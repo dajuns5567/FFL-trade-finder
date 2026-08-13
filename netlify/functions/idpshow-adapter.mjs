@@ -7,6 +7,8 @@ const normalizePosition=value=>{
   return ["DL","LB","DB"].includes(p)?"IDP":p;
 };
 
+const normalizePlayerName=value=>String(value||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+
 function parseCsv(text){
   const rows=[];let row=[],cell="",quoted=false;
   const source=String(text||"");
@@ -35,29 +37,44 @@ export function extractIdpShowRankings(text){
   const playerIndex=header.findIndex(x=>/player|name/.test(x));
   const posIndex=header.findIndex(x=>/^pos$|position/.test(x));
   if(rankIndex<0||playerIndex<0)return [];
-  const unique=new Map();
+  const rows=[];
   for(const cells of csv.slice(1)){
     const rank=Number(String(cells[rankIndex]||"").match(/\d{1,4}/)?.[0]);
     const player=String(cells[playerIndex]||"").trim();
     const position=normalizePosition(posIndex>=0?cells[posIndex]:"");
     if(!Number.isFinite(rank)||rank<1||!player)continue;
-    const key=player.toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
-    const prior=unique.get(key);
-    if(key&&(!prior||rank<prior.rank))unique.set(key,{rank,player,position});
+    rows.push({rank,player,position});
   }
-  return [...unique.values()].sort((a,b)=>a.rank-b.rank).slice(0,250);
+  return rows.sort((a,b)=>a.rank-b.rank).slice(0,250);
 }
 
-function rankContinuity(rankings){
-  const ranks=[...new Set((rankings||[]).map(x=>Number(x.rank)).filter(Number.isFinite))].sort((a,b)=>a-b);
+function validateRankings(rankings){
+  const rows=Array.isArray(rankings)?rankings:[];
+  const rankMap=new Map();
+  const nameMap=new Map();
+  for(const row of rows){
+    const rank=Number(row.rank);
+    if(!Number.isFinite(rank))continue;
+    if(!rankMap.has(rank))rankMap.set(rank,[]);
+    rankMap.get(rank).push(row.player);
+    const key=normalizePlayerName(row.player);
+    if(key){
+      if(!nameMap.has(key))nameMap.set(key,[]);
+      nameMap.get(key).push(rank);
+    }
+  }
+  const ranks=[...rankMap.keys()].sort((a,b)=>a-b);
   const minRank=ranks[0]??null;
   const maxRank=ranks.at(-1)??null;
   const missing=[];
   if(minRank===1&&maxRank!=null){
-    const set=new Set(ranks);
-    for(let rank=1;rank<=maxRank;rank++)if(!set.has(rank))missing.push(rank);
+    for(let rank=1;rank<=maxRank;rank++)if(!rankMap.has(rank))missing.push(rank);
   }
-  return {minRank,maxRank,missing,contiguous:minRank===1&&missing.length===0};
+  const duplicateRanks=[...rankMap.entries()].filter(([,players])=>players.length>1).map(([rank,players])=>({rank,players}));
+  const duplicatePlayers=[...nameMap.entries()].filter(([,ranksForPlayer])=>ranksForPlayer.length>1).map(([player,ranks])=>({player,ranks}));
+  const contiguous=minRank===1&&missing.length===0;
+  const valid=rows.length>=75&&contiguous&&duplicateRanks.length===0&&duplicatePlayers.length===0;
+  return {valid,minRank,maxRank,missing,duplicateRanks,duplicatePlayers};
 }
 
 async function fetchText(url,fetchImpl=fetch,accept="text/plain,*/*;q=0.8"){
@@ -93,32 +110,32 @@ export async function refreshIdpShow(opts={}){
   }
 
   const attempted=[];
-  let rankings=[];let dataUrl=null;
+  let rankings=[];let dataUrl=null;let validation={valid:false,minRank:null,maxRank:null,missing:[],duplicateRanks:[],duplicatePlayers:[]};
   for(const candidate of discoverCsvUrls(embedHtml)){
     try{
       const text=await fetchText(candidate,fetchImpl,"text/csv,text/plain,*/*;q=0.8");
       const parsed=extractIdpShowRankings(text);
-      const continuity=rankContinuity(parsed);
-      attempted.push({url:candidate,rows:parsed.length,min_rank:continuity.minRank,max_rank:continuity.maxRank,missing_ranks:continuity.missing,status:"ok"});
-      if(parsed.length>rankings.length){rankings=parsed;dataUrl=candidate;}
-      if(parsed.length>=75&&continuity.contiguous)break;
+      const checked=validateRankings(parsed);
+      attempted.push({url:candidate,rows:parsed.length,min_rank:checked.minRank,max_rank:checked.maxRank,missing_ranks:checked.missing,duplicate_ranks:checked.duplicateRanks,duplicate_players:checked.duplicatePlayers,status:"ok"});
+      if(parsed.length>rankings.length){rankings=parsed;dataUrl=candidate;validation=checked;}
+      if(checked.valid)break;
     }catch(error){attempted.push({url:candidate,rows:0,status:String(error?.message||error)});}
   }
 
-  const uniquePlayers=new Set(rankings.map(x=>x.player.toLowerCase())).size;
-  const continuity=rankContinuity(rankings);
-  const valid=rankings.length>=75&&uniquePlayers>=75&&continuity.contiguous;
+  const uniquePlayers=new Set(rankings.map(x=>normalizePlayerName(x.player)).filter(Boolean)).size;
+  const valid=validation.valid&&uniquePlayers===rankings.length;
   let error=null;
   if(!valid){
-    error=!continuity.contiguous
-      ?`Ranking sequence is not contiguous; missing ranks: ${continuity.missing.join(", ")||"unknown"}`
-      :`Only ${rankings.length} validated ranking rows were extracted from Datawrapper`;
+    if(validation.missing.length)error=`Ranking sequence is not contiguous; missing ranks: ${validation.missing.join(", ")}`;
+    else if(validation.duplicateRanks.length)error=`Duplicate source ranks detected: ${validation.duplicateRanks.map(x=>x.rank).join(", ")}`;
+    else if(validation.duplicatePlayers.length)error=`Duplicate player rows detected at ranks: ${validation.duplicatePlayers.map(x=>x.ranks.join("/" )).join(", ")}`;
+    else error=`Only ${rankings.length} validated ranking rows were extracted from Datawrapper`;
   }
   return {
     source:"The IDP Show Combined",id:"combined-dynasty",status:valid?"refreshed":"failed",valid,
     format:"combined-offense-idp-dynasty",reducedWeight:false,
     players_extracted:uniquePlayers,ranking_rows:rankings.length,rankings,timestamp:now,
     stage:valid?"validated":"extract",error,
-    urls:[SOURCE_URL],diagnostics:{fetch_method:"datawrapper-discovery",embed_url:EMBED_URL,data_url:dataUrl,attempted,parser:"idpshow-datawrapper-csv",unique_players_extracted:uniquePlayers,min_rank:continuity.minRank,max_rank:continuity.maxRank,missing_ranks:continuity.missing,rank_sequence_contiguous:continuity.contiguous,first_10:rankings.slice(0,10),validation_result:valid}
+    urls:[SOURCE_URL],diagnostics:{fetch_method:"datawrapper-discovery",embed_url:EMBED_URL,data_url:dataUrl,attempted,parser:"idpshow-datawrapper-csv-raw",unique_players_extracted:uniquePlayers,min_rank:validation.minRank,max_rank:validation.maxRank,missing_ranks:validation.missing,duplicate_ranks:validation.duplicateRanks,duplicate_players:validation.duplicatePlayers,rank_sequence_contiguous:validation.missing.length===0&&validation.minRank===1,first_10:rankings.slice(0,10),rows_198_208:rankings.filter(x=>x.rank>=198&&x.rank<=208),validation_result:valid}
   };
 }

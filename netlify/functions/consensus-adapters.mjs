@@ -5,8 +5,8 @@
  */
 
 export const CONSENSUS_SOURCES = [
-  { id:"fantasypros", name:"FantasyPros", type:"offense", format:"dynasty-ppr",
-    urls:["https://www.fantasypros.com/nfl/rankings/dynasty-overall.php?scoring=PPR"] },
+  { id:"fantasypros", name:"FantasyPros", type:"offense", format:"dynasty-ppr-superflex",
+    urls:["https://www.fantasypros.com/nfl/rankings/dynasty-superflex.php"] },
   { id:"draftsharks", name:"DraftSharks", type:"offense", format:"dynasty-ppr",
     urls:["https://www.draftsharks.com/dynasty-rankings/ppr-superflex",
           "https://www.draftsharks.com/dynasty-rankings/ppr"] },
@@ -60,7 +60,6 @@ function genericExtract(text, source) {
     const rest = cleanName(line);
     if (!rest || rest.length < 3 || rest.length > 100) continue;
 
-    // Remove common positional/team suffixes while preserving names.
     const name = rest
       .replace(/\s+\b(QB|RB|WR|TE|OT|OL|DL|DE|DT|EDGE|LB|ILB|OLB|CB|S|DB|IDP)\b(?:\s*[-|/].*)?$/i,"")
       .trim();
@@ -68,7 +67,6 @@ function genericExtract(text, source) {
     if (name.length >= 3) out.push({rank:r, player:name});
   }
 
-  // Deduplicate by rank/player while retaining first occurrence.
   const seen = new Set();
   return out.filter(x => {
     const k = `${x.rank}|${normalizePlayerName(x.player)}`;
@@ -104,23 +102,22 @@ function assignedJson(text, variableName) {
 export function extractFantasyProsRankings(text) {
   const payload=assignedJson(text,"ecrData");
   const players=Array.isArray(payload?.players)?payload.players:[];
-  const raw=[];
+  const rows=[];
   for(const row of players){
     const rank=Number(row?.rank_ecr);
     const player=String(row?.player_name||"").trim();
-    if(!player||!Number.isFinite(rank)||rank<1)continue;
-    raw.push({rank,player});
+    const playerId=Number(row?.player_id);
+    const position=String(row?.player_position_id||"").trim().toUpperCase();
+    const team=String(row?.player_team_id||"").trim().toUpperCase();
+    if(!player||!Number.isFinite(rank)||rank<1||!Number.isFinite(playerId))continue;
+    rows.push({rank,player,playerId,position,team});
   }
-  const unique=new Map();
-  for(const row of raw){
-    const key=normalizePlayerName(row.player);
-    const prior=unique.get(key);
-    if(key&&(!prior||row.rank<prior.rank))unique.set(key,row);
-  }
+  rows.sort((a,b)=>a.rank-b.rank);
   return {
-    rows:[...unique.values()].sort((a,b)=>a.rank-b.rank),
+    rows,
     rawRankingRows:players.length,
-    parser:"fantasypros-ecrData"
+    parser:"fantasypros-ecrData-player-id",
+    metadata:{type:payload?.type||null,scoring:payload?.scoring||null,sport:payload?.sport||null,year:payload?.year||null,week:payload?.week||null}
   };
 }
 
@@ -168,10 +165,10 @@ async function collectPages(source, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIM
     }
     const parsed=source.id==="fantasypros"
       ? extractFantasyProsRankings(page.text)
-      : {rows:genericExtract(page.text,source),rawRankingRows:null,parser:"generic-text"};
+      : {rows:genericExtract(page.text,source),rawRankingRows:null,parser:"generic-text",metadata:null};
     const first=parsed.rows;
     all.push(...first);
-    pageDiagnostics.push({fetch_method:page.method,parser:parsed.parser,raw_ranking_rows:parsed.rawRankingRows??first.length});
+    pageDiagnostics.push({fetch_method:page.method,parser:parsed.parser,raw_ranking_rows:parsed.rawRankingRows??first.length,metadata:parsed.metadata||null});
     seenPages.add(baseUrl);
 
     if (source.id === "ktc") {
@@ -207,7 +204,9 @@ async function collectPages(source, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIM
 
   const unique = new Map();
   for (const r of all) {
-    const key = `${r.rank}|${normalizePlayerName(r.player)}`;
+    const key = source.id==="fantasypros"
+      ? `${r.rank}|id:${r.playerId}`
+      : `${r.rank}|${normalizePlayerName(r.player)}`;
     if (!unique.has(key)) unique.set(key,r);
   }
   return {rows:[...unique.values()].sort((a,b)=>a.rank-b.rank),pageDiagnostics};
@@ -218,11 +217,25 @@ export async function refreshSource(source, opts={}) {
   try {
     const collected = await collectPages(source, opts.fetchImpl || fetch, opts.timeoutMs || DEFAULT_FETCH_TIMEOUT_MS);
     const rows=collected.rows;
-    const uniquePlayers = new Set(rows.map(x=>normalizePlayerName(x.player))).size;
+    const identities = source.id==="fantasypros"
+      ? new Set(rows.map(x=>`id:${x.playerId}`))
+      : new Set(rows.map(x=>normalizePlayerName(x.player)));
+    const uniquePlayers=identities.size;
     const enough = rows.length >= (source.id==="ktc" ? 100 : source.type==="idp" ? 40 : 75);
     const ranks = rows.map(x=>x.rank).filter(Number.isFinite);
     const ordered = ranks.length > 1 && ranks[0] >= 1;
-    const valid = enough && ordered && uniquePlayers >= Math.min(rows.length, 40);
+    let valid = enough && ordered && uniquePlayers >= Math.min(rows.length, 40);
+    let failureReason=valid?null:`Only ${rows.length} validated ranking rows were extracted`;
+
+    if(source.id==="fantasypros"){
+      const metadata=collected.pageDiagnostics[0]?.metadata||{};
+      const contiguous=rows.length>0&&rows.every((row,index)=>row.rank===index+1);
+      const uniqueRanks=new Set(rows.map(row=>row.rank)).size===rows.length;
+      const positionsOk=rows.every(row=>/^(QB|RB|WR|TE)$/.test(row.position));
+      const metadataOk=String(metadata.type||"").toLowerCase()==="dynasty"&&String(metadata.scoring||"").toUpperCase()==="PPR"&&String(metadata.sport||"").toUpperCase()==="NFL";
+      valid=rows.length>=500&&contiguous&&uniqueRanks&&identities.size===rows.length&&positionsOk&&metadataOk;
+      failureReason=valid?null:`FantasyPros Superflex validation failed: rows=${rows.length}, contiguous=${contiguous}, uniqueRanks=${uniqueRanks}, uniqueIds=${identities.size===rows.length}, positions=${positionsOk}, metadata=${metadataOk}`;
+    }
 
     return {
       source: source.name,
@@ -236,16 +249,17 @@ export async function refreshSource(source, opts={}) {
       rankings: rows,
       timestamp: now,
       stage: valid ? "validated" : "extract",
-      error: valid ? null : `Only ${rows.length} validated ranking rows were extracted`,
+      error: failureReason,
       urls: source.urls,
       ...(source.id==="fantasypros"?{diagnostics:{
         fetch_method:collected.pageDiagnostics[0]?.fetch_method||null,
-        parser:collected.pageDiagnostics[0]?.parser||"fantasypros-ecrData",
+        parser:collected.pageDiagnostics[0]?.parser||"fantasypros-ecrData-player-id",
         raw_ranking_rows:collected.pageDiagnostics[0]?.raw_ranking_rows||0,
+        metadata:collected.pageDiagnostics[0]?.metadata||null,
         unique_players_extracted:uniquePlayers,
         first_10:rows.slice(0,10),
         validation_result:valid,
-        failure_reason:valid?null:`Only ${rows.length} validated ranking rows were extracted`
+        failure_reason:failureReason
       }}:{})
     };
   } catch (e) {
@@ -255,7 +269,7 @@ export async function refreshSource(source, opts={}) {
       players_extracted:0,ranking_rows:0,rankings:[],timestamp:now,
       stage:"fetch",error:String(e?.message||e),urls:source.urls,
       ...(source.id==="fantasypros"?{diagnostics:{
-        fetch_method:null,parser:"fantasypros-ecrData",raw_ranking_rows:0,
+        fetch_method:null,parser:"fantasypros-ecrData-player-id",raw_ranking_rows:0,
         unique_players_extracted:0,first_10:[],validation_result:false,
         failure_reason:String(e?.message||e)
       }}:{})

@@ -1,4 +1,3 @@
-
 /*
  * V16 consensus ingestion layer.
  * This module deliberately does NOT assign player values.
@@ -13,8 +12,6 @@ export const CONSENSUS_SOURCES = [
           "https://www.draftsharks.com/dynasty-rankings/ppr"] },
   { id:"pfn", name:"PFN", type:"offense", format:"dynasty-ppr",
     urls:["https://www.profootballnetwork.com/fantasy-football-dynasty-rankings/"] },
-  { id:"si", name:"SI", type:"offense", format:"dynasty-ppr",
-    urls:["https://www.si.com/onsi/fantasy/rankings/top-150-overall-dynasty-fantasy-football-rankings-ja-marr-chase-is-still-the-top-option-but-puka-nacua-falls"] },
   { id:"ktc", name:"KTC", type:"offense", format:"dynasty",
     urls:["https://keeptradecut.com/dynasty-rankings"] , reducedWeight:true },
   { id:"draftsharks-idp", name:"DraftSharks IDP", type:"idp", format:"dynasty-idp",
@@ -157,19 +154,12 @@ async function getPage(url, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIMEOUT_MS)
   return {text, method:"jina", url};
 }
 
-/*
- * Source-specific pagination hooks.
- * We do not guess a pagination URL. Each adapter can add verified mechanisms.
- * KTC's adapter recognizes common page/offset parameters and stops only when
- * no new ranking rows are returned.
- */
 async function collectPages(source, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIMEOUT_MS) {
   const all = [];
   const seenPages = new Set();
   const pageDiagnostics=[];
 
   for (const baseUrl of source.urls) {
-    // First page.
     let page;
     try {
       page = await getPage(baseUrl,fetchImpl,timeoutMs);
@@ -184,8 +174,6 @@ async function collectPages(source, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIM
     pageDiagnostics.push({fetch_method:page.method,parser:parsed.parser,raw_ranking_rows:parsed.rawRankingRows??first.length});
     seenPages.add(baseUrl);
 
-    // KTC commonly exposes 50-ish ranking records at a time. Try conservative
-    // offset/page variants, stopping after three consecutive pages with no new rows.
     if (source.id === "ktc") {
       let empty = 0;
       let lastCount = new Set(all.map(x=>`${x.rank}|${normalizePlayerName(x.player)}`)).size;
@@ -231,9 +219,6 @@ export async function refreshSource(source, opts={}) {
     const collected = await collectPages(source, opts.fetchImpl || fetch, opts.timeoutMs || DEFAULT_FETCH_TIMEOUT_MS);
     const rows=collected.rows;
     const uniquePlayers = new Set(rows.map(x=>normalizePlayerName(x.player))).size;
-
-    // Validation is source-aware and deliberately does not require a fixed
-    // Sleeper match count. A source can be valid with imperfect name matching.
     const enough = rows.length >= (source.id==="ktc" ? 100 : source.type==="idp" ? 40 : 75);
     const ranks = rows.map(x=>x.rank).filter(Number.isFinite);
     const ordered = ranks.length > 1 && ranks[0] >= 1;

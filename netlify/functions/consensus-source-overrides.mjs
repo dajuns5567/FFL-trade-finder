@@ -1,6 +1,7 @@
 import { CONSENSUS_SOURCES, refreshAllSources as baseRefreshAllSources } from "./consensus-adapters.mjs";
 import { refreshIdpShow } from "./idpshow-adapter.mjs";
 import { refreshFanRanked } from "./fanranked-adapter.mjs";
+import { refreshKtc } from "./ktc-adapter.mjs";
 
 const blockedPfnIndex=CONSENSUS_SOURCES.findIndex(source=>source.id==="pfn");
 if(blockedPfnIndex>=0){
@@ -14,17 +15,21 @@ if(blockedPfnIndex>=0){
 }
 
 export async function refreshAllSources(opts={}) {
-  const [refresh,fanRanked]=await Promise.all([
+  const [refresh,fanRanked,ktc]=await Promise.all([
     baseRefreshAllSources(opts),
-    refreshFanRanked(opts)
+    refreshFanRanked(opts),
+    refreshKtc(opts)
   ]);
-  const index=refresh.results.findIndex(result=>result.id==="combined-dynasty");
-  if(index>=0){
-    try{refresh.results[index]=await refreshIdpShow(opts)}
+  const combinedIndex=refresh.results.findIndex(result=>result.id==="combined-dynasty");
+  if(combinedIndex>=0){
+    try{refresh.results[combinedIndex]=await refreshIdpShow(opts)}
     catch(error){
-      refresh.results[index]={...refresh.results[index],status:"failed",valid:false,stage:"fetch",error:String(error?.message||error),rankings:[],players_extracted:0,ranking_rows:0};
+      refresh.results[combinedIndex]={...refresh.results[combinedIndex],status:"failed",valid:false,stage:"fetch",error:String(error?.message||error),rankings:[],players_extracted:0,ranking_rows:0};
     }
   }
+  const ktcIndex=refresh.results.findIndex(result=>result.id==="ktc");
+  if(ktcIndex>=0)refresh.results[ktcIndex]=ktc;
+  else refresh.results.push(ktc);
   refresh.results.push(fanRanked);
   refresh.total=refresh.results.length;
   refresh.successful=refresh.results.filter(result=>result.valid).length;

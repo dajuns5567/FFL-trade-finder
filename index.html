@@ -419,7 +419,7 @@ function renderConsensusDiagnostics(summary){
   const list=document.getElementById("consensusSources");
   const sm=document.getElementById("consensusSummary");
   if(!box||!list||!sm)return;
-  const total=Number(summary?.total||8), ok=Number(summary?.successful||0);
+  const total=Number(summary?.total||7), ok=Number(summary?.successful||0);
   sm.textContent=`${ok}/${total} consensus sources refreshed`;
   const rows=Array.isArray(summary?.results)?summary.results:[];
   list.innerHTML=rows.map(x=>{
@@ -509,7 +509,7 @@ async function updateData(){
     buildTeams();renderAll();
     state.lastUpdate=new Date().toISOString();
     cacheSet("fll_sleeper_snapshot",{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
-    status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data loaded; consensus sources: <b>${consensusCount}/8</b> refreshed.`,"success");
+    status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data loaded; consensus sources: <b>${consensusCount}/7</b> refreshed.`,"success");
   }catch(e){
     console.error(e);
     const cached=cacheGet("fll_sleeper_snapshot");
@@ -557,7 +557,7 @@ boot();
 
 <script>
 window.fllConsensusStatus = function(summary) {
-  const total = Number(summary?.total ?? summary?.attempted ?? 8);
+  const total = Number(summary?.total ?? summary?.attempted ?? 7);
   const ok = Number(summary?.successful ?? summary?.refreshed ?? summary?.success ?? 0);
   return `${ok}/${total} consensus sources successful`;
 };

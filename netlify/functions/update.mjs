@@ -1,4 +1,4 @@
-import { refreshAllSources } from "./consensus-adapters.mjs";
+import { refreshAllSources } from "./consensus-source-overrides.mjs";
 
 export function buildConsensusPayload(refresh, updatedAt=new Date().toISOString()) {
   const results=Array.isArray(refresh?.results)?refresh.results:[];

@@ -48,6 +48,18 @@ export function extractIdpShowRankings(text){
   return [...unique.values()].sort((a,b)=>a.rank-b.rank).slice(0,250);
 }
 
+function rankContinuity(rankings){
+  const ranks=[...new Set((rankings||[]).map(x=>Number(x.rank)).filter(Number.isFinite))].sort((a,b)=>a-b);
+  const minRank=ranks[0]??null;
+  const maxRank=ranks.at(-1)??null;
+  const missing=[];
+  if(minRank===1&&maxRank!=null){
+    const set=new Set(ranks);
+    for(let rank=1;rank<=maxRank;rank++)if(!set.has(rank))missing.push(rank);
+  }
+  return {minRank,maxRank,missing,contiguous:minRank===1&&missing.length===0};
+}
+
 async function fetchText(url,fetchImpl=fetch,accept="text/plain,*/*;q=0.8"){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),TIMEOUT_MS);
@@ -67,11 +79,7 @@ function discoverCsvUrls(embedHtml){
     else if(!/^https?:\/\//i.test(value))value=new URL(value,EMBED_URL).href;
     found.push(value);
   }
-  const candidates=[
-    ...found,
-    new URL("dataset.csv",EMBED_URL).href,
-    new URL("data.csv",EMBED_URL).href
-  ];
+  const candidates=[...found,new URL("dataset.csv",EMBED_URL).href,new URL("data.csv",EMBED_URL).href];
   return [...new Set(candidates)];
 }
 
@@ -90,19 +98,27 @@ export async function refreshIdpShow(opts={}){
     try{
       const text=await fetchText(candidate,fetchImpl,"text/csv,text/plain,*/*;q=0.8");
       const parsed=extractIdpShowRankings(text);
-      attempted.push({url:candidate,rows:parsed.length,status:"ok"});
+      const continuity=rankContinuity(parsed);
+      attempted.push({url:candidate,rows:parsed.length,min_rank:continuity.minRank,max_rank:continuity.maxRank,missing_ranks:continuity.missing,status:"ok"});
       if(parsed.length>rankings.length){rankings=parsed;dataUrl=candidate;}
-      if(parsed.length>=75)break;
+      if(parsed.length>=75&&continuity.contiguous)break;
     }catch(error){attempted.push({url:candidate,rows:0,status:String(error?.message||error)});}
   }
 
   const uniquePlayers=new Set(rankings.map(x=>x.player.toLowerCase())).size;
-  const valid=rankings.length>=75&&uniquePlayers>=75;
+  const continuity=rankContinuity(rankings);
+  const valid=rankings.length>=75&&uniquePlayers>=75&&continuity.contiguous;
+  let error=null;
+  if(!valid){
+    error=!continuity.contiguous
+      ?`Ranking sequence is not contiguous; missing ranks: ${continuity.missing.join(", ")||"unknown"}`
+      :`Only ${rankings.length} validated ranking rows were extracted from Datawrapper`;
+  }
   return {
     source:"The IDP Show Combined",id:"combined-dynasty",status:valid?"refreshed":"failed",valid,
     format:"combined-offense-idp-dynasty",reducedWeight:false,
     players_extracted:uniquePlayers,ranking_rows:rankings.length,rankings,timestamp:now,
-    stage:valid?"validated":"extract",error:valid?null:`Only ${rankings.length} validated ranking rows were extracted from Datawrapper`,
-    urls:[SOURCE_URL],diagnostics:{fetch_method:"datawrapper-discovery",embed_url:EMBED_URL,data_url:dataUrl,attempted,parser:"idpshow-datawrapper-csv",unique_players_extracted:uniquePlayers,first_10:rankings.slice(0,10),validation_result:valid}
+    stage:valid?"validated":"extract",error,
+    urls:[SOURCE_URL],diagnostics:{fetch_method:"datawrapper-discovery",embed_url:EMBED_URL,data_url:dataUrl,attempted,parser:"idpshow-datawrapper-csv",unique_players_extracted:uniquePlayers,min_rank:continuity.minRank,max_rank:continuity.maxRank,missing_ranks:continuity.missing,rank_sequence_contiguous:continuity.contiguous,first_10:rankings.slice(0,10),validation_result:valid}
   };
 }

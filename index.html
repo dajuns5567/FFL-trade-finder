@@ -509,7 +509,7 @@ async function updateData(){
     buildTeams();renderAll();
     state.lastUpdate=new Date().toISOString();
     cacheSet("fll_sleeper_snapshot",{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
-    status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data loaded; consensus sources: <b>${consensusCount}/8</b> refreshed.`,"success");
+    status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data loaded; consensus sources: <b>${consensusCount}/9</b> refreshed.`,"success");
   }catch(e){
     console.error(e);
     const cached=cacheGet("fll_sleeper_snapshot");

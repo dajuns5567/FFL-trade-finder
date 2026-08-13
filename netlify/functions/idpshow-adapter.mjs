@@ -2,12 +2,13 @@ const SOURCE_URL="https://www.theidpshow.com/p/combined-idp-offense-dynasty-rank
 const EMBED_URL="https://datawrapper.dwcdn.net/gNM2r/1/";
 const TIMEOUT_MS=7000;
 
+const DEFENSIVE_POSITIONS=new Set(["DL","DE","DT","EDGE","LB","ILB","OLB","DB","CB","S","FS","SS"]);
+
 const normalizePosition=value=>{
-  const p=String(value||"").trim().toUpperCase();
-  if(["DL","DE","DT","EDGE"].includes(p))return "IDP";
-  if(["LB","ILB","OLB"].includes(p))return "IDP";
-  if(["DB","CB","S","FS","SS"].includes(p))return "IDP";
-  return p;
+  const raw=String(value||"").trim().toUpperCase();
+  const tokens=raw.split(/[\s,\/|;+]+/).filter(Boolean);
+  if(tokens.some(token=>DEFENSIVE_POSITIONS.has(token)))return "IDP";
+  return raw;
 };
 
 const normalizePlayerName=value=>String(value||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
@@ -44,9 +45,10 @@ export function extractIdpShowRankings(text){
   for(const cells of csv.slice(1)){
     const rank=Number(String(cells[rankIndex]||"").match(/\d{1,4}/)?.[0]);
     const player=String(cells[playerIndex]||"").trim();
-    const position=normalizePosition(posIndex>=0?cells[posIndex]:"");
+    const rawPosition=posIndex>=0?String(cells[posIndex]||"").trim():"";
+    const position=normalizePosition(rawPosition);
     if(!Number.isFinite(rank)||rank<1||!player)continue;
-    rows.push({rank,player,position});
+    rows.push({rank,player,position,rawPosition});
   }
   return rows.sort((a,b)=>a.rank-b.rank).slice(0,250);
 }
@@ -63,26 +65,16 @@ function validateRankings(rankings){
     const key=normalizePlayerName(row.player);
     if(key){
       if(!nameMap.has(key))nameMap.set(key,[]);
-      nameMap.get(key).push({rank,player:row.player,position:String(row.position||"").toUpperCase()});
+      nameMap.get(key).push({rank,player:row.player,position:String(row.position||"").toUpperCase(),rawPosition:String(row.rawPosition||"").toUpperCase()});
     }
   }
-
   const ranks=[...rankMap.keys()].sort((a,b)=>a-b);
   const minRank=ranks[0]??null;
   const maxRank=ranks.at(-1)??null;
   const missing=[];
-  if(minRank===1&&maxRank!=null){
-    for(let rank=1;rank<=maxRank;rank++)if(!rankMap.has(rank))missing.push(rank);
-  }
-
-  const duplicateRanks=[...rankMap.entries()]
-    .filter(([,players])=>players.length>1)
-    .map(([rank,players])=>({rank,players}));
-
-  const duplicatePlayers=[...nameMap.entries()]
-    .filter(([,entries])=>entries.length>1)
-    .map(([normalized,entries])=>({normalized,player:entries[0].player,entries,ranks:entries.map(x=>x.rank)}));
-
+  if(minRank===1&&maxRank!=null){for(let rank=1;rank<=maxRank;rank++)if(!rankMap.has(rank))missing.push(rank);}
+  const duplicateRanks=[...rankMap.entries()].filter(([,players])=>players.length>1).map(([rank,players])=>({rank,players}));
+  const duplicatePlayers=[...nameMap.entries()].filter(([,entries])=>entries.length>1).map(([normalized,entries])=>({normalized,player:entries[0].player,entries,ranks:entries.map(x=>x.rank)}));
   const allowedDualRolePlayers=[];
   const blockingDuplicatePlayers=[];
   for(const duplicate of duplicatePlayers){
@@ -90,13 +82,9 @@ function validateRankings(rankings){
     const idpEntries=entries.filter(x=>x.position==="IDP");
     const offenseEntries=entries.filter(x=>x.position&&x.position!=="IDP");
     const allowed=entries.length===2&&idpEntries.length===1&&offenseEntries.length===1;
-    if(allowed){
-      allowedDualRolePlayers.push({player:duplicate.player,ranks:duplicate.ranks,positions:entries.map(x=>x.position)});
-    }else{
-      blockingDuplicatePlayers.push(duplicate);
-    }
+    if(allowed)allowedDualRolePlayers.push({player:duplicate.player,ranks:duplicate.ranks,positions:entries.map(x=>x.position),rawPositions:entries.map(x=>x.rawPosition)});
+    else blockingDuplicatePlayers.push(duplicate);
   }
-
   const contiguous=minRank===1&&missing.length===0;
   const valid=rows.length>=75&&contiguous&&duplicateRanks.length===0&&blockingDuplicatePlayers.length===0;
   return {valid,minRank,maxRank,missing,duplicateRanks,duplicatePlayers,allowedDualRolePlayers,blockingDuplicatePlayers};
@@ -121,8 +109,7 @@ function discoverCsvUrls(embedHtml){
     else if(!/^https?:\/\//i.test(value))value=new URL(value,EMBED_URL).href;
     found.push(value);
   }
-  const candidates=[...found,new URL("dataset.csv",EMBED_URL).href,new URL("data.csv",EMBED_URL).href];
-  return [...new Set(candidates)];
+  return [...new Set([...found,new URL("dataset.csv",EMBED_URL).href,new URL("data.csv",EMBED_URL).href])];
 }
 
 export async function refreshIdpShow(opts={}){
@@ -130,12 +117,9 @@ export async function refreshIdpShow(opts={}){
   const fetchImpl=opts.fetchImpl||fetch;
   let embedHtml="";
   try{embedHtml=await fetchText(EMBED_URL,fetchImpl,"text/html,application/xhtml+xml,*/*;q=0.8");}
-  catch(error){
-    return {source:"The IDP Show Combined",id:"combined-dynasty",status:"failed",valid:false,format:"combined-offense-idp-dynasty",reducedWeight:false,players_extracted:0,ranking_rows:0,rankings:[],timestamp:now,stage:"fetch",error:`Datawrapper embed fetch failed: ${String(error?.message||error)}`,urls:[SOURCE_URL],diagnostics:{embed_url:EMBED_URL,validation_result:false}};
-  }
+  catch(error){return {source:"The IDP Show Combined",id:"combined-dynasty",status:"failed",valid:false,format:"combined-offense-idp-dynasty",reducedWeight:false,players_extracted:0,ranking_rows:0,rankings:[],timestamp:now,stage:"fetch",error:`Datawrapper embed fetch failed: ${String(error?.message||error)}`,urls:[SOURCE_URL],diagnostics:{embed_url:EMBED_URL,validation_result:false}};}
 
-  const attempted=[];
-  let rankings=[];let dataUrl=null;
+  const attempted=[];let rankings=[];let dataUrl=null;
   let validation={valid:false,minRank:null,maxRank:null,missing:[],duplicateRanks:[],duplicatePlayers:[],allowedDualRolePlayers:[],blockingDuplicatePlayers:[]};
   for(const candidate of discoverCsvUrls(embedHtml)){
     try{
@@ -154,14 +138,8 @@ export async function refreshIdpShow(opts={}){
   if(!valid){
     if(validation.missing.length)error=`Ranking sequence is not contiguous; missing ranks: ${validation.missing.join(", ")}`;
     else if(validation.duplicateRanks.length)error=`Duplicate source ranks detected: ${validation.duplicateRanks.map(x=>x.rank).join(", ")}`;
-    else if(validation.blockingDuplicatePlayers.length)error=`Invalid duplicate player row: ${validation.blockingDuplicatePlayers.map(x=>`${x.player} at ranks ${x.ranks.join("/")} positions ${x.entries.map(e=>e.position||"unknown").join("/")}`).join("; ")}`;
+    else if(validation.blockingDuplicatePlayers.length)error=`Invalid duplicate player row: ${validation.blockingDuplicatePlayers.map(x=>`${x.player} at ranks ${x.ranks.join("/")} positions ${x.entries.map(e=>e.rawPosition||e.position||"unknown").join("/")}`).join("; ")}`;
     else error=`Only ${rankings.length} validated ranking rows were extracted from Datawrapper`;
   }
-  return {
-    source:"The IDP Show Combined",id:"combined-dynasty",status:valid?"refreshed":"failed",valid,
-    format:"combined-offense-idp-dynasty",reducedWeight:false,
-    players_extracted:uniquePlayers,ranking_rows:rankings.length,rankings,timestamp:now,
-    stage:valid?"validated":"extract",error,
-    urls:[SOURCE_URL],diagnostics:{fetch_method:"datawrapper-discovery",embed_url:EMBED_URL,data_url:dataUrl,attempted,parser:"idpshow-datawrapper-csv-dual-role",unique_players_extracted:uniquePlayers,ranking_rows:rankings.length,min_rank:validation.minRank,max_rank:validation.maxRank,missing_ranks:validation.missing,duplicate_ranks:validation.duplicateRanks,allowed_dual_role_players:validation.allowedDualRolePlayers,blocking_duplicate_players:validation.blockingDuplicatePlayers,rank_sequence_contiguous:validation.missing.length===0&&validation.minRank===1,first_10:rankings.slice(0,10),rows_198_208:rankings.filter(x=>x.rank>=198&&x.rank<=208),validation_result:valid}
-  };
+  return {source:"The IDP Show Combined",id:"combined-dynasty",status:valid?"refreshed":"failed",valid,format:"combined-offense-idp-dynasty",reducedWeight:false,players_extracted:uniquePlayers,ranking_rows:rankings.length,rankings,timestamp:now,stage:valid?"validated":"extract",error,urls:[SOURCE_URL],diagnostics:{fetch_method:"datawrapper-discovery",embed_url:EMBED_URL,data_url:dataUrl,attempted,parser:"idpshow-datawrapper-csv-dual-role",unique_players_extracted:uniquePlayers,ranking_rows:rankings.length,min_rank:validation.minRank,max_rank:validation.maxRank,missing_ranks:validation.missing,duplicate_ranks:validation.duplicateRanks,allowed_dual_role_players:validation.allowedDualRolePlayers,blocking_duplicate_players:validation.blockingDuplicatePlayers,rank_sequence_contiguous:validation.missing.length===0&&validation.minRank===1,first_10:rankings.slice(0,10),rows_198_208:rankings.filter(x=>x.rank>=198&&x.rank<=208),validation_result:valid}};
 }

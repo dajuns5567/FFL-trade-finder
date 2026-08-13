@@ -4,6 +4,10 @@ import { refreshFanRanked } from "./fanranked-adapter.mjs";
 import { refreshKtc } from "./ktc-adapter.mjs";
 import { refreshRotowireIdp } from "./rotowire-idp-adapter.mjs";
 import { refreshDraftSharksIdp } from "./draftsharks-idp-adapter.mjs";
+import { refreshDraftSharksOffense } from "./draftsharks-offense-adapter.mjs";
+
+const draftSharksSource=CONSENSUS_SOURCES.find(source=>source.id==="draftsharks");
+if(draftSharksSource){draftSharksSource.urls=["https://www.draftsharks.com/dynasty-rankings/ppr-superflex"];draftSharksSource.format="dynasty-ppr-superflex";}
 
 const blockedPfnIndex=CONSENSUS_SOURCES.findIndex(source=>source.id==="pfn");
 if(blockedPfnIndex>=0){
@@ -32,20 +36,24 @@ const dynastyDealerIndex=CONSENSUS_SOURCES.findIndex(source=>source.id==="dynast
 if(dynastyDealerIndex>=0)CONSENSUS_SOURCES.splice(dynastyDealerIndex,1);
 
 export async function refreshAllSources(opts={}) {
-  const [refresh,fanRanked,ktc,rotowireIdp,draftSharksIdp]=await Promise.all([
+  const [refresh,fanRanked,ktc,rotowireIdp,draftSharksIdp,draftSharksOffense]=await Promise.all([
     baseRefreshAllSources(opts),
     refreshFanRanked(opts),
     refreshKtc(opts),
     refreshRotowireIdp(opts),
-    refreshDraftSharksIdp(opts)
+    refreshDraftSharksIdp(opts),
+    refreshDraftSharksOffense(opts)
   ]);
   const combinedIndex=refresh.results.findIndex(result=>result.id==="combined-dynasty");
   if(combinedIndex>=0){
     try{refresh.results[combinedIndex]=await refreshIdpShow(opts)}
-    catch(error){
-      refresh.results[combinedIndex]={...refresh.results[combinedIndex],status:"failed",valid:false,stage:"fetch",error:String(error?.message||error),rankings:[],players_extracted:0,ranking_rows:0};
-    }
+    catch(error){refresh.results[combinedIndex]={...refresh.results[combinedIndex],status:"failed",valid:false,stage:"fetch",error:String(error?.message||error),rankings:[],players_extracted:0,ranking_rows:0};}
   }
+
+  const draftSharksIndex=refresh.results.findIndex(result=>result.id==="draftsharks");
+  if(draftSharksIndex>=0)refresh.results[draftSharksIndex]=draftSharksOffense;
+  else refresh.results.push(draftSharksOffense);
+
   const ktcIndex=refresh.results.findIndex(result=>result.id==="ktc");
   if(ktcIndex>=0)refresh.results[ktcIndex]=ktc;
   else refresh.results.push(ktc);

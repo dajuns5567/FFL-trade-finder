@@ -3,11 +3,11 @@ import { CONSENSUS_SOURCES, refreshAllSources as baseRefreshAllSources } from ".
 const blockedPfnIndex=CONSENSUS_SOURCES.findIndex(source=>source.id==="pfn");
 if(blockedPfnIndex>=0){
   CONSENSUS_SOURCES.splice(blockedPfnIndex,1,{
-    id:"dynastynerds",
-    name:"Dynasty Nerds",
-    type:"offense",
-    format:"dynasty-superflex",
-    urls:["https://www.dynastynerds.com/dynasty-rankings/superflex/"]
+    id:"combined-dynasty",
+    name:"The IDP Show Combined",
+    type:"mixed",
+    format:"combined-offense-idp-dynasty",
+    urls:["https://www.theidpshow.com/p/combined-idp-offense-dynasty-rankings-fantasy-football"]
   });
 }
 

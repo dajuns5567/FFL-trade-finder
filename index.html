@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>FLL 32-Team Dynasty Trade Finder — V13</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--ink:#111827;--muted:#667085;--line:#e5e7eb;--accent:#2563eb;--good:#047857;--warn:#b45309;--bad:#b91c1c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+header{background:#111827;color:#fff;padding:18px 16px;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px #0002}
+h1{font-size:21px;margin:0 0 4px}header p{margin:0;color:#cbd5e1;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 2px #00000008}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+label{display:block;font-weight:700;font-size:13px;margin-bottom:6px}select,input{width:100%;padding:11px 12px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;font:inherit}
+button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}button.secondary{background:#eef2f7;color:#344054}button.small{padding:7px 9px;font-size:12px}button:disabled{opacity:.55;cursor:not-allowed}
+.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.tabs button{white-space:nowrap}.tabs button.active{background:#111827}
+.asset{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid var(--line);padding:9px;border-radius:9px;margin:6px 0;background:#fafafa}
+.pill{display:inline-block;padding:4px 7px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:11px;font-weight:700;margin:2px}
+.result{border:1px solid var(--line);border-radius:12px;padding:13px;margin:10px 0}.result .top{display:flex;justify-content:space-between;gap:10px}
+.score{font-size:22px;font-weight:800}.muted{color:var(--muted)}.tiny{font-size:12px}.empty{padding:18px;text-align:center;color:var(--muted)}
+.notice{padding:11px;border-radius:9px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:13px}
+.success{background:#ecfdf3;border-color:#a7f3d0;color:#065f46}.error{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.rationaleBody{margin-top:8px}.checklist{max-height:290px;overflow:auto;border:1px solid var(--line);border-radius:9px;padding:8px}
+.checkrow{display:flex;gap:8px;align-items:center;font-weight:500;margin:6px 0}.checkrow input{width:auto}
+.bar{height:7px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:7px 0}.bar>i{display:block;height:100%;background:var(--accent)}
+@media(max-width:700px){.grid,.grid3{grid-template-columns:1fr}main{padding:10px}.card{padding:13px}header{padding:15px 12px}}
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
+    <div><h1>FLL 32-Team Dynasty Trade Finder</h1><p>League-specific trade search • 32 teams • Superflex • PPR • custom IDP</p></div>
+    <button id="updateBtn" class="secondary small">↻ Update</button>
+  </div>
+</header>
+
+<main>
+<div class="tabs">
+  <button class="active" data-tab="finder">Trade Finder</button>
+  <button data-tab="evaluator">Trade Evaluator</button>
+  <button data-tab="league">League</button>
+  <button data-tab="settings">Model</button>
+</div>
+
+<section id="finder" class="tab">
+<div class="card">
+  <h2>Find trades</h2>
+  <div class="notice" id="updateStatus">Loading Sleeper league data…</div>
+  <div id="consensusDiagnostics" class="card" style="margin-top:10px;display:none">
+  <h3 style="margin:0 0 8px">Consensus refresh diagnostics</h3>
+  <div id="consensusSummary" class="muted" style="margin-bottom:8px"></div>
+  <div id="consensusSources"></div>
+</div>
+  <p class="muted">Team fit affects only partner selection. It does not change player value. The Finder and Evaluator use the same master ranking.</p>
+  <div class="grid3">
+    <div>
+      <label>Your team</label>
+      <select id="findTeam"><option value="">Loading teams…</option></select>
+      <div id="myTeamStage" class="tiny muted" style="margin-top:5px"></div>
+    </div>
+    <div>
+      <label>Asset(s) you want to shop</label>
+      <div id="findShop"><div class="empty">Select a team first.</div></div>
+    </div>
+    <div>
+      <label>Position you want to acquire</label>
+      <select id="findPos">
+        <option value="ANY">Any position</option><option value="QB">QB</option><option value="RB">RB</option><option value="WR">WR</option><option value="TE">TE</option><option value="IDP">IDP</option>
+      </select>
+      <label style="margin-top:12px">Search style</label>
+      <select id="findMode">
+        <option value="balanced">Balanced / fair</option><option value="need">Best partner fit</option><option value="value">Maximum value received</option><option value="rebuild">Future-oriented</option><option value="contend">Win-now</option>
+      </select>
+    </div>
+  </div>
+  <div style="margin-top:12px"><button id="runFinder" disabled>Find realistic trades</button></div>
+  <div id="finderResults" style="margin-top:14px"></div>
+</div>
+</section>
+
+<section id="evaluator" class="tab" hidden>
+<div class="card">
+  <h2>Trade evaluator</h2>
+  <div class="grid">
+    <div><h3>Team A</h3><select id="evalA"></select><div id="assetsA"></div><button class="secondary small" id="addA">+ Add player/pick</button></div>
+    <div><h3>Team B</h3><select id="evalB"></select><div id="assetsB"></div><button class="secondary small" id="addB">+ Add player/pick</button></div>
+  </div>
+  <div style="margin-top:12px"><button id="evaluate">Evaluate trade</button></div>
+  <div id="evalResults" style="margin-top:14px"></div>
+</div>
+</section>
+
+<section id="league" class="tab" hidden>
+<div class="card"><h2>League snapshot</h2><div id="leagueInfo"></div></div>
+<div class="card"><h2>Teams</h2><div id="teamsTable"></div></div>
+</section>
+
+<section id="settings" class="tab" hidden>
+<div class="card"><h2>Valuation model</h2>
+<p><b>Unified valuation model.</b> Consensus is the dominant anchor; league scoring, Superflex, scarcity and IDP replacement level are filters, not permission to turn fringe players into premium assets.</p>
+<ul>
+<li>Consensus market: dominant anchor; small league-specific adjustments.</li>
+<li>Team fit: 0% of player value; partner selection only.</li>
+<li>QB/RB scarcity: 15% • WR: 10% • TE: 2% • IDP: 0%.</li>
+<li>TE is never treated as a lineup need.</li>
+<li>Ordinary IDPs are not used as generic sweeteners. Elite IDPs can retain meaningful value.</li>
+<li>Package values use diminishing returns so several weak assets cannot manufacture an elite asset.</li>
+</ul>
+<div class="notice">V13 data-loading change: Sleeper core data is rendered before market-source refresh. A failed consensus/news source can no longer prevent the team selector from populating.</div>
+</div>
+</section>
+</main>
+
+<script>
+const LEAGUE="1316867686394769408";
+const FALLBACK_SEASON=2026;
+const CACHE_TTL=1000*60*60*6;
+const scoring={pass_yd:.04,pass_td:4,pass_int:-2,pass_inc:-.1,pass_sacked:-.2,pass_2pt:2,rush_yd:.1,rush_td:6,rush_2pt:2,rec:1,rec_yd:.1,rec_td:6,rec_2pt:2,idp_td:10,idp_sack:4.5,idp_qb_hit:2.5,idp_tkl_loss:2.5,idp_blk_kick:5,idp_int:9,idp_int_yd:.1,idp_fum_rec:7.5,idp_fum_rec_yd:.1,idp_ff:7.5,idp_safety:5,idp_tkl_ast:.5,idp_tkl_solo:1,idp_pass_def:6};
+
+let state={league:null,users:[],rosters:[],players:{},stats:{},teams:[],allAssets:[],rankings:{},trending:{},lastUpdate:null,faab:{},assetsA:[],assetsB:[],tradedPicks:[],draftPicks:[]};
+let masterRankCache=null, valueCache=new Map(), fitCache=new Map(), stageCache=new Map();
+
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function cacheGet(k,ttl=CACHE_TTL){try{const x=JSON.parse(localStorage.getItem(k)||"null");return x&&Date.now()-x.t<ttl?x.v:null}catch(e){return null}}
+function cacheSet(k,v){try{localStorage.setItem(k,JSON.stringify({t:Date.now(),v}))}catch(e){}}
+async function get(path,timeout=18000){
+  const c=new AbortController(); const timer=setTimeout(()=>c.abort(),timeout);
+  try{
+    const r=await fetch("https://api.sleeper.app/v1"+path,{cache:"no-store",signal:c.signal});
+    if(!r.ok)throw Error(path+" "+r.status);
+    return await r.json();
+  }finally{clearTimeout(timer)}
+}
+function status(msg,kind=""){const el=document.getElementById("updateStatus");if(el){el.className="notice"+(kind?" "+kind:"");el.innerHTML=msg}}
+
+function playerName(id){const p=state.players[id]||{};return p.full_name||[p.first_name,p.last_name].filter(Boolean).join(" ")||String(id)}
+function groupPos(x){
+  if(x.type==="pick")return "PICK";
+  const p=state.players[x.id]||{}, ps=p.fantasy_positions||[];
+  if(ps.includes("QB"))return "QB"; if(ps.includes("RB"))return "RB"; if(ps.includes("WR"))return "WR"; if(ps.includes("TE"))return "TE"; return "IDP";
+}
+function pos(id){return groupPos({type:"player",id})}
+function teamName(id){return state.teams.find(t=>Number(t.id)===Number(id))?.name||("Team "+id)}
+function assetLabel(x){return x.type==="pick"?x.name:`${playerName(x.id)} <span class="muted">(${groupPos(x)})</span>`}
+
+function buildCurrentFuturePicks(){
+  const season=Number(state.league?.season)||FALLBACK_SEASON;
+  const rounds=Number(state.league?.settings?.draft_rounds)||5;
+  const rosterIds=state.rosters.map(r=>Number(r.roster_id));
+  const traded=Array.isArray(state.tradedPicks)?state.tradedPicks:[];
+  const moved=new Map();
+  for(const p of traded){
+    const y=Number(p?.season),r=Number(p?.round),original=Number(p?.roster_id),owner=Number(p?.owner_id);
+    if(!y||!r||!original||!owner)continue;
+    if(y<season+1||y>season+3||r<1||r>rounds)continue;
+    moved.set(`${y}|${r}|${original}`,owner);
+  }
+  const out=[];
+  for(const original of rosterIds){
+    for(let y=season+1;y<=season+3;y++){
+      for(let r=1;r<=rounds;r++){
+        const owner=moved.get(`${y}|${r}|${original}`)??original;
+        out.push({type:"pick",id:`pick-${y}-${r}-${original}`,season:y,round:r,owner,original_owner:original,name:`${y} R${r}`,source:"sleeper"});
+      }
+    }
+  }
+  return out;
+}
+
+function buildTeams(){
+  const um={}; state.users.forEach(u=>um[u.user_id]=u);
+  state.teams=state.rosters.map(r=>({
+    id:Number(r.roster_id),owner:r.owner_id,
+    name:(um[r.owner_id]?.metadata?.team_name||um[r.owner_id]?.display_name||("Team "+r.roster_id)),
+    roster:r,user:um[r.owner_id]
+  })).sort((a,b)=>a.id-b.id);
+
+  state.allAssets=[];
+  state.teams.forEach(t=>{
+    (t.roster.players||[]).forEach(pid=>state.allAssets.push({type:"player",id:String(pid),owner:t.id,name:playerName(pid),pos:pos(pid),team:t.id}));
+  });
+  state.draftPicks=buildCurrentFuturePicks();
+  state.allAssets.push(...state.draftPicks);
+
+  state.faab={};
+  state.teams.forEach(t=>{
+    const s=t.roster.settings||{};
+    const remaining=s.waiver_budget_remaining;
+    const used=s.waiver_budget_used;
+    state.faab[t.id]=remaining!=null?Number(remaining):(used!=null?200-Number(used):NaN);
+  });
+  masterRankCache=null; valueCache.clear();fitCache.clear();stageCache.clear();
+}
+
+function fillSelects(){
+  const selects=["findTeam","evalA","evalB"];
+  for(const id of selects){
+    const el=document.getElementById(id); if(!el)continue;
+    const old=el.value;
+    const placeholder=id==="findTeam"?'<option value="">Choose your team…</option>':"";
+    el.innerHTML=placeholder+state.teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("");
+    if(old && [...el.options].some(o=>o.value===old))el.value=old;
+  }
+  document.getElementById("runFinder").disabled=!state.teams.length;
+}
+
+function renderFinderShop(){
+  const el=document.getElementById("findShop"), id=Number(document.getElementById("findTeam").value);
+  if(!id){el.innerHTML="<div class='empty'>Choose your team first.</div>";return}
+  const assets=state.allAssets.filter(x=>Number(x.owner)===id).sort((a,b)=>baseValue(b)-baseValue(a));
+  if(!assets.length){el.innerHTML="<div class='empty'>No roster assets are available yet. Player data may still be loading.</div>";return}
+  el.innerHTML=`<div class="tiny muted" style="margin-bottom:6px">Select one or more outgoing assets.</div><div class="checklist">${
+    assets.map((x,i)=>`<label class="checkrow"><input class="shopCheck" type="checkbox" data-asset-index="${i}"><span>${assetLabel(x)} ${x.type==="player"?`<span class="muted">[rank ${playerRankValue(x).rank}]</span>`:`<span class="muted">(${x.season} R${x.round})</span>`}</span></label>`).join("")
+  }</div>`;
+  el.querySelectorAll(".shopCheck").forEach((c,i)=>c._asset=assets[i]);
+}
+document.getElementById("findTeam").addEventListener("change",()=>{renderFinderShop();updateStageLabel()});
+
+function updateStageLabel(){
+  const id=Number(document.getElementById("findTeam").value), el=document.getElementById("myTeamStage");
+  el.textContent=id?`Roster stage: ${teamStage(id).label}`:"";
+}
+
+function rawScore(id){
+  let best=0,last=null;
+  for(const y of Object.keys(state.stats||{})){
+    const s=state.stats[y]?.[id]; if(!s)continue;
+    last=s; let v=0; for(const [k,w] of Object.entries(scoring))v+=(Number(s[k])||0)*w;
+    best=Math.max(best,v);
+  }
+  return {ppg:best/17,stats:last||{}};
+}
+function consensusRank(id){
+  const n=playerName(id).toLowerCase(),vals=[];
+  for(const src of Object.values(state.rankings||{})){
+    const d=src?.data||{};
+    if(d[n]!=null)vals.push(Number(d[n]));
+    else {const k=Object.keys(d).find(k=>k===n||k.includes(n)||n.includes(k));if(k)vals.push(Number(d[k]))}
+  }
+  return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+}
+function leagueAdjustment(x){
+  const p=groupPos(x),rs=rawScore(x.id),cr=consensusRank(x.id); let a=1;
+  if(p==="QB"){a*=1.10;if(cr&&cr<=40)a*=1.04;if(rs.ppg>=16)a*=1.04}
+  if(p==="RB")a*=1.06;
+  if(p==="WR")a*=1.03;
+  if(p==="TE")a*=1.00;
+  if(p==="IDP"){a*=.60;if(cr&&cr<=80&&rs.ppg>=8)a*=1.15;if(rs.ppg>=12&&cr&&cr<=50)a*=1.20}
+  a*=({QB:1.15,RB:1.15,WR:1.10,TE:1.02,IDP:1}[p]||1);
+  if(rs.ppg>=18)a*=1.04; else if(rs.ppg<5)a*=.98;
+  return a;
+}
+function trendFactor(id){
+  const hit=Number(state.trending?.[id]||0),p=state.players[id]||{}; let f=hit?Math.min(1.015,1+Math.log1p(hit)*.001):1;
+  if(p.injury_status==="Out"||p.status==="Inactive")f*=.97; else if(p.injury_status==="Doubtful")f*=.985;
+  return f;
+}
+function masterRankings(){
+  const players=state.allAssets.filter(x=>x.type==="player");
+  return players.map(x=>{
+    const cr=consensusRank(x.id),rank=cr==null?260:Math.max(1,cr);
+    return {x,rank,adjusted:(1/Math.pow(rank,.88))*leagueAdjustment(x)*trendFactor(x.id)};
+  }).sort((a,b)=>b.adjusted-a.adjusted);
+}
+function ensureMaster(){return masterRankCache||(masterRankCache=masterRankings())}
+function playerRankValue(x){
+  const arr=ensureMaster(),i=arr.findIndex(z=>String(z.x.id)===String(x.id));
+  if(i<0)return{rank:999,value:1,tier:9};
+  const rank=i+1;
+  const tiers=[12,24,48,80,120,180,260,9999];
+  let tier=tiers.findIndex(m=>rank<=m); if(tier<0)tier=7;
+  const start=tier===0?1:tiers[tier-1]+1,end=tiers[tier],within=(rank-start)/Math.max(1,end-start);
+  const mult=[1,.84,.67,.52,.39,.28,.19,.11][tier];
+  return{rank,value:Math.max(1,Math.round(mult*(1-.38*within)*1000)),tier:tier+1};
+}
+function pickValue(x){
+  const r=Number(x.round)||1,yr=Number(x.season)||FALLBACK_SEASON,base={1:2500,2:850,3:350,4:170,5:100}[r]||60;
+  return Math.max(10,base*Math.pow(.90,Math.max(0,yr-FALLBACK_SEASON)));
+}
+function baseValue(x){
+  if(x.type==="pick")return pickValue(x);
+  if(valueCache.has(x.id))return valueCache.get(x.id);
+  const v=playerRankValue(x).value;valueCache.set(x.id,v);return v;
+}
+function packageValue(items){
+  const vals=items.map(baseValue).sort((a,b)=>b-a),weights=[1,.38,.16,.065,.025,.01];
+  return vals.reduce((s,v,i)=>s+v*(weights[i]??.006),0);
+}
+
+function teamNeed(teamId){
+  const t=state.teams.find(x=>x.id===Number(teamId));if(!t)return{};
+  const c={QB:0,RB:0,WR:0,TE:0,IDP:0};
+  (t.roster.players||[]).forEach(id=>{const p=state.players[id]||{},ps=p.fantasy_positions||[];
+    if(ps.includes("QB"))c.QB++;if(ps.includes("RB"))c.RB++;if(ps.includes("WR"))c.WR++;if(ps.includes("TE"))c.TE++;if(ps.some(x=>["DL","LB","DB","IDP"].includes(x)))c.IDP++;
+  });
+  return{QB:Math.max(0,3-c.QB),RB:Math.max(0,3-c.RB),WR:Math.max(0,3-c.WR),TE:0,IDP:0,counts:c};
+}
+function teamFit(x,teamId){
+  const g=groupPos(x);if(g==="PICK"||g==="TE")return 0;
+  const key=teamId+"|"+x.id;if(fitCache.has(key))return fitCache.get(key);
+  const n=teamNeed(teamId),v=baseValue(x);if(g==="IDP"){const z=(n.IDP||0)*Math.min(60,v*.02);fitCache.set(key,z);return z}
+  const st=teamStage(teamId);let z=(n[g]||0)*Math.min(420,v*.05);
+  if(g==="QB")z*=st.label==="Rebuilder"?1.05:1.10;if(g==="RB")z*=st.label==="Contender"?1.06:1;if(g==="WR")z*=st.label==="Rebuilder"?1.04:1;
+  fitCache.set(key,z);return z;
+}
+function teamStage(teamId){
+  if(stageCache.has(teamId))return stageCache.get(teamId);
+  const t=state.teams.find(x=>x.id===Number(teamId));if(!t)return{label:"Unknown",score:0};
+  const vals=(t.roster.players||[]).map(id=>baseValue({type:"player",id})).sort((a,b)=>b-a);
+  const top=vals.slice(0,10).reduce((a,b)=>a+b,0),depth=vals.slice(10,20).reduce((a,b)=>a+b,0),picks=state.allAssets.filter(x=>x.type==="pick"&&x.owner===Number(teamId)).reduce((a,b)=>a+pickValue(b),0);
+  const ages=(t.roster.players||[]).map(id=>Number(state.players[id]?.age)).filter(x=>x>0),avg=ages.length?ages.reduce((a,b)=>a+b,0)/ages.length:25;
+  const w=Number(t.roster.settings?.wins)||0,l=Number(t.roster.settings?.losses)||0,pct=(w+l)?w/(w+l):.5,score=top*.72+depth*.10+picks*.04+pct*220-(avg-25)*30;
+  const out=score>15000?{label:"Contender",score}:score<9500?{label:"Rebuilder",score}:{label:"Competitive / transitional",score};stageCache.set(teamId,out);return out;
+}
+
+function tradeScore(give,receive,a,b,mode="balanced"){
+  const ga=packageValue(give),ra=packageValue(receive),edge=ra-ga,ratio=(ra+1)/(ga+1);
+  const fair=Math.max(1,Math.min(99,50+Math.log(ratio)*34));
+  const fitA=receive.reduce((s,x)=>s+teamFit(x,a),0),fitB=give.reduce((s,x)=>s+teamFit(x,b),0);
+  const closeness=100-Math.min(100,Math.abs(fair-50)*2);
+  let finderScore=closeness*.72+Math.min(28,(Math.max(0,fitA)+Math.max(0,fitB))/100);
+  if(mode==="need")finderScore+=Math.min(8,fitB/55);
+  if(mode==="value")finderScore+=Math.min(5,Math.max(0,edge)/100);
+  return{ga,ra,fitA,fitB,edge,fair,finderScore:Math.max(1,Math.min(99,finderScore))};
+}
+function explainTrade(r,me,them,receive,give){
+  const lines=[],mn=teamName(me),tn=teamName(them),f=r.fair;
+  if(f>=68)lines.push(`${mn} receives materially more modeled value. This is an aggressive offer in your favor, not a fair trade.`);
+  else if(f>=56)lines.push(`${mn} receives a modest modeled value advantage. It is favorable to you, with ${tn}'s roster fit providing the main reason they might consider it.`);
+  else if(f<=32)lines.push(`${tn} receives materially more modeled value. This is an aggressive offer in their favor, not a fair trade.`);
+  else if(f<=44)lines.push(`${tn} receives a modest modeled value advantage. It is not neutral.`);
+  else lines.push(`The packages are close in modeled value.`);
+  if(r.fitB>r.fitA+5)lines.push(`${tn} has the stronger roster-fit reason to consider the deal. Fit affects partner selection only, not player value.`);
+  if(receive.some(x=>groupPos(x)==="IDP")||give.some(x=>groupPos(x)==="IDP"))lines.push(`IDP is treated as a deep replacement-level market; ordinary IDPs are not used as generic sweeteners.`);
+  if(receive.some(x=>groupPos(x)==="QB")||give.some(x=>groupPos(x)==="QB"))lines.push(`QB value reflects the Superflex floor and ceiling, so premium QBs remain difficult to replace.`);
+  if(receive.some(x=>groupPos(x)==="TE")||give.some(x=>groupPos(x)==="TE"))lines.push(`TE is not a required starter, so TE need is not driving the recommendation.`);
+  lines.push(`Consensus remains the primary market anchor; league settings are filters rather than permission to create a premium valuation for a fringe player.`);
+  return lines;
+}
+
+function makePackages(items,targetPos="ANY",sellingPos="OFF"){
+  const players=items.filter(x=>x.type==="player").sort((a,b)=>baseValue(b)-baseValue(a)).slice(0,12);
+  const picks=items.filter(x=>x.type==="pick").sort((a,b)=>pickValue(b)-pickValue(a)).slice(0,6);
+  const eligible=targetPos==="ANY"?players:players.filter(x=>groupPos(x)===targetPos);
+  const out=[],seen=new Set();
+  function add(a){
+    if(sellingPos!=="IDP"&&a.some(x=>groupPos(x)==="IDP"))return;
+    const k=a.map(x=>x.id).sort().join("|");if(!seen.has(k)){seen.add(k);out.push(a)}
+  }
+  eligible.forEach(x=>add([x]));picks.forEach(x=>add([x]));
+  for(let i=0;i<eligible.length;i++)for(let j=i+1;j<eligible.length;j++)add([eligible[i],eligible[j]]);
+  for(let i=0;i<eligible.length;i++)for(const p of picks.slice(0,3))add([eligible[i],p]);
+  return out;
+}
+
+async function runFinder(){
+  const btn=document.getElementById("runFinder");btn.disabled=true;
+  try{
+    const me=Number(document.getElementById("findTeam").value),mode=document.getElementById("findMode").value,target=document.getElementById("findPos").value;
+    if(!me){document.getElementById("finderResults").innerHTML="<div class='notice error'>Choose a team before finding trades.</div>";return}
+    const selected=[...document.querySelectorAll(".shopCheck:checked")].map(c=>c._asset).filter(Boolean);
+    const give=selected.length?selected:state.allAssets.filter(x=>x.owner===me&&x.type==="player").sort((a,b)=>baseValue(b)-baseValue(a)).slice(0,1);
+    if(!give.length){document.getElementById("finderResults").innerHTML="<div class='notice error'>No outgoing assets are available for this team.</div>";return}
+    const sellingPos=give.some(x=>groupPos(x)==="IDP")?"IDP":"OFF",out=[];
+    for(const t of state.teams.filter(x=>x.id!==me)){
+      const owned=state.allAssets.filter(x=>x.owner===t.id),packages=makePackages(owned,target,sellingPos);let best=null;
+      for(const recv of packages){
+        if(!recv.length)continue;
+        const r=tradeScore(give,recv,me,t.id,mode);
+        if(r.fair<40||r.fair>60)continue;
+        if(r.fitB<5&&mode!=="value")continue;
+        if(!best||r.finderScore>best.score)best={t,recv,r,score:r.finderScore,stage:teamStage(t.id)};
+      }
+      if(best)out.push(best);
+    }
+    out.sort((a,b)=>b.score-a.score);
+    document.getElementById("finderResults").innerHTML=out.length?out.slice(0,10).map((x,i)=>finderCard(x,i,me,give)).join(""):"<div class='empty'>No realistic trades found within the current objective-value range. Try another target position or outgoing package.</div>";
+  }catch(e){console.error(e);document.getElementById("finderResults").innerHTML=`<div class='notice error'>Trade Finder error: ${esc(e.message)}</div>`}
+  finally{btn.disabled=false}
+}
+function finderCard(x,i,me,give){
+  const f=x.r.fair,verdict=f>=61?"Favors you":f<=39?"Favors them":"Close to fair";
+  const edge=x.r.edge;
+  return `<div class="result"><div class="top"><div><b>#${i+1} ${esc(x.t.name)}</b><div class="muted">${esc(x.stage.label)} • ${x.t.roster.players?.length||0} rostered players • FAAB $${Number.isFinite(state.faab[x.t.id])?state.faab[x.t.id]:"?"}</div>
+  <div style="margin-top:7px"><b>Team A receives:</b> ${x.recv.map(assetLabel).join(" ")}</div>
+  <div style="margin-top:5px"><b>Team B receives:</b> ${give.map(assetLabel).join(" ")}</div></div><div><span class="score">${x.score.toFixed(0)}</span><div class="tiny muted">match</div></div></div>
+  <p><b>${verdict}</b> • fairness ${f.toFixed(0)}/100 • ${edge>=0?"You receive":"They receive"} the modeled value edge: <b>${Math.abs(edge).toFixed(0)} units</b></p>
+  <button class="secondary small rationaleBtn" data-rationale='${esc(JSON.stringify(explainTrade(x.r,me,x.t.id,x.recv,give)))}'>Trade rationale</button><div class="rationaleBody" hidden></div></div>`;
+}
+
+function renderAssets(side){
+  const el=document.getElementById("assets"+side),arr=state["assets"+side];
+  el.innerHTML=arr.length?arr.map((x,i)=>`<div class="asset"><div><b>${assetLabel(x)}</b></div><button class="secondary small removeAsset" data-side="${side}" data-index="${i}">×</button></div>`).join(""):"<div class='empty'>No assets added</div>";
+}
+function addAssetPrompt(side){
+  const team=Number(document.getElementById("eval"+side).value),mine=state.allAssets.filter(x=>x.owner===team);
+  const label=prompt("Enter an exact player name or pick, e.g. 2027 R1");if(!label)return;
+  const x=mine.find(a=>(a.type==="player"?playerName(a.id):a.name).toLowerCase()===label.toLowerCase())||mine.find(a=>(a.type==="player"?playerName(a.id):a.name).toLowerCase().includes(label.toLowerCase()));
+  if(x){state["assets"+side].push({...x});renderAssets(side)}else alert("That asset was not found on the selected team's current Sleeper roster/pick data.");
+}
+function evalHTML(r,a,b){
+  const f=r.fair,verdict=f>=57?"Favors Team A":f<=43?"Favors Team B":"Close to fair";
+  return `<div class="result"><div class="top"><div><b>${esc(teamName(a))} receives:</b> ${state.assetsB.map(assetLabel).join(" ")||"nothing"}<br><b>${esc(teamName(b))} receives:</b> ${state.assetsA.map(assetLabel).join(" ")||"nothing"}</div><div class="score ${f>=57?"good":f<=43?"bad":"warn"}">${f.toFixed(0)}/100</div></div><div class="bar"><i style="width:${f}%"></i></div><p><b>${verdict}</b> • ${r.edge>=0?esc(teamName(a)):esc(teamName(b))} has the modeled value edge: <b>${Math.abs(r.edge).toFixed(0)} units</b></p><button class="secondary small rationaleBtn">Trade rationale</button><div class="rationaleBody" hidden><ul>${explainTrade(r,a,b,state.assetsB,state.assetsA).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></div>`;
+}
+
+function renderLeague(){
+  document.getElementById("leagueInfo").innerHTML=`<p><b>${esc(state.league?.name||"League")}</b> • ${state.teams.length} teams • ${esc(state.league?.season||FALLBACK_SEASON)} season</p><p class="tiny muted">Sleeper league ID ${LEAGUE}. Future pick ownership is derived from Sleeper's roster IDs and league draft rounds, with explicit traded-pick ownership overrides from Sleeper's traded_picks endpoint.</p>`;
+  document.getElementById("teamsTable").innerHTML=state.teams.map(t=>{
+    const picks=state.draftPicks.filter(x=>Number(x.owner)===Number(t.id)).sort((a,b)=>a.season-b.season||a.round-b.round);
+    const pickText=picks.map(x=>`${x.season} R${x.round}`).join(", ");
+    return `<div class="asset"><div><b>${esc(t.name)}</b><br><small>${(t.roster.players||[]).length} players • FAAB $${Number.isFinite(state.faab[t.id])?state.faab[t.id]:"?"} • ${esc(teamStage(t.id).label)}</small><br><small class="muted">Picks: ${esc(pickText||"None")}</small></div><span class="pill">Roster ${t.id}</span></div>`;
+  }).join("");
+}
+function renderAll(){fillSelects();renderFinderShop();renderAssets("A");renderAssets("B");renderLeague();updateStageLabel()}
+
+function renderConsensusDiagnostics(summary){
+  const box=document.getElementById("consensusDiagnostics");
+  const list=document.getElementById("consensusSources");
+  const sm=document.getElementById("consensusSummary");
+  if(!box||!list||!sm)return;
+  const total=Number(summary?.total||8), ok=Number(summary?.successful||0);
+  sm.textContent=`${ok}/${total} consensus sources refreshed`;
+  const rows=Array.isArray(summary?.results)?summary.results:[];
+  list.innerHTML=rows.map(x=>{
+    const fresh=Boolean(x.ok)||String(x.status||"").toLowerCase()==="refreshed";
+    const retained=String(x.status||"").toLowerCase()==="retained";
+    const icon=fresh?"✓":retained?"↻":"✗";
+    const label=fresh?"Freshly refreshed":retained?"Validated snapshot retained":"Failed";
+    const detail=[
+      label,
+      Number.isFinite(Number(x.players_extracted))?`${x.players_extracted} players extracted`:"",
+      x.stage?`stage: ${x.stage}`:"",
+      x.error?String(x.error):""
+    ].filter(Boolean).join(" • ");
+    return `<div class="asset"><div><b>${icon} ${esc(x.source||"Unknown")}</b><br><small class="muted">${esc(detail)}</small></div><small class="muted">${esc(x.url||"")}</small></div>`;
+  }).join("");
+  box.style.display="block";
+}
+
+async function refreshConsensus(){
+  const players=Object.entries(state.players||{}).filter(([id,p])=>p?.fantasy_positions?.length)
+    .map(([id,p])=>({id,name:[p.first_name,p.last_name].filter(Boolean).join(" ")||p.full_name||id,position:(p.fantasy_positions||[])[0]}));
+  const urls=["/.netlify/functions/update","/api/update"];
+  let lastError=null;
+  for(const url of urls){
+    try{
+      const r=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({leagueId:LEAGUE,players,season:FALLBACK_SEASON}),cache:"no-store"});
+      if(!r.ok){lastError=Error(`Consensus endpoint ${r.status}`);continue}
+      const payload=await r.json();
+      if(!payload?.summary){lastError=Error(payload?.error||"Consensus endpoint returned no diagnostics");continue}
+
+      renderConsensusDiagnostics(payload.summary);
+
+      // Only replace source snapshots when that source actually succeeded.
+      const prior=state.rankings||{};
+      Object.entries(payload.sources||{}).forEach(([name,v])=>prior[name]=v);
+      state.rankings=prior;
+      masterRankCache=null; valueCache.clear(); fitCache.clear(); stageCache.clear();
+
+      return Number(payload.summary.successful||0);
+    }catch(e){lastError=e}
+  }
+  throw lastError||Error("Consensus refresh failed");
+}
+
+function parseRankingText(txt){
+  const out={};
+  for(const raw of txt.split(/\n+/)){
+    const line=raw.replace(/[*_#|]/g," ").replace(/\s+/g," ").trim();
+    const m=line.match(/(?:^|\s)(\d{1,3})[.)\-:]?\s+([A-Z][A-Za-z'’.-]+(?:\s+[A-Z][A-Za-z'’.-]+){1,3})(?:\s|$)/);
+    if(!m)continue;const rank=Number(m[1]),name=m[2].trim();
+    if(rank<=300&&name.length>5&&!/rankings|players|football|dynasty|fantasy|quarterback|receiver/i.test(name))out[name.toLowerCase()]=rank;
+  }
+  return out;
+}
+
+async function loadCore(){
+  status("Loading Sleeper league, users and rosters…");
+  const league=await get("/league/"+LEAGUE);
+  const [users,rosters,tradedPicks]=await Promise.all([
+    get("/league/"+LEAGUE+"/users"),
+    get("/league/"+LEAGUE+"/rosters"),
+    get("/league/"+LEAGUE+"/traded_picks").catch(()=>[])
+  ]);
+  state.league=league;state.users=users;state.rosters=rosters;state.tradedPicks=Array.isArray(tradedPicks)?tradedPicks:[];
+  buildTeams();fillSelects();renderLeague();renderFinderShop();updateStageLabel();
+  status(`Loaded <b>${state.teams.length} teams</b> from Sleeper. Loading player data…`,"success");
+
+  const season=Number(league?.season)||FALLBACK_SEASON;
+  const [players,stats,trending]=await Promise.all([
+    get("/players/nfl").catch(()=>null),
+    get("/stats/nfl/regular/"+season+"?season_type=regular").catch(()=>({})),
+    get("/players/nfl/trending/add?lookback_hours=168&limit=100").catch(()=>[])
+  ]);
+  if(players)state.players=players;
+  state.stats={[season]:stats||{}};
+  state.trending=Array.isArray(trending)?Object.fromEntries(trending.map(a=>[a.player_id,Number(a.count||a.adds||1)])):(trending||{});
+  buildTeams();renderAll();cacheSet("fll_sleeper_snapshot",{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:new Date().toISOString()});
+  status(`Loaded <b>${state.teams.length} teams</b> and <b>${state.allAssets.filter(x=>x.type==="player").length} rostered players</b> from Sleeper. Refreshing consensus references in the background…`,"success");
+}
+
+async function updateData(){
+  const btn=document.getElementById("updateBtn");btn.disabled=true;
+  try{
+    await loadCore();
+    let consensusCount=0;
+    try{consensusCount=await refreshConsensus(true)}catch(e){}
+    buildTeams();renderAll();
+    state.lastUpdate=new Date().toISOString();
+    cacheSet("fll_sleeper_snapshot",{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
+    status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data loaded; consensus sources: <b>${consensusCount}/8</b> refreshed.`,"success");
+  }catch(e){
+    console.error(e);
+    const cached=cacheGet("fll_sleeper_snapshot");
+    if(cached){
+      state={...state,...cached};buildTeams();renderAll();
+      status(`Live update failed: <b>${esc(e.message)}</b>. Cached Sleeper snapshot restored so the team selector remains usable.`,"error");
+    }else{
+      status(`Update failed: <b>${esc(e.message)}</b>. Sleeper data could not be loaded in this browser.`,"error");
+    }
+  }finally{btn.disabled=false}
+}
+
+async function boot(){
+  const cached=cacheGet("fll_sleeper_snapshot");
+  if(cached){
+    state={...state,...cached};buildTeams();renderAll();status("Loaded cached league data instantly. Refreshing Sleeper data in the background…");
+    updateData();
+  }else await updateData();
+}
+
+document.getElementById("updateBtn").onclick=updateData;
+document.getElementById("runFinder").onclick=runFinder;
+document.getElementById("addA").onclick=()=>addAssetPrompt("A");
+document.getElementById("addB").onclick=()=>addAssetPrompt("B");
+document.getElementById("evaluate").onclick=()=>{
+  const a=Number(document.getElementById("evalA").value),b=Number(document.getElementById("evalB").value);
+  if(!a||!b||a===b){alert("Choose two different teams.");return}
+  const r=tradeScore(state.assetsA,state.assetsB,a,b);document.getElementById("evalResults").innerHTML=evalHTML(r,a,b);
+};
+document.addEventListener("click",e=>{
+  const rem=e.target.closest(".removeAsset");if(rem){state["assets"+rem.dataset.side].splice(Number(rem.dataset.index),1);renderAssets(rem.dataset.side);return}
+  const b=e.target.closest(".rationaleBtn");if(!b)return;
+  const box=b.nextElementSibling;if(!box)return;
+  if(box.hidden){if(b.dataset.rationale){try{box.innerHTML="<ul>"+JSON.parse(b.dataset.rationale).map(x=>`<li>${esc(x)}</li>`).join("")+"</ul>"}catch(_){}}
+    box.hidden=false;b.textContent="Hide rationale";
+  }else{box.hidden=true;b.textContent="Trade rationale"}
+});
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+  document.querySelectorAll(".tab").forEach(x=>x.hidden=x.id!==b.dataset.tab);
+  if(b.dataset.tab==="finder")renderFinderShop();
+});
+boot();
+</script>
+
+<script>
+window.fllConsensusStatus = function(summary) {
+  const total = Number(summary?.total ?? summary?.attempted ?? 8);
+  const ok = Number(summary?.successful ?? summary?.refreshed ?? summary?.success ?? 0);
+  return `${ok}/${total} consensus sources successful`;
+};
+</script>
+
+
+<script>
+window.renderConsensusDiagnostics=function(summary){
+  const box=document.getElementById("consensusDiagnostics");
+  const list=document.getElementById("consensusSources");
+  const sm=document.getElementById("consensusSummary");
+  if(!box||!list||!sm)return;
+  const rows=Array.isArray(summary?.results)?summary.results:[];
+  const total=Number(summary?.total ?? 8);
+  const fresh=Number(summary?.successful ?? summary?.refreshed ?? 0);
+  sm.textContent=`${fresh}/${total} refreshed`;
+  list.innerHTML=rows.map(x=>{
+    const icon=x.status==="refreshed"?"✓":x.status==="retained"?"↻":"✗";
+    const label=x.status==="refreshed"?"Freshly refreshed":x.status==="retained"?"Validated snapshot retained":"Failed";
+    const count=(x.players_extracted??x.count);
+    const detail=[
+      label,
+      Number.isFinite(Number(count))?`${count} players`:"",
+      x.timestamp?new Date(x.timestamp).toLocaleString():"",
+      x.stage?`${x.stage}${x.error?": "+x.error:""}`:""
+    ].filter(Boolean).join(" • ");
+    return `<div class="asset"><div><b>${icon} ${String(x.source||"Unknown")}</b><br><small class="muted">${String(detail)}</small></div></div>`;
+  }).join("");
+  box.style.display="block";
+};
+</script>
+
+
+
+<div id="v16ConsensusNote" class="tiny muted" style="margin-top:6px">V16 source-specific ingestion: pagination, extraction, and validation are handled per source. No valuation changes are applied in this step.</div>
+</body>
+</html>

@@ -25,6 +25,9 @@ export const CONSENSUS_SOURCES = [
     urls:["https://www.dynastydealer.com/rankings/idp"] }
 ];
 
+const DEFAULT_FETCH_TIMEOUT_MS = 7000;
+const KTC_MAX_PAGE = 5;
+
 const norm = s => String(s || "")
   .normalize("NFKD")
   .replace(/[\u0300-\u036f]/g,"")
@@ -78,27 +81,33 @@ function genericExtract(text, source) {
   }).sort((a,b)=>a.rank-b.rank);
 }
 
-async function fetchText(url, fetchImpl=fetch) {
+async function fetchText(url, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIMEOUT_MS) {
   const headers = {
     "user-agent":"Mozilla/5.0 (compatible; FLL-TradeFinder/16.0; +https://netlify.com)",
     "accept":"text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8"
   };
-  const res = await fetchImpl(url,{headers,redirect:"follow"});
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return await res.text();
-}
-
-async function fetchViaJina(url, fetchImpl=fetch) {
-  const u = `https://r.jina.ai/http://${url.replace(/^https?:\/\//,"")}`;
-  return fetchText(u,fetchImpl);
-}
-
-async function getPage(url, fetchImpl=fetch) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const text = await fetchText(url,fetchImpl);
+    const res = await fetchImpl(url,{headers,redirect:"follow",signal:controller.signal});
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchViaJina(url, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIMEOUT_MS) {
+  const u = `https://r.jina.ai/http://${url.replace(/^https?:\/\//,"")}`;
+  return fetchText(u,fetchImpl,timeoutMs);
+}
+
+async function getPage(url, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIMEOUT_MS) {
+  try {
+    const text = await fetchText(url,fetchImpl,timeoutMs);
     if (text && text.length > 500) return {text, method:"direct", url};
   } catch {}
-  const text = await fetchViaJina(url,fetchImpl);
+  const text = await fetchViaJina(url,fetchImpl,timeoutMs);
   return {text, method:"jina", url};
 }
 
@@ -108,7 +117,7 @@ async function getPage(url, fetchImpl=fetch) {
  * KTC's adapter recognizes common page/offset parameters and stops only when
  * no new ranking rows are returned.
  */
-async function collectPages(source, fetchImpl=fetch) {
+async function collectPages(source, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIMEOUT_MS) {
   const all = [];
   const seenPages = new Set();
 
@@ -116,7 +125,7 @@ async function collectPages(source, fetchImpl=fetch) {
     // First page.
     let page;
     try {
-      page = await getPage(baseUrl,fetchImpl);
+      page = await getPage(baseUrl,fetchImpl,timeoutMs);
     } catch (e) {
       continue;
     }
@@ -129,7 +138,7 @@ async function collectPages(source, fetchImpl=fetch) {
     if (source.id === "ktc") {
       let empty = 0;
       let lastCount = new Set(all.map(x=>`${x.rank}|${normalizePlayerName(x.player)}`)).size;
-      for (let pageNo=2; pageNo<=40 && empty<3; pageNo++) {
+      for (let pageNo=2; pageNo<=KTC_MAX_PAGE && empty<2; pageNo++) {
         const variants = [
           `${baseUrl}?page=${pageNo}`,
           `${baseUrl}?offset=${(pageNo-1)*50}`,
@@ -140,7 +149,7 @@ async function collectPages(source, fetchImpl=fetch) {
           if (seenPages.has(u)) continue;
           seenPages.add(u);
           try {
-            const p = await getPage(u,fetchImpl);
+            const p = await getPage(u,fetchImpl,timeoutMs);
             const rows = genericExtract(p.text,source);
             const before = new Set(all.map(x=>`${x.rank}|${normalizePlayerName(x.player)}`));
             for (const r of rows) {
@@ -168,7 +177,7 @@ async function collectPages(source, fetchImpl=fetch) {
 export async function refreshSource(source, opts={}) {
   const now = new Date().toISOString();
   try {
-    const rows = await collectPages(source, opts.fetchImpl || fetch);
+    const rows = await collectPages(source, opts.fetchImpl || fetch, opts.timeoutMs || DEFAULT_FETCH_TIMEOUT_MS);
     const uniquePlayers = new Set(rows.map(x=>normalizePlayerName(x.player))).size;
 
     // Validation is source-aware and deliberately does not require a fixed
@@ -204,10 +213,7 @@ export async function refreshSource(source, opts={}) {
 }
 
 export async function refreshAllSources(opts={}) {
-  const results=[];
-  for (const source of CONSENSUS_SOURCES) {
-    results.push(await refreshSource(source,opts));
-  }
+  const results=await Promise.all(CONSENSUS_SOURCES.map(source=>refreshSource(source,opts)));
   return {
     successful:results.filter(x=>x.valid).length,
     total:CONSENSUS_SOURCES.length,

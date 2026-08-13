@@ -1,0 +1,29 @@
+name: Fix seven-source UI
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update source-count fallbacks and self-remove
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('summary?.total||8', 'summary?.total||7')
+          s=s.replace('${consensusCount}/8', '${consensusCount}/7')
+          s=s.replace('summary?.attempted ?? 8', 'summary?.attempted ?? 7')
+          p.write_text(s)
+          PY
+          rm .github/workflows/fix-seven-sources.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html .github/workflows/fix-seven-sources.yml
+          git commit -m "Show seven consensus sources" || exit 0
+          git push

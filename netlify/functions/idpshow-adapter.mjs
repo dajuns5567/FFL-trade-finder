@@ -60,7 +60,7 @@ function validateRankings(rankings){
     const key=normalizePlayerName(row.player);
     if(key){
       if(!nameMap.has(key))nameMap.set(key,[]);
-      nameMap.get(key).push(rank);
+      nameMap.get(key).push({rank,player:row.player});
     }
   }
   const ranks=[...rankMap.keys()].sort((a,b)=>a-b);
@@ -71,7 +71,7 @@ function validateRankings(rankings){
     for(let rank=1;rank<=maxRank;rank++)if(!rankMap.has(rank))missing.push(rank);
   }
   const duplicateRanks=[...rankMap.entries()].filter(([,players])=>players.length>1).map(([rank,players])=>({rank,players}));
-  const duplicatePlayers=[...nameMap.entries()].filter(([,ranksForPlayer])=>ranksForPlayer.length>1).map(([player,ranks])=>({player,ranks}));
+  const duplicatePlayers=[...nameMap.entries()].filter(([,entries])=>entries.length>1).map(([normalized,entries])=>({normalized,player:entries[0].player,ranks:entries.map(x=>x.rank)}));
   const contiguous=minRank===1&&missing.length===0;
   const valid=rows.length>=75&&contiguous&&duplicateRanks.length===0&&duplicatePlayers.length===0;
   return {valid,minRank,maxRank,missing,duplicateRanks,duplicatePlayers};
@@ -128,7 +128,7 @@ export async function refreshIdpShow(opts={}){
   if(!valid){
     if(validation.missing.length)error=`Ranking sequence is not contiguous; missing ranks: ${validation.missing.join(", ")}`;
     else if(validation.duplicateRanks.length)error=`Duplicate source ranks detected: ${validation.duplicateRanks.map(x=>x.rank).join(", ")}`;
-    else if(validation.duplicatePlayers.length)error=`Duplicate player rows detected at ranks: ${validation.duplicatePlayers.map(x=>x.ranks.join("/" )).join(", ")}`;
+    else if(validation.duplicatePlayers.length)error=`Duplicate player row: ${validation.duplicatePlayers.map(x=>`${x.player} at ranks ${x.ranks.join("/")}`).join("; ")}`;
     else error=`Only ${rankings.length} validated ranking rows were extracted from Datawrapper`;
   }
   return {

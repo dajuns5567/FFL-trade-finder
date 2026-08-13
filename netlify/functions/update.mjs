@@ -1,26 +1,42 @@
 import { refreshAllSources } from "./consensus-source-overrides.mjs";
 
+function addSnapshot(sources,name,result,rows,kind,updatedAt){
+  const data={};
+  for(const row of rows||[]){
+    const player=String(row?.player||"").trim().toLowerCase();
+    const rank=Number(row?.rank);
+    if(!player||!Number.isFinite(rank))continue;
+    if(data[player]==null||rank<data[player])data[player]=rank;
+  }
+  if(!Object.keys(data).length)return;
+  sources[name]={
+    updated:result.timestamp||updatedAt,
+    data,
+    url:Array.isArray(result.urls)?result.urls[0]||null:null,
+    kind,
+    playerCount:Object.keys(data).length,
+    ...(result.reducedWeight?{reducedWeight:true}:{})
+  };
+}
+
 export function buildConsensusPayload(refresh, updatedAt=new Date().toISOString()) {
   const results=Array.isArray(refresh?.results)?refresh.results:[];
   const sources={};
 
   for(const result of results){
     if(!result?.valid)continue;
-    const data={};
-    for(const row of result.rankings||[]){
-      const name=String(row?.player||"").trim().toLowerCase();
-      const rank=Number(row?.rank);
-      if(!name||!Number.isFinite(rank))continue;
-      if(data[name]==null||rank<data[name])data[name]=rank;
+    if(result.id==="combined-dynasty"){
+      const offense=[];
+      const idp=[];
+      for(const row of result.rankings||[]){
+        if(String(row?.position||"").toUpperCase()==="IDP")idp.push(row);
+        else offense.push(row);
+      }
+      addSnapshot(sources,"The IDP Show Combined Offense",result,offense,"offense",updatedAt);
+      addSnapshot(sources,"The IDP Show Combined IDP",result,idp,"idp",updatedAt);
+      continue;
     }
-    sources[result.source]={
-      updated:result.timestamp||updatedAt,
-      data,
-      url:Array.isArray(result.urls)?result.urls[0]||null:null,
-      kind:result.id?.includes("idp")?"idp":"offense",
-      playerCount:Object.keys(data).length,
-      ...(result.reducedWeight?{reducedWeight:true}:{})
-    };
+    addSnapshot(sources,result.source,result,result.rankings,result.id?.includes("idp")?"idp":"offense",updatedAt);
   }
 
   const diagnostics=results.map(result=>({

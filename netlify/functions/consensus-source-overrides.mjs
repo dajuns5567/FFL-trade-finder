@@ -27,6 +27,9 @@ if(pffIdpIndex>=0){
   });
 }
 
+const dynastyDealerIndex=CONSENSUS_SOURCES.findIndex(source=>source.id==="dynasty-dealer-idp");
+if(dynastyDealerIndex>=0)CONSENSUS_SOURCES.splice(dynastyDealerIndex,1);
+
 export async function refreshAllSources(opts={}) {
   const [refresh,fanRanked,ktc,rotowireIdp]=await Promise.all([
     baseRefreshAllSources(opts),

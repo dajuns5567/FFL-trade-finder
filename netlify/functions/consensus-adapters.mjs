@@ -7,7 +7,7 @@
 
 export const CONSENSUS_SOURCES = [
   { id:"fantasypros", name:"FantasyPros", type:"offense", format:"dynasty-ppr",
-    urls:["https://www.fantasypros.com/nfl/rankings/dynasty-overall.php"] },
+    urls:["https://www.fantasypros.com/nfl/rankings/dynasty-overall.php?scoring=PPR"] },
   { id:"draftsharks", name:"DraftSharks", type:"offense", format:"dynasty-ppr",
     urls:["https://www.draftsharks.com/dynasty-rankings/ppr-superflex",
           "https://www.draftsharks.com/dynasty-rankings/ppr"] },
@@ -81,6 +81,52 @@ function genericExtract(text, source) {
   }).sort((a,b)=>a.rank-b.rank);
 }
 
+function assignedJson(text, variableName) {
+  const source=String(text||"");
+  const marker=new RegExp(`(?:var|let|const|window\\.)?\\s*${variableName}\\s*=\\s*`);
+  const match=marker.exec(source);
+  if(!match)return null;
+  const start=source.indexOf("{",match.index+match[0].length);
+  if(start<0)return null;
+  let depth=0,quoted=false,escaped=false;
+  for(let i=start;i<source.length;i++){
+    const ch=source[i];
+    if(quoted){
+      if(escaped)escaped=false;
+      else if(ch==="\\")escaped=true;
+      else if(ch==='"')quoted=false;
+      continue;
+    }
+    if(ch==='"'){quoted=true;continue}
+    if(ch==="{")depth++;
+    else if(ch==="}"&&--depth===0)return JSON.parse(source.slice(start,i+1));
+  }
+  return null;
+}
+
+export function extractFantasyProsRankings(text) {
+  const payload=assignedJson(text,"ecrData");
+  const players=Array.isArray(payload?.players)?payload.players:[];
+  const raw=[];
+  for(const row of players){
+    const rank=Number(row?.rank_ecr);
+    const player=String(row?.player_name||"").trim();
+    if(!player||!Number.isFinite(rank)||rank<1)continue;
+    raw.push({rank,player});
+  }
+  const unique=new Map();
+  for(const row of raw){
+    const key=normalizePlayerName(row.player);
+    const prior=unique.get(key);
+    if(key&&(!prior||row.rank<prior.rank))unique.set(key,row);
+  }
+  return {
+    rows:[...unique.values()].sort((a,b)=>a.rank-b.rank),
+    rawRankingRows:players.length,
+    parser:"fantasypros-ecrData"
+  };
+}
+
 async function fetchText(url, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIMEOUT_MS) {
   const headers = {
     "user-agent":"Mozilla/5.0 (compatible; FLL-TradeFinder/16.0; +https://netlify.com)",
@@ -120,6 +166,7 @@ async function getPage(url, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIMEOUT_MS)
 async function collectPages(source, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIMEOUT_MS) {
   const all = [];
   const seenPages = new Set();
+  const pageDiagnostics=[];
 
   for (const baseUrl of source.urls) {
     // First page.
@@ -129,8 +176,12 @@ async function collectPages(source, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIM
     } catch (e) {
       continue;
     }
-    const first = genericExtract(page.text,source);
+    const parsed=source.id==="fantasypros"
+      ? extractFantasyProsRankings(page.text)
+      : {rows:genericExtract(page.text,source),rawRankingRows:null,parser:"generic-text"};
+    const first=parsed.rows;
     all.push(...first);
+    pageDiagnostics.push({fetch_method:page.method,parser:parsed.parser,raw_ranking_rows:parsed.rawRankingRows??first.length});
     seenPages.add(baseUrl);
 
     // KTC commonly exposes 50-ish ranking records at a time. Try conservative
@@ -171,13 +222,14 @@ async function collectPages(source, fetchImpl=fetch, timeoutMs=DEFAULT_FETCH_TIM
     const key = `${r.rank}|${normalizePlayerName(r.player)}`;
     if (!unique.has(key)) unique.set(key,r);
   }
-  return [...unique.values()].sort((a,b)=>a.rank-b.rank);
+  return {rows:[...unique.values()].sort((a,b)=>a.rank-b.rank),pageDiagnostics};
 }
 
 export async function refreshSource(source, opts={}) {
   const now = new Date().toISOString();
   try {
-    const rows = await collectPages(source, opts.fetchImpl || fetch, opts.timeoutMs || DEFAULT_FETCH_TIMEOUT_MS);
+    const collected = await collectPages(source, opts.fetchImpl || fetch, opts.timeoutMs || DEFAULT_FETCH_TIMEOUT_MS);
+    const rows=collected.rows;
     const uniquePlayers = new Set(rows.map(x=>normalizePlayerName(x.player))).size;
 
     // Validation is source-aware and deliberately does not require a fixed
@@ -200,14 +252,28 @@ export async function refreshSource(source, opts={}) {
       timestamp: now,
       stage: valid ? "validated" : "extract",
       error: valid ? null : `Only ${rows.length} validated ranking rows were extracted`,
-      urls: source.urls
+      urls: source.urls,
+      ...(source.id==="fantasypros"?{diagnostics:{
+        fetch_method:collected.pageDiagnostics[0]?.fetch_method||null,
+        parser:collected.pageDiagnostics[0]?.parser||"fantasypros-ecrData",
+        raw_ranking_rows:collected.pageDiagnostics[0]?.raw_ranking_rows||0,
+        unique_players_extracted:uniquePlayers,
+        first_10:rows.slice(0,10),
+        validation_result:valid,
+        failure_reason:valid?null:`Only ${rows.length} validated ranking rows were extracted`
+      }}:{})
     };
   } catch (e) {
     return {
       source:source.name,id:source.id,status:"failed",valid:false,
       format:source.format,reducedWeight:!!source.reducedWeight,
       players_extracted:0,ranking_rows:0,rankings:[],timestamp:now,
-      stage:"fetch",error:String(e?.message||e),urls:source.urls
+      stage:"fetch",error:String(e?.message||e),urls:source.urls,
+      ...(source.id==="fantasypros"?{diagnostics:{
+        fetch_method:null,parser:"fantasypros-ecrData",raw_ranking_rows:0,
+        unique_players_extracted:0,first_10:[],validation_result:false,
+        failure_reason:String(e?.message||e)
+      }}:{})
     };
   }
 }

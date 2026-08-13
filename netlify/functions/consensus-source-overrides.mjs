@@ -3,6 +3,7 @@ import { refreshIdpShow } from "./idpshow-adapter.mjs";
 import { refreshFanRanked } from "./fanranked-adapter.mjs";
 import { refreshKtc } from "./ktc-adapter.mjs";
 import { refreshRotowireIdp } from "./rotowire-idp-adapter.mjs";
+import { refreshDraftSharksIdp } from "./draftsharks-idp-adapter.mjs";
 
 const blockedPfnIndex=CONSENSUS_SOURCES.findIndex(source=>source.id==="pfn");
 if(blockedPfnIndex>=0){
@@ -31,11 +32,12 @@ const dynastyDealerIndex=CONSENSUS_SOURCES.findIndex(source=>source.id==="dynast
 if(dynastyDealerIndex>=0)CONSENSUS_SOURCES.splice(dynastyDealerIndex,1);
 
 export async function refreshAllSources(opts={}) {
-  const [refresh,fanRanked,ktc,rotowireIdp]=await Promise.all([
+  const [refresh,fanRanked,ktc,rotowireIdp,draftSharksIdp]=await Promise.all([
     baseRefreshAllSources(opts),
     refreshFanRanked(opts),
     refreshKtc(opts),
-    refreshRotowireIdp(opts)
+    refreshRotowireIdp(opts),
+    refreshDraftSharksIdp(opts)
   ]);
   const combinedIndex=refresh.results.findIndex(result=>result.id==="combined-dynasty");
   if(combinedIndex>=0){
@@ -47,6 +49,10 @@ export async function refreshAllSources(opts={}) {
   const ktcIndex=refresh.results.findIndex(result=>result.id==="ktc");
   if(ktcIndex>=0)refresh.results[ktcIndex]=ktc;
   else refresh.results.push(ktc);
+
+  const draftSharksIdpIndex=refresh.results.findIndex(result=>result.id==="draftsharks-idp");
+  if(draftSharksIdpIndex>=0)refresh.results[draftSharksIdpIndex]=draftSharksIdp;
+  else refresh.results.push(draftSharksIdp);
 
   const rotowireIndex=refresh.results.findIndex(result=>result.id==="rotowire-idp");
   if(rotowireIndex>=0)refresh.results[rotowireIndex]=rotowireIdp;

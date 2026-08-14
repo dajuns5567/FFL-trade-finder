@@ -27,13 +27,24 @@ consensusRank=function(id){
   return Number.isFinite(Number(d.offenseRank))?Number(d.offenseRank):null;
 };
 
+function idpProfile(id){
+  const ps=new Set((state.players?.[id]?.fantasy_positions||[]).map(x=>String(x).toUpperCase()));
+  if([...ps].some(x=>["DL","DE","DT"].includes(x)))return{type:"front",scarcity:1.10,benchmark:11};
+  if(ps.has("LB"))return{type:"lb",scarcity:1.03,benchmark:9};
+  if([...ps].some(x=>["DB","CB","S"].includes(x)))return{type:"db",scarcity:1.01,benchmark:8};
+  return{type:"idp",scarcity:1.00,benchmark:9};
+}
 function leagueContextValue(x,consensus){
   const p=groupPos(x),rs=rawScore(x.id);
-  const scarcity={QB:1.15,RB:1.15,WR:1.10,TE:1.02,IDP:1.00}[p]||1;
-  const benchmark={QB:18,RB:11,WR:11,TE:8,IDP:9}[p]||10;
+  if(p==="IDP"){
+    const profile=idpProfile(x.id);
+    const production=rs.seasons?clamp(.82,.88+.18*(rs.ppg/profile.benchmark),1.32):.94;
+    return consensus*profile.scarcity*production*trendFactor(x.id);
+  }
+  const scarcity={QB:1.15,RB:1.15,WR:1.10,TE:1.02}[p]||1;
+  const benchmark={QB:18,RB:11,WR:11,TE:8}[p]||10;
   const production=rs.seasons?clamp(.84,.90+.15*(rs.ppg/benchmark),1.20):.96;
-  const availability=trendFactor(x.id);
-  return consensus*scarcity*production*availability;
+  return consensus*scarcity*production*trendFactor(x.id);
 }
 
 function modelPlayerValue(x){
@@ -44,9 +55,9 @@ function modelPlayerValue(x){
   }
   const context=leagueContextValue(x,consensus),detail=consensusDetail(x.id);
   let value=.70*consensus+.30*context;
-  value=clamp(consensus*.78,value,consensus*1.28);
-  const elite=(Number(detail?.offenseRank)<=24)||(Number(detail?.idpRank)<=10);
-  if(elite)value=Math.max(value,consensus*.92);
+  value=clamp(consensus*.78,value,consensus*(p==="IDP"?1.18:1.28));
+  const elite=(Number(detail?.offenseRank)<=24)||(p==="IDP"&&Number(detail?.idpRank)<=20);
+  if(elite)value=Math.max(value,consensus*.94);
   const fringe=(Number(detail?.offenseRank)>220)||(p==="IDP"&&Number(detail?.idpRank)>120);
   if(fringe)value=Math.min(value,consensus*1.12);
   return{value:Math.max(1,Math.round(value)),consensus:Math.round(consensus),context:Math.round(context),fallback:false};
@@ -105,5 +116,5 @@ updateData=async function(){
 };
 
 document.getElementById("updateBtn").onclick=updateData;
-const model=document.querySelector("#settings .card");if(model){const n=document.createElement("div");n.className="notice success";n.innerHTML="V17 valuation test: final player trade value = <b>70% refreshed Consensus Composite Value + 30% league context</b>. Offense and IDP use separate consensus/value curves. League context uses this league’s live Sleeper scoring settings, multi-season regular-season production, positional scarcity, availability and conservative guardrails.";model.appendChild(n)}
+const model=document.querySelector("#settings .card");if(model){const n=document.createElement("div");n.className="notice success";n.innerHTML="V17 valuation test: final player trade value = <b>70% refreshed Consensus Composite Value + 30% league context</b>. Offense and IDP use separate consensus/value curves. Elite front-seven IDPs can earn a league-context premium from this league’s sack/QB-hit/TFL-heavy scoring and three-season production, but the IDP curve remains below elite offense.";model.appendChild(n)}
 })();

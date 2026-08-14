@@ -37,19 +37,26 @@ function idpProfile(id){
 function offenseScarcity(p,detail){
   const rank=Number(detail?.offenseRank);
   if(p==="QB"){
-    // Superflex replacement pressure: viable starters are difficult to replace, but consensus remains the anchor.
     if(Number.isFinite(rank)&&rank<=24)return 1.22;
     if(Number.isFinite(rank)&&rank<=72)return 1.18;
     return 1.15;
   }
   if(p==="RB"){
-    // This league has a shallow pool of dependable starting RBs (~40-50). Apply a small scarcity premium
-    // across the position rather than discounting backups/handcuffs or forcing a cliff after the starters.
     if(Number.isFinite(rank)&&rank<=80)return 1.21;
     if(Number.isFinite(rank)&&rank<=180)return 1.18;
     return 1.16;
   }
   return{WR:1.10,TE:1.02}[p]||1;
+}
+function idpProductionFactor(rs,profile,eliteFront){
+  if(!rs.seasons)return eliteFront?1.04:.94;
+  // Three-year regular-season Sleeper scoring is the dominant signal inside the 30% league-context bucket.
+  // Recent season remains most important (50/30/20), but sustained league-specific PPG can materially lift elite IDPs.
+  const ratio=rs.ppg/Math.max(1,profile.benchmark);
+  if(eliteFront)return clamp(.78,.72+.58*ratio,1.95);
+  if(profile.type==="lb")return clamp(.80,.76+.42*ratio,1.58);
+  if(profile.type==="db")return clamp(.80,.78+.38*ratio,1.50);
+  return clamp(.80,.78+.40*ratio,1.52);
 }
 function leagueContextValue(x,consensus){
   const p=groupPos(x),rs=rawScore(x.id),detail=consensusDetail(x.id);
@@ -57,9 +64,7 @@ function leagueContextValue(x,consensus){
     const profile=idpProfile(x.id),idpRank=Number(detail?.idpRank);
     const eliteFront=profile.type==="front"&&Number.isFinite(idpRank)&&idpRank<=30;
     const scarcity=eliteFront?1.35:profile.scarcity;
-    const production=rs.seasons
-      ? clamp(.82,.88+(eliteFront?.30:.18)*(rs.ppg/profile.benchmark),eliteFront?1.60:1.32)
-      : (eliteFront?1.08:.94);
+    const production=idpProductionFactor(rs,profile,eliteFront);
     return consensus*scarcity*production*trendFactor(x.id);
   }
   const scarcity=offenseScarcity(p,detail);
@@ -77,7 +82,8 @@ function modelPlayerValue(x){
   const context=leagueContextValue(x,consensus),detail=consensusDetail(x.id),idpRank=Number(detail?.idpRank),profile=p==="IDP"?idpProfile(x.id):null;
   const eliteFront=p==="IDP"&&profile?.type==="front"&&Number.isFinite(idpRank)&&idpRank<=30;
   let value=.70*consensus+.30*context;
-  value=clamp(consensus*.78,value,consensus*(eliteFront?1.45:p==="IDP"?1.18:1.28));
+  // Wider IDP context ceiling allows exceptional three-year league production to matter, while consensus remains 70%.
+  value=clamp(consensus*.78,value,consensus*(eliteFront?1.62:p==="IDP"?1.32:1.28));
   const elite=(Number(detail?.offenseRank)<=24)||(p==="IDP"&&idpRank<=20);
   if(elite)value=Math.max(value,consensus*.94);
   const fringe=(Number(detail?.offenseRank)>220)||(p==="IDP"&&idpRank>120);
@@ -138,5 +144,5 @@ updateData=async function(){
 };
 
 document.getElementById("updateBtn").onclick=updateData;
-const model=document.querySelector("#settings .card");if(model){const n=document.createElement("div");n.className="notice success";n.innerHTML="V17 valuation test: final player trade value = <b>70% refreshed Consensus Composite Value + 30% league context</b>. Offense and IDP use separate consensus/value curves. The league-context layer includes Superflex QB scarcity and a modest RB scarcity premium reflecting the shallow pool of dependable starters, without penalizing handcuffs or breakout-depth RBs. Elite front-seven IDPs can earn a stronger premium from this league’s sack/QB-hit/TFL-heavy scoring and three-season production.";model.appendChild(n)}
+const model=document.querySelector("#settings .card");if(model){const n=document.createElement("div");n.className="notice success";n.innerHTML="V17 valuation test: final player trade value = <b>70% refreshed Consensus Composite Value + 30% league context</b>. Offense and IDP use separate consensus/value curves. The league-context layer uses three-year regular-season Sleeper scoring as a major IDP signal (50/30/20 recency weighting), plus league scoring and positional scarcity. Superflex QB scarcity and a modest RB scarcity premium remain active without penalizing depth RBs.";model.appendChild(n)}
 })();

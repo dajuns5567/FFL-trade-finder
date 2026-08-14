@@ -37,7 +37,7 @@ function incomingVariants(items,target){
   const eligible=target==='ANY'?allPlayers:allPlayers.filter(x=>groupPos(x)===target);
   const picks=topByValue(items.filter(x=>x.type==='pick'),6),pkgs=[];
   for(const x of eligible)pkgs.push([x]);
-  if(target==='ANY')for(const p of picks)pkgs.push([p]);
+  // Standalone incoming picks are intentionally excluded. Picks may sweeten a player deal, but the Finder should not recommend pick-only swaps.
   for(const x of eligible.slice(0,14))for(const p of picks.slice(0,4))pkgs.push([x,p]);
   for(let i=0;i<Math.min(10,eligible.length);i++)for(let j=i+1;j<Math.min(10,eligible.length);j++)pkgs.push([eligible[i],eligible[j]]);
   return uniquePackages(pkgs);
@@ -47,7 +47,17 @@ function desiredIncomingVariants(owner,targetAsset){
   for(const p of picks.slice(0,3))out.push([targetAsset,p]);
   return uniquePackages(out);
 }
+function straightPlayerRankGapTooLarge(give,recv){
+  if(give.length!==1||recv.length!==1||give[0]?.type!=='player'||recv[0]?.type!=='player')return false;
+  const a=playerRankValue(give[0]).rank,b=playerRankValue(recv[0]).rank;if(!Number.isFinite(a)||!Number.isFinite(b))return false;
+  const better=Math.min(a,b),gap=Math.abs(a-b),allowed=better<=40?18:better<=100?25:better<=200?32:45;
+  return gap>allowed;
+}
 function candidateScore(give,recv,me,other,mode){
+  // A Finder recommendation must include at least one player somewhere in the deal. Picks are sweeteners/assets, not reasons to suggest exchanging equivalent picks.
+  if([...give,...recv].every(x=>x?.type==='pick'))return null;
+  // Market-rank friction: a large dynasty-rank gap is not a realistic straight 1-for-1 even when compressed numeric values look close. Require an added player/pick to bridge it.
+  if(straightPlayerRankGapTooLarge(give,recv))return null;
   const gv=approxValue(give),rv=approxValue(recv),ratio=rv/Math.max(1,gv);
   if(ratio<.42||ratio>2.35)return null;
   const r=tradeScore(give,recv,me,other,mode),fairGap=Math.abs(r.fair-50);

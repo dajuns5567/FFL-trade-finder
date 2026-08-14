@@ -13,29 +13,22 @@ function offenseNeutralHistory28(z){
   if(exp==null||exp>1||Number(audit?.qualifyingSeasons)>0)return z;
   const c=Number(state.consensusComposite?.byId?.[id]),other=Number(audit?.otherContextValue);
   if(!Number.isFinite(c)||c<=0||!Number.isFinite(other))return z;
-  // No NFL scoring history is neutral evidence, not negative evidence. Preserve the approved 65/25/10 structure by setting the unavailable scoring input to consensus-neutral.
+  // No NFL scoring history is neutral evidence, not negative evidence. Keep the approved 65/25/10 structure
+  // by using consensus as the neutral scoring-history input until a qualifying Sleeper sample exists.
   let raw=.65*c+.25*c+.10*other;
   raw=clamp28(c*.90,raw,c*1.18);
   const curved=curve28(raw);
   return{...z,value:Math.max(z.value,Math.round(curved)),preCurveValue:Math.max(Number(z.preCurveValue)||0,Math.round(raw)),production:{...(z.production||{}),noHistoryNeutralized:true,experienceYears:exp}};
 }
-function eliteIdpTranslation28(z){
-  if(groupPos(z.x)!=='IDP')return z;
-  const id=String(z.x.id),a=typeof window.idpScoringAudit==='function'?window.idpScoringAudit(id):null;
-  const ppg=Number(a?.ppg),seasons=Number(a?.qualifyingSeasons),conf=Number(a?.confidence);
-  if(!Number.isFinite(ppg)||!Number.isFinite(seasons)||!Number.isFinite(conf)||seasons<2||conf<=0)return z;
-  // Cross-position translation only. The underlying 40/40/20 IDP calculation is unchanged.
-  // Sustained elite league scoring gets a nonlinear premium; ordinary good IDPs receive little or none.
-  const eliteSignal=clamp28(0,(ppg-12)/8,1.35);
-  const sampleSignal=seasons>=3?1:.72;
-  const mult=1+eliteSignal*.48*conf*sampleSignal;
-  if(mult<=1.005)return z;
-  return{...z,value:Math.max(z.value,Math.round(z.value*mult)),production:{...(z.production||{}),eliteIdpTranslationMultiplier:Number(mult.toFixed(3))}};
-}
 function calibrate28(rows){
-  const adjusted=rows.map(offenseNeutralHistory28).map(eliteIdpTranslation28).sort((a,b)=>b.value-a.value);
-  // Extreme-top compression only: keep #1 first but avoid an excessive gap over the next elite asset.
-  if(adjusted.length>1&&adjusted[0].value>adjusted[1].value*1.12)adjusted[0]={...adjusted[0],value:Math.round(adjusted[1].value*1.12),production:{...(adjusted[0].production||{}),topGapCapped:true}};
+  const adjusted=rows.map(offenseNeutralHistory28).sort((a,b)=>b.value-a.value);
+  // Offense-only extreme-top compression. Keep the best asset #1, but do not let the economic curve alone
+  // create more than a 12% gap over #2. This does not alter IDP valuation in this release.
+  const offensiveIndexes=adjusted.map((z,i)=>({z,i})).filter(o=>groupPos(o.z.x)!=='IDP');
+  if(offensiveIndexes.length>1){
+    const first=offensiveIndexes[0],second=offensiveIndexes[1];
+    if(first.z.value>second.z.value*1.12)adjusted[first.i]={...first.z,value:Math.round(second.z.value*1.12),production:{...(first.z.production||{}),topGapCapped:true}};
+  }
   return adjusted.sort((a,b)=>b.value-a.value);
 }
 masterRankings=function(){return calibrate28(priorMaster28())};

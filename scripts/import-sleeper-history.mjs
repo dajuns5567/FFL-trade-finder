@@ -7,7 +7,8 @@ const START_LEAGUE_ID=String(process.argv[2]||process.env.SLEEPER_LEAGUE_ID||DEF
 const MAX_LEAGUES=Math.max(1,Math.min(5,Number(process.env.SLEEPER_HISTORY_DEPTH||4)));
 const OUT_ROOT=path.resolve(process.env.SLEEPER_DATA_DIR||'data/sleeper');
 const API='https://api.sleeper.app/v1';
-const headers={accept:'application/json','user-agent':'FFL-TradeFinder-SleeperImporter/1.2'};
+const headers={accept:'application/json','user-agent':'FFL-TradeFinder-SleeperImporter/1.3'};
+const COMPACT_KEYS=['pts_ppr','gp','gms_active','games_played','games','gms','off_snp','off_snaps','offensive_snaps','snaps_offense','pass_att','rush_att','rec_tgt','targets'];
 
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function getJson(url,{retries=3}={}){
@@ -24,6 +25,16 @@ async function getJson(url,{retries=3}={}){
 async function writeJson(file,value){await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,JSON.stringify(value,null,2)+'\n','utf8')}
 function seasonOf(league){return Number(league?.season)||null}
 function payloadCount(payload){return Array.isArray(payload)?payload.length:(payload&&typeof payload==='object'?Object.keys(payload).length:0)}
+function compactSeason(seasonStats){
+  const out={};
+  for(const [id,row] of Object.entries(seasonStats||{})){
+    const src=row?.stats&&typeof row.stats==='object'?row.stats:row;
+    const compact={};
+    for(const key of COMPACT_KEYS){const n=Number(src?.[key]);if(Number.isFinite(n))compact[key]=n;}
+    if(Object.keys(compact).length)out[String(id)]=compact;
+  }
+  return out;
+}
 
 function planFor(currentSeason,completedWeek,status){
   const s=Number(currentSeason),w=Math.max(0,Math.min(18,Number(completedWeek)||0)),st=String(status||'').toLowerCase();
@@ -61,6 +72,11 @@ function validateSeason(year,seasonStats){
   if(rows.length<100||withPpr<75||withGames<75)throw new Error(`Sleeper ${year} scoring snapshot failed validation rows=${rows.length} ppr=${withPpr} games=${withGames}`);
   return{players:rows.length,withPpr,withGames};
 }
+function validateCompact(year,compact){
+  const rows=Object.values(compact||{}),withPpr=rows.filter(r=>Number.isFinite(Number(r?.pts_ppr))).length,withGames=rows.filter(r=>Number(r?.gp)>0).length;
+  if(rows.length<100||withPpr<75||withGames<75)throw new Error(`Compact Sleeper ${year} history failed validation rows=${rows.length} ppr=${withPpr} games=${withGames}`);
+  return{players:rows.length,withPpr,withGames};
+}
 
 async function main(){
   const current=await fetchLeagueBundle(START_LEAGUE_ID),chain=[current];let leagueId=current.previousLeagueId;
@@ -68,19 +84,22 @@ async function main(){
 
   const currentFetch=await fetchWeeklyStats(current.season,{allowFutureEmpty:true});
   const completedWeek=completedWeekFrom(currentFetch.weekly),plan=planFor(current.season,completedWeek,current.league?.status);
-  const productionSeasons=Object.keys(plan.yearWeights).map(Number).sort((a,b)=>b-a),statsBySeason={},seasonDiagnostics={};
+  const productionSeasons=Object.keys(plan.yearWeights).map(Number).sort((a,b)=>b-a),statsBySeason={},seasonDiagnostics={},compactStats={},compactDiagnostics={};
 
   for(const year of productionSeasons){
     const fetched=year===current.season?currentFetch:await fetchWeeklyStats(year);
     const aggregated=aggregateWeeks(fetched.weekly);
     seasonDiagnostics[year]=validateSeason(year,aggregated);
+    const compact=compactSeason(aggregated);
+    compactDiagnostics[year]=validateCompact(year,compact);
+    compactStats[year]=compact;
     statsBySeason[year]={weekly:fetched.weekly,season:aggregated};
   }
 
   const manifest={
     ok:true,generatedAt:new Date().toISOString(),source:'Sleeper public API',currentLeagueId:START_LEAGUE_ID,
     currentSeason:current.season,currentLeagueStatus:current.league?.status||null,currentSeasonCompletedWeek:completedWeek,
-    productionWeightPlan:plan,productionSeasons,seasonDiagnostics,qualifyingHistoricalSeasonMinimumGames:8,
+    productionWeightPlan:plan,productionSeasons,seasonDiagnostics,compactDiagnostics,qualifyingHistoricalSeasonMinimumGames:8,
     pprMethod:'Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.',
     linkedLeagueSeasons:chain.map(x=>({leagueId:x.leagueId,season:x.season,previousLeagueId:x.previousLeagueId})),
     rosterMutation:false,
@@ -89,11 +108,18 @@ async function main(){
       'Production seasons are selected by season year from the active 60/30/10 or in-season weighting plan and are not dependent on previous_league_id links.',
       'Raw weekly Sleeper stat payloads are preserved. No player production number is fabricated.',
       'Offensive PPR is derived only from Sleeper-provided pts_ppr or deterministic standard-PPR scoring of Sleeper raw stats.',
+      'offense-history.json is a compact delivery artifact derived only from the verified season aggregates; it does not recalculate or estimate player production.',
       'Raw weekly stats remain available for exact league-specific IDP reconstruction, including stacked sack/interception scoring.'
     ]
   };
+  const offenseHistory={
+    ok:true,generatedAt:manifest.generatedAt,source:'Sleeper importer snapshot',currentSeason:current.season,completedWeek,
+    weightPlan:plan,requiredYears:productionSeasons,availableYears:productionSeasons,complete:true,partial:false,
+    qualifyingHistoricalSeasonMinimumGames:8,pprMethod:manifest.pprMethod,seasonDiagnostics:compactDiagnostics,stats:compactStats
+  };
   await writeJson(path.join(OUT_ROOT,'manifest.json'),manifest);
   await writeJson(path.join(OUT_ROOT,'weight-plan.json'),plan);
+  await writeJson(path.join(OUT_ROOT,'offense-history.json'),offenseHistory);
 
   for(const year of productionSeasons){
     const dir=path.join(OUT_ROOT,String(year));
@@ -109,6 +135,6 @@ async function main(){
     await writeJson(path.join(dir,'transactions.json'),await fetchTransactions(item.leagueId));
   }
 
-  console.log(JSON.stringify({ok:true,out:OUT_ROOT,productionSeasons,completedWeek,weightPlan:plan,seasonDiagnostics,rostersMutated:false},null,2));
+  console.log(JSON.stringify({ok:true,out:OUT_ROOT,productionSeasons,completedWeek,weightPlan:plan,seasonDiagnostics,compactDiagnostics,offenseHistoryPlayers:Object.fromEntries(Object.entries(compactStats).map(([y,s])=>[y,Object.keys(s).length])),rostersMutated:false},null,2));
 }
 main().catch(err=>{console.error(err);process.exitCode=1});

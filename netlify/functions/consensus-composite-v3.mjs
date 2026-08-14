@@ -1,6 +1,6 @@
 const OFF=new Set(["QB","RB","WR","TE"]);
 const IDP=new Set(["DL","DE","DT","LB","DB","CB","S","IDP"]);
-const REDUCED=.5,OFF_FLOOR=260,IDP_FLOOR=180,EXP=.32,OFF_SCALE=1000,IDP_SCALE=300,DUAL_IDP_SHARE=.35,DUAL_CAP=1.20;
+const REDUCED=.5,OFF_FLOOR=260,IDP_FLOOR=180,EXP=.32,OFF_SCALE=3000,IDP_SCALE=900,DUAL_IDP_SHARE=.35,DUAL_CAP=1.20;
 const norm=s=>String(s||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[’']/g,"").replace(/[^a-z0-9]+/gi," ").trim().toLowerCase();
 const positionsOf=p=>new Set((Array.isArray(p?.positions)?p.positions:[p?.position]).filter(Boolean).map(x=>String(x).toUpperCase()));
 const reindex=rows=>[...(rows||[])].filter(r=>Number.isFinite(Number(r?.rank))&&String(r?.player||"").trim()).sort((a,b)=>Number(a.rank)-Number(b.rank)).map((r,i)=>({...r,modelRank:i+1}));

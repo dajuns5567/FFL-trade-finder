@@ -34,10 +34,27 @@ function idpProfile(id){
   if([...ps].some(x=>["DB","CB","S"].includes(x)))return{type:"db",scarcity:1.01,benchmark:8};
   return{type:"idp",scarcity:1.00,benchmark:9};
 }
+function offenseScarcity(p,detail){
+  const rank=Number(detail?.offenseRank);
+  if(p==="QB"){
+    // Superflex replacement pressure: viable starters are difficult to replace, but consensus remains the anchor.
+    if(Number.isFinite(rank)&&rank<=24)return 1.22;
+    if(Number.isFinite(rank)&&rank<=72)return 1.18;
+    return 1.15;
+  }
+  if(p==="RB"){
+    // This league has a shallow pool of dependable starting RBs (~40-50). Apply a small scarcity premium
+    // across the position rather than discounting backups/handcuffs or forcing a cliff after the starters.
+    if(Number.isFinite(rank)&&rank<=80)return 1.21;
+    if(Number.isFinite(rank)&&rank<=180)return 1.18;
+    return 1.16;
+  }
+  return{WR:1.10,TE:1.02}[p]||1;
+}
 function leagueContextValue(x,consensus){
-  const p=groupPos(x),rs=rawScore(x.id);
+  const p=groupPos(x),rs=rawScore(x.id),detail=consensusDetail(x.id);
   if(p==="IDP"){
-    const profile=idpProfile(x.id),detail=consensusDetail(x.id),idpRank=Number(detail?.idpRank);
+    const profile=idpProfile(x.id),idpRank=Number(detail?.idpRank);
     const eliteFront=profile.type==="front"&&Number.isFinite(idpRank)&&idpRank<=30;
     const scarcity=eliteFront?1.35:profile.scarcity;
     const production=rs.seasons
@@ -45,7 +62,7 @@ function leagueContextValue(x,consensus){
       : (eliteFront?1.08:.94);
     return consensus*scarcity*production*trendFactor(x.id);
   }
-  const scarcity={QB:1.15,RB:1.15,WR:1.10,TE:1.02}[p]||1;
+  const scarcity=offenseScarcity(p,detail);
   const benchmark={QB:18,RB:11,WR:11,TE:8}[p]||10;
   const production=rs.seasons?clamp(.84,.90+.15*(rs.ppg/benchmark),1.20):.96;
   return consensus*scarcity*production*trendFactor(x.id);
@@ -121,5 +138,5 @@ updateData=async function(){
 };
 
 document.getElementById("updateBtn").onclick=updateData;
-const model=document.querySelector("#settings .card");if(model){const n=document.createElement("div");n.className="notice success";n.innerHTML="V17 valuation test: final player trade value = <b>70% refreshed Consensus Composite Value + 30% league context</b>. Offense and IDP use separate consensus/value curves. Elite front-seven IDPs can earn a stronger league-context premium from this league’s sack/QB-hit/TFL-heavy scoring and three-season production, while the 70% consensus anchor keeps them below elite offense.";model.appendChild(n)}
+const model=document.querySelector("#settings .card");if(model){const n=document.createElement("div");n.className="notice success";n.innerHTML="V17 valuation test: final player trade value = <b>70% refreshed Consensus Composite Value + 30% league context</b>. Offense and IDP use separate consensus/value curves. The league-context layer includes Superflex QB scarcity and a modest RB scarcity premium reflecting the shallow pool of dependable starters, without penalizing handcuffs or breakout-depth RBs. Elite front-seven IDPs can earn a stronger premium from this league’s sack/QB-hit/TFL-heavy scoring and three-season production.";model.appendChild(n)}
 })();

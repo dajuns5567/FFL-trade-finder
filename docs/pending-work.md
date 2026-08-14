@@ -1,0 +1,12 @@
+# Pending work
+
+Canonical backlog for work discussed but not yet completed or fully validated.
+
+1. IDP cross-position valuation calibration. Keep the approved 40% consensus / 40% Sleeper league scoring lookback / 20% other dynasty + league context structure, but improve the cross-position translation so sustained elite IDPs (especially elite pass rushers with strong league PPG) are not pushed too far down overall rankings while ordinary IDPs do not receive broad boosts. No IDP positional scarcity bonus.
+2. IDP context validation. Continue checking tackle volume, spike-play frequency (sacks, interceptions, forced fumbles, recoveries, pass defenses), age, sample confidence, missing-year handling, and current-season incremental weighting against actual Sleeper history. Missing seasons must not transfer their full intended weight to a short sample.
+3. Sleeper trade-history calibration. The importer captures transactions, but completed league trades have not yet been audited or incorporated as a market-calibration signal. Use them only as supporting evidence, not as the primary valuation model.
+4. 2026 Rookie Tracker. A separate staged UI branch exists. It must only list players positively identified as 2026 rookies. Sleeper explicit year metadata + years_exp=0 is accepted when present; otherwise cross-check against an explicit rookie source such as DraftSharks playerGroup=rookies rather than guessing from age/history.
+5. Rookie / one-year offensive protection. Staged in valuation-curve-v27: short scoring history may not create a full negative 25% scoring-lookback signal for players with <=1 NFL season. Positive short-sample production remains confidence-shrunk rather than artificially boosted.
+6. Universal economic value curve. Staged in valuation-curve-v27: strengthen middle/lower differentiation and soften only the extreme top. The same monotonic curve must be applied to players and draft picks so trade-engine comparisons remain internally consistent.
+7. Trade-history-aware sanity checks for picks/packages after the universal curve is deployed. Confirm player-for-pick and multi-asset recommendations remain realistic after the common economic scale change.
+8. Verify the redundant sell-side UI remains absent. The compatibility file no longer injects a separate "Player you want to sell / shop" box; the normal global player search + existing asset checklist should remain the only sell-side path.

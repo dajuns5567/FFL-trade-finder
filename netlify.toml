@@ -6,6 +6,9 @@
 [functions]
   node_bundler = "esbuild"
 
+[build.processing.html]
+  pretty_urls = false
+
 [[redirects]]
   from = "/"
   to = "/.netlify/functions/site-v17"

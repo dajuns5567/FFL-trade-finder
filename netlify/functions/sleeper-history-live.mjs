@@ -3,7 +3,7 @@ import {weightPlan} from './history-weights.mjs';
 
 const API='https://api.sleeper.app/v1';
 const DEFAULT_LEAGUE_ID='1316867686394769408';
-const headers={accept:'application/json','user-agent':'FFL-TradeFinder-SleeperHistory/1.6'};
+const headers={accept:'application/json','user-agent':'FFL-TradeFinder-SleeperHistory/1.7'};
 
 async function getJson(url){const r=await fetch(url,{headers,cache:'no-store'});if(!r.ok)throw new Error(`${r.status} ${r.statusText} for ${url}`);return r.json()}
 function countPayload(x){return Array.isArray(x)?x.length:(x&&typeof x==='object'?Object.keys(x).length:0)}
@@ -18,11 +18,12 @@ function seasonDiagnostics(aggregated){
   return{players,withPpr,nativeWeeks,reconstructedWeeks};
 }
 async function fetchSeasonWeeks(season){
+  const errors=[];
   const entries=await Promise.all(Array.from({length:18},(_,i)=>{
-    const week=i+1;
-    return getJson(`${API}/stats/nfl/regular/${season}/${week}`).catch(()=>({})).then(payload=>[week,payload]);
+    const week=i+1,url=`${API}/stats/nfl/regular/${season}/${week}`;
+    return getJson(url).then(payload=>[week,payload]).catch(e=>{errors.push(`w${week}:${String(e?.message||e)}`);return[week,{}]});
   }));
-  return Object.fromEntries(entries);
+  return{weekly:Object.fromEntries(entries),errors};
 }
 
 export default async function handler(req){
@@ -30,14 +31,17 @@ export default async function handler(req){
     const u=new URL(req.url),start=String(u.searchParams.get('leagueId')||DEFAULT_LEAGUE_ID),chain=[];let id=start;
     for(let i=0;i<4&&id;i++){const league=await getJson(`${API}/league/${id}`),season=Number(league?.season);if(!season)break;chain.push({leagueId:id,season,status:league?.status||null,scoringSettings:league?.scoring_settings||{},settings:league?.settings||{},previousLeagueId:league?.previous_league_id?String(league.previous_league_id):null});id=league?.previous_league_id?String(league.previous_league_id):null}
     if(!chain.length)throw new Error('No Sleeper league history found');
-    const currentSeason=chain[0].season,aggregatedBySeason={},pprDiagnostics={};let completedWeek=0;
+    const currentSeason=chain[0].season,aggregatedBySeason={},pprDiagnostics={},fetchErrorsBySeason={};let completedWeek=0;
     for(const item of chain){
-      const weekly=await fetchSeasonWeeks(item.season);
+      const fetched=await fetchSeasonWeeks(item.season),weekly=fetched.weekly;
+      fetchErrorsBySeason[item.season]=fetched.errors;
       aggregatedBySeason[item.season]=aggregateWeeks(weekly);
       pprDiagnostics[item.season]=seasonDiagnostics(aggregatedBySeason[item.season]);
       if(item===chain[0])for(let week=1;week<=18;week++)if(countPayload(weekly[week])>0)completedWeek=week;
     }
-    const plan=weightPlan(currentSeason,completedWeek,chain[0].status);
-    return new Response(JSON.stringify({ok:true,generatedAt:new Date().toISOString(),currentLeagueId:start,currentSeason,currentLeagueStatus:chain[0].status,completedWeek,weightPlan:plan,qualifyingHistoricalSeasonMinimumGames:8,pprScoringWeights:PPR_WEIGHTS,pprDiagnostics,chain,aggregatedBySeason,rosterMutation:false,notes:['This endpoint does not fetch or modify live rosters.','Weekly stat requests are fetched concurrently within each season to avoid refresh timeouts.','Current-year stats may contribute from Week 1 using the dynamic weekly weight.','Historical completed-season samples remain subject to the 8-game minimum plus client-side meaningful-participation checks.','Native Sleeper pts_ppr is preserved whenever supplied. When the stats endpoint omits pts_ppr, standard PPR is deterministically reconstructed from Sleeper raw offensive stats using the explicit pprScoringWeights returned in this response.']}),{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
+    const plan=weightPlan(currentSeason,completedWeek,chain[0].status),requiredYears=Object.keys(plan.yearWeights||{}).map(Number);
+    const incompleteRequiredYears=requiredYears.filter(y=>(fetchErrorsBySeason[y]||[]).length>0||!aggregatedBySeason[y]);
+    if(incompleteRequiredYears.length)throw new Error(`Incomplete Sleeper history for weighted season(s): ${incompleteRequiredYears.join(', ')}`);
+    return new Response(JSON.stringify({ok:true,generatedAt:new Date().toISOString(),currentLeagueId:start,currentSeason,currentLeagueStatus:chain[0].status,completedWeek,weightPlan:plan,qualifyingHistoricalSeasonMinimumGames:8,pprScoringWeights:PPR_WEIGHTS,pprDiagnostics,fetchErrorsBySeason,complete:true,chain,aggregatedBySeason,rosterMutation:false,notes:['This endpoint does not fetch or modify live rosters.','Weekly stat requests are fetched concurrently within each season to avoid refresh timeouts.','Weighted historical seasons are rejected rather than silently valued from partial fetches.','Current-year stats may contribute from Week 1 using the dynamic weekly weight.','Historical completed-season samples remain subject to the 8-game minimum plus client-side meaningful-participation checks.','Native Sleeper pts_ppr is preserved whenever supplied. When the stats endpoint omits pts_ppr, standard PPR is deterministically reconstructed from Sleeper raw offensive stats using the explicit pprScoringWeights returned in this response.']}),{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
   }catch(e){return new Response(JSON.stringify({ok:false,error:String(e?.message||e)}),{status:500,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
 }

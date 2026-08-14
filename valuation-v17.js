@@ -28,24 +28,43 @@ rawScore=function(id){
 };
 
 consensusRank=function(id){const d=consensusDetail(id);if(!d)return null;const p=groupPos({type:'player',id});if(p==='IDP')return Number.isFinite(Number(d.idpRank))?Number(d.idpRank):null;return Number.isFinite(Number(d.offenseRank))?Number(d.offenseRank):null};
-function idpProfile(id){const ps=new Set((state.players?.[id]?.fantasy_positions||[]).map(x=>String(x).toUpperCase()));if([...ps].some(x=>['DL','DE','DT'].includes(x)))return{type:'front',scarcity:1.12,benchmark:9,base:760};if(ps.has('LB'))return{type:'lb',scarcity:1.03,benchmark:9,base:680};if([...ps].some(x=>['DB','CB','S'].includes(x)))return{type:'db',scarcity:1.01,benchmark:8,base:610};return{type:'idp',scarcity:1,benchmark:9,base:650}}
+function idpProfile(id){const ps=new Set((state.players?.[id]?.fantasy_positions||[]).map(x=>String(x).toUpperCase()));if([...ps].some(x=>['DL','DE','DT'].includes(x)))return{type:'front',scarcity:1.15,benchmark:9,base:790};if(ps.has('LB'))return{type:'lb',scarcity:1.06,benchmark:9,base:710};if([...ps].some(x=>['DB','CB','S'].includes(x)))return{type:'db',scarcity:1.02,benchmark:8,base:640};return{type:'idp',scarcity:1,benchmark:9,base:680}}
+function playerAge(id){const p=state.players?.[id]||{},age=Number(p.age);if(Number.isFinite(age)&&age>0)return age;if(p.birth_date){const d=new Date(p.birth_date);if(!Number.isNaN(d.getTime()))return (Date.now()-d.getTime())/(365.2425*86400000)}return null}
+function idpAgeFactor(id){const age=playerAge(id);if(!Number.isFinite(age))return 1;if(age<=23)return 1.12;if(age<=25)return 1.09;if(age<=27)return 1.05;if(age<=29)return 1.02;if(age<=31)return .99;if(age<=33)return .95;return .90}
 function offenseScarcity(p,detail){const rank=Number(detail?.offenseRank);if(p==='QB'){if(Number.isFinite(rank)&&rank<=24)return 1.22;if(Number.isFinite(rank)&&rank<=72)return 1.18;return 1.15}if(p==='RB'){if(Number.isFinite(rank)&&rank<=80)return 1.21;if(Number.isFinite(rank)&&rank<=180)return 1.18;return 1.16}return{WR:1.10,TE:1.02}[p]||1}
 function offenseProductionFactor(rs,benchmark){if(!rs.seasons)return 1;const raw=clamp(.84,.90+.15*(rs.ppg/benchmark),1.20);return 1+rs.confidence*(raw-1)}
-function idpProductionValue(id,rs){const profile=idpProfile(id);if(!rs.seasons)return null;const ratio=rs.ppg/Math.max(1,profile.benchmark),adjusted=1+rs.confidence*(ratio-1);return clamp(120,profile.base*Math.pow(clamp(.50,adjusted,2.50),1.70)*profile.scarcity,1900)}
-function idpProductionContext(id,consensus,detail,rs){const profile=idpProfile(id),idpRank=Number(detail?.idpRank),eliteFront=profile.type==='front'&&Number.isFinite(idpRank)&&idpRank<=30,scarcity=eliteFront?1.24:profile.scarcity,prod=idpProductionValue(id,rs);if(!Number.isFinite(prod))return consensus*scarcity;return prod*.84+(consensus*scarcity)*.16}
-function leagueContextValue(x,consensus){const p=groupPos(x),rs=rawScore(x.id),detail=consensusDetail(x.id);if(p==='IDP')return idpProductionContext(x.id,consensus,detail,rs)*trendFactor(x.id);const scarcity=offenseScarcity(p,detail),benchmark={QB:18,RB:11,WR:11,TE:8}[p]||10,production=offenseProductionFactor(rs,benchmark);return consensus*scarcity*production*trendFactor(x.id)}
+function idpProductionValue(id,rs){const profile=idpProfile(id);if(!rs.seasons)return null;const ratio=rs.ppg/Math.max(1,profile.benchmark),adjusted=1+rs.confidence*(ratio-1);return clamp(140,profile.base*Math.pow(clamp(.50,adjusted,2.70),1.78)*profile.scarcity*idpAgeFactor(id),2100)}
+function idpLeagueContext(id,consensus,detail,rs){
+  const profile=idpProfile(id),idpRank=Number(detail?.idpRank),eliteFront=profile.type==='front'&&Number.isFinite(idpRank)&&idpRank<=30;
+  const scarcity=eliteFront?1.25:profile.scarcity,age=idpAgeFactor(id),prod=idpProductionValue(id,rs);
+  if(Number.isFinite(prod))return prod;
+  // Missing qualified history is neutral, not a penalty. Use a conservative dynasty/scarcity baseline until production qualifies.
+  return consensus*scarcity*age;
+}
+function leagueContextValue(x,consensus){const p=groupPos(x),rs=rawScore(x.id),detail=consensusDetail(x.id);if(p==='IDP')return idpLeagueContext(x.id,consensus,detail,rs)*trendFactor(x.id);const scarcity=offenseScarcity(p,detail),benchmark={QB:18,RB:11,WR:11,TE:8}[p]||10,production=offenseProductionFactor(rs,benchmark);return consensus*scarcity*production*trendFactor(x.id)}
 
 function modelPlayerValue(x){
   const consensus=consensusCompositeValue(x.id),p=groupPos(x),rs=rawScore(x.id);
   if(!consensus){
-    if(p==='IDP'&&rs.seasons){const prod=idpProductionValue(x.id,rs);const value=Math.max(35,Math.min(360,Math.round((prod||120)*(.20+.18*rs.confidence))));return{value,consensus:null,context:Math.round(prod||0),fallback:true}}
-    const cap=p==='IDP'?70:120;return{value:Math.max(1,Math.round(Math.min(cap,rs.ppg*6))),consensus:null,context:null,fallback:true};
+    if(p==='IDP'&&rs.seasons){const prod=idpProductionValue(x.id,rs);const value=Math.max(45,Math.min(520,Math.round((prod||140)*(.24+.24*rs.confidence))));return{value,consensus:null,context:Math.round(prod||0),fallback:true}}
+    const cap=p==='IDP'?85:120;return{value:Math.max(1,Math.round(Math.min(cap,rs.ppg*6))),consensus:null,context:null,fallback:true};
   }
-  const context=leagueContextValue(x,consensus),detail=consensusDetail(x.id),idpRank=Number(detail?.idpRank);let value=.70*consensus+.30*context;
-  if(p==='IDP')value=clamp(consensus*.78,value,Math.max(consensus*2.15,consensus+650));else value=clamp(consensus*.78,value,consensus*1.28);
-  const elite=(Number(detail?.offenseRank)<=24)||(p==='IDP'&&idpRank<=20);if(elite)value=Math.max(value,consensus*.94);
-  const strongIdp=p==='IDP'&&rs.seasons>0&&rs.confidence>0&&rs.ppg>=idpProfile(x.id).benchmark*1.15;
-  const fringe=(Number(detail?.offenseRank)>220)||(p==='IDP'&&idpRank>120&&!strongIdp);if(fringe)value=Math.min(value,consensus*(p==='IDP'?1.22:1.12));
+  const context=leagueContextValue(x,consensus),detail=consensusDetail(x.id),idpRank=Number(detail?.idpRank);let value;
+  if(p==='IDP'){
+    // IDP-only change: 50% refreshed consensus + 50% league-specific context.
+    value=.50*consensus+.50*context;
+    // Broad safety rails only: allow league production to correct generic IDP markets without creating offensive-level IDP prices.
+    value=clamp(consensus*.72,value,Math.max(consensus*2.70,consensus+900));
+    const elite=idpRank<=20;if(elite)value=Math.max(value,consensus*.92);
+    const strong=rs.seasons>0&&rs.confidence>0&&rs.ppg>=idpProfile(x.id).benchmark*1.15;
+    if(idpRank>150&&!strong)value=Math.min(value,consensus*1.35);
+  }else{
+    // Offensive valuation is intentionally unchanged: 70% consensus + 30% league context.
+    value=.70*consensus+.30*context;
+    value=clamp(consensus*.78,value,consensus*1.28);
+    if(Number(detail?.offenseRank)<=24)value=Math.max(value,consensus*.94);
+    if(Number(detail?.offenseRank)>220)value=Math.min(value,consensus*1.12);
+  }
   return{value:Math.max(1,Math.round(value)),consensus:Math.round(consensus),context:Math.round(context),fallback:false};
 }
 function valuationUniverse(){const ids=new Set(state.allAssets.filter(x=>x.type==='player').map(x=>String(x.id)));for(const id of Object.keys(state.consensusComposite?.byId||{}))ids.add(String(id));return [...ids].filter(id=>state.players?.[id]?.fantasy_positions?.length).map(id=>({type:'player',id,owner:state.allAssets.find(x=>x.type==='player'&&String(x.id)===id)?.owner??null}))}
@@ -60,5 +79,5 @@ async function loadQualifiedProduction(season){try{const r=await fetch(`/.netlif
 loadCore=async function(){status('Loading Sleeper league, users and rosters…');const league=await get('/league/'+LEAGUE);const [users,rosters,tradedPicks]=await Promise.all([get('/league/'+LEAGUE+'/users'),get('/league/'+LEAGUE+'/rosters'),get('/league/'+LEAGUE+'/traded_picks').catch(()=>[])]);state.league=league;state.users=users;state.rosters=rosters;state.tradedPicks=Array.isArray(tradedPicks)?tradedPicks:[];buildTeams();fillSelects();renderLeague();renderFinderShop();updateStageLabel();status(`Loaded <b>${state.teams.length} teams</b> from Sleeper. Loading player data and qualified 3-year scoring history…`,'success');const season=Number(league?.season)||FALLBACK_SEASON;const [players,trending,production]=await Promise.all([get('/players/nfl').catch(()=>null),get('/players/nfl/trending/add?lookback_hours=168&limit=100').catch(()=>[]),loadQualifiedProduction(season)]);if(players)state.players=players;state.stats=production||{};state.trending=Array.isArray(trending)?Object.fromEntries(trending.map(a=>[a.player_id,Number(a.count||a.adds||1)])):(trending||{});buildTeams();renderAll();cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,consensusComposite:state.consensusComposite,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:new Date().toISOString()});status(`Loaded <b>${state.teams.length} teams</b> and <b>${state.allAssets.filter(x=>x.type==='player').length} rostered players</b> from Sleeper. Refreshing consensus references in the background…`,'success')};
 updateData=async function(){const btn=document.getElementById('updateBtn');btn.disabled=true;try{await loadCore();let consensusCount=0;try{consensusCount=await refreshConsensus()}catch(e){console.error(e)}buildTeams();renderAll();state.lastUpdate=new Date().toISOString();cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,consensusComposite:state.consensusComposite,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data loaded; consensus sources: <b>${consensusCount}/7</b> refreshed. Consensus composite values recalculated.`,'success')}catch(e){console.error(e);const cached=cacheGet('fll_sleeper_snapshot');if(cached){state={...state,...cached};buildTeams();renderAll();status(`Live update failed: <b>${esc(e.message)}</b>. Cached Sleeper snapshot restored.`,'error')}else status(`Update failed: <b>${esc(e.message)}</b>. Sleeper data could not be loaded in this browser.`,'error')}finally{btn.disabled=false}};
 document.getElementById('updateBtn').onclick=updateData;
-const model=document.querySelector('#settings .card');if(model){const n=document.createElement('div');n.className='notice success';n.innerHTML='V19 valuation: final TV remains <b>70% Consensus Composite + 30% league context</b>. The 30% scores weekly Sleeper production with this league\'s actual scoring settings, including defensive-stat key aliases. Only seasons with 8+ games qualify; missing seasons are neutral and sparse histories are confidence-shrunk.';model.appendChild(n)}
+const model=document.querySelector('#settings .card');if(model){const n=document.createElement('div');n.className='notice success';n.innerHTML='V20 valuation test: <b>offense remains 70% Consensus Composite + 30% league context</b>. <b>IDP is now 50% Consensus Composite + 50% IDP league context</b>. IDP context uses this league\'s Sleeper scoring, qualified 8+ game PPG history with 50/30/20 recency weighting, sample confidence, IDP positional scarcity, dynasty age context, and conservative missing-history treatment.';model.appendChild(n)}
 })();

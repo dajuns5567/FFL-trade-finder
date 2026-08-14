@@ -8,16 +8,22 @@ rawScore=function(id){
   const activeScoring={...scoring,...(state.league?.scoring_settings||{})};
   for(const y of years){
     const s=state.stats?.[y]?.[id];if(!s)continue;
+    const games=Number(s.gp||s.gms_active||s.games_played||0);
+    // A season is eligible for the three-year production anchor only at 8+ games.
+    // An ineligible/missing season is ignored rather than treated as a negative season.
+    if(!Number.isFinite(games)||games<8)continue;
     let points=0;for(const [k,w] of Object.entries(activeScoring))points+=(Number(s[k])||0)*Number(w||0);
-    const gamesRaw=Number(s.gp||s.gms_active||s.games_played||0);
-    if(points===0&&gamesRaw<=0)continue;
-    const games=gamesRaw>0?gamesRaw:17;
-    samples.push({season:y,ppg:points/Math.max(1,games),points,stats:s});
+    samples.push({season:y,ppg:points/games,points,games,stats:s});
     if(samples.length===3)break;
   }
-  if(!samples.length)return{ppg:0,seasons:0,stats:{},samples:[]};
+  if(!samples.length)return{ppg:0,seasons:0,stats:{},samples:[],confidence:0};
   const weights=[.50,.30,.20].slice(0,samples.length),den=weights.reduce((a,b)=>a+b,0);
-  return{ppg:samples.reduce((sum,x,i)=>sum+x.ppg*weights[i],0)/den,seasons:samples.length,stats:samples[0].stats,samples};
+  const ppg=samples.reduce((sum,x,i)=>sum+x.ppg*weights[i],0)/den;
+  // Missing eligible years do not lower PPG. Instead, sparse history lowers confidence so one strong
+  // 8-10 game season cannot be extrapolated as if it were three full seasons.
+  const seasonConfidence=({1:.42,2:.72,3:1})[samples.length]||1;
+  const gameConfidence=clamp(.65,samples.reduce((s,x)=>s+Math.min(1,x.games/14),0)/samples.length,1);
+  return{ppg,seasons:samples.length,stats:samples[0].stats,samples,confidence:seasonConfidence*gameConfidence};
 };
 
 consensusRank=function(id){
@@ -29,10 +35,10 @@ consensusRank=function(id){
 
 function idpProfile(id){
   const ps=new Set((state.players?.[id]?.fantasy_positions||[]).map(x=>String(x).toUpperCase()));
-  if([...ps].some(x=>["DL","DE","DT"].includes(x)))return{type:"front",scarcity:1.12,benchmark:9};
-  if(ps.has("LB"))return{type:"lb",scarcity:1.03,benchmark:9};
-  if([...ps].some(x=>["DB","CB","S"].includes(x)))return{type:"db",scarcity:1.01,benchmark:8};
-  return{type:"idp",scarcity:1.00,benchmark:9};
+  if([...ps].some(x=>["DL","DE","DT"].includes(x)))return{type:"front",scarcity:1.12,benchmark:9,base:700};
+  if(ps.has("LB"))return{type:"lb",scarcity:1.03,benchmark:9,base:650};
+  if([...ps].some(x=>["DB","CB","S"].includes(x)))return{type:"db",scarcity:1.01,benchmark:8,base:580};
+  return{type:"idp",scarcity:1.00,benchmark:9,base:620};
 }
 function offenseScarcity(p,detail){
   const rank=Number(detail?.offenseRank);
@@ -48,42 +54,28 @@ function offenseScarcity(p,detail){
   }
   return{WR:1.10,TE:1.02}[p]||1;
 }
-function playerAge(id){
-  const p=state.players?.[id]||{};
-  const age=Number(p.age);if(Number.isFinite(age)&&age>0)return age;
-  if(p.birth_date){const d=new Date(p.birth_date),now=new Date();if(!Number.isNaN(d.getTime()))return (now-d)/(365.2425*86400000)}
-  return null;
+function offenseProductionFactor(rs,benchmark){
+  if(!rs.seasons)return 1;
+  const raw=clamp(.84,.90+.15*(rs.ppg/benchmark),1.20);
+  return 1+rs.confidence*(raw-1);
 }
-function idpProductionFactor(id,rs,profile,eliteFront,idpRank){
-  const age=playerAge(id),young=Number.isFinite(age)&&age<=25;
-  // Missing history is neutral for established players and mildly positive for young consensus-backed IDPs:
-  // lack of a three-year sample must not be treated as evidence that an emerging player is low-value.
-  if(!rs.seasons){
-    if(young&&Number.isFinite(idpRank)&&idpRank<=100)return profile.type==="front"?1.18:1.10;
-    return 1.00;
-  }
+function idpProductionContext(id,consensus,detail,rs){
+  const profile=idpProfile(id),idpRank=Number(detail?.idpRank);
+  const eliteFront=profile.type==="front"&&Number.isFinite(idpRank)&&idpRank<=30;
+  const scarcity=eliteFront?1.24:profile.scarcity;
+  if(!rs.seasons)return consensus*scarcity;
   const ratio=rs.ppg/Math.max(1,profile.benchmark);
-  let factor;
-  if(eliteFront)factor=clamp(.82,.72+.58*ratio,1.95);
-  else if(profile.type==="lb")factor=clamp(.84,.76+.42*ratio,1.58);
-  else if(profile.type==="db")factor=clamp(.84,.78+.38*ratio,1.50);
-  else factor=clamp(.84,.78+.40*ratio,1.52);
-  // One-season samples are useful but noisy. Young players should not be punished for not yet having three seasons.
-  if(young&&rs.seasons<3)factor=Math.max(factor,profile.type==="front"?1.12:1.06);
-  return factor;
+  const adjustedRatio=1+rs.confidence*(ratio-1);
+  // Production is an independent league-context value, not just a multiplier on consensus.
+  // This lets proven high-PPG IDPs recover value when generic IDP consensus is too low for this scoring system.
+  const productionValue=clamp(180,profile.base*Math.pow(clamp(.55,adjustedRatio,2.35),1.65)*scarcity,1800);
+  return productionValue*.82+(consensus*scarcity)*.18;
 }
 function leagueContextValue(x,consensus){
   const p=groupPos(x),rs=rawScore(x.id),detail=consensusDetail(x.id);
-  if(p==="IDP"){
-    const profile=idpProfile(x.id),idpRank=Number(detail?.idpRank);
-    const eliteFront=profile.type==="front"&&Number.isFinite(idpRank)&&idpRank<=30;
-    const scarcity=eliteFront?1.35:profile.scarcity;
-    const production=idpProductionFactor(x.id,rs,profile,eliteFront,idpRank);
-    return consensus*scarcity*production*trendFactor(x.id);
-  }
-  const scarcity=offenseScarcity(p,detail);
-  const benchmark={QB:18,RB:11,WR:11,TE:8}[p]||10;
-  const production=rs.seasons?clamp(.84,.90+.15*(rs.ppg/benchmark),1.20):.96;
+  if(p==="IDP")return idpProductionContext(x.id,consensus,detail,rs)*trendFactor(x.id);
+  const scarcity=offenseScarcity(p,detail),benchmark={QB:18,RB:11,WR:11,TE:8}[p]||10;
+  const production=offenseProductionFactor(rs,benchmark);
   return consensus*scarcity*production*trendFactor(x.id);
 }
 
@@ -93,14 +85,17 @@ function modelPlayerValue(x){
     const rs=rawScore(x.id),cap=p==="IDP"?90:150;
     return{value:Math.max(1,Math.round(Math.min(cap,rs.ppg*9))),consensus:null,context:null,fallback:true};
   }
-  const context=leagueContextValue(x,consensus),detail=consensusDetail(x.id),idpRank=Number(detail?.idpRank),profile=p==="IDP"?idpProfile(x.id):null;
-  const eliteFront=p==="IDP"&&profile?.type==="front"&&Number.isFinite(idpRank)&&idpRank<=30;
+  const context=leagueContextValue(x,consensus),detail=consensusDetail(x.id),idpRank=Number(detail?.idpRank),rs=rawScore(x.id);
   let value=.70*consensus+.30*context;
-  value=clamp(consensus*.78,value,consensus*(eliteFront?1.62:p==="IDP"?1.32:1.28));
+  if(p==="IDP"){
+    // Keep consensus dominant, but allow exceptional qualified league production to correct a low generic IDP market value.
+    value=clamp(consensus*.78,value,Math.max(consensus*1.90,consensus+550));
+  }else value=clamp(consensus*.78,value,consensus*1.28);
   const elite=(Number(detail?.offenseRank)<=24)||(p==="IDP"&&idpRank<=20);
   if(elite)value=Math.max(value,consensus*.94);
-  const fringe=(Number(detail?.offenseRank)>220)||(p==="IDP"&&idpRank>120);
-  if(fringe)value=Math.min(value,consensus*1.12);
+  const strongIdpProduction=p==="IDP"&&rs.seasons>0&&rs.confidence>0&&rs.ppg>=idpProfile(x.id).benchmark*1.25;
+  const fringe=(Number(detail?.offenseRank)>220)||(p==="IDP"&&idpRank>120&&!strongIdpProduction);
+  if(fringe)value=Math.min(value,consensus*(p==="IDP"?1.18:1.12));
   return{value:Math.max(1,Math.round(value)),consensus:Math.round(consensus),context:Math.round(context),fallback:false};
 }
 
@@ -157,5 +152,5 @@ updateData=async function(){
 };
 
 document.getElementById("updateBtn").onclick=updateData;
-const model=document.querySelector("#settings .card");if(model){const n=document.createElement("div");n.className="notice success";n.innerHTML="V17 valuation test: final player trade value = <b>70% refreshed Consensus Composite Value + 30% league context</b>. Offense and IDP use separate consensus/value curves. The league-context layer uses three-year regular-season Sleeper scoring as a major IDP signal (50/30/20 recency weighting), plus league scoring, positional scarcity, and age/sample confidence so emerging IDPs are not penalized simply for lacking a full three-year NFL history. Superflex QB scarcity and a modest RB scarcity premium remain active without penalizing depth RBs.";model.appendChild(n)}
+const model=document.querySelector("#settings .card");if(model){const n=document.createElement("div");n.className="notice success";n.innerHTML="V17 valuation test: final player trade value = <b>70% refreshed Consensus Composite Value + 30% league context</b>. Three-year Sleeper production uses PPG only for seasons with at least 8 games. Missing/ineligible seasons are ignored rather than penalized; sparse histories are confidence-shrunk so one short or exceptional season cannot masquerade as a three-year track record.";model.appendChild(n)}
 })();

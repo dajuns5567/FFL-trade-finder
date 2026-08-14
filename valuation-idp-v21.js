@@ -12,36 +12,48 @@ function age21(id){const p=state.players?.[id]||{},a=Number(p.age);if(Number.isF
 function ageFactor21(id){const a=age21(id);if(!Number.isFinite(a))return 1;if(a<=23)return 1.10;if(a<=25)return 1.07;if(a<=27)return 1.04;if(a<=29)return 1.02;if(a<=31)return 1;if(a<=33)return .96;return .92}
 function consensus21(id){const v=Number(state.consensusComposite?.byId?.[String(id)]);return Number.isFinite(v)&&v>0?v:null}
 function detail21(id){return state.consensusComposite?.detailsById?.[String(id)]||null}
+function fallbackWeightPlan21(){
+ const years=Object.keys(state.stats||{}).map(Number).filter(Number.isFinite).sort((a,b)=>b-a),latest=years[0]||Number(state.league?.season)||FALLBACK_SEASON;
+ return{mode:'preseason-offseason',completedWeek:0,yearWeights:{[latest-1]:.60,[latest-2]:.30,[latest-3]:.10}};
+}
+function historyPlan21(){return state.sleeperHistory?.weightPlan?.yearWeights?state.sleeperHistory.weightPlan:fallbackWeightPlan21()}
 function realIdpScore(id){
- const years=Object.keys(state.stats||{}).map(Number).filter(Number.isFinite).sort((a,b)=>b-a),samples=[],settings=activeScoring();
- for(const y of years){
-  const row=state.stats?.[y]?.[id];if(!row)continue;const s=statObj(row),gp=games(row);if(gp<8)continue;
+ const plan=historyPlan21(),yearWeights=plan.yearWeights||{},currentSeason=Number(state.sleeperHistory?.currentSeason),settings=activeScoring(),samples=[];
+ for(const [yearRaw,assignedRaw] of Object.entries(yearWeights)){
+  const y=Number(yearRaw),assigned=Number(assignedRaw);if(!Number.isFinite(y)||!Number.isFinite(assigned)||assigned<=0)continue;
+  const row=state.stats?.[y]?.[id];if(!row)continue;const s=statObj(row),gp=games(row),isCurrent=plan.mode==='in-season'&&y===currentSeason;
+  if(isCurrent){if(gp<1)continue}else if(gp<8)continue;
   let points=0,premiumPoints=0;const breakdown={};
   for(const [key,weightRaw] of Object.entries(settings)){
    const weight=Number(weightRaw||0);if(!weight)continue;const qty=statNumber(s,key);if(!qty)continue;const pts=qty*weight;points+=pts;breakdown[key]={qty,weight,points:pts};if(PREMIUM_KEYS.has(key))premiumPoints+=pts;
   }
   const pprRef=Number.isFinite(Number(s.pts_ppr))?Number(s.pts_ppr):null;
-  samples.push({season:y,games:gp,points,ppg:points/gp,premiumPoints,premiumPpg:premiumPoints/gp,pprRef,breakdown});if(samples.length===3)break;
+  samples.push({season:y,games:gp,assignedWeight:assigned,currentSeason:isCurrent,points,ppg:points/gp,premiumPoints,premiumPpg:premiumPoints/gp,pprRef,breakdown});
  }
- if(!samples.length)return{seasons:0,ppg:0,premiumPpg:0,confidence:0,samples:[]};
- const w=[.50,.30,.20].slice(0,samples.length),den=w.reduce((a,b)=>a+b,0),ppg=samples.reduce((s,x,i)=>s+x.ppg*w[i],0)/den,premiumPpg=samples.reduce((s,x,i)=>s+x.premiumPpg*w[i],0)/den;
- const seasonConfidence=({1:.45,2:.74,3:1})[samples.length]||1,gameConfidence=clamp21(.65,samples.reduce((s,x)=>s+Math.min(1,x.games/14),0)/samples.length,1);
- return{seasons:samples.length,ppg,premiumPpg,confidence:seasonConfidence*gameConfidence,samples};
+ if(!samples.length)return{seasons:0,ppg:0,premiumPpg:0,confidence:0,weightCoverage:0,samples:[],weightPlan:plan};
+ samples.sort((a,b)=>b.season-a.season);
+ const coverage=samples.reduce((s,x)=>s+x.assignedWeight,0),den=Math.max(.0001,coverage);
+ const ppg=samples.reduce((s,x)=>s+x.ppg*x.assignedWeight,0)/den,premiumPpg=samples.reduce((s,x)=>s+x.premiumPpg*x.assignedWeight,0)/den;
+ const historical=samples.filter(x=>!x.currentSeason),historicalCount=historical.length;
+ const historyConfidence=historicalCount>=3?1:historicalCount===2?.78:historicalCount===1?.52:.22;
+ const currentSample=samples.find(x=>x.currentSeason),currentGameConfidence=currentSample?clamp21(.20,currentSample.games/14,1):1;
+ const coverageConfidence=clamp21(.20,coverage,1),confidence=clamp21(.10,coverageConfidence*(.70+.30*historyConfidence)*(currentSample?(.82+.18*currentGameConfidence):1),1);
+ return{seasons:samples.length,historicalSeasons:historicalCount,ppg,premiumPpg,confidence,weightCoverage:coverage,samples,weightPlan:plan};
 }
 function percentile(arr,x){if(!arr.length)return.5;const a=arr.slice().sort((m,n)=>m-n);let below=0,equal=0;for(const v of a){if(v<x)below++;else if(v===x)equal++}return clamp21(.01,(below+.5*equal)/a.length,.99)}
-let distCache=null,distStatsRef=null;
+let distCache=null,distStatsRef=null,distPlanKey='';
 function idpDistributions(){
- if(distCache&&distStatsRef===state.stats)return distCache;
+ const planKey=JSON.stringify(state.sleeperHistory?.weightPlan||{});if(distCache&&distStatsRef===state.stats&&distPlanKey===planKey)return distCache;
  const groups={front:{ppg:[],premium:[]},lb:{ppg:[],premium:[]},db:{ppg:[],premium:[]},idp:{ppg:[],premium:[]},all:{ppg:[],premium:[]}};
  const ids=new Set();for(const y of Object.keys(state.stats||{}))for(const id of Object.keys(state.stats?.[y]||{}))ids.add(String(id));
  for(const id of ids){if(groupPos({type:'player',id})!=='IDP')continue;const rs=realIdpScore(id);if(!rs.seasons)continue;const g=idpProfile21(id);groups[g].ppg.push(rs.ppg);groups[g].premium.push(rs.premiumPpg);groups.all.ppg.push(rs.ppg);groups.all.premium.push(rs.premiumPpg)}
- distStatsRef=state.stats;distCache=groups;return groups;
+ distStatsRef=state.stats;distPlanKey=planKey;distCache=groups;return groups;
 }
 function idpContext21(id,consensus){
  const rs=realIdpScore(id),profile=idpProfile21(id),dists=idpDistributions(),g=(dists[profile]?.ppg.length>=20?dists[profile]:dists.all);
  if(!rs.seasons){const scarcity={front:1.10,lb:1.03,db:.98,idp:1}[profile]||1;return{value:consensus*scarcity*ageFactor21(id),rs,ppgPct:null,premiumPct:null,index:null}}
  const ppgPct=percentile(g.ppg,rs.ppg),premiumPct=percentile(g.premium,rs.premiumPpg);
- const rawIndex=.78*ppgPct+.17*premiumPct+.05*Math.min(1,rs.seasons/3);
+ const rawIndex=.78*ppgPct+.17*premiumPct+.05*Math.min(1,rs.historicalSeasons/3);
  const index=.50+rs.confidence*(rawIndex-.50);
  const cfg={front:{floor:220,ceiling:1750},lb:{floor:210,ceiling:1550},db:{floor:175,ceiling:1325},idp:{floor:190,ceiling:1450}}[profile]||{floor:190,ceiling:1450};
  let value=cfg.floor+(cfg.ceiling-cfg.floor)*Math.pow(clamp21(.03,index,.99),1.55);value*=ageFactor21(id);
@@ -61,7 +73,7 @@ ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings(
 playerRankValue=function(x){const arr=ensureMaster(),i=arr.findIndex(z=>String(z.x.id)===String(x.id));if(i<0)return{rank:999,value:1,tier:9,consensus:null,context:null};const z=arr[i],rank=i+1,tiers=[12,24,48,80,120,180,260,400,9999];let tier=tiers.findIndex(m=>rank<=m);if(tier<0)tier=8;return{rank,value:z.value,tier:tier+1,consensus:z.consensus,context:z.context}};
 baseValue=function(x){if(x.type==='pick')return pickValue(x);if(valueCache.has(x.id))return valueCache.get(x.id);const v=playerRankValue(x).value;valueCache.set(x.id,v);return v};
 assetLabel=function(x){if(x.type==='pick')return x.name;const m=playerRankValue(x),cv=m.consensus==null?'fallback':m.consensus;return `${playerName(x.id)} <span class="muted">(${groupPos(x)} • CV ${cv} • TV ${m.value})</span>`};
-window.idpScoringAudit=function(nameOrId){const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(id=>playerName(id).toLowerCase()===q);if(!id)return null;const c=consensus21(id),ctx=c?idpContext21(id,c):idpContext21(id,250);return{id,name:playerName(id),profile:idpProfile21(id),consensus:c,context:Math.round(ctx.value),ppg:Number(ctx.rs.ppg.toFixed(2)),premiumPpg:Number(ctx.rs.premiumPpg.toFixed(2)),qualifyingSeasons:ctx.rs.seasons,confidence:Number(ctx.rs.confidence.toFixed(3)),ppgPercentile:ctx.ppgPct==null?null:Number((ctx.ppgPct*100).toFixed(1)),premiumPercentile:ctx.premiumPct==null?null:Number((ctx.premiumPct*100).toFixed(1)),seasons:ctx.rs.samples};};
+window.idpScoringAudit=function(nameOrId){const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(id=>playerName(id).toLowerCase()===q);if(!id)return null;const c=consensus21(id),ctx=c?idpContext21(id,c):idpContext21(id,250);return{id,name:playerName(id),profile:idpProfile21(id),consensus:c,context:Math.round(ctx.value),ppg:Number(ctx.rs.ppg.toFixed(2)),premiumPpg:Number(ctx.rs.premiumPpg.toFixed(2)),qualifyingSeasons:ctx.rs.seasons,historicalSeasons:ctx.rs.historicalSeasons,confidence:Number(ctx.rs.confidence.toFixed(3)),weightCoverage:Number(ctx.rs.weightCoverage.toFixed(3)),weightPlan:ctx.rs.weightPlan,ppgPercentile:ctx.ppgPct==null?null:Number((ctx.ppgPct*100).toFixed(1)),premiumPercentile:ctx.premiumPct==null?null:Number((ctx.premiumPct*100).toFixed(1)),seasons:ctx.rs.samples};};
 masterRankCache=null;valueCache.clear();fitCache.clear();stageCache.clear();
-const model=document.querySelector('#settings .card');if(model){const n=document.createElement('div');n.className='notice success';n.innerHTML='V21 IDP context: <b>IDP remains 50% consensus + 50% league-specific context</b>. The league-specific half now uses actual weekly Sleeper scoring from this league, 8+ game qualifying seasons, 50/30/20 recency weighting, same-position PPG percentile, premium-event scoring percentile, sample confidence, age and IDP scarcity. Stacked sacks/interceptions are counted through the actual stat categories Sleeper recorded; no synthetic sack or interception points are invented. Sleeper PPR is retained as a reference where present, while IDP value uses the league-specific defensive scoring. Offensive valuation is unchanged.';model.appendChild(n)}
+const model=document.querySelector('#settings .card');if(model){const n=document.createElement('div');n.className='notice success';n.innerHTML='V22 IDP history plan: <b>IDP remains 50% consensus + 50% league-specific context</b>. The history input refreshes from Sleeper when Update is run. Offseason weighting is 60/30/10 across the three most recent completed seasons. In-season, current-year results begin at 10% after Week 1 and rise toward 60% by Week 18 while the prior three seasons decline proportionally from 55/25/10. Historical seasons require 8+ games; the current season may contribute from Week 1 at its deliberately small scheduled weight. Missing history reduces confidence instead of being treated as poor production. Offensive valuation is unchanged.';model.appendChild(n)}
 })();

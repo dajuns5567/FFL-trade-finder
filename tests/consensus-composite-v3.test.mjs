@@ -31,3 +31,25 @@ test("dual-role player combines offense with a capped IDP contribution",()=>{
   assert.ok(d.consensusCompositeValue>d.offenseValue);
   assert.ok(d.consensusCompositeValue<=Math.round(d.offenseValue*1.20));
 });
+
+test("matches a source name without a suffix to a Sleeper suffix name",()=>{
+  const results=[
+    result("Off A","off-a",[{player:"Kenneth Walker",rank:8,position:"RB"}]),
+    result("Off B","off-b",[{player:"Kenneth Walker",rank:9,position:"RB"}])
+  ];
+  const c=buildConsensusComposite(results,[{id:"kw3",name:"Kenneth Walker III",positions:["RB"]}]);
+  assert.ok(c.byId.kw3>0);
+  assert.equal(c.detailsById.kw3.kind,"offense");
+  assert.deepEqual(c.detailsById.kw3.offenseSources,["Off A","Off B"]);
+});
+
+test("does not force an ambiguous suffixless match",()=>{
+  const results=[
+    result("Off A","off-a",[
+      {player:"Alex Smith Jr.",rank:10,position:"WR"},
+      {player:"Alex Smith III",rank:11,position:"WR"}
+    ])
+  ];
+  const c=buildConsensusComposite(results,[{id:"amb",name:"Alex Smith",positions:["WR"]}]);
+  assert.equal(c.byId.amb,undefined);
+});

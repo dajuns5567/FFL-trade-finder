@@ -1,0 +1,62 @@
+name: Import Sleeper League History
+
+on:
+  workflow_dispatch:
+    inputs:
+      league_id:
+        description: Sleeper league ID
+        required: false
+        default: '1316867686394769408'
+      history_depth:
+        description: Number of linked league seasons to import
+        required: false
+        default: '4'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Import Sleeper history
+        env:
+          SLEEPER_LEAGUE_ID: ${{ inputs.league_id }}
+          SLEEPER_HISTORY_DEPTH: ${{ inputs.history_depth }}
+        run: node scripts/import-sleeper-history.mjs
+
+      - name: Publish snapshot to sleeper-data branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sleeper-data
+          cp -R data/sleeper /tmp/sleeper-data/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git ls-remote --exit-code --heads origin sleeper-data >/dev/null 2>&1; then
+            git fetch origin sleeper-data:sleeper-data
+            git switch sleeper-data
+          else
+            git switch --orphan sleeper-data
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+          rm -rf data/sleeper
+          mkdir -p data
+          cp -R /tmp/sleeper-data/sleeper data/
+          git add data/sleeper
+          if git diff --cached --quiet; then
+            echo 'No Sleeper data changes to publish.'
+            exit 0
+          fi
+          git commit -m 'Update Sleeper league data snapshot [skip ci]'
+          git push origin sleeper-data

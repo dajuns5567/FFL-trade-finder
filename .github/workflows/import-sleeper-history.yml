@@ -8,9 +8,18 @@ on:
         required: false
         default: '1316867686394769408'
       history_depth:
-        description: Number of linked league seasons to import
+        description: Number of linked league seasons to import for trade-history audit
         required: false
         default: '4'
+  schedule:
+    - cron: '17 * * * *'
+  push:
+    branches:
+      - scoring-importer-v36
+    paths:
+      - '.github/workflows/import-sleeper-history.yml'
+      - 'scripts/import-sleeper-history.mjs'
+      - 'netlify/functions/ppr-scoring.mjs'
 
 permissions:
   contents: write
@@ -31,9 +40,31 @@ jobs:
 
       - name: Import Sleeper history
         env:
-          SLEEPER_LEAGUE_ID: ${{ inputs.league_id }}
-          SLEEPER_HISTORY_DEPTH: ${{ inputs.history_depth }}
+          SLEEPER_LEAGUE_ID: ${{ inputs.league_id || '1316867686394769408' }}
+          SLEEPER_HISTORY_DEPTH: ${{ inputs.history_depth || '4' }}
         run: node scripts/import-sleeper-history.mjs
+
+      - name: Verify imported scoring snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s data/sleeper/manifest.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('data/sleeper/manifest.json','utf8'));
+          if(!m.ok) throw new Error('manifest is not ok');
+          if(!Array.isArray(m.productionSeasons) || m.productionSeasons.length < 3) throw new Error('missing production seasons');
+          for(const year of m.productionSeasons){
+            const p=`data/sleeper/${year}/season-stats.json`;
+            if(!fs.existsSync(p)) throw new Error(`missing ${p}`);
+            const rows=JSON.parse(fs.readFileSync(p,'utf8'));
+            const values=Object.values(rows||{});
+            const ppr=values.filter(r=>Number.isFinite(Number(r?.pts_ppr))).length;
+            const games=values.filter(r=>Number(r?.gp)>0).length;
+            if(values.length<100 || ppr<75 || games<75) throw new Error(`season ${year} failed validation rows=${values.length} ppr=${ppr} games=${games}`);
+          }
+          console.log(JSON.stringify({ok:true,productionSeasons:m.productionSeasons,generatedAt:m.generatedAt},null,2));
+          NODE
 
       - name: Publish snapshot to sleeper-data branch
         shell: bash

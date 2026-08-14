@@ -1,6 +1,6 @@
 const API='https://api.sleeper.app/v1';
 const DEFAULT_LEAGUE_ID='1316867686394769408';
-const headers={accept:'application/json','user-agent':'FFL-TradeFinder-SleeperHistory/1.2'};
+const headers={accept:'application/json','user-agent':'FFL-TradeFinder-SleeperHistory/1.3'};
 
 async function getJson(url){const r=await fetch(url,{headers,cache:'no-store'});if(!r.ok)throw new Error(`${r.status} ${r.statusText} for ${url}`);return r.json()}
 function countPayload(x){return Array.isArray(x)?x.length:(x&&typeof x==='object'?Object.keys(x).length:0)}
@@ -13,7 +13,17 @@ function weightPlan(currentSeason,completedWeek,leagueStatus){
   const previous=remaining*(base[0]/total),two=remaining*(base[1]/total),three=remaining*(base[2]/total);
   return{mode:'in-season',completedWeek:w,weights:{currentYear:current,previousYear:previous,twoYearsAgo:two,threeYearsAgo:three},yearWeights:{[currentSeason]:current,[currentSeason-1]:previous,[currentSeason-2]:two,[currentSeason-3]:three}};
 }
-function rows(payload){if(Array.isArray(payload))return payload.map(r=>[String(r?.player_id||r?.id||''),r?.stats&&typeof r.stats==='object'?r.stats:r]).filter(([id])=>id);if(!payload||typeof payload!=='object')return[];return Object.entries(payload).map(([id,v])=>[String(v?.player_id||id),v?.stats&&typeof v.stats==='object'?v.stats:v]).filter(([id])=>id)}
+const SCORE_FIELDS=['pts_ppr','pts_half_ppr','pts_std'];
+function mergedStats(row){
+  const base=row?.stats&&typeof row.stats==='object'?{...row.stats}:{...(row||{})};
+  for(const key of SCORE_FIELDS){const n=Number(row?.[key]);if(Number.isFinite(n)&&!Number.isFinite(Number(base[key])))base[key]=n}
+  return base;
+}
+function rows(payload){
+  if(Array.isArray(payload))return payload.map(r=>[String(r?.player_id||r?.id||''),mergedStats(r)]).filter(([id])=>id);
+  if(!payload||typeof payload!=='object')return[];
+  return Object.entries(payload).map(([id,v])=>[String(v?.player_id||id),mergedStats(v)]).filter(([id])=>id);
+}
 function aggregateWeeks(weekly){const out={};for(let week=1;week<=18;week++){for(const [id,stats] of rows(weekly?.[week])){const dst=out[id]||(out[id]={gp:0});dst.gp+=1;for(const [k,v] of Object.entries(stats||{})){const n=Number(v);if(!Number.isFinite(n)||['gp','gms_active','games_played'].includes(k))continue;dst[k]=(Number(dst[k])||0)+n}}}return out}
 
 export default async function handler(req){
@@ -24,6 +34,6 @@ export default async function handler(req){
     const currentSeason=chain[0].season,aggregatedBySeason={};let completedWeek=0;
     for(const item of chain){const weekly={};for(let week=1;week<=18;week++)weekly[week]=await getJson(`${API}/stats/nfl/regular/${item.season}/${week}`).catch(()=>({}));aggregatedBySeason[item.season]=aggregateWeeks(weekly);if(item===chain[0])for(let week=1;week<=18;week++)if(countPayload(weekly[week])>0)completedWeek=week}
     const plan=weightPlan(currentSeason,completedWeek,chain[0].status);
-    return new Response(JSON.stringify({ok:true,generatedAt:new Date().toISOString(),currentLeagueId:start,currentSeason,currentLeagueStatus:chain[0].status,completedWeek,weightPlan:plan,qualifyingHistoricalSeasonMinimumGames:8,chain,aggregatedBySeason,rosterMutation:false,notes:['This endpoint does not fetch or modify live rosters.','Current-year stats may contribute from Week 1 using the dynamic weekly weight.','Historical completed-season samples remain subject to the 8-game minimum.']}),{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
+    return new Response(JSON.stringify({ok:true,generatedAt:new Date().toISOString(),currentLeagueId:start,currentSeason,currentLeagueStatus:chain[0].status,completedWeek,weightPlan:plan,qualifyingHistoricalSeasonMinimumGames:8,chain,aggregatedBySeason,rosterMutation:false,notes:['This endpoint does not fetch or modify live rosters.','Current-year stats may contribute from Week 1 using the dynamic weekly weight.','Historical completed-season samples remain subject to the 8-game minimum.','Sleeper top-level pts_ppr/pts_half_ppr/pts_std fields are preserved during aggregation instead of being discarded when a stats object is present.']}),{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
   }catch(e){return new Response(JSON.stringify({ok:false,error:String(e?.message||e)}),{status:500,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
 }

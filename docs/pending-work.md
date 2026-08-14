@@ -12,4 +12,4 @@ Canonical backlog for work discussed but not yet completed or fully validated.
 8. Post-calibration pick/package sanity checks remain required. Confirm player-for-pick and multi-asset recommendations stay realistic after the common economic scale and later Finder market-friction changes.
 9. Verify the redundant sell-side UI remains absent. The compatibility file no longer injects a separate "Player you want to sell / shop" box; the normal global player search + existing asset checklist should remain the only sell-side path.
 10. Display terminology: use "Value" for the 4x presentation number and keep "scoring component" reserved for the Sleeper production-history input.
-11. After offense is stable, return to IDP before any further Trade Finder work. Then revisit Rookie Tracker and trade-history calibration before final package tuning.
+11. Work order after offense: return to IDP valuation before any further Trade Finder work. Then revisit Rookie Tracker and Sleeper trade-history calibration before final package tuning.

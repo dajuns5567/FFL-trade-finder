@@ -76,9 +76,9 @@
   "company_id": null,
   "last_message_id": "1394009041042169856",
   "sport": "nfl",
-  "season_type": "regular",
-  "season": "2026",
   "shard": 773,
+  "season": "2026",
+  "season_type": "regular",
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,

@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-08-14T17:48:06.362Z",
+  "generatedAt": "2026-08-14T18:39:48.054Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -43,6 +43,23 @@
       "withGames": 2832
     }
   },
+  "compactDiagnostics": {
+    "2023": {
+      "players": 2777,
+      "withPpr": 1334,
+      "withGames": 2777
+    },
+    "2024": {
+      "players": 2816,
+      "withPpr": 1363,
+      "withGames": 2816
+    },
+    "2025": {
+      "players": 2832,
+      "withPpr": 938,
+      "withGames": 2832
+    }
+  },
   "qualifyingHistoricalSeasonMinimumGames": 8,
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "linkedLeagueSeasons": [
@@ -68,6 +85,7 @@
     "Production seasons are selected by season year from the active 60/30/10 or in-season weighting plan and are not dependent on previous_league_id links.",
     "Raw weekly Sleeper stat payloads are preserved. No player production number is fabricated.",
     "Offensive PPR is derived only from Sleeper-provided pts_ppr or deterministic standard-PPR scoring of Sleeper raw stats.",
+    "offense-history.json is a compact delivery artifact derived only from the verified season aggregates; it does not recalculate or estimate player production.",
     "Raw weekly stats remain available for exact league-specific IDP reconstruction, including stacked sack/interception scoring."
   ]
 }

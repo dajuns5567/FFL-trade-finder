@@ -1,4 +1,5 @@
 import { refreshAllSources } from "./consensus-source-overrides.mjs";
+import { buildConsensusComposite } from "./consensus-composite-v3.mjs";
 
 function addSnapshot(sources,name,result,rows,kind,updatedAt){
   const data={};
@@ -9,28 +10,18 @@ function addSnapshot(sources,name,result,rows,kind,updatedAt){
     if(data[player]==null||rank<data[player])data[player]=rank;
   }
   if(!Object.keys(data).length)return;
-  sources[name]={
-    updated:result.timestamp||updatedAt,
-    data,
-    url:Array.isArray(result.urls)?result.urls[0]||null:null,
-    kind,
-    playerCount:Object.keys(data).length,
-    ...(result.reducedWeight?{reducedWeight:true}:{})
-  };
+  sources[name]={updated:result.timestamp||updatedAt,data,url:Array.isArray(result.urls)?result.urls[0]||null:null,kind,playerCount:Object.keys(data).length,...(result.reducedWeight?{reducedWeight:true}:{})};
 }
 
-export function buildConsensusPayload(refresh, updatedAt=new Date().toISOString()) {
+export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().toISOString()) {
   const results=Array.isArray(refresh?.results)?refresh.results:[];
   const sources={};
-
   for(const result of results){
     if(!result?.valid)continue;
     if(result.id==="combined-dynasty"){
-      const offense=[];
-      const idp=[];
+      const offense=[],idp=[];
       for(const row of result.rankings||[]){
-        if(String(row?.position||"").toUpperCase()==="IDP")idp.push(row);
-        else offense.push(row);
+        if(String(row?.position||"").toUpperCase()==="IDP")idp.push(row); else offense.push(row);
       }
       addSnapshot(sources,"The IDP Show Combined Offense",result,offense,"offense",updatedAt);
       addSnapshot(sources,"The IDP Show Combined IDP",result,idp,"idp",updatedAt);
@@ -38,32 +29,10 @@ export function buildConsensusPayload(refresh, updatedAt=new Date().toISOString(
     }
     addSnapshot(sources,result.source,result,result.rankings,result.id?.includes("idp")?"idp":"offense",updatedAt);
   }
-
-  const diagnostics=results.map(result=>({
-    source:result.source,
-    ok:!!result.valid,
-    status:result.valid?"refreshed":"failed",
-    stage:result.stage||null,
-    url:Array.isArray(result.urls)?result.urls[0]||null:null,
-    players_extracted:Number(result.players_extracted||0),
-    ranking_rows:Number(result.ranking_rows||0),
-    error:result.valid?null:(result.error||null),
-    timestamp:result.timestamp||null,
-    ...(result.reducedWeight?{reducedWeight:true}:{})
-  }));
+  const diagnostics=results.map(result=>({source:result.source,ok:!!result.valid,status:result.valid?"refreshed":"failed",stage:result.stage||null,url:Array.isArray(result.urls)?result.urls[0]||null:null,players_extracted:Number(result.players_extracted||0),ranking_rows:Number(result.ranking_rows||0),error:result.valid?null:(result.error||null),timestamp:result.timestamp||null,...(result.reducedWeight?{reducedWeight:true}:{})}));
   const successful=diagnostics.filter(result=>result.ok).length;
-
-  return {
-    ok:true,
-    sources,
-    summary:{
-      total:results.length,
-      successful,
-      failed:results.length-successful,
-      results:diagnostics
-    },
-    updatedAt
-  };
+  const composite=buildConsensusComposite(results,players);
+  return {ok:true,sources,composite,summary:{total:results.length,successful,failed:results.length-successful,results:diagnostics},updatedAt};
 }
 
 export default async (req)=>{
@@ -72,16 +41,8 @@ export default async (req)=>{
   let body={};try{body=await req.json()}catch{return json({ok:false,error:"Invalid JSON"},400)}
   const players=Array.isArray(body.players)?body.players:[];
   if(!players.length)return json({ok:false,error:"No player list supplied"},400);
-
   const refresh=await refreshAllSources();
-
-  // A partial refresh is diagnostic success: failed sources are omitted from
-  // sources so the browser retains their last validated snapshots.
-  return json(buildConsensusPayload(refresh));
+  return json(buildConsensusPayload(refresh,players));
 };
 
-function json(body,status=200){
-  return new Response(JSON.stringify(body),{status,headers:{
-    "content-type":"application/json; charset=utf-8","cache-control":"no-store"
-  }});
-}
+function json(body,status=200){return new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}})}

@@ -79,6 +79,7 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/sleeper-data
           cp -R data/sleeper /tmp/sleeper-data/
+          rm -rf data/sleeper
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           if git ls-remote --exit-code --heads origin sleeper-data >/dev/null 2>&1; then

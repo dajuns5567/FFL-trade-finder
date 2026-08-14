@@ -13,13 +13,6 @@ on:
         default: '4'
   schedule:
     - cron: '17 * * * *'
-  push:
-    branches:
-      - scoring-importer-v36
-    paths:
-      - '.github/workflows/import-sleeper-history.yml'
-      - 'scripts/import-sleeper-history.mjs'
-      - 'netlify/functions/ppr-scoring.mjs'
 
 permissions:
   contents: write

@@ -1,7 +1,7 @@
 (()=>{
 const priorLoadCore22=typeof loadCore==='function'?loadCore:null;
 const SNAPSHOT_URL='/sleeper-data/offense-history.json';
-const SLEEPER_DATA_ROOT='/sleeper-data';
+const IDP_HISTORY_URL='/.netlify/functions/idp-history';
 const OFFENSE_POS22=new Set(['QB','RB','WR','TE']);
 
 const num22=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
@@ -62,15 +62,13 @@ function mergeIdpHistory22(stats){
   state.stats=merged;
 }
 async function fetchIdpHistory22(years){
-  const out={};
-  await Promise.all(years.map(async year=>{
-    const r=await fetch(`${SLEEPER_DATA_ROOT}/${year}/season-stats.json?ts=${Date.now()}`,{cache:'no-store',headers:{accept:'application/json'}});
-    if(!r.ok)throw Error(`Sleeper IDP season ${year} ${r.status}`);
-    const rows=await r.json();
-    if(!usableIdpSeason22(rows))throw Error(`Sleeper IDP season ${year} failed validation`);
-    out[year]=rows;
-  }));
-  return out;
+  const idpIds=Object.keys(state.players||{}).filter(id=>groupPos({type:'player',id})==='IDP');
+  const r=await fetch(IDP_HISTORY_URL,{method:'POST',headers:{'content-type':'application/json',accept:'application/json'},body:JSON.stringify({years,idpIds}),cache:'no-store'});
+  if(!r.ok)throw Error(`Sleeper IDP history endpoint ${r.status}`);
+  const j=await r.json();
+  if(!j?.ok||!j?.stats)throw Error(j?.error||'Sleeper IDP history endpoint returned no verified stats');
+  for(const year of years)if(!usableIdpSeason22(j.stats?.[year]))throw Error(`Sleeper IDP season ${year} failed validation`);
+  return j.stats;
 }
 async function hydrateImportedOffense22(){
   const r=await fetch(`${SNAPSHOT_URL}?ts=${Date.now()}`,{cache:'no-store',headers:{accept:'application/json'}});
@@ -91,14 +89,14 @@ async function hydrateImportedOffense22(){
     requiredYears:years,
     availableYears:available,
     pprDiagnostics:j.seasonDiagnostics||null,
-    seasonFetchSource:Object.fromEntries(available.map(y=>[y,'verified-importer-compact-offense-plus-verified-idp-season-stats'])),
+    seasonFetchSource:Object.fromEntries(available.map(y=>[y,'verified-importer-compact-offense-plus-server-filtered-verified-idp-season-stats'])),
     seasonErrors:{},
     complete:true,
     partial:false,
     fallback:false,
     direct:false,
     imported:true,
-    source:'Sleeper importer snapshot with verified IDP season history',
+    source:'Sleeper importer snapshot with verified server-filtered IDP season history',
     qualifyingHistoricalSeasonMinimumGames:Number(j.qualifyingHistoricalSeasonMinimumGames)||8,
     pprMethod:j.pprMethod||null
   };

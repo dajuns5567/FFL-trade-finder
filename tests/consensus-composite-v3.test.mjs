@@ -31,3 +31,24 @@ test("dual-role player combines offense with a capped IDP contribution",()=>{
   assert.ok(d.consensusCompositeValue>d.offenseValue);
   assert.ok(d.consensusCompositeValue<=Math.round(d.offenseValue*1.20));
 });
+
+test("matches suffixless source name to Sleeper suffix name when position is compatible",()=>{
+  const results=[
+    result("Off A","off-a",[{player:"Kenneth Walker",rank:20,position:"RB"}]),
+    result("Off B","off-b",[{player:"Kenneth Walker",rank:22,position:"RB"}])
+  ];
+  const c=buildConsensusComposite(results,[{id:"kw3",name:"Kenneth Walker III",positions:["RB"]}]);
+  assert.ok(c.byId.kw3>0);
+  assert.equal(c.detailsById.kw3.kind,"offense");
+});
+
+test("does not assign an exact-name source row to an incompatible-position Sleeper player",()=>{
+  const results=[result("Off A","off-a",[{player:"Kenneth Walker",rank:20,position:"RB"}])];
+  const players=[
+    {id:"wrong",name:"Kenneth Walker",positions:["WR"]},
+    {id:"right",name:"Kenneth Walker III",positions:["RB"]}
+  ];
+  const c=buildConsensusComposite(results,players);
+  assert.equal(c.byId.wrong,undefined);
+  assert.ok(c.byId.right>0);
+});

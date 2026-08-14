@@ -1,6 +1,6 @@
 (()=>{
 const priorLoadQualifiedProduction=typeof loadQualifiedProduction==='function'?loadQualifiedProduction:null;
-const SNAPSHOT_ROOT='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper';
+const SNAPSHOT_ROOT='/sleeper-data';
 const PPR_WEIGHTS_CLIENT={pass_yd:.04,pass_td:4,pass_int:-2,pass_2pt:2,rush_yd:.1,rush_td:6,rush_2pt:2,rec:1,rec_yd:.1,rec_td:6,rec_2pt:2,fum_lost:-2,kr_td:6,pr_td:6,fum_rec_td:6};
 const num22=(o,k)=>{const n=Number(o?.[k]);return Number.isFinite(n)?n:0};
 function standardPpr22(s){let seen=false,pts=0;for(const [k,w] of Object.entries(PPR_WEIGHTS_CLIENT)){if(Number.isFinite(Number(s?.[k])))seen=true;pts+=num22(s,k)*w}return seen?Number(pts.toFixed(4)):null}

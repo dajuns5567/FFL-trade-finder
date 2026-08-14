@@ -10,6 +10,12 @@
   pretty_urls = false
 
 [[redirects]]
+  from = "/sleeper-data/*"
+  to = "https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/"
   to = "/.netlify/functions/site-v17"
   status = 200

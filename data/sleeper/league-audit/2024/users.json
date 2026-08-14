@@ -1,0 +1,641 @@
+[
+  {
+    "avatar": "405213591fe488220f2f4f79d9cc28eb",
+    "display_name": "stewshakes",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/341b098c6d6e1c6fdbe2d25cbe82d4ce.jpg",
+      "mention_pn": "on",
+      "team_name": "Chicago Bears"
+    },
+    "settings": null,
+    "user_id": "464475491546427392"
+  },
+  {
+    "avatar": "08dcdee4f12437e1a3df0870ff73bacb",
+    "display_name": "Frellace14",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "off",
+      "archived": "off",
+      "avatar": "https://sleepercdn.com/images/mascots_v2/12_Titan/idle-mobile-small.gif",
+      "league_report_pn": "on",
+      "mascot_message": "off",
+      "mention_pn": "on",
+      "player_like_pn": "on",
+      "player_nickname_update": "off",
+      "team_name": "Tampa Bay Buccaneers",
+      "team_name_update": "off",
+      "trade_block_pn": "off",
+      "transaction_commissioner": "on",
+      "transaction_free_agent": "off",
+      "transaction_trade": "on",
+      "transaction_waiver": "off",
+      "user_message_pn": "off"
+    },
+    "settings": null,
+    "user_id": "600418187745492992"
+  },
+  {
+    "avatar": "30d82652664d1491b69135b62e05fa02",
+    "display_name": "Brey92597",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "archived": "off",
+      "avatar": "https://sleepercdn.com/uploads/dba5997992cb8dbf04f27c8d769d8680.jpg",
+      "league_report_pn": "on",
+      "mascot_message": "off",
+      "mention_pn": "on",
+      "player_like_pn": "off",
+      "player_nickname_update": "off",
+      "team_name": "Houston Texans",
+      "team_name_update": "off",
+      "trade_block_pn": "off",
+      "transaction_commissioner": "off",
+      "transaction_free_agent": "on",
+      "transaction_trade": "on",
+      "transaction_waiver": "off",
+      "user_message_pn": "off"
+    },
+    "settings": null,
+    "user_id": "600422464798912512"
+  },
+  {
+    "avatar": "34bd6c447cc53bc42ae3c6461eecfe52",
+    "display_name": "HOTA",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "off",
+      "archived": "off",
+      "avatar": "https://sleepercdn.com/uploads/e3bfae16509fbeaf97a5956c318410ef.jpg",
+      "league_report_pn": "off",
+      "mascot_message": "off",
+      "mention_pn": "on",
+      "player_like_pn": "off",
+      "player_nickname_update": "off",
+      "team_name": "Buffalo Bills",
+      "team_name_update": "off",
+      "trade_block_pn": "off",
+      "transaction_commissioner": "off",
+      "transaction_free_agent": "off",
+      "transaction_trade": "on",
+      "transaction_waiver": "off",
+      "user_message_pn": "off"
+    },
+    "settings": null,
+    "user_id": "600447396530413568"
+  },
+  {
+    "avatar": "5819ba3ce053e0092b158a7e51337cdd",
+    "display_name": "Susyphus",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "archived": "on",
+      "avatar": "https://sleepercdn.com/uploads/6295c3444abfd6ea08a44c980a38c02a.jpg",
+      "mention_pn": "on",
+      "team_name": "Washington Commanders"
+    },
+    "settings": null,
+    "user_id": "601868706330505216"
+  },
+  {
+    "avatar": "6d4e5b0774ff7fa2d0d8e4538d6f63fc",
+    "display_name": "Mike3Spedale",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "avatar": "https://sleepercdn.com/uploads/41ff3e62a80badd350ac90a5e72dbc6d.jpg",
+      "mention_pn": "on",
+      "team_name": "Cleveland Browns"
+    },
+    "settings": null,
+    "user_id": "710560632327454720"
+  },
+  {
+    "avatar": "b3338675f635c2c1f42b469621d38ec6",
+    "display_name": "JustInTheF1elds",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/ff7e7b8f539aac5cd0f7304aebd6c6f2.jpg",
+      "mention_pn": "on",
+      "team_name": "New England Patriots"
+    },
+    "settings": null,
+    "user_id": "712323182941536256"
+  },
+  {
+    "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
+    "display_name": "TomKatz",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/2997aae37d72e2746af4951ccf985358.jpg",
+      "mention_pn": "on",
+      "team_name": "Detroit Lions"
+    },
+    "settings": null,
+    "user_id": "729929924969865216"
+  },
+  {
+    "avatar": "d55d1f7075eda01948318de4af616075",
+    "display_name": "ImQuinning",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/images/v2/avatars/avatar_default_blue.webp",
+      "mention_pn": "on",
+      "team_name": "Carolina Panthers"
+    },
+    "settings": null,
+    "user_id": "736949448093097984"
+  },
+  {
+    "avatar": "f1676eb49a97970902a4c567282feb29",
+    "display_name": "Vicinanzo13",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "archived": "on",
+      "avatar": "https://sleepercdn.com/uploads/55110f0aa7773ae20eb17d3df2afebbb.jpg",
+      "mention_pn": "on",
+      "team_name": "Las Vegas Raiders "
+    },
+    "settings": null,
+    "user_id": "817936222621122560"
+  },
+  {
+    "avatar": "e7af4deab0289b4f5505646424895246",
+    "display_name": "Jgeiss22",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "avatar": "https://sleepercdn.com/uploads/20bc3a9ae094daad026156e7ce84559b.jpg",
+      "mention_pn": "on",
+      "team_name": "Minnesota Vikings"
+    },
+    "settings": null,
+    "user_id": "858596140008984576"
+  },
+  {
+    "avatar": "8eb8f8bf999945d523f2c4033f70473e",
+    "display_name": "Jdoc2000",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "avatar": "https://sleepercdn.com/uploads/d696975276aa4a0df28b3d40d048df3c.jpg",
+      "mention_pn": "on",
+      "team_name": "Jacksonville Jags"
+    },
+    "settings": null,
+    "user_id": "859609459952074752"
+  },
+  {
+    "avatar": "f0edbf4278f53f9425db175073df6584",
+    "display_name": "dajunst",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "avatar": "https://sleepercdn.com/uploads/bb7337326edb54430da61e26124dc96d.jpg",
+      "mention_pn": "on",
+      "team_name": "New Orleans Saints"
+    },
+    "settings": null,
+    "user_id": "865264007848808448"
+  },
+  {
+    "avatar": "e7af4deab0289b4f5505646424895246",
+    "display_name": "slawson98",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "off",
+      "archived": "off",
+      "avatar": "https://sleepercdn.com/uploads/ee2044c5fd738012c70c1bf26e8dcc61.jpg",
+      "league_report_pn": "on",
+      "mascot_message": "off",
+      "mention_pn": "on",
+      "player_like_pn": "on",
+      "player_nickname_update": "off",
+      "team_name": "Indianapolis Colts ",
+      "team_name_update": "on",
+      "trade_block_pn": "on",
+      "transaction_commissioner": "on",
+      "transaction_free_agent": "on",
+      "transaction_trade": "on",
+      "transaction_waiver": "on",
+      "user_message_pn": "on"
+    },
+    "settings": null,
+    "user_id": "867991923552579584"
+  },
+  {
+    "avatar": "b3338675f635c2c1f42b469621d38ec6",
+    "display_name": "Karp32",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/c04166238e7f932b3a87ac03a7c6e2c5.jpg",
+      "league_report_pn": "off",
+      "mascot_message": "off",
+      "mention_pn": "on",
+      "player_like_pn": "off",
+      "player_nickname_update": "off",
+      "team_name": "Los Angeles Chargers ",
+      "team_name_update": "off",
+      "trade_block_pn": "off",
+      "transaction_commissioner": "off",
+      "transaction_free_agent": "off",
+      "transaction_trade": "off",
+      "transaction_waiver": "off",
+      "user_message_pn": "off"
+    },
+    "settings": null,
+    "user_id": "987377632494825472"
+  },
+  {
+    "avatar": "b566a5971df8569ee52d176a24b7f14e",
+    "display_name": "xBRYANZAOx",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "archived": "on",
+      "avatar": "https://sleepercdn.com/uploads/b63c9a37cbd2bcb86df86f0899fe6d63.jpg",
+      "mention_pn": "on",
+      "team_name": "Da NY Futbol Giants"
+    },
+    "settings": null,
+    "user_id": "990379635521228800"
+  },
+  {
+    "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
+    "display_name": "hudballers",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/abb902c5fd387f9232ad9cbeff6255f3.jpg",
+      "mention_pn": "on",
+      "team_name": "Cincinnati Bungals"
+    },
+    "settings": null,
+    "user_id": "992186817011044352"
+  },
+  {
+    "avatar": "b3338675f635c2c1f42b469621d38ec6",
+    "display_name": "Petesmith523",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "off",
+      "avatar": "https://sleepercdn.com/uploads/a96bef7eee75490f7d92fc79d3b7c21f.jpg",
+      "league_report_pn": "off",
+      "mascot_message": "on",
+      "mention_pn": "on",
+      "player_like_pn": "off",
+      "player_nickname_update": "off",
+      "team_name": "Atlanta Falcons",
+      "team_name_update": "off",
+      "trade_block_pn": "on",
+      "transaction_commissioner": "on",
+      "transaction_free_agent": "off",
+      "transaction_trade": "on",
+      "transaction_waiver": "off",
+      "user_message_pn": "off"
+    },
+    "settings": null,
+    "user_id": "993238021132660736"
+  },
+  {
+    "avatar": "4f4090e5e9c3941414db40a871e3e909",
+    "display_name": "nickpolidore",
+    "is_bot": false,
+    "is_owner": true,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/c9d119e18c2c041f0d5215afc655b10c.jpg",
+      "league_report_pn": "on",
+      "mascot_message": "on",
+      "mention_pn": "on",
+      "player_like_pn": "on",
+      "player_nickname_update": "on",
+      "team_name": "Miami Dolphins",
+      "team_name_update": "on",
+      "trade_block_pn": "on",
+      "transaction_commissioner": "on",
+      "transaction_free_agent": "on",
+      "transaction_trade": "on",
+      "transaction_waiver": "on",
+      "user_message_pn": "on"
+    },
+    "settings": null,
+    "user_id": "1113981810230403072"
+  },
+  {
+    "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
+    "display_name": "ryanpuccino",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "archived": "off",
+      "avatar": "https://sleepercdn.com/uploads/8638a6d72791129142d583740e5efe86.jpg",
+      "mention_pn": "on",
+      "team_name": "Pittsburgh Steelers"
+    },
+    "settings": null,
+    "user_id": "1114044533941133312"
+  },
+  {
+    "avatar": "82aec8e811b839b8ec25d7b458afd57b",
+    "display_name": "BrooksLong",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "off",
+      "allow_sms": "on",
+      "avatar": "https://sleepercdn.com/uploads/1a73c687c1a23003be376c7a5220e14d.jpg",
+      "league_report_pn": "on",
+      "mascot_message": "off",
+      "mention_pn": "on",
+      "player_like_pn": "on",
+      "player_nickname_update": "off",
+      "team_name": "LA Rams",
+      "team_name_update": "off",
+      "trade_block_pn": "on",
+      "transaction_commissioner": "on",
+      "transaction_free_agent": "off",
+      "transaction_trade": "on",
+      "transaction_waiver": "off",
+      "user_message_pn": "off"
+    },
+    "settings": null,
+    "user_id": "1114225229640945664"
+  },
+  {
+    "avatar": "2954af518c08da30113478de59d8fab4",
+    "display_name": "jakeslomiak21",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "avatar": "https://sleepercdn.com/uploads/4a2065dd27d8a8bcc75d9683bc515605.jpg",
+      "league_report_pn": "off",
+      "mascot_message": "on",
+      "mention_pn": "on",
+      "player_like_pn": "on",
+      "player_nickname_update": "off",
+      "team_name": "Denver Broncos ",
+      "team_name_update": "off",
+      "trade_block_pn": "on",
+      "transaction_commissioner": "on",
+      "transaction_free_agent": "off",
+      "transaction_trade": "on",
+      "transaction_waiver": "off",
+      "user_message_pn": "on"
+    },
+    "settings": null,
+    "user_id": "1114227883914022912"
+  },
+  {
+    "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
+    "display_name": "cjminnich",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "off",
+      "avatar": "https://sleepercdn.com/uploads/6549c201fcdd357649e7cfb304025f8b.jpg",
+      "league_report_pn": "off",
+      "mascot_message": "off",
+      "mention_pn": "on",
+      "player_like_pn": "on",
+      "player_nickname_update": "off",
+      "team_name": "Baltimore Ravens",
+      "team_name_update": "off",
+      "trade_block_pn": "on",
+      "transaction_commissioner": "on",
+      "transaction_free_agent": "on",
+      "transaction_trade": "on",
+      "transaction_waiver": "on",
+      "user_message_pn": "on"
+    },
+    "settings": null,
+    "user_id": "1114297344201166848"
+  },
+  {
+    "avatar": "f0edbf4278f53f9425db175073df6584",
+    "display_name": "kevinfalkenstein",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "avatar": "https://sleepercdn.com/uploads/ff53bf15519fdee9755a561bd4aaf361.jpg",
+      "mention_pn": "on",
+      "team_name": "New York Jets "
+    },
+    "settings": null,
+    "user_id": "1114320606398423040"
+  },
+  {
+    "avatar": "4f4090e5e9c3941414db40a871e3e909",
+    "display_name": "ldbienstock",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "off",
+      "avatar": "https://sleepercdn.com/uploads/2e1a0897c3d19a286a16fc7cfd742974.jpg",
+      "league_report_pn": "on",
+      "mascot_message": "on",
+      "mention_pn": "on",
+      "player_like_pn": "on",
+      "player_nickname_update": "on",
+      "team_name": "Seattle Seahawks",
+      "team_name_update": "on",
+      "trade_block_pn": "on",
+      "transaction_commissioner": "on",
+      "transaction_free_agent": "on",
+      "transaction_trade": "on",
+      "transaction_waiver": "on",
+      "user_message_pn": "on"
+    },
+    "settings": null,
+    "user_id": "1116409937254555648"
+  },
+  {
+    "avatar": "f0edbf4278f53f9425db175073df6584",
+    "display_name": "BL9",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/2ed827e12f4eb8ddec1724d94a9d28c4.jpg",
+      "mention_pn": "on",
+      "team_name": "Arizona Cardinals"
+    },
+    "settings": null,
+    "user_id": "1117219210041643008"
+  },
+  {
+    "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
+    "display_name": "scornejo300",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/10d3c70b5ff8797d85c86cdeb9ea19b0.jpg",
+      "mention_pn": "on",
+      "team_name": "Dallas Cowboys"
+    },
+    "settings": null,
+    "user_id": "1118948474361401344"
+  },
+  {
+    "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
+    "display_name": "drbrayden",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/380e1095a604fbc4df832f5799ef1755.jpg",
+      "mention_pn": "on",
+      "team_name": "San Francisco 49ers"
+    },
+    "settings": null,
+    "user_id": "1118949143743012864"
+  },
+  {
+    "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
+    "display_name": "joeydelia9",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/6a6f59f1a6c29e25b44569b4df79085a.jpg",
+      "mention_pn": "on",
+      "team_name": "Green Bay Packers"
+    },
+    "settings": null,
+    "user_id": "1118961997346873344"
+  },
+  {
+    "avatar": "8eb8f8bf999945d523f2c4033f70473e",
+    "display_name": "TyScally",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "off",
+      "avatar": "https://sleepercdn.com/uploads/f3df57542d90ffa6809b39ae17ad9879.jpg",
+      "league_report_pn": "on",
+      "mascot_message": "on",
+      "mention_pn": "on",
+      "player_like_pn": "on",
+      "player_nickname_update": "on",
+      "team_name": "Kansas City Chiefs ",
+      "team_name_update": "on",
+      "trade_block_pn": "on",
+      "transaction_commissioner": "on",
+      "transaction_free_agent": "on",
+      "transaction_trade": "on",
+      "transaction_waiver": "on",
+      "user_message_pn": "on"
+    },
+    "settings": null,
+    "user_id": "1118978561446207488"
+  },
+  {
+    "avatar": "15d7cf259bc30eab8f6120f45f652fb6",
+    "display_name": "tmacadelic",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/d99ec49f07c2a08d44993726861816f1.jpg",
+      "mention_pn": "on",
+      "team_name": "Philiadelphia Eagles "
+    },
+    "settings": null,
+    "user_id": "1119001231508373504"
+  },
+  {
+    "avatar": "f0edbf4278f53f9425db175073df6584",
+    "display_name": "wyocum3",
+    "is_bot": false,
+    "is_owner": null,
+    "league_id": "1113982138841436160",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/b6cedb0c8e6c7a4d3c41f4b414c0943e.jpg",
+      "league_report_pn": "off",
+      "mascot_message": "off",
+      "mention_pn": "on",
+      "player_like_pn": "on",
+      "player_nickname_update": "off",
+      "team_name": "Tennesee Titans",
+      "team_name_update": "off",
+      "trade_block_pn": "on",
+      "transaction_commissioner": "off",
+      "transaction_free_agent": "off",
+      "transaction_trade": "on",
+      "transaction_waiver": "off",
+      "user_message_pn": "on"
+    },
+    "settings": null,
+    "user_id": "1129152499471986688"
+  }
+]

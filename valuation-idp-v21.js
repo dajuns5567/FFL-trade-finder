@@ -20,7 +20,6 @@ function realIdpScore(id){
   for(const [key,weightRaw] of Object.entries(settings)){
    const weight=Number(weightRaw||0);if(!weight)continue;const qty=statNumber(s,key);if(!qty)continue;const pts=qty*weight;points+=pts;breakdown[key]={qty,weight,points:pts};if(PREMIUM_KEYS.has(key))premiumPoints+=pts;
   }
-  // Sleeper's PPR column is preserved as a reference when present, but IDP value is driven by this league's actual defensive scoring above.
   const pprRef=Number.isFinite(Number(s.pts_ppr))?Number(s.pts_ppr):null;
   samples.push({season:y,games:gp,points,ppg:points/gp,premiumPoints,premiumPpg:premiumPoints/gp,pprRef,breakdown});if(samples.length===3)break;
  }
@@ -30,19 +29,18 @@ function realIdpScore(id){
  return{seasons:samples.length,ppg,premiumPpg,confidence:seasonConfidence*gameConfidence,samples};
 }
 function percentile(arr,x){if(!arr.length)return.5;const a=arr.slice().sort((m,n)=>m-n);let below=0,equal=0;for(const v of a){if(v<x)below++;else if(v===x)equal++}return clamp21(.01,(below+.5*equal)/a.length,.99)}
-let distCacheKey='',distCache=null;
+let distCache=null,distStatsRef=null;
 function idpDistributions(){
- const years=Object.keys(state.stats||{}).join('|'),key=`${years}|${Object.keys(state.players||{}).length}`;if(distCache&&distCacheKey===key)return distCache;
+ if(distCache&&distStatsRef===state.stats)return distCache;
  const groups={front:{ppg:[],premium:[]},lb:{ppg:[],premium:[]},db:{ppg:[],premium:[]},idp:{ppg:[],premium:[]},all:{ppg:[],premium:[]}};
  const ids=new Set();for(const y of Object.keys(state.stats||{}))for(const id of Object.keys(state.stats?.[y]||{}))ids.add(String(id));
  for(const id of ids){if(groupPos({type:'player',id})!=='IDP')continue;const rs=realIdpScore(id);if(!rs.seasons)continue;const g=idpProfile21(id);groups[g].ppg.push(rs.ppg);groups[g].premium.push(rs.premiumPpg);groups.all.ppg.push(rs.ppg);groups.all.premium.push(rs.premiumPpg)}
- distCacheKey=key;distCache=groups;return groups;
+ distStatsRef=state.stats;distCache=groups;return groups;
 }
 function idpContext21(id,consensus){
  const rs=realIdpScore(id),profile=idpProfile21(id),dists=idpDistributions(),g=(dists[profile]?.ppg.length>=20?dists[profile]:dists.all);
  if(!rs.seasons){const scarcity={front:1.10,lb:1.03,db:.98,idp:1}[profile]||1;return{value:consensus*scarcity*ageFactor21(id),rs,ppgPct:null,premiumPct:null,index:null}}
  const ppgPct=percentile(g.ppg,rs.ppg),premiumPct=percentile(g.premium,rs.premiumPpg);
- // Actual league PPG is dominant. Premium-event percentile is a smaller sustainability/profile signal; stacked sack/INT scoring is already present in PPG because every recorded category is summed with the league's real weight.
  const rawIndex=.78*ppgPct+.17*premiumPct+.05*Math.min(1,rs.seasons/3);
  const index=.50+rs.confidence*(rawIndex-.50);
  const cfg={front:{floor:220,ceiling:1750},lb:{floor:210,ceiling:1550},db:{floor:175,ceiling:1325},idp:{floor:190,ceiling:1450}}[profile]||{floor:190,ceiling:1450};
@@ -52,20 +50,18 @@ function idpContext21(id,consensus){
 function universe21(){const ids=new Set(state.allAssets.filter(x=>x.type==='player').map(x=>String(x.id)));for(const id of Object.keys(state.consensusComposite?.byId||{}))ids.add(String(id));return[...ids].filter(id=>state.players?.[id]?.fantasy_positions?.length).map(id=>({type:'player',id,owner:state.allAssets.find(x=>x.type==='player'&&String(x.id)===id)?.owner??null}))}
 function model21(x,legacyById){
  if(groupPos(x)!=='IDP')return legacyById.get(String(x.id))||{x,value:1,consensus:null,context:null,fallback:true};
- const c=consensus21(x.id),ctx=c? idpContext21(x.id,c):null,rs=ctx?.rs||realIdpScore(x.id);
+ const c=consensus21(x.id),ctx=c?idpContext21(x.id,c):null,rs=ctx?.rs||realIdpScore(x.id);
  if(!c){if(rs.seasons){const prod=idpContext21(x.id,250);return{x,value:Math.max(40,Math.min(520,Math.round(prod.value*(.22+.22*rs.confidence)))),consensus:null,context:Math.round(prod.value),fallback:true}}return{x,value:1,consensus:null,context:null,fallback:true}}
  let value=.50*c+.50*ctx.value;const rank=Number(detail21(x.id)?.idpRank);
  value=clamp21(c*.70,value,Math.max(c*3.2,c+1050));if(Number.isFinite(rank)&&rank<=20)value=Math.max(value,c*.92);
  return{x,value:Math.max(1,Math.round(value)),consensus:Math.round(c),context:Math.round(ctx.value),fallback:false,production:ctx};
 }
-masterRankings=function(){
- const legacy=legacyMasterRankings(),legacyById=new Map(legacy.map(z=>[String(z.x.id),z]));return universe21().map(x=>model21(x,legacyById)).sort((a,b)=>b.value-a.value);
-};
+masterRankings=function(){const legacy=legacyMasterRankings(),legacyById=new Map(legacy.map(z=>[String(z.x.id),z]));return universe21().map(x=>model21(x,legacyById)).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};
 playerRankValue=function(x){const arr=ensureMaster(),i=arr.findIndex(z=>String(z.x.id)===String(x.id));if(i<0)return{rank:999,value:1,tier:9,consensus:null,context:null};const z=arr[i],rank=i+1,tiers=[12,24,48,80,120,180,260,400,9999];let tier=tiers.findIndex(m=>rank<=m);if(tier<0)tier=8;return{rank,value:z.value,tier:tier+1,consensus:z.consensus,context:z.context}};
 baseValue=function(x){if(x.type==='pick')return pickValue(x);if(valueCache.has(x.id))return valueCache.get(x.id);const v=playerRankValue(x).value;valueCache.set(x.id,v);return v};
 assetLabel=function(x){if(x.type==='pick')return x.name;const m=playerRankValue(x),cv=m.consensus==null?'fallback':m.consensus;return `${playerName(x.id)} <span class="muted">(${groupPos(x)} • CV ${cv} • TV ${m.value})</span>`};
 window.idpScoringAudit=function(nameOrId){const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(id=>playerName(id).toLowerCase()===q);if(!id)return null;const c=consensus21(id),ctx=c?idpContext21(id,c):idpContext21(id,250);return{id,name:playerName(id),profile:idpProfile21(id),consensus:c,context:Math.round(ctx.value),ppg:Number(ctx.rs.ppg.toFixed(2)),premiumPpg:Number(ctx.rs.premiumPpg.toFixed(2)),qualifyingSeasons:ctx.rs.seasons,confidence:Number(ctx.rs.confidence.toFixed(3)),ppgPercentile:ctx.ppgPct==null?null:Number((ctx.ppgPct*100).toFixed(1)),premiumPercentile:ctx.premiumPct==null?null:Number((ctx.premiumPct*100).toFixed(1)),seasons:ctx.rs.samples};};
 masterRankCache=null;valueCache.clear();fitCache.clear();stageCache.clear();
-const model=document.querySelector('#settings .card');if(model){const n=document.createElement('div');n.className='notice success';n.innerHTML='V21 IDP context: <b>IDP remains 50% consensus + 50% league-specific context</b>. The league-specific half now uses actual weekly Sleeper scoring from this league, 8+ game qualifying seasons, 50/30/20 recency weighting, same-position PPG percentile, premium-event scoring percentile, sample confidence, age and IDP scarcity. Stacked sacks/interceptions are counted through the actual stat categories Sleeper recorded on each play/season; no synthetic sack or interception points are invented. Offensive valuation is unchanged.';model.appendChild(n)}
+const model=document.querySelector('#settings .card');if(model){const n=document.createElement('div');n.className='notice success';n.innerHTML='V21 IDP context: <b>IDP remains 50% consensus + 50% league-specific context</b>. The league-specific half now uses actual weekly Sleeper scoring from this league, 8+ game qualifying seasons, 50/30/20 recency weighting, same-position PPG percentile, premium-event scoring percentile, sample confidence, age and IDP scarcity. Stacked sacks/interceptions are counted through the actual stat categories Sleeper recorded; no synthetic sack or interception points are invented. Sleeper PPR is retained as a reference where present, while IDP value uses the league-specific defensive scoring. Offensive valuation is unchanged.';model.appendChild(n)}
 })();

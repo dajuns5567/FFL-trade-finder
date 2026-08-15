@@ -4,9 +4,31 @@ This file is for development planning only. It is intentionally separate from pr
 
 ## Current protected production checkpoint
 
-V89 production state: `591a9bee1d9e12ea33070413c96a3efad13218a8`
+Known-good deployed production state as of 2026-08-15: V94 commit `eb1eea7e1dd5b394555a2ae659247a429c91957f`.
 
-The protected rollback branch should remain an exact code checkpoint and should not be modified merely to update these notes.
+Protected rollback branches:
+- `preserve-v94-before-package-adjustment`
+- `checkpoint-production-v94-2026-08-15`
+
+These branches are exact code checkpoints and must not be modified merely to update notes. The currently staged V95/V96 trade-engine work is not production until explicitly deployed.
+
+## Persistent architecture guardrails — do not forget
+
+1. Player valuation is independent from Trade Finder / Trade Evaluator logic. Trade-engine work may read existing player Values and ranks but must not modify how CV, TV, Value, consensus, scoring, offense valuation, IDP valuation, overall rank, or positional rank are calculated.
+2. Display precision may expose already-existing differences that were hidden by final rounding, but it must not create new valuation differences, reorder players, or change ranks.
+3. Draft picks are a separate asset class from players. Draft-pick calculations must never feed into player valuation or player ranking.
+4. Draft-pick ownership and original-pick attachment come from Sleeper imported data. The public projection document never assigns ownership and is used only for projected team strength / slot / context.
+5. The public projection document is read-only. FFL Trade Market must never write to or edit it.
+6. Trade Finder / Evaluator fairness is a unified system. 100/100 means the best mutually reasonable trade; increasingly unequal trades score lower; clearly unacceptable deals are labeled Trade Rejected.
+7. Team direction, roster fit, projection context, selected trade type, and partner fit may influence which trade is recommended and how rationale is written, but they may not change player Value.
+8. A trade-only package/consolidation adjustment may be used to prevent many lesser assets from adding up mechanically to a premium asset. This adjustment belongs only to the transaction, never to the player or pick. Raw asset Values must remain visible separately from any trade-only adjustment.
+9. Trade-only consolidation adjustment must scale progressively: premium/high-end players receive stronger adjustment when acquired for fragmented lesser packages; mid-tier players can receive smaller adjustment when many low-tier assets are consolidated for them. Similar-quality assets should receive little or no adjustment.
+10. Trade Finder should support Tier Up / Neutral / Tier Down, a specific desired position, and a package-assistance choice allowing the Finder either to add unselected assets when needed or use only user-selected outgoing assets.
+11. When a specific position is requested, that position should be a meaningful incoming centerpiece rather than a token throw-in beside the true value of the package.
+12. Large Trade Evaluator packages should show totals and the first three assets on each side by default, with a View full details control for additional assets.
+13. Recommended and evaluated trades should clearly separate YOU RECEIVE / YOU SEND, individual asset Values, raw totals, trade-only adjustment when applicable, fairness status, and rationale.
+14. Trade rationale should include a plain-English football/trade-market explanation plus value comparison and projection context.
+15. No staging or notes change authorizes deployment. Move production only after explicit user deployment approval.
 
 ## Incomplete tasks
 

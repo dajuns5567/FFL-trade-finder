@@ -10,7 +10,9 @@ Protected rollback branches:
 - `preserve-v94-before-package-adjustment`
 - `checkpoint-production-v94-2026-08-15`
 
-These branches are exact code checkpoints and must not be modified merely to update notes. The currently staged V95/V96 trade-engine work is not production until explicitly deployed.
+These branches are exact code checkpoints and must not be modified merely to update notes.
+
+Current staged trade-engine refinement: V96 branch `stage-v96-progressive-package-adjustment`, tip `047f25034126ea20fb2c228e065b5e1f72fe7b40`. It is not production until explicitly deployed.
 
 ## Persistent architecture guardrails — do not forget
 

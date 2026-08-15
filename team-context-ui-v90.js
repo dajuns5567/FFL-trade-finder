@@ -1,0 +1,9 @@
+(()=>{
+function norm90ui(s){return String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
+function outlookLine90(id){const z=window.teamContextOutlook90?.(id);if(!z)return'';return `<div class="tiny muted team-context-line90" style="margin-top:3px">Projection: <b>${esc(z.phase)}</b> • power #${z.rank} • ${z.expWins.toFixed(1)} exp wins • ${(z.playoff*100).toFixed(1)}% playoff • ${(z.title*100).toFixed(1)}% title</div>`}
+function decorateFinder90(){const cards=[...document.querySelectorAll('#finderResults .result')];for(const card of cards){if(card.querySelector('.team-context-line90'))continue;const b=card.querySelector('.top > div:first-child > b');if(!b)continue;const txt=String(b.textContent||'').replace(/^#\d+\s+/,'').trim(),team=(state.teams||[]).find(t=>norm90ui(t.name)===norm90ui(txt));if(team)b.insertAdjacentHTML('afterend',outlookLine90(team.id))}}
+function decorateSelected90(){const sel=document.getElementById('findTeam'),box=document.getElementById('myTeamStage');if(!sel||!box)return;const id=Number(sel.value);box.querySelector?.('.team-context-selected90')?.remove();const z=window.teamContextOutlook90?.(id);if(!z)return;const span=document.createElement('div');span.className='team-context-selected90';span.innerHTML=`Projection outlook: <b>${esc(z.phase)}</b> • #${z.rank} • ${(z.playoff*100).toFixed(1)}% playoff`;box.appendChild(span)}
+if(typeof runFinder==='function'){const priorRun90=runFinder;runFinder=async function(){const r=await priorRun90();decorateFinder90();return r};const btn=document.getElementById('runFinder');if(btn)btn.onclick=runFinder}
+const sel=document.getElementById('findTeam');if(sel)sel.addEventListener('change',()=>setTimeout(decorateSelected90,20));
+window.decorateTeamContext90=()=>{decorateFinder90();decorateSelected90()};setTimeout(window.decorateTeamContext90,50);
+})();

@@ -7,3 +7,5 @@ The adjustment scales smoothly with the existing Value of the stronger centerpie
 Current V97 rollback checkpoints remain preserved on `preserve-v97-before-v98` and `checkpoint-production-v97-2026-08-15`.
 
 Deployment rule: only the V98 trade engine, V98 UI stylesheet, loader activation, and this documentation may differ from V97 production.
+
+This note documents the deployed behavior and is not executable site logic.

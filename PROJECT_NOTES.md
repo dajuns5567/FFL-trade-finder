@@ -13,6 +13,9 @@ The protected rollback branch should remain an exact code checkpoint and should 
 1. Correct remaining IDP valuation archetypes, including the type of profile represented by Nick Bosa, without player-specific calculation conditions.
 2. Refine Trade Finder logic.
 3. Improve information-sourcing/startup efficiency to reduce initial load time without sacrificing data accuracy, refresh behavior, Sleeper data, consensus ingestion, valuation methodology, or calculations.
+4. Develop visual aid for Trade Evaluator.
+5. Comprehensive rationale for Trade Finder and Trade Evaluator.
+6. Value adjustment within Trade Finder and Trade Evaluator results.
 
 ## Completed / remove from incomplete list
 

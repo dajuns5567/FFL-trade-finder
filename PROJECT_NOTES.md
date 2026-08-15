@@ -17,6 +17,23 @@ The protected rollback branch should remain an exact code checkpoint and should 
 5. Comprehensive rationale for Trade Finder and Trade Evaluator.
 6. Value adjustment within Trade Finder and Trade Evaluator results.
 
+## Ideas proposed by ChatGPT
+
+These are proposals only. They are not approved implementation tasks and do not authorize any code, valuation, UI, architecture, or deployment changes.
+
+1. Team Direction / Roster Profile — characterize franchises as contender, competitive, retooling, rebuilding, etc., using roster value, age, positional strength, and draft capital strictly for partner-selection context, never player valuation.
+2. Trade Finder “Why This Team?” — explain why a suggested partner is a logical fit based on roster construction, positional depth, and draft capital.
+3. Trade Market / Asset Availability — allow assets to be marked Untouchable, Available, or Actively Shopping as preference signals only.
+4. Roster Value Dashboard — show total player value, offensive value, IDP value, draft capital, average roster age, and top-end assets by franchise.
+5. Position Strength Dashboard — rank each franchise’s QB/RB/WR/TE/IDP strength using existing rankings.
+6. Trade Block — allow users to mark players/picks they are willing to move and have Trade Finder search around those assets.
+7. Package Builder / Make It Fair — suggest the smallest realistic asset addition/removal that brings an uneven trade toward an acceptable range.
+8. Trade Finder Constraints — support preferences such as desired position, desired draft picks, protected assets, package shape, or excluding IDPs.
+9. League Asset Search — search any player and immediately view value, rank, position rank, owner, NFL team, comparable assets, and realistic potential buyers.
+10. Value History — periodically snapshot values for historical viewing without allowing historical values to influence current valuation.
+11. Draft Capital Dashboard — show picks owned by year, projected slots, individual values, total draft capital, and league rank.
+12. Shareable Trade Card — generate a clean visual trade summary containing teams, assets, values, fairness assessment, and rationale.
+
 ## Completed / remove from incomplete list
 
 - Rookie filtering on Player Values, including offense, defense, and position combinations.

@@ -15,10 +15,10 @@ function packageAdjustment(a,b){
     const stud=clamp(.25,(premium-3000)/3000,1);
     const disparity=clamp(0,premium/Math.max(1,otherMax)-1.35,1.2);
     const fragmentation=clamp(1,1+(otherCount-2)*.22,1.55);
-    return premium*(.13+.06*stud+.035*disparity)*fragmentation;
+    return premium*(.115+.06*stud+.035*disparity)*fragmentation;
   }
-  if(amax>bmax){aa=calc(amax,a,bmax,(b||[]).length);if(aa)reason='Side A receives a consolidation premium for giving up the more valuable centerpiece.'}
-  else if(bmax>amax){ba=calc(bmax,b,amax,(a||[]).length);if(ba)reason='Side B receives a consolidation premium for giving up the more valuable centerpiece.'}
+  if(amax>bmax){aa=calc(amax,a,bmax,(b||[]).length);if(aa)reason='The package containing the more valuable centerpiece receives a consolidation premium.'}
+  else if(bmax>amax){ba=calc(bmax,b,amax,(a||[]).length);if(ba)reason='The package containing the more valuable centerpiece receives a consolidation premium.'}
   return{aRaw:ar,bRaw:br,aAdj:aa,bAdj:ba,aEffective:ar+aa,bEffective:br+ba,reason,amax,bmax};
 }
 function fairnessV95(give,recv){
@@ -37,7 +37,7 @@ function phase(id){return window.teamContextOutlook90?.(Number(id))||null}
 function fit(me,other,mode,give,recv){const c=Number(window.teamContextTradeFit90?.(me,other,mode,give,recv))||0;let n=0;try{n=(recv||[]).reduce((s,x)=>s+(Number(teamFit(x,me))||0),0)+(give||[]).reduce((s,x)=>s+(Number(teamFit(x,other))||0),0)}catch(_){}return clamp(0,50+c*5+n/260,100)}
 function rationale(me,other,give,recv,mode,tier,f){const mine=teamName(me),them=teamName(other),a=phase(me),b=phase(other),out=[];if(f.rejected){out.push(`This trade is rejected because the adjusted package values are too far apart. Raw totals alone make the deal look closer than it is, but the side giving up the premium centerpiece is not being compensated enough for consolidating multiple lesser assets into one higher-end asset.`)}else if(f.score>=94)out.push('This is a strong two-way trade. The raw totals and the trade-adjusted package values are both close enough that roster construction and team direction can reasonably determine preference.');else out.push('This trade is within the negotiable range, but the side surrendering the stronger centerpiece or more concentrated value should have a clear strategic reason to accept the package.');
   out.push(`Raw value comparison: ${mine} sends ${fmt(f.aRaw)} and receives ${fmt(f.bRaw)} (${f.edgeRaw>=0?'+':''}${fmt(f.edgeRaw)}).`);
-  if(f.aAdj||f.bAdj)out.push(`Trade-only Value Adjustment: ${f.aAdj?mine:them} receives a ${fmt(f.aAdj||f.bAdj)} package adjustment for premium-asset concentration, roster-spot consolidation, and the gap between the top assets. This adjustment changes trade fairness only; it does not change any player or pick Value.`);
+  if(f.aAdj||f.bAdj)out.push(`Trade-only Value Adjustment: the package containing the more valuable centerpiece receives a ${fmt(f.aAdj||f.bAdj)} adjustment for premium-asset concentration, roster-spot consolidation, and the gap between the top assets. This adjustment changes trade fairness only; it does not change any player or pick Value.`);
   out.push(`Adjusted fairness is ${f.score}/100, where 100/100 is the best mutual trade.`);
   if(tier==='up')out.push('Tier Up was selected, so the Finder prioritizes a more premium incoming centerpiece. Several lesser assets cannot simply add up to a premium player without overcoming the consolidation adjustment.');
   if(tier==='down')out.push('Tier Down was selected, so the Finder prioritizes a less premium centerpiece plus additional meaningful value.');

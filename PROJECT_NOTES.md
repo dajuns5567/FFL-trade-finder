@@ -16,23 +16,21 @@ The protected rollback branch should remain an exact code checkpoint and should 
 4. Develop visual aid for Trade Evaluator.
 5. Comprehensive rationale for Trade Finder and Trade Evaluator.
 6. Value adjustment within Trade Finder and Trade Evaluator results.
+7. Team Direction / Roster Profile — classify franchises as contender, competitive, retooling, rebuilding, etc., using roster value, age, positional strength, and draft capital. This informs trade-partner selection and does not alter player valuation.
+8. Trade Finder “Why This Team?” — explain why each suggested trade partner makes sense based on roster construction, positional depth, and draft capital.
+9. Trade Market / Asset Availability — mark assets as Untouchable, Available, or Actively Shopping, used as preference signals rather than valuation adjustments.
+10. Roster Value Dashboard — show each franchise's total player value, offensive value, IDP value, draft capital, average roster age, and top-end assets.
+11. Position Strength Dashboard — rank every franchise's QB/RB/WR/TE/IDP strength using existing rankings.
+12. Package Builder / Make It Fair — suggest the smallest realistic asset addition/removal needed to bring an uneven trade toward an acceptable range.
+13. Trade Finder Constraints — support options such as desired position, wanting picks, protecting particular assets, specifying package structure, or excluding IDPs.
+14. League Asset Search — search any player and immediately show value, rank, positional rank, owner, NFL team, comparable assets, and realistic potential buyers.
+15. Value History — periodically snapshot player values so changes can be viewed over time, while never allowing historical values to determine current value.
+16. Draft Capital Dashboard — display picks owned by year, projected slots, individual pick values, total draft capital, and league-wide draft-capital rank.
+17. Shareable Trade Card — create a clean visual summary of a trade containing both teams, assets, values, fairness assessment, and rationale.
 
 ## Ideas proposed by ChatGPT
 
-These are proposals only. They are not approved implementation tasks and do not authorize any code, valuation, UI, architecture, or deployment changes.
-
-1. Team Direction / Roster Profile — characterize franchises as contender, competitive, retooling, rebuilding, etc., using roster value, age, positional strength, and draft capital strictly for partner-selection context, never player valuation.
-2. Trade Finder “Why This Team?” — explain why a suggested partner is a logical fit based on roster construction, positional depth, and draft capital.
-3. Trade Market / Asset Availability — allow assets to be marked Untouchable, Available, or Actively Shopping as preference signals only.
-4. Roster Value Dashboard — show total player value, offensive value, IDP value, draft capital, average roster age, and top-end assets by franchise.
-5. Position Strength Dashboard — rank each franchise’s QB/RB/WR/TE/IDP strength using existing rankings.
-6. Trade Block — allow users to mark players/picks they are willing to move and have Trade Finder search around those assets.
-7. Package Builder / Make It Fair — suggest the smallest realistic asset addition/removal that brings an uneven trade toward an acceptable range.
-8. Trade Finder Constraints — support preferences such as desired position, desired draft picks, protected assets, package shape, or excluding IDPs.
-9. League Asset Search — search any player and immediately view value, rank, position rank, owner, NFL team, comparable assets, and realistic potential buyers.
-10. Value History — periodically snapshot values for historical viewing without allowing historical values to influence current valuation.
-11. Draft Capital Dashboard — show picks owned by year, projected slots, individual values, total draft capital, and league rank.
-12. Shareable Trade Card — generate a clean visual trade summary containing teams, assets, values, fairness assessment, and rationale.
+The previously proposed ideas above have now been approved as incomplete implementation tasks, with the exception of Trade Block, which was declined because its functionality is redundant with Trade Finder. No proposal or task entry by itself authorizes a production change or deployment.
 
 ## Completed / remove from incomplete list
 

@@ -1,0 +1,14 @@
+(()=>{
+function availableYears(){return [...new Set((state.allAssets||[]).filter(x=>x.type==='pick'&&Number(x.round)>=1&&Number(x.round)<=3).map(x=>Number(x.season)).filter(Boolean))].sort((a,b)=>a-b)}
+function selectedYears(){return new Set([...document.querySelectorAll('.draftYear106:checked')].map(x=>Number(x.value)))}
+function selectedRounds(){return new Set([...document.querySelectorAll('.draftRound106:checked')].map(x=>Number(x.value)))}
+function renderTargets(){
+  const tier=document.getElementById('tradeTier94');if(!tier)return;let box=document.getElementById('draftTargets106');if(!box){box=document.createElement('div');box.id='draftTargets106';box.className='draftTargets106';tier.insertAdjacentElement('afterend',box)}
+  const on=tier.value==='draft';box.hidden=!on;if(!on)return;const keepY=selectedYears(),keepR=selectedRounds();
+  box.innerHTML=`<div class="draftTargets106-title">Draft pick targets <span>optional</span></div><div class="draftTargets106-note">Choose a year, a round, or both. Leave both blank to search all available first-, second-, and third-round picks. Manual pick filters take priority over roster-fit logic.</div><div class="draftTargets106-dim"><b>Year</b><div class="draftTargets106-options">${availableYears().map(y=>`<label><input class="draftYear106" type="checkbox" value="${y}" ${keepY.has(y)?'checked':''}> ${y}</label>`).join('')}</div></div><div class="draftTargets106-dim"><b>Round</b><div class="draftTargets106-options">${[1,2,3].map(r=>`<label><input class="draftRound106" type="checkbox" value="${r}" ${keepR.has(r)?'checked':''}> R${r}</label>`).join('')}</div></div>`
+}
+function clearFinder(){document.querySelectorAll('.shopCheck').forEach(b=>{b.checked=false;b.dispatchEvent(new Event('change',{bubbles:true}))});document.getElementById('finderResults')?.replaceChildren()}
+function clearEvaluator(){try{state.assetsA=[];state.assetsB=[]}catch(_){}document.querySelectorAll('#evalChooserA input[type="checkbox"],#evalChooserB input[type="checkbox"],input[data-eval-side]').forEach(b=>{b.checked=false;b.dispatchEvent(new Event('change',{bubbles:true}))});document.getElementById('evalResults')?.replaceChildren();try{if(typeof renderAssets==='function'){renderAssets('A');renderAssets('B')}}catch(_){} }
+function install(){const tier=document.getElementById('tradeTier94');if(tier&&!tier.__v116controls){tier.__v116controls=true;tier.addEventListener('change',renderTargets)}renderTargets();if(!document.__v116clear){document.__v116clear=true;document.addEventListener('click',e=>{const b=e.target.closest?.('button');if(!b)return;const t=(b.textContent||'').trim();if(/^Clear selections$/i.test(t))setTimeout(clearFinder,0);if(/^Clear trade$/i.test(t))setTimeout(clearEvaluator,0)},true)}}
+setTimeout(install,0);setTimeout(install,200);setTimeout(install,700);if(!window.__controlsV116Poll)window.__controlsV116Poll=setInterval(install,1500);window.controlsV116={install,renderTargets};
+})();

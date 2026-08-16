@@ -5,6 +5,7 @@ const selectedShop=()=>[...document.querySelectorAll('.shopCheck:checked')].map(
 const selectedYears=()=>[...document.querySelectorAll('.draftYear106:checked')].map(x=>Number(x.value));
 const selectedRounds=()=>[...document.querySelectorAll('.draftRound106:checked')].map(x=>Number(x.value));
 function installLogo(){
+  if(window.section1V113||window.__section1Release==='v113'||document.querySelector('header h1.fleecedFlat113'))return;
   const h=document.querySelector('header h1');if(!h)return;
   h.className='fleecedFlat111';h.textContent='Fleeced!';h.setAttribute('aria-label','Fleeced!');
   document.getElementById('fleecedFlat110Style')?.remove();

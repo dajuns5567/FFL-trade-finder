@@ -1,0 +1,1 @@
+Section 1 status: activation fix in progress. V100 code existed in GitHub but did not appear in the live UI. V101 forces a normal production rebuild with fresh cache keys. Section 2 roster-balance and blank-selection diversification requirements remain pending until Section 1 is verified.

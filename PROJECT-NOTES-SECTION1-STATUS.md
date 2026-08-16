@@ -16,30 +16,31 @@
 - No deployment is allowed without explicit user approval.
 - Approved Fleeced! logo is locked unless the user explicitly requests a logo change.
 
-## V117 correction scope — approved 2026-08-16
-1. Replace V116 rank-driven package penalty behavior with value-banded eligibility.
-2. Preserve strong package penalties for true low-value consolidation such as Barion Brown + Malik Benson + Khalil Herbert.
-3. Make 1500–2500 assets only occasionally/lightly penalty-eligible; normal assets above 2500 receive no package penalty.
-4. Add premium-centerpiece protection so packages containing a premium asset are handled primarily by Value Adjustment rather than blanket fragmentation penalty.
-5. Ja'Marr Chase vs Chuba Hubbard + Denzel Boston + Jonathan Brooks should remain clearly unfair because of actual effective value/premium concentration, not because the three-player side is reduced by an enormous package penalty.
-6. Jayden Daniels + J.K. Dobbins vs Trevor Lawrence + Parker Washington + Omar Cooper should use Value Adjustment rather than the V116 ~3,252 package penalty on the Lawrence side.
-7. Benson/Brown/Herbert vs Parker Washington remains the regression anchor for a functioning low-value package penalty, though V117 may be slightly less harsh than V116.
-8. Remove/replace misleading fixed “package quality 100/100” text when a package penalty is present.
-9. Rebuild Finder candidate generation before final fairness filtering. Search broader one-player, player+pick, two-player, and sensible three-asset structures across all partner teams.
-10. Chuba Hubbard must be able to produce recommendations when qualifying trades exist. Benson/Brown must not be structurally unusable merely because the outgoing package itself receives a penalty.
-11. Finder retains up to multiple viable candidates per partner during generation, then globally ranks the final pool. Show 5 initially and Load More in groups of 5.
-12. Final recommendations use the same V117 fairness function as the Evaluator. Recommendation rank never raises fairness.
-13. Do not change Player Values, rankings, consensus, Sleeper ownership, draft-pick values, team-fit valuation rules, or the approved logo in this correction.
+## V118 consolidation scope — approved 2026-08-16
+1. Make V118 the single authoritative trade-calculation and rendering path for Trade Evaluator and Trade Finder.
+2. Stop relying on DOM re-parsing/post-processing for Evaluator totals and score presentation.
+3. Render raw total → package penalty → after-penalty value → Value Adjustment → effective total from the same fairness object used to score the trade.
+4. Keep V117 value-banded package-penalty rules: strongest below 1500, light/occasional 1500–2500, normally zero above 2500.
+5. Preserve premium-centerpiece handling through Value Adjustment rather than blanket package penalties.
+6. Use the exact same V118 fairness function for Finder candidates and Evaluator results.
+7. Generate Finder candidates broadly before filtering: singles, player+pick, two-player, sensible three-player/three-asset structures, and draft-pick bundles where appropriate.
+8. Team fit may affect partner/recommendation ordering only; it may not alter fairness or asset values.
+9. Finder only recommends candidates meeting the unified fairness threshold; recommendation ordering never raises fairness.
+10. Display 5 recommendations initially and Load More in groups of 5.
+11. Preserve Player Values, ranks, consensus, draft-pick values, Sleeper ownership, team-context valuation rules, and the approved Fleeced! logo.
 
-## Verification cases for V117
-- Benson + Brown + Herbert vs Parker Washington: meaningful package penalty remains; trade remains strongly unfavorable, but penalty should be somewhat less extreme than V116.
-- Benson + Brown + Herbert vs Jadarian Price: meaningful low-value package penalty remains and trade remains clearly unfavorable.
-- Chuba Hubbard + Denzel Boston + Jonathan Brooks vs Ja'Marr Chase: little or no package penalty; Chase-side Value Adjustment/effective value should still make trade clearly unfair.
-- Jayden Daniels + J.K. Dobbins vs Trevor Lawrence + Parker Washington + Omar Cooper: Lawrence side should not receive the old blanket package penalty; Value Adjustment should be the main trade-only adjustment.
-- Justin Jefferson vs Trevor Lawrence: one-for-one receives no package penalty; normal fairness/value-adjustment behavior remains intact.
-- Finder: Chuba Hubbard alone under Make a fair trade should return recommendations if fair structures exist.
-- Finder: Benson + Brown under Make a fair trade and Tier up should search and return qualifying structures rather than failing because the assets are low value.
-- Finder: verify first 5 results, Load More, no duplicate package spam, and no 100/100 score unless effective totals are extremely close.
+## Verification cases for V118
+- Benson + Brown + Herbert vs Parker Washington: low-value package penalty should remain meaningful; raw totals must display correctly; result should remain clearly unfavorable.
+- Benson + Brown + Herbert vs Jadarian Price: same low-value penalty behavior; no zero raw totals or contradictory package-quality text.
+- Chuba Hubbard + Denzel Boston + Jonathan Brooks vs Ja'Marr Chase: little/no package penalty; Chase-side Value Adjustment/effective difference should keep the trade clearly unfair without an absurd consolidation penalty.
+- Jayden Daniels + J.K. Dobbins vs Trevor Lawrence + Parker Washington + Omar Cooper: no blanket package penalty on the Lawrence side; Value Adjustment should drive the concentration difference; score should not be near-perfect if the effective gap remains large.
+- Justin Jefferson vs Trevor Lawrence: one-for-one gets no package penalty.
+- Finder: Chuba Hubbard / Make a fair trade should return multiple qualifying recommendations when available.
+- Finder: Benson + Brown / Make a fair trade, Tier up, and Acquire draft picks should search stable final results without flash/disappear behavior.
+- Finder: first 5 results visible; Load More exposes the next 5 in the same global score/recommendation order.
+- Search selection: selecting A then searching/selecting B/C should retain all selections in Finder and Evaluator.
+- Explicit removal should clear the corresponding checkbox.
+- Approved Fleeced! logo remains unchanged.
 
 ## Incomplete tasks — carry forward until explicitly verified/fixed
 1. Search/selection persistence in Finder and Evaluator: selecting player A, then searching/selecting B/C/etc. must retain all explicit selections. Explicit removal must uncheck the matching checkbox.

@@ -28,6 +28,7 @@ function installFairness(){
   if(window.tradeEngine96)window.tradeEngine96.fairness=fairness;
 }
 function installLogo(){
+  if(window.__finderPriorityPoll110){clearInterval(window.__finderPriorityPoll110);window.__finderPriorityPoll110=null}
   if(window.__section1V111Poll){clearInterval(window.__section1V111Poll);window.__section1V111Poll=null}
   const h=document.querySelector('header h1');if(!h)return;
   if(h.className!=='fleecedFlat113'||!h.querySelector('.fleecedWord113')){h.className='fleecedFlat113';h.setAttribute('aria-label','Fleeced!');h.innerHTML='<span class="fleecedWord113">Fleeced!</span><span class="fleecedArrow113" aria-hidden="true"></span>'}

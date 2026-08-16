@@ -1,0 +1,1 @@
+Guardrail: V101 is an activation-only rebuild for already-authored Section 1 UI/filter code. It must not alter player valuation, rankings, consensus, scoring, draft-pick valuation, or Sleeper ownership logic.

@@ -1,0 +1,1 @@
+V108 scope: Trade Finder manual Acquire Draft Picks priority, optional year/round filters, flattened logo presentation, and trade-package quality guard for Finder/Evaluator. No player valuation, ranking, consensus weighting, Sleeper ownership, draft-pick valuation, or existing continuous Value Adjustment formulas are changed.

@@ -9,7 +9,7 @@ function installLogo(){
   h.className='fleecedFlat111';h.textContent='Fleeced!';h.setAttribute('aria-label','Fleeced!');
   document.getElementById('fleecedFlat110Style')?.remove();
   if(document.getElementById('fleecedFlat111Style'))return;
-  const s=document.createElement('style');s.id='fleecedFlat111Style';s.textContent=`header h1.fleecedFlat111{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;width:168px!important;height:49px!important;margin:10px 0 10px!important;padding:0 14px!important;background:#fff!important;border:3px solid #111!important;border-radius:18px!important;color:#efb900!important;font-family:"Trebuchet MS","Arial Rounded MT Bold","Comic Sans MS",sans-serif!important;font-size:28px!important;font-style:normal!important;font-weight:900!important;line-height:1!important;letter-spacing:-.2px!important;text-align:center!important;text-shadow:none!important;box-shadow:none!important;-webkit-text-stroke:0!important;transform:none!important;filter:none!important;background-image:none!important}header h1.fleecedFlat111:before{content:""!important;display:block!important;position:absolute!important;left:20px!important;bottom:-15px!important;width:0!important;height:0!important;border-top:15px solid #111!important;border-right:15px solid transparent!important;transform:none!important}header h1.fleecedFlat111:after{content:""!important;display:block!important;position:absolute!important;left:23px!important;bottom:-10px!important;width:0!important;height:0!important;border-top:11px solid #fff!important;border-right:11px solid transparent!important;transform:none!important}`;document.head.appendChild(s);
+  const s=document.createElement('style');s.id='fleecedFlat111Style';s.textContent=`header h1.fleecedFlat111{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;width:168px!important;height:49px!important;margin:10px 0 10px!important;padding:0 14px!important;background:#fff!important;border:3px solid #111!important;border-radius:18px!important;color:#efb900!important;font-family:"Trebuchet MS","Arial Rounded MT Bold","Comic Sans MS",sans-serif!important;font-size:28px!important;font-style:normal!important;font-weight:900!important;line-height:1!important;letter-spacing:-.2px!important;text-align:center!important;text-shadow:none!important;box-shadow:none!important;-webkit-text-stroke:1.35px #111!important;paint-order:stroke fill!important;transform:none!important;filter:none!important;background-image:none!important;box-sizing:border-box!important}header h1.fleecedFlat111:before{content:""!important;display:block!important;position:absolute!important;left:25px!important;bottom:-9px!important;width:14px!important;height:14px!important;background:#fff!important;border-left:3px solid #111!important;border-bottom:3px solid #111!important;transform:rotate(-45deg)!important;transform-origin:center!important;box-sizing:border-box!important}header h1.fleecedFlat111:after{display:none!important;content:none!important}`;document.head.appendChild(s);
 }
 function replaceRejectedText(){
   const host=document.getElementById('evalResults');if(!host)return;
@@ -44,10 +44,10 @@ function diagnoseDraftEmpty(){
   const host=document.getElementById('finderResults');if(!host||document.getElementById('tradeTier94')?.value!=='draft'||host.querySelector('.trade95-card'))return;
   const text=(host.textContent||'').trim();if(!/No draft-pick-only package/i.test(text))return;
   const me=Number(document.getElementById('findTeam')?.value),give=selectedShop();if(!me||!give.length)return;
-  const ys=new Set(selectedYears()),rs=new Set(selectedRounds()),target=raw(give),teams=[];
+  const ys=new Set(selectedYears()),rs=new Set(selectedRounds()),target=window.section1V106?.qualityDetail?.(give)?.effective||raw(give),teams=[];
   for(const tm of state.teams||[]){if(Number(tm.id)===me)continue;const picks=(state.allAssets||[]).filter(x=>x.type==='pick'&&Number(x.owner)===Number(tm.id)&&Number(x.round)>=1&&Number(x.round)<=3&&(!ys.size||ys.has(Number(x.season)))&&(!rs.size||rs.has(Number(x.round))));teams.push({id:Number(tm.id),count:picks.length,value:raw(picks)})}
   teams.sort((a,b)=>b.value-a.value||b.count-a.count);const best=teams[0]||{count:0,value:0};
-  const minimum=target*.68;
+  const minimum=target*.72;
   if(best.value<minimum){host.innerHTML=`<div class="empty">No team has enough ${filterLabel()} draft-pick value to provide fair value for the selected outgoing package. The most any one team can currently offer within those filters is ${best.count} qualifying pick${best.count===1?'':'s'} worth ${best.value.toLocaleString(undefined,{maximumFractionDigits:1})} raw Value, below the minimum range needed for this package.</div>`}
 }
 function loadMoreButton(host,cards){
@@ -58,12 +58,23 @@ function loadMoreButton(host,cards){
   btn.onclick=()=>{const hidden=cards.filter(c=>c.hidden).slice(0,step);hidden.forEach(c=>{c.hidden=false;c.dataset.more111='0'});const remain=cards.filter(c=>c.hidden).length;if(remain)btn.textContent=`Load more trades (${remain} more)`;else btn.remove()};
   host.appendChild(btn);
 }
+function deprioritizeOptionalTE(){
+  const host=document.getElementById('finderResults');if(!host||document.getElementById('tradeTier94')?.value==='draft')return;
+  const cards=[...host.querySelectorAll(':scope > .trade95-card, :scope > .result.trade95-card')];if(!cards.length)return;
+  const marked=[];
+  for(const card of cards){const body=card.querySelector('.rationaleBody'),txt=body?.textContent||'';if(!/TE is one of this roster['’]s thinner positions relative to the league/i.test(txt))continue;
+    const walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT);let n;while((n=walker.nextNode())){if(/TE is one of this roster['’]s thinner positions relative to the league/i.test(n.nodeValue||''))n.nodeValue=(n.nodeValue||'').replace(/TE is one of this roster['’]s thinner positions relative to the league[^.]*\.?/i,'Tight end is not a required starting position in this league, so TE depth is not treated as a positional need.')}
+    const ctx=card.querySelector('.trade95-head .trade95-sub');if(ctx)ctx.textContent=(ctx.textContent||'').replace(/\s*•\s*roster-need priority/ig,'');marked.push(card)
+  }
+  if(!marked.length)return;for(const c of marked)host.appendChild(c);
+}
 function paginateFinder(){
   const host=document.getElementById('finderResults');if(!host)return;
+  deprioritizeOptionalTE();
   const cards=[...host.querySelectorAll(':scope > .trade95-card, :scope > .result.trade95-card')];
   if(!cards.length){document.getElementById('loadMoreTrades111')?.remove();return}
-  if(host.dataset.pageKey111===cards.map(c=>c.textContent?.slice(0,80)).join('|'))return;
-  host.dataset.pageKey111=cards.map(c=>c.textContent?.slice(0,80)).join('|');loadMoreButton(host,cards);
+  const key=cards.map(c=>c.textContent?.slice(0,80)).join('|');if(host.dataset.pageKey111===key)return;
+  host.dataset.pageKey111=key;loadMoreButton(host,cards);
 }
 function observe(){
   const evalHost=document.getElementById('evalResults');if(evalHost&&!evalHost.__v111){evalHost.__v111=true;new MutationObserver(()=>replaceRejectedText()).observe(evalHost,{childList:true,subtree:true,characterData:true})}

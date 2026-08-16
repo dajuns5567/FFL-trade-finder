@@ -605,8 +605,8 @@
       "waiver_budget": [
         {
           "amount": 73,
-          "sender": 15,
-          "receiver": 12
+          "receiver": 12,
+          "sender": 15
         }
       ]
     },
@@ -3047,8 +3047,8 @@
       "waiver_budget": [
         {
           "amount": 34,
-          "sender": 5,
-          "receiver": 2
+          "receiver": 2,
+          "sender": 5
         }
       ]
     },
@@ -3091,8 +3091,8 @@
       "waiver_budget": [
         {
           "amount": 23,
-          "sender": 2,
-          "receiver": 15
+          "receiver": 15,
+          "sender": 2
         }
       ]
     },

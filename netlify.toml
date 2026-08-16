@@ -17,7 +17,7 @@
 
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/site-v18"
+  to = "/.netlify/functions/site-v19"
   status = 200
   force = true
 

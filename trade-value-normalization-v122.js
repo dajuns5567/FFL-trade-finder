@@ -2,82 +2,59 @@
 'use strict';
 
 // V122 STAGING ONLY — intentionally not referenced by production wrapper.
-// Purpose: translate the existing master ordering into a smooth 120–9,999
-// trade/display currency without changing rankings or the underlying
-// CV/TV/consensus/scoring valuation model. Draft picks are translated through
-// the same currency by preserving their current player-equivalent buying power.
+// Purpose: apply one smooth monotonic rescaling to the EXISTING numeric Value
+// produced by the current valuation systems. The underlying player valuation,
+// draft-pick projection, ownership, ranking, CV/TV, consensus, and fairness
+// inputs remain unchanged. Players and picks use the exact same presentation
+// transform so existing player-vs-pick equivalence is preserved.
 
-const VERSION='v122-smooth-staging';
-const MIN_VALUE=120;
-const MAX_VALUE=9999;
-const CURVE_P=0.5243697479;
-const CURVE_Q=1.974789916;
-const FALLBACK_MAX_RANK=907;
+const VERSION='v122-uniform-value-rescale-staging';
+const DISPLAY_MIN=120;
+const DISPLAY_MAX=9999;
+const FALLBACK_RAW_MAX=10460;
+
+// Smooth S-curve parameters. These operate on current numeric Value, not rank.
+// The curve compresses the extreme top, spreads more meaningful assets through
+// the upper/middle display range, and gives the low end more room toward 120.
+const CURVE_A=1.8701544585;
+const CURVE_B=1.1751216327;
 
 const clamp=(lo,x,hi)=>Math.max(lo,Math.min(x,hi));
 const round5=n=>Math.round(n/5)*5;
 
-function rankOf(asset){
-  if(!asset||asset.type!=='player')return 0;
-  const info=window.playerRankValue?.(asset);
-  const rank=Number(info?.rank);
-  return Number.isFinite(rank)&&rank>0?rank:0;
-}
-
-function currentMaxRank(){
-  const ranks=(window.state?.allAssets||[])
-    .filter(x=>x?.type==='player')
-    .map(rankOf)
-    .filter(Boolean);
-  return Math.max(FALLBACK_MAX_RANK,...ranks);
-}
-
-// One continuous curve. No hard rank bands or tier boundaries.
-// The slope changes smoothly from elite to replacement level.
-function smoothValueForRank(rank,maxRank=currentMaxRank()){
-  const r=clamp(1,Number(rank)||1,Math.max(2,maxRank));
-  const x=(r-1)/(Math.max(2,maxRank)-1);
-  const share=Math.pow(Math.max(0,1-Math.pow(x,CURVE_P)),CURVE_Q);
-  return round5(clamp(MIN_VALUE,MIN_VALUE+(MAX_VALUE-MIN_VALUE)*share,MAX_VALUE));
-}
-
-function normalizedPlayerValue(asset){
-  const rank=rankOf(asset);
-  return rank?smoothValueForRank(rank):null;
-}
-
-function playerEquivalenceTable(rawValue){
-  const players=(window.state?.allAssets||[]).filter(x=>x?.type==='player');
-  const rows=[];
-  for(const asset of players){
-    const oldValue=Number(rawValue(asset));
-    const rank=rankOf(asset);
-    if(!rank||!Number.isFinite(oldValue))continue;
-    rows.push({oldValue,newValue:smoothValueForRank(rank),rank});
+function captureRawValue(engine){
+  if(!engine.__v122RawAssetValue){
+    Object.defineProperty(engine,'__v122RawAssetValue',{
+      configurable:true,
+      enumerable:false,
+      writable:false,
+      value:engine.assetValue?.bind(engine)
+    });
   }
-  rows.sort((a,b)=>b.oldValue-a.oldValue||a.rank-b.rank);
-  return rows;
+  return engine.__v122RawAssetValue;
 }
 
-// Translate an existing pick value by asking: on the CURRENT currency, what
-// player value is this pick closest/equivalent to? Then give the pick the same
-// position on the NEW currency. This preserves projected-slot/year/round logic;
-// only the numerical scale changes.
-function translateByPlayerEquivalence(oldValue,table){
+function currentRawMax(rawValue){
+  let max=FALLBACK_RAW_MAX;
+  for(const asset of (window.state?.allAssets||[])){
+    if(asset?.type!=='player')continue;
+    const v=Number(rawValue(asset));
+    if(Number.isFinite(v))max=Math.max(max,v);
+  }
+  return max;
+}
+
+function rescaleExistingValue(oldValue,rawMax){
   const v=Number(oldValue);
-  if(!Number.isFinite(v)||!table.length)return v;
-  if(v>=table[0].oldValue)return table[0].newValue;
-  const last=table[table.length-1];
-  if(v<=last.oldValue)return Math.max(MIN_VALUE,last.newValue);
-  for(let i=1;i<table.length;i++){
-    const hi=table[i-1],lo=table[i];
-    if(v<=hi.oldValue&&v>=lo.oldValue){
-      const span=hi.oldValue-lo.oldValue;
-      const t=span>0?(hi.oldValue-v)/span:0;
-      return round5(clamp(MIN_VALUE,hi.newValue+(lo.newValue-hi.newValue)*t,MAX_VALUE));
-    }
-  }
-  return MIN_VALUE;
+  if(!Number.isFinite(v))return 0;
+  if(v<=DISPLAY_MIN)return DISPLAY_MIN;
+  const hi=Math.max(DISPLAY_MIN+1,Number(rawMax)||FALLBACK_RAW_MAX);
+  if(v>=hi)return DISPLAY_MAX;
+
+  const x=clamp(1e-9,(v-DISPLAY_MIN)/(hi-DISPLAY_MIN),1-1e-9);
+  const logit=Math.log(x/(1-x));
+  const y=1/(1+Math.exp(-(CURVE_A*logit+CURVE_B)));
+  return round5(clamp(DISPLAY_MIN,DISPLAY_MIN+(DISPLAY_MAX-DISPLAY_MIN)*y,DISPLAY_MAX));
 }
 
 function install(){
@@ -85,25 +62,18 @@ function install(){
   if(!engines.length)return false;
 
   for(const engine of engines){
-    if(!engine.__v122RawAssetValue){
-      Object.defineProperty(engine,'__v122RawAssetValue',{
-        configurable:true,
-        enumerable:false,
-        writable:false,
-        value:engine.assetValue?.bind(engine)
-      });
-    }
-    const rawValue=engine.__v122RawAssetValue;
+    const rawValue=captureRawValue(engine);
     if(typeof rawValue!=='function')continue;
-    const equivalence=playerEquivalenceTable(rawValue);
+    const rawMax=currentRawMax(rawValue);
 
     const translated=function(asset){
       const oldValue=Number(rawValue(asset))||0;
-      if(asset?.type==='player'){
-        const nv=normalizedPlayerValue(asset);
-        return nv==null?oldValue:nv;
+      // SAME transformation for players and draft picks. Pick year/round/slot
+      // logic determines oldValue exactly as before; only its displayed/trade
+      // currency number is rescaled afterward.
+      if(asset?.type==='player'||asset?.type==='pick'){
+        return rescaleExistingValue(oldValue,rawMax);
       }
-      if(asset?.type==='pick')return translateByPlayerEquivalence(oldValue,equivalence);
       return oldValue;
     };
 
@@ -122,22 +92,27 @@ function install(){
     return Number(engine?.__v122RawAssetValue?.(asset))||0;
   };
 
+  window.v122RescaledAssetValue=(asset)=>{
+    const engine=window.tradeEngine96||window.tradeEngine98;
+    const rawValue=engine?.__v122RawAssetValue;
+    if(typeof rawValue!=='function')return Number(engine?.assetValue?.(asset))||0;
+    const rawMax=currentRawMax(rawValue);
+    return rescaleExistingValue(rawValue(asset),rawMax);
+  };
+
   window.__tradeValueNormalization=VERSION;
   return true;
 }
 
 window.tradeValueNormalizationV122={
   VERSION,
-  MIN_VALUE,
-  MAX_VALUE,
-  CURVE_P,
-  CURVE_Q,
-  rankOf,
-  currentMaxRank,
-  smoothValueForRank,
-  normalizedPlayerValue,
-  playerEquivalenceTable,
-  translateByPlayerEquivalence,
+  DISPLAY_MIN,
+  DISPLAY_MAX,
+  FALLBACK_RAW_MAX,
+  CURVE_A,
+  CURVE_B,
+  currentRawMax,
+  rescaleExistingValue,
   install
 };
 })();

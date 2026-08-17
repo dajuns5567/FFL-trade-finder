@@ -619,7 +619,8 @@
       "allow_sms": "on",
       "avatar": "https://sleepercdn.com/uploads/a0142549a9104e9dcf11210740acdf4f.jpg",
       "mention_pn": "on",
-      "team_name": "Carolina Panthers"
+      "team_name": "Carolina Panthers",
+      "user_message_pn": "off"
     },
     "settings": null,
     "user_id": "1132798349075476480"

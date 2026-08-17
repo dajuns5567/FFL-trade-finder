@@ -13,32 +13,33 @@
 - Recommendation ordering and fairness score are separate. The best or only recommendation is never automatically 100/100. A 100/100 trade requires extremely close effective value.
 - TE is not a required starter and must not be treated as an artificial positional need.
 - Acquire Draft Picks is a manual user intent and takes priority over roster-fit logic for incoming asset construction.
+- In Acquire Draft Picks only, sub-1500 fringe players are not treated as fully liquid at their displayed master Value. Their draft-market buying power is capped at no more than one comparable third-round pick each. This does not change their master Value or rank.
 - No deployment is allowed without explicit user approval.
 - Approved Fleeced! logo is locked unless the user explicitly requests a logo change.
 
-## V121 repair scope — approved 2026-08-16
-1. Remove V120 from the active production wrapper and replace it with V121 on top of the proven V119 recommendation engine.
-2. Make V121 the authoritative fairness function used by both Finder and Evaluator without altering Player Values, ranks, consensus inputs, draft-pick Values, Sleeper ownership, or team-fit valuation rules.
-3. Reserve strong package-quality penalties for true low-value consolidation, especially when two or more players are below 1500 Value.
-4. Allow only light/occasional package penalties in the 1500–2500 range; normal mid-tier packages such as Dobbins + Boston + Brooks and Parker Washington + Omar Cooper should not receive severe consolidation penalties.
-5. Keep Value Adjustment and Package Quality Penalty mutually exclusive on the same side; premium-centerpiece trades are governed primarily by Value Adjustment.
-6. Render exactly one trade-only adjustment path per side: raw total → package penalty → effective total, OR raw total → Value Adjustment → effective total.
-7. Preserve evaluator search/removal checkbox synchronization and removal of redundant [rank] tags.
-8. Replace the unbounded Acquire Draft Picks search with a bounded package search that still supports multi-pick bundles, including many picks when available, while preventing Benson + Brown from freezing the browser.
-9. Keep Finder pagination at 5 recommendations per page under the same fairness standard.
-10. Leave the approved Fleeced! logo untouched.
+## V122 repair scope — prepared 2026-08-16, not deployed
+1. Keep the V121 valuation/fairness rules but isolate every Trade Evaluator evaluation from stale legacy render state. Each evaluation receives a fresh results host and capture-phase click handling so old evaluator handlers cannot stack a second penalty/adjustment presentation.
+2. Clearing a trade also clears evaluator render state so a subsequently selected player cannot inherit the previous trade's package penalty or Value Adjustment.
+3. Preserve the V121 low-tier package penalty behavior that tested well for Benson + Brown + Herbert vs Parker Washington and Jadarian Price.
+4. Preserve the correction that normal mid-tier packages should not receive severe package penalties; Dobbins + Boston + Brooks vs Ja'Marr Chase remains a required regression test.
+5. Fix Trade Finder search-selection persistence so a player selected through the global Finder search is represented by a checked outgoing asset even when the normal checklist row is filtered out.
+6. Add a draft-specific liquidity rule: each sub-1500 fringe player contributes at most one comparable third-round pick of buying power in Acquire Draft Picks. This is intentionally stronger than ordinary package-quality treatment because players around the Benson/Brown/Cuevas/Virgil tier may be close to waiver-wire value in this 32-team league.
+7. When the entire outgoing draft package consists of fringe sub-1500 players, incoming construction is capped at no more than one draft pick per outgoing fringe player. Mixed packages may still use larger pick bundles based on the non-fringe assets.
+8. Keep the bounded draft search so Acquire Draft Picks cannot freeze the page.
+9. Expand broad ordinary Trade Finder output from the existing top 12 to as many as 50 already-generated qualifying candidates. The existing first 12 and their ordering remain unchanged; lower-scoring qualifying candidates are appended in current overall recommendation-score order.
+10. Continue presenting Finder results five at a time through Load More. Do not loosen the underlying fairness rejection rule merely to reach 50 results.
+11. Do not alter Player Values, ranks, consensus inputs, draft-pick Values, Sleeper ownership, team-fit valuation rules, or the approved Fleeced! logo.
 
-## V121 verification targets
-- Benson + Brown + Herbert vs Parker Washington: package penalty remains meaningful and trade remains clearly unfavorable, but the penalty is not an absurd blanket reduction.
-- Benson + Brown + Herbert vs Jadarian Price: low-value consolidation penalty remains visible and materially affects fairness.
-- Dobbins + Denzel Boston + Jonathan Brooks vs Ja'Marr Chase: no severe package penalty on the mid-tier package; Chase-side Value Adjustment should be the main premium-concentration mechanism.
-- Parker Washington + Omar Cooper vs Benson + Brown + Herbert: Parker/Omar side should not receive a severe package penalty; displayed effective totals must follow the visible adjustment path exactly.
-- Jayden Daniels + J.K. Dobbins vs Trevor Lawrence + Parker Washington + Omar Cooper: no blanket package penalty on the Lawrence package; Value Adjustment should control concentration differences.
-- One-for-one trades receive no package penalty.
-- Finder: Benson + Brown / Make a fair trade and Tier up remain usable.
-- Finder: Benson + Brown / Acquire Draft Picks completes without page-unresponsive behavior and can return qualifying draft-pick bundles when available.
-- Finder: Chuba Hubbard / Make a fair trade, Tier up, and Acquire Draft Picks remain working as verified in V120.
-- Search removal continues to uncheck the matching evaluator checkbox; [rank] remains absent.
+## V122 verification targets
+- Evaluate Benson + Brown + Herbert vs Parker Washington, then Clear Trade, then build a completely different trade. The second trade must show only its own adjustment/penalty lines once each.
+- Repeat multiple evaluate → clear → edit cycles. No duplicated PACKAGE QUALITY PENALTY, AFTER PACKAGE PENALTY, VALUE ADJUSTMENT, TRADE-ADJUSTED TOTAL, or summary penalty text may accumulate.
+- Benson + Brown + Herbert vs Parker Washington and vs Jadarian Price should retain the V121 low-tier penalty behavior that tested well.
+- Dobbins + Denzel Boston + Jonathan Brooks vs Ja'Marr Chase must not fall back to the old ~5,000-point mid-tier package penalty.
+- Select Chuba Hubbard through the Finder search box, not the checklist, then run Make a fair trade and Tier up. Results should match normal checkbox selection behavior.
+- Acquire Draft Picks with Benson + Brown should no longer return a five-pick package worth ~1,600 effective points. Their draft-liquid buying power is capped at approximately two third-round-pick equivalents combined.
+- Acquire Draft Picks with Josh Cuevas, Reggie Virgil, Benson, Brown, and comparable sub-1500 fringe players should reflect the same one-third-round-pick-equivalent-per-player ceiling.
+- Chuba Hubbard Acquire Draft Picks remains unaffected except for normal fairness rules because Chuba is above the fringe threshold.
+- Broad ordinary Finder searches should keep the same best offers first, show five initially, and continue through Load More up to as many as 50 qualifying candidates when enough candidates exist.
 - Fleeced! logo remains unchanged and stable.
 
 ## Incomplete tasks — carry forward until explicitly verified/fixed

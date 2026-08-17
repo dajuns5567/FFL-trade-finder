@@ -1,72 +1,112 @@
-# V122 Normalized Trade / Display Value Proposal — Staged, Not Deployed
+# V122 Smooth Normalized Trade / Display Value Proposal — Staged, Not Deployed
 
 ## Goal
 Translate the existing master player ordering into a better-distributed 120–9,999 numerical currency without changing why any player is ranked where he is.
 
 This is not a new football valuation model. CV, TV, consensus, scoring, age/production, scarcity, Sleeper data, positional rankings, and the master rank order remain unchanged. The new number is a deterministic translation of the already-finished ordering.
 
-## Why change the full curve
-The existing presentation is too steep at the top and too compressed at the bottom: an elite #1 player can sit above 10,000 while a player around #20 is near 5,200, yet fringe players hundreds of ranks apart remain crowded around 1,000–1,500. That makes low-tier assets look too additive in packages.
+## Smooth curve, not rank tiers
+The first staging draft used piecewise anchors. That approach is superseded.
 
-The proposed translation spreads more legitimate premium players into the 6,000–9,000 range while allowing replacement-level players to fall much more aggressively toward the existing 120 floor.
+V122 now uses one continuous monotonic curve across the entire ranked player pool. There are no hard breakpoints at ranks 100, 200, 300, 400, etc. The slope changes smoothly from elite players through replacement-level players.
 
-## Staged anchor curve
+The current staging function is approximately:
+
+`value(rank) = 120 + (9,999 - 120) * (1 - x^0.52437)^1.97479`
+
+where `x = (rank - 1) / (maxRank - 1)`.
+
+The resulting reference points for a pool ending around rank 907 are approximately:
 - #1: 9,999
-- #5: 9,500
-- #10: 9,000
-- #20: 7,800
-- #50: 6,200
-- #100: 4,700
-- #200: 3,000
-- #300: 1,900
-- #400: 1,400
-- #500: 1,000
-- #600: 750
-- #700: 520
-- #800: 330
-- #900: 180
-- #1000+: 120 floor
+- #5: 8,895
+- #10: 8,337
+- #20: 7,593
+- #50: 6,220
+- #100: 4,824
+- #150: 3,865
+- #200: 3,136
+- #300: 2,080
+- #400: 1,359
+- #500: 857
+- #600: 512
+- #700: 288
+- #800: 163
+- #900: 120
 
-Interpolation between anchors is monotonic and deterministic; values are rounded to 5-point increments for display consistency.
+These are reference outputs from one continuous curve, not manually assigned tiers. The exact bottom rank adapts to the current ranked pool while preserving the 120 floor and 9,999 ceiling.
 
-## Three layers that must remain separate
-1. Canonical valuation/ranking layer — unchanged. This determines the master order and preserves all existing football inputs.
-2. Normalized trade/display currency — the proposed 120–9,999 translation used consistently in Player Values, Trade Finder, Trade Evaluator, and raw package totals once activated.
-3. Value Adjustment — remains a separate trade-only consolidation mechanism for premium concentration where simple additive normalized values are insufficient.
+## What remains unchanged
+- Master overall player rank order.
+- Positional rankings.
+- CV and TV.
+- Consensus inputs and source weighting.
+- League scoring adjustments.
+- Scarcity inputs.
+- Age, production, role, and all underlying valuation calculations.
+- Sleeper roster/pick ownership.
+- Team-fit logic; fit remains recommendation/partner selection only.
+- Existing draft-pick projection logic, including year/round/projected-slot behavior.
+- Approved Fleeced! logo.
 
-## Draft picks
-Draft-pick values are not remapped by V122. They remain on their existing valuation path unless a later explicit calibration is approved. This allows the player-value experiment to be isolated and prevents unrelated pick logic from changing at the same time.
+## Normalized trade currency
+When activated, the smooth value is the numerical currency shown and summed in:
+- Player Values.
+- Trade Finder.
+- Trade Evaluator.
+- Raw package totals.
+- The existing Value Adjustment calculations.
+
+This changes the translation of existing valuation into trade currency, but not the underlying valuation or ranking itself.
+
+## Draft-pick normalization
+Draft picks must move onto the same new numerical spectrum so a player does not suddenly become worth multiple firsts simply because only players were rescaled.
+
+V122 does NOT change how a draft pick is valued. Existing year, round, ownership, projected-slot, and pick-context logic still produces the pick's current underlying value first.
+
+The display/trade-currency translation then preserves the pick's current player-equivalent buying power:
+1. Build the current player market as pairs of `(old player Value, new smooth Value)`.
+2. Take the pick's existing underlying Value.
+3. Locate/interpolate the players with the most similar existing Value.
+4. Give the pick the corresponding normalized Value on the new curve.
+
+Example concept: if the current model considers a projected pick approximately equivalent to a player around rank 150, after normalization that pick should remain approximately equivalent to the same caliber/rank-150 player. Both numbers change together.
+
+This means V122 does not independently make firsts, seconds, or thirds stronger or weaker. It only changes the numerical ruler used to express the equivalence relationship the current pick model already determined.
 
 ## Package penalty experiment
-The existing package-penalty work is preserved separately in `docs/PACKAGE-PENALTY-EXPERIMENT-SNAPSHOT.md` and in the current V121 implementation.
+The package-penalty work remains preserved separately in `docs/PACKAGE-PENALTY-EXPERIMENT-SNAPSHOT.md` and in the pre-normalization code.
 
-The proposed V122 comparison should test the normalized player currency with package penalty disabled. The purpose is to determine whether the better-shaped value curve plus the existing Value Adjustment makes package penalty unnecessary. Package penalty is not deleted during this experiment.
+The intended V122 test remains normalized player/pick currency plus the existing Value Adjustment, with package penalty disabled for the comparison. Package penalty is not deleted while testing. If the smooth curve naturally prevents Benson/Brown/waiver-tier stacking, package penalty can later be retired cleanly.
 
-## Explicit guardrails
-- Do not change master player rank order.
-- Do not change CV or TV.
-- Do not change consensus/scoring/scarcity/age/production calculations.
-- Do not change Sleeper ownership or roster data.
-- Do not change team-fit valuation rules; fit remains partner-selection only.
-- Do not change the approved Fleeced! logo.
-- Do not change draft-pick values as part of this experiment.
-- Do not deploy without explicit user approval.
+## Why this may remove the need for package penalty
+The existing currency is compressed at the bottom. Several players who are barely above replacement level still carry enough numerical Value to stack into meaningful assets.
+
+On the smooth curve, replacement-level players naturally approach 120 without a special trade-time punishment. At the same time, premium players below rank #1 occupy more of the 6,000–9,000 range, so the top of the market is not artificially dominated by one or two values.
+
+Value Adjustment remains available for premium consolidation, so flattening the elite raw-value gap does not imply that elite players become easier to acquire.
 
 ## Preserved rollback state
 Pre-remap production is preserved on branch `snapshot/pre-value-display-remap-2026-08-16` at commit `b214f85badc337e3c66c6f88980c73d3d272fec7`.
 
-The package-penalty experiment is preserved separately so it can either be restored or retired after V122 testing without reconstruction.
-
-## Staging implementation
-`trade-value-normalization-v122.js` contains the deterministic rank-to-currency mapping. It is intentionally NOT referenced by `netlify/functions/site-v20.mjs`, so creating the staging file does not alter the live site.
+The smooth experiment lives on branch `experiment/v122-smooth-value-spectrum` and is intentionally not wired into the production site wrapper.
 
 ## Pre-deployment validation targets
-Check both player sequencing and familiar trades before activation:
-- #1 / #5 / #10 / #20 / #50 / #100 values expand more naturally through the premium range.
-- #300 / #400 remain meaningful assets but no longer crowd the lower tiers.
-- #500 and below fall much faster toward replacement-level values.
-- #800–#900 players approach minimal buying power.
-- No player changes relative rank order.
-- Known low-tier packages such as Benson + Brown and Benson + Brown + Herbert should lose additive buying power naturally.
-- Mid-tier packages such as Dobbins + Boston + Brooks should not be punished merely for containing multiple players.
-- Premium consolidation such as packages for Ja'Marr Chase should be controlled primarily by Value Adjustment rather than a blanket package penalty.
+Before deployment, compare:
+- Player values near ranks 1, 5, 10, 20, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800, and 900.
+- Several projected first-, second-, and third-round picks versus players they are currently closest to in trade value.
+- Benson + Brown.
+- Benson + Brown + Herbert for Parker Washington.
+- Benson + Brown + Herbert for Jadarian Price.
+- Dobbins + Boston + Brooks for Ja'Marr Chase.
+- Jordan Tyson package benchmark.
+- Jayden Daniels premium package benchmark.
+- Ordinary one-for-one trades.
+
+Success criteria:
+- Rank sequencing is identical.
+- Player/pick equivalence is materially preserved.
+- Rank ~150 does not become worth multiple firsts solely because of rescaling.
+- Very deep players lose additive buying power naturally.
+- Mid-tier packages do not need a blanket package penalty.
+- Value Adjustment remains the only special premium-consolidation mechanism during the comparison.
+- No production deployment occurs until explicitly approved.

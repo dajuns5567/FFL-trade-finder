@@ -16,38 +16,38 @@
 - No deployment is allowed without explicit user approval.
 - Approved Fleeced! logo is locked unless the user explicitly requests a logo change.
 
-## V119 recovery scope — prepared 2026-08-16, not yet deployed
-1. Restore the previously working recommendation/rendering path instead of replacing it with a custom V118 Finder/Evaluator renderer.
-2. Keep the established underlying Trade Finder engine for ordinary recommendations and layer the newer fairness rules over it.
-3. Preserve the value-banded package penalty: strongest below 1500, occasional/light from 1500–2500, normally zero above 2500.
-4. Preserve premium-side Value Adjustment and prevent the same side from receiving both Value Adjustment and Package Quality Penalty.
-5. Keep fairness tier-aware so similar absolute point gaps are judged differently at different package sizes.
-6. Fix search-selection persistence independently of the recommendation engine. Finder and Evaluator selections are stored by asset id and re-applied after search/rerender; explicitly unchecking an asset removes it.
-7. Finder search persistence uses hidden checked mirror inputs only when a selected outgoing asset is temporarily absent from the rendered checklist, so the stable engine still sees every explicitly selected outgoing asset.
-8. Restore 5-at-a-time result presentation for ordinary Finder results without loosening fairness thresholds for later pages.
-9. Leave the approved Fleeced! logo untouched.
-10. Do not change Player Values, rankings, consensus inputs, draft-pick Values, Sleeper ownership, or team-fit valuation rules.
+## V121 repair scope — approved 2026-08-16
+1. Remove V120 from the active production wrapper and replace it with V121 on top of the proven V119 recommendation engine.
+2. Make V121 the authoritative fairness function used by both Finder and Evaluator without altering Player Values, ranks, consensus inputs, draft-pick Values, Sleeper ownership, or team-fit valuation rules.
+3. Reserve strong package-quality penalties for true low-value consolidation, especially when two or more players are below 1500 Value.
+4. Allow only light/occasional package penalties in the 1500–2500 range; normal mid-tier packages such as Dobbins + Boston + Brooks and Parker Washington + Omar Cooper should not receive severe consolidation penalties.
+5. Keep Value Adjustment and Package Quality Penalty mutually exclusive on the same side; premium-centerpiece trades are governed primarily by Value Adjustment.
+6. Render exactly one trade-only adjustment path per side: raw total → package penalty → effective total, OR raw total → Value Adjustment → effective total.
+7. Preserve evaluator search/removal checkbox synchronization and removal of redundant [rank] tags.
+8. Replace the unbounded Acquire Draft Picks search with a bounded package search that still supports multi-pick bundles, including many picks when available, while preventing Benson + Brown from freezing the browser.
+9. Keep Finder pagination at 5 recommendations per page under the same fairness standard.
+10. Leave the approved Fleeced! logo untouched.
 
-## V119 verification targets
-- Evaluator raw Player Values and raw package totals must never render as zero when the checklist shows nonzero player Values.
-- Benson + Brown + Herbert vs Parker Washington should again display real Values, apply a meaningful low-value package penalty, and remain clearly unfavorable.
-- Chuba Hubbard + Denzel Boston + Jonathan Brooks vs Ja'Marr Chase should show little/no package penalty on the mid-tier package and remain unfair primarily because of premium concentration / Value Adjustment.
-- One-for-one trades must receive no package penalty.
-- Finder: Chuba Hubbard / Make a fair trade should use the stable recommendation engine and return multiple qualifying structures when available.
-- Finder: Benson + Brown should remain usable in ordinary fair-trade and tier-up searches, subject to their reduced effective buying power.
-- Search persistence: select A, search/select B, then C; A/B/C must all remain selected in Finder and Evaluator.
-- Explicitly unchecking/removing A must remove A from persistent selection state.
-- First 5 qualifying Finder cards display initially; Load More reveals the next 5 under the same scoring standard.
+## V121 verification targets
+- Benson + Brown + Herbert vs Parker Washington: package penalty remains meaningful and trade remains clearly unfavorable, but the penalty is not an absurd blanket reduction.
+- Benson + Brown + Herbert vs Jadarian Price: low-value consolidation penalty remains visible and materially affects fairness.
+- Dobbins + Denzel Boston + Jonathan Brooks vs Ja'Marr Chase: no severe package penalty on the mid-tier package; Chase-side Value Adjustment should be the main premium-concentration mechanism.
+- Parker Washington + Omar Cooper vs Benson + Brown + Herbert: Parker/Omar side should not receive a severe package penalty; displayed effective totals must follow the visible adjustment path exactly.
+- Jayden Daniels + J.K. Dobbins vs Trevor Lawrence + Parker Washington + Omar Cooper: no blanket package penalty on the Lawrence package; Value Adjustment should control concentration differences.
+- One-for-one trades receive no package penalty.
+- Finder: Benson + Brown / Make a fair trade and Tier up remain usable.
+- Finder: Benson + Brown / Acquire Draft Picks completes without page-unresponsive behavior and can return qualifying draft-pick bundles when available.
+- Finder: Chuba Hubbard / Make a fair trade, Tier up, and Acquire Draft Picks remain working as verified in V120.
+- Search removal continues to uncheck the matching evaluator checkbox; [rank] remains absent.
 - Fleeced! logo remains unchanged and stable.
 
 ## Incomplete tasks — carry forward until explicitly verified/fixed
-1. Search/selection persistence in Finder and Evaluator remains incomplete until live V119 verification confirms it.
-2. Add outgoing selection controls: Select all assets, Select all players, Select all draft picks.
-3. For 2+ selected outgoing assets only, allow optional “I want to trade some of the selected assets” mode. Default remains “trade all selected assets.”
-4. “Some selected assets” treats the selected set as an eligible pool and explores varied sensible subsets/package structures. “All selected assets” requires every selected asset.
-5. When Add assets if needed is enabled, allow the user to exclude specific assets from ever being auto-added.
-6. Preserve broad package diversity and roster-balance logic from Section 2 requirements.
-7. Do not consider any item complete merely because code was attempted. Keep it here until live verification confirms behavior.
+1. Add outgoing selection controls: Select all assets, Select all players, Select all draft picks.
+2. For 2+ selected outgoing assets only, allow optional “I want to trade some of the selected assets” mode. Default remains “trade all selected assets.”
+3. “Some selected assets” treats the selected set as an eligible pool and explores varied sensible subsets/package structures. “All selected assets” requires every selected asset.
+4. When Add assets if needed is enabled, allow the user to exclude specific assets from ever being auto-added.
+5. Preserve broad package diversity and roster-balance logic from Section 2 requirements.
+6. Do not consider any item complete merely because code was attempted. Keep it here until live verification confirms behavior.
 
 ## Deployment/data preservation requirement
 Every approved deployment must record the release identifier, merge/deployment commit, active trade/valuation script versions, and data-source/snapshot state used by that release. Live external-source data cannot be considered permanently reproducible unless a repository snapshot is saved. A deployment-snapshot workflow/manifest remains required before this can be claimed as fully archival/reproducible.

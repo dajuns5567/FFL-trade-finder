@@ -10,8 +10,8 @@ export default async () => {
     .replace(/window\.section1V116\?\.install\?\.\(\);/g, '')
     .replace(/<script>window\.__section1Release="v116";<\/script>/g, '');
 
-  const value = '<script src="/trade-value-normalization-v130.js?v=130"></script><script>window.tradeValueNormalizationV130?.install?.();</script>';
-  const runtime = '<script>window.__section1Release="v130";</script><script src="/trade-runtime-v130.js?v=130"></script><script>window.section1V130?.install?.();</script>';
+  const value = '<script src="/trade-value-normalization-v130.js?v=131"></script><script>window.tradeValueNormalizationV130?.install?.();</script>';
+  const runtime = '<script>window.__section1Release="v131";</script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script>';
   const html = raw.replace('</body>', value + runtime + '</body>');
 
   return new Response(html, {
@@ -19,7 +19,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v130-single-runtime-canonical-values'
+      'x-fll-release': 'section1-v131-canonical-runtime'
     }
   });
 };

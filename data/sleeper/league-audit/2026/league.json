@@ -77,7 +77,6 @@
   "sport": "nfl",
   "season_type": "regular",
   "season": "2026",
-  "last_message_id": "1395271039067394048",
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,
@@ -224,6 +223,7 @@
     "idp_tkl_ast": 0.5
   },
   "shard": 773,
+  "last_message_id": "1395271039067394048",
   "draft_id": "1316867686407356416",
   "last_author_avatar": null,
   "last_author_display_name": "sys",

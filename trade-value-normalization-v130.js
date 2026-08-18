@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const MIN=120,MAX=9999,PLAYER_BREAK=325,PLAYER_BREAK_VALUE=1825,ELITE_FIRST=6500;
+const MIN=120,MAX=9999,PLAYER_BREAK=325,PLAYER_BREAK_VALUE=1825,ELITE_FIRST=7000;
 const clamp=(a,x,b)=>Math.max(a,Math.min(x,b));
 const round5=n=>Math.round(Number(n||0)/5)*5;
 const rankOf=a=>{try{return Math.max(1,Number(window.playerRankValue?.(a)?.rank)||0)}catch(_){return 0}};
@@ -30,7 +30,7 @@ function install(){
  for(const e of [window.tradeEngine96,window.tradeEngine98,window.tradeEngine99].filter(Boolean)){
    try{Object.defineProperty(e,'assetValue',{configurable:true,enumerable:true,writable:true,value:canonicalValue})}catch(_){e.assetValue=canonicalValue}
  }
- window.__tradeValueNormalization='v132-source-pick-display-scale';return true;
+ window.__tradeValueNormalization='v133-source-pick-display-scale-7000';return true;
 }
 setTimeout(install,0);setTimeout(install,150);setTimeout(install,700);
 window.tradeValueNormalizationV130={MIN,MAX,ELITE_FIRST,rankOf,currentMaxRank,playerValueForRank,playerValue,nearestSeason,sourceValue,sourceAnchor,pickScale,pickValue,pickContext,canonicalValue,install};

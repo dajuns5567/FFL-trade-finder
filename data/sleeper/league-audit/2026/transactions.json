@@ -4,6 +4,112 @@
       "status": "complete",
       "type": "free_agent",
       "metadata": null,
+      "created": 1787075997142,
+      "settings": null,
+      "leg": 1,
+      "draft_picks": [],
+      "creator": "729929924969865216",
+      "transaction_id": "1395501512905469952",
+      "adds": {
+        "13282": 22
+      },
+      "drops": null,
+      "consenter_ids": [
+        22
+      ],
+      "roster_ids": [
+        22
+      ],
+      "status_updated": 1787075997142,
+      "waiver_budget": []
+    },
+    {
+      "status": "complete",
+      "type": "free_agent",
+      "metadata": null,
+      "created": 1787075962545,
+      "settings": null,
+      "leg": 1,
+      "draft_picks": [],
+      "creator": "993238021132660736",
+      "transaction_id": "1395501367790931968",
+      "adds": null,
+      "drops": {
+        "8139": 25
+      },
+      "consenter_ids": [
+        25
+      ],
+      "roster_ids": [
+        25
+      ],
+      "status_updated": 1787075962545,
+      "waiver_budget": []
+    },
+    {
+      "status": "complete",
+      "type": "trade",
+      "metadata": null,
+      "created": 1787059617493,
+      "settings": null,
+      "leg": 1,
+      "draft_picks": [
+        {
+          "round": 2,
+          "season": "2027",
+          "league_id": null,
+          "roster_id": 19,
+          "owner_id": 25,
+          "previous_owner_id": 22
+        },
+        {
+          "round": 3,
+          "season": "2027",
+          "league_id": null,
+          "roster_id": 25,
+          "owner_id": 22,
+          "previous_owner_id": 25
+        },
+        {
+          "round": 2,
+          "season": "2028",
+          "league_id": null,
+          "roster_id": 27,
+          "owner_id": 22,
+          "previous_owner_id": 25
+        }
+      ],
+      "creator": "993238021132660736",
+      "transaction_id": "1395432811678146560",
+      "adds": {
+        "4034": 22,
+        "7567": 25,
+        "9754": 25,
+        "11638": 22,
+        "13276": 25
+      },
+      "drops": {
+        "4034": 25,
+        "7567": 22,
+        "9754": 22,
+        "11638": 25,
+        "13276": 22
+      },
+      "consenter_ids": [
+        22,
+        25
+      ],
+      "roster_ids": [
+        22,
+        25
+      ],
+      "status_updated": 1787075826978,
+      "waiver_budget": []
+    },
+    {
+      "status": "complete",
+      "type": "free_agent",
+      "metadata": null,
       "created": 1787021047809,
       "settings": null,
       "leg": 1,

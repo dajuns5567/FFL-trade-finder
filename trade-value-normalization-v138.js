@@ -5,6 +5,7 @@ const round5=n=>Math.round(Number(n||0)/5)*5;
 const originalBaseValue=typeof window.baseValue==='function'?window.baseValue.bind(window):null;
 const originalPackageValue=typeof window.packageValue==='function'?window.packageValue.bind(window):null;
 const originalPickValue=typeof window.pickValue==='function'?window.pickValue.bind(window):null;
+let installed=false;
 function sourceProjectionFn(){return window.draftPickProjection92||window.draftPickProjection90||window.draftPickProjection86||null}
 function playerValue(a){
  if(!a||a.type!=='player')return 0;
@@ -40,6 +41,8 @@ function canonicalPackageValue(items){
 }
 function pickContext(a){let p={};try{p=sourceProjectionFn()?.(a)||{}}catch(_){}const rid=originalRoster(a);return{...p,originalRoster:rid,originalTeam:p.originalTeam||teamName(rid),currentOwner:Number(a?.owner)||0,currentOwnerTeam:p.currentOwnerTeam||teamName(Number(a?.owner)),projectedSlot:Number(p.projectedSlot)||16,value:pickValue(a),sourceValue:sourceValue(a),displayScale:pickScale(),source:p.source||'existing draft-pick valuation source'}}
 function install(){
+ if(installed)return true;
+ installed=true;
  // V138 intentionally leaves established player valuation untouched. Only picks
  // receive the proportional 7,000-scale transform.
  window.baseValue=a=>canonicalValue(a);
@@ -50,9 +53,9 @@ function install(){
  window.__tradeValueNormalization='v138-pick-only-scale-7000';
  return true;
 }
-install();
 const api={MIN,ELITE_FIRST,playerValue,nearestSeason,sourceValue,sourceAnchor,pickScale,pickValue,pickContext,canonicalValue,canonicalPackageValue,install,originalBaseValue,originalPackageValue,originalPickValue};
 window.tradeValueNormalizationV138=api;
-// Compatibility alias for the existing V130 runtime/UI consumers.
+// Compatibility alias for existing V130 runtime/UI consumers.
 window.tradeValueNormalizationV130=api;
+install();
 })();

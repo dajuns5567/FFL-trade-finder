@@ -19,9 +19,10 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V144 Finder is intentionally loaded before V130 so its capture-phase runFinder
-  // handler is authoritative. V130 still owns fairness, Evaluator, and selection sync.
-  const runtime = '<script>window.__section1Release="v144";</script><script src="/trade-finder-v143.js?v=144"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  // V145 Finder loads before V130 so its capture-phase runFinder handler is authoritative.
+  // It resolves the visible position selector instead of trusting one findPos id instance.
+  // V130 still owns fairness, Evaluator, and selection synchronization.
+  const runtime = '<script>window.__section1Release="v145";</script><script src="/trade-finder-v143.js?v=145"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -29,7 +30,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v144-finder-authority-position-blank-breadth'
+      'x-fll-release': 'section1-v145-visible-position-blank-breadth'
     }
   });
 };

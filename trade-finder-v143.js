@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const clamp=(a,x,b)=>Math.max(a,Math.min(x,b));
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
 const id=x=>String(x?.id??'');
 const st=()=>window.state||{};
@@ -25,17 +25,16 @@ function assetKey(xs){return (xs||[]).map(x=>`${x.type}:${id(x)}`).sort().join('
 function addPkg(out,seen,xs){const clean=(xs||[]).filter(Boolean),k=assetKey(clean);if(!clean.length||seen.has(k))return;seen.add(k);out.push(clean)}
 function selectedGive(){const map=window.section1V130?.finderSel;if(map?.size)return [...map.values()];return [...document.querySelectorAll('.shopCheck:checked')].map(b=>b._asset).filter(Boolean)}
 function spreadSample(xs,n){if(xs.length<=n)return xs.slice();const out=[],seen=new Set();for(let i=0;i<n;i++){const j=Math.round(i*(xs.length-1)/(n-1));if(!seen.has(j)){seen.add(j);out.push(xs[j])}}return out}
-function centerpiece(xs){const ps=(xs||[]).filter(x=>x.type==='player');if(!ps.length)return null;return ps.slice().sort((a,b)=>av(b)-av(a)||rankOf(a)-rankOf(b))[0]}
+function centerpiece(xs){const ps=(xs||[]).filter(x=>x.type==='player');if(!ps.length)return null;return ps.slice().sort((a,b)=>rankOf(a)-rankOf(b)||av(b)-av(a))[0]}
 function packageMatchesPosition(xs){const t=targetPos();if(t==='ANY')return true;const c=centerpiece(xs);return !!c&&pos(c)===t}
 
 function blankGivePackages(me){
  const owned=(st().allAssets||[]).filter(x=>Number(x.owner)===me).sort((a,b)=>av(b)-av(a));
  const players=owned.filter(x=>x.type==='player'),picks=owned.filter(x=>x.type==='pick');
- const sample=spreadSample(players,8),out=[],seen=new Set();
+ const sample=spreadSample(players,6),out=[],seen=new Set();
  sample.forEach(x=>addPkg(out,seen,[x]));
- spreadSample(picks,2).forEach(x=>addPkg(out,seen,[x]));
- for(let i=0;i+1<sample.length;i+=4)addPkg(out,seen,[sample[i],sample[i+1]]);
- const topPicks=spreadSample(picks,2);for(let i=0;i<Math.min(2,sample.length);i++)if(topPicks.length)addPkg(out,seen,[sample[i],topPicks[i%topPicks.length]]);
+ const onePick=spreadSample(picks,1);onePick.forEach(x=>addPkg(out,seen,[x]));
+ if(sample.length>=2)addPkg(out,seen,[sample[0],sample[Math.min(3,sample.length-1)]]);
  return out;
 }
 
@@ -44,7 +43,7 @@ function pickPackages(picks,target,light=false){
  const ps=picks.filter(draftEligible).sort((a,b)=>av(b)-av(a)),out=[],seen=new Set();
  ps.forEach(p=>addPkg(out,seen,[p]));if(!ps.length)return out;
  for(const order of [ps.slice(),ps.slice().reverse(),ps.slice().sort((a,b)=>Math.abs(av(a)-target)-Math.abs(av(b)-target))]){const cur=[];for(const p of order){cur.push(p);if(cur.length>=2)addPkg(out,seen,cur.slice())}}
- if(light)return out.slice(0,45);
+ if(light)return out.slice(0,32);
  let states=[{xs:[],sum:0}];
  for(const p of ps){const next=states.slice();for(const s of states)next.push({xs:[...s.xs,p],sum:s.sum+av(p)});const byKey=new Map();for(const s of next){const k=assetKey(s.xs);const old=byKey.get(k);if(!old||Math.abs(s.sum-target)<Math.abs(old.sum-target))byKey.set(k,s)}states=[...byKey.values()].sort((a,b)=>Math.abs(a.sum-target)-Math.abs(b.sum-target)||a.xs.length-b.xs.length).slice(0,400)}
  states.filter(s=>s.xs.length>=2).slice(0,150).forEach(s=>addPkg(out,seen,s.xs));return out;
@@ -52,14 +51,14 @@ function pickPackages(picks,target,light=false){
 
 function playerPackages(owned,target,light=false){
  const players=owned.filter(x=>x.type==='player'),picks=owned.filter(x=>x.type==='pick'&&Number(x.round)<=3);
- const near=players.slice().sort((a,b)=>Math.abs(av(a)-target)-Math.abs(av(b)-target)||rankOf(a)-rankOf(b)).slice(0,light?14:52);
- const nearPicks=picks.slice().sort((a,b)=>Math.abs(av(a)-target)-Math.abs(av(b)-target)).slice(0,light?4:12);
+ const near=players.slice().sort((a,b)=>Math.abs(av(a)-target)-Math.abs(av(b)-target)||rankOf(a)-rankOf(b)).slice(0,light?10:52);
+ const nearPicks=picks.slice().sort((a,b)=>Math.abs(av(a)-target)-Math.abs(av(b)-target)).slice(0,light?2:12);
  const out=[],seen=new Set();
  near.forEach(p=>{const xs=[p];if(packageMatchesPosition(xs))addPkg(out,seen,xs)});
  if(targetPos()==='ANY')nearPicks.forEach(p=>addPkg(out,seen,[p]));
- const pLim=light?8:32,kLim=light?2:8;
+ const pLim=light?6:32,kLim=light?1:8;
  for(const p of near.slice(0,pLim))for(const k of nearPicks.slice(0,kLim)){const xs=[p,k];if(packageMatchesPosition(xs))addPkg(out,seen,xs)}
- const pairLim=light?9:24;for(let i=0;i<Math.min(pairLim,near.length);i++)for(let j=i+1;j<Math.min(pairLim,near.length);j++){const xs=[near[i],near[j]];if(packageMatchesPosition(xs))addPkg(out,seen,xs)}
+ const pairLim=light?6:24;for(let i=0;i<Math.min(pairLim,near.length);i++)for(let j=i+1;j<Math.min(pairLim,near.length);j++){const xs=[near[i],near[j]];if(packageMatchesPosition(xs))addPkg(out,seen,xs)}
  if(!light){for(let i=0;i<Math.min(10,near.length);i++)for(let j=i+1;j<Math.min(10,near.length);j++)for(const k of nearPicks.slice(0,4)){const xs=[near[i],near[j],k];if(packageMatchesPosition(xs))addPkg(out,seen,xs)}}
  return out;
 }
@@ -101,7 +100,8 @@ function generate(){
        const row={me,other,give,recv,f,fit,recommend,gap,blank,centerKey};
        const old=bestByCenter.get(centerKey);if(!old||recommend>old.recommend||(recommend===old.recommend&&gap<old.gap))bestByCenter.set(centerKey,row);
      }
-     const partnerRows=[...bestByCenter.values()].sort((a,b)=>b.recommend-a.recommend||b.f.score-a.f.score||a.gap-b.gap).slice(0,blank?1:4);
+     const perPartner=(blank||tier==='draft')?1:3;
+     const partnerRows=[...bestByCenter.values()].sort((a,b)=>b.recommend-a.recommend||b.f.score-a.f.score||a.gap-b.gap).slice(0,perPartner);
      all.push(...partnerRows);
    }
  }
@@ -110,7 +110,7 @@ function generate(){
  for(const r of all){
    const sig=`${r.other}|${r.centerKey}`;if(seen.has(sig))continue;
    const gk=assetKey(r.give),gused=giveUse.get(gk)||0;if(blank&&gused>=2)continue;
-   const pused=partnerUse.get(r.other)||0;if(!blank&&pused>=4)continue;
+   const pused=partnerUse.get(r.other)||0;const pmax=(blank||tier==='draft')?1:3;if(pused>=pmax)continue;
    seen.add(sig);giveUse.set(gk,gused+1);partnerUse.set(r.other,pused+1);out.push(r);if(out.length>=120)break;
  }
  return out;

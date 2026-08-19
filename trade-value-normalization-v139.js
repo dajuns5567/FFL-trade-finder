@@ -7,9 +7,11 @@ const originalBaseValue=typeof window.baseValue==='function'?window.baseValue.bi
 const originalPackageValue=typeof window.packageValue==='function'?window.packageValue.bind(window):null;
 const originalPickValue=typeof window.pickValue==='function'?window.pickValue.bind(window):null;
 let installed=false;
+const stateRef=()=>{try{return typeof state!=='undefined'&&state?state:(window.state||{})}catch(_){return window.state||{}}};
+const assets=()=>Array.from(stateRef().allAssets||[]);
 const rankOf=a=>{try{return Math.max(1,Number(window.playerRankValue?.(a)?.rank)||0)}catch(_){return 0}};
 function sourceProjectionFn(){return window.draftPickProjection92||window.draftPickProjection90||window.draftPickProjection86||null}
-function currentMaxRank(){const rs=(window.state?.allAssets||[]).filter(x=>x?.type==='player').map(rankOf).filter(Boolean);return Math.max(907,...rs)}
+function currentMaxRank(){const rs=assets().filter(x=>x?.type==='player').map(rankOf).filter(Boolean);return Math.max(907,...rs)}
 function playerValueForRank(rank,maxRank=currentMaxRank()){
  const r=clamp(1,Number(rank)||1,maxRank);
  if(r===1)return MAX;
@@ -20,14 +22,14 @@ function playerValueForRank(rank,maxRank=currentMaxRank()){
 function playerValue(a){const r=rankOf(a);if(r)return playerValueForRank(r);try{const v=Number(originalBaseValue?.(a));return Number.isFinite(v)&&v>0?v:0}catch(_){return 0}}
 function originalRoster(a){const n=Number(a?.original_owner);if(n)return n;const m=String(a?.id||'').match(/^pick-\d+-\d+-(\d+)$/);return m?Number(m[1]):0}
 function teamName(id){return window.teamName?.(id)||`Roster ${id}`}
-function nearestSeason(){const ys=(window.state?.allAssets||[]).filter(x=>x?.type==='pick').map(x=>Number(x.season)).filter(Number.isFinite);return ys.length?Math.min(...ys):null}
+function nearestSeason(){const ys=assets().filter(x=>x?.type==='pick').map(x=>Number(x.season)).filter(Number.isFinite);return ys.length?Math.min(...ys):null}
 function sourceValue(a){
  if(!a||a.type!=='pick')return 0;
  try{const p=sourceProjectionFn();const v=Number(p?.(a)?.value);if(Number.isFinite(v)&&v>0)return v}catch(_){}
  try{const v=Number(originalPickValue?.(a));if(Number.isFinite(v)&&v>0)return v}catch(_){}
  return 0;
 }
-function sourceAnchor(){const y=nearestSeason();if(!y)return 0;const vals=(window.state?.allAssets||[]).filter(x=>x?.type==='pick'&&Number(x.season)===y&&Number(x.round)===1).map(sourceValue).filter(v=>v>0);return vals.length?Math.max(...vals):0}
+function sourceAnchor(){const y=nearestSeason();if(!y)return 0;const vals=assets().filter(x=>x?.type==='pick'&&Number(x.season)===y&&Number(x.round)===1).map(sourceValue).filter(v=>v>0);return vals.length?Math.max(...vals):0}
 function pickScale(){const a=sourceAnchor();return a>0?ELITE_FIRST/a:1}
 function pickValue(a){const raw=sourceValue(a);if(!(raw>0))return MIN;return round5(Math.max(MIN,raw*pickScale()))}
 function canonicalValue(a){if(a?.type==='player')return playerValue(a);if(a?.type==='pick')return pickValue(a);try{const v=Number(originalBaseValue?.(a));return Number.isFinite(v)&&v>0?v:0}catch(_){return 0}}
@@ -40,10 +42,10 @@ function install(){
  for(const e of [window.tradeEngine96,window.tradeEngine98,window.tradeEngine99].filter(Boolean)){
    try{Object.defineProperty(e,'assetValue',{configurable:true,enumerable:true,writable:true,value:canonicalValue})}catch(_){e.assetValue=canonicalValue}
  }
- window.__tradeValueNormalization='v139-player-9999-pick-7000';
+ window.__tradeValueNormalization='v141-state-aware-player-9999-pick-7000';
  return true;
 }
-const api={MIN,MAX,ELITE_FIRST,rankOf,currentMaxRank,playerValueForRank,playerValue,nearestSeason,sourceValue,sourceAnchor,pickScale,pickValue,pickContext,canonicalValue,canonicalPackageValue,install,originalBaseValue,originalPackageValue,originalPickValue};
+const api={MIN,MAX,ELITE_FIRST,stateRef,assets,rankOf,currentMaxRank,playerValueForRank,playerValue,nearestSeason,sourceValue,sourceAnchor,pickScale,pickValue,pickContext,canonicalValue,canonicalPackageValue,install,originalBaseValue,originalPackageValue,originalPickValue};
 window.tradeValueNormalizationV139=api;
 window.tradeValueNormalizationV130=api;
 install();

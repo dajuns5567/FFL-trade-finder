@@ -14,10 +14,39 @@ function originalRoster(a){const n=Number(a?.original_owner);if(n)return n;const
 function projectedSlot(a){try{const p=(window.draftPickProjection92||window.draftPickProjection90||window.draftPickProjection86)?.(a)||{};return Math.max(1,Math.min(32,Math.round(Number(p.projectedSlot)||16)))}catch(_){return 16}}
 function rows(){return allPicks().map(a=>({a,source:sourceValue(a),display:displayValue(a)})).sort((x,y)=>y.source-x.source||Number(x.a.season)-Number(y.a.season)||Number(x.a.round)-Number(y.a.round)||projectedSlot(x.a)-projectedSlot(y.a));}
 function render(){const host=document.getElementById('draftPickValuesV137');if(!host)return;const list=rows();host.innerHTML=list.length?`<div class="draftPickGridV137">${list.map((r,i)=>{const a=r.a,slot=projectedSlot(a),orig=originalRoster(a),owner=Number(a.owner)||0;return `<div class="draftPickRowV137"><b>${i+1}. ${esc(a.name||`${a.season} R${a.round}`)}</b><small>${a.season} R${a.round} • projected ${a.round}.${String(slot).padStart(2,'0')} • Value ${fmt(r.display)}<br>Original: ${esc(teamName(orig))} • Current owner: ${esc(teamName(owner))}</small></div>`}).join('')}</div>`:'<div class="muted">No draft picks loaded.</div>';}
-function leaveDraftMode(rankings,btn){rankings.classList.remove('draftPicksModeV137');btn?.classList.remove('active')}
-function ensureUI(){const rankings=document.getElementById('rankings');if(!rankings)return false;let btn=document.getElementById('draftPicksFilterV137');if(!btn){const existing=[...rankings.querySelectorAll('button')];const rookie=existing.find(b=>/^Rookies$/i.test((b.textContent||'').trim()));const all=existing.find(b=>/^All$/i.test((b.textContent||'').trim()));const anchor=rookie||all;if(!anchor)return false;btn=document.createElement('button');btn.id='draftPicksFilterV137';btn.type='button';btn.className=anchor.className;btn.textContent='Draft Picks';anchor.insertAdjacentElement('afterend',btn);btn.addEventListener('click',()=>{rankings.classList.add('draftPicksModeV137');btn.classList.add('active');render()});for(const b of existing)b.addEventListener('click',()=>leaveDraftMode(rankings,btn));}
- let host=document.getElementById('draftPickValuesV137');if(!host){host=document.createElement('div');host.id='draftPickValuesV137';const firstRow=rankings.querySelector('.valueRow19');const grid=firstRow?.parentElement;if(grid)grid.insertAdjacentElement('beforebegin',host);else rankings.appendChild(host);}return true;}
-function install(){if(!document.getElementById('draftPickValuesStyleV137')){const s=document.createElement('style');s.id='draftPickValuesStyleV137';s.textContent='#draftPickValuesV137{display:none;margin-top:16px}.draftPicksModeV137 #draftPickValuesV137{display:block}.draftPicksModeV137 .valueRow19{display:none!important}.draftPicksModeV137 #rankingsGrid,.draftPicksModeV137 .valueGrid19{display:none!important}.draftPickGridV137{display:grid;grid-template-columns:1fr 1fr;gap:8px}.draftPickRowV137{border:1px solid var(--border,#2b3140);border-radius:10px;padding:10px 12px;background:var(--panel,#151923)}.draftPickRowV137 small{display:block;margin-top:3px;opacity:.8}@media(max-width:800px){.draftPickGridV137{grid-template-columns:1fr}}';document.head.appendChild(s)}let tries=0;const t=setInterval(()=>{tries++;if(ensureUI()||tries>40)clearInterval(t)},100);}
+function leaveDraftMode(rankings,btn){rankings?.classList.remove('draftPicksModeV137');btn?.classList.remove('active');btn?.classList.add('secondary')}
+function enterDraftMode(rankings,btn){rankings?.classList.add('draftPicksModeV137');btn?.classList.add('active');btn?.classList.remove('secondary');render()}
+function ensureUI(){
+ const rankings=document.getElementById('rankings');
+ const controls=document.getElementById('playerValueFilter');
+ const search=document.getElementById('allValueSearch');
+ if(!rankings||!controls||!search)return false;
+ let btn=document.getElementById('draftPicksFilterV137');
+ if(!btn){
+   btn=document.createElement('button');
+   btn.id='draftPicksFilterV137';btn.type='button';btn.className='secondary small';btn.textContent='Draft Picks';
+   const rookie=document.getElementById('playerRookieFilter');
+   if(rookie)rookie.insertAdjacentElement('afterend',btn);else controls.appendChild(btn);
+   btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();enterDraftMode(rankings,btn)});
+ }
+ if(!controls.dataset.draftExitBound){
+   controls.dataset.draftExitBound='1';
+   controls.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.id==='draftPicksFilterV137')return;leaveDraftMode(rankings,document.getElementById('draftPicksFilterV137'))});
+ }
+ let host=document.getElementById('draftPickValuesV137');
+ if(!host){host=document.createElement('div');host.id='draftPickValuesV137';search.insertAdjacentElement('afterend',host)}
+ return true;
+}
+function install(){
+ if(!document.getElementById('draftPickValuesStyleV137')){
+   const s=document.createElement('style');s.id='draftPickValuesStyleV137';
+   s.textContent='#draftPickValuesV137{display:none;margin-top:16px}#rankings.draftPicksModeV137 #draftPickValuesV137{display:block}#rankings.draftPicksModeV137 .grid{display:none!important}.draftPickGridV137{display:grid;grid-template-columns:1fr 1fr;gap:8px}.draftPickRowV137{border:1px solid var(--border,#2b3140);border-radius:10px;padding:10px 12px;background:var(--panel,#151923)}.draftPickRowV137 small{display:block;margin-top:3px;opacity:.8}@media(max-width:800px){.draftPickGridV137{grid-template-columns:1fr}}';document.head.appendChild(s)
+ }
+ ensureUI();
+ const observer=new MutationObserver(()=>{if(ensureUI()&&document.getElementById('rankings')?.classList.contains('draftPicksModeV137'))render()});
+ observer.observe(document.documentElement,{subtree:true,childList:true});
+ window.__draftPickValuesObserverV137=observer;
+}
 window.draftPickValuesV137={rows,sourceValue,displayValue,nearestSeason,sourceAnchor,render,ensureUI,install};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();

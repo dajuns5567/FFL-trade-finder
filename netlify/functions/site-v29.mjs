@@ -19,10 +19,10 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V146 owns Finder clicks before V130. Candidate generation is bounded and
-  // yields between chunks so searches cannot monopolize the browser event loop.
+  // V147 owns Finder clicks before V130. It reads the canonical #finder #findPos
+  // directly and treats zero checked shop boxes as an explicit blank search.
   // V130 still owns fairness, Evaluator, and selection synchronization.
-  const runtime = '<script>window.__section1Release="v146";</script><script src="/trade-finder-v146.js?v=146"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  const runtime = '<script>window.__section1Release="v147";</script><script src="/trade-finder-v147.js?v=147"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -30,7 +30,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v146-responsive-finder-beam'
+      'x-fll-release': 'section1-v147-finder-final-two'
     }
   });
 };

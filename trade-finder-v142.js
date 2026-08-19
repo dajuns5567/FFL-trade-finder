@@ -40,11 +40,11 @@ function spreadSample(xs,n){
 function blankGivePackages(me){
  const owned=(st().allAssets||[]).filter(x=>Number(x.owner)===me).sort((a,b)=>av(b)-av(a));
  const players=owned.filter(x=>x.type==='player'),picks=owned.filter(x=>x.type==='pick');
- const sample=spreadSample(players,18),out=[],seen=new Set();
+ const sample=spreadSample(players,14),out=[],seen=new Set();
  sample.forEach(x=>addPkg(out,seen,[x]));
- spreadSample(picks,6).forEach(x=>addPkg(out,seen,[x]));
- for(let i=0;i+1<sample.length;i+=3)addPkg(out,seen,[sample[i],sample[i+1]]);
- const topPicks=spreadSample(picks,5);for(let i=0;i<Math.min(8,sample.length);i++)if(topPicks.length)addPkg(out,seen,[sample[i],topPicks[i%topPicks.length]]);
+ spreadSample(picks,4).forEach(x=>addPkg(out,seen,[x]));
+ for(let i=0;i+1<sample.length;i+=4)addPkg(out,seen,[sample[i],sample[i+1]]);
+ const topPicks=spreadSample(picks,4);for(let i=0;i<Math.min(6,sample.length);i++)if(topPicks.length)addPkg(out,seen,[sample[i],topPicks[i%topPicks.length]]);
  return out;
 }
 
@@ -70,23 +70,23 @@ function pickPackages(picks,target){
    const next=states.map(s=>s);
    for(const s of states)next.push({xs:[...s.xs,p],sum:s.sum+av(p)});
    const byKey=new Map();for(const s of next){const k=assetKey(s.xs);const old=byKey.get(k);if(!old||Math.abs(s.sum-target)<Math.abs(old.sum-target))byKey.set(k,s)}
-   states=[...byKey.values()].sort((a,b)=>Math.abs(a.sum-target)-Math.abs(b.sum-target)||a.xs.length-b.xs.length).slice(0,500);
+   states=[...byKey.values()].sort((a,b)=>Math.abs(a.sum-target)-Math.abs(b.sum-target)||a.xs.length-b.xs.length).slice(0,400);
  }
- states.filter(s=>s.xs.length>=2).slice(0,180).forEach(s=>addPkg(out,seen,s.xs));
+ states.filter(s=>s.xs.length>=2).slice(0,150).forEach(s=>addPkg(out,seen,s.xs));
  return out;
 }
 
 function playerPackages(owned,target){
  const tpos=targetPos(),players=owned.filter(x=>x.type==='player'),picks=owned.filter(x=>x.type==='pick'&&Number(x.round)<=3);
- const near=players.slice().sort((a,b)=>Math.abs(av(a)-target)-Math.abs(av(b)-target)||rankOf(a)-rankOf(b)).slice(0,56);
- const nearPicks=picks.slice().sort((a,b)=>Math.abs(av(a)-target)-Math.abs(av(b)-target)).slice(0,14);
+ const near=players.slice().sort((a,b)=>Math.abs(av(a)-target)-Math.abs(av(b)-target)||rankOf(a)-rankOf(b)).slice(0,44);
+ const nearPicks=picks.slice().sort((a,b)=>Math.abs(av(a)-target)-Math.abs(av(b)-target)).slice(0,10);
  const out=[],seen=new Set();
  function qualifies(xs){return tpos==='ANY'||xs.some(x=>x.type==='player'&&pos(x)===tpos)}
  near.forEach(p=>{if(qualifies([p]))addPkg(out,seen,[p])});
  if(tpos==='ANY')nearPicks.forEach(p=>addPkg(out,seen,[p]));
- for(const p of near.slice(0,36))for(const k of nearPicks.slice(0,10)){const xs=[p,k];if(qualifies(xs))addPkg(out,seen,xs)}
- for(let i=0;i<Math.min(30,near.length);i++)for(let j=i+1;j<Math.min(30,near.length);j++){const xs=[near[i],near[j]];if(qualifies(xs))addPkg(out,seen,xs)}
- for(let i=0;i<Math.min(12,near.length);i++)for(let j=i+1;j<Math.min(12,near.length);j++)for(const k of nearPicks.slice(0,5)){const xs=[near[i],near[j],k];if(qualifies(xs))addPkg(out,seen,xs)}
+ for(const p of near.slice(0,26))for(const k of nearPicks.slice(0,7)){const xs=[p,k];if(qualifies(xs))addPkg(out,seen,xs)}
+ for(let i=0;i<Math.min(20,near.length);i++)for(let j=i+1;j<Math.min(20,near.length);j++){const xs=[near[i],near[j]];if(qualifies(xs))addPkg(out,seen,xs)}
+ for(let i=0;i<Math.min(8,near.length);i++)for(let j=i+1;j<Math.min(8,near.length);j++)for(const k of nearPicks.slice(0,3)){const xs=[near[i],near[j],k];if(qualifies(xs))addPkg(out,seen,xs)}
  return out;
 }
 

@@ -27,6 +27,7 @@ function selectedGive(){const map=window.section1V130?.finderSel;if(map?.size)re
 function spreadSample(xs,n){if(xs.length<=n)return xs.slice();const out=[],seen=new Set();for(let i=0;i<n;i++){const j=Math.round(i*(xs.length-1)/(n-1));if(!seen.has(j)){seen.add(j);out.push(xs[j])}}return out}
 function centerpiece(xs){const ps=(xs||[]).filter(x=>x.type==='player');if(!ps.length)return null;return ps.slice().sort((a,b)=>rankOf(a)-rankOf(b)||av(b)-av(a))[0]}
 function packageMatchesPosition(xs){const t=targetPos();if(t==='ANY')return true;const c=centerpiece(xs);return !!c&&pos(c)===t}
+function resultMatchesPosition(r){const t=targetPos();if(t==='ANY'||finderMode()==='draft')return true;const c=centerpiece(r?.recv||[]);return !!c&&pos(c)===t}
 
 function blankGivePackages(me){
  const owned=(st().allAssets||[]).filter(x=>Number(x.owner)===me).sort((a,b)=>av(b)-av(a));
@@ -108,12 +109,13 @@ function generate(){
  all.sort((a,b)=>b.recommend-a.recommend||b.f.score-a.f.score||a.gap-b.gap);
  const seen=new Set(),giveUse=new Map(),partnerUse=new Map(),out=[];
  for(const r of all){
+   if(!resultMatchesPosition(r))continue;
    const sig=`${r.other}|${r.centerKey}`;if(seen.has(sig))continue;
    const gk=assetKey(r.give),gused=giveUse.get(gk)||0;if(blank&&gused>=2)continue;
    const pused=partnerUse.get(r.other)||0;const pmax=(blank||tier==='draft')?1:3;if(pused>=pmax)continue;
    seen.add(sig);giveUse.set(gk,gused+1);partnerUse.set(r.other,pused+1);out.push(r);if(out.length>=120)break;
  }
- return out;
+ return out.filter(resultMatchesPosition);
 }
 
 function pickMeta(x){const p=norm().pickContext?.(x)||{},slot=Math.max(1,Math.min(32,Math.round(Number(p.projectedSlot)||16)));return `${x.season} R${x.round} • projected ${x.round}.${String(slot).padStart(2,'0')}`}
@@ -124,7 +126,7 @@ function rationale(r){const mode=finderMode(),style=searchStyle(),bits=[];bits.p
 function card(r,i){const f=r.f,label=f.score>=94?'Excellent Fit':f.score>=82?'Fair':'Negotiable';return `<div class="result trade95-card"><div class="trade95-head"><div><b>#${i+1} ${esc(teamName(r.other))}</b><div class="trade95-sub">Recommendation ${Math.round(r.recommend)}/100</div></div><div class="trade95-score">${Math.round(f.score)}<span>/100</span><div>${label}</div></div></div><div class="trade95-grid">${side('YOU RECEIVE',r.recv,f.bRaw,f.bAdj,f.bEffective)}${side('YOU SEND',r.give,f.aRaw,f.aAdj,f.aEffective)}</div><div class="trade95-summary"><div><b>${label}</b><span>Raw difference ${fmt(f.edgeRaw)}</span>${(f.aAdj||f.bAdj)?`<span>Value Adjustment +${fmt(Math.max(f.aAdj,f.bAdj))}</span>`:''}<span>Partner fit ${Math.round(r.fit)}/100</span></div></div><button class="secondary small rationaleBtn">Trade rationale</button><div class="rationaleBody" hidden>${rationale(r)}</div></div>`}
 function wire(host){host.querySelectorAll('.rationaleBtn').forEach(b=>b.onclick=()=>{const x=b.nextElementSibling;x.hidden=!x.hidden;b.textContent=x.hidden?'Trade rationale':'Hide rationale'})}
 function noResults(){const tier=finderMode();if(tier==='draft'&&(selectedYears().size||selectedRounds().size))return 'No team has a qualifying draft-pick package that passes the current fairness model for those year/round filters.';return 'No realistic trade passed the current fairness, intent, position, and partner requirements.'}
-function render(){const host=document.getElementById('finderResults');if(!host)return;rows=generate();visible=Math.min(5,rows.length);const draw=()=>{host.innerHTML=rows.length?rows.slice(0,visible).map(card).join(''):`<div class="empty">${esc(noResults())}</div>`;wire(host);if(visible<rows.length){const b=document.createElement('button');b.className='secondary';b.style.cssText='margin:12px auto 4px;display:block';b.textContent=`Load more trades (${rows.length-visible} more)`;b.onclick=()=>{visible=Math.min(rows.length,visible+5);draw()};host.appendChild(b)}};draw()}
+function render(){const host=document.getElementById('finderResults');if(!host)return;rows=generate().filter(resultMatchesPosition);visible=Math.min(5,rows.length);const draw=()=>{host.innerHTML=rows.length?rows.slice(0,visible).map(card).join(''):`<div class="empty">${esc(noResults())}</div>`;wire(host);if(visible<rows.length){const b=document.createElement('button');b.className='secondary';b.style.cssText='margin:12px auto 4px;display:block';b.textContent=`Load more trades (${rows.length-visible} more)`;b.onclick=()=>{visible=Math.min(rows.length,visible+5);draw()};host.appendChild(b)}};draw()}
 document.addEventListener('click',e=>{const b=e.target.closest?.('#runFinder');if(!b)return;e.preventDefault();e.stopImmediatePropagation();render()},true);
-window.tradeFinderV143={generate,render,blankGivePackages,pickPackages,playerPackages,tierOK,selectedGive,centerpiece};
+window.tradeFinderV143={generate,render,blankGivePackages,pickPackages,playerPackages,tierOK,selectedGive,centerpiece,resultMatchesPosition};
 })();

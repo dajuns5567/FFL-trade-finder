@@ -19,10 +19,11 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V148 owns Finder clicks before V130. It owns the visible position selector
-  // and uses a bounded progressive blank-search path for fast first results.
+  // V149 owns Finder clicks before V130. It restores and reads the original
+  // #findPos control from index.html and renders blank-search results only once
+  // after generation completes, preventing the progressive result-set flash.
   // V130 still owns fairness, Evaluator, and selection synchronization.
-  const runtime = '<script>window.__section1Release="v148";</script><script src="/trade-finder-v148.js?v=148"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  const runtime = '<script>window.__section1Release="v149";</script><script src="/trade-finder-v149.js?v=149"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -30,7 +31,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v148-owned-position-fast-blank'
+      'x-fll-release': 'section1-v149-stable-results-position-source'
     }
   });
 };

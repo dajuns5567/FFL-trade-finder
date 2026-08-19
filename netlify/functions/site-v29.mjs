@@ -15,15 +15,17 @@ export default async () => {
     .replace(/<script src="\/ui-v20\.js\?v=78"><\/script>/g, '')
     .replace(/<script src="\/ui-v24\.js\?v=82"><\/script>/g, '');
 
-  // All canonical value/UI adapters load before deferred boot. V140 synchronously
-  // replaces ui-v18's legacy rankings markup and overrides the old pick-label
-  // path before the first cached/live render can occur.
-  const value = '<script src="/trade-value-normalization-v139.js?v=140"></script><script src="/ui-player-values-v139.js?v=140"></script><script src="/ui-runtime-values-v140.js?v=140"></script>';
+  // V141 bridges the app's lexical `state` binding to window.state before any
+  // modern runtime reads it, keeps that bridge synced on every render, and
+  // normalizes the available NFL-team field before Player Values render.
+  // The normalization layer is also state-aware directly, so pick scaling no
+  // longer falls back to 1 when calculating the nearest-year first-round anchor.
+  const value = '<script src="/state-bridge-v141.js?v=141"></script><script src="/trade-value-normalization-v139.js?v=141"></script><script src="/ui-player-values-v139.js?v=141"></script><script src="/ui-runtime-values-v140.js?v=141"></script>';
   const deferredBoot = '<script>if(typeof window.__fllDeferredBoot==="function")window.__fllDeferredBoot();</script>';
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  const runtime = '<script>window.__section1Release="v140";</script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=140"></script>';
+  const runtime = '<script>window.__section1Release="v141";</script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -31,7 +33,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v140-verified-value-path'
+      'x-fll-release': 'section1-v141-state-bridge-pick-scale-team-stable'
     }
   });
 };

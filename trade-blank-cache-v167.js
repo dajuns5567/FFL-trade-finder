@@ -15,12 +15,11 @@ function isBlankLike(){
   return checked===0||checked===boxes.length;
 }
 function restore(){
-  if(!active)return;
   active=false;
   if(restoreTimer){clearTimeout(restoreTimer);restoreTimer=null}
   if(observer){observer.disconnect();observer=null}
-  try{if(normObj&&origCanonical)normObj.canonicalValue=origCanonical}catch(_){}
-  try{if(origRank)window.playerRankValue=origRank}catch(_){}
+  try{if(normObj&&typeof origCanonical==='function')normObj.canonicalValue=origCanonical}catch(_){}
+  try{if(typeof origRank==='function')window.playerRankValue=origRank}catch(_){}
   normObj=null;origCanonical=null;origRank=null;
   valueCache.clear();rankCache.clear();
 }
@@ -29,7 +28,7 @@ function install(){
   normObj=window.tradeValueNormalizationV130||window.tradeValueNormalizationV139||null;
   origCanonical=normObj?.canonicalValue;
   origRank=window.playerRankValue;
-  if(typeof origCanonical!=='function')return;
+  if(typeof origCanonical!=='function'){restore();return}
   valueCache.clear();rankCache.clear();
   try{
     normObj.canonicalValue=function(x){

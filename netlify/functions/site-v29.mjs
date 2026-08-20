@@ -19,10 +19,10 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V153 preserves V152 behavior and makes blank search evaluate a bounded mix
-  // of single-asset, player+player, player+pick, and pick+pick outgoing packages.
-  // The blank workload is reduced from 50 outgoing packages to at most 36.
-  const runtime = '<script>window.__section1Release="v153";</script><script src="/trade-finder-v150.js?v=153"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  // V153 keeps 50 mixed blank-search outgoing packages while pruning implausible
+  // incoming packages before full fairness scoring. V152 package-shape mixing,
+  // position rules, pagination, and the 250-result safety ceiling are preserved.
+  const runtime = '<script>window.__section1Release="v153b";</script><script src="/trade-finder-v150.js?v=153b"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -30,7 +30,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v153-blank-outgoing-mix-performance'
+      'x-fll-release': 'section1-v153b-blank-50-performance'
     }
   });
 };

@@ -19,11 +19,10 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V150 owns Finder clicks before V130. It reads the actual V97 checkbox
-  // position controls and expands blank-search breadth while retaining outgoing
-  // asset rotation and stable final rendering.
-  // V130 still owns fairness, Evaluator, and selection synchronization.
-  const runtime = '<script>window.__section1Release="v150";</script><script src="/trade-finder-v150.js?v=150"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  // V151 preserves V150's working Finder behavior, requires the premium incoming
+  // asset to be the selected position when a position filter is active, and uses
+  // a 250-result safety ceiling. Acquire Draft Picks remains exempt.
+  const runtime = '<script>window.__section1Release="v151";</script><script src="/trade-finder-v150.js?v=151"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -31,7 +30,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v150-live-position-blank-breadth'
+      'x-fll-release': 'section1-v151-premium-position-250-cap'
     }
   });
 };

@@ -19,10 +19,9 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V165 leaves the current selected-asset Finder untouched. A dedicated blank-search
-  // runner is registered before it and intercepts only zero-selection or all-selection
-  // searches, using the last known-good V153 blank execution loop. Select all is UI-only.
-  const runtime = '<script>window.__section1Release="v165";</script><script src="/trade-select-all-v165.js?v=165"></script><script src="/trade-blank-v165.js?v=165"></script><script src="/trade-finder-v150.js?v=165"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  // V166 runs blank and all-selected searches inside the same Finder instance.
+  // Select all remains UI-only; the standalone V165 blank runner is no longer loaded.
+  const runtime = '<script>window.__section1Release="v166";</script><script src="/trade-select-all-v165.js?v=166"></script><script src="/trade-finder-v150.js?v=166"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -30,7 +29,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v165-native-all-blank-v153-loop'
+      'x-fll-release': 'section1-v166-native-blank-in-finder'
     }
   });
 };

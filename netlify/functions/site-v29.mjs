@@ -19,9 +19,9 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V166 runs blank and all-selected searches inside the same Finder instance.
-  // Select all remains UI-only; the standalone V165 blank runner is no longer loaded.
-  const runtime = '<script>window.__section1Release="v166";</script><script src="/trade-select-all-v165.js?v=166"></script><script src="/trade-finder-v150.js?v=166"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  // V167 preserves the V166 Finder and adds blank/all-selected search-local caching.
+  // The cache layer is loaded before the Finder so it can activate before render starts.
+  const runtime = '<script>window.__section1Release="v167";</script><script src="/trade-select-all-v165.js?v=167"></script><script src="/trade-blank-cache-v167.js?v=167"></script><script src="/trade-finder-v150.js?v=167"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -29,7 +29,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v166-native-blank-in-finder'
+      'x-fll-release': 'section1-v167-blank-search-cache'
     }
   });
 };

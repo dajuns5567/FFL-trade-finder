@@ -19,10 +19,10 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V154 preserves V153 behavior and only expands incoming generation when the
-  // outgoing side contains 2+ assets: a small bounded set of 3-player returns is
-  // considered in the same fairness/fit pool with no frequency boost.
-  const runtime = '<script>window.__section1Release="v154";</script><script src="/trade-finder-v150.js?v=154"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  // V155 preserves V154 behavior and broadens only the 2+ outgoing-asset path:
+  // bounded 3-asset returns may be 3 players, 2 players + pick, or player + 2 picks.
+  // They compete normally; one-outgoing-asset searches and all frozen logic stay unchanged.
+  const runtime = '<script>window.__section1Release="v155";</script><script src="/trade-finder-v150.js?v=155"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -30,7 +30,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v154-three-player-incoming-expansion'
+      'x-fll-release': 'section1-v155-three-asset-mixed-incoming'
     }
   });
 };

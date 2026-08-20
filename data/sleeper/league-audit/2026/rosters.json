@@ -971,6 +971,7 @@
       "13319",
       "13364",
       "13524",
+      "2306",
       "4950",
       "5346",
       "7527",
@@ -990,7 +991,7 @@
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
-      "waiver_position": 31,
+      "waiver_position": 32,
       "wins": 0
     },
     "starters": [
@@ -1067,7 +1068,7 @@
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 50,
-      "waiver_position": 32,
+      "waiver_position": 31,
       "wins": 0
     },
     "starters": [

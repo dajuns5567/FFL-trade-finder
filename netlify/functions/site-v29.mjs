@@ -19,10 +19,10 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V151 preserves V150's working Finder behavior, requires the premium incoming
-  // asset to be the selected position when a position filter is active, and uses
-  // a 250-result safety ceiling. Acquire Draft Picks remains exempt.
-  const runtime = '<script>window.__section1Release="v151";</script><script src="/trade-finder-v150.js?v=151"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  // V152 preserves V151 behavior and balances Make-a-Fair-Trade + Any-position
+  // recommendations across single-player, player+pick, and multi-player shapes.
+  // Tier/position/draft modes and the 250-result safety ceiling are unchanged.
+  const runtime = '<script>window.__section1Release="v152";</script><script src="/trade-finder-v150.js?v=152"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -30,7 +30,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v151-premium-position-250-cap'
+      'x-fll-release': 'section1-v152-fair-trade-shape-mix'
     }
   });
 };

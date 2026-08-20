@@ -19,10 +19,10 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V157 preserves V156 blank-search recovery and V155 package rules while
-  // bounding explicit 2+ asset three-asset candidate generation to the closest
-  // value beams per opponent instead of materializing hundreds of combinations.
-  const runtime = '<script>window.__section1Release="v157";</script><script src="/trade-finder-v150.js?v=157"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  // V164 adds a Select all UI/blank-search alias without changing Finder logic.
+  // The v164 cache key guarantees the current Finder asset is loaded rather than
+  // an older cached V157 URL.
+  const runtime = '<script>window.__section1Release="v164";</script><script src="/trade-select-all-v164.js?v=164"></script><script src="/trade-finder-v150.js?v=164"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -30,7 +30,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v157-explicit-multiasset-performance'
+      'x-fll-release': 'section1-v164-select-all-blank-alias'
     }
   });
 };

@@ -19,10 +19,10 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V156 preserves V155 explicit multi-asset expansion, but blank search no longer
-  // invokes 3-asset incoming generation. Failed searches also recover cleanly so
-  // subsequent Finder runs remain usable without a page/session reset.
-  const runtime = '<script>window.__section1Release="v156";</script><script src="/trade-finder-v150.js?v=156"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  // V157 preserves V156 blank-search recovery and V155 package rules while
+  // bounding explicit 2+ asset three-asset candidate generation to the closest
+  // value beams per opponent instead of materializing hundreds of combinations.
+  const runtime = '<script>window.__section1Release="v157";</script><script src="/trade-finder-v150.js?v=157"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -30,7 +30,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v156-blank-search-recovery'
+      'x-fll-release': 'section1-v157-explicit-multiasset-performance'
     }
   });
 };

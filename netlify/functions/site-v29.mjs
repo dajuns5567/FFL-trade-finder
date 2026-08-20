@@ -19,10 +19,10 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V155 preserves V154 behavior and broadens only the 2+ outgoing-asset path:
-  // bounded 3-asset returns may be 3 players, 2 players + pick, or player + 2 picks.
-  // They compete normally; one-outgoing-asset searches and all frozen logic stay unchanged.
-  const runtime = '<script>window.__section1Release="v155";</script><script src="/trade-finder-v150.js?v=155"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
+  // V156 preserves V155 explicit multi-asset expansion, but blank search no longer
+  // invokes 3-asset incoming generation. Failed searches also recover cleanly so
+  // subsequent Finder runs remain usable without a page/session reset.
+  const runtime = '<script>window.__section1Release="v156";</script><script src="/trade-finder-v150.js?v=156"></script><script src="/trade-runtime-v130.js?v=131"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -30,7 +30,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v155-three-asset-mixed-incoming'
+      'x-fll-release': 'section1-v156-blank-search-recovery'
     }
   });
 };

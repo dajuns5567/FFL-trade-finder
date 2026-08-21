@@ -8,6 +8,7 @@ const currentTeam=side=>Number(document.getElementById('eval'+side)?.value)||0;
 const selectedState=side=>appState()?.['assets'+side]||[];
 const renderSide=side=>{try{window.renderAssets?.(side)}catch(_){};const search=document.getElementById('evalSearch'+side);if(search)search.dispatchEvent(new Event('input',{bubbles:false}));};
 const anyTeamOn=()=>Boolean(document.getElementById(CHECK_ID)?.checked);
+const assetKey=x=>`${x?.type||''}:${String(x?.id??'')}`;
 
 function normalizeToCurrentTeams(){
  const s=appState();
@@ -38,11 +39,47 @@ function ensureControl(){
 function onEvaluatorTeamChange(e){
  const side=sideForSelect(e.target);
  if(!side||!anyTeamOn())return;
- // ui-v18's normal bubbling listener clears this side. Suppress only while
- // Any Team is active, then reuse its existing search input to redraw the
- // chooser for the newly selected roster without changing selected assets.
+ // ui-v18 normally clears this side on team change. Suppress only while
+ // Any Team is active and redraw the chooser for the newly selected roster.
  e.stopImmediatePropagation();
  queueMicrotask(()=>renderSide(side));
+}
+
+function onAnyTeamGlobalSearchClick(e){
+ if(!anyTeamOn())return;
+ const button=e.target.closest?.('#evalGlobalResultsA button[data-pid],#evalGlobalResultsB button[data-pid]');
+ if(!button)return;
+ const results=button.closest('[id^="evalGlobalResults"]');
+ const side=results?.id==='evalGlobalResultsA'?'A':results?.id==='evalGlobalResultsB'?'B':null;
+ if(!side)return;
+ const s=appState();
+ if(!s)return;
+ // ui-v19 replaces the entire side with the clicked global-search player.
+ // In Any Team mode, intercept that one path and append/dedupe instead.
+ e.preventDefault();
+ e.stopImmediatePropagation();
+ const pid=String(button.dataset.pid||'');
+ const owner=Number(button.dataset.owner)||0;
+ const asset=(s.allAssets||[]).find(x=>x?.type==='player'&&String(x.id)===pid);
+ if(!asset)return;
+ const sel=document.getElementById('eval'+side);
+ if(sel&&owner){sel.value=String(owner);sel.dispatchEvent(new Event('change',{bubbles:true}));}
+ const arr=s['assets'+side]||(s['assets'+side]=[]);
+ const k=assetKey(asset);
+ if(!arr.some(x=>assetKey(x)===k))arr.push({...asset});
+ renderSide(side);
+ const input=document.getElementById('evalGlobalSearch'+side);
+ if(input){try{input.value=typeof playerName==='function'?playerName(pid):(asset.name||pid)}catch(_){input.value=asset.name||pid}}
+ if(results)results.innerHTML='';
+}
+
+function onEvaluatorClear(e){
+ const button=e.target.closest?.('button');
+ if(!button||!button.closest('#evaluator'))return;
+ const text=(button.textContent||'').trim();
+ if(!/^(Clear trade|Clear selections)$/i.test(text))return;
+ const box=document.getElementById(CHECK_ID);
+ if(box)box.checked=false;
 }
 
 function install(){
@@ -50,8 +87,10 @@ function install(){
  if(!document.__evalAnyTeam179){
   document.__evalAnyTeam179=true;
   document.addEventListener('change',onEvaluatorTeamChange,true);
+  document.addEventListener('click',onAnyTeamGlobalSearchClick,true);
+  document.addEventListener('click',onEvaluatorClear,true);
  }
- window.__evalAnyTeam179='v179';
+ window.__evalAnyTeam179='v180';
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();

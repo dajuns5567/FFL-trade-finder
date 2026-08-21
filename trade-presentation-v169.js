@@ -39,19 +39,16 @@ function diversifyGroup(group){
   }
   if(keys.length<2)return group.slice();
   const out=[];
-  let last=null;
+  let cursor=0;
   while(out.length<group.length){
-    let chosen=null;
-    for(const k of keys){
-      const b=buckets.get(k);
-      if(b?.length&&k!==last){chosen=k;break}
+    let chosen=-1;
+    for(let step=0;step<keys.length;step++){
+      const i=(cursor+step)%keys.length;
+      if(buckets.get(keys[i])?.length){chosen=i;break}
     }
-    if(chosen===null){
-      for(const k of keys){if(buckets.get(k)?.length){chosen=k;break}}
-    }
-    if(chosen===null)break;
-    out.push(buckets.get(chosen).shift());
-    last=chosen;
+    if(chosen<0)break;
+    out.push(buckets.get(keys[chosen]).shift());
+    cursor=(chosen+1)%keys.length;
   }
   return out;
 }

@@ -74,10 +74,11 @@
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
   "company_id": null,
+  "last_message_id": "1396309076853420032",
   "sport": "nfl",
-  "season_type": "regular",
-  "season": "2026",
   "shard": 773,
+  "season": "2026",
+  "season_type": "regular",
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,
@@ -223,7 +224,6 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
-  "last_message_id": "1396309076853420032",
   "last_author_avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
   "last_author_display_name": "TomKatz",
   "last_author_id": "729929924969865216",

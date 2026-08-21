@@ -7,8 +7,13 @@ function blankLike(){
   const checked=boxes.filter(b=>b.checked).length;
   return checked===0||checked===boxes.length;
 }
-function scoreOf(card){
+function recommendationOf(card){
   const m=(card.textContent||'').match(/Recommendation\s+(\d+)\/100/i);
+  return m?Number(m[1]):0;
+}
+function fairnessOf(card){
+  const el=card.querySelector('.trade95-score');
+  const m=(el?.textContent||'').match(/(\d+)\s*\/100/);
   return m?Number(m[1]):0;
 }
 function sideInfo(side){
@@ -71,33 +76,45 @@ function spacePickOnly(cards,maxRun=2){
       if(alt>=0)idx=alt;
     }
     const card=remaining.splice(idx,1)[0];
-    if(outgoingPickOnly(card))streak++;
-    else streak=0;
+    streak=outgoingPickOnly(card)?streak+1:0;
     out.push(card);
   }
   return out;
+}
+function renumber(cards){
+  cards.forEach((card,i)=>{
+    const b=card.querySelector('.trade95-head > div > b');
+    if(!b)return;
+    const text=b.textContent||'';
+    b.textContent=text.match(/^#\d+\s+/)?text.replace(/^#\d+\s+/,`#${i+1} `):`#${i+1} ${text}`;
+  });
 }
 function apply(){
   if(running||!blankLike())return;
   const host=document.getElementById('finderResults');
   if(!host)return;
   const cards=[...host.querySelectorAll(':scope > .trade95-card')];
-  if(cards.length<2)return;
-  const groups=[],byScore=new Map();
-  for(const card of cards){
-    const score=scoreOf(card);
-    if(!byScore.has(score)){const g=[];byScore.set(score,g);groups.push(g)}
-    byScore.get(score).push(card);
+  if(cards.length<2){renumber(cards);return}
+
+  // V176 invariant: fairness is the immutable outer presentation order,
+  // Recommendation is the secondary order. Diversity may only rearrange
+  // trades that have the exact same fairness AND Recommendation score.
+  const sorted=cards.slice().sort((a,b)=>
+    fairnessOf(b)-fairnessOf(a)||recommendationOf(b)-recommendationOf(a)
+  );
+  const ordered=[];
+  for(let i=0;i<sorted.length;){
+    const fair=fairnessOf(sorted[i]),rec=recommendationOf(sorted[i]),group=[];
+    while(i<sorted.length&&fairnessOf(sorted[i])===fair&&recommendationOf(sorted[i])===rec)group.push(sorted[i++]);
+    ordered.push(...spacePickOnly(diversifyGroup(group),2));
   }
-  const mixed=[];
-  for(const g of groups)mixed.push(...diversifyGroup(g));
-  const ordered=spacePickOnly(mixed,2);
-  if(ordered.every((c,i)=>c===cards[i]))return;
+
   running=true;
   try{
     observer?.disconnect();
     const loadMore=[...host.children].find(x=>x.tagName==='BUTTON'&&/Load more trades/i.test(x.textContent||''))||null;
     for(const card of ordered)host.insertBefore(card,loadMore);
+    renumber(ordered);
   }finally{
     running=false;
     observe();
@@ -112,5 +129,5 @@ function observe(){
 }
 function boot(){observe();apply()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-window.tradePresentationV169={apply,blankLike,structureKey,outgoingPickOnly,spacePickOnly};
+window.tradePresentationV169={apply,blankLike,structureKey,outgoingPickOnly,spacePickOnly,fairnessOf,recommendationOf};
 })();

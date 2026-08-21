@@ -19,8 +19,8 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V170 preserves all V169 Finder/presentation/valuation behavior and tunes only the shared Value Adjustment curve.
-  const runtime = '<script>window.__section1Release="v170";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-finder-v150.js?v=169"></script><script src="/trade-runtime-v130.js?v=132"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=169"></script>';
+  // V171 preserves all V170 logic and smooths only the shared Value Adjustment decline below the JSN anchor.
+  const runtime = '<script>window.__section1Release="v171";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-finder-v150.js?v=169"></script><script src="/trade-runtime-v130.js?v=133"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=169"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -28,7 +28,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v170-value-adjustment-tuning'
+      'x-fll-release': 'section1-v171-value-adjustment-smoothing'
     }
   });
 };

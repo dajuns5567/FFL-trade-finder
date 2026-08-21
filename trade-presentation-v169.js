@@ -30,6 +30,15 @@ function structureKey(card){
   }
   return`g${give.n}p${give.p}k${give.k}|r${recv.n}p${recv.p}k${recv.k}`;
 }
+function outgoingPickOnly(card){
+  for(const side of card.querySelectorAll('.trade95-side')){
+    const title=(side.querySelector('.trade95-side-title')?.textContent||'').trim().toUpperCase();
+    if(!title.includes('YOU SEND'))continue;
+    const info=sideInfo(side);
+    return info.n>0&&info.p===0&&info.k===info.n;
+  }
+  return false;
+}
 function diversifyGroup(group){
   const buckets=new Map(),keys=[];
   for(const card of group){
@@ -52,6 +61,22 @@ function diversifyGroup(group){
   }
   return out;
 }
+function spacePickOnly(cards,maxRun=2){
+  const remaining=cards.slice(),out=[];
+  let streak=0;
+  while(remaining.length){
+    let idx=0;
+    if(streak>=maxRun){
+      const alt=remaining.findIndex(c=>!outgoingPickOnly(c));
+      if(alt>=0)idx=alt;
+    }
+    const card=remaining.splice(idx,1)[0];
+    if(outgoingPickOnly(card))streak++;
+    else streak=0;
+    out.push(card);
+  }
+  return out;
+}
 function apply(){
   if(running||!blankLike())return;
   const host=document.getElementById('finderResults');
@@ -64,8 +89,9 @@ function apply(){
     if(!byScore.has(score)){const g=[];byScore.set(score,g);groups.push(g)}
     byScore.get(score).push(card);
   }
-  const ordered=[];
-  for(const g of groups)ordered.push(...diversifyGroup(g));
+  const mixed=[];
+  for(const g of groups)mixed.push(...diversifyGroup(g));
+  const ordered=spacePickOnly(mixed,2);
   if(ordered.every((c,i)=>c===cards[i]))return;
   running=true;
   try{
@@ -86,5 +112,5 @@ function observe(){
 }
 function boot(){observe();apply()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-window.tradePresentationV169={apply,blankLike,structureKey};
+window.tradePresentationV169={apply,blankLike,structureKey,outgoingPickOnly,spacePickOnly};
 })();

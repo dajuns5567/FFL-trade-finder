@@ -19,8 +19,8 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V173 preserves V172 search/valuation logic and keeps the diversified blank result order intact.
-  const runtime = '<script>window.__section1Release="v173";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-finder-v150.js?v=173"></script><script src="/trade-runtime-v130.js?v=133"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=169"></script>';
+  // V174 preserves V173 search/valuation logic and spaces long pick-only outgoing recommendation runs in presentation only.
+  const runtime = '<script>window.__section1Release="v174";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-finder-v150.js?v=173"></script><script src="/trade-runtime-v130.js?v=133"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=174"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -28,7 +28,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v173-preserve-blank-distribution-order'
+      'x-fll-release': 'section1-v174-space-outgoing-pick-runs'
     }
   });
 };

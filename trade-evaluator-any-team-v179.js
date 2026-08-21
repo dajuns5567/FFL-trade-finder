@@ -2,18 +2,20 @@
 'use strict';
 const CHECK_ID='evalAnyTeam179';
 const WRAP_ID='evalAnyTeamWrap179';
+const appState=()=>{try{return state}catch(_){return window.state||null}};
 const sideForSelect=el=>el?.id==='evalA'?'A':el?.id==='evalB'?'B':null;
 const currentTeam=side=>Number(document.getElementById('eval'+side)?.value)||0;
-const selectedState=side=>window.state?.['assets'+side]||[];
+const selectedState=side=>appState()?.['assets'+side]||[];
 const renderSide=side=>{try{window.renderAssets?.(side)}catch(_){};const search=document.getElementById('evalSearch'+side);if(search)search.dispatchEvent(new Event('input',{bubbles:false}));};
 const anyTeamOn=()=>Boolean(document.getElementById(CHECK_ID)?.checked);
 
 function normalizeToCurrentTeams(){
- if(!window.state)return;
+ const s=appState();
+ if(!s)return;
  for(const side of ['A','B']){
   const team=currentTeam(side);
   if(!team)continue;
-  window.state['assets'+side]=selectedState(side).filter(x=>Number(x?.owner)===team);
+  s['assets'+side]=selectedState(side).filter(x=>Number(x?.owner)===team);
   renderSide(side);
  }
 }

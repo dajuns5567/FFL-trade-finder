@@ -73,10 +73,11 @@
     "daily_waivers_last_ran": 18
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
-  "shard": 773,
-  "season": "2026",
-  "season_type": "regular",
+  "company_id": null,
   "sport": "nfl",
+  "season_type": "regular",
+  "season": "2026",
+  "shard": 773,
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,
@@ -222,7 +223,6 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
-  "company_id": null,
   "last_message_id": "1396991492869869568",
   "last_author_avatar": "2954af518c08da30113478de59d8fab4",
   "last_author_display_name": "jakeslomiak21",

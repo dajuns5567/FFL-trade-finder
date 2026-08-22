@@ -1,0 +1,1 @@
+V204 isolation audit: direct modification of working V202 loader only. No loader-over-loader transform. Behavioral changes limited to Maximum Value neutral 3-asset buffer/shape mix and Maximum Value Tier Up 2-for-2 shape mix. Site file changes only release/cache pointer.

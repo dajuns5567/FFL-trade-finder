@@ -20,12 +20,12 @@ export default async () => {
   else raw = raw.replace('</body>', value + '</body>');
 
   // V195 changes Finder distribution/presentation only: blank results can fill the
-  // existing 250-result ceiling, blank outgoing packages expand to 80, distinct outgoing
-  // packages are exhausted before repeat variants, repeated 3-asset two-asset overlaps
-  // are spaced apart, and Maximum Value + neutral/fair visibly mixes outgoing package counts.
-  // Tier rules, draft presentation, Partner Fit, fairness, valuation and Value Adjustment
-  // are unchanged.
-  const runtime = '<script>window.__section1Release="v195";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-style-loader-v188.js?v=1951"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=176"></script>';
+  // existing 250-result ceiling, blank outgoing packages expand to 80 with the extra
+  // packages focused on mid/high assets, distinct outgoing packages are exhausted before
+  // repeat variants, repeated 3-asset two-asset overlaps are spaced apart, and Maximum
+  // Value + neutral/fair visibly mixes outgoing package counts. Tier rules, draft
+  // presentation, Partner Fit, fairness, valuation and Value Adjustment are unchanged.
+  const runtime = '<script>window.__section1Release="v195";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-style-loader-v188.js?v=1952"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=176"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {

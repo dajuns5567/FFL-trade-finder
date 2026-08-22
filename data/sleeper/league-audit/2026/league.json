@@ -73,7 +73,6 @@
     "daily_waivers_last_ran": 18
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
-  "company_id": null,
   "shard": 773,
   "season": "2026",
   "season_type": "regular",
@@ -223,6 +222,7 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
+  "company_id": null,
   "last_message_id": "1396991492869869568",
   "last_author_avatar": "2954af518c08da30113478de59d8fab4",
   "last_author_display_name": "jakeslomiak21",
@@ -239,6 +239,8 @@
   "bracket_id": null,
   "bracket_overrides_id": null,
   "group_id": null,
+  "loser_bracket_id": null,
+  "loser_bracket_overrides_id": null,
   "roster_positions": [
     "RB",
     "WR",
@@ -254,7 +256,5 @@
     "BN",
     "BN"
   ],
-  "loser_bracket_id": null,
-  "loser_bracket_overrides_id": null,
   "total_rosters": 32
 }

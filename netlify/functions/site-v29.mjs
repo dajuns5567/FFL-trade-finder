@@ -13,17 +13,16 @@ export default async () => {
     .replace(/<script src="\/ui-v20\.js\?v=78"><\/script>/g, '')
     .replace(/<script src="\/ui-v24\.js\?v=82"><\/script>/g, '');
 
-  // Frozen valuation path from V141. V197 keeps V196/V195 valuation behavior unchanged.
+  // Frozen valuation path from V141. V198 keeps V197/V196/V195 valuation behavior unchanged.
   const value = '<script src="/state-bridge-v141.js?v=141"></script><script src="/trade-value-normalization-v139.js?v=141"></script><script src="/ui-player-values-v139.js?v=141"></script><script src="/ui-runtime-values-v140.js?v=141"></script>';
   const deferredBoot = '<script>if(typeof window.__fllDeferredBoot==="function")window.__fllDeferredBoot();</script>';
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V197 preserves V196's 250-result pool, 80 outgoing-package pool, distinct-package
-  // waves, low-value safeguards, draft presentation, Partner Fit 70/30, fairness,
-  // valuation and Value Adjustment. It changes only Load More presentation and the
-  // requested style-specific package-shape/composition preferences.
-  const runtime = '<script>window.__section1Release="v197";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-style-loader-v197.js?v=197"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=197"></script>';
+  // V198 preserves V197's Load More behavior and all V195/V196 result safeguards.
+  // Only neutral/fair Best Partner Fit and Maximum Value three-asset generation/presentation
+  // are refined for stronger package variety and more Maximum Value 3-incoming options.
+  const runtime = '<script>window.__section1Release="v198";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-style-loader-v198.js?v=198"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=197"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -31,7 +30,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v197-finder-shape-loadmore-fixes'
+      'x-fll-release': 'section1-v198-neutral-three-asset-variety'
     }
   });
 };

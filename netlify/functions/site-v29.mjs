@@ -13,15 +13,14 @@ export default async () => {
     .replace(/<script src="\/ui-v20\.js\?v=78"><\/script>/g, '')
     .replace(/<script src="\/ui-v24\.js\?v=82"><\/script>/g, '');
 
-  // Frozen valuation path from V141. V200 keeps V198/V197/V196/V195 valuation behavior unchanged.
+  // Frozen valuation path from V141. V202 keeps V200/V198/V197 valuation behavior unchanged.
   const value = '<script src="/state-bridge-v141.js?v=141"></script><script src="/trade-value-normalization-v139.js?v=141"></script><script src="/ui-player-values-v139.js?v=141"></script><script src="/ui-runtime-values-v140.js?v=141"></script>';
   const deferredBoot = '<script>if(typeof window.__fllDeferredBoot==="function")window.__fllDeferredBoot();</script>';
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V200 preserves the exact working V198 behavior everywhere except Maximum Value + neutral/fair,
-  // where 3-asset candidate breadth and incoming-package diversity are refined safely.
-  const runtime = '<script>window.__section1Release="v200";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-style-loader-v200.js?v=200"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=197"></script>';
+  // V202 retries only neutral/fair 3-asset generation/retention from the working V200 baseline.
+  const runtime = '<script>window.__section1Release="v202";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-style-loader-v202.js?v=202"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=197"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -29,7 +28,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v200-max-value-neutral-safe'
+      'x-fll-release': 'section1-v202-safe-neutral-three-asset-retry'
     }
   });
 };

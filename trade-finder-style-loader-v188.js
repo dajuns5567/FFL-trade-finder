@@ -76,13 +76,13 @@ src=src.replace(oldTakeCap,"(giveUse.get(gk)||0)>=5");
 // versions are exhausted before third versions, etc. Maximum remains five per package.
 const waveDecl="recentGives=[];const available=()=>";
 if(src.split(waveDecl).length-1!==1){console.error('V195 Finder guard failed: blank wave declaration changed');return}
-src=src.replace(waveDecl,"recentGives=[],giveWave=1;const available=()=>");
+src=src.replace(waveDecl,"recentGives=[],giveWave={n:1};const available=()=>");
 const waveCap="if((giveUse.get(gk)||0)>=5)continue;";
 if(src.split(waveCap).length-1!==1){console.error('V195 Finder guard failed: blank wave cap changed');return}
-src=src.replace(waveCap,"if((giveUse.get(gk)||0)>=Math.min(5,giveWave))continue;");
+src=src.replace(waveCap,"if((giveUse.get(gk)||0)>=Math.min(5,giveWave.n))continue;");
 const waveAdvance="if(!r)break;picked.add(r);";
 if(src.split(waveAdvance).length-1!==1){console.error('V195 Finder guard failed: blank wave advance changed');return}
-src=src.replace(waveAdvance,"if(!r&&giveWave<5){giveWave++;continue}if(!r)break;picked.add(r);");
+src=src.replace(waveAdvance,"if(!r&&giveWave.n<5){giveWave.n++;continue}if(!r)break;picked.add(r);");
 
 const oldPresentation="function presentationSort(a,b){return b.recommend-a.recommend||b.f.score-a.f.score||a.gap-b.gap}";
 const newPresentation="function presentationSort(a,b){if(maximumValuePresentationActive()){const d=(Number(b.maximumValueScore)||-1)-(Number(a.maximumValueScore)||-1);if(d)return d;const e=(Number(b.f?.edgeEffective)||0)-(Number(a.f?.edgeEffective)||0);if(e)return e}return b.recommend-a.recommend||b.f.score-a.f.score||a.gap-b.gap}";

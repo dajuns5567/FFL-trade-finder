@@ -13,17 +13,17 @@ export default async () => {
     .replace(/<script src="\/ui-v20\.js\?v=78"><\/script>/g, '')
     .replace(/<script src="\/ui-v24\.js\?v=82"><\/script>/g, '');
 
-  // Frozen valuation path from V141. V196 keeps V195 valuation behavior unchanged.
+  // Frozen valuation path from V141. V197 keeps V196/V195 valuation behavior unchanged.
   const value = '<script src="/state-bridge-v141.js?v=141"></script><script src="/trade-value-normalization-v139.js?v=141"></script><script src="/ui-player-values-v139.js?v=141"></script><script src="/ui-runtime-values-v140.js?v=141"></script>';
   const deferredBoot = '<script>if(typeof window.__fllDeferredBoot==="function")window.__fllDeferredBoot();</script>';
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V196 preserves V195's 250-result pool, 80 outgoing-package pool, distinct-package
+  // V197 preserves V196's 250-result pool, 80 outgoing-package pool, distinct-package
   // waves, low-value safeguards, draft presentation, Partner Fit 70/30, fairness,
-  // valuation and Value Adjustment. Only style-specific package generation/presentation
-  // is refined for Partner Fit and Maximum Value combinations.
-  const runtime = '<script>window.__section1Release="v196";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-style-loader-v188.js?v=196"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=176"></script>';
+  // valuation and Value Adjustment. It changes only Load More presentation and the
+  // requested style-specific package-shape/composition preferences.
+  const runtime = '<script>window.__section1Release="v197";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-style-loader-v197.js?v=197"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=197"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -31,7 +31,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v196-style-package-shape-refinements'
+      'x-fll-release': 'section1-v197-finder-shape-loadmore-fixes'
     }
   });
 };

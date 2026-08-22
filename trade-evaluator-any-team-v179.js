@@ -6,9 +6,11 @@ const appState=()=>{try{return state}catch(_){return window.state||null}};
 const sideForSelect=el=>el?.id==='evalA'?'A':el?.id==='evalB'?'B':null;
 const currentTeam=side=>Number(document.getElementById('eval'+side)?.value)||0;
 const selectedState=side=>appState()?.['assets'+side]||[];
-const renderSide=side=>{try{window.renderAssets?.(side)}catch(_){};const search=document.getElementById('evalSearch'+side);if(search)search.dispatchEvent(new Event('input',{bubbles:false}));};
 const anyTeamOn=()=>Boolean(document.getElementById(CHECK_ID)?.checked);
 const assetKey=x=>`${x?.type||''}:${String(x?.id??'')}`;
+const cloneSelection=side=>(selectedState(side)||[]).map(x=>({...x}));
+function restoreSelection(side,snapshot){const s=appState();if(!s)return;const live=s['assets'+side]||(s['assets'+side]=[]),merged=[],seen=new Set();for(const x of [...snapshot,...live]){const k=assetKey(x);if(!seen.has(k)){seen.add(k);merged.push({...x})}}s['assets'+side]=merged;}
+function redraw(side){try{if(typeof renderAssets==='function')renderAssets(side)}catch(_){};try{if(typeof renderEvalChooser==='function')renderEvalChooser(side)}catch(_){};}
 
 function normalizeToCurrentTeams(){
  const s=appState();
@@ -17,7 +19,7 @@ function normalizeToCurrentTeams(){
   const team=currentTeam(side);
   if(!team)continue;
   s['assets'+side]=selectedState(side).filter(x=>Number(x?.owner)===team);
-  renderSide(side);
+  redraw(side);
  }
 }
 
@@ -39,10 +41,11 @@ function ensureControl(){
 function onEvaluatorTeamChange(e){
  const side=sideForSelect(e.target);
  if(!side||!anyTeamOn())return;
- // ui-v18 normally clears this side on team change. Suppress only while
- // Any Team is active and redraw the chooser for the newly selected roster.
- e.stopImmediatePropagation();
- queueMicrotask(()=>renderSide(side));
+ const keep=cloneSelection(side);
+ // Let the existing team-change path redraw the newly selected roster, then
+ // restore the accumulated Any Team selection after all normal listeners run.
+ queueMicrotask(()=>{restoreSelection(side,keep);redraw(side)});
+ setTimeout(()=>{restoreSelection(side,keep);redraw(side)},0);
 }
 
 function onAnyTeamGlobalSearchClick(e){
@@ -52,25 +55,38 @@ function onAnyTeamGlobalSearchClick(e){
  const results=button.closest('[id^="evalGlobalResults"]');
  const side=results?.id==='evalGlobalResultsA'?'A':results?.id==='evalGlobalResultsB'?'B':null;
  if(!side)return;
- const s=appState();
- if(!s)return;
- // ui-v19 replaces the entire side with the clicked global-search player.
- // In Any Team mode, intercept that one path and append/dedupe instead.
- e.preventDefault();
- e.stopImmediatePropagation();
+ const s=appState();if(!s)return;
+ const keep=cloneSelection(side);
  const pid=String(button.dataset.pid||'');
  const owner=Number(button.dataset.owner)||0;
  const asset=(s.allAssets||[]).find(x=>x?.type==='player'&&String(x.id)===pid);
  if(!asset)return;
+ // Own the global-search click in Any Team mode so ui-v19 cannot replace the
+ // side with a one-player array. Preserve every prior checkbox/search asset.
+ e.preventDefault();e.stopImmediatePropagation();
  const sel=document.getElementById('eval'+side);
  if(sel&&owner){sel.value=String(owner);sel.dispatchEvent(new Event('change',{bubbles:true}));}
- const arr=s['assets'+side]||(s['assets'+side]=[]);
- const k=assetKey(asset);
- if(!arr.some(x=>assetKey(x)===k))arr.push({...asset});
- renderSide(side);
+ const combined=[...keep,{...asset}];
+ queueMicrotask(()=>{restoreSelection(side,combined);redraw(side)});
+ setTimeout(()=>{restoreSelection(side,combined);redraw(side)},0);
  const input=document.getElementById('evalGlobalSearch'+side);
  if(input){try{input.value=typeof playerName==='function'?playerName(pid):(asset.name||pid)}catch(_){input.value=asset.name||pid}}
  if(results)results.innerHTML='';
+}
+
+function onAnyTeamChooserChange(e){
+ if(!anyTeamOn())return;
+ const box=e.target.closest?.('input[data-eval-side]');if(!box)return;
+ const side=box.dataset.evalSide;if(side!=='A'&&side!=='B')return;
+ const keep=cloneSelection(side),asset=box._asset;if(!asset)return;
+ // The normal chooser handler already applies the checkbox. Reconcile after it
+ // runs so checking a roster player cannot erase selections from other teams.
+ queueMicrotask(()=>{
+  const s=appState();if(!s)return;
+  if(box.checked)restoreSelection(side,[...keep,{...asset}]);
+  else {const k=assetKey(asset);s['assets'+side]=selectedState(side).filter(x=>assetKey(x)!==k);}
+  redraw(side);
+ });
 }
 
 function onEvaluatorClear(e){
@@ -78,8 +94,7 @@ function onEvaluatorClear(e){
  if(!button||!button.closest('#evaluator'))return;
  const text=(button.textContent||'').trim();
  if(!/^(Clear trade|Clear selections)$/i.test(text))return;
- const box=document.getElementById(CHECK_ID);
- if(box)box.checked=false;
+ const box=document.getElementById(CHECK_ID);if(box)box.checked=false;
 }
 
 function install(){
@@ -88,9 +103,10 @@ function install(){
   document.__evalAnyTeam179=true;
   document.addEventListener('change',onEvaluatorTeamChange,true);
   document.addEventListener('click',onAnyTeamGlobalSearchClick,true);
+  document.addEventListener('change',onAnyTeamChooserChange,true);
   document.addEventListener('click',onEvaluatorClear,true);
  }
- window.__evalAnyTeam179='v180';
+ window.__evalAnyTeam179='v181';
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();

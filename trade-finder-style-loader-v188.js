@@ -1,8 +1,9 @@
 (()=>{
 'use strict';
 // V195 keeps the V191/V194 trade engine and changes only presentation/distribution:
-// restore the full 250 blank-result ceiling, reduce repeated 3-asset overlap, and
-// visibly vary outgoing package counts for Maximum Value + neutral/fair searches.
+// restore the full 250 blank-result ceiling, expand blank outgoing packages safely,
+// prioritize distinct outgoing packages before variants, reduce repeated 3-asset overlap,
+// and visibly vary outgoing package counts for Maximum Value + neutral/fair searches.
 const xhr=new XMLHttpRequest();
 xhr.open('GET','/trade-finder-v150.js?v=178',false);
 try{xhr.send(null)}catch(e){console.error('V195 Finder load failed',e);return}
@@ -54,6 +55,14 @@ const newTake="if((giveCount>=3||tier==='down')&&tier!=='draft')return mixReceiv
 if(src.split(oldTake).length-1!==1){console.error('V195 Finder guard failed: partner package-mix signature changed');return}
 src=src.replace(oldTake,newTake);
 
+// Expand blank outgoing packages from 50 to 80 without changing package construction logic.
+// Existing async yield points remain in generateAsync, so the larger pool does not block
+// the UI in one uninterrupted search loop.
+const oldBlankGiveTail="if(out.length<50){for(let i=0;i<pp.length&&out.length<50;i++)for(let j=i+1;j<pp.length&&out.length<50;j++)addPkg(out,seen,[pp[i],pp[j]])}return out.slice(0,50)";
+const newBlankGiveTail="if(out.length<80){for(let i=0;i<pp.length&&out.length<80;i++)for(let j=i+1;j<pp.length&&out.length<80;j++)addPkg(out,seen,[pp[i],pp[j]])}return out.slice(0,80)";
+if(src.split(oldBlankGiveTail).length-1!==1){console.error('V195 Finder guard failed: blank give-package cap changed');return}
+src=src.replace(oldBlankGiveTail,newBlankGiveTail);
+
 // The original blank distributor allows at most three results for each outgoing package.
 // With at most 50 blank-search give packages, that creates a hard 150-result ceiling.
 const oldAvail="(giveUse.get(assetKey(r.give))||0)<3";
@@ -61,6 +70,19 @@ const oldTakeCap="(giveUse.get(gk)||0)>=3";
 if(src.split(oldAvail).length-1!==1||src.split(oldTakeCap).length-1!==1){console.error('V195 Finder guard failed: blank result-cap signature changed');return}
 src=src.replace(oldAvail,"(giveUse.get(assetKey(r.give))||0)<5");
 src=src.replace(oldTakeCap,"(giveUse.get(gk)||0)>=5");
+
+// Outgoing-package waves: every distinct qualifying outgoing package gets a chance
+// before a second version of an already-used package can be selected, then second
+// versions are exhausted before third versions, etc. Maximum remains five per package.
+const waveDecl="recentGives=[];const available=()=>";
+if(src.split(waveDecl).length-1!==1){console.error('V195 Finder guard failed: blank wave declaration changed');return}
+src=src.replace(waveDecl,"recentGives=[],giveWave=1;const available=()=>");
+const waveCap="if((giveUse.get(gk)||0)>=5)continue;";
+if(src.split(waveCap).length-1!==1){console.error('V195 Finder guard failed: blank wave cap changed');return}
+src=src.replace(waveCap,"if((giveUse.get(gk)||0)>=Math.min(5,giveWave))continue;");
+const waveAdvance="if(!r)break;picked.add(r);";
+if(src.split(waveAdvance).length-1!==1){console.error('V195 Finder guard failed: blank wave advance changed');return}
+src=src.replace(waveAdvance,"if(!r&&giveWave<5){giveWave++;continue}if(!r)break;picked.add(r);");
 
 const oldPresentation="function presentationSort(a,b){return b.recommend-a.recommend||b.f.score-a.f.score||a.gap-b.gap}";
 const newPresentation="function presentationSort(a,b){if(maximumValuePresentationActive()){const d=(Number(b.maximumValueScore)||-1)-(Number(a.maximumValueScore)||-1);if(d)return d;const e=(Number(b.f?.edgeEffective)||0)-(Number(a.f?.edgeEffective)||0);if(e)return e}return b.recommend-a.recommend||b.f.score-a.f.score||a.gap-b.gap}";
@@ -82,5 +104,5 @@ if(src.split(oldBlankReturn).length-1!==1){console.error('V195 Finder guard fail
 src=src.replace(oldBlankReturn,newBlankReturn);
 
 try{(0,eval)(src+'\n//# sourceURL=trade-finder-v150-v195-runtime.js')}catch(e){console.error('V195 Finder eval failed',e);return}
-window.__tradeFinderStyleV188={version:'v195',base:'v191',recommendationSites:recommendCount,acceptanceSites:acceptCount,candidateSites:bestCount,maxResults:250};
+window.__tradeFinderStyleV188={version:'v195',base:'v191',recommendationSites:recommendCount,acceptanceSites:acceptCount,candidateSites:bestCount,maxResults:250,blankGiveLimit:80};
 })();

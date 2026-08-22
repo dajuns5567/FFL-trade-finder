@@ -21,8 +21,10 @@ export default async () => {
 
   // V184 leaves the V178 Finder source untouched. The isolated loader changes only
   // Best Partner Fit recommendation weighting (70% fairness / 30% roster fit).
+  // V185 caches the roster-needs matrix once per live state so Best Partner Fit does
+  // not rebuild all 32 teams' positional rooms for every candidate trade.
   // Every other recommendation style executes the exact V178 92/8 path.
-  const runtime = '<script>window.__section1Release="v184";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=184"></script><script src="/trade-finder-partner-fit-loader-v184.js?v=184"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v130.js?v=133"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=176"></script>';
+  const runtime = '<script>window.__section1Release="v185";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=185"></script><script src="/trade-finder-partner-fit-loader-v184.js?v=184"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v130.js?v=133"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=176"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -30,7 +32,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v184-best-partner-fit-roster-needs'
+      'x-fll-release': 'section1-v185-best-partner-fit-performance-cache'
     }
   });
 };

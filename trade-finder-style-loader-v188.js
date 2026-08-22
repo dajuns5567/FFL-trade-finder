@@ -55,11 +55,12 @@ const newTake="if((giveCount>=3||tier==='down')&&tier!=='draft')return mixReceiv
 if(src.split(oldTake).length-1!==1){console.error('V195 Finder guard failed: partner package-mix signature changed');return}
 src=src.replace(oldTake,newTake);
 
-// Expand blank outgoing packages from 50 to 80 without changing package construction logic.
-// Existing async yield points remain in generateAsync, so the larger pool does not block
-// the UI in one uninterrupted search loop.
+// Preserve the original first 50 outgoing packages exactly. The extra 30 are built
+// only from the top ~70% of the roster by player value, with a balanced mix of added
+// single-player, player+pick, and two-player packages so expansion does not create a
+// new low-end or two-player-package bias.
 const oldBlankGiveTail="if(out.length<50){for(let i=0;i<pp.length&&out.length<50;i++)for(let j=i+1;j<pp.length&&out.length<50;j++)addPkg(out,seen,[pp[i],pp[j]])}return out.slice(0,50)";
-const newBlankGiveTail="if(out.length<80){for(let i=0;i<pp.length&&out.length<80;i++)for(let j=i+1;j<pp.length&&out.length<80;j++)addPkg(out,seen,[pp[i],pp[j]])}return out.slice(0,80)";
+const newBlankGiveTail="if(out.length<50){for(let i=0;i<pp.length&&out.length<50;i++)for(let j=i+1;j<pp.length&&out.length<50;j++)addPkg(out,seen,[pp[i],pp[j]])}const core=players.slice(0,Math.max(8,Math.min(players.length,Math.ceil(players.length*.70)))),corePicks=spread(picks,6);for(const p of core.slice(0,18)){if(out.length>=60)break;addPkg(out,seen,[p])}for(let i=0;i<core.length&&corePicks.length&&out.length<68;i++)addPkg(out,seen,[core[i],corePicks[i%corePicks.length]]);for(let i=0;i<core.length&&out.length<80;i++)for(let j=i+1;j<core.length&&out.length<80;j++)addPkg(out,seen,[core[i],core[j]]);return out.slice(0,80)";
 if(src.split(oldBlankGiveTail).length-1!==1){console.error('V195 Finder guard failed: blank give-package cap changed');return}
 src=src.replace(oldBlankGiveTail,newBlankGiveTail);
 

@@ -13,17 +13,17 @@ export default async () => {
     .replace(/<script src="\/ui-v20\.js\?v=78"><\/script>/g, '')
     .replace(/<script src="\/ui-v24\.js\?v=82"><\/script>/g, '');
 
-  // Frozen valuation path from V141. V190 does not alter player/pick valuation formulas.
+  // Frozen valuation path from V141. V191 does not alter player/pick valuation formulas.
   const value = '<script src="/state-bridge-v141.js?v=141"></script><script src="/trade-value-normalization-v139.js?v=141"></script><script src="/ui-player-values-v139.js?v=141"></script><script src="/ui-runtime-values-v140.js?v=141"></script>';
   const deferredBoot = '<script>if(typeof window.__fllDeferredBoot==="function")window.__fllDeferredBoot();</script>';
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V190 preserves V187 Value Adjustment, V186 Partner Fit, frozen V178 Finder,
-  // consensus, valuation, fairness math and Tier eligibility. The isolated style
-  // loader restores Tier Down 3-asset generation/package variety and diversifies
-  // Maximum Value results without overriding Acquire Draft Picks presentation.
-  const runtime = '<script>window.__section1Release="v190";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-style-loader-v188.js?v=190"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=176"></script>';
+  // V191 preserves V190 Tier Down behavior, V187 Value Adjustment, V186 Partner Fit,
+  // frozen V178 Finder, consensus, valuation, fairness math and Tier eligibility.
+  // Maximum Value value-tier diversity is presentation-only; valid candidates are
+  // no longer removed from the result pool. Acquire Draft Picks remains authoritative.
+  const runtime = '<script>window.__section1Release="v191";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-style-loader-v188.js?v=191"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=176"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -31,7 +31,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v190-tier-down-variety-max-value-diversity'
+      'x-fll-release': 'section1-v191-max-value-full-pool'
     }
   });
 };

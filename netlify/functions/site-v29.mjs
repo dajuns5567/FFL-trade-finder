@@ -20,8 +20,8 @@ export default async () => {
   else raw = raw.replace('</body>', value + '</body>');
 
   // V178 keeps all existing Finder logic and applies fairness-first ordering to the full blank result array before pagination.
-  // V181 makes the Evaluator-only Any Team selection cumulative across team dropdowns, global searches, and roster checkboxes.
-  const runtime = '<script>window.__section1Release="v181";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-finder-v150.js?v=178"></script><script src="/trade-runtime-v130.js?v=133"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=176"></script><script src="/trade-evaluator-any-team-v179.js?v=181"></script>';
+  // V182 loads the Evaluator-only Any Team handler before V130 so it can own only multi-team evaluator selection events.
+  const runtime = '<script>window.__section1Release="v182";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-finder-v150.js?v=178"></script><script src="/trade-evaluator-any-team-v179.js?v=182"></script><script src="/trade-runtime-v130.js?v=133"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=176"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -29,7 +29,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v181-evaluator-any-team-stable-selection'
+      'x-fll-release': 'section1-v182-evaluator-any-team-runtime-map'
     }
   });
 };

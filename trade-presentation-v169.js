@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-let observer=null,running=false;
+let observer=null,running=false,lastVisibleCount=0;
 function blankLike(){
   const boxes=[...document.querySelectorAll('#findShop .shopCheck')].filter(Boolean);
   if(!boxes.length)return true;
@@ -94,11 +94,18 @@ function apply(){
   const host=document.getElementById('finderResults');
   if(!host)return;
   const cards=[...host.querySelectorAll(':scope > .trade95-card')];
-  if(cards.length<2){renumber(cards);return}
+  if(!cards.length){lastVisibleCount=0;return}
+  if(cards.length<2){renumber(cards);lastVisibleCount=cards.length;return}
 
-  // V176 invariant: fairness is the immutable outer presentation order,
-  // Recommendation is the secondary order. Diversity may only rearrange
-  // trades that have the exact same fairness AND Recommendation score.
+  // Load more redraws the visible prefix with five additional cards. Do not re-sort
+  // the already displayed prefix; preserve the Finder's next-five sequence below it.
+  if(lastVisibleCount>0&&cards.length>lastVisibleCount){
+    renumber(cards);
+    lastVisibleCount=cards.length;
+    return;
+  }
+
+  // Initial batch for a new search keeps the V176 fairness/recommendation invariant.
   const sorted=cards.slice().sort((a,b)=>
     fairnessOf(b)-fairnessOf(a)||recommendationOf(b)-recommendationOf(a)
   );
@@ -115,6 +122,7 @@ function apply(){
     const loadMore=[...host.children].find(x=>x.tagName==='BUTTON'&&/Load more trades/i.test(x.textContent||''))||null;
     for(const card of ordered)host.insertBefore(card,loadMore);
     renumber(ordered);
+    lastVisibleCount=ordered.length;
   }finally{
     running=false;
     observe();

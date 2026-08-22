@@ -13,18 +13,16 @@ export default async () => {
     .replace(/<script src="\/ui-v20\.js\?v=78"><\/script>/g, '')
     .replace(/<script src="\/ui-v24\.js\?v=82"><\/script>/g, '');
 
-  // Frozen valuation path from V141. Finder work must not alter these formulas.
+  // Frozen valuation path from V141. V186 does not alter valuation formulas.
   const value = '<script src="/state-bridge-v141.js?v=141"></script><script src="/trade-value-normalization-v139.js?v=141"></script><script src="/ui-player-values-v139.js?v=141"></script><script src="/ui-runtime-values-v140.js?v=141"></script>';
   const deferredBoot = '<script>if(typeof window.__fllDeferredBoot==="function")window.__fllDeferredBoot();</script>';
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V184 leaves the V178 Finder source untouched. The isolated loader changes only
-  // Best Partner Fit recommendation weighting (70% fairness / 30% roster fit).
-  // V185 caches the roster-needs matrix once per live state so Best Partner Fit does
-  // not rebuild all 32 teams' positional rooms for every candidate trade.
-  // Every other recommendation style executes the exact V178 92/8 path.
-  const runtime = '<script>window.__section1Release="v185";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=185"></script><script src="/trade-finder-partner-fit-loader-v184.js?v=184"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v130.js?v=133"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=176"></script>';
+  // V186 keeps the frozen V178 Finder and changes only Best Partner Fit:
+  // TE is flex-only (not a required-position need), and packages with 2 QBs on
+  // either side are rejected by the Best Partner Fit recommendation layer.
+  const runtime = '<script>window.__section1Release="v186";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-partner-fit-loader-v184.js?v=184"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v130.js?v=133"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=176"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -32,7 +30,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v185-best-partner-fit-performance-cache'
+      'x-fll-release': 'section1-v186-fantasypros-partner-fit-audit'
     }
   });
 };

@@ -113,7 +113,7 @@ async function runSpecific(){
  const resolved=resolveTarget(me);if(resolved.error){host.innerHTML=`<div class="notice error">${esc(resolved.error)}</div>`;return}const target=resolved.target,other=Number(target.owner);
  const gives=outgoingPackages(me);if(!gives.length){host.innerHTML='<div class="notice error">No outgoing package is available for this search.</div>';return}
  const owned=(state().allAssets||[]).filter(x=>Number(x.owner)===other),rows=[];
- window.tradeStylePreferencesV221?.reset?.();btn.disabled=true;host.innerHTML=`<div class="empty">Finding trades for ${esc(pname(target))}…</div>`;
+ window.tradeStylePreferencesV221?.reset?.();btn.disabled=true;host.innerHTML=`<div class="empty">Searching realistic trades for ${esc(pname(target))}…</div>`;
  try{
   for(let gi=0;gi<gives.length;gi++){
    const give=gives[gi];for(const recv of targetPackages(target,owned,give)){

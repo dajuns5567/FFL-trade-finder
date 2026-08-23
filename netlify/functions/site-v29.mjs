@@ -19,9 +19,9 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V217 loads an isolated Future-Oriented click interceptor before the untouched V209 Finder.
-  // It activates only for Future-Oriented and never for Acquire Draft Picks.
-  const runtime = '<script>window.__section1Release="v217";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/future-oriented-v217.js?v=217"></script><script src="/trade-finder-style-loader-v209.js?v=209"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=197"></script>';
+  // V217 loads the untouched V209 Finder first, then adds a Future-Oriented-only trade-fit preference hook.
+  // No V209 source, click handling, generation, eligibility, package structure, or rendering is replaced.
+  const runtime = '<script>window.__section1Release="v217";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-finder-style-loader-v209.js?v=209"></script><script src="/future-oriented-v217.js?v=217"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=197"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -29,7 +29,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v217-future-oriented-isolated'
+      'x-fll-release': 'section1-v217-future-oriented-fit-hook'
     }
   });
 };

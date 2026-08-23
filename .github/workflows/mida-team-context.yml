@@ -1,0 +1,121 @@
+name: Sync MIDA team context
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/mida-team-context.yml'
+      - 'scripts/sync-mida-team-context.py'
+  pull_request:
+    paths:
+      - '.github/workflows/mida-team-context.yml'
+      - 'scripts/sync-mida-team-context.py'
+      - 'netlify/functions/team-context-v90.mjs'
+
+concurrency:
+  group: mida-team-context-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out Fleeced source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install snapshot decoder dependency
+        run: python -m pip install --disable-pip-version-check pandas==2.2.3
+
+      - name: Decode and validate MIDA League standings
+        env:
+          MIDA_OUTPUT: mida-team-context.csv
+        run: python scripts/sync-mida-team-context.py
+
+      - name: Validate normalized Fleeced schema
+        run: |
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+          p = Path('mida-team-context.csv')
+          rows = list(csv.reader(p.read_text(encoding='utf-8').splitlines()))
+          header = ['Team','Rank','Conf','Division','Exp Points','Exp Wins','Playoff %','Title %']
+          idx = next((i for i, r in enumerate(rows) if r == header), -1)
+          assert idx >= 0, 'normalized header missing'
+          data = rows[idx+1:]
+          assert len(data) == 32, f'expected 32 teams, got {len(data)}'
+          ranks = sorted(int(r[1]) for r in data)
+          assert ranks == list(range(1,33)), 'ranks must be exactly 1..32'
+          assert len({r[0].strip().lower() for r in data}) == 32, 'team names must be unique'
+          PY
+
+      - name: Upload normalized snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: mida-team-context
+          path: mida-team-context.csv
+          if-no-files-found: error
+          retention-days: 3
+
+  publish:
+    if: github.event_name != 'pull_request'
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Check out live-data branch
+        uses: actions/checkout@v4
+        with:
+          ref: mida-live-data
+          fetch-depth: 1
+
+      - name: Download normalized snapshot
+        uses: actions/download-artifact@v4
+        with:
+          name: mida-team-context
+          path: incoming
+
+      - name: Revalidate artifact and update only when changed
+        run: |
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+          src = Path('incoming/mida-team-context.csv')
+          rows = list(csv.reader(src.read_text(encoding='utf-8').splitlines()))
+          header = ['Team','Rank','Conf','Division','Exp Points','Exp Wins','Playoff %','Title %']
+          idx = next((i for i, r in enumerate(rows) if r == header), -1)
+          assert idx >= 0, 'normalized header missing'
+          data = rows[idx+1:]
+          assert len(data) == 32, f'expected 32 teams, got {len(data)}'
+          assert sorted(int(r[1]) for r in data) == list(range(1,33)), 'invalid ranks'
+          dest = Path('data/mida-team-context.csv')
+          dest.parent.mkdir(parents=True, exist_ok=True)
+          dest.write_bytes(src.read_bytes())
+          PY
+
+      - name: Commit live snapshot if changed
+        run: |
+          if git diff --quiet -- data/mida-team-context.csv; then
+            echo 'MIDA standings unchanged; nothing to publish.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/mida-team-context.csv
+          git commit -m 'Refresh MIDA team context snapshot'
+          git push origin HEAD:mida-live-data

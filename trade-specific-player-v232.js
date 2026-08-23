@@ -6,7 +6,7 @@ const norm=()=>window.tradeValueNormalizationV130||window.tradeValueNormalizatio
 const av=x=>Math.max(0,Number(norm().canonicalValue?.(x))||0);
 const raw=xs=>(xs||[]).reduce((s,x)=>s+av(x),0);
 const id=x=>String(x?.id??'');
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
 const pname=x=>x?.type==='pick'?(x.name||`${x.season} R${x.round}`):(window.playerName?.(x.id)||x?.name||id(x));
 const pos=x=>x?.type==='pick'?'PICK':(window.groupPos?.(x)||'IDP');

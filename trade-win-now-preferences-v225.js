@@ -70,18 +70,19 @@ function tierDownDeconsolidationSignal(recv){
  const ps=players(recv),ks=picks(recv),scores=ps.map(playerWinNow).sort((a,b)=>b-a);
  if(ps.length>=2){
   const second=scores[1]||0,third=scores[2]||0;
-  // Reward true de-consolidation only when the additional players are useful Win-Now pieces.
-  let bonus=second>=55?2.8:second>=42?2.1:second>=30?1.1:-.5;
-  if(ps.length>=3)bonus+=third>=42?1.0:third>=30?.5:0;
-  if(ks.length)bonus-=.25*Math.min(ks.length,2);
-  return clamp(-2,bonus,4);
+  // True Win-Now de-consolidation requires the additional player(s) to have useful present-value quality.
+  let score=second>=55?8:second>=42?7:second>=30?5.5:-2.5;
+  if(ps.length>=3)score+=third>=42?1:third>=30?.6:0;
+  if(ks.length)score-=.35*Math.min(ks.length,2);
+  return clamp(-4,score,9);
  }
- // One player plus a pick is still legal Tier Down construction, but it should be a fallback in Win-Now.
+ // One player + pick is retained only as a fallback when the existing Tier Down pool lacks a comparable
+ // multi-player Win-Now return; an elite player keeps it from being discarded outright.
  if(ps.length===1&&ks.length>=1){
   const best=scores[0]||0;
-  return best>=82?-1.4:best>=68?-2.1:-3.0;
+  return best>=82?-4.5:best>=68?-6:-8;
  }
- return 0;
+ return ps.length===1?-3:0;
 }
 function winNowSignal(give,recv,tier){
  const player=packagePlayerSignal(recv);
@@ -98,7 +99,9 @@ window.teamContextTradeFit90=function(me,other,style,give,recv){
   const signal=winNowSignal(give,recv,tier);
   if(tier==='down'){
    const decon=tierDownDeconsolidationSignal(recv);
-   return clamp(-10,base*.34+signal*.46+decon*.20,10);
+   // In this one intersection, package de-consolidation must survive V209's per-partner retention cap.
+   // Existing Tier Down eligibility still decides which candidates are legal; this only ranks those candidates.
+   return clamp(-10,base*.20+signal*.30+decon*.50,10);
   }
   // Exact V224 behavior for Win-Now + Fair Trade / Tier Up.
   return clamp(-10,base*.38+signal*.62,10);

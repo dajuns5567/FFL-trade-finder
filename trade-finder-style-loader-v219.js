@@ -25,7 +25,7 @@ const stageNew="const stagePatch=`\n"+
 replaceOnce(stageOld,stageNew,'Finder source stage');
 
 const oldTail='src=src.split(finalTail).join("ordered=diversifyThreeAssetOverlap(ordered,tier);ordered=sprinkleTwoPlayerForTwo(ordered,tier);return ordered");';
-const newTail='src=src.split(finalTail).join("ordered=futureOutgoingMix(ordered,tier);ordered=diversifyThreeAssetOverlap(ordered,tier);ordered=sprinkleTwoPlayerForTwo(ordered,tier);return ordered");';
+const newTail='src=src.split(finalTail).join("ordered=(typeof futureOutgoingMix===\\\"function\\\"?futureOutgoingMix(ordered,tier):ordered);ordered=diversifyThreeAssetOverlap(ordered,tier);ordered=sprinkleTwoPlayerForTwo(ordered,tier);return ordered");';
 replaceOnce(oldTail,newTail,'Future outgoing structure mix');
 
 function evalLoader(code,label){try{(0,eval)(code+'\n//# sourceURL='+label);return true}catch(e){console.error(label+' eval failed',e);return false}}

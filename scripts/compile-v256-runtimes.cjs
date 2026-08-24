@@ -1,0 +1,5 @@
+const fs=require('fs');const vm=require('vm');
+function compile(entry,responses,out){let captured='';class X{open(m,u){this.u=u}send(){const p=responses[this.u];if(!p)throw new Error('missing '+this.u);this.status=200;this.responseText=fs.readFileSync(p,'utf8')}}const ctx={console,XMLHttpRequest:X,window:{},document:{},setTimeout,clearTimeout,MutationObserver:function(){}};ctx.window=ctx;ctx.eval=(src)=>{captured=String(src)};vm.createContext(ctx);vm.runInContext(fs.readFileSync(entry,'utf8'),ctx,{filename:entry});if(!captured)throw new Error('no runtime captured from '+entry);fs.writeFileSync(out,captured.replace(/\n\/\/# sourceURL=.*$/m,''));}
+compile('trade-finder-style-loader-v209.js',{'/trade-finder-style-loader-v197.js?v=197':'trade-finder-style-loader-v197.js','/trade-finder-v150.js?v=178':'trade-finder-v150.js'},'trade-finder-v256-compiled.js');
+compile('trade-runtime-v187-loader.js',{'/trade-runtime-v130.js?v=133':'trade-runtime-v130.js'},'trade-runtime-v256-compiled.js');
+console.log('compiled V256 runtimes');

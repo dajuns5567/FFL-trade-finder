@@ -17,6 +17,7 @@ on:
       - 'scripts/finder-runtime-smoke-v254.cjs'
       - 'scripts/finder-runtime-compiled-smoke-v257.cjs'
       - 'scripts/select-all-blank-equivalence-v258.cjs'
+      - 'scripts/select-all-persistence-v260.cjs'
       - 'scripts/te-scoring-adjustment-v259-smoke.cjs'
       - 'netlify/functions/site-v29.mjs'
       - '.github/workflows/finder-runtime-smoke.yml'
@@ -36,5 +37,7 @@ jobs:
         run: node scripts/finder-runtime-compiled-smoke-v257.cjs
       - name: Select All exact blank-search equivalence
         run: node scripts/select-all-blank-equivalence-v258.cjs
+      - name: Select All survives roster rerender
+        run: node scripts/select-all-persistence-v260.cjs
       - name: Live TE scoring adjustment freshness and isolation
         run: node scripts/te-scoring-adjustment-v259-smoke.cjs

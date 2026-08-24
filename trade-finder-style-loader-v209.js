@@ -22,23 +22,6 @@ src=src.replace(v208OldSelectedShapeLine,v208NewSelectedShapeLine);
 const stageMarker="let src=xhr.responseText;";
 if(src.split(stageMarker).length-1!==1){console.error('V209 guard failed: V197 Finder-source stage');return}
 const stagePatch=`
-const v254OldBlankSelection="function blankSelection(chosen){const boxes=shopBoxes();return chosen.length===0||(boxes.length>0&&chosen.length===boxes.length)}";
-const v254NewBlankSelection="function blankSelection(chosen){const boxes=shopBoxes();return chosen.length===0||(boxes.length>0&&chosen.length===boxes.length)}function addAssetsIfNeededEnabled(){for(const x of document.querySelectorAll('input[type=\\\"checkbox\\\"]')){const text=String(x.closest?.('label')?.textContent||x.parentElement?.textContent||'').normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();if(text==='add assets if needed'||text.startsWith('add assets if needed '))return!!x.checked}return false}function manualGivePackages(me,chosen){const out=[chosen];if(!addAssetsIfNeededEnabled()||!chosen?.length||chosen.length>=3)return out;const used=new Set(chosen.map(x=>x.type+':'+id(x))),owned=(st().allAssets||[]).filter(x=>Number(x.owner)===me&&(x.type==='player'||(x.type==='pick'&&Number(x.round)<=3))&&!used.has(x.type+':'+id(x))).sort((a,b)=>av(b)-av(a)),extras=spread(owned,18),seen=new Set([assetKey(chosen)]);for(const x of extras)addPkg(out,seen,[...chosen,x]);if(chosen.length===1){for(let i=0;i<extras.length&&out.length<36;i++)for(let j=i+1;j<extras.length&&out.length<36;j++)addPkg(out,seen,[chosen[0],extras[i],extras[j]])}return out}";
-if(src.split(v254OldBlankSelection).length-1!==1){console.error('V254 Finder guard failed: blankSelection');return}
-src=src.replace(v254OldBlankSelection,v254NewBlankSelection);
-const v254OldManualGives="chosen=selectedGive(),blank=blankSelection(chosen),gives=blank?blankGivePackages(me):[chosen],tier=finderMode()";
-const v254NewManualGives="chosen=selectedGive(),blank=blankSelection(chosen),gives=blank?blankGivePackages(me):manualGivePackages(me,chosen),tier=finderMode()";
-if(src.split(v254OldManualGives).length-1!==1){console.error('V254 Finder guard failed: manual gives');return}
-src=src.replace(v254OldManualGives,v254NewManualGives);
-const v254OldFinalizeStart="function finalize(all,tier,w,blank=false){all.sort(presentationSort);const seen=new Set(),eligible=[],mix=fairAny(tier,w);";
-const v254NewFinalizeStart="function finalize(all,tier,w,blank=false){const addBackfill=!blank&&addAssetsIfNeededEnabled()&&selectedGive().length>0,manualKey=addBackfill?assetKey(selectedGive()):'';all.sort(addBackfill?((a,b)=>(assetKey(a.give)===manualKey?0:1)-(assetKey(b.give)===manualKey?0:1)||presentationSort(a,b)):presentationSort);const seen=new Set(),eligible=[],mix=fairAny(tier,w);";
-if(src.split(v254OldFinalizeStart).length-1!==1){console.error('V254 Finder guard failed: finalize start');return}
-src=src.replace(v254OldFinalizeStart,v254NewFinalizeStart);
-const v254BT=String.fromCharCode(96),v254DL='$'+'{';
-const v254OldDedupe='const k=blank?'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}|'+v254DL+'assetKey(r.give)}'+v254DL+'shape}'+v254BT+':'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}'+v254DL+'shape}'+v254BT+';';
-const v254NewDedupe='const k=blank?'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}|'+v254DL+'assetKey(r.give)}'+v254DL+'shape}'+v254BT+':(addBackfill?'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}|'+v254DL+'assetKey(r.give)}'+v254DL+'shape}'+v254BT+':'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}'+v254DL+'shape}'+v254BT+');';
-if(src.split(v254OldDedupe).length-1!==1){console.error('V254 Finder guard failed: selected dedupe');return}
-src=src.replace(v254OldDedupe,v254NewDedupe);
 const v206OldPartnerCap="function capBlankPartnerThree(arr){let usedThree=false;return(arr||[]).filter(r=>{if((r.recv?.length||0)!==3)return true;if(usedThree)return false;usedThree=true;return true})}";
 const v206NewPartnerCap="function uniqueMaximumValueThreePairs(list){const used=new Set();return(list||[]).filter(r=>{if((r.recv?.length||0)!==3)return true;const pairs=recvThreePairs(r);if(pairs.some(p=>used.has(p)))return false;for(const p of pairs)used.add(p);return true})}function capBlankPartnerThree(arr){const expanded=finderMode()==='neutral'&&(searchStyle()==='balanced'||searchStyle()==='value'),limit=expanded?2:1;let used=0;const pairUse=new Set();return(arr||[]).filter(r=>{if((r.recv?.length||0)!==3)return true;if(used>=limit)return false;if(expanded){const pairs=recvThreePairs(r);if(pairs.some(p=>pairUse.has(p)))return false;for(const p of pairs)pairUse.add(p)}used++;return true})}";
 if(src.split(v206OldPartnerCap).length-1!==1){console.error('V209 Finder guard failed: partner three cap');return}
@@ -90,6 +73,29 @@ const neutralModes="((searchStyle()==='need'||searchStyle()==='value'||searchSty
 const gateCount=src.split(needNeutral).length-1;
 if(gateCount!==3){console.error('V209 guard failed: expected 3 neutral generation gates, found',gateCount);return}
 src=src.split(needNeutral).join(neutralModes);
+
+// V254: patch only the frozen Finder package-input/finalize boundary after V209's own guarded transforms are established.
+const v254StagePatch=`
+const v254OldBlankSelection="function blankSelection(chosen){const boxes=shopBoxes();return chosen.length===0||(boxes.length>0&&chosen.length===boxes.length)}";
+const v254NewBlankSelection="function blankSelection(chosen){const boxes=shopBoxes();return chosen.length===0||(boxes.length>0&&chosen.length===boxes.length)}function addAssetsIfNeededEnabled(){for(const x of document.querySelectorAll('input[type=\\\"checkbox\\\"]')){const text=String(x.closest?.('label')?.textContent||x.parentElement?.textContent||'').normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();if(text==='add assets if needed'||text.startsWith('add assets if needed '))return!!x.checked}return false}function manualGivePackages(me,chosen){const out=[chosen];if(!addAssetsIfNeededEnabled()||!chosen?.length||chosen.length>=3)return out;const used=new Set(chosen.map(x=>x.type+':'+id(x))),owned=(st().allAssets||[]).filter(x=>Number(x.owner)===me&&(x.type==='player'||(x.type==='pick'&&Number(x.round)<=3))&&!used.has(x.type+':'+id(x))).sort((a,b)=>av(b)-av(a)),extras=spread(owned,18),seen=new Set([assetKey(chosen)]);for(const x of extras)addPkg(out,seen,[...chosen,x]);if(chosen.length===1){for(let i=0;i<extras.length&&out.length<36;i++)for(let j=i+1;j<extras.length&&out.length<36;j++)addPkg(out,seen,[chosen[0],extras[i],extras[j]])}return out}";
+if(src.split(v254OldBlankSelection).length-1!==1){console.error('V254 Finder guard failed: blankSelection');return}
+src=src.replace(v254OldBlankSelection,v254NewBlankSelection);
+const v254OldManualGives="chosen=selectedGive(),blank=blankSelection(chosen),gives=blank?blankGivePackages(me):[chosen],tier=finderMode()";
+const v254NewManualGives="chosen=selectedGive(),blank=blankSelection(chosen),gives=blank?blankGivePackages(me):manualGivePackages(me,chosen),tier=finderMode()";
+if(src.split(v254OldManualGives).length-1!==1){console.error('V254 Finder guard failed: manual gives');return}
+src=src.replace(v254OldManualGives,v254NewManualGives);
+const v254OldFinalizeStart="function finalize(all,tier,w,blank=false){all.sort(presentationSort);const seen=new Set(),eligible=[],mix=fairAny(tier,w);";
+const v254NewFinalizeStart="function finalize(all,tier,w,blank=false){const addBackfill=!blank&&addAssetsIfNeededEnabled()&&selectedGive().length>0,manualKey=addBackfill?assetKey(selectedGive()):'';all.sort(addBackfill?((a,b)=>(assetKey(a.give)===manualKey?0:1)-(assetKey(b.give)===manualKey?0:1)||presentationSort(a,b)):presentationSort);const seen=new Set(),eligible=[],mix=fairAny(tier,w);";
+if(src.split(v254OldFinalizeStart).length-1!==1){console.error('V254 Finder guard failed: finalize start');return}
+src=src.replace(v254OldFinalizeStart,v254NewFinalizeStart);
+const v254BT=String.fromCharCode(96),v254DL='$'+'{';
+const v254OldDedupe='const k=blank?'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}|'+v254DL+'assetKey(r.give)}'+v254DL+'shape}'+v254BT+':'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}'+v254DL+'shape}'+v254BT+';';
+const v254NewDedupe='const k=blank?'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}|'+v254DL+'assetKey(r.give)}'+v254DL+'shape}'+v254BT+':(addBackfill?'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}|'+v254DL+'assetKey(r.give)}'+v254DL+'shape}'+v254BT+':'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}'+v254DL+'shape}'+v254BT+');';
+if(src.split(v254OldDedupe).length-1!==1){console.error('V254 Finder guard failed: selected dedupe');return}
+src=src.replace(v254OldDedupe,v254NewDedupe);
+`;
+if(src.split(stageMarker).length-1!==1){console.error('V254 Finder guard failed: V197 Finder-source stage');return}
+src=src.replace(stageMarker,stageMarker+v254StagePatch);
 
 // Best Partner Fit stays at 8, Balanced stays at 10, Maximum Value stays at 24.
 const oldBuffer="}const buf=[];const add=xs=>{if(positionOK(xs,w))keepClosest(buf,xs,target,3)};";

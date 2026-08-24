@@ -97,11 +97,6 @@ src=src.replace(v254OldDedupe,v254NewDedupe);
 if(src.split(stageMarker).length-1!==1){console.error('V256 Finder guard failed: V197 Finder-source stage');return}
 src=src.replace(stageMarker,stageMarker+v254StagePatch);
 
-const v256Yield="if(++steps%2===0)await yieldUI()";
-const v256YieldCount=src.split(v256Yield).length-1;
-if(v256YieldCount!==2){console.error('V256 Finder guard failed: expected 2 yield cadence sites, found',v256YieldCount);return}
-src=src.split(v256Yield).join("if(++steps%8===0)await yieldUI()");
-
 // Best Partner Fit stays at 8, Balanced stays at 10, Maximum Value stays at 24.
 const oldBuffer="}const buf=[];const add=xs=>{if(positionOK(xs,w))keepClosest(buf,xs,target,3)};";
 const newBuffer="}const neutralThreeVariety=(tier==='neutral'&&(searchStyle()==='need'||searchStyle()==='value'||searchStyle()==='balanced')),buf=[];const add=xs=>{if(positionOK(xs,w))keepClosest(buf,xs,target,(searchStyle()==='value'&&tier==='neutral')?24:(searchStyle()==='balanced'&&tier==='neutral')?10:(neutralThreeVariety?8:3))};";

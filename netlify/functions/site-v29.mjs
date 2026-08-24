@@ -19,8 +19,8 @@ export default async () => {
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
 
-  // V232 is isolated: an empty specific-player field falls straight through to frozen V209 unchanged.
-  const runtime = '<script>window.__section1Release="v226";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-style-preferences-v221.js?v=221"></script><script src="/trade-win-now-preferences-v226.js?v=226"></script><script src="/trade-specific-player-v232.js?v=232"></script><script src="/trade-finder-style-loader-v209.js?v=209"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-finder-candidate-guard-v223.js?v=223"></script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=197"></script>';
+  // V250 cache-busts the targeted-player runtime so production cannot keep executing stale V232 browser/CDN cache entries.
+  const runtime = '<script>window.__section1Release="v250";</script><script src="/trade-select-all-v165.js?v=169"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-style-preferences-v221.js?v=221"></script><script src="/trade-win-now-preferences-v226.js?v=226"></script><script src="/trade-specific-player-v232.js?v=250"></script><script src="/trade-finder-style-loader-v209.js?v=209"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v187-loader.js?v=187"></script><script>window.section1V130?.install?.();</script><script src="/trade-finder-candidate-guard-v223.js?v=223"></script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=197"></script>';
   const html = raw.replace('</body>', runtime + '</body>');
 
   return new Response(html, {
@@ -28,7 +28,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v226-win-now-tier-down-player-focus-on-v223-v221-v209'
+      'x-fll-release': 'section1-v250-targeted-player-runtime-cache-bust'
     }
   });
 };

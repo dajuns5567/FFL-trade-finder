@@ -99,7 +99,8 @@ function allManualOnly(rows) { return (rows || []).length > 0 && rows.every(r =>
     controls.tradeAssist97.checked = true;
     const onRows = await window.tradeFinderV168.generateAsync(0);
     if (!hasExpanded(onRows)) failures.push('normal Finder checkbox ON returned no qualifying expanded outgoing package');
-    if (!(onRows || []).some(r => (r.give || []).length === 1 && r.give[0]?.id === 'manual')) failures.push('normal Finder checkbox ON did not preserve the exact manual package');
+    if (!hasExpanded((onRows || []).slice(0, 5))) failures.push('normal Finder checkbox ON did not place an expanded outgoing package in the first five recommendations');
+    if (!(onRows || []).slice(0, 5).some(r => (r.give || []).length === 1 && r.give[0]?.id === 'manual')) failures.push('normal Finder checkbox ON did not preserve the exact manual package in the first five recommendations');
 
     controls.tradeAssist97.checked = false;
     const offRows = await window.tradeFinderV168.generateAsync(0);
@@ -128,7 +129,7 @@ function allManualOnly(rows) { return (rows || []).length > 0 && rows.every(r =>
     originalError('\nV255 Finder behavioral smoke failed:\n- ' + failures.join('\n- '));
     process.exit(1);
   }
-  console.log('V255 Finder behavioral smoke passed: normal + targeted checkbox ON/OFF behavior verified');
+  console.log('V255 Finder behavioral smoke passed: first-five normal + visible targeted ON/OFF behavior verified');
 })().catch(err => {
   originalError(err);
   process.exit(1);

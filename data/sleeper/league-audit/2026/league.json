@@ -73,7 +73,10 @@
     "daily_waivers_last_ran": 18
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
-  "company_id": null,
+  "shard": 773,
+  "season": "2026",
+  "season_type": "regular",
+  "sport": "nfl",
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,
@@ -219,11 +222,8 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
-  "season": "2026",
-  "season_type": "regular",
-  "sport": "nfl",
-  "shard": 773,
   "last_message_id": "1397694711879213056",
+  "company_id": null,
   "last_author_avatar": null,
   "last_author_display_name": "sys",
   "last_author_id": "166666666666666666",
@@ -251,9 +251,9 @@
     "BN",
     "BN"
   ],
+  "group_id": null,
   "bracket_id": null,
   "bracket_overrides_id": null,
-  "group_id": null,
   "loser_bracket_id": null,
   "loser_bracket_overrides_id": null,
   "total_rosters": 32

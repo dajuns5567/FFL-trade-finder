@@ -31,7 +31,7 @@ const v206NewShare="function capBlankThreeShare(list){const strict=finderMode()=
 if(src.split(v206OldShare).length-1!==1){console.error('V209 Finder guard failed: blank three share');return}
 src=src.replace(v206OldShare,v206NewShare);
 const v206OldFinalizeBase="let base;if(!blank)base=eligible.slice(0,MAX_RESULTS);else base=selectBlankDistribution(eligible);";
-const v207NewFinalizeBase="const pairUnique=(tier==='neutral'&&searchStyle()==='value')?uniqueMaximumValueThreePairs(eligible):eligible;let base;if(!blank)base=pairUnique.slice(0,MAX_RESULTS);else base=selectBlankDistribution(pairUnique);base=ensureTwoPlayerForTwoShare(base,pairUnique,tier);";
+const v207NewFinalizeBase="const pairUnique=(tier==='neutral'&&searchStyle()==='value')?uniqueMaximumValueThreePairs(eligible):eligible;let base;if(!blank)base=addBackfill?mixAddAssetResults(pairUnique,manualKey,MAX_RESULTS):pairUnique.slice(0,MAX_RESULTS);else base=selectBlankDistribution(pairUnique);base=ensureTwoPlayerForTwoShare(base,pairUnique,tier);";
 if(src.split(v206OldFinalizeBase).length-1!==1){console.error('V209 Finder guard failed: finalize base selection');return}
 src=src.replace(v206OldFinalizeBase,v207NewFinalizeBase);
 
@@ -74,27 +74,27 @@ const gateCount=src.split(needNeutral).length-1;
 if(gateCount!==3){console.error('V209 guard failed: expected 3 neutral generation gates, found',gateCount);return}
 src=src.split(needNeutral).join(neutralModes);
 
-// V254: patch only the frozen Finder package-input/finalize boundary after V209's own guarded transforms are established.
+// V255: patch only the frozen Finder package-input/finalize boundary after V209's own guarded transforms are established.
 const v254StagePatch=`
 const v254OldBlankSelection="function blankSelection(chosen){const boxes=shopBoxes();return chosen.length===0||(boxes.length>0&&chosen.length===boxes.length)}";
-const v254NewBlankSelection="function blankSelection(chosen){const boxes=shopBoxes();return chosen.length===0||(boxes.length>0&&chosen.length===boxes.length)}function addAssetsIfNeededEnabled(){for(const x of document.querySelectorAll('input[type=\\\"checkbox\\\"]')){const text=String(x.closest?.('label')?.textContent||x.parentElement?.textContent||'').normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();if(text==='add assets if needed'||text.startsWith('add assets if needed '))return!!x.checked}return false}function manualGivePackages(me,chosen){const out=[chosen];if(!addAssetsIfNeededEnabled()||!chosen?.length||chosen.length>=3)return out;const used=new Set(chosen.map(x=>x.type+':'+id(x))),owned=(st().allAssets||[]).filter(x=>Number(x.owner)===me&&(x.type==='player'||(x.type==='pick'&&Number(x.round)<=3))&&!used.has(x.type+':'+id(x))).sort((a,b)=>av(b)-av(a)),extras=spread(owned,18),seen=new Set([assetKey(chosen)]);for(const x of extras)addPkg(out,seen,[...chosen,x]);if(chosen.length===1){for(let i=0;i<extras.length&&out.length<36;i++)for(let j=i+1;j<extras.length&&out.length<36;j++)addPkg(out,seen,[chosen[0],extras[i],extras[j]])}return out}";
-if(src.split(v254OldBlankSelection).length-1!==1){console.error('V254 Finder guard failed: blankSelection');return}
+const v254NewBlankSelection="function blankSelection(chosen){const boxes=shopBoxes();return chosen.length===0||(boxes.length>0&&chosen.length===boxes.length)}function addAssetsIfNeededEnabled(){const direct=document.getElementById('tradeAssist97');if(direct)return!!direct.checked;for(const x of document.querySelectorAll('input[type=\\\"checkbox\\\"]')){const text=String(x.closest?.('label')?.textContent||x.parentElement?.textContent||'').normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();if(text==='add assets if needed'||text.startsWith('add assets if needed '))return!!x.checked}return false}function manualGivePackages(me,chosen){const out=[chosen];if(!addAssetsIfNeededEnabled()||!chosen?.length||chosen.length>=3)return out;const used=new Set(chosen.map(x=>x.type+':'+id(x))),owned=(st().allAssets||[]).filter(x=>Number(x.owner)===me&&(x.type==='player'||(x.type==='pick'&&Number(x.round)<=3))&&!used.has(x.type+':'+id(x))).sort((a,b)=>av(b)-av(a)),extras=spread(owned,18),seen=new Set([assetKey(chosen)]);for(const x of extras)addPkg(out,seen,[...chosen,x]);if(chosen.length===1){for(let i=0;i<extras.length&&out.length<36;i++)for(let j=i+1;j<extras.length&&out.length<36;j++)addPkg(out,seen,[chosen[0],extras[i],extras[j]])}return out}function roundRobinGiveRows(rows){const groups=new Map(),order=[];for(const r of rows||[]){const k=assetKey(r.give);if(!groups.has(k)){groups.set(k,[]);order.push(k)}groups.get(k).push(r)}const out=[];let moved=true;while(moved){moved=false;for(const k of order){const g=groups.get(k);if(g?.length){out.push(g.shift());moved=true}}}return out}function mixAddAssetResults(list,manualKey,limit=MAX_RESULTS){const primary=(list||[]).filter(r=>assetKey(r.give)===manualKey),expanded=roundRobinGiveRows((list||[]).filter(r=>assetKey(r.give)!==manualKey));if(!expanded.length)return primary.slice(0,limit);if(!primary.length)return expanded.slice(0,limit);const out=[],pattern=[0,0,1],buckets=[primary,expanded];let step=0;while(out.length<limit&&(buckets[0].length||buckets[1].length)){let pick=pattern[step++%pattern.length];if(!buckets[pick].length)pick=1-pick;if(!buckets[pick].length)break;out.push(buckets[pick].shift())}return out}";
+if(src.split(v254OldBlankSelection).length-1!==1){console.error('V255 Finder guard failed: blankSelection');return}
 src=src.replace(v254OldBlankSelection,v254NewBlankSelection);
 const v254OldManualGives="chosen=selectedGive(),blank=blankSelection(chosen),gives=blank?blankGivePackages(me):[chosen],tier=finderMode()";
 const v254NewManualGives="chosen=selectedGive(),blank=blankSelection(chosen),gives=blank?blankGivePackages(me):manualGivePackages(me,chosen),tier=finderMode()";
-if(src.split(v254OldManualGives).length-1!==1){console.error('V254 Finder guard failed: manual gives');return}
+if(src.split(v254OldManualGives).length-1!==1){console.error('V255 Finder guard failed: manual gives');return}
 src=src.replace(v254OldManualGives,v254NewManualGives);
 const v254OldFinalizeStart="function finalize(all,tier,w,blank=false){all.sort(presentationSort);const seen=new Set(),eligible=[],mix=fairAny(tier,w);";
-const v254NewFinalizeStart="function finalize(all,tier,w,blank=false){const addBackfill=!blank&&addAssetsIfNeededEnabled()&&selectedGive().length>0,manualKey=addBackfill?assetKey(selectedGive()):'';all.sort(addBackfill?((a,b)=>(assetKey(a.give)===manualKey?0:1)-(assetKey(b.give)===manualKey?0:1)||presentationSort(a,b)):presentationSort);const seen=new Set(),eligible=[],mix=fairAny(tier,w);";
-if(src.split(v254OldFinalizeStart).length-1!==1){console.error('V254 Finder guard failed: finalize start');return}
+const v254NewFinalizeStart="function finalize(all,tier,w,blank=false){const addBackfill=!blank&&addAssetsIfNeededEnabled()&&selectedGive().length>0,manualKey=addBackfill?assetKey(selectedGive()):'';all.sort(presentationSort);const seen=new Set(),eligible=[],mix=fairAny(tier,w);";
+if(src.split(v254OldFinalizeStart).length-1!==1){console.error('V255 Finder guard failed: finalize start');return}
 src=src.replace(v254OldFinalizeStart,v254NewFinalizeStart);
 const v254BT=String.fromCharCode(96),v254DL=String.fromCharCode(36)+'{';
 const v254OldDedupe='const k=blank?'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}|'+v254DL+'assetKey(r.give)}'+v254DL+'shape}'+v254BT+':'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}'+v254DL+'shape}'+v254BT+';';
 const v254NewDedupe='const k=blank?'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}|'+v254DL+'assetKey(r.give)}'+v254DL+'shape}'+v254BT+':(addBackfill?'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}|'+v254DL+'assetKey(r.give)}'+v254DL+'shape}'+v254BT+':'+v254BT+v254DL+'r.other}|'+v254DL+'r.centerKey}'+v254DL+'shape}'+v254BT+');';
-if(src.split(v254OldDedupe).length-1!==1){console.error('V254 Finder guard failed: selected dedupe');return}
+if(src.split(v254OldDedupe).length-1!==1){console.error('V255 Finder guard failed: selected dedupe');return}
 src=src.replace(v254OldDedupe,v254NewDedupe);
 `;
-if(src.split(stageMarker).length-1!==1){console.error('V254 Finder guard failed: V197 Finder-source stage');return}
+if(src.split(stageMarker).length-1!==1){console.error('V255 Finder guard failed: V197 Finder-source stage');return}
 src=src.replace(stageMarker,stageMarker+v254StagePatch);
 
 // Best Partner Fit stays at 8, Balanced stays at 10, Maximum Value stays at 24.
@@ -135,5 +135,6 @@ src=src.split(finalTail).join("ordered=diversifyThreeAssetOverlap(ordered,tier);
 src=src.replaceAll("V197 Finder","V209 Finder")
        .replace("version:'v197',base:'v196'","version:'v209',base:'v208'")
        .replace('trade-finder-v150-v197-runtime.js','trade-finder-v150-v209-runtime.js');
-try{(0,eval)(src+'\n//# sourceURL=trade-finder-style-loader-v209-transformed.js')}catch(e){console.error('V209 loader eval failed',e)}
+try{(0,eval)(src+'\
+//# sourceURL=trade-finder-style-loader-v209-transformed.js')}catch(e){console.error('V209 loader eval failed',e)}
 })();

@@ -1,0 +1,21 @@
+name: Finder runtime smoke
+
+on:
+  pull_request:
+    paths:
+      - 'trade-finder-style-loader-v209.js'
+      - 'trade-specific-player-v232.js'
+      - 'scripts/finder-runtime-smoke-v254.cjs'
+      - 'netlify/functions/site-v29.mjs'
+      - '.github/workflows/finder-runtime-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  runtime-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node scripts/finder-runtime-smoke-v254.cjs

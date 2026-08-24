@@ -4,8 +4,16 @@ on:
   pull_request:
     paths:
       - 'trade-finder-style-loader-v209.js'
+      - 'trade-finder-style-loader-v197.js'
+      - 'trade-finder-v150.js'
+      - 'trade-finder-v256-compiled.js'
+      - 'trade-runtime-v187-loader.js'
+      - 'trade-runtime-v130.js'
+      - 'trade-runtime-v256-compiled.js'
       - 'trade-specific-player-v232.js'
+      - 'scripts/compile-v256-runtimes.cjs'
       - 'scripts/finder-runtime-smoke-v254.cjs'
+      - 'scripts/finder-runtime-compiled-smoke-v257.cjs'
       - 'netlify/functions/site-v29.mjs'
       - '.github/workflows/finder-runtime-smoke.yml'
   workflow_dispatch:
@@ -18,4 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: node scripts/finder-runtime-smoke-v254.cjs
+      - name: Frozen V256 loader behavior
+        run: node scripts/finder-runtime-smoke-v254.cjs
+      - name: Compiled V256 equivalence behavior
+        run: node scripts/finder-runtime-compiled-smoke-v257.cjs

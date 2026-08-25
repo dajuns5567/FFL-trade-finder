@@ -1,8 +1,10 @@
 import siteV17 from './site-v17.mjs';
 
-export default async () => {
+let cachedHtml=null;
+
+async function buildHtml(){
   const base = await siteV17();
-  if (!base.ok) return base;
+  if (!base.ok) return {response:base,html:null};
   let raw = await base.text();
 
   raw = raw
@@ -21,9 +23,17 @@ export default async () => {
   else raw = raw.replace('</body>', value + '</body>');
 
   const runtime = '<script>window.__section1Release="v263";</script><script src="/trade-select-all-v165.js?v=261"></script><script src="/trade-blank-cache-v167.js?v=169"></script><script src="/trade-partner-fit-v184.js?v=186"></script><script src="/trade-style-preferences-v221.js?v=221"></script><script src="/trade-win-now-preferences-v226.js?v=226"></script><script src="/trade-specific-player-v232.js?v=256"></script><script src="/trade-finder-v256-compiled.js?v=258"></script><script src="/trade-evaluator-any-team-v183.js?v=183"></script><script src="/trade-runtime-v256-compiled.js?v=258"></script><script>window.section1V130?.install?.();</script><script src="/trade-selected-positions-only-v262.js?v=262"></script><script src="/trade-finder-candidate-guard-v223.js?v=263"></script><script src="/trade-ui-canonical-v136.js?v=141"></script><script src="/trade-presentation-v169.js?v=197"></script><script src="/methodology-v264.js?v=264"></script>';
-  const html = raw.replace('</body>', runtime + '</body>');
+  return {response:null,html:raw.replace('</body>', runtime + '</body>')};
+}
 
-  return new Response(html, {
+export default async () => {
+  if(cachedHtml===null){
+    const built=await buildHtml();
+    if(built.response)return built.response;
+    cachedHtml=built.html;
+  }
+
+  return new Response(cachedHtml, {
     status: 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',

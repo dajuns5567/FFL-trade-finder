@@ -1,6 +1,7 @@
 (()=>{
 'use strict';
 let active=false,stopTimer=null,observer=null;
+let valueMemoHost=null,valueMemoOriginal=null,valueMemoWrapped=null,valueMemo=new Map();
 const state=()=>window.state||{};
 const norm=()=>window.tradeValueNormalizationV130||window.tradeValueNormalizationV139||{};
 const id=x=>String(x?.id??'');
@@ -42,6 +43,27 @@ function hasMultipleIncomingIDP(recv){
   for(const x of recv||[])if(isIDP(x)&&++n>1)return true;
   return false;
 }
+function selectedPositionSet(){
+  return new Set([...document.querySelectorAll('#tradePos97 .trade97-pos:checked')]
+    .map(x=>String(x.value||'').toUpperCase())
+    .filter(x=>x&&x!=='ANY'));
+}
+function selectedPositionsOnlyActive(){
+  const input=document.getElementById('tradeSelectedPositionsOnly262');
+  if(!input?.checked)return false;
+  if(String(document.getElementById('desiredPlayerSearch')?.value||'').trim())return false;
+  return selectedPositionSet().size>1;
+}
+function selectedPositionsOnlyOK(recv){
+  if(!selectedPositionsOnlyActive())return true;
+  const allowed=selectedPositionSet();
+  for(const x of recv||[]){
+    if(x?.type!=='player')continue;
+    const p=String(window.groupPos?.(x)||'IDP').toUpperCase();
+    if(!allowed.has(p))return false;
+  }
+  return true;
+}
 function premiumIncomingPlayer(recv){
   const ps=(recv||[]).filter(x=>x?.type==='player');
   if(!ps.length)return null;
@@ -63,14 +85,35 @@ function markRejected(f,reason){
   if(!f||typeof f!=='object')return f;
   return Object.assign({},f,{rejected:true,finderGuardReason:reason});
 }
+function valueMemoKey(x){return x&&typeof x==='object'?`${String(x.type||'asset')}:${id(x)}`:''}
+function stopValueMemo(){
+  if(valueMemoHost&&valueMemoOriginal&&valueMemoHost.canonicalValue===valueMemoWrapped)valueMemoHost.canonicalValue=valueMemoOriginal;
+  valueMemoHost=null;valueMemoOriginal=null;valueMemoWrapped=null;valueMemo=new Map();
+}
+function startValueMemo(){
+  stopValueMemo();
+  const host=norm(),original=host?.canonicalValue;
+  if(!host||typeof original!=='function')return false;
+  valueMemoHost=host;valueMemoOriginal=original;valueMemo=new Map();
+  valueMemoWrapped=function(x,...args){
+    if(!active||args.length)return original.call(this,x,...args);
+    const key=valueMemoKey(x);if(!key)return original.call(this,x);
+    if(valueMemo.has(key))return valueMemo.get(key);
+    const value=original.call(this,x);valueMemo.set(key,value);return value;
+  };
+  host.canonicalValue=valueMemoWrapped;
+  return true;
+}
 function deactivate(){
   active=false;
+  stopValueMemo();
   if(stopTimer){clearTimeout(stopTimer);stopTimer=null}
   if(observer){observer.disconnect();observer=null}
 }
 function activate(){
   deactivate();
   active=true;
+  startValueMemo();
   const host=document.getElementById('finderResults');
   if(host){
     observer=new MutationObserver(()=>{
@@ -87,6 +130,7 @@ function install(){
   if(!section||typeof original!=='function')return false;
   if(original.__finderCandidateGuardV223)return true;
   const wrapped=function(give,recv){
+    if(active&&!selectedPositionsOnlyOK(recv))return{rejected:true,finderGuardReason:'selected-positions-only'};
     const f=original.call(section,give,recv);
     if(!active||!f||f.rejected)return f;
     if(hasMultipleIncomingIDP(recv))return markRejected(f,'multiple-incoming-idp');
@@ -106,5 +150,5 @@ window.addEventListener('click',e=>{
   activate();
 },true);
 install();
-window.tradeFinderCandidateGuardV223={install,activate,deactivate,hasMultipleIncomingIDP,futureAgeOK,isIDP,ageOf};
+window.tradeFinderCandidateGuardV223={install,activate,deactivate,hasMultipleIncomingIDP,futureAgeOK,isIDP,ageOf,selectedPositionSet,selectedPositionsOnlyActive,selectedPositionsOnlyOK,startValueMemo,stopValueMemo};
 })();

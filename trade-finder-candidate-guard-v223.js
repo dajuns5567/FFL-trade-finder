@@ -130,9 +130,9 @@ function install(){
   if(!section||typeof original!=='function')return false;
   if(original.__finderCandidateGuardV223)return true;
   const wrapped=function(give,recv){
+    if(active&&!selectedPositionsOnlyOK(recv))return{rejected:true,finderGuardReason:'selected-positions-only'};
     const f=original.call(section,give,recv);
     if(!active||!f||f.rejected)return f;
-    if(!selectedPositionsOnlyOK(recv))return markRejected(f,'selected-positions-only');
     if(hasMultipleIncomingIDP(recv))return markRejected(f,'multiple-incoming-idp');
     if(!futureAgeOK(give,recv))return markRejected(f,'future-age-regression');
     return f;

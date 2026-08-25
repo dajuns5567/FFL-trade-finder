@@ -14,7 +14,12 @@ function addShell(){
   const sec=document.createElement('section');sec.id='valueHistory';sec.className='tab';sec.hidden=true;
   sec.innerHTML='<div class="card"><h2>Value History</h2><p class="muted">Historical observations of the finished Fleeced! master value. History is read-only and does not feed back into player values, rankings, Trade Finder or Trade Evaluator.</p><div id="vhLazy"><div class="empty">Open Value History to load historical data.</div></div></div>';
   main.appendChild(sec);
-  b.addEventListener('click',()=>setTimeout(initUI,0));
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!==b.dataset.tab);
+    setTimeout(initUI,0);
+  });
 }
 
 function ranked(){try{return typeof ensureMaster==='function'?(ensureMaster()||[]):[]}catch{return[]}}

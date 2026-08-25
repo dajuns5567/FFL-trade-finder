@@ -23,7 +23,9 @@ on:
       - 'scripts/selected-positions-only-v262-smoke.cjs'
       - 'scripts/finder-per-run-value-memo-v263-smoke.cjs'
       - 'scripts/te-scoring-adjustment-v259-smoke.cjs'
+      - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/site-v29.mjs'
+      - 'netlify.toml'
       - '.github/workflows/finder-runtime-smoke.yml'
   workflow_dispatch:
 

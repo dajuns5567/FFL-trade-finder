@@ -8,7 +8,7 @@ export default async () => {
 
   // Frozen V141 valuation path remains unchanged. V259 adds a live Sleeper-scoring adapter after normalization;
   // with no TE-specific reception bonus it returns the V258 value exactly.
-  const value = '<script src="/state-bridge-v141.js?v=141"></script><script src="/trade-value-normalization-v139.js?v=141"></script><script src="/trade-te-scoring-adjustment-v259.js?v=259"></script><script src="/ui-player-values-v139.js?v=141"></script><script src="/ui-runtime-values-v140.js?v=141"></script>';
+  const value = '<script src="/state-bridge-v141.js?v=141"></script><script src="/trade-value-normalization-v139.js?v=141"></script><script src="/trade-te-scoring-adjustment-v259.js?v=259"></script><script src="/ui-player-values-v139.js?v=141"></script><script src="/ui-runtime-values-v140.js?v=141"></script><script src="/nonblocking-consensus-v277.js?v=277"></script>';
   const deferredBoot = '<script>if(typeof window.__fllDeferredBoot==="function")window.__fllDeferredBoot();</script>';
   if (raw.includes(deferredBoot)) raw = raw.replace(deferredBoot, value + deferredBoot);
   else raw = raw.replace('</body>', value + '</body>');
@@ -21,7 +21,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v263-selected-positions-add-assets-performance-methodology-v264-value-history-v276-theme-v274'
+      'x-fll-release': 'section1-v263-selected-positions-add-assets-performance-methodology-v264-value-history-v276-theme-v274-nonblocking-consensus-v277'
     }
   });
 };

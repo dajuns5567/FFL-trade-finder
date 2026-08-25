@@ -5,6 +5,7 @@
 
 [functions]
   node_bundler = "esbuild"
+  included_files = ["index.html", "trade-section1-core-v100.js", "trade-section1-v100.css", "trade-section1-v106.css"]
 
 [build.processing.html]
   pretty_urls = false

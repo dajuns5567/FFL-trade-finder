@@ -1,6 +1,7 @@
 (()=>{
 'use strict';
 let active=false,stopTimer=null,observer=null;
+let valueMemoHost=null,valueMemoOriginal=null,valueMemoWrapped=null,valueMemo=new Map();
 const state=()=>window.state||{};
 const norm=()=>window.tradeValueNormalizationV130||window.tradeValueNormalizationV139||{};
 const id=x=>String(x?.id??'');
@@ -84,14 +85,35 @@ function markRejected(f,reason){
   if(!f||typeof f!=='object')return f;
   return Object.assign({},f,{rejected:true,finderGuardReason:reason});
 }
+function valueMemoKey(x){return x&&typeof x==='object'?`${String(x.type||'asset')}:${id(x)}`:''}
+function stopValueMemo(){
+  if(valueMemoHost&&valueMemoOriginal&&valueMemoHost.canonicalValue===valueMemoWrapped)valueMemoHost.canonicalValue=valueMemoOriginal;
+  valueMemoHost=null;valueMemoOriginal=null;valueMemoWrapped=null;valueMemo=new Map();
+}
+function startValueMemo(){
+  stopValueMemo();
+  const host=norm(),original=host?.canonicalValue;
+  if(!host||typeof original!=='function')return false;
+  valueMemoHost=host;valueMemoOriginal=original;valueMemo=new Map();
+  valueMemoWrapped=function(x,...args){
+    if(!active||args.length)return original.call(this,x,...args);
+    const key=valueMemoKey(x);if(!key)return original.call(this,x);
+    if(valueMemo.has(key))return valueMemo.get(key);
+    const value=original.call(this,x);valueMemo.set(key,value);return value;
+  };
+  host.canonicalValue=valueMemoWrapped;
+  return true;
+}
 function deactivate(){
   active=false;
+  stopValueMemo();
   if(stopTimer){clearTimeout(stopTimer);stopTimer=null}
   if(observer){observer.disconnect();observer=null}
 }
 function activate(){
   deactivate();
   active=true;
+  startValueMemo();
   const host=document.getElementById('finderResults');
   if(host){
     observer=new MutationObserver(()=>{
@@ -128,5 +150,5 @@ window.addEventListener('click',e=>{
   activate();
 },true);
 install();
-window.tradeFinderCandidateGuardV223={install,activate,deactivate,hasMultipleIncomingIDP,futureAgeOK,isIDP,ageOf,selectedPositionSet,selectedPositionsOnlyActive,selectedPositionsOnlyOK};
+window.tradeFinderCandidateGuardV223={install,activate,deactivate,hasMultipleIncomingIDP,futureAgeOK,isIDP,ageOf,selectedPositionSet,selectedPositionsOnlyActive,selectedPositionsOnlyOK,startValueMemo,stopValueMemo};
 })();

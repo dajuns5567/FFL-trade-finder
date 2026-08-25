@@ -42,6 +42,27 @@ function hasMultipleIncomingIDP(recv){
   for(const x of recv||[])if(isIDP(x)&&++n>1)return true;
   return false;
 }
+function selectedPositionSet(){
+  return new Set([...document.querySelectorAll('#tradePos97 .trade97-pos:checked')]
+    .map(x=>String(x.value||'').toUpperCase())
+    .filter(x=>x&&x!=='ANY'));
+}
+function selectedPositionsOnlyActive(){
+  const input=document.getElementById('tradeSelectedPositionsOnly262');
+  if(!input?.checked)return false;
+  if(String(document.getElementById('desiredPlayerSearch')?.value||'').trim())return false;
+  return selectedPositionSet().size>1;
+}
+function selectedPositionsOnlyOK(recv){
+  if(!selectedPositionsOnlyActive())return true;
+  const allowed=selectedPositionSet();
+  for(const x of recv||[]){
+    if(x?.type!=='player')continue;
+    const p=String(window.groupPos?.(x)||'IDP').toUpperCase();
+    if(!allowed.has(p))return false;
+  }
+  return true;
+}
 function premiumIncomingPlayer(recv){
   const ps=(recv||[]).filter(x=>x?.type==='player');
   if(!ps.length)return null;
@@ -89,6 +110,7 @@ function install(){
   const wrapped=function(give,recv){
     const f=original.call(section,give,recv);
     if(!active||!f||f.rejected)return f;
+    if(!selectedPositionsOnlyOK(recv))return markRejected(f,'selected-positions-only');
     if(hasMultipleIncomingIDP(recv))return markRejected(f,'multiple-incoming-idp');
     if(!futureAgeOK(give,recv))return markRejected(f,'future-age-regression');
     return f;
@@ -106,5 +128,5 @@ window.addEventListener('click',e=>{
   activate();
 },true);
 install();
-window.tradeFinderCandidateGuardV223={install,activate,deactivate,hasMultipleIncomingIDP,futureAgeOK,isIDP,ageOf};
+window.tradeFinderCandidateGuardV223={install,activate,deactivate,hasMultipleIncomingIDP,futureAgeOK,isIDP,ageOf,selectedPositionSet,selectedPositionsOnlyActive,selectedPositionsOnlyOK};
 })();

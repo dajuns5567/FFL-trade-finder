@@ -4,6 +4,7 @@ export default async () => {
   const base = await siteV17();
   if (!base.ok) return base;
   let raw = await base.text();
+  raw = raw.replace('</head>', '<link rel="stylesheet" href="/fleeced-theme-v271.css?v=271"></head>');
 
   // Frozen V141 valuation path remains unchanged. V259 adds a live Sleeper-scoring adapter after normalization;
   // with no TE-specific reception bonus it returns the V258 value exactly.
@@ -20,7 +21,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v263-selected-positions-add-assets-performance-methodology-v264-value-history-v269'
+      'x-fll-release': 'section1-v263-selected-positions-add-assets-performance-methodology-v264-value-history-v269-theme-v271'
     }
   });
 };

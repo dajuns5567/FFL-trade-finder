@@ -3,6 +3,7 @@ import { getStore } from '@netlify/blobs';
 const LEAGUE='1316867686394769408';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const store=()=>getStore('fll-value-history-v1');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
@@ -21,6 +22,31 @@ function fingerprint(rows){
   for(const r of rows){const s=`${r.id}:${r.value}:${r.overall}:${r.posRank}|`;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}}
   return (h>>>0).toString(36);
 }
+async function listSnapshots(s){
+  let last;
+  for(let attempt=0;attempt<2;attempt++){
+    try{return await s.list({prefix:'snapshots/'})}catch(e){last=e;if(attempt===0)await sleep(120)}
+  }
+  throw last||new Error('snapshot listing failed');
+}
+async function readSnapshotsBounded(s,blobs,batchSize=25){
+  const snaps=[];
+  for(let i=0;i<blobs.length;i+=batchSize){
+    const batch=blobs.slice(i,i+batchSize);
+    const rows=await Promise.all(batch.map(async b=>{try{return await s.get(b.key,{type:'json'})}catch{return null}}));
+    snaps.push(...rows);
+  }
+  return snaps;
+}
+async function getPlayerHistory(s,playerId){
+  const listing=await listSnapshots(s);
+  const blobs=(listing?.blobs||[]).slice(-500);
+  const snaps=await readSnapshotsBounded(s,blobs,25);
+  const points=[];
+  for(const snap of snaps){const row=snap?.rows?.find?.(r=>String(r.id)===playerId);if(row)points.push({t:snap.t,value:row.value,overall:row.overall,pos:row.pos,posRank:row.posRank})}
+  points.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  return points;
+}
 
 export default async (req)=>{
   try{
@@ -28,13 +54,12 @@ export default async (req)=>{
     if(req.method==='GET'){
       const playerId=String(url.searchParams.get('player_id')||'').trim();
       if(!playerId)return json({error:'player_id required'},400);
-      const listing=await s.list({prefix:'snapshots/'});
-      const blobs=(listing?.blobs||[]).slice(-500);
-      const snaps=await Promise.all(blobs.map(async b=>{try{return await s.get(b.key,{type:'json'})}catch{return null}}));
-      const points=[];
-      for(const snap of snaps){const row=snap?.rows?.find?.(r=>String(r.id)===playerId);if(row)points.push({t:snap.t,value:row.value,overall:row.overall,pos:row.pos,posRank:row.posRank})}
-      points.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-      return json({player_id:playerId,points});
+      let points,last;
+      for(let attempt=0;attempt<2;attempt++){
+        try{points=await getPlayerHistory(s,playerId);last=null;break}catch(e){last=e;if(attempt===0)await sleep(180)}
+      }
+      if(last)throw last;
+      return json({player_id:playerId,points:points||[]});
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
     const body=await req.json().catch(()=>null);

@@ -225,13 +225,14 @@
   "last_author_id": "1114320606398423040",
   "last_author_is_bot": false,
   "last_message_attachment": null,
+  "draft_id": "1180251688940855297",
   "last_message_text_map": null,
   "last_message_time": 1772813998989,
   "last_pinned_message_id": "1314798149453225984",
   "last_read_id": null,
-  "draft_id": "1180251688940855297",
   "league_id": "1180251688940855296",
   "previous_league_id": "1113982138841436160",
+  "group_id": null,
   "roster_positions": [
     "RB",
     "WR",
@@ -249,7 +250,6 @@
   ],
   "bracket_id": 1304400728969711600,
   "bracket_overrides_id": 1304468788804079600,
-  "group_id": null,
   "loser_bracket_id": 1304400728973906000,
   "loser_bracket_overrides_id": 1304468788846014500,
   "total_rosters": 32

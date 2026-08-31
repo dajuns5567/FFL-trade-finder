@@ -16,10 +16,12 @@ const teamName=n=>window.teamName?.(n)||((st().teams||[]).find(t=>Number(t.id)==
 const fair=(a,b)=>window.section1V130?.fair?.(a,b)||null;
 let rows=[],visible=5,runToken=0;
 function targetText(){return q(document.getElementById('desiredPlayerSearch')?.value)}
-function active(){return!!targetText()&&String(document.getElementById('tradeTier94')?.value||'')==='up'}
 function style(){return String(document.getElementById('findMode')?.value||'balanced')}
 function selectedGive(){return[...document.querySelectorAll('#findShop .shopCheck:checked,.shopCheck:checked')].map(x=>x._asset).filter(Boolean)}
 function addAssets(){return!!document.getElementById('tradeAssist97')?.checked}
+function exactTarget(){const needle=targetText(),me=Number(document.getElementById('findTeam')?.value);if(!needle||!me)return null;return(st().allAssets||[]).find(x=>x?.type==='player'&&Number(x.owner)!==me&&q(pname(x))===needle)||null}
+function normalFinderIntersection(){return!!exactTarget()&&style()==='value'&&addAssets()&&selectedGive().length>0&&String(document.getElementById('tradeTier94')?.value||'')==='up'}
+function active(){return!!targetText()&&String(document.getElementById('tradeTier94')?.value||'')==='up'&&!normalFinderIntersection()}
 function owned(owner){return(st().allAssets||[]).filter(x=>Number(x.owner)===Number(owner)&&(x.type==='player'||(x.type==='pick'&&Number(x.round)<=3)))}
 function key(xs){return(xs||[]).map(x=>`${x.type}:${id(x)}`).sort().join('|')}
 function addPkg(out,seen,xs){const clean=(xs||[]).filter(Boolean),k=key(clean);if(clean.length&&!seen.has(k)){seen.add(k);out.push(clean)}}

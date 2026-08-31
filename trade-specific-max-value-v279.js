@@ -16,9 +16,11 @@ const teamName=n=>window.teamName?.(n)||((st().teams||[]).find(t=>Number(t.id)==
 const fair=(a,b)=>window.section1V130?.fair?.(a,b)||null;
 let active=[],visible=5,token=0;
 function targetText(){return q(document.getElementById('desiredPlayerSearch')?.value)}
-function isActive(){return targetText()&&String(document.getElementById('findMode')?.value||'')==='value'}
 function selectedGive(){return[...document.querySelectorAll('#findShop .shopCheck:checked,.shopCheck:checked')].map(x=>x._asset).filter(Boolean)}
 function addAssets(){const x=document.getElementById('tradeAssist97');return!!x?.checked}
+function exactTarget(){const needle=targetText(),me=Number(document.getElementById('findTeam')?.value);if(!needle||!me)return null;return(st().allAssets||[]).find(x=>x?.type==='player'&&Number(x.owner)!==me&&q(pname(x))===needle)||null}
+function normalFinderIntersection(){const tier=String(document.getElementById('tradeTier94')?.value||'');return!!exactTarget()&&String(document.getElementById('findMode')?.value||'')==='value'&&addAssets()&&selectedGive().length>0&&(tier==='up'||tier==='down')}
+function isActive(){return!!targetText()&&String(document.getElementById('findMode')?.value||'')==='value'&&!normalFinderIntersection()}
 function unique(xs){const out=[],seen=new Set();for(const x of xs||[]){const k=`${x?.type}:${id(x)}`;if(!x||seen.has(k))continue;seen.add(k);out.push(x)}return out}
 function owned(owner){return(st().allAssets||[]).filter(x=>Number(x.owner)===Number(owner)&&(x.type==='player'||(x.type==='pick'&&Number(x.round)<=3)))}
 function combos(pool,maxLen=3){const a=unique(pool),out=[];for(let i=0;i<a.length;i++){out.push([a[i]]);if(maxLen<2)continue;for(let j=i+1;j<a.length;j++){out.push([a[i],a[j]]);if(maxLen<3)continue;for(let k=j+1;k<a.length;k++)out.push([a[i],a[j],a[k]])}}return out}

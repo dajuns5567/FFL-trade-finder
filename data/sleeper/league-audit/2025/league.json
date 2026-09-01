@@ -70,10 +70,6 @@
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
   "company_id": null,
-  "sport": "nfl",
-  "season_type": "regular",
-  "season": "2025",
-  "shard": 183,
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,
@@ -219,6 +215,10 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
+  "season": "2025",
+  "season_type": "regular",
+  "sport": "nfl",
+  "shard": 183,
   "last_message_id": "1335682357000167424",
   "last_author_avatar": "f0edbf4278f53f9425db175073df6584",
   "last_author_display_name": "kevinfalkenstein",
@@ -228,8 +228,8 @@
   "last_message_text_map": null,
   "last_message_time": 1772813998989,
   "last_pinned_message_id": "1314798149453225984",
-  "last_read_id": null,
   "draft_id": "1180251688940855297",
+  "last_read_id": null,
   "league_id": "1180251688940855296",
   "previous_league_id": "1113982138841436160",
   "roster_positions": [

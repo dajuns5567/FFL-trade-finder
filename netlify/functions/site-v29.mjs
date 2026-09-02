@@ -21,7 +21,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v263-selected-positions-add-assets-performance-methodology-v264-value-history-v278-theme-v274-nonblocking-consensus-v277-evaluator-roster-v285-specific-max-value-pick-display-v279-specific-tier-up-v282-specific-add-assets-v308-manual-shape-diversity-specific-max-tier-add-v300-recommended-pick-ownership-v301-specific-player-outgoing-diversity-v302'
+      'x-fll-release': 'section1-v263-selected-positions-add-assets-performance-methodology-v264-value-history-v278-theme-v274-nonblocking-consensus-v277-evaluator-roster-v285-specific-max-value-pick-display-v279-specific-tier-up-v282-specific-add-assets-v308-manual-shape-diversity-neutral-only-specific-max-tier-add-v300-recommended-pick-ownership-v301-specific-player-outgoing-diversity-v302'
     }
   });
 };

@@ -33,7 +33,7 @@ function outgoing(me,target){const chosen=selectedGive(),out=[],seen=new Set();i
  for(let i=0;i<triplePool.length;i++)for(let j=i+1;j<triplePool.length;j++)for(let k=j+1;k<triplePool.length;k++)triples.push([triplePool[i],triplePool[j],triplePool[k]]);
  for(const xs of balancedPackages(triples,av(target),120))addPkg(out,seen,xs);
  return out}
-function incoming(owner,target){const pool=owned(owner).filter(x=>!(x.type==='player'&&id(x)===id(target))).sort((a,b)=>av(b)-av(a)),extras=spread(pool,22),out=[[target]];for(const x of extras)out.push([target,x]);for(let i=0;i<extras.length;i++)for(let j=i+1;j++)out.push([target,extras[i],extras[j]]);return out}
+function incoming(owner,target){const pool=owned(owner).filter(x=>!(x.type==='player'&&id(x)===id(target))).sort((a,b)=>av(b)-av(a)),extras=spread(pool,22),out=[[target]];for(const x of extras)out.push([target,x]);for(let i=0;i<extras.length;i++)for(let j=i+1;j<extras.length;j++)out.push([target,extras[i],extras[j]]);return out}
 function bestPlayer(xs){return(xs||[]).filter(x=>x.type==='player').sort((a,b)=>rank(a)-rank(b)||av(b)-av(a))[0]||null}
 function trueTierUp(give,recv,target){const incomingBest=bestPlayer(recv),outgoingBest=bestPlayer(give);if(!incomingBest||id(incomingBest)!==id(target))return false;if(outgoingBest)return rank(target)<rank(outgoingBest);return av(target)>Math.max(...give.map(av),0)}
 function positionsOK(target){const checked=[...document.querySelectorAll('#tradePos97 .trade97-pos:checked,.trade97-pos:checked')].map(x=>String(x.value||'').toUpperCase());return!checked.length||checked.includes('ANY')||checked.includes(pos(target))}

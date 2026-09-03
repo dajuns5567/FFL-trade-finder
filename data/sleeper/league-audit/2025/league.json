@@ -70,10 +70,11 @@
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
   "company_id": null,
+  "last_message_id": "1335682357000167424",
+  "sport": "nfl",
   "shard": 183,
   "season": "2025",
   "season_type": "regular",
-  "sport": "nfl",
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,
@@ -219,8 +220,6 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
-  "last_message_id": "1335682357000167424",
-  "draft_id": "1180251688940855297",
   "last_author_avatar": "f0edbf4278f53f9425db175073df6584",
   "last_author_display_name": "kevinfalkenstein",
   "last_author_id": "1114320606398423040",
@@ -230,6 +229,7 @@
   "last_message_time": 1772813998989,
   "last_pinned_message_id": "1314798149453225984",
   "last_read_id": null,
+  "draft_id": "1180251688940855297",
   "league_id": "1180251688940855296",
   "previous_league_id": "1113982138841436160",
   "roster_positions": [
@@ -247,9 +247,9 @@
     "BN",
     "BN"
   ],
-  "group_id": null,
   "bracket_id": 1304400728969711600,
   "bracket_overrides_id": 1304468788804079600,
+  "group_id": null,
   "loser_bracket_id": 1304400728973906000,
   "loser_bracket_overrides_id": 1304468788846014500,
   "total_rosters": 32

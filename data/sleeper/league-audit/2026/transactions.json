@@ -4,6 +4,31 @@
       "status": "complete",
       "type": "free_agent",
       "metadata": null,
+      "created": 1788488898012,
+      "settings": null,
+      "leg": 1,
+      "draft_picks": [],
+      "creator": "858596140008984576",
+      "transaction_id": "1401427648671956992",
+      "adds": {
+        "8333": 24
+      },
+      "drops": {
+        "7626": 24
+      },
+      "consenter_ids": [
+        24
+      ],
+      "roster_ids": [
+        24
+      ],
+      "status_updated": 1788488898012,
+      "waiver_budget": []
+    },
+    {
+      "status": "complete",
+      "type": "free_agent",
+      "metadata": null,
       "created": 1788396123346,
       "settings": null,
       "leg": 1,

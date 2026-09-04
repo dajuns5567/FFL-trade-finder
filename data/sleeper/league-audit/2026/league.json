@@ -74,10 +74,6 @@
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
   "company_id": null,
-  "shard": 773,
-  "season": "2026",
-  "season_type": "regular",
-  "sport": "nfl",
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,
@@ -223,8 +219,11 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
+  "season": "2026",
+  "season_type": "regular",
+  "shard": 773,
+  "sport": "nfl",
   "last_message_id": "1401641134500876288",
-  "draft_id": "1316867686407356416",
   "last_author_avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
   "last_author_display_name": "TomKatz",
   "last_author_id": "729929924969865216",
@@ -234,6 +233,7 @@
   "last_message_time": 1788539797000,
   "last_pinned_message_id": "1393060582013304832",
   "last_read_id": null,
+  "draft_id": "1316867686407356416",
   "league_id": "1316867686394769408",
   "previous_league_id": "1180251688940855296",
   "roster_positions": [

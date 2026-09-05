@@ -75,6 +75,7 @@
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
   "company_id": null,
+  "last_message_id": "1402017675420418048",
   "shard": 773,
   "season": "2026",
   "season_type": "regular",
@@ -224,7 +225,6 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
-  "last_message_id": "1402017675420418048",
   "draft_id": "1316867686407356416",
   "last_author_avatar": "2954af518c08da30113478de59d8fab4",
   "last_author_display_name": "jakeslomiak21",

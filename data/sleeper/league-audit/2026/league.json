@@ -79,7 +79,6 @@
   "season": "2026",
   "season_type": "regular",
   "sport": "nfl",
-  "last_message_id": "1402017675420418048",
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,
@@ -225,6 +224,8 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
+  "last_message_id": "1402017675420418048",
+  "draft_id": "1316867686407356416",
   "last_author_avatar": "2954af518c08da30113478de59d8fab4",
   "last_author_display_name": "jakeslomiak21",
   "last_author_id": "1114227883914022912",
@@ -233,12 +234,9 @@
   "last_message_text_map": null,
   "last_message_time": 1788629571351,
   "last_pinned_message_id": "1393060582013304832",
-  "draft_id": "1316867686407356416",
   "last_read_id": null,
   "league_id": "1316867686394769408",
   "previous_league_id": "1180251688940855296",
-  "bracket_id": null,
-  "bracket_overrides_id": null,
   "roster_positions": [
     "RB",
     "WR",
@@ -254,6 +252,8 @@
     "BN",
     "BN"
   ],
+  "bracket_id": null,
+  "bracket_overrides_id": null,
   "group_id": null,
   "loser_bracket_id": null,
   "loser_bracket_overrides_id": null,

@@ -30,7 +30,7 @@ window.loadCore=async()=>true;window.renderAll=()=>{};
 const controls={
  findTeam:{value:'1'},findMode:{value:'balanced'},tradeTier94:{value:'neutral'},tradeAssist97:{checked:true},
  desiredPlayerSearch:{value:''},finderResults:{innerHTML:'',textContent:'',appendChild(){}},
- evalA:{value:'1'},evalB:{value:'2'},evalResults:{innerHTML:''},evaluate:{onclick:null},
+ evalA:{value:'1'},evalB:{value:'2'},evalResults:{innerHTML:'',querySelectorAll(){return[]}},evaluate:{onclick:null},
  evalChooserA:{querySelectorAll(){return[]}},evalChooserB:{querySelectorAll(){return[]}}
 };
 const boxes=allAssets.filter(x=>Number(x.owner)===1).map(a=>({_asset:a,checked:a.id==='manual'}));

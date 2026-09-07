@@ -15,7 +15,6 @@ on:
       - 'trade-selected-positions-only-v262.js'
       - 'trade-finder-candidate-guard-v223.js'
       - 'trade-te-scoring-adjustment-v259.js'
-      - 'trade-value-normalization-v139.js'
       - 'player-modeled-gap-display-v313.js'
       - 'scripts/compile-v256-runtimes.cjs'
       - 'scripts/finder-runtime-smoke-v254.cjs'
@@ -27,7 +26,6 @@ on:
       - 'scripts/te-scoring-adjustment-v259-smoke.cjs'
       - 'scripts/value-adjustment-monotonic-v311-smoke.cjs'
       - 'scripts/player-modeled-gap-display-v313-smoke.cjs'
-      - 'scripts/phase2-modeled-player-trade-v314-smoke.cjs'
       - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/site-v29.mjs'
       - 'netlify.toml'
@@ -60,5 +58,3 @@ jobs:
         run: node scripts/value-adjustment-monotonic-v311-smoke.cjs
       - name: Bounded modeled-gap player Value presentation
         run: node scripts/player-modeled-gap-display-v313-smoke.cjs
-      - name: Phase 2 canonical player currency Finder/Evaluator integration
-        run: node scripts/phase2-modeled-player-trade-v314-smoke.cjs

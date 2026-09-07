@@ -1,8 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 
-const BASELINE = '756133a8ece0a644eb72060d64c4d47f92abbf77';
-const APPROVED_NORMALIZATION_BLOB = '065ef96e4e044f456ed038f8944638a0c86a4427';
+const BASELINE = 'e95105e0a062faca352b0fd7f88d0a4bcd45ce69';
 
 const protectedExact = new Set([
   'trade-value-normalization-v139.js',
@@ -95,14 +94,9 @@ for (const path of [...all].filter(isProtectedCalculationModule).sort()) {
     failures.push(`${path}: protected calculation module was added/removed relative to frozen baseline`);
     continue;
   }
-  if (path === 'trade-value-normalization-v139.js') {
-    const blob = git(['hash-object', path]).trim();
-    if (blob !== APPROVED_NORMALIZATION_BLOB) failures.push(`${path}: canonical trade-value normalization differs from approved V314 Phase 2 implementation`);
-    continue;
-  }
   const before = baselineText(path);
   const now = readFileSync(path, 'utf8');
-  if (before !== now) failures.push(`${path}: protected calculation code differs from frozen V313 baseline`);
+  if (before !== now) failures.push(`${path}: protected calculation code differs from frozen baseline`);
 }
 
 const baselineIndex = baselineText('index.html');
@@ -121,5 +115,5 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Valuation calculation freeze verified against V313 baseline ${BASELINE}, with the explicitly approved V314 normalization blob.`);
+console.log(`Valuation calculation freeze verified against ${BASELINE}.`);
 console.log('No current player/pick values are stored by this check; only calculation code is protected.');

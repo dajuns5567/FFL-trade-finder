@@ -68,9 +68,6 @@ function build(){
 }
 function value(asset){
   if(!asset||asset.type!=='player')return 0;
-  const n=window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
-  const shared=Number(n.modeledGapPlayerValue?.(asset)??n.playerValue?.(asset));
-  if(Number.isFinite(shared)&&shared>0)return shared;
   build();
   const v=Number(cacheMap.get(String(asset.id??'')));
   return Number.isFinite(v)&&v>0?v:MIN;
@@ -135,7 +132,7 @@ function install(){
   observer.disconnect();
   observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true});
   document.addEventListener('click',e=>{if(e.target.closest?.('.tabs button[data-tab="rankings"],#runFinder,#evaluate'))setTimeout(patch,0)},true);
-  window.__playerModeledGapDisplayV313='v314-shared-trade-display-currency';
+  window.__playerModeledGapDisplayV313='v313-presentation-only';
 }
 window.playerModeledGapDisplayV313={MIN,MAX,BAND_ENDS,BLEND,MIN_RATIO,MAX_RATIO,value,build,patch,get meta(){build();return cacheMeta},install};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();

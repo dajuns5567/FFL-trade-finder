@@ -19,7 +19,7 @@ function playerValueForRank(rank,maxRank=currentMaxRank()){
  const span=Math.max(1,maxRank-PLAYER_BREAK),t=(r-PLAYER_BREAK)/span;
  return round5(clamp(MIN,MIN+(PLAYER_BREAK_VALUE-MIN)*Math.pow(Math.max(0,1-Math.pow(t,.7)),1.5),PLAYER_BREAK_VALUE));
 }
-function playerValue(a){const r=rankOf(a);if(r)return playerValueForRank(r);try{const v=Number(originalBaseValue?.(a));return Number.isFinite(v)&&v>0?v:0}catch(_){return 0}}
+function playerValue(a){const pre=Number(window.playerModeledGapValuesV315?.value?.(a));if(Number.isFinite(pre)&&pre>0)return pre;const r=rankOf(a);if(r)return playerValueForRank(r);try{const v=Number(originalBaseValue?.(a));return Number.isFinite(v)&&v>0?v:0}catch(_){return 0}}
 function originalRoster(a){const n=Number(a?.original_owner);if(n)return n;const m=String(a?.id||'').match(/^pick-\d+-\d+-(\d+)$/);return m?Number(m[1]):0}
 function teamName(id){return window.teamName?.(id)||`Roster ${id}`}
 function nearestSeason(){const ys=assets().filter(x=>x?.type==='pick').map(x=>Number(x.season)).filter(Number.isFinite);return ys.length?Math.min(...ys):null}
@@ -42,7 +42,7 @@ function install(){
  for(const e of [window.tradeEngine96,window.tradeEngine98,window.tradeEngine99].filter(Boolean)){
    try{Object.defineProperty(e,'assetValue',{configurable:true,enumerable:true,writable:true,value:canonicalValue})}catch(_){e.assetValue=canonicalValue}
  }
- window.__tradeValueNormalization='v141-state-aware-player-9999-pick-7000';
+ window.__tradeValueNormalization='v315-precomputed-modeled-gap-player-pick-7000';
  return true;
 }
 const api={MIN,MAX,ELITE_FIRST,stateRef,assets,rankOf,currentMaxRank,playerValueForRank,playerValue,nearestSeason,sourceValue,sourceAnchor,pickScale,pickValue,pickContext,canonicalValue,canonicalPackageValue,install,originalBaseValue,originalPackageValue,originalPickValue};

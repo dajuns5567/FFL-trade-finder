@@ -1,12 +1,13 @@
 (()=>{
 'use strict';
 const MIN=120,MAX=9999,PLAYER_BREAK=325,PLAYER_BREAK_VALUE=1825,ELITE_FIRST=7000;
+const MODELED_BAND_ENDS=[12,24,48,80,120,180,260],MODELED_BLEND=.28,MODELED_MIN_RATIO=.45,MODELED_MAX_RATIO=2.25;
 const clamp=(a,x,b)=>Math.max(a,Math.min(x,b));
 const round5=n=>Math.round(Number(n||0)/5)*5;
 const originalBaseValue=typeof window.baseValue==='function'?window.baseValue.bind(window):null;
 const originalPackageValue=typeof window.packageValue==='function'?window.packageValue.bind(window):null;
 const originalPickValue=typeof window.pickValue==='function'?window.pickValue.bind(window):null;
-let installed=false;
+let installed=false,modeledCacheArr=null,modeledCacheMap=new Map();
 const stateRef=()=>{try{return typeof state!=='undefined'&&state?state:(window.state||{})}catch(_){return window.state||{}}};
 const assets=()=>Array.from(stateRef().allAssets||[]);
 const rankOf=a=>{try{return Math.max(1,Number(window.playerRankValue?.(a)?.rank)||0)}catch(_){return 0}};
@@ -19,7 +20,27 @@ function playerValueForRank(rank,maxRank=currentMaxRank()){
  const span=Math.max(1,maxRank-PLAYER_BREAK),t=(r-PLAYER_BREAK)/span;
  return round5(clamp(MIN,MIN+(PLAYER_BREAK_VALUE-MIN)*Math.pow(Math.max(0,1-Math.pow(t,.7)),1.5),PLAYER_BREAK_VALUE));
 }
-function playerValue(a){const r=rankOf(a);if(r)return playerValueForRank(r);try{const v=Number(originalBaseValue?.(a));return Number.isFinite(v)&&v>0?v:0}catch(_){return 0}}
+function medianModeled(xs){const a=(xs||[]).filter(x=>Number.isFinite(x)&&x>0).slice().sort((x,y)=>x-y);if(!a.length)return 1;const m=a.length>>1;return a.length%2?a[m]:(a[m-1]+a[m])/2}
+function modeledMaster(){try{return window.ensureMaster?.()||[]}catch(_){return[]}}
+function rebuildModeledPlayerValues(){
+ const arr=modeledMaster();if(arr===modeledCacheArr)return;modeledCacheArr=arr;modeledCacheMap=new Map();
+ const n=arr.length;if(!n)return;
+ const maxRank=Math.max(907,n),vals=arr.map(z=>{const v=Number(z?.value);return Number.isFinite(v)&&v>0?v:0}),ends=[...MODELED_BAND_ENDS.filter(x=>x<n),n];
+ let start=1;
+ for(const end of ends){
+   const s=start,e=end,startVal=playerValueForRank(s,maxRank),endVal=playerValueForRank(e,maxRank);
+   if(s===e){modeledCacheMap.set(String(arr[s-1]?.x?.id??''),Math.round(clamp(MIN,startVal,MAX)));start=e+1;continue}
+   const modeledGaps=[],baseGaps=[];
+   for(let r=s;r<e;r++){modeledGaps.push(Math.max(0,vals[r-1]-vals[r]));baseGaps.push(Math.max(.0001,playerValueForRank(r,maxRank)-playerValueForRank(r+1,maxRank)))}
+   const localMedian=medianModeled(modeledGaps),weights=baseGaps.map((g,i)=>{const ratio=clamp(MODELED_MIN_RATIO,modeledGaps[i]/Math.max(localMedian,.0001),MODELED_MAX_RATIO);return g*((1-MODELED_BLEND)+MODELED_BLEND*ratio)}),totalW=weights.reduce((x,y)=>x+y,0)||1,span=Math.max(0,startVal-endVal);
+   let cur=startVal;modeledCacheMap.set(String(arr[s-1]?.x?.id??''),Math.round(clamp(MIN,cur,MAX)));
+   for(let i=0;i<weights.length;i++){cur-=span*(weights[i]/totalW);const rank=s+i+1;let out=Math.round(clamp(MIN,cur,MAX));if(rank===e)out=Math.round(clamp(MIN,endVal,MAX));modeledCacheMap.set(String(arr[rank-1]?.x?.id??''),out)}
+   start=e+1;
+ }
+ if(arr[0]?.x?.id!=null)modeledCacheMap.set(String(arr[0].x.id),MAX);
+}
+function modeledGapPlayerValue(a){if(!a||a.type!=='player')return 0;rebuildModeledPlayerValues();const v=Number(modeledCacheMap.get(String(a.id??'')));if(Number.isFinite(v)&&v>0)return v;const r=rankOf(a);if(r)return playerValueForRank(r);try{const x=Number(originalBaseValue?.(a));return Number.isFinite(x)&&x>0?x:0}catch(_){return 0}}
+function playerValue(a){return modeledGapPlayerValue(a)}
 function originalRoster(a){const n=Number(a?.original_owner);if(n)return n;const m=String(a?.id||'').match(/^pick-\d+-\d+-(\d+)$/);return m?Number(m[1]):0}
 function teamName(id){return window.teamName?.(id)||`Roster ${id}`}
 function nearestSeason(){const ys=assets().filter(x=>x?.type==='pick').map(x=>Number(x.season)).filter(Number.isFinite);return ys.length?Math.min(...ys):null}
@@ -42,10 +63,10 @@ function install(){
  for(const e of [window.tradeEngine96,window.tradeEngine98,window.tradeEngine99].filter(Boolean)){
    try{Object.defineProperty(e,'assetValue',{configurable:true,enumerable:true,writable:true,value:canonicalValue})}catch(_){e.assetValue=canonicalValue}
  }
- window.__tradeValueNormalization='v141-state-aware-player-9999-pick-7000';
+ window.__tradeValueNormalization='v314-modeled-gap-player-trade-values-pick-7000';
  return true;
 }
-const api={MIN,MAX,ELITE_FIRST,stateRef,assets,rankOf,currentMaxRank,playerValueForRank,playerValue,nearestSeason,sourceValue,sourceAnchor,pickScale,pickValue,pickContext,canonicalValue,canonicalPackageValue,install,originalBaseValue,originalPackageValue,originalPickValue};
+const api={MIN,MAX,ELITE_FIRST,MODELED_BAND_ENDS,MODELED_BLEND,MODELED_MIN_RATIO,MODELED_MAX_RATIO,stateRef,assets,rankOf,currentMaxRank,playerValueForRank,modeledGapPlayerValue,playerValue,nearestSeason,sourceValue,sourceAnchor,pickScale,pickValue,pickContext,canonicalValue,canonicalPackageValue,install,originalBaseValue,originalPackageValue,originalPickValue};
 window.tradeValueNormalizationV139=api;
 window.tradeValueNormalizationV130=api;
 install();

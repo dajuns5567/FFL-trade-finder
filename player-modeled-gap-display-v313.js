@@ -66,13 +66,17 @@ function build(){
   if(arr[0]?.x?.id!=null)cacheMap.set(String(arr[0].x.id),MAX);
   cacheMeta={bands,count:n,blend:BLEND,minRatio:MIN_RATIO,maxRatio:MAX_RATIO};
 }
+function baseValue(asset){
+  if(!asset||asset.type!=='player')return 0;
+  build();
+  const v=Number(cacheMap.get(String(asset.id??'')));
+  return Number.isFinite(v)&&v>0?v:MIN;
+}
 function value(asset){
   if(!asset||asset.type!=='player')return 0;
   const live=Number(window.modeledPlayerTradeValueV317?.playerValue?.(asset));
   if(Number.isFinite(live)&&live>0)return live;
-  build();
-  const v=Number(cacheMap.get(String(asset.id??'')));
-  return Number.isFinite(v)&&v>0?v:MIN;
+  return baseValue(asset);
 }
 function patchValueText(node,next){
   if(!node)return;
@@ -139,6 +143,6 @@ function install(){
   document.addEventListener('click',e=>{if(e.target.closest?.('.tabs button[data-tab="rankings"],#runFinder,#evaluate'))setTimeout(patch,0)},true);
   window.__playerModeledGapDisplayV313='v317-safe-leaf-presentation';
 }
-window.playerModeledGapDisplayV313={MIN,MAX,BAND_ENDS,BLEND,MIN_RATIO,MAX_RATIO,value,build,patch,get meta(){build();return cacheMeta},install};
+window.playerModeledGapDisplayV313={MIN,MAX,BAND_ENDS,BLEND,MIN_RATIO,MAX_RATIO,baseValue,value,build,patch,get meta(){build();return cacheMeta},install};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();

@@ -1,0 +1,36 @@
+const cp=require('child_process');
+const expected={
+  'trade-value-normalization-v139.js':'a3176707c4812e4747864914bfc68b05294990a0',
+  'trade-te-scoring-adjustment-v259.js':'7f087f0339b5d8a3af1c97e8787f4c55d28f59a6',
+  'trade-finder-v256-compiled.js':'f8d5547ae2046f66a9b0f6a13708ba7561e4a7c3',
+  'trade-runtime-v256-compiled.js':'16669445a8fe19f3a1a35726458a12c799a983d1',
+  'trade-evaluator-any-team-v184.js':'c088af9ce9bd24f6142873fae201f1a262c63123',
+  'trade-finder-candidate-guard-v223.js':'9373b06e4014f5fc368cf8eb00ed087b261ba1a7',
+  'trade-ui-canonical-v136.js':'b9474616d1be29ae2c97ba0838cedd45e2a077b8',
+  'trade-presentation-v169.js':'601e6218b98ea8d0def1dc5d58004b0535e7905d',
+  'trade-select-all-v165.js':'9791e4ae53d583f015aa1b0e2a016590773cf12e',
+  'trade-blank-cache-v167.js':'2d3d3c77a96bd0fcc65d933c55fc39761fd5434a',
+  'trade-partner-fit-v184.js':'f5b6ab91941dd12dc6a49e7c5dbf4921ee6f43a4',
+  'trade-style-preferences-v221.js':'567db5906217a46262b92adf2619bb2106a1d532',
+  'trade-win-now-preferences-v226.js':'1c74d7ea956c42568f93b08f46fea9ae9fff0b32',
+  'trade-selected-positions-only-v262.js':'56e561565f6adf6402cc7e6c28cd090fa3dd8cd6',
+  'trade-specific-max-tier-add-v300.js':'66fa68072f507ebc759abea7be5ec394016994d4',
+  'trade-specific-tier-up-v282.js':'368792e5e3d2dc718001c4e555e77c63c4e616ae',
+  'trade-specific-add-assets-v282.js':'f356f8913914ef136a2a0909f17d01e97a4a14a0',
+  'trade-specific-max-value-v279.js':'e6cf9f3d0caf3adee7953e1ade270a36dc1fbeba',
+  'trade-specific-player-v232.js':'e65e7503b7f41a3b234d9357e6c21eaedaba1443',
+  'pick-display-sync-v279.js':'ac0e5102c969139fade368410209ae44a6b78eff',
+  'trade-recommended-pick-ownership-v301.js':'383c4cccc512d8f57692ab81a5e45102179fad02'
+};
+let bad=[];
+for(const [path,sha] of Object.entries(expected)){
+  let actual='';
+  try{actual=cp.execFileSync('git',['hash-object',path],{encoding:'utf8'}).trim()}catch(e){bad.push(path+': missing');continue}
+  if(actual!==sha)bad.push(path+': '+actual+' != frozen V311 '+sha);
+}
+if(bad.length){
+  console.error('V311 PIPELINE IDENTITY FAILURE');
+  for(const x of bad)console.error('- '+x);
+  process.exit(1);
+}
+console.log('V311 value/Finder/Evaluator pipeline identity verified for '+Object.keys(expected).length+' loaded modules.');

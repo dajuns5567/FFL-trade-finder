@@ -16,6 +16,7 @@ on:
       - 'trade-finder-candidate-guard-v223.js'
       - 'trade-te-scoring-adjustment-v259.js'
       - 'player-modeled-gap-display-v313.js'
+      - 'modeled-player-trade-value-swap-v316.js'
       - 'scripts/compile-v256-runtimes.cjs'
       - 'scripts/finder-runtime-smoke-v254.cjs'
       - 'scripts/finder-runtime-compiled-smoke-v257.cjs'
@@ -26,6 +27,7 @@ on:
       - 'scripts/te-scoring-adjustment-v259-smoke.cjs'
       - 'scripts/value-adjustment-monotonic-v311-smoke.cjs'
       - 'scripts/player-modeled-gap-display-v313-smoke.cjs'
+      - 'scripts/simple-player-value-swap-v316-smoke.cjs'
       - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/site-v29.mjs'
       - 'netlify.toml'
@@ -58,3 +60,5 @@ jobs:
         run: node scripts/value-adjustment-monotonic-v311-smoke.cjs
       - name: Bounded modeled-gap player Value presentation
         run: node scripts/player-modeled-gap-display-v313-smoke.cjs
+      - name: Simple player-value swap Finder/Evaluator smoke
+        run: node scripts/simple-player-value-swap-v316-smoke.cjs

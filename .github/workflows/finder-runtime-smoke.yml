@@ -11,6 +11,7 @@ on:
       - 'trade-runtime-v130.js'
       - 'trade-runtime-v256-compiled.js'
       - 'trade-specific-player-v232.js'
+      - 'scripts/acquire-specific-outgoing-diversity-v321-smoke.cjs'
       - 'trade-select-all-v165.js'
       - 'trade-selected-positions-only-v262.js'
       - 'trade-finder-candidate-guard-v223.js'
@@ -64,3 +65,5 @@ jobs:
         run: node scripts/v311-pipeline-identity-v319-smoke.cjs
       - name: V319 values through frozen V311 Finder and Evaluator
         run: node scripts/v319-values-v311-integration-smoke.cjs
+      - name: Acquire Specific Player outgoing centerpiece diversity
+        run: node scripts/acquire-specific-outgoing-diversity-v321-smoke.cjs

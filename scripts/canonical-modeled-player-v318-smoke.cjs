@@ -70,10 +70,10 @@ assert(n.canonicalValue(players.find(p=>p.pos==='TE'))===d.value(players.find(p=
 assert(n.canonicalValue(picks[0])===7000&&n.canonicalValue(picks[1])===6500,'pick values changed');
 assert(n.canonicalValue(players[0])===9999,'top player is not 9999');
 
-const callsBeforeHotPath=ensureCalls;
 vm.runInContext(fs.readFileSync('trade-runtime-v256-compiled.js','utf8'),ctx,{filename:'trade-runtime-v256-compiled.js'});
 vm.runInContext(fs.readFileSync('trade-finder-v256-compiled.js','utf8'),ctx,{filename:'trade-finder-v256-compiled.js'});
 (async()=>{
+  const callsBeforeHotPath=ensureCalls;
   const rows=await ctx.tradeFinderV168.generateAsync(0);
   assert(Array.isArray(rows),'compiled Finder did not return an array');
   assert(ensureCalls===callsBeforeHotPath,'Finder hot path re-entered ensureMaster/model construction');

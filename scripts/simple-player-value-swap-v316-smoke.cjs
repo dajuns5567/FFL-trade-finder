@@ -30,11 +30,12 @@ global.MutationObserver=function(){this.observe=()=>{};this.disconnect=()=>{}};g
 function run(p){vm.runInThisContext(fs.readFileSync(p,'utf8'),{filename:p})}
 run('trade-value-normalization-v139.js');run('trade-te-scoring-adjustment-v259.js');run('player-modeled-gap-display-v313.js');run('modeled-player-trade-value-swap-v316.js');
 assert(window.modeledPlayerTradeValueSwapV316.install(),'swap did not install');
-const norm=window.tradeValueNormalizationV130,afterInstall=ensureCalls;
+const norm=window.tradeValueNormalizationV130;
 assert(norm.canonicalValue(manual)===window.playerModeledGapDisplayV313.value(manual),'canonical player value does not match approved V313 display value');
 const pickBefore=norm.canonicalValue(allAssets.find(x=>x.id==='k1'));
+const beforeHotLoop=ensureCalls;
 for(let i=0;i<10000;i++)norm.canonicalValue(i%2?manual:mine2);
-assert(ensureCalls===afterInstall,'canonical hot-path player lookup re-entered ensureMaster');
+assert(ensureCalls===beforeHotLoop,'canonical hot-path player lookup re-entered ensureMaster');
 
 let fairCalls=0;
 window.section1V130={fair(give,recv){fairCalls++;const aRaw=give.reduce((s,x)=>s+norm.canonicalValue(x),0),bRaw=recv.reduce((s,x)=>s+norm.canonicalValue(x),0);return{score:88,rejected:false,edgeEffective:bRaw-aRaw,edgeRaw:bRaw-aRaw,aRaw,bRaw,aAdj:0,bAdj:0,aEffective:aRaw,bEffective:bRaw}},install(){}};

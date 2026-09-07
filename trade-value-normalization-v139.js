@@ -1,6 +1,7 @@
 (()=>{
 'use strict';
-const MIN=120,MAX=9999,PLAYER_BREAK=325,PLAYER_BREAK_VALUE=1825,ELITE_FIRST=7000;\nconst MODELED_BAND_ENDS=[12,24,48,80,120,180,260],MODELED_BLEND=.28,MODELED_MIN_RATIO=.45,MODELED_MAX_RATIO=2.25;
+const MIN=120,MAX=9999,PLAYER_BREAK=325,PLAYER_BREAK_VALUE=1825,ELITE_FIRST=7000;
+const MODELED_BAND_ENDS=[12,24,48,80,120,180,260],MODELED_BLEND=.28,MODELED_MIN_RATIO=.45,MODELED_MAX_RATIO=2.25;
 const clamp=(a,x,b)=>Math.max(a,Math.min(x,b));
 const round5=n=>Math.round(Number(n||0)/5)*5;
 const originalBaseValue=typeof window.baseValue==='function'?window.baseValue.bind(window):null;

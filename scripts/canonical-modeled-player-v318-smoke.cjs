@@ -29,6 +29,7 @@ const elements={
 const doc={
   readyState:'complete',documentElement:{},body:{},
   getElementById:id=>elements[id]||null,
+  querySelector(sel){return null},
   querySelectorAll(sel){
     if(sel.includes('.shopCheck'))return[];
     if(sel.includes('trade97-pos'))return[];

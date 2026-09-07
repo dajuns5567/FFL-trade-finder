@@ -74,9 +74,10 @@ assert(typeof window.tradeFinderV168?.generateAsync==='function','normal Trade F
  window.section1V130.evalSel.A.set(mine.id,mine);window.section1V130.evalSel.B.set(target.id,target);
  window.section1V130.install();
  assert(typeof controls.evaluate.onclick==='function','Trade Evaluator click handler did not install');
+ const evalBefore=ensureCalls;
  controls.evaluate.onclick({preventDefault(){}});
  assert(/Normalized trade currency|RAW ASSET TOTAL|TRADE-ADJUSTED TOTAL/i.test(controls.evalResults.innerHTML),'Trade Evaluator did not render a result');
- assert(ensureCalls===before,'Trade Evaluator caused model-map rebuild in hot path');
+ assert(ensureCalls===evalBefore,'Trade Evaluator caused model-map rebuild in hot path');
 
  run('player-modeled-gap-display-v313.js');
  assert(window.playerModeledGapDisplayV313.value(p2)===norm.canonicalValue(p2),'display and trade player values diverged');

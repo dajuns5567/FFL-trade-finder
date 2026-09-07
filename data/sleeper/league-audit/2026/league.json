@@ -75,7 +75,6 @@
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
   "company_id": null,
-  "last_message_id": "1402562036512096256",
   "shard": 773,
   "season": "2026",
   "season_type": "regular",
@@ -225,6 +224,7 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
+  "last_message_id": "1402562036512096256",
   "last_author_avatar": null,
   "last_author_display_name": "sys",
   "last_author_id": "166666666666666666",

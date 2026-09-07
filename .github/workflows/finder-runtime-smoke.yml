@@ -15,6 +15,7 @@ on:
       - 'trade-selected-positions-only-v262.js'
       - 'trade-finder-candidate-guard-v223.js'
       - 'trade-te-scoring-adjustment-v259.js'
+      - 'modeled-player-values-v319.js'
       - 'scripts/compile-v256-runtimes.cjs'
       - 'scripts/finder-runtime-smoke-v254.cjs'
       - 'scripts/finder-runtime-compiled-smoke-v257.cjs'
@@ -24,6 +25,8 @@ on:
       - 'scripts/finder-per-run-value-memo-v263-smoke.cjs'
       - 'scripts/te-scoring-adjustment-v259-smoke.cjs'
       - 'scripts/value-adjustment-monotonic-v311-smoke.cjs'
+      - 'scripts/v311-pipeline-identity-v319-smoke.cjs'
+      - 'scripts/v319-values-v311-integration-smoke.cjs'
       - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/site-v29.mjs'
       - 'netlify.toml'
@@ -54,3 +57,7 @@ jobs:
         run: node scripts/te-scoring-adjustment-v259-smoke.cjs
       - name: Value Adjustment monotonicity and shared-pipeline isolation
         run: node scripts/value-adjustment-monotonic-v311-smoke.cjs
+      - name: Exact V311 pipeline identity
+        run: node scripts/v311-pipeline-identity-v319-smoke.cjs
+      - name: V319 values through frozen V311 Finder and Evaluator
+        run: node scripts/v319-values-v311-integration-smoke.cjs

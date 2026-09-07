@@ -1,0 +1,24 @@
+const fs=require('fs'),vm=require('vm');
+function assert(x,m){if(!x)throw new Error(m)}
+const document={__v131sel:false,addEventListener(){},querySelectorAll(){return[]},getElementById(){return null}};
+const ctx={console,document,setTimeout(){return 0},clearTimeout(){},setInterval(){return 0},clearInterval(){},MutationObserver:function(){}};
+ctx.window=ctx;ctx.state={players:{},teams:[],allAssets:[],assetsA:[],assetsB:[]};
+ctx.tradeValueNormalizationV130={canonicalValue:x=>Number(x?.v)||0,install(){}};
+ctx.playerRankValue=x=>({rank:Number(x?.rank)||9999});
+ctx.playerName=x=>String(x?.name||x?.id||'');ctx.groupPos=x=>x?.pos||'WR';
+vm.createContext(ctx);vm.runInContext(fs.readFileSync('trade-runtime-v256-compiled.js','utf8'),ctx);
+const fair=ctx.section1V130?.fair;if(typeof fair!=='function')throw new Error('shared fair unavailable');
+const P=(id,v,rank,pos='WR')=>({type:'player',id,v,rank,pos});
+const jsn=P('jsn',8785,7,'WR'),jt=P('jt',7570,23,'RB'),tet=P('tet',6807,38,'WR');
+const f=fair([jsn],[jt,tet]);
+assert(f.aRaw===8785&&f.bRaw===14377,'raw totals drifted from screenshot calibration case');
+assert(f.aAdj>4900&&f.aAdj<5200,'elite-for-depth recalibration outside intended range: '+f.aAdj);
+assert(f.score>=90&&f.score<=96,'JSN calibration case should be roughly even, got '+f.score);
+assert(f.status==='Fair'||f.status==='Excellent Fit','JSN calibration case should no longer be Negotiable');
+const reverse=fair([jt,tet],[jsn]);
+assert(reverse.score===f.score,'fairness symmetry changed');
+assert(Math.abs(reverse.bAdj-f.aAdj)<1e-9,'adjustment symmetry changed');
+const mid=P('mid',6800,60),a=P('a',6100,75),b=P('b',1800,150);
+const mf=fair([mid],[a,b]);
+assert(mf.aAdj<Math.max(0,mf.bRaw-mf.aRaw),'mid-tier premium adjustment should not automatically erase full raw gap');
+console.log('V320 screenshot calibration and proportional premium-for-depth smoke passed: score='+f.score+', adjustment='+Math.round(f.aAdj));

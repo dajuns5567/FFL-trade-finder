@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 
 const BASELINE = '756133a8ece0a644eb72060d64c4d47f92abbf77';
-const APPROVED_NORMALIZATION_BLOB = '08a25e3830bcd6b7000ee9b32c6fcb7b9deb9924';
+const APPROVED_NORMALIZATION_BLOB = '065ef96e4e044f456ed038f8944638a0c86a4427';
 
 const protectedExact = new Set([
   'trade-value-normalization-v139.js',

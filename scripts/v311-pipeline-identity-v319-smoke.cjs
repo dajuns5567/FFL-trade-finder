@@ -3,7 +3,7 @@ const expected={
   'trade-value-normalization-v139.js':'a3176707c4812e4747864914bfc68b05294990a0',
   'trade-te-scoring-adjustment-v259.js':'7f087f0339b5d8a3af1c97e8787f4c55d28f59a6',
   'trade-finder-v256-compiled.js':'f8d5547ae2046f66a9b0f6a13708ba7561e4a7c3',
-  'trade-runtime-v256-compiled.js':'16669445a8fe19f3a1a35726458a12c799a983d1',
+  'trade-runtime-v256-compiled.js':'95803b720f2555277d83390583f52ec23ebf111d',
   'trade-evaluator-any-team-v184.js':'c088af9ce9bd24f6142873fae201f1a262c63123',
   'trade-finder-candidate-guard-v223.js':'9373b06e4014f5fc368cf8eb00ed087b261ba1a7',
   'trade-ui-canonical-v136.js':'b9474616d1be29ae2c97ba0838cedd45e2a077b8',
@@ -33,4 +33,4 @@ if(bad.length){
   for(const x of bad)console.error('- '+x);
   process.exit(1);
 }
-console.log('V311 value/Finder/Evaluator pipeline identity verified for '+Object.keys(expected).length+' loaded modules.');
+console.log('V319 pipeline identity verified with only approved V320 Value Adjustment runtime drift for '+Object.keys(expected).length+' loaded modules.');

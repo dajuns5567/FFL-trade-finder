@@ -18,7 +18,7 @@ const expected={
   'trade-specific-tier-up-v282.js':'368792e5e3d2dc718001c4e555e77c63c4e616ae',
   'trade-specific-add-assets-v282.js':'f356f8913914ef136a2a0909f17d01e97a4a14a0',
   'trade-specific-max-value-v279.js':'e6cf9f3d0caf3adee7953e1ade270a36dc1fbeba',
-  'trade-specific-player-v232.js':'e65e7503b7f41a3b234d9357e6c21eaedaba1443',
+  'trade-specific-player-v232.js':'7eef6b14e323b56144b1a6a1ccf9621b2ed16064',
   'pick-display-sync-v279.js':'ac0e5102c969139fade368410209ae44a6b78eff',
   'trade-recommended-pick-ownership-v301.js':'383c4cccc512d8f57692ab81a5e45102179fad02'
 };
@@ -33,4 +33,4 @@ if(bad.length){
   for(const x of bad)console.error('- '+x);
   process.exit(1);
 }
-console.log('V319 pipeline identity verified with only approved V320 Value Adjustment runtime drift for '+Object.keys(expected).length+' loaded modules.');
+console.log('V320 pipeline identity verified with only approved V320 Value Adjustment and V321 Acquire Specific Player drift for '+Object.keys(expected).length+' loaded modules.');

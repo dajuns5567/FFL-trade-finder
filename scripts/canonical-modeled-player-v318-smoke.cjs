@@ -21,7 +21,7 @@ let ensureCalls=0;
 const elements={
   findTeam:{value:'1'},findMode:{value:'balanced'},tradeTier94:{value:'neutral'},findPos:{value:'ANY'},
   finderResults:{innerHTML:'',textContent:'',querySelectorAll(){return[]},appendChild(){}},
-  evalA:{value:'1'},evalB:{value:'2'},evalResults:{innerHTML:''},
+  evalA:{value:'1'},evalB:{value:'2'},evalResults:{innerHTML:'',querySelectorAll(){return[]}},
   evalChooserA:{querySelectorAll(){return[]}},evalChooserB:{querySelectorAll(){return[]}},
   findShop:{querySelectorAll(){return[]}},rankings:{querySelectorAll(){return[]}},
   runFinder:{onclick:null},evaluate:{onclick:null},updateBtn:{onclick:null},updateStatus:{textContent:'ready'}

@@ -23,6 +23,7 @@ on:
       - 'scripts/selected-positions-only-v262-smoke.cjs'
       - 'scripts/finder-per-run-value-memo-v263-smoke.cjs'
       - 'scripts/te-scoring-adjustment-v259-smoke.cjs'
+      - 'scripts/value-adjustment-monotonic-v311-smoke.cjs'
       - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/site-v29.mjs'
       - 'netlify.toml'
@@ -51,3 +52,5 @@ jobs:
         run: node scripts/finder-per-run-value-memo-v263-smoke.cjs
       - name: Live TE scoring adjustment freshness and isolation
         run: node scripts/te-scoring-adjustment-v259-smoke.cjs
+      - name: Value Adjustment monotonicity and shared-pipeline isolation
+        run: node scripts/value-adjustment-monotonic-v311-smoke.cjs

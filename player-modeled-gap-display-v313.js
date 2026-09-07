@@ -38,8 +38,7 @@ function build(){
       bands.push({start:s,end:e,startVal,endVal});
       start=e+1;continue;
     }
-    const modeledGaps=[];
-    const baseGaps=[];
+    const modeledGaps=[],baseGaps=[];
     for(let r=s;r<e;r++){
       modeledGaps.push(Math.max(0,vals[r-1]-vals[r]));
       baseGaps.push(Math.max(.0001,legacyValue(r,maxRank)-legacyValue(r+1,maxRank)));
@@ -66,14 +65,18 @@ function build(){
   if(arr[0]?.x?.id!=null)cacheMap.set(String(arr[0].x.id),MAX);
   cacheMeta={bands,count:n,blend:BLEND,minRatio:MIN_RATIO,maxRatio:MAX_RATIO};
 }
+function invalidate(){cacheArr=null;cacheMap=new Map();cacheMeta=null}
 function value(asset){
   if(!asset||asset.type!=='player')return 0;
   build();
   const v=Number(cacheMap.get(String(asset.id??'')));
-  return Number.isFinite(v)&&v>0?v:MIN;
+  if(Number.isFinite(v)&&v>0)return v;
+  const rank=Number(window.playerRankValue?.(asset)?.rank)||0;
+  return rank>0?legacyValue(rank,Math.max(907,master().length)):0;
 }
+function snapshot(){build();return new Map(cacheMap)}
 function patchValueText(node,next){
-  if(!node)return;
+  if(!node||!(Number(next)>0))return;
   const t=node.textContent||'';
   const r=t.replace(/Value\s+[\d,.]+/i,'Value '+fmt(next));
   if(r!==t)node.textContent=r;
@@ -102,8 +105,12 @@ function patchChooser(host){
   for(const box of host.querySelectorAll('input[type="checkbox"]')){
     const a=box._asset;if(!a||a.type!=='player')continue;
     const row=box.closest('label,.checkrow');if(!row)continue;
-    for(const node of row.querySelectorAll('span,small,div')){
-      if(/Value\s+[\d,.]+/i.test(node.textContent||'')){patchValueText(node,value(a));break}
+    const leaves=[...row.querySelectorAll('span.tiny,small,.trade95-sub')].filter(n=>/Value\s+[\d,.]+/i.test(n.textContent||''));
+    for(const node of leaves){
+      const bs=[...node.querySelectorAll('b')];
+      const valueNode=bs.length?bs[bs.length-1]:null;
+      if(valueNode){const next=fmt(value(a));if(next&&valueNode.textContent!==next)valueNode.textContent=next;break}
+      patchValueText(node,value(a));break;
     }
   }
 }
@@ -114,7 +121,8 @@ function patchTradeCards(root=document){
     const a=playerByName(row.querySelector('b')?.textContent||'');
     if(!a)continue;
     const out=row.querySelector('.trade95-value');
-    if(out)out.textContent=fmt(value(a));
+    const next=value(a);
+    if(out&&next>0&&out.textContent!==fmt(next))out.textContent=fmt(next);
   }
 }
 function patch(){
@@ -132,8 +140,8 @@ function install(){
   observer.disconnect();
   observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true});
   document.addEventListener('click',e=>{if(e.target.closest?.('.tabs button[data-tab="rankings"],#runFinder,#evaluate'))setTimeout(patch,0)},true);
-  window.__playerModeledGapDisplayV313='v313-presentation-only';
+  window.__playerModeledGapDisplayV313='v318-safe-leaf-modeled-gap-display';
 }
-window.playerModeledGapDisplayV313={MIN,MAX,BAND_ENDS,BLEND,MIN_RATIO,MAX_RATIO,value,build,patch,get meta(){build();return cacheMeta},install};
+window.playerModeledGapDisplayV313={MIN,MAX,BAND_ENDS,BLEND,MIN_RATIO,MAX_RATIO,value,build,invalidate,snapshot,patch,get meta(){build();return cacheMeta},install};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();

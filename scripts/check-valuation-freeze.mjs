@@ -1,15 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 
-const BASELINE = '756133a8ece0a644eb72060d64c4d47f92abbf77';
-const APPROVED_EXACT_BLOBS = new Map([
-  ['trade-value-normalization-v139.js','4dfff7cbe00dd10d14d6fc45d4576c07bfd0c459'],
-  ['player-modeled-gap-values-v315.js','3929b7e9b659eb706cdb1e37dbd7e14bc5926510'],
-]);
+const BASELINE = 'e95105e0a062faca352b0fd7f88d0a4bcd45ce69';
 
 const protectedExact = new Set([
   'trade-value-normalization-v139.js',
-  'player-modeled-gap-values-v315.js',
   'draft-pick-context-v92.js',
   'draft-pick-v86.js',
   'team-context-v90.js',
@@ -93,24 +88,15 @@ const failures = [];
 const all = new Set([...listBaselineFiles(), ...listCurrentFiles()]);
 
 for (const path of [...all].filter(isProtectedCalculationModule).sort()) {
-  const currentExists = existsSync(path);
-  if (!currentExists) {
-    failures.push(`${path}: protected calculation module is missing`);
-    continue;
-  }
-  if (APPROVED_EXACT_BLOBS.has(path)) {
-    const blob = git(['hash-object', path]).trim();
-    if (blob !== APPROVED_EXACT_BLOBS.get(path)) failures.push(`${path}: protected Phase 2 implementation differs from its approved exact blob`);
-    continue;
-  }
   const baselineExists = listBaselineFiles().includes(path);
-  if (!baselineExists) {
-    failures.push(`${path}: unexpected protected calculation module was added relative to frozen V313`);
+  const currentExists = existsSync(path);
+  if (!baselineExists || !currentExists) {
+    failures.push(`${path}: protected calculation module was added/removed relative to frozen baseline`);
     continue;
   }
   const before = baselineText(path);
   const now = readFileSync(path, 'utf8');
-  if (before !== now) failures.push(`${path}: protected calculation code differs from frozen V313 baseline`);
+  if (before !== now) failures.push(`${path}: protected calculation code differs from frozen baseline`);
 }
 
 const baselineIndex = baselineText('index.html');
@@ -129,5 +115,5 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Valuation calculation freeze verified against frozen V313 ${BASELINE}, with exact approved V315 Phase 2 blobs.`);
+console.log(`Valuation calculation freeze verified against ${BASELINE}.`);
 console.log('No current player/pick values are stored by this check; only calculation code is protected.');

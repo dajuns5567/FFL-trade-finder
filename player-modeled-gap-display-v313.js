@@ -68,12 +68,11 @@ function build(){
 }
 function value(asset){
   if(!asset||asset.type!=='player')return 0;
-  const pre=Number(window.playerModeledGapValuesV315?.value?.(asset));
-  if(Number.isFinite(pre)&&pre>0)return pre;
   build();
   const v=Number(cacheMap.get(String(asset.id??'')));
   return Number.isFinite(v)&&v>0?v:MIN;
 }
+function snapshot(){build();return new Map(cacheMap)}
 function patchValueText(node,next){
   if(!node)return;
   const t=node.textContent||'';
@@ -134,8 +133,8 @@ function install(){
   observer.disconnect();
   observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true});
   document.addEventListener('click',e=>{if(e.target.closest?.('.tabs button[data-tab="rankings"],#runFinder,#evaluate'))setTimeout(patch,0)},true);
-  window.__playerModeledGapDisplayV313='v315-shared-precomputed-trade-display';
+  window.__playerModeledGapDisplayV313='v313-presentation-only';
 }
-window.playerModeledGapDisplayV313={MIN,MAX,BAND_ENDS,BLEND,MIN_RATIO,MAX_RATIO,value,build,patch,get meta(){build();return cacheMeta},install};
+window.playerModeledGapDisplayV313={MIN,MAX,BAND_ENDS,BLEND,MIN_RATIO,MAX_RATIO,value,build,snapshot,patch,get meta(){build();return cacheMeta},install};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();

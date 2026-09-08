@@ -15,7 +15,9 @@ function addStyles(){
   if(document.getElementById('vhHubStyles'))return;
   const st=document.createElement('style');st.id='vhHubStyles';
   st.textContent=`
-  #valueHistory>.card{border-color:color-mix(in srgb,#e4b53f 22%,var(--line));background:radial-gradient(circle at 15% 0%,rgba(228,181,63,.045),transparent 30%),linear-gradient(180deg,color-mix(in srgb,var(--card) 98%,#e4b53f 1%),var(--card));box-shadow:0 14px 38px rgba(0,0,0,.18),inset 0 1px 0 rgba(228,181,63,.08)}
+  #valueHistory>.card{border-color:var(--line);background:var(--card);box-shadow:0 14px 38px rgba(0,0,0,.18)}
+  #valueHistory #vhContent{display:grid;gap:16px}
+  #valueHistory .vh-grid,#valueHistory .vh-grid-2,#valueHistory .vh-rank-grid{margin:0}
   #valueHistory .vh-shell{display:grid;gap:16px}
   #valueHistory .vh-control-row{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:4px 0 0;padding-bottom:4px}
   #valueHistory .vh-hero{display:block;margin:0 0 4px}
@@ -23,17 +25,17 @@ function addStyles(){
   #valueHistory .vh-search-wrap input{margin:7px 0 0;border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important;transition:border-color .15s ease,box-shadow .15s ease}
   #valueHistory .vh-search-wrap input:focus,#valueHistory .vh-search-wrap input:focus-visible,#valueHistory input[type="search"]:focus,#valueHistory input[type="search"]:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.20)!important}
   #valueHistory .vh-status{font-size:12px;color:var(--muted);text-align:right;line-height:1.45;padding:0 2px;white-space:nowrap}
-  #valueHistory .vh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-  #valueHistory .vh-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+  #valueHistory .vh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  #valueHistory .vh-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}
   #valueHistory .vh-card-head{display:grid;grid-template-columns:1fr;gap:10px;align-content:start}
-  #valueHistory .vh-mover-card{height:100%;border-left:2px solid color-mix(in srgb,#e4b53f 46%,var(--line))}
+  #valueHistory .vh-mover-card{height:100%;border-left:2px solid color-mix(in srgb,#e4b53f 48%,var(--line))}
   #valueHistory .vh-mover-card .vh-card-head{min-height:102px}
   #valueHistory .vh-mover-card .vh-card-actions{align-self:end}
   #valueHistory .vh-card-periods{display:flex;gap:4px;flex-wrap:wrap}
   #valueHistory .vh-card-periods button{padding:6px 9px;min-width:0;font-size:12px;font-weight:800}
   #valueHistory .vh-card-periods button:not(.secondary){color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 15%,var(--card))!important;border-color:color-mix(in srgb,#e4b53f 52%,var(--line))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 28%,transparent),0 3px 10px rgba(0,0,0,.16)!important}
-  #valueHistory .vh-card{position:relative;border:1px solid color-mix(in srgb,#e4b53f 16%,var(--line));background:linear-gradient(180deg,color-mix(in srgb,#e4b53f 2.5%,var(--card)),var(--card));border-radius:14px;padding:14px;min-width:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.018)}
-  #valueHistory .vh-card:before{content:"";position:absolute;left:14px;right:14px;top:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(228,181,63,.38),transparent);pointer-events:none}
+  #valueHistory .vh-card{position:relative;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;min-width:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.018)}
+  #valueHistory .vh-card:before{content:"";position:absolute;left:18px;right:18px;top:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(228,181,63,.26),transparent);pointer-events:none}
   #valueHistory .vh-card h3{margin:0 0 5px;font-size:16px;font-weight:800;letter-spacing:.01em;color:#f4f4f5}
   #valueHistory .vh-section-heading{font-size:18px!important;color:#f4f4f5;margin-bottom:6px!important}
   #valueHistory .vh-filter-card{padding:14px 16px}
@@ -42,7 +44,7 @@ function addStyles(){
   #valueHistory .vh-list{display:grid;gap:5px}
   #valueHistory .vh-mover{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
   #valueHistory .vh-mover:first-child{border-top:0}
-  #valueHistory .vh-ranknum{font-size:11px;color:var(--muted);text-align:center}
+  #valueHistory .vh-ranknum{font-size:16px;font-weight:900;color:#e4b53f;text-align:center;font-variant-numeric:tabular-nums;line-height:1}
   #valueHistory .vh-player-link{background:none;border:0;padding:0;color:inherit;text-align:left;font:inherit;cursor:pointer;min-width:0}
   #valueHistory .vh-player-link:hover{text-decoration:underline}
   #valueHistory .vh-player-link b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -52,18 +54,19 @@ function addStyles(){
   #valueHistory .vh-down{color:var(--bad,#c45151)}
   #valueHistory .vh-neutral{color:var(--muted)}
   #valueHistory .vh-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  #valueHistory .vh-profile-info{display:grid;grid-template-columns:minmax(220px,1.35fr) minmax(420px,2.6fr) minmax(145px,.7fr);gap:18px;align-items:stretch}
-  #valueHistory .vh-profile-primary{display:flex;flex-direction:column;justify-content:center;min-width:0}
-  #valueHistory .vh-profile-primary h2{margin:0 0 8px;font-size:25px}
+  #valueHistory .vh-profile-info{display:grid;grid-template-columns:minmax(210px,1.15fr) minmax(560px,3.8fr) minmax(165px,.9fr);gap:0;align-items:stretch}
+  #valueHistory .vh-profile-primary{display:flex;flex-direction:column;justify-content:center;min-width:0;padding-right:20px}
+  #valueHistory .vh-profile-primary h2{margin:0 0 10px;font-size:27px;line-height:1.08}
   #valueHistory .vh-profile-kicker{display:flex;gap:6px;flex-wrap:wrap}
   #valueHistory .vh-profile-kicker span{display:inline-flex;align-items:center;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--card) 90%,transparent);font-size:12px;color:var(--muted)}
-  #valueHistory .vh-profile-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-  #valueHistory .vh-profile-fact{border-left:1px solid var(--line);padding:6px 10px;min-width:0;display:flex;flex-direction:column;justify-content:center}
-  #valueHistory .vh-profile-fact small{color:var(--muted);font-size:11px;margin-bottom:3px}
-  #valueHistory .vh-profile-fact b{font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  #valueHistory .vh-profile-fact span{font-size:11px;color:var(--muted);margin-top:2px}
-  #valueHistory .vh-current{display:flex;flex-direction:column;justify-content:center;text-align:right;border-left:1px solid var(--line);padding-left:18px}
-  #valueHistory .vh-current .vh-big{font-size:34px;font-weight:800;line-height:1}
+  #valueHistory .vh-profile-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
+  #valueHistory .vh-profile-fact{border-left:1px solid var(--line);padding:10px 16px;min-width:0;display:flex;flex-direction:column;justify-content:center}
+  #valueHistory .vh-profile-fact small{color:#b9c0ce;font-size:12px;font-weight:800;letter-spacing:.025em;margin-bottom:6px}
+  #valueHistory .vh-profile-fact b{font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #valueHistory .vh-profile-fact span{font-size:12px;color:var(--muted);margin-top:4px}
+  #valueHistory .vh-current{display:flex;flex-direction:column;justify-content:center;text-align:right;border-left:1px solid var(--line);padding-left:20px}
+  #valueHistory .vh-current small{font-size:12px;font-weight:800;letter-spacing:.025em}
+  #valueHistory .vh-current .vh-big{font-size:36px;font-weight:900;line-height:1}
   #valueHistory .vh-rank-chart svg{display:block;width:100%;height:auto}
   #valueHistory .vh-rank-chart .vh-axis{stroke:currentColor;opacity:.25}
   #valueHistory .vh-rank-chart .vh-axis-text{fill:currentColor;font-size:10px;opacity:.72}
@@ -71,6 +74,7 @@ function addStyles(){
   #valueHistory .vh-rank-chart .vh-rank-dot{fill:#e4b53f;stroke:var(--card);stroke-width:1.5}
   #valueHistory .vh-periods{display:flex;gap:6px;flex-wrap:wrap}
   #valueHistory .vh-periods button{min-width:58px;padding:8px 12px;font-weight:800}
+  #valueHistory .vh-periods button:not(.secondary){color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 15%,var(--card))!important;border-color:color-mix(in srgb,#e4b53f 55%,var(--line))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 28%,transparent),0 3px 10px rgba(0,0,0,.16)!important}
   #valueHistory .vh-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
   #valueHistory .vh-metric{border:1px solid var(--line);border-radius:12px;padding:11px;background:color-mix(in srgb,var(--card) 92%,transparent)}
   #valueHistory .vh-metric small{display:block;color:var(--muted);margin-bottom:3px}
@@ -101,7 +105,7 @@ function addStyles(){
   #valueHistory .vh-subnav button.vh-subnav-active{color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 14%,var(--card))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 42%,transparent),0 3px 12px rgba(0,0,0,.18)!important}
   #valueHistory .vh-team-toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
   #valueHistory .vh-team-toolbar label{min-width:280px;flex:1}
-  #valueHistory .vh-team-picker{border-color:color-mix(in srgb,#e4b53f 30%,var(--line));background:linear-gradient(180deg,rgba(228,181,63,.055),color-mix(in srgb,var(--card) 98%,black))}
+  #valueHistory .vh-team-picker{border-color:color-mix(in srgb,#e4b53f 28%,var(--line));background:var(--card)}
   #valueHistory .vh-team-picker h3{color:#e4b53f}
   #valueHistory .vh-team-toolbar select,#valueHistory #vhMarketSearch{border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important}
   #valueHistory .vh-team-toolbar select:focus,#valueHistory .vh-team-toolbar select:focus-visible,#valueHistory #vhMarketSearch:focus,#valueHistory #vhMarketSearch:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.18)!important}
@@ -134,7 +138,12 @@ function addStyles(){
   #valueHistory details.vh-market-table summary{cursor:pointer;font-weight:700}
   #valueHistory .vh-search-results{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0 0}
   #valueHistory .vh-empty{padding:18px;text-align:center;color:var(--muted)}
-  @media(max-width:900px){#valueHistory .vh-control-row{align-items:flex-start}#valueHistory .vh-status{text-align:left;white-space:normal;width:100%}#valueHistory .vh-grid,#valueHistory .vh-grid-2,#valueHistory .vh-similar-grid{grid-template-columns:1fr}#valueHistory .vh-metrics{grid-template-columns:repeat(3,1fr)}#valueHistory .vh-profile-info{grid-template-columns:1fr 1fr}#valueHistory .vh-profile-facts{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-current{grid-column:2;grid-row:1;text-align:right}}
+  #valueHistory .vh-brand-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:2px}
+  #valueHistory .vh-brand-lockup{display:inline-block;position:relative;padding:7px 15px 8px;border:2px solid #11151d;border-radius:13px;background:#f7f7f4;box-shadow:0 3px 0 #11151d}
+  #valueHistory .vh-brand-lockup:after{content:"";position:absolute;left:20px;bottom:-8px;width:13px;height:13px;background:#f7f7f4;border-left:2px solid #11151d;border-bottom:2px solid #11151d;transform:skewY(-28deg) rotate(-18deg)}
+  #valueHistory .vh-brand-title{position:relative;z-index:1;margin:0!important;color:#f0bc28;font-size:27px!important;font-weight:950;letter-spacing:-.035em;line-height:1;-webkit-text-stroke:1.2px #16191f;text-shadow:0 1px 0 #16191f}
+  #valueHistory .vh-brand-copy{max-width:610px;margin:0 0 1px!important;color:var(--muted);font-size:10px!important;line-height:1.35;text-align:right;opacity:.9}
+  @media(max-width:900px){#valueHistory .vh-control-row{align-items:flex-start}#valueHistory .vh-status{text-align:left;white-space:normal;width:100%}#valueHistory .vh-brand-copy{text-align:left;max-width:none;width:100%}#valueHistory .vh-grid,#valueHistory .vh-grid-2,#valueHistory .vh-similar-grid{grid-template-columns:1fr}#valueHistory .vh-metrics{grid-template-columns:repeat(3,1fr)}#valueHistory .vh-profile-info{grid-template-columns:1fr 1fr}#valueHistory .vh-profile-facts{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-current{grid-column:2;grid-row:1;text-align:right}}
   @media(max-width:620px){#valueHistory .vh-metrics{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-rank-grid{grid-template-columns:1fr}#valueHistory .vh-profile-info{grid-template-columns:1fr}#valueHistory .vh-profile-facts{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-current{grid-column:auto;grid-row:auto;text-align:left;border-left:0;border-top:1px solid var(--line);padding:12px 0 0}}
   `;
   document.head.appendChild(st);
@@ -145,7 +154,7 @@ function addShell(){
   const b=document.createElement('button');b.type='button';b.dataset.tab='valueHistory';b.textContent='Value History';tabs.appendChild(b);
   const main=document.querySelector('main');if(!main)return;
   const sec=document.createElement('section');sec.id='valueHistory';sec.className='tab';sec.hidden=true;
-  sec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-hero"><div><h2 style="margin:0 0 4px">Value History</h2><p class="muted" style="margin:0">Historical intelligence for the finished Fleeced! master value. Read-only: this data never feeds back into values, rankings, Trade Finder or Trade Evaluator.</p></div></div><div id="vhLazy"><div class="empty">Open Value History to load the market dashboard.</div></div></div></div>';
+  sec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-brand-head"><div class="vh-brand-lockup"><h2 class="vh-brand-title">Value History</h2></div><p class="vh-brand-copy">Historical intelligence for the finished Fleeced! master value. Read-only: this data never feeds back into values, rankings, Trade Finder or Trade Evaluator.</p></div><div id="vhLazy"><div class="empty">Open Value History to load the market dashboard.</div></div></div></div>';
   main.appendChild(sec);
   b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!==b.dataset.tab);setTimeout(initUI,0)});
 }

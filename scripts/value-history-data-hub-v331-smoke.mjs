@@ -24,12 +24,14 @@ assert(baselineFor(snaps,Date.parse(snaps[3].t),365)===snaps[0],'365-day baselin
 
 const m=marketFromSnapshots(snaps);
 assert(m.has7&&m.has30&&m.has365,'period availability flags incorrect');
+assert(m.periods['1D'],'1D market period missing');
 assert(m.tracking_since===snaps[0].t,'tracking start incorrect');
 assert(m.latest===snaps[3].t,'latest snapshot incorrect');
 assert(m.periods['1Y'].valueRisers[0].id==='a'&&m.periods['1Y'].valueRisers[0].delta===2100,'1Y value riser calculation incorrect');
 assert(m.periods['1Y'].valueFallers[0].id==='b'&&m.periods['1Y'].valueFallers[0].delta===-1100,'1Y value faller calculation incorrect');
 assert(m.periods['30D'].rankRisers.some(x=>x.id==='a'&&x.overallDelta>0),'30D rank risers missing');
 assert(m.periods['30D'].rankFallers.some(x=>x.id==='b'&&x.overallDelta<0),'30D rank fallers missing');
+assert(Array.isArray(m.periods['1D'].valueRisers)&&Array.isArray(m.periods['1D'].valueFallers),'1D mover lists missing');
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta7'),'market rows missing 7D positional-rank delta');
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta30'),'market rows missing 30D positional-rank delta');
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta365'),'market rows missing 1Y positional-rank delta');
@@ -83,7 +85,19 @@ for(const needle of [
   'vh-rank-hit',
   'data-vh-rank-label',
   'marketCache=null;scheduleSnapshot(1000)',
-  'Tracked since'
+  'Tracked since',
+  "'1D','7D','30D','90D','1Y','ALL'",
+  "period==='1D'",
+  "if(period==='1D')return inRange",
+  'View all',
+  'data-vh-view-all',
+  'vh-modal-backdrop',
+  'Top Value Risers',
+  'Top Value Fallers',
+  'Top Rank Risers',
+  'Top Rank Fallers',
+  "marketCache.periods?.[period]?.[category]",
+  "filter(r=>owned.has(String(r.id)))"
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
 for(const forbidden of [
@@ -102,4 +116,4 @@ assert(!backend.includes("url.searchParams.get('player_ids')"),'Track My Team mu
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
-console.log('V337 Value History Track My Team interaction regression passed');
+console.log('V338 Value History 24H/View All/team movers regression passed');

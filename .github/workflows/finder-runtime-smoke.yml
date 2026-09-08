@@ -107,17 +107,16 @@ jobs:
       - name: Live FanRanked parser diagnostic
         run: |
           node --input-type=module <<'NODE'
-          const PLAYERS='https://www.fanranked.com/api/players?mode=football_dynasty_sf';
-          const MARKET='https://www.fanranked.com/api/football/market-values?format=superflex';
+          const PLAYERS='https://www.fanranked.com/api/players?mode=football_dynasty_sf', MARKET='https://www.fanranked.com/api/football/market-values?format=superflex';
           const [players,market]=await Promise.all([fetch(PLAYERS).then(r=>r.json()),fetch(MARKET).then(r=>r.json())]);
-          console.log('players',Array.isArray(players)?players.length:Object.keys(players||{}).length);
-          console.log('market keys',Object.keys(market||{}));
-          const vals=Array.isArray(market?.values)?market.values:[];
-          console.log('values',vals.length);
-          console.log('sample',JSON.stringify(vals.slice(0,25),null,2));
-          console.log('field keys',[...new Set(vals.flatMap(v=>Object.keys(v||{})))]);
-          const rankCounts={}; for(const v of vals){const r=String(v?.rank);rankCounts[r]=(rankCounts[r]||0)+1}
-          console.log('duplicate ranks',Object.entries(rankCounts).filter(([,n])=>n>1).slice(0,80));
+          const byId=new Map(players.map(p=>[String(p.id),p])), vals=Array.isArray(market?.values)?market.values:[];
+          const offense=new Set(['QB','RB','WR','TE']);
+          const rows=vals.map(v=>({v,p:byId.get(String(v.playerId))})).filter(x=>x.p&&Array.isArray(x.p.positions)&&x.p.positions.some(pos=>offense.has(String(pos).toUpperCase()))&&!String(x.v.playerId).startsWith('pick:'));
+          const dupRanks=[...new Set(rows.map(x=>x.v.rank).filter((r,i,a)=>a.indexOf(r)!==i))].slice(0,20);
+          console.log('offense rows',rows.length,'unique players',new Set(rows.map(x=>x.v.playerId)).size,'capturedAt',Object.entries(rows.reduce((m,x)=>(m[x.v.capturedAt]=(m[x.v.capturedAt]||0)+1,m),{})).slice(0,20));
+          for(const rank of dupRanks)console.log('RANK',rank,rows.filter(x=>x.v.rank===rank).map(x=>({id:x.v.playerId,name:x.p.name,value:x.v.value,rank:x.v.rank,capturedAt:x.v.capturedAt})));
+          const dupIds=[...new Set(rows.map(x=>x.v.playerId).filter((id,i,a)=>a.indexOf(id)!==i))].slice(0,20);
+          for(const id of dupIds)console.log('PLAYER',id,rows.filter(x=>x.v.playerId===id).map(x=>({name:x.p.name,value:x.v.value,rank:x.v.rank,capturedAt:x.v.capturedAt})));
           process.exit(17);
           NODE
       - name: Value History data hub syntax

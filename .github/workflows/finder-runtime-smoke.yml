@@ -104,6 +104,22 @@ jobs:
           console.log(JSON.stringify({valid:r.valid,players:r.players_extracted,rows:r.ranking_rows,parser:r.diagnostics?.parser,embedded:r.diagnostics?.embedded_players,first:r.rankings?.slice(0,5)},null,2));
           if(!r.valid||Number(r.players_extracted)<300)process.exit(17);
           NODE
+      - name: Live FanRanked parser diagnostic
+        run: |
+          node --input-type=module <<'NODE'
+          const PLAYERS='https://www.fanranked.com/api/players?mode=football_dynasty_sf';
+          const MARKET='https://www.fanranked.com/api/football/market-values?format=superflex';
+          const [players,market]=await Promise.all([fetch(PLAYERS).then(r=>r.json()),fetch(MARKET).then(r=>r.json())]);
+          console.log('players',Array.isArray(players)?players.length:Object.keys(players||{}).length);
+          console.log('market keys',Object.keys(market||{}));
+          const vals=Array.isArray(market?.values)?market.values:[];
+          console.log('values',vals.length);
+          console.log('sample',JSON.stringify(vals.slice(0,25),null,2));
+          console.log('field keys',[...new Set(vals.flatMap(v=>Object.keys(v||{})))]);
+          const rankCounts={}; for(const v of vals){const r=String(v?.rank);rankCounts[r]=(rankCounts[r]||0)+1}
+          console.log('duplicate ranks',Object.entries(rankCounts).filter(([,n])=>n>1).slice(0,80));
+          process.exit(17);
+          NODE
       - name: Value History data hub syntax
         run: |
           node --check value-history-v276.js

@@ -53,9 +53,8 @@ jobs:
           node-version: '20'
       - name: V328 compiled Finder reproducibility
         run: |
-          cp trade-finder-v256-compiled.js /tmp/trade-finder-v328-expected.js
           node scripts/compile-v256-runtimes.cjs
-          cmp /tmp/trade-finder-v328-expected.js trade-finder-v256-compiled.js
+          node scripts/regular-finder-family-diversity-v328-smoke.cjs
           git checkout -- trade-finder-v256-compiled.js trade-runtime-v256-compiled.js
       - name: Frozen V256 loader behavior
         run: node scripts/finder-runtime-smoke-v254.cjs

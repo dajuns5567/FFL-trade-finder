@@ -32,9 +32,12 @@ assert(m.periods['1Y'].valueFallers[0].id==='b'&&m.periods['1Y'].valueFallers[0]
 assert(m.periods['30D'].rankRisers.some(x=>x.id==='a'&&x.overallDelta>0),'30D rank risers missing');
 assert(m.periods['30D'].rankFallers.some(x=>x.id==='b'&&x.overallDelta<0),'30D rank fallers missing');
 assert(Array.isArray(m.periods['1D'].valueRisers)&&Array.isArray(m.periods['1D'].valueFallers),'1D mover lists missing');
+assert(Array.isArray(m.periods['30D'].posRankRisers)&&Array.isArray(m.periods['30D'].posRankFallers),'positional-rank mover lists missing');
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta7'),'market rows missing 7D positional-rank delta');
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta30'),'market rows missing 30D positional-rank delta');
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta365'),'market rows missing 1Y positional-rank delta');
+assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'deltaAll'),'market rows missing all-time value delta');
+assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDeltaAll'),'market rows missing all-time positional-rank delta');
 assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not receive fabricated pre-entry 365-day history');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
@@ -80,8 +83,8 @@ for(const needle of [
   'Nearest ${esc(target.pos)} Ranks',
   'slice(Math.max(0,vi-5),vi)',
   'slice(vi+1,vi+6)',
-  'slice(Math.max(0,pi-2),pi)',
-  'slice(pi+1,pi+3)',
+  'slice(Math.max(0,pi-5),pi)',
+  'slice(pi+1,pi+6)',
   'vh-rank-hit',
   'data-vh-rank-label',
   'marketCache=null;scheduleSnapshot(1000)',
@@ -97,7 +100,24 @@ for(const needle of [
   'Top Rank Risers',
   'Top Rank Fallers',
   "marketCache.periods?.[period]?.[category]",
-  "filter(r=>owned.has(String(r.id)))"
+  "filter(r=>owned.has(String(r.id)))",
+  'Top Positional Rank Risers',
+  'Top Positional Rank Fallers',
+  'posRankRisers',
+  'posRankFallers',
+  'Value 1Y',
+  'Value All',
+  'Pos Δ 1Y',
+  'Pos Δ All',
+  'deltaAll',
+  'posRankDeltaAll',
+  'Since last refresh',
+  'refreshValue',
+  'refreshPos',
+  'Player value',
+  'Date / time',
+  'vh-filter-label',
+  'History range'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
 for(const forbidden of [
@@ -116,4 +136,4 @@ assert(!backend.includes("url.searchParams.get('player_ids')"),'Track My Team mu
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
-console.log('V338 Value History 24H/View All/team movers regression passed');
+console.log('V339 Value History player-chart/layout/team positional-movers regression passed');

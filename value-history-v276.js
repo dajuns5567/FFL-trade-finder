@@ -400,7 +400,7 @@ function teamNetNeighbors(){
 function openTeamNetModal(){
   closeMoverModal();const {all}=teamNetNeighbors(),wrap=document.createElement('div');wrap.id='vhMoverModal';wrap.className='vh-modal-backdrop';
   wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="All team net values"><div class="vh-modal-head"><div><h3>All 32 Teams — Overall Net Value</h3><div class="vh-sub">Current raw player-value totals from the latest site load / refresh</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-list">${all.map((t,i)=>`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><div><b>${esc(t.name)}</b><small>Raw current player-value total</small></div><div class="vh-delta">${fmt(t.value)}</div></div>`).join('')}</div></div></div>`;
-  document.body.appendChild(wrap);
+  (document.getElementById('valueHistory')||document.body).appendChild(wrap);
 }
 function overallNetValueCard(data,teamLabel){
   const pts=Array.isArray(data?.points)?data.points:[],last=pts[pts.length-1],total=last?Number(last.value):0,count=Number(data?.player_count)||0,

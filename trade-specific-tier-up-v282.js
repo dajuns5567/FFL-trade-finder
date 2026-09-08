@@ -16,7 +16,7 @@ const teamName=n=>window.teamName?.(n)||((st().teams||[]).find(t=>Number(t.id)==
 const fair=(a,b)=>window.section1V130?.fair?.(a,b)||null;
 let rows=[],visible=5,runToken=0;
 function targetText(){return q(document.getElementById('desiredPlayerSearch')?.value)}
-function active(){return!!targetText()&&String(document.getElementById('tradeTier94')?.value||'')==='up'}
+function active(){return!!targetText()&&String(document.getElementById('tradeTier94')?.value||'')==='up'&&!(style()==='value'&&selectedGive().length===0)}
 function style(){return String(document.getElementById('findMode')?.value||'balanced')}
 function selectedGive(){return[...document.querySelectorAll('#findShop .shopCheck:checked,.shopCheck:checked')].map(x=>x._asset).filter(Boolean)}
 function addAssets(){return!!document.getElementById('tradeAssist97')?.checked}

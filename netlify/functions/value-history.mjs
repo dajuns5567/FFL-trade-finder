@@ -152,17 +152,18 @@ function metricsAgainst(latestSnap,baseSnap){
 }
 function marketPeriod(latest,base){
   const metrics=metricsAgainst(latest,base),rows=[...metrics.values()];
-  const valueRisers=rows.filter(x=>x.delta>0).sort((a,b)=>b.delta-a.delta||b.value-a.value).slice(0,10);
-  const valueFallers=rows.filter(x=>x.delta<0).sort((a,b)=>a.delta-b.delta||b.value-a.value).slice(0,10);
-  const rankRisers=rows.filter(x=>x.overallDelta>0).sort((a,b)=>b.overallDelta-a.overallDelta||b.value-a.value).slice(0,10);
-  const rankFallers=rows.filter(x=>x.overallDelta<0).sort((a,b)=>a.overallDelta-b.overallDelta||b.value-a.value).slice(0,10);
+  const valueRisers=rows.filter(x=>x.delta>0).sort((a,b)=>b.delta-a.delta||b.value-a.value);
+  const valueFallers=rows.filter(x=>x.delta<0).sort((a,b)=>a.delta-b.delta||b.value-a.value);
+  const rankRisers=rows.filter(x=>x.overallDelta>0).sort((a,b)=>b.overallDelta-a.overallDelta||b.value-a.value);
+  const rankFallers=rows.filter(x=>x.overallDelta<0).sort((a,b)=>a.overallDelta-b.overallDelta||b.value-a.value);
   return{valueRisers,valueFallers,rankRisers,rankFallers,metrics};
 }
 function marketFromSnapshots(snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  if(!ordered.length)return{tracking_since:null,latest:null,snapshot_count:0,periods:{'7D':{},'30D':{},'90D':{},'1Y':{},'ALL':{}},marketRows:[],has7:false,has30:false,has90:false,has365:false};
+  if(!ordered.length)return{tracking_since:null,latest:null,snapshot_count:0,periods:{'1D':{},'7D':{},'30D':{},'90D':{},'1Y':{},'ALL':{}},marketRows:[],has1:false,has7:false,has30:false,has90:false,has365:false};
   const first=ordered[0],latest=ordered[ordered.length-1],latestMs=new Date(latest.t).getTime(),firstMs=new Date(first.t).getTime();
   const bases={
+    '1D':baselineFor(ordered,latestMs,1)||first,
     '7D':baselineFor(ordered,latestMs,7)||first,
     '30D':baselineFor(ordered,latestMs,30)||first,
     '90D':baselineFor(ordered,latestMs,90)||first,
@@ -182,6 +183,7 @@ function marketFromSnapshots(snaps){
   }).sort((a,b)=>b.value-a.value);
   return{
     tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,periods,marketRows,
+    has1:latestMs-firstMs>=1*86400000,
     has7:latestMs-firstMs>=7*86400000,
     has30:latestMs-firstMs>=30*86400000,
     has90:latestMs-firstMs>=90*86400000,
@@ -205,10 +207,10 @@ async function getMarketSummary(s){
     const snaps=await readSnapshotsBounded(s,items,25),market=marketFromSnapshots(snaps);
     market.snapshot_count=items.length;return market;
   }
-  const wanted=[items[0],itemAtOrBefore(items,latestMs-7*86400000),itemAtOrBefore(items,latestMs-30*86400000),itemAtOrBefore(items,latestMs-90*86400000),itemAtOrBefore(items,latestMs-365*86400000),latestItem].filter(Boolean);
+  const wanted=[items[0],itemAtOrBefore(items,latestMs-1*86400000),itemAtOrBefore(items,latestMs-7*86400000),itemAtOrBefore(items,latestMs-30*86400000),itemAtOrBefore(items,latestMs-90*86400000),itemAtOrBefore(items,latestMs-365*86400000),latestItem].filter(Boolean);
   const unique=[],seen=new Set();for(const item of wanted)if(!seen.has(item.key)){seen.add(item.key);unique.push(item)}
   unique.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  const snaps=await readSnapshotsBounded(s,unique,6),market=marketFromSnapshots(snaps);
+  const snaps=await readSnapshotsBounded(s,unique,7),market=marketFromSnapshots(snaps);
   market.snapshot_count=items.length;
   return market;
 }

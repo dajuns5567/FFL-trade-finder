@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history';
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,currentView='market',marketSort={key:'value',dir:-1},marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'};
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,currentView='market',marketSort={key:'value',dir:-1},marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -84,6 +84,14 @@ function addStyles(){
   #valueHistory .vh-neighbor-row:first-child{border-top:0}
   #valueHistory .vh-neighbor-row small{display:block;color:var(--muted)}
   #valueHistory .vh-rank-hit{fill:transparent;stroke:transparent;cursor:crosshair;pointer-events:all}
+  #valueHistory .vh-card-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  #valueHistory .vh-view-all{white-space:nowrap}
+  #valueHistory .vh-modal-backdrop{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:24px}
+  #valueHistory .vh-modal{width:min(860px,96vw);max-height:min(82vh,900px);overflow:hidden;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 24px 80px rgba(0,0,0,.5);display:grid;grid-template-rows:auto 1fr}
+  #valueHistory .vh-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 18px;border-bottom:1px solid var(--line)}
+  #valueHistory .vh-modal-head h3{margin:0 0 3px}
+  #valueHistory .vh-modal-body{overflow:auto;padding:8px 18px 18px}
+  #valueHistory .vh-modal .vh-mover{grid-template-columns:26px minmax(0,1fr) auto auto}
   #valueHistory .vh-rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   #valueHistory .vh-rank-stat{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px}
   #valueHistory .vh-rank-stat b{font-size:20px}
@@ -154,6 +162,9 @@ function handleContentClick(e){
   const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();currentPlayerId=null;renderTrackMyTeam();return}
   const period=e.target.closest('[data-vh-period]');if(period&&currentPlayerId){const box=document.getElementById('vhProfileData');const pts=box?JSON.parse(box.dataset.points||'[]'):[];renderPlayerProfile(currentPlayerId,pts,period.dataset.vhPeriod);return}
   const mp=e.target.closest('[data-vh-market-period]');if(mp&&marketCache){marketPeriods[mp.dataset.vhCategory]=mp.dataset.vhMarketPeriod;renderMarketDashboard();return}
+  const tp=e.target.closest('[data-vh-team-period]');if(tp&&marketCache){teamPeriods[tp.dataset.vhCategory]=tp.dataset.vhTeamPeriod;renderTrackedTeamTable();return}
+  const viewAll=e.target.closest('[data-vh-view-all]');if(viewAll&&marketCache){openMoverModal(viewAll.dataset.vhViewAll,viewAll.dataset.vhCategory,viewAll.dataset.vhPeriod,viewAll.dataset.vhScope||'market');return}
+  const close=e.target.closest('[data-vh-modal-close]');if(close){closeMoverModal();return}
   const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};if(currentView==='team')renderTrackedTeamTable();else renderMarketTable();return}
 }
 function handleContentChange(e){
@@ -172,21 +183,36 @@ async function loadMarket(force=false){
   renderMarketDashboard();
 }
 function deltaClass(n){return Number(n)>0?'vh-up':Number(n)<0?'vh-down':'vh-neutral'}
-function moverRows(rows,mode='value'){
+function moverRows(rows,mode='value',limit=10){
   if(!rows?.length)return'<div class="vh-empty">Not enough historical movement yet.</div>';
-  return`<div class="vh-list">${rows.map((r,i)=>{const delta=mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)} #${r.posRank} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())} • Overall #${r.overall} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div><button type="button" class="secondary small vh-view-chart" data-vh-player="${esc(r.id)}">View chart</button></div>`}).join('')}</div>`;
+  const shown=Number.isFinite(limit)?rows.slice(0,limit):rows;
+  return`<div class="vh-list">${shown.map((r,i)=>{const delta=mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)} #${r.posRank} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())} • Overall #${r.overall} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div><button type="button" class="secondary small vh-view-chart" data-vh-player="${esc(r.id)}">View chart</button></div>`}).join('')}</div>`;
 }
 function marketPeriodButtons(category){
   const selected=marketPeriods[category]||'7D';
-  return`<div class="vh-card-periods">${['7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===selected?'':'secondary '}small" data-vh-category="${category}" data-vh-market-period="${p}">${p}</button>`).join('')}</div>`;
+  return`<div class="vh-card-periods">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===selected?'':'secondary '}small" data-vh-category="${category}" data-vh-market-period="${p}">${p}</button>`).join('')}</div>`;
 }
 function periodLabel(period,m){
   if(period==='ALL')return'Since Tracking Began';
+  if(period==='1D'&&!m.has1)return'Available History';
   if(period==='1Y'&&!m.has365)return'Since Tracking Began';
   if(period==='90D'&&!m.has90)return'Available History';
   if(period==='30D'&&!m.has30)return'Available History';
   if(period==='7D'&&!m.has7)return'Available History';
   return period.replace('1Y','1 Year');
+}
+function moverCardActions(scope,category,period){
+  const periodAttr=scope==='team'?'data-vh-team-period':'data-vh-market-period';
+  const selected=scope==='team'?(teamPeriods[category]||period):(marketPeriods[category]||period);
+  return`<div class="vh-card-actions"><div class="vh-card-periods">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===selected?'':'secondary '}small" data-vh-category="${category}" ${periodAttr}="${p}">${p}</button>`).join('')}</div><button type="button" class="secondary small vh-view-all" data-vh-view-all="1" data-vh-scope="${scope}" data-vh-category="${category}" data-vh-period="${selected}">View all</button></div>`;
+}
+function closeMoverModal(){document.getElementById('vhMoverModal')?.remove()}
+function openMoverModal(_,category,period,scope='market'){
+  closeMoverModal();
+  const m=marketCache||{},p=m.periods?.[period]||{},owned=scope==='team'?new Set((state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id))):null;
+  const mode=category.startsWith('rank')?'rank':'value',rows=(p?.[category]||[]).filter(r=>!owned||owned.has(String(r.id)));
+  const titleMap={valueRisers:'Value Risers',valueFallers:'Value Fallers',rankRisers:'Rank Risers',rankFallers:'Rank Fallers'};
+  const wrap=document.createElement('div');wrap.id='vhMoverModal';wrap.className='vh-modal-backdrop';wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="${esc(titleMap[category]||'Movers')}"><div class="vh-modal-head"><div><h3>${scope==='team'?`${esc(teamName(trackedTeamId))} — `:''}${esc(titleMap[category]||'Movers')} — ${esc(periodLabel(period,m))}</h3><div class="vh-sub">${rows.length} players moved in this period</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body">${moverRows(rows,mode,Infinity)}</div></div>`;document.getElementById('vhLazy')?.appendChild(wrap);
 }
 function renderMarketDashboard(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
@@ -196,12 +222,12 @@ function renderMarketDashboard(){
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
   <div class="vh-grid-2">
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Risers — ${periodLabel(vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${marketPeriodButtons('valueRisers')}</div>${moverRows(vpR.valueRisers)}</div>
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Fallers — ${periodLabel(vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${marketPeriodButtons('valueFallers')}</div>${moverRows(vpF.valueFallers)}</div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Risers — ${periodLabel(vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(vpR.valueRisers)}</div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Fallers — ${periodLabel(vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(vpF.valueFallers)}</div>
   </div>
   <div class="vh-grid-2">
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Risers — ${periodLabel(rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${marketPeriodButtons('rankRisers')}</div>${moverRows(rpR.rankRisers,'rank')}</div>
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Fallers — ${periodLabel(rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${marketPeriodButtons('rankFallers')}</div>${moverRows(rpF.rankFallers,'rank')}</div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Risers — ${periodLabel(rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(rpR.rankRisers,'rank')}</div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Fallers — ${periodLabel(rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(rpF.rankFallers,'rank')}</div>
   </div>
   <details class="vh-card vh-market-table"><summary>Full Market History Table</summary><div class="vh-sub" style="margin-top:8px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
@@ -248,7 +274,18 @@ function renderTrackedTeamTable(){
   const host=document.getElementById('vhTrackedTeam');if(!host||!marketCache||!trackedTeamId)return;
   const owned=new Set((state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)));
   const rows=sortedMarketRows((marketCache.marketRows||[]).filter(r=>owned.has(String(r.id))));
-  host.innerHTML=`<div class="vh-card"><div class="vh-card-head"><div><h3>${esc(teamName(trackedTeamId))}</h3><div class="vh-sub">${rows.length} current players • same columns and data as Full Market History</div></div></div>${marketTableRowsMarkup(rows)}</div>`;
+  const periodRows=(category,period)=>(marketCache.periods?.[period]?.[category]||[]).filter(r=>owned.has(String(r.id)));
+  const vr=teamPeriods.valueRisers,vf=teamPeriods.valueFallers,rr=teamPeriods.rankRisers,rf=teamPeriods.rankFallers;
+  host.innerHTML=`
+    <div class="vh-grid-2">
+      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Value Risers — ${periodLabel(vr,marketCache)}</h3><div class="vh-sub">Largest value gains on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueRisers',vr)}</div>${moverRows(periodRows('valueRisers',vr))}</div>
+      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Value Fallers — ${periodLabel(vf,marketCache)}</h3><div class="vh-sub">Largest value declines on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueFallers',vf)}</div>${moverRows(periodRows('valueFallers',vf))}</div>
+    </div>
+    <div class="vh-grid-2">
+      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Rank Risers — ${periodLabel(rr,marketCache)}</h3><div class="vh-sub">Largest overall-rank improvements on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','rankRisers',rr)}</div>${moverRows(periodRows('rankRisers',rr),'rank')}</div>
+      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Rank Fallers — ${periodLabel(rf,marketCache)}</h3><div class="vh-sub">Largest overall-rank declines on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','rankFallers',rf)}</div>${moverRows(periodRows('rankFallers',rf),'rank')}</div>
+    </div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>${esc(teamName(trackedTeamId))} — Full Market History</h3><div class="vh-sub">${rows.length} current players • same columns and data as Full Market History</div></div></div>${marketTableRowsMarkup(rows)}</div>`;
 }
 function currentPlayerRows(){
   const list=ranked(),pr=posRanks(list),rows=[];
@@ -271,9 +308,10 @@ function livePlayerMeta(id){
 }
 function periodPoints(pts,period){
   if(!pts.length||period==='ALL')return pts.slice();
-  const days={ '7D':7,'30D':30,'90D':90,'1Y':365 }[period]||30,latest=new Date(pts[pts.length-1].t).getTime(),cut=latest-days*86400000;
+  const days={ '1D':1,'7D':7,'30D':30,'90D':90,'1Y':365 }[period]||30,latest=new Date(pts[pts.length-1].t).getTime(),cut=latest-days*86400000;
   const inRange=pts.filter(p=>new Date(p.t).getTime()>=cut);
   if(!inRange.length)return[pts[pts.length-1]];
+  if(period==='1D')return inRange;
   const firstIndex=pts.indexOf(inRange[0]);if(firstIndex>0)inRange.unshift(pts[firstIndex-1]);
   return inRange;
 }
@@ -322,7 +360,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
       <div class="vh-current"><small class="muted">Current Value</small><div class="vh-big">${fmt(meta.value||last.value)}</div></div>
     </div>
   </div>
-  <div class="vh-card"><div class="vh-periods">${['7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-period="${p}">${p}</button>`).join('')}</div></div>
+  <div class="vh-card"><div class="vh-periods">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-period="${p}">${p}</button>`).join('')}</div></div>
   <div class="vh-metrics">
     <div class="vh-metric"><small>${period} Change</small><b class="${deltaClass(delta)}">${signed(delta)}</b><div class="tiny muted">${signedPct(pct)}</div></div>
     <div class="vh-metric"><small>${period} Range</small><b>${fmt(pmin)}–${fmt(pmax)}</b></div>

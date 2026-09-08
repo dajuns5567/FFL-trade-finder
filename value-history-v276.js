@@ -41,11 +41,23 @@ function addStyles(){
   #valueHistory .vh-down{color:var(--bad,#c45151)}
   #valueHistory .vh-neutral{color:var(--muted)}
   #valueHistory .vh-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  #valueHistory .vh-profile-head{display:flex;gap:18px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
-  #valueHistory .vh-profile-title h2{margin:0 0 4px}
-  #valueHistory .vh-meta{color:var(--muted);font-size:13px;line-height:1.55}
-  #valueHistory .vh-current{text-align:right}
-  #valueHistory .vh-current .vh-big{font-size:32px;font-weight:800;line-height:1}
+  #valueHistory .vh-profile-info{display:grid;grid-template-columns:minmax(220px,1.35fr) minmax(420px,2.6fr) minmax(145px,.7fr);gap:18px;align-items:stretch}
+  #valueHistory .vh-profile-primary{display:flex;flex-direction:column;justify-content:center;min-width:0}
+  #valueHistory .vh-profile-primary h2{margin:0 0 8px;font-size:25px}
+  #valueHistory .vh-profile-kicker{display:flex;gap:6px;flex-wrap:wrap}
+  #valueHistory .vh-profile-kicker span{display:inline-flex;align-items:center;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--card) 90%,transparent);font-size:12px;color:var(--muted)}
+  #valueHistory .vh-profile-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  #valueHistory .vh-profile-fact{border-left:1px solid var(--line);padding:6px 10px;min-width:0;display:flex;flex-direction:column;justify-content:center}
+  #valueHistory .vh-profile-fact small{color:var(--muted);font-size:11px;margin-bottom:3px}
+  #valueHistory .vh-profile-fact b{font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #valueHistory .vh-profile-fact span{font-size:11px;color:var(--muted);margin-top:2px}
+  #valueHistory .vh-current{display:flex;flex-direction:column;justify-content:center;text-align:right;border-left:1px solid var(--line);padding-left:18px}
+  #valueHistory .vh-current .vh-big{font-size:34px;font-weight:800;line-height:1}
+  #valueHistory .vh-rank-chart svg{display:block;width:100%;height:auto}
+  #valueHistory .vh-rank-chart .vh-axis{stroke:currentColor;opacity:.25}
+  #valueHistory .vh-rank-chart .vh-axis-text{fill:currentColor;font-size:10px;opacity:.72}
+  #valueHistory .vh-rank-chart .vh-rank-line{fill:none;stroke:#e4b53f;stroke-width:3;vector-effect:non-scaling-stroke}
+  #valueHistory .vh-rank-chart .vh-rank-dot{fill:#e4b53f;stroke:var(--card);stroke-width:1.5}
   #valueHistory .vh-periods{display:flex;gap:6px;flex-wrap:wrap}
   #valueHistory .vh-periods button{min-width:52px}
   #valueHistory .vh-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
@@ -75,8 +87,8 @@ function addStyles(){
   #valueHistory details.vh-market-table summary{cursor:pointer;font-weight:700}
   #valueHistory .vh-search-results{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0 0}
   #valueHistory .vh-empty{padding:18px;text-align:center;color:var(--muted)}
-  @media(max-width:900px){#valueHistory .vh-grid,#valueHistory .vh-grid-2{grid-template-columns:1fr}#valueHistory .vh-metrics{grid-template-columns:repeat(3,1fr)}}
-  @media(max-width:620px){#valueHistory .vh-metrics{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-rank-grid{grid-template-columns:1fr}#valueHistory .vh-current{text-align:left}}
+  @media(max-width:900px){#valueHistory .vh-grid,#valueHistory .vh-grid-2{grid-template-columns:1fr}#valueHistory .vh-metrics{grid-template-columns:repeat(3,1fr)}#valueHistory .vh-profile-info{grid-template-columns:1fr 1fr}#valueHistory .vh-profile-facts{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-current{grid-column:2;grid-row:1;text-align:right}}
+  @media(max-width:620px){#valueHistory .vh-metrics{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-rank-grid{grid-template-columns:1fr}#valueHistory .vh-profile-info{grid-template-columns:1fr}#valueHistory .vh-profile-facts{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-current{grid-column:auto;grid-row:auto;text-align:left;border-left:0;border-top:1px solid var(--line);padding:12px 0 0}}
   `;
   document.head.appendChild(st);
 }
@@ -196,11 +208,17 @@ function periodPoints(pts,period){
   const firstIndex=pts.indexOf(inRange[0]);if(firstIndex>0)inRange.unshift(pts[firstIndex-1]);
   return inRange;
 }
-function rankSpark(points,field){
+function rankSpark(points,field,axisLabel='Rank'){
   if(!points.length)return'<div class="vh-empty">No rank history yet.</div>';
-  const vals=points.map(p=>Number(p[field])).filter(Number.isFinite),min=Math.min(...vals),max=Math.max(...vals),W=360,H=90,P=8,n=Math.max(1,points.length-1),x=i=>P+(W-2*P)*(i/n),y=v=>P+(H-2*P)*((Number(v)-min)/Math.max(1,max-min));
-  const path=points.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(p[field]).toFixed(1)}`).join(' ');
-  return`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Rank history"><path d="${path}" fill="none" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke"/></svg>`;
+  const clean=points.filter(p=>Number.isFinite(Number(p[field]))),vals=clean.map(p=>Number(p[field]));
+  if(!clean.length)return'<div class="vh-empty">No rank history yet.</div>';
+  const min=Math.min(...vals),max=Math.max(...vals),W=430,H=150,L=48,R=14,T=14,B=36,n=Math.max(1,clean.length-1),spread=Math.max(1,max-min),
+    x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*((Number(v)-min)/spread),
+    first=clean[0],last=clean[clean.length-1],
+    dateLabel=t=>{try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch{return''}};
+  const path=clean.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(p[field]).toFixed(1)}`).join(' '),
+    dots=clean.map((p,i)=>`<circle class="vh-rank-dot" cx="${x(i).toFixed(1)}" cy="${y(p[field]).toFixed(1)}" r="3.5"><title>${esc(dateTime(p.t))}: #${p[field]}</title></circle>`).join('');
+  return`<div class="vh-rank-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(axisLabel)} history"><line class="vh-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H-B}"/><line class="vh-axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/><text class="vh-axis-text" x="${L-7}" y="${T+4}" text-anchor="end">#${min}</text><text class="vh-axis-text" x="${L-7}" y="${H-B}" text-anchor="end">#${max}</text><text class="vh-axis-text" x="13" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 13 ${(T+H-B)/2})">${esc(axisLabel)}</text><text class="vh-axis-text" x="${L}" y="${H-14}">${esc(dateLabel(first.t))}</text><text class="vh-axis-text" x="${W-R}" y="${H-14}" text-anchor="end">${esc(dateLabel(last.t))}</text><text class="vh-axis-text" x="${(L+W-R)/2}" y="${H-3}" text-anchor="middle">Date</text><path class="vh-rank-line" d="${path}"/>${dots}</svg></div>`;
 }
 function valueChart(id,pts){
   if(!pts.length)return`<div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. A point will appear after a completed value refresh is recorded.</div>`;
@@ -212,7 +230,7 @@ function valueChart(id,pts){
 function recentChanges(pts){
   const rows=[];for(let i=pts.length-1;i>0&&rows.length<8;i--){const a=pts[i-1],b=pts[i],dv=Number(b.value)-Number(a.value),dr=Number(a.overall)-Number(b.overall),dp=Number(a.posRank)-Number(b.posRank);if(dv||dr||dp)rows.push({t:b.t,dv,dr,dp,value:b.value,overall:b.overall,pos:b.pos,posRank:b.posRank})}
   if(!rows.length)return'<div class="vh-empty">No value or rank changes recorded yet.</div>';
-  return`<div class="vh-feed">${rows.map(r=>`<div class="vh-feed-row"><div><b>${dateShort(r.t)}</b><div class="muted">Value ${fmt(r.value)} • Overall #${r.overall} • ${esc(r.pos)} #${r.posRank}</div></div><div style="text-align:right"><b class="${deltaClass(r.dv)}">${signed(r.dv)}</b><div class="muted">${r.dr?`${r.dr>0?'+':''}${r.dr} overall`:''}${r.dr&&r.dp?' • ':''}${r.dp?`${r.dp>0?'+':''}${r.dp} pos`:''}</div></div></div>`).join('')}</div>`;
+  return`<div class="vh-feed">${rows.map(r=>`<div class="vh-feed-row"><div><b>${esc(dateTime(r.t))}</b><div class="muted">Value ${fmt(r.value)} • Overall #${r.overall} • ${esc(r.pos)} #${r.posRank}</div></div><div style="text-align:right"><b class="${deltaClass(r.dv)}">${signed(r.dv)}</b><div class="muted">${r.dr?`${r.dr>0?'+':''}${r.dr} overall`:''}${r.dr&&r.dp?' • ':''}${r.dp?`${r.dp>0?'+':''}${r.dp} pos`:''}</div></div></div>`).join('')}</div>`;
 }
 function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
@@ -224,7 +242,16 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   <div id="vhProfileData" data-points="${esc(JSON.stringify(allPts))}" hidden></div>
   <div class="vh-card">
     <div class="vh-toolbar" style="margin-bottom:12px"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div>
-    <div class="vh-profile-head"><div class="vh-profile-title"><h2>${esc(playerName(id))}</h2><div class="vh-meta">${esc(meta.pos)} • ${esc(meta.nfl)}${meta.age?` • Age ${meta.age}`:''}<br>Owned by: <b>${esc(meta.ownerName)}</b><br>${meta.overall?`Overall #${meta.overall}`:''}${meta.posRank?` • ${esc(meta.pos)} #${meta.posRank}`:''}<br>Tracked since: ${dateShort(allPts[0].t)}</div></div><div class="vh-current"><small class="muted">Current Value</small><div class="vh-big">${fmt(meta.value||last.value)}</div></div></div>
+    <div class="vh-profile-info">
+      <div class="vh-profile-primary"><h2>${esc(playerName(id))}</h2><div class="vh-profile-kicker"><span>${esc(meta.pos)}</span><span>${esc(meta.nfl)}</span>${meta.age?`<span>Age ${meta.age}</span>`:''}</div></div>
+      <div class="vh-profile-facts">
+        <div class="vh-profile-fact"><small>Fantasy team</small><b>${esc(meta.ownerName)}</b></div>
+        <div class="vh-profile-fact"><small>NFL team</small><b>${esc(meta.nfl)}</b></div>
+        <div class="vh-profile-fact"><small>Current rank</small><b>${meta.overall?`Overall #${meta.overall}`:'—'}</b><span>${meta.posRank?`${esc(meta.pos)} #${meta.posRank}`:'—'}</span></div>
+        <div class="vh-profile-fact"><small>Tracked since</small><b>${dateShort(allPts[0].t)}</b><span>${fmt(allPts.length)} observations</span></div>
+      </div>
+      <div class="vh-current"><small class="muted">Current Value</small><div class="vh-big">${fmt(meta.value||last.value)}</div></div>
+    </div>
   </div>
   <div class="vh-card"><div class="vh-periods">${['7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-period="${p}">${p}</button>`).join('')}</div></div>
   <div class="vh-metrics">
@@ -237,8 +264,8 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   </div>
   <div class="vh-card vh-chart-card"><h3 style="margin:0 0 8px">${period==='ALL'?'All-Time':period} Value History</h3>${valueChart(id,pts)}</div>
   <div class="vh-rank-grid">
-    <div class="vh-card"><h3>Overall Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.overall} → #${rankLast.overall}</span><b class="${deltaClass(overallMove)}">${overallMove>0?'+':''}${overallMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'overall')}</div>
-    <div class="vh-card"><h3>${esc(meta.pos)} Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.posRank} → #${rankLast.posRank}</span><b class="${deltaClass(posMove)}">${posMove>0?'+':''}${posMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'posRank')}</div>
+    <div class="vh-card"><h3>Overall Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.overall} → #${rankLast.overall}</span><b class="${deltaClass(overallMove)}">${overallMove>0?'+':''}${overallMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'overall','Overall rank')}</div>
+    <div class="vh-card"><h3>${esc(meta.pos)} Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.posRank} → #${rankLast.posRank}</span><b class="${deltaClass(posMove)}">${posMove>0?'+':''}${posMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'posRank',`${meta.pos} rank`)}</div>
   </div>
   <div class="vh-grid">
     <div class="vh-card" style="grid-column:span 2"><h3>Recent Changes</h3><div class="vh-sub">Latest recorded value or rank changes</div>${recentChanges(allPts)}</div>

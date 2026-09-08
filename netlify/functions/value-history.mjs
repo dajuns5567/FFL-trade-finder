@@ -174,11 +174,29 @@ function marketFromSnapshots(snaps){
     has365:latestMs-new Date(first.t).getTime()>=365*86400000
   };
 }
+function itemAtOrBefore(items,targetMs){
+  let best=items[0]||null;
+  for(const item of items){
+    const ms=new Date(item?.t||'').getTime();
+    if(!Number.isFinite(ms))continue;
+    if(ms<=targetMs)best=item;else break;
+  }
+  return best;
+}
 async function getMarketSummary(s){
-  const indexed=await allItems(s);
-  if(!indexed.items.length)return marketFromSnapshots([]);
-  const snaps=await readSnapshotsBounded(s,indexed.items,25);
-  return marketFromSnapshots(snaps);
+  const indexed=await allItems(s),items=indexed.items||[];
+  if(!items.length)return marketFromSnapshots([]);
+  const latestItem=items[items.length-1],latestMs=new Date(latestItem?.t||'').getTime();
+  if(!Number.isFinite(latestMs)){
+    const snaps=await readSnapshotsBounded(s,items,25),market=marketFromSnapshots(snaps);
+    market.snapshot_count=items.length;return market;
+  }
+  const wanted=[items[0],itemAtOrBefore(items,latestMs-7*86400000),itemAtOrBefore(items,latestMs-30*86400000),itemAtOrBefore(items,latestMs-365*86400000),latestItem].filter(Boolean);
+  const unique=[],seen=new Set();for(const item of wanted)if(!seen.has(item.key)){seen.add(item.key);unique.push(item)}
+  unique.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  const snaps=await readSnapshotsBounded(s,unique,5),market=marketFromSnapshots(snaps);
+  market.snapshot_count=items.length;
+  return market;
 }
 async function appendIndex(s,key,t){
   const legacy=normalizeItems(await safeGet(s,LEGACY_INDEX_KEY),LEGACY_MAX).filter(x=>x.key!==key);

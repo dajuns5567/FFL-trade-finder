@@ -147,7 +147,6 @@ for(const needle of [
   'Closest in Overall Value',
   'Nearest ${esc(target.pos)} Ranks',
   '${esc(playerName(id))}',  'vh-brand-copy',
-  'font-size:16px;font-weight:900',
   '#valueHistory #vhContent{display:grid;gap:16px}',
   '#valueHistory .vh-profile-fact small{color:#b9c0ce;font-size:12px;font-weight:800',
   '#valueHistory .vh-periods button:not(.secondary)',

@@ -57,6 +57,14 @@ for(const needle of [
   'vh-point-hit',
   'vh-chart-tooltip',
   'stroke="#e4b53f"',
+  'vh-rank-line',
+  'stroke:#e4b53f',
+  'Overall rank',
+  'Date',
+  'vh-profile-info',
+  'Fantasy team',
+  'Current rank',
+  'dateTime(r.t)',
   'Tracked since'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 

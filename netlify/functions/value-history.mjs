@@ -233,7 +233,6 @@ async function appendIndex(s,key,t){
     await retry(()=>s.setJSON(MONTHS_KEY,{version:2,months}),120);
   }
 }
-async 
 const SCORING_API='https://api.sleeper.app/v1';
 const SCORING_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper';
 const scoringCache=new Map();
@@ -293,7 +292,7 @@ async function scoringMilestones(playerId){
     return{source:'Sleeper weekly regular-season stats + league scoring settings',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,refreshedAt:new Date().toISOString()};
   }catch(e){console.warn('value-history-scoring',e);return null}
 }
-function health(s){
+async function health(s){
   const latest=await safeGet(s,LATEST_KEY),indexed=await allItems(s);
   if(indexed.items.length)return{ok:true,storage:'reachable',source:indexed.source,snapshotCount:indexed.items.length,latest:latest?.t||null};
   if(indexed.source==='unavailable'){

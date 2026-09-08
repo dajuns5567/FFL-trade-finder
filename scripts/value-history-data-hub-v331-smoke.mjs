@@ -227,4 +227,7 @@ assert(backend.includes('writeFilteredIndexes(s,keep)'),'V346 history reindex mi
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
-console.log('V345 Value History team-net/UI-polish regression passed');
+const updateSource=fs.readFileSync('netlify/functions/update.mjs','utf8');
+assert(updateSource.includes("integrityReady=!!ktc?.valid"),'consensus refresh is not gated on KTC validation');
+assert(updateSource.includes("sources:integrityReady?sources:{}"),'partial consensus refresh can replace snapshots without KTC');
+console.log('V346 Value History team-net/KTC-integrity regression passed');

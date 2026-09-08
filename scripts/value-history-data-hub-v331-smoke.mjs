@@ -44,10 +44,13 @@ assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'delta1'),'market ro
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta1'),'market rows missing 1D positional-rank delta');
 assert(leagueScore({sack:1,tkl_loss:1,qb_hit:1},{sack:4.5,tkl_loss:2.5,qb_hit:2.5})===9.5,'league scoring must preserve stacked IDP categories');
 assert(weeklyPlayerRow({'p1':{stats:{sack:1}}},'p1').sack===1,'weekly player row extraction failed');
-const tradeSample=normalizeCompletedTrade({type:'trade',status:'complete',transaction_id:'t1',status_updated:Date.parse('2026-09-08T12:00:00Z'),roster_ids:[1,2],adds:{p1:1,p2:2},draft_picks:[{season:'2028',round:1,roster_id:2,owner_id:1}]},1);
+const exactDraftResults=new Map([['2028|1|2',{player_id:'rookie1',draft_slot:7,pick_no:7,draft_id:'d1',source:'Sleeper draft result + slot_to_roster_id'}]]);
+const tradeSample=normalizeCompletedTrade({type:'trade',status:'complete',transaction_id:'t1',status_updated:Date.parse('2026-09-08T12:00:00Z'),roster_ids:[1,2],adds:{p1:1,p2:2},draft_picks:[{season:'2028',round:1,roster_id:2,owner_id:1}]},1,2026,{'1':'Alpha','2':'Beta'},exactDraftResults);
 assert(tradeSample?.sides?.length===2,'completed trade normalization failed');
 assert(tradeSample.sides.find(x=>x.roster_id==='1')?.player_ids?.[0]==='p1','trade player receiver mapping failed');
 assert(tradeSample.sides.find(x=>x.roster_id==='1')?.picks?.[0]?.season==='2028','trade pick receiver mapping failed');
+assert(tradeSample.sides.find(x=>x.roster_id==='1')?.picks?.[0]?.drafted_player_id==='rookie1','exact Sleeper draft-result mapping failed');
+assert(tradeSample.team_names?.['1']==='Alpha','historical Sleeper team name mapping failed');
 const ktcPlayers=Array.from({length:320},(_,i)=>({playerName:`Player ${i+1}`,position:['QB','RB','WR','TE'][i%4],superflexValues:{value:10000-i,rank:i+1}}));
 const ktcParsed=extractKtcSuperflexRankings(`<script type="application/json" id="ktc-players">${JSON.stringify(ktcPlayers)}</script><script>var playersArray = JSON.parse(document.getElementById('ktc-players').textContent);</script>`);
 assert(ktcParsed.rows.length===320,'KTC embedded JSON parser must recover the complete player universe');
@@ -209,8 +212,13 @@ for(const needle of [
   'Value Range',
   '.vh-value-chart{position:relative;padding-top:98px}',
   'padding:10px 16px;min-width:0',
-  'Trade history',
-  'Completed Trade Value History',
+  "tradeBtn.textContent='Trade History'",
+  'Completed Trade History',
+  'Value Presentation',
+  'Trade Evaluator Analysis',
+  'Current evaluator rationale',
+  'data-vh-open-trade-history',
+  'Recent Trade Impact',
   'What Moved My Team',
   'data-vh-team-attribution',
   'data-vh-team-net-sort',
@@ -223,9 +231,16 @@ for(const forbidden of [
   'modeledPlayerValuesV319.build(',
   'section1V130.install(',
   'tradeFinderV168.generate',
-  'tradeEvaluator',
+  'tradeEvaluatorAnyTeam',
   'Value Adjustment='
 ])assert(!ui.includes(forbidden),'Value History must remain read-only relative to trade/value systems: '+forbidden);
+assert(ui.includes("typeof tradeScore!=='function'"),'Trade History must consume the existing current evaluator runtime');
+assert(ui.includes("typeof window.tradeAssetValue93==='function'"),'Trade History must consume the existing evaluator asset-value function');
+assert(!ui.includes('state.assetsA='),'Trade History must not overwrite Trade Evaluator Team A selections');
+assert(!ui.includes('state.assetsB='),'Trade History must not overwrite Trade Evaluator Team B selections');
+assert(!ui.includes('pickValue=function'),'Trade History must not replace draft-pick valuation logic');
+assert(ui.includes("tradeBtn.dataset.tab='tradeHistory'"),'Trade History must be a separate top-level tab');
+
 
 const backend=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 assert(backend.includes("MONTH_INDEX_PREFIX='indexes/'"),'partitioned all-time index missing');
@@ -234,7 +249,10 @@ assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility 
 assert(backend.includes("url.searchParams.get('team_net')==='1'"),'Track My Team net-value history endpoint missing');
 assert(backend.includes("url.searchParams.get('trades')==='1'"),'completed trade history endpoint missing');
 assert(backend.includes('completedTradeHistory(s)'),'completed trade history must remain in Value History backend');
-assert(backend.includes('TRADE_AUDIT_URL'),'Sleeper imported trade audit source missing');
+assert(backend.includes('TRADE_AUDIT_SEASONS'),'Sleeper imported multi-season trade audit source missing');
+assert(backend.includes('exactDraftResultMap'),'exact Sleeper draft-result mapping missing');
+assert(backend.includes('slot_to_roster_id'),'draft-result mapping must use Sleeper slot_to_roster_id rather than inference');
+assert(backend.includes("TRADE_AUDIT_SEASONS=[2024,2025,2026]"),'2024–2026 linked trade audit coverage missing');
 assert(backend.includes('closestSnapshotItem'),'trade history must use stored Value History snapshots rather than fabricated historical values');
 assert(backend.includes('getTeamNetHistory(s,ids)'),'team net-value history must be simple snapshot summation');
 assert(backend.includes('value+=n;found++'),'team net-value history must sum stored player values directly');

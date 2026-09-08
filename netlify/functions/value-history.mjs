@@ -260,7 +260,7 @@ function leagueScore(stats,scoring){
 }
 async function scoringSeasonWeeks(year,currentSeason){
   const key=String(year),cached=scoringCache.get(key),now=Date.now();
-  if(cached&&now-cached.t<(Number(year)===Number(currentSeason)?300000:86400000))return cached.weekly;
+  if(cached&&now-cached.t<(Number(year)===Number(currentSeason)?30000:86400000))return cached.weekly;
   let weekly={};
   if(Number(year)===Number(currentSeason)){
     const pairs=await Promise.all(Array.from({length:18},async(_,i)=>{const week=i+1;try{return[week,await scoringJson(`${SCORING_API}/stats/nfl/regular/${year}/${week}`)]}catch{return[week,{}]}}));

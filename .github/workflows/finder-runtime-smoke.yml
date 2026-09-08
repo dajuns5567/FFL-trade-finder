@@ -39,6 +39,9 @@ on:
       - 'scripts/v319-values-v311-integration-smoke.cjs'
       - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/site-v29.mjs'
+      - 'netlify/functions/value-history.mjs'
+      - 'value-history-v276.js'
+      - 'scripts/value-history-data-hub-v331-smoke.mjs'
       - 'netlify.toml'
       - '.github/workflows/finder-runtime-smoke.yml'
   workflow_dispatch:
@@ -92,3 +95,9 @@ jobs:
         run: node scripts/specific-player-family-diversity-v327-smoke.cjs
       - name: Regular Finder outgoing player-core family diversity
         run: node scripts/regular-finder-family-diversity-v328-smoke.cjs
+      - name: Value History data hub syntax
+        run: |
+          node --check value-history-v276.js
+          node --check netlify/functions/value-history.mjs
+      - name: Value History data hub behavior and isolation
+        run: node scripts/value-history-data-hub-v331-smoke.mjs

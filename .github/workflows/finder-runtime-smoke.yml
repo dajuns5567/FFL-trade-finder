@@ -7,6 +7,7 @@ on:
       - 'trade-finder-style-loader-v197.js'
       - 'trade-finder-v150.js'
       - 'trade-finder-v256-compiled.js'
+      - 'trade-presentation-v169.js'
       - 'trade-runtime-v187-loader.js'
       - 'trade-runtime-v130.js'
       - 'trade-runtime-v256-compiled.js'
@@ -23,6 +24,8 @@ on:
       - 'trade-te-scoring-adjustment-v259.js'
       - 'modeled-player-values-v319.js'
       - 'scripts/compile-v256-runtimes.cjs'
+      - 'scripts/patch-regular-family-v328.cjs'
+      - 'scripts/regular-finder-family-diversity-v328-smoke.cjs'
       - 'scripts/finder-runtime-smoke-v254.cjs'
       - 'scripts/finder-runtime-compiled-smoke-v257.cjs'
       - 'scripts/select-all-blank-equivalence-v258.cjs'
@@ -48,6 +51,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: V328 compiled Finder reproducibility
+        run: |
+          cp trade-finder-v256-compiled.js /tmp/trade-finder-v328-expected.js
+          node scripts/compile-v256-runtimes.cjs
+          cmp /tmp/trade-finder-v328-expected.js trade-finder-v256-compiled.js
+          git checkout -- trade-finder-v256-compiled.js trade-runtime-v256-compiled.js
       - name: Frozen V256 loader behavior
         run: node scripts/finder-runtime-smoke-v254.cjs
       - name: Compiled V256 equivalence behavior
@@ -82,3 +91,5 @@ jobs:
         run: node scripts/blank-specific-runtime-v326-smoke.cjs
       - name: Specific-player outgoing player-core family diversity
         run: node scripts/specific-player-family-diversity-v327-smoke.cjs
+      - name: Regular Finder outgoing player-core family diversity
+        run: node scripts/regular-finder-family-diversity-v328-smoke.cjs

@@ -177,11 +177,11 @@ function marketFromSnapshots(snaps){
     const p=marketPeriod(latest,base);
     periods[label]={valueRisers:p.valueRisers,valueFallers:p.valueFallers,rankRisers:p.rankRisers,rankFallers:p.rankFallers,posRankRisers:p.posRankRisers,posRankFallers:p.posRankFallers,baseline:base?.t||null};
   }
-  const m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m365=marketPeriod(latest,bases['1Y']).metrics,mAll=marketPeriod(latest,bases['ALL']).metrics;
+  const m1=marketPeriod(latest,bases['1D']).metrics,m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m365=marketPeriod(latest,bases['1Y']).metrics,mAll=marketPeriod(latest,bases['ALL']).metrics;
   const latestMap=rowMap(latest);
   const marketRows=[...latestMap.values()].map(r=>{
-    const id=String(r.id),d7=m7.get(id),d30=m30.get(id),d365=m365.get(id),dAll=mAll.get(id);
-    return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,deltaAll:dAll?.delta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,posRankDeltaAll:dAll?.posRankDelta??null,overallDelta7:d7?.overallDelta??null,overallDelta30:d30?.overallDelta??null};
+    const id=String(r.id),d1=m1.get(id),d7=m7.get(id),d30=m30.get(id),d365=m365.get(id),dAll=mAll.get(id);
+    return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta1:d1?.delta??null,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,deltaAll:dAll?.delta??null,posRankDelta1:d1?.posRankDelta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,posRankDeltaAll:dAll?.posRankDelta??null,overallDelta7:d7?.overallDelta??null,overallDelta30:d30?.overallDelta??null};
   }).sort((a,b)=>b.value-a.value);
   return{
     tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,periods,marketRows,
@@ -233,7 +233,67 @@ async function appendIndex(s,key,t){
     await retry(()=>s.setJSON(MONTHS_KEY,{version:2,months}),120);
   }
 }
-async function health(s){
+async 
+const SCORING_API='https://api.sleeper.app/v1';
+const SCORING_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper';
+const scoringCache=new Map();
+async function scoringJson(url){
+  const r=await fetch(url,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
+  if(!r.ok)throw new Error(`scoring fetch ${r.status}`);
+  return r.json();
+}
+function weeklyPlayerRow(payload,id){
+  if(!payload)return null;
+  if(!Array.isArray(payload)){const direct=payload?.[id];if(direct)return direct?.stats&&typeof direct.stats==='object'?direct.stats:direct}
+  const rows=Array.isArray(payload)?payload:Object.values(payload||{});
+  const row=rows.find(x=>String(x?.player_id||x?.id||'')===String(id));
+  return row?(row?.stats&&typeof row.stats==='object'?row.stats:row):null;
+}
+function leagueScore(stats,scoring){
+  let total=0,seen=false;
+  for(const [key,weightRaw] of Object.entries(scoring||{})){
+    const weight=Number(weightRaw),value=Number(stats?.[key]);
+    if(!Number.isFinite(weight)||!Number.isFinite(value))continue;
+    seen=true;total+=weight*value;
+  }
+  return seen?Number(total.toFixed(2)):null;
+}
+async function scoringSeasonWeeks(year,currentSeason){
+  const key=String(year),cached=scoringCache.get(key),now=Date.now();
+  if(cached&&now-cached.t<(Number(year)===Number(currentSeason)?300000:86400000))return cached.weekly;
+  let weekly={};
+  if(Number(year)===Number(currentSeason)){
+    const pairs=await Promise.all(Array.from({length:18},async(_,i)=>{const week=i+1;try{return[week,await scoringJson(`${SCORING_API}/stats/nfl/regular/${year}/${week}`)]}catch{return[week,{}]}}));
+    weekly=Object.fromEntries(pairs);
+  }else weekly=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
+  scoringCache.set(key,{t:now,weekly});return weekly;
+}
+async function scoringMilestones(playerId){
+  try{
+    const league=await scoringJson(`${SCORING_API}/league/${LEAGUE}`),currentSeason=Number(league?.season),scoring=league?.scoring_settings||{};
+    if(!currentSeason||!Object.keys(scoring).length)return null;
+    const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={};
+    await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason)));
+    let highWeek=null,highSeason=null,highPpg=null;
+    for(const year of years){
+      let total=0,games=0;
+      for(let week=1;week<=18;week++){
+        const row=weeklyPlayerRow(weeklyByYear[year]?.[week],playerId);if(!row)continue;
+        const points=leagueScore(row,scoring);if(points==null)continue;
+        games++;total+=points;
+        if(!highWeek||points>highWeek.points)highWeek={points,season:year,week};
+      }
+      total=Number(total.toFixed(2));
+      if(games>=8){
+        const ppg=Number((total/games).toFixed(2));
+        if(!highSeason||total>highSeason.points)highSeason={points:total,season:year,games};
+        if(!highPpg||ppg>highPpg.points)highPpg={points:ppg,season:year,games,total};
+      }
+    }
+    return{source:'Sleeper weekly regular-season stats + league scoring settings',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,refreshedAt:new Date().toISOString()};
+  }catch(e){console.warn('value-history-scoring',e);return null}
+}
+function health(s){
   const latest=await safeGet(s,LATEST_KEY),indexed=await allItems(s);
   if(indexed.items.length)return{ok:true,storage:'reachable',source:indexed.source,snapshotCount:indexed.items.length,latest:latest?.t||null};
   if(indexed.source==='unavailable'){
@@ -259,8 +319,8 @@ export default async (req)=>{
       }
       const playerId=String(url.searchParams.get('player_id')||'').trim();
       if(!playerId)return json({error:'player_id required'},400);
-      const result=await retry(()=>getPlayerHistory(s,playerId),180);
-      return json({player_id:playerId,points:result.points||[],history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
+      const result=await retry(()=>getPlayerHistory(s,playerId),180),milestones=await scoringMilestones(playerId);
+      return json({player_id:playerId,points:result.points||[],scoring_milestones:milestones,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
     const body=await req.json().catch(()=>null);

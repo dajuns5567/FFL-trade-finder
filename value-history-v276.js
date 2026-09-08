@@ -19,6 +19,7 @@ function addStyles(){
   #valueHistory .vh-hero{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
   #valueHistory .vh-search-wrap{flex:1 1 340px;max-width:620px}
   #valueHistory .vh-search-wrap input{margin:6px 0 0}
+  #valueHistory .vh-search-wrap input:focus{outline:none!important;border-color:color-mix(in srgb,#e4b53f 62%,var(--line))!important;box-shadow:0 0 0 2px color-mix(in srgb,#e4b53f 22%,transparent),0 0 18px color-mix(in srgb,#e4b53f 18%,transparent)!important}
   #valueHistory .vh-status{font-size:12px;color:var(--muted);text-align:right}
   #valueHistory .vh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
   #valueHistory .vh-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}

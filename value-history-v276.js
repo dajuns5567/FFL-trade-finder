@@ -15,20 +15,26 @@ function addStyles(){
   if(document.getElementById('vhHubStyles'))return;
   const st=document.createElement('style');st.id='vhHubStyles';
   st.textContent=`
+  #valueHistory>.card{border-color:color-mix(in srgb,#e4b53f 22%,var(--line));background:radial-gradient(circle at 15% 0%,rgba(228,181,63,.045),transparent 30%),linear-gradient(180deg,color-mix(in srgb,var(--card) 98%,#e4b53f 1%),var(--card));box-shadow:0 14px 38px rgba(0,0,0,.18),inset 0 1px 0 rgba(228,181,63,.08)}
   #valueHistory .vh-shell{display:grid;gap:16px}
-  #valueHistory .vh-hero{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
-  #valueHistory .vh-search-wrap{flex:1 1 340px;max-width:620px}
-  #valueHistory .vh-search-wrap input{margin:6px 0 0}
-  #valueHistory .vh-search-wrap input:focus{outline:none!important;border-color:color-mix(in srgb,#e4b53f 62%,var(--line))!important;box-shadow:0 0 0 2px color-mix(in srgb,#e4b53f 22%,transparent),0 0 18px color-mix(in srgb,#e4b53f 18%,transparent)!important}
-  #valueHistory .vh-status{font-size:12px;color:var(--muted);text-align:right}
+  #valueHistory .vh-control-row{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:4px 0 0;padding-bottom:4px}
+  #valueHistory .vh-hero{display:block;margin:0 0 4px}
+  #valueHistory .vh-search-wrap{width:min(620px,100%)}
+  #valueHistory .vh-search-wrap input{margin:7px 0 0;border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important;transition:border-color .15s ease,box-shadow .15s ease}
+  #valueHistory .vh-search-wrap input:focus,#valueHistory .vh-search-wrap input:focus-visible,#valueHistory input[type="search"]:focus,#valueHistory input[type="search"]:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.20)!important}
+  #valueHistory .vh-status{font-size:12px;color:var(--muted);text-align:right;line-height:1.45;padding:0 2px;white-space:nowrap}
   #valueHistory .vh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-  #valueHistory .vh-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  #valueHistory .vh-card-head{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+  #valueHistory .vh-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+  #valueHistory .vh-card-head{display:grid;grid-template-columns:1fr;gap:10px;align-content:start}
+  #valueHistory .vh-mover-card{height:100%;border-left:2px solid color-mix(in srgb,#e4b53f 46%,var(--line))}
+  #valueHistory .vh-mover-card .vh-card-head{min-height:102px}
+  #valueHistory .vh-mover-card .vh-card-actions{align-self:end}
   #valueHistory .vh-card-periods{display:flex;gap:4px;flex-wrap:wrap}
   #valueHistory .vh-card-periods button{padding:6px 9px;min-width:0;font-size:12px;font-weight:800}
   #valueHistory .vh-card-periods button:not(.secondary){color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 15%,var(--card))!important;border-color:color-mix(in srgb,#e4b53f 52%,var(--line))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 28%,transparent),0 3px 10px rgba(0,0,0,.16)!important}
-  #valueHistory .vh-card{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;min-width:0}
-  #valueHistory .vh-card h3{margin:0 0 5px;font-size:16px;font-weight:800;letter-spacing:.01em}
+  #valueHistory .vh-card{position:relative;border:1px solid color-mix(in srgb,#e4b53f 16%,var(--line));background:linear-gradient(180deg,color-mix(in srgb,#e4b53f 2.5%,var(--card)),var(--card));border-radius:14px;padding:14px;min-width:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.018)}
+  #valueHistory .vh-card:before{content:"";position:absolute;left:14px;right:14px;top:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(228,181,63,.38),transparent);pointer-events:none}
+  #valueHistory .vh-card h3{margin:0 0 5px;font-size:16px;font-weight:800;letter-spacing:.01em;color:#f4f4f5}
   #valueHistory .vh-section-heading{font-size:18px!important;color:#f4f4f5;margin-bottom:6px!important}
   #valueHistory .vh-filter-card{padding:14px 16px}
   #valueHistory .vh-filter-label{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#e4b53f;margin-bottom:9px}
@@ -95,6 +101,10 @@ function addStyles(){
   #valueHistory .vh-subnav button.vh-subnav-active{color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 14%,var(--card))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 42%,transparent),0 3px 12px rgba(0,0,0,.18)!important}
   #valueHistory .vh-team-toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
   #valueHistory .vh-team-toolbar label{min-width:280px;flex:1}
+  #valueHistory .vh-team-picker{border-color:color-mix(in srgb,#e4b53f 30%,var(--line));background:linear-gradient(180deg,rgba(228,181,63,.055),color-mix(in srgb,var(--card) 98%,black))}
+  #valueHistory .vh-team-picker h3{color:#e4b53f}
+  #valueHistory .vh-team-toolbar select,#valueHistory #vhMarketSearch{border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important}
+  #valueHistory .vh-team-toolbar select:focus,#valueHistory .vh-team-toolbar select:focus-visible,#valueHistory #vhMarketSearch:focus,#valueHistory #vhMarketSearch:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.18)!important}
   #valueHistory .vh-similar-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   #valueHistory .vh-neighbor-list{display:grid;gap:6px}
   #valueHistory .vh-neighbor-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
@@ -124,7 +134,7 @@ function addStyles(){
   #valueHistory details.vh-market-table summary{cursor:pointer;font-weight:700}
   #valueHistory .vh-search-results{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0 0}
   #valueHistory .vh-empty{padding:18px;text-align:center;color:var(--muted)}
-  @media(max-width:900px){#valueHistory .vh-grid,#valueHistory .vh-grid-2,#valueHistory .vh-similar-grid{grid-template-columns:1fr}#valueHistory .vh-metrics{grid-template-columns:repeat(3,1fr)}#valueHistory .vh-profile-info{grid-template-columns:1fr 1fr}#valueHistory .vh-profile-facts{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-current{grid-column:2;grid-row:1;text-align:right}}
+  @media(max-width:900px){#valueHistory .vh-control-row{align-items:flex-start}#valueHistory .vh-status{text-align:left;white-space:normal;width:100%}#valueHistory .vh-grid,#valueHistory .vh-grid-2,#valueHistory .vh-similar-grid{grid-template-columns:1fr}#valueHistory .vh-metrics{grid-template-columns:repeat(3,1fr)}#valueHistory .vh-profile-info{grid-template-columns:1fr 1fr}#valueHistory .vh-profile-facts{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-current{grid-column:2;grid-row:1;text-align:right}}
   @media(max-width:620px){#valueHistory .vh-metrics{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-rank-grid{grid-template-columns:1fr}#valueHistory .vh-profile-info{grid-template-columns:1fr}#valueHistory .vh-profile-facts{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-current{grid-column:auto;grid-row:auto;text-align:left;border-left:0;border-top:1px solid var(--line);padding:12px 0 0}}
   `;
   document.head.appendChild(st);
@@ -149,7 +159,7 @@ function scheduleSnapshot(delay=60000){clearTimeout(snapshotTimer);snapshotTimer
 function initUI(){
   if(uiReady)return;uiReady=true;
   const root=document.getElementById('vhLazy');if(!root)return;
-  root.innerHTML=`<div class="vh-subnav"><button type="button" class="secondary small" data-vh-dashboard>Market dashboard</button><button type="button" class="secondary small" data-vh-track-team>Track my team</button></div><div class="vh-hero"><div class="vh-search-wrap"><label for="vhSearch"><b>Search player history</b></label><input id="vhSearch" type="search" placeholder="Search a player…" autocomplete="off"><div id="vhResults" class="vh-search-results"></div></div><div class="vh-status" id="vhStatus">Loading market history…</div></div><div id="vhContent"><div class="vh-empty">Loading market dashboard…</div></div>`;
+  root.innerHTML=`<div class="vh-control-row"><div class="vh-subnav"><button type="button" class="secondary small" data-vh-dashboard>Market dashboard</button><button type="button" class="secondary small" data-vh-track-team>Track my team</button></div><div class="vh-status" id="vhStatus">Loading market history…</div></div><div class="vh-hero"><div class="vh-search-wrap"><label for="vhSearch"><b>Search player history</b></label><input id="vhSearch" type="search" placeholder="Search a player…" autocomplete="off"><div id="vhResults" class="vh-search-results"></div></div></div><div id="vhContent"><div class="vh-empty">Loading market dashboard…</div></div>`;
   const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
   input.addEventListener('input',()=>renderSearchResults(input.value));
   results.addEventListener('click',e=>{const b=e.target.closest('button[data-vh-id]');if(!b)return;selectPlayer(b.dataset.vhId)});
@@ -239,12 +249,12 @@ function renderMarketDashboard(){
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
   <div class="vh-grid-2">
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Risers — ${periodLabel(vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(vpR.valueRisers)}</div>
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Fallers — ${periodLabel(vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(vpF.valueFallers)}</div>
+    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Value Risers — ${periodLabel(vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(vpR.valueRisers)}</div>
+    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Value Fallers — ${periodLabel(vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(vpF.valueFallers)}</div>
   </div>
   <div class="vh-grid-2">
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Risers — ${periodLabel(rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(rpR.rankRisers,'rank')}</div>
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Fallers — ${periodLabel(rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(rpF.rankFallers,'rank')}</div>
+    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Rank Risers — ${periodLabel(rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(rpR.rankRisers,'rank')}</div>
+    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Rank Fallers — ${periodLabel(rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(rpF.rankFallers,'rank')}</div>
   </div>
   <details class="vh-card vh-market-table"><summary>Full Market History Table</summary><div class="vh-sub" style="margin-top:8px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
@@ -278,7 +288,7 @@ function renderTrackMyTeam(){
   const box=document.getElementById('vhContent');if(!box)return;
   const ids=leagueTeamIds(),selected=trackedTeamId&&ids.includes(String(trackedTeamId))?String(trackedTeamId):'';
   const status=document.getElementById('vhStatus');if(status)status.textContent='Track a league roster using the same data as Full Market History.';
-  box.innerHTML=`<div class="vh-card"><div class="vh-card-head"><div><h3>Track My Team</h3><div class="vh-sub">Select one of the 32 league teams. This table is the Full Market History dataset filtered to that team's current players.</div></div></div><div class="vh-team-toolbar"><label><b>Fantasy team</b><select data-vh-team-select><option value="">Select a team…</option>${ids.map(id=>`<option value="${esc(id)}" ${selected===id?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div></div><div id="vhTrackedTeam"></div>`;
+  box.innerHTML=`<div class="vh-card vh-team-picker"><div class="vh-card-head"><div><h3>Track My Team</h3><div class="vh-sub">Select one of the 32 league teams. This table is the Full Market History dataset filtered to that team's current players.</div></div></div><div class="vh-team-toolbar"><label><b>Fantasy team</b><select data-vh-team-select><option value="">Select a team…</option>${ids.map(id=>`<option value="${esc(id)}" ${selected===id?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div></div><div id="vhTrackedTeam"></div>`;
   if(selected)loadTrackedTeam();
 }
 async function loadTrackedTeam(){
@@ -296,16 +306,16 @@ function renderTrackedTeamTable(){
   const vr=teamPeriods.valueRisers,vf=teamPeriods.valueFallers,rr=teamPeriods.rankRisers,rf=teamPeriods.rankFallers,prr=teamPeriods.posRankRisers,prf=teamPeriods.posRankFallers;
   host.innerHTML=`
     <div class="vh-grid-2">
-      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Value Risers — ${periodLabel(vr,marketCache)}</h3><div class="vh-sub">Largest value gains on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueRisers',vr)}</div>${moverRows(periodRows('valueRisers',vr))}</div>
-      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Value Fallers — ${periodLabel(vf,marketCache)}</h3><div class="vh-sub">Largest value declines on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueFallers',vf)}</div>${moverRows(periodRows('valueFallers',vf))}</div>
+      <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Value Risers — ${periodLabel(vr,marketCache)}</h3><div class="vh-sub">Largest value gains on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueRisers',vr)}</div>${moverRows(periodRows('valueRisers',vr))}</div>
+      <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Value Fallers — ${periodLabel(vf,marketCache)}</h3><div class="vh-sub">Largest value declines on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueFallers',vf)}</div>${moverRows(periodRows('valueFallers',vf))}</div>
     </div>
     <div class="vh-grid-2">
-      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Rank Risers — ${periodLabel(rr,marketCache)}</h3><div class="vh-sub">Largest overall-rank improvements on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','rankRisers',rr)}</div>${moverRows(periodRows('rankRisers',rr),'rank')}</div>
-      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Rank Fallers — ${periodLabel(rf,marketCache)}</h3><div class="vh-sub">Largest overall-rank declines on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','rankFallers',rf)}</div>${moverRows(periodRows('rankFallers',rf),'rank')}</div>
+      <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Rank Risers — ${periodLabel(rr,marketCache)}</h3><div class="vh-sub">Largest overall-rank improvements on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','rankRisers',rr)}</div>${moverRows(periodRows('rankRisers',rr),'rank')}</div>
+      <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Rank Fallers — ${periodLabel(rf,marketCache)}</h3><div class="vh-sub">Largest overall-rank declines on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','rankFallers',rf)}</div>${moverRows(periodRows('rankFallers',rf),'rank')}</div>
     </div>
     <div class="vh-grid-2">
-      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Positional Rank Risers — ${periodLabel(prr,marketCache)}</h3><div class="vh-sub">Largest improvements within each player's position on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','posRankRisers',prr)}</div>${moverRows(periodRows('posRankRisers',prr),'posRank')}</div>
-      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Positional Rank Fallers — ${periodLabel(prf,marketCache)}</h3><div class="vh-sub">Largest declines within each player's position on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','posRankFallers',prf)}</div>${moverRows(periodRows('posRankFallers',prf),'posRank')}</div>
+      <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Positional Rank Risers — ${periodLabel(prr,marketCache)}</h3><div class="vh-sub">Largest improvements within each player's position on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','posRankRisers',prr)}</div>${moverRows(periodRows('posRankRisers',prr),'posRank')}</div>
+      <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Positional Rank Fallers — ${periodLabel(prf,marketCache)}</h3><div class="vh-sub">Largest declines within each player's position on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','posRankFallers',prf)}</div>${moverRows(periodRows('posRankFallers',prf),'posRank')}</div>
     </div>
     <div class="vh-card"><div class="vh-card-head"><div><h3>${esc(teamName(trackedTeamId))} — Full Market History</h3><div class="vh-sub">${rows.length} current players • same columns and data as Full Market History</div></div></div>${marketTableRowsMarkup(rows)}</div>`;
 }

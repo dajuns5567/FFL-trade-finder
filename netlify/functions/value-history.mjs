@@ -4,9 +4,11 @@ const LEAGUE='1316867686394769408';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const store=()=>getStore('fll-value-history-v2');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const INDEX_KEY='snapshot-index.json';
+const LEGACY_INDEX_KEY='snapshot-index.json';
 const LATEST_KEY='latest.json';
-const MAX_SNAPSHOTS=500;
+const MONTHS_KEY='history-months.json';
+const MONTH_INDEX_PREFIX='indexes/';
+const LEGACY_MAX=500;
 
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
@@ -35,87 +37,195 @@ async function retry(fn,wait=120){
 async function safeGet(s,key){
   try{return await retry(()=>s.get(key,{type:'json'}),120)}catch{return null}
 }
-async function listSnapshots(s){
-  return retry(()=>s.list({prefix:'snapshots/'}),120);
+function monthKey(t){
+  const d=new Date(t);
+  return Number.isFinite(d.getTime())?d.toISOString().slice(0,7):'';
 }
-function normalizeIndex(value){
-  const items=Array.isArray(value?.items)?value.items:[];
-  const out=[],seen=new Set();
+function monthIndexKey(month){return`${MONTH_INDEX_PREFIX}${month}.json`}
+function normalizeItems(value,limit=Infinity){
+  const items=Array.isArray(value?.items)?value.items:[],out=[],seen=new Set();
   for(const x of items){
     const key=String(x?.key||'').trim(),t=String(x?.t||'').trim();
     if(!key||!key.startsWith('snapshots/')||seen.has(key))continue;
     seen.add(key);out.push({key,t});
   }
   out.sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key)));
-  return out.slice(-MAX_SNAPSHOTS);
+  return Number.isFinite(limit)?out.slice(-limit):out;
+}
+function normalizeMonths(value){
+  const months=Array.isArray(value?.months)?value.months.map(String).filter(x=>/^\d{4}-\d{2}$/.test(x)):[];
+  return [...new Set(months)].sort();
 }
 async function readSnapshotsBounded(s,items,batchSize=25){
   const snaps=[];
   for(let i=0;i<items.length;i+=batchSize){
     const batch=items.slice(i,i+batchSize);
     const rows=await Promise.all(batch.map(async item=>{try{return await s.get(item.key,{type:'json'})}catch{return null}}));
-    snaps.push(...rows);
+    for(const snap of rows)if(snap?.t&&Array.isArray(snap?.rows))snaps.push(snap);
   }
+  snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   return snaps;
 }
 function pointsFromSnapshots(snaps,playerId){
   const points=[];
-  for(const snap of snaps){const row=snap?.rows?.find?.(r=>String(r.id)===playerId);if(row)points.push({t:snap.t,value:row.value,overall:row.overall,pos:row.pos,posRank:row.posRank})}
+  for(const snap of snaps){
+    const row=snap?.rows?.find?.(r=>String(r.id)===playerId);
+    if(row)points.push({t:snap.t,value:row.value,overall:row.overall,pos:row.pos,posRank:row.posRank});
+  }
   points.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   return points;
 }
-async function indexedItems(s){
-  const index=await safeGet(s,INDEX_KEY),items=normalizeIndex(index);
-  return items.length?items:null;
+async function indexedItemsAll(s){
+  const legacy=normalizeItems(await safeGet(s,LEGACY_INDEX_KEY),LEGACY_MAX);
+  const months=normalizeMonths(await safeGet(s,MONTHS_KEY));
+  const all=[],seen=new Set(),add=item=>{if(item?.key&&!seen.has(item.key)){seen.add(item.key);all.push(item)}};
+  for(const item of legacy)add(item);
+  for(const month of months){
+    const idx=normalizeItems(await safeGet(s,monthIndexKey(month)));
+    for(const item of idx)add(item);
+  }
+  all.sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key)));
+  return{items:all,months,hasPartitioned:months.length>0};
+}
+async function listSnapshots(s){
+  return retry(()=>s.list({prefix:'snapshots/'}),120);
 }
 async function listedItems(s){
   const listing=await listSnapshots(s);
-  return (listing?.blobs||[]).slice(-MAX_SNAPSHOTS).map(b=>({key:b.key,t:''}));
+  return (listing?.blobs||[]).map(b=>({key:b.key,t:''}));
+}
+async function allItems(s){
+  const indexed=await indexedItemsAll(s);
+  if(indexed.items.length)return{...indexed,source:indexed.hasPartitioned?'partitioned-index':'legacy-index'};
+  try{
+    const listed=await listedItems(s);
+    return{items:listed,months:[],hasPartitioned:false,source:listed.length?'list':'empty'};
+  }catch{return{items:[],months:[],hasPartitioned:false,source:'unavailable'}}
 }
 async function latestFallback(s,playerId){
-  const latest=await safeGet(s,LATEST_KEY);
-  const key=String(latest?.key||'').trim();
+  const latest=await safeGet(s,LATEST_KEY),key=String(latest?.key||'').trim();
   if(!key)return{reachable:true,points:[],source:'empty'};
   const snap=await safeGet(s,key);
   if(!snap)return{reachable:false,points:[],source:'latest-unreadable'};
   return{reachable:true,points:pointsFromSnapshots([snap],playerId),source:'latest-fallback'};
 }
 async function getPlayerHistory(s,playerId){
-  const index=await indexedItems(s);
-  if(index){
-    const snaps=await readSnapshotsBounded(s,index,25);
-    return{points:pointsFromSnapshots(snaps,playerId),source:'index',snapshotCount:index.length};
+  const indexed=await allItems(s);
+  if(indexed.items.length){
+    const snaps=await readSnapshotsBounded(s,indexed.items,25);
+    return{points:pointsFromSnapshots(snaps,playerId),source:indexed.source,snapshotCount:indexed.items.length};
   }
-  try{
-    const listed=await listedItems(s);
-    if(!listed.length)return{points:[],source:'empty',snapshotCount:0};
-    const snaps=await readSnapshotsBounded(s,listed,25);
-    return{points:pointsFromSnapshots(snaps,playerId),source:'list',snapshotCount:listed.length};
-  }catch{
+  if(indexed.source==='unavailable'){
     const fallback=await latestFallback(s,playerId);
     if(!fallback.reachable)throw new Error('history store unavailable');
     return{points:fallback.points,source:fallback.source,snapshotCount:fallback.source==='empty'?0:1,partial:fallback.source==='latest-fallback'};
   }
+  return{points:[],source:'empty',snapshotCount:0};
+}
+function rowMap(snap){return new Map((snap?.rows||[]).map(r=>[String(r.id),r]))}
+function baselineFor(snaps,latestMs,days){
+  if(!snaps.length)return null;
+  const target=latestMs-days*86400000;
+  let best=snaps[0];
+  for(const snap of snaps){
+    const ms=new Date(snap.t).getTime();
+    if(!Number.isFinite(ms))continue;
+    if(ms<=target)best=snap;else break;
+  }
+  return best;
+}
+function deltaRow(latest,base){
+  if(!latest||!base)return null;
+  const delta=Number(latest.value)-Number(base.value);
+  return{
+    id:String(latest.id),value:Number(latest.value),overall:Number(latest.overall),pos:String(latest.pos),posRank:Number(latest.posRank),
+    delta,pct:Number(base.value)?delta/Number(base.value)*100:0,
+    overallDelta:Number(base.overall)-Number(latest.overall),
+    posRankDelta:Number(base.posRank)-Number(latest.posRank),
+    fromValue:Number(base.value),fromOverall:Number(base.overall),fromPosRank:Number(base.posRank)
+  };
+}
+function metricsAgainst(latestSnap,baseSnap){
+  const latest=rowMap(latestSnap),base=rowMap(baseSnap),out=new Map();
+  for(const [id,row] of latest){const d=deltaRow(row,base.get(id));if(d)out.set(id,d)}
+  return out;
+}
+function marketFromSnapshots(snaps){
+  const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  if(!ordered.length)return{tracking_since:null,latest:null,snapshot_count:0,movers7d:[],risers365:[],fallers365:[],rankMovers30:[],marketRows:[],has365:false};
+  const first=ordered[0],latest=ordered[ordered.length-1],latestMs=new Date(latest.t).getTime();
+  const b7=baselineFor(ordered,latestMs,7)||first,b30=baselineFor(ordered,latestMs,30)||first,b365=baselineFor(ordered,latestMs,365)||first;
+  const m7=metricsAgainst(latest,b7),m30=metricsAgainst(latest,b30),m365=metricsAgainst(latest,b365);
+  const movers7d=[...m7.values()].filter(x=>x.delta!==0).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)||b.value-a.value).slice(0,10);
+  const yr=[...m365.values()].filter(x=>x.delta!==0);
+  const risers365=yr.filter(x=>x.delta>0).sort((a,b)=>b.delta-a.delta||b.value-a.value).slice(0,10);
+  const fallers365=yr.filter(x=>x.delta<0).sort((a,b)=>a.delta-b.delta||b.value-a.value).slice(0,10);
+  const rankMovers30=[...m30.values()].filter(x=>x.overallDelta!==0).sort((a,b)=>Math.abs(b.overallDelta)-Math.abs(a.overallDelta)||b.value-a.value).slice(0,10);
+  const latestMap=rowMap(latest);
+  const marketRows=[...latestMap.values()].map(r=>{
+    const id=String(r.id),d7=m7.get(id),d30=m30.get(id),d365=m365.get(id);
+    return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,overallDelta30:d30?.overallDelta??null};
+  }).sort((a,b)=>b.value-a.value);
+  return{
+    tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,
+    movers7d,risers365,fallers365,rankMovers30,marketRows,
+    has7:latestMs-new Date(first.t).getTime()>=7*86400000,
+    has30:latestMs-new Date(first.t).getTime()>=30*86400000,
+    has365:latestMs-new Date(first.t).getTime()>=365*86400000
+  };
+}
+function itemAtOrBefore(items,targetMs){
+  let best=items[0]||null;
+  for(const item of items){
+    const ms=new Date(item?.t||'').getTime();
+    if(!Number.isFinite(ms))continue;
+    if(ms<=targetMs)best=item;else break;
+  }
+  return best;
+}
+async function getMarketSummary(s){
+  const indexed=await allItems(s),items=indexed.items||[];
+  if(!items.length)return marketFromSnapshots([]);
+  const latestItem=items[items.length-1],latestMs=new Date(latestItem?.t||'').getTime();
+  if(!Number.isFinite(latestMs)){
+    const snaps=await readSnapshotsBounded(s,items,25),market=marketFromSnapshots(snaps);
+    market.snapshot_count=items.length;return market;
+  }
+  const wanted=[items[0],itemAtOrBefore(items,latestMs-7*86400000),itemAtOrBefore(items,latestMs-30*86400000),itemAtOrBefore(items,latestMs-365*86400000),latestItem].filter(Boolean);
+  const unique=[],seen=new Set();for(const item of wanted)if(!seen.has(item.key)){seen.add(item.key);unique.push(item)}
+  unique.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  const snaps=await readSnapshotsBounded(s,unique,5),market=marketFromSnapshots(snaps);
+  market.snapshot_count=items.length;
+  return market;
 }
 async function appendIndex(s,key,t){
-  const current=normalizeIndex(await safeGet(s,INDEX_KEY));
-  const filtered=current.filter(x=>x.key!==key);
-  filtered.push({key,t});
-  filtered.sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key)));
-  await retry(()=>s.setJSON(INDEX_KEY,{version:1,items:filtered.slice(-MAX_SNAPSHOTS)}),120);
-}
-async function health(s){
-  const latest=await safeGet(s,LATEST_KEY),index=normalizeIndex(await safeGet(s,INDEX_KEY));
-  if(index.length)return{ok:true,storage:'reachable',source:'index',snapshotCount:index.length,latest:latest?.t||null};
-  try{
-    const listed=await listedItems(s);
-    return{ok:true,storage:'reachable',source:'list',snapshotCount:listed.length,latest:latest?.t||null};
-  }catch{
-    if(latest?.key){const snap=await safeGet(s,latest.key);if(snap)return{ok:true,storage:'degraded',source:'latest-fallback',snapshotCount:1,latest:latest?.t||null}}
-    if(latest===null)return{ok:false,storage:'unavailable',source:'none',snapshotCount:0,latest:null};
-    return{ok:true,storage:'reachable',source:'empty',snapshotCount:0,latest:latest?.t||null};
+  const legacy=normalizeItems(await safeGet(s,LEGACY_INDEX_KEY),LEGACY_MAX).filter(x=>x.key!==key);
+  legacy.push({key,t});legacy.sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key)));
+  await retry(()=>s.setJSON(LEGACY_INDEX_KEY,{version:2,items:legacy.slice(-LEGACY_MAX)}),120);
+
+  const month=monthKey(t);
+  if(!month)return;
+  const monthKeyName=monthIndexKey(month),monthly=normalizeItems(await safeGet(s,monthKeyName)).filter(x=>x.key!==key);
+  monthly.push({key,t});monthly.sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key)));
+  await retry(()=>s.setJSON(monthKeyName,{version:2,month,items:monthly}),120);
+
+  const months=normalizeMonths(await safeGet(s,MONTHS_KEY));
+  if(!months.includes(month)){
+    months.push(month);months.sort();
+    await retry(()=>s.setJSON(MONTHS_KEY,{version:2,months}),120);
   }
 }
+async function health(s){
+  const latest=await safeGet(s,LATEST_KEY),indexed=await allItems(s);
+  if(indexed.items.length)return{ok:true,storage:'reachable',source:indexed.source,snapshotCount:indexed.items.length,latest:latest?.t||null};
+  if(indexed.source==='unavailable'){
+    if(latest?.key){const snap=await safeGet(s,latest.key);if(snap)return{ok:true,storage:'degraded',source:'latest-fallback',snapshotCount:1,latest:latest?.t||null}}
+    return{ok:false,storage:'unavailable',source:'none',snapshotCount:0,latest:null};
+  }
+  return{ok:true,storage:'reachable',source:'empty',snapshotCount:0,latest:latest?.t||null};
+}
+
+export { monthKey, marketFromSnapshots, baselineFor };
 
 export default async (req)=>{
   try{
@@ -124,6 +234,10 @@ export default async (req)=>{
       if(url.searchParams.get('health')==='1'){
         const h=await health(s);
         return json(h,h.ok?200:503);
+      }
+      if(url.searchParams.get('market')==='1'){
+        const market=await retry(()=>getMarketSummary(s),180);
+        return json({market,history_state:'ok'});
       }
       const playerId=String(url.searchParams.get('player_id')||'').trim();
       if(!playerId)return json({error:'player_id required'},400);
@@ -136,14 +250,12 @@ export default async (req)=>{
     const rows=cleanRows(body?.rows);
     if(rows.length<100)return json({error:'incomplete snapshot'},400);
     rows.sort((a,b)=>a.id.localeCompare(b.id));
-    const fp=fingerprint(rows);
-    const latest=await safeGet(s,LATEST_KEY);
+    const fp=fingerprint(rows),latest=await safeGet(s,LATEST_KEY);
     if(latest?.fingerprint===fp)return json({ok:true,stored:false,reason:'unchanged',t:latest.t});
-    const t=new Date().toISOString();
-    const key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
-    const snapshot={version:1,league:LEAGUE,t,fingerprint:fp,rows};
+    const t=new Date().toISOString(),key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
+    const snapshot={version:2,league:LEAGUE,t,fingerprint:fp,rows};
     await retry(()=>s.setJSON(key,snapshot),120);
-    await retry(()=>s.setJSON(LATEST_KEY,{version:1,t,fingerprint:fp,key,count:rows.length}),120);
+    await retry(()=>s.setJSON(LATEST_KEY,{version:2,t,fingerprint:fp,key,count:rows.length}),120);
     try{await appendIndex(s,key,t)}catch(e){console.warn('value-history-index',e)}
     return json({ok:true,stored:true,t,count:rows.length});
   }catch(e){

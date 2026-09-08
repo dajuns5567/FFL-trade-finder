@@ -1,20 +1,222 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history';
-let installed=false,uiReady=false,snapshotTimer=null;
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,marketSort={key:'value',dir:-1};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
-function addShell(){if(installed)return;installed=true;const tabs=document.querySelector('.tabs');if(!tabs)return;const b=document.createElement('button');b.type='button';b.dataset.tab='valueHistory';b.textContent='Value History';tabs.appendChild(b);const main=document.querySelector('main');if(!main)return;const sec=document.createElement('section');sec.id='valueHistory';sec.className='tab';sec.hidden=true;sec.innerHTML='<div class="card"><h2>Value History</h2><p class="muted">Historical observations of the finished Fleeced! master value. History is read-only and does not feed back into player values, rankings, Trade Finder or Trade Evaluator.</p><div id="vhLazy"><div class="empty">Open Value History to load historical data.</div></div></div>';main.appendChild(sec);b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!==b.dataset.tab);setTimeout(initUI,0)})}
+const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
+const signed=n=>{const v=Number(n)||0;return`${v>0?'+':''}${fmt(v)}`};
+const signedPct=n=>{const v=Number(n)||0;return`${v>0?'+':''}${v.toFixed(1)}%`};
+const dateShort=t=>{try{return new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}catch{return'—'}};
+const dateTime=t=>{try{return new Date(t).toLocaleString()}catch{return'—'}};
+
+function addStyles(){
+  if(document.getElementById('vhHubStyles'))return;
+  const st=document.createElement('style');st.id='vhHubStyles';
+  st.textContent=`
+  #valueHistory .vh-shell{display:grid;gap:16px}
+  #valueHistory .vh-hero{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+  #valueHistory .vh-search-wrap{flex:1 1 340px;max-width:620px}
+  #valueHistory .vh-search-wrap input{margin:6px 0 0}
+  #valueHistory .vh-status{font-size:12px;color:var(--muted);text-align:right}
+  #valueHistory .vh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  #valueHistory .vh-card{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;min-width:0}
+  #valueHistory .vh-card h3{margin:0 0 4px;font-size:15px}
+  #valueHistory .vh-card .vh-sub{font-size:12px;color:var(--muted);margin-bottom:10px}
+  #valueHistory .vh-list{display:grid;gap:5px}
+  #valueHistory .vh-mover{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+  #valueHistory .vh-mover:first-child{border-top:0}
+  #valueHistory .vh-ranknum{font-size:11px;color:var(--muted);text-align:center}
+  #valueHistory .vh-player-link{background:none;border:0;padding:0;color:inherit;text-align:left;font:inherit;cursor:pointer;min-width:0}
+  #valueHistory .vh-player-link:hover{text-decoration:underline}
+  #valueHistory .vh-player-link b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #valueHistory .vh-player-link small{color:var(--muted)}
+  #valueHistory .vh-delta{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+  #valueHistory .vh-up{color:var(--good,#1f9d68)}
+  #valueHistory .vh-down{color:var(--bad,#c45151)}
+  #valueHistory .vh-neutral{color:var(--muted)}
+  #valueHistory .vh-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  #valueHistory .vh-profile-head{display:flex;gap:18px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+  #valueHistory .vh-profile-title h2{margin:0 0 4px}
+  #valueHistory .vh-meta{color:var(--muted);font-size:13px;line-height:1.55}
+  #valueHistory .vh-current{text-align:right}
+  #valueHistory .vh-current .vh-big{font-size:32px;font-weight:800;line-height:1}
+  #valueHistory .vh-periods{display:flex;gap:6px;flex-wrap:wrap}
+  #valueHistory .vh-periods button{min-width:52px}
+  #valueHistory .vh-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+  #valueHistory .vh-metric{border:1px solid var(--line);border-radius:12px;padding:11px;background:color-mix(in srgb,var(--card) 92%,transparent)}
+  #valueHistory .vh-metric small{display:block;color:var(--muted);margin-bottom:3px}
+  #valueHistory .vh-metric b{font-size:17px}
+  #valueHistory .vh-chart-card{padding:12px}
+  #valueHistory .vh-chart-card svg{display:block;width:100%;height:auto;border-radius:10px}
+  #valueHistory .vh-rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  #valueHistory .vh-rank-stat{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px}
+  #valueHistory .vh-rank-stat b{font-size:20px}
+  #valueHistory .vh-feed{display:grid;gap:8px}
+  #valueHistory .vh-feed-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
+  #valueHistory .vh-feed-row:first-child{border-top:0}
+  #valueHistory .vh-table-wrap{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:12px}
+  #valueHistory .vh-table{width:100%;border-collapse:collapse;font-size:12px}
+  #valueHistory .vh-table th,#valueHistory .vh-table td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+  #valueHistory .vh-table th:first-child,#valueHistory .vh-table td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}
+  #valueHistory .vh-table th{position:sticky;top:0;background:var(--card);z-index:2;cursor:pointer}
+  #valueHistory .vh-table th:first-child{z-index:3}
+  #valueHistory details.vh-market-table summary{cursor:pointer;font-weight:700}
+  #valueHistory .vh-search-results{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0 0}
+  #valueHistory .vh-empty{padding:18px;text-align:center;color:var(--muted)}
+  @media(max-width:900px){#valueHistory .vh-grid{grid-template-columns:1fr}#valueHistory .vh-metrics{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:620px){#valueHistory .vh-metrics{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-rank-grid{grid-template-columns:1fr}#valueHistory .vh-current{text-align:left}}
+  `;
+  document.head.appendChild(st);
+}
+function addShell(){
+  if(installed)return;installed=true;addStyles();
+  const tabs=document.querySelector('.tabs');if(!tabs)return;
+  const b=document.createElement('button');b.type='button';b.dataset.tab='valueHistory';b.textContent='Value History';tabs.appendChild(b);
+  const main=document.querySelector('main');if(!main)return;
+  const sec=document.createElement('section');sec.id='valueHistory';sec.className='tab';sec.hidden=true;
+  sec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-hero"><div><h2 style="margin:0 0 4px">Value History</h2><p class="muted" style="margin:0">Historical intelligence for the finished Fleeced! master value. Read-only: this data never feeds back into values, rankings, Trade Finder or Trade Evaluator.</p></div></div><div id="vhLazy"><div class="empty">Open Value History to load the market dashboard.</div></div></div></div>';
+  main.appendChild(sec);
+  b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!==b.dataset.tab);setTimeout(initUI,0)});
+}
 function ranked(){try{return typeof ensureMaster==='function'?(ensureMaster()||[]):[]}catch{return[]}}
 function posRanks(list){const counts={},map=new Map();for(const z of list){const p=groupPos(z.x);counts[p]=(counts[p]||0)+1;map.set(String(z.x.id),counts[p])}return map}
 function currentRows(){const list=ranked();if(!list.length||!tv().playerValue)return[];const pr=posRanks(list),rows=[];for(let i=0;i<list.length;i++){const x=list[i]?.x;if(!x||x.type!=='player')continue;const pos=groupPos(x);if(!['QB','RB','WR','TE','IDP'].includes(pos))continue;const value=Math.round(Number(tv().playerValue(x)||0));if(!Number.isFinite(value)||value<=0)continue;rows.push({id:String(x.id),value,overall:i+1,pos,posRank:pr.get(String(x.id))||1})}return rows}
 function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();return !/loading|updating|refreshing/.test(text)}
-async function recordSnapshot(){try{if(!snapshotPreconditions()){scheduleSnapshot(15000);return}const rows=currentRows();if(rows.length<100){scheduleSnapshot(15000);return}fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows}),keepalive:true}).catch(()=>{})}catch{}}
+async function recordSnapshot(){try{if(!snapshotPreconditions()){scheduleSnapshot(15000);return}const rows=currentRows();if(rows.length<100){scheduleSnapshot(15000);return}const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows}),keepalive:true});if(r.ok){marketCache=null;if(uiReady&&!currentPlayerId)loadMarket(true)}}catch{}}
 function scheduleSnapshot(delay=60000){clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(recordSnapshot,{timeout:5000});else recordSnapshot()},delay)}
-function initUI(){if(uiReady)return;uiReady=true;const root=document.getElementById('vhLazy');if(!root)return;root.innerHTML='<label for="vhSearch">Player</label><input id="vhSearch" type="search" placeholder="Search a player…" autocomplete="off"><div id="vhResults" class="tiny" style="margin:8px 0 14px"></div><div id="vhChart"><div class="empty">Select a player to view value history.</div></div>';const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');input.addEventListener('input',()=>{const q=norm(input.value);if(!q){results.innerHTML='';return}const matches=ranked().filter(z=>z?.x?.type==='player'&&norm(playerName(z.x.id)).includes(q)).slice(0,20);results.innerHTML=matches.map(z=>`<button type="button" class="secondary small" data-vh-id="${esc(z.x.id)}" style="margin:2px">${esc(playerName(z.x.id))} • ${esc(groupPos(z.x))}</button>`).join('')});results.addEventListener('click',e=>{const b=e.target.closest('button[data-vh-id]');if(!b)return;input.value=playerName(b.dataset.vhId);results.innerHTML='';loadPlayer(b.dataset.vhId)})}
+
+function initUI(){
+  if(uiReady)return;uiReady=true;
+  const root=document.getElementById('vhLazy');if(!root)return;
+  root.innerHTML=`<div class="vh-hero"><div class="vh-search-wrap"><label for="vhSearch"><b>Search player history</b></label><input id="vhSearch" type="search" placeholder="Search a player…" autocomplete="off"><div id="vhResults" class="vh-search-results"></div></div><div class="vh-status" id="vhStatus">Loading market history…</div></div><div id="vhContent"><div class="vh-empty">Loading market dashboard…</div></div>`;
+  const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
+  input.addEventListener('input',()=>renderSearchResults(input.value));
+  results.addEventListener('click',e=>{const b=e.target.closest('button[data-vh-id]');if(!b)return;selectPlayer(b.dataset.vhId)});
+  document.getElementById('vhContent')?.addEventListener('click',handleContentClick);
+  loadMarket();
+}
+function renderSearchResults(value){
+  const results=document.getElementById('vhResults');if(!results)return;
+  const q=norm(value);if(!q){results.innerHTML='';return}
+  const matches=ranked().filter(z=>z?.x?.type==='player'&&norm(playerName(z.x.id)).includes(q)).slice(0,16);
+  results.innerHTML=matches.map(z=>`<button type="button" class="secondary small" data-vh-id="${esc(z.x.id)}">${esc(playerName(z.x.id))} • ${esc(groupPos(z.x))}</button>`).join('');
+}
+function selectPlayer(id){
+  currentPlayerId=String(id);const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
+  if(input)input.value=playerName(id);if(results)results.innerHTML='';
+  loadPlayer(id);
+}
+function handleContentClick(e){
+  const player=e.target.closest('[data-vh-player]');if(player){selectPlayer(player.dataset.vhPlayer);return}
+  const back=e.target.closest('[data-vh-dashboard]');if(back){currentPlayerId=null;const input=document.getElementById('vhSearch');if(input)input.value='';loadMarket();return}
+  const period=e.target.closest('[data-vh-period]');if(period&&currentPlayerId){const box=document.getElementById('vhProfileData');const pts=box?JSON.parse(box.dataset.points||'[]'):[];renderPlayerProfile(currentPlayerId,pts,period.dataset.vhPeriod);return}
+  const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};renderMarketTable();return}
+}
 async function historyFetch(id){let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_id=${encodeURIComponent(id)}`,{cache:'no-store'});if(!r.ok)throw Error('history unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('history unavailable')}
-async function loadPlayer(id){const box=document.getElementById('vhChart');if(!box)return;box.innerHTML='<div class="empty">Loading history…</div>';try{const data=await historyFetch(id),pts=Array.isArray(data.points)?data.points:[];renderChart(box,id,pts)}catch{box.innerHTML='<div class="notice">Historical data is temporarily unavailable. Current values and all trade tools are unaffected.</div>'}}
-function renderChart(box,id,pts){if(!pts.length){box.innerHTML=`<div class="empty">No historical observations recorded yet for ${esc(playerName(id))}. A point will appear after a completed value refresh is recorded.</div>`;return}const values=pts.map(p=>Number(p.value)).filter(Number.isFinite),min=Math.min(...values),max=Math.max(...values),pad=Math.max(100,(max-min)*.15),lo=Math.max(0,min-pad),hi=max+pad;const W=900,H=360,L=64,R=24,T=24,B=54,n=Math.max(1,pts.length-1),x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo));const path=pts.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' ');const dots=pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="4"><title>${esc(new Date(p.t).toLocaleString())}: ${Number(p.value).toLocaleString()} • Overall #${p.overall} • ${esc(p.pos)} #${p.posRank}</title></circle>`).join('');const first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=first.value?delta/Number(first.value)*100:0;box.innerHTML=`<div class="grid3" style="margin-bottom:12px"><div><b>Current</b><div class="score">${Number(last.value).toLocaleString()}</div></div><div><b>Change</b><div class="score">${delta>=0?'+':''}${delta.toLocaleString()}</div><small>${pct>=0?'+':''}${pct.toFixed(1)}%</small></div><div><b>Range</b><div class="score">${min.toLocaleString()}–${max.toLocaleString()}</div><small>${pts.length} observation${pts.length===1?'':'s'}</small></div></div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(playerName(id))} value history" style="width:100%;height:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="currentColor" opacity=".25"/><line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="currentColor" opacity=".25"/><text x="${L-8}" y="${T+5}" text-anchor="end" font-size="12" fill="currentColor">${Math.round(hi).toLocaleString()}</text><text x="${L-8}" y="${H-B}" text-anchor="end" font-size="12" fill="currentColor">${Math.round(lo).toLocaleString()}</text><text x="${L}" y="${H-18}" font-size="12" fill="currentColor">${esc(new Date(first.t).toLocaleDateString())}</text><text x="${W-R}" y="${H-18}" text-anchor="end" font-size="12" fill="currentColor">${esc(new Date(last.t).toLocaleDateString())}</text><path d="${path}" fill="none" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke"/>${dots}</svg><p class="tiny muted">Hover/tap a point for its timestamp, overall rank and positional rank.</p>`}
-function boot(){addShell();scheduleSnapshot(60000);document.getElementById('updateBtn')?.addEventListener('click',()=>scheduleSnapshot(60000),{passive:true})}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+async function marketFetch(){const r=await fetch(`${API}?market=1`,{cache:'no-store'});if(!r.ok)throw Error('market history unavailable');return await r.json()}
+async function loadMarket(force=false){
+  const box=document.getElementById('vhContent');if(!box)return;
+  currentPlayerId=null;
+  if(!marketCache||force){box.innerHTML='<div class="vh-empty">Loading market dashboard…</div>';try{const data=await marketFetch();marketCache=data.market||{};}catch{box.innerHTML='<div class="notice">Historical market data is temporarily unavailable. Current values and all trade tools are unaffected.</div>';return}}
+  renderMarketDashboard();
+}
+function deltaClass(n){return Number(n)>0?'vh-up':Number(n)<0?'vh-down':'vh-neutral'}
+function moverRows(rows,mode='value'){
+  if(!rows?.length)return'<div class="vh-empty">Not enough historical movement yet.</div>';
+  return`<div class="vh-list">${rows.map((r,i)=>{const delta=mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)} #${r.posRank} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div></div>`}).join('')}</div>`;
+}
+function renderMarketDashboard(){
+  const box=document.getElementById('vhContent');if(!box||!marketCache)return;
+  const m=marketCache,status=document.getElementById('vhStatus');
+  if(status)status.textContent=m.latest?`Tracking since ${dateShort(m.tracking_since)} • Latest snapshot ${dateTime(m.latest)} • ${fmt(m.snapshot_count)} observations`:'Waiting for the first historical snapshot.';
+  const yearLabel=m.has365?'365 Days':'Since Tracking Began',weekSub=m.has7?'Largest absolute value changes over the last 7 days':'Using all available history until 7 full days are tracked';
+  box.innerHTML=`
+  <div class="vh-grid">
+    <div class="vh-card"><h3>Top 10 Movers — 7 Days</h3><div class="vh-sub">${weekSub}</div>${moverRows(m.movers7d)}</div>
+    <div class="vh-card"><h3>Biggest Risers — ${yearLabel}</h3><div class="vh-sub">Largest net increases in finished player value</div>${moverRows(m.risers365)}</div>
+    <div class="vh-card"><h3>Biggest Fallers — ${yearLabel}</h3><div class="vh-sub">Largest net decreases in finished player value</div>${moverRows(m.fallers365)}</div>
+  </div>
+  <div class="vh-card"><h3>Largest Rank Movers — 30 Days</h3><div class="vh-sub">${m.has30?'Overall-rank movement over the last 30 days':'Using available history until 30 full days are tracked'}</div>${moverRows(m.rankMovers30,'rank')}</div>
+  <details class="vh-card vh-market-table"><summary>Full Market History Table</summary><div class="vh-sub" style="margin-top:8px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
+  document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
+  renderMarketTable();
+}
+function renderMarketTable(){
+  const host=document.getElementById('vhMarketTable');if(!host||!marketCache)return;
+  const q=norm(document.getElementById('vhMarketSearch')?.value||''),rows=(marketCache.marketRows||[]).filter(r=>!q||norm(playerName(r.id)).includes(q)).slice();
+  const key=marketSort.key,dir=marketSort.dir;
+  rows.sort((a,b)=>{if(key==='name')return dir*String(playerName(a.id)).localeCompare(String(playerName(b.id)));const av=Number(a[key]),bv=Number(b[key]);if(!Number.isFinite(av)&&!Number.isFinite(bv))return 0;if(!Number.isFinite(av))return 1;if(!Number.isFinite(bv))return-1;return dir*(av-bv)});
+  host.innerHTML=`<div class="vh-table-wrap"><table class="vh-table"><thead><tr><th data-vh-sort="name">Player</th><th data-vh-sort="value">Value</th><th data-vh-sort="delta7">7D</th><th data-vh-sort="delta30">30D</th><th data-vh-sort="delta365">1Y/All</th><th data-vh-sort="overall">Overall</th><th data-vh-sort="posRank">Pos Rank</th></tr></thead><tbody>${rows.map(r=>`<tr><td><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)}</small></button></td><td>${fmt(r.value)}</td><td class="${deltaClass(r.delta7)}">${r.delta7==null?'—':signed(r.delta7)}</td><td class="${deltaClass(r.delta30)}">${r.delta30==null?'—':signed(r.delta30)}</td><td class="${deltaClass(r.delta365)}">${r.delta365==null?'—':signed(r.delta365)}</td><td>#${r.overall}</td><td>${esc(r.pos)} #${r.posRank}</td></tr>`).join('')}</tbody></table></div>`;
+}
+async function loadPlayer(id){
+  const box=document.getElementById('vhContent');if(!box)return;box.innerHTML='<div class="vh-empty">Loading player history…</div>';
+  try{const data=await historyFetch(id),pts=Array.isArray(data.points)?data.points:[];renderPlayerProfile(id,pts,'ALL')}catch{box.innerHTML='<div class="notice">Historical data is temporarily unavailable. Current values and all trade tools are unaffected.</div>'}
+}
+function livePlayerMeta(id){
+  const list=ranked(),pr=posRanks(list),idx=list.findIndex(z=>String(z?.x?.id)===String(id)),z=idx>=0?list[idx]:null,x=z?.x||{type:'player',id},p=state.players?.[String(id)]||{},asset=(state.allAssets||[]).find(a=>a?.type==='player'&&String(a.id)===String(id));
+  const pos=groupPos(x),owner=asset?.owner,nfl=String(p.team||p.team_abbr||p.nfl_team||p.pro_team||'FA').toUpperCase();
+  let age=Number(p.age);if(!Number.isFinite(age)){const bd=p.birth_date||p.birthdate||p.dob;if(bd){const d=new Date(bd),now=new Date();if(Number.isFinite(d.getTime())){age=now.getFullYear()-d.getFullYear();const before=now.getMonth()<d.getMonth()||(now.getMonth()===d.getMonth()&&now.getDate()<d.getDate());if(before)age--}}}
+  return{pos,nfl,ownerName:owner==null?'Free Agent':teamName(owner),age:Number.isFinite(age)&&age>0?age:null,overall:idx>=0?idx+1:null,posRank:pr.get(String(id))||null,value:Math.round(Number(tv().playerValue?.(x)||0))};
+}
+function periodPoints(pts,period){
+  if(!pts.length||period==='ALL')return pts.slice();
+  const days={ '7D':7,'30D':30,'90D':90,'1Y':365 }[period]||30,latest=new Date(pts[pts.length-1].t).getTime(),cut=latest-days*86400000;
+  const inRange=pts.filter(p=>new Date(p.t).getTime()>=cut);
+  if(!inRange.length)return[pts[pts.length-1]];
+  const firstIndex=pts.indexOf(inRange[0]);if(firstIndex>0)inRange.unshift(pts[firstIndex-1]);
+  return inRange;
+}
+function rankSpark(points,field){
+  if(!points.length)return'<div class="vh-empty">No rank history yet.</div>';
+  const vals=points.map(p=>Number(p[field])).filter(Number.isFinite),min=Math.min(...vals),max=Math.max(...vals),W=360,H=90,P=8,n=Math.max(1,points.length-1),x=i=>P+(W-2*P)*(i/n),y=v=>P+(H-2*P)*((Number(v)-min)/Math.max(1,max-min));
+  const path=points.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(p[field]).toFixed(1)}`).join(' ');
+  return`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Rank history"><path d="${path}" fill="none" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function valueChart(id,pts){
+  if(!pts.length)return`<div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. A point will appear after a completed value refresh is recorded.</div>`;
+  const values=pts.map(p=>Number(p.value)).filter(Number.isFinite),min=Math.min(...values),max=Math.max(...values),pad=Math.max(100,(max-min)*.15),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=360,L=64,R=24,T=24,B=54,n=Math.max(1,pts.length-1),x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo));
+  const path=pts.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' '),dots=pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="4"><title>${esc(dateTime(p.t))}: ${fmt(p.value)} • Overall #${p.overall} • ${esc(p.pos)} #${p.posRank}</title></circle>`).join(''),first=pts[0],last=pts[pts.length-1];
+  return`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(playerName(id))} value history"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="currentColor" opacity=".25"/><line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="currentColor" opacity=".25"/><text x="${L-8}" y="${T+5}" text-anchor="end" font-size="12" fill="currentColor">${Math.round(hi).toLocaleString()}</text><text x="${L-8}" y="${H-B}" text-anchor="end" font-size="12" fill="currentColor">${Math.round(lo).toLocaleString()}</text><text x="${L}" y="${H-18}" font-size="12" fill="currentColor">${esc(new Date(first.t).toLocaleDateString())}</text><text x="${W-R}" y="${H-18}" text-anchor="end" font-size="12" fill="currentColor">${esc(new Date(last.t).toLocaleDateString())}</text><path d="${path}" fill="none" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke"/>${dots}</svg><p class="tiny muted">Hover/tap a point for timestamp, overall rank and positional rank.</p>`;
+}
+function recentChanges(pts){
+  const rows=[];for(let i=pts.length-1;i>0&&rows.length<8;i--){const a=pts[i-1],b=pts[i],dv=Number(b.value)-Number(a.value),dr=Number(a.overall)-Number(b.overall),dp=Number(a.posRank)-Number(b.posRank);if(dv||dr||dp)rows.push({t:b.t,dv,dr,dp,value:b.value,overall:b.overall,pos:b.pos,posRank:b.posRank})}
+  if(!rows.length)return'<div class="vh-empty">No value or rank changes recorded yet.</div>';
+  return`<div class="vh-feed">${rows.map(r=>`<div class="vh-feed-row"><div><b>${dateShort(r.t)}</b><div class="muted">Value ${fmt(r.value)} • Overall #${r.overall} • ${esc(r.pos)} #${r.posRank}</div></div><div style="text-align:right"><b class="${deltaClass(r.dv)}">${signed(r.dv)}</b><div class="muted">${r.dr?`${r.dr>0?'+':''}${r.dr} overall`:''}${r.dr&&r.dp?' • ':''}${r.dp?`${r.dp>0?'+':''}${r.dp} pos`:''}</div></div></div>`).join('')}</div>`;
+}
+function renderPlayerProfile(id,allPts,period='ALL'){
+  const box=document.getElementById('vhContent');if(!box)return;
+  if(!allPts.length){box.innerHTML=`<div class="vh-card"><div class="vh-toolbar"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
+  const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank)));
+  const latestMs=new Date(allPts[allPts.length-1].t).getTime(),rank30=allPts.filter(p=>new Date(p.t).getTime()>=latestMs-30*86400000),rankBase=rank30[0]||allPts[0],rankLast=rank30[rank30.length-1]||allPts[allPts.length-1],overallMove=Number(rankBase.overall)-Number(rankLast.overall),posMove=Number(rankBase.posRank)-Number(rankLast.posRank);
+  const status=document.getElementById('vhStatus');if(status)status.textContent=`Tracked since ${dateShort(allPts[0].t)} • ${fmt(allPts.length)} player observations`;
+  box.innerHTML=`
+  <div id="vhProfileData" data-points="${esc(JSON.stringify(allPts))}" hidden></div>
+  <div class="vh-card">
+    <div class="vh-toolbar" style="margin-bottom:12px"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div>
+    <div class="vh-profile-head"><div class="vh-profile-title"><h2>${esc(playerName(id))}</h2><div class="vh-meta">${esc(meta.pos)} • ${esc(meta.nfl)}${meta.age?` • Age ${meta.age}`:''}<br>Owned by: <b>${esc(meta.ownerName)}</b><br>${meta.overall?`Overall #${meta.overall}`:''}${meta.posRank?` • ${esc(meta.pos)} #${meta.posRank}`:''}<br>Tracked since: ${dateShort(allPts[0].t)}</div></div><div class="vh-current"><small class="muted">Current Value</small><div class="vh-big">${fmt(meta.value||last.value)}</div></div></div>
+  </div>
+  <div class="vh-card"><div class="vh-periods">${['7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-period="${p}">${p}</button>`).join('')}</div></div>
+  <div class="vh-metrics">
+    <div class="vh-metric"><small>${period} Change</small><b class="${deltaClass(delta)}">${signed(delta)}</b><div class="tiny muted">${signedPct(pct)}</div></div>
+    <div class="vh-metric"><small>${period} Range</small><b>${fmt(pmin)}–${fmt(pmax)}</b></div>
+    <div class="vh-metric"><small>All-Time High</small><b>${fmt(allMax)}</b></div>
+    <div class="vh-metric"><small>All-Time Low</small><b>${fmt(allMin)}</b></div>
+    <div class="vh-metric"><small>Best Overall Rank</small><b>#${bestOverall}</b></div>
+    <div class="vh-metric"><small>Best ${esc(meta.pos)} Rank</small><b>#${bestPos}</b></div>
+  </div>
+  <div class="vh-card vh-chart-card"><h3 style="margin:0 0 8px">${period==='ALL'?'All-Time':period} Value History</h3>${valueChart(id,pts)}</div>
+  <div class="vh-rank-grid">
+    <div class="vh-card"><h3>Overall Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.overall} → #${rankLast.overall}</span><b class="${deltaClass(overallMove)}">${overallMove>0?'+':''}${overallMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'overall')}</div>
+    <div class="vh-card"><h3>${esc(meta.pos)} Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.posRank} → #${rankLast.posRank}</span><b class="${deltaClass(posMove)}">${posMove>0?'+':''}${posMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'posRank')}</div>
+  </div>
+  <div class="vh-grid">
+    <div class="vh-card" style="grid-column:span 2"><h3>Recent Changes</h3><div class="vh-sub">Latest recorded value or rank changes</div>${recentChanges(allPts)}</div>
+    <div class="vh-card"><h3>All-Time Milestones</h3><div class="vh-feed"><div class="vh-feed-row"><span>High value</span><b>${fmt(allMax)}</b></div><div class="vh-feed-row"><span>Low value</span><b>${fmt(allMin)}</b></div><div class="vh-feed-row"><span>Best overall</span><b>#${bestOverall}</b></div><div class="vh-feed-row"><span>Best ${esc(meta.pos)}</span><b>#${bestPos}</b></div><div class="vh-feed-row"><span>Observations</span><b>${fmt(allPts.length)}</b></div></div></div>
+  </div>`;
+}
+function boot(){addShell();scheduleSnapshot(60000);document.getElementById('updateBtn')?.addEventListener('click',()=>scheduleSnapshot(60000),{passive:true})}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+window.valueHistoryV331={currentRows,recordSnapshot,historyFetch,marketFetch,livePlayerMeta,periodPoints};
 })();

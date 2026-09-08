@@ -2,7 +2,7 @@ const cp=require('child_process');
 const expected={
   'trade-value-normalization-v139.js':'a3176707c4812e4747864914bfc68b05294990a0',
   'trade-te-scoring-adjustment-v259.js':'7f087f0339b5d8a3af1c97e8787f4c55d28f59a6',
-  'trade-finder-v256-compiled.js':'df2cd8ef5ac48ab56f9dd38fc9e61d59ab14e898',
+  'trade-finder-v256-compiled.js':'7654cbb12e4a5f48f18cd12ef56b7e71b5ad9287',
   'trade-runtime-v256-compiled.js':'95803b720f2555277d83390583f52ec23ebf111d',
   'trade-evaluator-any-team-v184.js':'c088af9ce9bd24f6142873fae201f1a262c63123',
   'trade-finder-candidate-guard-v223.js':'9373b06e4014f5fc368cf8eb00ed087b261ba1a7',

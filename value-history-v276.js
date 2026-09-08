@@ -80,8 +80,8 @@ function addStyles(){
   #valueHistory .vh-profile-fact small{color:#e4b53f;font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;margin-bottom:7px}
   #valueHistory .vh-profile-fact b{font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
   #valueHistory .vh-profile-fact span{font-size:12px;color:var(--muted);margin-top:4px}
-  #valueHistory .vh-current{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border-left:1px solid var(--line);padding-left:20px}
-  #valueHistory .vh-current small{font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;color:#e4b53f!important}
+  #valueHistory .vh-current{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border-left:1px solid var(--line);padding:10px 16px;min-width:0}
+  #valueHistory .vh-current small{font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;color:#e4b53f!important;margin-bottom:7px;line-height:1.2}
   #valueHistory .vh-current .vh-big{font-size:36px;font-weight:900;line-height:1}
   #valueHistory .vh-rank-chart svg{display:block;width:100%;height:auto}
   #valueHistory .vh-rank-chart .vh-axis{stroke:currentColor;opacity:.25}
@@ -98,9 +98,9 @@ function addStyles(){
   #valueHistory .vh-metric .vh-metric-time{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.25}
   #valueHistory .vh-chart-card{padding:12px}
   #valueHistory .vh-chart-card svg{display:block;width:100%;height:auto;border-radius:10px}
-  #valueHistory .vh-value-chart{position:relative}
+  #valueHistory .vh-value-chart{position:relative;padding-top:98px}
   #valueHistory .vh-value-axis{fill:currentColor;font-size:13px;font-weight:700;opacity:.88}
-  #valueHistory .vh-refresh-callout{position:absolute;right:16px;top:4px;z-index:4;min-width:260px;padding:12px 14px;border:1px solid color-mix(in srgb,#e4b53f 52%,var(--line));border-radius:12px;background:linear-gradient(180deg,color-mix(in srgb,#e4b53f 8%,var(--card)),color-mix(in srgb,var(--card) 96%,black));box-shadow:0 8px 24px rgba(0,0,0,.24)}
+  #valueHistory .vh-refresh-callout{position:absolute;right:16px;top:4px;z-index:4;min-width:260px;max-width:calc(100% - 32px);padding:12px 14px;border:1px solid color-mix(in srgb,#e4b53f 52%,var(--line));border-radius:12px;background:linear-gradient(180deg,color-mix(in srgb,#e4b53f 8%,var(--card)),color-mix(in srgb,var(--card) 96%,black));box-shadow:0 8px 24px rgba(0,0,0,.24)}
   #valueHistory .vh-refresh-callout .vh-refresh-label{display:block;text-align:center;color:#e4b53f;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;margin-bottom:8px}
   #valueHistory .vh-refresh-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   #valueHistory .vh-refresh-metric{padding:8px 10px;border:1px solid color-mix(in srgb,var(--line) 82%,transparent);border-radius:9px;background:color-mix(in srgb,var(--card) 90%,transparent)}
@@ -510,7 +510,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   <div class="vh-card vh-filter-card"><div class="vh-filter-label">History range</div><div class="vh-periods">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-period="${p}">${p}</button>`).join('')}</div></div>
   <div class="vh-metrics">
     <div class="vh-metric"><small>${period} Change</small><b class="${deltaClass(delta)}">${signed(delta)}</b><div class="tiny muted">${signedPct(pct)}</div></div>
-    <div class="vh-metric"><small>${period} Range</small><b>${fmt(pmin)}–${fmt(pmax)}</b></div>
+    <div class="vh-metric"><small>Value Range</small><b>${fmt(pmin)}–${fmt(pmax)}</b></div>
     <div class="vh-metric"><small>All-Time High</small><b>${fmt(allMax)}</b><div class="vh-metric-time">${highPoint?dateTime(highPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>All-Time Low</small><b>${fmt(allMin)}</b><div class="vh-metric-time">${lowPoint?dateTime(lowPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>Best Overall Rank</small><b>#${bestOverall}</b><div class="vh-metric-time">${bestOverallPoint?dateTime(bestOverallPoint.t):'—'}</div></div>

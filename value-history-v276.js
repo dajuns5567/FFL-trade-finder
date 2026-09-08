@@ -57,7 +57,7 @@ function addStyles(){
   #valueHistory .vh-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   #valueHistory .vh-profile-info{display:grid;grid-template-columns:minmax(210px,1.15fr) minmax(560px,3.8fr) minmax(165px,.9fr);gap:0;align-items:stretch}
   #valueHistory .vh-profile-primary{display:flex;flex-direction:column;justify-content:center;min-width:0;padding-right:20px}
-  #valueHistory .vh-profile-primary h2{margin:0 0 10px;font-size:27px;line-height:1.08}
+  #valueHistory .vh-profile-primary h2{margin:0 0 10px;font-size:24px;line-height:1.08}
   #valueHistory .vh-profile-kicker{display:flex;gap:6px;flex-wrap:wrap}
   #valueHistory .vh-profile-kicker span{display:inline-flex;align-items:center;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--card) 90%,transparent);font-size:12px;color:var(--muted)}
   #valueHistory .vh-profile-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}

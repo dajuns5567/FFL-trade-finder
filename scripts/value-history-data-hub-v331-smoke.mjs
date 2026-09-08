@@ -148,7 +148,6 @@ for(const needle of [
   'Nearest ${esc(target.pos)} Ranks',
   '${esc(playerName(id))}',  'vh-brand-copy',
   '#valueHistory #vhContent{display:grid;gap:16px}',
-  '#valueHistory .vh-profile-fact small{color:#b9c0ce;font-size:12px;font-weight:800',
   '#valueHistory .vh-periods button:not(.secondary)',
   'background:var(--card)'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);

@@ -30,9 +30,9 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
     addSnapshot(sources,result.source,result,result.rankings,result.id?.includes("idp")?"idp":"offense",updatedAt);
   }
   const diagnostics=results.map(result=>({source:result.source,ok:!!result.valid,status:result.valid?"refreshed":"failed",stage:result.stage||null,url:Array.isArray(result.urls)?result.urls[0]||null:null,players_extracted:Number(result.players_extracted||0),ranking_rows:Number(result.ranking_rows||0),error:result.valid?null:(result.error||null),timestamp:result.timestamp||null,...(result.reducedWeight?{reducedWeight:true}:{})}));
-  const successful=diagnostics.filter(result=>result.ok).length;
-  const composite=buildConsensusComposite(results,players);
-  return {ok:true,sources,composite,summary:{total:results.length,successful,failed:results.length-successful,results:diagnostics},updatedAt};
+  const successful=diagnostics.filter(result=>result.ok).length,ktc=results.find(result=>result?.id==='ktc'),integrityReady=!!ktc?.valid;
+  const composite=integrityReady?buildConsensusComposite(results,players):{byId:{},byName:{},detailsById:{},sourceCounts:{offense:0,idp:0},ambiguousNames:[]};
+  return {ok:true,sources:integrityReady?sources:{},composite,withheld:!integrityReady,integrity:{ktc_valid:integrityReady,reason:integrityReady?null:'KTC validation failed; consensus replacement withheld so prior validated source set remains in use'},summary:{total:results.length,successful,failed:results.length-successful,results:diagnostics},updatedAt};
 }
 
 export default async (req)=>{

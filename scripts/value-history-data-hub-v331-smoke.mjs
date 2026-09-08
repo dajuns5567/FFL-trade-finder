@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { extractKtcSuperflexRankings } from '../netlify/functions/ktc-adapter.mjs';
 
 const backendSource=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 const pureSource=backendSource.replace(/^import .*$/m,'').replace(/export \{[^}]+\};/,'').split('export default async')[0];
@@ -43,6 +44,9 @@ assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'delta1'),'market ro
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta1'),'market rows missing 1D positional-rank delta');
 assert(leagueScore({sack:1,tkl_loss:1,qb_hit:1},{sack:4.5,tkl_loss:2.5,qb_hit:2.5})===9.5,'league scoring must preserve stacked IDP categories');
 assert(weeklyPlayerRow({'p1':{stats:{sack:1}}},'p1').sack===1,'weekly player row extraction failed');
+const ktcPlayers=Array.from({length:320},(_,i)=>({playerName:`Player ${i+1}`,position:['QB','RB','WR','TE'][i%4],superflexValues:{value:10000-i}}));
+const ktcParsed=extractKtcSuperflexRankings(`<script>var playersArray=${JSON.stringify(ktcPlayers)};</script>`);
+assert(ktcParsed.rows.length===320,'KTC fallback must recover rankings from Superflex values');
 assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not receive fabricated pre-entry 365-day history');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
@@ -188,7 +192,15 @@ for(const needle of [
   'No qualifying 8+ game season yet',
   'text-align:center;color:#e4b53f',
   'top:4px',
-  'Search player history'
+  'Search player history',
+  'hasValidatedKtcSnapshot',
+  'currentTeamNetStandings',
+  'League Net Value Comparison',
+  'data-vh-team-net-all',
+  'All-time high',
+  'All-time low',
+  'vh-net-hit',
+  'market history unavailable ('
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
 for(const forbidden of [
@@ -209,7 +221,13 @@ assert(backend.includes('value+=n;found++'),'team net-value history must sum sto
 assert(backend.includes('scoringMilestones(playerId)'),'Sleeper scoring milestones endpoint integration missing');
 assert(backend.includes("qualifyingSeasonMinimumGames:8"),'8-game qualifying season rule missing');
 assert(backend.includes("league?.scoring_settings"),'league scoring settings are not used for milestones');
+assert(backend.includes("V346_KTC_CUTOFF_MS=Date.parse('2026-09-08T05:23:00.000Z')"),'V346 KTC cutoff missing');
+assert(backend.includes('scrubV346KtcContamination(s)'),'V346 history scrub missing');
+assert(backend.includes('writeFilteredIndexes(s,keep)'),'V346 history reindex missing');
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
-console.log('V345 Value History team-net/UI-polish regression passed');
+const updateSource=fs.readFileSync('netlify/functions/update.mjs','utf8');
+assert(updateSource.includes("integrityReady=!!ktc?.valid"),'consensus refresh is not gated on KTC validation');
+assert(updateSource.includes("sources:integrityReady?sources:{}"),'partial consensus refresh can replace snapshots without KTC');
+console.log('V346 Value History team-net/KTC-integrity regression passed');

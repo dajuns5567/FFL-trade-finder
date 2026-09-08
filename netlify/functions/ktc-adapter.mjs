@@ -51,35 +51,52 @@ function extractAssignedArray(text,variableName){
   return null;
 }
 
-export function extractKtcSuperflexRankings(text){
-  const players=extractAssignedArray(text,"playersArray");
-  if(!Array.isArray(players))throw new Error("KTC playersArray was not found");
-
-  const sourceRows=[];
-  let excludedDraftPicks=0;
-  let excludedNonOffense=0;
-  for(const row of players){
-    const rank=Number(row?.superflexValues?.rank);
-    if(!Number.isFinite(rank)||rank<1||rank>MAX_SOURCE_RANK)continue;
-    const position=String(row?.position||"").trim().toUpperCase();
-    if(position==="RDP"){excludedDraftPicks++;continue}
-    if(!OFFENSE_POSITIONS.has(position)){excludedNonOffense++;continue}
-    const player=String(row?.playerName||"").trim();
+function finiteNumber(...xs){for(const x of xs){const n=Number(x);if(Number.isFinite(n))return n}return null}
+function ktcRank(row){return finiteNumber(row?.superflexValues?.rank,row?.superflexValue?.rank,row?.values?.superflex?.rank,row?.superflexRank,row?.superflex_rank)}
+function ktcValue(row){return finiteNumber(row?.superflexValues?.value,row?.superflexValue?.value,row?.values?.superflex?.value,row?.superflexValue,row?.superflex_value)}
+function normalizeKtcPlayers(players){
+  const raw=[],excluded={draft:0,nonOffense:0};
+  for(const row of players||[]){
+    const position=String(row?.position||row?.pos||"").trim().toUpperCase();
+    if(position==="RDP"){excluded.draft++;continue}
+    if(!OFFENSE_POSITIONS.has(position)){excluded.nonOffense++;continue}
+    const player=String(row?.playerName||row?.name||"").trim();
     if(!player)continue;
-    sourceRows.push({rank,player,position});
+    raw.push({player,position,rank:ktcRank(row),value:ktcValue(row)});
   }
-
-  const unique=new Map();
-  for(const row of sourceRows){
-    const key=normalizePlayerName(row.player);
-    if(!key)continue;
-    const prior=unique.get(key);
-    if(!prior||row.rank<prior.rank)unique.set(key,row);
+  const byName=new Map();
+  for(const row of raw){
+    const key=normalizePlayerName(row.player);if(!key)continue;
+    const prior=byName.get(key);
+    if(!prior||((Number.isFinite(row.rank)?row.rank:Infinity)<(Number.isFinite(prior.rank)?prior.rank:Infinity))||((row.value||-Infinity)>(prior.value||-Infinity)))byName.set(key,row);
   }
-  const rows=[...unique.values()].sort((a,b)=>a.rank-b.rank);
-  return {rows,rawPlayers:players.length,excludedDraftPicks,excludedNonOffense};
+  const unique=[...byName.values()];
+  const ranked=unique.filter(r=>Number.isFinite(r.rank)&&r.rank>=1&&r.rank<=MAX_SOURCE_RANK).sort((a,b)=>a.rank-b.rank);
+  if(ranked.length>=300){
+    const seenRank=new Set(),out=[];
+    for(const r of ranked){if(seenRank.has(r.rank))continue;seenRank.add(r.rank);out.push({rank:r.rank,player:r.player,position:r.position})}
+    if(out.length>=300)return{rows:out.slice(0,MAX_SOURCE_RANK),mode:"explicit-rank",excluded};
+  }
+  const valued=unique.filter(r=>Number.isFinite(r.value)&&r.value>0).sort((a,b)=>b.value-a.value||a.player.localeCompare(b.player)).slice(0,MAX_SOURCE_RANK);
+  if(valued.length>=300)return{rows:valued.map((r,i)=>({rank:i+1,player:r.player,position:r.position,value:r.value})),mode:"derived-from-superflex-value",excluded};
+  return{rows:ranked.map(r=>({rank:r.rank,player:r.player,position:r.position})),mode:"insufficient",excluded,valuedCount:valued.length};
 }
-
+function collectKtcPlayerArrays(text){
+  const arrays=[];
+  for(const name of ["playersArray","rankings","players"]){try{const a=extractAssignedArray(text,name);if(Array.isArray(a)&&a.length)arrays.push(a)}catch{}}
+  return arrays.sort((a,b)=>b.length-a.length);
+}
+export function extractKtcSuperflexRankings(text){
+  const arrays=collectKtcPlayerArrays(text);
+  if(!arrays.length)throw new Error("KTC player ranking array was not found");
+  let best=null;
+  for(const players of arrays){
+    const parsed=normalizeKtcPlayers(players);
+    if(!best||parsed.rows.length>best.rows.length)best={...parsed,rawPlayers:players.length};
+    if(parsed.rows.length>=300)break;
+  }
+  return {rows:best?.rows||[],rawPlayers:best?.rawPlayers||0,excludedDraftPicks:best?.excluded?.draft||0,excludedNonOffense:best?.excluded?.nonOffense||0,parserMode:best?.mode||"none",valuedCount:best?.valuedCount||0};
+}
 export async function refreshKtc(opts={}){
   const now=new Date().toISOString();
   try{
@@ -97,11 +114,12 @@ export async function refreshKtc(opts={}){
       error:valid?null:`Only ${rows.length} unique offensive Superflex rankings were extracted from KTC's top ${MAX_SOURCE_RANK} source ranks`,
       urls:[KTC_URL],
       diagnostics:{
-        parser:"ktc-playersArray-superflexValues-rank",
+        parser:`ktc-resilient-${extracted.parserMode}`,
         raw_players:extracted.rawPlayers,
         max_source_rank:MAX_SOURCE_RANK,
         excluded_draft_picks:extracted.excludedDraftPicks,
         excluded_non_offense:extracted.excludedNonOffense,
+        valued_rows:extracted.valuedCount||rows.length,
         first_10:rows.slice(0,10),
         validation_result:valid
       }

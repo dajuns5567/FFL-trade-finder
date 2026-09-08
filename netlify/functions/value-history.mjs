@@ -122,6 +122,23 @@ async function getPlayerHistory(s,playerId){
   }
   return{points:[],source:'empty',snapshotCount:0};
 }
+async function getTeamNetHistory(s,playerIds){
+  const ids=[...new Set((playerIds||[]).map(String).filter(Boolean))].slice(0,100),wanted=new Set(ids);
+  if(!ids.length)return{points:[],playerCount:0,source:'empty'};
+  const indexed=await allItems(s);
+  if(!indexed.items.length)return{points:[],playerCount:ids.length,source:indexed.source};
+  const snaps=await readSnapshotsBounded(s,indexed.items,25),points=[];
+  for(const snap of snaps){
+    let value=0,found=0;
+    for(const row of snap?.rows||[]){
+      if(!wanted.has(String(row?.id)))continue;
+      const n=Number(row?.value);if(!Number.isFinite(n))continue;
+      value+=n;found++;
+    }
+    points.push({t:snap.t,value:Math.round(value),playersFound:found,playerCount:ids.length});
+  }
+  return{points,playerCount:ids.length,source:indexed.source,snapshotCount:indexed.items.length};
+}
 function rowMap(snap){return new Map((snap?.rows||[]).map(r=>[String(r.id),r]))}
 function baselineFor(snaps,latestMs,days){
   if(!snaps.length)return null;
@@ -257,14 +274,22 @@ function leagueScore(stats,scoring){
   }
   return seen?Number(total.toFixed(2)):null;
 }
+function weeklyHasData(weekly){return Object.values(weekly||{}).some(v=>Array.isArray(v)?v.length>0:(v&&typeof v==='object'&&Object.keys(v).length>0))}
+async function liveSeasonWeeks(year){
+  const pairs=await Promise.all(Array.from({length:18},async(_,i)=>{const week=i+1;try{return[week,await scoringJson(`${SCORING_API}/stats/nfl/regular/${year}/${week}`)]}catch{return[week,{}]}}));
+  return Object.fromEntries(pairs);
+}
 async function scoringSeasonWeeks(year,currentSeason){
   const key=String(year),cached=scoringCache.get(key),now=Date.now();
   if(cached&&now-cached.t<(Number(year)===Number(currentSeason)?30000:86400000))return cached.weekly;
   let weekly={};
   if(Number(year)===Number(currentSeason)){
-    const pairs=await Promise.all(Array.from({length:18},async(_,i)=>{const week=i+1;try{return[week,await scoringJson(`${SCORING_API}/stats/nfl/regular/${year}/${week}`)]}catch{return[week,{}]}}));
-    weekly=Object.fromEntries(pairs);
-  }else weekly=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
+    weekly=await liveSeasonWeeks(year);
+    if(!weeklyHasData(weekly))weekly=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
+  }else{
+    weekly=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
+    if(!weeklyHasData(weekly))weekly=await liveSeasonWeeks(year);
+  }
   scoringCache.set(key,{t:now,weekly});return weekly;
 }
 async function scoringMilestones(playerId){
@@ -315,6 +340,11 @@ export default async (req)=>{
       if(url.searchParams.get('market')==='1'){
         const market=await retry(()=>getMarketSummary(s),180);
         return json({market,history_state:'ok'});
+      }
+      if(url.searchParams.get('team_net')==='1'){
+        const ids=String(url.searchParams.get('player_ids')||'').split(',').map(x=>x.trim()).filter(Boolean);
+        const result=await retry(()=>getTeamNetHistory(s,ids),180);
+        return json({team_net:true,points:result.points||[],player_count:result.playerCount||0,history_state:result.source,snapshot_count:result.snapshotCount||0});
       }
       const playerId=String(url.searchParams.get('player_id')||'').trim();
       if(!playerId)return json({error:'player_id required'},400);

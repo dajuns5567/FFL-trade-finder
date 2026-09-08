@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history';
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,currentView='market',marketSort={key:'value',dir:-1},marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,currentView='market',marketSort={key:'value',dir:-1},marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),teamNetCache=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -15,13 +15,14 @@ function addStyles(){
   if(document.getElementById('vhHubStyles'))return;
   const st=document.createElement('style');st.id='vhHubStyles';
   st.textContent=`
-  #valueHistory>.card{border-color:var(--line);background:color-mix(in srgb,var(--card) 72%,#06080c);box-shadow:0 14px 38px rgba(0,0,0,.24)}
+  #valueHistory>.card{border:0!important;background:color-mix(in srgb,var(--card) 72%,#06080c);box-shadow:none!important}
   #valueHistory #vhContent{display:grid;gap:16px}
   #valueHistory .vh-grid,#valueHistory .vh-grid-2,#valueHistory .vh-rank-grid{margin:0}
   #valueHistory .vh-shell{display:grid;gap:16px}
   #valueHistory .vh-control-row{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:4px 0 0;padding-bottom:4px}
   #valueHistory .vh-hero{display:block;margin:0 0 4px}
   #valueHistory .vh-search-wrap{width:min(620px,100%)}
+  #valueHistory .vh-search-wrap label b{display:block;font-size:15px;font-weight:900;letter-spacing:.02em;color:#f4f4f5;margin-bottom:3px}
   #valueHistory .vh-search-wrap input{margin:7px 0 0;border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important;transition:border-color .15s ease,box-shadow .15s ease}
   #valueHistory .vh-search-wrap input:focus,#valueHistory .vh-search-wrap input:focus-visible,#valueHistory input[type="search"]:focus,#valueHistory input[type="search"]:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.20)!important}
   #valueHistory .vh-status{font-size:12px;color:var(--muted);text-align:right;line-height:1.45;padding:0 2px;white-space:nowrap}
@@ -40,6 +41,12 @@ function addStyles(){
   #valueHistory .vh-pool-filter button:not(.secondary){color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 15%,var(--card))!important;border-color:color-mix(in srgb,#e4b53f 52%,var(--line))!important}
   #valueHistory .vh-market-table summary{cursor:pointer;color:#e4b53f;font-size:17px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;padding:4px 0 8px;border-bottom:1px solid color-mix(in srgb,#e4b53f 28%,var(--line));list-style-position:inside}
   #valueHistory .vh-market-table summary::marker{color:#e4b53f}
+  #valueHistory .vh-market-table summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none}
+  #valueHistory .vh-market-table summary::-webkit-details-marker{display:none}
+  #valueHistory .vh-details-state{font-size:11px;font-weight:900;letter-spacing:.06em;color:#e4b53f}
+  #valueHistory .vh-state-close{display:none}
+  #valueHistory .vh-market-table[open] .vh-state-open{display:none}
+  #valueHistory .vh-market-table[open] .vh-state-close{display:inline}
   #valueHistory .vh-selected-divider b{display:block;font-size:14px}
   #valueHistory .vh-selected-divider small{display:block;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:0;margin-top:3px}
   #valueHistory .vh-card{position:relative;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;min-width:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.018)}
@@ -86,15 +93,15 @@ function addStyles(){
   #valueHistory .vh-periods button:not(.secondary){color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 15%,var(--card))!important;border-color:color-mix(in srgb,#e4b53f 55%,var(--line))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 28%,transparent),0 3px 10px rgba(0,0,0,.16)!important}
   #valueHistory .vh-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
   #valueHistory .vh-metric{border:1px solid var(--line);border-radius:12px;padding:12px 10px;background:color-mix(in srgb,var(--card) 92%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:82px}
-  #valueHistory .vh-metric small{display:block;color:#e4b53f;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
+  #valueHistory .vh-metric>small{display:flex;align-items:center;justify-content:center;min-height:28px;color:#e4b53f;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;text-align:center}
   #valueHistory .vh-metric b{font-size:18px}
   #valueHistory .vh-metric .vh-metric-time{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.25}
   #valueHistory .vh-chart-card{padding:12px}
   #valueHistory .vh-chart-card svg{display:block;width:100%;height:auto;border-radius:10px}
   #valueHistory .vh-value-chart{position:relative}
   #valueHistory .vh-value-axis{fill:currentColor;font-size:13px;font-weight:700;opacity:.88}
-  #valueHistory .vh-refresh-callout{position:absolute;right:16px;top:12px;z-index:4;min-width:260px;padding:12px 14px;border:1px solid color-mix(in srgb,#e4b53f 52%,var(--line));border-radius:12px;background:linear-gradient(180deg,color-mix(in srgb,#e4b53f 8%,var(--card)),color-mix(in srgb,var(--card) 96%,black));box-shadow:0 8px 24px rgba(0,0,0,.24)}
-  #valueHistory .vh-refresh-callout .vh-refresh-label{display:block;color:#e4b53f;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;margin-bottom:8px}
+  #valueHistory .vh-refresh-callout{position:absolute;right:16px;top:4px;z-index:4;min-width:260px;padding:12px 14px;border:1px solid color-mix(in srgb,#e4b53f 52%,var(--line));border-radius:12px;background:linear-gradient(180deg,color-mix(in srgb,#e4b53f 8%,var(--card)),color-mix(in srgb,var(--card) 96%,black));box-shadow:0 8px 24px rgba(0,0,0,.24)}
+  #valueHistory .vh-refresh-callout .vh-refresh-label{display:block;text-align:center;color:#e4b53f;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;margin-bottom:8px}
   #valueHistory .vh-refresh-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   #valueHistory .vh-refresh-metric{padding:8px 10px;border:1px solid color-mix(in srgb,var(--line) 82%,transparent);border-radius:9px;background:color-mix(in srgb,var(--card) 90%,transparent)}
   #valueHistory .vh-refresh-metric small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:800;margin-bottom:3px}
@@ -104,7 +111,7 @@ function addStyles(){
   #valueHistory .vh-chart-tooltip{position:absolute;z-index:6;display:none;pointer-events:none;min-width:180px;max-width:260px;padding:9px 11px;border:1px solid color-mix(in srgb,#e4b53f 65%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--card) 96%,black);box-shadow:0 8px 24px rgba(0,0,0,.28);font-size:12px;line-height:1.45;transform:translate(10px,-50%)}
   #valueHistory .vh-chart-tooltip b{display:block;color:#e4b53f;font-size:13px;margin-bottom:2px}
   #valueHistory .vh-view-chart{white-space:nowrap;padding:5px 8px!important;font-size:11px!important;min-width:0!important}
-  #valueHistory .vh-chart-col{width:72px;min-width:72px}
+  #valueHistory .vh-chart-col{width:72px;min-width:72px;text-align:center!important}
   #valueHistory .vh-overall-cell{display:inline-flex;align-items:center;justify-content:flex-end;gap:5px}
   #valueHistory .vh-rank-arrow{font-size:12px;font-weight:900;line-height:1}
   #valueHistory .vh-rank-arrow.vh-up{color:var(--good,#1f9d68)}
@@ -137,9 +144,23 @@ function addStyles(){
   #valueHistory .vh-rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   #valueHistory .vh-rank-stat{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px}
   #valueHistory .vh-rank-stat b{font-size:20px}
-  #valueHistory .vh-feed{display:grid;gap:8px}
-  #valueHistory .vh-feed-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
+  #valueHistory .vh-feed{display:grid;gap:0}
+  #valueHistory .vh-feed-row{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:10px 0;border-top:1px solid var(--line);font-size:13px}
   #valueHistory .vh-feed-row:first-child{border-top:0}
+  #valueHistory .vh-milestone-label{display:flex;flex-direction:column;gap:4px;min-width:0}
+  #valueHistory .vh-milestone-time{display:block;color:var(--muted);font-size:10px;line-height:1.3}
+  #valueHistory .vh-feed-row>b{flex:0 0 auto;text-align:right}
+  #valueHistory .vh-net-card{padding:16px 18px}
+  #valueHistory .vh-net-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:8px}
+  #valueHistory .vh-net-total{text-align:right}
+  #valueHistory .vh-net-total small{display:block;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+  #valueHistory .vh-net-total b{display:block;font-size:24px;line-height:1;color:#f4f4f5}
+  #valueHistory .vh-net-chart svg{display:block;width:100%;height:142px}
+  #valueHistory .vh-net-line{fill:none;stroke:#e4b53f;stroke-width:3;vector-effect:non-scaling-stroke}
+  #valueHistory .vh-net-dot{fill:#e4b53f;stroke:var(--card);stroke-width:1.5}
+  #valueHistory .vh-net-axis{stroke:currentColor;opacity:.22}
+  #valueHistory .vh-net-axis-text{fill:currentColor;font-size:10px;opacity:.72}
+  #valueHistory .vh-net-note{margin-top:6px;color:var(--muted);font-size:10px;line-height:1.35}
   #valueHistory .vh-table-wrap{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:12px}
   #valueHistory .vh-table{width:100%;border-collapse:collapse;font-size:12px}
   #valueHistory .vh-table th,#valueHistory .vh-table td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
@@ -171,7 +192,7 @@ function ranked(){try{return typeof ensureMaster==='function'?(ensureMaster()||[
 function posRanks(list){const counts={},map=new Map();for(const z of list){const p=groupPos(z.x);counts[p]=(counts[p]||0)+1;map.set(String(z.x.id),counts[p])}return map}
 function currentRows(){const list=ranked();if(!list.length||!tv().playerValue)return[];const pr=posRanks(list),rows=[];for(let i=0;i<list.length;i++){const x=list[i]?.x;if(!x||x.type!=='player')continue;const pos=groupPos(x);if(!['QB','RB','WR','TE','IDP'].includes(pos))continue;const value=Math.round(Number(tv().playerValue(x)||0));if(!Number.isFinite(value)||value<=0)continue;rows.push({id:String(x.id),value,overall:i+1,pos,posRank:pr.get(String(x.id))||1})}return rows}
 function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();return !/loading|updating|refreshing/.test(text)}
-async function recordSnapshot(){try{if(!snapshotPreconditions()){scheduleSnapshot(2000);return false}const rows=currentRows();if(rows.length<100){scheduleSnapshot(2000);return false}const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows}),keepalive:true});if(r.ok){marketCache=null;if(uiReady){if(currentView==='market')loadMarket(true);else if(currentView==='team'&&trackedTeamId)loadTrackedTeam()}return true}scheduleSnapshot(3000);return false}catch{scheduleSnapshot(3000);return false}}
+async function recordSnapshot(){try{if(!snapshotPreconditions()){scheduleSnapshot(2000);return false}const rows=currentRows();if(rows.length<100){scheduleSnapshot(2000);return false}const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows}),keepalive:true});if(r.ok){marketCache=null;teamNetCache.clear();if(uiReady){if(currentView==='market')loadMarket(true);else if(currentView==='team'&&trackedTeamId)loadTrackedTeam()}return true}scheduleSnapshot(3000);return false}catch{scheduleSnapshot(3000);return false}}
 function scheduleSnapshot(delay=60000){clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(recordSnapshot,{timeout:5000});else recordSnapshot()},delay)}
 
 function initUI(){
@@ -207,12 +228,12 @@ function handleContentClick(e){
   const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();currentPlayerId=null;renderTrackMyTeam();return}
   const period=e.target.closest('[data-vh-period]');if(period&&currentPlayerId){const box=document.getElementById('vhProfileData');const pts=box?JSON.parse(box.dataset.points||'[]'):[];renderPlayerProfile(currentPlayerId,pts,period.dataset.vhPeriod);return}
   const mp=e.target.closest('[data-vh-market-period]');if(mp&&marketCache){marketPeriods[mp.dataset.vhCategory]=mp.dataset.vhMarketPeriod;renderMarketDashboard();return}
-  const tp=e.target.closest('[data-vh-team-period]');if(tp&&marketCache){teamPeriods[tp.dataset.vhCategory]=tp.dataset.vhTeamPeriod;renderTrackedTeamTable();return}
+  const tp=e.target.closest('[data-vh-team-period]');if(tp&&marketCache){teamPeriods[tp.dataset.vhCategory]=tp.dataset.vhTeamPeriod;loadTrackedTeam();return}
   const mr=e.target.closest('[data-vh-market-pool]');if(mr&&marketCache){marketPools[mr.dataset.vhCategory]=mr.dataset.vhMarketPool;renderMarketDashboard();return}
-  const tr=e.target.closest('[data-vh-team-pool]');if(tr&&marketCache){teamPools[tr.dataset.vhCategory]=tr.dataset.vhTeamPool;renderTrackedTeamTable();return}
+  const tr=e.target.closest('[data-vh-team-pool]');if(tr&&marketCache){teamPools[tr.dataset.vhCategory]=tr.dataset.vhTeamPool;loadTrackedTeam();return}
   const viewAll=e.target.closest('[data-vh-view-all]');if(viewAll&&marketCache){openMoverModal(viewAll.dataset.vhViewAll,viewAll.dataset.vhCategory,viewAll.dataset.vhPeriod,viewAll.dataset.vhScope||'market');return}
   const close=e.target.closest('[data-vh-modal-close]');if(close){closeMoverModal();return}
-  const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};if(currentView==='team')renderTrackedTeamTable();else renderMarketTable();return}
+  const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};if(currentView==='team'){const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=ids.join(',');renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length})}else renderMarketTable();return}
 }
 function handleContentChange(e){
   const team=e.target.closest?.('[data-vh-team-select]');if(!team)return;
@@ -222,6 +243,13 @@ function hideChartTooltip(){document.querySelectorAll('#valueHistory .vh-chart-t
 function handleChartPointer(e){const hit=e.target?.closest?.('.vh-point-hit,.vh-rank-hit'),wrap=hit?.closest?.('.vh-value-chart,.vh-rank-chart'),tip=wrap?.querySelector?.('.vh-chart-tooltip');if(!hit||!wrap||!tip){if(e.type==='pointermove')hideChartTooltip();return}const rect=wrap.getBoundingClientRect(),x=Math.max(8,Math.min(rect.width-210,e.clientX-rect.left)),y=Math.max(20,Math.min(rect.height-20,e.clientY-rect.top));tip.innerHTML=hit.classList.contains('vh-rank-hit')?`<b>${esc(hit.dataset.vhDate)}</b><div>${esc(hit.dataset.vhRankLabel)} <strong>#${esc(hit.dataset.vhRank)}</strong></div>`:`<b>${esc(hit.dataset.vhDate)}</b><div>Value <strong>${esc(hit.dataset.vhValue)}</strong></div><div>Overall #${esc(hit.dataset.vhOverall)} • ${esc(hit.dataset.vhPos)} #${esc(hit.dataset.vhPosRank)}</div>`;tip.style.left=`${x}px`;tip.style.top=`${y}px`;tip.style.display='block'}
 async function historyFetch(id){let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_id=${encodeURIComponent(id)}`,{cache:'no-store'});if(!r.ok)throw Error('history unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('history unavailable')}
 async function marketFetch(){const r=await fetch(`${API}?market=1`,{cache:'no-store'});if(!r.ok)throw Error('market history unavailable');return await r.json()}
+async function teamNetFetch(ids){
+  const key=(ids||[]).map(String).sort().join(','),cached=teamNetCache.get(key);
+  if(cached)return cached;
+  const r=await fetch(`${API}?team_net=1&player_ids=${encodeURIComponent(key)}`,{cache:'no-store'});
+  if(!r.ok)throw Error('team net history unavailable');
+  const data=await r.json();teamNetCache.set(key,data);return data;
+}
 async function ensureMarketCache(force=false){if(!marketCache||force){const data=await marketFetch();marketCache=data.market||{}}return marketCache}
 async function loadMarket(force=false){
   const box=document.getElementById('vhContent');if(!box)return;
@@ -253,7 +281,7 @@ function applyMoverPool(rows,scope,category){const pool=moverPool(scope,category
 function moverCardActions(scope,category,period){
   const periodAttr=scope==='team'?'data-vh-team-period':'data-vh-market-period',poolAttr=scope==='team'?'data-vh-team-pool':'data-vh-market-pool';
   const selected=scope==='team'?(teamPeriods[category]||period):(marketPeriods[category]||period),pool=moverPool(scope,category);
-  return`<div class="vh-card-actions"><div class="vh-card-periods">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===selected?'':'secondary '}small" data-vh-category="${category}" ${periodAttr}="${p}">${p}</button>`).join('')}</div><div class="vh-pool-filter"><span>Player pool</span>${['100','200','300','500','ALL'].map(p=>`<button type="button" class="${p===pool?'':'secondary '}small" data-vh-category="${category}" ${poolAttr}="${p}">${p==='ALL'?'All':`Top ${p}`}</button>`).join('')}</div><button type="button" class="secondary small vh-view-all" data-vh-view-all="1" data-vh-scope="${scope}" data-vh-category="${category}" data-vh-period="${selected}">View all</button></div>`;
+  return`<div class="vh-card-actions"><div class="vh-card-periods">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===selected?'':'secondary '}small" data-vh-category="${category}" ${periodAttr}="${p}">${p}</button>`).join('')}</div><div class="vh-pool-filter"><span>Player pool</span>${['100','200','300','500','ALL'].map(p=>`<button type="button" class="${p===pool?'':'secondary '}small" data-vh-category="${category}" ${poolAttr}="${p}">${p==='ALL'?'All':`Top ${p}`}</button>`).join('')}</div><button type="button" class="secondary small vh-view-all" data-vh-view-all="1" data-vh-scope="${scope}" data-vh-category="${category}" data-vh-period="${selected}">View full list</button></div>`;
 }
 function closeMoverModal(){document.getElementById('vhMoverModal')?.remove()}
 function openMoverModal(_,category,period,scope='market'){
@@ -278,7 +306,7 @@ function renderMarketDashboard(){
     <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Rank Risers — ${periodLabel(rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(applyMoverPool(rpR.rankRisers,'market','rankRisers'),'rank')}</div>
     <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Rank Fallers — ${periodLabel(rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(applyMoverPool(rpF.rankFallers,'market','rankFallers'),'rank')}</div>
   </div>
-  <details class="vh-card vh-market-table"><summary>Full Market History Table — Open / Close</summary><div class="vh-sub" style="margin-top:10px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
+  <details class="vh-card vh-market-table"><summary><span>Full Market History Table</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
   renderMarketTable();
 }
@@ -317,16 +345,32 @@ async function loadTrackedTeam(){
   currentView='team';syncSubnav();const host=document.getElementById('vhTrackedTeam');if(!host)return;
   if(!trackedTeamId){host.innerHTML='';return}
   host.innerHTML='<div class="vh-card"><div class="vh-empty">Refreshing team market history…</div></div>';
-  try{await ensureMarketCache(!marketCache)}catch{host.innerHTML='<div class="notice">Team market history is temporarily unavailable. Current values and all trade tools are unaffected.</div>';return}
-  renderTrackedTeamTable();
+  const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id));
+  let netData={points:[],player_count:ids.length};
+  try{const results=await Promise.all([ensureMarketCache(!marketCache),teamNetFetch(ids)]);netData=results[1]||netData}catch{try{await ensureMarketCache(!marketCache)}catch{host.innerHTML='<div class="notice">Team market history is temporarily unavailable. Current values and all trade tools are unaffected.</div>';return}}
+  renderTrackedTeamTable(netData);
 }
-function renderTrackedTeamTable(){
+function teamNetChart(points){
+  const pts=(points||[]).filter(p=>Number.isFinite(Number(p?.value))&&p?.t);
+  if(!pts.length)return'<div class="vh-empty">Net-value history will appear after a completed Value History snapshot.</div>';
+  const vals=pts.map(p=>Number(p.value)),min=Math.min(...vals),max=Math.max(...vals),pad=Math.max(200,(max-min)*.12),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=142,L=70,R=18,T=12,B=30,n=Math.max(1,pts.length-1),
+    x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo)),first=pts[0],last=pts[pts.length-1],
+    path=pts.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' '),
+    dots=pts.map((p,i)=>`<circle class="vh-net-dot" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="4"><title>${esc(dateTime(p.t))}: ${fmt(p.value)}</title></circle>`).join('');
+  return`<div class="vh-net-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Overall Net Value history"><line class="vh-net-axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/><line class="vh-net-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H-B}"/><text class="vh-net-axis-text" x="${L-8}" y="${T+4}" text-anchor="end">${fmt(Math.round(hi))}</text><text class="vh-net-axis-text" x="${L-8}" y="${H-B}" text-anchor="end">${fmt(Math.round(lo))}</text><text class="vh-net-axis-text" x="${L}" y="${H-8}">${esc(dateShort(first.t))}</text><text class="vh-net-axis-text" x="${W-R}" y="${H-8}" text-anchor="end">${esc(dateShort(last.t))}</text><path class="vh-net-line" d="${path}"/>${dots}</svg></div>`;
+}
+function overallNetValueCard(data,teamLabel){
+  const pts=Array.isArray(data?.points)?data.points:[],last=pts[pts.length-1],total=last?Number(last.value):0,count=Number(data?.player_count)||0;
+  return`<div class="vh-card vh-net-card"><div class="vh-net-head"><div><h3 class="vh-section-heading">Overall Net Value</h3><div class="vh-sub">${esc(teamLabel)} current roster value across recorded snapshots</div></div><div class="vh-net-total"><small>Current total</small><b>${fmt(total)}</b></div></div>${teamNetChart(pts)}<div class="vh-net-note">Simple addition of the selected team's ${count} current player values. No scarcity, fit, package, Trade Finder, Trade Evaluator, or other adjustments are applied.</div></div>`;
+}
+function renderTrackedTeamTable(netData={points:[]}){
   const host=document.getElementById('vhTrackedTeam');if(!host||!marketCache||!trackedTeamId)return;
   const owned=new Set((state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)));
   const rows=sortedMarketRows((marketCache.marketRows||[]).filter(r=>owned.has(String(r.id))));
   const periodRows=(category,period)=>(marketCache.periods?.[period]?.[category]||[]).filter(r=>owned.has(String(r.id)));
   const vr=teamPeriods.valueRisers,vf=teamPeriods.valueFallers,rr=teamPeriods.rankRisers,rf=teamPeriods.rankFallers,prr=teamPeriods.posRankRisers,prf=teamPeriods.posRankFallers;
   host.innerHTML=`
+    ${overallNetValueCard(netData,teamName(trackedTeamId))}
     <div class="vh-grid-2">
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Value Risers — ${periodLabel(vr,marketCache)}</h3><div class="vh-sub">Largest value gains on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueRisers',vr)}</div>${moverRows(applyMoverPool(periodRows('valueRisers',vr),'team','valueRisers'))}</div>
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Value Fallers — ${periodLabel(vf,marketCache)}</h3><div class="vh-sub">Largest value declines on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueFallers',vf)}</div>${moverRows(applyMoverPool(periodRows('valueFallers',vf),'team','valueFallers'))}</div>
@@ -424,7 +468,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
     <div class="vh-metric"><small>All-Time High</small><b>${fmt(allMax)}</b><div class="vh-metric-time">${highPoint?dateTime(highPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>All-Time Low</small><b>${fmt(allMin)}</b><div class="vh-metric-time">${lowPoint?dateTime(lowPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>Best Overall Rank</small><b>#${bestOverall}</b><div class="vh-metric-time">${bestOverallPoint?dateTime(bestOverallPoint.t):'—'}</div></div>
-    <div class="vh-metric"><small>Best ${esc(meta.pos)} Rank</small><b>#${bestPos}</b></div>
+    <div class="vh-metric"><small>Best ${esc(meta.pos)} Rank</small><b>#${bestPos}</b><div class="vh-metric-time">&nbsp;</div></div>
   </div>
   <div class="vh-card vh-chart-card"><h3 class="vh-section-heading">${period==='ALL'?'All-Time':period} Value History</h3>${valueChart(id,pts,allPts)}</div>
   <div class="vh-rank-grid">
@@ -432,12 +476,22 @@ function renderPlayerProfile(id,allPts,period='ALL'){
     <div class="vh-card"><h3 class="vh-section-heading">${esc(meta.pos)} Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.posRank} → #${rankLast.posRank}</span><b class="${deltaClass(posMove)}">${posMove>0?'+':''}${posMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'posRank',`${meta.pos} rank`)}</div>
   </div>
   <div class="vh-grid">
-    <div class="vh-card" style="grid-column:span 2"><h3>Recent Changes</h3><div class="vh-sub">Latest recorded value or rank changes</div>${recentChanges(allPts)}</div>
-    <div class="vh-card"><h3>All-Time Milestones</h3><div class="vh-feed"><div class="vh-feed-row"><span>High value<small>${highPoint?dateTime(highPoint.t):'—'}</small></span><b>${fmt(allMax)}</b></div><div class="vh-feed-row"><span>Low value<small>${lowPoint?dateTime(lowPoint.t):'—'}</small></span><b>${fmt(allMin)}</b></div><div class="vh-feed-row"><span>Best overall<small>${bestOverallPoint?dateTime(bestOverallPoint.t):'—'}</small></span><b>#${bestOverall}</b></div><div class="vh-feed-row"><span>Best ${esc(meta.pos)}</span><b>#${bestPos}</b></div><div class="vh-feed-row"><span>Lowest ${esc(meta.pos)} Rank</span><b>#${lowestPos}</b></div>${scoring?.highWeek?`<div class="vh-feed-row"><span>Highest points in a week<small>${scoring.highWeek.season} Week ${scoring.highWeek.week}</small></span><b>${Number(scoring.highWeek.points).toFixed(2)}</b></div>`:''}${scoring?.highSeason?`<div class="vh-feed-row"><span>Highest points in a season<small>${scoring.highSeason.season} • ${scoring.highSeason.games} games</small></span><b>${Number(scoring.highSeason.points).toFixed(2)}</b></div>`:''}${scoring?.highPpg?`<div class="vh-feed-row"><span>Highest PPG in qualifying season<small>${scoring.highPpg.season} • ${scoring.highPpg.games} games • 8+ game qualifier</small></span><b>${Number(scoring.highPpg.points).toFixed(2)}</b></div>`:''}<div class="vh-feed-row"><span>Observations</span><b>${fmt(allPts.length)}</b></div></div>${scoring?'<div class="tiny muted" style="margin-top:9px">Scoring milestones use Sleeper weekly regular-season stats and this league’s scoring settings. Informational only.</div>':''}</div>
+    <div class="vh-card" style="grid-column:span 2"><h3 class="vh-section-heading">Recent Changes</h3><div class="vh-sub">Latest recorded value or rank changes</div>${recentChanges(allPts)}</div>
+    <div class="vh-card"><h3 class="vh-section-heading">All-Time Milestones</h3><div class="vh-feed">
+      <div class="vh-feed-row"><span class="vh-milestone-label">High value<span class="vh-milestone-time">${highPoint?dateTime(highPoint.t):'—'}</span></span><b>${fmt(allMax)}</b></div>
+      <div class="vh-feed-row"><span class="vh-milestone-label">Low value<span class="vh-milestone-time">${lowPoint?dateTime(lowPoint.t):'—'}</span></span><b>${fmt(allMin)}</b></div>
+      <div class="vh-feed-row"><span class="vh-milestone-label">Best overall<span class="vh-milestone-time">${bestOverallPoint?dateTime(bestOverallPoint.t):'—'}</span></span><b>#${bestOverall}</b></div>
+      <div class="vh-feed-row"><span class="vh-milestone-label">Best ${esc(meta.pos)}</span><b>#${bestPos}</b></div>
+      <div class="vh-feed-row"><span class="vh-milestone-label">Lowest ${esc(meta.pos)} Rank</span><b>#${lowestPos}</b></div>
+      <div class="vh-feed-row"><span class="vh-milestone-label">Highest points in a week<span class="vh-milestone-time">${scoring?.highWeek?`${scoring.highWeek.season} Week ${scoring.highWeek.week}`:'No recorded NFL week yet'}</span></span><b>${scoring?.highWeek?Number(scoring.highWeek.points).toFixed(2):'—'}</b></div>
+      <div class="vh-feed-row"><span class="vh-milestone-label">Highest points in a season<span class="vh-milestone-time">${scoring?.highSeason?`${scoring.highSeason.season} • ${scoring.highSeason.games} games`:'No qualifying 8+ game season yet'}</span></span><b>${scoring?.highSeason?Number(scoring.highSeason.points).toFixed(2):'—'}</b></div>
+      <div class="vh-feed-row"><span class="vh-milestone-label">Highest PPG in qualifying season<span class="vh-milestone-time">${scoring?.highPpg?`${scoring.highPpg.season} • ${scoring.highPpg.games} games`:'No qualifying 8+ game season yet'}</span></span><b>${scoring?.highPpg?Number(scoring.highPpg.points).toFixed(2):'—'}</b></div>
+      <div class="vh-feed-row"><span class="vh-milestone-label">Observations</span><b>${fmt(allPts.length)}</b></div>
+    </div><div class="tiny muted" style="margin-top:10px">Scoring milestones use Sleeper weekly regular-season stats and this league’s scoring settings. Informational only.</div></div>
   </div>
   ${similarPlayersSection(id)}`;
 }
-function boot(){addShell();scheduleSnapshot(0);document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;scheduleSnapshot(1000);if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+function boot(){addShell();scheduleSnapshot(0);document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000);if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={currentRows,recordSnapshot,historyFetch,marketFetch,livePlayerMeta,periodPoints};
 })();

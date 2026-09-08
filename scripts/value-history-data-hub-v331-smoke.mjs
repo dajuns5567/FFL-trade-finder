@@ -91,12 +91,12 @@ for(const needle of [
   'slice(pi+1,pi+6)',
   'vh-rank-hit',
   'data-vh-rank-label',
-  'marketCache=null;scheduleSnapshot(1000)',
+  'marketCache=null;teamNetCache.clear();scheduleSnapshot(1000)',
   'Tracked since',
   "'1D','7D','30D','90D','1Y','ALL'",
   "period==='1D'",
   "if(period==='1D')return inRange",
-  'View all',
+  'View full list',
   'data-vh-view-all',
   'vh-modal-backdrop',
   'Top Value Risers',
@@ -161,7 +161,9 @@ for(const needle of [
   'marketPools',
   'teamPools',
   'applyMoverPool',
-  'Full Market History Table — Open / Close',
+  'Full Market History Table',
+  'vh-state-open',
+  'vh-state-close',
   'scoring_milestones',
   'Highest points in a week',
   'Highest points in a season',
@@ -174,9 +176,19 @@ for(const needle of [
   'playerScoringCache',
   'target.overall',
   'target.value',
-  '#valueHistory>.card{border-color:var(--line);background:color-mix(in srgb,var(--card) 72%,#06080c)',
+  '#valueHistory>.card{border:0!important;background:color-mix(in srgb,var(--card) 72%,#06080c)',
   '#valueHistory .vh-market-table summary',
-  'align-items:center;justify-content:center;text-align:center;min-height:82px'
+  'align-items:center;justify-content:center;text-align:center;min-height:82px',
+  'Overall Net Value',
+  'teamNetFetch',
+  'teamNetChart',
+  'Simple addition of the selected team',
+  'View full list',
+  'vh-milestone-time',
+  'No qualifying 8+ game season yet',
+  'text-align:center;color:#e4b53f',
+  'top:4px',
+  'Search player history'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
 for(const forbidden of [
@@ -191,11 +203,13 @@ const backend=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 assert(backend.includes("MONTH_INDEX_PREFIX='indexes/'"),'partitioned all-time index missing');
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
-assert(!backend.includes("url.searchParams.get('player_ids')"),'Track My Team must not create a separate history endpoint');
+assert(backend.includes("url.searchParams.get('team_net')==='1'"),'Track My Team net-value history endpoint missing');
+assert(backend.includes('getTeamNetHistory(s,ids)'),'team net-value history must be simple snapshot summation');
+assert(backend.includes('value+=n;found++'),'team net-value history must sum stored player values directly');
 assert(backend.includes('scoringMilestones(playerId)'),'Sleeper scoring milestones endpoint integration missing');
 assert(backend.includes("qualifyingSeasonMinimumGames:8"),'8-game qualifying season rule missing');
 assert(backend.includes("league?.scoring_settings"),'league scoring settings are not used for milestones');
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
-console.log('V344 Value History scoring/mover-pool/1D-table regression passed');
+console.log('V345 Value History team-net/UI-polish regression passed');

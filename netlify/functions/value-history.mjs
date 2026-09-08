@@ -163,10 +163,10 @@ function marketFromSnapshots(snaps){
   if(!ordered.length)return{tracking_since:null,latest:null,snapshot_count:0,periods:{'7D':{},'30D':{},'90D':{},'1Y':{},'ALL':{}},marketRows:[],has7:false,has30:false,has90:false,has365:false};
   const first=ordered[0],latest=ordered[ordered.length-1],latestMs=new Date(latest.t).getTime(),firstMs=new Date(first.t).getTime();
   const bases={
-    '7D':baselineFor(ordered,latestMs-7*86400000)||first,
-    '30D':baselineFor(ordered,latestMs-30*86400000)||first,
-    '90D':baselineFor(ordered,latestMs-90*86400000)||first,
-    '1Y':baselineFor(ordered,latestMs-365*86400000)||first,
+    '7D':baselineFor(ordered,latestMs,7)||first,
+    '30D':baselineFor(ordered,latestMs,30)||first,
+    '90D':baselineFor(ordered,latestMs,90)||first,
+    '1Y':baselineFor(ordered,latestMs,365)||first,
     'ALL':first
   };
   const periods={};

@@ -232,6 +232,12 @@ assert(backend.includes('writeFilteredIndexes(s,keep)'),'V346 history reindex mi
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
 const updateSource=fs.readFileSync('netlify/functions/update.mjs','utf8');
-assert(updateSource.includes("integrityReady=!!ktc?.valid"),'consensus refresh is not gated on KTC validation');
-assert(updateSource.includes("sources:integrityReady?sources:{}"),'partial consensus refresh can replace snapshots without KTC');
-console.log('V346 Value History team-net/KTC-integrity regression passed');
+assert(updateSource.includes("failedSources=diagnostics.filter(result=>!result.ok)"),'consensus refresh is not checking all source failures');
+assert(updateSource.includes("integrityReady=results.length>=7&&failedSources.length===0"),'consensus replacement is not gated on all required sources');
+assert(updateSource.includes("sources:integrityReady?sources:{}"),'partial consensus refresh can replace the prior validated source set');
+assert(backend.includes("V348_BAD_WINDOWS"),'V348 exact contaminated timestamp windows missing');
+assert(backend.includes("scrubV348ConsensusContamination(s)"),'V348 contaminated timestamp scrub missing');
+const fanRankedSource=fs.readFileSync('netlify/functions/fanranked-adapter.mjs','utf8');
+assert(fanRankedSource.includes("sort((a,b)=>b.value-a.value"),'FanRanked current ranking is not rebuilt from current market values');
+assert(fanRankedSource.includes(".map((row,index)=>({rank:index+1"),'FanRanked current ranking is not reassigned contiguously');
+console.log('V348 Value History/consensus source integrity regression passed');

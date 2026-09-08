@@ -18,6 +18,15 @@ assert(f.status==='Fair'||f.status==='Excellent Fit','JSN calibration case shoul
 const reverse=fair([jt,tet],[jsn]);
 assert(reverse.score===f.score,'fairness symmetry changed');
 assert(Math.abs(reverse.bAdj-f.aAdj)<1e-9,'adjustment symmetry changed');
+const allen=P('allen',9999,1,'QB'),jsnElite=P('jsnElite',8782,7,'WR'),jj=P('jj',8167,14,'WR');
+const elitePackage=fair([allen],[jsnElite,jj]);
+assert(elitePackage.aRaw===9999&&elitePackage.bRaw===16949,'elite counter-package raw totals drifted');
+assert(elitePackage.aAdj>2800&&elitePackage.aAdj<3100,'elite-counterpiece attenuation outside intended range: '+elitePackage.aAdj);
+assert(elitePackage.aAdj<(elitePackage.bRaw-elitePackage.aRaw)*.50,'elite counter-package must not restore most of the raw gap');
+assert(elitePackage.score<70,'Allen for JSN + Jefferson must no longer be treated as roughly even, got '+elitePackage.score);
+const eliteReverse=fair([jsnElite,jj],[allen]);
+assert(eliteReverse.score===elitePackage.score,'elite-counterpiece fairness symmetry changed');
+assert(Math.abs(eliteReverse.bAdj-elitePackage.aAdj)<1e-9,'elite-counterpiece adjustment symmetry changed');
 const mid=P('mid',6800,60),a=P('a',6100,75),b=P('b',1800,150);
 const mf=fair([mid],[a,b]);
 assert(mf.aAdj<Math.max(0,mf.bRaw-mf.aRaw),'mid-tier premium adjustment should not automatically erase full raw gap');

@@ -150,28 +150,42 @@ function metricsAgainst(latestSnap,baseSnap){
   for(const [id,row] of latest){const d=deltaRow(row,base.get(id));if(d)out.set(id,d)}
   return out;
 }
+function marketPeriod(latest,base){
+  const metrics=metricsAgainst(latest,base),rows=[...metrics.values()];
+  const valueRisers=rows.filter(x=>x.delta>0).sort((a,b)=>b.delta-a.delta||b.value-a.value).slice(0,10);
+  const valueFallers=rows.filter(x=>x.delta<0).sort((a,b)=>a.delta-b.delta||b.value-a.value).slice(0,10);
+  const rankRisers=rows.filter(x=>x.overallDelta>0).sort((a,b)=>b.overallDelta-a.overallDelta||b.value-a.value).slice(0,10);
+  const rankFallers=rows.filter(x=>x.overallDelta<0).sort((a,b)=>a.overallDelta-b.overallDelta||b.value-a.value).slice(0,10);
+  return{valueRisers,valueFallers,rankRisers,rankFallers,metrics};
+}
 function marketFromSnapshots(snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  if(!ordered.length)return{tracking_since:null,latest:null,snapshot_count:0,movers7d:[],risers365:[],fallers365:[],rankMovers30:[],marketRows:[],has365:false};
-  const first=ordered[0],latest=ordered[ordered.length-1],latestMs=new Date(latest.t).getTime();
-  const b7=baselineFor(ordered,latestMs,7)||first,b30=baselineFor(ordered,latestMs,30)||first,b365=baselineFor(ordered,latestMs,365)||first;
-  const m7=metricsAgainst(latest,b7),m30=metricsAgainst(latest,b30),m365=metricsAgainst(latest,b365);
-  const movers7d=[...m7.values()].filter(x=>x.delta!==0).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)||b.value-a.value).slice(0,10);
-  const yr=[...m365.values()].filter(x=>x.delta!==0);
-  const risers365=yr.filter(x=>x.delta>0).sort((a,b)=>b.delta-a.delta||b.value-a.value).slice(0,10);
-  const fallers365=yr.filter(x=>x.delta<0).sort((a,b)=>a.delta-b.delta||b.value-a.value).slice(0,10);
-  const rankMovers30=[...m30.values()].filter(x=>x.overallDelta!==0).sort((a,b)=>Math.abs(b.overallDelta)-Math.abs(a.overallDelta)||b.value-a.value).slice(0,10);
+  if(!ordered.length)return{tracking_since:null,latest:null,snapshot_count:0,periods:{'7D':{},'30D':{},'90D':{},'1Y':{},'ALL':{}},marketRows:[],has7:false,has30:false,has90:false,has365:false};
+  const first=ordered[0],latest=ordered[ordered.length-1],latestMs=new Date(latest.t).getTime(),firstMs=new Date(first.t).getTime();
+  const bases={
+    '7D':baselineFor(ordered,latestMs-7*86400000)||first,
+    '30D':baselineFor(ordered,latestMs-30*86400000)||first,
+    '90D':baselineFor(ordered,latestMs-90*86400000)||first,
+    '1Y':baselineFor(ordered,latestMs-365*86400000)||first,
+    'ALL':first
+  };
+  const periods={};
+  for(const [label,base] of Object.entries(bases)){
+    const p=marketPeriod(latest,base);
+    periods[label]={valueRisers:p.valueRisers,valueFallers:p.valueFallers,rankRisers:p.rankRisers,rankFallers:p.rankFallers,baseline:base?.t||null};
+  }
+  const m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m365=marketPeriod(latest,bases['1Y']).metrics;
   const latestMap=rowMap(latest);
   const marketRows=[...latestMap.values()].map(r=>{
     const id=String(r.id),d7=m7.get(id),d30=m30.get(id),d365=m365.get(id);
     return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,overallDelta30:d30?.overallDelta??null};
   }).sort((a,b)=>b.value-a.value);
   return{
-    tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,
-    movers7d,risers365,fallers365,rankMovers30,marketRows,
-    has7:latestMs-new Date(first.t).getTime()>=7*86400000,
-    has30:latestMs-new Date(first.t).getTime()>=30*86400000,
-    has365:latestMs-new Date(first.t).getTime()>=365*86400000
+    tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,periods,marketRows,
+    has7:latestMs-firstMs>=7*86400000,
+    has30:latestMs-firstMs>=30*86400000,
+    has90:latestMs-firstMs>=90*86400000,
+    has365:latestMs-firstMs>=365*86400000
   };
 }
 function itemAtOrBefore(items,targetMs){
@@ -191,10 +205,10 @@ async function getMarketSummary(s){
     const snaps=await readSnapshotsBounded(s,items,25),market=marketFromSnapshots(snaps);
     market.snapshot_count=items.length;return market;
   }
-  const wanted=[items[0],itemAtOrBefore(items,latestMs-7*86400000),itemAtOrBefore(items,latestMs-30*86400000),itemAtOrBefore(items,latestMs-365*86400000),latestItem].filter(Boolean);
+  const wanted=[items[0],itemAtOrBefore(items,latestMs-7*86400000),itemAtOrBefore(items,latestMs-30*86400000),itemAtOrBefore(items,latestMs-90*86400000),itemAtOrBefore(items,latestMs-365*86400000),latestItem].filter(Boolean);
   const unique=[],seen=new Set();for(const item of wanted)if(!seen.has(item.key)){seen.add(item.key);unique.push(item)}
   unique.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  const snaps=await readSnapshotsBounded(s,unique,5),market=marketFromSnapshots(snaps);
+  const snaps=await readSnapshotsBounded(s,unique,6),market=marketFromSnapshots(snaps);
   market.snapshot_count=items.length;
   return market;
 }

@@ -38,6 +38,7 @@ assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta30'),'m
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta365'),'market rows missing 1Y positional-rank delta');
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'deltaAll'),'market rows missing all-time value delta');
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDeltaAll'),'market rows missing all-time positional-rank delta');
+assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'overallDelta7'),'market rows missing 7D overall-rank delta');
 assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not receive fabricated pre-entry 365-day history');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
@@ -57,7 +58,6 @@ for(const needle of [
   "state.players?.[String(r.id)]?.team",
   'posRankDelta7',
   'posRankDelta30',
-  'posRankDelta365',
   'View chart',
   'vh-point-hit',
   'vh-chart-tooltip',
@@ -107,7 +107,8 @@ for(const needle of [
   'posRankFallers',
   'Value 1Y',
   'Value All',
-  'Pos Δ 1Y',
+  'Overall Δ 7D',
+  'Pos Δ 1W',
   'Pos Δ All',
   'deltaAll',
   'posRankDeltaAll',
@@ -117,7 +118,18 @@ for(const needle of [
   'Player value',
   'Date / time',
   'vh-filter-label',
-  'History range'
+  'History range',
+  'vh-overall-cell',
+  'vh-rank-arrow',
+  'title="Overall rank improved in the last 7 days"',
+  'title="Overall rank fell in the last 7 days"',
+  'View</button>',
+  'vh-chart-col',
+  'vh-refresh-metrics',
+  'Value change',
+  'rank change',
+  '#valueHistory .vh-card-periods button:not(.secondary)',
+  '#valueHistory .vh-search-wrap input:focus',
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
 for(const forbidden of [
@@ -136,4 +148,4 @@ assert(!backend.includes("url.searchParams.get('player_ids')"),'Track My Team mu
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
-console.log('V339 Value History player-chart/layout/team positional-movers regression passed');
+console.log('V340 Value History market rank-delta/table/theme regression passed');

@@ -25,9 +25,10 @@ for(let i=0;i<12;i++)rows.push(row([maxx,K('mx'+i,1000-i)],92-i*.05,92-i*.05,2))
 for(let i=0;i<10;i++)rows.push(row([jj,K('jj'+i,500-i)],91-i*.05,91-i*.05,3));
 rows.push(row([a,b],91.5,91.5,4),row([c,d],91.4,91.4,5),row([e,f],91.3,91.3,6),row([a,c],91.2,91.2,7),row([b,d],91.1,91.1,8));
 const selected=api.selectBlankDistribution(rows);
-const first=selected.slice(0,8).map(r=>api.outgoingFamilyKey(r.give));
-assert(new Set(first).size>=5,'blank selector still allows same-player + pick variants to crowd out distinct families: '+first.join(','));
-assert(first.filter(x=>x==='P:Maxx').length<=1,'Maxx family repeated too early: '+first.join(','));
+const availableFamilies=new Set(rows.map(r=>api.outgoingFamilyKey(r.give))).size;
+const first=selected.slice(0,Math.min(availableFamilies,8)).map(r=>api.outgoingFamilyKey(r.give));
+assert(new Set(first).size===first.length,'blank selector repeated a player-core family before available distinct families were exhausted: '+first.join(','));
+assert(first.includes('P:A|B')&&first.includes('P:C|D'),'distinct player-player families were crowded out by player+pick variants: '+first.join(','));
 
 const ordered=[row([maxx,K('x1',1000)],94,94),row([maxx,K('x2',950)],93.9,93.9),row([a,b],93.5,93.5),row([c,d],93.4,93.4),row([e,f],93.3,93.3),row([jj,K('x3',300)],92,92)];
 const stable=api.stabilizeBlankFamilies(ordered,'neutral');

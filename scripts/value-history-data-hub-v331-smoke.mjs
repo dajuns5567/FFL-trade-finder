@@ -5,8 +5,8 @@ import { extractKtcSuperflexRankings } from '../netlify/functions/ktc-adapter.mj
 const backendSource=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 const pureSource=backendSource.replace(/^import .*$/m,'').replace(/export \{[^}]+\};/,'').split('export default async')[0];
 const context={console,Response,URL,setTimeout,clearTimeout};context.globalThis=context;vm.createContext(context);
-vm.runInContext(pureSource+`;globalThis.__vh={marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow};`,context,{filename:'value-history-pure.mjs'});
-const {marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow}=context.__vh;
+vm.runInContext(pureSource+`;globalThis.__vh={marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow,normalizeCompletedTrade};`,context,{filename:'value-history-pure.mjs'});
+const {marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow,normalizeCompletedTrade}=context.__vh;
 
 function assert(x,m){if(!x)throw new Error(m)}
 const day=86400000;
@@ -44,6 +44,10 @@ assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'delta1'),'market ro
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta1'),'market rows missing 1D positional-rank delta');
 assert(leagueScore({sack:1,tkl_loss:1,qb_hit:1},{sack:4.5,tkl_loss:2.5,qb_hit:2.5})===9.5,'league scoring must preserve stacked IDP categories');
 assert(weeklyPlayerRow({'p1':{stats:{sack:1}}},'p1').sack===1,'weekly player row extraction failed');
+const tradeSample=normalizeCompletedTrade({type:'trade',status:'complete',transaction_id:'t1',status_updated:Date.parse('2026-09-08T12:00:00Z'),roster_ids:[1,2],adds:{p1:1,p2:2},draft_picks:[{season:'2028',round:1,roster_id:2,owner_id:1}]},1);
+assert(tradeSample?.sides?.length===2,'completed trade normalization failed');
+assert(tradeSample.sides.find(x=>x.roster_id==='1')?.player_ids?.[0]==='p1','trade player receiver mapping failed');
+assert(tradeSample.sides.find(x=>x.roster_id==='1')?.picks?.[0]?.season==='2028','trade pick receiver mapping failed');
 const ktcPlayers=Array.from({length:320},(_,i)=>({playerName:`Player ${i+1}`,position:['QB','RB','WR','TE'][i%4],superflexValues:{value:10000-i,rank:i+1}}));
 const ktcParsed=extractKtcSuperflexRankings(`<script type="application/json" id="ktc-players">${JSON.stringify(ktcPlayers)}</script><script>var playersArray = JSON.parse(document.getElementById('ktc-players').textContent);</script>`);
 assert(ktcParsed.rows.length===320,'KTC embedded JSON parser must recover the complete player universe');
@@ -204,7 +208,15 @@ for(const needle of [
   'market history unavailable (',
   'Value Range',
   '.vh-value-chart{position:relative;padding-top:98px}',
-  'padding:10px 16px;min-width:0'
+  'padding:10px 16px;min-width:0',
+  'Trade history',
+  'Completed Trade Value History',
+  'What Moved My Team',
+  'data-vh-team-attribution',
+  'data-vh-team-net-sort',
+  '30D Rank Δ',
+  'data-vh-trade-team',
+  'current-roster value movement'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
 for(const forbidden of [
@@ -220,6 +232,10 @@ assert(backend.includes("MONTH_INDEX_PREFIX='indexes/'"),'partitioned all-time i
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
 assert(backend.includes("url.searchParams.get('team_net')==='1'"),'Track My Team net-value history endpoint missing');
+assert(backend.includes("url.searchParams.get('trades')==='1'"),'completed trade history endpoint missing');
+assert(backend.includes('completedTradeHistory(s)'),'completed trade history must remain in Value History backend');
+assert(backend.includes('TRADE_AUDIT_URL'),'Sleeper imported trade audit source missing');
+assert(backend.includes('closestSnapshotItem'),'trade history must use stored Value History snapshots rather than fabricated historical values');
 assert(backend.includes('getTeamNetHistory(s,ids)'),'team net-value history must be simple snapshot summation');
 assert(backend.includes('value+=n;found++'),'team net-value history must sum stored player values directly');
 assert(backend.includes('scoringMilestones(playerId)'),'Sleeper scoring milestones endpoint integration missing');

@@ -39,7 +39,7 @@ assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not rec
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
 for(const needle of [
-  "['7D','30D','90D','1Y','ALL']",
+  "['1D','7D','30D','90D','1Y','ALL']",
   'Biggest Value Risers',
   'Biggest Value Fallers',
   'Biggest Rank Risers',

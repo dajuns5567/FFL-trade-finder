@@ -222,12 +222,12 @@ function renderMarketDashboard(){
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
   <div class="vh-grid-2">
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Risers — ${periodLabel(vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${marketPeriodButtons('valueRisers')}</div>${moverRows(vpR.valueRisers)}</div>
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Fallers — ${periodLabel(vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${marketPeriodButtons('valueFallers')}</div>${moverRows(vpF.valueFallers)}</div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Risers — ${periodLabel(vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(vpR.valueRisers)}</div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Fallers — ${periodLabel(vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(vpF.valueFallers)}</div>
   </div>
   <div class="vh-grid-2">
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Risers — ${periodLabel(rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${marketPeriodButtons('rankRisers')}</div>${moverRows(rpR.rankRisers,'rank')}</div>
-    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Fallers — ${periodLabel(rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${marketPeriodButtons('rankFallers')}</div>${moverRows(rpF.rankFallers,'rank')}</div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Risers — ${periodLabel(rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(rpR.rankRisers,'rank')}</div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Fallers — ${periodLabel(rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(rpF.rankFallers,'rank')}</div>
   </div>
   <details class="vh-card vh-market-table"><summary>Full Market History Table</summary><div class="vh-sub" style="margin-top:8px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
@@ -274,7 +274,18 @@ function renderTrackedTeamTable(){
   const host=document.getElementById('vhTrackedTeam');if(!host||!marketCache||!trackedTeamId)return;
   const owned=new Set((state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)));
   const rows=sortedMarketRows((marketCache.marketRows||[]).filter(r=>owned.has(String(r.id))));
-  host.innerHTML=`<div class="vh-card"><div class="vh-card-head"><div><h3>${esc(teamName(trackedTeamId))}</h3><div class="vh-sub">${rows.length} current players • same columns and data as Full Market History</div></div></div>${marketTableRowsMarkup(rows)}</div>`;
+  const periodRows=(category,period)=>(marketCache.periods?.[period]?.[category]||[]).filter(r=>owned.has(String(r.id)));
+  const vr=teamPeriods.valueRisers,vf=teamPeriods.valueFallers,rr=teamPeriods.rankRisers,rf=teamPeriods.rankFallers;
+  host.innerHTML=`
+    <div class="vh-grid-2">
+      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Value Risers — ${periodLabel(vr,marketCache)}</h3><div class="vh-sub">Largest value gains on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueRisers',vr)}</div>${moverRows(periodRows('valueRisers',vr))}</div>
+      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Value Fallers — ${periodLabel(vf,marketCache)}</h3><div class="vh-sub">Largest value declines on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueFallers',vf)}</div>${moverRows(periodRows('valueFallers',vf))}</div>
+    </div>
+    <div class="vh-grid-2">
+      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Rank Risers — ${periodLabel(rr,marketCache)}</h3><div class="vh-sub">Largest overall-rank improvements on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','rankRisers',rr)}</div>${moverRows(periodRows('rankRisers',rr),'rank')}</div>
+      <div class="vh-card"><div class="vh-card-head"><div><h3>Top Rank Fallers — ${periodLabel(rf,marketCache)}</h3><div class="vh-sub">Largest overall-rank declines on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','rankFallers',rf)}</div>${moverRows(periodRows('rankFallers',rf),'rank')}</div>
+    </div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>${esc(teamName(trackedTeamId))} — Full Market History</h3><div class="vh-sub">${rows.length} current players • same columns and data as Full Market History</div></div></div>${marketTableRowsMarkup(rows)}</div>`;
 }
 function currentPlayerRows(){
   const list=ranked(),pr=posRanks(list),rows=[];
@@ -297,9 +308,10 @@ function livePlayerMeta(id){
 }
 function periodPoints(pts,period){
   if(!pts.length||period==='ALL')return pts.slice();
-  const days={ '7D':7,'30D':30,'90D':90,'1Y':365 }[period]||30,latest=new Date(pts[pts.length-1].t).getTime(),cut=latest-days*86400000;
+  const days={ '1D':1,'7D':7,'30D':30,'90D':90,'1Y':365 }[period]||30,latest=new Date(pts[pts.length-1].t).getTime(),cut=latest-days*86400000;
   const inRange=pts.filter(p=>new Date(p.t).getTime()>=cut);
   if(!inRange.length)return[pts[pts.length-1]];
+  if(period==='1D')return inRange;
   const firstIndex=pts.indexOf(inRange[0]);if(firstIndex>0)inRange.unshift(pts[firstIndex-1]);
   return inRange;
 }
@@ -348,7 +360,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
       <div class="vh-current"><small class="muted">Current Value</small><div class="vh-big">${fmt(meta.value||last.value)}</div></div>
     </div>
   </div>
-  <div class="vh-card"><div class="vh-periods">${['7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-period="${p}">${p}</button>`).join('')}</div></div>
+  <div class="vh-card"><div class="vh-periods">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-period="${p}">${p}</button>`).join('')}</div></div>
   <div class="vh-metrics">
     <div class="vh-metric"><small>${period} Change</small><b class="${deltaClass(delta)}">${signed(delta)}</b><div class="tiny muted">${signedPct(pct)}</div></div>
     <div class="vh-metric"><small>${period} Range</small><b>${fmt(pmin)}–${fmt(pmax)}</b></div>

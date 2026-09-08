@@ -66,6 +66,10 @@ for(const needle of [
   'Current rank',
   'dateTime(r.t)',
   'Track my team',
+  "root.addEventListener('click',handleContentClick)",
+  "root.addEventListener('change',handleContentChange)",
+  'vh-subnav-active',
+  'Overall #${r.overall}',
   'same columns and data as Full Market History',
   'marketTableRowsMarkup(rows)',
   'currentView===\'team\'',
@@ -98,4 +102,4 @@ assert(!backend.includes("url.searchParams.get('player_ids')"),'Track My Team mu
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
-console.log('V336 Value History team tracking/similar-player regression passed');
+console.log('V337 Value History Track My Team interaction regression passed');

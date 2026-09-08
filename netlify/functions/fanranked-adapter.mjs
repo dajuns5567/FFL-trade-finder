@@ -6,16 +6,19 @@ const MAX_PLAYERS=300;
 const OFFENSE_POSITIONS=new Set(["QB","RB","WR","TE"]);
 
 async function fetchJson(url,fetchImpl=fetch){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),TIMEOUT_MS);
-  try{
-    const res=await fetchImpl(url,{headers:{
-      "user-agent":"Mozilla/5.0 (compatible; FFL-TradeFinder/16.0; +https://netlify.com)",
-      "accept":"application/json,text/plain,*/*;q=0.8"
-    },redirect:"follow",signal:controller.signal});
-    if(!res.ok)throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  }finally{clearTimeout(timer)}
+  let last;
+  for(let attempt=0;attempt<3;attempt++){
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),TIMEOUT_MS);
+    try{
+      const res=await fetchImpl(url,{headers:{
+        "user-agent":"Mozilla/5.0 (compatible; FFL-TradeFinder/16.0; +https://netlify.com)",
+        "accept":"application/json,text/plain,*/*;q=0.8"
+      },redirect:"follow",signal:controller.signal});
+      if(!res.ok)throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    }catch(e){last=e;if(attempt<2)await new Promise(r=>setTimeout(r,250*(attempt+1)))}finally{clearTimeout(timer)}
+  }
+  throw last||new Error('FanRanked fetch failed');
 }
 
 function isOffensePlayer(player){

@@ -215,7 +215,7 @@ function rankSpark(points,field,axisLabel='Rank'){
   const min=Math.min(...vals),max=Math.max(...vals),W=430,H=150,L=48,R=14,T=14,B=36,n=Math.max(1,clean.length-1),spread=Math.max(1,max-min),
     x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*((Number(v)-min)/spread),
     first=clean[0],last=clean[clean.length-1],
-    dateLabel=t=>{try{return new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'})}catch{return''}};
+    dateLabel=t=>{try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch{return''}};
   const path=clean.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(p[field]).toFixed(1)}`).join(' '),
     dots=clean.map((p,i)=>`<circle class="vh-rank-dot" cx="${x(i).toFixed(1)}" cy="${y(p[field]).toFixed(1)}" r="3.5"><title>${esc(dateTime(p.t))}: #${p[field]}</title></circle>`).join('');
   return`<div class="vh-rank-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(axisLabel)} history"><line class="vh-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H-B}"/><line class="vh-axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/><text class="vh-axis-text" x="${L-7}" y="${T+4}" text-anchor="end">#${min}</text><text class="vh-axis-text" x="${L-7}" y="${H-B}" text-anchor="end">#${max}</text><text class="vh-axis-text" x="13" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 13 ${(T+H-B)/2})">${esc(axisLabel)}</text><text class="vh-axis-text" x="${L}" y="${H-14}">${esc(dateLabel(first.t))}</text><text class="vh-axis-text" x="${W-R}" y="${H-14}" text-anchor="end">${esc(dateLabel(last.t))}</text><text class="vh-axis-text" x="${(L+W-R)/2}" y="${H-3}" text-anchor="middle">Date</text><path class="vh-rank-line" d="${path}"/>${dots}</svg></div>`;

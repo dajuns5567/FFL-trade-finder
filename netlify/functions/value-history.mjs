@@ -293,7 +293,7 @@ async function appendIndex(s,key,t){
 }
 const SCORING_API='https://api.sleeper.app/v1';
 const SCORING_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper';
-const TRADE_AUDIT_URL=`${SCORING_RAW}/league-audit/2026/transactions.json`;
+const TRADE_AUDIT_SEASONS=[2024,2025,2026];
 let tradeAuditCache=null;
 const scoringCache=new Map();
 async function scoringJson(url){
@@ -360,7 +360,46 @@ async function scoringMilestones(playerId){
     return{source:'Sleeper weekly regular-season stats + league scoring settings',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,refreshedAt:new Date().toISOString()};
   }catch(e){console.warn('value-history-scoring',e);return null}
 }
-function normalizeCompletedTrade(tx,week){
+async function tradeJson(url){
+  const r=await fetch(url,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-TradeHistory/1.0'},cache:'no-store'});
+  if(!r.ok)throw new Error(`trade history fetch ${r.status}`);
+  return r.json();
+}
+function auditUrl(season,file){return`${SCORING_RAW}/league-audit/${season}/${file}.json?ts=${Date.now()}`}
+function historicalTeamNames(users,rosters){
+  const userById=new Map((users||[]).map(u=>[String(u?.user_id||''),u])),out={};
+  for(const r of rosters||[]){
+    const rid=String(r?.roster_id||'');if(!rid)continue;const u=userById.get(String(r?.owner_id||''))||{};
+    out[rid]=String(u?.metadata?.team_name||u?.display_name||`Roster ${rid}`);
+  }
+  return out;
+}
+async function exactDraftResultMap(league){
+  const leagueId=String(league?.league_id||'');if(!leagueId)return new Map();
+  const drafts=await tradeJson(`${SCORING_API}/league/${leagueId}/drafts`).catch(()=>[]),out=new Map(),ambiguous=new Set();
+  for(const meta of Array.isArray(drafts)?drafts:[]){
+    const draftId=String(meta?.draft_id||'');if(!draftId)continue;
+    const [draft,picks]=await Promise.all([
+      tradeJson(`${SCORING_API}/draft/${draftId}`).catch(()=>null),
+      tradeJson(`${SCORING_API}/draft/${draftId}/picks`).catch(()=>[])
+    ]);
+    const season=String(draft?.season||meta?.season||'');if(!season||!draft?.slot_to_roster_id||!Array.isArray(picks)||!picks.length)continue;
+    const rosterToSlot=new Map();
+    for(const [slot,rid] of Object.entries(draft.slot_to_roster_id||{})){const r=String(rid||'');if(r)rosterToSlot.set(r,Number(slot))}
+    for(const [rid,slot] of rosterToSlot){
+      if(!Number.isFinite(slot))continue;
+      for(const pick of picks){
+        if(Number(pick?.draft_slot)!==slot)continue;
+        const round=Number(pick?.round),playerId=String(pick?.player_id||'');if(!round||!playerId)continue;
+        const key=`${season}|${round}|${rid}`,mapped={player_id:playerId,draft_slot:slot,pick_no:Number(pick?.pick_no)||null,draft_id:draftId,source:'Sleeper draft result + slot_to_roster_id'};
+        if(out.has(key)&&out.get(key)?.player_id!==playerId){ambiguous.add(key);out.delete(key)}else if(!ambiguous.has(key))out.set(key,mapped);
+      }
+    }
+  }
+  for(const key of ambiguous)out.delete(key);
+  return out;
+}
+function normalizeCompletedTrade(tx,week,season,teamNames,draftResults){
   if(tx?.type!=='trade'||tx?.status!=='complete')return null;
   const rosterIds=[...new Set((tx.roster_ids||[]).map(String).filter(Boolean))],adds=tx.adds&&typeof tx.adds==='object'?tx.adds:{},picks=Array.isArray(tx.draft_picks)?tx.draft_picks:[];
   const createdMs=Number(tx.status_updated||tx.created),created=Number.isFinite(createdMs)?new Date(createdMs).toISOString():null;
@@ -368,16 +407,27 @@ function normalizeCompletedTrade(tx,week){
   const sides=rosterIds.map(rosterId=>({
     roster_id:rosterId,
     player_ids:Object.entries(adds).filter(([,rid])=>String(rid)===rosterId).map(([id])=>String(id)),
-    picks:picks.filter(p=>String(p?.owner_id||'')===rosterId).map(p=>({season:String(p?.season||''),round:Number(p?.round)||null,original_roster_id:p?.roster_id==null?null:String(p.roster_id)}))
+    picks:picks.filter(p=>String(p?.owner_id||'')===rosterId).map(p=>{
+      const pickSeason=String(p?.season||''),round=Number(p?.round)||null,original=p?.roster_id==null?null:String(p.roster_id),mapped=pickSeason&&round&&original?draftResults.get(`${pickSeason}|${round}|${original}`):null;
+      return{season:pickSeason,round,original_roster_id:original,drafted_player_id:mapped?.player_id||null,draft_slot:mapped?.draft_slot||null,pick_no:mapped?.pick_no||null,draft_id:mapped?.draft_id||null,draft_result_source:mapped?.source||null};
+    })
   }));
-  return{id:String(tx.transaction_id||''),created,week:Number(week)||null,roster_ids:rosterIds,sides};
+  return{id:String(tx.transaction_id||''),created,season:Number(season)||null,week:Number(week)||null,roster_ids:rosterIds,team_names:teamNames||{},sides};
 }
 async function importedCompletedTrades(){
   const now=Date.now();if(tradeAuditCache&&now-tradeAuditCache.t<60000)return tradeAuditCache.value;
-  const r=await fetch(`${TRADE_AUDIT_URL}?ts=${now}`,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryTrades/1.0'},cache:'no-store'});
-  if(!r.ok)throw new Error(`trade audit fetch ${r.status}`);
-  const payload=await r.json(),trades=[];
-  for(const [week,rows] of Object.entries(payload||{}))for(const tx of Array.isArray(rows)?rows:[]){const t=normalizeCompletedTrade(tx,week);if(t)trades.push(t)}
+  const seasonBundles=await Promise.all(TRADE_AUDIT_SEASONS.map(async season=>{
+    const [transactions,league,users,rosters]=await Promise.all([
+      tradeJson(auditUrl(season,'transactions')),
+      tradeJson(auditUrl(season,'league')),
+      tradeJson(auditUrl(season,'users')),
+      tradeJson(auditUrl(season,'rosters'))
+    ]);
+    const draftResults=await exactDraftResultMap(league),teamNames=historicalTeamNames(users,rosters);
+    return{season,transactions,teamNames,draftResults};
+  }));
+  const trades=[];
+  for(const bundle of seasonBundles)for(const [week,rows] of Object.entries(bundle.transactions||{}))for(const tx of Array.isArray(rows)?rows:[]){const t=normalizeCompletedTrade(tx,week,bundle.season,bundle.teamNames,bundle.draftResults);if(t)trades.push(t)}
   trades.sort((a,b)=>String(b.created).localeCompare(String(a.created)));tradeAuditCache={t:now,value:trades};return trades;
 }
 function closestSnapshotItem(items,targetMs,maxGapMs=36*3600000){
@@ -388,14 +438,14 @@ function closestSnapshotItem(items,targetMs,maxGapMs=36*3600000){
   }
   return best&&bestGap<=maxGapMs?best:null;
 }
-function sideValueFromMap(side,map){
-  const ids=side?.player_ids||[];if(!ids.length)return{value:0,complete:true,found:0};
-  let value=0,found=0;for(const id of ids){const row=map.get(String(id));const n=Number(row?.value);if(!Number.isFinite(n))continue;value+=n;found++}
-  return{value:Math.round(value),complete:found===ids.length,found};
+function playerValuesFromMap(side,map){
+  const ids=side?.player_ids||[],values=[],missing=[];
+  for(const id of ids){const row=map.get(String(id)),n=Number(row?.value);if(Number.isFinite(n))values.push({id:String(id),value:Math.round(n)});else missing.push(String(id))}
+  return{values,missing,complete:missing.length===0,total:values.reduce((n,x)=>n+x.value,0)};
 }
 async function completedTradeHistory(s){
   const trades=await importedCompletedTrades(),indexed=await allItems(s),items=indexed.items||[];
-  if(!items.length)return{source:'Sleeper imported transaction audit (2026)',tracking_since:null,latest:null,trades:trades.map(t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_player_value:null,current_player_value:null,player_value_delta:null}))}))};
+  if(!items.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',tracking_since:null,latest:null,trades:trades.map(t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_players:[],then_players_complete:false,current_players:[],current_players_complete:false}))}))};
   const latestItem=items[items.length-1],selected=new Map([[latestItem.key,latestItem]]),snapshotItemByTrade=new Map();
   for(const trade of trades){
     const ms=new Date(trade.created).getTime(),item=Number.isFinite(ms)?closestSnapshotItem(items,ms):null;
@@ -407,13 +457,12 @@ async function completedTradeHistory(s){
   const out=trades.map(trade=>{
     const histItem=snapshotItemByTrade.get(trade.id)||null,histSnap=histItem?snapByKey.get(histItem.key):null,histMap=rowMap(histSnap||{rows:[]});
     const sides=trade.sides.map(side=>{
-      const then=histItem?sideValueFromMap(side,histMap):{value:null,complete:false},current=sideValueFromMap(side,latestMap);
-      const thenValue=histItem&&then.complete?then.value:null,currentValue=current.complete?current.value:null;
-      return{...side,then_player_value:thenValue,current_player_value:currentValue,player_value_delta:thenValue!=null&&currentValue!=null?currentValue-thenValue:null};
+      const then=histItem?playerValuesFromMap(side,histMap):{values:[],missing:[...(side.player_ids||[])],complete:false,total:null},current=playerValuesFromMap(side,latestMap);
+      return{...side,then_players:then.values,then_players_complete:Boolean(histItem&&then.complete),then_player_total:histItem&&then.complete?then.total:null,current_players:current.values,current_players_complete:current.complete,current_player_total:current.complete?current.total:null};
     });
     return{...trade,trade_snapshot_t:histItem?.t||null,current_snapshot_t:latestItem?.t||null,sides};
   });
-  return{source:'Sleeper imported transaction audit (2026)',tracking_since:items[0]?.t||null,latest:latestItem?.t||null,trades:out};
+  return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',tracking_since:items[0]?.t||null,latest:latestItem?.t||null,trades:out};
 }
 async function health(s){
   const latest=await safeGet(s,LATEST_KEY),indexed=await allItems(s);

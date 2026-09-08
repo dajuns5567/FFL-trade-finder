@@ -81,8 +81,19 @@ function normalizeKtcPlayers(players){
   if(valued.length>=300)return{rows:valued.map((r,i)=>({rank:i+1,player:r.player,position:r.position,value:r.value})),mode:"derived-from-superflex-value",excluded};
   return{rows:ranked.map(r=>({rank:r.rank,player:r.player,position:r.position})),mode:"insufficient",excluded,valuedCount:valued.length};
 }
+function extractJsonScriptArray(text,id){
+  const source=String(text||""),re=new RegExp(`<script[^>]*\\bid=["']${id}["'][^>]*>([\\s\\S]*?)<\\/script>`,"i"),match=re.exec(source);
+  if(!match)return null;
+  try{const value=JSON.parse(match[1].trim());return Array.isArray(value)?value:null}catch{return null}
+}
 function collectKtcPlayerArrays(text){
   const arrays=[];
+  // KTC's current page embeds the complete ranking universe in a JSON script and
+  // then assigns playersArray via JSON.parse(document.getElementById(...)).
+  // Parsing the assignment as a literal array incorrectly jumps forward to a
+  // tiny unrelated array, which was the source of the 3-player production failure.
+  const embedded=extractJsonScriptArray(text,"ktc-players");
+  if(Array.isArray(embedded)&&embedded.length)arrays.push(embedded);
   for(const name of ["playersArray","rankings","players"]){try{const a=extractAssignedArray(text,name);if(Array.isArray(a)&&a.length)arrays.push(a)}catch{}}
   return arrays.sort((a,b)=>b.length-a.length);
 }
@@ -95,7 +106,7 @@ export function extractKtcSuperflexRankings(text){
     if(!best||parsed.rows.length>best.rows.length)best={...parsed,rawPlayers:players.length};
     if(parsed.rows.length>=300)break;
   }
-  return {rows:best?.rows||[],rawPlayers:best?.rawPlayers||0,excludedDraftPicks:best?.excluded?.draft||0,excludedNonOffense:best?.excluded?.nonOffense||0,parserMode:best?.mode||"none",valuedCount:best?.valuedCount||0};
+  return {rows:best?.rows||[],rawPlayers:best?.rawPlayers||0,excludedDraftPicks:best?.excluded?.draft||0,excludedNonOffense:best?.excluded?.nonOffense||0,parserMode:best?.mode||"none",valuedCount:best?.valuedCount||0,embeddedPlayers:Array.isArray(extractJsonScriptArray(text,"ktc-players"))?extractJsonScriptArray(text,"ktc-players").length:0};
 }
 export async function refreshKtc(opts={}){
   const now=new Date().toISOString();
@@ -116,6 +127,7 @@ export async function refreshKtc(opts={}){
       diagnostics:{
         parser:`ktc-resilient-${extracted.parserMode}`,
         raw_players:extracted.rawPlayers,
+        embedded_players:extracted.embeddedPlayers||0,
         max_source_rank:MAX_SOURCE_RANK,
         excluded_draft_picks:extracted.excludedDraftPicks,
         excluded_non_offense:extracted.excludedNonOffense,

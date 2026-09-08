@@ -40,6 +40,7 @@ on:
       - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/site-v29.mjs'
       - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/ktc-adapter.mjs'
       - 'value-history-v276.js'
       - 'scripts/value-history-data-hub-v331-smoke.mjs'
       - 'netlify.toml'
@@ -95,6 +96,14 @@ jobs:
         run: node scripts/specific-player-family-diversity-v327-smoke.cjs
       - name: Regular Finder outgoing player-core family diversity
         run: node scripts/regular-finder-family-diversity-v328-smoke.cjs
+      - name: Live KTC parser integrity
+        run: |
+          node --input-type=module <<'NODE'
+          import { refreshKtc } from './netlify/functions/ktc-adapter.mjs';
+          const r=await refreshKtc({timeoutMs:15000});
+          console.log(JSON.stringify({valid:r.valid,players:r.players_extracted,rows:r.ranking_rows,parser:r.diagnostics?.parser,embedded:r.diagnostics?.embedded_players,first:r.rankings?.slice(0,5)},null,2));
+          if(!r.valid||Number(r.players_extracted)<300)process.exit(17);
+          NODE
       - name: Value History data hub syntax
         run: |
           node --check value-history-v276.js

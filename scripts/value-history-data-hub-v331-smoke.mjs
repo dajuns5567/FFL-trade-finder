@@ -44,9 +44,10 @@ assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'delta1'),'market ro
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta1'),'market rows missing 1D positional-rank delta');
 assert(leagueScore({sack:1,tkl_loss:1,qb_hit:1},{sack:4.5,tkl_loss:2.5,qb_hit:2.5})===9.5,'league scoring must preserve stacked IDP categories');
 assert(weeklyPlayerRow({'p1':{stats:{sack:1}}},'p1').sack===1,'weekly player row extraction failed');
-const ktcPlayers=Array.from({length:320},(_,i)=>({playerName:`Player ${i+1}`,position:['QB','RB','WR','TE'][i%4],superflexValues:{value:10000-i}}));
-const ktcParsed=extractKtcSuperflexRankings(`<script>var playersArray=${JSON.stringify(ktcPlayers)};</script>`);
-assert(ktcParsed.rows.length===320,'KTC fallback must recover rankings from Superflex values');
+const ktcPlayers=Array.from({length:320},(_,i)=>({playerName:`Player ${i+1}`,position:['QB','RB','WR','TE'][i%4],superflexValues:{value:10000-i,rank:i+1}}));
+const ktcParsed=extractKtcSuperflexRankings(`<script type="application/json" id="ktc-players">${JSON.stringify(ktcPlayers)}</script><script>var playersArray = JSON.parse(document.getElementById('ktc-players').textContent);</script>`);
+assert(ktcParsed.rows.length===320,'KTC embedded JSON parser must recover the complete player universe');
+assert(ktcParsed.rows[0].rank===1&&ktcParsed.rows.at(-1).rank===320,'KTC embedded JSON ranks are not preserved');
 assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not receive fabricated pre-entry 365-day history');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
@@ -200,7 +201,10 @@ for(const needle of [
   'All-time high',
   'All-time low',
   'vh-net-hit',
-  'market history unavailable ('
+  'market history unavailable (',
+  'Value Range',
+  '.vh-value-chart{position:relative;padding-top:98px}',
+  'padding:10px 16px;min-width:0'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
 for(const forbidden of [

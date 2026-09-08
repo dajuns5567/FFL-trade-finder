@@ -105,7 +105,16 @@ function apply(){
     return;
   }
 
-  // Initial batch for a new search keeps the V176 fairness/recommendation invariant.
+  // V328 regular blank Finder rows are already quality-bounded and family-stabilized
+  // after every style/tier ordering pass. Preserve that order instead of undoing it here.
+  const familyOrdered=cards.every(c=>String(c.dataset?.regularFamilyKey||''));
+  if(familyOrdered){
+    renumber(cards);
+    lastVisibleCount=cards.length;
+    return;
+  }
+
+  // Initial batch for all other searches keeps the V176 fairness/recommendation invariant.
   const sorted=cards.slice().sort((a,b)=>
     fairnessOf(b)-fairnessOf(a)||recommendationOf(b)-recommendationOf(a)
   );

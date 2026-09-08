@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history';
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,marketSort={key:'value',dir:-1};
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,marketSort={key:'value',dir:-1},marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -21,6 +21,10 @@ function addStyles(){
   #valueHistory .vh-search-wrap input{margin:6px 0 0}
   #valueHistory .vh-status{font-size:12px;color:var(--muted);text-align:right}
   #valueHistory .vh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  #valueHistory .vh-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  #valueHistory .vh-card-head{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+  #valueHistory .vh-card-periods{display:flex;gap:4px;flex-wrap:wrap}
+  #valueHistory .vh-card-periods button{padding:4px 7px;min-width:0;font-size:11px}
   #valueHistory .vh-card{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;min-width:0}
   #valueHistory .vh-card h3{margin:0 0 4px;font-size:15px}
   #valueHistory .vh-card .vh-sub{font-size:12px;color:var(--muted);margin-bottom:10px}
@@ -65,7 +69,7 @@ function addStyles(){
   #valueHistory details.vh-market-table summary{cursor:pointer;font-weight:700}
   #valueHistory .vh-search-results{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0 0}
   #valueHistory .vh-empty{padding:18px;text-align:center;color:var(--muted)}
-  @media(max-width:900px){#valueHistory .vh-grid{grid-template-columns:1fr}#valueHistory .vh-metrics{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:900px){#valueHistory .vh-grid,#valueHistory .vh-grid-2{grid-template-columns:1fr}#valueHistory .vh-metrics{grid-template-columns:repeat(3,1fr)}}
   @media(max-width:620px){#valueHistory .vh-metrics{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-rank-grid{grid-template-columns:1fr}#valueHistory .vh-current{text-align:left}}
   `;
   document.head.appendChild(st);
@@ -84,7 +88,7 @@ function ranked(){try{return typeof ensureMaster==='function'?(ensureMaster()||[
 function posRanks(list){const counts={},map=new Map();for(const z of list){const p=groupPos(z.x);counts[p]=(counts[p]||0)+1;map.set(String(z.x.id),counts[p])}return map}
 function currentRows(){const list=ranked();if(!list.length||!tv().playerValue)return[];const pr=posRanks(list),rows=[];for(let i=0;i<list.length;i++){const x=list[i]?.x;if(!x||x.type!=='player')continue;const pos=groupPos(x);if(!['QB','RB','WR','TE','IDP'].includes(pos))continue;const value=Math.round(Number(tv().playerValue(x)||0));if(!Number.isFinite(value)||value<=0)continue;rows.push({id:String(x.id),value,overall:i+1,pos,posRank:pr.get(String(x.id))||1})}return rows}
 function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();return !/loading|updating|refreshing/.test(text)}
-async function recordSnapshot(){try{if(!snapshotPreconditions()){scheduleSnapshot(15000);return}const rows=currentRows();if(rows.length<100){scheduleSnapshot(15000);return}const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows}),keepalive:true});if(r.ok){marketCache=null;if(uiReady&&!currentPlayerId)loadMarket(true)}}catch{}}
+async function recordSnapshot(){try{if(!snapshotPreconditions()){scheduleSnapshot(2000);return false}const rows=currentRows();if(rows.length<100){scheduleSnapshot(2000);return false}const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows}),keepalive:true});if(r.ok){marketCache=null;if(uiReady&&!currentPlayerId)loadMarket(true);return true}scheduleSnapshot(3000);return false}catch{scheduleSnapshot(3000);return false}}
 function scheduleSnapshot(delay=60000){clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(recordSnapshot,{timeout:5000});else recordSnapshot()},delay)}
 
 function initUI(){
@@ -112,6 +116,7 @@ function handleContentClick(e){
   const player=e.target.closest('[data-vh-player]');if(player){selectPlayer(player.dataset.vhPlayer);return}
   const back=e.target.closest('[data-vh-dashboard]');if(back){currentPlayerId=null;const input=document.getElementById('vhSearch');if(input)input.value='';loadMarket();return}
   const period=e.target.closest('[data-vh-period]');if(period&&currentPlayerId){const box=document.getElementById('vhProfileData');const pts=box?JSON.parse(box.dataset.points||'[]'):[];renderPlayerProfile(currentPlayerId,pts,period.dataset.vhPeriod);return}
+  const mp=e.target.closest('[data-vh-market-period]');if(mp&&marketCache){marketPeriods[mp.dataset.vhCategory]=mp.dataset.vhMarketPeriod;renderMarketDashboard();return}
   const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};renderMarketTable();return}
 }
 async function historyFetch(id){let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_id=${encodeURIComponent(id)}`,{cache:'no-store'});if(!r.ok)throw Error('history unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('history unavailable')}
@@ -127,18 +132,33 @@ function moverRows(rows,mode='value'){
   if(!rows?.length)return'<div class="vh-empty">Not enough historical movement yet.</div>';
   return`<div class="vh-list">${rows.map((r,i)=>{const delta=mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)} #${r.posRank} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div></div>`}).join('')}</div>`;
 }
+function marketPeriodButtons(category){
+  const selected=marketPeriods[category]||'7D';
+  return`<div class="vh-card-periods">${['7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===selected?'':'secondary '}small" data-vh-category="${category}" data-vh-market-period="${p}">${p}</button>`).join('')}</div>`;
+}
+function periodLabel(period,m){
+  if(period==='ALL')return'Since Tracking Began';
+  if(period==='1Y'&&!m.has365)return'Since Tracking Began';
+  if(period==='90D'&&!m.has90)return'Available History';
+  if(period==='30D'&&!m.has30)return'Available History';
+  if(period==='7D'&&!m.has7)return'Available History';
+  return period.replace('1Y','1 Year');
+}
 function renderMarketDashboard(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
   const m=marketCache,status=document.getElementById('vhStatus');
-  if(status)status.textContent=m.latest?`Tracking since ${dateShort(m.tracking_since)} • Latest snapshot ${dateTime(m.latest)} • ${fmt(m.snapshot_count)} observations`:'Waiting for the first historical snapshot.';
-  const yearLabel=m.has365?'365 Days':'Since Tracking Began',weekSub=m.has7?'Largest absolute value changes over the last 7 days':'Using all available history until 7 full days are tracked';
+  if(status)status.textContent=m.latest?`Tracking since ${dateShort(m.tracking_since)} • Latest snapshot ${dateTime(m.latest)} • ${fmt(m.snapshot_count)} snapshots`:'Initializing first historical snapshot…';
+  const vr=marketPeriods.valueRisers,vf=marketPeriods.valueFallers,rr=marketPeriods.rankRisers,rf=marketPeriods.rankFallers;
+  const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
-  <div class="vh-grid">
-    <div class="vh-card"><h3>Top 10 Movers — 7 Days</h3><div class="vh-sub">${weekSub}</div>${moverRows(m.movers7d)}</div>
-    <div class="vh-card"><h3>Biggest Risers — ${yearLabel}</h3><div class="vh-sub">Largest net increases in finished player value</div>${moverRows(m.risers365)}</div>
-    <div class="vh-card"><h3>Biggest Fallers — ${yearLabel}</h3><div class="vh-sub">Largest net decreases in finished player value</div>${moverRows(m.fallers365)}</div>
+  <div class="vh-grid-2">
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Risers — ${periodLabel(vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${marketPeriodButtons('valueRisers')}</div>${moverRows(vpR.valueRisers)}</div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Value Fallers — ${periodLabel(vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${marketPeriodButtons('valueFallers')}</div>${moverRows(vpF.valueFallers)}</div>
   </div>
-  <div class="vh-card"><h3>Largest Rank Movers — 30 Days</h3><div class="vh-sub">${m.has30?'Overall-rank movement over the last 30 days':'Using available history until 30 full days are tracked'}</div>${moverRows(m.rankMovers30,'rank')}</div>
+  <div class="vh-grid-2">
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Risers — ${periodLabel(rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${marketPeriodButtons('rankRisers')}</div>${moverRows(rpR.rankRisers,'rank')}</div>
+    <div class="vh-card"><div class="vh-card-head"><div><h3>Biggest Rank Fallers — ${periodLabel(rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${marketPeriodButtons('rankFallers')}</div>${moverRows(rpF.rankFallers,'rank')}</div>
+  </div>
   <details class="vh-card vh-market-table"><summary>Full Market History Table</summary><div class="vh-sub" style="margin-top:8px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
   renderMarketTable();
@@ -188,7 +208,7 @@ function recentChanges(pts){
 function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
   if(!allPts.length){box.innerHTML=`<div class="vh-card"><div class="vh-toolbar"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
-  const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank)));
+  const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank)));
   const latestMs=new Date(allPts[allPts.length-1].t).getTime(),rank30=allPts.filter(p=>new Date(p.t).getTime()>=latestMs-30*86400000),rankBase=rank30[0]||allPts[0],rankLast=rank30[rank30.length-1]||allPts[allPts.length-1],overallMove=Number(rankBase.overall)-Number(rankLast.overall),posMove=Number(rankBase.posRank)-Number(rankLast.posRank);
   const status=document.getElementById('vhStatus');if(status)status.textContent=`Tracked since ${dateShort(allPts[0].t)} • ${fmt(allPts.length)} player observations`;
   box.innerHTML=`
@@ -213,10 +233,10 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   </div>
   <div class="vh-grid">
     <div class="vh-card" style="grid-column:span 2"><h3>Recent Changes</h3><div class="vh-sub">Latest recorded value or rank changes</div>${recentChanges(allPts)}</div>
-    <div class="vh-card"><h3>All-Time Milestones</h3><div class="vh-feed"><div class="vh-feed-row"><span>High value</span><b>${fmt(allMax)}</b></div><div class="vh-feed-row"><span>Low value</span><b>${fmt(allMin)}</b></div><div class="vh-feed-row"><span>Best overall</span><b>#${bestOverall}</b></div><div class="vh-feed-row"><span>Best ${esc(meta.pos)}</span><b>#${bestPos}</b></div><div class="vh-feed-row"><span>Observations</span><b>${fmt(allPts.length)}</b></div></div></div>
+    <div class="vh-card"><h3>All-Time Milestones</h3><div class="vh-feed"><div class="vh-feed-row"><span>High value</span><b>${fmt(allMax)}</b></div><div class="vh-feed-row"><span>Low value</span><b>${fmt(allMin)}</b></div><div class="vh-feed-row"><span>Best overall</span><b>#${bestOverall}</b></div><div class="vh-feed-row"><span>Best ${esc(meta.pos)}</span><b>#${bestPos}</b></div><div class="vh-feed-row"><span>Lowest ${esc(meta.pos)} Rank</span><b>#${lowestPos}</b></div><div class="vh-feed-row"><span>Observations</span><b>${fmt(allPts.length)}</b></div></div></div>
   </div>`;
 }
-function boot(){addShell();scheduleSnapshot(60000);document.getElementById('updateBtn')?.addEventListener('click',()=>scheduleSnapshot(60000),{passive:true})}
+function boot(){addShell();scheduleSnapshot(0);document.getElementById('updateBtn')?.addEventListener('click',()=>scheduleSnapshot(1000),{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={currentRows,recordSnapshot,historyFetch,marketFetch,livePlayerMeta,periodPoints};
 })();

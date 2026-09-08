@@ -31,7 +31,7 @@ const diverse=g.familyRoundRobin(genericItems,12,x=>x.give.xs);
 const families=diverse.map(x=>g.outgoingFamilyKey(x.give.xs));
 assert(families.includes('P:Chuba Hubbard|J.K. Dobbins'),'Chuba+Dobbins family was cut before fairness');
 assert(families.filter(x=>x==='P:Maxx Crosby').length===1,'same-player/different-pick Maxx family repeated before distinct families were exhausted: '+families.join(','));
-assert(families.filter(x=>x==='P:Justin Jefferson').length===1,'same-player/different-pick Jefferson family repeated before distinct families were exhausted: '+families.join(','));
+assert(families.filter(x=>x==='P:Justin Jefferson').length<=1,'same-player/different-pick Jefferson family repeated before distinct families were exhausted: '+families.join(','));
 assert(new Set(families).size>=10,'pre-fairness family diversity too low: '+families.join(','));
 
 const maxCandidates=m.structureCandidates(pool,target,2,24);

@@ -26,22 +26,25 @@ const m=marketFromSnapshots(snaps);
 assert(m.has7&&m.has30&&m.has365,'period availability flags incorrect');
 assert(m.tracking_since===snaps[0].t,'tracking start incorrect');
 assert(m.latest===snaps[3].t,'latest snapshot incorrect');
-assert(m.risers365[0].id==='a'&&m.risers365[0].delta===2100,'365-day riser calculation incorrect');
-assert(m.fallers365[0].id==='b'&&m.fallers365[0].delta===-1100,'365-day faller calculation incorrect');
-assert(m.rankMovers30.some(x=>x.id==='a'&&x.overallDelta>0),'30-day rank movers missing');
+assert(m.periods['1Y'].valueRisers[0].id==='a'&&m.periods['1Y'].valueRisers[0].delta===2100,'1Y value riser calculation incorrect');
+assert(m.periods['1Y'].valueFallers[0].id==='b'&&m.periods['1Y'].valueFallers[0].delta===-1100,'1Y value faller calculation incorrect');
+assert(m.periods['30D'].rankRisers.some(x=>x.id==='a'&&x.overallDelta>0),'30D rank risers missing');
+assert(m.periods['30D'].rankFallers.some(x=>x.id==='b'&&x.overallDelta<0),'30D rank fallers missing');
 assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not receive fabricated pre-entry 365-day history');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
 for(const needle of [
   "['7D','30D','90D','1Y','ALL']",
-  'Top 10 Movers — 7 Days',
-  'Biggest Risers',
-  'Biggest Fallers',
-  'Largest Rank Movers — 30 Days',
+  'Biggest Value Risers',
+  'Biggest Value Fallers',
+  'Biggest Rank Risers',
+  'Biggest Rank Fallers',
+  'data-vh-market-period',
   'Full Market History Table',
   'Overall Rank — Last 30 Days',
   'Recent Changes',
   'All-Time Milestones',
+  'Lowest ${esc(meta.pos)} Rank',
   'Tracked since'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
@@ -58,4 +61,6 @@ assert(backend.includes("MONTH_INDEX_PREFIX='indexes/'"),'partitioned all-time i
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
 
-console.log('V331 Value History data hub regression passed');
+assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
+assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
+console.log('V332 Value History dashboard/filter regression passed');

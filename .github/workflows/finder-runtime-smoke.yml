@@ -104,20 +104,13 @@ jobs:
           console.log(JSON.stringify({valid:r.valid,players:r.players_extracted,rows:r.ranking_rows,parser:r.diagnostics?.parser,embedded:r.diagnostics?.embedded_players,first:r.rankings?.slice(0,5)},null,2));
           if(!r.valid||Number(r.players_extracted)<300)process.exit(17);
           NODE
-      - name: Live FanRanked parser diagnostic
+      - name: Live FanRanked parser integrity
         run: |
           node --input-type=module <<'NODE'
-          const PLAYERS='https://www.fanranked.com/api/players?mode=football_dynasty_sf', MARKET='https://www.fanranked.com/api/football/market-values?format=superflex';
-          const [players,market]=await Promise.all([fetch(PLAYERS).then(r=>r.json()),fetch(MARKET).then(r=>r.json())]);
-          const byId=new Map(players.map(p=>[String(p.id),p])), vals=Array.isArray(market?.values)?market.values:[];
-          const offense=new Set(['QB','RB','WR','TE']);
-          const rows=vals.map(v=>({v,p:byId.get(String(v.playerId))})).filter(x=>x.p&&Array.isArray(x.p.positions)&&x.p.positions.some(pos=>offense.has(String(pos).toUpperCase()))&&!String(x.v.playerId).startsWith('pick:'));
-          const dupRanks=[...new Set(rows.map(x=>x.v.rank).filter((r,i,a)=>a.indexOf(r)!==i))].slice(0,20);
-          console.log('offense rows',rows.length,'unique players',new Set(rows.map(x=>x.v.playerId)).size,'capturedAt',Object.entries(rows.reduce((m,x)=>(m[x.v.capturedAt]=(m[x.v.capturedAt]||0)+1,m),{})).slice(0,20));
-          for(const rank of dupRanks)console.log('RANK',rank,rows.filter(x=>x.v.rank===rank).map(x=>({id:x.v.playerId,name:x.p.name,value:x.v.value,rank:x.v.rank,capturedAt:x.v.capturedAt})));
-          const dupIds=[...new Set(rows.map(x=>x.v.playerId).filter((id,i,a)=>a.indexOf(id)!==i))].slice(0,20);
-          for(const id of dupIds)console.log('PLAYER',id,rows.filter(x=>x.v.playerId===id).map(x=>({name:x.p.name,value:x.v.value,rank:x.v.rank,capturedAt:x.v.capturedAt})));
-          process.exit(17);
+          import { refreshFanRanked } from './netlify/functions/fanranked-adapter.mjs';
+          const r=await refreshFanRanked();
+          console.log(JSON.stringify({valid:r.valid,players:r.players_extracted,rows:r.ranking_rows,first:r.rankings?.slice(0,10),diagnostics:r.diagnostics},null,2));
+          if(!r.valid||Number(r.players_extracted)<200||Number(r.ranking_rows)!==300)process.exit(18);
           NODE
       - name: Value History data hub syntax
         run: |

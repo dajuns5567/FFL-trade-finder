@@ -4,8 +4,8 @@ import vm from 'node:vm';
 const backendSource=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 const pureSource=backendSource.replace(/^import .*$/m,'').replace(/export \{[^}]+\};/,'').split('export default async')[0];
 const context={console,Response,URL,setTimeout,clearTimeout};context.globalThis=context;vm.createContext(context);
-vm.runInContext(pureSource+`;globalThis.__vh={marketFromSnapshots,monthKey,baselineFor};`,context,{filename:'value-history-pure.mjs'});
-const {marketFromSnapshots,monthKey,baselineFor}=context.__vh;
+vm.runInContext(pureSource+`;globalThis.__vh={marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow};`,context,{filename:'value-history-pure.mjs'});
+const {marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow}=context.__vh;
 
 function assert(x,m){if(!x)throw new Error(m)}
 const day=86400000;
@@ -39,6 +39,10 @@ assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta365'),'
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'deltaAll'),'market rows missing all-time value delta');
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDeltaAll'),'market rows missing all-time positional-rank delta');
 assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'overallDelta7'),'market rows missing 7D overall-rank delta');
+assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'delta1'),'market rows missing 1D value delta');
+assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta1'),'market rows missing 1D positional-rank delta');
+assert(leagueScore({sack:1,tkl_loss:1,qb_hit:1},{sack:4.5,tkl_loss:2.5,qb_hit:2.5})===9.5,'league scoring must preserve stacked IDP categories');
+assert(weeklyPlayerRow({'p1':{stats:{sack:1}}},'p1').sack===1,'weekly player row extraction failed');
 assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not receive fabricated pre-entry 365-day history');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
@@ -149,7 +153,30 @@ for(const needle of [
   '${esc(playerName(id))}',  'vh-brand-copy',
   '#valueHistory #vhContent{display:grid;gap:16px}',
   '#valueHistory .vh-periods button:not(.secondary)',
-  'background:var(--card)'
+  'background:var(--card)',
+  'Value Δ 1D',
+  'Pos Δ 1D',
+  'Player pool',
+  'Top ${p}',
+  'marketPools',
+  'teamPools',
+  'applyMoverPool',
+  'Full Market History Table — Open / Close',
+  'scoring_milestones',
+  'Highest points in a week',
+  'Highest points in a season',
+  'Highest PPG in qualifying season',
+  'Sleeper weekly regular-season stats',
+  'vh-metric-time',
+  'dateTime(highPoint.t)',
+  'dateTime(lowPoint.t)',
+  'dateTime(bestOverallPoint.t)',
+  'playerScoringCache',
+  'target.overall',
+  'target.value',
+  '#valueHistory>.card{border-color:var(--line);background:color-mix(in srgb,var(--card) 72%,#06080c)',
+  '#valueHistory .vh-market-table summary',
+  'align-items:center;justify-content:center;text-align:center;min-height:82px'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
 for(const forbidden of [
@@ -165,7 +192,10 @@ assert(backend.includes("MONTH_INDEX_PREFIX='indexes/'"),'partitioned all-time i
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
 assert(!backend.includes("url.searchParams.get('player_ids')"),'Track My Team must not create a separate history endpoint');
+assert(backend.includes('scoringMilestones(playerId)'),'Sleeper scoring milestones endpoint integration missing');
+assert(backend.includes("qualifyingSeasonMinimumGames:8"),'8-game qualifying season rule missing');
+assert(backend.includes("league?.scoring_settings"),'league scoring settings are not used for milestones');
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
-console.log('V343 Value History hierarchy/continuous-neighbor regression passed');
+console.log('V344 Value History scoring/mover-pool/1D-table regression passed');

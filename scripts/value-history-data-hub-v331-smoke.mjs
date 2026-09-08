@@ -136,7 +136,6 @@ for(const needle of [
   '#valueHistory input[type="search"]:focus',
   '#valueHistory .vh-team-toolbar select:focus',
   'border-left:2px solid color-mix(in srgb,#e4b53f',
-  'background:radial-gradient(circle at 15% 0%',
   'rgba(228,181,63,.30)',
   'vh-brand-lockup',
   'vh-brand-title',

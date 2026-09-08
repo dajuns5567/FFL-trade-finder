@@ -137,12 +137,17 @@ for(const needle of [
   '#valueHistory .vh-team-toolbar select:focus',
   'border-left:2px solid color-mix(in srgb,#e4b53f',
   'rgba(228,181,63,.30)',
-  'vh-brand-lockup',
   'vh-brand-title',
-  'vh-brand-copy',
-  'font-size:16px;font-weight:900',
+  'vh-similar-title',
+  'vh-selected-divider',
+  '-webkit-text-stroke:.7px #05070a',
+  'background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important',
+  '#valueHistory .vh-value-axis{fill:currentColor;font-size:13px;font-weight:700',
+  'text-transform:uppercase;color:#e4b53f!important',
+  'Closest in Overall Value',
+  'Nearest ${esc(target.pos)} Ranks',
+  '${esc(playerName(id))}',  'vh-brand-copy',
   '#valueHistory #vhContent{display:grid;gap:16px}',
-  '#valueHistory .vh-profile-fact small{color:#b9c0ce;font-size:12px;font-weight:800',
   '#valueHistory .vh-periods button:not(.secondary)',
   'background:var(--card)'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
@@ -163,4 +168,4 @@ assert(!backend.includes("url.searchParams.get('player_ids')"),'Track My Team mu
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
-console.log('V342 Value History branded-header/player-layout regression passed');
+console.log('V343 Value History hierarchy/continuous-neighbor regression passed');

@@ -14,6 +14,7 @@ on:
       - 'scripts/acquire-specific-outgoing-diversity-v321-smoke.cjs'
       - 'scripts/acquire-specific-spectrum-diversity-v322-smoke.cjs'
       - 'scripts/specific-max-tier-routing-structure-v324-smoke.cjs'
+      - 'scripts/specific-player-simple-package-v325-smoke.cjs'
       - 'trade-select-all-v165.js'
       - 'trade-selected-positions-only-v262.js'
       - 'trade-finder-candidate-guard-v223.js'
@@ -73,3 +74,5 @@ jobs:
         run: node scripts/acquire-specific-spectrum-diversity-v322-smoke.cjs
       - name: Specific-player Maximum Value Tier Up/Down routing and structure
         run: node scripts/specific-max-tier-routing-structure-v324-smoke.cjs
+      - name: Specific-player simple-package coverage and outgoing asset frequency
+        run: node scripts/specific-player-simple-package-v325-smoke.cjs

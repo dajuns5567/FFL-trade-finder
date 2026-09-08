@@ -156,7 +156,9 @@ function marketPeriod(latest,base){
   const valueFallers=rows.filter(x=>x.delta<0).sort((a,b)=>a.delta-b.delta||b.value-a.value);
   const rankRisers=rows.filter(x=>x.overallDelta>0).sort((a,b)=>b.overallDelta-a.overallDelta||b.value-a.value);
   const rankFallers=rows.filter(x=>x.overallDelta<0).sort((a,b)=>a.overallDelta-b.overallDelta||b.value-a.value);
-  return{valueRisers,valueFallers,rankRisers,rankFallers,metrics};
+  const posRankRisers=rows.filter(x=>x.posRankDelta>0).sort((a,b)=>b.posRankDelta-a.posRankDelta||b.value-a.value);
+  const posRankFallers=rows.filter(x=>x.posRankDelta<0).sort((a,b)=>a.posRankDelta-b.posRankDelta||b.value-a.value);
+  return{valueRisers,valueFallers,rankRisers,rankFallers,posRankRisers,posRankFallers,metrics};
 }
 function marketFromSnapshots(snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
@@ -173,13 +175,13 @@ function marketFromSnapshots(snaps){
   const periods={};
   for(const [label,base] of Object.entries(bases)){
     const p=marketPeriod(latest,base);
-    periods[label]={valueRisers:p.valueRisers,valueFallers:p.valueFallers,rankRisers:p.rankRisers,rankFallers:p.rankFallers,baseline:base?.t||null};
+    periods[label]={valueRisers:p.valueRisers,valueFallers:p.valueFallers,rankRisers:p.rankRisers,rankFallers:p.rankFallers,posRankRisers:p.posRankRisers,posRankFallers:p.posRankFallers,baseline:base?.t||null};
   }
-  const m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m365=marketPeriod(latest,bases['1Y']).metrics;
+  const m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m365=marketPeriod(latest,bases['1Y']).metrics,mAll=marketPeriod(latest,bases['ALL']).metrics;
   const latestMap=rowMap(latest);
   const marketRows=[...latestMap.values()].map(r=>{
-    const id=String(r.id),d7=m7.get(id),d30=m30.get(id),d365=m365.get(id);
-    return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,overallDelta30:d30?.overallDelta??null};
+    const id=String(r.id),d7=m7.get(id),d30=m30.get(id),d365=m365.get(id),dAll=mAll.get(id);
+    return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,deltaAll:dAll?.delta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,posRankDeltaAll:dAll?.posRankDelta??null,overallDelta30:d30?.overallDelta??null};
   }).sort((a,b)=>b.value-a.value);
   return{
     tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,periods,marketRows,

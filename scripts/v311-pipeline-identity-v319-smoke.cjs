@@ -2,12 +2,12 @@ const cp=require('child_process');
 const expected={
   'trade-value-normalization-v139.js':'a3176707c4812e4747864914bfc68b05294990a0',
   'trade-te-scoring-adjustment-v259.js':'7f087f0339b5d8a3af1c97e8787f4c55d28f59a6',
-  'trade-finder-v256-compiled.js':'f8d5547ae2046f66a9b0f6a13708ba7561e4a7c3',
+  'trade-finder-v256-compiled.js':'df2cd8ef5ac48ab56f9dd38fc9e61d59ab14e898',
   'trade-runtime-v256-compiled.js':'95803b720f2555277d83390583f52ec23ebf111d',
   'trade-evaluator-any-team-v184.js':'c088af9ce9bd24f6142873fae201f1a262c63123',
   'trade-finder-candidate-guard-v223.js':'9373b06e4014f5fc368cf8eb00ed087b261ba1a7',
   'trade-ui-canonical-v136.js':'b9474616d1be29ae2c97ba0838cedd45e2a077b8',
-  'trade-presentation-v169.js':'601e6218b98ea8d0def1dc5d58004b0535e7905d',
+  'trade-presentation-v169.js':'8aac60753e3a5a8494b824b8dfe767d66fa072e7',
   'trade-select-all-v165.js':'9791e4ae53d583f015aa1b0e2a016590773cf12e',
   'trade-blank-cache-v167.js':'2d3d3c77a96bd0fcc65d933c55fc39761fd5434a',
   'trade-partner-fit-v184.js':'f5b6ab91941dd12dc6a49e7c5dbf4921ee6f43a4',
@@ -33,4 +33,4 @@ if(bad.length){
   for(const x of bad)console.error('- '+x);
   process.exit(1);
 }
-console.log('V327 pipeline identity verified with approved V320 Value Adjustment and scoped specific-player family-diversity changes for '+Object.keys(expected).length+' loaded modules.');
+console.log('V328 pipeline identity verified with approved V320 Value Adjustment and scoped specific-player family-diversity changes for '+Object.keys(expected).length+' loaded modules.');

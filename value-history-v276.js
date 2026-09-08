@@ -72,7 +72,10 @@ function addStyles(){
   #valueHistory .vh-chart-tooltip{position:absolute;z-index:6;display:none;pointer-events:none;min-width:180px;max-width:260px;padding:9px 11px;border:1px solid color-mix(in srgb,#e4b53f 65%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--card) 96%,black);box-shadow:0 8px 24px rgba(0,0,0,.28);font-size:12px;line-height:1.45;transform:translate(10px,-50%)}
   #valueHistory .vh-chart-tooltip b{display:block;color:#e4b53f;font-size:13px;margin-bottom:2px}
   #valueHistory .vh-view-chart{white-space:nowrap}
-  #valueHistory .vh-subnav{display:flex;gap:8px;flex-wrap:wrap}
+  #valueHistory .vh-subnav{display:inline-flex;gap:3px;align-items:center;width:max-content;max-width:100%;padding:4px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--card) 88%,black);box-shadow:inset 0 1px 0 rgba(255,255,255,.02)}
+  #valueHistory .vh-subnav button{border:0!important;border-radius:9px!important;padding:7px 12px!important;background:transparent!important;color:var(--muted)!important;box-shadow:none!important;font-weight:700}
+  #valueHistory .vh-subnav button:hover{color:inherit!important;background:color-mix(in srgb,var(--card) 72%,white 4%)!important}
+  #valueHistory .vh-subnav button.vh-subnav-active{color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 12%,var(--card))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 30%,transparent)!important}
   #valueHistory .vh-team-toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
   #valueHistory .vh-team-toolbar label{min-width:280px;flex:1}
   #valueHistory .vh-similar-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -125,8 +128,14 @@ function initUI(){
   const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
   input.addEventListener('input',()=>renderSearchResults(input.value));
   results.addEventListener('click',e=>{const b=e.target.closest('button[data-vh-id]');if(!b)return;selectPlayer(b.dataset.vhId)});
-  const content=document.getElementById('vhContent');content?.addEventListener('click',handleContentClick);content?.addEventListener('change',handleContentChange);content?.addEventListener('pointermove',handleChartPointer);content?.addEventListener('pointerleave',hideChartTooltip);content?.addEventListener('pointerdown',handleChartPointer);
-  loadMarket();
+  root.addEventListener('click',handleContentClick);root.addEventListener('change',handleContentChange);
+  const content=document.getElementById('vhContent');content?.addEventListener('pointermove',handleChartPointer);content?.addEventListener('pointerleave',hideChartTooltip);content?.addEventListener('pointerdown',handleChartPointer);
+  syncSubnav();loadMarket();
+}
+function syncSubnav(){
+  document.querySelectorAll('#valueHistory .vh-subnav button').forEach(b=>b.classList.remove('vh-subnav-active'));
+  const active=currentView==='team'?document.querySelector('#valueHistory [data-vh-track-team]'):document.querySelector('#valueHistory [data-vh-dashboard]');
+  active?.classList.add('vh-subnav-active');
 }
 function renderSearchResults(value){
   const results=document.getElementById('vhResults');if(!results)return;
@@ -135,14 +144,14 @@ function renderSearchResults(value){
   results.innerHTML=matches.map(z=>`<button type="button" class="secondary small" data-vh-id="${esc(z.x.id)}">${esc(playerName(z.x.id))} • ${esc(groupPos(z.x))}</button>`).join('');
 }
 function selectPlayer(id){
-  currentView='player';currentPlayerId=String(id);const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
+  currentView='player';syncSubnav();currentPlayerId=String(id);const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
   if(input)input.value=playerName(id);if(results)results.innerHTML='';
   loadPlayer(id);
 }
 function handleContentClick(e){
   const player=e.target.closest('[data-vh-player]');if(player){selectPlayer(player.dataset.vhPlayer);return}
-  const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';loadMarket(true);return}
-  const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';currentPlayerId=null;renderTrackMyTeam();return}
+  const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';loadMarket(true);return}
+  const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();currentPlayerId=null;renderTrackMyTeam();return}
   const period=e.target.closest('[data-vh-period]');if(period&&currentPlayerId){const box=document.getElementById('vhProfileData');const pts=box?JSON.parse(box.dataset.points||'[]'):[];renderPlayerProfile(currentPlayerId,pts,period.dataset.vhPeriod);return}
   const mp=e.target.closest('[data-vh-market-period]');if(mp&&marketCache){marketPeriods[mp.dataset.vhCategory]=mp.dataset.vhMarketPeriod;renderMarketDashboard();return}
   const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};if(currentView==='team')renderTrackedTeamTable();else renderMarketTable();return}
@@ -158,7 +167,7 @@ async function marketFetch(){const r=await fetch(`${API}?market=1`,{cache:'no-st
 async function ensureMarketCache(force=false){if(!marketCache||force){const data=await marketFetch();marketCache=data.market||{}}return marketCache}
 async function loadMarket(force=false){
   const box=document.getElementById('vhContent');if(!box)return;
-  currentView='market';currentPlayerId=null;
+  currentView='market';syncSubnav();currentPlayerId=null;
   if(!marketCache||force){box.innerHTML='<div class="vh-empty">Loading market dashboard…</div>';try{await ensureMarketCache(force)}catch{box.innerHTML='<div class="notice">Historical market data is temporarily unavailable. Current values and all trade tools are unaffected.</div>';return}}
   renderMarketDashboard();
 }
@@ -221,7 +230,7 @@ function leagueTeamIds(){
   return[...ids].sort((a,b)=>String(teamName(a)).localeCompare(String(teamName(b))));
 }
 function renderTrackMyTeam(){
-  currentView='team';currentPlayerId=null;
+  currentView='team';syncSubnav();currentPlayerId=null;
   const box=document.getElementById('vhContent');if(!box)return;
   const ids=leagueTeamIds(),selected=trackedTeamId&&ids.includes(String(trackedTeamId))?String(trackedTeamId):'';
   const status=document.getElementById('vhStatus');if(status)status.textContent='Track a league roster using the same data as Full Market History.';
@@ -229,7 +238,7 @@ function renderTrackMyTeam(){
   if(selected)loadTrackedTeam();
 }
 async function loadTrackedTeam(){
-  currentView='team';const host=document.getElementById('vhTrackedTeam');if(!host)return;
+  currentView='team';syncSubnav();const host=document.getElementById('vhTrackedTeam');if(!host)return;
   if(!trackedTeamId){host.innerHTML='';return}
   host.innerHTML='<div class="vh-card"><div class="vh-empty">Refreshing team market history…</div></div>';
   try{await ensureMarketCache(!marketCache)}catch{host.innerHTML='<div class="notice">Team market history is temporarily unavailable. Current values and all trade tools are unaffected.</div>';return}
@@ -250,7 +259,7 @@ function similarPlayersSection(id){
   const rows=currentPlayerRows(),target=rows.find(r=>r.id===String(id));if(!target)return'';
   const byValue=rows.slice().sort((a,b)=>b.value-a.value),vi=byValue.findIndex(r=>r.id===target.id),valueAbove=byValue.slice(Math.max(0,vi-5),vi),valueBelow=byValue.slice(vi+1,vi+6);
   const same=rows.filter(r=>r.pos===target.pos).sort((a,b)=>(a.posRank||9999)-(b.posRank||9999)),pi=same.findIndex(r=>r.id===target.id),posAbove=same.slice(Math.max(0,pi-2),pi),posBelow=same.slice(pi+1,pi+3);
-  const row=r=>`<div class="vh-neighbor-row"><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(String(state.players?.[r.id]?.team||'FA').toUpperCase())} • ${esc(r.pos)} • Value ${fmt(r.value)} • ${esc(r.pos)} #${r.posRank||'—'}</small></button><button type="button" class="secondary small" data-vh-player="${esc(r.id)}">View chart</button></div>`;
+  const row=r=>`<div class="vh-neighbor-row"><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(String(state.players?.[r.id]?.team||'FA').toUpperCase())} • ${esc(r.pos)} • Overall #${r.overall} • Value ${fmt(r.value)} • ${esc(r.pos)} #${r.posRank||'—'}</small></button><button type="button" class="secondary small" data-vh-player="${esc(r.id)}">View chart</button></div>`;
   const group=(above,below)=>`<div class="vh-neighbor-list">${above.length?'<div class="tiny muted" style="padding:4px 0">Above selected player</div>':''}${above.map(row).join('')}${below.length?'<div class="tiny muted" style="padding:4px 0">Below selected player</div>':''}${below.map(row).join('')}</div>`;
   return`<div class="vh-card"><div class="vh-card-head"><div><h3>Similar Value Players</h3><div class="vh-sub">Current neighbors around ${esc(playerName(id))}; informational only.</div></div></div><div class="vh-similar-grid"><div><h3>Closest in Overall Value</h3><div class="vh-sub">5 players immediately above and below by current value</div>${group(valueAbove,valueBelow)}</div><div><h3>Nearest ${esc(target.pos)} Ranks</h3><div class="vh-sub">2 players immediately above and below in positional rank</div>${group(posAbove,posBelow)}</div></div></div>`;
 }

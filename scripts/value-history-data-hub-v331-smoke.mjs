@@ -192,7 +192,15 @@ for(const needle of [
   'No qualifying 8+ game season yet',
   'text-align:center;color:#e4b53f',
   'top:4px',
-  'Search player history'
+  'Search player history',
+  'hasValidatedKtcSnapshot',
+  'currentTeamNetStandings',
+  'League Net Value Comparison',
+  'data-vh-team-net-all',
+  'All-time high',
+  'All-time low',
+  'vh-net-hit',
+  'market history unavailable ('
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
 for(const forbidden of [

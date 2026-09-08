@@ -130,7 +130,7 @@ async function loadMarket(force=false){
 function deltaClass(n){return Number(n)>0?'vh-up':Number(n)<0?'vh-down':'vh-neutral'}
 function moverRows(rows,mode='value'){
   if(!rows?.length)return'<div class="vh-empty">Not enough historical movement yet.</div>';
-  return`<div class="vh-list">${rows.map((r,i)=>{const delta=mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)} #${r.posRank} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div></div>`}).join('')}</div>`;
+  return`<div class="vh-list">${rows.map((r,i)=>{const delta=mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)} #${r.posRank} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())} • Overall #${r.overall} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div></div>`}).join('')}</div>`;
 }
 function marketPeriodButtons(category){
   const selected=marketPeriods[category]||'7D';

@@ -130,6 +130,14 @@ for(const needle of [
   'rank change',
   '#valueHistory .vh-card-periods button:not(.secondary)',
   '#valueHistory .vh-search-wrap input:focus',
+  'vh-control-row',
+  'vh-mover-card',
+  'vh-team-picker',
+  '#valueHistory input[type="search"]:focus',
+  '#valueHistory .vh-team-toolbar select:focus',
+  'border-left:2px solid color-mix(in srgb,#e4b53f',
+  'background:radial-gradient(circle at 15% 0%',
+  'rgba(228,181,63,.30)',
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
 for(const forbidden of [
@@ -148,4 +156,4 @@ assert(!backend.includes("url.searchParams.get('player_ids')"),'Track My Team mu
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
-console.log('V340 Value History market rank-delta/table/theme regression passed');
+console.log('V341 Value History Fleeced visual-spacing regression passed');

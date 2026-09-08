@@ -17,8 +17,8 @@ const expected={
   'trade-specific-max-tier-add-v300.js':'66fa68072f507ebc759abea7be5ec394016994d4',
   'trade-specific-tier-up-v282.js':'7459ff61db4b4479635dedc05a66ada53ce0a904',
   'trade-specific-add-assets-v282.js':'f356f8913914ef136a2a0909f17d01e97a4a14a0',
-  'trade-specific-max-value-v279.js':'abb99b7cb6de174354faf85d8fd03f87e4caae60',
-  'trade-specific-player-v232.js':'2606df4965c090e04d4bb2272b283763efca9109',
+  'trade-specific-max-value-v279.js':'9c2d02beb6affd4212d35cdb4fe25d6540ab3848',
+  'trade-specific-player-v232.js':'5d0a957b1699e20065df62182dc58edc7237bab5',
   'pick-display-sync-v279.js':'ac0e5102c969139fade368410209ae44a6b78eff',
   'trade-recommended-pick-ownership-v301.js':'383c4cccc512d8f57692ab81a5e45102179fad02'
 };
@@ -33,4 +33,4 @@ if(bad.length){
   for(const x of bad)console.error('- '+x);
   process.exit(1);
 }
-console.log('V320 pipeline identity verified with approved V320 Value Adjustment, V322 Acquire Specific Player spectrum drift, and V324 scoped Maximum Value routing/structure drift'+Object.keys(expected).length+' loaded modules.');
+console.log('V325 pipeline identity verified with approved V320 Value Adjustment, V322 generic specific-player evolution, V324 routing change, and V325 package coverage/asset-frequency changes for '+Object.keys(expected).length+' loaded modules.');

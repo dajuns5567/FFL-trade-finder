@@ -30,6 +30,9 @@ assert(m.periods['1Y'].valueRisers[0].id==='a'&&m.periods['1Y'].valueRisers[0].d
 assert(m.periods['1Y'].valueFallers[0].id==='b'&&m.periods['1Y'].valueFallers[0].delta===-1100,'1Y value faller calculation incorrect');
 assert(m.periods['30D'].rankRisers.some(x=>x.id==='a'&&x.overallDelta>0),'30D rank risers missing');
 assert(m.periods['30D'].rankFallers.some(x=>x.id==='b'&&x.overallDelta<0),'30D rank fallers missing');
+assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta7'),'market rows missing 7D positional-rank delta');
+assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta30'),'market rows missing 30D positional-rank delta');
+assert(Object.prototype.hasOwnProperty.call(m.marketRows[0],'posRankDelta365'),'market rows missing 1Y positional-rank delta');
 assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not receive fabricated pre-entry 365-day history');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
@@ -47,6 +50,13 @@ for(const needle of [
   'Lowest ${esc(meta.pos)} Rank',
   'Overall #${r.overall}',
   "state.players?.[String(r.id)]?.team",
+  'posRankDelta7',
+  'posRankDelta30',
+  'posRankDelta365',
+  'View chart',
+  'vh-point-hit',
+  'vh-chart-tooltip',
+  'stroke="#e4b53f"',
   'Tracked since'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 

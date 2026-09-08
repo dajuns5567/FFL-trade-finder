@@ -29,7 +29,7 @@ function addStyles(){
   #valueHistory .vh-card h3{margin:0 0 4px;font-size:15px}
   #valueHistory .vh-card .vh-sub{font-size:12px;color:var(--muted);margin-bottom:10px}
   #valueHistory .vh-list{display:grid;gap:5px}
-  #valueHistory .vh-mover{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+  #valueHistory .vh-mover{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
   #valueHistory .vh-mover:first-child{border-top:0}
   #valueHistory .vh-ranknum{font-size:11px;color:var(--muted);text-align:center}
   #valueHistory .vh-player-link{background:none;border:0;padding:0;color:inherit;text-align:left;font:inherit;cursor:pointer;min-width:0}
@@ -54,6 +54,12 @@ function addStyles(){
   #valueHistory .vh-metric b{font-size:17px}
   #valueHistory .vh-chart-card{padding:12px}
   #valueHistory .vh-chart-card svg{display:block;width:100%;height:auto;border-radius:10px}
+  #valueHistory .vh-value-chart{position:relative}
+  #valueHistory .vh-point-hit{fill:transparent;stroke:transparent;cursor:crosshair;pointer-events:all}
+  #valueHistory .vh-point-dot{fill:#e4b53f;stroke:var(--card);stroke-width:2;pointer-events:none}
+  #valueHistory .vh-chart-tooltip{position:absolute;z-index:6;display:none;pointer-events:none;min-width:180px;max-width:260px;padding:9px 11px;border:1px solid color-mix(in srgb,#e4b53f 65%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--card) 96%,black);box-shadow:0 8px 24px rgba(0,0,0,.28);font-size:12px;line-height:1.45;transform:translate(10px,-50%)}
+  #valueHistory .vh-chart-tooltip b{display:block;color:#e4b53f;font-size:13px;margin-bottom:2px}
+  #valueHistory .vh-view-chart{white-space:nowrap}
   #valueHistory .vh-rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   #valueHistory .vh-rank-stat{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px}
   #valueHistory .vh-rank-stat b{font-size:20px}
@@ -98,7 +104,7 @@ function initUI(){
   const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
   input.addEventListener('input',()=>renderSearchResults(input.value));
   results.addEventListener('click',e=>{const b=e.target.closest('button[data-vh-id]');if(!b)return;selectPlayer(b.dataset.vhId)});
-  document.getElementById('vhContent')?.addEventListener('click',handleContentClick);
+  const content=document.getElementById('vhContent');content?.addEventListener('click',handleContentClick);content?.addEventListener('pointermove',handleChartPointer);content?.addEventListener('pointerleave',hideChartTooltip);content?.addEventListener('pointerdown',handleChartPointer);
   loadMarket();
 }
 function renderSearchResults(value){
@@ -119,6 +125,8 @@ function handleContentClick(e){
   const mp=e.target.closest('[data-vh-market-period]');if(mp&&marketCache){marketPeriods[mp.dataset.vhCategory]=mp.dataset.vhMarketPeriod;renderMarketDashboard();return}
   const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};renderMarketTable();return}
 }
+function hideChartTooltip(){const tip=document.querySelector('#valueHistory .vh-chart-tooltip');if(tip)tip.style.display='none'}
+function handleChartPointer(e){const hit=e.target?.closest?.('.vh-point-hit'),wrap=hit?.closest?.('.vh-value-chart'),tip=wrap?.querySelector?.('.vh-chart-tooltip');if(!hit||!wrap||!tip){if(e.type==='pointermove')hideChartTooltip();return}const rect=wrap.getBoundingClientRect(),x=Math.max(8,Math.min(rect.width-210,e.clientX-rect.left)),y=Math.max(20,Math.min(rect.height-20,e.clientY-rect.top));tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>Value <strong>${esc(hit.dataset.vhValue)}</strong></div><div>Overall #${esc(hit.dataset.vhOverall)} • ${esc(hit.dataset.vhPos)} #${esc(hit.dataset.vhPosRank)}</div>`;tip.style.left=`${x}px`;tip.style.top=`${y}px`;tip.style.display='block'}
 async function historyFetch(id){let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_id=${encodeURIComponent(id)}`,{cache:'no-store'});if(!r.ok)throw Error('history unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('history unavailable')}
 async function marketFetch(){const r=await fetch(`${API}?market=1`,{cache:'no-store'});if(!r.ok)throw Error('market history unavailable');return await r.json()}
 async function loadMarket(force=false){
@@ -130,7 +138,7 @@ async function loadMarket(force=false){
 function deltaClass(n){return Number(n)>0?'vh-up':Number(n)<0?'vh-down':'vh-neutral'}
 function moverRows(rows,mode='value'){
   if(!rows?.length)return'<div class="vh-empty">Not enough historical movement yet.</div>';
-  return`<div class="vh-list">${rows.map((r,i)=>{const delta=mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)} #${r.posRank} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())} • Overall #${r.overall} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div></div>`}).join('')}</div>`;
+  return`<div class="vh-list">${rows.map((r,i)=>{const delta=mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)} #${r.posRank} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())} • Overall #${r.overall} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div><button type="button" class="secondary small vh-view-chart" data-vh-player="${esc(r.id)}">View chart</button></div>`}).join('')}</div>`;
 }
 function marketPeriodButtons(category){
   const selected=marketPeriods[category]||'7D';
@@ -168,7 +176,7 @@ function renderMarketTable(){
   const q=norm(document.getElementById('vhMarketSearch')?.value||''),rows=(marketCache.marketRows||[]).filter(r=>!q||norm(playerName(r.id)).includes(q)).slice();
   const key=marketSort.key,dir=marketSort.dir;
   rows.sort((a,b)=>{if(key==='name')return dir*String(playerName(a.id)).localeCompare(String(playerName(b.id)));const av=Number(a[key]),bv=Number(b[key]);if(!Number.isFinite(av)&&!Number.isFinite(bv))return 0;if(!Number.isFinite(av))return 1;if(!Number.isFinite(bv))return-1;return dir*(av-bv)});
-  host.innerHTML=`<div class="vh-table-wrap"><table class="vh-table"><thead><tr><th data-vh-sort="name">Player</th><th data-vh-sort="value">Value</th><th data-vh-sort="delta7">7D</th><th data-vh-sort="delta30">30D</th><th data-vh-sort="delta365">1Y/All</th><th data-vh-sort="overall">Overall</th><th data-vh-sort="posRank">Pos Rank</th></tr></thead><tbody>${rows.map(r=>`<tr><td><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)}</small></button></td><td>${fmt(r.value)}</td><td class="${deltaClass(r.delta7)}">${r.delta7==null?'—':signed(r.delta7)}</td><td class="${deltaClass(r.delta30)}">${r.delta30==null?'—':signed(r.delta30)}</td><td class="${deltaClass(r.delta365)}">${r.delta365==null?'—':signed(r.delta365)}</td><td>#${r.overall}</td><td>${esc(r.pos)} #${r.posRank}</td></tr>`).join('')}</tbody></table></div>`;
+  host.innerHTML=`<div class="vh-table-wrap"><table class="vh-table"><thead><tr><th data-vh-sort="name">Player</th><th data-vh-sort="value">Value</th><th data-vh-sort="delta7">Value 7D</th><th data-vh-sort="delta30">Value 30D</th><th data-vh-sort="delta365">Value 1Y/All</th><th data-vh-sort="overall">Overall</th><th data-vh-sort="posRank">Pos Rank</th><th data-vh-sort="posRankDelta7">Pos Δ 7D</th><th data-vh-sort="posRankDelta30">Pos Δ 30D</th><th data-vh-sort="posRankDelta365">Pos Δ 1Y/All</th><th>Chart</th></tr></thead><tbody>${rows.map(r=>`<tr><td><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())}</small></button></td><td>${fmt(r.value)}</td><td class="${deltaClass(r.delta7)}">${r.delta7==null?'—':signed(r.delta7)}</td><td class="${deltaClass(r.delta30)}">${r.delta30==null?'—':signed(r.delta30)}</td><td class="${deltaClass(r.delta365)}">${r.delta365==null?'—':signed(r.delta365)}</td><td>#${r.overall}</td><td>${esc(r.pos)} #${r.posRank}</td><td class="${deltaClass(r.posRankDelta7)}">${r.posRankDelta7==null?'—':signed(r.posRankDelta7)}</td><td class="${deltaClass(r.posRankDelta30)}">${r.posRankDelta30==null?'—':signed(r.posRankDelta30)}</td><td class="${deltaClass(r.posRankDelta365)}">${r.posRankDelta365==null?'—':signed(r.posRankDelta365)}</td><td><button type="button" class="secondary small vh-view-chart" data-vh-player="${esc(r.id)}">View chart</button></td></tr>`).join('')}</tbody></table></div>`;
 }
 async function loadPlayer(id){
   const box=document.getElementById('vhContent');if(!box)return;box.innerHTML='<div class="vh-empty">Loading player history…</div>';
@@ -197,8 +205,9 @@ function rankSpark(points,field){
 function valueChart(id,pts){
   if(!pts.length)return`<div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. A point will appear after a completed value refresh is recorded.</div>`;
   const values=pts.map(p=>Number(p.value)).filter(Number.isFinite),min=Math.min(...values),max=Math.max(...values),pad=Math.max(100,(max-min)*.15),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=360,L=64,R=24,T=24,B=54,n=Math.max(1,pts.length-1),x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo));
-  const path=pts.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' '),dots=pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="4"><title>${esc(dateTime(p.t))}: ${fmt(p.value)} • Overall #${p.overall} • ${esc(p.pos)} #${p.posRank}</title></circle>`).join(''),first=pts[0],last=pts[pts.length-1];
-  return`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(playerName(id))} value history"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="currentColor" opacity=".25"/><line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="currentColor" opacity=".25"/><text x="${L-8}" y="${T+5}" text-anchor="end" font-size="12" fill="currentColor">${Math.round(hi).toLocaleString()}</text><text x="${L-8}" y="${H-B}" text-anchor="end" font-size="12" fill="currentColor">${Math.round(lo).toLocaleString()}</text><text x="${L}" y="${H-18}" font-size="12" fill="currentColor">${esc(new Date(first.t).toLocaleDateString())}</text><text x="${W-R}" y="${H-18}" text-anchor="end" font-size="12" fill="currentColor">${esc(new Date(last.t).toLocaleDateString())}</text><path d="${path}" fill="none" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke"/>${dots}</svg><p class="tiny muted">Hover/tap a point for timestamp, overall rank and positional rank.</p>`;
+  const path=pts.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' '),
+    dots=pts.map((p,i)=>`<g><circle class="vh-point-dot" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="5"/><circle class="vh-point-hit" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="18" data-vh-date="${esc(dateTime(p.t))}" data-vh-value="${fmt(p.value)}" data-vh-overall="${p.overall}" data-vh-pos="${esc(p.pos)}" data-vh-pos-rank="${p.posRank}" tabindex="0" aria-label="${esc(dateTime(p.t))}: Value ${fmt(p.value)}, Overall rank ${p.overall}, ${esc(p.pos)} rank ${p.posRank}"/></g>`).join(''),first=pts[0],last=pts[pts.length-1];
+  return`<div class="vh-value-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(playerName(id))} value history"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="currentColor" opacity=".25"/><line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="currentColor" opacity=".25"/><text x="${L-8}" y="${T+5}" text-anchor="end" font-size="12" fill="currentColor">${Math.round(hi).toLocaleString()}</text><text x="${L-8}" y="${H-B}" text-anchor="end" font-size="12" fill="currentColor">${Math.round(lo).toLocaleString()}</text><text x="${L}" y="${H-18}" font-size="12" fill="currentColor">${esc(new Date(first.t).toLocaleDateString())}</text><text x="${W-R}" y="${H-18}" text-anchor="end" font-size="12" fill="currentColor">${esc(new Date(last.t).toLocaleDateString())}</text><path d="${path}" fill="none" stroke="#e4b53f" stroke-width="3.5" vector-effect="non-scaling-stroke"/>${dots}</svg><div class="vh-chart-tooltip" role="status" aria-live="polite"></div></div><p class="tiny muted">Move your pointer near a gold point or tap it to see timestamp, value, overall rank and positional rank.</p>`;
 }
 function recentChanges(pts){
   const rows=[];for(let i=pts.length-1;i>0&&rows.length<8;i--){const a=pts[i-1],b=pts[i],dv=Number(b.value)-Number(a.value),dr=Number(a.overall)-Number(b.overall),dp=Number(a.posRank)-Number(b.posRank);if(dv||dr||dp)rows.push({t:b.t,dv,dr,dp,value:b.value,overall:b.overall,pos:b.pos,posRank:b.posRank})}

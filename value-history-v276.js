@@ -399,7 +399,7 @@ function teamNetNeighbors(){
 }
 function openTeamNetModal(){
   closeMoverModal();const {all}=teamNetNeighbors(),wrap=document.createElement('div');wrap.id='vhMoverModal';wrap.className='vh-modal-backdrop';
-  wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="All team net values"><div class="vh-modal-head"><div><h3>All 32 Teams — Overall Net Value</h3><div class="vh-sub">Current raw player-value totals from the latest site load / refresh</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-list">${all.map((t,i)=>`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><div><b>${esc(t.name)}</b><small>Total value</small></div><div class="vh-delta">${fmt(t.value)}</div></div>`).join('')}</div></div></div>`;
+  wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="All team net values"><div class="vh-modal-head"><div><h3>All 32 Teams — Overall Net Value</h3><div class="vh-sub">Current raw player-value totals from the latest site load / refresh</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-list"><div class="vh-mover"><div class="vh-ranknum"></div><div></div><div class="vh-delta"><small>Total value</small></div></div>${all.map((t,i)=>`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><div><b>${esc(t.name)}</b></div><div class="vh-delta">${fmt(t.value)}</div></div>`).join('')}</div></div></div>`;
   (document.getElementById('vhLazy')||document.getElementById('valueHistory')||document.body).appendChild(wrap);
 }
 function overallNetValueCard(data,teamLabel){

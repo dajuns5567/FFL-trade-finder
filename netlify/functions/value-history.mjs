@@ -7,6 +7,17 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const INDEX_KEY='snapshot-index.json';
 const LATEST_KEY='latest.json';
 const MAX_SNAPSHOTS=500;
+const KNOWN_BAD_MINUTES=new Set(['2026-09-07T21:07']);
+function minuteKey(t){const d=new Date(t);return Number.isFinite(d.getTime())?d.toISOString().slice(0,16):''}
+function knownBadTimestamp(t){return KNOWN_BAD_MINUTES.has(minuteKey(t))}
+function collapsed120Snapshot(snap){
+  const rows=Array.isArray(snap?.rows)?snap.rows:[];
+  if(rows.length<100)return false;
+  let at120=0;
+  for(const r of rows)if(Number(r?.value)===120)at120++;
+  return at120/rows.length>=0.9;
+}
+function validSnapshot(snap){return!!snap&&!knownBadTimestamp(snap?.t)&&!collapsed120Snapshot(snap)}
 
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
@@ -54,7 +65,7 @@ async function readSnapshotsBounded(s,items,batchSize=25){
   for(let i=0;i<items.length;i+=batchSize){
     const batch=items.slice(i,i+batchSize);
     const rows=await Promise.all(batch.map(async item=>{try{return await s.get(item.key,{type:'json'})}catch{return null}}));
-    snaps.push(...rows);
+    snaps.push(...rows.filter(validSnapshot));
   }
   return snaps;
 }
@@ -78,6 +89,7 @@ async function latestFallback(s,playerId){
   if(!key)return{reachable:true,points:[],source:'empty'};
   const snap=await safeGet(s,key);
   if(!snap)return{reachable:false,points:[],source:'latest-unreadable'};
+  if(!validSnapshot(snap))return{reachable:true,points:[],source:'filtered-latest'};
   return{reachable:true,points:pointsFromSnapshots([snap],playerId),source:'latest-fallback'};
 }
 async function getPlayerHistory(s,playerId){
@@ -135,6 +147,7 @@ export default async (req)=>{
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);
     const rows=cleanRows(body?.rows);
     if(rows.length<100)return json({error:'incomplete snapshot'},400);
+    if(collapsed120Snapshot({rows}))return json({ok:true,stored:false,reason:'rejected-collapsed-120-snapshot'},200);
     rows.sort((a,b)=>a.id.localeCompare(b.id));
     const fp=fingerprint(rows);
     const latest=await safeGet(s,LATEST_KEY);

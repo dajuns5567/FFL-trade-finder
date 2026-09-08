@@ -11,6 +11,8 @@ const MONTH_INDEX_PREFIX='indexes/';
 const LEGACY_MAX=500;
 const V346_KTC_CUTOFF_MS=Date.parse('2026-09-08T05:23:00.000Z');
 const V346_CLEANUP_KEY='maintenance/v346-ktc-history-scrub.json';
+const V348_CLEANUP_KEY='maintenance/v348-consensus-history-scrub.json';
+const V348_BAD_WINDOWS=[[Date.parse('2026-09-08T20:00:00.000Z'),Date.parse('2026-09-08T20:01:00.000Z')],[Date.parse('2026-09-08T22:08:00.000Z'),Date.parse('2026-09-08T22:09:00.000Z')]];
 
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
@@ -128,6 +130,18 @@ async function scrubV346KtcContamination(s){
   }else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
   const result={done:true,cutoff:'2026-09-08T05:23:00.000Z',removed:bad.length,completedAt:new Date().toISOString()};
   await retry(()=>s.setJSON(V346_CLEANUP_KEY,result),120);return result;
+}
+async function scrubV348ConsensusContamination(s){
+  const marker=await safeGet(s,V348_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await indexedItemsAll(s),items=indexed.items||[];
+  const isBad=item=>{const ms=new Date(item?.t||'').getTime();return Number.isFinite(ms)&&V348_BAD_WINDOWS.some(([a,b])=>ms>=a&&ms<b)};
+  const bad=items.filter(isBad),keep=items.filter(item=>!isBad(item));
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v348-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v348-history-reindex',e)}
+  const last=keep[keep.length-1]||null;
+  if(last){const snap=await safeGet(s,last.key);if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:2,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows),key:last.key,count:snap.rows.length}),120)}
+  const result={done:true,windows:['2026-09-08 16:00 EDT','2026-09-08 18:08 EDT'],removed:bad.length,completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V348_CLEANUP_KEY,result),120);return result;
 }
 async function latestFallback(s,playerId){
   const latest=await safeGet(s,LATEST_KEY),key=String(latest?.key||'').trim();
@@ -360,6 +374,7 @@ export default async (req)=>{
   try{
     const url=new URL(req.url),s=store();
     try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
+    try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
     if(req.method==='GET'){
       if(url.searchParams.get('health')==='1'){
         const h=await health(s);

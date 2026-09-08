@@ -65,6 +65,20 @@ for(const needle of [
   'Fantasy team',
   'Current rank',
   'dateTime(r.t)',
+  'Track my team',
+  'same columns and data as Full Market History',
+  'marketTableRowsMarkup(rows)',
+  'currentView===\'team\'',
+  'Similar Value Players',
+  'Closest in Overall Value',
+  'Nearest ${esc(target.pos)} Ranks',
+  'slice(Math.max(0,vi-5),vi)',
+  'slice(vi+1,vi+6)',
+  'slice(Math.max(0,pi-2),pi)',
+  'slice(pi+1,pi+3)',
+  'vh-rank-hit',
+  'data-vh-rank-label',
+  'marketCache=null;scheduleSnapshot(1000)',
   'Tracked since'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
@@ -80,7 +94,8 @@ const backend=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 assert(backend.includes("MONTH_INDEX_PREFIX='indexes/'"),'partitioned all-time index missing');
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
+assert(!backend.includes("url.searchParams.get('player_ids')"),'Track My Team must not create a separate history endpoint');
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
-console.log('V332 Value History dashboard/filter regression passed');
+console.log('V336 Value History team tracking/similar-player regression passed');

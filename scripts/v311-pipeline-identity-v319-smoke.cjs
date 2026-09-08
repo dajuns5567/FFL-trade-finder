@@ -17,7 +17,7 @@ const expected={
   'trade-specific-max-tier-add-v300.js':'66fa68072f507ebc759abea7be5ec394016994d4',
   'trade-specific-tier-up-v282.js':'368792e5e3d2dc718001c4e555e77c63c4e616ae',
   'trade-specific-add-assets-v282.js':'f356f8913914ef136a2a0909f17d01e97a4a14a0',
-  'trade-specific-max-value-v279.js':'e6cf9f3d0caf3adee7953e1ade270a36dc1fbeba',
+  'trade-specific-max-value-v279.js':'7d804f2fc50dbf8eff7fe1ef1bfe7afc1274b8db',
   'trade-specific-player-v232.js':'2606df4965c090e04d4bb2272b283763efca9109',
   'pick-display-sync-v279.js':'ac0e5102c969139fade368410209ae44a6b78eff',
   'trade-recommended-pick-ownership-v301.js':'383c4cccc512d8f57692ab81a5e45102179fad02'
@@ -33,4 +33,4 @@ if(bad.length){
   for(const x of bad)console.error('- '+x);
   process.exit(1);
 }
-console.log('V320 pipeline identity verified with approved V320 Value Adjustment and V322 Acquire Specific Player spectrum drift for '+Object.keys(expected).length+' loaded modules.');
+console.log('V320 pipeline identity verified with approved V320 Value Adjustment, V322 Acquire Specific Player spectrum drift, and V323 scoped Maximum Value Tier Up/Down drift for '+Object.keys(expected).length+' loaded modules.');

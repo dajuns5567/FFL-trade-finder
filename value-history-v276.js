@@ -224,17 +224,26 @@ function addStyles(){
   @media(max-width:900px){#valueHistory .vh-control-row{align-items:flex-start}#valueHistory .vh-status{text-align:left;white-space:normal;width:100%}#valueHistory .vh-brand-copy{text-align:left;max-width:none;width:100%}#valueHistory .vh-grid,#valueHistory .vh-grid-2,#valueHistory .vh-similar-grid{grid-template-columns:1fr}#valueHistory .vh-metrics{grid-template-columns:repeat(3,1fr)}#valueHistory .vh-profile-info{grid-template-columns:1fr 1fr}#valueHistory .vh-profile-facts{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-current{grid-column:2;grid-row:1;text-align:right}}
   @media(max-width:620px){#valueHistory .vh-metrics{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-rank-grid{grid-template-columns:1fr}#valueHistory .vh-profile-info{grid-template-columns:1fr}#valueHistory .vh-profile-facts{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-current{grid-column:auto;grid-row:auto;text-align:left;border-left:0;border-top:1px solid var(--line);padding:12px 0 0}}
   `;
+  st.textContent=st.textContent.replaceAll('#valueHistory',':is(#valueHistory,#tradeHistory)');
   document.head.appendChild(st);
 }
 function addShell(){
   if(installed)return;installed=true;addStyles();
   const tabs=document.querySelector('.tabs');if(!tabs)return;
-  const b=document.createElement('button');b.type='button';b.dataset.tab='valueHistory';b.textContent='Value History';tabs.appendChild(b);
+  const valueBtn=document.createElement('button');valueBtn.type='button';valueBtn.dataset.tab='valueHistory';valueBtn.textContent='Value History';
+  const tradeBtn=document.createElement('button');tradeBtn.type='button';tradeBtn.dataset.tab='tradeHistory';tradeBtn.textContent='Trade History';
+  tabs.appendChild(valueBtn);tabs.appendChild(tradeBtn);
   const main=document.querySelector('main');if(!main)return;
   const sec=document.createElement('section');sec.id='valueHistory';sec.className='tab';sec.hidden=true;
   sec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-brand-head"><h2 class="vh-brand-title">Value History</h2><p class="vh-brand-copy">Historical intelligence for the finished Fleeced! master value. Read-only: this data never feeds back into values, rankings, Trade Finder or Trade Evaluator.</p></div><div id="vhLazy"><div class="empty">Open Value History to load the market dashboard.</div></div></div></div>';
-  main.appendChild(sec);
-  b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!==b.dataset.tab);setTimeout(initUI,0)});
+  const tradeSec=document.createElement('section');tradeSec.id='tradeHistory';tradeSec.className='tab';tradeSec.hidden=true;
+  tradeSec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-brand-head"><h2 class="vh-brand-title">Trade History</h2><p class="vh-brand-copy">Completed Sleeper trades with historical value presentation and a read-only analysis from the current Trade Evaluator logic.</p></div><div id="tradeHistoryContent"><div class="empty">Open Trade History to load completed trades.</div></div></div></div>';
+  main.appendChild(sec);main.appendChild(tradeSec);
+  const activate=(button,id)=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));button.classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!==id)};
+  valueBtn.addEventListener('click',()=>{activate(valueBtn,'valueHistory');setTimeout(initUI,0)});
+  tradeBtn.addEventListener('click',()=>{activate(tradeBtn,'tradeHistory');setTimeout(initTradeHistoryUI,0)});
+  tradeSec.addEventListener('change',handleContentChange);
+  tradeSec.addEventListener('click',handleContentClick);
 }
 function ranked(){try{return typeof ensureMaster==='function'?(ensureMaster()||[]):[]}catch{return[]}}
 function posRanks(list){const counts={},map=new Map();for(const z of list){const p=groupPos(z.x);counts[p]=(counts[p]||0)+1;map.set(String(z.x.id),counts[p])}return map}
@@ -247,7 +256,7 @@ function scheduleSnapshot(delay=60000){clearTimeout(snapshotTimer);snapshotTimer
 function initUI(){
   if(uiReady)return;uiReady=true;
   const root=document.getElementById('vhLazy');if(!root)return;
-  root.innerHTML=`<div class="vh-control-row"><div class="vh-subnav"><button type="button" class="secondary small" data-vh-dashboard>Market dashboard</button><button type="button" class="secondary small" data-vh-track-team>Track my team</button><button type="button" class="secondary small" data-vh-trades>Trade history</button></div><div class="vh-status" id="vhStatus">Loading market history…</div></div><div class="vh-hero"><div class="vh-search-wrap"><label for="vhSearch"><b>Search player history</b></label><input id="vhSearch" type="search" placeholder="Search a player…" autocomplete="off"><div id="vhResults" class="vh-search-results"></div></div></div><div id="vhContent"><div class="vh-empty">Loading market dashboard…</div></div>`;
+  root.innerHTML=`<div class="vh-control-row"><div class="vh-subnav"><button type="button" class="secondary small" data-vh-dashboard>Market dashboard</button><button type="button" class="secondary small" data-vh-track-team>Track my team</button></div><div class="vh-status" id="vhStatus">Loading market history…</div></div><div class="vh-hero"><div class="vh-search-wrap"><label for="vhSearch"><b>Search player history</b></label><input id="vhSearch" type="search" placeholder="Search a player…" autocomplete="off"><div id="vhResults" class="vh-search-results"></div></div></div><div id="vhContent"><div class="vh-empty">Loading market dashboard…</div></div>`;
   const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
   input.addEventListener('input',()=>renderSearchResults(input.value));
   results.addEventListener('click',e=>{const b=e.target.closest('button[data-vh-id]');if(!b)return;selectPlayer(b.dataset.vhId)});
@@ -257,7 +266,7 @@ function initUI(){
 }
 function syncSubnav(){
   document.querySelectorAll('#valueHistory .vh-subnav button').forEach(b=>b.classList.remove('vh-subnav-active'));
-  const selector=currentView==='team'?'#valueHistory [data-vh-track-team]':currentView==='trades'?'#valueHistory [data-vh-trades]':'#valueHistory [data-vh-dashboard]';
+  const selector=currentView==='team'?'#valueHistory [data-vh-track-team]':'#valueHistory [data-vh-dashboard]';
   document.querySelector(selector)?.classList.add('vh-subnav-active');
 }
 function renderSearchResults(value){
@@ -275,7 +284,7 @@ function handleContentClick(e){
   const player=e.target.closest('[data-vh-player]');if(player){selectPlayer(player.dataset.vhPlayer);return}
   const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';loadMarket(true);return}
   const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();currentPlayerId=null;renderTrackMyTeam();return}
-  const trades=e.target.closest('[data-vh-trades]');if(trades){currentView='trades';syncSubnav();currentPlayerId=null;loadTradeHistory();return}
+  const openTrades=e.target.closest('[data-vh-open-trade-history]');if(openTrades){openTradeHistoryTab(openTrades.dataset.vhTradeTeam||'');return}
   const teamNetSortBtn=e.target.closest('[data-vh-team-net-sort]');if(teamNetSortBtn){const key=teamNetSortBtn.dataset.vhTeamNetSort;if(teamNetSort.key===key)teamNetSort.dir*=-1;else teamNetSort={key,dir:key==='name'?1:-1};openTeamNetModal();return}
   const attr=e.target.closest('[data-vh-team-attribution]');if(attr&&trackedTeamId){teamAttributionPeriod=attr.dataset.vhTeamAttribution;const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=ids.join(',');renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length});return}
   const period=e.target.closest('[data-vh-period]');if(period&&currentPlayerId){const box=document.getElementById('vhProfileData');const pts=box?JSON.parse(box.dataset.points||'[]'):[];renderPlayerProfile(currentPlayerId,pts,period.dataset.vhPeriod);return}
@@ -307,24 +316,108 @@ async function tradeHistoryFetch(){
   const r=await fetch(`${API}?trades=1`,{cache:'no-store'});if(!r.ok)throw Error('trade history unavailable');
   tradeHistoryCache=await r.json();return tradeHistoryCache;
 }
-function tradePickLabel(p){return`${esc(p.season)} Round ${esc(p.round)} pick${p.original_roster_id?` • originally roster ${esc(p.original_roster_id)}`:''}`}
-function tradeSideMarkup(side,trade){
-  const assets=[...(side.player_ids||[]).map(id=>`<div class="vh-trade-asset"><b>${esc(playerName(id))}</b></div>`),...(side.picks||[]).map(p=>`<div class="vh-trade-asset">Draft pick: ${tradePickLabel(p)}</div>`)];
-  const thenValue=side.then_player_value==null?'—':fmt(side.then_player_value),nowValue=side.current_player_value==null?'—':fmt(side.current_player_value),move=side.player_value_delta;
-  return`<div class="vh-trade-side"><h4>${esc(teamName(side.roster_id))} received</h4><div class="vh-trade-assets">${assets.length?assets.join(''):'<div class="vh-empty">No player/pick assets parsed.</div>'}</div><div class="vh-trade-values"><div><small>Player value then</small><b>${thenValue}</b></div><div><small>Player value now</small><b>${nowValue}</b></div><div><small>Change</small><b class="${move==null?'vh-neutral':deltaClass(move)}">${move==null?'—':signed(move)}</b></div></div></div>`;
+function historicalTradeTeamName(trade,id){return String(trade?.team_names?.[String(id)]||teamName(id))}
+function tradePickAsset(p,receiver){
+  const original=Number(p?.original_roster_id)||0,season=Number(p?.season)||0,round=Number(p?.round)||0;
+  if(!season||!round||!original)return null;
+  return{type:'pick',id:`pick-${season}-${round}-${original}`,season,round,owner:Number(receiver)||0,original_owner:original,name:`${season} R${round}`,source:'sleeper-history'};
 }
+function tradePlayerAsset(id,receiver){return{type:'player',id:String(id),owner:Number(receiver)||0,name:playerName(id)}}
+function currentEvaluatorValue(asset){
+  if(!asset)return null;
+  try{
+    if(typeof window.tradeAssetValue93==='function'){const n=Number(window.tradeAssetValue93(asset));return Number.isFinite(n)?Math.round(n):null}
+    return null;
+  }catch{return null}
+}
+function historicalPlayerValue(side,id){
+  const row=(side?.then_players||[]).find(x=>String(x?.id)===String(id)),n=Number(row?.value);return Number.isFinite(n)?Math.round(n):null
+}
+function tradePickLabel(p,trade){
+  const original=p.original_roster_id?historicalTradeTeamName(trade,p.original_roster_id):'Unknown original team';
+  const used=p.drafted_player_id?` → selected ${esc(playerName(p.drafted_player_id))}${p.pick_no?` at ${p.season}.${String(p.pick_no).padStart(2,'0')}`:''}`:'';
+  return`${esc(p.season)} Round ${esc(p.round)} • original: ${esc(original)}${used}`;
+}
+function sideValueModel(side,trade){
+  const atTradeItems=[],currentItems=[];let atTradeComplete=true,currentComplete=true;
+  for(const id of side.player_ids||[]){
+    const hist=historicalPlayerValue(side,id),asset=tradePlayerAsset(id,side.roster_id),now=currentEvaluatorValue(asset);
+    if(hist==null)atTradeComplete=false;if(now==null)currentComplete=false;
+    atTradeItems.push({label:playerName(id),kind:'player',value:hist});
+    currentItems.push({label:playerName(id),kind:'player',value:now});
+  }
+  for(const p of side.picks||[]){
+    const pickAsset=tradePickAsset(p,side.roster_id),then=currentEvaluatorValue(pickAsset);
+    if(then==null)atTradeComplete=false;
+    atTradeItems.push({label:`Draft pick: ${p.season} R${p.round}`,kind:'pick',value:then});
+    if(p.drafted_player_id){
+      const drafted=tradePlayerAsset(p.drafted_player_id,side.roster_id),now=currentEvaluatorValue(drafted);if(now==null)currentComplete=false;
+      currentItems.push({label:`${playerName(p.drafted_player_id)} (from ${p.season} R${p.round})`,kind:'drafted-player',value:now});
+    }else{
+      const now=currentEvaluatorValue(pickAsset);if(now==null)currentComplete=false;
+      currentItems.push({label:`Draft pick: ${p.season} R${p.round}`,kind:'pick',value:now});
+    }
+  }
+  const sum=items=>items.reduce((n,x)=>n+(Number(x.value)||0),0);
+  return{atTradeItems,currentItems,atTradeTotal:atTradeComplete?sum(atTradeItems):null,currentTotal:currentComplete?sum(currentItems):null,atTradeComplete,currentComplete};
+}
+function tradeOutcomeAssets(side){
+  const out=(side.player_ids||[]).map(id=>tradePlayerAsset(id,side.roster_id));
+  for(const p of side.picks||[]){if(p.drafted_player_id)out.push(tradePlayerAsset(p.drafted_player_id,side.roster_id));else{const pick=tradePickAsset(p,side.roster_id);if(pick)out.push(pick)}}
+  return out;
+}
+function tradeEvaluatorAnalysis(trade){
+  if((trade.roster_ids||[]).length!==2||!Array.isArray(trade.sides)||trade.sides.length!==2)return{available:false,reason:'The current Trade Evaluator supports two-team trades only; no grade is inferred for a multi-team trade.'};
+  if(typeof tradeScore!=='function'||typeof explainTrade!=='function'||typeof window.tradeAssetValue93!=='function')return{available:false,reason:'Current Trade Evaluator runtime is not available yet.'};
+  try{
+    const sideA=trade.sides[0],sideB=trade.sides[1],a=Number(sideA.roster_id),b=Number(sideB.roster_id),receiveA=tradeOutcomeAssets(sideA),giveA=tradeOutcomeAssets(sideB);
+    if(!a||!b)return{available:false,reason:'Sleeper roster IDs are incomplete for this trade.'};
+    const missing=[...receiveA,...giveA].some(x=>currentEvaluatorValue(x)==null);
+    if(missing)return{available:false,reason:'At least one historical asset is not available to the current Trade Evaluator, so no grade is fabricated.'};
+    const r=tradeScore(giveA,receiveA,a,b,'balanced'),score=Math.max(1,Math.min(99,Number(r?.fair)||50)),raw=explainTrade(r,a,b,receiveA,giveA)||[];
+    const currentA=teamName(a),currentB=teamName(b),histA=historicalTradeTeamName(trade,a),histB=historicalTradeTeamName(trade,b);
+    const rationale=raw.map(line=>String(line).split(currentA).join(histA).split(currentB).join(histB));
+    return{available:true,score,teamA:a,teamB:b,teamAName:histA,teamBName:histB,verdict:score>=57?`Favors ${histA}`:score<=43?`Favors ${histB}`:'Close to fair',rationale};
+  }catch(e){return{available:false,reason:`Current Trade Evaluator could not analyze this historical package: ${String(e?.message||e)}`}}
+}
+function tradeItemRows(items){
+  return items.map(x=>`<div class="vh-driver-row"><div><b>${esc(x.label)}</b></div><div>${x.value==null?'—':fmt(x.value)}</div></div>`).join('')||'<div class="vh-empty">No assets.</div>'
+}
+function tradeValuePresentation(trade){
+  return`<div class="vh-card"><div class="vh-card-head"><div><h3>Value Presentation</h3><div class="vh-sub">Historical player values come only from stored Fleeced! snapshots. Draft picks use the current, unchanged Trade Evaluator draft-pick value function. A completed pick is linked to the exact Sleeper draft result when available.</div></div></div><div class="vh-trade-sides">${(trade.sides||[]).map(side=>{const m=sideValueModel(side,trade),delta=m.atTradeTotal!=null&&m.currentTotal!=null?m.currentTotal-m.atTradeTotal:null;return`<div class="vh-trade-side"><h4>${esc(historicalTradeTeamName(trade,side.roster_id))} received</h4><div class="vh-trade-assets">${(side.player_ids||[]).map(id=>`<div class="vh-trade-asset"><b>${esc(playerName(id))}</b></div>`).join('')}${(side.picks||[]).map(p=>`<div class="vh-trade-asset">Draft pick: ${tradePickLabel(p,trade)}</div>`).join('')}</div><div class="vh-grid-2"><div><h3>At trade</h3>${tradeItemRows(m.atTradeItems)}</div><div><h3>Current outcome</h3>${tradeItemRows(m.currentItems)}</div></div><div class="vh-trade-values"><div><small>Total value at trade</small><b>${m.atTradeTotal==null?'—':fmt(m.atTradeTotal)}</b></div><div><small>Current outcome value</small><b>${m.currentTotal==null?'—':fmt(m.currentTotal)}</b></div><div><small>Change</small><b class="${delta==null?'vh-neutral':deltaClass(delta)}">${delta==null?'—':signed(delta)}</b></div></div>${m.atTradeComplete?'':`<div class="vh-trade-note">Historical player value is incomplete because this trade predates the reliable stored Value History window or a player is missing from that snapshot. No historical player value was guessed.</div>`}</div>`}).join('')}</div></div>`
+}
+function tradeEvaluatorSection(trade){
+  const a=tradeEvaluatorAnalysis(trade);
+  if(!a.available)return`<div class="vh-card"><div class="vh-card-head"><div><h3>Trade Evaluator Analysis</h3><div class="vh-sub">Read-only use of the current Trade Evaluator logic.</div></div></div><div class="vh-empty">${esc(a.reason)}</div></div>`;
+  return`<div class="vh-card"><div class="vh-card-head"><div><h3>Trade Evaluator Analysis</h3><div class="vh-sub">This calls the current Trade Evaluator scoring and rationale functions without changing evaluator selections, values, or Finder state.</div></div></div><div class="vh-trade-head"><div><h4>${esc(a.verdict)}</h4><div class="vh-sub">${esc(a.teamAName)} perspective</div></div><div class="score">${Math.round(a.score)}/100</div></div><div class="bar"><i style="width:${a.score}%"></i></div><div class="vh-grid-2"><div class="vh-attribution-stat"><small>${esc(a.teamAName)} grade</small><b>${Math.round(a.score)}/100</b></div><div class="vh-attribution-stat"><small>${esc(a.teamBName)} grade</small><b>${Math.round(100-a.score)}/100</b></div></div><div class="vh-trade-note"><b>Current evaluator rationale</b><ul>${a.rationale.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></div>`
+}
+function tradeCard(trade){
+  const names=(trade.roster_ids||[]).map(id=>esc(historicalTradeTeamName(trade,id))).join(' ↔ ');
+  return`<div class="vh-trade-card"><div class="vh-trade-head"><div><h4>${esc(dateTime(trade.created))} • ${esc(String(trade.season||''))} Trade</h4><div class="vh-sub">${names}</div></div><small>${trade.trade_snapshot_t?`Historical snapshot: ${esc(dateTime(trade.trade_snapshot_t))}`:'Historical player snapshot unavailable'}</small></div>${tradeValuePresentation(trade)}${tradeEvaluatorSection(trade)}</div>`
+}
+function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else renderTradeHistory()}
 function renderTradeHistory(){
-  currentView='trades';syncSubnav();const box=document.getElementById('vhContent');if(!box)return;
+  const box=document.getElementById('tradeHistoryContent');if(!box)return;
   const data=tradeHistoryCache;if(!data?.trades){box.innerHTML='<div class="vh-card"><div class="vh-empty">Loading completed trades…</div></div>';return}
   const ids=leagueTeamIds(),filtered=(data.trades||[]).filter(t=>!tradeTeamFilter||(t.roster_ids||[]).map(String).includes(String(tradeTeamFilter)));
-  const cards=filtered.map(t=>`<div class="vh-trade-card"><div class="vh-trade-head"><div><h4>${esc(dateTime(t.created))} • Trade</h4><div class="vh-sub">${(t.roster_ids||[]).map(id=>esc(teamName(id))).join(' ↔ ')}</div></div><small>${t.trade_snapshot_t?`Value snapshot: ${esc(dateTime(t.trade_snapshot_t))}`:'Value-at-trade snapshot unavailable'}</small></div><div class="vh-trade-sides">${(t.sides||[]).map(side=>tradeSideMarkup(side,t)).join('')}</div>${t.trade_snapshot_t?'':`<div class="vh-trade-note">This trade occurred outside the reliable Value History snapshot window, so a “then” value is intentionally not fabricated.</div>`}</div>`).join('');
-  box.innerHTML=`<div class="vh-card"><div class="vh-card-head"><div><h3>Completed Trade Value History</h3><div class="vh-sub">Sleeper completed trades connected to stored Fleeced! player-value snapshots. Historical comparison is player-only because draft-pick historical values were not stored; picks remain listed but are excluded from “then vs now.”</div></div></div><div class="vh-team-toolbar"><label><b>Filter by team</b><select data-vh-trade-team><option value="">All teams</option>${ids.map(id=>`<option value="${esc(id)}" ${String(tradeTeamFilter)===String(id)?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div><div class="vh-trade-note">Source: ${esc(data.source||'Sleeper transaction history')} • ${filtered.length} completed trade${filtered.length===1?'':'s'} shown.</div></div><div class="vh-trade-list">${cards||'<div class="vh-card"><div class="vh-empty">No completed trades match this filter.</div></div>'}</div>`;
-  const status=document.getElementById('vhStatus');if(status)status.textContent=`Completed trade history • ${filtered.length} trade${filtered.length===1?'':'s'}`;
+  box.innerHTML=`<div class="vh-card"><div class="vh-card-head"><div><h3>Completed Trade History</h3><div class="vh-sub">Two sections per trade: a value presentation and a read-only analysis from the current Trade Evaluator. Draft-pick values are consumed from the existing evaluator pick logic; this page does not modify that logic.</div></div></div><div class="vh-team-toolbar"><label><b>Filter by team</b><select data-vh-trade-team><option value="">All teams</option>${ids.map(id=>`<option value="${esc(id)}" ${String(tradeTeamFilter)===String(id)?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div><div class="vh-trade-note">Source: ${esc(data.source||'Sleeper transaction history')} • ${filtered.length} completed trade${filtered.length===1?'':'s'} shown. Exact draft-result mapping is displayed only when Sleeper provides an unambiguous draft slot → roster → player chain.</div></div><div class="vh-trade-list">${filtered.map(tradeCard).join('')||'<div class="vh-card"><div class="vh-empty">No completed trades match this filter.</div></div>'}</div>`;
 }
 async function loadTradeHistory(){
-  currentView='trades';syncSubnav();const box=document.getElementById('vhContent');if(!box)return;
+  const box=document.getElementById('tradeHistoryContent');if(!box)return;
   box.innerHTML='<div class="vh-card"><div class="vh-empty">Loading completed trades…</div></div>';
-  try{await tradeHistoryFetch();renderTradeHistory()}catch{box.innerHTML='<div class="notice">Completed trade history is temporarily unavailable. Current values and all trade tools are unaffected.</div>'}
+  try{await tradeHistoryFetch();renderTradeHistory()}catch{box.innerHTML='<div class="notice">Completed trade history is temporarily unavailable. Current values, Trade Evaluator, and Trade Finder are unaffected.</div>'}
+}
+function openTradeHistoryTab(teamId=''){
+  if(teamId)tradeTeamFilter=String(teamId);
+  const btn=document.querySelector('.tabs button[data-tab="tradeHistory"]');if(!btn)return;
+  btn.click();
+}
+function teamTradeImpactCard(teamId){
+  const id=String(teamId),data=tradeHistoryCache,trades=(data?.trades||[]).filter(t=>(t.roster_ids||[]).map(String).includes(id));
+  if(!data)return`<div class="vh-card"><div class="vh-card-head"><div><h3>Recent Trade Impact</h3><div class="vh-sub">Completed-trade context is available in the dedicated Trade History tab.</div></div></div><button type="button" class="secondary small" data-vh-open-trade-history data-vh-trade-team="${esc(id)}">Open Trade History</button></div>`;
+  const t=trades[0];if(!t)return`<div class="vh-card"><div class="vh-card-head"><div><h3>Recent Trade Impact</h3><div class="vh-sub">No completed Sleeper trades found for this team in the imported history.</div></div></div><button type="button" class="secondary small" data-vh-open-trade-history data-vh-trade-team="${esc(id)}">Open Trade History</button></div>`;
+  const side=(t.sides||[]).find(x=>String(x.roster_id)===id),m=side?sideValueModel(side,t):null,delta=m?.atTradeTotal!=null&&m?.currentTotal!=null?m.currentTotal-m.atTradeTotal:null;
+  return`<div class="vh-card"><div class="vh-card-head"><div><h3>Recent Trade Impact</h3><div class="vh-sub">Latest completed trade involving ${esc(teamName(id))}: ${esc(dateShort(t.created))}</div></div></div><div class="vh-attribution-summary"><div class="vh-attribution-stat"><small>Value at trade</small><b>${m?.atTradeTotal==null?'—':fmt(m.atTradeTotal)}</b></div><div class="vh-attribution-stat"><small>Current outcome</small><b>${m?.currentTotal==null?'—':fmt(m.currentTotal)}</b></div><div class="vh-attribution-stat"><small>Change</small><b class="${delta==null?'vh-neutral':deltaClass(delta)}">${delta==null?'—':signed(delta)}</b></div></div><button type="button" class="secondary small" data-vh-open-trade-history data-vh-trade-team="${esc(id)}">View full Trade History</button></div>`
 }
 async function historyFetch(id){let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_id=${encodeURIComponent(id)}`,{cache:'no-store'});if(!r.ok)throw Error('history unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('history unavailable')}
 async function marketFetch(){let last;for(let attempt=0;attempt<3;attempt++){try{const r=await fetch(`${API}?market=1`,{cache:'no-store'});if(!r.ok)throw Error(`market history unavailable (${r.status})`);return await r.json()}catch(e){last=e;if(attempt<2)await new Promise(r=>setTimeout(r,250*(attempt+1)))}}throw last||Error('market history unavailable')}
@@ -434,6 +527,7 @@ async function loadTrackedTeam(){
   let netData={points:[],player_count:ids.length};
   try{const results=await Promise.all([ensureMarketCache(!marketCache),teamNetFetch(ids)]);netData=results[1]||netData}catch{try{await ensureMarketCache(!marketCache)}catch{host.innerHTML='<div class="notice">Team market history is temporarily unavailable. Current values and all trade tools are unaffected.</div>';return}}
   renderTrackedTeamTable(netData);
+  if(!tradeHistoryCache){const teamAtLoad=String(trackedTeamId);tradeHistoryFetch().then(()=>{if(currentView==='team'&&String(trackedTeamId)===teamAtLoad)renderTrackedTeamTable(netData)}).catch(()=>{})}
 }
 function teamNetChart(points){
   const pts=(points||[]).filter(p=>Number.isFinite(Number(p?.value))&&p?.t);
@@ -507,6 +601,7 @@ function renderTrackedTeamTable(netData={points:[]}){
   host.innerHTML=`
     ${overallNetValueCard(netData,teamName(trackedTeamId))}
     ${teamAttributionCard(owned)}
+    ${teamTradeImpactCard(trackedTeamId)}
     <div class="vh-grid-2">
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Value Risers — ${periodLabel(vr,marketCache)}</h3><div class="vh-sub">Largest value gains on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueRisers',vr)}</div>${moverRows(applyMoverPool(periodRows('valueRisers',vr),'team','valueRisers'))}</div>
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Value Fallers — ${periodLabel(vf,marketCache)}</h3><div class="vh-sub">Largest value declines on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueFallers',vf)}</div>${moverRows(applyMoverPool(periodRows('valueFallers',vf),'team','valueFallers'))}</div>

@@ -98,7 +98,20 @@ jobs:
         run: node scripts/regular-finder-family-diversity-v328-smoke.cjs
       - name: Live KTC parser diagnostic
         run: |
-          node --input-type=module -e "import('./netlify/functions/ktc-adapter.mjs').then(async m=>{const r=await m.refreshKtc({timeoutMs:15000}); console.log(JSON.stringify(r,null,2)); if(!r.valid) process.exit(17)})"
+          node --input-type=module <<'NODE'
+          import { refreshKtc } from './netlify/functions/ktc-adapter.mjs';
+          const url='https://keeptradecut.com/dynasty-rankings';
+          const html=await fetch(url,{headers:{'user-agent':'Mozilla/5.0','accept':'text/html'}}).then(r=>r.text());
+          const needles=['playersArray','playerName','superflexValues','oneQBValues','Trevor Etienne','api/','dynasty-rankings?page','player-name','rank-number','player-row'];
+          console.log('HTML length',html.length);
+          for(const n of needles){
+            const i=html.indexOf(n);console.log('NEEDLE',n,'index',i,'count',html.split(n).length-1);
+            if(i>=0)console.log(html.slice(Math.max(0,i-500),i+1800));
+          }
+          console.log('SCRIPT SRCS',[...html.matchAll(/<script[^>]+src=["']([^"']+)/gi)].map(m=>m[1]).slice(0,40));
+          console.log('LINK HREFS',[...html.matchAll(/href=["']([^"']*dynasty[^"']*)/gi)].map(m=>m[1]).slice(0,40));
+          const r=await refreshKtc({timeoutMs:15000});console.log(JSON.stringify(r,null,2));if(!r.valid)process.exit(17);
+          NODE
       - name: Value History data hub syntax
         run: |
           node --check value-history-v276.js

@@ -1,5 +1,11 @@
 import fs from 'node:fs';
-import { marketFromSnapshots, monthKey, baselineFor } from '../netlify/functions/value-history.mjs';
+import vm from 'node:vm';
+
+const backendSource=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
+const pureSource=backendSource.replace(/^import .*$/m,'').replace(/export \{[^}]+\};/,'').split('export default async')[0];
+const context={console,Response,URL,setTimeout,clearTimeout};context.globalThis=context;vm.createContext(context);
+vm.runInContext(pureSource+`;globalThis.__vh={marketFromSnapshots,monthKey,baselineFor};`,context,{filename:'value-history-pure.mjs'});
+const {marketFromSnapshots,monthKey,baselineFor}=context.__vh;
 
 function assert(x,m){if(!x)throw new Error(m)}
 const day=86400000;

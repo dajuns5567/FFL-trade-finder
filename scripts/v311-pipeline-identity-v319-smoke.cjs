@@ -18,7 +18,7 @@ const expected={
   'trade-specific-tier-up-v282.js':'7459ff61db4b4479635dedc05a66ada53ce0a904',
   'trade-specific-add-assets-v282.js':'f356f8913914ef136a2a0909f17d01e97a4a14a0',
   'trade-specific-max-value-v279.js':'b6d107010bce823373f85af877b215956ffc8271',
-  'trade-specific-player-v232.js':'dca676c686d9d63445adf111a9deb8e55927746e',
+  'trade-specific-player-v232.js':'ec8b823f41b3a4bb015cb6e5f8717bbcbe2d38f9',
   'pick-display-sync-v279.js':'ac0e5102c969139fade368410209ae44a6b78eff',
   'trade-recommended-pick-ownership-v301.js':'383c4cccc512d8f57692ab81a5e45102179fad02'
 };
@@ -33,4 +33,4 @@ if(bad.length){
   for(const x of bad)console.error('- '+x);
   process.exit(1);
 }
-console.log('V325 pipeline identity verified with approved V320 Value Adjustment, V322 generic specific-player evolution, V324 routing change, and V325 package coverage/asset-frequency changes for '+Object.keys(expected).length+' loaded modules.');
+console.log('V326 pipeline identity verified with approved V320 Value Adjustment, V322 generic specific-player evolution, V324 routing change, and V325 package coverage/asset-frequency changes for '+Object.keys(expected).length+' loaded modules.');

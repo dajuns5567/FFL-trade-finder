@@ -58,7 +58,6 @@ for(const needle of [
   "state.players?.[String(r.id)]?.team",
   'posRankDelta7',
   'posRankDelta30',
-  'posRankDelta365',
   'View chart',
   'vh-point-hit',
   'vh-chart-tooltip',

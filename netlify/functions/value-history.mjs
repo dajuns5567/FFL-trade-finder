@@ -122,6 +122,26 @@ async function getPlayerHistory(s,playerId){
   }
   return{points:[],source:'empty',snapshotCount:0};
 }
+async function getPlayersHistory(s,playerIds){
+  const ids=[...new Set((playerIds||[]).map(String).filter(Boolean))].slice(0,64);
+  const indexed=await allItems(s);
+  const histories={};for(const id of ids)histories[id]=[];
+  if(!ids.length)return{histories,source:'empty',snapshotCount:0};
+  if(indexed.items.length){
+    const snaps=await readSnapshotsBounded(s,indexed.items,25);
+    for(const id of ids)histories[id]=pointsFromSnapshots(snaps,id);
+    return{histories,source:indexed.source,snapshotCount:indexed.items.length};
+  }
+  if(indexed.source==='unavailable'){
+    for(const id of ids){
+      const fallback=await latestFallback(s,id);
+      if(!fallback.reachable)throw new Error('history store unavailable');
+      histories[id]=fallback.points||[];
+    }
+    return{histories,source:'latest-fallback',snapshotCount:1,partial:true};
+  }
+  return{histories,source:'empty',snapshotCount:0};
+}
 function rowMap(snap){return new Map((snap?.rows||[]).map(r=>[String(r.id),r]))}
 function baselineFor(snaps,latestMs,days){
   if(!snaps.length)return null;
@@ -252,6 +272,11 @@ export default async (req)=>{
       if(url.searchParams.get('market')==='1'){
         const market=await retry(()=>getMarketSummary(s),180);
         return json({market,history_state:'ok'});
+      }
+      const playerIds=String(url.searchParams.get('player_ids')||'').split(',').map(x=>x.trim()).filter(Boolean);
+      if(playerIds.length){
+        const result=await retry(()=>getPlayersHistory(s,playerIds),180);
+        return json({player_ids:playerIds,histories:result.histories||{},history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
       }
       const playerId=String(url.searchParams.get('player_id')||'').trim();
       if(!playerId)return json({error:'player_id required'},400);

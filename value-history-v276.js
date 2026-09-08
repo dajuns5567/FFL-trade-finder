@@ -25,6 +25,7 @@ function addStyles(){
   #valueHistory .vh-card-head{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
   #valueHistory .vh-card-periods{display:flex;gap:4px;flex-wrap:wrap}
   #valueHistory .vh-card-periods button{padding:6px 9px;min-width:0;font-size:12px;font-weight:800}
+  #valueHistory .vh-card-periods button:not(.secondary){color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 15%,var(--card))!important;border-color:color-mix(in srgb,#e4b53f 52%,var(--line))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 28%,transparent),0 3px 10px rgba(0,0,0,.16)!important}
   #valueHistory .vh-card{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;min-width:0}
   #valueHistory .vh-card h3{margin:0 0 5px;font-size:16px;font-weight:800;letter-spacing:.01em}
   #valueHistory .vh-section-heading{font-size:18px!important;color:#f4f4f5;margin-bottom:6px!important}

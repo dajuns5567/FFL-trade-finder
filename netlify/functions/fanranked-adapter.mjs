@@ -6,16 +6,19 @@ const MAX_PLAYERS=300;
 const OFFENSE_POSITIONS=new Set(["QB","RB","WR","TE"]);
 
 async function fetchJson(url,fetchImpl=fetch){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),TIMEOUT_MS);
-  try{
-    const res=await fetchImpl(url,{headers:{
-      "user-agent":"Mozilla/5.0 (compatible; FFL-TradeFinder/16.0; +https://netlify.com)",
-      "accept":"application/json,text/plain,*/*;q=0.8"
-    },redirect:"follow",signal:controller.signal});
-    if(!res.ok)throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  }finally{clearTimeout(timer)}
+  let last;
+  for(let attempt=0;attempt<3;attempt++){
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),TIMEOUT_MS);
+    try{
+      const res=await fetchImpl(url,{headers:{
+        "user-agent":"Mozilla/5.0 (compatible; FFL-TradeFinder/16.0; +https://netlify.com)",
+        "accept":"application/json,text/plain,*/*;q=0.8"
+      },redirect:"follow",signal:controller.signal});
+      if(!res.ok)throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    }catch(e){last=e;if(attempt<2)await new Promise(r=>setTimeout(r,250*(attempt+1)))}finally{clearTimeout(timer)}
+  }
+  throw last||new Error('FanRanked fetch failed');
 }
 
 function isOffensePlayer(player){
@@ -24,24 +27,26 @@ function isOffensePlayer(player){
 }
 
 export function buildFanRankedMarketRows(playersPayload,marketPayload){
-  const players=Array.isArray(playersPayload)?playersPayload:[];
-  const values=Array.isArray(marketPayload?.values)?marketPayload.values:[];
-  const byId=new Map(players.map(player=>[String(player?.id||""),player]));
-  const rows=[];
+  const players=Array.isArray(playersPayload)?playersPayload:[],values=Array.isArray(marketPayload?.values)?marketPayload.values:[],byId=new Map(players.map(player=>[String(player?.id||""),player])),latestByPlayer=new Map();
   for(const entry of values){
     const playerId=String(entry?.playerId||"");
-    const rank=Number(entry?.rank);
-    if(!playerId||playerId.startsWith("pick:")||!Number.isFinite(rank)||rank<1||rank>MAX_PLAYERS)continue;
+    if(!playerId||playerId.startsWith("pick:"))continue;
     const player=byId.get(playerId);
     if(!player||!isOffensePlayer(player))continue;
-    const name=String(player?.name||"").trim();
-    if(!name)continue;
-    rows.push({rank,player:name});
+    const name=String(player?.name||"").trim(),value=Number(entry?.value),capturedAt=String(entry?.capturedAt||"");
+    if(!name||!Number.isFinite(value)||value<0)continue;
+    const prior=latestByPlayer.get(playerId),priorTime=Date.parse(prior?.capturedAt||"")||0,nextTime=Date.parse(capturedAt)||0;
+    if(!prior||nextTime>=priorTime)latestByPlayer.set(playerId,{playerId,player:name,value,capturedAt});
   }
-  rows.sort((a,b)=>a.rank-b.rank||a.player.localeCompare(b.player));
-  return rows;
+  // FanRanked currently returns each player's latest market value, but the embedded
+  // rank can come from the day that player was last recalculated. Mixing those
+  // historical rank fields creates duplicate ranks across different capture dates.
+  // Rebuild the current market order from the source's current market values instead.
+  return [...latestByPlayer.values()]
+    .sort((a,b)=>b.value-a.value||a.player.localeCompare(b.player))
+    .slice(0,MAX_PLAYERS)
+    .map((row,index)=>({rank:index+1,player:row.player,value:row.value,capturedAt:row.capturedAt}));
 }
-
 export async function refreshFanRanked(opts={}){
   const now=new Date().toISOString();
   const fetchImpl=opts.fetchImpl||fetch;
@@ -82,8 +87,8 @@ export async function refreshFanRanked(opts={}){
       diagnostics:{
         players_url:PLAYERS_URL,
         market_url:MARKET_URL,
-        ranking_field:"market rank",
-        ignored_field:"consensusRank",
+        ranking_field:"market value-derived current order",
+        ignored_field:"stale mixed-date market rank + consensusRank",
         max_players:MAX_PLAYERS,
         unique_players_extracted:uniqueNames,
         duplicate_ranks:duplicateRanks,
@@ -98,7 +103,7 @@ export async function refreshFanRanked(opts={}){
       format:"dynasty-superflex-ppr-market",reducedWeight:false,
       players_extracted:0,ranking_rows:0,rankings:[],timestamp:now,
       stage:"fetch",error:String(error?.message||error),urls:[SOURCE_URL],
-      diagnostics:{players_url:PLAYERS_URL,market_url:MARKET_URL,ranking_field:"market rank",ignored_field:"consensusRank",max_players:MAX_PLAYERS,validation_result:false}
+      diagnostics:{players_url:PLAYERS_URL,market_url:MARKET_URL,ranking_field:"market value-derived current order",ignored_field:"stale mixed-date market rank + consensusRank",max_players:MAX_PLAYERS,validation_result:false}
     };
   }
 }

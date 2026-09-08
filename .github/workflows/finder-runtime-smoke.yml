@@ -104,6 +104,14 @@ jobs:
           console.log(JSON.stringify({valid:r.valid,players:r.players_extracted,rows:r.ranking_rows,parser:r.diagnostics?.parser,embedded:r.diagnostics?.embedded_players,first:r.rankings?.slice(0,5)},null,2));
           if(!r.valid||Number(r.players_extracted)<300)process.exit(17);
           NODE
+      - name: Live FanRanked parser integrity
+        run: |
+          node --input-type=module <<'NODE'
+          import { refreshFanRanked } from './netlify/functions/fanranked-adapter.mjs';
+          const r=await refreshFanRanked();
+          console.log(JSON.stringify({valid:r.valid,players:r.players_extracted,rows:r.ranking_rows,first:r.rankings?.slice(0,10),diagnostics:r.diagnostics},null,2));
+          if(!r.valid||Number(r.players_extracted)<200||Number(r.ranking_rows)!==300)process.exit(18);
+          NODE
       - name: Value History data hub syntax
         run: |
           node --check value-history-v276.js

@@ -293,6 +293,8 @@ async function appendIndex(s,key,t){
 }
 const SCORING_API='https://api.sleeper.app/v1';
 const SCORING_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper';
+const TRADE_AUDIT_URL=`${SCORING_RAW}/league-audit/2026/transactions.json`;
+let tradeAuditCache=null;
 const scoringCache=new Map();
 async function scoringJson(url){
   const r=await fetch(url,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
@@ -358,6 +360,61 @@ async function scoringMilestones(playerId){
     return{source:'Sleeper weekly regular-season stats + league scoring settings',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,refreshedAt:new Date().toISOString()};
   }catch(e){console.warn('value-history-scoring',e);return null}
 }
+function normalizeCompletedTrade(tx,week){
+  if(tx?.type!=='trade'||tx?.status!=='complete')return null;
+  const rosterIds=[...new Set((tx.roster_ids||[]).map(String).filter(Boolean))],adds=tx.adds&&typeof tx.adds==='object'?tx.adds:{},picks=Array.isArray(tx.draft_picks)?tx.draft_picks:[];
+  const createdMs=Number(tx.status_updated||tx.created),created=Number.isFinite(createdMs)?new Date(createdMs).toISOString():null;
+  if(!created||rosterIds.length<2)return null;
+  const sides=rosterIds.map(rosterId=>({
+    roster_id:rosterId,
+    player_ids:Object.entries(adds).filter(([,rid])=>String(rid)===rosterId).map(([id])=>String(id)),
+    picks:picks.filter(p=>String(p?.owner_id||'')===rosterId).map(p=>({season:String(p?.season||''),round:Number(p?.round)||null,original_roster_id:p?.roster_id==null?null:String(p.roster_id)}))
+  }));
+  return{id:String(tx.transaction_id||''),created,week:Number(week)||null,roster_ids:rosterIds,sides};
+}
+async function importedCompletedTrades(){
+  const now=Date.now();if(tradeAuditCache&&now-tradeAuditCache.t<60000)return tradeAuditCache.value;
+  const r=await fetch(`${TRADE_AUDIT_URL}?ts=${now}`,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryTrades/1.0'},cache:'no-store'});
+  if(!r.ok)throw new Error(`trade audit fetch ${r.status}`);
+  const payload=await r.json(),trades=[];
+  for(const [week,rows] of Object.entries(payload||{}))for(const tx of Array.isArray(rows)?rows:[]){const t=normalizeCompletedTrade(tx,week);if(t)trades.push(t)}
+  trades.sort((a,b)=>String(b.created).localeCompare(String(a.created)));tradeAuditCache={t:now,value:trades};return trades;
+}
+function closestSnapshotItem(items,targetMs,maxGapMs=36*3600000){
+  let best=null,bestGap=Infinity;
+  for(const item of items||[]){
+    const ms=new Date(item?.t||'').getTime();if(!Number.isFinite(ms))continue;
+    const gap=Math.abs(ms-targetMs);if(gap<bestGap){bestGap=gap;best=item}
+  }
+  return best&&bestGap<=maxGapMs?best:null;
+}
+function sideValueFromMap(side,map){
+  const ids=side?.player_ids||[];if(!ids.length)return{value:0,complete:true,found:0};
+  let value=0,found=0;for(const id of ids){const row=map.get(String(id));const n=Number(row?.value);if(!Number.isFinite(n))continue;value+=n;found++}
+  return{value:Math.round(value),complete:found===ids.length,found};
+}
+async function completedTradeHistory(s){
+  const trades=await importedCompletedTrades(),indexed=await allItems(s),items=indexed.items||[];
+  if(!items.length)return{source:'Sleeper imported transaction audit (2026)',tracking_since:null,latest:null,trades:trades.map(t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_player_value:null,current_player_value:null,player_value_delta:null}))}))};
+  const latestItem=items[items.length-1],selected=new Map([[latestItem.key,latestItem]]),snapshotItemByTrade=new Map();
+  for(const trade of trades){
+    const ms=new Date(trade.created).getTime(),item=Number.isFinite(ms)?closestSnapshotItem(items,ms):null;
+    if(item){selected.set(item.key,item);snapshotItemByTrade.set(trade.id,item)}
+  }
+  const selectedItems=[...selected.values()].sort((a,b)=>String(a.t).localeCompare(String(b.t))),snaps=await readSnapshotsBounded(s,selectedItems,20),snapByKey=new Map();
+  for(const snap of snaps){const item=selectedItems.find(x=>String(x.t)===String(snap.t));if(item)snapByKey.set(item.key,snap)}
+  const latestSnap=snapByKey.get(latestItem.key),latestMap=rowMap(latestSnap||{rows:[]});
+  const out=trades.map(trade=>{
+    const histItem=snapshotItemByTrade.get(trade.id)||null,histSnap=histItem?snapByKey.get(histItem.key):null,histMap=rowMap(histSnap||{rows:[]});
+    const sides=trade.sides.map(side=>{
+      const then=histItem?sideValueFromMap(side,histMap):{value:null,complete:false},current=sideValueFromMap(side,latestMap);
+      const thenValue=histItem&&then.complete?then.value:null,currentValue=current.complete?current.value:null;
+      return{...side,then_player_value:thenValue,current_player_value:currentValue,player_value_delta:thenValue!=null&&currentValue!=null?currentValue-thenValue:null};
+    });
+    return{...trade,trade_snapshot_t:histItem?.t||null,current_snapshot_t:latestItem?.t||null,sides};
+  });
+  return{source:'Sleeper imported transaction audit (2026)',tracking_since:items[0]?.t||null,latest:latestItem?.t||null,trades:out};
+}
 async function health(s){
   const latest=await safeGet(s,LATEST_KEY),indexed=await allItems(s);
   if(indexed.items.length)return{ok:true,storage:'reachable',source:indexed.source,snapshotCount:indexed.items.length,latest:latest?.t||null};
@@ -383,6 +440,10 @@ export default async (req)=>{
       if(url.searchParams.get('market')==='1'){
         const market=await retry(()=>getMarketSummary(s),180);
         return json({market,history_state:'ok'});
+      }
+      if(url.searchParams.get('trades')==='1'){
+        const result=await retry(()=>completedTradeHistory(s),180);
+        return json(result);
       }
       if(url.searchParams.get('team_net')==='1'){
         const ids=String(url.searchParams.get('player_ids')||'').split(',').map(x=>x.trim()).filter(Boolean);

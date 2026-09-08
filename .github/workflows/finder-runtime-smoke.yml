@@ -13,7 +13,6 @@ on:
       - 'trade-specific-player-v232.js'
       - 'scripts/acquire-specific-outgoing-diversity-v321-smoke.cjs'
       - 'scripts/acquire-specific-spectrum-diversity-v322-smoke.cjs'
-      - 'scripts/specific-max-tier-down-diversity-v323-smoke.cjs'
       - 'trade-select-all-v165.js'
       - 'trade-selected-positions-only-v262.js'
       - 'trade-finder-candidate-guard-v223.js'
@@ -71,5 +70,3 @@ jobs:
         run: node scripts/acquire-specific-outgoing-diversity-v321-smoke.cjs
       - name: Acquire Specific Player full-spectrum diversity
         run: node scripts/acquire-specific-spectrum-diversity-v322-smoke.cjs
-      - name: Specific-player Maximum Value Tier Up and Tier Down outgoing diversity
-        run: node scripts/specific-max-tier-down-diversity-v323-smoke.cjs

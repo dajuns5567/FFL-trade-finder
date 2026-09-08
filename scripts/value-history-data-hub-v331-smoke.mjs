@@ -45,6 +45,8 @@ for(const needle of [
   'Recent Changes',
   'All-Time Milestones',
   'Lowest ${esc(meta.pos)} Rank',
+  'Overall #${r.overall}',
+  "state.players?.[String(r.id)]?.team",
   'Tracked since'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 

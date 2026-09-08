@@ -221,6 +221,9 @@ assert(backend.includes('value+=n;found++'),'team net-value history must sum sto
 assert(backend.includes('scoringMilestones(playerId)'),'Sleeper scoring milestones endpoint integration missing');
 assert(backend.includes("qualifyingSeasonMinimumGames:8"),'8-game qualifying season rule missing');
 assert(backend.includes("league?.scoring_settings"),'league scoring settings are not used for milestones');
+assert(backend.includes("V346_KTC_CUTOFF_MS=Date.parse('2026-09-08T05:23:00.000Z')"),'V346 KTC cutoff missing');
+assert(backend.includes('scrubV346KtcContamination(s)'),'V346 history scrub missing');
+assert(backend.includes('writeFilteredIndexes(s,keep)'),'V346 history reindex missing');
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');

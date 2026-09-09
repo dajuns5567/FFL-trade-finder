@@ -214,9 +214,13 @@ for(const needle of [
   'padding:10px 16px;min-width:0',
   "tradeBtn.textContent='Trade History'",
   'Completed Trade History',
-  'Value Presentation',
+  'Fleeced Trade Breakdown',
   'Trade Evaluator Analysis',
-  'Current evaluator rationale',
+  'Raw asset total',
+  'Value adjustment',
+  'Trade-adjusted total',
+  'vh-eval-scorebar',
+  'background:#e4b53f!important',
   'data-vh-open-trade-history',
   'Recent Trade Impact',
   'What Moved My Team',
@@ -234,8 +238,10 @@ for(const forbidden of [
   'tradeEvaluatorAnyTeam',
   'Value Adjustment='
 ])assert(!ui.includes(forbidden),'Value History must remain read-only relative to trade/value systems: '+forbidden);
-assert(ui.includes("typeof tradeScore!=='function'"),'Trade History must consume the existing current evaluator runtime');
+assert(ui.includes("const fair=window.section1V130?.fair"),'Trade History must consume the exact current shared evaluator fairness function');
 assert(ui.includes("typeof window.tradeAssetValue93==='function'"),'Trade History must consume the existing evaluator asset-value function');
+assert(ui.includes('tradeOriginalAssets(side)'), 'Trade Evaluator analysis must evaluate the original traded package rather than mutate it into current outcomes');
+assert(!ui.includes('Current evaluator rationale'),'Trade History evaluator section must not render the written rationale block');
 assert(!ui.includes('state.assetsA='),'Trade History must not overwrite Trade Evaluator Team A selections');
 assert(!ui.includes('state.assetsB='),'Trade History must not overwrite Trade Evaluator Team B selections');
 assert(!ui.includes('pickValue=function'),'Trade History must not replace draft-pick valuation logic');
@@ -244,6 +250,12 @@ assert(ui.includes("tradeBtn.dataset.tab='tradeHistory'"),'Trade History must be
 
 const backend=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 assert(backend.includes("MONTH_INDEX_PREFIX='indexes/'"),'partitioned all-time index missing');
+assert(!backend.includes('CANONICAL_HISTORY_ORIGIN'),'Value History must not depend on a cross-site Netlify proxy');
+assert(backend.includes("ARCHIVE_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history'"),'durable GitHub Value History archive source missing');
+assert(backend.includes("url.searchParams.get('archive_export')==='1'"),'Value History archive export endpoint missing');
+assert(backend.includes('archiveAllSnapshots()'),'archived snapshots are not merged into player/team history');
+assert(backend.includes('archiveSnapshot(item)'),'market history does not read durable archived snapshots');
+assert(backend.includes("'github-archive+netlify-live'"),'history source does not expose archive/live merge state');
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
 assert(backend.includes("url.searchParams.get('team_net')==='1'"),'Track My Team net-value history endpoint missing');
@@ -274,4 +286,11 @@ assert(backend.includes("scrubV348ConsensusContamination(s)"),'V348 contaminated
 const fanRankedSource=fs.readFileSync('netlify/functions/fanranked-adapter.mjs','utf8');
 assert(fanRankedSource.includes("sort((a,b)=>b.value-a.value"),'FanRanked current ranking is not rebuilt from current market values');
 assert(fanRankedSource.includes(".map((row,index)=>({rank:index+1"),'FanRanked current ranking is not reassigned contiguously');
+const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
+assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
+assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');
+assert(archiveWriter.includes('months/'),'archive writer monthly bundle persistence missing');
+const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.yml','utf8');
+assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');
+assert(archiveWorkflow.includes('contents: write'),'archive workflow needs contents write permission');
 console.log('V348 Value History/consensus source integrity regression passed');

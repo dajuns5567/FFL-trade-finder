@@ -1,0 +1,27 @@
+name: Archive Value History
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: value-history-archive
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Archive new Value History snapshots
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALUE_HISTORY_SOURCE_URL: ${{ vars.VALUE_HISTORY_SOURCE_URL || 'https://subtle-genie-6167c5.netlify.app/.netlify/functions/value-history' }}
+        run: node scripts/archive-value-history.mjs

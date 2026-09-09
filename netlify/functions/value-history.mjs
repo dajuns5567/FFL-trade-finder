@@ -576,17 +576,17 @@ export default async (req)=>{
     if(req.method!=='POST')return json({error:'method not allowed'},405);
     const body=await req.json().catch(()=>null);
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);
-    const rows=cleanRows(body?.rows);
+    const rows=cleanRows(body?.rows),picks=cleanPicks(body?.picks);
     if(rows.length<100)return json({error:'incomplete snapshot'},400);
-    rows.sort((a,b)=>a.id.localeCompare(b.id));
-    const fp=fingerprint(rows),latest=await safeGet(s,LATEST_KEY);
+    rows.sort((a,b)=>a.id.localeCompare(b.id));picks.sort((a,b)=>a.id.localeCompare(b.id));
+    const fp=fingerprint(rows,picks),latest=await safeGet(s,LATEST_KEY);
     if(latest?.fingerprint===fp)return json({ok:true,stored:false,reason:'unchanged',t:latest.t});
     const t=new Date().toISOString(),key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
-    const snapshot={version:2,league:LEAGUE,t,fingerprint:fp,rows};
+    const snapshot={version:3,league:LEAGUE,t,fingerprint:fp,rows,picks};
     await retry(()=>s.setJSON(key,snapshot),120);
     await retry(()=>s.setJSON(LATEST_KEY,{version:2,t,fingerprint:fp,key,count:rows.length}),120);
     try{await appendIndex(s,key,t)}catch(e){console.warn('value-history-index',e)}
-    return json({ok:true,stored:true,t,count:rows.length});
+    return json({ok:true,stored:true,t,count:rows.length,pick_count:picks.length});
   }catch(e){
     console.error('value-history',e);
     return json({error:'history unavailable'},503);

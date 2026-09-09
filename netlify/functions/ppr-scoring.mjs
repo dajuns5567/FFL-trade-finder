@@ -49,3 +49,48 @@ export function aggregateWeeks(weekly){
   }
   return out;
 }
+
+
+export const IDP_SCORE_ALIASES={idp_td:['def_td','td'],idp_sack:['sack'],idp_qb_hit:['qb_hit','qb_hits'],idp_tkl_loss:['tkl_loss','tfl'],idp_blk_kick:['blk_kick'],idp_int:['int'],idp_int_yd:['int_yd'],idp_fum_rec:['fum_rec'],idp_fum_rec_yd:['fum_rec_yd'],idp_ff:['ff'],idp_safety:['safety'],idp_tkl_ast:['tkl_ast','ast_tkl'],idp_tkl_solo:['tkl_solo','solo_tkl'],idp_pass_def:['pass_def','pd']};
+
+export function statValue(stats,key){
+  if(Number.isFinite(Number(stats?.[key])))return Number(stats[key]);
+  if(String(key).startsWith('idp_')){
+    const bare=String(key).slice(4);
+    if(Number.isFinite(Number(stats?.[bare])))return Number(stats[bare]);
+  }
+  for(const alias of IDP_SCORE_ALIASES[key]||[])if(Number.isFinite(Number(stats?.[alias])))return Number(stats[alias]);
+  return 0;
+}
+
+export function leagueFantasyPoints(stats,scoringSettings={}){
+  let points=0,seen=false;
+  for(const [key,wRaw] of Object.entries(scoringSettings||{})){
+    const w=Number(wRaw);
+    if(!Number.isFinite(w)||!w)continue;
+    const v=statValue(stats,key);
+    if(v!==0||Number.isFinite(Number(stats?.[key])))seen=true;
+    points+=v*w;
+  }
+  if(!seen&&Number.isFinite(Number(stats?.pts_ppr)))return Number(stats.pts_ppr);
+  return Number(points.toFixed(4));
+}
+
+const firstFinite=(obj,keys)=>{for(const key of keys){const n=Number(obj?.[key]);if(Number.isFinite(n)&&n>=0)return n}return null};
+export function playerSnapShare(stats,{phase='offense',teamSnapMax=0}={}){
+  const pctKeys=phase==='defense'
+    ?['def_snp_pct','def_snap_pct','defensive_snap_pct','snap_pct']
+    :['off_snp_pct','off_snap_pct','offensive_snap_pct','snap_pct'];
+  const pct=firstFinite(stats,pctKeys);
+  if(pct!=null)return pct>1?pct/100:pct;
+  const snapKeys=phase==='defense'
+    ?['def_snp','def_snaps','defensive_snaps','snaps_defense']
+    :['off_snp','off_snaps','offensive_snaps','snaps_offense'];
+  const snaps=firstFinite(stats,snapKeys),den=Number(teamSnapMax);
+  return snaps!=null&&Number.isFinite(den)&&den>0?snaps/den:null;
+}
+
+export function qualifiesCurrentSeasonGame(stats,{phase='offense',teamSnapMax=0,scoringSettings={}}={}){
+  const points=leagueFantasyPoints(stats,scoringSettings),snapShare=playerSnapShare(stats,{phase,teamSnapMax});
+  return{qualified:(snapShare!=null&&snapShare>=.20)||points>=8,points,snapShare};
+}

@@ -244,6 +244,11 @@ assert(ui.includes("tradeBtn.dataset.tab='tradeHistory'"),'Trade History must be
 
 const backend=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 assert(backend.includes("MONTH_INDEX_PREFIX='indexes/'"),'partitioned all-time index missing');
+assert(backend.includes("ARCHIVE_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history'"),'durable GitHub Value History archive source missing');
+assert(backend.includes("url.searchParams.get('archive_export')==='1'"),'Value History archive export endpoint missing');
+assert(backend.includes('archiveAllSnapshots()'),'archived snapshots are not merged into player/team history');
+assert(backend.includes('archiveSnapshot(item)'),'market history does not read durable archived snapshots');
+assert(backend.includes("'github-archive+netlify-live'"),'history source does not expose archive/live merge state');
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
 assert(backend.includes("url.searchParams.get('team_net')==='1'"),'Track My Team net-value history endpoint missing');
@@ -274,4 +279,11 @@ assert(backend.includes("scrubV348ConsensusContamination(s)"),'V348 contaminated
 const fanRankedSource=fs.readFileSync('netlify/functions/fanranked-adapter.mjs','utf8');
 assert(fanRankedSource.includes("sort((a,b)=>b.value-a.value"),'FanRanked current ranking is not rebuilt from current market values');
 assert(fanRankedSource.includes(".map((row,index)=>({rank:index+1"),'FanRanked current ranking is not reassigned contiguously');
+const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
+assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
+assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');
+assert(archiveWriter.includes('months/'),'archive writer monthly bundle persistence missing');
+const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.yml','utf8');
+assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');
+assert(archiveWorkflow.includes('contents: write'),'archive workflow needs contents write permission');
 console.log('V348 Value History/consensus source integrity regression passed');

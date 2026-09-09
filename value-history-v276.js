@@ -482,7 +482,8 @@ function tradeEvaluatorAnalysis(trade){
     if(!a||!b)return{available:false,reason:'Sleeper roster IDs are incomplete for this trade.'};
     const missing=[...aReceived,...bReceived].some(x=>tradeHistoryEvaluatorValue(x,trade)==null);
     if(missing)return{available:false,reason:'At least one historical asset is unavailable to the current Trade Evaluator, so no score is fabricated.'};
-    const f=tradeHistoryFair(bReceived,aReceived,trade),score=Math.max(1,Math.min(100,Number(f?.score)||1)),histA=historicalTradeTeamName(trade,a),histB=historicalTradeTeamName(trade,b),label=f?.rejected?'Fleeced!':String(f?.status||'Trade');
+    const fair=window.section1V130?.fair;if(typeof fair!=='function')return{available:false,reason:'Current Trade Evaluator fairness runtime is not available yet.'};
+    const f=fair(bReceived,aReceived),score=Math.max(1,Math.min(100,Number(f?.score)||1)),histA=historicalTradeTeamName(trade,a),histB=historicalTradeTeamName(trade,b),label=f?.rejected?'Fleeced!':String(f?.status||'Trade');
     return{available:true,score,label,teamA:a,teamB:b,teamAName:histA,teamBName:histB,aReceived,bReceived,f};
   }catch(e){return{available:false,reason:`Current Trade Evaluator could not analyze this historical package: ${String(e?.message||e)}`}}
 }

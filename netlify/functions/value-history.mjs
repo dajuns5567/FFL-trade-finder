@@ -497,6 +497,15 @@ function playerValuesFromMap(side,map){
   for(const id of ids){const row=map.get(String(id)),n=Number(row?.value);if(Number.isFinite(n))values.push({id:String(id),value:Math.round(n)});else missing.push(String(id))}
   return{values,missing,complete:missing.length===0,total:values.reduce((n,x)=>n+x.value,0)};
 }
+function pickMap(snap){return new Map((snap?.picks||[]).map(p=>[String(p.id),p]))}
+function pickValuesFromSide(side,map){
+  const values=[],missing=[];
+  for(const p of side?.picks||[]){
+    const id=`pick-${Number(p?.season)||0}-${Number(p?.round)||0}-${Number(p?.original_roster_id)||0}`,row=map.get(id),n=Number(row?.value);
+    if(Number.isFinite(n))values.push({id,value:Math.round(n),season:Number(p.season),round:Number(p.round),original_roster_id:Number(p.original_roster_id)||null});else missing.push(id);
+  }
+  return{values,missing,complete:missing.length===0,total:values.reduce((n,x)=>n+x.value,0)};
+}
 async function completedTradeHistory(s){
   const trades=await importedCompletedTrades(),indexed=await allItems(s),items=indexed.items||[];
   if(!items.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',tracking_since:null,latest:null,trades:trades.map(t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_players:[],then_players_complete:false,current_players:[],current_players_complete:false}))}))};

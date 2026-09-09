@@ -3,6 +3,45 @@ import { getStore } from '@netlify/blobs';
 const LEAGUE='1316867686394769408';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const store=()=>getStore('fll-value-history-v2');
+const ARCHIVE_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history';
+let archiveIndexCache=null,archiveIndexCacheAt=0;
+async function archiveJson(path){
+  const r=await fetch(`${ARCHIVE_RAW}/${path}?ts=${Date.now()}`,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryArchive/1.0'},cache:'no-store'});
+  if(!r.ok)throw new Error(`archive fetch ${r.status}: ${path}`);
+  return r.json();
+}
+async function archiveIndex(){
+  const now=Date.now();
+  if(archiveIndexCache&&now-archiveIndexCacheAt<30000)return archiveIndexCache;
+  try{
+    const idx=await archiveJson('index.json');
+    archiveIndexCache=idx&&Array.isArray(idx.items)?idx:{items:[],months:[]};archiveIndexCacheAt=now;return archiveIndexCache;
+  }catch{return{items:[],months:[]}}
+}
+function archiveItemAtOrBefore(items,targetMs){
+  let best=items[0]||null;
+  for(const item of items||[]){const ms=new Date(item?.t||'').getTime();if(!Number.isFinite(ms))continue;if(ms<=targetMs)best=item;else break}
+  return best;
+}
+async function archiveSnapshot(item){
+  if(!item?.path)return null;
+  try{const snap=await archiveJson(item.path);return snap?.t&&Array.isArray(snap?.rows)?snap:null}catch{return null}
+}
+async function archiveAllSnapshots(){
+  const idx=await archiveIndex(),months=[...new Set((idx.months||[]).map(String).filter(Boolean))].sort(),out=[];
+  for(const month of months){
+    try{
+      const bundle=await archiveJson(`months/${month}.json`);
+      for(const snap of bundle?.snapshots||[])if(snap?.t&&Array.isArray(snap.rows))out.push(snap);
+    }catch{}
+  }
+  out.sort((a,b)=>String(a.t).localeCompare(String(b.t)));return out;
+}
+function mergeSnapshots(...groups){
+  const map=new Map();
+  for(const group of groups)for(const snap of group||[]){if(!snap?.t||!Array.isArray(snap.rows))continue;map.set(String(snap.t),snap)}
+  return[...map.values()].sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const LEGACY_INDEX_KEY='snapshot-index.json';
 const LATEST_KEY='latest.json';

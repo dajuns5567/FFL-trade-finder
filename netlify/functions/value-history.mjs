@@ -65,6 +65,16 @@ function cleanRows(rows){
   }
   return out.slice(0,5000);
 }
+function cleanPicks(picks){
+  if(!Array.isArray(picks))return[];
+  const out=[];
+  for(const p of picks){
+    const id=String(p?.id||'').trim(),value=Math.round(Number(p?.value)),season=Math.round(Number(p?.season)),round=Math.round(Number(p?.round)),original_owner=Math.round(Number(p?.original_owner)),owner=Math.round(Number(p?.owner));
+    if(!id||!Number.isFinite(value)||value<0||value>12000||!Number.isFinite(season)||season<2020||season>2100||!Number.isFinite(round)||round<1||round>10||!Number.isFinite(original_owner)||original_owner<1)continue;
+    out.push({id,value,season,round,original_owner,owner:Number.isFinite(owner)?owner:0});
+  }
+  return out.slice(0,1000);
+}
 function fingerprint(rows){
   let h=2166136261;
   for(const r of rows){const s=`${r.id}:${r.value}:${r.overall}:${r.posRank}|`;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}}

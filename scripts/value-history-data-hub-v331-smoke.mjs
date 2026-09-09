@@ -362,7 +362,12 @@ assert(backend.includes('writeFilteredIndexes(s,keep)'),'V346 history reindex mi
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
 assert(ui.includes("function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;"),'Value History capture must wait only for usable site player state, not for a specific ranking source');
 assert(!ui.includes("Object.keys(state.players).length<100||!hasValidatedKtcSnapshot()"),'Value History player snapshots must not be blocked by the KTC-specific validation gate');
-assert(ui.includes("const rows=currentRows(),picks=currentPickRows(),teams=currentTeamRows(rows);"),'Value History must copy the site already-calculated player values into each snapshot');
+assert(ui.includes("const rows=currentRows();"),'Value History must copy the site already-calculated player values into each snapshot');
+assert(ui.includes("try{picks=currentPickRows()}catch"),'draft-pick snapshot enrichment must never block the core player snapshot');
+assert(ui.includes("try{teams=currentTeamRows(rows)}catch"),'team snapshot enrichment must never block the core player snapshot');
+assert(ui.includes("if(rows.length<100){scheduleSnapshot(2000);return false}"),'player rows must be the only required snapshot payload before enrichment');
+assert(ui.indexOf("const rows=currentRows();")<ui.indexOf("try{picks=currentPickRows()}catch"),'core player snapshot must be built before optional pick enrichment');
+assert(ui.indexOf("const rows=currentRows();")<ui.indexOf("try{teams=currentTeamRows(rows)}catch"),'core player snapshot must be built before optional team enrichment');
 assert(ui.includes('scheduleSnapshot(1000)'),'Update-triggered value recalculation must schedule a new historical observation');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
 const updateSource=fs.readFileSync('netlify/functions/update.mjs','utf8');

@@ -348,7 +348,26 @@ function currentTeamRows(playerRows=currentRows()){
 }
 function hasValidatedKtcSnapshot(){for(const [name,src] of Object.entries(state?.rankings||{})){const label=`${name} ${src?.source||''}`.toLowerCase();if(!/ktc|keeptradecut/.test(label))continue;const count=Number(src?.playerCount)||Object.keys(src?.data||{}).length;if(count>=300)return true}return false}
 function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();return !/loading|updating|refreshing/.test(text)}
-async function recordSnapshot(){try{if(!snapshotPreconditions()){scheduleSnapshot(2000);return false}const rows=currentRows(),picks=currentPickRows(),teams=currentTeamRows(rows);if(rows.length<100){scheduleSnapshot(2000);return false}const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams}),keepalive:true});if(r.ok){marketCache=null;teamNetCache.clear();if(uiReady){if(currentView==='market')loadMarket(true);else if(currentView==='team'&&trackedTeamId)loadTrackedTeam()}return true}scheduleSnapshot(3000);return false}catch{scheduleSnapshot(3000);return false}}
+async function recordSnapshot(){
+  try{
+    if(!snapshotPreconditions()){scheduleSnapshot(2000);return false}
+    const rows=currentRows();
+    if(rows.length<100){scheduleSnapshot(2000);return false}
+    let picks=[],teams=[];
+    try{picks=currentPickRows()}catch(e){console.warn('value-history-pick-enrichment',e)}
+    try{teams=currentTeamRows(rows)}catch(e){console.warn('value-history-team-enrichment',e)}
+    const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams}),keepalive:true});
+    if(r.ok){
+      marketCache=null;teamNetCache.clear();
+      if(uiReady){if(currentView==='market')loadMarket(true);else if(currentView==='team'&&trackedTeamId)loadTrackedTeam()}
+      return true
+    }
+    scheduleSnapshot(3000);return false
+  }catch(e){
+    console.warn('value-history-player-snapshot',e);
+    scheduleSnapshot(3000);return false
+  }
+}
 function scheduleSnapshot(delay=60000){clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(recordSnapshot,{timeout:5000});else recordSnapshot()},delay)}
 
 function initUI(){

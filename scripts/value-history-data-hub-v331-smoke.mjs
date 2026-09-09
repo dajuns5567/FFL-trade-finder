@@ -337,6 +337,8 @@ assert(backend.includes("url.searchParams.get('trades')==='1'"),'completed trade
 assert(backend.includes('function cleanPicks(picks)'),'Value History backend must sanitize stored pick snapshots separately from player rows');
 assert(backend.includes('function cleanTeams(teams)'),'Value History backend must sanitize team totals separately from player rows');
 assert(backend.includes('const snapshot={version:4,league:LEAGUE,t,fingerprint:fp,rows,picks,teams}'),'Value History snapshots must persist player, pick, and team totals as separate collections');
+assert(backend.includes('await appendIndex(s,key,t);'),'Value History write must persist the snapshot index before reporting success');
+assert(!backend.includes("try{await appendIndex(s,key,t)}catch"),'Value History must not silently report success for an unindexed snapshot');
 assert(backend.includes('histPickMap=pickMap'),'completed trade history must read pick values from the exact historical snapshot');
 assert(backend.includes('then_picks:thenPicks.values'),'completed trade history must expose recorded pick values to Trade History');
 assert(backend.includes('completedTradeHistory(s)'),'completed trade history must remain in Value History backend');
@@ -363,6 +365,9 @@ assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immed
 assert(ui.includes("function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;"),'Value History capture must wait only for usable site player state, not for a specific ranking source');
 assert(!ui.includes("Object.keys(state.players).length<100||!hasValidatedKtcSnapshot()"),'Value History player snapshots must not be blocked by the KTC-specific validation gate');
 assert(ui.includes("const rows=currentRows();"),'Value History must copy the site already-calculated player values into each snapshot');
+assert(!ui.includes("keepalive:true"),'Value History POST must not use browser keepalive because the expanded snapshot payload can exceed keepalive body limits');
+assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams})"),'Value History POST must send the completed player snapshot payload');
+assert(ui.includes("else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId);"),'successful Value History writes must refresh the currently viewed player chart immediately');
 assert(ui.includes("try{picks=currentPickRows()}catch"),'draft-pick snapshot enrichment must never block the core player snapshot');
 assert(ui.includes("try{teams=currentTeamRows(rows)}catch"),'team snapshot enrichment must never block the core player snapshot');
 assert(ui.includes("if(rows.length<100){scheduleSnapshot(2000);return false}"),'player rows must be the only required snapshot payload before enrichment');
@@ -379,6 +384,8 @@ assert(backend.includes("scrubV348ConsensusContamination(s)"),'V348 contaminated
 const fanRankedSource=fs.readFileSync('netlify/functions/fanranked-adapter.mjs','utf8');
 assert(fanRankedSource.includes("sort((a,b)=>b.value-a.value"),'FanRanked current ranking is not rebuilt from current market values');
 assert(fanRankedSource.includes(".map((row,index)=>({rank:index+1"),'FanRanked current ranking is not reassigned contiguously');
+const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
+assert(siteV29.includes('/value-history-v276.js?v=367'),'production shell must cache-bust the V367 Value History recorder');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');

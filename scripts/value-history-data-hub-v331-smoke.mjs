@@ -238,15 +238,27 @@ for(const forbidden of [
   'tradeEvaluatorAnyTeam',
   'Value Adjustment='
 ])assert(!ui.includes(forbidden),'Value History must remain read-only relative to trade/value systems: '+forbidden);
-assert(ui.includes("const fair=window.section1V130?.fair"),'Trade History must consume the exact current shared evaluator fairness function');
-assert(ui.includes("typeof window.tradeAssetValue93==='function'"),'Trade History must retain evaluator asset-value fallback');
+assert(ui.includes('function tradeHistoryFair(give,recv,trade)'), 'Trade History must use an isolated historical evaluator adapter');
+assert(ui.includes('retroactiveTradeHistoryPickValue(asset,trade)'), 'Trade History retroactive pick timing adapter missing');
 assert(ui.includes("window.tradeValueNormalizationV130?.canonicalValue"),'Trade History current player and pick display must use the exact active evaluator canonical value function');
 assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
 assert(ui.includes('tradeOriginalAssets(side)'), 'Trade Evaluator analysis must evaluate the original traded package rather than mutate it into current outcomes');
+assert(ui.includes('return Number.isFinite(season)&&season>2000?season+1:null'),'retroactive Trade History nearest draft year must roll from the trade season');
+assert(ui.includes('Math.pow(.88,Math.max(0,y-base))'),'retroactive Trade History must preserve the existing 12% per-year discount cadence');
+assert(ui.includes('(y===2027&&r===1)?1.03:1'),'retroactive Trade History must preserve the existing 2027 R1 premium without giving it to 2026');
+assert(ui.includes("asset?.type==='pick'?retroactiveTradeHistoryPickValue(asset,trade):currentEvaluatorValue(asset)"),'only picks may receive retroactive timing adjustment inside Trade History');
+assert(ui.includes('text-align:center'),'Trade History time headers must be centered');
+assert(ui.includes('${tradeEvaluatorSection(trade)}${tradeValuePresentation(trade)}'),'Trade Evaluator Analysis must render before Fleeced Trade Breakdown');
+assert(ui.includes('Overall #'),'Trade History received-player metadata must show current overall rank');
+assert(ui.includes('posRank'),'Trade History received-player metadata must show current positional rank');
 assert(!ui.includes('Current evaluator rationale'),'Trade History evaluator section must not render the written rationale block');
 assert(!ui.includes('state.assetsA='),'Trade History must not overwrite Trade Evaluator Team A selections');
 assert(!ui.includes('state.assetsB='),'Trade History must not overwrite Trade Evaluator Team B selections');
 assert(!ui.includes('pickValue=function'),'Trade History must not replace draft-pick valuation logic');
+assert(!ui.includes('window.pickValue='),'Trade History must never overwrite shared current/future pickValue');
+assert(!ui.includes('tradeValueNormalizationV130.canonicalValue='),'Trade History must never overwrite canonical current/future valuation');
+assert(!ui.includes('draftPickProjection92='),'Trade History must never overwrite shared draft-pick projection logic');
+assert(!ui.includes('YEAR_DISCOUNT92='),'Trade History must not modify the shared current/future draft-pick year discount');
 assert(ui.includes("tradeBtn.dataset.tab='tradeHistory'"),'Trade History must be a separate top-level tab');
 
 

@@ -263,6 +263,13 @@ assert(ui.includes('Math.pow(.88,Math.max(0,y-base))'),'retroactive Trade Histor
 assert(ui.includes('(y===2027&&r===1)?1.03:1'),'retroactive Trade History must preserve the existing 2027 R1 premium without giving it to 2026');
 assert(ui.includes("asset?.type==='pick'?retroactiveTradeHistoryPickValue(asset,trade):currentEvaluatorValue(asset)"),'only picks may receive retroactive timing adjustment inside Trade History');
 assert(ui.includes('text-align:center'),'Trade History time headers must be centered');
+assert(ui.includes('function hindsightAnalysis(trade)'),'Trade History Hindsight evaluator missing');
+assert(ui.includes('<h4>Hindsight</h4>'),'Fleeced Trade Breakdown must include Hindsight');
+assert(ui.includes('CURRENT OUTCOME'),'Hindsight must present current outcome packages');
+assert(ui.includes('gap:28px'),'completed trades must have stronger visual separation');
+assert(ui.includes('border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line))'),'completed trade cards need distinct outer borders');
+assert(!ui.includes('nearest-year retroactive frame'),'retroactive pick-frame mechanics must remain hidden from user-facing text');
+assert(!ui.includes('<div class="vh-assets-title">Assets received</div>'),'redundant Fleeced Trade Breakdown Assets Received block must be removed');
 assert(ui.includes('${tradeEvaluatorSection(trade)}${tradeValuePresentation(trade)}'),'Trade Evaluator Analysis must render before Fleeced Trade Breakdown');
 assert(ui.includes('Overall #'),'Trade History received-player metadata must show current overall rank');
 assert(ui.includes('posRank'),'Trade History received-player metadata must show current positional rank');

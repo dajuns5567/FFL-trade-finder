@@ -477,11 +477,20 @@ async function importedCompletedTrades(){
       tradeJson(auditUrl(season,'users')),
       tradeJson(auditUrl(season,'rosters'))
     ]);
-    const draftResults=await exactDraftResultMap(league),teamNames=historicalTeamNames(users,rosters);
-    return{season,transactions,teamNames,draftResults};
+    const teamNames=historicalTeamNames(users,rosters);
+    return{season,transactions,league,teamNames};
   }));
+  const combinedDraftResults=new Map(),ambiguous=new Set();
+  for(const bundle of seasonBundles){
+    const draftResults=await exactDraftResultMap(bundle.league);
+    for(const [key,mapped] of draftResults){
+      if(combinedDraftResults.has(key)&&combinedDraftResults.get(key)?.player_id!==mapped?.player_id){ambiguous.add(key);combinedDraftResults.delete(key)}
+      else if(!ambiguous.has(key))combinedDraftResults.set(key,mapped);
+    }
+  }
+  for(const key of ambiguous)combinedDraftResults.delete(key);
   const trades=[];
-  for(const bundle of seasonBundles)for(const [week,rows] of Object.entries(bundle.transactions||{}))for(const tx of Array.isArray(rows)?rows:[]){const t=normalizeCompletedTrade(tx,week,bundle.season,bundle.teamNames,bundle.draftResults);if(t)trades.push(t)}
+  for(const bundle of seasonBundles)for(const [week,rows] of Object.entries(bundle.transactions||{}))for(const tx of Array.isArray(rows)?rows:[]){const t=normalizeCompletedTrade(tx,week,bundle.season,bundle.teamNames,combinedDraftResults);if(t)trades.push(t)}
   trades.sort((a,b)=>String(b.created).localeCompare(String(a.created)));tradeAuditCache={t:now,value:trades};return trades;
 }
 function closestSnapshotItem(items,targetMs,maxGapMs=36*3600000){

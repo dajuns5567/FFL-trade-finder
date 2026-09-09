@@ -215,7 +215,7 @@ for(const needle of [
   "tradeBtn.textContent='Trade History'",
   'Completed Trade History',
   'Fleeced Trade Breakdown',
-  'Trade Evaluator Analysis',
+  'Original Trade Analysis',
   'Raw asset total',
   'Value adjustment',
   'Trade-adjusted total',
@@ -261,9 +261,16 @@ assert(Math.abs(vhSandbox.tradeHistoryPickTimingFactor(2026,1,2025)-0.88)<1e-9,'
 assert(Math.abs(vhSandbox.tradeHistoryPickTimingFactor(2027,2,2025)-Math.pow(.88,2))<1e-9,'2027 non-R1 pick in a 2024 trade must be two years farther away');
 assert(ui.includes('Math.pow(.88,Math.max(0,y-base))'),'retroactive Trade History must preserve the existing 12% per-year discount cadence');
 assert(ui.includes('(y===2027&&r===1)?1.03:1'),'retroactive Trade History must preserve the existing 2027 R1 premium without giving it to 2026');
-assert(ui.includes("asset?.type==='pick'?retroactiveTradeHistoryPickValue(asset,trade):currentEvaluatorValue(asset)"),'only picks may receive retroactive timing adjustment inside Trade History');
+assert(ui.includes("const historical=side?historicalPlayerValue(side,asset.id):null"),'Original Trade Analysis players must use stored at-time-of-trade values');
+assert(ui.includes("return historical==null?null:historical"),'Original Trade Analysis must not substitute current player values when history is missing');
+assert(ui.includes("if(asset.type==='pick'&&completedHistoricalPick(asset))return retroactiveTradeHistoryPickValue(asset,trade);"),'Hindsight historical unresolved picks must retain isolated historical pick handling');
+assert(ui.includes("return currentEvaluatorValue(asset);"),'Hindsight must continue using today current values for current outcome assets');
 assert(ui.includes('text-align:center'),'Trade History time headers must be centered');
 assert(ui.includes('function hindsightAnalysis(trade)'),'Trade History Hindsight evaluator missing');
+assert(ui.includes("Looking back on trades with today's current value."),'Hindsight description must use the approved current-value wording');
+assert(ui.includes("Historical value unavailable"),'Original Trade Analysis must report unavailable historical results rather than fabricate a score');
+assert(ui.includes("value==null?'N/A':fmt(value)"),'Original Trade Analysis missing asset values must display N/A');
+assert(ui.includes("These trades occurred before Trade History was established"),'pre-history Original Trade Analysis disclaimer missing');
 assert(ui.includes('function fairWithValue(give,recv,valueFn)'),'Trade History must expose one shared parameterized fairness adapter');
 assert(ui.includes('const depth=Math.max(0,otherRaw-otherTop)'),'Trade History fairness adapter must mirror the active evaluator depth-cap logic');
 assert(ui.includes('counterElitePressure(otherAssets)'),'Trade History fairness adapter must mirror the active evaluator elite-counter pressure');

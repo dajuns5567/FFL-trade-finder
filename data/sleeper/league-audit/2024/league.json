@@ -77,10 +77,6 @@
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
   "company_id": null,
-  "shard": 907,
-  "season": "2024",
-  "season_type": "regular",
-  "sport": "nfl",
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,
@@ -226,6 +222,10 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
+  "season": "2024",
+  "season_type": "regular",
+  "shard": 907,
+  "sport": "nfl",
   "last_message_id": "1182792919823704064",
   "last_author_avatar": "e7af4deab0289b4f5505646424895246",
   "last_author_display_name": "slawson98",

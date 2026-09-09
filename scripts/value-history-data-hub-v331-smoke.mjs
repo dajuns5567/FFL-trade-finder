@@ -238,19 +238,47 @@ for(const forbidden of [
   'tradeEvaluatorAnyTeam',
   'Value Adjustment='
 ])assert(!ui.includes(forbidden),'Value History must remain read-only relative to trade/value systems: '+forbidden);
-assert(ui.includes("const fair=window.section1V130?.fair"),'Trade History must consume the exact current shared evaluator fairness function');
-assert(ui.includes("typeof window.tradeAssetValue93==='function'"),'Trade History must retain evaluator asset-value fallback');
+assert(ui.includes('function tradeHistoryFair(give,recv,trade)'), 'Trade History must use an isolated historical evaluator adapter');
+assert(ui.includes('retroactiveTradeHistoryPickValue(asset,trade)'), 'Trade History retroactive pick timing adapter missing');
 assert(ui.includes("window.tradeValueNormalizationV130?.canonicalValue"),'Trade History current player and pick display must use the exact active evaluator canonical value function');
+assert(ui.includes('function currentPickRows()'),'Value History must capture live canonical draft-pick values for future exact trade history');
+assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks})"),'Value History snapshot POST must include live pick values');
+assert(ui.includes('const recorded=Number(asset.historyRecordedValue)'),'Trade History must prefer recorded historical pick values before retroactive fallback');
 assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
 assert(ui.includes('tradeOriginalAssets(side)'), 'Trade Evaluator analysis must evaluate the original traded package rather than mutate it into current outcomes');
+assert(ui.includes('return Number.isFinite(season)&&season>2000?season+1:null'),'retroactive Trade History nearest draft year must roll from the trade season');
+assert(ui.includes('function tradeHistoryPickTimingFactor(year,round,nearestYear)'),'Trade History distance-based pick timing helper missing');
+assert(ui.includes('Math.max(0,y-base)'),'Trade History pick distance must be measured from trade-season nearest draft year');
+const vhSandbox={window:{},state:{allAssets:[]}};
+const vhTradeHelpers=ui.match(/function tradeHistoryNearestDraftYear\(trade\)[\s\S]*?function historicalPlayerValue/);
+assert(vhTradeHelpers,'Trade History historical draft timing helpers could not be isolated for regression testing');
+vm.runInNewContext(vhTradeHelpers[0].replace(/function historicalPlayerValue[\s\S]*/,''),vhSandbox);
+assert(vhSandbox.tradeHistoryNearestDraftYear({season:2024})===2025,'2024 Trade History nearest draft year must be 2025');
+assert(vhSandbox.tradeHistoryNearestDraftYear({season:2025})===2026,'2025 Trade History nearest draft year must be 2026');
+assert(vhSandbox.tradeHistoryNearestDraftYear({season:2026})===2027,'2026 Trade History nearest draft year must be 2027');
+assert(Math.abs(vhSandbox.tradeHistoryPickTimingFactor(2025,1,2025)-1)<1e-9,'2025 pick in a 2024 trade must receive nearest-year timing');
+assert(Math.abs(vhSandbox.tradeHistoryPickTimingFactor(2026,1,2025)-0.88)<1e-9,'2026 pick in a 2024 trade must be one year farther away');
+assert(Math.abs(vhSandbox.tradeHistoryPickTimingFactor(2027,2,2025)-Math.pow(.88,2))<1e-9,'2027 non-R1 pick in a 2024 trade must be two years farther away');
+assert(ui.includes('Math.pow(.88,Math.max(0,y-base))'),'retroactive Trade History must preserve the existing 12% per-year discount cadence');
+assert(ui.includes('(y===2027&&r===1)?1.03:1'),'retroactive Trade History must preserve the existing 2027 R1 premium without giving it to 2026');
+assert(ui.includes("asset?.type==='pick'?retroactiveTradeHistoryPickValue(asset,trade):currentEvaluatorValue(asset)"),'only picks may receive retroactive timing adjustment inside Trade History');
+assert(ui.includes('text-align:center'),'Trade History time headers must be centered');
+assert(ui.includes('${tradeEvaluatorSection(trade)}${tradeValuePresentation(trade)}'),'Trade Evaluator Analysis must render before Fleeced Trade Breakdown');
+assert(ui.includes('Overall #'),'Trade History received-player metadata must show current overall rank');
+assert(ui.includes('posRank'),'Trade History received-player metadata must show current positional rank');
 assert(!ui.includes('Current evaluator rationale'),'Trade History evaluator section must not render the written rationale block');
 assert(!ui.includes('state.assetsA='),'Trade History must not overwrite Trade Evaluator Team A selections');
 assert(!ui.includes('state.assetsB='),'Trade History must not overwrite Trade Evaluator Team B selections');
 assert(!ui.includes('pickValue=function'),'Trade History must not replace draft-pick valuation logic');
+assert(!ui.includes('window.pickValue='),'Trade History must never overwrite shared current/future pickValue');
+assert(!ui.includes('tradeValueNormalizationV130.canonicalValue='),'Trade History must never overwrite canonical current/future valuation');
+assert(!ui.includes('draftPickProjection92='),'Trade History must never overwrite shared draft-pick projection logic');
+assert(!ui.includes('YEAR_DISCOUNT92='),'Trade History must not modify the shared current/future draft-pick year discount');
 assert(ui.includes("tradeBtn.dataset.tab='tradeHistory'"),'Trade History must be a separate top-level tab');
 
 
 const backend=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
+assert(!backend.includes('rows.push({id,value,season,round'),'stored picks must remain outside player rows so player history/rank calculations stay isolated');
 assert(backend.includes("MONTH_INDEX_PREFIX='indexes/'"),'partitioned all-time index missing');
 assert(!backend.includes('CANONICAL_HISTORY_ORIGIN'),'Value History must not depend on a cross-site Netlify proxy');
 assert(backend.includes("ARCHIVE_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history'"),'durable GitHub Value History archive source missing');
@@ -262,6 +290,10 @@ assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary 
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
 assert(backend.includes("url.searchParams.get('team_net')==='1'"),'Track My Team net-value history endpoint missing');
 assert(backend.includes("url.searchParams.get('trades')==='1'"),'completed trade history endpoint missing');
+assert(backend.includes('function cleanPicks(picks)'),'Value History backend must sanitize stored pick snapshots separately from player rows');
+assert(backend.includes('const snapshot={version:3,league:LEAGUE,t,fingerprint:fp,rows,picks}'),'Value History snapshots must persist pick values without mixing them into player rows');
+assert(backend.includes('histPickMap=pickMap'),'completed trade history must read pick values from the exact historical snapshot');
+assert(backend.includes('then_picks:thenPicks.values'),'completed trade history must expose recorded pick values to Trade History');
 assert(backend.includes('completedTradeHistory(s)'),'completed trade history must remain in Value History backend');
 assert(backend.includes('TRADE_AUDIT_SEASONS'),'Sleeper imported multi-season trade audit source missing');
 assert(backend.includes('exactDraftResultMap'),'exact Sleeper draft-result mapping missing');

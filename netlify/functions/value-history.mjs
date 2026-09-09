@@ -65,9 +65,20 @@ function cleanRows(rows){
   }
   return out.slice(0,5000);
 }
-function fingerprint(rows){
+function cleanPicks(picks){
+  if(!Array.isArray(picks))return[];
+  const out=[];
+  for(const p of picks){
+    const id=String(p?.id||'').trim(),value=Math.round(Number(p?.value)),season=Math.round(Number(p?.season)),round=Math.round(Number(p?.round)),original_owner=Math.round(Number(p?.original_owner)),owner=Math.round(Number(p?.owner));
+    if(!id||!Number.isFinite(value)||value<0||value>12000||!Number.isFinite(season)||season<2020||season>2100||!Number.isFinite(round)||round<1||round>10||!Number.isFinite(original_owner)||original_owner<1)continue;
+    out.push({id,value,season,round,original_owner,owner:Number.isFinite(owner)?owner:0});
+  }
+  return out.slice(0,1000);
+}
+function fingerprint(rows,picks=[]){
   let h=2166136261;
-  for(const r of rows){const s=`${r.id}:${r.value}:${r.overall}:${r.posRank}|`;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}}
+  for(const r of rows){const x=`${r.id}:${r.value}:${r.overall}:${r.posRank}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
+  for(const p of picks){const x=`P:${p.id}:${p.value}:${p.season}:${p.round}:${p.original_owner}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
   return (h>>>0).toString(36);
 }
 async function retry(fn,wait=120){
@@ -486,9 +497,18 @@ function playerValuesFromMap(side,map){
   for(const id of ids){const row=map.get(String(id)),n=Number(row?.value);if(Number.isFinite(n))values.push({id:String(id),value:Math.round(n)});else missing.push(String(id))}
   return{values,missing,complete:missing.length===0,total:values.reduce((n,x)=>n+x.value,0)};
 }
+function pickMap(snap){return new Map((snap?.picks||[]).map(p=>[String(p.id),p]))}
+function pickValuesFromSide(side,map){
+  const values=[],missing=[];
+  for(const p of side?.picks||[]){
+    const id=`pick-${Number(p?.season)||0}-${Number(p?.round)||0}-${Number(p?.original_roster_id)||0}`,row=map.get(id),n=Number(row?.value);
+    if(Number.isFinite(n))values.push({id,value:Math.round(n),season:Number(p.season),round:Number(p.round),original_roster_id:Number(p.original_roster_id)||null});else missing.push(id);
+  }
+  return{values,missing,complete:missing.length===0,total:values.reduce((n,x)=>n+x.value,0)};
+}
 async function completedTradeHistory(s){
   const trades=await importedCompletedTrades(),indexed=await allItems(s),items=indexed.items||[];
-  if(!items.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',tracking_since:null,latest:null,trades:trades.map(t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_players:[],then_players_complete:false,current_players:[],current_players_complete:false}))}))};
+  if(!items.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',tracking_since:null,latest:null,trades:trades.map(t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_players:[],then_players_complete:false,then_picks:[],then_picks_complete:false,current_players:[],current_players_complete:false}))}))};
   const latestItem=items[items.length-1],selected=new Map([[latestItem.key,latestItem]]),snapshotItemByTrade=new Map();
   for(const trade of trades){
     const ms=new Date(trade.created).getTime(),item=Number.isFinite(ms)?closestSnapshotItem(items,ms):null;
@@ -498,10 +518,10 @@ async function completedTradeHistory(s){
   for(const snap of snaps){const item=selectedItems.find(x=>String(x.t)===String(snap.t));if(item)snapByKey.set(item.key,snap)}
   const latestSnap=snapByKey.get(latestItem.key),latestMap=rowMap(latestSnap||{rows:[]});
   const out=trades.map(trade=>{
-    const histItem=snapshotItemByTrade.get(trade.id)||null,histSnap=histItem?snapByKey.get(histItem.key):null,histMap=rowMap(histSnap||{rows:[]});
+    const histItem=snapshotItemByTrade.get(trade.id)||null,histSnap=histItem?snapByKey.get(histItem.key):null,histMap=rowMap(histSnap||{rows:[]}),histPickMap=pickMap(histSnap||{picks:[]});
     const sides=trade.sides.map(side=>{
-      const then=histItem?playerValuesFromMap(side,histMap):{values:[],missing:[...(side.player_ids||[])],complete:false,total:null},current=playerValuesFromMap(side,latestMap);
-      return{...side,then_players:then.values,then_players_complete:Boolean(histItem&&then.complete),then_player_total:histItem&&then.complete?then.total:null,current_players:current.values,current_players_complete:current.complete,current_player_total:current.complete?current.total:null};
+      const then=histItem?playerValuesFromMap(side,histMap):{values:[],missing:[...(side.player_ids||[])],complete:false,total:null},thenPicks=histItem?pickValuesFromSide(side,histPickMap):{values:[],missing:(side.picks||[]).map(p=>`pick-${p.season}-${p.round}-${p.original_roster_id}`),complete:false,total:null},current=playerValuesFromMap(side,latestMap);
+      return{...side,then_players:then.values,then_players_complete:Boolean(histItem&&then.complete),then_player_total:histItem&&then.complete?then.total:null,then_picks:thenPicks.values,then_picks_complete:Boolean(histItem&&thenPicks.complete),then_pick_total:histItem&&thenPicks.complete?thenPicks.total:null,current_players:current.values,current_players_complete:current.complete,current_player_total:current.complete?current.total:null};
     });
     return{...trade,trade_snapshot_t:histItem?.t||null,current_snapshot_t:latestItem?.t||null,sides};
   });
@@ -556,17 +576,17 @@ export default async (req)=>{
     if(req.method!=='POST')return json({error:'method not allowed'},405);
     const body=await req.json().catch(()=>null);
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);
-    const rows=cleanRows(body?.rows);
+    const rows=cleanRows(body?.rows),picks=cleanPicks(body?.picks);
     if(rows.length<100)return json({error:'incomplete snapshot'},400);
-    rows.sort((a,b)=>a.id.localeCompare(b.id));
-    const fp=fingerprint(rows),latest=await safeGet(s,LATEST_KEY);
+    rows.sort((a,b)=>a.id.localeCompare(b.id));picks.sort((a,b)=>a.id.localeCompare(b.id));
+    const fp=fingerprint(rows,picks),latest=await safeGet(s,LATEST_KEY);
     if(latest?.fingerprint===fp)return json({ok:true,stored:false,reason:'unchanged',t:latest.t});
     const t=new Date().toISOString(),key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
-    const snapshot={version:2,league:LEAGUE,t,fingerprint:fp,rows};
+    const snapshot={version:3,league:LEAGUE,t,fingerprint:fp,rows,picks};
     await retry(()=>s.setJSON(key,snapshot),120);
     await retry(()=>s.setJSON(LATEST_KEY,{version:2,t,fingerprint:fp,key,count:rows.length}),120);
     try{await appendIndex(s,key,t)}catch(e){console.warn('value-history-index',e)}
-    return json({ok:true,stored:true,t,count:rows.length});
+    return json({ok:true,stored:true,t,count:rows.length,pick_count:picks.length});
   }catch(e){
     console.error('value-history',e);
     return json({error:'history unavailable'},503);

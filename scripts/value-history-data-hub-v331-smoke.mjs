@@ -360,6 +360,9 @@ assert(backend.includes('scrubV346KtcContamination(s)'),'V346 history scrub miss
 assert(backend.includes('writeFilteredIndexes(s,keep)'),'V346 history reindex missing');
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
+assert(ui.includes("function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;"),'Value History capture must wait only for usable site player state, not for a specific ranking source');
+assert(!ui.includes("Object.keys(state.players).length<100||!hasValidatedKtcSnapshot()"),'Value History player snapshots must not be blocked by the KTC-specific validation gate');
+assert(ui.includes("const rows=currentRows(),picks=currentPickRows(),teams=currentTeamRows(rows);"),'Value History must copy the site already-calculated player values into each snapshot');
 assert(ui.includes('scheduleSnapshot(1000)'),'Update-triggered value recalculation must schedule a new historical observation');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
 const updateSource=fs.readFileSync('netlify/functions/update.mjs','utf8');

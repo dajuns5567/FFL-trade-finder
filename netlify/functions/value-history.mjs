@@ -75,10 +75,21 @@ function cleanPicks(picks){
   }
   return out.slice(0,1000);
 }
-function fingerprint(rows,picks=[]){
+function cleanTeams(teams){
+  if(!Array.isArray(teams))return[];
+  const out=[];
+  for(const t of teams){
+    const id=String(t?.id||'').trim(),value=Math.round(Number(t?.value)),player_count=Math.round(Number(t?.player_count));
+    if(!id||!Number.isFinite(value)||value<0||value>500000||!Number.isFinite(player_count)||player_count<0||player_count>100)continue;
+    out.push({id,value,player_count});
+  }
+  out.sort((a,b)=>a.id.localeCompare(b.id));return out.slice(0,100);
+}
+function fingerprint(rows,picks=[],teams=[]){
   let h=2166136261;
   for(const r of rows){const x=`${r.id}:${r.value}:${r.overall}:${r.posRank}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
   for(const p of picks){const x=`P:${p.id}:${p.value}:${p.season}:${p.round}:${p.original_owner}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
+  for(const t of teams){const x=`T:${t.id}:${t.value}:${t.player_count}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
   return (h>>>0).toString(36);
 }
 async function retry(fn,wait=120){
@@ -210,22 +221,28 @@ async function getPlayerHistory(s,playerId){
   }
   return{points:[],source:'empty',snapshotCount:0};
 }
-async function getTeamNetHistory(s,playerIds){
-  const ids=[...new Set((playerIds||[]).map(String).filter(Boolean))].slice(0,100),wanted=new Set(ids);
-  if(!ids.length)return{points:[],playerCount:0,source:'empty'};
+async function getTeamNetHistory(s,playerIds,teamId=''){
+  const ids=[...new Set((playerIds||[]).map(String).filter(Boolean))].slice(0,100),wanted=new Set(ids),tid=String(teamId||'').trim();
+  if(!ids.length&&!tid)return{points:[],playerCount:0,source:'empty'};
   const indexed=await allItems(s),localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[],archiveSnaps=await archiveAllSnapshots(),snaps=mergeSnapshots(archiveSnaps,localSnaps);
   if(!snaps.length)return{points:[],playerCount:ids.length,source:indexed.source};
   const points=[];
   for(const snap of snaps){
+    const exact=tid?(snap?.teams||[]).find(t=>String(t?.id)===tid):null;
+    if(exact&&Number.isFinite(Number(exact.value))){
+      points.push({t:snap.t,value:Math.round(Number(exact.value)),playerCount:Number(exact.player_count)||0,teamSnapshot:true});
+      continue;
+    }
+    if(!ids.length)continue;
     let value=0,found=0;
     for(const row of snap?.rows||[]){
       if(!wanted.has(String(row?.id)))continue;
       const n=Number(row?.value);if(!Number.isFinite(n))continue;
       value+=n;found++;
     }
-    points.push({t:snap.t,value:Math.round(value),playersFound:found,playerCount:ids.length});
+    points.push({t:snap.t,value:Math.round(value),playersFound:found,playerCount:ids.length,teamSnapshot:false});
   }
-  return{points,playerCount:ids.length,source:archiveSnaps.length?'github-archive+netlify-live':'netlify-live',snapshotCount:snaps.length};
+  return{points,playerCount:points.length?Number(points[points.length-1]?.playerCount)||ids.length:ids.length,source:archiveSnaps.length?'github-archive+netlify-live':'netlify-live',snapshotCount:snaps.length};
 }
 function rowMap(snap){return new Map((snap?.rows||[]).map(r=>[String(r.id),r]))}
 function baselineFor(snaps,latestMs,days){
@@ -573,8 +590,8 @@ export default async (req)=>{
         return json(result);
       }
       if(url.searchParams.get('team_net')==='1'){
-        const ids=String(url.searchParams.get('player_ids')||'').split(',').map(x=>x.trim()).filter(Boolean);
-        const result=await retry(()=>getTeamNetHistory(s,ids),180);
+        const ids=String(url.searchParams.get('player_ids')||'').split(',').map(x=>x.trim()).filter(Boolean),teamId=String(url.searchParams.get('team_id')||'').trim();
+        const result=await retry(()=>getTeamNetHistory(s,ids,teamId),180);
         return json({team_net:true,points:result.points||[],player_count:result.playerCount||0,history_state:result.source,snapshot_count:result.snapshotCount||0});
       }
       const playerId=String(url.searchParams.get('player_id')||'').trim();
@@ -585,17 +602,17 @@ export default async (req)=>{
     if(req.method!=='POST')return json({error:'method not allowed'},405);
     const body=await req.json().catch(()=>null);
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);
-    const rows=cleanRows(body?.rows),picks=cleanPicks(body?.picks);
+    const rows=cleanRows(body?.rows),picks=cleanPicks(body?.picks),teams=cleanTeams(body?.teams);
     if(rows.length<100)return json({error:'incomplete snapshot'},400);
     rows.sort((a,b)=>a.id.localeCompare(b.id));picks.sort((a,b)=>a.id.localeCompare(b.id));
-    const fp=fingerprint(rows,picks),latest=await safeGet(s,LATEST_KEY);
+    const fp=fingerprint(rows,picks,teams),latest=await safeGet(s,LATEST_KEY);
     if(latest?.fingerprint===fp)return json({ok:true,stored:false,reason:'unchanged',t:latest.t});
     const t=new Date().toISOString(),key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
-    const snapshot={version:3,league:LEAGUE,t,fingerprint:fp,rows,picks};
+    const snapshot={version:4,league:LEAGUE,t,fingerprint:fp,rows,picks,teams};
     await retry(()=>s.setJSON(key,snapshot),120);
     await retry(()=>s.setJSON(LATEST_KEY,{version:2,t,fingerprint:fp,key,count:rows.length}),120);
     try{await appendIndex(s,key,t)}catch(e){console.warn('value-history-index',e)}
-    return json({ok:true,stored:true,t,count:rows.length,pick_count:picks.length});
+    return json({ok:true,stored:true,t,count:rows.length,pick_count:picks.length,team_count:teams.length});
   }catch(e){
     console.error('value-history',e);
     return json({error:'history unavailable'},503);

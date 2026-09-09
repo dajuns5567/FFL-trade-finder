@@ -222,13 +222,12 @@ for(const needle of [
   'vh-eval-scorebar',
   'background:#e4b53f!important',
   'data-vh-open-trade-history',
-  'Recent Trade Impact',
-  'What Moved My Team',
+  "What's Happening With My Team",
   'data-vh-team-attribution',
   'data-vh-team-net-sort',
   '30D Rank Δ',
   'data-vh-trade-team',
-  'current-roster value movement'
+  'Trade-linked team net-value points'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
 for(const forbidden of [
@@ -242,7 +241,19 @@ assert(ui.includes('function tradeHistoryFair(give,recv,trade)'), 'Trade History
 assert(ui.includes('retroactiveTradeHistoryPickValue(asset,trade)'), 'Trade History retroactive pick timing adapter missing');
 assert(ui.includes("window.tradeValueNormalizationV130?.canonicalValue"),'Trade History current player and pick display must use the exact active evaluator canonical value function');
 assert(ui.includes('function currentPickRows()'),'Value History must capture live canonical draft-pick values for future exact trade history');
-assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks})"),'Value History snapshot POST must include live pick values');
+assert(ui.includes('function currentTeamRows(playerRows=currentRows())'),'Value History must capture authoritative per-team net totals at snapshot time');
+assert(ui.includes('function teamTradeNetEvents(teamId,netData,period)'),'Track My Team must identify completed trades against authoritative net-value points');
+assert(ui.includes('function teamNetPointTradeMap(teamId,points)'),'Overall Net Value chart must map completed trades to authoritative team data points');
+assert(ui.includes('data-vh-trades='),'trade-linked Overall Net Value points must carry trade context into the chart tooltip');
+assert(ui.includes('Observed team net-value change from prior authoritative snapshot'),'Overall Net Value tooltip must display observed net-value movement tied to the point');
+assert(ui.includes('not an assumption that the trade alone caused the change'),'Overall Net Value tooltip must preserve non-causal attribution language');
+assert(ui.includes("p?.teamSnapshot===true"),'trade-linked team events must never use legacy reconstructed net points');
+assert(ui.includes("tm>prevMs&&tm<=curMs"),'completed trades must be bracketed by the actual before/after team snapshots they are linked to');
+assert(ui.includes("What's Happening With My Team"),'approved Track My Team attribution heading missing');
+assert(!ui.includes('What Moved My Team'),'legacy team attribution heading must be removed');
+assert(!ui.includes('${teamTradeImpactCard(trackedTeamId)}'),'standalone Recent Trade Impact card must not duplicate trade events');
+assert(ui.includes('The snapshot change is observed team net-value movement, not an assumption that the trade alone caused the move.'),'trade-linked net movement must include non-causal attribution language');
+assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams})"),'Value History snapshot POST must include separate player, pick, and team ownership totals');
 assert(ui.includes('const recorded=Number(asset.historyRecordedValue)'),'Trade History must prefer recorded historical pick values before retroactive fallback');
 assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
 assert(ui.includes('tradeOriginalAssets(side)'), 'Trade Evaluator analysis must evaluate the original traded package rather than mutate it into current outcomes');
@@ -271,6 +282,7 @@ assert(ui.includes("Looking back on trades with today's current value."),'Hindsi
 assert(ui.includes("Historical value unavailable"),'Original Trade Analysis must report unavailable historical results rather than fabricate a score');
 assert(ui.includes("value==null?'N/A':fmt(value)"),'Original Trade Analysis missing asset values must display N/A');
 assert(ui.includes("These trades occurred before Trade History was established"),'pre-history Original Trade Analysis disclaimer missing');
+assert(ui.includes("N/A means this trade occurred before reliable Trade History player values were established, so no historical player value is guessed."),'incomplete Original Trade Analysis description must contain the pre-history N/A disclaimer');
 assert(ui.includes('function fairWithValue(give,recv,valueFn)'),'Trade History must expose one shared parameterized fairness adapter');
 assert(ui.includes('const depth=Math.max(0,otherRaw-otherTop)'),'Trade History fairness adapter must mirror the active evaluator depth-cap logic');
 assert(ui.includes('counterElitePressure(otherAssets)'),'Trade History fairness adapter must mirror the active evaluator elite-counter pressure');
@@ -320,7 +332,8 @@ assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility 
 assert(backend.includes("url.searchParams.get('team_net')==='1'"),'Track My Team net-value history endpoint missing');
 assert(backend.includes("url.searchParams.get('trades')==='1'"),'completed trade history endpoint missing');
 assert(backend.includes('function cleanPicks(picks)'),'Value History backend must sanitize stored pick snapshots separately from player rows');
-assert(backend.includes('const snapshot={version:3,league:LEAGUE,t,fingerprint:fp,rows,picks}'),'Value History snapshots must persist pick values without mixing them into player rows');
+assert(backend.includes('function cleanTeams(teams)'),'Value History backend must sanitize team totals separately from player rows');
+assert(backend.includes('const snapshot={version:4,league:LEAGUE,t,fingerprint:fp,rows,picks,teams}'),'Value History snapshots must persist player, pick, and team totals as separate collections');
 assert(backend.includes('histPickMap=pickMap'),'completed trade history must read pick values from the exact historical snapshot');
 assert(backend.includes('then_picks:thenPicks.values'),'completed trade history must expose recorded pick values to Trade History');
 assert(backend.includes('completedTradeHistory(s)'),'completed trade history must remain in Value History backend');
@@ -332,8 +345,10 @@ assert(!backend.includes('bundle.teamNames,bundle.draftResults'),'historical tra
 assert(backend.includes('slot_to_roster_id'),'draft-result mapping must use Sleeper slot_to_roster_id rather than inference');
 assert(backend.includes("TRADE_AUDIT_SEASONS=[2024,2025,2026]"),'2024–2026 linked trade audit coverage missing');
 assert(backend.includes('closestSnapshotItem'),'trade history must use stored Value History snapshots rather than fabricated historical values');
-assert(backend.includes('getTeamNetHistory(s,ids)'),'team net-value history must be simple snapshot summation');
-assert(backend.includes('value+=n;found++'),'team net-value history must sum stored player values directly');
+assert(backend.includes("async function getTeamNetHistory(s,playerIds,teamId='')"),'team net-value history must accept a team-specific authoritative snapshot key');
+assert(backend.includes('snap?.teams||[]'),'team net-value history must prefer stored team ownership totals when available');
+assert(backend.includes('teamSnapshot:true'),'authoritative team net points must be identified explicitly');
+assert(backend.includes('teamSnapshot:false'),'legacy current-roster reconstructions must remain distinguishable from authoritative team snapshots');
 assert(backend.includes('scoringMilestones(playerId)'),'Sleeper scoring milestones endpoint integration missing');
 assert(backend.includes("qualifyingSeasonMinimumGames:8"),'8-game qualifying season rule missing');
 assert(backend.includes("league?.scoring_settings"),'league scoring settings are not used for milestones');

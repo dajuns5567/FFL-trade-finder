@@ -194,6 +194,25 @@ function addStyles(){
   #valueHistory .vh-driver-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid color-mix(in srgb,var(--line) 72%,transparent)}
   #valueHistory .vh-driver-row:first-child{border-top:0}
   #valueHistory .vh-driver-row small{display:block;color:var(--muted)}
+  #valueHistory .vh-team-trade-events{margin-top:16px;padding-top:14px;border-top:1px solid color-mix(in srgb,#e4b53f 28%,var(--line))}
+  #valueHistory .vh-team-trade-events-head{margin-bottom:7px}
+  #valueHistory .vh-team-trade-events-head h3{color:#e4b53f;font-size:14px;text-transform:uppercase;letter-spacing:.055em}
+  #valueHistory .vh-team-trade-event{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:9px 0;border-top:1px solid color-mix(in srgb,var(--line) 72%,transparent)}
+  #valueHistory .vh-team-trade-event:first-of-type{border-top:0}
+  #valueHistory .vh-team-trade-event-main{display:flex;align-items:center;gap:9px;min-width:0}
+  #valueHistory .vh-team-trade-event-main b{display:block;font-size:12px}
+  #valueHistory .vh-team-trade-event-main small{display:block;color:var(--muted);margin-top:2px;font-size:10px}
+  #valueHistory .vh-trade-event-badge{display:inline-flex;align-items:center;justify-content:center;border:1px solid color-mix(in srgb,#e4b53f 65%,var(--line));border-radius:999px;padding:3px 7px;color:#e4b53f;background:color-mix(in srgb,#e4b53f 8%,var(--card));font-size:9px;font-weight:950;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+  #valueHistory .vh-team-trade-event-value{text-align:right;font-variant-numeric:tabular-nums}
+  #valueHistory .vh-team-trade-event-value small,#valueHistory .vh-team-trade-event-value span{display:block;font-size:9px;color:var(--muted)}
+  #valueHistory .vh-team-trade-event-value b{display:block;font-size:16px;margin:2px 0}
+  #valueHistory .vh-team-trade-event-value span.vh-up{color:var(--good,#1f9d68)}
+  #valueHistory .vh-team-trade-event-value span.vh-down{color:var(--bad,#c45151)}
+  #valueHistory .vh-net-trade-dot{stroke:#e4b53f;stroke-width:2.2;filter:drop-shadow(0 0 3px rgba(228,181,63,.45))}
+  #valueHistory .vh-tooltip-trades{margin-top:7px;padding-top:7px;border-top:1px solid color-mix(in srgb,#e4b53f 34%,var(--line))}
+  #valueHistory .vh-tooltip-trades>small{display:block;color:var(--muted);font-size:9px;line-height:1.35;margin-top:4px}
+  #valueHistory .vh-tooltip-trade{margin-top:4px;font-size:10px}
+  @media(max-width:700px){#valueHistory .vh-team-trade-event{grid-template-columns:1fr}#valueHistory .vh-team-trade-event-value{text-align:left}}
   #valueHistory .vh-trade-list{display:grid;gap:28px}
   #valueHistory .vh-trade-card{border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line));border-radius:15px;padding:0 14px 14px;background:color-mix(in srgb,var(--card) 96%,black);box-shadow:0 10px 24px rgba(0,0,0,.22),0 0 0 1px rgba(255,255,255,.015);overflow:hidden}
   #valueHistory .vh-trade-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin:0 -14px 14px;padding:13px 14px 12px;background:color-mix(in srgb,#e4b53f 7%,var(--card));border-bottom:1px solid color-mix(in srgb,#e4b53f 34%,var(--line))}
@@ -316,9 +335,20 @@ function currentPickRows(){
   }
   out.sort((a,b)=>a.id.localeCompare(b.id));return out;
 }
+function currentTeamRows(playerRows=currentRows()){
+  const valueById=new Map((playerRows||[]).map(r=>[String(r.id),Number(r.value)||0])),totals=new Map();
+  for(const t of state.teams||[])totals.set(String(t.id),{id:String(t.id),value:0,player_count:0});
+  for(const a of state.allAssets||[]){
+    if(a?.type!=='player')continue;
+    const owner=String(a.owner||''),bucket=totals.get(owner),value=valueById.get(String(a.id));
+    if(!bucket||!Number.isFinite(value))continue;
+    bucket.value+=value;bucket.player_count++;
+  }
+  return[...totals.values()].map(t=>({...t,value:Math.round(t.value)})).sort((a,b)=>a.id.localeCompare(b.id));
+}
 function hasValidatedKtcSnapshot(){for(const [name,src] of Object.entries(state?.rankings||{})){const label=`${name} ${src?.source||''}`.toLowerCase();if(!/ktc|keeptradecut/.test(label))continue;const count=Number(src?.playerCount)||Object.keys(src?.data||{}).length;if(count>=300)return true}return false}
 function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100||!hasValidatedKtcSnapshot())return false;const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();return !/loading|updating|refreshing/.test(text)}
-async function recordSnapshot(){try{if(!snapshotPreconditions()){scheduleSnapshot(2000);return false}const rows=currentRows(),picks=currentPickRows();if(rows.length<100){scheduleSnapshot(2000);return false}const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks}),keepalive:true});if(r.ok){marketCache=null;teamNetCache.clear();if(uiReady){if(currentView==='market')loadMarket(true);else if(currentView==='team'&&trackedTeamId)loadTrackedTeam()}return true}scheduleSnapshot(3000);return false}catch{scheduleSnapshot(3000);return false}}
+async function recordSnapshot(){try{if(!snapshotPreconditions()){scheduleSnapshot(2000);return false}const rows=currentRows(),picks=currentPickRows(),teams=currentTeamRows(rows);if(rows.length<100){scheduleSnapshot(2000);return false}const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams}),keepalive:true});if(r.ok){marketCache=null;teamNetCache.clear();if(uiReady){if(currentView==='market')loadMarket(true);else if(currentView==='team'&&trackedTeamId)loadTrackedTeam()}return true}scheduleSnapshot(3000);return false}catch{scheduleSnapshot(3000);return false}}
 function scheduleSnapshot(delay=60000){clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(recordSnapshot,{timeout:5000});else recordSnapshot()},delay)}
 
 function initUI(){
@@ -354,7 +384,7 @@ function handleContentClick(e){
   const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();currentPlayerId=null;renderTrackMyTeam();return}
   const openTrades=e.target.closest('[data-vh-open-trade-history]');if(openTrades){openTradeHistoryTab(openTrades.dataset.vhTradeTeam||'');return}
   const teamNetSortBtn=e.target.closest('[data-vh-team-net-sort]');if(teamNetSortBtn){const key=teamNetSortBtn.dataset.vhTeamNetSort;if(teamNetSort.key===key)teamNetSort.dir*=-1;else teamNetSort={key,dir:key==='name'?1:-1};openTeamNetModal();return}
-  const attr=e.target.closest('[data-vh-team-attribution]');if(attr&&trackedTeamId){teamAttributionPeriod=attr.dataset.vhTeamAttribution;const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=ids.join(',');renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length});return}
+  const attr=e.target.closest('[data-vh-team-attribution]');if(attr&&trackedTeamId){teamAttributionPeriod=attr.dataset.vhTeamAttribution;const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=teamNetCacheKey(ids,trackedTeamId);renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length});return}
   const period=e.target.closest('[data-vh-period]');if(period&&currentPlayerId){const box=document.getElementById('vhProfileData');const pts=box?JSON.parse(box.dataset.points||'[]'):[];renderPlayerProfile(currentPlayerId,pts,period.dataset.vhPeriod);return}
   const mp=e.target.closest('[data-vh-market-period]');if(mp&&marketCache){marketPeriods[mp.dataset.vhCategory]=mp.dataset.vhMarketPeriod;renderMarketDashboard();return}
   const tp=e.target.closest('[data-vh-team-period]');if(tp&&marketCache){teamPeriods[tp.dataset.vhCategory]=tp.dataset.vhTeamPeriod;loadTrackedTeam();return}
@@ -363,7 +393,7 @@ function handleContentClick(e){
   const viewAll=e.target.closest('[data-vh-view-all]');if(viewAll&&marketCache){openMoverModal(viewAll.dataset.vhViewAll,viewAll.dataset.vhCategory,viewAll.dataset.vhPeriod,viewAll.dataset.vhScope||'market');return}
   const allNet=e.target.closest('[data-vh-team-net-all]');if(allNet){openTeamNetModal();return}
   const close=e.target.closest('[data-vh-modal-close]');if(close){closeMoverModal();return}
-  const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};if(currentView==='team'){const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=ids.join(',');renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length})}else renderMarketTable();return}
+  const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};if(currentView==='team'){const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=teamNetCacheKey(ids,trackedTeamId);renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length})}else renderMarketTable();return}
 }
 function handleContentChange(e){
   const team=e.target.closest?.('[data-vh-team-select]');if(team){trackedTeamId=team.value;loadTrackedTeam();return}
@@ -374,7 +404,12 @@ function handleChartPointer(e){
   const hit=e.target?.closest?.('.vh-point-hit,.vh-rank-hit,.vh-net-hit'),wrap=hit?.closest?.('.vh-value-chart,.vh-rank-chart,.vh-net-chart'),tip=wrap?.querySelector?.('.vh-chart-tooltip');
   if(!hit||!wrap||!tip){if(e.type==='pointermove')hideChartTooltip();return}
   const rect=wrap.getBoundingClientRect(),x=Math.max(8,Math.min(rect.width-210,e.clientX-rect.left)),y=Math.max(20,Math.min(rect.height-20,e.clientY-rect.top));
-  if(hit.classList.contains('vh-net-hit'))tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>Overall Net Value <strong>${esc(hit.dataset.vhNetValue)}</strong></div>`;
+  if(hit.classList.contains('vh-net-hit')){
+    let linked=null;try{linked=hit.dataset.vhTrades?JSON.parse(hit.dataset.vhTrades):null}catch{}
+    const trades=Array.isArray(linked?.events)?linked.events:[];
+    const tradeMarkup=trades.length?`<div class="vh-tooltip-trades"><small>Completed trade${trades.length===1?'':'s'} linked to this team snapshot</small>${trades.map(t=>`<div class="vh-tooltip-trade"><b>${esc(t.date)}</b> • vs. ${esc(t.counterparts)}</div>`).join('')}<div class="${deltaClass(linked.change)}">Observed team net-value change from prior authoritative snapshot: <strong>${signed(linked.change)}</strong></div><small>This is observed movement between snapshots, not an assumption that the trade alone caused the change.</small></div>`:''; 
+    tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>Overall Net Value <strong>${esc(hit.dataset.vhNetValue)}</strong></div>${tradeMarkup}`;
+  }
   else if(hit.classList.contains('vh-rank-hit'))tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>${esc(hit.dataset.vhRankLabel)} <strong>#${esc(hit.dataset.vhRank)}</strong></div>`;
   else tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>Value <strong>${esc(hit.dataset.vhValue)}</strong></div><div>Overall #${esc(hit.dataset.vhOverall)} • ${esc(hit.dataset.vhPos)} #${esc(hit.dataset.vhPosRank)}</div>`;
   tip.style.left=`${x}px`;tip.style.top=`${y}px`;tip.style.display='block';
@@ -594,7 +629,7 @@ function tradeEvaluatorSection(trade){
   const a=tradeEvaluatorAnalysis(trade);
   if(!a.available)return`<div class="vh-card vh-history-section"><div class="vh-card-head"><div><h3>Original Trade Analysis</h3><div class="vh-sub">Current evaluator calculation, read-only.</div></div></div><div class="vh-empty">${esc(a.reason)}</div></div>`;
   if(a.incomplete){
-    return`<div class="vh-card vh-history-section"><div class="vh-eval-head"><div><h3>Original Trade Analysis</h3><div class="vh-sub">The original trade package using the historical values available from when the trade occurred.</div></div></div><div class="vh-result-board"><div class="vh-result-team"><small>Trade-adjusted total</small><strong>N/A</strong><b>${esc(a.teamAName)}</b></div><div class="vh-result-vs"><span>Original result</span><strong>N/A</strong><em>Historical value unavailable</em></div><div class="vh-result-team"><small>Trade-adjusted total</small><strong>N/A</strong><b>${esc(a.teamBName)}</b></div></div><div class="vh-detail-caption">Original trade detail</div><div class="vh-eval-grid">${evaluatorSide(`${a.teamAName}`,a.aReceived,0,0,0,trade)}${evaluatorSide(`${a.teamBName}`,a.bReceived,0,0,0,trade)}</div><div class="vh-trade-note">N/A indicates that the historical player value is unavailable. These trades occurred before Trade History was established, so no historical player value is guessed or replaced with today's value.</div></div>`;
+    return`<div class="vh-card vh-history-section"><div class="vh-eval-head"><div><h3>Original Trade Analysis</h3><div class="vh-sub">The original trade package using the historical values available from when the trade occurred. N/A means this trade occurred before reliable Trade History player values were established, so no historical player value is guessed.</div></div></div><div class="vh-result-board"><div class="vh-result-team"><small>Trade-adjusted total</small><strong>N/A</strong><b>${esc(a.teamAName)}</b></div><div class="vh-result-vs"><span>Original result</span><strong>N/A</strong><em>Historical value unavailable</em></div><div class="vh-result-team"><small>Trade-adjusted total</small><strong>N/A</strong><b>${esc(a.teamBName)}</b></div></div><div class="vh-detail-caption">Original trade detail</div><div class="vh-eval-grid">${evaluatorSide(`${a.teamAName}`,a.aReceived,0,0,0,trade)}${evaluatorSide(`${a.teamBName}`,a.bReceived,0,0,0,trade)}</div><div class="vh-trade-note">N/A indicates that the historical player value is unavailable. These trades occurred before Trade History was established, so no historical player value is guessed or replaced with today's value.</div></div>`;
   }
   const f=a.f,edge=Number(f?.edgeEffective)||0;
   return`<div class="vh-card vh-history-section"><div class="vh-eval-head"><div><h3>Original Trade Analysis</h3><div class="vh-sub">The original trade package evaluated with the Trade History valuation context that applied when the trade occurred. Current/future Trade Evaluator and draft-pick logic are not modified.</div></div></div>${tradeResultScoreboard(a.teamAName,f.bEffective,a.teamBName,f.aEffective,a.score,a.label)}<div class="vh-eval-scorebar" aria-label="Trade Evaluator score ${Math.round(a.score)} out of 100"><i style="width:${a.score}%"></i></div><div class="vh-detail-caption">Original trade detail</div><div class="vh-eval-grid">${evaluatorSide(`${a.teamAName}`,a.aReceived,f.bRaw,f.bAdj,f.bEffective,trade)}${evaluatorSide(`${a.teamBName}`,a.bReceived,f.aRaw,f.aAdj,f.aEffective,trade)}</div><div class="vh-trade-summary3"><div><small>Raw difference</small><b>${signed(Number(f.edgeRaw)||0)}</b></div><div><small>Value adjustment</small><b>${Math.max(Number(f.aAdj)||0,Number(f.bAdj)||0)>0?'+'+fmt(Math.max(Number(f.aAdj)||0,Number(f.bAdj)||0)):'0'}</b></div><div><small>Adjusted difference</small><b class="${deltaClass(edge)}">${signed(edge)}</b></div></div></div>`
@@ -629,10 +664,11 @@ function teamTradeImpactCard(teamId){
 }
 async function historyFetch(id){let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_id=${encodeURIComponent(id)}`,{cache:'no-store'});if(!r.ok)throw Error('history unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('history unavailable')}
 async function marketFetch(){let last;for(let attempt=0;attempt<3;attempt++){try{const r=await fetch(`${API}?market=1`,{cache:'no-store'});if(!r.ok)throw Error(`market history unavailable (${r.status})`);return await r.json()}catch(e){last=e;if(attempt<2)await new Promise(r=>setTimeout(r,250*(attempt+1)))}}throw last||Error('market history unavailable')}
-async function teamNetFetch(ids){
-  const key=(ids||[]).map(String).sort().join(','),cached=teamNetCache.get(key);
+function teamNetCacheKey(ids,teamId){return`${String(teamId||'')}|${(ids||[]).map(String).sort().join(',')}`}
+async function teamNetFetch(ids,teamId){
+  const playerKey=(ids||[]).map(String).sort().join(','),key=teamNetCacheKey(ids,teamId),cached=teamNetCache.get(key);
   if(cached)return cached;
-  const r=await fetch(`${API}?team_net=1&player_ids=${encodeURIComponent(key)}`,{cache:'no-store'});
+  const r=await fetch(`${API}?team_net=1&team_id=${encodeURIComponent(String(teamId||''))}&player_ids=${encodeURIComponent(playerKey)}`,{cache:'no-store'});
   if(!r.ok)throw Error('team net history unavailable');
   const data=await r.json();teamNetCache.set(key,data);return data;
 }
@@ -733,17 +769,29 @@ async function loadTrackedTeam(){
   host.innerHTML='<div class="vh-card"><div class="vh-empty">Refreshing team market history…</div></div>';
   const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id));
   let netData={points:[],player_count:ids.length};
-  try{const results=await Promise.all([ensureMarketCache(!marketCache),teamNetFetch(ids)]);netData=results[1]||netData}catch{try{await ensureMarketCache(!marketCache)}catch{host.innerHTML='<div class="notice">Team market history is temporarily unavailable. Current values and all trade tools are unaffected.</div>';return}}
+  try{const results=await Promise.all([ensureMarketCache(!marketCache),teamNetFetch(ids,trackedTeamId)]);netData=results[1]||netData}catch{try{await ensureMarketCache(!marketCache)}catch{host.innerHTML='<div class="notice">Team market history is temporarily unavailable. Current values and all trade tools are unaffected.</div>';return}}
   renderTrackedTeamTable(netData);
   if(!tradeHistoryCache){const teamAtLoad=String(trackedTeamId);tradeHistoryFetch().then(()=>{if(currentView==='team'&&String(trackedTeamId)===teamAtLoad)renderTrackedTeamTable(netData)}).catch(()=>{})}
+}
+function teamNetPointTradeMap(teamId,points){
+  const id=String(teamId||''),auth=(points||[]).filter(p=>p?.teamSnapshot===true&&p?.t&&Number.isFinite(Number(p.value))).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t))),map=new Map();
+  if(auth.length<2||!tradeHistoryCache||!id)return map;
+  const trades=(tradeHistoryCache.trades||[]).filter(t=>(t.roster_ids||[]).map(String).includes(id));
+  for(let i=1;i<auth.length;i++){
+    const prev=auth[i-1],cur=auth[i],a=new Date(prev.t).getTime(),b=new Date(cur.t).getTime();
+    if(!Number.isFinite(a)||!Number.isFinite(b))continue;
+    const events=trades.filter(t=>{const tm=new Date(t?.created||0).getTime();return Number.isFinite(tm)&&tm>a&&tm<=b}).map(t=>({id:String(t.id||''),date:dateShort(t.created),counterparts:(t.roster_ids||[]).map(String).filter(x=>x!==id).map(x=>historicalTradeTeamName(t,x)).join(' / ')||'another team'}));
+    if(events.length)map.set(String(cur.t),{events,change:Math.round(Number(cur.value)-Number(prev.value))});
+  }
+  return map;
 }
 function teamNetChart(points){
   const pts=(points||[]).filter(p=>Number.isFinite(Number(p?.value))&&p?.t);
   if(!pts.length)return'<div class="vh-empty">Net-value history will appear after a completed Value History snapshot.</div>';
-  const vals=pts.map(p=>Number(p.value)),min=Math.min(...vals),max=Math.max(...vals),pad=Math.max(200,(max-min)*.12),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=142,L=70,R=18,T=12,B=30,n=Math.max(1,pts.length-1),
+  const tradeMap=teamNetPointTradeMap(trackedTeamId,pts),vals=pts.map(p=>Number(p.value)),min=Math.min(...vals),max=Math.max(...vals),pad=Math.max(200,(max-min)*.12),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=142,L=70,R=18,T=12,B=30,n=Math.max(1,pts.length-1),
     x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo)),first=pts[0],last=pts[pts.length-1],
     path=pts.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' '),
-    dots=pts.map((p,i)=>`<circle class="vh-net-dot" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="4"/><circle class="vh-net-hit" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="13" data-vh-date="${esc(dateTime(p.t))}" data-vh-net-value="${fmt(p.value)}"></circle>`).join('');
+    dots=pts.map((p,i)=>{const linked=tradeMap.get(String(p.t)),tradeAttr=linked?` data-vh-trades="${esc(JSON.stringify(linked))}"`:'',dotClass=linked?'vh-net-dot vh-net-trade-dot':'vh-net-dot';return`<circle class="${dotClass}" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="${linked?5:4}"/><circle class="vh-net-hit" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="13" data-vh-date="${esc(dateTime(p.t))}" data-vh-net-value="${fmt(p.value)}"${tradeAttr}></circle>`}).join('');
   return`<div class="vh-net-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Overall Net Value history"><line class="vh-net-axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/><line class="vh-net-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H-B}"/><text class="vh-net-axis-text" x="${L-8}" y="${T+4}" text-anchor="end">${fmt(Math.round(hi))}</text><text class="vh-net-axis-text" x="${L-8}" y="${H-B}" text-anchor="end">${fmt(Math.round(lo))}</text><text class="vh-net-axis-text" x="${L}" y="${H-8}">${esc(dateShort(first.t))}</text><text class="vh-net-axis-text" x="${W-R}" y="${H-8}" text-anchor="end">${esc(dateShort(last.t))}</text><path class="vh-net-line" d="${path}"/>${dots}</svg><div class="vh-chart-tooltip" style="display:none"></div></div>`;
 }
 function currentTeamNetStandings(){
@@ -792,14 +840,31 @@ function overallNetValueCard(data,teamLabel){
     high=pts.reduce((best,p)=>!best||Number(p.value)>Number(best.value)?p:best,null),low=pts.reduce((best,p)=>!best||Number(p.value)<Number(best.value)?p:best,null),
     {neighbors}=teamNetNeighbors();
   const neighborMarkup=neighbors.map(t=>`<div class="vh-team-neighbor ${String(t.id)===String(trackedTeamId)?'current':''}"><small>${String(t.id)===String(trackedTeamId)?'Selected team':'Nearby team'}</small><b>${esc(t.name)}</b><strong>${fmt(t.value)}</strong></div>`).join('');
-  return`<div class="vh-card vh-net-card"><div class="vh-net-head"><div><h3 class="vh-section-heading">Overall Net Value</h3><div class="vh-sub">${esc(teamLabel)} current roster value across recorded snapshots</div></div><div class="vh-net-total"><small>Current total</small><b>${fmt(total)}</b></div></div><div class="vh-net-metrics"><div class="vh-net-metric"><small>Current net value</small><b>${fmt(total)}</b><span>${count} current players</span></div><div class="vh-net-metric"><small>All-time high</small><b>${high?fmt(high.value):'—'}</b><span>${high?esc(dateTime(high.t)):'No history yet'}</span></div><div class="vh-net-metric"><small>All-time low</small><b>${low?fmt(low.value):'—'}</b><span>${low?esc(dateTime(low.t)):'No history yet'}</span></div></div>${teamNetChart(pts)}<div class="vh-team-neighbors"><div class="vh-team-neighbors-head"><h4>League Net Value Comparison</h4><button type="button" class="secondary small" data-vh-team-net-all>View all</button></div><div class="vh-team-neighbor-list">${neighborMarkup}</div></div><div class="vh-net-note">Simple addition of the selected team's ${count} current player values. No scarcity, fit, package, Trade Finder, Trade Evaluator, or other adjustments are applied.</div></div>`;
+  return`<div class="vh-card vh-net-card"><div class="vh-net-head"><div><h3 class="vh-section-heading">Overall Net Value</h3><div class="vh-sub">${esc(teamLabel)} player value across recorded team snapshots</div></div><div class="vh-net-total"><small>Current total</small><b>${fmt(total)}</b></div></div><div class="vh-net-metrics"><div class="vh-net-metric"><small>Current net value</small><b>${fmt(total)}</b><span>${count} current players</span></div><div class="vh-net-metric"><small>All-time high</small><b>${high?fmt(high.value):'—'}</b><span>${high?esc(dateTime(high.t)):'No history yet'}</span></div><div class="vh-net-metric"><small>All-time low</small><b>${low?fmt(low.value):'—'}</b><span>${low?esc(dateTime(low.t)):'No history yet'}</span></div></div>${teamNetChart(pts)}<div class="vh-team-neighbors"><div class="vh-team-neighbors-head"><h4>League Net Value Comparison</h4><button type="button" class="secondary small" data-vh-team-net-all>View all</button></div><div class="vh-team-neighbor-list">${neighborMarkup}</div></div><div class="vh-net-note">Simple addition of the selected team's ${count} current player values. No scarcity, fit, package, Trade Finder, Trade Evaluator, or other adjustments are applied.</div></div>`;
 }
-function teamAttributionCard(owned){
+function teamTradeNetEvents(teamId,netData,period){
+  const id=String(teamId),days=period==='30D'?30:7,pts=(netData?.points||[]).filter(p=>p?.teamSnapshot===true&&p?.t&&Number.isFinite(Number(p.value))).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  if(pts.length<2||!tradeHistoryCache)return[];
+  const latestMs=new Date(pts[pts.length-1].t).getTime(),cutoff=latestMs-days*86400000,trades=(tradeHistoryCache.trades||[]).filter(t=>(t.roster_ids||[]).map(String).includes(id));
+  const out=[];
+  for(const trade of trades){
+    const tm=new Date(trade?.created||0).getTime();if(!Number.isFinite(tm)||tm<cutoff||tm>latestMs)continue;
+    let idx=-1;
+    for(let i=1;i<pts.length;i++){const prevMs=new Date(pts[i-1].t).getTime(),curMs=new Date(pts[i].t).getTime();if(tm>prevMs&&tm<=curMs){idx=i;break}}
+    if(idx<1)continue;
+    const point=pts[idx],prev=pts[idx-1],others=(trade.roster_ids||[]).map(String).filter(x=>x!==id).map(x=>historicalTradeTeamName(trade,x));
+    out.push({trade,point,prev,change:Math.round(Number(point.value)-Number(prev.value)),counterpart:others.join(' / ')||'another team'});
+  }
+  return out.sort((a,b)=>String(b.trade.created).localeCompare(String(a.trade.created)));
+}
+function teamAttributionCard(owned,netData,teamId){
   const period=teamAttributionPeriod==='30D'?'30D':'7D',key=period==='30D'?'delta30':'delta7',rows=(marketCache?.marketRows||[]).filter(r=>owned.has(String(r.id))&&Number.isFinite(Number(r?.[key]))).map(r=>({...r,move:Number(r[key])}));
-  const gains=rows.filter(r=>r.move>0).sort((a,b)=>b.move-a.move).slice(0,5),losses=rows.filter(r=>r.move<0).sort((a,b)=>a.move-b.move).slice(0,5),net=rows.reduce((n,r)=>n+r.move,0),up=gains.reduce((n,r)=>n+r.move,0),down=losses.reduce((n,r)=>n+r.move,0);
+  const gains=rows.filter(r=>r.move>0).sort((a,b)=>b.move-a.move).slice(0,5),losses=rows.filter(r=>r.move<0).sort((a,b)=>a.move-b.move).slice(0,5),net=rows.reduce((n,r)=>n+r.move,0),up=gains.reduce((n,r)=>n+r.move,0),down=losses.reduce((n,r)=>n+r.move,0),tradeEvents=teamTradeNetEvents(teamId,netData,period);
   const driver=list=>list.length?list.map(r=>`<div class="vh-driver-row"><div><b>${esc(playerName(r.id))}</b><small>${esc(r.pos)} #${r.posRank} • Current value ${fmt(r.value)}</small></div><div class="${deltaClass(r.move)}"><b>${signed(r.move)}</b></div></div>`).join(''):'<div class="vh-empty">No qualifying movement in this period.</div>';
-  return`<div class="vh-card"><div class="vh-card-head"><div><h3>What Moved My Team</h3><div class="vh-sub">Current-roster value attribution. This is descriptive only and never changes player values or trade calculations.</div></div><div class="vh-card-periods">${['7D','30D'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-team-attribution="${p}">${p}</button>`).join('')}</div></div><div class="vh-attribution-summary"><div class="vh-attribution-stat"><small>Net current-roster change</small><b class="${deltaClass(net)}">${signed(net)}</b></div><div class="vh-attribution-stat"><small>Value gained</small><b class="vh-up">${signed(up)}</b></div><div class="vh-attribution-stat"><small>Value lost</small><b class="vh-down">${signed(down)}</b></div></div><div class="vh-grid-2"><div><h3>Biggest positive drivers</h3><div class="vh-driver-list">${driver(gains)}</div></div><div><h3>Biggest negative drivers</h3><div class="vh-driver-list">${driver(losses)}</div></div></div></div>`;
+  const tradeRows=tradeEvents.length?tradeEvents.map(e=>`<div class="vh-team-trade-event"><div class="vh-team-trade-event-main"><span class="vh-trade-event-badge">Trade</span><div><b>${esc(dateShort(e.trade.created))} • vs. ${esc(e.counterpart)}</b><small>Linked to recorded team net-value point: ${esc(dateTime(e.point.t))}</small></div></div><div class="vh-team-trade-event-value"><small>Team net value</small><b>${fmt(e.point.value)}</b><span class="${deltaClass(e.change)}">${signed(e.change)} from prior team snapshot</span></div><button type="button" class="secondary small" data-vh-open-trade-history data-vh-trade-team="${esc(String(teamId))}">View trade</button></div>`).join(''):`<div class="vh-empty">No completed trades in this period are bracketed by authoritative team net-value snapshots yet.</div>`;
+  return`<div class="vh-card"><div class="vh-card-head"><div><h3>What's Happening With My Team</h3><div class="vh-sub">Current-roster value movement plus completed trade events linked to recorded team net-value points. Descriptive only; these observations never change player values or trade calculations.</div></div><div class="vh-card-periods">${['7D','30D'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-team-attribution="${p}">${p}</button>`).join('')}</div></div><div class="vh-attribution-summary"><div class="vh-attribution-stat"><small>Net current-roster change</small><b class="${deltaClass(net)}">${signed(net)}</b></div><div class="vh-attribution-stat"><small>Value gained</small><b class="vh-up">${signed(up)}</b></div><div class="vh-attribution-stat"><small>Value lost</small><b class="vh-down">${signed(down)}</b></div></div><div class="vh-grid-2"><div><h3>Biggest positive drivers</h3><div class="vh-driver-list">${driver(gains)}</div></div><div><h3>Biggest negative drivers</h3><div class="vh-driver-list">${driver(losses)}</div></div></div><div class="vh-team-trade-events"><div class="vh-team-trade-events-head"><h3>Trade-linked team net-value points</h3><div class="vh-sub">A trade is linked only when real team snapshots exist immediately before and after it. The snapshot change is observed team net-value movement, not an assumption that the trade alone caused the move.</div></div>${tradeRows}</div></div>`;
 }
+
 function renderTrackedTeamTable(netData={points:[]}){
   const host=document.getElementById('vhTrackedTeam');if(!host||!marketCache||!trackedTeamId)return;
   const owned=new Set((state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)));
@@ -808,8 +873,7 @@ function renderTrackedTeamTable(netData={points:[]}){
   const vr=teamPeriods.valueRisers,vf=teamPeriods.valueFallers,rr=teamPeriods.rankRisers,rf=teamPeriods.rankFallers,prr=teamPeriods.posRankRisers,prf=teamPeriods.posRankFallers;
   host.innerHTML=`
     ${overallNetValueCard(netData,teamName(trackedTeamId))}
-    ${teamAttributionCard(owned)}
-    ${teamTradeImpactCard(trackedTeamId)}
+    ${teamAttributionCard(owned,netData,trackedTeamId)}
     <div class="vh-grid-2">
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Value Risers — ${periodLabel(vr,marketCache)}</h3><div class="vh-sub">Largest value gains on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueRisers',vr)}</div>${moverRows(applyMoverPool(periodRows('valueRisers',vr),'team','valueRisers'))}</div>
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Top Value Fallers — ${periodLabel(vf,marketCache)}</h3><div class="vh-sub">Largest value declines on ${esc(teamName(trackedTeamId))}</div></div>${moverCardActions('team','valueFallers',vf)}</div>${moverRows(applyMoverPool(periodRows('valueFallers',vf),'team','valueFallers'))}</div>

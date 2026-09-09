@@ -605,8 +605,7 @@ export default async (req)=>{
     const rows=cleanRows(body?.rows),picks=cleanPicks(body?.picks),teams=cleanTeams(body?.teams);
     if(rows.length<100)return json({error:'incomplete snapshot'},400);
     rows.sort((a,b)=>a.id.localeCompare(b.id));picks.sort((a,b)=>a.id.localeCompare(b.id));
-    const fp=fingerprint(rows,picks,teams),latest=await safeGet(s,LATEST_KEY);
-    if(latest?.fingerprint===fp)return json({ok:true,stored:false,reason:'unchanged',t:latest.t});
+    const fp=fingerprint(rows,picks,teams);
     const t=new Date().toISOString(),key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
     const snapshot={version:4,league:LEAGUE,t,fingerprint:fp,rows,picks,teams};
     await retry(()=>s.setJSON(key,snapshot),120);

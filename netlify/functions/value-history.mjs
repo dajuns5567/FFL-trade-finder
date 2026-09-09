@@ -75,9 +75,10 @@ function cleanPicks(picks){
   }
   return out.slice(0,1000);
 }
-function fingerprint(rows){
+function fingerprint(rows,picks=[]){
   let h=2166136261;
-  for(const r of rows){const s=`${r.id}:${r.value}:${r.overall}:${r.posRank}|`;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}}
+  for(const r of rows){const x=`${r.id}:${r.value}:${r.overall}:${r.posRank}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
+  for(const p of picks){const x=`P:${p.id}:${p.value}:${p.season}:${p.round}:${p.original_owner}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
   return (h>>>0).toString(36);
 }
 async function retry(fn,wait=120){

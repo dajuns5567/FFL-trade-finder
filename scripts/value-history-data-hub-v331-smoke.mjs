@@ -274,11 +274,11 @@ assert(!ui.includes('window.pickValue='),'Trade History must never overwrite sha
 assert(!ui.includes('tradeValueNormalizationV130.canonicalValue='),'Trade History must never overwrite canonical current/future valuation');
 assert(!ui.includes('draftPickProjection92='),'Trade History must never overwrite shared draft-pick projection logic');
 assert(!ui.includes('YEAR_DISCOUNT92='),'Trade History must not modify the shared current/future draft-pick year discount');
-assert(!backend.includes('rows.push({id,value,season,round'),'stored picks must remain outside player rows so player history/rank calculations stay isolated');
 assert(ui.includes("tradeBtn.dataset.tab='tradeHistory'"),'Trade History must be a separate top-level tab');
 
 
 const backend=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
+assert(!backend.includes('rows.push({id,value,season,round'),'stored picks must remain outside player rows so player history/rank calculations stay isolated');
 assert(backend.includes("MONTH_INDEX_PREFIX='indexes/'"),'partitioned all-time index missing');
 assert(!backend.includes('CANONICAL_HISTORY_ORIGIN'),'Value History must not depend on a cross-site Netlify proxy');
 assert(backend.includes("ARCHIVE_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history'"),'durable GitHub Value History archive source missing');

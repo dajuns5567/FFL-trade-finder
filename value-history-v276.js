@@ -356,10 +356,14 @@ async function recordSnapshot(){
     let picks=[],teams=[];
     try{picks=currentPickRows()}catch(e){console.warn('value-history-pick-enrichment',e)}
     try{teams=currentTeamRows(rows)}catch(e){console.warn('value-history-team-enrichment',e)}
-    const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams}),keepalive:true});
+    const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams})});
     if(r.ok){
       marketCache=null;teamNetCache.clear();
-      if(uiReady){if(currentView==='market')loadMarket(true);else if(currentView==='team'&&trackedTeamId)loadTrackedTeam()}
+      if(uiReady){
+        if(currentView==='market')loadMarket(true);
+        else if(currentView==='team'&&trackedTeamId)loadTrackedTeam();
+        else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId);
+      }
       return true
     }
     scheduleSnapshot(3000);return false

@@ -244,6 +244,18 @@ assert(ui.includes("window.tradeValueNormalizationV130?.canonicalValue"),'Trade 
 assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
 assert(ui.includes('tradeOriginalAssets(side)'), 'Trade Evaluator analysis must evaluate the original traded package rather than mutate it into current outcomes');
 assert(ui.includes('return Number.isFinite(season)&&season>2000?season+1:null'),'retroactive Trade History nearest draft year must roll from the trade season');
+assert(ui.includes('function tradeHistoryPickTimingFactor(year,round,nearestYear)'),'Trade History distance-based pick timing helper missing');
+assert(ui.includes('Math.max(0,y-base)'),'Trade History pick distance must be measured from trade-season nearest draft year');
+const vhSandbox={window:{},state:{allAssets:[]}};
+const vhTradeHelpers=ui.match(/function tradeHistoryNearestDraftYear\(trade\)[\s\S]*?function historicalPlayerValue/);
+assert(vhTradeHelpers,'Trade History historical draft timing helpers could not be isolated for regression testing');
+vm.runInNewContext(vhTradeHelpers[0].replace(/function historicalPlayerValue[\s\S]*/,''),vhSandbox);
+assert(vhSandbox.tradeHistoryNearestDraftYear({season:2024})===2025,'2024 Trade History nearest draft year must be 2025');
+assert(vhSandbox.tradeHistoryNearestDraftYear({season:2025})===2026,'2025 Trade History nearest draft year must be 2026');
+assert(vhSandbox.tradeHistoryNearestDraftYear({season:2026})===2027,'2026 Trade History nearest draft year must be 2027');
+assert(Math.abs(vhSandbox.tradeHistoryPickTimingFactor(2025,1,2025)-1)<1e-9,'2025 pick in a 2024 trade must receive nearest-year timing');
+assert(Math.abs(vhSandbox.tradeHistoryPickTimingFactor(2026,1,2025)-0.88)<1e-9,'2026 pick in a 2024 trade must be one year farther away');
+assert(Math.abs(vhSandbox.tradeHistoryPickTimingFactor(2027,2,2025)-Math.pow(.88,2))<1e-9,'2027 non-R1 pick in a 2024 trade must be two years farther away');
 assert(ui.includes('Math.pow(.88,Math.max(0,y-base))'),'retroactive Trade History must preserve the existing 12% per-year discount cadence');
 assert(ui.includes('(y===2027&&r===1)?1.03:1'),'retroactive Trade History must preserve the existing 2027 R1 premium without giving it to 2026');
 assert(ui.includes("asset?.type==='pick'?retroactiveTradeHistoryPickValue(asset,trade):currentEvaluatorValue(asset)"),'only picks may receive retroactive timing adjustment inside Trade History');

@@ -506,9 +506,10 @@ function tradeEvaluatorAnalysis(trade){
     const sideA=trade.sides[0],sideB=trade.sides[1],a=Number(sideA.roster_id),b=Number(sideB.roster_id),aReceived=tradeOriginalAssets(sideA),bReceived=tradeOriginalAssets(sideB);
     if(!a||!b)return{available:false,reason:'Sleeper roster IDs are incomplete for this trade.'};
     const missing=[...aReceived,...bReceived].some(x=>tradeHistoryEvaluatorValue(x,trade)==null);
-    if(missing)return{available:false,reason:'At least one historical asset is unavailable to the current Trade Evaluator, so no score is fabricated.'};
-    const f=tradeHistoryFair(bReceived,aReceived,trade),score=Math.max(1,Math.min(100,Number(f?.score)||1)),histA=historicalTradeTeamName(trade,a),histB=historicalTradeTeamName(trade,b),label=f?.rejected?'Fleeced!':String(f?.status||'Trade');
-    return{available:true,score,label,teamA:a,teamB:b,teamAName:histA,teamBName:histB,aReceived,bReceived,f};
+    const histA=historicalTradeTeamName(trade,a),histB=historicalTradeTeamName(trade,b);
+    if(missing)return{available:true,incomplete:true,score:null,label:'Historical value unavailable',teamA:a,teamB:b,teamAName:histA,teamBName:histB,aReceived,bReceived,f:null};
+    const f=tradeHistoryFair(bReceived,aReceived,trade),score=Math.max(1,Math.min(100,Number(f?.score)||1)),label=f?.rejected?'Fleeced!':String(f?.status||'Trade');
+    return{available:true,incomplete:false,score,label,teamA:a,teamB:b,teamAName:histA,teamBName:histB,aReceived,bReceived,f};
   }catch(e){return{available:false,reason:`Current Trade Evaluator could not analyze this historical package: ${String(e?.message||e)}`}}
 }
 function tradeItemRows(items){
@@ -550,7 +551,7 @@ function hindsightAssetRow(asset,trade){
     const hist=completedHistoricalPick(asset)?' • historical pick fallback':'';
     meta=`Draft pick • original: ${historicalTradeTeamName(trade,asset.original_owner)}${hist}`;
   }else meta=currentTradePlayerMeta(asset?.id);
-  return`<div class="vh-eval-asset"><div><b>${esc(label)}</b><small>${esc(meta)}</small></div><strong>${value==null?'—':fmt(value)}</strong></div>`;
+  return`<div class="vh-eval-asset"><div><b>${esc(label)}</b><small>${esc(meta)}</small></div><strong>${value==null?'N/A':fmt(value)}</strong></div>`;
 }
 function hindsightSide(title,assets,raw,adj,effective,trade){
   return`<div class="vh-eval-side"><div class="vh-eval-side-title">${esc(title)}</div>${assets.map(a=>hindsightAssetRow(a,trade)).join('')||'<div class="vh-empty">No current outcome assets</div>'}<div class="vh-eval-totals"><div class="vh-eval-total"><span>Raw asset total</span><b>${fmt(raw)}</b></div>${Number(adj)>0?`<div class="vh-eval-total adjust"><span>Value adjustment</span><b>+${fmt(adj)}</b></div><div class="vh-eval-total effective"><span>Trade-adjusted total</span><b>${fmt(effective)}</b></div>`:''}</div></div>`;
@@ -589,6 +590,9 @@ function evaluatorSide(title,assets,raw,adj,effective,trade){
 function tradeEvaluatorSection(trade){
   const a=tradeEvaluatorAnalysis(trade);
   if(!a.available)return`<div class="vh-card vh-history-section"><div class="vh-card-head"><div><h3>Original Trade Analysis</h3><div class="vh-sub">Current evaluator calculation, read-only.</div></div></div><div class="vh-empty">${esc(a.reason)}</div></div>`;
+  if(a.incomplete){
+    return`<div class="vh-card vh-history-section"><div class="vh-eval-head"><div><h3>Original Trade Analysis</h3><div class="vh-sub">The original trade package using the historical values available from when the trade occurred.</div></div></div><div class="vh-result-board"><div class="vh-result-team"><small>Trade-adjusted total</small><strong>N/A</strong><b>${esc(a.teamAName)}</b></div><div class="vh-result-vs"><span>Original result</span><strong>N/A</strong><em>Historical value unavailable</em></div><div class="vh-result-team"><small>Trade-adjusted total</small><strong>N/A</strong><b>${esc(a.teamBName)}</b></div></div><div class="vh-detail-caption">Original trade detail</div><div class="vh-eval-grid">${evaluatorSide(`${a.teamAName}`,a.aReceived,0,0,0,trade)}${evaluatorSide(`${a.teamBName}`,a.bReceived,0,0,0,trade)}</div><div class="vh-trade-note">N/A indicates that the historical player value is unavailable. These trades occurred before Trade History was established, so no historical player value is guessed or replaced with today's value.</div></div>`;
+  }
   const f=a.f,edge=Number(f?.edgeEffective)||0;
   return`<div class="vh-card vh-history-section"><div class="vh-eval-head"><div><h3>Original Trade Analysis</h3><div class="vh-sub">The original trade package evaluated with the Trade History valuation context that applied when the trade occurred. Current/future Trade Evaluator and draft-pick logic are not modified.</div></div></div>${tradeResultScoreboard(a.teamAName,f.bEffective,a.teamBName,f.aEffective,a.score,a.label)}<div class="vh-eval-scorebar" aria-label="Trade Evaluator score ${Math.round(a.score)} out of 100"><i style="width:${a.score}%"></i></div><div class="vh-detail-caption">Original trade detail</div><div class="vh-eval-grid">${evaluatorSide(`${a.teamAName}`,a.aReceived,f.bRaw,f.bAdj,f.bEffective,trade)}${evaluatorSide(`${a.teamBName}`,a.bReceived,f.aRaw,f.aAdj,f.aEffective,trade)}</div><div class="vh-trade-summary3"><div><small>Raw difference</small><b>${signed(Number(f.edgeRaw)||0)}</b></div><div><small>Value adjustment</small><b>${Math.max(Number(f.aAdj)||0,Number(f.bAdj)||0)>0?'+'+fmt(Math.max(Number(f.aAdj)||0,Number(f.bAdj)||0)):'0'}</b></div><div><small>Adjusted difference</small><b class="${deltaClass(edge)}">${signed(edge)}</b></div></div></div>`
 }

@@ -3,40 +3,6 @@ const priorLoadCore90=loadCore;
 const priorTradeScore90=tradeScore;
 const priorExplainTrade90=explainTrade;
 const CACHE_KEY='ffl_team_projection_v90';
-const PROJECTION_OWNER_ID_90={
-  'miami dolphins':'1113981810230403072',
-  'new orleans aints':'865264007848808448',
-  'denver doncos':'1114227883914022912',
-  'san francisco 49ers':'1118949143743012864',
-  'los angeles chargers':'987377632494825472',
-  'seattle seahawks':'1116409937254555648',
-  'cincinnati bungals':'992186817011044352',
-  'los angeles rams':'1114225229640945664',
-  'philadelphia eagles':'1119001231508373504',
-  'houston texans':'600422464798912512',
-  'minnesota vikings':'858596140008984576',
-  'detroit lions':'729929924969865216',
-  'new york giants':'411324970589757440',
-  'pittsburgh steelers':'713540242640035840',
-  'new england patriots':'712323182941536256',
-  'baltimore ravens':'1114297344201166848',
-  'indianapolis colts':'867991923552579584',
-  'tampa bay buccaneers':'600418187745492992',
-  'chicago bears':'464475491546427392',
-  'dallas cowboys':'1118948474361401344',
-  'carolina panthers':'1132798349075476480',
-  'tennessee titans':'1129152499471986688',
-  'buffalo billiards':'600447396530413568',
-  'green bay packers':'1118961997346873344',
-  'jacksonville jags':'859609459952074752',
-  'washington commanders':'1233918270512316416',
-  'atlanta falcons':'993238021132660736',
-  'arizona cardinals':'1117219210041643008',
-  'cleveland browns':'710560632327454720',
-  'new york jets':'1114320606398423040',
-  'kansas city chiefs':'848753504037216256',
-  'las vegas raiders':'1227400338441523200'
-};
 const ctx={status:'uninitialized',sourceDate:null,fetchedAt:null,hash:null,changed:null,selectedWeek:null,teams:new Map(),error:null,usingFallback:false};
 function norm90(s){return String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
 function parsePct90(v){const n=parseFloat(String(v??'').replace('%','').replace(',',''));return Number.isFinite(n)?n/100:null}
@@ -52,18 +18,7 @@ function parseProjection90(text){const rows=csvRows90(text);const flat=rows.flat
  if(!dm)throw Error('Projection source is missing the Data as of marker. User review required.');
  return{sourceDate:String(dm[1]).trim(),selectedWeek:wm?Number(wm[1]):null,teams};
 }
-function mapTeams90(parsed){
- const currentByOwner=new Map((state.teams||[]).map(t=>[String(t.owner||''),t])),out=new Map(),missing=[],seenOwners=new Set();
- for(const z of parsed.teams){
-   const ownerId=PROJECTION_OWNER_ID_90[norm90(z.name)],team=ownerId?currentByOwner.get(String(ownerId)):null;
-   if(!ownerId||!team){missing.push(z.name);continue}
-   if(seenOwners.has(ownerId))throw Error(`Projection owner mapping duplicate for ${z.name}. User review required.`);
-   seenOwners.add(ownerId);
-   out.set(Number(team.id),{...z,phase:phase90(z),sleeperOwnerId:String(ownerId),currentTeamName:String(team.name||z.name)});
- }
- if(out.size!==32)throw Error(`Projection owner mapping incomplete (${out.size}/32). Missing: ${missing.join(', ')}. User review required.`);
- return out
-}
+function mapTeams90(parsed){const site=new Map((state.teams||[]).map(t=>[norm90(t.name),Number(t.id)])),out=new Map(),missing=[];for(const z of parsed.teams){const id=site.get(norm90(z.name));if(!id)missing.push(z.name);else out.set(id,{...z,phase:phase90(z)})}if(out.size!==32)throw Error(`Projection team mapping incomplete (${out.size}/32). Missing: ${missing.join(', ')}. User review required.`);return out}
 function cacheSave90(raw){try{localStorage.setItem(CACHE_KEY,JSON.stringify(raw))}catch(_){}}
 function cacheRead90(){try{return JSON.parse(localStorage.getItem(CACHE_KEY)||'null')}catch(_){return null}}
 function ensureHealth90(){let el=document.getElementById('teamProjectionHealth90');if(el)return el;const status=document.getElementById('updateStatus');if(!status)return null;el=document.createElement('div');el.id='teamProjectionHealth90';el.className='tiny muted';el.style.marginTop='6px';status.insertAdjacentElement('afterend',el);return el}

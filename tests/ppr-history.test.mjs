@@ -17,7 +17,10 @@ test('native pts_ppr wins over reconstruction',()=>{
 });
 
 test('weekly aggregation preserves PPR and game counts',()=>{
-  const weekly={1:{p1:{player_id:'p1',stats:{rush_yd:100,rush_td:1,rec:2,rec_yd:20}}},2:{p1:{player_id:'p1',stats:{rush_yd:50,rec:3,rec_yd:30}}}}};
+  const weekly={
+    1:{p1:{player_id:'p1',stats:{rush_yd:100,rush_td:1,rec:2,rec_yd:20}}},
+    2:{p1:{player_id:'p1',stats:{rush_yd:50,rec:3,rec_yd:30}}}
+  };
   const out=aggregateWeeks(weekly);
   assert.equal(out.p1.gp,2);
   assert.equal(out.p1.pts_ppr,31);

@@ -278,6 +278,11 @@ assert(ui.includes('function tradeHistoryFair(give,recv,trade){return fairWithVa
 assert(ui.includes('function hindsightFair(give,recv,trade){return fairWithValue'), 'Hindsight must use the same fairness algorithm as original Trade Evaluator Analysis');
 assert(ui.includes('const f=tradeHistoryFair(bReceived,aReceived,trade)'), 'historical Trade Evaluator must use the shared Trade History fairness adapter');
 assert(ui.includes('<h4>Hindsight</h4>'),'Fleeced Trade Breakdown must include Hindsight');
+assert(ui.includes('function historicalValueComparisonSection(trade)'),'Historical Value Comparison must be a distinct final Trade History section');
+assert(ui.includes('${tradeValuePresentation(trade)}${tradeEvaluatorSection(trade)}${historicalValueComparisonSection(trade)}'),'Trade History order must be Fleeced/Hindsight, Original Analysis, then Historical Value Comparison');
+assert(!ui.includes('Historical player snapshot unavailable'),'redundant unavailable snapshot header label must not be shown');
+assert(!ui.includes('historical pick fallback'),'internal retroactive pick fallback wording must remain hidden');
+assert(!ui.includes('Historical value change compared with what each side ultimately holds from the deal today.'),'Fleeced Trade Breakdown description must be removed');
 assert(ui.includes('function completedHistoricalPick(asset)'),'Hindsight must detect already-historical draft picks');
 assert(ui.includes('if(asset.type===\'pick\'&&completedHistoricalPick(asset))return retroactiveTradeHistoryPickValue(asset,trade);'),'historical Hindsight picks must not fall through to live current/future pick valuation');
 assert(ui.includes('function tradeResultScoreboard(teamA,totalA,teamB,totalB,score,label)'),'Trade History must render prominent adjusted-total scoreboards');
@@ -287,7 +292,7 @@ assert(ui.includes('gap:28px'),'completed trades must have stronger visual separ
 assert(ui.includes('border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line))'),'completed trade cards need distinct outer borders');
 assert(!ui.includes('nearest-year retroactive frame'),'retroactive pick-frame mechanics must remain hidden from user-facing text');
 assert(!ui.includes('<div class="vh-assets-title">Assets received</div>'),'redundant Fleeced Trade Breakdown Assets Received block must be removed');
-assert(ui.includes('${tradeEvaluatorSection(trade)}${tradeValuePresentation(trade)}'),'Trade Evaluator Analysis must render before Fleeced Trade Breakdown');
+assert(ui.includes('${tradeValuePresentation(trade)}${tradeEvaluatorSection(trade)}${historicalValueComparisonSection(trade)}'),'Trade History must render Fleeced/Hindsight first, Original Trade Analysis second, and Historical Value Comparison last');
 assert(ui.includes('Overall #'),'Trade History received-player metadata must show current overall rank');
 assert(ui.includes('posRank'),'Trade History received-player metadata must show current positional rank');
 assert(!ui.includes('Current evaluator rationale'),'Trade History evaluator section must not render the written rationale block');
@@ -321,6 +326,9 @@ assert(backend.includes('then_picks:thenPicks.values'),'completed trade history 
 assert(backend.includes('completedTradeHistory(s)'),'completed trade history must remain in Value History backend');
 assert(backend.includes('TRADE_AUDIT_SEASONS'),'Sleeper imported multi-season trade audit source missing');
 assert(backend.includes('exactDraftResultMap'),'exact Sleeper draft-result mapping missing');
+assert(backend.includes('const combinedDraftResults=new Map(),ambiguous=new Set()'),'historical Sleeper draft results must be combined across imported league seasons');
+assert(backend.includes('normalizeCompletedTrade(tx,week,bundle.season,bundle.teamNames,combinedDraftResults)'),'historical trades must resolve picks against the cross-season Sleeper draft-result map');
+assert(!backend.includes('bundle.teamNames,bundle.draftResults'),'historical trade resolution must not be limited to the transaction season draft list');
 assert(backend.includes('slot_to_roster_id'),'draft-result mapping must use Sleeper slot_to_roster_id rather than inference');
 assert(backend.includes("TRADE_AUDIT_SEASONS=[2024,2025,2026]"),'2024–2026 linked trade audit coverage missing');
 assert(backend.includes('closestSnapshotItem'),'trade history must use stored Value History snapshots rather than fabricated historical values');

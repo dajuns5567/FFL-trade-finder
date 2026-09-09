@@ -508,7 +508,7 @@ function pickValuesFromSide(side,map){
 }
 async function completedTradeHistory(s){
   const trades=await importedCompletedTrades(),indexed=await allItems(s),items=indexed.items||[];
-  if(!items.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',tracking_since:null,latest:null,trades:trades.map(t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_players:[],then_players_complete:false,current_players:[],current_players_complete:false}))}))};
+  if(!items.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',tracking_since:null,latest:null,trades:trades.map(t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_players:[],then_players_complete:false,then_picks:[],then_picks_complete:false,current_players:[],current_players_complete:false}))}))};
   const latestItem=items[items.length-1],selected=new Map([[latestItem.key,latestItem]]),snapshotItemByTrade=new Map();
   for(const trade of trades){
     const ms=new Date(trade.created).getTime(),item=Number.isFinite(ms)?closestSnapshotItem(items,ms):null;
@@ -518,10 +518,10 @@ async function completedTradeHistory(s){
   for(const snap of snaps){const item=selectedItems.find(x=>String(x.t)===String(snap.t));if(item)snapByKey.set(item.key,snap)}
   const latestSnap=snapByKey.get(latestItem.key),latestMap=rowMap(latestSnap||{rows:[]});
   const out=trades.map(trade=>{
-    const histItem=snapshotItemByTrade.get(trade.id)||null,histSnap=histItem?snapByKey.get(histItem.key):null,histMap=rowMap(histSnap||{rows:[]});
+    const histItem=snapshotItemByTrade.get(trade.id)||null,histSnap=histItem?snapByKey.get(histItem.key):null,histMap=rowMap(histSnap||{rows:[]}),histPickMap=pickMap(histSnap||{picks:[]});
     const sides=trade.sides.map(side=>{
-      const then=histItem?playerValuesFromMap(side,histMap):{values:[],missing:[...(side.player_ids||[])],complete:false,total:null},current=playerValuesFromMap(side,latestMap);
-      return{...side,then_players:then.values,then_players_complete:Boolean(histItem&&then.complete),then_player_total:histItem&&then.complete?then.total:null,current_players:current.values,current_players_complete:current.complete,current_player_total:current.complete?current.total:null};
+      const then=histItem?playerValuesFromMap(side,histMap):{values:[],missing:[...(side.player_ids||[])],complete:false,total:null},thenPicks=histItem?pickValuesFromSide(side,histPickMap):{values:[],missing:(side.picks||[]).map(p=>`pick-${p.season}-${p.round}-${p.original_roster_id}`),complete:false,total:null},current=playerValuesFromMap(side,latestMap);
+      return{...side,then_players:then.values,then_players_complete:Boolean(histItem&&then.complete),then_player_total:histItem&&then.complete?then.total:null,then_picks:thenPicks.values,then_picks_complete:Boolean(histItem&&thenPicks.complete),then_pick_total:histItem&&thenPicks.complete?thenPicks.total:null,current_players:current.values,current_players_complete:current.complete,current_player_total:current.complete?current.total:null};
     });
     return{...trade,trade_snapshot_t:histItem?.t||null,current_snapshot_t:latestItem?.t||null,sides};
   });

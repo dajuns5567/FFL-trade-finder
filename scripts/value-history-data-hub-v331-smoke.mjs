@@ -330,6 +330,9 @@ assert(backend.includes("'github-archive+netlify-live'"),'history source does no
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
 assert(backend.includes("url.searchParams.get('team_net')==='1'"),'Track My Team net-value history endpoint missing');
+assert(!backend.includes("reason:'unchanged'"),'Value History must not suppress completed calculations just because the fingerprint matches the prior snapshot');
+assert(!backend.includes("latest?.fingerprint===fp"),'Value History must record each completed player-value calculation as its own timestamped observation');
+assert(backend.includes("const fp=fingerprint(rows,picks,teams);"),'Value History may retain fingerprints for snapshot integrity without using them for deduplication');
 assert(backend.includes("url.searchParams.get('trades')==='1'"),'completed trade history endpoint missing');
 assert(backend.includes('function cleanPicks(picks)'),'Value History backend must sanitize stored pick snapshots separately from player rows');
 assert(backend.includes('function cleanTeams(teams)'),'Value History backend must sanitize team totals separately from player rows');
@@ -357,6 +360,7 @@ assert(backend.includes('scrubV346KtcContamination(s)'),'V346 history scrub miss
 assert(backend.includes('writeFilteredIndexes(s,keep)'),'V346 history reindex missing');
 
 assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
+assert(ui.includes('scheduleSnapshot(1000)'),'Update-triggered value recalculation must schedule a new historical observation');
 assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
 const updateSource=fs.readFileSync('netlify/functions/update.mjs','utf8');
 assert(updateSource.includes("failedSources=diagnostics.filter(result=>!result.ok)"),'consensus refresh is not checking all source failures');

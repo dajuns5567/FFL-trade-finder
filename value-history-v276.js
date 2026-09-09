@@ -430,12 +430,15 @@ function tradeHistoryEvaluatorValue(asset,trade){
   return asset?.type==='pick'?retroactiveTradeHistoryPickValue(asset,trade):currentEvaluatorValue(asset);
 }
 function fairWithValue(give,recv,valueFn){
-  const clamp=(a,x,b)=>Math.max(a,Math.min(x,b)),av=x=>Math.max(0,Number(valueFn(x))||0),raw=xs=>(xs||[]).reduce((n,x)=>n+av(x),0);
-  const aRaw=raw(give),bRaw=raw(recv),am=Math.max(0,...(give||[]).map(av)),bm=Math.max(0,...(recv||[]).map(av));let aAdj=0,bAdj=0;
-  const calc=(premium,other,count)=>{if(count<2||premium<=other||other<=0)return 0;const rel=clamp(0,other/premium,1),strength=premium/(premium+3500),rate=.075+.18*strength,counter=1-.75*Math.pow(rel,1.4),disp=1+.8*(1-rel),extra=Math.max(0,count-2),frag=Math.min(1.28,1+.10*Math.min(extra,1)+.06*Math.min(Math.max(extra-1,0),1)+.04*Math.min(Math.max(extra-2,0),1)+.03*Math.min(Math.max(extra-3,0),1)+.02*Math.max(0,extra-4)),elite=1.3+1.5*clamp(0,(premium-5000)/5000,1),smooth=1+.39*clamp(0,(8800-premium)/1890,1);return premium*rate*counter*disp*frag*elite*smooth};
-  if(am>bm)aAdj=calc(am,bm,(recv||[]).length);else if(bm>am)bAdj=calc(bm,am,(give||[]).length);
-  const a=aRaw+aAdj,b=bRaw+bAdj,hi=Math.max(a,b,1),rel=Math.abs(a-b)/hi,m=145+45*clamp(0,(hi-4000)/7000,1),score=Math.round(clamp(1,100-rel*m,100)),ratio=Math.min(a,b)/hi;
-  return{aRaw,bRaw,aAdj,bAdj,aEffective:a,bEffective:b,edgeRaw:b?bRaw-aRaw:0,edgeEffective:b-a,ratio,score,rejected:score<55||ratio<.62,status:score>=94?'Excellent Fit':score>=82?'Fair':'Negotiable'};
+  const clamp=(a,x,b)=>Math.max(a,Math.min(x,b)),av=x=>Math.max(0,Number(valueFn(x))||0),raw=xs=>(xs||[]).reduce((n,x)=>n+av(x),0),rankOf=x=>x?.type==='player'?Math.max(1,Number(window.playerRankValue?.(x)?.rank)||9999):0;
+  const ar=raw(give),br=raw(recv),aTop=(give||[]).slice().sort((x,y)=>av(y)-av(x))[0]||null,bTop=(recv||[]).slice().sort((x,y)=>av(y)-av(x))[0]||null,am=aTop?av(aTop):0,bm=bTop?av(bTop):0;let aa=0,ba=0;
+  const amp=asset=>{if(!asset||asset.type!=='player')return 1.10;const r=Math.max(1,rankOf(asset));return 1.10+.44*Math.exp(-(r-1)/35)};
+  const eliteWeight=asset=>asset?.type==='player'?Math.exp(-(Math.max(1,rankOf(asset))-1)/28):0;
+  const counterElitePressure=xs=>{const strengths=(xs||[]).filter(x=>x?.type==='player'&&(rankOf(x)<=20||av(x)>=8000)).map(x=>{const r=Math.max(1,rankOf(x)),v=av(x),rankStrength=clamp(0,(21-r)/20,1),valueStrength=clamp(0,(v-7800)/2200,1);return .7*rankStrength+.3*valueStrength});return strengths.length?clamp(0,Math.max(...strengths)+.18*Math.max(0,strengths.length-1),1):0};
+  const calc=(premium,otherTop,otherRaw,premiumRaw,asset,otherAssets)=>{if(premium<=otherTop||otherTop<=0)return 0;const depth=Math.max(0,otherRaw-otherTop);if(depth<=0)return 0;const rel=clamp(0,otherTop/premium,1),strength=premium/(premium+3500),rate=.075+.18*strength,counter=1-.75*Math.pow(rel,1.4),disp=1+.8*(1-rel),elite=1.3+1.5*clamp(0,(premium-5000)/5000,1),smooth=1+.39*clamp(0,(8800-premium)/1890,1),legacy=premium*rate*counter*disp*elite*smooth*amp(asset),rawGap=Math.max(0,otherRaw-premiumRaw),ew=eliteWeight(asset),gapTarget=rawGap>0?rawGap*(.50+.50*ew):0,depthCap=depth*(.55+(rawGap>0?.35*ew:0)),elitePressure=rawGap>0?counterElitePressure(otherAssets):0,eliteCounterCap=elitePressure>0?rawGap*(1-.72*elitePressure):Infinity;return Math.min(Math.max(legacy,gapTarget),depthCap,eliteCounterCap)};
+  if(am>bm)aa=calc(am,bm,br,ar,aTop,recv);else if(bm>am)ba=calc(bm,am,ar,br,bTop,give);
+  const a=ar+aa,b=br+ba,hi=Math.max(a,b,1),rel=Math.abs(a-b)/hi,m=145+45*clamp(0,(hi-4000)/7000,1),score=Math.round(clamp(1,100-rel*m,100)),ratio=Math.min(a,b)/hi;
+  return{aRaw:ar,bRaw:br,aAdj:aa,bAdj:ba,aEffective:a,bEffective:b,edgeRaw:b?br-ar:0,edgeEffective:b-a,ratio,score,rejected:score<55||ratio<.62,status:score>=94?'Excellent Fit':score>=82?'Fair':'Negotiable'};
 }
 function tradeHistoryFair(give,recv,trade){return fairWithValue(give,recv,a=>tradeHistoryEvaluatorValue(a,trade))}
 function hindsightFair(give,recv,trade){return fairWithValue(give,recv,a=>hindsightValue(a,trade))}
@@ -496,8 +499,7 @@ function tradeEvaluatorAnalysis(trade){
     if(!a||!b)return{available:false,reason:'Sleeper roster IDs are incomplete for this trade.'};
     const missing=[...aReceived,...bReceived].some(x=>tradeHistoryEvaluatorValue(x,trade)==null);
     if(missing)return{available:false,reason:'At least one historical asset is unavailable to the current Trade Evaluator, so no score is fabricated.'};
-    const fair=window.section1V130?.fair;if(typeof fair!=='function')return{available:false,reason:'Current Trade Evaluator fairness runtime is not available yet.'};
-    const f=fair(bReceived,aReceived),score=Math.max(1,Math.min(100,Number(f?.score)||1)),histA=historicalTradeTeamName(trade,a),histB=historicalTradeTeamName(trade,b),label=f?.rejected?'Fleeced!':String(f?.status||'Trade');
+    const f=tradeHistoryFair(bReceived,aReceived,trade),score=Math.max(1,Math.min(100,Number(f?.score)||1)),histA=historicalTradeTeamName(trade,a),histB=historicalTradeTeamName(trade,b),label=f?.rejected?'Fleeced!':String(f?.status||'Trade');
     return{available:true,score,label,teamA:a,teamB:b,teamAName:histA,teamBName:histB,aReceived,bReceived,f};
   }catch(e){return{available:false,reason:`Current Trade Evaluator could not analyze this historical package: ${String(e?.message||e)}`}}
 }

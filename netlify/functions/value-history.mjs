@@ -609,8 +609,8 @@ export default async (req)=>{
     const t=new Date().toISOString(),key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
     const snapshot={version:4,league:LEAGUE,t,fingerprint:fp,rows,picks,teams};
     await retry(()=>s.setJSON(key,snapshot),120);
+    await appendIndex(s,key,t);
     await retry(()=>s.setJSON(LATEST_KEY,{version:2,t,fingerprint:fp,key,count:rows.length}),120);
-    try{await appendIndex(s,key,t)}catch(e){console.warn('value-history-index',e)}
     return json({ok:true,stored:true,t,count:rows.length,pick_count:picks.length,team_count:teams.length});
   }catch(e){
     console.error('value-history',e);

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "league_id": "1316867686394769408",
+  "archive_branch": "value-history-data",
+  "archive_path": "value-history",
+  "archive_started_date": "2026-09-08",
+  "initialized_from_fresh_baseline": true,
+  "historical_values_before_archive_start": "unavailable_unless_authoritatively_recovered",
+  "source_policy": "stored Fleeced master-value snapshots only; never reconstruct or guess",
+  "hosting_policy": "Netlify is not the historical source of truth"
+}

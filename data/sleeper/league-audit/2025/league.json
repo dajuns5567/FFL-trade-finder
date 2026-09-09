@@ -70,10 +70,10 @@
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
   "company_id": null,
-  "sport": "nfl",
-  "season_type": "regular",
-  "season": "2025",
   "shard": 183,
+  "season": "2025",
+  "season_type": "regular",
+  "sport": "nfl",
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,

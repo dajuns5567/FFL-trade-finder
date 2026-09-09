@@ -250,6 +250,10 @@ assert(ui.includes("tradeBtn.dataset.tab='tradeHistory'"),'Trade History must be
 
 const backend=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 assert(backend.includes("MONTH_INDEX_PREFIX='indexes/'"),'partitioned all-time index missing');
+assert(backend.includes("CANONICAL_HISTORY_ORIGIN='https://roaring-sundae-564761.netlify.app'"),'canonical Value History origin missing');
+assert(backend.includes('shouldProxyToCanonical()'),'cross-project Value History continuity proxy missing');
+assert(backend.includes('proxyCanonicalHistory(req)'),'Value History canonical proxy implementation missing');
+assert(backend.includes("'x-fleeced-history-origin':'canonical-roaring-sundae'"),'canonical history response marker missing');
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
 assert(backend.includes("url.searchParams.get('team_net')==='1'"),'Track My Team net-value history endpoint missing');

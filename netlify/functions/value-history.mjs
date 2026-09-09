@@ -190,11 +190,8 @@ async function latestFallback(s,playerId){
   return{reachable:true,points:pointsFromSnapshots([snap],playerId),source:'latest-fallback'};
 }
 async function getPlayerHistory(s,playerId){
-  const indexed=await allItems(s);
-  if(indexed.items.length){
-    const snaps=await readSnapshotsBounded(s,indexed.items,25);
-    return{points:pointsFromSnapshots(snaps,playerId),source:indexed.source,snapshotCount:indexed.items.length};
-  }
+  const indexed=await allItems(s),localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[],archiveSnaps=await archiveAllSnapshots(),snaps=mergeSnapshots(archiveSnaps,localSnaps);
+  if(snaps.length)return{points:pointsFromSnapshots(snaps,playerId),source:archiveSnaps.length?'github-archive+netlify-live':'netlify-live',snapshotCount:snaps.length};
   if(indexed.source==='unavailable'){
     const fallback=await latestFallback(s,playerId);
     if(!fallback.reachable)throw new Error('history store unavailable');
@@ -205,9 +202,9 @@ async function getPlayerHistory(s,playerId){
 async function getTeamNetHistory(s,playerIds){
   const ids=[...new Set((playerIds||[]).map(String).filter(Boolean))].slice(0,100),wanted=new Set(ids);
   if(!ids.length)return{points:[],playerCount:0,source:'empty'};
-  const indexed=await allItems(s);
-  if(!indexed.items.length)return{points:[],playerCount:ids.length,source:indexed.source};
-  const snaps=await readSnapshotsBounded(s,indexed.items,25),points=[];
+  const indexed=await allItems(s),localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[],archiveSnaps=await archiveAllSnapshots(),snaps=mergeSnapshots(archiveSnaps,localSnaps);
+  if(!snaps.length)return{points:[],playerCount:ids.length,source:indexed.source};
+  const points=[];
   for(const snap of snaps){
     let value=0,found=0;
     for(const row of snap?.rows||[]){
@@ -217,7 +214,7 @@ async function getTeamNetHistory(s,playerIds){
     }
     points.push({t:snap.t,value:Math.round(value),playersFound:found,playerCount:ids.length});
   }
-  return{points,playerCount:ids.length,source:indexed.source,snapshotCount:indexed.items.length};
+  return{points,playerCount:ids.length,source:archiveSnaps.length?'github-archive+netlify-live':'netlify-live',snapshotCount:snaps.length};
 }
 function rowMap(snap){return new Map((snap?.rows||[]).map(r=>[String(r.id),r]))}
 function baselineFor(snaps,latestMs,days){
@@ -299,19 +296,26 @@ function itemAtOrBefore(items,targetMs){
   return best;
 }
 async function getMarketSummary(s){
-  const indexed=await allItems(s),items=indexed.items||[];
-  if(!items.length)return marketFromSnapshots([]);
-  const latestItem=items[items.length-1],latestMs=new Date(latestItem?.t||'').getTime();
-  if(!Number.isFinite(latestMs)){
-    const snaps=await readSnapshotsBounded(s,items,25),market=marketFromSnapshots(snaps);
-    market.snapshot_count=items.length;return market;
+  const local=await allItems(s),arch=await archiveIndex();
+  const timed=[],seenT=new Set();
+  for(const item of arch.items||[]){const t=String(item?.t||'');if(!t||seenT.has(t))continue;seenT.add(t);timed.push({...item,source:'archive'})}
+  for(const item of local.items||[]){const t=String(item?.t||'');if(!t)continue;if(seenT.has(t)){const i=timed.findIndex(x=>x.t===t);if(i>=0)timed[i]={...item,source:'local'};continue}seenT.add(t);timed.push({...item,source:'local'})}
+  timed.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  if(!timed.length){
+    if(local.items?.length){
+      const snaps=await readSnapshotsBounded(s,local.items,25),market=marketFromSnapshots(snaps);market.snapshot_count=snaps.length;return market;
+    }
+    return marketFromSnapshots([]);
   }
-  const wanted=[items[0],itemAtOrBefore(items,latestMs-1*86400000),itemAtOrBefore(items,latestMs-7*86400000),itemAtOrBefore(items,latestMs-30*86400000),itemAtOrBefore(items,latestMs-90*86400000),itemAtOrBefore(items,latestMs-365*86400000),latestItem].filter(Boolean);
-  const unique=[],seen=new Set();for(const item of wanted)if(!seen.has(item.key)){seen.add(item.key);unique.push(item)}
-  unique.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  const snaps=await readSnapshotsBounded(s,unique,7),market=marketFromSnapshots(snaps);
-  market.snapshot_count=items.length;
-  return market;
+  const latestItem=timed[timed.length-1],latestMs=new Date(latestItem.t).getTime(),wanted=[timed[0],archiveItemAtOrBefore(timed,latestMs-1*86400000),archiveItemAtOrBefore(timed,latestMs-7*86400000),archiveItemAtOrBefore(timed,latestMs-30*86400000),archiveItemAtOrBefore(timed,latestMs-90*86400000),archiveItemAtOrBefore(timed,latestMs-365*86400000),latestItem].filter(Boolean);
+  const unique=[],seen=new Set();for(const item of wanted){const k=`${item.source}:${item.key||item.path||item.t}`;if(!seen.has(k)){seen.add(k);unique.push(item)}}
+  const snaps=[];
+  for(const item of unique){
+    if(item.source==='archive'){const snap=await archiveSnapshot(item);if(snap)snaps.push(snap)}
+    else{try{const snap=await s.get(item.key,{type:'json'});if(snap?.t&&Array.isArray(snap.rows))snaps.push(snap)}catch{}}
+  }
+  snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  const market=marketFromSnapshots(snaps);market.snapshot_count=timed.length;market.archive_snapshot_count=(arch.items||[]).length;market.local_snapshot_count=(local.items||[]).length;return market;
 }
 async function appendIndex(s,key,t){
   const legacy=normalizeItems(await safeGet(s,LEGACY_INDEX_KEY),LEGACY_MAX).filter(x=>x.key!==key);
@@ -521,6 +525,12 @@ export default async (req)=>{
     try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
     try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
     if(req.method==='GET'){
+      if(url.searchParams.get('archive_export')==='1'){
+        const indexed=await allItems(s),sinceMs=new Date(String(url.searchParams.get('since')||'')).getTime();
+        const items=(indexed.items||[]).filter(item=>{const ms=new Date(item?.t||'').getTime();return !Number.isFinite(sinceMs)||!Number.isFinite(ms)||ms>sinceMs});
+        const snapshots=await readSnapshotsBounded(s,items,25);
+        return json({schema_version:1,league_id:LEAGUE,source:'netlify-live-buffer',snapshot_count:snapshots.length,snapshots});
+      }
       if(url.searchParams.get('health')==='1'){
         const h=await health(s);
         return json(h,h.ok?200:503);

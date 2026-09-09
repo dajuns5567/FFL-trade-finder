@@ -239,7 +239,9 @@ for(const forbidden of [
   'Value Adjustment='
 ])assert(!ui.includes(forbidden),'Value History must remain read-only relative to trade/value systems: '+forbidden);
 assert(ui.includes("const fair=window.section1V130?.fair"),'Trade History must consume the exact current shared evaluator fairness function');
-assert(ui.includes("typeof window.tradeAssetValue93==='function'"),'Trade History must consume the existing evaluator asset-value function');
+assert(ui.includes("typeof window.tradeAssetValue93==='function'"),'Trade History must retain evaluator asset-value fallback');
+assert(ui.includes("window.tradeValueNormalizationV130?.canonicalValue"),'Trade History current player and pick display must use the exact active evaluator canonical value function');
+assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
 assert(ui.includes('tradeOriginalAssets(side)'), 'Trade Evaluator analysis must evaluate the original traded package rather than mutate it into current outcomes');
 assert(!ui.includes('Current evaluator rationale'),'Trade History evaluator section must not render the written rationale block');
 assert(!ui.includes('state.assetsA='),'Trade History must not overwrite Trade Evaluator Team A selections');

@@ -384,6 +384,12 @@ assert(backend.includes("scrubV348ConsensusContamination(s)"),'V348 contaminated
 const fanRankedSource=fs.readFileSync('netlify/functions/fanranked-adapter.mjs','utf8');
 assert(fanRankedSource.includes("sort((a,b)=>b.value-a.value"),'FanRanked current ranking is not rebuilt from current market values');
 assert(fanRankedSource.includes(".map((row,index)=>({rank:index+1"),'FanRanked current ranking is not reassigned contiguously');
+const teamContext90=fs.readFileSync('team-context-v90.js','utf8');
+assert(teamContext90.includes("const PROJECTION_OWNER_ID_90={"),'team projection identity must be pinned to stable Sleeper owner IDs');
+assert(teamContext90.includes("'detroit lions':'729929924969865216'"),'Detroit Lions projection identity must resolve through its Sleeper user ID');
+assert(teamContext90.includes("const currentByOwner=new Map((state.teams||[]).map(t=>[String(t.owner||''),t]))"),'team projection mapping must resolve current rosters by Sleeper owner ID rather than mutable team names');
+assert(!teamContext90.includes("const site=new Map((state.teams||[]).map(t=>[norm90(t.name),Number(t.id)]))"),'legacy exact current-team-name projection mapping must be removed');
+assert(teamContext90.includes("Projection owner mapping incomplete"),'owner-ID projection mapping must fail closed if a stable owner cannot be resolved');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
 assert(siteV29.includes('/value-history-v276.js?v=367'),'production shell must cache-bust the V367 Value History recorder');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');

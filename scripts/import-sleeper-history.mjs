@@ -146,7 +146,7 @@ async function main(){
     const compact=compactSeason(aggregated);
     compactDiagnostics[year]=year===current.season?{...seasonDiagnostics[year],compactPlayers:Object.keys(compact).length}:validateCompact(year,compact);
     compactStats[year]=compact;
-    statsBySeason[year]={weekly:fetched.weekly,season:aggregated};
+    statsBySeason[year]={weekly:year===current.season?currentFetch.weekly:fetched.weekly,qualifiedWeekly:year===current.season?qualifiedCurrent.weekly:null,season:aggregated};
   }
 
   const manifest={
@@ -180,6 +180,7 @@ async function main(){
   for(const year of productionSeasons){
     const dir=path.join(OUT_ROOT,String(year));
     await writeJson(path.join(dir,'weekly-stats.json'),statsBySeason[year].weekly);
+    if(year===current.season)await writeJson(path.join(dir,'qualified-weekly-stats.json'),statsBySeason[year].qualifiedWeekly||{});
     await writeJson(path.join(dir,'season-stats.json'),statsBySeason[year].season);
   }
   for(const item of chain){

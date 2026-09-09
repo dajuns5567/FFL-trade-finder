@@ -243,6 +243,10 @@ assert(ui.includes("window.tradeValueNormalizationV130?.canonicalValue"),'Trade 
 assert(ui.includes('function currentPickRows()'),'Value History must capture live canonical draft-pick values for future exact trade history');
 assert(ui.includes('function currentTeamRows(playerRows=currentRows())'),'Value History must capture authoritative per-team net totals at snapshot time');
 assert(ui.includes('function teamTradeNetEvents(teamId,netData,period)'),'Track My Team must identify completed trades against authoritative net-value points');
+assert(ui.includes('function teamNetPointTradeMap(teamId,points)'),'Overall Net Value chart must map completed trades to authoritative team data points');
+assert(ui.includes('data-vh-trades='),'trade-linked Overall Net Value points must carry trade context into the chart tooltip');
+assert(ui.includes('Observed team net-value change from prior authoritative snapshot'),'Overall Net Value tooltip must display observed net-value movement tied to the point');
+assert(ui.includes('not an assumption that the trade alone caused the change'),'Overall Net Value tooltip must preserve non-causal attribution language');
 assert(ui.includes("p?.teamSnapshot===true"),'trade-linked team events must never use legacy reconstructed net points');
 assert(ui.includes("tm>prevMs&&tm<=curMs"),'completed trades must be bracketed by the actual before/after team snapshots they are linked to');
 assert(ui.includes("What's Happening With My Team"),'approved Track My Team attribution heading missing');
@@ -278,6 +282,7 @@ assert(ui.includes("Looking back on trades with today's current value."),'Hindsi
 assert(ui.includes("Historical value unavailable"),'Original Trade Analysis must report unavailable historical results rather than fabricate a score');
 assert(ui.includes("value==null?'N/A':fmt(value)"),'Original Trade Analysis missing asset values must display N/A');
 assert(ui.includes("These trades occurred before Trade History was established"),'pre-history Original Trade Analysis disclaimer missing');
+assert(ui.includes("N/A means this trade occurred before reliable Trade History player values were established, so no historical player value is guessed."),'incomplete Original Trade Analysis description must contain the pre-history N/A disclaimer');
 assert(ui.includes('function fairWithValue(give,recv,valueFn)'),'Trade History must expose one shared parameterized fairness adapter');
 assert(ui.includes('const depth=Math.max(0,otherRaw-otherTop)'),'Trade History fairness adapter must mirror the active evaluator depth-cap logic');
 assert(ui.includes('counterElitePressure(otherAssets)'),'Trade History fairness adapter must mirror the active evaluator elite-counter pressure');

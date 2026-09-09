@@ -208,6 +208,10 @@ function addStyles(){
   #valueHistory .vh-team-trade-event-value b{display:block;font-size:16px;margin:2px 0}
   #valueHistory .vh-team-trade-event-value span.vh-up{color:var(--good,#1f9d68)}
   #valueHistory .vh-team-trade-event-value span.vh-down{color:var(--bad,#c45151)}
+  #valueHistory .vh-net-trade-dot{stroke:#e4b53f;stroke-width:2.2;filter:drop-shadow(0 0 3px rgba(228,181,63,.45))}
+  #valueHistory .vh-tooltip-trades{margin-top:7px;padding-top:7px;border-top:1px solid color-mix(in srgb,#e4b53f 34%,var(--line))}
+  #valueHistory .vh-tooltip-trades>small{display:block;color:var(--muted);font-size:9px;line-height:1.35;margin-top:4px}
+  #valueHistory .vh-tooltip-trade{margin-top:4px;font-size:10px}
   @media(max-width:700px){#valueHistory .vh-team-trade-event{grid-template-columns:1fr}#valueHistory .vh-team-trade-event-value{text-align:left}}
   #valueHistory .vh-trade-list{display:grid;gap:28px}
   #valueHistory .vh-trade-card{border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line));border-radius:15px;padding:0 14px 14px;background:color-mix(in srgb,var(--card) 96%,black);box-shadow:0 10px 24px rgba(0,0,0,.22),0 0 0 1px rgba(255,255,255,.015);overflow:hidden}
@@ -389,7 +393,7 @@ function handleContentClick(e){
   const viewAll=e.target.closest('[data-vh-view-all]');if(viewAll&&marketCache){openMoverModal(viewAll.dataset.vhViewAll,viewAll.dataset.vhCategory,viewAll.dataset.vhPeriod,viewAll.dataset.vhScope||'market');return}
   const allNet=e.target.closest('[data-vh-team-net-all]');if(allNet){openTeamNetModal();return}
   const close=e.target.closest('[data-vh-modal-close]');if(close){closeMoverModal();return}
-  const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};if(currentView==='team'){const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=ids.join(',');renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length})}else renderMarketTable();return}
+  const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};if(currentView==='team'){const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=teamNetCacheKey(ids,trackedTeamId);renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length})}else renderMarketTable();return}
 }
 function handleContentChange(e){
   const team=e.target.closest?.('[data-vh-team-select]');if(team){trackedTeamId=team.value;loadTrackedTeam();return}
@@ -400,7 +404,12 @@ function handleChartPointer(e){
   const hit=e.target?.closest?.('.vh-point-hit,.vh-rank-hit,.vh-net-hit'),wrap=hit?.closest?.('.vh-value-chart,.vh-rank-chart,.vh-net-chart'),tip=wrap?.querySelector?.('.vh-chart-tooltip');
   if(!hit||!wrap||!tip){if(e.type==='pointermove')hideChartTooltip();return}
   const rect=wrap.getBoundingClientRect(),x=Math.max(8,Math.min(rect.width-210,e.clientX-rect.left)),y=Math.max(20,Math.min(rect.height-20,e.clientY-rect.top));
-  if(hit.classList.contains('vh-net-hit'))tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>Overall Net Value <strong>${esc(hit.dataset.vhNetValue)}</strong></div>`;
+  if(hit.classList.contains('vh-net-hit')){
+    let linked=null;try{linked=hit.dataset.vhTrades?JSON.parse(hit.dataset.vhTrades):null}catch{}
+    const trades=Array.isArray(linked?.events)?linked.events:[];
+    const tradeMarkup=trades.length?`<div class="vh-tooltip-trades"><small>Completed trade${trades.length===1?'':'s'} linked to this team snapshot</small>${trades.map(t=>`<div class="vh-tooltip-trade"><b>${esc(t.date)}</b> • vs. ${esc(t.counterparts)}</div>`).join('')}<div class="${deltaClass(linked.change)}">Observed team net-value change from prior authoritative snapshot: <strong>${signed(linked.change)}</strong></div><small>This is observed movement between snapshots, not an assumption that the trade alone caused the change.</small></div>`:''; 
+    tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>Overall Net Value <strong>${esc(hit.dataset.vhNetValue)}</strong></div>${tradeMarkup}`;
+  }
   else if(hit.classList.contains('vh-rank-hit'))tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>${esc(hit.dataset.vhRankLabel)} <strong>#${esc(hit.dataset.vhRank)}</strong></div>`;
   else tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>Value <strong>${esc(hit.dataset.vhValue)}</strong></div><div>Overall #${esc(hit.dataset.vhOverall)} • ${esc(hit.dataset.vhPos)} #${esc(hit.dataset.vhPosRank)}</div>`;
   tip.style.left=`${x}px`;tip.style.top=`${y}px`;tip.style.display='block';
@@ -764,13 +773,25 @@ async function loadTrackedTeam(){
   renderTrackedTeamTable(netData);
   if(!tradeHistoryCache){const teamAtLoad=String(trackedTeamId);tradeHistoryFetch().then(()=>{if(currentView==='team'&&String(trackedTeamId)===teamAtLoad)renderTrackedTeamTable(netData)}).catch(()=>{})}
 }
+function teamNetPointTradeMap(teamId,points){
+  const id=String(teamId||''),auth=(points||[]).filter(p=>p?.teamSnapshot===true&&p?.t&&Number.isFinite(Number(p.value))).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t))),map=new Map();
+  if(auth.length<2||!tradeHistoryCache||!id)return map;
+  const trades=(tradeHistoryCache.trades||[]).filter(t=>(t.roster_ids||[]).map(String).includes(id));
+  for(let i=1;i<auth.length;i++){
+    const prev=auth[i-1],cur=auth[i],a=new Date(prev.t).getTime(),b=new Date(cur.t).getTime();
+    if(!Number.isFinite(a)||!Number.isFinite(b))continue;
+    const events=trades.filter(t=>{const tm=new Date(t?.created||0).getTime();return Number.isFinite(tm)&&tm>a&&tm<=b}).map(t=>({id:String(t.id||''),date:dateShort(t.created),counterparts:(t.roster_ids||[]).map(String).filter(x=>x!==id).map(x=>historicalTradeTeamName(t,x)).join(' / ')||'another team'}));
+    if(events.length)map.set(String(cur.t),{events,change:Math.round(Number(cur.value)-Number(prev.value))});
+  }
+  return map;
+}
 function teamNetChart(points){
   const pts=(points||[]).filter(p=>Number.isFinite(Number(p?.value))&&p?.t);
   if(!pts.length)return'<div class="vh-empty">Net-value history will appear after a completed Value History snapshot.</div>';
-  const vals=pts.map(p=>Number(p.value)),min=Math.min(...vals),max=Math.max(...vals),pad=Math.max(200,(max-min)*.12),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=142,L=70,R=18,T=12,B=30,n=Math.max(1,pts.length-1),
+  const tradeMap=teamNetPointTradeMap(trackedTeamId,pts),vals=pts.map(p=>Number(p.value)),min=Math.min(...vals),max=Math.max(...vals),pad=Math.max(200,(max-min)*.12),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=142,L=70,R=18,T=12,B=30,n=Math.max(1,pts.length-1),
     x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo)),first=pts[0],last=pts[pts.length-1],
     path=pts.map((p,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' '),
-    dots=pts.map((p,i)=>`<circle class="vh-net-dot" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="4"/><circle class="vh-net-hit" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="13" data-vh-date="${esc(dateTime(p.t))}" data-vh-net-value="${fmt(p.value)}"></circle>`).join('');
+    dots=pts.map((p,i)=>{const linked=tradeMap.get(String(p.t)),tradeAttr=linked?` data-vh-trades="${esc(JSON.stringify(linked))}"`:'',dotClass=linked?'vh-net-dot vh-net-trade-dot':'vh-net-dot';return`<circle class="${dotClass}" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="${linked?5:4}"/><circle class="vh-net-hit" cx="${x(i).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="13" data-vh-date="${esc(dateTime(p.t))}" data-vh-net-value="${fmt(p.value)}"${tradeAttr}></circle>`}).join('');
   return`<div class="vh-net-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Overall Net Value history"><line class="vh-net-axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/><line class="vh-net-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H-B}"/><text class="vh-net-axis-text" x="${L-8}" y="${T+4}" text-anchor="end">${fmt(Math.round(hi))}</text><text class="vh-net-axis-text" x="${L-8}" y="${H-B}" text-anchor="end">${fmt(Math.round(lo))}</text><text class="vh-net-axis-text" x="${L}" y="${H-8}">${esc(dateShort(first.t))}</text><text class="vh-net-axis-text" x="${W-R}" y="${H-8}" text-anchor="end">${esc(dateShort(last.t))}</text><path class="vh-net-line" d="${path}"/>${dots}</svg><div class="vh-chart-tooltip" style="display:none"></div></div>`;
 }
 function currentTeamNetStandings(){

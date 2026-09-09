@@ -200,8 +200,11 @@ function addStyles(){
   #valueHistory .vh-trade-head h4{margin:0;color:#e4b53f;font-size:14px}
   #valueHistory .vh-trade-sides{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   #valueHistory .vh-trade-side{border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
-  #valueHistory .vh-trade-assets{display:grid;gap:4px;margin:7px 0 9px}
-  #valueHistory .vh-trade-asset{font-size:12px}
+  #valueHistory .vh-assets-title{font-size:11px;font-weight:950;letter-spacing:.075em;text-transform:uppercase;color:#e4b53f;margin:10px 0 6px}
+  #valueHistory .vh-trade-assets{display:grid;gap:0;margin:0 0 14px;padding:8px 11px;border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:10px;background:color-mix(in srgb,#e4b53f 5%,var(--card))}
+  #valueHistory .vh-trade-asset{font-size:14px;font-weight:760;padding:7px 0;border-top:1px solid color-mix(in srgb,var(--line) 72%,transparent);line-height:1.35}
+  #valueHistory .vh-trade-asset:first-child{border-top:0}
+  #valueHistory .vh-trade-asset b{font-size:14px}
   #valueHistory .vh-trade-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
   #valueHistory .vh-trade-values>div{border-top:1px solid var(--line);padding-top:6px;text-align:center}
   #valueHistory .vh-trade-values small{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em}
@@ -358,6 +361,8 @@ function tradePlayerAsset(id,receiver){return{type:'player',id:String(id),owner:
 function currentEvaluatorValue(asset){
   if(!asset)return null;
   try{
+    const canonical=window.tradeValueNormalizationV130?.canonicalValue;
+    if(typeof canonical==='function'){const n=Number(canonical(asset));return Number.isFinite(n)?Math.round(n):null}
     if(typeof window.tradeAssetValue93==='function'){const n=Number(window.tradeAssetValue93(asset));return Number.isFinite(n)?Math.round(n):null}
     return null;
   }catch{return null}
@@ -420,7 +425,7 @@ function tradeItemRows(items){
   return items.map(x=>`<div class="vh-driver-row"><div><b>${esc(x.label)}</b></div><div>${x.value==null?'—':fmt(x.value)}</div></div>`).join('')||'<div class="vh-empty">No assets.</div>'
 }
 function tradeValuePresentation(trade){
-  return`<div class="vh-card vh-history-section"><div class="vh-card-head"><div><h3>Fleeced Trade Breakdown</h3><div class="vh-sub">What each team received at the time, and what those assets are worth now. Historical player values are shown only when a real stored snapshot exists; completed picks are linked only to exact Sleeper draft results.</div></div></div><div class="vh-breakdown-sides">${(trade.sides||[]).map(side=>{const m=sideValueModel(side,trade),delta=m.atTradeTotal!=null&&m.currentTotal!=null?m.currentTotal-m.atTradeTotal:null;return`<div class="vh-breakdown-side"><h4>${esc(historicalTradeTeamName(trade,side.roster_id))}</h4><div class="vh-sub">Assets received</div><div class="vh-trade-assets">${(side.player_ids||[]).map(id=>`<div class="vh-trade-asset"><b>${esc(playerName(id))}</b></div>`).join('')}${(side.picks||[]).map(p=>`<div class="vh-trade-asset">Draft pick: ${tradePickLabel(p,trade)}</div>`).join('')}</div><div class="vh-time-columns"><div class="vh-time-column"><div class="vh-time-label">At time of trade</div>${tradeItemRows(m.atTradeItems)}</div><div class="vh-time-column"><div class="vh-time-label">Current outcome</div>${tradeItemRows(m.currentItems)}</div></div><div class="vh-trade-summary3"><div><small>Value at trade</small><b>${m.atTradeTotal==null?'—':fmt(m.atTradeTotal)}</b></div><div><small>Current value</small><b>${m.currentTotal==null?'—':fmt(m.currentTotal)}</b></div><div><small>Change</small><b class="${delta==null?'vh-neutral':deltaClass(delta)}">${delta==null?'—':signed(delta)}</b></div></div>${m.atTradeComplete?'':`<div class="vh-trade-note">Historical player value is unavailable for part of this package because the trade predates reliable stored Value History or a player is missing from that snapshot. No value was guessed.</div>`}</div>`}).join('')}</div></div>`
+  return`<div class="vh-card vh-history-section"><div class="vh-card-head"><div><h3>Fleeced Trade Breakdown</h3><div class="vh-sub">What each team received at the time, and what those assets are worth now. Historical player values are shown only when a real stored snapshot exists; completed picks are linked only to exact Sleeper draft results.</div></div></div><div class="vh-breakdown-sides">${(trade.sides||[]).map(side=>{const m=sideValueModel(side,trade),delta=m.atTradeTotal!=null&&m.currentTotal!=null?m.currentTotal-m.atTradeTotal:null;return`<div class="vh-breakdown-side"><h4>${esc(historicalTradeTeamName(trade,side.roster_id))}</h4><div class="vh-assets-title">Assets received</div><div class="vh-trade-assets">${(side.player_ids||[]).map(id=>`<div class="vh-trade-asset"><b>${esc(playerName(id))}</b></div>`).join('')}${(side.picks||[]).map(p=>`<div class="vh-trade-asset">Draft pick: ${tradePickLabel(p,trade)}</div>`).join('')}</div><div class="vh-time-columns"><div class="vh-time-column"><div class="vh-time-label">At time of trade</div>${tradeItemRows(m.atTradeItems)}</div><div class="vh-time-column"><div class="vh-time-label">Current outcome</div>${tradeItemRows(m.currentItems)}</div></div><div class="vh-trade-summary3"><div><small>Value at trade</small><b>${m.atTradeTotal==null?'—':fmt(m.atTradeTotal)}</b></div><div><small>Current value</small><b>${m.currentTotal==null?'—':fmt(m.currentTotal)}</b></div><div><small>Change</small><b class="${delta==null?'vh-neutral':deltaClass(delta)}">${delta==null?'—':signed(delta)}</b></div></div>${m.atTradeComplete?'':`<div class="vh-trade-note">Historical player value is unavailable for part of this package because the trade predates reliable stored Value History or a player is missing from that snapshot. No value was guessed.</div>`}</div>`}).join('')}</div></div>`
 }
 function evaluatorAssetRow(asset){
   const value=currentEvaluatorValue(asset),label=asset?.type==='pick'?(asset.name||`${asset.season} R${asset.round}`):playerName(asset?.id),meta=asset?.type==='pick'?`Draft pick • original roster ${asset.original_owner||'—'}`:`${groupPos(asset)} • ${String(state.players?.[String(asset?.id)]?.team||'FA').toUpperCase()}`;

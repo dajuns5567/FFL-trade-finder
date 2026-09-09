@@ -275,7 +275,7 @@ assert(ui.includes('function completedHistoricalPick(asset)'),'Hindsight must de
 assert(ui.includes('if(asset.type===\'pick\'&&completedHistoricalPick(asset))return retroactiveTradeHistoryPickValue(asset,trade);'),'historical Hindsight picks must not fall through to live current/future pick valuation');
 assert(ui.includes('function tradeResultScoreboard(teamA,totalA,teamB,totalB,score,label)'),'Trade History must render prominent adjusted-total scoreboards');
 assert(ui.includes('Winner • trade-adjusted total'),'winner/loser hierarchy must emphasize final adjusted totals');
-assert(ui.includes('CURRENT OUTCOME'),'Hindsight must present current outcome packages');
+assert(ui.includes('Current outcome detail'),'Hindsight must present current outcome package detail beneath the scoreboard');
 assert(ui.includes('gap:28px'),'completed trades must have stronger visual separation');
 assert(ui.includes('border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line))'),'completed trade cards need distinct outer borders');
 assert(!ui.includes('nearest-year retroactive frame'),'retroactive pick-frame mechanics must remain hidden from user-facing text');

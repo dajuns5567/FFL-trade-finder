@@ -4,5 +4,7 @@
   "snapshot_count": 0,
   "tracking_since": null,
   "latest": null,
-  "items": []
+  "items": [],
+  "months": [],
+  "archive_format": "append-only snapshots + monthly bundles"
 }

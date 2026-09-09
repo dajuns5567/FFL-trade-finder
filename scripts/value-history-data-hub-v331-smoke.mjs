@@ -264,6 +264,9 @@ assert(ui.includes('(y===2027&&r===1)?1.03:1'),'retroactive Trade History must p
 assert(ui.includes("asset?.type==='pick'?retroactiveTradeHistoryPickValue(asset,trade):currentEvaluatorValue(asset)"),'only picks may receive retroactive timing adjustment inside Trade History');
 assert(ui.includes('text-align:center'),'Trade History time headers must be centered');
 assert(ui.includes('function hindsightAnalysis(trade)'),'Trade History Hindsight evaluator missing');
+assert(ui.includes("const fair=window.section1V130?.fair;if(typeof fair!=='function'"),'Trade Evaluator Analysis must use the canonical live fairness runtime');
+assert(ui.includes('const f=fair(bReceived,aReceived)'), 'historical Trade Evaluator must use the same fairness logic as Hindsight');
+assert(!ui.includes('const f=tradeHistoryFair(bReceived,aReceived,trade)'), 'historical Trade Evaluator must not use the stale duplicated fairness formula');
 assert(ui.includes('<h4>Hindsight</h4>'),'Fleeced Trade Breakdown must include Hindsight');
 assert(ui.includes('CURRENT OUTCOME'),'Hindsight must present current outcome packages');
 assert(ui.includes('gap:28px'),'completed trades must have stronger visual separation');

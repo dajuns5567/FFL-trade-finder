@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-09T23:23:31.544Z",
+  "generatedAt": "2026-09-09T23:32:13.562Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -61,6 +61,17 @@
     }
   },
   "qualifyingHistoricalSeasonMinimumGames": 8,
+  "currentSeasonQualification": {
+    "minimumSnapShare": 0.2,
+    "minimumFantasyPoints": 8,
+    "finalGamesOnly": true,
+    "finalTeamsByWeek": {},
+    "diagnostics": {
+      "finalGames": 0,
+      "qualifiedPlayerGames": 0,
+      "rejectedPlayerGames": 0
+    }
+  },
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "linkedLeagueSeasons": [
     {
@@ -84,6 +95,8 @@
     "The importer never writes to the live application roster state. Roster JSON files are audit snapshots only.",
     "Production seasons are selected by season year from the active 60/30/10 or in-season weighting plan and are not dependent on previous_league_id links.",
     "Raw weekly Sleeper stat payloads are preserved. No player production number is fabricated.",
+    "During the active current season, only player-games from NFL games verified final are eligible for scoring.",
+    "A finalized current-season player-game qualifies when Sleeper snap share is at least 20% or league fantasy points are at least 8. Missing snap data does not satisfy the snap criterion.",
     "Offensive PPR is derived only from Sleeper-provided pts_ppr or deterministic standard-PPR scoring of Sleeper raw stats.",
     "offense-history.json is a compact delivery artifact derived only from the verified season aggregates; it does not recalculate or estimate player production.",
     "Raw weekly stats remain available for exact league-specific IDP reconstruction, including stacked sack/interception scoring."

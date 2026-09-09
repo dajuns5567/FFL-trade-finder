@@ -3,6 +3,20 @@ import { getStore } from '@netlify/blobs';
 const LEAGUE='1316867686394769408';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const store=()=>getStore('fll-value-history-v2');
+const CANONICAL_HISTORY_ORIGIN='https://roaring-sundae-564761.netlify.app';
+const CANONICAL_HISTORY_PATH='/.netlify/functions/value-history';
+function normalizedOrigin(value){try{return new URL(String(value||'')).origin}catch{return''}}
+function shouldProxyToCanonical(){
+  const siteOrigin=normalizedOrigin(process.env.URL||process.env.DEPLOY_PRIME_URL||'');
+  return Boolean(siteOrigin&&siteOrigin!==CANONICAL_HISTORY_ORIGIN);
+}
+async function proxyCanonicalHistory(req){
+  const incoming=new URL(req.url),target=new URL(CANONICAL_HISTORY_PATH,CANONICAL_HISTORY_ORIGIN);target.search=incoming.search;
+  const init={method:req.method,headers:{accept:'application/json','user-agent':'FFL-TradeFinder-CanonicalHistoryProxy/1.0'}};
+  if(req.method==='POST'){init.headers['content-type']='application/json';init.body=await req.text()}
+  const r=await fetch(target,init),body=await r.text();
+  return new Response(body,{status:r.status,headers:{'content-type':r.headers.get('content-type')||'application/json; charset=utf-8','cache-control':'no-store','x-fleeced-history-origin':'canonical-roaring-sundae'}});
+}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const LEGACY_INDEX_KEY='snapshot-index.json';
 const LATEST_KEY='latest.json';
@@ -478,6 +492,7 @@ export { monthKey, marketFromSnapshots, baselineFor };
 
 export default async (req)=>{
   try{
+    if(shouldProxyToCanonical())return await proxyCanonicalHistory(req);
     const url=new URL(req.url),s=store();
     try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
     try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}

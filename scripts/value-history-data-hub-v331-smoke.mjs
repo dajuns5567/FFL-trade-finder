@@ -327,6 +327,15 @@ assert(backend.includes("url.searchParams.get('archive_export')==='1'"),'Value H
 assert(backend.includes('archiveAllSnapshots()'),'archived snapshots are not merged into player/team history');
 assert(backend.includes('archiveSnapshot(item)'),'market history does not read durable archived snapshots');
 assert(backend.includes("'github-archive+netlify-live'"),'history source does not expose archive/live merge state');
+assert(backend.includes("function safeStore(){try{return store()}catch"),'Value History reads must survive Netlify Blob store initialization failure');
+assert(backend.includes("'github-archive'"),'Value History must support archive-only history when the live Blob layer is unavailable');
+assert(backend.includes("components:{"),'Value History health response must expose independent component diagnostics');
+assert(backend.includes("githubArchive:{reachable:"),'Value History health must report GitHub archive reachability separately');
+assert(backend.includes("netlifyLive:{reachable:"),'Value History health must report Netlify live-buffer reachability separately');
+assert(backend.includes("const archiveSnaps=await archiveAllSnapshots();"),'Value History read paths must load the durable GitHub archive independently of Netlify Blobs');
+assert(backend.includes("history_source:historySource"),'Trade History must expose its historical-value source separately from raw Sleeper trade audits');
+assert(backend.includes("const trades=await importedCompletedTrades();"),'Trade History must load Sleeper completed trades before optional historical-value storage');
+
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
 assert(backend.includes("url.searchParams.get('team_net')==='1'"),'Track My Team net-value history endpoint missing');
@@ -398,7 +407,16 @@ const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');
 assert(archiveWriter.includes('months/'),'archive writer monthly bundle persistence missing');
+assert(archiveWriter.includes("getStore({name:'fll-value-history-v2',siteID:netlifySiteId,token:netlifyToken"),'archive writer must read the production Blob store directly instead of depending on anonymous access to an SSO-protected site');
+assert(archiveWriter.includes("source:'netlify-blobs-direct'"),'archive writer direct Blob source marker missing');
+assert(archiveWriter.includes('Durable Value History archive verification failed after write'),'archive writer must verify the durable index after persistence');
+assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret'),'archive writer must provide an actionable SSO-authentication failure');
+
 const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.yml','utf8');
 assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');
 assert(archiveWorkflow.includes('contents: write'),'archive workflow needs contents write permission');
+assert(archiveWorkflow.includes('NETLIFY_BLOBS_TOKEN:'),'archive workflow must inject an authenticated Blob token instead of relying on public site access');
+assert(archiveWorkflow.includes('NETLIFY_SITE_ID: 0cc03543-09f9-4de9-9b52-6cbc4fbc4357'),'archive workflow must target the production Blob site explicitly');
+assert(archiveWorkflow.includes('npm install --ignore-scripts --no-audit --no-fund'),'archive workflow must install the Netlify Blobs client before direct access');
+
 console.log('V348 Value History/consensus source integrity regression passed');

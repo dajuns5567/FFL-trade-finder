@@ -3,6 +3,7 @@ import { getStore } from '@netlify/blobs';
 const LEAGUE='1316867686394769408';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const store=()=>getStore('fll-value-history-v2');
+function safeStore(){try{return store()}catch(e){console.warn('value-history-store-init',e);return null}}
 const ARCHIVE_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history';
 let archiveIndexCache=null,archiveIndexCacheAt=0;
 async function archiveJson(path){
@@ -15,8 +16,11 @@ async function archiveIndex(){
   if(archiveIndexCache&&now-archiveIndexCacheAt<30000)return archiveIndexCache;
   try{
     const idx=await archiveJson('index.json');
-    archiveIndexCache=idx&&Array.isArray(idx.items)?idx:{items:[],months:[]};archiveIndexCacheAt=now;return archiveIndexCache;
-  }catch{return{items:[],months:[]}}
+    archiveIndexCache=idx&&Array.isArray(idx.items)?{...idx,reachable:true,error:null}:{items:[],months:[],reachable:true,error:null};
+    archiveIndexCacheAt=now;return archiveIndexCache;
+  }catch(e){
+    return{items:[],months:[],reachable:false,error:String(e?.message||e)};
+  }
 }
 function archiveItemAtOrBefore(items,targetMs){
   let best=items[0]||null;
@@ -28,12 +32,18 @@ async function archiveSnapshot(item){
   try{const snap=await archiveJson(item.path);return snap?.t&&Array.isArray(snap?.rows)?snap:null}catch{return null}
 }
 async function archiveAllSnapshots(){
-  const idx=await archiveIndex(),months=[...new Set((idx.months||[]).map(String).filter(Boolean))].sort(),out=[];
+  const idx=await archiveIndex(),months=[...new Set((idx.months||[]).map(String).filter(Boolean))].sort(),out=[],seen=new Set();
   for(const month of months){
     try{
       const bundle=await archiveJson(`months/${month}.json`);
-      for(const snap of bundle?.snapshots||[])if(snap?.t&&Array.isArray(snap.rows))out.push(snap);
-    }catch{}
+      for(const snap of bundle?.snapshots||[])if(snap?.t&&Array.isArray(snap.rows)&&!seen.has(String(snap.t))){seen.add(String(snap.t));out.push(snap)}
+    }catch(e){console.warn('value-history-archive-month',month,e)}
+  }
+  if(!out.length&&(idx.items||[]).length){
+    for(const item of idx.items||[]){
+      const snap=await archiveSnapshot(item);
+      if(snap?.t&&!seen.has(String(snap.t))){seen.add(String(snap.t));out.push(snap)}
+    }
   }
   out.sort((a,b)=>String(a.t).localeCompare(String(b.t)));return out;
 }
@@ -212,19 +222,31 @@ async function latestFallback(s,playerId){
   return{reachable:true,points:pointsFromSnapshots([snap],playerId),source:'latest-fallback'};
 }
 async function getPlayerHistory(s,playerId){
-  const indexed=await allItems(s),localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[],archiveSnaps=await archiveAllSnapshots(),snaps=mergeSnapshots(archiveSnaps,localSnaps);
-  if(snaps.length)return{points:pointsFromSnapshots(snaps,playerId),source:archiveSnaps.length?'github-archive+netlify-live':'netlify-live',snapshotCount:snaps.length};
-  if(indexed.source==='unavailable'){
-    const fallback=await latestFallback(s,playerId);
-    if(!fallback.reachable)throw new Error('history store unavailable');
-    return{points:fallback.points,source:fallback.source,snapshotCount:fallback.source==='empty'?0:1,partial:fallback.source==='latest-fallback'};
+  const archiveSnaps=await archiveAllSnapshots();
+  let indexed={items:[],source:s?'empty':'unavailable'},localSnaps=[];
+  if(s){
+    try{indexed=await allItems(s);localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[]}catch(e){indexed={items:[],source:'unavailable',error:String(e?.message||e)}}
   }
-  return{points:[],source:'empty',snapshotCount:0};
+  const snaps=mergeSnapshots(archiveSnaps,localSnaps);
+  if(snaps.length){
+    const source=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
+    return{points:pointsFromSnapshots(snaps,playerId),source,snapshotCount:snaps.length,partial:indexed.source==='unavailable'&&archiveSnaps.length>0};
+  }
+  if(s&&indexed.source==='unavailable'){
+    const fallback=await latestFallback(s,playerId);
+    if(fallback.reachable)return{points:fallback.points,source:fallback.source,snapshotCount:fallback.source==='empty'?0:1,partial:true};
+  }
+  return{points:[],source:indexed.source==='unavailable'?'unavailable':'empty',snapshotCount:0,partial:indexed.source==='unavailable'};
 }
 async function getTeamNetHistory(s,playerIds,teamId=''){
   const ids=[...new Set((playerIds||[]).map(String).filter(Boolean))].slice(0,100),wanted=new Set(ids),tid=String(teamId||'').trim();
   if(!ids.length&&!tid)return{points:[],playerCount:0,source:'empty'};
-  const indexed=await allItems(s),localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[],archiveSnaps=await archiveAllSnapshots(),snaps=mergeSnapshots(archiveSnaps,localSnaps);
+  const archiveSnaps=await archiveAllSnapshots();
+  let indexed={items:[],source:s?'empty':'unavailable'},localSnaps=[];
+  if(s){
+    try{indexed=await allItems(s);localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[]}catch(e){indexed={items:[],source:'unavailable',error:String(e?.message||e)}}
+  }
+  const snaps=mergeSnapshots(archiveSnaps,localSnaps);
   if(!snaps.length)return{points:[],playerCount:ids.length,source:indexed.source};
   const points=[];
   for(const snap of snaps){
@@ -242,7 +264,8 @@ async function getTeamNetHistory(s,playerIds,teamId=''){
     }
     points.push({t:snap.t,value:Math.round(value),playersFound:found,playerCount:ids.length,teamSnapshot:false});
   }
-  return{points,playerCount:points.length?Number(points[points.length-1]?.playerCount)||ids.length:ids.length,source:archiveSnaps.length?'github-archive+netlify-live':'netlify-live',snapshotCount:snaps.length};
+  const source=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
+  return{points,playerCount:points.length?Number(points[points.length-1]?.playerCount)||ids.length:ids.length,source,snapshotCount:snaps.length,partial:indexed.source==='unavailable'&&archiveSnaps.length>0};
 }
 function rowMap(snap){return new Map((snap?.rows||[]).map(r=>[String(r.id),r]))}
 function baselineFor(snaps,latestMs,days){
@@ -324,7 +347,9 @@ function itemAtOrBefore(items,targetMs){
   return best;
 }
 async function getMarketSummary(s){
-  const local=await allItems(s),arch=await archiveIndex();
+  let local={items:[],source:s?'empty':'unavailable'};
+  if(s){try{local=await allItems(s)}catch(e){local={items:[],source:'unavailable',error:String(e?.message||e)}}}
+  const arch=await archiveIndex();
   const timed=[],seenT=new Set();
   for(const item of arch.items||[]){const t=String(item?.t||'');if(!t||seenT.has(t))continue;seenT.add(t);timed.push({...item,source:'archive'})}
   for(const item of local.items||[]){const t=String(item?.t||'');if(!t)continue;if(seenT.has(t)){const i=timed.findIndex(x=>x.t===t);if(i>=0)timed[i]={...item,source:'local'};continue}seenT.add(t);timed.push({...item,source:'local'})}
@@ -533,45 +558,60 @@ function pickValuesFromSide(side,map){
   return{values,missing,complete:missing.length===0,total:values.reduce((n,x)=>n+x.value,0)};
 }
 async function completedTradeHistory(s){
-  const trades=await importedCompletedTrades(),indexed=await allItems(s),items=indexed.items||[];
-  if(!items.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',tracking_since:null,latest:null,trades:trades.map(t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_players:[],then_players_complete:false,then_picks:[],then_picks_complete:false,current_players:[],current_players_complete:false}))}))};
-  const latestItem=items[items.length-1],selected=new Map([[latestItem.key,latestItem]]),snapshotItemByTrade=new Map();
-  for(const trade of trades){
-    const ms=new Date(trade.created).getTime(),item=Number.isFinite(ms)?closestSnapshotItem(items,ms):null;
-    if(item){selected.set(item.key,item);snapshotItemByTrade.set(trade.id,item)}
+  const trades=await importedCompletedTrades();
+  const archiveSnaps=await archiveAllSnapshots();
+  let localSnaps=[],localState=s?'empty':'unavailable';
+  if(s){
+    try{
+      const indexed=await allItems(s);localState=indexed.source;
+      localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[];
+    }catch(e){localState='unavailable'}
   }
-  const selectedItems=[...selected.values()].sort((a,b)=>String(a.t).localeCompare(String(b.t))),snaps=await readSnapshotsBounded(s,selectedItems,20),snapByKey=new Map();
-  for(const snap of snaps){const item=selectedItems.find(x=>String(x.t)===String(snap.t));if(item)snapByKey.set(item.key,snap)}
-  const latestSnap=snapByKey.get(latestItem.key),latestMap=rowMap(latestSnap||{rows:[]});
+  const snaps=mergeSnapshots(archiveSnaps,localSnaps);
+  const emptyTrade=t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_players:[],then_players_complete:false,then_picks:[],then_picks_complete:false,current_players:[],current_players_complete:false}))});
+  if(!snaps.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',history_source:localState,tracking_since:null,latest:null,trades:trades.map(emptyTrade)};
+  const latestSnap=snaps[snaps.length-1],latestMap=rowMap(latestSnap||{rows:[]});
+  const closestSnap=ms=>{let best=null;for(const snap of snaps){const sm=new Date(snap?.t||'').getTime();if(!Number.isFinite(sm))continue;if(sm<=ms)best=snap;else break}return best};
   const out=trades.map(trade=>{
-    const histItem=snapshotItemByTrade.get(trade.id)||null,histSnap=histItem?snapByKey.get(histItem.key):null,histMap=rowMap(histSnap||{rows:[]}),histPickMap=pickMap(histSnap||{picks:[]});
+    const ms=new Date(trade.created).getTime(),histSnap=Number.isFinite(ms)?closestSnap(ms):null,histMap=rowMap(histSnap||{rows:[]}),histPickMap=pickMap(histSnap||{picks:[]});
     const sides=trade.sides.map(side=>{
-      const then=histItem?playerValuesFromMap(side,histMap):{values:[],missing:[...(side.player_ids||[])],complete:false,total:null},thenPicks=histItem?pickValuesFromSide(side,histPickMap):{values:[],missing:(side.picks||[]).map(p=>`pick-${p.season}-${p.round}-${p.original_roster_id}`),complete:false,total:null},current=playerValuesFromMap(side,latestMap);
-      return{...side,then_players:then.values,then_players_complete:Boolean(histItem&&then.complete),then_player_total:histItem&&then.complete?then.total:null,then_picks:thenPicks.values,then_picks_complete:Boolean(histItem&&thenPicks.complete),then_pick_total:histItem&&thenPicks.complete?thenPicks.total:null,current_players:current.values,current_players_complete:current.complete,current_player_total:current.complete?current.total:null};
+      const then=histSnap?playerValuesFromMap(side,histMap):{values:[],missing:[...(side.player_ids||[])],complete:false,total:null},thenPicks=histSnap?pickValuesFromSide(side,histPickMap):{values:[],missing:(side.picks||[]).map(p=>`pick-${p.season}-${p.round}-${p.original_roster_id}`),complete:false,total:null},current=playerValuesFromMap(side,latestMap);
+      return{...side,then_players:then.values,then_players_complete:Boolean(histSnap&&then.complete),then_player_total:histSnap&&then.complete?then.total:null,then_picks:thenPicks.values,then_picks_complete:Boolean(histSnap&&thenPicks.complete),then_pick_total:histSnap&&thenPicks.complete?thenPicks.total:null,current_players:current.values,current_players_complete:current.complete,current_player_total:current.complete?current.total:null};
     });
-    return{...trade,trade_snapshot_t:histItem?.t||null,current_snapshot_t:latestItem?.t||null,sides};
+    return{...trade,trade_snapshot_t:histSnap?.t||null,current_snapshot_t:latestSnap?.t||null,sides};
   });
-  return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',tracking_since:items[0]?.t||null,latest:latestItem?.t||null,trades:out};
+  const historySource=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
+  return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',history_source:historySource,tracking_since:snaps[0]?.t||null,latest:latestSnap?.t||null,trades:out};
 }
 async function health(s){
-  const latest=await safeGet(s,LATEST_KEY),indexed=await allItems(s);
-  if(indexed.items.length)return{ok:true,storage:'reachable',source:indexed.source,snapshotCount:indexed.items.length,latest:latest?.t||null};
-  if(indexed.source==='unavailable'){
-    if(latest?.key){const snap=await safeGet(s,latest.key);if(snap)return{ok:true,storage:'degraded',source:'latest-fallback',snapshotCount:1,latest:latest?.t||null}}
-    return{ok:false,storage:'unavailable',source:'none',snapshotCount:0,latest:null};
-  }
-  return{ok:true,storage:'reachable',source:'empty',snapshotCount:0,latest:latest?.t||null};
+  const arch=await archiveIndex();
+  let latest=null,indexed={items:[],source:s?'empty':'unavailable'};
+  if(s){latest=await safeGet(s,LATEST_KEY);try{indexed=await allItems(s)}catch(e){indexed={items:[],source:'unavailable',error:String(e?.message||e)}}}
+  const archiveCount=(arch.items||[]).length,liveCount=(indexed.items||[]).length,total=Math.max(archiveCount,liveCount);
+  return{
+    ok:archiveCount>0||liveCount>0||indexed.source!=='unavailable',
+    storage:archiveCount>0||liveCount>0?'reachable':(indexed.source==='unavailable'&&!arch.reachable?'unavailable':'degraded'),
+    source:archiveCount&&liveCount?'github-archive+netlify-live':archiveCount?'github-archive':liveCount?'netlify-live':indexed.source,
+    snapshotCount:total,latest:latest?.t||arch.latest||null,
+    components:{
+      githubArchive:{reachable:arch.reachable!==false,snapshotCount:archiveCount,latest:arch.latest||null,error:arch.error||null},
+      netlifyLive:{reachable:indexed.source!=='unavailable',snapshotCount:liveCount,latest:latest?.t||null,error:indexed.error||null}
+    }
+  };
 }
 
 export { monthKey, marketFromSnapshots, baselineFor };
 
 export default async (req)=>{
   try{
-    const url=new URL(req.url),s=store();
-    try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
-    try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
+    const url=new URL(req.url),s=safeStore();
+    if(s){
+      try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
+      try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
+    }
     if(req.method==='GET'){
       if(url.searchParams.get('archive_export')==='1'){
+        if(!s)return json({error:'netlify live buffer unavailable'},503);
         const indexed=await allItems(s),sinceMs=new Date(String(url.searchParams.get('since')||'')).getTime();
         const items=(indexed.items||[]).filter(item=>{const ms=new Date(item?.t||'').getTime();return !Number.isFinite(sinceMs)||!Number.isFinite(ms)||ms>sinceMs});
         const snapshots=await readSnapshotsBounded(s,items,25);
@@ -600,6 +640,7 @@ export default async (req)=>{
       return json({player_id:playerId,points:result.points||[],scoring_milestones:milestones,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
+    if(!s)return json({error:'live history store unavailable'},503);
     const body=await req.json().catch(()=>null);
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);
     const rows=cleanRows(body?.rows),picks=cleanPicks(body?.picks),teams=cleanTeams(body?.teams);

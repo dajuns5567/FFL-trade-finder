@@ -21,12 +21,9 @@ function addStyles(){
   #valueHistory .vh-shell{display:grid;gap:16px}
   #valueHistory .vh-control-row{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:4px 0 0;padding-bottom:4px}
   #valueHistory .vh-hero{display:block;margin:0 0 4px}
-  #valueHistory .vh-search-wrap{width:min(440px,100%);transition:width .18s ease}
-  #valueHistory .vh-search-wrap.vh-player-selected{width:min(400px,100%)}
+  #valueHistory .vh-search-wrap{width:min(440px,100%)}
   #valueHistory .vh-search-wrap label b{display:block;font-size:15px;font-weight:900;letter-spacing:.02em;color:#f4f4f5;margin-bottom:3px}
-  #valueHistory .vh-search-wrap input{margin:7px 0 0;border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important;transition:border-color .15s ease,box-shadow .15s ease,background .15s ease}
-  #valueHistory .vh-search-wrap.vh-player-selected input{min-height:44px;padding:10px 14px;border-color:color-mix(in srgb,#e4b53f 38%,var(--line))!important;border-radius:10px!important;background:linear-gradient(180deg,color-mix(in srgb,#e4b53f 5%,var(--card)),color-mix(in srgb,var(--card) 97%,black))!important;color:#f4f4f5!important;font-size:17px!important;font-weight:850!important;letter-spacing:.005em!important}
-  #valueHistory .vh-search-wrap.vh-player-selected label b{font-size:11px;color:#e4b53f;text-transform:uppercase;letter-spacing:.07em;margin-bottom:1px}
+  #valueHistory .vh-search-wrap input{margin:7px 0 0}
   #valueHistory .vh-search-wrap input:focus,#valueHistory .vh-search-wrap input:focus-visible,#valueHistory input[type="search"]:focus,#valueHistory input[type="search"]:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.20)!important}
   #valueHistory .vh-status{font-size:12px;color:var(--muted);text-align:right;line-height:1.45;padding:0 2px;white-space:nowrap}
   #valueHistory .vh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
@@ -74,10 +71,12 @@ function addStyles(){
   #valueHistory .vh-neutral{color:var(--muted)}
   #valueHistory .vh-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   #valueHistory .vh-profile-info{display:grid;grid-template-columns:minmax(210px,1.15fr) minmax(560px,3.8fr) minmax(165px,.9fr);gap:0;align-items:stretch}
-  #valueHistory .vh-profile-primary{display:grid;grid-template-rows:38px 28px 18px;align-content:center;min-width:0;padding:10px 16px 10px 14px}
-  #valueHistory .vh-profile-primary h2{margin:0;font-size:24px;line-height:38px;letter-spacing:-.01em;align-self:center}
-  #valueHistory .vh-profile-kicker{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-  #valueHistory .vh-profile-kicker span{display:inline-flex;align-items:center;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--card) 90%,transparent);font-size:12px;color:var(--muted)}
+  #valueHistory .vh-profile-primary{display:grid;grid-template-rows:18px 38px 18px;align-content:center;justify-items:center;text-align:center;min-width:0;padding:10px 16px}
+  #valueHistory .vh-profile-primary>small{color:#e4b53f;font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;margin:0;line-height:18px}
+  #valueHistory .vh-profile-primary h2{margin:0;font-size:22px;line-height:38px;letter-spacing:-.01em;align-self:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #valueHistory .vh-profile-kicker{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;justify-content:center;min-width:0}
+  #valueHistory .vh-profile-kicker span{display:inline-flex;align-items:center;padding:2px 6px;border:0;border-radius:0;background:transparent;font-size:12px;color:var(--muted);white-space:nowrap}
+  #valueHistory .vh-profile-kicker span+span:before{content:"•";margin-right:6px;color:color-mix(in srgb,#e4b53f 65%,var(--muted))}
   #valueHistory .vh-profile-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
   #valueHistory .vh-profile-fact{border-left:1px solid var(--line);padding:10px 16px;min-width:0;display:grid;grid-template-rows:18px 38px 18px;align-content:center;justify-items:center;text-align:center}
   #valueHistory .vh-profile-fact small{color:#e4b53f;font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;margin:0;line-height:18px}
@@ -422,9 +421,8 @@ function renderSearchResults(value){
   results.innerHTML=matches.map(z=>`<button type="button" class="secondary small" data-vh-id="${esc(z.x.id)}">${esc(playerName(z.x.id))} • ${esc(groupPos(z.x))}</button>`).join('');
 }
 function syncPlayerSearchState(){
-  const wrap=document.querySelector('#valueHistory .vh-search-wrap'),label=wrap?.querySelector('label b');
-  if(wrap)wrap.classList.toggle('vh-player-selected',currentView==='player'&&!!currentPlayerId);
-  if(label)label.textContent=currentView==='player'&&currentPlayerId?'Selected player':'Search player history';
+  const label=document.querySelector('#valueHistory .vh-search-wrap label b');
+  if(label)label.textContent='Search player history';
 }
 function selectPlayer(id){
   currentView='player';syncSubnav();currentPlayerId=String(id);const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
@@ -1044,7 +1042,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   <div class="vh-card">
     <div class="vh-toolbar" style="margin-bottom:12px"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div>
     <div class="vh-profile-info">
-      <div class="vh-profile-primary"><h2>${esc(playerName(id))}</h2><div class="vh-profile-kicker"><span>${esc(meta.pos)}</span><span>${esc(meta.nfl)}</span>${meta.age?`<span>Age ${meta.age}</span>`:''}</div></div>
+      <div class="vh-profile-primary"><small>Player</small><h2>${esc(playerName(id))}</h2><div class="vh-profile-kicker"><span>${esc(meta.pos)}</span><span>${esc(meta.nfl)}</span>${meta.age?`<span>Age ${meta.age}</span>`:''}</div></div>
       <div class="vh-profile-facts">
         <div class="vh-profile-fact"><small>Fantasy team</small><b>${esc(meta.ownerName)}</b></div>
         <div class="vh-profile-fact"><small>NFL team</small><b>${esc(meta.nfl)}</b></div>

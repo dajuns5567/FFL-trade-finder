@@ -394,7 +394,7 @@ assert(backend.includes("V346_KTC_CUTOFF_MS=Date.parse('2026-09-08T05:23:00.000Z
 assert(backend.includes('scrubV346KtcContamination(s)'),'V346 history scrub missing');
 assert(backend.includes('writeFilteredIndexes(s,keep)'),'V346 history reindex missing');
 
-assert(ui.includes('scheduleSnapshot(0)'),'first snapshot is not attempted immediately on site load');
+assert(ui.includes('scheduleSnapshot(0,snapshotSourceFromUrl())'),'first snapshot is not attempted immediately on site load with source tagging');
 assert(ui.includes("function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;"),'Value History capture must wait only for usable site player state, not for a specific ranking source');
 assert(!ui.includes("Object.keys(state.players).length<100||!hasValidatedKtcSnapshot()"),'Value History player snapshots must not be blocked by the KTC-specific validation gate');
 assert(ui.includes("const rows=currentRows();"),'Value History must copy the site already-calculated player values into each snapshot');

@@ -372,16 +372,22 @@ function currentTeamRows(playerRows=currentRows()){
 }
 function hasValidatedKtcSnapshot(){for(const [name,src] of Object.entries(state?.rankings||{})){const label=`${name} ${src?.source||''}`.toLowerCase();if(!/ktc|keeptradecut/.test(label))continue;const count=Number(src?.playerCount)||Object.keys(src?.data||{}).length;if(count>=300)return true}return false}
 function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();return !/loading|updating|refreshing/.test(text)}
-async function recordSnapshot(){
+let pendingSnapshotSource='page-load';
+function snapshotSourceFromUrl(){
+  try{return new URLSearchParams(location.search).get('vh_source')==='scheduled'?'scheduled':'page-load'}catch{return'page-load'}
+}
+async function recordSnapshot(source=pendingSnapshotSource){
   try{
-    if(!snapshotPreconditions()){scheduleSnapshot(2000);return false}
+    if(!snapshotPreconditions()){scheduleSnapshot(2000,source);return false}
     const rows=currentRows();
-    if(rows.length<100){scheduleSnapshot(2000);return false}
+    if(rows.length<100){scheduleSnapshot(2000,source);return false}
     let picks=[],teams=[];
     try{picks=currentPickRows()}catch(e){console.warn('value-history-pick-enrichment',e)}
     try{teams=currentTeamRows(rows)}catch(e){console.warn('value-history-team-enrichment',e)}
-    const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams})});
+    const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})});
     if(r.ok){
+      const stored=await r.json().catch(()=>({ok:true}));
+      window.__vhLastSnapshot={ok:true,source,t:stored?.t||null};
       marketCache=null;teamNetCache.clear();
       if(uiReady){
         if(currentView==='market')loadMarket(true);
@@ -390,13 +396,13 @@ async function recordSnapshot(){
       }
       return true
     }
-    scheduleSnapshot(3000);return false
+    scheduleSnapshot(3000,source);return false
   }catch(e){
     console.warn('value-history-player-snapshot',e);
-    scheduleSnapshot(3000);return false
+    scheduleSnapshot(3000,source);return false
   }
 }
-function scheduleSnapshot(delay=60000){clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(recordSnapshot,{timeout:5000});else recordSnapshot()},delay)}
+function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){pendingSnapshotSource=source;clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(()=>recordSnapshot(source),{timeout:5000});else recordSnapshot(source)},delay)}
 
 function initUI(){
   if(uiReady)return;uiReady=true;
@@ -1082,7 +1088,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   </div>
   ${similarPlayersSection(id)}`;
 }
-function boot(){addShell();scheduleSnapshot(0);document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000);if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+function boot(){addShell();scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={currentRows,recordSnapshot,historyFetch,marketFetch,livePlayerMeta,periodPoints};
 })();

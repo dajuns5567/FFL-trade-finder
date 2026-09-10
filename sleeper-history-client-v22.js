@@ -49,7 +49,7 @@ async function hydrateImportedOffense22(){
   if(!j?.ok||j?.source!=='Sleeper importer snapshot'||!j?.complete||!j?.weightPlan?.yearWeights||!j?.stats)throw Error('Sleeper importer compact artifact failed validation');
   const years=Object.keys(j.weightPlan.yearWeights).map(Number).filter(Number.isFinite),available=(j.availableYears||[]).map(Number),currentSeason=Number(j.currentSeason),inSeason=j.weightPlan?.mode==='in-season';
   if(years.length<3||available.length!==years.length||!years.every(y=>y===currentSeason&&inSeason?usableCurrentSeason22(j.qualifiedCurrentStats):usableSeason22(j.stats?.[y])))throw Error('Sleeper importer compact artifact is incomplete for scoring history');
-  if(inSeason&&j.currentSeasonQualification?.finalGamesOnly!==true)throw Error('Current-season scoring artifact is missing final-game qualification');
+  if(inSeason&&(j.currentSeasonQualification?.finalGamesOnly!==true||j.currentSeasonQualification?.fullWeekValuationGate!==true))throw Error('Current-season scoring artifact is missing the final-game/full-week valuation gate');
   mergeOffenseHistory22(j.stats,currentSeason,j.qualifiedCurrentStats||{});
   state.sleeperHistory={
     generatedAt:j.generatedAt,

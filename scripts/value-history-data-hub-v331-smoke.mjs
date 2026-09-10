@@ -346,6 +346,10 @@ assert(backend.includes("ARCHIVE_RAW='https://raw.githubusercontent.com/dajuns55
 assert(backend.includes("url.searchParams.get('archive_export')==='1'"),'Value History archive export endpoint missing');
 assert(backend.includes('archiveAllSnapshots()'),'archived snapshots are not merged into player/team history');
 assert(backend.includes('archiveSnapshot(item)'),'market history does not read durable archived snapshots');
+assert(backend.includes("function archiveRelativePath(path)"),'archive snapshot paths must normalize branch-root prefixes');
+assert(backend.includes("p.startsWith('value-history/')?p.slice('value-history/'.length):p"),'archive-only startup must not double-prefix value-history paths after a Netlify account switch');
+assert(backend.includes("archiveJson(archiveRelativePath(item.path))"),'market archive reads must use normalized GitHub paths');
+
 assert(backend.includes("'github-archive+netlify-live'"),'history source does not expose archive/live merge state');
 assert(backend.includes("function safeStore(){try{return store()}catch"),'Value History reads must survive Netlify Blob store initialization failure');
 assert(backend.includes("'github-archive'"),'Value History must support archive-only history when the live Blob layer is unavailable');

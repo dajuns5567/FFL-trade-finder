@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {standardPpr,mergedStats,aggregateWeeks,qualifiesCurrentSeasonGame,playerSnapShare,leagueFantasyPoints} from '../netlify/functions/ppr-scoring.mjs';
+import {standardPpr,mergedStats,aggregateWeeks,qualifiesCurrentSeasonGame,playerSnapShare,leagueFantasyPoints,latestFullyCompletedWeek,valuationEligibleCurrentSeasonWeeks} from '../netlify/functions/ppr-scoring.mjs';
 import {weightPlan} from '../netlify/functions/history-weights.mjs';
 
 test('reconstructs standard PPR from Sleeper raw offense stats',()=>{
@@ -65,4 +65,23 @@ test('current-season identity shifts dynamically year to year',()=>{
   assert.deepEqual(w1_2027.yearWeights,{2027:.10,2026:.55,2025:.25,2024:.10});
   const done_2027=weightPlan(2027,18,'complete');
   assert.deepEqual(done_2027.yearWeights,{2027:.60,2026:.30,2025:.10});
+});
+
+test('partial NFL week is collected but withheld from valuation until all scheduled games are final',()=>{
+  const qualified={
+    1:{p1:{pts_ppr:20}},
+    2:{p1:{pts_ppr:25},p2:{pts_ppr:12}}
+  };
+  const partial={
+    1:{scheduledGames:16,finalGames:16,complete:true},
+    2:{scheduledGames:16,finalGames:1,complete:false}
+  };
+  assert.equal(latestFullyCompletedWeek(partial),1);
+  const gated=valuationEligibleCurrentSeasonWeeks(qualified,partial);
+  assert.deepEqual(gated.weekly[1],qualified[1]);
+  assert.deepEqual(gated.weekly[2],{});
+  const done={...partial,2:{scheduledGames:16,finalGames:16,complete:true}};
+  const released=valuationEligibleCurrentSeasonWeeks(qualified,done);
+  assert.equal(released.completedWeek,2);
+  assert.deepEqual(released.weekly[2],qualified[2]);
 });

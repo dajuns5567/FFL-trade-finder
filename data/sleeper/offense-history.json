@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-09T23:32:13.562Z",
+  "generatedAt": "2026-09-10T00:31:54.172Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 0,
@@ -36,7 +36,9 @@
     "minimumSnapShare": 0.2,
     "minimumFantasyPoints": 8,
     "finalGamesOnly": true,
-    "finalTeamsByWeek": {},
+    "finalTeamsByWeek": {
+      "1": []
+    },
     "diagnostics": {
       "finalGames": 0,
       "qualifiedPlayerGames": 0,

@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {aggregateWeeks,rows,qualifiesCurrentSeasonGame,valuationEligibleCurrentSeasonWeeks} from '../netlify/functions/ppr-scoring.mjs';
+import {aggregateWeeks,rows,qualifiesCurrentSeasonGame,valuationEligibleCurrentSeasonWeeks,weekFinalityFromGameSlots} from '../netlify/functions/ppr-scoring.mjs';
 
 const DEFAULT_LEAGUE_ID='1316867686394769408';
 const START_LEAGUE_ID=String(process.argv[2]||process.env.SLEEPER_LEAGUE_ID||DEFAULT_LEAGUE_ID);
@@ -80,15 +80,14 @@ function playerPhase(meta){
 async function fetchFinalTeamsForWeek(season,week){
   const url=`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${season}&seasontype=2&week=${week}`;
   const payload=await getJson(url),events=Array.isArray(payload?.events)?payload.events:[],out=new Set();
-  let finalGames=0;
-  for(const event of events){
-    const comp=event?.competitions?.[0],status=comp?.status?.type;
-    const isFinal=status?.completed===true||String(status?.name||'').toUpperCase()==='STATUS_FINAL';
-    if(!isFinal)continue;
-    finalGames++;
-    for(const team of comp?.competitors||[]){const code=normalizeTeamCode(team?.team?.abbreviation);if(code)out.add(code)}
-  }
-  return{finalTeams:out,scheduledGames:events.length,finalGames,complete:events.length>0&&finalGames===events.length};
+  const slots=events.map((event,index)=>{
+    const comp=event?.competitions?.[0],status=comp?.status?.type||{},id=String(event?.id||`${season}-w${week}-slot-${index+1}`);
+    const teams=(comp?.competitors||[]).map(team=>normalizeTeamCode(team?.team?.abbreviation)).filter(Boolean);
+    return{id,status,teams};
+  });
+  const finality=weekFinalityFromGameSlots(slots);
+  for(const slot of finality.slots)if(slot.state==='final')for(const team of slot.teams||[])out.add(team);
+  return{finalTeams:out,...finality};
 }
 async function qualifiedCurrentSeasonWeekly(season,weekly,players,scoringSettings){
   const out={},finalTeamsByWeek={},weekFinalityByWeek={},diagnostics={finalGames:0,qualifiedPlayerGames:0,rejectedPlayerGames:0};
@@ -98,8 +97,9 @@ async function qualifiedCurrentSeasonWeekly(season,weekly,players,scoringSetting
     try{finality=await fetchFinalTeamsForWeek(season,week)}catch(e){finality={finalTeams:new Set(),scheduledGames:0,finalGames:0,complete:false};diagnostics[`week${week}FinalityError`]=String(e?.message||e)}
     const finalTeams=finality.finalTeams;
     finalTeamsByWeek[week]=[...finalTeams];
-    weekFinalityByWeek[week]={scheduledGames:finality.scheduledGames,finalGames:finality.finalGames,complete:finality.complete};
+    weekFinalityByWeek[week]={scheduledGames:finality.scheduledGames,finalGames:finality.finalGames,ignoredGames:finality.ignoredGames,blockingGames:finality.blockingGames,complete:finality.complete,nullSlots:finality.nullSlots,slots:finality.slots.map(s=>({id:s.id,state:s.state,teams:s.teams||[]}))};
     diagnostics.finalGames+=finality.finalGames;
+    diagnostics.ignoredGames=(diagnostics.ignoredGames||0)+finality.ignoredGames;
     const parsed=rows(payload),teamMax=new Map();
     for(const [id,stats] of parsed){
       const meta=players?.[id],team=normalizeTeamCode(meta?.team);if(!team||!finalTeams.has(team))continue;
@@ -169,7 +169,8 @@ async function main(){
       'Raw weekly Sleeper stat payloads are preserved. No player production number is fabricated.',
       'During the active current season, only player-games from NFL games verified final are eligible for scoring.',
       'A finalized current-season player-game qualifies when Sleeper snap share is at least 20% or league fantasy points are at least 8. Missing snap data does not satisfy the snap criterion.',
-      'Finalized games are collected immediately, but a new NFL week does not enter valuation until every scheduled game in that week is final.',
+      'Finalized games are collected immediately, but a new NFL week does not enter valuation until every non-ignored game slot in that week is final.',
+      'Delayed, postponed, suspended, or canceled games occupy a null scoring slot and do not block the rest of the week. If the same event is later made up, its stable event slot becomes final and the makeup result fills that original null slot rather than shifting later weeks.',
       'Offensive PPR is derived only from Sleeper-provided pts_ppr or deterministic standard-PPR scoring of Sleeper raw stats.',
       'offense-history.json is a compact delivery artifact derived only from the verified season aggregates; it does not recalculate or estimate player production.',
       'Raw weekly stats remain available for exact league-specific IDP reconstruction, including stacked sack/interception scoring.'

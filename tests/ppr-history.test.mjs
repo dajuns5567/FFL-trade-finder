@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {standardPpr,mergedStats,aggregateWeeks,qualifiesCurrentSeasonGame,playerSnapShare,leagueFantasyPoints,latestFullyCompletedWeek,valuationEligibleCurrentSeasonWeeks} from '../netlify/functions/ppr-scoring.mjs';
+import {standardPpr,mergedStats,aggregateWeeks,qualifiesCurrentSeasonGame,playerSnapShare,leagueFantasyPoints,latestFullyCompletedWeek,valuationEligibleCurrentSeasonWeeks,classifyGameSlot,weekFinalityFromGameSlots} from '../netlify/functions/ppr-scoring.mjs';
 import {weightPlan} from '../netlify/functions/history-weights.mjs';
 
 test('reconstructs standard PPR from Sleeper raw offense stats',()=>{
@@ -84,4 +84,28 @@ test('partial NFL week is collected but withheld from valuation until all schedu
   const released=valuationEligibleCurrentSeasonWeeks(qualified,done);
   assert.equal(released.completedWeek,2);
   assert.deepEqual(released.weekly[2],qualified[2]);
+});
+
+test('delayed or canceled game slots are null and non-blocking, then a makeup final fills the same slot',()=>{
+  const slots=[
+    {id:'g1',status:{name:'STATUS_FINAL',completed:true}},
+    {id:'g2',status:{name:'STATUS_POSTPONED',description:'Postponed'}},
+    {id:'g3',status:{name:'STATUS_CANCELED',description:'Canceled'}}
+  ];
+  const delayed=weekFinalityFromGameSlots(slots);
+  assert.equal(delayed.complete,true);
+  assert.equal(delayed.finalGames,1);
+  assert.equal(delayed.ignoredGames,2);
+  assert.deepEqual(delayed.nullSlots,['g2','g3']);
+  assert.equal(classifyGameSlot({name:'STATUS_DELAYED',description:'Delayed'}),'ignored');
+  const madeUp=weekFinalityFromGameSlots([slots[0],{id:'g2',status:{name:'STATUS_FINAL',completed:true}},slots[2]]);
+  assert.equal(madeUp.complete,true);
+  assert.equal(madeUp.finalGames,2);
+  assert.equal(madeUp.ignoredGames,1);
+  assert.deepEqual(madeUp.nullSlots,['g3']);
+  assert.equal(madeUp.slots.find(x=>x.id==='g2')?.state,'final');
+});
+
+test('completed-week pointer never jumps across a still-blocking earlier week',()=>{
+  assert.equal(latestFullyCompletedWeek({1:{complete:true},2:{complete:false},3:{complete:true}}),1);
 });

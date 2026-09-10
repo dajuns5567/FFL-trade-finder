@@ -1,0 +1,38 @@
+name: Scheduled Value History Browser Refresh
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '47 */3 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: value-history-headless-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install browser runtime
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Load production Fleeced site and record scheduled observation
+        env:
+          VALUE_HISTORY_SITE_URL: ${{ vars.VALUE_HISTORY_SITE_URL || 'https://subtle-genie-6167c5.netlify.app/' }}
+          NETLIFY_SITE_ID: 0cc03543-09f9-4de9-9b52-6cbc4fbc4357
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN || secrets.NETLIFY_AUTH_TOKEN }}
+          VALUE_HISTORY_RECENT_MS: 9900000
+        run: node scripts/value-history-headless-refresh.mjs

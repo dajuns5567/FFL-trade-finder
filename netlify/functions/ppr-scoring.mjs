@@ -95,9 +95,25 @@ export function qualifiesCurrentSeasonGame(stats,{phase='offense',teamSnapMax=0,
   return{qualified:(snapShare!=null&&snapShare>=.20)||points>=8,points,snapShare};
 }
 
+export const IGNORED_GAME_STATUS_TOKENS=['CANCEL','POSTPON','DELAY','SUSPEND'];
+export function classifyGameSlot(status={}){
+  const name=String(status?.name||'').toUpperCase(),description=String(status?.description||'').toUpperCase(),detail=String(status?.detail||'').toUpperCase();
+  if(status?.completed===true||name==='STATUS_FINAL'||name==='FINAL')return'final';
+  const text=`${name} ${description} ${detail}`;
+  if(IGNORED_GAME_STATUS_TOKENS.some(token=>text.includes(token)))return'ignored';
+  return'blocking';
+}
+export function weekFinalityFromGameSlots(slots=[]){
+  const list=(slots||[]).map((slot,index)=>({...slot,id:String(slot?.id||`slot-${index+1}`),state:slot?.state||classifyGameSlot(slot?.status||{})}));
+  const finalGames=list.filter(x=>x.state==='final').length,ignoredGames=list.filter(x=>x.state==='ignored').length,blockingGames=list.filter(x=>x.state==='blocking').length;
+  return{scheduledGames:list.length,finalGames,ignoredGames,blockingGames,complete:list.length>0&&blockingGames===0,nullSlots:list.filter(x=>x.state==='ignored').map(x=>x.id),slots:list};
+}
 export function latestFullyCompletedWeek(finalityByWeek={}){
   let last=0;
-  for(let week=1;week<=18;week++)if(finalityByWeek?.[week]?.complete===true)last=week;
+  for(let week=1;week<=18;week++){
+    if(finalityByWeek?.[week]?.complete===true)last=week;
+    else break;
+  }
   return last;
 }
 

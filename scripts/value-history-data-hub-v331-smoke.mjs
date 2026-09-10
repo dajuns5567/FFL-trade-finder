@@ -291,7 +291,7 @@ assert(ui.includes('function hindsightFair(give,recv,trade){return fairWithValue
 assert(ui.includes('const f=tradeHistoryFair(bReceived,aReceived,trade)'), 'historical Trade Evaluator must use the shared Trade History fairness adapter');
 assert(ui.includes('<h4>Hindsight</h4>'),'Fleeced Trade Breakdown must include Hindsight');
 assert(ui.includes('function historicalValueComparisonSection(trade)'),'Historical Value Comparison must be a distinct final Trade History section');
-assert(ui.includes('${tradeValuePresentation(trade)}${tradeEvaluatorSection(trade)}${historicalValueComparisonSection(trade)}'),'Trade History order must be Fleeced/Hindsight, Original Analysis, then Historical Value Comparison');
+assert(ui.includes("${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}"),'Trade History expanded order must remain Hindsight, Original Analysis, then Historical Value Comparison');
 assert(!ui.includes('Historical player snapshot unavailable'),'redundant unavailable snapshot header label must not be shown');
 assert(!ui.includes('historical pick fallback'),'internal retroactive pick fallback wording must remain hidden');
 assert(!ui.includes('Historical value change compared with what each side ultimately holds from the deal today.'),'Fleeced Trade Breakdown description must be removed');

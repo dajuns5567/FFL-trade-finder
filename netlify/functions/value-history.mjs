@@ -27,9 +27,13 @@ function archiveItemAtOrBefore(items,targetMs){
   for(const item of items||[]){const ms=new Date(item?.t||'').getTime();if(!Number.isFinite(ms))continue;if(ms<=targetMs)best=item;else break}
   return best;
 }
+function archiveRelativePath(path){
+  const p=String(path||'').replace(/^\/+/, '');
+  return p.startsWith('value-history/')?p.slice('value-history/'.length):p;
+}
 async function archiveSnapshot(item){
   if(!item?.path)return null;
-  try{const snap=await archiveJson(item.path);return snap?.t&&Array.isArray(snap?.rows)?snap:null}catch{return null}
+  try{const snap=await archiveJson(archiveRelativePath(item.path));return snap?.t&&Array.isArray(snap?.rows)?snap:null}catch{return null}
 }
 async function archiveAllSnapshots(){
   const idx=await archiveIndex(),months=[...new Set((idx.months||[]).map(String).filter(Boolean))].sort(),out=[],seen=new Set();

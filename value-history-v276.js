@@ -679,7 +679,7 @@ function tradeEvaluatorSection(trade){
   const f=a.f,edge=Number(f?.edgeEffective)||0;
   return`<div class="vh-card vh-history-section"><div class="vh-eval-head"><div><h3>Original Trade Analysis</h3><div class="vh-sub">The original trade package evaluated with the Trade History valuation context that applied when the trade occurred. Current/future Trade Evaluator and draft-pick logic are not modified.</div></div></div>${tradeResultScoreboard(a.teamAName,f.bEffective,a.teamBName,f.aEffective,a.score,a.label)}<div class="vh-eval-scorebar" aria-label="Trade Evaluator score ${Math.round(a.score)} out of 100"><i style="width:${a.score}%"></i></div><div class="vh-detail-caption">Original trade detail</div><div class="vh-eval-grid">${evaluatorSide(`${a.teamAName}`,a.aReceived,f.bRaw,f.bAdj,f.bEffective,trade)}${evaluatorSide(`${a.teamBName}`,a.bReceived,f.aRaw,f.aAdj,f.aEffective,trade)}</div><div class="vh-trade-summary3"><div><small>Raw difference</small><b>${signed(Number(f.edgeRaw)||0)}</b></div><div><small>Value adjustment</small><b>${Math.max(Number(f.aAdj)||0,Number(f.bAdj)||0)>0?'+'+fmt(Math.max(Number(f.aAdj)||0,Number(f.bAdj)||0)):'0'}</b></div><div><small>Adjusted difference</small><b class="${deltaClass(edge)}">${signed(edge)}</b></div></div></div>`
 }
-function tradeStateKey(trade){return String(trade?.id||trade?.transaction_id||trade?.created||Math.random())}
+function tradeStateKey(trade){return String(trade?.id||trade?.transaction_id||`${trade?.created||'unknown'}:${(trade?.roster_ids||[]).join('-')}`)}
 function compactTradeAssetLabel(p,trade){
   if(p?.player_id||p?.id)return esc(playerName(p.player_id||p.id));
   if(p?.season&&p?.round)return `${esc(p.season)} R${esc(p.round)}`;

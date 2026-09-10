@@ -403,7 +403,7 @@ assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks
 assert(ui.includes("else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId);"),'successful Value History writes must refresh the currently viewed player chart immediately');
 assert(ui.includes("try{picks=currentPickRows()}catch"),'draft-pick snapshot enrichment must never block the core player snapshot');
 assert(ui.includes("try{teams=currentTeamRows(rows)}catch"),'team snapshot enrichment must never block the core player snapshot');
-assert(ui.includes("if(rows.length<100){scheduleSnapshot(2000);return false}"),'player rows must be the only required snapshot payload before enrichment');
+assert(ui.includes("if(rows.length<100){scheduleSnapshot(2000,source);return false}"),'player rows must be the only required snapshot payload before enrichment');
 assert(ui.indexOf("const rows=currentRows();")<ui.indexOf("try{picks=currentPickRows()}catch"),'core player snapshot must be built before optional pick enrichment');
 assert(ui.indexOf("const rows=currentRows();")<ui.indexOf("try{teams=currentTeamRows(rows)}catch"),'core player snapshot must be built before optional team enrichment');
 assert(ui.includes("scheduleSnapshot(1000,'manual-update')"),'Update-triggered value recalculation must schedule a new historical observation');

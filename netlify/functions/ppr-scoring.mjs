@@ -94,3 +94,15 @@ export function qualifiesCurrentSeasonGame(stats,{phase='offense',teamSnapMax=0,
   const points=leagueFantasyPoints(stats,scoringSettings),snapShare=playerSnapShare(stats,{phase,teamSnapMax});
   return{qualified:(snapShare!=null&&snapShare>=.20)||points>=8,points,snapShare};
 }
+
+export function latestFullyCompletedWeek(finalityByWeek={}){
+  let last=0;
+  for(let week=1;week<=18;week++)if(finalityByWeek?.[week]?.complete===true)last=week;
+  return last;
+}
+
+export function valuationEligibleCurrentSeasonWeeks(qualifiedWeekly={},finalityByWeek={}){
+  const completedWeek=latestFullyCompletedWeek(finalityByWeek),weekly={};
+  for(let week=1;week<=18;week++)weekly[week]=week<=completedWeek&&finalityByWeek?.[week]?.complete===true?(qualifiedWeekly?.[week]||{}):{};
+  return{weekly,completedWeek};
+}

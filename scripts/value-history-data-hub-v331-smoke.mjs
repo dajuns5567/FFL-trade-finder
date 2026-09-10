@@ -214,7 +214,6 @@ for(const needle of [
   'padding:10px 16px;min-width:0',
   "tradeBtn.textContent='Trade History'",
   'Completed Trade History',
-  'Fleeced Trade Breakdown',
   'Original Trade Analysis',
   'Raw asset total',
   'Value adjustment',
@@ -289,7 +288,11 @@ assert(ui.includes('counterElitePressure(otherAssets)'),'Trade History fairness 
 assert(ui.includes('function tradeHistoryFair(give,recv,trade){return fairWithValue'), 'original Trade Evaluator Analysis must use the shared current fairness algorithm with historical values');
 assert(ui.includes('function hindsightFair(give,recv,trade){return fairWithValue'), 'Hindsight must use the same fairness algorithm as original Trade Evaluator Analysis');
 assert(ui.includes('const f=tradeHistoryFair(bReceived,aReceived,trade)'), 'historical Trade Evaluator must use the shared Trade History fairness adapter');
-assert(ui.includes('<h4>Hindsight</h4>'),'Fleeced Trade Breakdown must include Hindsight');
+assert(ui.includes('<h4>Hindsight</h4>'),'Trade History Hindsight detail must remain available');
+assert(!ui.includes('<h3>Fleeced Trade Breakdown</h3>'),'redundant Fleeced Trade Breakdown wrapper heading must be removed');
+assert(ui.includes('return hindsightSection(trade)'),'Hindsight must render directly without the redundant outer breakdown card');
+assert(ui.includes('vh-trade-toggle-active'),'selected Trade History detail controls must use the dedicated gold active state');
+assert(ui.includes('function compactTradePlayerMeta(id)'),'compact Trade History player rows must include position and NFL team metadata');
 assert(ui.includes('function historicalValueComparisonSection(trade)'),'Historical Value Comparison must be a distinct final Trade History section');
 assert(ui.includes("${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}"),'Trade History expanded order must remain Hindsight, Original Analysis, then Historical Value Comparison');
 assert(!ui.includes('Historical player snapshot unavailable'),'redundant unavailable snapshot header label must not be shown');
@@ -410,7 +413,7 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=371'),'production shell must cache-bust the V371 Trade History presentation runtime');
+assert(siteV29.includes('/value-history-v276.js?v=372'),'production shell must cache-bust the V372 Trade History presentation runtime');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');

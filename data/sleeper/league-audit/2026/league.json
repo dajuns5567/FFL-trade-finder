@@ -75,6 +75,10 @@
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
   "company_id": null,
+  "shard": 773,
+  "season": "2026",
+  "season_type": "regular",
+  "sport": "nfl",
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,
@@ -220,12 +224,7 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
-  "season": "2026",
-  "season_type": "regular",
-  "shard": 773,
-  "sport": "nfl",
   "last_message_id": "1403616565160599552",
-  "draft_id": "1316867686407356416",
   "last_author_avatar": "f0edbf4278f53f9425db175073df6584",
   "last_author_display_name": "kevinfalkenstein",
   "last_author_id": "1114320606398423040",
@@ -235,8 +234,11 @@
   "last_message_time": 1789010776370,
   "last_pinned_message_id": "1393060582013304832",
   "last_read_id": null,
+  "draft_id": "1316867686407356416",
   "league_id": "1316867686394769408",
   "previous_league_id": "1180251688940855296",
+  "bracket_id": null,
+  "bracket_overrides_id": null,
   "group_id": null,
   "roster_positions": [
     "RB",
@@ -253,8 +255,6 @@
     "BN",
     "BN"
   ],
-  "bracket_id": null,
-  "bracket_overrides_id": null,
   "loser_bracket_id": null,
   "loser_bracket_overrides_id": null,
   "total_rosters": 32

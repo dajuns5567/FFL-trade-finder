@@ -2,9 +2,6 @@ name: Archive Value History
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - v370-durable-history-repair
   schedule:
     - cron: '17 * * * *'
 

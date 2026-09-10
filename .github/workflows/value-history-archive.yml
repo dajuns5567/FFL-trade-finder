@@ -20,8 +20,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify archive credentials
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN || secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$NETLIFY_BLOBS_TOKEN" ]; then
+            echo "::warning::NETLIFY_BLOBS_TOKEN/NETLIFY_AUTH_TOKEN is not configured. The archive script will try the protected HTTP endpoint, which is expected to return 401 while Netlify SSO is enabled."
+          fi
       - name: Archive new Value History snapshots
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NETLIFY_SITE_ID: 0cc03543-09f9-4de9-9b52-6cbc4fbc4357
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN || secrets.NETLIFY_AUTH_TOKEN }}
           VALUE_HISTORY_SOURCE_URL: ${{ vars.VALUE_HISTORY_SOURCE_URL || 'https://subtle-genie-6167c5.netlify.app/.netlify/functions/value-history' }}
         run: node scripts/archive-value-history.mjs

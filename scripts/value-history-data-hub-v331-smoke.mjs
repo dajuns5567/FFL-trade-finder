@@ -304,7 +304,7 @@ assert(ui.includes('gap:28px'),'completed trades must have stronger visual separ
 assert(ui.includes('border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line))'),'completed trade cards need distinct outer borders');
 assert(!ui.includes('nearest-year retroactive frame'),'retroactive pick-frame mechanics must remain hidden from user-facing text');
 assert(!ui.includes('<div class="vh-assets-title">Assets received</div>'),'redundant Fleeced Trade Breakdown Assets Received block must be removed');
-assert(ui.includes('${tradeValuePresentation(trade)}${tradeEvaluatorSection(trade)}${historicalValueComparisonSection(trade)}'),'Trade History must render Fleeced/Hindsight first, Original Trade Analysis second, and Historical Value Comparison last');
+assert(ui.includes("${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}"),'Trade History expanded sections must render Hindsight first, Original Trade Analysis second, and Historical Value Comparison last');
 assert(ui.includes('Overall #'),'Trade History received-player metadata must show current overall rank');
 assert(ui.includes('posRank'),'Trade History received-player metadata must show current positional rank');
 assert(!ui.includes('Current evaluator rationale'),'Trade History evaluator section must not render the written rationale block');

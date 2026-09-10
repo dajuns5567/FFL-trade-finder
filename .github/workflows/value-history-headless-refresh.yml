@@ -6,16 +6,16 @@ on:
     - cron: '47 */3 * * *'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: value-history-headless-refresh
+  group: value-history-durable-write
   cancel-in-progress: false
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -29,10 +29,29 @@ jobs:
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Load production Fleeced site and record scheduled observation
+      - name: Resolve latest production Netlify site for main
+        id: active_site
         env:
-          VALUE_HISTORY_SITE_URL: ${{ vars.VALUE_HISTORY_SITE_URL || 'https://subtle-genie-6167c5.netlify.app/' }}
-          NETLIFY_SITE_ID: 0cc03543-09f9-4de9-9b52-6cbc4fbc4357
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN || secrets.NETLIFY_BLOBS_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          VALUE_HISTORY_DEPLOY_BRANCH: main
+        run: node scripts/resolve-active-netlify-site.mjs
+
+      - name: Load resolved production Fleeced site and record scheduled observation
+        env:
+          VALUE_HISTORY_SITE_URL: ${{ steps.active_site.outputs.site_url }}
+          NETLIFY_SITE_ID: ${{ steps.active_site.outputs.site_id }}
           NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN || secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN || secrets.NETLIFY_BLOBS_TOKEN }}
           VALUE_HISTORY_RECENT_MS: 9900000
         run: node scripts/value-history-headless-refresh.mjs
+
+      - name: Persist scheduled observation to durable Value History archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NETLIFY_SITE_ID: ${{ steps.active_site.outputs.site_id }}
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN || secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN || secrets.NETLIFY_BLOBS_TOKEN }}
+          VALUE_HISTORY_SOURCE_URL: ${{ steps.active_site.outputs.site_url }}.netlify/functions/value-history
+        run: node scripts/archive-value-history.mjs

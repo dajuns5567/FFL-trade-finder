@@ -74,14 +74,14 @@ function addStyles(){
   #valueHistory .vh-neutral{color:var(--muted)}
   #valueHistory .vh-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   #valueHistory .vh-profile-info{display:grid;grid-template-columns:minmax(210px,1.15fr) minmax(560px,3.8fr) minmax(165px,.9fr);gap:0;align-items:stretch}
-  #valueHistory .vh-profile-primary{display:flex;flex-direction:column;justify-content:center;min-width:0;padding:12px 18px 12px 14px;border:1px solid color-mix(in srgb,#e4b53f 22%,var(--line));border-radius:12px;background:color-mix(in srgb,#e4b53f 4%,var(--card));margin-right:14px}
-  #valueHistory .vh-profile-primary h2{margin:0 0 9px;font-size:24px;line-height:1.08;letter-spacing:-.01em}
-  #valueHistory .vh-profile-kicker{display:flex;gap:6px;flex-wrap:wrap}
+  #valueHistory .vh-profile-primary{display:grid;grid-template-rows:38px 28px 18px;align-content:center;min-width:0;padding:10px 16px 10px 14px}
+  #valueHistory .vh-profile-primary h2{margin:0;font-size:24px;line-height:38px;letter-spacing:-.01em;align-self:center}
+  #valueHistory .vh-profile-kicker{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   #valueHistory .vh-profile-kicker span{display:inline-flex;align-items:center;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--card) 90%,transparent);font-size:12px;color:var(--muted)}
   #valueHistory .vh-profile-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
-  #valueHistory .vh-profile-fact{border-left:1px solid var(--line);padding:10px 16px;min-width:0;display:grid;grid-template-rows:18px 22px 18px;align-content:center;justify-items:center;text-align:center}
+  #valueHistory .vh-profile-fact{border-left:1px solid var(--line);padding:10px 16px;min-width:0;display:grid;grid-template-rows:18px 38px 18px;align-content:center;justify-items:center;text-align:center}
   #valueHistory .vh-profile-fact small{color:#e4b53f;font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;margin:0;line-height:18px}
-  #valueHistory .vh-profile-fact b{font-size:15px;line-height:22px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  #valueHistory .vh-profile-fact b{font-size:15px;line-height:38px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;align-self:center}
   #valueHistory .vh-profile-fact span{font-size:12px;color:var(--muted);margin:0;line-height:18px}
   #valueHistory .vh-current{display:grid;grid-template-rows:18px 38px 18px;align-content:center;justify-items:center;text-align:center;border-left:1px solid var(--line);padding:10px 16px;min-width:0}
   #valueHistory .vh-current small{font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;color:#e4b53f!important;margin:0;line-height:18px}
@@ -95,10 +95,10 @@ function addStyles(){
   #valueHistory .vh-periods button{min-width:58px;padding:8px 12px;font-weight:800}
   #valueHistory .vh-periods button:not(.secondary){color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 15%,var(--card))!important;border-color:color-mix(in srgb,#e4b53f 55%,var(--line))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 28%,transparent),0 3px 10px rgba(0,0,0,.16)!important}
   #valueHistory .vh-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-  #valueHistory .vh-metric{border:1px solid var(--line);border-radius:12px;padding:12px 10px;background:color-mix(in srgb,var(--card) 92%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:82px}
-  #valueHistory .vh-metric>small{display:flex;align-items:center;justify-content:center;min-height:28px;color:#e4b53f;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;text-align:center}
-  #valueHistory .vh-metric b{font-size:18px}
-  #valueHistory .vh-metric .vh-metric-time{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.25}
+  #valueHistory .vh-metric{border:1px solid var(--line);border-radius:12px;padding:12px 10px;background:color-mix(in srgb,var(--card) 92%,transparent);display:grid;grid-template-rows:28px 26px 16px;align-content:center;justify-items:center;text-align:center;min-height:82px}
+  #valueHistory .vh-metric>small{display:flex;align-items:center;justify-content:center;min-height:28px;color:#e4b53f;font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;margin:0;text-align:center;line-height:14px}
+  #valueHistory .vh-metric b{font-size:18px;line-height:26px;align-self:center}
+  #valueHistory .vh-metric .vh-metric-time{font-size:10px;color:var(--muted);margin:0;line-height:16px;min-height:16px}
   #valueHistory .vh-chart-card{padding:12px}
   #valueHistory .vh-chart-card svg{display:block;width:100%;height:auto;border-radius:10px}
   #valueHistory .vh-value-chart{position:relative;padding-top:98px}

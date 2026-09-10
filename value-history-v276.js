@@ -221,9 +221,12 @@ function addStyles(){
   #valueHistory .vh-compact-side{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:color-mix(in srgb,var(--card) 97%,black);min-width:0}
   #valueHistory .vh-compact-side>b{display:block;font-size:13px;color:#f4f4f5;margin-bottom:6px}
   #valueHistory .vh-compact-assets{display:flex;gap:6px;flex-wrap:wrap}
-  #valueHistory .vh-compact-asset{display:inline-flex;align-items:center;min-height:24px;padding:4px 7px;border:1px solid color-mix(in srgb,#e4b53f 24%,var(--line));border-radius:999px;background:color-mix(in srgb,#e4b53f 5%,var(--card));font-size:11px;font-weight:750;color:var(--muted)}
+  #valueHistory .vh-compact-asset{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:30px;padding:5px 8px;border:1px solid color-mix(in srgb,#e4b53f 24%,var(--line));border-radius:10px;background:color-mix(in srgb,#e4b53f 5%,var(--card));font-size:11px;font-weight:750;color:var(--muted);line-height:1.2}
+  #valueHistory .vh-compact-asset>b{color:#f4f4f5;font-size:11px}
+  #valueHistory .vh-compact-asset>small{display:block;margin-top:2px;color:var(--muted);font-size:9px;font-weight:750;letter-spacing:.02em}
   #valueHistory .vh-trade-toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
   #valueHistory .vh-trade-toggle{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;min-width:150px;font-weight:900}
+  #valueHistory .vh-trade-toggle-active{color:#151515!important;background:#e4b53f!important;border-color:#e4b53f!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 0 0 1px rgba(228,181,63,.28)!important}
   #valueHistory .vh-trade-toggle span{font-size:11px;opacity:.8}
   #valueHistory .vh-trade-collapsed{padding-bottom:10px}
   #valueHistory .vh-trade-collapsed .vh-trade-head{margin-bottom:10px}
@@ -652,7 +655,7 @@ function hindsightSection(trade){
   return`<div class="vh-hindsight"><div class="vh-hindsight-head"><div><h4>Hindsight</h4><div class="vh-sub">Looking back on trades with today's current value.</div></div></div>${tradeResultScoreboard(h.teamAName,f.bEffective,h.teamBName,f.aEffective,h.score,h.label)}<div class="vh-eval-scorebar" aria-label="Hindsight score ${Math.round(h.score)} out of 100"><i style="width:${h.score}%"></i></div><div class="vh-detail-caption">Current outcome detail</div><div class="vh-eval-grid">${hindsightSide(`${h.teamAName}`,h.aAssets,f.bRaw,f.bAdj,f.bEffective,trade)}${hindsightSide(`${h.teamBName}`,h.bAssets,f.aRaw,f.aAdj,f.aEffective,trade)}</div><div class="vh-trade-summary3"><div><small>Raw difference</small><b>${signed(Number(f.edgeRaw)||0)}</b></div><div><small>Value adjustment</small><b>${Math.max(Number(f.aAdj)||0,Number(f.bAdj)||0)>0?'+'+fmt(Math.max(Number(f.aAdj)||0,Number(f.bAdj)||0)):'0'}</b></div><div><small>Adjusted difference</small><b class="${deltaClass(edge)}">${signed(edge)}</b></div></div></div>`;
 }
 function tradeValuePresentation(trade){
-  return`<div class="vh-card vh-history-section"><div class="vh-card-head"><div><h3>Fleeced Trade Breakdown</h3></div></div>${hindsightSection(trade)}</div>`
+  return hindsightSection(trade)
 }
 function historicalValueComparisonSection(trade){
   return`<div class="vh-card vh-history-section"><div class="vh-history-compare-title">Historical value comparison</div><div class="vh-breakdown-sides">${(trade.sides||[]).map(side=>{const m=sideValueModel(side,trade),delta=m.atTradeTotal!=null&&m.currentTotal!=null?m.currentTotal-m.atTradeTotal:null;return`<div class="vh-breakdown-side"><h4>${esc(historicalTradeTeamName(trade,side.roster_id))}</h4><div class="vh-time-columns"><div class="vh-time-column"><div class="vh-time-label">At time of trade</div>${tradeItemRows(m.atTradeItems)}</div><div class="vh-time-column"><div class="vh-time-label">Current outcome</div>${tradeItemRows(m.currentItems)}</div></div><div class="vh-trade-summary3"><div><small>Value at trade</small><b>${m.atTradeTotal==null?'—':fmt(m.atTradeTotal)}</b></div><div><small>Current value</small><b>${m.currentTotal==null?'—':fmt(m.currentTotal)}</b></div><div><small>Change</small><b class="${delta==null?'vh-neutral':deltaClass(delta)}">${delta==null?'—':signed(delta)}</b></div></div>${m.atTradeComplete?'':`<div class="vh-trade-note">Historical player value is unavailable for part of this package because the trade predates reliable stored Value History or a player is missing from that snapshot. No value was guessed.</div>`}</div>`}).join('')}</div></div>`
@@ -685,16 +688,20 @@ function compactTradeAssetLabel(p,trade){
   if(p?.season&&p?.round)return `${esc(p.season)} R${esc(p.round)}`;
   return 'Asset';
 }
+function compactTradePlayerMeta(id){
+  const sid=String(id),asset=tradePlayerAsset(sid,0),pos=groupPos(asset),team=String(state.players?.[sid]?.team||'FA').toUpperCase();
+  return`${pos} • ${team}`
+}
 function compactTradeSide(side,trade){
   const assets=[];
-  for(const id of side?.player_ids||[])assets.push(`<span class="vh-compact-asset">${esc(playerName(id))}</span>`);
-  for(const p of side?.picks||[])assets.push(`<span class="vh-compact-asset">${esc(p.season)} R${esc(p.round)}${p?.drafted_player_id?` → ${esc(playerName(p.drafted_player_id))}`:''}</span>`);
+  for(const id of side?.player_ids||[])assets.push(`<span class="vh-compact-asset"><b>${esc(playerName(id))}</b><small>${esc(compactTradePlayerMeta(id))}</small></span>`);
+  for(const p of side?.picks||[])assets.push(`<span class="vh-compact-asset"><b>${esc(p.season)} R${esc(p.round)}${p?.drafted_player_id?` → ${esc(playerName(p.drafted_player_id))}`:''}</b></span>`);
   return`<div class="vh-compact-side"><b>${esc(historicalTradeTeamName(trade,side?.roster_id))}</b><div class="vh-compact-assets">${assets.join('')||'<span class="vh-compact-asset">No assets</span>'}</div></div>`
 }
 function tradeCard(trade){
   const key=tradeStateKey(trade),open=tradeDetailState.get(key)||{hindsight:false,original:false},anyOpen=open.hindsight||open.original;
   const names=(trade.roster_ids||[]).map(id=>esc(historicalTradeTeamName(trade,id))).join(' ↔ ');
-  return`<div class="vh-trade-card ${anyOpen?'vh-trade-expanded':'vh-trade-collapsed'}"><div class="vh-trade-head"><div><h4>${esc(dateTime(trade.created))} • ${esc(String(trade.season||''))} Trade</h4><div class="vh-sub">${names}</div></div>${trade.trade_snapshot_t?`<small>Historical snapshot: ${esc(dateTime(trade.trade_snapshot_t))}</small>`:''}</div><div class="vh-compact-trade">${(trade.sides||[]).map(side=>compactTradeSide(side,trade)).join('')}</div><div class="vh-trade-toggle-row"><button type="button" class="${open.hindsight?'':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="hindsight" data-vh-trade-id="${esc(key)}" aria-expanded="${open.hindsight?'true':'false'}">Hindsight <span>${open.hindsight?'▴':'▾'}</span></button><button type="button" class="${open.original?'':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="original" data-vh-trade-id="${esc(key)}" aria-expanded="${open.original?'true':'false'}">Original Trade Analysis <span>${open.original?'▴':'▾'}</span></button></div>${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}</div>`
+  return`<div class="vh-trade-card ${anyOpen?'vh-trade-expanded':'vh-trade-collapsed'}"><div class="vh-trade-head"><div><h4>${esc(dateTime(trade.created))} • ${esc(String(trade.season||''))} Trade</h4><div class="vh-sub">${names}</div></div>${trade.trade_snapshot_t?`<small>Historical snapshot: ${esc(dateTime(trade.trade_snapshot_t))}</small>`:''}</div><div class="vh-compact-trade">${(trade.sides||[]).map(side=>compactTradeSide(side,trade)).join('')}</div><div class="vh-trade-toggle-row"><button type="button" class="${open.hindsight?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="hindsight" data-vh-trade-id="${esc(key)}" aria-expanded="${open.hindsight?'true':'false'}">Hindsight <span>${open.hindsight?'▴':'▾'}</span></button><button type="button" class="${open.original?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="original" data-vh-trade-id="${esc(key)}" aria-expanded="${open.original?'true':'false'}">Original Trade Analysis <span>${open.original?'▴':'▾'}</span></button></div>${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}</div>`
 }
 function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else renderTradeHistory()}
 function renderTradeHistory(){

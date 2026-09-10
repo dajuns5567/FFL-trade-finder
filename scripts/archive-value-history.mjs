@@ -28,9 +28,10 @@ async function putFile(path,content,message,sha){
   return gh(`/repos/${owner}/${repo}/contents/${encodeURIComponent(path).replace(/%2F/g,'/')}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
 }
 const V380_BAD_WINDOW=[Date.parse('2026-09-10T03:25:00.000Z'),Date.parse('2026-09-10T03:35:00.000Z')];
-function isV380BadSnapshot(s){const ms=new Date(s?.t||'').getTime();return Number.isFinite(ms)&&ms>=V380_BAD_WINDOW[0]&&ms<V380_BAD_WINDOW[1]}
+const V381_BAD_WINDOW=[Date.parse('2026-09-10T03:20:00.000Z'),Date.parse('2026-09-10T03:46:38.700Z')];
+function isKnownBadSnapshot(s){const ms=new Date(s?.t||'').getTime();return Number.isFinite(ms)&&[V380_BAD_WINDOW,V381_BAD_WINDOW].some(([a,b])=>ms>=a&&ms<b)}
 function validSnapshot(s){
-  return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100&&!isV380BadSnapshot(s);
+  return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100&&!isKnownBadSnapshot(s);
 }
 function monthOf(t){return String(t).slice(0,7)}
 function safeName(t){return String(t).replace(/[:.]/g,'-')}
@@ -72,7 +73,7 @@ for(const snap of incoming){
   const month=monthOf(snap.t),path=`${root}/snapshots/${month.replace('-','/')}/${safeName(snap.t)}.json`;
   const prior=await readFile(path);
   if(!prior)await putFile(path,JSON.stringify(snap,null,2)+'\n',`Archive Value History snapshot ${snap.t}`);
-  index.items=index.items||[];index.items.push({t:snap.t,path,fingerprint:snap.fingerprint||null,count:snap.rows.length});
+  index.items=index.items||[];index.items.push({t:snap.t,path,fingerprint:snap.fingerprint||null,count:snap.rows.length,source:snap.source||null});
   if(!monthGroups.has(month))monthGroups.set(month,[]);monthGroups.get(month).push(snap);
 }
 for(const [month,newSnaps] of monthGroups){

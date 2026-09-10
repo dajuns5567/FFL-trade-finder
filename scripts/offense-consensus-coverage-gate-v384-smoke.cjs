@@ -59,7 +59,8 @@ assert(api.noConsensusOffenseScore('o5')===60,'existing no-consensus scoring fal
 assert(api.noConsensusOffenseScore('o0')===1,'no-history zero-consensus offense should remain at fallback floor');
 
 // No synthetic rank fallback is introduced here; IDP continues through its pre-existing model.
+// Check executable fallback assignments rather than comments mentioning the legacy 260 issue.
 const src=fs.readFileSync('offense-consensus-coverage-gate-v384.js','utf8');
-assert(!/\b260\b/.test(src),'V385 must not introduce a 260 fallback');
+assert(!/rank\s*=\s*260\b|:\s*260\b/.test(src),'V385 must not introduce a 260 fallback');
 assert(!src.includes('idpRank')&&!src.includes('idpSources'),'V385 must not inspect or rewrite IDP consensus/scoring logic');
 console.log('V385 exact-source offense coverage + no-consensus depth + IDP isolation smoke passed');

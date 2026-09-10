@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history';
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),teamNetCache=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -217,6 +217,19 @@ function addStyles(){
   #valueHistory .vh-trade-card{border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line));border-radius:15px;padding:0 14px 14px;background:color-mix(in srgb,var(--card) 96%,black);box-shadow:0 10px 24px rgba(0,0,0,.22),0 0 0 1px rgba(255,255,255,.015);overflow:hidden}
   #valueHistory .vh-trade-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin:0 -14px 14px;padding:13px 14px 12px;background:color-mix(in srgb,#e4b53f 7%,var(--card));border-bottom:1px solid color-mix(in srgb,#e4b53f 34%,var(--line))}
   #valueHistory .vh-trade-head h4{margin:0;color:#e4b53f;font-size:15px}
+  #valueHistory .vh-compact-trade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 10px}
+  #valueHistory .vh-compact-side{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:color-mix(in srgb,var(--card) 97%,black);min-width:0}
+  #valueHistory .vh-compact-side>b{display:block;font-size:13px;color:#f4f4f5;margin-bottom:6px}
+  #valueHistory .vh-compact-assets{display:flex;gap:6px;flex-wrap:wrap}
+  #valueHistory .vh-compact-asset{display:inline-flex;align-items:center;min-height:24px;padding:4px 7px;border:1px solid color-mix(in srgb,#e4b53f 24%,var(--line));border-radius:999px;background:color-mix(in srgb,#e4b53f 5%,var(--card));font-size:11px;font-weight:750;color:var(--muted)}
+  #valueHistory .vh-trade-toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+  #valueHistory .vh-trade-toggle{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;min-width:150px;font-weight:900}
+  #valueHistory .vh-trade-toggle span{font-size:11px;opacity:.8}
+  #valueHistory .vh-trade-collapsed{padding-bottom:10px}
+  #valueHistory .vh-trade-collapsed .vh-trade-head{margin-bottom:10px}
+  #valueHistory .vh-trade-expanded .vh-history-section{margin-top:12px}
+  @media(max-width:900px){#valueHistory .vh-compact-trade{grid-template-columns:1fr}}
+
   #valueHistory .vh-trade-sides{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   #valueHistory .vh-trade-side{border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
   #valueHistory .vh-assets-title{font-size:11px;font-weight:950;letter-spacing:.075em;text-transform:uppercase;color:#e4b53f;margin:10px 0 6px}
@@ -402,6 +415,15 @@ function selectPlayer(id){
   loadPlayer(id);
 }
 function handleContentClick(e){
+  const tradeToggle=e.target.closest('[data-vh-trade-toggle]');
+  if(tradeToggle){
+    const id=String(tradeToggle.dataset.vhTradeId||''),section=String(tradeToggle.dataset.vhTradeToggle||'');
+    if(id&&section){
+      const state=tradeDetailState.get(id)||{hindsight:false,original:false};
+      state[section]=!state[section];tradeDetailState.set(id,state);renderTradeHistory();
+    }
+    return;
+  }
   const player=e.target.closest('[data-vh-player]');if(player){selectPlayer(player.dataset.vhPlayer);return}
   const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';loadMarket(true);return}
   const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();currentPlayerId=null;renderTrackMyTeam();return}
@@ -657,16 +679,29 @@ function tradeEvaluatorSection(trade){
   const f=a.f,edge=Number(f?.edgeEffective)||0;
   return`<div class="vh-card vh-history-section"><div class="vh-eval-head"><div><h3>Original Trade Analysis</h3><div class="vh-sub">The original trade package evaluated with the Trade History valuation context that applied when the trade occurred. Current/future Trade Evaluator and draft-pick logic are not modified.</div></div></div>${tradeResultScoreboard(a.teamAName,f.bEffective,a.teamBName,f.aEffective,a.score,a.label)}<div class="vh-eval-scorebar" aria-label="Trade Evaluator score ${Math.round(a.score)} out of 100"><i style="width:${a.score}%"></i></div><div class="vh-detail-caption">Original trade detail</div><div class="vh-eval-grid">${evaluatorSide(`${a.teamAName}`,a.aReceived,f.bRaw,f.bAdj,f.bEffective,trade)}${evaluatorSide(`${a.teamBName}`,a.bReceived,f.aRaw,f.aAdj,f.aEffective,trade)}</div><div class="vh-trade-summary3"><div><small>Raw difference</small><b>${signed(Number(f.edgeRaw)||0)}</b></div><div><small>Value adjustment</small><b>${Math.max(Number(f.aAdj)||0,Number(f.bAdj)||0)>0?'+'+fmt(Math.max(Number(f.aAdj)||0,Number(f.bAdj)||0)):'0'}</b></div><div><small>Adjusted difference</small><b class="${deltaClass(edge)}">${signed(edge)}</b></div></div></div>`
 }
+function tradeStateKey(trade){return String(trade?.id||trade?.transaction_id||`${trade?.created||'unknown'}:${(trade?.roster_ids||[]).join('-')}`)}
+function compactTradeAssetLabel(p,trade){
+  if(p?.player_id||p?.id)return esc(playerName(p.player_id||p.id));
+  if(p?.season&&p?.round)return `${esc(p.season)} R${esc(p.round)}`;
+  return 'Asset';
+}
+function compactTradeSide(side,trade){
+  const assets=[];
+  for(const id of side?.player_ids||[])assets.push(`<span class="vh-compact-asset">${esc(playerName(id))}</span>`);
+  for(const p of side?.picks||[])assets.push(`<span class="vh-compact-asset">${esc(p.season)} R${esc(p.round)}${p?.drafted_player_id?` → ${esc(playerName(p.drafted_player_id))}`:''}</span>`);
+  return`<div class="vh-compact-side"><b>${esc(historicalTradeTeamName(trade,side?.roster_id))}</b><div class="vh-compact-assets">${assets.join('')||'<span class="vh-compact-asset">No assets</span>'}</div></div>`
+}
 function tradeCard(trade){
+  const key=tradeStateKey(trade),open=tradeDetailState.get(key)||{hindsight:false,original:false},anyOpen=open.hindsight||open.original;
   const names=(trade.roster_ids||[]).map(id=>esc(historicalTradeTeamName(trade,id))).join(' ↔ ');
-  return`<div class="vh-trade-card"><div class="vh-trade-head"><div><h4>${esc(dateTime(trade.created))} • ${esc(String(trade.season||''))} Trade</h4><div class="vh-sub">${names}</div></div>${trade.trade_snapshot_t?`<small>Historical snapshot: ${esc(dateTime(trade.trade_snapshot_t))}</small>`:''}</div>${tradeValuePresentation(trade)}${tradeEvaluatorSection(trade)}${historicalValueComparisonSection(trade)}</div>`
+  return`<div class="vh-trade-card ${anyOpen?'vh-trade-expanded':'vh-trade-collapsed'}"><div class="vh-trade-head"><div><h4>${esc(dateTime(trade.created))} • ${esc(String(trade.season||''))} Trade</h4><div class="vh-sub">${names}</div></div>${trade.trade_snapshot_t?`<small>Historical snapshot: ${esc(dateTime(trade.trade_snapshot_t))}</small>`:''}</div><div class="vh-compact-trade">${(trade.sides||[]).map(side=>compactTradeSide(side,trade)).join('')}</div><div class="vh-trade-toggle-row"><button type="button" class="${open.hindsight?'':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="hindsight" data-vh-trade-id="${esc(key)}" aria-expanded="${open.hindsight?'true':'false'}">Hindsight <span>${open.hindsight?'▴':'▾'}</span></button><button type="button" class="${open.original?'':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="original" data-vh-trade-id="${esc(key)}" aria-expanded="${open.original?'true':'false'}">Original Trade Analysis <span>${open.original?'▴':'▾'}</span></button></div>${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}</div>`
 }
 function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else renderTradeHistory()}
 function renderTradeHistory(){
   const box=document.getElementById('tradeHistoryContent');if(!box)return;
   const data=tradeHistoryCache;if(!data?.trades){box.innerHTML='<div class="vh-card"><div class="vh-empty">Loading completed trades…</div></div>';return}
   const ids=leagueTeamIds(),filtered=(data.trades||[]).filter(t=>!tradeTeamFilter||(t.roster_ids||[]).map(String).includes(String(tradeTeamFilter)));
-  box.innerHTML=`<div class="vh-card"><div class="vh-card-head"><div><h3>Completed Trade History</h3><div class="vh-sub">Each completed trade is separated into its own card. Fleeced Trade Breakdown leads with Hindsight using today's current outcome pieces, followed by Original Trade Analysis and the Historical Value Comparison.</div></div></div><div class="vh-team-toolbar"><label><b>Filter by team</b><select data-vh-trade-team><option value="">All teams</option>${ids.map(id=>`<option value="${esc(id)}" ${String(tradeTeamFilter)===String(id)?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div><div class="vh-trade-note">Source: ${esc(data.source||'Sleeper transaction history')} • ${filtered.length} completed trade${filtered.length===1?'':'s'} shown. Exact draft-result mapping is displayed only when Sleeper provides an unambiguous draft slot → roster → player chain.</div></div><div class="vh-trade-list">${filtered.map(tradeCard).join('')||'<div class="vh-card"><div class="vh-empty">No completed trades match this filter.</div></div>'}</div>`;
+  box.innerHTML=`<div class="vh-card"><div class="vh-card-head"><div><h3>Completed Trade History</h3><div class="vh-sub">Trades open in a compact view showing the teams and assets exchanged. Expand Hindsight and/or Original Trade Analysis only when you want the full detail; Historical Value Comparison appears with either expanded section.</div></div></div><div class="vh-team-toolbar"><label><b>Filter by team</b><select data-vh-trade-team><option value="">All teams</option>${ids.map(id=>`<option value="${esc(id)}" ${String(tradeTeamFilter)===String(id)?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div><div class="vh-trade-note">Source: ${esc(data.source||'Sleeper transaction history')} • ${filtered.length} completed trade${filtered.length===1?'':'s'} shown. Exact draft-result mapping is displayed only when Sleeper provides an unambiguous draft slot → roster → player chain.</div></div><div class="vh-trade-list">${filtered.map(tradeCard).join('')||'<div class="vh-card"><div class="vh-empty">No completed trades match this filter.</div></div>'}</div>`;
 }
 async function loadTradeHistory(){
   const box=document.getElementById('tradeHistoryContent');if(!box)return;

@@ -416,7 +416,6 @@ assert(backend.includes("V348_BAD_WINDOWS"),'V348 exact contaminated timestamp w
 assert(backend.includes("scrubV348ConsensusContamination(s)"),'V348 contaminated timestamp scrub missing');
 assert(backend.includes("V380_BAD_WINDOW"),'V380 requested 9/9 11:30 PM Eastern scrub window missing');
 assert(backend.includes("scrubV380PartialWeekSnapshot(s)"),'V380 requested partial-week Value History scrub missing');
-assert(archiveWriter.includes("isV380BadSnapshot"),'V380 scrubbed point must be blocked from durable archive ingestion');
 const fanRankedSource=fs.readFileSync('netlify/functions/fanranked-adapter.mjs','utf8');
 assert(fanRankedSource.includes("sort((a,b)=>b.value-a.value"),'FanRanked current ranking is not rebuilt from current market values');
 assert(fanRankedSource.includes(".map((row,index)=>({rank:index+1"),'FanRanked current ranking is not reassigned contiguously');
@@ -438,6 +437,7 @@ assert(archiveWriter.includes("getStore({name:'fll-value-history-v2',siteID:netl
 assert(archiveWriter.includes("source:'netlify-blobs-direct'"),'archive writer direct Blob source marker missing');
 assert(archiveWriter.includes('Durable Value History archive verification failed after write'),'archive writer must verify the durable index after persistence');
 assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret'),'archive writer must provide an actionable SSO-authentication failure');
+assert(archiveWriter.includes("isV380BadSnapshot"),'V380 scrubbed point must be blocked from durable archive ingestion');
 
 const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.yml','utf8');
 assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');

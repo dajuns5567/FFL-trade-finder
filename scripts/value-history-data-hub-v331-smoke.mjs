@@ -422,7 +422,7 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=374'),'production shell must cache-bust the V374 historical pick display runtime');
+assert(siteV29.includes('/value-history-v276.js?v=375'),'production shell must cache-bust the V375 Value History presentation runtime');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');

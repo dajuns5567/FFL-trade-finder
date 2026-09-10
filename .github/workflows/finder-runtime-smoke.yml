@@ -1,6 +1,9 @@
 name: Finder runtime smoke
 
 on:
+  push:
+    branches:
+      - v370-durable-history-repair
   pull_request:
     paths:
       - 'trade-finder-style-loader-v209.js'

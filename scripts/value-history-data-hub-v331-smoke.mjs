@@ -297,6 +297,12 @@ assert(ui.includes('return hindsightSection(trade)'),'Hindsight must render dire
 assert(ui.includes('vh-trade-toggle-active'),'selected Trade History detail controls must use the dedicated gold active state');
 assert(ui.includes('function compactTradePlayerMeta(id)'),'compact Trade History player rows must include position and NFL team metadata');
 assert(ui.includes('function historicalValueComparisonSection(trade)'),'Historical Value Comparison must be a distinct final Trade History section');
+assert(ui.includes('function historicalDraftSlotLabel(p)'),'Trade History must format completed rookie selections from Sleeper round and draft slot');
+assert(ui.includes("String(slot).padStart(2,'0')")&&ui.includes("historicalDraftSlotLabel(p)"),'completed rookie pick labels must use Sleeper round + draft_slot notation');
+assert(ui.includes('function historicalPickOwnershipLabel(p,trade)'),'Historical Value Comparison must expose draft-pick ownership/origin context');
+assert(ui.includes("meta:\`From ${slotLabel||\`${p.season} R${p.round}\`} • ${ownership}\`"),'converted picks in Historical Value Comparison must show exact rookie slot and original ownership');
+assert(!ui.includes("${p.season}.${String(p.pick_no).padStart(2,'0')}"),'Trade History must not display Sleeper overall pick_no as year.slot');
+
 assert(ui.includes("${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}"),'Trade History expanded order must remain Hindsight, Original Analysis, then Historical Value Comparison');
 assert(!ui.includes('Historical player snapshot unavailable'),'redundant unavailable snapshot header label must not be shown');
 assert(!ui.includes('historical pick fallback'),'internal retroactive pick fallback wording must remain hidden');
@@ -416,7 +422,7 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=373'),'production shell must cache-bust the V373 Trade History presentation runtime');
+assert(siteV29.includes('/value-history-v276.js?v=374'),'production shell must cache-bust the V374 historical pick display runtime');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');

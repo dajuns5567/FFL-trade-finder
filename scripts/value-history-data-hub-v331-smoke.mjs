@@ -237,6 +237,9 @@ for(const forbidden of [
   'Value Adjustment='
 ])assert(!ui.includes(forbidden),'Value History must remain read-only relative to trade/value systems: '+forbidden);
 assert(ui.includes('function tradeHistoryFair(give,recv,trade)'), 'Trade History must use an isolated historical evaluator adapter');
+assert(ui.includes('proximityRate=clamp(.18,.18+2.35*(1-rel),1)'),'Trade History value adjustment must scale continuously with centerpiece proximity');
+assert(ui.includes('centerpieceProximityCap=rawGap>0?rawGap*proximityRate:Infinity'),'Trade History value adjustment must cap raw-gap erasure when centerpieces are near peers');
+assert(ui.includes('eliteCounterCap,centerpieceProximityCap'),'centerpiece proximity cap must coexist with existing elite-counter protection rather than replacing it');
 assert(ui.includes('retroactiveTradeHistoryPickValue(asset,trade)'), 'Trade History retroactive pick timing adapter missing');
 assert(ui.includes("window.tradeValueNormalizationV130?.canonicalValue"),'Trade History current player and pick display must use the exact active evaluator canonical value function');
 assert(ui.includes('function currentPickRows()'),'Value History must capture live canonical draft-pick values for future exact trade history');
@@ -413,7 +416,7 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=372'),'production shell must cache-bust the V372 Trade History presentation runtime');
+assert(siteV29.includes('/value-history-v276.js?v=373'),'production shell must cache-bust the V373 Trade History presentation runtime');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');

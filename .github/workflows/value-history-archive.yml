@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install archive runtime
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Verify archive credentials
         env:
           NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN || secrets.NETLIFY_AUTH_TOKEN }}

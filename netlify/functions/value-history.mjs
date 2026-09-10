@@ -16,7 +16,7 @@ async function archiveIndex(){
   if(archiveIndexCache&&now-archiveIndexCacheAt<30000)return archiveIndexCache;
   try{
     const idx=await archiveJson('index.json');
-    archiveIndexCache=idx&&Array.isArray(idx.items)?{...idx,reachable:true,error:null}:{items:[],months:[],reachable:true,error:null};
+    archiveIndexCache=idx&&Array.isArray(idx.items)?{...idx,items:idx.items.filter(item=>!isV380BadTime(item?.t)),reachable:true,error:null}:{items:[],months:[],reachable:true,error:null};
     archiveIndexCacheAt=now;return archiveIndexCache;
   }catch(e){
     return{items:[],months:[],reachable:false,error:String(e?.message||e)};
@@ -40,7 +40,7 @@ async function archiveAllSnapshots(){
   for(const month of months){
     try{
       const bundle=await archiveJson(`months/${month}.json`);
-      for(const snap of bundle?.snapshots||[])if(snap?.t&&Array.isArray(snap.rows)&&!seen.has(String(snap.t))){seen.add(String(snap.t));out.push(snap)}
+      for(const snap of bundle?.snapshots||[])if(snap?.t&&Array.isArray(snap.rows)&&!isV380BadTime(snap.t)&&!seen.has(String(snap.t))){seen.add(String(snap.t));out.push(snap)}
     }catch(e){console.warn('value-history-archive-month',month,e)}
   }
   if(!out.length&&(idx.items||[]).length){
@@ -66,6 +66,9 @@ const V346_KTC_CUTOFF_MS=Date.parse('2026-09-08T05:23:00.000Z');
 const V346_CLEANUP_KEY='maintenance/v346-ktc-history-scrub.json';
 const V348_CLEANUP_KEY='maintenance/v348-consensus-history-scrub.json';
 const V348_BAD_WINDOWS=[[Date.parse('2026-09-08T20:00:00.000Z'),Date.parse('2026-09-08T20:01:00.000Z')],[Date.parse('2026-09-08T22:08:00.000Z'),Date.parse('2026-09-08T22:09:00.000Z')]];
+const V380_CLEANUP_KEY='maintenance/v380-partial-week-history-scrub.json';
+const V380_BAD_WINDOW=[Date.parse('2026-09-10T03:25:00.000Z'),Date.parse('2026-09-10T03:35:00.000Z')];
+const isV380BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V380_BAD_WINDOW[0]&&ms<V380_BAD_WINDOW[1]};
 
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
@@ -217,6 +220,17 @@ async function scrubV348ConsensusContamination(s){
   if(last){const snap=await safeGet(s,last.key);if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:2,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows),key:last.key,count:snap.rows.length}),120)}
   const result={done:true,windows:['2026-09-08 16:00 EDT','2026-09-08 18:08 EDT'],removed:bad.length,completedAt:new Date().toISOString()};
   await retry(()=>s.setJSON(V348_CLEANUP_KEY,result),120);return result;
+}
+async function scrubV380PartialWeekSnapshot(s){
+  const marker=await safeGet(s,V380_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV380BadTime(item?.t)),keep=items.filter(item=>!isV380BadTime(item?.t));
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v380-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v380-history-reindex',e)}
+  const last=keep[keep.length-1]||null;
+  if(last){const snap=await safeGet(s,last.key);if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:2,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows),key:last.key,count:snap.rows.length}),120)}
+  else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,window:['2026-09-09 23:25 EDT','2026-09-09 23:35 EDT'],removed:bad.length,completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V380_CLEANUP_KEY,result),120);return result;
 }
 async function latestFallback(s,playerId){
   const latest=await safeGet(s,LATEST_KEY),key=String(latest?.key||'').trim();
@@ -612,6 +626,7 @@ export default async (req)=>{
     if(s){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
+      try{await scrubV380PartialWeekSnapshot(s)}catch(e){console.warn('v380-history-scrub',e)}
     }
     if(req.method==='GET'){
       if(url.searchParams.get('archive_export')==='1'){

@@ -27,8 +27,10 @@ async function putFile(path,content,message,sha){
   if(sha)body.sha=sha;
   return gh(`/repos/${owner}/${repo}/contents/${encodeURIComponent(path).replace(/%2F/g,'/')}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
 }
+const V380_BAD_WINDOW=[Date.parse('2026-09-10T03:25:00.000Z'),Date.parse('2026-09-10T03:35:00.000Z')];
+function isV380BadSnapshot(s){const ms=new Date(s?.t||'').getTime();return Number.isFinite(ms)&&ms>=V380_BAD_WINDOW[0]&&ms<V380_BAD_WINDOW[1]}
 function validSnapshot(s){
-  return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100;
+  return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100&&!isV380BadSnapshot(s);
 }
 function monthOf(t){return String(t).slice(0,7)}
 function safeName(t){return String(t).replace(/[:.]/g,'-')}

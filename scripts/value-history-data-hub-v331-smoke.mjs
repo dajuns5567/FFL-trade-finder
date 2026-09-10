@@ -190,7 +190,7 @@ for(const needle of [
   'target.value',
   '#valueHistory>.card{border:0!important;background:color-mix(in srgb,var(--card) 72%,#06080c)',
   '#valueHistory .vh-market-table summary',
-  'align-items:center;justify-content:center;text-align:center;min-height:82px',
+  'align-content:center;justify-items:center;text-align:center;min-height:82px',
   'Overall Net Value',
   'teamNetFetch',
   'teamNetChart',
@@ -414,6 +414,8 @@ assert(updateSource.includes("integrityReady=results.length>=7&&failedSources.le
 assert(updateSource.includes("sources:integrityReady?sources:{}"),'partial consensus refresh can replace the prior validated source set');
 assert(backend.includes("V348_BAD_WINDOWS"),'V348 exact contaminated timestamp windows missing');
 assert(backend.includes("scrubV348ConsensusContamination(s)"),'V348 contaminated timestamp scrub missing');
+assert(backend.includes("V380_BAD_WINDOW"),'V380 requested 9/9 11:30 PM Eastern scrub window missing');
+assert(backend.includes("scrubV380PartialWeekSnapshot(s)"),'V380 requested partial-week Value History scrub missing');
 const fanRankedSource=fs.readFileSync('netlify/functions/fanranked-adapter.mjs','utf8');
 assert(fanRankedSource.includes("sort((a,b)=>b.value-a.value"),'FanRanked current ranking is not rebuilt from current market values');
 assert(fanRankedSource.includes(".map((row,index)=>({rank:index+1"),'FanRanked current ranking is not reassigned contiguously');
@@ -426,7 +428,7 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=377'),'production shell must cache-bust the V377 Value History presentation runtime');
+assert(siteV29.includes('/value-history-v276.js?v=379'),'production shell must cache-bust the current V379 Value History presentation runtime');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');
@@ -435,6 +437,7 @@ assert(archiveWriter.includes("getStore({name:'fll-value-history-v2',siteID:netl
 assert(archiveWriter.includes("source:'netlify-blobs-direct'"),'archive writer direct Blob source marker missing');
 assert(archiveWriter.includes('Durable Value History archive verification failed after write'),'archive writer must verify the durable index after persistence');
 assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret'),'archive writer must provide an actionable SSO-authentication failure');
+assert(archiveWriter.includes("isV380BadSnapshot"),'V380 scrubbed point must be blocked from durable archive ingestion');
 
 const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.yml','utf8');
 assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');

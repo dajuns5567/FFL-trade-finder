@@ -32,12 +32,18 @@ async function archiveSnapshot(item){
   try{const snap=await archiveJson(item.path);return snap?.t&&Array.isArray(snap?.rows)?snap:null}catch{return null}
 }
 async function archiveAllSnapshots(){
-  const idx=await archiveIndex(),months=[...new Set((idx.months||[]).map(String).filter(Boolean))].sort(),out=[];
+  const idx=await archiveIndex(),months=[...new Set((idx.months||[]).map(String).filter(Boolean))].sort(),out=[],seen=new Set();
   for(const month of months){
     try{
       const bundle=await archiveJson(`months/${month}.json`);
-      for(const snap of bundle?.snapshots||[])if(snap?.t&&Array.isArray(snap.rows))out.push(snap);
-    }catch{}
+      for(const snap of bundle?.snapshots||[])if(snap?.t&&Array.isArray(snap.rows)&&!seen.has(String(snap.t))){seen.add(String(snap.t));out.push(snap)}
+    }catch(e){console.warn('value-history-archive-month',month,e)}
+  }
+  if(!out.length&&(idx.items||[]).length){
+    for(const item of idx.items||[]){
+      const snap=await archiveSnapshot(item);
+      if(snap?.t&&!seen.has(String(snap.t))){seen.add(String(snap.t));out.push(snap)}
+    }
   }
   out.sort((a,b)=>String(a.t).localeCompare(String(b.t)));return out;
 }

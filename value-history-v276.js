@@ -83,9 +83,9 @@ function addStyles(){
   #valueHistory .vh-profile-fact small{color:#e4b53f;font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;margin:0;line-height:18px}
   #valueHistory .vh-profile-fact b{font-size:15px;line-height:22px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
   #valueHistory .vh-profile-fact span{font-size:12px;color:var(--muted);margin:0;line-height:18px}
-  #valueHistory .vh-current{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border-left:1px solid var(--line);padding:10px 16px;min-width:0}
-  #valueHistory .vh-current small{font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;color:#e4b53f!important;margin-bottom:7px;line-height:1.2}
-  #valueHistory .vh-current .vh-big{font-size:36px;font-weight:900;line-height:1}
+  #valueHistory .vh-current{display:grid;grid-template-rows:18px 38px 18px;align-content:center;justify-items:center;text-align:center;border-left:1px solid var(--line);padding:10px 16px;min-width:0}
+  #valueHistory .vh-current small{font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;color:#e4b53f!important;margin:0;line-height:18px}
+  #valueHistory .vh-current .vh-big{font-size:36px;font-weight:900;line-height:38px}
   #valueHistory .vh-rank-chart svg{display:block;width:100%;height:auto}
   #valueHistory .vh-rank-chart .vh-axis{stroke:currentColor;opacity:.25}
   #valueHistory .vh-rank-chart .vh-axis-text{fill:currentColor;font-size:10px;opacity:.72}

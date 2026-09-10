@@ -1,29 +1,27 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-10T03:26:34.168Z",
+  "generatedAt": "2026-09-10T03:46:38.700Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
   "currentLeagueStatus": "in_season",
-  "currentSeasonCompletedWeek": 1,
+  "currentSeasonCompletedWeek": 0,
   "productionWeightPlan": {
-    "mode": "in-season",
-    "completedWeek": 1,
+    "mode": "preseason-offseason",
+    "completedWeek": 0,
     "weights": {
-      "currentYear": 0.1,
-      "previousYear": 0.55,
-      "twoYearsAgo": 0.25,
+      "currentYear": 0,
+      "previousYear": 0.6,
+      "twoYearsAgo": 0.3,
       "threeYearsAgo": 0.1
     },
     "yearWeights": {
       "2023": 0.1,
-      "2024": 0.25,
-      "2025": 0.55,
-      "2026": 0.1
+      "2024": 0.3,
+      "2025": 0.6
     }
   },
   "productionSeasons": [
-    2026,
     2025,
     2024,
     2023
@@ -43,12 +41,6 @@
       "players": 2832,
       "withPpr": 938,
       "withGames": 2832
-    },
-    "2026": {
-      "players": 20,
-      "withPpr": 8,
-      "withGames": 20,
-      "currentSeasonQualified": true
     }
   },
   "compactDiagnostics": {
@@ -66,13 +58,6 @@
       "players": 2832,
       "withPpr": 938,
       "withGames": 2832
-    },
-    "2026": {
-      "players": 20,
-      "withPpr": 8,
-      "withGames": 20,
-      "currentSeasonQualified": true,
-      "compactPlayers": 20
     }
   },
   "qualifyingHistoricalSeasonMinimumGames": 8,
@@ -80,11 +65,19 @@
     "minimumSnapShare": 0.2,
     "minimumFantasyPoints": 8,
     "finalGamesOnly": true,
+    "fullWeekValuationGate": true,
     "finalTeamsByWeek": {
       "1": [
         "SEA",
         "NE"
       ]
+    },
+    "weekFinalityByWeek": {
+      "1": {
+        "scheduledGames": 16,
+        "finalGames": 1,
+        "complete": false
+      }
     },
     "diagnostics": {
       "finalGames": 1,
@@ -117,6 +110,7 @@
     "Raw weekly Sleeper stat payloads are preserved. No player production number is fabricated.",
     "During the active current season, only player-games from NFL games verified final are eligible for scoring.",
     "A finalized current-season player-game qualifies when Sleeper snap share is at least 20% or league fantasy points are at least 8. Missing snap data does not satisfy the snap criterion.",
+    "Finalized games are collected immediately, but a new NFL week does not enter valuation until every scheduled game in that week is final.",
     "Offensive PPR is derived only from Sleeper-provided pts_ppr or deterministic standard-PPR scoring of Sleeper raw stats.",
     "offense-history.json is a compact delivery artifact derived only from the verified season aggregates; it does not recalculate or estimate player production.",
     "Raw weekly stats remain available for exact league-specific IDP reconstruction, including stacked sack/interception scoring."

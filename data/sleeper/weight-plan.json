@@ -1,16 +1,15 @@
 {
-  "mode": "in-season",
-  "completedWeek": 1,
+  "mode": "preseason-offseason",
+  "completedWeek": 0,
   "weights": {
-    "currentYear": 0.1,
-    "previousYear": 0.55,
-    "twoYearsAgo": 0.25,
+    "currentYear": 0,
+    "previousYear": 0.6,
+    "twoYearsAgo": 0.3,
     "threeYearsAgo": 0.1
   },
   "yearWeights": {
     "2023": 0.1,
-    "2024": 0.25,
-    "2025": 0.55,
-    "2026": 0.1
+    "2024": 0.3,
+    "2025": 0.6
   }
 }

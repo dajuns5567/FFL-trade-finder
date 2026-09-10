@@ -1,10 +1,79 @@
 {
   "schema_version": 1,
   "league_id": "1316867686394769408",
-  "snapshot_count": 0,
-  "tracking_since": null,
-  "latest": null,
-  "items": [],
-  "months": [],
+  "snapshot_count": 11,
+  "tracking_since": "2026-09-08T23:54:11.770Z",
+  "latest": "2026-09-09T23:44:50.109Z",
+  "items": [
+    {
+      "t": "2026-09-08T23:54:11.770Z",
+      "path": "value-history/snapshots/2026/09/2026-09-08T23-54-11-770Z.json",
+      "fingerprint": "8pfkbd",
+      "count": 890
+    },
+    {
+      "t": "2026-09-09T00:29:21.083Z",
+      "path": "value-history/snapshots/2026/09/2026-09-09T00-29-21-083Z.json",
+      "fingerprint": "9utdni",
+      "count": 889
+    },
+    {
+      "t": "2026-09-09T00:40:39.857Z",
+      "path": "value-history/snapshots/2026/09/2026-09-09T00-40-39-857Z.json",
+      "fingerprint": "1msdeh1",
+      "count": 889
+    },
+    {
+      "t": "2026-09-09T03:30:03.466Z",
+      "path": "value-history/snapshots/2026/09/2026-09-09T03-30-03-466Z.json",
+      "fingerprint": "1dsgnly",
+      "count": 890
+    },
+    {
+      "t": "2026-09-09T03:32:32.188Z",
+      "path": "value-history/snapshots/2026/09/2026-09-09T03-32-32-188Z.json",
+      "fingerprint": "12ehjdo",
+      "count": 889
+    },
+    {
+      "t": "2026-09-09T03:35:31.233Z",
+      "path": "value-history/snapshots/2026/09/2026-09-09T03-35-31-233Z.json",
+      "fingerprint": "12ehjdo",
+      "count": 889
+    },
+    {
+      "t": "2026-09-09T16:37:05.961Z",
+      "path": "value-history/snapshots/2026/09/2026-09-09T16-37-05-961Z.json",
+      "fingerprint": "1l768yf",
+      "count": 802
+    },
+    {
+      "t": "2026-09-09T22:45:54.036Z",
+      "path": "value-history/snapshots/2026/09/2026-09-09T22-45-54-036Z.json",
+      "fingerprint": "yq5n3v",
+      "count": 803
+    },
+    {
+      "t": "2026-09-09T22:53:15.133Z",
+      "path": "value-history/snapshots/2026/09/2026-09-09T22-53-15-133Z.json",
+      "fingerprint": "oca8ry",
+      "count": 803
+    },
+    {
+      "t": "2026-09-09T23:00:26.706Z",
+      "path": "value-history/snapshots/2026/09/2026-09-09T23-00-26-706Z.json",
+      "fingerprint": "oca8ry",
+      "count": 803
+    },
+    {
+      "t": "2026-09-09T23:44:50.109Z",
+      "path": "value-history/snapshots/2026/09/2026-09-09T23-44-50-109Z.json",
+      "fingerprint": "1ngmq14",
+      "count": 803
+    }
+  ],
+  "months": [
+    "2026-09"
+  ],
   "archive_format": "append-only snapshots + monthly bundles"
 }

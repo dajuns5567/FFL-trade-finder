@@ -547,9 +547,18 @@ function historicalPickValue(side,p){
 function historicalPlayerValue(side,id){
   const row=(side?.then_players||[]).find(x=>String(x?.id)===String(id)),n=Number(row?.value);return Number.isFinite(n)?Math.round(n):null
 }
+function historicalDraftSlotLabel(p){
+  const season=Number(p?.season),round=Number(p?.round),slot=Number(p?.draft_slot);
+  if(!Number.isFinite(season)||!Number.isFinite(round)||!Number.isFinite(slot)||slot<1)return null;
+  return`${season} ${round}.${String(slot).padStart(2,'0')}`
+}
+function historicalPickOwnershipLabel(p,trade){
+  const original=p?.original_roster_id?historicalTradeTeamName(trade,p.original_roster_id):'Unknown original team';
+  return `Original pick: ${original}`
+}
 function tradePickLabel(p,trade){
   const original=p.original_roster_id?historicalTradeTeamName(trade,p.original_roster_id):'Unknown original team';
-  const used=p.drafted_player_id?` → selected ${esc(playerName(p.drafted_player_id))}${p.pick_no?` at ${p.season}.${String(p.pick_no).padStart(2,'0')}`:''}`:'';
+  const slotLabel=historicalDraftSlotLabel(p),used=p.drafted_player_id?` → selected ${esc(playerName(p.drafted_player_id))}${slotLabel?` at ${esc(slotLabel)}`:''}`:'';
   return`${esc(p.season)} Round ${esc(p.round)} • original: ${esc(original)}${used}`;
 }
 function sideValueModel(side,trade){
@@ -563,13 +572,14 @@ function sideValueModel(side,trade){
   for(const p of side.picks||[]){
     const pickAsset=tradePickAsset(p,side.roster_id),recorded=historicalPickValue(side,p),then=recorded??retroactiveTradeHistoryPickValue(pickAsset,trade);
     if(then==null)atTradeComplete=false;
-    atTradeItems.push({label:`Draft pick: ${p.season} R${p.round}`,kind:'pick',value:then});
+    const ownership=historicalPickOwnershipLabel(p,trade),slotLabel=historicalDraftSlotLabel(p);
+    atTradeItems.push({label:`Draft pick: ${p.season} R${p.round}`,meta:ownership,kind:'pick',value:then});
     if(p.drafted_player_id){
       const drafted=tradePlayerAsset(p.drafted_player_id,side.roster_id),now=currentEvaluatorValue(drafted);if(now==null)currentComplete=false;
-      currentItems.push({label:`${playerName(p.drafted_player_id)} (from ${p.season} R${p.round})`,kind:'drafted-player',value:now});
+      currentItems.push({label:playerName(p.drafted_player_id),meta:`From ${slotLabel||`${p.season} R${p.round}`} • ${ownership}`,kind:'drafted-player',value:now});
     }else{
       const now=currentEvaluatorValue(pickAsset);if(now==null)currentComplete=false;
-      currentItems.push({label:`Draft pick: ${p.season} R${p.round}`,kind:'pick',value:now});
+      currentItems.push({label:`Draft pick: ${p.season} R${p.round}`,meta:ownership,kind:'pick',value:now});
     }
   }
   const sum=items=>items.reduce((n,x)=>n+(Number(x.value)||0),0);
@@ -599,14 +609,14 @@ function tradeEvaluatorAnalysis(trade){
   }catch(e){return{available:false,reason:`Current Trade Evaluator could not analyze this historical package: ${String(e?.message||e)}`}}
 }
 function tradeItemRows(items){
-  return items.map(x=>`<div class="vh-driver-row"><div><b>${esc(x.label)}</b></div><div>${x.value==null?'—':fmt(x.value)}</div></div>`).join('')||'<div class="vh-empty">No assets.</div>'
+  return items.map(x=>`<div class="vh-driver-row"><div><b>${esc(x.label)}</b>${x.meta?`<small>${esc(x.meta)}</small>`:''}</div><div>${x.value==null?'—':fmt(x.value)}</div></div>`).join('')||'<div class="vh-empty">No assets.</div>'
 }
 function tradeHindsightAssets(side){
   const out=(side?.player_ids||[]).map(id=>tradePlayerAsset(id,side.roster_id));
   for(const p of side?.picks||[]){
     if(p?.drafted_player_id){
       const a=tradePlayerAsset(p.drafted_player_id,side.roster_id);
-      a.hindsightFromPick={season:Number(p.season)||null,round:Number(p.round)||null,original_roster_id:Number(p.original_roster_id)||null,pick_no:Number(p.pick_no)||null};
+      a.hindsightFromPick={season:Number(p.season)||null,round:Number(p.round)||null,original_roster_id:Number(p.original_roster_id)||null,draft_slot:Number(p.draft_slot)||null,pick_no:Number(p.pick_no)||null};
       out.push(a);
     }else{
       const a=tradePickAsset(p,side.roster_id);if(a)out.push(a);
@@ -632,7 +642,8 @@ function hindsightAssetRow(asset,trade){
   let meta='';
   if(asset?.hindsightFromPick){
     const p=asset.hindsightFromPick,original=p.original_roster_id?historicalTradeTeamName(trade,p.original_roster_id):'Unknown original team';
-    meta=`${currentTradePlayerMeta(asset.id)} • from ${p.season} R${p.round}${p.pick_no?` (${p.season}.${String(p.pick_no).padStart(2,'0')})`:''} • original: ${original}`;
+    const slotLabel=historicalDraftSlotLabel(p);
+    meta=`${currentTradePlayerMeta(asset.id)} • from ${slotLabel||`${p.season} R${p.round}`} • original: ${original}`;
   }else if(asset?.type==='pick'){
     meta=`Draft pick • original: ${historicalTradeTeamName(trade,asset.original_owner)}`;
   }else meta=currentTradePlayerMeta(asset?.id);
@@ -668,7 +679,7 @@ function evaluatorAssetRow(asset,trade){
   const value=tradeHistoryEvaluatorValue(asset,trade),label=asset?.type==='pick'?(asset.name||`${asset.season} R${asset.round}`):playerName(asset?.id);
   let meta='';
   if(asset?.type==='pick'){
-    const original=historicalTradeTeamName(trade,asset.original_owner),used=asset.historyPick?.drafted_player_id?` • selected ${playerName(asset.historyPick.drafted_player_id)}${asset.historyPick.pick_no?` at ${asset.season}.${String(asset.historyPick.pick_no).padStart(2,'0')}`:''}`:'';
+    const original=historicalTradeTeamName(trade,asset.original_owner),slotLabel=historicalDraftSlotLabel({season:asset.season,round:asset.round,draft_slot:asset.historyPick?.draft_slot}),used=asset.historyPick?.drafted_player_id?` • selected ${playerName(asset.historyPick.drafted_player_id)}${slotLabel?` at ${slotLabel}`:''}`:'';
     meta=`Draft pick • original: ${original}${used}`;
   }else meta=currentTradePlayerMeta(asset?.id);
   return`<div class="vh-eval-asset"><div><b>${esc(label)}</b><small>${esc(meta)}</small></div><strong>${value==null?'—':fmt(value)}</strong></div>`

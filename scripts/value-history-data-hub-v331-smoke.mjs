@@ -190,7 +190,7 @@ for(const needle of [
   'target.value',
   '#valueHistory>.card{border:0!important;background:color-mix(in srgb,var(--card) 72%,#06080c)',
   '#valueHistory .vh-market-table summary',
-  'align-items:center;justify-content:center;text-align:center;min-height:82px',
+  'align-content:center;justify-items:center;text-align:center;min-height:82px',
   'Overall Net Value',
   'teamNetFetch',
   'teamNetChart',

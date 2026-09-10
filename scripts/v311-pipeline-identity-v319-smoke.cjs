@@ -33,4 +33,5 @@ if(bad.length){
   for(const x of bad)console.error('- '+x);
   process.exit(1);
 }
-console.log('V330 pipeline identity verified with approved V320 Value Adjustment and scoped specific-player family-diversity changes for '+Object.keys(expected).length+' loaded modules.');
+require('./offense-consensus-coverage-gate-v384-smoke.cjs');
+console.log('V384 pipeline identity verified: frozen trade/value-adjustment modules unchanged and offense zero-consensus coverage gate isolation passed for '+Object.keys(expected).length+' loaded modules.');

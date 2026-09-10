@@ -21,9 +21,12 @@ function addStyles(){
   #valueHistory .vh-shell{display:grid;gap:16px}
   #valueHistory .vh-control-row{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:4px 0 0;padding-bottom:4px}
   #valueHistory .vh-hero{display:block;margin:0 0 4px}
-  #valueHistory .vh-search-wrap{width:min(620px,100%)}
+  #valueHistory .vh-search-wrap{width:min(620px,100%);transition:width .18s ease}
+  #valueHistory .vh-search-wrap.vh-player-selected{width:min(470px,100%)}
   #valueHistory .vh-search-wrap label b{display:block;font-size:15px;font-weight:900;letter-spacing:.02em;color:#f4f4f5;margin-bottom:3px}
-  #valueHistory .vh-search-wrap input{margin:7px 0 0;border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important;transition:border-color .15s ease,box-shadow .15s ease}
+  #valueHistory .vh-search-wrap input{margin:7px 0 0;border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important;transition:border-color .15s ease,box-shadow .15s ease,background .15s ease}
+  #valueHistory .vh-search-wrap.vh-player-selected input{min-height:44px;padding:10px 14px;border-color:color-mix(in srgb,#e4b53f 38%,var(--line))!important;border-radius:10px!important;background:linear-gradient(180deg,color-mix(in srgb,#e4b53f 5%,var(--card)),color-mix(in srgb,var(--card) 97%,black))!important;color:#f4f4f5!important;font-size:17px!important;font-weight:850!important;letter-spacing:.005em!important}
+  #valueHistory .vh-search-wrap.vh-player-selected label b{font-size:11px;color:#e4b53f;text-transform:uppercase;letter-spacing:.07em;margin-bottom:1px}
   #valueHistory .vh-search-wrap input:focus,#valueHistory .vh-search-wrap input:focus-visible,#valueHistory input[type="search"]:focus,#valueHistory input[type="search"]:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.20)!important}
   #valueHistory .vh-status{font-size:12px;color:var(--muted);text-align:right;line-height:1.45;padding:0 2px;white-space:nowrap}
   #valueHistory .vh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
@@ -194,6 +197,9 @@ function addStyles(){
   #valueHistory .vh-driver-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid color-mix(in srgb,var(--line) 72%,transparent)}
   #valueHistory .vh-driver-row:first-child{border-top:0}
   #valueHistory .vh-driver-row small{display:block;color:var(--muted)}
+  #valueHistory .vh-driver-row>div.vh-up>b{color:var(--good,#1f9d68)!important}
+  #valueHistory .vh-driver-row>div.vh-down>b{color:var(--bad,#c45151)!important}
+  #valueHistory .vh-driver-row>div.vh-neutral>b{color:var(--muted)!important}
   #valueHistory .vh-team-trade-events{margin-top:16px;padding-top:14px;border-top:1px solid color-mix(in srgb,#e4b53f 28%,var(--line))}
   #valueHistory .vh-team-trade-events-head{margin-bottom:7px}
   #valueHistory .vh-team-trade-events-head h3{color:#e4b53f;font-size:14px;text-transform:uppercase;letter-spacing:.055em}
@@ -415,9 +421,14 @@ function renderSearchResults(value){
   const matches=ranked().filter(z=>z?.x?.type==='player'&&norm(playerName(z.x.id)).includes(q)).slice(0,16);
   results.innerHTML=matches.map(z=>`<button type="button" class="secondary small" data-vh-id="${esc(z.x.id)}">${esc(playerName(z.x.id))} • ${esc(groupPos(z.x))}</button>`).join('');
 }
+function syncPlayerSearchState(){
+  const wrap=document.querySelector('#valueHistory .vh-search-wrap'),label=wrap?.querySelector('label b');
+  if(wrap)wrap.classList.toggle('vh-player-selected',currentView==='player'&&!!currentPlayerId);
+  if(label)label.textContent=currentView==='player'&&currentPlayerId?'Selected player':'Search player history';
+}
 function selectPlayer(id){
   currentView='player';syncSubnav();currentPlayerId=String(id);const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
-  if(input)input.value=playerName(id);if(results)results.innerHTML='';
+  if(input)input.value=playerName(id);if(results)results.innerHTML='';syncPlayerSearchState();
   loadPlayer(id);
 }
 function handleContentClick(e){
@@ -431,8 +442,8 @@ function handleContentClick(e){
     return;
   }
   const player=e.target.closest('[data-vh-player]');if(player){selectPlayer(player.dataset.vhPlayer);return}
-  const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';loadMarket(true);return}
-  const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();currentPlayerId=null;renderTrackMyTeam();return}
+  const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';syncPlayerSearchState();loadMarket(true);return}
+  const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();currentPlayerId=null;syncPlayerSearchState();renderTrackMyTeam();return}
   const openTrades=e.target.closest('[data-vh-open-trade-history]');if(openTrades){openTradeHistoryTab(openTrades.dataset.vhTradeTeam||'');return}
   const teamNetSortBtn=e.target.closest('[data-vh-team-net-sort]');if(teamNetSortBtn){const key=teamNetSortBtn.dataset.vhTeamNetSort;if(teamNetSort.key===key)teamNetSort.dir*=-1;else teamNetSort={key,dir:key==='name'?1:-1};openTeamNetModal();return}
   const attr=e.target.closest('[data-vh-team-attribution]');if(attr&&trackedTeamId){teamAttributionPeriod=attr.dataset.vhTeamAttribution;const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=teamNetCacheKey(ids,trackedTeamId);renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length});return}

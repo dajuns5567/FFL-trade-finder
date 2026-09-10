@@ -103,7 +103,7 @@ for(const needle of [
   'slice(pi+1,pi+6)',
   'vh-rank-hit',
   'data-vh-rank-label',
-  'marketCache=null;teamNetCache.clear();scheduleSnapshot(1000)',
+  "marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update')",
   'Tracked since',
   "'1D','7D','30D','90D','1Y','ALL'",
   "period==='1D'",
@@ -406,8 +406,8 @@ assert(ui.includes("try{teams=currentTeamRows(rows)}catch"),'team snapshot enric
 assert(ui.includes("if(rows.length<100){scheduleSnapshot(2000);return false}"),'player rows must be the only required snapshot payload before enrichment');
 assert(ui.indexOf("const rows=currentRows();")<ui.indexOf("try{picks=currentPickRows()}catch"),'core player snapshot must be built before optional pick enrichment');
 assert(ui.indexOf("const rows=currentRows();")<ui.indexOf("try{teams=currentTeamRows(rows)}catch"),'core player snapshot must be built before optional team enrichment');
-assert(ui.includes('scheduleSnapshot(1000)'),'Update-triggered value recalculation must schedule a new historical observation');
-assert(ui.includes('scheduleSnapshot(1000)'),'post-update snapshot is not scheduled promptly');
+assert(ui.includes("scheduleSnapshot(1000,'manual-update')"),'Update-triggered value recalculation must schedule a new historical observation');
+assert(ui.includes("scheduleSnapshot(1000,'manual-update')"),'post-update snapshot is not scheduled promptly');
 const updateSource=fs.readFileSync('netlify/functions/update.mjs','utf8');
 assert(updateSource.includes("failedSources=diagnostics.filter(result=>!result.ok)"),'consensus refresh is not checking all source failures');
 assert(updateSource.includes("integrityReady=results.length>=7&&failedSources.length===0"),'consensus replacement is not gated on all required sources');

@@ -1,27 +1,29 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-10T02:27:06.063Z",
+  "generatedAt": "2026-09-10T03:26:34.168Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
   "currentLeagueStatus": "in_season",
-  "currentSeasonCompletedWeek": 0,
+  "currentSeasonCompletedWeek": 1,
   "productionWeightPlan": {
-    "mode": "preseason-offseason",
-    "completedWeek": 0,
+    "mode": "in-season",
+    "completedWeek": 1,
     "weights": {
-      "currentYear": 0,
-      "previousYear": 0.6,
-      "twoYearsAgo": 0.3,
+      "currentYear": 0.1,
+      "previousYear": 0.55,
+      "twoYearsAgo": 0.25,
       "threeYearsAgo": 0.1
     },
     "yearWeights": {
       "2023": 0.1,
-      "2024": 0.3,
-      "2025": 0.6
+      "2024": 0.25,
+      "2025": 0.55,
+      "2026": 0.1
     }
   },
   "productionSeasons": [
+    2026,
     2025,
     2024,
     2023
@@ -41,6 +43,12 @@
       "players": 2832,
       "withPpr": 938,
       "withGames": 2832
+    },
+    "2026": {
+      "players": 20,
+      "withPpr": 8,
+      "withGames": 20,
+      "currentSeasonQualified": true
     }
   },
   "compactDiagnostics": {
@@ -58,6 +66,13 @@
       "players": 2832,
       "withPpr": 938,
       "withGames": 2832
+    },
+    "2026": {
+      "players": 20,
+      "withPpr": 8,
+      "withGames": 20,
+      "currentSeasonQualified": true,
+      "compactPlayers": 20
     }
   },
   "qualifyingHistoricalSeasonMinimumGames": 8,
@@ -66,12 +81,15 @@
     "minimumFantasyPoints": 8,
     "finalGamesOnly": true,
     "finalTeamsByWeek": {
-      "1": []
+      "1": [
+        "SEA",
+        "NE"
+      ]
     },
     "diagnostics": {
-      "finalGames": 0,
-      "qualifiedPlayerGames": 0,
-      "rejectedPlayerGames": 0
+      "finalGames": 1,
+      "qualifiedPlayerGames": 20,
+      "rejectedPlayerGames": 127
     }
   },
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",

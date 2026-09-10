@@ -430,7 +430,7 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=381'),'production shell must cache-bust the current V381 Value History presentation runtime');
+assert(siteV29.includes('/value-history-v276.js?v=383'),'production shell must cache-bust the current V383 Value History presentation runtime');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');
@@ -457,4 +457,5 @@ assert(headlessScript.includes("vh_source','scheduled"),'scheduled browser load 
 assert(headlessScript.includes("fll-value-history-v2"),'scheduled browser must check the authoritative live history buffer before adding another observation');
 assert(headlessScript.includes("window.__vhLastSnapshot"),'scheduled browser must wait for a confirmed Value History write before closing');
 
-console.log('V381 Value History/consensus/headless refresh integrity regression passed');
+assert(ui.includes("marketPools={valueRisers:'300',valueFallers:'300',rankRisers:'300',rankFallers:'300'}"),'Market dashboard mover cards must default to the Top 300 player pool');
+console.log('V383 Value History/consensus/headless refresh integrity regression passed');

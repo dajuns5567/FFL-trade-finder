@@ -316,6 +316,14 @@ assert(!ui.includes('tradeValueNormalizationV130.canonicalValue='),'Trade Histor
 assert(!ui.includes('draftPickProjection92='),'Trade History must never overwrite shared draft-pick projection logic');
 assert(!ui.includes('YEAR_DISCOUNT92='),'Trade History must not modify the shared current/future draft-pick year discount');
 assert(ui.includes("tradeBtn.dataset.tab='tradeHistory'"),'Trade History must be a separate top-level tab');
+assert(ui.includes("tradeDetailState=new Map()"),'Trade History expansion state must be maintained independently per trade');
+assert(ui.includes('data-vh-trade-toggle="hindsight"'),'Trade History must expose an independent Hindsight toggle');
+assert(ui.includes('data-vh-trade-toggle="original"'),'Trade History must expose an independent Original Trade Analysis toggle');
+assert(ui.includes("open.hindsight?tradeValuePresentation(trade):''"),'Hindsight detail must render only when selected');
+assert(ui.includes("open.original?tradeEvaluatorSection(trade):''"),'Original Trade Analysis must render only when selected');
+assert(ui.includes("anyOpen?historicalValueComparisonSection(trade):''"),'Historical Value Comparison must stay hidden until either detail section is opened');
+assert(ui.includes('vh-compact-trade'),'Trade History collapsed cards must retain a compact asset summary');
+
 
 
 const backend=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
@@ -402,7 +410,7 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=367'),'production shell must cache-bust the V367 Value History recorder');
+assert(siteV29.includes('/value-history-v276.js?v=371'),'production shell must cache-bust the V371 Trade History presentation runtime');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');

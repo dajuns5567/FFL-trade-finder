@@ -1,4 +1,5 @@
 import { getStore } from '@netlify/blobs';
+import { readFileSync } from 'node:fs';
 const token=process.env.GITHUB_TOKEN;
 const repository=process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder';
 const sourceBase=process.env.VALUE_HISTORY_SOURCE_URL||'https://subtle-genie-6167c5.netlify.app/.netlify/functions/value-history';
@@ -6,6 +7,7 @@ const netlifySiteId=process.env.NETLIFY_SITE_ID||'0cc03543-09f9-4de9-9b52-6cbc4f
 const netlifyToken=process.env.NETLIFY_BLOBS_TOKEN||process.env.NETLIFY_AUTH_TOKEN||'';
 const dataBranch='value-history-data';
 const root='value-history';
+const scheduledSnapshotFile=String(process.env.VALUE_HISTORY_SNAPSHOT_FILE||'').trim();
 if(!token)throw new Error('GITHUB_TOKEN required');
 const [owner,repo]=repository.split('/');
 const api='https://api.github.com';
@@ -61,7 +63,11 @@ async function snapshotsFromHttpExport(){
   }
   return response.json();
 }
-const payload=await snapshotsFromBlobStore()||await snapshotsFromHttpExport();
+let payload;
+if(scheduledSnapshotFile){
+  const snap=JSON.parse(readFileSync(scheduledSnapshotFile,'utf8'));
+  payload={schema_version:1,league_id:'1316867686394769408',source:'scheduled-local-browser',snapshot_count:1,snapshots:[snap]};
+}else payload=await snapshotsFromBlobStore()||await snapshotsFromHttpExport();
 const incoming=(payload.snapshots||[]).filter(validSnapshot).filter(s=>!existing.has(String(s.t))).sort((a,b)=>String(a.t).localeCompare(String(b.t)));
 if(!incoming.length){
   console.log(`No new Value History snapshots to archive. Source=${payload.source||'unknown'} source_count=${Number(payload.snapshot_count)||0} archive_count=${(index.items||[]).length}.`);

@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-11T02:26:02.258Z",
+  "generatedAt": "2026-09-11T03:25:45.699Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 0,
@@ -39,6 +39,8 @@
     "fullWeekValuationGate": true,
     "finalTeamsByWeek": {
       "1": [
+        "LAR",
+        "SF",
         "SEA",
         "NE"
       ]
@@ -46,15 +48,15 @@
     "weekFinalityByWeek": {
       "1": {
         "scheduledGames": 16,
-        "finalGames": 1,
+        "finalGames": 2,
         "ignoredGames": 0,
-        "blockingGames": 15,
+        "blockingGames": 14,
         "complete": false,
         "nullSlots": [],
         "slots": [
           {
             "id": "401872657",
-            "state": "blocking",
+            "state": "final",
             "teams": [
               "LAR",
               "SF"
@@ -184,9 +186,9 @@
       }
     },
     "diagnostics": {
-      "finalGames": 1,
-      "qualifiedPlayerGames": 59,
-      "rejectedPlayerGames": 86,
+      "finalGames": 2,
+      "qualifiedPlayerGames": 79,
+      "rejectedPlayerGames": 216,
       "ignoredGames": 0
     }
   },

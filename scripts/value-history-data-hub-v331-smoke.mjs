@@ -445,16 +445,22 @@ const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.y
 assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');
 assert(archiveWorkflow.includes('contents: write'),'archive workflow needs contents write permission');
 assert(archiveWorkflow.includes('NETLIFY_BLOBS_TOKEN:'),'archive workflow must inject an authenticated Blob token instead of relying on public site access');
-assert(archiveWorkflow.includes('NETLIFY_SITE_ID: 0cc03543-09f9-4de9-9b52-6cbc4fbc4357'),'archive workflow must target the production Blob site explicitly');
+assert(archiveWorkflow.includes('Resolve latest production Netlify site for main'),'interactive archive workflow may resolve the currently accessible Netlify live buffer without being required by scheduled history');
 assert(archiveWorkflow.includes('npm install --ignore-scripts --no-audit --no-fund'),'archive workflow must install the Netlify Blobs client before direct access');
 
 const headlessWorkflow=fs.readFileSync('.github/workflows/value-history-headless-refresh.yml','utf8');
 assert(headlessWorkflow.includes("cron: '47 */3 * * *'"),'scheduled headless Value History cadence must be every three hours');
 assert(!headlessWorkflow.includes('git push'),'headless Value History refresh must never create a deployment by pushing code');
-assert(headlessWorkflow.includes('scripts/value-history-headless-refresh.mjs'),'headless workflow must load production through the dedicated browser script');
+assert(headlessWorkflow.includes('scripts/value-history-headless-refresh.mjs'),'headless workflow must run the dedicated browser script');
+assert(!headlessWorkflow.includes('resolve-active-netlify-site.mjs'),'scheduled Value History must not depend on discovering or authenticating to any Netlify site');
+assert(!headlessWorkflow.includes('NETLIFY_SITE_ID'),'scheduled Value History must not depend on a Netlify site ID');
+assert(headlessWorkflow.includes('VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json'),'scheduled workflow must hand the local browser snapshot directly to the durable archive writer');
 const headlessScript=fs.readFileSync('scripts/value-history-headless-refresh.mjs','utf8');
 assert(headlessScript.includes("vh_source','scheduled"),'scheduled browser load must identify itself without pressing Update');
-assert(headlessScript.includes("fll-value-history-v2"),'scheduled browser must check the authoritative live history buffer before adding another observation');
+assert(headlessScript.includes("runtime:'github-main-local'"),'scheduled browser must execute the current GitHub main application locally');
+assert(headlessScript.includes('writeFileSync(snapshotFile'),'scheduled browser must capture the completed site snapshot without Netlify storage');
+assert(!headlessScript.includes("@netlify/blobs"),'scheduled browser must remain independent of Netlify Blob credentials');
+assert(archiveWriter.includes("source:'scheduled-local-browser'"),'durable archive writer must accept the locally captured scheduled snapshot directly');
 assert(headlessScript.includes("window.__vhLastSnapshot"),'scheduled browser must wait for a confirmed Value History write before closing');
 
-console.log('V381 Value History/consensus/headless refresh integrity regression passed');
+console.log('V388 Netlify-independent scheduled Value History + consensus integrity regression passed');

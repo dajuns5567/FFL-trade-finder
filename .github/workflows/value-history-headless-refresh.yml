@@ -29,29 +29,13 @@ jobs:
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Resolve latest production Netlify site for main
-        id: active_site
+      - name: Run current main locally and record scheduled observation
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN || secrets.NETLIFY_BLOBS_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_SHA: ${{ github.sha }}
-          VALUE_HISTORY_DEPLOY_BRANCH: main
-        run: node scripts/resolve-active-netlify-site.mjs
-
-      - name: Load resolved production Fleeced site and record scheduled observation
-        env:
-          VALUE_HISTORY_SITE_URL: ${{ steps.active_site.outputs.site_url }}
-          NETLIFY_SITE_ID: ${{ steps.active_site.outputs.site_id }}
-          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN || secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN || secrets.NETLIFY_BLOBS_TOKEN }}
-          VALUE_HISTORY_RECENT_MS: 9900000
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
         run: node scripts/value-history-headless-refresh.mjs
 
-      - name: Persist scheduled observation to durable Value History archive
+      - name: Persist scheduled observation directly to durable Value History archive
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NETLIFY_SITE_ID: ${{ steps.active_site.outputs.site_id }}
-          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN || secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN || secrets.NETLIFY_BLOBS_TOKEN }}
-          VALUE_HISTORY_SOURCE_URL: ${{ steps.active_site.outputs.site_url }}.netlify/functions/value-history
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
         run: node scripts/archive-value-history.mjs

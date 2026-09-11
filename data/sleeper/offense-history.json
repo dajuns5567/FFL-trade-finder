@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-11T12:31:13.056Z",
+  "generatedAt": "2026-09-11T13:26:36.774Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 0,
@@ -187,8 +187,8 @@
     },
     "diagnostics": {
       "finalGames": 2,
-      "qualifiedPlayerGames": 79,
-      "rejectedPlayerGames": 216,
+      "qualifiedPlayerGames": 130,
+      "rejectedPlayerGames": 165,
       "ignoredGames": 0
     }
   },

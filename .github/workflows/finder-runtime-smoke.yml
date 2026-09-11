@@ -140,31 +140,22 @@ jobs:
           node --check scripts/value-history-headless-refresh.mjs
       - name: Value History data hub behavior and isolation
         run: |
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          const p='scripts/value-history-data-hub-v331-smoke.mjs';
-          let s=fs.readFileSync(p,'utf8');
-          const old="assert(archiveWorkflow.includes('NETLIFY_SITE_ID: 0cc03543-09f9-4de9-9b52-6cbc4fbc4357'),'archive workflow must target the production Blob site explicitly');";
-          const replacement="assert(archiveWorkflow.includes('scripts/resolve-active-netlify-site.mjs'),'archive workflow must resolve the active production Netlify site dynamically');\nassert(!archiveWorkflow.includes('NETLIFY_SITE_ID: 0cc03543-09f9-4de9-9b52-6cbc4fbc4357'),'archive workflow must not be pinned to the retired production site');";
-          if(!s.includes(old))throw new Error('expected legacy archive-site assertion missing');
-          fs.writeFileSync(p,s.replace(old,replacement));
-          NODE
           node scripts/value-history-data-hub-v331-smoke.mjs
+          node --check scripts/value-history-headless-refresh.mjs
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           const ui=fs.readFileSync('value-history-ui-defaults-v386.js','utf8');
           const headless=fs.readFileSync('.github/workflows/value-history-headless-refresh.yml','utf8');
           const archive=fs.readFileSync('.github/workflows/value-history-archive.yml','utf8');
-          const resolver=fs.readFileSync('scripts/resolve-active-netlify-site.mjs','utf8');
           const site=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
           const assert=(x,m)=>{if(!x)throw new Error(m)};
-          for(const c of ['valueRisers','valueFallers','rankRisers','rankFallers'])assert(ui.includes(`[data-vh-market-pool=\"300\"][data-vh-category=\"${c}\"]`),`Top 300 market default missing for ${c}`);
-          for(const c of ['rankRisers','rankFallers'])assert(ui.includes(`[data-vh-market-period=\"7D\"][data-vh-category=\"${c}\"]`),`7D rank default missing for ${c}`);
+          for(const c of ['valueRisers','valueFallers','rankRisers','rankFallers'])assert(ui.includes(`[data-vh-market-pool="300"][data-vh-category="${c}"]`),`Top 300 market default missing for ${c}`);
+          for(const c of ['rankRisers','rankFallers'])assert(ui.includes(`[data-vh-market-period="7D"][data-vh-category="${c}"]`),`7D rank default missing for ${c}`);
           assert(site.includes('/value-history-ui-defaults-v386.js?v=386'),'market-default/observability runtime is not loaded');
-          assert(headless.includes('scripts/resolve-active-netlify-site.mjs'),'headless workflow is not dynamically resolving the latest production site');
-          assert(archive.includes('scripts/resolve-active-netlify-site.mjs'),'archive workflow is not dynamically resolving the latest production site');
-          assert(resolver.includes("context||'').toLowerCase()!=='production'"),'resolver must require production deploys');
-          assert(resolver.includes("branch||'')!==branch"),'resolver must require the main deployment branch');
+          assert(!headless.includes('resolve-active-netlify-site.mjs'),'scheduled headless history must not depend on a Netlify resolver');
+          assert(!headless.includes('NETLIFY_SITE_ID'),'scheduled headless history must not depend on a Netlify site ID');
+          assert(headless.includes('VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json'),'scheduled browser snapshot handoff missing');
+          assert(archive.includes('scripts/resolve-active-netlify-site.mjs'),'interactive archive workflow may continue to ingest an accessible Netlify live buffer');
           assert(ui.includes('Last scheduled refresh'),'scheduled refresh visibility missing');
-          console.log('V387 dynamic Netlify continuity + Market Dashboard defaults + headless observability smoke passed');
+          console.log('V388 Netlify-independent scheduled history + Market Dashboard defaults + observability smoke passed');
           NODE

@@ -372,13 +372,18 @@ function currentTeamRows(playerRows=currentRows()){
 }
 function hasValidatedKtcSnapshot(){for(const [name,src] of Object.entries(state?.rankings||{})){const label=`${name} ${src?.source||''}`.toLowerCase();if(!/ktc|keeptradecut/.test(label))continue;const count=Number(src?.playerCount)||Object.keys(src?.data||{}).length;if(count>=300)return true}return false}
 function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();return !/loading|updating|refreshing/.test(text)}
+function scheduledRefreshReady(){
+  if(snapshotSourceFromUrl()!=='scheduled')return true;
+  const gate=window.__vhScheduledRefreshGate;
+  return !!(gate?.ready&&gate?.sleeperReady&&gate?.consensusReady);
+}
 let pendingSnapshotSource='page-load';
 function snapshotSourceFromUrl(){
   try{return new URLSearchParams(location.search).get('vh_source')==='scheduled'?'scheduled':'page-load'}catch{return'page-load'}
 }
 async function recordSnapshot(source=pendingSnapshotSource){
   try{
-    if(!snapshotPreconditions()){scheduleSnapshot(2000,source);return false}
+    if(!snapshotPreconditions()||!scheduledRefreshReady()){scheduleSnapshot(2000,source);return false}
     const rows=currentRows();
     if(rows.length<100){scheduleSnapshot(2000,source);return false}
     let picks=[],teams=[];

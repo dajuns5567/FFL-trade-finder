@@ -120,4 +120,13 @@ const latestFile=await readFile(`${root}/latest.json`);
 await putFile(`${root}/latest.json`,JSON.stringify({schema_version:1,league_id:'1316867686394769408',latest:index.items.at(-1)||null},null,2)+'\n',`Update durable Value History latest pointer`,latestFile?.sha);
 const verify=JSON.parse((await readFile(`${root}/index.json`)).content);
 if(Number(verify?.snapshot_count)!==Number(index.snapshot_count)||!verify?.latest)throw new Error('Durable Value History archive verification failed after write');
+for(const snap of incoming){
+  const item=(verify.items||[]).find(x=>String(x?.t)===String(snap.t));
+  if(!item)throw new Error(`Durable Value History archive verification missing snapshot ${snap.t}`);
+  if(String(snap.source||'')==='scheduled'&&String(item.source||'')!=='scheduled')throw new Error(`Durable Value History archive verification lost scheduled source for ${snap.t}`);
+  const stored=await readFile(String(item.path||''));
+  if(!stored?.content)throw new Error(`Durable Value History archive verification unreadable snapshot ${snap.t}`);
+  const parsed=JSON.parse(stored.content);
+  if(String(parsed?.t)!==String(snap.t)||String(parsed?.source||'')!==String(snap.source||''))throw new Error(`Durable Value History archive verification content mismatch for ${snap.t}`);
+}
 console.log(`Archived ${incoming.length} Value History snapshot(s) from ${payload.source||'unknown'}; total ${index.snapshot_count}; latest ${index.latest}.`);

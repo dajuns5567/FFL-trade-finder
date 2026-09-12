@@ -455,15 +455,22 @@ assert(archiveWriter.includes('parseMonthBundleText(prior?.content,month)'),'mon
 assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must rebuild corrupt bundles from indexed snapshots rather than discard history');
 const headlessRefresh=fs.readFileSync('scripts/value-history-headless-refresh.mjs','utf8');
 const valueHistoryUi=fs.readFileSync('value-history-v276.js','utf8');
-assert(headlessRefresh.includes("window.__vhScheduledRefreshGate?.ready===true"),'scheduled headless refresh must wait for full valuation inputs');
-assert(headlessRefresh.includes("sleeperReady")&&headlessRefresh.includes("consensusReady"),'scheduled headless refresh must explicitly require Sleeper and consensus completion');
-assert(valueHistoryUi.includes("!scheduledRefreshReady()"),'scheduled Value History recorder must reject pre-consensus/pre-Sleeper snapshots');
+assert(headlessRefresh.includes("state?.sleeperHistory?.complete===true")||headlessRefresh.includes("window.state?.sleeperHistory?.complete===true"),'scheduled headless refresh must wait for verified Sleeper history completion');
+assert(headlessRefresh.includes("consensusSources")&&headlessRefresh.includes("covered>=7"),'scheduled headless refresh must require all seven consensus sources before capture');
+assert(headlessRefresh.includes("window.currentRows()"),'scheduled headless refresh must capture the same site-calculated currentRows used by Value History');
+assert(headlessRefresh.includes("Buffer.from(await r.arrayBuffer())"),'scheduled Sleeper proxy must buffer decoded upstream bytes before serving them');
+assert(!headlessRefresh.includes("new Response(r.body,{status:r.status,headers:r.headers})"),'scheduled Sleeper proxy must not forward stale content-encoding headers with an already-decoded body');
+assert(headlessRefresh.includes("page.setDefaultTimeout(240000)"),'scheduled browser must use an actual four-minute readiness timeout');
+assert(headlessRefresh.includes("offense-history.json")&&headlessRefresh.includes("failed local proxy preflight"),'scheduled browser must preflight required Sleeper artifacts before valuation');
+assert(valueHistoryUi.includes("!scheduledRefreshReady()"),'scheduled Value History recorder must retain its pre-consensus/pre-Sleeper protection');
 
 const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.yml','utf8');
 assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');
 assert(archiveWorkflow.includes('contents: write'),'archive workflow needs contents write permission');
 assert(archiveWorkflow.includes('NETLIFY_BLOBS_TOKEN:'),'archive workflow must inject an authenticated Blob token instead of relying on public site access');
 assert(archiveWorkflow.includes('Resolve latest production Netlify site for main'),'interactive archive workflow may resolve the currently accessible Netlify live buffer without being required by scheduled history');
+assert(archiveWorkflow.includes("if: steps.active_site.outputs.matched_target_sha == 'true'"),'interactive archive must not ingest live Blob history from a retired Netlify production site');
+assert(archiveWorkflow.includes('Skipping live Netlify Blob ingestion; scheduled GitHub-native history remains unaffected.'),'interactive archive must report unavailable current-site access instead of silently archiving a retired site');
 assert(archiveWorkflow.includes('npm install --ignore-scripts --no-audit --no-fund'),'archive workflow must install the Netlify Blobs client before direct access');
 
 const headlessWorkflow=fs.readFileSync('.github/workflows/value-history-headless-refresh.yml','utf8');
@@ -491,4 +498,4 @@ assert(!headlessScript.includes("@netlify/blobs"),'scheduled browser must remain
 assert(archiveWriter.includes("source:'scheduled-local-browser'"),'durable archive writer must accept the locally captured scheduled snapshot directly');
 assert(headlessScript.includes("window.__vhLastSnapshot"),'scheduled browser must wait for a confirmed Value History write before closing');
 
-console.log('V393 GitHub-only redundant wakeups + self-healing scheduled Value History regression passed');
+console.log('V394 headless full-load parity + Netlify-safe live archive regression passed');

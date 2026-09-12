@@ -9,12 +9,14 @@ async function refreshConsensusBackground277(run){
     consensusCount=await refreshConsensus(true);
     if(run!==consensusRun277)return;
     buildTeams();renderAll();
+    window.__fllConsensusRefresh={complete:true,ok:Number(consensusCount)>=7,successful:Number(consensusCount)||0,total:7,completedAt:new Date().toISOString()};
     state.lastUpdate=new Date().toISOString();
     cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
     status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data and team projections ready; consensus sources: <b>${consensusCount}/7</b> refreshed.`,'success');
   }catch(e){
     if(run!==consensusRun277)return;
     console.warn('Background consensus refresh failed',e);
+    window.__fllConsensusRefresh={complete:true,ok:false,successful:0,total:7,error:String(e?.message||e),completedAt:new Date().toISOString()};
     status(`Sleeper core data and team projections are ready. Consensus refresh did not complete; last validated consensus snapshots remain in use.`,'success');
   }
 }
@@ -26,6 +28,7 @@ updateData=async function(){
     cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
     status(`Core league data and team projections ready <b>${new Date().toLocaleString()}</b>. Refreshing consensus references in the background…`,'success');
     const run=++consensusRun277;
+    window.__fllConsensusRefresh={complete:false,ok:false,successful:0,total:7,startedAt:new Date().toISOString()};
     refreshConsensusBackground277(run);
   }catch(e){
     console.error(e);

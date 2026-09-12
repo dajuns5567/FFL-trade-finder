@@ -118,33 +118,55 @@ try{
   const response=await page.goto(url.toString(),{waitUntil:'domcontentloaded',timeout:120000});
   if(!response||!response.ok())throw new Error(`Local Fleeced load failed: ${response?.status()||'no response'}`);
 
-  await page.waitForFunction(()=>{
-    const players=window.state?.players||{};
-    const rankings=window.state?.rankings||{};
-    const covered=Object.values(rankings).filter(src=>(Number(src?.playerCount)||Object.keys(src?.data||{}).length)>0).length;
-    const sleeper=window.state?.sleeperHistory;
-    const status=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();
-    const busy=/loading|updating|refreshing/.test(status);
-    return Object.keys(players).length>=700&&sleeper?.complete===true&&covered>=7&&!busy&&typeof window.currentRows==='function';
-  },null,{timeout:240000});
+  try{
+    await page.waitForFunction(()=>{
+      try{window.fllStateBridgeV141?.syncState?.()}catch{}
+      const players=window.state?.players||{};
+      const sleeper=window.state?.sleeperHistory;
+      const consensus=window.__fllConsensusRefresh;
+      const vh=window.valueHistoryV331;
+      const status=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();
+      const busy=/loading|updating|refreshing/.test(status);
+      return Object.keys(players).length>=700&&sleeper?.complete===true&&consensus?.complete===true&&consensus?.ok===true&&Number(consensus?.successful)>=7&&!busy&&typeof vh?.currentRows==='function';
+    },null,{timeout:240000});
+  }catch(e){
+    const readiness=await page.evaluate(()=>{
+      try{window.fllStateBridgeV141?.syncState?.()}catch{}
+      const rankings=window.state?.rankings||{};
+      return {
+        players:Object.keys(window.state?.players||{}).length,
+        sleeperComplete:window.state?.sleeperHistory?.complete===true,
+        sleeperSource:window.state?.sleeperHistory?.source||null,
+        consensusMarker:window.__fllConsensusRefresh||null,
+        consensusSources:Object.values(rankings).filter(src=>(Number(src?.playerCount)||Object.keys(src?.data||{}).length)>0).length,
+        valueHistoryApi:!!window.valueHistoryV331,
+        hasCurrentRows:typeof window.valueHistoryV331?.currentRows==='function',
+        status:String(document.getElementById('updateStatus')?.textContent||'')
+      };
+    });
+    throw new Error(`Scheduled readiness timeout: ${JSON.stringify(readiness)}`,{cause:e});
+  }
 
   const readiness=await page.evaluate(()=>{
+    try{window.fllStateBridgeV141?.syncState?.()}catch{}
     const rankings=window.state?.rankings||{};
     return {
       players:Object.keys(window.state?.players||{}).length,
       sleeperComplete:window.state?.sleeperHistory?.complete===true,
       sleeperSource:window.state?.sleeperHistory?.source||null,
+      consensusMarker:window.__fllConsensusRefresh||null,
       consensusSources:Object.values(rankings).filter(src=>(Number(src?.playerCount)||Object.keys(src?.data||{}).length)>0).length,
       status:String(document.getElementById('updateStatus')?.textContent||'')
     };
   });
-  if(!readiness.sleeperComplete||readiness.consensusSources<7)throw new Error(`Scheduled refresh inputs incomplete: ${JSON.stringify(readiness)}`);
+  if(!readiness.sleeperComplete||readiness.consensusMarker?.ok!==true||Number(readiness.consensusMarker?.successful)<7)throw new Error(`Scheduled refresh inputs incomplete: ${JSON.stringify(readiness)}`);
 
   const captured=await page.evaluate(()=>{
-    const rows=window.currentRows();
+    const vh=window.valueHistoryV331;
+    const rows=vh.currentRows();
     let picks=[];let teams=[];
-    try{picks=typeof window.currentPickRows==='function'?window.currentPickRows():[]}catch{}
-    try{teams=typeof window.currentTeamRows==='function'?window.currentTeamRows(rows):[]}catch{}
+    try{picks=typeof vh.currentPickRows==='function'?vh.currentPickRows():[]}catch{}
+    try{teams=typeof vh.currentTeamRows==='function'?vh.currentTeamRows(rows):[]}catch{}
     return {rows,picks,teams};
   });
   if(!Array.isArray(captured.rows)||captured.rows.length<700)throw new Error(`Scheduled capture returned only ${captured.rows?.length||0} player rows`);

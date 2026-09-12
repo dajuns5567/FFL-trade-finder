@@ -138,6 +138,8 @@ jobs:
           node --check netlify/functions/value-history-observability.mjs
           node --check scripts/resolve-active-netlify-site.mjs
           node --check scripts/value-history-headless-refresh.mjs
+      - name: Full browser runtime syntax audit
+        run: node scripts/site-runtime-syntax-audit.mjs
       - name: Value History data hub behavior and isolation
         run: |
           node scripts/value-history-data-hub-v331-smoke.mjs

@@ -438,7 +438,8 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=390'),'production shell must cache-bust the current V390 Value History presentation runtime');
+assert(siteV29.includes('/value-history-v276.js?v=395'),'production shell must cache-bust the current V395 Value History capture runtime');
+assert(siteV29.includes('/nonblocking-consensus-v277.js?v=395'),'production shell must cache-bust the V395 consensus completion marker');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');
@@ -455,9 +456,10 @@ assert(archiveWriter.includes('parseMonthBundleText(prior?.content,month)'),'mon
 assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must rebuild corrupt bundles from indexed snapshots rather than discard history');
 const headlessRefresh=fs.readFileSync('scripts/value-history-headless-refresh.mjs','utf8');
 const valueHistoryUi=fs.readFileSync('value-history-v276.js','utf8');
-assert(headlessRefresh.includes("state?.sleeperHistory?.complete===true")||headlessRefresh.includes("window.state?.sleeperHistory?.complete===true"),'scheduled headless refresh must wait for verified Sleeper history completion');
-assert(headlessRefresh.includes("consensusSources")&&headlessRefresh.includes("covered>=7"),'scheduled headless refresh must require all seven consensus sources before capture');
-assert(headlessRefresh.includes("window.currentRows()"),'scheduled headless refresh must capture the same site-calculated currentRows used by Value History');
+assert(headlessRefresh.includes("sleeper?.complete===true"),'scheduled headless refresh must wait for verified Sleeper history completion');
+assert(headlessRefresh.includes("consensus?.complete===true")&&headlessRefresh.includes("consensus?.ok===true")&&headlessRefresh.includes("successful)>=7"),'scheduled headless refresh must require an authoritative successful 7/7 consensus refresh');
+assert(headlessRefresh.includes("window.valueHistoryV331")&&headlessRefresh.includes("vh.currentRows()"),'scheduled headless refresh must capture the same exported site-calculated currentRows used by Value History');
+assert(valueHistoryUi.includes("currentPickRows,currentTeamRows"),'Value History must expose read-only pick/team capture helpers for the scheduled runner');
 assert(headlessRefresh.includes("Buffer.from(await r.arrayBuffer())"),'scheduled Sleeper proxy must buffer decoded upstream bytes before serving them');
 assert(!headlessRefresh.includes("new Response(r.body,{status:r.status,headers:r.headers})"),'scheduled Sleeper proxy must not forward stale content-encoding headers with an already-decoded body');
 assert(headlessRefresh.includes("page.setDefaultTimeout(240000)"),'scheduled browser must use an actual four-minute readiness timeout');
@@ -498,4 +500,4 @@ assert(!headlessScript.includes("@netlify/blobs"),'scheduled browser must remain
 assert(archiveWriter.includes("source:'scheduled-local-browser'"),'durable archive writer must accept the locally captured scheduled snapshot directly');
 assert(headlessScript.includes("writeFileSync(snapshotFile"),'scheduled browser must persist the completed site-calculated snapshot file before closing');
 
-console.log('V394 headless full-load parity + Netlify-safe live archive regression passed');
+console.log('V395 audited headless readiness + capture pipeline regression passed');

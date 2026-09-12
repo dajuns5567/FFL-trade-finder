@@ -61,8 +61,12 @@ async function genericFunction(name,req){
 async function proxySleeperData(url){
   const suffix=url.pathname.replace(/^\/sleeper-data\//,'');
   const target=`https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper/${suffix}${url.search}`;
-  const r=await fetch(target,{headers:{'user-agent':'Fleeced-Scheduled-Local-Runtime/1.0'},cache:'no-store'});
-  return new Response(r.body,{status:r.status,headers:r.headers});
+  const r=await fetch(target,{headers:{'user-agent':'Fleeced-Scheduled-Local-Runtime/1.0',accept:'application/json'},cache:'no-store'});
+  const bytes=Buffer.from(await r.arrayBuffer());
+  const headers=new Headers({'content-type':r.headers.get('content-type')||'application/json; charset=utf-8','cache-control':'no-store'});
+  const etag=r.headers.get('etag');if(etag)headers.set('etag',etag);
+  const modified=r.headers.get('last-modified');if(modified)headers.set('last-modified',modified);
+  return new Response(bytes,{status:r.status,headers});
 }
 function staticResponse(pathname){
   let rel=decodeURIComponent(pathname).replace(/^\/+/, '');
@@ -91,59 +95,67 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});
 const port=server.address().port,siteUrl=`http://127.0.0.1:${port}/`;
+for(const required of ['offense-history.json']){
+  const r=await fetch(`${siteUrl}sleeper-data/${required}?preflight=${Date.now()}`,{cache:'no-store'});
+  if(!r.ok)throw new Error(`Required Sleeper artifact ${required} failed local proxy preflight: ${r.status}`);
+  const j=await r.json();
+  if(!j||typeof j!=='object'||j.ok!==true)throw new Error(`Required Sleeper artifact ${required} failed JSON validation`);
+}
 const url=new URL(siteUrl);url.searchParams.set('vh_source','scheduled');url.searchParams.set('vh_ts',String(Date.now()));
 console.log(JSON.stringify({event:'scheduled-refresh-target',runtime:'github-main-local',site:url.origin,commit:process.env.GITHUB_SHA||null},null,2));
 
 const browser=await chromium.launch({headless:true});
 try{
   const page=await browser.newPage();
+  const pageErrors=[];
+  const failedRequests=[];
+  page.setDefaultTimeout(240000);
   page.on('console',msg=>{if(['error','warning'].includes(msg.type()))console.log(`browser-${msg.type()}:`,msg.text())});
-  page.on('pageerror',err=>console.log('browser-pageerror:',String(err?.message||err)));
-  await page.addInitScript(()=>{
-    window.__vhScheduledRefreshGate={ready:false,sleeperReady:false,consensusReady:false};
-    const install=()=>{
-      if(typeof window.loadCore!=='function'||typeof window.refreshConsensus!=='function')return false;
-      const load=window.loadCore.bind(window),consensus=window.refreshConsensus.bind(window);
-      window.loadCore=async(...args)=>{
-        const out=await load(...args);
-        window.__vhScheduledRefreshGate={...(window.__vhScheduledRefreshGate||{}),sleeperReady:true,ready:false};
-        return out;
-      };
-      window.refreshConsensus=async(...args)=>{
-        const out=await consensus(...args);
-        const rankings=window.state?.rankings||{};
-        const covered=Object.values(rankings).filter(src=>(Number(src?.playerCount)||Object.keys(src?.data||{}).length)>0).length;
-        window.__vhScheduledRefreshGate={...(window.__vhScheduledRefreshGate||{}),consensusReady:covered>0,consensusSources:covered,ready:false};
-        return out;
-      };
-      return true;
-    };
-    const timer=setInterval(()=>{
-      if(!install())return;
-      clearInterval(timer);
-      const poll=setInterval(()=>{
-        const gate=window.__vhScheduledRefreshGate||{};
-        const status=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();
-        const busy=/loading|updating|refreshing/.test(status);
-        if(gate.sleeperReady&&gate.consensusReady&&!busy){
-          gate.ready=true;window.__vhScheduledRefreshGate=gate;clearInterval(poll);
-        }
-      },100);
-    },0);
-  });
+  page.on('pageerror',err=>{pageErrors.push(String(err?.stack||err?.message||err));console.log('browser-pageerror:',String(err?.stack||err?.message||err))});
+  page.on('requestfailed',req=>{const row={url:req.url(),failure:req.failure()?.errorText||'unknown'};failedRequests.push(row);console.log('browser-requestfailed:',JSON.stringify(row))});
+  page.on('response',res=>{if(res.status()>=400)console.log('browser-http-error:',res.status(),res.url())});
+
   const response=await page.goto(url.toString(),{waitUntil:'domcontentloaded',timeout:120000});
   if(!response||!response.ok())throw new Error(`Local Fleeced load failed: ${response?.status()||'no response'}`);
-  await page.waitForFunction(()=>window.__vhScheduledRefreshGate?.ready===true,{timeout:240000});
-  const gate=await page.evaluate(()=>window.__vhScheduledRefreshGate);
-  if(!gate?.sleeperReady||!gate?.consensusReady)throw new Error('Scheduled refresh did not complete Sleeper + consensus valuation inputs');
-  console.log(JSON.stringify({event:'scheduled-full-refresh-ready',sleeper:true,consensus:true,consensusSources:gate.consensusSources||0},null,2));
-  await page.waitForFunction(()=>window.__vhLastSnapshot?.ok===true,{timeout:240000});
-  const result=await page.evaluate(()=>window.__vhLastSnapshot);
-  if(result?.source!=='scheduled')throw new Error(`Unexpected snapshot source: ${result?.source||'missing'}`);
-  const snap=JSON.parse(readFileSync(snapshotFile,'utf8'));
-  if(!Array.isArray(snap.rows)||snap.rows.length<100)throw new Error('Scheduled snapshot file missing required player rows');
-  if(snap.source!=='scheduled')throw new Error('Scheduled snapshot file source mismatch');
-  console.log(JSON.stringify({ok:true,skipped:false,runtime:'github-main-local',snapshot:{t:snap.t,source:snap.source,count:snap.rows.length,fingerprint:snap.fingerprint}},null,2));
+
+  await page.waitForFunction(()=>{
+    const players=window.state?.players||{};
+    const rankings=window.state?.rankings||{};
+    const covered=Object.values(rankings).filter(src=>(Number(src?.playerCount)||Object.keys(src?.data||{}).length)>0).length;
+    const sleeper=window.state?.sleeperHistory;
+    const status=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();
+    const busy=/loading|updating|refreshing/.test(status);
+    return Object.keys(players).length>=700&&sleeper?.complete===true&&covered>=7&&!busy&&typeof window.currentRows==='function';
+  },null,{timeout:240000});
+
+  const readiness=await page.evaluate(()=>{
+    const rankings=window.state?.rankings||{};
+    return {
+      players:Object.keys(window.state?.players||{}).length,
+      sleeperComplete:window.state?.sleeperHistory?.complete===true,
+      sleeperSource:window.state?.sleeperHistory?.source||null,
+      consensusSources:Object.values(rankings).filter(src=>(Number(src?.playerCount)||Object.keys(src?.data||{}).length)>0).length,
+      status:String(document.getElementById('updateStatus')?.textContent||'')
+    };
+  });
+  if(!readiness.sleeperComplete||readiness.consensusSources<7)throw new Error(`Scheduled refresh inputs incomplete: ${JSON.stringify(readiness)}`);
+
+  const captured=await page.evaluate(()=>{
+    const rows=window.currentRows();
+    let picks=[];let teams=[];
+    try{picks=typeof window.currentPickRows==='function'?window.currentPickRows():[]}catch{}
+    try{teams=typeof window.currentTeamRows==='function'?window.currentTeamRows(rows):[]}catch{}
+    return {rows,picks,teams};
+  });
+  if(!Array.isArray(captured.rows)||captured.rows.length<700)throw new Error(`Scheduled capture returned only ${captured.rows?.length||0} player rows`);
+  if(captured.rows.some(r=>!Number.isFinite(Number(r?.value))||!Number.isFinite(Number(r?.overall))))throw new Error('Scheduled capture contains non-finite player values/ranks');
+
+  const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
+  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',rows:captured.rows,picks:captured.picks,teams:captured.teams};
+  mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
+  writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
+
+  console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,pageErrors:pageErrors.length,failedRequests:failedRequests.length,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
 }finally{
   await browser.close();
   await new Promise(resolve=>server.close(resolve));

@@ -32,7 +32,14 @@ jobs:
           VALUE_HISTORY_DEPLOY_BRANCH: main
         run: node scripts/resolve-active-netlify-site.mjs
 
+      - name: Report unavailable current Netlify live buffer
+        if: steps.active_site.outputs.matched_target_sha != 'true'
+        run: |
+          echo "Current main is not deployed to a Netlify site accessible to this token."
+          echo "Skipping live Netlify Blob ingestion; scheduled GitHub-native history remains unaffected."
+
       - name: Archive new Value History snapshots
+        if: steps.active_site.outputs.matched_target_sha == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NETLIFY_SITE_ID: ${{ steps.active_site.outputs.site_id }}

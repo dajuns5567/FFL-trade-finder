@@ -32,7 +32,8 @@ async function putFile(path,content,message,sha){
 }
 const V380_BAD_WINDOW=[Date.parse('2026-09-10T03:25:00.000Z'),Date.parse('2026-09-10T03:35:00.000Z')];
 const V381_BAD_WINDOW=[Date.parse('2026-09-10T03:20:00.000Z'),Date.parse('2026-09-10T03:46:38.700Z')];
-function isKnownBadSnapshot(s){const ms=new Date(s?.t||'').getTime();return Number.isFinite(ms)&&[V380_BAD_WINDOW,V381_BAD_WINDOW].some(([a,b])=>ms>=a&&ms<b)}
+const V391_BAD_WINDOW=[Date.parse('2026-09-10T03:51:00.000Z'),Date.parse('2026-09-10T03:52:00.000Z')];
+function isKnownBadSnapshot(s){const ms=new Date(s?.t||'').getTime();return Number.isFinite(ms)&&[V380_BAD_WINDOW,V381_BAD_WINDOW,V391_BAD_WINDOW].some(([a,b])=>ms>=a&&ms<b)}
 function validSnapshot(s){
   return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100&&!isKnownBadSnapshot(s);
 }

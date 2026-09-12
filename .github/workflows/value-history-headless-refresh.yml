@@ -3,7 +3,8 @@ name: Scheduled Value History Browser Refresh
 on:
   workflow_dispatch:
   schedule:
-    - cron: '47 */3 * * *'
+    - cron: '17 * * * *'
+    - cron: '47 * * * *'
 
 permissions:
   contents: write
@@ -23,18 +24,36 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Check whether scheduled history is due
+        id: due
+        env:
+          VALUE_HISTORY_DUE_MINUTES: '165'
+          VALUE_HISTORY_STALE_MINUTES: '240'
+          FORCE_SCHEDULED_REFRESH: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+        run: node scripts/value-history-scheduled-due.mjs
+
+      - name: Report healthy scheduled history
+        if: steps.due.outputs.due != 'true'
+        run: |
+          echo "Scheduled Value History is current."
+          echo "Last scheduled point: ${{ steps.due.outputs.last_scheduled }}"
+          echo "Age (minutes): ${{ steps.due.outputs.age_minutes }}"
+
       - name: Install browser runtime
+        if: steps.due.outputs.due == 'true'
         run: |
           npm install --ignore-scripts --no-audit --no-fund
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
 
       - name: Run current main locally and record scheduled observation
+        if: steps.due.outputs.due == 'true'
         env:
           VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
         run: node scripts/value-history-headless-refresh.mjs
 
       - name: Persist scheduled observation directly to durable Value History archive
+        if: steps.due.outputs.due == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { extractKtcSuperflexRankings } from '../netlify/functions/ktc-adapter.mjs';
+import { emptyMonthBundle, parseMonthBundleText } from './value-history-archive-utils.mjs';
 
 const backendSource=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 const pureSource=backendSource.replace(/^import .*$/m,'').replace(/export \{[^}]+\};/,'').split('export default async')[0];
@@ -21,6 +22,11 @@ const snaps=[
 ];
 
 assert(monthKey('2026-09-07T21:07:00Z')==='2026-09','month partition key incorrect');
+assert(parseMonthBundleText('', '2026-09')===null,'blank monthly archive must be treated as recoverable corruption');
+assert(parseMonthBundleText('{broken', '2026-09')===null,'invalid monthly archive JSON must be treated as recoverable corruption');
+const validMonth=parseMonthBundleText(JSON.stringify({schema_version:1,league_id:'1316867686394769408',month:'2026-09',snapshots:[{t:'x'}]}),'2026-09');
+assert(validMonth?.snapshots?.length===1,'valid monthly archive JSON must remain readable');
+assert(emptyMonthBundle('2026-09').month==='2026-09','empty monthly archive recovery bundle must preserve month identity');
 assert(baselineFor(snaps,Date.parse(snaps[3].t),365)===snaps[0],'365-day baseline selection incorrect');
 
 const m=marketFromSnapshots(snaps);
@@ -440,6 +446,8 @@ assert(archiveWriter.includes("source:'netlify-blobs-direct'"),'archive writer d
 assert(archiveWriter.includes('Durable Value History archive verification failed after write'),'archive writer must verify the durable index after persistence');
 assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret'),'archive writer must provide an actionable SSO-authentication failure');
 assert(archiveWriter.includes("isKnownBadSnapshot"),'V380/V381 scrubbed partial-week points must be blocked from durable archive ingestion');
+assert(archiveWriter.includes('parseMonthBundleText(prior?.content,month)'),'monthly archive writer must tolerate blank/corrupt month files');
+assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must rebuild corrupt bundles from indexed snapshots rather than discard history');
 
 const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.yml','utf8');
 assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');
@@ -463,4 +471,4 @@ assert(!headlessScript.includes("@netlify/blobs"),'scheduled browser must remain
 assert(archiveWriter.includes("source:'scheduled-local-browser'"),'durable archive writer must accept the locally captured scheduled snapshot directly');
 assert(headlessScript.includes("window.__vhLastSnapshot"),'scheduled browser must wait for a confirmed Value History write before closing');
 
-console.log('V388 Netlify-independent scheduled Value History + consensus integrity regression passed');
+console.log('V389 durable scheduled Value History archive recovery + consensus integrity regression passed');

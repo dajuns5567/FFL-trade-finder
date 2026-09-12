@@ -446,6 +446,8 @@ assert(archiveWriter.includes('months/'),'archive writer monthly bundle persiste
 assert(archiveWriter.includes("getStore({name:'fll-value-history-v2',siteID:netlifySiteId,token:netlifyToken"),'archive writer must read the production Blob store directly instead of depending on anonymous access to an SSO-protected site');
 assert(archiveWriter.includes("source:'netlify-blobs-direct'"),'archive writer direct Blob source marker missing');
 assert(archiveWriter.includes('Durable Value History archive verification failed after write'),'archive writer must verify the durable index after persistence');
+assert(archiveWriter.includes('verification missing snapshot'),'archive writer must verify the exact newly written snapshot exists in the durable index');
+assert(archiveWriter.includes('verification unreadable snapshot'),'archive writer must read back the exact newly written snapshot before reporting success');
 assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret'),'archive writer must provide an actionable SSO-authentication failure');
 assert(archiveWriter.includes("isKnownBadSnapshot"),'V380/V381 scrubbed partial-week points must be blocked from durable archive ingestion');
 assert(archiveWriter.includes("V391_BAD_WINDOW"),'V391 removed timestamp must be blocked from durable archive re-ingestion');
@@ -465,7 +467,12 @@ assert(archiveWorkflow.includes('Resolve latest production Netlify site for main
 assert(archiveWorkflow.includes('npm install --ignore-scripts --no-audit --no-fund'),'archive workflow must install the Netlify Blobs client before direct access');
 
 const headlessWorkflow=fs.readFileSync('.github/workflows/value-history-headless-refresh.yml','utf8');
-assert(headlessWorkflow.includes("cron: '47 */3 * * *'"),'scheduled headless Value History cadence must be every three hours');
+const scheduledDue=fs.readFileSync('scripts/value-history-scheduled-due.mjs','utf8');
+assert(headlessWorkflow.includes("cron: '17 * * * *'")&&headlessWorkflow.includes("cron: '47 * * * *'"),'scheduled headless watchdog must have two hourly trigger opportunities');
+assert(headlessWorkflow.includes("VALUE_HISTORY_DUE_MINUTES: '165'"),'scheduled headless watchdog must use the 2h45 durable-history due threshold');
+assert(headlessWorkflow.includes("steps.due.outputs.due == 'true'"),'browser work must run only when durable scheduled history is due');
+assert(scheduledDue.includes("String(x?.source||'')==='scheduled'"),'due check must use scheduled observations only, not page-load/manual observations');
+assert(scheduledDue.includes("ageMinutes>=thresholdMinutes"),'due check must self-heal when scheduled history is stale');
 assert(!headlessWorkflow.includes('git push'),'headless Value History refresh must never create a deployment by pushing code');
 assert(headlessWorkflow.includes('scripts/value-history-headless-refresh.mjs'),'headless workflow must run the dedicated browser script');
 assert(!headlessWorkflow.includes('resolve-active-netlify-site.mjs'),'scheduled Value History must not depend on discovering or authenticating to any Netlify site');
@@ -479,4 +486,4 @@ assert(!headlessScript.includes("@netlify/blobs"),'scheduled browser must remain
 assert(archiveWriter.includes("source:'scheduled-local-browser'"),'durable archive writer must accept the locally captured scheduled snapshot directly');
 assert(headlessScript.includes("window.__vhLastSnapshot"),'scheduled browser must wait for a confirmed Value History write before closing');
 
-console.log('V389 durable scheduled Value History archive recovery + consensus integrity regression passed');
+console.log('V392 self-healing scheduled Value History watchdog + durable verification regression passed');

@@ -95,6 +95,12 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});
 const port=server.address().port,siteUrl=`http://127.0.0.1:${port}/`;
+for(const required of ['offense-history.json']){
+  const r=await fetch(`${siteUrl}sleeper-data/${required}?preflight=${Date.now()}`,{cache:'no-store'});
+  if(!r.ok)throw new Error(`Required Sleeper artifact ${required} failed local proxy preflight: ${r.status}`);
+  const j=await r.json();
+  if(!j||typeof j!=='object'||j.ok!==true)throw new Error(`Required Sleeper artifact ${required} failed JSON validation`);
+}
 const url=new URL(siteUrl);url.searchParams.set('vh_source','scheduled');url.searchParams.set('vh_ts',String(Date.now()));
 console.log(JSON.stringify({event:'scheduled-refresh-target',runtime:'github-main-local',site:url.origin,commit:process.env.GITHUB_SHA||null},null,2));
 

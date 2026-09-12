@@ -1,5 +1,6 @@
 import { getStore } from '@netlify/blobs';
 import { readFileSync } from 'node:fs';
+import { emptyMonthBundle, parseMonthBundleText } from './value-history-archive-utils.mjs';
 const token=process.env.GITHUB_TOKEN;
 const repository=process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder';
 const sourceBase=process.env.VALUE_HISTORY_SOURCE_URL||'https://subtle-genie-6167c5.netlify.app/.netlify/functions/value-history';
@@ -82,9 +83,29 @@ for(const snap of incoming){
   index.items=index.items||[];index.items.push({t:snap.t,path,fingerprint:snap.fingerprint||null,count:snap.rows.length,source:snap.source||null});
   if(!monthGroups.has(month))monthGroups.set(month,[]);monthGroups.get(month).push(snap);
 }
+async function rebuildMonthBundleFromSnapshots(month){
+  const bundle=emptyMonthBundle(month),items=(index.items||[]).filter(item=>monthOf(item?.t)===month&&item?.path);
+  const snaps=[];
+  for(let i=0;i<items.length;i+=20){
+    const batch=items.slice(i,i+20);
+    const files=await Promise.all(batch.map(item=>readFile(item.path).catch(()=>null)));
+    for(const file of files){
+      if(!file?.content?.trim())continue;
+      try{const snap=JSON.parse(file.content);if(validSnapshot(snap))snaps.push(snap)}catch{}
+    }
+  }
+  const byT=new Map(snaps.map(s=>[String(s.t),s]));
+  bundle.snapshots=[...byT.values()].sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  return bundle;
+}
 for(const [month,newSnaps] of monthGroups){
-  const path=`${root}/months/${month}.json`,prior=await readFile(path),bundle=prior?JSON.parse(prior.content):{schema_version:1,league_id:'1316867686394769408',month,snapshots:[]};
-  const byT=new Map((bundle.snapshots||[]).map(s=>[String(s.t),s]));for(const snap of newSnaps)byT.set(String(snap.t),snap);
+  const path=`${root}/months/${month}.json`,prior=await readFile(path);
+  let bundle=parseMonthBundleText(prior?.content,month);
+  if(!bundle){
+    if(prior)console.warn(`Monthly Value History bundle ${path} is blank or invalid; rebuilding it from indexed snapshot files.`);
+    bundle=await rebuildMonthBundleFromSnapshots(month);
+  }
+  const byT=new Map((bundle.snapshots||[]).filter(validSnapshot).map(s=>[String(s.t),s]));for(const snap of newSnaps)byT.set(String(snap.t),snap);
   bundle.snapshots=[...byT.values()].sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   await putFile(path,JSON.stringify(bundle,null,2)+'\n',`Update Value History monthly archive ${month}`,prior?.sha);
 }

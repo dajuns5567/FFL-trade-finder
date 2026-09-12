@@ -436,7 +436,7 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=381'),'production shell must cache-bust the current V381 Value History presentation runtime');
+assert(siteV29.includes('/value-history-v276.js?v=390'),'production shell must cache-bust the current V390 Value History presentation runtime');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');
@@ -448,6 +448,11 @@ assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret')
 assert(archiveWriter.includes("isKnownBadSnapshot"),'V380/V381 scrubbed partial-week points must be blocked from durable archive ingestion');
 assert(archiveWriter.includes('parseMonthBundleText(prior?.content,month)'),'monthly archive writer must tolerate blank/corrupt month files');
 assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must rebuild corrupt bundles from indexed snapshots rather than discard history');
+const headlessRefresh=fs.readFileSync('scripts/value-history-headless-refresh.mjs','utf8');
+const valueHistoryUi=fs.readFileSync('value-history-v276.js','utf8');
+assert(headlessRefresh.includes("window.__vhScheduledRefreshGate?.ready===true"),'scheduled headless refresh must wait for full valuation inputs');
+assert(headlessRefresh.includes("sleeperReady")&&headlessRefresh.includes("consensusReady"),'scheduled headless refresh must explicitly require Sleeper and consensus completion');
+assert(valueHistoryUi.includes("!scheduledRefreshReady()"),'scheduled Value History recorder must reject pre-consensus/pre-Sleeper snapshots');
 
 const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.yml','utf8');
 assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');

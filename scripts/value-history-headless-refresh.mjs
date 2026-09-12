@@ -99,8 +99,44 @@ try{
   const page=await browser.newPage();
   page.on('console',msg=>{if(['error','warning'].includes(msg.type()))console.log(`browser-${msg.type()}:`,msg.text())});
   page.on('pageerror',err=>console.log('browser-pageerror:',String(err?.message||err)));
+  await page.addInitScript(()=>{
+    window.__vhScheduledRefreshGate={ready:false,sleeperReady:false,consensusReady:false};
+    const install=()=>{
+      if(typeof window.loadCore!=='function'||typeof window.refreshConsensus!=='function')return false;
+      const load=window.loadCore.bind(window),consensus=window.refreshConsensus.bind(window);
+      window.loadCore=async(...args)=>{
+        const out=await load(...args);
+        window.__vhScheduledRefreshGate={...(window.__vhScheduledRefreshGate||{}),sleeperReady:true,ready:false};
+        return out;
+      };
+      window.refreshConsensus=async(...args)=>{
+        const out=await consensus(...args);
+        const rankings=window.state?.rankings||{};
+        const covered=Object.values(rankings).filter(src=>(Number(src?.playerCount)||Object.keys(src?.data||{}).length)>0).length;
+        window.__vhScheduledRefreshGate={...(window.__vhScheduledRefreshGate||{}),consensusReady:covered>0,consensusSources:covered,ready:false};
+        return out;
+      };
+      return true;
+    };
+    const timer=setInterval(()=>{
+      if(!install())return;
+      clearInterval(timer);
+      const poll=setInterval(()=>{
+        const gate=window.__vhScheduledRefreshGate||{};
+        const status=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();
+        const busy=/loading|updating|refreshing/.test(status);
+        if(gate.sleeperReady&&gate.consensusReady&&!busy){
+          gate.ready=true;window.__vhScheduledRefreshGate=gate;clearInterval(poll);
+        }
+      },100);
+    },0);
+  });
   const response=await page.goto(url.toString(),{waitUntil:'domcontentloaded',timeout:120000});
   if(!response||!response.ok())throw new Error(`Local Fleeced load failed: ${response?.status()||'no response'}`);
+  await page.waitForFunction(()=>window.__vhScheduledRefreshGate?.ready===true,{timeout:240000});
+  const gate=await page.evaluate(()=>window.__vhScheduledRefreshGate);
+  if(!gate?.sleeperReady||!gate?.consensusReady)throw new Error('Scheduled refresh did not complete Sleeper + consensus valuation inputs');
+  console.log(JSON.stringify({event:'scheduled-full-refresh-ready',sleeper:true,consensus:true,consensusSources:gate.consensusSources||0},null,2));
   await page.waitForFunction(()=>window.__vhLastSnapshot?.ok===true,{timeout:240000});
   const result=await page.evaluate(()=>window.__vhLastSnapshot);
   if(result?.source!=='scheduled')throw new Error(`Unexpected snapshot source: ${result?.source||'missing'}`);

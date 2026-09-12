@@ -423,6 +423,8 @@ assert(backend.includes("scrubV348ConsensusContamination(s)"),'V348 contaminated
 assert(backend.includes("V380_BAD_WINDOW"),'V380 requested 9/9 11:30 PM Eastern scrub window missing');
 assert(backend.includes("scrubV380PartialWeekSnapshot(s)"),'V380 requested partial-week Value History scrub missing');
 assert(backend.includes("scrubV381PartialWeekHistory(s)"),'V381 complete partial-week contamination scrub missing');
+assert(backend.includes("V391_BAD_WINDOW"),'V391 requested timestamp scrub window missing');
+assert(backend.includes("scrubV391RequestedTimestamp(s)"),'V391 requested timestamp scrub missing');
 assert(backend.includes("source=['scheduled','page-load','manual-update']"),'Value History snapshot source audit tag missing');
 const fanRankedSource=fs.readFileSync('netlify/functions/fanranked-adapter.mjs','utf8');
 assert(fanRankedSource.includes("sort((a,b)=>b.value-a.value"),'FanRanked current ranking is not rebuilt from current market values');
@@ -446,6 +448,7 @@ assert(archiveWriter.includes("source:'netlify-blobs-direct'"),'archive writer d
 assert(archiveWriter.includes('Durable Value History archive verification failed after write'),'archive writer must verify the durable index after persistence');
 assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret'),'archive writer must provide an actionable SSO-authentication failure');
 assert(archiveWriter.includes("isKnownBadSnapshot"),'V380/V381 scrubbed partial-week points must be blocked from durable archive ingestion');
+assert(archiveWriter.includes("V391_BAD_WINDOW"),'V391 removed timestamp must be blocked from durable archive re-ingestion');
 assert(archiveWriter.includes('parseMonthBundleText(prior?.content,month)'),'monthly archive writer must tolerate blank/corrupt month files');
 assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must rebuild corrupt bundles from indexed snapshots rather than discard history');
 const headlessRefresh=fs.readFileSync('scripts/value-history-headless-refresh.mjs','utf8');

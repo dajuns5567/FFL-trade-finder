@@ -5,6 +5,15 @@ on:
   schedule:
     - cron: '17 * * * *'
     - cron: '47 * * * *'
+  workflow_run:
+    workflows:
+      - Archive Value History
+      - Import Sleeper League History
+      - Sync MIDA team context
+    types:
+      - completed
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -15,6 +24,7 @@ concurrency:
 
 jobs:
   refresh:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -36,6 +46,8 @@ jobs:
         if: steps.due.outputs.due != 'true'
         run: |
           echo "Scheduled Value History is current."
+          echo "Wake event: ${{ github.event_name }}"
+          echo "Trigger workflow: ${{ github.event.workflow_run.name || 'n/a' }}"
           echo "Last scheduled point: ${{ steps.due.outputs.last_scheduled }}"
           echo "Age (minutes): ${{ steps.due.outputs.age_minutes }}"
 

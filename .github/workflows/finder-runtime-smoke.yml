@@ -142,6 +142,7 @@ jobs:
         run: |
           node scripts/value-history-data-hub-v331-smoke.mjs
           node --check scripts/value-history-headless-refresh.mjs
+          node --check scripts/value-history-scheduled-due.mjs
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           const ui=fs.readFileSync('value-history-ui-defaults-v386.js','utf8');

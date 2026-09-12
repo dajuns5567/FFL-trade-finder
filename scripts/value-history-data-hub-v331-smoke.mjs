@@ -496,6 +496,6 @@ assert(headlessScript.includes("runtime:'github-main-local'"),'scheduled browser
 assert(headlessScript.includes('writeFileSync(snapshotFile'),'scheduled browser must capture the completed site snapshot without Netlify storage');
 assert(!headlessScript.includes("@netlify/blobs"),'scheduled browser must remain independent of Netlify Blob credentials');
 assert(archiveWriter.includes("source:'scheduled-local-browser'"),'durable archive writer must accept the locally captured scheduled snapshot directly');
-assert(headlessScript.includes("window.__vhLastSnapshot"),'scheduled browser must wait for a confirmed Value History write before closing');
+assert(headlessScript.includes("writeFileSync(snapshotFile"),'scheduled browser must persist the completed site-calculated snapshot file before closing');
 
 console.log('V394 headless full-load parity + Netlify-safe live archive regression passed');

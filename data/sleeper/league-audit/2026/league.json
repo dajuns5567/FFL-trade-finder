@@ -222,8 +222,8 @@
   },
   "season": "2026",
   "season_type": "regular",
-  "sport": "nfl",
   "shard": 773,
+  "sport": "nfl",
   "last_message_id": "1404338364513107968",
   "last_author_avatar": "2954af518c08da30113478de59d8fab4",
   "last_author_display_name": "jakeslomiak21",
@@ -237,8 +237,6 @@
   "draft_id": "1316867686407356416",
   "league_id": "1316867686394769408",
   "previous_league_id": "1180251688940855296",
-  "bracket_id": null,
-  "bracket_overrides_id": null,
   "roster_positions": [
     "RB",
     "WR",
@@ -254,6 +252,8 @@
     "BN",
     "BN"
   ],
+  "bracket_id": null,
+  "bracket_overrides_id": null,
   "group_id": null,
   "loser_bracket_id": null,
   "loser_bracket_overrides_id": null,

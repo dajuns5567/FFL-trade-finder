@@ -43,11 +43,13 @@ async function archiveAllSnapshots(){
       for(const snap of bundle?.snapshots||[])if(snap?.t&&Array.isArray(snap.rows)&&!isKnownBadHistoryTime(snap.t)&&!seen.has(String(snap.t))){seen.add(String(snap.t));out.push(snap)}
     }catch(e){console.warn('value-history-archive-month',month,e)}
   }
-  if(!out.length&&(idx.items||[]).length){
-    for(const item of idx.items||[]){
-      const snap=await archiveSnapshot(item);
-      if(snap?.t&&!seen.has(String(snap.t))){seen.add(String(snap.t));out.push(snap)}
-    }
+  // Monthly bundles are an optimization only. The append-only index/per-snapshot files
+  // are authoritative, so always backfill any indexed timestamp missing from a bundle.
+  for(const item of idx.items||[]){
+    const t=String(item?.t||'');
+    if(!t||seen.has(t)||isKnownBadHistoryTime(t))continue;
+    const snap=await archiveSnapshot(item);
+    if(snap?.t&&!seen.has(String(snap.t))){seen.add(String(snap.t));out.push(snap)}
   }
   out.sort((a,b)=>String(a.t).localeCompare(String(b.t)));return out;
 }

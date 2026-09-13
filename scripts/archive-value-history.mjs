@@ -101,14 +101,18 @@ async function rebuildMonthBundleFromSnapshots(month){
 }
 for(const [month,newSnaps] of monthGroups){
   const path=`${root}/months/${month}.json`,prior=await readFile(path);
-  let bundle=parseMonthBundleText(prior?.content,month);
-  if(!bundle){
-    if(prior)console.warn(`Monthly Value History bundle ${path} is blank or invalid; rebuilding it from indexed snapshot files.`);
-    bundle=await rebuildMonthBundleFromSnapshots(month);
-  }
-  const byT=new Map((bundle.snapshots||[]).filter(validSnapshot).map(s=>[String(s.t),s]));for(const snap of newSnaps)byT.set(String(snap.t),snap);
+  // The index + immutable per-snapshot files are authoritative. Rebuild the touched
+  // month from those append-only records every time so a partial/stale month bundle
+  // can never erase earlier history.
+  const bundle=await rebuildMonthBundleFromSnapshots(month);
+  const byT=new Map((bundle.snapshots||[]).filter(validSnapshot).map(s=>[String(s.t),s]));
+  for(const snap of newSnaps)byT.set(String(snap.t),snap);
   bundle.snapshots=[...byT.values()].sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  await putFile(path,JSON.stringify(bundle,null,2)+'\n',`Update Value History monthly archive ${month}`,prior?.sha);
+  const indexedMonthTimes=new Set((index.items||[]).filter(item=>monthOf(item?.t)===month).map(item=>String(item.t)));
+  const bundleTimes=new Set(bundle.snapshots.map(s=>String(s.t)));
+  const missing=[...indexedMonthTimes].filter(t=>!bundleTimes.has(t));
+  if(missing.length)throw new Error(`Monthly Value History rebuild missing ${missing.length} indexed snapshot(s) for ${month}: ${missing.slice(0,5).join(', ')}`);
+  await putFile(path,JSON.stringify(bundle,null,2)+'\n',`Rebuild append-only Value History monthly archive ${month}`,prior?.sha);
 }
 index.items.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
 index.months=[...new Set(index.items.map(x=>monthOf(x.t)))].sort();
@@ -120,6 +124,16 @@ const latestFile=await readFile(`${root}/latest.json`);
 await putFile(`${root}/latest.json`,JSON.stringify({schema_version:1,league_id:'1316867686394769408',latest:index.items.at(-1)||null},null,2)+'\n',`Update durable Value History latest pointer`,latestFile?.sha);
 const verify=JSON.parse((await readFile(`${root}/index.json`)).content);
 if(Number(verify?.snapshot_count)!==Number(index.snapshot_count)||!verify?.latest)throw new Error('Durable Value History archive verification failed after write');
+const beforeCount=Number(JSON.parse(idxFile.content)?.snapshot_count)||0;
+if(Number(verify?.snapshot_count)<beforeCount)throw new Error('Durable Value History archive must never shrink');
+for(const month of monthGroups.keys()){
+  const monthFile=await readFile(`${root}/months/${month}.json`);
+  const monthBundle=parseMonthBundleText(monthFile?.content,month);
+  const expected=(verify.items||[]).filter(item=>monthOf(item?.t)===month).map(item=>String(item.t));
+  const actual=new Set((monthBundle?.snapshots||[]).map(s=>String(s.t)));
+  const missing=expected.filter(t=>!actual.has(t));
+  if(missing.length)throw new Error(`Durable Value History monthly archive ${month} is missing ${missing.length} indexed point(s)`);
+}
 for(const snap of incoming){
   const item=(verify.items||[]).find(x=>String(x?.t)===String(snap.t));
   if(!item)throw new Error(`Durable Value History archive verification missing snapshot ${snap.t}`);

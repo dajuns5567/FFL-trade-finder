@@ -452,8 +452,12 @@ assert(archiveWriter.includes('verification unreadable snapshot'),'archive write
 assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret'),'archive writer must provide an actionable SSO-authentication failure');
 assert(archiveWriter.includes("isKnownBadSnapshot"),'V380/V381 scrubbed partial-week points must be blocked from durable archive ingestion');
 assert(archiveWriter.includes("V391_BAD_WINDOW"),'V391 removed timestamp must be blocked from durable archive re-ingestion');
-assert(archiveWriter.includes('parseMonthBundleText(prior?.content,month)'),'monthly archive writer must tolerate blank/corrupt month files');
+assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must recover from blank/corrupt/incomplete month files using authoritative indexed snapshots');
 assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must rebuild corrupt bundles from indexed snapshots rather than discard history');
+assert(archiveWriter.includes('Rebuild append-only Value History monthly archive'),'monthly archive writes must rebuild from append-only indexed snapshot files');
+assert(archiveWriter.includes('archive must never shrink'),'durable archive verification must reject any history shrink');
+assert(archiveWriter.includes('indexedMonthTimes'),'monthly bundle verification must include every indexed timestamp');
+assert(backend.includes('always backfill any indexed timestamp missing from a bundle'),'history reads must recover indexed points even if a monthly bundle is incomplete');
 const headlessRefresh=fs.readFileSync('scripts/value-history-headless-refresh.mjs','utf8');
 const valueHistoryUi=fs.readFileSync('value-history-v276.js','utf8');
 assert(headlessRefresh.includes("sleeper?.complete===true"),'scheduled headless refresh must wait for verified Sleeper history completion');
@@ -500,4 +504,4 @@ assert(!headlessScript.includes("@netlify/blobs"),'scheduled browser must remain
 assert(archiveWriter.includes("source:'scheduled-local-browser'"),'durable archive writer must accept the locally captured scheduled snapshot directly');
 assert(headlessScript.includes("writeFileSync(snapshotFile"),'scheduled browser must persist the completed site-calculated snapshot file before closing');
 
-console.log('V395 audited headless readiness + capture pipeline regression passed');
+console.log('V396 append-only Value History preservation + audited headless pipeline regression passed');

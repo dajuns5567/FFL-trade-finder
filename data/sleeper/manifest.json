@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-13T20:48:14.894Z",
+  "generatedAt": "2026-09-13T23:08:59.044Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -68,18 +68,18 @@
     "fullWeekValuationGate": true,
     "finalTeamsByWeek": {
       "1": [
-        "DET",
-        "NO",
-        "CAR",
-        "CHI",
         "CIN",
         "TB",
+        "DET",
+        "NO",
         "TEN",
         "NYJ",
         "IND",
         "BAL",
         "PIT",
         "ATL",
+        "CAR",
+        "CHI",
         "JAX",
         "CLE",
         "HOU",
@@ -99,22 +99,6 @@
         "complete": false,
         "nullSlots": [],
         "slots": [
-          {
-            "id": "401872923",
-            "state": "final",
-            "teams": [
-              "DET",
-              "NO"
-            ]
-          },
-          {
-            "id": "401872661",
-            "state": "final",
-            "teams": [
-              "CAR",
-              "CHI"
-            ]
-          },
           {
             "id": "401872928",
             "state": "blocking",
@@ -156,6 +140,14 @@
             ]
           },
           {
+            "id": "401872923",
+            "state": "final",
+            "teams": [
+              "DET",
+              "NO"
+            ]
+          },
+          {
             "id": "401872924",
             "state": "final",
             "teams": [
@@ -177,6 +169,14 @@
             "teams": [
               "PIT",
               "ATL"
+            ]
+          },
+          {
+            "id": "401872661",
+            "state": "final",
+            "teams": [
+              "CAR",
+              "CHI"
             ]
           },
           {
@@ -232,8 +232,8 @@
     },
     "diagnostics": {
       "finalGames": 10,
-      "qualifiedPlayerGames": 318,
-      "rejectedPlayerGames": 1112,
+      "qualifiedPlayerGames": 320,
+      "rejectedPlayerGames": 1110,
       "ignoredGames": 0
     }
   },

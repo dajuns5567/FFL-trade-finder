@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-13T18:11:43.765Z",
+  "generatedAt": "2026-09-13T20:48:14.894Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -68,6 +68,22 @@
     "fullWeekValuationGate": true,
     "finalTeamsByWeek": {
       "1": [
+        "DET",
+        "NO",
+        "CAR",
+        "CHI",
+        "CIN",
+        "TB",
+        "TEN",
+        "NYJ",
+        "IND",
+        "BAL",
+        "PIT",
+        "ATL",
+        "JAX",
+        "CLE",
+        "HOU",
+        "BUF",
         "SEA",
         "NE",
         "LAR",
@@ -77,74 +93,26 @@
     "weekFinalityByWeek": {
       "1": {
         "scheduledGames": 16,
-        "finalGames": 2,
+        "finalGames": 10,
         "ignoredGames": 0,
-        "blockingGames": 14,
+        "blockingGames": 6,
         "complete": false,
         "nullSlots": [],
         "slots": [
           {
-            "id": "401872925",
-            "state": "blocking",
-            "teams": [
-              "CIN",
-              "TB"
-            ]
-          },
-          {
             "id": "401872923",
-            "state": "blocking",
+            "state": "final",
             "teams": [
               "DET",
               "NO"
             ]
           },
           {
-            "id": "401872924",
-            "state": "blocking",
-            "teams": [
-              "TEN",
-              "NYJ"
-            ]
-          },
-          {
-            "id": "401872659",
-            "state": "blocking",
-            "teams": [
-              "IND",
-              "BAL"
-            ]
-          },
-          {
-            "id": "401872658",
-            "state": "blocking",
-            "teams": [
-              "PIT",
-              "ATL"
-            ]
-          },
-          {
             "id": "401872661",
-            "state": "blocking",
+            "state": "final",
             "teams": [
               "CAR",
               "CHI"
-            ]
-          },
-          {
-            "id": "401872922",
-            "state": "blocking",
-            "teams": [
-              "JAX",
-              "CLE"
-            ]
-          },
-          {
-            "id": "401872660",
-            "state": "blocking",
-            "teams": [
-              "HOU",
-              "BUF"
             ]
           },
           {
@@ -177,6 +145,54 @@
             "teams": [
               "LAC",
               "ARI"
+            ]
+          },
+          {
+            "id": "401872925",
+            "state": "final",
+            "teams": [
+              "CIN",
+              "TB"
+            ]
+          },
+          {
+            "id": "401872924",
+            "state": "final",
+            "teams": [
+              "TEN",
+              "NYJ"
+            ]
+          },
+          {
+            "id": "401872659",
+            "state": "final",
+            "teams": [
+              "IND",
+              "BAL"
+            ]
+          },
+          {
+            "id": "401872658",
+            "state": "final",
+            "teams": [
+              "PIT",
+              "ATL"
+            ]
+          },
+          {
+            "id": "401872922",
+            "state": "final",
+            "teams": [
+              "JAX",
+              "CLE"
+            ]
+          },
+          {
+            "id": "401872660",
+            "state": "final",
+            "teams": [
+              "HOU",
+              "BUF"
             ]
           },
           {
@@ -215,9 +231,9 @@
       }
     },
     "diagnostics": {
-      "finalGames": 2,
-      "qualifiedPlayerGames": 130,
-      "rejectedPlayerGames": 165,
+      "finalGames": 10,
+      "qualifiedPlayerGames": 318,
+      "rejectedPlayerGames": 1112,
       "ignoredGames": 0
     }
   },

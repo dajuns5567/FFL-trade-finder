@@ -452,7 +452,7 @@ assert(archiveWriter.includes('verification unreadable snapshot'),'archive write
 assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret'),'archive writer must provide an actionable SSO-authentication failure');
 assert(archiveWriter.includes("isKnownBadSnapshot"),'V380/V381 scrubbed partial-week points must be blocked from durable archive ingestion');
 assert(archiveWriter.includes("V391_BAD_WINDOW"),'V391 removed timestamp must be blocked from durable archive re-ingestion');
-assert(archiveWriter.includes('parseMonthBundleText(prior?.content,month)'),'monthly archive writer must tolerate blank/corrupt month files');
+assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must recover from blank/corrupt/incomplete month files using authoritative indexed snapshots');
 assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must rebuild corrupt bundles from indexed snapshots rather than discard history');
 assert(archiveWriter.includes('Rebuild append-only Value History monthly archive'),'monthly archive writes must rebuild from append-only indexed snapshot files');
 assert(archiveWriter.includes('archive must never shrink'),'durable archive verification must reject any history shrink');

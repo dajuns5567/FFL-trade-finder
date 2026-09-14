@@ -15,7 +15,8 @@ function markEvaluatorWinner(){
       const sides=[...card.querySelectorAll('.trade95-side')];
       sides.forEach(s=>s.classList.remove('fleeced-eval-winner'));
       if(sides.length!==2)continue;
-      const a=sideTotal(sides[0]),b=sideTotal(sides[1]);
+      const totals=sides.map(side=>sideTotal(side));
+      const a=totals[0],b=totals[1];
       if(a==null||b==null||a===b)continue;
       (a>b?sides[0]:sides[1]).classList.add('fleeced-eval-winner');
     }
@@ -91,7 +92,7 @@ function cardTeams(card){
 }
 function decorateScores(){
   for(const card of document.querySelectorAll('#finderResults .trade95-card,#evalResults .trade95-card')){
-    if(card.dataset.fleecedPresentation==='1')continue;
+    if(card.dataset.fleecedPresentation==='2')continue;
     const scoreBox=card.querySelector('.trade95-score');
     const m=String(scoreBox?.textContent||'').match(/(\d+)\s*\/100/i);
     if(!m)continue;
@@ -102,27 +103,38 @@ function decorateScores(){
     if(headTitle&&!headTitle.dataset.fleecedOriginalTitle)headTitle.dataset.fleecedOriginalTitle=String(headTitle.textContent||'');
     const [leftTeam,rightTeam]=cardTeams(card);
     const sides=[...card.querySelectorAll('.trade95-side')];
-    if(card.closest('#finderResults')&&sides.length===2){
+    if(sides.length===2){
       const titles=sides.map(s=>s.querySelector('.trade95-side-title'));
       if(titles[0])titles[0].textContent=leftTeam+' RECEIVES';
       if(titles[1])titles[1].textContent=rightTeam+' RECEIVES';
     }
     const totals=sides.map(side=>sideTotal(side));
-    const summary=document.createElement('div');
-    summary.className='fleeced-hindsight-summary';
-    summary.innerHTML='<div class="fleeced-summary-top"><div class="fleeced-summary-title"><strong></strong><small></small></div><div class="fleeced-summary-score"></div></div><div class="fleeced-score-track"><i></i></div><div class="fleeced-summary-teams"><span></span><span></span></div>';
-    summary.querySelector('.fleeced-summary-title strong').textContent=label;
-    summary.querySelector('.fleeced-summary-title small').textContent=leftTeam+' ↔ '+rightTeam;
-    summary.querySelector('.fleeced-summary-score').textContent=score+'/100';
-    summary.querySelector('.fleeced-score-track i').style.width=score+'%';
-    const teamSpans=summary.querySelectorAll('.fleeced-summary-teams span');
-    teamSpans[0].textContent=leftTeam+(Number.isFinite(totals[0])?' • '+Math.round(totals[0]).toLocaleString():'');
-    teamSpans[1].textContent=rightTeam+(Number.isFinite(totals[1])?' • '+Math.round(totals[1]).toLocaleString():'');
+    const winnerIndex=totals.length===2&&totals[0]!=null&&totals[1]!=null&&totals[0]!==totals[1]?(totals[0]>totals[1]?0:1):-1;
+    const board=document.createElement('div');
+    board.className='fleeced-hindsight-board';
+    board.innerHTML='<div class="fleeced-result-team left"><small></small><strong></strong><b></b></div><div class="fleeced-result-vs"><span>FAIRNESS RATING</span><strong></strong><em></em></div><div class="fleeced-result-team right"><small></small><strong></strong><b></b></div><div class="fleeced-result-bar"><i></i></div>';
+    const resultTeams=board.querySelectorAll('.fleeced-result-team');
+    const teamNames=[leftTeam,rightTeam];
+    resultTeams.forEach((box,i)=>{
+      box.querySelector('small').textContent=i===winnerIndex?'WINNER • TRADE-ADJUSTED TOTAL':'TRADE-ADJUSTED TOTAL';
+      box.querySelector('strong').textContent=totals[i]==null?'—':Math.round(totals[i]).toLocaleString();
+      box.querySelector('b').textContent=teamNames[i];
+      if(i===winnerIndex)box.classList.add('winner');
+    });
+    board.querySelector('.fleeced-result-vs strong').textContent=score+'/100 • '+label.replace(/!$/,'').toUpperCase();
+    const edge=totals[0]!=null&&totals[1]!=null?Math.abs(totals[0]-totals[1]):null;
+    board.querySelector('.fleeced-result-vs em').textContent=edge==null?'':'ADJUSTED EDGE • '+Math.round(edge).toLocaleString();
+    board.querySelector('.fleeced-result-bar i').style.width=score+'%';
+    const match=document.createElement('div');
+    match.className='fleeced-result-matchup';
+    match.textContent=leftTeam+' ↔ '+rightTeam;
     if(head){
-      head.replaceChildren(summary);
-    }else card.prepend(summary);
-    card.dataset.fleecedPresentation='1';
+      head.replaceChildren(match,board);
+    }else card.prepend(match,board);
+    card.querySelector('.trade95-summary')?.classList.add('fleeced-hide-legacy-summary');
+    card.dataset.fleecedPresentation='2';
   }
+  markEvaluatorWinner();
 }
 function arrangeFinderFields(){
   const select=document.getElementById('findTeam');
@@ -141,10 +153,8 @@ function arrangeFinderFields(){
     if(label){label.textContent='Search player';label.classList.add('fleeced-field-heading','fleeced-search-label')}
     if(select.nextElementSibling!==label&&label)select.insertAdjacentElement('afterend',label);
     if(label&&label.nextElementSibling!==search)label.insertAdjacentElement('afterend',search);
-    const wrap=document.getElementById('tradeSelectAll165');
     const selectAll=document.getElementById('tradeSelectAllButton165');
     if(selectAll)selectAll.classList.add('fleeced-select-all');
-    if(wrap&&search.nextElementSibling!==wrap)search.insertAdjacentElement('afterend',wrap)
   }
 }
 function brandSelectAll(){

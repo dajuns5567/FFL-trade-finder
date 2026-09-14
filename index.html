@@ -37,20 +37,55 @@ button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700
 
 <main>
 <div class="tabs">
-  <button class="active" data-tab="finder">Trade Finder</button>
+  <button class="active" data-tab="home">Home</button>
+  <button data-tab="finder">Trade Finder</button>
   <button data-tab="evaluator">Trade Evaluator</button>
   <button data-tab="league">League</button>
   <button data-tab="settings">Model</button>
 </div>
 
-<section id="finder" class="tab">
-<div class="card">
-  <div class="notice" id="updateStatus">Loading Sleeper league data…</div>
-  <div id="consensusDiagnostics" class="card" style="margin-top:10px;display:none">
-  <h3 style="margin:0 0 8px">Consensus refresh diagnostics</h3>
-  <div id="consensusSummary" class="muted" style="margin-bottom:8px"></div>
-  <div id="consensusSources"></div>
+<section id="home" class="tab">
+<div class="card fleeced-home-shell">
+  <div class="fleeced-home-head">
+    <div><h2>Home</h2><p class="muted">League data, market-source status, and direct navigation across Fleeced.</p></div>
+  </div>
+  <div id="homeDataStatus" class="fleeced-home-status">
+    <div class="notice" id="updateStatus">Loading Sleeper league data…</div>
+  </div>
+  <div id="homeNavigation" class="fleeced-home-grid">
+    <button type="button" class="fleeced-home-card" data-home-tab="finder"><span>Trade Finder</span><small>Build realistic trade recommendations</small></button>
+    <button type="button" class="fleeced-home-card" data-home-tab="evaluator"><span>Trade Evaluator</span><small>Evaluate a specific package</small></button>
+    <button type="button" class="fleeced-home-card" data-home-tab="league"><span>League</span><small>League and roster information</small></button>
+    <button type="button" class="fleeced-home-card" data-home-tab="settings"><span>Methodology</span><small>How Fleeced values assets and trades</small></button>
+    <div class="fleeced-home-card fleeced-home-expandable" data-home-group="rankings">
+      <button type="button" class="fleeced-home-card-main"><span>Player Values</span><small>Master rankings and asset values</small></button>
+      <div class="fleeced-home-sub" hidden>
+        <button type="button" data-home-tab="rankings" data-home-player-filter="ALL">All</button>
+        <button type="button" data-home-tab="rankings" data-home-player-filter="OFFENSE">Offense</button>
+        <button type="button" data-home-tab="rankings" data-home-player-filter="DEFENSE">Defense</button>
+        <button type="button" data-home-tab="rankings" data-home-player-filter="ROOKIES">Rookies</button>
+        <button type="button" data-home-tab="rankings" data-home-player-filter="DRAFT">Draft Picks</button>
+      </div>
+    </div>
+    <div class="fleeced-home-card fleeced-home-expandable" data-home-group="valueHistory">
+      <button type="button" class="fleeced-home-card-main"><span>Value History</span><small>Market movement and team tracking</small></button>
+      <div class="fleeced-home-sub" hidden>
+        <button type="button" data-home-tab="valueHistory" data-home-vh="market">Market Dashboard</button>
+        <button type="button" data-home-tab="valueHistory" data-home-vh="team">Track My Team</button>
+      </div>
+    </div>
+    <button type="button" class="fleeced-home-card" data-home-tab="tradeHistory"><span>Trade History</span><small>Completed trades, hindsight, and historical values</small></button>
+  </div>
+  <div id="consensusDiagnostics" class="card fleeced-home-consensus" style="margin-top:18px;display:none">
+    <h3 style="margin:0 0 8px">Consensus refresh diagnostics</h3>
+    <div id="consensusSummary" class="muted" style="margin-bottom:8px"></div>
+    <div id="consensusSources"></div>
+  </div>
 </div>
+</section>
+
+<section id="finder" class="tab" hidden>
+<div class="card">
   <h2>Trade Finder</h2>
   <p class="muted">Team fit affects only partner selection. It does not change player value. The Finder and Evaluator use the same master ranking.</p>
   <div class="grid3">
@@ -81,7 +116,7 @@ button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700
 
 <section id="evaluator" class="tab" hidden>
 <div class="card">
-  <h2>Trade evaluator</h2>
+  <h2>Trade Evaluator</h2>
   <div class="grid">
     <div><h3>Team A</h3><select id="evalA"></select><div id="assetsA"></div><button class="secondary small" id="addA">+ Add player/pick</button></div>
     <div><h3>Team B</h3><select id="evalB"></select><div id="assetsB"></div><button class="secondary small" id="addB">+ Add player/pick</button></div>

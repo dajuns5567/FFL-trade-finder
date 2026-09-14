@@ -1153,3 +1153,20 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #home #homeValueRisers .fleeced-home-data-row{
   grid-template-columns:24px minmax(0,1fr) auto;
 }
+
+
+/* V432 Home card title underline + alignment */
+#home .fleeced-home-card>span,
+#home .fleeced-home-card-main>span{
+  display:table!important;
+  width:auto!important;
+  padding-bottom:3px!important;
+  border-bottom:1px solid #e4b53f!important;
+  line-height:1.15!important;
+}
+#home .fleeced-home-card-main{
+  padding:14px 15px!important;
+}
+#home .fleeced-home-card-head{
+  align-items:start!important;
+}

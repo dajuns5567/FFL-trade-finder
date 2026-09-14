@@ -1236,3 +1236,12 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   border-color:#e4b53f!important;
   background:color-mix(in srgb,#0b0f14 84%,#e4b53f 16%)!important;
 }
+
+
+/* V435 Home card descriptions centered */
+#home .fleeced-home-card>small,
+#home .fleeced-home-card-main>small{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}

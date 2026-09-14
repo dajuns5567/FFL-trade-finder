@@ -714,7 +714,7 @@ function hindsightValue(asset,trade){
 }
 function tradeResultScoreboard(teamA,totalA,teamB,totalB,score,label){
   const a=Number(totalA)||0,b=Number(totalB)||0,edge=Math.abs(a-b),aWin=a>b,bWin=b>a;
-  return`<div class="vh-result-board"><div class="vh-result-team ${aWin?'winner':''}"><b>${esc(teamA)}</b><strong>${fmt(a)}</strong><small>${aWin?'Winner • trade-adjusted value':'Trade-adjusted value'}</small></div><div class="vh-result-vs"><span>Fairness rating</span><strong>${Math.round(Number(score)||0)}/100 • ${esc(label||'Trade')}</strong><em>Adjusted value difference • ${fmt(edge)}</em></div><div class="vh-result-team ${bWin?'winner':''}"><b>${esc(teamB)}</b><strong>${fmt(b)}</strong><small>${bWin?'Winner • trade-adjusted value':'Trade-adjusted value'}</small></div></div>`;
+  return`<div class="vh-result-board"><div class="vh-result-team ${aWin?'winner':''}"><b>${esc(teamA)}</b><strong>${fmt(a)}</strong><small>${aWin?'Winner • trade-adjusted total':'Trade-adjusted total'}</small></div><div class="vh-result-vs"><span>Fairness rating</span><strong>${Math.round(Number(score)||0)}/100 • ${esc(label||'Trade')}</strong><em>Adjusted value difference • ${fmt(edge)}</em></div><div class="vh-result-team ${bWin?'winner':''}"><b>${esc(teamB)}</b><strong>${fmt(b)}</strong><small>${bWin?'Winner • trade-adjusted total':'Trade-adjusted total'}</small></div></div>`;
 }
 function hindsightAssetRow(asset,trade){
   const value=hindsightValue(asset,trade),label=asset?.type==='pick'?(asset.name||`${asset.season} R${asset.round}`):playerName(asset?.id);

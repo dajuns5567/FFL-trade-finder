@@ -1141,3 +1141,15 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
     padding-left:0;
   }
 }
+
+/* V429 Home previews mirror canonical Player Values and Value History */
+#home #homeTopPlayers .fleeced-home-two-col,
+#home #homeValueRisers .fleeced-home-two-col{
+  align-items:start;
+}
+#home #homeValueRisers .fleeced-home-two-col>div{
+  min-width:0;
+}
+#home #homeValueRisers .fleeced-home-data-row{
+  grid-template-columns:24px minmax(0,1fr) auto;
+}

@@ -72,18 +72,12 @@ function playerMeta(id){
 function renderTopPlayers(){
   const host=document.getElementById('homeTopPlayers');
   if(!host)return false;
-  const rows=[...document.querySelectorAll('#playerValuesBody .valueRow19')].map(row=>{
-    const link=row.querySelector('[data-pv-history]');
-    const id=link?.dataset.pvHistory||row.dataset.playerId||'';
-    const nameNode=row.querySelector('.pv-history-name b');
-    const metaNode=row.querySelector('.pv-history-meta');
-    const raw=(nameNode?.textContent||'').trim();
-    const m=raw.match(/^(\d+)\.\s*(.+)$/);
-    if(!id||!m)return null;
-    return {id,rank:Number(m[1]),name:m[2],meta:(metaNode?.textContent||'').trim()};
-  }).filter(Boolean).sort((a,b)=>a.rank-b.rank).slice(0,10);
+  const helper=globalThis.playerValuesV139?.homeTopPlayers;
+  if(typeof helper!=='function')return false;
+  let rows=[];
+  try{rows=helper(10)||[]}catch{return false}
   if(rows.length<10)return false;
-  const col=items=>items.map(r=>'<div class="fleeced-home-data-row fleeced-home-player-row"><span class="fleeced-home-data-rank">'+r.rank+'</span><button type="button" class="fleeced-home-player-link" data-home-history="'+esc(r.id)+'"><b>'+esc(r.name)+'</b><small>'+esc(r.meta)+'</small></button></div>').join('');
+  const col=items=>items.map(r=>'<div class="fleeced-home-data-row fleeced-home-player-row"><span class="fleeced-home-data-rank">'+esc(r.rank)+'</span><button type="button" class="fleeced-home-player-link" data-home-history="'+esc(r.id)+'"><b>'+esc(r.name)+'</b><small>'+esc(r.pos)+' • '+esc(r.team)+' • Value '+fmt(r.value)+' • Overall #'+esc(r.rank)+' • '+esc(r.pos)+' #'+esc(r.posRank)+'</small></button></div>').join('');
   host.innerHTML='<div class="fleeced-home-list-title">Top 10 Current Players</div><div class="fleeced-home-two-col"><div>'+col(rows.slice(0,5))+'</div><div>'+col(rows.slice(5,10))+'</div></div>';
   return true;
 }
@@ -101,9 +95,9 @@ async function renderValueRisers(){
     const rows=(homeMarketCache.periods?.['7D']?.valueRisers||[])
       .filter(x=>Number(x?.overall)<=300&&Number(x?.delta)>0)
       .sort((a,b)=>Number(b.delta||0)-Number(a.delta||0))
-      .slice(0,5);
+      .slice(0,10);
     if(!rows.length){
-      host.innerHTML='<div class="fleeced-home-list-title">Top 5 Value Risers • 7D • Top 300</div><div class="fleeced-home-loading">Not enough 7-day movement recorded yet.</div>';
+      host.innerHTML='<div class="fleeced-home-list-title">Top 10 Value Risers • 7D • Top 300</div><div class="fleeced-home-loading">Not enough 7-day movement recorded yet.</div>';
       return true;
     }
     let unresolved=false;
@@ -112,13 +106,18 @@ async function renderValueRisers(){
       const fallback=String(x.name||'').trim();
       const name=(meta.name&&meta.name!==id&&!/^\d+$/.test(meta.name))?meta.name:((fallback&&fallback!==id&&!/^\d+$/.test(fallback))?fallback:'');
       if(!name)unresolved=true;
-      return '<div class="fleeced-home-data-row"><span class="fleeced-home-data-rank">'+(i+1)+'</span><button type="button" class="fleeced-home-player-link" data-home-history="'+esc(id)+'"><b>'+esc(name||'Loading player…')+'</b><small>'+esc(meta.pos)+' • '+esc(meta.team)+' • Overall #'+esc(x.overall)+'</small></button><strong class="fleeced-home-up">+'+fmt(x.delta)+'</strong></div>';
-    }).join('');
+      const pos=String(x.pos||meta.pos||'');
+      const team=String(state.players?.[id]?.team||meta.team||'FA').toUpperCase();
+      const pr=x.posRank==null?'—':x.posRank;
+      return '<div class="fleeced-home-data-row"><span class="fleeced-home-data-rank">'+(i+1)+'</span><button type="button" class="fleeced-home-player-link" data-home-history="'+esc(id)+'"><b>'+esc(name||'Loading player…')+'</b><small>'+esc(pos)+' #'+esc(pr)+' • '+esc(team)+' • Overall #'+esc(x.overall)+' • Value '+fmt(x.value)+'</small></button><strong class="fleeced-home-up">+'+fmt(x.delta)+'</strong></div>';
+    });
     if(unresolved)return false;
-    host.innerHTML='<div class="fleeced-home-list-title">Top 5 Value Risers • 7D • Top 300</div>'+rendered;
+    const left=rendered.slice(0,5).join('');
+    const right=rendered.slice(5,10).join('');
+    host.innerHTML='<div class="fleeced-home-list-title">Top 10 Value Risers • 7D • Top 300</div><div class="fleeced-home-two-col"><div>'+left+'</div><div>'+right+'</div></div>';
     return true;
   }catch{
-    host.innerHTML='<div class="fleeced-home-list-title">Top 5 Value Risers • 7D • Top 300</div><div class="fleeced-home-loading">Value-history summary is temporarily unavailable.</div>';
+    host.innerHTML='<div class="fleeced-home-list-title">Top 10 Value Risers • 7D • Top 300</div><div class="fleeced-home-loading">Value-history summary is temporarily unavailable.</div>';
     return true;
   }
 }

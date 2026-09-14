@@ -36,12 +36,26 @@ const prevRenderAll=renderAll;renderAll=function(){prevRenderAll();setTimeout(pa
 document.addEventListener('click',e=>{const history=e.target.closest('[data-pv-history]');if(history){e.preventDefault();window.valueHistoryV331?.openPlayer?.(history.dataset.pvHistory);return}if(e.target.closest('.tabs button[data-tab="rankings"]'))setTimeout(ensureAllValues,0)});
 setTimeout(patchUI,0);
 function homeTopPlayers(limit=10){
-  const ranked=rankedPlayers(),posRanks=positionalRanks(ranked);
-  return ranked
-    .filter(z=>z?.x?.type==='player')
-    .map(z=>{const x=z.x,m=playerRankValue(x),p=state.players?.[String(x.id)]||{},g=groupPos(x),v=Number(tv().playerValue?.(x)||0),pr=posRanks.get(String(x.id))||0;return{id:String(x.id),name:playerName(x.id),rank:Number(m.rank)||99999,pos:g,team:String(p.team||'FA').toUpperCase(),value:v,posRank:pr,consensus:m.consensus??'fallback',tradeValue:m.value}})
-    .sort((a,b)=>a.rank-b.rank)
-    .slice(0,Math.max(1,Number(limit)||10));
+  const assets=(state.allAssets||[]).filter(a=>a?.type==='player');
+  const seen=new Set(),rows=[];
+  for(const a of assets){
+    const id=String(a.id);
+    if(seen.has(id))continue;
+    seen.add(id);
+    const value=Number(tv().playerValue?.({type:'player',id})||0);
+    if(!Number.isFinite(value)||value<=0)continue;
+    const p=state.players?.[id]||{},pos=groupPos({type:'player',id});
+    rows.push({id,name:playerName(id),pos,team:String(p.team||'FA').toUpperCase(),value});
+  }
+  rows.sort((a,b)=>b.value-a.value||String(a.name).localeCompare(String(b.name)));
+  const posCounts={};
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i];
+    r.rank=i+1;
+    posCounts[r.pos]=(posCounts[r.pos]||0)+1;
+    r.posRank=posCounts[r.pos];
+  }
+  return rows.slice(0,Math.max(1,Number(limit)||10));
 }
 window.playerValuesV139={ensureAllValues,renderAllValues,homeTopPlayers};
 })();

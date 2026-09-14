@@ -463,3 +463,186 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   justify-content:flex-start!important;
   margin:0 0 10px!important;
 }
+
+/* V416 exact title, subnav, Select All, and Hindsight-result presentation */
+#finder .card > h2,
+#evaluator .card > h2,
+#rankings h2{
+  margin:0 0 14px!important;
+  color:#f4f4f5!important;
+  font-size:26px!important;
+  font-weight:850!important;
+  letter-spacing:-.02em!important;
+  line-height:1.1!important;
+  text-transform:none!important;
+  text-shadow:none!important;
+}
+#valueHistory .vh-subnav button{
+  font-family:inherit!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  letter-spacing:.025em!important;
+  text-transform:uppercase!important;
+}
+#valueHistory .vh-subnav button:not(.vh-subnav-active){
+  color:#f4f4f5!important;
+}
+#valueHistory .vh-subnav button.vh-subnav-active{
+  color:#e4b53f!important;
+}
+
+#tradeSelectAll165{
+  width:100%!important;
+  margin-top:8px!important;
+}
+#tradeSelectAllButton165{
+  width:100%!important;
+  min-height:42px!important;
+  background:#0b0f14!important;
+  color:#e5bd55!important;
+  border:1px solid rgba(216,170,53,.58)!important;
+  font-family:inherit!important;
+  font-size:13px!important;
+  font-weight:950!important;
+  letter-spacing:.04em!important;
+  text-transform:uppercase!important;
+  box-shadow:none!important;
+}
+#tradeSelectAllButton165:hover,#tradeSelectAllButton165:focus-visible{
+  background:#11161c!important;
+  color:#f0c85a!important;
+  border-color:#d8aa35!important;
+  outline:none!important;
+}
+#tradeSelectAllButton165[data-selected="1"]{
+  background:color-mix(in srgb,#e4b53f 10%,#0b0f14)!important;
+  color:#e4b53f!important;
+}
+
+#finderResults .trade95-head,#evalResults .trade95-head{
+  display:block!important;
+  padding:0 0 10px!important;
+  border-bottom:0!important;
+}
+#finderResults .fleeced-result-matchup,#evalResults .fleeced-result-matchup{
+  color:#f4f4f5!important;
+  font-size:15px!important;
+  font-weight:850!important;
+  margin:0 0 12px!important;
+}
+#finderResults .fleeced-hindsight-board,#evalResults .fleeced-hindsight-board{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 140px minmax(0,1fr)!important;
+  grid-template-areas:"left vs right" "bar bar bar"!important;
+  gap:10px 14px!important;
+  align-items:stretch!important;
+}
+#finderResults .fleeced-result-team,#evalResults .fleeced-result-team{
+  border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line))!important;
+  border-radius:11px!important;
+  padding:11px 13px!important;
+  background:color-mix(in srgb,var(--card) 72%,#06080c)!important;
+  min-width:0!important;
+}
+#finderResults .fleeced-result-team.left,#evalResults .fleeced-result-team.left{grid-area:left!important}
+#finderResults .fleeced-result-team.right,#evalResults .fleeced-result-team.right{grid-area:right!important}
+#finderResults .fleeced-result-team small,#evalResults .fleeced-result-team small{
+  display:block!important;
+  color:var(--muted)!important;
+  font-size:9px!important;
+  font-weight:900!important;
+  letter-spacing:.055em!important;
+  text-transform:uppercase!important;
+}
+#finderResults .fleeced-result-team strong,#evalResults .fleeced-result-team strong{
+  display:block!important;
+  color:#f4f4f5!important;
+  font-size:25px!important;
+  line-height:1!important;
+  margin:6px 0!important;
+}
+#finderResults .fleeced-result-team b,#evalResults .fleeced-result-team b{
+  color:#f4f4f5!important;
+  font-size:12px!important;
+  font-weight:850!important;
+}
+#finderResults .fleeced-result-team.winner,#evalResults .fleeced-result-team.winner{
+  border-color:#e4b53f!important;
+  background:color-mix(in srgb,#e4b53f 8%,var(--card))!important;
+}
+#finderResults .fleeced-result-team.winner small,
+#finderResults .fleeced-result-team.winner strong,
+#evalResults .fleeced-result-team.winner small,
+#evalResults .fleeced-result-team.winner strong{
+  color:#e4b53f!important;
+}
+#finderResults .fleeced-result-vs,#evalResults .fleeced-result-vs{
+  grid-area:vs!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  min-width:0!important;
+}
+#finderResults .fleeced-result-vs span,#evalResults .fleeced-result-vs span{
+  color:var(--muted)!important;
+  font-size:9px!important;
+  font-weight:900!important;
+  letter-spacing:.055em!important;
+}
+#finderResults .fleeced-result-vs strong,#evalResults .fleeced-result-vs strong{
+  color:#e4b53f!important;
+  font-size:16px!important;
+  font-weight:950!important;
+  line-height:1.05!important;
+  margin:4px 0!important;
+  white-space:nowrap!important;
+}
+#finderResults .fleeced-result-vs em,#evalResults .fleeced-result-vs em{
+  color:var(--muted)!important;
+  font-size:9px!important;
+  font-style:normal!important;
+  font-weight:800!important;
+  white-space:nowrap!important;
+}
+#finderResults .fleeced-result-bar,#evalResults .fleeced-result-bar{
+  grid-area:bar!important;
+  height:8px!important;
+  border:2px solid #e4b53f!important;
+  border-radius:999px!important;
+  padding:1px!important;
+  background:#0b0f14!important;
+  overflow:hidden!important;
+}
+#finderResults .fleeced-result-bar i,#evalResults .fleeced-result-bar i{
+  display:block!important;
+  height:100%!important;
+  border-radius:999px!important;
+  background:#e4b53f!important;
+}
+#finderResults .trade95-grid,#evalResults .trade95-grid{
+  position:relative!important;
+  margin-top:12px!important;
+}
+#finderResults .trade95-grid:before,#evalResults .trade95-grid:before{
+  content:"CURRENT OUTCOME DETAIL";
+  position:absolute;
+  top:-14px;
+  left:50%;
+  transform:translateX(-50%);
+  color:var(--muted);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.055em;
+  white-space:nowrap;
+}
+#finderResults .fleeced-hide-legacy-summary,#evalResults .fleeced-hide-legacy-summary{
+  display:none!important;
+}
+@media(max-width:760px){
+  #finderResults .fleeced-hindsight-board,#evalResults .fleeced-hindsight-board{
+    grid-template-columns:1fr!important;
+    grid-template-areas:"left" "vs" "right" "bar"!important;
+  }
+}

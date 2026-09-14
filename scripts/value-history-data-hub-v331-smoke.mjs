@@ -467,6 +467,7 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
+const indexHtml=fs.readFileSync('index.html','utf8');
 assert(siteV29.includes('/value-history-v276.js?v=424'),'production shell must cache-bust the current V424 Value History UI/runtime');
 assert(siteV29.includes('/fleeced-theme-v274.css?v=424'),'production shell must cache-bust the V424 Fleeced theme');
 assert(siteV29.includes('/fleeced-presentation-v413.js?v=423'),'production shell must load the V416 presentation-only interaction-safe presentation runtime');

@@ -1264,3 +1264,16 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   text-align:center!important;
   align-self:center!important;
 }
+
+
+/* V437 Trade Finder only: winner remains identified, but no gold winner highlight */
+#finderResults .trade-side.winner,
+#finderResults .trade-summary-side.winner,
+#finderResults .winner-side,
+#tradeFinderResults .trade-side.winner,
+#tradeFinderResults .trade-summary-side.winner,
+#tradeFinderResults .winner-side{
+  background:transparent!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}

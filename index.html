@@ -53,12 +53,13 @@ button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700
     <div class="notice" id="updateStatus">Loading Sleeper league data…</div>
   </div>
   <div id="homeNavigation" class="fleeced-home-grid">
-    <button type="button" class="fleeced-home-card" data-home-tab="finder"><span>Trade Finder</span><small>Build realistic trade recommendations</small></button>
-    <button type="button" class="fleeced-home-card" data-home-tab="evaluator"><span>Trade Evaluator</span><small>Evaluate a specific package</small></button>
-    <button type="button" class="fleeced-home-card" data-home-tab="league"><span>League</span><small>League and roster information</small></button>
-    <button type="button" class="fleeced-home-card" data-home-tab="settings"><span>Methodology</span><small>How Fleeced values assets and trades</small></button>
-    <div class="fleeced-home-card fleeced-home-expandable" data-home-group="rankings">
+    <button type="button" class="fleeced-home-card" data-home-tab="finder"><span>Trade Finder</span><small>Select assets to trade and review up to 250 recommended trades</small></button>
+    <button type="button" class="fleeced-home-card" data-home-tab="evaluator"><span>Trade Evaluator</span><small>Evaluate fairness of specific trade packages</small></button>
+    <button type="button" class="fleeced-home-card" data-home-tab="tradeHistory"><span>Trade History</span><small>Review real trades, analysis at the time of trade, and see how that trade looks in hindsight</small></button>
+
+    <div class="fleeced-home-card fleeced-home-expandable fleeced-home-wide" data-home-group="rankings">
       <button type="button" class="fleeced-home-card-main"><span>Player Values</span><small>Master rankings and asset values</small></button>
+      <div id="homeTopPlayers" class="fleeced-home-data-list"><div class="fleeced-home-loading">Loading top players…</div></div>
       <div class="fleeced-home-sub" hidden>
         <button type="button" data-home-tab="rankings" data-home-player-filter="ALL">All</button>
         <button type="button" data-home-tab="rankings" data-home-player-filter="OFFENSE">Offense</button>
@@ -67,14 +68,18 @@ button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700
         <button type="button" data-home-tab="rankings" data-home-player-filter="DRAFT">Draft Picks</button>
       </div>
     </div>
-    <div class="fleeced-home-card fleeced-home-expandable" data-home-group="valueHistory">
-      <button type="button" class="fleeced-home-card-main"><span>Value History</span><small>Market movement and team tracking</small></button>
+
+    <div class="fleeced-home-card fleeced-home-expandable fleeced-home-wide" data-home-group="valueHistory">
+      <button type="button" class="fleeced-home-card-main"><span>Value History</span><small>Historical value hub, risers, fallers, team value analysis, and more</small></button>
+      <div id="homeValueRisers" class="fleeced-home-data-list"><div class="fleeced-home-loading">Loading 7D risers…</div></div>
       <div class="fleeced-home-sub" hidden>
         <button type="button" data-home-tab="valueHistory" data-home-vh="market">Market Dashboard</button>
         <button type="button" data-home-tab="valueHistory" data-home-vh="team">Track My Team</button>
       </div>
     </div>
-    <button type="button" class="fleeced-home-card" data-home-tab="tradeHistory"><span>Trade History</span><small>Completed trades, hindsight, and historical values</small></button>
+
+    <button type="button" class="fleeced-home-card fleeced-home-half" data-home-tab="league"><span>League</span><small>League and roster information</small></button>
+    <button type="button" class="fleeced-home-card fleeced-home-half" data-home-tab="settings"><span>Methodology</span><small>How Fleeced values assets and trades</small></button>
   </div>
   <div id="consensusDiagnostics" class="card fleeced-home-consensus" style="margin-top:18px;display:none">
     <h3 style="margin:0 0 8px">Consensus refresh diagnostics</h3>

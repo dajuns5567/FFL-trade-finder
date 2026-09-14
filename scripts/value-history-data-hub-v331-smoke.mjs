@@ -327,6 +327,9 @@ assert(ui.includes('vh-history-cue')&&ui.includes('View history ↗'),'Full Mark
 assert(!ui.includes('<th class="vh-chart-col">Chart</th>'),'Full Market History must not render a separate Chart column');
 assert(ui.includes('.vh-player-link:hover')&&ui.includes('color:#e4b53f'),'Value History player links must turn Fleeced gold on hover/focus');
 assert(ui.includes('vh-trade-toggle:after')&&ui.includes('content:"Select"')&&ui.includes('content:"Selected"'),'Trade History analysis toggles must look clearly selectable');
+assert(ui.includes('vh-original-title')&&ui.includes('Original Trade Analysis'),'Original Trade Analysis heading must use Fleeced gold themed text');
+assert(ui.includes('vh-player-name-line')&&ui.includes('View history ↗'),'Value History links must place View history directly beside player names');
+assert(ui.includes('background:color-mix(in srgb,var(--card) 72%,#06080c)'),'Trade History heading background must match the Value History panel background');
 assert(ui.includes('data-vh-trade-year')&&ui.includes('data-vh-trade-month'),'Trade History must provide year and month filters');
 assert(ui.includes('data-vh-trade-reset')&&ui.includes('Reset filters'),'Trade History must provide a reset-filters control');
 assert(ui.includes('vh-receives-label')&&ui.includes('Receives'),'Trade History compact team sides must label received assets clearly');
@@ -449,7 +452,7 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=399'),'production shell must cache-bust the current V399 Value History UI/runtime');
+assert(siteV29.includes('/value-history-v276.js?v=400'),'production shell must cache-bust the current V400 Value History UI/runtime');
 assert(siteV29.includes('/ui-player-values-v139.js?v=398'),'production shell must cache-bust the current V398 Player Values UI');
 assert(siteV29.includes('/nonblocking-consensus-v277.js?v=395'),'production shell must cache-bust the V395 consensus completion marker');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');

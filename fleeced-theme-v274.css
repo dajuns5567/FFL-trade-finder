@@ -1035,3 +1035,31 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   #home .fleeced-home-grid>.fleeced-home-wide,
   #home .fleeced-home-grid>.fleeced-home-half{grid-column:auto!important}
 }
+
+/* V427 Home submenu prompt and top placement */
+#home .fleeced-home-sub{
+  padding:2px 14px 12px!important;
+  border-top:1px solid color-mix(in srgb,#e4b53f 26%,var(--line));
+  border-bottom:1px solid color-mix(in srgb,#e4b53f 18%,var(--line));
+  margin-bottom:4px;
+}
+#home .fleeced-home-sub-prompt{
+  flex:1 0 100%;
+  color:#f4f4f5;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+  margin:8px 0 2px;
+}
+#home .fleeced-home-expandable.open .fleeced-home-card-main{
+  padding-bottom:8px!important;
+}
+#home .fleeced-home-expandable.open .fleeced-home-card-main small:after{
+  content:" • Select an option below to continue";
+  color:#e4b53f;
+  font-weight:850;
+}
+#home .fleeced-home-expandable.open .fleeced-home-sub button{
+  min-height:34px;
+}

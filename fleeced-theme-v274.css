@@ -1348,3 +1348,30 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #tradeHistory [class*="historical"] [class*="team"] > h3{
   text-align:center!important;
 }
+
+
+/* UI-only: center summary-box label, value, and team name across trade presentations */
+.trade-finder .trade-summary > *,
+#tradeFinder .trade-summary > *,
+.trade-evaluator .trade-summary > *,
+#tradeEvaluator .trade-summary > *,
+.trade-history .trade-summary > *,
+#tradeHistory .trade-summary > *,
+.trade-history [class*="hindsight"] [class*="summary"] > *,
+#tradeHistory [class*="hindsight"] [class*="summary"] > *,
+.trade-history [class*="original"] [class*="summary"] > *,
+#tradeHistory [class*="original"] [class*="summary"] > *,
+.trade-history .historical-value-comparison [class*="summary"] > *,
+#tradeHistory .historical-value-comparison [class*="summary"] > * {
+  text-align:center!important;
+}
+
+/* Known summary cards: center all direct textual content without changing dimensions */
+.trade-finder [class*="trade-adjusted"] ,
+#tradeFinder [class*="trade-adjusted"],
+.trade-evaluator [class*="trade-adjusted"],
+#tradeEvaluator [class*="trade-adjusted"],
+.trade-history [class*="trade-adjusted"],
+#tradeHistory [class*="trade-adjusted"] {
+  text-align:center!important;
+}

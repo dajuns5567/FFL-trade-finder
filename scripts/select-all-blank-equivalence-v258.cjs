@@ -2,6 +2,7 @@ const fs=require('fs');const cp=require('child_process');
 const selectAll=fs.readFileSync('trade-select-all-v165.js','utf8');
 if(/dispatchEvent\s*\(/.test(selectAll))throw new Error('Select All must not broadcast synthetic manual-selection change events');
 if(!/selectAllBlankAlias/.test(selectAll))throw new Error('Select All blank alias helper missing');
+for(const file of ['trade-finder-v150.js','trade-finder-v256-compiled.js','trade-specific-player-v232.js','trade-specific-max-value-v279.js','trade-specific-blank-router-v325.js']){const src=fs.readFileSync(file,'utf8');if(!/tradeSelectAllV165\?\.aliasActive\?\.\(\)/.test(src))throw new Error(file+' does not honor Select All as a blank-search alias')}
 const src=fs.readFileSync('scripts/finder-runtime-smoke-v254.cjs','utf8');
 const loader="runFile('trade-finder-style-loader-v209.js');";
 if((src.split(loader).length-1)!==1)throw new Error('Select All smoke guard failed: Finder loader call');

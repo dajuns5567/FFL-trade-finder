@@ -24,7 +24,7 @@ function selectedRounds(){return new Set([...document.querySelectorAll('.draftRo
 function finderMode(){return document.getElementById('tradeTier94')?.value||'neutral'}
 function searchStyle(){return document.getElementById('findMode')?.value||'balanced'}
 function shopBoxes(){return[...document.querySelectorAll('#findShop .shopCheck')].filter(b=>b&&b._asset)}
-function selectedGive(){return shopBoxes().filter(b=>b.checked).map(b=>b._asset).filter(Boolean)}
+function selectedGive(){if(window.tradeSelectAllV165?.aliasActive?.())return[];return shopBoxes().filter(b=>b.checked).map(b=>b._asset).filter(Boolean)}
 function blankSelection(chosen){const boxes=shopBoxes();return chosen.length===0||(boxes.length>0&&chosen.length===boxes.length)}
 function assetKey(xs){return(xs||[]).map(x=>`${x.type}:${id(x)}`).sort().join('|')}
 function addPkg(out,seen,xs){const clean=(xs||[]).filter(Boolean),k=assetKey(clean);if(!clean.length||seen.has(k))return;seen.add(k);out.push(clean)}

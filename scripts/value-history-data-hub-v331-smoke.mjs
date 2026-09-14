@@ -80,7 +80,7 @@ for(const needle of [
   "state.players?.[String(r.id)]?.team",
   'posRankDelta7',
   'posRankDelta30',
-  'View chart',
+  'View history ↗',
   'vh-point-hit',
   'vh-chart-tooltip',
   'stroke="#e4b53f"',
@@ -467,8 +467,9 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=411'),'production shell must cache-bust the current V411 Value History UI/runtime');
-assert(siteV29.includes('/fleeced-theme-v274.css?v=408'),'production shell must cache-bust the V408 presentation-only Fleeced theme');
+assert(siteV29.includes('/value-history-v276.js?v=412'),'production shell must cache-bust the current V412 Value History UI/runtime');
+assert(siteV29.includes('/fleeced-theme-v274.css?v=412'),'production shell must cache-bust the V412 presentation-only Fleeced theme');
+assert(siteV29.includes('/fleeced-presentation-v412.js?v=412'),'production shell must load the V412 presentation-only evaluator winner marker');
 assert(siteV29.includes('/ui-player-values-v139.js?v=398'),'production shell must cache-bust the current V398 Player Values UI');
 assert(siteV29.includes('/nonblocking-consensus-v277.js?v=395'),'production shell must cache-bust the V395 consensus completion marker');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');

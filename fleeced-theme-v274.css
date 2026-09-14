@@ -305,3 +305,74 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   letter-spacing:.04em!important;
   text-transform:uppercase!important;
 }
+
+/* V414 Fleeced typography and interaction refinements */
+#rankings h2{
+  color:#e4b53f!important;
+  font-size:20px!important;
+  font-weight:950!important;
+  letter-spacing:.065em!important;
+  text-transform:uppercase!important;
+  text-shadow:0 0 12px rgba(228,181,63,.08)!important;
+}
+#rankings #playerValuesBody h3{
+  color:#e4b53f!important;
+  font-size:16px!important;
+  font-weight:950!important;
+  letter-spacing:.055em!important;
+  text-transform:uppercase!important;
+}
+#rankings #playerValueFilter button,#rankings #playerPositionFilter button{
+  font-weight:900!important;
+  letter-spacing:.035em!important;
+  text-transform:uppercase!important;
+}
+#rankings #playerValueFilter button:not(.secondary),#rankings #playerPositionFilter button:not(.secondary){
+  color:#e4b53f!important;
+  border-color:rgba(216,170,53,.58)!important;
+  background:color-mix(in srgb,#e4b53f 10%,var(--card))!important;
+}
+
+#finder .fleeced-select-all{
+  display:block!important;
+  width:auto!important;
+  margin-top:8px!important;
+}
+#runFinder,#evaluate{
+  font-size:14px!important;
+  font-weight:950!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+}
+#finderResults .fleeced-presented-player,#evalResults .fleeced-presented-player{
+  color:#f4f4f5!important;
+}
+#finderResults .fleeced-presented-player:hover,#evalResults .fleeced-presented-player:hover,
+#finderResults .fleeced-presented-player:focus-visible,#evalResults .fleeced-presented-player:focus-visible{
+  color:#e4b53f!important;
+}
+#finderResults .fleeced-trade-judgment,#evalResults .fleeced-trade-judgment{
+  color:#e4b53f!important;
+  font-size:20px!important;
+  font-weight:950!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+}
+.fleeced-trade-rating-head{justify-content:flex-end!important}
+.fleeced-trade-rating-head span{color:#f4f4f5!important;font-size:17px!important;font-weight:950!important}
+
+#valueHistory [data-vh-dashboard]{
+  background:#0b0f14!important;
+  color:#e5bd55!important;
+  border:1px solid rgba(216,170,53,.58)!important;
+  font-weight:950!important;
+  letter-spacing:.03em!important;
+  text-transform:uppercase!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.22)!important;
+}
+#valueHistory [data-vh-dashboard]:hover,#valueHistory [data-vh-dashboard]:focus-visible{
+  background:#11161c!important;
+  color:#f0c85a!important;
+  border-color:#d8aa35!important;
+  outline:none!important;
+}

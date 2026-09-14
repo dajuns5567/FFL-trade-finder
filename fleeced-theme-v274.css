@@ -1170,3 +1170,19 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #home .fleeced-home-card-head{
   align-items:start!important;
 }
+
+
+/* V433 Home top-row card alignment */
+#home #homeNavigation > button.fleeced-home-card{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  align-content:flex-start!important;
+  text-align:left!important;
+}
+#home #homeNavigation > button.fleeced-home-card > span,
+#home #homeNavigation > button.fleeced-home-card > small{
+  align-self:flex-start!important;
+  text-align:left!important;
+}

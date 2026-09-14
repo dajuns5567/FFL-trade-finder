@@ -1424,3 +1424,106 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   width:100%!important;
   text-align:center!important;
 }
+
+
+/* V446 exact highlighted-area centering across trade UI */
+#finderResults .fleeced-result-team,
+#evalResults .fleeced-result-team{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#finderResults .fleeced-result-team > *,
+#evalResults .fleeced-result-team > *{
+  width:100%!important;
+  text-align:center!important;
+}
+
+/* Trade History compact view: center each team's compact package block */
+#tradeHistory .th-team,
+#tradeHistory .trade-history-team,
+#tradeHistory [class*="compact"] [class*="team"],
+#tradeHistory [class*="trade"] > [class*="teams"] > div{
+  text-align:center!important;
+}
+#tradeHistory .th-team > *,
+#tradeHistory .trade-history-team > *,
+#tradeHistory [class*="compact"] [class*="team"] > *,
+#tradeHistory [class*="trade"] > [class*="teams"] > div > *{
+  margin-left:auto!important;
+  margin-right:auto!important;
+  text-align:center!important;
+  justify-content:center!important;
+}
+
+/* Hindsight summary cards: center label, value and team as one unit */
+#tradeHistory [class*="hindsight"] .fleeced-result-team,
+#tradeHistory [class*="hindsight"] [class*="result-team"],
+#tradeHistory [class*="hindsight"] [class*="scorebox"]{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#tradeHistory [class*="hindsight"] .fleeced-result-team > *,
+#tradeHistory [class*="hindsight"] [class*="result-team"] > *,
+#tradeHistory [class*="hindsight"] [class*="scorebox"] > *{
+  width:100%!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  text-align:center!important;
+}
+
+/* Hindsight current-outcome detail team headings */
+#tradeHistory [class*="hindsight"] .trade95-side-title,
+#tradeHistory [class*="hindsight"] .trade97-side-title,
+#tradeHistory [class*="hindsight"] [class*="side"] > h3,
+#tradeHistory [class*="hindsight"] [class*="side"] > h4{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}
+
+/* Historical Value Comparison: center team heading over both columns */
+#tradeHistory [class*="historical"] > [class*="side"] > :first-child,
+#tradeHistory [class*="comparison"] > [class*="side"] > :first-child,
+#tradeHistory [class*="historical"] [class*="team-name"],
+#tradeHistory [class*="comparison"] [class*="team-name"]{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+/* Original Trade Analysis summary N/A cards */
+#tradeHistory [class*="original"] [class*="result-team"],
+#tradeHistory [class*="original"] [class*="scorebox"],
+#tradeHistory [class*="original"] .fleeced-result-team{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#tradeHistory [class*="original"] [class*="result-team"] > *,
+#tradeHistory [class*="original"] [class*="scorebox"] > *,
+#tradeHistory [class*="original"] .fleeced-result-team > *{
+  width:100%!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  text-align:center!important;
+}
+
+/* Original Trade Detail: center team heading above assets */
+#tradeHistory [class*="original"] .trade95-side-title,
+#tradeHistory [class*="original"] .trade97-side-title,
+#tradeHistory [class*="original"] [class*="side"] > h3,
+#tradeHistory [class*="original"] [class*="side"] > h4{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}

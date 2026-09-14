@@ -1,3 +1,10 @@
+function normalizeEvaluatorTitle(){
+  const root=document.getElementById('evaluator');
+  if(!root)return;
+  const h=[...root.querySelectorAll(':scope > h1,:scope > h2,:scope > h3')].find(x=>/^trade evaluator$/i.test((x.textContent||'').trim()));
+  if(h)h.textContent='Trade Evaluator';
+}
+
 (()=>{
 'use strict';
 function numberFrom(el){
@@ -186,4 +193,5 @@ function install(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 window.fleecedPresentationV413={decorate,markEvaluatorWinner,openHistory};
+normalizeEvaluatorTitle();
 })();

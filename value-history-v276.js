@@ -29,7 +29,7 @@ function addStyles(){
   #valueHistory .vh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
   #valueHistory .vh-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}
   #valueHistory .vh-card-head{display:grid;grid-template-columns:1fr;gap:10px;align-content:start}
-  #valueHistory .vh-mover-card{height:100%;border-left:2px solid color-mix(in srgb,#e4b53f 48%,var(--line))}
+  #valueHistory .vh-mover-card{height:100%;border-left:2px solid color-mix(in srgb,#e4b53f 48%,var(--line));background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   #valueHistory .vh-mover-card .vh-card-head{min-height:102px}
   #valueHistory .vh-mover-card .vh-card-actions{align-self:end}
   #valueHistory .vh-card-periods{display:flex;gap:4px;flex-wrap:wrap}
@@ -39,6 +39,7 @@ function addStyles(){
   #valueHistory .vh-pool-filter>span{font-size:10px;font-weight:900;letter-spacing:.065em;text-transform:uppercase;color:var(--muted);margin-right:2px}
   #valueHistory .vh-pool-filter button{padding:4px 7px;min-width:0;font-size:10px;font-weight:800}
   #valueHistory .vh-pool-filter button:not(.secondary){color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 15%,var(--card))!important;border-color:color-mix(in srgb,#e4b53f 52%,var(--line))!important}
+  #valueHistory .vh-market-table{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   #valueHistory .vh-market-table summary{cursor:pointer;color:#e4b53f;font-size:17px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;padding:4px 0 8px;border-bottom:1px solid color-mix(in srgb,#e4b53f 28%,var(--line));list-style-position:inside}
   #valueHistory .vh-market-table summary::marker{color:#e4b53f}
   #valueHistory .vh-market-table summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none}
@@ -243,7 +244,7 @@ function addStyles(){
   #valueHistory .vh-trade-history-summary{background:transparent!important;border:0!important;box-shadow:none!important}
   #valueHistory .vh-trade-history-summary:before{display:none!important}
   #valueHistory .vh-trade-list{display:grid;gap:16px}
-  #valueHistory .vh-trade-card{border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line));border-radius:15px;padding:0 12px 10px;background:color-mix(in srgb,var(--card) 96%,black);box-shadow:0 10px 24px rgba(0,0,0,.22),0 0 0 1px rgba(255,255,255,.015);overflow:hidden}
+  #valueHistory .vh-trade-card{border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line));border-radius:15px;padding:0 12px 10px;background:color-mix(in srgb,var(--card) 72%,#06080c);box-shadow:0 10px 24px rgba(0,0,0,.22),0 0 0 1px rgba(255,255,255,.015);overflow:hidden}
   #valueHistory .vh-trade-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin:0 -12px 8px;padding:10px 12px 9px;background:color-mix(in srgb,var(--card) 72%,#06080c);border-bottom:1px solid color-mix(in srgb,#e4b53f 34%,var(--line))}
   #valueHistory .vh-trade-head h4{margin:0;color:#e4b53f;font-size:15px}
   #valueHistory .vh-trade-date{display:inline;color:inherit;background:transparent;box-shadow:none;padding:0;border-radius:0}
@@ -292,7 +293,7 @@ function addStyles(){
   #valueHistory .vh-time-label{font-size:10px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:#e4b53f;padding-bottom:6px;border-bottom:1px solid color-mix(in srgb,#e4b53f 30%,var(--line));margin-bottom:3px;text-align:center}
   #valueHistory .vh-trade-asset small{display:block;color:var(--muted);font-size:10px;font-weight:650;margin-top:3px;letter-spacing:.01em}
   #valueHistory .vh-trade-summary3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:12px}
-  #valueHistory .vh-trade-summary3>div{border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center}
+  #valueHistory .vh-trade-summary3>div{border:0;border-radius:0;padding:8px;text-align:center;background:transparent;box-shadow:none}
   #valueHistory .vh-trade-summary3 small{display:block;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
   #valueHistory .vh-trade-summary3 b{display:block;font-size:16px;margin-top:3px}
   #valueHistory .vh-original-title{color:#e4b53f!important;text-transform:uppercase;letter-spacing:.055em;font-weight:950!important;text-shadow:0 0 12px rgba(228,181,63,.08)}
@@ -319,13 +320,13 @@ function addStyles(){
   #valueHistory .vh-eval-total.effective{padding-top:5px;border-top:1px solid var(--line)}
   #valueHistory .vh-eval-total.effective span,#valueHistory .vh-eval-total.effective b{color:#f4f4f5}
   #valueHistory .vh-hindsight{margin-bottom:16px;padding:0;border:0;background:transparent;box-shadow:none}
-  #valueHistory .vh-hindsight-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:8px}
-  #valueHistory .vh-hindsight-head h4{margin:0;color:#e4b53f;font-size:16px;letter-spacing:.02em}
-  #valueHistory .vh-hindsight-head .vh-sub{margin-top:3px}
+  #valueHistory .vh-hindsight-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin:6px 0 14px;padding:0;border:0;background:transparent;box-shadow:none}
+  #valueHistory .vh-hindsight-head h4{margin:0;color:#e4b53f;font-size:20px;font-weight:950;letter-spacing:.035em;line-height:1.05}
+  #valueHistory .vh-hindsight-head .vh-sub{margin-top:5px;margin-bottom:0}
   #valueHistory .vh-hindsight-score{font-size:23px;font-weight:950;line-height:1;white-space:nowrap;text-align:right}
   #valueHistory .vh-hindsight-score span{font-size:11px;color:var(--muted);font-weight:800}
   #valueHistory .vh-hindsight-score small{display:block;margin-top:4px;color:#e4b53f;font-size:9px;text-transform:uppercase;letter-spacing:.07em}
-  #valueHistory .vh-history-compare-title{margin:3px 0 10px;color:#e4b53f!important;font-size:17px;font-weight:950;letter-spacing:.055em;text-transform:uppercase;text-align:left;text-shadow:0 0 12px rgba(228,181,63,.08)}
+  #valueHistory .vh-history-compare-title{margin:10px 0 14px;color:#e4b53f!important;font-size:17px;font-weight:950;letter-spacing:.055em;text-transform:uppercase;text-align:center;text-shadow:0 0 12px rgba(228,181,63,.08)}
   #valueHistory .vh-result-board{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:stretch;margin:10px 0 12px}
   #valueHistory .vh-result-team{border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:color-mix(in srgb,var(--card) 96%,black);min-width:0}
   #valueHistory .vh-result-team.winner{border-color:#e4b53f;background:color-mix(in srgb,#e4b53f 8%,var(--card));box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 28%,transparent)}
@@ -340,11 +341,11 @@ function addStyles(){
   @media(max-width:700px){#valueHistory .vh-result-board{grid-template-columns:1fr}.vh-result-vs{min-width:0!important;padding:2px 0}}
   @media(max-width:900px){#valueHistory .vh-attribution-summary{grid-template-columns:1fr}#valueHistory .vh-trade-sides,#valueHistory .vh-breakdown-sides,#valueHistory .vh-eval-grid{grid-template-columns:1fr}}
   @media(max-width:900px){#valueHistory .vh-net-metrics{grid-template-columns:1fr}#valueHistory .vh-team-neighbor-list{grid-template-columns:1fr 1fr}#valueHistory .vh-team-neighbor.current{grid-column:1/-1}}
-  #valueHistory .vh-table-wrap{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:12px}
-  #valueHistory .vh-table{width:100%;border-collapse:collapse;font-size:12px}
+  #valueHistory .vh-table-wrap{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
+  #valueHistory .vh-table{width:100%;border-collapse:collapse;font-size:12px;background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   #valueHistory .vh-table th,#valueHistory .vh-table td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-  #valueHistory .vh-table th:first-child,#valueHistory .vh-table td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}
-  #valueHistory .vh-table th{position:sticky;top:0;background:var(--card);z-index:2;cursor:pointer}
+  #valueHistory .vh-table th:first-child,#valueHistory .vh-table td:first-child{text-align:left;position:sticky;left:0;background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
+  #valueHistory .vh-table th{position:sticky;top:0;background:color-mix(in srgb,var(--card) 72%,#06080c)!important;z-index:2;cursor:pointer}
   #valueHistory .vh-table th:first-child{z-index:3}
   #valueHistory details.vh-market-table summary{cursor:pointer;font-weight:700}
   #valueHistory .vh-search-results{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0 0}

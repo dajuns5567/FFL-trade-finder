@@ -56,3 +56,12 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #rankings .asset.valueRow19 .pv-history-link:focus-visible{
   color:#e4b53f!important;
 }
+
+/* V408 presentation-only evaluator shell cleanup */
+#evaluator>.card{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding-left:0!important;
+  padding-right:0!important;
+}

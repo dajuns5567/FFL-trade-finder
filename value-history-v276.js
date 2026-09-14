@@ -249,13 +249,13 @@ function addStyles(){
   #valueHistory .vh-trade-head h4{margin:0;color:#e4b53f;font-size:15px}
   #valueHistory .vh-trade-date{display:inline;color:inherit;background:transparent;box-shadow:none;padding:0;border-radius:0}
   #valueHistory .vh-compact-trade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 8px}
-  #valueHistory .vh-compact-side{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:10px;padding:8px 10px;background:color-mix(in srgb,var(--card) 72%,#06080c);min-width:0}
+  #valueHistory .vh-compact-side{border:0;border-radius:0;padding:8px 10px;background:transparent;min-width:0;box-shadow:none}
   #valueHistory .vh-compact-side>b{display:block;font-size:13px;color:#f4f4f5;margin-bottom:2px}
   #valueHistory .vh-receives-label{display:block;color:#e4b53f;font-size:9px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
   #valueHistory .vh-trade-reset{align-self:end;white-space:nowrap;background:color-mix(in srgb,var(--card) 72%,#06080c)!important;color:#e5bd55!important;border:1px solid rgba(216,170,53,.72)!important;font-family:inherit!important;font-weight:800!important;letter-spacing:.01em!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 4px 12px rgba(0,0,0,.22)!important}
   #valueHistory .vh-trade-reset:hover,#valueHistory .vh-trade-reset:focus-visible{background:#11161c!important;color:#f0c85a!important;border-color:#d8aa35!important;outline:none!important}
   #valueHistory .vh-compact-assets{display:flex;gap:6px;flex-wrap:wrap}
-  #valueHistory .vh-compact-asset{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:26px;padding:4px 7px;border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--card) 72%,#06080c);font-size:11px;font-weight:750;color:var(--muted);line-height:1.2}
+  #valueHistory .vh-compact-asset{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:26px;padding:4px 0;border:0;border-radius:0;background:transparent;font-size:11px;font-weight:750;color:var(--muted);line-height:1.2;box-shadow:none}
   #valueHistory .vh-compact-asset>b{color:#f4f4f5;font-size:11px}
   #valueHistory .vh-compact-asset>small{display:block;margin-top:2px;color:var(--muted);font-size:9px;font-weight:750;letter-spacing:.02em}
   #valueHistory .vh-trade-toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin:0}

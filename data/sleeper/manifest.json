@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-13T23:08:59.044Z",
+  "generatedAt": "2026-09-14T01:03:02.444Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -84,6 +84,14 @@
         "CLE",
         "HOU",
         "BUF",
+        "LV",
+        "MIA",
+        "MIN",
+        "GB",
+        "PHI",
+        "WSH",
+        "LAC",
+        "ARI",
         "SEA",
         "NE",
         "LAR",
@@ -93,42 +101,18 @@
     "weekFinalityByWeek": {
       "1": {
         "scheduledGames": 16,
-        "finalGames": 10,
+        "finalGames": 14,
         "ignoredGames": 0,
-        "blockingGames": 6,
+        "blockingGames": 2,
         "complete": false,
         "nullSlots": [],
         "slots": [
           {
-            "id": "401872928",
+            "id": "401872930",
             "state": "blocking",
             "teams": [
-              "LV",
-              "MIA"
-            ]
-          },
-          {
-            "id": "401872927",
-            "state": "blocking",
-            "teams": [
-              "MIN",
-              "GB"
-            ]
-          },
-          {
-            "id": "401872929",
-            "state": "blocking",
-            "teams": [
-              "PHI",
-              "WSH"
-            ]
-          },
-          {
-            "id": "401872926",
-            "state": "blocking",
-            "teams": [
-              "LAC",
-              "ARI"
+              "NYG",
+              "DAL"
             ]
           },
           {
@@ -196,11 +180,35 @@
             ]
           },
           {
-            "id": "401872930",
-            "state": "blocking",
+            "id": "401872928",
+            "state": "final",
             "teams": [
-              "NYG",
-              "DAL"
+              "LV",
+              "MIA"
+            ]
+          },
+          {
+            "id": "401872927",
+            "state": "final",
+            "teams": [
+              "MIN",
+              "GB"
+            ]
+          },
+          {
+            "id": "401872929",
+            "state": "final",
+            "teams": [
+              "PHI",
+              "WSH"
+            ]
+          },
+          {
+            "id": "401872926",
+            "state": "final",
+            "teams": [
+              "LAC",
+              "ARI"
             ]
           },
           {
@@ -231,9 +239,9 @@
       }
     },
     "diagnostics": {
-      "finalGames": 10,
-      "qualifiedPlayerGames": 320,
-      "rejectedPlayerGames": 1110,
+      "finalGames": 14,
+      "qualifiedPlayerGames": 414,
+      "rejectedPlayerGames": 1595,
       "ignoredGames": 0
     }
   },

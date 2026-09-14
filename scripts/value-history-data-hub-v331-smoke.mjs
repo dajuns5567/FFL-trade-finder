@@ -469,9 +469,9 @@ assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID iden
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
 const indexHtml=fs.readFileSync('index.html','utf8');
 assert(siteV29.includes('/value-history-v276.js?v=424'),'production shell must cache-bust the current V424 Value History UI/runtime');
-assert(siteV29.includes('/fleeced-theme-v274.css?v=425'),'production shell must cache-bust the V425 Fleeced theme');
+assert(siteV29.includes('/fleeced-theme-v274.css?v=427'),'production shell must cache-bust the V425 Fleeced theme');
 assert(siteV29.includes('/fleeced-presentation-v413.js?v=423'),'production shell must load the V416 presentation-only interaction-safe presentation runtime');
-assert(siteV29.includes('/fleeced-home-v424.js?v=425'),'production shell must load the V425 Home navigation runtime');
+assert(siteV29.includes('/fleeced-home-v424.js?v=427'),'production shell must load the V425 Home navigation runtime');
 assert(indexHtml.includes('data-tab="home"')&&indexHtml.includes('id="home" class="tab"'),'Home must be a first-class default tab');
 assert(indexHtml.includes('<h2>Trade Evaluator</h2>'),'Trade Evaluator title must use final capitalization');
 assert(indexHtml.includes('Select assets to trade and review up to 250 recommended trades'),'Home Trade Finder description must match');
@@ -480,7 +480,7 @@ assert(indexHtml.includes('Review real trades, analysis at the time of trade, an
 assert(indexHtml.includes('Historical value hub, risers, fallers, team value analysis, and more'),'Home Value History description must match');
 assert(indexHtml.includes('id="homeTopPlayers"')&&indexHtml.includes('id="homeValueRisers"'),'Home must expose current top players and 7D riser summary slots');
 assert(siteV29.includes('/trade-select-all-v165.js?v=417'),'production shell must cache-bust the V416 Select All presentation-placement runtime');
-assert(siteV29.includes('/ui-player-values-v139.js?v=398'),'production shell must cache-bust the current V398 Player Values UI');
+assert(siteV29.includes('/ui-player-values-v139.js?v=427'),'production shell must cache-bust the current V398 Player Values UI');
 assert(siteV29.includes('/nonblocking-consensus-v277.js?v=395'),'production shell must cache-bust the V395 consensus completion marker');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
@@ -547,3 +547,6 @@ assert(archiveWriter.includes("source:'scheduled-local-browser'"),'durable archi
 assert(headlessScript.includes("writeFileSync(snapshotFile"),'scheduled browser must persist the completed site-calculated snapshot file before closing');
 
 console.log('V396 append-only Value History preservation + audited headless pipeline regression passed');
+
+assert(indexHtml.includes('fleeced-home-sub-prompt')&&indexHtml.includes('Choose where you want to go'),'Home expandable cards must prompt for a destination choice');
+assert(fs.readFileSync('ui-player-values-v139.js','utf8').includes('homeTopPlayers(limit=10)'),'Home Player Values must use canonical Player Values ordering for ten players');

@@ -4,7 +4,7 @@ export default async () => {
   const base = await siteV17();
   if (!base.ok) return base;
   let raw = await base.text();
-  raw = raw.replace('</head>', '<link rel="stylesheet" href="/fleeced-theme-v274.css?v=437"></head>');
+  raw = raw.replace('</head>', '<link rel="stylesheet" href="/fleeced-theme-v274.css?v=440"></head>');
 
   // Frozen V141 valuation path remains unchanged. V259 adds a live Sleeper-scoring adapter after normalization;
   // with no TE-specific reception bonus it returns the V258 value exactly.

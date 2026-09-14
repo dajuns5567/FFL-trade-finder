@@ -1277,3 +1277,38 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   background-color:transparent!important;
   box-shadow:none!important;
 }
+
+
+/* UI-only alignment: raw total / adjustment / adjusted total rows */
+#finderResults .trade95-total,
+#evalResults .trade95-total,
+#finderResults .trade97-adjust,
+#evalResults .trade97-adjust,
+#finderResults .trade97-effective,
+#evalResults .trade97-effective{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  column-gap:12px!important;
+  padding-left:0!important;
+  padding-right:0!important;
+}
+#finderResults .trade95-total>span,
+#evalResults .trade95-total>span,
+#finderResults .trade97-adjust>span,
+#evalResults .trade97-adjust>span,
+#finderResults .trade97-effective>span,
+#evalResults .trade97-effective>span{
+  justify-self:start!important;
+  margin:0!important;
+}
+#finderResults .trade95-total>b,
+#evalResults .trade95-total>b,
+#finderResults .trade97-adjust>b,
+#evalResults .trade97-adjust>b,
+#finderResults .trade97-effective>b,
+#evalResults .trade97-effective>b{
+  justify-self:end!important;
+  margin:0!important;
+  text-align:right!important;
+}

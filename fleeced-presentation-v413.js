@@ -1,7 +1,10 @@
 (()=>{
 'use strict';
 function numberFrom(el){
-  const text=String(el?.textContent||'').replace(/[^0-9.-]+/g,'');
+  const raw=String(el?.textContent||'').trim();
+  if(!raw)return null;
+  const text=raw.replace(/[^0-9.-]+/g,'');
+  if(!text)return null;
   const n=Number(text);
   return Number.isFinite(n)?n:null;
 }
@@ -12,13 +15,7 @@ function markEvaluatorWinner(){
   for(const host of [document.getElementById('finderResults'),document.getElementById('evalResults')]){
     if(!host)continue;
     for(const card of host.querySelectorAll('.trade95-card')){
-      const sides=[...card.querySelectorAll('.trade95-side')];
-      sides.forEach(s=>s.classList.remove('fleeced-eval-winner'));
-      if(sides.length!==2)continue;
-      const totals=sides.map(side=>sideTotal(side));
-      const a=totals[0],b=totals[1];
-      if(a==null||b==null||a===b)continue;
-      (a>b?sides[0]:sides[1]).classList.add('fleeced-eval-winner');
+      card.querySelectorAll('.trade95-side').forEach(s=>s.classList.remove('fleeced-eval-winner'));
     }
   }
 }
@@ -92,7 +89,7 @@ function cardTeams(card){
 }
 function decorateScores(){
   for(const card of document.querySelectorAll('#finderResults .trade95-card,#evalResults .trade95-card')){
-    if(card.dataset.fleecedPresentation==='2')continue;
+    if(card.dataset.fleecedPresentation==='3')continue;
     const scoreBox=card.querySelector('.trade95-score');
     const m=String(scoreBox?.textContent||'').match(/(\d+)\s*\/100/i);
     if(!m)continue;
@@ -100,7 +97,10 @@ function decorateScores(){
     const label=String(scoreBox?.querySelector('div')?.textContent||card.querySelector('.trade95-summary b')?.textContent||'Trade').trim();
     const head=card.querySelector('.trade95-head');
     const headTitle=head?.querySelector(':scope > div:first-child > b');
-    if(headTitle&&!headTitle.dataset.fleecedOriginalTitle)headTitle.dataset.fleecedOriginalTitle=String(headTitle.textContent||'');
+    const originalTitle=String(headTitle?.dataset.fleecedOriginalTitle||headTitle?.textContent||'').trim();
+    if(headTitle&&!headTitle.dataset.fleecedOriginalTitle)headTitle.dataset.fleecedOriginalTitle=originalTitle;
+    const numberMatch=originalTitle.match(/^#(\d+)\b/);
+    const tradeNumber=numberMatch?Number(numberMatch[1]):null;
     const [leftTeam,rightTeam]=cardTeams(card);
     const sides=[...card.querySelectorAll('.trade95-side')];
     if(sides.length===2){
@@ -112,7 +112,7 @@ function decorateScores(){
     const winnerIndex=totals.length===2&&totals[0]!=null&&totals[1]!=null&&totals[0]!==totals[1]?(totals[0]>totals[1]?0:1):-1;
     const board=document.createElement('div');
     board.className='fleeced-hindsight-board';
-    board.innerHTML='<div class="fleeced-result-team left"><small></small><strong></strong><b></b></div><div class="fleeced-result-vs"><span>FAIRNESS RATING</span><strong></strong><em></em></div><div class="fleeced-result-team right"><small></small><strong></strong><b></b></div><div class="fleeced-result-bar"><i></i></div>';
+    board.innerHTML='<div class="fleeced-result-team left"><small></small><strong></strong><b></b></div><div class="fleeced-result-vs"><span>FAIRNESS RATING</span><strong></strong><em></em></div><div class="fleeced-result-team right"><small></small><strong></strong><b></b></div><div class="fleeced-result-bar-wrap"><span>0</span><div class="fleeced-result-bar"><i></i></div><span>100</span></div>';
     const resultTeams=board.querySelectorAll('.fleeced-result-team');
     const teamNames=[leftTeam,rightTeam];
     resultTeams.forEach((box,i)=>{
@@ -127,12 +127,10 @@ function decorateScores(){
     board.querySelector('.fleeced-result-bar i').style.width=score+'%';
     const match=document.createElement('div');
     match.className='fleeced-result-matchup';
-    match.textContent=leftTeam+' ↔ '+rightTeam;
-    if(head){
-      head.replaceChildren(match,board);
-    }else card.prepend(match,board);
+    match.innerHTML=(tradeNumber?'<span class="fleeced-trade-number">#'+tradeNumber+'</span> ':'')+'<span>'+leftTeam+' ↔ '+rightTeam+'</span>';
+    if(head){head.replaceChildren(match,board)}else card.prepend(match,board);
     card.querySelector('.trade95-summary')?.classList.add('fleeced-hide-legacy-summary');
-    card.dataset.fleecedPresentation='2';
+    card.dataset.fleecedPresentation='3';
   }
   markEvaluatorWinner();
 }

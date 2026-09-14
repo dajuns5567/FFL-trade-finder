@@ -15,6 +15,11 @@ assert(f.aRaw===8785&&f.bRaw===14377,'raw totals drifted from screenshot calibra
 assert(f.aAdj>4900&&f.aAdj<5200,'elite-for-depth recalibration outside intended range: '+f.aAdj);
 assert(f.score>=90&&f.score<=96,'JSN calibration case should be roughly even, got '+f.score);
 assert(f.status==='Fair'||f.status==='Excellent Fit','JSN calibration case should no longer be Negotiable');
+const achane=P('achane',7812,19,'RB'),shakir=P('shakir',3979,136,'WR'),tank=P('tank',2682,219,'WR'),jsnCurrent=P('jsnCurrent',8875,6,'WR');
+const nearEqual=fair([jsnCurrent,tank],[achane,shakir]);
+assert(Math.abs(nearEqual.bRaw-nearEqual.aRaw)===234,'near-equal raw package fixture drifted');
+assert(nearEqual.aAdj>2000&&nearEqual.aAdj<3000,'centerpiece scarcity premium is still being suppressed by near-equal raw totals: '+nearEqual.aAdj);
+assert(nearEqual.aEffective-nearEqual.bEffective>2000,'JSN-side adjusted edge should remain materially above the Achane-side package after depth fills the raw gap');
 const reverse=fair([jt,tet],[jsn]);
 assert(reverse.score===f.score,'fairness symmetry changed');
 assert(Math.abs(reverse.bAdj-f.aAdj)<1e-9,'adjustment symmetry changed');
@@ -30,4 +35,4 @@ assert(Math.abs(eliteReverse.bAdj-elitePackage.aAdj)<1e-9,'elite-counterpiece ad
 const mid=P('mid',6800,60),a=P('a',6100,75),b=P('b',1800,150);
 const mf=fair([mid],[a,b]);
 assert(mf.aAdj<Math.max(0,mf.bRaw-mf.aRaw),'mid-tier premium adjustment should not automatically erase full raw gap');
-console.log('V320 screenshot calibration and proportional premium-for-depth smoke passed: score='+f.score+', adjustment='+Math.round(f.aAdj));
+console.log('V321 centerpiece-scarcity and proportional premium-for-depth smoke passed: score='+f.score+', adjustment='+Math.round(f.aAdj));

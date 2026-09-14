@@ -722,3 +722,39 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
     grid-template-areas:"left" "vs" "right" "bar"!important;
   }
 }
+
+/* V418 compact Finder/Evaluator result headers without fairness bar */
+#finderResults .fleeced-hindsight-board,#evalResults .fleeced-hindsight-board{
+  grid-template-columns:minmax(0,.82fr) minmax(170px,.9fr) minmax(0,.82fr)!important;
+  grid-template-areas:"left vs right"!important;
+  gap:10px 14px!important;
+}
+#finderResults .fleeced-result-bar-wrap,#evalResults .fleeced-result-bar-wrap,
+#finderResults .fleeced-result-bar,#evalResults .fleeced-result-bar{
+  display:none!important;
+}
+#finderResults .fleeced-result-matchup,#evalResults .fleeced-result-matchup{
+  align-items:center!important;
+}
+#finderResults .fleeced-trade-number,#evalResults .fleeced-trade-number{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:40px!important;
+  padding:4px 8px!important;
+  border:1px solid rgba(216,170,53,.58)!important;
+  border-radius:9px!important;
+  background:color-mix(in srgb,#e4b53f 8%,#0b0f14)!important;
+  color:#e4b53f!important;
+  font-size:18px!important;
+  font-weight:950!important;
+  letter-spacing:.02em!important;
+  line-height:1!important;
+  flex:0 0 auto!important;
+}
+@media(max-width:760px){
+  #finderResults .fleeced-hindsight-board,#evalResults .fleeced-hindsight-board{
+    grid-template-columns:1fr!important;
+    grid-template-areas:"left" "vs" "right"!important;
+  }
+}

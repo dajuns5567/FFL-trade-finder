@@ -72,6 +72,7 @@ function playerMeta(id){
 function renderTopPlayers(){
   const host=document.getElementById('homeTopPlayers');
   if(!host)return false;
+  if(!consensusRefreshComplete())return false;
   const helper=globalThis.playerValuesV139?.homeTopPlayers;
   if(typeof helper!=='function')return false;
   let rows=[];
@@ -82,9 +83,16 @@ function renderTopPlayers(){
   return true;
 }
 let homeMarketCache=null;
+function consensusRefreshComplete(){
+  const status=document.getElementById('homeDataStatus');
+  const text=String(status?.textContent||'');
+  const match=text.match(/consensus sources:\s*(\d+)\/(\d+)\s*refreshed/i);
+  return !!(match&&Number(match[1])>0&&Number(match[1])===Number(match[2]));
+}
 async function renderValueRisers(){
   const host=document.getElementById('homeValueRisers');
   if(!host)return false;
+  if(!consensusRefreshComplete())return false;
   try{
     if(!homeMarketCache){
       const r=await fetch('/.netlify/functions/value-history?market=1',{cache:'no-store'});
@@ -124,16 +132,16 @@ async function renderValueRisers(){
 function scheduleTopPlayers(){
   let tries=0;
   const run=()=>{
-    if(renderTopPlayers()||++tries>=24)return;
-    setTimeout(run,250);
+    if(renderTopPlayers()||++tries>=120)return;
+    setTimeout(run,500);
   };
   run();
 }
 function scheduleValueRisers(){
   let tries=0;
   const run=async()=>{
-    if(await renderValueRisers()||++tries>=24)return;
-    setTimeout(run,250);
+    if(await renderValueRisers()||++tries>=120)return;
+    setTimeout(run,500);
   };
   run();
 }
@@ -172,8 +180,8 @@ function install(){
   if(finder)new MutationObserver(()=>queueMicrotask(relocateFinderDiagnostics)).observe(finder,{childList:true});
   const tabs=document.querySelector('.tabs');
   if(tabs)new MutationObserver(()=>queueMicrotask(normalizeTabOrder)).observe(tabs,{childList:true});
-  document.getElementById('updateBtn')?.addEventListener('click',()=>{setTimeout(scheduleTopPlayers,900);setTimeout(scheduleValueRisers,1200)},{passive:true});
+  document.getElementById('updateBtn')?.addEventListener('click',()=>{homeMarketCache=null;setTimeout(scheduleTopPlayers,500);setTimeout(scheduleValueRisers,500)},{passive:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.fleecedHomeV428={activateTab,relocateFinderDiagnostics,normalizeTabOrder,renderTopPlayers,renderValueRisers};
+window.fleecedHomeV430={activateTab,relocateFinderDiagnostics,normalizeTabOrder,renderTopPlayers,renderValueRisers,consensusRefreshComplete};
 })();

@@ -116,9 +116,9 @@ function decorateScores(){
     const resultTeams=board.querySelectorAll('.fleeced-result-team');
     const teamNames=[leftTeam,rightTeam];
     resultTeams.forEach((box,i)=>{
-      box.querySelector('small').textContent=i===winnerIndex?'WINNER • TRADE-ADJUSTED TOTAL':'TRADE-ADJUSTED TOTAL';
+      box.querySelector('small').textContent=teamNames[i];
       box.querySelector('strong').textContent=totals[i]==null?'—':Math.round(totals[i]).toLocaleString();
-      box.querySelector('b').textContent=teamNames[i];
+      box.querySelector('b').textContent=i===winnerIndex?'WINNER • TRADE-ADJUSTED TOTAL':'TRADE-ADJUSTED TOTAL';
       if(i===winnerIndex)box.classList.add('winner');
     });
     board.querySelector('.fleeced-result-vs strong').textContent=score+'/100 • '+label.replace(/!$/,'').toUpperCase();

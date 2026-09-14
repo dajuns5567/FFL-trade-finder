@@ -1,11 +1,27 @@
 (()=>{
 'use strict';
+const TAB_ORDER=['home','finder','evaluator','tradeHistory','rankings','valueHistory','league','settings'];
+const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
 function tabButton(id){return document.querySelector('.tabs button[data-tab="'+id+'"]')}
 function activateTab(id){
   const b=tabButton(id);
   if(!b)return false;
   b.click();
   return true;
+}
+function normalizeTabOrder(){
+  const tabs=document.querySelector('.tabs');
+  if(!tabs)return;
+  const buttons=[...tabs.querySelectorAll(':scope > button[data-tab]')];
+  const wanted=TAB_ORDER.filter(id=>buttons.some(b=>b.dataset.tab===id));
+  const current=buttons.map(b=>b.dataset.tab).filter(id=>wanted.includes(id));
+  if(current.join('|')===wanted.join('|'))return;
+  for(const id of wanted){
+    const b=buttons.find(x=>x.dataset.tab===id);
+    if(b)tabs.appendChild(b);
+  }
 }
 function applyPlayerFilter(filter){
   setTimeout(()=>{
@@ -41,6 +57,61 @@ function toggleGroup(card){
   sub.hidden=!willOpen;
   card.classList.toggle('open',willOpen);
 }
+function playerMeta(id){
+  const p=globalThis.state?.players?.[String(id)]||{};
+  const pos=typeof globalThis.groupPos==='function'?globalThis.groupPos({type:'player',id:String(id)}):((p.fantasy_positions||[])[0]||'');
+  const team=String(p.team||'FA').toUpperCase();
+  return {pos,team};
+}
+function renderTopPlayers(){
+  const host=document.getElementById('homeTopPlayers');
+  if(!host)return false;
+  if(typeof globalThis.ensureMaster!=='function'||typeof globalThis.playerName!=='function')return false;
+  let ranked=[];
+  try{ranked=globalThis.ensureMaster()||[]}catch{return false}
+  const tv=globalThis.tradeValueNormalizationV139||globalThis.tradeValueNormalizationV130||{};
+  const rows=ranked.filter(z=>z?.x?.type==='player').slice(0,5);
+  if(!rows.length)return false;
+  host.innerHTML='<div class="fleeced-home-list-title">Top 5 Current Players</div>'+rows.map((z,i)=>{
+    const id=String(z.x.id),meta=playerMeta(id);
+    const value=typeof tv.playerValue==='function'?Number(tv.playerValue(z.x)||0):0;
+    return '<div class="fleeced-home-data-row"><span class="fleeced-home-data-rank">'+(i+1)+'</span><div><b>'+esc(globalThis.playerName(id))+'</b><small>'+esc(meta.pos)+' • '+esc(meta.team)+(value?' • Value '+fmt(value):'')+'</small></div></div>';
+  }).join('');
+  return true;
+}
+async function renderValueRisers(){
+  const host=document.getElementById('homeValueRisers');
+  if(!host)return;
+  try{
+    const r=await fetch('/.netlify/functions/value-history?market=1',{cache:'no-store'});
+    if(!r.ok)throw Error('market history unavailable');
+    const payload=await r.json();
+    const market=payload?.market||{};
+    const rows=(market.periods?.['7D']?.valueRisers||[])
+      .filter(x=>Number(x?.overall)<=300&&Number(x?.delta)>0)
+      .sort((a,b)=>Number(b.delta||0)-Number(a.delta||0))
+      .slice(0,5);
+    if(!rows.length){
+      host.innerHTML='<div class="fleeced-home-list-title">Top 5 Value Risers • 7D • Top 300</div><div class="fleeced-home-loading">Not enough 7-day movement recorded yet.</div>';
+      return;
+    }
+    host.innerHTML='<div class="fleeced-home-list-title">Top 5 Value Risers • 7D • Top 300</div>'+rows.map((x,i)=>{
+      const id=String(x.id),meta=playerMeta(id);
+      const name=typeof globalThis.playerName==='function'?globalThis.playerName(id):(x.name||id);
+      return '<div class="fleeced-home-data-row"><span class="fleeced-home-data-rank">'+(i+1)+'</span><div><b>'+esc(name)+'</b><small>'+esc(meta.pos)+' • '+esc(meta.team)+' • Overall #'+esc(x.overall)+'</small></div><strong class="fleeced-home-up">+'+fmt(x.delta)+'</strong></div>';
+    }).join('');
+  }catch{
+    host.innerHTML='<div class="fleeced-home-list-title">Top 5 Value Risers • 7D • Top 300</div><div class="fleeced-home-loading">Value-history summary is temporarily unavailable.</div>';
+  }
+}
+function scheduleTopPlayers(){
+  let tries=0;
+  const run=()=>{
+    if(renderTopPlayers()||++tries>=20)return;
+    setTimeout(run,250);
+  };
+  run();
+}
 function handleClick(e){
   const main=e.target.closest('.fleeced-home-card-main');
   if(main){e.preventDefault();toggleGroup(main.closest('.fleeced-home-expandable'));return}
@@ -56,9 +127,15 @@ function install(){
   if(!home)return;
   home.addEventListener('click',handleClick);
   relocateFinderDiagnostics();
+  normalizeTabOrder();
+  scheduleTopPlayers();
+  renderValueRisers();
   const finder=document.querySelector('#finder>.card');
   if(finder)new MutationObserver(()=>queueMicrotask(relocateFinderDiagnostics)).observe(finder,{childList:true});
+  const tabs=document.querySelector('.tabs');
+  if(tabs)new MutationObserver(()=>queueMicrotask(normalizeTabOrder)).observe(tabs,{childList:true});
+  document.getElementById('updateBtn')?.addEventListener('click',()=>{setTimeout(scheduleTopPlayers,900);setTimeout(renderValueRisers,1200)},{passive:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.fleecedHomeV424={activateTab,relocateFinderDiagnostics};
+window.fleecedHomeV425={activateTab,relocateFinderDiagnostics,normalizeTabOrder,renderTopPlayers,renderValueRisers};
 })();

@@ -1312,3 +1312,19 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   margin:0!important;
   text-align:right!important;
 }
+
+
+/* UI-only trade presentation centering */
+#finderResults .fleeced-hindsight-side,
+#evalResults .fleeced-hindsight-side{
+  text-align:center!important;
+}
+#finderResults .fleeced-hindsight-side *,
+#evalResults .fleeced-hindsight-side *{
+  text-align:center!important;
+}
+#finderResults .trade95-side-title,
+#evalResults .trade95-side-title{
+  text-align:center!important;
+  text-transform:none!important;
+}

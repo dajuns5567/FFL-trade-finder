@@ -77,6 +77,8 @@ function addStyles(){
   #valueHistory .vh-profile-info{display:grid;grid-template-columns:minmax(210px,1.15fr) minmax(560px,3.8fr) minmax(165px,.9fr);gap:0;align-items:stretch}
   #valueHistory .vh-profile-primary{display:grid;grid-template-rows:18px 38px 18px;align-content:center;justify-items:center;text-align:center;min-width:0;padding:10px 16px}
   #valueHistory .vh-profile-primary>small{color:#e4b53f;font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;margin:0;line-height:18px}
+  /* vh-fit-text-guard: preserve box/header dimensions; shrink overflowing text only */
+  #valueHistory .vh-profile-primary,#valueHistory .vh-profile-fact,#valueHistory .vh-current,#valueHistory .vh-metric{overflow:hidden}
   #valueHistory .vh-profile-primary h2{margin:0;font-size:22px;line-height:38px;letter-spacing:-.01em;align-self:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #valueHistory .vh-profile-kicker{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;justify-content:center;min-width:0}
   #valueHistory .vh-profile-kicker span{display:inline-flex;align-items:center;padding:2px 6px;border:0;border-radius:0;background:transparent;font-size:12px;color:var(--muted);white-space:nowrap}
@@ -447,6 +449,20 @@ function renderSearchResults(value){
   const q=norm(value);if(!q){results.innerHTML='';return}
   const matches=ranked().filter(z=>z?.x?.type==='player'&&norm(playerName(z.x.id)).includes(q)).slice(0,16);
   results.innerHTML=matches.map(z=>`<button type="button" class="secondary small" data-vh-id="${esc(z.x.id)}">${esc(playerName(z.x.id))} • ${esc(groupPos(z.x))}</button>`).join('');
+}
+function fitValueHistoryCellText(root=document){
+  const targets=root.querySelectorAll('#valueHistory .vh-profile-primary h2,#valueHistory .vh-profile-fact small,#valueHistory .vh-profile-fact b,#valueHistory .vh-profile-fact span,#valueHistory .vh-current small,#valueHistory .vh-current .vh-big,#valueHistory .vh-metric>small,#valueHistory .vh-metric b,#valueHistory .vh-metric .vh-metric-time');
+  for(const el of targets){
+    const base=Number(el.dataset.vhBaseFont||parseFloat(getComputedStyle(el).fontSize)||12);
+    if(!el.dataset.vhBaseFont)el.dataset.vhBaseFont=String(base);
+    const min=el.matches('.vh-profile-primary h2')?14:el.matches('.vh-current .vh-big')?24:el.matches('.vh-profile-fact b,.vh-metric b')?11:el.matches('.vh-profile-fact small,.vh-current small,.vh-metric>small')?9:8;
+    el.style.fontSize=base+'px';
+    let size=base,guard=0;
+    while(size>min&&el.scrollWidth>el.clientWidth&&guard++<40){
+      size=Math.max(min,size-.5);
+      el.style.fontSize=size+'px';
+    }
+  }
 }
 function syncPlayerSearchState(){
   const label=document.querySelector('#valueHistory .vh-search-wrap label b');
@@ -1123,6 +1139,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
     </div><div class="tiny muted" style="margin-top:10px">Scoring milestones use Sleeper weekly regular-season stats and this league’s scoring settings. Informational only.</div></div>
   </div>
   ${similarPlayersSection(id)}`;
+  setTimeout(()=>fitValueHistoryCellText(box),0);
 }
 function boot(){addShell();scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

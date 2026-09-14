@@ -112,7 +112,7 @@ function decorateScores(){
     const winnerIndex=totals.length===2&&totals[0]!=null&&totals[1]!=null&&totals[0]!==totals[1]?(totals[0]>totals[1]?0:1):-1;
     const board=document.createElement('div');
     board.className='fleeced-hindsight-board';
-    board.innerHTML='<div class="fleeced-result-team left"><small></small><strong></strong><b></b></div><div class="fleeced-result-vs"><span>FAIRNESS RATING</span><strong></strong><em></em></div><div class="fleeced-result-team right"><small></small><strong></strong><b></b></div><div class="fleeced-result-bar-wrap"><span>0</span><div class="fleeced-result-bar"><i></i></div><span>100</span></div>';
+    board.innerHTML='<div class="fleeced-result-team left"><small></small><strong></strong><b></b></div><div class="fleeced-result-vs"><span>FAIRNESS RATING</span><strong></strong><em></em></div><div class="fleeced-result-team right"><small></small><strong></strong><b></b></div>';
     const resultTeams=board.querySelectorAll('.fleeced-result-team');
     const teamNames=[leftTeam,rightTeam];
     resultTeams.forEach((box,i)=>{
@@ -124,7 +124,6 @@ function decorateScores(){
     board.querySelector('.fleeced-result-vs strong').textContent=score+'/100 • '+label.replace(/!$/,'').toUpperCase();
     const edge=totals[0]!=null&&totals[1]!=null?Math.abs(totals[0]-totals[1]):null;
     board.querySelector('.fleeced-result-vs em').textContent=edge==null?'':'ADJUSTED EDGE • '+Math.round(edge).toLocaleString();
-    board.querySelector('.fleeced-result-bar i').style.width=score+'%';
     const match=document.createElement('div');
     match.className='fleeced-result-matchup';
     match.innerHTML=(tradeNumber?'<span class="fleeced-trade-number">#'+tradeNumber+'</span> ':'')+'<span>'+leftTeam+' ↔ '+rightTeam+'</span>';

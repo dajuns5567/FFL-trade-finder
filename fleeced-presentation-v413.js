@@ -70,9 +70,27 @@ function decoratePresentedPlayers(){
     name.setAttribute('title','Open value history');
   }
 }
+function selectedText(id){
+  const el=document.getElementById(id);if(!el)return'';
+  const opt=el.options?.[el.selectedIndex];
+  return String(opt?.textContent||'').trim();
+}
+function cleanFinderPartner(text){
+  return String(text||'').replace(/^#\d+\s+/,'').trim();
+}
+function cardTeams(card){
+  if(card.closest('#finderResults')){
+    const own=selectedText('findTeam');
+    const head=card.querySelector('.trade95-head>div:first-child>b');
+    const partner=cleanFinderPartner(head?.dataset.fleecedOriginalTitle||head?.textContent||'');
+    return[own||'Your team',partner||'Trade partner'];
+  }
+  const sides=[...card.querySelectorAll('.trade95-side-title')].map(x=>String(x.textContent||'').replace(/\s+RECEIVES\s*$/i,'').trim());
+  return[sides[0]||selectedText('evalA')||'Team A',sides[1]||selectedText('evalB')||'Team B'];
+}
 function decorateScores(){
   for(const card of document.querySelectorAll('#finderResults .trade95-card,#evalResults .trade95-card')){
-    if(card.querySelector(':scope > .fleeced-trade-rating'))continue;
+    if(card.dataset.fleecedPresentation==='1')continue;
     const scoreBox=card.querySelector('.trade95-score');
     const m=String(scoreBox?.textContent||'').match(/(\d+)\s*\/100/i);
     if(!m)continue;
@@ -80,13 +98,29 @@ function decorateScores(){
     const label=String(scoreBox?.querySelector('div')?.textContent||card.querySelector('.trade95-summary b')?.textContent||'Trade').trim();
     const head=card.querySelector('.trade95-head');
     const headTitle=head?.querySelector(':scope > div:first-child > b');
-    if(headTitle){headTitle.textContent=label;headTitle.classList.add('fleeced-trade-judgment')}
-    const rating=document.createElement('div');
-    rating.className='fleeced-trade-rating';
-    rating.innerHTML='<div class="fleeced-trade-rating-head"><span></span></div><div class="fleeced-score-track"><i></i></div>';
-    rating.querySelector('span').textContent=score+'/100';
-    rating.querySelector('i').style.width=score+'%';
-    if(head)head.insertAdjacentElement('afterend',rating);else card.prepend(rating);
+    if(headTitle&&!headTitle.dataset.fleecedOriginalTitle)headTitle.dataset.fleecedOriginalTitle=String(headTitle.textContent||'');
+    const [leftTeam,rightTeam]=cardTeams(card);
+    const sides=[...card.querySelectorAll('.trade95-side')];
+    if(card.closest('#finderResults')&&sides.length===2){
+      const titles=sides.map(s=>s.querySelector('.trade95-side-title'));
+      if(titles[0])titles[0].textContent=leftTeam+' RECEIVES';
+      if(titles[1])titles[1].textContent=rightTeam+' RECEIVES';
+    }
+    const totals=sides.map(side=>sideTotal(side));
+    const summary=document.createElement('div');
+    summary.className='fleeced-hindsight-summary';
+    summary.innerHTML='<div class="fleeced-summary-top"><div class="fleeced-summary-title"><strong></strong><small></small></div><div class="fleeced-summary-score"></div></div><div class="fleeced-score-track"><i></i></div><div class="fleeced-summary-teams"><span></span><span></span></div>';
+    summary.querySelector('.fleeced-summary-title strong').textContent=label;
+    summary.querySelector('.fleeced-summary-title small').textContent=leftTeam+' ↔ '+rightTeam;
+    summary.querySelector('.fleeced-summary-score').textContent=score+'/100';
+    summary.querySelector('.fleeced-score-track i').style.width=score+'%';
+    const teamSpans=summary.querySelectorAll('.fleeced-summary-teams span');
+    teamSpans[0].textContent=leftTeam+(Number.isFinite(totals[0])?' • '+Math.round(totals[0]).toLocaleString():'');
+    teamSpans[1].textContent=rightTeam+(Number.isFinite(totals[1])?' • '+Math.round(totals[1]).toLocaleString():'');
+    if(head){
+      head.replaceChildren(summary);
+    }else card.prepend(summary);
+    card.dataset.fleecedPresentation='1';
   }
 }
 function arrangeFinderFields(){
@@ -106,8 +140,10 @@ function arrangeFinderFields(){
     if(label){label.textContent='Search player';label.classList.add('fleeced-field-heading','fleeced-search-label')}
     if(select.nextElementSibling!==label&&label)select.insertAdjacentElement('afterend',label);
     if(label&&label.nextElementSibling!==search)label.insertAdjacentElement('afterend',search);
-    const selectAll=[...document.querySelectorAll('#finder button')].find(b=>/^select all$/i.test((b.textContent||'').trim()));
-    if(selectAll&&search.nextElementSibling!==selectAll){search.insertAdjacentElement('afterend',selectAll);selectAll.classList.add('fleeced-select-all')}
+    const wrap=document.getElementById('tradeSelectAll165');
+    const selectAll=document.getElementById('tradeSelectAllButton165');
+    if(selectAll)selectAll.classList.add('fleeced-select-all');
+    if(wrap&&search.nextElementSibling!==wrap)search.insertAdjacentElement('afterend',wrap)
   }
 }
 function brandSelectAll(){

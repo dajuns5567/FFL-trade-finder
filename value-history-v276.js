@@ -244,8 +244,8 @@ function addStyles(){
   #valueHistory .vh-trade-history-summary{background:transparent!important;border:0!important;box-shadow:none!important}
   #valueHistory .vh-trade-history-summary:before{display:none!important}
   #valueHistory .vh-trade-list{display:grid;gap:16px}
-  #valueHistory .vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:15px;padding:0 12px 10px;background:var(--card);box-shadow:0 10px 24px rgba(0,0,0,.22);overflow:hidden}
-  #valueHistory .vh-trade-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin:0 -12px 8px;padding:10px 12px 9px;background:var(--card);border-bottom:0}
+  #valueHistory .vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:15px;padding:0 12px 10px;background:color-mix(in srgb,var(--card) 72%,#06080c);box-shadow:0 10px 24px rgba(0,0,0,.22);overflow:hidden}
+  #valueHistory .vh-trade-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin:0 -12px 8px;padding:10px 12px 9px;background:color-mix(in srgb,var(--card) 72%,#06080c);border-bottom:0}
   #valueHistory .vh-trade-head h4{margin:0;color:#e4b53f;font-size:15px}
   #valueHistory .vh-trade-date{display:inline;color:inherit;background:transparent;box-shadow:none;padding:0;border-radius:0}
   #valueHistory .vh-compact-trade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 8px}

@@ -183,3 +183,125 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   letter-spacing:.08em;
   text-transform:uppercase;
 }
+
+/* V413 interaction-safe presentation polish */
+#finder .fleeced-field-heading,#evaluator h3{
+  color:#e4b53f!important;
+  font-size:14px!important;
+  font-weight:950!important;
+  letter-spacing:.055em!important;
+  text-transform:uppercase!important;
+}
+#finder .fleeced-search-label{margin-top:12px!important}
+#finder .fleeced-select-all{
+  background:#0b0f14!important;
+  color:#e5bd55!important;
+  border:1px solid rgba(216,170,53,.58)!important;
+  font-weight:900!important;
+  letter-spacing:.025em!important;
+  text-transform:uppercase!important;
+  box-shadow:none!important;
+}
+#finder .fleeced-select-all:hover{color:#f0c85a!important;border-color:#d8aa35!important;background:#11161c!important}
+
+#findShop .checkrow,#evalChooserA label,#evalChooserB label{
+  position:relative!important;
+  padding-right:112px!important;
+}
+.fleeced-view-history{
+  position:absolute!important;
+  right:8px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  background:transparent!important;
+  border:0!important;
+  color:#e4b53f!important;
+  font-size:9px!important;
+  font-weight:950!important;
+  letter-spacing:.05em!important;
+  text-transform:uppercase!important;
+  padding:4px 2px!important;
+  white-space:nowrap!important;
+  box-shadow:none!important;
+}
+.fleeced-view-history:hover,.fleeced-view-history:focus-visible{
+  color:#f3ca61!important;
+  text-decoration:underline!important;
+  outline:none!important;
+}
+
+#finderResults .fleeced-presented-player,#evalResults .fleeced-presented-player{
+  color:#e4b53f!important;
+  cursor:pointer!important;
+  text-decoration:none!important;
+  font-weight:950!important;
+}
+#finderResults .fleeced-presented-player:hover,#evalResults .fleeced-presented-player:hover,
+#finderResults .fleeced-presented-player:focus-visible,#evalResults .fleeced-presented-player:focus-visible{
+  color:#f3ca61!important;
+  text-decoration:underline!important;
+  outline:none!important;
+}
+
+#finderResults .trade95-score,#evalResults .trade95-score{display:none!important}
+#finderResults .trade95-summary,#evalResults .trade95-summary{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  padding:8px 0 0!important;
+  margin:10px 0 8px!important;
+}
+#finderResults .trade97-adjust,#evalResults .trade97-adjust,
+#finderResults .trade97-effective,#evalResults .trade97-effective{
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+#finderResults .fleeced-trade-rating,#evalResults .fleeced-trade-rating{
+  margin:12px 0 4px!important;
+}
+.fleeced-trade-rating-head{
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:space-between!important;
+  gap:16px!important;
+  margin-bottom:7px!important;
+}
+.fleeced-trade-rating-head strong{
+  color:#e4b53f!important;
+  font-size:22px!important;
+  font-weight:950!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+  line-height:1!important;
+}
+.fleeced-trade-rating-head span{
+  color:#f4f4f5!important;
+  font-size:17px!important;
+  font-weight:950!important;
+}
+.fleeced-score-track{
+  height:8px!important;
+  border:2px solid #e4b53f!important;
+  border-radius:999px!important;
+  padding:1px!important;
+  background:#0b0f14!important;
+  overflow:hidden!important;
+}
+.fleeced-score-track i{
+  display:block!important;
+  height:100%!important;
+  border-radius:999px!important;
+  background:#e4b53f!important;
+}
+
+#finderResults .trade95-head>div:first-child>b,#evalResults .trade95-head>div:first-child>b{
+  font-size:18px!important;
+}
+#finderResults .trade95-summary b,#evalResults .trade95-summary b{
+  color:#e4b53f!important;
+  font-size:16px!important;
+  font-weight:950!important;
+  letter-spacing:.04em!important;
+  text-transform:uppercase!important;
+}

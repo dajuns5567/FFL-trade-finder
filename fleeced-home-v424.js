@@ -61,22 +61,31 @@ function playerMeta(id){
   const p=globalThis.state?.players?.[String(id)]||{};
   const pos=typeof globalThis.groupPos==='function'?globalThis.groupPos({type:'player',id:String(id)}):((p.fantasy_positions||[])[0]||'');
   const team=String(p.team||'FA').toUpperCase();
-  return {pos,team};
+  const name=(typeof globalThis.playerName==='function'&&globalThis.playerName(id))||p.full_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||p.name||String(id);
+  return {pos,team,name};
 }
 function renderTopPlayers(){
   const host=document.getElementById('homeTopPlayers');
   if(!host)return false;
-  if(typeof globalThis.ensureMaster!=='function'||typeof globalThis.playerName!=='function')return false;
+  if(typeof globalThis.ensureMaster!=='function')return false;
   let ranked=[];
   try{ranked=globalThis.ensureMaster()||[]}catch{return false}
   const tv=globalThis.tradeValueNormalizationV139||globalThis.tradeValueNormalizationV130||{};
-  const rows=ranked.filter(z=>z?.x?.type==='player').slice(0,5);
+  const rankFor=x=>{
+    if(typeof globalThis.playerRankValue==='function'){
+      const m=globalThis.playerRankValue(x)||{};
+      if(Number.isFinite(Number(m.rank)))return Number(m.rank);
+    }
+    return Number(x?.masterRank||x?.rank||99999);
+  };
+  const rows=ranked.filter(z=>z?.x?.type==='player').map(z=>({z,rank:rankFor(z.x)})).sort((a,b)=>a.rank-b.rank).slice(0,10);
   if(!rows.length)return false;
-  host.innerHTML='<div class="fleeced-home-list-title">Top 5 Current Players</div>'+rows.map((z,i)=>{
+  const col=items=>items.map(({z,rank})=>{
     const id=String(z.x.id),meta=playerMeta(id);
     const value=typeof tv.playerValue==='function'?Number(tv.playerValue(z.x)||0):0;
-    return '<div class="fleeced-home-data-row"><span class="fleeced-home-data-rank">'+(i+1)+'</span><div><b>'+esc(globalThis.playerName(id))+'</b><small>'+esc(meta.pos)+' • '+esc(meta.team)+(value?' • Value '+fmt(value):'')+'</small></div></div>';
+    return '<div class="fleeced-home-data-row"><span class="fleeced-home-data-rank">'+rank+'</span><button type="button" class="fleeced-home-player-link" data-home-history="'+esc(id)+'"><b>'+esc(meta.name)+'</b><small>'+esc(meta.pos)+' • '+esc(meta.team)+(value?' • Value '+fmt(value):'')+'</small></button></div>';
   }).join('');
+  host.innerHTML='<div class="fleeced-home-list-title">Top 10 Current Players</div><div class="fleeced-home-two-col"><div>'+col(rows.slice(0,5))+'</div><div>'+col(rows.slice(5,10))+'</div></div>';
   return true;
 }
 async function renderValueRisers(){
@@ -97,8 +106,8 @@ async function renderValueRisers(){
     }
     host.innerHTML='<div class="fleeced-home-list-title">Top 5 Value Risers • 7D • Top 300</div>'+rows.map((x,i)=>{
       const id=String(x.id),meta=playerMeta(id);
-      const name=typeof globalThis.playerName==='function'?globalThis.playerName(id):(x.name||id);
-      return '<div class="fleeced-home-data-row"><span class="fleeced-home-data-rank">'+(i+1)+'</span><div><b>'+esc(name)+'</b><small>'+esc(meta.pos)+' • '+esc(meta.team)+' • Overall #'+esc(x.overall)+'</small></div><strong class="fleeced-home-up">+'+fmt(x.delta)+'</strong></div>';
+      const name=meta.name;
+      return '<div class="fleeced-home-data-row"><span class="fleeced-home-data-rank">'+(i+1)+'</span><button type="button" class="fleeced-home-player-link" data-home-history="'+esc(id)+'"><b>'+esc(name)+'</b><small>'+esc(meta.pos)+' • '+esc(meta.team)+' • Overall #'+esc(x.overall)+'</small></button><strong class="fleeced-home-up">+'+fmt(x.delta)+'</strong></div>';
     }).join('');
   }catch{
     host.innerHTML='<div class="fleeced-home-list-title">Top 5 Value Risers • 7D • Top 300</div><div class="fleeced-home-loading">Value-history summary is temporarily unavailable.</div>';
@@ -113,6 +122,14 @@ function scheduleTopPlayers(){
   run();
 }
 function handleClick(e){
+  const history=e.target.closest('[data-home-history]');
+  if(history){
+    e.preventDefault();
+    const id=history.dataset.homeHistory;
+    if(globalThis.valueHistoryV331?.openPlayer){globalThis.valueHistoryV331.openPlayer(id);return}
+    if(activateTab('valueHistory'))setTimeout(()=>globalThis.valueHistoryV331?.openPlayer?.(id),120);
+    return;
+  }
   const main=e.target.closest('.fleeced-home-card-main');
   if(main){e.preventDefault();toggleGroup(main.closest('.fleeced-home-expandable'));return}
   const action=e.target.closest('[data-home-tab]');
@@ -137,5 +154,5 @@ function install(){
   document.getElementById('updateBtn')?.addEventListener('click',()=>{setTimeout(scheduleTopPlayers,900);setTimeout(renderValueRisers,1200)},{passive:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.fleecedHomeV425={activateTab,relocateFinderDiagnostics,normalizeTabOrder,renderTopPlayers,renderValueRisers};
+window.fleecedHomeV426={activateTab,relocateFinderDiagnostics,normalizeTabOrder,renderTopPlayers,renderValueRisers};
 })();

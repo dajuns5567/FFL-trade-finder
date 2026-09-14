@@ -117,6 +117,8 @@ function addStyles(){
   #valueHistory .vh-chart-tooltip{position:absolute;z-index:6;display:none;pointer-events:none;min-width:180px;max-width:260px;padding:9px 11px;border:1px solid color-mix(in srgb,#e4b53f 65%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--card) 96%,black);box-shadow:0 8px 24px rgba(0,0,0,.28);font-size:12px;line-height:1.45;transform:translate(10px,-50%)}
   #valueHistory .vh-chart-tooltip b{display:block;color:#e4b53f;font-size:13px;margin-bottom:2px}
   #valueHistory .vh-view-chart{white-space:nowrap;padding:5px 8px!important;font-size:11px!important;min-width:0!important}
+  #valueHistory .vh-view-history{white-space:nowrap;padding:5px 8px!important;font-size:10px!important;font-weight:900!important;letter-spacing:.035em;text-transform:uppercase;color:#e4b53f!important;border-color:color-mix(in srgb,#e4b53f 48%,var(--line))!important;background:color-mix(in srgb,#e4b53f 8%,var(--card))!important}
+  #valueHistory .vh-view-history:hover,#valueHistory .vh-view-history:focus-visible{color:#f2c75d!important;border-color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 14%,var(--card))!important;outline:none}
   #valueHistory .vh-chart-col{width:72px;min-width:72px;text-align:center!important}
   #valueHistory .vh-overall-cell{display:inline-flex;align-items:center;justify-content:flex-end;gap:5px}
   #valueHistory .vh-rank-arrow{font-size:12px;font-weight:900;line-height:1}
@@ -231,7 +233,7 @@ function addStyles(){
   #valueHistory .vh-trade-card{border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line));border-radius:15px;padding:0 12px 10px;background:color-mix(in srgb,var(--card) 96%,black);box-shadow:0 10px 24px rgba(0,0,0,.22),0 0 0 1px rgba(255,255,255,.015);overflow:hidden}
   #valueHistory .vh-trade-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin:0 -12px 8px;padding:10px 12px 9px;background:color-mix(in srgb,var(--card) 72%,#06080c);border-bottom:1px solid color-mix(in srgb,#e4b53f 34%,var(--line))}
   #valueHistory .vh-trade-head h4{margin:0;color:#e4b53f;font-size:15px}
-  #valueHistory .vh-trade-date{display:inline-block;padding:2px 5px;border-radius:6px;background:color-mix(in srgb,#e4b53f 11%,var(--card));box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 18%,transparent)}
+  #valueHistory .vh-trade-date{display:inline;color:inherit;background:transparent;box-shadow:none;padding:0;border-radius:0}
   #valueHistory .vh-compact-trade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 8px}
   #valueHistory .vh-compact-side{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:color-mix(in srgb,var(--card) 97%,black);min-width:0}
   #valueHistory .vh-compact-side>b{display:block;font-size:13px;color:#f4f4f5;margin-bottom:2px}
@@ -244,11 +246,10 @@ function addStyles(){
   #valueHistory .vh-trade-toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin:0}
   #valueHistory .vh-trade-toggle{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;min-width:170px;font-weight:900;border:1px solid color-mix(in srgb,#e4b53f 34%,var(--line))!important;background:color-mix(in srgb,#e4b53f 6%,var(--card))!important;color:#f4f4f5!important;box-shadow:inset 0 0 0 1px rgba(228,181,63,.04)}
   #valueHistory .vh-trade-toggle:hover,#valueHistory .vh-trade-toggle:focus-visible{border-color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 12%,var(--card))!important;color:#f2c75d!important;outline:none}
-  #valueHistory .vh-trade-toggle:after{content:"Select";font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:#e4b53f;opacity:.9}
-  #valueHistory .vh-trade-toggle-active:after{content:"Selected"}
+  #valueHistory .vh-trade-toggle:after{content:"Open";font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:#e4b53f;opacity:.95}
+  #valueHistory .vh-trade-toggle-active:after{content:"Close"}
   #valueHistory .vh-trade-toggle-active{color:#f2c75d!important;background:color-mix(in srgb,#e4b53f 14%,var(--card))!important;border-color:color-mix(in srgb,#e4b53f 58%,var(--line))!important;box-shadow:inset 0 0 0 1px rgba(228,181,63,.10),0 0 0 1px rgba(228,181,63,.08)!important}
   #valueHistory .vh-trade-toggle-active:hover{background:color-mix(in srgb,#e4b53f 18%,var(--card))!important;border-color:#e4b53f!important}
-  #valueHistory .vh-trade-toggle span{font-size:11px;opacity:.8}
   #valueHistory .vh-trade-collapsed{padding-bottom:8px}
   #valueHistory .vh-trade-collapsed .vh-trade-head{margin-bottom:10px}
   #valueHistory .vh-trade-expanded .vh-history-section{margin-top:12px}
@@ -755,7 +756,7 @@ function compactTradeSide(side,trade){
 function tradeCard(trade){
   const key=tradeStateKey(trade),open=tradeDetailState.get(key)||{hindsight:false,original:false},anyOpen=open.hindsight||open.original;
   const names=(trade.roster_ids||[]).map(id=>esc(historicalTradeTeamName(trade,id))).join(' ↔ ');
-  return`<div class="vh-trade-card ${anyOpen?'vh-trade-expanded':'vh-trade-collapsed'}"><div class="vh-trade-head"><div><h4><span class="vh-trade-date">${esc(dateTime(trade.created))}</span> • ${esc(String(trade.season||''))} Trade</h4><div class="vh-sub">${names}</div></div>${trade.trade_snapshot_t?`<small>Historical snapshot: ${esc(dateTime(trade.trade_snapshot_t))}</small>`:''}</div><div class="vh-compact-trade">${(trade.sides||[]).map(side=>compactTradeSide(side,trade)).join('')}</div><div class="vh-trade-toggle-row"><button type="button" class="${open.hindsight?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="hindsight" data-vh-trade-id="${esc(key)}" aria-expanded="${open.hindsight?'true':'false'}">Hindsight <span>${open.hindsight?'▴':'▾'}</span></button><button type="button" class="${open.original?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="original" data-vh-trade-id="${esc(key)}" aria-expanded="${open.original?'true':'false'}">Original Trade Analysis <span>${open.original?'▴':'▾'}</span></button></div>${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}</div>`
+  return`<div class="vh-trade-card ${anyOpen?'vh-trade-expanded':'vh-trade-collapsed'}"><div class="vh-trade-head"><div><h4><span class="vh-trade-date">${esc(dateTime(trade.created))}</span> • ${esc(String(trade.season||''))} Trade</h4><div class="vh-sub">${names}</div></div>${trade.trade_snapshot_t?`<small>Historical snapshot: ${esc(dateTime(trade.trade_snapshot_t))}</small>`:''}</div><div class="vh-compact-trade">${(trade.sides||[]).map(side=>compactTradeSide(side,trade)).join('')}</div><div class="vh-trade-toggle-row"><button type="button" class="${open.hindsight?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="hindsight" data-vh-trade-id="${esc(key)}" aria-expanded="${open.hindsight?'true':'false'}">Hindsight</button><button type="button" class="${open.original?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="original" data-vh-trade-id="${esc(key)}" aria-expanded="${open.original?'true':'false'}">Original Trade Analysis</button></div>${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}</div>`
 }
 function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else renderTradeHistory()}
 function renderTradeHistory(){
@@ -812,7 +813,7 @@ function deltaClass(n){return Number(n)>0?'vh-up':Number(n)<0?'vh-down':'vh-neut
 function moverRows(rows,mode='value',limit=10){
   if(!rows?.length)return'<div class="vh-empty">Not enough historical movement yet.</div>';
   const shown=Number.isFinite(limit)?rows.slice(0,limit):rows;
-  return`<div class="vh-list">${shown.map((r,i)=>{const delta=mode==='posRank'?r.posRankDelta:mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='posRank'?`${delta>0?'+':''}${delta} pos ranks`:mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><span class="vh-player-name-line"><b>${esc(playerName(r.id))}</b><span class="vh-history-cue">View history ↗</span></span><small>${esc(r.pos)} #${r.posRank} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())} • Overall #${r.overall} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div><button type="button" class="secondary small vh-view-chart" data-vh-player="${esc(r.id)}">View chart</button></div>`}).join('')}</div>`;
+  return`<div class="vh-list">${shown.map((r,i)=>{const delta=mode==='posRank'?r.posRankDelta:mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='posRank'?`${delta>0?'+':''}${delta} pos ranks`:mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><span class="vh-player-name-line"><b>${esc(playerName(r.id))}</b></span><small>${esc(r.pos)} #${r.posRank} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())} • Overall #${r.overall} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div><button type="button" class="small vh-view-history" data-vh-player="${esc(r.id)}">View history ↗</button></div>`}).join('')}</div>`;
 }
 function marketPeriodButtons(category){
   const selected=marketPeriods[category]||'7D';
@@ -857,7 +858,7 @@ function renderMarketDashboard(){
     <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Rank Risers — ${periodLabel(rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(applyMoverPool(rpR.rankRisers,'market','rankRisers'),'rank')}</div>
     <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Rank Fallers — ${periodLabel(rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(applyMoverPool(rpF.rankFallers,'market','rankFallers'),'rank')}</div>
   </div>
-  <details class="vh-card vh-market-table"><summary><span>Full Market History Table</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
+  <details class="vh-card vh-market-table" open><summary><span>Full Market History Table</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
   renderMarketTable();
 }

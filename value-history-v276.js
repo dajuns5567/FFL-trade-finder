@@ -255,7 +255,7 @@ function addStyles(){
   #valueHistory .vh-trade-reset{align-self:end;white-space:nowrap;background:color-mix(in srgb,var(--card) 72%,#06080c)!important;color:#e5bd55!important;border:1px solid rgba(216,170,53,.72)!important;font-family:inherit!important;font-weight:800!important;letter-spacing:.01em!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 4px 12px rgba(0,0,0,.22)!important}
   #valueHistory .vh-trade-reset:hover,#valueHistory .vh-trade-reset:focus-visible{background:#11161c!important;color:#f0c85a!important;border-color:#d8aa35!important;outline:none!important}
   #valueHistory .vh-compact-assets{display:flex;gap:6px;flex-wrap:wrap}
-  #valueHistory .vh-compact-asset{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:26px;padding:4px 0;border:0;border-radius:0;background:transparent;font-size:11px;font-weight:750;color:var(--muted);line-height:1.2;box-shadow:none}
+  #valueHistory .vh-compact-asset{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:26px;padding:4px 7px;border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--card) 72%,#06080c);font-size:11px;font-weight:750;color:var(--muted);line-height:1.2;box-shadow:none}
   #valueHistory .vh-compact-asset>b{color:#f4f4f5;font-size:11px}
   #valueHistory .vh-compact-asset>small{display:block;margin-top:2px;color:var(--muted);font-size:9px;font-weight:750;letter-spacing:.02em}
   #valueHistory .vh-trade-toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin:0}
@@ -549,7 +549,7 @@ async function tradeHistoryFetch(){
   const r=await fetch(`${API}?trades=1`,{cache:'no-store'});if(!r.ok)throw Error('trade history unavailable');
   tradeHistoryCache=await r.json();return tradeHistoryCache;
 }
-function historicalTradeTeamName(trade,id){return String(trade?.team_names?.[String(id)]||teamName(id))}
+function historicalTradeTeamName(trade,id){const archived=String(trade?.team_names?.[String(id)]||'').trim(),live=String(teamName(id)||'').trim(),generic=/^roster\s+\d+$/i.test(archived)||/^team\s+\d+$/i.test(archived);return generic&&live&&!/^roster\s+\d+$/i.test(live)&&!/^team\s+\d+$/i.test(live)?live:(archived||live)}
 function tradePickAsset(p,receiver){
   const original=Number(p?.original_roster_id)||0,season=Number(p?.season)||0,round=Number(p?.round)||0;
   if(!season||!round||!original)return null;
@@ -1065,7 +1065,7 @@ function similarPlayersSection(id){
   const rows=currentPlayerRows(),target=rows.find(r=>r.id===String(id));if(!target)return'';
   const byValue=rows.slice().sort((a,b)=>b.value-a.value),vi=byValue.findIndex(r=>r.id===target.id),valueAbove=byValue.slice(Math.max(0,vi-5),vi),valueBelow=byValue.slice(vi+1,vi+6);
   const same=rows.filter(r=>r.pos===target.pos).sort((a,b)=>(a.posRank||9999)-(b.posRank||9999)),pi=same.findIndex(r=>r.id===target.id),posAbove=same.slice(Math.max(0,pi-5),pi),posBelow=same.slice(pi+1,pi+6);
-  const row=r=>`<div class="vh-neighbor-row"><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(String(state.players?.[r.id]?.team||'FA').toUpperCase())} • ${esc(r.pos)} • Overall #${r.overall} • Value ${fmt(r.value)} • ${esc(r.pos)} #${r.posRank||'—'}</small></button><button type="button" class="secondary small" data-vh-player="${esc(r.id)}">View chart</button></div>`;
+  const row=r=>`<div class="vh-neighbor-row"><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(String(state.players?.[r.id]?.team||'FA').toUpperCase())} • ${esc(r.pos)} • Overall #${r.overall} • Value ${fmt(r.value)} • ${esc(r.pos)} #${r.posRank||'—'}</small></button><button type="button" class="vh-player-link vh-neighbor-history" data-vh-player="${esc(r.id)}"><span class="vh-history-cue">View history ↗</span></button></div>`;
   const group=(above,below)=>`<div class="vh-neighbor-list">${above.map(row).join('')}<div class="vh-selected-divider"><b>${esc(playerName(id))}</b><small>${esc(String(state.players?.[target.id]?.team||'FA').toUpperCase())} • ${esc(target.pos)} • Overall #${target.overall} • Value ${fmt(target.value)} • ${esc(target.pos)} #${target.posRank||'—'}</small></div>${below.map(row).join('')}</div>`;
   return`<div class="vh-card"><div class="vh-card-head"><div><h3 class="vh-similar-title">Similar Value Players</h3><div class="vh-sub">Current neighbors around ${esc(playerName(id))}; informational only.</div></div></div><div class="vh-similar-grid"><div><h3>Closest in Overall Value</h3><div class="vh-sub">5 players immediately above and below by current value</div>${group(valueAbove,valueBelow)}</div><div><h3>Nearest ${esc(target.pos)} Ranks</h3><div class="vh-sub">5 players immediately above and below in positional rank</div>${group(posAbove,posBelow)}</div></div></div>`;
 }

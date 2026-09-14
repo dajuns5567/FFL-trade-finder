@@ -35,5 +35,27 @@ function patchUI(){ensureGlobalEvalSearch('A');ensureGlobalEvalSearch('B');ensur
 const prevRenderAll=renderAll;renderAll=function(){prevRenderAll();setTimeout(patchUI,0)};
 document.addEventListener('click',e=>{const history=e.target.closest('[data-pv-history]');if(history){e.preventDefault();window.valueHistoryV331?.openPlayer?.(history.dataset.pvHistory);return}if(e.target.closest('.tabs button[data-tab="rankings"]'))setTimeout(ensureAllValues,0)});
 setTimeout(patchUI,0);
-window.playerValuesV139={ensureAllValues,renderAllValues};
+function homeTopPlayers(limit=10){
+  const ranked=rankedPlayers(),posRanks=positionalRanks(ranked);
+  return ranked
+    .filter(z=>z?.x?.type==='player')
+    .map(z=>{
+      const x=z.x,m=playerRankValue(x),p=state.players?.[String(x.id)]||{},g=groupPos(x);
+      const v=Number(tv().playerValue?.(x)||0),pr=posRanks.get(String(x.id))||0;
+      return{
+        id:String(x.id),
+        name:playerName(x.id),
+        rank:Number(m.rank)||99999,
+        pos:g,
+        team:String(p.team||'FA').toUpperCase(),
+        value:v,
+        posRank:pr,
+        consensus:m.consensus??'fallback',
+        tradeValue:m.value
+      };
+    })
+    .sort((a,b)=>a.rank-b.rank)
+    .slice(0,Math.max(1,Number(limit)||10));
+}
+window.playerValuesV139={ensureAllValues,renderAllValues,homeTopPlayers};
 })();

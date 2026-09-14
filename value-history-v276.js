@@ -714,7 +714,7 @@ function hindsightValue(asset,trade){
 }
 function tradeResultScoreboard(teamA,totalA,teamB,totalB,score,label){
   const a=Number(totalA)||0,b=Number(totalB)||0,edge=Math.abs(a-b),aWin=a>b,bWin=b>a;
-  return`<div class="vh-result-board"><div class="vh-result-team ${aWin?'winner':''}"><small>${aWin?'Winner • trade-adjusted total':'Trade-adjusted total'}</small><strong>${fmt(a)}</strong><b>${esc(teamA)}</b></div><div class="vh-result-vs"><span>Fairness rating</span><strong>${Math.round(Number(score)||0)}/100 • ${esc(label||'Trade')}</strong><em>Adjusted edge • ${fmt(edge)}</em></div><div class="vh-result-team ${bWin?'winner':''}"><small>${bWin?'Winner • trade-adjusted total':'Trade-adjusted total'}</small><strong>${fmt(b)}</strong><b>${esc(teamB)}</b></div></div>`;
+  return`<div class="vh-result-board"><div class="vh-result-team ${aWin?'winner':''}"><small>${aWin?'Winner • trade-adjusted value':'Trade-adjusted value'}</small><strong>${fmt(a)}</strong><b>${esc(teamA)}</b></div><div class="vh-result-vs"><span>Fairness rating</span><strong>${Math.round(Number(score)||0)}/100 • ${esc(label||'Trade')}</strong><em>Adjusted value difference • ${fmt(edge)}</em></div><div class="vh-result-team ${bWin?'winner':''}"><small>${bWin?'Winner • trade-adjusted value':'Trade-adjusted value'}</small><strong>${fmt(b)}</strong><b>${esc(teamB)}</b></div></div>`;
 }
 function hindsightAssetRow(asset,trade){
   const value=hindsightValue(asset,trade),label=asset?.type==='pick'?(asset.name||`${asset.season} R${asset.round}`):playerName(asset?.id);
@@ -868,6 +868,7 @@ function periodLabel(period,m){
 }
 function moverPool(scope,category){return scope==='team'?(teamPools[category]||'ALL'):(marketPools[category]||'ALL')}
 function applyMoverPool(rows,scope,category){const pool=moverPool(scope,category),max=pool==='ALL'?Infinity:Number(pool);return(rows||[]).filter(r=>!Number.isFinite(max)||Number(r.overall)<=max)}
+function moverTitle(base,period,m){const label=periodLabel(period,m);return label==='Available History'?base:`${base} — ${label}`}
 function moverCardActions(scope,category,period){
   const periodAttr=scope==='team'?'data-vh-team-period':'data-vh-market-period',poolAttr=scope==='team'?'data-vh-team-pool':'data-vh-market-pool';
   const selected=scope==='team'?(teamPeriods[category]||period):(marketPeriods[category]||period),pool=moverPool(scope,category);
@@ -889,12 +890,12 @@ function renderMarketDashboard(){
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
   <div class="vh-grid-2">
-    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Value Risers — ${periodLabel(vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(applyMoverPool(vpR.valueRisers,'market','valueRisers'))}</div>
-    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Value Fallers — ${periodLabel(vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(applyMoverPool(vpF.valueFallers,'market','valueFallers'))}</div>
+    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Risers',vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(applyMoverPool(vpR.valueRisers,'market','valueRisers'))}</div>
+    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Fallers',vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(applyMoverPool(vpF.valueFallers,'market','valueFallers'))}</div>
   </div>
   <div class="vh-grid-2">
-    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Rank Risers — ${periodLabel(rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(applyMoverPool(rpR.rankRisers,'market','rankRisers'),'rank')}</div>
-    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>Biggest Rank Fallers — ${periodLabel(rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(applyMoverPool(rpF.rankFallers,'market','rankFallers'),'rank')}</div>
+    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Risers',rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(applyMoverPool(rpR.rankRisers,'market','rankRisers'),'rank')}</div>
+    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Fallers',rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(applyMoverPool(rpF.rankFallers,'market','rankFallers'),'rank')}</div>
   </div>
   <details class="vh-card vh-market-table" open><summary><span>Full Market History Table</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);

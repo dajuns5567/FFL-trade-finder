@@ -30,4 +30,4 @@ const ab=fair([elite],stack),ba=fair(stack,[elite]);
 assert(ab.score===ba.score,'fairness score must remain symmetric');
 assert(Math.abs(ab.aAdj-ba.bAdj)<1e-9&&Math.abs(ab.bAdj-ba.aAdj)<1e-9,'adjustment must swap symmetrically');
 for(const p of ['trade-specific-player-v232.js','trade-specific-add-assets-v282.js','trade-specific-max-value-v279.js','trade-specific-tier-up-v282.js','trade-specific-max-tier-add-v300.js']){const s=fs.readFileSync(p,'utf8');assert(s.includes('section1V130?.fair?.'),'pipeline '+p+' no longer delegates to shared fair()')}
-console.log('V320 Value Adjustment monotonicity and shared-pipeline smoke passed');
+console.log('V321 Value Adjustment monotonicity and shared-pipeline smoke passed');

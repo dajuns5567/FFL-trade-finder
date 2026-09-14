@@ -336,6 +336,9 @@ assert(ui.includes('vh-history-compare-title')&&ui.includes('Historical value co
 assert(ui.includes('vh-view-history')&&ui.includes('View history ↗'),'Mover lists must replace View chart with on-brand View history action');
 assert(ui.includes('<details class="vh-card vh-market-table" open>'),'Full Market History Table must default open');
 assert(ui.includes('.vh-trade-date{display:inline;color:inherit;background:transparent;box-shadow:none'),'Trade History date/time must not use a yellow highlight background');
+assert(ui.includes('fitValueHistoryCellText')&&ui.includes('vh-fit-text-guard'),'Overflowing player-profile text must shrink within fixed cells');
+assert(ui.includes('el.scrollWidth>el.clientWidth'),'Text fitting must react only to actual overflow');
+assert(ui.includes('overflow:hidden'),'Value History profile cells must preserve their dimensions while fitting text');
 assert(ui.includes('data-vh-trade-year')&&ui.includes('data-vh-trade-month'),'Trade History must provide year and month filters');
 assert(ui.includes('data-vh-trade-reset')&&ui.includes('Reset filters'),'Trade History must provide a reset-filters control');
 assert(ui.includes('vh-receives-label')&&ui.includes('Receives'),'Trade History compact team sides must label received assets clearly');

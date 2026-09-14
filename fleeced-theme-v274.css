@@ -1634,3 +1634,19 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 .vh-compact-assets{
   justify-content:center!important;
 }
+
+
+/* V449 compact receives inline + gold Historical Value Comparison team names */
+.vh-compact-side > b,
+.vh-compact-side > .vh-receives-label{
+  display:inline!important;
+  width:auto!important;
+  margin:0!important;
+  vertical-align:baseline!important;
+}
+.vh-compact-side > .vh-receives-label{
+  margin-left:.4rem!important;
+}
+.vh-breakdown-side > h4{
+  color:var(--gold)!important;
+}

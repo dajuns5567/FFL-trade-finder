@@ -80,7 +80,7 @@ for(const needle of [
   "state.players?.[String(r.id)]?.team",
   'posRankDelta7',
   'posRankDelta30',
-  'View chart',
+  'View history ↗',
   'vh-point-hit',
   'vh-chart-tooltip',
   'stroke="#e4b53f"',
@@ -322,7 +322,7 @@ assert(ui.includes('.vh-trade-list{display:grid;gap:16px}')&&ui.includes('.vh-tr
 assert(ui.includes('.vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line))'),'completed trade cards need distinct thin gold outer borders');
 assert(!ui.includes('nearest-year retroactive frame'),'retroactive pick-frame mechanics must remain hidden from user-facing text');
 assert(ui.includes('vh-driver-heading')&&ui.includes('Biggest positive drivers')&&ui.includes('Biggest negative drivers'),'Track My Team driver headings must use Fleeced themed headers');
-assert(ui.includes('vh-driver-chart')&&ui.includes('View chart')&&ui.includes('data-vh-player'),'Track My Team drivers must link to player Value History charts');
+assert(ui.includes('vh-driver-chart')&&ui.includes('View history ↗')&&ui.includes('data-vh-player'),'Track My Team drivers must link to player Value History with the on-brand View history action');
 assert(ui.includes('vh-history-cue')&&ui.includes('View history ↗'),'Full Market History must show inline View history cues');
 assert(!ui.includes('<th class="vh-chart-col">Chart</th>'),'Full Market History must not render a separate Chart column');
 assert(ui.includes('.vh-player-link:hover')&&ui.includes('color:#e4b53f'),'Value History player links must turn Fleeced gold on hover/focus');
@@ -467,8 +467,9 @@ const siteV17=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
 assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runtime cache key must remain unchanged');
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=410'),'production shell must cache-bust the current V410 Value History UI/runtime');
-assert(siteV29.includes('/fleeced-theme-v274.css?v=408'),'production shell must cache-bust the V408 presentation-only Fleeced theme');
+assert(siteV29.includes('/value-history-v276.js?v=415'),'production shell must cache-bust the current V415 Value History UI/runtime');
+assert(siteV29.includes('/fleeced-theme-v274.css?v=415'),'production shell must cache-bust the V415 presentation-only Fleeced theme');
+assert(siteV29.includes('/fleeced-presentation-v413.js?v=415'),'production shell must load the V415 presentation-only interaction-safe presentation runtime');
 assert(siteV29.includes('/ui-player-values-v139.js?v=398'),'production shell must cache-bust the current V398 Player Values UI');
 assert(siteV29.includes('/nonblocking-consensus-v277.js?v=395'),'production shell must cache-bust the V395 consensus completion marker');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');

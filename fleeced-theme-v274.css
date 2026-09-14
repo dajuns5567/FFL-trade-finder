@@ -65,3 +65,401 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   padding-left:0!important;
   padding-right:0!important;
 }
+
+/* V412 presentation-only Fleeced unification */
+#finder h2,#evaluator h2{
+  color:#e4b53f!important;
+  font-size:20px!important;
+  font-weight:950!important;
+  letter-spacing:.065em!important;
+  text-transform:uppercase!important;
+  text-shadow:0 0 12px rgba(228,181,63,.08)!important;
+}
+#finder h3,#evaluator h3,.trade98-pref-title{
+  color:#e4b53f!important;
+  font-size:16px!important;
+  font-weight:900!important;
+  letter-spacing:.06em!important;
+  text-transform:uppercase!important;
+}
+#finder #findTeam,#valueHistory [data-vh-team-select]{
+  -webkit-appearance:none!important;
+  appearance:none!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M2 2l5 5 5-5' fill='none' stroke='%23c7cbd1' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:calc(100% - 14px) center!important;
+  background-size:14px 9px!important;
+  padding-right:42px!important;
+}
+.trade98-prefcol{
+  background:transparent!important;
+  border-color:color-mix(in srgb,#e4b53f 28%,var(--line))!important;
+  box-shadow:none!important;
+}
+.trade98-prefcol .trade97-checks label,
+.trade98-prefcol .trade97-assist{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.trade98-prefcol .trade97-checks label{padding-left:0!important;padding-right:0!important}
+.trade98-prefcol .trade97-assist{padding-left:0!important;padding-right:0!important}
+
+#finderResults .trade95-card,#evalResults .trade95-card{
+  background:color-mix(in srgb,var(--card) 72%,#06080c)!important;
+  border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line))!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.20)!important;
+}
+#finderResults .trade95-card:before,#evalResults .trade95-card:before,
+#finderResults .trade95-card.excellent:before,#evalResults .trade95-card.excellent:before,
+#finderResults .trade95-card.fair:before,#evalResults .trade95-card.fair:before,
+#finderResults .trade95-card.negotiable:before,#evalResults .trade95-card.negotiable:before,
+#finderResults .trade95-card.rejected:before,#evalResults .trade95-card.rejected:before{
+  background:#e4b53f!important;
+}
+#finderResults .trade95-head,#evalResults .trade95-head{
+  border-bottom:1px solid color-mix(in srgb,#e4b53f 30%,var(--line))!important;
+}
+#finderResults .trade95-head>div:first-child>b,#evalResults .trade95-head>div:first-child>b{
+  color:#f4f4f5!important;
+  font-size:16px!important;
+  font-weight:900!important;
+}
+#finderResults .trade95-score,#evalResults .trade95-score{
+  background:color-mix(in srgb,var(--card) 72%,#06080c)!important;
+  border:1px solid color-mix(in srgb,#e4b53f 52%,var(--line))!important;
+  color:#e4b53f!important;
+  box-shadow:none!important;
+}
+#finderResults .trade95-score div,#evalResults .trade95-score div{color:#e4b53f!important}
+#finderResults .trade95-side,#evalResults .trade95-side,
+#finderResults .trade95-side:first-child,#evalResults .trade95-side:first-child,
+#finderResults .trade95-side:last-child,#evalResults .trade95-side:last-child{
+  position:relative;
+  background:color-mix(in srgb,var(--card) 72%,#06080c)!important;
+  border:1px solid color-mix(in srgb,#e4b53f 38%,var(--line))!important;
+  box-shadow:none!important;
+}
+#finderResults .trade95-side-title,#evalResults .trade95-side-title,
+#finderResults .trade95-side:first-child .trade95-side-title,#evalResults .trade95-side:first-child .trade95-side-title,
+#finderResults .trade95-side:last-child .trade95-side-title,#evalResults .trade95-side:last-child .trade95-side-title{
+  color:#e4b53f!important;
+  font-size:11px!important;
+  font-weight:950!important;
+  letter-spacing:.09em!important;
+}
+#finderResults .trade95-value,#evalResults .trade95-value{
+  background:color-mix(in srgb,var(--card) 80%,#06080c)!important;
+  color:#f4f4f5!important;
+  border:1px solid color-mix(in srgb,#e4b53f 20%,var(--line))!important;
+}
+#finderResults .trade95-summary,#evalResults .trade95-summary{
+  background:color-mix(in srgb,var(--card) 72%,#06080c)!important;
+  border:1px solid color-mix(in srgb,#e4b53f 35%,var(--line))!important;
+}
+#finderResults .trade95-summary b,#evalResults .trade95-summary b,
+#finderResults .trade97-adjust,#evalResults .trade97-adjust,
+#finderResults .trade97-effective b,#evalResults .trade97-effective b{
+  color:#e4b53f!important;
+}
+#finderResults .trade97-adjust,#evalResults .trade97-adjust,
+#finderResults .trade97-effective,#evalResults .trade97-effective{
+  background:transparent!important;
+  border-radius:0!important;
+}
+#evalResults .trade95-side.fleeced-eval-winner{
+  border-color:#e4b53f!important;
+  background:color-mix(in srgb,#e4b53f 8%,var(--card))!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 24%,transparent)!important;
+}
+#evalResults .trade95-side.fleeced-eval-winner:after{
+  content:"WINNER";
+  position:absolute;
+  right:11px;
+  top:9px;
+  color:#e4b53f;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+/* V413 interaction-safe presentation polish */
+#finder .fleeced-field-heading,#evaluator h3{
+  color:#e4b53f!important;
+  font-size:14px!important;
+  font-weight:950!important;
+  letter-spacing:.055em!important;
+  text-transform:uppercase!important;
+}
+#finder .fleeced-search-label{margin-top:12px!important}
+#finder .fleeced-select-all{
+  background:#0b0f14!important;
+  color:#e5bd55!important;
+  border:1px solid rgba(216,170,53,.58)!important;
+  font-weight:900!important;
+  letter-spacing:.025em!important;
+  text-transform:uppercase!important;
+  box-shadow:none!important;
+}
+#finder .fleeced-select-all:hover{color:#f0c85a!important;border-color:#d8aa35!important;background:#11161c!important}
+
+#findShop .checkrow,#evalChooserA label,#evalChooserB label{
+  position:relative!important;
+  padding-right:112px!important;
+}
+.fleeced-view-history{
+  position:absolute!important;
+  right:8px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  background:transparent!important;
+  border:0!important;
+  color:#e4b53f!important;
+  font-size:9px!important;
+  font-weight:950!important;
+  letter-spacing:.05em!important;
+  text-transform:uppercase!important;
+  padding:4px 2px!important;
+  white-space:nowrap!important;
+  box-shadow:none!important;
+}
+.fleeced-view-history:hover,.fleeced-view-history:focus-visible{
+  color:#f3ca61!important;
+  text-decoration:underline!important;
+  outline:none!important;
+}
+
+#finderResults .fleeced-presented-player,#evalResults .fleeced-presented-player{
+  color:#e4b53f!important;
+  cursor:pointer!important;
+  text-decoration:none!important;
+  font-weight:950!important;
+}
+#finderResults .fleeced-presented-player:hover,#evalResults .fleeced-presented-player:hover,
+#finderResults .fleeced-presented-player:focus-visible,#evalResults .fleeced-presented-player:focus-visible{
+  color:#f3ca61!important;
+  text-decoration:underline!important;
+  outline:none!important;
+}
+
+#finderResults .trade95-score,#evalResults .trade95-score{display:none!important}
+#finderResults .trade95-summary,#evalResults .trade95-summary{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  padding:8px 0 0!important;
+  margin:10px 0 8px!important;
+}
+#finderResults .trade97-adjust,#evalResults .trade97-adjust,
+#finderResults .trade97-effective,#evalResults .trade97-effective{
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+#finderResults .fleeced-trade-rating,#evalResults .fleeced-trade-rating{
+  margin:12px 0 4px!important;
+}
+.fleeced-trade-rating-head{
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:space-between!important;
+  gap:16px!important;
+  margin-bottom:7px!important;
+}
+.fleeced-trade-rating-head strong{
+  color:#e4b53f!important;
+  font-size:22px!important;
+  font-weight:950!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+  line-height:1!important;
+}
+.fleeced-trade-rating-head span{
+  color:#f4f4f5!important;
+  font-size:17px!important;
+  font-weight:950!important;
+}
+.fleeced-score-track{
+  height:8px!important;
+  border:2px solid #e4b53f!important;
+  border-radius:999px!important;
+  padding:1px!important;
+  background:#0b0f14!important;
+  overflow:hidden!important;
+}
+.fleeced-score-track i{
+  display:block!important;
+  height:100%!important;
+  border-radius:999px!important;
+  background:#e4b53f!important;
+}
+
+#finderResults .trade95-head>div:first-child>b,#evalResults .trade95-head>div:first-child>b{
+  font-size:18px!important;
+}
+#finderResults .trade95-summary b,#evalResults .trade95-summary b{
+  color:#e4b53f!important;
+  font-size:16px!important;
+  font-weight:950!important;
+  letter-spacing:.04em!important;
+  text-transform:uppercase!important;
+}
+
+/* V414 Fleeced typography and interaction refinements */
+#rankings h2{
+  color:#e4b53f!important;
+  font-size:20px!important;
+  font-weight:950!important;
+  letter-spacing:.065em!important;
+  text-transform:uppercase!important;
+  text-shadow:0 0 12px rgba(228,181,63,.08)!important;
+}
+#rankings #playerValuesBody h3{
+  color:#e4b53f!important;
+  font-size:16px!important;
+  font-weight:950!important;
+  letter-spacing:.055em!important;
+  text-transform:uppercase!important;
+}
+#rankings #playerValueFilter button,#rankings #playerPositionFilter button{
+  font-weight:900!important;
+  letter-spacing:.035em!important;
+  text-transform:uppercase!important;
+}
+#rankings #playerValueFilter button:not(.secondary),#rankings #playerPositionFilter button:not(.secondary){
+  color:#e4b53f!important;
+  border-color:rgba(216,170,53,.58)!important;
+  background:color-mix(in srgb,#e4b53f 10%,var(--card))!important;
+}
+
+#finder .fleeced-select-all{
+  display:block!important;
+  width:auto!important;
+  margin-top:8px!important;
+}
+#runFinder,#evaluate{
+  font-size:14px!important;
+  font-weight:950!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+}
+#finderResults .fleeced-presented-player,#evalResults .fleeced-presented-player{
+  color:#f4f4f5!important;
+}
+#finderResults .fleeced-presented-player:hover,#evalResults .fleeced-presented-player:hover,
+#finderResults .fleeced-presented-player:focus-visible,#evalResults .fleeced-presented-player:focus-visible{
+  color:#e4b53f!important;
+}
+#finderResults .fleeced-trade-judgment,#evalResults .fleeced-trade-judgment{
+  color:#e4b53f!important;
+  font-size:20px!important;
+  font-weight:950!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+}
+.fleeced-trade-rating-head{justify-content:flex-end!important}
+.fleeced-trade-rating-head span{color:#f4f4f5!important;font-size:17px!important;font-weight:950!important}
+
+#valueHistory [data-vh-dashboard]{
+  background:#0b0f14!important;
+  color:#e5bd55!important;
+  border:1px solid rgba(216,170,53,.58)!important;
+  font-weight:950!important;
+  letter-spacing:.03em!important;
+  text-transform:uppercase!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.22)!important;
+}
+#valueHistory [data-vh-dashboard]:hover,#valueHistory [data-vh-dashboard]:focus-visible{
+  background:#11161c!important;
+  color:#f0c85a!important;
+  border-color:#d8aa35!important;
+  outline:none!important;
+}
+
+/* V415 Hindsight-style Finder/Evaluator summary and title alignment */
+#finder>h2,#evaluator>h2,#rankings h2{
+  margin:0 0 14px!important;
+  color:#f4f4f5!important;
+  font-size:26px!important;
+  font-weight:850!important;
+  letter-spacing:-.02em!important;
+  line-height:1.1!important;
+  text-transform:none!important;
+  text-shadow:none!important;
+}
+#finderResults .trade95-head,#evalResults .trade95-head{
+  display:block!important;
+  padding-bottom:12px!important;
+  border-bottom:0!important;
+}
+#finderResults .fleeced-hindsight-summary,#evalResults .fleeced-hindsight-summary{
+  width:100%!important;
+  display:block!important;
+}
+.fleeced-summary-top{
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:space-between!important;
+  gap:16px!important;
+  margin-bottom:8px!important;
+}
+.fleeced-summary-title{display:grid!important;gap:3px!important;min-width:0!important}
+.fleeced-summary-title strong{
+  color:#e4b53f!important;
+  font-size:20px!important;
+  font-weight:950!important;
+  letter-spacing:.045em!important;
+  text-transform:uppercase!important;
+  line-height:1.05!important;
+}
+.fleeced-summary-title small{
+  color:#f4f4f5!important;
+  font-size:14px!important;
+  font-weight:800!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.fleeced-summary-score{
+  color:#e4b53f!important;
+  font-size:18px!important;
+  font-weight:950!important;
+  white-space:nowrap!important;
+}
+.fleeced-summary-teams{
+  display:flex!important;
+  justify-content:space-between!important;
+  gap:20px!important;
+  margin-top:7px!important;
+  color:var(--muted)!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  letter-spacing:.025em!important;
+}
+#finderResults .trade95-grid,#evalResults .trade95-grid{
+  margin-top:8px!important;
+}
+#finderResults .trade95-side.fleeced-eval-winner,
+#evalResults .trade95-side.fleeced-eval-winner{
+  border-color:#e4b53f!important;
+  background:color-mix(in srgb,#e4b53f 8%,var(--card))!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 24%,transparent)!important;
+}
+#finderResults .trade95-side.fleeced-eval-winner:after,
+#evalResults .trade95-side.fleeced-eval-winner:after{
+  content:"WINNER";
+  position:absolute;
+  right:11px;
+  top:9px;
+  color:#e4b53f;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+#valueHistory .vh-profile-back{
+  display:flex!important;
+  justify-content:flex-start!important;
+  margin:0 0 10px!important;
+}

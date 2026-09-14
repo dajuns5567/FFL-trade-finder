@@ -216,7 +216,7 @@ function addStyles(){
   #valueHistory .vh-driver-main{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
   #valueHistory .vh-driver-name{color:#f4f4f5;text-decoration:none;font-weight:900;cursor:pointer}
   #valueHistory .vh-driver-name:hover{color:#e4b53f;text-decoration:underline}
-  #valueHistory .vh-driver-chart{white-space:nowrap;padding:5px 8px!important;font-size:10px!important}
+  #valueHistory .vh-driver-chart{white-space:nowrap;padding:0!important;font-size:10px!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#e4b53f!important;font-weight:900!important;letter-spacing:.045em!important;text-transform:uppercase!important}
   #valueHistory .vh-driver-heading{color:#e4b53f!important;font-size:14px!important;text-transform:uppercase;letter-spacing:.055em;font-weight:900!important}
   #valueHistory .vh-driver-row small{display:block;color:var(--muted)}
   #valueHistory .vh-driver-row>div.vh-up>b{color:var(--good,#1f9d68)!important}
@@ -244,18 +244,18 @@ function addStyles(){
   #valueHistory .vh-trade-history-summary{background:transparent!important;border:0!important;box-shadow:none!important}
   #valueHistory .vh-trade-history-summary:before{display:none!important}
   #valueHistory .vh-trade-list{display:grid;gap:16px}
-  #valueHistory .vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:15px;padding:0 12px 10px;background:var(--card);box-shadow:0 10px 24px rgba(0,0,0,.22);overflow:hidden}
-  #valueHistory .vh-trade-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin:0 -12px 8px;padding:10px 12px 9px;background:var(--card);border-bottom:0}
+  #valueHistory .vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:15px;padding:0 12px 10px;background:color-mix(in srgb,var(--card) 72%,#06080c);box-shadow:0 10px 24px rgba(0,0,0,.22);overflow:hidden}
+  #valueHistory .vh-trade-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin:0 -12px 8px;padding:10px 12px 9px;background:color-mix(in srgb,var(--card) 72%,#06080c);border-bottom:0}
   #valueHistory .vh-trade-head h4{margin:0;color:#e4b53f;font-size:15px}
   #valueHistory .vh-trade-date{display:inline;color:inherit;background:transparent;box-shadow:none;padding:0;border-radius:0}
   #valueHistory .vh-compact-trade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 8px}
-  #valueHistory .vh-compact-side{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:10px;padding:8px 10px;background:var(--card);min-width:0}
+  #valueHistory .vh-compact-side{border:0;border-radius:0;padding:8px 10px;background:transparent;min-width:0;box-shadow:none}
   #valueHistory .vh-compact-side>b{display:block;font-size:13px;color:#f4f4f5;margin-bottom:2px}
   #valueHistory .vh-receives-label{display:block;color:#e4b53f;font-size:9px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
   #valueHistory .vh-trade-reset{align-self:end;white-space:nowrap;background:color-mix(in srgb,var(--card) 72%,#06080c)!important;color:#e5bd55!important;border:1px solid rgba(216,170,53,.72)!important;font-family:inherit!important;font-weight:800!important;letter-spacing:.01em!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 4px 12px rgba(0,0,0,.22)!important}
   #valueHistory .vh-trade-reset:hover,#valueHistory .vh-trade-reset:focus-visible{background:#11161c!important;color:#f0c85a!important;border-color:#d8aa35!important;outline:none!important}
   #valueHistory .vh-compact-assets{display:flex;gap:6px;flex-wrap:wrap}
-  #valueHistory .vh-compact-asset{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:26px;padding:4px 7px;border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:10px;background:var(--card);font-size:11px;font-weight:750;color:var(--muted);line-height:1.2}
+  #valueHistory .vh-compact-asset{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:26px;padding:4px 7px;border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--card) 72%,#06080c);font-size:11px;font-weight:750;color:var(--muted);line-height:1.2;box-shadow:none}
   #valueHistory .vh-compact-asset>b{color:#f4f4f5;font-size:11px}
   #valueHistory .vh-compact-asset>small{display:block;margin-top:2px;color:var(--muted);font-size:9px;font-weight:750;letter-spacing:.02em}
   #valueHistory .vh-trade-toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin:0}
@@ -285,7 +285,7 @@ function addStyles(){
   #valueHistory .vh-history-section{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}
   #valueHistory .vh-history-section:before{display:none!important}
   #valueHistory .vh-breakdown-sides{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-  #valueHistory .vh-breakdown-side{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:12px;padding:13px;min-width:0;background:var(--card)}
+  #valueHistory .vh-breakdown-side{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:12px;padding:13px;min-width:0;background:color-mix(in srgb,var(--card) 72%,#06080c)}
   #valueHistory .vh-breakdown-side>h4{margin:0 0 3px;font-size:15px}
   #valueHistory .vh-breakdown-side>.vh-sub{margin-bottom:12px}
   #valueHistory .vh-time-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -306,7 +306,7 @@ function addStyles(){
   #valueHistory .vh-eval-scorebar{height:12px;border:2px solid color-mix(in srgb,#e4b53f 70%,#f5f5f5);border-radius:999px;padding:2px;background:#090b10;box-shadow:inset 0 0 0 1px rgba(0,0,0,.65),0 0 0 1px rgba(228,181,63,.15);overflow:hidden;margin:0}
   #valueHistory .vh-eval-scorebar>i{display:block;height:100%;border-radius:999px;background:#e4b53f!important;box-shadow:0 0 8px rgba(228,181,63,.42)}
   #valueHistory .vh-eval-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  #valueHistory .vh-eval-side{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:11px;padding:12px;background:var(--card);min-width:0}
+  #valueHistory .vh-eval-side{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:11px;padding:12px;background:color-mix(in srgb,var(--card) 72%,#06080c);min-width:0}
   #valueHistory .vh-eval-side-title{font-size:11px;font-weight:950;letter-spacing:.06em;text-transform:uppercase;color:#e4b53f;margin-bottom:8px}
   #valueHistory .vh-eval-asset{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid color-mix(in srgb,var(--line) 72%,transparent)}
   #valueHistory .vh-eval-asset:first-of-type{border-top:0}
@@ -328,7 +328,7 @@ function addStyles(){
   #valueHistory .vh-hindsight-score small{display:block;margin-top:4px;color:#e4b53f;font-size:9px;text-transform:uppercase;letter-spacing:.07em}
   #valueHistory .vh-history-compare-title{margin:10px 0 14px;text-align:center}
   #valueHistory .vh-result-board{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:stretch;margin:10px 0 12px}
-  #valueHistory .vh-result-team{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:11px;padding:11px 13px;background:var(--card);min-width:0}
+  #valueHistory .vh-result-team{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line));border-radius:11px;padding:11px 13px;background:color-mix(in srgb,var(--card) 72%,#06080c);min-width:0}
   #valueHistory .vh-result-team.winner{border-color:#e4b53f;background:color-mix(in srgb,#e4b53f 8%,var(--card));box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 28%,transparent)}
   #valueHistory .vh-result-team small{display:block;color:var(--muted);font-size:9px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
   #valueHistory .vh-result-team strong{display:block;margin-top:4px;font-size:27px;line-height:1;font-weight:950;color:#f4f4f5}
@@ -549,7 +549,7 @@ async function tradeHistoryFetch(){
   const r=await fetch(`${API}?trades=1`,{cache:'no-store'});if(!r.ok)throw Error('trade history unavailable');
   tradeHistoryCache=await r.json();return tradeHistoryCache;
 }
-function historicalTradeTeamName(trade,id){return String(trade?.team_names?.[String(id)]||teamName(id))}
+function historicalTradeTeamName(trade,id){const archived=String(trade?.team_names?.[String(id)]||'').trim(),live=String(teamName(id)||'').trim(),generic=/^roster\s+\d+$/i.test(archived)||/^team\s+\d+$/i.test(archived);return generic&&live&&!/^roster\s+\d+$/i.test(live)&&!/^team\s+\d+$/i.test(live)?live:(archived||live)}
 function tradePickAsset(p,receiver){
   const original=Number(p?.original_roster_id)||0,season=Number(p?.season)||0,round=Number(p?.round)||0;
   if(!season||!round||!original)return null;
@@ -1028,7 +1028,7 @@ function teamTradeNetEvents(teamId,netData,period){
 function teamAttributionCard(owned,netData,teamId){
   const period=teamAttributionPeriod==='30D'?'30D':'7D',key=period==='30D'?'delta30':'delta7',rows=(marketCache?.marketRows||[]).filter(r=>owned.has(String(r.id))&&Number.isFinite(Number(r?.[key]))).map(r=>({...r,move:Number(r[key])}));
   const gains=rows.filter(r=>r.move>0).sort((a,b)=>b.move-a.move).slice(0,5),losses=rows.filter(r=>r.move<0).sort((a,b)=>a.move-b.move).slice(0,5),net=rows.reduce((n,r)=>n+r.move,0),up=gains.reduce((n,r)=>n+r.move,0),down=losses.reduce((n,r)=>n+r.move,0),tradeEvents=teamTradeNetEvents(teamId,netData,period);
-  const driver=list=>list.length?list.map(r=>`<div class="vh-driver-row"><div class="vh-driver-main"><div><a href="#" class="vh-driver-name" data-vh-player="${esc(String(r.id))}">${esc(playerName(r.id))}</a><small>${esc(r.pos)} #${r.posRank} • Current value ${fmt(r.value)}</small></div><button type="button" class="secondary small vh-driver-chart" data-vh-player="${esc(String(r.id))}">View chart</button></div><div class="${deltaClass(r.move)}"><b>${signed(r.move)}</b></div></div>`).join(''):'<div class="vh-empty">No qualifying movement in this period.</div>';
+  const driver=list=>list.length?list.map(r=>`<div class="vh-driver-row"><div class="vh-driver-main"><div><a href="#" class="vh-driver-name" data-vh-player="${esc(String(r.id))}">${esc(playerName(r.id))}</a><small>${esc(r.pos)} #${r.posRank} • Current value ${fmt(r.value)}</small></div><button type="button" class="vh-player-link vh-driver-chart" data-vh-player="${esc(String(r.id))}"><span class="vh-history-cue">View history ↗</span></button></div><div class="${deltaClass(r.move)}"><b>${signed(r.move)}</b></div></div>`).join(''):'<div class="vh-empty">No qualifying movement in this period.</div>';
   const tradeRows=tradeEvents.length?tradeEvents.map(e=>`<div class="vh-team-trade-event"><div class="vh-team-trade-event-main"><span class="vh-trade-event-badge">Trade</span><div><b>${esc(dateShort(e.trade.created))} • vs. ${esc(e.counterpart)}</b><small>Linked to recorded team net-value point: ${esc(dateTime(e.point.t))}</small></div></div><div class="vh-team-trade-event-value"><small>Team net value</small><b>${fmt(e.point.value)}</b><span class="${deltaClass(e.change)}">${signed(e.change)} from prior team snapshot</span></div><button type="button" class="secondary small" data-vh-open-trade-history data-vh-trade-team="${esc(String(teamId))}">View trade</button></div>`).join(''):`<div class="vh-empty">No completed trades in this period are bracketed by authoritative team net-value snapshots yet.</div>`;
   return`<div class="vh-card"><div class="vh-card-head"><div><h3>What's Happening With My Team</h3><div class="vh-sub">Current-roster value movement plus completed trade events linked to recorded team net-value points. Descriptive only; these observations never change player values or trade calculations.</div></div><div class="vh-card-periods">${['7D','30D'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-team-attribution="${p}">${p}</button>`).join('')}</div></div><div class="vh-attribution-summary"><div class="vh-attribution-stat"><small>Net current-roster change</small><b class="${deltaClass(net)}">${signed(net)}</b></div><div class="vh-attribution-stat"><small>Value gained</small><b class="vh-up">${signed(up)}</b></div><div class="vh-attribution-stat"><small>Value lost</small><b class="vh-down">${signed(down)}</b></div></div><div class="vh-grid-2"><div><h3 class="vh-driver-heading">Biggest positive drivers</h3><div class="vh-driver-list">${driver(gains)}</div></div><div><h3 class="vh-driver-heading">Biggest negative drivers</h3><div class="vh-driver-list">${driver(losses)}</div></div></div><div class="vh-team-trade-events"><div class="vh-team-trade-events-head"><h3>Trade-linked team net-value points</h3><div class="vh-sub">A trade is linked only when real team snapshots exist immediately before and after it. The snapshot change is observed team net-value movement, not an assumption that the trade alone caused the move.</div></div>${tradeRows}</div></div>`;
 }
@@ -1065,7 +1065,7 @@ function similarPlayersSection(id){
   const rows=currentPlayerRows(),target=rows.find(r=>r.id===String(id));if(!target)return'';
   const byValue=rows.slice().sort((a,b)=>b.value-a.value),vi=byValue.findIndex(r=>r.id===target.id),valueAbove=byValue.slice(Math.max(0,vi-5),vi),valueBelow=byValue.slice(vi+1,vi+6);
   const same=rows.filter(r=>r.pos===target.pos).sort((a,b)=>(a.posRank||9999)-(b.posRank||9999)),pi=same.findIndex(r=>r.id===target.id),posAbove=same.slice(Math.max(0,pi-5),pi),posBelow=same.slice(pi+1,pi+6);
-  const row=r=>`<div class="vh-neighbor-row"><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(String(state.players?.[r.id]?.team||'FA').toUpperCase())} • ${esc(r.pos)} • Overall #${r.overall} • Value ${fmt(r.value)} • ${esc(r.pos)} #${r.posRank||'—'}</small></button><button type="button" class="secondary small" data-vh-player="${esc(r.id)}">View chart</button></div>`;
+  const row=r=>`<div class="vh-neighbor-row"><button class="vh-player-link" data-vh-player="${esc(r.id)}"><b>${esc(playerName(r.id))}</b><small>${esc(String(state.players?.[r.id]?.team||'FA').toUpperCase())} • ${esc(r.pos)} • Overall #${r.overall} • Value ${fmt(r.value)} • ${esc(r.pos)} #${r.posRank||'—'}</small></button><button type="button" class="vh-player-link vh-neighbor-history" data-vh-player="${esc(r.id)}"><span class="vh-history-cue">View history ↗</span></button></div>`;
   const group=(above,below)=>`<div class="vh-neighbor-list">${above.map(row).join('')}<div class="vh-selected-divider"><b>${esc(playerName(id))}</b><small>${esc(String(state.players?.[target.id]?.team||'FA').toUpperCase())} • ${esc(target.pos)} • Overall #${target.overall} • Value ${fmt(target.value)} • ${esc(target.pos)} #${target.posRank||'—'}</small></div>${below.map(row).join('')}</div>`;
   return`<div class="vh-card"><div class="vh-card-head"><div><h3 class="vh-similar-title">Similar Value Players</h3><div class="vh-sub">Current neighbors around ${esc(playerName(id))}; informational only.</div></div></div><div class="vh-similar-grid"><div><h3>Closest in Overall Value</h3><div class="vh-sub">5 players immediately above and below by current value</div>${group(valueAbove,valueBelow)}</div><div><h3>Nearest ${esc(target.pos)} Ranks</h3><div class="vh-sub">5 players immediately above and below in positional rank</div>${group(posAbove,posBelow)}</div></div></div>`;
 }
@@ -1113,14 +1113,14 @@ function recentChanges(pts){
 }
 function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
-  if(!allPts.length){box.innerHTML=`<div class="vh-card"><div class="vh-toolbar"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
+  if(!allPts.length){box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
   const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null;
   const latestMs=new Date(allPts[allPts.length-1].t).getTime(),rank30=allPts.filter(p=>new Date(p.t).getTime()>=latestMs-30*86400000),rankBase=rank30[0]||allPts[0],rankLast=rank30[rank30.length-1]||allPts[allPts.length-1],overallMove=Number(rankBase.overall)-Number(rankLast.overall),posMove=Number(rankBase.posRank)-Number(rankLast.posRank);
   const status=document.getElementById('vhStatus');if(status)status.textContent=`Tracked since ${dateShort(allPts[0].t)} • ${fmt(allPts.length)} player observations`;
   box.innerHTML=`
   <div id="vhProfileData" data-points="${esc(JSON.stringify(allPts))}" hidden></div>
+  <div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div>
   <div class="vh-card">
-    <div class="vh-toolbar" style="margin-bottom:12px"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div>
     <div class="vh-profile-info">
       <div class="vh-profile-primary"><small>Player</small><h2>${esc(playerName(id))}</h2><div class="vh-profile-kicker"><span>${esc(meta.pos)}</span><span>${esc(meta.nfl)}</span>${meta.age?`<span>Age ${meta.age}</span>`:''}</div></div>
       <div class="vh-profile-facts">

@@ -1339,3 +1339,12 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #tradeHistory .trade95-side-title{
   text-align:center!important;
 }
+
+
+/* UI-only: center team names in Trade History historical value comparison */
+.trade-history .historical-value-comparison .team-name,
+#tradeHistory .historical-value-comparison .team-name,
+.trade-history [class*="historical"] [class*="team"] > h3,
+#tradeHistory [class*="historical"] [class*="team"] > h3{
+  text-align:center!important;
+}

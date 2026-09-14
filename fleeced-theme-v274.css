@@ -835,3 +835,119 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #evaluator>h2{
   text-transform:none!important;
 }
+
+/* V424 Home dashboard */
+#home>.card{
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  padding:4px 0 18px!important;
+}
+#home .fleeced-home-head h2{
+  margin:0 0 6px!important;
+  color:#f4f4f5!important;
+  font-size:26px!important;
+  font-weight:850!important;
+  letter-spacing:-.02em!important;
+  text-transform:none!important;
+}
+#home .fleeced-home-status{display:grid;gap:8px;margin:0 0 18px}
+#home .fleeced-home-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+#home .fleeced-home-card{
+  appearance:none;
+  min-width:0;
+  min-height:100px;
+  border:1px solid color-mix(in srgb,#e4b53f 38%,var(--line));
+  border-radius:12px;
+  background:color-mix(in srgb,var(--card) 72%,#06080c);
+  padding:14px 15px;
+  color:#f4f4f5;
+  text-align:left;
+  box-shadow:none;
+}
+#home button.fleeced-home-card,
+#home .fleeced-home-card-main{cursor:pointer}
+#home .fleeced-home-card:hover,
+#home .fleeced-home-expandable.open{
+  border-color:#e4b53f;
+  background:color-mix(in srgb,#e4b53f 7%,var(--card));
+}
+#home .fleeced-home-card>span,
+#home .fleeced-home-card-main>span{
+  display:block;
+  color:#e4b53f;
+  font-size:16px;
+  font-weight:950;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+}
+#home .fleeced-home-card>small,
+#home .fleeced-home-card-main>small{
+  display:block;
+  margin-top:7px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.4;
+  font-weight:650;
+}
+#home .fleeced-home-expandable{padding:0;overflow:hidden}
+#home .fleeced-home-card-main{
+  width:100%;
+  border:0;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  padding:14px 15px;
+  box-shadow:none;
+}
+#home .fleeced-home-sub{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  padding:0 14px 14px;
+}
+#home .fleeced-home-sub[hidden]{display:none!important}
+#home .fleeced-home-sub button{
+  border:1px solid color-mix(in srgb,#e4b53f 34%,var(--line));
+  background:#0b0f14;
+  color:#e5bd55;
+  padding:7px 9px;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+}
+#home .fleeced-home-sub button:hover,
+#home .fleeced-home-sub button:focus-visible{
+  border-color:#e4b53f;
+  color:#f0c85a;
+  outline:none;
+}
+#home .fleeced-home-consensus{
+  border:0!important;
+  border-top:1px solid color-mix(in srgb,#e4b53f 28%,var(--line))!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:18px 0 0!important;
+  box-shadow:none!important;
+}
+#home .fleeced-home-consensus h3{
+  color:#e4b53f!important;
+  font-size:17px!important;
+  font-weight:950!important;
+  letter-spacing:.055em!important;
+  text-transform:uppercase!important;
+}
+#home #consensusSources .asset{
+  border:0!important;
+  background:transparent!important;
+  padding:8px 0!important;
+  border-bottom:1px solid var(--line)!important;
+  border-radius:0!important;
+}
+@media(max-width:900px){#home .fleeced-home-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){#home .fleeced-home-grid{grid-template-columns:1fr}}

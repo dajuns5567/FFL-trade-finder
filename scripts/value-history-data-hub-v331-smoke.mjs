@@ -326,7 +326,7 @@ assert(ui.includes('vh-driver-chart')&&ui.includes('View chart')&&ui.includes('d
 assert(ui.includes('vh-history-cue')&&ui.includes('View history ↗'),'Full Market History must show inline View history cues');
 assert(!ui.includes('<th class="vh-chart-col">Chart</th>'),'Full Market History must not render a separate Chart column');
 assert(ui.includes('.vh-player-link:hover')&&ui.includes('color:#e4b53f'),'Value History player links must turn Fleeced gold on hover/focus');
-assert(ui.includes('vh-trade-toggle:after')&&ui.includes('content:"Select"')&&ui.includes('content:"Selected"'),'Trade History analysis toggles must look clearly selectable');
+assert(ui.includes('vh-trade-toggle:after')&&ui.includes('content:"Open"')&&ui.includes('content:"Close"'),'Trade History analysis toggles must look clearly selectable and expose Open/Close state');
 assert(ui.includes('vh-original-title')&&ui.includes('Original Trade Analysis'),'Original Trade Analysis heading must use Fleeced gold themed text');
 assert(ui.includes('vh-player-name-line')&&ui.includes('View history ↗'),'Value History links must place View history directly beside player names');
 assert(ui.includes('background:color-mix(in srgb,var(--card) 72%,#06080c)'),'Trade History heading background must match the Value History panel background');

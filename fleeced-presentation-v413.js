@@ -126,7 +126,7 @@ function decorateScores(){
       box.querySelector('small').textContent=teamNames[i];
       box.querySelector('strong').textContent=totals[i]==null?'—':Math.round(totals[i]).toLocaleString();
       box.querySelector('b').textContent=i===winnerIndex?'WINNER • TRADE-ADJUSTED TOTAL':'TRADE-ADJUSTED TOTAL';
-      if(i===winnerIndex)box.classList.add('winner');
+      if(i===winnerIndex&&!card.closest('#finderResults'))box.classList.add('winner');
     });
     board.querySelector('.fleeced-result-vs strong').textContent=score+'/100 • '+label.replace(/!$/,'').toUpperCase();
     const edge=totals[0]!=null&&totals[1]!=null?Math.abs(totals[0]-totals[1]):null;

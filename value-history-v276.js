@@ -139,7 +139,7 @@ function addStyles(){
   #valueHistory .vh-trade-filter-toolbar label{min-width:0;display:grid;grid-template-rows:18px 44px;align-items:end}
   #valueHistory .vh-trade-filter-toolbar label>b{display:block;text-align:center;line-height:18px}
   #valueHistory .vh-trade-filter-toolbar select{height:44px;padding-right:38px!important;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,#aeb6c7 50%),linear-gradient(135deg,#aeb6c7 50%,transparent 50%)!important;background-position:calc(100% - 17px) 18px,calc(100% - 12px) 18px!important;background-size:5px 5px,5px 5px!important;background-repeat:no-repeat!important}
-  #valueHistory .vh-trade-filter-toolbar .vh-trade-reset{height:44px;min-height:44px;margin:0;align-self:end;display:flex;align-items:center;justify-content:center}
+  #valueHistory .vh-trade-filter-toolbar .vh-trade-reset{height:44px;min-height:44px;margin:0 0 -1px 0;align-self:end;display:flex;align-items:center;justify-content:center}
   @media(max-width:900px){#valueHistory .vh-trade-filter-toolbar{grid-template-columns:1fr}#valueHistory .vh-trade-filter-toolbar .vh-trade-reset{width:100%}}
   #valueHistory .vh-team-picker{border-color:color-mix(in srgb,#e4b53f 28%,var(--line));background:var(--card)}
   #valueHistory .vh-team-picker h3{color:#e4b53f}

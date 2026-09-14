@@ -9,6 +9,12 @@ const norm=()=>window.tradeValueNormalizationV130||window.tradeValueNormalizatio
 const av=x=>Math.max(0,Number(norm().canonicalValue?.(x))||0);
 const raw=xs=>(xs||[]).reduce((s,x)=>s+av(x),0);
 const rankOf=x=>x?.type==='player'?Math.max(1,Number(window.playerRankValue?.(x)?.rank)||9999):0;
+const posRankOf=x=>{
+  if(x?.type!=='player')return 0;
+  const target=pos(x),ranked=(window.ensureMaster?.()||[]).map(r=>r?.x).filter(a=>a?.type==='player'&&pos(a)===target);
+  const i=ranked.findIndex(a=>id(a)===id(x));
+  return i>=0?i+1:0;
+};
 const pos=x=>x?.type==='pick'?'PICK':(window.groupPos?.(x)||'IDP');
 const pname=x=>x?.type==='pick'?(x.name||`${x.season} R${x.round}`):(window.playerName?.(x.id)||x?.name||id(x));
 const teamName=n=>window.teamName?.(n)||`Team ${n}`;
@@ -69,7 +75,7 @@ async function generateAsync(token){const me=Number(document.getElementById('fin
  return finalize(all,tier,w,false)}
 function pickMeta(x){const p=norm().pickContext?.(x)||{},slot=Math.max(1,Math.min(32,Math.round(Number(p.projectedSlot)||16)));return`${x.season} R${x.round} • projected ${x.round}.${String(slot).padStart(2,'0')}`}
 function nflTeam(x){const p=st().players?.[x.id]||{};return String(p.team||p.team_abbr||p.nfl_team||p.pro_team||'FA').toUpperCase()}
-function assetRow(x){return x.type==='pick'?`<div class="trade95-asset"><div><b>${esc(pname(x))}</b><div class="trade95-sub">${esc(pickMeta(x))}</div></div><div class="trade95-value">${fmt(av(x))}</div></div>`:`<div class="trade95-asset"><div><b>${esc(pname(x))}</b><div class="trade95-sub">${esc(pos(x))} • ${esc(nflTeam(x))} • overall #${rankOf(x)}</div></div><div class="trade95-value">${fmt(av(x))}</div></div>`}
+function assetRow(x){return x.type==='pick'?`<div class="trade95-asset"><div><b>${esc(pname(x))}</b><div class="trade95-sub">${esc(pickMeta(x))}</div></div><div class="trade95-value">${fmt(av(x))}</div></div>`:`<div class="trade95-asset"><div><b>${esc(pname(x))}</b><div class="trade95-sub">${esc(pos(x))} • ${esc(nflTeam(x))} • overall #${rankOf(x)}${posRankOf(x)?` • ${esc(pos(x))} #${posRankOf(x)}`:''}</div></div><div class="trade95-value">${fmt(av(x))}</div></div>`}
 function side(title,xs,total,adj,eff){return`<div class="trade95-side"><div class="trade95-side-title">${title}</div>${xs.map(assetRow).join('')}<div class="trade95-total"><span>RAW ASSET TOTAL</span><b>${fmt(total)}</b></div>${adj>0?`<div class="trade97-adjust"><span>VALUE ADJUSTMENT</span><b>+${fmt(adj)}</b></div><div class="trade97-effective"><span>TRADE-ADJUSTED TOTAL</span><b>${fmt(eff)}</b></div>`:''}</div>`}
 function card(r,i){const f=r.f,label=f.score>=94?'Excellent Fit':f.score>=82?'Fair':'Negotiable';return`<div class="result trade95-card"><div class="trade95-head"><div><b>#${i+1} ${esc(teamName(r.other))}</b><div class="trade95-sub">Recommendation ${Math.round(r.recommend)}/100</div></div><div class="trade95-score">${Math.round(f.score)}<span>/100</span><div>${label}</div></div></div><div class="trade95-grid">${side('YOU RECEIVE',r.recv,f.bRaw,f.bAdj,f.bEffective)}${side('YOU SEND',r.give,f.aRaw,f.aAdj,f.aEffective)}</div><div class="trade95-summary"><div><b>${label}</b><span>Raw difference ${fmt(f.edgeRaw)}</span>${(f.aAdj||f.bAdj)?`<span>Value Adjustment +${fmt(Math.max(f.aAdj,f.bAdj))}</span>`:''}<span>Partner fit ${Math.round(r.fit)}/100</span></div></div></div>`}
 function draw(host){host.innerHTML=rows.length?rows.slice(0,visible).map(card).join(''):`<div class="empty">No realistic trade passed the current fairness, intent, position, and partner requirements.</div>`;if(visible<rows.length){const b=document.createElement('button');b.className='secondary';b.style.cssText='margin:12px auto 4px;display:block';b.textContent=`Load more trades (${rows.length-visible} more)`;b.onclick=()=>{visible=Math.min(rows.length,visible+5);draw(host)};host.appendChild(b)}}

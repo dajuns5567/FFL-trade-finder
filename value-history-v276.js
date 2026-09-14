@@ -69,6 +69,9 @@ function addStyles(){
   #valueHistory .vh-player-name-line b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #valueHistory .vh-player-link b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #valueHistory .vh-player-link small{color:var(--muted)}
+  #valueHistory .vh-history-cue{display:inline-flex;align-items:center;white-space:nowrap;font-size:9px;font-weight:900;letter-spacing:.045em;text-transform:uppercase}
+  #valueHistory .vh-player-link .vh-history-cue{color:#e4b53f!important}
+  #valueHistory .vh-player-link:hover .vh-history-cue,#valueHistory .vh-player-link:focus-visible .vh-history-cue{color:#f2c75d!important}
   #valueHistory .vh-delta{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
   #valueHistory .vh-up{color:var(--good,#1f9d68)}
   #valueHistory .vh-down{color:var(--bad,#c45151)}

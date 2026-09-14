@@ -17,7 +17,7 @@ const fair=(a,b)=>window.section1V130?.fair?.(a,b)||null;
 let active=[],visible=5,token=0;
 function targetText(){return q(document.getElementById('desiredPlayerSearch')?.value)}
 function isActive(){return targetText()&&String(document.getElementById('findMode')?.value||'')==='value'}
-function selectedGive(){return[...document.querySelectorAll('#findShop .shopCheck:checked,.shopCheck:checked')].map(x=>x._asset).filter(Boolean)}
+function selectedGive(){if(window.tradeSelectAllV165?.aliasActive?.())return[];return[...document.querySelectorAll('#findShop .shopCheck:checked,.shopCheck:checked')].map(x=>x._asset).filter(Boolean)}
 function addAssets(){const x=document.getElementById('tradeAssist97');return!!x?.checked}
 function unique(xs){const out=[],seen=new Set();for(const x of xs||[]){const k=`${x?.type}:${id(x)}`;if(!x||seen.has(k))continue;seen.add(k);out.push(x)}return out}
 function owned(owner){return(st().allAssets||[]).filter(x=>Number(x.owner)===Number(owner)&&(x.type==='player'||(x.type==='pick'&&Number(x.round)<=3)))}

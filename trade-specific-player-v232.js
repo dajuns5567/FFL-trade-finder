@@ -17,7 +17,7 @@ const q=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowe
 const key=xs=>(xs||[]).map(x=>`${x.type}:${id(x)}`).sort().join('|');
 let activeRows=[],visibleRows=5,runToken=0;
 function targetText(){return q(document.getElementById('desiredPlayerSearch')?.value)}
-function selectedGive(){return[...document.querySelectorAll('#findShop .shopCheck:checked,.shopCheck:checked')].map(x=>x._asset).filter(Boolean)}
+function selectedGive(){if(window.tradeSelectAllV165?.aliasActive?.())return[];return[...document.querySelectorAll('#findShop .shopCheck:checked,.shopCheck:checked')].map(x=>x._asset).filter(Boolean)}
 function addAssetsIfNeededEnabled(){const direct=document.getElementById('tradeAssist97');if(direct)return!!direct.checked;for(const x of document.querySelectorAll('input[type="checkbox"]')){const text=q(x.closest?.('label')?.textContent||x.parentElement?.textContent||'');if(text==='add assets if needed'||text.startsWith('add assets if needed '))return!!x.checked}return false}
 function uniqueAssets(xs){const out=[],seen=new Set();for(const x of xs||[]){const k=`${x?.type}:${id(x)}`;if(!x||seen.has(k))continue;seen.add(k);out.push(x)}return out}
 function usableOwned(owner){return(st().allAssets||[]).filter(x=>Number(x.owner)===Number(owner)&&(x.type==='player'||(x.type==='pick'&&Number(x.round)<=3)))}

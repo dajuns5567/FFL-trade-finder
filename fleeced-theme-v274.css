@@ -1277,3 +1277,472 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   background-color:transparent!important;
   box-shadow:none!important;
 }
+
+
+/* UI-only alignment: raw total / adjustment / adjusted total rows */
+#finderResults .trade95-total,
+#evalResults .trade95-total,
+#finderResults .trade97-adjust,
+#evalResults .trade97-adjust,
+#finderResults .trade97-effective,
+#evalResults .trade97-effective{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  column-gap:12px!important;
+  padding-left:0!important;
+  padding-right:0!important;
+}
+#finderResults .trade95-total>span,
+#evalResults .trade95-total>span,
+#finderResults .trade97-adjust>span,
+#evalResults .trade97-adjust>span,
+#finderResults .trade97-effective>span,
+#evalResults .trade97-effective>span{
+  justify-self:start!important;
+  margin:0!important;
+}
+#finderResults .trade95-total>b,
+#evalResults .trade95-total>b,
+#finderResults .trade97-adjust>b,
+#evalResults .trade97-adjust>b,
+#finderResults .trade97-effective>b,
+#evalResults .trade97-effective>b{
+  justify-self:end!important;
+  margin:0!important;
+  text-align:right!important;
+}
+
+
+/* UI-only trade presentation centering */
+#finderResults .fleeced-hindsight-side,
+#evalResults .fleeced-hindsight-side{
+  text-align:center!important;
+}
+#finderResults .fleeced-hindsight-side *,
+#evalResults .fleeced-hindsight-side *{
+  text-align:center!important;
+}
+#finderResults .trade95-side-title,
+#evalResults .trade95-side-title{
+  text-align:center!important;
+  text-transform:none!important;
+}
+
+
+/* UI-only: center team names in trade summary/value boxes without changing sizing */
+#finderResults .fleeced-hindsight-side > :last-child,
+#evalResults .fleeced-hindsight-side > :last-child,
+.trade-history .fleeced-hindsight-side > :last-child,
+#tradeHistory .fleeced-hindsight-side > :last-child,
+.trade-history .trade95-side-title,
+#tradeHistory .trade95-side-title{
+  text-align:center!important;
+}
+
+
+/* UI-only: center team names in Trade History historical value comparison */
+.trade-history .historical-value-comparison .team-name,
+#tradeHistory .historical-value-comparison .team-name,
+.trade-history [class*="historical"] [class*="team"] > h3,
+#tradeHistory [class*="historical"] [class*="team"] > h3{
+  text-align:center!important;
+}
+
+
+/* UI-only: center summary-box label, value, and team name across trade presentations */
+.trade-finder .trade-summary > *,
+#tradeFinder .trade-summary > *,
+.trade-evaluator .trade-summary > *,
+#tradeEvaluator .trade-summary > *,
+.trade-history .trade-summary > *,
+#tradeHistory .trade-summary > *,
+.trade-history [class*="hindsight"] [class*="summary"] > *,
+#tradeHistory [class*="hindsight"] [class*="summary"] > *,
+.trade-history [class*="original"] [class*="summary"] > *,
+#tradeHistory [class*="original"] [class*="summary"] > *,
+.trade-history .historical-value-comparison [class*="summary"] > *,
+#tradeHistory .historical-value-comparison [class*="summary"] > * {
+  text-align:center!important;
+}
+
+/* Known summary cards: center all direct textual content without changing dimensions */
+.trade-finder [class*="trade-adjusted"] ,
+#tradeFinder [class*="trade-adjusted"],
+.trade-evaluator [class*="trade-adjusted"],
+#tradeEvaluator [class*="trade-adjusted"],
+.trade-history [class*="trade-adjusted"],
+#tradeHistory [class*="trade-adjusted"] {
+  text-align:center!important;
+}
+
+
+/* V445 UI-only: exact centering for trade result score cards and Trade History comparison/detail headings */
+#finderResults .trade97-scorebox,
+#evalResults .trade97-scorebox,
+#finderResults .trade95-scorebox,
+#evalResults .trade95-scorebox,
+#finderResults .fleeced-hindsight-scorebox,
+#evalResults .fleeced-hindsight-scorebox,
+#tradeHistory .fleeced-hindsight-scorebox,
+#tradeHistory .trade97-scorebox,
+#tradeHistory .trade95-scorebox,
+#tradeHistory [class*="scorebox"] {
+  text-align:center!important;
+}
+#finderResults .trade97-scorebox > *,
+#evalResults .trade97-scorebox > *,
+#finderResults .trade95-scorebox > *,
+#evalResults .trade95-scorebox > *,
+#finderResults .fleeced-hindsight-scorebox > *,
+#evalResults .fleeced-hindsight-scorebox > *,
+#tradeHistory .fleeced-hindsight-scorebox > *,
+#tradeHistory .trade97-scorebox > *,
+#tradeHistory .trade95-scorebox > *,
+#tradeHistory [class*="scorebox"] > * {
+  text-align:center!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+/* Historical Value Comparison: team heading centered over both comparison columns */
+#tradeHistory [class*="historical"] .trade95-team-name,
+#tradeHistory [class*="historical"] .team-name,
+#tradeHistory [class*="comparison"] .trade95-team-name,
+#tradeHistory [class*="comparison"] .team-name {
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}
+
+/* Original Trade Analysis: team heading centered over its asset detail */
+#tradeHistory [class*="original"] .trade95-side-title,
+#tradeHistory [class*="original"] .trade97-side-title,
+#tradeHistory [class*="original"] [class*="team-name"],
+#tradeHistory [class*="original"] [class*="side-title"] {
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}
+
+
+/* V446 exact highlighted-area centering across trade UI */
+#finderResults .fleeced-result-team,
+#evalResults .fleeced-result-team{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#finderResults .fleeced-result-team > *,
+#evalResults .fleeced-result-team > *{
+  width:100%!important;
+  text-align:center!important;
+}
+
+/* Trade History compact view: center each team's compact package block */
+#tradeHistory .th-team,
+#tradeHistory .trade-history-team,
+#tradeHistory [class*="compact"] [class*="team"],
+#tradeHistory [class*="trade"] > [class*="teams"] > div{
+  text-align:center!important;
+}
+#tradeHistory .th-team > *,
+#tradeHistory .trade-history-team > *,
+#tradeHistory [class*="compact"] [class*="team"] > *,
+#tradeHistory [class*="trade"] > [class*="teams"] > div > *{
+  margin-left:auto!important;
+  margin-right:auto!important;
+  text-align:center!important;
+  justify-content:center!important;
+}
+
+/* Hindsight summary cards: center label, value and team as one unit */
+#tradeHistory [class*="hindsight"] .fleeced-result-team,
+#tradeHistory [class*="hindsight"] [class*="result-team"],
+#tradeHistory [class*="hindsight"] [class*="scorebox"]{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#tradeHistory [class*="hindsight"] .fleeced-result-team > *,
+#tradeHistory [class*="hindsight"] [class*="result-team"] > *,
+#tradeHistory [class*="hindsight"] [class*="scorebox"] > *{
+  width:100%!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  text-align:center!important;
+}
+
+/* Hindsight current-outcome detail team headings */
+#tradeHistory [class*="hindsight"] .trade95-side-title,
+#tradeHistory [class*="hindsight"] .trade97-side-title,
+#tradeHistory [class*="hindsight"] [class*="side"] > h3,
+#tradeHistory [class*="hindsight"] [class*="side"] > h4{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}
+
+/* Historical Value Comparison: center team heading over both columns */
+#tradeHistory [class*="historical"] > [class*="side"] > :first-child,
+#tradeHistory [class*="comparison"] > [class*="side"] > :first-child,
+#tradeHistory [class*="historical"] [class*="team-name"],
+#tradeHistory [class*="comparison"] [class*="team-name"]{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+/* Original Trade Analysis summary N/A cards */
+#tradeHistory [class*="original"] [class*="result-team"],
+#tradeHistory [class*="original"] [class*="scorebox"],
+#tradeHistory [class*="original"] .fleeced-result-team{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#tradeHistory [class*="original"] [class*="result-team"] > *,
+#tradeHistory [class*="original"] [class*="scorebox"] > *,
+#tradeHistory [class*="original"] .fleeced-result-team > *{
+  width:100%!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  text-align:center!important;
+}
+
+/* Original Trade Detail: center team heading above assets */
+#tradeHistory [class*="original"] .trade95-side-title,
+#tradeHistory [class*="original"] .trade97-side-title,
+#tradeHistory [class*="original"] [class*="side"] > h3,
+#tradeHistory [class*="original"] [class*="side"] > h4{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}
+
+
+/* V447 trade presentation parity: positional-meta support + exact alignment */
+#finderResults .fleeced-result-vs,
+#evalResults .fleeced-result-vs{
+  font-size:10px!important;
+  font-weight:900!important;
+  letter-spacing:.06em!important;
+}
+#finderResults .fleeced-result-vs span,
+#evalResults .fleeced-result-vs span{
+  font-size:10px!important;
+  font-weight:900!important;
+  letter-spacing:.06em!important;
+}
+#finderResults .fleeced-result-vs strong,
+#evalResults .fleeced-result-vs strong{
+  font-size:18px!important;
+  line-height:1.05!important;
+  margin-top:4px!important;
+}
+#finderResults .fleeced-result-vs em,
+#evalResults .fleeced-result-vs em{
+  font-size:10px!important;
+  margin-top:5px!important;
+}
+#valueHistory .vh-result-team{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#valueHistory .vh-result-team > *{
+  width:100%!important;
+  text-align:center!important;
+}
+#valueHistory .vh-compact-side{
+  text-align:center!important;
+}
+#valueHistory .vh-compact-side > b,
+#valueHistory .vh-compact-side > .vh-receives-label,
+#valueHistory .vh-eval-side-title,
+#valueHistory .vh-breakdown-side > h4{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}
+#valueHistory .vh-compact-assets{
+  justify-content:center!important;
+}
+
+
+/* V448 exact Trade History centering requested from screenshots */
+.vh-result-team{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+.vh-result-team > *{
+  width:100%!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  text-align:center!important;
+}
+.vh-result-team > b{
+  order:1!important;
+  text-align:center!important;
+}
+.vh-result-team > strong{
+  order:2!important;
+  text-align:center!important;
+}
+.vh-result-team > small{
+  order:3!important;
+  text-align:center!important;
+}
+
+.vh-eval-side-title{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+.vh-breakdown-side > h4{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+.vh-compact-side > b,
+.vh-compact-side > .vh-receives-label{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.vh-compact-assets{
+  justify-content:center!important;
+}
+
+
+/* V449 compact receives inline + gold Historical Value Comparison team names */
+.vh-compact-side > b,
+.vh-compact-side > .vh-receives-label{
+  display:inline!important;
+  width:auto!important;
+  margin:0!important;
+  vertical-align:baseline!important;
+}
+.vh-compact-side > .vh-receives-label{
+  margin-left:.4rem!important;
+}
+.vh-breakdown-side > h4{
+  color:var(--gold)!important;
+}
+
+
+/* V450 requested Trade History parity + Finder control alignment */
+#valueHistory .vh-result-team{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#valueHistory .vh-result-team > b{
+  order:1!important;
+  width:100%!important;
+  margin:0!important;
+  color:#f4f4f5!important;
+  font-size:12px!important;
+  font-weight:850!important;
+  text-align:center!important;
+}
+#valueHistory .vh-result-team > strong{
+  order:2!important;
+  width:100%!important;
+  margin:6px 0!important;
+  color:#f4f4f5!important;
+  font-size:25px!important;
+  line-height:1!important;
+  font-weight:950!important;
+  text-align:center!important;
+}
+#valueHistory .vh-result-team > small{
+  order:3!important;
+  width:100%!important;
+  margin:0!important;
+  color:var(--muted)!important;
+  font-size:9px!important;
+  font-weight:900!important;
+  letter-spacing:.055em!important;
+  text-transform:uppercase!important;
+  text-align:center!important;
+}
+#valueHistory .vh-result-team.winner > strong{
+  color:#e4b53f!important;
+}
+
+/* Compact Trade History: center team + receives as a single inline heading */
+#valueHistory .vh-compact-side{
+  text-align:center!important;
+}
+#valueHistory .vh-compact-side > b,
+#valueHistory .vh-compact-side > .vh-receives-label{
+  display:inline-block!important;
+  width:auto!important;
+  margin:0!important;
+  vertical-align:baseline!important;
+  text-align:center!important;
+}
+#valueHistory .vh-compact-side > .vh-receives-label{
+  margin-left:.4rem!important;
+}
+#valueHistory .vh-compact-assets{
+  justify-content:center!important;
+}
+
+/* Historical Value Comparison team names use Fleeced gold */
+#valueHistory .vh-breakdown-side > h4{
+  display:block!important;
+  width:100%!important;
+  margin:0 0 3px!important;
+  color:#e4b53f!important;
+  text-align:center!important;
+}
+
+/* Original/Hindsight detail team headings remain centered */
+#valueHistory .vh-eval-side-title{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+/* Trade Finder left controls: headings and Select All centered to their controls */
+#finder .fleeced-field-heading{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}
+#finder .fleeced-search-label{
+  text-align:center!important;
+}
+#tradeSelectAllButton165{
+  display:block!important;
+  width:auto!important;
+  min-width:111px!important;
+  margin:8px auto 0!important;
+}

@@ -322,7 +322,7 @@ assert(ui.includes('.vh-trade-list{display:grid;gap:16px}')&&ui.includes('.vh-tr
 assert(ui.includes('.vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line))'),'completed trade cards need distinct thin gold outer borders');
 assert(!ui.includes('nearest-year retroactive frame'),'retroactive pick-frame mechanics must remain hidden from user-facing text');
 assert(ui.includes('vh-driver-heading')&&ui.includes('Biggest positive drivers')&&ui.includes('Biggest negative drivers'),'Track My Team driver headings must use Fleeced themed headers');
-assert(ui.includes('vh-driver-chart')&&ui.includes('View chart')&&ui.includes('data-vh-player'),'Track My Team drivers must link to player Value History charts');
+assert(ui.includes('vh-driver-chart')&&ui.includes('View history ↗')&&ui.includes('data-vh-player'),'Track My Team drivers must link to player Value History with the on-brand View history action');
 assert(ui.includes('vh-history-cue')&&ui.includes('View history ↗'),'Full Market History must show inline View history cues');
 assert(!ui.includes('<th class="vh-chart-col">Chart</th>'),'Full Market History must not render a separate Chart column');
 assert(ui.includes('.vh-player-link:hover')&&ui.includes('color:#e4b53f'),'Value History player links must turn Fleeced gold on hover/focus');

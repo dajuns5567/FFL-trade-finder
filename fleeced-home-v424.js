@@ -67,24 +67,12 @@ function playerMeta(id){
 function renderTopPlayers(){
   const host=document.getElementById('homeTopPlayers');
   if(!host)return false;
-  if(typeof globalThis.ensureMaster!=='function')return false;
-  let ranked=[];
-  try{ranked=globalThis.ensureMaster()||[]}catch{return false}
-  const tv=globalThis.tradeValueNormalizationV139||globalThis.tradeValueNormalizationV130||{};
-  const rankFor=x=>{
-    if(typeof globalThis.playerRankValue==='function'){
-      const m=globalThis.playerRankValue(x)||{};
-      if(Number.isFinite(Number(m.rank)))return Number(m.rank);
-    }
-    return Number(x?.masterRank||x?.rank||99999);
-  };
-  const rows=ranked.filter(z=>z?.x?.type==='player').map(z=>({z,rank:rankFor(z.x)})).sort((a,b)=>a.rank-b.rank).slice(0,10);
+  const helper=globalThis.playerValuesV139?.homeTopPlayers;
+  if(typeof helper!=='function')return false;
+  let rows=[];
+  try{rows=helper(10)||[]}catch{return false}
   if(!rows.length)return false;
-  const col=items=>items.map(({z,rank})=>{
-    const id=String(z.x.id),meta=playerMeta(id);
-    const value=typeof tv.playerValue==='function'?Number(tv.playerValue(z.x)||0):0;
-    return '<div class="fleeced-home-data-row"><span class="fleeced-home-data-rank">'+rank+'</span><button type="button" class="fleeced-home-player-link" data-home-history="'+esc(id)+'"><b>'+esc(meta.name)+'</b><small>'+esc(meta.pos)+' • '+esc(meta.team)+(value?' • Value '+fmt(value):'')+'</small></button></div>';
-  }).join('');
+  const col=items=>items.map(r=>'<div class="fleeced-home-data-row"><span class="fleeced-home-data-rank">'+esc(r.rank)+'</span><button type="button" class="fleeced-home-player-link" data-home-history="'+esc(r.id)+'"><b>'+esc(r.name)+'</b><small>'+esc(r.pos)+' • '+esc(r.team)+' • Value '+fmt(r.value)+' • Overall #'+esc(r.rank)+' • '+esc(r.pos)+' #'+esc(r.posRank)+'</small></button></div>').join('');
   host.innerHTML='<div class="fleeced-home-list-title">Top 10 Current Players</div><div class="fleeced-home-two-col"><div>'+col(rows.slice(0,5))+'</div><div>'+col(rows.slice(5,10))+'</div></div>';
   return true;
 }

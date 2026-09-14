@@ -758,3 +758,21 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
     grid-template-areas:"left" "vs" "right"!important;
   }
 }
+
+/* V419 Finder/Evaluator adjustment color hierarchy */
+#finderResults .trade95-side .trade95-adjust,
+#evalResults .trade95-side .trade95-adjust{
+  color:#e4b53f!important;
+}
+#finderResults .trade95-side .trade95-adjust strong,
+#evalResults .trade95-side .trade95-adjust strong{
+  color:#e4b53f!important;
+}
+#finderResults .trade95-side .trade95-adjusted,
+#evalResults .trade95-side .trade95-adjusted{
+  color:var(--text)!important;
+}
+#finderResults .trade95-side .trade95-adjusted strong,
+#evalResults .trade95-side .trade95-adjusted strong{
+  color:var(--text)!important;
+}

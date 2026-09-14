@@ -119,8 +119,8 @@ function addStyles(){
   #valueHistory .vh-chart-tooltip{position:absolute;z-index:6;display:none;pointer-events:none;min-width:180px;max-width:260px;padding:9px 11px;border:1px solid color-mix(in srgb,#e4b53f 65%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--card) 96%,black);box-shadow:0 8px 24px rgba(0,0,0,.28);font-size:12px;line-height:1.45;transform:translate(10px,-50%)}
   #valueHistory .vh-chart-tooltip b{display:block;color:#e4b53f;font-size:13px;margin-bottom:2px}
   #valueHistory .vh-view-chart{white-space:nowrap;padding:5px 8px!important;font-size:11px!important;min-width:0!important}
-  #valueHistory .vh-view-history{white-space:nowrap;padding:5px 8px!important;font-size:10px!important;font-weight:900!important;letter-spacing:.035em;text-transform:uppercase;color:#e4b53f!important;border-color:color-mix(in srgb,#e4b53f 48%,var(--line))!important;background:color-mix(in srgb,#e4b53f 8%,var(--card))!important}
-  #valueHistory .vh-view-history:hover,#valueHistory .vh-view-history:focus-visible{color:#f2c75d!important;border-color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 14%,var(--card))!important;outline:none}
+  #valueHistory .vh-view-history{white-space:nowrap;padding:4px 0!important;font-size:10px!important;font-weight:900!important;letter-spacing:.035em;text-transform:uppercase;color:#e4b53f!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+  #valueHistory .vh-view-history:hover,#valueHistory .vh-view-history:focus-visible{color:#f2c75d!important;text-decoration:underline;background:transparent!important;outline:none}
   #valueHistory .vh-chart-col{width:72px;min-width:72px;text-align:center!important}
   #valueHistory .vh-overall-cell{display:inline-flex;align-items:center;justify-content:flex-end;gap:5px}
   #valueHistory .vh-rank-arrow{font-size:12px;font-weight:900;line-height:1}
@@ -132,6 +132,12 @@ function addStyles(){
   #valueHistory .vh-subnav button.vh-subnav-active{color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 14%,var(--card))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 42%,transparent),0 3px 12px rgba(0,0,0,.18)!important}
   #valueHistory .vh-team-toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
   #valueHistory .vh-team-toolbar label{min-width:280px;flex:1}
+  #valueHistory .vh-trade-filter-toolbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 94px;gap:10px;align-items:end}
+  #valueHistory .vh-trade-filter-toolbar label{min-width:0;display:grid;grid-template-rows:18px 44px;align-items:end}
+  #valueHistory .vh-trade-filter-toolbar label>b{display:block;text-align:center;line-height:18px}
+  #valueHistory .vh-trade-filter-toolbar select{height:44px;padding-right:38px!important;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,#aeb6c7 50%),linear-gradient(135deg,#aeb6c7 50%,transparent 50%)!important;background-position:calc(100% - 17px) 18px,calc(100% - 12px) 18px!important;background-size:5px 5px,5px 5px!important;background-repeat:no-repeat!important}
+  #valueHistory .vh-trade-filter-toolbar .vh-trade-reset{height:44px;min-height:44px;margin:0;align-self:end;display:flex;align-items:center;justify-content:center}
+  @media(max-width:900px){#valueHistory .vh-trade-filter-toolbar{grid-template-columns:1fr}#valueHistory .vh-trade-filter-toolbar .vh-trade-reset{width:100%}}
   #valueHistory .vh-team-picker{border-color:color-mix(in srgb,#e4b53f 28%,var(--line));background:var(--card)}
   #valueHistory .vh-team-picker h3{color:#e4b53f}
   #valueHistory .vh-team-toolbar select,#valueHistory #vhMarketSearch{border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important}
@@ -451,16 +457,24 @@ function renderSearchResults(value){
   results.innerHTML=matches.map(z=>`<button type="button" class="secondary small" data-vh-id="${esc(z.x.id)}">${esc(playerName(z.x.id))} • ${esc(groupPos(z.x))}</button>`).join('');
 }
 function fitValueHistoryCellText(root=document){
-  const targets=root.querySelectorAll('#valueHistory .vh-profile-primary h2,#valueHistory .vh-profile-fact small,#valueHistory .vh-profile-fact b,#valueHistory .vh-profile-fact span,#valueHistory .vh-current small,#valueHistory .vh-current .vh-big,#valueHistory .vh-metric>small,#valueHistory .vh-metric b,#valueHistory .vh-metric .vh-metric-time');
+  const targets=root.querySelectorAll('.vh-profile-primary h2,.vh-profile-fact small,.vh-profile-fact b,.vh-profile-fact span,.vh-current small,.vh-current .vh-big,.vh-metric>small,.vh-metric b,.vh-metric .vh-metric-time');
   for(const el of targets){
     const base=Number(el.dataset.vhBaseFont||parseFloat(getComputedStyle(el).fontSize)||12);
     if(!el.dataset.vhBaseFont)el.dataset.vhBaseFont=String(base);
-    const min=el.matches('.vh-profile-primary h2')?14:el.matches('.vh-current .vh-big')?24:el.matches('.vh-profile-fact b,.vh-metric b')?11:el.matches('.vh-profile-fact small,.vh-current small,.vh-metric>small')?9:8;
+    const min=el.matches('.vh-profile-primary h2')?10:el.matches('.vh-current .vh-big')?20:el.matches('.vh-profile-fact b')?8:el.matches('.vh-metric b')?10:el.matches('.vh-profile-fact small,.vh-current small,.vh-metric>small')?8:7;
     el.style.fontSize=base+'px';
+    el.style.textOverflow='clip';
     let size=base,guard=0;
-    while(size>min&&el.scrollWidth>el.clientWidth&&guard++<40){
+    while(size>min&&el.clientWidth>0&&el.scrollWidth>el.clientWidth+1&&guard++<80){
       size=Math.max(min,size-.5);
       el.style.fontSize=size+'px';
+    }
+    if(el.scrollWidth>el.clientWidth+1){
+      el.style.letterSpacing='-.025em';
+      while(size>min&&el.scrollWidth>el.clientWidth+1&&guard++<120){
+        size=Math.max(min,size-.5);
+        el.style.fontSize=size+'px';
+      }
     }
   }
 }
@@ -789,7 +803,7 @@ function renderTradeHistory(){
     if(tradeMonthFilter&&monthOfTrade(t)!==String(tradeMonthFilter))return false;
     return true;
   });
-  box.innerHTML=`<div class="vh-card"><div class="vh-card-head"><div><h3>Completed Trade History</h3><div class="vh-sub">Trades open in a compact view showing the teams and assets exchanged. Expand Hindsight and/or Original Trade Analysis only when you want the full detail; Historical Value Comparison appears with either expanded section.</div></div></div><div class="vh-team-toolbar"><label><b>Filter by team</b><select data-vh-trade-team><option value="">All teams</option>${ids.map(id=>`<option value="${esc(id)}" ${String(tradeTeamFilter)===String(id)?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label><label><b>Year</b><select data-vh-trade-year><option value="">All years</option>${years.map(y=>`<option value="${esc(y)}" ${String(tradeYearFilter)===String(y)?'selected':''}>${esc(y)}</option>`).join('')}</select></label><label><b>Month</b><select data-vh-trade-month><option value="">All months</option>${months.map(([v,l])=>`<option value="${v}" ${String(tradeMonthFilter)===v?'selected':''}>${l}</option>`).join('')}</select></label><button type="button" class="secondary small vh-trade-reset" data-vh-trade-reset>Reset filters</button></div><div class="vh-trade-note">Source: ${esc(data.source||'Sleeper transaction history')} • ${filtered.length} completed trade${filtered.length===1?'':'s'} shown. Exact draft-result mapping is displayed only when Sleeper provides an unambiguous draft slot → roster → player chain.</div></div><div class="vh-trade-list">${filtered.map(tradeCard).join('')||'<div class="vh-card"><div class="vh-empty">No completed trades match these filters.</div></div>'}</div>`;
+  box.innerHTML=`<div class="vh-card"><div class="vh-card-head"><div><h3>Completed Trade History</h3><div class="vh-sub">Trades open in a compact view showing the teams and assets exchanged. Expand Hindsight and/or Original Trade Analysis only when you want the full detail; Historical Value Comparison appears with either expanded section.</div></div></div><div class="vh-team-toolbar vh-trade-filter-toolbar"><label><b>Filter by team</b><select data-vh-trade-team><option value="">All teams</option>${ids.map(id=>`<option value="${esc(id)}" ${String(tradeTeamFilter)===String(id)?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label><label><b>Year</b><select data-vh-trade-year><option value="">All years</option>${years.map(y=>`<option value="${esc(y)}" ${String(tradeYearFilter)===String(y)?'selected':''}>${esc(y)}</option>`).join('')}</select></label><label><b>Month</b><select data-vh-trade-month><option value="">All months</option>${months.map(([v,l])=>`<option value="${v}" ${String(tradeMonthFilter)===v?'selected':''}>${l}</option>`).join('')}</select></label><button type="button" class="secondary small vh-trade-reset" data-vh-trade-reset>Reset filters</button></div><div class="vh-trade-note">Source: ${esc(data.source||'Sleeper transaction history')} • ${filtered.length} completed trade${filtered.length===1?'':'s'} shown. Exact draft-result mapping is displayed only when Sleeper provides an unambiguous draft slot → roster → player chain.</div></div><div class="vh-trade-list">${filtered.map(tradeCard).join('')||'<div class="vh-card"><div class="vh-empty">No completed trades match these filters.</div></div>'}</div>`;
 }
 async function loadTradeHistory(){
   const box=document.getElementById('tradeHistoryContent');if(!box)return;

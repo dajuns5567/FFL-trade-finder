@@ -1245,3 +1245,22 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   width:100%!important;
   text-align:center!important;
 }
+
+
+/* V436 center all Home card descriptions, including multi-line text */
+#home #homeNavigation > .fleeced-home-card > small,
+#home #homeNavigation > .fleeced-home-card-main > small,
+#home #homeNavigation .fleeced-home-card-head .fleeced-home-card-main > small{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  text-align:center!important;
+  align-self:center!important;
+  white-space:normal!important;
+}
+#home #homeNavigation > button.fleeced-home-card > small{
+  text-align:center!important;
+  align-self:center!important;
+}

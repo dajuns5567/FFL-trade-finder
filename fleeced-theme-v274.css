@@ -776,3 +776,34 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #evalResults .trade95-side .trade95-adjusted strong{
   color:var(--text)!important;
 }
+
+/* V420 Finder/Evaluator final presentation cleanup */
+#finderResults .fleeced-trade-number,#evalResults .fleeced-trade-number{
+  display:inline!important;
+  min-width:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#e4b53f!important;
+  font-size:18px!important;
+  font-weight:950!important;
+  line-height:1!important;
+}
+#finderResults .trade95-value,#evalResults .trade95-value{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+}
+#finderResults .trade97-adjust,#evalResults .trade97-adjust,
+#finderResults .trade97-adjust b,#evalResults .trade97-adjust b,
+#finderResults .trade97-adjust strong,#evalResults .trade97-adjust strong{
+  color:#e4b53f!important;
+}
+#finderResults .trade97-effective,#evalResults .trade97-effective,
+#finderResults .trade97-effective b,#evalResults .trade97-effective b,
+#finderResults .trade97-effective strong,#evalResults .trade97-effective strong{
+  color:#f4f4f5!important;
+}

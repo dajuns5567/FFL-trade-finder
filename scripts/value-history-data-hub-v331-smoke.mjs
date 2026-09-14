@@ -318,9 +318,14 @@ assert(ui.includes('if(asset.type===\'pick\'&&completedHistoricalPick(asset))ret
 assert(ui.includes('function tradeResultScoreboard(teamA,totalA,teamB,totalB,score,label)'),'Trade History must render prominent adjusted-total scoreboards');
 assert(ui.includes('Winner • trade-adjusted total'),'winner/loser hierarchy must emphasize final adjusted totals');
 assert(ui.includes('Current outcome detail'),'Hindsight must present current outcome package detail beneath the scoreboard');
-assert(ui.includes('gap:28px'),'completed trades must have stronger visual separation');
+assert(ui.includes('.vh-trade-list{display:grid;gap:16px}')&&ui.includes('border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line))'),'completed trades must keep clear separation while using compact spacing');
 assert(ui.includes('border:2px solid color-mix(in srgb,#e4b53f 30%,var(--line))'),'completed trade cards need distinct outer borders');
 assert(!ui.includes('nearest-year retroactive frame'),'retroactive pick-frame mechanics must remain hidden from user-facing text');
+assert(ui.includes('vh-driver-heading')&&ui.includes('Biggest positive drivers')&&ui.includes('Biggest negative drivers'),'Track My Team driver headings must use Fleeced themed headers');
+assert(ui.includes('vh-driver-chart')&&ui.includes('View chart')&&ui.includes('data-vh-player'),'Track My Team drivers must link to player Value History charts');
+assert(ui.includes('data-vh-trade-year')&&ui.includes('data-vh-trade-month'),'Trade History must provide year and month filters');
+assert(ui.includes("tradeYearFilter=''")&&ui.includes("tradeMonthFilter=''"),'Trade History month/year filters must remain client-side UI state');
+assert(ui.includes('openPlayer:(id)=>'),'Value History must expose a navigation-only player opener for Player Values');
 assert(!ui.includes('<div class="vh-assets-title">Assets received</div>'),'redundant Fleeced Trade Breakdown Assets Received block must be removed');
 assert(ui.includes("${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}"),'Trade History expanded sections must render Hindsight first, Original Trade Analysis second, and Historical Value Comparison last');
 assert(ui.includes('Overall #'),'Trade History received-player metadata must show current overall rank');

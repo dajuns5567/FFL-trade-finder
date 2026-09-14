@@ -471,7 +471,7 @@ const indexHtml=fs.readFileSync('index.html','utf8');
 assert(siteV29.includes('/value-history-v276.js?v=424'),'production shell must cache-bust the current V424 Value History UI/runtime');
 assert(siteV29.includes('/fleeced-theme-v274.css?v=429'),'production shell must cache-bust the V425 Fleeced theme');
 assert(siteV29.includes('/fleeced-presentation-v413.js?v=423'),'production shell must load the V416 presentation-only interaction-safe presentation runtime');
-assert(siteV29.includes('/fleeced-home-v424.js?v=430'),'production shell must load the V425 Home navigation runtime');
+assert(siteV29.includes('/fleeced-home-v424.js?v=431'),'production shell must load the V425 Home navigation runtime');
 assert(indexHtml.includes('data-tab="home"')&&indexHtml.includes('id="home" class="tab"'),'Home must be a first-class default tab');
 assert(indexHtml.includes('<h2>Trade Evaluator</h2>'),'Trade Evaluator title must use final capitalization');
 assert(indexHtml.includes('Select assets to trade and review up to 250 recommended trades'),'Home Trade Finder description must match');
@@ -565,3 +565,8 @@ const playerValuesPreview=fs.readFileSync('ui-player-values-v139.js','utf8');
 assert(homePreviewRuntime.includes('consensusRefreshComplete()'),'Home previews must wait for consensus refresh completion');
 assert(homePreviewRuntime.includes("match=text.match(/consensus sources:"),'Home refresh gating must read the same visible consensus refresh status');
 assert(playerValuesPreview.includes('const ranked=rankedPlayers(),posRanks=positionalRanks(ranked)'),'Home Player Values must use the same canonical rankedPlayers source as the Player Values tab');
+
+const homeOnlyRuntime=fs.readFileSync('fleeced-home-v424.js','utf8');
+assert(homeOnlyRuntime.includes("#playerValuesBody .valueRow19"),'Home Player Values preview must parse the rendered Player Values tab so order and values match exactly');
+assert(homeOnlyRuntime.includes('Waiting for consensus refresh…'),'Home previews must visibly wait for consensus refresh before rendering');
+assert(homeOnlyRuntime.includes('refreshHomePreviewsAfterConsensus'),'Home Value History preview must not fetch/render before consensus refresh completion');

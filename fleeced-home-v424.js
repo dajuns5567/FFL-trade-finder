@@ -73,13 +73,35 @@ function renderTopPlayers(){
   const host=document.getElementById('homeTopPlayers');
   if(!host)return false;
   if(!consensusRefreshComplete())return false;
-  const helper=globalThis.playerValuesV139?.homeTopPlayers;
-  if(typeof helper!=='function')return false;
-  let rows=[];
-  try{rows=helper(10)||[]}catch{return false}
+
+  const sourceRows=[...document.querySelectorAll('#playerValuesBody .valueRow19')];
+  if(!sourceRows.length)return false;
+
+  const rows=sourceRows.map(row=>{
+    const link=row.querySelector('[data-pv-history]');
+    const id=String(link?.dataset.pvHistory||row.dataset.playerId||'');
+    const title=(row.querySelector('.pv-history-name b')?.textContent||'').trim();
+    const meta=(row.querySelector('.pv-history-meta')?.textContent||'').trim();
+    const match=title.match(/^(\d+)\.\s*(.+)$/);
+    if(!id||!match)return null;
+    const name=match[2].trim();
+    if(!name||/^\d+$/.test(name))return null;
+    return {id,rank:Number(match[1]),name,meta};
+  }).filter(Boolean).sort((a,b)=>a.rank-b.rank).slice(0,10);
+
   if(rows.length<10)return false;
-  const col=items=>items.map(r=>'<div class="fleeced-home-data-row fleeced-home-player-row"><span class="fleeced-home-data-rank">'+esc(r.rank)+'</span><button type="button" class="fleeced-home-player-link" data-home-history="'+esc(r.id)+'"><b>'+esc(r.name)+'</b><small>'+esc(r.pos)+' • '+esc(r.team)+' • Value '+fmt(r.value)+' • Overall #'+esc(r.rank)+' • '+esc(r.pos)+' #'+esc(r.posRank)+'</small></button></div>').join('');
-  host.innerHTML='<div class="fleeced-home-list-title">Top 10 Current Players</div><div class="fleeced-home-two-col"><div>'+col(rows.slice(0,5))+'</div><div>'+col(rows.slice(5,10))+'</div></div>';
+
+  const col=items=>items.map(r=>
+    '<div class="fleeced-home-data-row fleeced-home-player-row">'+
+      '<span class="fleeced-home-data-rank">'+esc(r.rank)+'</span>'+
+      '<button type="button" class="fleeced-home-player-link" data-home-history="'+esc(r.id)+'">'+
+        '<b>'+esc(r.name)+'</b><small>'+esc(r.meta)+'</small>'+
+      '</button>'+
+    '</div>'
+  ).join('');
+
+  host.innerHTML='<div class="fleeced-home-list-title">Top 10 Current Players</div>'+
+    '<div class="fleeced-home-two-col"><div>'+col(rows.slice(0,5))+'</div><div>'+col(rows.slice(5,10))+'</div></div>';
   return true;
 }
 let homeMarketCache=null;
@@ -129,9 +151,16 @@ async function renderValueRisers(){
     return true;
   }
 }
+function setHomePreviewWaiting(){
+  const players=document.getElementById('homeTopPlayers');
+  const risers=document.getElementById('homeValueRisers');
+  if(players)players.innerHTML='<div class="fleeced-home-loading">Waiting for consensus refresh…</div>';
+  if(risers)risers.innerHTML='<div class="fleeced-home-loading">Waiting for consensus refresh…</div>';
+}
 function scheduleTopPlayers(){
   let tries=0;
   const run=()=>{
+    if(!consensusRefreshComplete()){if(++tries<120)setTimeout(run,500);return}
     if(renderTopPlayers()||++tries>=120)return;
     setTimeout(run,500);
   };
@@ -140,10 +169,22 @@ function scheduleTopPlayers(){
 function scheduleValueRisers(){
   let tries=0;
   const run=async()=>{
+    if(!consensusRefreshComplete()){if(++tries<120)setTimeout(run,500);return}
     if(await renderValueRisers()||++tries>=120)return;
     setTimeout(run,500);
   };
   run();
+}
+function refreshHomePreviewsAfterConsensus(){
+  if(!consensusRefreshComplete())return false;
+  setHomePreviewWaiting();
+  if(!refreshHomePreviewsAfterConsensus()){
+    const status=document.getElementById('homeDataStatus');
+    if(status)new MutationObserver(()=>{
+      if(refreshHomePreviewsAfterConsensus())return;
+    }).observe(status,{childList:true,subtree:true,characterData:true});
+  }
+  return true;
 }
 function handleClick(e){
   const history=e.target.closest('[data-home-history]');
@@ -183,5 +224,5 @@ function install(){
   document.getElementById('updateBtn')?.addEventListener('click',()=>{homeMarketCache=null;setTimeout(scheduleTopPlayers,500);setTimeout(scheduleValueRisers,500)},{passive:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.fleecedHomeV430={activateTab,relocateFinderDiagnostics,normalizeTabOrder,renderTopPlayers,renderValueRisers,consensusRefreshComplete};
+window.fleecedHomeV431={activateTab,relocateFinderDiagnostics,normalizeTabOrder,renderTopPlayers,renderValueRisers,consensusRefreshComplete};
 })();

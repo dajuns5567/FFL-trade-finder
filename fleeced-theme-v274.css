@@ -1375,3 +1375,52 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #tradeHistory [class*="trade-adjusted"] {
   text-align:center!important;
 }
+
+
+/* V445 UI-only: exact centering for trade result score cards and Trade History comparison/detail headings */
+#finderResults .trade97-scorebox,
+#evalResults .trade97-scorebox,
+#finderResults .trade95-scorebox,
+#evalResults .trade95-scorebox,
+#finderResults .fleeced-hindsight-scorebox,
+#evalResults .fleeced-hindsight-scorebox,
+#tradeHistory .fleeced-hindsight-scorebox,
+#tradeHistory .trade97-scorebox,
+#tradeHistory .trade95-scorebox,
+#tradeHistory [class*="scorebox"] {
+  text-align:center!important;
+}
+#finderResults .trade97-scorebox > *,
+#evalResults .trade97-scorebox > *,
+#finderResults .trade95-scorebox > *,
+#evalResults .trade95-scorebox > *,
+#finderResults .fleeced-hindsight-scorebox > *,
+#evalResults .fleeced-hindsight-scorebox > *,
+#tradeHistory .fleeced-hindsight-scorebox > *,
+#tradeHistory .trade97-scorebox > *,
+#tradeHistory .trade95-scorebox > *,
+#tradeHistory [class*="scorebox"] > * {
+  text-align:center!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+/* Historical Value Comparison: team heading centered over both comparison columns */
+#tradeHistory [class*="historical"] .trade95-team-name,
+#tradeHistory [class*="historical"] .team-name,
+#tradeHistory [class*="comparison"] .trade95-team-name,
+#tradeHistory [class*="comparison"] .team-name {
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}
+
+/* Original Trade Analysis: team heading centered over its asset detail */
+#tradeHistory [class*="original"] .trade95-side-title,
+#tradeHistory [class*="original"] .trade97-side-title,
+#tradeHistory [class*="original"] [class*="team-name"],
+#tradeHistory [class*="original"] [class*="side-title"] {
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}

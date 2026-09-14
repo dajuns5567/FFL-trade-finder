@@ -1527,3 +1527,54 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   width:100%!important;
   text-align:center!important;
 }
+
+
+/* V447 trade presentation parity: positional-meta support + exact alignment */
+#finderResults .fleeced-result-vs,
+#evalResults .fleeced-result-vs{
+  font-size:10px!important;
+  font-weight:900!important;
+  letter-spacing:.06em!important;
+}
+#finderResults .fleeced-result-vs span,
+#evalResults .fleeced-result-vs span{
+  font-size:10px!important;
+  font-weight:900!important;
+  letter-spacing:.06em!important;
+}
+#finderResults .fleeced-result-vs strong,
+#evalResults .fleeced-result-vs strong{
+  font-size:18px!important;
+  line-height:1.05!important;
+  margin-top:4px!important;
+}
+#finderResults .fleeced-result-vs em,
+#evalResults .fleeced-result-vs em{
+  font-size:10px!important;
+  margin-top:5px!important;
+}
+#valueHistory .vh-result-team{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#valueHistory .vh-result-team > *{
+  width:100%!important;
+  text-align:center!important;
+}
+#valueHistory .vh-compact-side{
+  text-align:center!important;
+}
+#valueHistory .vh-compact-side > b,
+#valueHistory .vh-compact-side > .vh-receives-label,
+#valueHistory .vh-eval-side-title,
+#valueHistory .vh-breakdown-side > h4{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+}
+#valueHistory .vh-compact-assets{
+  justify-content:center!important;
+}

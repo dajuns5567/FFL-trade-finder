@@ -645,8 +645,8 @@ function sideValueModel(side,trade){
   for(const id of side.player_ids||[]){
     const hist=historicalPlayerValue(side,id),asset=tradePlayerAsset(id,side.roster_id),now=currentEvaluatorValue(asset);
     if(hist==null)atTradeComplete=false;if(now==null)currentComplete=false;
-    atTradeItems.push({label:playerName(id),kind:'player',value:hist});
-    currentItems.push({label:playerName(id),kind:'player',value:now});
+    atTradeItems.push({label:playerName(id),meta:currentTradePlayerMeta(id),kind:'player',value:hist});
+    currentItems.push({label:playerName(id),meta:currentTradePlayerMeta(id),kind:'player',value:now});
   }
   for(const p of side.picks||[]){
     const pickAsset=tradePickAsset(p,side.roster_id),recorded=historicalPickValue(side,p),then=recorded??retroactiveTradeHistoryPickValue(pickAsset,trade);
@@ -714,7 +714,7 @@ function hindsightValue(asset,trade){
 }
 function tradeResultScoreboard(teamA,totalA,teamB,totalB,score,label){
   const a=Number(totalA)||0,b=Number(totalB)||0,edge=Math.abs(a-b),aWin=a>b,bWin=b>a;
-  return`<div class="vh-result-board"><div class="vh-result-team ${aWin?'winner':''}"><small>${aWin?'Winner • trade-adjusted value':'Trade-adjusted value'}</small><strong>${fmt(a)}</strong><b>${esc(teamA)}</b></div><div class="vh-result-vs"><span>Fairness rating</span><strong>${Math.round(Number(score)||0)}/100 • ${esc(label||'Trade')}</strong><em>Adjusted value difference • ${fmt(edge)}</em></div><div class="vh-result-team ${bWin?'winner':''}"><small>${bWin?'Winner • trade-adjusted value':'Trade-adjusted value'}</small><strong>${fmt(b)}</strong><b>${esc(teamB)}</b></div></div>`;
+  return`<div class="vh-result-board"><div class="vh-result-team ${aWin?'winner':''}"><b>${esc(teamA)}</b><strong>${fmt(a)}</strong><small>${aWin?'Winner • trade-adjusted value':'Trade-adjusted value'}</small></div><div class="vh-result-vs"><span>Fairness rating</span><strong>${Math.round(Number(score)||0)}/100 • ${esc(label||'Trade')}</strong><em>Adjusted value difference • ${fmt(edge)}</em></div><div class="vh-result-team ${bWin?'winner':''}"><b>${esc(teamB)}</b><strong>${fmt(b)}</strong><small>${bWin?'Winner • trade-adjusted value':'Trade-adjusted value'}</small></div></div>`;
 }
 function hindsightAssetRow(asset,trade){
   const value=hindsightValue(asset,trade),label=asset?.type==='pick'?(asset.name||`${asset.season} R${asset.round}`):playerName(asset?.id);
@@ -782,8 +782,7 @@ function compactTradeAssetLabel(p,trade){
   return 'Asset';
 }
 function compactTradePlayerMeta(id){
-  const sid=String(id),asset=tradePlayerAsset(sid,0),pos=groupPos(asset),team=String(state.players?.[sid]?.team||'FA').toUpperCase();
-  return`${pos} • ${team}`
+  return currentTradePlayerMeta(id)
 }
 function compactTradeSide(side,trade){
   const assets=[];

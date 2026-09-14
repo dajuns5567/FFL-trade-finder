@@ -5,3 +5,54 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 .trade98-prefcol{border:1px solid rgba(216,170,53,.34)!important;background:linear-gradient(145deg,rgba(216,170,53,.07),rgba(15,17,21,.16))!important}.trade98-pref-title{color:#e5bd55!important}.trade98-prefcol .trade97-assist{background:linear-gradient(135deg,rgba(216,170,53,.06),rgba(255,255,255,.025))!important;border-color:rgba(216,170,53,.28)!important}.trade98-prefcol .trade97-checks label{border-color:rgba(216,170,53,.18)!important;background:rgba(216,170,53,.025)!important}.trade98-prefcol input[type='checkbox']{accent-color:#d8aa35!important}
 #findShop input[type='checkbox'],#evaluator input[type='checkbox']{accent-color:#d8aa35!important}
 #valueHistory #vhChart svg path{stroke:#d8aa35!important}#valueHistory #vhChart svg circle{fill:#e7bd4d!important}
+/* V407 presentation-only box removal and neutral surface cleanup */
+#finder>.card,#rankings>.card,#settings>.card,#league>.card{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+#finder>.card,#rankings>.card,#settings>.card,#league>.card{
+  padding-left:0!important;
+  padding-right:0!important;
+}
+#consensusDiagnostics{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+}
+#consensusSources .asset{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  padding:8px 0!important;
+}
+#league #teamsTable .asset{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+}
+#rankings .asset.valueRow19{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  padding:8px 0!important;
+  margin:0!important;
+}
+#rankings .asset.valueRow19 .pv-history-link,
+#rankings .asset.valueRow19 .pv-history-link *,
+#rankings .asset.valueRow19 small{
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#rankings .asset.valueRow19 .pv-history-link{
+  border-radius:0!important;
+  color:#f4f4f5!important;
+}
+#rankings .asset.valueRow19 .pv-history-link:hover,
+#rankings .asset.valueRow19 .pv-history-link:focus-visible{
+  color:#e4b53f!important;
+}

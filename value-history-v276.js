@@ -281,7 +281,8 @@ function addStyles(){
   #valueHistory .vh-trade-values small{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em}
   #valueHistory .vh-trade-values b{display:block;margin-top:2px}
   #valueHistory .vh-trade-note{margin-top:10px;color:var(--muted);font-size:10px;line-height:1.4}
-  #valueHistory .vh-history-section{border:1px solid color-mix(in srgb,#e4b53f 24%,var(--line));background:color-mix(in srgb,var(--card) 72%,#06080c)}
+  #valueHistory .vh-history-section{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}
+  #valueHistory .vh-history-section:before{display:none!important}
   #valueHistory .vh-breakdown-sides{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   #valueHistory .vh-breakdown-side{border:1px solid var(--line);border-radius:12px;padding:13px;min-width:0;background:color-mix(in srgb,var(--card) 97%,black)}
   #valueHistory .vh-breakdown-side>h4{margin:0 0 3px;font-size:15px}
@@ -317,14 +318,14 @@ function addStyles(){
   #valueHistory .vh-eval-total.adjust b{color:#e4b53f}
   #valueHistory .vh-eval-total.effective{padding-top:5px;border-top:1px solid var(--line)}
   #valueHistory .vh-eval-total.effective span,#valueHistory .vh-eval-total.effective b{color:#f4f4f5}
-  #valueHistory .vh-hindsight{margin-bottom:16px;padding:13px;border:1px solid color-mix(in srgb,#e4b53f 38%,var(--line));border-radius:12px;background:color-mix(in srgb,#e4b53f 4%,var(--card))}
+  #valueHistory .vh-hindsight{margin-bottom:16px;padding:0;border:0;background:transparent;box-shadow:none}
   #valueHistory .vh-hindsight-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:8px}
   #valueHistory .vh-hindsight-head h4{margin:0;color:#e4b53f;font-size:16px;letter-spacing:.02em}
   #valueHistory .vh-hindsight-head .vh-sub{margin-top:3px}
   #valueHistory .vh-hindsight-score{font-size:23px;font-weight:950;line-height:1;white-space:nowrap;text-align:right}
   #valueHistory .vh-hindsight-score span{font-size:11px;color:var(--muted);font-weight:800}
   #valueHistory .vh-hindsight-score small{display:block;margin-top:4px;color:#e4b53f;font-size:9px;text-transform:uppercase;letter-spacing:.07em}
-  #valueHistory .vh-history-compare-title{margin:3px 0 9px;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;text-align:center}
+  #valueHistory .vh-history-compare-title{margin:3px 0 10px;color:#e4b53f!important;font-size:17px;font-weight:950;letter-spacing:.055em;text-transform:uppercase;text-align:left;text-shadow:0 0 12px rgba(228,181,63,.08)}
   #valueHistory .vh-result-board{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:stretch;margin:10px 0 12px}
   #valueHistory .vh-result-team{border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:color-mix(in srgb,var(--card) 96%,black);min-width:0}
   #valueHistory .vh-result-team.winner{border-color:#e4b53f;background:color-mix(in srgb,#e4b53f 8%,var(--card));box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 28%,transparent)}
@@ -333,8 +334,8 @@ function addStyles(){
   #valueHistory .vh-result-team.winner strong{color:#e4b53f}
   #valueHistory .vh-result-team b{display:block;margin-top:6px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #valueHistory .vh-result-vs{display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:92px;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;text-align:center}
-  #valueHistory .vh-result-vs strong{display:block;color:#f4f4f5;font-size:16px;margin-top:3px}
-  #valueHistory .vh-result-vs em{font-style:normal;color:#e4b53f;font-size:9px;margin-top:3px}
+  #valueHistory .vh-result-vs strong{display:block;color:#e4b53f;font-size:18px;line-height:1.05;margin-top:4px;white-space:nowrap}
+  #valueHistory .vh-result-vs em{font-style:normal;color:var(--muted);font-size:10px;margin-top:5px;white-space:nowrap}
   #valueHistory .vh-detail-caption{font-size:9px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;color:var(--muted);text-align:center;margin:10px 0 6px}
   @media(max-width:700px){#valueHistory .vh-result-board{grid-template-columns:1fr}.vh-result-vs{min-width:0!important;padding:2px 0}}
   @media(max-width:900px){#valueHistory .vh-attribution-summary{grid-template-columns:1fr}#valueHistory .vh-trade-sides,#valueHistory .vh-breakdown-sides,#valueHistory .vh-eval-grid{grid-template-columns:1fr}}
@@ -712,7 +713,7 @@ function hindsightValue(asset,trade){
 }
 function tradeResultScoreboard(teamA,totalA,teamB,totalB,score,label){
   const a=Number(totalA)||0,b=Number(totalB)||0,edge=Math.abs(a-b),aWin=a>b,bWin=b>a;
-  return`<div class="vh-result-board"><div class="vh-result-team ${aWin?'winner':''}"><small>${aWin?'Winner • trade-adjusted total':'Trade-adjusted total'}</small><strong>${fmt(a)}</strong><b>${esc(teamA)}</b></div><div class="vh-result-vs"><span>Adjusted edge</span><strong>${fmt(edge)}</strong><em>${Math.round(Number(score)||0)}/100 • ${esc(label||'Trade')}</em></div><div class="vh-result-team ${bWin?'winner':''}"><small>${bWin?'Winner • trade-adjusted total':'Trade-adjusted total'}</small><strong>${fmt(b)}</strong><b>${esc(teamB)}</b></div></div>`;
+  return`<div class="vh-result-board"><div class="vh-result-team ${aWin?'winner':''}"><small>${aWin?'Winner • trade-adjusted total':'Trade-adjusted total'}</small><strong>${fmt(a)}</strong><b>${esc(teamA)}</b></div><div class="vh-result-vs"><span>Fairness rating</span><strong>${Math.round(Number(score)||0)}/100 • ${esc(label||'Trade')}</strong><em>Adjusted edge • ${fmt(edge)}</em></div><div class="vh-result-team ${bWin?'winner':''}"><small>${bWin?'Winner • trade-adjusted total':'Trade-adjusted total'}</small><strong>${fmt(b)}</strong><b>${esc(teamB)}</b></div></div>`;
 }
 function hindsightAssetRow(asset,trade){
   const value=hindsightValue(asset,trade),label=asset?.type==='pick'?(asset.name||`${asset.season} R${asset.round}`):playerName(asset?.id);

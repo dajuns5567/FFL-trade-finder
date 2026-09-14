@@ -825,3 +825,13 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #finderResults .fleeced-result-team.winner b,#evalResults .fleeced-result-team.winner b{
   color:#e4b53f!important;
 }
+
+/* V423 total label sizing + evaluator title casing */
+#finderResults .fleeced-result-team b,#evalResults .fleeced-result-team b{
+  font-size:9px!important;
+  line-height:1.15!important;
+  letter-spacing:.02em!important;
+}
+#evaluator>h2{
+  text-transform:none!important;
+}

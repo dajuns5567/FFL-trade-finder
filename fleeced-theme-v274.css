@@ -807,3 +807,21 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #finderResults .trade97-effective strong,#evalResults .trade97-effective strong{
   color:#f4f4f5!important;
 }
+
+/* V422 presented trade total-box typography */
+#finderResults .fleeced-result-team small,#evalResults .fleeced-result-team small{
+  font-size:12px!important;
+  font-weight:850!important;
+  color:#f4f4f5!important;
+}
+#finderResults .fleeced-result-team b,#evalResults .fleeced-result-team b{
+  font-size:13px!important;
+  font-weight:850!important;
+  color:#8f96a6!important;
+}
+#finderResults .fleeced-result-team.winner small,#evalResults .fleeced-result-team.winner small{
+  color:#e4b53f!important;
+}
+#finderResults .fleeced-result-team.winner b,#evalResults .fleeced-result-team.winner b{
+  color:#e4b53f!important;
+}

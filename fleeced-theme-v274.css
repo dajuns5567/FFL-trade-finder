@@ -1328,3 +1328,14 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   text-align:center!important;
   text-transform:none!important;
 }
+
+
+/* UI-only: center team names in trade summary/value boxes without changing sizing */
+#finderResults .fleeced-hindsight-side > :last-child,
+#evalResults .fleeced-hindsight-side > :last-child,
+.trade-history .fleeced-hindsight-side > :last-child,
+#tradeHistory .fleeced-hindsight-side > :last-child,
+.trade-history .trade95-side-title,
+#tradeHistory .trade95-side-title{
+  text-align:center!important;
+}

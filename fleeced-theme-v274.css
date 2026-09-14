@@ -1063,3 +1063,81 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #home .fleeced-home-expandable.open .fleeced-home-sub button{
   min-height:34px;
 }
+
+/* V428 Home optional subsection dropdown + clean data links */
+#home .fleeced-home-card-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 44px;
+  align-items:start;
+}
+#home .fleeced-home-card-main{
+  min-width:0;
+}
+#home .fleeced-home-card-toggle{
+  width:34px;
+  height:34px;
+  margin:12px 12px 0 0;
+  border:1px solid color-mix(in srgb,#e4b53f 48%,var(--line));
+  border-radius:9px;
+  background:#0b0f14!important;
+  color:#e4b53f!important;
+  font-size:21px!important;
+  font-weight:950!important;
+  line-height:1!important;
+  padding:0!important;
+  cursor:pointer;
+}
+#home .fleeced-home-card-toggle[aria-expanded="true"]{
+  transform:rotate(180deg);
+  border-color:#e4b53f;
+}
+#home .fleeced-home-sub{
+  padding:7px 14px 11px!important;
+  border-top:1px solid color-mix(in srgb,#e4b53f 24%,var(--line));
+  border-bottom:1px solid color-mix(in srgb,#e4b53f 16%,var(--line));
+  margin:0 0 5px;
+}
+#home .fleeced-home-sub-prompt{display:none!important}
+#home .fleeced-home-expandable.open .fleeced-home-card-main small:after{content:none!important}
+#home .fleeced-home-two-col{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 18px;
+}
+#home .fleeced-home-two-col>div+div{
+  border-left:1px solid color-mix(in srgb,var(--line) 82%,transparent);
+  padding-left:18px;
+}
+#home .fleeced-home-player-link{
+  appearance:none!important;
+  display:block!important;
+  width:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:inherit!important;
+  text-align:left!important;
+  cursor:pointer!important;
+}
+#home .fleeced-home-player-link:hover b,
+#home .fleeced-home-player-link:focus-visible b{
+  color:#e4b53f!important;
+}
+#home .fleeced-home-player-link:focus-visible{
+  outline:1px solid #e4b53f!important;
+  outline-offset:3px!important;
+}
+#home .fleeced-home-player-row{
+  grid-template-columns:24px minmax(0,1fr)!important;
+}
+@media(max-width:760px){
+  #home .fleeced-home-two-col{grid-template-columns:1fr}
+  #home .fleeced-home-two-col>div+div{
+    border-left:0;
+    padding-left:0;
+  }
+}

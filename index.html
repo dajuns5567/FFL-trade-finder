@@ -58,9 +58,11 @@ button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700
     <button type="button" class="fleeced-home-card" data-home-tab="tradeHistory"><span>Trade History</span><small>Review real trades, analysis at the time of trade, and see how that trade looks in hindsight</small></button>
 
     <div class="fleeced-home-card fleeced-home-expandable fleeced-home-wide" data-home-group="rankings">
-      <button type="button" class="fleeced-home-card-main"><span>Player Values</span><small>Master rankings and asset values</small></button>
+      <div class="fleeced-home-card-head">
+        <button type="button" class="fleeced-home-card-main" data-home-tab="rankings"><span>Player Values</span><small>Master rankings and asset values</small></button>
+        <button type="button" class="fleeced-home-card-toggle" aria-expanded="false" aria-label="Show Player Values sections">⌄</button>
+      </div>
       <div class="fleeced-home-sub" hidden>
-        <div class="fleeced-home-sub-prompt">Choose where you want to go</div>
         <button type="button" data-home-tab="rankings" data-home-player-filter="ALL">All</button>
         <button type="button" data-home-tab="rankings" data-home-player-filter="OFFENSE">Offense</button>
         <button type="button" data-home-tab="rankings" data-home-player-filter="DEFENSE">Defense</button>
@@ -71,9 +73,11 @@ button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700
     </div>
 
     <div class="fleeced-home-card fleeced-home-expandable fleeced-home-wide" data-home-group="valueHistory">
-      <button type="button" class="fleeced-home-card-main"><span>Value History</span><small>Historical value hub, risers, fallers, team value analysis, and more</small></button>
+      <div class="fleeced-home-card-head">
+        <button type="button" class="fleeced-home-card-main" data-home-tab="valueHistory"><span>Value History</span><small>Historical value hub, risers, fallers, team value analysis, and more</small></button>
+        <button type="button" class="fleeced-home-card-toggle" aria-expanded="false" aria-label="Show Value History sections">⌄</button>
+      </div>
       <div class="fleeced-home-sub" hidden>
-        <div class="fleeced-home-sub-prompt">Choose where you want to go</div>
         <button type="button" data-home-tab="valueHistory" data-home-vh="market">Market Dashboard</button>
         <button type="button" data-home-tab="valueHistory" data-home-vh="team">Track My Team</button>
       </div>

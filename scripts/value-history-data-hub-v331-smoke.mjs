@@ -469,9 +469,9 @@ assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID iden
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
 const indexHtml=fs.readFileSync('index.html','utf8');
 assert(siteV29.includes('/value-history-v276.js?v=424'),'production shell must cache-bust the current V424 Value History UI/runtime');
-assert(siteV29.includes('/fleeced-theme-v274.css?v=427'),'production shell must cache-bust the V425 Fleeced theme');
+assert(siteV29.includes('/fleeced-theme-v274.css?v=428'),'production shell must cache-bust the V425 Fleeced theme');
 assert(siteV29.includes('/fleeced-presentation-v413.js?v=423'),'production shell must load the V416 presentation-only interaction-safe presentation runtime');
-assert(siteV29.includes('/fleeced-home-v424.js?v=427'),'production shell must load the V425 Home navigation runtime');
+assert(siteV29.includes('/fleeced-home-v424.js?v=428'),'production shell must load the V425 Home navigation runtime');
 assert(indexHtml.includes('data-tab="home"')&&indexHtml.includes('id="home" class="tab"'),'Home must be a first-class default tab');
 assert(indexHtml.includes('<h2>Trade Evaluator</h2>'),'Trade Evaluator title must use final capitalization');
 assert(indexHtml.includes('Select assets to trade and review up to 250 recommended trades'),'Home Trade Finder description must match');
@@ -548,5 +548,8 @@ assert(headlessScript.includes("writeFileSync(snapshotFile"),'scheduled browser 
 
 console.log('V396 append-only Value History preservation + audited headless pipeline regression passed');
 
-assert(indexHtml.includes('fleeced-home-sub-prompt')&&indexHtml.includes('Choose where you want to go'),'Home expandable cards must prompt for a destination choice');
-assert(fs.readFileSync('ui-player-values-v139.js','utf8').includes('homeTopPlayers(limit=10)'),'Home Player Values must use canonical Player Values ordering for ten players');
+
+assert(indexHtml.includes('fleeced-home-card-toggle'),'Home expandable cards must expose an explicit dropdown arrow');
+assert(!indexHtml.includes('Choose where you want to go'),'Home subsection dropdown must remain optional without a mandatory-choice prompt');
+assert(indexHtml.includes('class="fleeced-home-card-main" data-home-tab="rankings"'),'Player Values Home card must navigate to the main tab when its heading is selected');
+assert(indexHtml.includes('class="fleeced-home-card-main" data-home-tab="valueHistory"'),'Value History Home card must navigate to the main tab when its heading is selected');

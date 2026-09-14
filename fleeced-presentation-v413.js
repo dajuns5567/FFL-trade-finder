@@ -78,13 +78,14 @@ function decorateScores(){
     if(!m)continue;
     const score=Math.max(0,Math.min(100,Number(m[1])||0));
     const label=String(scoreBox?.querySelector('div')?.textContent||card.querySelector('.trade95-summary b')?.textContent||'Trade').trim();
+    const head=card.querySelector('.trade95-head');
+    const headTitle=head?.querySelector(':scope > div:first-child > b');
+    if(headTitle){headTitle.textContent=label;headTitle.classList.add('fleeced-trade-judgment')}
     const rating=document.createElement('div');
     rating.className='fleeced-trade-rating';
-    rating.innerHTML='<div class="fleeced-trade-rating-head"><strong></strong><span></span></div><div class="fleeced-score-track"><i></i></div>';
-    rating.querySelector('strong').textContent=label;
+    rating.innerHTML='<div class="fleeced-trade-rating-head"><span></span></div><div class="fleeced-score-track"><i></i></div>';
     rating.querySelector('span').textContent=score+'/100';
     rating.querySelector('i').style.width=score+'%';
-    const head=card.querySelector('.trade95-head');
     if(head)head.insertAdjacentElement('afterend',rating);else card.prepend(rating);
   }
 }
@@ -104,6 +105,9 @@ function arrangeFinderFields(){
     const label=[...col.querySelectorAll('label,b')].find(x=>/search any league player/i.test((x.textContent||'').trim()));
     if(label){label.textContent='Search player';label.classList.add('fleeced-field-heading','fleeced-search-label')}
     if(select.nextElementSibling!==label&&label)select.insertAdjacentElement('afterend',label);
+    if(label&&label.nextElementSibling!==search)label.insertAdjacentElement('afterend',search);
+    const selectAll=[...document.querySelectorAll('#finder button')].find(b=>/^select all$/i.test((b.textContent||'').trim()));
+    if(selectAll&&search.nextElementSibling!==selectAll){search.insertAdjacentElement('afterend',selectAll);selectAll.classList.add('fleeced-select-all')}
   }
 }
 function brandSelectAll(){

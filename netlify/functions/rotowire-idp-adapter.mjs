@@ -1,6 +1,7 @@
 const ROTOWIRE_IDP_URL="https://www.rotowire.com/football/cheatsheet-idp.php";
 const TIMEOUT_MS=7000;
 const DEF_POSITIONS=new Set(["DL","DE","DT","EDGE","LB","ILB","OLB","DB","CB","S","FS","SS"]);
+const MIN_VALID_ROWS=75;
 
 function normalizePlayerName(name){
   return String(name||"")
@@ -76,7 +77,7 @@ export async function refreshRotowireIdp(opts={}){
     const uniqueRanks=new Set(rows.map(row=>row.rank));
     const maxRank=rows.length?rows[rows.length-1].rank:0;
     const contiguous=rows.length>0&&rows.every((row,index)=>row.rank===index+1);
-    const valid=rows.length>=75&&uniquePlayers.size===rows.length&&uniqueRanks.size===rows.length&&contiguous;
+    const valid=rows.length>=MIN_VALID_ROWS&&uniquePlayers.size===rows.length&&uniqueRanks.size===rows.length&&contiguous;
     return {
       source:"RotoWire IDP",id:"rotowire-idp",status:valid?"refreshed":"failed",valid,
       format:"2026-idp-cheatsheet",reducedWeight:true,
@@ -84,7 +85,7 @@ export async function refreshRotowireIdp(opts={}){
       timestamp:now,stage:valid?"validated":"extract",
       error:valid?null:`RotoWire IDP validation failed: ${rows.length} rows, max rank ${maxRank}, contiguous=${contiguous}`,
       urls:[ROTOWIRE_IDP_URL],
-      diagnostics:{parser:"rotowire-rankings-ssr-rich",max_rank:maxRank,contiguous,first_10:rows.slice(0,10),validation_result:valid}
+      diagnostics:{parser:"rotowire-rankings-ssr-rich",source_contract:"contiguous-ranks-min-75",minimum_rows:MIN_VALID_ROWS,max_rank:maxRank,contiguous,unique_players:uniquePlayers.size===rows.length,unique_ranks:uniqueRanks.size===rows.length,first_10:rows.slice(0,10),validation_result:valid}
     };
   }catch(error){
     return {

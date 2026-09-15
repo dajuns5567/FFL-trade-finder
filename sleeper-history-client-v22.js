@@ -2,6 +2,7 @@
 const priorLoadCore22=typeof loadCore==='function'?loadCore:null;
 const SNAPSHOT_URL='/sleeper-data/offense-history.json';
 const OFFENSE_POS22=new Set(['QB','RB','WR','TE']);
+const IDP_POS22=new Set(['DL','DE','DT','NT','EDGE','LB','ILB','MLB','OLB','DB','CB','S','SS','FS','IDP']);
 
 const num22=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
 function games22(row){for(const k of ['gp','gms_active','games_played','games','gms']){const n=num22(row?.[k]);if(n!=null&&n>=0)return n}return 0}
@@ -26,15 +27,24 @@ function clearValueCaches22(){
   try{fitCache.clear()}catch(e){}
   try{stageCache.clear()}catch(e){}
 }
-function mergeOffenseHistory22(stats,currentSeason,qualifiedCurrentStats){
+function mergeScoringHistory22(stats,currentSeason,qualifiedCurrentStats){
   const merged={...(state.stats||{})},current=String(currentSeason||'');
-  if(current)merged[current]={...(qualifiedCurrentStats||{})};
+  if(current){
+    const yr={...(merged[current]||{})};
+    for(const [id,row] of Object.entries(qualifiedCurrentStats||{})){
+      const ps=state.players?.[id]?.fantasy_positions||[],isOffense=ps.some(p=>OFFENSE_POS22.has(String(p).toUpperCase())),isIdp=ps.some(p=>IDP_POS22.has(String(p).toUpperCase()))||groupPos({type:'player',id})==='IDP';
+      if(!isOffense&&!isIdp)continue;
+      const existing=yr[id]?.stats&&typeof yr[id].stats==='object'?yr[id].stats:(yr[id]||{});
+      yr[id]={...existing,...row};
+    }
+    merged[current]=yr;
+  }
   for(const [year,rows] of Object.entries(stats||{})){
     if(String(year)===current)continue;
     const yr={...(merged[year]||{})};
     for(const [id,row] of Object.entries(rows||{})){
-      const ps=state.players?.[id]?.fantasy_positions||[];
-      if(!ps.some(p=>OFFENSE_POS22.has(String(p).toUpperCase())))continue;
+      const ps=state.players?.[id]?.fantasy_positions||[],isOffense=ps.some(p=>OFFENSE_POS22.has(String(p).toUpperCase())),isIdp=ps.some(p=>IDP_POS22.has(String(p).toUpperCase()))||groupPos({type:'player',id})==='IDP';
+      if(!isOffense&&!isIdp)continue;
       const existing=yr[id]?.stats&&typeof yr[id].stats==='object'?yr[id].stats:(yr[id]||{});
       yr[id]={...existing,...row};
     }
@@ -50,7 +60,7 @@ async function hydrateImportedOffense22(){
   const years=Object.keys(j.weightPlan.yearWeights).map(Number).filter(Number.isFinite),available=(j.availableYears||[]).map(Number),currentSeason=Number(j.currentSeason),inSeason=j.weightPlan?.mode==='in-season';
   if(years.length<3||available.length!==years.length||!years.every(y=>y===currentSeason&&inSeason?usableCurrentSeason22(j.qualifiedCurrentStats):usableSeason22(j.stats?.[y])))throw Error('Sleeper importer compact artifact is incomplete for scoring history');
   if(inSeason&&(j.currentSeasonQualification?.finalGamesOnly!==true||j.currentSeasonQualification?.fullWeekValuationGate!==true))throw Error('Current-season scoring artifact is missing the final-game/full-week valuation gate');
-  mergeOffenseHistory22(j.stats,currentSeason,j.qualifiedCurrentStats||{});
+  mergeScoringHistory22(j.stats,currentSeason,j.qualifiedCurrentStats||{});
   state.sleeperHistory={
     generatedAt:j.generatedAt,
     currentSeason:Number(j.currentSeason),

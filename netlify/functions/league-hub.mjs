@@ -18,8 +18,11 @@ function txByRoster(rows){const out={};for(const tx of rows||[]){const touched=n
 function opponentMap(matchups){const groups=new Map(),out={};for(const m of matchups||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}for(const rows of groups.values())if(rows.length===2){out[String(rows[0].roster_id)]=String(rows[1].roster_id);out[String(rows[1].roster_id)]=String(rows[0].roster_id)}return out}
 async function weeklyReport(){
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
- const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,week=Math.max(1,currentWeek-1);
- if(currentWeek<=1)return{available:false,season,week:null,reason:'The first weekly report unlocks after Sleeper advances beyond Week 1, so incomplete games are never written up.'};
+ const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1;
+ // Sleeper can leave nfl.week on the just-finished scoring week after Monday night.
+ // On Tuesday ET, publish that completed scoring week instead of hiding it until rollover.
+ const et=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',weekday:'short'}).format(new Date()),useCurrent=et==='Tue'&&currentWeek>=1,week=useCurrent?currentWeek:Math.max(1,currentWeek-1);
+ if(currentWeek<=1&&!useCurrent)return{available:false,season,week:null,reason:'The first weekly report unlocks when Week 1 is complete; incomplete games are never written up.'};
  const [matchups,transactions,rosters,users,proj,players,nextMatchups]=await Promise.all([
   fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`),fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>[]),
   fetchJson(`${API}/league/${LEAGUE}/rosters`),fetchJson(`${API}/league/${LEAGUE}/users`),projections(season,week,league?.scoring_settings||{}),

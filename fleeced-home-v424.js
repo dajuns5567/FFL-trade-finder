@@ -177,13 +177,10 @@ function scheduleValueRisers(){
 }
 function refreshHomePreviewsAfterConsensus(){
   if(!consensusRefreshComplete())return false;
+  homeMarketCache=null;
   setHomePreviewWaiting();
-  if(!refreshHomePreviewsAfterConsensus()){
-    const status=document.getElementById('homeDataStatus');
-    if(status)new MutationObserver(()=>{
-      if(refreshHomePreviewsAfterConsensus())return;
-    }).observe(status,{childList:true,subtree:true,characterData:true});
-  }
+  scheduleTopPlayers();
+  scheduleValueRisers();
   return true;
 }
 function handleClick(e){

@@ -289,7 +289,6 @@ function consensusRank(id){
     if(playerGroup!=="IDP"&&kind==="idp")continue;
     const d=src?.data||{};
     if(d[n]!=null)vals.push(Number(d[n]));
-    else {const k=Object.keys(d).find(k=>k===n||k.includes(n)||n.includes(k));if(k)vals.push(Number(d[k]))}
   }
   return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
 }

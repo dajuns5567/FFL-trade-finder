@@ -19,10 +19,13 @@ function opponentMap(matchups){const groups=new Map(),out={};for(const m of matc
 async function weeklyReport(){
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
  const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1;
- // Sleeper can leave nfl.week on the just-finished scoring week after Monday night.
- // On Tuesday ET, publish that completed scoring week instead of hiding it until rollover.
- const et=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',weekday:'short'}).format(new Date()),useCurrent=et==='Tue'&&currentWeek>=1,week=useCurrent?currentWeek:Math.max(1,currentWeek-1);
- if(currentWeek<=1&&!useCurrent)return{available:false,season,week:null,reason:'The first weekly report unlocks when Week 1 is complete; incomplete games are never written up.'};
+ // Publish from completed matchup data, not from Sleeper advancing its global week counter.
+ // A scoring week is complete once every matchup has two teams and both teams have final points.
+ const candidateWeek=Math.max(1,currentWeek),candidateMatchups=await fetchJson(`${API}/league/${LEAGUE}/matchups/${candidateWeek}`).catch(()=>[]);
+ const groups=new Map();for(const m of candidateMatchups||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}
+ const candidateComplete=groups.size>0&&[...groups.values()].every(rows=>rows.length===2&&rows.every(m=>Number.isFinite(Number(m?.points))));
+ const week=candidateComplete?candidateWeek:Math.max(1,currentWeek-1);
+ if(currentWeek<=1&&!candidateComplete)return{available:false,season,week:null,reason:'Week 1 is still in progress. The broadcast publishes as soon as all Week 1 matchup results are final.'};
  const [matchups,transactions,rosters,users,proj,players,nextMatchups]=await Promise.all([
   fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`),fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>[]),
   fetchJson(`${API}/league/${LEAGUE}/rosters`),fetchJson(`${API}/league/${LEAGUE}/users`),projections(season,week,league?.scoring_settings||{}),

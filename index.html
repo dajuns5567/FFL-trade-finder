@@ -616,25 +616,20 @@ window.fllConsensusStatus = function(summary) {
 
 <script>
 window.renderConsensusDiagnostics=function(summary){
-  const box=document.getElementById("consensusDiagnostics");
-  const list=document.getElementById("consensusSources");
-  const sm=document.getElementById("consensusSummary");
+  const box=document.getElementById("consensusDiagnostics"),list=document.getElementById("consensusSources"),sm=document.getElementById("consensusSummary");
   if(!box||!list||!sm)return;
-  const rows=Array.isArray(summary?.results)?summary.results:[];
-  const total=Number(summary?.total ?? 8);
-  const fresh=Number(summary?.successful ?? summary?.refreshed ?? 0);
-  sm.textContent=`${fresh}/${total} refreshed`;
+  const rows=Array.isArray(summary?.results)?summary.results:[],total=Number(summary?.total??7);
+  const fresh=rows.filter(x=>["refreshed","fresh"].includes(String(x.status||"").toLowerCase())||x.ok).length;
+  const lkg=rows.filter(x=>String(x.status||"").toLowerCase()==="last-known-good").length;
+  const unavailable=rows.filter(x=>String(x.status||"").toLowerCase()==="unavailable").length;
+  sm.textContent=`${fresh}/${total} freshly refreshed${lkg?` • ${lkg}/${total} using last-known-good`:""}${unavailable?` • ${unavailable} unavailable`:""}`;
   list.innerHTML=rows.map(x=>{
-    const icon=x.status==="refreshed"?"✓":x.status==="retained"?"↻":"✗";
-    const label=x.status==="refreshed"?"Freshly refreshed":x.status==="retained"?"Validated snapshot retained":"Failed";
-    const count=(x.players_extracted??x.count);
-    const detail=[
-      label,
-      Number.isFinite(Number(count))?`${count} players`:"",
-      x.timestamp?new Date(x.timestamp).toLocaleString():"",
-      x.stage?`${x.stage}${x.error?": "+x.error:""}`:""
-    ].filter(Boolean).join(" • ");
-    return `<div class="asset"><div><b>${icon} ${String(x.source||"Unknown")}</b><br><small class="muted">${String(detail)}</small></div></div>`;
+    const st=String(x.status||"").toLowerCase(),isFresh=x.ok||st==="refreshed"||st==="fresh",isLkg=st==="last-known-good",pending=st==="fresh-not-promoted";
+    const icon=isFresh?"✓":isLkg?"⚠":pending?"•":"✗";
+    const label=isFresh?"Fresh":isLkg?"Using last-known-good":pending?"Fresh candidate — batch not promoted":"Unavailable";
+    const attempted=x.timestamp?new Date(x.timestamp).toLocaleString():"",snap=x.snapshot_timestamp?new Date(x.snapshot_timestamp).toLocaleString():"";
+    const detail=[label,isLkg&&snap?`snapshot ${snap}`:"",attempted?`attempt ${attempted}`:"",Number.isFinite(Number(x.players_extracted))?`${x.players_extracted} players`:"",x.error?String(x.error):""].filter(Boolean).join(" • ");
+    return `<div class="asset"><div><b>${icon} ${esc(x.source||"Unknown")}</b><br><small class="muted">${esc(detail)}</small></div></div>`;
   }).join("");
   box.style.display="block";
 };

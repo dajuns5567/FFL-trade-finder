@@ -414,8 +414,16 @@ async function getMarketSummary(s){
   const unique=[],seen=new Set();for(const item of wanted){const k=`${item.source}:${item.key||item.path||item.t}`;if(!seen.has(k)){seen.add(k);unique.push(item)}}
   const snaps=[];
   for(const item of unique){
-    if(item.source==='archive'){const snap=await archiveSnapshot(item);if(snap)snaps.push(snap)}
-    else{try{const snap=await s.get(item.key,{type:'json'});if(snap?.t&&Array.isArray(snap.rows))snaps.push(snap)}catch{}}
+    let snap=null;
+    if(item.source==='archive')snap=await archiveSnapshot(item);
+    else if(s){try{snap=await s.get(item.key,{type:'json'})}catch{}}
+    // A timestamp can exist in both stores. If the live blob is missing/corrupt,
+    // fall back to the durable GitHub archive instead of failing the whole market.
+    if((!snap?.t||!Array.isArray(snap.rows))&&item.source==='local'){
+      const archived=(arch.items||[]).find(x=>String(x?.t||'')===String(item.t||''));
+      if(archived)snap=await archiveSnapshot(archived);
+    }
+    if(snap?.t&&Array.isArray(snap.rows))snaps.push(snap);
   }
   snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   const market=marketFromSnapshots(snaps);market.snapshot_count=timed.length;market.archive_snapshot_count=(arch.items||[]).length;market.local_snapshot_count=(local.items||[]).length;return market;

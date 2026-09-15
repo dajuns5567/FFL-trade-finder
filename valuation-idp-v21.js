@@ -30,7 +30,7 @@ function scoreSeason24(id,y,assigned,kind){
 }
 function realScore24(id,kind){
  const plan=historyPlan24(),yearWeights=plan.yearWeights||{},samples=[];
- for(const [yearRaw,assignedRaw] of Object.entries(yearWeights)){const y=Number(yearRaw);let assigned=Number(assignedRaw);if(!Number.isFinite(y)||!Number.isFinite(assigned)||assigned<=0)continue;const currentSeason=Number(state.sleeperHistory?.currentSeason),isCurrent=plan.mode==='in-season'&&y===currentSeason;if(kind==='idp'&&isCurrent){const completedWeek=Math.max(0,Number(plan.completedWeek)||Number(state.sleeperHistory?.completedWeek)||0);const idpSampleReliability=clamp24(0,completedWeek/8,1);assigned*=idpSampleReliability}if(assigned<=0)continue;const s=scoreSeason24(id,y,assigned,kind);if(s)samples.push(s)}
+ for(const [yearRaw,assignedRaw] of Object.entries(yearWeights)){const y=Number(yearRaw),assigned=Number(assignedRaw);if(!Number.isFinite(y)||!Number.isFinite(assigned)||assigned<=0)continue;const s=scoreSeason24(id,y,assigned,kind);if(s)samples.push(s)}
  if(!samples.length)return{seasons:0,historicalSeasons:0,ppg:0,premiumPpg:0,confidence:0,weightCoverage:0,samples:[],weightPlan:plan};
  samples.sort((a,b)=>b.season-a.season);const coverage=samples.reduce((s,x)=>s+x.assignedWeight,0),den=Math.max(.0001,coverage),ppg=samples.reduce((s,x)=>s+x.ppg*x.assignedWeight,0)/den;
  const premiumPpg=kind==='idp'?samples.reduce((s,x)=>s+(x.premiumPpg||0)*x.assignedWeight,0)/den:0;const historical=samples.filter(x=>!x.currentSeason),currentSample=samples.find(x=>x.currentSeason),confidence=seasonConfidence24(historical.length,currentSample,coverage);

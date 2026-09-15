@@ -1746,3 +1746,29 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   min-width:111px!important;
   margin:8px auto 0!important;
 }
+
+/* V480 Home: four equal primary navigation cards; preserve Player Values / Value History sizing */
+#home #homeNavigation{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+#home #homeNavigation > button.fleeced-home-card:not(.fleeced-home-half){
+  grid-column:span 1!important;
+  width:100%!important;
+  min-width:0!important;
+  text-align:center!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+}
+#home #homeNavigation > .fleeced-home-wide{
+  grid-column:span 2!important;
+}
+#home #homeNavigation > .fleeced-home-half{
+  grid-column:span 2!important;
+  min-height:62px!important;
+  padding:10px 16px!important;
+}
+#home #homeNavigation > .fleeced-home-half span{margin-bottom:3px!important}
+#home #homeNavigation > .fleeced-home-half small{line-height:1.15!important}
+@media(max-width:900px){
+ #home #homeNavigation{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #home #homeNavigation > button.fleeced-home-card:not(.fleeced-home-half){grid-column:span 1!important}
+ #home #homeNavigation > .fleeced-home-wide,#home #homeNavigation > .fleeced-home-half{grid-column:1/-1!important}
+}

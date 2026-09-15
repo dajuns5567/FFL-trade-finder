@@ -6,7 +6,7 @@ const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:
 const fetchJson=async url=>{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-League-Hub/2.0'},cache:'no-store'});if(!r.ok)throw new Error(`Sleeper ${r.status}`);return r.json()};
 const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
 const MANAGER_CACHE_VERSION=6;
-const BROADCAST_VERSION=2;
+const BROADCAST_VERSION=8;
 const score=(stats,scoring)=>{if(!stats)return null;let n=0,used=false;for(const [k,w] of Object.entries(scoring||{})){const v=Number(stats[k]),m=Number(w);if(Number.isFinite(v)&&Number.isFinite(m)){n+=v*m;used=true}}return used?Number(n.toFixed(2)):null};
 function projectionRows(raw){if(Array.isArray(raw))return raw;if(Array.isArray(raw?.players))return raw.players;if(raw&&typeof raw==='object')return Object.values(raw);return[]}
 async function projections(season,week,scoring){
@@ -15,6 +15,7 @@ async function projections(season,week,scoring){
   return{};
 }
 function txByRoster(rows){const out={};for(const tx of rows||[]){const touched=new Set([...(tx?.roster_ids||[]).map(String),...Object.values(tx?.adds||{}).map(String),...Object.values(tx?.drops||{}).map(String)]);for(const id of touched){if(!out[id])out[id]=[];out[id].push({id:String(tx?.transaction_id||''),type:String(tx?.type||'transaction'),status:String(tx?.status||''),adds:Object.keys(tx?.adds||{}),drops:Object.keys(tx?.drops||{}),created:Number(tx?.status_updated||tx?.created)||null})}}return out}
+function matchupComplete(rows){if(!Array.isArray(rows)||!rows.length)return false;const groups=new Map();for(const m of rows){const k=String(m?.matchup_id??'');if(!k)return false;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}return [...groups.values()].every(pair=>pair.length===2&&pair.every(m=>Number.isFinite(Number(m?.points))&&m?.players_points&&Object.keys(m.players_points).length>0))}
 function opponentMap(matchups){const groups=new Map(),out={};for(const m of matchups||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}for(const rows of groups.values())if(rows.length===2){out[String(rows[0].roster_id)]=String(rows[1].roster_id);out[String(rows[1].roster_id)]=String(rows[0].roster_id)}return out}
 async function weeklyReport(){
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
@@ -22,16 +23,10 @@ async function weeklyReport(){
  // Sleeper's roster W/L update is the completion signal. Do not publish merely because matchup points look final,
  // and do not require Sleeper to advance nfl.week. Compare current roster records with the records implied by
  // completed weeks before the candidate week; the candidate is publishable only when Sleeper has applied every result.
- const candidateWeek=Math.max(1,currentWeek),candidateMatchups=await fetchJson(`${API}/league/${LEAGUE}/matchups/${candidateWeek}`).catch(()=>[]),candidateRosters=await fetchJson(`${API}/league/${LEAGUE}/rosters`).catch(()=>[]);
- const priorWeeks=candidateWeek>1?await Promise.all(Array.from({length:candidateWeek-1},(_,i)=>fetchJson(`${API}/league/${LEAGUE}/matchups/${i+1}`).catch(()=>[]))):[];
- const priorRecord={};for(const rows of priorWeeks)for(const m of rows||[]){const id=String(m?.roster_id||'');if(id&&!priorRecord[id])priorRecord[id]={wins:0,losses:0};}
- const tally=rows=>{const gs=new Map();for(const m of rows||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!gs.has(k))gs.set(k,[]);gs.get(k).push(m)}for(const pair of gs.values())if(pair.length===2&&pair.every(m=>Number.isFinite(Number(m?.points)))){const [a,b]=pair,ai=String(a.roster_id),bi=String(b.roster_id);priorRecord[ai]??={wins:0,losses:0};priorRecord[bi]??={wins:0,losses:0};if(Number(a.points)>Number(b.points)){priorRecord[ai].wins++;priorRecord[bi].losses++}else if(Number(b.points)>Number(a.points)){priorRecord[bi].wins++;priorRecord[ai].losses++}}};
- for(const rows of priorWeeks)tally(rows);
- const expected=JSON.parse(JSON.stringify(priorRecord));const before=JSON.parse(JSON.stringify(priorRecord));
- tally(candidateMatchups);for(const m of candidateMatchups||[]){const id=String(m?.roster_id||'');expected[id]??={wins:0,losses:0};before[id]??={wins:0,losses:0};}
- const candidateComplete=candidateMatchups.length>0&&candidateRosters.length>0&&candidateMatchups.every(m=>{const id=String(m?.roster_id||''),r=candidateRosters.find(x=>String(x?.roster_id||'')===id),e=expected[id];return r&&e&&Number(r?.settings?.wins||0)>=e.wins&&Number(r?.settings?.losses||0)>=e.losses});
- const week=candidateComplete?candidateWeek:Math.max(1,currentWeek-1);
- if(currentWeek<=1&&!candidateComplete)return{available:false,season,week:null,reason:'Week 1 results are final, but the broadcast is waiting for Sleeper to apply each team’s Week 1 win/loss to its roster record.'};
+ const probeWeeks=[...new Set([currentWeek,Math.max(1,currentWeek-1)])];
+ let week=null;
+ for(const w of probeWeeks){const ms=await fetchJson(`${API}/league/${LEAGUE}/matchups/${w}`).catch(()=>[]);if(!matchupComplete(ms))continue;const rs=await fetchJson(`${API}/league/${LEAGUE}/rosters`).catch(()=>[]),prior=w>1?await Promise.all(Array.from({length:w-1},(_,i)=>fetchJson(`${API}/league/${LEAGUE}/matchups/${i+1}`).catch(()=>[]))):[],record={};const tally=rows=>{const g=new Map();for(const m of rows||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!g.has(k))g.set(k,[]);g.get(k).push(m)}for(const pair of g.values())if(pair.length===2){const[a,b]=pair,ai=String(a.roster_id),bi=String(b.roster_id);record[ai]??={wins:0,losses:0};record[bi]??={wins:0,losses:0};if(Number(a.points)>Number(b.points)){record[ai].wins++;record[bi].losses++}else if(Number(b.points)>Number(a.points)){record[bi].wins++;record[ai].losses++}}};for(const p of prior)tally(p);tally(ms);const applied=ms.every(m=>{const r=rs.find(x=>String(x.roster_id)===String(m.roster_id)),x=record[String(m.roster_id)];return r&&x&&Number(r?.settings?.wins||0)>=x.wins&&Number(r?.settings?.losses||0)>=x.losses});if(applied){week=w;break}}
+ if(!week)return{available:false,season,week:null,reason:'The Fleeced! Inquirer is waiting for Sleeper to publish complete player scoring and apply every finished matchup to team records.'};
  const [matchups,transactions,rosters,users,proj,players,nextMatchups]=await Promise.all([
   fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`),fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>[]),
   fetchJson(`${API}/league/${LEAGUE}/rosters`),fetchJson(`${API}/league/${LEAGUE}/users`),projections(season,week,league?.scoring_settings||{}),

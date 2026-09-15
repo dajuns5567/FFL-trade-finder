@@ -19,13 +19,19 @@ function opponentMap(matchups){const groups=new Map(),out={};for(const m of matc
 async function weeklyReport(){
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
  const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1;
- // Publish from completed matchup data, not from Sleeper advancing its global week counter.
- // A scoring week is complete once every matchup has two teams and both teams have final points.
- const candidateWeek=Math.max(1,currentWeek),candidateMatchups=await fetchJson(`${API}/league/${LEAGUE}/matchups/${candidateWeek}`).catch(()=>[]);
- const groups=new Map();for(const m of candidateMatchups||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}
- const candidateComplete=groups.size>0&&[...groups.values()].every(rows=>rows.length===2&&rows.every(m=>Number.isFinite(Number(m?.points))));
+ // Sleeper's roster W/L update is the completion signal. Do not publish merely because matchup points look final,
+ // and do not require Sleeper to advance nfl.week. Compare current roster records with the records implied by
+ // completed weeks before the candidate week; the candidate is publishable only when Sleeper has applied every result.
+ const candidateWeek=Math.max(1,currentWeek),candidateMatchups=await fetchJson(`${API}/league/${LEAGUE}/matchups/${candidateWeek}`).catch(()=>[]),candidateRosters=await fetchJson(`${API}/league/${LEAGUE}/rosters`).catch(()=>[]);
+ const priorWeeks=candidateWeek>1?await Promise.all(Array.from({length:candidateWeek-1},(_,i)=>fetchJson(`${API}/league/${LEAGUE}/matchups/${i+1}`).catch(()=>[]))):[];
+ const priorRecord={};for(const rows of priorWeeks)for(const m of rows||[]){const id=String(m?.roster_id||'');if(id&&!priorRecord[id])priorRecord[id]={wins:0,losses:0};}
+ const tally=rows=>{const gs=new Map();for(const m of rows||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!gs.has(k))gs.set(k,[]);gs.get(k).push(m)}for(const pair of gs.values())if(pair.length===2&&pair.every(m=>Number.isFinite(Number(m?.points)))){const [a,b]=pair,ai=String(a.roster_id),bi=String(b.roster_id);priorRecord[ai]??={wins:0,losses:0};priorRecord[bi]??={wins:0,losses:0};if(Number(a.points)>Number(b.points)){priorRecord[ai].wins++;priorRecord[bi].losses++}else if(Number(b.points)>Number(a.points)){priorRecord[bi].wins++;priorRecord[ai].losses++}}};
+ for(const rows of priorWeeks)tally(rows);
+ const expected=JSON.parse(JSON.stringify(priorRecord));const before=JSON.parse(JSON.stringify(priorRecord));
+ tally(candidateMatchups);for(const m of candidateMatchups||[]){const id=String(m?.roster_id||'');expected[id]??={wins:0,losses:0};before[id]??={wins:0,losses:0};}
+ const candidateComplete=candidateMatchups.length>0&&candidateRosters.length>0&&candidateMatchups.every(m=>{const id=String(m?.roster_id||''),r=candidateRosters.find(x=>String(x?.roster_id||'')===id),e=expected[id];return r&&e&&Number(r?.settings?.wins||0)>=e.wins&&Number(r?.settings?.losses||0)>=e.losses});
  const week=candidateComplete?candidateWeek:Math.max(1,currentWeek-1);
- if(currentWeek<=1&&!candidateComplete)return{available:false,season,week:null,reason:'Week 1 is still in progress. The broadcast publishes as soon as all Week 1 matchup results are final.'};
+ if(currentWeek<=1&&!candidateComplete)return{available:false,season,week:null,reason:'Week 1 results are final, but the broadcast is waiting for Sleeper to apply each team’s Week 1 win/loss to its roster record.'};
  const [matchups,transactions,rosters,users,proj,players,nextMatchups]=await Promise.all([
   fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`),fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>[]),
   fetchJson(`${API}/league/${LEAGUE}/rosters`),fetchJson(`${API}/league/${LEAGUE}/users`),projections(season,week,league?.scoring_settings||{}),

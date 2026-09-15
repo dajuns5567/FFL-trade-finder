@@ -604,6 +604,7 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));b.classList.add("active");
   document.querySelectorAll(".tab").forEach(x=>x.hidden=x.id!==b.dataset.tab);
   if(b.dataset.tab==="finder")renderFinderShop();
+  document.dispatchEvent(new CustomEvent("fll:tabchange",{detail:{tab:b.dataset.tab}}));
 });
 boot();
 </script>

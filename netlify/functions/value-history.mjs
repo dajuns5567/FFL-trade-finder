@@ -75,12 +75,15 @@ const V381_BAD_WINDOW=[Date.parse('2026-09-10T03:20:00.000Z'),Date.parse('2026-0
 const V391_CLEANUP_KEY='maintenance/v391-remove-20260909-235110-history.json';
 const V486_CLEANUP_KEY='maintenance/v486-remove-partial-consensus-after-20260915-0100-et.json';
 const V486_BAD_FROM_MS=Date.parse('2026-09-15T05:00:00.000Z');
+// This was a one-time contamination interval, not a permanent cutoff. Future
+// headless/page-load/manual snapshots must continue to be accepted and tracked.
+const V486_BAD_UNTIL_MS=Date.parse('2026-09-15T05:30:00.000Z');
 const V391_BAD_WINDOW=[Date.parse('2026-09-10T03:51:00.000Z'),Date.parse('2026-09-10T03:52:00.000Z')];
 const isInWindow=(t,[a,b])=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=a&&ms<b};
 const isV380BadTime=t=>isInWindow(t,V380_BAD_WINDOW);
 const isV381BadTime=t=>isInWindow(t,V381_BAD_WINDOW);
 const isV391BadTime=t=>isInWindow(t,V391_BAD_WINDOW);
-const isV486BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V486_BAD_FROM_MS};
+const isV486BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V486_BAD_FROM_MS&&ms<V486_BAD_UNTIL_MS};
 const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t);
 
 function cleanRows(rows){

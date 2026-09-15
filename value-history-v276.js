@@ -800,7 +800,7 @@ function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else rend
 window.openTradeHistoryTradeV452=function(id){
   const key=String(id||'');if(!key)return;
   tradeTeamFilter='';tradeYearFilter='';tradeMonthFilter='';
-  const show=()=>{const trade=(tradeHistoryCache?.trades||[]).find(t=>tradeStateKey(t)===key||String(t?.id||t?.transaction_id||'')===key);if(!trade)return;const k=tradeStateKey(trade);tradeDetailState.set(k,{hindsight:true,original:false});renderTradeHistory();requestAnimationFrame(()=>{const el=[...document.querySelectorAll('[data-vh-trade-card-id]')].find(x=>x.dataset.vhTradeCardId===k);el?.scrollIntoView({behavior:'smooth',block:'center'});el?.classList.add('vh-trade-focus');setTimeout(()=>el?.classList.remove('vh-trade-focus'),2200)})};
+  const show=()=>{const trade=(tradeHistoryCache?.trades||[]).find(t=>tradeStateKey(t)===key||String(t?.id||t?.transaction_id||'')===key);if(!trade)return;const k=tradeStateKey(trade);tradeDetailState.set(k,{hindsight:true,original:false});renderTradeHistory();requestAnimationFrame(()=>{const el=[...document.querySelectorAll('[data-vh-trade-card-id]')].find(x=>x.dataset.vhTradeCardId===k);if(!el)return;const top=Math.max(0,window.scrollY+el.getBoundingClientRect().top-110);window.scrollTo({top,behavior:'auto'});el.classList.add('vh-trade-focus');setTimeout(()=>el.classList.remove('vh-trade-focus'),2200)})};
   if(!tradeHistoryCache)tradeHistoryFetch().then(show).catch(()=>{});else show();
 };
 function renderTradeHistory(){

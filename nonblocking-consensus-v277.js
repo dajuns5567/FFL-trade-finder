@@ -12,7 +12,7 @@ async function refreshConsensusBackground277(run){
     window.__fllConsensusRefresh={complete:true,ok:Number(consensusCount)>=7,successful:Number(consensusCount)||0,total:7,completedAt:new Date().toISOString()};
     state.lastUpdate=new Date().toISOString();
     cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
-    status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data and team projections ready; consensus sources: <b>${consensusCount}/7</b> refreshed.`,'success');
+    status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data and team projections ready; consensus sources: <b>${consensusCount}/7</b> freshly refreshed. See Consensus Refresh Diagnostics for any last-known-good fallback.`,'success');
   }catch(e){
     if(run!==consensusRun277)return;
     console.warn('Background consensus refresh failed',e);

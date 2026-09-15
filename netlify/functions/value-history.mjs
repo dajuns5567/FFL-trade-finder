@@ -717,6 +717,7 @@ export default async (req)=>{
       try{await scrubV391RequestedTimestamp(s)}catch(e){console.warn('v391-history-scrub',e)}
       try{await scrubV486PartialConsensus(s)}catch(e){console.warn('v486-history-scrub',e)}
       try{await scrubV487RequestedTimestamp(s)}catch(e){console.warn('v487-history-scrub',e)}
+      try{await scrubV490RequestedInterval(s)}catch(e){console.warn('v490-history-scrub',e)}
     }
     if(req.method==='GET'){
       if(url.searchParams.get('archive_export')==='1'){

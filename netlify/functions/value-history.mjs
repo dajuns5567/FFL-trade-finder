@@ -77,7 +77,7 @@ const V486_CLEANUP_KEY='maintenance/v486-remove-partial-consensus-after-20260915
 const V486_BAD_FROM_MS=Date.parse('2026-09-15T05:00:00.000Z');
 // This was a one-time contamination interval, not a permanent cutoff. Future
 // headless/page-load/manual snapshots must continue to be accepted and tracked.
-const V486_BAD_UNTIL_MS=Date.parse('2026-09-15T05:30:00.000Z');
+const V486_BAD_UNTIL_MS=Date.parse('2026-09-15T05:35:00.000Z');
 const V391_BAD_WINDOW=[Date.parse('2026-09-10T03:51:00.000Z'),Date.parse('2026-09-10T03:52:00.000Z')];
 const isInWindow=(t,[a,b])=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=a&&ms<b};
 const isV380BadTime=t=>isInWindow(t,V380_BAD_WINDOW);
@@ -278,7 +278,7 @@ async function scrubV486PartialConsensus(s){
   const last=keep[keep.length-1]||null;
   if(last){const snap=await safeGet(s,last.key);if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows),key:last.key,count:snap.rows.length,source:snap.source||null}),120)}
   else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
-  const result={done:true,from:'2026-09-15 01:00 EDT',removed:bad.length,completedAt:new Date().toISOString()};
+  const result={done:true,from:'2026-09-15 01:00 EDT',through:'2026-09-15 01:35 EDT',removed:bad.length,completedAt:new Date().toISOString()};
   await retry(()=>s.setJSON(V486_CLEANUP_KEY,result),120);return result;
 }
 async function latestFallback(s,playerId){

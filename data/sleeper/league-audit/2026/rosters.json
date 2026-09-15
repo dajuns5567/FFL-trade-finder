@@ -7,7 +7,9 @@
       "allow_pn_inactive_starters": "off",
       "allow_pn_player_injury_status": "off",
       "allow_pn_scoring": "off",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "L",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1L"
     },
     "owner_id": "600447396530413568",
     "player_map": null,
@@ -41,9 +43,13 @@
     "roster_id": 1,
     "settings": {
       "division": 1,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 51,
+      "fpts_against": 89,
+      "fpts_against_decimal": 72,
+      "fpts_decimal": 62,
+      "losses": 1,
+      "ppts": 71,
+      "ppts_decimal": 68,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -74,6 +80,7 @@
       "p_nick_8139": "Zeus",
       "p_nick_12596": "Mad Max",
       "p_nick_10917": "Brigham Young U",
+      "record": "L",
       "p_nick_5840": "One And The Same",
       "p_nick_9756": "BAC to the Future",
       "p_nick_7543": "Ass Etn Szn",
@@ -108,6 +115,7 @@
       "p_nick_8112": "6 God",
       "allow_pn_inactive_starters": "on",
       "p_nick_5086": "Scan’t Touch This",
+      "streak": "1L",
       "p_nick_8676": "Rosh Hashanah",
       "p_nick_827": "Taylor Park Boys",
       "p_nick_4988": "Scrub-a-Dub-Chubb",
@@ -152,9 +160,13 @@
     "roster_id": 2,
     "settings": {
       "division": 1,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 99,
+      "fpts_against": 102,
+      "fpts_against_decimal": 16,
+      "fpts_decimal": 10,
+      "losses": 1,
+      "ppts": 120,
+      "ppts_decimal": 90,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": -11,
@@ -181,7 +193,10 @@
     "co_owners": null,
     "keepers": null,
     "league_id": "1316867686394769408",
-    "metadata": null,
+    "metadata": {
+      "record": "W",
+      "streak": "1W"
+    },
     "owner_id": "712323182941536256",
     "player_map": null,
     "players": [
@@ -209,14 +224,18 @@
     "roster_id": 3,
     "settings": {
       "division": 1,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 93,
+      "fpts_against": 86,
+      "fpts_against_decimal": 68,
+      "fpts_decimal": 97,
       "losses": 0,
+      "ppts": 159,
+      "ppts_decimal": 92,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 11,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "6790",
@@ -251,7 +270,9 @@
       "p_nick_6872": "Patriot unfortunately ",
       "p_nick_8210": "Who",
       "p_nick_9753": "Full Charb",
-      "p_nick_9754": "Bum"
+      "p_nick_9754": "Bum",
+      "record": "L",
+      "streak": "1L"
     },
     "owner_id": "1114320606398423040",
     "player_map": null,
@@ -277,9 +298,13 @@
     "roster_id": 4,
     "settings": {
       "division": 1,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 61,
+      "fpts_against": 89,
+      "fpts_against_decimal": 82,
+      "fpts_decimal": 30,
+      "losses": 1,
+      "ppts": 84,
+      "ppts_decimal": 0,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -302,38 +327,40 @@
     "keepers": null,
     "league_id": "1316867686394769408",
     "metadata": {
-      "allow_pn_inactive_starters": "on",
+      "record": "W",
+      "p_nick_9228": "Would dive for the ball",
       "allow_pn_player_injury_status": "on",
+      "p_nick_4999": "Kimbo Slice",
       "allow_pn_scoring": "on",
-      "p_nick_10883": "Bum",
-      "p_nick_10892": "The Holy Spirit",
-      "p_nick_11604": "White Jesus",
+      "p_nick_11651": "Geranimo",
+      "p_nick_1339": "Wyocum3 sr.",
+      "p_nick_9506": "The franchise",
       "p_nick_11617": "Hasnt earned a nickname",
       "p_nick_11619": "Trash",
-      "p_nick_11626": "GOAT",
-      "p_nick_11651": "Geranimo",
-      "p_nick_11662": "CDs Dad (1 reception 5 yds)",
-      "p_nick_12718": "Puka 2.0",
-      "p_nick_13322": "Lovelands Replacement",
-      "p_nick_1339": "Wyocum3 sr.",
-      "p_nick_3286": "Pearsalls replacement",
-      "p_nick_4080": "On the block",
-      "p_nick_4999": "Kimbo Slice",
-      "p_nick_5284": "The Father",
-      "p_nick_5870": "Kay Adams Baby Daddy",
-      "p_nick_6794": "Black Jesus",
-      "p_nick_6803": "I hate you",
-      "p_nick_7496": "3rd rounder",
-      "p_nick_7596": "Wr1",
-      "p_nick_7648": "Buff tyreek",
+      "restrict_pn_scoring_starters_only": "on",
       "p_nick_7671": "St. BJ",
       "p_nick_8142": "Pierced TDs",
-      "p_nick_8155": "Better than Jefferson",
-      "p_nick_9228": "Would dive for the ball",
-      "p_nick_9506": "The franchise",
-      "p_nick_9753": "Better than Kyren",
+      "p_nick_7648": "Buff tyreek",
+      "p_nick_6794": "Black Jesus",
+      "p_nick_6803": "I hate you",
       "p_nick_9754": "Ladd’s dad",
-      "restrict_pn_scoring_starters_only": "on"
+      "p_nick_11604": "White Jesus",
+      "p_nick_8155": "Better than Jefferson",
+      "allow_pn_inactive_starters": "on",
+      "p_nick_5284": "The Father",
+      "streak": "1W",
+      "p_nick_10892": "The Holy Spirit",
+      "p_nick_9753": "Better than Kyren",
+      "p_nick_3286": "Pearsalls replacement",
+      "p_nick_12718": "Puka 2.0",
+      "p_nick_13322": "Lovelands Replacement",
+      "p_nick_7496": "3rd rounder",
+      "p_nick_11626": "GOAT",
+      "p_nick_7596": "Wr1",
+      "p_nick_10883": "Bum",
+      "p_nick_4080": "On the block",
+      "p_nick_11662": "CDs Dad (1 reception 5 yds)",
+      "p_nick_5870": "Kay Adams Baby Daddy"
     },
     "owner_id": "1114297344201166848",
     "player_map": null,
@@ -363,19 +390,23 @@
     "roster_id": 5,
     "settings": {
       "division": 2,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 115,
+      "fpts_against": 98,
+      "fpts_against_decimal": 0,
+      "fpts_decimal": 4,
       "losses": 0,
+      "ppts": 120,
+      "ppts_decimal": 34,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 102,
       "waiver_position": 32,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "8155",
       "8142",
-      "7090",
+      "11604",
       "9486",
       "9228",
       "5816",
@@ -392,7 +423,10 @@
     "co_owners": null,
     "keepers": null,
     "league_id": "1316867686394769408",
-    "metadata": null,
+    "metadata": {
+      "record": "L",
+      "streak": "1L"
+    },
     "owner_id": "992186817011044352",
     "player_map": null,
     "players": [
@@ -418,9 +452,13 @@
     "roster_id": 6,
     "settings": {
       "division": 2,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 66,
+      "fpts_against": 83,
+      "fpts_against_decimal": 60,
+      "fpts_decimal": 84,
+      "losses": 1,
+      "ppts": 98,
+      "ppts_decimal": 90,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -461,7 +499,9 @@
       "p_nick_6218": "I love cocaine",
       "p_nick_6820": "PTSD is not a joke",
       "p_nick_7641": "Shot his teammate",
-      "p_nick_8119": "Gives me PTSD"
+      "p_nick_8119": "Gives me PTSD",
+      "record": "W",
+      "streak": "1W"
     },
     "owner_id": "710560632327454720",
     "player_map": null,
@@ -492,14 +532,18 @@
     "roster_id": 7,
     "settings": {
       "division": 2,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 55,
+      "fpts_against": 35,
+      "fpts_against_decimal": 30,
+      "fpts_decimal": 46,
       "losses": 0,
+      "ppts": 89,
+      "ppts_decimal": 6,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 19,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "4035",
@@ -519,7 +563,10 @@
     "co_owners": null,
     "keepers": null,
     "league_id": "1316867686394769408",
-    "metadata": null,
+    "metadata": {
+      "record": "W",
+      "streak": "1W"
+    },
     "owner_id": "713540242640035840",
     "player_map": null,
     "players": [
@@ -542,14 +589,18 @@
     "roster_id": 8,
     "settings": {
       "division": 2,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 92,
+      "fpts_against": 86,
+      "fpts_against_decimal": 10,
+      "fpts_decimal": 90,
       "losses": 0,
+      "ppts": 94,
+      "ppts_decimal": 80,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 6,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "9226",
@@ -573,7 +624,9 @@
       "allow_pn_player_injury_status": "off",
       "allow_pn_scoring": "off",
       "p_nick_11703": "Waddup Big Pimpin?",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "L",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1L"
     },
     "owner_id": "600422464798912512",
     "player_map": null,
@@ -600,9 +653,13 @@
     "roster_id": 9,
     "settings": {
       "division": 3,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 87,
+      "fpts_against": 151,
+      "fpts_against_decimal": 51,
+      "fpts_decimal": 54,
+      "losses": 1,
+      "ppts": 102,
+      "ppts_decimal": 34,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -650,7 +707,9 @@
       "p_nick_7648": "Lightning Bolton",
       "p_nick_8150": "The Dogpound",
       "p_nick_9500": "Slot Merchant",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "W",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1W"
     },
     "owner_id": "867991923552579584",
     "player_map": null,
@@ -677,14 +736,18 @@
     "roster_id": 10,
     "settings": {
       "division": 3,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 80,
+      "fpts_against": 24,
+      "fpts_against_decimal": 90,
+      "fpts_decimal": 6,
       "losses": 0,
+      "ppts": 110,
+      "ppts_decimal": 26,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 4,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "13286",
@@ -706,7 +769,10 @@
     "co_owners": null,
     "keepers": null,
     "league_id": "1316867686394769408",
-    "metadata": null,
+    "metadata": {
+      "record": "L",
+      "streak": "1L"
+    },
     "owner_id": "859609459952074752",
     "player_map": null,
     "players": [
@@ -735,9 +801,13 @@
     "roster_id": 11,
     "settings": {
       "division": 3,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 52,
+      "fpts_against": 60,
+      "fpts_against_decimal": 26,
+      "fpts_decimal": 60,
+      "losses": 1,
+      "ppts": 63,
+      "ppts_decimal": 0,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -773,7 +843,9 @@
       "p_nick_5872": "Laegue Winner",
       "p_nick_7527": "Better than Purdy",
       "p_nick_8131": "TE1",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "W",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1W"
     },
     "owner_id": "1129152499471986688",
     "player_map": null,
@@ -800,15 +872,19 @@
     "roster_id": 12,
     "settings": {
       "division": 3,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 114,
+      "fpts_against": 78,
+      "fpts_against_decimal": 80,
+      "fpts_decimal": 89,
       "locked": 0,
       "losses": 0,
+      "ppts": 127,
+      "ppts_decimal": 89,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": -33,
       "waiver_position": 8,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "12533",
@@ -831,6 +907,7 @@
     "keepers": null,
     "league_id": "1316867686394769408",
     "metadata": {
+      "record": "W",
       "p_nick_7600": "Smash Muth",
       "p_nick_5297": "Wittiness Ran Out",
       "p_nick_8333": "ALawrence Taylor",
@@ -860,6 +937,7 @@
       "p_nick_6183": "2intheGink1intheStink",
       "allow_pn_inactive_starters": "on",
       "p_nick_6056": "Tore Achiles (on the sideline)",
+      "streak": "1W",
       "p_nick_8363": "Jackie Moon",
       "p_nick_4968": "TreWay",
       "p_nick_5375": "Jordan Blackhead",
@@ -904,14 +982,18 @@
     "roster_id": 13,
     "settings": {
       "division": 4,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 121,
+      "fpts_against": 118,
+      "fpts_against_decimal": 66,
+      "fpts_decimal": 64,
       "losses": 0,
+      "ppts": 131,
+      "ppts_decimal": 44,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 53,
       "waiver_position": 26,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "7588",
@@ -939,7 +1021,9 @@
       "allow_pn_scoring": "on",
       "p_nick_13289": "Franchise QB",
       "p_nick_2216": "2027 first gets him",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "L",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1L"
     },
     "owner_id": "848753504037216256",
     "player_map": null,
@@ -973,9 +1057,13 @@
     "roster_id": 14,
     "settings": {
       "division": 4,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 7,
+      "fpts_against": 81,
+      "fpts_against_decimal": 26,
+      "fpts_decimal": 90,
+      "losses": 1,
+      "ppts": 7,
+      "ppts_decimal": 90,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -1020,7 +1108,9 @@
       "p_nick_8204": "Shake Melton",
       "p_nick_8254": "Not Joey",
       "p_nick_8392": "Criss Cross Applesauce",
-      "p_nick_9487": "Tahj’s Brother"
+      "p_nick_9487": "Tahj’s Brother",
+      "record": "L",
+      "streak": "1L"
     },
     "owner_id": "1227400338441523200",
     "player_map": null,
@@ -1045,9 +1135,13 @@
     "roster_id": 15,
     "settings": {
       "division": 4,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 8,
+      "fpts_against": 104,
+      "fpts_against_decimal": 47,
+      "fpts_decimal": 40,
+      "losses": 1,
+      "ppts": 31,
+      "ppts_decimal": 30,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 50,
@@ -1057,7 +1151,7 @@
     "starters": [
       "11570",
       "8204",
-      "0",
+      "12641",
       "11588",
       "13380",
       "13360",
@@ -1079,7 +1173,9 @@
       "allow_pn_scoring": "off",
       "p_nick_5041": "1 first  ",
       "p_nick_8155": "Wont Trade",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "L",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1L"
     },
     "owner_id": "987377632494825472",
     "player_map": null,
@@ -1106,9 +1202,13 @@
     "roster_id": 16,
     "settings": {
       "division": 4,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 98,
+      "fpts_against": 117,
+      "fpts_against_decimal": 56,
+      "fpts_decimal": 80,
+      "losses": 1,
+      "ppts": 118,
+      "ppts_decimal": 70,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -1135,7 +1235,10 @@
     "co_owners": null,
     "keepers": null,
     "league_id": "1316867686394769408",
-    "metadata": null,
+    "metadata": {
+      "record": "W",
+      "streak": "1W"
+    },
     "owner_id": "1118948474361401344",
     "player_map": null,
     "players": [
@@ -1157,14 +1260,18 @@
     "roster_id": 17,
     "settings": {
       "division": 5,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 89,
+      "fpts_against": 61,
+      "fpts_against_decimal": 30,
+      "fpts_decimal": 82,
       "losses": 0,
+      "ppts": 91,
+      "ppts_decimal": 32,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 20,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "7543",
@@ -1196,7 +1303,9 @@
       "p_nick_6945": "Guitar Hero",
       "p_nick_8137": "Lil Picky",
       "p_nick_8148": "Whiskey",
-      "p_nick_9501": "D’Mario Party"
+      "p_nick_9501": "D’Mario Party",
+      "record": "W",
+      "streak": "1W"
     },
     "owner_id": "411324970589757440",
     "player_map": null,
@@ -1225,14 +1334,18 @@
     "roster_id": 18,
     "settings": {
       "division": 5,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 89,
+      "fpts_against": 51,
+      "fpts_against_decimal": 62,
+      "fpts_decimal": 72,
       "losses": 0,
+      "ppts": 107,
+      "ppts_decimal": 70,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 10,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "8151",
@@ -1255,7 +1368,9 @@
     "league_id": "1316867686394769408",
     "metadata": {
       "p_nick_8289": "Aisan Hutchinson",
-      "p_nick_9504": "Charmin Strong"
+      "p_nick_9504": "Charmin Strong",
+      "record": "W",
+      "streak": "1W"
     },
     "owner_id": "1119001231508373504",
     "player_map": null,
@@ -1288,14 +1403,18 @@
     "roster_id": 19,
     "settings": {
       "division": 5,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 102,
+      "fpts_against": 99,
+      "fpts_against_decimal": 10,
+      "fpts_decimal": 16,
       "losses": 0,
+      "ppts": 118,
+      "ppts_decimal": 86,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 29,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "11581",
@@ -1321,7 +1440,9 @@
       "allow_pn_inactive_starters": "on",
       "allow_pn_player_injury_status": "on",
       "allow_pn_scoring": "off",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "L",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1L"
     },
     "owner_id": "1233918270512316416",
     "player_map": null,
@@ -1348,9 +1469,13 @@
     "roster_id": 20,
     "settings": {
       "division": 5,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 86,
+      "fpts_against": 93,
+      "fpts_against_decimal": 97,
+      "fpts_decimal": 68,
+      "losses": 1,
+      "ppts": 120,
+      "ppts_decimal": 28,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -1381,7 +1506,9 @@
       "allow_pn_inactive_starters": "on",
       "allow_pn_player_injury_status": "on",
       "allow_pn_scoring": "on",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "W",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1W"
     },
     "owner_id": "464475491546427392",
     "player_map": null,
@@ -1390,7 +1517,6 @@
       "11557",
       "11576",
       "11674",
-      "12476",
       "12531",
       "12573",
       "13275",
@@ -1407,20 +1533,23 @@
       "8144"
     ],
     "reserve": [
-      "12476",
       "12531"
     ],
     "roster_id": 21,
     "settings": {
       "division": 6,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 83,
+      "fpts_against": 66,
+      "fpts_against_decimal": 84,
+      "fpts_decimal": 60,
       "losses": 0,
+      "ppts": 113,
+      "ppts_decimal": 10,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 9,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "5892",
@@ -1446,6 +1575,7 @@
       "p_nick_11676": "Spedelelelelele",
       "p_nick_6118": "The fat brother",
       "p_nick_11562": "Na na na na na Ratman",
+      "record": "L",
       "p_nick_9505": "4 foot 2",
       "p_nick_4082": "Kevin Curtis",
       "p_nick_4149": "Bourbon Street",
@@ -1484,6 +1614,7 @@
       "p_nick_10970": "Ta tas",
       "p_nick_12738": "RB1",
       "p_nick_11643": "RB1",
+      "streak": "1L",
       "p_nick_96": "I told jake",
       "p_nick_5864": "To name emeka",
       "p_nick_13240": "RB5",
@@ -1537,10 +1668,14 @@
     "roster_id": 22,
     "settings": {
       "division": 6,
-      "fpts": 0,
+      "fpts": 98,
+      "fpts_against": 115,
+      "fpts_against_decimal": 4,
       "fpts_decimal": 0,
       "locked": 0,
-      "losses": 0,
+      "losses": 1,
+      "ppts": 120,
+      "ppts_decimal": 90,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -1567,7 +1702,10 @@
     "co_owners": null,
     "keepers": null,
     "league_id": "1316867686394769408",
-    "metadata": null,
+    "metadata": {
+      "record": "L",
+      "streak": "1L"
+    },
     "owner_id": "1118961997346873344",
     "player_map": null,
     "players": [
@@ -1591,9 +1729,13 @@
     "roster_id": 23,
     "settings": {
       "division": 6,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 35,
+      "fpts_against": 55,
+      "fpts_against_decimal": 46,
+      "fpts_decimal": 30,
+      "losses": 1,
+      "ppts": 72,
+      "ppts_decimal": 5,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -1623,7 +1765,9 @@
       "allow_pn_player_injury_status": "off",
       "allow_pn_scoring": "off",
       "p_nick_5970": "Dorture Chamber",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "L",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1L"
     },
     "owner_id": "858596140008984576",
     "player_map": null,
@@ -1656,9 +1800,13 @@
     "roster_id": 24,
     "settings": {
       "division": 6,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 86,
+      "fpts_against": 92,
+      "fpts_against_decimal": 90,
+      "fpts_decimal": 10,
+      "losses": 1,
+      "ppts": 144,
+      "ppts_decimal": 20,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -1688,7 +1836,9 @@
       "allow_pn_inactive_starters": "on",
       "allow_pn_player_injury_status": "on",
       "allow_pn_scoring": "on",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "L",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1L"
     },
     "owner_id": "993238021132660736",
     "player_map": null,
@@ -1718,9 +1868,13 @@
     "roster_id": 25,
     "settings": {
       "division": 7,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 24,
+      "fpts_against": 80,
+      "fpts_against_decimal": 6,
+      "fpts_decimal": 90,
+      "losses": 1,
+      "ppts": 59,
+      "ppts_decimal": 60,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
@@ -1747,7 +1901,10 @@
     "co_owners": null,
     "keepers": null,
     "league_id": "1316867686394769408",
-    "metadata": null,
+    "metadata": {
+      "record": "W",
+      "streak": "1W"
+    },
     "owner_id": "1132798349075476480",
     "player_map": null,
     "players": [
@@ -1775,14 +1932,18 @@
     "roster_id": 26,
     "settings": {
       "division": 7,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 60,
+      "fpts_against": 52,
+      "fpts_against_decimal": 60,
+      "fpts_decimal": 26,
       "losses": 0,
+      "ppts": 81,
+      "ppts_decimal": 96,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 18,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "12481",
@@ -1825,7 +1986,9 @@
       "p_nick_7594": "Chuba Missile Crisis",
       "p_nick_7608": "Saints Legend",
       "p_nick_8408": "Spooky Jordan Mason",
-      "p_nick_9488": "OPOTY"
+      "p_nick_9488": "OPOTY",
+      "record": "W",
+      "streak": "1W"
     },
     "owner_id": "865264007848808448",
     "player_map": null,
@@ -1852,14 +2015,18 @@
     "roster_id": 27,
     "settings": {
       "division": 7,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 151,
+      "fpts_against": 87,
+      "fpts_against_decimal": 54,
+      "fpts_decimal": 51,
       "losses": 0,
+      "ppts": 161,
+      "ppts_decimal": 81,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 5,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "7594",
@@ -1885,7 +2052,9 @@
       "allow_pn_inactive_starters": "on",
       "allow_pn_player_injury_status": "on",
       "allow_pn_scoring": "on",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "L",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1L"
     },
     "owner_id": "600418187745492992",
     "player_map": null,
@@ -1916,9 +2085,13 @@
     "roster_id": 28,
     "settings": {
       "division": 7,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 78,
+      "fpts_against": 114,
+      "fpts_against_decimal": 89,
+      "fpts_decimal": 80,
+      "losses": 1,
+      "ppts": 96,
+      "ppts_decimal": 30,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 1,
@@ -1944,7 +2117,10 @@
     "co_owners": null,
     "keepers": null,
     "league_id": "1316867686394769408",
-    "metadata": null,
+    "metadata": {
+      "record": "W",
+      "streak": "1W"
+    },
     "owner_id": "1117219210041643008",
     "player_map": null,
     "players": [
@@ -1966,14 +2142,18 @@
     "roster_id": 29,
     "settings": {
       "division": 8,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 117,
+      "fpts_against": 98,
+      "fpts_against_decimal": 80,
+      "fpts_decimal": 56,
       "losses": 0,
+      "ppts": 117,
+      "ppts_decimal": 56,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 7,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "3198",
@@ -1995,7 +2175,9 @@
       "allow_pn_player_injury_status": "on",
       "allow_pn_scoring": "on",
       "p_nick_8142": "Capable Caucasian",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "W",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1W"
     },
     "owner_id": "1114225229640945664",
     "player_map": null,
@@ -2020,14 +2202,18 @@
     "roster_id": 30,
     "settings": {
       "division": 8,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 104,
+      "fpts_against": 8,
+      "fpts_against_decimal": 40,
+      "fpts_decimal": 47,
       "losses": 0,
+      "ppts": 116,
+      "ppts_decimal": 45,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 13,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "8138",
@@ -2049,6 +2235,7 @@
     "league_id": "1316867686394769408",
     "metadata": {
       "p_nick_4135": "Better than Hutchinson",
+      "record": "L",
       "p_nick_13363": "1.02",
       "p_nick_11579": "Better than Dobbins",
       "p_nick_4035": "Kamala",
@@ -2079,6 +2266,7 @@
       "p_nick_19": "Old GOAT",
       "p_nick_843": "Ol Reliable",
       "p_nick_13320": "Worthy 2.0",
+      "streak": "1L",
       "p_nick_9753": "Better than Kenneth the Menath",
       "p_nick_12478": "Nick Stash",
       "p_nick_5960": "Basically free",
@@ -2130,9 +2318,13 @@
     "roster_id": 31,
     "settings": {
       "division": 8,
-      "fpts": 0,
-      "fpts_decimal": 0,
-      "losses": 0,
+      "fpts": 118,
+      "fpts_against": 121,
+      "fpts_against_decimal": 64,
+      "fpts_decimal": 66,
+      "losses": 1,
+      "ppts": 138,
+      "ppts_decimal": 46,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": -37,
@@ -2163,7 +2355,9 @@
       "allow_pn_inactive_starters": "off",
       "allow_pn_player_injury_status": "off",
       "allow_pn_scoring": "off",
-      "restrict_pn_scoring_starters_only": "on"
+      "record": "W",
+      "restrict_pn_scoring_starters_only": "on",
+      "streak": "1W"
     },
     "owner_id": "1116409937254555648",
     "player_map": null,
@@ -2187,14 +2381,18 @@
     "roster_id": 32,
     "settings": {
       "division": 8,
-      "fpts": 0,
-      "fpts_decimal": 0,
+      "fpts": 81,
+      "fpts_against": 7,
+      "fpts_against_decimal": 90,
+      "fpts_decimal": 26,
       "losses": 0,
+      "ppts": 91,
+      "ppts_decimal": 86,
       "ties": 0,
       "total_moves": 0,
       "waiver_budget_used": 0,
       "waiver_position": 14,
-      "wins": 0
+      "wins": 1
     },
     "starters": [
       "7021",

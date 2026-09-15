@@ -1,27 +1,29 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-15T01:27:03.991Z",
+  "generatedAt": "2026-09-15T07:42:50.789Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
   "currentLeagueStatus": "in_season",
-  "currentSeasonCompletedWeek": 0,
+  "currentSeasonCompletedWeek": 1,
   "productionWeightPlan": {
-    "mode": "preseason-offseason",
-    "completedWeek": 0,
+    "mode": "in-season",
+    "completedWeek": 1,
     "weights": {
-      "currentYear": 0,
-      "previousYear": 0.6,
-      "twoYearsAgo": 0.3,
+      "currentYear": 0.1,
+      "previousYear": 0.55,
+      "twoYearsAgo": 0.25,
       "threeYearsAgo": 0.1
     },
     "yearWeights": {
       "2023": 0.1,
-      "2024": 0.3,
-      "2025": 0.6
+      "2024": 0.25,
+      "2025": 0.55,
+      "2026": 0.1
     }
   },
   "productionSeasons": [
+    2026,
     2025,
     2024,
     2023
@@ -41,6 +43,12 @@
       "players": 2832,
       "withPpr": 938,
       "withGames": 2832
+    },
+    "2026": {
+      "players": 983,
+      "withPpr": 290,
+      "withGames": 983,
+      "currentSeasonQualified": true
     }
   },
   "compactDiagnostics": {
@@ -58,6 +66,13 @@
       "players": 2832,
       "withPpr": 938,
       "withGames": 2832
+    },
+    "2026": {
+      "players": 983,
+      "withPpr": 290,
+      "withGames": 983,
+      "currentSeasonQualified": true,
+      "compactPlayers": 983
     }
   },
   "qualifyingHistoricalSeasonMinimumGames": 8,
@@ -97,26 +112,20 @@
         "LAC",
         "ARI",
         "NYG",
-        "DAL"
+        "DAL",
+        "KC",
+        "DEN"
       ]
     },
     "weekFinalityByWeek": {
       "1": {
         "scheduledGames": 16,
-        "finalGames": 15,
+        "finalGames": 16,
         "ignoredGames": 0,
-        "blockingGames": 1,
-        "complete": false,
+        "blockingGames": 0,
+        "complete": true,
         "nullSlots": [],
         "slots": [
-          {
-            "id": "401872931",
-            "state": "blocking",
-            "teams": [
-              "KC",
-              "DEN"
-            ]
-          },
           {
             "id": "401872656",
             "state": "final",
@@ -236,14 +245,22 @@
               "NYG",
               "DAL"
             ]
+          },
+          {
+            "id": "401872931",
+            "state": "final",
+            "teams": [
+              "KC",
+              "DEN"
+            ]
           }
         ]
       }
     },
     "diagnostics": {
-      "finalGames": 15,
-      "qualifiedPlayerGames": 960,
-      "rejectedPlayerGames": 1195,
+      "finalGames": 16,
+      "qualifiedPlayerGames": 983,
+      "rejectedPlayerGames": 1313,
       "ignoredGames": 0
     }
   },

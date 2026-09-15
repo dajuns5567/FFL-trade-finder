@@ -282,11 +282,13 @@ function rawScore(id){
   return {ppg:best/17,stats:last||{}};
 }
 function consensusRank(id){
-  const n=playerName(id).toLowerCase(),vals=[];
+  const n=playerName(id).toLowerCase(),playerGroup=groupPos({type:"player",id}),vals=[];
   for(const src of Object.values(state.rankings||{})){
+    const kind=String(src?.kind||"").toLowerCase();
+    if(playerGroup==="IDP"&&kind==="offense")continue;
+    if(playerGroup!=="IDP"&&kind==="idp")continue;
     const d=src?.data||{};
     if(d[n]!=null)vals.push(Number(d[n]));
-    else {const k=Object.keys(d).find(k=>k===n||k.includes(n)||n.includes(k));if(k)vals.push(Number(d[k]))}
   }
   return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
 }
@@ -601,6 +603,7 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));b.classList.add("active");
   document.querySelectorAll(".tab").forEach(x=>x.hidden=x.id!==b.dataset.tab);
   if(b.dataset.tab==="finder")renderFinderShop();
+  document.dispatchEvent(new CustomEvent("fll:tabchange",{detail:{tab:b.dataset.tab}}));
 });
 boot();
 </script>

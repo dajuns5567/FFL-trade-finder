@@ -1,0 +1,12 @@
+name: League Hub Syntax Diagnostic
+on:
+  push:
+    branches:
+      - fix/value-history-future-tracking
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse League Hub runtime
+        run: node --check league-hub-v451.js

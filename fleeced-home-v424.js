@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const TAB_ORDER=['home','finder','evaluator','tradeHistory','rankings','valueHistory','league','settings'];
+const TAB_ORDER=['home','finder','evaluator','tradeHistory','rankings','valueHistory','leagueHub','league','settings'];
 const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 

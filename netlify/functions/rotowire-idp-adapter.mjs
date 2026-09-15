@@ -77,7 +77,9 @@ export async function refreshRotowireIdp(opts={}){
     const uniqueRanks=new Set(rows.map(row=>row.rank));
     const maxRank=rows.length?rows[rows.length-1].rank:0;
     const contiguous=rows.length>0&&rows.every((row,index)=>row.rank===index+1);
-    // RotoWire can legitimately contain distinct NFL players with the same normalized name.\n    // Name uniqueness is therefore diagnostic only; the source contract is rank integrity + usable player rows.\n    const valid=rows.length>=MIN_VALID_ROWS&&uniqueRanks.size===rows.length&&contiguous&&rows.every(row=>normalizePlayerName(row.player));
+    // RotoWire can legitimately contain distinct NFL players with the same normalized name.
+    // Name uniqueness is therefore diagnostic only; the source contract is rank integrity + usable player rows.
+    const valid=rows.length>=MIN_VALID_ROWS&&uniqueRanks.size===rows.length&&contiguous&&rows.every(row=>normalizePlayerName(row.player));
     return {
       source:"RotoWire IDP",id:"rotowire-idp",status:valid?"refreshed":"failed",valid,
       format:"2026-idp-cheatsheet",reducedWeight:true,

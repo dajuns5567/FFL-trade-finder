@@ -77,15 +77,15 @@ export async function refreshRotowireIdp(opts={}){
     const uniqueRanks=new Set(rows.map(row=>row.rank));
     const maxRank=rows.length?rows[rows.length-1].rank:0;
     const contiguous=rows.length>0&&rows.every((row,index)=>row.rank===index+1);
-    const valid=rows.length>=MIN_VALID_ROWS&&uniquePlayers.size===rows.length&&uniqueRanks.size===rows.length&&contiguous;
+    // RotoWire can legitimately contain distinct NFL players with the same normalized name.\n    // Name uniqueness is therefore diagnostic only; the source contract is rank integrity + usable player rows.\n    const valid=rows.length>=MIN_VALID_ROWS&&uniqueRanks.size===rows.length&&contiguous&&rows.every(row=>normalizePlayerName(row.player));
     return {
       source:"RotoWire IDP",id:"rotowire-idp",status:valid?"refreshed":"failed",valid,
       format:"2026-idp-cheatsheet",reducedWeight:true,
-      players_extracted:uniquePlayers.size,ranking_rows:rows.length,rankings:rows,
+      players_extracted:rows.length,unique_player_names:uniquePlayers.size,ranking_rows:rows.length,rankings:rows,
       timestamp:now,stage:valid?"validated":"extract",
       error:valid?null:`RotoWire IDP validation failed: ${rows.length} rows, max rank ${maxRank}, contiguous=${contiguous}`,
       urls:[ROTOWIRE_IDP_URL],
-      diagnostics:{parser:"rotowire-rankings-ssr-rich",source_contract:"contiguous-ranks-min-75",minimum_rows:MIN_VALID_ROWS,max_rank:maxRank,contiguous,unique_players:uniquePlayers.size===rows.length,unique_ranks:uniqueRanks.size===rows.length,first_10:rows.slice(0,10),validation_result:valid}
+      diagnostics:{parser:"rotowire-rankings-ssr-rich",source_contract:"contiguous-unique-ranks-min-75-nonempty-player-names",minimum_rows:MIN_VALID_ROWS,max_rank:maxRank,contiguous,unique_player_names:uniquePlayers.size,duplicate_normalized_names:rows.length-uniquePlayers.size,unique_ranks:uniqueRanks.size===rows.length,first_10:rows.slice(0,10),validation_result:valid}
     };
   }catch(error){
     return {

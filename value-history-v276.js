@@ -592,6 +592,7 @@ function retroactiveTradeHistoryPickValue(asset,trade){
   if(!(currentFactor>0))return live;
   return Math.max(0,Math.round((live*historicalFactor/currentFactor)/5)*5);
 }
+window.retroactiveTradeHistoryPickValueV461=retroactiveTradeHistoryPickValue;
 function tradeHistoryEvaluatorValue(asset,trade){
   if(!asset)return null;
   const side=(trade?.sides||[]).find(s=>Number(s?.roster_id)===Number(asset?.owner));

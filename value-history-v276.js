@@ -799,7 +799,7 @@ function tradeCard(trade){
 function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else renderTradeHistory()}
 window.openValueHistoryTeamV458=function(id,showLeagueComparison=false){
  const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');btn?.click();currentView='team';trackedTeamId=String(id||'');syncSubnav();
- const go=()=>{renderTrackMyTeam();if(trackedTeamId){loadTrackedTeam().then(()=>{if(showLeagueComparison)setTimeout(()=>openTeamNetModal(),80)}).catch(()=>{})}};
+ const go=()=>{renderTrackMyTeam();if(trackedTeamId){loadTrackedTeam();if(showLeagueComparison){let n=0,t=setInterval(()=>{n++;if(document.querySelector('[data-vh-team-net-all]')){clearInterval(t);openTeamNetModal()}else if(n>40)clearInterval(t)},100)}}};
  setTimeout(go,80);
 };
 window.openTradeHistoryTeamV455=function(id){

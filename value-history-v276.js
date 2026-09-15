@@ -797,6 +797,11 @@ function tradeCard(trade){
   return`<div class="vh-trade-card ${anyOpen?'vh-trade-expanded':'vh-trade-collapsed'}" data-vh-trade-card-id="${esc(key)}"><div class="vh-trade-head"><div><h4><span class="vh-trade-date">${esc(dateTime(trade.created))}</span> • ${esc(String(trade.season||''))} Trade</h4><div class="vh-sub">${names}</div></div>${trade.trade_snapshot_t?`<small>Historical snapshot: ${esc(dateTime(trade.trade_snapshot_t))}</small>`:''}</div><div class="vh-compact-trade">${(trade.sides||[]).map(side=>compactTradeSide(side,trade)).join('')}</div><div class="vh-trade-toggle-row"><button type="button" class="${open.hindsight?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="hindsight" data-vh-trade-id="${esc(key)}" aria-expanded="${open.hindsight?'true':'false'}">Hindsight</button><button type="button" class="${open.original?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="original" data-vh-trade-id="${esc(key)}" aria-expanded="${open.original?'true':'false'}">Original Trade Analysis</button></div>${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}</div>`
 }
 function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else renderTradeHistory()}
+window.openTradeHistoryTeamV455=function(id){
+  tradeTeamFilter=String(id||'');tradeYearFilter='';tradeMonthFilter='';
+  const show=()=>{renderTradeHistory();requestAnimationFrame(()=>{const sel=document.querySelector('#tradeHistory [data-vh-trade-team]');if(sel)sel.value=tradeTeamFilter;const box=document.getElementById('tradeHistoryContent');if(box){const top=Math.max(0,window.scrollY+box.getBoundingClientRect().top-110);window.scrollTo({top,behavior:'auto'})}})};
+  if(!tradeHistoryCache)tradeHistoryFetch().then(show).catch(()=>{});else show();
+};
 window.openTradeHistoryTradeV452=function(id){
   const key=String(id||'');if(!key)return;
   tradeTeamFilter='';tradeYearFilter='';tradeMonthFilter='';

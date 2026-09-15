@@ -76,7 +76,7 @@ export async function refreshRotowireIdp(opts={}){
     const uniqueRanks=new Set(rows.map(row=>row.rank));
     const maxRank=rows.length?rows[rows.length-1].rank:0;
     const contiguous=rows.length>0&&rows.every((row,index)=>row.rank===index+1);
-    const valid=rows.length>=75&&uniquePlayers.size===rows.length&&uniqueRanks.size===rows.length&&contiguous;
+    // RotoWire currently publishes a complete Top-100 IDP sheet. Validate the source as published\n    // rather than rejecting a clean 100-row list merely because an older expectation assumed deeper pagination.\n    const valid=rows.length>=100&&maxRank===rows.length&&uniquePlayers.size===rows.length&&uniqueRanks.size===rows.length&&contiguous;
     return {
       source:"RotoWire IDP",id:"rotowire-idp",status:valid?"refreshed":"failed",valid,
       format:"2026-idp-cheatsheet",reducedWeight:true,

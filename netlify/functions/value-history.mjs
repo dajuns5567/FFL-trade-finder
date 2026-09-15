@@ -682,6 +682,11 @@ export default async (req)=>{
         const h=await health(s);
         return json(h,h.ok?200:503);
       }
+      if(url.searchParams.get('team_highs')==='1'){
+        const archived=await archiveAllSnapshots().catch(()=>[]),indexed=s?await allItems(s).catch(()=>({items:[]})):{items:[]},live=s?await readSnapshotsBounded(s,indexed.items||[],25).catch(()=>[]):[],snaps=mergeSnapshots(archived,live),highs={};
+        for(const snap of snaps)for(const row of snap?.teams||[]){const id=String(row?.id||''),value=Number(row?.value);if(!id||!Number.isFinite(value))continue;if(!highs[id]||value>highs[id].value)highs[id]={team_id:id,value:Math.round(value),t:snap.t}}
+        return json({team_highs:true,highs:Object.values(highs),snapshot_count:snaps.length,history_state:snaps.length?'ok':'empty'});
+      }
       if(url.searchParams.get('market')==='1'){
         const market=await retry(()=>getMarketSummary(s),180);
         return json({market,history_state:'ok'});

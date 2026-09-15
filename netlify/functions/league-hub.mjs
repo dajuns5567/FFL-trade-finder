@@ -30,7 +30,8 @@ async function weeklyReport(){
  const teams=(matchups||[]).map(m=>{const id=String(m.roster_id),oid=opp[id],o=(matchups||[]).find(x=>String(x.roster_id)===oid),r=rosterById.get(id),u=userById.get(String(r?.owner_id||'')),starters=(m.starters||[]).filter(x=>x&&x!=='0'),points=m.players_points||{},projected=starters.reduce((n,p)=>n+(Number(proj[p])||0),0),projectedKnown=starters.filter(p=>Number.isFinite(Number(proj[p]))).length,bench=(m.players||[]).filter(p=>!starters.includes(p)),bestBench=bench.map(p=>({id:String(p),points:Number(points[p])||0})).sort((a,b)=>b.points-a.points)[0]||null,worstStarter=starters.map(p=>({id:String(p),points:Number(points[p])||0})).sort((a,b)=>a.points-b.points)[0]||null;
   return{roster_id:id,team_name:String(u?.metadata?.team_name||u?.display_name||`Roster ${id}`),opponent_roster_id:oid||null,points:Number(m.points)||0,opponent_points:Number(o?.points)||0,won:o?Number(m.points)>Number(o.points):null,projected:Number(projected.toFixed(2)),projection_coverage:projectedKnown,starter_count:starters.length,best_bench:bestBench,worst_starter:worstStarter,transactions:tx[id]||[]};
  });
- return{available:true,season,week,generated_at:new Date().toISOString(),projection_source:Object.keys(proj).length?'Sleeper weekly projections scored with league scoring settings':'projection data unavailable',teams};
+ const completeTeams=teams.map(t=>({...t,opponent_projected:teams.find(x=>String(x.roster_id)===String(t.opponent_roster_id))?.projected??null}));
+ return{available:true,season,week,generated_at:new Date().toISOString(),projection_source:Object.keys(proj).length?'Sleeper weekly projections scored with league scoring settings':'projection data unavailable',teams:completeTeams};
 }
 async function draftAwards(){
  const league=await fetchJson(`${API}/league/${LEAGUE}`),current=Number(league?.season)||new Date().getFullYear(),years=[current,current-1,current-2,current-3],out=[];

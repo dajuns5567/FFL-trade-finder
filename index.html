@@ -282,8 +282,11 @@ function rawScore(id){
   return {ppg:best/17,stats:last||{}};
 }
 function consensusRank(id){
-  const n=playerName(id).toLowerCase(),vals=[];
+  const n=playerName(id).toLowerCase(),playerGroup=groupPos({type:"player",id}),vals=[];
   for(const src of Object.values(state.rankings||{})){
+    const kind=String(src?.kind||"").toLowerCase();
+    if(playerGroup==="IDP"&&kind==="offense")continue;
+    if(playerGroup!=="IDP"&&kind==="idp")continue;
     const d=src?.data||{};
     if(d[n]!=null)vals.push(Number(d[n]));
     else {const k=Object.keys(d).find(k=>k===n||k.includes(n)||n.includes(k));if(k)vals.push(Number(d[k]))}

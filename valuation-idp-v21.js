@@ -116,6 +116,24 @@ playerRankValue=function(x){const arr=ensureMaster(),i=arr.findIndex(z=>String(z
 baseValue=function(x){if(x.type==='pick')return pickValue(x);if(valueCache.has(x.id))return valueCache.get(x.id);const v=playerRankValue(x).value;valueCache.set(x.id,v);return v};
 assetLabel=function(x){if(x.type==='pick')return x.name;const m=playerRankValue(x),cv=m.consensus==null?'fallback':m.consensus;return `${playerName(x.id)} <span class="muted">(${groupPos(x)} • CV ${cv} • TV ${m.value})</span>`};
 window.idpScoringAudit=function(nameOrId){const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(id=>playerName(id).toLowerCase()===q);if(!id)return null;const c=consensus24(id),prod=idpProductionComponent24(id),other=otherIdpContext24(id,prod.rs);return{id,name:playerName(id),consensus:c,finalValue:c?Math.round(.50*c+.35*prod.value+.15*other):null,productionValue:Math.round(prod.value),otherContextValue:Math.round(other),ppg:Number(prod.rs.ppg.toFixed(2)),premiumPpg:Number(prod.rs.premiumPpg.toFixed(2)),qualifyingSeasons:prod.rs.seasons,historicalSeasons:prod.rs.historicalSeasons,confidence:Number(prod.rs.confidence.toFixed(3)),weightCoverage:Number(prod.rs.weightCoverage.toFixed(3)),plannedWeight:Number((prod.rs.plannedWeight||0).toFixed(3)),currentAssignedWeight:Number((prod.rs.currentAssignedWeight||0).toFixed(3)),currentPlannedShare:Number(((prod.rs.currentPlannedShare||0)*100).toFixed(1)),currentEffectiveShare:Number(((prod.rs.currentEffectiveShare||0)*100).toFixed(1)),weightAmplification:Number((prod.rs.weightAmplification||1).toFixed(3)),weightPlan:prod.rs.weightPlan,ppgPercentile:prod.ppgPct==null?null:Number((prod.ppgPct*100).toFixed(1)),premiumPercentile:prod.premiumPct==null?null:Number((prod.premiumPct*100).toFixed(1)),effectivePercentile:Number((prod.effectivePct*100).toFixed(1)),seasons:prod.rs.samples};};
+window.ppgIntegrityPopulationAudit=function(){
+ const seen=new Set();for(const y of Object.keys(state.stats||{}))for(const id of Object.keys(state.stats?.[y]||{}))seen.add(String(id));
+ const rows=[],years=[2026,2025,2024,2023];
+ for(const id of seen){
+   const pos=groupPos({type:'player',id});if(!['QB','RB','WR','TE','IDP'].includes(pos))continue;
+   const kind=pos==='IDP'?'idp':'offense',rs=realScore24(id,kind),bySeason=new Map((rs.samples||[]).map(s=>[Number(s.season),s]));
+   for(const season of years){
+     const raw=state.stats?.[season]?.[id];if(!raw)continue;
+     const games=Number(raw.games)||0,points=Number(raw.pts_ppr)||0,expected=games>0?points/games:0,s=bySeason.get(season);
+     const current=season===2026,seasonQualifies=current?games>0:games>=8,included=!!s;
+     const ppgDelta=included?Math.abs((Number(s.ppg)||0)-expected):0;
+     rows.push({id,name:playerName(id),pos,season,currentSeason:current,points:Number(points.toFixed(3)),qualifyingGames:games,expectedPpg:Number(expected.toFixed(6)),included,seasonQualifies,calculatedPpg:included?Number((Number(s.ppg)||0).toFixed(6)):null,ppgDelta:Number(ppgDelta.toFixed(9)),assignedWeight:included?Number((Number(s.assignedWeight)||0).toFixed(3)):0,qualificationMismatch:included!==seasonQualifies,ppgMismatch:included&&ppgDelta>1e-6});
+   }
+ }
+ const mismatches=rows.filter(x=>x.qualificationMismatch||x.ppgMismatch);
+ const summary={rows:rows.length,players:new Set(rows.map(x=>x.id)).size,ppgMismatches:rows.filter(x=>x.ppgMismatch).length,qualificationMismatches:rows.filter(x=>x.qualificationMismatch).length,mismatches:mismatches.length};
+ return{summary,mismatches,offenseMismatches:mismatches.filter(x=>x.pos!=='IDP'),idpMismatches:mismatches.filter(x=>x.pos==='IDP')};
+};
 window.offenseScoringFoundationAudit=function(nameOrId){
  const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(pid=>playerName(pid).toLowerCase()===q);if(!id)return null;
  const pos=groupPos({type:'player',id});if(!['QB','RB','WR','TE'].includes(pos))return null;

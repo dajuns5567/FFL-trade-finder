@@ -25,7 +25,7 @@ function scoreSeason24(id,y,assigned,kind){
    return{season:y,games:gp,assignedWeight:assigned,currentSeason:isCurrent,points,ppg:points/gp,pprPoints:Number.isFinite(ptsPpr)?ptsPpr:null,pprPpg:Number.isFinite(ptsPpr)?ptsPpr/gp:null};
  }
  let points=0,premiumPoints=0;const breakdown={};
- for(const [key,wRaw] of Object.entries(activeScoring24())){const w=Number(wRaw||0);if(!w)continue;const qty=statNumber24(s,key);if(!qty)continue;const pts=qty*w;points+=pts;breakdown[key]={qty,weight:w,points:pts};if(PREMIUM_KEYS.has(key))premiumPoints+=pts}
+ for(const [key,wRaw] of Object.entries(activeScoring24())){if(!String(key).startsWith('idp_'))continue;const w=Number(wRaw||0);if(!w)continue;const qty=statNumber24(s,key);if(!qty)continue;const pts=qty*w;points+=pts;breakdown[key]={qty,weight:w,points:pts};if(PREMIUM_KEYS.has(key))premiumPoints+=pts}
  return{season:y,games:gp,assignedWeight:assigned,currentSeason:isCurrent,points,ppg:points/gp,premiumPoints,premiumPpg:premiumPoints/gp,breakdown};
 }
 function realScore24(id,kind){

@@ -32,9 +32,21 @@ function realScore24(id,kind){
  const plan=historyPlan24(),yearWeights=plan.yearWeights||{},samples=[];
  for(const [yearRaw,assignedRaw] of Object.entries(yearWeights)){const y=Number(yearRaw),assigned=Number(assignedRaw);if(!Number.isFinite(y)||!Number.isFinite(assigned)||assigned<=0)continue;const s=scoreSeason24(id,y,assigned,kind);if(s)samples.push(s)}
  if(!samples.length)return{seasons:0,historicalSeasons:0,ppg:0,premiumPpg:0,confidence:0,weightCoverage:0,samples:[],weightPlan:plan};
- samples.sort((a,b)=>b.season-a.season);const coverage=samples.reduce((s,x)=>s+x.assignedWeight,0),plannedWeight=Object.values(yearWeights).reduce((s,w)=>s+(Number.isFinite(Number(w))&&Number(w)>0?Number(w):0),0),den=Math.max(.0001,coverage),ppg=samples.reduce((s,x)=>s+x.ppg*x.assignedWeight,0)/den;
- const premiumPpg=kind==='idp'?samples.reduce((s,x)=>s+(x.premiumPpg||0)*x.assignedWeight,0)/den:0;const historical=samples.filter(x=>!x.currentSeason),currentSample=samples.find(x=>x.currentSeason),confidence=seasonConfidence24(historical.length,currentSample,coverage),currentAssigned=Number(currentSample?.assignedWeight)||0,currentEffectiveShare=coverage>0?currentAssigned/coverage:0,currentPlannedShare=plannedWeight>0?currentAssigned/plannedWeight:0;
- return{seasons:samples.length,historicalSeasons:historical.length,ppg,premiumPpg,confidence,weightCoverage:coverage,plannedWeight,currentAssignedWeight:currentAssigned,currentPlannedShare,currentEffectiveShare,weightAmplification:currentPlannedShare>0?currentEffectiveShare/currentPlannedShare:1,samples,weightPlan:plan};
+ samples.sort((a,b)=>b.season-a.season);
+ const historical=samples.filter(x=>!x.currentSeason),currentSample=samples.find(x=>x.currentSeason),plannedWeight=Object.values(yearWeights).reduce((s,w)=>s+(Number.isFinite(Number(w))&&Number(w)>0?Number(w):0),0);
+ // IDP Week-1 invariant: a player with no qualified current-season game must not move merely because
+ // the league entered in-season mode. Preserve the established 60/30/10 historical blend until that
+ // player has qualifying current-season evidence. Once evidence exists, use the exact scheduled
+ // 10/55/25/10 (Week 1) weights without redistributing missing weight into the current season.
+ let calcSamples=samples.map(x=>({...x,calcWeight:Number(x.assignedWeight)||0}));
+ if(kind==='idp'&&plan.mode==='in-season'&&!currentSample){
+   const hs=[...historical].sort((a,b)=>b.season-a.season),fallback=[.60,.30,.10];
+   calcSamples=hs.map((x,i)=>({...x,calcWeight:fallback[i]||0}));
+ }
+ const coverage=calcSamples.reduce((s,x)=>s+x.calcWeight,0),den=Math.max(.0001,coverage),ppg=calcSamples.reduce((s,x)=>s+x.ppg*x.calcWeight,0)/den;
+ const premiumPpg=kind==='idp'?calcSamples.reduce((s,x)=>s+(x.premiumPpg||0)*x.calcWeight,0)/den:0;
+ const confidence=seasonConfidence24(historical.length,currentSample,coverage),currentAssigned=Number(currentSample?.assignedWeight)||0,currentEffectiveShare=currentSample&&coverage>0?currentAssigned/coverage:0,currentPlannedShare=plannedWeight>0?currentAssigned/plannedWeight:0;
+ return{seasons:samples.length,historicalSeasons:historical.length,ppg,premiumPpg,confidence,weightCoverage:coverage,plannedWeight,currentAssignedWeight:currentAssigned,currentPlannedShare,currentEffectiveShare,weightAmplification:currentPlannedShare>0?currentEffectiveShare/currentPlannedShare:1,samples,weightPlan:plan,idpNoGameHistoricalInvariant:kind==='idp'&&plan.mode==='in-season'&&!currentSample};
 }
 function percentile24(arr,x){if(!arr.length)return.5;const a=arr.slice().sort((m,n)=>m-n);let below=0,equal=0;for(const v of a){if(v<x)below++;else if(v===x)equal++}return clamp24(.01,(below+.5*equal)/a.length,.99)}
 let distCache24=null,distStatsRef24=null,distPlanKey24='';

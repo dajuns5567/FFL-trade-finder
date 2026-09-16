@@ -187,7 +187,7 @@ async function main(){
 
   const manifest={
     ok:true,generatedAt:new Date().toISOString(),source:'Sleeper public API',currentLeagueId:START_LEAGUE_ID,
-    currentSeason:current.season,currentLeagueStatus:current.league?.status||null,currentSeasonCompletedWeek:completedWeek,
+    currentSeason:current.season,currentLeagueStatus:current.league?.status||null,currentSeasonCompletedWeek:completedWeek,currentLeagueScoringSettings:current.league?.scoring_settings||{},
     productionWeightPlan:plan,productionSeasons,seasonDiagnostics,compactDiagnostics,qualifyingHistoricalSeasonMinimumGames:8,qualifyingGameRule:{minimumSnapShare:0.20,minimumFantasyPoints:8,operator:'OR'},
     currentSeasonQualification:{minimumSnapShare:.20,minimumFantasyPoints:8,finalGamesOnly:true,fullWeekValuationGate:true,finalTeamsByWeek:qualifiedCurrent.finalTeamsByWeek,weekFinalityByWeek:qualifiedCurrent.weekFinalityByWeek,diagnostics:qualifiedCurrent.diagnostics},
     pprMethod:'Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.',
@@ -213,6 +213,7 @@ async function main(){
   };
   await writeJson(path.join(OUT_ROOT,'manifest.json'),manifest);
   await writeJson(path.join(OUT_ROOT,'weight-plan.json'),plan);
+  await writeJson(path.join(OUT_ROOT,'players.json'),players);
   await writeJson(path.join(OUT_ROOT,'offense-history.json'),offenseHistory);
 
   for(const year of productionSeasons){

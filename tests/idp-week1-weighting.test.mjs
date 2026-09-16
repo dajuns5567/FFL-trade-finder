@@ -16,7 +16,7 @@ function idpWeights(samples,yearWeights,currentSeason){
   const historicalAvailable=historical.reduce((s,x)=>s+(Number(yearWeights[x.season])||0),0);
   return samples.map(x=>x.season===currentSeason?{...x,calcWeight:currentAssigned}:{...x,calcWeight:historicalAvailable>0?(Number(yearWeights[x.season])||0)*(historicalTarget/historicalAvailable):0});
 }
-const share=(rows,season)=>{const d=rows.reduce((s,x)=>s+x.calcWeight,0);return rows.find(x=>x.season===season)?.calcWeight/d||0};
+const share=(rows,season,planned=null)=>{const available=rows.reduce((s,x)=>s+x.calcWeight,0);const d=planned??available;return rows.find(x=>x.season===season)?.calcWeight/d||0};
 
 test('Week 1 remains exactly 10% with complete history',()=>{
  const w={2026:.10,2025:.55,2024:.25,2023:.10};
@@ -40,6 +40,8 @@ test('current season alone remains scheduled 10% rather than being normalized to
  assert.equal(rows[0].calcWeight,.10);
  // No historical evidence exists to fill the other 90%; calculation coverage is intentionally .10.
  assert.equal(rows.reduce((s,x)=>s+x.calcWeight,0),.10);
+ // Runtime scoring uses the scheduled denominator (1.00), so Week 1 remains exactly 10% effective.
+ assert.equal(Number(share(rows,2026,1).toFixed(6)),.10);
 });
 test('no qualifying current game preserves historical 60/30/10 lookback',()=>{
  const w={2026:.10,2025:.55,2024:.25,2023:.10};

@@ -73,12 +73,15 @@ function realScore24(id,kind){
  // Preserve the scheduled in-season denominator for IDPs. If a player has only Week 1 evidence,
  // the 10% current-season bucket must remain 10% of the calculation rather than being normalized
  // to 100% merely because the historical 90% has no qualifying samples.
- const scheduledIdpDen=kind==='idp'&&plan.mode==='in-season'&&currentSample?plannedWeight:calcWeight;
- const den=Math.max(.0001,scheduledIdpDen),ppg=calcSamples.reduce((s,x)=>s+x.ppg*x.calcWeight,0)/den;
+ // Preserve the scheduled in-season denominator for every scoring population. Missing historical
+ // evidence lowers confidence/coverage; it must not donate its scheduled share to Week 1 or another
+ // available season. This is position-agnostic and prevents the same normalization defect on offense.
+ const scheduledDen=plan.mode==='in-season'&&currentSample?plannedWeight:calcWeight;
+ const den=Math.max(.0001,scheduledDen),ppg=calcSamples.reduce((s,x)=>s+x.ppg*x.calcWeight,0)/den;
  const premiumPpg=kind==='idp'?calcSamples.reduce((s,x)=>s+(x.premiumPpg||0)*x.calcWeight,0)/den:0;
- // Confidence continues to use actual evidence coverage, not redistributed calculation weight,
- // so missing seasons are ignored for PPG but still correctly lower sample confidence.
- const confidence=seasonConfidence24(historical.length,currentSample,evidenceCoverage),currentEffectiveShare=currentSample&&calcWeight>0?currentAssigned/calcWeight:0,currentPlannedShare=plannedWeight>0?currentAssigned/plannedWeight:0;
+ // Confidence continues to use actual evidence coverage. Effective current share is measured against
+ // the same denominator actually used by scoring, not merely the sum of available samples.
+ const confidence=seasonConfidence24(historical.length,currentSample,evidenceCoverage),currentEffectiveShare=currentSample&&scheduledDen>0?currentAssigned/scheduledDen:0,currentPlannedShare=plannedWeight>0?currentAssigned/plannedWeight:0;
  return{seasons:samples.length,historicalSeasons:historical.length,ppg,premiumPpg,confidence,weightCoverage:evidenceCoverage,calculationWeight:calcWeight,plannedWeight,currentAssignedWeight:currentAssigned,currentPlannedShare,currentEffectiveShare,weightAmplification:currentPlannedShare>0?currentEffectiveShare/currentPlannedShare:1,samples,weightPlan:plan,idpNoGameHistoricalInvariant:kind==='idp'&&plan.mode==='in-season'&&!currentSample};
 }
 function percentile24(arr,x){if(!arr.length)return.5;const a=arr.slice().sort((m,n)=>m-n);let below=0,equal=0;for(const v of a){if(v<x)below++;else if(v===x)equal++}return clamp24(.01,(below+.5*equal)/a.length,.99)}

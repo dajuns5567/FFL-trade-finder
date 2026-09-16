@@ -101,6 +101,11 @@ function auditPlayer(nameOrId){
   const scoring=typeof window.idpScoringAudit==='function'&&window.groupPos?.({type:'player',id})==='IDP'?window.idpScoringAudit(id):(typeof window.offenseScoringAudit==='function'?window.offenseScoringAudit(id):null);
   return{id,name:window.playerName?.(id)||id,position:window.groupPos?.({type:'player',id})||null,masterRank:rank,modeledValue:Number(z?.value)||null,preCurveValue:Number(z?.preCurveValue)||null,canonicalValue:Number.isFinite(canonical)?canonical:null,priorCanonicalValue:Number.isFinite(prior)?prior:null,canonicalDelta:Number.isFinite(canonical)&&Number.isFinite(prior)?canonical-prior:null,consensus:Number(z?.consensus??scoring?.consensus)||null,context:Number(z?.context)||null,scoring,production:z?.production||null,canonicalMeta:{...meta}};
 }
+function auditKnownGood(names){
+  const targets=(Array.isArray(names)&&names.length?names:['Greg Rousseau','Maxx Crosby','Brian Branch','Aidan Hutchinson','Jalen Coker','Isaiah Likely','Alvin Kamara']);
+  const rows=targets.map(n=>auditPlayer(n)).filter(Boolean);
+  return {control:{timestamp:'2026-09-15T02:14:00-04:00',label:'last known-good Value History control'},rows:rows.map(r=>({...r,controlValue:null,controlRank:null,deltaFromControl:null,note:'Fill controlValue/controlRank from the 2:14 AM ET Value History snapshot; priorCanonicalValue is NOT the control.'}))};
+}
 function auditPopulation(){
   let arr=[];try{arr=window.ensureMaster?.()||[]}catch(_){arr=[]}
   return arr.map(z=>auditPlayer(String(z?.x?.id??''))).filter(Boolean).sort((a,b)=>Math.abs(Number(b.canonicalDelta)||0)-Math.abs(Number(a.canonicalDelta)||0));
@@ -167,7 +172,7 @@ window.modeledPlayerValuesV319={
   snapshot(){return new Map(map)},
   get meta(){return{...meta}},
   get ready(){return installed&&meta.ready},
-  auditPlayer,auditPopulation,
+  auditPlayer,auditPopulation,auditKnownGood,
   get priorCanonical(){return priorCanonical}
 };
 })();

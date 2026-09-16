@@ -23176,6 +23176,28 @@
     "idp_tkl_ast": 3,
     "st_tkl_solo": 1
   },
+  "8473": {
+    "gp": 10,
+    "_ppr_native_weeks": 2,
+    "_ppr_reconstructed_weeks": 0,
+    "def_snp": 223,
+    "idp_tkl": 12,
+    "idp_tkl_ast": 7,
+    "idp_tkl_solo": 5,
+    "pos_rank_half_ppr": 9990,
+    "pos_rank_ppr": 9990,
+    "pos_rank_std": 9990,
+    "st_snp": 47,
+    "tm_def_snp": 745,
+    "tm_off_snp": 665,
+    "tm_st_snp": 303,
+    "idp_qb_hit": 3,
+    "idp_sack": 1,
+    "idp_sack_yd": 5,
+    "pts_half_ppr": 1,
+    "pts_ppr": 1,
+    "pts_std": 1
+  },
   "8476": {
     "gp": 17,
     "_ppr_native_weeks": 8,

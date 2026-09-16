@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-16T20:06:49.880Z",
+  "generatedAt": "2026-09-16T22:55:22.216Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 1,
@@ -23277,9 +23277,9 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 864,
-      "withPpr": 717,
-      "withGames": 864
+      "players": 865,
+      "withPpr": 718,
+      "withGames": 865
     },
     "2024": {
       "players": 933,
@@ -34255,6 +34255,17 @@
         "st_tkl_solo": 1,
         "idp_pass_def": 4,
         "idp_tkl_ast": 3
+      },
+      "8473": {
+        "pts_ppr": 1,
+        "gp": 10,
+        "def_snp": 223,
+        "idp_tkl": 12,
+        "idp_sack_yd": 5,
+        "idp_tkl_solo": 5,
+        "idp_sack": 1,
+        "idp_qb_hit": 3,
+        "idp_tkl_ast": 7
       },
       "8476": {
         "pts_ppr": 48,

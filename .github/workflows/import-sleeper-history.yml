@@ -52,6 +52,7 @@ jobs:
           set -euo pipefail
           test -s data/sleeper/manifest.json
           test -s data/sleeper/offense-history.json
+          test -s data/sleeper/players.json
           node - <<'NODE'
           const fs=require('fs');
           const m=JSON.parse(fs.readFileSync('data/sleeper/manifest.json','utf8'));

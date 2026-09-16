@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {aggregateWeeks,rows,qualifiesCurrentSeasonGame,valuationEligibleCurrentSeasonWeeks,weekFinalityFromGameSlots} from '../netlify/functions/ppr-scoring.mjs';
+import {aggregateWeeks,rows,qualifiesCurrentSeasonGame,valuationEligibleCurrentSeasonWeeks,weekFinalityFromGameSlots,leagueFantasyPoints} from '../netlify/functions/ppr-scoring.mjs';
 
 const DEFAULT_LEAGUE_ID='1316867686394769408';
 const START_LEAGUE_ID=String(process.argv[2]||process.env.SLEEPER_LEAGUE_ID||DEFAULT_LEAGUE_ID);

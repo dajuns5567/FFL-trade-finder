@@ -60,7 +60,15 @@ Meaning: valuation arithmetic is correct **given stored season aggregates**. It 
 
 ## EXACT CURRENT TASK
 
-Finish the **raw player-game qualification audit**.
+The **raw player-game qualification audit is complete and clean** on workflow run `35059817028` (head `bd71cf89f668be4052977b88a9f464e13d7d1f6f`): 120,503 player-games, offense 20,892 qualified / 0 aggregate mismatches, IDP 22,762 qualified / 0 aggregate mismatches, and every year 2023–2026 has 0 aggregate mismatches. The audit excludes Sleeper TEAM_/DEF/DST pseudo-player rows after the validated audit-only fix `bd71cf8`.
+
+Resume with **population-wide post-Week-1 model validation and consumer regression**. Validate IDP consensus vs production vs context/final curve, confirm offense remains sane under the same clean scoring foundation, then validate canonical Value/rank propagation through Finder and Evaluator. Do not tune toward the pre-Week-1 snapshot; Week 1 is legitimate evidence at its documented weight. Use the <=2:00 AM 9/15 snapshot only as a diagnostic reference.
+
+V73 systemic recalibration selected from population diagnostics: center/width `2050/300 -> 250/150`, and the broad young EDGE/LB emerging .55 shield requires evidence >= .20. This is systemic, not player-specific. It was validated diagnostically before production change.
+
+### Completed raw audit details
+
+The prior raw-audit task is complete.
 
 Audit script:
 `scripts/audit-qualified-player-games.mjs`

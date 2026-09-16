@@ -69,7 +69,12 @@ function realScore24(id,kind){
      calcSamples=hs.map((x,i)=>({...x,calcWeight:fallback[i]||0}));
    }
  }
- const calcWeight=calcSamples.reduce((s,x)=>s+x.calcWeight,0),den=Math.max(.0001,calcWeight),ppg=calcSamples.reduce((s,x)=>s+x.ppg*x.calcWeight,0)/den;
+ const calcWeight=calcSamples.reduce((s,x)=>s+x.calcWeight,0);
+ // Preserve the scheduled in-season denominator for IDPs. If a player has only Week 1 evidence,
+ // the 10% current-season bucket must remain 10% of the calculation rather than being normalized
+ // to 100% merely because the historical 90% has no qualifying samples.
+ const scheduledIdpDen=kind==='idp'&&plan.mode==='in-season'&&currentSample?plannedWeight:calcWeight;
+ const den=Math.max(.0001,scheduledIdpDen),ppg=calcSamples.reduce((s,x)=>s+x.ppg*x.calcWeight,0)/den;
  const premiumPpg=kind==='idp'?calcSamples.reduce((s,x)=>s+(x.premiumPpg||0)*x.calcWeight,0)/den:0;
  // Confidence continues to use actual evidence coverage, not redistributed calculation weight,
  // so missing seasons are ignored for PPG but still correctly lower sample confidence.

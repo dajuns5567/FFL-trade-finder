@@ -124,15 +124,13 @@ window.ppgIntegrityPopulationAudit=function(){
    const kind=pos==='IDP'?'idp':'offense',rs=realScore24(id,kind),bySeason=new Map((rs.samples||[]).map(s=>[Number(s.season),s]));
    for(const season of years){
      const raw=state.stats?.[season]?.[id];if(!raw)continue;
-     const stats=statObj24(raw),games=games24(raw),s=bySeason.get(season),ptsPpr=Number(stats.pts_ppr);
-     let points=Number.isFinite(ptsPpr)?ptsPpr:null;
-     if(points==null){
-       points=0;
-       for(const [key,wRaw] of Object.entries(activeScoring24())){
-         if(kind==='offense'&&key.startsWith('idp_'))continue;
-         if(kind==='idp'&&!key.startsWith('idp_'))continue;
-         const w=Number(wRaw||0);if(!w)continue;points+=statNumber24(stats,key)*w;
-       }
+     const stats=statObj24(raw),games=games24(raw),s=bySeason.get(season);
+     let points=0;
+     if(kind==='offense'){
+       const ptsPpr=Number(stats.pts_ppr);points=Number.isFinite(ptsPpr)?ptsPpr:0;
+       if(!Number.isFinite(ptsPpr))for(const [key,wRaw] of Object.entries(activeScoring24())){if(key.startsWith('idp_'))continue;const w=Number(wRaw||0);if(w)points+=statNumber24(stats,key)*w}
+     }else{
+       for(const [key,wRaw] of Object.entries(activeScoring24())){if(!key.startsWith('idp_'))continue;const w=Number(wRaw||0);if(w)points+=statNumber24(stats,key)*w}
      }
      const expected=games>0?points/games:0;
      const current=season===Number(state.sleeperHistory?.currentSeason),seasonQualifies=current?games>0:games>=8,included=!!s;

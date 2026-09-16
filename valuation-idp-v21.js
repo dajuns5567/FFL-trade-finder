@@ -48,14 +48,33 @@ function realScore24(id,kind){
  // player has qualifying current-season evidence. Once evidence exists, use the exact scheduled
  // 10/55/25/10 (Week 1) weights without redistributing missing weight into the current season.
  let calcSamples=samples.map(x=>({...x,calcWeight:Number(x.assignedWeight)||0}));
- if(kind==='idp'&&plan.mode==='in-season'&&!currentSample){
-   const hs=[...historical].sort((a,b)=>b.season-a.season),fallback=[.60,.30,.10];
-   calcSamples=hs.map((x,i)=>({...x,calcWeight:fallback[i]||0}));
+ const evidenceCoverage=samples.reduce((s,x)=>s+(Number(x.assignedWeight)||0),0);
+ const currentAssigned=Number(currentSample?.assignedWeight)||0;
+ if(kind==='idp'&&plan.mode==='in-season'){
+   if(currentSample){
+     // Keep the current season at its scheduled share (10% in Week 1). Missing/ineligible
+     // historical seasons reduce confidence, but must never donate their weight to Week 1.
+     // Redistribute only the historical bucket across the historical seasons that qualify.
+     const historicalTarget=Math.max(0,plannedWeight-currentAssigned);
+     const historicalAvailable=historical.reduce((s,x)=>s+(Number(x.assignedWeight)||0),0);
+     calcSamples=samples.map(x=>{
+       if(x.currentSeason)return{...x,calcWeight:currentAssigned};
+       const w=Number(x.assignedWeight)||0;
+       return{...x,calcWeight:historicalAvailable>0?w*(historicalTarget/historicalAvailable):0};
+     });
+   }else{
+     // No qualified current-season game: preserve the established historical lookback.
+     // Apply 60/30/10 to the most recent qualifying historical seasons; Week 1 gets 0%.
+     const hs=[...historical].sort((a,b)=>b.season-a.season),fallback=[.60,.30,.10];
+     calcSamples=hs.map((x,i)=>({...x,calcWeight:fallback[i]||0}));
+   }
  }
- const coverage=calcSamples.reduce((s,x)=>s+x.calcWeight,0),den=Math.max(.0001,coverage),ppg=calcSamples.reduce((s,x)=>s+x.ppg*x.calcWeight,0)/den;
+ const calcWeight=calcSamples.reduce((s,x)=>s+x.calcWeight,0),den=Math.max(.0001,calcWeight),ppg=calcSamples.reduce((s,x)=>s+x.ppg*x.calcWeight,0)/den;
  const premiumPpg=kind==='idp'?calcSamples.reduce((s,x)=>s+(x.premiumPpg||0)*x.calcWeight,0)/den:0;
- const confidence=seasonConfidence24(historical.length,currentSample,coverage),currentAssigned=Number(currentSample?.assignedWeight)||0,currentEffectiveShare=currentSample&&coverage>0?currentAssigned/coverage:0,currentPlannedShare=plannedWeight>0?currentAssigned/plannedWeight:0;
- return{seasons:samples.length,historicalSeasons:historical.length,ppg,premiumPpg,confidence,weightCoverage:coverage,plannedWeight,currentAssignedWeight:currentAssigned,currentPlannedShare,currentEffectiveShare,weightAmplification:currentPlannedShare>0?currentEffectiveShare/currentPlannedShare:1,samples,weightPlan:plan,idpNoGameHistoricalInvariant:kind==='idp'&&plan.mode==='in-season'&&!currentSample};
+ // Confidence continues to use actual evidence coverage, not redistributed calculation weight,
+ // so missing seasons are ignored for PPG but still correctly lower sample confidence.
+ const confidence=seasonConfidence24(historical.length,currentSample,evidenceCoverage),currentEffectiveShare=currentSample&&calcWeight>0?currentAssigned/calcWeight:0,currentPlannedShare=plannedWeight>0?currentAssigned/plannedWeight:0;
+ return{seasons:samples.length,historicalSeasons:historical.length,ppg,premiumPpg,confidence,weightCoverage:evidenceCoverage,calculationWeight:calcWeight,plannedWeight,currentAssignedWeight:currentAssigned,currentPlannedShare,currentEffectiveShare,weightAmplification:currentPlannedShare>0?currentEffectiveShare/currentPlannedShare:1,samples,weightPlan:plan,idpNoGameHistoricalInvariant:kind==='idp'&&plan.mode==='in-season'&&!currentSample};
 }
 function percentile24(arr,x){if(!arr.length)return.5;const a=arr.slice().sort((m,n)=>m-n);let below=0,equal=0;for(const v of a){if(v<x)below++;else if(v===x)equal++}return clamp24(.01,(below+.5*equal)/a.length,.99)}
 let distCache24=null,distStatsRef24=null,distPlanKey24='';

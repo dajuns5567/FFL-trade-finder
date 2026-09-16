@@ -107,8 +107,8 @@ function model24(x,legacyById){
  }
  if(!c)return legacyById.get(String(x.id))||{x,value:1,consensus:null,context:null,fallback:true};
  const prod=offenseProductionComponent24(x.id,pos),other=offenseOtherContext24(x.id,pos,c,detail);const prodValue=Number.isFinite(prod.value)?prod.value:c;
- let value=.70*c+.18*prodValue+.12*other;value=clamp24(c*.78,value,c*1.30);if(Number(detail?.offenseRank)<=24)value=Math.max(value,c*.94);if(Number(detail?.offenseRank)>220)value=Math.min(value,c*1.12);
- return{x,value:Math.max(1,Math.round(value)),consensus:Math.round(c),context:Math.round((.18*prodValue+.12*other)/.30),fallback:false,production:prod};
+ let value=.60*c+.25*prodValue+.15*other;value=clamp24(c*.78,value,c*1.30);if(Number(detail?.offenseRank)<=24)value=Math.max(value,c*.94);if(Number(detail?.offenseRank)>220)value=Math.min(value,c*1.12);
+ return{x,value:Math.max(1,Math.round(value)),consensus:Math.round(c),context:Math.round((.25*prodValue+.15*other)/.40),fallback:false,production:prod};
 }
 masterRankings=function(){const legacy=legacyMasterRankings(),legacyById=new Map(legacy.map(z=>[String(z.x.id),z]));return universe24().map(x=>model24(x,legacyById)).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};

@@ -158,14 +158,20 @@ async function main(){
     }else{
       const qualifiedHistorical={};
       for(let week=1;week<=18;week++){
+        const parsed=rows(fetched.weekly?.[week]),teamMax=new Map();
+        // Apply the SAME per-game qualification used by valuation: >=20% of team snaps
+        // OR >=8 league fantasy points. Build team/phase snap maxima from that week's feed
+        // so historical denominators count qualifying games, not generic games played.
+        for(const [id,stats] of parsed){
+          const meta=players?.[id]||{},team=normalizeTeamCode(meta?.team),phase=playerPhase(meta),n=snapCount(stats,phase);
+          if(!team||n==null)continue;
+          const key=`${team}|${phase}`,prior=Number(teamMax.get(key)||0);if(n>prior)teamMax.set(key,n);
+        }
         const keep={};
-        for(const [id,stats] of rows(fetched.weekly?.[week])){
-          const meta=players?.[id]||{},phase=playerPhase(meta),n=snapCount(stats,phase);
-          // Historical qualifying game: count an actual active player-game. Prefer snap
-          // evidence; if Sleeper lacks historical snap data, a non-zero league fantasy
-          // scoring event is evidence the player participated.
-          const pts=leagueFantasyPoints(stats,current.league?.scoring_settings||{});
-          if((n!=null&&n>0)||pts!==0)keep[id]=stats;
+        for(const [id,stats] of parsed){
+          const meta=players?.[id]||{},team=normalizeTeamCode(meta?.team),phase=playerPhase(meta),teamSnapMax=Number(teamMax.get(`${team}|${phase}`)||0);
+          const q=qualifiesCurrentSeasonGame(stats,{phase,teamSnapMax,scoringSettings:current.league?.scoring_settings||{}});
+          if(q.qualified)keep[id]=stats;
         }
         qualifiedHistorical[week]=keep;
       }

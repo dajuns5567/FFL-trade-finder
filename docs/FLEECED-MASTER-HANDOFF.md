@@ -251,11 +251,11 @@ Do not recalibrate 60/25/15 merely because selected players look surprising. Ver
 
 **Current active component split:**
 
-- 50% consensus
-- 35% production
-- 15% other IDP dynasty context
+- 40% consensus
+- 40% production
+- 20% other IDP dynasty context
 
-Older docs may mention 40/40/20. That is stale for the active branch.
+40/40/20 is the current intended IDP component split. If active runtime code differs, treat that as an implementation discrepancy to investigate rather than redefining the intended model.
 
 IDP production uses the actual league IDP scoring settings, not generic `pts_ppr`.
 
@@ -1179,7 +1179,7 @@ Results so far:
 
 Do not assume offense is fully cleared until raw game qualification is independently proven.
 
-Current offense component formula remains **60/25/15**.
+Current offense component formula remains **60/25/15**. Current IDP component formula is **40/40/20**.
 
 ---
 

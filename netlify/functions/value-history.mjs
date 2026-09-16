@@ -78,7 +78,7 @@ const V487_CLEANUP_KEY='maintenance/v487-remove-20260915-011941-et-everywhere.js
 const V490_CLEANUP_KEY='maintenance/v490-remove-20260915-0100-through-0157-et.json';
 const V491_CLEANUP_KEY='maintenance/v491-remove-latest-bad-snapshot.json';
 const V492_CLEANUP_KEY='maintenance/v492-remove-post-0214-et-bad-history.json';
-const V492_BAD_FROM_MS=Date.parse('2026-09-15T06:14:00.000Z');
+const V492_BAD_FROM_MS=Date.parse('2026-09-15T06:07:00.000Z');
 const V492_BAD_UNTIL_MS=Date.parse('2026-09-16T00:20:00.000Z');
 const V486_BAD_FROM_MS=Date.parse('2026-09-15T05:00:00.000Z');
 // This was a one-time contamination interval, not a permanent cutoff. Future
@@ -95,7 +95,7 @@ const isV486BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinit
 const V487_BAD_WINDOW=[Date.parse('2026-09-15T05:19:00.000Z'),Date.parse('2026-09-15T05:20:00.000Z')];
 const isV487BadTime=t=>isInWindow(t,V487_BAD_WINDOW);
 const isV490BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V490_BAD_FROM_MS&&ms<V490_BAD_UNTIL_MS};
-const isV492BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>V492_BAD_FROM_MS&&ms<V492_BAD_UNTIL_MS};
+const isV492BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V492_BAD_FROM_MS&&ms<V492_BAD_UNTIL_MS};
 const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t);
 
 function cleanRows(rows){
@@ -336,7 +336,7 @@ async function scrubV492Post0214History(s){
   const last=keep[keep.length-1]||null;
   if(last){const snap=await safeGet(s,last.key);if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)}
   else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
-  const result={done:true,window:['after 2026-09-15 02:14 EDT','before 2026-09-15 20:20 EDT'],removed:bad.length,completedAt:new Date().toISOString()};
+  const result={done:true,window:['from 2026-09-15 02:07 EDT','before 2026-09-15 20:20 EDT'],removed:bad.length,completedAt:new Date().toISOString()};
   await retry(()=>s.setJSON(V492_CLEANUP_KEY,result),120);return result;
 }
 async function latestFallback(s,playerId){

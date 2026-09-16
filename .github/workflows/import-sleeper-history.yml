@@ -18,6 +18,8 @@ on:
       - '.github/workflows/import-sleeper-history.yml'
       - 'netlify/functions/ppr-scoring.mjs'
       - 'netlify/functions/sleeper-imported-history.mjs'
+      - 'sleeper-history-client-v22.js'
+      - 'valuation-idp-v21.js'
   schedule:
     - cron: '17 * * * *'
 

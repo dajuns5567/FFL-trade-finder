@@ -12,6 +12,7 @@ const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const same=(a,b,tol=1e-6)=>Math.abs(num(a)-num(b))<=tol;
 const add=(obj,key,n)=>obj[key]=num(obj[key])+num(n);
+const isPlayerRow=(id,players)=>Object.prototype.hasOwnProperty.call(players,id);
 
 const manifest=await read(path.join(ROOT,'manifest.json'));
 const scoring=manifest?.currentLeagueScoringSettings||{};
@@ -19,7 +20,7 @@ let players={};try{players=await read(path.join(ROOT,'players.json'))}catch{}
 if(!Object.keys(players).length)throw new Error('players.json is required and must be non-empty for an independent qualification audit');
 
 const report={
- summary:{playerGames:0,qualified:0,rejected:0,offense:{playerGames:0,qualified:0,rejected:0,aggregateMismatches:0},idp:{playerGames:0,qualified:0,rejected:0,aggregateMismatches:0},aggregateMismatches:0},
+ summary:{playerGames:0,qualified:0,rejected:0,nonPlayerRowsIgnored:0,offense:{playerGames:0,qualified:0,rejected:0,aggregateMismatches:0},idp:{playerGames:0,qualified:0,rejected:0,aggregateMismatches:0},aggregateMismatches:0},
  years:{},aggregateMismatches:[]
 };
 
@@ -27,19 +28,21 @@ for(const year of years){
  let weekly;try{weekly=await read(path.join(ROOT,String(year),'weekly-stats.json'))}catch{continue}
  let stored={};try{stored=await read(path.join(ROOT,String(year),'season-stats.json'))}catch{}
  const qualified={},rebuiltLeaguePoints={},phaseById={};
- const counts={offense:{playerGames:0,qualified:0,rejected:0},idp:{playerGames:0,qualified:0,rejected:0}};
+ const counts={offense:{playerGames:0,qualified:0,rejected:0},idp:{playerGames:0,qualified:0,rejected:0},nonPlayerRowsIgnored:0};
 
  for(let week=1;week<=18;week++){
   const parsed=rows(weekly?.[week]),teamMax=new Map();
   for(const [id,s] of parsed){
-   const meta=players[id]||{},team=normalizeTeamCode(meta.team),phase=playerPhase(meta),n=snapCount(s,phase);
+   if(!isPlayerRow(id,players)){counts.nonPlayerRowsIgnored++;continue}
+   const meta=players[id],team=normalizeTeamCode(meta.team),phase=playerPhase(meta),n=snapCount(s,phase);
    phaseById[id]=phase;
    if(!team||n==null)continue;
    const k=team+'|'+phase;teamMax.set(k,Math.max(num(teamMax.get(k)),n));
   }
   const keep={};
   for(const [id,s] of parsed){
-   const meta=players[id]||{},team=normalizeTeamCode(meta.team),phase=phaseById[id]||playerPhase(meta);
+   if(!isPlayerRow(id,players))continue;
+   const meta=players[id],team=normalizeTeamCode(meta.team),phase=phaseById[id]||playerPhase(meta);
    counts[phase==='defense'?'idp':'offense'].playerGames++;
    const q=qualifiesCurrentSeasonGame(s,{phase,teamSnapMax:num(teamMax.get(team+'|'+phase)),scoringSettings:scoring});
    if(q.qualified){
@@ -58,7 +61,8 @@ for(const year of years){
  const mismatches=[];
 
  for(const id of ids){
-  const phase=phaseById[id]||playerPhase(players[id]||{}),bucket=phase==='defense'?'idp':'offense';
+  if(!isPlayerRow(id,players))continue;
+  const phase=phaseById[id]||playerPhase(players[id]),bucket=phase==='defense'?'idp':'offense';
   const r=rebuilt[id],s=stored[id];
   const rebuiltGames=num(r?.gp),storedGames=num(s?.gp);
   // pts_ppr is canonical for offense aggregates. IDP canonical fantasy points are reconstructed
@@ -73,6 +77,7 @@ for(const year of years){
  }
 
  report.years[year]={...counts,rebuiltPlayers:Object.keys(rebuilt).length,storedPlayers:Object.keys(stored).length,aggregateMismatches:mismatches.length};
+ report.summary.nonPlayerRowsIgnored+=counts.nonPlayerRowsIgnored;
  for(const bucket of ['offense','idp'])for(const key of ['playerGames','qualified','rejected']){report.summary[bucket][key]+=counts[bucket][key];report.summary[key]+=counts[bucket][key]}
 }
 console.log(JSON.stringify(report,null,2));

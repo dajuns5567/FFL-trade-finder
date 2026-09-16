@@ -148,17 +148,29 @@ async function main(){
 
   for(const year of productionSeasons){
     const fetched=year===current.season?{...qualifiedCurrent,weekly:gatedCurrent.weekly}:await fetchWeeklyStats(year);
+    // Counterfactual PPG rebuild: use weekly player-games so the denominator follows
+    // valuation qualification rather than generic season GP. Historical seasons require
+    // >=8 qualifying games; current season keeps the live >=20% snaps OR >=8 league-points gate.
     let aggregated;
     if(year===current.season){
       aggregated=aggregateWeeks(fetched.weekly);
       seasonDiagnostics[year]=validateCurrentSeason(year,aggregated);qualifiedCurrentStats=aggregated;
     }else{
-      // Historical PPG denominator must be actual games played, not "weeks with a Sleeper row".
-      // Weekly feeds can contain zero/inactive rows; aggregateWeeks() counts each row as gp=1,
-      // which depresses PPG broadly (notably IDPs). Prefer Sleeper's season aggregate when available.
-      let seasonAggregate=null;
-      try{seasonAggregate=Object.fromEntries(rows(await getJson(`${API}/stats/nfl/regular/${year}`)))}catch{}
-      aggregated=seasonAggregate&&Object.keys(seasonAggregate).length>=100?seasonAggregate:aggregateWeeks(fetched.weekly);
+      const qualifiedHistorical={};
+      for(let week=1;week<=18;week++){
+        const keep={};
+        for(const [id,stats] of rows(fetched.weekly?.[week])){
+          const meta=players?.[id]||{},phase=playerPhase(meta),n=snapCount(stats,phase);
+          // Historical qualifying game: count an actual active player-game. Prefer snap
+          // evidence; if Sleeper lacks historical snap data, a non-zero league fantasy
+          // scoring event is evidence the player participated.
+          const pts=leagueFantasyPoints(stats,current.league?.scoring_settings||{});
+          if((n!=null&&n>0)||pts!==0)keep[id]=stats;
+        }
+        qualifiedHistorical[week]=keep;
+      }
+      const candidate=aggregateWeeks(qualifiedHistorical);
+      aggregated=Object.fromEntries(Object.entries(candidate).filter(([,row])=>Number(row?.gp)>=8));
       seasonDiagnostics[year]=validateSeason(year,aggregated);
     }
     const compact=compactSeason(aggregated,current.league?.scoring_settings||{});

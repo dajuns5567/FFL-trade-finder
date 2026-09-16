@@ -1,6 +1,6 @@
 const fs=require('fs');const vm=require('vm');
 const elements=new Map();
-function box(id){return{checked:false,_asset:{type:'player',id},classList:{contains:x=>x==='shopCheck'},setAttribute(k,v){this[k]=v}}}
+function box(id){return{checked:false,_asset:{type:'player',id},classList:{contains:x=>x==='shopCheck'},setAttribute(k,v){if(k==='checked'){this.defaultChecked=true;return}this[k]=v}}}
 let boxes=[box('a'),box('b'),box('c')],changeHandler=null,observerCb=null;
 function makeEl(tag){const el={tagName:String(tag).toUpperCase(),style:{},dataset:{},children:[],textContent:'',className:'',type:'',_id:'',appendChild(c){this.children.push(c);return c},addEventListener(type,fn){this['on'+type]=fn},setAttribute(k,v){this[k]=v},remove(){if(this._id)elements.delete(this._id)}};Object.defineProperty(el,'id',{get(){return this._id},set(v){this._id=v;if(v)elements.set(v,this)}});return el}
 const team=makeEl('select');team.id='findTeam';team.value='1';team.insertAdjacentElement=(_where,el)=>{if(el?.id)elements.set(el.id,el);return el};

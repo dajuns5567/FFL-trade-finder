@@ -27,28 +27,27 @@ function clearValueCaches22(){
   try{fitCache.clear()}catch(e){}
   try{stageCache.clear()}catch(e){}
 }
+function scoringPlayer22(id){
+  const ps=state.players?.[id]?.fantasy_positions||[],isOffense=ps.some(p=>OFFENSE_POS22.has(String(p).toUpperCase())),isIdp=ps.some(p=>IDP_POS22.has(String(p).toUpperCase()))||groupPos({type:'player',id})==='IDP';
+  return isOffense||isIdp;
+}
+function authoritativeSeason22(rows){
+  const yr={};
+  for(const [id,row] of Object.entries(rows||{})){if(scoringPlayer22(id))yr[id]={...row};}
+  return yr;
+}
 function mergeScoringHistory22(stats,currentSeason,qualifiedCurrentStats){
   const merged={...(state.stats||{})},current=String(currentSeason||'');
   if(current){
-    const yr={...(merged[current]||{})};
-    for(const [id,row] of Object.entries(qualifiedCurrentStats||{})){
-      const ps=state.players?.[id]?.fantasy_positions||[],isOffense=ps.some(p=>OFFENSE_POS22.has(String(p).toUpperCase())),isIdp=ps.some(p=>IDP_POS22.has(String(p).toUpperCase()))||groupPos({type:'player',id})==='IDP';
-      if(!isOffense&&!isIdp)continue;
-      const existing=yr[id]?.stats&&typeof yr[id].stats==='object'?yr[id].stats:(yr[id]||{});
-      yr[id]={...existing,...row};
-    }
-    merged[current]=yr;
+    // Current-season valuation data is authoritative: rebuild it only from
+    // the importer's qualified sample so stale Week-1 rows cannot survive.
+    merged[current]=authoritativeSeason22(qualifiedCurrentStats||{});
   }
   for(const [year,rows] of Object.entries(stats||{})){
     if(String(year)===current)continue;
-    const yr={...(merged[year]||{})};
-    for(const [id,row] of Object.entries(rows||{})){
-      const ps=state.players?.[id]?.fantasy_positions||[],isOffense=ps.some(p=>OFFENSE_POS22.has(String(p).toUpperCase())),isIdp=ps.some(p=>IDP_POS22.has(String(p).toUpperCase()))||groupPos({type:'player',id})==='IDP';
-      if(!isOffense&&!isIdp)continue;
-      const existing=yr[id]?.stats&&typeof yr[id].stats==='object'?yr[id].stats:(yr[id]||{});
-      yr[id]={...existing,...row};
-    }
-    merged[year]=yr;
+    // The qualified importer snapshot is authoritative. Rebuilding prevents excluded
+    // seasons, extra games, or stale stat keys from surviving the qualification gate.
+    merged[year]=authoritativeSeason22(rows||{});
   }
   state.stats=merged;
 }

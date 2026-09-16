@@ -18,6 +18,8 @@ on:
       - '.github/workflows/import-sleeper-history.yml'
       - 'netlify/functions/ppr-scoring.mjs'
       - 'netlify/functions/sleeper-imported-history.mjs'
+      - 'sleeper-history-client-v22.js'
+      - 'valuation-idp-v21.js'
   schedule:
     - cron: '17 * * * *'
 
@@ -50,6 +52,7 @@ jobs:
           set -euo pipefail
           test -s data/sleeper/manifest.json
           test -s data/sleeper/offense-history.json
+          test -s data/sleeper/players.json
           node - <<'NODE'
           const fs=require('fs');
           const m=JSON.parse(fs.readFileSync('data/sleeper/manifest.json','utf8'));
@@ -79,6 +82,27 @@ jobs:
           }
           console.log(JSON.stringify({ok:true,productionSeasons:m.productionSeasons,generatedAt:m.generatedAt,compactDiagnostics:m.compactDiagnostics},null,2));
           NODE
+
+      - name: Run raw player-game qualification audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/audit-qualified-player-games.mjs | tee qualified-player-games-audit.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const r=JSON.parse(fs.readFileSync('qualified-player-games-audit.json','utf8'));
+          const s=r.summary||{};
+          console.log(JSON.stringify({aggregateMismatches:s.aggregateMismatches,offense:s.offense,idp:s.idp,years:r.years},null,2));
+          if(Number(s.aggregateMismatches)!==0) process.exitCode=1;
+          NODE
+
+      - name: Upload raw qualification audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qualified-player-games-audit
+          path: qualified-player-games-audit.json
+          if-no-files-found: error
 
       - name: Publish snapshot to sleeper-data branch
         shell: bash

@@ -1,0 +1,31 @@
+name: IDP scoring smoke
+on:
+  pull_request:
+    paths:
+      - 'valuation-idp-v21.js'
+      - 'scripts/import-sleeper-history.mjs'
+      - 'sleeper-history-client-v22.js'
+      - 'netlify/functions/ppr-scoring.mjs'
+      - 'netlify/functions/history-weights.mjs'
+      - 'tests/ppr-history.test.mjs'
+      - 'tests/idp-week1-weighting.test.mjs'
+      - '.github/workflows/idp-scoring-smoke.yml'
+  workflow_dispatch:
+jobs:
+  idp-scoring:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: PPG and game qualification
+        run: node --test tests/ppr-history.test.mjs
+      - name: IDP Week 1 weighting invariants
+        run: node --test tests/idp-week1-weighting.test.mjs
+      - name: Scoring pipeline syntax
+        run: |
+          node --check scripts/import-sleeper-history.mjs
+          node --check sleeper-history-client-v22.js
+          node --check netlify/functions/ppr-scoring.mjs
+          node --check valuation-idp-v21.js

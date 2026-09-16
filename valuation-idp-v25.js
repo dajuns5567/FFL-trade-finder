@@ -13,11 +13,20 @@ function historyMetrics25(a){
  for(const s of samples){const w=Number(s.assignedWeight||0),g=Math.max(1,Number(s.games||0));ppg+=Number(s.ppg||0)*w;tackles+=((breakdownQty25(s,['idp_tkl_solo'])+breakdownQty25(s,['idp_tkl_ast']))/g)*w;spikes+=((breakdownQty25(s,['idp_sack'])+breakdownQty25(s,['idp_int'])+breakdownQty25(s,['idp_ff'])+breakdownQty25(s,['idp_fum_rec'])+breakdownQty25(s,['idp_pass_def']))/g)*w}
  return{ppg:ppg/coverage,tackleRate:tackles/coverage,spikeRate:spikes/coverage,confidence:clamp25(0,Number(a.confidence||0),1),coverage,seasons:Number(a.qualifyingSeasons||samples.length)};
 }
+function historicalBenchmarkMetrics25(a){
+ const samples=(Array.isArray(a?.seasons)?a.seasons:[]).filter(s=>!s.currentSeason).sort((x,y)=>Number(y.season)-Number(x.season)).slice(0,3),weights=[.60,.30,.10];
+ if(!samples.length)return null;
+ let ppg=0,tackles=0,spikes=0,coverage=0;
+ for(let i=0;i<samples.length;i++){const s=samples[i],w=weights[i]||0,g=Math.max(1,Number(s.games||0));coverage+=w;ppg+=Number(s.ppg||0)*w;tackles+=((breakdownQty25(s,['idp_tkl_solo'])+breakdownQty25(s,['idp_tkl_ast']))/g)*w;spikes+=((breakdownQty25(s,['idp_sack'])+breakdownQty25(s,['idp_int'])+breakdownQty25(s,['idp_ff'])+breakdownQty25(s,['idp_fum_rec'])+breakdownQty25(s,['idp_pass_def']))/g)*w}
+ return coverage>0?{ppg:ppg/coverage,tackleRate:tackles/coverage,spikeRate:spikes/coverage}:null;
+}
 let cache25=null,statsRef25=null,planKey25='';
 function distributions25(){
  const key=JSON.stringify(state.sleeperHistory?.weightPlan||{});if(cache25&&statsRef25===state.stats&&planKey25===key)return cache25;
- const rows=[];for(const id of Object.keys(state.players||{})){if(groupPos({type:'player',id})!=='IDP')continue;const a=typeof priorAudit25==='function'?priorAudit25(id):null;if(!a?.qualifyingSeasons)continue;const m=historyMetrics25(a);rows.push({id,a,m})}
- cache25={rows,ppg:rows.map(r=>r.m.ppg),tackles:rows.map(r=>r.m.tackleRate),spikes:rows.map(r=>r.m.spikeRate)};statsRef25=state.stats;planKey25=key;return cache25;
+ const rows=[];for(const id of Object.keys(state.players||{})){if(groupPos({type:'player',id})!=='IDP')continue;const a=typeof priorAudit25==='function'?priorAudit25(id):null;if(!a?.qualifyingSeasons)continue;const m=historicalBenchmarkMetrics25(a);if(m)rows.push({id,a,m})}
+ // Keep the comparison population anchored to established historical production. Week 1 changes the
+ // evaluated player's blended metric, not every other IDP's percentile benchmark.
+ cache25={rows,ppg:rows.map(r=>r.m.ppg),tackles:rows.map(r=>r.m.tackleRate),spikes:rows.map(r=>r.m.spikeRate),historicalBenchmark:true};statsRef25=state.stats;planKey25=key;return cache25;
 }
 function scoring25(id){
  const a=typeof priorAudit25==='function'?priorAudit25(id):null,m=historyMetrics25(a),d=distributions25();

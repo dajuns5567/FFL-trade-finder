@@ -14,7 +14,16 @@ function consensus24(id){const v=Number(state.consensusComposite?.byId?.[String(
 function detail24(id){return state.consensusComposite?.detailsById?.[String(id)]||null}
 function fallbackWeightPlan24(){const years=Object.keys(state.stats||{}).map(Number).filter(Number.isFinite).sort((a,b)=>b-a),latest=Number(state.league?.season)||years[0]||FALLBACK_SEASON;return{mode:'preseason-offseason',completedWeek:0,yearWeights:{[latest-1]:.60,[latest-2]:.30,[latest-3]:.10}}}
 function historyPlan24(){return state.sleeperHistory?.weightPlan?.yearWeights?state.sleeperHistory.weightPlan:fallbackWeightPlan24()}
-function seasonConfidence24(historicalCount,currentSample,coverage){const historyConfidence=historicalCount>=3?1:historicalCount===2?.74:historicalCount===1?.42:.20;const currentGameConfidence=currentSample?clamp24(.15,currentSample.games/14,1):1;const coverageConfidence=clamp24(.20,coverage,1);return clamp24(.08,coverageConfidence*(.66+.34*historyConfidence)*(currentSample?(.78+.22*currentGameConfidence):1),1)}
+function seasonConfidence24(historicalCount,currentSample,coverage){
+ const historyConfidence=historicalCount>=3?1:historicalCount===2?.74:historicalCount===1?.42:.20,coverageConfidence=clamp24(.20,coverage,1);
+ // Week 1 evidence belongs in the scheduled season weight. It must not simultaneously
+ // penalize an established veteran's production confidence merely because only one
+ // current-season game exists. Preserve full confidence for complete 3-year histories;
+ // current-game confidence only fills missing historical evidence.
+ const currentGameConfidence=currentSample?clamp24(.15,currentSample.games/14,1):1;
+ const historyBase=.66+.34*historyConfidence,currentFill=currentSample?(1-historyConfidence)*.22*currentGameConfidence:0;
+ return clamp24(.08,coverageConfidence*Math.min(1,historyBase+currentFill),1)
+}
 function scoreSeason24(id,y,assigned,kind){
  const row=state.stats?.[y]?.[id];if(!row)return null;const s=statObj24(row),gp=games24(row);if(!gp)return null;
  const plan=historyPlan24(),currentSeason=Number(state.sleeperHistory?.currentSeason),isCurrent=plan.mode==='in-season'&&y===currentSeason;
@@ -25,16 +34,55 @@ function scoreSeason24(id,y,assigned,kind){
    return{season:y,games:gp,assignedWeight:assigned,currentSeason:isCurrent,points,ppg:points/gp,pprPoints:Number.isFinite(ptsPpr)?ptsPpr:null,pprPpg:Number.isFinite(ptsPpr)?ptsPpr/gp:null};
  }
  let points=0,premiumPoints=0;const breakdown={};
- for(const [key,wRaw] of Object.entries(activeScoring24())){const w=Number(wRaw||0);if(!w)continue;const qty=statNumber24(s,key);if(!qty)continue;const pts=qty*w;points+=pts;breakdown[key]={qty,weight:w,points:pts};if(PREMIUM_KEYS.has(key))premiumPoints+=pts}
+ for(const [key,wRaw] of Object.entries(activeScoring24())){if(!String(key).startsWith('idp_'))continue;const w=Number(wRaw||0);if(!w)continue;const qty=statNumber24(s,key);if(!qty)continue;const pts=qty*w;points+=pts;breakdown[key]={qty,weight:w,points:pts};if(PREMIUM_KEYS.has(key))premiumPoints+=pts}
  return{season:y,games:gp,assignedWeight:assigned,currentSeason:isCurrent,points,ppg:points/gp,premiumPoints,premiumPpg:premiumPoints/gp,breakdown};
 }
 function realScore24(id,kind){
  const plan=historyPlan24(),yearWeights=plan.yearWeights||{},samples=[];
  for(const [yearRaw,assignedRaw] of Object.entries(yearWeights)){const y=Number(yearRaw),assigned=Number(assignedRaw);if(!Number.isFinite(y)||!Number.isFinite(assigned)||assigned<=0)continue;const s=scoreSeason24(id,y,assigned,kind);if(s)samples.push(s)}
  if(!samples.length)return{seasons:0,historicalSeasons:0,ppg:0,premiumPpg:0,confidence:0,weightCoverage:0,samples:[],weightPlan:plan};
- samples.sort((a,b)=>b.season-a.season);const coverage=samples.reduce((s,x)=>s+x.assignedWeight,0),plannedWeight=Object.values(yearWeights).reduce((s,w)=>s+(Number.isFinite(Number(w))&&Number(w)>0?Number(w):0),0),den=Math.max(.0001,coverage),ppg=samples.reduce((s,x)=>s+x.ppg*x.assignedWeight,0)/den;
- const premiumPpg=kind==='idp'?samples.reduce((s,x)=>s+(x.premiumPpg||0)*x.assignedWeight,0)/den:0;const historical=samples.filter(x=>!x.currentSeason),currentSample=samples.find(x=>x.currentSeason),confidence=seasonConfidence24(historical.length,currentSample,coverage),currentAssigned=Number(currentSample?.assignedWeight)||0,currentEffectiveShare=coverage>0?currentAssigned/coverage:0,currentPlannedShare=plannedWeight>0?currentAssigned/plannedWeight:0;
- return{seasons:samples.length,historicalSeasons:historical.length,ppg,premiumPpg,confidence,weightCoverage:coverage,plannedWeight,currentAssignedWeight:currentAssigned,currentPlannedShare,currentEffectiveShare,weightAmplification:currentPlannedShare>0?currentEffectiveShare/currentPlannedShare:1,samples,weightPlan:plan};
+ samples.sort((a,b)=>b.season-a.season);
+ const historical=samples.filter(x=>!x.currentSeason),currentSample=samples.find(x=>x.currentSeason),plannedWeight=Object.values(yearWeights).reduce((s,w)=>s+(Number.isFinite(Number(w))&&Number(w)>0?Number(w):0),0);
+ // IDP Week-1 invariant: a player with no qualified current-season game must not move merely because
+ // the league entered in-season mode. Preserve the established 60/30/10 historical blend until that
+ // player has qualifying current-season evidence. Once evidence exists, use the exact scheduled
+ // 10/55/25/10 (Week 1) weights without redistributing missing weight into the current season.
+ let calcSamples=samples.map(x=>({...x,calcWeight:Number(x.assignedWeight)||0}));
+ const evidenceCoverage=samples.reduce((s,x)=>s+(Number(x.assignedWeight)||0),0);
+ const currentAssigned=Number(currentSample?.assignedWeight)||0;
+ if(kind==='idp'&&plan.mode==='in-season'){
+   if(currentSample){
+     // Keep the current season at its scheduled share (10% in Week 1). Missing/ineligible
+     // historical seasons reduce confidence, but must never donate their weight to Week 1.
+     // Redistribute only the historical bucket across the historical seasons that qualify.
+     const historicalTarget=Math.max(0,plannedWeight-currentAssigned);
+     const historicalAvailable=historical.reduce((s,x)=>s+(Number(x.assignedWeight)||0),0);
+     calcSamples=samples.map(x=>{
+       if(x.currentSeason)return{...x,calcWeight:currentAssigned};
+       const w=Number(x.assignedWeight)||0;
+       return{...x,calcWeight:historicalAvailable>0?w*(historicalTarget/historicalAvailable):0};
+     });
+   }else{
+     // No qualified current-season game: preserve the established historical lookback.
+     // Apply 60/30/10 to the most recent qualifying historical seasons; Week 1 gets 0%.
+     const hs=[...historical].sort((a,b)=>b.season-a.season),fallback=[.60,.30,.10];
+     calcSamples=hs.map((x,i)=>({...x,calcWeight:fallback[i]||0}));
+   }
+ }
+ const calcWeight=calcSamples.reduce((s,x)=>s+x.calcWeight,0);
+ // Preserve the scheduled in-season denominator for IDPs. If a player has only Week 1 evidence,
+ // the 10% current-season bucket must remain 10% of the calculation rather than being normalized
+ // to 100% merely because the historical 90% has no qualifying samples.
+ // Preserve the scheduled in-season denominator for every scoring population. Missing historical
+ // evidence lowers confidence/coverage; it must not donate its scheduled share to Week 1 or another
+ // available season. This is position-agnostic and prevents the same normalization defect on offense.
+ const scheduledDen=plan.mode==='in-season'&&currentSample?plannedWeight:calcWeight;
+ const den=Math.max(.0001,scheduledDen),ppg=calcSamples.reduce((s,x)=>s+x.ppg*x.calcWeight,0)/den;
+ const premiumPpg=kind==='idp'?calcSamples.reduce((s,x)=>s+(x.premiumPpg||0)*x.calcWeight,0)/den:0;
+ // Confidence continues to use actual evidence coverage. Effective current share is measured against
+ // the same denominator actually used by scoring, not merely the sum of available samples.
+ const confidence=seasonConfidence24(historical.length,currentSample,evidenceCoverage),currentEffectiveShare=currentSample&&scheduledDen>0?currentAssigned/scheduledDen:0,currentPlannedShare=plannedWeight>0?currentAssigned/plannedWeight:0;
+ return{seasons:samples.length,historicalSeasons:historical.length,ppg,premiumPpg,confidence,weightCoverage:evidenceCoverage,calculationWeight:calcWeight,plannedWeight,currentAssignedWeight:currentAssigned,currentPlannedShare,currentEffectiveShare,weightAmplification:currentPlannedShare>0?currentEffectiveShare/currentPlannedShare:1,samples,weightPlan:plan,idpNoGameHistoricalInvariant:kind==='idp'&&plan.mode==='in-season'&&!currentSample};
 }
 function percentile24(arr,x){if(!arr.length)return.5;const a=arr.slice().sort((m,n)=>m-n);let below=0,equal=0;for(const v of a){if(v<x)below++;else if(v===x)equal++}return clamp24(.01,(below+.5*equal)/a.length,.99)}
 let distCache24=null,distStatsRef24=null,distPlanKey24='';
@@ -59,8 +107,8 @@ function model24(x,legacyById){
  }
  if(!c)return legacyById.get(String(x.id))||{x,value:1,consensus:null,context:null,fallback:true};
  const prod=offenseProductionComponent24(x.id,pos),other=offenseOtherContext24(x.id,pos,c,detail);const prodValue=Number.isFinite(prod.value)?prod.value:c;
- let value=.70*c+.18*prodValue+.12*other;value=clamp24(c*.78,value,c*1.30);if(Number(detail?.offenseRank)<=24)value=Math.max(value,c*.94);if(Number(detail?.offenseRank)>220)value=Math.min(value,c*1.12);
- return{x,value:Math.max(1,Math.round(value)),consensus:Math.round(c),context:Math.round((.18*prodValue+.12*other)/.30),fallback:false,production:prod};
+ let value=.60*c+.25*prodValue+.15*other;value=clamp24(c*.78,value,c*1.30);if(Number(detail?.offenseRank)<=24)value=Math.max(value,c*.94);if(Number(detail?.offenseRank)>220)value=Math.min(value,c*1.12);
+ return{x,value:Math.max(1,Math.round(value)),consensus:Math.round(c),context:Math.round((.25*prodValue+.15*other)/.40),fallback:false,production:prod};
 }
 masterRankings=function(){const legacy=legacyMasterRankings(),legacyById=new Map(legacy.map(z=>[String(z.x.id),z]));return universe24().map(x=>model24(x,legacyById)).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};
@@ -68,6 +116,77 @@ playerRankValue=function(x){const arr=ensureMaster(),i=arr.findIndex(z=>String(z
 baseValue=function(x){if(x.type==='pick')return pickValue(x);if(valueCache.has(x.id))return valueCache.get(x.id);const v=playerRankValue(x).value;valueCache.set(x.id,v);return v};
 assetLabel=function(x){if(x.type==='pick')return x.name;const m=playerRankValue(x),cv=m.consensus==null?'fallback':m.consensus;return `${playerName(x.id)} <span class="muted">(${groupPos(x)} • CV ${cv} • TV ${m.value})</span>`};
 window.idpScoringAudit=function(nameOrId){const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(id=>playerName(id).toLowerCase()===q);if(!id)return null;const c=consensus24(id),prod=idpProductionComponent24(id),other=otherIdpContext24(id,prod.rs);return{id,name:playerName(id),consensus:c,finalValue:c?Math.round(.50*c+.35*prod.value+.15*other):null,productionValue:Math.round(prod.value),otherContextValue:Math.round(other),ppg:Number(prod.rs.ppg.toFixed(2)),premiumPpg:Number(prod.rs.premiumPpg.toFixed(2)),qualifyingSeasons:prod.rs.seasons,historicalSeasons:prod.rs.historicalSeasons,confidence:Number(prod.rs.confidence.toFixed(3)),weightCoverage:Number(prod.rs.weightCoverage.toFixed(3)),plannedWeight:Number((prod.rs.plannedWeight||0).toFixed(3)),currentAssignedWeight:Number((prod.rs.currentAssignedWeight||0).toFixed(3)),currentPlannedShare:Number(((prod.rs.currentPlannedShare||0)*100).toFixed(1)),currentEffectiveShare:Number(((prod.rs.currentEffectiveShare||0)*100).toFixed(1)),weightAmplification:Number((prod.rs.weightAmplification||1).toFixed(3)),weightPlan:prod.rs.weightPlan,ppgPercentile:prod.ppgPct==null?null:Number((prod.ppgPct*100).toFixed(1)),premiumPercentile:prod.premiumPct==null?null:Number((prod.premiumPct*100).toFixed(1)),effectivePercentile:Number((prod.effectivePct*100).toFixed(1)),seasons:prod.rs.samples};};
+window.ppgIntegrityPopulationAudit=function(){
+ const seen=new Set();for(const y of Object.keys(state.stats||{}))for(const id of Object.keys(state.stats?.[y]||{}))seen.add(String(id));
+ const rows=[],years=[2026,2025,2024,2023];
+ for(const id of seen){
+   const pos=groupPos({type:'player',id});if(!['QB','RB','WR','TE','IDP'].includes(pos))continue;
+   const kind=pos==='IDP'?'idp':'offense',rs=realScore24(id,kind),bySeason=new Map((rs.samples||[]).map(s=>[Number(s.season),s]));
+   for(const season of years){
+     const raw=state.stats?.[season]?.[id];if(!raw)continue;
+     const stats=statObj24(raw),games=games24(raw),s=bySeason.get(season);
+     let points=0;
+     if(kind==='offense'){
+       const ptsPpr=Number(stats.pts_ppr);points=Number.isFinite(ptsPpr)?ptsPpr:0;
+       if(!Number.isFinite(ptsPpr))for(const [key,wRaw] of Object.entries(activeScoring24())){if(key.startsWith('idp_'))continue;const w=Number(wRaw||0);if(w)points+=statNumber24(stats,key)*w}
+     }else{
+       for(const [key,wRaw] of Object.entries(activeScoring24())){if(!key.startsWith('idp_'))continue;const w=Number(wRaw||0);if(w)points+=statNumber24(stats,key)*w}
+     }
+     const expected=games>0?points/games:0;
+     const current=season===Number(state.sleeperHistory?.currentSeason),seasonQualifies=current?games>0:games>=8,included=!!s;
+     const ppgDelta=included?Math.abs((Number(s.ppg)||0)-expected):0;
+     rows.push({id,name:playerName(id),pos,season,currentSeason:current,points:Number(points.toFixed(3)),qualifyingGames:games,expectedPpg:Number(expected.toFixed(6)),included,seasonQualifies,calculatedPpg:included?Number((Number(s.ppg)||0).toFixed(6)):null,ppgDelta:Number(ppgDelta.toFixed(9)),assignedWeight:included?Number((Number(s.assignedWeight)||0).toFixed(3)):0,qualificationMismatch:included!==seasonQualifies,ppgMismatch:included&&ppgDelta>1e-6});
+   }
+ }
+ const mismatches=rows.filter(x=>x.qualificationMismatch||x.ppgMismatch);
+ const summary={rows:rows.length,players:new Set(rows.map(x=>x.id)).size,ppgMismatches:rows.filter(x=>x.ppgMismatch).length,qualificationMismatches:rows.filter(x=>x.qualificationMismatch).length,mismatches:mismatches.length};
+ return{summary,mismatches,offenseMismatches:mismatches.filter(x=>x.pos!=='IDP'),idpMismatches:mismatches.filter(x=>x.pos==='IDP')};
+};
+window.offenseScoringFoundationAudit=function(nameOrId){
+ const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(pid=>playerName(pid).toLowerCase()===q);if(!id)return null;
+ const pos=groupPos({type:'player',id});if(!['QB','RB','WR','TE'].includes(pos))return null;
+ const rs=realScore24(id,'offense'),planned=Number(rs.plannedWeight)||0,current=Number(rs.currentAssignedWeight)||0,calc=Number(rs.calculationWeight)||0;
+ return{id,name:playerName(id),pos,ppg:Number((rs.ppg||0).toFixed(3)),historicalSeasons:rs.historicalSeasons,qualifyingSeasons:rs.seasons,confidence:Number((rs.confidence||0).toFixed(3)),weightCoverage:Number((rs.weightCoverage||0).toFixed(3)),calculationWeight:Number(calc.toFixed(3)),plannedWeight:Number(planned.toFixed(3)),currentAssignedWeight:Number(current.toFixed(3)),currentPlannedShare:planned>0?Number((100*current/planned).toFixed(1)):0,currentEffectiveShare:Number((100*(Number(rs.currentEffectiveShare)||0)).toFixed(1)),weightAmplification:current>0&&planned>0?Number(((Number(rs.currentEffectiveShare)||0)/(current/planned)).toFixed(3)):1,seasons:(rs.samples||[]).map(s=>({season:s.season,currentSeason:!!s.currentSeason,games:s.games,points:Number((s.points||0).toFixed(2)),ppg:Number((s.ppg||0).toFixed(3)),assignedWeight:Number((s.assignedWeight||0).toFixed(3))}))};
+};
+window.scoringFoundationPopulationAudit=function(){
+ const out={offense:[],idp:[]},seen=new Set();
+ for(const y of Object.keys(state.stats||{}))for(const id of Object.keys(state.stats?.[y]||{}))seen.add(String(id));
+ for(const id of seen){
+   const pos=groupPos({type:'player',id});
+   if(['QB','RB','WR','TE'].includes(pos)){const a=window.offenseScoringFoundationAudit(id);if(a)out.offense.push(a)}
+   else if(pos==='IDP'){const a=window.idpScoringAudit?.(id);if(a)out.idp.push(a)}
+ }
+ const summary=rows=>({players:rows.length,amplified:rows.filter(x=>Number(x.weightAmplification)>1.000001).length,maxAmplification:rows.reduce((m,x)=>Math.max(m,Number(x.weightAmplification)||0),0),zeroHistoryCurrent:rows.filter(x=>Number(x.currentAssignedWeight)>0&&Number(x.historicalSeasons)===0).length,incompleteHistoryCurrent:rows.filter(x=>Number(x.currentAssignedWeight)>0&&Number(x.historicalSeasons)<3).length});
+ return{offense:summary(out.offense),idp:summary(out.idp),offenseAmplified:out.offense.filter(x=>Number(x.weightAmplification)>1.000001).sort((a,b)=>b.weightAmplification-a.weightAmplification),idpAmplified:out.idp.filter(x=>Number(x.weightAmplification)>1.000001).sort((a,b)=>b.weightAmplification-a.weightAmplification)};
+};
+window.idpPpgQualificationAudit=function(nameOrId){
+ const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(pid=>playerName(pid).toLowerCase()===q);if(!id)return null;
+ const a=realScore24(id,'idp'),rows=(a.samples||[]).map(s=>({season:s.season,currentSeason:!!s.currentSeason,points:s.points,games:s.games,ppg:s.ppg,qualifiesSeason:!!s.currentSeason||Number(s.games)>=8,assignedWeight:s.assignedWeight}));
+ return{id,name:playerName(id),historicalSeasons:a.historicalSeasons,currentSeasonIncluded:!!(a.samples||[]).find(s=>s.currentSeason),blendedPpg:a.ppg,seasons:rows};
+};
+window.idpPpgQualificationAuditSet=function(names){const xs=Array.isArray(names)&&names.length?names:['Brian Branch','Nick Bosa','T.J. Watt','Maxx Crosby','Greg Rousseau','Aidan Hutchinson'];return xs.map(window.idpPpgQualificationAudit).filter(Boolean)};
+window.idpWeek1CounterfactualAudit=function(nameOrId){
+ const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(pid=>playerName(pid).toLowerCase()===q);if(!id)return null;
+ const actual=idpProductionComponent24(id),actualRs=actual.rs;
+ const historical=(actualRs.samples||[]).filter(s=>!s.currentSeason);
+ const den=historical.reduce((s,x)=>s+(Number(x.assignedWeight)||0),0)||1;
+ const histPpg=historical.reduce((s,x)=>s+x.ppg*(Number(x.assignedWeight)||0),0)/den;
+ const histPremium=historical.reduce((s,x)=>s+(x.premiumPpg||0)*(Number(x.assignedWeight)||0),0)/den;
+ const d=distributions24().IDP;
+ const calc=(ppg,premium,confidence)=>{const p=percentile24(d.ppg,ppg),pr=percentile24(d.premium,premium),raw=.84*p+.16*pr,eff=.50+confidence*(raw-.50),value=120+1900*Math.pow(clamp24(.03,eff,.99),3.65);return{ppg:Number(ppg.toFixed(3)),premiumPpg:Number(premium.toFixed(3)),ppgPercentile:Number((p*100).toFixed(1)),premiumPercentile:Number((pr*100).toFixed(1)),effectivePercentile:Number((eff*100).toFixed(1)),productionValue:Math.round(value)}};
+ const historicalOnly=calc(histPpg,histPremium,1);
+ const actualCalc=calc(actualRs.ppg,actualRs.premiumPpg,actualRs.confidence);
+ return{id,name:playerName(id),current:actualRs.samples?.find(s=>s.currentSeason)||null,historicalOnly,actual:actualCalc,delta:{ppg:Number((actualCalc.ppg-historicalOnly.ppg).toFixed(3)),ppgPercentile:Number((actualCalc.ppgPercentile-historicalOnly.ppgPercentile).toFixed(1)),effectivePercentile:Number((actualCalc.effectivePercentile-historicalOnly.effectivePercentile).toFixed(1)),productionValue:actualCalc.productionValue-historicalOnly.productionValue}};
+};
+window.idpWeek1CounterfactualAuditSet=function(names){const xs=Array.isArray(names)&&names.length?names:['Brian Branch','T.J. Watt','Maxx Crosby','Greg Rousseau','Aidan Hutchinson'];return{population:window.idpDistributionAudit(),players:xs.map(window.idpWeek1CounterfactualAudit).filter(Boolean)};};
+window.idpDistributionAudit=function(){const d=distributions24().IDP,summary=a=>{const x=a.slice().sort((m,n)=>m-n),q=p=>x.length?x[Math.min(x.length-1,Math.max(0,Math.floor((x.length-1)*p)))]:null;return{n:x.length,min:q(0),p25:q(.25),median:q(.5),p75:q(.75),p90:q(.9),p95:q(.95),max:q(1)}};return{ppg:summary(d.ppg),premium:summary(d.premium)};};
+window.idpWeek1ScoringAudit=function(nameOrId){
+ const a=window.idpScoringAudit?.(nameOrId);if(!a)return null;
+ const seasons=(a.seasons||[]).map(s=>({season:s.season,currentSeason:!!s.currentSeason,games:s.games,points:Number((s.points||0).toFixed?.(2)??s.points),ppg:Number((s.ppg||0).toFixed?.(3)??s.ppg),assignedWeight:Number((s.assignedWeight||0).toFixed?.(3)??s.assignedWeight),premiumPpg:Number((s.premiumPpg||0).toFixed?.(3)??s.premiumPpg),breakdown:s.breakdown||{}}));
+ const current=seasons.find(s=>s.currentSeason)||null,historical=seasons.filter(s=>!s.currentSeason);
+ return{id:a.id,name:a.name,ppg:a.ppg,productionValue:a.productionValue,ppgPercentile:a.ppgPercentile,effectivePercentile:a.effectivePercentile,confidence:a.confidence,weightCoverage:a.weightCoverage,currentPlannedShare:a.currentPlannedShare,currentEffectiveShare:a.currentEffectiveShare,weightAmplification:a.weightAmplification,current,historical,seasons};
+};
+window.idpWeek1ScoringAuditSet=function(names){const xs=Array.isArray(names)&&names.length?names:['Brian Branch','T.J. Watt','Maxx Crosby','Greg Rousseau','Aidan Hutchinson'];return xs.map(window.idpWeek1ScoringAudit).filter(Boolean);};
 window.idpWeightingAudit=function(){const rows=[];for(const id of Object.keys(state.players||{})){if(groupPos({type:'player',id})!=='IDP')continue;const a=window.idpScoringAudit?.(id);if(!a||!a.currentAssignedWeight)continue;rows.push({id,name:a.name,consensus:a.consensus,plannedWeekShare:a.currentPlannedShare,effectiveWeekShare:a.currentEffectiveShare,amplification:a.weightAmplification,coverage:a.weightCoverage,historicalSeasons:a.historicalSeasons,ppg:a.ppg,productionValue:a.productionValue,finalValue:a.finalValue});}return rows.sort((a,b)=>b.amplification-a.amplification||b.effectiveWeekShare-a.effectiveWeekShare);};
 window.offenseScoringAudit=function(nameOrId){const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(id=>playerName(id).toLowerCase()===q);if(!id)return null;const pos=groupPos({type:'player',id});if(pos==='IDP')return null;const c=consensus24(id),d=detail24(id),prod=offenseProductionComponent24(id,pos),other=c?offenseOtherContext24(id,pos,c,d):null;return{id,name:playerName(id),position:pos,consensus:c,productionValue:prod.value==null?null:Math.round(prod.value),otherContextValue:other==null?null:Math.round(other),ppg:Number(prod.rs.ppg.toFixed(2)),qualifyingSeasons:prod.rs.seasons,historicalSeasons:prod.rs.historicalSeasons,confidence:Number(prod.rs.confidence.toFixed(3)),weightCoverage:Number(prod.rs.weightCoverage.toFixed(3)),weightPlan:prod.rs.weightPlan,ppgPercentile:prod.ppgPct==null?null:Number((prod.ppgPct*100).toFixed(1)),seasons:prod.rs.samples};};
 masterRankCache=null;valueCache.clear();fitCache.clear();stageCache.clear();

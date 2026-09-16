@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {aggregateWeeks,rows,qualifiesCurrentSeasonGame,valuationEligibleCurrentSeasonWeeks,weekFinalityFromGameSlots} from '../netlify/functions/ppr-scoring.mjs';
+import {aggregateWeeks,rows,qualifiesCurrentSeasonGame,valuationEligibleCurrentSeasonWeeks,weekFinalityFromGameSlots,leagueFantasyPoints} from '../netlify/functions/ppr-scoring.mjs';
 
 const DEFAULT_LEAGUE_ID='1316867686394769408';
 const START_LEAGUE_ID=String(process.argv[2]||process.env.SLEEPER_LEAGUE_ID||DEFAULT_LEAGUE_ID);
@@ -8,7 +8,9 @@ const MAX_LEAGUES=Math.max(1,Math.min(5,Number(process.env.SLEEPER_HISTORY_DEPTH
 const OUT_ROOT=path.resolve(process.env.SLEEPER_DATA_DIR||'data/sleeper');
 const API='https://api.sleeper.app/v1';
 const headers={accept:'application/json','user-agent':'FFL-TradeFinder-SleeperImporter/1.3'};
-const COMPACT_KEYS=['pts_ppr','gp','gms_active','games_played','games','gms','off_snp','off_snaps','offensive_snaps','snaps_offense','pass_att','rush_att','rec_tgt','targets'];
+const COMPACT_BASE_KEYS=['pts_ppr','gp','gms_active','games_played','games','gms','off_snp','off_snaps','offensive_snaps','snaps_offense','def_snp','def_snaps','defensive_snaps','snaps_defense','pass_att','rush_att','rec_tgt','targets'];
+function compactKeys(scoringSettings={}){const keys=new Set(COMPACT_BASE_KEYS);for(const key of Object.keys(scoringSettings||{})){keys.add(key);if(String(key).startsWith('idp_'))keys.add(String(key).slice(4));}return [...keys]}
+
 
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function getJson(url,{retries=3}={}){
@@ -25,12 +27,12 @@ async function getJson(url,{retries=3}={}){
 async function writeJson(file,value){await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,JSON.stringify(value,null,2)+'\n','utf8')}
 function seasonOf(league){return Number(league?.season)||null}
 function payloadCount(payload){return Array.isArray(payload)?payload.length:(payload&&typeof payload==='object'?Object.keys(payload).length:0)}
-function compactSeason(seasonStats){
+function compactSeason(seasonStats,scoringSettings={}){
   const out={};
   for(const [id,row] of Object.entries(seasonStats||{})){
     const src=row?.stats&&typeof row.stats==='object'?row.stats:row;
     const compact={};
-    for(const key of COMPACT_KEYS){const n=Number(src?.[key]);if(Number.isFinite(n))compact[key]=n;}
+    for(const key of compactKeys(scoringSettings)){const n=Number(src?.[key]);if(Number.isFinite(n))compact[key]=n;}
     if(Object.keys(compact).length)out[String(id)]=compact;
   }
   return out;
@@ -146,10 +148,38 @@ async function main(){
 
   for(const year of productionSeasons){
     const fetched=year===current.season?{...qualifiedCurrent,weekly:gatedCurrent.weekly}:await fetchWeeklyStats(year);
-    const aggregated=aggregateWeeks(fetched.weekly);
-    if(year===current.season){seasonDiagnostics[year]=validateCurrentSeason(year,aggregated);qualifiedCurrentStats=aggregated}
-    else seasonDiagnostics[year]=validateSeason(year,aggregated);
-    const compact=compactSeason(aggregated);
+    // Counterfactual PPG rebuild: use weekly player-games so the denominator follows
+    // valuation qualification rather than generic season GP. Historical seasons require
+    // >=8 qualifying games; current season keeps the live >=20% snaps OR >=8 league-points gate.
+    let aggregated;
+    if(year===current.season){
+      aggregated=aggregateWeeks(fetched.weekly);
+      seasonDiagnostics[year]=validateCurrentSeason(year,aggregated);qualifiedCurrentStats=aggregated;
+    }else{
+      const qualifiedHistorical={};
+      for(let week=1;week<=18;week++){
+        const parsed=rows(fetched.weekly?.[week]),teamMax=new Map();
+        // Apply the SAME per-game qualification used by valuation: >=20% of team snaps
+        // OR >=8 league fantasy points. Build team/phase snap maxima from that week's feed
+        // so historical denominators count qualifying games, not generic games played.
+        for(const [id,stats] of parsed){
+          const meta=players?.[id]||{},team=normalizeTeamCode(meta?.team),phase=playerPhase(meta),n=snapCount(stats,phase);
+          if(!team||n==null)continue;
+          const key=`${team}|${phase}`,prior=Number(teamMax.get(key)||0);if(n>prior)teamMax.set(key,n);
+        }
+        const keep={};
+        for(const [id,stats] of parsed){
+          const meta=players?.[id]||{},team=normalizeTeamCode(meta?.team),phase=playerPhase(meta),teamSnapMax=Number(teamMax.get(`${team}|${phase}`)||0);
+          const q=qualifiesCurrentSeasonGame(stats,{phase,teamSnapMax,scoringSettings:current.league?.scoring_settings||{}});
+          if(q.qualified)keep[id]=stats;
+        }
+        qualifiedHistorical[week]=keep;
+      }
+      const candidate=aggregateWeeks(qualifiedHistorical);
+      aggregated=Object.fromEntries(Object.entries(candidate).filter(([,row])=>Number(row?.gp)>=8));
+      seasonDiagnostics[year]=validateSeason(year,aggregated);
+    }
+    const compact=compactSeason(aggregated,current.league?.scoring_settings||{});
     compactDiagnostics[year]=year===current.season?{...seasonDiagnostics[year],compactPlayers:Object.keys(compact).length}:validateCompact(year,compact);
     compactStats[year]=compact;
     statsBySeason[year]={weekly:year===current.season?currentFetch.weekly:fetched.weekly,qualifiedWeekly:year===current.season?gatedCurrent.weekly:null,season:aggregated};
@@ -157,8 +187,8 @@ async function main(){
 
   const manifest={
     ok:true,generatedAt:new Date().toISOString(),source:'Sleeper public API',currentLeagueId:START_LEAGUE_ID,
-    currentSeason:current.season,currentLeagueStatus:current.league?.status||null,currentSeasonCompletedWeek:completedWeek,
-    productionWeightPlan:plan,productionSeasons,seasonDiagnostics,compactDiagnostics,qualifyingHistoricalSeasonMinimumGames:8,
+    currentSeason:current.season,currentLeagueStatus:current.league?.status||null,currentSeasonCompletedWeek:completedWeek,currentLeagueScoringSettings:current.league?.scoring_settings||{},
+    productionWeightPlan:plan,productionSeasons,seasonDiagnostics,compactDiagnostics,qualifyingHistoricalSeasonMinimumGames:8,qualifyingGameRule:{minimumSnapShare:0.20,minimumFantasyPoints:8,operator:'OR'},
     currentSeasonQualification:{minimumSnapShare:.20,minimumFantasyPoints:8,finalGamesOnly:true,fullWeekValuationGate:true,finalTeamsByWeek:qualifiedCurrent.finalTeamsByWeek,weekFinalityByWeek:qualifiedCurrent.weekFinalityByWeek,diagnostics:qualifiedCurrent.diagnostics},
     pprMethod:'Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.',
     linkedLeagueSeasons:chain.map(x=>({leagueId:x.leagueId,season:x.season,previousLeagueId:x.previousLeagueId})),
@@ -183,6 +213,7 @@ async function main(){
   };
   await writeJson(path.join(OUT_ROOT,'manifest.json'),manifest);
   await writeJson(path.join(OUT_ROOT,'weight-plan.json'),plan);
+  await writeJson(path.join(OUT_ROOT,'players.json'),players);
   await writeJson(path.join(OUT_ROOT,'offense-history.json'),offenseHistory);
 
   for(const year of productionSeasons){

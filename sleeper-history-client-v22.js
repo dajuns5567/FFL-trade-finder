@@ -27,7 +27,16 @@ function clearValueCaches22(){
   try{fitCache.clear()}catch(e){}
   try{stageCache.clear()}catch(e){}
 }
-function scoringPlayer22(id){\n  const ps=state.players?.[id]?.fantasy_positions||[],isOffense=ps.some(p=>OFFENSE_POS22.has(String(p).toUpperCase())),isIdp=ps.some(p=>IDP_POS22.has(String(p).toUpperCase()))||groupPos({type:'player',id})==='IDP';\n  return isOffense||isIdp;\n}\nfunction authoritativeSeason22(rows){\n  const yr={};\n  for(const [id,row] of Object.entries(rows||{})){if(scoringPlayer22(id))yr[id]={...row};}\n  return yr;\n}\nfunction mergeScoringHistory22(stats,currentSeason,qualifiedCurrentStats){
+function scoringPlayer22(id){
+  const ps=state.players?.[id]?.fantasy_positions||[],isOffense=ps.some(p=>OFFENSE_POS22.has(String(p).toUpperCase())),isIdp=ps.some(p=>IDP_POS22.has(String(p).toUpperCase()))||groupPos({type:'player',id})==='IDP';
+  return isOffense||isIdp;
+}
+function authoritativeSeason22(rows){
+  const yr={};
+  for(const [id,row] of Object.entries(rows||{})){if(scoringPlayer22(id))yr[id]={...row};}
+  return yr;
+}
+function mergeScoringHistory22(stats,currentSeason,qualifiedCurrentStats){
   const merged={...(state.stats||{})},current=String(currentSeason||'');
   if(current){
     // Current-season valuation data is authoritative: rebuild it only from
@@ -36,7 +45,9 @@ function scoringPlayer22(id){\n  const ps=state.players?.[id]?.fantasy_positions
   }
   for(const [year,rows] of Object.entries(stats||{})){
     if(String(year)===current)continue;
-    // The qualified importer snapshot is authoritative. Rebuilding prevents excluded\n    // seasons, extra games, or stale stat keys from surviving the qualification gate.\n    merged[year]=authoritativeSeason22(rows||{});
+    // The qualified importer snapshot is authoritative. Rebuilding prevents excluded
+    // seasons, extra games, or stale stat keys from surviving the qualification gate.
+    merged[year]=authoritativeSeason22(rows||{});
   }
   state.stats=merged;
 }

@@ -14,7 +14,16 @@ function consensus24(id){const v=Number(state.consensusComposite?.byId?.[String(
 function detail24(id){return state.consensusComposite?.detailsById?.[String(id)]||null}
 function fallbackWeightPlan24(){const years=Object.keys(state.stats||{}).map(Number).filter(Number.isFinite).sort((a,b)=>b-a),latest=Number(state.league?.season)||years[0]||FALLBACK_SEASON;return{mode:'preseason-offseason',completedWeek:0,yearWeights:{[latest-1]:.60,[latest-2]:.30,[latest-3]:.10}}}
 function historyPlan24(){return state.sleeperHistory?.weightPlan?.yearWeights?state.sleeperHistory.weightPlan:fallbackWeightPlan24()}
-function seasonConfidence24(historicalCount,currentSample,coverage){const historyConfidence=historicalCount>=3?1:historicalCount===2?.74:historicalCount===1?.42:.20;const currentGameConfidence=currentSample?clamp24(.15,currentSample.games/14,1):1;const coverageConfidence=clamp24(.20,coverage,1);return clamp24(.08,coverageConfidence*(.66+.34*historyConfidence)*(currentSample?(.78+.22*currentGameConfidence):1),1)}
+function seasonConfidence24(historicalCount,currentSample,coverage){
+ const historyConfidence=historicalCount>=3?1:historicalCount===2?.74:historicalCount===1?.42:.20,coverageConfidence=clamp24(.20,coverage,1);
+ // Week 1 evidence belongs in the scheduled season weight. It must not simultaneously
+ // penalize an established veteran's production confidence merely because only one
+ // current-season game exists. Preserve full confidence for complete 3-year histories;
+ // current-game confidence only fills missing historical evidence.
+ const currentGameConfidence=currentSample?clamp24(.15,currentSample.games/14,1):1;
+ const historyBase=.66+.34*historyConfidence,currentFill=currentSample?(1-historyConfidence)*.22*currentGameConfidence:0;
+ return clamp24(.08,coverageConfidence*Math.min(1,historyBase+currentFill),1)
+}
 function scoreSeason24(id,y,assigned,kind){
  const row=state.stats?.[y]?.[id];if(!row)return null;const s=statObj24(row),gp=games24(row);if(!gp)return null;
  const plan=historyPlan24(),currentSeason=Number(state.sleeperHistory?.currentSeason),isCurrent=plan.mode==='in-season'&&y===currentSeason;

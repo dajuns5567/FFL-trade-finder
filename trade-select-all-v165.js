@@ -7,7 +7,7 @@ function shopBoxes(){return[...document.querySelectorAll(`#${SHOP_ID} .shopCheck
 function allChecked(){const boxes=shopBoxes();return boxes.length>0&&boxes.every(b=>b.checked)}
 function aliasActive(){const team=currentTeam();return!!allSelectedTeam&&(!team||allSelectedTeam===team)}
 function syncButton(){const btn=document.getElementById('tradeSelectAllButton165');if(!btn)return;const on=aliasActive()||allChecked();btn.textContent=on?'All selected':'Select all';btn.setAttribute('aria-pressed',on?'true':'false');btn.dataset.selected=on?'1':'0'}
-function applyAlias(){if(!aliasActive()||applying)return false;const boxes=shopBoxes();if(!boxes.length)return false;applying=true;try{for(const box of boxes){if(box.checked)continue;box.checked=true;if(typeof box.setAttribute==='function')box.setAttribute('checked','')}syncButton();return true}finally{applying=false}}
+function applyAlias(){if(!aliasActive()||applying)return false;const boxes=shopBoxes();if(!boxes.length)return false;applying=true;try{for(const box of boxes){if(box.checked)continue;box.checked=true;box.setAttribute('checked','')}syncButton();return true}finally{applying=false}}
 function selectAllBlankAlias(){const team=currentTeam();if(!team)return;allSelectedTeam=team;applyAlias();syncButton();queueReapply()}
 function clearAlias(){allSelectedTeam='';syncButton()}
 function queueReapply(){for(const delay of [0,25,75,150,300,600,1000])setTimeout(()=>{if(aliasActive())applyAlias()},delay)}

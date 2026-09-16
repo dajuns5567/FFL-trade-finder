@@ -28,8 +28,14 @@ function offenseCoverage384(id){
   const p=position384({type:'player',id});if(!OFF.has(p))return false;
   const sourceNames=offenseSourceNames384();
   if(!sourceNames.sourceCount)return null;
-  const name=normalizeName384(typeof playerName==='function'?playerName(id):state?.players?.[String(id)]?.full_name||'');
-  return !!name&&sourceNames.names.has(name);
+  const sid=String(id),detail=state?.consensusComposite?.detailsById?.[sid];
+  // The consensus composite is the canonical identity authority. Its offenseSources are only
+  // populated after the validated source-to-Sleeper match, including approved suffix handling
+  // (e.g. source "Thomas Fidone II" -> Sleeper "Thomas Fidone"). Do not re-litigate that match
+  // here with a stricter raw-name equality check or a legitimately covered player can be
+  // demoted into a no-consensus numeric slot after valuation has already completed.
+  if(String(detail?.kind||'').toLowerCase()==='offense'&&Array.isArray(detail?.offenseSources)&&detail.offenseSources.length)return true;
+  return false;
 }
 function noConsensusOffenseScore384(id){
   let ppg=0;
@@ -77,7 +83,7 @@ masterRankCache=null;
 try{valueCache?.clear?.();fitCache?.clear?.();stageCache?.clear?.()}catch(_){}
 
 window.offenseConsensusCoverageGateV384={
-  version:385,
+  version:386,
   offensePositions:[...OFF],
   offenseCoverage:offenseCoverage384,
   auditPlayer(id){const sid=String(id),name=typeof playerName==='function'?playerName(sid):state?.players?.[sid]?.full_name||'',normalized=normalizeName384(name),sourceNames=offenseSourceNames384();return{id:sid,name,normalized,sourceCount:sourceNames.sourceCount,exactSourceCoverage:sourceNames.names.has(normalized),compositeValue:Number(state?.consensusComposite?.byId?.[sid])||null,compositeDetail:state?.consensusComposite?.detailsById?.[sid]||null}},

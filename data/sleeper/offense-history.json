@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-16T11:29:52.238Z",
+  "generatedAt": "2026-09-16T16:53:11.047Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 1,
@@ -219,7 +219,7 @@
     "diagnostics": {
       "finalGames": 16,
       "qualifiedPlayerGames": 1020,
-      "rejectedPlayerGames": 1273,
+      "rejectedPlayerGames": 1257,
       "ignoredGames": 0
     }
   },
@@ -23275,19 +23275,19 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 862,
+      "players": 863,
       "withPpr": 716,
-      "withGames": 862
+      "withGames": 863
     },
     "2024": {
-      "players": 934,
-      "withPpr": 778,
-      "withGames": 934
+      "players": 933,
+      "withPpr": 776,
+      "withGames": 933
     },
     "2025": {
-      "players": 1031,
+      "players": 1030,
       "withPpr": 554,
-      "withGames": 1031
+      "withGames": 1030
     },
     "2026": {
       "players": 1020,
@@ -25084,6 +25084,12 @@
         "xpm": 14,
         "fgm_50p": 3,
         "fgmiss_40_49": 1
+      },
+      "3888": {
+        "gp": 16,
+        "off_snp": 958,
+        "st_tkl_solo": 1,
+        "fum": 1
       },
       "3973": {
         "pts_ppr": 22,
@@ -40021,6 +40027,10 @@
         "xpm": 34,
         "fgm_50p": 5
       },
+      "3888": {
+        "gp": 10,
+        "off_snp": 563
+      },
       "3973": {
         "pts_ppr": 21,
         "gp": 17,
@@ -44881,18 +44891,6 @@
         "idp_qb_hit": 1,
         "idp_ff": 2,
         "idp_tkl_ast": 30
-      },
-      "7283": {
-        "pts_ppr": 3,
-        "gp": 15,
-        "def_snp": 343,
-        "idp_tkl": 19,
-        "idp_sack_yd": 26,
-        "idp_tkl_loss": 3,
-        "idp_tkl_solo": 13,
-        "idp_sack": 3,
-        "idp_qb_hit": 7,
-        "idp_tkl_ast": 6
       },
       "7301": {
         "pts_ppr": 7.5,
@@ -50079,19 +50077,6 @@
         "idp_int": 1,
         "idp_pass_def": 6,
         "idp_tkl_ast": 29
-      },
-      "10938": {
-        "pts_ppr": 2.5,
-        "gp": 12,
-        "def_snp": 373,
-        "idp_tkl": 43,
-        "idp_tkl_loss": 3,
-        "idp_tkl_solo": 18,
-        "idp_sack": 0.5,
-        "idp_pass_def": 1,
-        "idp_fum_rec": 1,
-        "idp_qb_hit": 1,
-        "idp_tkl_ast": 25
       },
       "10940": {
         "pts_ppr": 12.5,
@@ -60452,16 +60437,6 @@
         "idp_qb_hit": 4,
         "idp_ff": 1,
         "idp_tkl_ast": 13
-      },
-      "7283": {
-        "gp": 10,
-        "def_snp": 172,
-        "idp_tkl": 12,
-        "idp_tkl_loss": 1,
-        "idp_tkl_solo": 4,
-        "idp_sack": 1,
-        "idp_qb_hit": 2,
-        "idp_tkl_ast": 8
       },
       "7301": {
         "gp": 9,

@@ -3771,6 +3771,24 @@
     "fgmiss": 1,
     "fgmiss_40_49": 1
   },
+  "3888": {
+    "gp": 16,
+    "_ppr_native_weeks": 0,
+    "_ppr_reconstructed_weeks": 0,
+    "gs": 15,
+    "off_snp": 958,
+    "pos_rank_half_ppr": 15984,
+    "pos_rank_ppr": 15984,
+    "pos_rank_std": 15984,
+    "st_snp": 59,
+    "tm_def_snp": 1011,
+    "tm_off_snp": 1090,
+    "tm_st_snp": 425,
+    "penalty": 7,
+    "penalty_yd": 65,
+    "fum": 1,
+    "st_tkl_solo": 1
+  },
   "3973": {
     "gp": 16,
     "_ppr_native_weeks": 9,

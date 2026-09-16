@@ -12144,26 +12144,6 @@
     "penalty_yd": 15,
     "idp_pass_def": 1
   },
-  "7283": {
-    "gp": 10,
-    "_ppr_native_weeks": 0,
-    "_ppr_reconstructed_weeks": 0,
-    "def_snp": 172,
-    "idp_tkl": 12,
-    "idp_tkl_ast": 8,
-    "pos_rank_half_ppr": 9990,
-    "pos_rank_ppr": 9990,
-    "pos_rank_std": 9990,
-    "pts_idp": 26,
-    "st_snp": 12,
-    "tm_def_snp": 649,
-    "tm_off_snp": 692,
-    "tm_st_snp": 273,
-    "idp_qb_hit": 2,
-    "idp_sack": 1,
-    "idp_tkl_solo": 4,
-    "idp_tkl_loss": 1
-  },
   "7301": {
     "gp": 9,
     "_ppr_native_weeks": 0,

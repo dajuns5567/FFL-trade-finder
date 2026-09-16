@@ -124,8 +124,18 @@ window.ppgIntegrityPopulationAudit=function(){
    const kind=pos==='IDP'?'idp':'offense',rs=realScore24(id,kind),bySeason=new Map((rs.samples||[]).map(s=>[Number(s.season),s]));
    for(const season of years){
      const raw=state.stats?.[season]?.[id];if(!raw)continue;
-     const games=Number(raw.games)||0,points=Number(raw.pts_ppr)||0,expected=games>0?points/games:0,s=bySeason.get(season);
-     const current=season===2026,seasonQualifies=current?games>0:games>=8,included=!!s;
+     const stats=statObj24(raw),games=games24(raw),s=bySeason.get(season),ptsPpr=Number(stats.pts_ppr);
+     let points=Number.isFinite(ptsPpr)?ptsPpr:null;
+     if(points==null){
+       points=0;
+       for(const [key,wRaw] of Object.entries(activeScoring24())){
+         if(kind==='offense'&&key.startsWith('idp_'))continue;
+         if(kind==='idp'&&!key.startsWith('idp_'))continue;
+         const w=Number(wRaw||0);if(!w)continue;points+=statNumber24(stats,key)*w;
+       }
+     }
+     const expected=games>0?points/games:0;
+     const current=season===Number(state.sleeperHistory?.currentSeason),seasonQualifies=current?games>0:games>=8,included=!!s;
      const ppgDelta=included?Math.abs((Number(s.ppg)||0)-expected):0;
      rows.push({id,name:playerName(id),pos,season,currentSeason:current,points:Number(points.toFixed(3)),qualifyingGames:games,expectedPpg:Number(expected.toFixed(6)),included,seasonQualifies,calculatedPpg:included?Number((Number(s.ppg)||0).toFixed(6)):null,ppgDelta:Number(ppgDelta.toFixed(9)),assignedWeight:included?Number((Number(s.assignedWeight)||0).toFixed(3)):0,qualificationMismatch:included!==seasonQualifies,ppgMismatch:included&&ppgDelta>1e-6});
    }

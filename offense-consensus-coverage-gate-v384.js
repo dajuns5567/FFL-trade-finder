@@ -80,6 +80,7 @@ window.offenseConsensusCoverageGateV384={
   version:385,
   offensePositions:[...OFF],
   offenseCoverage:offenseCoverage384,
+  auditPlayer(id){const sid=String(id),name=typeof playerName==='function'?playerName(sid):state?.players?.[sid]?.full_name||'',normalized=normalizeName384(name),sourceNames=offenseSourceNames384();return{id:sid,name,normalized,sourceCount:sourceNames.sourceCount,exactSourceCoverage:sourceNames.names.has(normalized),compositeValue:Number(state?.consensusComposite?.byId?.[sid])||null,compositeDetail:state?.consensusComposite?.detailsById?.[sid]||null}},
   noConsensusOffenseScore:noConsensusOffenseScore384,
   apply:apply384,
   description:'V385: exact front-to-back offensive source coverage. Zero-source QB/RB/WR/TE players rank after covered offense using the existing no-consensus scoring path; IDP rows, values and model logic are untouched.'

@@ -127,6 +127,27 @@ function install(){
   window.__modeledPlayerValuesV319='v319-v311-logic-current-modeled-player-values';
   return true;
 }
+function contributionAudit(nameOrId){
+  const q=String(nameOrId||'').toLowerCase();
+  const id=window.state?.players?.[nameOrId]?String(nameOrId):Object.keys(window.state?.players||{}).find(pid=>{try{return String(window.playerName?.(pid)||'').toLowerCase()===q}catch(_){return false}});
+  if(!id)return null;
+  let arr=[];try{arr=window.ensureMaster?.()||[]}catch(_){}
+  const row=arr.find(z=>String(z?.x?.id??'')===id)||null;
+  const rank=arr.findIndex(z=>String(z?.x?.id??'')===id)+1;
+  const canonical=Number(map.get(id));
+  const scoring=(typeof window.offenseScoringAudit==='function'?window.offenseScoringAudit(id):null);
+  const idp=(typeof window.idpScoringAudit==='function'?window.idpScoringAudit(id):null);
+  const modeled=Number(row?.value);
+  const consensus=Number(row?.consensus??scoring?.consensus??idp?.consensus);
+  const context=Number(row?.context);
+  const production=Number(row?.productionValue??row?.production?.value??scoring?.productionValue??idp?.productionValue);
+  const pos=window.groupPos?.({type:'player',id})||null;
+  const weights=pos==='IDP'?{consensus:.40,scoring:.40,context:.20}:{consensus:.65,scoring:.25,context:.10};
+  return {id,name:window.playerName?.(id)||id,position:pos,masterRank:rank||null,canonicalValue:Number.isFinite(canonical)?canonical:null,modeledValue:Number.isFinite(modeled)?modeled:null,inputs:{consensus:Number.isFinite(consensus)?consensus:null,production:Number.isFinite(production)?production:null,context:Number.isFinite(context)?context:null},weights,weightedContributions:{consensus:Number.isFinite(consensus)?consensus*weights.consensus:null,scoring:Number.isFinite(production)?production*weights.scoring:null,context:Number.isFinite(context)?context*weights.context:null},scoringAudit:scoring,idpScoringAudit:idp,rawMasterRow:row};
+}
+function contributionAuditSet(names){
+  return (names||['Trey McBride','Greg Rousseau','Maxx Crosby','Brian Branch','Aidan Hutchinson','Jalen Coker','Isaiah Likely','Alvin Kamara']).map(contributionAudit).filter(Boolean);
+}
 function refresh(force=true){
   if(!installed){
     if(force){lastMaster=null;meta={...meta,ready:false}}
@@ -150,7 +171,7 @@ function schedule(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 window.modeledPlayerValuesV319={
   MIN,MAX,BAND_ENDS,BLEND,MIN_RATIO,MAX_RATIO,
-  build,install,refresh,playerValue,canonicalValue,
+  build,install,refresh,playerValue,canonicalValue,contributionAudit,contributionAuditSet,
   snapshot(){return new Map(map)},
   get meta(){return{...meta}},
   get ready(){return installed&&meta.ready},

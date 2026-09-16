@@ -148,9 +148,19 @@ async function main(){
 
   for(const year of productionSeasons){
     const fetched=year===current.season?{...qualifiedCurrent,weekly:gatedCurrent.weekly}:await fetchWeeklyStats(year);
-    const aggregated=aggregateWeeks(fetched.weekly);
-    if(year===current.season){seasonDiagnostics[year]=validateCurrentSeason(year,aggregated);qualifiedCurrentStats=aggregated}
-    else seasonDiagnostics[year]=validateSeason(year,aggregated);
+    let aggregated;
+    if(year===current.season){
+      aggregated=aggregateWeeks(fetched.weekly);
+      seasonDiagnostics[year]=validateCurrentSeason(year,aggregated);qualifiedCurrentStats=aggregated;
+    }else{
+      // Historical PPG denominator must be actual games played, not "weeks with a Sleeper row".
+      // Weekly feeds can contain zero/inactive rows; aggregateWeeks() counts each row as gp=1,
+      // which depresses PPG broadly (notably IDPs). Prefer Sleeper's season aggregate when available.
+      let seasonAggregate=null;
+      try{seasonAggregate=Object.fromEntries(rows(await getJson(`${API}/stats/nfl/regular/${year}`)))}catch{}
+      aggregated=seasonAggregate&&Object.keys(seasonAggregate).length>=100?seasonAggregate:aggregateWeeks(fetched.weekly);
+      seasonDiagnostics[year]=validateSeason(year,aggregated);
+    }
     const compact=compactSeason(aggregated,current.league?.scoring_settings||{});
     compactDiagnostics[year]=year===current.season?{...seasonDiagnostics[year],compactPlayers:Object.keys(compact).length}:validateCompact(year,compact);
     compactStats[year]=compact;

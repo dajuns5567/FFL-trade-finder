@@ -92,6 +92,19 @@ function build(force=false){
   meta={ready:true,count:next.size,version:meta.version+1,maxRank,blend:BLEND,minRatio:MIN_RATIO,maxRatio:MAX_RATIO};
   return true;
 }
+function rankOfId(arr,id){const i=(arr||[]).findIndex(z=>String(z?.x?.id??'')===String(id));return i<0?null:i+1}
+function auditPlayer(nameOrId){
+  const q=String(nameOrId||'').toLowerCase(),id=window.state?.players?.[nameOrId]?String(nameOrId):Object.keys(window.state?.players||{}).find(pid=>{try{return String(window.playerName?.(pid)||'').toLowerCase()===q}catch(_){return false}});
+  if(!id)return null;
+  let arr=[];try{arr=window.ensureMaster?.()||[]}catch(_){arr=[]}
+  const z=arr.find(r=>String(r?.x?.id??'')===id)||null,rank=rankOfId(arr,id),canonical=Number(map.get(id)),prior=priorPlayer?Number(priorPlayer({type:'player',id})):priorCanonical?Number(priorCanonical({type:'player',id})):null;
+  const scoring=typeof window.idpScoringAudit==='function'&&window.groupPos?.({type:'player',id})==='IDP'?window.idpScoringAudit(id):(typeof window.offenseScoringAudit==='function'?window.offenseScoringAudit(id):null);
+  return{id,name:window.playerName?.(id)||id,position:window.groupPos?.({type:'player',id})||null,masterRank:rank,modeledValue:Number(z?.value)||null,preCurveValue:Number(z?.preCurveValue)||null,canonicalValue:Number.isFinite(canonical)?canonical:null,priorCanonicalValue:Number.isFinite(prior)?prior:null,canonicalDelta:Number.isFinite(canonical)&&Number.isFinite(prior)?canonical-prior:null,consensus:Number(z?.consensus??scoring?.consensus)||null,context:Number(z?.context)||null,scoring,production:z?.production||null,canonicalMeta:{...meta}};
+}
+function auditPopulation(){
+  let arr=[];try{arr=window.ensureMaster?.()||[]}catch(_){arr=[]}
+  return arr.map(z=>auditPlayer(String(z?.x?.id??''))).filter(Boolean).sort((a,b)=>Math.abs(Number(b.canonicalDelta)||0)-Math.abs(Number(a.canonicalDelta)||0));
+}
 function playerValue(a){
   if(!a||a.type!=='player')return 0;
   const v=Number(map.get(key(a)));
@@ -154,6 +167,7 @@ window.modeledPlayerValuesV319={
   snapshot(){return new Map(map)},
   get meta(){return{...meta}},
   get ready(){return installed&&meta.ready},
+  auditPlayer,auditPopulation,
   get priorCanonical(){return priorCanonical}
 };
 })();

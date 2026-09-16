@@ -188,7 +188,7 @@ async function main(){
   const manifest={
     ok:true,generatedAt:new Date().toISOString(),source:'Sleeper public API',currentLeagueId:START_LEAGUE_ID,
     currentSeason:current.season,currentLeagueStatus:current.league?.status||null,currentSeasonCompletedWeek:completedWeek,
-    productionWeightPlan:plan,productionSeasons,seasonDiagnostics,compactDiagnostics,qualifyingHistoricalSeasonMinimumGames:8,
+    productionWeightPlan:plan,productionSeasons,seasonDiagnostics,compactDiagnostics,qualifyingHistoricalSeasonMinimumGames:8,qualifyingGameRule:{minimumSnapShare:0.20,minimumFantasyPoints:8,operator:'OR'},
     currentSeasonQualification:{minimumSnapShare:.20,minimumFantasyPoints:8,finalGamesOnly:true,fullWeekValuationGate:true,finalTeamsByWeek:qualifiedCurrent.finalTeamsByWeek,weekFinalityByWeek:qualifiedCurrent.weekFinalityByWeek,diagnostics:qualifiedCurrent.diagnostics},
     pprMethod:'Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.',
     linkedLeagueSeasons:chain.map(x=>({leagueId:x.leagueId,season:x.season,previousLeagueId:x.previousLeagueId})),

@@ -30,12 +30,13 @@ function clearValueCaches22(){
 function mergeScoringHistory22(stats,currentSeason,qualifiedCurrentStats){
   const merged={...(state.stats||{})},current=String(currentSeason||'');
   if(current){
-    const yr={...(merged[current]||{})};
+    // Current-season valuation data is authoritative: rebuild it only from
+    // the importer's qualified sample so stale Week-1 rows cannot survive.
+    const yr={};
     for(const [id,row] of Object.entries(qualifiedCurrentStats||{})){
       const ps=state.players?.[id]?.fantasy_positions||[],isOffense=ps.some(p=>OFFENSE_POS22.has(String(p).toUpperCase())),isIdp=ps.some(p=>IDP_POS22.has(String(p).toUpperCase()))||groupPos({type:'player',id})==='IDP';
       if(!isOffense&&!isIdp)continue;
-      const existing=yr[id]?.stats&&typeof yr[id].stats==='object'?yr[id].stats:(yr[id]||{});
-      yr[id]={...existing,...row};
+      yr[id]={...row};
     }
     merged[current]=yr;
   }

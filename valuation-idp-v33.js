@@ -19,13 +19,17 @@ function role33(id){
 }
 function profile33(z){
   const prod=z.production||{},id=String(z.x.id),p=state.players?.[id]||{};
-  return{id,role:role33(id),age:age33(id),baseline:Math.max(1,Number(z.value||1)),ppg:clamp33(0,(num33(prod.idpPpgPercentileV53)??50)/100,1),tackle:clamp33(0,(num33(prod.idpTacklePercentileV53)??50)/100,1),spike:clamp33(0,(num33(prod.idpSpikePercentileV53)??50)/100,1),evidence:clamp33(0,num33(prod.idpEvidenceV53)??0,1),consensus:num33(state.consensusComposite?.byId?.[id])??num33(z.consensus)??0,active:String(p.status||'').toLowerCase()==='active'};
+  // V62 is an upside/context layer, not a second scoring component. Established players
+  // with a complete three-season production history must not receive another production-
+  // percentile multiplier here; their production is already represented by the 40% scoring
+  // component and the historical calibration stack.
+  return{id,role:role33(id),age:age33(id),baseline:Math.max(1,Number(z.value||1)),ppg:clamp33(0,(num33(prod.idpPpgPercentileV53)??50)/100,1),tackle:clamp33(0,(num33(prod.idpTacklePercentileV53)??50)/100,1),spike:clamp33(0,(num33(prod.idpSpikePercentileV53)??50)/100,1),evidence:clamp33(0,num33(prod.idpEvidenceV53)??0,1),historicalSeasons:Number(prod.a?.historicalSeasons??0),consensus:num33(state.consensusComposite?.byId?.[id])??num33(z.consensus)??0,active:String(p.status||'').toLowerCase()==='active'};
 }
 function factor33(p){
   if(p.evidence<=0)return 1;
   let factor=1;
   // Established elite/high-value IDPs receive no new positive adjustment in this layer.
-  const upsideEligible=p.baseline<500;
+  const upsideEligible=p.baseline<500&&p.historicalSeasons<3;
   // Stronger consensus-production divergence correction for traditional LBs.
   if(p.role==='LB'){
     if(p.consensus>=700&&p.ppg<.75){

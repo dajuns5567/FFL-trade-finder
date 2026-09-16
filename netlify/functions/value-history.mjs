@@ -77,6 +77,9 @@ const V486_CLEANUP_KEY='maintenance/v486-remove-partial-consensus-after-20260915
 const V487_CLEANUP_KEY='maintenance/v487-remove-20260915-011941-et-everywhere.json';
 const V490_CLEANUP_KEY='maintenance/v490-remove-20260915-0100-through-0157-et.json';
 const V491_CLEANUP_KEY='maintenance/v491-remove-latest-bad-snapshot.json';
+const V492_CLEANUP_KEY='maintenance/v492-remove-post-0214-et-bad-history.json';
+const V492_BAD_FROM_MS=Date.parse('2026-09-15T06:14:00.000Z');
+const V492_BAD_UNTIL_MS=Date.parse('2026-09-16T00:20:00.000Z');
 const V486_BAD_FROM_MS=Date.parse('2026-09-15T05:00:00.000Z');
 // This was a one-time contamination interval, not a permanent cutoff. Future
 // headless/page-load/manual snapshots must continue to be accepted and tracked.
@@ -92,7 +95,8 @@ const isV486BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinit
 const V487_BAD_WINDOW=[Date.parse('2026-09-15T05:19:00.000Z'),Date.parse('2026-09-15T05:20:00.000Z')];
 const isV487BadTime=t=>isInWindow(t,V487_BAD_WINDOW);
 const isV490BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V490_BAD_FROM_MS&&ms<V490_BAD_UNTIL_MS};
-const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t);
+const isV492BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>V492_BAD_FROM_MS&&ms<V492_BAD_UNTIL_MS};
+const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t);
 
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
@@ -323,6 +327,17 @@ async function scrubV491LatestSnapshot(s){
   else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
   const result={done:true,removed:1,removed_key:last.key,removed_at:last.t||null,completedAt:new Date().toISOString()};
   await retry(()=>s.setJSON(V491_CLEANUP_KEY,result),120);return result;
+}
+async function scrubV492Post0214History(s){
+  const marker=await safeGet(s,V492_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV492BadTime(item?.t)),keep=items.filter(item=>!isV492BadTime(item?.t));
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v492-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v492-history-reindex',e)}
+  const last=keep[keep.length-1]||null;
+  if(last){const snap=await safeGet(s,last.key);if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)}
+  else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,window:['after 2026-09-15 02:14 EDT','before 2026-09-15 20:20 EDT'],removed:bad.length,completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V492_CLEANUP_KEY,result),120);return result;
 }
 async function latestFallback(s,playerId){
   const latest=await safeGet(s,LATEST_KEY),key=String(latest?.key||'').trim();
@@ -733,6 +748,7 @@ export default async (req)=>{
       try{await scrubV487RequestedTimestamp(s)}catch(e){console.warn('v487-history-scrub',e)}
       try{await scrubV490RequestedInterval(s)}catch(e){console.warn('v490-history-scrub',e)}
       try{await scrubV491LatestSnapshot(s)}catch(e){console.warn('v491-history-scrub',e)}
+      try{await scrubV492Post0214History(s)}catch(e){console.warn('v492-history-scrub',e)}
     }
     if(req.method==='GET'){
       if(url.searchParams.get('archive_export')==='1'){

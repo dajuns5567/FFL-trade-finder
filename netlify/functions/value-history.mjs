@@ -786,6 +786,9 @@ export default async (req)=>{
       return json({player_id:playerId,points:result.points||[],scoring_milestones:milestones,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
+    // Temporary safety freeze: current valuation outputs are under root-cause audit.
+    // Reads remain available; resume writes only after the corrected valuation build is verified.
+    return json({ok:true,recorded:false,paused:true,reason:'valuation-root-cause-audit'},202);
     if(!s)return json({error:'live history store unavailable'},503);
     const body=await req.json().catch(()=>null);
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);

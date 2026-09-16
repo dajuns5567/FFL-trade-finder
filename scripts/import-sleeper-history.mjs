@@ -8,7 +8,9 @@ const MAX_LEAGUES=Math.max(1,Math.min(5,Number(process.env.SLEEPER_HISTORY_DEPTH
 const OUT_ROOT=path.resolve(process.env.SLEEPER_DATA_DIR||'data/sleeper');
 const API='https://api.sleeper.app/v1';
 const headers={accept:'application/json','user-agent':'FFL-TradeFinder-SleeperImporter/1.3'};
-const COMPACT_KEYS=['pts_ppr','gp','gms_active','games_played','games','gms','off_snp','off_snaps','offensive_snaps','snaps_offense','pass_att','rush_att','rec_tgt','targets'];
+const COMPACT_BASE_KEYS=['pts_ppr','gp','gms_active','games_played','games','gms','off_snp','off_snaps','offensive_snaps','snaps_offense','def_snp','def_snaps','defensive_snaps','snaps_defense','pass_att','rush_att','rec_tgt','targets'];
+function compactKeys(scoringSettings={}){const keys=new Set(COMPACT_BASE_KEYS);for(const key of Object.keys(scoringSettings||{})){keys.add(key);if(String(key).startsWith('idp_'))keys.add(String(key).slice(4));}return [...keys]}
+
 
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function getJson(url,{retries=3}={}){
@@ -25,12 +27,12 @@ async function getJson(url,{retries=3}={}){
 async function writeJson(file,value){await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,JSON.stringify(value,null,2)+'\n','utf8')}
 function seasonOf(league){return Number(league?.season)||null}
 function payloadCount(payload){return Array.isArray(payload)?payload.length:(payload&&typeof payload==='object'?Object.keys(payload).length:0)}
-function compactSeason(seasonStats){
+function compactSeason(seasonStats,scoringSettings={}){
   const out={};
   for(const [id,row] of Object.entries(seasonStats||{})){
     const src=row?.stats&&typeof row.stats==='object'?row.stats:row;
     const compact={};
-    for(const key of COMPACT_KEYS){const n=Number(src?.[key]);if(Number.isFinite(n))compact[key]=n;}
+    for(const key of compactKeys(scoringSettings)){const n=Number(src?.[key]);if(Number.isFinite(n))compact[key]=n;}
     if(Object.keys(compact).length)out[String(id)]=compact;
   }
   return out;
@@ -149,7 +151,7 @@ async function main(){
     const aggregated=aggregateWeeks(fetched.weekly);
     if(year===current.season){seasonDiagnostics[year]=validateCurrentSeason(year,aggregated);qualifiedCurrentStats=aggregated}
     else seasonDiagnostics[year]=validateSeason(year,aggregated);
-    const compact=compactSeason(aggregated);
+    const compact=compactSeason(aggregated,current.league?.scoring_settings||{});
     compactDiagnostics[year]=year===current.season?{...seasonDiagnostics[year],compactPlayers:Object.keys(compact).length}:validateCompact(year,compact);
     compactStats[year]=compact;
     statsBySeason[year]={weekly:year===current.season?currentFetch.weekly:fetched.weekly,qualifiedWeekly:year===current.season?gatedCurrent.weekly:null,season:aggregated};

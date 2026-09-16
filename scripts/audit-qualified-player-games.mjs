@@ -12,7 +12,7 @@ const read=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const same=(a,b,tol=1e-6)=>Math.abs(num(a)-num(b))<=tol;
 const add=(obj,key,n)=>obj[key]=num(obj[key])+num(n);
-const isPlayerRow=(id,players)=>Object.prototype.hasOwnProperty.call(players,id);
+const isPlayerRow=(id,players)=>{if(!Object.prototype.hasOwnProperty.call(players,id))return false;const meta=players[id]||{},pos=String(meta.position||'').toUpperCase(),fps=(meta.fantasy_positions||[]).map(x=>String(x).toUpperCase());return !String(id).startsWith('TEAM_')&&!['DEF','DST'].includes(pos)&&!fps.some(x=>x==='DEF'||x==='DST')};
 
 const manifest=await read(path.join(ROOT,'manifest.json'));
 const scoring=manifest?.currentLeagueScoringSettings||{};

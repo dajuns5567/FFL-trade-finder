@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-16T02:34:28.277Z",
+  "generatedAt": "2026-09-16T04:00:59.817Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 1,
@@ -219,7 +219,7 @@
     "diagnostics": {
       "finalGames": 16,
       "qualifiedPlayerGames": 1020,
-      "rejectedPlayerGames": 1272,
+      "rejectedPlayerGames": 1273,
       "ignoredGames": 0
     }
   },
@@ -23275,14 +23275,14 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 860,
-      "withPpr": 714,
-      "withGames": 860
+      "players": 861,
+      "withPpr": 715,
+      "withGames": 861
     },
     "2024": {
-      "players": 933,
-      "withPpr": 777,
-      "withGames": 933
+      "players": 934,
+      "withPpr": 778,
+      "withGames": 934
     },
     "2025": {
       "players": 1031,
@@ -28109,6 +28109,24 @@
         "rec_td_50p": 1,
         "fum": 1,
         "rec_yd": 621
+      },
+      "5938": {
+        "pts_ppr": 42.699999999999996,
+        "gp": 13,
+        "off_snp": 383,
+        "rec_tgt": 17,
+        "rec_0_4": 2,
+        "rec_td": 3,
+        "bonus_fd_wr": 4,
+        "rec": 11,
+        "rec_fd": 4,
+        "rec_5_9": 4,
+        "bonus_rec_wr": 11,
+        "rec_40p": 1,
+        "rec_10_19": 4,
+        "rec_td_40p": 1,
+        "rec_td_50p": 1,
+        "rec_yd": 137
       },
       "5944": {
         "pts_ppr": 10.5,
@@ -42685,6 +42703,28 @@
         "rush_yd": 2,
         "fum": 1,
         "rec_yd": 1096
+      },
+      "5938": {
+        "pts_ppr": 64.3,
+        "gp": 17,
+        "off_snp": 546,
+        "rec_tgt": 45,
+        "rec_0_4": 11,
+        "rec_td": 1,
+        "rec_20_29": 4,
+        "bonus_fd_wr": 11,
+        "idp_tkl": 2,
+        "idp_tkl_solo": 2,
+        "rec": 31,
+        "fum_lost": 1,
+        "rec_fd": 11,
+        "rec_5_9": 12,
+        "bonus_rec_wr": 31,
+        "rec_40p": 1,
+        "rec_10_19": 3,
+        "rec_td_40p": 1,
+        "fum": 2,
+        "rec_yd": 293
       },
       "5944": {
         "pts_ppr": 9,

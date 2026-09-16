@@ -53,13 +53,7 @@ let distCache24=null,distStatsRef24=null,distPlanKey24='';
 function distributions24(){
  const planKey=JSON.stringify(state.sleeperHistory?.weightPlan||{});if(distCache24&&distStatsRef24===state.stats&&distPlanKey24===planKey)return distCache24;
  const out={IDP:{ppg:[],premium:[]},QB:{ppg:[]},RB:{ppg:[]},WR:{ppg:[]},TE:{ppg:[]}};const ids=new Set();for(const y of Object.keys(state.stats||{}))for(const id of Object.keys(state.stats?.[y]||{}))ids.add(String(id));
- for(const id of ids){const pos=groupPos({type:'player',id});if(pos==='IDP'){
-   // Population invariant: compare dynasty-relevant IDPs only. Historical stats include
-   // hundreds of fringe/inactive defenders; including them makes ordinary starter PPG
-   // appear ~96th percentile and compresses every useful IDP into the same top bucket.
-   const c=consensus24(id);if(!(Number.isFinite(c)&&c>0))continue;
-   const rs=realScore24(id,'idp');if(rs.seasons){out.IDP.ppg.push(rs.ppg);out.IDP.premium.push(rs.premiumPpg)}
- }else if(out[pos]){const rs=realScore24(id,'offense');if(rs.seasons)out[pos].ppg.push(rs.ppg)}}
+ for(const id of ids){const pos=groupPos({type:'player',id});if(pos==='IDP'){const rs=realScore24(id,'idp');if(rs.seasons){out.IDP.ppg.push(rs.ppg);out.IDP.premium.push(rs.premiumPpg)}}else if(out[pos]){const rs=realScore24(id,'offense');if(rs.seasons)out[pos].ppg.push(rs.ppg)}}
  distStatsRef24=state.stats;distPlanKey24=planKey;distCache24=out;return out;
 }
 function idpProductionComponent24(id){const rs=realScore24(id,'idp'),d=distributions24().IDP;if(!rs.seasons)return{value:480,rs,ppgPct:null,premiumPct:null,effectivePct:.50};const ppgPct=percentile24(d.ppg,rs.ppg),premiumPct=percentile24(d.premium,rs.premiumPpg),rawPct=.84*ppgPct+.16*premiumPct,effectivePct=.50+rs.confidence*(rawPct-.50);const value=120+1900*Math.pow(clamp24(.03,effectivePct,.99),3.65);return{value,rs,ppgPct,premiumPct,effectivePct}}

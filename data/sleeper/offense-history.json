@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-17T13:26:03.334Z",
+  "generatedAt": "2026-09-17T18:12:25.514Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 1,
@@ -23291,9 +23291,9 @@
       "withGames": 934
     },
     "2025": {
-      "players": 1031,
+      "players": 1030,
       "withPpr": 555,
-      "withGames": 1031
+      "withGames": 1030
     },
     "2026": {
       "players": 1020,
@@ -31819,12 +31819,12 @@
       },
       "7682": {
         "pts_ppr": 11,
-        "gp": 14,
-        "def_snp": 691,
+        "gp": 15,
+        "def_snp": 701,
         "idp_fum_ret_yd": 1,
-        "idp_tkl": 69,
+        "idp_tkl": 72,
         "idp_tkl_loss": 1,
-        "idp_tkl_solo": 46,
+        "idp_tkl_solo": 47,
         "idp_int": 1,
         "idp_int_ret_yd": 44,
         "idp_def_td": 1,
@@ -31832,7 +31832,7 @@
         "idp_pass_def": 4,
         "idp_fum_rec": 1,
         "idp_ff": 1,
-        "idp_tkl_ast": 23
+        "idp_tkl_ast": 25
       },
       "7685": {
         "pts_ppr": 4,
@@ -62986,17 +62986,6 @@
         "st_tkl_solo": 1,
         "idp_pass_def": 6,
         "idp_tkl_ast": 30
-      },
-      "8296": {
-        "gp": 10,
-        "def_snp": 527,
-        "idp_fum_ret_yd": 9,
-        "idp_tkl": 33,
-        "idp_tkl_loss": 1,
-        "idp_tkl_solo": 22,
-        "idp_pass_def": 2,
-        "idp_fum_rec": 2,
-        "idp_tkl_ast": 11
       },
       "8303": {
         "pts_ppr": 2,

@@ -13415,10 +13415,10 @@
       "adds": {
         "7770": 15
       },
-      "drops": null,
       "consenter_ids": [
         15
       ],
+      "drops": null,
       "roster_ids": [
         15
       ],
@@ -13436,12 +13436,12 @@
       "creator": "1227400338441523200",
       "transaction_id": "1406273690148048896",
       "adds": null,
-      "drops": {
-        "13360": 15
-      },
       "consenter_ids": [
         15
       ],
+      "drops": {
+        "13360": 15
+      },
       "roster_ids": [
         15
       ],
@@ -13461,12 +13461,12 @@
       "adds": {
         "6931": 20
       },
-      "drops": {
-        "11435": 20
-      },
       "consenter_ids": [
         20
       ],
+      "drops": {
+        "11435": 20
+      },
       "roster_ids": [
         20
       ],
@@ -13486,10 +13486,10 @@
       "adds": {
         "9479": 24
       },
-      "drops": null,
       "consenter_ids": [
         24
       ],
+      "drops": null,
       "roster_ids": [
         24
       ],
@@ -13507,12 +13507,12 @@
       "creator": "858596140008984576",
       "transaction_id": "1406077086199767040",
       "adds": null,
-      "drops": {
-        "8365": 24
-      },
       "consenter_ids": [
         24
       ],
+      "drops": {
+        "8365": 24
+      },
       "roster_ids": [
         24
       ],
@@ -13532,10 +13532,10 @@
       "adds": {
         "6900": 12
       },
-      "drops": null,
       "consenter_ids": [
         12
       ],
+      "drops": null,
       "roster_ids": [
         12
       ],
@@ -13555,12 +13555,12 @@
       "adds": {
         "6141": 12
       },
-      "drops": {
-        "8359": 12
-      },
       "consenter_ids": [
         12
       ],
+      "drops": {
+        "8359": 12
+      },
       "roster_ids": [
         12
       ],
@@ -13580,12 +13580,12 @@
       "adds": {
         "11729": 28
       },
-      "drops": {
-        "11668": 28
-      },
       "consenter_ids": [
         28
       ],
+      "drops": {
+        "11668": 28
+      },
       "roster_ids": [
         28
       ],

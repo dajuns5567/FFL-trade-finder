@@ -34,7 +34,7 @@ function offenseCoverage384(id){
   // (e.g. source "Thomas Fidone II" -> Sleeper "Thomas Fidone"). Do not re-litigate that match
   // here with a stricter raw-name equality check or a legitimately covered player can be
   // demoted into a no-consensus numeric slot after valuation has already completed.
-  if(String(detail?.kind||'').toLowerCase()==='offense'&&Array.isArray(detail?.offenseSources)&&detail.offenseSources.length)return true;
+  if(['offense','dual'].includes(String(detail?.kind||'').toLowerCase())&&Array.isArray(detail?.offenseSources)&&detail.offenseSources.length)return true;
   return false;
 }
 function noConsensusOffenseScore384(id){
@@ -74,12 +74,12 @@ masterRankCache=null;
 try{valueCache?.clear?.();fitCache?.clear?.();stageCache?.clear?.()}catch(_){}
 
 window.offenseConsensusCoverageGateV384={
-  version:387,
+  version:388,
   offensePositions:[...OFF],
   offenseCoverage:offenseCoverage384,
   auditPlayer(id){const sid=String(id),name=typeof playerName==='function'?playerName(sid):state?.players?.[sid]?.full_name||'',normalized=normalizeName384(name),sourceNames=offenseSourceNames384();return{id:sid,name,normalized,sourceCount:sourceNames.sourceCount,exactSourceCoverage:sourceNames.names.has(normalized),compositeValue:Number(state?.consensusComposite?.byId?.[sid])||null,compositeDetail:state?.consensusComposite?.detailsById?.[sid]||null}},
   noConsensusOffenseScore:noConsensusOffenseScore384,
   apply:apply384,
-  description:'V387: canonical composite coverage is an eligibility boundary only. Covered player Values remain attached to their identities; zero-source offense is appended on the established no-consensus scoring fallback; IDP model logic is untouched.'
+  description:'V388: canonical offense coverage accepts both offense and dual composite identities when validated offenseSources exist. Covered player Values remain attached to their identities; zero-source offense uses the established fallback; IDP model logic is untouched.'
 };
 })();

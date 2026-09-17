@@ -17,8 +17,11 @@ function protectInexperienced27(z){
  if(Number.isFinite(rank)&&rank<=24)raw=Math.max(raw,c*.93);if(Number.isFinite(rank)&&rank>220)raw=Math.min(raw,c*1.13);
  return{...z,value:Math.max(1,Math.round(raw)),consensus:Math.round(c),context:Math.round((.25*protectedProd+.10*other)/.35),production:{...(z.production||{}),experienceYears:exp,experienceProtected:true,protectedProductionValue:Math.round(protectedProd),modelWeights:{consensus:.65,scoringLookback:.25,otherLeagueDynastyContext:.10}}};
 }
-// One monotonic economic curve is applied to BOTH players and picks so trade ratios stay internally consistent.
-// It steepens the middle/lower range while intentionally compressing only the extreme top.
+// Economic curve remains available for draft picks, where the downstream canonical pick path
+// still consumes the curved source value. During this controlled audit, player model values are
+// intentionally left on their pre-curve valuation scale so all later offense/IDP calibration
+// layers operate on model values rather than an already transformed economic scale. Final player
+// trade values remain rank-derived by the downstream canonical normalization layer.
 function assetCurve27(v){
  const x=Math.max(1,Number(v)||1),low=50,mid=500,high=1700;
  const midValue=high*Math.pow(mid/high,1.45);
@@ -27,7 +30,7 @@ function assetCurve27(v){
  return high+.55*(x-high);
 }
 function applyCurve27(rows){
- const adjusted=rows.map(protectInexperienced27).map(z=>({...z,preCurveValue:z.value,value:Math.max(1,Math.round(assetCurve27(z.value)))}));
+ const adjusted=rows.map(protectInexperienced27).map(z=>({...z,preCurveValue:z.value,value:Math.max(1,Math.round(z.value))}));
  adjusted.sort((a,b)=>b.value-a.value);
  return adjusted;
 }

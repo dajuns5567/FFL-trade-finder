@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {rows,qualifiesCurrentSeasonGame,aggregateWeeks,leagueFantasyPoints} from '../netlify/functions/ppr-scoring.mjs';
+import {getConsensusCompositeV3} from '../netlify/functions/consensus-composite-v3.mjs';
 
 const ROOT=path.resolve(process.env.SLEEPER_DATA_DIR||'data/sleeper');
 const years=[2026,2025,2024,2023];
@@ -111,6 +112,13 @@ for(const p of Object.values(report.idpPopulationAudit.players)){
  delete p.games;
 }
 report.idpPopulationAudit.playerCount=Object.keys(report.idpPopulationAudit.players).length;
+try{
+ const cons=await getConsensusCompositeV3();
+ const byId=cons?.byPlayerId||cons?.players||cons?.values||cons||{};
+ for(const p of Object.values(report.idpPopulationAudit.players)){
+  const x=byId[p.id]||{};p.consensus={value:Number(x.value??x.consensus??x.composite??0)||null,rank:Number(x.rank??x.modelRank??x.consensusRank??0)||null};
+ }
+}catch(e){report.idpPopulationAudit.consensusError=String(e?.message||e)}
 const roleOf=p=>{const pos=String(p.position||'').toUpperCase();if(['LB','ILB','MLB','OLB'].includes(pos))return 'LB';if(['DL','DE','EDGE'].includes(pos))return 'EDGE';if(['DT','NT'].includes(pos))return 'INTERIOR';if(['DB','CB','S','SS','FS'].includes(pos))return 'DB';return 'OTHER'};
 report.idpPopulationAudit.roles={};
 for(const p of Object.values(report.idpPopulationAudit.players)){
@@ -122,6 +130,15 @@ for(const r of Object.values(report.idpPopulationAudit.roles)){
  r.playerMeanDistribution=dist(r.allMeans);r.playerMedianDistribution=dist(r.allMedians);r.ge70PlayerMeanDistribution=dist(r.ge70Means);r.ge70PlayerMedianDistribution=dist(r.ge70Medians);r.ge70GameCountDistribution=dist(r.ge70GameCounts);
  r.ge70QualityTiers={meanP25:r.ge70PlayerMeanDistribution?.p25??null,meanMedian:r.ge70PlayerMeanDistribution?.median??null,meanP75:r.ge70PlayerMeanDistribution?.p75??null,meanP90:r.ge70PlayerMeanDistribution?.p90??null,medianP25:r.ge70PlayerMedianDistribution?.p25??null,medianMedian:r.ge70PlayerMedianDistribution?.median??null,medianP75:r.ge70PlayerMedianDistribution?.p75??null,medianP90:r.ge70PlayerMedianDistribution?.p90??null};
  delete r.allMeans;delete r.allMedians;delete r.ge70Means;delete r.ge70Medians;delete r.ge70GameCounts;
+}
+report.idpPopulationAudit.productionConsensusAlignment={};
+for(const role of ['LB','EDGE']){
+ const ps=Object.values(report.idpPopulationAudit.players).filter(p=>roleOf(p)===role&&p.opportunity?.pointsGe70&&p.consensus?.value);
+ const sorted=[...ps].sort((a,b)=>a.opportunity.pointsGe70.mean-b.opportunity.pointsGe70.mean);
+ const n=sorted.length;
+ const buckets={P50:sorted.slice(Math.floor(n*.5)),P75:sorted.slice(Math.floor(n*.75)),P90:sorted.slice(Math.floor(n*.9))};
+ report.idpPopulationAudit.productionConsensusAlignment[role]={players:n};
+ for(const [k,a] of Object.entries(buckets))report.idpPopulationAudit.productionConsensusAlignment[role][k]={players:a.length,productionMean:dist(a.map(p=>p.opportunity.pointsGe70.mean)),consensusValue:dist(a.map(p=>p.consensus.value)),consensusRank:dist(a.map(p=>p.consensus.rank).filter(Number.isFinite))};
 }
 report.idpPopulationAudit.eliteRoleComparison={};
 for(const [role,r] of Object.entries(report.idpPopulationAudit.roles))report.idpPopulationAudit.eliteRoleComparison[role]=r.ge70QualityTiers;

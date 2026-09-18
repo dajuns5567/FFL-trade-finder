@@ -158,6 +158,16 @@ for(const band of ['low','medium','high']){const a=dr.filter(x=>x.evidenceBand==
 for(const band of ['young','prime-young','prime','veteran','unknown']){const a=dr.filter(x=>x.ageBand===band);report.idpPopulationAudit.consensusScoringDisagreement.summary.byAge[band]={players:a.length,gap:dist(a.map(x=>x.consensusMinusScoringPercentile)),absoluteGap:dist(a.map(x=>Math.abs(x.consensusMinusScoringPercentile)))}}
 report.idpPopulationAudit.consensusScoringDisagreement.extremes=[...dr].sort((a,b)=>Math.abs(b.consensusMinusScoringPercentile)-Math.abs(a.consensusMinusScoringPercentile)).slice(0,50);
 delete report.idpPopulationAudit.consensusScoringDisagreement.rows;
+report.idpPopulationAudit.v25ScoringCalibration={note:'Exact V25 scoring transform reconstructed from historical qualifying-season PPG evidence; opportunity metrics remain diagnostic overlays.',controls:{},population:{}};
+const clampV=(lo,x,hi)=>Math.max(lo,Math.min(hi,x));
+const qV=(a,p)=>{if(!a.length)return null;const s=[...a].sort((x,y)=>x-y),i=(s.length-1)*p,lo=Math.floor(i),hi=Math.ceil(i);return s[lo]+(s[hi]-s[lo])*(i-lo)};
+const pctV=(a,x)=>{if(!a.length)return .5;let below=0,equal=0;for(const v of a){if(v<x)below++;else if(v===x)equal++}return clampV(.01,(below+.5*equal)/a.length,.99)};
+const histRows=[];
+for(const p of Object.values(report.idpPopulationAudit.players)){const seasons=Object.entries(p.bySeason||{}).filter(([y,s])=>Number(y)<2026&&s?.distribution?.games>=8).sort((a,b)=>Number(b[0])-Number(a[0])).slice(0,3),w=[.60,.30,.10];if(!seasons.length)continue;let ppg=0,cov=0;for(let i=0;i<seasons.length;i++){ppg+=seasons[i][1].distribution.mean*w[i];cov+=w[i]}histRows.push({p,ppg:ppg/cov,coverage:cov,seasons:seasons.length})}
+const histPpg=histRows.map(x=>x.ppg),p50=qV(histPpg,.50),p99=Math.max((p50||0)+.01,qV(histPpg,.99)||0);
+report.idpPopulationAudit.v25ScoringCalibration.population={players:histRows.length,p50,p99,ppgDistribution:dist(histPpg)};
+const controlSet=new Set(['Maxx Crosby','Myles Garrett','Roquan Smith','Dallas Turner','Aidan Hutchinson','Will Anderson Jr.','Will Anderson','Carson Schwesinger','Jack Campbell','T.J. Watt']);
+for(const x of histRows){const p=x.p,ppgPct=pctV(histPpg,x.ppg),relative=clampV(0,(x.ppg-p50)/(p99-p50),1.10),raw=.55*ppgPct+.45*relative;const conf=clampV(0,Math.min(1,x.coverage),1),strength=.45+conf*(raw-.45),value=clampV(180,180+1270*Math.pow(clampV(.08,strength,1),2.70),1500);if(controlSet.has(p.name))report.idpPopulationAudit.v25ScoringCalibration.controls[p.name]={weightedHistoricalPpg:x.ppg,historicalSeasons:x.seasons,coverage:x.coverage,ppgPercentile:ppgPct,relativeAboveP50:relative,rawStrength:raw,diagnosticConfidence:conf,postConfidenceStrength:strength,reconstructedScoringValue:value,currentOpportunity:p.opportunity};}
 report.idpPopulationAudit.eliteRoleComparison={};
 for(const [role,r] of Object.entries(report.idpPopulationAudit.roles))report.idpPopulationAudit.eliteRoleComparison[role]=r.ge70QualityTiers;
 report.distributionAudit.requestedNames=[...targetNames];

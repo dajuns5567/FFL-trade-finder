@@ -142,6 +142,22 @@ for(const role of ['LB','EDGE']){
  report.idpPopulationAudit.productionConsensusAlignment[role]={players:n};
  for(const [k,a] of Object.entries(buckets))report.idpPopulationAudit.productionConsensusAlignment[role][k]={players:a.length,productionMean:dist(a.map(p=>p.opportunity.pointsGe70.mean)),consensusValue:dist(a.map(p=>p.consensus.value)),consensusRank:dist(a.map(p=>p.consensus.rank).filter(Number.isFinite))};
 }
+report.idpPopulationAudit.consensusScoringDisagreement={rows:[]};
+for(const p of Object.values(report.idpPopulationAudit.players)){
+ const cv=Number(p.consensus?.value),sd=p.opportunity?.pointsGe70||p.distribution;
+ if(!Number.isFinite(cv)||!sd||!Number.isFinite(sd.mean))continue;
+ const evidence=p.opportunity?.ge70||0,careerGames=p.distribution?.games||0;
+ report.idpPopulationAudit.consensusScoringDisagreement.rows.push({id:p.id,name:p.name,position:p.position,age:p.age??null,consensusValue:cv,consensusRank:p.consensus?.rank??null,scoringMean:sd.mean,scoringMedian:sd.median,evidenceGe70:evidence,careerQualifyingGames:careerGames,meanMedianRatio:sd.meanMedianRatio??null});
+}
+const dr=report.idpPopulationAudit.consensusScoringDisagreement.rows;
+const pctRanks=(a,key,asc=true)=>{const s=[...a].filter(x=>Number.isFinite(Number(x[key]))).sort((x,y)=>(Number(x[key])-Number(y[key]))*(asc?1:-1));const m=new Map();s.forEach((x,i)=>m.set(x.id,s.length>1?i/(s.length-1):.5));return m};
+const consPct=pctRanks(dr,'consensusValue'),scorePct=pctRanks(dr,'scoringMean');
+for(const x of dr){x.consensusPercentile=consPct.get(x.id)??null;x.scoringPercentile=scorePct.get(x.id)??null;x.consensusMinusScoringPercentile=(x.consensusPercentile??0)-(x.scoringPercentile??0);x.evidenceBand=x.evidenceGe70>=16?'high':x.evidenceGe70>=8?'medium':x.evidenceGe70>=1?'low':'none';x.ageBand=Number.isFinite(Number(x.age))?(x.age<=24?'young':x.age<=27?'prime-young':x.age<=30?'prime':'veteran'):'unknown'}
+report.idpPopulationAudit.consensusScoringDisagreement.summary={players:dr.length,absoluteGap:dist(dr.map(x=>Math.abs(x.consensusMinusScoringPercentile))),byEvidence:{},byAge:{}};
+for(const band of ['low','medium','high']){const a=dr.filter(x=>x.evidenceBand===band);report.idpPopulationAudit.consensusScoringDisagreement.summary.byEvidence[band]={players:a.length,gap:dist(a.map(x=>x.consensusMinusScoringPercentile)),absoluteGap:dist(a.map(x=>Math.abs(x.consensusMinusScoringPercentile)))}}
+for(const band of ['young','prime-young','prime','veteran','unknown']){const a=dr.filter(x=>x.ageBand===band);report.idpPopulationAudit.consensusScoringDisagreement.summary.byAge[band]={players:a.length,gap:dist(a.map(x=>x.consensusMinusScoringPercentile)),absoluteGap:dist(a.map(x=>Math.abs(x.consensusMinusScoringPercentile)))}}
+report.idpPopulationAudit.consensusScoringDisagreement.extremes=[...dr].sort((a,b)=>Math.abs(b.consensusMinusScoringPercentile)-Math.abs(a.consensusMinusScoringPercentile)).slice(0,50);
+delete report.idpPopulationAudit.consensusScoringDisagreement.rows;
 report.idpPopulationAudit.eliteRoleComparison={};
 for(const [role,r] of Object.entries(report.idpPopulationAudit.roles))report.idpPopulationAudit.eliteRoleComparison[role]=r.ge70QualityTiers;
 report.distributionAudit.requestedNames=[...targetNames];

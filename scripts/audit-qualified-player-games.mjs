@@ -168,6 +168,28 @@ const histPpg=histRows.map(x=>x.ppg),p50=qV(histPpg,.50),p99=Math.max((p50||0)+.
 report.idpPopulationAudit.v25ScoringCalibration.population={players:histRows.length,p50,p99,ppgDistribution:dist(histPpg)};
 const controlSet=new Set(['Maxx Crosby','Myles Garrett','Roquan Smith','Dallas Turner','Aidan Hutchinson','Will Anderson Jr.','Will Anderson','Carson Schwesinger','Jack Campbell','T.J. Watt']);
 for(const x of histRows){const p=x.p,ppgPct=pctV(histPpg,x.ppg),relative=clampV(0,(x.ppg-p50)/(p99-p50),1.10),raw=.55*ppgPct+.45*relative;const conf=clampV(0,Math.min(1,x.coverage),1),strength=.45+conf*(raw-.45),value=clampV(180,180+1270*Math.pow(clampV(.08,strength,1),2.70),1500);if(controlSet.has(p.name))report.idpPopulationAudit.v25ScoringCalibration.controls[p.name]={weightedHistoricalPpg:x.ppg,historicalSeasons:x.seasons,coverage:x.coverage,ppgPercentile:ppgPct,relativeAboveP50:relative,rawStrength:raw,diagnosticConfidence:conf,postConfidenceStrength:strength,reconstructedScoringValue:value,currentOpportunity:p.opportunity};}
+report.idpPopulationAudit.v25ExactScoringTrace={note:'Exact V21 realScore confidence/weight semantics feeding V25, with V25 historical benchmark transform.',controls:{},population:{}};
+const wp=manifest?.weightPlan?.yearWeights||manifest?.weight_plan?.yearWeights||{};
+const planned=Object.values(wp).reduce((s,v)=>s+(Number(v)>0?Number(v):0),0)||1;
+const currentYear=Number(manifest?.currentSeason||manifest?.current_season||2026);
+function exactInput(p){
+ const ys=Object.entries(p.bySeason||{}).map(([y,s])=>[Number(y),s]).filter(([y,s])=>s?.distribution?.games>0&&((y===currentYear&&s.distribution.games>=1)||(y!==currentYear&&s.distribution.games>=8)));
+ const historical=ys.filter(([y])=>y!==currentYear).sort((a,b)=>b[0]-a[0]),cur=ys.find(([y])=>y===currentYear);
+ let samples=[];
+ for(const [y,s] of ys){const assigned=Number(wp[y]||0);if(assigned>0)samples.push({season:y,ppg:s.distribution.mean,games:s.distribution.games,assignedWeight:assigned,currentSeason:y===currentYear})}
+ const evidenceCoverage=samples.reduce((z,x)=>z+x.assignedWeight,0),currentAssigned=Number(cur?wp[currentYear]||0:0);
+ let calc=samples.map(x=>({...x,calcWeight:x.assignedWeight}));
+ if(cur){const ht=Math.max(0,planned-currentAssigned),ha=calc.filter(x=>!x.currentSeason).reduce((z,x)=>z+x.assignedWeight,0);calc=calc.map(x=>x.currentSeason?{...x,calcWeight:currentAssigned}:{...x,calcWeight:ha>0?x.assignedWeight*(ht/ha):0})}
+ else{const fb=[.60,.30,.10];calc=historical.slice(0,3).map(([y,s],i)=>({season:y,ppg:s.distribution.mean,games:s.distribution.games,assignedWeight:Number(wp[y]||0),calcWeight:fb[i],currentSeason:false}))}
+ const calcWeight=calc.reduce((z,x)=>z+x.calcWeight,0),den=cur?planned:calcWeight,ppg=den>0?calc.reduce((z,x)=>z+x.ppg*x.calcWeight,0)/den:0;
+ const hc=historical.length>=3?1:historical.length===2?.74:historical.length===1?.42:.20,cc=Math.max(.20,Math.min(1,evidenceCoverage)),cgc=cur?Math.max(.15,Math.min(1,cur[1].distribution.games/14)):1,hb=.66+.34*hc,fill=cur?(1-hc)*.22*cgc:0,confidence=Math.max(.08,Math.min(1,cc*Math.min(1,hb+fill)));
+ return{ppg,confidence,evidenceCoverage,historicalSeasons:historical.length,currentGames:cur?.[1]?.distribution?.games||0,samples:calc};
+}
+const exactRows=[];
+for(const p of Object.values(report.idpPopulationAudit.players)){const e=exactInput(p);if(e.historicalSeasons){const hs=Object.entries(p.bySeason||{}).map(([y,s])=>[Number(y),s]).filter(([y,s])=>y!==currentYear&&s?.distribution?.games>=8).sort((a,b)=>b[0]-a[0]).slice(0,3),ww=[.60,.30,.10];let z=0,cov=0;for(let i=0;i<hs.length;i++){z+=hs[i][1].distribution.mean*ww[i];cov+=ww[i]}exactRows.push({p,e,benchmark:z/cov})}}
+const bp=exactRows.map(x=>x.benchmark),b50=qV(bp,.50),b99=Math.max(b50+.01,qV(bp,.99)||0);report.idpPopulationAudit.v25ExactScoringTrace.population={players:exactRows.length,p50:b50,p99:b99,benchmarkPpg:dist(bp)};
+const ctl=new Set(['Maxx Crosby','Myles Garrett','Roquan Smith','Dallas Turner','Aidan Hutchinson','Will Anderson Jr.','Will Anderson','Carson Schwesinger','Jack Campbell','T.J. Watt']);
+for(const x of exactRows){const pct=pctV(bp,x.e.ppg),rel=clampV(0,(x.e.ppg-b50)/(b99-b50),1.10),raw=.55*pct+.45*rel,str=.45+x.e.confidence*(raw-.45),val=clampV(180,180+1270*Math.pow(clampV(.08,str,1),2.70),1500);if(ctl.has(x.p.name))report.idpPopulationAudit.v25ExactScoringTrace.controls[x.p.name]={...x.e,ppgPercentile:pct,relativeAboveP50:rel,rawStrength:raw,strength:str,reconstructedV25ScoringValue:val};}
 report.idpPopulationAudit.eliteRoleComparison={};
 for(const [role,r] of Object.entries(report.idpPopulationAudit.roles))report.idpPopulationAudit.eliteRoleComparison[role]=r.ge70QualityTiers;
 report.distributionAudit.requestedNames=[...targetNames];

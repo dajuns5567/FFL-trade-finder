@@ -31,7 +31,7 @@ function baseAudit25(id){generation25();id=String(id);if(baseAuditCache25.has(id
 function metrics25(id,a){generation25();id=String(id);if(metricsCache25.has(id))return metricsCache25.get(id);const m=historyMetrics25(a);metricsCache25.set(id,m);return m}
 function distributions25(){
  generation25();if(cache25)return cache25;
- const rows=[];for(const id of Object.keys(state.players||{})){if(groupPos({type:'player',id})!=='IDP')continue;const a=baseAudit25(id);if(!a?.qualifyingSeasons)continue;const m=historicalBenchmarkMetrics25(a);if(m)rows.push({id,a,m})}
+ const rows=[];for(const id of Object.keys(state.players||{})){if(groupPos({type:'player',id})!=='IDP'||String(state.players?.[id]?.position||'').toUpperCase()==='DEF')continue;const a=baseAudit25(id);if(!a?.qualifyingSeasons)continue;const m=historicalBenchmarkMetrics25(a);if(m)rows.push({id,a,m})}
  const ppg=rows.map(r=>r.m.ppg),tackles=rows.map(r=>r.m.tackleRate),spikes=rows.map(r=>r.m.spikeRate),p50=q25(ppg,.50),p99=Math.max(p50+.01,q25(ppg,.99));
  const topPpg=[...rows].sort((a,b)=>b.m.ppg-a.m.ppg).slice(0,30).map(r=>({id:r.id,name:playerName(r.id),position:state.players?.[r.id]?.position||null,historicalBenchmarkPpg:r.m.ppg,qualifyingSeasons:r.a?.qualifyingSeasons??null,confidence:r.a?.confidence??null,seasons:(r.a?.seasons||[]).filter(s=>!s.currentSeason).sort((a,b)=>Number(b.season)-Number(a.season)).slice(0,3).map(s=>({season:s.season,games:s.games,ppg:s.ppg,assignedWeight:s.assignedWeight,points:s.points}))}));
  const playerRows=rows.filter(r=>String(state.players?.[r.id]?.position||'').toUpperCase()!=='DEF'),playerPpg=playerRows.map(r=>r.m.ppg),playerP50=q25(playerPpg,.50),playerP99=Math.max(playerP50+.01,q25(playerPpg,.99));

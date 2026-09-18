@@ -21,8 +21,14 @@ if(!Object.keys(players).length)throw new Error('players.json is required and mu
 
 const report={
  summary:{playerGames:0,qualified:0,rejected:0,nonPlayerRowsIgnored:0,offense:{playerGames:0,qualified:0,rejected:0,aggregateMismatches:0},idp:{playerGames:0,qualified:0,rejected:0,aggregateMismatches:0},aggregateMismatches:0},
- years:{},aggregateMismatches:[]
+ years:{},aggregateMismatches:[],distributionAudit:{targets:{}}
 };
+const targetNames=new Set(['Maxx Crosby','Myles Garrett','Roquan Smith','Dallas Turner']);
+const targetIds=new Map(Object.entries(players).filter(([,p])=>targetNames.has(String(p?.full_name||''))).map(([id,p])=>[id,p.full_name]));
+for(const [id,name] of targetIds)report.distributionAudit.targets[id]={id,name,seasons:{},combinedGames:[]};
+const percentile=(a,p)=>{if(!a.length)return null;const s=[...a].sort((x,y)=>x-y),i=(s.length-1)*p,lo=Math.floor(i),hi=Math.ceil(i);return s[lo]+(s[hi]-s[lo])*(i-lo)};
+const dist=a=>{const x=a.map(Number).filter(Number.isFinite),n=x.length;if(!n)return null;const s=[...x].sort((a,b)=>a-b),sum=s.reduce((a,b)=>a+b,0),mean=sum/n,median=percentile(s,.5),trim=Math.floor(n*.10),t=trim&&n>2*trim?s.slice(trim,n-trim):s,trimmedMean=t.reduce((a,b)=>a+b,0)/t.length,variance=s.reduce((z,v)=>z+(v-mean)**2,0)/n,best=[...s].sort((a,b)=>b-a);return{games:n,mean,median,trimmedMean,p25:percentile(s,.25),p75:percentile(s,.75),p90:percentile(s,.90),max:best[0],stdDev:Math.sqrt(variance),meanMinusMedian:mean-median,meanMedianRatio:median?mean/median:null,avgExcludingBest:n>1?(sum-best[0])/(n-1):null,avgExcludingBestTwo:n>2?(sum-best[0]-best[1])/(n-2):null,bestGameShare:sum?best[0]/sum:null,bestTwoShare:sum?(best[0]+(best[1]||0))/sum:null}};
+
 
 for(const year of years){
  let weekly;try{weekly=await read(path.join(ROOT,String(year),'weekly-stats.json'))}catch{continue}
@@ -45,6 +51,11 @@ for(const year of years){
    const meta=players[id],team=normalizeTeamCode(meta.team),phase=phaseById[id]||playerPhase(meta);
    counts[phase==='defense'?'idp':'offense'].playerGames++;
    const q=qualifiesCurrentSeasonGame(s,{phase,teamSnapMax:num(teamMax.get(team+'|'+phase)),scoringSettings:scoring});
+   if(targetIds.has(id)){
+    const t=report.distributionAudit.targets[id],season=t.seasons[year]||(t.seasons[year]={rows:[]});
+    season.rows.push({week,points:q.points,snapShare:q.snapShare,qualified:q.qualified});
+    if(q.qualified)t.combinedGames.push({year,week,points:q.points,snapShare:q.snapShare});
+   }
    if(q.qualified){
     keep[id]=s;
     counts[phase==='defense'?'idp':'offense'].qualified++;
@@ -80,4 +91,13 @@ for(const year of years){
  report.summary.nonPlayerRowsIgnored+=counts.nonPlayerRowsIgnored;
  for(const bucket of ['offense','idp'])for(const key of ['playerGames','qualified','rejected']){report.summary[bucket][key]+=counts[bucket][key];report.summary[key]+=counts[bucket][key]}
 }
+for(const t of Object.values(report.distributionAudit.targets)){
+ for(const [year,s] of Object.entries(t.seasons)){
+  const qualified=s.rows.filter(r=>r.qualified);
+  s.qualifyingGames=qualified.length;s.distribution=dist(qualified.map(r=>r.points));
+ }
+ t.combinedDistribution=dist(t.combinedGames.map(r=>r.points));
+}
+report.distributionAudit.requestedNames=[...targetNames];
+report.distributionAudit.foundNames=[...targetIds.values()];
 console.log(JSON.stringify(report,null,2));

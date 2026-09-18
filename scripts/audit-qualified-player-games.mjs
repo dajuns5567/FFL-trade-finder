@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {rows,qualifiesCurrentSeasonGame,aggregateWeeks,leagueFantasyPoints} from '../netlify/functions/ppr-scoring.mjs';
-import {getConsensusCompositeV3} from '../netlify/functions/consensus-composite-v3.mjs';
+import {buildConsensusComposite} from '../netlify/functions/consensus-composite-v3.mjs';
+import {refreshAllSources} from '../netlify/functions/consensus-source-overrides.mjs';
 
 const ROOT=path.resolve(process.env.SLEEPER_DATA_DIR||'data/sleeper');
 const years=[2026,2025,2024,2023];
@@ -113,10 +114,11 @@ for(const p of Object.values(report.idpPopulationAudit.players)){
 }
 report.idpPopulationAudit.playerCount=Object.keys(report.idpPopulationAudit.players).length;
 try{
- const cons=await getConsensusCompositeV3();
- const byId=cons?.byPlayerId||cons?.players||cons?.values||cons||{};
+ const refresh=await refreshAllSources();
+ const cons=buildConsensusComposite(refresh.results,Object.entries(players).map(([id,p])=>({id,name:p?.full_name||'',position:p?.position,positions:p?.fantasy_positions||p?.positions})));
+ const byId=cons?.detailsById||{};
  for(const p of Object.values(report.idpPopulationAudit.players)){
-  const x=byId[p.id]||{};p.consensus={value:Number(x.value??x.consensus??x.composite??0)||null,rank:Number(x.rank??x.modelRank??x.consensusRank??0)||null};
+  const x=byId[p.id]||{};p.consensus={value:Number(x.consensusCompositeValue??0)||null,rank:Number(x.idpRank??0)||null,sources:x.idpSources||[]};
  }
 }catch(e){report.idpPopulationAudit.consensusError=String(e?.message||e)}
 const roleOf=p=>{const pos=String(p.position||'').toUpperCase();if(['LB','ILB','MLB','OLB'].includes(pos))return 'LB';if(['DL','DE','EDGE'].includes(pos))return 'EDGE';if(['DT','NT'].includes(pos))return 'INTERIOR';if(['DB','CB','S','SS','FS'].includes(pos))return 'DB';return 'OTHER'};

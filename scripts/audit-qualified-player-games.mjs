@@ -111,6 +111,17 @@ for(const p of Object.values(report.idpPopulationAudit.players)){
  delete p.games;
 }
 report.idpPopulationAudit.playerCount=Object.keys(report.idpPopulationAudit.players).length;
+const roleOf=p=>{const pos=String(p.position||'').toUpperCase();if(['LB','ILB','MLB','OLB'].includes(pos))return 'LB';if(['DL','DE','EDGE'].includes(pos))return 'EDGE';if(['DT','NT'].includes(pos))return 'INTERIOR';if(['DB','CB','S','SS','FS'].includes(pos))return 'DB';return 'OTHER'};
+report.idpPopulationAudit.roles={};
+for(const p of Object.values(report.idpPopulationAudit.players)){
+ const role=roleOf(p),r=report.idpPopulationAudit.roles[role]||(report.idpPopulationAudit.roles[role]={players:0,allMeans:[],allMedians:[],ge70Means:[],ge70Medians:[],ge70GameCounts:[]});
+ r.players++;if(p.distribution){r.allMeans.push(p.distribution.mean);r.allMedians.push(p.distribution.median)}
+ if(p.opportunity?.pointsGe70){r.ge70Means.push(p.opportunity.pointsGe70.mean);r.ge70Medians.push(p.opportunity.pointsGe70.median);r.ge70GameCounts.push(p.opportunity.ge70)}
+}
+for(const r of Object.values(report.idpPopulationAudit.roles)){
+ r.playerMeanDistribution=dist(r.allMeans);r.playerMedianDistribution=dist(r.allMedians);r.ge70PlayerMeanDistribution=dist(r.ge70Means);r.ge70PlayerMedianDistribution=dist(r.ge70Medians);r.ge70GameCountDistribution=dist(r.ge70GameCounts);
+ delete r.allMeans;delete r.allMedians;delete r.ge70Means;delete r.ge70Medians;delete r.ge70GameCounts;
+}
 report.distributionAudit.requestedNames=[...targetNames];
 report.distributionAudit.foundNames=[...targetIds.values()];
 console.log(JSON.stringify(report,null,2));

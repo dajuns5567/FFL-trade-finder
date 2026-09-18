@@ -169,7 +169,7 @@ report.idpPopulationAudit.v25ScoringCalibration.population={players:histRows.len
 const controlSet=new Set(['Maxx Crosby','Myles Garrett','Roquan Smith','Dallas Turner','Aidan Hutchinson','Will Anderson Jr.','Will Anderson','Carson Schwesinger','Jack Campbell','T.J. Watt']);
 for(const x of histRows){const p=x.p,ppgPct=pctV(histPpg,x.ppg),relative=clampV(0,(x.ppg-p50)/(p99-p50),1.10),raw=.55*ppgPct+.45*relative;const conf=clampV(0,Math.min(1,x.coverage),1),strength=.45+conf*(raw-.45),value=clampV(180,180+1270*Math.pow(clampV(.08,strength,1),2.70),1500);if(controlSet.has(p.name))report.idpPopulationAudit.v25ScoringCalibration.controls[p.name]={weightedHistoricalPpg:x.ppg,historicalSeasons:x.seasons,coverage:x.coverage,ppgPercentile:ppgPct,relativeAboveP50:relative,rawStrength:raw,diagnosticConfidence:conf,postConfidenceStrength:strength,reconstructedScoringValue:value,currentOpportunity:p.opportunity};}
 report.idpPopulationAudit.v25ExactScoringTrace={note:'Exact V21 realScore confidence/weight semantics feeding V25, with V25 historical benchmark transform.',controls:{},population:{}};
-const wp=manifest?.weightPlan?.yearWeights||manifest?.weight_plan?.yearWeights||{};
+const wp=manifest?.productionWeightPlan?.yearWeights||{};
 const planned=Object.values(wp).reduce((s,v)=>s+(Number(v)>0?Number(v):0),0)||1;
 const currentYear=Number(manifest?.currentSeason||manifest?.current_season||2026);
 function exactInput(p){

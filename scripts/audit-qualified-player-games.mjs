@@ -120,8 +120,11 @@ for(const p of Object.values(report.idpPopulationAudit.players)){
 }
 for(const r of Object.values(report.idpPopulationAudit.roles)){
  r.playerMeanDistribution=dist(r.allMeans);r.playerMedianDistribution=dist(r.allMedians);r.ge70PlayerMeanDistribution=dist(r.ge70Means);r.ge70PlayerMedianDistribution=dist(r.ge70Medians);r.ge70GameCountDistribution=dist(r.ge70GameCounts);
+ r.ge70QualityTiers={meanP25:r.ge70PlayerMeanDistribution?.p25??null,meanMedian:r.ge70PlayerMeanDistribution?.median??null,meanP75:r.ge70PlayerMeanDistribution?.p75??null,meanP90:r.ge70PlayerMeanDistribution?.p90??null,medianP25:r.ge70PlayerMedianDistribution?.p25??null,medianMedian:r.ge70PlayerMedianDistribution?.median??null,medianP75:r.ge70PlayerMedianDistribution?.p75??null,medianP90:r.ge70PlayerMedianDistribution?.p90??null};
  delete r.allMeans;delete r.allMedians;delete r.ge70Means;delete r.ge70Medians;delete r.ge70GameCounts;
 }
+report.idpPopulationAudit.eliteRoleComparison={};
+for(const [role,r] of Object.entries(report.idpPopulationAudit.roles))report.idpPopulationAudit.eliteRoleComparison[role]=r.ge70QualityTiers;
 report.distributionAudit.requestedNames=[...targetNames];
 report.distributionAudit.foundNames=[...targetIds.values()];
 console.log(JSON.stringify(report,null,2));

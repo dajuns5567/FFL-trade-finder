@@ -21,7 +21,7 @@ if(!Object.keys(players).length)throw new Error('players.json is required and mu
 
 const report={
  summary:{playerGames:0,qualified:0,rejected:0,nonPlayerRowsIgnored:0,offense:{playerGames:0,qualified:0,rejected:0,aggregateMismatches:0},idp:{playerGames:0,qualified:0,rejected:0,aggregateMismatches:0},aggregateMismatches:0},
- years:{},aggregateMismatches:[],distributionAudit:{targets:{}}
+ years:{},aggregateMismatches:[],distributionAudit:{targets:{}},idpPopulationAudit:{players:{}}
 };
 const targetNames=new Set(['Maxx Crosby','Myles Garrett','Roquan Smith','Dallas Turner']);
 const targetIds=new Map(Object.entries(players).filter(([,p])=>targetNames.has(String(p?.full_name||''))).map(([id,p])=>[id,p.full_name]));
@@ -51,6 +51,10 @@ for(const year of years){
    const meta=players[id],team=normalizeTeamCode(meta.team),phase=phaseById[id]||playerPhase(meta);
    counts[phase==='defense'?'idp':'offense'].playerGames++;
    const q=qualifiesCurrentSeasonGame(s,{phase,teamSnapMax:num(teamMax.get(team+'|'+phase)),scoringSettings:scoring});
+   if(phase==='defense'&&q.qualified){
+    const p=report.idpPopulationAudit.players[id]||(report.idpPopulationAudit.players[id]={id,name:meta?.full_name||null,position:meta?.position||null,age:meta?.age??null,games:[]});
+    p.games.push({year,week,points:q.points,snapShare:q.snapShare});
+   }
    if(targetIds.has(id)){
     const t=report.distributionAudit.targets[id],season=t.seasons[year]||(t.seasons[year]={rows:[]});
     season.rows.push({week,points:q.points,snapShare:q.snapShare,qualified:q.qualified});
@@ -98,6 +102,15 @@ for(const t of Object.values(report.distributionAudit.targets)){
  }
  t.combinedDistribution=dist(t.combinedGames.map(r=>r.points));
 }
+for(const p of Object.values(report.idpPopulationAudit.players)){
+ const g=p.games,pts=g.map(x=>x.points),snaps=g.map(x=>x.snapShare).filter(Number.isFinite);
+ p.distribution=dist(pts);p.snapDistribution=dist(snaps);
+ p.opportunity={games:g.length,ge50:g.filter(x=>Number(x.snapShare)>=.50).length,ge70:g.filter(x=>Number(x.snapShare)>=.70).length,ge80:g.filter(x=>Number(x.snapShare)>=.80).length,pointsGe50:dist(g.filter(x=>Number(x.snapShare)>=.50).map(x=>x.points)),pointsGe70:dist(g.filter(x=>Number(x.snapShare)>=.70).map(x=>x.points)),pointsGe80:dist(g.filter(x=>Number(x.snapShare)>=.80).map(x=>x.points))};
+ p.bySeason={};
+ for(const y of years){const yg=g.filter(x=>x.year===y);if(!yg.length)continue;const ys=yg.map(x=>x.snapShare).filter(Number.isFinite);p.bySeason[y]={games:yg.length,distribution:dist(yg.map(x=>x.points)),snapDistribution:dist(ys),ge50:yg.filter(x=>Number(x.snapShare)>=.50).length,ge70:yg.filter(x=>Number(x.snapShare)>=.70).length};}
+ delete p.games;
+}
+report.idpPopulationAudit.playerCount=Object.keys(report.idpPopulationAudit.players).length;
 report.distributionAudit.requestedNames=[...targetNames];
 report.distributionAudit.foundNames=[...targetIds.values()];
 console.log(JSON.stringify(report,null,2));

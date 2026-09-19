@@ -3,7 +3,7 @@ import {REPORTERS,reporterForTeam,realStatLine,buildInquirerWeek} from '../netli
 
 const assert=(x,m)=>{if(!x)throw new Error(m)};
 assert(REPORTERS.length===4,'Fleeced Inquirer must have exactly four permanent reporters');
-assert(REPORTERS.map(r=>r.name).join('|')==='Nick Swindell|cjminnich|Tilly Fleecer|Jefferson Filch','Fleeced Inquirer public reporter names must remain the approved V11 names');
+assert(REPORTERS.map(r=>r.name).join('|')==='Nick Swindell|Bartholomew Roycington III|Tilly Fleecer|Jefferson Filch','Fleeced Inquirer public reporter names must remain the approved V11 names');
 
 const teams=Array.from({length:32},(_,i)=>String(i+1));
 for(let week=1;week<=4;week++){
@@ -55,7 +55,7 @@ assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub mu
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
 assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
-assert(backend.includes("explicit V12 reporter-name upgrade"),'The requested V11 reporter rename must explicitly migrate older reporter articles exactly once');
+assert(backend.includes("explicit V13 fan-beat style and reporter-name upgrade"),'The requested V11 reporter rename must explicitly migrate older reporter articles exactly once');
 assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');
 assert(backend.includes("Number(stored?.inquirer_version||0)<INQUIRER_VERSION"),'Only older-version archived reporter articles may be migrated; current-version articles stay preserved');
 assert(backend.includes('leagueSeasonContext('),'Inquirer backend must derive season standings/streak context from completed Sleeper matchups');
@@ -64,4 +64,6 @@ assert(ui.includes('storedInquirerArticle(t)'),'League Hub must render preserved
 assert(ui.includes('reporterArchiveHTML(w)'),'League Hub must expose reporter archive UI');
 assert(ui.includes('data-lh-reporter-archive'),'Reporter archive controls missing');
 assert(helper.includes('dramatic without inventing facts'),'Reporter house style must preserve dramatic-but-factual constraint');
+assert(helper.includes('Hometown old-school beat writer and obvious fan')&&helper.includes('Hometown analytics beat writer and fan')&&helper.includes('Hometown tabloid beat writer and unapologetic fan')&&helper.includes('Hometown investigative beat writer and fan'),'All four reporters must explicitly write as hometown beat reporters/fans');
+assert(helper.includes('group chat')&&helper.includes('Sunday')&&helper.includes('spreadsheets cannot be angry')&&helper.includes('subpoena immunity'),'V13 prose engine must preserve frequent sarcasm and embedded humor rather than generic recap copy');
 console.log('Fleeced Inquirer four-reporter rotation, real-stat, persistence, and archive smoke passed');

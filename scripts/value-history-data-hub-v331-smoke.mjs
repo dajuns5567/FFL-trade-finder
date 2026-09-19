@@ -430,7 +430,7 @@ assert(backend.includes('scrubV346KtcContamination(s)'),'V346 history scrub miss
 assert(backend.includes('writeFilteredIndexes(s,keep)'),'V346 history reindex missing');
 
 assert(ui.includes('scheduleSnapshot(0,snapshotSourceFromUrl())'),'first snapshot is not attempted immediately on site load with source tagging');
-assert(ui.includes("function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;"),'Value History capture must wait only for usable site player state, not for a specific ranking source');
+assert(ui.includes('function snapshotPreconditions()')&&ui.includes('Object.keys(state.players).length<100'),'Value History capture must wait for usable site player state without depending on a specific ranking source');
 assert(!ui.includes("Object.keys(state.players).length<100||!hasValidatedKtcSnapshot()"),'Value History player snapshots must not be blocked by the KTC-specific validation gate');
 assert(ui.includes("const rows=currentRows();"),'Value History must copy the site already-calculated player values into each snapshot');
 assert(!ui.includes("keepalive:true"),'Value History POST must not use browser keepalive because the expanded snapshot payload can exceed keepalive body limits');

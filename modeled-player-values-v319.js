@@ -387,3 +387,13 @@ window.postTerminalOffenseOverrideAudit=function(){
  const byStage={};for(const r of rows)byStage[r.stage]=(byStage[r.stage]||0)+1;
  return{criterion:'diagnostic only: rows where final served offense value differs from the rounded exact result captured inside its actual terminal V43/V45/V47/V48/V49 valuation stage; this isolates downstream/post-terminal overrides without changing values',summary:{offenseWithTerminalExact:arr.filter(z=>window.groupPos?.(z.x)!=='IDP'&&terminal.some(([f,k])=>z.production?.[f]&&num(z.production?.[k])!=null)).length,mismatches:rows.length,byStage},largest:rows.slice(0,40)};
 };
+
+window.offenseCoverageGatePrecisionAudit=function(){
+ const arr=window.ensureMaster?.()||[],gate=window.offenseConsensusCoverageGateV384,num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
+ const terminal=[['rbCalibrationV49','offenseTerminalExactV49','V49'],['rbCalibrationV48','offenseTerminalExactV48','V48'],['youngCalibrationV47','offenseTerminalExactV47','V47'],['youngIdentityV45','offenseTerminalExactV45','V45'],['offenseContextV43','offenseTerminalExactV43','V43']];
+ const rows=arr.filter(z=>window.groupPos?.(z.x)!=='IDP').map((z,i)=>{const p=z.production||{};let stage='none',exact=null;for(const [flag,key,label] of terminal){if(p[flag]){stage=label;exact=num(p[key]);break;}}let covered=null;try{covered=gate?.offenseCoverage?.(z.x?.id)}catch(_){}return{id:String(z.x?.id??''),name:window.playerName?.(z.x?.id)||String(z.x?.id??''),served:num(z.value),preCoverageGateValue:num(z.preCoverageGateValue),coverageGate384:!!z.coverageGate384,noConsensusOffenseScore:num(z.noConsensusOffenseScore),covered,stage,terminalExact:exact,terminalRounded:exact==null?null:Math.max(1,Math.round(exact)),slotDelta:exact==null?null:num(z.value)-Math.max(1,Math.round(exact)),rank:i+1};});
+ const bucket=r=>r.coverageGate384?'gate-uncovered':r.covered===false?'uncovered-unflagged':r.covered===true?'covered':'coverage-unknown';
+ const counts={};for(const r of rows)counts[bucket(r)]=(counts[bucket(r)]||0)+1;
+ const mismatches=rows.filter(r=>r.terminalRounded!=null&&r.served!==r.terminalRounded);const mismatchBuckets={};for(const r of mismatches)mismatchBuckets[bucket(r)]=(mismatchBuckets[bucket(r)]||0)+1;
+ return{criterion:'diagnostic only: correlate terminal offense precision mismatches with the post-V40 offense-consensus-coverage-gate-v384 identity/slot reassignment; no mutation',summary:{offenseRows:rows.length,coverageBuckets:counts,terminalMismatches:mismatches.length,mismatchBuckets},gateRows:rows.filter(r=>r.coverageGate384).slice(0,40),largestMismatches:mismatches.sort((a,b)=>Math.abs(b.slotDelta)-Math.abs(a.slotDelta)).slice(0,40)};
+};

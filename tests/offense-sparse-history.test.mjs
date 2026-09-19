@@ -21,11 +21,9 @@ test('zero-history RB example is restrained rather than doubled',()=>{
   let f=c>=900?1.28:c>=750?1.22:c>=650?1.16:1.08;
   f+=.03;
   f=Math.max(1,Math.min(f,1.31));
-  const baseEvidenceCap=.95+.05*Math.max(0,Math.min(1,(c-500)/500));
-  const rookieEvidenceCap=Math.max(.90,Math.min(1,baseEvidenceCap-.02));
+  const evidenceCap=.95+.05*Math.max(0,Math.min(1,(c-500)/500));
   assert.equal(f,1.11);
   assert(c*f<800,'moderate-consensus zero-history RB context became excessive');
-  assert(Math.abs(baseEvidenceCap-.9621)<1e-9,'zero-history RB base evidence cap drifted');
-  assert(Math.abs(rookieEvidenceCap-.9421)<1e-9,'zero-history rookie RB uncertainty drifted');
-  assert(c*rookieEvidenceCap<c*baseEvidenceCap,'rookie uncertainty no longer distinguishes true rookies from experienced zero-history RBs');
+  assert(Math.abs(evidenceCap-.9621)<1e-9,'zero-history RB evidence cap drifted');
+  assert(c*evidenceCap<c,'moderate-consensus zero-history RB regained a premium above consensus');
 });

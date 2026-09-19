@@ -27,13 +27,24 @@ const sampleTeams=teams.map((id,i)=>({
 }));
 const players=Object.fromEntries(teams.map((id,i)=>['p'+id,{full_name:'Player '+id,position:i%2?'WR':'LB',team:'NFL'}]));
 const weeklyStats=Object.fromEntries(teams.map((id,i)=>['p'+id,i%2?{rec:6,rec_tgt:9,rec_yd:101,rec_td:1}:{tkl_solo:8,tkl_ast:3,sack:1}]));
-const built=buildInquirerWeek({season:2026,week:1,teams:sampleTeams,players,weeklyStats,scoringSettings:{},scoreFn:()=>20});
+const weeklyStatHistory={
+  1:weeklyStats,
+  2:Object.fromEntries(teams.map((id,i)=>['p'+id,i%2?{rec:5,rec_tgt:8,rec_yd:82}:{tkl_solo:6,tkl_ast:2}])),
+  3:Object.fromEntries(teams.map((id,i)=>['p'+id,i%2?{rec:7,rec_tgt:10,rec_yd:115,rec_td:1}:{tkl_solo:9,tkl_ast:4,sack:1}])),
+  4:Object.fromEntries(teams.map((id,i)=>['p'+id,i%2?{rec:8,rec_tgt:11,rec_yd:128,rec_td:1}:{tkl_solo:10,tkl_ast:3,sack:1}])),
+  5:Object.fromEntries(teams.map((id,i)=>['p'+id,i%2?{rec:9,rec_tgt:12,rec_yd:140,rec_td:2}:{tkl_solo:11,tkl_ast:4,sack:2}])),
+  6:Object.fromEntries(teams.map((id,i)=>['p'+id,i%2?{rec:10,rec_tgt:13,rec_yd:155,rec_td:2}:{tkl_solo:12,tkl_ast:5,sack:2}]))
+};
+for(const t of sampleTeams)t.league_context={season_context_available:true,record:{wins:5,losses:1,ties:0},standings_rank:3,league_size:32,playoff_teams:16,playoff_week_start:14,games_until_playoffs:5,inside_playoff_line:true,spots_from_playoff_line:-13,streak:{type:'W',length:4},recent_games:[{week:2,points:120},{week:3,points:125},{week:4,points:130},{week:5,points:135},{week:6,points:140}],recent_avg_points:130,prior_five_avg_points:110};
+const built=buildInquirerWeek({season:2026,week:6,teams:sampleTeams,players,weeklyStats:weeklyStatHistory[6],weeklyStatHistory,scoringSettings:{},scoreFn:(stats)=>Number(stats?.rec_yd||stats?.tkl_solo||20)});
 assert(built.reporters.length===4&&built.teams.length===32,'Inquirer weekly build must return four reporters and 32 team articles');
 for(const t of built.teams){
  const a=t.inquirer_article;
  assert(a?.reporter?.id&&a?.headline&&a?.byline,'Each team article must preserve reporter identity, headline, and byline');
  assert((a.paragraphs||[]).some(p=>p.includes('fantasy pts')),'Each performance article must cite fantasy points');
  assert((a.paragraphs||[]).some(p=>/rec|solo|sacks|yds/.test(p)),'Each performance article must cite real-life Sleeper stats');
+ assert((a.paragraphs||[]).some(p=>/5-1|winning streak|playoff push|league rank/i.test(p)),'Each article must include verified season/standings/streak/playoff context when available');
+ assert((a.paragraphs||[]).some(p=>/last three|prior three|stretch/i.test(p)),'Player coverage must support multi-game performance context when enough Sleeper history exists');
 }
 
 const backend=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');
@@ -42,9 +53,12 @@ const helper=fs.readFileSync('netlify/functions/inquirer-reporters.mjs','utf8');
 assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub must fetch Sleeper raw weekly stats for Inquirer articles');
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
-assert(backend.includes('if(Array.isArray(prior?.teams))'),'Stored completed-week Inquirer articles must be reused across future Inquirer versions instead of silently rewritten');
-assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store immutable standalone article files in addition to the archive index');
-assert(backend.includes("if(!stored?.headline)await s.setJSON(articleKey"),'Existing archived reporter articles must never be silently overwritten');
+assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
+assert(backend.includes("explicit V10 league/player-context upgrade"),'The requested V10 context upgrade must explicitly migrate older reporter articles exactly as a versioned migration');
+assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');
+assert(backend.includes("Number(stored?.inquirer_version||0)<INQUIRER_VERSION"),'Only older-version archived reporter articles may be migrated; current-version articles stay preserved');
+assert(backend.includes('leagueSeasonContext('),'Inquirer backend must derive season standings/streak context from completed Sleeper matchups');
+assert(backend.includes('weeklyStatHistory'),'Inquirer backend must provide multi-week Sleeper stat history for player trend context');
 assert(ui.includes('storedInquirerArticle(t)'),'League Hub must render preserved Inquirer article copy');
 assert(ui.includes('reporterArchiveHTML(w)'),'League Hub must expose reporter archive UI');
 assert(ui.includes('data-lh-reporter-archive'),'Reporter archive controls missing');

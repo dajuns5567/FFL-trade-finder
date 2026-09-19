@@ -9,7 +9,7 @@ const key=a=>String(a?.id??'');
 let map=new Map(),meta={ready:false,count:0,version:0},lastMaster=null;
 let installed=false,priorCanonical=null,priorPlayer=null,observer=null;
 
-function modeled(z){const v=Number(z?.value);return Number.isFinite(v)&&v>0?v:0}
+function modeled(z){const p=Number(z?.marketPrecisionValueV386),v=Number(z?.value);return Number.isFinite(p)&&p>0?p:(Number.isFinite(v)&&v>0?v:0)}
 function median(xs){
   const a=(xs||[]).filter(x=>Number.isFinite(x)&&x>0).slice().sort((a,b)=>a-b);
   if(!a.length)return 1;
@@ -463,4 +463,16 @@ window.fullPrecisionV72CoverageMarketAudit=function(){
  const cutoffs=[50,100,150,200,300,400,500].map(n=>{const g=cand.slice(0,n),idp=g.filter(r=>r.pos==='IDP').length;return{top:n,idp,offense:n-idp,cutoff:g.at(-1)?.candidate??null}});
  const movers=cand.filter(r=>r.delta).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,40);
  return{criterion:'diagnostic only: full internal V72 baseline*factor precision + covered offense terminal precision + unchanged V384 uncovered fallback; no served-value mutation',summary:{players:rows.length,sources,served:stats('served'),candidate:stats('candidate')},cutoffs,largestMovers:movers};
+};
+
+window.precisionRuntimeCandidateRegressionAudit=function(){
+ const arr=window.ensureMaster?.()||[],api=window.modeledPlayerValuesV319;api?.build?.(true);const snap=api?.snapshot?.()||new Map(),num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
+ const rows=arr.map((z,i)=>({id:String(z?.x?.id??''),name:window.playerName?.(z?.x?.id)||String(z?.x?.id??''),group:window.groupPos?.(z.x)||null,served:num(z.value),precision:num(z.marketPrecisionValueV386),source:z.marketPrecisionSourceV386||null,priorRank:num(z.marketPrecisionPriorRankV386),rank:i+1,canonical:num(snap.get(String(z?.x?.id??''))),gate:!!z.coverageGate384}));
+ const sourceCounts={};for(const r of rows)sourceCounts[r.source]=(sourceCounts[r.source]||0)+1;
+ const monotonic=rows.every((r,i)=>i===0||r.precision<=rows[i-1].precision);
+ const servedUnchangedGate=rows.filter(r=>r.gate).every(r=>r.precision===r.served);
+ const density=[50,100,150,200,300,400,500].map(n=>({top:n,idp:rows.slice(0,n).filter(r=>r.group==='IDP').length,offense:rows.slice(0,n).filter(r=>r.group!=='IDP').length}));
+ const movers=rows.map(r=>({...r,delta:r.priorRank-r.rank})).filter(r=>r.delta).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,40);
+ let canonicalMonotonic=true;for(let i=1;i<rows.length;i++)if(rows[i].canonical>rows[i-1].canonical){canonicalMonotonic=false;break}
+ return{criterion:'PR runtime candidate regression: combined rank uses full precision; served row values remain compatibility/display values; V384 uncovered fallback unchanged; V319 canonical mapping consumes precision gaps',summary:{players:rows.length,sourceCounts,precisionMonotonic:monotonic,v384FallbackPrecisionEqualsServed:servedUnchangedGate,canonicalMonotonic},density,largestMovers:movers,v384Rows:rows.filter(r=>r.gate).map(r=>({id:r.id,name:r.name,served:r.served,precision:r.precision,rank:r.rank,canonical:r.canonical})).slice(0,40)};
 };

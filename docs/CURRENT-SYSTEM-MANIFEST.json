@@ -54,7 +54,7 @@
     "inquirer_rotation": "8 teams per reporter per week; every reporter covers every team once across four consecutive weeks",
     "inquirer_real_stats_source": "Sleeper weekly raw stats",
     "inquirer_article_archives": "immutable standalone per-reporter article JSON + reporter archive index",
-    "inquirer_version": 14,
+    "inquirer_version": 15,
     "inquirer_live_context": [
       "season record and league rank",
       "winning/losing streaks from completed Sleeper matchups",
@@ -86,7 +86,34 @@
       }
     ],
     "inquirer_house_style": "Hometown beat reporter + fan; frequent sarcasm and embedded humor; first-person rooting interest; rival needling and self-deprecating team frustration allowed; all football facts remain Sleeper-grounded.",
-    "inquirer_article_standard": "Full long-form beat column: ~9–10 substantive paragraphs when data exists; minimum regression target 400 words; narrative analysis of season meaning, recent history, score construction, players, lineup/transactions, opponent quality, playoff/next-week stakes, and a closing kicker."
+    "inquirer_article_standard": "Full long-form beat column: ~9–10 substantive paragraphs when data exists; minimum regression target 400 words; narrative analysis of season meaning, recent history, score construction, players, lineup/transactions, opponent quality, playoff/next-week stakes, and a closing kicker.",
+    "inquirer_season_classification": {
+      "regular_season_weeks": "1-13",
+      "playoffs_weeks": "14-17",
+      "playoffs_begin_week": 14,
+      "final_inquirer_week": 17
+    },
+    "inquirer_team_value_watch": {
+      "source": "canonical Value History team snapshots",
+      "target_period": "7D",
+      "fallback": "earliest valid observation when fewer than 7 days exist; label as AVAILABLE history"
+    },
+    "inquirer_league_overview": [
+      "game-week analysis",
+      "standings/playoff/bubble analysis",
+      "league-wide transactions",
+      "canonical Trade History reactions",
+      "canonical team Value History movement",
+      "bottom-five standings-based No. 1-pick race analysis",
+      "four-reporter Hot Takes",
+      "verified next-week bye/injury roster pressure"
+    ],
+    "inquirer_availability_sources": {
+      "byes": "verified NFL schedule source already used by scoring/import pipeline",
+      "injuries": "Sleeper player injury/status metadata",
+      "rule": "withhold unsupported claims when source data is unavailable"
+    },
+    "inquirer_league_overview_archive": "inquirer/league-overview/<season>/week-<NN>.json and indexed into all four reporter archives"
   },
   "recovery_branches": {
     "code": "baseline/20260919-home-valuehistory-aligned",

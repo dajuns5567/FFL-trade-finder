@@ -54,6 +54,9 @@ Current Value History data recovery baseline:
 - `baseline/20260919-value-history-reset`
 - commit `928d5c7ff6e131fe85ddc72fe1659fa8582cdee9`
 
+Canonical documentation recovery baseline:
+- `baseline/20260919-canonical-project-memory`
+
 These branches are recovery points. Do not rewrite or delete them during ordinary work.
 
 ---

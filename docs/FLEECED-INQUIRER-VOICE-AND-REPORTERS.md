@@ -24,8 +24,13 @@ Data rules:
 - use starting-lineup and positional production
 - use transactions
 - use standings/division implications
+- use season record and current league rank
+- identify active winning and losing streaks from completed Sleeper matchups
+- identify sustained strong or poor team scoring stretches from recent completed games when enough history exists
+- surface playoff-push context when the team is close enough to the playoff window for that language to be meaningful, including whether the club is inside/outside the current playoff line
 - use manager information and relevant league awards when available
 - when mentioning a player in a performance context, include **fantasy points and real-life stat production** from Sleeper weekly stats
+- when enough weekly history exists, compare a player's recent multi-game fantasy production with the preceding stretch and call out genuine hot/cold runs rather than treating every game as isolated
 - real-life stat examples include passing attempts/completions/yards/TD/INT, rushing attempts/yards/TD, receptions/targets/yards/TD, and IDP tackles/sacks/TFL/QB hits/INT/FF/FR/PD
 - if Sleeper does not return a usable real-life stat line, say so or avoid the unsupported detail; never invent it
 - never fabricate 0.0–0.0 results
@@ -117,7 +122,9 @@ Each reporter also receives a persistent archive in the League Hub Blob store:
 - archive index entry
 - link back to the preserved weekly report
 
-Once an Inquirer article has been stored for a completed week, ordinary refreshes and future Inquirer code versions reuse that stored article instead of silently rewriting its prose. Reporter article files are write-once unless an explicit migration is intentionally performed.
+Once an Inquirer article has been stored for a completed week, ordinary refreshes reuse that stored article instead of silently rewriting its prose. Reporter article files are write-once unless an explicit migration is intentionally performed.
+
+**V10 is an explicit migration** requested on 2026-09-19 so existing V9 articles can be regenerated once with the richer live-league contract: standings, streaks, playoff positioning, recent team scoring form, and multi-week player form. After the V10 migration, ordinary refreshes preserve the V10 article.
 
 ## Runtime files
 

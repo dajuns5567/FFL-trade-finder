@@ -5,6 +5,7 @@ const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:
 const store=()=>getStore('fll-value-history-v2');
 function safeStore(){try{return store()}catch(e){console.warn('value-history-store-init',e);return null}}
 const ARCHIVE_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history';
+const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
 let archiveIndexCache=null,archiveIndexCacheAt=0;
 async function archiveJson(path){
   const r=await fetch(`${ARCHIVE_RAW}/${path}?ts=${Date.now()}`,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryArchive/1.0'},cache:'no-store'});
@@ -860,7 +861,7 @@ export default async (req)=>{
     rows.sort((a,b)=>a.id.localeCompare(b.id));picks.sort((a,b)=>a.id.localeCompare(b.id));
     const fp=fingerprint(rows,picks,teams);
     const t=new Date().toISOString(),key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
-    const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,rows,picks,teams};
+    const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,rows,picks,teams};
     await retry(()=>s.setJSON(key,snapshot),120);
     await appendIndex(s,key,t);
     await retry(()=>s.setJSON(LATEST_KEY,{version:3,t,fingerprint:fp,key,count:rows.length,source}),120);

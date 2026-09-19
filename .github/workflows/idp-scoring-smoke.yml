@@ -3,6 +3,12 @@ on:
   pull_request:
     paths:
       - 'valuation-idp-v21.js'
+      - 'valuation-idp-v25-perf.js'
+      - 'valuation-idp-v43.js'
+      - 'nonblocking-consensus-v277.js'
+      - 'modeled-player-values-v319.js'
+      - 'netlify/functions/consensus-composite-v3.mjs'
+      - 'tests/idp-valuation-refresh-contract.test.mjs'
       - 'scripts/import-sleeper-history.mjs'
       - 'sleeper-history-client-v22.js'
       - 'netlify/functions/ppr-scoring.mjs'
@@ -23,9 +29,16 @@ jobs:
         run: node --test tests/ppr-history.test.mjs
       - name: IDP Week 1 weighting invariants
         run: node --test tests/idp-week1-weighting.test.mjs
+      - name: IDP weekly refresh and rank-stability contract
+        run: node --test tests/idp-valuation-refresh-contract.test.mjs
       - name: Scoring pipeline syntax
         run: |
           node --check scripts/import-sleeper-history.mjs
           node --check sleeper-history-client-v22.js
           node --check netlify/functions/ppr-scoring.mjs
           node --check valuation-idp-v21.js
+          node --check valuation-idp-v25-perf.js
+          node --check valuation-idp-v43.js
+          node --check nonblocking-consensus-v277.js
+          node --check modeled-player-values-v319.js
+          node --check netlify/functions/consensus-composite-v3.mjs

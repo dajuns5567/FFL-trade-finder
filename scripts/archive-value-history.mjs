@@ -53,9 +53,10 @@ const V495_BAD_TIMES=new Set(['2026-09-19T21:47:21.051Z']);
 const V498_BAD_TIMES=new Set(['2026-09-19T23:09:48.738Z']);
 const V496_BASELINE_T='2026-09-19T22:01:38.323Z';
 const V496_BASELINE_MS=Date.parse(V496_BASELINE_T);
+const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
 function isKnownBadSnapshot(s){const t=String(s?.t||''),ms=new Date(t).getTime();return V495_BAD_TIMES.has(t)||V498_BAD_TIMES.has(t)||(Number.isFinite(ms)&&(ms<V496_BASELINE_MS||[V380_BAD_WINDOW,V381_BAD_WINDOW,V391_BAD_WINDOW,V494_BAD_WINDOW].some(([a,b])=>ms>=a&&ms<b)))}
 function validSnapshot(s){
-  return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100&&!isKnownBadSnapshot(s);
+  return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100&&!isKnownBadSnapshot(s)&&(String(s.source||'')!=='scheduled'||String(s.valuation_contract||'')===SCHEDULED_VALUATION_CONTRACT);
 }
 function monthOf(t){return String(t).slice(0,7)}
 function safeName(t){return String(t).replace(/[:.]/g,'-')}

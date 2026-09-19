@@ -49,6 +49,7 @@
   },
   "recovery_branches": {
     "code": "baseline/20260919-home-valuehistory-aligned",
-    "value_history_data": "baseline/20260919-value-history-reset"
+    "value_history_data": "baseline/20260919-value-history-reset",
+    "canonical_project_memory": "baseline/20260919-canonical-project-memory"
   }
 }

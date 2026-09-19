@@ -1,12 +1,12 @@
 'use strict';
 
-export const INQUIRER_VERSION=12;
+export const INQUIRER_VERSION=13;
 
 export const REPORTERS=[
- {id:'walter-mercer',name:'Nick Swindell',title:'Senior Football Correspondent',desk:'The Old Desk',voice:'Old-school beat writer. Clipped sentences. Scoreboard first. Dry skepticism. Sounds like ink, coffee, and a deadline.',signature:'No hysteria without a box score.'},
- {id:'tess-delaney',name:'cjminnich',title:'Performance & Tactics Columnist',desk:'The Numbers Desk',voice:'Sharp analytical columnist. Precise, observant, mildly sarcastic. Treats projections, usage, efficiency, and lineup choices like evidence.',signature:'The numbers are allowed to be rude.'},
- {id:'mack-hollis',name:'Tilly Fleecer',title:'Tabloid Sports Editor',desk:'The Back Page',voice:'Boisterous tabloid sports voice. Punchy. Braggy when deserved, mocking when earned, dramatic without inventing facts.',signature:'If it happened, it belongs in 48-point type.'},
- {id:'nora-voss',name:'Jefferson Filch',title:'Investigations & Front Office',desk:'The Inquiry Desk',voice:'Sardonic investigative columnist. Forensic about roster decisions and transactions. Darker dry humor, suspicious of easy narratives.',signature:'Every lineup leaves fingerprints.'}
+ {id:'walter-mercer',name:'Nick Swindell',title:'Senior Football Correspondent',desk:'The Old Desk',voice:'Hometown old-school beat writer and obvious fan. Clipped sentences, dry sarcasm, institutional memory, mild contempt for excuses, and the confidence of someone who has watched this team ruin perfectly good Sundays before.',signature:'No hysteria without a box score.'},
+ {id:'tess-delaney',name:'Bartholomew Roycington III',title:'Performance & Tactics Columnist',desk:'The Numbers Desk',voice:'Hometown analytics beat writer and fan. Precise but snarky, treats projections and usage like evidence, enjoys being right about trends, and gets personally offended when the team ignores the obvious numbers.',signature:'The numbers are allowed to be rude.'},
+ {id:'mack-hollis',name:'Tilly Fleecer',title:'Tabloid Sports Editor',desk:'The Back Page',voice:'Hometown tabloid beat writer and unapologetic fan. Loud, funny, sarcastic, shamelessly celebratory after wins, merciless after dumb losses, and always looking for the sentence that makes rival managers roll their eyes.',signature:'If it happened, it belongs in 48-point type.'},
+ {id:'nora-voss',name:'Jefferson Filch',title:'Investigations & Front Office',desk:'The Inquiry Desk',voice:'Hometown investigative beat writer and fan. Sardonic, suspicious, petty in a professional-looking way, forensic about lineup decisions and transactions, and convinced every bad roster move deserves a paper trail.',signature:'Every lineup leaves fingerprints.'}
 ];
 
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
@@ -56,9 +56,9 @@ export function realStatLine(position,stats){
 function formText(p){
  const f=p?.recent_form;if(!f||Number(f.games)||0<3)return'';
  const last=Number(f.last3_avg),prior=Number(f.prior3_avg);
- if(f.label==='hot'&&Number.isFinite(last)&&Number.isFinite(prior))return ' Over the last three: '+one(last)+' fantasy pts/game, up from '+one(prior)+' over the prior three — a real hot stretch.';
- if(f.label==='cold'&&Number.isFinite(last)&&Number.isFinite(prior))return ' Over the last three: '+one(last)+' fantasy pts/game, down from '+one(prior)+' over the prior three — a cold stretch worth watching.';
- if(Number.isFinite(last))return ' Over the last three: '+one(last)+' fantasy pts/game.';
+ if(f.label==='hot'&&Number.isFinite(last)&&Number.isFinite(prior))return ' He is also averaging '+one(last)+' over the last three after '+one(prior)+' over the previous three, which is the sort of trend this desk is legally required to overreact to.';
+ if(f.label==='cold'&&Number.isFinite(last)&&Number.isFinite(prior))return ' He is down to '+one(last)+' per game over the last three from '+one(prior)+' over the previous three, which is not a slump so much as a tiny weekly tax on our happiness.';
+ if(Number.isFinite(last))return ' His last-three average sits at '+one(last)+', which is neither parade material nor a reason to throw furniture.';
  return'';
 }
 function fact(p){
@@ -68,17 +68,18 @@ function fact(p){
 }
 function aside(t,w,r){
  const pools={
-  'walter-mercer':['The press box has filed this under “worth remembering, not worth engraving.”','The old rule applies: keep the clipping, lose the parade route.','A veteran copy editor has already circled the result twice and the excuses zero times.'],
-  'tess-delaney':['The spreadsheet has no emotional attachment to anyone involved.','Regression remains undefeated, which is inconvenient for victory-lap scheduling.','The model would like everyone to stop confusing one week with a constitution.'],
-  'mack-hollis':['Somebody in circulation has already ordered larger headline type.','The back page is behaving irresponsibly, as tradition requires.','Local authorities have not confirmed whether the victory cigar violated indoor policy.'],
-  'nora-voss':['The evidence has been bagged, tagged, and placed beside the waiver wire.','No subpoenas have been issued, but the lineup card has been retained.','The front office may consider this paragraph an informal request for comment.']
+  'walter-mercer':['We have now reached the dangerous stage where this fan base begins saying “maybe” out loud.','The press box has upgraded the situation from “annoying” to “interesting,” which is as close to optimism as management allows.','Keep the clipping. Hide the parade route. We have been hurt before.'],
+  'tess-delaney':['The spreadsheet says this is sustainable. The fan in me has asked the spreadsheet to please stop tempting fate.','The numbers are good enough that even the eye-test people have gone suspiciously quiet.','Regression remains undefeated, but for one week we are choosing not to invite it to dinner.'],
+  'mack-hollis':['Someone find the rival group chat. We have irresponsible journalism to conduct.','The back page has abandoned neutrality and frankly feels terrific about it.','If this keeps up, circulation is going to become unbearable by choice.'],
+  'nora-voss':['The lineup card has been entered into evidence, and several prior complaints are being quietly withdrawn.','No subpoenas yet, but the rival manager may want counsel.','The front office has requested that we stop calling this “evidence.” Request denied.']
  };
  const a=pools[r.id]||pools['walter-mercer'];let h=0;for(const ch of String(t.manager_name||t.roster_id)+String(w)+r.id)h=(h*33+ch.charCodeAt(0))>>>0;return a[h%a.length];
 }
 function txText(t,facts){
- const tx=t.transactions||[];if(!tx.length)return 'GM '+t.manager_name+' made no recorded transaction this week. No move will be invented to fill the space.';
+ const tx=t.transactions||[];
+ if(!tx.length)return 'The front office recorded no move this week. Apparently GM '+t.manager_name+' looked at the waiver wire, folded the newspaper, and decided the roster could solve its own problems.';
  const bits=[];for(const move of tx.slice(0,3)){for(const id of move.adds||[])if(facts[id])bits.push('added '+fact(facts[id]));for(const id of move.drops||[])if(facts[id])bits.push('dropped '+fact(facts[id]))}
- return 'GM '+t.manager_name+' logged '+tx.length+' transaction'+(tx.length===1?'': 's')+(bits.length?': '+bits.slice(0,4).join('; '):'.');
+ return 'GM '+t.manager_name+' did at least leave fingerprints on the transaction log: '+tx.length+' move'+(tx.length===1?'':'s')+(bits.length?'. The notable business: '+bits.slice(0,4).join('; '):'. The paperwork exists even if the revolution does not.');
 }
 function headline(t,w,r){
  const score=one(t.points)+'–'+one(t.opponent_points),st=t?.league_context?.streak||{},run=Number(st.length)>=3?(st.type==='W'?Number(st.length)+' STRAIGHT':st.type==='L'?Number(st.length)+'-GAME SLIDE':''):'';
@@ -88,19 +89,19 @@ function headline(t,w,r){
  return run?('The Evidence Board: '+t.team_name+' and the '+run.toLowerCase()):t.won?'The Evidence Board: How '+t.team_name+' Won '+score:'The Evidence Board: Where '+t.team_name+' Lost '+score;
 }
 function intro(t,w,r){
- const d=Number(t.points)-Number(t.projected),proj=Number.isFinite(Number(t.projected))?Math.abs(d).toFixed(1)+' points '+(d>=0?'above':'below')+' Sleeper projection':'with no reliable projection comparison';
- if(r.id==='walter-mercer')return 'Week '+w+'. Final: '+t.team_name+' '+(t.won?'over':'under')+' the opposition, '+one(t.points)+'–'+one(t.opponent_points)+'. They finished '+proj+'. That is the scorebook. Everything else is interpretation.';
- if(r.id==='tess-delaney')return t.team_name+' finished Week '+w+' at '+one(t.points)+' fantasy points against '+one(t.opponent_points)+', '+proj+'. The result matters; the gap between expectation and production tells us why.';
- if(r.id==='mack-hollis')return (t.won?'Sound the presses':'Stop the presses')+': '+t.team_name+' put '+one(t.points)+' on the board while the opponent posted '+one(t.opponent_points)+'. They landed '+proj+'. The back page has opinions.';
- return 'The Week '+w+' file on '+t.team_name+' closes at '+one(t.points)+'–'+one(t.opponent_points)+', '+(t.won?'a win':'a loss')+', and '+proj+'. The useful question is which fingerprints are actually on the result.';
+ const d=Number(t.points)-Number(t.projected),proj=Number.isFinite(Number(t.projected))?Math.abs(d).toFixed(1)+' points '+(d>=0?'above':'below')+' Sleeper projection':'with no reliable projection comparison',score=one(t.points)+'–'+one(t.opponent_points);
+ if(r.id==='walter-mercer')return t.won?'Week '+w+'. Final: '+score+'. We won, we finished '+proj+', and for once nobody needs a 900-word explanation of what went wrong. Enjoy the rare administrative simplicity.':'Week '+w+'. Final: '+score+'. We lost and finished '+proj+'. There are cleaner ways to spend a Sunday, including several recognized dental procedures.';
+ if(r.id==='tess-delaney')return t.won?'The numbers cooperated for once: '+t.team_name+' scored '+one(t.points)+', beat '+one(t.opponent_points)+', and finished '+proj+'. I would like to thank the roster for briefly respecting arithmetic.':t.team_name+' scored '+one(t.points)+' against '+one(t.opponent_points)+' and finished '+proj+'. The spreadsheet is not angry. Spreadsheets cannot be angry. I, however, have options.';
+ if(r.id==='mack-hollis')return t.won?'SOUND THE PRESSES: '+t.team_name+' just hung '+one(t.points)+' on the board, won '+score+', and finished '+proj+'. Neutrality has been suspended until further notice.': 'STOP THE PRESSES: '+t.team_name+' lost '+score+' while finishing '+proj+'. The back page would like a refund and the name of whoever approved this experience.';
+ return t.won?'Case closed, temporarily: '+t.team_name+' wins '+score+' and finishes '+proj+'. This desk has reviewed the evidence and, against long-standing instinct, finds the defendant competent this week.':'The file reads '+score+', a loss, and '+proj+'. We have opened an inquiry into how exactly we all agreed to watch this happen in real time.';
 }
 function playersParagraph(t,r){
  const rows=(t.starter_details||[]).slice(),top=rows.slice().sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2),low=rows.slice().sort((a,b)=>Number(a.points)-Number(b.points))[0],stars=top.map(fact).join(' | '),lowFact=low?fact(low):'No verified low starter detail was available.';
- const trend=rows.filter(p=>['hot','cold'].includes(p?.recent_form?.label)).sort((a,b)=>Math.abs(Number(b.recent_form?.delta)||0)-Math.abs(Number(a.recent_form?.delta)||0))[0],trendNote=trend?(' The longer tape matters too: '+trend.name+' is in a '+(trend.recent_form.label==='hot'?'strong':'poor')+' three-game stretch, averaging '+one(trend.recent_form.last3_avg)+' fantasy points compared with '+one(trend.recent_form.prior3_avg)+' over the prior three.'):'';
- if(r.id==='walter-mercer')return 'Game book: '+(stars||'No verified starter production was available.')+' The low return: '+lowFact+trendNote;
- if(r.id==='tess-delaney')return 'Production leaders: '+(stars||'No verified starter production was available.')+' Lowest starter output: '+lowFact+' Fantasy points and the real stat line belong in the same sentence.'+trendNote;
- if(r.id==='mack-hollis')return 'Stars of the screaming headline: '+(stars||'No verified starter production was available.')+' And down in the tiny legal print: '+lowFact+trendNote;
- return 'Exhibit A: '+(stars||'No verified starter production was available.')+' Exhibit B, the lowest starter return: '+lowFact+' The numbers are entered without alibi or embellishment.'+trendNote;
+ const trend=rows.filter(p=>['hot','cold'].includes(p?.recent_form?.label)).sort((a,b)=>Math.abs(Number(b.recent_form?.delta)||0)-Math.abs(Number(a.recent_form?.delta)||0))[0],trendNote=trend?(' And because one week is how fools get tattoos, the longer sample matters: '+trend.name+' is in a '+(trend.recent_form.label==='hot'?'heater':'rut')+', '+one(trend.recent_form.last3_avg)+' per game over the last three versus '+one(trend.recent_form.prior3_avg)+' over the prior three.'):'';
+ if(r.id==='walter-mercer')return 'The people who kept us sane: '+(stars||'No verified starter production was available.')+' The person currently receiving the traditional beat-writer side-eye: '+lowFact+trendNote;
+ if(r.id==='tess-delaney')return 'Here is the part where the box score gets rude. The good: '+(stars||'No verified starter production was available.')+' The less-good: '+lowFact+'. Fantasy points and real NFL production are both on the record, because vibes have lost their subpoena immunity.'+trendNote;
+ if(r.id==='mack-hollis')return 'PUT THESE MEN ON THE FRONT PAGE: '+(stars||'No verified starter production was available.')+' Bury this next bit near the classifieds: '+lowFact+trendNote;
+ return 'Exhibit A, the useful citizens: '+(stars||'No verified starter production was available.')+' Exhibit B, currently under polite investigation: '+lowFact+'. Nobody is charged with a crime. Yet.'+trendNote;
 }
 function leagueContextParagraph(t,w,r){
  const c=t?.league_context;if(!c?.season_context_available)return 'Season file: Sleeper has not supplied enough completed matchup history for a verified streak or standings narrative.';
@@ -112,17 +113,17 @@ function leagueContextParagraph(t,w,r){
    playoff=' The playoff push is live: '+t.team_name+' sits #'+rank+' of '+size+', '+(c.inside_playoff_line?'inside':'outside')+' a '+c.playoff_teams+'-team field with '+c.games_until_playoffs+' regular-season game'+(Number(c.games_until_playoffs)===1?'':'s')+' before the playoff window.';
   }else playoff=' In the early table, '+t.team_name+' is #'+rank+' of '+size+' with '+c.playoff_teams+' playoff places ultimately available.';
  }
- if(r.id==='walter-mercer')return 'Season ledger: '+record+', '+streak+'.'+stretch+playoff;
- if(r.id==='tess-delaney')return 'Season context: '+record+', league rank #'+(rank||'—')+', '+streak+'.'+stretch+playoff;
- if(r.id==='mack-hollis')return 'THE BIGGER PICTURE: '+record+'. '+streak.toUpperCase()+'.'+stretch+playoff;
- return 'Season file: record '+record+', standing #'+(rank||'—')+', '+streak+'.'+stretch+playoff;
+ if(r.id==='walter-mercer')return 'The season ledger now reads '+record+', with a '+streak+'.'+stretch+playoff+' Longtime readers will recognize this as the exact moment optimism usually begins making irresponsible purchases.';
+ if(r.id==='tess-delaney')return 'Zoom out before we start hanging banners: '+record+', league rank #'+(rank||'—')+', '+streak+'.'+stretch+playoff+' The numbers are either building a case or preparing an elaborate prank.';
+ if(r.id==='mack-hollis')return 'NOW FOR THE PART WE WILL ABSOLUTELY USE TO ANNOY OTHER MANAGERS: '+record+'. '+streak.toUpperCase()+'.'+stretch+playoff+' Yes, screenshots are encouraged.';
+ return 'The season file says '+record+', standing #'+(rank||'—')+', '+streak+'.'+stretch+playoff+' This is where a fan starts believing and an investigator starts backing up the hard drive.';
 }
 function outlook(t,w,r){
  const div=t.division_results||[],wins=div.filter(x=>x.won).length,next=t.next_opponent_roster_id?'Next: '+t.next_opponent_name+'. ':'Sleeper has not supplied a next opponent, so none will be invented. ',division=div.length?wins+' of '+div.length+' other division teams won in Week '+w+'.':'No complete divisional comparison was available.';
- if(r.id==='walter-mercer')return next+division+' One week is a result. A run of them becomes a season.';
- if(r.id==='tess-delaney')return next+division+' The next test is whether this week’s usage and production repeat, not whether the headline does.';
- if(r.id==='mack-hollis')return next+division+' The presses will be warmed up either way.';
- return next+division+' The file stays open until the pattern becomes evidence.';
+ if(r.id==='walter-mercer')return next+division+' We will spend the next several days pretending this matchup is “just another week,” a lie everyone involved has agreed to respect.';
+ if(r.id==='tess-delaney')return next+division+' I will now stare at the usage trends until they either become predictive or file a restraining order.';
+ if(r.id==='mack-hollis')return next+division+' The presses are warm, the group chat is vulnerable, and we intend to behave with exactly the amount of dignity this league has earned.';
+ return next+division+' The file remains open. So does the tab containing the standings, which is certainly healthy behavior.';
 }
 
 export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyStatHistory={},scoringSettings,scoreFn}){

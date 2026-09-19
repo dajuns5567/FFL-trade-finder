@@ -1,17 +1,23 @@
-const token=process.env.NETLIFY_AUTH_TOKEN||process.env.NETLIFY_BLOBS_TOKEN||'';
+const tokens=[process.env.NETLIFY_BLOBS_TOKEN,process.env.NETLIFY_AUTH_TOKEN].map(x=>String(x||'').trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i);
 const repository=String(process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder').toLowerCase();
 const targetSha=String(process.env.GITHUB_SHA||'').trim();
 const branch=String(process.env.VALUE_HISTORY_DEPLOY_BRANCH||'main').trim()||'main';
 const api='https://api.netlify.com/api/v1';
 
-if(!token)throw new Error('NETLIFY_AUTH_TOKEN or NETLIFY_BLOBS_TOKEN is required to resolve the active Netlify site');
+if(!tokens.length)throw new Error('NETLIFY_AUTH_TOKEN or NETLIFY_BLOBS_TOKEN is required to resolve the active Netlify site');
 
-const headers={authorization:`Bearer ${token}`,accept:'application/json','user-agent':'Fleeced-Value-History-Site-Resolver/1.0'};
-
+let activeToken=null;
 async function netlify(path){
-  const r=await fetch(`${api}${path}`,{headers,cache:'no-store'});
-  if(!r.ok)throw new Error(`Netlify ${r.status}: ${await r.text()}`);
-  return r.json();
+  const candidates=activeToken?[activeToken]:tokens;
+  let last=null;
+  for(const token of candidates){
+    const r=await fetch(`${api}${path}`,{headers:{authorization:`Bearer ${token}`,accept:'application/json','user-agent':'Fleeced-Value-History-Site-Resolver/1.0'},cache:'no-store'});
+    if(r.ok){activeToken=token;return r.json()}
+    const body=await r.text();
+    last=new Error(`Netlify ${r.status}: ${body}`);
+    if(r.status!==401&&r.status!==403)throw last;
+  }
+  throw last||new Error('Netlify site resolution failed');
 }
 
 function normRepo(s){

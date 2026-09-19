@@ -10,8 +10,10 @@ test('zero-history young offense projection stays consensus-anchored',()=>{
 });
 
 test('zero-history RB receives no secondary rank/context lift',()=>{
-  const src=fs.readFileSync('valuation-offense-v40.js','utf8');
-  assert(!src.includes("seasons===0&&"),'zero-history RB regained a secondary context lift');
+  for(const file of ['valuation-offense-v39.js','valuation-offense-v40.js']){
+    const src=fs.readFileSync(file,'utf8');
+    assert(!src.includes("seasons===0&&"),file+' regained a secondary context lift');
+  }
 });
 
 test('zero-history RB example is restrained rather than doubled',()=>{

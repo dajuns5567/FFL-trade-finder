@@ -152,3 +152,23 @@ Do not collapse the four reporters back into one generic voice unless explicitly
 **V12 reporter-name migration — 2026-09-19:** public bylines became Nick Swindell, cjminnich, Tilly Fleecer, and Jefferson Filch. Internal reporter IDs remained unchanged.
 
 **V13 style/name migration — 2026-09-19:** cjminnich becomes Bartholomew Roycington III. More importantly, the house style is upgraded from neutral-ish sports recap to **hometown beat reporter + fan**: more sarcasm, more first-person rooting interest, more callbacks to recent pain/success, more rival needling, and less robotic section language. The reporters may be petty, dramatic, mocking, boastful, skeptical, or exasperated as long as the football facts remain grounded in Sleeper data.
+
+
+## V14 long-form article standard — 2026-09-19
+
+The Inquirer is not a recap feed. Each published team story should read like a full beat column that happens to be powered by structured Sleeper data.
+
+Expected article shape:
+- roughly 9–10 substantive paragraphs when the underlying data exists
+- a narrative lead rather than a score dump
+- a season thesis that explains what the result means
+- callbacks to recent games so the story has memory
+- analysis of how the team score was constructed, including concentration/depth and projection hits/misses
+- multiple player discussions with fantasy points, real-life NFL production, and multi-game form where available
+- supporting-cast and weak-link analysis
+- lineup/bench/transaction analysis that evaluates managerial process without pretending hindsight is certainty
+- opponent-quality context
+- next-opponent/playoff implications
+- a closing beat-writer kicker that sounds like someone who will be back covering the same team next week
+
+The story should not read like a list of required fields. Facts should be woven into an argument about the team: what changed, what is sustainable, what is worrying, what the manager got right or wrong, and what this week means inside the larger season. Sarcasm and fandom should continue throughout the article, not appear only in a final aside.

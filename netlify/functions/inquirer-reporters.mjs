@@ -176,6 +176,7 @@ function valueHistoryParagraph(t,r){
 }
 function availabilityParagraph(t,w,r){
  const a=t?.next_week_availability,nextWeek=Number(a?.next_nfl_week)||Number(w)+1,byes=a?.bye_players||[],byeStarters=a?.bye_current_starters||[],inj=a?.injury_players||[],injStarters=a?.injury_current_starters||[];
+ if(a?.fantasy_season_complete||Number(w)>=INQUIRER_FINAL_WEEK)return 'Next Week Personnel: Week '+INQUIRER_FINAL_WEEK+' closes the Fleeced! in-season fantasy calendar. There is no Week 18 fantasy preview to manufacture, so the personnel file closes here.';
  const list=rows=>rows.slice(0,5).map(x=>x.name+' ('+x.position+(x.designation?', '+x.designation:'')+')').join(', ');
  if(!a)return 'Next-week personnel file: no verified roster-availability bundle was available, so no bye or injury problem will be manufactured.';
  if(!a.schedule_verified&&inj.length===0)return 'Next-week personnel file: the NFL schedule lookup was unavailable and Sleeper supplied no current injury designation worth publishing. This desk declines to convert missing data into fake concern.';

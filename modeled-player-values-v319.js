@@ -352,3 +352,11 @@ window.actualPipelinePrecisionAudit=function(){
  const movers=candidate.map(r=>({...r,delta:r.oldRank-r.candidateRank})).filter(r=>r.delta).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,50);
  return{criterion:'diagnostic only: preserve served values for offense rows whose final served value does not match assetCurve(preCurveValue), recover exact curve only on matching normal-pipeline rows, and recover IDP V72 precision from its actual stored V72 baseline/factor fields; no runtime mutation',summary:{players:rows.length,sources,protectedOffenseRows:rows.filter(r=>r.pos!=='IDP'&&r.protectedRow).length,served:ties('served'),exact:ties('exact')},cutoffs,largestRankMovers:movers};
 };
+
+window.offenseFinalStagePrecisionTrace=function(){
+ const arr=window.ensureMaster?.()||[],num=v=>{const n=Number(v);return Number.isFinite(n)?n:null},flags=['rbCalibrationV49','rbCalibrationV48','youngCalibrationV47','youngCalibrationV46','youngIdentityV45','youngOffenseContextV44','offenseContextV43','offenseContextV42','offenseMidRbV41'];
+ const rows=arr.filter(z=>window.groupPos?.(z.x)!=='IDP').map((z,i)=>{const p=z.production||{},last=flags.find(k=>p[k])||'none';return{id:String(z.x?.id??''),name:window.playerName?.(z.x?.id)||String(z.x?.id??''),served:num(z.value),preCurve:num(z.preCurveValue),lastStage:last,flags:flags.filter(k=>p[k])}});
+ const counts={};for(const r of rows)counts[r.lastStage]=(counts[r.lastStage]||0)+1;
+ const examples={};for(const k of Object.keys(counts))examples[k]=rows.filter(r=>r.lastStage===k).slice(0,12);
+ return{criterion:'diagnostic only: identify the latest offense wrapper that actually touched each served row using existing production stage flags; no reconstruction and no runtime mutation',summary:{offenseRows:rows.length,lastStageCounts:counts},examples};
+};

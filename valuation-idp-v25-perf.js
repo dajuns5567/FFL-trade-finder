@@ -5,6 +5,7 @@ const clamp25=(lo,x,hi)=>Math.max(lo,Math.min(hi,x));
 const q25=(arr,p)=>{if(!arr.length)return 0;const a=[...arr].sort((x,y)=>x-y),i=clamp25(0,(a.length-1)*p,a.length-1),lo=Math.floor(i),hi=Math.ceil(i);return a[lo]+(a[hi]-a[lo])*(i-lo)};
 const pct25=(arr,x)=>{if(!arr.length)return .5;let below=0,equal=0;for(const v of arr){if(v<x)below++;else if(v===x)equal++}return clamp25(.01,(below+.5*equal)/arr.length,.99)};
 function age25(id){const p=state.players?.[id]||{},a=Number(p.age);if(Number.isFinite(a)&&a>0)return a;if(p.birth_date){const d=new Date(p.birth_date);if(!Number.isNaN(d.getTime()))return(Date.now()-d.getTime())/(365.2425*86400000)}return null}
+function role25(id){const p=state.players?.[String(id)]||{},primary=String(p.position||'').toUpperCase(),vals=[primary,...(Array.isArray(p.fantasy_positions)?p.fantasy_positions:[])].filter(Boolean).map(v=>String(v).toUpperCase());if(['DT','NT'].includes(primary))return'INTERIOR';if(vals.some(v=>['DE','EDGE','DL'].includes(v)))return'EDGE';if(vals.some(v=>['LB','ILB','MLB','OLB'].includes(v)))return'LB';if(vals.some(v=>['S','SS','FS','CB','DB'].includes(v)))return'DB';return'OTHER'}
 function ageScore25(id){const a=age25(id);if(!Number.isFinite(a))return .5;if(a<=23)return 1;if(a<=25)return .9;if(a<=27)return .8;if(a<=29)return .67;if(a<=31)return .52;if(a<=33)return .35;return .2}
 function breakdownQty25(sample,keys){let n=0;for(const k of keys){const b=sample?.breakdown?.[k];if(b&&Number.isFinite(Number(b.qty)))n+=Number(b.qty)}return n}
 function historyMetrics25(a){
@@ -35,13 +36,14 @@ function distributions25(){
  const rows=[];for(const id of Object.keys(state.players||{})){if(groupPos({type:'player',id})!=='IDP'||!isIndividualIdp25(id))continue;const a=baseAudit25(id);if(!a?.qualifyingSeasons)continue;const m=historicalBenchmarkMetrics25(a);if(m)rows.push({id,a,m})}
  const ppg=rows.map(r=>r.m.ppg),tackles=rows.map(r=>r.m.tackleRate),spikes=rows.map(r=>r.m.spikeRate),p50=q25(ppg,.50),p99=Math.max(p50+.01,q25(ppg,.99));
  const topPpg=[...rows].sort((a,b)=>b.m.ppg-a.m.ppg).slice(0,30).map(r=>({id:r.id,name:playerName(r.id),position:state.players?.[r.id]?.position||null,historicalBenchmarkPpg:r.m.ppg,qualifyingSeasons:r.a?.qualifyingSeasons??null,confidence:r.a?.confidence??null,seasons:(r.a?.seasons||[]).filter(s=>!s.currentSeason).sort((a,b)=>Number(b.season)-Number(a.season)).slice(0,3).map(s=>({season:s.season,games:s.games,ppg:s.ppg,assignedWeight:s.assignedWeight,points:s.points}))}));
- const playerRows=rows.filter(r=>String(state.players?.[r.id]?.position||'').toUpperCase()!=='DEF'),playerPpg=playerRows.map(r=>r.m.ppg),playerP50=q25(playerPpg,.50),playerP99=Math.max(playerP50+.01,q25(playerPpg,.99));
- cache25={rows,ppg,tackles,spikes,p50,p99,historicalBenchmark:true,topPpg,playerOnlyBenchmark:{n:playerPpg.length,p50:playerP50,p99:playerP99}};return cache25;
+ const playerRows=rows.filter(r=>String(state.players?.[r.id]?.position||'').toUpperCase()!=='DEF'),playerPpg=playerRows.map(r=>r.m.ppg),playerP50=q25(playerPpg,.50),playerP99=Math.max(playerP50+.01,q25(playerPpg,.99)),rolePpg={EDGE:[],LB:[],DB:[],INTERIOR:[]};
+ for(const r of rows){const k=role25(r.id),x=Number(r.m?.ppg);if(rolePpg[k]&&Number.isFinite(x))rolePpg[k].push(x)}
+ cache25={rows,ppg,tackles,spikes,p50,p99,rolePpg,historicalBenchmark:true,topPpg,playerOnlyBenchmark:{n:playerPpg.length,p50:playerP50,p99:playerP99}};return cache25;
 }
 function scoring25(id){
- generation25();id=String(id);if(scoreCache25.has(id))return scoreCache25.get(id);const a=baseAudit25(id),m=metrics25(id,a),d=distributions25();let out;
- if(!a?.qualifyingSeasons||!d.ppg.length)out={value:520,a,m,ppgPct:null,relative:null,strength:.45};
- else{const ppgPct=pct25(d.ppg,m.ppg),relative=clamp25(0,(m.ppg-d.p50)/(d.p99-d.p50),1.10),raw=.55*ppgPct+.45*relative,strength=.45+m.confidence*(raw-.45),value=180+1270*Math.pow(clamp25(.08,strength,1),2.70);out={value:clamp25(180,value,1500),a,m,ppgPct,relative,raw,strength,benchmarkP50:d.p50,benchmarkP99:d.p99,benchmarkN:d.ppg.length}}
+ generation25();id=String(id);if(scoreCache25.has(id))return scoreCache25.get(id);const a=baseAudit25(id),m=metrics25(id,a),d=distributions25(),role=role25(id);let out;
+ if(!a?.qualifyingSeasons||!d.ppg.length)out={value:520,a,m,ppgPct:null,relative:null,strength:.45,role};
+ else{const ppgPct=pct25(d.ppg,m.ppg),relative=clamp25(0,(m.ppg-d.p50)/(d.p99-d.p50),1.10),historicalSeasons=Number(a?.historicalSeasons||0),confidenceApplied=role==='EDGE'&&historicalSeasons>=2&&ppgPct>=.90?Math.max(m.confidence,.60):m.confidence,raw=.55*ppgPct+.45*relative,strength=.45+confidenceApplied*(raw-.45),overallValue=clamp25(180,180+1270*Math.pow(clamp25(.08,strength,1),2.70),1500);let value=overallValue,roleValue=null,roleBlend=0;if(role==='LB'){const xs=d.rolePpg?.LB||[];if(xs.length){const rp50=q25(xs,.50),rp99=Math.max(rp50+.01,q25(xs,.99)),rpct=pct25(xs,m.ppg),rrel=clamp25(0,(m.ppg-rp50)/(rp99-rp50),1.10),rraw=.55*rpct+.45*rrel,rstrength=.45+confidenceApplied*(rraw-.45);roleValue=clamp25(180,180+1270*Math.pow(clamp25(.08,rstrength,1),2.70),1500);roleBlend=.20;value=.80*overallValue+.20*roleValue}}out={value,a,m,ppgPct,relative,raw,strength,role,confidenceApplied,overallValue,roleValue,roleBlend,benchmarkP50:d.p50,benchmarkP99:d.p99,benchmarkN:d.ppg.length}}
  scoreCache25.set(id,out);return out;
 }
 function context25(id,score){

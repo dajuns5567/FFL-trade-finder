@@ -68,7 +68,7 @@ function leagueSeasonContext(matchupsByWeek,rosters,week,league){
   return{roster_id:String(r.roster_id),wins,losses,ties,fpts};
  }).sort((a,b)=>b.wins-a.wins||a.losses-b.losses||b.ties-a.ties||b.fpts-a.fpts||Number(a.roster_id)-Number(b.roster_id));
  const rankById=new Map(standingRows.map((x,i)=>[x.roster_id,i+1])),playoffTeams=Math.max(0,Number(league?.settings?.playoff_teams)||0),
-  playoffWeek=Math.max(0,Number(league?.settings?.playoff_week_start)||14),out={};
+  playoffWeek=INQUIRER_PLAYOFF_START_WEEK,out={};
  for(const row of standingRows){
   const games=gamesByRoster[row.roster_id]||[],recent=games.slice(-5),last=games[games.length-1],streakType=last?.result||'',streak=streakType?(()=>{let n=0;for(let i=games.length-1;i>=0&&games[i].result===streakType;i--)n++;return n})():0,
    avgRecent=recent.length?recent.reduce((n,g)=>n+g.points,0)/recent.length:null,prior=games.slice(Math.max(0,games.length-10),Math.max(0,games.length-5)),avgPrior=prior.length?prior.reduce((n,g)=>n+g.points,0)/prior.length:null,
@@ -113,7 +113,7 @@ async function weeklyReport(req){
  // Sleeper's roster W/L update is the completion signal. Do not publish merely because matchup points look final,
  // and do not require Sleeper to advance nfl.week. Compare current roster records with the records implied by
  // completed weeks before the candidate week; the candidate is publishable only when Sleeper has applied every result.
- const probeWeeks=[...new Set([currentWeek,Math.max(1,currentWeek-1)])].filter(w=>w>=1&&w<=INQUIRER_FINAL_WEEK);
+ const cappedWeek=Math.min(INQUIRER_FINAL_WEEK,Math.max(1,currentWeek)),probeWeeks=[...new Set([cappedWeek,Math.max(1,cappedWeek-1)])];
  let week=null;
  for(const w of probeWeeks){const ms=await fetchJson(`${API}/league/${LEAGUE}/matchups/${w}`).catch(()=>[]);if(!matchupComplete(ms))continue;const rs=await fetchJson(`${API}/league/${LEAGUE}/rosters`).catch(()=>[]),prior=w>1?await Promise.all(Array.from({length:w-1},(_,i)=>fetchJson(`${API}/league/${LEAGUE}/matchups/${i+1}`).catch(()=>[]))):[],record={};const tally=rows=>{const g=new Map();for(const m of rows||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!g.has(k))g.set(k,[]);g.get(k).push(m)}for(const pair of g.values())if(pair.length===2){const[a,b]=pair,ai=String(a.roster_id),bi=String(b.roster_id);record[ai]??={wins:0,losses:0};record[bi]??={wins:0,losses:0};if(Number(a.points)>Number(b.points)){record[ai].wins++;record[bi].losses++}else if(Number(b.points)>Number(a.points)){record[bi].wins++;record[ai].losses++}}};for(const p of prior)tally(p);tally(ms);const applied=ms.every(m=>{const r=rs.find(x=>String(x.roster_id)===String(m.roster_id)),x=record[String(m.roster_id)];return r&&x&&Number(r?.settings?.wins||0)>=x.wins&&Number(r?.settings?.losses||0)>=x.losses});if(applied){week=w;break}}
  if(!week)return{available:false,season,week:null,reason:'The Fleeced! Inquirer is waiting for Sleeper to publish complete player scoring and apply every finished matchup to team records.'};
@@ -123,7 +123,7 @@ async function weeklyReport(req){
   fetchJson(`${API}/players/nfl`).catch(()=>({})),week<INQUIRER_FINAL_WEEK?fetchJson(`${API}/league/${LEAGUE}/matchups/${week+1}`).catch(()=>[]):Promise.resolve([]),
   fetchJson(`${API}/stats/nfl/regular/${season}/${week}`).catch(()=>({}))
  ]);
- const nextNflWeek=Math.min(18,week+1),[teamValueHistory,canonicalTrades,nextSchedule]=await Promise.all([
+ const nextNflWeek=week<INQUIRER_FINAL_WEEK?week+1:null,[teamValueHistory,canonicalTrades,nextSchedule]=await Promise.all([
   internalHistory(origin,'team_net_all=1'),
   internalHistory(origin,'trades=1'),
   nflWeekSchedule(season,nextNflWeek)

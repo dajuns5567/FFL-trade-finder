@@ -486,13 +486,16 @@ const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');
 assert(archiveWriter.includes('months/'),'archive writer monthly bundle persistence missing');
-assert(archiveWriter.includes("getStore({name:'fll-value-history-v2',siteID:netlifySiteId,token:netlifyToken"),'archive writer must read the production Blob store directly instead of depending on anonymous access to an SSO-protected site');
+assert(archiveWriter.includes("getStore({name:'fll-value-history-v2',siteID:netlifySiteId,token"),'archive writer must read the production Blob store directly instead of depending on anonymous access to an SSO-protected site');
 assert(archiveWriter.includes("source:'netlify-blobs-direct'"),'archive writer direct Blob source marker missing');
 assert(archiveWriter.includes('Durable Value History archive verification failed after write'),'archive writer must verify the durable index after persistence');
 assert(archiveWriter.includes('verification missing snapshot'),'archive writer must verify the exact newly written snapshot exists in the durable index');
 assert(archiveWriter.includes('verification unreadable snapshot'),'archive writer must read back the exact newly written snapshot before reporting success');
 assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret'),'archive writer must provide an actionable SSO-authentication failure');
 assert(archiveWriter.includes("isKnownBadSnapshot"),'V380/V381 scrubbed partial-week points must be blocked from durable archive ingestion');
+assert(archiveWriter.includes("V493_BAD_WINDOW"),'requested 2026-09-16 12:57 EDT through 2026-09-19 15:37 EDT points must be blocked from re-archive');
+assert(backend.includes("V493_TRADE_REFERENCE_MINUTE='2026-09-19T21:36'"),'in-window Trade History must use the requested 2026-09-19 17:36 EDT reference minute');
+
 assert(archiveWriter.includes("V391_BAD_WINDOW"),'V391 removed timestamp must be blocked from durable archive re-ingestion');
 assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must recover from blank/corrupt/incomplete month files using authoritative indexed snapshots');
 assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must rebuild corrupt bundles from indexed snapshots rather than discard history');

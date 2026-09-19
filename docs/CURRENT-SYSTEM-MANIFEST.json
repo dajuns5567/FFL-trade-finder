@@ -54,7 +54,7 @@
     "inquirer_rotation": "8 teams per reporter per week; every reporter covers every team once across four consecutive weeks",
     "inquirer_real_stats_source": "Sleeper weekly raw stats",
     "inquirer_article_archives": "immutable standalone per-reporter article JSON + reporter archive index",
-    "inquirer_version": 10,
+    "inquirer_version": 11,
     "inquirer_live_context": [
       "season record and league rank",
       "winning/losing streaks from completed Sleeper matchups",
@@ -66,6 +66,24 @@
     "scheduled_value_history_contract": "precision-idp-runtime-20260919",
     "invalid_value_history_times": [
       "2026-09-19T23:09:48.738Z"
+    ],
+    "inquirer_reporters": [
+      {
+        "name": "Nick Swindell",
+        "desk": "The Old Desk"
+      },
+      {
+        "name": "Penny Picket",
+        "desk": "The Numbers Desk"
+      },
+      {
+        "name": "Tilly Fleecer",
+        "desk": "The Back Page"
+      },
+      {
+        "name": "Frank Filcher",
+        "desk": "The Inquiry Desk"
+      }
     ]
   },
   "recovery_branches": {

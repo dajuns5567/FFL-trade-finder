@@ -172,3 +172,70 @@ Expected article shape:
 - a closing beat-writer kicker that sounds like someone who will be back covering the same team next week
 
 The story should not read like a list of required fields. Facts should be woven into an argument about the team: what changed, what is sustainable, what is worrying, what the manager got right or wrong, and what this week means inside the larger season. Sarcasm and fandom should continue throughout the article, not appear only in a final aside.
+
+
+## V15 live-league desk expansion — 2026-09-19
+
+V15 expands the Inquirer from team-only beat columns into a full league newspaper.
+
+### Team article additions
+
+Every team beat article now includes a **Value Watch** section sourced from the canonical Value History team snapshots:
+- compare the latest team value with the observation at or before seven days earlier
+- if seven full days are not yet available, use the earliest valid observation and label it as available history rather than claiming a full 7D move
+- include absolute team-value movement, percentage movement when available, and the beginning/ending team value
+- Value Watch is commentary on market movement, not a standings result and not a valuation input
+
+Every team beat article also includes a **Next Week Personnel** section:
+- use the verified NFL schedule already trusted by the scoring/import pipeline to identify actual bye weeks
+- use current Sleeper player metadata for injury/status designations
+- distinguish current starters from the rest of the roster
+- discuss positional/roster pressure without pretending an injury designation is a guaranteed absence
+- if the schedule or injury data is unavailable, withhold the unsupported claim instead of guessing
+
+### In-season week classification
+
+The Fleeced! fantasy season is archived as:
+- **Weeks 1–13 — Regular Season**
+- **Weeks 14–17 — Playoffs**
+
+Week 14 is the permanent Inquirer playoff boundary. Every reporter must write from a playoffs-have-started perspective in Weeks 14–17 rather than calling those weeks a playoff push. Week 18 is not an Inquirer in-season fantasy week.
+
+### League Overview
+
+Each completed week also publishes a first-class **Fleeced! League Overview** article co-authored by all four reporters.
+
+The overview contains four desk sections and all four reporters appear in the byline/archive.
+
+Required league-wide analysis:
+- the game week as a whole: top scores, margins, major streaks and what changed
+- standings and playoff/seeding context
+- current bubble pressure before Week 14 and playoff consequences from Week 14 onward
+- league-wide waiver/free-agent/transaction activity
+- reactions to completed trades using the canonical Trade History feed
+- team Value History risers/fallers using canonical team Value History
+- next-week bye/injury roster pressure around the league
+- a standings-based **Race to the Bottom / No. 1 Pick** section analyzing the bottom five teams and their trajectory toward potentially finishing last
+- do not invent a lottery, odds, max-PF rule, or tiebreaker that the league data does not establish; describe the bottom-five race as standings/draft-position pressure unless the real draft-order rule is known
+
+### Hot Takes
+
+The League Overview contains a dedicated **Hot Takes** segment with one take from each reporter.
+
+The takes should be opinionated, funny, sarcastic and forward-looking while remaining grounded in real league/player data. Appropriate topics include:
+- what a sustained player hot/cold stretch means for the future of that roster
+- whether a manager's repeated lineup selections indicate a process problem
+- implications of bench/start decisions
+- whether a winning/losing streak looks sustainable
+- how a transaction or trade changes a team's future options
+- whether a bottom-five team is drifting into a real No. 1-pick race
+- how upcoming byes or injury designations stress roster construction
+
+Hot Takes are analysis, not new facts. Do not invent injuries, usage, standings, transactions or player production to make a stronger take.
+
+### Archive behavior
+
+The League Overview is archived independently at:
+`inquirer/league-overview/<season>/week-<NN>.json`
+
+Because all four reporters contribute to it, the same League Overview also appears in each reporter's personal archive alongside that reporter's team beat articles.

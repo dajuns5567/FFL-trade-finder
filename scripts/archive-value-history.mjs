@@ -5,7 +5,7 @@ const token=process.env.GITHUB_TOKEN;
 const repository=process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder';
 const sourceBase=process.env.VALUE_HISTORY_SOURCE_URL||'https://subtle-genie-6167c5.netlify.app/.netlify/functions/value-history';
 const netlifySiteId=process.env.NETLIFY_SITE_ID||'0cc03543-09f9-4de9-9b52-6cbc4fbc4357';
-const netlifyToken=process.env.NETLIFY_BLOBS_TOKEN||process.env.NETLIFY_AUTH_TOKEN||'';
+const netlifyTokens=[process.env.NETLIFY_BLOBS_TOKEN,process.env.NETLIFY_AUTH_TOKEN].map(x=>String(x||'').trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i);
 const dataBranch='value-history-data';
 const root='value-history';
 const scheduledSnapshotFile=String(process.env.VALUE_HISTORY_SNAPSHOT_FILE||'').trim();
@@ -59,17 +59,24 @@ const idxFile=await readFile(`${root}/index.json`);
 if(!idxFile)throw new Error('Value History archive index missing');
 const index=JSON.parse(idxFile.content),existing=new Set((index.items||[]).map(x=>String(x.t))),since=index.latest||'';
 async function snapshotsFromBlobStore(){
-  if(!netlifyToken)return null;
-  const live=getStore({name:'fll-value-history-v2',siteID:netlifySiteId,token:netlifyToken,consistency:'strong'});
-  const listing=await live.list({prefix:'snapshots/'});
-  const keys=(listing?.blobs||[]).map(x=>String(x?.key||'')).filter(Boolean).sort(),snapshots=[];
-  for(let i=0;i<keys.length;i+=25){
-    const batch=keys.slice(i,i+25);
-    const rows=await Promise.all(batch.map(key=>live.get(key,{type:'json'}).catch(()=>null)));
-    for(const snap of rows)if(validSnapshot(snap))snapshots.push(snap);
+  if(!netlifyTokens.length)return null;
+  let last=null;
+  for(const token of netlifyTokens){
+    try{
+      const live=getStore({name:'fll-value-history-v2',siteID:netlifySiteId,token,consistency:'strong'});
+      const listing=await live.list({prefix:'snapshots/'});
+      const keys=(listing?.blobs||[]).map(x=>String(x?.key||'')).filter(Boolean).sort(),snapshots=[];
+      for(let i=0;i<keys.length;i+=25){
+        const batch=keys.slice(i,i+25);
+        const rows=await Promise.all(batch.map(key=>live.get(key,{type:'json'}).catch(()=>null)));
+        for(const snap of rows)if(validSnapshot(snap))snapshots.push(snap);
+      }
+      snapshots.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+      return{schema_version:1,league_id:'1316867686394769408',source:'netlify-blobs-direct',snapshot_count:snapshots.length,snapshots};
+    }catch(e){last=e}
   }
-  snapshots.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  return{schema_version:1,league_id:'1316867686394769408',source:'netlify-blobs-direct',snapshot_count:snapshots.length,snapshots};
+  if(last)console.warn('Netlify Blob archive credentials unavailable; trying HTTP export:',String(last?.message||last));
+  return null;
 }
 async function snapshotsFromHttpExport(){
   const source=new URL(sourceBase);source.searchParams.set('archive_export','1');if(since)source.searchParams.set('since',since);

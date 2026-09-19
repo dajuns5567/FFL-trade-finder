@@ -81,7 +81,7 @@ const V492_CLEANUP_KEY='maintenance/v492b-remove-post-0207-et-bad-history-all-pl
 const V494_CLEANUP_KEY='maintenance/v494-remove-20260916-0057-through-20260919-1537-et.json';
 const V494_BAD_FROM_MS=Date.parse('2026-09-16T04:57:00.000Z');
 const V494_BAD_UNTIL_MS=Date.parse('2026-09-19T19:38:00.000Z');
-const V494_TRADE_REFERENCE_MINUTE='2026-09-19T21:36';
+const V494_TRADE_REFERENCE_MINUTE='2026-09-19T22:01';
 const V495_CLEANUP_KEY='maintenance/v495-remove-20260919-174721-et-unstable-scheduled.json';
 const V495_BAD_TIMES=new Set(['2026-09-19T21:47:21.051Z']);
 const V492_BAD_FROM_MS=Date.parse('2026-09-15T06:07:00.000Z');
@@ -742,7 +742,7 @@ async function completedTradeHistory(s){
       const then=histSnap?playerValuesFromMap(side,histMap):{values:[],missing:[...(side.player_ids||[])],complete:false,total:null},thenPicks=histSnap?pickValuesFromSide(side,histPickMap):{values:[],missing:(side.picks||[]).map(p=>`pick-${p.season}-${p.round}-${p.original_roster_id}`),complete:false,total:null},current=playerValuesFromMap(side,latestMap);
       return{...side,then_players:then.values,then_players_complete:Boolean(histSnap&&then.complete),then_player_total:histSnap&&then.complete?then.total:null,then_picks:thenPicks.values,then_picks_complete:Boolean(histSnap&&thenPicks.complete),then_pick_total:histSnap&&thenPicks.complete?thenPicks.total:null,current_players:current.values,current_players_complete:current.complete,current_player_total:current.complete?current.total:null};
     });
-    return{...trade,trade_snapshot_t:histSnap?.t||null,trade_snapshot_reference:inRequestedWindow?'requested-2026-09-19-1736-et':null,current_snapshot_t:latestSnap?.t||null,sides};
+    return{...trade,trade_snapshot_t:histSnap?.t||null,trade_snapshot_reference:inRequestedWindow?'requested-2026-09-19-1801-et':null,current_snapshot_t:latestSnap?.t||null,sides};
   });
   const historySource=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
   return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',history_source:historySource,tracking_since:snaps[0]?.t||null,latest:latestSnap?.t||null,trades:out};

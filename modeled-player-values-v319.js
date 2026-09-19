@@ -397,3 +397,31 @@ window.offenseCoverageGatePrecisionAudit=function(){
  const mismatches=rows.filter(r=>r.terminalRounded!=null&&r.served!==r.terminalRounded);const mismatchBuckets={};for(const r of mismatches)mismatchBuckets[bucket(r)]=(mismatchBuckets[bucket(r)]||0)+1;
  return{criterion:'diagnostic only: correlate terminal offense precision mismatches with the post-V40 offense-consensus-coverage-gate-v384 identity/slot reassignment; no mutation',summary:{offenseRows:rows.length,coverageBuckets:counts,terminalMismatches:mismatches.length,mismatchBuckets},gateRows:rows.filter(r=>r.coverageGate384).slice(0,40),largestMismatches:mismatches.sort((a,b)=>Math.abs(b.slotDelta)-Math.abs(a.slotDelta)).slice(0,40)};
 };
+
+window.precisionPreservedCoverageGateMarketAudit=function(){
+ const arr=window.ensureMaster?.()||[],gate=window.offenseConsensusCoverageGateV384,num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
+ const terminal=[['rbCalibrationV49','offenseTerminalExactV49'],['rbCalibrationV48','offenseTerminalExactV48'],['youngCalibrationV47','offenseTerminalExactV47'],['youngIdentityV45','offenseTerminalExactV45'],['offenseContextV43','offenseTerminalExactV43']];
+ const base=arr.map((z,i)=>{const p=z.production||{},pos=window.groupPos?.(z.x),served=num(z.value);let exact=served,source='served';
+   if(pos==='IDP'){const b=num(p.idpOverallTradeCurveBaselineV72),f=num(p.idpOverallTradeCurveFactorV72);if(b!=null&&f!=null){exact=b*f;source='IDP-V72';}}
+   else{for(const [flag,key] of terminal){if(p[flag]){const e=num(p[key]);if(e!=null){exact=e;source='OFF-terminal';}break;}}}
+   let covered=null;try{if(pos!=='IDP')covered=gate?.offenseCoverage?.(z.x?.id)}catch(_){}
+   return{z,id:String(z.x?.id??''),name:window.playerName?.(z.x?.id)||String(z.x?.id??''),pos,served,exact,source,covered,gateUncovered:!!z.coverageGate384,oldRank:i+1};
+ });
+ // Reproduce V384's identity rule on precision-preserved offense slots. Covered offense retains its
+ // pre-gate model order; uncovered offense is appended by the existing no-consensus fallback.
+ // Numeric slots are the sorted exact terminal offense values rather than rounded served slots.
+ const off=base.filter(r=>r.pos!=='IDP'),covered=off.filter(r=>r.covered!==false),uncovered=off.filter(r=>r.covered===false);
+ covered.sort((a,b)=>b.exact-a.exact||a.oldRank-b.oldRank);
+ uncovered.forEach(r=>{r.fallback=num(r.z.noConsensusOffenseScore);if(r.fallback==null)try{r.fallback=num(gate?.noConsensusOffenseScore?.(r.id))}catch(_){}if(r.fallback==null)r.fallback=1;});
+ uncovered.sort((a,b)=>b.fallback-a.fallback||a.oldRank-b.oldRank);
+ const identities=[...covered,...uncovered],slots=off.map(r=>r.exact).sort((a,b)=>b-a);
+ const offCandidate=identities.map((r,i)=>({...r,candidate:slots[i]??r.exact,candidateSource:r.covered===false?'coverage-uncovered-slot':'coverage-covered-slot'}));
+ const idp=base.filter(r=>r.pos==='IDP').map(r=>({...r,candidate:r.exact,candidateSource:r.source}));
+ const cand=[...offCandidate,...idp].sort((a,b)=>b.candidate-a.candidate||a.oldRank-b.oldRank);cand.forEach((r,i)=>r.newRank=i+1);
+ const ties=k=>{const m=new Map();for(const r of cand){const v=r[k];m.set(v,(m.get(v)||0)+1)}const g=[...m.values()].filter(n=>n>1);return{groups:g.length,players:g.reduce((a,n)=>a+n,0),max:g.length?Math.max(...g):1,distinct:m.size}};
+ const servedRows=base.map(r=>({...r,candidate:r.served}));
+ const servedTie=(()=>{const m=new Map();for(const r of servedRows)m.set(r.served,(m.get(r.served)||0)+1);const g=[...m.values()].filter(n=>n>1);return{groups:g.length,players:g.reduce((a,n)=>a+n,0),max:g.length?Math.max(...g):1,distinct:m.size}})();
+ const cutoffs=[50,100,150,200,300,400,500].map(n=>{const g=cand.slice(0,n),idpn=g.filter(r=>r.pos==='IDP').length;return{top:n,idp:idpn,offense:n-idpn,cutoff:g.at(-1)?.candidate??null}});
+ const movers=cand.map(r=>({...r,delta:r.oldRank-r.newRank})).filter(r=>r.delta).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,40);
+ return{criterion:'diagnostic counterfactual only: preserve terminal offense precision through V384 exact coverage ordering/slot reassignment, keep uncovered fallback ordering unchanged, combine with V72 precision; no runtime mutation',summary:{players:base.length,offense:off.length,covered:covered.length,uncovered:uncovered.length,served:servedTie,candidate:ties('candidate')},cutoffs,largestMovers:movers};
+};

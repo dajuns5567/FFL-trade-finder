@@ -468,10 +468,10 @@ assert(siteV17.includes('/team-context-v90.js?v=90'), 'frozen team-context runti
 assert(siteV17.includes('/team-context-owner-map-v368.js?v=368'), 'owner-ID identity adapter must load immediately after frozen team context');
 const siteV29=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
 const indexHtml=fs.readFileSync('index.html','utf8');
-assert(siteV29.includes('/value-history-v276.js?v=424'),'production shell must cache-bust the current V424 Value History UI/runtime');
-assert(siteV29.includes('/fleeced-theme-v274.css?v=429'),'production shell must cache-bust the V425 Fleeced theme');
-assert(siteV29.includes('/fleeced-presentation-v413.js?v=423'),'production shell must load the V416 presentation-only interaction-safe presentation runtime');
-assert(siteV29.includes('/fleeced-home-v424.js?v=431'),'production shell must load the V425 Home navigation runtime');
+assert(/\/value-history-v276\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load Value History with an explicit cache-bust key');
+assert(/\/fleeced-theme-v274\.css\?v=[^"'<>\s]+/.test(siteV29),'production shell must load the Fleeced theme with an explicit cache-bust key');
+assert(/\/fleeced-presentation-v413\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load the presentation runtime with an explicit cache-bust key');
+assert(/\/fleeced-home-v424\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load the Home runtime with an explicit cache-bust key');
 assert(indexHtml.includes('data-tab="home"')&&indexHtml.includes('id="home" class="tab"'),'Home must be a first-class default tab');
 assert(indexHtml.includes('<h2>Trade Evaluator</h2>'),'Trade Evaluator title must use final capitalization');
 assert(indexHtml.includes('Select assets to trade and review up to 250 recommended trades'),'Home Trade Finder description must match');

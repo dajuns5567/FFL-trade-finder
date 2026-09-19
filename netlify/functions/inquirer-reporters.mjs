@@ -201,9 +201,11 @@ function leagueContextParagraph(t,w,r){
  const recent=Number(c.recent_avg_points),prior=Number(c.prior_five_avg_points),stretch=Number.isFinite(recent)&&Number.isFinite(prior)&&Math.abs(recent-prior)>=8?(' Over the last five, the club is averaging '+one(recent)+', '+one(Math.abs(recent-prior))+' '+(recent>prior?'higher':'lower')+' than the prior five — '+(recent>prior?'sustained strong form.':'a genuine downturn.')):Number.isFinite(recent)&&Number(c.recent_games?.length)>=3?(' Recent scoring pace: '+one(recent)+' per game across the last '+c.recent_games.length+'.'):'';
  let playoff='';
  if(Number(c.playoff_teams)>0&&rank){
-  if(Number(c.games_until_playoffs)<=6){
-   playoff=' The playoff push is live: '+t.team_name+' sits #'+rank+' of '+size+', '+(c.inside_playoff_line?'inside':'outside')+' a '+c.playoff_teams+'-team field with '+c.games_until_playoffs+' regular-season game'+(Number(c.games_until_playoffs)===1?'':'s')+' before the playoff window.';
-  }else playoff=' In the early table, '+t.team_name+' is #'+rank+' of '+size+' with '+c.playoff_teams+' playoff places ultimately available.';
+  if(Number(w)>=INQUIRER_PLAYOFF_START_WEEK&&Number(w)<=INQUIRER_FINAL_WEEK){
+   playoff=' The playoffs are underway — this newsroom marks Week '+INQUIRER_PLAYOFF_START_WEEK+' as the start — so every lineup choice now carries elimination/seeding consequences. '+t.team_name+' enters this playoff-week file at #'+rank+' of '+size+'.';
+  }else if(Number(c.games_until_playoffs)<=6){
+   playoff=' The playoff push is live: '+t.team_name+' sits #'+rank+' of '+size+', '+(c.inside_playoff_line?'inside':'outside')+' a '+c.playoff_teams+'-team field with '+c.games_until_playoffs+' regular-season game'+(Number(c.games_until_playoffs)===1?'':'s')+' before Week '+INQUIRER_PLAYOFF_START_WEEK+' opens the playoffs.';
+  }else playoff=' In the early table, '+t.team_name+' is #'+rank+' of '+size+' with '+c.playoff_teams+' playoff places ultimately available. Week '+INQUIRER_PLAYOFF_START_WEEK+' is the postseason line this desk is tracking.';
  }
  if(r.id==='walter-mercer')return 'The season ledger now reads '+record+', with a '+streak+'.'+stretch+playoff+' Longtime readers will recognize this as the exact moment optimism usually begins making irresponsible purchases.';
  if(r.id==='tess-delaney')return 'Zoom out before we start hanging banners: '+record+', league rank #'+(rank||'—')+', '+streak+'.'+stretch+playoff+' The numbers are either building a case or preparing an elaborate prank.';

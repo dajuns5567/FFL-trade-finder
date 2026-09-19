@@ -40,6 +40,6 @@ pickValue=function(x){return Math.max(1,Math.round(assetCurve27(priorPickValue27
 playerRankValue=function(x){const arr=ensureMaster(),i=arr.findIndex(z=>String(z.x.id)===String(x.id));if(i<0)return{rank:999,value:1,tier:9,consensus:null,context:null};const z=arr[i],rank=i+1,tiers=[12,24,48,80,120,180,260,400,9999];let tier=tiers.findIndex(m=>rank<=m);if(tier<0)tier=8;return{rank,value:z.value,tier:tier+1,consensus:z.consensus,context:z.context}};
 baseValue=function(x){if(x.type==='pick')return pickValue(x);if(valueCache.has(x.id))return valueCache.get(x.id);const v=playerRankValue(x).value;valueCache.set(x.id,v);return v};
 window.valueCurveAudit=function(nameOrId){const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(pid=>playerName(pid).toLowerCase()===q);if(!id)return null;const z=masterRankings().find(r=>String(r.x.id)===id);if(!z)return null;return{id,name:playerName(id),yearsExp:yearsExp27(id),experienceProtected:!!z.production?.experienceProtected,preCurveValue:z.preCurveValue,finalValue:z.value};};
-window.assetCurveAudit=function(v){return{raw:Number(v),curved:Math.round(assetCurve27(Number(v)))}};
+window.assetCurveAudit=function(v){const raw=Number(v),exact=assetCurve27(raw);return{raw,exact,curved:Math.round(exact)}};
 masterRankCache=null;valueCache.clear();fitCache.clear();stageCache.clear();
 })();

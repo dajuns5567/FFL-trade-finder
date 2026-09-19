@@ -52,14 +52,14 @@ async function syncReporterArchives(s,result,broadcastKey){
  const reporters=result?.reporters||publicReporters(),teams=result?.teams||[];
  for(const reporter of reporters){
   const key='inquirer/reporters/'+reporter.id+'/index.json',old=await s.get(key,{type:'json'}).catch(()=>null),rows=Array.isArray(old?.articles)?old.articles:[];
-  const seen=new Set(rows.map(x=>[x.season,x.week,x.roster_id].join('|')));
+  const seen=new Map(rows.map((x,i)=>[[x.season,x.week,x.roster_id].join('|'),i]));
   for(const team of teams.filter(t=>t?.inquirer_article?.reporter?.id===reporter.id)){
    const article=team.inquirer_article,k=[result.season,result.week,team.roster_id].join('|'),articleKey='inquirer/reporters/'+reporter.id+'/articles/'+result.season+'/week-'+String(result.week).padStart(2,'0')+'-roster-'+String(team.roster_id).padStart(2,'0')+'.json';
-   const stored=await s.get(articleKey,{type:'json'}).catch(()=>null);
-   if(!stored?.headline)await s.setJSON(articleKey,{...article,team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),captured_at:String(result.generated_at||new Date().toISOString())});
-   if(seen.has(k))continue;
-   rows.push({season:Number(result.season),week:Number(result.week),roster_id:String(team.roster_id),team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),headline:String(article.headline||''),byline:String(article.byline||''),captured_at:String(result.generated_at||new Date().toISOString()),broadcast_key:broadcastKey,article_key:articleKey});
-   seen.add(k);
+   const stored=await s.get(articleKey,{type:'json'}).catch(()=>null),migrate=Number(stored?.inquirer_version||0)<INQUIRER_VERSION;
+   if(!stored?.headline||migrate)await s.setJSON(articleKey,{...article,team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),captured_at:String(result.generated_at||new Date().toISOString()),migration_reason:migrate&&stored?.headline?'explicit V10 league/player-context upgrade':null});
+   const entry={season:Number(result.season),week:Number(result.week),roster_id:String(team.roster_id),team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),headline:String(article.headline||''),byline:String(article.byline||''),captured_at:String(result.generated_at||new Date().toISOString()),broadcast_key:broadcastKey,article_key:articleKey,inquirer_version:INQUIRER_VERSION};
+   if(seen.has(k)){const i=seen.get(k);if(Number(rows[i]?.inquirer_version||0)<INQUIRER_VERSION)rows[i]=entry;continue}
+   rows.push(entry);seen.set(k,rows.length-1);
   }
   rows.sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week)||String(a.team_name).localeCompare(String(b.team_name)));
   await s.setJSON(key,{schema_version:1,reporter,articles:rows});
@@ -104,7 +104,7 @@ async function weeklyReport(){
  const inquirer=buildInquirerWeek({season,week,teams:completeTeams,players,weeklyStats,weeklyStatHistory,scoringSettings:league?.scoring_settings||{},scoreFn:score});
  const result={available:true,season,week,generated_at:new Date().toISOString(),broadcast_version:BROADCAST_VERSION,inquirer_version:INQUIRER_VERSION,projection_source:Object.keys(proj).length?'Sleeper weekly projections scored with league scoring settings':'projection data unavailable',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',reporters:inquirer.reporters,teams:inquirer.teams};
  const s=store(),key=`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`,prior=await s.get(key,{type:'json'}).catch(()=>null);
- if(Array.isArray(prior?.teams)){
+ if(Array.isArray(prior?.teams)&&Number(prior?.inquirer_version||0)>=INQUIRER_VERSION){
   const priorByRoster=new Map(prior.teams.map(t=>[String(t.roster_id),t]));
   result.teams=result.teams.map(t=>{const p=priorByRoster.get(String(t.roster_id));return p?.inquirer_article?{...t,inquirer_article:p.inquirer_article,reporter_id:p.reporter_id||p.inquirer_article?.reporter?.id||t.reporter_id}:t});
  }

@@ -40,12 +40,16 @@ test('recency weights match offseason and in-season targets',()=>{
 });
 
 
-test('current-season game qualification uses 20% snaps OR 8 fantasy points',()=>{
+test('current-season game qualification uses 18% snaps OR 8 fantasy points',()=>{
   const scoring={rush_yd:.1,rush_td:6,rec:1,rec_yd:.1,rec_td:6,idp_tkl_solo:1.5,idp_sack:6};
-  assert.equal(qualifiesCurrentSeasonGame({off_snp:20,rush_yd:10},{phase:'offense',teamSnapMax:100,scoringSettings:scoring}).qualified,true);
-  assert.equal(qualifiesCurrentSeasonGame({off_snp:19,rush_yd:20,rush_td:1},{phase:'offense',teamSnapMax:100,scoringSettings:scoring}).qualified,true);
-  assert.equal(qualifiesCurrentSeasonGame({off_snp:19,rush_yd:19},{phase:'offense',teamSnapMax:100,scoringSettings:scoring}).qualified,false);
-  assert.equal(qualifiesCurrentSeasonGame({def_snp_pct:.20,tkl_solo:1},{phase:'defense',teamSnapMax:70,scoringSettings:scoring}).qualified,true);
+  const brooksLike=qualifiesCurrentSeasonGame({off_snp_pct:.19,rush_yd:72},{phase:'offense',teamSnapMax:100,scoringSettings:scoring});
+  assert.equal(brooksLike.points,7.2);
+  assert.equal(brooksLike.snapShare,.19);
+  assert.equal(brooksLike.qualified,true);
+  assert.equal(qualifiesCurrentSeasonGame({off_snp_pct:.18,rush_yd:10},{phase:'offense',teamSnapMax:100,scoringSettings:scoring}).qualified,true);
+  assert.equal(qualifiesCurrentSeasonGame({off_snp_pct:.17,rush_yd:20,rush_td:1},{phase:'offense',teamSnapMax:100,scoringSettings:scoring}).qualified,true);
+  assert.equal(qualifiesCurrentSeasonGame({off_snp_pct:.17,rush_yd:72},{phase:'offense',teamSnapMax:100,scoringSettings:scoring}).qualified,false);
+  assert.equal(qualifiesCurrentSeasonGame({def_snp_pct:.18,tkl_solo:1},{phase:'defense',teamSnapMax:70,scoringSettings:scoring}).qualified,true);
 });
 
 test('missing snap data does not satisfy the snap criterion',()=>{

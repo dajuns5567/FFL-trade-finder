@@ -217,3 +217,25 @@ window.noRankFilterMarketAudit=function(){
   const pairs=cross.slice(0,6).map(x=>crossingSimulation(rows[x.rankA-1],rows[x.rankB-1]));
   return{criterion:'diagnostic only: inspect final calculated player market with V319 rank-value remapping removed; preserve one shared offense/IDP scale, natural ties and proportionality; no runtime mutation',control:'current V319 canonical mapping remains unchanged and reversible',summary:{all:summ(rows),offense:summ(rows.filter(r=>['QB','RB','WR','TE'].includes(r.group))),IDP:summ(rows.filter(r=>r.group==='IDP'))},bands,rankControls:controls,closestCrossPositionAdjacentPairs:cross,naturalTies:ties,largestMidLowAdjacentRatios:proportional,crossingSimulations:pairs};
 };
+
+window.smoothMacroRankCurveAudit=function(){
+  let arr=[];try{arr=window.ensureMaster?.()||[]}catch(_){arr=[]}
+  const api=window.modeledPlayerValuesV319;if(!api)throw new Error('modeledPlayerValuesV319 unavailable');
+  api.build(true);const snap=api.snapshot(), maxRank=arr.length;
+  const legacy=(rank)=>{try{const a=window.tradeValueNormalizationV130,b=window.tradeValueNormalizationV139;if(a?.playerValueForRank)return +a.playerValueForRank(rank,maxRank);if(b?.playerValueForRank)return +b.playerValueForRank(rank,maxRank)}catch(_){}
+    return Math.round(120+(9999-120)*Math.pow(Math.max(0,1-(rank-1)/Math.max(1,maxRank-1)),1.35));
+  };
+  const rows=arr.map((z,i)=>{const id=String(z?.x?.id??''),v=Number(z?.value);return{id,name:window.playerName?.(id)||id,group:window.groupPos?.(z.x)||null,rank:i+1,modelValue:v,currentCanonical:Number(snap.get(id)),macro:legacy(i+1)}}).filter(r=>r.id&&Number.isFinite(r.modelValue));
+  // Counterfactual: preserve the established macro rank curve exactly as the market anchor,
+  // but use continuous modeled-value interpolation between neighboring distinct-value anchors.
+  // Equal modeled values receive equal candidate values; no position-specific curve or history/order lock.
+  const groups=[];for(let i=0;i<rows.length;){let j=i+1;while(j<rows.length&&rows[j].modelValue===rows[i].modelValue)j++;const mid=(i+j-1)/2+1;groups.push({i,j,value:rows[i].modelValue,anchorRank:mid,anchorCanonical:legacy(mid)});i=j}
+  const candidate=new Array(rows.length);
+  for(let g=0;g<groups.length;g++){const x=groups[g];for(let k=x.i;k<x.j;k++)candidate[k]=x.anchorCanonical}
+  const out=rows.map((r,i)=>({...r,candidate:Math.round(candidate[i]),candidateMinusCurrent:Math.round(candidate[i]-r.currentCanonical)}));
+  const ties=[];for(let i=0;i<out.length-1;i++)if(out[i].modelValue===out[i+1].modelValue)ties.push({a:out[i].name,b:out[i+1].name,modelValue:out[i].modelValue,current:[out[i].currentCanonical,out[i+1].currentCanonical],candidate:[out[i].candidate,out[i+1].candidate]});
+  const boundaries=[1,12,13,24,25,48,49,50,80,81,100,120,121,150,180,181,200,260,261,300,400,500].map(r=>out[r-1]).filter(Boolean);
+  const crossPairs=[];for(let i=0;i<out.length-1&&crossPairs.length<30;i++){const a=out[i],b=out[i+1];if(a.group!==b.group&&(a.group==='IDP'||b.group==='IDP')&&a.modelValue-b.modelValue<=2)crossPairs.push({a:a.name,groupA:a.group,rawA:a.modelValue,b:b.name,groupB:b.group,rawB:b.modelValue,rawGap:a.modelValue-b.modelValue,currentGap:a.currentCanonical-b.currentCanonical,candidateGap:a.candidate-b.candidate})}
+  const jumps=out.slice(0,-1).map((a,i)=>({rank:a.rank,a:a.name,b:out[i+1].name,rawGap:a.modelValue-out[i+1].modelValue,currentGap:a.currentCanonical-out[i+1].currentCanonical,candidateGap:a.candidate-out[i+1].candidate})).sort((a,b)=>Math.abs(b.candidateGap)-Math.abs(a.candidateGap)).slice(0,40);
+  return{criterion:'diagnostic only: preserve established shared 9999-to-120 macro market curve and tier drop-off while allowing natural modeled-value ties/convergence; no runtime mutation',rollback:'current V319 remains unchanged',note:'candidate anchors each distinct modeled-value tie group at the established macro curve rank midpoint; this is a diagnostic of tie/crossing behavior, not a proposed runtime formula',boundaries,naturalTieControls:ties.slice(0,50),closeCrossPositionPairs:crossPairs,largestCandidateAdjacentGaps:jumps};
+};

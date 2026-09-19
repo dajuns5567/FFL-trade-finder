@@ -124,10 +124,12 @@ try{
       const players=window.state?.players||{};
       const sleeper=window.state?.sleeperHistory;
       const consensus=window.__fllConsensusRefresh;
+      const refresh=window.__fllValueRefresh;
+      const modeled=window.modeledPlayerValuesV319;
       const vh=window.valueHistoryV331;
       const status=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();
       const busy=/loading|updating|refreshing/.test(status);
-      return Object.keys(players).length>=700&&sleeper?.complete===true&&consensus?.complete===true&&consensus?.ok===true&&Number(consensus?.successful)>=7&&!busy&&typeof vh?.currentRows==='function';
+      return Object.keys(players).length>=700&&sleeper?.complete===true&&consensus?.complete===true&&consensus?.ok===true&&Number(consensus?.successful)>=7&&refresh?.inFlight!==true&&modeled?.ready===true&&!busy&&typeof vh?.currentRows==='function';
     },null,{timeout:240000});
   }catch(e){
     const readiness=await page.evaluate(()=>{
@@ -138,6 +140,9 @@ try{
         sleeperComplete:window.state?.sleeperHistory?.complete===true,
         sleeperSource:window.state?.sleeperHistory?.source||null,
         consensusMarker:window.__fllConsensusRefresh||null,
+        valueRefresh:window.__fllValueRefresh||null,
+        modeledReady:window.modeledPlayerValuesV319?.ready===true,
+        modeledMeta:window.modeledPlayerValuesV319?.meta||null,
         consensusSources:Object.values(rankings).filter(src=>(Number(src?.playerCount)||Object.keys(src?.data||{}).length)>0).length,
         valueHistoryApi:!!window.valueHistoryV331,
         hasCurrentRows:typeof window.valueHistoryV331?.currentRows==='function',
@@ -155,20 +160,41 @@ try{
       sleeperComplete:window.state?.sleeperHistory?.complete===true,
       sleeperSource:window.state?.sleeperHistory?.source||null,
       consensusMarker:window.__fllConsensusRefresh||null,
+      valueRefresh:window.__fllValueRefresh||null,
+      modeledReady:window.modeledPlayerValuesV319?.ready===true,
+      modeledMeta:window.modeledPlayerValuesV319?.meta||null,
       consensusSources:Object.values(rankings).filter(src=>(Number(src?.playerCount)||Object.keys(src?.data||{}).length)>0).length,
       status:String(document.getElementById('updateStatus')?.textContent||'')
     };
   });
   if(!readiness.sleeperComplete||readiness.consensusMarker?.ok!==true||Number(readiness.consensusMarker?.successful)<7)throw new Error(`Scheduled refresh inputs incomplete: ${JSON.stringify(readiness)}`);
 
-  const captured=await page.evaluate(()=>{
+  const captureCurrent=()=>page.evaluate(()=>{
     const vh=window.valueHistoryV331;
     const rows=vh.currentRows();
     let picks=[];let teams=[];
     try{picks=typeof vh.currentPickRows==='function'?vh.currentPickRows():[]}catch{}
     try{teams=typeof vh.currentTeamRows==='function'?vh.currentTeamRows(rows):[]}catch{}
-    return {rows,picks,teams};
+    return {rows,picks,teams,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,status:String(document.getElementById('updateStatus')?.textContent||'')};
   });
+  const sameRows=(a,b)=>{
+    if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
+    for(let i=0;i<a.length;i++){
+      const x=a[i],y=b[i];
+      if(String(x?.id)!==String(y?.id)||Number(x?.value)!==Number(y?.value)||Number(x?.overall)!==Number(y?.overall)||Number(x?.posRank)!==Number(y?.posRank)||String(x?.pos)!==String(y?.pos))return false;
+    }
+    return true;
+  };
+  let captured=null;
+  for(let attempt=0;attempt<4;attempt++){
+    const first=await captureCurrent();
+    await page.waitForTimeout(1500);
+    const second=await captureCurrent();
+    const stable=sameRows(first.rows,second.rows)&&second.refresh?.inFlight!==true&&second.modeledReady===true&&!/loading|updating|refreshing/i.test(second.status||'');
+    if(stable){captured=second;break}
+    if(attempt<3)await page.waitForTimeout(2000);
+  }
+  if(!captured)throw new Error('Scheduled capture never reached a stable canonical player-row state');
   if(!Array.isArray(captured.rows)||captured.rows.length<700)throw new Error(`Scheduled capture returned only ${captured.rows?.length||0} player rows`);
   if(captured.rows.some(r=>!Number.isFinite(Number(r?.value))||!Number.isFinite(Number(r?.overall))))throw new Error('Scheduled capture contains non-finite player values/ranks');
 

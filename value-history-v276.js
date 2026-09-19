@@ -547,8 +547,21 @@ function handleChartPointer(e){
 }
 async function tradeHistoryFetch(){
   if(tradeHistoryCache)return tradeHistoryCache;
-  const r=await fetch(`${API}?trades=1`,{cache:'no-store'});if(!r.ok)throw Error('trade history unavailable');
-  tradeHistoryCache=await r.json();return tradeHistoryCache;
+  let last;
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      const r=await fetch(`${API}?trades=1`,{cache:'no-store'});
+      if(!r.ok)throw Error(`trade history unavailable (${r.status})`);
+      const data=await r.json();
+      if(!Array.isArray(data?.trades))throw Error('trade history response malformed');
+      tradeHistoryCache=data;
+      return tradeHistoryCache;
+    }catch(e){
+      last=e;
+      if(attempt<2)await new Promise(r=>setTimeout(r,300*(attempt+1)));
+    }
+  }
+  throw last||Error('trade history unavailable');
 }
 function historicalTradeTeamName(trade,id){const archived=String(trade?.team_names?.[String(id)]||'').trim(),live=String(teamName(id)||'').trim(),generic=/^roster\s+\d+$/i.test(archived)||/^team\s+\d+$/i.test(archived);return generic&&live&&!/^roster\s+\d+$/i.test(live)&&!/^team\s+\d+$/i.test(live)?live:(archived||live)}
 function tradePickAsset(p,receiver){

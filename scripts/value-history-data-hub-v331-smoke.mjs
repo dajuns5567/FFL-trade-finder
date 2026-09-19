@@ -496,6 +496,10 @@ assert(archiveWriter.includes("isKnownBadSnapshot"),'V380/V381 scrubbed partial-
 assert(archiveWriter.includes("V494_BAD_WINDOW")&&archiveWriter.includes("2026-09-16T04:57:00.000Z"),'requested 2026-09-16 00:57 EDT through 2026-09-19 15:37 EDT points must be blocked from re-archive');
 assert(archiveWriter.includes("V495_BAD_TIMES")&&archiveWriter.includes("2026-09-19T21:47:21.051Z"),'known unstable 2026-09-19 17:47:21 EDT scheduled point must be blocked from re-archive');
 assert(backend.includes("V495_BAD_TIMES")&&backend.includes("2026-09-19T21:47:21.051Z"),'known unstable scheduled point must be filtered from history reads');
+assert(archiveWriter.includes("V496_BASELINE_T='2026-09-19T22:01:38.323Z'"),'durable Value History archive must reject every snapshot before the verified 2026-09-19 18:01:38 EDT baseline');
+assert(backend.includes("V496_BASELINE_T='2026-09-19T22:01:38.323Z'"),'active Value History reads must begin at the verified 2026-09-19 18:01:38 EDT baseline');
+assert(backend.includes("scrubV496BaselineReset(s)"),'live Value History buffer must scrub every pre-baseline snapshot');
+assert(backend.includes("isV496PreBaseline"),'pre-baseline Value History points must be filtered from all active history reads');
 assert(backend.includes("V494_TRADE_REFERENCE_MINUTE='2026-09-19T22:01'"),'in-window Trade History must use the verified 2026-09-19 18:01 EDT reference minute');
 
 assert(archiveWriter.includes("V391_BAD_WINDOW"),'V391 removed timestamp must be blocked from durable archive re-ingestion');

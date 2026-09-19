@@ -405,7 +405,23 @@ function currentTeamRows(playerRows=currentRows()){
   return[...totals.values()].map(t=>({...t,value:Math.round(t.value)})).sort((a,b)=>a.id.localeCompare(b.id));
 }
 function hasValidatedKtcSnapshot(){for(const [name,src] of Object.entries(state?.rankings||{})){const label=`${name} ${src?.source||''}`.toLowerCase();if(!/ktc|keeptradecut/.test(label))continue;const count=Number(src?.playerCount)||Object.keys(src?.data||{}).length;if(count>=300)return true}return false}
-function snapshotPreconditions(){if(!window.state||!state.players||Object.keys(state.players).length<100)return false;const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();return !/loading|updating|refreshing/.test(text)}
+function snapshotPreconditions(){
+  if(!window.state||!state.players||Object.keys(state.players).length<100)return false;
+  if(window.__fllValueRefresh?.inFlight)return false;
+  if(window.__fllConsensusRefresh?.complete!==true)return false;
+  if(window.modeledPlayerValuesV319&&window.modeledPlayerValuesV319.ready!==true)return false;
+  if(state.sleeperHistory&&state.sleeperHistory.complete!==true)return false;
+  const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();
+  return !/loading|updating|refreshing/.test(text)
+}
+function sameSnapshotRows(a,b){
+  if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
+  for(let i=0;i<a.length;i++){
+    const x=a[i],y=b[i];
+    if(String(x?.id)!==String(y?.id)||Number(x?.value)!==Number(y?.value)||Number(x?.overall)!==Number(y?.overall)||Number(x?.posRank)!==Number(y?.posRank)||String(x?.pos)!==String(y?.pos))return false;
+  }
+  return true
+}
 function scheduledRefreshReady(){
   if(snapshotSourceFromUrl()!=='scheduled')return true;
   const gate=window.__vhScheduledRefreshGate;
@@ -418,8 +434,12 @@ function snapshotSourceFromUrl(){
 async function recordSnapshot(source=pendingSnapshotSource){
   try{
     if(!snapshotPreconditions()||!scheduledRefreshReady()){scheduleSnapshot(2000,source);return false}
+    const firstRows=currentRows();
+    if(firstRows.length<100){scheduleSnapshot(2000,source);return false}
+    await new Promise(r=>setTimeout(r,1200));
+    if(!snapshotPreconditions()||!scheduledRefreshReady()){scheduleSnapshot(2000,source);return false}
     const rows=currentRows();
-    if(rows.length<100){scheduleSnapshot(2000,source);return false}
+    if(rows.length<100||!sameSnapshotRows(firstRows,rows)){scheduleSnapshot(2000,source);return false}
     let picks=[],teams=[];
     try{picks=currentPickRows()}catch(e){console.warn('value-history-pick-enrichment',e)}
     try{teams=currentTeamRows(rows)}catch(e){console.warn('value-history-team-enrichment',e)}

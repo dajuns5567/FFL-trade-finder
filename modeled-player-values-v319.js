@@ -148,6 +148,7 @@ function schedule(){
   },true);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
+window.idpCanonicalMappingAudit=function(){build(true);const arr=window.ensureMaster?.()||[],ids=['5991','3973','8289','10892','12578','10880','4070','4960','11667','11665','7113','8659','7640','11687','5041'];return{model:'v319 canonical mapping: rank anchors from legacy curve; within-band spacing blends 28% modeled-gap ratio clamped .45–2.25',masterCount:arr.length,maxRank:Math.max(907,arr.length),bandEnds:[...BAND_ENDS],rows:ids.map(id=>{const i=arr.findIndex(z=>String(z?.x?.id)===id),z=i>=0?arr[i]:null,a={type:'player',id};return{id,name:window.playerName?.(id)||id,position:window.state?.players?.[id]?.position||null,modelValue:z?.value??null,overallRank:i>=0?i+1:null,canonicalValue:Number(map.get(id)??0),legacyRankValue:i>=0?legacyValue(i+1,Math.max(907,arr.length)):null,bandEnd:i>=0?(BAND_ENDS.find(e=>i+1<=e)||arr.length):null}})}};
 window.modeledPlayerValuesV319={
   MIN,MAX,BAND_ENDS,BLEND,MIN_RATIO,MAX_RATIO,
   build,install,refresh,playerValue,canonicalValue,

@@ -46,6 +46,12 @@ for(const t of built.teams){
  assert((a.paragraphs||[]).some(p=>/rec|solo|sacks|yds/.test(p)),'Each performance article must cite real-life Sleeper stats');
  assert((a.paragraphs||[]).some(p=>/5-1|winning streak|playoff push|league rank/i.test(p)),'Each article must include verified season/standings/streak/playoff context when available');
  assert((a.paragraphs||[]).some(p=>/last three|prior three|stretch/i.test(p)),'Player coverage must support multi-game performance context when enough Sleeper history exists');
+ assert((a.paragraphs||[]).length>=9,'Each Inquirer story must be a full multi-paragraph article, not a short recap');
+ const articleWords=(a.paragraphs||[]).join(' ').trim().split(/\s+/).filter(Boolean).length;
+ assert(articleWords>=400,'Each Inquirer story must contain substantial long-form analysis rather than a checklist summary; got '+articleWords+' words');
+ assert((a.paragraphs||[]).some(p=>/top three starters|anatomy|forensic accounting|AUTOPSY/i.test(p)),'Each article must analyze how the team score was constructed');
+ assert((a.paragraphs||[]).some(p=>/bench|lineup card|front office|manager/i.test(p)),'Each article must analyze management or lineup decisions');
+ assert((a.paragraphs||[]).some(p=>/opponent|other sideline|Cross-examination|people we just/i.test(p)),'Each article must contextualize the quality of the opponent');
 }
 
 const backend=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');
@@ -55,7 +61,7 @@ assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub mu
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
 assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
-assert(backend.includes("explicit V13 fan-beat style and reporter-name upgrade"),'The requested V11 reporter rename must explicitly migrate older reporter articles exactly once');
+assert(backend.includes("explicit V14 long-form article upgrade"),'The requested V11 reporter rename must explicitly migrate older reporter articles exactly once');
 assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');
 assert(backend.includes("Number(stored?.inquirer_version||0)<INQUIRER_VERSION"),'Only older-version archived reporter articles may be migrated; current-version articles stay preserved');
 assert(backend.includes('leagueSeasonContext('),'Inquirer backend must derive season standings/streak context from completed Sleeper matchups');

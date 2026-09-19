@@ -445,3 +445,22 @@ window.coveredPrecisionWithV384FallbackAudit=function(){
  const uncovered=cand.filter(r=>r.gateUncovered).map(r=>({id:r.id,name:r.name,served:r.served,candidate:r.candidate,oldRank:r.oldRank,newRank:r.newRank,delta:r.delta})).slice(0,40);
  return{criterion:'diagnostic only: preserve exact terminal precision for covered offense, preserve V384 served fallback values for all uncovered offense, combine with V72 precision; no runtime mutation',summary:{players:rows.length,sources,served:tieStats('served'),candidate:tieStats('candidate')},cutoffs,uncoveredCheck:uncovered,largestMovers:movers};
 };
+
+window.fullPrecisionV72CoverageMarketAudit=function(){
+ const arr=window.ensureMaster?.()||[],gate=window.offenseConsensusCoverageGateV384,num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
+ const terminal=[['rbCalibrationV49','offenseTerminalExactV49'],['rbCalibrationV48','offenseTerminalExactV48'],['youngCalibrationV47','offenseTerminalExactV47'],['youngIdentityV45','offenseTerminalExactV45'],['offenseContextV43','offenseTerminalExactV43']];
+ const rows=arr.map((z,i)=>{const p=z.production||{},pos=window.groupPos?.(z.x),served=num(z.value);let candidate=served,source='served';
+   if(pos==='IDP'){const e=num(p.idpOverallTradeCurveExactV72);if(e!=null){candidate=e;source='IDP-V72-full-exact';}}
+   else{let covered=null;try{covered=gate?.offenseCoverage?.(z.x?.id)}catch(_){}
+     if(covered===false||z.coverageGate384){candidate=served;source='V384-uncovered-served-fallback';}
+     else{for(const [flag,key] of terminal){if(p[flag]){const e=num(p[key]);if(e!=null){candidate=e;source='OFF-covered-terminal-exact';}break;}}}
+   }
+   return{id:String(z.x?.id??''),name:window.playerName?.(z.x?.id)||String(z.x?.id??''),pos,served,candidate,source,oldRank:i+1,gateUncovered:!!z.coverageGate384};
+ });
+ const cand=[...rows].sort((a,b)=>b.candidate-a.candidate||a.oldRank-b.oldRank);cand.forEach((r,i)=>{r.newRank=i+1;r.delta=r.oldRank-r.newRank});
+ const stats=k=>{const m=new Map();for(const r of rows)m.set(r[k],(m.get(r[k])||0)+1);const g=[...m.values()].filter(n=>n>1);return{groups:g.length,players:g.reduce((a,n)=>a+n,0),max:g.length?Math.max(...g):1,distinct:m.size}};
+ const sources={};for(const r of rows)sources[r.source]=(sources[r.source]||0)+1;
+ const cutoffs=[50,100,150,200,300,400,500].map(n=>{const g=cand.slice(0,n),idp=g.filter(r=>r.pos==='IDP').length;return{top:n,idp,offense:n-idp,cutoff:g.at(-1)?.candidate??null}});
+ const movers=cand.filter(r=>r.delta).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,40);
+ return{criterion:'diagnostic only: full internal V72 baseline*factor precision + covered offense terminal precision + unchanged V384 uncovered fallback; no served-value mutation',summary:{players:rows.length,sources,served:stats('served'),candidate:stats('candidate')},cutoffs,largestMovers:movers};
+};

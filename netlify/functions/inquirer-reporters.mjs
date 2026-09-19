@@ -1,6 +1,6 @@
 'use strict';
 
-export const INQUIRER_VERSION=9;
+export const INQUIRER_VERSION=10;
 
 export const REPORTERS=[
  {id:'walter-mercer',name:'Walter Mercer',title:'Senior Football Correspondent',desk:'The Old Desk',voice:'Old-school beat writer. Clipped sentences. Scoreboard first. Dry skepticism. Sounds like ink, coffee, and a deadline.',signature:'No hysteria without a box score.'},
@@ -53,10 +53,18 @@ export function realStatLine(position,stats){
  return parts.filter(Boolean).slice(0,5).join(' • ');
 }
 
+function formText(p){
+ const f=p?.recent_form;if(!f||Number(f.games)||0<3)return'';
+ const last=Number(f.last3_avg),prior=Number(f.prior3_avg);
+ if(f.label==='hot'&&Number.isFinite(last)&&Number.isFinite(prior))return ' Over the last three: '+one(last)+' fantasy pts/game, up from '+one(prior)+' over the prior three — a real hot stretch.';
+ if(f.label==='cold'&&Number.isFinite(last)&&Number.isFinite(prior))return ' Over the last three: '+one(last)+' fantasy pts/game, down from '+one(prior)+' over the prior three — a cold stretch worth watching.';
+ if(Number.isFinite(last))return ' Over the last three: '+one(last)+' fantasy pts/game.';
+ return'';
+}
 function fact(p){
  if(!p)return'No verified player detail was available.';
  const fp=Number.isFinite(Number(p.points))?one(p.points)+' fantasy pts':'fantasy points unavailable';
- return p.name+' — '+fp+'; '+(String(p.real_stat_line||'').trim()||'Sleeper returned no usable real-life stat line');
+ return p.name+' — '+fp+'; '+(String(p.real_stat_line||'').trim()||'Sleeper returned no usable real-life stat line')+formText(p);
 }
 function aside(t,w,r){
  const pools={
@@ -73,11 +81,11 @@ function txText(t,facts){
  return 'GM '+t.manager_name+' logged '+tx.length+' transaction'+(tx.length===1?'': 's')+(bits.length?': '+bits.slice(0,4).join('; '):'.');
 }
 function headline(t,w,r){
- const score=one(t.points)+'–'+one(t.opponent_points);
- if(r.id==='walter-mercer')return t.won?t.team_name+' BANKS WEEK '+w+', '+score:t.team_name+' LEFT COUNTING THE COST AFTER '+score+' LOSS';
- if(r.id==='tess-delaney')return t.won?'The Margin Had a Method: '+t.team_name+' Wins '+score:'The Numbers Turned: '+t.team_name+' Falls '+score;
- if(r.id==='mack-hollis')return t.won?'EXTRA! '+t.team_name+' KICKS DOWN THE DOOR, '+score+'!':'RED INK! '+t.team_name+' TAKES A '+score+' HIT';
- return t.won?'The Evidence Board: How '+t.team_name+' Won '+score:'The Evidence Board: Where '+t.team_name+' Lost '+score;
+ const score=one(t.points)+'–'+one(t.opponent_points),st=t?.league_context?.streak||{},run=Number(st.length)>=3?(st.type==='W'?Number(st.length)+' STRAIGHT':st.type==='L'?Number(st.length)+'-GAME SLIDE':''):'';
+ if(r.id==='walter-mercer')return run?(t.team_name+' — '+run+' AFTER '+score):t.won?t.team_name+' BANKS WEEK '+w+', '+score:t.team_name+' LEFT COUNTING THE COST AFTER '+score+' LOSS';
+ if(r.id==='tess-delaney')return run?(t.team_name+': The Data Behind '+run.replace('STRAIGHT','Straight').replace('GAME SLIDE','Game Slide')):t.won?'The Margin Had a Method: '+t.team_name+' Wins '+score:'The Numbers Turned: '+t.team_name+' Falls '+score;
+ if(r.id==='mack-hollis')return run?(run+'! '+t.team_name+' OWNS THE BACK PAGE'):t.won?'EXTRA! '+t.team_name+' KICKS DOWN THE DOOR, '+score+'!':'RED INK! '+t.team_name+' TAKES A '+score+' HIT';
+ return run?('The Evidence Board: '+t.team_name+' and the '+run.toLowerCase()):t.won?'The Evidence Board: How '+t.team_name+' Won '+score:'The Evidence Board: Where '+t.team_name+' Lost '+score;
 }
 function intro(t,w,r){
  const d=Number(t.points)-Number(t.projected),proj=Number.isFinite(Number(t.projected))?Math.abs(d).toFixed(1)+' points '+(d>=0?'above':'below')+' Sleeper projection':'with no reliable projection comparison';
@@ -88,10 +96,26 @@ function intro(t,w,r){
 }
 function playersParagraph(t,r){
  const rows=(t.starter_details||[]).slice(),top=rows.slice().sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2),low=rows.slice().sort((a,b)=>Number(a.points)-Number(b.points))[0],stars=top.map(fact).join(' | '),lowFact=low?fact(low):'No verified low starter detail was available.';
- if(r.id==='walter-mercer')return 'Game book: '+(stars||'No verified starter production was available.')+' The low return: '+lowFact;
- if(r.id==='tess-delaney')return 'Production leaders: '+(stars||'No verified starter production was available.')+' Lowest starter output: '+lowFact+' Fantasy points and the real stat line belong in the same sentence.';
- if(r.id==='mack-hollis')return 'Stars of the screaming headline: '+(stars||'No verified starter production was available.')+' And down in the tiny legal print: '+lowFact;
- return 'Exhibit A: '+(stars||'No verified starter production was available.')+' Exhibit B, the lowest starter return: '+lowFact+' The numbers are entered without alibi or embellishment.';
+ const trend=rows.filter(p=>['hot','cold'].includes(p?.recent_form?.label)).sort((a,b)=>Math.abs(Number(b.recent_form?.delta)||0)-Math.abs(Number(a.recent_form?.delta)||0))[0],trendNote=trend?(' The longer tape matters too: '+trend.name+' is in a '+(trend.recent_form.label==='hot'?'strong':'poor')+' three-game stretch, averaging '+one(trend.recent_form.last3_avg)+' fantasy points compared with '+one(trend.recent_form.prior3_avg)+' over the prior three.'):'';
+ if(r.id==='walter-mercer')return 'Game book: '+(stars||'No verified starter production was available.')+' The low return: '+lowFact+trendNote;
+ if(r.id==='tess-delaney')return 'Production leaders: '+(stars||'No verified starter production was available.')+' Lowest starter output: '+lowFact+' Fantasy points and the real stat line belong in the same sentence.'+trendNote;
+ if(r.id==='mack-hollis')return 'Stars of the screaming headline: '+(stars||'No verified starter production was available.')+' And down in the tiny legal print: '+lowFact+trendNote;
+ return 'Exhibit A: '+(stars||'No verified starter production was available.')+' Exhibit B, the lowest starter return: '+lowFact+' The numbers are entered without alibi or embellishment.'+trendNote;
+}
+function leagueContextParagraph(t,w,r){
+ const c=t?.league_context;if(!c?.season_context_available)return 'Season file: Sleeper has not supplied enough completed matchup history for a verified streak or standings narrative.';
+ const rec=c.record||{},record=String(rec.wins||0)+'-'+String(rec.losses||0)+(Number(rec.ties)?'-'+String(rec.ties):''),rank=Number(c.standings_rank),size=Number(c.league_size)||32,st=c.streak||{},streak=Number(st.length)>=2?(Number(st.length)+'-game '+(st.type==='W'?'winning':'losing')+' streak'):'no active multi-game streak';
+ const recent=Number(c.recent_avg_points),prior=Number(c.prior_five_avg_points),stretch=Number.isFinite(recent)&&Number.isFinite(prior)&&Math.abs(recent-prior)>=8?(' Over the last five, the club is averaging '+one(recent)+', '+one(Math.abs(recent-prior))+' '+(recent>prior?'higher':'lower')+' than the prior five — '+(recent>prior?'sustained strong form.':'a genuine downturn.')):Number.isFinite(recent)&&Number(c.recent_games?.length)>=3?(' Recent scoring pace: '+one(recent)+' per game across the last '+c.recent_games.length+'.'):'';
+ let playoff='';
+ if(Number(c.playoff_teams)>0&&rank){
+  if(Number(c.games_until_playoffs)<=6){
+   playoff=' The playoff push is live: '+t.team_name+' sits #'+rank+' of '+size+', '+(c.inside_playoff_line?'inside':'outside')+' a '+c.playoff_teams+'-team field with '+c.games_until_playoffs+' regular-season game'+(Number(c.games_until_playoffs)===1?'':'s')+' before the playoff window.';
+  }else playoff=' In the early table, '+t.team_name+' is #'+rank+' of '+size+' with '+c.playoff_teams+' playoff places ultimately available.';
+ }
+ if(r.id==='walter-mercer')return 'Season ledger: '+record+', '+streak+'.'+stretch+playoff;
+ if(r.id==='tess-delaney')return 'Season context: '+record+', league rank #'+(rank||'—')+', '+streak+'.'+stretch+playoff;
+ if(r.id==='mack-hollis')return 'THE BIGGER PICTURE: '+record+'. '+streak.toUpperCase()+'.'+stretch+playoff;
+ return 'Season file: record '+record+', standing #'+(rank||'—')+', '+streak+'.'+stretch+playoff;
 }
 function outlook(t,w,r){
  const div=t.division_results||[],wins=div.filter(x=>x.won).length,next=t.next_opponent_roster_id?'Next: '+t.next_opponent_name+'. ':'Sleeper has not supplied a next opponent, so none will be invented. ',division=div.length?wins+' of '+div.length+' other division teams won in Week '+w+'.':'No complete divisional comparison was available.';
@@ -101,10 +125,16 @@ function outlook(t,w,r){
  return next+division+' The file stays open until the pattern becomes evidence.';
 }
 
-export function buildInquirerWeek({season,week,teams,players,weeklyStats,scoringSettings,scoreFn}){
- const ids=(teams||[]).map(t=>String(t.roster_id)).sort((a,b)=>(Number(a)-Number(b))||a.localeCompare(b)),raw=weeklyStatsMap(weeklyStats),facts={},meta=players||{},needed=new Set();
+export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyStatHistory={},scoringSettings,scoreFn}){
+ const ids=(teams||[]).map(t=>String(t.roster_id)).sort((a,b)=>(Number(a)-Number(b))||a.localeCompare(b)),raw=weeklyStatsMap(weeklyStats),facts={},meta=players||{},needed=new Set(),historyByWeek=Object.fromEntries(Object.entries(weeklyStatHistory||{}).map(([w,payload])=>[Number(w),weeklyStatsMap(payload)]));
  for(const t of teams||[]){for(const p of t.starter_details||[])needed.add(String(p.id));for(const move of t.transactions||[]){for(const id of move.adds||[])needed.add(String(id));for(const id of move.drops||[])needed.add(String(id))}}
- for(const id of needed){const m=meta[id]||{},stats=raw[id]||{},position=String(m.position||m.fantasy_positions?.[0]||'FLEX'),name=String(m.full_name||((m.first_name||'')+' '+(m.last_name||'')).trim()||id),fp=typeof scoreFn==='function'?scoreFn(stats,scoringSettings):null;facts[id]={id,name,position,nfl_team:String(m.team||'FA'),points:Number.isFinite(Number(fp))?Number(fp):null,real_stat_line:realStatLine(position,stats)}}
- const enriched=(teams||[]).map(t=>{const reporter=reporterForTeam(t.roster_id,week,ids),starters=(t.starter_details||[]).map(p=>({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line})),tt={...t,starter_details:starters},article={schema_version:1,inquirer_version:INQUIRER_VERSION,season:Number(season),week:Number(week),roster_id:String(t.roster_id),reporter:reporterPublic(reporter),headline:headline(tt,week,reporter),byline:'By '+reporter.name+', '+reporter.title,deck:reporter.desk+' • '+reporter.signature,paragraphs:[intro(tt,week,reporter),playersParagraph(tt,reporter),txText(tt,facts),outlook(tt,week,reporter)],aside:aside(tt,week,reporter),generated_from:'Sleeper completed matchup, projection, transaction, roster, player metadata, and raw weekly stats',real_stats_source:'Sleeper weekly stats',facts:{team_points:Number(tt.points),opponent_points:Number(tt.opponent_points),projected:Number(tt.projected),starter_details:starters}};return{...tt,inquirer_article:article,reporter_id:reporter.id}});
+ for(const id of needed){
+  const m=meta[id]||{},stats=raw[id]||{},position=String(m.position||m.fantasy_positions?.[0]||'FLEX'),name=String(m.full_name||((m.first_name||'')+' '+(m.last_name||'')).trim()||id),fp=typeof scoreFn==='function'?scoreFn(stats,scoringSettings):null,
+   series=Object.keys(historyByWeek).map(Number).sort((a,b)=>a-b).map(w=>{const st=historyByWeek[w]?.[id];if(!st)return null;const pts=typeof scoreFn==='function'?scoreFn(st,scoringSettings):null;return Number.isFinite(Number(pts))?{week:w,points:Number(pts),real_stat_line:realStatLine(position,st)}:null}).filter(Boolean),
+   last3=series.slice(-3),prior3=series.slice(-6,-3),lastAvg=last3.length?last3.reduce((n,x)=>n+x.points,0)/last3.length:null,priorAvg=prior3.length?prior3.reduce((n,x)=>n+x.points,0)/prior3.length:null,delta=Number.isFinite(lastAvg)&&Number.isFinite(priorAvg)?lastAvg-priorAvg:null,
+   label=last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta>=3&&lastAvg>=priorAvg*1.2?'hot':last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta<=-3&&lastAvg<=priorAvg*.8?'cold':last3.length===3?'steady':'insufficient';
+  facts[id]={id,name,position,nfl_team:String(m.team||'FA'),points:Number.isFinite(Number(fp))?Number(fp):null,real_stat_line:realStatLine(position,stats),recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
+ }
+ const enriched=(teams||[]).map(t=>{const reporter=reporterForTeam(t.roster_id,week,ids),starters=(t.starter_details||[]).map(p=>({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,recent_form:facts[String(p.id)]?.recent_form||null})),tt={...t,starter_details:starters},article={schema_version:2,inquirer_version:INQUIRER_VERSION,season:Number(season),week:Number(week),roster_id:String(t.roster_id),reporter:reporterPublic(reporter),headline:headline(tt,week,reporter),byline:'By '+reporter.name+', '+reporter.title,deck:reporter.desk+' • '+reporter.signature,paragraphs:[intro(tt,week,reporter),leagueContextParagraph(tt,week,reporter),playersParagraph(tt,reporter),txText(tt,facts),outlook(tt,week,reporter)],aside:aside(tt,week,reporter),generated_from:'Sleeper completed matchup, season-to-date matchup history, standings, projection, transaction, roster, player metadata, and weekly real-life stats',real_stats_source:'Sleeper weekly stats',facts:{team_points:Number(tt.points),opponent_points:Number(tt.opponent_points),projected:Number(tt.projected),league_context:tt.league_context||null,starter_details:starters}};return{...tt,inquirer_article:article,reporter_id:reporter.id}});
  return{reporters:publicReporters(),teams:enriched};
 }

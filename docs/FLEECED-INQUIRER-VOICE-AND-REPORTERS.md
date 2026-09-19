@@ -38,7 +38,7 @@ Data rules:
 
 ## Four permanent reporters
 
-### Walter Mercer — Senior Football Correspondent
+### Nick Swindell — Senior Football Correspondent
 Desk: **The Old Desk**
 
 Personality:
@@ -51,7 +51,7 @@ Personality:
 Signature:
 > No hysteria without a box score.
 
-### Tess Delaney — Performance & Tactics Columnist
+### Penny Picket — Performance & Tactics Columnist
 Desk: **The Numbers Desk**
 
 Personality:
@@ -64,7 +64,7 @@ Personality:
 Signature:
 > The numbers are allowed to be rude.
 
-### Mack Hollis — Tabloid Sports Editor
+### Tilly Fleecer — Tabloid Sports Editor
 Desk: **The Back Page**
 
 Personality:
@@ -78,7 +78,7 @@ Personality:
 Signature:
 > If it happened, it belongs in 48-point type.
 
-### Nora Voss — Investigations & Front Office
+### Frank Filcher — Investigations & Front Office
 Desk: **The Inquiry Desk**
 
 Personality:
@@ -124,7 +124,9 @@ Each reporter also receives a persistent archive in the League Hub Blob store:
 
 Once an Inquirer article has been stored for a completed week, ordinary refreshes reuse that stored article instead of silently rewriting its prose. Reporter article files are write-once unless an explicit migration is intentionally performed.
 
-**V10 is an explicit migration** requested on 2026-09-19 so existing V9 articles can be regenerated once with the richer live-league contract: standings, streaks, playoff positioning, recent team scoring form, and multi-week player form. After the V10 migration, ordinary refreshes preserve the V10 article.
+**V10 was an explicit migration** requested on 2026-09-19 so existing V9 articles could be regenerated once with the richer live-league contract: standings, streaks, playoff positioning, recent team scoring form, and multi-week player form.
+
+**V11 is an explicit reporter-name migration** requested on 2026-09-19. The four stable internal reporter IDs and archive paths are retained, but public bylines are now Nick Swindell, Penny Picket, Tilly Fleecer, and Frank Filcher. Existing V10 articles may be regenerated once so saved bylines/archive metadata use the new names. After the V11 migration, ordinary refreshes preserve the V11 article.
 
 ## Runtime files
 

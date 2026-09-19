@@ -84,7 +84,7 @@ function txReview(t){if(!t.transactions?.length)return 'GM '+t.manager_name+' ke
 function storedInquirerArticle(t){
  const a=t?.inquirer_article;if(!a)return'';
  const reporter=a.reporter||{};
- return '<div class="lh-article"><div class="lh-reporter-byline"><b>'+esc(a.byline||('By '+(reporter.name||'Fleeced! Inquirer')))+'</b><small>'+esc((a.deck||reporter.desk||'')+(reporter.voice?' • '+reporter.voice:''))+'</small></div><h4>'+esc(a.headline||t.team_name)+'</h4>'+(a.paragraphs||[]).map((p,i)=>'<p'+(i===2?' class="lh-report-transaction"':'')+'>'+esc(p)+'</p>').join('')+(a.aside?'<p><i>'+esc(a.aside)+'</i></p>':'')+'<div class="lh-sub">Source: '+esc(a.real_stats_source||'Sleeper weekly stats')+' • fantasy scoring, real-life stat lines, matchup and transaction facts are preserved with this article.</div></div>'
+ return '<div class="lh-article"><div class="lh-reporter-byline"><b>'+esc(a.byline||('By '+(reporter.name||'Fleeced! Inquirer')))+'</b><small>'+esc((a.deck||reporter.desk||'')+(reporter.voice?' • '+reporter.voice:''))+'</small></div><h4>'+esc(a.headline||t.team_name)+'</h4>'+(a.paragraphs||[]).map(p=>'<p>'+esc(p)+'</p>').join('')+(a.aside?'<p><i>'+esc(a.aside)+'</i></p>':'')+'<div class="lh-sub">Source: '+esc(a.real_stats_source||'Sleeper weekly stats')+' • fantasy scoring, real-life stat lines, matchup and transaction facts are preserved with this article.</div></div>'
 }
 function reporterArchiveHTML(w){
  const reporters=w?.reporters||reporterDirectoryCache?.reporters||[],buttons=reporters.map(r=>'<button type="button" class="lh-reporter-desk '+(openReporterArchive===r.id?'active':'')+'" data-lh-reporter-archive="'+esc(r.id)+'"><b>'+esc(r.name)+'</b><small>'+esc(r.title)+'<br>'+esc(r.desk)+'</small></button>').join('');

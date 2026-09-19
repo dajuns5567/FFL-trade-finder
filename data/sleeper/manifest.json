@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-18T00:16:26.036Z",
+  "generatedAt": "2026-09-19T20:55:22.549Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -190,9 +190,9 @@
       "withGames": 1031
     },
     "2026": {
-      "players": 1020,
-      "withPpr": 297,
-      "withGames": 1020,
+      "players": 1021,
+      "withPpr": 298,
+      "withGames": 1021,
       "currentSeasonQualified": true
     }
   },
@@ -213,21 +213,21 @@
       "withGames": 1031
     },
     "2026": {
-      "players": 1020,
-      "withPpr": 297,
-      "withGames": 1020,
+      "players": 1021,
+      "withPpr": 298,
+      "withGames": 1021,
       "currentSeasonQualified": true,
-      "compactPlayers": 1020
+      "compactPlayers": 1021
     }
   },
   "qualifyingHistoricalSeasonMinimumGames": 8,
   "qualifyingGameRule": {
-    "minimumSnapShare": 0.2,
+    "minimumSnapShare": 0.18,
     "minimumFantasyPoints": 8,
     "operator": "OR"
   },
   "currentSeasonQualification": {
-    "minimumSnapShare": 0.2,
+    "minimumSnapShare": 0.18,
     "minimumFantasyPoints": 8,
     "finalGamesOnly": true,
     "fullWeekValuationGate": true,
@@ -409,8 +409,8 @@
     },
     "diagnostics": {
       "finalGames": 16,
-      "qualifiedPlayerGames": 1020,
-      "rejectedPlayerGames": 1259,
+      "qualifiedPlayerGames": 1021,
+      "rejectedPlayerGames": 1258,
       "ignoredGames": 0
     }
   },
@@ -438,11 +438,12 @@
     "Production seasons are selected by season year from the active 60/30/10 or in-season weighting plan and are not dependent on previous_league_id links.",
     "Raw weekly Sleeper stat payloads are preserved. No player production number is fabricated.",
     "During the active current season, only player-games from NFL games verified final are eligible for scoring.",
-    "A finalized current-season player-game qualifies when Sleeper snap share is at least 20% or league fantasy points are at least 8. Missing snap data does not satisfy the snap criterion.",
+    "A finalized current-season player-game qualifies when Sleeper snap share is at least 18% or league fantasy points are at least 8. Missing snap data does not satisfy the snap criterion.",
     "Finalized games are collected immediately, but a new NFL week does not enter valuation until every non-ignored game slot in that week is final.",
     "Delayed, postponed, suspended, or canceled games occupy a null scoring slot and do not block the rest of the week. If the same event is later made up, its stable event slot becomes final and the makeup result fills that original null slot rather than shifting later weeks.",
     "Offensive PPR is derived only from Sleeper-provided pts_ppr or deterministic standard-PPR scoring of Sleeper raw stats.",
     "offense-history.json is a compact delivery artifact derived only from the verified season aggregates; it does not recalculate or estimate player production.",
-    "Raw weekly stats remain available for exact league-specific IDP reconstruction, including stacked sack/interception scoring."
+    "Raw weekly stats remain available for exact league-specific IDP reconstruction, including stacked sack/interception scoring.",
+    "2026 Week 1 snapshot refreshed after the qualifying snap threshold moved from 20% to 18%; player 11583 (Jonathon Brooks) now qualifies at 13/68 offensive snaps (19.12%) with 7.2 PPR points."
   ]
 }

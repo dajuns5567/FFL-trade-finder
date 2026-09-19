@@ -73,6 +73,19 @@ function build(force=false){
       if(rank===e)out=Math.round(clamp(MIN,endVal,MAX));
       next.set(id,out);
     }
+    // Exact calculated ties should not receive different canonical values solely
+    // from stable array order. Collapse each exact-tie run to its midpoint
+    // canonical value, but never merge across an intentional V319 band boundary.
+    for(let r=s;r<=e;){
+      let j=r;
+      while(j<e&&vals[j]===vals[r-1])j++;
+      if(j>r){
+        let sum=0,count=0;
+        for(let k=r;k<=j;k++){const id=String(arr[k-1]?.x?.id??''),v=Number(next.get(id));if(Number.isFinite(v)){sum+=v;count++}}
+        if(count){const tied=Math.round(sum/count);for(let k=r;k<=j;k++){const id=String(arr[k-1]?.x?.id??'');next.set(id,tied)}}
+      }
+      r=j+1;
+    }
     start=e+1;
   }
   const topId=String(arr[0]?.x?.id??'');
@@ -497,4 +510,10 @@ window.precisionCanonicalDeltaRegressionAudit=function(){
  const largest=[...rows].sort((a,b)=>b.absDelta-a.absDelta||a.rank-b.rank).slice(0,50);
  const genuineTies=[];for(let i=0;i<rows.length;){let j=i+1;while(j<rows.length&&rows[j].precision===rows[i].precision)j++;if(j-i>1)genuineTies.push({precision:rows[i].precision,count:j-i,rows:rows.slice(i,j).map(r=>({rank:r.rank,name:r.name,old:r.oldCanonical,candidate:r.candidateCanonical}))});i=j}
  return{criterion:'diagnostic only: reconstruct legacy V319 canonical mapping on the precision-ranked runtime order using served integer gaps, compare against candidate V319 using precision gaps; no additional mutation',summary:{all:summary(rows),offense:summary(rows.filter(r=>r.group!=='IDP')),IDP:summary(rows.filter(r=>r.group==='IDP')),v384:summary(rows.filter(r=>r.gate))},boundaries,largestCanonicalDeltas:largest,genuinePrecisionTieGroups:genuineTies.slice(0,40)};
+};
+
+window.exactTieCanonicalRegressionAudit=function(){
+ const arr=window.ensureMaster?.()||[],api=window.modeledPlayerValuesV319;api?.build?.(true);const snap=api?.snapshot?.()||new Map(),groups=[];
+ for(let i=0;i<arr.length;){const v=modeled(arr[i]);let j=i+1;while(j<arr.length&&modeled(arr[j])===v)j++;if(j-i>1){const rows=arr.slice(i,j).map((z,k)=>({rank:i+k+1,name:window.playerName?.(z.x?.id)||String(z.x?.id??''),precision:v,canonical:Number(snap.get(String(z.x?.id??'')))})),bands=new Set(rows.map(r=>BAND_ENDS.find(e=>r.rank<=e)||arr.length));groups.push({precision:v,count:rows.length,crossesBandBoundary:bands.size>1,canonicalDistinct:[...new Set(rows.map(r=>r.canonical))],rows})}i=j}
+ return{criterion:'runtime candidate exact-tie regression: exact precision ties within the same V319 band share canonical value; intentional band endpoints remain isolated',summary:{tieGroups:groups.length,sameBandTieGroups:groups.filter(g=>!g.crossesBandBoundary).length,sameBandViolations:groups.filter(g=>!g.crossesBandBoundary&&g.canonicalDistinct.length>1).length,crossBoundaryGroups:groups.filter(g=>g.crossesBandBoundary).length},groups:groups.slice(0,80)};
 };

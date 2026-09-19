@@ -497,6 +497,11 @@ assert(archiveWriter.includes("V494_BAD_WINDOW")&&archiveWriter.includes("2026-0
 assert(archiveWriter.includes("V495_BAD_TIMES")&&archiveWriter.includes("2026-09-19T21:47:21.051Z"),'known unstable 2026-09-19 17:47:21 EDT scheduled point must be blocked from re-archive');
 assert(backend.includes("V495_BAD_TIMES")&&backend.includes("2026-09-19T21:47:21.051Z"),'known unstable scheduled point must be filtered from history reads');
 assert(archiveWriter.includes("V496_BASELINE_T='2026-09-19T22:01:38.323Z'"),'durable Value History archive must reject every snapshot before the verified 2026-09-19 18:01:38 EDT baseline');
+assert(archiveWriter.includes("V498_BAD_TIMES=new Set(['2026-09-19T23:09:48.738Z'])"),'durable archive must permanently reject the invalid 2026-09-19 19:09:48 EDT scheduled snapshot');
+assert(backend.includes("V498_BAD_TIMES=new Set(['2026-09-19T23:09:48.738Z'])"),'active Value History reads/live storage must permanently filter the invalid 2026-09-19 19:09:48 EDT scheduled snapshot');
+assert(backend.includes('scrubV498InvalidScheduledSnapshot(s)'),'live Value History storage must physically scrub the invalid 19:09:48 EDT scheduled snapshot');
+assert(archiveWriter.includes("SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919'"),'scheduled durable snapshots must require the current valuation contract');
+assert(archiveWriter.includes("String(s.valuation_contract||'')===SCHEDULED_VALUATION_CONTRACT"),'scheduled archive validation must reject snapshots produced by stale valuation runtimes');
 assert(backend.includes("V496_BASELINE_T='2026-09-19T22:01:38.323Z'"),'active Value History reads must begin at the verified 2026-09-19 18:01:38 EDT baseline');
 assert(backend.includes("scrubV496BaselineReset(s)"),'live Value History buffer must scrub every pre-baseline snapshot');
 assert(backend.includes("isV496PreBaseline"),'pre-baseline Value History points must be filtered from all active history reads');

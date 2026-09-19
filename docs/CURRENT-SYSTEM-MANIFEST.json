@@ -54,7 +54,7 @@
     "inquirer_rotation": "8 teams per reporter per week; every reporter covers every team once across four consecutive weeks",
     "inquirer_real_stats_source": "Sleeper weekly raw stats",
     "inquirer_article_archives": "immutable standalone per-reporter article JSON + reporter archive index",
-    "inquirer_version": 13,
+    "inquirer_version": 14,
     "inquirer_live_context": [
       "season record and league rank",
       "winning/losing streaks from completed Sleeper matchups",
@@ -85,7 +85,8 @@
         "desk": "The Inquiry Desk"
       }
     ],
-    "inquirer_house_style": "Hometown beat reporter + fan; frequent sarcasm and embedded humor; first-person rooting interest; rival needling and self-deprecating team frustration allowed; all football facts remain Sleeper-grounded."
+    "inquirer_house_style": "Hometown beat reporter + fan; frequent sarcasm and embedded humor; first-person rooting interest; rival needling and self-deprecating team frustration allowed; all football facts remain Sleeper-grounded.",
+    "inquirer_article_standard": "Full long-form beat column: ~9–10 substantive paragraphs when data exists; minimum regression target 400 words; narrative analysis of season meaning, recent history, score construction, players, lineup/transactions, opponent quality, playoff/next-week stakes, and a closing kicker."
   },
   "recovery_branches": {
     "code": "baseline/20260919-home-valuehistory-aligned",

@@ -1,6 +1,7 @@
 'use strict';
 
 export const INQUIRER_VERSION=14;
+export const INQUIRER_HOUSE_STYLE='Hometown beat reporter + fan. Frequent sarcasm, embedded humor, long-form analysis, and dramatic framing are encouraged. Dramatic without inventing facts: scores, standings, transactions, player production, streaks, projections, and real-life stats must remain grounded in Sleeper data.';
 
 export const REPORTERS=[
  {id:'walter-mercer',name:'Nick Swindell',title:'Senior Football Correspondent',desk:'The Old Desk',voice:'Hometown old-school beat writer and obvious fan. Clipped sentences, dry sarcasm, institutional memory, mild contempt for excuses, and the confidence of someone who has watched this team ruin perfectly good Sundays before.',signature:'No hysteria without a box score.'},

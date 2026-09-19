@@ -69,7 +69,7 @@ assert(backend.includes('weeklyStatHistory'),'Inquirer backend must provide mult
 assert(ui.includes('storedInquirerArticle(t)'),'League Hub must render preserved Inquirer article copy');
 assert(ui.includes('reporterArchiveHTML(w)'),'League Hub must expose reporter archive UI');
 assert(ui.includes('data-lh-reporter-archive'),'Reporter archive controls missing');
-assert(helper.includes('dramatic without inventing facts'),'Reporter house style must preserve dramatic-but-factual constraint');
+assert(/dramatic without inventing facts/i.test(helper),'Reporter house style must preserve dramatic-but-factual constraint');
 assert(helper.includes('Hometown old-school beat writer and obvious fan')&&helper.includes('Hometown analytics beat writer and fan')&&helper.includes('Hometown tabloid beat writer and unapologetic fan')&&helper.includes('Hometown investigative beat writer and fan'),'All four reporters must explicitly write as hometown beat reporters/fans');
 assert(helper.includes('group chat')&&helper.includes('Sunday')&&helper.includes('spreadsheets cannot be angry')&&helper.includes('subpoena immunity'),'V13 prose engine must preserve frequent sarcasm and embedded humor rather than generic recap copy');
 console.log('Fleeced Inquirer four-reporter rotation, real-stat, persistence, and archive smoke passed');

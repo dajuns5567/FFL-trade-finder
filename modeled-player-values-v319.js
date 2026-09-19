@@ -476,3 +476,25 @@ window.precisionRuntimeCandidateRegressionAudit=function(){
  let canonicalMonotonic=true;for(let i=1;i<rows.length;i++)if(rows[i].canonical>rows[i-1].canonical){canonicalMonotonic=false;break}
  return{criterion:'PR runtime candidate regression: combined rank uses full precision; served row values remain compatibility/display values; V384 uncovered fallback unchanged; V319 canonical mapping consumes precision gaps',summary:{players:rows.length,sourceCounts,precisionMonotonic:monotonic,v384FallbackPrecisionEqualsServed:servedUnchangedGate,canonicalMonotonic},density,largestMovers:movers,v384Rows:rows.filter(r=>r.gate).map(r=>({id:r.id,name:r.name,served:r.served,precision:r.precision,rank:r.rank,canonical:r.canonical})).slice(0,40)};
 };
+
+window.precisionCanonicalDeltaRegressionAudit=function(){
+ const arr=window.ensureMaster?.()||[],api=window.modeledPlayerValuesV319,src=window.tradeValueNormalizationV130||window.tradeValueNormalizationV139;
+ if(!api||typeof src?.playerValueForRank!=='function')throw new Error('canonical dependencies unavailable');
+ api.build(true);const candidate=api.snapshot(),n=arr.length,maxRank=Math.max(907,n),ends=[...api.BAND_ENDS.filter(x=>x<n),n],clamp=(a,x,b)=>Math.max(a,Math.min(x,b));
+ const median=xs=>{const a=xs.filter(x=>Number.isFinite(x)&&x>0).slice().sort((a,b)=>a-b);if(!a.length)return 1;const m=a.length>>1;return a.length%2?a[m]:(a[m-1]+a[m])/2};
+ const legacy=r=>Number(src.playerValueForRank(r,maxRank));
+ const oldVals=arr.map(z=>Number(z?.value)||0),old=new Map();let start=1;
+ for(const end of ends){const s=start,e=end,startVal=legacy(s),endVal=legacy(e);if(s===e){old.set(String(arr[s-1]?.x?.id??''),Math.round(clamp(api.MIN,startVal,api.MAX)));start=e+1;continue}
+   const mg=[],bg=[];for(let r=s;r<e;r++){mg.push(Math.max(0,oldVals[r-1]-oldVals[r]));bg.push(Math.max(.0001,legacy(r)-legacy(r+1)))}
+   const lm=median(mg),weights=bg.map((g,i)=>{const ratio=clamp(api.MIN_RATIO,mg[i]/Math.max(lm,.0001),api.MAX_RATIO);return g*((1-api.BLEND)+api.BLEND*ratio)}),total=weights.reduce((a,b)=>a+b,0)||1,span=Math.max(0,startVal-endVal);let cur=startVal;
+   old.set(String(arr[s-1]?.x?.id??''),Math.round(clamp(api.MIN,cur,api.MAX)));for(let i=0;i<weights.length;i++){cur-=span*(weights[i]/total);const rank=s+i+1,id=String(arr[rank-1]?.x?.id??'');let out=Math.round(clamp(api.MIN,cur,api.MAX));if(rank===e)out=Math.round(clamp(api.MIN,endVal,api.MAX));old.set(id,out)}start=e+1}
+ if(arr[0])old.set(String(arr[0]?.x?.id??''),api.MAX);
+ const rows=arr.map((z,i)=>{const id=String(z?.x?.id??''),o=Number(old.get(id)),v=Number(candidate.get(id)),d=v-o;return{id,name:window.playerName?.(id)||id,group:window.groupPos?.(z.x)||null,rank:i+1,precision:Number(z.marketPrecisionValueV386),served:Number(z.value),oldCanonical:o,candidateCanonical:v,delta:d,absDelta:Math.abs(d),gate:!!z.coverageGate384}});
+ const q=(xs,p)=>{const a=xs.filter(Number.isFinite).sort((a,b)=>a-b);if(!a.length)return null;const x=(a.length-1)*p,l=Math.floor(x),h=Math.ceil(x);return +(a[l]+(a[h]-a[l])*(x-l)).toFixed(2)};
+ const summary=xs=>({n:xs.length,changed:xs.filter(r=>r.delta!==0).length,delta:{min:Math.min(...xs.map(r=>r.delta)),p10:q(xs.map(r=>r.delta),.1),median:q(xs.map(r=>r.delta),.5),p90:q(xs.map(r=>r.delta),.9),max:Math.max(...xs.map(r=>r.delta))},abs:{median:q(xs.map(r=>r.absDelta),.5),p90:q(xs.map(r=>r.absDelta),.9),p95:q(xs.map(r=>r.absDelta),.95),max:Math.max(...xs.map(r=>r.absDelta))}});
+ const boundaryRanks=[1,12,13,24,25,48,49,80,81,120,121,180,181,260,261,n].filter((v,i,a)=>v<=n&&a.indexOf(v)===i);
+ const boundaries=boundaryRanks.map(r=>rows[r-1]);
+ const largest=[...rows].sort((a,b)=>b.absDelta-a.absDelta||a.rank-b.rank).slice(0,50);
+ const genuineTies=[];for(let i=0;i<rows.length;){let j=i+1;while(j<rows.length&&rows[j].precision===rows[i].precision)j++;if(j-i>1)genuineTies.push({precision:rows[i].precision,count:j-i,rows:rows.slice(i,j).map(r=>({rank:r.rank,name:r.name,old:r.oldCanonical,candidate:r.candidateCanonical}))});i=j}
+ return{criterion:'diagnostic only: reconstruct legacy V319 canonical mapping on the precision-ranked runtime order using served integer gaps, compare against candidate V319 using precision gaps; no additional mutation',summary:{all:summary(rows),offense:summary(rows.filter(r=>r.group!=='IDP')),IDP:summary(rows.filter(r=>r.group==='IDP')),v384:summary(rows.filter(r=>r.gate))},boundaries,largestCanonicalDeltas:largest,genuinePrecisionTieGroups:genuineTies.slice(0,40)};
+};

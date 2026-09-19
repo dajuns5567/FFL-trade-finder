@@ -291,3 +291,14 @@ window.preCurveCollapseTraceAudit=function(){
  const offenseSamples=distinctPreCollapsed.filter(g=>g.every(r=>r.group!=='IDP')).slice(0,15).map(g=>({finalValue:g[0].finalValue,players:g}));
  return{criterion:'diagnostic only: trace preCurveValue -> final model value and V72 reconstruction; no runtime mutation',summary:{players:rows.length,tieGroups:tieGroups.length,distinctPreCollapsedGroups:distinctPreCollapsed.length,playersInDistinctPreCollapsedGroups:distinctPreCollapsed.reduce((n,g)=>n+g.length,0),offenseRowsChangedAfterPreCurve:rows.filter(r=>r.group!=='IDP'&&r.preCurveValue!==r.finalValue).length,idpRowsChangedAfterPreCurve:rows.filter(r=>r.group==='IDP'&&r.preCurveValue!==r.finalValue).length},offenseSamples,idpSamples,samples,interpretationHints:['valuation-offense-v27 applyCurve27 stores preCurveValue then immediately rounds z.value; for already-integer inputs this is a no-op','IDP V72 later computes Math.round(baseline*factor), so distinct baselines can collapse to the same integer output','factorStored is rounded to 3 decimals for metadata; reconstructedUnrounded is diagnostic only and is not guaranteed to equal the exact internal factor used']};
 };
+
+window.offenseCurveReapplicationAudit=function(){
+ const arr=window.ensureMaster?.()||[];
+ const flags=['offenseMidRbV41','offenseContextV42','offenseContextV43','youngOffenseContextV44','youngIdentityV45','youngCalibrationV46','youngCalibrationV47','rbCalibrationV48','rbCalibrationV49'];
+ const rows=arr.filter(z=>window.groupPos?.(z.x)!=='IDP').map((z,i)=>{const p=z.production||{},active=flags.filter(k=>p[k]===true),id=String(z.x?.id??'');return{id,name:window.playerName?.(id)||id,group:window.groupPos?.(z.x)||null,rank:arr.indexOf(z)+1,preCurveValue:Number(z.preCurveValue),finalValue:Number(z.value),curveFlags:active,curveFlagCount:active.length};});
+ const hist={};for(const r of rows)hist[r.curveFlagCount]=(hist[r.curveFlagCount]||0)+1;
+ const changed=rows.filter(r=>Number.isFinite(r.preCurveValue)&&r.preCurveValue!==r.finalValue);
+ const flagged=rows.filter(r=>r.curveFlagCount>0);
+ const samples=[...changed].sort((a,b)=>Math.abs((b.preCurveValue-b.finalValue))-Math.abs((a.preCurveValue-a.finalValue))).slice(0,40);
+ return{criterion:'diagnostic only: identify downstream offense wrappers that can reapply assetCurveAudit after V27 intentionally leaves player values uncurved; no runtime mutation',codeFinding:{v27:'applyCurve27 stores preCurveValue and leaves player value on model scale; assetCurve27 remains exposed for picks/audit',downstream:'valuation-offense-v32 through v40 each define curveXX(raw) by calling window.assetCurveAudit(raw); their rebuild paths can therefore reintroduce the economic asset curve for affected offensive players'},summary:{offensePlayers:rows.length,changedAfterPreCurve:changed.length,playersWithDownstreamCurveFlags:flagged.length,curveFlagCountHistogram:hist},samples,flags};
+};

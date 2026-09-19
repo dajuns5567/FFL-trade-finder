@@ -494,6 +494,8 @@ assert(archiveWriter.includes('verification unreadable snapshot'),'archive write
 assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret'),'archive writer must provide an actionable SSO-authentication failure');
 assert(archiveWriter.includes("isKnownBadSnapshot"),'V380/V381 scrubbed partial-week points must be blocked from durable archive ingestion');
 assert(archiveWriter.includes("V494_BAD_WINDOW")&&archiveWriter.includes("2026-09-16T04:57:00.000Z"),'requested 2026-09-16 00:57 EDT through 2026-09-19 15:37 EDT points must be blocked from re-archive');
+assert(archiveWriter.includes("V495_BAD_TIMES")&&archiveWriter.includes("2026-09-19T21:47:21.051Z"),'known unstable 2026-09-19 17:47:21 EDT scheduled point must be blocked from re-archive');
+assert(backend.includes("V495_BAD_TIMES")&&backend.includes("2026-09-19T21:47:21.051Z"),'known unstable scheduled point must be filtered from history reads');
 assert(backend.includes("V494_TRADE_REFERENCE_MINUTE='2026-09-19T21:36'"),'in-window Trade History must use the requested 2026-09-19 17:36 EDT reference minute');
 
 assert(archiveWriter.includes("V391_BAD_WINDOW"),'V391 removed timestamp must be blocked from durable archive re-ingestion');
@@ -510,6 +512,9 @@ assert(headlessRefresh.includes("consensus?.complete===true")&&headlessRefresh.i
 assert(headlessRefresh.includes("window.valueHistoryV331")&&headlessRefresh.includes("vh.currentRows()"),'scheduled headless refresh must capture the same exported site-calculated currentRows used by Value History');
 assert(valueHistoryUi.includes("window.__fllValueRefresh?.inFlight"),'interactive Value History snapshots must wait until the full valuation refresh is complete');
 assert(valueHistoryUi.includes("sameSnapshotRows(firstRows,rows)"),'interactive Value History snapshots must verify stable canonical rows before persistence');
+assert(headlessRefresh.includes("sameRows(first.rows,second.rows)"),'scheduled headless snapshots must verify stable canonical rows before persistence');
+assert(headlessRefresh.includes("page.waitForTimeout(1500)"),'scheduled headless snapshots must observe a stability interval before persistence');
+assert(headlessRefresh.includes("window.__fllValueRefresh"),'scheduled headless readiness must honor the full valuation refresh in-flight marker');
 const consensusRuntime=fs.readFileSync('nonblocking-consensus-v277.js','utf8');
 assert(consensusRuntime.includes("setValueRefresh277({inFlight:true,phase:'core'"),'valuation refresh must expose core-load in-flight state before async work begins');
 assert(consensusRuntime.includes("setValueRefresh277({inFlight:false,phase:'complete'"),'valuation refresh must expose completed state only after consensus-derived values are rebuilt');

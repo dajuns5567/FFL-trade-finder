@@ -455,6 +455,25 @@ async function getTeamNetHistory(s,playerIds,teamId=''){
   const source=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
   return{points,playerCount:points.length?Number(points[points.length-1]?.playerCount)||ids.length:ids.length,source,snapshotCount:snaps.length,partial:indexed.source==='unavailable'&&archiveSnaps.length>0};
 }
+async function getAllTeamWeekMovement(s){
+  const archiveSnaps=await archiveAllSnapshots();
+  let indexed={items:[],source:s?'empty':'unavailable'},localSnaps=[];
+  if(s){try{indexed=await allItems(s);localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[]}catch(e){indexed={items:[],source:'unavailable',error:String(e?.message||e)}}}
+  const snaps=mergeSnapshots(archiveSnaps,localSnaps).filter(x=>x?.t&&Array.isArray(x?.teams)&&x.teams.length);
+  if(!snaps.length)return{teams:[],source:indexed.source,snapshotCount:0,trackingSince:null,latest:null};
+  const latest=snaps[snaps.length-1],latestMs=new Date(latest.t).getTime(),targetMs=latestMs-7*86400000;
+  let base=snaps[0];for(const snap of snaps){const ms=new Date(snap.t).getTime();if(Number.isFinite(ms)&&ms<=targetMs)base=snap;else if(Number.isFinite(ms)&&ms>targetMs)break}
+  const exactSeven=new Date(base.t).getTime()<=targetMs,baseMap=new Map((base.teams||[]).map(x=>[String(x?.id||''),x])),out=[];
+  for(const row of latest.teams||[]){
+    const id=String(row?.id||''),value=Number(row?.value),prior=baseMap.get(id),baseValue=Number(prior?.value);
+    if(!id||!Number.isFinite(value))continue;
+    const delta=Number.isFinite(baseValue)?Math.round(value-baseValue):null,pct=Number.isFinite(baseValue)&&baseValue!==0?delta/baseValue*100:null;
+    out.push({team_id:id,value:Math.round(value),baseline_value:Number.isFinite(baseValue)?Math.round(baseValue):null,delta,pct,baseline_t:base.t,latest_t:latest.t,period:exactSeven?'7D':'AVAILABLE',player_count:Number(row?.player_count)||0});
+  }
+  out.sort((a,b)=>(Number(b.delta)||0)-(Number(a.delta)||0)||Number(a.team_id)-Number(b.team_id));
+  const source=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
+  return{teams:out,source,snapshotCount:snaps.length,trackingSince:snaps[0].t,latest:latest.t,baseline:base.t,period:exactSeven?'7D':'AVAILABLE'};
+}
 function rowMap(snap){return new Map((snap?.rows||[]).map(r=>[String(r.id),r]))}
 function baselineFor(snaps,latestMs,days){
   if(!snaps.length)return null;
@@ -841,6 +860,10 @@ export default async (req)=>{
       if(url.searchParams.get('trades')==='1'){
         const result=await retry(()=>completedTradeHistory(s),180);
         return json(result);
+      }
+      if(url.searchParams.get('team_net_all')==='1'){
+        const result=await retry(()=>getAllTeamWeekMovement(s),180);
+        return json({team_net_all:true,...result});
       }
       if(url.searchParams.get('team_net')==='1'){
         const ids=String(url.searchParams.get('player_ids')||'').split(',').map(x=>x.trim()).filter(Boolean),teamId=String(url.searchParams.get('team_id')||'').trim();

@@ -7,6 +7,7 @@ import updateHandler from '../netlify/functions/update.mjs';
 import picksHandler from '../netlify/functions/picks.mjs';
 
 const snapshotFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE||'.tmp/value-history-scheduled.json';
+const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
 const league='1316867686394769408';
 
 function fingerprint(rows,picks=[],teams=[]){
@@ -45,7 +46,7 @@ async function valueHistory(req){
   if(String(payload.league)!==league||rows.length<100)return json({ok:false,error:'Scheduled snapshot payload incomplete'},400);
   if(payload.source!=='scheduled')return json({ok:false,error:'Scheduled local collector only accepts source=scheduled'},400);
   const t=new Date().toISOString(),fp=fingerprint(rows,picks,teams);
-  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',rows,picks,teams};
+  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,rows,picks,teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
   return json({ok:true,t,fingerprint:fp,source:'scheduled',count:rows.length});
@@ -199,7 +200,7 @@ try{
   if(captured.rows.some(r=>!Number.isFinite(Number(r?.value))||!Number.isFinite(Number(r?.overall))))throw new Error('Scheduled capture contains non-finite player values/ranks');
 
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
-  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',rows:captured.rows,picks:captured.picks,teams:captured.teams};
+  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
 

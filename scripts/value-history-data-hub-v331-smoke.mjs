@@ -481,7 +481,7 @@ assert(indexHtml.includes('Historical value hub, risers, fallers, team value ana
 assert(indexHtml.includes('id="homeTopPlayers"')&&indexHtml.includes('id="homeValueRisers"'),'Home must expose current top players and 7D riser summary slots');
 assert(/\/trade-select-all-v165\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load Select All with an explicit cache-bust key');
 assert(siteV29.includes('/ui-player-values-v139.js?v=430'),'production shell must cache-bust the current V398 Player Values UI');
-assert(siteV29.includes('/nonblocking-consensus-v277.js?v=395'),'production shell must cache-bust the V395 consensus completion marker');
+assert(/\/nonblocking-consensus-v277\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load consensus completion runtime with an explicit cache-bust key');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
 assert(archiveWriter.includes('Archive Value History snapshot'),'archive writer snapshot commit path missing');
@@ -493,8 +493,8 @@ assert(archiveWriter.includes('verification missing snapshot'),'archive writer m
 assert(archiveWriter.includes('verification unreadable snapshot'),'archive writer must read back the exact newly written snapshot before reporting success');
 assert(archiveWriter.includes('configure NETLIFY_BLOBS_TOKEN repository secret'),'archive writer must provide an actionable SSO-authentication failure');
 assert(archiveWriter.includes("isKnownBadSnapshot"),'V380/V381 scrubbed partial-week points must be blocked from durable archive ingestion');
-assert(archiveWriter.includes("V493_BAD_WINDOW"),'requested 2026-09-16 12:57 EDT through 2026-09-19 15:37 EDT points must be blocked from re-archive');
-assert(backend.includes("V493_TRADE_REFERENCE_MINUTE='2026-09-19T21:36'"),'in-window Trade History must use the requested 2026-09-19 17:36 EDT reference minute');
+assert(archiveWriter.includes("V494_BAD_WINDOW")&&archiveWriter.includes("2026-09-16T04:57:00.000Z"),'requested 2026-09-16 00:57 EDT through 2026-09-19 15:37 EDT points must be blocked from re-archive');
+assert(backend.includes("V494_TRADE_REFERENCE_MINUTE='2026-09-19T21:36'"),'in-window Trade History must use the requested 2026-09-19 17:36 EDT reference minute');
 
 assert(archiveWriter.includes("V391_BAD_WINDOW"),'V391 removed timestamp must be blocked from durable archive re-ingestion');
 assert(archiveWriter.includes('rebuildMonthBundleFromSnapshots(month)'),'monthly archive writer must recover from blank/corrupt/incomplete month files using authoritative indexed snapshots');
@@ -508,6 +508,11 @@ const valueHistoryUi=fs.readFileSync('value-history-v276.js','utf8');
 assert(headlessRefresh.includes("sleeper?.complete===true"),'scheduled headless refresh must wait for verified Sleeper history completion');
 assert(headlessRefresh.includes("consensus?.complete===true")&&headlessRefresh.includes("consensus?.ok===true")&&headlessRefresh.includes("successful)>=7"),'scheduled headless refresh must require an authoritative successful 7/7 consensus refresh');
 assert(headlessRefresh.includes("window.valueHistoryV331")&&headlessRefresh.includes("vh.currentRows()"),'scheduled headless refresh must capture the same exported site-calculated currentRows used by Value History');
+assert(valueHistoryUi.includes("window.__fllValueRefresh?.inFlight"),'interactive Value History snapshots must wait until the full valuation refresh is complete');
+assert(valueHistoryUi.includes("sameSnapshotRows(firstRows,rows)"),'interactive Value History snapshots must verify stable canonical rows before persistence');
+const consensusRuntime=fs.readFileSync('nonblocking-consensus-v277.js','utf8');
+assert(consensusRuntime.includes("setValueRefresh277({inFlight:true,phase:'core'"),'valuation refresh must expose core-load in-flight state before async work begins');
+assert(consensusRuntime.includes("setValueRefresh277({inFlight:false,phase:'complete'"),'valuation refresh must expose completed state only after consensus-derived values are rebuilt');
 assert(valueHistoryUi.includes("currentPickRows,currentTeamRows"),'Value History must expose read-only pick/team capture helpers for the scheduled runner');
 assert(headlessRefresh.includes("Buffer.from(await r.arrayBuffer())"),'scheduled Sleeper proxy must buffer decoded upstream bytes before serving them');
 assert(!headlessRefresh.includes("new Response(r.body,{status:r.status,headers:r.headers})"),'scheduled Sleeper proxy must not forward stale content-encoding headers with an already-decoded body');

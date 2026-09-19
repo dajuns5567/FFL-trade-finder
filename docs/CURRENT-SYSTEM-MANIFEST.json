@@ -53,7 +53,20 @@
     "inquirer_reporter_count": 4,
     "inquirer_rotation": "8 teams per reporter per week; every reporter covers every team once across four consecutive weeks",
     "inquirer_real_stats_source": "Sleeper weekly raw stats",
-    "inquirer_article_archives": "immutable standalone per-reporter article JSON + reporter archive index"
+    "inquirer_article_archives": "immutable standalone per-reporter article JSON + reporter archive index",
+    "inquirer_version": 10,
+    "inquirer_live_context": [
+      "season record and league rank",
+      "winning/losing streaks from completed Sleeper matchups",
+      "recent team scoring form",
+      "playoff-line/push context when season timing makes it meaningful",
+      "player fantasy points plus real-life Sleeper stat line",
+      "multi-game player hot/cold form when enough weekly history exists"
+    ],
+    "scheduled_value_history_contract": "precision-idp-runtime-20260919",
+    "invalid_value_history_times": [
+      "2026-09-19T23:09:48.738Z"
+    ]
   },
   "recovery_branches": {
     "code": "baseline/20260919-home-valuehistory-aligned",

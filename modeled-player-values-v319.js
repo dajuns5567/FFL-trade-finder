@@ -337,3 +337,18 @@ window.precisionPreservationMarketCounterfactual=function(){
  const adjacent=[];for(let i=1;i<candidate.length;i++){const a=candidate[i-1],b=candidate[i],gap=a.exact-b.exact;if(gap<=1)adjacent.push({rankA:i,nameA:a.name,exactA:a.exact,rankB:i+1,nameB:b.name,exactB:b.exact,gap});}
  return{criterion:'counterfactual only: carry exact offense asset-curve output and exact IDP V72 baseline*factor into one combined market; preserve every formula/curve and do not mutate runtime or V319',summary:{players:rows.length,sources:Object.fromEntries([...new Set(rows.map(r=>r.source))].map(s=>[s,rows.filter(r=>r.source===s).length])),served:tieStats('served'),exact:tieStats('exact')},cutoffs,largestRankMovers:movers,closestAdjacentPairs:adjacent.slice(0,50)};
 };
+
+window.actualPipelinePrecisionAudit=function(){
+ const arr=window.ensureMaster?.()||[],num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
+ const rows=arr.map((z,i)=>{const id=String(z.x?.id??''),pos=window.groupPos?.(z.x),p=z.production||{},served=num(z.value),name=window.playerName?.(id)||id;let exact=served,source='served-unchanged',protectedRow=false;
+   if(pos==='IDP'){const b=num(p.idpOverallTradeCurveBaselineV72),f=num(p.idpOverallTradeCurveFactorV72);if(b!=null&&f!=null){exact=b*f;source='idp-v72-stored-baseline*stored-factor';}}
+   else{const pre=num(z.preCurveValue);if(pre!=null&&typeof window.assetCurveAudit==='function'){const audit=window.assetCurveAudit(pre),rounded=num(audit?.curved);if(rounded!=null&&Math.abs(rounded-served)<=1){const low=50,mid=500,high=1700,mv=high*Math.pow(mid/high,1.45),x=Math.max(1,pre);exact=x<mid?Math.max(1,low+(x-low)*(mv-low)/(mid-low)):x<high?high*Math.pow(x/high,1.45):high+.55*(x-high);source='offense-final-preCurve-exact';}else protectedRow=true;}}
+   return{id,name,pos,served,exact,source,protectedRow,oldRank:i+1};
+ });
+ const candidate=[...rows].sort((a,b)=>b.exact-a.exact||a.oldRank-b.oldRank);candidate.forEach((r,i)=>r.candidateRank=i+1);
+ const ties=key=>{const m=new Map();for(const r of rows){const v=r[key];m.set(v,(m.get(v)||0)+1)}const g=[...m.values()].filter(n=>n>1);return{tieGroups:g.length,tiedPlayers:g.reduce((a,n)=>a+n,0),maxTieSize:g.length?Math.max(...g):1,distinctValues:m.size}};
+ const sources={};for(const r of rows)sources[r.source]=(sources[r.source]||0)+1;
+ const cutoffs=[50,100,150,200,300,400,500].map(n=>{const g=candidate.slice(0,n),idp=g.filter(r=>r.pos==='IDP').length;return{top:n,idp,offense:n-idp,cutoffExact:g.at(-1)?.exact??null}});
+ const movers=candidate.map(r=>({...r,delta:r.oldRank-r.candidateRank})).filter(r=>r.delta).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,50);
+ return{criterion:'diagnostic only: preserve served values for offense rows whose final served value does not match assetCurve(preCurveValue), recover exact curve only on matching normal-pipeline rows, and recover IDP V72 precision from its actual stored V72 baseline/factor fields; no runtime mutation',summary:{players:rows.length,sources,protectedOffenseRows:rows.filter(r=>r.pos!=='IDP'&&r.protectedRow).length,served:ties('served'),exact:ties('exact')},cutoffs,largestRankMovers:movers};
+};

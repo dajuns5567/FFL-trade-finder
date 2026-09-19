@@ -21,12 +21,8 @@ function seasonConfidence24(historicalCount,currentSample,coverage){
  // current-season game exists. Preserve full confidence for complete 3-year histories;
  // current-game confidence only fills missing historical evidence.
  const currentGameConfidence=currentSample?clamp24(.15,currentSample.games/14,1):1;
- const historyBase=.66+.34*historyConfidence,currentFill=currentSample?(1-historyConfidence)*.22*currentGameConfidence:0,
- countBackedCoverageFloor=historicalCount>=3?1:historicalCount===2?.65:historicalCount===1?.42:.20,
- effectiveCoverage=Math.max(coverageConfidence,countBackedCoverageFloor);
- // Missing scheduled seasons still contribute zero scoring weight. This floor only prevents two full
- // qualifying historical seasons from being treated as weak evidence solely because one weighted year is absent.
- return clamp24(.08,effectiveCoverage*Math.min(1,historyBase+currentFill),1)
+ const historyBase=.66+.34*historyConfidence,currentFill=currentSample?(1-historyConfidence)*.22*currentGameConfidence:0;
+ return clamp24(.08,coverageConfidence*Math.min(1,historyBase+currentFill),1)
 }
 function scoreSeason24(id,y,assigned,kind){
  const row=state.stats?.[y]?.[id];if(!row)return null;const s=statObj24(row),gp=games24(row);if(!gp)return null;

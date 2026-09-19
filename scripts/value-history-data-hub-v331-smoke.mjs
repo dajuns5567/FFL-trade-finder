@@ -584,6 +584,11 @@ assert(homePreviewRuntime.includes("match=text.match(/consensus sources:"),'Home
 assert(playerValuesPreview.includes('const ranked=rankedPlayers(),posRanks=positionalRanks(ranked)'),'Home Player Values must use the same canonical rankedPlayers source as the Player Values tab');
 
 const homeOnlyRuntime=fs.readFileSync('fleeced-home-v424.js','utf8');
-assert(homeOnlyRuntime.includes("#playerValuesBody .valueRow19"),'Home Player Values preview must parse the rendered Player Values tab so order and values match exactly');
+assert(homeOnlyRuntime.includes("playerValuesV139?.homeTopPlayers?.(10)"),'Home Player Values preview must reuse the Player Values canonical data API instead of scraping hidden-tab DOM');
+assert(homeOnlyRuntime.includes("valueHistoryV331?.marketData?.(force)"),'Home Value History preview must reuse the Value History cached market-data API instead of issuing a parallel request');
+assert(!homeOnlyRuntime.includes("#playerValuesBody .valueRow19"),'Home Player Values preview must not depend on hidden-tab DOM rendering');
+assert(!homeOnlyRuntime.includes("fetch('/.netlify/functions/value-history?market=1'"),'Home Value History preview must not maintain a separate market endpoint loader');
+assert(homeOnlyRuntime.includes("const marker=globalThis.__fllConsensusRefresh"),'Home consensus readiness must use the authoritative refresh marker rather than diagnostic text alone');
+assert(valueHistoryUi.includes("marketData:(force=false)=>ensureMarketCache(!!force)"),'Value History must expose its existing cached market data to Home');
 assert(homeOnlyRuntime.includes('Waiting for consensus refresh…'),'Home previews must visibly wait for consensus refresh before rendering');
 assert(homeOnlyRuntime.includes('refreshHomePreviewsAfterConsensus'),'Home Value History preview must not fetch/render before consensus refresh completion');

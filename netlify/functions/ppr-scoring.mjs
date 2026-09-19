@@ -92,7 +92,7 @@ export function playerSnapShare(stats,{phase='offense',teamSnapMax=0}={}){
 
 export function qualifiesCurrentSeasonGame(stats,{phase='offense',teamSnapMax=0,scoringSettings={}}={}){
   const points=leagueFantasyPoints(stats,scoringSettings),snapShare=playerSnapShare(stats,{phase,teamSnapMax});
-  return{qualified:(snapShare!=null&&snapShare>=.20)||points>=8,points,snapShare};
+  return{qualified:(snapShare!=null&&snapShare>=.18)||points>=8,points,snapShare};
 }
 
 export const IGNORED_GAME_STATUS_TOKENS=['CANCEL','POSTPON','DELAY','SUSPEND'];

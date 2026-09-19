@@ -85,6 +85,8 @@ const V494_TRADE_REFERENCE_MINUTE='2026-09-19T22:01';
 const V495_CLEANUP_KEY='maintenance/v495-remove-20260919-174721-et-unstable-scheduled.json';
 const V495_BAD_TIMES=new Set(['2026-09-19T21:47:21.051Z']);
 const V496_CLEANUP_KEY='maintenance/v496-reset-value-history-baseline-20260919-180138-et.json';
+const V498_CLEANUP_KEY='maintenance/v498-remove-20260919-190948-et-invalid-scheduled.json';
+const V498_BAD_TIMES=new Set(['2026-09-19T23:09:48.738Z']);
 const V496_BASELINE_T='2026-09-19T22:01:38.323Z';
 const V496_BASELINE_MS=Date.parse(V496_BASELINE_T);
 const V492_BAD_FROM_MS=Date.parse('2026-09-15T06:07:00.000Z');
@@ -108,7 +110,8 @@ const isV492BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinit
 const isV494BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V494_BAD_FROM_MS&&ms<V494_BAD_UNTIL_MS};
 const isV495BadTime=t=>V495_BAD_TIMES.has(String(t||''));
 const isV496PreBaseline=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms<V496_BASELINE_MS};
-const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t)||isV494BadTime(t)||isV495BadTime(t)||isV496PreBaseline(t);
+const isV498BadTime=t=>V498_BAD_TIMES.has(String(t||''));
+const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t)||isV494BadTime(t)||isV495BadTime(t)||isV498BadTime(t)||isV496PreBaseline(t);
 
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
@@ -372,6 +375,17 @@ async function scrubV495UnstableScheduledSnapshot(s){
   else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
   const result={done:true,removed:bad.length,removed_times:bad.map(x=>x.t),completedAt:new Date().toISOString()};
   await retry(()=>s.setJSON(V495_CLEANUP_KEY,result),120);return result;
+}
+async function scrubV498InvalidScheduledSnapshot(s){
+  const marker=await safeGet(s,V498_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV498BadTime(item?.t)),keep=items.filter(item=>!isV498BadTime(item?.t));
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v498-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v498-history-reindex',e)}
+  const last=keep[keep.length-1]||null;
+  if(last){const snap=await safeGet(s,last.key);if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)}
+  else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,removed:bad.length,removed_times:bad.map(x=>x.t),reason:'invalid scheduled snapshot used stale valuation logic',completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V498_CLEANUP_KEY,result),120);return result;
 }
 async function scrubV496BaselineReset(s){
   const marker=await safeGet(s,V496_CLEANUP_KEY);if(marker?.done)return marker;

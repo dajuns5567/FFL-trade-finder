@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "league_id": "1316867686394769408",
-  "snapshot_count": 57,
+  "snapshot_count": 38,
   "tracking_since": "2026-09-08T23:54:11.770Z",
-  "latest": "2026-09-19T19:37:08.145Z",
+  "latest": "2026-09-16T16:54:36.370Z",
   "items": [
     {
       "t": "2026-09-08T23:54:11.770Z",
@@ -258,139 +258,6 @@
       "path": "value-history/snapshots/2026/09/2026-09-16T16-54-36-370Z.json",
       "fingerprint": "1pfkt78",
       "count": 789,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-16T20:08:16.597Z",
-      "path": "value-history/snapshots/2026/09/2026-09-16T20-08-16-597Z.json",
-      "fingerprint": "hye2qb",
-      "count": 789,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-16T20:12:17.434Z",
-      "path": "value-history/snapshots/2026/09/2026-09-16T20-12-17-434Z.json",
-      "fingerprint": "zq514i",
-      "count": 789,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-16T22:58:42.811Z",
-      "path": "value-history/snapshots/2026/09/2026-09-16T22-58-42-811Z.json",
-      "fingerprint": "7rugr0",
-      "count": 796,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-16T22:59:40.420Z",
-      "path": "value-history/snapshots/2026/09/2026-09-16T22-59-40-420Z.json",
-      "fingerprint": "5ff9o6",
-      "count": 796,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-17T06:44:13.259Z",
-      "path": "value-history/snapshots/2026/09/2026-09-17T06-44-13-259Z.json",
-      "fingerprint": "6p2cb1",
-      "count": 797,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-17T12:09:14.978Z",
-      "path": "value-history/snapshots/2026/09/2026-09-17T12-09-14-978Z.json",
-      "fingerprint": "1yn59m3",
-      "count": 798,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-17T17:17:47.434Z",
-      "path": "value-history/snapshots/2026/09/2026-09-17T17-17-47-434Z.json",
-      "fingerprint": "os7i27",
-      "count": 798,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-17T20:35:01.693Z",
-      "path": "value-history/snapshots/2026/09/2026-09-17T20-35-01-693Z.json",
-      "fingerprint": "141sgfi",
-      "count": 798,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-18T00:18:00.290Z",
-      "path": "value-history/snapshots/2026/09/2026-09-18T00-18-00-290Z.json",
-      "fingerprint": "z9wxhb",
-      "count": 797,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-18T05:58:03.298Z",
-      "path": "value-history/snapshots/2026/09/2026-09-18T05-58-03-298Z.json",
-      "fingerprint": "1j3qv8y",
-      "count": 795,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-18T11:19:46.495Z",
-      "path": "value-history/snapshots/2026/09/2026-09-18T11-19-46-495Z.json",
-      "fingerprint": "tzu516",
-      "count": 796,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-18T16:27:23.299Z",
-      "path": "value-history/snapshots/2026/09/2026-09-18T16-27-23-299Z.json",
-      "fingerprint": "1d8hmmz",
-      "count": 804,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-18T19:14:48.407Z",
-      "path": "value-history/snapshots/2026/09/2026-09-18T19-14-48-407Z.json",
-      "fingerprint": "16cr20o",
-      "count": 805,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-18T22:37:02.548Z",
-      "path": "value-history/snapshots/2026/09/2026-09-18T22-37-02-548Z.json",
-      "fingerprint": "1t2rzjq",
-      "count": 783,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-19T05:08:35.042Z",
-      "path": "value-history/snapshots/2026/09/2026-09-19T05-08-35-042Z.json",
-      "fingerprint": "1akukvp",
-      "count": 783,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-19T09:44:45.660Z",
-      "path": "value-history/snapshots/2026/09/2026-09-19T09-44-45-660Z.json",
-      "fingerprint": "9nf63l",
-      "count": 783,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-19T13:30:03.418Z",
-      "path": "value-history/snapshots/2026/09/2026-09-19T13-30-03-418Z.json",
-      "fingerprint": "1hmk87h",
-      "count": 781,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-19T16:50:00.420Z",
-      "path": "value-history/snapshots/2026/09/2026-09-19T16-50-00-420Z.json",
-      "fingerprint": "14hlx2r",
-      "count": 784,
-      "source": "scheduled"
-    },
-    {
-      "t": "2026-09-19T19:37:08.145Z",
-      "path": "value-history/snapshots/2026/09/2026-09-19T19-37-08-145Z.json",
-      "fingerprint": "ge1qjm",
-      "count": 783,
       "source": "scheduled"
     }
   ],

@@ -78,10 +78,10 @@ const V487_CLEANUP_KEY='maintenance/v487-remove-20260915-011941-et-everywhere.js
 const V490_CLEANUP_KEY='maintenance/v490-remove-20260915-0100-through-0157-et.json';
 const V491_CLEANUP_KEY='maintenance/v491-remove-latest-bad-snapshot.json';
 const V492_CLEANUP_KEY='maintenance/v492b-remove-post-0207-et-bad-history-all-players.json';
-const V493_CLEANUP_KEY='maintenance/v493-remove-20260916-1257-through-20260919-1537-et.json';
-const V493_BAD_FROM_MS=Date.parse('2026-09-16T16:57:00.000Z');
-const V493_BAD_UNTIL_MS=Date.parse('2026-09-19T19:38:00.000Z');
-const V493_TRADE_REFERENCE_MINUTE='2026-09-19T21:36';
+const V494_CLEANUP_KEY='maintenance/v494-remove-20260916-0057-through-20260919-1537-et.json';
+const V494_BAD_FROM_MS=Date.parse('2026-09-16T04:57:00.000Z');
+const V494_BAD_UNTIL_MS=Date.parse('2026-09-19T19:38:00.000Z');
+const V494_TRADE_REFERENCE_MINUTE='2026-09-19T21:36';
 const V492_BAD_FROM_MS=Date.parse('2026-09-15T06:07:00.000Z');
 const V492_BAD_UNTIL_MS=Date.parse('2026-09-16T00:20:00.000Z');
 const V486_BAD_FROM_MS=Date.parse('2026-09-15T05:00:00.000Z');
@@ -100,8 +100,8 @@ const V487_BAD_WINDOW=[Date.parse('2026-09-15T05:19:00.000Z'),Date.parse('2026-0
 const isV487BadTime=t=>isInWindow(t,V487_BAD_WINDOW);
 const isV490BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V490_BAD_FROM_MS&&ms<V490_BAD_UNTIL_MS};
 const isV492BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V492_BAD_FROM_MS&&ms<V492_BAD_UNTIL_MS};
-const isV493BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V493_BAD_FROM_MS&&ms<V493_BAD_UNTIL_MS};
-const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t)||isV493BadTime(t);
+const isV494BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V494_BAD_FROM_MS&&ms<V494_BAD_UNTIL_MS};
+const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t)||isV494BadTime(t);
 
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
@@ -344,16 +344,16 @@ async function scrubV492Post0214History(s){
   const result={done:true,window:['all players from 2026-09-15 02:07 EDT','before 2026-09-15 20:20 EDT'],removed:bad.length,completedAt:new Date().toISOString()};
   await retry(()=>s.setJSON(V492_CLEANUP_KEY,result),120);return result;
 }
-async function scrubV493RequestedInterval(s){
-  const marker=await safeGet(s,V493_CLEANUP_KEY);if(marker?.done)return marker;
-  const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV493BadTime(item?.t)),keep=items.filter(item=>!isV493BadTime(item?.t));
-  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v493-history-delete',item.key,e)}}
-  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v493-history-reindex',e)}
+async function scrubV494RequestedInterval(s){
+  const marker=await safeGet(s,V494_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV494BadTime(item?.t)),keep=items.filter(item=>!isV494BadTime(item?.t));
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v494-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v494-history-reindex',e)}
   const last=keep[keep.length-1]||null;
   if(last){const snap=await safeGet(s,last.key);if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)}
   else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
-  const result={done:true,from:'2026-09-16 12:57 EDT',through:'2026-09-19 15:37 EDT',removed:bad.length,completedAt:new Date().toISOString()};
-  await retry(()=>s.setJSON(V493_CLEANUP_KEY,result),120);return result;
+  const result={done:true,from:'2026-09-16 00:57 EDT',through:'2026-09-19 15:37 EDT',removed:bad.length,completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V494_CLEANUP_KEY,result),120);return result;
 }
 async function latestFallback(s,playerId){
   const latest=await safeGet(s,LATEST_KEY),key=String(latest?.key||'').trim();
@@ -721,9 +721,9 @@ async function completedTradeHistory(s){
   if(!snaps.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',history_source:localState,tracking_since:null,latest:null,trades:trades.map(emptyTrade)};
   const latestSnap=snaps[snaps.length-1],latestMap=rowMap(latestSnap||{rows:[]});
   const closestSnap=ms=>{let best=null;for(const snap of snaps){const sm=new Date(snap?.t||'').getTime();if(!Number.isFinite(sm))continue;if(sm<=ms)best=snap;else break}return best};
-  const requestedTradeReference=snaps.find(snap=>String(snap?.t||'').slice(0,16)===V493_TRADE_REFERENCE_MINUTE)||null;
+  const requestedTradeReference=snaps.find(snap=>String(snap?.t||'').slice(0,16)===V494_TRADE_REFERENCE_MINUTE)||null;
   const out=trades.map(trade=>{
-    const ms=new Date(trade.created).getTime(),inRequestedWindow=Number.isFinite(ms)&&ms>=V493_BAD_FROM_MS&&ms<V493_BAD_UNTIL_MS,histSnap=inRequestedWindow?requestedTradeReference:(Number.isFinite(ms)?closestSnap(ms):null),histMap=rowMap(histSnap||{rows:[]}),histPickMap=pickMap(histSnap||{picks:[]});
+    const ms=new Date(trade.created).getTime(),inRequestedWindow=Number.isFinite(ms)&&ms>=V494_BAD_FROM_MS&&ms<V494_BAD_UNTIL_MS,histSnap=inRequestedWindow?requestedTradeReference:(Number.isFinite(ms)?closestSnap(ms):null),histMap=rowMap(histSnap||{rows:[]}),histPickMap=pickMap(histSnap||{picks:[]});
     const sides=trade.sides.map(side=>{
       const then=histSnap?playerValuesFromMap(side,histMap):{values:[],missing:[...(side.player_ids||[])],complete:false,total:null},thenPicks=histSnap?pickValuesFromSide(side,histPickMap):{values:[],missing:(side.picks||[]).map(p=>`pick-${p.season}-${p.round}-${p.original_roster_id}`),complete:false,total:null},current=playerValuesFromMap(side,latestMap);
       return{...side,then_players:then.values,then_players_complete:Boolean(histSnap&&then.complete),then_player_total:histSnap&&then.complete?then.total:null,then_picks:thenPicks.values,then_picks_complete:Boolean(histSnap&&thenPicks.complete),then_pick_total:histSnap&&thenPicks.complete?thenPicks.total:null,current_players:current.values,current_players_complete:current.complete,current_player_total:current.complete?current.total:null};
@@ -766,7 +766,7 @@ export default async (req)=>{
       try{await scrubV490RequestedInterval(s)}catch(e){console.warn('v490-history-scrub',e)}
       try{await scrubV491LatestSnapshot(s)}catch(e){console.warn('v491-history-scrub',e)}
       try{await scrubV492Post0214History(s)}catch(e){console.warn('v492-history-scrub',e)}
-      try{await scrubV493RequestedInterval(s)}catch(e){console.warn('v493-history-scrub',e)}
+      try{await scrubV494RequestedInterval(s)}catch(e){console.warn('v494-history-scrub',e)}
     }
     if(req.method==='GET'){
       if(url.searchParams.get('archive_export')==='1'){

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "snapshot_date": "2026-09-19",
+  "purpose": "Machine-readable recovery map for the accepted Fleeced runtime architecture. Documentation only; never import as valuation logic.",
+  "repository": "dajuns5567/FFL-trade-finder",
+  "work_branch": "release/precision-idp-runtime-20260919",
+  "pull_request": 385,
+  "primary_preview": "https://deploy-preview-385--precious-stroopwafel-196eae.netlify.app",
+  "canonical_document": "docs/CANONICAL-SYSTEM-2026-09-19.md",
+  "components": {
+    "scoring": "netlify/functions/ppr-scoring.mjs",
+    "idp_baseline": "docs/idp-valuation-baseline-2026-09-19.md",
+    "combined_precision": "combined-market-precision-v386.js",
+    "canonical_currency": "trade-value-normalization-v139.js",
+    "modeled_values": "modeled-player-values-v319.js",
+    "consensus_refresh": "nonblocking-consensus-v277.js",
+    "trade_engine": "trade-runtime-v256-compiled.js",
+    "trade_finder": "trade-finder-v256-compiled.js",
+    "value_history_backend": "netlify/functions/value-history.mjs",
+    "value_history_ui": "value-history-v276.js",
+    "headless_history": "scripts/value-history-headless-refresh.mjs",
+    "archive_writer": "scripts/archive-value-history.mjs",
+    "home": "fleeced-home-v424.js"
+  },
+  "accepted_contracts": {
+    "current_game_qualification": "snap_share >= 0.18 OR league_fantasy_points >= 8",
+    "historical_season_min_qualifying_games": 8,
+    "current_week_requires_all_nonignored_games_final": true,
+    "idp_model_weights": {
+      "consensus": 0.4,
+      "scoring": 0.4,
+      "context": 0.2
+    },
+    "canonical_player_max": 9999,
+    "canonical_player_floor": 120,
+    "canonical_nearest_year_first_anchor": 7000,
+    "trade_consolidation": "Value Adjustment only; Package Quality Penalty is not active in current V256 runtime",
+    "trade_reject_if": "score < 55 OR effective_value_ratio < 0.62",
+    "trade_labels": {
+      "94-100": "Excellent Fit",
+      "82-93": "Fair",
+      "otherwise_nonrejected": "Negotiable"
+    },
+    "value_history_baseline_utc": "2026-09-19T22:01:38.323Z",
+    "value_history_baseline_et": "2026-09-19 18:01:38.323 ET",
+    "affected_trade_original_analysis_reference_minute_utc": "2026-09-19T22:01",
+    "affected_trade_original_analysis_reference_et": "2026-09-19 18:01 ET",
+    "production_merge_requires_explicit_user_authorization": true
+  },
+  "recovery_branches": {
+    "code": "baseline/20260919-home-valuehistory-aligned",
+    "value_history_data": "baseline/20260919-value-history-reset"
+  }
+}

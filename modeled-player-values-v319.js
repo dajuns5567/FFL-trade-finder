@@ -239,3 +239,30 @@ window.smoothMacroRankCurveAudit=function(){
   const jumps=out.slice(0,-1).map((a,i)=>({rank:a.rank,a:a.name,b:out[i+1].name,rawGap:a.modelValue-out[i+1].modelValue,currentGap:a.currentCanonical-out[i+1].currentCanonical,candidateGap:a.candidate-out[i+1].candidate})).sort((a,b)=>Math.abs(b.candidateGap)-Math.abs(a.candidateGap)).slice(0,40);
   return{criterion:'diagnostic only: preserve established shared 9999-to-120 macro market curve and tier drop-off while allowing natural modeled-value ties/convergence; no runtime mutation',rollback:'current V319 remains unchanged',note:'candidate anchors each distinct modeled-value tie group at the established macro curve rank midpoint; this is a diagnostic of tie/crossing behavior, not a proposed runtime formula',boundaries,naturalTieControls:ties.slice(0,50),closeCrossPositionPairs:crossPairs,largestCandidateAdjacentGaps:jumps};
 };
+
+window.continuousV130MacroCurveAudit=function(){
+  let arr=[];try{arr=window.ensureMaster?.()||[]}catch(_){arr=[]}
+  const api=window.modeledPlayerValuesV319;if(!api)throw new Error('modeledPlayerValuesV319 unavailable');
+  api.build(true);const snap=api.snapshot(),src=window.tradeValueNormalizationV130||window.tradeValueNormalizationV139;
+  if(typeof src?.playerValueForRank!=='function')throw new Error('V130/V139 playerValueForRank unavailable');
+  const n=arr.length,maxRank=Math.max(907,n);
+  const rows=arr.map((z,i)=>{const id=String(z?.x?.id??''),raw=Number(z?.value),rank=i+1;return{id,name:window.playerName?.(id)||id,group:window.groupPos?.(z.x)||null,rank,raw,current:Number(snap.get(id)),macro:Number(src.playerValueForRank(rank,maxRank))}}).filter(r=>r.id&&Number.isFinite(r.raw));
+  const q=(xs,p)=>{if(!xs.length)return null;const s=[...xs].sort((a,b)=>a-b),x=(s.length-1)*p,l=Math.floor(x),h=Math.ceil(x);return +(s[l]+(s[h]-s[l])*(x-l)).toFixed(2)};
+  const macroAt=x=>{const lo=Math.max(1,Math.floor(x)),hi=Math.min(maxRank,Math.ceil(x));if(lo===hi)return Number(src.playerValueForRank(lo,maxRank));const a=Number(src.playerValueForRank(lo,maxRank)),b=Number(src.playerValueForRank(hi,maxRank)),t=x-lo;return a+(b-a)*t};
+  // Counterfactual removes V319's hard [12,24,48,80,120,180,260] bands.
+  // Raw ties share the midpoint rank and therefore share one macro value.
+  // Distinct raw values retain their current ordinal location on the original continuous V130 curve.
+  const candidate=new Array(rows.length);for(let i=0;i<rows.length;){let j=i+1;while(j<rows.length&&rows[j].raw===rows[i].raw)j++;const midRank=((i+1)+j)/2,val=Math.round(macroAt(midRank));for(let k=i;k<j;k++)candidate[k]=val;i=j}
+  const out=rows.map((r,i)=>({...r,candidate:candidate[i],delta:candidate[i]-r.current}));
+  const ranks=[1,12,13,24,25,48,49,50,80,81,100,120,121,150,180,181,200,260,261,300,325,326,400,500,600,700].map(r=>out[r-1]).filter(Boolean);
+  const adj=out.slice(0,-1).map((a,i)=>{const b=out[i+1];return{rank:a.rank,a:a.name,b:b.name,groups:[a.group,b.group],rawGap:a.raw-b.raw,currentGap:a.current-b.current,candidateGap:a.candidate-b.candidate,candidateA:a.candidate,candidateB:b.candidate}});
+  const exactTies=adj.filter(x=>x.rawGap===0).slice(0,80);
+  const close=adj.filter(x=>x.rawGap>=0&&x.rawGap<=2).sort((a,b)=>Math.abs(b.candidateGap)-Math.abs(a.candidateGap)).slice(0,80);
+  const boundaryWindows=[12,24,48,80,120,180,260,325].map(b=>({boundary:b,rows:out.slice(Math.max(0,b-3),Math.min(out.length,b+2)).map(r=>({rank:r.rank,name:r.name,group:r.group,raw:r.raw,current:r.current,macro:r.macro,candidate:r.candidate}))}));
+  const summaries=[50,100,150,200,300,400,500].map(cut=>{const s=out.slice(0,cut);return{top:cut,macroAtCut:out[cut-1]?.macro??null,candidateAtCut:out[cut-1]?.candidate??null,rawAtCut:out[cut-1]?.raw??null,idp:s.filter(r=>r.group==='IDP').length}});
+  const crossingSamples=[];
+  const types=[['OFF','OFF'],['IDP','IDP'],['IDP','OFF']];
+  const g=r=>r.group==='IDP'?'IDP':'OFF';
+  for(const [ga,gb] of types){const p=adj.find(x=>g(out[x.rank-1])===ga&&g(out[x.rank])===gb&&x.rawGap<=2)||adj.find(x=>g(out[x.rank-1])===gb&&g(out[x.rank])===ga&&x.rawGap<=2);if(p){const a=out[p.rank-1],b=out[p.rank],center=b.raw;crossingSamples.push({type:ga+'-'+gb,a:a.name,b:b.name,base:[a.raw,b.raw],note:'value-only crossing expectation: equal raw values must tie; a one-point move through equality must reverse ordering without a V319 band-boundary jump',steps:[center+2,center+1,center,center-1,center-2].map(v=>({challengerRaw:v,relation:v>b.raw?'above':v<b.raw?'below':'tie'}))})}}
+  return{criterion:'diagnostic only: original continuous V130/V139 9999-to-120 macro curve; V319 hard bands removed from counterfactual; ties share value; no runtime mutation',control:{v319Bands:[12,24,48,80,120,180,260],v130Break:325,v130BreakValue:1825,max:9999,min:120,maxRank},rankControls:ranks,marketCheckpoints:summaries,boundaryWindows,exactTieControls:exactTies,largestCloseRawGaps:close,crossingSamples};
+};

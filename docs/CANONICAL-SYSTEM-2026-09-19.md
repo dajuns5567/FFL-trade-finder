@@ -468,6 +468,8 @@ If consensus fails:
 11. Home Player Values and Value History panels now reuse their respective tab data APIs.
 12. Home preview boxes were aligned to shared row/typography geometry.
 13. Finder/IDP smoke tests were updated to validate behavior rather than obsolete cache-bust/version strings.
+14. Invalid scheduled snapshot `2026-09-19T23:09:48.738Z` (7:09:48.738 PM ET) was removed from the durable Value History archive and permanently blocked.
+15. Scheduled Value History snapshots now carry valuation contract `precision-idp-runtime-20260919`; the archive rejects scheduled snapshots that do not identify the current valuation contract.
 
 ---
 

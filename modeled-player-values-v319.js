@@ -200,3 +200,20 @@ window.directCanonicalValueAudit=function(){
   let orderMismatch=0;for(let i=1;i<rows.length;i++)if(rows[i].modelValue>rows[i-1].modelValue)orderMismatch++;
   return{criterion:'diagnostic only: quantify distortion introduced after final calculated player values by V319 rank-based canonical remapping; direct candidate equals current final calculated model value; no runtime mutation',mapping:{bandEnds:[...api.BAND_ENDS],blend:api.BLEND,minRatio:api.MIN_RATIO,maxRatio:api.MAX_RATIO,forcedTopValue:api.MAX},summary:{all:summary(rows),offense:summary(rows.filter(r=>['QB','RB','WR','TE'].includes(r.group))),IDP:summary(rows.filter(r=>r.group==='IDP'))},bands,rankControls:controls,largestAbsoluteDistortions:topAbs,orderMismatch};
 };
+
+window.noRankFilterMarketAudit=function(){
+  let arr=[];try{arr=window.ensureMaster?.()||[]}catch(_){arr=[]}
+  const api=window.modeledPlayerValuesV319;if(!api)throw new Error('modeledPlayerValuesV319 unavailable');api.build(true);const snap=api.snapshot();
+  const rows=arr.map((z,i)=>{const id=String(z?.x?.id??''),v=Number(z?.value),cur=Number(snap.get(id));return{id,name:window.playerName?.(id)||id,group:window.groupPos?.(z.x)||null,rank:i+1,modelValue:v,currentCanonical:cur}}).filter(r=>r.id&&Number.isFinite(r.modelValue));
+  const q=(xs,p)=>{if(!xs.length)return null;const a=[...xs].sort((a,b)=>a-b),x=(a.length-1)*p,l=Math.floor(x),h=Math.ceil(x);return +(a[l]+(a[h]-a[l])*(x-l)).toFixed(2)};
+  const summ=xs=>{const v=xs.map(x=>x.modelValue);return{n:xs.length,min:v.length?Math.min(...v):null,p10:q(v,.1),p25:q(v,.25),median:q(v,.5),p75:q(v,.75),p90:q(v,.9),p95:q(v,.95),max:v.length?Math.max(...v):null}};
+  const bands=[[1,50],[51,100],[101,150],[151,200],[201,300],[301,400],[401,500],[501,rows.length]].map(([a,b])=>{const x=rows.slice(a-1,b),idp=x.filter(r=>r.group==='IDP'),off=x.filter(r=>['QB','RB','WR','TE'].includes(r.group));return{ranks:a+'-'+b,all:summ(x),IDP:summ(idp),offense:summ(off),composition:{IDP:idp.length,offense:off.length}}});
+  const adjacent=rows.slice(0,-1).map((a,i)=>{const b=rows[i+1],gap=a.modelValue-b.modelValue;return{rankA:a.rank,nameA:a.name,groupA:a.group,valueA:a.modelValue,rankB:b.rank,nameB:b.name,groupB:b.group,valueB:b.modelValue,gap,ratio:b.modelValue?+(a.modelValue/b.modelValue).toFixed(4):null}}); 
+  const cross=adjacent.filter(x=>x.groupA!==x.groupB&&((x.groupA==='IDP')||(x.groupB==='IDP'))).sort((a,b)=>a.gap-b.gap).slice(0,30);
+  const ties=adjacent.filter(x=>x.gap===0).slice(0,50);
+  const proportional=adjacent.filter(x=>x.rankA>=100).sort((a,b)=>b.ratio-a.ratio).slice(0,30);
+  const controls=[1,2,3,4,5,6,7,8,9,10,25,50,75,100,125,150,175,200,250,300,400,500].map(r=>rows[r-1]).filter(Boolean);
+  const crossingSimulation=(a,b)=>{const lo=Math.max(1,Math.min(a.modelValue,b.modelValue)-5),hi=Math.max(a.modelValue,b.modelValue)+5,out=[];for(let v=lo;v<=hi;v++){out.push({challenger:v,other:b.modelValue,delta:v-b.modelValue,relation:v<b.modelValue?'below':v>b.modelValue?'above':'tie'})}return{nameA:a.name,groupA:a.group,startA:a.modelValue,nameB:b.name,groupB:b.group,startB:b.modelValue,steps:out}};
+  const pairs=cross.slice(0,6).map(x=>crossingSimulation(rows[x.rankA-1],rows[x.rankB-1]));
+  return{criterion:'diagnostic only: inspect final calculated player market with V319 rank-value remapping removed; preserve one shared offense/IDP scale, natural ties and proportionality; no runtime mutation',control:'current V319 canonical mapping remains unchanged and reversible',summary:{all:summ(rows),offense:summ(rows.filter(r=>['QB','RB','WR','TE'].includes(r.group))),IDP:summ(rows.filter(r=>r.group==='IDP'))},bands,rankControls:controls,closestCrossPositionAdjacentPairs:cross,naturalTies:ties,largestMidLowAdjacentRatios:proportional,crossingSimulations:pairs};
+};

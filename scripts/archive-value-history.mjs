@@ -23,7 +23,22 @@ async function gh(path,init={}){
 async function readFile(path){
   const j=await gh(`/repos/${owner}/${repo}/contents/${encodeURIComponent(path).replace(/%2F/g,'/')}?ref=${encodeURIComponent(dataBranch)}`);
   if(!j)return null;
-  return{sha:j.sha,content:Buffer.from(j.content||'','base64').toString('utf8')};
+  let encoding=String(j.encoding||'').toLowerCase(),encoded=String(j.content||'').trim();
+  // GitHub's Contents API omits inline content for files larger than 1 MB.
+  // Monthly Value History bundles can exceed that size, so fall back to the
+  // Git blob endpoint using the authoritative blob SHA instead of treating the
+  // file as empty and falsely reporting every indexed snapshot as missing.
+  if((!encoded||encoding==='none')&&j.sha){
+    const blob=await gh(`/repos/${owner}/${repo}/git/blobs/${j.sha}`);
+    if(blob){
+      encoding=String(blob.encoding||'base64').toLowerCase();
+      encoded=String(blob.content||'').trim();
+    }
+  }
+  const content=encoding==='base64'
+    ?Buffer.from(encoded.replace(/\s+/g,''),'base64').toString('utf8')
+    :encoded;
+  return{sha:j.sha,content};
 }
 async function putFile(path,content,message,sha){
   const body={message,content:Buffer.from(content).toString('base64'),branch:dataBranch};

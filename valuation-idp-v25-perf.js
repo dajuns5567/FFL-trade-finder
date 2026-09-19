@@ -75,3 +75,5 @@ window.idpScoringAudit=function(nameOrId){generation25();const q=String(nameOrId
 masterRankCache=null;valueCache.clear();fitCache.clear();stageCache.clear();
 const card=document.querySelector('#settings .card');if(card){const n=document.createElement('div');n.className='notice success';n.innerHTML='V25 IDP calibration staged: <b>40% consensus + 40% actual Sleeper scoring lookback + 20% other league/dynasty context</b>. The 20% context uses age plus small tackle-volume and spike-play-frequency signals (sacks, interceptions, forced fumbles, recoveries and pass defenses) from the same imported Sleeper history. All history-dependent pieces refresh with Update. Missing qualifying years shrink confidence toward neutral rather than transferring their full weight to a short sample.';card.appendChild(n)}
 })();
+
+/* PR384 preview retrigger: role benchmark audit */

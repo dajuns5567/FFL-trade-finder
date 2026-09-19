@@ -279,3 +279,15 @@ window.upstreamPrecisionTieAudit=function(){
   const hist={};for(const n of allTieSizes)hist[n]=(hist[n]||0)+1;
   return{criterion:'diagnostic only: locate where precision is already lost before V319; no runtime mutation',summary:{players:arr.length,tieGroups:ties.length,tiedPlayers,share:+(tiedPlayers/Math.max(1,arr.length)).toFixed(4),maxTieSize:Math.max(0,...allTieSizes),tieSizeHistogram:hist},selected,notes:['ensureMasterValue is the exact numeric input V319 currently receives','fields reports numeric/string valuation-like properties already present on the master row and asset; absence means the precision must be traced farther upstream','this audit does not infer or reconstruct missing decimals']};
 };
+
+window.preCurveCollapseTraceAudit=function(){
+ let arr=[];try{arr=window.ensureMaster?.()||[]}catch(_){arr=[]}
+ const num=x=>Number.isFinite(Number(x))?Number(x):null;
+ const rows=arr.map((z,i)=>{const p=z.production||{},id=String(z.x?.id??''),pre=num(z.preCurveValue),final=num(z.value),b72=num(p.idpOverallTradeCurveBaselineV72),f72=num(p.idpOverallTradeCurveFactorV72);return{id,name:window.playerName?.(id)||id,group:window.groupPos?.(z.x)||null,rank:i+1,preCurveValue:pre,finalValue:final,delta:pre!=null&&final!=null?final-pre:null,v72:{baseline:b72,factorStored:f72,shield:num(p.idpOverallTradeCurveShieldV72),reconstructedUnrounded:b72!=null&&f72!=null?b72*f72:null,reconstructedRounded:b72!=null&&f72!=null?Math.round(b72*f72):null},experienceProtected:!!p.experienceProtected}});
+ const tieGroups=[];for(let i=0;i<rows.length;){let j=i+1;while(j<rows.length&&rows[j].finalValue===rows[i].finalValue)j++;if(j-i>1)tieGroups.push(rows.slice(i,j));i=j}
+ const distinctPreCollapsed=tieGroups.filter(g=>new Set(g.map(r=>r.preCurveValue)).size>1);
+ const samples=distinctPreCollapsed.slice(0,25).map(g=>({finalValue:g[0].finalValue,players:g}));
+ const idpSamples=distinctPreCollapsed.filter(g=>g.some(r=>r.group==='IDP')).slice(0,15).map(g=>({finalValue:g[0].finalValue,players:g}));
+ const offenseSamples=distinctPreCollapsed.filter(g=>g.every(r=>r.group!=='IDP')).slice(0,15).map(g=>({finalValue:g[0].finalValue,players:g}));
+ return{criterion:'diagnostic only: trace preCurveValue -> final model value and V72 reconstruction; no runtime mutation',summary:{players:rows.length,tieGroups:tieGroups.length,distinctPreCollapsedGroups:distinctPreCollapsed.length,playersInDistinctPreCollapsedGroups:distinctPreCollapsed.reduce((n,g)=>n+g.length,0),offenseRowsChangedAfterPreCurve:rows.filter(r=>r.group!=='IDP'&&r.preCurveValue!==r.finalValue).length,idpRowsChangedAfterPreCurve:rows.filter(r=>r.group==='IDP'&&r.preCurveValue!==r.finalValue).length},offenseSamples,idpSamples,samples,interpretationHints:['valuation-offense-v27 applyCurve27 stores preCurveValue then immediately rounds z.value; for already-integer inputs this is a no-op','IDP V72 later computes Math.round(baseline*factor), so distinct baselines can collapse to the same integer output','factorStored is rounded to 3 decimals for metadata; reconstructedUnrounded is diagnostic only and is not guaranteed to equal the exact internal factor used']};
+};

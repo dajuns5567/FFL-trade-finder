@@ -54,6 +54,11 @@ on:
       - 'value-history-v276.js'
       - 'value-history-ui-defaults-v386.js'
       - 'scripts/value-history-data-hub-v331-smoke.mjs'
+      - 'league-hub-v451.js'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/inquirer-reporters.mjs'
+      - 'scripts/inquirer-reporters-smoke.mjs'
+      - 'docs/FLEECED-INQUIRER-VOICE-AND-REPORTERS.md'
       - 'netlify.toml'
       - '.github/workflows/finder-runtime-smoke.yml'
   workflow_dispatch:
@@ -138,6 +143,12 @@ jobs:
           node --check netlify/functions/value-history-observability.mjs
           node --check scripts/resolve-active-netlify-site.mjs
           node --check scripts/value-history-headless-refresh.mjs
+      - name: Fleeced Inquirer reporter rotation, real stats, and archives
+        run: |
+          node --check league-hub-v451.js
+          node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/inquirer-reporters.mjs
+          node scripts/inquirer-reporters-smoke.mjs
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs
       - name: Value History data hub behavior and isolation

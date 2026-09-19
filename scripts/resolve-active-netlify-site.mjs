@@ -8,7 +8,7 @@ if(!tokens.length)throw new Error('NETLIFY_AUTH_TOKEN or NETLIFY_BLOBS_TOKEN is 
 
 let activeToken=null;
 async function netlify(path){
-  const candidates=activeToken?[activeToken]:tokens;
+  const candidates=activeToken?[activeToken,...tokens.filter(token=>token!==activeToken)]:tokens;
   let last=null;
   for(const token of candidates){
     const r=await fetch(`${api}${path}`,{headers:{authorization:`Bearer ${token}`,accept:'application/json','user-agent':'Fleeced-Value-History-Site-Resolver/1.0'},cache:'no-store'});

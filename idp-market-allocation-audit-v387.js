@@ -13,7 +13,8 @@ function run(){
  const idp=out.filter(r=>r.pos==='IDP').map(r=>({rank:r.rank,id:r.id,name:r.name,served:r.served,precision:r.precision,canonical:r.canonical,consensus:r.consensus,context:r.context,baseline:Number(r.production?.idpOverallTradeCurveBaselineV72),factor:Number(r.production?.idpOverallTradeCurveFactorV72),shield:Number(r.production?.idpOverallTradeCurveShieldV72)}));
  const suppressed=[...idp].filter(r=>Number.isFinite(r.baseline)&&r.baseline>0).sort((a,b)=>(b.baseline-b.precision)-(a.baseline-a.precision)).slice(0,40);
  const highBaselineLowRank=[...idp].filter(r=>r.rank>=200&&Number.isFinite(r.baseline)).sort((a,b)=>b.baseline-a.baseline).slice(0,50);
- return{players:out.length,density,buckets,controls:controlRows,around200:around(200),around300:around(300),around400:around(400),around500:around(500),idpSuppressed:suppressed,highBaselineLowRank};
+ const cfFactors=[.50,.54,.58,.62].map(floor=>{const mixed=out.map(r=>r.pos==='IDP'&&Number.isFinite(Number(r.production?.idpOverallTradeCurveBaselineV72))?{...r,cf:Number(r.production.idpOverallTradeCurveBaselineV72)*Math.max(floor,Number(r.production?.idpOverallTradeCurveFactorV72)||0)}:{...r,cf:r.precision}).sort((a,b)=>b.cf-a.cf);const d=[100,150,200,250,300,350,400,450,500].map(k=>mixed.slice(0,k).filter(r=>r.pos==='IDP').length);const controlsCf=controlRows.filter(r=>r.pos==='IDP').map(r=>{const x=mixed.findIndex(q=>q.id===r.id);return{name:r.name,rank:x+1,value:mixed[x]?.cf}});return{floor,density:d,controls:controlsCf}});
+ return{players:out.length,density,buckets,controls:controlRows,around200:around(200),around300:around(300),around400:around(400),around500:around(500),idpSuppressed:suppressed,highBaselineLowRank,minimumFactorCounterfactual:cfFactors};
 }
 window.idpMarketAllocationAuditV387={run};
 })();

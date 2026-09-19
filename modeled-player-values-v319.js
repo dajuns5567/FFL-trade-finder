@@ -9,7 +9,7 @@ const key=a=>String(a?.id??'');
 let map=new Map(),meta={ready:false,count:0,version:0},lastMaster=null;
 let installed=false,priorCanonical=null,priorPlayer=null,observer=null;
 
-function modeled(z){const v=Number(z?.value);return Number.isFinite(v)&&v>0?v:0}
+function modeled(z){const p=Number(z?.marketPrecisionValueV386),v=Number(z?.value);return Number.isFinite(p)&&p>0?p:(Number.isFinite(v)&&v>0?v:0)}
 function median(xs){
   const a=(xs||[]).filter(x=>Number.isFinite(x)&&x>0).slice().sort((a,b)=>a-b);
   if(!a.length)return 1;
@@ -72,6 +72,18 @@ function build(force=false){
       let out=Math.round(clamp(MIN,cur,MAX));
       if(rank===e)out=Math.round(clamp(MIN,endVal,MAX));
       next.set(id,out);
+    }
+    // Exact calculated ties should not receive different canonical values solely
+    // from stable array order. Keep intentional V319 band boundaries intact.
+    for(let r=s;r<=e;){
+      let j=r;
+      while(j<e&&vals[j]===vals[r-1])j++;
+      if(j>r){
+        let sum=0,count=0;
+        for(let k=r;k<=j;k++){const id=String(arr[k-1]?.x?.id??''),v=Number(next.get(id));if(Number.isFinite(v)){sum+=v;count++}}
+        if(count){const tied=Math.round(sum/count);for(let k=r;k<=j;k++){const id=String(arr[k-1]?.x?.id??'');next.set(id,tied)}}
+      }
+      r=j+1;
     }
     start=e+1;
   }

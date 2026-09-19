@@ -77,6 +77,6 @@ window.idpV72R1BoundaryCompositionAudit=function(){
  all.sort((a,b)=>b.r1-a.r1||b.current-a.current);all.forEach((x,i)=>x.rank=i+1);
  const windows=[[40,60],[90,110],[135,165],[185,215],[285,315],[385,415],[485,515]];
  const composition=Object.fromEntries(windows.map(([lo,hi])=>[lo+'-'+hi,all.slice(lo-1,hi).map(x=>({rank:x.rank,name:x.name,pos:x.pos,value:x.r1,baseline:x.baseline,current:x.current,shield:x.shield}))]));
- const boundaries=[50,100,150,200,300,400,500].map(rank=>{const x=all[rank-1],above=all[rank-2],below=all[rank];return{rank,cutoffValue:x?.r1||null,at:x?{name:x.name,pos:x.pos,value:x.r1,baseline:x.baseline}:null,above:above?{name:above.name,pos:above.pos,value:above.r1,baseline:above.baseline}:null,below:below?{name:below.name,pos:below.pos,value:below.r1,baseline:below.baseline}:null,idpThroughBoundary:all.slice(0,rank).filter(y=>y.isIDP).length})});
+ const boundaries=[50,100,150,200,300,400,500].map(rank=>{const x=all[rank-1],above=all[rank-2],below=all[rank];return {rank,cutoffValue:x?.r1||null,at:x?{name:x.name,pos:x.pos,value:x.r1,baseline:x.baseline}:null,above:above?{name:above.name,pos:above.pos,value:above.r1,baseline:above.baseline}:null,below:below?{name:below.name,pos:below.pos,value:below.r1,baseline:below.baseline}:null,idpThroughBoundary:all.slice(0,rank).filter(y=>y.isIDP).length};});
  return{criterion:'diagnostic only: inspect actual R1 rank-boundary composition before further V72 calibration; same fresh-current-baseline R1 formula; no runtime mutation',r1:'24 low /16 mid /16 high',boundaries,composition};
 };

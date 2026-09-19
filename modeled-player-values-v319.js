@@ -319,3 +319,21 @@ window.assetCurveResolutionAudit=function(){
  const regions=[{name:'below500',a:1,b:499.999},{name:'500to1700',a:500,b:1699.999},{name:'1700plus',a:1700,b:10000}].map(q=>{const g=valid.filter(r=>r.raw>=q.a&&r.raw<=q.b);return{name:q.name,n:g.length,derivativeAtMidpoint:q.name==='below500'?(midValue-low)/(mid-low):q.name==='500to1700'?1.45*Math.pow(((500+1700)/2)/high,.45):.55,distinctRaw:new Set(g.map(r=>r.raw)).size,distinctExact:new Set(g.map(r=>r.curveExact)).size,distinctRounded:new Set(g.map(r=>r.curveRounded)).size}});
  return{criterion:'diagnostic only: measure exact assetCurve27 resolution before its Math.round; no runtime mutation',formula:{low,mid,high,midValue,below500:'linear from (50,50) to (500,midValue)',midBand:'1700*(x/1700)^1.45',above1700:'1700 + .55*(x-1700)',assetCurveAudit:'returns Math.round(assetCurve27(v))'},summary:{offenseRows:rows.length,reconstructable:valid.length,roundedCollisionBuckets:collisions.length,playersInRoundedCollisionBuckets:collisions.reduce((n,x)=>n+x.count,0),maxRoundedCollisionSize:collisions[0]?.count||0},regions,largestRoundedCollisions:collisions.slice(0,40)};
 };
+
+window.precisionPreservationMarketCounterfactual=function(){
+ const arr=window.ensureMaster?.()||[], low=50,mid=500,high=1700,midValue=high*Math.pow(mid/high,1.45);
+ const curve=x=>{x=Math.max(1,Number(x)||1);if(x<mid)return Math.max(1,low+(x-low)*(midValue-low)/(mid-low));if(x<high)return high*Math.pow(x/high,1.45);return high+.55*(x-high)};
+ const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
+ const rows=arr.map((z,i)=>{const id=String(z.x?.id??''),pos=window.groupPos?.(z.x),p=z.production||{},served=num(z.value),pre=num(z.preCurveValue);let exact=null,source=null;
+   if(pos==='IDP'){const b=num(p.v72Baseline),f=num(p.v72Factor);if(b!=null&&f!=null){exact=b*f;source='idp-v72-baseline*factor';}}
+   else{const c=num(window.state?.consensusComposite?.byId?.[id]),prod=num(p.effectiveScoringValue),ctx=num(z.context),age=num(p.ageFactor)??1;if(c!=null&&prod!=null&&ctx!=null){let raw=.60*c+.23*prod+.12*ctx+.05*(c*age);raw=Math.max(c*.82,Math.min(raw,c*1.26));exact=curve(raw);source='offense-exact-asset-curve';}}
+   if(exact==null){exact=served;source='served-fallback';}
+   return{id,name:window.playerName?.(id)||id,pos,served,pre,exact,source,oldRank:i+1};
+ });
+ const candidate=[...rows].sort((a,b)=>b.exact-a.exact||a.oldRank-b.oldRank);candidate.forEach((r,i)=>r.candidateRank=i+1);
+ const tieStats=key=>{const m=new Map();for(const r of rows){const v=r[key];m.set(v,(m.get(v)||0)+1)}const gs=[...m.values()].filter(n=>n>1);return{tieGroups:gs.length,tiedPlayers:gs.reduce((a,n)=>a+n,0),maxTieSize:gs.length?Math.max(...gs):1,distinctValues:m.size}};
+ const cutoffs=[50,100,150,200,300,400,500].map(n=>{const top=candidate.slice(0,n),idp=top.filter(r=>r.pos==='IDP').length;return{top:n,idp,offense:n-idp,cutoffExact:top.at(-1)?.exact??null}});
+ const movers=[...candidate].map(r=>({...r,delta:r.oldRank-r.candidateRank})).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,50);
+ const adjacent=[];for(let i=1;i<candidate.length;i++){const a=candidate[i-1],b=candidate[i],gap=a.exact-b.exact;if(gap<=1)adjacent.push({rankA:i,nameA:a.name,exactA:a.exact,rankB:i+1,nameB:b.name,exactB:b.exact,gap});}
+ return{criterion:'counterfactual only: carry exact offense asset-curve output and exact IDP V72 baseline*factor into one combined market; preserve every formula/curve and do not mutate runtime or V319',summary:{players:rows.length,sources:Object.fromEntries([...new Set(rows.map(r=>r.source))].map(s=>[s,rows.filter(r=>r.source===s).length])),served:tieStats('served'),exact:tieStats('exact')},cutoffs,largestRankMovers:movers,closestAdjacentPairs:adjacent.slice(0,50)};
+};

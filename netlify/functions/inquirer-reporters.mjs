@@ -1,6 +1,6 @@
 'use strict';
 
-export const INQUIRER_VERSION=13;
+export const INQUIRER_VERSION=14;
 
 export const REPORTERS=[
  {id:'walter-mercer',name:'Nick Swindell',title:'Senior Football Correspondent',desk:'The Old Desk',voice:'Hometown old-school beat writer and obvious fan. Clipped sentences, dry sarcasm, institutional memory, mild contempt for excuses, and the confidence of someone who has watched this team ruin perfectly good Sundays before.',signature:'No hysteria without a box score.'},
@@ -103,6 +103,72 @@ function playersParagraph(t,r){
  if(r.id==='mack-hollis')return 'PUT THESE MEN ON THE FRONT PAGE: '+(stars||'No verified starter production was available.')+' Bury this next bit near the classifieds: '+lowFact+trendNote;
  return 'Exhibit A, the useful citizens: '+(stars||'No verified starter production was available.')+' Exhibit B, currently under polite investigation: '+lowFact+'. Nobody is charged with a crime. Yet.'+trendNote;
 }
+function recentHistoryParagraph(t,r){
+ const games=(t?.league_context?.recent_games||[]).slice(-4);
+ if(games.length<2)return '';
+ const run=games.map(g=>(g.result||'?')+' '+one(g.points)+'–'+one(g.opponent_points)+(g.opponent_name?' vs '+g.opponent_name:'')).join(', ');
+ const wins=games.filter(g=>g.result==='W').length,losses=games.filter(g=>g.result==='L').length;
+ if(r.id==='walter-mercer')return 'This week did not arrive by itself. The last four entries in the notebook read: '+run+'. That is '+wins+' wins and '+losses+' losses in the stretch, which is enough of a sample to stop calling every result an accident.';
+ if(r.id==='tess-delaney')return 'The recent sample matters more than whichever emotion won Sunday night. Over the last '+games.length+' completed games the sequence is '+run+'. That gives us an actual trend line instead of the fantasy-football equivalent of reading tea leaves.';
+ if(r.id==='mack-hollis')return 'FOR THOSE JUST JOINING THE BANDWAGON: the recent tape says '+run+'. That is '+wins+' wins, '+losses+' losses, and at least '+games.length+' separate opportunities for this fan base to behave irrationally.';
+ return 'The case file has prior pages. Recent results: '+run+'. A single week can lie. '+games.length+' completed games are at least required to coordinate their story.';
+}
+function gameAnatomyParagraph(t,r){
+ const rows=(t.starter_details||[]).filter(p=>Number.isFinite(Number(p.points))),team=Number(t.points)||0,sorted=rows.slice().sort((a,b)=>Number(b.points)-Number(a.points)),top3=sorted.slice(0,3).reduce((n,p)=>n+Number(p.points||0),0),share=team>0?top3/team*100:null,
+  known=rows.filter(p=>Number.isFinite(Number(p.projected))),over=known.filter(p=>Number(p.points)-Number(p.projected)>=3).length,under=known.filter(p=>Number(p.projected)-Number(p.points)>=3).length,
+  margin=Number(t.points)-Number(t.opponent_points),projMargin=Number(t.points)-Number(t.projected);
+ const core=(Number.isFinite(share)?' The top three starters supplied '+share.toFixed(0)+'% of the team total.':'')+(known.length?' '+over+' starters beat projection by at least three points; '+under+' missed it by at least three.':'')+(Number.isFinite(projMargin)?' The final score landed '+Math.abs(projMargin).toFixed(1)+' points '+(projMargin>=0?'above':'below')+' the pregame projection.':'');
+ if(r.id==='walter-mercer')return 'How it happened matters. The margin was '+Math.abs(margin).toFixed(1)+' points.'+core+' That is either a balanced win or a warning label, depending on how many names did the lifting.';
+ if(r.id==='tess-delaney')return 'The anatomy of the score is more useful than the score itself.'+core+' Translation: we can tell whether this came from repeatable depth or three guys dragging everyone else through customs.';
+ if(r.id==='mack-hollis')return 'LET US AUTOPSY THIS BEAUTIFUL/UGLY THING.'+core+' If three players are carrying the newspaper, fine. Just do not ask them to carry the building every week.';
+ return 'The forensic accounting is straightforward.'+core+' Concentration is not automatically a crime, but it is how dependency gets introduced to the record.';
+}
+function supportingCastParagraph(t,r){
+ const rows=(t.starter_details||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points)),support=rows.slice(2,5),low=rows[rows.length-1];
+ const supportText=support.length?support.map(fact).join(' | '):'The middle of the lineup produced no additional verified detail.';
+ const lowText=low?fact(low):'No verified low starter detail was available.';
+ if(r.id==='walter-mercer')return 'The headline names were not alone. The middle of the card gave us '+supportText+' At the other end sat '+lowText+' A roster survives September on stars. It survives November on the people between those two sentences.';
+ if(r.id==='tess-delaney')return 'Depth check: '+supportText+' The low-end result was '+lowText+' This is where sustainability usually hides: not in the best score on the page, but in whether the fifth- and sixth-best starters are useful human beings.';
+ if(r.id==='mack-hollis')return 'THE SUPPORTING CAST, because even tabloids have union rules: '+supportText+' And then there was '+lowText+' We are not booing. We are merely clearing our throat very loudly.';
+ return 'Secondary evidence matters. '+supportText+' The weakest verified starter return: '+lowText+' Cases are rarely decided by one witness, unless that witness scores 40 and everyone else gets to go home early.';
+}
+function managerParagraph(t,facts,r){
+ const bench=t.best_bench,worst=t.worst_starter,benchPts=Number(bench?.points),worstPts=Number(worst?.points),swing=Number.isFinite(benchPts)&&Number.isFinite(worstPts)?benchPts-worstPts:null;
+ let lineup='';
+ if(Number.isFinite(swing)&&swing>=5)lineup=' There was also a bench decision worth putting under fluorescent light: '+bench.name+' scored '+one(benchPts)+' while '+worst.name+' started for '+one(worstPts)+', a '+one(swing)+'-point difference.';
+ else if(Number.isFinite(swing))lineup=' The loudest bench-versus-starter gap was only '+one(Math.max(0,swing))+' points, so we can spare the manager the ceremonial public hearing.';
+ const tx=txText(t,facts);
+ if(r.id==='walter-mercer')return tx+lineup+' Managers do not get credit for points after kickoff, but they absolutely get blamed for leaving them in the wrong chair.';
+ if(r.id==='tess-delaney')return tx+lineup+' Lineup decisions are process, not fortune-telling, but process is the part we are actually allowed to evaluate without pretending to own a crystal ball.';
+ if(r.id==='mack-hollis')return tx+lineup+' If the wrong guy was on the bench, please direct all complaint mail to the front office. We have already ordered extra envelopes.';
+ return tx+lineup+' The transaction log and lineup card remain the two documents management keeps hoping reporters will forget to request.';
+}
+function opponentContextParagraph(t,r){
+ const o=t?.opponent_context,name=t.opponent_name||'the opponent';
+ if(!o?.record)return 'The opponent file is thin enough that we will not manufacture a résumé for '+name+'.';
+ const rec=o.record,record=(rec.wins||0)+'-'+(rec.losses||0)+(Number(rec.ties)?'-'+rec.ties:''),rank=Number(o.standings_rank),st=o.streak||{},streak=Number(st.length)>=2?st.length+'-game '+(st.type==='W'?'winning':'losing')+' streak':'no active multi-game streak';
+ const quality=rank&&rank<=Math.max(8,Number(o.playoff_teams)||0)?'one of the stronger teams on the board':'a team the standings do not currently place among the elite';
+ if(r.id==='walter-mercer')return 'The other sideline deserves context too. '+name+' came in '+record+', ranked #'+(rank||'—')+', with a '+streak+'. That is '+quality+'. Results mean more when you know who was standing on the other side.';
+ if(r.id==='tess-delaney')return 'Opponent adjustment, because beating a contender and beating a crater are not the same data point: '+name+' entered '+record+', rank #'+(rank||'—')+', '+streak+'. In plain English, this was '+quality+'.';
+ if(r.id==='mack-hollis')return 'ABOUT THE PEOPLE WE JUST BEAT/LOST TO: '+name+' entered '+record+', ranked #'+(rank||'—')+', with a '+streak+'. So yes, the résumé matters. Please include this paragraph in any rival-manager appeal.';
+ return 'Cross-examination of the opponent: '+name+', '+record+', standing #'+(rank||'—')+', '+streak+'. Context does not excuse a loss or cheapen a win; it merely prevents us from prosecuting the wrong case.';
+}
+function nextWeekParagraph(t,r){
+ const n=t?.next_opponent_context,name=t.next_opponent_name||'the next opponent';
+ if(!t.next_opponent_roster_id)return 'Sleeper has not supplied the next opponent yet, so this newspaper will resist the ancient temptation to invent one.';
+ const rec=n?.record?((n.record.wins||0)+'-'+(n.record.losses||0)+(Number(n.record.ties)?'-'+n.record.ties:'')):'record unavailable',rank=Number(n?.standings_rank),st=n?.streak||{},streak=Number(st.length)>=2?st.length+'-game '+(st.type==='W'?'winning':'losing')+' streak':'no active multi-game streak';
+ if(r.id==='walter-mercer')return 'Next is '+name+', currently '+rec+(rank?', #'+rank+' in the league':'')+', with a '+streak+'. That gives the next week shape. We can stop pretending the schedule is just a row of anonymous boxes.';
+ if(r.id==='tess-delaney')return 'The next data point is '+name+': '+rec+(rank?', league rank #'+rank:'')+', '+streak+'. If the current trend is real, this is where it gets another chance to prove it.';
+ if(r.id==='mack-hollis')return 'NEXT VICTIM/PROBLEM: '+name+', '+rec+(rank?', ranked #'+rank:'')+', '+streak+'. The back page is already working on two headlines and will deny both under oath.';
+ return 'Next file: '+name+', '+rec+(rank?', standing #'+rank:'')+', '+streak+'. Preparation begins now, along with the usual fan ritual of checking the matchup seventeen times before Tuesday.';
+}
+function closingParagraph(t,r){
+ const won=!!t.won;
+ if(r.id==='walter-mercer')return won?'So keep the clipping. This one earned ink. But a season is not built by admiring yesterday’s paper; it is built by giving us something worth printing again next week.':'File the loss, remember why it happened, and move on. Fans are allowed to be irritated. Beat writers are required to save the receipts.';
+ if(r.id==='tess-delaney')return won?'The fun part is that the result and the process mostly agree. The terrifying part is that I have now typed that sentence where the fantasy gods can see it.':'The loss is useful only if the process changes. Otherwise we are not analyzing a trend; we are documenting a hobby with poor boundaries.';
+ if(r.id==='mack-hollis')return won?'Enjoy it. Screenshot the standings. Send something tasteful and deeply annoying to the rival chat. Tomorrow we resume pretending to be professionals.':'Be angry tonight. Be funny about it tomorrow. And if this roster does it again next week, we are printing names in a font usually reserved for indictments.';
+ return won?'The evidence supports optimism, which is deeply inconvenient for a desk built on suspicion. We will adapt.':'The evidence is not fatal. It is merely annoying, specific, and now archived. That is what newspapers are for.';
+}
 function leagueContextParagraph(t,w,r){
  const c=t?.league_context;if(!c?.season_context_available)return 'Season file: Sleeper has not supplied enough completed matchup history for a verified streak or standings narrative.';
  const rec=c.record||{},record=String(rec.wins||0)+'-'+String(rec.losses||0)+(Number(rec.ties)?'-'+String(rec.ties):''),rank=Number(c.standings_rank),size=Number(c.league_size)||32,st=c.streak||{},streak=Number(st.length)>=2?(Number(st.length)+'-game '+(st.type==='W'?'winning':'losing')+' streak'):'no active multi-game streak';
@@ -136,6 +202,6 @@ export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyS
    label=last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta>=3&&lastAvg>=priorAvg*1.2?'hot':last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta<=-3&&lastAvg<=priorAvg*.8?'cold':last3.length===3?'steady':'insufficient';
   facts[id]={id,name,position,nfl_team:String(m.team||'FA'),points:Number.isFinite(Number(fp))?Number(fp):null,real_stat_line:realStatLine(position,stats),recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
  }
- const enriched=(teams||[]).map(t=>{const reporter=reporterForTeam(t.roster_id,week,ids),starters=(t.starter_details||[]).map(p=>({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,recent_form:facts[String(p.id)]?.recent_form||null})),tt={...t,starter_details:starters},article={schema_version:2,inquirer_version:INQUIRER_VERSION,season:Number(season),week:Number(week),roster_id:String(t.roster_id),reporter:reporterPublic(reporter),headline:headline(tt,week,reporter),byline:'By '+reporter.name+', '+reporter.title,deck:reporter.desk+' • '+reporter.signature,paragraphs:[intro(tt,week,reporter),leagueContextParagraph(tt,week,reporter),playersParagraph(tt,reporter),txText(tt,facts),outlook(tt,week,reporter)],aside:aside(tt,week,reporter),generated_from:'Sleeper completed matchup, season-to-date matchup history, standings, projection, transaction, roster, player metadata, and weekly real-life stats',real_stats_source:'Sleeper weekly stats',facts:{team_points:Number(tt.points),opponent_points:Number(tt.opponent_points),projected:Number(tt.projected),league_context:tt.league_context||null,starter_details:starters}};return{...tt,inquirer_article:article,reporter_id:reporter.id}});
+ const enriched=(teams||[]).map(t=>{const reporter=reporterForTeam(t.roster_id,week,ids),starters=(t.starter_details||[]).map(p=>({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,recent_form:facts[String(p.id)]?.recent_form||null})),benchFact=t.best_bench?{...t.best_bench,real_stat_line:facts[String(t.best_bench.id)]?.real_stat_line||'',recent_form:facts[String(t.best_bench.id)]?.recent_form||null}:null,worstFact=t.worst_starter?{...t.worst_starter,real_stat_line:facts[String(t.worst_starter.id)]?.real_stat_line||'',recent_form:facts[String(t.worst_starter.id)]?.recent_form||null}:null,tt={...t,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter},paragraphs=[intro(tt,week,reporter),leagueContextParagraph(tt,week,reporter),recentHistoryParagraph(tt,reporter),gameAnatomyParagraph(tt,reporter),playersParagraph(tt,reporter),supportingCastParagraph(tt,reporter),managerParagraph(tt,facts,reporter),opponentContextParagraph(tt,reporter),nextWeekParagraph(tt,reporter),closingParagraph(tt,reporter)].filter(Boolean),article={schema_version:3,inquirer_version:INQUIRER_VERSION,season:Number(season),week:Number(week),roster_id:String(t.roster_id),reporter:reporterPublic(reporter),headline:headline(tt,week,reporter),byline:'By '+reporter.name+', '+reporter.title,deck:reporter.desk+' • '+reporter.signature,paragraphs,aside:aside(tt,week,reporter),generated_from:'Sleeper completed matchup, season-to-date matchup history, opponent context, standings, projections, lineup decisions, transactions, roster/player metadata, and weekly real-life stats',real_stats_source:'Sleeper weekly stats',facts:{team_points:Number(tt.points),opponent_points:Number(tt.opponent_points),projected:Number(tt.projected),league_context:tt.league_context||null,opponent_context:tt.opponent_context||null,next_opponent_context:tt.next_opponent_context||null,starter_details:starters,best_bench:benchFact||null,worst_starter:worstFact||null}};return{...tt,inquirer_article:article,reporter_id:reporter.id}});
  return{reporters:publicReporters(),teams:enriched};
 }

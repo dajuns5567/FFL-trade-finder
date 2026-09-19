@@ -56,7 +56,7 @@ async function syncReporterArchives(s,result,broadcastKey){
   for(const team of teams.filter(t=>t?.inquirer_article?.reporter?.id===reporter.id)){
    const article=team.inquirer_article,k=[result.season,result.week,team.roster_id].join('|'),articleKey='inquirer/reporters/'+reporter.id+'/articles/'+result.season+'/week-'+String(result.week).padStart(2,'0')+'-roster-'+String(team.roster_id).padStart(2,'0')+'.json';
    const stored=await s.get(articleKey,{type:'json'}).catch(()=>null),migrate=Number(stored?.inquirer_version||0)<INQUIRER_VERSION;
-   if(!stored?.headline||migrate)await s.setJSON(articleKey,{...article,team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),captured_at:String(result.generated_at||new Date().toISOString()),migration_reason:migrate&&stored?.headline?'explicit V12 reporter-name upgrade':null});
+   if(!stored?.headline||migrate)await s.setJSON(articleKey,{...article,team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),captured_at:String(result.generated_at||new Date().toISOString()),migration_reason:migrate&&stored?.headline?'explicit V13 fan-beat style and reporter-name upgrade':null});
    const entry={season:Number(result.season),week:Number(result.week),roster_id:String(team.roster_id),team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),headline:String(article.headline||''),byline:String(article.byline||''),captured_at:String(result.generated_at||new Date().toISOString()),broadcast_key:broadcastKey,article_key:articleKey,inquirer_version:INQUIRER_VERSION};
    if(seen.has(k)){const i=seen.get(k);if(Number(rows[i]?.inquirer_version||0)<INQUIRER_VERSION)rows[i]=entry;continue}
    rows.push(entry);seen.set(k,rows.length-1);

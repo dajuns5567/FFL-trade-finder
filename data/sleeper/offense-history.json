@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-18T00:16:26.036Z",
+  "generatedAt": "2026-09-19T20:55:22.549Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 1,
@@ -36,7 +36,7 @@
   "partial": false,
   "qualifyingHistoricalSeasonMinimumGames": 8,
   "currentSeasonQualification": {
-    "minimumSnapShare": 0.2,
+    "minimumSnapShare": 0.18,
     "minimumFantasyPoints": 8,
     "finalGamesOnly": true,
     "fullWeekValuationGate": true,
@@ -218,8 +218,8 @@
     },
     "diagnostics": {
       "finalGames": 16,
-      "qualifiedPlayerGames": 1020,
-      "rejectedPlayerGames": 1259,
+      "qualifiedPlayerGames": 1021,
+      "rejectedPlayerGames": 1258,
       "ignoredGames": 0
     }
   },
@@ -15017,6 +15017,40 @@
       "tm_off_snp": 68,
       "tm_st_snp": 30
     },
+    "11583": {
+      "gp": 1,
+      "_ppr_native_weeks": 1,
+      "_ppr_reconstructed_weeks": 0,
+      "bonus_fd_rb": 1,
+      "bonus_rec_rb": 1,
+      "off_snp": 13,
+      "pass_rush_yd": 14,
+      "pos_rank_half_ppr": 36,
+      "pos_rank_ppr": 38,
+      "pos_rank_std": 34,
+      "pts_half_ppr": 6.7,
+      "pts_ppr": 7.2,
+      "pts_std": 6.2,
+      "rec": 1,
+      "rec_40p": 1,
+      "rec_air_yd": 22,
+      "rec_fd": 1,
+      "rec_lng": 48,
+      "rec_tgt": 2,
+      "rec_yar": 26,
+      "rec_yd": 48,
+      "rec_ypr": 48,
+      "rec_ypt": 24,
+      "rush_att": 4,
+      "rush_lng": 6,
+      "rush_rec_yd": 62,
+      "rush_yac": 6,
+      "rush_yd": 14,
+      "rush_ypa": 3.5,
+      "tm_def_snp": 75,
+      "tm_off_snp": 68,
+      "tm_st_snp": 37
+    },
     "11584": {
       "gp": 1,
       "_ppr_native_weeks": 1,
@@ -23296,11 +23330,11 @@
       "withGames": 1031
     },
     "2026": {
-      "players": 1020,
-      "withPpr": 297,
-      "withGames": 1020,
+      "players": 1021,
+      "withPpr": 298,
+      "withGames": 1021,
       "currentSeasonQualified": true,
-      "compactPlayers": 1020
+      "compactPlayers": 1021
     }
   },
   "stats": {
@@ -77820,6 +77854,20 @@
         "rush_fd": 2,
         "rush_yd": 37,
         "bonus_fd_rb": 2
+      },
+      "11583": {
+        "pts_ppr": 7.2,
+        "gp": 1,
+        "off_snp": 13,
+        "rush_att": 4,
+        "rec_tgt": 2,
+        "rec": 1,
+        "rec_fd": 1,
+        "rec_40p": 1,
+        "rush_yd": 14,
+        "bonus_rec_rb": 1,
+        "rec_yd": 48,
+        "bonus_fd_rb": 1
       },
       "11584": {
         "pts_ppr": 20.3,

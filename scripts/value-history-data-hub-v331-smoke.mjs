@@ -569,7 +569,7 @@ assert(indexHtml.includes('class="fleeced-home-card-main" data-home-tab="valueHi
 
 const homeRuntime=fs.readFileSync('fleeced-home-v424.js','utf8');
 const playerValuesUi=fs.readFileSync('ui-player-values-v139.js','utf8');
-assert(playerValuesUi.includes("rows.sort((a,b)=>b.value-a.value"),'Home Player Values preview must be position agnostic and use the canonical current player value ordering');
+assert(playerValuesUi.includes("function rankedPlayers(){return ensureMaster?.()||[]}")&&playerValuesUi.includes("function homeTopPlayers(limit=10)")&&playerValuesUi.includes(".filter(z=>z?.x?.type==='player')")&&playerValuesUi.includes(".sort((a,b)=>a.rank-b.rank)"),'Home Player Values preview must be position agnostic and follow the canonical master player ordering');
 assert(homeRuntime.includes('Top 10 Value Risers • 7D • Top 300'),'Home Value History preview must show ten 7D Top-300 risers');
 assert(homeRuntime.includes("rows.slice(0,5)")&&homeRuntime.includes("rows.slice(5,10)"),'Home previews must present 1–5 and 6–10 in two columns');
 

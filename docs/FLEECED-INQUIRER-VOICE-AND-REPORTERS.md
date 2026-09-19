@@ -107,15 +107,17 @@ A completed weekly report stores:
 - fantasy-point facts
 - real-life Sleeper stat lines used in the article
 
-Each reporter also receives a persistent archive index in the League Hub Blob store:
+Each reporter also receives a persistent archive in the League Hub Blob store:
+- an immutable standalone JSON file for every published article
 - reporter identity
 - season/week
 - team
 - manager
 - headline
+- archive index entry
 - link back to the preserved weekly report
 
-Once a V9 Inquirer article has been stored for a completed week, ordinary refreshes reuse that stored article instead of silently rewriting its prose.
+Once an Inquirer article has been stored for a completed week, ordinary refreshes and future Inquirer code versions reuse that stored article instead of silently rewriting its prose. Reporter article files are write-once unless an explicit migration is intentionally performed.
 
 ## Runtime files
 

@@ -5,7 +5,7 @@ This document records the accepted defensive valuation architecture and the rule
 ## Data flow
 
 1. Sleeper production is imported on the scheduled workflow and rebuilt from qualified player-games.
-2. Current-season games qualify at >=20% snaps OR >=8 league fantasy points.
+2. Current-season games qualify at >=18% snaps OR >=8 league fantasy points.
 3. A current NFL week enters valuation only after the full-week valuation gate says every non-ignored game slot for that week is final.
 4. The browser hydrates the verified scoring snapshot, replaces the authoritative current-season scoring sample, and clears valuation caches.
 5. Consensus refreshes use the seven-source refresh pipeline. A new composite is promoted only when the complete source batch validates; otherwise the last-known-good validated composite remains active.

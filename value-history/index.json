@@ -1,10 +1,20 @@
 {
   "schema_version": 1,
   "league_id": "1316867686394769408",
-  "snapshot_count": 0,
-  "tracking_since": null,
-  "latest": null,
-  "items": [],
-  "months": [],
+  "snapshot_count": 1,
+  "tracking_since": "2026-09-19T23:38:30.077Z",
+  "latest": "2026-09-19T23:38:30.077Z",
+  "items": [
+    {
+      "t": "2026-09-19T23:38:30.077Z",
+      "path": "value-history/snapshots/2026/09/2026-09-19T23-38-30-077Z.json",
+      "fingerprint": "15g93oj",
+      "count": 780,
+      "source": "scheduled"
+    }
+  ],
+  "months": [
+    "2026-09"
+  ],
   "archive_format": "append-only snapshots + monthly bundles"
 }

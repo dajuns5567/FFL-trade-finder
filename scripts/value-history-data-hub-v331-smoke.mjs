@@ -503,6 +503,9 @@ assert(backend.includes('scrubV498InvalidScheduledSnapshot(s)'),'live Value Hist
 assert(archiveWriter.includes("SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919'"),'scheduled durable snapshots must require the current valuation contract');
 assert(archiveWriter.includes("String(s.valuation_contract||'')===SCHEDULED_VALUATION_CONTRACT"),'scheduled archive validation must reject snapshots produced by stale valuation runtimes');
 assert(backend.includes("V496_BASELINE_T='2026-09-19T22:01:38.323Z'"),'active Value History reads must begin at the verified 2026-09-19 18:01:38 EDT baseline');
+assert(backend.includes('getAllTeamWeekMovement(s)'),'Value History must expose canonical all-team weekly movement for Inquirer reuse');
+assert(backend.includes("url.searchParams.get('team_net_all')==='1'"),'Value History must retain the all-team movement endpoint');
+assert(backend.includes("period:exactSeven?'7D':'AVAILABLE'"),'Team weekly movement must label partial tracking as AVAILABLE instead of falsely claiming seven days');
 assert(backend.includes("scrubV496BaselineReset(s)"),'live Value History buffer must scrub every pre-baseline snapshot');
 assert(backend.includes("isV496PreBaseline"),'pre-baseline Value History points must be filtered from all active history reads');
 assert(backend.includes("V494_TRADE_REFERENCE_MINUTE='2026-09-19T22:01'"),'in-window Trade History must use the verified 2026-09-19 18:01 EDT reference minute');

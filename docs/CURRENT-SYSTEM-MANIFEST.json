@@ -20,7 +20,11 @@
     "value_history_ui": "value-history-v276.js",
     "headless_history": "scripts/value-history-headless-refresh.mjs",
     "archive_writer": "scripts/archive-value-history.mjs",
-    "home": "fleeced-home-v424.js"
+    "home": "fleeced-home-v424.js",
+    "league_hub": "league-hub-v451.js",
+    "league_hub_backend": "netlify/functions/league-hub.mjs",
+    "inquirer_reporters": "netlify/functions/inquirer-reporters.mjs",
+    "inquirer_contract": "docs/FLEECED-INQUIRER-VOICE-AND-REPORTERS.md"
   },
   "accepted_contracts": {
     "current_game_qualification": "snap_share >= 0.18 OR league_fantasy_points >= 8",
@@ -45,7 +49,11 @@
     "value_history_baseline_et": "2026-09-19 18:01:38.323 ET",
     "affected_trade_original_analysis_reference_minute_utc": "2026-09-19T22:01",
     "affected_trade_original_analysis_reference_et": "2026-09-19 18:01 ET",
-    "production_merge_requires_explicit_user_authorization": true
+    "production_merge_requires_explicit_user_authorization": true,
+    "inquirer_reporter_count": 4,
+    "inquirer_rotation": "8 teams per reporter per week; every reporter covers every team once across four consecutive weeks",
+    "inquirer_real_stats_source": "Sleeper weekly raw stats",
+    "inquirer_article_archives": "immutable standalone per-reporter article JSON + reporter archive index"
   },
   "recovery_branches": {
     "code": "baseline/20260919-home-valuehistory-aligned",

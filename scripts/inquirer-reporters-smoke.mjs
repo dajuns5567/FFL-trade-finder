@@ -3,6 +3,7 @@ import {REPORTERS,reporterForTeam,realStatLine,buildInquirerWeek} from '../netli
 
 const assert=(x,m)=>{if(!x)throw new Error(m)};
 assert(REPORTERS.length===4,'Fleeced Inquirer must have exactly four permanent reporters');
+assert(REPORTERS.map(r=>r.name).join('|')==='Nick Swindell|Penny Picket|Tilly Fleecer|Frank Filcher','Fleeced Inquirer public reporter names must remain the approved V11 names');
 
 const teams=Array.from({length:32},(_,i)=>String(i+1));
 for(let week=1;week<=4;week++){
@@ -54,7 +55,7 @@ assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub mu
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
 assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
-assert(backend.includes("explicit V10 league/player-context upgrade"),'The requested V10 context upgrade must explicitly migrate older reporter articles exactly as a versioned migration');
+assert(backend.includes("explicit V11 reporter-name upgrade"),'The requested V11 reporter rename must explicitly migrate older reporter articles exactly once');
 assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');
 assert(backend.includes("Number(stored?.inquirer_version||0)<INQUIRER_VERSION"),'Only older-version archived reporter articles may be migrated; current-version articles stay preserved');
 assert(backend.includes('leagueSeasonContext('),'Inquirer backend must derive season standings/streak context from completed Sleeper matchups');

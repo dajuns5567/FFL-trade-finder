@@ -1,12 +1,12 @@
 'use strict';
 
-export const INQUIRER_VERSION=10;
+export const INQUIRER_VERSION=11;
 
 export const REPORTERS=[
- {id:'walter-mercer',name:'Walter Mercer',title:'Senior Football Correspondent',desk:'The Old Desk',voice:'Old-school beat writer. Clipped sentences. Scoreboard first. Dry skepticism. Sounds like ink, coffee, and a deadline.',signature:'No hysteria without a box score.'},
- {id:'tess-delaney',name:'Tess Delaney',title:'Performance & Tactics Columnist',desk:'The Numbers Desk',voice:'Sharp analytical columnist. Precise, observant, mildly sarcastic. Treats projections, usage, efficiency, and lineup choices like evidence.',signature:'The numbers are allowed to be rude.'},
- {id:'mack-hollis',name:'Mack Hollis',title:'Tabloid Sports Editor',desk:'The Back Page',voice:'Boisterous tabloid sports voice. Punchy. Braggy when deserved, mocking when earned, dramatic without inventing facts.',signature:'If it happened, it belongs in 48-point type.'},
- {id:'nora-voss',name:'Nora Voss',title:'Investigations & Front Office',desk:'The Inquiry Desk',voice:'Sardonic investigative columnist. Forensic about roster decisions and transactions. Darker dry humor, suspicious of easy narratives.',signature:'Every lineup leaves fingerprints.'}
+ {id:'walter-mercer',name:'Nick Swindell',title:'Senior Football Correspondent',desk:'The Old Desk',voice:'Old-school beat writer. Clipped sentences. Scoreboard first. Dry skepticism. Sounds like ink, coffee, and a deadline.',signature:'No hysteria without a box score.'},
+ {id:'tess-delaney',name:'Penny Picket',title:'Performance & Tactics Columnist',desk:'The Numbers Desk',voice:'Sharp analytical columnist. Precise, observant, mildly sarcastic. Treats projections, usage, efficiency, and lineup choices like evidence.',signature:'The numbers are allowed to be rude.'},
+ {id:'mack-hollis',name:'Tilly Fleecer',title:'Tabloid Sports Editor',desk:'The Back Page',voice:'Boisterous tabloid sports voice. Punchy. Braggy when deserved, mocking when earned, dramatic without inventing facts.',signature:'If it happened, it belongs in 48-point type.'},
+ {id:'nora-voss',name:'Frank Filcher',title:'Investigations & Front Office',desk:'The Inquiry Desk',voice:'Sardonic investigative columnist. Forensic about roster decisions and transactions. Darker dry humor, suspicious of easy narratives.',signature:'Every lineup leaves fingerprints.'}
 ];
 
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};

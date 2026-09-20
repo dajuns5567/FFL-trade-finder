@@ -184,4 +184,53 @@ function personnelNarrative(t,w){
   if(a.fantasy_season_complete||Number(w)>=17)return `There is no Week 18 fantasy matchup to preview. The Super Bowl closes the Fleeced! in-season calendar, so the roster-pressure file ends here.`;
   const byes=a.bye_current_starters||[],inj=a.injury_current_starters||[];
   if(!a.schedule_verified&&!inj.length)return `The next-week availability file is too thin to support a confident roster warning. The NFL schedule was not verified and Sleeper has no current-starter injury designation worth publishing, so there is nothing responsible to dramatize yet.`;
-  let s=a.schedule_verified?(byes.length?`${byes.length} current starter${byes.length===1?' is':'s are'} on a verified NFL bye next week.`:`There are no verified current-starter byes next week.`):`Bye claims are being withhe
+  let s=a.schedule_verified?(byes.length?`${byes.length} current starter${byes.length===1?' is':'s are'} on a verified NFL bye next week.`:`There are no verified current-starter byes next week.`):`Bye claims are being withheld because the schedule lookup was not verified.`;
+  if(inj.length)s+=` Sleeper also has ${inj.length} current starter${inj.length===1?'':'s'} carrying an injury or status designation, which makes depth a real roster question before lineups lock.`;
+  else s+=` Sleeper does not currently show a publishable injury designation on a starter.`;
+  return s;
+}
+
+function nextOpponentNarrative(t,w){
+  const n=t.next_opponent_context,name=t.next_opponent_name||'the next opponent';
+  if(!t.next_opponent_roster_id)return Number(w)>=17?`There is no next fantasy opponent after the Super Bowl.`:`Sleeper has not supplied the next opponent yet, so no matchup will be invented.`;
+  const rec=n?.record?`${n.record.wins||0}-${n.record.losses||0}${Number(n.record.ties)?'-'+n.record.ties:''}`:'record unavailable';
+  const nr=nextRound(Number(w)+1,t.conference),round=nr?` in the ${nr}`:'';
+  return `${name} is next${round}, carrying a ${rec} record${n?.standings_rank?', currently '+n.standings_rank+'th in the league':''}. The job this week is not to chase the last box score; it is to decide which parts of this performance deserve to travel.`;
+}
+
+function buildSections(t,w,r,facts,sentiment){
+  const g=gameFacts(t),star=playerProse(g.top),second=playerProse(g.second),low=playerProse(g.low),bench=playerProse(g.bench);
+  const season=seasonNarrative(t,w),tx=transactionNarrative(t,facts),value=valueNarrative(t),fans=sentimentNarrative(sentiment),personnel=personnelNarrative(t,w),next=nextOpponentNarrative(t,w),trend=trendProse(g.top);
+  const won=!!t.won,margin=g.margin.toFixed(1),opp=t.opponent_name||'the opponent';
+  const proj=g.projDelta==null?'':` Against the pregame projection, the lineup finished ${Math.abs(g.projDelta).toFixed(1)} points ${g.projDelta>=0?'above':'below'} expectation.`;
+
+  if(r.id==='walter-mercer')return[
+    {heading:'From the Press Box',kind:'lede',paragraphs:[
+      `${t.team_name} ${won?'won':'lost'} ${g.score}, and the useful part is not that the scoreboard looked good or bad for five minutes after the final. It is that Week ${w} gave us the first clean entry in the season notebook: a ${margin}-point ${won?'win':'loss'} against ${opp}.${proj} The temptation is to call it a statement. Beat writers with functioning memories should know better.`,
+      `${season} The point of keeping a notebook is to stop one loud Sunday from rewriting the season in our heads. This result matters because it happened; what it means depends on whether the same strengths and mistakes survive the next few pages.`
+    ]},
+    {heading:'Who Earned the Ink',kind:'players',paragraphs:[
+      `${star} That was the performance that gave this game its shape, not just because of the fantasy total but because the real NFL production underneath it was visible. ${trend||'There is not enough multi-game evidence yet to turn that performance into a trend, which is probably healthy for everybody involved.'}`,
+      `${second} The lineup also had a less glamorous end of the page. ${low} A good roster can survive one soft starter line; what it cannot do forever is ask the same stars to cover every quiet position.`
+    ]},
+    {heading:'The Manager’s Chair',kind:'management',paragraphs:[
+      `${tx} Transaction volume is not intelligence by itself, but it does tell us where management believed the roster needed attention. The next useful question is whether those moves addressed the positions that actually decided this matchup.`,
+      g.bench&&g.worst&&g.benchGap>=5?`${bench} That matters because ${g.worst.name} was in the starting lineup instead. ${low} Hindsight is cheap, so one missed decision is not a conviction, but repeated versions of the same mistake eventually become process.`:`There is no single bench decision large enough to explain the result by itself. That is worth saying because managers deserve blame for process, not for failing to predict every bounce of a football.`
+    ]},
+    {heading:'The Mood Around Town',kind:'sentiment',paragraphs:[
+      `${fans} The useful thing about a fan base is that it remembers. One bad week does not erase a championship résumé, and one good week does not grant lifetime immunity to a manager who has spent a month lighting matches near the depth chart.`,
+      `${value} Put together, public mood and market movement tell two different stories: one is emotional memory, the other is changing roster perception. Neither belongs in the standings, but both belong in a real beat column.`
+    ]},
+    {heading:'What Comes Next',kind:'outlook',paragraphs:[
+      `${personnel} Availability is where roster construction stops being theoretical. A manager who built depth gets to use it; a manager who did not gets to discover that fact in public.`,
+      `${next} Keep the clipping if this was a win. Keep the receipts if it was a loss. Either way, the season is asking for another page before anyone gets to declare the story finished.`
+    ]}
+  ];
+
+  if(r.id==='tess-delaney')return[
+    {heading:'What the Result Actually Says',kind:'lede',paragraphs:[
+      `${t.team_name} ${won?'won':'lost'} ${g.score}. Fine. The more useful question is whether the path to that score looks repeatable. The margin was ${margin} points, and${g.projDelta==null?' there is no trustworthy projection comparison to lean on.':` the lineup finished ${Math.abs(g.projDelta).toFixed(1)} points ${g.projDelta>=0?'above':'below'} projection.`} That gives us a result and a process, which are related but not interchangeable.`,
+      `${season} The sample is still allowed to be small. My only request is that we stop treating “small” as a synonym for “meaningless.” Even in Week ${w}, usage, lineup concentration and decision quality can tell us what deserves another look.`
+    ]},
+    {heading:'Where the Production Came From',kind:'players',paragraphs:[
+      `${star} That is the player-level result I care about most because the fantasy number has a real football stat line sitting underneath it. ${trend||'For now, it is a strong data

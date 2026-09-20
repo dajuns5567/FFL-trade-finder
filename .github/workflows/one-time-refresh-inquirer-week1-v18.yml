@@ -1,4 +1,4 @@
-name: One-time publish audited Week 1 Inquirer V18
+name: One-time publish audited Week 1 Inquirer V18 — pass 2
 
 on:
   push:
@@ -42,7 +42,7 @@ jobs:
             }
           }
           console.log(JSON.stringify(matches,null,2));
-          if(!matches.length||!matches.some(p=>/5 solo/.test(p.real_stat_line)&&/3 ast/.test(p.real_stat_line)&&/1 QB hits/.test(p.real_stat_line)&&/1 PD/.test(p.real_stat_line)))process.exit(18);
+          if(!matches.length||!matches.some(p=>/5 solo/.test(p.real_stat_line)&&/3 assists/.test(p.real_stat_line)&&/1 QB hit/.test(p.real_stat_line)&&/1 PD/.test(p.real_stat_line)))process.exit(18);
           NODE
       - name: Build immutable V18 preload
         run: |

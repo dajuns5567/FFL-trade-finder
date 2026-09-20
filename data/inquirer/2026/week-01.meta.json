@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "season": 2026,
+  "week": 1,
+  "inquirer_version": 16,
+  "generated_at": "2026-09-20T00:32:53.255Z",
+  "teams": 32,
+  "reporters": [
+    "Nick Swindell",
+    "Bartholomew Roycington III",
+    "Tilly Fleecer",
+    "Jefferson Filch"
+  ],
+  "league_overview_sections": 4,
+  "hot_takes": 4,
+  "source": "Sleeper Week 1 completed data via scripts/one-time-generate-inquirer-week1.mjs",
+  "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs"
+}

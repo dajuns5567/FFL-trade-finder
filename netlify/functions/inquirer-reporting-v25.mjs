@@ -66,16 +66,56 @@ function management(t,facts,reporter){
   if(!selected.length)return ['n/a'];
   return selected.map(m=>{
     const add=names(m.add),drop=names(m.drop),bits=[];
-    if(add&&drop)bits.push(`${t.manager_name} brought in ${add} and moved on from ${drop}.`);
-    else if(add)bits.push(`${t.manager_name} added ${add}, a move important enough to make the column rather than the transaction crawl.`);
-    else bits.push(`${t.manager_name} cut ${drop}.`);
+    if(add&&drop)bits.push(deskChoice(t,reporter,[
+      [`${t.manager_name} brought in ${add} and moved on from ${drop}.`,`${t.manager_name} changed the room by adding ${add} and sending out ${drop}.`],
+      [`${t.manager_name} welcomed ${add} and showed ${drop} the less glamorous side of the velvet rope.`,`${t.manager_name} rearranged the guest list: ${add} in, ${drop} out.`],
+      [`${t.manager_name} MADE A MOVE: ${add} in, ${drop} out.`,`${t.manager_name} hit the transaction wire with ${add} arriving and ${drop} leaving.`],
+      [`The front-office file shows ${t.manager_name} bringing in ${add} and moving ${drop} out.`,`${t.manager_name} left a clean paper trail: ${add} arrived, ${drop} departed.`]
+    ]));
+    else if(add)bits.push(deskChoice(t,reporter,[
+      [`${t.manager_name} added ${add}, a move worth tracking beyond the transaction crawl.`,`${add} is the addition from ${t.manager_name} that earned space in the notebook.`],
+      [`${t.manager_name} added ${add}; at least one waiver move came dressed for the column.`,`${add} joined ${t.manager_name}’s roster and, unlike most wire activity, deserves another look.`],
+      [`${t.manager_name} went shopping and came home with ${add}. This one makes the back page.`,`ADD ALERT: ${t.manager_name} landed ${add}, a move loud enough to escape the ticker.`],
+      [`The transaction file highlights ${t.manager_name} adding ${add}.`,`${t.manager_name}’s notable incoming evidence is ${add}.`]
+    ]));
+    else bits.push(deskChoice(t,reporter,[
+      [`${t.manager_name} cut ${drop}; the replacement plan now matters.`,`${drop} is gone from ${t.manager_name}’s roster, which makes the next move worth watching.`],
+      [`${t.manager_name} showed ${drop} the door. The roster spot had better have plans.`,`${drop} was removed from ${t.manager_name}’s guest list; an empty chair is not a strategy.`],
+      [`CUT: ${t.manager_name} moved on from ${drop}. The back page would like to see what comes next.`,`${t.manager_name} dropped ${drop}, so somebody else now has to justify the empty space.`],
+      [`The file records ${t.manager_name} cutting ${drop}. The follow-up is what replaces that piece.`,`${drop} appears in the outgoing column for ${t.manager_name}; the inquiry now shifts to the replacement.`]
+    ]));
     const incoming=m.add.filter(p=>valid(p.value)).sort((a,b)=>b.value-a.value)[0],outgoing=m.drop.filter(p=>valid(p.value)).sort((a,b)=>b.value-a.value)[0];
-    if(incoming&&m.lineup)bits.push(`${incoming.name} went straight into the lineup, so this was not a stash disguised as activity.`);
-    else if(incoming)bits.push(`${incoming.name} is the most valuable incoming piece at ${Math.round(incoming.value).toLocaleString('en-US')}, which makes the move worth tracking even before it earns a starting role.`);
-    if(outgoing&&(!incoming||Number(outgoing.value)>Number(incoming.value)*1.15))bits.push(`${outgoing.name} is the meaningful cost of the move; replacing that value matters more than winning a one-week waiver headline.`);
+    if(incoming&&m.lineup)bits.push(deskChoice(t,reporter,[
+      [`${incoming.name} went straight into the lineup, so the move already had a job attached to it.`,`${incoming.name} immediately drew a starting assignment; this was not a stash.`],
+      [`${incoming.name} went directly into the lineup, an admirably decisive use of the new arrival.`,`The new arrival, ${incoming.name}, skipped the waiting room and started immediately.`],
+      [`${incoming.name} HIT THE LINEUP IMMEDIATELY. That is a move with intent.`,`${incoming.name} was not brought in to collect dust; the starter card had his name on it right away.`],
+      [`${incoming.name} appears on the starting card immediately after arrival. Intent is established.`,`The paperwork shows ${incoming.name} went straight from acquisition to starting lineup.`]
+    ]));
+    else if(incoming)bits.push(deskChoice(t,reporter,[
+      [`${incoming.name} is the biggest incoming market piece at ${Math.round(incoming.value).toLocaleString('en-US')}; the next question is whether a role follows.`,`${incoming.name}, valued at ${Math.round(incoming.value).toLocaleString('en-US')}, is the addition with enough market weight to keep watching.`],
+      [`${incoming.name} carries ${Math.round(incoming.value).toLocaleString('en-US')} of current value, expensive enough to merit more than decorative depth.`,`At ${Math.round(incoming.value).toLocaleString('en-US')} in current value, ${incoming.name} is not merely a charming bench accessory.`],
+      [`${incoming.name} brings ${Math.round(incoming.value).toLocaleString('en-US')} of value with him. Now give the man a reason to be here.`,`The biggest incoming chip is ${incoming.name} at ${Math.round(incoming.value).toLocaleString('en-US')}; the back page awaits the role.`],
+      [`${incoming.name} is the most substantial incoming asset at ${Math.round(incoming.value).toLocaleString('en-US')} in current value. Usage is the next piece of evidence.`,`The incoming file is led by ${incoming.name}, currently worth ${Math.round(incoming.value).toLocaleString('en-US')}; role evidence comes next.`]
+    ]));
+    if(outgoing&&(!incoming||Number(outgoing.value)>Number(incoming.value)*1.15))bits.push(deskChoice(t,reporter,[
+      [`${outgoing.name} is the meaningful cost; that departure has to be replaced somewhere.`,`${outgoing.name} carries enough value out the door that the rest of the plan cannot be ignored.`],
+      [`${outgoing.name} is the expensive goodbye. The empty space now has expectations.`,`${outgoing.name} leaves the larger bill behind, which makes the replacement more than a matter of taste.`],
+      [`${outgoing.name} IS THE COST. Somebody on this roster now has to make that departure look smart.`,`The loud part of the outgoing side is ${outgoing.name}; replacing that value is the next headline.`],
+      [`${outgoing.name} is the material outgoing evidence. The replacement plan belongs in the next filing.`,`The cost side centers on ${outgoing.name}, a departure too substantial to wave away.`]
+    ]));
     const addStar=m.add.filter(p=>valid(p.points)).sort((a,b)=>b.points-a.points)[0],dropStar=m.drop.filter(p=>valid(p.points)).sort((a,b)=>b.points-a.points)[0];
-    if(addStar&&Number(addStar.points)>=10)bits.push(`${addStar.name} immediately gave ${t.team_name} ${one(addStar.points)} points of evidence that the move can help on Sundays.`);
-    else if(dropStar&&Number(dropStar.points)>=10)bits.push(`${dropStar.name} answered the cut with ${one(dropStar.points)} points, the sort of result that keeps a transaction in the conversation for another week.`);
+    if(addStar&&Number(addStar.points)>=10)bits.push(deskChoice(t,reporter,[
+      [`${addStar.name} answered immediately with ${one(addStar.points)} points, useful first-week evidence for the move.`,`${one(addStar.points)} points from ${addStar.name} gave the transaction an immediate football reason to matter.`],
+      [`${addStar.name} introduced himself with ${one(addStar.points)} points. A tasteful first return.`,`${one(addStar.points)} points from ${addStar.name} is the sort of debut that makes a transaction look well dressed.`],
+      [`${addStar.name} PAID OUT IMMEDIATELY: ${one(addStar.points)} points.`,`${one(addStar.points)} points from ${addStar.name} gave management exactly the kind of instant headline it wanted.`],
+      [`${addStar.name} produced ${one(addStar.points)} points immediately after the move. The first exhibit favors management.`,`The initial return is ${one(addStar.points)} points from ${addStar.name}; that belongs in the favorable evidence file.`]
+    ]));
+    else if(dropStar&&Number(dropStar.points)>=10)bits.push(deskChoice(t,reporter,[
+      [`${dropStar.name} answered the cut with ${one(dropStar.points)} points, enough to keep the decision in next week’s notebook.`,`${one(dropStar.points)} points from departed ${dropStar.name} ensures this cut gets a follow-up.`],
+      [`${dropStar.name} responded to the goodbye with ${one(dropStar.points)} points. Awkward; deliciously so.`,`The departed ${dropStar.name} posted ${one(dropStar.points)} points, which is how an exit earns a second column.`],
+      [`OF COURSE ${dropStar.name} SCORED ${one(dropStar.points)} AFTER THE CUT. See you next week.`,`${dropStar.name} left and immediately hung ${one(dropStar.points)} points on the board. The back page has not forgotten.`],
+      [`${dropStar.name} produced ${one(dropStar.points)} points after the cut. That decision remains under review.`,`The outgoing ${dropStar.name} answered with ${one(dropStar.points)} points; the file stays open.`]
+    ]));
     return bits.join(' ');
   });
 }
@@ -177,7 +217,7 @@ function naturalLede(t,r){
     [`${bad.name}’s ${one(bad.points)} points go into the file as the miss the winning lineup managed to conceal. The follow-up question comes next week.`,`The evidence includes a quiet ${one(bad.points)} from ${bad.name}; the result kept it from becoming an indictment. For now.`]
   ]));
   else if(second)ps.push(deskChoice(t,r,[
-    [`${top.name} had company from ${second.name}, which made the top of the lineup feel like a story rather than a solo act.`,`${second.name} was the next name that mattered behind ${top.name}. That is useful support, not an arithmetic lesson.`],
+    [`${top.name} had company from ${second.name}, which made the top of the lineup feel like a story rather than a solo act.`,`${second.name} was the next name that mattered behind ${top.name}. That is useful support behind the headline.`],
     [`${second.name} supplied the supporting performance behind ${top.name}; even a star appreciates competent company.`,`${top.name} owned the marquee, with ${second.name} doing enough nearby to keep the production from becoming a one-person salon.`],
     [`${second.name} joined ${top.name} among the names worth printing. Two headline performances are more fun than one and require no further explanation.`,`${top.name} got the biggest type, but ${second.name} earned ink too. That is how a lineup starts sounding dangerous.`],
     [`${second.name} appears on the same evidence board as ${top.name}; the case did not rest on one witness alone.`,`${top.name} led the testimony, with ${second.name} supplying corroboration that actually mattered.`]

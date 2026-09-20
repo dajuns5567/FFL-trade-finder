@@ -313,3 +313,94 @@ Extreme negative language is sports-fan satire, not a literal call for violence.
 When the same manager remains in place, the previous week's archived sentiment is blended with the new evidence. When management changes, the old manager's sentiment does not transfer automatically to the replacement.
 
 Fan Sentiment is commentary only. It must never feed back into player valuation, trade valuation, standings, or any other numerical league system.
+
+
+## V17 narrative newsroom standard — Week 1 rewrite, 2026-09-19
+
+V17 replaces the original 2026 Week 1 V16 edition because the V16 team stories read like templated requirement summaries rather than real beat columns.
+
+### Article architecture
+
+Every team story is a **sectional long-form beat column**, not a sequence of requirement-checklist paragraphs.
+
+Each team article has six complete sections:
+1. the game story / lede
+2. player-performance analysis
+3. management / lineup / transaction analysis
+4. a standalone Value Watch
+5. rolling Fan Sentiment
+6. next-week outlook / roster-pressure reporting
+
+Each section must contain connected prose, not labels followed by stat fragments.
+
+The archived article keeps a flat `paragraphs` array for compatibility, but `sections` is the canonical V17 presentation and writing structure.
+
+### Prose rules
+
+- Write like a beat reporter who is also a fan of the team being covered.
+- Facts should support the story rather than becoming the story's grammar.
+- Do not write pipe-delimited stat dumps.
+- Do not chain every relevant number into one sentence merely because the data exists.
+- When a player is discussed materially, connect fantasy production to the available real NFL stat line in complete prose.
+- Use numbers selectively. The reader should come away remembering what happened and why it mattered, not feeling as if a box score was read aloud.
+- Avoid fragment-heavy headline-style body copy.
+- Tilly Fleecer may be loud, sarcastic and tabloid-minded without turning entire paragraphs into all caps.
+- Humor and sarcasm should emerge from each reporter's personality instead of being supplied by a canned all-caps prefix.
+- Week-to-week context should be woven into analysis instead of appearing as a detached checklist item.
+- Value Watch remains its own section and must fail closed when a valid comparison does not exist.
+- Fan Sentiment remains a running reputation rather than a reaction to one game.
+
+### Headline rules
+
+Headlines must vary across the eight teams assigned to each reporter in a week.
+
+The deterministic headline system provides multiple win/loss constructions per reporter and must avoid:
+- repeating one formula across most of a desk
+- inserting the final score into every title
+- awkward possessives
+- singular/plural agreement that depends on whether a team name is grammatically singular or plural
+- leading/trailing whitespace or accidental stat-dump syntax
+
+### Generated-edition quality gate
+
+The canonical audit is:
+
+`node scripts/inquirer-prose-quality-audit.mjs`
+
+The audit evaluates the **finished archived edition**, not merely source-code structure.
+
+For a 32-team weekly edition it currently requires:
+- 32 team articles
+- six required section kinds per article
+- at least two paragraphs per section / 12 narrative paragraphs per story
+- at least 520 words per team article
+- median paragraph length of at least 38 words
+- numeric-token density no greater than 7.5%
+- all-caps-word density no greater than 1.8%
+- no pipe-delimited stat-dump prose
+- no legacy V16 canned checklist phrases
+- very-short-sentence ratio no greater than 22%
+- reporter-specific vocabulary/voice evidence
+- at least six distinct normalized headline structures per reporter across that reporter's eight weekly stories
+- no five-word paragraph opener reused across more than eight stories
+
+The audit is a permanent PR CI gate. If a generated edition fails it, fix the writing engine or generated prose; do not weaken the audit merely to publish.
+
+### 2026 Week 1 replacement
+
+The original V16 Week 1 preload is superseded.
+
+The published 2026 Week 1 V17 replacement:
+- contains 32 team stories
+- assigns eight team stories to each reporter
+- contains six sections and 12 paragraphs per team story
+- averages about 840 words per team article
+- keeps the four-desk League Overview and four Hot Takes
+- passed the generated-edition prose audit before being committed
+- retains the Week 1 fail-closed Value Watch because no valid seven-day team-value comparison existed
+
+The immutable Week 1 edition remains at:
+`netlify/functions/inquirer-week1-2026-preload.mjs`
+
+with publication metadata at:
+`data/inquirer/2026/week-01.meta.json`

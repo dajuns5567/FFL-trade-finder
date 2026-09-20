@@ -9,7 +9,7 @@ const recapSections=d?.league_overview?.sections||[];
 const recap=recapSections.flatMap(s=>s?.paragraphs||[]).join(' ');
 const teamWords=(d.teams||[]).map(t=>words(articleText(t)));
 
-assert.equal(Number(d.inquirer_version),25,'Generated edition must be Inquirer V25');
+assert.equal(Number(d.inquirer_version),26,'Generated edition must be Inquirer V26');
 assert.equal((d.teams||[]).length,32,'Generated Week 1 edition must contain 32 team articles');
 assert.ok(recapSections.length>=4,'Weekly Recap must preserve a complete multi-desk edition');
 assert.ok(words(recap)>Math.max(...teamWords),'Editorial Weekly Recap should be deeper than the longest team column');

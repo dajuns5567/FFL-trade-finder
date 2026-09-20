@@ -3,7 +3,7 @@
 import {buildNarrativeArticle} from './inquirer-narrative-v17.mjs';
 import {buildHumanLeagueOverviewV19} from './inquirer-overview-v19.mjs';
 
-export const INQUIRER_VERSION=23;
+export const INQUIRER_VERSION=24;
 export const INQUIRER_PLAYOFF_START_WEEK=14;
 export const INQUIRER_FINAL_WEEK=17;
 export function inquirerWeekClassification(week,season,conference=''){
@@ -289,23 +289,25 @@ function outlook(t,w,r){
 
 export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyStatHistory={},scoringSettings,scoreFn,weekClassification=null,playerValues={}}){
  const ids=(teams||[]).map(t=>String(t.roster_id)).sort((a,b)=>(Number(a)-Number(b))||a.localeCompare(b)),raw=weeklyStatsMap(weeklyStats),facts={},meta=players||{},needed=new Set(),historyByWeek=Object.fromEntries(Object.entries(weeklyStatHistory||{}).map(([w,payload])=>[Number(w),weeklyStatsMap(payload)]));
- for(const t of teams||[]){for(const p of t.starter_details||[])needed.add(String(p.id));if(t.best_bench?.id)needed.add(String(t.best_bench.id));if(t.worst_starter?.id)needed.add(String(t.worst_starter.id));if(t.best_lineup_miss?.reserve?.id)needed.add(String(t.best_lineup_miss.reserve.id));if(t.best_lineup_miss?.starter?.id)needed.add(String(t.best_lineup_miss.starter.id));for(const move of t.transactions||[]){for(const id of move.adds||[])needed.add(String(id));for(const id of move.drops||[])needed.add(String(id))}}
+ for(const t of teams||[]){for(const id of t.roster_player_ids||[])needed.add(String(id));for(const p of t.starter_details||[])needed.add(String(p.id));if(t.best_bench?.id)needed.add(String(t.best_bench.id));if(t.worst_starter?.id)needed.add(String(t.worst_starter.id));if(t.best_lineup_miss?.reserve?.id)needed.add(String(t.best_lineup_miss.reserve.id));if(t.best_lineup_miss?.starter?.id)needed.add(String(t.best_lineup_miss.starter.id));for(const move of t.transactions||[]){for(const id of move.adds||[])needed.add(String(id));for(const id of move.drops||[])needed.add(String(id))}}
  for(const id of needed){
   const m=meta[id]||{},stats=raw[id]||{},position=String(m.position||m.fantasy_positions?.[0]||'FLEX'),name=String(m.full_name||((m.first_name||'')+' '+(m.last_name||'')).trim()||id),fp=typeof scoreFn==='function'?scoreFn(stats,scoringSettings):null,
-   series=Object.keys(historyByWeek).map(Number).sort((a,b)=>a-b).map(w=>{const st=historyByWeek[w]?.[id];if(!st)return null;const pts=typeof scoreFn==='function'?scoreFn(st,scoringSettings):null;return Number.isFinite(Number(pts))?{week:w,points:Number(pts),real_stat_line:realStatLine(position,st)}:null}).filter(Boolean),
+   series=Object.keys(historyByWeek).map(Number).sort((a,b)=>a-b).map(w=>{const st=historyByWeek[w]?.[id];if(!st)return null;const pts=typeof scoreFn==='function'?scoreFn(st,scoringSettings):null;return pts!=null&&Number.isFinite(Number(pts))?{week:w,points:Number(pts),real_stat_line:realStatLine(position,st)}:null}).filter(Boolean),
    last3=series.slice(-3),prior3=series.slice(-6,-3),lastAvg=last3.length?last3.reduce((n,x)=>n+x.points,0)/last3.length:null,priorAvg=prior3.length?prior3.reduce((n,x)=>n+x.points,0)/prior3.length:null,delta=Number.isFinite(lastAvg)&&Number.isFinite(priorAvg)?lastAvg-priorAvg:null,
    label=last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta>=3&&lastAvg>=priorAvg*1.2?'hot':last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta<=-3&&lastAvg<=priorAvg*.8?'cold':last3.length===3?'steady':'insufficient';
   const seasonPoints=series.reduce((n,x)=>n+Number(x.points||0),0),seasonGames=series.length,seasonAvg=seasonGames?seasonPoints/seasonGames:null;
-  facts[id]={id,name,position,nfl_team:String(m.team||'FA'),points:Number.isFinite(Number(fp))?Number(fp):null,real_stat_line:realStatLine(position,stats),season_fantasy_points:seasonPoints,season_games:seasonGames,season_avg:seasonAvg,recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
+  facts[id]={id,name,position,nfl_team:String(m.team||'FA'),points:fp!=null&&Number.isFinite(Number(fp))?Number(fp):null,real_stats:stats,real_stat_line:realStatLine(position,stats),season_fantasy_points:seasonPoints,season_games:seasonGames,season_avg:seasonAvg,recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
  }
  for(const [id,f] of Object.entries(facts)){const v=playerValues[id];if(v!=null&&Number.isFinite(Number(v)))f.value=Number(v)}
  const classification=weekClassification||inquirerWeekClassification(week,season);
- const enrichPlayer=p=>p?({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,season_fantasy_points:facts[String(p.id)]?.season_fantasy_points??null,season_games:facts[String(p.id)]?.season_games??0,season_avg:facts[String(p.id)]?.season_avg??null,recent_form:facts[String(p.id)]?.recent_form||null}):null;
+ const enrichPlayer=p=>p?({...p,value:facts[String(p.id)]?.value??null,real_stats:facts[String(p.id)]?.real_stats||{},real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,season_fantasy_points:facts[String(p.id)]?.season_fantasy_points??null,season_games:facts[String(p.id)]?.season_games??0,season_avg:facts[String(p.id)]?.season_avg??null,recent_form:facts[String(p.id)]?.recent_form||null}):null;
  const enriched=(teams||[]).map(t=>{
   const reporter=reporterForTeam(t.roster_id,week,ids),teamClassification=inquirerWeekClassification(week,season,t.conference),starters=(t.starter_details||[]).map(enrichPlayer);
   const benchFact=enrichPlayer(t.best_bench),worstFact=enrichPlayer(t.worst_starter),miss=t.best_lineup_miss?{...t.best_lineup_miss,reserve:enrichPlayer(t.best_lineup_miss.reserve),starter:enrichPlayer(t.best_lineup_miss.starter)}:null;
   const division_results=t.division==null?[]:(teams||[]).filter(x=>String(x.roster_id)!==String(t.roster_id)&&x.division!=null&&String(x.division)===String(t.division)&&(!t.conference||x.conference===t.conference)).map(x=>({roster_id:x.roster_id,team_name:x.team_name,points:x.points,opponent_points:x.opponent_points,opponent_name:x.opponent_name,record:x.league_context?.record||null}));
-  const tt={...t,division_results,next_divisional:division_results.some(x=>String(x.roster_id)===String(t.next_opponent_roster_id)),week_classification:teamClassification,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter,best_lineup_miss:miss};
+  const nextTeam=(teams||[]).find(x=>String(x.roster_id)===String(t.next_opponent_roster_id));
+  const next_opponent_roster=nextTeam?{team_name:nextTeam.team_name,roster_id:nextTeam.roster_id,players:[...new Set(nextTeam.roster_player_ids||(nextTeam.starter_details||[]).map(p=>String(p.id)))].map(id=>facts[String(id)]).filter(Boolean)}:null;
+  const tt={...t,next_opponent_roster,division_results,next_divisional:division_results.some(x=>String(x.roster_id)===String(t.next_opponent_roster_id)),week_classification:teamClassification,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter,best_lineup_miss:miss};
   const sentiment=fanSentimentForTeam(tt),article=buildNarrativeArticle({team:tt,week,reporter,facts,sentiment,teamClassification,aside:aside(tt,week,reporter)});
   return{...tt,inquirer_article:article,reporter_id:reporter.id};
  });

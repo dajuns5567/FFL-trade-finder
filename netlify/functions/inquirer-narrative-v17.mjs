@@ -1,6 +1,6 @@
 'use strict';
 
-import {humanSectionsV23} from './inquirer-editorial-v23.mjs';
+import {humanSectionsV24} from './inquirer-reporting-v24.mjs';
 
 const one=v=>Number(v||0).toFixed(1);
 const ordinal=n=>{const x=Math.abs(Number(n)||0),m100=x%100,m10=x%10;return String(x)+(m100>=11&&m100<=13?'th':m10===1?'st':m10===2?'nd':m10===3?'rd':'th')};
@@ -316,11 +316,11 @@ function buildSections(t,w,r,facts,sentiment){
 }
 
 export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamClassification,aside}){
-  const sections=humanSectionsV23({team,week,reporter,facts,sentiment});
+  const sections=humanSectionsV24({team,week,reporter,facts,sentiment});
   const paragraphs=sections.flatMap(s=>s.paragraphs||[]);
   return{
     schema_version:11,
-    inquirer_version:23,
+    inquirer_version:24,
     season:Number(teamClassification?.season||2026),
     week:Number(week),
     week_classification:teamClassification,
@@ -332,7 +332,8 @@ export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamCl
     deck:reporter.desk+' • '+reporter.signature+' • '+teamClassification.label,
     sections,
     paragraphs,
-    aside,
+    aside:null,
+    sources:{mida:team.mida_outlook?{name:'MIDA',url:team.mida_outlook.source,as_of:team.mida_outlook.source_date}:null},
     generated_from:'Sleeper completed matchup, season-to-date matchup history, opponent context, standings, projections, lineup decisions, transactions, roster/player metadata, weekly real-life stats, canonical team Value History, verified NFL schedule, and Sleeper injury designations',
     real_stats_source:'Sleeper weekly stats',
     facts:{
@@ -344,6 +345,7 @@ export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamCl
       league_context:team.league_context||null,
       opponent_context:team.opponent_context||null,
       next_opponent_context:team.next_opponent_context||null,
+      next_opponent_roster:team.next_opponent_roster||null,
       value_history_week:team.value_history_week||null,
       next_week_availability:team.next_week_availability||null,
       fan_sentiment:sentiment,

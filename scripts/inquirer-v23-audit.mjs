@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import edition from '../netlify/functions/inquirer-week1-2026-preload.mjs';
 import {selectImportantMoves,humanSectionsV23,outlookCopy,sentimentCopy,divisionCopy} from '../netlify/functions/inquirer-editorial-v23.mjs';
-assert.equal(edition.inquirer_version,23);
+assert.ok(edition.inquirer_version>=23);
 const moods=new Set();
 for(const t of edition.teams){
   const sections=t.inquirer_article.sections,management=sections.find(s=>s.kind==='management'),outlook=sections.find(s=>s.kind==='outlook').paragraphs.join(' '),mood=sections.find(s=>s.kind==='sentiment').paragraphs.join(' ');

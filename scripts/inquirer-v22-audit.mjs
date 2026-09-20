@@ -12,7 +12,7 @@ export function auditV22(edition){
     assert.doesNotMatch(body,/leading trio|lead trio|next three names|next three contributors|taking the night off|truth-sized hole/);
     if(!t.value_history_week)assert.deepEqual(s.find(x=>x.kind==='value').paragraphs,['n/a']);
     if(!t.transactions.length)assert.deepEqual(s.find(x=>x.kind==='management').paragraphs,['n/a']);
-    if(t.mida_outlook){assert.match(s.find(x=>x.kind==='outlook').paragraphs.join(' '),edition.inquirer_version>=23?/MIDA.*playoff chance/:/MIDA outlook.*playoffs.*championship.*division title/)}
+    if(t.mida_outlook){assert.match(s.find(x=>x.kind==='outlook').paragraphs.join(' '),edition.inquirer_version>=24?/around .*chance of reaching the playoffs/:edition.inquirer_version>=23?/MIDA.*playoff chance/:/MIDA outlook.*playoffs.*championship.*division title/)}
     const top=t.starter_details.slice().sort((a,b)=>b.points-a.points).slice(0,3);
     for(const p of top)assert.ok(s.find(x=>x.kind==='lede').paragraphs.join(' ').includes(p.name));
   }

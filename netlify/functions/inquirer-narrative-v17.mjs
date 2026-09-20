@@ -1,6 +1,6 @@
 'use strict';
 
-import {humanSectionsV21} from './inquirer-human-v21.mjs';
+import {humanSectionsV22} from './inquirer-context-v22.mjs';
 
 const one=v=>Number(v||0).toFixed(1);
 const ordinal=n=>{const x=Math.abs(Number(n)||0),m100=x%100,m10=x%10;return String(x)+(m100>=11&&m100<=13?'th':m10===1?'st':m10===2?'nd':m10===3?'rd':'th')};
@@ -316,11 +316,11 @@ function buildSections(t,w,r,facts,sentiment){
 }
 
 export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamClassification,aside}){
-  const sections=humanSectionsV21({team,week,reporter,facts,sentiment});
+  const sections=humanSectionsV22({team,week,reporter,facts,sentiment});
   const paragraphs=sections.flatMap(s=>s.paragraphs||[]);
   return{
     schema_version:11,
-    inquirer_version:21,
+    inquirer_version:22,
     season:Number(teamClassification?.season||2026),
     week:Number(week),
     week_classification:teamClassification,

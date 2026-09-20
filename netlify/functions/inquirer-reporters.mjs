@@ -3,7 +3,7 @@
 import {buildNarrativeArticle} from './inquirer-narrative-v17.mjs';
 import {buildHumanLeagueOverviewV19} from './inquirer-overview-v19.mjs';
 
-export const INQUIRER_VERSION=21;
+export const INQUIRER_VERSION=22;
 export const INQUIRER_PLAYOFF_START_WEEK=14;
 export const INQUIRER_FINAL_WEEK=17;
 export function inquirerWeekClassification(week,season,conference=''){
@@ -287,7 +287,7 @@ function outlook(t,w,r){
  return next+division+' The file remains open. So does the tab containing the standings, which is certainly healthy behavior.';
 }
 
-export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyStatHistory={},scoringSettings,scoreFn,weekClassification=null}){
+export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyStatHistory={},scoringSettings,scoreFn,weekClassification=null,playerValues={}}){
  const ids=(teams||[]).map(t=>String(t.roster_id)).sort((a,b)=>(Number(a)-Number(b))||a.localeCompare(b)),raw=weeklyStatsMap(weeklyStats),facts={},meta=players||{},needed=new Set(),historyByWeek=Object.fromEntries(Object.entries(weeklyStatHistory||{}).map(([w,payload])=>[Number(w),weeklyStatsMap(payload)]));
  for(const t of teams||[]){for(const p of t.starter_details||[])needed.add(String(p.id));if(t.best_bench?.id)needed.add(String(t.best_bench.id));if(t.worst_starter?.id)needed.add(String(t.worst_starter.id));if(t.best_lineup_miss?.reserve?.id)needed.add(String(t.best_lineup_miss.reserve.id));if(t.best_lineup_miss?.starter?.id)needed.add(String(t.best_lineup_miss.starter.id));for(const move of t.transactions||[]){for(const id of move.adds||[])needed.add(String(id));for(const id of move.drops||[])needed.add(String(id))}}
  for(const id of needed){
@@ -298,6 +298,7 @@ export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyS
   const seasonPoints=series.reduce((n,x)=>n+Number(x.points||0),0),seasonGames=series.length,seasonAvg=seasonGames?seasonPoints/seasonGames:null;
   facts[id]={id,name,position,nfl_team:String(m.team||'FA'),points:Number.isFinite(Number(fp))?Number(fp):null,real_stat_line:realStatLine(position,stats),season_fantasy_points:seasonPoints,season_games:seasonGames,season_avg:seasonAvg,recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
  }
+ for(const [id,f] of Object.entries(facts)){const v=playerValues[id];if(v!=null&&Number.isFinite(Number(v)))f.value=Number(v)}
  const classification=weekClassification||inquirerWeekClassification(week,season);
  const enrichPlayer=p=>p?({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,season_fantasy_points:facts[String(p.id)]?.season_fantasy_points??null,season_games:facts[String(p.id)]?.season_games??0,season_avg:facts[String(p.id)]?.season_avg??null,recent_form:facts[String(p.id)]?.recent_form||null}):null;
  const enriched=(teams||[]).map(t=>{

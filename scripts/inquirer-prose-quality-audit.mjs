@@ -8,6 +8,7 @@ if(source){
   edition=(await import('../netlify/functions/inquirer-week1-2026-preload.mjs')).default;
 }
 
+if(Number(edition?.inquirer_version)>=22){const {auditV22}=await import('./inquirer-v22-audit.mjs');auditV22(edition);process.exit(0)}
 const fail=(m)=>{throw new Error(m)};
 const words=s=>String(s||'').trim().split(/\s+/).filter(Boolean);
 const median=a=>{const x=a.slice().sort((p,q)=>p-q);return x.length?(x[Math.floor((x.length-1)/2)]+x[Math.floor(x.length/2)])/2:0};

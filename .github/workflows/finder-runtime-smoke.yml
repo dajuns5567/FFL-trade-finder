@@ -61,6 +61,8 @@ on:
       - 'netlify/functions/inquirer-human-v19.mjs'
       - 'netlify/functions/inquirer-human-v20.mjs'
       - 'netlify/functions/inquirer-human-v21.mjs'
+      - 'netlify/functions/inquirer-context-v22.mjs'
+      - 'scripts/inquirer-v22-audit.mjs'
       - 'netlify/functions/inquirer-overview-v19.mjs'
       - 'netlify/functions/inquirer-week1-2026-preload.mjs'
       - 'scripts/inquirer-reporters-smoke.mjs'
@@ -162,6 +164,7 @@ jobs:
           node --check netlify/functions/inquirer-human-v19.mjs
           node --check netlify/functions/inquirer-human-v20.mjs
           node --check netlify/functions/inquirer-human-v21.mjs
+          node --check netlify/functions/inquirer-context-v22.mjs
           node --check netlify/functions/inquirer-overview-v19.mjs
           node --check scripts/inquirer-prose-quality-audit.mjs
           node --check scripts/inquirer-overview-quality-audit.mjs

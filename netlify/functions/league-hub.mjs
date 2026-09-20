@@ -1,4 +1,5 @@
 import { getStore } from '@netlify/blobs';
+import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
 import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
 
@@ -33,7 +34,7 @@ async function projections(season,week,scoring){
   for(const u of urls)try{const raw=await fetchJson(u),map={};for(const r of projectionRows(raw)){const id=String(r?.player_id||r?.player?.player_id||'');if(!id)continue;const s=r?.stats||r?.projection||r;const custom=score(s,scoring),fallback=Number(r?.pts_ppr??s?.pts_ppr??r?.fantasy_points);map[id]=Number.isFinite(custom)?custom:(Number.isFinite(fallback)?fallback:null)}if(Object.keys(map).length)return map}catch{}
   return{};
 }
-function txByRoster(rows){const out={};for(const tx of rows||[]){const touched=new Set([...(tx?.roster_ids||[]).map(String),...Object.values(tx?.adds||{}).map(String),...Object.values(tx?.drops||{}).map(String)]);for(const id of touched){if(!out[id])out[id]=[];out[id].push({id:String(tx?.transaction_id||''),type:String(tx?.type||'transaction'),status:String(tx?.status||''),adds:Object.keys(tx?.adds||{}),drops:Object.keys(tx?.drops||{}),created:Number(tx?.status_updated||tx?.created)||null})}}return out}
+function txByRoster(rows){const out={};for(const tx of rows||[]){const touched=new Set([...(tx?.roster_ids||[]).map(String),...Object.values(tx?.adds||{}).map(String),...Object.values(tx?.drops||{}).map(String)]);for(const id of touched){if(!out[id])out[id]=[];out[id].push({id:String(tx?.transaction_id||''),type:String(tx?.type||'transaction'),status:String(tx?.status||''),adds:Object.keys(tx?.adds||{}).filter(p=>String(tx.adds[p])===id),drops:Object.keys(tx?.drops||{}).filter(p=>String(tx.drops[p])===id),created:Number(tx?.status_updated||tx?.created)||null})}}return out}
 function normalizeTeamCode(v){const s=String(v||'').trim().toUpperCase();return({JAC:'JAX',WAS:'WSH',LA:'LAR',LAR:'LAR',LV:'LV',OAK:'LV',SD:'LAC',STL:'LAR'}[s]||s)}
 async function nflWeekSchedule(season,week){
  const w=Number(week);if(!Number.isFinite(w)||w<1||w>18)return{ok:false,week:w,teams:[],games:0,source:'unavailable'};
@@ -147,7 +148,7 @@ async function syncReporterArchives(s,result,broadcastKey){
   const teamEntries=await Promise.all(teams.filter(t=>t?.inquirer_article?.reporter?.id===reporter.id).map(async team=>{
    const article=team.inquirer_article,k=[result.season,result.week,team.roster_id].join('|'),articleKey='inquirer/reporters/'+reporter.id+'/articles/'+result.season+'/week-'+String(result.week).padStart(2,'0')+'-roster-'+String(team.roster_id).padStart(2,'0')+'.json';
    const stored=await s.get(articleKey,{type:'json'}).catch(()=>null),migrate=Number(stored?.inquirer_version||0)<INQUIRER_VERSION;
-   if(!stored?.headline||migrate)await s.setJSON(articleKey,{...article,team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),captured_at:String(result.generated_at||new Date().toISOString()),migration_reason:migrate&&stored?.headline?'explicit V21 impact-and-depth rewrite':null});
+   if(!stored?.headline||migrate)await s.setJSON(articleKey,{...article,team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),captured_at:String(result.generated_at||new Date().toISOString()),migration_reason:migrate&&stored?.headline?'explicit V22 evidence-and-outlook rewrite':null});
    return{k,entry:{season:Number(result.season),week:Number(result.week),roster_id:String(team.roster_id),team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),headline:String(article.headline||''),byline:String(article.byline||''),captured_at:String(result.generated_at||new Date().toISOString()),broadcast_key:broadcastKey,article_key:articleKey,inquirer_version:INQUIRER_VERSION}};
   }));
   for(const {k,entry} of teamEntries){
@@ -192,10 +193,10 @@ async function weeklyReport(req){
   fetchJson(`${API}/stats/nfl/regular/${season}/${week}`).catch(()=>({})),
   week>=INQUIRER_PLAYOFF_START_WEEK?fetchJson(`${API}/league/${LEAGUE}/winners_bracket`).catch(()=>[]):Promise.resolve([])
  ]);
- const nextNflWeek=week<INQUIRER_FINAL_WEEK?week+1:null,[teamValueHistory,canonicalTrades,nextSchedule]=await Promise.all([
+ const nextNflWeek=week<INQUIRER_FINAL_WEEK?week+1:null,[teamValueHistory,canonicalTrades,nextSchedule,playerMarket]=await Promise.all([
   internalHistory(origin,'team_net_all=1'),
   internalHistory(origin,'trades=1'),
-  nflWeekSchedule(season,nextNflWeek)
+  nflWeekSchedule(season,nextNflWeek), internalHistory(origin,'market=1')
  ]);
  const matchupWeeks=Array.from({length:Math.max(1,week)},(_,i)=>i+1),statWeeks=Array.from({length:Math.min(6,Math.max(1,week))},(_,i)=>Math.max(1,week-Math.min(5,week-1))+i);
  const [seasonMatchupsRows,recentStatRows]=await Promise.all([
@@ -220,7 +221,7 @@ async function weeklyReport(req){
  });
  const byId=new Map(teams.map(t=>[String(t.roster_id),t])),contextFor=id=>{const base=seasonContext[String(id)]||null;if(!base)return null;return{...base,recent_games:(base.recent_games||[]).map(g=>({...g,opponent_name:teamName(g.opponent_roster_id)}))}},completeTeams=teams.map(t=>({...t,opponent_name:teamName(t.opponent_roster_id),opponent_projected:byId.get(String(t.opponent_roster_id))?.projected??null,opponent_context:contextFor(t.opponent_roster_id),next_opponent_name:teamName(t.next_opponent_roster_id),next_opponent_projected:byId.get(String(t.next_opponent_roster_id))?.next_projected??null,next_opponent_context:contextFor(t.next_opponent_roster_id),division_results:teams.filter(x=>String(x.division)===String(t.division)&&x.roster_id!==t.roster_id).map(x=>({roster_id:x.roster_id,team_name:x.team_name,won:x.won,points:x.points})),league_context:contextFor(t.roster_id)}));
  const currentWeekTrades=(canonicalTrades?.trades||[]).filter(t=>Number(t?.season)===season&&Number(t?.week)===week),weekClassification=inquirerWeekClassification(week,season);
- const inquirer=buildInquirerWeek({season,week,teams:completeTeams,players,weeklyStats,weeklyStatHistory,scoringSettings:league?.scoring_settings||{},scoreFn:score,weekClassification});
+ const inquirer=buildInquirerWeek({season,week,playerValues:Object.fromEntries((playerMarket?.marketRows||[]).map(p=>[String(p.id),p.value])),teams:attachMida(completeTeams,await loadMida()),players,weeklyStats,weeklyStatHistory,scoringSettings:league?.scoring_settings||{},scoreFn:score,weekClassification});
  const leagueOverview=buildLeagueOverview({season,week,teams:inquirer.teams,players,transactions,canonicalTrades:currentWeekTrades,weekClassification,valueHistoryMeta:{period:teamValueHistory?.period||null,baseline:teamValueHistory?.baseline||null,latest:teamValueHistory?.latest||null,source:teamValueHistory?.source||null}});
  const result={available:true,season,week,week_classification:weekClassification,generated_at:new Date().toISOString(),broadcast_version:BROADCAST_VERSION,inquirer_version:INQUIRER_VERSION,projection_source:Object.keys(proj).length?'Sleeper weekly projections scored with league scoring settings':'projection data unavailable',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:canonicalTrades?.source||'unavailable',reporters:inquirer.reporters,league_overview:leagueOverview,teams:inquirer.teams};
  const key=`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`,prior=await s.get(key,{type:'json'}).catch(()=>null);
@@ -228,7 +229,7 @@ async function weeklyReport(req){
   const priorByRoster=new Map(prior.teams.map(t=>[String(t.roster_id),t]));
   result.teams=result.teams.map(t=>{const p=priorByRoster.get(String(t.roster_id));return p?.inquirer_article?{...t,inquirer_article:p.inquirer_article,reporter_id:p.reporter_id||p.inquirer_article?.reporter?.id||t.reporter_id}:t});
  }
- await s.setJSON(key,result);await syncReporterArchives(s,result,key);if(result.league_overview){const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json',storedOverview=await s.get(overviewKey,{type:'json'}).catch(()=>null);if(!storedOverview?.headline||Number(storedOverview?.inquirer_version||0)<INQUIRER_VERSION)await s.setJSON(overviewKey,{...result.league_overview,captured_at:result.generated_at,migration_reason:storedOverview?.headline?'explicit V21 impact-and-depth rewrite':null})}
+ await s.setJSON(key,result);await syncReporterArchives(s,result,key);if(result.league_overview){const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json',storedOverview=await s.get(overviewKey,{type:'json'}).catch(()=>null);if(!storedOverview?.headline||Number(storedOverview?.inquirer_version||0)<INQUIRER_VERSION)await s.setJSON(overviewKey,{...result.league_overview,captured_at:result.generated_at,migration_reason:storedOverview?.headline?'explicit V22 evidence-and-outlook rewrite':null})}
  const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),list=Array.isArray(idx)?idx:[];if(!list.some(x=>x.season===season&&x.week===week)){list.push({type:'week',season,week,key,captured_at:result.generated_at});list.sort((a,b)=>a.season-b.season||a.week-b.week);await s.setJSON('broadcasts/index.json',list)}return result;
 }
 async function broadcastArchive(){

@@ -210,7 +210,7 @@ assert(ui.includes('scrollToInquirerArticle')&&ui.includes('showWeeklyArticle(we
 assert(ui.includes("const preserveY=view==='daily'&&previousView==='daily'?window.scrollY:null")&&ui.includes("window.scrollTo({top:preserveY,behavior:'auto'})"),'Reporter desk rerenders must preserve the reader’s scroll position');
 assert(ui.includes('data-lh-reporter-close'),'Reporter Desks must provide an explicit Close control');
 assert(ui.includes('Weekly Recap • All 4 Reporters')&&ui.includes('data-lh-broadcast-team="__league__"'),'Weekly Recap must remain the user-facing league article and its headline must open the recap');
-assert(!ui.includes('Weekly Recap'),'Weekly Recap must not regress into user-facing League Hub copy after the Weekly Recap rename');
+assert(!ui.includes('League Notebook'),'League Notebook must not regress into user-facing League Hub copy after the Weekly Recap rename');
 assert(ui.includes('data-lh-archive-year')&&ui.includes('data-lh-archive-week')&&ui.includes('data-lh-archive-team')&&ui.includes('data-lh-reporter-article-season'),'Article Archive must retain Year/Week/Team filters and clickable reporter-story archive controls');
 assert(backend.includes("team_name:'Weekly Recap'")&&!backend.includes("team_name:'League Overview'"),'Stored archive metadata must call the league-wide article Weekly Recap');
 assert(backend.includes('nextProj')&&overviewWriter.includes('underdog_projected')&&overviewWriter.includes('favorite_projected'),'Upset picks must be backed by next-week projections and preserve both projected scores');

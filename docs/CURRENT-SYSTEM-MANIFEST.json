@@ -54,7 +54,7 @@
     "inquirer_rotation": "8 teams per reporter per week; every reporter covers every team once across four consecutive weeks",
     "inquirer_real_stats_source": "Sleeper weekly raw stats",
     "inquirer_article_archives": "immutable standalone per-reporter article JSON + reporter archive index",
-    "inquirer_version": 16,
+    "inquirer_version": 17,
     "inquirer_live_context": [
       "season record and league rank",
       "winning/losing streaks from completed Sleeper matchups",
@@ -144,17 +144,52 @@
     },
     "inquirer_published_editions": {
       "2026-week-1": {
-        "inquirer_version": 16,
-        "status": "published as immutable preload on PR #385",
+        "inquirer_version": 17,
+        "status": "published as audited immutable preload on PR #385; replaces V16 checklist-style edition",
         "team_articles": 32,
         "reporter_distribution": "8 team articles per reporter",
+        "team_article_sections": 6,
+        "team_article_paragraphs": 12,
+        "average_team_article_words": 840,
+        "prose_audit": "passed scripts/inquirer-prose-quality-audit.mjs before commit",
         "league_overview_sections": 4,
         "hot_takes": 4,
-        "generated_from": "completed Sleeper Week 1 matchup/player-stat/transaction data",
+        "generated_from": "completed Sleeper Week 1 matchup/player-stat/transaction data through V17 narrative writer",
         "value_history_note": "no valid seven-day team Value History comparison existed, so no movement was invented",
         "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs",
         "metadata": "data/inquirer/2026/week-01.meta.json"
       }
+    },
+    "inquirer_article_structure": {
+      "canonical": "six-section narrative beat column",
+      "sections": [
+        "game story / lede",
+        "player performance",
+        "management / lineup / transactions",
+        "Value Watch",
+        "rolling Fan Sentiment",
+        "next-week outlook / roster pressure"
+      ],
+      "compatibility": "flat paragraphs array retained in archive, but sections are canonical"
+    },
+    "inquirer_prose_quality": {
+      "audit": "scripts/inquirer-prose-quality-audit.mjs",
+      "permanent_ci_gate": true,
+      "minimum_team_article_words": 520,
+      "minimum_median_paragraph_words": 38,
+      "team_sections": 6,
+      "minimum_team_paragraphs": 12,
+      "max_numeric_token_density": 0.075,
+      "max_uppercase_word_density": 0.018,
+      "max_short_sentence_ratio": 0.22,
+      "minimum_normalized_headline_patterns_per_reporter": 6,
+      "maximum_reuse_of_same_five_word_paragraph_opener": 8,
+      "prohibited": [
+        "pipe-delimited stat-dump prose",
+        "legacy V16 checklist phrases",
+        "all-caps body gimmick as substitute for voice"
+      ],
+      "rule": "fix the writing/generator when the generated edition fails; do not weaken the audit merely to publish"
     }
   },
   "recovery_branches": {

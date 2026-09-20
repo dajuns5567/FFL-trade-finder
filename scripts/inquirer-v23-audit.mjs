@@ -5,7 +5,8 @@ assert.ok(edition.inquirer_version>=23);
 const moods=new Set();
 for(const t of edition.teams){
   const sections=t.inquirer_article.sections,management=sections.find(s=>s.kind==='management'),outlook=sections.find(s=>s.kind==='outlook').paragraphs.join(' '),mood=sections.find(s=>s.kind==='sentiment').paragraphs.join(' ');
-  assert.ok(management.paragraphs.length<=2);
+  const maxManagementParagraphs=Number(edition.inquirer_version)>=26?3:2;
+  assert.ok(management.paragraphs.length<=maxManagementParagraphs,'Management section exceeded the current editorial cap: '+management.paragraphs.length);
   assert.doesNotMatch(management.paragraphs.join(' '),/Transaction verdict|Current snapshot value received|These are player totals/);
   assert.doesNotMatch(outlook,/division (?:title|odds)|division.*n\/a/i);
   assert.doesNotMatch(mood,/Strong Approval|crowd.*statement|no pattern finding/);

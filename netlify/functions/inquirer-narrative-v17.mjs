@@ -1,6 +1,7 @@
 'use strict';
 
 const one=v=>Number(v||0).toFixed(1);
+const ordinal=n=>{const x=Math.abs(Number(n)||0),m100=x%100,m10=x%10;return String(x)+(m100>=11&&m100<=13?'th':m10===1?'st':m10===2?'nd':m10===3?'rd':'th')};
 
 function headlineVariant(t){
   const n=Number(t?.roster_id);
@@ -194,7 +195,7 @@ function nextOpponentNarrative(t,w){
   if(!t.next_opponent_roster_id)return Number(w)>=17?`There is no next fantasy opponent after the Super Bowl.`:`Sleeper has not supplied the next opponent yet, so no matchup will be invented.`;
   const rec=n?.record?`${n.record.wins||0}-${n.record.losses||0}${Number(n.record.ties)?'-'+n.record.ties:''}`:'record unavailable';
   const nr=nextRound(Number(w)+1,t.conference),round=nr?` in the ${nr}`:'';
-  return `${name} is next${round}, carrying a ${rec} record${n?.standings_rank?', currently '+n.standings_rank+'th in the league':''}. The job this week is not to chase the last box score; it is to decide which parts of this performance deserve to travel.`;
+  return `${name} is next${round}, carrying a ${rec} record${n?.standings_rank?', currently '+ordinal(n.standings_rank)+' in the league':''}. The job this week is not to chase the last box score; it is to decide which parts of this performance deserve to travel.`;
 }
 
 function buildSections(t,w,r,facts,sentiment){

@@ -1,5 +1,6 @@
 import { getStore } from '@netlify/blobs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
+import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
 
 const LEAGUE='1316867686394769408';
 const API='https://api.sleeper.app/v1';
@@ -8,6 +9,23 @@ const fetchJson=async url=>{const r=await fetch(url,{headers:{accept:'applicatio
 const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
 const MANAGER_CACHE_VERSION=6;
 const BROADCAST_VERSION=11;
+const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026]]);
+const preloadedBroadcast=(season,week)=>PRELOADED_BROADCASTS.get(String(Number(season))+'|'+String(Number(week)))||null;
+function preloadedReporterEntries(reporterId){
+ const p=week1Preload2026,rows=[];
+ for(const team of p?.teams||[]){
+  const article=team?.inquirer_article;if(article?.reporter?.id!==reporterId)continue;
+  rows.push({season:Number(p.season),week:Number(p.week),roster_id:String(team.roster_id),team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),headline:String(article.headline||''),byline:String(article.byline||''),captured_at:String(p.generated_at||''),broadcast_key:'preloaded:2026:1',article_key:'preloaded:2026:1:'+String(team.roster_id),inquirer_version:Number(p.inquirer_version)||INQUIRER_VERSION,preloaded:true});
+ }
+ if(p?.league_overview)rows.push({season:Number(p.season),week:Number(p.week),roster_id:'__league__',team_name:'League Overview',manager_name:'Co-authored by all four desks',headline:String(p.league_overview.headline||'Fleeced! League Overview'),byline:String(p.league_overview.byline||''),captured_at:String(p.generated_at||''),broadcast_key:'preloaded:2026:1',article_key:'preloaded:2026:1:league',inquirer_version:Number(p.inquirer_version)||INQUIRER_VERSION,preloaded:true});
+ return rows;
+}
+function mergeArchiveEntries(primary,extra){
+ const rows=Array.isArray(primary)?primary.slice():[],seen=new Set(rows.map(x=>[x.season,x.week,x.roster_id].join('|')));
+ for(const x of extra||[]){const k=[x.season,x.week,x.roster_id].join('|');if(!seen.has(k)){rows.push(x);seen.add(k)}}
+ rows.sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week)||String(a.team_name||'').localeCompare(String(b.team_name||'')));
+ return rows;
+}
 const score=(stats,scoring)=>{if(!stats)return null;let n=0,used=false;for(const [k,w] of Object.entries(scoring||{})){const raw=stats[k]??(String(k).startsWith('idp_')?stats[String(k).slice(4)]:undefined),v=Number(raw),m=Number(w);if(Number.isFinite(v)&&Number.isFinite(m)){n+=v*m;used=true}}return used?Number(n.toFixed(2)):null};
 function projectionRows(raw){if(Array.isArray(raw))return raw;if(Array.isArray(raw?.players))return raw.players;if(raw&&typeof raw==='object')return Object.values(raw);return[]}
 async function projections(season,week,scoring){
@@ -113,8 +131,8 @@ async function syncReporterArchives(s,result,broadcastKey){
 }
 async function reporterArchive(id){
  const reporter=publicReporters().find(x=>x.id===String(id||''));if(!reporter)return{error:'reporter not found'};
- const s=store(),j=await s.get('inquirer/reporters/'+reporter.id+'/index.json',{type:'json'}).catch(()=>null);
- return{schema_version:1,reporter,articles:Array.isArray(j?.articles)?j.articles:[]};
+ const s=store(),j=await s.get('inquirer/reporters/'+reporter.id+'/index.json',{type:'json'}).catch(()=>null),articles=mergeArchiveEntries(Array.isArray(j?.articles)?j.articles:[],preloadedReporterEntries(reporter.id));
+ return{schema_version:1,reporter,articles};
 }
 async function reporterDirectory(){return{schema_version:1,inquirer_version:INQUIRER_VERSION,reporters:publicReporters()}}
 
@@ -128,7 +146,8 @@ async function weeklyReport(req){
  let week=null;
  for(const w of probeWeeks){const ms=await fetchJson(`${API}/league/${LEAGUE}/matchups/${w}`).catch(()=>[]);if(!matchupComplete(ms))continue;const rs=await fetchJson(`${API}/league/${LEAGUE}/rosters`).catch(()=>[]),prior=w>1?await Promise.all(Array.from({length:w-1},(_,i)=>fetchJson(`${API}/league/${LEAGUE}/matchups/${i+1}`).catch(()=>[]))):[],record={};const tally=rows=>{const g=new Map();for(const m of rows||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!g.has(k))g.set(k,[]);g.get(k).push(m)}for(const pair of g.values())if(pair.length===2){const[a,b]=pair,ai=String(a.roster_id),bi=String(b.roster_id);record[ai]??={wins:0,losses:0};record[bi]??={wins:0,losses:0};if(Number(a.points)>Number(b.points)){record[ai].wins++;record[bi].losses++}else if(Number(b.points)>Number(a.points)){record[bi].wins++;record[ai].losses++}}};for(const p of prior)tally(p);tally(ms);const applied=ms.every(m=>{const r=rs.find(x=>String(x.roster_id)===String(m.roster_id)),x=record[String(m.roster_id)];return r&&x&&Number(r?.settings?.wins||0)>=x.wins&&Number(r?.settings?.losses||0)>=x.losses});if(applied){week=w;break}}
  if(!week)return{available:false,season,week:null,reason:'The Fleeced! Inquirer is waiting for Sleeper to publish complete player scoring and apply every finished matchup to team records.'};
- const s=store(),previousBroadcast=week>1?await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null):null;
+ const preload=preloadedBroadcast(season,week);if(preload)return preload;
+ const s=store(),previousStored=week>1?await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null):null,previousBroadcast=previousStored||preloadedBroadcast(season,week-1);
  let managerHistoryData=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
  if(!managerHistoryData?.career?.length)managerHistoryData=await managerHistory().catch(()=>({career:[],current:[],assignments:[]}));
  const [matchups,transactions,rosters,users,proj,players,nextMatchups,weeklyStats,winnersBracket]=await Promise.all([
@@ -169,8 +188,15 @@ async function weeklyReport(req){
  await s.setJSON(key,result);await syncReporterArchives(s,result,key);if(result.league_overview){const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json',storedOverview=await s.get(overviewKey,{type:'json'}).catch(()=>null);if(!storedOverview?.headline||Number(storedOverview?.inquirer_version||0)<INQUIRER_VERSION)await s.setJSON(overviewKey,{...result.league_overview,captured_at:result.generated_at,migration_reason:storedOverview?.headline?'explicit V16 playoff-round/fan-sentiment upgrade':null})}
  const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),list=Array.isArray(idx)?idx:[];if(!list.some(x=>x.season===season&&x.week===week)){list.push({type:'week',season,week,key,captured_at:result.generated_at});list.sort((a,b)=>a.season-b.season||a.week-b.week);await s.setJSON('broadcasts/index.json',list)}return result;
 }
-async function broadcastArchive(){const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]);return{reports:Array.isArray(idx)?idx:[]}}
-async function broadcastStored(season,week){const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null);return v||{error:'broadcast not found'}}
+async function broadcastArchive(){
+ const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),rows=Array.isArray(idx)?idx.slice():[],p=week1Preload2026,key='2026|1';
+ if(!rows.some(x=>String(Number(x.season))+'|'+String(Number(x.week))===key))rows.push({type:'week',season:2026,week:1,key:'preloaded:2026:1',captured_at:String(p.generated_at||''),preloaded:true});
+ rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
+}
+async function broadcastStored(season,week){
+ const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null);
+ return v||preloadedBroadcast(season,week)||{error:'broadcast not found'};
+}
 
 async function draftAwards(){
  const league=await fetchJson(`${API}/league/${LEAGUE}`),current=Number(league?.season)||new Date().getFullYear(),years=[current,current-1,current-2,current-3],out=[];

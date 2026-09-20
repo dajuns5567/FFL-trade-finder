@@ -97,7 +97,8 @@ const championTeam={...sampleTeams[0],
 const championBuild=buildInquirerWeek({season:2026,week:11,teams:[championTeam],players,weeklyStats:weeklyStatHistory[6],weeklyStatHistory,scoringSettings:{},scoreFn:(stats)=>Number(stats?.rec_yd||stats?.tkl_solo||20),weekClassification:inquirerWeekClassification(11,2026)});
 const champSentiment=championBuild.teams[0].inquirer_article.fan_sentiment;
 assert(champSentiment.score>=70,'One bad week must not cause a proven repeated champion to collapse into negative fan sentiment');
-assert(/Hall of Fame|Build the Statue|Parade|Standing Ovation/.test(championBuild.teams[0].inquirer_article.paragraphs.find(p=>/Fan Sentiment|Public Sentiment File/i.test(p))||''),'Strong championship management must retain strongly positive fan language after one bad week');
+const champSentimentSection=championBuild.teams[0].inquirer_article.sections.find(s=>s.kind==='sentiment');
+assert(/Hall of Fame|Build the Statue|Parade|Standing Ovation/.test([champSentiment.title,...(champSentimentSection?.paragraphs||[])].join(' ')),'Strong championship management must retain strongly positive fan language after one bad week');
 
 const collapseTeam={...sampleTeams[31],
  manager_user_id:'collapse-owner',manager_name:'Basement GM',manager_career:{user_id:'collapse-owner',wins:5,losses:30,playoff_wins:0,championships:0,regular_season_titles:0},
@@ -139,7 +140,7 @@ assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub mu
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
 assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
-assert(backend.includes("explicit V17 narrative rewrite"),'V16 must explicitly migrate older articles once for playoff-round and fan-sentiment support');
+assert(backend.includes("explicit V17 narrative rewrite"),'Older Inquirer articles must explicitly migrate once to the V17 narrative schema');
 assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');
 assert(backend.includes("Number(stored?.inquirer_version||0)<INQUIRER_VERSION"),'Only older-version archived reporter articles may be migrated; current-version articles stay preserved');
 assert(backend.includes('leagueSeasonContext('),'Inquirer backend must derive season standings/streak context from completed Sleeper matchups');
@@ -156,7 +157,7 @@ assert(backend.includes('injury_status'),'Inquirer must use Sleeper injury desig
 assert(backend.includes("league?.metadata?.['division_'+d]"),'Conference must be derived from Sleeper division metadata rather than hardcoded roster IDs');
 assert(backend.includes("name.startsWith('AFC')")&&backend.includes("name.startsWith('NFC')"),'Sleeper AFC/NFC division labels must drive conference assignment');
 assert(backend.includes("managers/history-cache.json"),'Fan sentiment must consume persistent manager career history');
-assert(backend.includes("import week1Preload2026 from './inquirer-week1-2026-preload.mjs'"),'League Hub must import the immutable Week 1 V16 preload');
+assert(backend.includes("import week1Preload2026 from './inquirer-week1-2026-preload.mjs'"),'League Hub must import the immutable rewritten Week 1 V17 preload');
 assert(backend.includes('preloadedBroadcast(season,week)'), 'League Hub weekly/archive paths must recognize preloaded completed editions');
 assert(backend.includes('preloadedReporterEntries(reporter.id)'), 'Reporter archives must merge each reporter’s Week 1 preload stories');
 assert(backend.includes("key:'preloaded:2026:1'"), 'Weekly archive index must expose preloaded Week 1');

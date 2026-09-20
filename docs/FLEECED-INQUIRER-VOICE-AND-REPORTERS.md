@@ -531,3 +531,97 @@ The archive remains:
 
 with metadata at:
 `data/inquirer/2026/week-01.meta.json`
+
+
+## V20 passionate beat-reporter newsroom — active standard
+
+V20 supersedes the V18/V19 presentation-oriented editions. The six reporting beats remain available as coverage requirements, but **they are no longer a fixed article template or fixed reading order**.
+
+### Identity and voice
+
+Each writer is a hometown beat reporter and fan whose emotional investment is visible on the page.
+
+All four reporters must:
+- be conversational, sarcastic and funny
+- use one-liners and observational humor naturally
+- show real elation after important wins and championships
+- show frustration, impatience and disappointment during losses or prolonged bad stretches
+- offer editorial judgment and newsroom insight beyond repeating the inputs
+- write as though they have followed the team all week, watched the game, know the manager's habits and have opinions about what happened
+- deliver statistics inside the story rather than pausing to explain what the statistics mean
+
+Distinct personality does **not** mean assigning one reporter the role of dry statistics analyst. Bartholomew in particular is a theatrical, overeducated, slightly pretentious hometown columnist with sharp sarcasm, not a "numbers desk" presenter.
+
+### Thirty-two articles, not thirty-two templates
+
+A weekly edition must feel like 32 separately filed stories.
+
+V20 uses the facts of each team's week to choose an editorial angle such as:
+- championship celebration
+- playoff survival or elimination
+- a legal lineup mistake
+- blowout win/loss
+- close win/loss
+- winning heater or losing spiral
+- unusually active front office
+- a broader win/loss story
+
+The order of the six reporting beats varies by article. The finished-edition audit requires multiple distinct section orders, and no one structure may dominate the edition.
+
+V20 also requires at least 14 narrative paragraphs per team article: the six reporting beats plus additional editorial/newsroom judgment. Extra paragraphs must add voice, insight, humor or emotional context—not filler.
+
+Repeated five-word openings and repeated normalized sentences are audited across the entire 32-team edition. If one line becomes a canned template, change the writer rather than relaxing the audit.
+
+### Lineup hindsight is slot-aware
+
+A reporter may criticize a bench/start decision only when the reserve could legally occupy the starter's actual Sleeper lineup slot.
+
+Examples:
+- an RB may replace an RB or eligible offensive FLEX slot
+- a WR may replace a WR or eligible offensive FLEX slot
+- a QB may replace a QB or eligible Superflex/OP slot
+- IDP positions remain inside their IDP-eligible positions/slots
+
+**An IDP player cannot be framed as a replacement for an RB, WR, QB or other offensive slot merely because the IDP player scored more fantasy points.**
+
+This rule applies everywhere, including fallback UI copy. Cross-position "best bench vs. worst starter" comparisons are prohibited unless the substitution is actually legal.
+
+### Archive behavior
+
+The Fleeced! Inquirer archive:
+- defaults to the current completed week
+- has Year, Week and Team filters
+- lets a reader select one team and move through that team's archived coverage
+- preserves the selected team when the reader changes archive year where that team remains available
+- retains reporter-specific archives in addition to the team/week archive
+
+Source/provenance text is still available but is collapsed behind a **Sources** disclosure so an article ends like journalism rather than a data report.
+
+### V20 generated-edition gate
+
+The canonical team audit remains:
+
+`node scripts/inquirer-prose-quality-audit.mjs`
+
+The audited 2026 Week 1 V20 edition records:
+- 32 articles
+- six reporting beats per article
+- at least 14 paragraphs per article
+- about 444 words per article on average
+- eight distinct section-order patterns across the league
+- zero five-word paragraph openings reused beyond the allowed limit
+- zero normalized sentences reused beyond the allowed limit
+- approximately 3.3% numeric-token density across the edition
+- all four reporters satisfying their personality/voice checks
+
+The separate League Notebook audit remains:
+
+`node scripts/inquirer-overview-quality-audit.mjs`
+
+It requires every desk—not only Tilly—to carry personality/humor, while preserving the five real prediction categories: championship, fraud, division, player and upset.
+
+The immutable Week 1 V20 archive is:
+`netlify/functions/inquirer-week1-2026-preload.mjs`
+
+with publication metadata:
+`data/inquirer/2026/week-01.meta.json`

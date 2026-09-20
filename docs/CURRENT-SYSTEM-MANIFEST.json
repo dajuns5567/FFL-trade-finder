@@ -54,7 +54,7 @@
     "inquirer_rotation": "8 teams per reporter per week; every reporter covers every team once across four consecutive weeks",
     "inquirer_real_stats_source": "Sleeper weekly raw stats",
     "inquirer_article_archives": "immutable standalone per-reporter article JSON + reporter archive index",
-    "inquirer_version": 18,
+    "inquirer_version": 20,
     "inquirer_live_context": [
       "season record and league rank",
       "winning/losing streaks from completed Sleeper matchups",
@@ -85,8 +85,8 @@
         "desk": "The Inquiry Desk"
       }
     ],
-    "inquirer_house_style": "Hometown beat reporter + fan; frequent sarcasm and embedded humor; first-person rooting interest; rival needling and self-deprecating team frustration allowed; all football facts remain Sleeper-grounded.",
-    "inquirer_article_standard": "Full long-form beat column: ~9–10 substantive paragraphs when data exists; minimum regression target 400 words; narrative analysis of season meaning, recent history, score construction, players, lineup/transactions, opponent quality, playoff/next-week stakes, and a closing kicker.",
+    "inquirer_house_style": "Passionate hometown beat reporter + fan. Every desk uses conversational sarcasm, one-liners, emotional investment and newsroom judgment. Personalities remain distinct; no reporter is assigned a dry numbers-presenter role. Facts remain grounded in league data.",
+    "inquirer_article_standard": "Six reporting beats with variable story order and team-specific editorial angle; minimum 14 narrative paragraphs; ~444 words average in audited 2026 Week 1 V20 edition; article must read as a separately filed beat column, not a six-part data presentation.",
     "inquirer_season_classification": {
       "regular_season_weeks": "1-13",
       "playoffs_weeks": "14-17",
@@ -144,19 +144,20 @@
     },
     "inquirer_published_editions": {
       "2026-week-1": {
-        "inquirer_version": 18,
-        "status": "published as audited immutable preload on PR #385; replaces V17 edition",
+        "inquirer_version": 20,
+        "status": "published as audited immutable preload on PR #385; replaces V19/V18 presentation-oriented edition",
         "team_articles": 32,
         "reporter_distribution": "8 team articles per reporter",
         "team_article_sections": 6,
-        "team_article_paragraphs": 12,
-        "average_team_article_words": 363,
+        "minimum_team_article_paragraphs": 14,
+        "average_team_article_words": 444,
+        "distinct_section_orders": 8,
+        "numeric_token_density": 0.033,
         "prose_audits": [
           "scripts/inquirer-prose-quality-audit.mjs",
           "scripts/inquirer-overview-quality-audit.mjs"
         ],
         "league_overview_sections": 4,
-        "league_overview_words": 496,
         "hot_takes": 5,
         "hot_take_types": [
           "championship",
@@ -165,16 +166,21 @@
           "player",
           "upset"
         ],
-        "nate_landman_real_stat_line_verified": true,
-        "generated_from": "completed Sleeper Week 1 data through V18 human-first newsroom",
-        "value_history_note": "no valid seven-day team Value History comparison existed, so no movement was invented",
+        "legal_lineup_swap_only": true,
+        "idp_cannot_replace_offensive_slot": true,
+        "archive_filters": [
+          "year",
+          "week",
+          "team"
+        ],
+        "archive_default": "current completed week",
         "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs",
         "metadata": "data/inquirer/2026/week-01.meta.json"
       }
     },
     "inquirer_article_structure": {
-      "canonical": "six-section human-first beat column",
-      "sections": [
+      "canonical": "variable-order passionate beat column",
+      "required_beats": [
         "game story / lede",
         "player performance",
         "management / lineup / transactions",
@@ -182,8 +188,9 @@
         "rolling Fan Sentiment",
         "next-week outlook / roster pressure"
       ],
-      "compatibility": "flat paragraphs array retained in archive; sections remain canonical",
-      "editorial_rule": "report the story; do not explain the data pipeline"
+      "order_rule": "section order varies by article; no one order may dominate more than 8 of 32 stories",
+      "minimum_paragraphs": 14,
+      "editorial_rule": "report the story, add newsroom judgment, humor and emotion; do not explain the data pipeline"
     },
     "inquirer_prose_quality": {
       "audit": "scripts/inquirer-prose-quality-audit.mjs",
@@ -192,12 +199,12 @@
       "minimum_team_article_words": 300,
       "minimum_median_paragraph_words": 24,
       "team_sections": 6,
-      "minimum_team_paragraphs": 12,
+      "minimum_team_paragraphs": 14,
       "max_numeric_token_density": 0.075,
       "max_uppercase_word_density": 0.018,
       "max_short_sentence_ratio": 0.22,
       "minimum_normalized_headline_patterns_per_reporter": 6,
-      "maximum_reuse_of_same_five_word_paragraph_opener": 8,
+      "maximum_reuse_of_same_five_word_paragraph_opener": 4,
       "prohibited": [
         "pipe-delimited stat-dump prose",
         "legacy V16/V17 checklist language",
@@ -206,7 +213,10 @@
         "internal reporter voice prompt displayed to readers",
         "all-caps body gimmick as substitute for voice"
       ],
-      "rule": "fix generated prose when the edition fails; do not relax the audit merely to publish"
+      "rule": "fix generated prose when the edition fails; do not relax the audit merely to publish",
+      "required_distinct_section_orders": 4,
+      "maximum_articles_using_one_section_order": 8,
+      "maximum_reuse_of_same_normalized_sentence": 4
     },
     "inquirer_league_notebook": {
       "canonical": "four-desk human League Notebook",
@@ -227,6 +237,23 @@
       "transaction_players": true,
       "defensive_alias_fallbacks": true,
       "nate_landman_week1_regression": "player 8659 must resolve 5 solo, 3 assists, 1 QB hit, 1 PD"
+    },
+    "inquirer_lineup_hindsight": {
+      "source": "Sleeper lineup slots and player positions",
+      "rule": "criticize a bench/start decision only when reserve is legally eligible for the starter's actual lineup slot",
+      "offense_idp_isolation": true,
+      "prohibited": "IDP scorer presented as an RB/WR/QB/offensive replacement merely because bench fantasy points are higher"
+    },
+    "inquirer_archive_ui": {
+      "default": "current completed week",
+      "filters": [
+        "year",
+        "week",
+        "team"
+      ],
+      "preserve_team_across_year_change": true,
+      "reporter_archives": true,
+      "sources_display": "collapsed disclosure"
     }
   },
   "recovery_branches": {

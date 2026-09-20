@@ -3,7 +3,7 @@
   "season": 2026,
   "week": 1,
   "inquirer_version": 17,
-  "generated_at": "2026-09-20T01:07:32.258Z",
+  "generated_at": "2026-09-20T01:11:14.709Z",
   "teams": 32,
   "reporters": [
     "Nick Swindell",
@@ -18,6 +18,6 @@
   "average_team_article_words": 840,
   "prose_quality_audit": "passed scripts/inquirer-prose-quality-audit.mjs before commit",
   "replaces": "V16 Week 1 checklist-style edition",
-  "source": "Completed Sleeper Week 1 data via V17 narrative writer",
+  "source": "Completed Sleeper Week 1 data via corrected V17 narrative writer",
   "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs"
 }

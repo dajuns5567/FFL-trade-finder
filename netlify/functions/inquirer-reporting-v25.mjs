@@ -462,21 +462,61 @@ function gameImportance(g){
  const sameDivision=String(g.winner?.division||'')!==''&&String(g.winner?.division)===String(g.loser?.division),bubble=[g.winner,g.loser].reduce((n,t)=>n+(Math.abs(Number(t.league_context?.spots_from_playoff_line)||0)<=3?1:0),0),playoff=[g.winner,g.loser].reduce((n,t)=>n+(valid(t.mida_outlook?.playoff)?Math.max(0,50-Math.abs(Number(t.mida_outlook.playoff)-50)):0),0);
  return (g.upset?80:0)+(g.margin<=6?60:0)+Math.max(0,50-g.margin)+(sameDivision?70:0)+bubble*35+playoff+Math.min(40,g.combined/8);
 }
-function implicationStory(g){
- const w=g.winner,l=g.loser,sameDivision=String(w.division||'')!==''&&String(w.division)===String(l.division),wr=w.league_context?.record||{},lr=l.league_context?.record||{},wp=valid(w.mida_outlook?.playoff)?Number(w.mida_outlook.playoff):null,lp=valid(l.mida_outlook?.playoff)?Number(l.mida_outlook.playoff):null,parts=[];
- if(sameDivision)parts.push(`Because this was a ${w.division_name||'division'} game, ${w.team_name} banked a result that matters twice: one more win for itself and one loss handed directly to ${l.team_name}. It is far too early to pretend a tiebreaker is settled, but this is the kind of September result teams wish they had back when the division tightens later.`);
- else parts.push(`${w.team_name} leaves the week at ${Number(wr.wins)||0}-${Number(wr.losses)||0}, while ${l.team_name} is ${Number(lr.wins)||0}-${Number(lr.losses)||0}. That does not define either season, but it changes the amount of pressure each side carries into the next stretch.`);
- if(wp!=null||lp!=null)parts.push(`${wp!=null?w.team_name+' now sits around '+one(wp)+'% to reach the playoffs':''}${wp!=null&&lp!=null?', while ':''}${lp!=null?l.team_name+' is around '+one(lp)+'%':''}. Those numbers are not destiny; they are a useful picture of how much runway each team currently owns. ${w.team_name} can spend the next few weeks building cushion. ${l.team_name} has less room to let another winnable matchup drift away.`);
- const wdiv=(w.division_results||[]).filter(x=>Number(x.points)!==Number(x.opponent_points)),ldiv=(l.division_results||[]).filter(x=>Number(x.points)!==Number(x.opponent_points));
- if(!sameDivision&&(wdiv.length||ldiv.length))parts.push(`Around the divisions, the result also changes who is chasing whom. ${w.team_name} gets to watch the next round from a slightly stronger position; ${l.team_name} now needs its own response before rival results start doing the talking for it.`);
- return parts.join(' ');
+
+function divisionPressure(t,result){
+  const rivals=t.division_results||[],winners=rivals.filter(x=>Number(x.points)>Number(x.opponent_points)).map(x=>x.team_name),losers=rivals.filter(x=>Number(x.points)<Number(x.opponent_points)).map(x=>x.team_name);
+  if(result==='W'){
+    if(losers.length&&winners.length)return t.team_name+' gained ground on '+losers.join(', ')+' but got no breathing room from '+winners.join(', ')+'.';
+    if(losers.length)return t.team_name+' also got help from '+losers.join(', ')+' losing elsewhere in the division.';
+    if(winners.length)return winners.join(', ')+' won too, so '+t.team_name+' kept pace rather than creating separation.';
+  }else{
+    if(winners.length&&losers.length)return winners.join(', ')+' won while '+losers.join(', ')+' lost, so the damage around '+t.division_name+' was mixed rather than clean.';
+    if(winners.length)return winners.join(', ')+' won elsewhere, which makes this loss cost '+t.team_name+' a little more ground.';
+    if(losers.length)return losers.join(', ')+' also lost, limiting the divisional damage without making this result any prettier.';
+  }
+  return null;
+}
+function implicationStory(g,slot=0){
+  const w=g.winner,l=g.loser,sameDivision=String(w.division||'')!==''&&String(w.division)===String(l.division),wr=w.league_context?.record||{},lr=l.league_context?.record||{},wp=valid(w.mida_outlook?.playoff)?Number(w.mida_outlook.playoff):null,lp=valid(l.mida_outlook?.playoff)?Number(l.mida_outlook.playoff):null,wdiv=divisionPressure(w,'W'),ldiv=divisionPressure(l,'L');
+  const playoffLine=wp!=null||lp!=null?((wp!=null?w.team_name+' is around '+one(wp)+'% to reach the playoffs':'' )+(wp!=null&&lp!=null?', while ':'')+(lp!=null?l.team_name+' is around '+one(lp)+'%':''))+'. ':'';
+  if(sameDivision)return 'The standings consequence is immediate because these teams share '+(w.division_name||'a division')+'. '+w.team_name+' gets the win and hands the loss directly to '+l.team_name+', the sort of early result that matters again when tiebreaker conversations arrive months from now. '+playoffLine+w.team_name+' leaves at '+(Number(wr.wins)||0)+'-'+(Number(wr.losses)||0)+' with a little more control of its own road; '+l.team_name+' leaves at '+(Number(lr.wins)||0)+'-'+(Number(lr.losses)||0)+' knowing the return meeting just became more important.';
+  if(slot===0)return playoffLine+w.team_name+' can treat this as the first piece of cushion rather than proof of anything grand. '+l.team_name+' has the opposite assignment: turn the loss into an isolated bruise before a second bad Sunday turns it into the beginning of a chase. '+[wdiv,ldiv].filter(Boolean).join(' ');
+  if(slot===1)return w.team_name+' walks into next week '+(Number(wr.wins)||0)+'-'+(Number(wr.losses)||0)+', and that record gives it the luxury of building instead of repairing. '+l.team_name+' is '+(Number(lr.wins)||0)+'-'+(Number(lr.losses)||0)+', where another close loss would start making every future toss-up feel less optional. '+playoffLine+[wdiv,ldiv].filter(Boolean).join(' ');
+  if(slot===2)return 'For '+w.team_name+', the value of this result is the freedom it buys later: one banked win is one fewer rescue mission the schedule has to provide. For '+l.team_name+', the road narrows by exactly one opportunity, which is why the next favorable matchup matters more now than it did a week ago. '+playoffLine+[wdiv,ldiv].filter(Boolean).join(' ');
+  if(slot===3)return playoffLine+'The winner gets to spend the next week talking about how to build on the result; the loser has to spend it explaining what must change. That difference sounds small in September and feels much larger when the middle of the season starts charging interest. '+[wdiv,ldiv].filter(Boolean).join(' ');
+  return w.team_name+' earned the pleasant version of the future: keep stacking ordinary wins and let somebody else chase. '+l.team_name+' now needs a response before this becomes the kind of early loss that shows up again when playoff math gets uncomfortable. '+playoffLine+[wdiv,ldiv].filter(Boolean).join(' ');
 }
 
-function gameStory(g){
+function gameStory(g,slot=0){
   const star=list(g.winner)[0],loserStar=list(g.loser)[0],winnerSupport=list(g.winner)[1],loserMiss=list(g.loser).filter(p=>delta(p)!=null).sort((a,b)=>delta(a)-delta(b))[0];
-  if(g.upset)return `${g.winner.team_name} supplied the week’s cleanest upset, beating ${g.loser.team_name} ${one(g.winner.points)}–${one(g.loser.points)} after entering the matchup behind on the projection. ${star?star.name+' led the winning side with '+one(star.points)+' points. ':''}${winnerSupport?winnerSupport.name+' gave the winner another performance worth remembering, which is why the upset feels sturdier than one player stealing it alone. ':''}${loserStar?`${loserStar.name} gave ${g.loser.team_name} ${one(loserStar.points)} points, but the rest of the answer never arrived. `:''}${loserMiss&&loserMiss.name!==loserStar?.name?`${loserMiss.name}’s ${one(loserMiss.points)}-point showing is the performance that will nag at the losing side all week. `:''}That is the kind of result that changes the conversation before the standings have had time to settle.`;
-  if(g.margin<=6)return `${g.winner.team_name} escaped ${g.loser.team_name} ${one(g.winner.points)}–${one(g.loser.points)} in one of the games everybody kept checking. ${star?`${star.name}’s ${one(star.points)} points mattered more because there was almost no room to waste them. `:''}${winnerSupport?`${winnerSupport.name} gave ${g.winner.team_name} another useful answer when the game tightened. `:''}${loserStar?`${loserStar.name} kept ${g.loser.team_name} close with ${one(loserStar.points)} points, which only makes the final margin hurt more. `:''}${loserMiss&&loserMiss.name!==loserStar?.name?`${loserMiss.name} finished at ${one(loserMiss.points)}, the sort of quiet slot that becomes enormous in a one-score fantasy game. `:''}Neither roster gets a sweeping conclusion from a margin this small, but both leave the week knowing exactly where the result turned.`;
-  return `${g.winner.team_name} handled ${g.loser.team_name} ${one(g.winner.points)}–${one(g.loser.points)}. ${star?`${star.name} set the tone with ${one(star.points)}, and the margin made the rest of the league notice. `:''}${winnerSupport?`${winnerSupport.name} gave the winning side real support instead of making it a one-star production. `:''}${loserStar?`${loserStar.name} was the best reply for ${g.loser.team_name} at ${one(loserStar.points)}, but there was too much scoreboard left to chase. `:''}A comfortable Week 1 win does not settle a season; it does give the winner permission to expect more of the same next Sunday.`;
+  if(g.upset){
+    const open=[
+      g.winner.team_name+' delivered the projection upset that deserves the lead, beating '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
+      g.winner.team_name+' ignored the pregame forecast and took '+g.loser.team_name+' down '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
+      'Another favorite learned the usual lesson when '+g.winner.team_name+' beat '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+': projections do not get lineup spots. ',
+      g.winner.team_name+' turned a projected disadvantage into a '+one(g.winner.points)+'–'+one(g.loser.points)+' win over '+g.loser.team_name+'. ',
+      'The quieter upset on the board belongs to '+g.winner.team_name+', '+one(g.winner.points)+'–'+one(g.loser.points)+' over '+g.loser.team_name+'. '
+    ][slot%5];
+    return open+(star?star.name+' led the winning side with '+one(star.points)+' points. ':'')+(winnerSupport?winnerSupport.name+' gave the result enough support to keep it from becoming a one-player heist. ':'')+(loserStar?loserStar.name+' answered with '+one(loserStar.points)+' for '+g.loser.team_name+'. ':'')+(loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+' is the name that will bother the losing side after finishing at '+one(loserMiss.points)+'. ':'')+(slot===0?'That is the sort of Week 1 result that changes the tone before the standings have had time to settle.':'The favorite now has to prove the forecast was more right about the season than it was about Sunday.');
+  }
+  if(g.margin<=6){
+    const open=[
+      g.winner.team_name+' escaped '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+' in one of the games everybody kept checking. ',
+      'The week’s best argument against multitasking was '+g.winner.team_name+' over '+g.loser.team_name+', '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
+      g.winner.team_name+' survived the kind of game that turns every lineup decision into a replay, edging '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
+      'There was almost nothing between '+g.winner.team_name+' and '+g.loser.team_name+' before '+g.winner.team_name+' came out '+one(g.margin)+' points ahead. ',
+      g.winner.team_name+' got the final word in a '+one(g.winner.points)+'–'+one(g.loser.points)+' grinder with '+g.loser.team_name+'. '
+    ][slot%5];
+    return open+(star?star.name+' mattered more because there was almost no room to waste his '+one(star.points)+' points. ':'')+(winnerSupport?winnerSupport.name+' supplied the kind of secondary performance close games punish teams for missing. ':'')+(loserStar?loserStar.name+' kept '+g.loser.team_name+' alive with '+one(loserStar.points)+'. ':'')+(loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+' finished at '+one(loserMiss.points)+', and a line that quiet looks enormous when the margin is this small. ':'')+'Nobody gets to call a game this close destiny; both teams leave knowing exactly which handful of plays and lineup spots decided it.';
+  }
+  const opens=[
+    g.winner.team_name+' handled '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
+    g.winner.team_name+' spent Sunday making '+g.loser.team_name+' chase a game that never really came back, '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
+    'One of the week’s clearest statements came from '+g.winner.team_name+', which beat '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
+    g.winner.team_name+' never needed a dramatic ending against '+g.loser.team_name+', closing out a '+one(g.winner.points)+'–'+one(g.loser.points)+' win. ',
+    'The comfortable result worth keeping is '+g.winner.team_name+' over '+g.loser.team_name+', '+one(g.winner.points)+'–'+one(g.loser.points)+'. '
+  ];
+  return opens[slot%5]+(star?star.name+' set the tone with '+one(star.points)+'. ':'')+(winnerSupport?winnerSupport.name+' made sure the winning side had more than one place to look for production. ':'')+(loserStar?loserStar.name+' was the best reply for '+g.loser.team_name+' at '+one(loserStar.points)+', but the scoreboard kept moving away. ':'')+'A comfortable early win is not a season verdict. It is permission for '+g.winner.team_name+' to expect the same standard next week.';
 }
 
 function availabilityStory(teams){
@@ -508,8 +548,8 @@ export function expandWeeklyRecapV25(o,teams,week){
   const upMove=movement(teams,1),downMove=movement(teams,-1),trend=playerTrend(teams),availability=availabilityStory(teams),moves=teams.map(t=>({t,text:managementStory(t)})).filter(x=>x.text).slice(0,2),next=nextGame(teams);
   const original=o.sections||[],reporter=i=>original[i]?.reporter||null;
   const sections=[
-    {reporter:reporter(0),heading:'What Actually Mattered This Week',paragraphs:chosen.length?chosen.flatMap(g=>[gameStory(g),implicationStory(g)]):['The week did not produce enough verified matchup detail for a responsible lead story.']},
-    {reporter:reporter(1),heading:'The Market and the Players Are Telling Us Something',paragraphs:[
+    {reporter:reporter(0),heading:'What Actually Mattered This Week',paragraphs:chosen.length?chosen.flatMap((g,i)=>[gameStory(g,i),implicationStory(g,i)]):['The week did not produce enough verified matchup detail for a responsible lead story.']},
+    {reporter:reporter(1),heading:'The Velvet Rope: Form, Fortune and the Week’s Unfashionable Truths',paragraphs:[
       upMove?`${upMove.team_name} posted the week’s strongest team-value move at ${Number(upMove.value_history_week.delta)>0?'+':''}${Math.round(Number(upMove.value_history_week.delta)).toLocaleString('en-US')}. That does not win a matchup by itself, but it changes how the roster is viewed going into the next trade conversation.`:null,
       downMove&&(!upMove||String(downMove.roster_id)!==String(upMove.roster_id))?`${downMove.team_name} moved the other direction, down ${Math.abs(Math.round(Number(downMove.value_history_week.delta))).toLocaleString('en-US')} in team value. The important question now is whether that is a temporary market bruise or the start of a roster problem the manager has to address.`:null,
       trend?`${trend.p.name} is the player trend worth following: ${one(trend.p.recent_form.last3_avg)} per game over the last three after ${one(trend.p.recent_form.prior3_avg)} in the prior sample for ${trend.t.team_name}. ${trend.p.recent_form.label==='hot'?'The arrow is pointing up, but the next few weeks decide whether this becomes a new baseline or just a heater.':'The slide is real enough to watch now, and the next matchup will tell us whether the correction has started.'}`:null

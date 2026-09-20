@@ -202,7 +202,7 @@ function bestEligibleLineupMiss(starters,bench){
   }
   return best;
 }
-const teamName=id=>{const r=rb.get(String(id)),u=ub.get(String(r?.owner_id||''));return String(u?.metadata?.team_name||u?.display_name||('Roster '+id))};
+const teamName=id=>{const r=rb.get(String(id)),u=ub.get(String(r?.owner_id||''));return String(u?.metadata?.team_name||u?.display_name||('Roster '+id)).trim()};
 const canonicalWeekTrades=tradeRows(transactions,teamName);
 function tradeAcquisitionHistory(trades,rosterId,currentPlayerIds){
   const rid=String(rosterId),current=new Set((currentPlayerIds||[]).map(String)),seen=new Set(),out=[];

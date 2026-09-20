@@ -127,7 +127,7 @@ function management(t,facts,reporter){
     ]));
     else bits.push(deskChoice(t,reporter,[
       [`${t.manager_name} cut ${drop}; the replacement plan now matters.`,`${drop} is gone from ${t.manager_name}’s roster, which makes the next move worth watching.`],
-      [`${t.manager_name} showed ${drop} the door. The roster spot had better have plans.`,`${drop} was removed from ${t.manager_name}’s guest list; an empty chair is not a strategy.`],
+      [`${t.manager_name} showed ${drop} the door. ${t.team_name} now has to prove that roster spot has a better use.`,`${drop} was removed from ${t.manager_name}’s guest list; an empty chair is not a strategy.`],
       [`CUT: ${t.manager_name} moved on from ${drop}. The back page would like to see what comes next.`,`${t.manager_name} dropped ${drop}, so somebody else now has to justify the empty space.`],
       [`The file records ${t.manager_name} cutting ${drop}. The follow-up is what replaces that piece.`,`${drop} appears in the outgoing column for ${t.manager_name}; the inquiry now shifts to the replacement.`]
     ]));
@@ -146,7 +146,7 @@ function management(t,facts,reporter){
     ]));
     if(outgoing&&(!incoming||Number(outgoing.value)>Number(incoming.value)*1.15))bits.push(deskChoice(t,reporter,[
       [`${outgoing.name} is the meaningful cost; that departure has to be replaced somewhere.`,`${outgoing.name} carries enough value out the door that the rest of the plan cannot be ignored.`],
-      [`${outgoing.name} is the expensive goodbye. The empty space now has expectations.`,`${outgoing.name} leaves the larger bill behind, which makes the replacement more than a matter of taste.`],
+      [`${outgoing.name} is the expensive goodbye. ${t.team_name} now has to make the vacancy more useful than the player it surrendered.`,`${outgoing.name} leaves the larger bill behind, which makes the replacement more than a matter of taste.`],
       [`${outgoing.name} IS THE COST. Somebody on this roster now has to make that departure look smart.`,`The loud part of the outgoing side is ${outgoing.name}; replacing that value is the next headline.`],
       [`${outgoing.name} is the material outgoing evidence. The replacement plan belongs in the next filing.`,`The cost side centers on ${outgoing.name}, a departure too substantial to wave away.`]
     ]));
@@ -615,10 +615,16 @@ function managementStory(t){
   const s=t.inquirer_article?.sections?.find(x=>x.kind==='management'),p=(s?.paragraphs||[]).find(x=>x&&x!=='n/a');return p||null;
 }
 function tillyManagementStory(t){
-  const core=managementStory(t);if(!core)return null;
-  const trade=(t.trade_acquisitions||[])[0],lead=trade?`TRADE FOLLOW-UP: ${t.team_name} has ${trade.player_name} because management dealt for him, so every useful or useless Sunday belongs to that decision now. `:`ROSTER MOVE WORTH WATCHING: ${t.team_name} made one of the few transactions this week that actually changed the football conversation. `;
-  const p=trade?(t.starter_details||[]).find(x=>String(x.id)===String(trade.player_id)):null,context=p?playerContextParagraph(p):'';
-  return lead+core+(context?` ${context}`:'')+` The back page will revisit ${t.team_name} when this move has several matchups behind it; the useful question is what changed on Sundays, not who won one afternoon of transaction chatter.`;
+  const facts=t.transaction_player_facts||{},clean={...t,transactions:consolidateTransactions(t)},pick=selectImportantMoves(clean,facts)[0];if(!pick)return null;
+  const add=names(pick.add),drop=names(pick.drop),isTrade=String(pick.move?.type||'').toLowerCase()==='trade',incoming=(pick.add||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],outgoing=(pick.drop||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],bits=[];
+  if(isTrade&&add)bits.push(`TRADE FOLLOW-UP: ${t.team_name} brought in ${add}${drop?' and sent out '+drop:''}. That is a roster bet with a price attached, so the back page gets to keep grading the football consequences long after the transaction alert disappears.`);
+  else if(add&&drop)bits.push(`ROSTER MOVE: ${t.team_name} brought in ${add} and moved on from ${drop}. Fine. Now the new piece has to make the Sunday lineup better, because winning the transaction feed is not a standings category.`);
+  else if(add)bits.push(`NEW ARRIVAL: ${t.team_name} added ${add}. The interesting part starts now: role, usage and whether this player fixes something the roster actually needed.`);
+  else if(drop)bits.push(`CUT WATCH: ${t.team_name} moved on from ${drop}. The question is not whether the move looked tidy on Tuesday; it is whether the vacated role becomes more useful by Sunday.`);
+  if(incoming&&valid(incoming.points))bits.push(`${incoming.name} immediately gave ${t.team_name} ${one(incoming.points)} fantasy points${incoming.real_stat_line?' from '+incoming.real_stat_line.replaceAll(' • ',', '):''}. ${playerContextParagraph(incoming)||'That first return is worth noting without pretending the sample is finished.'}`);
+  if(outgoing&&valid(outgoing.points)&&Number(outgoing.points)>=10)bits.push(`${outgoing.name} answered the exit with ${one(outgoing.points)} points. That does not make the move wrong by itself, but it guarantees ${t.manager_name} gets a follow-up question if the replacement does not produce.`);
+  bits.push(`For ${t.team_name}, this move should be judged across the next several matchups: does the role improve, does the roster gain another way to win, and does the cost keep looking reasonable once the first-week noise is gone?`);
+  return bits.join(' ');
 }
 function playerTrend(teams){
   return teams.flatMap(t=>(t.starter_details||[]).map(p=>({t,p}))).filter(x=>['hot','cold'].includes(x.p?.recent_form?.label)).sort((a,b)=>Math.abs(Number(b.p.recent_form?.delta)||0)-Math.abs(Number(a.p.recent_form?.delta)||0))[0]||null;

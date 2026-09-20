@@ -1,7 +1,7 @@
 'use strict';
 
 import {buildNarrativeArticle} from './inquirer-narrative-v17.mjs';
-import {buildHumanLeagueOverview} from './inquirer-overview-v18.mjs';
+import {buildHumanLeagueOverviewV19} from './inquirer-overview-v19.mjs';
 
 export const INQUIRER_VERSION=19;
 export const INQUIRER_PLAYOFF_START_WEEK=14;
@@ -351,5 +351,5 @@ function hotTakeRows(teams,reporters){
  return takes;
 }
 export function buildLeagueOverview(args){
- return buildHumanLeagueOverview({...args,reporters:REPORTERS});
+ return buildHumanLeagueOverviewV19({...args,reporters:REPORTERS});
 }

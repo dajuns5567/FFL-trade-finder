@@ -55,6 +55,7 @@ for(const team of teams){
   if(nums/Math.max(1,wc)>.075)fail(team.team_name+' is too numbers-heavy: '+(100*nums/wc).toFixed(1)+'% numeric-token density');
   if(upp/Math.max(1,wc)>.018)fail(team.team_name+' body relies too heavily on all-caps words');
   if(/\s\|\s/.test(body))fail(team.team_name+' still contains pipe-delimited stat-dump prose');
+  if(/\b(?:1th|2th|3th|21th|22th|23th|31th|32th)\b/i.test(body))fail(team.team_name+' contains a malformed standings ordinal');
   if(/\b(?:PUT THESE MEN ON THE FRONT PAGE|THE SUPPORTING CAST|ABOUT THE PEOPLE WE JUST|LET US AUTOPSY|NOW FOR THE PART WE WILL)\b/i.test(body))fail(team.team_name+' still contains V16 checklist-template copy');
 
   let short=0,sents=0;

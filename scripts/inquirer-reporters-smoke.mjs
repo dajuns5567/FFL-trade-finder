@@ -66,7 +66,8 @@ for(const t of built.teams){
  assert(a?.reporter?.id&&a?.headline&&a?.byline,'Each team article must preserve reporter identity, headline, and byline');
  assert((a.paragraphs||[]).some(p=>/fantasy points/i.test(p)),'Each performance article must cite fantasy points in prose');
  assert((a.paragraphs||[]).some(p=>/rec|solo|sacks|yds/.test(p)),'Each performance article must cite real-life Sleeper stats');
- assert((a.paragraphs||[]).some(p=>/5-1|winning streak|playoff push|league rank/i.test(p)),'Each article must include verified season/standings/streak/playoff context when available');
+ assert(a.facts?.league_context?.standings_rank===t.league_context.standings_rank&&a.facts?.league_context?.record?.wins===t.league_context.record.wins,'Each article must preserve verified season/standings/streak/playoff context in its facts');
+ assert((a.paragraphs||[]).some(p=>p.includes(String(t.league_context.record.wins)+'-'+String(t.league_context.record.losses))||/streak|Week 14|playoff/i.test(p)),'Each article must weave verified season context into narrative prose');
  assert((a.paragraphs||[]).some(p=>/last three|prior three|stretch/i.test(p)),'Player coverage must support multi-game performance context when enough Sleeper history exists');
  assert((a.sections||[]).length===6&&(a.paragraphs||[]).length>=12,'Each Inquirer story must be a six-section multi-paragraph article, not a recap');
  const articleWords=(a.paragraphs||[]).join(' ').trim().split(/\s+/).filter(Boolean).length;

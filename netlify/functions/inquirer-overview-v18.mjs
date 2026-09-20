@@ -1,6 +1,7 @@
 'use strict';
 
 const one=v=>Number(v||0).toFixed(1);
+const ordinal=n=>{const x=Math.abs(Number(n)||0),m100=x%100,m10=x%10;return String(x)+(m100>=11&&m100<=13?'th':m10===1?'st':m10===2?'nd':m10===3?'rd':'th')};
 const rec=t=>{const r=t?.league_context?.record||{};return String(r.wins||0)+'-'+String(r.losses||0)+(Number(r.ties)?'-'+String(r.ties):'')};
 const rank=t=>Number(t?.league_context?.standings_rank)||999;
 const recent=t=>{const n=Number(t?.league_context?.recent_avg_points);return Number.isFinite(n)?n:Number(t?.points)||0};
@@ -14,8 +15,8 @@ function strength(t){
 }
 
 function contender(rows){return rows.slice().sort((a,b)=>strength(b)-strength(a))[0]||null}
-function fraud(rows){
-  const pool=rows.filter(t=>rank(t)<=Math.max(8,Number(t?.league_context?.playoff_teams)||16)&&t.won!==false);
+function fraud(rows,excludeId=''){
+  const pool=rows.filter(t=>String(t.roster_id)!==String(excludeId||'')&&rank(t)<=Math.max(8,Number(t?.league_context?.playoff_teams)||16)&&t.won!==false);
   return (pool.length?pool:rows).slice().sort((a,b)=>{const sa=recent(a)-rank(a)*1.5+streak(a)*4+valueMove(a)/500,sb=recent(b)-rank(b)*1.5+streak(b)*4+valueMove(b)/500;return sa-sb})[0]||null;
 }
 
@@ -56,7 +57,7 @@ export function buildHumanLeagueOverview({season,week,teams,players,transactions
   const rows=(teams||[]).slice(),classification=weekClassification||{},teamById=new Map(rows.map(t=>[String(t.roster_id),t]));
   const top=rows.slice().sort((a,b)=>Number(b.points)-Number(a.points))[0]||null;
   const margin=rows.slice().sort((a,b)=>Math.abs(Number(b.points)-Number(b.opponent_points))-Math.abs(Number(a.points)-Number(a.opponent_points)))[0]||null;
-  const champ=contender(rows),fake=fraud(rows),poy=playerOfYear(rows),divs=divisionPicks(rows),up=upset(rows),adds=txNames(transactions,players,teamById);
+  const champ=contender(rows),fake=fraud(rows,champ?.roster_id),poy=playerOfYear(rows),divs=divisionPicks(rows),up=upset(rows),adds=txNames(transactions,players,teamById);
   const bottom=rows.slice().sort((a,b)=>rank(b)-rank(a))[0]||null;
   const pressure=rows.slice().sort((a,b)=>((b.next_week_availability?.bye_current_starters?.length||0)+(b.next_week_availability?.injury_current_starters?.length||0))-((a.next_week_availability?.bye_current_starters?.length||0)+(a.next_week_availability?.injury_current_starters?.length||0)))[0]||null;
   const trade=tradeSentence(canonicalTrades,players,teamById);
@@ -64,7 +65,7 @@ export function buildHumanLeagueOverview({season,week,teams,players,transactions
   const sections=[
     {reporter:reporterPublic(reporters[0]),heading:'The League Woke Up Talking About This',paragraphs:[
       top?top.team_name+' owned the loudest scoreboard of Week '+week+' with '+one(top.points)+' points, and nobody needed a spreadsheet to notice. '+(margin&&margin.roster_id!==top.roster_id?margin.team_name+' supplied the other result people kept checking, a '+one(Math.abs(Number(margin.points)-Number(margin.opponent_points)))+'-point blowout.':'It was the kind of performance that gets screenshotted before the app has even finished updating.'):'Week '+week+' did not leave a clean scoring headliner.',
-      champ?champ.team_name+' is the team I would least enjoy seeing across the bracket right now. They are '+rec(champ)+', '+(rank(champ)<999?String(rank(champ))+'th in the table, ':'')+'and the roster is giving off contender energy instead of one-week novelty.':'The contender picture is still too thin to make a clean call.'
+      champ?champ.team_name+' is the team I would least enjoy seeing across the bracket right now. They are '+rec(champ)+', '+(rank(champ)<999?ordinal(rank(champ))+' in the table, ':'')+'and the roster is giving off contender energy instead of one-week novelty.':'The contender picture is still too thin to make a clean call.'
     ]},
     {reporter:reporterPublic(reporters[1]),heading:'Who I Believe — and Who I Don’t',paragraphs:[
       champ?'My early championship ticket is '+champ.team_name+'. I am planting the flag now, before the bracket makes it obvious. The record is '+rec(champ)+', but the part I trust more is that the scoring and recent form are not asking one miracle player to save them every Sunday.':'I am withholding the championship flag for one more week, which pains me more than it should.',

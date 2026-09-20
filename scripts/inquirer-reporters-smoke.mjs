@@ -6,9 +6,9 @@ const assert=(x,m)=>{if(!x)throw new Error(m)};
 assert(REPORTERS.length===4,'Fleeced Inquirer must have exactly four permanent reporters');
 assert(REPORTERS.map(r=>r.name).join('|')==='Nick Swindell|Bartholomew Roycington III|Tilly Fleecer|Jefferson Filch','Fleeced Inquirer public reporter names must remain the approved names');
 assert(INQUIRER_PLAYOFF_START_WEEK===14&&INQUIRER_FINAL_WEEK===17,'Inquirer season must classify Weeks 14-17 as playoffs and stop at Week 17');
-assert(week1Preload?.inquirer_version===24&&Number(week1Preload?.season)===2026&&Number(week1Preload?.week)===1,'Committed Week 1 preload must be the rewritten 2026 V21 edition');
+assert(week1Preload?.inquirer_version===25&&Number(week1Preload?.season)===2026&&Number(week1Preload?.week)===1,'Committed Week 1 preload must be the generated 2026 V25 edition');
 assert(Array.isArray(week1Preload?.teams)&&week1Preload.teams.length===32,'Committed Week 1 preload must contain all 32 team articles');
-assert(week1Preload.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(t?.inquirer_article?.sections)&&t.inquirer_article.sections.length===8&&Array.isArray(t?.inquirer_article?.paragraphs)&&t.inquirer_article.paragraphs.length>=8),'Every preloaded Week 1 team must have an eight-section V21 article with Hot Seat and Cool Throne');
+assert(week1Preload.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(t?.inquirer_article?.sections)&&t.inquirer_article.sections.length===8&&Array.isArray(t?.inquirer_article?.paragraphs)&&t.inquirer_article.paragraphs.length>=8),'Every preloaded Week 1 team must have an eight-section V25 article with Hot Seat and Cool Throne');
 const preloadReporterCounts=new Map(REPORTERS.map(r=>[r.name,0]));
 for(const t of week1Preload.teams){const n=t?.inquirer_article?.reporter?.name;preloadReporterCounts.set(n,(preloadReporterCounts.get(n)||0)+1)}
 for(const r of REPORTERS)assert(preloadReporterCounts.get(r.name)===8,'Week 1 preload must preserve exactly eight team stories for '+r.name);
@@ -69,9 +69,9 @@ for(const t of built.teams){
  assert(a.facts?.league_context?.standings_rank===t.league_context.standings_rank&&a.facts?.league_context?.record?.wins===t.league_context.record.wins,'Each article must preserve verified season/standings/streak/playoff context in its facts');
  assert((a.paragraphs||[]).some(p=>p.includes(String(t.league_context.record.wins)+'-'+String(t.league_context.record.losses))||/streak|Week 14|playoff/i.test(p)),'Each article must weave verified season context into narrative prose');
  assert((a.facts?.starter_details||[]).every(p=>p.recent_form!=null),'Player coverage must preserve multi-game performance context for the writer when history exists');
- assert((a.sections||[]).length===8&&(a.paragraphs||[]).length>=8,'Each V21 Inquirer story must preserve six reporting beats, Hot Seat, Cool Throne, and full section depth');
+ assert((a.sections||[]).length===8&&(a.paragraphs||[]).length>=8,'Each V25 Inquirer story must preserve six reporting beats, Hot Seat, Cool Throne, and full section depth');
  const articleWords=(a.paragraphs||[]).join(' ').trim().split(/\s+/).filter(Boolean).length;
- assert(articleWords>=200,'Each V21 Inquirer story must contain a complete human-readable beat column rather than a checklist summary; got '+articleWords+' words');
+ assert(articleWords>=200,'Each V25 Inquirer story must contain a complete human-readable beat column rather than a checklist summary; got '+articleWords+' words');
  assert((a.sections||[]).some(s=>s.kind==='players'&&(s.paragraphs||[]).length>=Math.min(2,t.starter_details.length)),'Each article must connect available leading and supporting player performances to the result');
  const managementSection=(a.sections||[]).find(s=>s.kind==='management');
  assert(managementSection&&(managementSection.paragraphs||[]).length>=1&&managementSection.paragraphs.length<=2,'Each article must contain a complete management/lineup section with transaction-quality judgment');
@@ -176,7 +176,7 @@ assert(backend.includes('injury_status'),'Inquirer must use Sleeper injury desig
 assert(backend.includes("league?.metadata?.['division_'+d]"),'Conference must be derived from Sleeper division metadata rather than hardcoded roster IDs');
 assert(backend.includes("name.startsWith('AFC')")&&backend.includes("name.startsWith('NFC')"),'Sleeper AFC/NFC division labels must drive conference assignment');
 assert(backend.includes("managers/history-cache.json"),'Fan sentiment must consume persistent manager career history');
-assert(backend.includes("import week1Preload2026 from './inquirer-week1-2026-preload.mjs'"),'League Hub must import the immutable rewritten Week 1 V21 preload');
+assert(backend.includes("import week1Preload2026 from './inquirer-week1-2026-preload.mjs'"),'League Hub must import the generated Week 1 V25 preload');
 assert(backend.includes('preloadedBroadcast(season,week)'), 'League Hub weekly/archive paths must recognize preloaded completed editions');
 assert(backend.includes('preloadedReporterEntries(reporter.id)'), 'Reporter archives must merge each reporter’s Week 1 preload stories');
 assert(backend.includes("key:'preloaded:2026:1'"), 'Weekly archive index must expose preloaded Week 1');
@@ -186,7 +186,7 @@ assert(/not a data presenter/i.test(helper)&&/smooth narrative delivery/i.test(h
 assert(helper.includes('Old-school hometown beat writer')&&helper.includes('Overeducated, theatrical hometown columnist')&&helper.includes('Hometown tabloid lifer')&&helper.includes('Hometown investigative columnist'),'All four reporters must preserve distinct but entertaining hometown personalities');
 assert(/Winning is vulgar, addictive and highly recommended/.test(helper),'Bartholomew must remain a theatrical columnist rather than a numbers-desk presenter');
 assert(/parking|complaint|clipping/i.test(human+newsroom)&&/good china|waistcoat|theatrical|vulgar|hotel-lobby/i.test(human+newsroom)&&/angry font|confetti|back page/i.test(human+newsroom)&&/fingerprints|docket|cross-examination|evidence/i.test(human+newsroom),'Every V21 desk must preserve distinct sarcasm/humor vocabulary without relying on photo-size metaphors');
-assert(helper.includes('buildNarrativeArticle')&&narrative.includes('humanSectionsV24')&&fs.readFileSync('netlify/functions/inquirer-human-v21.mjs','utf8').includes('humanSectionsV19')&&human.includes("kind:'lede'")&&human.includes("kind:'players'")&&human.includes("kind:'management'")&&human.includes("kind:'value'")&&human.includes("kind:'sentiment'")&&human.includes("kind:'outlook'"),'V21 must compose the six reporting beats plus matchup impact sections through the depth layer');
+assert(helper.includes('buildNarrativeArticle')&&narrative.includes('humanSectionsV25')&&fs.readFileSync('netlify/functions/inquirer-human-v21.mjs','utf8').includes('humanSectionsV19')&&human.includes("kind:'lede'")&&human.includes("kind:'players'")&&human.includes("kind:'management'")&&human.includes("kind:'value'")&&human.includes("kind:'sentiment'")&&human.includes("kind:'outlook'"),'V25 must compose the six reporting beats plus matchup impact sections through the depth layer');
 assert(overviewWriter.includes("kind:'championship'")&&overviewWriter.includes("kind:'fraud'")&&overviewWriter.includes("kind:'division'")&&overviewWriter.includes("kind:'player'")&&overviewWriter.includes("kind:'upset'"),'Hot Takes must remain explicit prediction types');
 assert(helper.includes('Hall of Fame Petition')&&helper.includes('Metaphorical Torches & Pitchforks')&&helper.includes('The Imaginary Mansion Is Under Siege'),'V16 fan sentiment must preserve the full creative positive-to-negative spectrum');
 assert(helper.includes("previous.score)*.65+raw*.35"),'V16 fan sentiment must preserve prior-week inertia so one result cannot dominate management reputation');
@@ -204,6 +204,6 @@ assert(ui.includes('scrollToInquirerArticle')&&ui.includes('showWeeklyArticle(we
 assert(ui.includes("const preserveY=view==='daily'&&previousView==='daily'?window.scrollY:null")&&ui.includes("window.scrollTo({top:preserveY,behavior:'auto'})"),'Reporter desk rerenders must preserve the reader’s scroll position');
 assert(ui.includes('data-lh-reporter-close'),'Reporter Desks must provide an explicit Close control');
 assert(backend.includes('nextProj')&&overviewWriter.includes('underdog_projected')&&overviewWriter.includes('favorite_projected'),'Upset picks must be backed by next-week projections and preserve both projected scores');
-assert(week1Preload.teams.every(t=>['hot-seat','cool-throne'].every(k=>t.inquirer_article.sections.some(s=>s.kind===k))),'Every preloaded V21 article must include Hot Seat and Cool Throne sections');
+assert(week1Preload.teams.every(t=>['hot-seat','cool-throne'].every(k=>t.inquirer_article.sections.some(s=>s.kind===k))),'Every preloaded V25 article must include Hot Seat and Cool Throne sections');
 assert(!ui.includes("esc(r?.voice||'')"),'Published archive UI must never print internal reporter voice prompts');
-console.log('Fleeced Inquirer four-reporter rotation, real-stat, persistence, and archive smoke passed');
+console.log('Fleeced Inquirer V25 four-reporter rotation, real-stat, persistence, and archive smoke passed');

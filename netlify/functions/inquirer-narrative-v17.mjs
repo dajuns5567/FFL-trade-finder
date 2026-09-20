@@ -321,6 +321,7 @@ export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamCl
   return{
     schema_version:11,
     inquirer_version:26,
+    editorial_revision:2,
     season:Number(teamClassification?.season||2026),
     week:Number(week),
     week_classification:teamClassification,

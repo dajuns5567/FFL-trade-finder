@@ -155,11 +155,13 @@ const narrative=fs.readFileSync('netlify/functions/inquirer-narrative-v17.mjs','
 const human=fs.readFileSync('netlify/functions/inquirer-human-v19.mjs','utf8');
 const newsroom=fs.readFileSync('netlify/functions/inquirer-human-v20.mjs','utf8');
 const overviewWriter=fs.readFileSync('netlify/functions/inquirer-overview-v19.mjs','utf8');
+const reporting=fs.readFileSync('netlify/functions/inquirer-reporting-v25.mjs','utf8');
 assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub must fetch Sleeper raw weekly stats for Inquirer articles');
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
 assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
-assert(backend.includes("explicit V26 expanded editorial reporting rewrite"),'Older Inquirer articles must explicitly migrate once to the active expanded editorial schema');
+assert(backend.includes("explicit V26 recovered editorial contract rewrite"),'Older or stale-revision Inquirer articles must explicitly migrate to the recovered editorial contract');
+assert(backend.includes('INQUIRER_EDITORIAL_REVISION=2')&&backend.includes('editorial_revision||0)<INQUIRER_EDITORIAL_REVISION'),'Current-version stored articles must still migrate when they predate the recovered editorial revision');
 assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');
 assert(backend.includes("Number(stored?.inquirer_version||0)<INQUIRER_VERSION"),'Only older-version archived reporter articles may be migrated; current-version articles stay preserved');
 assert(backend.includes('leagueSeasonContext('),'Inquirer backend must derive season standings/streak context from completed Sleeper matchups');
@@ -187,6 +189,10 @@ assert(helper.includes('Old-school hometown beat writer')&&helper.includes('Over
 assert(/Winning is vulgar, addictive and highly recommended/.test(helper),'Bartholomew must remain a theatrical columnist rather than a numbers-desk presenter');
 assert(/parking|complaint|clipping/i.test(human+newsroom)&&/good china|waistcoat|theatrical|vulgar|hotel-lobby/i.test(human+newsroom)&&/angry font|confetti|back page/i.test(human+newsroom)&&/fingerprints|docket|cross-examination|evidence/i.test(human+newsroom),'Every V21 desk must preserve distinct sarcasm/humor vocabulary without relying on photo-size metaphors');
 assert(helper.includes('buildNarrativeArticle')&&narrative.includes('humanSectionsV25')&&fs.readFileSync('netlify/functions/inquirer-human-v21.mjs','utf8').includes('humanSectionsV19')&&human.includes("kind:'lede'")&&human.includes("kind:'players'")&&human.includes("kind:'management'")&&human.includes("kind:'value'")&&human.includes("kind:'sentiment'")&&human.includes("kind:'outlook'"),'V25 must compose the six reporting beats plus matchup impact sections through the depth layer');
+assert(reporting.includes('function nickExpansion')&&reporting.includes('function bartholomewExpansion')&&reporting.includes('function tillyExpansion')&&reporting.includes('function filchExpansion')&&reporting.includes('reporterStructureV26'),'Recovered Work-state requires four structurally distinct reporter expansion paths, not one shared commentary template');
+assert(!reporting.includes('function sectionCommentary'),'Generic shared sectionCommentary must not return; it regresses the four reporters toward one article template');
+assert(reporting.includes('valueSectionV26')&&reporting.includes('acquisitionCallback'),'Active team articles must preserve reporter-specific Value History prose and ongoing trade-acquisition memory');
+assert(/section-order shuffling alone is not enough/i.test(helper),'House style must state that reporter differences require more than reordered sections');
 assert(overviewWriter.includes("kind:'championship'")&&overviewWriter.includes("kind:'fraud'")&&overviewWriter.includes("kind:'division'")&&overviewWriter.includes("kind:'player'")&&overviewWriter.includes("kind:'upset'"),'Hot Takes must remain explicit prediction types');
 assert(helper.includes('Hall of Fame Petition')&&helper.includes('Metaphorical Torches & Pitchforks')&&helper.includes('The Imaginary Mansion Is Under Siege'),'V16 fan sentiment must preserve the full creative positive-to-negative spectrum');
 assert(helper.includes("previous.score)*.65+raw*.35"),'V16 fan sentiment must preserve prior-week inertia so one result cannot dominate management reputation');
@@ -203,7 +209,11 @@ assert(ui.includes('.lh-reporter-byline{margin:8px 0 12px;padding:2px 0;border:0
 assert(ui.includes('scrollToInquirerArticle')&&ui.includes('showWeeklyArticle(weeklyCache,true)'),'Selecting an Inquirer article must scroll the reader to the top of that article');
 assert(ui.includes("const preserveY=view==='daily'&&previousView==='daily'?window.scrollY:null")&&ui.includes("window.scrollTo({top:preserveY,behavior:'auto'})"),'Reporter desk rerenders must preserve the reader’s scroll position');
 assert(ui.includes('data-lh-reporter-close'),'Reporter Desks must provide an explicit Close control');
+assert(ui.includes('Weekly Recap • All 4 Reporters')&&ui.includes('data-lh-broadcast-team="__league__"'),'Weekly Recap must remain the user-facing league article and its headline must open the recap');
+assert(!ui.includes('League Notebook'),'League Notebook must not regress into user-facing League Hub copy after the Weekly Recap rename');
+assert(ui.includes('data-lh-archive-year')&&ui.includes('data-lh-archive-week')&&ui.includes('data-lh-archive-team')&&ui.includes('data-lh-reporter-article-season'),'Article Archive must retain Year/Week/Team filters and clickable reporter-story archive controls');
+assert(backend.includes("team_name:'Weekly Recap'")&&!backend.includes("team_name:'League Overview'"),'Stored archive metadata must call the league-wide article Weekly Recap');
 assert(backend.includes('nextProj')&&overviewWriter.includes('underdog_projected')&&overviewWriter.includes('favorite_projected'),'Upset picks must be backed by next-week projections and preserve both projected scores');
 assert(week1Preload.teams.every(t=>['hot-seat','cool-throne'].every(k=>t.inquirer_article.sections.some(s=>s.kind===k))),'Every preloaded V25 article must include Hot Seat and Cool Throne sections');
 assert(!ui.includes("esc(r?.voice||'')"),'Published archive UI must never print internal reporter voice prompts');
-console.log('Fleeced Inquirer V26 four-reporter rotation, real-stat, persistence, and archive smoke passed');
+console.log('Fleeced Inquirer V26 recovered Work-state, reporter structure, persistence, and archive smoke passed');

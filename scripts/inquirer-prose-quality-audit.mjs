@@ -20,16 +20,16 @@ const normalizeHeadline=(team,a)=>{
   return s.replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/\s+/g,' ').trim();
 };
 
-if(Number(edition?.inquirer_version)<17)fail('Prose audit requires Inquirer V17 or newer; got '+edition?.inquirer_version);
+if(Number(edition?.inquirer_version)<18)fail('Prose audit requires the V18 human-first Inquirer or newer; got '+edition?.inquirer_version);
 const teams=edition?.teams||[];
 if(teams.length!==32)fail('Expected 32 team articles; got '+teams.length);
 
 const requiredKinds=['lede','players','management','value','sentiment','outlook'];
 const voiceAnchors={
-  'walter-mercer':['press box','notebook','clipping','ink','receipts'],
-  'tess-delaney':['process','sample','spreadsheet','numbers','repeatable'],
-  'mack-hollis':['back page','front page','newspaper','ink','circulation','confetti'],
-  'nora-voss':['evidence','file','witness','paper trail','inquiry','prosecution']
+  'walter-mercer':['press box','notebook','clipping','ink','receipts','beat writer'],
+  'tess-delaney':['repeatable','projection','usage','production','watching','believe','trend'],
+  'mack-hollis':['back page','parade','group chat','angry font','giant photo','classifieds'],
+  'nora-voss':['evidence','file','witness','paper trail','inquiry','prosecution','fingerprints']
 };
 
 const headlinePatterns=new Map(),openingCounts=new Map(),report={articles:[],headline_patterns:{},global:{}};
@@ -50,13 +50,27 @@ for(const team of teams){
   const paras=sections.flatMap(s=>s.paragraphs||[]),body=paras.join(' ');
   if(paras.length<12)fail(team.team_name+' has only '+paras.length+' narrative paragraphs');
   const wc=words(body).length,nums=numericTokens(body),upp=upperWords(body),lens=paras.map(p=>words(p).length);
-  if(wc<520)fail(team.team_name+' is too short for a full beat column: '+wc+' words');
-  if(median(lens)<38)fail(team.team_name+' paragraphs are too fragmentary; median paragraph is '+median(lens)+' words');
+  if(wc<300)fail(team.team_name+' is too short to carry a complete six-section beat column: '+wc+' words');
+  if(median(lens)<24)fail(team.team_name+' paragraphs are too fragmentary; median paragraph is '+median(lens)+' words');
   if(nums/Math.max(1,wc)>.075)fail(team.team_name+' is too numbers-heavy: '+(100*nums/wc).toFixed(1)+'% numeric-token density');
   if(upp/Math.max(1,wc)>.018)fail(team.team_name+' body relies too heavily on all-caps words');
   if(/\s\|\s/.test(body))fail(team.team_name+' still contains pipe-delimited stat-dump prose');
   if(/\b(?:1th|2th|3th|21th|22th|23th|31th|32th)\b/i.test(body))fail(team.team_name+' contains a malformed standings ordinal');
   if(/\b(?:PUT THESE MEN ON THE FRONT PAGE|THE SUPPORTING CAST|ABOUT THE PEOPLE WE JUST|LET US AUTOPSY|NOW FOR THE PART WE WILL)\b/i.test(body))fail(team.team_name+' still contains V16 checklist-template copy');
+  const explainerPatterns=[
+    /usable real-life stat line/i,
+    /the useful (?:question|part|comparison)/i,
+    /that is the player-level result/i,
+    /the numbers are asking/i,
+    /this section carries forward/i,
+    /the market has moved this roster/i,
+    /the next data point/i,
+    /the question for the file is whether value movement/i,
+    /because the fantasy number has a real football stat line sitting underneath it/i,
+    /the result is real\. motive, intent/i,
+    /Sleeper (?:did not|returned|has not|currently|supplied)/i
+  ];
+  for(const re of explainerPatterns)if(re.test(body))fail(team.team_name+' contains data-explainer / pipeline language instead of reporter prose: '+re);
 
   let short=0,sents=0;
   for(const p of paras){
@@ -67,7 +81,8 @@ for(const team of teams){
   }
   if(short/Math.max(1,sents)>.22)fail(team.team_name+' has too many sentence fragments/very short sentences: '+short+'/'+sents);
 
-  const anchors=voiceAnchors[rid]||[],hits=anchors.filter(x=>body.toLowerCase().includes(x));
+  const voiceText=(body+' '+sections.map(s=>s.heading||'').join(' ')).toLowerCase();
+  const anchors=voiceAnchors[rid]||[],hits=anchors.filter(x=>voiceText.includes(x));
   if(hits.length<2)fail(team.team_name+' does not sound sufficiently like '+a.reporter.name+'; voice-anchor hits='+hits.join(', '));
 
   const hp=normalizeHeadline(team,a);

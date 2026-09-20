@@ -66,7 +66,7 @@ function supportSentence(p,voice,v){
  const rows={
   nick:[name+' was right there behind him with '+c+'.',name+' kept the lineup from turning into a one-man rescue mission with '+c+'.',name+' chipped in '+c+', which matters more than it sounds in a league this deep.',name+' gave the middle of the card some backbone with '+c+'.'],
   bart:[name+' added '+c+', an extremely civilized contribution.',name+' followed with '+c+', which I will accept without requiring a sonnet.',name+' contributed '+c+'. Not everything needs to be transcendent; sometimes useful is beautiful.',name+' brought '+c+', and I am willing to call that respectable in public.'],
-  tilly:[name+' also showed up with '+c+'. Yes, there are two photos on the front page now.',name+' added '+c+', so the supporting cast may keep its parking privileges.',name+' brought '+c+'. The back page acknowledges depth when it is forced to.',name+' chipped in '+c+'. Nobody tell him the headline was already assigned.'],
+  tilly:[name+' also showed up with '+c+'. Yes, there are two photos on the front page now.',name+' added '+c+', so the rest of the lineup may keep its parking privileges.',name+' brought '+c+'. The back page acknowledges depth when it is forced to.',name+' chipped in '+c+'. Nobody tell him the headline was already assigned.'],
   jeff:[name+' corroborated the story with '+c+'.',name+' added '+c+', enough to stay off the witness list for now.',name+' supplied '+c+'. Consider that cooperative testimony.',name+' backed the lead witness with '+c+'. The file appreciates teamwork.']
  };
  return pick(rows[voice],v+1);

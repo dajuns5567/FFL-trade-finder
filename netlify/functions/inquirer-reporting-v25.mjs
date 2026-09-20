@@ -8,6 +8,9 @@ const delta=p=>valid(p?.projected)?Number(p.points)-Number(p.projected):null;
 const group=p=>/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT)$/.test(String(p?.position||''))?'defense':p?.position==='QB'?'quarterback':p?.position==='RB'?'backfield':p?.position==='TE'?'tight end':'receiving corps';
 const names=xs=>xs.map(x=>x.name).filter(Boolean).join(', ');
 const chance=n=>valid(n)?one(n)+'%':null;
+const voice=r=>({'walter-mercer':0,'tess-delaney':1,'mack-hollis':2,'nora-voss':3}[r?.id]??0);
+const choose=(t,items)=>items[Math.abs(Number(t?.roster_id)||0)%items.length];
+const deskChoice=(t,r,sets)=>choose(t,sets[voice(r)]||sets[0]);
 
 function opportunity(p){
   const s=p?.real_stats||{},position=String(p?.position||'').toUpperCase();
@@ -77,27 +80,76 @@ function management(t,facts,reporter){
   });
 }
 
-function opponentPreview(t){
+function opponentPreview(t,r){
   const o=t.next_opponent_roster;if(!o)return null;
   const scored=(o.players||[]).filter(p=>Number(p.season_games)>0&&valid(p.season_fantasy_points)).sort((a,b)=>Number(b.season_fantasy_points)-Number(a.season_fantasy_points)).slice(0,2);
-  const valued=(o.players||[]).filter(p=>valid(p.value)).sort((a,b)=>Number(b.value)-Number(a.value)).slice(0,2);
-  const namesSeen=new Set(),parts=[];
+  const valued=(o.players||[]).filter(p=>valid(p.value)).sort((a,b)=>Number(b.value)-Number(a.value)).slice(0,2),namesSeen=new Set(),parts=[];
   for(const p of [...scored,...valued])if(!namesSeen.has(String(p.id))){namesSeen.add(String(p.id));parts.push(p)}
   if(!parts.length)return null;
-  const stars=parts.slice(0,3).map(p=>p.name);
-  return `${t.next_opponent_name||o.team_name} brings ${stars.join(stars.length>1?', ':'')}${stars.length>1?' into the matchup':''}. ${scored[0]?`${scored[0].name} has been the scoring headliner so far`:''}${scored[0]&&valued[0]&&String(scored[0].id)!==String(valued[0].id)?`, while ${valued[0].name} remains the roster’s highest-value piece`:''}. ${t.team_name} does not need a statistical lecture to know where the danger lives.`;
+  const stars=parts.slice(0,3).map(p=>p.name),lead=scored[0],market=valued[0];
+  const intro=deskChoice(t,r,[
+    [`${t.next_opponent_name||o.team_name} puts ${stars.join(', ')} at the front of next week’s scouting report.`,`${stars.join(', ')} are the first names ${t.team_name} will circle for ${t.next_opponent_name||o.team_name}.`],
+    [`${t.next_opponent_name||o.team_name} arrives with ${stars.join(', ')}, a guest list impolite enough to ruin the evening.`,`The next appointment is ${t.next_opponent_name||o.team_name}, and ${stars.join(', ')} are bringing too much luggage.`],
+    [`Circle ${stars.join(', ')} in thick ink: ${t.next_opponent_name||o.team_name} is bringing them next week.`,`${t.next_opponent_name||o.team_name} is next, and the back page already has ${stars.join(', ')} circled.`],
+    [`The next file opens on ${t.next_opponent_name||o.team_name}; ${stars.join(', ')} are already clipped to the evidence board.`,`${stars.join(', ')} headline the ${t.next_opponent_name||o.team_name} file, and none will be hard to locate in the paperwork.`]
+  ]);
+  let tail='';
+  if(lead&&market&&String(lead.id)!==String(market.id))tail=deskChoice(t,r,[
+    [`${lead.name} has supplied the scoring; ${market.name} is still the roster’s biggest market piece. That is two different problems to prepare for.`,`Production points first to ${lead.name}, while roster value points to ${market.name}. ${t.team_name} has more than one fire to watch.`],
+    [`${lead.name} owns the scoring headline, while ${market.name} carries the larger market price. Very tasteful, very inconvenient.`,`${lead.name} has done the scoreboard damage; ${market.name} remains the expensive centerpiece. One threat would have been enough.`],
+    [`${lead.name} has been the points problem and ${market.name} the market heavyweight. Pick your poison; preferably neither.`,`${lead.name} leads the scoring, ${market.name} leads the price tag, and ${t.team_name} gets both on the same bill.`],
+    [`The paper trail separates the threats: ${lead.name} leads the scoring, ${market.name} the market value. The defense rests only when both do.`,`${lead.name} has the production file; ${market.name} has the valuation file. Both stay open through kickoff.`]
+  ]);
+  else if(lead)tail=deskChoice(t,r,[
+    [`${lead.name} has been the scoring headliner, so the assignment is not especially mysterious.`,`${lead.name} is the recent scoring threat ${t.team_name} cannot let own the afternoon.`],
+    [`${lead.name} has supplied the points, an inelegant but convincing demand for attention.`,`The scoring trail keeps leading back to ${lead.name}. Even I can respect evidence that obvious.`],
+    [`${lead.name} has been the loudest scorer. Stop that name and make somebody else earn the headline.`,`The scoreboard keeps shouting ${lead.name}. Next week is a good time to lower the volume.`],
+    [`${lead.name} keeps appearing at the top of the scoring file. That witness cannot be lost in the crowd.`,`The production evidence points first to ${lead.name}; any plan that skips that page is incomplete.`]
+  ]);
+  return [intro,tail].filter(Boolean).join(' ');
 }
 
-function outlook(t,week){
+function outlook(t,week,r){
   const ps=[],m=t.mida_outlook,op=t.next_opponent_name,gap=valid(t.next_projected)&&valid(t.next_opponent_projected)?Number(t.next_projected)-Number(t.next_opponent_projected):null;
   if(op&&gap!=null){
-    const feel=Math.abs(gap)<6?'looks close enough to punish one bad lineup decision':gap>0?'leans toward '+t.team_name+' on paper':'asks '+t.team_name+' to beat the forecast';
-    ps.push(`${op} is next, and the ${one(t.next_projected)}–${one(t.next_opponent_projected)} projection ${feel}. ${gap>10?'This is the kind of favorable spot a serious team turns into a routine win.':gap<-10?'The stars will have to travel well; there is not much room for passengers.':'A matchup this tight usually leaves one or two player performances deciding what the final score remembers.'}`);
+    const copy=Math.abs(gap)<6?deskChoice(t,r,[
+      [`${t.team_name} and ${op} are separated by only ${one(Math.abs(gap))} projected points. One ordinary mistake can own a game that close.`,`Only ${one(Math.abs(gap))} projected points separate ${t.team_name} and ${op}; this is a week for clean decisions and loud stars.`],
+      [`${t.team_name} and ${op} sit just ${one(Math.abs(gap))} projected points apart. A small margin for a large amount of future complaining.`,`Only ${one(Math.abs(gap))} projected points separate ${t.team_name} from ${op}. I have selected the appropriate dramatic sigh.`],
+      [`${one(Math.abs(gap))} projected points separate ${t.team_name} and ${op}: one lineup call, one monster quarter, one group-chat disaster.`,`${t.team_name} gets ${op} with the forecast almost level. Perfect conditions for someone to become a hero or a screenshot.`],
+      [`The ${t.team_name}-${op} file opens with only ${one(Math.abs(gap))} projected points between them. Small gaps leave excellent fingerprints.`,`${t.team_name} and ${op} are nearly even on paper. The inquiry will focus on whichever decision breaks the tie.`]
+    ]):gap>0?deskChoice(t,r,[
+      [`The projection leans toward ${t.team_name} against ${op}. Good teams make those afternoons look ordinary.`,`${op} is the sort of favorable assignment ${t.team_name} should bank without turning Sunday into a crisis.`],
+      [`The numbers hand ${t.team_name} the nicer side of the table against ${op}. Manners require taking advantage.`,`${op} is an inviting appointment on paper. It would be gauche to waste it.`],
+      [`The forecast likes ${t.team_name} against ${op}. The back page prefers confirmation to excuses.`,`${op} is a game ${t.team_name} should expect to own. Save the drama for another week.`],
+      [`The evidence gives ${t.team_name} the edge over ${op}; management should avoid manufacturing a problem.`,`${op} enters the file as the favorable matchup. Failing to close it would create a thicker folder.`]
+    ]):deskChoice(t,r,[
+      [`${t.team_name} gets the harder projection against ${op}; one headliner probably has to steal the afternoon.`,`${op} asks ${t.team_name} to beat the forecast, so the stars cannot leave the furniture to the supporting cast.`],
+      [`The forecast favors ${op}. How vulgar. ${t.team_name} will need a star turn to improve the décor.`,`${op} is the difficult engagement. ${t.team_name} needs its best players to be unmistakable.`],
+      [`${op} owns the projected edge. Fine—give the back page an upset worth wasting ink on.`,`${t.team_name} is chasing the projection against ${op}; this is when a centerpiece earns 48-point type.`],
+      [`The file favors ${op}; ${t.team_name} needs evidence strong enough to overturn it Sunday.`,`${op} holds the projected advantage. The clean rebuttal is a big afternoon from ${t.team_name}’s best players.`]
+    ]);
+    ps.push(copy);
   }
-  const scout=opponentPreview(t);if(scout)ps.push(scout);
+  const scout=opponentPreview(t,r);if(scout)ps.push(scout);
   if(m&&valid(m.playoff)){
-    const playoff=chance(m.playoff),title=chance(m.title),r=t.league_context?.record||{};
-    ps.push(`${t.team_name} has around ${playoff} chance of reaching the playoffs${title?' and '+title+' of winning the championship':''}. At ${record(t)}, ${Number(m.playoff)>=70?'the expectation is no longer just to look interesting; it is to stack results that match the roster’s promise':Number(m.playoff)>=40?'the season still has room to swing, which makes ordinary wins more valuable than dramatic explanations':'the path is narrow enough that every winnable week feels expensive to waste'}.`);
+    const title=valid(m.title)?` and around ${one(m.title)}% chance of winning the championship`:'';
+    const stakes=Number(m.playoff)>=70?deskChoice(t,r,[
+      [`At ${record(t)}, the expectation is to turn that promise into real wins.`,`A strong postseason path buys expectation, not permission to coast.`],
+      [`That is an invitation to the serious table, not a decorative place card.`,`The outlook is too strong to treat merely interesting football as enough.`],
+      [`Those odds come with a job: keep winning before the league gets bored with the hype.`,`The bracket is already flirting with ${t.team_name}. Make it less subtle.`],
+      [`The evidence supports expectations now. Every wasted favorable week becomes an item in the file.`,`A strong outlook raises the standard of proof; ${t.team_name} should start supplying wins.`]
+    ]):Number(m.playoff)>=40?deskChoice(t,r,[
+      [`The season still has room to swing; ordinary wins matter more than dramatic explanations.`,`A two-week run can still change the whole conversation.`],
+      [`The door is open without being held for them. A civilized winning streak would be lovely.`,`There is enough hope to dress up, not enough to order champagne.`],
+      [`The path is open, but nobody is reserving a parade route. Stack wins and make the argument louder.`,`The back page accepts victories as evidence; there is still time to provide them.`],
+      [`The case remains live and undecided. A few clean wins would make the paperwork friendlier.`,`There is enough in the file to keep believing, not enough to close the inquiry.`]
+    ]):deskChoice(t,r,[
+      [`The path is narrow enough that every winnable week feels expensive to waste.`,`Hope now needs results more than speeches.`],
+      [`The invitation is written in very small print. Winning remains the tasteful response.`,`The route is narrow, and even optimism should check the dress code.`],
+      [`The math is rude. The satisfying answer is to start stealing games.`,`There is no room for decorative losses now; wins are the only headline that helps.`],
+      [`The evidence is thin enough that every dropped opportunity becomes material.`,`The file needs wins soon, not theories about why they are coming.`]
+    ]);
+    ps.push(`${t.team_name} has around ${one(m.playoff)}% chance of reaching the playoffs${title}. ${stakes}`);
   }
   const div=divisionCopy(t);if(div)ps.push(div);
   return ps.length?ps:['n/a'];
@@ -155,7 +207,7 @@ export function humanSectionsV25(args){
     if(s.kind==='lede')return {...s,paragraphs:naturalLede(t)};
     if(s.kind==='players')return {...s,paragraphs:playerSection(t)};
     if(s.kind==='management')return {...s,paragraphs:mgmt};
-    if(s.kind==='outlook')return {...s,paragraphs:outlook(t,args.week)};
+    if(s.kind==='outlook')return {...s,paragraphs:outlook(t,args.week,args.reporter)};
     if(s.kind==='sentiment')return {...s,paragraphs:sentiment(t)};
     if(s.kind==='hot-seat')return {...s,paragraphs:hotCool(t,'hot-seat')};
     if(s.kind==='cool-throne')return {...s,paragraphs:hotCool(t,'cool-throne')};

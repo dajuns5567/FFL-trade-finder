@@ -3,7 +3,7 @@
 import {buildNarrativeArticle} from './inquirer-narrative-v17.mjs';
 import {buildHumanLeagueOverview} from './inquirer-overview-v18.mjs';
 
-export const INQUIRER_VERSION=18;
+export const INQUIRER_VERSION=19;
 export const INQUIRER_PLAYOFF_START_WEEK=14;
 export const INQUIRER_FINAL_WEEK=17;
 export function inquirerWeekClassification(week,season,conference=''){
@@ -16,10 +16,10 @@ export function inquirerWeekClassification(week,season,conference=''){
 export const INQUIRER_HOUSE_STYLE='Hometown beat reporter + fan. Frequent sarcasm, embedded humor, long-form analysis, and dramatic framing are encouraged. Dramatic without inventing facts: scores, standings, transactions, player production, streaks, projections, and real-life stats must remain grounded in Sleeper data.';
 
 export const REPORTERS=[
- {id:'walter-mercer',name:'Nick Swindell',title:'Senior Football Correspondent',desk:'The Old Desk',voice:'Hometown old-school beat writer and obvious fan. Clipped sentences, dry sarcasm, institutional memory, mild contempt for excuses, and the confidence of someone who has watched this team ruin perfectly good Sundays before.',signature:'No hysteria without a box score.'},
- {id:'tess-delaney',name:'Bartholomew Roycington III',title:'Performance & Tactics Columnist',desk:'The Numbers Desk',voice:'Hometown analytics beat writer and fan. Precise but snarky, treats projections and usage like evidence, enjoys being right about trends, and gets personally offended when the team ignores the obvious numbers.',signature:'The numbers are allowed to be rude.'},
- {id:'mack-hollis',name:'Tilly Fleecer',title:'Tabloid Sports Editor',desk:'The Back Page',voice:'Hometown tabloid beat writer and unapologetic fan. Loud, funny, sarcastic, shamelessly celebratory after wins, merciless after dumb losses, and always looking for the sentence that makes rival managers roll their eyes.',signature:'If it happened, it belongs in 48-point type.'},
- {id:'nora-voss',name:'Jefferson Filch',title:'Investigations & Front Office',desk:'The Inquiry Desk',voice:'Hometown investigative beat writer and fan. Sardonic, suspicious, petty in a professional-looking way, forensic about lineup decisions and transactions, and convinced every bad roster move deserves a paper trail.',signature:'Every lineup leaves fingerprints.'}
+ {id:'walter-mercer',name:'Nick Swindell',title:'Senior Football Correspondent',desk:'The Old Desk',voice:'Old-school hometown beat writer, lifelong fan and practiced pessimist. Dry one-liners, deep institutional memory, grudging praise, real affection for the team, and the weary confidence of someone who has had too many Sundays ruined to waste time pretending he is neutral.',signature:'Keep the clipping. Hide the parade route.'},
+ {id:'tess-delaney',name:'Bartholomew Roycington III',title:'Columnist at Large',desk:'The Velvet Rope',voice:'Overeducated, theatrical hometown columnist and shameless fan. Wry, pompous in a self-aware way, fond of elegant insults, dramatic sighs, good metaphors and treating fantasy football like high culture despite all available evidence.',signature:'Winning is vulgar, addictive and highly recommended.'},
+ {id:'mack-hollis',name:'Tilly Fleecer',title:'Tabloid Sports Editor',desk:'The Back Page',voice:'Hometown tabloid lifer and unapologetic fan. Loud, funny, sarcastic, shamelessly celebratory after wins, merciless after dumb losses, and always looking for the sentence that makes rival managers roll their eyes.',signature:'If it happened, it belongs in 48-point type.'},
+ {id:'nora-voss',name:'Jefferson Filch',title:'Investigations & Front Office',desk:'The Inquiry Desk',voice:'Hometown investigative columnist, suspicious fan and professional grudge archivist. Noir sarcasm, petty precision, lineup-paper-trail obsession and the belief that every bad roster move deserves a follow-up question and at least one good joke.',signature:'Every lineup leaves fingerprints.'}
 ];
 
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
@@ -221,7 +221,7 @@ function fanSentimentForTeam(t){
  if(gp)raw+=clamp(((Number(rec.wins||0)+.5*Number(rec.ties||0))/gp-.5)*24,-10,10);
  const pct=Number(v.pct);if(Number.isFinite(pct))raw+=clamp(pct*2,-10,10);
  const projDelta=Number(t.points)-Number(t.projected);if(Number.isFinite(projDelta))raw+=clamp(projDelta/5,-5,5);
- const lineupSwing=Number(t?.best_bench?.points)-Number(t?.worst_starter?.points);if(Number.isFinite(lineupSwing)&&lineupSwing>7)raw-=clamp((lineupSwing-7)/2,0,8);
+ const lineupSwing=Number(t?.best_lineup_miss?.gap);if(Number.isFinite(lineupSwing)&&lineupSwing>7)raw-=clamp((lineupSwing-7)/2,0,8);
  const recentTrades=Number(t.recent_trade_count)||0;
  if(recentTrades&&Number.isFinite(pct))raw+=pct>0?3:pct<0?-3:0;
  const priorChamps=Number(career.championships)||0,currentTitle=t.current_season_champion?1:0,totalChamps=priorChamps+currentTitle;
@@ -289,7 +289,7 @@ function outlook(t,w,r){
 
 export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyStatHistory={},scoringSettings,scoreFn,weekClassification=null}){
  const ids=(teams||[]).map(t=>String(t.roster_id)).sort((a,b)=>(Number(a)-Number(b))||a.localeCompare(b)),raw=weeklyStatsMap(weeklyStats),facts={},meta=players||{},needed=new Set(),historyByWeek=Object.fromEntries(Object.entries(weeklyStatHistory||{}).map(([w,payload])=>[Number(w),weeklyStatsMap(payload)]));
- for(const t of teams||[]){for(const p of t.starter_details||[])needed.add(String(p.id));if(t.best_bench?.id)needed.add(String(t.best_bench.id));if(t.worst_starter?.id)needed.add(String(t.worst_starter.id));for(const move of t.transactions||[]){for(const id of move.adds||[])needed.add(String(id));for(const id of move.drops||[])needed.add(String(id))}}
+ for(const t of teams||[]){for(const p of t.starter_details||[])needed.add(String(p.id));if(t.best_bench?.id)needed.add(String(t.best_bench.id));if(t.worst_starter?.id)needed.add(String(t.worst_starter.id));if(t.best_lineup_miss?.reserve?.id)needed.add(String(t.best_lineup_miss.reserve.id));if(t.best_lineup_miss?.starter?.id)needed.add(String(t.best_lineup_miss.starter.id));for(const move of t.transactions||[]){for(const id of move.adds||[])needed.add(String(id));for(const id of move.drops||[])needed.add(String(id))}}
  for(const id of needed){
   const m=meta[id]||{},stats=raw[id]||{},position=String(m.position||m.fantasy_positions?.[0]||'FLEX'),name=String(m.full_name||((m.first_name||'')+' '+(m.last_name||'')).trim()||id),fp=typeof scoreFn==='function'?scoreFn(stats,scoringSettings):null,
    series=Object.keys(historyByWeek).map(Number).sort((a,b)=>a-b).map(w=>{const st=historyByWeek[w]?.[id];if(!st)return null;const pts=typeof scoreFn==='function'?scoreFn(st,scoringSettings):null;return Number.isFinite(Number(pts))?{week:w,points:Number(pts),real_stat_line:realStatLine(position,st)}:null}).filter(Boolean),
@@ -299,7 +299,14 @@ export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyS
   facts[id]={id,name,position,nfl_team:String(m.team||'FA'),points:Number.isFinite(Number(fp))?Number(fp):null,real_stat_line:realStatLine(position,stats),season_fantasy_points:seasonPoints,season_games:seasonGames,season_avg:seasonAvg,recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
  }
  const classification=weekClassification||inquirerWeekClassification(week,season);
- const enriched=(teams||[]).map(t=>{const reporter=reporterForTeam(t.roster_id,week,ids),teamClassification=inquirerWeekClassification(week,season,t.conference),starters=(t.starter_details||[]).map(p=>({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,season_fantasy_points:facts[String(p.id)]?.season_fantasy_points??null,season_games:facts[String(p.id)]?.season_games??0,season_avg:facts[String(p.id)]?.season_avg??null,recent_form:facts[String(p.id)]?.recent_form||null})),benchFact=t.best_bench?{...t.best_bench,real_stat_line:facts[String(t.best_bench.id)]?.real_stat_line||'',season_fantasy_points:facts[String(t.best_bench.id)]?.season_fantasy_points??null,season_games:facts[String(t.best_bench.id)]?.season_games??0,season_avg:facts[String(t.best_bench.id)]?.season_avg??null,recent_form:facts[String(t.best_bench.id)]?.recent_form||null}:null,worstFact=t.worst_starter?{...t.worst_starter,real_stat_line:facts[String(t.worst_starter.id)]?.real_stat_line||'',season_fantasy_points:facts[String(t.worst_starter.id)]?.season_fantasy_points??null,season_games:facts[String(t.worst_starter.id)]?.season_games??0,season_avg:facts[String(t.worst_starter.id)]?.season_avg??null,recent_form:facts[String(t.worst_starter.id)]?.recent_form||null}:null,tt={...t,week_classification:teamClassification,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter},sentiment=fanSentimentForTeam(tt),article=buildNarrativeArticle({team:tt,week,reporter,facts,sentiment,teamClassification,aside:aside(tt,week,reporter)});return{...tt,inquirer_article:article,reporter_id:reporter.id}});
+ const enrichPlayer=p=>p?({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,season_fantasy_points:facts[String(p.id)]?.season_fantasy_points??null,season_games:facts[String(p.id)]?.season_games??0,season_avg:facts[String(p.id)]?.season_avg??null,recent_form:facts[String(p.id)]?.recent_form||null}):null;
+ const enriched=(teams||[]).map(t=>{
+  const reporter=reporterForTeam(t.roster_id,week,ids),teamClassification=inquirerWeekClassification(week,season,t.conference),starters=(t.starter_details||[]).map(enrichPlayer);
+  const benchFact=enrichPlayer(t.best_bench),worstFact=enrichPlayer(t.worst_starter),miss=t.best_lineup_miss?{...t.best_lineup_miss,reserve:enrichPlayer(t.best_lineup_miss.reserve),starter:enrichPlayer(t.best_lineup_miss.starter)}:null;
+  const tt={...t,week_classification:teamClassification,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter,best_lineup_miss:miss};
+  const sentiment=fanSentimentForTeam(tt),article=buildNarrativeArticle({team:tt,week,reporter,facts,sentiment,teamClassification,aside:aside(tt,week,reporter)});
+  return{...tt,inquirer_article:article,reporter_id:reporter.id};
+ });
  return{reporters:publicReporters(),teams:enriched};
 }
 

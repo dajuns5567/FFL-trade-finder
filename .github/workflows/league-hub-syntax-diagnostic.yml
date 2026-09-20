@@ -3,10 +3,18 @@ on:
   push:
     branches:
       - fix/value-history-future-tracking
+      - release/precision-idp-runtime-20260919
 jobs:
   syntax:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Parse League Hub runtime
-        run: node --check league-hub-v451.js
+      - name: Parse League Hub and Inquirer V25
+        run: |
+          node --check league-hub-v451.js
+          node --check netlify/functions/inquirer-reporting-v25.mjs
+          node --check netlify/functions/inquirer-narrative-v17.mjs
+          node --check netlify/functions/inquirer-overview-v19.mjs
+          node --check netlify/functions/inquirer-reporters.mjs
+          node scripts/site-runtime-syntax-audit.mjs
+          node scripts/inquirer-v25-audit.mjs

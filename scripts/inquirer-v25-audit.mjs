@@ -21,7 +21,10 @@ const mk=(id,name,opp,points,oppPoints,projected,next,nextProj,valueDelta)=>({
 const teams=[
   mk(1,'Alpha',2,150,90,120,3,111,500),mk(2,'Bravo',1,90,150,130,4,109,-400),
   mk(3,'Charlie',4,111,109,105,1,115,250),mk(4,'Delta',3,109,111,106,2,114,-100),
-  mk(5,'Echo',6,130,100,125,1,112,50),mk(6,'Foxtrot',5,100,130,119,2,108,-50)
+  mk(5,'Echo',6,130,100,125,1,112,50),mk(6,'Foxtrot',5,100,130,119,2,108,-50),
+  mk(7,'Golf',8,118,116,114,9,110,75),mk(8,'Hotel',7,116,118,113,10,109,-65),
+  mk(9,'India',10,142,121,128,7,117,180),mk(10,'Juliet',9,121,142,127,8,116,-140),
+  mk(11,'Kilo',12,104,101,99,7,106,90),mk(12,'Lima',11,101,104,103,8,105,-80)
 ];
 const overview={sections:[0,1,2,3].map(i=>({reporter:{id:'r'+i,name:'Reporter '+i},heading:'old',paragraphs:['old']})),hot_takes:[]};
 const recap=expandWeeklyRecapV25(overview,teams,1);

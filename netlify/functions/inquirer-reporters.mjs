@@ -38,7 +38,7 @@ export function reporterForTeam(rosterId,week,rosterIds=[]){
 export function weeklyStatsMap(raw){
  const out={};
  if(Array.isArray(raw)){for(const row of raw||[]){const id=String(row?.player_id||row?.player?.player_id||row?.id||'');if(id)out[id]=row?.stats&&typeof row.stats==='object'?row.stats:row}return out}
- if(raw&&typeof raw==='object')for(const [id,row] of Object.entries(raw))out[String(id)]=row?.stats&&typeof row.stats==='object'?row.stats:row;
+ if(raw&&typeof raw==='object')for(const [key,row] of Object.entries(raw)){const id=String(row?.player_id||row?.player?.player_id||row?.id||key);if(id)out[id]=row?.stats&&typeof row.stats==='object'?row.stats:row}
  return out;
 }
 
@@ -289,7 +289,7 @@ function outlook(t,w,r){
 
 export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyStatHistory={},scoringSettings,scoreFn,weekClassification=null}){
  const ids=(teams||[]).map(t=>String(t.roster_id)).sort((a,b)=>(Number(a)-Number(b))||a.localeCompare(b)),raw=weeklyStatsMap(weeklyStats),facts={},meta=players||{},needed=new Set(),historyByWeek=Object.fromEntries(Object.entries(weeklyStatHistory||{}).map(([w,payload])=>[Number(w),weeklyStatsMap(payload)]));
- for(const t of teams||[]){for(const p of t.starter_details||[])needed.add(String(p.id));for(const move of t.transactions||[]){for(const id of move.adds||[])needed.add(String(id));for(const id of move.drops||[])needed.add(String(id))}}
+ for(const t of teams||[]){for(const p of t.starter_details||[])needed.add(String(p.id));if(t.best_bench?.id)needed.add(String(t.best_bench.id));if(t.worst_starter?.id)needed.add(String(t.worst_starter.id));for(const move of t.transactions||[]){for(const id of move.adds||[])needed.add(String(id));for(const id of move.drops||[])needed.add(String(id))}}
  for(const id of needed){
   const m=meta[id]||{},stats=raw[id]||{},position=String(m.position||m.fantasy_positions?.[0]||'FLEX'),name=String(m.full_name||((m.first_name||'')+' '+(m.last_name||'')).trim()||id),fp=typeof scoreFn==='function'?scoreFn(stats,scoringSettings):null,
    series=Object.keys(historyByWeek).map(Number).sort((a,b)=>a-b).map(w=>{const st=historyByWeek[w]?.[id];if(!st)return null;const pts=typeof scoreFn==='function'?scoreFn(st,scoringSettings):null;return Number.isFinite(Number(pts))?{week:w,points:Number(pts),real_stat_line:realStatLine(position,st)}:null}).filter(Boolean),

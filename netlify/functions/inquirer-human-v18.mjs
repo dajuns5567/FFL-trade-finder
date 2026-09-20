@@ -11,10 +11,10 @@ function game(team){
   return {rows,top:rows[0]||null,second:rows[1]||null,low:rows[rows.length-1]||null,bench,worst,benchGap:Number.isFinite(benchGap)?benchGap:null,score:one(team.points)+'–'+one(team.opponent_points),margin:Math.abs(Number(team.points)-Number(team.opponent_points)),projection:Number.isFinite(projection)?projection:null,delta:Number.isFinite(delta)?delta:null};
 }
 
-function playerLine(p,voice){
+function playerLine(p,voice,detail='full'){
   if(!p)return'';
   const fp=Number.isFinite(Number(p.points))?one(p.points)+' fantasy points':null;
-  const real=String(p.real_stat_line||'').trim().replaceAll(' • ',', ');
+  const real=detail==='full'?String(p.real_stat_line||'').trim().replaceAll(' • ',', '):'';
   const core=fp&&real?fp+', with '+real:fp||real||'a quiet box score';
   if(voice==='nick')return p.name+' did the heavy lifting with '+core+'.';
   if(voice==='bart')return p.name+' gave them '+core+'.';
@@ -49,8 +49,8 @@ function managementLine(t,facts,voice){
     for(const id of move.drops||[])if(facts[String(id)])named.push({verb:'moved on from',p:facts[String(id)]});
     if(named.length>=2)break;
   }
-  let s='GM '+t.manager_name+' made '+tx.length+' roster move'+(tx.length===1?'':'s')+' this week.';
-  if(named[0])s+=' The clearest one: '+named[0].verb+' '+named[0].p.name+(Number.isFinite(Number(named[0].p.points))?' after a '+one(named[0].p.points)+'-point week':'')+'.';
+  let s=tx.length>=10?'GM '+t.manager_name+' spent the week living on the transaction wire.':tx.length>=4?'GM '+t.manager_name+' was busy on the transaction wire.':tx.length===1?'GM '+t.manager_name+' made one roster move this week.':'GM '+t.manager_name+' made a few roster moves this week.';
+  if(named[0])s+=' The clearest one: '+named[0].verb+' '+named[0].p.name+'.';
   if(named[1])s+=' '+named[1].p.name+' was part of the churn too.';
   return s;
 }
@@ -91,12 +91,12 @@ function nextLine(t,w){
 
 export function humanSections({team:t,week:w,reporter:r,facts,sentiment}){
   const g=game(t),voice=voiceId(r),won=!!t.won,opp=t.opponent_name||'the opponent',season=seasonLine(t,w),next=nextLine(t,w);
-  const star=playerLine(g.top,voice),second=playerLine(g.second,voice),low=playerLine(g.low,voice),trend=trendLine(g.top,voice),mgmt=managementLine(t,facts,voice),value=valueLine(t,voice),fans=fanLine(t,sentiment,voice),personnel=personnelLine(t,w,voice);
-  const projection=g.delta==null?'':' They finished '+Math.abs(g.delta).toFixed(1)+' points '+(g.delta>=0?'over':'under')+' projection.';
-  const benchStory=g.bench&&g.worst&&g.benchGap>=5?playerLine(g.bench,voice)+' '+g.worst.name+' got the start instead, a '+one(g.benchGap)+'-point swing sitting on the bench.':'There was no single bench decision big enough to explain the result by itself.';
+  const star=playerLine(g.top,voice,'full'),second=playerLine(g.second,voice,'brief'),low=playerLine(g.low,voice,'brief'),trend=trendLine(g.top,voice),mgmt=managementLine(t,facts,voice),value=valueLine(t,voice),fans=fanLine(t,sentiment,voice),personnel=personnelLine(t,w,voice);
+  const projection=g.delta==null?'':g.delta>=0?' They also beat the pregame projection.':' They came in below the pregame projection.';
+  const benchStory=g.bench&&g.worst&&g.benchGap>=5?playerLine(g.bench,voice,'full')+' '+g.worst.name+' got the start instead. That is a bench decision worth remembering next time the same choice appears.':'There was no single bench decision big enough to explain the result by itself.';
 
   if(voice==='nick')return [
-    {heading:'From the Press Box',kind:'lede',paragraphs:[t.team_name+' '+(won?'beat':'lost to')+' '+opp+', '+g.score+'. The margin was '+g.margin.toFixed(1)+', and it felt about as comfortable as that number sounds.'+projection,season+' One Sunday does not write a season, but it does leave ink. '+(won?'The good parts were good enough to travel.':'There is already something worth fixing before it becomes a habit.')]},
+    {heading:'From the Press Box',kind:'lede',paragraphs:[t.team_name+' '+(won?'beat':'lost to')+' '+opp+', '+g.score+'. It felt about as comfortable as that score sounds.'+projection,season+' One Sunday does not write a season, but it does leave ink. '+(won?'The good parts were good enough to travel.':'There is already something worth fixing before it becomes a habit.')]},
     {heading:'Who Earned the Ink',kind:'players',paragraphs:[star+trend+' '+second,low+' Every lineup has a quiet end; the problem starts when the same names keep living there.']},
     {heading:'The Manager’s Chair',kind:'management',paragraphs:[mgmt,benchStory+' Hindsight is cheap, but repeated hindsight eventually becomes a scouting report on the manager.']},
     {heading:'Value Watch',kind:'value',paragraphs:[value,'The market can be early, late, or moody. For now it is one more note in the margin next to what the team is doing on Sundays.']},

@@ -1,4 +1,4 @@
-name: One-time run Fleeced Inquirer Week 1 preview
+name: One-time generate Fleeced Inquirer Week 1 archive
 
 on:
   push:
@@ -8,69 +8,20 @@ on:
       - '.github/workflows/one-time-run-inquirer-week1-preview.yml'
 
 jobs:
-  run-week1:
+  generate-week1:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Run and verify Week 1 Inquirer V16
-        env:
-          BASE: https://deploy-preview-385--precious-stroopwafel-196eae.netlify.app
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Generate Week 1 Inquirer V16 from Sleeper
         run: |
-          set -euo pipefail
-          fetch_preview() {
-            local url="$1" out="$2"
-            if curl --fail --silent --show-error --max-time 90 "$url" -o "$out"; then return 0; fi
-            for token in "${NETLIFY_AUTH_TOKEN:-}" "${NETLIFY_BLOBS_TOKEN:-}"; do
-              [ -n "$token" ] || continue
-              if curl --fail --silent --show-error --max-time 90 -H "Authorization: Bearer $token" "$url" -o "$out"; then return 0; fi
-            done
-            return 1
-          }
-          for attempt in $(seq 1 8); do
-            echo "Attempt $attempt"
-            if fetch_preview "$BASE/.netlify/functions/league-hub?weekly=1" /tmp/week1.json; then
-              node <<'NODE'
-          const fs=require('fs');
-          const x=JSON.parse(fs.readFileSync('/tmp/week1.json','utf8'));
-          console.log(JSON.stringify({
-            available:x.available,
-            season:x.season,
-            week:x.week,
-            inquirer_version:x.inquirer_version,
-            teams:x.teams?.length,
-            overview_sections:x.league_overview?.sections?.length,
-            hot_takes:x.league_overview?.hot_takes?.length,
-            classification:x.week_classification?.label
-          },null,2));
-          if(x.available!==true)process.exit(2);
-          if(Number(x.season)!==2026||Number(x.week)!==1)process.exit(3);
-          if(Number(x.inquirer_version)!==16)process.exit(4);
-          if(!Array.isArray(x.teams)||x.teams.length!==32)process.exit(5);
-          if(!x.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(t?.inquirer_article?.paragraphs)&&t.inquirer_article.paragraphs.length>=9))process.exit(6);
-          if(!x.league_overview||!Array.isArray(x.league_overview.sections)||x.league_overview.sections.length!==4)process.exit(7);
-          if(!Array.isArray(x.league_overview.hot_takes)||x.league_overview.hot_takes.length!==4)process.exit(8);
-          if(x.week_classification?.label!=='Week 1 • Regular Season')process.exit(9);
-          NODE
-              rc=$?
-              if [ "$rc" -eq 0 ]; then break; fi
-            fi
-            sleep 10
-            if [ "$attempt" -eq 8 ]; then echo "Week 1 Inquirer did not validate"; exit 1; fi
-          done
-
-          for reporter in walter-mercer tess-delaney mack-hollis nora-voss; do
-            fetch_preview "$BASE/.netlify/functions/league-hub?reporter_archive=$reporter" "/tmp/$reporter.json"
-            REPORTER="$reporter" node <<'NODE'
-          const fs=require('fs');
-          const id=process.env.REPORTER;
-          const x=JSON.parse(fs.readFileSync('/tmp/'+id+'.json','utf8'));
-          const rows=x.articles||[];
-          const teamRows=rows.filter(r=>Number(r.season)===2026&&Number(r.week)===1&&String(r.roster_id)!=='__league__');
-          const overview=rows.find(r=>Number(r.season)===2026&&Number(r.week)===1&&String(r.roster_id)==='__league__');
-          console.log(id,{team_articles:teamRows.length,league_overview:!!overview});
-          if(teamRows.length!==8||!overview)process.exit(11);
-          NODE
-          done
-          echo "Week 1 Fleeced Inquirer V16 archive verified."
+          OUT=/tmp/week1-inquirer.json node scripts/one-time-generate-inquirer-week1.mjs
+          node -e "const x=require('/tmp/week1-inquirer.json'); if(x.inquirer_version!==16||x.week!==1||x.teams?.length!==32||x.league_overview?.sections?.length!==4||x.league_overview?.hot_takes?.length!==4) process.exit(1); console.log('validated Week 1 V16 archive')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: week1-inquirer-v16
+          path: /tmp/week1-inquirer.json
+          retention-days: 1

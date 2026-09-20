@@ -404,3 +404,130 @@ The immutable Week 1 edition remains at:
 
 with publication metadata at:
 `data/inquirer/2026/week-01.meta.json`
+
+
+## V18 human-first newsroom standard — active as of 2026-09-19
+
+V18 supersedes V17 for both team beat columns and the League Overview. V17 remains documented above as historical context, but it is no longer the active writing standard.
+
+### Core editorial rule
+
+**Report the story. Do not explain the data pipeline to the reader.**
+
+Statistics are supporting evidence, not the grammar of the article. A reporter should sound as though they watched the team all week, followed the transactions, saw the game, talked to the fan base, and then wrote a column.
+
+The article must not narrate internal implementation details such as:
+- whether Sleeper returned a row
+- whether a "usable real-life stat line" was available
+- what the next data point will establish
+- what "this section" is designed to measure
+- why a numerical metric is technically useful before presenting it
+- generic phrases such as "the useful question", "the useful part", or "the numbers are asking"
+
+If a supporting data field is missing, either write around it naturally or omit that claim. Do not turn missing data into article copy.
+
+### Team beat columns
+
+The six-section architecture remains:
+1. game story / lede
+2. players who shaped the result
+3. management / lineup / transaction reporting
+4. Value Watch
+5. rolling Fan Sentiment
+6. next-week outlook
+
+The structure exists to keep coverage complete; it must not make the prose read like six database reports.
+
+V18 team columns should:
+- flow in complete reporter prose
+- lead with what happened, not with a methodology disclaimer
+- use the final score and only the most meaningful supporting numbers
+- avoid repeating full stat lines for every player mentioned
+- give the primary player meaningful fantasy + real-football context while treating secondary names more lightly
+- describe bench mistakes as decisions and consequences rather than as abstract point-gap calculations
+- describe transaction activity as front-office behavior rather than a transaction-count dump
+- keep each reporter's personality inside the writing instead of printing the internal voice instructions under the byline
+- never display the reporter prompt/voice description as published article text
+
+Bench players and comparison players are first-class article subjects. If a best-bench or worst-starter player is discussed, the same weekly Sleeper stat enrichment used for starters must be applied to that player before prose is generated.
+
+### Defensive stat-line rule
+
+IDP stat rendering accepts Sleeper IDP aliases for solo tackles, assists, total tackles, sacks, tackles for loss, quarterback hits, interceptions, forced fumbles, fumble recoveries and passes defended. When solo/assist detail is absent, total tackles may be used. Defensive snaps are a last-resort factual fallback.
+
+Singular grammar must be natural: `1 sack`, `1 QB hit`, `1 tackle`, not plural labels after the number one.
+
+The Week 1 Nate Landman regression case is permanent evidence for this rule. His archived Week 1 row must resolve from player id 8659 to a real defensive line including **5 solo, 3 assists, 1 QB hit and 1 PD** rather than being described as missing.
+
+### League Notebook
+
+The co-authored League Overview is now written as a **League Notebook**, not a statistical report.
+
+Each of the four desks gets a real editorial section with connected paragraphs. League-wide facts such as scoring leaders, standings, trades, roster movement, injuries and market direction may inform the notebook, but the prose should sound like league reporting, gossip and opinion rather than a dashboard narration.
+
+The canonical generated-edition audit is:
+
+`node scripts/inquirer-overview-quality-audit.mjs`
+
+### Hot Takes means predictions
+
+The Hot Takes box is not a second analytics section.
+
+Where the underlying league data permits it, every weekly edition must include bold, falsifiable predictions from these categories:
+- **championship / Super Bowl pick**
+- **fraud-team call**
+- **division-winner picks**
+- **Player of the Year pick**
+- **upset special**
+
+These are explicitly predictions, not current standings presented with dramatic labels. The article should make clear that a call is a pick/opinion while remaining grounded in the league's real completed results and roster context.
+
+Hot Takes may be wrong. That is part of the feature.
+
+### V18 quality gates
+
+The team-column audit is:
+
+`node scripts/inquirer-prose-quality-audit.mjs`
+
+For the current 32-team edition it requires, among other checks:
+- 32 complete team articles
+- six section kinds and at least 12 paragraphs per team
+- at least 300 words per team column
+- median paragraph length of at least 24 words
+- numeric-token density no greater than 7.5%
+- no provider/pipeline-explainer language in article copy
+- no legacy checklist/stat-dump constructions
+- reporter-specific voice evidence
+- headline diversity
+- no five-word paragraph opener reused across more than eight stories
+
+The League Notebook audit independently checks:
+- four reporter sections
+- connected multi-paragraph prose
+- restrained numerical density
+- absence of legacy statistical-report phrasing
+- at least five real Hot Takes
+- championship, fraud, division, player and upset prediction categories
+
+Both audits are permanent PR CI gates.
+
+### 2026 Week 1 V18 replacement
+
+The immutable Week 1 archive was regenerated from completed Sleeper Week 1 data and replaced the V17 edition.
+
+Committed publication metadata records:
+- 32 team articles
+- eight team articles per reporter
+- six sections per team article
+- approximately 363 words per team article
+- four League Notebook sections
+- approximately 496 League Notebook words
+- five Hot Takes: championship, fraud, division, player and upset
+- verified Nate Landman bench-player real-stat enrichment
+
+The archive remains:
+`netlify/functions/inquirer-week1-2026-preload.mjs`
+
+with metadata at:
+`data/inquirer/2026/week-01.meta.json`

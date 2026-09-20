@@ -276,4 +276,63 @@ function buildSections(t,w,r,facts,sentiment){
   return[
     {heading:'The Week’s Evidence',kind:'lede',paragraphs:[
       `${t.team_name} ${won?'won':'lost'} ${g.score}, and the file begins with the ${margin}-point margin rather than a theory about character. ${g.projDelta==null?'There is no reliable projection comparison in evidence.':`The lineup finished ${Math.abs(g.projDelta).toFixed(1)} points ${g.projDelta>=0?'above':'below'} projection.`} The result is real. Motive, intent and sweeping conclusions remain under investigation.`,
-      `${season} This desk distrusts single-game certainty
+      `${season} This desk distrusts single-game certainty on principle, which is useful because fantasy managers produce it in industrial quantities. We can still identify what changed the game without pretending one week resolved the entire case.`
+    ]},
+    {heading:'Witnesses for the Record',kind:'players',paragraphs:[
+      `${star} That is our primary witness because the fantasy return is supported by a specific NFL stat line. ${trend||'There is not enough multi-game testimony yet to call it a trend, so the witness is excused until the sample gets larger.'}`,
+      `${second} The weaker testimony came from the other end of the lineup: ${low} One soft line is not fraud. Repeated soft lines in the same roster slot eventually become an organizational document.`
+    ]},
+    {heading:'Front Office Paper Trail',kind:'management',paragraphs:[
+      `${tx} Transactions are useful because they show what management believed before the result arrived. That makes them better evidence than a Monday explanation delivered after everyone has seen the score.`,
+      g.bench&&g.worst&&g.benchGap>=5?`${bench} The lineup card instead carried ${g.worst.name}. ${low} I am not indicting anyone over one hindsight gap, but the discrepancy is now in the file and will be compared with the next decision of the same kind.`:`There is no obvious bench mistake large enough to support a clean negligence theory this week. That may disappoint the prosecution, but accuracy outranks entertainment even in this building.`
+    ]},
+    {heading:'Public Sentiment File',kind:'sentiment',paragraphs:[
+      `${fans} The crowd is emotional evidence, not objective evidence, but it is still part of the story. A manager’s reputation is built from a chain of weeks, trades and roster decisions, which is why one verdict does not overturn the whole record.`,
+      `${value} That market movement belongs in a separate folder from wins and losses. It can corroborate a roster trend or contradict the mood, but it does not get to masquerade as a result.`
+    ]},
+    {heading:'Open Questions for Next Week',kind:'outlook',paragraphs:[
+      `${personnel} Roster pressure is where prior decisions become visible. Depth that looked excessive in August becomes useful the moment a bye or injury designation removes a starter from the board.`,
+      `${next} The file remains open. The cleanest way for management to answer this week’s questions is not with a quote, a trade announcement or a motivational slogan. It is with a lineup next week that makes the evidence less interesting.`
+    ]}
+  ];
+}
+
+export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamClassification,aside}){
+  const sections=buildSections(team,week,reporter,facts,sentiment);
+  const paragraphs=sections.flatMap(s=>s.paragraphs||[]);
+  return{
+    schema_version:7,
+    inquirer_version:17,
+    season:Number(teamClassification?.season||2026),
+    week:Number(week),
+    week_classification:teamClassification,
+    fan_sentiment:sentiment,
+    roster_id:String(team.roster_id),
+    reporter:{id:reporter.id,name:reporter.name,title:reporter.title,desk:reporter.desk,voice:reporter.voice,signature:reporter.signature},
+    headline:narrativeHeadline(team,week,reporter),
+    byline:'By '+reporter.name+', '+reporter.title,
+    deck:reporter.desk+' • '+reporter.signature+' • '+teamClassification.label,
+    sections,
+    paragraphs,
+    aside,
+    generated_from:'Sleeper completed matchup, season-to-date matchup history, opponent context, standings, projections, lineup decisions, transactions, roster/player metadata, weekly real-life stats, canonical team Value History, verified NFL schedule, and Sleeper injury designations',
+    real_stats_source:'Sleeper weekly stats',
+    facts:{
+      team_points:Number(team.points),
+      opponent_points:Number(team.opponent_points),
+      projected:Number(team.projected),
+      league_context:team.league_context||null,
+      opponent_context:team.opponent_context||null,
+      next_opponent_context:team.next_opponent_context||null,
+      value_history_week:team.value_history_week||null,
+      next_week_availability:team.next_week_availability||null,
+      fan_sentiment:sentiment,
+      manager_career:team.manager_career||null,
+      conference:team.conference||null,
+      division_name:team.division_name||null,
+      starter_details:team.starter_details||[],
+      best_bench:team.best_bench||null,
+      worst_starter:team.worst_starter||null
+    }
+  };
+}

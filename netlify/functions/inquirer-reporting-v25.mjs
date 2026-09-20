@@ -264,12 +264,26 @@ function hotCool(t,kind,r){
   ])];
 }
 
-function sentiment(t){
+function sentiment(t,r){
   const margin=Number(t.points)-Number(t.opponent_points),top=list(t)[0],m=t.mida_outlook,ps=[];
-  if(margin>20)ps.push(`${t.team_name} fans get to enjoy this one without immediately reaching for the calculator. A ${one(margin)}-point win, a ${record(t)} record and ${top?top.name+' playing like a headliner':'a comfortable Sunday'} is enough to let optimism into the building for a week.`);
-  else if(margin>0)ps.push(`${t.team_name} fans can exhale after a ${one(margin)}-point win over ${t.opponent_name}. Close wins do not settle every question, but they make those questions a lot more fun to ask at ${record(t)}.`);
-  else ps.push(`${t.team_name} fans will spend the week replaying the ${one(Math.abs(margin))}-point loss to ${t.opponent_name}. ${top?top.name+' gave them something worth keeping; ':''}the frustration is with how little margin the rest of the lineup created around it.`);
-  if(m&&valid(m.playoff))ps.push(`With roughly ${one(m.playoff)}% playoff chances, the mood should match the stakes: ${Number(m.playoff)>=70?'this roster has earned expectations, not excuses':Number(m.playoff)>=40?'there is too much season left for either panic or a victory parade':'hope now needs wins more than slogans'}.`);
+  if(margin>0)ps.push(deskChoice(t,r,[
+    [`${t.team_name} fans can live with a ${one(margin)}-point win over ${t.opponent_name}. ${margin>20?'This is the rare week to enjoy the clipping before inventing a problem.':'Close wins leave questions, but they are nicer questions at '+record(t)+'.'}`,`A ${one(margin)}-point win gives ${t.team_name} supporters permission to be pleased for one news cycle. The record says ${record(t)}; the anxiety can wait.`],
+    [`${t.team_name} supporters may enjoy the ${one(margin)}-point win over ${t.opponent_name} with only the minimum theatrical restraint. ${top?top.name+' gave them a centerpiece worth admiring.':''}`,`The mood around ${t.team_name} is appropriately pleased after beating ${t.opponent_name} by ${one(margin)}. At ${record(t)}, even I will allow a modest toast.`],
+    [`${t.team_name} won by ${one(margin)}, which means the group chat has already become unbearable in the correct direction. ${top?top.name+' supplied the easiest name to shout.':''}`,`A ${one(margin)}-point win over ${t.opponent_name} has ${t.team_name} fans typing faster than judgment permits. The ${record(t)} record will be screenshotted accordingly.`],
+    [`Public sentiment improves on the simple evidence of a ${one(margin)}-point win over ${t.opponent_name}. ${top?top.name+' supplied a useful exhibit.':''}`,`${t.team_name} supporters have a favorable finding after the ${one(margin)}-point win. The file says ${record(t)}, and nobody is appealing tonight.`]
+  ]));
+  else ps.push(deskChoice(t,r,[
+    [`${t.team_name} fans will replay the ${one(Math.abs(margin))}-point loss to ${t.opponent_name} all week. ${top?top.name+' at least gave them something worth keeping.':''}`,`A ${one(Math.abs(margin))}-point loss leaves ${t.team_name} supporters with the familiar hobby of rewriting Sunday by Tuesday. ${top?top.name+' is the part they should not throw out.':''}`],
+    [`The mood around ${t.team_name} is exactly as elegant as a ${one(Math.abs(margin))}-point loss to ${t.opponent_name} deserves. ${top?top.name+' provided one respectable detail.':''}`,`${t.team_name} supporters have been handed a ${one(Math.abs(margin))}-point loss and no tasteful way to display it. ${top?top.name+' deserved a better frame.':''}`],
+    [`${t.team_name} lost by ${one(Math.abs(margin))}, so the group chat is now a crime scene with reaction GIFs. ${top?top.name+' is spared the angry font.':''}`,`A ${one(Math.abs(margin))}-point loss to ${t.opponent_name} has ${t.team_name} fans reaching for capital letters. ${top?top.name+' gets the lone friendly headline.':''}`],
+    [`The public file opens with a ${one(Math.abs(margin))}-point loss to ${t.opponent_name}. ${top?top.name+' belongs in the mitigating-evidence folder.':''}`,`${t.team_name} supporters have entered the ${one(Math.abs(margin))}-point loss into evidence. ${top?top.name+' is not the name under suspicion.':''}`]
+  ]));
+  if(m&&valid(m.playoff))ps.push(deskChoice(t,r,[
+    [Number(m.playoff)>=70?`Postseason chances around ${one(m.playoff)}% move the bar from hope to expectation.`:Number(m.playoff)>=40?`Postseason chances around ${one(m.playoff)}% leave plenty to argue about and plenty left to earn.`:`Postseason chances around ${one(m.playoff)}% mean hope now needs wins more than slogans.`,Number(m.playoff)>=70?`Around ${one(m.playoff)}% to make the playoffs is enough for supporters to expect more than an interesting season.`:Number(m.playoff)>=40?`Around ${one(m.playoff)}% to make the playoffs keeps this season squarely in the argument.`:`Around ${one(m.playoff)}% to make the playoffs makes every useful result feel a little more expensive.`],
+    [Number(m.playoff)>=70?`Postseason chances around ${one(m.playoff)}% are enough to reserve a seat at the serious table, if not the champagne.`:Number(m.playoff)>=40?`Postseason chances around ${one(m.playoff)}% are neither tragedy nor triumph; how terribly suspenseful.`:`Postseason chances around ${one(m.playoff)}% call for fewer speeches and more victories, a vulgar but effective solution.`,Number(m.playoff)>=70?`Around ${one(m.playoff)}% playoff chances make modest expectations feel underdressed.`:Number(m.playoff)>=40?`Around ${one(m.playoff)}% playoff chances leave the door open just enough to be dramatic.`:`Around ${one(m.playoff)}% playoff chances are a small invitation. Winning is how one RSVPs.`],
+    [Number(m.playoff)>=70?`Postseason chances around ${one(m.playoff)}% are officially too high for timid headlines.`:Number(m.playoff)>=40?`Postseason chances around ${one(m.playoff)}% leave enough runway for a hot streak and enough danger for a meltdown headline.`:`Postseason chances around ${one(m.playoff)}% mean stop selling hope and start stacking wins.`,Number(m.playoff)>=70?`Around ${one(m.playoff)}% playoff chances mean the back page expects receipts, not potential.`:Number(m.playoff)>=40?`Around ${one(m.playoff)}% playoff chances keep both parade and panic on hold.`:`Around ${one(m.playoff)}% playoff chances need a few loud wins before the font gets bigger.`],
+    [Number(m.playoff)>=70?`Postseason chances around ${one(m.playoff)}% raise the burden of proof: this roster is supposed to matter.`:Number(m.playoff)>=40?`Postseason chances around ${one(m.playoff)}% keep the case unresolved and worth watching.`:`Postseason chances around ${one(m.playoff)}% leave little room for evidence-free optimism.`,Number(m.playoff)>=70?`Around ${one(m.playoff)}% playoff chances make expectation part of the record.`:Number(m.playoff)>=40?`Around ${one(m.playoff)}% playoff chances keep the inquiry open in both directions.`:`Around ${one(m.playoff)}% playoff chances put wins at the top of the evidence request.`]
+  ]));
   return ps;
 }
 
@@ -280,9 +294,9 @@ export function humanSectionsV25(args){
     if(s.kind==='players')return {...s,paragraphs:playerSection(t,args.reporter)};
     if(s.kind==='management')return {...s,paragraphs:mgmt};
     if(s.kind==='outlook')return {...s,paragraphs:outlook(t,args.week,args.reporter)};
-    if(s.kind==='sentiment')return {...s,paragraphs:sentiment(t)};
-    if(s.kind==='hot-seat')return {...s,paragraphs:hotCool(t,'hot-seat')};
-    if(s.kind==='cool-throne')return {...s,paragraphs:hotCool(t,'cool-throne')};
+    if(s.kind==='sentiment')return {...s,paragraphs:sentiment(t,args.reporter)};
+    if(s.kind==='hot-seat')return {...s,paragraphs:hotCool(t,'hot-seat',args.reporter)};
+    if(s.kind==='cool-throne')return {...s,paragraphs:hotCool(t,'cool-throne',args.reporter)};
     return s;
   });
 }

@@ -11,7 +11,9 @@ for(const t of edition.teams){
   assert.doesNotMatch(mood,/Strong Approval|crowd.*statement|no pattern finding/);
   for(const rival of t.division_results){assert.ok(outlook.includes(rival.team_name),t.team_name+' missing division result');assert.notEqual(rival.roster_id,t.roster_id)}
   assert.ok(t.division_results.length===3,t.team_name+' must have its three division rivals');
-  assert.ok(mood.includes(t.team_name));moods.add(mood);
+  if(Number(edition.inquirer_version)<25)assert.ok(mood.includes(t.team_name));
+  else assert.ok((t.inquirer_article.paragraphs||[]).join(' ').includes(t.team_name),t.team_name+' must remain clearly named in its article without forcing a canned sentiment repeat');
+  moods.add(mood);
 }
 assert.equal(moods.size,32);
 const t=structuredClone(edition.teams[0]),r=t.inquirer_article.reporter;

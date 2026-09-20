@@ -144,12 +144,12 @@ export function narrativeHeadline(t,w,r){
 function seasonNarrative(t,w){
   const c=t.league_context||{},st=c.streak||{},rank=Number(c.standings_rank),size=Number(c.league_size)||32,rec=c.record||{};
   const record=String(rec.wins||0)+'-'+String(rec.losses||0)+(Number(rec.ties)?'-'+String(rec.ties):'');
-  if(Number(w)===1)return `${t.team_name} has exactly one completed result in the book, so the opening table is still mostly a collection of tiny samples. The club leaves Week 1 at ${record}${rank?' and sits '+rank+'th of '+size:''}. That is useful context, not permission to start engraving trophies or tombstones.`;
+  if(Number(w)===1)return `${t.team_name} has exactly one completed result in the book, so the opening table is still mostly a collection of tiny samples. The club leaves Week 1 at ${record}${rank?' and sits '+ordinal(rank)+' of '+size:''}. That is useful context, not permission to start engraving trophies or tombstones.`;
   const streak=Number(st.length)>=2?` The ${st.type==='W'?'winning':'losing'} streak has reached ${st.length}.`:'';
   const recent=Number(c.recent_avg_points),prior=Number(c.prior_five_avg_points);
   const form=Number.isFinite(recent)&&Number.isFinite(prior)&&Math.abs(recent-prior)>=8?` The last-five scoring pace is ${one(recent)}, ${one(Math.abs(recent-prior))} ${recent>prior?'higher':'lower'} than the five before it.`:'';
   const playoff=Number(w)>=14?` This is ${t.week_classification?.round||'the playoffs'}, so there is no harmless version of a bad lineup decision now.`:Number(c.games_until_playoffs)<=6?` Week 14 starts the playoffs, which makes the current seed line more than decorative.`:'';
-  return `${t.team_name} is ${record}${rank?', '+rank+'th of '+size:''}.${streak}${form}${playoff}`;
+  return `${t.team_name} is ${record}${rank?', '+ordinal(rank)+' of '+size:''}.${streak}${form}${playoff}`;
 }
 
 function transactionNarrative(t,facts){

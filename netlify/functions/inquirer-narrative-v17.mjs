@@ -320,7 +320,7 @@ export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamCl
   const paragraphs=sections.flatMap(s=>s.paragraphs||[]);
   return{
     schema_version:11,
-    inquirer_version:24,
+    inquirer_version:26,
     season:Number(teamClassification?.season||2026),
     week:Number(week),
     week_classification:teamClassification,

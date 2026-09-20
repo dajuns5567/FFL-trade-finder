@@ -12,7 +12,7 @@ assert(week1Preload.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(
 const preloadReporterCounts=new Map(REPORTERS.map(r=>[r.name,0]));
 for(const t of week1Preload.teams){const n=t?.inquirer_article?.reporter?.name;preloadReporterCounts.set(n,(preloadReporterCounts.get(n)||0)+1)}
 for(const r of REPORTERS)assert(preloadReporterCounts.get(r.name)===8,'Week 1 preload must preserve exactly eight team stories for '+r.name);
-assert(week1Preload?.league_overview?.sections?.length===4&&week1Preload?.league_overview?.hot_takes?.length>=5,'Week 1 preload must include the four-desk League Notebook and five prediction Hot Takes');
+assert(week1Preload?.league_overview?.sections?.length===4&&week1Preload?.league_overview?.hot_takes?.length>=5,'Week 1 preload must include the four-desk Weekly Recap and five prediction Hot Takes');
 assert(week1Preload?.week_classification?.label==='Week 1 • Regular Season','Week 1 preload must preserve the canonical Week 1 classification');
 assert(week1Preload.teams.every(t=>t?.value_history_week==null),'Week 1 preload must not invent team Value History movement when no valid 7D comparison exists');
 assert(inquirerWeekClassification(14,2026,'AFC').label==='Week 14 • AFC Wildcard Round','Week 14 AFC teams must be in the AFC Wildcard Round');
@@ -145,8 +145,8 @@ assert(overview.week_classification?.phase==='Playoffs'&&overview.week_classific
 assert((overview.sections||[]).length===4,'League Overview must contain one substantive desk section from each reporter');
 assert((overview.hot_takes||[]).length>=5,'League Overview Hot Takes must contain championship, fraud, division, player and upset predictions');
 assert(['championship','fraud','division','player','upset'].every(k=>(overview.hot_takes||[]).some(x=>x.kind===k)),'Hot Takes must be actual prediction categories, not statistical-analysis blurbs');
-assert((overview.sections||[]).some(s=>(s.paragraphs||[]).some(p=>/trade|transaction/i.test(p))),'League Notebook must react naturally to meaningful weekly transactions when present');
-assert((overview.bottom_five||[]).length===5,'League Notebook data must preserve the bottom-five context even when the prose chooses a different lead');
+assert((overview.sections||[]).some(s=>(s.paragraphs||[]).some(p=>/trade|transaction/i.test(p))),'Weekly Recap must react naturally to meaningful weekly transactions when present');
+assert((overview.bottom_five||[]).length===5,'Weekly Recap data must preserve the bottom-five context even when the prose chooses a different lead');
 
 const backend=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');
 const ui=fs.readFileSync('league-hub-v451.js','utf8');
@@ -196,13 +196,13 @@ assert(/section-order shuffling alone is not enough/i.test(helper),'House style 
 assert(overviewWriter.includes("kind:'championship'")&&overviewWriter.includes("kind:'fraud'")&&overviewWriter.includes("kind:'division'")&&overviewWriter.includes("kind:'player'")&&overviewWriter.includes("kind:'upset'"),'Hot Takes must remain explicit prediction types');
 assert(helper.includes('Hall of Fame Petition')&&helper.includes('Metaphorical Torches & Pitchforks')&&helper.includes('The Imaginary Mansion Is Under Siege'),'V16 fan sentiment must preserve the full creative positive-to-negative spectrum');
 assert(helper.includes("previous.score)*.65+raw*.35"),'V16 fan sentiment must preserve prior-week inertia so one result cannot dominate management reputation');
-assert(helper.includes('buildLeagueOverview')&&helper.includes('buildHumanLeagueOverviewV19'),'The co-authored League Notebook must remain routed through the passionate newsroom engine');
+assert(helper.includes('buildLeagueOverview')&&helper.includes('buildHumanLeagueOverviewV19'),'The co-authored Weekly Recap must remain routed through the passionate newsroom engine');
 assert(backend.includes('slotAcceptsPosition(slot,position)')&&backend.includes('bestEligibleLineupMiss(starters,bench)'),'Lineup hindsight must use Sleeper slot eligibility instead of raw best-bench versus worst-starter scoring');
 assert(backend.includes("if(s==='FLEX')return ['RB','WR','TE'].includes(p)")&&backend.includes("if(s==='IDP_FLEX'||s==='IDP')return IDP_POSITIONS.has(p)"),'Offensive FLEX and IDP FLEX eligibility must remain separate');
 assert(helper.includes('best_lineup_miss')&&human.includes('best_lineup_miss')&&newsroom.includes('best_lineup_miss'),'V21 writer must consume only the position-eligible lineup miss for management criticism');
 assert(ui.includes('data-lh-archive-year')&&ui.includes('data-lh-archive-week')&&ui.includes('data-lh-archive-team'),'Inquirer archive must expose year, week, and team filters');
 assert(ui.includes('It opens on the current completed week'),'Inquirer archive must default its filter view to the current completed week');
-assert(ui.includes('linkedNotebookText')&&ui.includes('class="lh-inline-team" data-lh-value-team'),'League Notebook team references must open the matching team Value History');
+assert(ui.includes('linkedNotebookText')&&ui.includes('class="lh-inline-team" data-lh-value-team'),'Weekly Recap team references must open the matching team Value History');
 assert(ui.includes('data-lh-broadcast-article')&&ui.indexOf("nav+body+archive")>=0,'The clean team/manager article selector must render above the selected article');
 assert(ui.includes('.lh-article-picker span{font-size:16px')&&ui.includes('.lh-article-picker{display:grid')&&ui.includes('background:transparent'),'Choose an article must be prominent without a gold container');
 assert(ui.includes('.lh-reporter-byline{margin:8px 0 12px;padding:2px 0;border:0;background:transparent}'),'Author bylines must render without the gold box treatment');
@@ -210,7 +210,7 @@ assert(ui.includes('scrollToInquirerArticle')&&ui.includes('showWeeklyArticle(we
 assert(ui.includes("const preserveY=view==='daily'&&previousView==='daily'?window.scrollY:null")&&ui.includes("window.scrollTo({top:preserveY,behavior:'auto'})"),'Reporter desk rerenders must preserve the reader’s scroll position');
 assert(ui.includes('data-lh-reporter-close'),'Reporter Desks must provide an explicit Close control');
 assert(ui.includes('Weekly Recap • All 4 Reporters')&&ui.includes('data-lh-broadcast-team="__league__"'),'Weekly Recap must remain the user-facing league article and its headline must open the recap');
-assert(!ui.includes('League Notebook'),'League Notebook must not regress into user-facing League Hub copy after the Weekly Recap rename');
+assert(!ui.includes('Weekly Recap'),'Weekly Recap must not regress into user-facing League Hub copy after the Weekly Recap rename');
 assert(ui.includes('data-lh-archive-year')&&ui.includes('data-lh-archive-week')&&ui.includes('data-lh-archive-team')&&ui.includes('data-lh-reporter-article-season'),'Article Archive must retain Year/Week/Team filters and clickable reporter-story archive controls');
 assert(backend.includes("team_name:'Weekly Recap'")&&!backend.includes("team_name:'League Overview'"),'Stored archive metadata must call the league-wide article Weekly Recap');
 assert(backend.includes('nextProj')&&overviewWriter.includes('underdog_projected')&&overviewWriter.includes('favorite_projected'),'Upset picks must be backed by next-week projections and preserve both projected scores');

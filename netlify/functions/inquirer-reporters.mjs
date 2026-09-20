@@ -3,7 +3,7 @@
 import {buildNarrativeArticle} from './inquirer-narrative-v17.mjs';
 import {buildHumanLeagueOverviewV19} from './inquirer-overview-v19.mjs';
 
-export const INQUIRER_VERSION=24;
+export const INQUIRER_VERSION=25;
 export const INQUIRER_PLAYOFF_START_WEEK=14;
 export const INQUIRER_FINAL_WEEK=17;
 export function inquirerWeekClassification(week,season,conference=''){
@@ -296,11 +296,11 @@ export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyS
    last3=series.slice(-3),prior3=series.slice(-6,-3),lastAvg=last3.length?last3.reduce((n,x)=>n+x.points,0)/last3.length:null,priorAvg=prior3.length?prior3.reduce((n,x)=>n+x.points,0)/prior3.length:null,delta=Number.isFinite(lastAvg)&&Number.isFinite(priorAvg)?lastAvg-priorAvg:null,
    label=last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta>=3&&lastAvg>=priorAvg*1.2?'hot':last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta<=-3&&lastAvg<=priorAvg*.8?'cold':last3.length===3?'steady':'insufficient';
   const seasonPoints=series.reduce((n,x)=>n+Number(x.points||0),0),seasonGames=series.length,seasonAvg=seasonGames?seasonPoints/seasonGames:null;
-  facts[id]={id,name,position,nfl_team:String(m.team||'FA'),points:fp!=null&&Number.isFinite(Number(fp))?Number(fp):null,real_stats:stats,real_stat_line:realStatLine(position,stats),season_fantasy_points:seasonPoints,season_games:seasonGames,season_avg:seasonAvg,recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
+  facts[id]={id,name,position,nfl_team:String(m.team||'FA'),age:Number.isFinite(Number(m.age))?Number(m.age):null,years_exp:Number.isFinite(Number(m.years_exp))?Number(m.years_exp):null,points:fp!=null&&Number.isFinite(Number(fp))?Number(fp):null,real_stats:stats,real_stat_line:realStatLine(position,stats),season_fantasy_points:seasonPoints,season_games:seasonGames,season_avg:seasonAvg,recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
  }
  for(const [id,f] of Object.entries(facts)){const v=playerValues[id];if(v!=null&&Number.isFinite(Number(v)))f.value=Number(v)}
  const classification=weekClassification||inquirerWeekClassification(week,season);
- const enrichPlayer=p=>p?({...p,value:facts[String(p.id)]?.value??null,real_stats:facts[String(p.id)]?.real_stats||{},real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,season_fantasy_points:facts[String(p.id)]?.season_fantasy_points??null,season_games:facts[String(p.id)]?.season_games??0,season_avg:facts[String(p.id)]?.season_avg??null,recent_form:facts[String(p.id)]?.recent_form||null}):null;
+ const enrichPlayer=p=>p?({...p,value:facts[String(p.id)]?.value??null,age:facts[String(p.id)]?.age??null,years_exp:facts[String(p.id)]?.years_exp??null,real_stats:facts[String(p.id)]?.real_stats||{},real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,season_fantasy_points:facts[String(p.id)]?.season_fantasy_points??null,season_games:facts[String(p.id)]?.season_games??0,season_avg:facts[String(p.id)]?.season_avg??null,recent_form:facts[String(p.id)]?.recent_form||null}):null;
  const enriched=(teams||[]).map(t=>{
   const reporter=reporterForTeam(t.roster_id,week,ids),teamClassification=inquirerWeekClassification(week,season,t.conference),starters=(t.starter_details||[]).map(enrichPlayer);
   const benchFact=enrichPlayer(t.best_bench),worstFact=enrichPlayer(t.worst_starter),miss=t.best_lineup_miss?{...t.best_lineup_miss,reserve:enrichPlayer(t.best_lineup_miss.reserve),starter:enrichPlayer(t.best_lineup_miss.starter)}:null;

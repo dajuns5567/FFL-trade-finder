@@ -38,11 +38,11 @@ function topPlayerSentence(p,voice,v){
    'The headline found '+name+' before I did: '+c+'. Fine. Sometimes the obvious story is obvious because it is good.'
   ],
   tilly:[
-   name+' gets the giant photo, the expensive ink and probably a completely unauthorized billboard after '+c+'.',
+   name+' owns the lead headline after '+c+'. The expensive ink is justified for once.',
    'Put a frame around '+name+' — figuratively, legal department — because '+c+' just paid for the front page.',
    name+' brought '+c+'. I have already moved the headline font from “reasonable” to “neighbors can read it.”',
    name+' just dropped '+c+' on the newsroom desk. Somebody clear tomorrow’s front page and hide the adult supervision.',
-   'The giant photo belongs to '+name+' after '+c+'. We are accepting no appeals and very little dignity.',
+   'The lead story belongs to '+name+' after '+c+'. We are accepting no appeals and very little dignity.',
    name+' gave us '+c+', which is how perfectly normal newspapers end up pricing confetti by the pallet.',
    'If '+name+' wants the front page, '+c+' is a persuasive application. Approved immediately and with poor judgment.',
    name+' delivered '+c+'. I have informed the copy desk that subtlety is cancelled until Tuesday.'
@@ -66,7 +66,7 @@ function supportSentence(p,voice,v){
  const rows={
   nick:[name+' was right there behind him with '+c+'.',name+' kept the lineup from turning into a one-man rescue mission with '+c+'.',name+' chipped in '+c+', which matters more than it sounds in a league this deep.',name+' gave the middle of the card some backbone with '+c+'.'],
   bart:[name+' added '+c+', an extremely civilized contribution.',name+' followed with '+c+', which I will accept without requiring a sonnet.',name+' contributed '+c+'. Not everything needs to be transcendent; sometimes useful is beautiful.',name+' brought '+c+', and I am willing to call that respectable in public.'],
-  tilly:[name+' also showed up with '+c+'. Yes, there are two photos on the front page now.',name+' added '+c+', so the rest of the lineup may keep its parking privileges.',name+' brought '+c+'. The back page acknowledges depth when it is forced to.',name+' chipped in '+c+'. Nobody tell him the headline was already assigned.'],
+  tilly:[name+' also showed up with '+c+'. Yes, the front page has room for a second useful name.',name+' added '+c+', so the rest of the lineup may keep its parking privileges.',name+' brought '+c+'. The back page acknowledges depth when it is forced to.',name+' chipped in '+c+'. Nobody tell him the headline was already assigned.'],
   jeff:[name+' corroborated the story with '+c+'.',name+' added '+c+', enough to stay off the witness list for now.',name+' supplied '+c+'. Consider that cooperative testimony.',name+' backed the lead witness with '+c+'. The file appreciates teamwork.']
  };
  return pick(rows[voice],v+1);
@@ -77,7 +77,7 @@ function lowSentence(p,voice,v){
  const rows={
   nick:[name+' finished with '+c+'. I am not mailing a complaint yet, but I did find the envelope.',name+' gave us '+c+'. One bad Sunday is weather; two starts becoming climate.',name+' ended at '+c+'. Put it in the notebook, not on the wanted poster.',name+' managed '+c+'. We will call it forgettable and grant him the chance to make that description temporary.'],
   bart:[name+' finished with '+c+'. It lacked a certain… everything.',name+' gave us '+c+'. I have had appetizers with more staying power.',name+' landed at '+c+'. Not a tragedy, merely the sort of performance that makes one sigh theatrically.',name+' produced '+c+'. I refuse to call it disastrous because I am saving that adjective for a worse occasion.'],
-  tilly:[name+' gets the tiny photo by the classifieds after '+c+'. Redemption applications reopen next Sunday.',name+' brought '+c+'. The angry font is warming up but has not yet cleared legal.',name+' finished with '+c+'. We are not booing; we are simply making sustained disappointed noises.',name+' gave us '+c+'. The back page has placed a very small question mark over his locker.'],
+  tilly:[name+' lands below the fold after '+c+'. Redemption applications reopen next Sunday.',name+' brought '+c+'. The angry font is warming up but has not yet cleared legal.',name+' finished with '+c+'. We are not booing; we are simply making sustained disappointed noises.',name+' gave us '+c+'. The back page has placed a very small question mark over his locker.'],
   jeff:[name+' contributed '+c+'. Not a conviction, but certainly enough for a follow-up interview.',name+' finished with '+c+'. The file remains open and the coffee remains terrible.',name+' gave us '+c+'. One weak exhibit is survivable; a pattern is where paperwork gets expensive.',name+' landed at '+c+'. No charges today, but I am keeping the folder on my desk.']
  };
  return pick(rows[voice],v+2);
@@ -109,7 +109,7 @@ function recordSentence(t,w,voice,v){
  const rows={
   nick:['That leaves '+t.team_name+' at '+record+standing+'. I have learned not to marry the standings in September, but I do write down the phone number.',t.team_name+' walks out of Week '+w+' at '+record+standing+'. The table is young; our blood pressure is not.',t.team_name+' sits at '+record+standing+' tonight. Put the clipping away, but do not throw it out.',t.team_name+' is '+record+standing+' after this one. The standings are not scripture, though fans have been known to treat them that way.'],
   bart:['So we arrive at '+record+standing+'. It is early enough for manners and late enough for opinions, my favorite combination.',t.team_name+' now sits '+record+standing+'. I will resist declaring an era, mostly because eras require better tailoring.',t.team_name+' currently lives at '+record+standing+'. It is not destiny; it is merely where the mail is being delivered.',t.team_name+' leaves the week '+record+standing+'. A modest fact, already being overinterpreted in several group chats.'],
-  tilly:[t.team_name+' is '+record+standing+'. I have already seen parade maps and mock drafts in the same ten-minute span.',t.team_name+' is '+record+standing+'! That is either the beginning of a banner season or the first page of a future apology, and we will print both.',t.team_name+' wakes up '+record+standing+'. The city is reacting with its customary balance and restraint, meaning none at all.',t.team_name+' owns a '+record+standing+' line tonight. Somebody in the group chat has already made it their entire personality.'],
+  tilly:[t.team_name+' is '+record+standing+'. The group chat has already mistaken one line in the standings for a complete personality.',t.team_name+' is '+record+standing+'! That is either the beginning of something real or the first page of a future apology, and we will print both.',t.team_name+' wakes up '+record+standing+'. The city is reacting with its customary balance and restraint, meaning none at all.',t.team_name+' owns a '+record+standing+' line tonight. Somebody in the group chat has already made it their entire personality.'],
   jeff:[t.team_name+' is '+record+standing+'. The standings have been entered into evidence and immediately placed under surveillance.',t.team_name+' carries a '+record+standing+' file status. Nobody gets acquitted in Week '+w+', but nobody gets buried either.',t.team_name+' now sits '+record+standing+'. I note this because memory becomes suspiciously selective by November.',t.team_name+' enters the record at '+record+standing+' tonight. The standings do not lie; managers sometimes develop creative interpretations.']
  };
  return pick(rows[voice],v)+streak;
@@ -171,7 +171,7 @@ function transactionStory(t,facts,voice,v){
   const rows={
    nick:[t.manager_name+' '+verb+' '+p+'. That is the move I circled first.',p+' was the clearest name in the shuffle; management '+verb+' him before Sunday.',p+' is the transaction worth remembering after '+t.manager_name+' '+verb+' him.',t.manager_name+' '+verb+' '+p+', the move most likely to survive into next week’s notebook.'],
    bart:[p+' was the most interesting piece: '+t.manager_name+' '+verb+' him, and I have chosen to have an opinion about it.',t.manager_name+' '+verb+' '+p+'. At least one transaction arrived dressed for dinner.',p+' gets top billing from the move list after '+t.manager_name+' '+verb+' him.',t.manager_name+' '+verb+' '+p+', a transaction with enough shape to deserve actual prose.'],
-   tilly:[t.manager_name+' '+verb+' '+p+'. There is your transaction headline.',p+' gets the giant transaction arrow after '+t.manager_name+' '+verb+' him.',t.manager_name+' '+verb+' '+p+', and the back page immediately began overreacting.',p+' was the loudest name in the churn after '+t.manager_name+' '+verb+' him.'],
+   tilly:[t.manager_name+' '+verb+' '+p+'. There is your transaction headline.',p+' gets the transaction lead after '+t.manager_name+' '+verb+' him.',t.manager_name+' '+verb+' '+p+', and the back page immediately began overreacting.',p+' was the loudest name in the churn after '+t.manager_name+' '+verb+' him.'],
    jeff:[t.manager_name+' '+verb+' '+p+'. I marked that exhibit first.',p+' is the clearest transaction fingerprint after '+t.manager_name+' '+verb+' him.',t.manager_name+' '+verb+' '+p+', a fact now preserved in the paper trail.',p+' enters the transaction file after management '+verb+' him.']
   };
   detail+=' '+pick(rows[voice],v);
@@ -200,43 +200,43 @@ function lineupStory(t,voice,v){
   const b=m.reserve,s=m.starter,slot=String(m.slot||s.lineup_slot||s.position||'lineup'),gap=one(m.gap);
   const leads={
    nick:[
-    b.name+' could legally have occupied the '+slot+' seat held by '+s.name+', and the bench won that comparison by '+gap+'.',
+    b.name+' was available for the '+slot+' seat held by '+s.name+', and the bench won that comparison by '+gap+'.',
     'Here is the fair second-guess: '+b.name+' was eligible at '+slot+', where '+s.name+' started, and finished '+gap+' points ahead.',
-    'The lineup rules actually allow this complaint. '+b.name+' could have filled '+s.name+'’s '+slot+' slot and outscored him by '+gap+'.',
+    b.name+' was available for '+s.name+'’s '+slot+' slot and outscored him by '+gap+'.',
     'One bench gripe survives inspection: '+b.name+' was a legal '+slot+' alternative to '+s.name+' and produced '+gap+' more points.'
    ],
    bart:[
     'At last, a second-guess with proper credentials: '+b.name+' was eligible for '+s.name+'’s '+slot+' chair and outscored him by '+gap+'.',
     b.name+' could actually have taken the '+slot+' place occupied by '+s.name+', finishing '+gap+' points higher. This complaint is dressed appropriately.',
-    'Unlike most Monday outrage, this one has manners: '+b.name+' was a legal '+slot+' option over '+s.name+' and won the scoring comparison by '+gap+'.',
+    b.name+' was available at '+slot+' over '+s.name+' and won the scoring comparison by '+gap+'.',
     'The lineup card offers one legitimate critique. '+b.name+' qualified for the '+slot+' seat, '+s.name+' got it, and the bench finished '+gap+' points better.'
    ],
    tilly:[
     'Now we may yell: '+b.name+' was actually allowed in the '+slot+' chair occupied by '+s.name+', and the bench beat him by '+gap+'.',
-    'Complaint department, open the window. '+b.name+' could legally have started at '+slot+' over '+s.name+' and scored '+gap+' more.',
-    'This is a real bench scandal, not fantasy fan fiction: '+b.name+' was eligible for '+s.name+'’s '+slot+' spot and beat him by '+gap+'.',
+    'Complaint department, open the window. '+b.name+' could have started at '+slot+' over '+s.name+' and scored '+gap+' more.',
+    b.name+' could have taken '+s.name+'’s '+slot+' spot and beat him by '+gap+'.',
     b.name+' had a legal path into the '+slot+' slot, '+s.name+' started instead, and '+gap+' points stayed on the wrong side of the lineup screen.'
    ],
    jeff:[
     'Admissible evidence: '+b.name+' qualified for the '+slot+' seat held by '+s.name+' and outscored him by '+gap+'.',
     'The lineup file contains one legal substitution question. '+b.name+' could have occupied '+s.name+'’s '+slot+' spot and finished '+gap+' points ahead.',
-    b.name+' survives the eligibility check as a real '+slot+' alternative to '+s.name+', with a '+gap+'-point advantage left on the bench.',
+    b.name+' was a real '+slot+' alternative to '+s.name+', with a '+gap+'-point advantage left on the bench.',
     'One lineup discrepancy clears cross-examination: '+b.name+' was eligible at '+slot+', '+s.name+' started, and the difference was '+gap+'.'
    ]
   };
   const tails={
-   nick:[' That one belongs in the notebook. Hindsight is cheap, but a legal lineup alternative is at least a fair question.',' I am not demanding a tribunal. I am merely leaving the clipping on the manager’s chair.',' This is the kind of Monday complaint I will entertain because the rules say the swap was real.',' Nobody needs to be fired over one choice. Somebody does need to remember it.'],
-   bart:[' There is your legitimate second-guess, properly dressed and allowed through the front door.',' That is the kind of hindsight worth arguing about because the lineup rules actually permitted it. Revolutionary concept, I know.',' I dislike lazy hindsight; this is not lazy hindsight. It has documentation and everything.',' One may criticize a real alternative without descending into the usual Monday fantasy melodrama. How refreshing.'],
-   tilly:[' This is a real lineup choice, not the usual “why didn’t the linebacker start at running back?” nonsense.',' The complaint department is officially open because, for once, the substitute was actually allowed to occupy the chair.',' Sound the tiny siren. We found a bench complaint that survives the rulebook.',' Now the angry font has jurisdiction. Please use it irresponsibly but accurately.'],
-   jeff:[' That is admissible evidence: same legal seat, different result. I will not prosecute imaginary cross-position substitutions.',' This one survives cross-examination because the roster rules actually allowed the swap. Into the file it goes.',' Eligibility confirmed, scoring gap confirmed, hindsight complaint admitted. The court hates efficiency but appreciates facts.',' This is a real exhibit, not a hypothetical lineup crime invented after the score arrived.']
+   nick:[' That one belongs in the notebook. The decision cost useful points and deserves a harder look before the next lineup locks.',' I am not demanding a tribunal. I am merely leaving the clipping on the manager’s chair.',' That scoring gap is the part management owns, however reasonable the choice looked before kickoff.',' Nobody needs to be fired over one choice. Somebody does need to remember it.'],
+   bart:[' There is the second-guess, properly dressed and impossible to wave away.',' The lost points are inelegant, visible and entirely management’s problem to answer.',' The receipt is clear enough that a theatrical sigh would be underselling it.',' A better choice was available, and Sunday charged full price for missing it.'],
+   tilly:[' Those points stayed on the bench, and the complaint department has the manager’s extension.',' The back page does not need a rules seminar; it needs an answer for the lost points.',' Sound the siren. The lineup card left the better score sitting down.',' Now the angry font has jurisdiction. Please use it irresponsibly but accurately.'],
+   jeff:[' Same seat, different result. The decision and its cost are both in the file.',' The scoring gap survives cross-examination and goes directly into management’s folder.',' The lineup choice is confirmed, the lost points are confirmed, and the finding requires no further speech.',' This is the decision the paper trail will remember if it happens again.']
   };
   return pick(leads[voice],v)+pick(tails[voice],v+1);
  }
  const rows={
-  nick:['I went looking for the obvious bench catastrophe and could not find a legal one. That is good news for management and terrible news for columnists.','The bench produced no clean, position-eligible “you should have started him” scandal. I am reluctantly closing that complaint window for the week.','I checked the bench for a real substitution grievance and came up empty. Sometimes the lineup card simply refuses to give a reporter a villain.','No eligible reserve produced a clean case against the starter in his actual seat. Management may enjoy this rare paperwork-free Monday.'],
-  bart:['There is no honest lineup scandal here. A bench player scoring more than a starter does not matter if the rules would never let them trade seats; even fantasy outrage needs table manners.','I inspected the bench for a proper second-guess and found none that survived lineup eligibility. Tragic. I had a devastating paragraph ready.','The bench offered temptation but no legally interchangeable disaster. I refuse to compare chandeliers with soup spoons merely because both have numbers beside them.','No proper substitution complaint survives the seating chart. I had hoped for scandal and received administrative competence.'],
-  tilly:['I tried to manufacture a bench scandal and the lineup rules ruined my fun. An IDP cannot simply wander over and steal an RB chair because he scored more.','No legal bench heist this week. The back page refuses to pretend a linebacker could have started at running back merely because the point total is shinier.','The bench has bigger numbers in places, but nobody gets to move an IDP into an RB seat by yelling loudly enough. Believe me, I checked.','I came hunting for lineup malpractice and the eligibility rules confiscated my pitchfork. Different positions still have to use different chairs.'],
-  jeff:['The bench audit produced no admissible substitution complaint. Different positions are different positions; even this office has evidentiary standards.','No valid lineup swap clears the threshold. I will not charge management for failing to start a player in a seat he was never eligible to occupy.','The higher bench scores do not create a case unless those players could legally replace the starters in question. This file has no such exhibit.','I checked eligibility before filing charges. No bench player created a clean legal alternative worth prosecuting this week.']
+  nick:['The lineup card produced no five-point bench regret this week. Management can keep the chair without a lecture from the old desk.','There was no obvious start-sit miss large enough to change the story. I am reluctantly closing that complaint window for the week.','I checked the bench for a decision worth circling and came up empty. Sometimes the lineup card simply refuses to give a reporter a villain.','No reserve produced a clean five-point case against the chosen starter. Management may enjoy this rare paperwork-free Monday.'],
+  bart:['There is no honest lineup scandal here. I had a devastating paragraph ready and Sunday declined to earn it.','I inspected the bench for a proper second-guess and found no costly miss. Tragic for the column, pleasant for management.','The bench offered temptation but no decision dramatic enough to spoil the table setting.','No meaningful start-sit complaint survives the scorecard. I had hoped for scandal and received administrative competence.'],
+  tilly:['No five-point bench disaster this week. The angry font will have to find honest work elsewhere.','The back page found no start-sit heist large enough to prosecute. Management escapes with its shoelaces intact.','The bench had noise but no decision that changed the headline. Complaint desk closed, grudgingly.','I came hunting for lineup malpractice and found nothing worth the pitchfork. Deeply inconsiderate of management.'],
+  jeff:['The bench audit produced no five-point substitution complaint. The lineup card is released without charges.','No meaningful lineup swap clears the threshold. The management file stays thin on this count.','The higher bench scores did not create a material start-sit case this week. This file has no such exhibit.','The lineup review is complete. No bench decision created a scoring gap worth prosecuting.']
  };
  return pick(rows[voice],v);
 }
@@ -244,10 +244,10 @@ function valueStory(t,voice,v){
  const d=Number(t?.value_history_week?.delta);
  if(!Number.isFinite(d)){
   const rows={
-   nick:['The market desk gets no headline this week. Fine by me; Sunday supplied enough material without inventing a stock ticker.','There is no useful market move to hang on the wall yet. I can survive one week without pretending every roster has become a mutual fund.'],
-   bart:['The market page is mercifully quiet. We may discuss football like civilized degenerates for another paragraph.','No market headline this week. I will somehow endure the absence of a tiny arrow telling me how to feel.'],
-   tilly:['Value Watch is taking the night off. Good. The game already gave us enough reasons to overreact.','The market desk brought me nothing dramatic, so I have reassigned its font budget to the actual football.'],
-   jeff:['The market file has nothing material to add this week. I decline to manufacture evidence merely because the folder looks lonely.','No market movement worth entering as an exhibit. The case survives without decorative paperwork.']
+   nick:['The market desk gets no headline this week. Fine by me; Sunday supplied enough material without inventing a stock ticker.','There is no useful market move to hang on the wall yet. I can survive one week without pretending every roster has become a mutual fund.','The value ledger has not produced a clean comparison. Leave the space blank and let the football carry the page.','No defensible market change made deadline. The old desk has covered enough games to know that absence is not a trend.','The market column is empty, not asleep. It needs a real before-and-after before it earns our attention.','No verified value swing is available. I will save the ink for something the record can support.'],
+   bart:['The market page is mercifully quiet. We may discuss football like civilized degenerates for another paragraph.','No market headline this week. I will somehow endure the absence of a tiny arrow telling me how to feel.','The value salon has no guest tonight. One cannot review a movement that never arrived.','No verified comparison reached the market page, so the column remains elegantly unoccupied.','The market has offered silence. I refuse to dress it in formalwear and call it analysis.','No value change can be defended from the available record. Even gossip requires two observations.'],
+   tilly:['Value Watch has no verified comparison tonight. The game already gave us enough reasons to overreact.','The market desk brought me nothing defensible, so I have reassigned its font budget to the actual football.','The value board is blank. We considered drawing an arrow anyway and then remembered this is supposed to be a newspaper.','No clean market swing made deadline. The empty space is doing more honest work than a fake headline would.','Value Watch has no result to print. The back page will survive by yelling about things that actually happened.','The market desk has no verified movement. Keep the font warm and the conclusions cold.'],
+   jeff:['The market file has nothing material to add this week. I decline to manufacture evidence merely because the folder looks lonely.','No market movement worth entering as an exhibit. The case survives without decorative paperwork.','The value folder contains no defensible comparison. It remains open and conspicuously free of invented arrows.','No market finding can be entered from the available observations. The blank line is now part of the record.','The evidence bag arrived empty on roster value. That is a status report, not an invitation to improvise.','No verified market change survived review. The section remains present; the conclusion does not.']
   };
   return pick(rows[voice],v);
  }
@@ -315,7 +315,7 @@ function outlookStory(t,w,voice,v){
  const tails={
   nick:[' Next is '+opp+'. I will spend the week telling everyone it is just another matchup and believing none of it.',' '+opp+' is next. Keep the useful parts of this Sunday and burn the rest in a tasteful metal bin.',' '+opp+' waits next. I have already started writing questions nobody will answer until kickoff.',' Next up is '+opp+'. The notebook has a fresh page and, regrettably, so do my expectations.'],
   bart:[' Next comes '+opp+'. I plan to be insufferably specific about what should work and theatrically wounded if none of it does.',' '+opp+' awaits. A new week, a new chance for this roster to make my previous paragraph look wise or ridiculous.',' The next engagement is '+opp+'. I expect something presentable and reserve the right to sigh loudly.',' '+opp+' is next on the social calendar. Please arrive prepared and try not to embarrass the table.'],
-  tilly:[' Next victim or problem, depending on editorial mood: '+opp+'. The giant headline is blank and waiting.',' '+opp+' is next. I have prepared both the parade font and the emergency complaint font because professionalism matters.',' Clear space on the back page for '+opp+'. We will decide later whether the ink is celebratory or furious.',' '+opp+' gets the next chance to ruin my weekend. The presses have been warned.'],
+  tilly:[' Next victim or problem, depending on editorial mood: '+opp+'. The lead headline is blank and waiting.',' '+opp+' is next. I have prepared both the victory font and the emergency complaint font because professionalism matters.',' Clear space on the back page for '+opp+'. We will decide later whether the ink is celebratory or furious.',' '+opp+' gets the next chance to ruin my weekend. The presses have been warned.'],
   jeff:[' Next on the docket: '+opp+'. New opponent, same file cabinet, fresh opportunity to create or destroy evidence.',' '+opp+' is next. I will be watching the lineup card like it owes me money.',' The next file is labeled '+opp+'. I intend to open it before management starts explaining anything.',' '+opp+' awaits on the next docket. Fresh witnesses, fresh fingerprints, same suspicious reporter.']
  };
  return personnel+pick(tails[voice],v);
@@ -353,10 +353,10 @@ function headings(voice,v){
    ['A Football Match, Allegedly','Stars and Other Necessary People','Front Office Etiquette','Market Gossip','The Public Mood','Next Sunday, Unfortunately']
   ],
   tilly:[
-   ['The Back Page Has Feelings','Who Gets the Giant Photo','Management, Please Report to the Principal’s Office','Value Watch, Presented With Unnecessary Drama','What the Fans Are Yelling','Tomorrow’s Problem'],
+   ['The Back Page Has Feelings','Who Earned the Lead Headline','Management, Please Report to the Principal’s Office','Value Watch, Presented With Unnecessary Drama','What the Fans Are Yelling','Tomorrow’s Problem'],
    ['Stop the Presses','Put These Names in Huge Type','Front Office Shenanigans Department','Market Gossip We Will Abuse Responsibly','The City Has Lost Perspective','Next Week Needs a Headline'],
    ['Today in Responsible Journalism','Heroes, Villains and People on Probation','Explain Yourself, Management','Tiny Arrows, Huge Emotions','Public Nuisance Report','Who Are We Yelling About Next?'],
-   ['The Front Page Is Already a Mess','Large Photos and Small Photos','The Managerial Complaint Box','Value Watch: No Adults Present','How Loud Is the City?','Load the Next Edition']
+   ['The Front Page Is Already a Mess','Stars, Stalls and Everybody Between','The Managerial Complaint Box','Value Watch: No Adults Present','How Loud Is the City?','Load the Next Edition']
   ],
   jeff:[
    ['The Week’s Evidence','Witnesses for the Record','Front Office Paper Trail','Value History Exhibit','Public Sentiment File','Open Questions for Next Week'],
@@ -373,7 +373,7 @@ export function humanSectionsV19({team:t,week:w,reporter:r,facts,sentiment}){
  const ledeRows={
   nick:[t.team_name+' '+(won?'beat ':'lost to ')+opp+', '+score+'. It was '+mood+', and I have the coffee stains to prove I took it personally.',score+' against '+opp+'. '+(won?'Put the result in the good folder.':'Put it in the folder labeled “things I would rather not revisit.”')+' '+t.team_name+' made Sunday feel '+(won?'briefly civilized.':'longer than the calendar advertised.')],
   bart:[t.team_name+' '+(won?'won ':'lost ')+score+' against '+opp+'. '+(won?'Delightful. Irritatingly delightful.':'Ghastly. Not historically ghastly, but certainly enough to spoil the after-dinner mood.') ,score+' versus '+opp+'. I watched '+t.team_name+' turn that into '+mood+', and I have chosen to take it as a personal commentary on my weekend.'],
-  tilly:[t.team_name+' '+(won?'won ':'lost ')+score+' against '+opp+'. '+(won?'Find the parade permit.':'Who authorized this experience?')+' We are beginning at the correct emotional volume.',score+'! '+(won?'Victory, chaos, terrible decisions about confetti.':'Defeat, disgust, and a very rude copy deadline.')+' '+t.team_name+' has once again made neutrality impossible.'],
+  tilly:[t.team_name+' '+(won?'won ':'lost ')+score+' against '+opp+'. '+(won?(margin>=20?'The scoreboard needs its own edition.':'Bank the win before anyone mistakes relief for a dynasty.'):'Who authorized this experience?')+' We are beginning at the correct emotional volume.',score+'! '+(won?(margin>=15?'Victory, chaos, and a headline loud enough for the block.':'A useful win, a nervous copy desk, and no permission to plan December.'):'Defeat, disgust, and a very rude copy deadline.')+' '+t.team_name+' has once again made neutrality impossible.'],
   jeff:[t.team_name+' '+(won?'won ':'lost ')+score+' against '+opp+'. I entered the result into evidence and immediately became suspicious of how much I cared.',score+' is the final against '+opp+'. '+(won?'The defense may smile. Briefly.':'The file has been reopened and several people should avoid eye contact with this desk.')]
  };
  const p1=pick(ledeRows[voice],v);

@@ -533,7 +533,7 @@ with metadata at:
 `data/inquirer/2026/week-01.meta.json`
 
 
-## V20 passionate beat-reporter newsroom — active standard
+## V20 passionate beat-reporter newsroom — superseded by V21
 
 V20 supersedes the V18/V19 presentation-oriented editions. The six reporting beats remain available as coverage requirements, but **they are no longer a fixed article template or fixed reading order**.
 
@@ -625,3 +625,33 @@ The immutable Week 1 V20 archive is:
 
 with publication metadata:
 `data/inquirer/2026/week-01.meta.json`
+
+## V21 matchup-impact newsroom — active standard
+
+V21 keeps the six core reporting beats and adds two required sections to every team article:
+
+- **Hot Seat** names the player with the largest negative matchup impact. A manager joins only when repeated poor performance is paired with a negative transaction return or a material, position-eligible lineup miss.
+- **Cool Throne** names the player with the largest positive matchup impact and awards separate manager credit only when the decisions surrounding that matchup support it.
+
+Every one of the eight sections contains at least three connected paragraphs. The audited Week 1 edition therefore contains at least 24 paragraphs and 500 words per team article; the generated archive averages about 672 words.
+
+Transaction coverage must state an explicit quality verdict. Listing adds, drops or volume without judging the early return does not satisfy the management beat.
+
+League Notebook upset picks are projection-defined. The named underdog must have a lower verified next-week projected score than the named favorite, and both values are persisted with the hot take. Standings rank alone never makes a projected favorite an upset pick.
+
+Missing-data sections remain present but rotate honest empty-state prose. Rejected canned phrases include “taking the night off,” “giant photo,” “tiny photo,” “large photos and small photos,” and “find the parade permit.”
+
+The UI contract for V21 also requires:
+
+- League Notebook team links open that team’s Value History.
+- the article chooser uses a prominent neutral heading without a gold container.
+- author bylines use no gold container.
+- opening or closing a reporter desk preserves the reader’s scroll position so the archive menu stays in view.
+
+The canonical V21 gates are:
+
+`node scripts/inquirer-reporters-smoke.mjs`
+
+`node scripts/inquirer-prose-quality-audit.mjs`
+
+`node scripts/inquirer-overview-quality-audit.mjs`

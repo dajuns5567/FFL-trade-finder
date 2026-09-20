@@ -1,6 +1,6 @@
 'use strict';
 
-import {humanSectionsV20} from './inquirer-human-v20.mjs';
+import {humanSectionsV21} from './inquirer-human-v21.mjs';
 
 const one=v=>Number(v||0).toFixed(1);
 const ordinal=n=>{const x=Math.abs(Number(n)||0),m100=x%100,m10=x%10;return String(x)+(m100>=11&&m100<=13?'th':m10===1?'st':m10===2?'nd':m10===3?'rd':'th')};
@@ -316,11 +316,11 @@ function buildSections(t,w,r,facts,sentiment){
 }
 
 export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamClassification,aside}){
-  const sections=humanSectionsV20({team,week,reporter,facts,sentiment});
+  const sections=humanSectionsV21({team,week,reporter,facts,sentiment});
   const paragraphs=sections.flatMap(s=>s.paragraphs||[]);
   return{
-    schema_version:10,
-    inquirer_version:20,
+    schema_version:11,
+    inquirer_version:21,
     season:Number(teamClassification?.season||2026),
     week:Number(week),
     week_classification:teamClassification,
@@ -339,6 +339,8 @@ export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamCl
       team_points:Number(team.points),
       opponent_points:Number(team.opponent_points),
       projected:Number(team.projected),
+      next_projected:Number.isFinite(team.next_projected)?Number(team.next_projected):null,
+      next_opponent_projected:Number.isFinite(team.next_opponent_projected)?Number(team.next_opponent_projected):null,
       league_context:team.league_context||null,
       opponent_context:team.opponent_context||null,
       next_opponent_context:team.next_opponent_context||null,

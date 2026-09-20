@@ -9,7 +9,7 @@ const o=edition?.league_overview||{};
 const sections=Array.isArray(o.sections)?o.sections:[];
 const takes=Array.isArray(o.hot_takes)?o.hot_takes:[];
 
-if(Number(o.inquirer_version)<19)fail('League Notebook must be V19 or newer; got '+o.inquirer_version);
+if(Number(o.inquirer_version)<21)fail('League Notebook must be V21 or newer; got '+o.inquirer_version);
 if(sections.length!==4)fail('League overview must contain four reporter sections; got '+sections.length);
 for(const s of sections){
   if(!s?.reporter?.id)fail('Overview section missing reporter identity');
@@ -49,6 +49,8 @@ for(const t of takes){
   if(!/pick|calling|predict|beats|win|flag|fraud|upset/i.test(copy))fail('Hot Take is analysis instead of a prediction: '+String(t.title||'untitled'));
   if(words(t.take).length<12)fail('Hot Take is too thin: '+String(t.title||'untitled'));
 }
+const upset=takes.find(t=>t.kind==='upset');
+if(!Number.isFinite(Number(upset?.underdog_projected))||!Number.isFinite(Number(upset?.favorite_projected))||Number(upset.underdog_projected)>=Number(upset.favorite_projected))fail('Upset pick must name a true projected underdog with a lower projected score than the favorite');
 const report={
   inquirer_version:o.inquirer_version,
   headline:o.headline,
@@ -59,4 +61,4 @@ const report={
   hot_takes:takes.map(t=>({kind:t.kind,title:t.title,take:t.take}))
 };
 console.log(JSON.stringify(report,null,2));
-console.log('Fleeced Inquirer V19 League Notebook / real-hot-takes audit passed');
+console.log('Fleeced Inquirer V21 League Notebook / projection-valid hot-takes audit passed');

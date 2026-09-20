@@ -20,6 +20,20 @@ function score(stats,scoring){
   }
   return used?Number(n.toFixed(2)):null;
 }
+function projectionRows(raw){if(Array.isArray(raw))return raw;if(Array.isArray(raw?.players))return raw.players;if(raw&&typeof raw==='object')return Object.values(raw);return[]}
+async function projections(season,week,scoring){
+  const urls=['https://api.sleeper.app/projections/nfl/'+season+'/'+week+'?season_type=regular','https://api.sleeper.com/projections/nfl/'+season+'/'+week+'?season_type=regular'];
+  for(const url of urls)try{
+    const raw=await j(url),map={};
+    for(const r of projectionRows(raw)){
+      const id=String(r?.player_id||r?.player?.player_id||'');if(!id)continue;
+      const stats=r?.stats||r?.projection||r,custom=score(stats,scoring),fallback=Number(r?.pts_ppr??stats?.pts_ppr??r?.fantasy_points);
+      map[id]=Number.isFinite(custom)?custom:(Number.isFinite(fallback)?fallback:null);
+    }
+    if(Object.keys(map).length)return map;
+  }catch{}
+  return{};
+}
 function opponents(rows){
   const g=new Map(),out={};
   for(const m of rows||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!g.has(k))g.set(k,[]);g.get(k).push(m)}
@@ -141,7 +155,7 @@ function tradeRows(transactions,teamName){
 }
 
 const league=await j(API+'/league/'+LEAGUE);
-const [matchups,transactions,rosters,users,players,weeklyStats,nextMatchups,sched,careers]=await Promise.all([
+const [matchups,transactions,rosters,users,players,weeklyStats,nextMatchups,currentProj,nextProj,sched,careers]=await Promise.all([
   j(API+'/league/'+LEAGUE+'/matchups/1'),
   j(API+'/league/'+LEAGUE+'/transactions/1').catch(()=>[]),
   j(API+'/league/'+LEAGUE+'/rosters'),
@@ -149,12 +163,14 @@ const [matchups,transactions,rosters,users,players,weeklyStats,nextMatchups,sche
   j(API+'/players/nfl'),
   j(API+'/stats/nfl/regular/2026/1').catch(()=>({})),
   j(API+'/league/'+LEAGUE+'/matchups/2').catch(()=>[]),
+  projections(season,1,league.scoring_settings||{}),
+  projections(season,2,league.scoring_settings||{}),
   nextSchedule(),
   careerMap()
 ]);
 if(matchups.length!==32)throw new Error('Expected 32 Week 1 matchup rows; got '+matchups.length);
 
-const opp=opponents(matchups),nextOpp=opponents(nextMatchups),tx=txByRoster(transactions),ub=new Map(users.map(u=>[String(u.user_id),u])),rb=new Map(rosters.map(r=>[String(r.roster_id),r]));
+const opp=opponents(matchups),nextOpp=opponents(nextMatchups),nextMatchupByRoster=new Map(nextMatchups.map(m=>[String(m.roster_id),m])),tx=txByRoster(transactions),ub=new Map(users.map(u=>[String(u.user_id),u])),rb=new Map(rosters.map(r=>[String(r.roster_id),r]));
 const pname=id=>String(players?.[id]?.full_name||((players?.[id]?.first_name||'')+' '+(players?.[id]?.last_name||'')).trim()||id);
 const ppos=id=>String(players?.[id]?.position||'FLEX');
 const pteam=id=>String(players?.[id]?.team||'FA');
@@ -189,19 +205,20 @@ const ctx=seasonContext(matchups,rosters,league);
 
 const teams=matchups.map(m=>{
   const id=String(m.roster_id),oid=opp[id],o=matchups.find(x=>String(x.roster_id)===oid),r=rb.get(id),u=ub.get(String(r?.owner_id||'')),starters=(m.starters||[]).filter(x=>x&&x!=='0').map(String),rosterPlayers=(m.players||r?.players||[]).filter(x=>x&&x!=='0').map(String),pts=m.players_points||{};
-  const detail=(p,slot='')=>({id:String(p),name:pname(p),position:ppos(p),nfl_team:pteam(p),lineup_slot:slot||undefined,points:Number(pts[p])||0,projected:null});
+  const detail=(p,slot='')=>({id:String(p),name:pname(p),position:ppos(p),nfl_team:pteam(p),lineup_slot:slot||undefined,points:Number(pts[p])||0,projected:Number.isFinite(currentProj[p])?Number(currentProj[p]):null});
   const starterRaw=starters.map((p,i)=>detail(p,lineupSlots[i]||ppos(p))),benchRaw=rosterPlayers.filter(p=>!starters.includes(p)).map(p=>detail(p));
   const bestBench=benchRaw.slice().sort((a,b)=>b.points-a.points)[0]||null,worstStarter=starterRaw.slice().sort((a,b)=>a.points-b.points)[0]||null,starter_details=starterRaw.slice().sort((a,b)=>b.points-a.points),bestLineupMiss=bestEligibleLineupMiss(starterRaw,benchRaw),uid=String(r?.owner_id||''),div=r?.settings?.division??null;
-  return{roster_id:id,manager_user_id:uid,manager_name:String(u?.display_name||u?.username||('Roster '+id)),manager_career:careers.get(uid)||null,team_name:teamName(id),division:div,division_name:divisionName(league,div),conference:conference(league,div),opponent_roster_id:oid||null,next_opponent_roster_id:nextOpp[id]||null,points:Number(m.points)||0,opponent_points:Number(o?.points)||0,won:o?Number(m.points)>Number(o.points):null,projected:NaN,projection_coverage:0,starter_count:starters.length,best_bench:bestBench,worst_starter:worstStarter,best_lineup_miss:bestLineupMiss,starter_details,roster_player_ids:rosterPlayers,transactions:tx[id]||[],recent_trade_count:(transactions||[]).filter(t=>t?.type==='trade'&&(t?.roster_ids||[]).map(String).includes(id)).length,current_week_trade_count:(transactions||[]).filter(t=>t?.type==='trade'&&(t?.roster_ids||[]).map(String).includes(id)).length,previous_fan_sentiment:null,current_season_champion:false,value_history_week:null,next_week_availability:availability(rosterPlayers,starters,players,sched)};
+  const projectionCoverage=starters.filter(p=>Number.isFinite(currentProj[p])).length,projected=projectionCoverage?starters.reduce((n,p)=>n+(Number(currentProj[p])||0),0):null,nextStarters=(nextMatchupByRoster.get(id)?.starters||starters).filter(x=>x&&x!=='0').map(String),nextProjectionCoverage=nextStarters.filter(p=>Number.isFinite(nextProj[p])).length,nextProjected=nextProjectionCoverage?nextStarters.reduce((n,p)=>n+(Number(nextProj[p])||0),0):null;
+  return{roster_id:id,manager_user_id:uid,manager_name:String(u?.display_name||u?.username||('Roster '+id)),manager_career:careers.get(uid)||null,team_name:teamName(id),division:div,division_name:divisionName(league,div),conference:conference(league,div),opponent_roster_id:oid||null,next_opponent_roster_id:nextOpp[id]||null,points:Number(m.points)||0,opponent_points:Number(o?.points)||0,won:o?Number(m.points)>Number(o.points):null,projected:Number.isFinite(projected)?Number(projected.toFixed(2)):null,projection_coverage:projectionCoverage,next_projected:Number.isFinite(nextProjected)?Number(nextProjected.toFixed(2)):null,next_projection_coverage:nextProjectionCoverage,starter_count:starters.length,best_bench:bestBench,worst_starter:worstStarter,best_lineup_miss:bestLineupMiss,starter_details,roster_player_ids:rosterPlayers,transactions:tx[id]||[],recent_trade_count:(transactions||[]).filter(t=>t?.type==='trade'&&(t?.roster_ids||[]).map(String).includes(id)).length,current_week_trade_count:(transactions||[]).filter(t=>t?.type==='trade'&&(t?.roster_ids||[]).map(String).includes(id)).length,previous_fan_sentiment:null,current_season_champion:false,value_history_week:null,next_week_availability:availability(rosterPlayers,starters,players,sched)};
 });
 const contextFor=id=>{const base=ctx[String(id)]||null;return base?{...base,recent_games:(base.recent_games||[]).map(g=>({...g,opponent_name:teamName(g.opponent_roster_id)}))}:null};
 const byId=new Map(teams.map(t=>[String(t.roster_id),t]));
-const complete=teams.map(t=>({...t,opponent_name:teamName(t.opponent_roster_id),opponent_projected:byId.get(String(t.opponent_roster_id))?.projected??null,opponent_context:contextFor(t.opponent_roster_id),next_opponent_name:teamName(t.next_opponent_roster_id),next_opponent_context:contextFor(t.next_opponent_roster_id),division_results:teams.filter(x=>String(x.division)===String(t.division)&&x.roster_id!==t.roster_id).map(x=>({roster_id:x.roster_id,team_name:x.team_name,won:x.won,points:x.points})),league_context:contextFor(t.roster_id)}));
+const complete=teams.map(t=>({...t,opponent_name:teamName(t.opponent_roster_id),opponent_projected:byId.get(String(t.opponent_roster_id))?.projected??null,opponent_context:contextFor(t.opponent_roster_id),next_opponent_name:teamName(t.next_opponent_roster_id),next_opponent_projected:byId.get(String(t.next_opponent_roster_id))?.next_projected??null,next_opponent_context:contextFor(t.next_opponent_roster_id),division_results:teams.filter(x=>String(x.division)===String(t.division)&&x.roster_id!==t.roster_id).map(x=>({roster_id:x.roster_id,team_name:x.team_name,won:x.won,points:x.points})),league_context:contextFor(t.roster_id)}));
 const classification=inquirerWeekClassification(1,2026);
 const inq=buildInquirerWeek({season,week,teams:complete,players,weeklyStats,weeklyStatHistory:{1:weeklyStats},scoringSettings:league.scoring_settings||{},scoreFn:score,weekClassification:classification});
 const trades=tradeRows(transactions,teamName);
 const overview=buildLeagueOverview({season,week,teams:inq.teams,players,transactions,canonicalTrades:trades,weekClassification:classification,valueHistoryMeta:{period:null,baseline:null,latest:null,source:'No valid seven-day Value History comparison yet'}});
-const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),broadcast_version:15,inquirer_version:20,projection_source:'projection data unavailable in preloaded Week 1 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',value_history_source:'No valid seven-day comparison available for Week 1 preloaded edition',trade_history_source:'Sleeper Week 1 completed trades',reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
+const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),broadcast_version:15,inquirer_version:21,projection_source:Object.keys(currentProj).length&&Object.keys(nextProj).length?'Sleeper Week 1 and Week 2 projections scored with league settings':'projection data partially unavailable in preloaded Week 1 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',value_history_source:'No valid seven-day comparison available for Week 1 preloaded edition',trade_history_source:'Sleeper Week 1 completed trades',reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
 if(result.teams.length!==32)throw new Error('Expected 32 team articles');
 for(const t of result.teams){const a=t.inquirer_article;if(!a?.headline||!a?.reporter?.id||!Array.isArray(a?.paragraphs)||a.paragraphs.length<9)throw new Error('Incomplete article '+t.roster_id)}
 fs.writeFileSync(process.env.OUT||'/tmp/week1-inquirer.json',JSON.stringify(result,null,2)+'\n');

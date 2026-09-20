@@ -54,7 +54,7 @@
     "inquirer_rotation": "8 teams per reporter per week; every reporter covers every team once across four consecutive weeks",
     "inquirer_real_stats_source": "Sleeper weekly raw stats",
     "inquirer_article_archives": "immutable standalone per-reporter article JSON + reporter archive index",
-    "inquirer_version": 20,
+    "inquirer_version": 21,
     "inquirer_live_context": [
       "season record and league rank",
       "winning/losing streaks from completed Sleeper matchups",
@@ -86,7 +86,7 @@
       }
     ],
     "inquirer_house_style": "Passionate hometown beat reporter + fan. Every desk uses conversational sarcasm, one-liners, emotional investment and newsroom judgment. Personalities remain distinct; no reporter is assigned a dry numbers-presenter role. Facts remain grounded in league data.",
-    "inquirer_article_standard": "Six reporting beats with variable story order and team-specific editorial angle; minimum 14 narrative paragraphs; ~444 words average in audited 2026 Week 1 V20 edition; article must read as a separately filed beat column, not a six-part data presentation.",
+    "inquirer_article_standard": "Six core reporting beats plus Hot Seat and Cool Throne, in variable story order; three connected paragraphs per section; minimum 24 narrative paragraphs; ~672 words average in audited 2026 Week 1 V21 edition; article must make matchup and transaction judgments rather than explain the data pipeline.",
     "inquirer_season_classification": {
       "regular_season_weeks": "1-13",
       "playoffs_weeks": "14-17",
@@ -144,15 +144,16 @@
     },
     "inquirer_published_editions": {
       "2026-week-1": {
-        "inquirer_version": 20,
-        "status": "published as audited immutable preload on PR #385; replaces V19/V18 presentation-oriented edition",
+        "inquirer_version": 21,
+        "status": "audited immutable preload on PR #385; replaces the V20 passionate-newsroom edition",
         "team_articles": 32,
         "reporter_distribution": "8 team articles per reporter",
-        "team_article_sections": 6,
-        "minimum_team_article_paragraphs": 14,
-        "average_team_article_words": 444,
-        "distinct_section_orders": 8,
-        "numeric_token_density": 0.033,
+        "team_article_sections": 8,
+        "minimum_team_article_paragraphs": 24,
+        "minimum_team_article_words": 588,
+        "average_team_article_words": 672,
+        "distinct_section_orders": 6,
+        "numeric_token_density": 0.0635,
         "prose_audits": [
           "scripts/inquirer-prose-quality-audit.mjs",
           "scripts/inquirer-overview-quality-audit.mjs"
@@ -189,18 +190,22 @@
         "next-week outlook / roster pressure"
       ],
       "order_rule": "section order varies by article; no one order may dominate more than 8 of 32 stories",
-      "minimum_paragraphs": 14,
-      "editorial_rule": "report the story, add newsroom judgment, humor and emotion; do not explain the data pipeline"
+      "required_impact_sections": [
+        "Hot Seat",
+        "Cool Throne"
+      ],
+      "minimum_paragraphs": 24,
+      "editorial_rule": "report the story, grade transaction quality, prioritize matchup/player impact, and add newsroom judgment, humor and emotion; do not explain the data pipeline"
     },
     "inquirer_prose_quality": {
       "audit": "scripts/inquirer-prose-quality-audit.mjs",
       "overview_audit": "scripts/inquirer-overview-quality-audit.mjs",
       "permanent_ci_gate": true,
-      "minimum_team_article_words": 300,
-      "minimum_median_paragraph_words": 24,
-      "team_sections": 6,
-      "minimum_team_paragraphs": 14,
-      "max_numeric_token_density": 0.075,
+      "minimum_team_article_words": 500,
+      "minimum_median_paragraph_words": 19,
+      "team_sections": 8,
+      "minimum_team_paragraphs": 24,
+      "max_numeric_token_density": 0.08,
       "max_uppercase_word_density": 0.018,
       "max_short_sentence_ratio": 0.22,
       "minimum_normalized_headline_patterns_per_reporter": 6,

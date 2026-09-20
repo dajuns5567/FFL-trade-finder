@@ -45,39 +45,43 @@ Data rules:
 ### Nick Swindell — Senior Football Correspondent
 Desk: **The Old Desk**
 
-Personality:
-- veteran beat writer
-- clipped and declarative
-- box-score-first
-- dry skepticism
-- sounds like ink, coffee, and a deadline
+Personality and structure:
+- veteran hometown beat writer and lifelong fan
+- clipped, declarative paragraphs with dry skepticism and grudging praise
+- deep institutional memory; he connects the current Sunday to what the club has already shown him
+- opens from the result and the season story, not from methodology
+- introduces players as the people who shaped the game, not as rows in a stat table
+- closes with the next assignment and what the team must prove
+- sounds like ink, coffee, a deadline, and a fan who has been hurt before
 
 Signature:
-> No hysteria without a box score.
+> Keep the clipping. Hide the parade route.
 
-### Bartholomew Roycington III — Performance & Tactics Columnist
-Desk: **The Numbers Desk**
+### Bartholomew Roycington III — Columnist at Large
+Desk: **The Velvet Rope**
 
-Personality:
-- analytical
-- precise
-- dryly sarcastic
-- cares about projection, usage, efficiency, and lineup decisions
-- treats numbers as evidence rather than decoration
+Personality and structure:
+- overeducated, theatrical hometown columnist and shameless fan
+- witty, sarcastic, cultured/pretentious and dramatic; never the boring analytics reporter
+- longer flowing sentences and polished transitions rather than Nick’s clipped rhythm
+- treats players and managers like characters in an ongoing social comedy
+- uses elegant insults, dramatic sighs, literary/cultural metaphors and the good china
+- can discuss projections or usage, but only inside an observation or argument
+- should feel distinct from Tilly’s tabloid shouting
 
 Signature:
-> The numbers are allowed to be rude.
+> Winning is vulgar, addictive and highly recommended.
 
 ### Tilly Fleecer — Tabloid Sports Editor
 Desk: **The Back Page**
 
-Personality:
-- loud back-page sports voice
-- punchy and sensational
-- braggy when deserved
-- mocking when earned
-- may use EXTRA!, RED INK!, and oversized-newspaper energy
-- drama must remain anchored to actual results
+Personality and structure:
+- hometown tabloid lifer and unapologetic fan
+- shorter punchy paragraphs with banner-headline rhythm
+- loud, funny, sarcastic, shamelessly celebratory after wins and merciless after dumb losses
+- always looking for the sentence rival managers will screenshot
+- caps and oversized-newspaper energy are seasoning, not the whole meal
+- management coverage asks whether the move actually changed the team rather than whether the ticker was busy
 
 Signature:
 > If it happened, it belongs in 48-point type.
@@ -85,12 +89,13 @@ Signature:
 ### Jefferson Filch — Investigations & Front Office
 Desk: **The Inquiry Desk**
 
-Personality:
-- sardonic investigative columnist
-- forensic about roster decisions and transactions
-- skeptical of easy narratives
-- darker dry humor
-- treats lineup cards and transaction logs like evidence
+Personality and structure:
+- hometown investigative columnist, suspicious fan and professional grudge archivist
+- case-file construction, noir sarcasm and petty precision
+- remembers lineup mistakes, trades, how players arrived and what management surrendered
+- carries unresolved questions across weeks instead of treating every game as a fresh database row
+- skeptical of easy narratives, but still funny and emotionally invested
+- next-week sections should develop the matchup’s significance, divisional/playoff stakes and what each result changes down the road
 
 Signature:
 > Every lineup leaves fingerprints.
@@ -459,9 +464,9 @@ Singular grammar must be natural: `1 sack`, `1 QB hit`, `1 tackle`, not plural l
 
 The Week 1 Nate Landman regression case is permanent evidence for this rule. His archived Week 1 row must resolve from player id 8659 to a real defensive line including **5 solo, 3 assists, 1 QB hit and 1 PD** rather than being described as missing.
 
-### League Notebook
+### Weekly Recap
 
-The co-authored League Overview is now written as a **League Notebook**, not a statistical report.
+The co-authored League Overview is now written as a **Weekly Recap**, not a statistical report.
 
 Each of the four desks gets a real editorial section with connected paragraphs. League-wide facts such as scoring leaders, standings, trades, roster movement, injuries and market direction may inform the notebook, but the prose should sound like league reporting, gossip and opinion rather than a dashboard narration.
 
@@ -502,7 +507,7 @@ For the current 32-team edition it requires, among other checks:
 - headline diversity
 - no five-word paragraph opener reused across more than eight stories
 
-The League Notebook audit independently checks:
+The Weekly Recap audit independently checks:
 - four reporter sections
 - connected multi-paragraph prose
 - restrained numerical density
@@ -521,8 +526,8 @@ Committed publication metadata records:
 - eight team articles per reporter
 - six sections per team article
 - approximately 363 words per team article
-- four League Notebook sections
-- approximately 496 League Notebook words
+- four Weekly Recap sections
+- approximately 496 Weekly Recap words
 - five Hot Takes: championship, fraud, division, player and upset
 - verified Nate Landman bench-player real-stat enrichment
 
@@ -614,7 +619,7 @@ The audited 2026 Week 1 V20 edition records:
 - approximately 3.3% numeric-token density across the edition
 - all four reporters satisfying their personality/voice checks
 
-The separate League Notebook audit remains:
+The separate Weekly Recap audit remains:
 
 `node scripts/inquirer-overview-quality-audit.mjs`
 
@@ -626,7 +631,7 @@ The immutable Week 1 V20 archive is:
 with publication metadata:
 `data/inquirer/2026/week-01.meta.json`
 
-## V21 matchup-impact newsroom — active standard
+## V21 matchup-impact newsroom — historical foundation
 
 V21 keeps the six core reporting beats and adds two required sections to every team article:
 
@@ -637,13 +642,13 @@ Every one of the eight sections contains at least three connected paragraphs. Th
 
 Transaction coverage must state an explicit quality verdict. Listing adds, drops or volume without judging the early return does not satisfy the management beat.
 
-League Notebook upset picks are projection-defined. The named underdog must have a lower verified next-week projected score than the named favorite, and both values are persisted with the hot take. Standings rank alone never makes a projected favorite an upset pick.
+Weekly Recap upset picks are projection-defined. The named underdog must have a lower verified next-week projected score than the named favorite, and both values are persisted with the hot take. Standings rank alone never makes a projected favorite an upset pick.
 
 Missing-data sections remain present but rotate honest empty-state prose. Rejected canned phrases include “taking the night off,” “giant photo,” “tiny photo,” “large photos and small photos,” and “find the parade permit.”
 
 The UI contract for V21 also requires:
 
-- League Notebook team links open that team’s Value History.
+- Weekly Recap team links open that team’s Value History.
 - the article chooser uses a prominent neutral heading without a gold container.
 - author bylines use no gold container.
 - opening or closing a reporter desk preserves the reader’s scroll position so the archive menu stays in view.
@@ -655,3 +660,77 @@ The canonical V21 gates are:
 `node scripts/inquirer-prose-quality-audit.mjs`
 
 `node scripts/inquirer-overview-quality-audit.mjs`
+
+
+## V26 recovered Work-state contract — active
+
+This section supersedes older user-facing naming and article-structure guidance above where they conflict.
+
+### Weekly Recap
+
+The league-wide weekly article is **Weekly Recap**. Do not rename it back to League Notebook or League Overview in user-facing UI.
+
+The recap is co-authored by all four reporters and should be longer than a single team column because it develops the most consequential stories of the week. It is editorially selective rather than a checklist of all 16 matchups.
+
+When supported by the data, **What Actually Mattered This Week** should develop the most consequential games with:
+- result and star performances
+- divisional consequences
+- playoff-position consequences
+- what the result changes for both teams
+- value movement, major transactions, injuries or emerging trends when they genuinely belong in the story
+
+Jefferson Filch's next-week section should go beyond the projection to explain the matchup's significance, each team's current road, divisional stakes when applicable, postseason pressure and what winning or losing changes.
+
+### Team article north star
+
+The eight section kinds remain: lede, players, management, value, sentiment, outlook, Hot Seat and Cool Throne.
+
+Those eight kinds are coverage requirements, **not one shared article template**.
+
+Nick, Bartholomew, Tilly and Filch must differ in:
+- section construction and ordering
+- paragraph rhythm
+- transitions
+- how they open and close
+- how they introduce players
+- how they discuss management
+- how they use humor
+
+Section-order shuffling alone is not sufficient.
+
+Stats stay in the story, but the article must add observation, jokes, sarcasm, team history, emotional reaction, manager/player insight and connective newspaper prose. Do not pad missing evidence. A no-information section is exactly **n/a**.
+
+The reporter should write as though they remember prior weeks, roster construction and trades. A player acquired by trade remains a trade acquisition in later coverage when canonical Trade History supports it.
+
+### Archive/UI contract
+
+Preserve all of the following:
+- Year / Week / Team archive filters
+- archive defaults to the most recent completed week
+- Weekly Recap option in the article/archive picker
+- the article picker lives at the top of the selected article
+- selecting an article scrolls to the top of the article
+- Reporter Desks has an explicit Close control
+- opening/closing reporter desks preserves scroll position
+- team-name links inside Weekly Recap use a simple yellow underline and open that team's Value History
+- archived reporter-story controls open the relevant archived article
+- chooser/byline have no gold box background
+- Hot Takes background remains transparent
+- Sources stays collapsed
+
+### Prose rules
+
+Do not publish generation-process language such as:
+- "the useful question is"
+- "the useful part is"
+- "the data tells us"
+- "the next data point"
+- "Sleeper did not return"
+- "usable stat line"
+- scoring/valuation methodology explanations
+- implementation reassurance or pipeline commentary
+- reader instructions
+
+Fantasy and NFL stats support the reporter's observation; they are not the sentence template.
+
+Bartholomew is explicitly protected from regression into a dry analytics role. He should remain witty, sarcastic, cultured/pretentious, dramatic and funny while distinct from Tilly.

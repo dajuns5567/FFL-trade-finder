@@ -14,7 +14,8 @@ export function auditV22(edition){
     if(!t.transactions.length)assert.deepEqual(s.find(x=>x.kind==='management').paragraphs,['n/a']);
     if(t.mida_outlook){assert.match(s.find(x=>x.kind==='outlook').paragraphs.join(' '),edition.inquirer_version>=24?/around .*chance of reaching the playoffs/:edition.inquirer_version>=23?/MIDA.*playoff chance/:/MIDA outlook.*playoffs.*championship.*division title/)}
     const top=t.starter_details.slice().sort((a,b)=>b.points-a.points).slice(0,3);
-    for(const p of top)assert.ok(s.find(x=>x.kind==='lede').paragraphs.join(' ').includes(p.name));
+    const namedCoverage=(edition.inquirer_version>=26?s.filter(x=>x.kind==='lede'||x.kind==='players'):s.filter(x=>x.kind==='lede')).flatMap(x=>x.paragraphs||[]).join(' ');
+    for(const p of top)assert.ok(namedCoverage.includes(p.name),'Leading players must be named naturally across the game/player reporting beats: '+p.name);
   }
   const parsed=parseMida('Data as of 2026-09-16\nTeam,Rank,Conf,Division,Exp Points,Exp Wins,Playoff %,Title %\nTest,1,AFC,East,1200,9,80,5');
   assert.equal(parsed[0].playoff,80);assert.equal(parsed[0].division,null);

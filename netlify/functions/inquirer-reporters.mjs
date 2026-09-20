@@ -3,7 +3,7 @@
 import {buildNarrativeArticle} from './inquirer-narrative-v17.mjs';
 import {buildHumanLeagueOverviewV19} from './inquirer-overview-v19.mjs';
 
-export const INQUIRER_VERSION=19;
+export const INQUIRER_VERSION=20;
 export const INQUIRER_PLAYOFF_START_WEEK=14;
 export const INQUIRER_FINAL_WEEK=17;
 export function inquirerWeekClassification(week,season,conference=''){
@@ -13,7 +13,7 @@ export function inquirerWeekClassification(week,season,conference=''){
  const round=w===17?'Super Bowl':(conf?conf+' '+generic:'NFC/AFC '+generic);
  return{week:w,season:Number(season),phase:'Playoffs',playoffs:w>=14&&w<=17,round,conference:conf||null,label:'Week '+w+' • '+round,playoff_start_week:14,final_week:17};
 }
-export const INQUIRER_HOUSE_STYLE='Hometown beat reporter + fan. Frequent sarcasm, embedded humor, long-form analysis, and dramatic framing are encouraged. Dramatic without inventing facts: scores, standings, transactions, player production, streaks, projections, and real-life stats must remain grounded in Sleeper data.';
+export const INQUIRER_HOUSE_STYLE='Hometown beat reporter and lifelong fan, not a data presenter. Every desk uses conversational sarcasm, one-liners, emotional investment, real newsroom judgment and smooth narrative delivery. Personalities remain distinct, but none are assigned the role of boring numbers analyst. Facts stay grounded in league data; the prose should sound like somebody who watched, cared, argued, followed the team all week and then filed a column.';
 
 export const REPORTERS=[
  {id:'walter-mercer',name:'Nick Swindell',title:'Senior Football Correspondent',desk:'The Old Desk',voice:'Old-school hometown beat writer, lifelong fan and practiced pessimist. Dry one-liners, deep institutional memory, grudging praise, real affection for the team, and the weary confidence of someone who has had too many Sundays ruined to waste time pretending he is neutral.',signature:'Keep the clipping. Hide the parade route.'},

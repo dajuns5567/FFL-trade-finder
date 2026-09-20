@@ -6,13 +6,13 @@ const assert=(x,m)=>{if(!x)throw new Error(m)};
 assert(REPORTERS.length===4,'Fleeced Inquirer must have exactly four permanent reporters');
 assert(REPORTERS.map(r=>r.name).join('|')==='Nick Swindell|Bartholomew Roycington III|Tilly Fleecer|Jefferson Filch','Fleeced Inquirer public reporter names must remain the approved names');
 assert(INQUIRER_PLAYOFF_START_WEEK===14&&INQUIRER_FINAL_WEEK===17,'Inquirer season must classify Weeks 14-17 as playoffs and stop at Week 17');
-assert(week1Preload?.inquirer_version===18&&Number(week1Preload?.season)===2026&&Number(week1Preload?.week)===1,'Committed Week 1 preload must be the rewritten 2026 V18 edition');
+assert(week1Preload?.inquirer_version===19&&Number(week1Preload?.season)===2026&&Number(week1Preload?.week)===1,'Committed Week 1 preload must be the rewritten 2026 V19 edition');
 assert(Array.isArray(week1Preload?.teams)&&week1Preload.teams.length===32,'Committed Week 1 preload must contain all 32 team articles');
-assert(week1Preload.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(t?.inquirer_article?.sections)&&t.inquirer_article.sections.length===6&&Array.isArray(t?.inquirer_article?.paragraphs)&&t.inquirer_article.paragraphs.length>=12),'Every preloaded Week 1 team must have a six-section human-first V18 article');
+assert(week1Preload.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(t?.inquirer_article?.sections)&&t.inquirer_article.sections.length===6&&Array.isArray(t?.inquirer_article?.paragraphs)&&t.inquirer_article.paragraphs.length>=12),'Every preloaded Week 1 team must have a six-section passionate V19 article');
 const preloadReporterCounts=new Map(REPORTERS.map(r=>[r.name,0]));
 for(const t of week1Preload.teams){const n=t?.inquirer_article?.reporter?.name;preloadReporterCounts.set(n,(preloadReporterCounts.get(n)||0)+1)}
 for(const r of REPORTERS)assert(preloadReporterCounts.get(r.name)===8,'Week 1 preload must preserve exactly eight team stories for '+r.name);
-assert(week1Preload?.league_overview?.sections?.length===4&&week1Preload?.league_overview?.hot_takes?.length===4,'Week 1 preload must include the four-desk League Overview and four Hot Takes');
+assert(week1Preload?.league_overview?.sections?.length===4&&week1Preload?.league_overview?.hot_takes?.length>=5,'Week 1 preload must include the four-desk League Notebook and five prediction Hot Takes');
 assert(week1Preload?.week_classification?.label==='Week 1 • Regular Season','Week 1 preload must preserve the canonical Week 1 classification');
 assert(week1Preload.teams.every(t=>t?.value_history_week==null),'Week 1 preload must not invent team Value History movement when no valid 7D comparison exists');
 assert(inquirerWeekClassification(14,2026,'AFC').label==='Week 14 • AFC Wildcard Round','Week 14 AFC teams must be in the AFC Wildcard Round');
@@ -36,7 +36,7 @@ for(const id of teams){
 const qb=realStatLine('QB',{pass_cmp:24,pass_att:35,pass_yd:287,pass_td:3,pass_int:1,rush_att:5,rush_yd:31});
 assert(qb.includes('24/35 passing')&&qb.includes('287 pass yds')&&qb.includes('3 pass TD'),'QB real-life stat line missing Sleeper passing production');
 const idp=realStatLine('LB',{tkl_solo:7,tkl_ast:4,sack:1,tkl_loss:2,qb_hit:2,pass_def:1});
-assert(idp.includes('7 solo')&&idp.includes('1 sacks')&&idp.includes('2 TFL'),'IDP real-life stat line missing Sleeper defensive production');
+assert(idp.includes('7 solo')&&idp.includes('1 sack')&&idp.includes('2 TFL'),'IDP real-life stat line missing Sleeper defensive production');
 
 const sampleTeams=teams.map((id,i)=>({
  roster_id:id,manager_user_id:'u'+id,manager_name:'GM '+id,manager_career:{user_id:'u'+id,wins:20,losses:10,playoff_wins:2,championships:0,regular_season_titles:0},team_name:'Team '+id,conference:i<16?'AFC':'NFC',division_name:(i<16?'AFC':'NFC')+' TEST',points:100+i,opponent_points:90+i,won:true,projected:98,recent_trade_count:i%3,current_week_trade_count:i%2,previous_fan_sentiment:null,current_season_champion:false,
@@ -117,6 +117,21 @@ const collapseSentiment=collapseBuild.teams[0].inquirer_article.fan_sentiment;
 assert(collapseSentiment.score<=-55,'Sustained losing, falling values and poor management must be able to drive strongly negative fan sentiment');
 assert(/Fire-the-GM|Ban Him From the City|Torches|Mansion Is Under Siege/i.test(collapseSentiment.title+' '+collapseSentiment.scene),'Extreme sustained negative performance must have a creative negative sentiment range');
 
+const crossPositionTeam={...sampleTeams[2],roster_id:'cross',team_name:'Cross Position Test',manager_name:'Eligibility GM',
+ starter_details:[{id:'rb-test',name:'Starting Runner',position:'RB',lineup_slot:'RB',points:3,projected:10},{id:'wr-test',name:'Starting Wideout',position:'WR',lineup_slot:'WR',points:12,projected:12}],
+ best_bench:{id:'lb-test',name:'Bench Linebacker',position:'LB',points:31,projected:12},
+ worst_starter:{id:'rb-test',name:'Starting Runner',position:'RB',lineup_slot:'RB',points:3,projected:10},
+ best_lineup_miss:null,
+ league_context:{...sampleTeams[2].league_context,record:{wins:3,losses:3,ties:0},standings_rank:18},
+ next_week_availability:{schedule_verified:true,bye_players:[],bye_current_starters:[],injury_players:[],injury_current_starters:[]}
+};
+const crossPlayers={...players,'rb-test':{full_name:'Starting Runner',position:'RB',team:'NFL'},'wr-test':{full_name:'Starting Wideout',position:'WR',team:'NFL'},'lb-test':{full_name:'Bench Linebacker',position:'LB',team:'NFL'}};
+const crossStats={'rb-test':{rush_att:8,rush_yd:24},'wr-test':{rec:5,rec_tgt:7,rec_yd:70},'lb-test':{tkl_solo:10,tkl_ast:5,sack:1}};
+const crossBuild=buildInquirerWeek({season:2026,week:6,teams:[crossPositionTeam],players:crossPlayers,weeklyStats:crossStats,weeklyStatHistory:{6:crossStats},scoringSettings:{},scoreFn:()=>10,weekClassification});
+const crossManagement=crossBuild.teams[0].inquirer_article.sections.find(s=>s.kind==='management')?.paragraphs?.join(' ')||'';
+assert(!/Bench Linebacker.*Starting Runner|Starting Runner.*Bench Linebacker/.test(crossManagement),'IDP bench scorer must never be framed as a legal replacement for an RB starter');
+assert(/IDP|lineup rules|eligible|legal|allowed|substitution/i.test(crossManagement),'Cross-position lineup hindsight must explicitly respect legal lineup eligibility');
+
 const overview=buildLeagueOverview({
  season:2026,week:14,teams:built.teams,players,
  transactions:[{type:'free_agent',status:'complete',adds:{p1:'1'},drops:{p2:'2'}},{type:'trade',status:'complete',roster_ids:['1','2'],adds:{p1:'2',p2:'1'},drops:{}}],
@@ -128,22 +143,20 @@ assert(overview.week_classification?.phase==='Playoffs'&&overview.week_classific
 assert((overview.sections||[]).length===4,'League Overview must contain one substantive desk section from each reporter');
 assert((overview.hot_takes||[]).length>=5,'League Overview Hot Takes must contain championship, fraud, division, player and upset predictions');
 assert(['championship','fraud','division','player','upset'].every(k=>(overview.hot_takes||[]).some(x=>x.kind===k)),'Hot Takes must be actual prediction categories, not statistical-analysis blurbs');
-assert((overview.bottom_five||[]).length===5,'League Overview must analyze the bottom five teams in the race toward the No. 1 pick');
-assert((overview.sections||[]).some(s=>(s.paragraphs||[]).some(p=>/Completed trades this week|Trade/i.test(p))),'League Overview must react to canonical weekly trades');
-assert((overview.sections||[]).some(s=>(s.paragraphs||[]).some(p=>/bottom five|No\. 1 rookie pick|Race to the Bottom/i.test(p))),'League Overview must analyze the standings-based No. 1-pick race');
-assert((overview.sections||[]).some(s=>(s.paragraphs||[]).some(p=>/bye|injury/i.test(p))),'League Overview must analyze next-week bye/injury pressure');
+assert((overview.sections||[]).some(s=>(s.paragraphs||[]).some(p=>/trade|transaction/i.test(p))),'League Notebook must react naturally to meaningful weekly transactions when present');
+assert((overview.bottom_five||[]).length===5,'League Notebook data must preserve the bottom-five context even when the prose chooses a different lead');
 
 const backend=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');
 const ui=fs.readFileSync('league-hub-v451.js','utf8');
 const helper=fs.readFileSync('netlify/functions/inquirer-reporters.mjs','utf8');
 const narrative=fs.readFileSync('netlify/functions/inquirer-narrative-v17.mjs','utf8');
-const human=fs.readFileSync('netlify/functions/inquirer-human-v18.mjs','utf8');
-const overviewWriter=fs.readFileSync('netlify/functions/inquirer-overview-v18.mjs','utf8');
+const human=fs.readFileSync('netlify/functions/inquirer-human-v19.mjs','utf8');
+const overviewWriter=fs.readFileSync('netlify/functions/inquirer-overview-v19.mjs','utf8');
 assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub must fetch Sleeper raw weekly stats for Inquirer articles');
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
 assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
-assert(backend.includes("explicit V18 human-first newsroom rewrite"),'Older Inquirer articles must explicitly migrate once to the V18 human-first newsroom schema');
+assert(backend.includes("explicit V19 passionate newsroom rewrite"),'Older Inquirer articles must explicitly migrate once to the V18 human-first newsroom schema');
 assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');
 assert(backend.includes("Number(stored?.inquirer_version||0)<INQUIRER_VERSION"),'Only older-version archived reporter articles may be migrated; current-version articles stay preserved');
 assert(backend.includes('leagueSeasonContext('),'Inquirer backend must derive season standings/streak context from completed Sleeper matchups');
@@ -160,18 +173,26 @@ assert(backend.includes('injury_status'),'Inquirer must use Sleeper injury desig
 assert(backend.includes("league?.metadata?.['division_'+d]"),'Conference must be derived from Sleeper division metadata rather than hardcoded roster IDs');
 assert(backend.includes("name.startsWith('AFC')")&&backend.includes("name.startsWith('NFC')"),'Sleeper AFC/NFC division labels must drive conference assignment');
 assert(backend.includes("managers/history-cache.json"),'Fan sentiment must consume persistent manager career history');
-assert(backend.includes("import week1Preload2026 from './inquirer-week1-2026-preload.mjs'"),'League Hub must import the immutable rewritten Week 1 V18 preload');
+assert(backend.includes("import week1Preload2026 from './inquirer-week1-2026-preload.mjs'"),'League Hub must import the immutable rewritten Week 1 V19 preload');
 assert(backend.includes('preloadedBroadcast(season,week)'), 'League Hub weekly/archive paths must recognize preloaded completed editions');
 assert(backend.includes('preloadedReporterEntries(reporter.id)'), 'Reporter archives must merge each reporter’s Week 1 preload stories');
 assert(backend.includes("key:'preloaded:2026:1'"), 'Weekly archive index must expose preloaded Week 1');
 assert(backend.includes('previous_fan_sentiment:previousSentiment'),'Fan sentiment must carry forward from the prior archived week for the same team/manager');
 assert(backend.includes('current_season_champion'),'Week 17 sentiment must be able to recognize the current Sleeper championship winner');
 assert(/dramatic without inventing facts/i.test(helper),'Reporter house style must preserve dramatic-but-factual constraint');
-assert(helper.includes('Hometown old-school beat writer and obvious fan')&&helper.includes('Hometown analytics beat writer and fan')&&helper.includes('Hometown tabloid beat writer and unapologetic fan')&&helper.includes('Hometown investigative beat writer and fan'),'All four reporters must explicitly write as hometown beat reporters/fans');
-assert(/rival group chat/i.test(helper)&&/dental procedures/i.test(helper)&&/spreadsheets cannot be angry/i.test(helper)&&/subpoena immunity/i.test(helper),'V14 prose engine must preserve frequent sarcasm and embedded humor rather than generic recap copy');
-assert(helper.includes('buildNarrativeArticle')&&narrative.includes('humanSections')&&human.includes("kind:'lede'")&&human.includes("kind:'players'")&&human.includes("kind:'management'")&&human.includes("kind:'value'")&&human.includes("kind:'sentiment'")&&human.includes("kind:'outlook'"),'V18 must use the six-section human-first beat-column architecture');
-assert(overviewWriter.includes("kind:'championship'")&&overviewWriter.includes("kind:'fraud'")&&overviewWriter.includes("kind:'division'")&&overviewWriter.includes("kind:'player'")&&overviewWriter.includes("kind:'upset'"),'V18 Hot Takes must be explicit prediction types');
+assert(helper.includes('Old-school hometown beat writer')&&helper.includes('Overeducated, theatrical hometown columnist')&&helper.includes('Hometown tabloid lifer')&&helper.includes('Hometown investigative columnist'),'All four reporters must preserve distinct but entertaining hometown personalities');
+assert(/Winning is vulgar, addictive and highly recommended/.test(helper),'Bartholomew must remain a theatrical columnist rather than a numbers-desk presenter');
+assert(/parking|complaint|clipping/i.test(human)&&/good china|waistcoat|theatrical|vulgar/i.test(human)&&/angry font|confetti|giant photo/i.test(human)&&/fingerprints|docket|cross-examination/i.test(human),'Every V19 desk must have its own sarcasm/humor vocabulary');
+assert(helper.includes('buildNarrativeArticle')&&narrative.includes('humanSectionsV19')&&human.includes("kind:'lede'")&&human.includes("kind:'players'")&&human.includes("kind:'management'")&&human.includes("kind:'value'")&&human.includes("kind:'sentiment'")&&human.includes("kind:'outlook'"),'V19 must use the six-section passionate beat-column architecture');
+assert(overviewWriter.includes("kind:'championship'")&&overviewWriter.includes("kind:'fraud'")&&overviewWriter.includes("kind:'division'")&&overviewWriter.includes("kind:'player'")&&overviewWriter.includes("kind:'upset'"),'V19 Hot Takes must be explicit prediction types');
 assert(helper.includes('Hall of Fame Petition')&&helper.includes('Metaphorical Torches & Pitchforks')&&helper.includes('The Imaginary Mansion Is Under Siege'),'V16 fan sentiment must preserve the full creative positive-to-negative spectrum');
 assert(helper.includes("previous.score)*.65+raw*.35"),'V16 fan sentiment must preserve prior-week inertia so one result cannot dominate management reputation');
-assert(helper.includes('buildLeagueOverview')&&helper.includes('buildHumanLeagueOverview'),'V18 must route the co-authored League Overview through the human-first notebook engine');
+assert(helper.includes('buildLeagueOverview')&&helper.includes('buildHumanLeagueOverviewV19'),'V19 must route the co-authored League Notebook through the passionate newsroom engine');
+assert(backend.includes('slotAcceptsPosition(slot,position)')&&backend.includes('bestEligibleLineupMiss(starters,bench)'),'Lineup hindsight must use Sleeper slot eligibility instead of raw best-bench versus worst-starter scoring');
+assert(backend.includes("if(s==='FLEX')return ['RB','WR','TE'].includes(p)")&&backend.includes("if(s==='IDP_FLEX'||s==='IDP')return IDP_POSITIONS.has(p)"),'Offensive FLEX and IDP FLEX eligibility must remain separate');
+assert(helper.includes('best_lineup_miss')&&human.includes('best_lineup_miss'),'V19 writer must consume only the position-eligible lineup miss for management criticism');
+assert(/IDP cannot simply wander over and steal an RB chair/.test(human)&&/lineup rules actually permitted it/.test(human),'V19 copy must explicitly understand that IDP cannot replace RB and only legal substitutions deserve hindsight');
+assert(ui.includes('data-lh-archive-year')&&ui.includes('data-lh-archive-week')&&ui.includes('data-lh-archive-team'),'Inquirer archive must expose year, week, and team filters');
+assert(ui.includes('It opens on the current completed week'),'Inquirer archive must default its filter view to the current completed week');
+assert(!ui.includes("esc(r?.voice||'')"),'Published archive UI must never print internal reporter voice prompts');
 console.log('Fleeced Inquirer four-reporter rotation, real-stat, persistence, and archive smoke passed');

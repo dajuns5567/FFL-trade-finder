@@ -42,10 +42,10 @@ function newsroomInsight(t,voice,seed){
       jeff:['The file ends here. I have questions, receipts and several grudges, but no further game to subpoena.']
     },
     lineup:{
-      nick:[miss?.reserve?.name+' was a real, legal alternative to '+miss?.starter?.name+', which means this is not Monday-morning fan fiction. That choice belongs on the manager’s desk until somebody makes a better one next week.'],
-      bart:['At last, a lineup complaint with proper credentials: '+miss?.reserve?.name+' could actually have occupied '+miss?.starter?.name+'’s seat. I am delighted to discover outrage can occasionally read the rulebook.'],
-      tilly:['This one gets the siren because the swap was actually legal. '+miss?.reserve?.name+' could have started over '+miss?.starter?.name+'. No linebackers sneaking into running-back chairs, no imaginary substitutions, just a real decision we are absolutely going to yell about.'],
-      jeff:['The lineup complaint survived cross-examination: '+miss?.reserve?.name+' was eligible for the seat held by '+miss?.starter?.name+'. That makes it evidence, not hindsight cosplay.']
+      nick:[team+' has one lineup complaint I will actually sign my name to: '+miss?.reserve?.name+' was a real, legal alternative to '+miss?.starter?.name+'. That is not Monday-morning fan fiction; that choice belongs on the manager’s desk until somebody makes a better one next week.'],
+      bart:[team+' has finally given me a lineup complaint dressed well enough for publication: '+miss?.reserve?.name+' could actually have occupied '+miss?.starter?.name+'’s seat. I am delighted to discover outrage can occasionally read the rulebook.'],
+      tilly:[team+' has earned one legitimate siren: '+miss?.reserve?.name+' could actually have started over '+miss?.starter?.name+'. No linebackers sneaking into running-back chairs, no imaginary substitutions, just a real decision we are absolutely going to yell about.'],
+      jeff:[team+' put one lineup decision through cross-examination and it survived: '+miss?.reserve?.name+' was eligible for the seat held by '+miss?.starter?.name+'. That makes it evidence, not hindsight cosplay.']
     },
     'rout-win':{
       nick:[team+' did not merely beat '+opp+'; it made the fourth quarter feel like paperwork. Those are the Sundays beat writers pretend to find boring because admitting joy feels dangerous.'],

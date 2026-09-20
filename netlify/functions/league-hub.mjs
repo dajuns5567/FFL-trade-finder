@@ -234,7 +234,7 @@ async function weeklyReport(req){
 }
 async function broadcastArchive(){
  const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),rows=Array.isArray(idx)?idx.slice():[],p=week1Preload2026,key='2026|1';
- if(!rows.some(x=>String(Number(x.season))+'|'+String(Number(x.week))===key))rows.push({type:'week',season:2026,week:1,key:'preloaded:2026:1',captured_at:String(p.generated_at||''),preloaded:true});
+ if(Number(p?.inquirer_version||0)>=INQUIRER_VERSION&&!rows.some(x=>String(Number(x.season))+'|'+String(Number(x.week))===key))rows.push({type:'week',season:2026,week:1,key:'preloaded:2026:1',captured_at:String(p.generated_at||''),preloaded:true});
  rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
 }
 async function broadcastStored(season,week){

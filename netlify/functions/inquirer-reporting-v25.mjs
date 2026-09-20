@@ -31,17 +31,61 @@ function opportunity(p){
   return null;
 }
 
+function statSituation(p){
+  const s=p?.real_stats||{},pos=String(p?.position||'').toUpperCase(),line=String(p?.real_stat_line||'').replaceAll(' • ',', ');
+  if(pos==='RB'){
+    const carries=Number(s.rush_att),targets=Number(s.rec_tgt??s.targets),recs=Number(s.rec);
+    if(Number.isFinite(carries)||Number.isFinite(targets))return `${line?line+'. ':''}${p.name} had ${Number.isFinite(carries)?carries+' carries':'no recorded carry count'}${Number.isFinite(targets)?' and '+targets+' targets':''}. ${(carries||0)>=14||(targets||0)>=5?'That workload gives the fantasy result a usage base worth carrying forward.':'The fantasy total came without dominant volume, so next week matters before treating it as a new normal.'}`;
+  }
+  if(pos==='WR'||pos==='TE'){
+    const targets=Number(s.rec_tgt??s.targets),recs=Number(s.rec),yd=Number(s.rec_yd);
+    if(Number.isFinite(targets))return `${line?line+'. ':''}${targets} targets put ${p.name} directly into the real-life offense. ${targets>=8?'That kind of involvement is more useful for forecasting the next week than the fantasy total by itself.':targets>=5?'The role was meaningful, though not yet the sort of volume that makes every spike feel repeatable.':'The production came on a thin target base, so the result needs another week before it becomes a role statement.'}`;
+  }
+  if(pos==='QB'){
+    const att=Number(s.pass_att),rush=Number(s.rush_att);
+    if(Number.isFinite(att)||Number.isFinite(rush))return `${line?line+'. ':''}${p.name} logged ${Number.isFinite(att)?att+' pass attempts':'an unverified pass-attempt total'}${Number.isFinite(rush)&&rush>0?' and '+rush+' carries':''}. ${(att||0)>=30||(rush||0)>=6?'The opportunity was large enough that the fantasy result came from a full workload, not one isolated play.':'The workload was ordinary enough that efficiency drove more of the fantasy result.'}`;
+  }
+  const solo=Number(s.tkl_solo),ast=Number(s.tkl_ast),sacks=Number(s.sack),pd=Number(s.pass_def),ints=Number(s.int);
+  const tackles=(Number.isFinite(solo)?solo:0)+(Number.isFinite(ast)?ast:0);
+  if(tackles||sacks||pd||ints)return `${line?line+'. ':''}${tackles>=8?p.name+' was around the ball all afternoon; the tackle volume gives the fantasy score a steadier foundation than one splash play alone.':sacks>=1||ints>=1||pd>=2?p.name+' made the kind of impact play that swings an IDP week, but splash production is more volatile than repeat tackle volume.':p.name+' contributed without a dominant tackle or splash-play profile, so the next game will tell us more about how bankable this role is.'}`;
+  return line?`${line}. The real-life line supports the box score, but there is not enough usage detail here to make a stronger role claim.`:null;
+}
+
+function playerTrajectory(p){
+  const prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,current=Number(p?.season_avg),games=Number(p?.season_games)||0,age=Number(p?.age),opp=opportunity(p),pos=String(p?.position||'').toUpperCase();
+  if(!Number.isFinite(prior)||prior<=0||priorGames<6||!Number.isFinite(current)||games<1)return null;
+  const ratio=current/prior,oldThreshold=pos==='QB'?34:pos==='RB'?28:(pos==='WR'||pos==='TE')?30:29;
+  if(games>=3&&Number.isFinite(age)&&age<=26&&ratio>=1.28&&opp?.strong)return {kind:'breakout',strength:ratio-1,text:`${p.name} is moving into legitimate breakout territory: ${one(current)} fantasy points per game this season after ${one(prior)} across ${priorGames} games last year, and this week’s ${opp.text} says the production has opportunity behind it. That is a trend now, not merely a loud Sunday.`};
+  if(games===1&&Number.isFinite(age)&&age<=26&&ratio>=1.4&&opp?.strong)return {kind:'early-breakout',strength:ratio-1,text:`${p.name} is an early breakout watch, not a declared breakout. The Week 1 score sits well above last year’s ${one(prior)}-point average across ${priorGames} games, and ${opp.text} gives the spike a real workload underneath it. One week is evidence; two or three would start becoming a story.`};
+  if(games>=3&&Number.isFinite(age)&&age>=oldThreshold&&ratio<=.68)return {kind:'decline',strength:1-ratio,text:`${p.name} has earned a real decline watch: ${one(current)} per game this season versus ${one(prior)} across ${priorGames} games last year. At age ${age}, asking whether the old weekly floor is gone is fair; calling him finished still requires more than a short sample.`};
+  if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:'reliable',strength:1-Math.abs(ratio-1),text:`${p.name} is doing the boring valuable thing: ${one(current)} per game this season after ${one(prior)} across ${priorGames} games last year. That is reliability, not a breakout, and contenders need plenty of it.`};
+  if(games===1&&Math.abs(Number(p.points)-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(Number(p.points)-prior)/prior,text:`${p.name} opened the year near the level already established last season, when he averaged ${one(prior)} across ${priorGames} games. One week cannot prove reliability, but this performance looks more like continuation than reinvention.`};
+  if(games===1&&Number(p.points)<=prior*.5)return {kind:'stumble',strength:1-Number(p.points)/prior,text:`${p.name} opened well below last year’s ${one(prior)}-point average across ${priorGames} games. That is a Week 1 stumble, not proof of decline; the useful question is whether the role and opportunity rebound next Sunday.`};
+  return null;
+}
+
+function playerContextParagraph(p){
+  const pieces=[],stat=statSituation(p),traj=playerTrajectory(p);if(stat)pieces.push(stat);if(traj)pieces.push(traj.text);return pieces.join(' ');
+}
+
+function leaguePlayerPulse(teams){
+  const rows=(teams||[]).flatMap(t=>(t.starter_details||[]).map(p=>({t,p,tr:playerTrajectory(p)}))).filter(x=>x.tr);
+  const pick=kind=>rows.filter(x=>x.tr.kind===kind).sort((a,b)=>Number(b.tr.strength)-Number(a.tr.strength))[0]||null,out=[],seen=new Set();
+  for(const kind of ['breakout','early-breakout','reliable','decline','stumble']){
+    const x=pick(kind);if(!x||seen.has(String(x.p.id)))continue;seen.add(String(x.p.id));
+    const situ=statSituation(x.p),tag=kind==='decline'?'DECLINE WATCH':kind==='stumble'?'VETERAN CHECK-IN':kind==='reliable'?'RELIABLE':kind.includes('breakout')?'BREAKOUT WATCH':'PLAYER WATCH';
+    out.push(`${tag}: ${x.tr.text}${situ?' '+situ:''} For ${x.t.team_name}, the point is not the label; it is whether this player’s role changes what the roster can reasonably expect next week.`);
+    if(out.length>=3)break;
+  }
+  return out;
+}
+
 export function breakoutWatch(t){
-  const candidates=(t.starter_details||[]).map(p=>{
-    const age=Number(p.age),f=p.recent_form||{},baseline=Number(f.prior3_avg),current=Number(f.last3_avg),opp=opportunity(p);
-    if(!Number.isFinite(age)||age>26||!Number.isFinite(baseline)||baseline<=0||!Number.isFinite(current)||!opp?.strong)return null;
-    const lift=current-baseline;
-    if(lift<3||current<baseline*1.2)return null;
-    return {p,age,baseline,current,lift,opp,score:lift+Math.max(0,26-age)*.5};
-  }).filter(Boolean).sort((a,b)=>b.score-a.score);
+  const direct=(t.starter_details||[]).map(p=>({p,tr:playerTrajectory(p)})).filter(x=>['breakout','early-breakout'].includes(x.tr?.kind)).sort((a,b)=>Number(b.tr.strength)-Number(a.tr.strength))[0];
+  if(direct)return direct.tr.text;
+  const candidates=(t.starter_details||[]).map(p=>{const age=Number(p.age),f=p.recent_form||{},baseline=Number(f.prior3_avg),current=Number(f.last3_avg),opp=opportunity(p);if(!Number.isFinite(age)||age>26||!Number.isFinite(baseline)||baseline<=0||!Number.isFinite(current)||!opp?.strong)return null;const lift=current-baseline;if(lift<3||current<baseline*1.2)return null;return {p,age,baseline,current,lift,opp,score:lift+Math.max(0,26-age)*.5}}).filter(Boolean).sort((a,b)=>b.score-a.score);
   const x=candidates[0];if(!x)return null;
-  const established=Number(x.p.recent_form?.games)>=8;
-  return `${x.p.name} is ${established?'moving beyond a one-week curiosity':'worth an early breakout watch'} for ${t.team_name}. At age ${x.age}, the scoring has climbed from ${one(x.baseline)} per game across the prior sample to ${one(x.current)} over the last three, and this week’s ${x.opp.text} gives the jump actual opportunity behind it. ${established?'That is enough evidence to treat the improvement as a developing trend, not a finished verdict.':'The sample is still too short to call the new level permanent, but there is now something more substantial than one loud box score.'}`;
+  return `${x.p.name} is worth a breakout watch for ${t.team_name}. At age ${x.age}, the scoring has climbed from ${one(x.baseline)} per game across the prior sample to ${one(x.current)} over the last three, and this week’s ${x.opp.text} gives the jump actual opportunity behind it. The evidence is meaningful now, but the next few Sundays still decide whether the new level holds.`;
 }
 
 function consolidateTransactions(t){
@@ -117,8 +161,8 @@ function management(t,facts,reporter){
     ]));
     else if(dropStar&&Number(dropStar.points)>=10)bits.push(deskChoice(t,reporter,[
       [`${dropStar.name} answered the cut with ${one(dropStar.points)} points, enough to keep the decision in next week’s notebook.`,`${one(dropStar.points)} points from departed ${dropStar.name} ensures this cut gets a follow-up.`],
-      [`${dropStar.name} responded to the goodbye with ${one(dropStar.points)} points. Awkward; deliciously so.`,`The departed ${dropStar.name} posted ${one(dropStar.points)} points, which is how an exit earns a second column.`],
-      [`OF COURSE ${dropStar.name} SCORED ${one(dropStar.points)} AFTER THE CUT. See you next week.`,`${dropStar.name} left and immediately hung ${one(dropStar.points)} points on the board. The back page has not forgotten.`],
+      [`${dropStar.name} answered the move with ${one(dropStar.points)} points. That is enough to make ${t.manager_name} revisit the decision without pretending one Sunday settles it.`,`The departed ${dropStar.name} posted ${one(dropStar.points)} points, which is how an exit earns a second column.`],
+      [`OF COURSE ${dropStar.name} SCORED ${one(dropStar.points)} AFTER THE CUT. See you next week.`,`${dropStar.name} left and immediately hung ${one(dropStar.points)} points on the board. For ${t.team_name}, that turns the cut into a decision worth tracking instead of a transaction-line footnote.`],
       [`${dropStar.name} produced ${one(dropStar.points)} points after the cut. That decision remains under review.`,`The outgoing ${dropStar.name} answered with ${one(dropStar.points)} points; the file stays open.`]
     ]));
     return bits.join(' ');

@@ -42,10 +42,38 @@ function newsroomInsight(t,voice,seed){
       jeff:['The file ends here. I have questions, receipts and several grudges, but no further game to subpoena.']
     },
     lineup:{
-      nick:[team+' has one lineup complaint I will actually sign my name to: '+miss?.reserve?.name+' was a real, legal alternative to '+miss?.starter?.name+'. That is not Monday-morning fan fiction; that choice belongs on the manager’s desk until somebody makes a better one next week.'],
-      bart:[team+' has finally given me a lineup complaint dressed well enough for publication: '+miss?.reserve?.name+' could actually have occupied '+miss?.starter?.name+'’s seat. I am delighted to discover outrage can occasionally read the rulebook.'],
-      tilly:[team+' has earned one legitimate siren: '+miss?.reserve?.name+' could actually have started over '+miss?.starter?.name+'. No linebackers sneaking into running-back chairs, no imaginary substitutions, just a real decision we are absolutely going to yell about.'],
-      jeff:[team+' put one lineup decision through cross-examination and it survived: '+miss?.reserve?.name+' was eligible for the seat held by '+miss?.starter?.name+'. That makes it evidence, not hindsight cosplay.']
+      nick:[
+        team+' has one lineup complaint I will actually sign my name to: '+miss?.reserve?.name+' was a real, legal alternative to '+miss?.starter?.name+'. This was not Monday-morning fan fiction; the swap existed before kickoff, which makes the regret annoyingly legitimate.',
+        team+' left one honest second-guess on the table. '+miss?.reserve?.name+' could legally have sat in '+miss?.starter?.name+'’s chair, so this one gets written in ink instead of shouted into the void.',
+        'The old desk found a real lineup gripe for '+team+': '+miss?.reserve?.name+' was eligible where '+miss?.starter?.name+' started. I do not enjoy hindsight, but I respect it more when the rulebook confirms the alternative existed.',
+        team+' gave me exactly one bench complaint worth keeping. '+miss?.reserve?.name+' had a legal path into '+miss?.starter?.name+'’s spot, and that makes this a decision worth remembering rather than a fantasy-radio hallucination.',
+        'There is a fair question on '+team+'’s lineup card: '+miss?.reserve?.name+' could have replaced '+miss?.starter?.name+' without breaking a single roster rule. Put that clipping on the manager’s desk and leave it there until next Sunday.',
+        team+' cannot wave this one away as impossible hindsight. '+miss?.reserve?.name+' was genuinely eligible for '+miss?.starter?.name+'’s seat. I am not demanding a tribunal; I am demanding a better memory.'
+      ],
+      bart:[
+        team+' has finally given me a lineup complaint dressed well enough for publication: '+miss?.reserve?.name+' could actually have occupied '+miss?.starter?.name+'’s seat. How refreshing to discover outrage can occasionally arrive with documentation.',
+        'One critique of '+team+' survives etiquette class: '+miss?.reserve?.name+' was truly eligible for the chair occupied by '+miss?.starter?.name+'. At last, hindsight has bothered to wear proper shoes.',
+        team+' offered one second-guess that does not embarrass the person making it. '+miss?.reserve?.name+' could legally have replaced '+miss?.starter?.name+', which means this complaint may enter through the front door instead of climbing through a window.',
+        'The seating chart gives '+team+' one legitimate embarrassment: '+miss?.reserve?.name+' was allowed in '+miss?.starter?.name+'’s spot. I dislike lazy hindsight; fortunately this one brought credentials and an appointment.',
+        team+' made one lineup choice I am willing to discuss over the good china. '+miss?.reserve?.name+' was a lawful alternative to '+miss?.starter?.name+'. The complaint is real, tastefully presented and therefore much harder to dismiss.',
+        'A proper lineup grievance has emerged from '+team+'. '+miss?.reserve?.name+' could actually have taken '+miss?.starter?.name+'’s role. I had hoped to mock imaginary outrage; instead management has supplied the genuine article.'
+      ],
+      tilly:[
+        team+' has earned one legitimate siren: '+miss?.reserve?.name+' could actually have started over '+miss?.starter?.name+'. This is a real decision, not the usual fantasy-radio attempt to put a linebacker in a running-back chair.',
+        'Sound the tiny alarm for '+team+': '+miss?.reserve?.name+' was legally allowed in '+miss?.starter?.name+'’s spot. No imaginary cross-position nonsense required; management manufactured this headache all by itself.',
+        team+' finally gave the complaint desk jurisdiction. '+miss?.reserve?.name+' could truly have replaced '+miss?.starter?.name+'. The angry font loves a scandal even more when the roster rules sign the affidavit.',
+        'I checked before yelling, which is growth: '+miss?.reserve?.name+' was actually eligible over '+miss?.starter?.name+' for '+team+'. This is not an IDP sneaking into an RB chair; this is the real, printable kind of regret.',
+        team+' has a bench story the back page does not need to exaggerate. '+miss?.reserve?.name+' had a legal path into '+miss?.starter?.name+'’s seat. Wonderful. I can save my dishonesty budget for the headline.',
+        'The rulebook ruined none of my fun this time. '+miss?.reserve?.name+' really could have started over '+miss?.starter?.name+' for '+team+'. That means the siren is warranted, the complaint is admissible and subtlety is cancelled.'
+      ],
+      jeff:[
+        team+' put one lineup decision through cross-examination and it survived: '+miss?.reserve?.name+' was eligible for the seat held by '+miss?.starter?.name+'. The alternative existed before kickoff, which moves this from hindsight cosplay into the evidence file.',
+        'One '+team+' lineup question survived the eligibility audit. '+miss?.reserve?.name+' could legally replace '+miss?.starter?.name+'. That is the distinction between a real exhibit and a fan inventing a crime after seeing the score.',
+        team+' left a useful fingerprint on the lineup card: '+miss?.reserve?.name+' was an eligible alternative to '+miss?.starter?.name+'. The substitution clears the rulebook, so management gets a follow-up question instead of an acquittal.',
+        'The '+team+' paper trail contains one admissible second-guess. '+miss?.reserve?.name+' could have occupied '+miss?.starter?.name+'’s seat. I checked eligibility first because imaginary lineup crimes create terrible case law.',
+        team+' gave this desk a substitution worth subpoenaing: '+miss?.reserve?.name+' was legally available where '+miss?.starter?.name+' started. That is evidence, not a postgame fantasy about moving defenders into offensive chairs.',
+        'Cross-examination did not kill this '+team+' complaint. '+miss?.reserve?.name+' was truly eligible for '+miss?.starter?.name+'’s job. The rules confirm the option existed, so the decision stays in the file.'
+      ]
     },
     'rout-win':{
       nick:[team+' did not merely beat '+opp+'; it made the fourth quarter feel like paperwork. Those are the Sundays beat writers pretend to find boring because admitting joy feels dangerous.'],
@@ -155,10 +183,38 @@ function deskOneLiner(t,voice,seed){
   };
   const lead=pick(rows[voice],seed+7);
   const tails={
-    nick:[' I have learned to write it down before the next Sunday tries to revise the memory.',' That is the curse of caring about a team: even the jokes end up filed beside the serious notes.'],
-    bart:[' I reserve the right to turn this observation into a much grander complaint if circumstances continue to encourage me.',' One must preserve standards, even when the sport itself seems determined to behave like a neighborhood argument.'],
-    tilly:[' If this sounds excessive, excellent; moderation has never sold a back page or survived a league group chat.',' I will lower the emotional volume when the football gives me a reason, which is not the arrangement we have today.'],
-    jeff:[' The sentence is now in the file, timestamped and available for future embarrassment if management would like to prove me wrong.',' I prefer jokes with documentation; they age better when somebody insists later that none of this was foreseeable.']
+    nick:[
+      ' I have learned to write it down before the next Sunday tries to revise the memory.',
+      ' That is the curse of caring about a team: even the jokes end up filed beside the serious notes.',
+      ' Give me one clean Sunday and I become sentimental; give me one bad one and suddenly the notebook needs extra pages.',
+      ' Beat writers call this perspective. Fans call it remembering exactly who annoyed them.',
+      ' I will deny getting emotional if asked, but the coffee stains in the notebook may testify otherwise.',
+      ' Another week will arrive soon enough. Until then, this is the version of the story I am willing to defend.'
+    ],
+    bart:[
+      ' I reserve the right to turn this observation into a much grander complaint if circumstances continue to encourage me.',
+      ' One must preserve standards, even when the sport itself seems determined to behave like a neighborhood argument.',
+      ' I promised myself restraint this season and immediately discovered restraint has terrible entertainment value.',
+      ' The whole enterprise remains absurd, which is precisely why I insist on taking it personally.',
+      ' Please mistake my sarcasm for composure; the alternative is admitting how much this ridiculous team affects my evening.',
+      ' A columnist without strong feelings is merely a box score wearing cuff links, and I refuse the demotion.'
+    ],
+    tilly:[
+      ' If this sounds excessive, excellent; moderation has never sold a back page or survived a league group chat.',
+      ' I will lower the emotional volume when the football gives me a reason, which is not the arrangement we have today.',
+      ' This newspaper remains committed to balance, provided balance means one joke, one complaint and an irresponsible headline.',
+      ' Somebody has to care too much around here, and unfortunately I have press credentials.',
+      ' We can be reasonable in the offseason. During football season I have deadlines and grievances.',
+      ' The back page does not overreact; it simply reacts at a volume appropriate for people in the cheap seats.'
+    ],
+    jeff:[
+      ' The sentence is now in the file, timestamped and available for future embarrassment if management would like to prove me wrong.',
+      ' I prefer jokes with documentation; they age better when somebody insists later that none of this was foreseeable.',
+      ' Every opinion becomes more entertaining once somebody swears the evidence never existed.',
+      ' I keep receipts because memory is the first witness to become unreliable after a winning streak.',
+      ' The file cabinet is undefeated, mostly because it never forgets what everyone said on Monday.',
+      ' Suspicion is simply fandom with better recordkeeping and worse coffee.'
+    ]
   };
   return lead+pick(tails[voice],seed+11);
 }

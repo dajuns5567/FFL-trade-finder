@@ -132,7 +132,7 @@ export function narrativeHeadline(t,w,r){
       `The Lineup Card Has Questions After ${poss(team)} Loss`,
       `A Paper Trail Nobody at ${team} Should Enjoy Reading`,
       `The Inquiry Begins With What ${team} Left on the Table`,
-      `${opp} Wins the Argument; the Exhibits Belong to ${team}`,
+      `The Argument Goes to ${opp}; the Exhibits Belong to ${team}`,
       `A Loss for ${team}, So the File Stays Open`,
       `Fingerprints All Over ${poss(team)} Bad Sunday`
     ]

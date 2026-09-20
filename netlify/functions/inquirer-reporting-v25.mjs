@@ -466,13 +466,13 @@ function gameImportance(g){
 function divisionPressure(t,result){
   const rivals=t.division_results||[],winners=rivals.filter(x=>Number(x.points)>Number(x.opponent_points)).map(x=>x.team_name),losers=rivals.filter(x=>Number(x.points)<Number(x.opponent_points)).map(x=>x.team_name);
   if(result==='W'){
-    if(losers.length&&winners.length)return t.team_name+' gained ground on '+losers.join(', ')+' but got no breathing room from '+winners.join(', ')+'.';
-    if(losers.length)return t.team_name+' also got help from '+losers.join(', ')+' losing elsewhere in the division.';
-    if(winners.length)return winners.join(', ')+' won too, so '+t.team_name+' kept pace rather than creating separation.';
+    if(losers.length&&winners.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' gained ground on '+losers.join(', ')+' but got no breathing room from '+winners.join(', ')+'.';
+    if(losers.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' also got help from '+losers.join(', ')+' losing elsewhere.';
+    if(winners.length)return 'In '+(t.division_name||'the division')+', '+winners.join(', ')+' won too, so '+t.team_name+' kept pace rather than creating separation.';
   }else{
-    if(winners.length&&losers.length)return winners.join(', ')+' won while '+losers.join(', ')+' lost, so the damage around '+t.division_name+' was mixed rather than clean.';
-    if(winners.length)return winners.join(', ')+' won elsewhere, which makes this loss cost '+t.team_name+' a little more ground.';
-    if(losers.length)return losers.join(', ')+' also lost, limiting the divisional damage without making this result any prettier.';
+    if(winners.length&&losers.length)return 'In '+(t.division_name||'the division')+', '+winners.join(', ')+' won while '+losers.join(', ')+' lost, so the damage was mixed rather than clean.';
+    if(winners.length)return 'In '+(t.division_name||'the division')+', '+winners.join(', ')+' won elsewhere, which makes this loss cost '+t.team_name+' a little more ground.';
+    if(losers.length)return 'In '+(t.division_name||'the division')+', '+losers.join(', ')+' also lost, limiting the damage without making this result any prettier.';
   }
   return null;
 }
@@ -497,7 +497,21 @@ function gameStory(g,slot=0){
       g.winner.team_name+' turned a projected disadvantage into a '+one(g.winner.points)+'–'+one(g.loser.points)+' win over '+g.loser.team_name+'. ',
       'The quieter upset on the board belongs to '+g.winner.team_name+', '+one(g.winner.points)+'–'+one(g.loser.points)+' over '+g.loser.team_name+'. '
     ][slot%5];
-    return open+(star?star.name+' led the winning side with '+one(star.points)+' points. ':'')+(winnerSupport?winnerSupport.name+' gave the result enough support to keep it from becoming a one-player heist. ':'')+(loserStar?loserStar.name+' answered with '+one(loserStar.points)+' for '+g.loser.team_name+'. ':'')+(loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+' is the name that will bother the losing side after finishing at '+one(loserMiss.points)+'. ':'')+(slot===0?'That is the sort of Week 1 result that changes the tone before the standings have had time to settle.':'The favorite now has to prove the forecast was more right about the season than it was about Sunday.');
+    const supportLine=winnerSupport?[
+      winnerSupport.name+' gave the result enough support to keep it from becoming a one-player heist. ',
+      winnerSupport.name+' made sure the upset belonged to a lineup instead of one isolated eruption. ',
+      winnerSupport.name+' supplied the kind of second performance favorites hate seeing in an upset. ',
+      winnerSupport.name+' kept the winner from asking one star to do every bit of the stealing. ',
+      winnerSupport.name+' gave the result another sturdy leg to stand on. '
+    ][slot%5]:'';
+    const close=[
+      'That is the sort of Week 1 result that changes the tone before the standings have had time to settle.',
+      'The favorite leaves with a bruise and a simple assignment: make the projection look wiser over the next month than it did on Sunday.',
+      'The upset matters because it was earned from more than one place, which gives the winner something more useful than a lucky headline.',
+      'Now the winner gets to prove this was the beginning of an identity rather than one excellent afternoon.',
+      'The loser gets a reminder, the winner gets a little belief, and the rest of the league gets one more reason to stop penciling in results before kickoff.'
+    ][slot%5];
+    return open+(star?star.name+' led the winning side with '+one(star.points)+' points. ':'')+supportLine+(loserStar?loserStar.name+' answered with '+one(loserStar.points)+' for '+g.loser.team_name+'. ':'')+(loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+' is the name that will bother the losing side after finishing at '+one(loserMiss.points)+'. ':'')+close;
   }
   if(g.margin<=6){
     const open=[

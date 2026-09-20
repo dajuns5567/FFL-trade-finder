@@ -28,7 +28,7 @@ const requiredKinds=['lede','players','management','value','sentiment','outlook'
 const voiceAnchors={
   'walter-mercer':['press box','notebook','clipping','old desk','complaint','parking','cynic'],
   'tess-delaney':['civilized','good china','theatrical','elegant','taste','sigh','waistcoat','salons','vulgar'],
-  'mack-hollis':['back page','parade','group chat','angry font','giant photo','classifieds','confetti','presses'],
+  'mack-hollis':['back page','parade','group chat','angry font','giant photo','classifieds','confetti','presses','responsible journalism','heroes','villains','complaint box','front page','scream','yell'],
   'nora-voss':['evidence','file','witness','paper trail','inquiry','fingerprints','docket','cross-examination']
 };
 const humorPattern=/\b(?:parade|confetti|group chat|angry font|classifieds|parking|complaint|aspirin|good china|theatrical|waistcoat|salons|rental shoes|hotel lobby art|fingerprints|witness|paperwork|docket|restraining order|TED Talk|legal department|burn it|coffee|snacks|civilized|vulgar)\b/i;

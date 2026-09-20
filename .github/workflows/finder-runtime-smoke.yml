@@ -59,6 +59,7 @@ on:
       - 'netlify/functions/inquirer-reporters.mjs'
       - 'netlify/functions/inquirer-narrative-v17.mjs'
       - 'netlify/functions/inquirer-human-v19.mjs'
+      - 'netlify/functions/inquirer-human-v20.mjs'
       - 'netlify/functions/inquirer-overview-v19.mjs'
       - 'netlify/functions/inquirer-week1-2026-preload.mjs'
       - 'scripts/inquirer-reporters-smoke.mjs'
@@ -150,13 +151,14 @@ jobs:
           node --check netlify/functions/value-history-observability.mjs
           node --check scripts/resolve-active-netlify-site.mjs
           node --check scripts/value-history-headless-refresh.mjs
-      - name: Fleeced Inquirer V19 newsroom, lineup legality, archives, and writing quality
+      - name: Fleeced Inquirer V20 newsroom, lineup legality, archives, and writing quality
         run: |
           node --check league-hub-v451.js
           node --check netlify/functions/league-hub.mjs
           node --check netlify/functions/inquirer-reporters.mjs
           node --check netlify/functions/inquirer-narrative-v17.mjs
           node --check netlify/functions/inquirer-human-v19.mjs
+          node --check netlify/functions/inquirer-human-v20.mjs
           node --check netlify/functions/inquirer-overview-v19.mjs
           node --check scripts/inquirer-prose-quality-audit.mjs
           node --check scripts/inquirer-overview-quality-audit.mjs

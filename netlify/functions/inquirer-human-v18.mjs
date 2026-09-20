@@ -124,10 +124,10 @@ export function humanSections({team:t,week:w,reporter:r,facts,sentiment}){
 
   return [
     {heading:'The Week’s Evidence',kind:'lede',paragraphs:[t.team_name+' '+(won?'won':'lost')+' '+g.score+' against '+opp+'.'+projection+' The file opens with the result, not an excuse.',season+' If this becomes a pattern, we will have a case. For now, we have one more page and a few names worth circling.']},
-    {heading:'Witnesses for the Record',kind:'players',paragraphs:[star+trend+' '+second,low+' One bad line is not a conviction. Repeated bad lines in the same spot are when the paperwork gets interesting.']},
-    {heading:'Front Office Paper Trail',kind:'management',paragraphs:[mgmt,benchStory+' The lineup card is already in evidence, and the next one will be compared against it.']},
-    {heading:'Value History Exhibit',kind:'value',paragraphs:[value,'It belongs in the file because perception changes before standings sometimes do. It does not get to overrule the football.']},
-    {heading:'Public Sentiment File',kind:'sentiment',paragraphs:[fans,'The crowd is emotional evidence, but it is still evidence. Reputation is built over weeks, trades, and lineup decisions, not one Sunday argument.']},
-    {heading:'Open Questions for Next Week',kind:'outlook',paragraphs:[personnel,next+' Management gets another chance to make this week’s evidence less interesting.']},
+    {heading:'Witnesses for the Record',kind:'players',paragraphs:[star+trend+' '+second,low+' One bad line is not a conviction. Repeated bad lines in the same spot are when the paperwork gets interesting. The witness gets another Sunday before this desk starts using the word “pattern.”']},
+    {heading:'Front Office Paper Trail',kind:'management',paragraphs:[mgmt,benchStory+' The lineup card is already in evidence, and the next one will be compared against it. Managers rarely confess to a bad process; they simply hand you the same exhibit twice.']},
+    {heading:'Value History Exhibit',kind:'value',paragraphs:[value,'It belongs in the file because perception changes before standings sometimes do. It does not get to overrule the football. If the market keeps telling the same story for another week, then it earns a longer interview.']},
+    {heading:'Public Sentiment File',kind:'sentiment',paragraphs:[fans,'The crowd is emotional evidence, but it is still evidence. Reputation is built over weeks, trades, and lineup decisions, not one Sunday argument. A manager with a long file cannot rewrite it with one convenient result.']},
+    {heading:'Open Questions for Next Week',kind:'outlook',paragraphs:[personnel,next+' Management gets another chance to make this week’s evidence less interesting. The best answer to an open file is usually a boring lineup that simply works.']},
   ];
 }

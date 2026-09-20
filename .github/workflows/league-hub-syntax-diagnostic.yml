@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Parse League Hub and Inquirer V25
+      - name: Parse League Hub and Inquirer V26
         run: |
           node --check league-hub-v451.js
           node --check netlify/functions/inquirer-reporting-v25.mjs
@@ -18,15 +18,16 @@ jobs:
           node --check netlify/functions/inquirer-reporters.mjs
           node scripts/site-runtime-syntax-audit.mjs
           node scripts/inquirer-v25-audit.mjs
-      - name: Generate real Week 1 V25 edition
+      - name: Generate real Week 1 V26 edition
         run: |
           node scripts/one-time-generate-inquirer-week1.mjs
           node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer.json
+          node scripts/inquirer-overview-quality-audit.mjs /tmp/week1-inquirer.json
           node scripts/pack-inquirer-preload.mjs /tmp/week1-inquirer.json /tmp/inquirer-week1-2026-preload.mjs
-      - name: Upload generated V25 edition
+      - name: Upload generated V26 edition
         uses: actions/upload-artifact@v4
         with:
-          name: inquirer-v25-week1
+          name: inquirer-v26-week1
           path: |
             /tmp/week1-inquirer.json
             /tmp/inquirer-week1-2026-preload.mjs

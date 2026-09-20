@@ -217,9 +217,13 @@ function buildSections(t,w,r,facts,sentiment){
       `${tx} Transaction volume is not intelligence by itself, but it does tell us where management believed the roster needed attention. The next useful question is whether those moves addressed the positions that actually decided this matchup.`,
       g.bench&&g.worst&&g.benchGap>=5?`${bench} That matters because ${g.worst.name} was in the starting lineup instead. ${low} Hindsight is cheap, so one missed decision is not a conviction, but repeated versions of the same mistake eventually become process.`:`There is no single bench decision large enough to explain the result by itself. That is worth saying because managers deserve blame for process, not for failing to predict every bounce of a football.`
     ]},
+    {heading:'Value Watch',kind:'value',paragraphs:[
+      `${value} This is a market story, not a standings story, and the difference matters. Value movement belongs in the notebook because it can show perception changing before the record catches up.`,
+      `The useful comparison is never “value equals truth.” It is whether the market’s direction agrees with what we are seeing in usage, production and roster construction. When those disagree, that tension is part of the story rather than something to smooth over.`
+    ]},
     {heading:'The Mood Around Town',kind:'sentiment',paragraphs:[
       `${fans} The useful thing about a fan base is that it remembers. One bad week does not erase a championship résumé, and one good week does not grant lifetime immunity to a manager who has spent a month lighting matches near the depth chart.`,
-      `${value} Put together, public mood and market movement tell two different stories: one is emotional memory, the other is changing roster perception. Neither belongs in the standings, but both belong in a real beat column.`
+      `That memory is why the crowd can be happy after an imperfect win or merely irritated after one ugly loss by a proven manager. The temperature changes, but reputation should move more slowly than a scoreboard.`
     ]},
     {heading:'What Comes Next',kind:'outlook',paragraphs:[
       `${personnel} Availability is where roster construction stops being theoretical. A manager who built depth gets to use it; a manager who did not gets to discover that fact in public.`,
@@ -240,9 +244,13 @@ function buildSections(t,w,r,facts,sentiment){
       `${tx} I am less interested in whether a move looked clever on Tuesday than whether it attacked an actual weakness. Waiver activity is only strategy when it changes the set of decisions available on Sunday.`,
       g.bench&&g.worst&&g.benchGap>=5?`${bench} It is fair to compare that with the starter who occupied the weaker slot: ${low} The gap is notable, but hindsight does not automatically make the original choice irrational. If the same selection pattern repeats with the same evidence, then we have a process problem.`:`The bench did not contain a single obvious answer that would have rewritten the matchup. That is inconvenient for anyone looking for one manager decision to blame, but it is better analysis than manufacturing a culprit.`
     ]},
+    {heading:'Value Watch',kind:'value',paragraphs:[
+      `${value} Market value is not truth, but it is a useful second opinion. When results, player usage and roster value all move in the same direction, the signal gets harder to dismiss.`,
+      `I care less about a single value change than about whether the move is consistent with usage and production. If the market runs ahead of the football evidence, that is hype; if the football evidence runs ahead of the market, that is where an interesting buying argument starts.`
+    ]},
     {heading:'Market, Memory and the Crowd',kind:'sentiment',paragraphs:[
       `${fans} That is why this section carries forward from week to week. Reputation should behave like a moving average, not a panic button; good managers earn a buffer, and prolonged bad process eventually burns through it.`,
-      `${value} Market value is not truth, but it is a useful second opinion. When results, player usage and roster value all move in the same direction, the signal gets harder to dismiss.`
+      `Fan confidence is a slower variable than Sunday scoring. A good manager earns room for a bad week, while a long run of bad choices eventually makes even a lucky win feel temporary.`
     ]},
     {heading:'Next Week’s Test',kind:'outlook',paragraphs:[
       `${personnel} Bye weeks and injury designations are constraints, not excuses. They change the available decision tree, which is exactly why depth should be evaluated before kickoff instead of after a zero appears in the lineup.`,
@@ -263,9 +271,13 @@ function buildSections(t,w,r,facts,sentiment){
       `${tx} I support aggressive management right up until the exact moment it becomes random button pressing, so the standard here is simple: did the moves make the roster better at the places that mattered?`,
       g.bench&&g.worst&&g.benchGap>=5?`${bench} Meanwhile, the starting lineup carried ${g.worst.name} instead. ${low} That is the kind of hindsight gap that gets a caller on sports radio to say “I knew it all week” despite there being no witnesses.`:`There was no bench-versus-starter catastrophe large enough to put on a sandwich board outside the front office. Management may enjoy this temporary amnesty. It expires at the next lineup lock.`
     ]},
+    {heading:'Value Watch, Presented With Unnecessary Drama',kind:'value',paragraphs:[
+      `${value} If the market eventually agrees with the crowd, terrific. If it does not, we get several more weeks of arguments, which is excellent for circulation and terrible for everyone's blood pressure.`,
+      `A value chart is basically sports radio with decimals: useful, emotional and occasionally convinced it has solved the future. We will use it as evidence and still reserve the right to laugh at it when the actual football refuses to cooperate.`
+    ]},
     {heading:'What the Fans Are Yelling',kind:'sentiment',paragraphs:[
       `${fans} The important word there is “running.” Fans are allowed to be ridiculous; the newspaper is supposed to remember whether the manager has actually earned love, suspicion or a ceremonial banishment from city brunch.`,
-      `${value} If the market eventually agrees with the crowd, terrific. If it does not, we get several more weeks of arguments, which is excellent for circulation and terrible for everyone's blood pressure.`
+      `The crowd is not required to be fair every Sunday. This newspaper is required to remember why it was cheering or booing before Sunday arrived, which is how a reputation survives one weird box score.`
     ]},
     {heading:'Tomorrow’s Problem',kind:'outlook',paragraphs:[
       `${personnel} This is where jokes about depth charts stop being jokes. If a starter is unavailable, somebody else has to become a real person in the lineup, preferably before Sunday afternoon.`,
@@ -286,9 +298,13 @@ function buildSections(t,w,r,facts,sentiment){
       `${tx} Transactions are useful because they show what management believed before the result arrived. That makes them better evidence than a Monday explanation delivered after everyone has seen the score.`,
       g.bench&&g.worst&&g.benchGap>=5?`${bench} The lineup card instead carried ${g.worst.name}. ${low} I am not indicting anyone over one hindsight gap, but the discrepancy is now in the file and will be compared with the next decision of the same kind.`:`There is no obvious bench mistake large enough to support a clean negligence theory this week. That may disappoint the prosecution, but accuracy outranks entertainment even in this building.`
     ]},
+    {heading:'Value History Exhibit',kind:'value',paragraphs:[
+      `${value} That market movement belongs in a separate folder from wins and losses. It can corroborate a roster trend or contradict the mood, but it does not get to masquerade as a result.`,
+      `The question for the file is whether value movement supports the football evidence or merely reflects a market theory that has not reached the field yet. Either answer is useful, provided nobody confuses it with a verdict.`
+    ]},
     {heading:'Public Sentiment File',kind:'sentiment',paragraphs:[
       `${fans} The crowd is emotional evidence, not objective evidence, but it is still part of the story. A manager’s reputation is built from a chain of weeks, trades and roster decisions, which is why one verdict does not overturn the whole record.`,
-      `${value} That market movement belongs in a separate folder from wins and losses. It can corroborate a roster trend or contradict the mood, but it does not get to masquerade as a result.`
+      `Public opinion belongs in the file because it has memory. The same loss means something different for a manager with years of winning than it does for one whose last month already had the crowd measuring the city limits.`
     ]},
     {heading:'Open Questions for Next Week',kind:'outlook',paragraphs:[
       `${personnel} Roster pressure is where prior decisions become visible. Depth that looked excessive in August becomes useful the moment a bye or injury designation removes a starter from the board.`,

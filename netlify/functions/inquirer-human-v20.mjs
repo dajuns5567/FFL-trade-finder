@@ -78,7 +78,7 @@ function newsroomInsight(t,voice,seed){
       jeff:['The streak has survived long enough to become admissible. '+team+' keeps producing the same result, and even this desk eventually has to stop calling that coincidence.']
     },
     spiral:{
-      nick:[The next time somebody tells me one loss does not matter, I am going to hand them this streak and a stapler. '+team+' needs a normal Sunday before frustration becomes the team identity.'],
+      nick:['The next time somebody tells me one loss does not matter, I am going to hand them this streak and a stapler. '+team+' needs a normal Sunday before frustration becomes the team identity.'],
       bart:['A losing streak is repetition without the courtesy of becoming interesting. '+team+' has now offended both the standings and my sense of narrative pacing.'],
       tilly:[team+' keeps losing and the angry font is beginning to think it works here full time. Somebody win a game before it asks for benefits.'],
       jeff:['One loss is an incident. A streak is a pattern, and patterns are how folders become investigations. '+team+' has graduated to the thicker file.']

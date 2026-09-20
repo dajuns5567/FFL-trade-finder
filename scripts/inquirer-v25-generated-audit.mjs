@@ -57,6 +57,17 @@ for(const t of d.teams||[]){
   if(top?.real_stat_line)assert.ok(playerCopy.includes(String(top.real_stat_line).split(' • ')[0]),'Player section must preserve commentary around the leading player real-life stat line for '+t.team_name);
 }
 for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=2,'Reporter '+rid+' must have more than one article structure across eight team stories');
+const repeatedLong=new Map();
+for(const t of d.teams||[]){
+  const body=articleText(t);
+  for(const sentence of body.split(/(?<=[.!?])\s+/)){
+    const key=String(sentence||'').trim();
+    if(words(key)<8)continue;
+    repeatedLong.set(key,(repeatedLong.get(key)||0)+1);
+  }
+}
+const repeatedLongOffenders=[...repeatedLong].filter(([,count])=>count>2);
+assert.deepEqual(repeatedLongOffenders,[],'Generated team articles must not repeat any long sentence across more than two placements');
 const avgTeamWords=teamWords.reduce((n,x)=>n+x,0)/Math.max(1,teamWords.length);
 assert.ok(Math.min(...teamWords)>=400,'Every team column must preserve substantial commentary; shortest='+Math.min(...teamWords));
 assert.ok(avgTeamWords>=500,'Team columns must average at least 500 words of reporting/commentary; average='+avgTeamWords.toFixed(1));

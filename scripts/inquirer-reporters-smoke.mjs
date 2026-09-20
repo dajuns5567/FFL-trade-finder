@@ -209,6 +209,7 @@ assert(ui.includes('.lh-reporter-byline{margin:8px 0 12px;padding:2px 0;border:0
 assert(ui.includes('scrollToInquirerArticle')&&ui.includes('showWeeklyArticle(weeklyCache,true)'),'Selecting an Inquirer article must scroll the reader to the top of that article');
 assert(ui.includes("const preserveY=view==='daily'&&previousView==='daily'?window.scrollY:null")&&ui.includes("window.scrollTo({top:preserveY,behavior:'auto'})"),'Reporter desk rerenders must preserve the reader’s scroll position');
 assert(ui.includes('data-lh-reporter-close'),'Reporter Desks must provide an explicit Close control');
+assert(ui.includes("String(p).trim().toLowerCase()!=='n/a'"),'League Hub must suppress empty/n-a article sections instead of rendering their headings');
 assert(ui.includes('Weekly Recap • All 4 Reporters')&&ui.includes('const recapLink=w.league_overview?')&&ui.includes('data-lh-broadcast-team="__league__"'),'Weekly Recap must remain the user-facing league article with an always-visible headline link that opens the recap');
 assert(!ui.includes('League Notebook'),'League Notebook must not regress into user-facing League Hub copy after the Weekly Recap rename');
 assert(ui.includes('data-lh-archive-year')&&ui.includes('data-lh-archive-week')&&ui.includes('data-lh-archive-team')&&ui.includes('data-lh-reporter-article-season'),'Article Archive must retain Year/Week/Team filters and clickable reporter-story archive controls');

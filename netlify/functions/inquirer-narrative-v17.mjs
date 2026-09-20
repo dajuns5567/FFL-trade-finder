@@ -144,7 +144,7 @@ export function narrativeHeadline(t,w,r){
 function seasonNarrative(t,w){
   const c=t.league_context||{},st=c.streak||{},rank=Number(c.standings_rank),size=Number(c.league_size)||32,rec=c.record||{};
   const record=String(rec.wins||0)+'-'+String(rec.losses||0)+(Number(rec.ties)?'-'+String(rec.ties):'');
-  if(Number(w)===1)return `One result is not a trend, and the opening table is mostly a collection of very small sample sizes. ${t.team_name} leaves Week 1 at ${record}${rank?' and sits '+rank+'th of '+size:''}. That is useful context, not permission to start engraving trophies or tombstones.`;
+  if(Number(w)===1)return `${t.team_name} has exactly one completed result in the book, so the opening table is still mostly a collection of tiny samples. The club leaves Week 1 at ${record}${rank?' and sits '+rank+'th of '+size:''}. That is useful context, not permission to start engraving trophies or tombstones.`;
   const streak=Number(st.length)>=2?` The ${st.type==='W'?'winning':'losing'} streak has reached ${st.length}.`:'';
   const recent=Number(c.recent_avg_points),prior=Number(c.prior_five_avg_points);
   const form=Number.isFinite(recent)&&Number.isFinite(prior)&&Math.abs(recent-prior)>=8?` The last-five scoring pace is ${one(recent)}, ${one(Math.abs(recent-prior))} ${recent>prior?'higher':'lower'} than the five before it.`:'';
@@ -169,22 +169,22 @@ function transactionNarrative(t,facts){
 
 function valueNarrative(t){
   const v=t.value_history_week;
-  if(!v||!Number.isFinite(Number(v.delta)))return `The Value Watch is deliberately quiet this week. There is not yet a valid pair of team-value observations to support a real movement claim, so the market section will wait rather than decorate an empty sample with fake precision.`;
+  if(!v||!Number.isFinite(Number(v.delta)))return `${t.team_name}'s Value Watch is deliberately quiet this week. There is not yet a valid pair of team-value observations to support a real movement claim, so the market section will wait rather than decorate an empty sample with fake precision.`;
   const d=Number(v.delta),period=v.period==='7D'?'seven days':'the available tracking window';
-  return `The market has moved this roster ${d>=0?'up':'down'} by ${Math.abs(d).toLocaleString()} value points over ${period}, from ${Number(v.baseline_value||0).toLocaleString()} to ${Number(v.value||0).toLocaleString()}. That is not a win or a loss, but it is useful evidence about how the league’s valuation picture is changing around the results.`;
+  return `${t.team_name}'s market value moved ${d>=0?'up':'down'} by ${Math.abs(d).toLocaleString()} points over ${period}, from ${Number(v.baseline_value||0).toLocaleString()} to ${Number(v.value||0).toLocaleString()}. That is not a win or a loss, but it is useful evidence about how the league’s valuation picture is changing around the results.`;
 }
 
-function sentimentNarrative(s){
+function sentimentNarrative(t,s){
   const delta=s.change==null?'':` Compared with last week, the mood is ${s.change>=0?'warmer':'colder'} without pretending one Sunday erased everything that came before.`;
-  return `${s.scene} That reaction is being carried by the manager’s recent results, roster-value direction, transaction history and longer résumé rather than this week alone.${delta}`;
+  return `${t.team_name}'s fan base currently lands in “${s.title}” territory. ${s.scene} That reaction is being carried by the manager’s recent results, roster-value direction, transaction history and longer résumé rather than this week alone.${delta}`;
 }
 
 function personnelNarrative(t,w){
   const a=t.next_week_availability||{};
   if(a.fantasy_season_complete||Number(w)>=17)return `There is no Week 18 fantasy matchup to preview. The Super Bowl closes the Fleeced! in-season calendar, so the roster-pressure file ends here.`;
   const byes=a.bye_current_starters||[],inj=a.injury_current_starters||[];
-  if(!a.schedule_verified&&!inj.length)return `The next-week availability file is too thin to support a confident roster warning. The NFL schedule was not verified and Sleeper has no current-starter injury designation worth publishing, so there is nothing responsible to dramatize yet.`;
-  let s=a.schedule_verified?(byes.length?`${byes.length} current starter${byes.length===1?' is':'s are'} on a verified NFL bye next week.`:`There are no verified current-starter byes next week.`):`Bye claims are being withheld because the schedule lookup was not verified.`;
+  if(!a.schedule_verified&&!inj.length)return `${t.team_name}'s next-week availability file is too thin to support a confident roster warning. The NFL schedule was not verified and Sleeper has no current-starter injury designation worth publishing, so there is nothing responsible to dramatize yet.`;
+  let s=a.schedule_verified?(byes.length?`${t.team_name} has ${byes.length} current starter${byes.length===1?'':'s'} on a verified NFL bye next week.`:`${t.team_name} has no verified current-starter byes next week.`):`${t.team_name}'s bye claims are being withheld because the schedule lookup was not verified.`;
   if(inj.length)s+=` Sleeper also has ${inj.length} current starter${inj.length===1?'':'s'} carrying an injury or status designation, which makes depth a real roster question before lineups lock.`;
   else s+=` Sleeper does not currently show a publishable injury designation on a starter.`;
   return s;
@@ -200,7 +200,7 @@ function nextOpponentNarrative(t,w){
 
 function buildSections(t,w,r,facts,sentiment){
   const g=gameFacts(t),star=playerProse(g.top),second=playerProse(g.second),low=playerProse(g.low),bench=playerProse(g.bench);
-  const season=seasonNarrative(t,w),tx=transactionNarrative(t,facts),value=valueNarrative(t),fans=sentimentNarrative(sentiment),personnel=personnelNarrative(t,w),next=nextOpponentNarrative(t,w),trend=trendProse(g.top);
+  const season=seasonNarrative(t,w),tx=transactionNarrative(t,facts),value=valueNarrative(t),fans=sentimentNarrative(t,sentiment),personnel=personnelNarrative(t,w),next=nextOpponentNarrative(t,w),trend=trendProse(g.top);
   const won=!!t.won,margin=g.margin.toFixed(1),opp=t.opponent_name||'the opponent';
   const proj=g.projDelta==null?'':` Against the pregame projection, the lineup finished ${Math.abs(g.projDelta).toFixed(1)} points ${g.projDelta>=0?'above':'below'} expectation.`;
 

@@ -11,9 +11,9 @@ const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
 const MANAGER_CACHE_VERSION=6;
 const BROADCAST_VERSION=15;
 const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026]]);
-const preloadedBroadcast=(season,week)=>PRELOADED_BROADCASTS.get(String(Number(season))+'|'+String(Number(week)))||null;
+const preloadedBroadcast=(season,week)=>{const p=PRELOADED_BROADCASTS.get(String(Number(season))+'|'+String(Number(week)))||null;return p&&Number(p.inquirer_version||0)>=INQUIRER_VERSION?p:null};
 function preloadedReporterEntries(reporterId){
- const p=week1Preload2026,rows=[];
+ const p=week1Preload2026,rows=[];if(Number(p?.inquirer_version||0)<INQUIRER_VERSION)return rows;
  for(const team of p?.teams||[]){
   const article=team?.inquirer_article;if(article?.reporter?.id!==reporterId)continue;
   rows.push({season:Number(p.season),week:Number(p.week),roster_id:String(team.roster_id),team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),headline:String(article.headline||''),byline:String(article.byline||''),captured_at:String(p.generated_at||''),broadcast_key:'preloaded:2026:1',article_key:'preloaded:2026:1:'+String(team.roster_id),inquirer_version:Number(p.inquirer_version)||INQUIRER_VERSION,preloaded:true});
@@ -229,7 +229,7 @@ async function weeklyReport(req){
   const priorByRoster=new Map(prior.teams.map(t=>[String(t.roster_id),t]));
   result.teams=result.teams.map(t=>{const p=priorByRoster.get(String(t.roster_id));return p?.inquirer_article?{...t,inquirer_article:p.inquirer_article,reporter_id:p.reporter_id||p.inquirer_article?.reporter?.id||t.reporter_id}:t});
  }
- await s.setJSON(key,result);await syncReporterArchives(s,result,key);if(result.league_overview){const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json',storedOverview=await s.get(overviewKey,{type:'json'}).catch(()=>null);if(!storedOverview?.headline||Number(storedOverview?.inquirer_version||0)<INQUIRER_VERSION)await s.setJSON(overviewKey,{...result.league_overview,captured_at:result.generated_at,migration_reason:storedOverview?.headline?'explicit V24 sports reporting rewrite':null})}
+ await s.setJSON(key,result);await syncReporterArchives(s,result,key);if(result.league_overview){const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json',storedOverview=await s.get(overviewKey,{type:'json'}).catch(()=>null);if(!storedOverview?.headline||Number(storedOverview?.inquirer_version||0)<INQUIRER_VERSION)await s.setJSON(overviewKey,{...result.league_overview,captured_at:result.generated_at,migration_reason:storedOverview?.headline?'explicit V25 editorial sports reporting rewrite':null})}
  const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),list=Array.isArray(idx)?idx:[];if(!list.some(x=>x.season===season&&x.week===week)){list.push({type:'week',season,week,key,captured_at:result.generated_at});list.sort((a,b)=>a.season-b.season||a.week-b.week);await s.setJSON('broadcasts/index.json',list)}return result;
 }
 async function broadcastArchive(){

@@ -196,5 +196,9 @@ assert(backend.includes("if(s==='FLEX')return ['RB','WR','TE'].includes(p)")&&ba
 assert(helper.includes('best_lineup_miss')&&human.includes('best_lineup_miss')&&newsroom.includes('best_lineup_miss'),'V20 writer must consume only the position-eligible lineup miss for management criticism');
 assert(ui.includes('data-lh-archive-year')&&ui.includes('data-lh-archive-week')&&ui.includes('data-lh-archive-team'),'Inquirer archive must expose year, week, and team filters');
 assert(ui.includes('It opens on the current completed week'),'Inquirer archive must default its filter view to the current completed week');
+assert(ui.includes('linkedNotebookText')&&ui.includes('class="lh-inline-team" data-lh-broadcast-team'),'League Notebook team references must open the matching team article');
+assert(ui.includes('data-lh-broadcast-article')&&ui.indexOf("nav+body+archive")>=0,'The clean team/manager article selector must render above the selected article');
+assert(ui.includes('scrollToInquirerArticle')&&ui.includes('showWeeklyArticle(weeklyCache,true)'),'Selecting an Inquirer article must scroll the reader to the top of that article');
+assert(ui.includes('data-lh-reporter-close'),'Reporter Desks must provide an explicit Close control');
 assert(!ui.includes("esc(r?.voice||'')"),'Published archive UI must never print internal reporter voice prompts');
 console.log('Fleeced Inquirer four-reporter rotation, real-stat, persistence, and archive smoke passed');

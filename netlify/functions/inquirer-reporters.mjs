@@ -3,7 +3,7 @@
 import {buildNarrativeArticle} from './inquirer-narrative-v17.mjs';
 import {buildHumanLeagueOverviewV19} from './inquirer-overview-v19.mjs';
 
-export const INQUIRER_VERSION=25;
+export const INQUIRER_VERSION=26;
 export const INQUIRER_PLAYOFF_START_WEEK=14;
 export const INQUIRER_FINAL_WEEK=17;
 export function inquirerWeekClassification(week,season,conference=''){

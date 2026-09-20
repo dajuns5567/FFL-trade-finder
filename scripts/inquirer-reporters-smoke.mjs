@@ -159,7 +159,7 @@ assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub mu
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
 assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
-assert(backend.includes("explicit V24 sports reporting rewrite"),'Older Inquirer articles must explicitly migrate once to the V21 impact-and-depth schema');
+assert(backend.includes("explicit V26 expanded editorial reporting rewrite"),'Older Inquirer articles must explicitly migrate once to the active expanded editorial schema');
 assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');
 assert(backend.includes("Number(stored?.inquirer_version||0)<INQUIRER_VERSION"),'Only older-version archived reporter articles may be migrated; current-version articles stay preserved');
 assert(backend.includes('leagueSeasonContext('),'Inquirer backend must derive season standings/streak context from completed Sleeper matchups');
@@ -206,4 +206,4 @@ assert(ui.includes('data-lh-reporter-close'),'Reporter Desks must provide an exp
 assert(backend.includes('nextProj')&&overviewWriter.includes('underdog_projected')&&overviewWriter.includes('favorite_projected'),'Upset picks must be backed by next-week projections and preserve both projected scores');
 assert(week1Preload.teams.every(t=>['hot-seat','cool-throne'].every(k=>t.inquirer_article.sections.some(s=>s.kind===k))),'Every preloaded V25 article must include Hot Seat and Cool Throne sections');
 assert(!ui.includes("esc(r?.voice||'')"),'Published archive UI must never print internal reporter voice prompts');
-console.log('Fleeced Inquirer V25 four-reporter rotation, real-stat, persistence, and archive smoke passed');
+console.log('Fleeced Inquirer V26 four-reporter rotation, real-stat, persistence, and archive smoke passed');

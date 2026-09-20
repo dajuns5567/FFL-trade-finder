@@ -1,6 +1,4 @@
 name: League Hub Syntax Diagnostic
-permissions:
-  contents: write
 on:
   push:
     branches:
@@ -33,16 +31,3 @@ jobs:
           path: |
             /tmp/week1-inquirer.json
             /tmp/inquirer-week1-2026-preload.mjs
-      - name: Publish completed Week 1 preload
-        if: github.ref == 'refs/heads/release/precision-idp-runtime-20260919'
-        run: |
-          cp /tmp/inquirer-week1-2026-preload.mjs netlify/functions/inquirer-week1-2026-preload.mjs
-          if git diff --quiet -- netlify/functions/inquirer-week1-2026-preload.mjs; then
-            echo "Week 1 preload already current"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add netlify/functions/inquirer-week1-2026-preload.mjs
-          git commit -m "Republish Week 1 Inquirer V26 edition"
-          git push origin HEAD:${GITHUB_REF_NAME}

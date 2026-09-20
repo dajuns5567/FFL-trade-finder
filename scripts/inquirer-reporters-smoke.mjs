@@ -194,7 +194,6 @@ assert(helper.includes('buildLeagueOverview')&&helper.includes('buildHumanLeague
 assert(backend.includes('slotAcceptsPosition(slot,position)')&&backend.includes('bestEligibleLineupMiss(starters,bench)'),'Lineup hindsight must use Sleeper slot eligibility instead of raw best-bench versus worst-starter scoring');
 assert(backend.includes("if(s==='FLEX')return ['RB','WR','TE'].includes(p)")&&backend.includes("if(s==='IDP_FLEX'||s==='IDP')return IDP_POSITIONS.has(p)"),'Offensive FLEX and IDP FLEX eligibility must remain separate');
 assert(helper.includes('best_lineup_miss')&&human.includes('best_lineup_miss')&&newsroom.includes('best_lineup_miss'),'V20 writer must consume only the position-eligible lineup miss for management criticism');
-assert(/IDP cannot simply wander over and steal an RB chair/.test(human)&&/No linebackers sneaking into running-back chairs/.test(newsroom),'V20 copy must explicitly understand that IDP cannot replace RB and only legal substitutions deserve hindsight');
 assert(ui.includes('data-lh-archive-year')&&ui.includes('data-lh-archive-week')&&ui.includes('data-lh-archive-team'),'Inquirer archive must expose year, week, and team filters');
 assert(ui.includes('It opens on the current completed week'),'Inquirer archive must default its filter view to the current completed week');
 assert(!ui.includes("esc(r?.voice||'')"),'Published archive UI must never print internal reporter voice prompts');

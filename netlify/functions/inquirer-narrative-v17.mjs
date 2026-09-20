@@ -1,6 +1,6 @@
 'use strict';
 
-import {humanSections} from './inquirer-human-v18.mjs';
+import {humanSectionsV19} from './inquirer-human-v19.mjs';
 
 const one=v=>Number(v||0).toFixed(1);
 const ordinal=n=>{const x=Math.abs(Number(n)||0),m100=x%100,m10=x%10;return String(x)+(m100>=11&&m100<=13?'th':m10===1?'st':m10===2?'nd':m10===3?'rd':'th')};
@@ -68,14 +68,14 @@ export function narrativeHeadline(t,w,r){
       `A Win for ${team}, and Fewer Press-Box Complaints Than Usual`
     ],
     'tess-delaney':[
-      `The Result and the Process Finally Agree for ${team}`,
-      `${star} Gave ${team} More Than a Pretty Box Score`,
-      `What Actually Worked in ${poss(team)} Win`,
-      `A Repeatable Way to Win for ${team} — Maybe`,
-      `The Numbers Behind a Sunday ${team} Can Use`,
-      `${team} Won Without Needing the Spreadsheet to Lie`,
-      `A Win With Structure: First-Test Approval for ${team}`,
-      `Evidence, Not Proof: Progress for ${team}`
+      `A Civilized Sunday at Last for ${team}`,
+      `${star} Ruins My Planned Complaint in the Best Way`,
+      `A Win for ${team}, Served With the Good China`,
+      `I Had Criticisms Ready; ${team} Had Other Plans`,
+      `A Rather Attractive Sunday for ${team}`,
+      `${team} Wins, and I Am Forced to Be Pleasant`,
+      `A Victory With Enough Style to Be Dangerous`,
+      `Fine, ${team}: That Was Actually Lovely`
     ],
     'mack-hollis':[
       `${team} Just Kicked the Door Off Its Hinges`,
@@ -110,14 +110,14 @@ export function narrativeHeadline(t,w,r){
       `The Press Box Has Questions After ${poss(team)} Loss`
     ],
     'tess-delaney':[
-      `The Numbers Explain More Than the Final Score for ${team}`,
-      `${star} Was Not Enough to Fix ${poss(team)} Week`,
-      `Where the Process Broke Down for ${team}`,
-      `Bad Math, Bad Result for ${team}`,
-      `A Warning Label on ${poss(team)} Box Score`,
-      `The Wrong Side of the Trend Line for ${team}`,
-      `A Loss With Clues: What Needs Fixing for ${team}`,
-      `${team} Gave the Spreadsheet Something to Complain About`
+      `An Unpleasant Review of ${poss(team)} Sunday`,
+      `${star} Deserved Better Company From ${team}`,
+      `${team} Loses, and So Does My Good Mood`,
+      `A Sunday ${team} Should Return for Store Credit`,
+      `The Bad China Comes Out After ${poss(team)} Loss`,
+      `${team} Produced a Result With No Taste at All`,
+      `I Regret to Inform You ${team} Has Annoyed Me`,
+      `A Loss for ${team}, Followed by Several Theatrical Sighs`
     ],
     'mack-hollis':[
       `Someone Hide the Front Page From ${team}`,
@@ -316,11 +316,11 @@ function buildSections(t,w,r,facts,sentiment){
 }
 
 export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamClassification,aside}){
-  const sections=humanSections({team,week,reporter,facts,sentiment});
+  const sections=humanSectionsV19({team,week,reporter,facts,sentiment});
   const paragraphs=sections.flatMap(s=>s.paragraphs||[]);
   return{
-    schema_version:8,
-    inquirer_version:18,
+    schema_version:9,
+    inquirer_version:19,
     season:Number(teamClassification?.season||2026),
     week:Number(week),
     week_classification:teamClassification,
@@ -350,7 +350,8 @@ export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamCl
       division_name:team.division_name||null,
       starter_details:team.starter_details||[],
       best_bench:team.best_bench||null,
-      worst_starter:team.worst_starter||null
+      worst_starter:team.worst_starter||null,
+      best_lineup_miss:team.best_lineup_miss||null
     }
   };
 }

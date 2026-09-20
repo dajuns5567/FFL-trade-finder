@@ -148,16 +148,16 @@ function dailyHTML(all,stats,w,md){
   let body='';
   if(overviewOpen)body=leagueOverviewArticle(w.league_overview,teams);
   else if(opened)body=teamArticle(opened,w.week);
-  else if(w.league_overview)body='<div class="lh-story"><button type="button" class="lh-inline-team" data-lh-broadcast-team="__league__">'+esc(w.league_overview.headline||'Weekly Recap')+'</button><small>'+esc(w.league_overview.byline||'All four Fleeced! Inquirer desks')+'</small><span class="lh-badge">'+esc(w.week_classification?.phase||'In Season')+'</span></div>';
-  else if(first)body='<div class="lh-story"><b>'+esc(first.team_name)+'</b><small>'+esc(weeklyCopy(first))+'</small><span class="lh-badge">'+(first.won?'W':'L')+' • '+first.points.toFixed(1)+' pts</span></div>';
+  else if(first&&!w.league_overview)body='<div class="lh-story"><b>'+esc(first.team_name)+'</b><small>'+esc(weeklyCopy(first))+'</small><span class="lh-badge">'+(first.won?'W':'L')+' • '+first.points.toFixed(1)+' pts</span></div>';
 
+  const recapLink=w.league_overview?'<div class="lh-story"><button type="button" class="lh-inline-team" data-lh-broadcast-team="__league__">'+esc(w.league_overview.headline||'Fleeced! Weekly Recap')+'</button><small>'+esc(w.league_overview.byline||'All four Fleeced! Inquirer desks')+'</small></div>':'';
   const nav=articleOpen?'<label class="lh-article-picker"><span>Choose an article</span><select data-lh-broadcast-article><option value="__league__"'+(overviewOpen?' selected':'')+'>Weekly Recap • All 4 Reporters</option>'+teams.map(t=>'<option value="'+esc(t.roster_id)+'"'+(opened&&String(opened.roster_id)===String(t.roster_id)?' selected':'')+'>'+esc(t.team_name)+' • GM '+esc(t.manager_name)+' • '+esc(t.inquirer_article?.reporter?.name||'Reporter')+'</option>').join('')+'</select></label>':'';
 
   report='<div class="lh-card lh-wide lh-report">'+
    '<div class="lh-broadcast-summary" data-lh-broadcast-toggle="__league__"><div><h3 class="lh-report-title">🎙️ '+esc(w.week_classification?.label||('Week '+w.week))+' Fleeced! Inquirer</h3>'+
    '<div class="lh-sub">'+w.season+' • full team beat columns + Weekly Recap • Week 14 begins the archived Playoffs classification</div></div>'+
    '<button class="secondary small">'+(articleOpen?'Close Report':'Open Full Inquirer ▾')+'</button></div>'+
-   nav+body+archive+'</div>';
+   recapLink+nav+body+archive+'</div>';
  }else{
   report='<div class="lh-card lh-wide lh-report"><h3 class="lh-report-title">🎙️ Fleeced! Inquirer</h3><div class="lh-sub">'+esc(w?.reason||'The next completed-week report is being held until Sleeper advances the week.')+'</div>'+archive+'</div>';
  }

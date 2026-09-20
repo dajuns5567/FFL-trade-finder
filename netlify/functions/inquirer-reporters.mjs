@@ -3,7 +3,7 @@
 import {buildNarrativeArticle} from './inquirer-narrative-v17.mjs';
 import {buildHumanLeagueOverviewV19} from './inquirer-overview-v19.mjs';
 
-export const INQUIRER_VERSION=22;
+export const INQUIRER_VERSION=23;
 export const INQUIRER_PLAYOFF_START_WEEK=14;
 export const INQUIRER_FINAL_WEEK=17;
 export function inquirerWeekClassification(week,season,conference=''){
@@ -304,7 +304,8 @@ export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyS
  const enriched=(teams||[]).map(t=>{
   const reporter=reporterForTeam(t.roster_id,week,ids),teamClassification=inquirerWeekClassification(week,season,t.conference),starters=(t.starter_details||[]).map(enrichPlayer);
   const benchFact=enrichPlayer(t.best_bench),worstFact=enrichPlayer(t.worst_starter),miss=t.best_lineup_miss?{...t.best_lineup_miss,reserve:enrichPlayer(t.best_lineup_miss.reserve),starter:enrichPlayer(t.best_lineup_miss.starter)}:null;
-  const tt={...t,week_classification:teamClassification,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter,best_lineup_miss:miss};
+  const division_results=t.division==null?[]:(teams||[]).filter(x=>String(x.roster_id)!==String(t.roster_id)&&x.division!=null&&String(x.division)===String(t.division)&&(!t.conference||x.conference===t.conference)).map(x=>({roster_id:x.roster_id,team_name:x.team_name,points:x.points,opponent_points:x.opponent_points,opponent_name:x.opponent_name,record:x.league_context?.record||null}));
+  const tt={...t,division_results,next_divisional:division_results.some(x=>String(x.roster_id)===String(t.next_opponent_roster_id)),week_classification:teamClassification,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter,best_lineup_miss:miss};
   const sentiment=fanSentimentForTeam(tt),article=buildNarrativeArticle({team:tt,week,reporter,facts,sentiment,teamClassification,aside:aside(tt,week,reporter)});
   return{...tt,inquirer_article:article,reporter_id:reporter.id};
  });

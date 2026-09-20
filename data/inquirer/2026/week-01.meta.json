@@ -2,8 +2,8 @@
   "schema_version": 5,
   "season": 2026,
   "week": 1,
-  "inquirer_version": 22,
-  "generated_at": "2026-09-20T04:54:48.056Z",
+  "inquirer_version": 23,
+  "generated_at": "2026-09-20T15:29:43.450Z",
   "teams": 32,
   "reporters": [
     "Nick Swindell",
@@ -13,9 +13,9 @@
   ],
   "reporter_distribution": "8 team articles per reporter",
   "team_article_sections": 8,
-  "minimum_team_article_paragraphs": 17,
-  "minimum_team_article_words": 489,
-  "average_team_article_words": 1379,
+  "minimum_team_article_paragraphs": 16,
+  "minimum_team_article_words": 505,
+  "average_team_article_words": 627,
   "distinct_section_orders": 6,
   "league_overview_sections": 4,
   "hot_takes": 5,
@@ -41,7 +41,10 @@
   "projection_valid_upset_required": true,
   "hot_seat_and_cool_throne_required": true,
   "transaction_quality_verdict_required": true,
-  "replaces": "V21 impact-and-depth edition",
-  "source": "Completed Sleeper Week 1 data, timestamped MIDA odds and canonical current player values through V22",
-  "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs"
+  "replaces": "V22 evidence-and-outlook edition",
+  "source": "Completed Sleeper Week 1 data, timestamped MIDA odds and canonical player values through V23 selective editorial",
+  "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs",
+  "maximum_featured_transactions": 2,
+  "division_result_commentary": true,
+  "division_odds_displayed": false
 }

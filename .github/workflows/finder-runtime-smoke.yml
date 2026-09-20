@@ -62,6 +62,8 @@ on:
       - 'netlify/functions/inquirer-human-v20.mjs'
       - 'netlify/functions/inquirer-human-v21.mjs'
       - 'netlify/functions/inquirer-context-v22.mjs'
+      - 'netlify/functions/inquirer-editorial-v23.mjs'
+      - 'scripts/inquirer-v23-audit.mjs'
       - 'scripts/inquirer-v22-audit.mjs'
       - 'netlify/functions/inquirer-overview-v19.mjs'
       - 'netlify/functions/inquirer-week1-2026-preload.mjs'
@@ -165,12 +167,14 @@ jobs:
           node --check netlify/functions/inquirer-human-v20.mjs
           node --check netlify/functions/inquirer-human-v21.mjs
           node --check netlify/functions/inquirer-context-v22.mjs
+          node --check netlify/functions/inquirer-editorial-v23.mjs
           node --check netlify/functions/inquirer-overview-v19.mjs
           node --check scripts/inquirer-prose-quality-audit.mjs
           node --check scripts/inquirer-overview-quality-audit.mjs
           node --check scripts/pack-inquirer-preload.mjs
           node scripts/inquirer-reporters-smoke.mjs
           node scripts/inquirer-prose-quality-audit.mjs
+          node scripts/inquirer-v23-audit.mjs
           node scripts/inquirer-overview-quality-audit.mjs
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs

@@ -60,7 +60,7 @@ for(const team of teams){
   if(/\b(?:PUT THESE MEN ON THE FRONT PAGE|THE SUPPORTING CAST|ABOUT THE PEOPLE WE JUST|LET US AUTOPSY|NOW FOR THE PART WE WILL)\b/i.test(body))fail(team.team_name+' still contains V16 checklist-template copy');
   const explainerPatterns=[
     /usable real-life stat line/i,
-    /the useful (?:question|part|comparison)/i,
+    /the useful (?:question|part|comparison)\b/i,
     /that is the player-level result/i,
     /the numbers are asking/i,
     /this section carries forward/i,

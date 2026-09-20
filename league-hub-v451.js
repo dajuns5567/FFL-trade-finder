@@ -104,7 +104,7 @@ function linkedNotebookText(value,teams){
 }
 function leagueOverviewArticle(o){
  const teams=arguments[1]||[];
- if(!o)return '<div class="lh-article"><h4>Weekly Recap unavailable</h4><p>The archived weekly report does not contain a league-wide overview.</p></div>';
+ if(!o)return '<div class="lh-article"><h4>Weekly Recap unavailable</h4><p>The archived edition does not contain a Weekly Recap.</p></div>';
  const sections=(o.sections||[]).map(s=>'<section class="lh-overview-section"><div class="lh-reporter-byline"><b>'+esc((s.reporter?.name||'Reporter')+' — '+(s.heading||'Desk Report'))+'</b><small>'+esc((s.reporter?.desk||'')+(s.reporter?.signature?' • '+s.reporter.signature:''))+'</small></div>'+(s.paragraphs||[]).map(p=>'<p>'+linkedNotebookText(p,teams)+'</p>').join('')+'</section>').join('');
  const hot=(o.hot_takes||[]).length?'<section class="lh-hot-takes"><h4>🔥 Hot Takes</h4><div class="lh-sub">Bold predictions from the desks: title picks, fraud calls, division flags, player awards and upset specials.</div>'+(o.hot_takes||[]).map(x=>'<div class="lh-hot-take"><b>'+linkedNotebookText(x.title||x.reporter?.name||'Hot Take',teams)+'</b><p>'+linkedNotebookText(x.take||'',teams)+'</p></div>').join('')+'</section>':'';
  return '<div class="lh-article lh-league-overview"><div class="lh-reporter-byline"><b>'+esc(o.byline||'By the Fleeced! Inquirer desks')+'</b><small>'+esc((o.deck||'')+(o.week_classification?.label?' • '+o.week_classification.label:''))+'</small></div><h4>'+esc(o.headline||'Fleeced! Weekly Recap')+'</h4>'+sections+hot+'<details class="lh-source-note"><summary>Sources</summary><div class="lh-sub">Sleeper league data, canonical Trade History, canonical Value History, verified NFL schedule and Sleeper player/injury metadata. Draft-position discussion is standings-based unless the league provides a verified draft-order rule.</div></details></div>'
@@ -155,7 +155,7 @@ function dailyHTML(all,stats,w,md){
 
   report='<div class="lh-card lh-wide lh-report">'+
    '<div class="lh-broadcast-summary" data-lh-broadcast-toggle="__league__"><div><h3 class="lh-report-title">🎙️ '+esc(w.week_classification?.label||('Week '+w.week))+' Fleeced! Inquirer</h3>'+
-   '<div class="lh-sub">'+w.season+' • full team beat columns + co-authored league overview • Week 14 begins the archived Playoffs classification</div></div>'+
+   '<div class="lh-sub">'+w.season+' • full team beat columns + Weekly Recap • Week 14 begins the archived Playoffs classification</div></div>'+
    '<button class="secondary small">'+(articleOpen?'Close Report':'Open Full Inquirer ▾')+'</button></div>'+
    nav+body+archive+'</div>';
  }else{

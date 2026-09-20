@@ -32,5 +32,5 @@ assert.match(body,/Alpha/);
 assert.ok(new Set(teams.filter(t=>body.includes(t.team_name)).map(t=>t.team_name)).size<teams.length,'Editorial recap should select stories, not mention every team by contract');
 
 const source=fs.readFileSync(new URL('../netlify/functions/inquirer-reporting-v25.mjs',import.meta.url),'utf8');
-for(const phrase of ['second source of points','absorb a quieter return','where sacks and forced fumbles can turn'])assert.ok(!source.includes(phrase),'Rejected arithmetic/explainer phrase survived: '+phrase);
+for(const phrase of ['statistical lecture','arithmetic lesson','second source of points','absorb a quieter return','where sacks and forced fumbles can turn'])assert.ok(!source.includes(phrase),'Rejected arithmetic/explainer phrase survived: '+phrase);
 console.log(JSON.stringify({ok:true,version:25,breakout:true,editorial_selection:true}));

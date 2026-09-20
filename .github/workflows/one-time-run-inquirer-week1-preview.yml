@@ -15,11 +15,22 @@ jobs:
       - name: Run and verify Week 1 Inquirer V16
         env:
           BASE: https://deploy-preview-385--precious-stroopwafel-196eae.netlify.app
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 30); do
+          fetch_preview() {
+            local url="$1" out="$2"
+            if curl --fail --silent --show-error --max-time 90 "$url" -o "$out"; then return 0; fi
+            for token in "${NETLIFY_AUTH_TOKEN:-}" "${NETLIFY_BLOBS_TOKEN:-}"; do
+              [ -n "$token" ] || continue
+              if curl --fail --silent --show-error --max-time 90 -H "Authorization: Bearer $token" "$url" -o "$out"; then return 0; fi
+            done
+            return 1
+          }
+          for attempt in $(seq 1 8); do
             echo "Attempt $attempt"
-            if curl --fail --silent --show-error --max-time 90 "$BASE/.netlify/functions/league-hub?weekly=1" -o /tmp/week1.json; then
+            if fetch_preview "$BASE/.netlify/functions/league-hub?weekly=1" /tmp/week1.json; then
               node <<'NODE'
           const fs=require('fs');
           const x=JSON.parse(fs.readFileSync('/tmp/week1.json','utf8'));
@@ -46,11 +57,11 @@ jobs:
               if [ "$rc" -eq 0 ]; then break; fi
             fi
             sleep 10
-            if [ "$attempt" -eq 30 ]; then echo "Week 1 Inquirer did not validate"; exit 1; fi
+            if [ "$attempt" -eq 8 ]; then echo "Week 1 Inquirer did not validate"; exit 1; fi
           done
 
           for reporter in walter-mercer tess-delaney mack-hollis nora-voss; do
-            curl --fail --silent --show-error --max-time 60 "$BASE/.netlify/functions/league-hub?reporter_archive=$reporter" -o "/tmp/$reporter.json"
+            fetch_preview "$BASE/.netlify/functions/league-hub?reporter_archive=$reporter" "/tmp/$reporter.json"
             REPORTER="$reporter" node <<'NODE'
           const fs=require('fs');
           const id=process.env.REPORTER;

@@ -158,14 +158,41 @@ const opp=opponents(matchups),nextOpp=opponents(nextMatchups),tx=txByRoster(tran
 const pname=id=>String(players?.[id]?.full_name||((players?.[id]?.first_name||'')+' '+(players?.[id]?.last_name||'')).trim()||id);
 const ppos=id=>String(players?.[id]?.position||'FLEX');
 const pteam=id=>String(players?.[id]?.team||'FA');
+const OFFENSE_POSITIONS=new Set(['QB','RB','FB','WR','TE','K']);
+const IDP_POSITIONS=new Set(['DL','DE','DT','LB','DB','CB','S']);
+const lineupSlots=(league?.roster_positions||[]).map(x=>String(x||'').toUpperCase()).filter(x=>x&&!['BN','IR','TAXI'].includes(x));
+function slotAcceptsPosition(slot,position){
+  const s=String(slot||'').toUpperCase(),p=String(position||'').toUpperCase();
+  if(s===p)return true;
+  if(s==='FLEX')return ['RB','WR','TE'].includes(p);
+  if(s==='REC_FLEX')return ['WR','TE'].includes(p);
+  if(s==='WRRB_FLEX')return ['WR','RB'].includes(p);
+  if(s==='SUPER_FLEX'||s==='OP')return ['QB','RB','WR','TE'].includes(p);
+  if(s==='DL')return ['DL','DE','DT'].includes(p);
+  if(s==='DB')return ['DB','CB','S'].includes(p);
+  if(s==='IDP_FLEX'||s==='IDP')return IDP_POSITIONS.has(p);
+  if(s==='DEF')return p==='DEF';
+  if(OFFENSE_POSITIONS.has(s)||IDP_POSITIONS.has(s))return p===s;
+  return false;
+}
+function bestEligibleLineupMiss(starters,bench){
+  let best=null;
+  for(const starter of starters)for(const reserve of bench){
+    if(!slotAcceptsPosition(starter.lineup_slot,reserve.position))continue;
+    const gap=Number(reserve.points)-Number(starter.points);
+    if(Number.isFinite(gap)&&gap>0&&(!best||gap>best.gap))best={slot:starter.lineup_slot,gap,starter,reserve};
+  }
+  return best;
+}
 const teamName=id=>{const r=rb.get(String(id)),u=ub.get(String(r?.owner_id||''));return String(u?.metadata?.team_name||u?.display_name||('Roster '+id))};
 const ctx=seasonContext(matchups,rosters,league);
 
 const teams=matchups.map(m=>{
-  const id=String(m.roster_id),oid=opp[id],o=matchups.find(x=>String(x.roster_id)===oid),r=rb.get(id),u=ub.get(String(r?.owner_id||'')),starters=(m.starters||[]).filter(x=>x&&x!=='0'),rosterPlayers=(m.players||r?.players||[]).filter(x=>x&&x!=='0').map(String),pts=m.players_points||{},bench=rosterPlayers.filter(p=>!starters.includes(p));
-  const detail=p=>({id:String(p),name:pname(p),position:ppos(p),nfl_team:pteam(p),points:Number(pts[p])||0,projected:null});
-  const bestBench=bench.map(detail).sort((a,b)=>b.points-a.points)[0]||null,worstStarter=starters.map(detail).sort((a,b)=>a.points-b.points)[0]||null,starter_details=starters.map(detail).sort((a,b)=>b.points-a.points),uid=String(r?.owner_id||''),div=r?.settings?.division??null;
-  return{roster_id:id,manager_user_id:uid,manager_name:String(u?.display_name||u?.username||('Roster '+id)),manager_career:careers.get(uid)||null,team_name:teamName(id),division:div,division_name:divisionName(league,div),conference:conference(league,div),opponent_roster_id:oid||null,next_opponent_roster_id:nextOpp[id]||null,points:Number(m.points)||0,opponent_points:Number(o?.points)||0,won:o?Number(m.points)>Number(o.points):null,projected:NaN,projection_coverage:0,starter_count:starters.length,best_bench:bestBench,worst_starter:worstStarter,starter_details,roster_player_ids:rosterPlayers,transactions:tx[id]||[],recent_trade_count:(transactions||[]).filter(t=>t?.type==='trade'&&(t?.roster_ids||[]).map(String).includes(id)).length,current_week_trade_count:(transactions||[]).filter(t=>t?.type==='trade'&&(t?.roster_ids||[]).map(String).includes(id)).length,previous_fan_sentiment:null,current_season_champion:false,value_history_week:null,next_week_availability:availability(rosterPlayers,starters,players,sched)};
+  const id=String(m.roster_id),oid=opp[id],o=matchups.find(x=>String(x.roster_id)===oid),r=rb.get(id),u=ub.get(String(r?.owner_id||'')),starters=(m.starters||[]).filter(x=>x&&x!=='0').map(String),rosterPlayers=(m.players||r?.players||[]).filter(x=>x&&x!=='0').map(String),pts=m.players_points||{};
+  const detail=(p,slot='')=>({id:String(p),name:pname(p),position:ppos(p),nfl_team:pteam(p),lineup_slot:slot||undefined,points:Number(pts[p])||0,projected:null});
+  const starterRaw=starters.map((p,i)=>detail(p,lineupSlots[i]||ppos(p))),benchRaw=rosterPlayers.filter(p=>!starters.includes(p)).map(p=>detail(p));
+  const bestBench=benchRaw.slice().sort((a,b)=>b.points-a.points)[0]||null,worstStarter=starterRaw.slice().sort((a,b)=>a.points-b.points)[0]||null,starter_details=starterRaw.slice().sort((a,b)=>b.points-a.points),bestLineupMiss=bestEligibleLineupMiss(starterRaw,benchRaw),uid=String(r?.owner_id||''),div=r?.settings?.division??null;
+  return{roster_id:id,manager_user_id:uid,manager_name:String(u?.display_name||u?.username||('Roster '+id)),manager_career:careers.get(uid)||null,team_name:teamName(id),division:div,division_name:divisionName(league,div),conference:conference(league,div),opponent_roster_id:oid||null,next_opponent_roster_id:nextOpp[id]||null,points:Number(m.points)||0,opponent_points:Number(o?.points)||0,won:o?Number(m.points)>Number(o.points):null,projected:NaN,projection_coverage:0,starter_count:starters.length,best_bench:bestBench,worst_starter:worstStarter,best_lineup_miss:bestLineupMiss,starter_details,roster_player_ids:rosterPlayers,transactions:tx[id]||[],recent_trade_count:(transactions||[]).filter(t=>t?.type==='trade'&&(t?.roster_ids||[]).map(String).includes(id)).length,current_week_trade_count:(transactions||[]).filter(t=>t?.type==='trade'&&(t?.roster_ids||[]).map(String).includes(id)).length,previous_fan_sentiment:null,current_season_champion:false,value_history_week:null,next_week_availability:availability(rosterPlayers,starters,players,sched)};
 });
 const contextFor=id=>{const base=ctx[String(id)]||null;return base?{...base,recent_games:(base.recent_games||[]).map(g=>({...g,opponent_name:teamName(g.opponent_roster_id)}))}:null};
 const byId=new Map(teams.map(t=>[String(t.roster_id),t]));
@@ -174,7 +201,7 @@ const classification=inquirerWeekClassification(1,2026);
 const inq=buildInquirerWeek({season,week,teams:complete,players,weeklyStats,weeklyStatHistory:{1:weeklyStats},scoringSettings:league.scoring_settings||{},scoreFn:score,weekClassification:classification});
 const trades=tradeRows(transactions,teamName);
 const overview=buildLeagueOverview({season,week,teams:inq.teams,players,transactions,canonicalTrades:trades,weekClassification:classification,valueHistoryMeta:{period:null,baseline:null,latest:null,source:'No valid seven-day Value History comparison yet'}});
-const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),broadcast_version:13,inquirer_version:18,projection_source:'projection data unavailable in preloaded Week 1 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',value_history_source:'No valid seven-day comparison available for Week 1 preloaded edition',trade_history_source:'Sleeper Week 1 completed trades',reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
+const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),broadcast_version:14,inquirer_version:19,projection_source:'projection data unavailable in preloaded Week 1 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',value_history_source:'No valid seven-day comparison available for Week 1 preloaded edition',trade_history_source:'Sleeper Week 1 completed trades',reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
 if(result.teams.length!==32)throw new Error('Expected 32 team articles');
 for(const t of result.teams){const a=t.inquirer_article;if(!a?.headline||!a?.reporter?.id||!Array.isArray(a?.paragraphs)||a.paragraphs.length<9)throw new Error('Incomplete article '+t.roster_id)}
 fs.writeFileSync(process.env.OUT||'/tmp/week1-inquirer.json',JSON.stringify(result,null,2)+'\n');

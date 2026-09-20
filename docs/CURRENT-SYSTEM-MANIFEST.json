@@ -54,7 +54,7 @@
     "inquirer_rotation": "8 teams per reporter per week; every reporter covers every team once across four consecutive weeks",
     "inquirer_real_stats_source": "Sleeper weekly raw stats",
     "inquirer_article_archives": "immutable standalone per-reporter article JSON + reporter archive index",
-    "inquirer_version": 15,
+    "inquirer_version": 16,
     "inquirer_live_context": [
       "season record and league rank",
       "winning/losing streaks from completed Sleeper matchups",
@@ -113,7 +113,35 @@
       "injuries": "Sleeper player injury/status metadata",
       "rule": "withhold unsupported claims when source data is unavailable"
     },
-    "inquirer_league_overview_archive": "inquirer/league-overview/<season>/week-<NN>.json and indexed into all four reporter archives"
+    "inquirer_league_overview_archive": "inquirer/league-overview/<season>/week-<NN>.json and indexed into all four reporter archives",
+    "inquirer_playoff_rounds": {
+      "14": "AFC/NFC Wildcard Round",
+      "15": "AFC/NFC Divisional Round",
+      "16": "AFC/NFC Championship",
+      "17": "Super Bowl",
+      "conference_source": "Sleeper roster settings.division -> league.metadata.division_<n> prefix"
+    },
+    "inquirer_fan_sentiment": {
+      "persistence": "previous archived week blended at 65% for the same manager; new evidence 35%",
+      "inputs": [
+        "recent weighted W/L form",
+        "streak",
+        "season record and standings",
+        "recent scoring trend",
+        "current projection performance",
+        "lineup/bench decisions",
+        "canonical team Value History movement",
+        "recent trade activity",
+        "career playoff wins",
+        "regular-season titles",
+        "prior championships",
+        "current Week 17 Sleeper championship",
+        "prior archived fan sentiment"
+      ],
+      "rule": "sentiment is management commentary only and cannot feed valuation/trade/standings systems",
+      "extreme_negative_style": "obviously fictional sports-fan hyperbole; metaphorical/cartoon torches and pitchforks, not literal violence",
+      "extreme_positive_style": "Hall of Fame petition reserved for sufficiently strong sentiment with repeated championships"
+    }
   },
   "recovery_branches": {
     "code": "baseline/20260919-home-valuehistory-aligned",

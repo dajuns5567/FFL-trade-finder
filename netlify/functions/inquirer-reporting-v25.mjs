@@ -505,6 +505,52 @@ function sentiment(t,r){
   return ps;
 }
 
+function specificityPass(t,kind,value){
+  let p=String(value??'');
+  const team=t.team_name;
+  const swaps=[
+    ['The follow-up performance from this roster is what turns the note into a trend worth remembering.',(kind==='hot-seat'?'The '+team+' response':'The '+team+' follow-up performance')+' is what turns this weekly note into a trend worth remembering.'],
+    ['The optimism is allowed; the next Sunday still has to earn it.',team+' can keep the optimism; the next Sunday still has to earn it.'],
+    ['The Back Page wants another name earning ink before one superstar turns the entire lineup into a weekly dependency.','The Back Page wants another '+team+' name earning ink before one superstar turns this lineup into a weekly dependency.'],
+    ['A favorable matchup wasted by this team becomes a future headline with much worse punctuation.','A favorable matchup wasted by '+team+' becomes a future headline with much worse punctuation.'],
+    ['Do it again and the Back Page starts saving front pages.','If '+team+' gets another week like this, the Back Page starts saving front pages.'],
+    ['The record says 1-0; the anxiety can wait.',team+' is 1-0; the anxiety can wait.'],
+    ['The next assignment is to make the early division gain look less temporary.',team+' now has to make the early division gain look less temporary.'],
+    ['At 1-0, that is a clipping worth keeping.','At 1-0, '+team+' has a clipping worth keeping.'],
+    ['There is real ground to press now—do not turn a good headline into a one-week souvenir.',team+' has real ground to press now—do not turn a good headline into a one-week souvenir.'],
+    ['There is no room for decorative losses now; wins are the only headline that helps.',team+' has no room for decorative losses now; wins are the only headline that helps.'],
+    ['The win survived it; the back page will notice faster if it happens twice.',team+' survived it once; the back page will notice faster if the same problem happens twice.'],
+    ['The replacement plan belongs in the next filing.',team+' owes the next filing a real replacement plan.'],
+    ['The next game will tell us more about how bankable this role is.',team+' gets another look next game, when the role should tell us how bankable this production really is.'],
+    ['The door is open without being held for them. A civilized winning streak would be lovely.','The door is open for '+team+' without being held. A civilized winning streak would be lovely.'],
+    ['The back-page prescription is obvious—quit making the rivals do the saving.','The back-page prescription for '+team+' is obvious—quit making the rivals do the saving.'],
+    ['That makes this week part of the deal’s ongoing return, not an isolated box score.','For '+team+', that makes this week part of the deal’s ongoing return rather than an isolated box score.'],
+    ['That is how you get above the fold.','For '+team+', that is how a player gets above the fold.'],
+    ['That is how a lineup starts sounding dangerous.','That is how the '+team+' lineup starts sounding dangerous.'],
+    ['Print the 1-0 record large enough for the rival chat.','Print '+team+'’s 1-0 record large enough for the rival chat.'],
+    ['His production is now evidence in a transaction that remains open for review.','That production is now evidence in a '+team+' transaction that remains open for review.'],
+    ['Depending on rival charity twice in a row would be terribly unbecoming.',team+' depending on rival charity twice in a row would be terribly unbecoming.'],
+    ['Call it a warning under a winning headline.','For '+team+', call it a warning under a winning headline.'],
+    ['A two-week run can still change the whole conversation.','A two-week '+team+' run can still change the whole conversation.'],
+    ['A little more ground next week and we may discuss the table with the good china.','A little more '+team+' ground next week and we may discuss the table with the good china.'],
+    ['A 1-0 start looks rather nicer in ink.',team+'’s 1-0 start looks rather nicer in ink.'],
+    ['The verdict was still a win, so the inquiry stays informal.',team+' still got the win, so the inquiry stays informal.'],
+    ['The notebook version is shorter: the next loss would make the chase considerably uglier.','The '+team+' notebook version is shorter: the next loss would make the chase considerably uglier.'],
+    ['The loss made the miss part of it.',team+'’s loss made the miss part of the story.'],
+    ['The loss gave the miss nowhere to hide.',team+'’s loss gave the miss nowhere to hide.'],
+    ['The invitation is written in very small print. Winning remains the tasteful response.','The '+team+' invitation is written in very small print. Winning remains the tasteful response.'],
+    ['The evidence shows an opening; next week determines whether it becomes position or merely circumstance.',team+' has an opening; next week determines whether it becomes position or merely circumstance.'],
+    ['The evidence is thin enough that every dropped opportunity becomes material.',team+' has thin enough evidence that every dropped opportunity becomes material.'],
+    ['That is the kind of detail a loss refuses to accessorize away.','That is the kind of '+team+' detail a loss refuses to accessorize away.'],
+    ['File the 0-1 record and start the homework.','File '+team+' at 0-1 and start the homework.'],
+    ['After that, every expensive accessory has to reveal whether it can actually play.','After kickoff, every expensive '+team+' accessory has to reveal whether it can actually play.'],
+    ['A losing lineup cannot pretend it did not matter.','A losing '+team+' lineup cannot pretend it did not matter.'],
+    ['A few clean wins would make the paperwork friendlier.','A few clean '+team+' wins would make the paperwork friendlier.']
+  ];
+  for(const [from,to] of swaps)p=p.replaceAll(from,to);
+  return p;
+}
+
 export function humanSectionsV25(args){
   const {team:t,facts={}}=args,base=humanSectionsV23({...args,team:{...t,transactions:[]}}),mgmt=management(t,facts,args.reporter);
   const rewritten=base.map(s=>{
@@ -522,6 +568,7 @@ export function humanSectionsV25(args){
       if(s.kind==='players'){const traded=list(t).find(p=>p.acquisition);const callback=traded?acquisitionCallback(t,traded,args.reporter):null;if(callback)paragraphs.push(callback)}
       paragraphs.push(...reporterExpansionV26(t,s.kind,args.reporter));
     }
+    paragraphs=paragraphs.map(p=>specificityPass(t,s.kind,p));
     return {...s,paragraphs};
   });
   return reporterStructureV26(rewritten,t,args.reporter);

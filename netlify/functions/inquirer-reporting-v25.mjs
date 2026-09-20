@@ -122,7 +122,7 @@ function playerSection(t){
   const rows=list(t),top=rows[0],ps=[];
   if(!top)return ['n/a'];
   const topThree=rows.slice(0,3),bad=rows.filter(p=>delta(p)!=null&&delta(p)<-4).sort((a,b)=>delta(a)-delta(b))[0];
-  ps.push(`${top.name} was the headline with ${one(top.points)} points${top.real_stat_line?' ('+top.real_stat_line.replaceAll(' • ',', ')+')':''}. ${topThree.length>1?`${names(topThree.slice(1))} supplied the best support behind ${top.name}, and that is the part of the lineup ${t.team_name} can build on.`:''}`);
+  ps.push(`${top.name} was the headline with ${one(top.points)} fantasy points${top.real_stat_line?' ('+top.real_stat_line.replaceAll(' • ',', ')+')':''}. ${topThree.length>1?`${names(topThree.slice(1))} supplied the best support behind ${top.name}, and that is the part of the lineup ${t.team_name} can build on.`:''}`);
   if(bad&&String(bad.id)!==String(top.id))ps.push(`${bad.name} never found the same rhythm, finishing with ${one(bad.points)} against a ${one(bad.projected)} projection. ${Number(t.points)>Number(t.opponent_points)?'The win kept the miss from becoming the story.':'In a loss, that quiet spot becomes harder to hide.'}`);
   const breakout=breakoutWatch(t);if(breakout)ps.push(breakout);
   return ps;

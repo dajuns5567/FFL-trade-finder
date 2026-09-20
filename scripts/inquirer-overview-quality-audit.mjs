@@ -9,7 +9,7 @@ const o=edition?.league_overview||{};
 const sections=Array.isArray(o.sections)?o.sections:[];
 const takes=Array.isArray(o.hot_takes)?o.hot_takes:[];
 
-if(Number(o.inquirer_version)<18)fail('League overview must be V18 or newer; got '+o.inquirer_version);
+if(Number(o.inquirer_version)<19)fail('League Notebook must be V19 or newer; got '+o.inquirer_version);
 if(sections.length!==4)fail('League overview must contain four reporter sections; got '+sections.length);
 for(const s of sections){
   if(!s?.reporter?.id)fail('Overview section missing reporter identity');
@@ -17,6 +17,8 @@ for(const s of sections){
   if(!Array.isArray(s.paragraphs)||s.paragraphs.length<2)fail('Overview section '+s.heading+' needs at least two complete paragraphs');
 }
 if(new Set(sections.map(s=>s.reporter.id)).size!==4)fail('All four desks must appear once in the overview');
+const humor=/\b(?:parade|rental shoes|gala|hotel lobby art|elegant insult|group chat|honeymoon|front page|rookie class|mock|burn it|ceremonially|evidence|deadline|confetti|argument)\b/i;
+for(const s of sections)if(!humor.test((s.paragraphs||[]).join(' ')))fail((s.reporter?.name||'Reporter')+' League Notebook section is too straight; every desk must carry personality/humor');
 
 const body=sections.flatMap(s=>s.paragraphs||[]).join(' ');
 const wc=words(body).length,nd=numeric(body)/Math.max(1,wc);
@@ -57,4 +59,4 @@ const report={
   hot_takes:takes.map(t=>({kind:t.kind,title:t.title,take:t.take}))
 };
 console.log(JSON.stringify(report,null,2));
-console.log('Fleeced Inquirer V18 league-overview / real-hot-takes audit passed');
+console.log('Fleeced Inquirer V19 League Notebook / real-hot-takes audit passed');

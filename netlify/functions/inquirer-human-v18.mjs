@@ -77,7 +77,7 @@ function personnelLine(t,w,voice){
   const a=t.next_week_availability||{};if(a.fantasy_season_complete||Number(w)>=17)return'There is no next fantasy matchup. The Super Bowl closes the file.';
   const byes=a.bye_current_starters||[],inj=a.injury_current_starters||[];
   if(!a.schedule_verified&&!inj.length)return'The bye and injury picture is still settling, and there is nothing worth sounding an alarm about yet.';
-  if(!byes.length&&!inj.length)return voice==='tilly'?'No starter is carrying a verified bye or injury problem into next week. For once, the depth chart gets a quiet evening.':'No current starter is carrying a verified bye or injury problem into next week.';
+  if(!byes.length&&!inj.length){if(voice==='tilly')return'For once, '+t.team_name+' gets a quiet depth chart: no starter is carrying a verified bye or injury problem into next week.';if(voice==='nick')return t.team_name+' heads toward next week with a clean availability board. No current starter is carrying a verified bye or injury problem.';if(voice==='bart')return'The next-week personnel picture is clean for '+t.team_name+'. No current starter is carrying a verified bye or injury problem.';return t.team_name+"'s personnel file is clean going into next week. There is no verified starter bye or injury problem to flag."}
   const bits=[];if(byes.length)bits.push(byes.length+' starter'+(byes.length===1?'':'s')+' on bye');if(inj.length)bits.push(inj.length+' starter'+(inj.length===1?'':'s')+' carrying an injury/status tag');
   return t.team_name+' heads into next week with '+bits.join(' and ')+'. Depth is about to stop being theoretical.';
 }

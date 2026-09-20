@@ -161,7 +161,7 @@ jobs:
           node --check netlify/functions/value-history-observability.mjs
           node --check scripts/resolve-active-netlify-site.mjs
           node --check scripts/value-history-headless-refresh.mjs
-      - name: Fleeced Inquirer V25 newsroom, projections, archives, and writing quality
+      - name: Fleeced Inquirer V26 recovered newsroom, archives, and writing quality
         run: |
           node --check league-hub-v451.js
           node --check netlify/functions/league-hub.mjs
@@ -183,7 +183,9 @@ jobs:
           node scripts/inquirer-v23-audit.mjs
           node scripts/inquirer-v24-audit.mjs
           node scripts/inquirer-v25-audit.mjs
-          node scripts/inquirer-overview-quality-audit.mjs
+          node scripts/one-time-generate-inquirer-week1.mjs
+          node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer.json
+          node scripts/inquirer-overview-quality-audit.mjs /tmp/week1-inquirer.json
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs
       - name: Value History data hub behavior and isolation

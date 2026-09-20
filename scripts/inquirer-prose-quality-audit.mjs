@@ -20,7 +20,7 @@ const normalizeHeadline=(team,a)=>{
   return s.replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/\s+/g,' ').trim();
 };
 
-if(Number(edition?.inquirer_version)<19)fail('Prose audit requires the V19 passionate-newsroom Inquirer or newer; got '+edition?.inquirer_version);
+if(Number(edition?.inquirer_version)<20)fail('Prose audit requires the V20 passionate-newsroom Inquirer or newer; got '+edition?.inquirer_version);
 const teams=edition?.teams||[];
 if(teams.length!==32)fail('Expected 32 team articles; got '+teams.length);
 
@@ -33,7 +33,7 @@ const voiceAnchors={
 };
 const humorPattern=/\b(?:parade|confetti|group chat|angry font|classifieds|parking|complaint|aspirin|good china|theatrical|waistcoat|salons|rental shoes|hotel lobby art|fingerprints|witness|paperwork|docket|restraining order|TED Talk|legal department|burn it|coffee|snacks|civilized|vulgar)\b/i;
 
-const headlinePatterns=new Map(),openingCounts=new Map(),sentenceCounts=new Map(),report={articles:[],headline_patterns:{},global:{}};
+const headlinePatterns=new Map(),openingCounts=new Map(),sentenceCounts=new Map(),sectionOrderCounts=new Map(),report={articles:[],headline_patterns:{},global:{}};
 let allWords=0,allNums=0,allUpper=0,allParagraphs=0,allShortSentences=0,allSentences=0;
 
 for(const team of teams){
@@ -42,14 +42,15 @@ for(const team of teams){
   if(!a.headline)fail('Missing headline for roster '+team.roster_id);
   const sections=Array.isArray(a.sections)?a.sections:[];
   if(sections.length!==6)fail(team.team_name+' must have exactly six newspaper sections; got '+sections.length);
-  const kinds=sections.map(s=>s.kind);
+  const kinds=sections.map(s=>s.kind),orderKey=kinds.join('>');
+  sectionOrderCounts.set(orderKey,(sectionOrderCounts.get(orderKey)||0)+1);
   for(const k of requiredKinds)if(!kinds.includes(k))fail(team.team_name+' missing section kind '+k);
   for(const s of sections){
     if(!String(s.heading||'').trim())fail(team.team_name+' has a section without a heading');
     if(!Array.isArray(s.paragraphs)||s.paragraphs.length<2)fail(team.team_name+' section '+s.heading+' must contain at least two connected paragraphs');
   }
   const paras=sections.flatMap(s=>s.paragraphs||[]),body=paras.join(' ');
-  if(paras.length<12)fail(team.team_name+' has only '+paras.length+' narrative paragraphs');
+  if(paras.length<14)fail(team.team_name+' has only '+paras.length+' narrative paragraphs; V20 requires extra newsroom judgment beyond the six-section skeleton');
   const wc=words(body).length,nums=numericTokens(body),upp=upperWords(body),lens=paras.map(p=>words(p).length);
   if(wc<300)fail(team.team_name+' is too short to carry a complete six-section beat column: '+wc+' words');
   if(median(lens)<24)fail(team.team_name+' paragraphs are too fragmentary; median paragraph is '+median(lens)+' words');
@@ -119,6 +120,10 @@ if(repeatedOpeners.length)fail('Canned paragraph opener repeated across more tha
 const repeatedSentences=[...sentenceCounts.entries()].filter(([s,n])=>s&&n>4).sort((a,b)=>b[1]-a[1]);
 if(repeatedSentences.length)fail('Template sentence reused across more than four stories: '+JSON.stringify(repeatedSentences.slice(0,5)));
 
+const sectionOrders=[...sectionOrderCounts.entries()].sort((a,b)=>b[1]-a[1]);
+if(sectionOrders.length<4)fail('V20 still reads like one section template; only '+sectionOrders.length+' distinct article structures were generated');
+if(sectionOrders[0]?.[1]>8)fail('One V20 section structure is reused across '+sectionOrders[0][1]+' stories; 32 articles must not feel like the same template');
+
 report.global={
   articles:teams.length,
   average_words:Number((allWords/teams.length).toFixed(1)),
@@ -127,7 +132,8 @@ report.global={
   uppercase_density:Number((allUpper/allWords).toFixed(4)),
   short_sentence_ratio:Number((allShortSentences/Math.max(1,allSentences)).toFixed(4)),
   repeated_openers_over_4:repeatedOpeners,
-  repeated_sentences_over_4:repeatedSentences
+  repeated_sentences_over_4:repeatedSentences,
+  section_orders:Object.fromEntries(sectionOrders)
 };
 console.log(JSON.stringify(report,null,2));
 console.log('Fleeced Inquirer prose-quality audit passed');

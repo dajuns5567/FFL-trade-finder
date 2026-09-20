@@ -20,19 +20,20 @@ const normalizeHeadline=(team,a)=>{
   return s.replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/\s+/g,' ').trim();
 };
 
-if(Number(edition?.inquirer_version)<18)fail('Prose audit requires the V18 human-first Inquirer or newer; got '+edition?.inquirer_version);
+if(Number(edition?.inquirer_version)<19)fail('Prose audit requires the V19 passionate-newsroom Inquirer or newer; got '+edition?.inquirer_version);
 const teams=edition?.teams||[];
 if(teams.length!==32)fail('Expected 32 team articles; got '+teams.length);
 
 const requiredKinds=['lede','players','management','value','sentiment','outlook'];
 const voiceAnchors={
-  'walter-mercer':['press box','notebook','clipping','ink','receipts','beat writer'],
-  'tess-delaney':['repeatable','projection','usage','production','watching','believe','trend'],
-  'mack-hollis':['back page','parade','group chat','angry font','giant photo','classifieds'],
-  'nora-voss':['evidence','file','witness','paper trail','inquiry','prosecution','fingerprints']
+  'walter-mercer':['press box','notebook','clipping','old desk','complaint','parking','cynic'],
+  'tess-delaney':['civilized','good china','theatrical','elegant','taste','sigh','waistcoat','salons','vulgar'],
+  'mack-hollis':['back page','parade','group chat','angry font','giant photo','classifieds','confetti','presses'],
+  'nora-voss':['evidence','file','witness','paper trail','inquiry','fingerprints','docket','cross-examination']
 };
+const humorPattern=/\b(?:parade|confetti|group chat|angry font|classifieds|parking|complaint|aspirin|good china|theatrical|waistcoat|salons|rental shoes|hotel lobby art|fingerprints|witness|paperwork|docket|restraining order|TED Talk|legal department|burn it|coffee|snacks|civilized|vulgar)\b/i;
 
-const headlinePatterns=new Map(),openingCounts=new Map(),report={articles:[],headline_patterns:{},global:{}};
+const headlinePatterns=new Map(),openingCounts=new Map(),sentenceCounts=new Map(),report={articles:[],headline_patterns:{},global:{}};
 let allWords=0,allNums=0,allUpper=0,allParagraphs=0,allShortSentences=0,allSentences=0;
 
 for(const team of teams){
@@ -68,14 +69,29 @@ for(const team of teams){
     /the question for the file is whether value movement/i,
     /because the fantasy number has a real football stat line sitting underneath it/i,
     /the result is real\. motive, intent/i,
-    /Sleeper (?:did not|returned|has not|currently|supplied)/i
+    /Sleeper (?:did not|returned|has not|currently|supplied)/i,
+    /the final score is useful/i,
+    /the repeatable part looks like/i,
+    /the real question is whether/i,
+    /I care about the direction more than the drama/i,
+    /the market usually stops looking so theoretical/i,
+    /that is useful context/i,
+    /the part I trust more is/i,
+    /the data (?:says|shows|suggests)/i
   ];
   for(const re of explainerPatterns)if(re.test(body))fail(team.team_name+' contains data-explainer / pipeline language instead of reporter prose: '+re);
 
   let short=0,sents=0;
   for(const p of paras){
     const ss=sentenceParts(p);sents+=ss.length;
-    for(const s of ss)if(words(s).length<5)short++;
+    for(const s of ss){
+      if(words(s).length<5)short++;
+      let norm=s.toLowerCase();
+      const names=[team.team_name,team.manager_name,team.opponent_name,...((a?.facts?.starter_details||[]).map(x=>x.name)),a?.facts?.best_bench?.name,a?.facts?.worst_starter?.name].filter(Boolean).sort((x,y)=>String(y).length-String(x).length);
+      for(const name of names)norm=norm.replaceAll(String(name).toLowerCase(),'<name>');
+      norm=norm.replace(/\b\d+(?:\.\d+)?(?:[-–]\d+(?:\.\d+)?)?\b/g,'#').replace(/\s+/g,' ').trim();
+      if(words(norm).length>=8)sentenceCounts.set(norm,(sentenceCounts.get(norm)||0)+1);
+    }
     const opener=words(p).slice(0,5).join(' ').toLowerCase().replace(/\d+(?:\.\d+)?/g,'#');
     openingCounts.set(opener,(openingCounts.get(opener)||0)+1);
   }
@@ -84,6 +100,7 @@ for(const team of teams){
   const voiceText=(body+' '+sections.map(s=>s.heading||'').join(' ')).toLowerCase();
   const anchors=voiceAnchors[rid]||[],hits=anchors.filter(x=>voiceText.includes(x));
   if(hits.length<2)fail(team.team_name+' does not sound sufficiently like '+a.reporter.name+'; voice-anchor hits='+hits.join(', '));
+  if(!humorPattern.test(body))fail(team.team_name+' reads too straight; every desk needs visible humor/sarcasm, not just factual narration');
 
   const hp=normalizeHeadline(team,a);
   if(!headlinePatterns.has(rid))headlinePatterns.set(rid,new Set());
@@ -97,8 +114,10 @@ for(const [rid,set] of headlinePatterns){
   report.headline_patterns[rid]=set.size;
   if(set.size<6)fail('Reporter '+rid+' has only '+set.size+' distinct normalized headline structures across eight stories');
 }
-const repeatedOpeners=[...openingCounts.entries()].filter(([k,n])=>k&&n>8).sort((a,b)=>b[1]-a[1]);
-if(repeatedOpeners.length)fail('Canned paragraph opener repeated across more than eight stories: '+JSON.stringify(repeatedOpeners.slice(0,5)));
+const repeatedOpeners=[...openingCounts.entries()].filter(([k,n])=>k&&n>4).sort((a,b)=>b[1]-a[1]);
+if(repeatedOpeners.length)fail('Canned paragraph opener repeated across more than four stories: '+JSON.stringify(repeatedOpeners.slice(0,5)));
+const repeatedSentences=[...sentenceCounts.entries()].filter(([s,n])=>s&&n>4).sort((a,b)=>b[1]-a[1]);
+if(repeatedSentences.length)fail('Template sentence reused across more than four stories: '+JSON.stringify(repeatedSentences.slice(0,5)));
 
 report.global={
   articles:teams.length,
@@ -107,7 +126,8 @@ report.global={
   numeric_density:Number((allNums/allWords).toFixed(4)),
   uppercase_density:Number((allUpper/allWords).toFixed(4)),
   short_sentence_ratio:Number((allShortSentences/Math.max(1,allSentences)).toFixed(4)),
-  repeated_openers_over_8:repeatedOpeners
+  repeated_openers_over_4:repeatedOpeners,
+  repeated_sentences_over_4:repeatedSentences
 };
 console.log(JSON.stringify(report,null,2));
 console.log('Fleeced Inquirer prose-quality audit passed');

@@ -1,8 +1,15 @@
 'use strict';
 
-export const INQUIRER_VERSION=15;
+export const INQUIRER_VERSION=16;
 export const INQUIRER_PLAYOFF_START_WEEK=14;
 export const INQUIRER_FINAL_WEEK=17;
+export function inquirerWeekClassification(week,season,conference=''){
+ const w=Number(week),conf=/^(AFC|NFC)$/i.test(String(conference||''))?String(conference).toUpperCase():'';
+ if(w>=1&&w<=13)return{week:w,season:Number(season),phase:'Regular Season',playoffs:false,round:null,conference:conf||null,label:'Week '+w+' • Regular Season',playoff_start_week:14,final_week:17};
+ const generic={14:'Wildcard Round',15:'Divisional Round',16:'Championship',17:'Super Bowl'}[w]||'Playoffs';
+ const round=w===17?'Super Bowl':(conf?conf+' '+generic:'NFC/AFC '+generic);
+ return{week:w,season:Number(season),phase:'Playoffs',playoffs:w>=14&&w<=17,round,conference:conf||null,label:'Week '+w+' • '+round,playoff_start_week:14,final_week:17};
+}
 export const INQUIRER_HOUSE_STYLE='Hometown beat reporter + fan. Frequent sarcasm, embedded humor, long-form analysis, and dramatic framing are encouraged. Dramatic without inventing facts: scores, standings, transactions, player production, streaks, projections, and real-life stats must remain grounded in Sleeper data.';
 
 export const REPORTERS=[
@@ -189,6 +196,55 @@ function availabilityParagraph(t,w,r){
  if(r.id==='mack-hollis')return 'NEXT WEEK ROSTER PANIC INDEX: '+core+' If the depth chart survives this cleanly, we reserve the right to become smug about roster construction.';
  return 'Next Week Personnel File: '+core+' Consider this advance notice before anyone claims Tuesday that the roster problem appeared without warning.';
 }
+function clamp(n,min,max){return Math.max(min,Math.min(max,Number(n)||0))}
+function fanSentimentForTeam(t){
+ const c=t?.league_context||{},games=(c.recent_games||[]).slice(-5),weights=[.55,.7,.85,1,1.15].slice(-games.length),career=t?.manager_career||{},v=t?.value_history_week||{},st=c.streak||{};
+ let raw=0;
+ for(let i=0;i<games.length;i++)raw+=(games[i]?.result==='W'?8:games[i]?.result==='L'?-8:0)*(weights[i]||1);
+ if(st.type==='W')raw+=Math.min(14,Math.max(0,Number(st.length)-1)*3.5);
+ if(st.type==='L')raw-=Math.min(14,Math.max(0,Number(st.length)-1)*3.5);
+ const recent=Number(c.recent_avg_points),prior=Number(c.prior_five_avg_points);
+ if(Number.isFinite(recent)&&Number.isFinite(prior))raw+=clamp((recent-prior)/3,-10,10);
+ const rank=Number(c.standings_rank),size=Number(c.league_size)||32,playoffTeams=Number(c.playoff_teams)||0;
+ if(rank){if(rank<=4)raw+=10;else if(playoffTeams&&rank<=playoffTeams)raw+=5;else if(rank>size-5)raw-=10}
+ const rec=c.record||{},gp=Number(rec.wins||0)+Number(rec.losses||0)+Number(rec.ties||0);
+ if(gp)raw+=clamp(((Number(rec.wins||0)+.5*Number(rec.ties||0))/gp-.5)*24,-10,10);
+ const pct=Number(v.pct);if(Number.isFinite(pct))raw+=clamp(pct*2,-10,10);
+ const projDelta=Number(t.points)-Number(t.projected);if(Number.isFinite(projDelta))raw+=clamp(projDelta/5,-5,5);
+ const lineupSwing=Number(t?.best_bench?.points)-Number(t?.worst_starter?.points);if(Number.isFinite(lineupSwing)&&lineupSwing>7)raw-=clamp((lineupSwing-7)/2,0,8);
+ const recentTrades=Number(t.recent_trade_count)||0;
+ if(recentTrades&&Number.isFinite(pct))raw+=pct>0?3:pct<0?-3:0;
+ const priorChamps=Number(career.championships)||0,currentTitle=t.current_season_champion?1:0,totalChamps=priorChamps+currentTitle;
+ raw+=priorChamps>=3?42:priorChamps===2?32:priorChamps===1?16:0;
+ if(currentTitle)raw+=20;
+ raw+=Math.min(10,(Number(career.playoff_wins)||0)*1.5)+Math.min(6,(Number(career.regular_season_titles)||0)*3);
+ raw=clamp(raw,-100,100);
+ const previous=t?.previous_fan_sentiment,continuity=previous&&String(previous.manager_user_id||'')===String(t.manager_user_id||'')&&Number.isFinite(Number(previous.score));
+ const score=Math.round(clamp(continuity?Number(previous.score)*.65+raw*.35:raw,-100,100)),change=continuity?score-Number(previous.score):null;
+ let tier,title,scene;
+ if(score>=82&&totalChamps>=2){tier='IMMORTAL';title='Hall of Fame Petition';scene='Fans are circulating paperwork to put the owner in the league Hall of Fame before somebody can invent a waiting period. Multiple championships have converted normal gratitude into civic mythology.'}
+ else if(score>=70){tier='BELOVED';title='Build the Statue';scene='The fan base has moved from applause to urban planning. There are unserious proposals for a statue, a street rename, and at least one parade route that definitely has not been approved.'}
+ else if(score>=55){tier='ECSTATIC';title='Parade Permit Pending';scene='Fans are openly planning celebrations and treating every competent roster move as evidence that management sees football in four dimensions.'}
+ else if(score>=40){tier='THRILLED';title='Standing Ovation';scene='The building is loud, the approval rating is louder, and even the habitual complainers are having difficulty finding a grievance that can survive daylight.'}
+ else if(score>=25){tier='PLEASED';title='Strong Approval';scene='Fans are happy with management and mostly willing to let the front office cook, which in this league qualifies as an extraordinary period of social stability.'}
+ else if(score>=10){tier='OPTIMISTIC';title='Cautious Belief';scene='The fan base likes the direction but still keeps one hand near the panic button. Hope has returned; trust is still being issued in small denominations.'}
+ else if(score>-10){tier='MIXED';title='Jury Still Out';scene='The crowd is split between “the plan is working” and “we have seen this movie before.” Nobody is building a statue, but nobody has priced moving vans either.'}
+ else if(score>-25){tier='RESTLESS';title='Sports-Radio Grumbling';scene='Call-in shows are getting testy. Fans are questioning decisions, but this is still complaint-line territory rather than a full municipal crisis.'}
+ else if(score>-40){tier='ANGRY';title='The Boo Birds Have Arrived';scene='The boos are organized enough to have rhythm. Management is getting blamed for lineup choices, roster construction, and several weather events outside its jurisdiction.'}
+ else if(score>-55){tier='FURIOUS';title='Fire-the-GM Chants';scene='The fan base has reached synchronized “fire the GM” territory. Every old trade is being reposted with a red circle around it and absolutely no generosity about context.'}
+ else if(score>-70){tier='MUTINOUS';title='Ban Him From the City';scene='Fans are joking about revoking management’s city privileges. Local message boards have produced mock eviction notices, fake border checkpoints, and the sort of civic paperwork only a losing streak can inspire.'}
+ else if(score>-85){tier='REVOLT';title='Metaphorical Torches & Pitchforks';scene='The mood has entered cartoon-revolt territory: metaphorical torches, pitchforks, and demands that the GM be escorted to the city limits by a marching band playing only sad trombone.'}
+ else{tier='APOCALYPTIC';title='The Imaginary Mansion Is Under Siege';scene='In the grand tradition of sports-fan hyperbole, the bit has escalated to an imaginary mob “storming the GM’s mansion” with foam pitchforks, novelty torches, and a petition banning the front office from every brunch spot in town.'}
+ return{score,raw_score:Math.round(raw),change,continuity:!!continuity,tier,title,scene,manager_user_id:String(t.manager_user_id||''),championships:totalChamps,prior_championships:priorChamps,current_season_champion:!!t.current_season_champion,recent_trade_count:recentTrades,value_change:Number.isFinite(Number(v.delta))?Number(v.delta):null,recent_record:games.reduce((a,g)=>{if(g.result==='W')a.w++;else if(g.result==='L')a.l++;else a.t++;return a},{w:0,l:0,t:0})};
+}
+function fanSentimentParagraph(t,r,sentiment){
+ const s=sentiment||fanSentimentForTeam(t),delta=s.change==null?'':(' That is '+Math.abs(s.change)+' sentiment point'+(Math.abs(s.change)===1?'':'s')+' '+(s.change>=0?'warmer':'colder')+' than last week, so the crowd is moving without pretending one Sunday erased the month before it.');
+ const evidence=' The mood is carrying '+s.recent_record.w+'-'+s.recent_record.l+(s.recent_record.t?'-'+s.recent_record.t:'')+' over the recent sample, '+s.championships+' championship'+(s.championships===1?'':'s')+' on the current manager résumé, '+s.recent_trade_count+' recent trade'+(s.recent_trade_count===1?'':'s')+(s.value_change==null?'':', and a '+(s.value_change>=0?'+':'')+s.value_change.toLocaleString()+' team-value move')+'.';
+ if(r.id==='walter-mercer')return 'Fan Sentiment — '+s.title+': '+s.scene+evidence+delta+' The useful part is that this crowd remembers more than seven days, even when talk radio does not.';
+ if(r.id==='tess-delaney')return 'Fan Sentiment Index — '+s.title+': '+s.scene+evidence+delta+' Reputation has inertia; a good manager is not suddenly incompetent because variance learned his address.';
+ if(r.id==='mack-hollis')return 'FAN SENTIMENT — '+s.title.toUpperCase()+': '+s.scene+evidence+delta+' This newspaper supports calm, reasoned discourse and has therefore printed the loudest possible version of it.';
+ return 'Public Sentiment File — '+s.title+': '+s.scene+evidence+delta+' The prosecution notes that reputations are cumulative evidence, not a single-week mugshot.';
+}
 function closingParagraph(t,r){
  const won=!!t.won;
  if(r.id==='walter-mercer')return won?'So keep the clipping. This one earned ink. But a season is not built by admiring yesterday’s paper; it is built by giving us something worth printing again next week.':'File the loss, remember why it happened, and move on. Fans are allowed to be irritated. Beat writers are required to save the receipts.';
@@ -231,8 +287,8 @@ export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyS
    label=last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta>=3&&lastAvg>=priorAvg*1.2?'hot':last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta<=-3&&lastAvg<=priorAvg*.8?'cold':last3.length===3?'steady':'insufficient';
   facts[id]={id,name,position,nfl_team:String(m.team||'FA'),points:Number.isFinite(Number(fp))?Number(fp):null,real_stat_line:realStatLine(position,stats),recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
  }
- const classification=weekClassification||{week:Number(week),season:Number(season),phase:Number(week)>=INQUIRER_PLAYOFF_START_WEEK?'Playoffs':'Regular Season',playoffs:Number(week)>=INQUIRER_PLAYOFF_START_WEEK&&Number(week)<=INQUIRER_FINAL_WEEK,label:'Week '+week+(Number(week)>=INQUIRER_PLAYOFF_START_WEEK?' • Playoffs':' • Regular Season'),playoff_start_week:INQUIRER_PLAYOFF_START_WEEK,final_week:INQUIRER_FINAL_WEEK};
- const enriched=(teams||[]).map(t=>{const reporter=reporterForTeam(t.roster_id,week,ids),starters=(t.starter_details||[]).map(p=>({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,recent_form:facts[String(p.id)]?.recent_form||null})),benchFact=t.best_bench?{...t.best_bench,real_stat_line:facts[String(t.best_bench.id)]?.real_stat_line||'',recent_form:facts[String(t.best_bench.id)]?.recent_form||null}:null,worstFact=t.worst_starter?{...t.worst_starter,real_stat_line:facts[String(t.worst_starter.id)]?.real_stat_line||'',recent_form:facts[String(t.worst_starter.id)]?.recent_form||null}:null,tt={...t,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter},paragraphs=[intro(tt,week,reporter),leagueContextParagraph(tt,week,reporter),recentHistoryParagraph(tt,reporter),gameAnatomyParagraph(tt,reporter),playersParagraph(tt,reporter),supportingCastParagraph(tt,reporter),managerParagraph(tt,facts,reporter),opponentContextParagraph(tt,reporter),valueHistoryParagraph(tt,reporter),availabilityParagraph(tt,week,reporter),nextWeekParagraph(tt,reporter),closingParagraph(tt,reporter)].filter(Boolean),article={schema_version:4,inquirer_version:INQUIRER_VERSION,season:Number(season),week:Number(week),week_classification:classification,roster_id:String(t.roster_id),reporter:reporterPublic(reporter),headline:headline(tt,week,reporter),byline:'By '+reporter.name+', '+reporter.title,deck:reporter.desk+' • '+reporter.signature+' • '+classification.label,paragraphs,aside:aside(tt,week,reporter),generated_from:'Sleeper completed matchup, season-to-date matchup history, opponent context, standings, projections, lineup decisions, transactions, roster/player metadata, weekly real-life stats, canonical team Value History, verified NFL schedule, and Sleeper injury designations',real_stats_source:'Sleeper weekly stats',facts:{team_points:Number(tt.points),opponent_points:Number(tt.opponent_points),projected:Number(tt.projected),league_context:tt.league_context||null,opponent_context:tt.opponent_context||null,next_opponent_context:tt.next_opponent_context||null,value_history_week:tt.value_history_week||null,next_week_availability:tt.next_week_availability||null,starter_details:starters,best_bench:benchFact||null,worst_starter:worstFact||null}};return{...tt,inquirer_article:article,reporter_id:reporter.id}});
+ const classification=weekClassification||inquirerWeekClassification(week,season);
+ const enriched=(teams||[]).map(t=>{const reporter=reporterForTeam(t.roster_id,week,ids),teamClassification=inquirerWeekClassification(week,season,t.conference),starters=(t.starter_details||[]).map(p=>({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,recent_form:facts[String(p.id)]?.recent_form||null})),benchFact=t.best_bench?{...t.best_bench,real_stat_line:facts[String(t.best_bench.id)]?.real_stat_line||'',recent_form:facts[String(t.best_bench.id)]?.recent_form||null}:null,worstFact=t.worst_starter?{...t.worst_starter,real_stat_line:facts[String(t.worst_starter.id)]?.real_stat_line||'',recent_form:facts[String(t.worst_starter.id)]?.recent_form||null}:null,tt={...t,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter},sentiment=fanSentimentForTeam(tt),paragraphs=[intro(tt,week,reporter),leagueContextParagraph(tt,week,reporter),recentHistoryParagraph(tt,reporter),gameAnatomyParagraph(tt,reporter),playersParagraph(tt,reporter),supportingCastParagraph(tt,reporter),managerParagraph(tt,facts,reporter),opponentContextParagraph(tt,reporter),valueHistoryParagraph(tt,reporter),fanSentimentParagraph(tt,reporter,sentiment),availabilityParagraph(tt,week,reporter),nextWeekParagraph(tt,reporter),closingParagraph(tt,reporter)].filter(Boolean),article={schema_version:5,inquirer_version:INQUIRER_VERSION,season:Number(season),week:Number(week),week_classification:teamClassification,fan_sentiment:sentiment,roster_id:String(t.roster_id),reporter:reporterPublic(reporter),headline:headline(tt,week,reporter),byline:'By '+reporter.name+', '+reporter.title,deck:reporter.desk+' • '+reporter.signature+' • '+teamClassification.label,paragraphs,aside:aside(tt,week,reporter),generated_from:'Sleeper completed matchup, season-to-date matchup history, opponent context, standings, projections, lineup decisions, transactions, roster/player metadata, weekly real-life stats, canonical team Value History, verified NFL schedule, and Sleeper injury designations',real_stats_source:'Sleeper weekly stats',facts:{team_points:Number(tt.points),opponent_points:Number(tt.opponent_points),projected:Number(tt.projected),league_context:tt.league_context||null,opponent_context:tt.opponent_context||null,next_opponent_context:tt.next_opponent_context||null,value_history_week:tt.value_history_week||null,next_week_availability:tt.next_week_availability||null,fan_sentiment:sentiment,manager_career:tt.manager_career||null,conference:tt.conference||null,division_name:tt.division_name||null,starter_details:starters,best_bench:benchFact||null,worst_starter:worstFact||null}};return{...tt,inquirer_article:article,reporter_id:reporter.id}});
  return{reporters:publicReporters(),teams:enriched};
 }
 
@@ -277,7 +333,7 @@ function hotTakeRows(teams,reporters){
  return takes;
 }
 export function buildLeagueOverview({season,week,teams,players,transactions,canonicalTrades=[],weekClassification=null,valueHistoryMeta={}}){
- const reporters=REPORTERS,classification=weekClassification||{week:Number(week),season:Number(season),phase:Number(week)>=INQUIRER_PLAYOFF_START_WEEK?'Playoffs':'Regular Season',playoffs:Number(week)>=INQUIRER_PLAYOFF_START_WEEK,label:'Week '+week+(Number(week)>=INQUIRER_PLAYOFF_START_WEEK?' • Playoffs':' • Regular Season'),playoff_start_week:INQUIRER_PLAYOFF_START_WEEK,final_week:INQUIRER_FINAL_WEEK},rows=(teams||[]).slice(),teamById=new Map(rows.map(t=>[String(t.roster_id),t])),ranked=rows.slice().sort(standingsSort),playoffTeams=Number(ranked[0]?.league_context?.playoff_teams)||0;
+ const reporters=REPORTERS,classification=weekClassification||inquirerWeekClassification(week,season),rows=(teams||[]).slice(),teamById=new Map(rows.map(t=>[String(t.roster_id),t])),ranked=rows.slice().sort(standingsSort),playoffTeams=Number(ranked[0]?.league_context?.playoff_teams)||0;
  const topScore=rows.slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],biggestMargin=rows.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points)))[0],tx=transactionOverview(transactions,players,teamById);
  const bottomFive=ranked.slice(-5).sort((a,b)=>Number(b?.league_context?.standings_rank||0)-Number(a?.league_context?.standings_rank||0)),bubble=ranked.filter(t=>{const r=Number(t?.league_context?.standings_rank);return playoffTeams&&r>=Math.max(1,playoffTeams-2)&&r<=playoffTeams+3});
  const movers=rows.filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))).sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta)),availability=rows.filter(t=>(t?.next_week_availability?.bye_current_starters?.length||0)+(t?.next_week_availability?.injury_current_starters?.length||0)>0).sort((a,b)=>(b.next_week_availability.bye_current_starters.length+b.next_week_availability.injury_current_starters.length)-(a.next_week_availability.bye_current_starters.length+a.next_week_availability.injury_current_starters.length));

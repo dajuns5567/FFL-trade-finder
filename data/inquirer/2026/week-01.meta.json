@@ -1,9 +1,9 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "season": 2026,
   "week": 1,
-  "inquirer_version": 17,
-  "generated_at": "2026-09-20T01:11:14.709Z",
+  "inquirer_version": 18,
+  "generated_at": "2026-09-20T01:46:12.445Z",
   "teams": 32,
   "reporters": [
     "Nick Swindell",
@@ -13,11 +13,23 @@
   ],
   "reporter_distribution": "8 team articles per reporter",
   "team_article_sections": 6,
+  "average_team_article_words": 363,
   "league_overview_sections": 4,
-  "hot_takes": 4,
-  "average_team_article_words": 840,
-  "prose_quality_audit": "passed scripts/inquirer-prose-quality-audit.mjs before commit",
-  "replaces": "V16 Week 1 checklist-style edition",
-  "source": "Completed Sleeper Week 1 data via corrected V17 narrative writer",
+  "league_overview_words": 496,
+  "hot_takes": 5,
+  "hot_take_types": [
+    "championship",
+    "fraud",
+    "division",
+    "player",
+    "upset"
+  ],
+  "prose_quality_audits": [
+    "scripts/inquirer-prose-quality-audit.mjs",
+    "scripts/inquirer-overview-quality-audit.mjs"
+  ],
+  "nate_landman_real_stat_line_verified": true,
+  "replaces": "V17 Week 1 narrative edition",
+  "source": "Completed Sleeper Week 1 data via V18 human-first newsroom",
   "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs"
 }

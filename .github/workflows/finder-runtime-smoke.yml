@@ -57,7 +57,11 @@ on:
       - 'league-hub-v451.js'
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/inquirer-reporters.mjs'
+      - 'netlify/functions/inquirer-narrative-v17.mjs'
+      - 'netlify/functions/inquirer-week1-2026-preload.mjs'
       - 'scripts/inquirer-reporters-smoke.mjs'
+      - 'scripts/inquirer-prose-quality-audit.mjs'
+      - 'data/inquirer/2026/week-01.meta.json'
       - 'docs/FLEECED-INQUIRER-VOICE-AND-REPORTERS.md'
       - 'netlify.toml'
       - '.github/workflows/finder-runtime-smoke.yml'
@@ -143,12 +147,15 @@ jobs:
           node --check netlify/functions/value-history-observability.mjs
           node --check scripts/resolve-active-netlify-site.mjs
           node --check scripts/value-history-headless-refresh.mjs
-      - name: Fleeced Inquirer reporter rotation, real stats, and archives
+      - name: Fleeced Inquirer reporter rotation, real stats, archives, and prose quality
         run: |
           node --check league-hub-v451.js
           node --check netlify/functions/league-hub.mjs
           node --check netlify/functions/inquirer-reporters.mjs
+          node --check netlify/functions/inquirer-narrative-v17.mjs
+          node --check scripts/inquirer-prose-quality-audit.mjs
           node scripts/inquirer-reporters-smoke.mjs
+          node scripts/inquirer-prose-quality-audit.mjs
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs
       - name: Value History data hub behavior and isolation

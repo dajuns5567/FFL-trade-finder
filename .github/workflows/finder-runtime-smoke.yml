@@ -64,7 +64,9 @@ on:
       - 'netlify/functions/inquirer-context-v22.mjs'
       - 'netlify/functions/inquirer-editorial-v23.mjs'
       - 'netlify/functions/inquirer-reporting-v24.mjs'
+      - 'netlify/functions/inquirer-reporting-v25.mjs'
       - 'scripts/inquirer-v24-audit.mjs'
+      - 'scripts/inquirer-v25-audit.mjs'
       - 'scripts/inquirer-v23-audit.mjs'
       - 'scripts/inquirer-v22-audit.mjs'
       - 'netlify/functions/inquirer-overview-v19.mjs'
@@ -159,7 +161,7 @@ jobs:
           node --check netlify/functions/value-history-observability.mjs
           node --check scripts/resolve-active-netlify-site.mjs
           node --check scripts/value-history-headless-refresh.mjs
-      - name: Fleeced Inquirer V21 impact newsroom, projections, archives, and writing quality
+      - name: Fleeced Inquirer V25 newsroom, projections, archives, and writing quality
         run: |
           node --check league-hub-v451.js
           node --check netlify/functions/league-hub.mjs
@@ -171,6 +173,7 @@ jobs:
           node --check netlify/functions/inquirer-context-v22.mjs
           node --check netlify/functions/inquirer-editorial-v23.mjs
           node --check netlify/functions/inquirer-reporting-v24.mjs
+          node --check netlify/functions/inquirer-reporting-v25.mjs
           node --check netlify/functions/inquirer-overview-v19.mjs
           node --check scripts/inquirer-prose-quality-audit.mjs
           node --check scripts/inquirer-overview-quality-audit.mjs
@@ -179,6 +182,7 @@ jobs:
           node scripts/inquirer-prose-quality-audit.mjs
           node scripts/inquirer-v23-audit.mjs
           node scripts/inquirer-v24-audit.mjs
+          node scripts/inquirer-v25-audit.mjs
           node scripts/inquirer-overview-quality-audit.mjs
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs

@@ -132,7 +132,7 @@ const crossStats={'rb-test':{rush_att:8,rush_yd:24},'wr-test':{rec:5,rec_tgt:7,r
 const crossBuild=buildInquirerWeek({season:2026,week:6,teams:[crossPositionTeam],players:crossPlayers,weeklyStats:crossStats,weeklyStatHistory:{6:crossStats},scoringSettings:{},scoreFn:()=>10,weekClassification});
 const crossManagement=crossBuild.teams[0].inquirer_article.sections.find(s=>s.kind==='management')?.paragraphs?.join(' ')||'';
 assert(!/Bench Linebacker.*Starting Runner|Starting Runner.*Bench Linebacker/.test(crossManagement),'IDP bench scorer must never be framed as a legal replacement for an RB starter');
-assert(/IDP|lineup rules|eligible|legal|allowed|substitution/i.test(crossManagement),'Cross-position lineup hindsight must explicitly respect legal lineup eligibility');
+assert(crossBuild.teams[0].best_lineup_miss==null,'Cross-position test must produce no legal lineup miss when the only higher bench scorer is an LB and the weak starter is an RB');
 
 const overview=buildLeagueOverview({
  season:2026,week:14,teams:built.teams,players,

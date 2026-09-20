@@ -108,4 +108,80 @@ export function narrativeHeadline(t,w,r){
     ],
     'tess-delaney':[
       `The Numbers Explain More Than the Final Score for ${t.team_name}`,
- 
+      `${star} Was Not Enough to Fix ${t.team_name}'s Week`,
+      `Where ${t.team_name}'s Process Broke Down`,
+      `${t.team_name} Lost, and the Bad Math Was Not Subtle`,
+      `The Box Score Has a Warning Label for ${t.team_name}`,
+      `${t.team_name} Found the Wrong Side of Its Own Trend Line`,
+      `A Loss With Clues: What ${t.team_name} Needs to Fix`,
+      `${t.team_name} Gave the Spreadsheet Something to Complain About`
+    ],
+    'mack-hollis':[
+      `Someone Hide the Front Page From ${t.team_name}`,
+      `${star} Deserved Better Than This ${t.team_name} Ending`,
+      `${t.team_name} Has Forced Us to Use the Angry Font`,
+      `The Back Page Is Filing a Complaint Against ${t.team_name}`,
+      `${t.team_name} Lost, and Yes, We Have Begun Naming Names`,
+      `${opp} Ruined the Evening and ${t.team_name} Helped`,
+      `Red Ink Everywhere After ${t.team_name}'s Sunday`,
+      `${t.team_name} Gave This Newspaper a Very Expensive Headache`
+    ],
+    'nora-voss':[
+      `The Evidence Board Is Not Kind to ${t.team_name}`,
+      `${star} Cannot Be the Entire Defense for ${t.team_name}`,
+      `The Lineup Card Has Questions to Answer After ${t.team_name}'s Loss`,
+      `${t.team_name} Leaves a Paper Trail Nobody Should Enjoy Reading`,
+      `The Inquiry Begins With What ${t.team_name} Left on the Table`,
+      `${opp} Wins the Argument, and ${t.team_name} Supplies the Exhibits`,
+      `${t.team_name} Loses, So the File Stays Open`,
+      `There Are Fingerprints All Over ${t.team_name}'s Bad Sunday`
+    ]
+  };
+  const pool=(t.won?win:loss)[r.id]||(t.won?win['walter-mercer']:loss['walter-mercer']);
+  return pool[v%pool.length];
+}
+
+function seasonNarrative(t,w){
+  const c=t.league_context||{},st=c.streak||{},rank=Number(c.standings_rank),size=Number(c.league_size)||32,rec=c.record||{};
+  const record=String(rec.wins||0)+'-'+String(rec.losses||0)+(Number(rec.ties)?'-'+String(rec.ties):'');
+  if(Number(w)===1)return `One result is not a trend, and the opening table is mostly a collection of very small sample sizes. ${t.team_name} leaves Week 1 at ${record}${rank?' and sits '+rank+'th of '+size:''}. That is useful context, not permission to start engraving trophies or tombstones.`;
+  const streak=Number(st.length)>=2?` The ${st.type==='W'?'winning':'losing'} streak has reached ${st.length}.`:'';
+  const recent=Number(c.recent_avg_points),prior=Number(c.prior_five_avg_points);
+  const form=Number.isFinite(recent)&&Number.isFinite(prior)&&Math.abs(recent-prior)>=8?` The last-five scoring pace is ${one(recent)}, ${one(Math.abs(recent-prior))} ${recent>prior?'higher':'lower'} than the five before it.`:'';
+  const playoff=Number(w)>=14?` This is ${t.week_classification?.round||'the playoffs'}, so there is no harmless version of a bad lineup decision now.`:Number(c.games_until_playoffs)<=6?` Week 14 starts the playoffs, which makes the current seed line more than decorative.`:'';
+  return `${t.team_name} is ${record}${rank?', '+rank+'th of '+size:''}.${streak}${form}${playoff}`;
+}
+
+function transactionNarrative(t,facts){
+  const tx=t.transactions||[];
+  if(!tx.length)return `Management left the transaction wire alone this week. That can be discipline or complacency; the difference usually becomes obvious one injury later.`;
+  const named=[];
+  for(const move of tx){
+    for(const id of move.adds||[])if(facts[String(id)])named.push({verb:'added',p:facts[String(id)]});
+    for(const id of move.drops||[])if(facts[String(id)])named.push({verb:'moved on from',p:facts[String(id)]});
+    if(named.length>=2)break;
+  }
+  let s=`GM ${t.manager_name} logged ${tx.length} roster move${tx.length===1?'':'s'}, which at least establishes that the front office was awake.`;
+  if(named[0])s+=` The most visible piece was that management ${named[0].verb} ${named[0].p.name}. ${playerProse(named[0].p)}`;
+  if(named[1])s+=` Another move involved ${named[1].p.name}. ${playerProse(named[1].p)}`;
+  return s;
+}
+
+function valueNarrative(t){
+  const v=t.value_history_week;
+  if(!v||!Number.isFinite(Number(v.delta)))return `The Value Watch is deliberately quiet this week. There is not yet a valid pair of team-value observations to support a real movement claim, so the market section will wait rather than decorate an empty sample with fake precision.`;
+  const d=Number(v.delta),period=v.period==='7D'?'seven days':'the available tracking window';
+  return `The market has moved this roster ${d>=0?'up':'down'} by ${Math.abs(d).toLocaleString()} value points over ${period}, from ${Number(v.baseline_value||0).toLocaleString()} to ${Number(v.value||0).toLocaleString()}. That is not a win or a loss, but it is useful evidence about how the league’s valuation picture is changing around the results.`;
+}
+
+function sentimentNarrative(s){
+  const delta=s.change==null?'':` Compared with last week, the mood is ${s.change>=0?'warmer':'colder'} without pretending one Sunday erased everything that came before.`;
+  return `${s.scene} That reaction is being carried by the manager’s recent results, roster-value direction, transaction history and longer résumé rather than this week alone.${delta}`;
+}
+
+function personnelNarrative(t,w){
+  const a=t.next_week_availability||{};
+  if(a.fantasy_season_complete||Number(w)>=17)return `There is no Week 18 fantasy matchup to preview. The Super Bowl closes the Fleeced! in-season calendar, so the roster-pressure file ends here.`;
+  const byes=a.bye_current_starters||[],inj=a.injury_current_starters||[];
+  if(!a.schedule_verified&&!inj.length)return `The next-week availability file is too thin to support a confident roster warning. The NFL schedule was not verified and Sleeper has no current-starter injury designation worth publishing, so there is nothing responsible to dramatize yet.`;
+  let s=a.schedule_verified?(byes.length?`${byes.length} current starter${byes.length===1?' is':'s are'} on a verified NFL bye next week.`:`There are no verified current-starter byes next week.`):`Bye claims are being withhe

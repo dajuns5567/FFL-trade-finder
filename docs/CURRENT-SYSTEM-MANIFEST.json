@@ -141,6 +141,20 @@
       "rule": "sentiment is management commentary only and cannot feed valuation/trade/standings systems",
       "extreme_negative_style": "obviously fictional sports-fan hyperbole; metaphorical/cartoon torches and pitchforks, not literal violence",
       "extreme_positive_style": "Hall of Fame petition reserved for sufficiently strong sentiment with repeated championships"
+    },
+    "inquirer_published_editions": {
+      "2026-week-1": {
+        "inquirer_version": 16,
+        "status": "published as immutable preload on PR #385",
+        "team_articles": 32,
+        "reporter_distribution": "8 team articles per reporter",
+        "league_overview_sections": 4,
+        "hot_takes": 4,
+        "generated_from": "completed Sleeper Week 1 matchup/player-stat/transaction data",
+        "value_history_note": "no valid seven-day team Value History comparison existed, so no movement was invented",
+        "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs",
+        "metadata": "data/inquirer/2026/week-01.meta.json"
+      }
     }
   },
   "recovery_branches": {

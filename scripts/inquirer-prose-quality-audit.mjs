@@ -24,7 +24,7 @@ if(Number(edition?.inquirer_version)<17)fail('Prose audit requires Inquirer V17 
 const teams=edition?.teams||[];
 if(teams.length!==32)fail('Expected 32 team articles; got '+teams.length);
 
-const requiredKinds=['lede','players','management','sentiment','outlook'];
+const requiredKinds=['lede','players','management','value','sentiment','outlook'];
 const voiceAnchors={
   'walter-mercer':['press box','notebook','clipping','ink','receipts'],
   'tess-delaney':['process','sample','spreadsheet','numbers','repeatable'],
@@ -40,7 +40,7 @@ for(const team of teams){
   if(!rid)fail('Missing reporter id for roster '+team.roster_id);
   if(!a.headline)fail('Missing headline for roster '+team.roster_id);
   const sections=Array.isArray(a.sections)?a.sections:[];
-  if(sections.length!==5)fail(team.team_name+' must have exactly five newspaper sections; got '+sections.length);
+  if(sections.length!==6)fail(team.team_name+' must have exactly six newspaper sections; got '+sections.length);
   const kinds=sections.map(s=>s.kind);
   for(const k of requiredKinds)if(!kinds.includes(k))fail(team.team_name+' missing section kind '+k);
   for(const s of sections){
@@ -48,7 +48,7 @@ for(const team of teams){
     if(!Array.isArray(s.paragraphs)||s.paragraphs.length<2)fail(team.team_name+' section '+s.heading+' must contain at least two connected paragraphs');
   }
   const paras=sections.flatMap(s=>s.paragraphs||[]),body=paras.join(' ');
-  if(paras.length<10)fail(team.team_name+' has only '+paras.length+' narrative paragraphs');
+  if(paras.length<12)fail(team.team_name+' has only '+paras.length+' narrative paragraphs');
   const wc=words(body).length,nums=numericTokens(body),upp=upperWords(body),lens=paras.map(p=>words(p).length);
   if(wc<520)fail(team.team_name+' is too short for a full beat column: '+wc+' words');
   if(median(lens)<38)fail(team.team_name+' paragraphs are too fragmentary; median paragraph is '+median(lens)+' words');

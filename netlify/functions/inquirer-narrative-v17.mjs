@@ -233,4 +233,47 @@ function buildSections(t,w,r,facts,sentiment){
       `${season} The sample is still allowed to be small. My only request is that we stop treating “small” as a synonym for “meaningless.” Even in Week ${w}, usage, lineup concentration and decision quality can tell us what deserves another look.`
     ]},
     {heading:'Where the Production Came From',kind:'players',paragraphs:[
-      `${star} That is the player-level result I care about most because the fantasy number has a real football stat line sitting underneath it. ${trend||'For now, it is a strong data
+      `${star} That is the player-level result I care about most because the fantasy number has a real football stat line sitting underneath it. ${trend||'For now, it is a strong data point rather than a trend; the spreadsheet is capable of waiting even if the group chat is not.'}`,
+      `${second} At the other end, ${low} The shape of the lineup matters more than a highlight reel. Sustainable teams usually win because the middle of the roster is useful, not because one superstar is asked to perform weekly emergency surgery.`
+    ]},
+    {heading:'Process Review',kind:'management',paragraphs:[
+      `${tx} I am less interested in whether a move looked clever on Tuesday than whether it attacked an actual weakness. Waiver activity is only strategy when it changes the set of decisions available on Sunday.`,
+      g.bench&&g.worst&&g.benchGap>=5?`${bench} It is fair to compare that with the starter who occupied the weaker slot: ${low} The gap is notable, but hindsight does not automatically make the original choice irrational. If the same selection pattern repeats with the same evidence, then we have a process problem.`:`The bench did not contain a single obvious answer that would have rewritten the matchup. That is inconvenient for anyone looking for one manager decision to blame, but it is better analysis than manufacturing a culprit.`
+    ]},
+    {heading:'Market, Memory and the Crowd',kind:'sentiment',paragraphs:[
+      `${fans} That is why this section carries forward from week to week. Reputation should behave like a moving average, not a panic button; good managers earn a buffer, and prolonged bad process eventually burns through it.`,
+      `${value} Market value is not truth, but it is a useful second opinion. When results, player usage and roster value all move in the same direction, the signal gets harder to dismiss.`
+    ]},
+    {heading:'Next Week’s Test',kind:'outlook',paragraphs:[
+      `${personnel} Bye weeks and injury designations are constraints, not excuses. They change the available decision tree, which is exactly why depth should be evaluated before kickoff instead of after a zero appears in the lineup.`,
+      `${next} If this week exposed a repeatable strength, use it again. If it exposed a dependency, fix it before the next opponent notices. The numbers are not asking for panic; they are asking management to read them correctly.`
+    ]}
+  ];
+
+  if(r.id==='mack-hollis')return[
+    {heading:'The Back Page Has Feelings',kind:'lede',paragraphs:[
+      `${t.team_name} ${won?'won':'lost'} ${g.score}, which means the newsroom is currently operating at the emotionally responsible level of ${won?'“somebody find a parade permit”':'“who authorized this nonsense?”'} The margin was ${margin} points. That is the boring fact. The fun part is deciding which parts of the performance deserve enormous type and which parts should be hidden behind a classified ad.`,
+      `${season} I am aware that grown adults are supposed to respect sample size. I also work for a fictional tabloid inside a fantasy league, so everybody should lower their expectations accordingly. We will celebrate or complain loudly; we will simply do it with the box score attached.`
+    ]},
+    {heading:'Who Gets the Giant Photo',kind:'players',paragraphs:[
+      `${star} That is front-page material because the fantasy points came with a real NFL performance rather than a decorative number floating in space. ${trend||'It is too early to call it a heater, but nobody said we had to whisper while waiting for more evidence.'}`,
+      `${second} Not everybody gets confetti. ${low} That is not a public execution; it is just the part of the story where the band gets quieter and the coaching staff suddenly develops an interest in “cleaning things up.”`
+    ]},
+    {heading:'Management, Please Report to the Principal’s Office',kind:'management',paragraphs:[
+      `${tx} I support aggressive management right up until the exact moment it becomes random button pressing, so the standard here is simple: did the moves make the roster better at the places that mattered?`,
+      g.bench&&g.worst&&g.benchGap>=5?`${bench} Meanwhile, the starting lineup carried ${g.worst.name} instead. ${low} That is the kind of hindsight gap that gets a caller on sports radio to say “I knew it all week” despite there being no witnesses.`:`There was no bench-versus-starter catastrophe large enough to put on a sandwich board outside the front office. Management may enjoy this temporary amnesty. It expires at the next lineup lock.`
+    ]},
+    {heading:'What the Fans Are Yelling',kind:'sentiment',paragraphs:[
+      `${fans} The important word there is “running.” Fans are allowed to be ridiculous; the newspaper is supposed to remember whether the manager has actually earned love, suspicion or a ceremonial banishment from city brunch.`,
+      `${value} If the market eventually agrees with the crowd, terrific. If it does not, we get several more weeks of arguments, which is excellent for circulation and terrible for everyone's blood pressure.`
+    ]},
+    {heading:'Tomorrow’s Problem',kind:'outlook',paragraphs:[
+      `${personnel} This is where jokes about depth charts stop being jokes. If a starter is unavailable, somebody else has to become a real person in the lineup, preferably before Sunday afternoon.`,
+      `${next} ${won?'Enjoy the screenshot tonight and send one tasteful message to a rival.':'Complain tonight, make it funny tomorrow, and do not let the same mistake become next week’s headline.'} The back page gets another edition either way, and we have plenty of ink left.`
+    ]}
+  ];
+
+  return[
+    {heading:'The Week’s Evidence',kind:'lede',paragraphs:[
+      `${t.team_name} ${won?'won':'lost'} ${g.score}, and the file begins with the ${margin}-point margin rather than a theory about character. ${g.projDelta==null?'There is no reliable projection comparison in evidence.':`The lineup finished ${Math.abs(g.projDelta).toFixed(1)} points ${g.projDelta>=0?'above':'below'} projection.`} The result is real. Motive, intent and sweeping conclusions remain under investigation.`,
+      `${season} This desk distrusts single-game certainty

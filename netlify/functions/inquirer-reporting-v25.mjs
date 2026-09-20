@@ -149,6 +149,25 @@ function opponentPreview(t,r){
   return [intro,tail].filter(Boolean).join(' ');
 }
 
+function divisionStory(t,r){
+  let d=divisionCopy(t);if(!d)return null;
+  const lost='Another loss would leave this team relying more heavily on help from those rivals.';
+  const gained='Next week is a chance to improve that position before the division has time to separate.';
+  if(d.includes(lost))d=d.replace(lost,deskChoice(t,r,[
+    [`The useful response is simple: stop giving those rivals more help next week.`,`The notebook version is shorter: the next loss would make the chase considerably uglier.`],
+    [`Depending on rival charity twice in a row would be terribly unbecoming.`,`Another week of asking the neighbors for help would ruin the arrangement.`],
+    [`Next week: win your own game and stop outsourcing the rescue mission.`,`The back-page prescription is obvious—quit making the rivals do the saving.`],
+    [`The case improves fastest if ${t.team_name} stops requiring favorable exhibits from elsewhere.`,`Rival losses helped limit the damage; relying on that evidence again would weaken the case.`]
+  ]));
+  if(d.includes(gained))d=d.replace(gained,deskChoice(t,r,[
+    [`There is room to build on that ground next week before anyone gets comfortable.`,`The next assignment is to make the early division gain look less temporary.`],
+    [`A little more ground next week and we may discuss the table with the good china.`,`The division picture is flattering for now; repeating the result would make it fashionable.`],
+    [`The division opened a door. Kick it wider next week.`,`There is real ground to press now—do not turn a good headline into a one-week souvenir.`],
+    [`The evidence shows an opening; next week determines whether it becomes position or merely circumstance.`,`The division file moved in ${t.team_name}’s favor. One more clean result would make that meaningful.`]
+  ]));
+  return d;
+}
+
 function outlook(t,week,r){
   const ps=[],m=t.mida_outlook,op=t.next_opponent_name,gap=valid(t.next_projected)&&valid(t.next_opponent_projected)?Number(t.next_projected)-Number(t.next_opponent_projected):null;
   if(op&&gap!=null){
@@ -191,7 +210,7 @@ function outlook(t,week,r){
     ]);
     ps.push(`${t.team_name} has around ${one(m.playoff)}% chance of reaching the playoffs${title}. ${stakes}`);
   }
-  const div=divisionCopy(t);if(div)ps.push(div);
+  const div=divisionStory(t,r);if(div)ps.push(div);
   return ps.length?ps:['n/a'];
 }
 

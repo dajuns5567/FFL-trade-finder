@@ -1,4 +1,4 @@
-name: One-time publish audited Inquirer V20
+name: One-time publish audited Inquirer V20 — pass 2
 
 on:
   push:

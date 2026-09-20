@@ -1,9 +1,9 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "season": 2026,
   "week": 1,
-  "inquirer_version": 18,
-  "generated_at": "2026-09-20T01:46:12.445Z",
+  "inquirer_version": 20,
+  "generated_at": "2026-09-20T03:07:15.728Z",
   "teams": 32,
   "reporters": [
     "Nick Swindell",
@@ -13,9 +13,10 @@
   ],
   "reporter_distribution": "8 team articles per reporter",
   "team_article_sections": 6,
-  "average_team_article_words": 363,
+  "minimum_team_article_paragraphs": 14,
+  "average_team_article_words": 444,
+  "distinct_section_orders": 8,
   "league_overview_sections": 4,
-  "league_overview_words": 496,
   "hot_takes": 5,
   "hot_take_types": [
     "championship",
@@ -28,8 +29,15 @@
     "scripts/inquirer-prose-quality-audit.mjs",
     "scripts/inquirer-overview-quality-audit.mjs"
   ],
-  "nate_landman_real_stat_line_verified": true,
-  "replaces": "V17 Week 1 narrative edition",
-  "source": "Completed Sleeper Week 1 data via V18 human-first newsroom",
+  "legal_lineup_swap_only": true,
+  "idp_cannot_replace_offensive_slot": true,
+  "archive_filters": [
+    "year",
+    "week",
+    "team"
+  ],
+  "archive_default": "current completed week",
+  "replaces": "V19/V18 templated presentation edition",
+  "source": "Completed Sleeper Week 1 data through V20 passionate newsroom",
   "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs"
 }

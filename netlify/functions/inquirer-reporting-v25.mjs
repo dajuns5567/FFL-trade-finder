@@ -596,7 +596,7 @@ function tillyManagementStory(t){
   const core=managementStory(t);if(!core)return null;
   const trade=(t.trade_acquisitions||[])[0],lead=trade?`TRADE FOLLOW-UP: ${t.team_name} has ${trade.player_name} because management dealt for him, so every useful or useless Sunday belongs to that decision now. `:`ROSTER MOVE WORTH WATCHING: ${t.team_name} made one of the few transactions this week that actually changed the football conversation. `;
   const p=trade?(t.starter_details||[]).find(x=>String(x.id)===String(trade.player_id)):null,context=p?playerContextParagraph(p):'';
-  return lead+core+(context?` ${context}`:'')+` The useful question for ${t.team_name} is what this move looks like after several matchups, not whether it won one afternoon of transaction chatter.`;
+  return lead+core+(context?` ${context}`:'')+` The back page will revisit ${t.team_name} when this move has several matchups behind it; the useful question is what changed on Sundays, not who won one afternoon of transaction chatter.`;
 }
 function playerTrend(teams){
   return teams.flatMap(t=>(t.starter_details||[]).map(p=>({t,p}))).filter(x=>['hot','cold'].includes(x.p?.recent_form?.label)).sort((a,b)=>Math.abs(Number(b.p.recent_form?.delta)||0)-Math.abs(Number(a.p.recent_form?.delta)||0))[0]||null;

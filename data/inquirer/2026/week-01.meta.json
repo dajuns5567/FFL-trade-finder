@@ -1,9 +1,9 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "season": 2026,
   "week": 1,
-  "inquirer_version": 16,
-  "generated_at": "2026-09-20T00:32:53.255Z",
+  "inquirer_version": 17,
+  "generated_at": "2026-09-20T01:04:07.881Z",
   "teams": 32,
   "reporters": [
     "Nick Swindell",
@@ -11,8 +11,13 @@
     "Tilly Fleecer",
     "Jefferson Filch"
   ],
+  "reporter_distribution": "8 team articles per reporter",
+  "team_article_sections": 6,
   "league_overview_sections": 4,
   "hot_takes": 4,
-  "source": "Sleeper Week 1 completed data via scripts/one-time-generate-inquirer-week1.mjs",
+  "average_team_article_words": 840,
+  "prose_quality_audit": "passed scripts/inquirer-prose-quality-audit.mjs before commit",
+  "replaces": "V16 Week 1 checklist-style edition",
+  "source": "Completed Sleeper Week 1 data via V17 narrative writer",
   "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs"
 }

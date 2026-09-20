@@ -1,10 +1,20 @@
 import fs from 'node:fs';
 import {REPORTERS,reporterForTeam,realStatLine,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from '../netlify/functions/inquirer-reporters.mjs';
+import week1Preload from '../netlify/functions/inquirer-week1-2026-preload.mjs';
 
 const assert=(x,m)=>{if(!x)throw new Error(m)};
 assert(REPORTERS.length===4,'Fleeced Inquirer must have exactly four permanent reporters');
 assert(REPORTERS.map(r=>r.name).join('|')==='Nick Swindell|Bartholomew Roycington III|Tilly Fleecer|Jefferson Filch','Fleeced Inquirer public reporter names must remain the approved names');
 assert(INQUIRER_PLAYOFF_START_WEEK===14&&INQUIRER_FINAL_WEEK===17,'Inquirer season must classify Weeks 14-17 as playoffs and stop at Week 17');
+assert(week1Preload?.inquirer_version===16&&Number(week1Preload?.season)===2026&&Number(week1Preload?.week)===1,'Committed Week 1 preload must be the 2026 V16 edition');
+assert(Array.isArray(week1Preload?.teams)&&week1Preload.teams.length===32,'Committed Week 1 preload must contain all 32 team articles');
+assert(week1Preload.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(t?.inquirer_article?.paragraphs)&&t.inquirer_article.paragraphs.length>=9),'Every preloaded Week 1 team must have a complete long-form article');
+const preloadReporterCounts=new Map(REPORTERS.map(r=>[r.name,0]));
+for(const t of week1Preload.teams){const n=t?.inquirer_article?.reporter?.name;preloadReporterCounts.set(n,(preloadReporterCounts.get(n)||0)+1)}
+for(const r of REPORTERS)assert(preloadReporterCounts.get(r.name)===8,'Week 1 preload must preserve exactly eight team stories for '+r.name);
+assert(week1Preload?.league_overview?.sections?.length===4&&week1Preload?.league_overview?.hot_takes?.length===4,'Week 1 preload must include the four-desk League Overview and four Hot Takes');
+assert(week1Preload?.week_classification?.label==='Week 1 • Regular Season','Week 1 preload must preserve the canonical Week 1 classification');
+assert(week1Preload.teams.every(t=>t?.value_history_week==null),'Week 1 preload must not invent team Value History movement when no valid 7D comparison exists');
 assert(inquirerWeekClassification(14,2026,'AFC').label==='Week 14 • AFC Wildcard Round','Week 14 AFC teams must be in the AFC Wildcard Round');
 assert(inquirerWeekClassification(14,2026,'NFC').label==='Week 14 • NFC Wildcard Round','Week 14 NFC teams must be in the NFC Wildcard Round');
 assert(inquirerWeekClassification(15,2026,'AFC').round==='AFC Divisional Round','Week 15 must be the conference Divisional Round');
@@ -144,6 +154,10 @@ assert(backend.includes('injury_status'),'Inquirer must use Sleeper injury desig
 assert(backend.includes("league?.metadata?.['division_'+d]"),'Conference must be derived from Sleeper division metadata rather than hardcoded roster IDs');
 assert(backend.includes("name.startsWith('AFC')")&&backend.includes("name.startsWith('NFC')"),'Sleeper AFC/NFC division labels must drive conference assignment');
 assert(backend.includes("managers/history-cache.json"),'Fan sentiment must consume persistent manager career history');
+assert(backend.includes("import week1Preload2026 from './inquirer-week1-2026-preload.mjs'"),'League Hub must import the immutable Week 1 V16 preload');
+assert(backend.includes('preloadedBroadcast(season,week)'), 'League Hub weekly/archive paths must recognize preloaded completed editions');
+assert(backend.includes('preloadedReporterEntries(reporter.id)'), 'Reporter archives must merge each reporter’s Week 1 preload stories');
+assert(backend.includes("key:'preloaded:2026:1'"), 'Weekly archive index must expose preloaded Week 1');
 assert(backend.includes('previous_fan_sentiment:previousSentiment'),'Fan sentiment must carry forward from the prior archived week for the same team/manager');
 assert(backend.includes('current_season_champion'),'Week 17 sentiment must be able to recognize the current Sleeper championship winner');
 assert(/dramatic without inventing facts/i.test(helper),'Reporter house style must preserve dramatic-but-factual constraint');

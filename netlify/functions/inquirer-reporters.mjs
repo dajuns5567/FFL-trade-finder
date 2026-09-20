@@ -43,7 +43,7 @@ export function weeklyStatsMap(raw){
 }
 
 const first=(s,...keys)=>{for(const k of keys){const n=num(s?.[k]);if(n!=null)return n}return null};
-const push=(a,v,label)=>{if(v!=null)a.push(String(v)+' '+label)};
+const push=(a,v,label)=>{if(v!=null){const singular=Number(v)===1?({'sacks':'sack','QB hits':'QB hit','tackles':'tackle','assists':'assist'}[label]||label):label;a.push(String(v)+' '+singular)}};
 
 export function realStatLine(position,stats){
  const p=String(position||'').toUpperCase(),s=stats||{},parts=[];
@@ -62,7 +62,7 @@ export function realStatLine(position,stats){
   const fg=first(s,'fgm'),fga=first(s,'fga'),xp=first(s,'xpm'),xpa=first(s,'xpa');if(fg!=null||fga!=null)parts.push(String(fg??0)+'/'+String(fga??0)+' FG');if(xp!=null||xpa!=null)parts.push(String(xp??0)+'/'+String(xpa??0)+' XP');
  }else{
   const solo=first(s,'tkl_solo','idp_tkl_solo'),ast=first(s,'tkl_ast','idp_tkl_ast'),total=first(s,'tkl','idp_tkl');
-  if(solo!=null||ast!=null){push(parts,solo,'solo');push(parts,ast,'ast')}
+  if(solo!=null||ast!=null){push(parts,solo,'solo');push(parts,ast,'assists')}
   else if(total!=null)push(parts,total,'tackles');
   push(parts,first(s,'sack','idp_sack'),'sacks');push(parts,first(s,'tkl_loss','idp_tkl_loss','tfl'),'TFL');push(parts,first(s,'qb_hit','idp_qb_hit','qb_hits'),'QB hits');push(parts,first(s,'int','idp_int'),'INT');push(parts,first(s,'ff','idp_ff'),'FF');push(parts,first(s,'fum_rec','idp_fum_rec'),'FR');push(parts,first(s,'pass_def','idp_pass_def','pd'),'PD');
   if(!parts.length)push(parts,first(s,'def_snp','def_snaps','defensive_snaps'),'def snaps');

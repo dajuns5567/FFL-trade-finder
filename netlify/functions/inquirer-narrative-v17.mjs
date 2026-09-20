@@ -52,95 +52,94 @@ function gameFacts(t){
 }
 
 export function narrativeHeadline(t,w,r){
-  const g=gameFacts(t),v=headlineVariant(t),star=g.top?.name||t.team_name,opp=t.opponent_name||'the opposition';
+  const g=gameFacts(t),v=headlineVariant(t),team=String(t.team_name||'Team').trim(),star=String(g.top?.name||team).trim(),opp=String(t.opponent_name||'the opposition').trim(),poss=name=>/s$/i.test(String(name).trim())?String(name).trim()+'’':String(name).trim()+'’s';
   const win={
     'walter-mercer':[
-      `${t.team_name} Opens the Ledger With a Win Worth Keeping`,
-      `${star} Sets the Tone as ${t.team_name} Gets Its Sunday Right`,
-      `A Good Sunday, Which Is Exactly When ${t.team_name} Should Get Nervous`,
-      `${t.team_name} Finds the Boring Kind of Competence That Travels`,
-      `No Apology Needed: ${t.team_name} Earns the Ink`,
-      `${t.team_name} Leaves ${opp} With the Bill`,
-      `The First Clipping Belongs to ${t.team_name}`,
-      `${t.team_name} Wins, and the Press Box Has Fewer Complaints Than Usual`
+      `Week ${w} Belongs to ${team}: A Win Worth Keeping`,
+      `${star} Sets the Tone in ${poss(team)} Sunday Win`,
+      `A Good Sunday for ${team}, Which Is Exactly When We Get Nervous`,
+      `The Boring Kind of Competence Arrives for ${team}`,
+      `No Apology Needed: ${team} Earned the Ink`,
+      `${team} Sends ${opp} the Bill`,
+      `The First Clipping Belongs to ${team}`,
+      `A Win for ${team}, and Fewer Press-Box Complaints Than Usual`
     ],
     'tess-delaney':[
-      `The Result and the Process Finally Agree for ${t.team_name}`,
-      `${star} Gave ${t.team_name} More Than a Pretty Box Score`,
-      `What Actually Worked in ${t.team_name}'s Win`,
-      `${t.team_name} Found a Repeatable Way to Win — Maybe`,
-      `The Numbers Behind a Sunday ${t.team_name} Can Use`,
-      `${t.team_name} Won Without Needing the Spreadsheet to Lie`,
-      `A Win With Structure: ${t.team_name} Passed the First Test`,
-      `${t.team_name} Has Evidence, Not Proof, and That Is Progress`
+      `The Result and the Process Finally Agree for ${team}`,
+      `${star} Gave ${team} More Than a Pretty Box Score`,
+      `What Actually Worked in ${poss(team)} Win`,
+      `A Repeatable Way to Win for ${team} — Maybe`,
+      `The Numbers Behind a Sunday ${team} Can Use`,
+      `${team} Won Without Needing the Spreadsheet to Lie`,
+      `A Win With Structure: The First Test Goes ${poss(team)} Way`,
+      `Evidence, Not Proof: Progress for ${team}`
     ],
     'mack-hollis':[
-      `${t.team_name} Just Kicked the Door Off Its Hinges`,
-      `${star} Put ${t.team_name} on the Front Page`,
-      `Hide the Good China: ${t.team_name} Won and We Are Behaving Poorly`,
-      `The Back Page Belongs to ${t.team_name} Tonight`,
-      `${t.team_name} Won, So Naturally We Are Planning Something Irresponsible`,
-      `Please Check on ${opp}: ${t.team_name} Had a Day`,
-      `${t.team_name} Has Given This Newspaper Dangerous Confidence`,
-      `Print It Large: ${t.team_name} Came to Make a Mess`
+      `${team} Just Kicked the Door Off Its Hinges`,
+      `${star} Put ${team} on the Front Page`,
+      `Hide the Good China: ${team} Won and We Are Behaving Poorly`,
+      `The Back Page Belongs to ${team} Tonight`,
+      `A Win for ${team}, So Naturally We Are Planning Something Irresponsible`,
+      `Please Check on ${opp}: ${team} Had a Day`,
+      `Dangerous Confidence Has Arrived at the ${team} Desk`,
+      `Print It Large: ${team} Came to Make a Mess`
     ],
     'nora-voss':[
-      `Case File Closed for the Week: ${t.team_name} Has the Receipts`,
-      `${star} Is Exhibit A in ${t.team_name}'s Winning Argument`,
-      `The Lineup Card Survives Cross-Examination for ${t.team_name}`,
-      `${t.team_name} Produced Evidence the Skeptics Will Hate`,
-      `No Alibi Required: ${t.team_name} Built a Real Win`,
-      `${t.team_name} Leaves Very Little for the Inquiry Desk to Prosecute`,
-      `The Paper Trail Favors ${t.team_name} This Week`,
-      `${t.team_name} Wins, and the Evidence Is Annoyingly Coherent`
+      `Case File Closed for the Week: ${team} Has the Receipts`,
+      `${star} Is Exhibit A in ${poss(team)} Winning Argument`,
+      `The Lineup Card Survives Cross-Examination for ${team}`,
+      `Evidence the Skeptics Will Hate: ${team} Gets a Win`,
+      `No Alibi Required: A Real Win for ${team}`,
+      `Very Little to Prosecute After ${poss(team)} Win`,
+      `The Paper Trail Favors ${team} This Week`,
+      `A Win for ${team}, and the Evidence Is Annoyingly Coherent`
     ]
   };
   const loss={
     'walter-mercer':[
-      `${t.team_name} Has a Week It Will Want Back`,
-      `${star} Could Not Save ${t.team_name} From the Rest of the Story`,
-      `The First Bad Clipping Is Already in ${t.team_name}'s File`,
-      `${t.team_name} Loses, and There Is Plenty to Put in the Notebook`,
-      `A Sunday to File, Not Frame, for ${t.team_name}`,
-      `${opp} Sends ${t.team_name} Home With Homework`,
-      `${t.team_name} Finds Several Ways to Make One Loss Annoying`,
-      `The Press Box Has Questions After ${t.team_name}'s Loss`
+      `A Week ${team} Will Want Back`,
+      `${star} Could Not Save the Rest of ${poss(team)} Story`,
+      `The First Bad Clipping Is Already in ${poss(team)} File`,
+      `A Loss for ${team}, and Plenty for the Notebook`,
+      `A Sunday to File, Not Frame, for ${team}`,
+      `${opp} Sends ${team} Home With Homework`,
+      `One Loss, Several Annoyances for ${team}`,
+      `The Press Box Has Questions After ${poss(team)} Loss`
     ],
     'tess-delaney':[
-      `The Numbers Explain More Than the Final Score for ${t.team_name}`,
-      `${star} Was Not Enough to Fix ${t.team_name}'s Week`,
-      `Where ${t.team_name}'s Process Broke Down`,
-      `${t.team_name} Lost, and the Bad Math Was Not Subtle`,
-      `The Box Score Has a Warning Label for ${t.team_name}`,
-      `${t.team_name} Found the Wrong Side of Its Own Trend Line`,
-      `A Loss With Clues: What ${t.team_name} Needs to Fix`,
-      `${t.team_name} Gave the Spreadsheet Something to Complain About`
+      `The Numbers Explain More Than the Final Score for ${team}`,
+      `${star} Was Not Enough to Fix ${poss(team)} Week`,
+      `Where the Process Broke Down for ${team}`,
+      `Bad Math, Bad Result: ${team} Takes the Loss`,
+      `A Warning Label on ${poss(team)} Box Score`,
+      `The Wrong Side of the Trend Line for ${team}`,
+      `A Loss With Clues: What ${team} Needs to Fix`,
+      `${team} Gave the Spreadsheet Something to Complain About`
     ],
     'mack-hollis':[
-      `Someone Hide the Front Page From ${t.team_name}`,
-      `${star} Deserved Better Than This ${t.team_name} Ending`,
-      `${t.team_name} Has Forced Us to Use the Angry Font`,
-      `The Back Page Is Filing a Complaint Against ${t.team_name}`,
-      `${t.team_name} Lost, and Yes, We Have Begun Naming Names`,
-      `${opp} Ruined the Evening and ${t.team_name} Helped`,
-      `Red Ink Everywhere After ${t.team_name}'s Sunday`,
-      `${t.team_name} Gave This Newspaper a Very Expensive Headache`
+      `Someone Hide the Front Page From ${team}`,
+      `${star} Deserved Better Than This ${team} Ending`,
+      `The Angry Font Is Out for ${team}`,
+      `The Back Page Files a Complaint Against ${team}`,
+      `A Loss for ${team}, and Yes, We Have Begun Naming Names`,
+      `${opp} Ruined the Evening and ${team} Helped`,
+      `Red Ink Everywhere After ${poss(team)} Sunday`,
+      `A Very Expensive Headache Courtesy of ${team}`
     ],
     'nora-voss':[
-      `The Evidence Board Is Not Kind to ${t.team_name}`,
-      `${star} Cannot Be the Entire Defense for ${t.team_name}`,
-      `The Lineup Card Has Questions to Answer After ${t.team_name}'s Loss`,
-      `${t.team_name} Leaves a Paper Trail Nobody Should Enjoy Reading`,
-      `The Inquiry Begins With What ${t.team_name} Left on the Table`,
-      `${opp} Wins the Argument, and ${t.team_name} Supplies the Exhibits`,
-      `${t.team_name} Loses, So the File Stays Open`,
-      `There Are Fingerprints All Over ${t.team_name}'s Bad Sunday`
+      `The Evidence Board Is Not Kind to ${team}`,
+      `${star} Cannot Be the Entire Defense for ${team}`,
+      `The Lineup Card Has Questions After ${poss(team)} Loss`,
+      `A Paper Trail Nobody at ${team} Should Enjoy Reading`,
+      `The Inquiry Begins With What ${team} Left on the Table`,
+      `${opp} Wins the Argument; ${team} Supplies the Exhibits`,
+      `A Loss for ${team}, So the File Stays Open`,
+      `Fingerprints All Over ${poss(team)} Bad Sunday`
     ]
   };
   const pool=(t.won?win:loss)[r.id]||(t.won?win['walter-mercer']:loss['walter-mercer']);
-  return pool[v%pool.length];
+  return pool[v%pool.length].replace(/\s+/g,' ').trim();
 }
-
 function seasonNarrative(t,w){
   const c=t.league_context||{},st=c.streak||{},rank=Number(c.standings_rank),size=Number(c.league_size)||32,rec=c.record||{};
   const record=String(rec.wins||0)+'-'+String(rec.losses||0)+(Number(rec.ties)?'-'+String(rec.ties):'');

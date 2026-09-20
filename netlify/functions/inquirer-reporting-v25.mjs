@@ -66,7 +66,7 @@ function playerTrajectory(p){
     `${p.name} is an early breakout watch, not a declared breakout. Week 1 landed well above last year’s ${one(prior)}-point average across ${priorGames} games, and ${opp.text} gives the spike a real workload underneath it. The next ${p.name} game decides whether this stays a curiosity or starts becoming a role change worth believing.`,
     `Put ${p.name} on the breakout watch list, but keep the permanent marker capped. The opener cleared last year’s ${one(prior)}-point average across ${priorGames} games, while ${opp.text} shows there was actual opportunity behind it. A second useful ${p.name} week would matter more than another clever label.`,
     `${p.name} gave us the kind of opener that earns a breakout question. Last year’s baseline was ${one(prior)} across ${priorGames} games; this week came with ${opp.text} and a much louder fantasy result. That is enough to watch ${p.name} closely, nowhere near enough to declare his old baseline dead.`,
-    `${p.name} has an early breakout case because the fantasy spike came with ${opp.text}, not because Week 1 is magical. He averaged ${one(prior)} across ${priorGames} games last year. If the opportunity survives another Sunday, the conversation gets more serious.`
+    `${p.name} has an early breakout case because the fantasy spike came with ${opp.text}, not because Week 1 is magical. He averaged ${one(prior)} across ${priorGames} games last year. If ${p.name} keeps the opportunity another Sunday, his breakout conversation gets more serious.`
   ])};
   if(games>=3&&Number.isFinite(age)&&age>=oldThreshold&&ratio<=.68)return {kind:'decline',strength:1-ratio,text:keyedChoice(key,[
     `${p.name} has earned a real decline watch: ${one(current)} per game this season versus ${one(prior)} across ${priorGames} games last year. At age ${age}, wondering whether the old weekly floor is gone is fair; declaring him finished still outruns the evidence.`,
@@ -531,6 +531,7 @@ function specificityPass(t,kind,value){
     ['His production is now evidence in a transaction that remains open for review.','That production is now evidence in a '+team+' transaction that remains open for review.'],
     ['Depending on rival charity twice in a row would be terribly unbecoming.',team+' depending on rival charity twice in a row would be terribly unbecoming.'],
     ['Call it a warning under a winning headline.','For '+team+', call it a warning under a winning headline.'],
+    ['Call it one of the places the loss went missing.','For '+team+', call it one of the places the loss went missing.'],
     ['A two-week run can still change the whole conversation.','A two-week '+team+' run can still change the whole conversation.'],
     ['A little more ground next week and we may discuss the table with the good china.','A little more '+team+' ground next week and we may discuss the table with the good china.'],
     ['A 1-0 start looks rather nicer in ink.',team+'’s 1-0 start looks rather nicer in ink.'],

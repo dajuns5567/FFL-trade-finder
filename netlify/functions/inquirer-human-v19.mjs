@@ -39,7 +39,7 @@ function topPlayerSentence(p,voice,v){
   ],
   tilly:[
    name+' gets the giant photo, the expensive ink and probably a completely unauthorized billboard after '+c+'.',
-   'PUT A FRAME AROUND '+name+' — figuratively, legal department — because '+c+' just paid for the front page.',
+   'Put a frame around '+name+' — figuratively, legal department — because '+c+' just paid for the front page.',
    name+' brought '+c+'. I have already moved the headline font from “reasonable” to “neighbors can read it.”',
    name+' just dropped '+c+' on the newsroom desk. Somebody clear tomorrow’s front page and hide the adult supervision.',
    'The giant photo belongs to '+name+' after '+c+'. We are accepting no appeals and very little dignity.',
@@ -162,7 +162,7 @@ function lineupStory(t,voice,v){
   const tails={
    nick:[' That one belongs in the notebook. Hindsight is cheap, but a legal lineup alternative is at least a fair question.',' I am not demanding a tribunal. I am merely leaving the clipping on the manager’s chair.'],
    bart:[' There is your legitimate second-guess, properly dressed and allowed through the front door.',' That is the kind of hindsight worth arguing about because the lineup rules actually permitted it. Revolutionary concept, I know.'],
-   tilly:[' NOW we may yell. This is a real lineup choice, not the usual “why didn’t the linebacker start at running back?” nonsense.',' The complaint department is officially open because, for once, the substitute was actually allowed to occupy the chair.'],
+   tilly:[' Now we may yell. This is a real lineup choice, not the usual “why didn’t the linebacker start at running back?” nonsense.',' The complaint department is officially open because, for once, the substitute was actually allowed to occupy the chair.'],
    jeff:[' That is admissible evidence: same legal seat, different result. I will not prosecute imaginary cross-position substitutions.',' This one survives cross-examination because the roster rules actually allowed the swap. Into the file it goes.']
   };
   return lead+pick(tails[voice],v);
@@ -181,7 +181,7 @@ function valueStory(t,voice,v){
   const rows={
    nick:['The market desk gets no headline this week. Fine by me; Sunday supplied enough material without inventing a stock ticker.','There is no useful market move to hang on the wall yet. I can survive one week without pretending every roster has become a mutual fund.'],
    bart:['The market page is mercifully quiet. We may discuss football like civilized degenerates for another paragraph.','No market headline this week. I will somehow endure the absence of a tiny arrow telling me how to feel.'],
-   tilly:['VALUE WATCH IS TAKING THE NIGHT OFF. Good. The game already gave us enough reasons to overreact.','The market desk brought me nothing dramatic, so I have reassigned its font budget to the actual football.'],
+   tilly:['Value Watch is taking the night off. Good. The game already gave us enough reasons to overreact.','The market desk brought me nothing dramatic, so I have reassigned its font budget to the actual football.'],
    jeff:['The market file has nothing material to add this week. I decline to manufacture evidence merely because the folder looks lonely.','No market movement worth entering as an exhibit. The case survives without decorative paperwork.']
   };
   return pick(rows[voice],v);
@@ -200,7 +200,7 @@ function sentimentStory(t,s,voice,v){
  const intro={
   nick:['The mood around town is officially “'+title+'.”','Around here the fan base has reached “'+title+'.”'],
   bart:['The salons, sports bars and less reputable group chats agree on “'+title+'.”','Public opinion has arrived at the wonderfully dramatic label “'+title+'.”'],
-  tilly:['THE PEOPLE HAVE SPOKEN: “'+title+'.”','The city is currently operating at “'+title+'” and absolutely nobody is normal about it.'],
+  tilly:['The people have spoken: “'+title+'.”','The city is currently operating at “'+title+'” and absolutely nobody is normal about it.'],
   jeff:['Public sentiment enters the file as “'+title+'.”','The crowd’s statement for the record is “'+title+'.”']
  };
  const tail={
@@ -225,7 +225,7 @@ function outlookStory(t,w,voice,v){
  const tails={
   nick:[' Next is '+opp+'. I will spend the week telling everyone it is just another matchup and believing none of it.',' '+opp+' is next. Keep the useful parts of this Sunday and burn the rest in a tasteful metal bin.'],
   bart:[' Next comes '+opp+'. I plan to be insufferably specific about what should work and theatrically wounded if none of it does.',' '+opp+' awaits. A new week, a new chance for this roster to make my previous paragraph look wise or ridiculous.'],
-  tilly:[' NEXT VICTIM/PROBLEM, depending on editorial mood: '+opp+'. The giant headline is blank and waiting.',' '+opp+' is next. I have prepared both the parade font and the emergency complaint font because professionalism matters.'],
+  tilly:[' Next victim or problem, depending on editorial mood: '+opp+'. The giant headline is blank and waiting.',' '+opp+' is next. I have prepared both the parade font and the emergency complaint font because professionalism matters.'],
   jeff:[' Next on the docket: '+opp+'. New opponent, same file cabinet, fresh opportunity to create or destroy evidence.',' '+opp+' is next. I will be watching the lineup card like it owes me money.']
  };
  return personnel+pick(tails[voice],v);
@@ -236,14 +236,14 @@ function closingLine(t,voice,v){
   const rows={
    nick:['They are champions. I have spent a season rationing optimism and I am cashing every last bit of it tonight. Save the clipping forever.'],
    bart:['Champions. Magnificent, vulgar, indisputable champions. I withdraw every elegant reservation I have made all season and demand something sparkling.'],
-   tilly:['THEY WON THE WHOLE DAMN THING. Tear down tomorrow’s front page; we are printing this one until the presses melt.'],
+   tilly:['They won the whole damn thing. Tear down tomorrow’s front page; we are printing this one until the presses melt.'],
    jeff:['Case closed. Championship secured. The evidence is overwhelming and, for once, I am delighted to lose the argument.']
   };return rows[voice][0];
  }
  const rows={
   nick:won?['Enjoy the win. Football gives you too few clean Sundays to spend one of them apologizing for being happy.','I am keeping this clipping. Not because I trust happiness, but because I have learned to document rare events.','Take the win and sleep well. The sport will resume trying to ruin our mood soon enough.','Good teams bank wins before anyone has time to explain why they were not perfect. Bank this one.']:['I am irritated because I care, which is the ancient and stupid contract between a team and the people who follow it. Fix it next week.','Losses like this hang around the newsroom after everybody leaves. The only cure is making next Sunday less interesting.','I will not romanticize a loss. Put it in the file, learn something useful, and please give me a happier lead next week.','The nice thing about football is another Sunday arrives. The terrible thing is we have to think about this one until then.'],
   bart:won?['A lovely result. I intend to enjoy it with the unbearable composure of a man who will absolutely panic again next Sunday.','Winning is vulgar, addictive and highly recommended. Let us do it again before I develop standards.','I asked for competence and received joy. This is how expectations become dangerous.','A win with enough texture to discuss and enough joy to ruin my objectivity. Perfect.']:['I dislike this result personally and aesthetically. The only acceptable sequel is competence.','There are bad losses and there are losses that offend one’s sense of composition. This one needs a rewrite.','I will spend the week pretending to be measured while privately resenting several roster decisions.','The column ends because the newspaper has a deadline, not because I have run out of complaints.'],
-  tilly:won?['WE WON. The city may behave irresponsibly until breakfast; this newspaper certainly will.','Print the score on the good paper and send a copy to every rival manager with fragile self-esteem.','I have no closing thought beyond “ha.” Sometimes journalism achieves purity.','Victory! Somebody unlock the confetti closet and do not ask whether we have a permit.']:['I hate this and I am professionally obligated to use complete sentences, which feels unfair.','Burn the first draft, save the receipts and tell the team the angry font is already loaded for next week.','This loss stinks. There, sophisticated analysis complete. Now fix it.','The back page is furious, the coffee is worse, and next Sunday cannot arrive quickly enough.'],
+  tilly:won?['We won. The city may behave irresponsibly until breakfast; this newspaper certainly will.','Print the score on the good paper and send a copy to every rival manager with fragile self-esteem.','I have no closing thought beyond “ha.” Sometimes journalism achieves purity.','Victory! Somebody unlock the confetti closet and do not ask whether we have a permit.']:['I hate this and I am professionally obligated to use complete sentences, which feels unfair.','Burn the first draft, save the receipts and tell the team the angry font is already loaded for next week.','This loss stinks. There, sophisticated analysis complete. Now fix it.','The back page is furious, the coffee is worse, and next Sunday cannot arrive quickly enough.'],
   jeff:won?['The defense rests, temporarily. I will reopen the investigation at the first sign of nonsense.','A clean win does not erase suspicion; it merely makes suspicion much more pleasant.','The file closes with a W and several reluctant compliments. Do not make me regret either.','Evidence accepted. Result entered. Cynicism adjourned until next week.']:['The file stays open because of course it does. Please stop giving me evidence.','No acquittal tonight. Management gets seven days to produce a better exhibit.','The loss is entered into evidence. I would very much like next week to make it irrelevant.','I came looking for answers and found additional paperwork. Typical.']
  };
  return pick(rows[voice],v+(playoffs?3:0));
@@ -264,7 +264,7 @@ function headings(voice,v){
   ],
   tilly:[
    ['The Back Page Has Feelings','Who Gets the Giant Photo','Management, Please Report to the Principal’s Office','Value Watch, Presented With Unnecessary Drama','What the Fans Are Yelling','Tomorrow’s Problem'],
-   ['STOP THE PRESSES','Put These Names in Huge Type','Front Office Shenanigans Department','Market Gossip We Will Abuse Responsibly','The City Has Lost Perspective','Next Week Needs a Headline'],
+   ['Stop the Presses','Put These Names in Huge Type','Front Office Shenanigans Department','Market Gossip We Will Abuse Responsibly','The City Has Lost Perspective','Next Week Needs a Headline'],
    ['Today in Responsible Journalism','Heroes, Villains and People on Probation','Explain Yourself, Management','Tiny Arrows, Huge Emotions','Public Nuisance Report','Who Are We Yelling About Next?'],
    ['The Front Page Is Already a Mess','Large Photos and Small Photos','The Managerial Complaint Box','Value Watch: No Adults Present','How Loud Is the City?','Load the Next Edition']
   ],
@@ -283,7 +283,7 @@ export function humanSectionsV19({team:t,week:w,reporter:r,facts,sentiment}){
  const ledeRows={
   nick:[t.team_name+' '+(won?'beat ':'lost to ')+opp+', '+score+'. It was '+mood+', and I have the coffee stains to prove I took it personally.',score+' against '+opp+'. '+(won?'Put the result in the good folder.':'Put it in the folder labeled “things I would rather not revisit.”')+' '+t.team_name+' made Sunday feel '+(won?'briefly civilized.':'longer than the calendar advertised.')],
   bart:[t.team_name+' '+(won?'won ':'lost ')+score+' against '+opp+'. '+(won?'Delightful. Irritatingly delightful.':'Ghastly. Not historically ghastly, but certainly enough to spoil the after-dinner mood.') ,score+' versus '+opp+'. I watched '+t.team_name+' turn that into '+mood+', and I have chosen to take it as a personal commentary on my weekend.'],
-  tilly:[t.team_name+' '+(won?'won ':'lost ')+score+' against '+opp+'. '+(won?'FIND THE PARADE PERMIT.':'WHO AUTHORIZED THIS EXPERIENCE?')+' We are beginning at the correct emotional volume.',score+'! '+(won?'VICTORY, CHAOS, TERRIBLE DECISIONS ABOUT CONFETTI.':'DEFEAT, DISGUST, AND A VERY RUDE COPY DEADLINE.')+' '+t.team_name+' has once again made neutrality impossible.'],
+  tilly:[t.team_name+' '+(won?'won ':'lost ')+score+' against '+opp+'. '+(won?'Find the parade permit.':'Who authorized this experience?')+' We are beginning at the correct emotional volume.',score+'! '+(won?'Victory, chaos, terrible decisions about confetti.':'Defeat, disgust, and a very rude copy deadline.')+' '+t.team_name+' has once again made neutrality impossible.'],
   jeff:[t.team_name+' '+(won?'won ':'lost ')+score+' against '+opp+'. I entered the result into evidence and immediately became suspicious of how much I cared.',score+' is the final against '+opp+'. '+(won?'The defense may smile. Briefly.':'The file has been reopened and several people should avoid eye contact with this desk.')]
  };
  const p1=pick(ledeRows[voice],v);

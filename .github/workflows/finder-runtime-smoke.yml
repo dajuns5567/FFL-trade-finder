@@ -58,9 +58,12 @@ on:
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/inquirer-reporters.mjs'
       - 'netlify/functions/inquirer-narrative-v17.mjs'
+      - 'netlify/functions/inquirer-human-v18.mjs'
+      - 'netlify/functions/inquirer-overview-v18.mjs'
       - 'netlify/functions/inquirer-week1-2026-preload.mjs'
       - 'scripts/inquirer-reporters-smoke.mjs'
       - 'scripts/inquirer-prose-quality-audit.mjs'
+      - 'scripts/inquirer-overview-quality-audit.mjs'
       - 'data/inquirer/2026/week-01.meta.json'
       - 'docs/FLEECED-INQUIRER-VOICE-AND-REPORTERS.md'
       - 'netlify.toml'
@@ -147,15 +150,19 @@ jobs:
           node --check netlify/functions/value-history-observability.mjs
           node --check scripts/resolve-active-netlify-site.mjs
           node --check scripts/value-history-headless-refresh.mjs
-      - name: Fleeced Inquirer reporter rotation, real stats, archives, and prose quality
+      - name: Fleeced Inquirer V18 newsroom, stats, archives, and writing quality
         run: |
           node --check league-hub-v451.js
           node --check netlify/functions/league-hub.mjs
           node --check netlify/functions/inquirer-reporters.mjs
           node --check netlify/functions/inquirer-narrative-v17.mjs
+          node --check netlify/functions/inquirer-human-v18.mjs
+          node --check netlify/functions/inquirer-overview-v18.mjs
           node --check scripts/inquirer-prose-quality-audit.mjs
+          node --check scripts/inquirer-overview-quality-audit.mjs
           node scripts/inquirer-reporters-smoke.mjs
           node scripts/inquirer-prose-quality-audit.mjs
+          node scripts/inquirer-overview-quality-audit.mjs
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs
       - name: Value History data hub behavior and isolation

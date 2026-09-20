@@ -76,7 +76,8 @@ for(const t of built.teams){
  const managementSection=(a.sections||[]).find(s=>s.kind==='management');
  assert(managementSection&&(managementSection.paragraphs||[]).length>=2,'Each article must contain a complete management/lineup section regardless of where V20 places it in the story');
  assert(a.facts?.opponent_context!==undefined,'Each article must preserve opponent context for narrative reporting');
- assert((a.sections||[]).some(s=>s.kind==='value'&&/Value|Market/i.test(String(s.heading||''))),'Each article must include a dedicated team-specific Value History section');
+ const valueSection=(a.sections||[]).find(s=>s.kind==='value');
+ assert(valueSection&&(valueSection.paragraphs||[]).length>=2,'Each article must include a complete team-specific Value History reporting beat regardless of the reporter’s chosen section headline');
  assert((a.sections||[]).some(s=>s.kind==='outlook')&&a.facts?.next_week_availability!==undefined,'Each article must include a complete next-week section backed by availability data');
  assert(a.week_classification?.label==='Week 6 • Regular Season','Team article must persist the canonical week classification');
  assert(a.fan_sentiment&&Number.isFinite(Number(a.fan_sentiment.score)),'Each team article must persist a numeric rolling fan sentiment');

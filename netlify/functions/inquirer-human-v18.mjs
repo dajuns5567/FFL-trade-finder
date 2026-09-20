@@ -76,7 +76,7 @@ function fanLine(t,s,voice){
 function personnelLine(t,w,voice){
   const a=t.next_week_availability||{};if(a.fantasy_season_complete||Number(w)>=17)return'There is no next fantasy matchup. The Super Bowl closes the file.';
   const byes=a.bye_current_starters||[],inj=a.injury_current_starters||[];
-  if(!a.schedule_verified&&!inj.length)return'The next-week availability board is still incomplete, so there is no responsible bye or injury warning to print yet.';
+  if(!a.schedule_verified&&!inj.length)return'The bye and injury picture is still settling, and there is nothing worth sounding an alarm about yet.';
   if(!byes.length&&!inj.length)return voice==='tilly'?'No starter is carrying a verified bye or injury problem into next week. For once, the depth chart gets a quiet evening.':'No current starter is carrying a verified bye or injury problem into next week.';
   const bits=[];if(byes.length)bits.push(byes.length+' starter'+(byes.length===1?'':'s')+' on bye');if(inj.length)bits.push(inj.length+' starter'+(inj.length===1?'':'s')+' carrying an injury/status tag');
   return t.team_name+' heads into next week with '+bits.join(' and ')+'. Depth is about to stop being theoretical.';
@@ -84,7 +84,7 @@ function personnelLine(t,w,voice){
 
 function nextLine(t,w){
   const n=t.next_opponent_context,name=t.next_opponent_name||'the next opponent';
-  if(!t.next_opponent_roster_id)return Number(w)>=17?'There is nobody left on the fantasy schedule.':'Sleeper has not posted the next opponent yet.';
+  if(!t.next_opponent_roster_id)return Number(w)>=17?'There is nobody left on the fantasy schedule.':"Next week's opponent is not on the board yet.";
   const r=n?.record||{},record=n?.record?String(r.wins||0)+'-'+String(r.losses||0)+(Number(r.ties)?'-'+String(r.ties):''):'';
   return name+' is next'+(record?', bringing a '+record+' record':'')+(n?.standings_rank?', '+ordinal(n.standings_rank)+' in the league':'')+'.';
 }

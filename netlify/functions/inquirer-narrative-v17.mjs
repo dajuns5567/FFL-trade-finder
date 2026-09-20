@@ -60,7 +60,7 @@ export function narrativeHeadline(t,w,r){
       `A Good Sunday for ${team}, Which Is Exactly When We Get Nervous`,
       `The Boring Kind of Competence Arrives for ${team}`,
       `No Apology Needed: ${team} Earned the Ink`,
-      `${team} Sends ${opp} the Bill`,
+      `The Bill Goes to ${opp}; the Win Goes to ${team}`,
       `The First Clipping Belongs to ${team}`,
       `A Win for ${team}, and Fewer Press-Box Complaints Than Usual`
     ],
@@ -71,7 +71,7 @@ export function narrativeHeadline(t,w,r){
       `A Repeatable Way to Win for ${team} — Maybe`,
       `The Numbers Behind a Sunday ${team} Can Use`,
       `${team} Won Without Needing the Spreadsheet to Lie`,
-      `A Win With Structure: The First Test Goes ${poss(team)} Way`,
+      `A Win With Structure: First-Test Approval for ${team}`,
       `Evidence, Not Proof: Progress for ${team}`
     ],
     'mack-hollis':[
@@ -85,10 +85,10 @@ export function narrativeHeadline(t,w,r){
       `Print It Large: ${team} Came to Make a Mess`
     ],
     'nora-voss':[
-      `Case File Closed for the Week: ${team} Has the Receipts`,
+      `Case File Closed for the Week: Receipts in Hand for ${team}`,
       `${star} Is Exhibit A in ${poss(team)} Winning Argument`,
       `The Lineup Card Survives Cross-Examination for ${team}`,
-      `Evidence the Skeptics Will Hate: ${team} Gets a Win`,
+      `Evidence the Skeptics Will Hate: A Win for ${team}`,
       `No Alibi Required: A Real Win for ${team}`,
       `Very Little to Prosecute After ${poss(team)} Win`,
       `The Paper Trail Favors ${team} This Week`,
@@ -102,7 +102,7 @@ export function narrativeHeadline(t,w,r){
       `The First Bad Clipping Is Already in ${poss(team)} File`,
       `A Loss for ${team}, and Plenty for the Notebook`,
       `A Sunday to File, Not Frame, for ${team}`,
-      `${opp} Sends ${team} Home With Homework`,
+      `Homework for ${team} After the Loss to ${opp}`,
       `One Loss, Several Annoyances for ${team}`,
       `The Press Box Has Questions After ${poss(team)} Loss`
     ],
@@ -110,10 +110,10 @@ export function narrativeHeadline(t,w,r){
       `The Numbers Explain More Than the Final Score for ${team}`,
       `${star} Was Not Enough to Fix ${poss(team)} Week`,
       `Where the Process Broke Down for ${team}`,
-      `Bad Math, Bad Result: ${team} Takes the Loss`,
+      `Bad Math, Bad Result for ${team}`,
       `A Warning Label on ${poss(team)} Box Score`,
       `The Wrong Side of the Trend Line for ${team}`,
-      `A Loss With Clues: What ${team} Needs to Fix`,
+      `A Loss With Clues: What Needs Fixing for ${team}`,
       `${team} Gave the Spreadsheet Something to Complain About`
     ],
     'mack-hollis':[
@@ -132,7 +132,7 @@ export function narrativeHeadline(t,w,r){
       `The Lineup Card Has Questions After ${poss(team)} Loss`,
       `A Paper Trail Nobody at ${team} Should Enjoy Reading`,
       `The Inquiry Begins With What ${team} Left on the Table`,
-      `${opp} Wins the Argument; ${team} Supplies the Exhibits`,
+      `${opp} Wins the Argument; the Exhibits Belong to ${team}`,
       `A Loss for ${team}, So the File Stays Open`,
       `Fingerprints All Over ${poss(team)} Bad Sunday`
     ]

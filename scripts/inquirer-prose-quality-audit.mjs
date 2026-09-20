@@ -26,8 +26,8 @@ if(teams.length!==32)fail('Expected 32 team articles; got '+teams.length);
 
 const requiredKinds=['lede','players','management','value','sentiment','outlook'];
 const voiceAnchors={
-  'walter-mercer':['press box','notebook','clipping','old desk','complaint','parking','cynic'],
-  'tess-delaney':['civilized','good china','theatrical','elegant','taste','sigh','waistcoat','salons','vulgar'],
+  'walter-mercer':['press box','press-box','notebook','clipping','old desk','complaint','parking','cynic','sunday story','manager’s chair','front office homework','next assignment','folder','heroes','homework'],
+  'tess-delaney':['civilized','good china','theatrical','elegant','taste','sigh','waistcoat','salons','vulgar','review','leading men','patrons','engagement','footnotes','etiquette','composition'],
   'mack-hollis':['back page','parade','group chat','angry font','giant photo','classifieds','confetti','presses','responsible journalism','heroes','villains','complaint box','front page','scream','yell'],
   'nora-voss':['evidence','file','witness','paper trail','inquiry','fingerprints','docket','cross-examination']
 };

@@ -69,11 +69,12 @@ for(const t of built.teams){
  assert(a.facts?.league_context?.standings_rank===t.league_context.standings_rank&&a.facts?.league_context?.record?.wins===t.league_context.record.wins,'Each article must preserve verified season/standings/streak/playoff context in its facts');
  assert((a.paragraphs||[]).some(p=>p.includes(String(t.league_context.record.wins)+'-'+String(t.league_context.record.losses))||/streak|Week 14|playoff/i.test(p)),'Each article must weave verified season context into narrative prose');
  assert((a.facts?.starter_details||[]).every(p=>p.recent_form!=null),'Player coverage must preserve multi-game performance context for the writer when history exists');
- assert((a.sections||[]).length===6&&(a.paragraphs||[]).length>=12,'Each Inquirer story must be a six-section multi-paragraph article, not a recap');
+ assert((a.sections||[]).length===6&&(a.paragraphs||[]).length>=14,'Each V20 Inquirer story must preserve six reporting beats plus newsroom judgment, not a recap');
  const articleWords=(a.paragraphs||[]).join(' ').trim().split(/\s+/).filter(Boolean).length;
  assert(articleWords>=300,'Each Inquirer story must contain a complete human-readable beat column rather than a checklist summary; got '+articleWords+' words');
  assert((a.sections||[]).some(s=>s.kind==='players'&&(s.paragraphs||[]).length>=2),'Each article must contain a complete player/performance section rather than a stat-dump paragraph');
- assert((a.paragraphs||[]).some(p=>/bench|lineup card|front office|manager/i.test(p)),'Each article must analyze management or lineup decisions');
+ const managementSection=(a.sections||[]).find(s=>s.kind==='management');
+ assert(managementSection&&(managementSection.paragraphs||[]).length>=2,'Each article must contain a complete management/lineup section regardless of where V20 places it in the story');
  assert(a.facts?.opponent_context!==undefined,'Each article must preserve opponent context for narrative reporting');
  assert((a.sections||[]).some(s=>s.kind==='value'&&/Value|Market/i.test(String(s.heading||''))),'Each article must include a dedicated team-specific Value History section');
  assert((a.sections||[]).some(s=>s.kind==='outlook')&&a.facts?.next_week_availability!==undefined,'Each article must include a complete next-week section backed by availability data');

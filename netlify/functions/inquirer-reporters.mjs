@@ -1,8 +1,9 @@
 'use strict';
 
 import {buildNarrativeArticle} from './inquirer-narrative-v17.mjs';
+import {buildHumanLeagueOverview} from './inquirer-overview-v18.mjs';
 
-export const INQUIRER_VERSION=17;
+export const INQUIRER_VERSION=18;
 export const INQUIRER_PLAYOFF_START_WEEK=14;
 export const INQUIRER_FINAL_WEEK=17;
 export function inquirerWeekClassification(week,season,conference=''){
@@ -60,7 +61,11 @@ export function realStatLine(position,stats){
  }else if(p==='K'){
   const fg=first(s,'fgm'),fga=first(s,'fga'),xp=first(s,'xpm'),xpa=first(s,'xpa');if(fg!=null||fga!=null)parts.push(String(fg??0)+'/'+String(fga??0)+' FG');if(xp!=null||xpa!=null)parts.push(String(xp??0)+'/'+String(xpa??0)+' XP');
  }else{
-  push(parts,first(s,'tkl_solo','idp_tkl_solo'),'solo');push(parts,first(s,'tkl_ast','idp_tkl_ast'),'ast');push(parts,first(s,'sack','idp_sack'),'sacks');push(parts,first(s,'tkl_loss','idp_tkl_loss'),'TFL');push(parts,first(s,'qb_hit','idp_qb_hit'),'QB hits');push(parts,first(s,'int','idp_int'),'INT');push(parts,first(s,'ff','idp_ff'),'FF');push(parts,first(s,'fum_rec','idp_fum_rec'),'FR');push(parts,first(s,'pass_def','idp_pass_def'),'PD');
+  const solo=first(s,'tkl_solo','idp_tkl_solo'),ast=first(s,'tkl_ast','idp_tkl_ast'),total=first(s,'tkl','idp_tkl');
+  if(solo!=null||ast!=null){push(parts,solo,'solo');push(parts,ast,'ast')}
+  else if(total!=null)push(parts,total,'tackles');
+  push(parts,first(s,'sack','idp_sack'),'sacks');push(parts,first(s,'tkl_loss','idp_tkl_loss','tfl'),'TFL');push(parts,first(s,'qb_hit','idp_qb_hit','qb_hits'),'QB hits');push(parts,first(s,'int','idp_int'),'INT');push(parts,first(s,'ff','idp_ff'),'FF');push(parts,first(s,'fum_rec','idp_fum_rec'),'FR');push(parts,first(s,'pass_def','idp_pass_def','pd'),'PD');
+  if(!parts.length)push(parts,first(s,'def_snp','def_snaps','defensive_snaps'),'def snaps');
  }
  return parts.filter(Boolean).slice(0,5).join(' • ');
 }
@@ -290,10 +295,11 @@ export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyS
    series=Object.keys(historyByWeek).map(Number).sort((a,b)=>a-b).map(w=>{const st=historyByWeek[w]?.[id];if(!st)return null;const pts=typeof scoreFn==='function'?scoreFn(st,scoringSettings):null;return Number.isFinite(Number(pts))?{week:w,points:Number(pts),real_stat_line:realStatLine(position,st)}:null}).filter(Boolean),
    last3=series.slice(-3),prior3=series.slice(-6,-3),lastAvg=last3.length?last3.reduce((n,x)=>n+x.points,0)/last3.length:null,priorAvg=prior3.length?prior3.reduce((n,x)=>n+x.points,0)/prior3.length:null,delta=Number.isFinite(lastAvg)&&Number.isFinite(priorAvg)?lastAvg-priorAvg:null,
    label=last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta>=3&&lastAvg>=priorAvg*1.2?'hot':last3.length===3&&prior3.length>=2&&Number.isFinite(delta)&&delta<=-3&&lastAvg<=priorAvg*.8?'cold':last3.length===3?'steady':'insufficient';
-  facts[id]={id,name,position,nfl_team:String(m.team||'FA'),points:Number.isFinite(Number(fp))?Number(fp):null,real_stat_line:realStatLine(position,stats),recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
+  const seasonPoints=series.reduce((n,x)=>n+Number(x.points||0),0),seasonGames=series.length,seasonAvg=seasonGames?seasonPoints/seasonGames:null;
+  facts[id]={id,name,position,nfl_team:String(m.team||'FA'),points:Number.isFinite(Number(fp))?Number(fp):null,real_stat_line:realStatLine(position,stats),season_fantasy_points:seasonPoints,season_games:seasonGames,season_avg:seasonAvg,recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
  }
  const classification=weekClassification||inquirerWeekClassification(week,season);
- const enriched=(teams||[]).map(t=>{const reporter=reporterForTeam(t.roster_id,week,ids),teamClassification=inquirerWeekClassification(week,season,t.conference),starters=(t.starter_details||[]).map(p=>({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,recent_form:facts[String(p.id)]?.recent_form||null})),benchFact=t.best_bench?{...t.best_bench,real_stat_line:facts[String(t.best_bench.id)]?.real_stat_line||'',recent_form:facts[String(t.best_bench.id)]?.recent_form||null}:null,worstFact=t.worst_starter?{...t.worst_starter,real_stat_line:facts[String(t.worst_starter.id)]?.real_stat_line||'',recent_form:facts[String(t.worst_starter.id)]?.recent_form||null}:null,tt={...t,week_classification:teamClassification,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter},sentiment=fanSentimentForTeam(tt),article=buildNarrativeArticle({team:tt,week,reporter,facts,sentiment,teamClassification,aside:aside(tt,week,reporter)});return{...tt,inquirer_article:article,reporter_id:reporter.id}});
+ const enriched=(teams||[]).map(t=>{const reporter=reporterForTeam(t.roster_id,week,ids),teamClassification=inquirerWeekClassification(week,season,t.conference),starters=(t.starter_details||[]).map(p=>({...p,real_stat_line:facts[String(p.id)]?.real_stat_line||'',real_stats_available:!!facts[String(p.id)]?.real_stat_line,season_fantasy_points:facts[String(p.id)]?.season_fantasy_points??null,season_games:facts[String(p.id)]?.season_games??0,season_avg:facts[String(p.id)]?.season_avg??null,recent_form:facts[String(p.id)]?.recent_form||null})),benchFact=t.best_bench?{...t.best_bench,real_stat_line:facts[String(t.best_bench.id)]?.real_stat_line||'',season_fantasy_points:facts[String(t.best_bench.id)]?.season_fantasy_points??null,season_games:facts[String(t.best_bench.id)]?.season_games??0,season_avg:facts[String(t.best_bench.id)]?.season_avg??null,recent_form:facts[String(t.best_bench.id)]?.recent_form||null}:null,worstFact=t.worst_starter?{...t.worst_starter,real_stat_line:facts[String(t.worst_starter.id)]?.real_stat_line||'',season_fantasy_points:facts[String(t.worst_starter.id)]?.season_fantasy_points??null,season_games:facts[String(t.worst_starter.id)]?.season_games??0,season_avg:facts[String(t.worst_starter.id)]?.season_avg??null,recent_form:facts[String(t.worst_starter.id)]?.recent_form||null}:null,tt={...t,week_classification:teamClassification,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter},sentiment=fanSentimentForTeam(tt),article=buildNarrativeArticle({team:tt,week,reporter,facts,sentiment,teamClassification,aside:aside(tt,week,reporter)});return{...tt,inquirer_article:article,reporter_id:reporter.id}});
  return{reporters:publicReporters(),teams:enriched};
 }
 
@@ -337,7 +343,9 @@ function hotTakeRows(teams,reporters){
  takes.push({reporter:reporterPublic(reporters[3]),title:'Jefferson Filch: The bottom of the table has consequences',take:worst?(worst.team_name+' currently sits #'+worst.league_context.standings_rank+' with a '+recordText(worst.league_context)+' record. If the losses continue, this is not only a bad season; it becomes a draft-position story. '+(pressure&&pressure.roster_id===worst.roster_id?'The next-week bye/injury pressure does not improve the defense.':'And yes, this desk is already documenting who has the schedule and roster depth to escape the basement.')):'The standings file is too incomplete for a responsible No. 1-pick take, which is exactly the kind of sentence an investigative desk should be willing to print.'});
  return takes;
 }
-export function buildLeagueOverview({season,week,teams,players,transactions,canonicalTrades=[],weekClassification=null,valueHistoryMeta={}}){
+export function buildLeagueOverview(args){
+ return buildHumanLeagueOverview({...args,reporters:REPORTERS});
+}){
  const reporters=REPORTERS,classification=weekClassification||inquirerWeekClassification(week,season),rows=(teams||[]).slice(),teamById=new Map(rows.map(t=>[String(t.roster_id),t])),ranked=rows.slice().sort(standingsSort),playoffTeams=Number(ranked[0]?.league_context?.playoff_teams)||0;
  const topScore=rows.slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],biggestMargin=rows.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points)))[0],tx=transactionOverview(transactions,players,teamById);
  const bottomFive=ranked.slice(-5).sort((a,b)=>Number(b?.league_context?.standings_rank||0)-Number(a?.league_context?.standings_rank||0)),bubble=ranked.filter(t=>{const r=Number(t?.league_context?.standings_rank);return playoffTeams&&r>=Math.max(1,playoffTeams-2)&&r<=playoffTeams+3});

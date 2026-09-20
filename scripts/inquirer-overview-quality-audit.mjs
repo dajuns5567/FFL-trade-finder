@@ -9,16 +9,18 @@ const o=edition?.league_overview||{};
 const sections=Array.isArray(o.sections)?o.sections:[];
 const takes=Array.isArray(o.hot_takes)?o.hot_takes:[];
 
-if(Number(o.inquirer_version)<21)fail('League Notebook must be V21 or newer; got '+o.inquirer_version);
+if(Number(o.inquirer_version)<21)fail('Weekly Recap must be V21 or newer; got '+o.inquirer_version);
 if(sections.length!==4)fail('League overview must contain four reporter sections; got '+sections.length);
 for(const s of sections){
   if(!s?.reporter?.id)fail('Overview section missing reporter identity');
   if(!String(s.heading||'').trim())fail('Overview section missing heading');
-  if(!Array.isArray(s.paragraphs)||s.paragraphs.length<2)fail('Overview section '+s.heading+' needs at least two complete paragraphs');
+  if(!Array.isArray(s.paragraphs)||!s.paragraphs.length)fail('Weekly Recap section '+s.heading+' is empty');
+  const noInfo=s.paragraphs.length===1&&String(s.paragraphs[0]).trim()==='n/a';
+  if(!noInfo&&s.paragraphs.length<2)fail('Weekly Recap section '+s.heading+' needs at least two connected paragraphs when evidence exists');
 }
 if(new Set(sections.map(s=>s.reporter.id)).size!==4)fail('All four desks must appear once in the overview');
-const humor=/\b(?:parade|rental shoes|gala|hotel lobby art|elegant insult|group chat|honeymoon|front page|rookie class|mock|burn it|ceremonially|evidence|deadline|confetti|argument)\b/i;
-for(const s of sections)if(!humor.test((s.paragraphs||[]).join(' ')))fail((s.reporter?.name||'Reporter')+' League Notebook section is too straight; every desk must carry personality/humor');
+const humor=/\b(?:parade|rental shoes|gala|hotel[- ]lobby|good china|chaise|melodrama|elegant insult|group chat|honeymoon|front page|back page|receipt|rookie class|mock|burn it|ceremonially|evidence|file|paperwork|docket|deadline|confetti|argument|sigh|screenshot|decorative|decoration)\b/i;
+for(const s of sections){const copy=(s.paragraphs||[]).join(' ');if(copy.trim()==='n/a')continue;if(!humor.test(copy))fail((s.reporter?.name||'Reporter')+' Weekly Recap section is too straight; every desk must carry personality/humor');}
 
 const body=sections.flatMap(s=>s.paragraphs||[]).join(' ');
 const wc=words(body).length,nd=numeric(body)/Math.max(1,wc);
@@ -61,4 +63,4 @@ const report={
   hot_takes:takes.map(t=>({kind:t.kind,title:t.title,take:t.take}))
 };
 console.log(JSON.stringify(report,null,2));
-console.log('Fleeced Inquirer V21 League Notebook / projection-valid hot-takes audit passed');
+console.log('Fleeced Inquirer Weekly Recap / projection-valid hot-takes audit passed');

@@ -2,8 +2,9 @@
   "schema_version": 5,
   "season": 2026,
   "week": 1,
-  "inquirer_version": 24,
-  "generated_at": "2026-09-20T15:51:44.753Z",
+  "inquirer_version": 26,
+  "editorial_revision": 2,
+  "generated_at": "2026-09-20T21:32:07.486Z",
   "teams": 32,
   "reporters": [
     "Nick Swindell",
@@ -13,11 +14,13 @@
   ],
   "reporter_distribution": "8 team articles per reporter",
   "team_article_sections": 8,
-  "minimum_team_article_paragraphs": 16,
-  "minimum_team_article_words": 631,
-  "average_team_article_words": 744,
-  "distinct_section_orders": 6,
-  "league_overview_sections": 4,
+  "minimum_team_article_paragraphs": 20,
+  "minimum_team_article_words": 439,
+  "average_team_article_words": 609,
+  "maximum_team_article_words": 710,
+  "distinct_section_orders": 8,
+  "weekly_recap_sections": 4,
+  "weekly_recap_words": 1406,
   "hot_takes": 5,
   "hot_take_types": [
     "championship",
@@ -28,7 +31,8 @@
   ],
   "prose_quality_audits": [
     "scripts/inquirer-prose-quality-audit.mjs",
-    "scripts/inquirer-overview-quality-audit.mjs"
+    "scripts/inquirer-overview-quality-audit.mjs",
+    "scripts/inquirer-v25-generated-audit.mjs"
   ],
   "legal_lineup_swap_only": true,
   "idp_cannot_replace_offensive_slot": true,
@@ -38,15 +42,15 @@
     "team"
   ],
   "archive_default": "current completed week",
+  "weekly_recap_headline_link": true,
   "projection_valid_upset_required": true,
   "hot_seat_and_cool_throne_required": true,
-  "transaction_quality_verdict_required": true,
-  "replaces": "V23 selective editorial edition",
-  "source": "Completed Sleeper Week 1 data, full-season player scoring, MIDA probabilities and canonical player values through V24 sports reporting",
-  "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs",
   "maximum_featured_transactions": 2,
+  "acquisition_memory_from_canonical_trade_history": true,
   "division_result_commentary": true,
   "division_odds_displayed": false,
-  "maximum_team_article_words": 823,
-  "weekly_recap_words": 2242
+  "transaction_quality_verdict_required": false,
+  "replaces": "V25/revision-1 editorial edition",
+  "source": "Completed Sleeper Week 1 data plus canonical Trade History, canonical Value History context where available, MIDA outlook, verified schedule/injury metadata and current canonical player/team Value inputs through the V26 recovered newsroom",
+  "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs"
 }

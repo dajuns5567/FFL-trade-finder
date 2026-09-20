@@ -1,10 +1,16 @@
 import fs from 'node:fs';
-import {REPORTERS,reporterForTeam,realStatLine,buildInquirerWeek,buildLeagueOverview,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from '../netlify/functions/inquirer-reporters.mjs';
+import {REPORTERS,reporterForTeam,realStatLine,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from '../netlify/functions/inquirer-reporters.mjs';
 
 const assert=(x,m)=>{if(!x)throw new Error(m)};
 assert(REPORTERS.length===4,'Fleeced Inquirer must have exactly four permanent reporters');
 assert(REPORTERS.map(r=>r.name).join('|')==='Nick Swindell|Bartholomew Roycington III|Tilly Fleecer|Jefferson Filch','Fleeced Inquirer public reporter names must remain the approved names');
 assert(INQUIRER_PLAYOFF_START_WEEK===14&&INQUIRER_FINAL_WEEK===17,'Inquirer season must classify Weeks 14-17 as playoffs and stop at Week 17');
+assert(inquirerWeekClassification(14,2026,'AFC').label==='Week 14 • AFC Wildcard Round','Week 14 AFC teams must be in the AFC Wildcard Round');
+assert(inquirerWeekClassification(14,2026,'NFC').label==='Week 14 • NFC Wildcard Round','Week 14 NFC teams must be in the NFC Wildcard Round');
+assert(inquirerWeekClassification(15,2026,'AFC').round==='AFC Divisional Round','Week 15 must be the conference Divisional Round');
+assert(inquirerWeekClassification(16,2026,'NFC').round==='NFC Championship','Week 16 must be the conference Championship');
+assert(inquirerWeekClassification(17,2026,'AFC').round==='Super Bowl','Week 17 must be the Super Bowl regardless of conference');
+assert(inquirerWeekClassification(14,2026).round==='NFC/AFC Wildcard Round','League-wide Week 14 classification must represent both conferences');
 
 const teams=Array.from({length:32},(_,i)=>String(i+1));
 for(let week=1;week<=4;week++){
@@ -23,7 +29,7 @@ const idp=realStatLine('LB',{tkl_solo:7,tkl_ast:4,sack:1,tkl_loss:2,qb_hit:2,pas
 assert(idp.includes('7 solo')&&idp.includes('1 sacks')&&idp.includes('2 TFL'),'IDP real-life stat line missing Sleeper defensive production');
 
 const sampleTeams=teams.map((id,i)=>({
- roster_id:id,manager_name:'GM '+id,team_name:'Team '+id,points:100+i,opponent_points:90+i,won:true,projected:98,
+ roster_id:id,manager_user_id:'u'+id,manager_name:'GM '+id,manager_career:{user_id:'u'+id,wins:20,losses:10,playoff_wins:2,championships:0,regular_season_titles:0},team_name:'Team '+id,conference:i<16?'AFC':'NFC',division_name:(i<16?'AFC':'NFC')+' TEST',points:100+i,opponent_points:90+i,won:true,projected:98,recent_trade_count:i%3,current_week_trade_count:i%2,previous_fan_sentiment:null,current_season_champion:false,
  starter_details:[{id:'p'+id,name:'Player '+id,position:i%2?'WR':'LB',points:20,projected:15}],
  transactions:[],division_results:[],next_opponent_roster_id:null,next_opponent_name:''
 }));
@@ -61,16 +67,52 @@ for(const t of built.teams){
  assert((a.paragraphs||[]).some(p=>/Value Watch/i.test(p)),'Each article must include team-specific Value History movement');
  assert((a.paragraphs||[]).some(p=>/Next Week Personnel|ROSTER PANIC INDEX|Personnel File/i.test(p)),'Each article must include verified bye/injury roster-pressure analysis');
  assert(a.week_classification?.label==='Week 6 • Regular Season','Team article must persist the canonical week classification');
+ assert(a.fan_sentiment&&Number.isFinite(Number(a.fan_sentiment.score)),'Each team article must persist a numeric rolling fan sentiment');
+ assert((a.paragraphs||[]).some(p=>/Fan Sentiment|Public Sentiment File/i.test(p)),'Each team article must include a dedicated fan-sentiment section');
 }
+
+const championTeam={...sampleTeams[0],
+ manager_user_id:'champ-owner',manager_name:'Dynasty GM',manager_career:{user_id:'champ-owner',wins:55,losses:20,playoff_wins:11,championships:3,regular_season_titles:2},
+ points:71,opponent_points:132,won:false,projected:108,recent_trade_count:1,previous_fan_sentiment:{score:88,manager_user_id:'champ-owner'},
+ league_context:{...sampleTeams[0].league_context,record:{wins:9,losses:2,ties:0},standings_rank:2,streak:{type:'L',length:1},recent_games:[
+  {week:7,points:139,opponent_points:110,result:'W',opponent_name:'A'},
+  {week:8,points:145,opponent_points:120,result:'W',opponent_name:'B'},
+  {week:9,points:131,opponent_points:118,result:'W',opponent_name:'C'},
+  {week:10,points:142,opponent_points:121,result:'W',opponent_name:'D'},
+  {week:11,points:71,opponent_points:132,result:'L',opponent_name:'E'}
+ ],recent_avg_points:125.6,prior_five_avg_points:119},
+ value_history_week:{team_id:'1',value:24500,baseline_value:24350,delta:150,pct:.62,baseline_t:'2026-11-01T00:00:00Z',latest_t:'2026-11-08T00:00:00Z',period:'7D'}
+};
+const championBuild=buildInquirerWeek({season:2026,week:11,teams:[championTeam],players,weeklyStats:weeklyStatHistory[6],weeklyStatHistory,scoringSettings:{},scoreFn:(stats)=>Number(stats?.rec_yd||stats?.tkl_solo||20),weekClassification:inquirerWeekClassification(11,2026)});
+const champSentiment=championBuild.teams[0].inquirer_article.fan_sentiment;
+assert(champSentiment.score>=70,'One bad week must not cause a proven repeated champion to collapse into negative fan sentiment');
+assert(/Hall of Fame|Build the Statue|Parade|Standing Ovation/.test(championBuild.teams[0].inquirer_article.paragraphs.find(p=>/Fan Sentiment|Public Sentiment File/i.test(p))||''),'Strong championship management must retain strongly positive fan language after one bad week');
+
+const collapseTeam={...sampleTeams[31],
+ manager_user_id:'collapse-owner',manager_name:'Basement GM',manager_career:{user_id:'collapse-owner',wins:5,losses:30,playoff_wins:0,championships:0,regular_season_titles:0},
+ points:54,opponent_points:141,won:false,projected:105,recent_trade_count:2,previous_fan_sentiment:{score:-76,manager_user_id:'collapse-owner'},
+ league_context:{...sampleTeams[31].league_context,record:{wins:1,losses:10,ties:0},standings_rank:32,streak:{type:'L',length:6},recent_games:[
+  {week:7,points:69,opponent_points:120,result:'L',opponent_name:'A'},
+  {week:8,points:62,opponent_points:118,result:'L',opponent_name:'B'},
+  {week:9,points:75,opponent_points:130,result:'L',opponent_name:'C'},
+  {week:10,points:58,opponent_points:129,result:'L',opponent_name:'D'},
+  {week:11,points:54,opponent_points:141,result:'L',opponent_name:'E'}
+ ],recent_avg_points:63.6,prior_five_avg_points:96},
+ value_history_week:{team_id:'32',value:13100,baseline_value:14700,delta:-1600,pct:-10.88,baseline_t:'2026-11-01T00:00:00Z',latest_t:'2026-11-08T00:00:00Z',period:'7D'}
+};
+const collapseBuild=buildInquirerWeek({season:2026,week:11,teams:[collapseTeam],players,weeklyStats:weeklyStatHistory[6],weeklyStatHistory,scoringSettings:{},scoreFn:(stats)=>Number(stats?.rec_yd||stats?.tkl_solo||20),weekClassification:inquirerWeekClassification(11,2026)});
+const collapseSentiment=collapseBuild.teams[0].inquirer_article.fan_sentiment;
+assert(collapseSentiment.score<=-55,'Sustained losing, falling values and poor management must be able to drive strongly negative fan sentiment');
+assert(/Fire-the-GM|Ban Him From the City|Torches|Mansion Is Under Siege/i.test(collapseSentiment.title+' '+collapseSentiment.scene),'Extreme sustained negative performance must have a creative negative sentiment range');
 
 const overview=buildLeagueOverview({
  season:2026,week:14,teams:built.teams,players,
  transactions:[{type:'free_agent',status:'complete',adds:{p1:'1'},drops:{p2:'2'}},{type:'trade',status:'complete',roster_ids:['1','2'],adds:{p1:'2',p2:'1'},drops:{}}],
  canonicalTrades:[{season:2026,week:14,team_names:{'1':'Team 1','2':'Team 2'},sides:[{roster_id:'1',player_ids:['p2'],picks:[]},{roster_id:'2',player_ids:['p1'],picks:[{season:2027,round:1}]}]}],
- weekClassification:{week:14,season:2026,phase:'Playoffs',playoffs:true,label:'Week 14 • Playoffs',playoff_start_week:14,final_week:17},
+ weekClassification:inquirerWeekClassification(14,2026),
  valueHistoryMeta:{period:'7D',baseline:'2026-09-12T22:01:38.323Z',latest:'2026-09-19T22:01:38.323Z',source:'github-archive+netlify-live'}
 });
-assert(overview.week_classification?.phase==='Playoffs'&&overview.week_classification?.week===14,'League Overview must remember that Week 14 begins the playoffs');
+assert(overview.week_classification?.phase==='Playoffs'&&overview.week_classification?.round==='NFC/AFC Wildcard Round','League Overview must remember Week 14 as the NFC/AFC Wildcard Round');
 assert((overview.sections||[]).length===4,'League Overview must contain one substantive desk section from each reporter');
 assert((overview.hot_takes||[]).length===4,'League Overview Hot Takes must involve all four reporters');
 assert((overview.bottom_five||[]).length===5,'League Overview must analyze the bottom five teams in the race toward the No. 1 pick');
@@ -85,7 +127,7 @@ assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub mu
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
 assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
-assert(backend.includes("explicit V15 league-overview/value-watch upgrade"),'V15 must explicitly migrate older team articles once for Value Watch/League Overview support');
+assert(backend.includes("explicit V16 playoff-round/fan-sentiment upgrade"),'V16 must explicitly migrate older articles once for playoff-round and fan-sentiment support');
 assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');
 assert(backend.includes("Number(stored?.inquirer_version||0)<INQUIRER_VERSION"),'Only older-version archived reporter articles may be migrated; current-version articles stay preserved');
 assert(backend.includes('leagueSeasonContext('),'Inquirer backend must derive season standings/streak context from completed Sleeper matchups');
@@ -94,13 +136,21 @@ assert(ui.includes('storedInquirerArticle(t)'),'League Hub must render preserved
 assert(ui.includes('reporterArchiveHTML(w)'),'League Hub must expose reporter archive UI');
 assert(ui.includes('data-lh-reporter-archive'),'Reporter archive controls missing');
 assert(ui.includes('leagueOverviewArticle(o)')&&ui.includes('League Overview • All 4 Reporters'),'League Overview must be a first-class archived Inquirer article in the UI');
+assert(ui.includes('lh-fan-sentiment'),'Fan Sentiment must render as a dedicated visual section in the team article');
 assert(backend.includes("internalHistory(origin,'team_net_all=1')"),'Inquirer must reuse the canonical Value History team-movement endpoint');
 assert(backend.includes("internalHistory(origin,'trades=1')"),'Inquirer must reuse canonical Trade History for weekly trade reactions');
 assert(backend.includes('nflWeekSchedule(season,nextNflWeek)'),'Inquirer must verify next-week NFL schedule before calling bye situations');
 assert(backend.includes('injury_status'),'Inquirer must use Sleeper injury designations for roster-pressure analysis');
+assert(backend.includes("league?.metadata?.['division_'+d]"),'Conference must be derived from Sleeper division metadata rather than hardcoded roster IDs');
+assert(backend.includes("name.startsWith('AFC')")&&backend.includes("name.startsWith('NFC')"),'Sleeper AFC/NFC division labels must drive conference assignment');
+assert(backend.includes("managers/history-cache.json"),'Fan sentiment must consume persistent manager career history');
+assert(backend.includes('previous_fan_sentiment:previousSentiment'),'Fan sentiment must carry forward from the prior archived week for the same team/manager');
+assert(backend.includes('current_season_champion'),'Week 17 sentiment must be able to recognize the current Sleeper championship winner');
 assert(/dramatic without inventing facts/i.test(helper),'Reporter house style must preserve dramatic-but-factual constraint');
 assert(helper.includes('Hometown old-school beat writer and obvious fan')&&helper.includes('Hometown analytics beat writer and fan')&&helper.includes('Hometown tabloid beat writer and unapologetic fan')&&helper.includes('Hometown investigative beat writer and fan'),'All four reporters must explicitly write as hometown beat reporters/fans');
 assert(/rival group chat/i.test(helper)&&/dental procedures/i.test(helper)&&/spreadsheets cannot be angry/i.test(helper)&&/subpoena immunity/i.test(helper),'V14 prose engine must preserve frequent sarcasm and embedded humor rather than generic recap copy');
-assert(helper.includes('recentHistoryParagraph')&&helper.includes('gameAnatomyParagraph')&&helper.includes('supportingCastParagraph')&&helper.includes('managerParagraph')&&helper.includes('opponentContextParagraph')&&helper.includes('valueHistoryParagraph')&&helper.includes('availabilityParagraph')&&helper.includes('nextWeekParagraph')&&helper.includes('closingParagraph'),'V15 must retain the full long-form beat-column structure including Value Watch and next-week personnel analysis');
-assert(helper.includes('buildLeagueOverview')&&helper.includes('hotTakeRows'),'V15 must retain the co-authored League Overview and Hot Takes engine');
+assert(helper.includes('recentHistoryParagraph')&&helper.includes('gameAnatomyParagraph')&&helper.includes('supportingCastParagraph')&&helper.includes('managerParagraph')&&helper.includes('opponentContextParagraph')&&helper.includes('valueHistoryParagraph')&&helper.includes('fanSentimentParagraph')&&helper.includes('availabilityParagraph')&&helper.includes('nextWeekParagraph')&&helper.includes('closingParagraph'),'V16 must retain the full long-form beat-column structure including Value Watch, Fan Sentiment and next-week personnel analysis');
+assert(helper.includes('Hall of Fame Petition')&&helper.includes('Metaphorical Torches & Pitchforks')&&helper.includes('The Imaginary Mansion Is Under Siege'),'V16 fan sentiment must preserve the full creative positive-to-negative spectrum');
+assert(helper.includes("previous.score)*.65+raw*.35"),'V16 fan sentiment must preserve prior-week inertia so one result cannot dominate management reputation');
+assert(helper.includes('buildLeagueOverview')&&helper.includes('hotTakeRows'),'V16 must retain the co-authored League Overview and Hot Takes engine');
 console.log('Fleeced Inquirer four-reporter rotation, real-stat, persistence, and archive smoke passed');

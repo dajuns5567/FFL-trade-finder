@@ -159,7 +159,7 @@ function divisionStory(t,r){
   const lost='Another loss would leave this team relying more heavily on help from those rivals.';
   const gained='Next week is a chance to improve that position before the division has time to separate.';
   if(d.includes(lost))d=d.replace(lost,deskChoice(t,r,[
-    [`The useful response is simple: stop giving those rivals more help next week.`,`The notebook version is shorter: the next loss would make the chase considerably uglier.`],
+    [`The response is simple: stop giving those rivals more help next week.`,`The notebook version is shorter: the next loss would make the chase considerably uglier.`],
     [`Depending on rival charity twice in a row would be terribly unbecoming.`,`Another week of asking the neighbors for help would ruin the arrangement.`],
     [`Next week: win your own game and stop outsourcing the rescue mission.`,`The back-page prescription is obvious—quit making the rivals do the saving.`],
     [`The case improves fastest if ${t.team_name} stops requiring favorable exhibits from elsewhere.`,`Rival losses helped limit the damage; relying on that evidence again would weaken the case.`]
@@ -231,48 +231,111 @@ function acquisitionCallback(t,p,r){
   ]);
 }
 
-function sectionCommentary(t,kind,r){
- const rows=list(t),top=rows[0],second=rows[1],margin=Number(t.points)-Number(t.opponent_points),rec=t.league_context?.record||{},rank=Number(t.league_context?.standings_rank),m=t.mida_outlook;
- if(kind==='lede')return deskChoice(t,r,[
-   [margin>0?`The useful part for ${t.team_name} is not merely being 1-0 or adding another win; it is that the shape of the victory gives the roster something repeatable to build on. ${top?top.name+' looked like the centerpiece, and '+(second?second.name+' gave the lineup another dependable lane behind him.':'the next question is who can consistently support him.'):'The next week should tell us whether this was a foundation or a favorable afternoon.'}`:`The loss matters most for what it exposed. ${top?top.name+' gave '+t.team_name+' a performance it can build around, but the rest of the roster now has to prove that effort will not keep being stranded.':'There was not enough star production to hide the weak points.'}`],
-   [margin>0?`A win this early is a nice suit, not a finished wardrobe. ${top?top.name+' gave '+t.team_name+' a centerpiece worth dressing around; now the supporting cast has to make the look sustainable.':'The next assignment is proving the result travels.'}`:`The unpleasant question is whether this was one bad afternoon or the first look at a roster imbalance. ${top?top.name+' did enough to avoid the accusation himself.':''}`],
-   [margin>0?`The headline is the win, but the story is whether ${t.team_name} found something it can keep using. ${top?top.name+' looked like the player capable of setting that weekly tone.':''}`:`One loss does not make a season, but it does hand the back page a list of things to watch. ${top?top.name+' is not near the top of that complaint list.':''}`],
-   [margin>0?`The result closes one file and opens the more interesting one: can ${t.team_name} reproduce this shape against better opposition? ${top?top.name+' gives the case a credible lead witness.':''}`:`The final score is evidence, not a verdict on the season. What matters next is whether ${t.team_name} corrects the weak spots without wasting the performances that already worked.`]
- ]);
- if(kind==='players'&&top)return deskChoice(t,r,[
-   [`${top.name} is the player opponents now have to account for first, but the ceiling of this lineup will be decided by what happens after that first name. ${second?second.name+' giving '+t.team_name+' another credible answer changes how difficult the roster is to defend week to week.':'The supporting cast has to become more than background noise.'}`],
-   [`${top.name} supplied the star turn; the more interesting question is whether ${t.team_name} can make that performance feel normal rather than exceptional. ${second?second.name+' is the obvious candidate to keep the room from becoming a one-man show.':''}`],
-   [`${top.name} gets the giant type. Fine. The season gets interesting when ${second?second.name+' and the rest of the lineup make defenses choose which fire to chase.':'someone else earns enough ink to make the lineup less predictable.'}`],
-   [`${top.name} is the strongest exhibit. The next layer of evidence is depth: ${second?second.name+' gives the file a second credible source of weekly production.':'right now the file still needs another dependable contributor.'}`]
- ]);
- if(kind==='management')return deskChoice(t,r,[
-   [`Management will be judged less by the announcement than by what this roster looks like a month from now. A move that creates a weekly starter, fixes a recurring weakness or gives the team another way to win is the kind that keeps paying after the transaction feed disappears.`],
-   [`The transaction itself is merely the invitation. The real review starts when the new piece has to justify the chair, the price and the manager’s confidence every Sunday.`],
-   [`Nobody gets a trophy for winning the transaction ticker. The useful moves are the ones we are still talking about four Sundays later because the roster actually changed.`],
-   [`A transaction belongs in the file only if it changes the case. Role, production and what was surrendered will matter more over time than the day the move was announced.`]
- ]);
- if(kind==='sentiment')return deskChoice(t,r,[
-   [`Fans can enjoy the result without pretending the season has already supplied its ending. The mood should move with what the team is becoming, not just with one Sunday’s score.`],
-   [`Supporters are allowed a little theater, but September applause is still provisional. The next few weeks decide whether this mood becomes confidence or merely a very nice memory.`],
-   [`The group chat has every right to overreact; the standings will eventually make it earn the confidence. For now, the direction is what matters.`],
-   [`Public sentiment is useful only when attached to the larger record. One result changes the tone; repeated results change the case.`]
- ]);
- if(kind==='outlook'){
-   const playoff=valid(m?.playoff)?Number(m.playoff):null,cut=t.league_context?.playoff_teams||null;
-   return deskChoice(t,r,[
-    [`The road ahead is about turning this week into position. ${Number.isFinite(rank)?'Sitting around No. '+rank+' in a '+(t.league_context?.league_size||32)+'-team table means every clean win can save a much uglier chase later. ':''}${playoff!=null?'A playoff path around '+one(playoff)+'% is a starting point, not protection.':''}`],
-    [`The schedule now starts asking whether ${t.team_name} is collecting results or building an identity. ${playoff!=null?'With postseason chances around '+one(playoff)+'%, the margin for decorative losses is '+(playoff>=60?'smaller than the optimism suggests.':'already uncomfortable.') : 'The next few weeks will supply the missing postseason context.'}`],
-    [`Next week is not isolated from the rest of the road. Wins banked now are the ones that keep November from becoming a weekly emergency broadcast.`],
-    [`The next matchup belongs in the larger file: record, standings position and the remaining runway all move together. A good Sunday now can make later decisions calmer; a wasted one can make every future choice feel urgent.`]
-   ]);
- }
- if(kind==='hot-seat'||kind==='cool-throne')return deskChoice(t,r,[
-   [`One week earns attention, not permanence. The follow-up is what turns a performance into a trend—or turns a warning into something the lineup has to solve.`],
-   [`The chair is temporary. Reputation starts when the same kind of Sunday keeps returning.`],
-   [`The back page remembers repeat offenders and repeat heroes. One appearance here is merely the opening installment.`],
-   [`The file stays open. Repetition is what converts one data point into something worth believing.`]
- ]);
- return null;
+
+function managerMemory(t){
+  const c=t.manager_career||{},titles=Number(c.championships)||0,wins=Number(c.wins)||0,losses=Number(c.losses)||0;
+  if(titles>0)return t.manager_name+' has '+titles+' championship'+(titles===1?'':'s')+' on the résumé, so one odd Sunday does not erase the larger record. It also means the standard is higher when the same mistake starts repeating.';
+  if(wins+losses>=12)return t.manager_name+' carries a '+wins+'-'+losses+' career record into the week. That history belongs in the judgment: a pattern matters more than a single lucky or miserable afternoon.';
+  return null;
+}
+function recentDirection(t){
+  const games=(t.league_context?.recent_games||[]).slice(-4);if(games.length<2)return null;
+  const wins=games.filter(g=>g.result==='W').length,losses=games.filter(g=>g.result==='L').length;
+  if(wins>=3)return t.team_name+' has won '+wins+' of its last '+games.length+', enough for the mood around the club to feel earned rather than borrowed.';
+  if(losses>=3)return t.team_name+' has lost '+losses+' of its last '+games.length+', so this week lands inside a larger problem instead of arriving as an isolated annoyance.';
+  return 'The recent run is mixed enough that '+t.team_name+' is still writing its identity one Sunday at a time.';
+}
+function valueSectionV26(t,r){
+  const v=t.value_history_week;if(!valid(v?.delta))return ['n/a'];
+  const d=Number(v.delta),dir=d>0?'up':d<0?'down':'flat',amount=Math.abs(Math.round(d)).toLocaleString('en-US'),pct=valid(v.pct)?Math.abs(Number(v.pct)):null;
+  const core=t.team_name+' moved '+dir+(d===0?'':' '+amount)+(pct!=null&&d!==0?' ('+one(pct)+'%)':'')+' over the current Value History window.';
+  if(r.id==='walter-mercer')return[
+    core+' Keep it in the margin of the notebook, not the headline. Market movement matters most when the football starts making the same argument.',
+    d>0?'The encouraging part is that the roster is gaining room to maneuver while the season is still young. The front office should resist spending that flexibility just because it exists.':d<0?'The slide is worth watching because repeated value loss can turn a bad month into a harder rebuild. One week is not a fire sale; several can become one.':'No movement is its own message: the market has not changed its mind about this roster yet.'
+  ];
+  if(r.id==='tess-delaney')return[
+    core+' The market has adjusted the guest list, but nobody should confuse a better price tag with a trophy or a worse one with a funeral.',
+    d>0?'There is something pleasant about gaining value while still having games left to justify the optimism. The elegant outcome is for Sunday production to catch the same train.':d<0?'A falling roster value is the sort of stain that looks tiny under restaurant lighting and enormous the next morning. Stop it early and nobody needs to redecorate.':'The market remains stubbornly unimpressed, which is at least preferable to melodrama without cause.'
+  ];
+  if(r.id==='mack-hollis')return[
+    core+' That gets a sidebar, not the banner. The back page still belongs to wins, losses and the players actually deciding them.',
+    d>0?'GOOD NEWS WITH A LOWERCASE FONT: the roster is becoming more valuable without requiring a press conference. Keep stacking pieces that matter.':d<0?'BAD NEWS, NOT PANIC NEWS: value is leaking. Fix the roster before this becomes the kind of trend that earns an ugly nickname.':'NO MARKET DRAMA THIS WEEK. The newspaper will survive.'
+  ];
+  return[
+    core+' The number goes into the file beside the roster decisions that produced it; it does not replace the game result.',
+    d>0?'A rising value gives management more optionality, and that matters when the next trade or injury forces a choice. The inquiry is whether the gain came from pieces this team actually intends to build around.':d<0?'A declining value narrows future options if it persists. The next few decisions matter more than any explanation offered after the fact.':'The market has left the file unchanged. That is neither acquittal nor indictment.'
+  ];
+}
+function nickExpansion(t,kind){
+  const rows=list(t),top=rows[0],recent=recentDirection(t),memory=managerMemory(t),rank=Number(t.league_context?.standings_rank);
+  if(kind==='lede')return [recent||((top?top.name:'The lineup')+' gave the old desk enough to work with, but one result still has to survive the next Sunday before it earns a place in the season story.')];
+  if(kind==='players'&&top)return [(rows[1]?rows[1].name+' matters here because good teams stop asking the same star to rescue them every week. ':'')+'The names below the headline decide whether this lineup travels when the schedule gets less friendly.'];
+  if(kind==='management')return [memory||'Management gets judged on what remains useful after the transaction notification disappears. A move that fixes a weekly problem will age better than one that merely created activity.'];
+  if(kind==='sentiment')return ['Fans can enjoy the result without pretending September has issued a final ruling. Around here, optimism is allowed; it just has to bring receipts the following week.'];
+  if(kind==='outlook')return [(Number.isFinite(rank)?t.team_name+' sits around No. '+rank+' in the league table. ':'')+'The cleanest road forward is boring in the best way: bank the winnable games now so November does not require miracles.'];
+  if(kind==='hot-seat'||kind==='cool-throne')return ['The chair lasts a week. Reputation takes longer. The follow-up performance is what turns this into a trend worth remembering.'];
+  return [];
+}
+function bartholomewExpansion(t,kind){
+  const rows=list(t),top=rows[0],second=rows[1],memory=managerMemory(t),m=t.mida_outlook;
+  if(kind==='lede')return ['A single Sunday is not a coronation, naturally, but '+t.team_name+' has at least supplied a scene worth lingering over. '+(top?top.name+' gave the afternoon its leading man'+(second?', while '+second.name+' kept the production from becoming an embarrassing one-person recital.':'.'): 'The ensemble now owes us a sequel.')];
+  if(kind==='players'&&top)return [top.name+' supplied the star turn; the season becomes genuinely interesting when the rest of the cast makes that level of performance feel less exceptional and more like the house style.'];
+  if(kind==='management')return [memory||'Roster construction is fashion only until kickoff. After that, every expensive accessory has to reveal whether it can actually play.'];
+  if(kind==='sentiment')return ['Supporters are entitled to a little theater. The trick is making sure the applause is attached to something sturdier than one flattering scoreline.'];
+  if(kind==='outlook')return [(valid(m?.playoff)?'With a postseason path around '+one(m.playoff)+'%, ':'')+'the next engagement is less about forecasting destiny than accumulating the kind of wins that make the autumn schedule feel civilized instead of desperate.'];
+  if(kind==='hot-seat')return ['The uncomfortable chair is not a banishment; it is a request for a better performance, preferably before this columnist is forced to become repetitive and therefore common.'];
+  if(kind==='cool-throne')return ['The comfortable chair is deserved for the week. Permanence, like good tailoring, requires repetition.'];
+  return [];
+}
+function tillyExpansion(t,kind){
+  const rows=list(t),top=rows[0],second=rows[1],memory=managerMemory(t),rank=Number(t.league_context?.standings_rank);
+  if(kind==='lede')return [(Number(t.points)>Number(t.opponent_points)?'WIN FILED. NOW MAKE IT A STREAK. ':'LOSS FILED. NOW GIVE US A RESPONSE. ')+(top?top.name+' gets the big type, because somebody has to own the first sentence.':'The next edition needs a hero.')];
+  if(kind==='players'&&top)return [top.name+' gets the banner. '+(second?second.name+' gets the next column. ':'The supporting cast gets a challenge.')+'If this lineup wants to become a weekly problem for the league, the names below them have to keep showing up too.'];
+  if(kind==='management')return [memory||'The back page does not award trophies for transaction volume. Make the roster better, make the move matter, and then we will print the victory lap.'];
+  if(kind==='sentiment')return ['The group chat is allowed to overreact. That is what group chats are for. The standings get the final edit, so keep giving them something fun to print.'];
+  if(kind==='outlook')return [(Number.isFinite(rank)?'CURRENT TABLE: No. '+rank+'. ':'')+'Every win banked now is one fewer November emergency. Every wasted favorite spot becomes a future headline with much worse punctuation.'];
+  if(kind==='hot-seat')return ['One bad week gets angry font. Two starts a storyline. Three gets a nickname nobody wants.'];
+  if(kind==='cool-throne')return ['One huge week gets the picture above the fold. Do it again and we start saving front pages.'];
+  return [];
+}
+function filchExpansion(t,kind){
+  const rows=list(t),top=rows[0],memory=managerMemory(t),ctx=t.league_context||{},op=t.next_opponent_context||{},sameDivision=!!t.next_divisional;
+  if(kind==='lede')return ['The score closes the first file and opens the more important one: what from this week is likely to survive contact with the next opponent? '+(top?top.name+' is the strongest answer on the page.':'The lineup still owes the inquiry a clear answer.')];
+  if(kind==='players'&&top)return ['The production around '+top.name+' matters because roster dependence leaves fingerprints over time. If the same supporting names keep appearing, that is depth; if they vanish, this week becomes an outlier with excellent publicity.'];
+  if(kind==='management')return [memory||'A front office move stays in the file after the ticker forgets it. Role, opportunity and what management gave up will decide whether the transaction reads better a month from now.'];
+  if(kind==='sentiment')return ['Public opinion enters the record because it remembers what came before. One win can improve the mood; only repeated competent Sundays can rewrite a reputation.'];
+  if(kind==='outlook')return [(sameDivision?'The next matchup is divisional, so the result shifts both sides of the race at once. ':'The next matchup still spends one of a finite number of regular-season chances. ')+(op?.record?'The opponent arrives with its own '+String(op.record.wins||0)+'-'+String(op.record.losses||0)+' pressure, which makes the road ahead a two-team problem rather than a projection exercise.':'The schedule will reveal quickly whether this week solved anything durable.')];
+  if(kind==='hot-seat'||kind==='cool-throne')return ['The file remains open after one appearance in this chair. Repetition is what converts a weekly note into something management actually has to answer.'];
+  return [];
+}
+function reporterExpansionV26(t,kind,r){
+  if(r.id==='tess-delaney')return bartholomewExpansion(t,kind);
+  if(r.id==='mack-hollis')return tillyExpansion(t,kind);
+  if(r.id==='nora-voss')return filchExpansion(t,kind);
+  return nickExpansion(t,kind);
+}
+function reporterStructureV26(sections,t,r){
+  const byKind=new Map((sections||[]).map(s=>[s.kind,s])),variant=Math.floor(Math.max(0,(Number(t.roster_id)||1)-1)/4)%2;
+  const orders={
+    'walter-mercer':[
+      ['lede','players','management','hot-seat','value','sentiment','cool-throne','outlook'],
+      ['lede','players','value','management','cool-throne','sentiment','hot-seat','outlook']
+    ],
+    'tess-delaney':[
+      ['lede','players','sentiment','cool-throne','value','management','hot-seat','outlook'],
+      ['lede','sentiment','players','value','management','cool-throne','hot-seat','outlook']
+    ],
+    'mack-hollis':[
+      ['lede','hot-seat','players','cool-throne','management','sentiment','value','outlook'],
+      ['lede','players','hot-seat','management','cool-throne','sentiment','value','outlook']
+    ],
+    'nora-voss':[
+      ['lede','management','players','value','hot-seat','sentiment','cool-throne','outlook'],
+      ['lede','management','value','players','sentiment','hot-seat','cool-throne','outlook']
+    ]
+  };
+  const order=(orders[r.id]||orders['walter-mercer'])[variant];
+  return order.map(k=>byKind.get(k)).filter(Boolean);
 }
 
 function naturalLede(t,r){
@@ -369,11 +432,12 @@ function sentiment(t,r){
 
 export function humanSectionsV25(args){
   const {team:t,facts={}}=args,base=humanSectionsV23({...args,team:{...t,transactions:[]}}),mgmt=management(t,facts,args.reporter);
-  return base.map(s=>{
+  const rewritten=base.map(s=>{
     let paragraphs;
     if(s.kind==='lede')paragraphs=naturalLede(t,args.reporter);
     else if(s.kind==='players')paragraphs=playerSection(t,args.reporter);
     else if(s.kind==='management')paragraphs=mgmt;
+    else if(s.kind==='value')paragraphs=valueSectionV26(t,args.reporter);
     else if(s.kind==='outlook')paragraphs=outlook(t,args.week,args.reporter);
     else if(s.kind==='sentiment')paragraphs=sentiment(t,args.reporter);
     else if(s.kind==='hot-seat')paragraphs=hotCool(t,'hot-seat',args.reporter);
@@ -381,10 +445,11 @@ export function humanSectionsV25(args){
     else paragraphs=[...(s.paragraphs||[])];
     if(paragraphs.length&&paragraphs[0]!=='n/a'){
       if(s.kind==='players'){const traded=list(t).find(p=>p.acquisition);const callback=traded?acquisitionCallback(t,traded,args.reporter):null;if(callback)paragraphs.push(callback)}
-      const commentary=sectionCommentary(t,s.kind,args.reporter);if(commentary)paragraphs.push(commentary);
+      paragraphs.push(...reporterExpansionV26(t,s.kind,args.reporter));
     }
     return {...s,paragraphs};
   });
+  return reporterStructureV26(rewritten,t,args.reporter);
 }
 
 function uniqueGames(teams){

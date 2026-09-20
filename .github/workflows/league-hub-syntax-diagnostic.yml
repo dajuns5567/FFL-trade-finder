@@ -21,6 +21,7 @@ jobs:
       - name: Generate real Week 1 V25 edition
         run: |
           node scripts/one-time-generate-inquirer-week1.mjs
+          node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer.json
           node scripts/pack-inquirer-preload.mjs /tmp/week1-inquirer.json /tmp/inquirer-week1-2026-preload.mjs
       - name: Upload generated V25 edition
         uses: actions/upload-artifact@v4

@@ -239,3 +239,77 @@ The League Overview is archived independently at:
 `inquirer/league-overview/<season>/week-<NN>.json`
 
 Because all four reporters contribute to it, the same League Overview also appears in each reporter's personal archive alongside that reporter's team beat articles.
+
+
+## V16 conference playoff rounds + rolling fan sentiment — 2026-09-19
+
+### Exact postseason naming
+
+The Inquirer fantasy calendar remains Weeks 1–17, but playoff weeks now have permanent round identities:
+
+- **Week 14 — AFC Wildcard Round / NFC Wildcard Round**
+- **Week 15 — AFC Divisional Round / NFC Divisional Round**
+- **Week 16 — AFC Championship / NFC Championship**
+- **Week 17 — Super Bowl**
+
+Conference is not guessed from roster ID or team name. It is derived from Sleeper league metadata:
+- each roster's `settings.division`
+- the corresponding Sleeper `league.metadata.division_<n>` label
+- labels beginning `AFC` map to AFC; labels beginning `NFC` map to NFC
+
+League-wide overview copy may refer to the Week 14–16 rounds as **NFC/AFC Wildcard Round**, **NFC/AFC Divisional Round**, and **NFC/AFC Championship** because it covers both conferences. Team beat articles use the team's actual AFC/NFC round. Week 17 is simply the **Super Bowl**.
+
+The reporter must also know the next postseason round when previewing the following week. Week 13 can preview the AFC/NFC Wildcard Round; Week 14 can preview the conference Divisional Round; Week 15 can preview the conference Championship; Week 16 can preview the Super Bowl. No Week 18 fantasy round is invented.
+
+### Fan Sentiment toward management
+
+Every team article contains a dedicated **Fan Sentiment** section describing how that fan base currently feels about its GM/owner.
+
+This is a **running reputation**, not a reaction meter for one Sunday.
+
+Inputs may include:
+- the last several completed team results, weighted toward the most recent games
+- current winning or losing streak
+- season record and league standing
+- recent team scoring form versus the prior stretch
+- current week's result versus projection
+- lineup/bench decision quality
+- canonical team Value History movement
+- recent completed trade activity
+- prior playoff success
+- prior regular-season titles
+- prior championships
+- a newly won current-season championship when Sleeper's winners bracket identifies the Week 17 champion
+- the previous archived week's Fan Sentiment for the same manager
+
+The prior week's sentiment carries substantial inertia. A manager who has performed well for months, especially one with playoff success or repeated championships, should not become hated because of one loss. Likewise, a manager with a long losing stretch, deteriorating team value and repeated poor decisions should not reset to neutral because of one fluky win.
+
+The stored sentiment contains a numeric score for continuity and analysis, but the article itself should read naturally rather than like a dashboard.
+
+### Sentiment range
+
+The language should be creative and wide-ranging, with stronger management performance producing more positive fan reactions.
+
+Positive examples can progress through:
+- cautious belief
+- strong approval
+- standing ovation
+- parade-permit talk
+- build-the-statue demands
+- Hall of Fame petitions for proven/repeated champions
+
+Negative examples can progress through:
+- sports-radio grumbling
+- organized boo birds
+- fire-the-GM chants
+- joking demands to ban management from the city
+- **metaphorical/cartoon** torches-and-pitchforks revolt
+- an intentionally absurd imaginary-mansion siege at the very bottom of the scale
+
+Extreme negative language is sports-fan satire, not a literal call for violence. Keep it obviously hyperbolic and fictional while preserving the comedic intensity requested for the Inquirer.
+
+### Continuity rule
+
+When the same manager remains in place, the previous week's archived sentiment is blended with the new evidence. When management changes, the old manager's sentiment does not transfer automatically to the replacement.
+
+Fan Sentiment is commentary only. It must never feed back into player valuation, trade valuation, standings, or any other numerical league system.

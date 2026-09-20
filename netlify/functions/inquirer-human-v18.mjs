@@ -115,10 +115,10 @@ export function humanSections({team:t,week:w,reporter:r,facts,sentiment}){
 
   if(voice==='tilly')return [
     {heading:'The Back Page Has Feelings',kind:'lede',paragraphs:[t.team_name+' '+(won?'won':'lost')+' '+g.score+' against '+opp+', so the newsroom is currently at '+(won?'“find a parade permit”':'“who approved this mess?”')+' on the emotional scale.'+projection,season+' I know it is early. I also know nobody joined a 32-team fantasy league to practice emotional restraint. '+(won?'Put the screenshot in the group chat.':'Complain loudly, preferably with punctuation.')]},
-    {heading:'Who Gets the Giant Photo',kind:'players',paragraphs:[star+trend+' '+second,low+' That name gets the tiny photo near the classifieds until further notice.']},
-    {heading:'Management, Please Report to the Principal’s Office',kind:'management',paragraphs:[mgmt,benchStory+' I am not calling it malpractice yet. I am, however, printing the form in advance.']},
-    {heading:'Value Watch, Presented With Unnecessary Drama',kind:'value',paragraphs:[value,'A value chart is sports radio with decimals. I respect it completely until the second it disagrees with me.']},
-    {heading:'What the Fans Are Yelling',kind:'sentiment',paragraphs:[fans,'The city reserves the right to change its mind next Sunday and deny ever holding the previous opinion.']},
+    {heading:'Who Gets the Giant Photo',kind:'players',paragraphs:[star+trend+' '+second,low+' That name gets the tiny photo near the classifieds until further notice. The back page has room for a redemption story next week, but absolutely no room for amnesia.']},
+    {heading:'Management, Please Report to the Principal’s Office',kind:'management',paragraphs:[mgmt,benchStory+' I am not calling it malpractice yet. I am, however, printing the form in advance. One weird lineup choice is comedy; the same choice twice becomes a recurring character.']},
+    {heading:'Value Watch, Presented With Unnecessary Drama',kind:'value',paragraphs:[value,'A value chart is sports radio with decimals. I respect it completely until the second it disagrees with me. If the arrow keeps moving the same way next week, then we can start pretending it was wisdom all along.']},
+    {heading:'What the Fans Are Yelling',kind:'sentiment',paragraphs:[fans,'The city reserves the right to change its mind next Sunday and deny ever holding the previous opinion. Today’s confidence is tomorrow’s call-in-show evidence, and nobody here has signed a consistency agreement.']},
     {heading:'Tomorrow’s Problem',kind:'outlook',paragraphs:[personnel,next+' '+(won?'Enjoy tonight. Tomorrow we become unreasonable about the next opponent.':'The next headline is still available. Please do not make me reuse the angry font.')]},
   ];
 

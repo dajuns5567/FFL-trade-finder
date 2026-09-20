@@ -41,7 +41,6 @@ for(const t of d.teams||[]){
   if((management?.paragraphs||[])[0]!=='n/a')assert.ok((management?.paragraphs||[]).length>=2,'Meaningful management sections must include reporter follow-through');
   if((outlook?.paragraphs||[])[0]!=='n/a')assert.ok((outlook?.paragraphs||[]).length>=3,'Next-week sections must develop the matchup and road ahead');
 }
-}
 for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=2,'Reporter '+rid+' must have more than one article structure across eight team stories');
 const avgTeamWords=teamWords.reduce((n,x)=>n+x,0)/Math.max(1,teamWords.length);
 assert.ok(Math.min(...teamWords)>=400,'Every team column must preserve substantial commentary; shortest='+Math.min(...teamWords));

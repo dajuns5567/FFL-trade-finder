@@ -4,7 +4,7 @@
   "week": 1,
   "inquirer_version": 26,
   "editorial_revision": 2,
-  "generated_at": "2026-09-20T21:37:25.018Z",
+  "generated_at": "2026-09-20T22:07:05.943Z",
   "teams": 32,
   "reporters": [
     "Nick Swindell",
@@ -15,12 +15,12 @@
   "reporter_distribution": "8 team articles per reporter",
   "team_article_sections": 8,
   "minimum_team_article_paragraphs": 20,
-  "minimum_team_article_words": 456,
-  "average_team_article_words": 623,
-  "maximum_team_article_words": 729,
+  "minimum_team_article_words": 609,
+  "average_team_article_words": 804.6,
+  "maximum_team_article_words": 904,
   "distinct_section_orders": 8,
   "weekly_recap_sections": 4,
-  "weekly_recap_words": 1406,
+  "weekly_recap_words": 2797,
   "hot_takes": 5,
   "hot_take_types": [
     "championship",
@@ -51,6 +51,18 @@
   "division_odds_displayed": false,
   "transaction_quality_verdict_required": false,
   "replaces": "V25/revision-1 editorial edition",
-  "source": "Completed Sleeper Week 1 data plus canonical Trade History, canonical Value History context where available, MIDA outlook, verified schedule/injury metadata and current canonical player/team Value inputs through the V26 recovered newsroom",
-  "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs"
+  "source": "Completed Sleeper Week 1 data plus Sleeper 2025 player-history baselines, current-week real stat lines and usage, canonical Trade History, canonical Value History context where available, MIDA outlook, verified schedule/injury metadata and current canonical player/team Value inputs through the V26 recovered newsroom",
+  "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs",
+  "historical_player_stats_source": "Sleeper 2025 season-aggregate",
+  "historical_player_context": true,
+  "real_statline_commentary": true,
+  "player_trajectory_commentary": [
+    "early breakout",
+    "breakout",
+    "reliable",
+    "decline watch",
+    "veteran check-in"
+  ],
+  "empty_na_sections_hidden_in_ui": true,
+  "repeated_long_sentence_max_placements": 2
 }

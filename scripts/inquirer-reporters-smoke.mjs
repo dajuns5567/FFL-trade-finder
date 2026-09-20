@@ -41,7 +41,7 @@ assert(idp.includes('7 solo')&&idp.includes('1 sack')&&idp.includes('2 TFL'),'ID
 const sampleTeams=teams.map((id,i)=>({
  roster_id:id,manager_user_id:'u'+id,manager_name:'GM '+id,manager_career:{user_id:'u'+id,wins:20,losses:10,playoff_wins:2,championships:0,regular_season_titles:0},team_name:'Team '+id,conference:i<16?'AFC':'NFC',division_name:(i<16?'AFC':'NFC')+' TEST',points:100+i,opponent_points:90+i,won:true,projected:98,recent_trade_count:i%3,current_week_trade_count:i%2,previous_fan_sentiment:null,current_season_champion:false,
  starter_details:[{id:'p'+id,name:'Player '+id,position:i%2?'WR':'LB',points:20,projected:15}],
- transactions:[],division_results:[],next_opponent_roster_id:null,next_opponent_name:''
+ transactions:[],division_results:[],next_opponent_roster_id:String(i%2===0?i+2:i),next_opponent_name:'Team '+String(i%2===0?i+2:i)
 }));
 const players=Object.fromEntries(teams.map((id,i)=>['p'+id,{full_name:'Player '+id,position:i%2?'WR':'LB',team:'NFL'}]));
 const weeklyStats=Object.fromEntries(teams.map((id,i)=>['p'+id,i%2?{rec:6,rec_tgt:9,rec_yd:101,rec_td:1}:{tkl_solo:8,tkl_ast:3,sack:1}]));

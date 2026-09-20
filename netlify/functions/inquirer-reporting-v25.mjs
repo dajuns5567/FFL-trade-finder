@@ -244,16 +244,24 @@ function playerSection(t,r){
   return ps;
 }
 
-function hotCool(t,kind){
+function hotCool(t,kind,r){
   const rows=list(t).filter(p=>delta(p)!=null);if(!rows.length)return ['n/a'];
   if(kind==='hot-seat'){
-    const p=rows.slice().sort((a,b)=>delta(a)-delta(b))[0],d=delta(p);
-    if(d>=-2)return ['n/a'];
-    return [`${p.name} gets the Hot Seat after a ${one(p.points)}-point day left ${t.team_name} wanting more from the ${group(p)}. ${Number(t.points)>Number(t.opponent_points)?'The rest of the lineup covered it, which is a luxury rather than a plan.':'The loss made the quiet afternoon impossible to file away as harmless.'}`];
+    const p=rows.slice().sort((a,b)=>delta(a)-delta(b))[0],d=delta(p);if(d>=-2)return ['n/a'];
+    return [deskChoice(t,r,[
+      [`${p.name} gets the Hot Seat after ${one(p.points)} points left ${t.team_name} wanting more. ${Number(t.points)>Number(t.opponent_points)?'The win buys patience; it does not erase the off day.':'The loss makes the quiet afternoon harder to shrug off.'}`,`${p.name} gets the week’s side-eye at ${one(p.points)} points. ${Number(t.points)>Number(t.opponent_points)?'A winning lineup can carry that once.':'A losing lineup cannot pretend it did not matter.'}`],
+      [`${p.name} occupies the Hot Seat after a ${one(p.points)}-point contribution that did nothing for the décor. ${Number(t.points)>Number(t.opponent_points)?'Winning makes it forgivable, briefly.':'Losing makes it memorable.'}`,`${one(p.points)} points puts ${p.name} in the uncomfortable chair. ${Number(t.points)>Number(t.opponent_points)?'The result spared the blushes.':'The result removed that courtesy.'}`],
+      [`HOT SEAT: ${p.name}, after ${one(p.points)} points and a Sunday worth deleting from the camera roll. ${Number(t.points)>Number(t.opponent_points)?'The team won anyway. Do not test that magic twice.':'The team lost, so the back page is not offering amnesty.'}`,`${p.name} gets the angry-font treatment at ${one(p.points)} points. ${Number(t.points)>Number(t.opponent_points)?'The win saved the headline.':'The loss made the miss part of it.'}`],
+      [`The Hot Seat file belongs to ${p.name}: ${one(p.points)} points and an obvious follow-up. ${Number(t.points)>Number(t.opponent_points)?'The win keeps this at inquiry level.':'The loss makes the evidence consequential.'}`,`${p.name} is the name under review after ${one(p.points)} points. ${Number(t.points)>Number(t.opponent_points)?'No charges; the team survived.':'The final score keeps the case open.'}`]
+    ])];
   }
-  const p=rows.slice().sort((a,b)=>delta(b)-delta(a))[0],d=delta(p);
-  if(d<=2)return ['n/a'];
-  return [`${p.name} takes the Cool Throne after delivering ${one(p.points)} points when ${t.team_name} needed a difference-maker. ${Number(t.points)>Number(t.opponent_points)?'It was one of the performances that made the win feel controlled instead of accidental.':'Even in the loss, it was the sort of showing worth carrying into next week.'}`];
+  const p=rows.slice().sort((a,b)=>delta(b)-delta(a))[0],d=delta(p);if(d<=2)return ['n/a'];
+  return [deskChoice(t,r,[
+    [`${p.name} gets the Cool Throne after ${one(p.points)} points gave ${t.team_name} a performance worth keeping. ${Number(t.points)>Number(t.opponent_points)?'It belongs in the winning clipping.':'Even the loss could not bury it.'}`,`${one(p.points)} points earns ${p.name} the Cool Throne. ${Number(t.points)>Number(t.opponent_points)?'That was winning work.':'That was good work trapped in a bad result.'}`],
+    [`${p.name} takes the Cool Throne with ${one(p.points)} points and, for once, tasteful excess. ${Number(t.points)>Number(t.opponent_points)?'The victory suits it.':'The loss does not.'}`,`${p.name} gets the comfortable chair after ${one(p.points)} points. ${Number(t.points)>Number(t.opponent_points)?'A lovely contribution to a winning afternoon.':'A lovely contribution wasted on the wrong ending.'}`],
+    [`COOL THRONE: ${p.name}, ${one(p.points)} points, no further lobbying required. ${Number(t.points)>Number(t.opponent_points)?'Put it in the victory edition.':'Save the clipping anyway.'}`,`${p.name} owns the Cool Throne after a ${one(p.points)}-point headline. ${Number(t.points)>Number(t.opponent_points)?'That is how you get above the fold.':'That is how you keep your name out of the losing pile.'}`],
+    [`The Cool Throne file closes quickly: ${p.name}, ${one(p.points)} points, useful evidence. ${Number(t.points)>Number(t.opponent_points)?'The win confirms it.':'The loss does not impeach the performance.'}`,`${p.name} earns the favorable finding after ${one(p.points)} points. ${Number(t.points)>Number(t.opponent_points)?'The result supports the case.':'The result was the problem, not this witness.'}`]
+  ])];
 }
 
 function sentiment(t){

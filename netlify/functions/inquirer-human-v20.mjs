@@ -153,7 +153,14 @@ function deskOneLiner(t,voice,seed){
       'Every bad Sunday thinks it is an isolated incident until Jefferson Filch starts labeling folders.'
     ]
   };
-  return pick(rows[voice],seed+7);
+  const lead=pick(rows[voice],seed+7);
+  const tails={
+    nick:[' I have learned to write it down before the next Sunday tries to revise the memory.',' That is the curse of caring about a team: even the jokes end up filed beside the serious notes.'],
+    bart:[' I reserve the right to turn this observation into a much grander complaint if circumstances continue to encourage me.',' One must preserve standards, even when the sport itself seems determined to behave like a neighborhood argument.'],
+    tilly:[' If this sounds excessive, excellent; moderation has never sold a back page or survived a league group chat.',' I will lower the emotional volume when the football gives me a reason, which is not the arrangement we have today.'],
+    jeff:[' The sentence is now in the file, timestamped and available for future embarrassment if management would like to prove me wrong.',' I prefer jokes with documentation; they age better when somebody insists later that none of this was foreseeable.']
+  };
+  return lead+pick(tails[voice],seed+11);
 }
 
 function newsroomOrder(sections,seed){

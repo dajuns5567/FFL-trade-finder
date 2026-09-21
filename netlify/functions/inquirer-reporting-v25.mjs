@@ -948,6 +948,7 @@ function dedupeArticleSections(sections){
   return (sections||[]).map(s=>({
     ...s,
     paragraphs:(s.paragraphs||[]).map(p=>{
+      if(String(p||'').trim().toLowerCase()==='n/a')return'n/a';
       const parts=String(p||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean),keep=[];
       for(const sentence of parts){
         const key=sentence.toLowerCase().replace(/\s+/g,' ').trim();

@@ -932,9 +932,18 @@ export function humanSectionsV25(args){
     else if(s.kind==='management'){
       const moveParagraphs=mgmt.filter(p=>p&&p!=='n/a'),expansion=reporterExpansionV26(t,s.kind,args.reporter);
       paragraphs=[];
-      if(moveParagraphs.length)paragraphs.push(moveParagraphs.join(' '));
-      if(expansion.length)paragraphs.push(expansion.join(' '));
-      if(!paragraphs.length)paragraphs.push(`${t.manager_name} made no transaction move that changed the weekly story. With no verified lineup decision large enough to rewrite the result, ${t.team_name} needed better production from the starters already chosen rather than a different Tuesday transaction.`);
+      if(moveParagraphs.length){
+        paragraphs.push(moveParagraphs.join(' '));
+        if(expansion.length)paragraphs.push(expansion.join(' '));
+      }else if(expansion.length){
+        paragraphs.push(expansion[0]);
+        paragraphs.push(expansion.length>1
+          ? expansion.slice(1).join(' ')
+          : `${t.manager_name} has no transaction to hide behind here. The next management decision is straightforward: keep the useful lineup call, correct the weak one, and make ${t.team_name} earn a cleaner Sunday.`);
+      }else{
+        paragraphs.push(`${t.manager_name} made no transaction move that changed the weekly story. With no verified lineup decision large enough to rewrite the result, ${t.team_name} needed better production from the starters already chosen rather than a different Tuesday transaction.`);
+        paragraphs.push(`That leaves ${t.team_name} with an ordinary management job for next week: trust the roles that held up, challenge the ones that did not, and avoid inventing a roster problem the evidence has not earned.`);
+      }
     }
     else if(s.kind==='value')paragraphs=valueSectionV26(t,args.reporter);
     else if(s.kind==='outlook')paragraphs=outlook(t,args.week,args.reporter);

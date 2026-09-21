@@ -38,46 +38,45 @@ function statSituation(p){
     const carries=Number(s.rush_att),targets=Number(s.rec_tgt??s.targets);
     if(Number.isFinite(carries)||Number.isFinite(targets)){
       const work=(Number.isFinite(carries)?carries+' carries':'')+(Number.isFinite(carries)&&Number.isFinite(targets)?' and ':'')+(Number.isFinite(targets)?targets+' targets':'');
-      const read=(carries||0)>=14||(targets||0)>=5
-        ?p.name+' was not living on one lucky touch; '+work+' gave the fantasy line a real Sunday workload underneath it.'
-        :p.name+' got there on a lighter '+work+' workload, so efficiency did more of the work than volume.';
-      return `${line?line+'. ':''}${read}`;
+      const tail=(carries||0)>=14||(targets||0)>=5
+        ?`${p.name} had enough work to make the production look connected to a real weekly role.`
+        :`${p.name} did more with a lighter workload, so the efficiency deserves as much attention as the volume.`;
+      return `${line?line+'. ':''}${work?work+' for '+p.name+'. ':''}${tail}`;
     }
   }
   if(pos==='WR'||pos==='TE'){
     const targets=Number(s.rec_tgt??s.targets);
     if(Number.isFinite(targets)){
-      const read=targets>=8
-        ?`${targets} targets made ${p.name} a central part of the passing game, not a box-score tourist.`
+      const tail=targets>=8
+        ?`${p.name} commanded ${targets} targets, the kind of involvement that keeps a receiver in the center of an offense even when the touchdowns move around.`
         :targets>=5
-          ?`${p.name} drew ${targets} targets, enough involvement to make the production feel connected to a real role.`
-          :`${p.name} saw only ${targets} targets, so the fantasy total came from a narrow opportunity base.`;
-      return `${line?line+'. ':''}${read}`;
+          ?`${p.name} drew ${targets} targets, enough work to make the fantasy line feel tied to a real role.`
+          :`${p.name} saw only ${targets} targets, so the production came from a smaller slice of the offense.`;
+      return `${line?line+'. ':''}${tail}`;
     }
   }
   if(pos==='QB'){
     const att=Number(s.pass_att),rush=Number(s.rush_att),work=(Number.isFinite(att)?att+' pass attempts':'')+(Number.isFinite(att)&&Number.isFinite(rush)&&rush>0?' and ':'')+(Number.isFinite(rush)&&rush>0?rush+' carries':'');
     if(work){
-      const read=(att||0)>=30||(rush||0)>=6
-        ?`${p.name} had the ball often enough — ${work} — that the fantasy result came from a full offensive workload.`
-        :`${p.name} worked from ${work}; this was more an efficiency story than an overwhelming-volume one.`;
-      return `${line?line+'. ':''}${read}`;
+      const tail=(att||0)>=30||(rush||0)>=6
+        ?`${p.name} handled ${work}, enough involvement to keep the fantasy result from feeling like a three-play trick.`
+        :`${p.name} worked from ${work}; efficiency drove more of the afternoon than sheer volume.`;
+      return `${line?line+'. ':''}${tail}`;
     }
   }
   const solo=Number(s.tkl_solo),ast=Number(s.tkl_ast),sacks=Number(s.sack),pd=Number(s.pass_def),ints=Number(s.int),snaps=Number(s.def_snp??s.def_snaps??s.defensive_snaps);
   const tackles=(Number.isFinite(solo)?solo:0)+(Number.isFinite(ast)?ast:0);
   if(tackles||sacks||pd||ints||Number.isFinite(snaps)){
     let read='';
-    if(Number.isFinite(snaps)&&snaps>=40)read=`${p.name} was on the field for ${snaps} defensive snaps, so the role was full enough to matter even before the splash plays are counted.`;
-    else if(Number.isFinite(snaps))read=`${p.name} played ${snaps} defensive snaps, a smaller workload that puts more pressure on each impact play.`;
-    if(tackles>=8)read+=(read?' ':'')+`The ${tackles}-tackle volume gave the IDP score a sturdy floor.`;
-    else if(sacks>=1||ints>=1||pd>=2)read+=(read?' ':'')+`The impact plays made the fantasy week; another useful tackle line would make the production less dependent on one eruption.`;
-    else if(!read)read=`${p.name}’s defensive production came without enough snap detail to call the role settled.`;
+    if(Number.isFinite(snaps)&&snaps>=40)read=`${p.name} played ${snaps} defensive snaps, a full enough workload that the role itself deserves attention.`;
+    else if(Number.isFinite(snaps))read=`${p.name} played ${snaps} defensive snaps, leaving less margin for a quiet counting-stat day.`;
+    if(tackles>=8)read+=(read?' ':'')+`${p.name}'s ${tackles} tackles gave the IDP score a sturdy base.`;
+    else if(sacks>=1||ints>=1||pd>=2)read+=(read?' ':'')+`${p.name} made the splash plays that swung the IDP total; steadier tackle volume would make that ceiling easier to trust.`;
+    else if(!read)read=`${p.name} contributed without enough verified snap detail to call the role settled.`;
     return `${line?line+'. ':''}${read}`.trim();
   }
-  return line?`${line}. The football line gives ${p.name} context beyond the fantasy total, even though the available usage detail is limited.`:null;
+  return line?`${line}. ${p.name} had a real football line behind the fantasy total, even if the available usage detail is thin.`:null;
 }
-
 function scopedFootballRead(t,p,angle='matchup'){
   const raw=statSituation(p);if(!raw)return null;
   const safeName=String(p?.name||'Player').replaceAll('.','');

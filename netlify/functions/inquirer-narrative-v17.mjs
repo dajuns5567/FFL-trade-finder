@@ -321,7 +321,7 @@ export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamCl
   return{
     schema_version:11,
     inquirer_version:26,
-    editorial_revision:2,
+    editorial_revision:3,
     season:Number(teamClassification?.season||2026),
     week:Number(week),
     week_classification:teamClassification,
@@ -345,6 +345,7 @@ export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamCl
       next_opponent_projected:Number.isFinite(team.next_opponent_projected)?Number(team.next_opponent_projected):null,
       league_context:team.league_context||null,
       opponent_context:team.opponent_context||null,
+      opponent_roster:team.opponent_roster||null,
       next_opponent_context:team.next_opponent_context||null,
       next_opponent_roster:team.next_opponent_roster||null,
       value_history_week:team.value_history_week||null,

@@ -906,7 +906,7 @@ function managementNarrativeCoda(t,r){
   const won=Number(t.points)>Number(t.opponent_points),team=t.team_name;
   return deskChoice(t,r,[
     [won?`${team} won with the roster changes already in place. ${team} management gets a quiet Tuesday instead of an interrogation.`:`${team} lost with the recent changes in place. Every recent ${team} move gets a little louder after a loss.`],
-    [won?`${team} gets to let the new arrangement breathe under a win. A civilized opening, if nothing else.`:`${team} has a loss making every recent rearrangement look a little more important.`],
+    [won?`The new ${team} arrangement gets to breathe under a win. A civilized opening, if nothing else.`:`A ${team} loss makes every recent rearrangement look a little more important.`],
     [won?`${team.toUpperCase()} WON WITH THE NEW LOOK. ${team}’s front office can enjoy one quiet Tuesday.`:`${team.toUpperCase()} LOST WITH THE NEW LOOK. Every recent ${team} move just became easier to criticize.`],
     [won?`${team} won with the recent changes in place. Nobody needs a transaction autopsy this week.`:`${team} lost with the recent changes in place. ${team}’s new configuration now owes the roster a better Sunday.`]
   ]);
@@ -1893,7 +1893,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
   const fillerBanks=[
     [
       `${top.name} is the clear ${team} headliner; the next useful development is another player making a similarly durable weekly claim.`,
-      `${team} has its top performer in ${top.name}. The next question is which supporting role becomes dependable enough to stop being a weekly footnote.`,
+      `The top performer for ${team} is ${top.name}. The next question is which supporting role becomes dependable enough to stop being a weekly footnote.`,
       `${top.name} owns the strongest ${team} line. A deeper list of serious contributors next week would be a healthy sign.`
     ],
     [
@@ -2153,7 +2153,7 @@ function articleThreadV30(t,r,f,phase){
     },
     'upset-win':{
       sentiment:`The upset gives ${team} fans a reason to revise expectations upward without pretending one surprise result rewrote the season.`,
-      outlook:`Now ${team} has to show the upset was a usable version of the roster rather than a one-week ambush.`,
+      outlook:`Now the ${team} lineup has to show the upset was a usable version of the roster rather than a one-week ambush.`,
       management:`For ${manager}, the reward for an upset is a better question next week: which choices helped create a version worth repeating?`
     },
     'lineup-regret':{

@@ -112,22 +112,24 @@ function teamStatLine(p){
   const s=p?.real_stats||{},pos=String(p?.position||'').toUpperCase(),n=p?.name||'The player',count=(x,oneWord,manyWord=oneWord+'s')=>Number(x)===1?oneWord:manyWord;
   if(pos==='QB'){
     const cmp=Number(s.pass_cmp),att=Number(s.pass_att),yd=Number(s.pass_yd),td=Number(s.pass_td),ints=Number(s.pass_int),rush=Number(s.rush_att),rushYd=Number(s.rush_yd),rushTd=Number(s.rush_td);
-    const parts=[];
     if(Number.isFinite(cmp)&&Number.isFinite(att)){
-      let pass=`${n} completed ${cmp} of ${att} passes`;
-      if(Number.isFinite(yd))pass+=` for ${yd} yards`;
-      if(Number.isFinite(td)&&td>0)pass+=`, throwing ${td} ${count(td,'touchdown')}`;
-      if(Number.isFinite(ints)&&ints>0)pass+=` with ${ints} ${count(ints,'interception')}`;
-      parts.push(pass+'.');
+      let text=`${n} completed ${cmp} of ${att} passes`;
+      if(Number.isFinite(yd))text+=` for ${yd} yards`;
+      if(Number.isFinite(td)&&td>0)text+=`, throwing ${td} ${count(td,'touchdown')}`;
+      if(Number.isFinite(ints)&&ints>0)text+=` with ${ints} ${count(ints,'interception')}`;
+      if(Number.isFinite(rush)&&rush>0)text+=`, and added ${rush} ${count(rush,'carry','carries')} for ${Number.isFinite(rushYd)?rushYd:0} rushing yards${Number.isFinite(rushTd)&&rushTd>0?', including '+rushTd+' rushing '+count(rushTd,'touchdown'):''}`;
+      return text+'.';
     }
-    if(Number.isFinite(rush)&&rush>0)parts.push(`${n} added ${rush} ${count(rush,'carry','carries')} for ${Number.isFinite(rushYd)?rushYd:0} rushing yards${Number.isFinite(rushTd)&&rushTd>0?', including '+rushTd+' rushing '+count(rushTd,'touchdown'):''}.`);
-    if(parts.length)return parts.join(' ');
   }
   if(pos==='RB'){
-    const carries=Number(s.rush_att),rushYd=Number(s.rush_yd),rushTd=Number(s.rush_td),targets=Number(s.rec_tgt??s.targets),rec=Number(s.rec),recYd=Number(s.rec_yd),recTd=Number(s.rec_td),parts=[];
-    if(Number.isFinite(carries))parts.push(`${n} carried ${carries} ${count(carries,'time')} for ${Number.isFinite(rushYd)?rushYd:0} yards${Number.isFinite(rushTd)&&rushTd>0?', scoring '+rushTd+' rushing '+count(rushTd,'touchdown'):''}.`);
-    if(Number.isFinite(targets))parts.push(`${n} caught ${Number.isFinite(rec)?rec:0} of ${targets} targets for ${Number.isFinite(recYd)?recYd:0} yards${Number.isFinite(recTd)&&recTd>0?', adding '+recTd+' receiving '+count(recTd,'touchdown'):''}.`);
-    if(parts.length)return parts.join(' ');
+    const carries=Number(s.rush_att),rushYd=Number(s.rush_yd),rushTd=Number(s.rush_td),targets=Number(s.rec_tgt??s.targets),rec=Number(s.rec),recYd=Number(s.rec_yd),recTd=Number(s.rec_td);
+    let text='';
+    if(Number.isFinite(carries))text=`${n} carried ${carries} ${count(carries,'time')} for ${Number.isFinite(rushYd)?rushYd:0} yards${Number.isFinite(rushTd)&&rushTd>0?', scoring '+rushTd+' rushing '+count(rushTd,'touchdown'):''}`;
+    if(Number.isFinite(targets)){
+      const receiving=`caught ${Number.isFinite(rec)?rec:0} of ${targets} targets for ${Number.isFinite(recYd)?recYd:0} yards${Number.isFinite(recTd)&&recTd>0?', adding '+recTd+' receiving '+count(recTd,'touchdown'):''}`;
+      text+=text?`, and ${receiving}`:`${n} ${receiving}`;
+    }
+    if(text)return text+'.';
   }
   if(pos==='WR'||pos==='TE'){
     const targets=Number(s.rec_tgt??s.targets),rec=Number(s.rec),yd=Number(s.rec_yd),td=Number(s.rec_td);
@@ -170,7 +172,7 @@ function teamUsageComment(t,p,angle='star'){
     ],
     'hot-seat':[
       `${p.name} still handled ${o.text}; ${t.team_name} can demand better production before worrying that the role itself disappeared.`,
-      `${p.name} still had ${o.text}. The bad score belongs to the performance, not to a disappearing job.`,
+      `${p.name} still had ${o.text}. The bad score belongs to ${p.name}’s performance, not to a disappearing job.`,
       `${o.text} kept the job intact even on a bad fantasy day. ${t.team_name} needs a rebound, not a new position on the depth chart.`
     ],
     'cool-throne':[
@@ -221,7 +223,12 @@ function teamUsageComment(t,p,angle='star'){
 }
 
 function teamFootballRead(t,p,r,angle='star'){
-  const line=teamStatLine(p),comment=teamUsageComment(t,p,angle);
+  let line=teamStatLine(p);
+  if(line&&(angle==='opponent'||angle==='next-opponent')){
+    const owner=angle==='opponent'?t.opponent_name:t.next_opponent_name;
+    if(owner)line=`For ${owner}, ${line}`;
+  }
+  const comment=teamUsageComment(t,p,angle);
   return [line,comment].filter(Boolean).join(' ')||null;
 }
 
@@ -595,8 +602,8 @@ function teamScoreConstructionStory(t,r){
     projDelta=valid(t.projected)?Number(t.points)-Number(t.projected):null,won=Number(t.points)>Number(t.opponent_points),
     topNames=top3.map(p=>p.name).join(', '),pct=Math.round(share*100);
   let shape;
-  if(share>=.7)shape=`${topNames} accounted for about ${pct}% of ${t.team_name}’s scoring. That concentration left the rest of the lineup very little margin for a quiet afternoon.`;
-  else if(share>=.58)shape=`${topNames} supplied about ${pct}% of ${t.team_name}’s scoring. The stars carried most of the weight, but the supporting slots still had chances to change the result.`;
+  if(share>=.7)shape=`${topNames} accounted for about ${pct}% of ${t.team_name}’s scoring. ${t.team_name} left its supporting slots very little margin for a quiet afternoon.`;
+  else if(share>=.58)shape=`${topNames} supplied about ${pct}% of ${t.team_name}’s scoring. For ${t.team_name}, the stars carried most of the weight, but the supporting slots still had chances to change the result.`;
   else shape=`${topNames} supplied about ${pct}% of ${t.team_name}’s scoring, enough balance that one ordinary star performance did not have to decide the entire week.`;
   let expectation='';
   if(projDelta!=null){
@@ -658,7 +665,7 @@ function chairFootballStory(t,kind,r){
   const usage=teamUsageComment(t,p,kind),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0;
   let hist='';
   if(Number.isFinite(prior)&&prior>0&&priorGames>=6){
-    if(Number(p.points)<prior*.6)hist=keyedChoice((p.id||p.name)+'low',[`${p.name} averaged ${one(prior)} across ${priorGames} games last season, so one bad Sunday is not a new floor.`,`${p.name} usually gave this roster ${one(prior)} per game last year. Week 1 came in well below that standard.`,`${p.name} opened a long way beneath his ${one(prior)}-point 2025 average; one game is not enough to erase the older standard.`]);
+    if(Number(p.points)<prior*.6)hist=keyedChoice((p.id||p.name)+'low',[`${p.name} averaged ${one(prior)} across ${priorGames} games last season, so one bad Sunday is not a new floor.`,`${p.name} usually gave this roster ${one(prior)} per game last year. ${p.name}’s Week 1 came in well below that standard.`,`${p.name} opened a long way beneath his ${one(prior)}-point 2025 average; one game is not enough to erase the older standard.`]);
     else if(Number(p.points)>prior*1.3)hist=keyedChoice((p.id||p.name)+'high',[`${p.name} opened well above the ${one(prior)}-point average he carried last season.`,`That was a bigger ${p.name} afternoon than the ${one(prior)} per game he averaged in 2025.`,`${p.name} cleared his established ${one(prior)}-point baseline by enough to make the opener stand out.`]);
     else hist=keyedChoice((p.id||p.name)+'same',[`${p.name} landed close to the ${one(prior)}-point level he established last season.`,`This looked familiar from ${p.name}, who averaged ${one(prior)} across ${priorGames} games in 2025.`,`${p.name} opened near his established 2025 scoring level.`]);
   }

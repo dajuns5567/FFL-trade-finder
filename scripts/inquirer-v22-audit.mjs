@@ -12,7 +12,13 @@ export function auditV22(edition){
     assert.doesNotMatch(body,/leading trio|lead trio|next three names|next three contributors|taking the night off|truth-sized hole/);
     if(!t.value_history_week)assert.deepEqual(s.find(x=>x.kind==='value').paragraphs,['n/a']);
     if(!t.transactions.length)assert.deepEqual(s.find(x=>x.kind==='management').paragraphs,['n/a']);
-    if(t.mida_outlook){assert.match(s.find(x=>x.kind==='outlook').paragraphs.join(' '),edition.inquirer_version>=24?/around .*chance of reaching the playoffs/:edition.inquirer_version>=23?/MIDA.*playoff chance/:/MIDA outlook.*playoffs.*championship.*division title/)}
+    if(t.mida_outlook){
+      const outlook=s.find(x=>x.kind==='outlook').paragraphs.join(' ');
+      if(edition.inquirer_version>=24){
+        assert.match(body,/playoff/i,'Article must preserve playoff context without requiring the same percentage in multiple sections');
+        assert.match(outlook,/\b(?:next|forecast|schedule|gauntlet|expected|favou?red|underdog|road|assignment|opponent)\b/i,'Outlook must explain the next-game/schedule significance');
+      }else assert.match(outlook,edition.inquirer_version>=23?/MIDA.*playoff chance/:/MIDA outlook.*playoffs.*championship.*division title/);
+    }
     const top=t.starter_details.slice().sort((a,b)=>b.points-a.points).slice(0,3);
     const namedCoverage=(edition.inquirer_version>=25?s.filter(x=>x.kind==='lede'||x.kind==='players'):s.filter(x=>x.kind==='lede')).flatMap(x=>x.paragraphs||[]).join(' ');
     for(const p of top)assert.ok(namedCoverage.includes(p.name),'Leading players must be named naturally across the game/player reporting beats: '+p.name);

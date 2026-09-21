@@ -1981,7 +1981,7 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
       if(inStrong)impact=`${incoming.name} immediately produced ${one(incoming.points)} fantasy points${incoming.real_stat_line?', backed by '+String(incoming.real_stat_line).replaceAll(' • ',', '):''}.`;
       else impact=[
         `${incoming.name} did not post a headline game, but the first Sunday gave ${team} usable work from the new piece.`,
-        `${incoming.name} arrived without a star turn, which is fine; the move now has a real football role to evaluate.`,
+        keyedChoice(`${t.roster_id}:bart-incoming-quiet`,[`${incoming.name} arrived without a star turn, which is fine; the move now has a real football role to evaluate.`,`${incoming.name} did not make a grand entrance, but Bartholomew now has an actual Sunday role to judge instead of transaction-day perfume.`,`${incoming.name} joined ${team} without producing a headline. That is less glamorous and more useful than pretending one week already decided the transaction.`]),
         `${incoming.name.toUpperCase()} DID NOT BLOW UP THE SCOREBOARD. THE MOVE CAN STILL BE RIGHT WITHOUT A PARADE.`,
         `${incoming.name} supplied enough first-week information to evaluate the role without pretending the transaction has already been decided.`
       ][v];

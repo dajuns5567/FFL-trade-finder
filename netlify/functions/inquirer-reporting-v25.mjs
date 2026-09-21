@@ -366,7 +366,7 @@ function management(t,facts,reporter){
       [`${incoming.name} went straight into the starting lineup after arriving. The move had a real job attached to it.`,`${incoming.name} went directly from acquisition to the starting lineup. There was no waiting period.`]
     ]));
     else if(incoming)bits.push(deskChoice(moveTeam,reporter,[
-      [`${incoming.name} is the biggest incoming market piece at ${Math.round(incoming.value).toLocaleString('en-US')}; the next question is whether a role follows.`,`${incoming.name}, valued at ${Math.round(incoming.value).toLocaleString('en-US')}, is the addition with enough market weight to keep watching.`],
+      [`${incoming.name} is the biggest incoming market piece at ${Math.round(incoming.value).toLocaleString('en-US')}. A real Sunday role now has to follow the price tag.`,`${incoming.name}, valued at ${Math.round(incoming.value).toLocaleString('en-US')}, is the addition with enough market weight to keep watching.`],
       [`${incoming.name} carries ${Math.round(incoming.value).toLocaleString('en-US')} of current value, expensive enough to merit more than decorative depth.`,`At ${Math.round(incoming.value).toLocaleString('en-US')} in current value, ${incoming.name} is not merely a charming bench accessory.`],
       [`${incoming.name} brings ${Math.round(incoming.value).toLocaleString('en-US')} of value with him. The roster now has to turn that market weight into an actual Sunday role.`,`The biggest incoming chip is ${incoming.name} at ${Math.round(incoming.value).toLocaleString('en-US')}; the back page awaits the role.`],
       [`${incoming.name} is the most substantial incoming asset at ${Math.round(incoming.value).toLocaleString('en-US')} in current value. A real Sunday role would make that market price feel less theoretical.`,`${incoming.name} is the largest incoming market piece at ${Math.round(incoming.value).toLocaleString('en-US')}; a real role would make that price feel less theoretical.`]
@@ -445,25 +445,25 @@ function naturalLede(t,r){
     [`${t.team_name} beat ${t.opponent_name} ${one(t.points)}–${one(t.opponent_points)} and moved to ${record(t)}. ${top.name} did the loud work with ${one(top.points)} points, ${Math.abs(margin)>=20?'setting the tone for a Sunday fans can actually enjoy':'giving the win the headliner it needed'}.`,`${top.name} put ${one(top.points)} on the board and ${t.team_name} handled ${t.opponent_name} ${one(t.points)}–${one(t.opponent_points)}. At ${record(t)}, that is a clipping worth keeping.`],
     [`${t.team_name} left ${t.opponent_name} with the bill, ${one(t.points)}–${one(t.opponent_points)}, and ${top.name} supplied ${one(top.points)} reasons not to argue. A ${record(t)} start looks rather nicer in ink.`,`${top.name} gave ${t.team_name} the star turn, ${one(top.points)} points in a ${one(t.points)}–${one(t.opponent_points)} win over ${t.opponent_name}. For one week, the good china survives.`],
     [`${t.team_name} is on the front page after a ${one(t.points)}–${one(t.opponent_points)} win over ${t.opponent_name}. ${top.name} kicked the door open with ${one(top.points)} points.`,`${top.name} supplied ${one(top.points)} points and ${t.team_name} supplied the result: ${one(t.points)}–${one(t.opponent_points)} over ${t.opponent_name}. Print the ${record(t)} record large enough for the rival chat.`],
-    [`${t.team_name} beat ${t.opponent_name} ${one(t.points)}–${one(t.opponent_points)}, with ${top.name} supplying ${one(top.points)} points at the center of it. The cleanest part of the argument is the scoreboard: ${record(t)}.`,`${t.team_name} closed the file on ${t.opponent_name}, ${one(t.points)}–${one(t.opponent_points)}. ${top.name} left ${one(top.points)} points of fingerprints all over the win.`]
+    [`${t.team_name} beat ${t.opponent_name} ${one(t.points)}–${one(t.opponent_points)}, with ${top.name} supplying ${one(top.points)} points at the center of it. The cleanest part of the argument is the scoreboard: ${record(t)}.`,`${t.team_name} beat ${t.opponent_name} ${one(t.points)}–${one(t.opponent_points)}, and ${top.name} was impossible to miss at ${one(top.points)} points. The result holds up without dressing it as anything more complicated.`]
   ]));
   else ps.push(deskChoice(t,r,[
     [`${t.team_name} fell ${one(t.points)}–${one(t.opponent_points)} to ${t.opponent_name}, and ${top.name}’s ${one(top.points)} points deserved better company. The record is ${record(t)}; the notebook has questions.`,`${top.name} gave ${t.team_name} ${one(top.points)} points, but ${t.opponent_name} still walked out with a ${one(t.opponent_points)}–${one(t.points)} win. File the ${record(t)} record and start the homework.`],
     [`${top.name} brought ${one(top.points)} points to the table; ${t.team_name} still lost ${one(t.points)}–${one(t.opponent_points)} to ${t.opponent_name}. An unpleasant result, elegantly documented.`,`${t.team_name} lost ${one(t.points)}–${one(t.opponent_points)}, a dreadful frame for ${top.name}’s ${one(top.points)}-point afternoon. The ${record(t)} record is not improved by good typography.`],
     [`${top.name} showed up with ${one(top.points)} points. The rest of the headline is uglier: ${t.opponent_name} beat ${t.team_name} ${one(t.opponent_points)}–${one(t.points)}.`,`${t.team_name} takes the loss, ${one(t.points)}–${one(t.opponent_points)}, while ${top.name} gets the only flattering type at ${one(top.points)} points.`],
-    [`${t.team_name} lost ${one(t.points)}–${one(t.opponent_points)} to ${t.opponent_name}, even with ${one(top.points)} from ${top.name}. The problem was not the headliner; it was everything the lineup failed to build around him.`,`${top.name} left ${one(top.points)} points in the record, but ${t.team_name} still lost to ${t.opponent_name}, ${one(t.points)}–${one(t.opponent_points)}. The file now says ${record(t)}.`]
+    [`${t.team_name} lost ${one(t.points)}–${one(t.opponent_points)} to ${t.opponent_name}, even with ${one(top.points)} from ${top.name}. The problem was not the headliner; it was everything the lineup failed to build around him.`,`${top.name} gave ${t.team_name} ${one(top.points)} points, but ${t.opponent_name} still won ${one(t.opponent_points)}–${one(t.points)}. ${t.team_name} leaves the week at ${record(t)} with the rest of the lineup owing a better answer.`]
   ]));
   if(margin>0&&bad&&String(bad.id)!==String(top.id))ps.push(deskChoice(t,r,[
     [`${top.name} and the other leaders made ${bad.name}’s ${one(bad.points)}-point off day easy to forgive once. Next week offers a cleaner line in the notebook.`,`${bad.name} managed only ${one(bad.points)}, but the stars covered the bill. ${t.team_name} would rather see the supporting cast pay its share next week.`],
     [`${bad.name}’s ${one(bad.points)}-point afternoon was the ugly accessory nobody noticed because ${top.name} and company dressed the win so well. A repeat would be less charming.`,`The victory was generous enough to hide ${bad.name} at ${one(bad.points)}. Good teams accept the gift and ask for better tailoring next Sunday.`],
     [`${bad.name} gave ${t.team_name} only ${one(bad.points)}, and the superstars made sure it stayed a footnote. Consider next week the comeback headline audition.`,`${bad.name} disappeared into a ${one(bad.points)}-point afternoon. The win survived it; the same problem will be much louder if it happens twice.`],
-    [`${bad.name} managed only ${one(bad.points)}, and the win kept it from becoming the story. Another week like that would be harder for ${t.team_name} to hide.`,`The evidence includes a quiet ${one(bad.points)} from ${bad.name}; the result kept it from becoming an indictment. For now.`]
+    [`${bad.name} managed only ${one(bad.points)}, and the win kept it from becoming the story. Another week like that would be harder for ${t.team_name} to hide.`,`${bad.name} finished at ${one(bad.points)}, and the win kept that from becoming a larger problem. Another quiet week would be harder to excuse.`]
   ]));
   else if(second)ps.push(deskChoice(t,r,[
     [`${top.name} had company from ${second.name}, which made the top of the lineup feel like a story rather than a solo act.`,`${second.name} was the next name that mattered behind ${top.name}. That is useful support behind the headline.`],
     [`${second.name} supplied the supporting performance behind ${top.name}; even a star appreciates competent company.`,`${top.name} owned the marquee, with ${second.name} doing enough nearby to keep the production from becoming a one-person salon.`],
     [`${second.name} joined ${top.name} among the names worth printing. Two headline performances made the lineup considerably harder to flatten.`,`${top.name} got the biggest type, but ${second.name} earned ink too. That is how a lineup starts sounding dangerous.`],
-    [`${second.name} gave ${top.name} meaningful company, which kept ${t.team_name} from leaning on a single scorer all afternoon.`,`${top.name} led the testimony, with ${second.name} supplying corroboration that actually mattered.`]
+    [`${second.name} gave ${top.name} meaningful company, which kept ${t.team_name} from leaning on a single scorer all afternoon.`,`${top.name} led the way, and ${second.name} supplied enough behind him to keep the afternoon from becoming a one-player argument.`]
   ]));
   return ps;
 }
@@ -794,7 +794,7 @@ function specificityPass(t,kind,value){
     ['There is real ground to press now—do not turn a good headline into a one-week souvenir.',team+' has real ground to press now—do not turn a good headline into a one-week souvenir.'],
     ['There is no room for decorative losses now; wins are the only headline that helps.',team+' has no room for decorative losses now; wins are the only headline that helps.'],
     ['The win survived it; the same problem will be much louder if it happens twice.',team+' survived it once; the same problem will be much louder if it happens twice.'],
-    ['The replacement plan belongs in the next filing.',team+' owes the next filing a real replacement plan.'],
+    ['The replacement plan has to show up next week.',team+' needs a real replacement plan before next week.'],
     ['The next game will tell us more about how bankable this role is.',team+' gets another look next game, when the role should tell us how bankable this production really is.'],
     ['The door is open without being held for them. A civilized winning streak would be lovely.','The door is open for '+team+' without being held. A civilized winning streak would be lovely.'],
     ['The back-page prescription is obvious—quit making the rivals do the saving.','The back-page prescription for '+team+' is obvious—quit making the rivals do the saving.'],
@@ -802,22 +802,22 @@ function specificityPass(t,kind,value){
     ['That is how you get above the fold.','For '+team+', that is how a player gets above the fold.'],
     ['That is how a lineup starts sounding dangerous.','That is how the '+team+' lineup starts sounding dangerous.'],
     ['Print the 1-0 record large enough for the rival chat.','Print '+team+'’s 1-0 record large enough for the rival chat.'],
-    ['His production is now evidence in a transaction that remains open for review.','That production is now evidence in a '+team+' transaction that remains open for review.'],
+    ['His production now belongs in the evaluation of that move.','That production now belongs in '+team+'’s evaluation of the move.'],
     ['Depending on rival charity twice in a row would be terribly unbecoming.',team+' depending on rival charity twice in a row would be terribly unbecoming.'],
     ['Call it a warning under a winning headline.','For '+team+', call it a warning under a winning headline.'],
     ['Call it one of the places the loss went missing.','For '+team+', call it one of the places the loss went missing.'],
     ['A two-week run can still change the whole conversation.','A two-week '+team+' run can still change the whole conversation.'],
     ['A little more ground next week and we may discuss the table with the good china.','A little more '+team+' ground next week and we may discuss the table with the good china.'],
     ['A 1-0 start looks rather nicer in ink.',team+'’s 1-0 start looks rather nicer in ink.'],
-    ['The verdict was still a win, so the inquiry stays informal.',team+' still got the win, so the inquiry stays informal.'],
+    ['The result was still a win, so the concern stays small.',team+' still got the win, so the concern stays small.'],
     ['The notebook version is shorter: the next loss would make the chase considerably uglier.','The '+team+' notebook version is shorter: the next loss would make the chase considerably uglier.'],
     ['The loss made the miss part of it.',team+'’s loss made the miss part of the story.'],
     ['The loss gave the miss nowhere to hide.',team+'’s loss gave the miss nowhere to hide.'],
     ['The invitation is written in very small print. Winning remains the tasteful response.','The '+team+' invitation is written in very small print. Winning remains the tasteful response.'],
     ['The evidence shows an opening; next week determines whether it becomes position or merely circumstance.',team+' has an opening; next week determines whether it becomes position or merely circumstance.'],
-    ['The evidence is thin enough that every dropped opportunity becomes material.',team+' has thin enough evidence that every dropped opportunity becomes material.'],
+    ['There is so little margin that every dropped opportunity matters.',team+' has so little margin that every dropped opportunity matters.'],
     ['That is the kind of detail a loss refuses to accessorize away.','That is the kind of '+team+' detail a loss refuses to accessorize away.'],
-    ['File the 0-1 record and start the homework.','File '+team+' at 0-1 and start the homework.'],
+    ['Put the 0-1 record in the standings and start the homework.',team+' is 0-1; the homework starts there.'],
     ['After that, every expensive accessory has to reveal whether it can actually play.','After kickoff, every expensive '+team+' accessory has to reveal whether it can actually play.'],
     ['A losing lineup cannot pretend it did not matter.','A losing '+team+' lineup cannot pretend it did not matter.'],
     ['A few clean wins would make the paperwork friendlier.','A few clean '+team+' wins would make the paperwork friendlier.'],
@@ -861,12 +861,12 @@ function specificityPass(t,kind,value){
     ['September tables are temporary, but banked wins are not, and the old desk has learned not to confuse those two things.',team+' gets the usual September warning: the table is temporary, but the banked result is not.'],
     ['It is far too early for coronations and exactly early enough for consequences; one can be tasteful without pretending the standings are imaginary.',team+' is nowhere near a coronation and already close enough to consequences that the standings cannot be treated as imaginary.'],
     ['The Back Page can scream about stars all night, but this is the line that still matters when everybody wakes up Monday.','The Back Page can scream about '+team+' stars all night, but this is the line that still matters when everybody wakes up Monday.'],
-    ['One week never closes a case, but every result changes what the next one is allowed to mean.','One '+team+' week never closes a case, but this result changes what the next one is allowed to mean.'],
+    ['One week does not settle a season, but every result changes the weight of the next one.',team+' has only one result in the books, but it changes the weight of next week.'],
     ['Next week is a good time to lower the volume.','For '+team+', next week is a good time to lower the volume.'],
-    ['That witness cannot be lost in the crowd.',team+' cannot afford to lose that witness in the crowd.'],
-    ['The next file already has a lead witness.',team+' already has a lead witness clipped to the next file.'],
+    ['That contribution cannot disappear into the crowd.',team+' cannot afford to lose that contribution in the crowd.'],
+    ['The next matchup already has a player worth circling.',team+' already knows the first player it has to account for next week.'],
     ['The appointment has enough actual Week 1 form to be more interesting than whatever the forecast says over cocktails.',team+' gets an appointment with enough actual Week 1 form to be more interesting than whatever the forecast says over cocktails.'],
-    ['The distinction matters because Filch prosecutes available choices, not impossible bench swaps.','For '+team+', the distinction matters because Filch prosecutes available choices, not impossible bench swaps.']
+    ['The distinction matters because the better option was actually eligible, not an impossible hindsight swap.','For '+team+', that was a real lineup decision because the alternative was actually eligible, not an impossible hindsight swap.']
   ];
   for(const [from,to] of swaps)p=p.replaceAll(from,to);
   return p;
@@ -880,7 +880,7 @@ export function acquisitionCallback(t,p,r){
     [`${t.manager_name} traded for ${p.name}${when}${partner?' in a deal with '+partner:''}${price}. A week like this is part of the return ${t.team_name} paid for.`],
     [`${p.name} came to ${t.team_name} by trade${when}${price}. Useful Sundays like this make the price easier to admire.`],
     [`TRADE RECEIPT: ${p.name} arrived${when}${price}. A big ${p.name} Sunday puts the deal in the good-news column for another week.`],
-    [`${p.name} was acquired by trade${when}${partner?' from '+partner:''}${price}. His production now belongs in the ongoing judgment of that move.`]
+    [`${p.name} was acquired by trade${when}${partner?' from '+partner:''}${price}. Every useful Sunday now becomes part of how ${t.team_name} judges that move.`]
   ]);
 }
 

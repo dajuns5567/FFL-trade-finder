@@ -158,6 +158,27 @@ for(const t of d.teams||[]){
 
 const fourthWallHits=(teamCopy.match(/\b(?:sports journalist|journalism schools?|fourth-wall|beat-writer|press box|copy desk|editor|deadline|newsroom)\b/gi)||[]).length;
 assert.ok(fourthWallHits>=6,'Reporters should occasionally break the fourth wall across a full edition without making it every article; got '+fourthWallHits);
+
+for(const t of d.teams||[]){
+  const names=[...(t.starter_details||[]),...Object.values(t.transaction_player_facts||{}),...(t.trade_acquisitions||[]).flatMap(a=>[
+    a?.player_name?{name:a.player_name}:null,
+    ...(a?.outgoing_player_names||[]).map(name=>({name}))
+  ])].filter(p=>p?.name).map(p=>String(p.name).trim()).filter(Boolean);
+  const groups=new Map();
+  for(const full of [...new Set(names)]){
+    const bits=full.split(/\s+/),first=bits[0],last=bits.at(-1);if(bits.length<2)continue;
+    const a=groups.get(last)||[];a.push({full,first});groups.set(last,a);
+  }
+  const text=articleText(t);
+  for(const entries of groups.values()){
+    if(entries.length<2)continue;
+    for(const intended of entries)for(const other of entries){
+      if(intended.full===other.full)continue;
+      const bad=new RegExp('\\b'+escapeRe(intended.first)+'\\s+'+escapeRe(other.full)+'\\b','i');
+      assert.doesNotMatch(text,bad,'Generated prose must not concatenate same-surname player identities for '+t.team_name);
+    }
+  }
+}
 const repeatedLong=new Map();
 for(const t of d.teams||[]){
   const body=articleText(t);

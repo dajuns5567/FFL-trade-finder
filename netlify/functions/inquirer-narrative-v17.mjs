@@ -316,7 +316,12 @@ function buildSections(t,w,r,facts,sentiment){
 }
 
 function restoreSectionPlayerNamesV30(team,sections){
-  const players=[...new Map((team?.starter_details||[]).map(p=>[String(p?.name||'').trim(),p])).values()].filter(p=>p?.name),
+  const transactionPlayers=Object.values(team?.transaction_player_facts||{}),
+    tradePlayers=(team?.trade_acquisitions||[]).flatMap(a=>[
+      a?.player_name?{name:a.player_name}:null,
+      ...(a?.outgoing_player_names||[]).map(name=>({name}))
+    ]).filter(Boolean),
+    players=[...new Map([...(team?.starter_details||[]),...transactionPlayers,...tradePlayers].map(p=>[String(p?.name||'').trim(),p])).values()].filter(p=>p?.name),
     lastCounts=new Map();
   for(const p of players){
     const last=String(p.name).trim().split(/\s+/).at(-1);
@@ -331,8 +336,11 @@ function restoreSectionPlayerNamesV30(team,sections){
         if(new RegExp(escape(full),'i').test(text)){seen.add(full);continue}
         const last=full.split(/\s+/).at(-1);
         if(!last||lastCounts.get(last)!==1)continue;
-        const re=new RegExp('\\b'+escape(last)+'\\b');
-        if(re.test(text)){text=text.replace(re,full);seen.add(full)}
+        const re=new RegExp('\\b'+escape(last)+'\\b'),m=re.exec(text);
+        if(!m)continue;
+        const before=text.slice(0,m.index).trimEnd(),prev=(before.match(/([A-Z][A-Za-z'’.-]*)$/)||[])[1]||'';
+        if(prev)continue;
+        text=text.slice(0,m.index)+full+text.slice(m.index+m[0].length);seen.add(full);
       }
       return text;
     });

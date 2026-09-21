@@ -406,6 +406,18 @@ function filchExpansion(t,kind){
   if(kind==='hot-seat'||kind==='cool-throne')return ['The '+t.team_name+' file remains open after one appearance in this chair. Repetition is what converts this weekly note into something '+t.manager_name+' actually has to answer.'];
   return [];
 }
+function seasonContextStoryV26(t,r){
+  const ctx=t.league_context||{},rank=Number(ctx.standings_rank),size=Number(ctx.league_size)||32,st=ctx.streak||{},recent=Number(ctx.recent_avg_points),prior=Number(ctx.prior_five_avg_points),week=Number(t.week_classification?.week)||1;
+  const streak=Number(st.length)>=2?`${Number(st.length)}-game ${st.type==='W'?'winning':st.type==='L'?'losing':'result'} streak`:'no multi-game streak yet';
+  const form=Number.isFinite(recent)&&Number.isFinite(prior)&&Math.abs(recent-prior)>=4?` Recent scoring sits at ${one(recent)} per game versus ${one(prior)} in the preceding stretch, so the direction of travel is starting to show.`:'';
+  return deskChoice(t,r,[
+    [`${t.team_name} leaves Week ${week} at ${record(t)}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}, with ${streak}. September tables are temporary, but banked wins are not, and the old desk has learned not to confuse those two things.${form}`],
+    [`The table now seats ${t.team_name} at ${record(t)}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}, carrying ${streak}. It is far too early for coronations and exactly early enough for consequences; one can be tasteful without pretending the standings are imaginary.${form}`],
+    [`THE RECEIPT THAT LASTS: ${t.team_name} is ${record(t)}${Number.isFinite(rank)?', sitting No. '+rank+' of '+size:''}, with ${streak}. The Back Page can scream about stars all night, but this is the line that still matters when everybody wakes up Monday.${form}`],
+    [`The season file now reads ${t.team_name}: ${record(t)}${Number.isFinite(rank)?', standing No. '+rank+' of '+size:''}, ${streak}. One week never closes a case, but every result changes what the next one is allowed to mean.${form}`]
+  ]);
+}
+
 function currentOpponentFootballStory(t,r){
   const o=t.opponent_roster,rows=(o?.starters||o?.players||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points));
   const star=rows[0],second=rows[1];if(!star)return null;
@@ -497,7 +509,7 @@ function nextOpponentFootballStory(t,r){
 }
 
 function broadcastExpansionV26(t,kind,r){
-  if(kind==='lede')return [teamScoreConstructionStory(t,r),currentOpponentFootballStory(t,r)].filter(Boolean);
+  if(kind==='lede')return [seasonContextStoryV26(t,r),teamScoreConstructionStory(t,r),currentOpponentFootballStory(t,r)].filter(Boolean);
   if(kind==='players')return [supportingCastFootballStory(t,r)].filter(Boolean);
   if(kind==='management')return [lineupProcessStory(t,r)].filter(Boolean);
   if(kind==='outlook')return [nextOpponentFootballStory(t,r)].filter(Boolean);

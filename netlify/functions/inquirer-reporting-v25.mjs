@@ -123,7 +123,7 @@ function playerTrajectory(p){
     `${p.name} opened well below last year’s ${one(prior)}-point average across ${priorGames} games. Treat it as a Week 1 stumble, not proof of decline; the next useful signal is whether the role and opportunity rebound.`,
     `${p.name} started the year far under the ${one(prior)}-point average he carried across ${priorGames} games last season. One bad opener does not make a decline trend, but it does put the next workload under a brighter light.`,
     `The opener was a sharp drop from ${p.name}’s ${one(prior)}-point average across ${priorGames} games last year. That is enough to ask what happened to the role, nowhere near enough to call the player finished.`,
-    `${p.name} gave us a bad first data point against a ${one(prior)}-point average over ${priorGames} games last season. One ugly opener does not erase ${p.name}’s established baseline; the role next Sunday will say much more than the Week 1 total did.`
+    `${p.name} opened far below the ${one(prior)}-point average he established across ${priorGames} games last season. One ugly Sunday does not erase that floor; next week’s role will show whether this was merely a stumble or the first sign of something worth worrying about.`
   ])};
   return null;
 }
@@ -135,7 +135,7 @@ function leaguePlayerPulse(teams){
   for(const kind of ['breakout','early-breakout','reliable','decline','stumble']){
     const x=pick(kind);if(!x||seen.has(String(x.p.id)))continue;seen.add(String(x.p.id));
     const situ=statSituation(x.p),tag=kind==='decline'?'DECLINE WATCH':kind==='stumble'?'VETERAN CHECK-IN':kind==='reliable'?'RELIABLE':kind.includes('breakout')?'BREAKOUT WATCH':'PLAYER WATCH';
-    out.push(`${tag}: ${x.tr.text}${situ?' '+situ:''} For ${x.t.team_name}, the point is not the label; it is whether this player’s role changes what the roster can reasonably expect next week.`);
+    out.push(`${tag}: ${x.tr.text}${situ?' '+situ:''} For ${x.t.team_name}, the player’s role now matters as much as the headline because that is what can carry this story into next week.`);
     if(out.length>=3)break;
   }
   return out;
@@ -738,15 +738,15 @@ function gameImportance(g){
 
 function divisionPressure(t,result){
   const rivals=t.division_results||[],winners=rivals.filter(x=>Number(x.points)>Number(x.opponent_points)).map(x=>x.team_name),losers=rivals.filter(x=>Number(x.points)<Number(x.opponent_points)).map(x=>x.team_name),
-    oneRival=(xs,verb)=>xs.length?(xs[0]+(xs.length>1?' and '+String(xs.length-1)+' other division rival'+(xs.length>2?'s':''):'')+' '+verb):'';
+    rivalSubject=xs=>xs.length?(xs[0]+(xs.length>1?' and '+String(xs.length-1)+' other division rival'+(xs.length>2?'s':''):'')):'';
   if(result==='W'){
-    if(losers.length&&winners.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' gained ground because '+oneRival(losers,'lost')+', while '+oneRival(winners,'won')+' kept the top of the race from opening up.';
-    if(losers.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' also got help when '+oneRival(losers,'lost')+'.';
-    if(winners.length)return 'In '+(t.division_name||'the division')+', '+oneRival(winners,'won')+', so '+t.team_name+' kept pace rather than creating separation.';
+    if(losers.length&&winners.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' gained ground because '+rivalSubject(losers)+' lost, while '+rivalSubject(winners)+' also won and kept the top of the race from opening up.';
+    if(losers.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' also got help when '+rivalSubject(losers)+' lost.';
+    if(winners.length)return 'In '+(t.division_name||'the division')+', '+rivalSubject(winners)+' also won, so '+t.team_name+' kept pace rather than creating separation.';
   }else{
-    if(winners.length&&losers.length)return 'In '+(t.division_name||'the division')+', '+oneRival(winners,'won')+' while '+oneRival(losers,'lost')+', leaving '+t.team_name+' with mixed damage rather than a clean collapse.';
-    if(winners.length)return 'In '+(t.division_name||'the division')+', '+oneRival(winners,'won')+', which made this '+t.team_name+' loss cost a little more ground.';
-    if(losers.length)return 'In '+(t.division_name||'the division')+', '+oneRival(losers,'lost')+' too, limiting the damage without making this result any prettier.';
+    if(winners.length&&losers.length)return 'In '+(t.division_name||'the division')+', '+rivalSubject(winners)+' won while '+rivalSubject(losers)+' lost, leaving '+t.team_name+' with mixed damage rather than a clean collapse.';
+    if(winners.length)return 'In '+(t.division_name||'the division')+', '+rivalSubject(winners)+' won, which made this '+t.team_name+' loss cost a little more ground.';
+    if(losers.length)return 'In '+(t.division_name||'the division')+', '+rivalSubject(losers)+' lost too, limiting the damage without making this result any prettier.';
   }
   return null;
 }

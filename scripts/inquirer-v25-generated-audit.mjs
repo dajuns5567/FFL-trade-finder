@@ -151,7 +151,8 @@ for(const t of d.teams||[]){
     return Number.isFinite(pts)&&(pts>=15||(delta!=null&&delta>=4)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.2));
   }).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2);
   if(eligible.length>=2&&cool&&coolCopy.trim()&&coolCopy.trim().toLowerCase()!=='n/a'){
-    assert.ok(eligible.every(p=>coolCopy.includes(String(p.name||''))),'Cool Throne should recognize multiple legitimately deserving players for '+full+'; expected '+eligible.map(p=>p.name).join(', '));
+    const coolLower=coolCopy.toLowerCase();
+    assert.ok(eligible.every(p=>coolLower.includes(String(p.name||'').toLowerCase())),'Cool Throne should recognize multiple legitimately deserving players for '+full+'; expected '+eligible.map(p=>p.name).join(', '));
   }
 }
 

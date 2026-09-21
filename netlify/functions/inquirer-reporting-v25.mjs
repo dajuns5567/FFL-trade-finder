@@ -576,6 +576,12 @@ function outlook(t,week,r){
       [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. ${t.team_name} keeps the font small until its wins get louder.`],
       [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. The next result needs to be a win.`]
     ]));
+    else ps.push(deskChoice(t,r,[
+      [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. ${t.team_name} is still in the middle ground where ordinary wins can change the math quickly.`],
+      [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. ${t.team_name} is neither guest of honor nor outside the velvet rope yet.`],
+      [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. Those are fight-your-way-up-the-page odds for ${t.team_name}.`],
+      [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. ${t.team_name} has enough runway to matter and not enough to relax.`]
+    ]));
   }
   const div=divisionStory(t,r);if(div)ps.push(div);
   return ps.length?ps:['n/a'];

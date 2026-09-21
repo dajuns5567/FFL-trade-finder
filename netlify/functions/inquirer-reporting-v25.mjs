@@ -1983,8 +1983,11 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
     }
     const canonical=p=>({...p,name:tradeNameMap.get(String(p?.id))||t.transaction_player_facts?.[String(p?.id)]?.name||p?.name}),
       adds=(m.add||[]).map(canonical),drops=(m.drop||[]).map(canonical),
+      canonicalName=id=>tradeNameMap.get(String(id))||t.transaction_player_facts?.[String(id)]?.name||facts?.[String(id)]?.name||'',
       incoming=adds.slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],
-      outgoing=drops.slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],add=names(adds),drop=names(drops),
+      outgoing=drops.slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],
+      add=naturalJoin((m.move?.adds||[]).map(canonicalName).filter(Boolean))||names(adds),
+      drop=naturalJoin((m.move?.drops||[]).map(canonicalName).filter(Boolean))||names(drops),
       moveLead=trade?(add&&drop?`${manager} traded for ${add} and sent out ${drop}.`:add?`${manager} traded for ${add}.`:`${manager} sent out ${drop} in a trade.`):(add&&drop?`${manager} added ${add} and moved on from ${drop}.`:add?`${manager} added ${add}.`:`${manager} cut ${drop}.`);
     const inStrong=strongTransactionPerformance(incoming),outStrong=strongTransactionPerformance(outgoing);
     let impact='';

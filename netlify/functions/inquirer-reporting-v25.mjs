@@ -1251,7 +1251,7 @@ function storyAngleV28(t,r){
 
 function angleLeadV28(t,r,angle){
   const rows=list(t),top=rows[0],full=teamIdentityV28(t).full,opp=String(t.opponent_name||'the opponent'),
-    score=one(t.points)+'–'+one(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),
+    score=one(t.points)+'–'+one(t.opponent_points),oppScore=one(t.opponent_points)+'–'+one(t.points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),
     miss=t.best_lineup_miss,tx=Number(t.current_week_trade_count||0),topName=top?.name||'the leading scorer',
     seed=String(t.roster_id)+':'+angle+':'+String(r?.id||'');
   const spines={
@@ -1262,7 +1262,7 @@ function angleLeadV28(t,r,angle){
     ],
     'rout-loss':[
       `${full} lost ${score}, a margin of ${one(margin)} that resists euphemism. This was not one unlucky lineup slot; it was the kind of Sunday that makes every department of the roster look complicit.`,
-      `${opp} beat ${full} ${score}, and at that margin isolated excuses stop mattering. The whole ${full} lineup has to own a piece of the afternoon.`,
+      `${opp} beat ${full} ${oppScore}, and at that margin isolated excuses stop mattering. The whole ${full} lineup has to own a piece of the afternoon.`,
       `${score} is the sort of final that forces a beat writer to choose between analysis and an incident report. There are enough problems across ${full} that none deserves to hide behind the others.`
     ],
     'close-win':[
@@ -1272,7 +1272,7 @@ function angleLeadV28(t,r,angle){
     ],
     'close-loss':[
       `${full} lost ${score}, and ${one(margin)} points is close enough to make the whole afternoon feel personally negotiable. Every quiet starter and every legal bench alternative suddenly has a lawyer.`,
-      `${opp} beat ${full} ${score}. A ${one(margin)}-point loss is cruel because it gives hindsight too many places to stand and shout.`,
+      `${opp} beat ${full} ${oppScore}. A ${one(margin)}-point loss is cruel because it gives hindsight too many places to stand and shout.`,
       `${full} came away with a loss at ${score}, the kind that does not let anyone retreat into “we were never in it.” They were in it. That is what makes the autopsy irritating.`
     ],
     'upset-win':[
@@ -1671,43 +1671,140 @@ export function articleFrameV29(t,r){
 
 function classificationSentenceV29(p,tr,r){
   if(!p||!tr)return null;
-  const v=voice(r);
-  if(tr.kind==='star')return [
-    `${p.name} already owns a star-level standard. Sunday reinforced it with another performance worthy of that reputation.`,
-    `${p.name} arrived with star status already secured; this performance belongs in the confirmation column, not the discovery column.`,
-    `${p.name.toUpperCase()} WAS ALREADY A STAR. THIS WEEK GAVE THE RÉSUMÉ ANOTHER LOUD LINE.`,
-    `${p.name} enters the week as an established star; Sunday added another favorable line to an already substantial record.`
-  ][v];
-  if(tr.kind==='breakout'||tr.kind==='early-breakout')return [
-    `${p.name} has earned breakout-watch attention because the role and production are rising together.`,
-    `${p.name} is the emerging name worth circling; youth alone is not the argument, the expanding role is.`,
-    `${p.name.toUpperCase()} GETS BREAKOUT WATCH, not a coronation. The job is getting bigger and the production followed.`,
-    `${p.name} qualifies as an emerging player because the workload has changed with the output; the label stays provisional.`
-  ][v];
-  if(tr.kind==='rookie')return [
-    `Rookie ${p.name} gave the staff enough useful work to keep his role in the weekly conversation.`,
-    `Rookie ${p.name} made a respectable first claim on future work.`,
-    `ROOKIE WATCH: ${p.name} gave us something worth printing again next week.`,
-    `Rookie ${p.name} has one useful exhibit now; another Sunday decides how much weight it deserves.`
-  ][v];
-  if(tr.kind==='decline')return [
-    `${p.name} is on fall-off watch because the multi-week drop has outgrown the phrase “slow start.”`,
-    `${p.name} has reached the unfashionable part of the veteran curve where decline has to be discussed plainly.`,
-    `FALL-OFF WATCH: ${p.name}. Age plus repeated lighter production is no longer background noise.`,
-    `${p.name} has accumulated enough decline markers that the old weekly floor cannot be presumed.`
-  ][v];
-  if(tr.kind==='reliable')return [
-    `${p.name} remains a reliability story: familiar role, familiar output, very little Tuesday drama.`,
-    `${p.name} keeps delivering the unfashionable luxury of predictability.`,
-    `RELIABLE: ${p.name}. Not every useful player needs a transformation arc.`,
-    `${p.name} continues to corroborate the same weekly expectation, which is valuable precisely because it is boring.`
-  ][v];
-  if(tr.kind==='stumble')return [
-    `${p.name} gets one bad week labeled as a stumble, not a trend.`,
-    `${p.name} receives one week of manners before the criticism gets sharper.`,
-    `${p.name.toUpperCase()} GETS A MULLIGAN, not immunity.`,
-    `${p.name} has one poor exhibit; the next one determines whether the file changes categories.`
-  ][v];
+  const v=voice(r),key=`${p.id||p.name}:${tr.kind}:${r?.id||''}`;
+  const choose=banks=>keyedChoice(key,banks[v]);
+  if(tr.kind==='star')return choose([
+    [
+      `${p.name} already owns a star-level standard. Another substantial Sunday reinforces what the league already knew rather than creating a new category.`,
+      `${p.name} came into the week with star status already earned. The performance confirms the expectation instead of introducing it.`,
+      `${p.name} does not need breakout language. This is an established player adding another useful week to an existing résumé.`
+    ],
+    [
+      `${p.name} arrived with star status already settled. The interesting question is how long this level remains routine, not whether a breakout has begun.`,
+      `${p.name} is an established star, which makes the strong week confirmation rather than revelation.`,
+      `${p.name} needed no discovery narrative before kickoff and needs none now. The performance belongs to an already accomplished player.`
+    ],
+    [
+      `${p.name.toUpperCase()} WAS ALREADY A STAR. THIS WEEK ADDED A LOUD LINE; IT DID NOT INVENT THE PLAYER.`,
+      `ESTABLISHED STAR, NOT BREAKOUT: ${p.name.toUpperCase()}. THE HEADLINE IS THE PERFORMANCE, NOT A FAKE ORIGIN STORY.`,
+      `${p.name.toUpperCase()} DOES NOT NEED A BREAKOUT LABEL. HE NEEDED ANOTHER BIG SUNDAY, AND HE GOT ONE.`
+    ],
+    [
+      `${p.name} entered with star status already supported by prior work. Sunday corroborates that status; it does not open a breakout investigation.`,
+      `${p.name} belongs in the established-star category. The week changes the current evidence, not the career classification.`,
+      `${p.name} already had the résumé. This performance strengthens an existing finding rather than creating a new one.`
+    ]
+  ]);
+  if(tr.kind==='breakout'||tr.kind==='early-breakout')return choose([
+    [
+      `${p.name} has earned breakout-watch attention because the role and production are rising together.`,
+      `${p.name} is the young player worth tracking: the opportunity expanded and the production followed it.`,
+      `${p.name} has moved beyond a random spike. The role is changing enough to justify a provisional breakout label.`
+    ],
+    [
+      `${p.name} is the emerging name worth circling. The appeal is not youth by itself; it is a larger job producing a larger result.`,
+      `${p.name} has made the old expectation look dated enough to deserve breakout-watch attention, though one should resist declaring the case closed.`,
+      `${p.name} is beginning to outgrow last year’s description. The expanding workload is the persuasive part.`
+    ],
+    [
+      `BREAKOUT WATCH: ${p.name.toUpperCase()}. THE JOB GOT BIGGER AND THE PRODUCTION CAME WITH IT.`,
+      `${p.name.toUpperCase()} GETS THE BREAKOUT HEADLINE FOR NOW. ANOTHER WEEK OF THIS ROLE MAKES IT HARDER TO TAKE BACK.`,
+      `YOUNG PLAYER, BIGGER ROLE, LOUDER RESULT: ${p.name.toUpperCase()} HAS EARNED ANOTHER LOOK.`
+    ],
+    [
+      `${p.name} qualifies as an emerging player because workload and production moved together. The finding remains provisional.`,
+      `${p.name} has enough changed-role evidence to justify breakout watch without pretending one week closes the inquiry.`,
+      `${p.name} is an emerging case rather than an established conclusion; the larger workload is the evidence worth preserving.`
+    ]
+  ]);
+  if(tr.kind==='rookie')return choose([
+    [
+      `Rookie ${p.name} gave the staff enough useful work to keep the role in next week’s conversation.`,
+      `${p.name} is still a rookie, but Sunday gave the staff a reason to keep the door open.`,
+      `The rookie note on ${p.name} is simple: the first useful role has been earned; the second still has to be.`
+    ],
+    [
+      `Rookie ${p.name} made a respectable first claim on future work without requiring anyone to confuse promise with permanence.`,
+      `${p.name} has one good rookie Sunday in hand. That earns attention, not mythology.`,
+      `The rookie case for ${p.name} now has a real performance attached to it, which is more useful than projection and hope.`
+    ],
+    [
+      `ROOKIE WATCH: ${p.name.toUpperCase()} GAVE US SOMETHING WORTH PRINTING AGAIN NEXT WEEK.`,
+      `${p.name.toUpperCase()} HAS ONE ROOKIE SUNDAY WORTH YELLING ABOUT. EARN ANOTHER.`,
+      `THE ROOKIE PAGE HAS A NAME: ${p.name.toUpperCase()}. NOW KEEP THE JOB.`
+    ],
+    [
+      `Rookie ${p.name} has one useful exhibit. Another Sunday will tell us whether it deserves additional weight.`,
+      `${p.name} has supplied the first credible rookie data point; the role now requires corroboration.`,
+      `The rookie file on ${p.name} is no longer empty, which is meaningful without being conclusive.`
+    ]
+  ]);
+  if(tr.kind==='decline')return choose([
+    [
+      `${p.name} is on fall-off watch because the multi-week drop has outgrown the phrase “slow start.”`,
+      `${p.name} has been quiet for long enough that age and shrinking production belong in the same paragraph.`,
+      `${p.name} no longer gets the old weekly floor by reputation alone. The decline has lasted long enough to require evidence in the other direction.`
+    ],
+    [
+      `${p.name} has reached the veteran stage where decline has to be discussed plainly.`,
+      `${p.name} is forcing a veteran conversation nobody enjoys writing: the old standard is showing up less often.`,
+      `${p.name} has accumulated enough ordinary Sundays to make “temporary” a less convincing adjective.`
+    ],
+    [
+      `FALL-OFF WATCH: ${p.name.toUpperCase()}. AGE PLUS REPEATED LIGHTER PRODUCTION IS NOT BACKGROUND NOISE ANYMORE.`,
+      `${p.name.toUpperCase()} HAS USED UP THE “SLOW START” EXCUSE. THE NEXT SUNDAY NEEDS TO LOOK DIFFERENT.`,
+      `VETERAN WARNING LABEL: ${p.name.toUpperCase()}. THE OLD FLOOR IS NO LONGER AUTOMATIC.`
+    ],
+    [
+      `${p.name} has accumulated enough decline markers that the prior weekly floor cannot be presumed.`,
+      `${p.name} now has a multi-week adverse pattern rather than an isolated poor exhibit.`,
+      `${p.name} has moved from anomaly to monitored decline; the burden has shifted toward showing the old level still exists.`
+    ]
+  ]);
+  if(tr.kind==='reliable')return choose([
+    [
+      `${p.name} remains a reliability story: familiar role, familiar output and very little Tuesday drama.`,
+      `${p.name} keeps making the weekly decision easy. That kind of predictability is valuable precisely because it is boring.`,
+      `${p.name} is giving the roster what it has learned to expect, which is often more useful than one spectacular outlier.`
+    ],
+    [
+      `${p.name} keeps delivering the less glamorous luxury of predictability.`,
+      `${p.name} is performing the difficult trick of making useful work look ordinary.`,
+      `${p.name} continues to be reliably good, a condition columnists appreciate less than managers do.`
+    ],
+    [
+      `RELIABLE: ${p.name.toUpperCase()}. NOT EVERY USEFUL PLAYER NEEDS A TRANSFORMATION ARC.`,
+      `${p.name.toUpperCase()} DID THE BORING VALUABLE THING AGAIN. KEEP IT.`,
+      `NO DRAMA REQUIRED FROM ${p.name.toUpperCase()}. THE JOB LOOKS THE SAME AND THE OUTPUT FOLLOWED.`
+    ],
+    [
+      `${p.name} continues to corroborate the same weekly expectation, which is valuable because the role remains stable.`,
+      `${p.name} supplies a repeatable baseline rather than a new theory.`,
+      `${p.name} remains one of the cleaner weekly assumptions in the file.`
+    ]
+  ]);
+  if(tr.kind==='stumble')return choose([
+    [
+      `${p.name} gets one bad week labeled as a stumble, not a trend.`,
+      `${p.name} has enough prior work to earn patience for one ugly Sunday; another would change the tone.`,
+      `${p.name} had a bad week. The longer résumé keeps it from becoming a larger conclusion yet.`
+    ],
+    [
+      `${p.name} receives one week of restraint before the criticism gets sharper.`,
+      `${p.name} has earned enough prior credit to make this an unpleasant footnote rather than a career review.`,
+      `${p.name} gets one ugly Sunday without a dramatic rewrite. A second would be less defensible.`
+    ],
+    [
+      `${p.name.toUpperCase()} GETS A MULLIGAN, NOT IMMUNITY.`,
+      `ONE BAD WEEK FOR ${p.name.toUpperCase()}. DO IT AGAIN AND THE FONT GETS BIGGER.`,
+      `${p.name.toUpperCase()} HAS ENOUGH HISTORY TO SURVIVE THIS ONE. NEXT WEEK IS NOT FREE.`
+    ],
+    [
+      `${p.name} has one poor exhibit; the next one determines whether the category changes.`,
+      `${p.name} has an adverse week, not yet an adverse pattern.`,
+      `${p.name} retains the benefit of the larger sample for now; another poor result would materially change the file.`
+    ]
+  ]);
   return null;
 }
 
@@ -1804,6 +1901,118 @@ function hotSeatV29(t,r,f=articleFrameV29(t,r)){
   ],[
     `${naturalJoin(names)} ${names.length===1?'is':'are'} the adverse finding this week. ${won?`${team} won despite the shortfall from ${naturalJoin(names)}; that is mitigation, not a clean bill of health.`:`The ${team} loss already gives ${naturalJoin(names)} consequence in the weekly file.`}`
   ]][voice(r)];
+}
+
+function articleThreadV30(t,r,f,phase){
+  const team=teamIdentityV28(t).mascot,manager=t.manager_name||'management',top=f.top?.name||'the leading scorer',
+    miss=t.best_lineup_miss,share=Math.round((f.share||0)*100),angle=f.angle,key=`${t.roster_id}:${angle}:${phase}:${r?.id}`;
+  const base={
+    'rout-loss':{
+      sentiment:`A ${one(f.margin)}-point loss is too large for one scapegoat. ${team} supporters can be angry at individual misses, but the margin says the failure was distributed.`,
+      outlook:`The next ${team} game is less about proving one player can rebound than proving the lineup can stop failing in clusters.`,
+      management:`For ${manager}, the lesson is broader than one button: a loss this large usually needs more than one correction.`
+    },
+    'rout-win':{
+      sentiment:`A ${one(f.margin)}-point win gives ${team} fans room to enjoy the week without pretending every piece will repeat at the same volume.`,
+      outlook:`The next test for ${team} is whether the winning shape survives after the margin stops doing the storytelling.`,
+      management:`For ${manager}, a rout is permission to preserve what worked rather than a reason to assume every decision was perfect.`
+    },
+    'close-loss':{
+      sentiment:`A ${one(f.margin)}-point loss guarantees arguments because nearly every ordinary decision can be imagined as the missing difference.`,
+      outlook:`The next ${team} game needs fewer small leaks; a margin this thin turns ordinary mistakes into the whole result.`,
+      management:`For ${manager}, the close margin makes the legal lineup choices worth reviewing without turning hindsight into fiction.`
+    },
+    'close-win':{
+      sentiment:`A ${one(f.margin)}-point win gives ${team} the pleasant version of the same lesson: tiny mistakes mattered, but the scoreboard forgave them.`,
+      outlook:`The next ${team} matchup will test whether the close win was composure or simply a Sunday in which the final mistake belonged elsewhere.`,
+      management:`For ${manager}, surviving a close one should sharpen the lineup review rather than cancel it.`
+    },
+    'favorite-collapse':{
+      sentiment:`The frustration around ${team} is sharper because the roster entered with the friendlier forecast and still handed the result away.`,
+      outlook:`The next ${team} assignment now carries a credibility tax: favorites are expected to bank manageable games, not explain them afterward.`,
+      management:`For ${manager}, losing from the favored side puts roster and lineup choices under a brighter light than the same score would as an underdog.`
+    },
+    'upset-win':{
+      sentiment:`The upset gives ${team} fans a reason to revise expectations upward without pretending one surprise result rewrote the season.`,
+      outlook:`Now ${team} has to show the upset was a usable version of the roster rather than a one-week ambush.`,
+      management:`For ${manager}, the reward for an upset is a better question next week: which choices helped create a version worth repeating?`
+    },
+    'lineup-regret':{
+      sentiment:`The ${team} argument will keep circling the lineup card because the legal alternative was real, not invented after the final.`,
+      outlook:`The cleanest way for ${team} to end the lineup argument is to make the obvious decision before kickoff next time.`,
+      management:`For ${manager}, this week already supplied a legal counterfactual that deserves an actual correction.`
+    },
+    'front-office-storm':{
+      sentiment:`With ${Number(t.current_week_trade_count||0)} completed moves in the background, ${team} fans are judging the churn by what finally happened on Sunday.`,
+      outlook:`The next ${team} game should clarify whether all that roster motion created a better team or merely a busier transaction log.`,
+      management:`For ${manager}, activity is no longer the story. The new configuration has enough real football attached to it to be evaluated.`
+    },
+    'star-dependent':{
+      sentiment:`When roughly ${share}% of the scoring comes from three players, ${team} fans know where the gratitude belongs and where the impatience should go.`,
+      outlook:`The next ${team} game needs somebody outside the leading trio to make the article harder to write around the same three names.`,
+      management:`For ${manager}, the roster question is depth of production rather than star quality; ${top} already did enough to make that distinction clear.`
+    },
+    'defense-led':{
+      sentiment:`${top} made sure the ${team} conversation starts on defense, which is exactly what an IDP league should reward when the work is real.`,
+      outlook:`The next ${team} game asks whether the defensive carry can remain an advantage instead of becoming a weekly rescue plan.`,
+      management:`For ${manager}, a defensive headliner is roster construction paying off; the rest of the lineup still has to meet that standard.`
+    },
+    'projection-smash':{
+      sentiment:`Beating projection this badly changes the mood around ${team}, but fans will care more about which roles produced the surprise than the forecast itself.`,
+      outlook:`The next ${team} game tests whether the unexpected production belongs to a new role or a one-week spike.`,
+      management:`For ${manager}, the useful question is which source of overperformance can be intentionally preserved.`
+    },
+    'projection-crater':{
+      sentiment:`The ${team} frustration is not that a projection was wrong; it is that too many expected points vanished from roles the roster had reason to trust.`,
+      outlook:`The next ${team} matchup needs a normal version of the lineup before anyone asks for another ceiling game.`,
+      management:`For ${manager}, the repair job starts with the expected roles that failed rather than chasing a miracle replacement.`
+    },
+    'breakout-week':{
+      sentiment:`The most interesting ${team} optimism belongs to the emerging player whose role grew with the production; that is a better story than a random spike.`,
+      outlook:`The next ${team} game gives the breakout candidate a chance to keep the larger role before the label becomes permanent.`,
+      management:`For ${manager}, the young player has earned another opportunity rather than a ceremonial label.`
+    },
+    'division-fight':{
+      sentiment:`A divisional result makes the ${team} mood louder because the same Sunday moved a rival in the opposite direction.`,
+      outlook:`The next ${team} game arrives with divisional ground already won or lost; there is less room to treat the standings as background decoration.`,
+      management:`For ${manager}, division games turn ordinary lineup choices into decisions with standings consequences attached.`
+    }
+  }[angle];
+  if(!base?.[phase])return null;
+  const core=base[phase];
+  const banks=[
+    [core,core],
+    [core,`${core} That is the part Bartholomew would keep after the adjectives are edited out.`],
+    [core,`${core} THAT is the part Tilly would put above the fold.`],
+    [core,`${core} That is the thread Filch would keep attached to the next exhibit.`]
+  ];
+  return keyedChoice(key,banks[voice(r)]);
+}
+
+function sentimentStoryV30(t,r,f=articleFrameV29(t,r)){
+  const team=teamIdentityV28(t),manager=t.manager_name||'management',rec=record(t),rank=Number.isFinite(f.rank)?`${f.rank} of ${f.size}`:'unsettled',
+    p=f.playoff,titles=Number(t.manager_career?.championships)||0,thread=articleThreadV30(t,r,f,'sentiment'),margin=one(f.margin),v=voice(r);
+  const primary=[
+    f.won
+      ? `${team.city} gets the better Monday after a ${margin}-point ${team.mascot} win. The fan base can celebrate what actually happened while keeping one eye on the parts that looked harder to repeat.`
+      : `${team.city} gets the irritated Monday after a ${margin}-point ${team.mascot} loss. The useful fan reaction is not to blame everybody equally; some performances survived the result and some helped create it.`,
+    f.won
+      ? `${team.mascot} supporters are understandably pleased, and Bartholomew will permit the optimism without pretending one week has settled the order of things.`
+      : `${team.mascot} supporters have every right to be annoyed. Bartholomew’s only request is that the criticism distinguish between the players who failed and the good performances trapped inside the loss.`,
+    f.won
+      ? `${team.city.toUpperCase()} HAS A WIN AND THE GROUP CHAT HAS LOST ITS MIND. ${manager} MAY ENJOY THE SCREENSHOTS UNTIL THE NEXT LINEUP LOCKS.`
+      : `${team.city.toUpperCase()} HAS A LOSS AND THE GROUP CHAT HAS OPENED TWELVE INVESTIGATIONS BEFORE BREAKFAST. ${manager} SHOULD READ THE USEFUL COMPLAINTS AND MUTE THE REST.`,
+    f.won
+      ? `The public case for ${team.mascot} is favorable this week: a win, a pile of screenshots and very little procedural restraint. ${manager} gets another hearing next Sunday.`
+      : `The public case against ${team.mascot} is loud this week, but the evidence is uneven. ${manager} should separate the actual roster problem from the emotional exhibits.`
+  ][v];
+  const context=[
+    `The record is ${rec}, good for rank ${rank}${p!=null?`, with the playoff outlook around ${one(p)}%`:''}. ${titles?`${manager} has ${titles} championship${titles===1?'':'s'} on the résumé, enough to earn patience but not immunity.`:''}`,
+    `${rec} and rank ${rank} are the unromantic facts${p!=null?`; the current playoff outlook remains ${one(p)}%`:''}. ${titles?`${titles} championship${titles===1?'':'s'} give ${manager} a résumé, not diplomatic immunity.`:''}`,
+    `RECORD: ${rec}. RANK: ${String(rank).toUpperCase()}.${p!=null?` PLAYOFF OUTLOOK: ${one(p)}%.`:''} ${titles?`${manager.toUpperCase()} HAS ${titles} TITLE${titles===1?'':'S'} OF PRIOR GOODWILL. THAT COUPON BOOK IS NOT INFINITE.`:''}`,
+    `The public record reads ${rec}, rank ${rank}${p!=null?`, with a ${one(p)}% playoff estimate`:''}. ${titles?`${manager} enters with ${titles} championship${titles===1?'':'s'} of prior good conduct; the current week is still admissible.`:''}`
+  ][v];
+  return [primary,context,thread].filter(Boolean);
 }
 
 function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
@@ -1963,7 +2172,7 @@ export function humanSectionsV25(args){
     else if(c.kind==='players')paragraphs=playerStoryV29(t,args.reporter,frame);
     else if(c.kind==='management')paragraphs=managementStoryV29(t,facts,args.reporter,frame);
     else if(c.kind==='value')paragraphs=valueStoryV28(t,args.reporter);
-    else if(c.kind==='sentiment')paragraphs=[sentimentVoiceV28(t,args.reporter),sentimentContextV28(t,args.reporter)].filter(Boolean);
+    else if(c.kind==='sentiment')paragraphs=sentimentStoryV30(t,args.reporter,frame);
     else if(c.kind==='outlook')paragraphs=outlookStoryV29(t,args.reporter,frame);
     else if(c.kind==='hot-seat')paragraphs=hotSeatV29(t,args.reporter,frame);
     else if(c.kind==='cool-throne')paragraphs=coolThroneV29(t,args.reporter,frame);

@@ -721,15 +721,16 @@ function gameImportance(g){
 }
 
 function divisionPressure(t,result){
-  const rivals=t.division_results||[],winners=rivals.filter(x=>Number(x.points)>Number(x.opponent_points)).map(x=>x.team_name),losers=rivals.filter(x=>Number(x.points)<Number(x.opponent_points)).map(x=>x.team_name);
+  const rivals=t.division_results||[],winners=rivals.filter(x=>Number(x.points)>Number(x.opponent_points)).map(x=>x.team_name),losers=rivals.filter(x=>Number(x.points)<Number(x.opponent_points)).map(x=>x.team_name),
+    oneRival=(xs,verb)=>xs.length?(xs[0]+(xs.length>1?' and '+String(xs.length-1)+' other division rival'+(xs.length>2?'s':''):'')+' '+verb):'';
   if(result==='W'){
-    if(losers.length&&winners.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' gained ground on '+losers.join(', ')+' but got no breathing room from '+winners.join(', ')+'.';
-    if(losers.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' also got help from '+losers.join(', ')+' losing elsewhere.';
-    if(winners.length)return 'In '+(t.division_name||'the division')+', '+winners.join(', ')+' won too, so '+t.team_name+' kept pace rather than creating separation.';
+    if(losers.length&&winners.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' gained ground because '+oneRival(losers,'lost')+', while '+oneRival(winners,'won')+' kept the top of the race from opening up.';
+    if(losers.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' also got help when '+oneRival(losers,'lost')+'.';
+    if(winners.length)return 'In '+(t.division_name||'the division')+', '+oneRival(winners,'won')+', so '+t.team_name+' kept pace rather than creating separation.';
   }else{
-    if(winners.length&&losers.length)return 'In '+(t.division_name||'the division')+', '+winners.join(', ')+' won while '+losers.join(', ')+' lost, so the damage was mixed rather than clean.';
-    if(winners.length)return 'In '+(t.division_name||'the division')+', '+winners.join(', ')+' won elsewhere, which makes this loss cost '+t.team_name+' a little more ground.';
-    if(losers.length)return 'In '+(t.division_name||'the division')+', '+losers.join(', ')+' also lost, limiting the damage without making this result any prettier.';
+    if(winners.length&&losers.length)return 'In '+(t.division_name||'the division')+', '+oneRival(winners,'won')+' while '+oneRival(losers,'lost')+', leaving '+t.team_name+' with mixed damage rather than a clean collapse.';
+    if(winners.length)return 'In '+(t.division_name||'the division')+', '+oneRival(winners,'won')+', which made this '+t.team_name+' loss cost a little more ground.';
+    if(losers.length)return 'In '+(t.division_name||'the division')+', '+oneRival(losers,'lost')+' too, limiting the damage without making this result any prettier.';
   }
   return null;
 }

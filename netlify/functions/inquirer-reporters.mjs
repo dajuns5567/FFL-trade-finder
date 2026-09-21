@@ -306,10 +306,15 @@ export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyS
   const reporter=reporterForTeam(t.roster_id,week,ids),teamClassification=inquirerWeekClassification(week,season,t.conference),starters=(t.starter_details||[]).map(enrichPlayer);
   const benchFact=enrichPlayer(t.best_bench),worstFact=enrichPlayer(t.worst_starter),miss=t.best_lineup_miss?{...t.best_lineup_miss,reserve:enrichPlayer(t.best_lineup_miss.reserve),starter:enrichPlayer(t.best_lineup_miss.starter)}:null;
   const division_results=t.division==null?[]:(teams||[]).filter(x=>String(x.roster_id)!==String(t.roster_id)&&x.division!=null&&String(x.division)===String(t.division)&&(!t.conference||x.conference===t.conference)).map(x=>({roster_id:x.roster_id,team_name:x.team_name,points:x.points,opponent_points:x.opponent_points,opponent_name:x.opponent_name,record:x.league_context?.record||null}));
-  const nextTeam=(teams||[]).find(x=>String(x.roster_id)===String(t.next_opponent_roster_id));
-  const next_opponent_roster=nextTeam?{team_name:nextTeam.team_name,roster_id:nextTeam.roster_id,players:[...new Set(nextTeam.roster_player_ids||(nextTeam.starter_details||[]).map(p=>String(p.id)))].map(id=>facts[String(id)]).filter(Boolean)}:null;
+  const rosterPacket=team=>{
+   if(!team)return null;
+   const allIds=[...new Set(team.roster_player_ids||(team.starter_details||[]).map(p=>String(p.id)))],starterIds=(team.starter_details||[]).map(p=>String(p.id));
+   return{team_name:team.team_name,roster_id:team.roster_id,players:allIds.map(id=>facts[String(id)]).filter(Boolean),starters:starterIds.map(id=>facts[String(id)]).filter(Boolean)};
+  };
+  const opponentTeam=(teams||[]).find(x=>String(x.roster_id)===String(t.opponent_roster_id)),nextTeam=(teams||[]).find(x=>String(x.roster_id)===String(t.next_opponent_roster_id));
+  const opponent_roster=rosterPacket(opponentTeam),next_opponent_roster=rosterPacket(nextTeam);
   const transactionIds=[...new Set((t.transactions||[]).flatMap(m=>[...(m.adds||[]),...(m.drops||[])]).map(String))],transaction_player_facts=Object.fromEntries(transactionIds.map(id=>[id,facts[id]]).filter(([,x])=>x));
-  const tt={...t,next_opponent_roster,division_results,next_divisional:division_results.some(x=>String(x.roster_id)===String(t.next_opponent_roster_id)),week_classification:teamClassification,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter,best_lineup_miss:miss,transaction_player_facts};
+  const tt={...t,opponent_roster,next_opponent_roster,division_results,next_divisional:division_results.some(x=>String(x.roster_id)===String(t.next_opponent_roster_id)),week_classification:teamClassification,starter_details:starters,best_bench:benchFact||t.best_bench,worst_starter:worstFact||t.worst_starter,best_lineup_miss:miss,transaction_player_facts};
   const sentiment=fanSentimentForTeam(tt),article=buildNarrativeArticle({team:tt,week,reporter,facts,sentiment,teamClassification,aside:aside(tt,week,reporter)});
   return{...tt,inquirer_article:article,reporter_id:reporter.id};
  });

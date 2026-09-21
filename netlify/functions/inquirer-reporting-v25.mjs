@@ -945,9 +945,8 @@ function reporterStructureV26(sections,t,r){
 
 function dedupeArticleSections(sections){
   const seen=new Set();
-  return (sections||[]).map(s=>({
-    ...s,
-    paragraphs:(s.paragraphs||[]).map(p=>{
+  return (sections||[]).map(s=>{
+    const paragraphs=(s.paragraphs||[]).map(p=>{
       if(String(p||'').trim().toLowerCase()==='n/a')return'n/a';
       const parts=String(p||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean),keep=[];
       for(const sentence of parts){
@@ -957,10 +956,10 @@ function dedupeArticleSections(sections){
         keep.push(sentence);
       }
       return keep.join(' ');
-    }).filter(Boolean)
-  }));
+    }).filter(Boolean);
+    return {...s,paragraphs:paragraphs.length?paragraphs:['n/a']};
+  });
 }
-
 export function humanSectionsV25(args){
   const {team:t,facts={}}=args,base=humanSectionsV23({...args,team:{...t,transactions:[]}}),mgmt=management(t,facts,args.reporter);
   const rewritten=base.map(s=>{

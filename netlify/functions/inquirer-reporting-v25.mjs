@@ -870,10 +870,10 @@ function managementStory(t){
 function tillyManagementStory(t){
   const facts=t.transaction_player_facts||{},clean={...t,transactions:consolidateTransactions(t)},pick=selectImportantMoves(clean,facts)[0];if(!pick)return null;
   const add=names(pick.add),drop=names(pick.drop),isTrade=String(pick.move?.type||'').toLowerCase()==='trade',incoming=(pick.add||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],outgoing=(pick.drop||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],bits=[];
-  if(isTrade&&add)bits.push(`TRADE FOLLOW-UP: ${t.team_name} brought in ${add}${drop?' and sent out '+drop:''}. ${t.manager_name} paid for a new answer and gets to live with the comparison every Sunday.`);
-  else if(add&&drop)bits.push(`${t.team_name} swapped ${drop} for ${add}. Clean transaction, loud consequences: the new name has to make the lineup better.`);
-  else if(add)bits.push(`${t.team_name} added ${add}. No parade for the waiver wire; the interesting part is whether the new arrival earns a real Sunday role.`);
-  else if(drop)bits.push(`${t.team_name} moved on from ${drop}. The vacant roster spot now has to justify the cut.`);
+  if(isTrade&&add)bits.push(`TRADE FOLLOW-UP: ${t.team_name} brought in ${add}${drop?' and sent out '+drop:''}. ${t.manager_name} paid for a new answer and gets to live with the comparison every Sunday. Week 1 put that comparison on the front page.`);
+  else if(add&&drop)bits.push(`${t.team_name} swapped ${drop} for ${add}. Clean transaction, loud consequences: the new name has to make the lineup better. That is front-page material until the move settles in.`);
+  else if(add)bits.push(`${t.team_name} added ${add}. No parade for the waiver wire; the new arrival still has to earn a real Sunday role. A useful debut gets the move onto the front page.`);
+  else if(drop)bits.push(`${t.team_name} moved on from ${drop}. The vacant roster spot now has to justify the cut, and Week 1 already gave the decision front-page consequences.`);
   if(incoming&&valid(incoming.points)){
     const ctx=playerContextParagraph(incoming);
     bits.push(`${incoming.name} immediately gave ${t.team_name} ${one(incoming.points)} fantasy points.${ctx?' '+ctx:''}`);

@@ -647,7 +647,7 @@ function teamScoreConstructionStory(t,r){
     else expectation=' '+keyedChoice(ekey,[
       `${t.team_name} left ${one(Math.abs(projDelta))} projected points on the table, and ${won?'the win kept the shortfall from becoming the story.':'the loss made that missing production impossible to ignore.'}`,
       `${t.team_name} finished ${one(Math.abs(projDelta))} below projection. ${won?'Winning makes that a correction for next week instead of an excuse for this one.':'In a loss, those missing points become part of the autopsy.'}`,
-      `The lineup missed projection by ${one(Math.abs(projDelta))}. ${won?'${t.team_name} survived it; that does not make the shortfall worth repeating.':'${t.team_name} needed more from the roster and never found it.'}`
+      `The lineup missed projection by ${one(Math.abs(projDelta))}. ${won?t.team_name+' survived it; that does not make the shortfall worth repeating.':t.team_name+' needed more from the roster and never found it.'}`
     ]);
   }
   return shape+expectation;

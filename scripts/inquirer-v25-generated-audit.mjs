@@ -124,7 +124,7 @@ for(const t of d.teams||[]){
     for(const sentence of sentences)assert.doesNotMatch(sentence,subject,'Plural Sleeper team alias must not take a singular verb in '+full+': '+sentence);
   }
   if(Number(t.points)<Number(t.opponent_points)){
-    assert.doesNotMatch(body,/\b(?:survived that call|result look(?:ed)? as good on monday|enjoy the win|permission to toast|winning shape travels|bring(?:s)? a win into)\b/i,'Losing-team article contains winner-oriented framing for '+full);
+    assert.doesNotMatch(body,/\b(?:survived that call|survived the decision|the win bought|result look(?:ed)? as good on monday|enjoy the win|permission to toast|winning shape travels|bring(?:s)? a win into|celebrate the win|the victory makes|the win hides|the win permits)\b/i,'Losing-team article contains winner-oriented framing for '+full);
   }
   for(const p of t.starter_details||[]){
     if(!isEstablishedStar(p))continue;
@@ -179,6 +179,27 @@ for(const t of d.teams||[]){
     }
   }
 }
+const canonicalStatFact=(t,sentence)=>{
+  let x=String(sentence||''),players=[...(t.starter_details||[]),...(t.opponent_roster?.starters||t.opponent_roster?.players||[]),...(t.next_opponent_roster?.starters||t.next_opponent_roster?.players||[])].filter(p=>p?.name),
+    firstCounts=new Map();
+  for(const p of players){const first=String(p.name).trim().split(/\s+/)[0];if(first)firstCounts.set(first,(firstCounts.get(first)||0)+1)}
+  players.forEach((p,index)=>{
+    const full=String(p.name||'').trim();if(!full)return;const first=full.split(/\s+/)[0],token='[PLAYER:'+String(p.id||index)+']';
+    x=x.replace(new RegExp(escapeRe(full),'gi'),token);
+    if(firstCounts.get(first)===1)x=x.replace(new RegExp('\\b'+escapeRe(first)+'\\b','gi'),token);
+  });
+  return x.toLowerCase().replace(/\s+/g,' ').trim();
+};
+for(const t of d.teams||[]){
+  const statFacts=new Map();
+  for(const sentence of sentenceParts(articleText(t))){
+    if(!/\b(?:yards?|targets?|carries|touchdowns?|passes?|completed|caught|ran|tackles?|solo|assists?|sacks?|TFL|QB hits?|interceptions?|receptions?)\b/i.test(sentence)||!/\b\d+(?:\.\d+)?\b/.test(sentence))continue;
+    const fact=canonicalStatFact(t,sentence),rows=statFacts.get(fact)||[];rows.push(sentence);statFacts.set(fact,rows);
+  }
+  const duplicateStats=[...statFacts.values()].filter(rows=>rows.length>1);
+  assert.deepEqual(duplicateStats,[],'A team article must not print the same player stat line twice after full-name/first-name normalization for '+t.team_name);
+}
+
 const repeatedLong=new Map();
 for(const t of d.teams||[]){
   const body=articleText(t);

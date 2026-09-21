@@ -200,6 +200,26 @@ for(const t of d.teams||[]){
   assert.deepEqual(duplicateStats,[],'A team article must not print the same player stat line twice after full-name/first-name normalization for '+t.team_name);
 }
 
+for(const t of d.teams||[]){
+  const players=[...(t.starter_details||[]),...(t.opponent_roster?.starters||t.opponent_roster?.players||[]),...(t.next_opponent_roster?.starters||t.next_opponent_roster?.players||[])].filter(p=>p?.name),
+    firstCounts=new Map();
+  for(const p of players){const first=String(p.name).trim().split(/\s+/)[0];if(first)firstCounts.set(first,(firstCounts.get(first)||0)+1)}
+  const seenPlayerStatSignatures=new Map();
+  for(const sentence of sentenceParts(articleText(t))){
+    if(!/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|solo|assists?|TFL|sacks?|QB hits?|pass breakups?|snaps?|interceptions?|receptions?)\b/i.test(sentence))continue;
+    const nums=sentence.match(/-?\b\d+(?:\.\d+)?\b/g)||[];if(nums.length<2)continue;
+    for(const p of players){
+      const full=String(p.name||'').trim(),first=full.split(/\s+/)[0],fullRe=new RegExp(escapeRe(full),'i'),firstRe=firstCounts.get(first)===1?new RegExp('\\b'+escapeRe(first)+'\\b','i'):null;
+      if(!fullRe.test(sentence)&&!(firstRe&&firstRe.test(sentence)))continue;
+      const statWords=(sentence.toLowerCase().match(/\b(?:target|targets|carries|passing|rushing|receiving|yard|yards|touchdown|touchdowns|tackle|tackles|solo|assist|assists|tfl|sack|sacks|qb hit|qb hits|pass breakup|pass breakups|snap|snaps|interception|interceptions|reception|receptions)\b/g)||[]).sort();
+      const sig=String(p.id||full)+'::'+nums.join(',')+'::'+[...new Set(statWords)].join(',');
+      const rows=seenPlayerStatSignatures.get(sig)||[];rows.push(sentence);seenPlayerStatSignatures.set(sig,rows);
+    }
+  }
+  const duplicatePlayerStats=[...seenPlayerStatSignatures.values()].filter(rows=>rows.length>1);
+  assert.deepEqual(duplicatePlayerStats,[],'A team article must not repeat the same player football-stat signature under different prose wrappers for '+t.team_name);
+}
+
 const repeatedLong=new Map();
 for(const t of d.teams||[]){
   const body=articleText(t);

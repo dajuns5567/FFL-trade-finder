@@ -123,7 +123,7 @@ function playerTrajectory(p){
     `${p.name} opened well below last year’s ${one(prior)}-point average across ${priorGames} games. Treat it as a Week 1 stumble, not proof of decline; the next useful signal is whether the role and opportunity rebound.`,
     `${p.name} started the year far under the ${one(prior)}-point average he carried across ${priorGames} games last season. One bad opener does not make a decline trend, but it does put the next workload under a brighter light.`,
     `The opener was a sharp drop from ${p.name}’s ${one(prior)}-point average across ${priorGames} games last year. That is enough to ask what happened to the role, nowhere near enough to call the player finished.`,
-    `${p.name} opened far below the ${one(prior)}-point average he established across ${priorGames} games last season. One ugly Sunday does not erase that floor; next week’s role will show whether this was merely a stumble or the first sign of something worth worrying about.`
+    `${p.name} opened far below the ${one(prior)}-point average he established across ${priorGames} games last season. One ugly ${p.name} Sunday does not erase that floor; next week’s role will show whether this was merely a stumble or the first sign of something worth worrying about.`
   ])};
   return null;
 }

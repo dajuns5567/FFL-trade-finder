@@ -80,7 +80,9 @@ function statSituation(p){
 }
 function scopedFootballRead(t,p,angle='matchup'){
   const raw=statSituation(p);if(!raw)return null;
-  return String(raw).trim();
+  const compact=String(raw).trim().replace(/\.\s+/g,'; ').replace(/\.$/,'');
+  const prefix=angle==='opponent'?`Against ${t.team_name}, `:angle==='next-opponent'?`Looking ahead to ${t.team_name}’s next matchup, `:angle==='supporting-cast'?`Behind the ${t.team_name} headline, `:`For ${t.team_name}, `;
+  return prefix+compact+'.';
 }
 
 function playerTrajectory(p){
@@ -531,15 +533,14 @@ function nextOpponentFootballStory(t,r){
 
 function managementNarrativeCoda(t,r){
   const tx=consolidateTransactions(t)||[];if(!tx.length)return null;
-  const count=tx.length,won=Number(t.points)>Number(t.opponent_points);
+  const count=tx.length,won=Number(t.points)>Number(t.opponent_points),team=t.team_name;
   return deskChoice(t,r,[
-    [`${t.manager_name} made ${count} notable roster move${count===1?'':'s'} around this matchup. ${won?'${t.team_name} won, so the changes get to settle in under a good result.':'The loss means those choices will be judged against a roster that already needed more help.'}`],
-    [`${count===1?'One roster change':'Those '+count+' roster changes'} gave ${t.manager_name} something new to live with. ${won?'A win is a pleasant place to let the experiment breathe.':'A loss tends to make every rearranged chair look more important.'}`],
-    [`${t.manager_name.toUpperCase()} MOVED THE ROSTER ${count===1?'ONCE':count+' TIMES'}. ${won?'${t.team_name} got the win, which is the nicest possible first headline.':'The result was a loss, so the new configuration does not get a quiet opening week.'}`],
-    [`${t.manager_name} changed the roster ${count===1?'once':count+' times'} around Week 1. ${won?'${t.team_name} won with the new arrangement in place.':'The loss puts a little more pressure on those changes to produce something useful quickly.'}`]
+    [`${t.manager_name} made ${count} notable roster move${count===1?'':'s'} around this matchup. ${won?team+' won, so those changes get to settle in under a good result.':team+' lost, which puts a little more pressure on those choices to help quickly.'}`],
+    [`${count===1?'One roster change':'Those '+count+' roster changes'} gave ${t.manager_name} something new to live with. ${won?team+' has a win to let the experiment breathe.':team+' has a loss making every rearranged chair look more important.'}`],
+    [`${t.manager_name.toUpperCase()} MOVED THE ROSTER ${count===1?'ONCE':count+' TIMES'}. ${won?team+' got the win, the nicest possible first headline.':team+' lost, so the new configuration does not get a quiet opening week.'}`],
+    [`${t.manager_name} changed the roster ${count===1?'once':count+' times'} around Week 1. ${won?team+' won with the new arrangement in place.':team+' lost, and those changes now have to earn their keep faster.'}`]
   ]);
 }
-
 function managementImpactStory(t,r){
   const facts=t.transaction_player_facts||{},clean={...t,transactions:consolidateTransactions(t)},moves=selectImportantMoves(clean,facts);if(!moves.length)return null;
   const m=moves[0],incoming=(m.add||[]).filter(p=>valid(p.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],outgoing=(m.drop||[]).filter(p=>valid(p.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],
@@ -623,6 +624,24 @@ function specificityPass(t,kind,value){
     ['After that, every expensive accessory has to reveal whether it can actually play.','After kickoff, every expensive '+team+' accessory has to reveal whether it can actually play.'],
     ['A losing lineup cannot pretend it did not matter.','A losing '+team+' lineup cannot pretend it did not matter.'],
     ['A few clean wins would make the paperwork friendlier.','A few clean '+team+' wins would make the paperwork friendlier.'],
+    ['The record is young, but the next Sunday already carries a little more weight.',team+' has a young record, but its next Sunday already carries a little more weight.'],
+    ['Much too early for a coronation; exactly early enough for consequence.',team+' is much too early for a coronation and exactly early enough for consequence.'],
+    ['Keep that job description for another Sunday and the old baseline starts looking stale.',team+' gets a much different expectation if that job description survives another Sunday.'],
+    ['The loss means those choices will be judged against a roster that already needed more help.',team+' lost, so those choices now sit beside a roster that already needed more help.'],
+    ['The loss makes the quiet afternoon harder to shrug off.',team+' lost, making that quiet afternoon harder to shrug off.'],
+    ['An inelegant little reminder that exits can still send postcards.',team+' just received an inelegant reminder that exits can still send postcards.'],
+    ['A loss tends to make every rearranged chair look more important.',team+' has a loss making every rearranged chair look more important.'],
+    ['That shortfall belongs in the explanation for the loss.',team+' has to include that shortfall in any explanation for the loss.'],
+    ['In a loss, that kind of miss becomes part of the story.',team+' lost, so that kind of miss becomes part of the story.'],
+    ['That is an opening-week snapshot of the trade, not a lifetime verdict, but it already gave both managers something concrete to argue about.',team+' got an opening-week snapshot of the trade, not a lifetime verdict, and both managers already have something concrete to argue about.'],
+    ['Close wins leave nicer questions than close losses.',team+' gets to live with the nicer questions that follow a close win.'],
+    ['That is how a new arrival earns another week in large type.',team+' just got the kind of new-arrival performance that earns another week in large type.'],
+    ['The cleanest part of the argument is the scoreboard: 1-0.',team+' has the cleanest argument available: a 1-0 scoreboard.'],
+    ['The win covered it; the same miss in a close loss would feel much louder.',team+' had a win to cover that miss; a close loss would make it much louder.'],
+    ['The exchange already has a little drama, which is terribly considerate of them.',team+' already has a little drama in the exchange, which is terribly considerate of everyone involved.'],
+    ['A win is a pleasant place to let the experiment breathe.',team+' has a win, a pleasant place to let the experiment breathe.'],
+    ['The result was a loss, so the new configuration does not get a quiet opening week.',team+' lost, so the new configuration does not get a quiet opening week.'],
+    ['The loss puts a little more pressure on those changes to produce something useful quickly.',team+' lost, putting a little more pressure on those changes to produce something useful quickly.'],
     ['A civilized manager calls that something to remember, not something to confess.',team+' can call that something to remember rather than something to confess.'],
     ['An inconvenient guest list, but at least the danger is not hiding.',team+' gets an inconvenient guest list, but at least the danger is not hiding.'],
     ['That is enough form to make next week interesting before the forecast enters the room.',team+' gets enough recent form on the other side to make next week interesting before the forecast enters the room.'],

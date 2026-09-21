@@ -218,7 +218,7 @@ function management(t,facts,reporter){
       [`${addStar.name} answered immediately with ${one(addStar.points)} points, useful first-week evidence for the move.`,`${one(addStar.points)} points from ${addStar.name} gave the transaction an immediate football reason to matter.`],
       [`${addStar.name} introduced himself with ${one(addStar.points)} points. A tasteful first return.`,`${one(addStar.points)} points from ${addStar.name} is the sort of debut that makes a transaction look well dressed.`],
       [`${addStar.name} PAID OUT IMMEDIATELY: ${one(addStar.points)} points.`,`${one(addStar.points)} points from ${addStar.name} gave management exactly the kind of instant headline it wanted.`],
-      [`${addStar.name} produced ${one(addStar.points)} points immediately after the move. Management got the first useful return it could have asked for.`,`The initial return is ${one(addStar.points)} points from ${addStar.name}, a useful first Sunday for the move.`]
+      [`${addStar.name} produced ${one(addStar.points)} points immediately after the move. ${t.manager_name} got the first useful return the move could have offered.`,`The initial return is ${one(addStar.points)} points from ${addStar.name}, a useful first Sunday for the move.`]
     ]));
     else if(dropStar&&Number(dropStar.points)>=10)bits.push(deskChoice(moveTeam,reporter,[
       [`${dropStar.name} answered the cut with ${one(dropStar.points)} points, enough to keep the decision in next week’s notebook.`,`${one(dropStar.points)} points from departed ${dropStar.name} ensures this cut gets a follow-up.`],
@@ -537,7 +537,7 @@ function managementNarrativeCoda(t,r){
   return deskChoice(t,r,[
     [won?`${team} won with the roster changes already in the lineup, which gives management a better place to evaluate what comes next.`:`${team} lost, so the recent roster changes have less room to hide behind patience.`],
     [won?`${team} gets to let the new arrangement breathe under a win. A civilized opening, if nothing else.`:`${team} has a loss making every recent rearrangement look a little more important.`],
-    [won?`${team.toUpperCase()} WON WITH THE NEW LOOK. That buys the front office a quieter Tuesday.`:`${team.toUpperCase()} LOST WITH THE NEW LOOK. That makes every recent move louder before next Sunday.`],
+    [won?`${team.toUpperCase()} WON WITH THE NEW LOOK. ${team} buys its front office a quieter Tuesday.`:`${team.toUpperCase()} LOST WITH THE NEW LOOK. ${team} makes every recent move louder before next Sunday.`],
     [won?`${team} won with the recent changes in place. The result gives management some room before the next decision arrives.`:`${team} lost with the recent changes in place, which puts more pressure on the roster to show why those moves mattered.`]
   ]);
 }

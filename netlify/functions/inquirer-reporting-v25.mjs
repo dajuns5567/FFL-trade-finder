@@ -2116,16 +2116,30 @@ function scheduleSignificanceV29(t,r,f=articleFrameV29(t,r)){
   return parts;
 }
 
+function divisionRoundupV29(t,r,f=articleFrameV29(t,r)){
+  const rivals=(t.division_results||[]).filter(x=>x?.team_name);if(!rivals.length)return null;
+  const outcomes=rivals.map(x=>{
+    const result=Number(x.points)>Number(x.opponent_points)?'won':Number(x.points)<Number(x.opponent_points)?'lost':'tied';
+    return `${x.team_name} ${result}`;
+  }),winners=rivals.filter(x=>Number(x.points)>Number(x.opponent_points)).map(x=>x.team_name),losers=rivals.filter(x=>Number(x.points)<Number(x.opponent_points)).map(x=>x.team_name),
+    team=teamIdentityV28(t).mascot,division=t.division_name||'the division',summary=naturalJoin(outcomes);
+  if(voice(r)===0)return `Elsewhere in ${division}, ${summary}. ${f.won?(losers.length?`${team} gained at least a little room on ${naturalJoin(losers)} while still having to keep pace with ${naturalJoin(winners)}.`:`${team} won but received no free separation from the rest of the division.`):(winners.length?`The ${team} loss cost extra ground because ${naturalJoin(winners)} also won${losers.length?`, although ${naturalJoin(losers)} kept the damage from becoming universal`:''}.`:`${naturalJoin(losers)} lost too, limiting the damage without improving the ${team} result.`)}`;
+  if(voice(r)===1)return `The divisional table was not idle: ${summary}. ${f.won?(losers.length?`${team} may enjoy gaining ground on ${naturalJoin(losers)}, though ${winners.length?naturalJoin(winners)+' declined to provide any additional courtesy':'the rest of the room offered unusual cooperation'}.`:`The ${team} win kept pace without receiving much decorative assistance.`):(winners.length?`${naturalJoin(winners)} made the ${team} defeat more expensive; ${losers.length?naturalJoin(losers)+' at least had the manners to lose too.':'nobody else volunteered relief.'}`:`${naturalJoin(losers)} supplied some relief, which is kinder than the ${team} performance deserved.`)}`;
+  if(voice(r)===2)return `DIVISION SCOREBOARD: ${summary.toUpperCase()}. ${f.won?(losers.length?`${team.toUpperCase()} GAINED GROUND ON ${naturalJoin(losers).toUpperCase()}${winners.length?`, WHILE ${naturalJoin(winners).toUpperCase()} KEPT WINNING TOO`:''}.`:`THE ${team.toUpperCase()} WIN KEPT THE RACE MOVING WITHOUT ANY FREE GIFTS.`):(winners.length?`${naturalJoin(winners).toUpperCase()} MADE THE ${team.toUpperCase()} LOSS HURT MORE${losers.length?`; ${naturalJoin(losers).toUpperCase()} AT LEAST LOST TOO`:''}.`:`${naturalJoin(losers).toUpperCase()} LOST TOO. THANK THEM FOR THE SMALL FAVOR AND FIX THE ${team.toUpperCase()} PROBLEM.`)}`;
+  return `Division evidence: ${summary}. ${f.won?(losers.length?`The favorable ${team} result gained ground on ${naturalJoin(losers)}${winners.length?`, while ${naturalJoin(winners)} preserved pressure at the top`:''}.`:`The ${team} win preserved position without creating meaningful separation.`):(winners.length?`The adverse ${team} result became more costly when ${naturalJoin(winners)} also won${losers.length?`; losses by ${naturalJoin(losers)} partially limited the damage`:''}.`:`Losses by ${naturalJoin(losers)} limited the divisional damage but do not alter the ${team} finding.`)}`;
+}
+
 function outlookStoryV29(t,r,f=articleFrameV29(t,r)){
   const team=teamIdentityV28(t).mascot,next=t.next_opponent_name||'the next opponent',schedule=scheduleSignificanceV29(t,r,f),broader=outlookStakesV28(t,r),
-    thread=articleThreadV30(t,r,f,'outlook');
+    thread=articleThreadV30(t,r,f,'outlook'),division=divisionRoundupV29(t,r,f);
   const bridge=[
     f.won?`${team} approaches ${next} from the useful side of the standings; the next result decides whether Week 1 becomes cushion or merely a pleasant opening note.`:`${team} arrives at ${next} needing a response. Another ${team} loss would not resemble the first one; the schedule has already started moving.`,
     f.won?`A winning week gives ${team} leverage entering ${next}. The follow-up matters because good teams convert favorable weeks into margin for error.`:`The loss makes ${next} more consequential for ${team}; a contender is allowed an ugly Sunday, not an endless collection of them.`,
     f.won?`A WIN FOLLOWS ${team.toUpperCase()} INTO ${String(next).toUpperCase()}. NOW MAKE THE CUSHION USEFUL.`:`${team.toUpperCase()} NEEDS AN ANSWER AGAINST ${String(next).toUpperCase()}. THE FIRST LOSS ALREADY USED THE EASY EXCUSE.`,
     f.won?`The next exhibit is ${next}. One favorable ${team} result is already in hand; the follow-up determines whether the first week deserves more weight.`:`The next exhibit is ${next}. One adverse ${team} result is manageable; a second begins changing the pattern in the file.`
   ][voice(r)];
-  return [nextOpponentLeadV29(t,r,f),thread||bridge,...(schedule.length?schedule:[broader])].filter(Boolean).slice(0,4);
+  const context=[thread||bridge,division].filter(Boolean).join(' ');
+  return [nextOpponentLeadV29(t,r,f),context,...(schedule.length?schedule:[broader])].filter(Boolean).slice(0,4);
 }
 
 function dedupeArticleSectionsV29(sections,t){

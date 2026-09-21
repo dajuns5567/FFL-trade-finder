@@ -2284,6 +2284,31 @@ function restoreSectionFullNamesV30(t,paragraphs){
   });
 }
 
+function repairPlayerNameCollisionsV31(t,value){
+  let text=String(value??'');
+  const canonical=[...articlePlayers(t),...(t.trade_acquisitions||[]).flatMap(a=>[
+    a?.player_name?{name:a.player_name}:null,
+    ...(a?.outgoing_player_names||[]).map(name=>({name}))
+  ])].filter(p=>p?.name);
+  const unique=[...new Set(canonical.map(p=>String(p.name).trim()).filter(Boolean))];
+  const groups=new Map();
+  for(const full of unique){
+    const bits=full.split(/\s+/),first=bits[0],last=bits.at(-1);if(!first||!last||bits.length<2)continue;
+    const a=groups.get(last)||[];a.push({full,first,last});groups.set(last,a);
+  }
+  for(const entries of groups.values()){
+    if(entries.length<2)continue;
+    for(const intended of entries){
+      for(const other of entries){
+        if(intended.full===other.full)continue;
+        const re=new RegExp('\\b'+escapeRe(intended.first)+'\\s+'+escapeRe(other.full)+'\\b','g');
+        text=text.replace(re,intended.full);
+      }
+    }
+  }
+  return text;
+}
+
 export function humanSectionsV25(args){
   const {team:t,facts={}}=args,creative=humanSectionsV21(args),factual=humanSectionsV23(args),
     factualByKind=new Map((factual||[]).map(s=>[s.kind,s])),frame=articleFrameV29(t,args.reporter),fw=fourthWallV28(t,args.reporter,frame.angle);
@@ -2300,7 +2325,7 @@ export function humanSectionsV25(args){
     else paragraphs=['n/a'];
     paragraphs=(paragraphs||[]).map(p=>contextualizeParagraphV28(t,naturalizePlayerReferences(t,specificityPass(t,c.kind,p))))
       .map(p=>String(p).replace(/Fix the production and the back page will happily find a new target\./gi,'Fix the production and the angry headline can move to somebody else.'));
-    paragraphs=restoreSectionFullNamesV30(t,paragraphs);
+    paragraphs=restoreSectionFullNamesV30(t,paragraphs).map(p=>repairPlayerNameCollisionsV31(t,p));
     return {...f,...c,heading:headingV28(t,args.reporter,c.kind,c.heading,frame.angle),paragraphs:paragraphs.length?paragraphs:['n/a']};
   });
   const state={count:0},aliased=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>teamAliasPassV28(t,p,state))}));

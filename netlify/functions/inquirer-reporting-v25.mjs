@@ -713,10 +713,10 @@ function managementNarrativeCoda(t,r){
   const tx=consolidateTransactions(t)||[];if(!tx.length)return null;
   const won=Number(t.points)>Number(t.opponent_points),team=t.team_name;
   return deskChoice(t,r,[
-    [won?`${team} won with the roster changes already in place. Management gets a quiet Tuesday instead of an interrogation.`:`${team} lost with the recent changes in place. Every one of those moves gets a little louder after a loss.`],
+    [won?`${team} won with the roster changes already in place. ${team} management gets a quiet Tuesday instead of an interrogation.`:`${team} lost with the recent changes in place. Every recent ${team} move gets a little louder after a loss.`],
     [won?`${team} gets to let the new arrangement breathe under a win. A civilized opening, if nothing else.`:`${team} has a loss making every recent rearrangement look a little more important.`],
-    [won?`${team.toUpperCase()} WON WITH THE NEW LOOK. The front office can enjoy one quiet Tuesday.`:`${team.toUpperCase()} LOST WITH THE NEW LOOK. Every recent move just became easier to criticize.`],
-    [won?`${team} won with the recent changes in place. Nobody needs a transaction autopsy this week.`:`${team} lost with the recent changes in place. The new configuration now owes the roster a better Sunday.`]
+    [won?`${team.toUpperCase()} WON WITH THE NEW LOOK. ${team}’s front office can enjoy one quiet Tuesday.`:`${team.toUpperCase()} LOST WITH THE NEW LOOK. Every recent ${team} move just became easier to criticize.`],
+    [won?`${team} won with the recent changes in place. Nobody needs a transaction autopsy this week.`:`${team} lost with the recent changes in place. ${team}’s new configuration now owes the roster a better Sunday.`]
   ]);
 }
 
@@ -744,18 +744,18 @@ function managementImpactStory(t,r){
       [`OF COURSE ${outgoing.name} HAD A STRONG WEEK${transactionDestination(t,outgoing).toUpperCase()}. ${t.team_name} now needs the incoming side to answer.`],
       [`${outgoing.name} produced strongly${transactionDestination(t,outgoing)} after the trade. ${t.team_name} will hear about that one if the replacement stays quiet.`]
     ]);
-    return `${t.team_name} made a real trade, and Week 1 was mostly a shrug from both sides. Nobody produced enough to turn the deal into a fresh argument yet.`;
+    return `${t.team_name} made a real trade, and Week 1 was mostly a shrug from both sides. Neither side gave ${t.team_name} enough on Sunday to turn the deal into a fresh argument yet.`;
   }
   if(incoming)return inStrong?deskChoice(t,r,[
     [`${incoming.name} was excellent in his first Sunday after the move. ${t.manager_name} got exactly the kind of debut that makes a recent transaction look smart.`],
     [`${incoming.name} arrived dressed for the occasion and immediately justified another week of attention.`],
-    [`${incoming.name} HIT IMMEDIATELY. Management gets to enjoy that one without a footnote.`],
+    [`${incoming.name} HIT IMMEDIATELY. ${t.team_name} management gets to enjoy that one without a footnote.`],
     [`${incoming.name} delivered a strong first Sunday after arriving. ${t.team_name} will happily take another one.`]
   ]):deskChoice(t,r,[
     [`${incoming.name} was quiet in his first week with ${t.team_name}. ${t.manager_name} will want more before the move earns any celebration.`],
     [`${incoming.name} gave the move no reason for a victory lap yet. Perfectly civilized; not every transaction requires fireworks.`],
     [`${incoming.name} did not light up the scoreboard. Fine. ${t.team_name} can give the move another Sunday before anybody writes a victory speech or an obituary.`],
-    [`${incoming.name} had a quiet first Sunday with ${t.team_name}. No parade, no panic — just another week to show more.`]
+    [`${incoming.name} had a quiet first Sunday with ${t.team_name}. ${t.team_name} gets no parade and no panic — just another week for ${incoming.name} to show more.`]
   ]);
   if(outgoing)return outStrong?deskChoice(t,r,[
     [`${outgoing.name} had a strong week${transactionDestination(t,outgoing)}. If ${t.team_name}’s replacement stays quiet, that exit is going to get uncomfortable fast.`],

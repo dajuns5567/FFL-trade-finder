@@ -1878,8 +1878,8 @@ function nextOpponentLeadV29(t,r,f=articleFrameV29(t,r)){
     star=rows[0],clause=star?statClause(star):null,rec=t.next_opponent_context?.record,gap=valid(t.next_projected)&&valid(t.next_opponent_projected)?Number(t.next_projected)-Number(t.next_opponent_projected):null,
     recText=rec?`${Number(rec.wins)||0}-${Number(rec.losses)||0}`:null,starText=star?`${star.name} just produced ${one(star.points)} fantasy points${clause?`; ${star.name} ${clause}`:''}.`:'';
   if(voice(r)===0){
-    const forecast=gap==null?'The projection is incomplete.':Math.abs(gap)<6?`Only ${one(Math.abs(gap))} projected points separate the teams.`:gap>0?`${t.team_name} holds the projected edge.`:`The projected edge belongs to ${opp}.`;
-    return `Next comes ${opp}${recText?` at ${recText}`:''}. ${starText} ${forecast} ${f.won?'Nick will be watching whether ${t.team_name}’s winning shape travels.':gap>0?'After a loss, being favored turns this into a game '+t.team_name+' cannot afford to donate.':'After a loss, the assignment is to produce a response without asking the schedule for mercy.'}`.trim();
+    const forecast=gap==null?'The projection is incomplete.':Math.abs(gap)<6?`Only ${one(Math.abs(gap))} projected points separate the teams.`:gap>0?`The projected edge belongs to ${t.team_name}.`:`The projected edge belongs to ${opp}.`;
+    return `Next comes ${opp}${recText?` at ${recText}`:''}. ${starText} ${forecast} ${f.won?`Nick will be watching whether ${t.team_name}’s winning shape travels.`:gap>0?'After a loss, being favored turns this into a game '+t.team_name+' cannot afford to donate.':'After a loss, the assignment is to produce a response without asking the schedule for mercy.'}`.trim();
   }
   if(voice(r)===1){
     const forecast=gap==null?'The forecast has declined to offer a clean spread.':Math.abs(gap)<6?`The projection is nearly even, which is terribly rude to anyone hoping for a quiet afternoon.`:gap>0?`The prettier side of the forecast belongs to ${t.team_name}.`:`The forecast prefers ${opp}.`;

@@ -25,9 +25,9 @@ for(const s of sections){const copy=(s.paragraphs||[]).join(' ');if(copy.trim()=
 const bartholomew=sections.find(s=>String(s?.reporter?.id||'')==='tess-delaney'||/Bartholomew Roycington III/i.test(String(s?.reporter?.name||'')));
 if(!bartholomew)fail('Weekly Recap must preserve Bartholomew Roycington III’s section');
 const bartholomewCopy=(bartholomew.paragraphs||[]).join(' ');
-if(!/offensive breakout watch admits\s+.+?\s+and\s+.+?\s+past the velvet rope/i.test(bartholomewCopy))fail('Bartholomew must name two offensive breakout players to watch');
-if(!/On defense,\s+.+?\s+gets the third seat/i.test(bartholomewCopy))fail('Bartholomew must name one defensive breakout player to watch');
-if(!/are the two offensive names Bartholomew trusts/i.test(bartholomewCopy))fail('Bartholomew must name two offensive reliable players');
+if(!/On offense,\s+[^.]+?\s+and\s+[^.]+?\s+get the breakout-watch invitations/i.test(bartholomewCopy))fail('Bartholomew must name two legitimate offensive breakout players to watch');
+if(!/On defense,\s+[^.]+?\s+gets the watch list/i.test(bartholomewCopy))fail('Bartholomew must name one legitimate defensive breakout player to watch');
+if(!/are the two offensive reliability names Bartholomew trusts/i.test(bartholomewCopy))fail('Bartholomew must name two offensive reliable players');
 if(!/On defense,\s+.+?\s+gets the same designation/i.test(bartholomewCopy))fail('Bartholomew must name one defensive reliable player');
 
 const body=sections.flatMap(s=>s.paragraphs||[]).join(' ');

@@ -428,6 +428,11 @@ assert(backend.includes("league?.scoring_settings"),'league scoring settings are
 assert(backend.includes("V346_KTC_CUTOFF_MS=Date.parse('2026-09-08T05:23:00.000Z')"),'V346 KTC cutoff missing');
 assert(backend.includes('scrubV346KtcContamination(s)'),'V346 history scrub missing');
 assert(backend.includes('writeFilteredIndexes(s,keep)'),'V346 history reindex missing');
+assert(backend.includes("V499_BAD_TIMES=new Set(['2026-09-19T23:38:30.077Z','2026-09-20T06:20:50.829Z','2026-09-20T06:23:39.657Z','2026-09-20T12:25:37.233Z','2026-09-20T16:31:11.607Z','2026-09-20T19:29:04.241Z','2026-09-20T22:29:01.016Z'])"),'V499 requested Value History timestamps missing');
+assert(backend.includes('scrubV499UserRequestedSnapshots(s)'),'V499 Netlify live-buffer cleanup missing');
+assert(backend.includes('!isKnownBadHistoryTime(snap.t)'),'known-bad timestamps must be filtered defensively from Netlify live reads');
+const archiveValueHistorySource=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
+assert(archiveValueHistorySource.includes('V499_BAD_TIMES.has(t)'),'durable archive must refuse re-archiving V499-deleted timestamps');
 
 assert(ui.includes('scheduleSnapshot(0,snapshotSourceFromUrl())'),'first snapshot is not attempted immediately on site load with source tagging');
 assert(ui.includes('function snapshotPreconditions()')&&ui.includes('Object.keys(state.players).length<100'),'Value History capture must wait for usable site player state without depending on a specific ranking source');

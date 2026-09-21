@@ -1832,14 +1832,38 @@ function gameShapeV29(t,r,f=articleFrameV29(t,r)){
 
 function playerStoryV29(t,r,f=articleFrameV29(t,r)){
   const {top,supports,concerns,won}=f;if(!top)return ['n/a'];
-  const topStatus=f.trajectories.find(x=>String(x.p.id)===String(top.id))?.tr||null,topClause=statClause(top),team=teamIdentityV28(t).mascot,ps=[],
+  const topStatus=f.trajectories.find(x=>String(x.p.id)===String(top.id))?.tr||null,topClause=statClause(top),team=teamIdentityV28(t).mascot,ps=[],v=voice(r),
     topFootball=topClause?`${top.name} ${topClause}.`:'';
-  ps.push([
-    `${top.name} gets the lead player note after ${one(top.points)} fantasy points. ${topFootball} ${classificationSentenceV29(top,topStatus,r)||`${top.name}’s workload gives the performance enough substance to carry into next week.`}`.trim(),
-    `${top.name} was the player most worth keeping after deadline: ${one(top.points)} fantasy points. ${topFootball} ${classificationSentenceV29(top,topStatus,r)||'The real football was every bit as useful as the fantasy total.'}`.trim(),
-    `PUT ${top.name} IN BIG TYPE: ${one(top.points)} FANTASY POINTS. ${topFootball} ${classificationSentenceV29(top,topStatus,r)||'The workload earned the headline.'}`.trim(),
-    `${top.name} is the first cooperative witness: ${one(top.points)} fantasy points. ${topFootball} ${classificationSentenceV29(top,topStatus,r)||`${top.name}’s role keeps the performance relevant after the fantasy total is filed away.`}`.trim()
-  ][voice(r)]);
+  const openerBanks=[
+    [
+      `${top.name} gets the lead player note after ${one(top.points)} fantasy points. ${topFootball}`,
+      `${top.name} was the first ${team} name worth circling after ${one(top.points)} fantasy points. ${topFootball}`,
+      `${top.name} supplied the strongest individual ${team} performance at ${one(top.points)} fantasy points. ${topFootball}`
+    ],
+    [
+      `${top.name} owned the best individual ${team} performance at ${one(top.points)} fantasy points. ${topFootball}`,
+      `${top.name} gave Bartholomew the easiest name to praise after ${one(top.points)} fantasy points. ${topFootball}`,
+      `${top.name} was the clearest successful piece of the ${team} week, worth ${one(top.points)} fantasy points. ${topFootball}`
+    ],
+    [
+      `PUT ${top.name.toUpperCase()} IN BIG TYPE: ${one(top.points)} FANTASY POINTS. ${topFootball}`,
+      `${top.name.toUpperCase()} GETS THE PHOTO: ${one(top.points)} FANTASY POINTS. ${topFootball}`,
+      `THE ${team.toUpperCase()} HEADLINER IS ${top.name.toUpperCase()}: ${one(top.points)} FANTASY POINTS. ${topFootball}`
+    ],
+    [
+      `${top.name} is the primary affirmative player finding after ${one(top.points)} fantasy points. ${topFootball}`,
+      `${top.name} left the cleanest individual evidence in the ${team} article, producing ${one(top.points)} fantasy points. ${topFootball}`,
+      `${top.name} is the first player Filch would keep in the weekly file: ${one(top.points)} fantasy points. ${topFootball}`
+    ]
+  ][v];
+  const topStatusText=classificationSentenceV29(top,topStatus,r)||[
+    `${top.name}’s workload gives the performance enough substance to carry into next week.`,
+    `The football under ${top.name}’s fantasy total is the part worth keeping.`,
+    `${top.name.toUpperCase()} EARNED THE HEADLINE WITH THE ROLE, NOT JUST THE NUMBER.`,
+    `${top.name}’s role keeps the performance relevant after the fantasy total is filed away.`
+  ][v];
+  ps.push(`${keyedChoice(`${t.roster_id}:top:${r?.id}`,openerBanks)} ${topStatusText}`.replace(/\s+/g,' ').trim());
+
   const other=supports.filter(p=>String(p.id)!==String(top.id)).slice(0,2);
   if(other.length){
     const notes=other.map(p=>{
@@ -1847,31 +1871,48 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       return `${p.name}${c?` ${c}`:` contributed ${one(p.points)} fantasy points`}.${status?` ${status}`:''}`;
     });
     const close=[
-      won?`${team} had real secondary production, which is how a good individual week became a team win.`:`Those performances make the loss more specific: the useful work existed, but too many other lineup spots failed to match it.`,
-      won?`${team} had proper company for its headliner; the win did not require one star to drag an empty cast behind him.`:`Good supporting work survived inside the loss. That makes the quiet parts of ${team} harder, not easier, to excuse.`,
-      won?`THE ${team.toUpperCase()} SUPPORTING CAST EARNED INK TOO. THAT IS HOW A STAR PERFORMANCE BECOMES A ${team.toUpperCase()} WIN.`:`GOOD PERFORMANCES DO NOT ACQUIT THE ${team.toUpperCase()} LINEUP; THEY MAKE THE MISSING PRODUCTION EASIER TO FIND.`,
-      won?`The ${team} file contains multiple affirmative performances, enough to support the favorable result.`:`The ${team} loss cannot be assigned equally across the roster; these players did enough to narrow the adverse finding.`
-    ][voice(r)];
+      won?`${team} had real secondary production, enough to keep ${top.name} from becoming the entire explanation of the win.`:`Those performances make the ${team} loss more specific: useful work existed, so the quiet lineup spots deserve more of the blame.`,
+      won?`${top.name} had proper company. Bartholomew can praise the star without pretending the rest of ${team} vanished.`:`Good supporting work survived inside the ${team} loss, which makes the empty spots more difficult to excuse.`,
+      won?`THE ${team.toUpperCase()} SUPPORTING CAST EARNED INK TOO. ${top.name.toUpperCase()} DID NOT HAVE TO DO ALL THE YELLING.`:`GOOD ${team.toUpperCase()} PERFORMANCES DO NOT ACQUIT THE LINEUP; THEY MAKE THE MISSING PRODUCTION EASIER TO FIND.`,
+      won?`The ${team} file contains multiple affirmative performances, enough to support the favorable result.`:`The ${team} loss cannot be assigned equally across the roster; these performances narrow the adverse finding.`
+    ][v];
     ps.push(`${notes.join(' ')} ${close}`);
   }
+
   const bad=concerns[0];
   if(bad&&String(bad.id)!==String(top.id)){
     const c=statClause(bad),d=Math.abs(Number(delta(bad))),tr=f.trajectories.find(x=>String(x.p.id)===String(bad.id))?.tr,status=classificationSentenceV29(bad,tr,r);
     ps.push([
-      `${bad.name} is the player Nick circles in the margin after finishing ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`The ${team} win buys ${bad.name} one week of patience; another miss becomes harder to dismiss.`:`${bad.name} stays in the main ${team} story because the team lost.`}${status?` ${status}`:''}`,
-      `${bad.name} supplied the least flattering line of the main cast, landing ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?`The ${team} win keeps the criticism around ${bad.name} civilized for a week.`:`The ${team} loss makes ${bad.name}’s poor week impossible to dress up.`}${status?` ${status}`:''}`,
+      `${bad.name} is the player Nick circles in the margin after finishing ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`The ${team} win buys one week of patience; another ${bad.name} miss becomes harder to dismiss.`:`${bad.name} stays in the main ${team} story because the team lost.`}${status?` ${status}`:''}`,
+      `${bad.name} supplied the least convincing line of the main ${team} cast, landing ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?`Winning keeps the criticism measured for a week.`:`The loss makes ${bad.name}’s poor Sunday impossible to hide behind better performances.`}${status?` ${status}`:''}`,
       `THE NAME IN RED IS ${bad.name}: ${one(d)} BELOW PROJECTION${c?`; ${bad.name} ${c}`:''}. ${won?'THE SCOREBOARD HID THE DAMAGE THIS TIME.':'THE SCOREBOARD PUT A SPOTLIGHT ON IT.'}${status?` ${status}`:''}`,
-      `${bad.name} is the adverse player finding, ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`${team} won despite ${bad.name}’s shortfall; that is mitigation rather than exoneration.`:`${team} lost, so ${bad.name}’s shortfall belongs in the causal record.`}${status?` ${status}`:''}`
-    ][voice(r)]);
+      `${bad.name} is the adverse player finding, ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`${team} won despite the shortfall; that is mitigation rather than exoneration.`:`The ${team} loss gives ${bad.name}’s shortfall direct consequence.`}${status?` ${status}`:''}`
+    ][v]);
   }
-  while(ps.length<3){
-    ps.push([
-      `${top.name} is the clear ${team} headliner; the next useful development is a second or third player making the same kind of weekly claim on the offense or defense.`,
-      `${top.name} owns the ${team} star turn. Bartholomew would prefer a fuller cast next week rather than another evening spent asking one performance to carry the review.`,
-      `${top.name.toUpperCase()} IS THE ${team.toUpperCase()} HEADLINER. SOMEBODY ELSE NOW NEEDS TO MAKE THE BACK PAGE FIGHT FOR SPACE.`,
-      `${top.name} is established as the primary affirmative finding for ${team}. The remaining roster question is which secondary role becomes dependable enough to matter without prompting an investigation.`
-    ][voice(r)]);
-  }
+
+  const fillerBanks=[
+    [
+      `${top.name} is the clear ${team} headliner; the next useful development is another player making a similarly durable weekly claim.`,
+      `${team} has its top performer in ${top.name}. The next question is which supporting role becomes dependable enough to stop being a weekly footnote.`,
+      `${top.name} owns the strongest ${team} line. A deeper list of serious contributors next week would be a healthy sign.`
+    ],
+    [
+      `${top.name} owns the strongest ${team} paragraph. Bartholomew would prefer a fuller cast next week rather than another review built around one name.`,
+      `${team} gave ${top.name} the leading role; the more interesting future version of this roster gives the columnist a harder choice.`,
+      `${top.name} carried the strongest paragraph. Bartholomew would happily be inconvenienced by two or three equally persuasive performances next week.`
+    ],
+    [
+      `${top.name.toUpperCase()} IS THE ${team.toUpperCase()} HEADLINER. SOMEBODY ELSE NEEDS TO MAKE NEXT WEEK’S PAGE CROWDED.`,
+      `THE BIG TYPE BELONGS TO ${top.name.toUpperCase()}. ${team.toUpperCase()} NEEDS ANOTHER NAME FIGHTING FOR IT NEXT WEEK.`,
+      `${top.name.toUpperCase()} WON THE PHOTO. THE REST OF ${team.toUpperCase()} SHOULD MAKE THE COPY DESK ARGUE NEXT TIME.`
+    ],
+    [
+      `${top.name} remains the primary affirmative finding for ${team}; another corroborating performance would make the roster case stronger.`,
+      `${top.name} is the cleanest ${team} evidence. The next useful development is a second player forcing equal attention.`,
+      `${top.name} carries the strongest player finding. Filch would prefer the next file to contain more than one obvious affirmative exhibit.`
+    ]
+  ][v];
+  while(ps.length<3)ps.push(keyedChoice(`${t.roster_id}:filler:${ps.length}:${r?.id}`,fillerBanks));
   return ps.slice(0,3);
 }
 
@@ -2052,14 +2093,15 @@ function scheduleSignificanceV29(t,r,f=articleFrameV29(t,r)){
 }
 
 function outlookStoryV29(t,r,f=articleFrameV29(t,r)){
-  const team=teamIdentityV28(t).mascot,next=t.next_opponent_name||'the next opponent',schedule=scheduleSignificanceV29(t,r,f),broader=outlookStakesV28(t,r);
+  const team=teamIdentityV28(t).mascot,next=t.next_opponent_name||'the next opponent',schedule=scheduleSignificanceV29(t,r,f),broader=outlookStakesV28(t,r),
+    thread=articleThreadV30(t,r,f,'outlook');
   const bridge=[
     f.won?`${team} approaches ${next} from the useful side of the standings; the next result decides whether Week 1 becomes cushion or merely a pleasant opening note.`:`${team} arrives at ${next} needing a response. Another ${team} loss would not resemble the first one; the schedule has already started moving.`,
-    f.won?`A winning week gives ${team} a little leverage entering ${next}. The elegant ${team} move is to use that leverage before the schedule changes the dress code.`:`The loss makes ${next} more consequential for ${team}; a contender is allowed an ugly Sunday, not an endless collection of them.`,
-    f.won?`A WIN FOLLOWS ${team.toUpperCase()} INTO ${String(next).toUpperCase()}. NOW MAKE THE CUSHION USEFUL.`:`${team.toUpperCase()} NEEDS AN ANSWER AGAINST ${String(next).toUpperCase()}. THE FIRST ${team.toUpperCase()} LOSS ALREADY USED THE EASY EXCUSE.`,
+    f.won?`A winning week gives ${team} leverage entering ${next}. The follow-up matters because good teams convert favorable weeks into margin for error.`:`The loss makes ${next} more consequential for ${team}; a contender is allowed an ugly Sunday, not an endless collection of them.`,
+    f.won?`A WIN FOLLOWS ${team.toUpperCase()} INTO ${String(next).toUpperCase()}. NOW MAKE THE CUSHION USEFUL.`:`${team.toUpperCase()} NEEDS AN ANSWER AGAINST ${String(next).toUpperCase()}. THE FIRST LOSS ALREADY USED THE EASY EXCUSE.`,
     f.won?`The next exhibit is ${next}. One favorable ${team} result is already in hand; the follow-up determines whether the first week deserves more weight.`:`The next exhibit is ${next}. One adverse ${team} result is manageable; a second begins changing the pattern in the file.`
   ][voice(r)];
-  return [nextOpponentLeadV29(t,r,f),bridge,...(schedule.length?schedule:[broader])].filter(Boolean).slice(0,4);
+  return [nextOpponentLeadV29(t,r,f),thread||bridge,...(schedule.length?schedule:[broader])].filter(Boolean).slice(0,4);
 }
 
 function dedupeArticleSectionsV29(sections){

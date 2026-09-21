@@ -2256,8 +2256,13 @@ function restoreSectionFullNamesV30(t,paragraphs){
       if(last&&lastCounts.get(last)===1)aliases.push(last);
       if(first&&firstCounts.get(first)===1&&!/^(?:[A-Z]\.){1,3}$/.test(first))aliases.push(first);
       for(const alias of aliases){
-        const re=new RegExp('\\b'+escapeRe(alias)+'\\b');
-        if(re.test(text)){text=text.replace(re,full);seen.add(full);break}
+        const re=new RegExp('\\b'+escapeRe(alias)+'\\b'),m=re.exec(text);
+        if(!m)continue;
+        if(alias===last){
+          const before=text.slice(0,m.index).trimEnd(),prev=(before.match(/([A-Z][A-Za-z'’.-]*)$/)||[])[1]||'';
+          if(prev)continue;
+        }
+        text=text.slice(0,m.index)+full+text.slice(m.index+m[0].length);seen.add(full);break
       }
     }
     return text;

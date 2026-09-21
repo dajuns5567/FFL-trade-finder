@@ -1563,6 +1563,25 @@ function outlookStoryV28(t,r){
   return ps.filter(Boolean);
 }
 
+function contextualizeParagraphV28(t,value){
+  const text=String(value??''),id=teamIdentityV28(t),manager=String(t.manager_name||'').trim(),players=articlePlayers(t).flatMap(p=>{
+    const full=String(p?.name||'').trim(),first=full.split(/\s+/)[0];return [full,first].filter(Boolean);
+  }),entities=[id.full,id.city,id.mascot,String(t.opponent_name||''),String(t.next_opponent_name||''),manager,...players].filter(Boolean);
+  return splitSentencesSafeV28(text).map((sentence,index)=>{
+    const lead=sentence.trim();
+    if(lead.split(/\s+/).length<8)return sentence;
+    if(entities.some(e=>e&&lead.toLowerCase().includes(e.toLowerCase())))return sentence;
+    if(/^(Inside\b|Across the aisle\b|NEXT WEEK\b|PUBLIC MOOD\b|PRINT THE RECORD\b|LINEUP RECEIPT\b|VALUE WATCH\b|NO MANAGEMENT\b)/.test(lead))return sentence;
+    const ref=(index%2===0?id.mascot:id.city)||id.full;
+    if(/^I\b/.test(lead))return `On the ${ref} beat, ${lead}`;
+    const common=/^(The|That|This|It|Everything|Losing|Winning|A|One|Every|Call|In|Around|For|Roughly|About|Last|No|Nothing|Nobody|Somewhere|Context|Management|Expectation|Production|Depth|Supporters)\b/.test(lead);
+    const properPair=/^(?:[A-Z][A-Za-z'’.-]*|[A-Z](?:\.[A-Z])+\.?)\s+[A-Z][A-Za-z'’.-]*/.test(lead);
+    const body=common&&!properPair?lead.charAt(0).toLowerCase()+lead.slice(1):lead;
+    const prefixes=[`For ${ref}, `,`In the ${ref} story, `,`Around ${ref}, `];
+    return prefixes[(Number(t.roster_id||0)+index)%prefixes.length]+body;
+  }).join(' ');
+}
+
 function headingV28(t,r,kind,base,angle){
   const id=teamIdentityV28(t),top=list(t)[0],bad=list(t).filter(p=>delta(p)!=null).slice().sort((a,b)=>delta(a)-delta(b))[0],next=t.next_opponent_name||'Next Week',manager=t.manager_name||'Management';
   const banks={

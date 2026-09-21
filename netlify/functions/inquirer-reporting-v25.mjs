@@ -867,6 +867,15 @@ function nextGame(teams){
   return rows.sort((a,b)=>a.gap-b.gap)[0]||null;
 }
 
+function leagueTextureStory(teams){
+  const all=(teams||[]).flatMap(t=>list(t).map(p=>({t,p,trajectory:playerTrajectory(p)}))),breakout=all.find(x=>x.trajectory?.kind==='early-breakout'||x.trajectory?.kind==='breakout'),reliable=all.find(x=>x.trajectory?.kind==='reliable'&&(!breakout||String(x.p.id)!==String(breakout.p.id))),veteran=all.find(x=>x.trajectory?.kind==='decline'||x.trajectory?.kind==='veteran-check');
+  const names=[breakout?.p?.name,reliable?.p?.name,veteran?.p?.name].filter(Boolean);
+  let text='The league-wide football story is already more interesting than a leaderboard. Some opening-week explosions came with the sort of workload that can survive a quieter touchdown day; others were built on a handful of high-leverage plays that deserve excitement without pretending they are automatic. That distinction is where the season starts becoming useful. Fantasy points tell us who won Sunday, but targets, carries, defensive snaps and the shape of a player’s role tell us which parts of Sunday might follow the roster into October.';
+  if(names.length)text+=` ${names.join(', ')} are useful examples of why the reporters will keep separating form from noise. A young player forcing his way into a larger role, an established producer simply doing familiar work, and a veteran whose old baseline suddenly looks less secure are three different stories even when the fantasy totals land in the same neighborhood.`;
+  text+=' The best teams will not need every headline player to repeat an opening-week ceiling. They will need the underlying jobs to remain intact, the supporting cast to keep creating usable weeks, and management to notice when a real role change arrives before the rest of the league does. That is the thread worth carrying forward from the opener.';
+  return text;
+}
+
 function weeklyMatchupHeading(g,isTop=false){
   if(isTop)return `${g.winner.team_name} — Week ${g.winner?.week_classification?.week||1}’s High-Water Mark`;
   if(g.upset)return `${g.winner.team_name} vs. ${g.loser.team_name} — The Forecast Got Flipped`;
@@ -913,7 +922,7 @@ export function expandWeeklyRecapV25(o,teams,week){
   ].filter(Boolean);
   const original=o.sections||[],reporter=i=>original[i]?.reporter||null,tillyFallback=(original[2]?.paragraphs||[]).filter(p=>String(p||'').trim()&&String(p).trim()!=='n/a').slice(0,2);
   const matterBlocks=chosen.map((g,i)=>weeklyStoryBlock(g,i,!!topGame&&String(g.winner.roster_id)===String(topGame.winner.roster_id)&&String(g.loser.roster_id)===String(topGame.loser.roster_id)));
-  const synthesis=leagueSynthesis(teams);if(synthesis)matterBlocks.push({heading:'The League-Wide Read',paragraphs:[synthesis]});
+  const synthesis=leagueSynthesis(teams),texture=leagueTextureStory(teams);if(synthesis||texture)matterBlocks.push({heading:'The League-Wide Read',paragraphs:[synthesis,texture].filter(Boolean)});
   const backPageParagraphs=moves.length?moves.map(x=>x.text):(tillyFallback.length?tillyFallback:['n/a']),
     backPageBlocks=moves.length?moves.map(x=>({heading:x.t.team_name+' — Transaction Follow-Up',paragraphs:[x.text]})):[],
     nextParagraphs=next?[`${next.a.team_name} and ${next.b.team_name} is the matchup to circle first. The current projection separates them by only ${one(next.gap)} points, which is close enough for one star performance, one bad lineup call or one quiet Sunday from a centerpiece to swing the whole thing.`,...(()=>{

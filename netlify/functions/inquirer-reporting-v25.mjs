@@ -886,6 +886,7 @@ function specificityPass(t,kind,value){
     ['Even the good china cannot disguise a week that missed the standard, and winning grants only temporary diplomatic immunity.','Even '+team+'’s good china cannot disguise a week that missed the standard, and winning grants only temporary diplomatic immunity.'],
     ['One should generally collect the easier plate before the chef sends out something hostile.',team+' should generally collect the easier plate before the chef sends out something hostile.'],
     ['The team lost, so the angry font stays.',team+' lost, so the angry font stays.'],
+    ['The desk recognizes all three as renewable resources.','The '+team+' desk recognizes all three as renewable resources.'],
   ]);
   for(const [from,to] of swaps)p=p.replaceAll(from,to);
   return p;
@@ -986,8 +987,8 @@ export function humanSectionsV25(args){
       if(s.kind==='players'){const traded=list(t).find(p=>p.acquisition);const callback=traded?acquisitionCallback(t,traded,args.reporter):null;if(callback)paragraphs.push(callback)}
       if(s.kind!=='management')paragraphs.push(...reporterExpansionV26(t,s.kind,args.reporter));
     }
-    paragraphs=paragraphs.map(p=>specificityPass(t,s.kind,p));
     if(paragraphs.length&&paragraphs[0]!=='n/a'){const kicker=reporterSectionKicker(t,s.kind,args.reporter);if(kicker)paragraphs[paragraphs.length-1]=paragraphs[paragraphs.length-1]+' '+kicker;}
+    paragraphs=paragraphs.map(p=>specificityPass(t,s.kind,p));
     return {...s,paragraphs};
   });
   return dedupeArticleSections(reporterStructureV26(rewritten,t,args.reporter));

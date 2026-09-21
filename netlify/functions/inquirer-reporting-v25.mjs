@@ -224,9 +224,11 @@ function teamUsageComment(t,p,angle='star'){
 
 function teamFootballRead(t,p,r,angle='star'){
   let line=teamStatLine(p);
-  if(line&&(angle==='opponent'||angle==='next-opponent')){
-    const owner=angle==='opponent'?t.opponent_name:t.next_opponent_name;
-    if(owner)line=`For ${owner}, ${line}`;
+  if(line){
+    if(angle==='opponent')line=`On the other side, ${line}`;
+    else if(angle==='next-opponent')line=`Next week, ${line}`;
+    else if(angle==='supporting-cast')line=`Behind the lead scorer, ${line}`;
+    else if(angle==='hot-seat')line=`Even on the bad fantasy day, ${line}`;
   }
   const comment=teamUsageComment(t,p,angle);
   return [line,comment].filter(Boolean).join(' ')||null;

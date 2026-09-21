@@ -2345,7 +2345,7 @@ export function humanSectionsV25(args){
     paragraphs=restoreSectionFullNamesV30(t,paragraphs).map(p=>repairPlayerNameCollisionsV31(t,p));
     return {...f,...c,heading:headingV28(t,args.reporter,c.kind,c.heading,frame.angle),paragraphs:paragraphs.length?paragraphs:['n/a']};
   });
-  const state={count:0},aliased=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>teamAliasPassV28(t,p,state))}));
+  const state={count:0},aliased=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,p,state)))}));
   return dedupeArticleSectionsV29(dedupeArticleSections(aliased),t);
 }
 

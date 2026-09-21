@@ -39,6 +39,10 @@ assert.ok(hubSource.includes('linkedNotebookText(value,teams,seenRecords)'),'Lea
 assert.ok(hubSource.includes('team?.league_context?.record'),'First-mention records must come from the archived edition’s league context');
 assert.ok(hubSource.includes("label=match[0]+(first&&rec?' ('+rec+')':'')"),'First visible team mention must render its current season record');
 assert.ok(hubSource.includes('seenRecords=new Set()'),'Each rendered Inquirer article/recap must reset first-mention record tracking');
+const storedStart=hubSource.indexOf('function storedInquirerArticle(t,teams){'),storedEnd=hubSource.indexOf('function reporterArchiveHTML',storedStart),storedBlock=hubSource.slice(storedStart,storedEnd);
+assert.ok(storedStart>=0&&storedEnd>storedStart,'League Hub must retain stored Inquirer article renderer');
+assert.ok(storedBlock.indexOf('headline=render(a.headline||t.team_name)')>=0,'Stored Inquirer renderer must pre-render the visible headline');
+assert.ok(storedBlock.indexOf('headline=render(a.headline||t.team_name)')<storedBlock.indexOf('const body='),'Headline must consume first-mention record tracking before visually later article body text');
 
 const source=fs.readFileSync(new URL('../netlify/functions/inquirer-reporting-v25.mjs',import.meta.url),'utf8');
 for(const phrase of ['statistical lecture','arithmetic lesson','second source of points','absorb a quieter return','where sacks and forced fumbles can turn'])assert.ok(!source.includes(phrase),'Rejected arithmetic/explainer phrase survived: '+phrase);

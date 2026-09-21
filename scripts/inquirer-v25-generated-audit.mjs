@@ -130,7 +130,9 @@ for(const t of d.teams||[]){
     if(!isEstablishedStar(p))continue;
     const first=String(p.name||'').trim().split(/\s+/)[0],nameRe=new RegExp('(?:'+escapeRe(String(p.name||''))+'|\\b'+escapeRe(first)+'\\b)','i');
     for(const sentence of sentences){
-      if(nameRe.test(sentence)&&/\bbreakout(?:[- ]watch| candidate| story| label)?\b/i.test(sentence))assert.fail('Established star '+p.name+' must not be described as a breakout in '+full+': '+sentence);
+      const breakout=/\bbreakout(?:[- ]watch| candidate| story| label)?\b/i.test(sentence),
+        explicitRejection=/(?:does\s+not\s+need|doesn't\s+need|not|no\s+need\s+for|without)\b[^.]{0,48}\bbreakout\b|\bbreakout\b[^.]{0,24}\b(?:not|rather\s+than)\b/i.test(sentence);
+      if(nameRe.test(sentence)&&breakout&&!explicitRejection)assert.fail('Established star '+p.name+' must not be described as a breakout in '+full+': '+sentence);
     }
   }
 }

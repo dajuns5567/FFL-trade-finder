@@ -564,13 +564,13 @@ function outlook(t,week,r){
   if(m&&valid(m.playoff)){
     const p=Number(m.playoff),title=valid(m.title)?Number(m.title):null;
     if(p>=70)ps.push(deskChoice(t,r,[
-      [`${t.team_name} is around ${one(p)}% to reach the playoffs${Number.isFinite(title)?' and '+one(title)+'% to win the championship':''}. That is expectation territory now.`],
+      [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs${Number.isFinite(title)?' and '+one(title)+'% chance to win the championship':''}. That is expectation territory now.`],
       [`A ${one(p)}% playoff outlook gives ${t.team_name} a seat at the serious table${Number.isFinite(title)?', with '+one(title)+'% title odds beside it':''}.`],
       [`${one(p)}% playoff odds are too loud for ${t.team_name} to settle for interesting losses.`],
       [`${t.team_name} sits around ${one(p)}% to make the playoffs. A roster with that much early-season promise should be collecting wins.`]
     ]));
     else if(p<20)ps.push(deskChoice(t,r,[
-      [`${t.team_name} is around ${one(p)}% to reach the playoffs. The runway is already short enough that winnable weeks matter.`],
+      [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. The runway is already short enough that winnable weeks matter.`],
       [`At roughly ${one(p)}% playoff odds, ${t.team_name} has very little room for decorative losses.`],
       [`${one(p)}% playoff odds keep the font small for ${t.team_name} until the wins get louder.`],
       [`${t.team_name} sits around ${one(p)}% to make the playoffs. The next useful result needs to be a win.`]

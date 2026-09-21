@@ -137,7 +137,7 @@ function teamUsageComment(t,p,angle='star'){
   const strong={
     opponent:[`${p.name} stayed in the middle of the plan all afternoon.`,`${t.team_name} saw a full-sized ${p.name} role, not one lucky play.`],
     'next-opponent':[`${p.name} arrives with a full-sized role. ${t.team_name} cannot treat him as a side note.`,`${p.name} was heavily involved last week, and ${t.team_name} should expect the same job again.`],
-    'supporting-cast':[`${p.name} stayed involved from start to finish.`,`${p.name} had a real weekly role behind the score.`],
+    'supporting-cast':[`${p.name} stayed involved from start to finish.`,`${t.team_name} kept ${p.name} involved all afternoon.`],
     'hot-seat':[`${p.name} still got the work; the production was the problem.`,`${p.name} did not disappear from the plan. He simply did too little with it.`],
     'cool-throne':[`${p.name} got the work to match the big Sunday.`,`${p.name} had a full role and cashed it in.`],
     star:[`${p.name} got a full workload and made it count.`,`${p.name} stayed central to the plan all afternoon.`]
@@ -157,7 +157,7 @@ function teamFootballRead(t,p,r,angle='star'){
   let line=teamStatLine(p);
   if(line){
     if(angle==='opponent')line=`On the other side, ${line}`;
-    else if(angle==='next-opponent')line=`Next week, ${line}`;
+    else if(angle==='next-opponent')line=`Last week, ${line}`;
     else if(angle==='supporting-cast')line=line;
     else if(angle==='hot-seat')line=`Even on the bad fantasy day, ${line}`;
   }
@@ -573,10 +573,10 @@ function seasonContextStoryV26(t,r){
   const streakText=Number(st.length)>=2?` ${t.team_name} also carries a ${Number(st.length)}-game ${st.type==='W'?'winning':st.type==='L'?'losing':'result'} streak.`:'';
   const form=(week>=3&&Number.isFinite(recent)&&Number.isFinite(prior)&&prior>0&&Math.abs(recent-prior)>=4)?` Recent scoring sits at ${one(recent)} per game versus ${one(prior)} in the preceding stretch.`:'';
   return deskChoice(t,r,[
-    [`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} The record is young, but the next Sunday already carries a little more weight.`],
-    [`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} Much too early for a coronation; exactly early enough for consequence.`],
+    [`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} One result is in the bank; the next one gets to decide whether the clipping grows legs.`],
+    [`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} The table looks nicer already. One should resist ordering the commemorative silverware.`],
     [`${t.team_name.toUpperCase()} IS ${record(t)}${rankText}.${streakText}${form} Keep the parade route folded, but nobody has to apologize for enjoying the scoreboard.`],
-    [`${t.team_name} is ${record(t)} through Week ${week}${rankText}.${streakText}${form} Nothing is settled, and the next matchup still got more expensive.`]
+    [`${t.team_name} is ${record(t)} through Week ${week}${rankText}.${streakText}${form} The record is small; the consequences are not imaginary.`]
   ]);
 }
 
@@ -600,40 +600,40 @@ function teamScoreConstructionStory(t,r){
     topNames=top3.map(p=>p.name).join(', '),pct=Math.round(share*100),key='score-shape:'+String(t.roster_id);
   let shape;
   if(share>=.7)shape=keyedChoice(key,[
-    `${topNames} accounted for about ${pct}% of ${t.team_name}’s scoring. ${t.team_name} left the rest of the lineup very little room for an ordinary afternoon.`,
-    `About ${pct}% of ${t.team_name}’s points came from ${topNames}. The stars did their part; the rest of the lineup had almost no margin to disappear.`,
-    `${t.team_name} leaned hard on ${topNames}, who combined for ${one(top3pts)} points — roughly ${pct}% of the team total. ${t.team_name} asked three lineup spots to carry a lot of weight.`,
-    `The score was top-heavy: ${topNames} supplied roughly ${pct}% of ${t.team_name}’s production. ${t.team_name} would have felt a quieter day from any one of them very quickly.`
+    `${topNames} accounted for about ${pct}% of ${t.team_name}’s scoring. The stars carried almost everything.`,
+    `About ${pct}% of ${t.team_name}’s points came from ${topNames}. The top of the lineup did nearly all of the heavy lifting.`,
+    `${t.team_name} leaned hard on ${topNames}, who combined for ${one(top3pts)} points — roughly ${pct}% of the team total.`,
+    `The score was top-heavy: ${topNames} supplied roughly ${pct}% of ${t.team_name}’s production.`
   ]);
   else if(share>=.58)shape=keyedChoice(key,[
-    `${topNames} supplied about ${pct}% of ${t.team_name}’s scoring. ${t.team_name}’s stars carried most of the weight, but the supporting slots still had chances to change the result.`,
-    `${t.team_name} got roughly ${pct}% of its points from ${topNames}. ${t.team_name} was star-driven without becoming a complete one-man rescue mission.`,
-    `${topNames} combined for ${one(top3pts)} points, about ${pct}% of the ${t.team_name} total. ${t.team_name}’s core showed up; the rest of the roster still mattered.`,
-    `Most of ${t.team_name}’s scoring ran through ${topNames}, who produced about ${pct}% of the total. ${t.team_name} showed enough concentration to notice without calling the lineup fragile.`
+    `${topNames} supplied about ${pct}% of ${t.team_name}’s scoring. The stars drove the week without turning it into a one-man rescue.`,
+    `${t.team_name} got roughly ${pct}% of its points from ${topNames}. Star-driven, not star-dependent.`,
+    `${topNames} combined for ${one(top3pts)} points, about ${pct}% of the ${t.team_name} total. The core showed up and the rest still mattered.`,
+    `Most of ${t.team_name}’s scoring ran through ${topNames}, who produced about ${pct}% of the total.`
   ]);
   else shape=keyedChoice(key,[
-    `${topNames} supplied about ${pct}% of ${t.team_name}’s scoring, enough balance that one ordinary star performance did not have to decide the entire week.`,
-    `${t.team_name} spread the work around: its top three scorers, ${topNames}, accounted for only about ${pct}% of the total. That gave the lineup more than one way to survive Sunday.`,
-    `Even ${topNames} combined for just ${one(top3pts)} points, roughly ${pct}% of ${t.team_name}’s total. The rest of the roster did real work instead of waiting for a superstar to save it.`,
-    `Only about ${pct}% of ${t.team_name}’s scoring came from ${topNames}. That kind of distribution is useful when the schedule eventually gives a star an ordinary week.`
+    `${topNames} supplied about ${pct}% of ${t.team_name}’s scoring. The rest of the lineup did real work too.`,
+    `${t.team_name} spread the work around: its top three scorers, ${topNames}, accounted for only about ${pct}% of the total.`,
+    `Even ${topNames} combined for just ${one(top3pts)} points, roughly ${pct}% of ${t.team_name}’s total. The supporting slots carried their share.`,
+    `Only about ${pct}% of ${t.team_name}’s scoring came from ${topNames}. Balance did a lot of the work.`
   ]);
   let expectation='';
   if(projDelta!=null){
     const ekey='score-proj:'+String(t.roster_id);
     if(Math.abs(projDelta)<6)expectation=' '+keyedChoice(ekey,[
-      `${t.team_name} finished within ${one(Math.abs(projDelta))} of projection, close enough to call the final total roughly what the lineup promised.`,
-      `The final score landed only ${one(Math.abs(projDelta))} from projection, so ${t.team_name} did not need a statistical miracle to get there.`,
-      `${t.team_name} came in ${one(Math.abs(projDelta))} from its projection. The surprise, if there was one, came from where the points were produced rather than how many arrived.`
+      `${t.team_name} finished within ${one(Math.abs(projDelta))} of projection. No miracle, no collapse.`,
+      `The final score landed only ${one(Math.abs(projDelta))} from projection. ${t.team_name} looked about as dangerous as advertised.`,
+      `${t.team_name} came in ${one(Math.abs(projDelta))} from its projection. The surprise came from where the points showed up, not how many arrived.`
     ]);
     else if(projDelta>0)expectation=' '+keyedChoice(ekey,[
-      `${t.team_name} beat projection by ${one(projDelta)}, a meaningful overperformance that changed the shape of the matchup.`,
-      `${t.team_name} finished ${one(projDelta)} above projection. ${t.team_name} bought itself room the pregame forecast never promised.`,
-      `The lineup cleared its projection by ${one(projDelta)}. ${won?`${t.team_name} used that cushion to turn a good Sunday into a win.`:`${t.team_name} still could not turn that overperformance into a win.`}`
+      `${t.team_name} beat projection by ${one(projDelta)} and gave itself room the pregame forecast never promised.`,
+      `${t.team_name} finished ${one(projDelta)} above projection. That cushion made the afternoon considerably less stressful.`,
+      `The lineup cleared projection by ${one(projDelta)}. ${won?`${t.team_name} turned the extra production into a win.`:`${t.team_name} still could not turn the overperformance into a win.`}`
     ]);
     else expectation=' '+keyedChoice(ekey,[
-      `${t.team_name} left ${one(Math.abs(projDelta))} projected points on the table, and ${won?'the win kept the shortfall from becoming the story.':'the loss made that missing production impossible to ignore.'}`,
-      `${t.team_name} finished ${one(Math.abs(projDelta))} below projection. ${won?'Winning makes that a correction for next week instead of an excuse for this one.':'In a loss, those missing points become part of the autopsy.'}`,
-      `The lineup missed projection by ${one(Math.abs(projDelta))}. ${won?t.team_name+' survived it; that does not make the shortfall worth repeating.':t.team_name+' needed more from the roster and never found it.'}`
+      `${t.team_name} left ${one(Math.abs(projDelta))} projected points on the table, and ${won?'the win hid the shortfall.':'the loss made it impossible to ignore.'}`,
+      `${t.team_name} finished ${one(Math.abs(projDelta))} below projection. ${won?'Winning kept it from becoming the headline.':'In a loss, those missing points get very loud.'}`,
+      `The lineup missed projection by ${one(Math.abs(projDelta))}. ${won?`${t.team_name} survived it.`:`${t.team_name} needed more and never found it.`}`
     ]);
   }
   return shape+expectation;
@@ -681,7 +681,7 @@ function chairFootballStory(t,kind,r){
   if(tr.kind==='decline')return `Veteran ${p.name} is on fall-off watch after a multi-week slide. The old weekly floor is no longer automatic.`;
   if(tr.kind==='reliable')return kind==='hot-seat'?`${p.name} has usually been steadier than this. One bad week is an annoyance; another would be a story.`:`${p.name} landed near an established weekly level again. Boring can be very profitable.`;
   if(tr.kind==='stumble')return `${p.name} has a longer track record than this one result. Call ${p.name}’s week a stumble until repetition says otherwise.`;
-  if(tr.kind==='veteran')return `Veteran ${p.name} already has a long baseline. ${p.name}’s Week 1 moved it only at the margins.`;
+  if(tr.kind==='veteran')return `Veteran ${p.name} already owns a long baseline. Week 1 barely moved ${p.name} away from it.`;
   return null;
 }
 
@@ -1203,7 +1203,7 @@ function weeklyMatchupHeading(g,isTop=false){
 }
 function weeklyTopScorerStory(t,g){
   const rows=list(t),top=rows[0],second=rows[1],third=rows[2],parts=[];
-  parts.push(`${t.team_name} set the league’s weekly scoring ceiling at ${one(t.points)}, a ${one(Number(t.points)-Number(t.opponent_points))}-point win over ${t.opponent_name}. Nobody in the league put more points on the board. Anyone objecting can take the complaint to the scoreboard.`);
+  parts.push(`${t.team_name} set the league’s weekly scoring ceiling at ${one(t.points)}, a ${one(Number(t.points)-Number(t.opponent_points))}-point win over ${t.opponent_name}. Nobody in the league put more points on the board. Anyone objecting can take the argument to the scoreboard.`);
   if(top){
     const ctx=statSituation(top);
     parts.push(`${top.name} led the avalanche with ${one(top.points)} fantasy points${second?', '+second.name+' followed with '+one(second.points):''}${third?', and '+third.name+' added '+one(third.points):''}. ${ctx||''} ${second&&second.real_stat_line?second.name+' backed it with '+String(second.real_stat_line).replaceAll(' • ',', ')+'.':''} ${t.team_name} had three headliners instead of one miracle carrying the entire total.`.trim());

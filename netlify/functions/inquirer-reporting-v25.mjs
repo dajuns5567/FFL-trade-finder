@@ -28,9 +28,8 @@ function opportunity(p){
     const att=Number(s.pass_att),rush=Number(s.rush_att);
     if(Number.isFinite(att)||Number.isFinite(rush))return {strong:(att||0)>=25||(rush||0)>=6,text:`${Number.isFinite(att)?att+' pass attempts':''}${Number.isFinite(att)&&Number.isFinite(rush)?' and ':''}${Number.isFinite(rush)?rush+' carries':''}`};
   }
-  const snaps=Number(s.def_snp??s.def_snaps??s.defensive_snaps);
-  if(Number.isFinite(snaps))return {strong:snaps>=30,text:`${snaps} defensive snaps`};
-  return null;
+  const d=teamDefenseUsage(p);
+  return d?{strong:!!d.strong,text:d.text}:null;
 }
 
 function statSituation(p){
@@ -49,18 +48,11 @@ function statSituation(p){
     const carries=Number(s.rush_att),rushYd=Number(s.rush_yd),rushTd=Number(s.rush_td),targets=Number(s.rec_tgt??s.targets),rec=Number(s.rec),recYd=Number(s.rec_yd),recTd=Number(s.rec_td),parts=[];
     if(Number.isFinite(carries))parts.push(`${n} ran ${carries} ${plural(carries,'time')} for ${Number.isFinite(rushYd)?rushYd:0} yards${Number.isFinite(rushTd)&&rushTd>0?', scoring '+rushTd+' rushing '+plural(rushTd,'touchdown'):''}.`);
     if(Number.isFinite(targets))parts.push(`He caught ${Number.isFinite(rec)?rec:0} of ${targets} targets for ${Number.isFinite(recYd)?recYd:0} yards${Number.isFinite(recTd)&&recTd>0?' and '+recTd+' receiving '+plural(recTd,'touchdown'):''}.`);
-    if(parts.length){
-      parts.push((carries||0)>=14||(targets||0)>=5?`${n} had enough work to make the production look tied to a real weekly role.`:`${n} did more with a lighter workload, so efficiency carried more of the afternoon.`);
-      return parts.join(' ');
-    }
+    if(parts.length)return parts.join(' ');
   }
   if(pos==='WR'||pos==='TE'){
     const targets=Number(s.rec_tgt??s.targets),rec=Number(s.rec),yd=Number(s.rec_yd),td=Number(s.rec_td);
-    if(Number.isFinite(targets)){
-      const line=`${n} caught ${Number.isFinite(rec)?rec:0} of ${targets} targets for ${Number.isFinite(yd)?yd:0} yards${Number.isFinite(td)&&td>0?', scoring '+td+' '+plural(td,'touchdown'):''}.`;
-      const tail=targets>=8?` ${n} commanded enough targets to sit at the center of the passing game.`:targets>=5?` ${n} had a meaningful share of the passing game.`:` ${n} made the most of a smaller target share.`;
-      return line+tail;
-    }
+    if(Number.isFinite(targets))return `${n} caught ${Number.isFinite(rec)?rec:0} of ${targets} targets for ${Number.isFinite(yd)?yd:0} yards${Number.isFinite(td)&&td>0?', scoring '+td+' '+plural(td,'touchdown'):''}.`;
   }
   const solo=Number(s.tkl_solo),ast=Number(s.tkl_ast),sacks=Number(s.sack),tfl=Number(s.tkl_loss??s.tfl),qb=Number(s.qb_hit),pd=Number(s.pass_def),ints=Number(s.int),ff=Number(s.ff),snaps=Number(s.def_snp??s.def_snaps??s.defensive_snaps),bits=[];
   if(Number.isFinite(solo))bits.push(`${solo} solo ${plural(solo,'tackle')}`);
@@ -71,14 +63,15 @@ function statSituation(p){
   if(Number.isFinite(pd)&&pd>0)bits.push(`${pd} ${plural(pd,'pass breakup')}`);
   if(Number.isFinite(ints)&&ints>0)bits.push(`${ints} ${plural(ints,'interception')}`);
   if(Number.isFinite(ff)&&ff>0)bits.push(`${ff} forced ${plural(ff,'fumble')}`);
-  if(bits.length||Number.isFinite(snaps)){
-    let text=bits.length?`${n} finished with ${bits.join(', ')}.`:'';
-    if(Number.isFinite(snaps))text+=` ${n} played ${snaps} defensive snaps${snaps>=40?', a substantial role for the week':', so every splash play mattered a little more'}.`;
-    return text.trim();
+  if(bits.length){
+    let text=`${n} finished with ${bits.join(', ')}.`;
+    if(Number.isFinite(snaps)&&snaps<=25&&Number(p?.points)>=12)text+=` He did it in only ${snaps} defensive snaps.`;
+    return text;
   }
-  const line=String(p?.real_stat_line||'').replaceAll(' • ',', ');
+  const line=String(p?.real_stat_line||'').split(/\s*•\s*|\s*,\s*/).map(x=>x.trim()).filter(x=>x&&!/\b(?:def(?:ensive)?\s+)?snaps?\b/i.test(x)).join(', ');
   return line?`${n} finished with ${line}.`:null;
 }
+
 function scopedFootballRead(t,p,angle='matchup'){
   const raw=statSituation(p);if(!raw)return null;
   const compact=String(raw).trim().replace(/\.\s+He\s+/g,', and he ').replace(/\.\s+/g,'; ').replace(/\.$/,'');
@@ -140,22 +133,22 @@ function teamStatLine(p){
 
 function teamUsageComment(t,p,angle='star'){
   const o=teamOpportunity(p);if(!o)return null;
-  if(o.limited_snap)return keyedChoice(`${p.id||p.name}:${angle}:limited`,[`${p.name} did that in a genuinely limited defensive role. If the playing time grows, the ceiling gets more interesting; if it does not, efficiency is doing a lot of work.`,`${p.name} squeezed real production out of very little defensive playing time. That is exactly when the snap count deserves a sentence.`]);
+  if(o.limited_snap)return keyedChoice(`${p.id||p.name}:${angle}:limited`,[`${p.name} squeezed that production out of only ${o.snaps} defensive snaps.`,`${p.name} did all of that in a genuinely limited defensive role.`]);
   const strong={
-    opponent:[`${t.team_name} had to deal with a full-sized role, not one lucky play.`,`The workload kept ${p.name} involved long enough that ${t.team_name} could not simply wait him out.`],
-    'next-opponent':[`${p.name} arrives with a role that looks central enough to plan around. ${t.team_name} has to solve the job, not chase last week’s fantasy total.`,`The recent workload says ${p.name} should be in the middle of the plan again. ${t.team_name} needs an answer before the box score supplies the question.`],
-    'supporting-cast':[`${p.name} was part of the weekly plan rather than background scoring.`,`The role was substantial enough that ${t.team_name} can reasonably expect another useful chance.`],
-    'hot-seat':[`${p.name} still had a real role. The problem was the performance, not a disappearing job.`,`The workload survived the bad fantasy day, so ${t.team_name} needs a rebound more than a depth-chart panic.`],
-    'cool-throne':[`${p.name} had a real role underneath the big week. That matters more for next Sunday than preserving the exact score.`,`The workload supports the headline even if the fantasy ceiling comes back to earth.`],
-    star:[`${p.name} had enough work underneath the production to make the result feel earned.`,`The role was large enough that ${t.team_name} can trust the opportunity more than the exact point total.`]
+    opponent:[`${p.name} stayed in the middle of the plan all afternoon.`,`${t.team_name} saw a full-sized ${p.name} role, not one lucky play.`],
+    'next-opponent':[`${p.name} arrives with a full-sized role. ${t.team_name} cannot treat him as a side note.`,`${p.name} was heavily involved last week, and ${t.team_name} should expect the same job again.`],
+    'supporting-cast':[`${p.name} stayed involved from start to finish.`,`${p.name} had a real weekly role behind the score.`],
+    'hot-seat':[`${p.name} still got the work; the production was the problem.`,`${p.name} did not disappear from the plan. He simply did too little with it.`],
+    'cool-throne':[`${p.name} got the work to match the big Sunday.`,`${p.name} had a full role and cashed it in.`],
+    star:[`${p.name} got a full workload and made it count.`,`${p.name} stayed central to the plan all afternoon.`]
   };
   const light={
-    opponent:[`${p.name} hurt ${t.team_name} without an overwhelming role. The points count; the path is still something a defense can attack.`,`The production was louder than the workload, which gives ${t.team_name} at least one fixable part of the problem.`],
-    'next-opponent':[`${p.name} is arriving off useful production without an overwhelming workload. ${t.team_name} should make the efficiency prove itself again.`,`The recent role was lighter than the fantasy result. ${t.team_name} gets a chance to keep it that way.`],
-    'supporting-cast':[`${p.name} helped on a narrower role than the final score might suggest.`,`Useful work, but not yet the kind of role ${t.team_name} should pencil in every Sunday.`],
-    'hot-seat':[`${p.name} had a smaller role to go with the quiet fantasy day. That is the part ${t.team_name} needs to repair first.`,`The opportunity was thin enough that the scoring problem starts with getting ${p.name} back into the plan.`],
-    'cool-throne':[`${p.name} made a lighter role pay off. Enjoy the ceiling; ask for more opportunity before assuming it repeats.`,`The big week came without a dominant workload, so ${t.team_name} should celebrate the result without pretending the weekly floor changed overnight.`],
-    star:[`${p.name} made a smaller workload count. Another week of opportunity matters more than another week of efficiency.`,`The production arrived on a lighter role, which makes the next usage pattern more important than the victory lap.`]
+    opponent:[`${p.name} hurt ${t.team_name} without needing a huge workload.`,`${p.name} did damage on fewer chances than the final score suggests.`],
+    'next-opponent':[`${p.name} is coming off a big result on a lighter role; ${t.team_name} should make him do it the hard way again.`,`${p.name} was efficient on a smaller workload last week. ${t.team_name} gets a chance to keep that role small.`],
+    'supporting-cast':[`${p.name} helped on a narrower role.`,`${p.name} gave ${t.team_name} useful work without owning a huge share of the plan.`],
+    'hot-seat':[`${p.name}’s role was light and the score followed.`,`${p.name} did not get many chances, and none of them rescued the week.`],
+    'cool-throne':[`${p.name} made a smaller role pay off.`,`${p.name} squeezed a big Sunday out of a lighter workload.`],
+    star:[`${p.name} squeezed a lot out of a smaller workload.`,`${p.name} did not need a huge role to own the afternoon.`]
   };
   const bank=(o.strong?strong:light)[angle]||(o.strong?strong.star:light.star);return keyedChoice(`${p.id||p.name}:${angle}:${t.roster_id}`,bank);
 }
@@ -182,9 +175,9 @@ function teamTrajectory(p){
   if(games===1&&young&&ratio>=1.4&&role?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[`${p.name} belongs on early breakout watch, not in the breakout-candidate victory parade yet. The opener beat last year’s baseline by a wide margin and the role gave it some legitimacy; another few Sundays have to make it sustained.`,`${p.name} is young enough and opened loudly enough to start a breakout watch. One week is not sustained evidence, so the label stays “candidate pending more football” for now.`,`${p.name} gave us the first ingredient of a breakout case: a young player beating the old baseline with a meaningful role. The missing ingredient is repetition.`])};
   if(games>=3&&veteran&&ratio<=.68)return {kind:'decline',strength:1-ratio,text:keyedChoice(key,[`${p.name} is a veteran and now a legitimate fall-off candidate. The production has stayed well below last season’s level for multiple weeks; age makes the trend worth taking seriously without declaring the career over.`,`Put veteran ${p.name} on fall-off watch. A sustained drop from last year’s baseline is more than one bad Sunday, and this is the stage of a career where role erosion deserves attention.`,`${p.name} has crossed from “slow start” into fall-off-candidate territory: veteran age, a multi-week decline, and a scoring level well below the old baseline. The next question is whether the role is shrinking with it.`])};
   if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:'reliable',strength:1-Math.abs(ratio-1),text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} is doing the boring valuable thing: producing near the established baseline over a real sample. That is reliability, not a breakout.`,`${p.name} has settled back into familiar territory over multiple weeks. Reliable production rarely wins the group chat, but it keeps ${p.name} from becoming a Tuesday problem.`])};
-  if(games===1&&Math.abs(points-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(points-prior)/prior,text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} opened near last season’s established level. One week cannot prove reliability, but it looks more like continuity than reinvention.`,`${p.name} started the year in familiar territory relative to last season. That is a useful first sign of continuity, not a new ceiling.`])};
+  if(games===1&&Math.abs(points-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(points-prior)/prior,text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} opened near last season’s established level. Same neighborhood, same job description.`,`${p.name} started the year in familiar territory relative to last season. Nothing about the opener required a new scouting report.`])};
   if(games===1&&points<=prior*.5)return {kind:'stumble',strength:1-points/prior,text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} opened far below last season’s normal level. One ugly Sunday is a stumble, not a fall-off trend; another few weeks would change the classification.`,`${p.name} started well below the old baseline. The career did not disappear in one afternoon, but the next role now matters more.`])};
-  if(veteran)return {kind:'veteran',strength:.25,text:`Veteran ${p.name} entered the season with an established baseline, which makes this week useful mainly as a comparison point rather than a reinvention story.`};
+  if(veteran)return {kind:'veteran',strength:.25,text:`Veteran ${p.name} entered the season with an established baseline. Week 1 landed against that old standard, not a blank slate.`};
   return null;
 }
 
@@ -238,7 +231,7 @@ function leaguePlayerPulse(teams){
   for(const kind of ['breakout','early-breakout','reliable','decline','stumble']){
     const x=pick(kind);if(!x||seen.has(String(x.p.id)))continue;seen.add(String(x.p.id));
     const situ=statSituation(x.p),tag=kind==='decline'?'DECLINE WATCH':kind==='stumble'?'VETERAN CHECK-IN':kind==='reliable'?'RELIABLE':kind.includes('breakout')?'BREAKOUT WATCH':'PLAYER WATCH';
-    out.push(`${tag}: ${x.tr.text}${situ?' '+situ:''} For ${x.t.team_name}, the player’s role now matters as much as the headline because that is what can carry this story into next week.`);
+    out.push(`${tag}: ${x.tr.text}${situ?' '+situ:''}`);
     if(out.length>=3)break;
   }
   return out;
@@ -455,7 +448,7 @@ function hotCool(t,kind,r){
 function sentiment(t,r){
   const won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),top=list(t)[0],ctx=t.league_context||{},rank=Number(ctx.standings_rank),m=t.mida_outlook,miss=t.best_lineup_miss,tx=Number(t.current_week_trade_count||0),ps=[],resultTone=margin>=20?'comfortable':margin<=6?'nervy':'useful';
   ps.push(won?deskChoice(t,r,[
-    [`${t.team_name} fans get a ${resultTone} win and permission to enjoy Monday without pretending September settled anything. ${top?top.name+' gave the crowd an obvious hero; ':''}the useful part is that the celebration has an actual result underneath it.`],
+    [`${t.team_name} fans get a ${resultTone} win and ${top?top.name+' as an obvious Monday hero.':'a scoreboard worth enjoying.'} Enjoy it; September is still early enough to make parade plans look ridiculous by Halloween.`],
     [`The ${t.team_name} mood is appropriately overdressed after a ${resultTone} win. ${top?top.name+' gets the toast; ':''}anyone pricing parade confetti in September is still being asked to leave the dining room.`],
     [`${t.team_name} WON, so the group chat is behaving like a municipal emergency. ${top?top.name+' is the easiest name to scream; ':''}the rest of the fan base may now enjoy exactly one week of dangerous confidence.`],
     [`${t.team_name} supporters have a win, which means suspicion has temporarily been replaced by screenshots. ${top?top.name+' is where the praise starts; ':''}the important change is that optimism now has a receipt.`]
@@ -467,7 +460,7 @@ function sentiment(t,r){
   ]));
   const position=Number.isFinite(rank)?`No. ${rank} of ${Number(ctx.league_size)||32}`:record(t),expectation=valid(m?.playoff)?Number(m.playoff)>=70?'contender-level expectations':Number(m.playoff)<20?'a fan base already running short on patience':'a season that is still very much up for argument':'an unsettled season';
   ps.push(deskChoice(t,r,[
-    [`The bigger fan-base read is ${position}: ${t.team_name} has ${expectation}. One result changes the volume, not the assignment, and supporters will judge the next week against where this roster believes it belongs.`],
+    [`At ${position}, ${t.team_name} has ${expectation}. Supporters can enjoy this result without lowering the standard for the next one.`],
     [`At ${position}, ${t.team_name} has ${expectation}. The tasteful fan response is apparently impossible, so expect every good decision to become genius and every bad one to become a referendum by Tuesday morning.`],
     [`PUBLIC NUISANCE REPORT: ${t.team_name} sits at ${position} with ${expectation}. The fan base has enough information to be loud and nowhere near enough information to be reasonable. Perfect.`],
     [`The public mood has context: ${t.team_name} is ${position} with ${expectation}. Supporters are not reacting only to Sunday; they are reacting to what this roster was supposed to become.`]
@@ -683,12 +676,12 @@ function lineupProcessStory(t,r){
 
 function chairFootballStory(t,kind,r){
   const rows=list(t).filter(p=>delta(p)!=null);if(!rows.length)return null;const p=kind==='hot-seat'?rows.slice().sort((a,b)=>delta(a)-delta(b))[0]:rows.slice().sort((a,b)=>delta(b)-delta(a))[0];if(!p)return null;const tr=teamTrajectory(p);if(!tr)return null;
-  if(tr.kind==='rookie')return `${p.name} is a rookie, which makes this chair assignment a first checkpoint rather than a permanent label. The role over the next few weeks matters more than the opening-week emotion.`;
-  if(tr.kind==='breakout'||tr.kind==='early-breakout')return `${p.name} is on the young-player breakout watch. The important part now is whether the stronger level survives long enough to become a new baseline.`;
-  if(tr.kind==='decline')return `Veteran ${p.name} is on fall-off watch because the decline has lasted longer than one Sunday. The next few roles will tell ${t.team_name} whether this is erosion or merely a bad stretch.`;
-  if(tr.kind==='reliable')return `${p.name} has an established reliability case, which is why this week should be judged against a real baseline rather than treated as a brand-new identity.`;
-  if(tr.kind==='stumble')return `${p.name} has a longer track record than this one result. Call it a stumble for now; repetition is what would turn it into a trend.`;
-  if(tr.kind==='veteran')return `Veteran ${p.name} has enough history that one week should change the conversation only at the margins.`;
+  if(tr.kind==='rookie')return `${p.name} is a rookie, so this is the first checkpoint of a much longer season.`;
+  if(tr.kind==='breakout'||tr.kind==='early-breakout')return `${p.name} is on breakout watch now. Another few Sundays like this and the old baseline will look badly out of date.`;
+  if(tr.kind==='decline')return `Veteran ${p.name} is on fall-off watch after a multi-week slide. The old weekly floor is no longer automatic.`;
+  if(tr.kind==='reliable')return kind==='hot-seat'?`${p.name} has usually been steadier than this. One bad week is an annoyance; another would be a story.`:`${p.name} landed near an established weekly level again. Boring can be very profitable.`;
+  if(tr.kind==='stumble')return `${p.name} has a longer track record than this one result. Call it a stumble until repetition says otherwise.`;
+  if(tr.kind==='veteran')return `Veteran ${p.name} already has a long baseline. This week moved it only at the margins.`;
   return null;
 }
 
@@ -1210,7 +1203,7 @@ function weeklyMatchupHeading(g,isTop=false){
 }
 function weeklyTopScorerStory(t,g){
   const rows=list(t),top=rows[0],second=rows[1],third=rows[2],parts=[];
-  parts.push(`${t.team_name} set the league’s weekly scoring ceiling at ${one(t.points)}, a ${one(Number(t.points)-Number(t.opponent_points))}-point win over ${t.opponent_name}. Nobody in the league put more points on the board.`);
+  parts.push(`${t.team_name} set the league’s weekly scoring ceiling at ${one(t.points)}, a ${one(Number(t.points)-Number(t.opponent_points))}-point win over ${t.opponent_name}. Nobody in the league put more points on the board. Anyone objecting can take the complaint to the scoreboard.`);
   if(top){
     const ctx=statSituation(top);
     parts.push(`${top.name} led the avalanche with ${one(top.points)} fantasy points${second?', '+second.name+' followed with '+one(second.points):''}${third?', and '+third.name+' added '+one(third.points):''}. ${ctx||''} ${second&&second.real_stat_line?second.name+' backed it with '+String(second.real_stat_line).replaceAll(' • ',', ')+'.':''} ${t.team_name} had three headliners instead of one miracle carrying the entire total.`.trim());

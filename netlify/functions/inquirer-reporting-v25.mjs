@@ -850,6 +850,43 @@ function specificityPass(t,kind,value){
     ['The appointment has enough actual Week 1 form to be more interesting than whatever the forecast says over cocktails.',team+' gets an appointment with enough actual Week 1 form to be more interesting than whatever the forecast says over cocktails.'],
     ['The distinction matters because Filch prosecutes available choices, not impossible bench swaps.','For '+team+', that was a real lineup decision because the alternative was actually eligible, not an impossible hindsight swap.']
   ];
+  swaps.push(...[
+    ['One ugly Sunday is a stumble, not a fall-off trend; another few weeks would change the classification.','One ugly '+team+' Sunday is a stumble, not a fall-off trend; another few weeks would change the classification.'],
+    ['The loss gives the miss nowhere to hide.',team+'’s loss gives the miss nowhere to hide.'],
+    ['One result changes the volume, not the assignment, and supporters will judge the next week against where this roster believes it belongs.','One '+team+' result changes the volume, not the assignment, and supporters will judge next week against where this roster believes it belongs.'],
+    ['A real eligible lineup alternative was left unused, so fans have a concrete decision to revisit.',team+' left a real eligible lineup alternative unused, so fans have a concrete decision to revisit.'],
+    ['The opener beat last year’s baseline by a wide margin and the role gave it some legitimacy; another few Sundays have to make it sustained.','For '+team+', the opener beat last year’s baseline by a wide margin and the role gave it some legitimacy; another few Sundays have to make it sustained.'],
+    ['That is a useful first sign of continuity, not a new ceiling.','For '+team+', that is a useful first sign of continuity, not a new ceiling.'],
+    ['The tasteful fan response is apparently impossible, so expect every good decision to become genius and every bad one to become a referendum by Tuesday morning.',team+' fans are apparently incapable of the tasteful response, so expect every good decision to become genius and every bad one to become a Tuesday referendum.'],
+    ['There was a real lineup choice available, which means this is criticism rather than hindsight cosplay.',team+' had a real lineup choice available, which makes this criticism rather than hindsight cosplay.'],
+    ['Tasteful excess is still excess, but nobody is sending it back.','For '+team+', tasteful excess is still excess, but nobody is sending it back.'],
+    ['The important part now is whether the stronger level survives long enough to become a new baseline.','For '+team+', the important part is whether the stronger level survives long enough to become a new baseline.'],
+    ['Even the good china cannot disguise a week that missed the standard, and losing makes the review considerably less tasteful.','Even '+team+'’s good china cannot disguise a week that missed the standard, and losing makes the review considerably less tasteful.'],
+    ['Call it a stumble for now; repetition is what would turn it into a trend.','For '+team+', call it a stumble for now; repetition is what would turn it into a trend.'],
+    ['The points count; the path is still something a defense can attack.','The points count against '+team+'; the path is still something a defense can attack.'],
+    ['The team won anyway; do not test that magic twice.',team+' won anyway; do not test that magic twice.'],
+    ['One week cannot prove reliability, but it looks more like continuity than reinvention.','One '+team+' week cannot prove reliability, but it looks more like continuity than reinvention.'],
+    ['That screenshot gets louder if the same choice appears next Sunday.',team+' will hear that screenshot much louder if the same choice appears next Sunday.'],
+    ['The fan base has enough information to be loud and nowhere near enough information to be reasonable.',team+' fans have enough information to be loud and nowhere near enough information to be reasonable.'],
+    ['There was an eligible better lineup available, so the screenshot folder is open.',team+' had an eligible better lineup available, so the screenshot folder is open.'],
+    ['Conveniently, the roster has provided material for both.','Conveniently, '+team+' has provided material for both.'],
+    ['Whether it changed the final result is the only mercy.','Whether it changed '+team+'’s final result is the only mercy.'],
+    ['That makes the roster decision more important than the box score.','That makes '+team+'’s roster decision more important than the box score.'],
+    ['Supporters are not reacting only to Sunday; they are reacting to what this roster was supposed to become.',team+' supporters are not reacting only to Sunday; they are reacting to what this roster was supposed to become.'],
+    ['An eligible lineup alternative existed, so that decision belongs in the criticism.',team+' had an eligible lineup alternative, so that decision belongs in the criticism.'],
+    ['That was good work trapped inside a bad result.',team+' got good work trapped inside a bad result.'],
+    ['The only remaining mystery is whether the lineup behaves accordingly.','For '+team+', the only remaining mystery is whether the lineup behaves accordingly.'],
+    ['One week is not sustained evidence, so the label stays “candidate pending more football” for now.','One '+team+' week is not sustained evidence, so the label stays “candidate pending more football” for now.'],
+    ['Hope is charming; a bench plan is more useful.',team+' can hope for good health; a bench plan is more useful.'],
+    ['The career did not disappear in one afternoon, but the next role now matters more.','For '+team+', the career did not disappear in one afternoon, but the next role now matters more.'],
+    ['The transaction earned a headline without needing the same stat line printed twice.',team+' got a transaction headline without needing the same stat line printed twice.'],
+    ['That turns the next matchup into a chance to bank margin before a stronger test.','That turns '+team+'’s next matchup into a chance to bank margin before a stronger test.'],
+    ['Anyone engraving the trophy is excused from the table.','Anyone engraving a '+team+' trophy is excused from the table.'],
+    ['The roster decision matters more than the small sample.',team+'’s roster decision matters more than the small sample.'],
+    ['Even the good china cannot disguise a week that missed the standard, and winning grants only temporary diplomatic immunity.','Even '+team+'’s good china cannot disguise a week that missed the standard, and winning grants only temporary diplomatic immunity.'],
+    ['One should generally collect the easier plate before the chef sends out something hostile.',team+' should generally collect the easier plate before the chef sends out something hostile.'],
+    ['The team lost, so the angry font stays.',team+' lost, so the angry font stays.'],
+  ]);
   for(const [from,to] of swaps)p=p.replaceAll(from,to);
   return p;
 }

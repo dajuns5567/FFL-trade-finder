@@ -371,6 +371,47 @@ function sentiment(t,r){
   }
   return ps;
 }
+function outlook(t,week,r){
+  const ps=[],m=t.mida_outlook,op=t.next_opponent_name,gap=valid(t.next_projected)&&valid(t.next_opponent_projected)?Number(t.next_projected)-Number(t.next_opponent_projected):null;
+  if(op&&gap!=null){
+    const close=Math.abs(gap)<6,favored=gap>0;
+    ps.push(close?deskChoice(t,r,[
+      [`${t.team_name} and ${op} are separated by only ${one(Math.abs(gap))} projected points. One ordinary mistake can own a game that close.`],
+      [`Only ${one(Math.abs(gap))} projected points separate ${t.team_name} and ${op}. A small margin for a large amount of future complaining.`],
+      [`${one(Math.abs(gap))} projected points separate ${t.team_name} and ${op}: one lineup call, one monster quarter, one group-chat disaster.`],
+      [`${t.team_name} and ${op} are nearly even on paper. In a matchup that tight, the weak spots get expensive very quickly.`]
+    ]):favored?deskChoice(t,r,[
+      [`The projection leans toward ${t.team_name} against ${op}. Good teams make those afternoons look ordinary.`],
+      [`${t.team_name} gets the nicer side of the forecast against ${op}. Manners require taking advantage.`],
+      [`The forecast likes ${t.team_name} against ${op}. Fine. Put the favorite status on the scoreboard instead of the group chat.`],
+      [`${t.team_name} owns the projected edge over ${op}. A favorable matchup is only useful once it becomes a win.`]
+    ]):deskChoice(t,r,[
+      [`${op} has the projected edge over ${t.team_name}. One headliner probably has to steal the afternoon.`],
+      [`The forecast favors ${op}. How vulgar. ${t.team_name} will need a star turn to improve the décor.`],
+      [`${op} owns the projected edge. Fine—${t.team_name} gets a chance to make the upset louder than the forecast.`],
+      [`${op} is favored on paper. ${t.team_name} needs its best players to make that paper irrelevant.`]
+    ]));
+  }
+  const scout=opponentPreview(t,r);if(scout)ps.push(scout);
+  if(m&&valid(m.playoff)){
+    const p=Number(m.playoff),title=valid(m.title)?Number(m.title):null;
+    if(p>=70)ps.push(deskChoice(t,r,[
+      [`${t.team_name} is around ${one(p)}% to reach the playoffs${Number.isFinite(title)?' and '+one(title)+'% to win the championship':''}. That is expectation territory now.`],
+      [`A ${one(p)}% playoff outlook gives ${t.team_name} a seat at the serious table${Number.isFinite(title)?', with '+one(title)+'% title odds beside it':''}.`],
+      [`${one(p)}% playoff odds are too loud for ${t.team_name} to settle for interesting losses.`],
+      [`${t.team_name} sits around ${one(p)}% to make the playoffs. A roster with that much early-season promise should be collecting wins.`]
+    ]));
+    else if(p<20)ps.push(deskChoice(t,r,[
+      [`${t.team_name} is around ${one(p)}% to reach the playoffs. The runway is already short enough that winnable weeks matter.`],
+      [`At roughly ${one(p)}% playoff odds, ${t.team_name} has very little room for decorative losses.`],
+      [`${one(p)}% playoff odds keep the font small for ${t.team_name} until the wins get louder.`],
+      [`${t.team_name} sits around ${one(p)}% to make the playoffs. The next useful result needs to be a win.`]
+    ]));
+  }
+  const div=divisionStory(t,r);if(div)ps.push(div);
+  return ps.length?ps:['n/a'];
+}
+
 function specificityPass(t,kind,value){
   let p=String(value??'');
   const team=t.team_name;

@@ -569,15 +569,23 @@ function outlook(t,week,r){
 
 function seasonContextStoryV26(t,r){
   const ctx=t.league_context||{},rank=Number(ctx.standings_rank),size=Number(ctx.league_size)||32,st=ctx.streak||{},week=Number(t.week_classification?.week)||1,
-    recent=Number(ctx.recent_avg_points),prior=Number(ctx.prior_five_avg_points);
+    recent=Number(ctx.recent_avg_points),prior=Number(ctx.prior_five_avg_points),won=Number(t.points)>Number(t.opponent_points);
   const rankText=Number.isFinite(rank)?`, No. ${rank} of ${size}`:'';
   const streakText=Number(st.length)>=2?` ${t.team_name} also carries a ${Number(st.length)}-game ${st.type==='W'?'winning':st.type==='L'?'losing':'result'} streak.`:'';
   const form=(week>=3&&Number.isFinite(recent)&&Number.isFinite(prior)&&prior>0&&Math.abs(recent-prior)>=4)?` Recent scoring sits at ${one(recent)} per game versus ${one(prior)} in the preceding stretch.`:'';
   return deskChoice(t,r,[
-    [`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} ${t.team_name} has one result in the bank; the next one gets to decide whether the clipping grows legs.`],
-    [`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} The table looks nicer already. One should resist ordering the commemorative silverware.`],
-    [`${t.team_name.toUpperCase()} IS ${record(t)}${rankText}.${streakText}${form} Keep the parade route folded, but nobody has to apologize for enjoying the scoreboard.`],
-    [`${t.team_name} is ${record(t)} through Week ${week}${rankText}.${streakText}${form} ${t.team_name}’s record is small; the consequences are not imaginary.`]
+    [won
+      ?`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} ${t.team_name} has one result in the bank; the next one gets to decide whether the clipping grows legs.`
+      :`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} The first clipping is ugly. ${t.team_name} gets a week to keep it from becoming company.`],
+    [won
+      ?`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} The table looks nicer already. One should resist ordering the commemorative silverware.`
+      :`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} The table is already less flattering. Kindly keep the commemorative silverware boxed.`],
+    [won
+      ?`${t.team_name.toUpperCase()} IS ${record(t)}${rankText}.${streakText}${form} Keep the parade route folded, but nobody has to apologize for enjoying the scoreboard.`
+      :`${t.team_name.toUpperCase()} IS ${record(t)}${rankText}.${streakText}${form} Put the parade route back in the drawer and circle next Sunday in angry ink.`],
+    [won
+      ?`${t.team_name} is ${record(t)} through Week ${week}${rankText}.${streakText}${form} ${t.team_name}’s record is small; the consequences are not imaginary.`
+      :`${t.team_name} is ${record(t)} through Week ${week}${rankText}.${streakText}${form} One loss is not a pattern. It is, however, already in the record.`]
   ]);
 }
 

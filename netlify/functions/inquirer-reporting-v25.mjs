@@ -579,25 +579,25 @@ function naturalLede(t,r){
     [`${t.team_name} beat ${t.opponent_name} ${one(t.points)}–${one(t.opponent_points)} and moved to ${record(t)}. ${top.name} did the loud work with ${one(top.points)} points, ${Math.abs(margin)>=20?'setting the tone for a Sunday fans can actually enjoy':'giving the win the headliner it needed'}.`,`${top.name} put ${one(top.points)} on the board and ${t.team_name} handled ${t.opponent_name} ${one(t.points)}–${one(t.opponent_points)}. At ${record(t)}, that is a clipping worth keeping.`],
     [`${t.team_name} left ${t.opponent_name} with the bill, ${one(t.points)}–${one(t.opponent_points)}, and ${top.name} supplied ${one(top.points)} reasons not to argue. A ${record(t)} start looks rather nicer in ink.`,`${top.name} gave ${t.team_name} the star turn, ${one(top.points)} points in a ${one(t.points)}–${one(t.opponent_points)} win over ${t.opponent_name}. For one week, the good china survives.`],
     [`${t.team_name} is on the front page after a ${one(t.points)}–${one(t.opponent_points)} win over ${t.opponent_name}. ${top.name} kicked the door open with ${one(top.points)} points.`,`${top.name} supplied ${one(top.points)} points and ${t.team_name} supplied the result: ${one(t.points)}–${one(t.opponent_points)} over ${t.opponent_name}. Print the ${record(t)} record large enough for the rival chat.`],
-    [`The evidence reads ${t.team_name} ${one(t.points)}, ${t.opponent_name} ${one(t.opponent_points)}. ${top.name} is Exhibit A with ${one(top.points)} points, and the record now reads ${record(t)}.`,`${t.team_name} closed the file on ${t.opponent_name}, ${one(t.points)}–${one(t.opponent_points)}. ${top.name} left ${one(top.points)} points of fingerprints all over the win.`]
+    [`${t.team_name} beat ${t.opponent_name} ${one(t.points)}–${one(t.opponent_points)}, with ${top.name} supplying ${one(top.points)} points at the center of it. The cleanest part of the argument is the scoreboard: ${record(t)}.`,`${t.team_name} closed the file on ${t.opponent_name}, ${one(t.points)}–${one(t.opponent_points)}. ${top.name} left ${one(top.points)} points of fingerprints all over the win.`]
   ]));
   else ps.push(deskChoice(t,r,[
     [`${t.team_name} fell ${one(t.points)}–${one(t.opponent_points)} to ${t.opponent_name}, and ${top.name}’s ${one(top.points)} points deserved better company. The record is ${record(t)}; the notebook has questions.`,`${top.name} gave ${t.team_name} ${one(top.points)} points, but ${t.opponent_name} still walked out with a ${one(t.opponent_points)}–${one(t.points)} win. File the ${record(t)} record and start the homework.`],
     [`${top.name} brought ${one(top.points)} points to the table; ${t.team_name} still lost ${one(t.points)}–${one(t.opponent_points)} to ${t.opponent_name}. An unpleasant result, elegantly documented.`,`${t.team_name} lost ${one(t.points)}–${one(t.opponent_points)}, a dreadful frame for ${top.name}’s ${one(top.points)}-point afternoon. The ${record(t)} record is not improved by good typography.`],
     [`${top.name} showed up with ${one(top.points)} points. The rest of the headline is uglier: ${t.opponent_name} beat ${t.team_name} ${one(t.opponent_points)}–${one(t.points)}.`,`${t.team_name} takes the loss, ${one(t.points)}–${one(t.opponent_points)}, while ${top.name} gets the only flattering type at ${one(top.points)} points.`],
-    [`The case against ${t.team_name} starts with a ${one(t.points)}–${one(t.opponent_points)} loss to ${t.opponent_name}. ${top.name} supplied ${one(top.points)} points of mitigating evidence.`,`${top.name} left ${one(top.points)} points in the record, but ${t.team_name} still lost to ${t.opponent_name}, ${one(t.points)}–${one(t.opponent_points)}. The file now says ${record(t)}.`]
+    [`${t.team_name} lost ${one(t.points)}–${one(t.opponent_points)} to ${t.opponent_name}, even with ${one(top.points)} from ${top.name}. The problem was not the headliner; it was everything the lineup failed to build around him.`,`${top.name} left ${one(top.points)} points in the record, but ${t.team_name} still lost to ${t.opponent_name}, ${one(t.points)}–${one(t.opponent_points)}. The file now says ${record(t)}.`]
   ]));
   if(margin>0&&bad&&String(bad.id)!==String(top.id))ps.push(deskChoice(t,r,[
     [`${top.name} and the other leaders made ${bad.name}’s ${one(bad.points)}-point off day easy to forgive once. Next week offers a cleaner line in the notebook.`,`${bad.name} managed only ${one(bad.points)}, but the stars covered the bill. ${t.team_name} would rather see the supporting cast pay its share next week.`],
     [`${bad.name}’s ${one(bad.points)}-point afternoon was the ugly accessory nobody noticed because ${top.name} and company dressed the win so well. A repeat would be less charming.`,`The victory was generous enough to hide ${bad.name} at ${one(bad.points)}. Good teams accept the gift and ask for better tailoring next Sunday.`],
     [`${bad.name} gave ${t.team_name} only ${one(bad.points)}, and the superstars made sure it stayed a footnote. Consider next week the comeback headline audition.`,`${bad.name} disappeared into a ${one(bad.points)}-point afternoon. The win survived it; the back page will notice faster if it happens twice.`],
-    [`${bad.name}’s ${one(bad.points)} points go into the file as the miss the winning lineup managed to conceal. The follow-up question comes next week.`,`The evidence includes a quiet ${one(bad.points)} from ${bad.name}; the result kept it from becoming an indictment. For now.`]
+    [`${bad.name} managed only ${one(bad.points)}, and the win kept it from becoming the story. Another week like that would be harder for ${t.team_name} to hide.`,`The evidence includes a quiet ${one(bad.points)} from ${bad.name}; the result kept it from becoming an indictment. For now.`]
   ]));
   else if(second)ps.push(deskChoice(t,r,[
     [`${top.name} had company from ${second.name}, which made the top of the lineup feel like a story rather than a solo act.`,`${second.name} was the next name that mattered behind ${top.name}. That is useful support behind the headline.`],
     [`${second.name} supplied the supporting performance behind ${top.name}; even a star appreciates competent company.`,`${top.name} owned the marquee, with ${second.name} doing enough nearby to keep the production from becoming a one-person salon.`],
     [`${second.name} joined ${top.name} among the names worth printing. Two headline performances made the lineup considerably harder to flatten.`,`${top.name} got the biggest type, but ${second.name} earned ink too. That is how a lineup starts sounding dangerous.`],
-    [`${second.name} appears on the same evidence board as ${top.name}; the case did not rest on one witness alone.`,`${top.name} led the testimony, with ${second.name} supplying corroboration that actually mattered.`]
+    [`${second.name} gave ${top.name} meaningful company, which kept ${t.team_name} from leaning on a single scorer all afternoon.`,`${top.name} led the testimony, with ${second.name} supplying corroboration that actually mattered.`]
   ]));
   return ps;
 }
@@ -606,16 +606,16 @@ function playerSection(t,r){
   const rows=list(t),top=rows[0],ps=[];if(!top)return ['n/a'];
   const topThree=rows.slice(0,3),bad=rows.filter(p=>delta(p)!=null&&delta(p)<-4).sort((a,b)=>delta(a)-delta(b))[0],support=names(topThree.slice(1));
   ps.push(deskChoice(t,r,[
-    [`${top.name} led ${t.team_name} with ${one(top.points)} fantasy points${top.real_stat_line?' ('+top.real_stat_line.replaceAll(' • ',', ')+')':''}. ${support?support+' supplied the best support behind him.':''}`,`${one(top.points)} fantasy points made ${top.name} the first name in the notebook${top.real_stat_line?', with '+top.real_stat_line.replaceAll(' • ',', ')+' underneath it':''}. ${support?'The next useful names were '+support+'.':''}`],
-    [`${top.name} gets the good china after ${one(top.points)} fantasy points${top.real_stat_line?' ('+top.real_stat_line.replaceAll(' • ',', ')+')':''}. ${support?support+' made respectable company.':''}`,`${one(top.points)} fantasy points from ${top.name} was the elegant part of the card${top.real_stat_line?' — '+top.real_stat_line.replaceAll(' • ',', '):''}. ${support?'Behind that, '+support+' kept the table from looking bare.':''}`],
-    [`PUT ${top.name.toUpperCase()} IN THE BIG TYPE: ${one(top.points)} fantasy points${top.real_stat_line?' ('+top.real_stat_line.replaceAll(' • ',', ')+')':''}. ${support?support+' earned space below the fold.':''}`,`${top.name} owned the player page with ${one(top.points)} fantasy points${top.real_stat_line?' — '+top.real_stat_line.replaceAll(' • ',', '):''}. ${support?'The supporting headline goes to '+support+'.':''}`],
-    [`The player file starts with ${top.name}: ${one(top.points)} fantasy points${top.real_stat_line?' ('+top.real_stat_line.replaceAll(' • ',', ')+')':''}. ${support?support+' provided corroborating production.':''}`,`${top.name} is the clearest exhibit at ${one(top.points)} fantasy points${top.real_stat_line?' — '+top.real_stat_line.replaceAll(' • ',', '):''}. ${support?support+' belong in the supporting evidence.':''}`]
+    [`${top.name} led ${t.team_name} with ${one(top.points)} fantasy points. ${support?support+' supplied the best support behind him.':''}`,`${one(top.points)} made ${top.name} the first name in the notebook. ${support?'The next useful names were '+support+'.':''}`],
+    [`${top.name} gets the good china after ${one(top.points)} fantasy points. ${support?support+' made respectable company.':''}`,`${one(top.points)} from ${top.name} was the elegant part of the card. ${support?'Behind that, '+support+' kept the table from looking bare.':''}`],
+    [`PUT ${top.name.toUpperCase()} IN THE BIG TYPE: ${one(top.points)} fantasy points. ${support?support+' earned space below the fold.':''}`,`${top.name} owned the player page with ${one(top.points)} fantasy points. ${support?'The supporting headline goes to '+support+'.':''}`],
+    [`${top.name} gave ${t.team_name} ${one(top.points)} fantasy points, the best line on the roster. ${support?support+' supplied enough behind him to keep the afternoon from becoming a solo act.':''}`,`${top.name} was the clear centerpiece at ${one(top.points)} fantasy points. ${support?support+' mattered around him too.':''}`]
   ]));
   if(bad&&String(bad.id)!==String(top.id))ps.push(deskChoice(t,r,[
     [`${bad.name} finished at ${one(bad.points)} against a ${one(bad.projected)} projection. ${Number(t.points)>Number(t.opponent_points)?'The win kept that miss in the margins; another week may not.':'In a loss, that quiet slot earns a longer look.'}`,`${bad.name} never found the expected afternoon, ${one(bad.points)} against ${one(bad.projected)} projected. ${Number(t.points)>Number(t.opponent_points)?'The stars covered for it this time.':'The loss gave the miss nowhere to hide.'}`],
     [`${bad.name} supplied only ${one(bad.points)} against ${one(bad.projected)} projected. ${Number(t.points)>Number(t.opponent_points)?'The victory makes that forgivable, not fashionable.':'That is the kind of detail a loss refuses to accessorize away.'}`,`${one(bad.points)} from ${bad.name}, against ${one(bad.projected)} projected, was the part of the card we would politely send back. ${Number(t.points)>Number(t.opponent_points)?'Winning bought grace.':'Losing did not.'}`],
     [`${bad.name} landed at ${one(bad.points)} after a ${one(bad.projected)} projection. ${Number(t.points)>Number(t.opponent_points)?'The rest of the lineup kept it out of the headline.':'The final score dragged it straight onto the back page.'}`,`${bad.name} missed the expected mark, ${one(bad.points)} against ${one(bad.projected)} projected. ${Number(t.points)>Number(t.opponent_points)?'Call it a warning under a winning headline.':'Call it one of the places the loss went missing.'}`],
-    [`The weak exhibit is ${bad.name}: ${one(bad.points)} after a ${one(bad.projected)} projection. ${Number(t.points)>Number(t.opponent_points)?'The verdict was still a win, so the inquiry stays informal.':'The loss upgrades the follow-up question.'}`,`${bad.name} left a ${one(bad.points)}-point line against ${one(bad.projected)} projected. ${Number(t.points)>Number(t.opponent_points)?'The record marks it as a survivable miss.':'The record marks it as relevant evidence.'}`]
+    [`${bad.name} gave ${t.team_name} only ${one(bad.points)} against a ${one(bad.projected)} projection. ${Number(t.points)>Number(t.opponent_points)?'The win covered it; the same miss in a close loss would feel much louder.':'That shortfall belongs in the explanation for the loss.'}`,`${bad.name} finished ${one(Number(bad.projected)-Number(bad.points))} points under projection. ${Number(t.points)>Number(t.opponent_points)?'This time, the rest of the lineup made it survivable.':'This time, it mattered.'}`]
   ]));
   const topContext=playerContextParagraph(top);if(topContext)ps.push(topContext);
   if(bad&&String(bad.id)!==String(top.id)){const badContext=playerContextParagraph(bad);if(badContext)ps.push(badContext)}
@@ -623,7 +623,6 @@ function playerSection(t,r){
   for(const x of trajectoryRows){if(used.has(String(x.p.id)))continue;used.add(String(x.p.id));ps.push(x.tr.text);if(used.size>=2)break}
   return ps;
 }
-
 function hotCool(t,kind,r){
   const rows=list(t).filter(p=>delta(p)!=null);if(!rows.length)return ['n/a'];
   if(kind==='hot-seat'){
@@ -867,13 +866,19 @@ function managementStory(t){
 function tillyManagementStory(t){
   const facts=t.transaction_player_facts||{},clean={...t,transactions:consolidateTransactions(t)},pick=selectImportantMoves(clean,facts)[0];if(!pick)return null;
   const add=names(pick.add),drop=names(pick.drop),isTrade=String(pick.move?.type||'').toLowerCase()==='trade',incoming=(pick.add||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],outgoing=(pick.drop||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],bits=[];
-  if(isTrade&&add)bits.push(`TRADE FOLLOW-UP: ${t.team_name} brought in ${add}${drop?' and sent out '+drop:''}. That is a roster bet with a price attached, so the back page gets to keep grading the football consequences long after the transaction alert disappears.`);
-  else if(add&&drop)bits.push(choose(t,[`BACK PAGE SWAP: ${t.team_name} brought in ${add} and moved on from ${drop}. Now the new piece has to make the Sunday lineup better; winning the transaction feed is not a standings category.`,`THE BACK PAGE CHANGED THE NAMEPLATE: ${add} in, ${drop} out for ${t.team_name}. The only interesting verdict is whether that exchange fixes something once the lineup locks.`]));
-  else if(add)bits.push(choose(t,[`BACK PAGE ARRIVAL: ${t.team_name} added ${add}. The interesting part starts now: role, usage and whether this player fixes something the roster actually needed.`,`NEW NAME, SAME DEMAND: ${add} is on ${t.team_name} now. Give the back page a football reason to care—real snaps, real usage and a role that survives past the transaction alert.`]));
-  else if(drop)bits.push(choose(t,[`BACK PAGE CUT WATCH: ${t.team_name} moved on from ${drop}. The question is whether ${t.team_name} makes the vacated role more useful by Sunday, not whether the move looked tidy on Tuesday.`,`THE BACK PAGE NOTICED THE EXIT: ${drop} is gone from ${t.team_name}. If the roster is better for it, the replacement should make that obvious before this becomes a recurring question.`]));
-  if(incoming&&valid(incoming.points))bits.push(`${incoming.name} immediately gave ${t.team_name} ${one(incoming.points)} fantasy points${incoming.real_stat_line?' from '+incoming.real_stat_line.replaceAll(' • ',', '):''}. ${playerContextParagraph(incoming)||'That first return is worth noting without pretending the sample is finished.'}`);
-  if(outgoing&&valid(outgoing.points)&&Number(outgoing.points)>=10)bits.push(`${outgoing.name} answered the exit with ${one(outgoing.points)} points. That does not make the move wrong by itself, but it guarantees ${t.manager_name} gets a follow-up question if the replacement does not produce.`);
-  bits.push(choose(t,[`For ${t.team_name}, this move should be judged across the next several matchups: does the role improve, does the roster gain another way to win, and does the cost keep looking reasonable once the first-week noise is gone?`,`The verdict can wait. What matters for ${t.team_name} is whether this decision keeps helping after the novelty wears off—better usage, better lineup options, or one fewer weak spot to explain.`]));
+  if(isTrade&&add)bits.push(`TRADE FOLLOW-UP: ${t.team_name} brought in ${add}${drop?' and sent out '+drop:''}. ${t.manager_name} paid for a new answer and gets to live with the comparison every Sunday.`);
+  else if(add&&drop)bits.push(`${t.team_name} swapped ${drop} for ${add}. Clean transaction, loud consequences: the new name has to make the lineup better.`);
+  else if(add)bits.push(`${t.team_name} added ${add}. No parade for the waiver wire; the interesting part is whether the new arrival earns a real Sunday role.`);
+  else if(drop)bits.push(`${t.team_name} moved on from ${drop}. The vacant roster spot now has to justify the cut.`);
+  if(incoming&&valid(incoming.points)){
+    const ctx=playerContextParagraph(incoming);
+    bits.push(`${incoming.name} immediately gave ${t.team_name} ${one(incoming.points)} fantasy points.${ctx?' '+ctx:''}`);
+  }
+  if(outgoing&&valid(outgoing.points)&&Number(outgoing.points)>=10)bits.push(`${outgoing.name} answered the exit with ${one(outgoing.points)}. That is not a verdict on the move, but it makes the comparison impossible to ignore.`);
+  if(incoming&&outgoing&&valid(incoming.points)&&valid(outgoing.points)){
+    const diff=Number(incoming.points)-Number(outgoing.points);
+    bits.push(diff>0?`For one week, ${t.team_name} got ${one(diff)} more points from the incoming side of the move.`:diff<0?`For one week, the outgoing side beat the incoming return by ${one(Math.abs(diff))} points.`:`Week 1 left the two sides even on the scoreboard.`);
+  }
   return bits.join(' ');
 }
 function playerTrend(teams){
@@ -889,14 +894,19 @@ function nextGame(teams){
 }
 
 function leagueTextureStory(teams){
-  const all=(teams||[]).flatMap(t=>list(t).map(p=>({t,p,trajectory:playerTrajectory(p)}))),breakout=all.find(x=>x.trajectory?.kind==='early-breakout'||x.trajectory?.kind==='breakout'),reliable=all.find(x=>x.trajectory?.kind==='reliable'&&(!breakout||String(x.p.id)!==String(breakout.p.id))),veteran=all.find(x=>x.trajectory?.kind==='decline'||x.trajectory?.kind==='veteran-check');
-  const names=[breakout?.p?.name,reliable?.p?.name,veteran?.p?.name].filter(Boolean);
-  let text='The league-wide football story is already more interesting than a leaderboard. Some opening-week explosions came with the sort of workload that can survive a quieter touchdown day; others were built on a handful of high-leverage plays that deserve excitement without pretending they are automatic. That distinction is where the season starts becoming useful. Fantasy points tell us who won Sunday, but targets, carries, defensive snaps and the shape of a player’s role tell us which parts of Sunday might follow the roster into October.';
-  if(names.length)text+=` ${names.join(', ')} are useful examples of why the reporters will keep separating form from noise. A young player forcing his way into a larger role, an established producer simply doing familiar work, and a veteran whose old baseline suddenly looks less secure are three different stories even when the fantasy totals land in the same neighborhood.`;
-  text+=' The best teams will not need every headline player to repeat an opening-week ceiling. They will need the underlying jobs to remain intact, the supporting cast to keep creating usable weeks, and management to notice when a real role change arrives before the rest of the league does. That is the thread worth carrying forward from the opener.';
-  return text;
+  const usable=(teams||[]).filter(t=>valid(t.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points)),top=usable[0],low=usable[usable.length-1],
+    all=(teams||[]).flatMap(t=>list(t).map(p=>({t,p,tr:playerTrajectory(p)}))),
+    breakout=all.find(x=>x.tr?.kind==='early-breakout'||x.tr?.kind==='breakout'),
+    reliable=all.find(x=>x.tr?.kind==='reliable'&&(!breakout||String(x.p.id)!==String(breakout.p.id))),
+    stumble=all.find(x=>x.tr?.kind==='stumble'||x.tr?.kind==='decline');
+  const ps=[];
+  if(top)ps.push(`${top.team_name} set the scoring pace at ${one(top.points)}, and the shape of the win was almost as encouraging as the total. The lineup had several places to turn, which matters more than asking one superstar to repeat a ceiling every week.`);
+  if(breakout)ps.push(`${breakout.p.name} gave ${breakout.t.team_name} one of the more interesting young-player performances of the opener. ${statSituation(breakout.p)||''} Last season’s baseline was ${one(breakout.p.prior_season_avg)} across ${breakout.p.prior_season_games} games, so the Week 1 jump deserves attention without pretending the story is finished.`);
+  if(reliable)ps.push(`${reliable.p.name} looked much more familiar than surprising for ${reliable.t.team_name}: ${one(reliable.p.points)} points against a 2025 average of ${one(reliable.p.prior_season_avg)}. Not every useful player needs a breakout label; some just keep making the lineup easier to trust.`);
+  if(stumble)ps.push(`${stumble.p.name} opened well below the level ${stumble.t.team_name} saw last season. One bad Sunday does not erase the old floor, but it gives next week a little more weight.`);
+  if(low&&top&&String(low.roster_id)!==String(top.roster_id))ps.push(`${low.team_name} sat at the other end of the weekly scoring table with ${one(low.points)}. September gives teams room to recover, but it does not give the points back.`);
+  return ps.join(' ');
 }
-
 function weeklyMatchupHeading(g,isTop=false){
   if(isTop)return `${g.winner.team_name} — Week ${g.winner?.week_classification?.week||1}’s High-Water Mark`;
   if(g.upset)return `${g.winner.team_name} vs. ${g.loser.team_name} — The Forecast Got Flipped`;

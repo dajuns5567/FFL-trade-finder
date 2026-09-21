@@ -49,7 +49,8 @@ for(const phrase of [
   'this should be judged','the point is not','the question is whether','the file records',
   'first return','useful support behind the headline','old notebook rule','without printing the same score twice',
   'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is',
-  'the result matters because','other division rival','fantasy points reasons','opened near last season','turning finished with'
+  'the result matters because','other division rival','fantasy points reasons','opened near last season','turning finished with',
+  'the useful version is','nick’s note is simple','the transaction belongs in the article','survived that call','result look as good on monday'
 ]) assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
 assert.ok(!all.includes('${'),'Generated prose must never expose a template interpolation token');
 assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),'Generated Week 1 must carry a real prior-season player-history source');
@@ -90,7 +91,8 @@ for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=4,'Reporter '+r
 
 const teamCopy=(d.teams||[]).map(t=>articleText(t)).join('\n');
 for(const [label,re] of [
-  ['stat clause joined with bad “by” grammar',/\bby\s+(?:carried|finished|completed|caught|ran)\b/i],
+  ['stat clause joined with bad preposition grammar',/\b(?:by|with|after)\s+(?:carried|finished|completed|caught|ran)\b/i],
+  ['literal null leaked into prose',/\bnull\b/i],
   ['initialed player name split by contextual prose',/\b(?:C\.J\.|A\.J\.|D\.J\.|T\.J\.|P\.J\.)\s+(?:For|Around|In the)\b/i],
   ['St. player name split by contextual prose',/\bSt\.\s+(?:For|Around|In the)\b/i],
   ['standings No. split by contextual prose',/\bNo\.\s+(?:For|Around|In the)\b/i],
@@ -107,6 +109,31 @@ for(const t of d.teams||[]){
   if((city&&new RegExp('(?:^|\\W)'+escapeRe(city)+'(?:$|\\W)','i').test(withoutFull))||(mascot&&new RegExp('(?:^|\\W)'+escapeRe(mascot)+'(?:$|\\W)','i').test(withoutFull)))aliasArticles++;
 }
 assert.ok(aliasArticles>=24,'Most team articles must naturally use a Sleeper-derived city or mascot alias in addition to the full team name; got '+aliasArticles);
+
+const isEstablishedStar=p=>{
+  const prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,pos=String(p?.position||'').toUpperCase();
+  if(!Number.isFinite(prior)||games<8)return false;
+  const defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT)$/.test(pos),threshold=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13;
+  const years=Number(p?.years_exp);
+  return prior>=threshold*1.2||(prior>=threshold&&(!Number.isFinite(years)||years>=1));
+};
+for(const t of d.teams||[]){
+  const body=articleText(t),sentences=sentenceParts(body),full=String(t.team_name||'').trim(),bits=full.split(/\s+/).filter(Boolean),mascot=bits.at(-1)||'';
+  if(/s$/i.test(mascot)){
+    const subject=new RegExp('^(?:'+escapeRe(full)+'|'+escapeRe(mascot)+')\\s+(?:is|has|gets|holds|brings|turns)\\b','i');
+    for(const sentence of sentences)assert.doesNotMatch(sentence,subject,'Plural Sleeper team alias must not take a singular verb in '+full+': '+sentence);
+  }
+  if(Number(t.points)<Number(t.opponent_points)){
+    assert.doesNotMatch(body,/\b(?:survived that call|result look(?:ed)? as good on monday|enjoy the win|permission to toast|winning shape travels|bring(?:s)? a win into)\b/i,'Losing-team article contains winner-oriented framing for '+full);
+  }
+  for(const p of t.starter_details||[]){
+    if(!isEstablishedStar(p))continue;
+    const first=String(p.name||'').trim().split(/\s+/)[0],nameRe=new RegExp('(?:'+escapeRe(String(p.name||''))+'|\\b'+escapeRe(first)+'\\b)','i');
+    for(const sentence of sentences){
+      if(nameRe.test(sentence)&&/\bbreakout(?:[- ]watch| candidate| story| label)?\b/i.test(sentence))assert.fail('Established star '+p.name+' must not be described as a breakout in '+full+': '+sentence);
+    }
+  }
+}
 
 const fourthWallHits=(teamCopy.match(/\b(?:sports journalist|journalism schools?|fourth-wall|beat-writer|press box|copy desk|editor|deadline|newsroom)\b/gi)||[]).length;
 assert.ok(fourthWallHits>=6,'Reporters should occasionally break the fourth wall across a full edition without making it every article; got '+fourthWallHits);

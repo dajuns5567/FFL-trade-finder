@@ -175,7 +175,7 @@ function teamTrajectory(p){
   if(games===1&&young&&ratio>=1.4&&role?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[`${p.name} belongs on early breakout watch, not in the breakout-candidate victory parade yet. The opener beat last year’s baseline by a wide margin and the role gave it some legitimacy; another few Sundays have to make it sustained.`,`${p.name} is young enough and opened loudly enough to start a breakout watch. One week is not sustained evidence, so the label stays “candidate pending more football” for now.`,`${p.name} gave us the first ingredient of a breakout case: a young player beating the old baseline with a meaningful role. The missing ingredient is repetition.`])};
   if(games>=3&&veteran&&ratio<=.68)return {kind:'decline',strength:1-ratio,text:keyedChoice(key,[`${p.name} is a veteran and now a legitimate fall-off candidate. The production has stayed well below last season’s level for multiple weeks; age makes the trend worth taking seriously without declaring the career over.`,`Put veteran ${p.name} on fall-off watch. A sustained drop from last year’s baseline is more than one bad Sunday, and this is the stage of a career where role erosion deserves attention.`,`${p.name} has crossed from “slow start” into fall-off-candidate territory: veteran age, a multi-week decline, and a scoring level well below the old baseline. The next question is whether the role is shrinking with it.`])};
   if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:'reliable',strength:1-Math.abs(ratio-1),text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} is doing the boring valuable thing: producing near the established baseline over a real sample. That is reliability, not a breakout.`,`${p.name} has settled back into familiar territory over multiple weeks. Reliable production rarely wins the group chat, but it keeps ${p.name} from becoming a Tuesday problem.`])};
-  if(games===1&&Math.abs(points-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(points-prior)/prior,text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} opened near last season’s established level. Same neighborhood, same job description.`,`${p.name} started the year in familiar territory relative to last season. Nothing about the opener required a new scouting report.`])};
+  if(games===1&&Math.abs(points-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(points-prior)/prior,text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} opened near last season’s established level. Same neighborhood, same job description.`,`${p.name} started the year in familiar territory relative to last season. Nothing about ${p.name}’s opener required a new scouting report.`])};
   if(games===1&&points<=prior*.5)return {kind:'stumble',strength:1-points/prior,text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} opened far below last season’s normal level. One ugly Sunday is a stumble, not a fall-off trend; another few weeks would change the classification.`,`${p.name} started well below the old baseline. The career did not disappear in one afternoon, but the next role now matters more.`])};
   if(veteran)return {kind:'veteran',strength:.25,text:`Veteran ${p.name} entered the season with an established baseline. Week 1 landed against that old standard, not a blank slate.`};
   return null;
@@ -448,7 +448,7 @@ function hotCool(t,kind,r){
 function sentiment(t,r){
   const won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),top=list(t)[0],ctx=t.league_context||{},rank=Number(ctx.standings_rank),m=t.mida_outlook,miss=t.best_lineup_miss,tx=Number(t.current_week_trade_count||0),ps=[],resultTone=margin>=20?'comfortable':margin<=6?'nervy':'useful';
   ps.push(won?deskChoice(t,r,[
-    [`${t.team_name} fans get a ${resultTone} win and ${top?top.name+' as an obvious Monday hero.':'a scoreboard worth enjoying.'} Enjoy it; September is still early enough to make parade plans look ridiculous by Halloween.`],
+    [`${t.team_name} fans get a ${resultTone} win and ${top?top.name+' as an obvious Monday hero.':'a scoreboard worth enjoying.'} ${t.team_name} can enjoy it; September is still early enough to make parade plans look ridiculous by Halloween.`],
     [`The ${t.team_name} mood is appropriately overdressed after a ${resultTone} win. ${top?top.name+' gets the toast; ':''}anyone pricing parade confetti in September is still being asked to leave the dining room.`],
     [`${t.team_name} WON, so the group chat is behaving like a municipal emergency. ${top?top.name+' is the easiest name to scream; ':''}the rest of the fan base may now enjoy exactly one week of dangerous confidence.`],
     [`${t.team_name} supporters have a win, which means suspicion has temporarily been replaced by screenshots. ${top?top.name+' is where the praise starts; ':''}the important change is that optimism now has a receipt.`]
@@ -460,7 +460,7 @@ function sentiment(t,r){
   ]));
   const position=Number.isFinite(rank)?`No. ${rank} of ${Number(ctx.league_size)||32}`:record(t),expectation=valid(m?.playoff)?Number(m.playoff)>=70?'contender-level expectations':Number(m.playoff)<20?'a fan base already running short on patience':'a season that is still very much up for argument':'an unsettled season';
   ps.push(deskChoice(t,r,[
-    [`At ${position}, ${t.team_name} has ${expectation}. Supporters can enjoy this result without lowering the standard for the next one.`],
+    [`At ${position}, ${t.team_name} has ${expectation}. ${t.team_name} supporters can enjoy this result without lowering the standard for the next one.`],
     [`At ${position}, ${t.team_name} has ${expectation}. The tasteful fan response is apparently impossible, so expect every good decision to become genius and every bad one to become a referendum by Tuesday morning.`],
     [`PUBLIC NUISANCE REPORT: ${t.team_name} sits at ${position} with ${expectation}. The fan base has enough information to be loud and nowhere near enough information to be reasonable. Perfect.`],
     [`The public mood has context: ${t.team_name} is ${position} with ${expectation}. Supporters are not reacting only to Sunday; they are reacting to what this roster was supposed to become.`]
@@ -677,11 +677,11 @@ function lineupProcessStory(t,r){
 function chairFootballStory(t,kind,r){
   const rows=list(t).filter(p=>delta(p)!=null);if(!rows.length)return null;const p=kind==='hot-seat'?rows.slice().sort((a,b)=>delta(a)-delta(b))[0]:rows.slice().sort((a,b)=>delta(b)-delta(a))[0];if(!p)return null;const tr=teamTrajectory(p);if(!tr)return null;
   if(tr.kind==='rookie')return `${p.name} is a rookie, so this is the first checkpoint of a much longer season.`;
-  if(tr.kind==='breakout'||tr.kind==='early-breakout')return `${p.name} is on breakout watch now. Another few Sundays like this and the old baseline will look badly out of date.`;
+  if(tr.kind==='breakout'||tr.kind==='early-breakout')return `${p.name} is on breakout watch now. Give ${p.name} a few more Sundays like this and the old baseline will look badly out of date.`;
   if(tr.kind==='decline')return `Veteran ${p.name} is on fall-off watch after a multi-week slide. The old weekly floor is no longer automatic.`;
   if(tr.kind==='reliable')return kind==='hot-seat'?`${p.name} has usually been steadier than this. One bad week is an annoyance; another would be a story.`:`${p.name} landed near an established weekly level again. Boring can be very profitable.`;
-  if(tr.kind==='stumble')return `${p.name} has a longer track record than this one result. Call it a stumble until repetition says otherwise.`;
-  if(tr.kind==='veteran')return `Veteran ${p.name} already has a long baseline. This week moved it only at the margins.`;
+  if(tr.kind==='stumble')return `${p.name} has a longer track record than this one result. Call ${p.name}’s week a stumble until repetition says otherwise.`;
+  if(tr.kind==='veteran')return `Veteran ${p.name} already has a long baseline. ${p.name}’s Week 1 moved it only at the margins.`;
   return null;
 }
 

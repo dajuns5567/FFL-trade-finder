@@ -689,10 +689,10 @@ function lineupProcessStory(t,r){
     ]);
   }
   if(w&&b)return deskChoice(t,r,[
-    [`${w.name} was the quietest starter and ${b.name} led the bench, but there was no clean eligible swap large enough to rewrite the result. ${t.team_name} needed better production more than a different click.`],
-    [`${b.name} owned the bench headline while ${w.name} had the softest starting return. There was no obvious legal swap large enough to change the story.`],
-    [`${b.name} led the bench and ${w.name} gave the starting lineup very little. No obvious eligible swap fixes that after the fact; sometimes the roster simply needed more from the people already in the game.`],
-    [`${b.name} outscored the bench while ${w.name} struggled in the lineup, but there was no straightforward eligible replacement that rewrites Sunday.`]
+    [`${w.name} was the quietest starter at ${one(w.points)} points. There was no verified eligible bench replacement that would have improved that slot, so ${t.team_name} needed better production more than a different click.`],
+    [`${w.name} had the softest starting return at ${one(w.points)} points. The eligible bench did not offer a clean upgrade for that spot, which makes this a production problem rather than a lineup confession.`],
+    [`${w.name} gave the starting lineup only ${one(w.points)} points. No verified eligible replacement fixes that after the fact; ${t.team_name} simply needed more from the player already in the game.`],
+    [`${w.name} struggled in the lineup at ${one(w.points)} points, but there was no straightforward eligible replacement for that slot. The weak return matters; an imaginary cross-position fix does not.`]
   ]);
   return null;
 }

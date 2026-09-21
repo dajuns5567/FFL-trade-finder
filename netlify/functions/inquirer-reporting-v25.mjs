@@ -314,7 +314,7 @@ function bartholomewPlayerBoard(teams){
   const take=(defense,n,score,exclude=new Set())=>rows.filter(x=>defensivePlayer(x.p)===defense&&!exclude.has(String(x.p.id))&&Number.isFinite(score(x))).sort((a,b)=>score(b)-score(a)||b.pts-a.pts).slice(0,n);
   const bo=take(false,2,breakoutScore),bd=take(true,1,breakoutScore),used=new Set([...bo,...bd].map(x=>String(x.p.id))),
     ro=take(false,2,reliableScore,used),rd=take(true,1,reliableScore,used);
-  const rolePhrase=x=>x.role?.text?` ${x.role.text} gave the performance enough substance to keep the champagne corked but the name circled.`:'';
+  const rolePhrase=x=>x.role?.text?` The role included ${x.role.text}, enough substance to keep the champagne corked but the name circled.`:'';
   const ps=[];
   if(bo.length===2&&bd.length===1){
     ps.push(`Bartholomew’s offensive breakout watch admits ${bo[0].p.name} and ${bo[1].p.name} past the velvet rope. ${bo[0].p.name} earned the invitation.${rolePhrase(bo[0])} ${bo[1].p.name} did too.${rolePhrase(bo[1])} On defense, ${bd[0].p.name} gets the third seat after a Sunday loud enough to demand another look. Three names, no coronations; restraint remains fashionable for at least one more week.`);
@@ -533,14 +533,23 @@ function teamLedeV27(t,r){
   return ps.filter(Boolean);
 }
 function watchSentenceV27(x){
-  const p=x.p,tr=x.tr;
-  if(tr.kind==='breakout'||tr.kind==='early-breakout')return `Breakout watch belongs on ${p.name} now. ${tr.text}`;
-  if(tr.kind==='reliable')return `${p.name} is the steadier story. ${tr.text}`;
+  const p=x.p,tr=x.tr,key=p.id||p.name;
+  if(tr.kind==='breakout'||tr.kind==='early-breakout')return keyedChoice(key,[
+    `Breakout watch belongs on ${p.name} now. ${tr.text}`,
+    `${p.name} is the upside name worth circling. ${tr.text}`,
+    `Keep ${p.name} on the breakout page for another week. ${tr.text}`
+  ]);
+  if(tr.kind==='reliable')return keyedChoice(key,[
+    `${p.name} is the steadier story. ${tr.text}`,
+    `No alarm bells around ${p.name}. ${tr.text}`,
+    `${p.name} looks like the boring kind of useful. ${tr.text}`
+  ]);
   if(tr.kind==='decline')return `${p.name} has earned the uncomfortable paragraph. ${tr.text}`;
   if(tr.kind==='stumble')return `${p.name} gets a mulligan, not a free pass. ${tr.text}`;
   if(tr.kind==='rookie')return `${p.name} is the rookie worth tracking. ${tr.text}`;
   return tr.text;
 }
+
 function teamPlayersV27(t,r){
   const rows=list(t),top=rows[0];if(!top)return ['n/a'];
   const bad=rows.filter(p=>delta(p)!=null&&delta(p)<-4&&String(p.id)!==String(top.id)).sort((a,b)=>delta(a)-delta(b))[0],
@@ -600,7 +609,7 @@ function sentiment(t,r){
   ]));
   const position=Number.isFinite(rank)?`No. ${rank} of ${Number(ctx.league_size)||32}`:record(t),expectation=valid(m?.playoff)?Number(m.playoff)>=70?'contender-level expectations':Number(m.playoff)<20?'a fan base already running short on patience':'a season that is still very much up for argument':'an unsettled season';
   ps.push(deskChoice(t,r,[
-    [`At ${position}, ${t.team_name} has ${expectation}. ${t.team_name} supporters can enjoy this result without lowering the standard for the next one.`],
+    [`At ${position}, ${t.team_name} has ${expectation}. ${won?t.team_name+' has earned a calmer Tuesday; another win would turn optimism into expectation.':t.team_name+' has already made next Sunday louder than it needed to be.'}`],
     [`At ${position}, ${t.team_name} has ${expectation}. The tasteful fan response is apparently impossible, so expect every good decision to become genius and every bad one to become a referendum by Tuesday morning.`],
     [`PUBLIC NUISANCE REPORT: ${t.team_name} sits at ${position} with ${expectation}. The fan base has enough information to be loud and nowhere near enough information to be reasonable. Perfect.`],
     [`The public mood has context: ${t.team_name} is ${position} with ${expectation}. Supporters are not reacting only to Sunday; they are reacting to what this roster was supposed to become.`]
@@ -649,11 +658,11 @@ function scheduleSignificanceStory(t,r){
     [`BYE-WEEK DEPTH TEST: ${names} will be unavailable. ${t.team_name} gets to find out whether the bench is furniture or actually part of the house.`],
     [`Verified NFL byes remove ${names} from the next lineup. That turns depth into part of the matchup rather than an abstract roster compliment.`]
   ]));}
-  if((a.injury_current_starters||[]).length){const names=(a.injury_current_starters||[]).slice(0,3).map(x=>x.name).join(', ');parts.push(deskChoice(t,r,[
-    [`Availability matters before kickoff: ${names} currently carry injury/status designations. ${t.team_name} needs a plan that does not depend on optimistic refresh-button behavior.`],
-    [`${names} enter the week with injury/status flags. Hope is charming; a bench plan is more useful.`],
+  if((a.injury_current_starters||[]).length){const injuryRows=(a.injury_current_starters||[]).slice(0,3),names=injuryRows.map(x=>x.name).join(', '),verb=injuryRows.length===1?'enters':'enter',carry=injuryRows.length===1?'carries':'carry';parts.push(deskChoice(t,r,[
+    [`Availability matters before kickoff: ${names} ${carry} an injury/status designation. ${t.team_name} needs a plan that does not depend on optimistic refresh-button behavior.`],
+    [`${names} ${verb} the week with injury/status flags. Hope is charming; a bench plan is more useful.`],
     [`INJURY WATCH: ${names}. ${t.team_name} should prepare an actual contingency before Sunday turns the inactive list into breaking news.`],
-    [`${names} currently carry injury/status designations, so ${t.team_name} has a real depth question to solve before the matchup decides it for them.`]
+    [`${names} ${carry} injury/status designations, so ${t.team_name} has a real depth question to solve before the matchup decides it for them.`]
   ]));}
   return parts;
 }
@@ -734,7 +743,7 @@ function currentOpponentFootballStory(t,r){
   const won=Number(t.points)>Number(t.opponent_points),clause=statClause(star),support=second?` ${second.name} added ${one(second.points)} fantasy points.`:'';
   return deskChoice(t,r,[
     [`${t.opponent_name} did not go quietly. ${star.name} ${clause||'produced the best line on the other roster'}, a performance worth ${one(star.points)} fantasy points.${support} ${won?t.team_name+' absorbed the best counterpunch and kept scoring.':t.team_name+' never found enough elsewhere to answer it.'}`],
-    [`${star.name} was the attractive part of ${t.opponent_name}’s afternoon, turning ${clause||'the useful work'} into ${one(star.points)} fantasy points.${support} ${won?'Winning through that makes the '+t.team_name+' result look sturdier.':'That was enough elegance across the table to make '+t.team_name+' pay.'}`],
+    [`${star.name} was the attractive part of ${t.opponent_name}’s afternoon. ${star.name} ${clause||'did the useful work'}; the line was worth ${one(star.points)} fantasy points.${support} ${won?'Winning through that makes the '+t.team_name+' result look sturdier.':'That was enough elegance across the table to make '+t.team_name+' pay.'}`],
     [`${star.name.toUpperCase()} KEPT ${t.opponent_name.toUpperCase()} ALIVE by ${clause||'doing the useful work'}, and the line became ${one(star.points)} fantasy points.${support} ${won?t.team_name+' took the punch and kept moving.':t.team_name+' never produced the counterpunch it needed.'}`],
     [`${star.name} supplied the strongest answer for ${t.opponent_name} by ${clause||'leading the opposing lineup'}, good for ${one(star.points)} fantasy points.${support} ${won?t.team_name+' won anyway, which makes the result sturdier.':t.team_name+' never found an answer of equal weight.'}`]
   ]);

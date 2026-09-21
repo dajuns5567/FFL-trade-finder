@@ -236,9 +236,9 @@ function teamTrajectory(p){
     `${p.name} changed the conversation for one week. Keep the same workload next Sunday and “breakout watch” starts losing the word “watch.”`
   ])};
   if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:established?'star':'reliable',strength:1-Math.abs(ratio-1),text:keyedChoice(key,established?[
-    `${p.name} is already an established star; another week near his usual level reinforces the expectation instead of creating a breakout story.`,
+    `${p.name} already owns a star-level baseline, and another week near it reinforces the expectation.`,
     `${p.name} did what established stars are supposed to do: make a strong weekly role look ordinary.`,
-    `Nothing about ${p.name} requires a discovery label. The production belongs to an established player doing established-player work.`
+    `${p.name} looked like an established player doing the kind of work his roster already expects.`
   ]:[
     `${veteran?'Veteran ':''}${p.name} keeps showing up in the same useful neighborhood every week. That is reliability, and contenders need plenty of it.`,
     `${p.name} has become pleasantly predictable. The production keeps landing where this roster expects it.`
@@ -249,9 +249,9 @@ function teamTrajectory(p){
     `${p.name} gave the roster far less than it usually gets from him. The useful test comes next week, not in a Week 1 obituary.`
   ])};
   if(established)return {kind:'star',strength:Math.max(.5,ratio),text:keyedChoice(key,[
-    `${p.name} is already an established star. A big week strengthens that reputation; it does not make him a breakout candidate.`,
+    `${p.name} already owns star status. A big week strengthens that reputation and raises the standard for the next one.`,
     `${p.name} entered the season with a star-level track record, so Sunday belongs in the confirmation column rather than the discovery column.`,
-    `There is no need to rediscover ${p.name}. The question is whether the established star keeps delivering the role his roster already expects.`
+    `${p.name} entered Sunday with an established reputation; another substantial role keeps that reputation intact.`
   ])};
   if(games===1&&Math.abs(points-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(points-prior)/prior,text:keyedChoice(key,[
     `${veteran?'Veteran ':''}${p.name} averaged ${one(prior)} last season and looked like the same player Sunday. No reinvention required.`,
@@ -286,7 +286,7 @@ function playerTrajectory(p){
     `${p.name} opened a long way below last year’s ${one(prior)}-point average. The production disappeared for a week; the career did not.`
   ])};
   if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:established?'star':'reliable',strength:1-Math.abs(ratio-1),text:keyedChoice(key,established?[
-    `${p.name} remains an established star, not a breakout story. ${one(current)} per game this season sits in the same conversation as last year’s ${one(prior)}.`,
+    `${p.name} remains an established star. ${one(current)} per game this season sits in the same conversation as last year’s ${one(prior)}.`,
     `${p.name} is doing star-level work that the league already knew belonged in his range.`
   ]:[
     `${p.name} keeps doing the boring valuable thing: ${one(current)} per game this season after ${one(prior)} last year.`,
@@ -349,12 +349,12 @@ function bartholomewPlayerBoard(teams){
     const offense=bo.length?`On offense, ${naturalJoin(bo.map(x=>x.p.name))} ${bo.length===1?'gets':'get'} the breakout-watch invitations.`:'No offensive player clears the breakout bar this week.';
     const defense=bd.length?` On defense, ${bd[0].p.name} gets the watch list after a Sunday loud enough to demand another look.`:' No defensive player clears the breakout bar this week.';
     const detail=bo.map(x=>`${x.p.name}:${rolePhrase(x)}`).join(' ');
-    ps.push(`${offense}${defense} ${detail} Established stars are deliberately excluded; breakout watch is for players still changing what the league thinks they are.`);
+    ps.push(`${offense}${defense} ${detail} These are the names whose weekly reputations moved enough to earn another look.`);
   }
   if(ro.length||rd.length){
     const offense=ro.length?`${naturalJoin(ro.map(x=>x.p.name))} ${ro.length===1?'is the offensive reliability name':'are the two offensive reliability names'} Bartholomew trusts to keep doing familiar work.`:'No offensive player earns the reliability label this week.';
     const defense=rd.length?` On defense, ${rd[0].p.name} gets the same designation.`:' No defensive player clears the reliability bar this week.';
-    ps.push(`Reliability is less glamorous and considerably more useful. ${offense}${defense} An established star can absolutely belong here; being excellent already is the opposite of being a breakout candidate.`);
+    ps.push(`Reliability is less glamorous and considerably more useful. ${offense}${defense} Dependability rarely gets champagne, which is probably why it survives the evening.`);
   }
   return ps;
 }
@@ -1262,8 +1262,8 @@ function angleLeadV28(t,r,angle){
     ],
     'rout-loss':[
       `${full} lost ${score}, a margin of ${one(margin)} that resists euphemism. This was not one unlucky lineup slot; it was the kind of Sunday that makes every department of the roster look complicit.`,
-      `The polite version is that ${opp} beat ${full} ${score}. For ${full}, the useful version is that the game got away so completely that isolated excuses stopped mattering.`,
-      `${score} is the sort of final that forces a beat writer to choose between analysis and an incident report. ${full} has enough problems here that none deserves to hide behind the others.`
+      `${opp} beat ${full} ${score}, and at that margin isolated excuses stop mattering. The whole ${full} lineup has to own a piece of the afternoon.`,
+      `${score} is the sort of final that forces a beat writer to choose between analysis and an incident report. There are enough problems across ${full} that none deserves to hide behind the others.`
     ],
     'close-win':[
       `${full} escaped ${opp} ${score}, and the ${one(margin)}-point margin is exactly why the details matter. One lineup call, one target, one tackle or one ugly quarter could have turned a satisfying win into a week of recriminations.`,
@@ -1673,10 +1673,10 @@ function classificationSentenceV29(p,tr,r){
   if(!p||!tr)return null;
   const v=voice(r);
   if(tr.kind==='star')return [
-    `${p.name} is already an established star. ${p.name} reinforced the standard on Sunday instead of creating a breakout story.`,
+    `${p.name} already owns a star-level standard. Sunday reinforced it with another performance worthy of that reputation.`,
     `${p.name} arrived with star status already secured; this performance belongs in the confirmation column, not the discovery column.`,
-    `${p.name.toUpperCase()} DOES NOT NEED A BREAKOUT LABEL. ${p.name} already owns the résumé; this week simply gave it another loud line.`,
-    `${p.name} enters the file as an established star, so the relevant issue is consistency rather than discovery.`
+    `${p.name.toUpperCase()} WAS ALREADY A STAR. THIS WEEK GAVE THE RÉSUMÉ ANOTHER LOUD LINE.`,
+    `${p.name} enters the week as an established star; Sunday added another favorable line to an already substantial record.`
   ][v];
   if(tr.kind==='breakout'||tr.kind==='early-breakout')return [
     `${p.name} has earned breakout-watch attention because the role and production are rising together.`,
@@ -1769,9 +1769,9 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
   }
   while(ps.length<3){
     ps.push([
-      `${team} has a clear headliner in ${top.name}; the next useful development is a second or third player making the same kind of weekly claim on the offense or defense.`,
-      `${team} has its star turn in ${top.name}. Bartholomew would prefer a fuller cast next week rather than another evening spent asking one performance to carry the review.`,
-      `${team.toUpperCase()} HAS A HEADLINER IN ${top.name.toUpperCase()}. SOMEBODY ELSE ON ${team.toUpperCase()} NOW NEEDS TO MAKE THE BACK PAGE FIGHT FOR SPACE.`,
+      `${top.name} is the clear ${team} headliner; the next useful development is a second or third player making the same kind of weekly claim on the offense or defense.`,
+      `${top.name} owns the ${team} star turn. Bartholomew would prefer a fuller cast next week rather than another evening spent asking one performance to carry the review.`,
+      `${top.name.toUpperCase()} IS THE ${team.toUpperCase()} HEADLINER. SOMEBODY ELSE NOW NEEDS TO MAKE THE BACK PAGE FIGHT FOR SPACE.`,
       `${top.name} is established as the primary affirmative finding for ${team}. The remaining roster question is which secondary role becomes dependable enough to matter without prompting an investigation.`
     ][voice(r)]);
   }
@@ -1844,7 +1844,7 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
     if(outgoing&&outStrong)counter=`${outgoing.name} answered with ${one(outgoing.points)}${transactionDestination(t,outgoing)}, which keeps the other side of the receipt alive.`;
     else if(outgoing)counter=`${outgoing.name} is now producing${transactionDestination(t,outgoing)}, so the departure has to be tracked in the correct uniform rather than credited to ${team}.`;
     ps.push([
-      `${moveLead} ${impact} ${counter} Nick’s note is simple: the transaction belongs in the article only to the extent it changed usable football for ${team}.`,
+      `${moveLead} ${impact} ${counter} The move has a football consequence now; ${team} needs the roster spot or player it created to justify the decision over the next few Sundays.`,
       `${moveLead} ${impact} ${counter} The ${team} receipt finally has football attached to it, which is considerably more interesting than transaction-day self-congratulation.`,
       `${moveLead} ${impact} ${counter} TRANSACTION DAY WAS THE TRAILER FOR ${team.toUpperCase()}. SUNDAY WAS THE FIRST SCENE THAT COUNTS.`,
       `${moveLead} ${impact} ${counter} The timestamp proves the ${team} decision happened; the Sunday role begins showing what actually changed.`
@@ -1907,7 +1907,7 @@ function scheduleSignificanceV29(t,r,f=articleFrameV29(t,r)){
   else if(next&&laterStrong.length===1)parts.push([
     `${laterStrong[0].team_name} waits shortly after ${next.team_name}. ${f.won?`${team} would rather carry another win into the harder test.`:`The current loss makes banking the friendlier game in front of that test more important.`}`,
     `${laterStrong[0].team_name} appears soon after ${next.team_name}. ${team} should collect the easier appointment before the difficult one sends an invoice.`,
-    `${String(laterStrong[0].team_name).toUpperCase()} IS COMING AFTER ${String(next.team_name).toUpperCase()}. ${f.won?'BANK THE CUSHION FIRST.':'DO NOT ASK THE HARDER GAME TO REPAIR AN AVOIDABLE LOSS.'}`,
+    `AFTER ${String(next.team_name).toUpperCase()} COMES ${String(laterStrong[0].team_name).toUpperCase()}. ${f.won?'BANK THE CUSHION FIRST.':'DO NOT ASK THE HARDER GAME TO REPAIR AN AVOIDABLE LOSS.'}`,
     `${laterStrong[0].team_name} follows ${next.team_name}. The sequence gives ${team} a clear timing problem: accumulate margin before the stronger test rather than after it.`
   ][voice(r)]);
   else if(next&&strength(next)==='strong'&&laterSoft.length)parts.push([
@@ -1931,7 +1931,7 @@ function outlookStoryV29(t,r,f=articleFrameV29(t,r)){
     f.won?`${team} approaches ${next} from the useful side of the standings; the next result decides whether Week 1 becomes cushion or merely a pleasant opening note.`:`${team} arrives at ${next} needing a response. Another ${team} loss would not resemble the first one; the schedule has already started moving.`,
     f.won?`A winning week gives ${team} a little leverage entering ${next}. The elegant ${team} move is to use that leverage before the schedule changes the dress code.`:`The loss makes ${next} more consequential for ${team}; a contender is allowed an ugly Sunday, not an endless collection of them.`,
     f.won?`A WIN FOLLOWS ${team.toUpperCase()} INTO ${String(next).toUpperCase()}. NOW MAKE THE CUSHION USEFUL.`:`${team.toUpperCase()} NEEDS AN ANSWER AGAINST ${String(next).toUpperCase()}. THE FIRST ${team.toUpperCase()} LOSS ALREADY USED THE EASY EXCUSE.`,
-    f.won?`The next exhibit is ${next}. ${team} has one favorable result in hand; the follow-up determines whether the first week deserves more weight.`:`The next exhibit is ${next}. One adverse ${team} result is manageable; a second begins changing the pattern in the file.`
+    f.won?`The next exhibit is ${next}. One favorable ${team} result is already in hand; the follow-up determines whether the first week deserves more weight.`:`The next exhibit is ${next}. One adverse ${team} result is manageable; a second begins changing the pattern in the file.`
   ][voice(r)];
   return [nextOpponentLeadV29(t,r,f),bridge,...(schedule.length?schedule:[broader])].filter(Boolean).slice(0,4);
 }

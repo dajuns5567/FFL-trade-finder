@@ -18,11 +18,18 @@ const naturalJoin=xs=>{const a=(xs||[]).filter(Boolean);return a.length<2?(a[0]|
 const defensivePlayer=p=>/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT)$/.test(String(p?.position||'').toUpperCase());
 const articlePlayers=t=>[...(t?.starter_details||[]),...(t?.opponent_roster?.starters||t?.opponent_roster?.players||[]),...(t?.next_opponent_roster?.starters||t?.next_opponent_roster?.players||[])].filter(p=>p?.name);
 const escapeRe=value=>String(value??'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function splitSentencesSafeV28(value){
+  const protectedText=String(value??'')
+    .replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§'))
+    .replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms)\.(?=\s+[A-Z])/g,m=>m.replace('.','§'));
+  return protectedText.split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.')).filter(Boolean);
+}
+
 function naturalizePlayerReferences(t,value){
   const text=String(value??''),players=articlePlayers(t),firstCounts=new Map();
   for(const p of players){const first=String(p.name).trim().split(/\s+/)[0];if(first)firstCounts.set(first,(firstCounts.get(first)||0)+1)}
   const names=[...new Set(players.map(p=>String(p.name||'').trim()).filter(Boolean))].sort((a,b)=>b.length-a.length),last=new Map();
-  return text.split(/(?<=[.!?])\s+/).map((sentence,index)=>{
+  return splitSentencesSafeV28(text).map((sentence,index)=>{
     let out=sentence;
     for(const name of names){
       const first=name.split(/\s+/)[0];if(!first||firstCounts.get(first)!==1)continue;
@@ -36,6 +43,7 @@ function naturalizePlayerReferences(t,value){
     return out;
   }).join(' ');
 }
+
 function statClause(p){
   const line=teamStatLine(p);if(!line)return null;
   const name=String(p?.name||'').trim(),re=new RegExp('^'+escapeRe(name)+'\\s+','i');
@@ -1320,7 +1328,8 @@ function angleLeadV28(t,r,angle){
       `A reporter who keeps receipts eventually becomes unpopular with managers and very useful on Mondays. I can live with that arrangement.`
     ]
   ]);
-  return spine+' '+voiceLine;
+  const beat=teamIdentityV28(t).mascot,lead=/^I\b/.test(voiceLine)?`On the ${beat} beat, ${voiceLine}`:`For ${beat}, ${voiceLine.charAt(0).toLowerCase()+voiceLine.slice(1)}`;
+  return spine+' '+lead;
 }
 
 function fourthWallV28(t,r,angle){
@@ -1558,15 +1567,15 @@ function contextualizeParagraphV28(t,value){
   const text=String(value??''),id=teamIdentityV28(t),manager=String(t.manager_name||'').trim(),players=articlePlayers(t).flatMap(p=>{
     const full=String(p?.name||'').trim(),first=full.split(/\s+/)[0];return [full,first].filter(Boolean);
   }),entities=[id.full,id.city,id.mascot,String(t.opponent_name||''),String(t.next_opponent_name||''),manager,...players].filter(Boolean);
-  const sentences=text.split(/(?<=[.!?])\s+/).filter(Boolean);
-  return sentences.map((sentence,index)=>{
+  return splitSentencesSafeV28(text).map((sentence,index)=>{
     if(sentence.trim().split(/\s+/).length<8)return sentence;
     if(entities.some(e=>e&&sentence.toLowerCase().includes(e.toLowerCase())))return sentence;
     const ref=(index%2===0?id.mascot:id.city)||id.full,lead=sentence.trim();
     if(/^I\b/.test(lead))return `On the ${ref} beat, ${lead}`;
-    const first=lead.charAt(0),rest=lead.slice(1),lower=first.toLowerCase()+rest;
+    const common=/^(The|That|This|It|Everything|Losing|Winning|A|One|Every|Call|In|Around|For)\b/.test(lead);
+    const body=common?lead.charAt(0).toLowerCase()+lead.slice(1):lead;
     const prefixes=[`For ${ref}, `,`In the ${ref} story, `,`Around ${ref}, `];
-    return prefixes[(Number(t.roster_id||0)+index)%prefixes.length]+lower;
+    return prefixes[(Number(t.roster_id||0)+index)%prefixes.length]+body;
   }).join(' ');
 }
 

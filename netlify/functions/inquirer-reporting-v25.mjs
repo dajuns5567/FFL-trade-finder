@@ -634,9 +634,9 @@ function teamScoreConstructionStory(t,r){
 }
 
 function supportingCastFootballStory(t,r){
-  const rows=list(t),second=rows[1],third=rows[2];if(!second)return null;
+  const rows=list(t),bad=rows.filter(p=>delta(p)!=null&&delta(p)<-4).sort((a,b)=>delta(a)-delta(b))[0],supportRows=rows.slice(1).filter(p=>!bad||String(p.id)!==String(bad.id)).slice(0,2);if(!supportRows.length)return null;
   const pieces=[];
-  for(const p of [second,third].filter(Boolean)){
+  for(const p of supportRows){
     const ctx=teamFootballRead(t,p,r,'supporting-cast'),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0;
     let baseline='';
     if(Number.isFinite(prior)&&prior>0&&priorGames>=6){
@@ -787,7 +787,7 @@ function specificityPass(t,kind,value){
     ['That is how a lineup starts sounding dangerous.','That is how the '+team+' lineup starts sounding dangerous.'],
     ['Print the 1-0 record large enough for the rival chat.','Print '+team+'’s 1-0 record large enough for the rival chat.'],
     ['His production is now evidence in a transaction that remains open for review.','That production now belongs in '+team+'’s evaluation of the move.'],
-    ['Depending on rival charity twice in a row would be terribly unbecoming.',team+' depending on rival charity twice in a row would be terribly unbecoming.'],
+    ['Depending on rival charity twice in a row would be terribly unbecoming.',team+' cannot keep depending on rival charity; twice in a row would be terribly unbecoming.'],
     ['Call it a warning under a winning headline.','For '+team+', call it a warning under a winning headline.'],
     ['Call it one of the places the loss went missing.','For '+team+', call it one of the places the loss went missing.'],
     ['A two-week run can still change the whole conversation.','A two-week '+team+' run can still change the whole conversation.'],

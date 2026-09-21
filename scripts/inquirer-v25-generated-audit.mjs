@@ -50,7 +50,7 @@ for(const phrase of [
   'first return','useful support behind the headline','old notebook rule','without printing the same score twice',
   'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is',
   'the result matters because','other division rival','fantasy points reasons','opened near last season','turning finished with',
-  'the useful version is','nick’s note is simple','the transaction belongs in the article','survived that call','result look as good on monday'
+  'the useful version is','nick’s note is simple','the transaction belongs in the article','survived that call','result look as good on monday','roster compliment sitting on the bench','other side of the receipt alive','playoff case still sitting squarely in the argument','this week gave the résumé another loud line','somebody else now needs to make the back page fight for space','sunday reinforced it with another performance worthy of that reputation'
 ]) assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
 assert.ok(!all.includes('${'),'Generated prose must never expose a template interpolation token');
 assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),'Generated Week 1 must carry a real prior-season player-history source');
@@ -132,6 +132,24 @@ for(const t of d.teams||[]){
     for(const sentence of sentences){
       if(nameRe.test(sentence)&&/\bbreakout(?:[- ]watch| candidate| story| label)?\b/i.test(sentence))assert.fail('Established star '+p.name+' must not be described as a breakout in '+full+': '+sentence);
     }
+  }
+}
+
+
+const fmtScore=n=>{const x=Number(n);return Number.isFinite(x)?(Math.abs(x-Math.round(x))<1e-9?String(Math.round(x)):x.toFixed(1).replace(/0+$/,'').replace(/\.$/,'')):''};
+for(const t of d.teams||[]){
+  const body=articleText(t),full=String(t.team_name||''),opp=String(t.opponent_name||''),lost=Number(t.points)<Number(t.opponent_points);
+  if(lost&&full&&opp&&body.includes(opp+' beat '+full)){
+    const expected=opp+' beat '+full+' '+fmtScore(t.opponent_points)+'–'+fmtScore(t.points);
+    assert.ok(body.includes(expected),'Opponent-subject loss sentence must present opponent score first for '+full+'; expected '+expected);
+  }
+  const cool=(t.inquirer_article?.sections||[]).find(x=>x.kind==='cool-throne'),coolCopy=(cool?.paragraphs||[]).join(' ');
+  const eligible=(t.starter_details||[]).filter(p=>{
+    const pts=Number(p.points),prior=Number(p.prior_season_avg),proj=Number(p.projected),delta=Number.isFinite(proj)?pts-proj:null;
+    return Number.isFinite(pts)&&(pts>=15||(delta!=null&&delta>=4)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.2));
+  }).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2);
+  if(eligible.length>=2&&cool&&coolCopy.trim()&&coolCopy.trim().toLowerCase()!=='n/a'){
+    assert.ok(eligible.every(p=>coolCopy.includes(String(p.name||''))),'Cool Throne should recognize multiple legitimately deserving players for '+full+'; expected '+eligible.map(p=>p.name).join(', '));
   }
 }
 

@@ -2067,7 +2067,7 @@ function nextOpponentDepthV29(o,weeklyStar,r){
   if(voice(r)===0)return [seasonNote?`${seasonNote.name} is the longer-view warning after leading this roster’s season scoring so far.`:null,valueNote?`${valueNote.name} remains its highest-valued player, another reason the advance report cannot stop at last week’s box score.`:null].filter(Boolean).join(' ');
   if(voice(r)===1)return [seasonNote?`The weekly headline should not obscure ${seasonNote.name}, who still owns the stronger season-long scoring résumé.`:null,valueNote?`${valueNote.name} remains the roster’s most valuable piece, an inconvenient detail for anyone hoping one scouting note would suffice.`:null].filter(Boolean).join(' ');
   if(voice(r)===2)return [seasonNote?`DO NOT READ ONE BOX SCORE AND FORGET ${seasonNote.name.toUpperCase()}: HE LEADS THIS ROSTER’S SEASON SCORING.`:null,valueNote?`${valueNote.name.toUpperCase()} STILL CARRIES THE HIGHEST ROSTER VALUE. THE WARNING LABEL HAS MORE THAN ONE NAME.`:null].filter(Boolean).join(' ');
-  return [seasonNote?`The season file points separately to ${seasonNote.name}, the roster’s scoring leader to date.`:null,valueNote?`The value file points to ${valueNote.name} as the roster centerpiece, so the advance evidence is broader than one weekly performance.`:null].filter(Boolean).join(' ');
+  return [seasonNote?`${seasonNote.name} remains the roster’s season scoring leader, a separate concern from last week’s headline.`:null,valueNote?`${valueNote.name} still carries the roster’s highest current value, giving the opponent another centerpiece to account for.`:null].filter(Boolean).join(' ');
 }
 
 function nextOpponentLeadV29(t,r,f=articleFrameV29(t,r)){

@@ -1687,11 +1687,11 @@ function classificationSentenceV29(p,tr,r){
     [
       `${p.name.toUpperCase()} WAS ALREADY A STAR. THIS WEEK ADDED A LOUD LINE; IT DID NOT INVENT THE PLAYER.`,
       `ESTABLISHED STAR, NOT BREAKOUT: ${p.name.toUpperCase()}. THE HEADLINE IS THE PERFORMANCE, NOT A FAKE ORIGIN STORY.`,
-      `${p.name.toUpperCase()} DOES NOT NEED A BREAKOUT LABEL. HE NEEDED ANOTHER BIG SUNDAY, AND HE GOT ONE.`
+      `${p.name.toUpperCase()} DOES NOT NEED A BREAKOUT LABEL. ${p.name.toUpperCase()} NEEDED ANOTHER BIG SUNDAY, AND HE GOT ONE.`
     ],
     [
       `${p.name} entered with star status already supported by prior work. Sunday corroborates that status; it does not open a breakout investigation.`,
-      `${p.name} belongs in the established-star category. The week changes the current evidence, not the career classification.`,
+      `${p.name} belongs in the established-star category. ${p.name}’s week changes the current evidence, not the career classification.`,
       `${p.name} already had the résumé. This performance strengthens an existing finding rather than creating a new one.`
     ]
   ]);
@@ -1884,7 +1884,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
     const c=statClause(bad),d=Math.abs(Number(delta(bad))),tr=f.trajectories.find(x=>String(x.p.id)===String(bad.id))?.tr,status=classificationSentenceV29(bad,tr,r);
     ps.push([
       `${bad.name} is the player Nick circles in the margin after finishing ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`The ${team} win buys one week of patience; another ${bad.name} miss becomes harder to dismiss.`:`${bad.name} stays in the main ${team} story because the team lost.`}${status?` ${status}`:''}`,
-      `${bad.name} supplied the least convincing line of the main ${team} cast, landing ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?`Winning keeps the criticism measured for a week.`:`The loss makes ${bad.name}’s poor Sunday impossible to hide behind better performances.`}${status?` ${status}`:''}`,
+      `${bad.name} supplied the least convincing line of the main ${team} cast, landing ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?`The ${team} win keeps criticism of ${bad.name} measured for a week.`:`The loss makes ${bad.name}’s poor Sunday impossible to hide behind better performances.`}${status?` ${status}`:''}`,
       `THE NAME IN RED IS ${bad.name}: ${one(d)} BELOW PROJECTION${c?`; ${bad.name} ${c}`:''}. ${won?'THE SCOREBOARD HID THE DAMAGE THIS TIME.':'THE SCOREBOARD PUT A SPOTLIGHT ON IT.'}${status?` ${status}`:''}`,
       `${bad.name} is the adverse player finding, ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`${team} won despite the shortfall; that is mitigation rather than exoneration.`:`The ${team} loss gives ${bad.name}’s shortfall direct consequence.`}${status?` ${status}`:''}`
     ][v]);
@@ -1987,21 +1987,21 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
     if(outgoing){
       const dest=transactionDestination(t,outgoing);
       if(outStrong)counter=[
-        `${outgoing.name} answered with ${one(outgoing.points)}${dest}. The departure remains part of the comparison, not a reason to rewrite the move after one Sunday.`,
+        `${outgoing.name} answered with ${one(outgoing.points)}${dest}. ${outgoing.name} remains part of the comparison, not a reason to rewrite the move after one Sunday.`,
         `${outgoing.name} put up ${one(outgoing.points)}${dest}, which gives the transaction a credible counterargument without deciding it.`,
         `${outgoing.name.toUpperCase()} PUT UP ${one(outgoing.points)}${dest.toUpperCase()}. YES, THE OTHER UNIFORM COUNTS.`,
         `${outgoing.name} produced ${one(outgoing.points)}${dest}; the outgoing asset remains relevant to the transaction record.`
       ][v];
       else counter=[
         `${outgoing.name} is now producing${dest}; Nick will track the departure in the correct uniform rather than quietly charging those points back to ${team}.`,
-        `${outgoing.name} is now producing${dest}. The comparison belongs to two rosters now, not one transaction-day opinion.`,
+        `${outgoing.name} is now producing${dest}. ${outgoing.name} now belongs to a two-roster comparison, not one transaction-day opinion.`,
         `${outgoing.name.toUpperCase()} IS NOW PRODUCING${dest.toUpperCase()}. THOSE POINTS DO NOT BELONG TO ${team.toUpperCase()} ANYMORE.`,
         `${outgoing.name} is now producing${dest}; the departure remains part of the record without being credited to ${team}.`
       ][v];
     }
     const close=[
-      `The move has a real football consequence now. ${team} needs the role or roster spot it created to justify the decision over the next few Sundays.`,
-      `The decision finally has Sunday evidence attached to it. Bartholomew will reserve judgment until the new role has enough weeks to become persuasive.`,
+      `The ${team} move has a real football consequence now. The role or roster spot it created has to justify the decision over the next few Sundays.`,
+      `The ${team} decision finally has Sunday evidence attached to it. Bartholomew will reserve judgment on ${team} until the new role has enough weeks to become persuasive.`,
       `TRANSACTION DAY WAS THE TRAILER FOR ${team.toUpperCase()}. SUNDAY WAS THE FIRST SCENE THAT COUNTS.`,
       `The timestamp proves the ${team} decision happened; the Sunday role now begins showing what actually changed.`
     ][v];
@@ -2203,7 +2203,7 @@ function articleThreadV30(t,r,f,phase){
     '',
     ' That is the part Bartholomew would keep after the adjectives are edited out.',
     ' THAT is the part Tilly would put above the fold.',
-    ' That is the thread Filch would keep attached to the next exhibit.'
+    ` That is the ${team} thread Filch would keep attached to the next exhibit.`
   ];
   return keyedChoice(key,[core,core+tails[v]]);
 }
@@ -2213,11 +2213,11 @@ function sentimentStoryV30(t,r,f=articleFrameV29(t,r)){
     p=f.playoff,titles=Number(t.manager_career?.championships)||0,thread=articleThreadV30(t,r,f,'sentiment'),margin=one(f.margin),v=voice(r);
   const primary=[
     f.won
-      ? `${team.city} gets the better Monday after a ${margin}-point ${team.mascot} win. The fan base can celebrate what happened while keeping one eye on the parts that looked harder to repeat.`
-      : `${team.city} gets the irritated Monday after a ${margin}-point ${team.mascot} loss. The useful fan reaction is not to blame everybody equally; some performances survived the result and some helped create it.`,
+      ? `${team.city} gets the better Monday after a ${margin}-point ${team.mascot} win. ${team.mascot} fans can celebrate what happened while keeping one eye on the parts that looked harder to repeat.`
+      : `${team.city} gets the irritated Monday after a ${margin}-point ${team.mascot} loss. The useful ${team.mascot} reaction is not to blame everybody equally; some performances survived the result and some helped create it.`,
     f.won
       ? `${team.mascot} supporters are understandably pleased, and Bartholomew will permit the optimism without pretending one week settled the order of things.`
-      : `${team.mascot} supporters have every right to be annoyed. Bartholomew’s only request is that the criticism distinguish between the players who failed and the good performances trapped inside the loss.`,
+      : `${team.mascot} supporters have every right to be annoyed. Bartholomew’s only request for ${team.mascot} criticism is that it distinguish between the players who failed and the good performances trapped inside the loss.`,
     f.won
       ? `${team.city.toUpperCase()} HAS A WIN AND THE GROUP CHAT HAS LOST ITS MIND. ${manager} MAY ENJOY THE SCREENSHOTS UNTIL THE NEXT LINEUP LOCKS.`
       : `${team.city.toUpperCase()} HAS A LOSS AND THE GROUP CHAT HAS OPENED TWELVE INVESTIGATIONS BEFORE BREAKFAST. ${manager} SHOULD READ THE USEFUL COMPLAINTS AND MUTE THE REST.`,

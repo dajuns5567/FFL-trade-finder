@@ -1381,9 +1381,13 @@ function playerContextV28(t,r){
     trajectory=rows.map(p=>({p,tr:teamTrajectory(p)})).filter(x=>x.tr).sort((a,b)=>Number(b.tr.strength)-Number(a.tr.strength))[0],team=teamIdentityV28(t).mascot;
   const parts=[];
   if(top){
-    const prior=Number(top.prior_season_avg),games=Number(top.prior_season_games)||0,opp=teamOpportunity(top);
-    if(Number.isFinite(prior)&&games>=6)parts.push(`${top.name} averaged ${one(prior)} fantasy points across ${games} games last season; this week’s ${one(top.points)} matters more because ${opp?.text?'the role included '+opp.text+', enough involvement to make the spike more than a box-score accident':'the current role did not look accidental'}.`);
+    const prior=Number(top.prior_season_avg),games=Number(top.prior_season_games)||0,opp=teamOpportunity(top),raw=String(top.real_stat_line||'').replaceAll(' • ',', ');
+    const roleReason=opp?.text?`the role included ${opp.text}, enough involvement to make the spike more than a box-score accident`
+      :defensivePlayer(top)&&raw?`the defensive tackle-and-pressure line (${raw}) gives the performance real football underneath the fantasy total`
+      :'the current role did not look accidental';
+    if(Number.isFinite(prior)&&games>=6)parts.push(`${top.name} averaged ${one(prior)} fantasy points across ${games} games last season; this week’s ${one(top.points)} matters more because ${roleReason}.`);
     else if(opp?.text)parts.push(`${top.name} turned ${opp.text} into ${one(top.points)} fantasy points. For ${team}, the workload is the part worth carrying into next week; the score can take care of itself.`);
+    else if(defensivePlayer(top)&&raw)parts.push(`${top.name} produced ${one(top.points)} fantasy points from a defensive tackle-and-pressure line of ${raw}. For ${team}, that is actual IDP involvement rather than a fantasy total floating without context.`);
   }
   if(bad&&Number(delta(bad))<=-4){
     const usage=teamOpportunity(bad);
@@ -1408,7 +1412,7 @@ function playerCounterpointV28(t,r){
     const clause=statClause(bad),prior=Number(bad.prior_season_avg),priorGames=Number(bad.prior_season_games)||0;
     return deskChoice(t,r,[
       [`The uncomfortable ${team} line belongs to ${bad.name}, who ${clause||'never found enough production'} and finished at ${one(bad.points)} fantasy points. ${priorGames>=6?`He averaged ${one(prior)} last season, so one poor week earns patience rather than amnesia.`:'The next Sunday decides whether this was noise or the start of a real concern.'}`],
-      [`Every elegant card needs one stain, and ${bad.name} supplied ${team}’s: ${clause||'a quiet afternoon'} for ${one(bad.points)} fantasy points. ${priorGames>=6?`Last year’s ${one(prior)}-point average is the reason I am granting one week of manners.`:'Another performance like it and manners become optional.'}`],
+      [`Every elegant card needs one stain, and ${bad.name} supplied the stain on the ${team} card: ${clause||'a quiet afternoon'} for ${one(bad.points)} fantasy points. ${priorGames>=6?`Last year’s ${one(prior)}-point average is the reason I am granting one week of manners.`:'Another performance like it and manners become optional.'}`],
       [`THE SMALL PRINT HAS A NAME: ${bad.name}. ${bad.name} ${clause||'never found the useful part of the day'} and gave ${team} ${one(bad.points)} fantasy points. ${priorGames>=6?`The ${one(prior)}-point average from last year buys one mulligan, not a season pass.`:'Next week decides whether the angry font stays loaded.'}`],
       [`The least cooperative ${team} witness was ${bad.name}: ${clause||'the role produced too little'} and the fantasy return was ${one(bad.points)}. ${priorGames>=6?`A ${one(prior)}-point average last season argues for context, not acquittal.`:'The file needs a second exhibit before escalation.'}`]
     ]);
@@ -1550,6 +1554,22 @@ function outlookStoryV28(t,r){
   return ps.filter(Boolean);
 }
 
+function contextualizeParagraphV28(t,value){
+  const text=String(value??''),id=teamIdentityV28(t),manager=String(t.manager_name||'').trim(),players=articlePlayers(t).flatMap(p=>{
+    const full=String(p?.name||'').trim(),first=full.split(/\s+/)[0];return [full,first].filter(Boolean);
+  }),entities=[id.full,id.city,id.mascot,String(t.opponent_name||''),String(t.next_opponent_name||''),manager,...players].filter(Boolean);
+  const sentences=text.split(/(?<=[.!?])\s+/).filter(Boolean);
+  return sentences.map((sentence,index)=>{
+    if(sentence.trim().split(/\s+/).length<8)return sentence;
+    if(entities.some(e=>e&&sentence.toLowerCase().includes(e.toLowerCase())))return sentence;
+    const ref=(index%2===0?id.mascot:id.city)||id.full,lead=sentence.trim();
+    if(/^I\b/.test(lead))return `On the ${ref} beat, ${lead}`;
+    const first=lead.charAt(0),rest=lead.slice(1),lower=first.toLowerCase()+rest;
+    const prefixes=[`For ${ref}, `,`In the ${ref} story, `,`Around ${ref}, `];
+    return prefixes[(Number(t.roster_id||0)+index)%prefixes.length]+lower;
+  }).join(' ');
+}
+
 function headingV28(t,r,kind,base,angle){
   const id=teamIdentityV28(t),top=list(t)[0],bad=list(t).filter(p=>delta(p)!=null).slice().sort((a,b)=>delta(a)-delta(b))[0],next=t.next_opponent_name||'Next Week',manager=t.manager_name||'Management';
   const banks={
@@ -1630,7 +1650,7 @@ export function humanSectionsV25(args){
       const extra=chairFootballStory(t,c.kind,args.reporter);if(extra)paragraphs.push(extra);
     }else paragraphs=baseParagraphs;
     if(!paragraphs.length)paragraphs=['n/a'];
-    paragraphs=paragraphs.map(p=>naturalizePlayerReferences(t,specificityPass(t,c.kind,p)))
+    paragraphs=paragraphs.map(p=>contextualizeParagraphV28(t,naturalizePlayerReferences(t,specificityPass(t,c.kind,p))))
       .map(p=>String(p).replace(/Fix the production and the back page will happily find a new target\./gi,'Fix the production and the angry headline can move to somebody else.'));
     return {...f,...c,heading:headingV28(t,args.reporter,c.kind,c.heading,angle),paragraphs};
   });

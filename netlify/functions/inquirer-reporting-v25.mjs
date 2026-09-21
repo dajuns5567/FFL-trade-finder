@@ -469,7 +469,7 @@ function sentiment(t,r){
     [`Management is part of the mood too. ${miss?.reserve&&Number(miss.gap)>5?'A real eligible lineup alternative was left unused, so fans have a concrete decision to revisit.':'The roster changed this week, so the fan base now gets to grade the move against actual football instead of transaction-day optimism.'}`],
     [`Naturally, the crowd has also found management. ${miss?.reserve&&Number(miss.gap)>5?'There was a real lineup choice available, which means this is criticism rather than hindsight cosplay.':'Recent roster changes have moved from cocktail conversation to performance review.'}`],
     [`AND YES, MANAGEMENT IS IN THE COMMENTS. ${miss?.reserve&&Number(miss.gap)>5?'There was an eligible better lineup available, so the screenshot folder is open.':'The recent moves now have Sundays attached to them, which is when the fun starts.'}`],
-    [`The fan base also has a management angle. ${miss?.reserve&&Number(miss.gap)>5?'An eligible lineup alternative existed, so that decision belongs in the criticism.':'Recent transactions now have on-field consequences to judge.'}`]
+    [`${t.team_name} supporters also have a management angle. ${miss?.reserve&&Number(miss.gap)>5?'An eligible lineup alternative existed, so that decision belongs in the criticism.':'Recent transactions now have on-field consequences to judge.'}`]
   ]));
   return ps;
 }

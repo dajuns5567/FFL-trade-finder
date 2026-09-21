@@ -1801,7 +1801,7 @@ function hotSeatV29(t,r,f=articleFrameV29(t,r)){
   ],[
     `HOT SEAT: ${names.join(' / ').toUpperCase()}. ${won?`THE ${team.toUpperCase()} WIN HID THE SMOKE; IT DID NOT PUT OUT THE FIRE.`:`THE ${team.toUpperCase()} LOSS MADE THE SMOKE IMPOSSIBLE TO IGNORE.`}`
   ],[
-    `${naturalJoin(names)} ${names.length===1?'is':'are'} the adverse finding this week. ${won?'The verdict was a win despite the shortfall.':`The ${team} loss already gives ${naturalJoin(names)} consequence in the weekly file.`}`
+    `${naturalJoin(names)} ${names.length===1?'is':'are'} the adverse finding this week. ${won?`${team} won despite the shortfall from ${naturalJoin(names)}; that is mitigation, not a clean bill of health.`:`The ${team} loss already gives ${naturalJoin(names)} consequence in the weekly file.`}`
   ]][voice(r)];
 }
 

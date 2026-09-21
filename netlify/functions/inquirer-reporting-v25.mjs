@@ -573,7 +573,7 @@ function outlook(t,week,r){
     else if(p<20)ps.push(deskChoice(t,r,[
       [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. The runway is already short enough that winnable weeks matter.`],
       [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. There is very little room left for decorative losses.`],
-      [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. The font stays small until the wins get louder.`],
+      [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. ${t.team_name} keeps the font small until its wins get louder.`],
       [`${t.team_name} has around a ${one(p)}% chance of reaching the playoffs. The next result needs to be a win.`]
     ]));
   }

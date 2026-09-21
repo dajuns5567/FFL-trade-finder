@@ -60,7 +60,10 @@ for(const t of d.teams||[]){
   if((management?.paragraphs||[])[0]!=='n/a')assert.ok((management?.paragraphs||[]).length>=2,'Meaningful management sections must include reporter follow-through');
   if((outlook?.paragraphs||[])[0]!=='n/a')assert.ok((outlook?.paragraphs||[]).length>=3,'Next-week sections must develop the matchup and road ahead');
   const top=(t.starter_details||[])[0],playerCopy=(players?.paragraphs||[]).join(' ');
-  if(top?.real_stat_line)assert.ok(playerCopy.includes(String(top.real_stat_line).split(' • ')[0]),'Player section must preserve commentary around the leading player real-life stat line for '+t.team_name);
+  if(top?.real_stat_line){
+    assert.ok(playerCopy.includes(String(top.name||'')),'Player section must discuss the leading player by name for '+t.team_name);
+    assert.match(playerCopy,/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|sacks?|snaps?|interceptions?)\b/i,'Player section must translate the leading player real-life stat line into football prose for '+t.team_name);
+  }
 }
 for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=2,'Reporter '+rid+' must have more than one article structure across eight team stories');
 const repeatedLong=new Map();

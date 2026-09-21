@@ -12,7 +12,7 @@ const sentenceParts=s=>{
 };
 assert.equal(sentenceParts('On the other side, Amon-Ra St. Brown caught 10 passes.').length,1,'Sentence parser must preserve St. inside player names');
 assert.equal(sentenceParts('Next week, C.J. Stroud completed 26 passes.').length,1,'Sentence parser must preserve initialed player names');
-const articleText=t=>(t?.inquirer_article?.paragraphs||[]).join(' ');
+const articleText=t=>(t?.inquirer_article?.paragraphs||[]).filter(p=>String(p||'').trim()&&String(p).trim().toLowerCase()!=='n/a').join(' ');
 const recapSections=d?.league_overview?.sections||[];
 const recap=recapSections.flatMap(s=>s?.paragraphs||[]).join(' ');
 const teamWords=(d.teams||[]).map(t=>words(articleText(t)));

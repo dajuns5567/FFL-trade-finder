@@ -87,16 +87,16 @@ function playerTrajectory(p){
   if(!Number.isFinite(prior)||prior<=0||priorGames<6||!Number.isFinite(current)||games<1)return null;
   const ratio=current/prior,oldThreshold=pos==='QB'?34:pos==='RB'?28:(pos==='WR'||pos==='TE')?30:29;
   if(games>=3&&Number.isFinite(age)&&age<=26&&ratio>=1.28&&opp?.strong)return {kind:'breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} is moving into legitimate breakout territory: ${one(current)} per game this season after ${one(prior)} across ${priorGames} games last year, with this week’s ${opp.text} giving the jump real opportunity. The new level has lasted long enough to demand attention; the next test is whether defenses can knock it back down.`,
-    `${p.name} has built more than a hot box score. The season average is ${one(current)} after ${one(prior)} across ${priorGames} games last year, and ${opp.text} keeps the role attached to the production. That is a breakout case with evidence behind it, not a wish dressed as analysis.`,
-    `The breakout file on ${p.name} is getting thick: ${one(current)} per game this season versus ${one(prior)} across ${priorGames} games last year, plus ${opp.text} this week. The important change is not the label; it is that the role now supports the fantasy jump.`,
-    `${p.name} is forcing the conversation upward. A ${one(current)} season average after ${one(prior)} across ${priorGames} games last year would already be notable; pairing it with ${opp.text} makes the improvement much harder to dismiss as scoring luck.`
+    `${p.name} has climbed to ${one(current)} per game after averaging ${one(prior)} across ${priorGames} games last season. This week’s ${opp.text} gave the surge enough football underneath it to look like more than a scoring fluke.`,
+    `${p.name} is averaging ${one(current)} after sitting at ${one(prior)} across ${priorGames} games last year, and ${opp.text} kept the bigger production tied to a bigger role. That is how a hot start begins to look like an actual leap.`,
+    `${p.name} is making last year’s ${one(prior)}-point average look small next to this season’s ${one(current)}, and ${opp.text} gave the jump real substance. The role changed enough to make the scoring change believable.`,
+    `${p.name} has moved from ${one(prior)} per game last season to ${one(current)} this year, with ${opp.text} adding a real workload to the jump. That is more than a lucky touchdown streak.`
   ])};
   if(games===1&&Number.isFinite(age)&&age<=26&&ratio>=1.4&&opp?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} is an early breakout watch, not a declared breakout. Week 1 landed well above last year’s ${one(prior)}-point average across ${priorGames} games, and ${opp.text} gives the spike a real workload underneath it. One more ${p.name} week with this kind of work would turn an interesting opener into a real role change.`,
-    `Put ${p.name} on the breakout watch list, but keep the permanent marker capped. The opener cleared last year’s ${one(prior)}-point average across ${priorGames} games, while ${opp.text} shows there was actual opportunity behind it. Another Sunday with the same ${p.name} workload would make the breakout case considerably harder to dismiss.`,
-    `${p.name} gave us the kind of opener that earns a breakout question. Last year’s baseline was ${one(prior)} across ${priorGames} games; this week came with ${opp.text} and a much louder fantasy result. The old baseline still matters, but ${p.name} has given this team a legitimate reason to wonder whether something changed.`,
-    `${p.name} has an early breakout case because the fantasy spike came with ${opp.text}, not because Week 1 is magical. He averaged ${one(prior)} across ${priorGames} games last year. If ${p.name} keeps this opportunity another Sunday, the opener starts looking less like a spike and more like a new job description.`
+    `${p.name} opened far above last year’s ${one(prior)}-point average across ${priorGames} games, and ${opp.text} gave the production a real role behind it. Another week with that kind of involvement would make the change harder to dismiss.`,
+    `${p.name} cleared last year’s ${one(prior)}-point average by a wide margin, and ${opp.text} made the opener look earned rather than accidental. If the workload survives next week, the conversation changes quickly.`,
+    `${p.name} entered from a ${one(prior)}-point baseline across ${priorGames} games last year and opened this season much louder, with ${opp.text}. The role looked different enough to make the old expectation feel less comfortable.`,
+    `${p.name} averaged ${one(prior)} across ${priorGames} games last year, then opened with a bigger score and ${opp.text}. Keep that job description for another Sunday and the old baseline starts looking stale.`
   ])};
   if(games>=3&&Number.isFinite(age)&&age>=oldThreshold&&ratio<=.68)return {kind:'decline',strength:1-ratio,text:keyedChoice(key,[
     `${p.name} has earned a real decline watch: ${one(current)} per game this season versus ${one(prior)} across ${priorGames} games last year. At age ${age}, wondering whether the old weekly floor is gone is fair; declaring him finished still outruns the evidence.`,
@@ -117,9 +117,9 @@ function playerTrajectory(p){
     `${p.name} looked a lot like the player last season already taught us to expect: ${one(prior)} per game across ${priorGames} appearances, with Week 1 landing close to that baseline. Reliability for ${p.name} takes repetition, but this is a reasonable first brick.`
   ])};
   if(games===1&&Number(p.points)<=prior*.5)return {kind:'stumble',strength:1-Number(p.points)/prior,text:keyedChoice(key,[
-    `${p.name} opened well below last year’s ${one(prior)}-point average across ${priorGames} games. Treat it as a Week 1 stumble, not proof of decline; the next useful signal is whether the role and opportunity rebound.`,
+    `${p.name} opened well below last year’s ${one(prior)}-point average across ${priorGames} games. One bad Sunday is not a decline by itself, but the role needs to look healthier next week.`,
     `${p.name} started the year far under the ${one(prior)}-point average he carried across ${priorGames} games last season. One bad opener does not make a decline trend, but it does put the next workload under a brighter light.`,
-    `The opener was a sharp drop from ${p.name}’s ${one(prior)}-point average across ${priorGames} games last year. That is enough to ask what happened to the role, nowhere near enough to call the player finished.`,
+    `${p.name} opened a long way below the ${one(prior)}-point average he carried across ${priorGames} games last season. The production disappeared for a week; the career did not.`,
     `${p.name} opened far below the ${one(prior)}-point average he established across ${priorGames} games last season. One ugly ${p.name} Sunday does not erase that floor; next week’s role will show whether this was merely a stumble or the first sign of something worth worrying about.`
   ])};
   return null;

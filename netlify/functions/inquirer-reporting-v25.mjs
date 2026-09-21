@@ -1895,124 +1895,12 @@ function hotSeatV29(t,r,f=articleFrameV29(t,r)){
   return [[
     `${names[0]} gets the uncomfortable chair${names[1]?`, and ${names[1]} is close enough to feel the heat`:''}. ${won?`${team} won, so neither needs an obituary; the concern is what happens if the same shortfall returns.`:`${team} lost, so these quiet spots already belong in the explanation of the result.`}`
   ],[
-    `${names[0]} has the least attractive seat in the room${names[1]?`, with ${names[1]} sharing the draft`:''}. ${won?'A win permits manners without requiring amnesia.':`The ${team} loss makes ${naturalJoin(names)} considerably harder to accessorize.`}`
+    `${names[0]} gets the uncomfortable chair${names[1]?`, with ${names[1]} sharing the uncomfortable paragraph`:''}. ${won?'The win permits restraint without requiring amnesia.':`The ${team} loss makes those poor performances part of the main column rather than a footnote.`}`
   ],[
-    `HOT SEAT: ${names.join(' / ').toUpperCase()}. ${won?`THE ${team.toUpperCase()} WIN HID THE SMOKE; IT DID NOT PUT OUT THE FIRE.`:`THE ${team.toUpperCase()} LOSS MADE THE SMOKE IMPOSSIBLE TO IGNORE.`}`
+    `HOT SEAT — THE UNCOMFORTABLE CHAIR: ${names.join(' / ').toUpperCase()}. ${won?`THE ${team.toUpperCase()} WIN HID THE SMOKE; IT DID NOT PUT OUT THE FIRE.`:`THE ${team.toUpperCase()} LOSS MADE THE SMOKE IMPOSSIBLE TO IGNORE.`}`
   ],[
-    `${naturalJoin(names)} ${names.length===1?'is':'are'} the adverse finding this week. ${won?`${team} won despite the shortfall from ${naturalJoin(names)}; that is mitigation, not a clean bill of health.`:`The ${team} loss already gives ${naturalJoin(names)} consequence in the weekly file.`}`
+    `${naturalJoin(names)} ${names.length===1?'occupies':'occupy'} the uncomfortable chair this week. ${won?`${team} won despite the shortfall; that is mitigation, not a clean bill of health.`:`The ${team} loss already gives the shortfall consequence in the weekly file.`}`
   ]][voice(r)];
-}
-
-function articleThreadV30(t,r,f,phase){
-  const team=teamIdentityV28(t).mascot,manager=t.manager_name||'management',top=f.top?.name||'the leading scorer',
-    miss=t.best_lineup_miss,share=Math.round((f.share||0)*100),angle=f.angle,key=`${t.roster_id}:${angle}:${phase}:${r?.id}`;
-  const base={
-    'rout-loss':{
-      sentiment:`A ${one(f.margin)}-point loss is too large for one scapegoat. ${team} supporters can be angry at individual misses, but the margin says the failure was distributed.`,
-      outlook:`The next ${team} game is less about proving one player can rebound than proving the lineup can stop failing in clusters.`,
-      management:`For ${manager}, the lesson is broader than one button: a loss this large usually needs more than one correction.`
-    },
-    'rout-win':{
-      sentiment:`A ${one(f.margin)}-point win gives ${team} fans room to enjoy the week without pretending every piece will repeat at the same volume.`,
-      outlook:`The next test for ${team} is whether the winning shape survives after the margin stops doing the storytelling.`,
-      management:`For ${manager}, a rout is permission to preserve what worked rather than a reason to assume every decision was perfect.`
-    },
-    'close-loss':{
-      sentiment:`A ${one(f.margin)}-point loss guarantees arguments because nearly every ordinary decision can be imagined as the missing difference.`,
-      outlook:`The next ${team} game needs fewer small leaks; a margin this thin turns ordinary mistakes into the whole result.`,
-      management:`For ${manager}, the close margin makes the legal lineup choices worth reviewing without turning hindsight into fiction.`
-    },
-    'close-win':{
-      sentiment:`A ${one(f.margin)}-point win gives ${team} the pleasant version of the same lesson: tiny mistakes mattered, but the scoreboard forgave them.`,
-      outlook:`The next ${team} matchup will test whether the close win was composure or simply a Sunday in which the final mistake belonged elsewhere.`,
-      management:`For ${manager}, surviving a close one should sharpen the lineup review rather than cancel it.`
-    },
-    'favorite-collapse':{
-      sentiment:`The frustration around ${team} is sharper because the roster entered with the friendlier forecast and still handed the result away.`,
-      outlook:`The next ${team} assignment now carries a credibility tax: favorites are expected to bank manageable games, not explain them afterward.`,
-      management:`For ${manager}, losing from the favored side puts roster and lineup choices under a brighter light than the same score would as an underdog.`
-    },
-    'upset-win':{
-      sentiment:`The upset gives ${team} fans a reason to revise expectations upward without pretending one surprise result rewrote the season.`,
-      outlook:`Now ${team} has to show the upset was a usable version of the roster rather than a one-week ambush.`,
-      management:`For ${manager}, the reward for an upset is a better question next week: which choices helped create a version worth repeating?`
-    },
-    'lineup-regret':{
-      sentiment:`The ${team} argument will keep circling the lineup card because the legal alternative was real, not invented after the final.`,
-      outlook:`The cleanest way for ${team} to end the lineup argument is to make the obvious decision before kickoff next time.`,
-      management:`For ${manager}, this week already supplied a legal counterfactual that deserves an actual correction.`
-    },
-    'front-office-storm':{
-      sentiment:`With ${Number(t.current_week_trade_count||0)} completed moves in the background, ${team} fans are judging the churn by what finally happened on Sunday.`,
-      outlook:`The next ${team} game should clarify whether all that roster motion created a better team or merely a busier transaction log.`,
-      management:`For ${manager}, activity is no longer the story. The new configuration has enough real football attached to it to be evaluated.`
-    },
-    'star-dependent':{
-      sentiment:`When roughly ${share}% of the scoring comes from three players, ${team} fans know where the gratitude belongs and where the impatience should go.`,
-      outlook:`The next ${team} game needs somebody outside the leading trio to make the article harder to write around the same three names.`,
-      management:`For ${manager}, the roster question is depth of production rather than star quality; ${top} already did enough to make that distinction clear.`
-    },
-    'defense-led':{
-      sentiment:`${top} made sure the ${team} conversation starts on defense, which is exactly what an IDP league should reward when the work is real.`,
-      outlook:`The next ${team} game asks whether the defensive carry can remain an advantage instead of becoming a weekly rescue plan.`,
-      management:`For ${manager}, a defensive headliner is roster construction paying off; the rest of the lineup still has to meet that standard.`
-    },
-    'projection-smash':{
-      sentiment:`Beating projection this badly changes the mood around ${team}, but fans will care more about which roles produced the surprise than the forecast itself.`,
-      outlook:`The next ${team} game tests whether the unexpected production belongs to a new role or a one-week spike.`,
-      management:`For ${manager}, the useful question is which source of overperformance can be intentionally preserved.`
-    },
-    'projection-crater':{
-      sentiment:`The ${team} frustration is not that a projection was wrong; it is that too many expected points vanished from roles the roster had reason to trust.`,
-      outlook:`The next ${team} matchup needs a normal version of the lineup before anyone asks for another ceiling game.`,
-      management:`For ${manager}, the repair job starts with the expected roles that failed rather than chasing a miracle replacement.`
-    },
-    'breakout-week':{
-      sentiment:`The most interesting ${team} optimism belongs to the emerging player whose role grew with the production; that is a better story than a random spike.`,
-      outlook:`The next ${team} game gives the breakout candidate a chance to keep the larger role before the label becomes permanent.`,
-      management:`For ${manager}, the young player has earned another opportunity rather than a ceremonial label.`
-    },
-    'division-fight':{
-      sentiment:`A divisional result makes the ${team} mood louder because the same Sunday moved a rival in the opposite direction.`,
-      outlook:`The next ${team} game arrives with divisional ground already won or lost; there is less room to treat the standings as background decoration.`,
-      management:`For ${manager}, division games turn ordinary lineup choices into decisions with standings consequences attached.`
-    }
-  }[angle];
-  if(!base?.[phase])return null;
-  const core=base[phase];
-  const banks=[
-    [core,core],
-    [core,`${core} That is the part Bartholomew would keep after the adjectives are edited out.`],
-    [core,`${core} THAT is the part Tilly would put above the fold.`],
-    [core,`${core} That is the thread Filch would keep attached to the next exhibit.`]
-  ];
-  return keyedChoice(key,banks[voice(r)]);
-}
-
-function sentimentStoryV30(t,r,f=articleFrameV29(t,r)){
-  const team=teamIdentityV28(t),manager=t.manager_name||'management',rec=record(t),rank=Number.isFinite(f.rank)?`${f.rank} of ${f.size}`:'unsettled',
-    p=f.playoff,titles=Number(t.manager_career?.championships)||0,thread=articleThreadV30(t,r,f,'sentiment'),margin=one(f.margin),v=voice(r);
-  const primary=[
-    f.won
-      ? `${team.city} gets the better Monday after a ${margin}-point ${team.mascot} win. The fan base can celebrate what actually happened while keeping one eye on the parts that looked harder to repeat.`
-      : `${team.city} gets the irritated Monday after a ${margin}-point ${team.mascot} loss. The useful fan reaction is not to blame everybody equally; some performances survived the result and some helped create it.`,
-    f.won
-      ? `${team.mascot} supporters are understandably pleased, and Bartholomew will permit the optimism without pretending one week has settled the order of things.`
-      : `${team.mascot} supporters have every right to be annoyed. Bartholomew’s only request is that the criticism distinguish between the players who failed and the good performances trapped inside the loss.`,
-    f.won
-      ? `${team.city.toUpperCase()} HAS A WIN AND THE GROUP CHAT HAS LOST ITS MIND. ${manager} MAY ENJOY THE SCREENSHOTS UNTIL THE NEXT LINEUP LOCKS.`
-      : `${team.city.toUpperCase()} HAS A LOSS AND THE GROUP CHAT HAS OPENED TWELVE INVESTIGATIONS BEFORE BREAKFAST. ${manager} SHOULD READ THE USEFUL COMPLAINTS AND MUTE THE REST.`,
-    f.won
-      ? `The public case for ${team.mascot} is favorable this week: a win, a pile of screenshots and very little procedural restraint. ${manager} gets another hearing next Sunday.`
-      : `The public case against ${team.mascot} is loud this week, but the evidence is uneven. ${manager} should separate the actual roster problem from the emotional exhibits.`
-  ][v];
-  const context=[
-    `The record is ${rec}, good for rank ${rank}${p!=null?`, with the playoff outlook around ${one(p)}%`:''}. ${titles?`${manager} has ${titles} championship${titles===1?'':'s'} on the résumé, enough to earn patience but not immunity.`:''}`,
-    `${rec} and rank ${rank} are the unromantic facts${p!=null?`; the current playoff outlook remains ${one(p)}%`:''}. ${titles?`${titles} championship${titles===1?'':'s'} give ${manager} a résumé, not diplomatic immunity.`:''}`,
-    `RECORD: ${rec}. RANK: ${String(rank).toUpperCase()}.${p!=null?` PLAYOFF OUTLOOK: ${one(p)}%.`:''} ${titles?`${manager.toUpperCase()} HAS ${titles} TITLE${titles===1?'':'S'} OF PRIOR GOODWILL. THAT COUPON BOOK IS NOT INFINITE.`:''}`,
-    `The public record reads ${rec}, rank ${rank}${p!=null?`, with a ${one(p)}% playoff estimate`:''}. ${titles?`${manager} enters with ${titles} championship${titles===1?'':'s'} of prior good conduct; the current week is still admissible.`:''}`
-  ][v];
-  return [primary,context,thread].filter(Boolean);
 }
 
 function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
@@ -2023,9 +1911,9 @@ function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
     return `The record for ${team} is ${rec}, ${rank}. ${low?`With the playoff outlook around ${one(p)}%, wasting a week is expensive.`:'The loss narrows the room for another ordinary mistake.'}`;
   }
   if(voice(r)===1){
-    if(f.won)return `${rec} looks rather nicer beside ${team}, ${rank}. ${p!=null?`The ${one(p)}% playoff outlook means the victory met an expectation instead of inventing one.`:'One should enjoy the result without commissioning silverware.'}`;
-    if(high)return `A ${rec} record does not remove ${team} from the serious table; a ${one(p)}% playoff outlook did not evaporate because one Sunday was ugly. The vulgar part is donating a game while carrying expectations that high.`;
-    return `${rec} is an unattractive line beside ${team}, ${rank}. ${p!=null?`A ${one(p)}% playoff outlook makes the loss ${low?'expensive':'annoying'}, not transformative.`:'The table is young, but the loss is already real.'}`;
+    if(f.won)return `${rec} is the early ${team} record, ${rank}. ${p!=null?`The ${one(p)}% playoff outlook says the win met an existing expectation instead of inventing one.`:'The result deserves credit without pretending one week settled anything.'}`;
+    if(high)return `${team} is ${rec}, ${rank}, and the ${one(p)}% playoff outlook still treats this roster like a contender. The loss does not remove that status; it makes wasting a favorable week look considerably more careless.`;
+    return `${team} is ${rec}, ${rank}. ${p!=null?`A ${one(p)}% playoff outlook makes the loss ${low?'expensive':'annoying'}, not transformative.`:'The table is young, but the loss is already real.'}`;
   }
   if(voice(r)===2){
     if(f.won)return `PRINT THE RECORD: ${rec} FOR ${team.toUpperCase()}, ${rank.toUpperCase()}. ${p!=null?`PLAYOFF OUTLOOK: ${one(p)}%. ENJOY THE ${team.toUpperCase()} WIN AND KEEP THE PARADE PERMIT IN THE DRAWER.`:'THE GROUP CHAT GETS ONE WEEK OF LEGAL OPTIMISM.'}`;
@@ -2038,7 +1926,7 @@ function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
 }
 
 function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
-  const clean={...t,transactions:consolidateTransactions(t)},moves=selectImportantMoves(clean,facts),miss=t.best_lineup_miss,ps=[],manager=t.manager_name||'Management',team=teamIdentityV28(t).mascot;
+  const clean={...t,transactions:consolidateTransactions(t)},moves=selectImportantMoves(clean,facts),miss=t.best_lineup_miss,ps=[],manager=t.manager_name||'Management',team=teamIdentityV28(t).mascot,v=voice(r);
   if(moves.length){
     const m=moves[0],trade=String(m.move?.type||'').toLowerCase()==='trade',incoming=(m.add||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],
       outgoing=(m.drop||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],add=names(m.add||[]),drop=names(m.drop||[]),
@@ -2047,39 +1935,60 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
     let impact='';
     if(incoming){
       if(inStrong)impact=`${incoming.name} immediately produced ${one(incoming.points)} fantasy points${incoming.real_stat_line?', backed by '+String(incoming.real_stat_line).replaceAll(' • ',', '):''}.`;
-      else impact=`${incoming.name} did not need a headline game to make the move look sensible; the first Sunday at least gave ${team} usable football from the new piece.`;
+      else impact=[
+        `${incoming.name} did not post a headline game, but the first Sunday gave ${team} usable work from the new piece.`,
+        `${incoming.name} arrived without a star turn, which is fine; the move now has a real football role to evaluate.`,
+        `${incoming.name.toUpperCase()} DID NOT BLOW UP THE SCOREBOARD. THE MOVE CAN STILL BE RIGHT WITHOUT A PARADE.`,
+        `${incoming.name} supplied enough first-week information to evaluate the role without pretending the transaction has already been decided.`
+      ][v];
     }
     let counter='';
-    if(outgoing&&outStrong)counter=`${outgoing.name} answered with ${one(outgoing.points)}${transactionDestination(t,outgoing)}, which keeps the other side of the receipt alive.`;
-    else if(outgoing)counter=`${outgoing.name} is now producing${transactionDestination(t,outgoing)}, so the departure has to be tracked in the correct uniform rather than credited to ${team}.`;
-    ps.push([
-      `${moveLead} ${impact} ${counter} The move has a football consequence now; ${team} needs the roster spot or player it created to justify the decision over the next few Sundays.`,
-      `${moveLead} ${impact} ${counter} The ${team} receipt finally has football attached to it, which is considerably more interesting than transaction-day self-congratulation.`,
-      `${moveLead} ${impact} ${counter} TRANSACTION DAY WAS THE TRAILER FOR ${team.toUpperCase()}. SUNDAY WAS THE FIRST SCENE THAT COUNTS.`,
-      `${moveLead} ${impact} ${counter} The timestamp proves the ${team} decision happened; the Sunday role begins showing what actually changed.`
-    ][voice(r)].trim());
+    if(outgoing){
+      const dest=transactionDestination(t,outgoing);
+      if(outStrong)counter=[
+        `${outgoing.name} answered with ${one(outgoing.points)}${dest}. The departure remains part of the comparison, not a reason to rewrite the move after one Sunday.`,
+        `${outgoing.name} put up ${one(outgoing.points)}${dest}, which gives the transaction a credible counterargument without deciding it.`,
+        `${outgoing.name.toUpperCase()} PUT UP ${one(outgoing.points)}${dest.toUpperCase()}. YES, THE OTHER UNIFORM COUNTS.`,
+        `${outgoing.name} produced ${one(outgoing.points)}${dest}; the outgoing asset remains relevant to the transaction record.`
+      ][v];
+      else counter=[
+        `${outgoing.name} is now producing${dest}; Nick will track the departure in the correct uniform rather than quietly charging those points back to ${team}.`,
+        `${outgoing.name} is now producing${dest}. The comparison belongs to two rosters now, not one transaction-day opinion.`,
+        `${outgoing.name.toUpperCase()} IS NOW PRODUCING${dest.toUpperCase()}. THOSE POINTS DO NOT BELONG TO ${team.toUpperCase()} ANYMORE.`,
+        `${outgoing.name} is now producing${dest}; the departure remains part of the record without being credited to ${team}.`
+      ][v];
+    }
+    const close=[
+      `The move has a real football consequence now. ${team} needs the role or roster spot it created to justify the decision over the next few Sundays.`,
+      `The decision finally has Sunday evidence attached to it. Bartholomew will reserve judgment until the new role has enough weeks to become persuasive.`,
+      `TRANSACTION DAY WAS THE TRAILER FOR ${team.toUpperCase()}. SUNDAY WAS THE FIRST SCENE THAT COUNTS.`,
+      `The timestamp proves the ${team} decision happened; the Sunday role now begins showing what actually changed.`
+    ][v];
+    ps.push(`${moveLead} ${impact} ${counter} ${close}`.replace(/\s+/g,' ').trim());
   }
   if(miss?.reserve&&miss?.starter&&Number(miss.gap)>0){
     const slot=miss.slot||miss.starter.lineup_slot||'lineup',gap=Number(miss.gap),wouldFlip=f.lost&&gap>f.margin;
     ps.push([
       `${miss.reserve.name} could legally have replaced ${miss.starter.name} at ${slot} and added about ${one(gap)} points. ${wouldFlip?'That swing was large enough to change the result, which makes the decision part of the loss.':f.won?`${team} won anyway, but the legal alternative still belongs in ${manager}’s next-week preparation.`:`${manager} still owns the lineup mistake, but ${miss.reserve.name}’s extra points would not have erased the ${team} loss.`}`,
-      `${miss.reserve.name} was a legal ${slot} alternative to ${miss.starter.name}, worth roughly ${one(gap)} more points. ${wouldFlip?'That is the rare Monday complaint with enough arithmetic to alter the final.':f.won?`The ${team} win keeps ${manager}’s error from becoming the headline; it does not make the seating chart elegant.`:'Even the better seating chart would not have saved the evening, which is useful restraint for the criticism.'}`,
+      `${miss.reserve.name} was a legal ${slot} alternative to ${miss.starter.name}, worth roughly ${one(gap)} more points. ${wouldFlip?'That is the rare Monday complaint with enough arithmetic to alter the final.':f.won?`The ${team} win keeps ${manager}’s error from becoming the headline; it does not make the decision disappear.`:'Even the better lineup would not have saved the night, which keeps the criticism proportional.'}`,
       `LINEUP RECEIPT: ${miss.reserve.name} OVER ${miss.starter.name} AT ${String(slot).toUpperCase()} WAS LEGAL AND WORTH ABOUT ${one(gap)}. ${wouldFlip?'THAT COULD HAVE FLIPPED THE GAME.':f.won?`THE ${team.toUpperCase()} WIN HID THE LINEUP MISS; ${manager.toUpperCase()} MAY NOT GET THAT COVER NEXT TIME.`:'IT WOULD NOT HAVE FIXED THE WHOLE LOSS, SO DO NOT BLAME ONE BUTTON FOR THE FIRE.'}`,
       `${miss.reserve.name} over ${miss.starter.name} at ${slot} was an admissible alternative worth about ${one(gap)} points. ${wouldFlip?'The counterfactual crosses the final margin, so the management decision belongs in the causal record.':f.won?`The favorable ${team} verdict does not erase ${manager}’s lineup discrepancy.`:`${manager}’s discrepancy is real but smaller than the ${team} losing margin, so it cannot carry the entire case.`}`
-    ][voice(r)]);
+    ][v]);
   }
+  const thread=articleThreadV30(t,r,f,'management');
+  if(thread&&ps.length<2)ps.push(thread);
   if(!ps.length)ps.push([
     `${manager} did not create a material transaction or legal lineup controversy for ${team} this week. That is not praise so much as the absence of an avoidable second story.`,
-    `${manager} has denied Bartholomew a proper ${team} front-office grievance. Competence can be dreadfully inconvenient for a columnist.`,
+    `${manager} left Bartholomew without a substantial ${team} front-office grievance. That is a quiet form of competence, which may be the nicest thing written here all week.`,
     `NO ${team.toUpperCase()} MANAGEMENT SIREN THIS WEEK. THE PLAYERS PRODUCED ENOUGH MATERIAL WITHOUT HELP FROM THE FRONT OFFICE.`,
     `No material ${team} transaction or eligible lineup mistake clears the threshold for a management charge this week.`
-  ][voice(r)]);
+  ][v]);
   if(ps.length<2)ps.push([
-    `${manager} still has a follow-up assignment: preserve what worked for ${team}, correct what did not, and avoid turning one week’s manageable issue into a repeatable one.`,
-    `${manager} gets a second management note only because ${team} now has a real Sunday to learn from. The elegant move is to fix the obvious weakness before it needs a louder paragraph.`,
+    `${manager} still has a follow-up assignment: preserve what worked for ${team}, correct what did not, and avoid turning one manageable issue into a repeatable one.`,
+    `${manager} gets a second note because ${team} now has a real Sunday to learn from. Fix the obvious weakness before it earns a larger column.`,
     `${manager.toUpperCase()} GETS ONE MORE LINE: KEEP THE USEFUL ${team.toUpperCase()} DECISIONS, FIX THE OBVIOUS ONE, AND DO NOT MAKE THIS PAPER RECYCLE THE COMPLAINT NEXT WEEK.`,
-    `${manager} leaves the ${team} management file with a follow-up obligation rather than a verdict; the next lineup will show whether the first week changed any decisions.`
-  ][voice(r)]);
+    `${manager} leaves the ${team} management section with a follow-up obligation rather than a verdict; the next lineup will show whether Week 1 changed any decisions.`
+  ][v]);
   return ps.slice(0,2);
 }
 
@@ -2089,11 +1998,11 @@ function nextOpponentLeadV29(t,r,f=articleFrameV29(t,r)){
     recText=rec?`${Number(rec.wins)||0}-${Number(rec.losses)||0}`:null,starText=star?`${star.name} just produced ${one(star.points)} fantasy points${clause?`; ${star.name} ${clause}`:''}.`:'';
   if(voice(r)===0){
     const forecast=gap==null?'The projection is incomplete.':Math.abs(gap)<6?`Only ${one(Math.abs(gap))} projected points separate the teams.`:gap>0?`The projected edge belongs to ${t.team_name}.`:`The projected edge belongs to ${opp}.`;
-    return `Next comes ${opp}${recText?` at ${recText}`:''}. ${starText} ${forecast} ${f.won?`Nick will be watching whether ${t.team_name}’s winning shape travels.`:gap>0?'After a loss, being favored turns this into a game '+t.team_name+' cannot afford to donate.':'After a loss, the assignment is to produce a response without asking the schedule for mercy.'}`.trim();
+    return `Next comes ${opp}${recText?` at ${recText}`:''}. ${starText} ${forecast} ${f.won?`Nick will be watching whether the habits that produced the ${t.team_name} win travel.`:gap>0?'After a loss, being favored turns this into a game '+t.team_name+' cannot afford to donate.':'After a loss, the assignment is to produce a response without asking the schedule for mercy.'}`.trim();
   }
   if(voice(r)===1){
-    const forecast=gap==null?'The forecast has declined to offer a clean spread.':Math.abs(gap)<6?`The projection is nearly even, which is terribly rude to anyone hoping for a quiet afternoon.`:gap>0?`The prettier side of the forecast belongs to ${t.team_name}.`:`The forecast prefers ${opp}.`;
-    return `Next on the guest list is ${opp}${recText?`, carrying a ${recText} record`:''}. ${starText} ${forecast} ${f.won?`Bartholomew would like the winning ${t.team_name} form to survive a change of scenery.`:`${t.team_name} carries too much expectation to treat the next appointment as decorative.`}`.trim();
+    const forecast=gap==null?'The projection offers no clean edge yet.':Math.abs(gap)<6?`The projection is nearly even, which leaves very little room for a casual mistake.`:gap>0?`The forecast favors ${t.team_name}.`:`The forecast favors ${opp}.`;
+    return `The next assignment is ${opp}${recText?`, currently ${recText}`:''}. ${starText} ${forecast} ${f.won?`Bartholomew wants to see whether the winning ${t.team_name} version survives a different matchup.`:`${t.team_name} carries too much expectation to let the next game become another explanatory column.`}`.trim();
   }
   if(voice(r)===2){
     const forecast=gap==null?'NO CLEAN PROJECTION YET. EXCELLENT.':Math.abs(gap)<6?`ONLY ${one(Math.abs(gap))} PROJECTED POINTS SEPARATE THEM.`:gap>0?`THE FORECAST LIKES ${t.team_name.toUpperCase()}.`:`THE FORECAST LIKES ${String(opp).toUpperCase()}.`;
@@ -2106,31 +2015,39 @@ function nextOpponentLeadV29(t,r,f=articleFrameV29(t,r)){
 function scheduleSignificanceV29(t,r,f=articleFrameV29(t,r)){
   const currentWeek=Number(t.week_classification?.week)||1,up=(t.upcoming_opponents||[]).filter(x=>Number(x.week)>currentWeek).slice().sort((a,b)=>Number(a.week)-Number(b.week)),next=up[0],later=up.slice(1,3),
     a=t.next_week_availability||{},strength=x=>{const rank=Number(x?.context?.standings_rank),p=Number(x?.mida?.playoff);if((Number.isFinite(rank)&&rank<=8)||(Number.isFinite(p)&&p>=65))return'strong';if((Number.isFinite(rank)&&rank>=24)||(Number.isFinite(p)&&p<20))return'soft';return'middle'},
-    laterStrong=later.filter(x=>strength(x)==='strong'),laterSoft=later.filter(x=>strength(x)==='soft'),parts=[],team=teamIdentityV28(t).mascot;
+    laterStrong=later.filter(x=>strength(x)==='strong'),laterSoft=later.filter(x=>strength(x)==='soft'),parts=[],team=teamIdentityV28(t).mascot,v=voice(r);
   if(next&&laterStrong.length>=2)parts.push([
-    `After ${next.team_name}, ${naturalJoin(laterStrong.map(x=>x.team_name))} wait. ${f.won?`${team} can bank the next result before the schedule gets meaner.`:`The loss makes the next game more important because the schedule offers less room for a repair once that gauntlet begins.`}`,
-    `After ${next.team_name}, the guest list turns unpleasant with ${naturalJoin(laterStrong.map(x=>x.team_name))}. ${f.won?'Pocketing another win would be sensible before the expensive part of the menu arrives.':'Dropping another game before that stretch would be an inelegant way to create urgency.'}`,
-    `WIN OR LOSE, READ THE NEXT LINE OF THE SCHEDULE: ${naturalJoin(laterStrong.map(x=>x.team_name)).toUpperCase()} FOLLOW ${String(next.team_name).toUpperCase()}. ${f.won?'ANOTHER WIN BUYS CUSHION.':'THE CURRENT LOSS ALREADY SPENT SOME.'}`,
-    `${naturalJoin(laterStrong.map(x=>x.team_name))} follow ${next.team_name}. For ${team}, the next result therefore has value beyond one week because the later schedule reduces the number of easy corrective opportunities.`
-  ][voice(r)]);
+    `After ${next.team_name}, ${naturalJoin(laterStrong.map(x=>x.team_name))} wait. ${f.won?`${team} can bank the next result before the schedule gets meaner.`:`The loss makes the next game more important because the schedule offers less room for repair once that gauntlet begins.`}`,
+    `${next.team_name} is followed by ${naturalJoin(laterStrong.map(x=>x.team_name))}. That future difficulty makes the next result matter now because later correction gets harder.`,
+    `READ THE SCHEDULE AFTER ${String(next.team_name).toUpperCase()}: ${naturalJoin(laterStrong.map(x=>x.team_name)).toUpperCase()} FOLLOW. ${f.won?'ANOTHER WIN BUYS CUSHION.':'THE CURRENT LOSS ALREADY SPENT SOME.'}`,
+    `${naturalJoin(laterStrong.map(x=>x.team_name))} follow ${next.team_name}. The sequence leaves ${team} fewer cheap opportunities to correct whatever this week exposed.`
+  ][v]);
   else if(next&&laterStrong.length===1)parts.push([
     `${laterStrong[0].team_name} waits shortly after ${next.team_name}. ${f.won?`${team} would rather carry another win into the harder test.`:`The current loss makes banking the friendlier game in front of that test more important.`}`,
-    `${laterStrong[0].team_name} appears soon after ${next.team_name}. ${team} should collect the easier appointment before the difficult one sends an invoice.`,
+    `${laterStrong[0].team_name} appears soon after ${next.team_name}. The sensible ${team} move is to take care of the friendlier assignment before the degree of difficulty rises.`,
     `AFTER ${String(next.team_name).toUpperCase()} COMES ${String(laterStrong[0].team_name).toUpperCase()}. ${f.won?'BANK THE CUSHION FIRST.':'DO NOT ASK THE HARDER GAME TO REPAIR AN AVOIDABLE LOSS.'}`,
-    `${laterStrong[0].team_name} follows ${next.team_name}. The sequence gives ${team} a clear timing problem: accumulate margin before the stronger test rather than after it.`
-  ][voice(r)]);
+    `${laterStrong[0].team_name} follows ${next.team_name}. The sequence gives ${team} a timing problem: accumulate margin before the stronger test instead of asking the stronger test to create it.`
+  ][v]);
   else if(next&&strength(next)==='strong'&&laterSoft.length)parts.push([
     `The difficult part of this short stretch is ${next.team_name}, with softer ground behind it. ${f.won?'An upset would turn one win into real cushion.':'A loss would be understandable, but it would make the friendlier games behind it far less optional.'}`,
-    `The heavyweight before the schedule softens is ${next.team_name}. Steal this one and the table looks lovely; lose it and the later opportunities become appointments rather than suggestions.`,
+    `${next.team_name} is the immediate heavyweight before the road softens. Steal this one and the later games become opportunity; lose it and they become obligation.`,
     `${String(next.team_name).toUpperCase()} IS THE HEAVYWEIGHT BEFORE SOFTER GAMES ARRIVE. ${f.won?'STEAL IT AND BUILD CUSHION.':'MISS IT AND THE SOFTER GAMES BECOME MUST-HAVE MATERIAL.'}`,
-    `The strongest immediate test before the road eases is ${next.team_name}. The later schedule gives ${team} recovery opportunities, but not permission to waste them.`
-  ][voice(r)]);
+    `The strongest immediate test before the road eases is ${next.team_name}. The later schedule gives ${team} recovery opportunities, not permission to waste them.`
+  ][v]);
   const unavailable=[];
   if((a.bye_current_starters||[]).length)unavailable.push(`${names((a.bye_current_starters||[]).slice(0,3))} ${a.bye_current_starters.length===1?'is':'are'} on verified NFL byes`);
   if((a.injury_current_starters||[]).length){
     const x=a.injury_current_starters||[],n=names(x.slice(0,3));unavailable.push(x.length===1?`${n} carries an injury/status designation`:`${n} carry injury/status designations`);
   }
-  if(unavailable.length)parts.push(`${naturalJoin(unavailable)}. That turns depth into part of the next ${team} matchup rather than a roster compliment sitting on the bench.`);
+  if(unavailable.length){
+    const who=naturalJoin(unavailable),availability=[
+      `${who}. That makes ${team} depth a game-plan issue next week rather than a compliment to the bottom of the roster.`,
+      `${who}. ${team} now has an availability problem to solve before kickoff, which matters more than how impressive the depth chart looked in August.`,
+      `${who}. DEPTH IS ABOUT TO STOP BEING A ROSTER GRAPHIC AND START BEING A LINEUP DECISION FOR ${team.toUpperCase()}.`,
+      `${who}. The availability file changes the usable ${team} lineup before the opponent does anything at all.`
+    ][v];
+    parts.push(availability);
+  }
   return parts;
 }
 

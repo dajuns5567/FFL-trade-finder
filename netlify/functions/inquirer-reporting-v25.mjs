@@ -2057,24 +2057,37 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
   return ps.slice(0,2);
 }
 
+function nextOpponentDepthV29(o,weeklyStar,r){
+  const pool=(o?.players||o?.starters||[]).filter(p=>p?.name),season=pool.filter(p=>Number(p.season_games)>0&&Number.isFinite(Number(p.season_fantasy_points))).slice().sort((a,b)=>Number(b.season_fantasy_points)-Number(a.season_fantasy_points))[0],
+    valued=pool.filter(p=>p.value!=null&&Number.isFinite(Number(p.value))).slice().sort((a,b)=>Number(b.value)-Number(a.value))[0],weeklyId=String(weeklyStar?.id||''),notes=[];
+  if(season&&String(season.id)!==weeklyId)notes.push({kind:'season',p:season});
+  if(valued&&String(valued.id)!==weeklyId&&!notes.some(x=>String(x.p.id)===String(valued.id)))notes.push({kind:'value',p:valued});
+  if(!notes.length)return null;
+  const seasonNote=notes.find(x=>x.kind==='season')?.p,valueNote=notes.find(x=>x.kind==='value')?.p;
+  if(voice(r)===0)return [seasonNote?`${seasonNote.name} is the longer-view warning after leading this roster’s season scoring so far.`:null,valueNote?`${valueNote.name} remains its highest-valued player, another reason the advance report cannot stop at last week’s box score.`:null].filter(Boolean).join(' ');
+  if(voice(r)===1)return [seasonNote?`The weekly headline should not obscure ${seasonNote.name}, who still owns the stronger season-long scoring résumé.`:null,valueNote?`${valueNote.name} remains the roster’s most valuable piece, an inconvenient detail for anyone hoping one scouting note would suffice.`:null].filter(Boolean).join(' ');
+  if(voice(r)===2)return [seasonNote?`DO NOT READ ONE BOX SCORE AND FORGET ${seasonNote.name.toUpperCase()}: HE LEADS THIS ROSTER’S SEASON SCORING.`:null,valueNote?`${valueNote.name.toUpperCase()} STILL CARRIES THE HIGHEST ROSTER VALUE. THE WARNING LABEL HAS MORE THAN ONE NAME.`:null].filter(Boolean).join(' ');
+  return [seasonNote?`The season file points separately to ${seasonNote.name}, the roster’s scoring leader to date.`:null,valueNote?`The value file points to ${valueNote.name} as the roster centerpiece, so the advance evidence is broader than one weekly performance.`:null].filter(Boolean).join(' ');
+}
+
 function nextOpponentLeadV29(t,r,f=articleFrameV29(t,r)){
   const o=t.next_opponent_roster,opp=String(t.next_opponent_name||o?.team_name||'the next opponent'),rows=(o?.starters||o?.players||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points)),
     star=rows[0],clause=star?statClause(star):null,rec=t.next_opponent_context?.record,gap=valid(t.next_projected)&&valid(t.next_opponent_projected)?Number(t.next_projected)-Number(t.next_opponent_projected):null,
-    recText=rec?`${Number(rec.wins)||0}-${Number(rec.losses)||0}`:null,starText=star?`${star.name} just produced ${one(star.points)} fantasy points${clause?`; ${star.name} ${clause}`:''}.`:'';
+    recText=rec?`${Number(rec.wins)||0}-${Number(rec.losses)||0}`:null,starText=star?`${star.name} just produced ${one(star.points)} fantasy points${clause?`; ${star.name} ${clause}`:''}.`:'',depthText=nextOpponentDepthV29(o,star,r);
   if(voice(r)===0){
     const forecast=gap==null?'The projection is incomplete.':Math.abs(gap)<6?`Only ${one(Math.abs(gap))} projected points separate the teams.`:gap>0?`The projected edge belongs to ${t.team_name}.`:`The projected edge belongs to ${opp}.`;
-    return `Next comes ${opp}${recText?` at ${recText}`:''}. ${starText} ${forecast} ${f.won?`Nick will be watching whether the habits that produced the ${t.team_name} win travel.`:gap>0?'After a loss, being favored turns this into a game '+t.team_name+' cannot afford to donate.':'After a loss, the assignment is to produce a response without asking the schedule for mercy.'}`.trim();
+    return `Next comes ${opp}${recText?` at ${recText}`:''}. ${starText} ${depthText||''} ${forecast} ${f.won?`Nick will be watching whether the habits that produced the ${t.team_name} win travel.`:gap>0?'After a loss, being favored turns this into a game '+t.team_name+' cannot afford to donate.':'After a loss, the assignment is to produce a response without asking the schedule for mercy.'}`.trim();
   }
   if(voice(r)===1){
     const forecast=gap==null?'The projection offers no clean edge yet.':Math.abs(gap)<6?`The projection is nearly even, which leaves very little room for a casual mistake.`:gap>0?`The forecast favors ${t.team_name}.`:`The forecast favors ${opp}.`;
-    return `The next assignment is ${opp}${recText?`, currently ${recText}`:''}. ${starText} ${forecast} ${f.won?`Bartholomew wants to see whether the winning ${t.team_name} version survives a different matchup.`:`${t.team_name} carries too much expectation to let the next game become another explanatory column.`}`.trim();
+    return `The next assignment is ${opp}${recText?`, currently ${recText}`:''}. ${starText} ${depthText||''} ${forecast} ${f.won?`Bartholomew wants to see whether the winning ${t.team_name} version survives a different matchup.`:`${t.team_name} carries too much expectation to let the next game become another explanatory column.`}`.trim();
   }
   if(voice(r)===2){
     const forecast=gap==null?'NO CLEAN PROJECTION YET. EXCELLENT.':Math.abs(gap)<6?`ONLY ${one(Math.abs(gap))} PROJECTED POINTS SEPARATE THEM.`:gap>0?`THE FORECAST LIKES ${t.team_name.toUpperCase()}.`:`THE FORECAST LIKES ${String(opp).toUpperCase()}.`;
-    return `NEXT WEEK: ${opp.toUpperCase()}${recText?` (${recText})`:''}. ${starText} ${forecast} ${f.won?'PROVE THE WIN TRAVELS.':'THE RESPONSE GAME HAS ARRIVED.'}`.trim();
+    return `NEXT WEEK: ${opp.toUpperCase()}${recText?` (${recText})`:''}. ${starText} ${depthText||''} ${forecast} ${f.won?'PROVE THE WIN TRAVELS.':'THE RESPONSE GAME HAS ARRIVED.'}`.trim();
   }
   const forecast=gap==null?'No complete projection comparison has entered the file.':Math.abs(gap)<6?`The projection gap is only ${one(Math.abs(gap))} points.`:gap>0?`The paper forecast favors ${t.team_name}.`:`The paper forecast favors ${opp}.`;
-  return `The next file is ${opp}${recText?`, ${recText}`:''}. ${starText} ${forecast} ${f.won?`The ${t.team_name} assignment is to corroborate a favorable result.`:`The ${t.team_name} assignment is to answer an adverse result without creating a second one.`}`.trim();
+  return `The next file is ${opp}${recText?`, ${recText}`:''}. ${starText} ${depthText||''} ${forecast} ${f.won?`The ${t.team_name} assignment is to corroborate a favorable result.`:`The ${t.team_name} assignment is to answer an adverse result without creating a second one.`}`.trim();
 }
 
 function scheduleSignificanceV29(t,r,f=articleFrameV29(t,r)){

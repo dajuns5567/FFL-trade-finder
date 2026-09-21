@@ -79,9 +79,10 @@ function statSituation(p){
 }
 
 function scopedFootballRead(t,p,angle='matchup'){
-  const base=statSituation(p);if(!base)return null;
-  const compact=String(base).replace(/\.\s+/g,'; ').replace(/\.$/,'');
-  return `${t.team_name}’s ${angle} read on ${p.name}: ${compact}.`;
+  const raw=statSituation(p);if(!raw)return null;
+  const safeName=String(p?.name||'Player').replaceAll('.','');
+  const compact=String(raw).replaceAll(String(p?.name||''),safeName).replace(/\.\s+/g,'; ').replace(/\.$/,'');
+  return `${t.team_name}’s ${angle} read on ${safeName}: ${compact}.`;
 }
 
 function playerTrajectory(p){
@@ -693,7 +694,9 @@ function specificityPass(t,kind,value){
     ['One week never closes a case, but every result changes what the next one is allowed to mean.','One '+team+' week never closes a case, but this result changes what the next one is allowed to mean.'],
     ['Next week is a good time to lower the volume.','For '+team+', next week is a good time to lower the volume.'],
     ['That witness cannot be lost in the crowd.',team+' cannot afford to lose that witness in the crowd.'],
-    ['The next file already has a lead witness.',team+' already has a lead witness clipped to the next file.']
+    ['The next file already has a lead witness.',team+' already has a lead witness clipped to the next file.'],
+    ['The appointment has enough actual Week 1 form to be more interesting than whatever the forecast says over cocktails.',team+' gets an appointment with enough actual Week 1 form to be more interesting than whatever the forecast says over cocktails.'],
+    ['The distinction matters because Filch prosecutes available choices, not impossible bench swaps.','For '+team+', the distinction matters because Filch prosecutes available choices, not impossible bench swaps.']
   ];
   for(const [from,to] of swaps)p=p.replaceAll(from,to);
   return p;

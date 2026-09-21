@@ -2000,7 +2000,7 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
       ][v];
     }
     const close=[
-      `The ${team} move has a real football consequence now. The role or roster spot it created has to justify the decision over the next few Sundays.`,
+      keyedChoice(`${t.roster_id}:nick-move-close`,[`The ${team} move has a real football consequence now. The new role has to prove it was worth creating over the next few Sundays.`,`Sunday finally gave the ${team} transaction something more useful than a notification. Nick wants to see whether the roster spot created by the move keeps earning itself.`,`The ${team} transaction has left the transaction log and entered the football story. The next few weeks get to decide whether the roster is actually better for it.`]),
       `The ${team} decision finally has Sunday evidence attached to it. Bartholomew will reserve judgment on ${team} until the new role has enough weeks to become persuasive.`,
       `TRANSACTION DAY WAS THE TRAILER FOR ${team.toUpperCase()}. SUNDAY WAS THE FIRST SCENE THAT COUNTS.`,
       `The timestamp proves the ${team} decision happened; the Sunday role now begins showing what actually changed.`

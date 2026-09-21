@@ -4,9 +4,6 @@ on:
     branches:
       - fix/value-history-future-tracking
       - release/precision-idp-runtime-20260919
-permissions:
-  contents: write
-
 jobs:
   syntax:
     runs-on: ubuntu-latest
@@ -27,19 +24,6 @@ jobs:
           node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer.json
           node scripts/inquirer-overview-quality-audit.mjs /tmp/week1-inquirer.json
           node scripts/pack-inquirer-preload.mjs /tmp/week1-inquirer.json /tmp/inquirer-week1-2026-preload.mjs
-      - name: Sync passing Week 1 preload to branch
-        if: success() && github.ref == 'refs/heads/release/precision-idp-runtime-20260919'
-        run: |
-          cp /tmp/inquirer-week1-2026-preload.mjs netlify/functions/inquirer-week1-2026-preload.mjs
-          if git diff --quiet -- netlify/functions/inquirer-week1-2026-preload.mjs; then
-            echo "Week 1 preload already matches passing generated edition."
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add netlify/functions/inquirer-week1-2026-preload.mjs
-            git commit -m "Regenerate Week 1 Inquirer preload"
-            git push origin HEAD:release/precision-idp-runtime-20260919
-          fi
       - name: Upload generated V26 edition
         if: always()
         uses: actions/upload-artifact@v4

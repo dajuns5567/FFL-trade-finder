@@ -929,7 +929,13 @@ export function humanSectionsV25(args){
     let paragraphs;
     if(s.kind==='lede')paragraphs=naturalLede(t,args.reporter);
     else if(s.kind==='players')paragraphs=playerSection(t,args.reporter);
-    else if(s.kind==='management')paragraphs=mgmt[0]==='n/a'?mgmt:[mgmt.filter(p=>p&&p!=='n/a').join(' ')];
+    else if(s.kind==='management'){
+      const moveParagraphs=mgmt.filter(p=>p&&p!=='n/a'),expansion=reporterExpansionV26(t,s.kind,args.reporter);
+      paragraphs=[];
+      if(moveParagraphs.length)paragraphs.push(moveParagraphs.join(' '));
+      if(expansion.length)paragraphs.push(expansion.join(' '));
+      if(!paragraphs.length)paragraphs.push(`${t.manager_name} made no transaction move that changed the weekly story. With no verified lineup decision large enough to rewrite the result, ${t.team_name} needed better production from the starters already chosen rather than a different Tuesday transaction.`);
+    }
     else if(s.kind==='value')paragraphs=valueSectionV26(t,args.reporter);
     else if(s.kind==='outlook')paragraphs=outlook(t,args.week,args.reporter);
     else if(s.kind==='sentiment')paragraphs=sentiment(t,args.reporter);
@@ -938,9 +944,7 @@ export function humanSectionsV25(args){
     else paragraphs=[...(s.paragraphs||[])];
     if(paragraphs.length&&paragraphs[0]!=='n/a'){
       if(s.kind==='players'){const traded=list(t).find(p=>p.acquisition);const callback=traded?acquisitionCallback(t,traded,args.reporter):null;if(callback)paragraphs.push(callback)}
-      const expansion=reporterExpansionV26(t,s.kind,args.reporter);
-      if(s.kind==='management'&&expansion.length)paragraphs.push(expansion.join(' '));
-      else paragraphs.push(...expansion);
+      if(s.kind!=='management')paragraphs.push(...reporterExpansionV26(t,s.kind,args.reporter));
     }
     paragraphs=paragraphs.map(p=>specificityPass(t,s.kind,p));
     return {...s,paragraphs};

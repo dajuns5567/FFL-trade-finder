@@ -84,7 +84,7 @@ for(const t of d.teams||[]){
   if(top?.real_stat_line){
     const wholeArticle=articleText(t);
     assert.ok(wholeArticle.includes(String(top.name||'')),'Team article must discuss the leading scorer by name for '+t.team_name);
-    assert.match(playerCopy,/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|sacks?|snaps?|interceptions?)\b/i,'Player section must contain real-football usage/stat commentary for '+t.team_name);
+    assert.match(playerCopy,/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|solo|assists?|TFL|tackles? for loss|sacks?|QB hits?|pass breakups?|snaps?|interceptions?|forced fumbles?)\b/i,'Player section must contain real-football usage/stat commentary for '+t.team_name);
   }
 }
 for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=4,'Reporter '+rid+' must generate at least four distinct article structures across eight team stories; got '+orders.size);

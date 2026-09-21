@@ -405,6 +405,11 @@ function naturalLede(t,r){
     [`${second.name} joined ${top.name} among the names worth printing. Two headline performances made the lineup considerably harder to flatten.`,`${top.name} got the biggest type, but ${second.name} earned ink too. That is how a lineup starts sounding dangerous.`],
     [`${second.name} gave ${top.name} meaningful company, which kept ${t.team_name} from leaning on a single scorer all afternoon.`,`${top.name} led the way, and ${second.name} supplied enough behind him to keep the afternoon from becoming a one-player argument.`]
   ]));
+  const topScore=one(top.points);
+  if(ps[0]&&!/fantasy points/i.test(ps[0])){
+    if(ps[0].includes(topScore+' points'))ps[0]=ps[0].replace(topScore+' points',topScore+' fantasy points');
+    else if(ps[0].includes(topScore))ps[0]=ps[0].replace(topScore,topScore+' fantasy points');
+  }
   return ps;
 }
 

@@ -22,6 +22,14 @@ if(new Set(sections.map(s=>s.reporter.id)).size!==4)fail('All four desks must ap
 const humor=/\b(?:parade|rental shoes|gala|hotel[- ]lobby|good china|chaise|melodrama|elegant insult|group chat|honeymoon|front page|back page|receipt|rookie class|mock|burn it|ceremonially|evidence|file|paperwork|docket|deadline|confetti|argument|sigh|screenshot|decorative|decoration)\b/i;
 for(const s of sections){const copy=(s.paragraphs||[]).join(' ');if(copy.trim()==='n/a')continue;if(!humor.test(copy))fail((s.reporter?.name||'Reporter')+' Weekly Recap section is too straight; every desk must carry personality/humor');}
 
+const bartholomew=sections.find(s=>String(s?.reporter?.id||'')==='tess-delaney'||/Bartholomew Roycington III/i.test(String(s?.reporter?.name||'')));
+if(!bartholomew)fail('Weekly Recap must preserve Bartholomew Roycington III’s section');
+const bartholomewCopy=(bartholomew.paragraphs||[]).join(' ');
+if(!/offensive breakout watch admits\s+.+?\s+and\s+.+?\s+past the velvet rope/i.test(bartholomewCopy))fail('Bartholomew must name two offensive breakout players to watch');
+if(!/On defense,\s+.+?\s+gets the third seat/i.test(bartholomewCopy))fail('Bartholomew must name one defensive breakout player to watch');
+if(!/are the two offensive names Bartholomew trusts/i.test(bartholomewCopy))fail('Bartholomew must name two offensive reliable players');
+if(!/On defense,\s+.+?\s+gets the same designation/i.test(bartholomewCopy))fail('Bartholomew must name one defensive reliable player');
+
 const body=sections.flatMap(s=>s.paragraphs||[]).join(' ');
 const wc=words(body).length,nd=numeric(body)/Math.max(1,wc);
 if(wc<320)fail('League overview is too thin to read like a newspaper notebook: '+wc+' words');

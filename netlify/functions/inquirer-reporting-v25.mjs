@@ -135,7 +135,7 @@ function teamStatLine(p){
   const role=teamDefenseUsage(p);
   if(bits.length){let text=`${n} finished with ${bits.join(', ')}.`;if(role?.limited_snap)text+=` He did it on only ${role.snaps} defensive snaps, one of the rare cases where the snap count actually makes the performance more interesting.`;return text;}
   if(role?.limited_snap)return `${n} produced ${one(p.points)} fantasy points on only ${role.snaps} defensive snaps, unusually efficient work in a genuinely limited role.`;
-  const line=String(p?.real_stat_line||'').replaceAll(' • ',', ');return line?`${n} finished with ${line}.`:null;
+  const line=String(p?.real_stat_line||'').split(/\s*•\s*|\s*,\s*/).map(x=>x.trim()).filter(x=>x&&!/\b(?:def(?:ensive)?\s+)?snaps?\b/i.test(x)).join(', ');return line?`${n} finished with ${line}.`:null;
 }
 
 function teamUsageComment(t,p,angle='star'){

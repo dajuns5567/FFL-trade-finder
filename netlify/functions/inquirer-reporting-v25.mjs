@@ -215,7 +215,7 @@ function teamTrajectory(p){
   const rookie=Number.isFinite(years)&&years===0,young=(Number.isFinite(age)&&age<=26)||(Number.isFinite(years)&&years<=3),oldThreshold=pos==='QB'?34:pos==='RB'?28:(pos==='WR'||pos==='TE')?30:29,veteran=(Number.isFinite(years)&&years>=7)||(Number.isFinite(age)&&age>=oldThreshold);
   if(rookie)return {kind:'rookie',strength:1,text:keyedChoice(key,[
     `${p.name} is a rookie, and the first Sunday gave the coaching staff a reason to keep him involved.`,
-    `Rookie ${p.name} has already made himself difficult to ignore. The next question is whether the same role is waiting next week.`,
+    `Rookie ${p.name} has already made himself difficult to ignore. Another week in the same role would make that attention harder to dismiss.`,
     `${p.name} got his first real NFL Sunday on the page. Earning another one is the useful part.`
   ])};
   if(!Number.isFinite(prior)||prior<=0||priorGames<6||!Number.isFinite(current)||games<1)return null;

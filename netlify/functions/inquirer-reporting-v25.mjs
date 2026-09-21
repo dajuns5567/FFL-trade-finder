@@ -777,7 +777,37 @@ function broadcastExpansionV26(t,kind,r){
   return [];
 }
 
-function reporterExpansionV26(t,kind,r){return broadcastExpansionV26(t,kind,r)}
+function nickExpansion(t,kind,r){
+  return broadcastExpansionV26(t,kind,r);
+}
+function bartholomewExpansion(t,kind,r){
+  if(kind==='lede')return [seasonContextStoryV26(t,r),currentOpponentFootballStory(t,r),teamScoreConstructionStory(t,r)].filter(Boolean);
+  if(kind==='players')return [supportingCastFootballStory(t,r)].filter(Boolean);
+  if(kind==='management')return [managementImpactStory(t,r),lineupProcessStory(t,r),managementNarrativeCoda(t,r)].filter(Boolean);
+  if(kind==='outlook')return [nextOpponentFootballStory(t,r)].filter(Boolean);
+  if(kind==='hot-seat'||kind==='cool-throne')return [chairFootballStory(t,kind,r)].filter(Boolean);
+  return [];
+}
+function tillyExpansion(t,kind,r){
+  if(kind==='lede')return [teamScoreConstructionStory(t,r),seasonContextStoryV26(t,r),currentOpponentFootballStory(t,r)].filter(Boolean);
+  if(kind==='players')return [supportingCastFootballStory(t,r)].filter(Boolean);
+  if(kind==='management')return [managementImpactStory(t,r),managementNarrativeCoda(t,r),lineupProcessStory(t,r)].filter(Boolean);
+  if(kind==='outlook')return [nextOpponentFootballStory(t,r)].filter(Boolean);
+  if(kind==='hot-seat'||kind==='cool-throne')return [chairFootballStory(t,kind,r)].filter(Boolean);
+  return [];
+}
+function filchExpansion(t,kind,r){
+  if(kind==='lede')return [currentOpponentFootballStory(t,r),teamScoreConstructionStory(t,r),seasonContextStoryV26(t,r)].filter(Boolean);
+  if(kind==='players')return [supportingCastFootballStory(t,r)].filter(Boolean);
+  if(kind==='management')return [lineupProcessStory(t,r),managementImpactStory(t,r),managementNarrativeCoda(t,r)].filter(Boolean);
+  if(kind==='outlook')return [nextOpponentFootballStory(t,r)].filter(Boolean);
+  if(kind==='hot-seat'||kind==='cool-throne')return [chairFootballStory(t,kind,r)].filter(Boolean);
+  return [];
+}
+function reporterExpansionV26(t,kind,r){
+  const fn=r?.id==='tess-delaney'?bartholomewExpansion:r?.id==='mack-hollis'?tillyExpansion:r?.id==='nora-voss'?filchExpansion:nickExpansion;
+  return fn(t,kind,r);
+}
 
 function specificityPass(t,kind,value){
   let p=String(value??'');

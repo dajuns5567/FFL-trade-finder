@@ -4,6 +4,14 @@ import assert from 'node:assert/strict';
 const path=process.argv[2]||'/tmp/week1-inquirer.json';
 const d=JSON.parse(fs.readFileSync(path,'utf8'));
 const words=s=>String(s||'').trim().split(/\s+/).filter(Boolean).length;
+const sentenceParts=s=>{
+  const protectedText=String(s||'')
+    .replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§'))
+    .replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms)\.(?=\s+[A-Z])/g,m=>m.replace('.','§'));
+  return protectedText.split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);
+};
+assert.equal(sentenceParts('On the other side, Amon-Ra St. Brown caught 10 passes.').length,1,'Sentence parser must preserve St. inside player names');
+assert.equal(sentenceParts('Next week, C.J. Stroud completed 26 passes.').length,1,'Sentence parser must preserve initialed player names');
 const articleText=t=>(t?.inquirer_article?.paragraphs||[]).join(' ');
 const recapSections=d?.league_overview?.sections||[];
 const recap=recapSections.flatMap(s=>s?.paragraphs||[]).join(' ');
@@ -79,7 +87,7 @@ for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=2,'Reporter '+r
 const repeatedLong=new Map();
 for(const t of d.teams||[]){
   const body=articleText(t);
-  for(const sentence of body.split(/(?<=[.!?])\s+/)){
+  for(const sentence of sentenceParts(body)){
     const key=String(sentence||'').trim();
     if(words(key)<8)continue;
     repeatedLong.set(key,(repeatedLong.get(key)||0)+1);

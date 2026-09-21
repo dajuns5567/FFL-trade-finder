@@ -924,11 +924,21 @@ export function humanSectionsV25(args){
     else if(s.kind==='management'){
       const moveParagraphs=mgmt.filter(p=>p&&p!=='n/a'),expansion=reporterExpansionV26(t,s.kind,args.reporter);
       paragraphs=[];
-      if(moveParagraphs.length)paragraphs.push(moveParagraphs.join(' '));
-      if(expansion.length)paragraphs.push(expansion.join(' '));
-      if(!paragraphs.length)paragraphs=['n/a'];
+      if(moveParagraphs.length){
+        paragraphs.push(moveParagraphs.join(' '));
+        if(expansion.length)paragraphs.push(expansion.join(' '));
+      }else if(expansion.length){
+        paragraphs.push(expansion[0]);
+        paragraphs.push(expansion.length>1
+          ? expansion.slice(1).join(' ')
+          : deskChoice(t,args.reporter,[
+              [t.team_name+' has one real management decision to revisit here. The useful response is to correct it without inventing a larger roster crisis.'],
+              [t.team_name+' has one management blemish worth remembering. No need for a palace coup; a better Sunday decision will do.'],
+              ['MANAGEMENT NOTE: '+t.team_name+' has one real decision to fix. Correct it, print the lesson, move on.'],
+              [t.team_name+' has a concrete management choice to review. The next lineup gets a chance to show the lesson actually stuck.']
+            ]));
+      }else paragraphs=['n/a'];
     }
-
     else if(s.kind==='value')paragraphs=valueSectionV26(t,args.reporter);
     else if(s.kind==='outlook')paragraphs=outlook(t,args.week,args.reporter);
     else if(s.kind==='sentiment')paragraphs=sentiment(t,args.reporter);

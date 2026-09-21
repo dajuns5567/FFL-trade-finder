@@ -735,7 +735,7 @@ function managementNarrativeCoda(t,r){
     [won?`${team} won with the roster changes already in the lineup, which gives management a better place to evaluate what comes next.`:`${team} lost, so the recent roster changes have less room to hide behind patience.`],
     [won?`${team} gets to let the new arrangement breathe under a win. A civilized opening, if nothing else.`:`${team} has a loss making every recent rearrangement look a little more important.`],
     [won?`${team.toUpperCase()} WON WITH THE NEW LOOK. ${team} buys its front office a quieter Tuesday.`:`${team.toUpperCase()} LOST WITH THE NEW LOOK. ${team} makes every recent move louder before next Sunday.`],
-    [won?`${team} won with the recent changes in place. The result gives management some room before the next decision arrives.`:`${team} lost with the recent changes in place, which puts more pressure on the roster to show why those moves mattered.`]
+    [won?`${team} won with the recent changes in place. ${team} gets some room before the next management decision arrives.`:`${team} lost with the recent changes in place, which puts more pressure on the roster to show why those moves mattered.`]
   ]);
 }
 function managementImpactStory(t,r){

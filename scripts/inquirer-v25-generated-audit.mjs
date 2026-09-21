@@ -99,7 +99,7 @@ for(const [label,re] of [
   ['team alias used as singular “is making the file personal” subject',/disclosure:\s+(?!covering\b)[^.]*\sis making the file personal\b/i]
 ]) assert.doesNotMatch(teamCopy,re,'Generated team prose has '+label);
 
-const escapeRe=s=>String(s||'').replace(/[.*+?^$\{\}()|[\]\\]/g,'\\for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=2,'Reporter '+rid+' must have more than one article structure across eight team stories');');
+const escapeRe=value=>String(value||'').replace(/[.*+?^$\{\}()|[\]\\]/g,m=>'\\\\'+m);
 let aliasArticles=0;
 for(const t of d.teams||[]){
   const full=String(t.team_name||'').trim(),bits=full.split(/\s+/).filter(Boolean);if(bits.length<2)continue;

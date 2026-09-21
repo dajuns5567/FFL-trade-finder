@@ -35,21 +35,47 @@ function opportunity(p){
 function statSituation(p){
   const s=p?.real_stats||{},pos=String(p?.position||'').toUpperCase(),line=String(p?.real_stat_line||'').replaceAll(' • ',', ');
   if(pos==='RB'){
-    const carries=Number(s.rush_att),targets=Number(s.rec_tgt??s.targets),recs=Number(s.rec);
-    if(Number.isFinite(carries)||Number.isFinite(targets))return `${line?line+'. ':''}${p.name} had ${Number.isFinite(carries)?carries+' carries':'no recorded carry count'}${Number.isFinite(targets)?' and '+targets+' targets':''}. ${(carries||0)>=14||(targets||0)>=5?p.name+' had enough work that the fantasy result has a usage base worth carrying forward.':p.name+' produced without dominant volume, so next week matters before treating this as a new normal.'}`;
+    const carries=Number(s.rush_att),targets=Number(s.rec_tgt??s.targets);
+    if(Number.isFinite(carries)||Number.isFinite(targets)){
+      const work=(Number.isFinite(carries)?carries+' carries':'')+(Number.isFinite(carries)&&Number.isFinite(targets)?' and ':'')+(Number.isFinite(targets)?targets+' targets':'');
+      const read=(carries||0)>=14||(targets||0)>=5
+        ?p.name+' was not living on one lucky touch; '+work+' gave the fantasy line a real Sunday workload underneath it.'
+        :p.name+' got there on a lighter '+work+' workload, so efficiency did more of the work than volume.';
+      return `${line?line+'. ':''}${read}`;
+    }
   }
   if(pos==='WR'||pos==='TE'){
-    const targets=Number(s.rec_tgt??s.targets),recs=Number(s.rec),yd=Number(s.rec_yd);
-    if(Number.isFinite(targets))return `${line?line+'. ':''}${targets} targets put ${p.name} directly into the real-life offense. ${targets>=8?p.name+'’s target involvement is more useful for forecasting the next week than the fantasy total by itself.':targets>=5?p.name+' had a meaningful role, though not yet the sort of volume that makes every spike feel repeatable.':p.name+' produced on a thin target base, so the result needs another week before it becomes a role statement.'}`;
+    const targets=Number(s.rec_tgt??s.targets);
+    if(Number.isFinite(targets)){
+      const read=targets>=8
+        ?`${targets} targets made ${p.name} a central part of the passing game, not a box-score tourist.`
+        :targets>=5
+          ?`${p.name} drew ${targets} targets, enough involvement to make the production feel connected to a real role.`
+          :`${p.name} saw only ${targets} targets, so the fantasy total came from a narrow opportunity base.`;
+      return `${line?line+'. ':''}${read}`;
+    }
   }
   if(pos==='QB'){
-    const att=Number(s.pass_att),rush=Number(s.rush_att);
-    if(Number.isFinite(att)||Number.isFinite(rush))return `${line?line+'. ':''}${p.name} logged ${Number.isFinite(att)?att+' pass attempts':'an unverified pass-attempt total'}${Number.isFinite(rush)&&rush>0?' and '+rush+' carries':''}. ${(att||0)>=30||(rush||0)>=6?p.name+' had enough opportunity that the fantasy result came from a full workload, not one isolated play.':p.name+' worked from an ordinary-sized opportunity base, so efficiency drove more of the fantasy result.'}`;
+    const att=Number(s.pass_att),rush=Number(s.rush_att),work=(Number.isFinite(att)?att+' pass attempts':'')+(Number.isFinite(att)&&Number.isFinite(rush)&&rush>0?' and ':'')+(Number.isFinite(rush)&&rush>0?rush+' carries':'');
+    if(work){
+      const read=(att||0)>=30||(rush||0)>=6
+        ?`${p.name} had the ball often enough — ${work} — that the fantasy result came from a full offensive workload.`
+        :`${p.name} worked from ${work}; this was more an efficiency story than an overwhelming-volume one.`;
+      return `${line?line+'. ':''}${read}`;
+    }
   }
   const solo=Number(s.tkl_solo),ast=Number(s.tkl_ast),sacks=Number(s.sack),pd=Number(s.pass_def),ints=Number(s.int),snaps=Number(s.def_snp??s.def_snaps??s.defensive_snaps);
-  const tackles=(Number.isFinite(solo)?solo:0)+(Number.isFinite(ast)?ast:0),snapRead=Number.isFinite(snaps)?` ${p.name} played ${snaps} defensive snaps, which tells us whether the splash plays came from a full-time role or a smaller package.`:'';
-  if(tackles||sacks||pd||ints||Number.isFinite(snaps))return `${line?line+'. ':''}${snapRead}${tackles>=8?' The tackle volume gives the fantasy score a steadier foundation than one splash play alone.':sacks>=1||ints>=1||pd>=2?' The impact plays changed the IDP week; the snap count and follow-up tackle volume will decide how bankable that production is.':Number.isFinite(snaps)&&snaps>=40?' '+p.name+' logged substantial playing time even without a loud tackle line, so his role is worth carrying forward.':' The next game will tell us more about how bankable this role is.'}`.trim();
-  return line?`${line}. ${p.name}’s real-life line supports the box score, but the available usage detail is too thin for a stronger role claim.`:null;
+  const tackles=(Number.isFinite(solo)?solo:0)+(Number.isFinite(ast)?ast:0);
+  if(tackles||sacks||pd||ints||Number.isFinite(snaps)){
+    let read='';
+    if(Number.isFinite(snaps)&&snaps>=40)read=`${p.name} was on the field for ${snaps} defensive snaps, so the role was full enough to matter even before the splash plays are counted.`;
+    else if(Number.isFinite(snaps))read=`${p.name} played ${snaps} defensive snaps, a smaller workload that puts more pressure on each impact play.`;
+    if(tackles>=8)read+=(read?' ':'')+`The ${tackles}-tackle volume gave the IDP score a sturdy floor.`;
+    else if(sacks>=1||ints>=1||pd>=2)read+=(read?' ':'')+`The impact plays made the fantasy week; another useful tackle line would make the production less dependent on one eruption.`;
+    else if(!read)read=`${p.name}’s defensive production came without enough snap detail to call the role settled.`;
+    return `${line?line+'. ':''}${read}`.trim();
+  }
+  return line?`${line}. The football line gives ${p.name} context beyond the fantasy total, even though the available usage detail is limited.`:null;
 }
 
 function playerTrajectory(p){
@@ -63,10 +89,10 @@ function playerTrajectory(p){
     `${p.name} is forcing the conversation upward. A ${one(current)} season average after ${one(prior)} across ${priorGames} games last year would already be notable; pairing it with ${opp.text} makes the improvement much harder to dismiss as scoring luck.`
   ])};
   if(games===1&&Number.isFinite(age)&&age<=26&&ratio>=1.4&&opp?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} is an early breakout watch, not a declared breakout. Week 1 landed well above last year’s ${one(prior)}-point average across ${priorGames} games, and ${opp.text} gives the spike a real workload underneath it. The next ${p.name} game decides whether this stays a curiosity or starts becoming a role change worth believing.`,
-    `Put ${p.name} on the breakout watch list, but keep the permanent marker capped. The opener cleared last year’s ${one(prior)}-point average across ${priorGames} games, while ${opp.text} shows there was actual opportunity behind it. A second useful ${p.name} week would matter more than another clever label.`,
-    `${p.name} gave us the kind of opener that earns a breakout question. Last year’s baseline was ${one(prior)} across ${priorGames} games; this week came with ${opp.text} and a much louder fantasy result. That is enough to watch ${p.name} closely, nowhere near enough to declare his old baseline dead.`,
-    `${p.name} has an early breakout case because the fantasy spike came with ${opp.text}, not because Week 1 is magical. He averaged ${one(prior)} across ${priorGames} games last year. If ${p.name} keeps the opportunity another Sunday, his breakout conversation gets more serious.`
+    `${p.name} is an early breakout watch, not a declared breakout. Week 1 landed well above last year’s ${one(prior)}-point average across ${priorGames} games, and ${opp.text} gives the spike a real workload underneath it. One more ${p.name} week with this kind of work would turn an interesting opener into a real role change.`,
+    `Put ${p.name} on the breakout watch list, but keep the permanent marker capped. The opener cleared last year’s ${one(prior)}-point average across ${priorGames} games, while ${opp.text} shows there was actual opportunity behind it. Another Sunday with the same ${p.name} workload would make the breakout case considerably harder to dismiss.`,
+    `${p.name} gave us the kind of opener that earns a breakout question. Last year’s baseline was ${one(prior)} across ${priorGames} games; this week came with ${opp.text} and a much louder fantasy result. The old baseline still matters, but ${p.name} has given this team a legitimate reason to wonder whether something changed.`,
+    `${p.name} has an early breakout case because the fantasy spike came with ${opp.text}, not because Week 1 is magical. He averaged ${one(prior)} across ${priorGames} games last year. If ${p.name} keeps this opportunity another Sunday, the opener starts looking less like a spike and more like a new job description.`
   ])};
   if(games>=3&&Number.isFinite(age)&&age>=oldThreshold&&ratio<=.68)return {kind:'decline',strength:1-ratio,text:keyedChoice(key,[
     `${p.name} has earned a real decline watch: ${one(current)} per game this season versus ${one(prior)} across ${priorGames} games last year. At age ${age}, wondering whether the old weekly floor is gone is fair; declaring him finished still outruns the evidence.`,
@@ -90,7 +116,7 @@ function playerTrajectory(p){
     `${p.name} opened well below last year’s ${one(prior)}-point average across ${priorGames} games. Treat it as a Week 1 stumble, not proof of decline; the next useful signal is whether the role and opportunity rebound.`,
     `${p.name} started the year far under the ${one(prior)}-point average he carried across ${priorGames} games last season. One bad opener does not make a decline trend, but it does put the next workload under a brighter light.`,
     `The opener was a sharp drop from ${p.name}’s ${one(prior)}-point average across ${priorGames} games last year. That is enough to ask what happened to the role, nowhere near enough to call the player finished.`,
-    `${p.name} gave us a bad first data point against a ${one(prior)}-point average over ${priorGames} games last season. The responsible ${p.name} read is simple: note it, check the opportunity next week, and resist turning one Sunday into a career obituary.`
+    `${p.name} gave us a bad first data point against a ${one(prior)}-point average over ${priorGames} games last season. One ugly opener does not erase ${p.name}’s established baseline; the role next Sunday will say much more than the Week 1 total did.`
   ])};
   return null;
 }

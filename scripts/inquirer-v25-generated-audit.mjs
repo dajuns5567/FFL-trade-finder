@@ -169,6 +169,31 @@ for(const t of d.teams||[]){
 }
 const repeatedLongOffenders=[...repeatedLong].filter(([,count])=>count>2);
 assert.deepEqual(repeatedLongOffenders,[],'Generated team articles must not repeat any long sentence across more than two placements');
+
+const editorialEntities=[...new Set((d.teams||[]).flatMap(t=>[
+  t.team_name,t.opponent_name,t.next_opponent_name,t.manager_name,
+  ...(t.starter_details||[]).map(p=>p.name),
+  ...(t.opponent_roster?.starters||t.opponent_roster?.players||[]).map(p=>p?.name),
+  ...(t.next_opponent_roster?.starters||t.next_opponent_roster?.players||[]).map(p=>p?.name)
+]).filter(Boolean).map(x=>String(x).trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
+const editorialFingerprint=sentence=>{
+  let x=String(sentence||'').trim();
+  const numeric=(x.match(/\b\d+(?:\.\d+)?%?\b/g)||[]).length;
+  if(numeric>=2&&/\b(?:targets?|carries|yards?|touchdowns?|passes?|completed|tackles?|solo|assists?|sacks?|snaps?|interceptions?|TFL|QB hits?|receptions?)\b/i.test(x))return null;
+  for(const entity of editorialEntities)x=x.replace(new RegExp(escapeRe(entity),'gi'),'[ENTITY]');
+  x=x.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,'[#]').replace(/\s+/g,' ').trim();
+  return words(x)>=8?x:null;
+};
+const templatePlacements=new Map();
+for(const t of d.teams||[]){
+  const seenHere=new Set();
+  for(const sentence of sentenceParts(articleText(t))){
+    const fp=editorialFingerprint(sentence);if(!fp||seenHere.has(fp))continue;seenHere.add(fp);
+    const rows=templatePlacements.get(fp)||[];rows.push({team:t.team_name,reporter:t.inquirer_article?.reporter?.name,sentence});templatePlacements.set(fp,rows);
+  }
+}
+const templateOffenders=[...templatePlacements.entries()].filter(([,rows])=>rows.length>3).map(([fingerprint,rows])=>({fingerprint,count:rows.length,examples:rows.slice(0,4)}));
+assert.deepEqual(templateOffenders,[],'Editorial sentence templates must not recur across more than three team articles after names/numbers are normalized');
 const avgTeamWords=teamWords.reduce((n,x)=>n+x,0)/Math.max(1,teamWords.length);
 assert.ok(Math.min(...teamWords)>=400,'Every team column must preserve substantial commentary; shortest='+Math.min(...teamWords));
 assert.ok(avgTeamWords>=500,'Team columns must average at least 500 words of reporting/commentary; average='+avgTeamWords.toFixed(1));

@@ -78,6 +78,12 @@ function statSituation(p){
   return line?`${line}. The football line gives ${p.name} context beyond the fantasy total, even though the available usage detail is limited.`:null;
 }
 
+function scopedFootballRead(t,p,angle='matchup'){
+  const base=statSituation(p);if(!base)return null;
+  const compact=String(base).replace(/\.\s+/g,'; ').replace(/\.$/,'');
+  return `${t.team_name}’s ${angle} read on ${p.name}: ${compact}.`;
+}
+
 function playerTrajectory(p){
   const prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,current=Number(p?.season_avg),games=Number(p?.season_games)||0,age=Number(p?.age),opp=opportunity(p),pos=String(p?.position||'').toUpperCase(),key=p?.id||p?.name;
   if(!Number.isFinite(prior)||prior<=0||priorGames<6||!Number.isFinite(current)||games<1)return null;
@@ -421,7 +427,7 @@ function seasonContextStoryV26(t,r){
 function currentOpponentFootballStory(t,r){
   const o=t.opponent_roster,rows=(o?.starters||o?.players||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points));
   const star=rows[0],second=rows[1];if(!star)return null;
-  const starLine=statSituation(star),won=Number(t.points)>Number(t.opponent_points);
+  const starLine=scopedFootballRead(t,star,'opponent'),won=Number(t.points)>Number(t.opponent_points);
   const open=deskChoice(t,r,[
     [`${t.opponent_name} did not arrive empty-handed. ${star.name} gave them ${one(star.points)} fantasy points${second?' and '+second.name+' added '+one(second.points):''}. ${won?t.team_name+' absorbed that and still controlled the final score; that is a better description of the win than pretending the other side simply failed.':t.team_name+' never found enough counterweight, which is why the opponent’s best player became part of the final margin.'}`],
     [`${t.opponent_name} brought its own leading man in ${star.name}, who produced ${one(star.points)} fantasy points${second?', with '+second.name+' supplying '+one(second.points)+' beside him':''}. ${won?'The pleasing part for '+t.team_name+' is that the evening survived somebody else getting a star turn.':'The unpleasant part for '+t.team_name+' is that the rival marquee performance never received a convincing answer.'}`],
@@ -435,10 +441,10 @@ function teamScoreConstructionStory(t,r){
   const rows=list(t);if(!rows.length||!valid(t.points))return null;
   const top=rows[0],top3=rows.slice(0,3),top3pts=top3.reduce((n,p)=>n+Number(p.points||0),0),share=Number(t.points)>0?top3pts/Number(t.points):0,margin=Number(t.points)-Number(t.opponent_points),projDelta=valid(t.projected)?Number(t.points)-Number(t.projected):null;
   const shape=share>=.58
-    ?`The top three starters supplied about ${Math.round(share*100)}% of the team total, so this was a top-heavy construction even if the final number looked comfortable.`
-    :`The top three starters accounted for about ${Math.round(share*100)}% of the total, leaving enough production elsewhere that the lineup was not living entirely off one corner of the roster.`;
+    ?`${t.team_name} got about ${Math.round(share*100)}% of its total from the top three starters, so the final number was built on a distinctly top-heavy week.`
+    :`${t.team_name} got about ${Math.round(share*100)}% of its total from the top three starters, leaving enough production elsewhere that the lineup did not live entirely off one corner of the roster.`;
   const expectation=projDelta==null?'':Math.abs(projDelta)<6
-    ?`The finish landed close to the pregame projection, which makes the result feel more like the roster doing its normal job than a one-week eruption.`
+    ?`${t.team_name} landed close to its pregame projection, more normal operation than one-week eruption.`
     :projDelta>0
       ?`${t.team_name} beat its projection by ${one(Math.abs(projDelta))}, and the important question is how much of that came from roles that can repeat rather than touchdowns that happened to fall perfectly.`
       :`${t.team_name} finished ${one(Math.abs(projDelta))} below projection, so the final score left real expected production on the table.`;
@@ -449,7 +455,7 @@ function supportingCastFootballStory(t,r){
   const rows=list(t),second=rows[1],third=rows[2];if(!second)return null;
   const pieces=[];
   for(const p of [second,third].filter(Boolean)){
-    const ctx=statSituation(p),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0;
+    const ctx=scopedFootballRead(t,p,'supporting-cast'),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0;
     const baseline=Number.isFinite(prior)&&prior>0&&priorGames>=6
       ?(Number(p.points)>=prior*1.25?`That cleared last year’s ${one(prior)}-point average by enough to matter.`:Number(p.points)<=prior*.7?`That sat well below last year’s ${one(prior)}-point average, so the role matters as much as the disappointing total.`:`That lived near the ${one(prior)}-point average established across ${priorGames} games last season.`)
       :'';
@@ -487,7 +493,7 @@ function chairFootballStory(t,kind,r){
   const rows=list(t).filter(p=>delta(p)!=null);if(!rows.length)return null;
   const p=kind==='hot-seat'?rows.slice().sort((a,b)=>delta(a)-delta(b))[0]:rows.slice().sort((a,b)=>delta(b)-delta(a))[0];
   if(!p)return null;
-  const ctx=statSituation(p),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0;
+  const ctx=scopedFootballRead(t,p,kind==='hot-seat'?'hot-seat':'cool-throne'),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0;
   const hist=Number.isFinite(prior)&&prior>0&&priorGames>=6
     ?(Number(p.points)<prior*.6?`Last season’s ${one(prior)}-point average across ${priorGames} games makes this look like a bad Sunday against an established floor, not proof that the floor disappeared.`:Number(p.points)>prior*1.3?`Last season’s ${one(prior)}-point average gives this spike context: ${p.name} beat an established baseline by a meaningful amount.`:`The result stayed in the neighborhood of last season’s ${one(prior)}-point average.`)
     :'';
@@ -497,7 +503,7 @@ function chairFootballStory(t,kind,r){
 function nextOpponentFootballStory(t,r){
   const o=t.next_opponent_roster,rows=(o?.starters||o?.players||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points)),star=rows[0],second=rows[1];
   if(!o||!star)return null;
-  const ctx=statSituation(star),opp=t.next_opponent_name||o.team_name,rec=t.next_opponent_context?.record,playoff=t.next_opponent_mida?.playoff;
+  const ctx=scopedFootballRead(t,star,'next-opponent'),opp=t.next_opponent_name||o.team_name,rec=t.next_opponent_context?.record,playoff=t.next_opponent_mida?.playoff;
   const open=deskChoice(t,r,[
     [`The next opponent is not anonymous: ${opp} just got ${one(star.points)} fantasy points from ${star.name}${second?' and '+one(second.points)+' from '+second.name:''}. That is the personnel problem ${t.team_name} is walking toward, not merely a projection number.`],
     [`${opp} arrives with ${star.name} fresh off ${one(star.points)} fantasy points${second?', while '+second.name+' added '+one(second.points):''}. The appointment has enough actual Week 1 form to be more interesting than whatever the forecast says over cocktails.`],
@@ -680,7 +686,14 @@ function specificityPass(t,kind,value){
     ['File the 0-1 record and start the homework.','File '+team+' at 0-1 and start the homework.'],
     ['After that, every expensive accessory has to reveal whether it can actually play.','After kickoff, every expensive '+team+' accessory has to reveal whether it can actually play.'],
     ['A losing lineup cannot pretend it did not matter.','A losing '+team+' lineup cannot pretend it did not matter.'],
-    ['A few clean wins would make the paperwork friendlier.','A few clean '+team+' wins would make the paperwork friendlier.']
+    ['A few clean wins would make the paperwork friendlier.','A few clean '+team+' wins would make the paperwork friendlier.'],
+    ['September tables are temporary, but banked wins are not, and the old desk has learned not to confuse those two things.',team+' gets the usual September warning: the table is temporary, but the banked result is not.'],
+    ['It is far too early for coronations and exactly early enough for consequences; one can be tasteful without pretending the standings are imaginary.',team+' is nowhere near a coronation and already close enough to consequences that the standings cannot be treated as imaginary.'],
+    ['The Back Page can scream about stars all night, but this is the line that still matters when everybody wakes up Monday.','The Back Page can scream about '+team+' stars all night, but this is the line that still matters when everybody wakes up Monday.'],
+    ['One week never closes a case, but every result changes what the next one is allowed to mean.','One '+team+' week never closes a case, but this result changes what the next one is allowed to mean.'],
+    ['Next week is a good time to lower the volume.','For '+team+', next week is a good time to lower the volume.'],
+    ['That witness cannot be lost in the crowd.',team+' cannot afford to lose that witness in the crowd.'],
+    ['The next file already has a lead witness.',team+' already has a lead witness clipped to the next file.']
   ];
   for(const [from,to] of swaps)p=p.replaceAll(from,to);
   return p;

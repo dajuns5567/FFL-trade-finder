@@ -1905,7 +1905,7 @@ function dedupeArticleSectionsV29(sections){
   });
 }
 
-function humanSectionsV25(args){
+export function humanSectionsV25(args){
   const {team:t,facts={}}=args,creative=humanSectionsV21(args),factual=humanSectionsV23(args),
     factualByKind=new Map((factual||[]).map(s=>[s.kind,s])),frame=articleFrameV29(t,args.reporter),fw=fourthWallV28(t,args.reporter,frame.angle);
   const sections=(creative||[]).map(c=>{

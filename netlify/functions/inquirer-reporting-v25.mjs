@@ -186,43 +186,44 @@ function playerTrajectory(p){
   if(!Number.isFinite(prior)||prior<=0||priorGames<6||!Number.isFinite(current)||games<1)return null;
   const ratio=current/prior,oldThreshold=pos==='QB'?34:pos==='RB'?28:(pos==='WR'||pos==='TE')?30:29;
   if(games>=3&&Number.isFinite(age)&&age<=26&&ratio>=1.28&&opp?.strong)return {kind:'breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} has climbed to ${one(current)} per game after averaging ${one(prior)} across ${priorGames} games last season. This week’s ${opp.text} gave the surge enough football underneath it to look like more than a scoring fluke.`,
-    `${p.name} is averaging ${one(current)} after sitting at ${one(prior)} across ${priorGames} games last year, and ${opp.text} kept the bigger production tied to a bigger role. That is how a hot start begins to look like an actual leap.`,
-    `${p.name} is making last year’s ${one(prior)}-point average look small next to this season’s ${one(current)}, and ${opp.text} gave the jump real substance. The role changed enough to make the scoring change believable.`,
-    `${p.name} has moved from ${one(prior)} per game last season to ${one(current)} this year, with ${opp.text} adding a real workload to the jump. That is more than a lucky touchdown streak.`
+    `${p.name} has climbed from ${one(prior)} per game last season to ${one(current)} this year. The role has grown with the production; breakout watch is no longer premature.`,
+    `${p.name} is averaging ${one(current)} after sitting at ${one(prior)} last year. The old baseline is starting to look stale.`,
+    `Last year’s ${one(prior)}-point average looks small next to ${p.name}’s ${one(current)} this season. This has lasted long enough to call it a real leap.`,
+    `${p.name} has moved from ${one(prior)} per game last season to ${one(current)} this year. The hot start has outlived the fluke stage.`
   ])};
   if(games===1&&Number.isFinite(age)&&age<=26&&ratio>=1.4&&opp?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} opened far above last year’s ${one(prior)}-point average across ${priorGames} games, and ${opp.text} gave the production a real role behind it. Another week with that kind of involvement would make the change harder to dismiss.`,
-    `${p.name} cleared last year’s ${one(prior)}-point average by a wide margin, and ${opp.text} made the opener look earned rather than accidental. If the workload survives next week, the conversation changes quickly.`,
-    `${p.name} entered from a ${one(prior)}-point baseline across ${priorGames} games last year and opened this season much louder, with ${opp.text}. The role looked different enough to make the old expectation feel less comfortable.`,
-    `${p.name} averaged ${one(prior)} across ${priorGames} games last year, then opened with a bigger score and ${opp.text}. Keep that job description for another Sunday and the old baseline starts looking stale.`
+    `${p.name} opened far above last year’s ${one(prior)}-point average. Put him on breakout watch, not in the victory parade.`,
+    `${p.name} cleared last year’s ${one(prior)}-point average by a wide margin. One Sunday is not a trend, but it is enough to get attention.`,
+    `${p.name} entered from a ${one(prior)}-point baseline last year and opened this season much louder. The old expectation already looks a little uncomfortable.`,
+    `${p.name} averaged ${one(prior)} last season and opened well above it. Give the new job description another Sunday before calling it permanent.`
   ])};
   if(games>=3&&Number.isFinite(age)&&age>=oldThreshold&&ratio<=.68)return {kind:'decline',strength:1-ratio,text:keyedChoice(key,[
-    `${p.name} has earned a real decline watch: ${one(current)} per game this season versus ${one(prior)} across ${priorGames} games last year. At age ${age}, wondering whether the old weekly floor is gone is fair; declaring him finished still outruns the evidence.`,
-    `The uncomfortable veteran question belongs to ${p.name}. His current average is ${one(current)} after ${one(prior)} across ${priorGames} games last season. At age ${age}, the drop is large enough to investigate, not large enough to write the retirement column.`,
-    `${p.name} is giving us a decline story worth monitoring. The production has fallen from ${one(prior)} across ${priorGames} games last year to ${one(current)} this season. Age ${age} makes the question louder, but role and usage still get the final say.`,
-    `This is where “washed” becomes a question, not a verdict: ${p.name} sits at ${one(current)} per game after a ${one(prior)} average across ${priorGames} games last year. At age ${age}, the next few workloads matter more than the insult.`
+    `${p.name} has earned a real decline watch: ${one(current)} per game this season versus ${one(prior)} last year. At age ${age}, the old weekly floor no longer gets the benefit of the doubt.`,
+    `The uncomfortable veteran question belongs to ${p.name}: ${one(current)} now after ${one(prior)} last season. At age ${age}, the drop deserves attention.`,
+    `${p.name} is giving us a decline story worth monitoring. Production has fallen from ${one(prior)} last year to ${one(current)} this season, and age ${age} makes the slide harder to shrug off.`,
+    `${p.name} sits at ${one(current)} per game after a ${one(prior)} average last year. At age ${age}, “slow start” is beginning to run out of room.`
   ])};
   if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:'reliable',strength:1-Math.abs(ratio-1),text:keyedChoice(key,[
-    `${p.name} keeps doing the boring valuable thing: ${one(current)} per game this season after ${one(prior)} across ${priorGames} games last year. That is reliability, not a breakout, and contenders need plenty of it.`,
-    `${p.name} is almost aggressively familiar: ${one(current)} per game now, ${one(prior)} across ${priorGames} games last year. The lack of drama is the point. A lineup spot you do not have to solve every Tuesday has real value.`,
-    `The weekly floor around ${p.name} still looks intact. He is at ${one(current)} per game this season after ${one(prior)} across ${priorGames} games last year, which makes him less of a headline than a piece the roster can plan around.`,
-    `${p.name} is supplying continuity rather than novelty: ${one(current)} per game this season compared with ${one(prior)} across ${priorGames} games last year. Reliable production rarely wins the group chat, but it keeps the lineup from needing rescue missions.`
+    `${p.name} keeps doing the boring valuable thing: ${one(current)} per game this season after ${one(prior)} last year.`,
+    `${p.name} is almost aggressively familiar: ${one(current)} per game now, ${one(prior)} last year. A lineup spot that refuses to become a Tuesday problem has value.`,
+    `${p.name} is at ${one(current)} per game after ${one(prior)} last season. The weekly floor still looks intact.`,
+    `${p.name} is supplying continuity: ${one(current)} per game this season compared with ${one(prior)} last year. Reliable players rarely win the group chat, but they keep lineups out of rescue mode.`
   ])};
   if(games===1&&Math.abs(Number(p.points)-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(Number(p.points)-prior)/prior,text:keyedChoice(key,[
-    `${p.name} opened near the level already established last season, when he averaged ${one(prior)} across ${priorGames} games. Week 1 cannot prove ${p.name} reliable, but this looks more like continuation than reinvention.`,
-    `${p.name} gave his team a familiar opening line. Last season’s baseline was ${one(prior)} over ${priorGames} games, and the opener landed in the same neighborhood. That is not exciting ${p.name} evidence; it is useful evidence.`,
-    `There was nothing exotic about ${p.name}’s opener, which is a compliment. He averaged ${one(prior)} across ${priorGames} games last season and began this year near that level. The roster can treat ${p.name}’s opener as an early sign of continuity, not a guarantee.`,
-    `${p.name} looked a lot like the player last season already taught us to expect: ${one(prior)} per game across ${priorGames} appearances, with Week 1 landing close to that baseline. Reliability for ${p.name} takes repetition, but this is a reasonable first brick.`
+    `${p.name} opened near last season’s ${one(prior)}-point level. Familiar is a compliment here.`,
+    `${p.name} gave his team a familiar opening line after a ${one(prior)}-point baseline last year.`,
+    `There was nothing exotic about ${p.name}’s opener. Last season’s ${one(prior)}-point baseline still looks like home.`,
+    `${p.name} looked a lot like the player last season already taught us to expect, right around a ${one(prior)}-point baseline.`
   ])};
   if(games===1&&Number(p.points)<=prior*.5)return {kind:'stumble',strength:1-Number(p.points)/prior,text:keyedChoice(key,[
-    `${p.name} opened well below last year’s ${one(prior)}-point average across ${priorGames} games. One bad Sunday is not a decline by itself, but the role needs to look healthier next week.`,
-    `${p.name} started the year far under the ${one(prior)}-point average he carried across ${priorGames} games last season. One bad opener does not make a decline trend, but it does put the next workload under a brighter light.`,
-    `${p.name} opened a long way below the ${one(prior)}-point average he carried across ${priorGames} games last season. The production disappeared for a week; the career did not.`,
-    `${p.name} opened far below the ${one(prior)}-point average he established across ${priorGames} games last season. One ugly ${p.name} Sunday does not erase that floor; next week’s role will show whether this was merely a stumble or the first sign of something worth worrying about.`
+    `${p.name} opened well below last year’s ${one(prior)}-point average. One bad Sunday is a stumble, not a decline.`,
+    `${p.name} started the year far under the ${one(prior)}-point average he carried last season. The next workload gets a brighter light.`,
+    `${p.name} opened a long way below last year’s ${one(prior)}-point average. The production disappeared for a week; the career did not.`,
+    `${p.name} opened far below the ${one(prior)}-point average he established last season. Another quiet Sunday would make the concern harder to dismiss.`
   ])};
   return null;
 }
+
 function playerContextParagraph(p){return statSituation(p)||''}
 
 function leaguePlayerPulse(teams){
@@ -1081,7 +1082,7 @@ function matchupRead(g,slot=0){
 }
 
 function gameStory(g,slot=0){
-  const star=list(g.winner)[0],loserStar=list(g.loser)[0],winnerSupport=list(g.winner)[1],loserMiss=list(g.loser).filter(p=>delta(p)!=null).sort((a,b)=>delta(a)-delta(b))[0],starContext=star?playerContextParagraph(star):'',starTrajectory=star?playerTrajectory(star):null,loserContext=loserStar?playerContextParagraph(loserStar):'',projectionContext=g.upset&&valid(g.winner.projected)&&valid(g.loser.projected)?` ${g.winner.team_name} entered projected at ${one(g.winner.projected)} against ${one(g.loser.projected)} for ${g.loser.team_name} and won anyway.`:'';
+  const star=list(g.winner)[0],loserStar=list(g.loser)[0],winnerSupport=list(g.winner)[1],loserMiss=list(g.loser).filter(p=>delta(p)!=null).sort((a,b)=>delta(a)-delta(b))[0],starContext=star?playerContextParagraph(star):'',starTrajectory=star?playerTrajectory(star):null,loserContext=loserStar?playerContextParagraph(loserStar):'',projectionContext=g.upset?' '+g.winner.team_name+' entered as the projected underdog and won anyway.':'';
   const contextTail=(starContext?` ${starContext}`:'')+(starTrajectory?` ${starTrajectory.text}`:'')+(loserContext&&g.margin<=6?` On the other side, ${loserContext}`:'')+projectionContext+' '+matchupRead(g,slot);
   if(g.upset){
     const open=[
@@ -1105,7 +1106,7 @@ function gameStory(g,slot=0){
       'Now the winner gets to prove this was the beginning of an identity rather than one excellent afternoon.',
       'The loser gets a reminder, the winner gets a little belief, and the rest of the league gets one more reason to stop penciling in results before kickoff.'
     ][slot%5];
-    return open+(star?star.name+' led the winning side with '+one(star.points)+' points. ':'')+supportLine+(loserStar?loserStar.name+' answered with '+one(loserStar.points)+' for '+g.loser.team_name+'. ':'')+(loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+' is the name that will bother the losing side after finishing at '+one(loserMiss.points)+'. ':'')+close+contextTail;
+    return open+(star?star.name+' led the winning side with '+one(star.points)+' points. ':'')+supportLine+(loserStar?loserStar.name+' kept '+g.loser.team_name+' in the fight. ':'')+(loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+' is the quiet line the losing side will remember. ':'')+close+contextTail;
   }
   if(g.margin<=6){
     const open=[
@@ -1115,7 +1116,7 @@ function gameStory(g,slot=0){
       'There was almost nothing between '+g.winner.team_name+' and '+g.loser.team_name+' before '+g.winner.team_name+' came out '+one(g.margin)+' points ahead. ',
       g.winner.team_name+' got the final word in a '+one(g.winner.points)+'–'+one(g.loser.points)+' grinder with '+g.loser.team_name+'. '
     ][slot%5];
-    return open+(star?star.name+' mattered more because there was almost no room to waste his '+one(star.points)+' points. ':'')+(winnerSupport?winnerSupport.name+' supplied the kind of secondary performance close games punish teams for missing. ':'')+(loserStar?loserStar.name+' kept '+g.loser.team_name+' alive with '+one(loserStar.points)+'. ':'')+(loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+' finished at '+one(loserMiss.points)+', and a line that quiet looks enormous when the margin is this small. ':'')+'Nobody gets to call a game this close destiny; both teams leave knowing exactly which handful of plays and lineup spots decided it.'+contextTail;
+    return open+(star?star.name+' mattered more because there was almost no room to waste his '+one(star.points)+' points. ':'')+(winnerSupport?winnerSupport.name+' supplied the kind of secondary performance close games punish teams for missing. ':'')+(loserStar?loserStar.name+' kept '+g.loser.team_name+' alive. ':'')+(loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+' had the kind of quiet line that looks enormous in a game this close. ':'')+'Nobody gets to call a game this close destiny; both teams leave knowing exactly which handful of plays and lineup spots decided it.'+contextTail;
   }
   const opens=[
     g.winner.team_name+' handled '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
@@ -1124,7 +1125,7 @@ function gameStory(g,slot=0){
     g.winner.team_name+' never needed a dramatic ending against '+g.loser.team_name+', closing out a '+one(g.winner.points)+'–'+one(g.loser.points)+' win. ',
     'The comfortable result worth keeping is '+g.winner.team_name+' over '+g.loser.team_name+', '+one(g.winner.points)+'–'+one(g.loser.points)+'. '
   ];
-  return opens[slot%5]+(star?star.name+' set the tone with '+one(star.points)+'. ':'')+(winnerSupport?winnerSupport.name+' made sure the winning side had more than one place to look for production. ':'')+(loserStar?loserStar.name+' was the best reply for '+g.loser.team_name+' at '+one(loserStar.points)+', but the scoreboard kept moving away. ':'')+'A comfortable early win is not a season verdict. '+g.winner.team_name+' just raised the standard for what next Sunday should look like.'+contextTail;
+  return opens[slot%5]+(star?star.name+' set the tone with '+one(star.points)+'. ':'')+(winnerSupport?winnerSupport.name+' made sure the winning side had more than one place to look for production. ':'')+(loserStar?loserStar.name+' was the best reply for '+g.loser.team_name+', but the scoreboard kept moving away. ':'')+'A comfortable early win is not a season verdict. '+g.winner.team_name+' just raised the standard for what next Sunday should look like.'+contextTail;
 }
 
 function leagueSynthesis(teams){
@@ -1206,7 +1207,7 @@ function weeklyTopScorerStory(t,g){
   parts.push(`${t.team_name} set the league’s weekly scoring ceiling at ${one(t.points)}, a ${one(Number(t.points)-Number(t.opponent_points))}-point win over ${t.opponent_name}. Nobody in the league put more points on the board. Anyone objecting can take the argument to the scoreboard.`);
   if(top){
     const ctx=statSituation(top);
-    parts.push(`${top.name} led the avalanche with ${one(top.points)} fantasy points${second?', '+second.name+' followed with '+one(second.points):''}${third?', and '+third.name+' added '+one(third.points):''}. ${ctx||''} ${second&&second.real_stat_line?second.name+' backed it with '+String(second.real_stat_line).replaceAll(' • ',', ')+'.':''} ${t.team_name} had three headliners instead of one miracle carrying the entire total.`.trim());
+    parts.push(`${top.name} led the avalanche with ${one(top.points)} fantasy points${second?', with '+second.name+' right behind him':''}${third?', and '+third.name+' giving the lineup a third headliner':''}. ${ctx||''} ${second&&second.real_stat_line?second.name+' backed it with '+String(second.real_stat_line).replaceAll(' • ',', ')+'.':''} ${t.team_name} had three headliners instead of one miracle carrying the entire total.`.trim());
   }
   return parts;
 }

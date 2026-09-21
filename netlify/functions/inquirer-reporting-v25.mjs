@@ -1972,8 +1972,11 @@ function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
 function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
   const clean={...t,transactions:consolidateTransactions(t)},moves=selectImportantMoves(clean,facts),miss=t.best_lineup_miss,ps=[],manager=t.manager_name||'Management',team=teamIdentityV28(t).mascot,v=voice(r);
   if(moves.length){
-    const m=moves[0],trade=String(m.move?.type||'').toLowerCase()==='trade',incoming=(m.add||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],
-      outgoing=(m.drop||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],add=names(m.add||[]),drop=names(m.drop||[]),
+    const m=moves[0],trade=String(m.move?.type||'').toLowerCase()==='trade',
+      canonical=p=>({...p,name:t.transaction_player_facts?.[String(p?.id)]?.name||p?.name}),
+      adds=(m.add||[]).map(canonical),drops=(m.drop||[]).map(canonical),
+      incoming=adds.slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],
+      outgoing=drops.slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],add=names(adds),drop=names(drops),
       moveLead=trade?(add&&drop?`${manager} traded for ${add} and sent out ${drop}.`:add?`${manager} traded for ${add}.`:`${manager} sent out ${drop} in a trade.`):(add&&drop?`${manager} added ${add} and moved on from ${drop}.`:add?`${manager} added ${add}.`:`${manager} cut ${drop}.`);
     const inStrong=strongTransactionPerformance(incoming),outStrong=strongTransactionPerformance(outgoing);
     let impact='';

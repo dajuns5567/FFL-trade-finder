@@ -629,7 +629,7 @@ function reporterStructureV26(sections,t,r){
   return order.map(k=>byKind.get(k)).filter(Boolean);
 }
 
-function humanSectionsV25(args){
+export function humanSectionsV25(args){
   const {team:t,facts={}}=args,base=humanSectionsV23({...args,team:{...t,transactions:[]}}),mgmt=management(t,facts,args.reporter);
   const rewritten=base.map(s=>{
     let paragraphs;

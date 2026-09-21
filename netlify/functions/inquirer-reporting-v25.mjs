@@ -529,10 +529,40 @@ function nextOpponentFootballStory(t,r){
   return [open,ctx,...stakes].filter(Boolean).join(' ');
 }
 
+function managementImpactStory(t,r){
+  const facts=t.transaction_player_facts||{},clean={...t,transactions:consolidateTransactions(t)},moves=selectImportantMoves(clean,facts);if(!moves.length)return null;
+  const m=moves[0],incoming=(m.add||[]).filter(p=>valid(p.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],outgoing=(m.drop||[]).filter(p=>valid(p.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],
+    add=names(m.add||[]),drop=names(m.drop||[]),trade=String(m.move?.type||'').toLowerCase()==='trade';
+  if(trade&&incoming&&outgoing)return deskChoice(t,r,[
+    [`${incoming.name} gave ${t.team_name} ${one(incoming.points)} points after the move, while ${outgoing.name} scored ${one(outgoing.points)} on the other side. That is an opening-week snapshot of the trade, not a lifetime verdict, but it already gave both managers something concrete to argue about.`],
+    [`${incoming.name} opened the new arrangement with ${one(incoming.points)} points; ${outgoing.name} answered with ${one(outgoing.points)}. The exchange already has a little drama, which is terribly considerate of them.`],
+    [`TRADE SCOREBOARD: ${incoming.name} ${one(incoming.points)}, ${outgoing.name} ${one(outgoing.points)}. ${t.team_name} did not make the move for polite conversation, and Week 1 immediately gave it something to print.`],
+    [`${incoming.name} produced ${one(incoming.points)} for ${t.team_name}; ${outgoing.name} returned ${one(outgoing.points)} elsewhere. The comparison is already useful because both players had real Sunday roles, not because one week settles the deal.`]
+  ]);
+  if(incoming)return deskChoice(t,r,[
+    [`${incoming.name} immediately gave ${t.team_name} ${one(incoming.points)} points. The move already affected the lineup instead of sitting harmlessly on the transaction log.`],
+    [`${incoming.name} arrived and produced ${one(incoming.points)} right away. At least the new guest understood the dress code.`],
+    [`${incoming.name} showed up with ${one(incoming.points)} points. That is how a new arrival earns another week in large type.`],
+    [`${incoming.name} produced ${one(incoming.points)} immediately after arriving. ${t.team_name} got an actual football return from the move in Week 1.`]
+  ]);
+  if(outgoing)return deskChoice(t,r,[
+    [`${outgoing.name} scored ${one(outgoing.points)} after leaving ${t.team_name}. One Sunday does not make the decision wrong, but it keeps the departure from disappearing quietly.`],
+    [`${outgoing.name} left and promptly scored ${one(outgoing.points)}. An inelegant little reminder that exits can still send postcards.`],
+    [`${outgoing.name} ANSWERED THE EXIT WITH ${one(outgoing.points)}. ${t.team_name} gets to live with that headline until the replacement gives it a better one.`],
+    [`${outgoing.name} produced ${one(outgoing.points)} after the move. That makes the replacement plan more interesting than the transaction itself.`]
+  ]);
+  return add||drop?deskChoice(t,r,[
+    [`${t.team_name} changed the roster with ${add||drop}. The football consequence has not arrived yet, so the move remains background until a role appears.`],
+    [`${add||drop} changed the guest list for ${t.team_name}. The next meaningful development will happen in a lineup, not on the transaction page.`],
+    [`${t.team_name} changed the names on the roster with ${add||drop}. Fine. Now make it matter on Sunday.`],
+    [`${t.team_name} made the move involving ${add||drop}; the roster will make the argument from here.`]
+  ]):null;
+}
+
 function broadcastExpansionV26(t,kind,r){
   if(kind==='lede')return [seasonContextStoryV26(t,r),teamScoreConstructionStory(t,r),currentOpponentFootballStory(t,r)].filter(Boolean);
   if(kind==='players')return [supportingCastFootballStory(t,r)].filter(Boolean);
-  if(kind==='management')return [lineupProcessStory(t,r)].filter(Boolean);
+  if(kind==='management')return [lineupProcessStory(t,r),managementImpactStory(t,r)].filter(Boolean);
   if(kind==='outlook')return [nextOpponentFootballStory(t,r)].filter(Boolean);
   if(kind==='hot-seat'||kind==='cool-throne')return [chairFootballStory(t,kind,r)].filter(Boolean);
   return [];

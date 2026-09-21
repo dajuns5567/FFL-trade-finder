@@ -46,7 +46,10 @@ for(const phrase of [
   'opponent read on','the season file','the player file','the opposing file','the evidence reads','the inquiry stays','the case remains',
   'the distinction matters because','the back page gets to','the back page will','league-wide football story','fantasy points tell us',
   'the reporters will','the next useful signal','real sunday workload underneath','not a box-score tourist','more useful for forecasting',
-  'this should be judged','the point is not','the question is whether','the file records'
+  'this should be judged','the point is not','the question is whether','the file records',
+  'first return','useful support behind the headline','old notebook rule','without printing the same score twice',
+  'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is',
+  'the result matters because'
 ]) assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
 assert.ok(!all.includes('${'),'Generated prose must never expose a template interpolation token');
 assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),'Generated Week 1 must carry a real prior-season player-history source');

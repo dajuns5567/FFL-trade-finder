@@ -2129,8 +2129,11 @@ function outlookStoryV29(t,r,f=articleFrameV29(t,r)){
 }
 
 function dedupeArticleSectionsV29(sections,t){
-  const seen=new Set(),seenStatFacts=new Set(),players=articlePlayers(t||{}),firstCounts=new Map();
-  for(const p of players){const first=String(p?.name||'').trim().split(/\s+/)[0];if(first)firstCounts.set(first,(firstCounts.get(first)||0)+1)}
+  const seen=new Set(),seenStatFacts=new Set(),players=articlePlayers(t||{}),firstCounts=new Map(),statClauses=[];
+  for(const p of players){
+    const first=String(p?.name||'').trim().split(/\s+/)[0];if(first)firstCounts.set(first,(firstCounts.get(first)||0)+1);
+    const clause=statClause(p);if(clause)statClauses.push({p,clause:String(clause).replace(/\.$/,'').trim()});
+  }
   const canonicalizePlayerNames=sentence=>{
     let x=String(sentence||'');
     players.forEach((p,index)=>{
@@ -2142,18 +2145,39 @@ function dedupeArticleSectionsV29(sections,t){
     return x;
   };
   const statHeavy=sentence=>/\b(?:yards?|targets?|carries|touchdowns?|passes?|completed|caught|ran|tackles?|solo|assists?|sacks?|TFL|QB hits?|interceptions?|receptions?)\b/i.test(sentence)&&/\b\d+(?:\.\d+)?\b/.test(sentence);
+  const statSignature=sentence=>{
+    const raw=String(sentence||'');
+    for(const row of statClauses){
+      const clause=row.clause;if(!clause)continue;
+      if(raw.toLowerCase().includes(clause.toLowerCase()))return `${String(row.p?.id||row.p?.name)}::${clause.toLowerCase().replace(/\s+/g,' ')}`;
+    }
+    return statHeavy(raw)?canonicalizePlayerNames(raw).toLowerCase().replace(/\s+/g,' ').trim():null;
+  };
+  const stripRepeatedStatClause=sentence=>{
+    let out=String(sentence||'');
+    for(const row of statClauses){
+      const clause=row.clause,sig=`${String(row.p?.id||row.p?.name)}::${clause.toLowerCase().replace(/\s+/g,' ')}`;
+      if(!seenStatFacts.has(sig)||!out.toLowerCase().includes(clause.toLowerCase()))continue;
+      const full=String(row.p?.name||'').trim(),first=full.split(/\s+/)[0],namePattern=firstCounts.get(first)===1?`(?:${escapeRe(full)}|${escapeRe(first)})`:escapeRe(full);
+      const whole=new RegExp(`(?:${namePattern}\\s+)?${escapeRe(clause)}[.!;:]?\\s*`,'i');
+      out=out.replace(whole,'').replace(/^\s*[-—,:;]+\s*/,'').trim();
+    }
+    return out;
+  };
   return (sections||[]).map(sec=>{
     const paragraphs=(sec.paragraphs||[]).map(p=>{
       if(String(p||'').trim().toLowerCase()==='n/a')return'n/a';
       const keep=[];
-      for(const sentence of splitSentencesSafeV28(p)){
+      for(const rawSentence of splitSentencesSafeV28(p)){
+        let sentence=stripRepeatedStatClause(rawSentence);
+        if(!sentence)continue;
         const key=sentence.toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/\s+/g,' ').trim();
         if(key.length>55&&seen.has(key))continue;
         if(key.length>55)seen.add(key);
-        if(statHeavy(sentence)){
-          const fact=canonicalizePlayerNames(sentence).toLowerCase().replace(/\s+/g,' ').trim();
-          if(seenStatFacts.has(fact))continue;
-          seenStatFacts.add(fact);
+        const sig=statSignature(sentence);
+        if(sig){
+          if(seenStatFacts.has(sig))continue;
+          seenStatFacts.add(sig);
         }
         keep.push(sentence);
       }

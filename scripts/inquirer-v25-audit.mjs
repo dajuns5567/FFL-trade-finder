@@ -34,6 +34,12 @@ const body=recap.sections.flatMap(s=>s.paragraphs).join(' ');
 assert.match(body,/Alpha/);
 assert.ok(new Set(teams.filter(t=>body.includes(t.team_name)).map(t=>t.team_name)).size<teams.length,'Editorial recap should select stories, not mention every team by contract');
 
+const hubSource=fs.readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+assert.ok(hubSource.includes('linkedNotebookText(value,teams,seenRecords)'),'League Hub must track first team mentions while rendering Inquirer copy');
+assert.ok(hubSource.includes('team?.league_context?.record'),'First-mention records must come from the archived edition’s league context');
+assert.ok(hubSource.includes("label=match[0]+(first&&rec?' ('+rec+')':'')"),'First visible team mention must render its current season record');
+assert.ok(hubSource.includes('seenRecords=new Set()'),'Each rendered Inquirer article/recap must reset first-mention record tracking');
+
 const source=fs.readFileSync(new URL('../netlify/functions/inquirer-reporting-v25.mjs',import.meta.url),'utf8');
 for(const phrase of ['statistical lecture','arithmetic lesson','second source of points','absorb a quieter return','where sacks and forced fumbles can turn'])assert.ok(!source.includes(phrase),'Rejected arithmetic/explainer phrase survived: '+phrase);
 assert.ok(source.includes('chosen.length>=5'),'Weekly Recap must cap editorial selection at five developed matchups');

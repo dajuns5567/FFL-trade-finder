@@ -1988,7 +1988,14 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
       outgoing=drops.slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],
       add=naturalJoin((m.move?.adds||[]).map(canonicalName).filter(Boolean))||names(adds),
       drop=naturalJoin((m.move?.drops||[]).map(canonicalName).filter(Boolean))||names(drops),
-      moveLead=trade?(add&&drop?`${manager} traded for ${add} and sent out ${drop}.`:add?`${manager} traded for ${add}.`:`${manager} sent out ${drop} in a trade.`):(add&&drop?`${manager} added ${add} and moved on from ${drop}.`:add?`${manager} added ${add}.`:`${manager} cut ${drop}.`);
+      rawMoveLead=trade?(add&&drop?`${manager} traded for ${add} and sent out ${drop}.`:add?`${manager} traded for ${add}.`:`${manager} sent out ${drop} in a trade.`):(add&&drop?`${manager} added ${add} and moved on from ${drop}.`:add?`${manager} added ${add}.`:`${manager} cut ${drop}.`),
+      canonicalLeadName=(text,id)=>{
+        const full=canonicalName(id);if(!full)return text;
+        const bits=full.split(/\s+/),first=bits[0],last=bits.at(-1);if(!first||!last||bits.length<2)return text;
+        const fuzzy=new RegExp('\\b'+escapeRe(first)+'\\s+(?:[A-Z][A-Za-z\'’.-]*\\s+)?'+escapeRe(last)+'\\b','g');
+        return String(text).replace(fuzzy,full);
+      },
+      moveLead=[...(m.move?.adds||[]),...(m.move?.drops||[])].reduce((text,id)=>canonicalLeadName(text,id),rawMoveLead);
     const inStrong=strongTransactionPerformance(incoming),outStrong=strongTransactionPerformance(outgoing);
     let impact='';
     if(incoming){

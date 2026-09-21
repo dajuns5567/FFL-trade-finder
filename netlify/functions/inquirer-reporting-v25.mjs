@@ -329,6 +329,7 @@ function bartholomewPlayerBoard(teams){
     if(['breakout','early-breakout'].includes(x.tr?.kind))return 300+Number(x.tr.strength||0)*100;
     if(x.tr?.kind==='rookie'&&x.pts>=8)return 240+x.pts;
     if(x.young&&x.priorGames>=6&&x.ratio!=null&&x.ratio>=1.2&&x.role?.strong)return 180+x.ratio*10+x.pts/10;
+    if(defensivePlayer(x.p)&&x.young&&x.priorGames>=6&&x.ratio!=null&&x.ratio>=1.35&&x.pts>=14)return 170+x.ratio*10+x.pts/10;
     if(x.young&&x.pts>=12&&x.role?.strong)return 120+x.pts;
     return -Infinity;
   };
@@ -686,7 +687,7 @@ function scheduleSignificanceStory(t,r){
     [`${laterStrong[0].team_name} follows soon after ${next.team_name}. That turns the next matchup into a chance to bank margin before a stronger test.`]
   ]));
   else if(next&&nextStrength==='strong'&&laterSoft.length)parts.push(deskChoice(t,r,[
-    [`${next.team_name} is the hard part of this short stretch; softer ground follows. An upset would be a bonus win, while a loss would make those later opportunities less optional.`],
+    [`The hard part of this short stretch is ${next.team_name}; softer ground follows. An upset would be a bonus win, while a loss would make those later opportunities less optional.`],
     [`${next.team_name} is the unpleasant centerpiece before the schedule softens. Steal this one and the table looks lovely; lose it and ${t.team_name} simply has less permission to waste the friendlier weeks.`],
     [`${next.team_name} is the heavyweight before some relief arrives. A win would be stolen money. A loss would make the upcoming softer games look a lot more like invoices.`],
     [`${next.team_name} is the strongest immediate test before the road eases. The consequence is simple: an upset creates cushion; a loss shifts more pressure onto the friendlier games behind it.`]
@@ -1751,7 +1752,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
     const close=[
       won?`${team} had real secondary production, which is how a good individual week became a team win.`:`Those performances make the loss more specific: the useful work existed, but too many other lineup spots failed to match it.`,
       won?`${team} had proper company for its headliner; the win did not require one star to drag an empty cast behind him.`:`Good supporting work survived inside the loss. That makes the quiet parts of ${team} harder, not easier, to excuse.`,
-      won?`THE ${team.toUpperCase()} SUPPORTING CAST EARNED INK TOO. THAT IS HOW ${team.toUpperCase()} TURNS A STAR PERFORMANCE INTO A WIN.`:`GOOD PERFORMANCES DO NOT ACQUIT THE ${team.toUpperCase()} LINEUP; THEY MAKE THE MISSING PRODUCTION EASIER TO FIND.`,
+      won?`THE ${team.toUpperCase()} SUPPORTING CAST EARNED INK TOO. THAT IS HOW A STAR PERFORMANCE BECOMES A ${team.toUpperCase()} WIN.`:`GOOD PERFORMANCES DO NOT ACQUIT THE ${team.toUpperCase()} LINEUP; THEY MAKE THE MISSING PRODUCTION EASIER TO FIND.`,
       won?`The ${team} file contains multiple affirmative performances, enough to support the favorable result.`:`The ${team} loss cannot be assigned equally across the roster; these players did enough to narrow the adverse finding.`
     ][voice(r)];
     ps.push(`${notes.join(' ')} ${close}`);
@@ -1910,10 +1911,10 @@ function scheduleSignificanceV29(t,r,f=articleFrameV29(t,r)){
     `${laterStrong[0].team_name} follows ${next.team_name}. The sequence gives ${team} a clear timing problem: accumulate margin before the stronger test rather than after it.`
   ][voice(r)]);
   else if(next&&strength(next)==='strong'&&laterSoft.length)parts.push([
-    `${next.team_name} is the difficult part of this short stretch, with softer ground behind it. ${f.won?'An upset would turn one win into real cushion.':'A loss would be understandable, but it would make the friendlier games behind it far less optional.'}`,
-    `${next.team_name} is the heavyweight before the schedule softens. Steal this one and the table looks lovely; lose it and the later opportunities become appointments rather than suggestions.`,
+    `The difficult part of this short stretch is ${next.team_name}, with softer ground behind it. ${f.won?'An upset would turn one win into real cushion.':'A loss would be understandable, but it would make the friendlier games behind it far less optional.'}`,
+    `The heavyweight before the schedule softens is ${next.team_name}. Steal this one and the table looks lovely; lose it and the later opportunities become appointments rather than suggestions.`,
     `${String(next.team_name).toUpperCase()} IS THE HEAVYWEIGHT BEFORE SOFTER GAMES ARRIVE. ${f.won?'STEAL IT AND BUILD CUSHION.':'MISS IT AND THE SOFTER GAMES BECOME MUST-HAVE MATERIAL.'}`,
-    `${next.team_name} is the strongest immediate test before the road eases. The later schedule gives ${team} recovery opportunities, but not permission to waste them.`
+    `The strongest immediate test before the road eases is ${next.team_name}. The later schedule gives ${team} recovery opportunities, but not permission to waste them.`
   ][voice(r)]);
   const unavailable=[];
   if((a.bye_current_starters||[]).length)unavailable.push(`${names((a.bye_current_starters||[]).slice(0,3))} ${a.bye_current_starters.length===1?'is':'are'} on verified NFL byes`);
@@ -1929,7 +1930,7 @@ function outlookStoryV29(t,r,f=articleFrameV29(t,r)){
   const bridge=[
     f.won?`${team} approaches ${next} from the useful side of the standings; the next result decides whether Week 1 becomes cushion or merely a pleasant opening note.`:`${team} arrives at ${next} needing a response. Another ${team} loss would not resemble the first one; the schedule has already started moving.`,
     f.won?`A winning week gives ${team} a little leverage entering ${next}. The elegant ${team} move is to use that leverage before the schedule changes the dress code.`:`The loss makes ${next} more consequential for ${team}; a contender is allowed an ugly Sunday, not an endless collection of them.`,
-    f.won?`${team.toUpperCase()} BRINGS A WIN INTO ${String(next).toUpperCase()}. NOW MAKE THE CUSHION USEFUL.`:`${team.toUpperCase()} NEEDS AN ANSWER AGAINST ${String(next).toUpperCase()}. THE FIRST ${team.toUpperCase()} LOSS ALREADY USED THE EASY EXCUSE.`,
+    f.won?`A WIN FOLLOWS ${team.toUpperCase()} INTO ${String(next).toUpperCase()}. NOW MAKE THE CUSHION USEFUL.`:`${team.toUpperCase()} NEEDS AN ANSWER AGAINST ${String(next).toUpperCase()}. THE FIRST ${team.toUpperCase()} LOSS ALREADY USED THE EASY EXCUSE.`,
     f.won?`The next exhibit is ${next}. ${team} has one favorable result in hand; the follow-up determines whether the first week deserves more weight.`:`The next exhibit is ${next}. One adverse ${team} result is manageable; a second begins changing the pattern in the file.`
   ][voice(r)];
   return [nextOpponentLeadV29(t,r,f),bridge,...(schedule.length?schedule:[broader])].filter(Boolean).slice(0,4);

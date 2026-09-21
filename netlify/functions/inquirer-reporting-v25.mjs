@@ -16,6 +16,7 @@ const keyedChoice=(key,items)=>{const s=String(key||''),h=[...s].reduce((n,ch)=>
 const naturalJoin=xs=>{const a=(xs||[]).filter(Boolean);return a.length<2?(a[0]||''):a.length===2?a[0]+' and '+a[1]:a.slice(0,-1).join(', ')+', and '+a[a.length-1]};
 const defensivePlayer=p=>/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT)$/.test(String(p?.position||'').toUpperCase());
 const articlePlayers=t=>[...(t?.starter_details||[]),...(t?.opponent_roster?.starters||t?.opponent_roster?.players||[]),...(t?.next_opponent_roster?.starters||t?.next_opponent_roster?.players||[])].filter(p=>p?.name);
+const escapeRe=value=>String(value??'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 function naturalizePlayerReferences(t,value){
   const text=String(value??''),players=articlePlayers(t),firstCounts=new Map();
   for(const p of players){const first=String(p.name).trim().split(/\s+/)[0];if(first)firstCounts.set(first,(firstCounts.get(first)||0)+1)}
@@ -24,7 +25,7 @@ function naturalizePlayerReferences(t,value){
     let out=sentence;
     for(const name of names){
       const first=name.split(/\s+/)[0];if(!first||firstCounts.get(first)!==1)continue;
-      const re=new RegExp(name.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\const keyedChoice=(key,items)=>{const s=String(key||''),h=[...s].reduce((n,ch)=>((n*31)+ch.charCodeAt(0))>>>0,7);return items[h%items.length]};'),'gi');
+      const re=new RegExp(escapeRe(name),'gi');
       if(!re.test(out))continue;
       re.lastIndex=0;
       const prev=last.get(name);
@@ -36,7 +37,7 @@ function naturalizePlayerReferences(t,value){
 }
 function statClause(p){
   const line=teamStatLine(p);if(!line)return null;
-  const name=String(p?.name||'').trim(),re=new RegExp('^'+name.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\const keyedChoice=(key,items)=>{const s=String(key||''),h=[...s].reduce((n,ch)=>((n*31)+ch.charCodeAt(0))>>>0,7);return items[h%items.length]};')+'\\s+','i');
+  const name=String(p?.name||'').trim(),re=new RegExp('^'+escapeRe(name)+'\\s+','i');
   const clause=String(line).replace(re,'').replace(/\.$/,'');
   return clause?clause.charAt(0).toLowerCase()+clause.slice(1):null;
 }

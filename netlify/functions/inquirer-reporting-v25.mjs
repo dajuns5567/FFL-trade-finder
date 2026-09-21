@@ -2253,7 +2253,8 @@ function restoreSectionFullNamesV30(t,paragraphs){
       if(fullRe.test(text)){seen.add(full);continue}
       const bits=full.split(/\s+/),first=bits[0],last=bits.at(-1);
       const aliases=[];
-      if(last&&lastCounts.get(last)===1)aliases.push(last);
+      // Do not expand surname-only references: transaction-only players can share a surname
+      // with a starter, which makes last-name restoration capable of corrupting a valid full name.
       if(first&&firstCounts.get(first)===1&&!/^(?:[A-Z]\.){1,3}$/.test(first))aliases.push(first);
       for(const alias of aliases){
         const re=new RegExp('\\b'+escapeRe(alias)+'\\b'),m=re.exec(text);

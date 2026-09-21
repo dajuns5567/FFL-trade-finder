@@ -11,7 +11,7 @@ const fetchJson=async url=>{const r=await fetch(url,{headers:{accept:'applicatio
 const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
 const MANAGER_CACHE_VERSION=6;
 const BROADCAST_VERSION=15;
-const INQUIRER_EDITORIAL_REVISION=2;
+const INQUIRER_EDITORIAL_REVISION=3;
 const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026]]);
 const preloadedBroadcast=(season,week)=>{const p=PRELOADED_BROADCASTS.get(String(Number(season))+'|'+String(Number(week)))||null;return p&&Number(p.inquirer_version||0)>=INQUIRER_VERSION&&Number(p.editorial_revision||0)>=INQUIRER_EDITORIAL_REVISION?p:null};
 function preloadedReporterEntries(reporterId){

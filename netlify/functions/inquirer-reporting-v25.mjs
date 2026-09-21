@@ -2122,6 +2122,118 @@ function dedupeArticleSectionsV29(sections){
   });
 }
 
+function articleThreadV30(t,r,f,phase){
+  const team=teamIdentityV28(t).mascot,manager=t.manager_name||'management',top=f.top?.name||'the leading scorer',
+    share=Math.round((f.share||0)*100),angle=f.angle,key=`${t.roster_id}:${angle}:${phase}:${r?.id}`;
+  const base={
+    'rout-loss':{
+      sentiment:`A ${one(f.margin)}-point loss is too large for one scapegoat. ${team} supporters can be angry at individual misses, but the margin says the failure was distributed.`,
+      outlook:`The next ${team} game is less about proving one player can rebound than proving the lineup can stop failing in clusters.`,
+      management:`For ${manager}, the lesson is broader than one button: a loss this large usually needs more than one correction.`
+    },
+    'rout-win':{
+      sentiment:`A ${one(f.margin)}-point win gives ${team} fans room to enjoy the week without pretending every piece will repeat at the same volume.`,
+      outlook:`The next test for ${team} is whether the winning shape survives after the margin stops doing the storytelling.`,
+      management:`For ${manager}, a rout is permission to preserve what worked rather than a reason to assume every decision was perfect.`
+    },
+    'close-loss':{
+      sentiment:`A ${one(f.margin)}-point loss guarantees arguments because nearly every ordinary decision can be imagined as the missing difference.`,
+      outlook:`The next ${team} game needs fewer small leaks; a margin this thin turns ordinary mistakes into the whole result.`,
+      management:`For ${manager}, the close margin makes the legal lineup choices worth reviewing without turning hindsight into fiction.`
+    },
+    'close-win':{
+      sentiment:`A ${one(f.margin)}-point win gives ${team} the pleasant version of the same lesson: tiny mistakes mattered, but the scoreboard forgave them.`,
+      outlook:`The next ${team} matchup will test whether the close win was composure or simply a Sunday in which the final mistake belonged elsewhere.`,
+      management:`For ${manager}, surviving a close one should sharpen the lineup review rather than cancel it.`
+    },
+    'favorite-collapse':{
+      sentiment:`The frustration around ${team} is sharper because the roster entered with the friendlier forecast and still handed the result away.`,
+      outlook:`The next ${team} assignment now carries a credibility tax: favorites are expected to bank manageable games, not explain them afterward.`,
+      management:`For ${manager}, losing from the favored side puts roster and lineup choices under a brighter light than the same score would as an underdog.`
+    },
+    'upset-win':{
+      sentiment:`The upset gives ${team} fans a reason to revise expectations upward without pretending one surprise result rewrote the season.`,
+      outlook:`Now ${team} has to show the upset was a usable version of the roster rather than a one-week ambush.`,
+      management:`For ${manager}, the reward for an upset is a better question next week: which choices helped create a version worth repeating?`
+    },
+    'lineup-regret':{
+      sentiment:`The ${team} argument will keep circling the lineup card because the legal alternative was real, not invented after the final.`,
+      outlook:`The cleanest way for ${team} to end the lineup argument is to make the obvious decision before kickoff next time.`,
+      management:`For ${manager}, this week already supplied a legal counterfactual that deserves an actual correction.`
+    },
+    'front-office-storm':{
+      sentiment:`With ${Number(t.current_week_trade_count||0)} completed moves in the background, ${team} fans are judging the churn by what finally happened on Sunday.`,
+      outlook:`The next ${team} game should clarify whether all that roster motion created a better team or merely a busier transaction log.`,
+      management:`For ${manager}, activity is no longer the story. The new configuration has enough real football attached to it to be evaluated.`
+    },
+    'star-dependent':{
+      sentiment:`When roughly ${share}% of the scoring comes from three players, ${team} fans know where the gratitude belongs and where the impatience should go.`,
+      outlook:`The next ${team} game needs somebody outside the leading trio to make the article harder to write around the same three names.`,
+      management:`For ${manager}, the roster question is depth of production rather than star quality; ${top} already did enough to make that distinction clear.`
+    },
+    'defense-led':{
+      sentiment:`${top} made sure the ${team} conversation starts on defense, which is exactly what an IDP league should reward when the work is real.`,
+      outlook:`The next ${team} game asks whether the defensive carry can remain an advantage instead of becoming a weekly rescue plan.`,
+      management:`For ${manager}, a defensive headliner is roster construction paying off; the rest of the lineup still has to meet that standard.`
+    },
+    'projection-smash':{
+      sentiment:`Beating projection this badly changes the mood around ${team}, but fans will care more about which roles produced the surprise than the forecast itself.`,
+      outlook:`The next ${team} game tests whether the unexpected production belongs to a new role or a one-week spike.`,
+      management:`For ${manager}, the useful question is which source of overperformance can be intentionally preserved.`
+    },
+    'projection-crater':{
+      sentiment:`The ${team} frustration is not that a projection was wrong; it is that too many expected points vanished from roles the roster had reason to trust.`,
+      outlook:`The next ${team} matchup needs a normal version of the lineup before anyone asks for another ceiling game.`,
+      management:`For ${manager}, the repair job starts with the expected roles that failed rather than chasing a miracle replacement.`
+    },
+    'breakout-week':{
+      sentiment:`The most interesting ${team} optimism belongs to the emerging player whose role grew with the production; that is a better story than a random spike.`,
+      outlook:`The next ${team} game gives the breakout candidate a chance to keep the larger role before the label becomes permanent.`,
+      management:`For ${manager}, the young player has earned another opportunity rather than a ceremonial label.`
+    },
+    'division-fight':{
+      sentiment:`A divisional result makes the ${team} mood louder because the same Sunday moved a rival in the opposite direction.`,
+      outlook:`The next ${team} game arrives with divisional ground already won or lost; there is less room to treat the standings as background decoration.`,
+      management:`For ${manager}, division games turn ordinary lineup choices into decisions with standings consequences attached.`
+    }
+  }[angle];
+  if(!base?.[phase])return null;
+  const core=base[phase],v=voice(r);
+  const tails=[
+    '',
+    ' That is the part Bartholomew would keep after the adjectives are edited out.',
+    ' THAT is the part Tilly would put above the fold.',
+    ' That is the thread Filch would keep attached to the next exhibit.'
+  ];
+  return keyedChoice(key,[core,core+tails[v]]);
+}
+
+function sentimentStoryV30(t,r,f=articleFrameV29(t,r)){
+  const team=teamIdentityV28(t),manager=t.manager_name||'management',rec=record(t),rank=Number.isFinite(f.rank)?`${f.rank} of ${f.size}`:'unsettled',
+    p=f.playoff,titles=Number(t.manager_career?.championships)||0,thread=articleThreadV30(t,r,f,'sentiment'),margin=one(f.margin),v=voice(r);
+  const primary=[
+    f.won
+      ? `${team.city} gets the better Monday after a ${margin}-point ${team.mascot} win. The fan base can celebrate what happened while keeping one eye on the parts that looked harder to repeat.`
+      : `${team.city} gets the irritated Monday after a ${margin}-point ${team.mascot} loss. The useful fan reaction is not to blame everybody equally; some performances survived the result and some helped create it.`,
+    f.won
+      ? `${team.mascot} supporters are understandably pleased, and Bartholomew will permit the optimism without pretending one week settled the order of things.`
+      : `${team.mascot} supporters have every right to be annoyed. Bartholomew’s only request is that the criticism distinguish between the players who failed and the good performances trapped inside the loss.`,
+    f.won
+      ? `${team.city.toUpperCase()} HAS A WIN AND THE GROUP CHAT HAS LOST ITS MIND. ${manager} MAY ENJOY THE SCREENSHOTS UNTIL THE NEXT LINEUP LOCKS.`
+      : `${team.city.toUpperCase()} HAS A LOSS AND THE GROUP CHAT HAS OPENED TWELVE INVESTIGATIONS BEFORE BREAKFAST. ${manager} SHOULD READ THE USEFUL COMPLAINTS AND MUTE THE REST.`,
+    f.won
+      ? `The public case for ${team.mascot} is favorable this week: a win, a pile of screenshots and very little procedural restraint. ${manager} gets another hearing next Sunday.`
+      : `The public case against ${team.mascot} is loud this week, but the evidence is uneven. ${manager} should separate the actual roster problem from the emotional exhibits.`
+  ][v];
+  const context=[
+    `The record is ${rec}, good for rank ${rank}${p!=null?`, with the playoff outlook around ${one(p)}%`:''}. ${titles?`${manager} has ${titles} championship${titles===1?'':'s'} on the résumé, enough to earn patience but not immunity.`:''}`,
+    `${rec} and rank ${rank} are the unromantic facts${p!=null?`; the current playoff outlook remains ${one(p)}%`:''}. ${titles?`${titles} championship${titles===1?'':'s'} give ${manager} a résumé, not diplomatic immunity.`:''}`,
+    `RECORD: ${rec}. RANK: ${String(rank).toUpperCase()}.${p!=null?` PLAYOFF OUTLOOK: ${one(p)}%.`:''} ${titles?`${manager.toUpperCase()} HAS ${titles} TITLE${titles===1?'':'S'} OF PRIOR GOODWILL. THAT COUPON BOOK IS NOT INFINITE.`:''}`,
+    `The public record reads ${rec}, rank ${rank}${p!=null?`, with a ${one(p)}% playoff estimate`:''}. ${titles?`${manager} enters with ${titles} championship${titles===1?'':'s'} of prior good conduct; the current week is still admissible.`:''}`
+  ][v];
+  return [primary,context,thread].filter(Boolean);
+}
+
 export function humanSectionsV25(args){
   const {team:t,facts={}}=args,creative=humanSectionsV21(args),factual=humanSectionsV23(args),
     factualByKind=new Map((factual||[]).map(s=>[s.kind,s])),frame=articleFrameV29(t,args.reporter),fw=fourthWallV28(t,args.reporter,frame.angle);

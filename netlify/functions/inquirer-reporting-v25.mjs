@@ -573,10 +573,10 @@ function seasonContextStoryV26(t,r){
   const streakText=Number(st.length)>=2?` ${t.team_name} also carries a ${Number(st.length)}-game ${st.type==='W'?'winning':st.type==='L'?'losing':'result'} streak.`:'';
   const form=(week>=3&&Number.isFinite(recent)&&Number.isFinite(prior)&&prior>0&&Math.abs(recent-prior)>=4)?` Recent scoring sits at ${one(recent)} per game versus ${one(prior)} in the preceding stretch.`:'';
   return deskChoice(t,r,[
-    [`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} One result is in the bank; the next one gets to decide whether the clipping grows legs.`],
+    [`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} ${t.team_name} has one result in the bank; the next one gets to decide whether the clipping grows legs.`],
     [`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} The table looks nicer already. One should resist ordering the commemorative silverware.`],
     [`${t.team_name.toUpperCase()} IS ${record(t)}${rankText}.${streakText}${form} Keep the parade route folded, but nobody has to apologize for enjoying the scoreboard.`],
-    [`${t.team_name} is ${record(t)} through Week ${week}${rankText}.${streakText}${form} The record is small; the consequences are not imaginary.`]
+    [`${t.team_name} is ${record(t)} through Week ${week}${rankText}.${streakText}${form} ${t.team_name}’s record is small; the consequences are not imaginary.`]
   ]);
 }
 
@@ -606,9 +606,9 @@ function teamScoreConstructionStory(t,r){
     `The score was top-heavy: ${topNames} supplied roughly ${pct}% of ${t.team_name}’s production.`
   ]);
   else if(share>=.58)shape=keyedChoice(key,[
-    `${topNames} supplied about ${pct}% of ${t.team_name}’s scoring. The stars drove the week without turning it into a one-man rescue.`,
+    `${topNames} supplied about ${pct}% of ${t.team_name}’s scoring. ${t.team_name}’s stars drove the week without turning it into a one-man rescue.`,
     `${t.team_name} got roughly ${pct}% of its points from ${topNames}. Star-driven, not star-dependent.`,
-    `${topNames} combined for ${one(top3pts)} points, about ${pct}% of the ${t.team_name} total. The core showed up and the rest still mattered.`,
+    `${topNames} combined for ${one(top3pts)} points, about ${pct}% of the ${t.team_name} total. ${t.team_name}’s core showed up and the rest still mattered.`,
     `Most of ${t.team_name}’s scoring ran through ${topNames}, who produced about ${pct}% of the total.`
   ]);
   else shape=keyedChoice(key,[
@@ -627,7 +627,7 @@ function teamScoreConstructionStory(t,r){
     ]);
     else if(projDelta>0)expectation=' '+keyedChoice(ekey,[
       `${t.team_name} beat projection by ${one(projDelta)} and gave itself room the pregame forecast never promised.`,
-      `${t.team_name} finished ${one(projDelta)} above projection. That cushion made the afternoon considerably less stressful.`,
+      `${t.team_name} finished ${one(projDelta)} above projection. ${t.team_name} used that cushion to make the afternoon considerably less stressful.`,
       `The lineup cleared projection by ${one(projDelta)}. ${won?`${t.team_name} turned the extra production into a win.`:`${t.team_name} still could not turn the overperformance into a win.`}`
     ]);
     else expectation=' '+keyedChoice(ekey,[

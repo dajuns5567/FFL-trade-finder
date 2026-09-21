@@ -79,9 +79,7 @@ function statSituation(p){
 }
 function scopedFootballRead(t,p,angle='matchup'){
   const raw=statSituation(p);if(!raw)return null;
-  const safeName=String(p?.name||'Player').replaceAll('.','');
-  const compact=String(raw).replaceAll(String(p?.name||''),safeName).replace(/\.\s+/g,'; ').replace(/\.$/,'');
-  return `${t.team_name}’s ${angle} read on ${safeName}: ${compact}.`;
+  return String(raw).trim();
 }
 
 function playerTrajectory(p){
@@ -413,30 +411,31 @@ function filchExpansion(t,kind){
   return [];
 }
 function seasonContextStoryV26(t,r){
-  const ctx=t.league_context||{},rank=Number(ctx.standings_rank),size=Number(ctx.league_size)||32,st=ctx.streak||{},recent=Number(ctx.recent_avg_points),prior=Number(ctx.prior_five_avg_points),week=Number(t.week_classification?.week)||1;
-  const streak=Number(st.length)>=2?`${Number(st.length)}-game ${st.type==='W'?'winning':st.type==='L'?'losing':'result'} streak`:'no multi-game streak yet';
-  const form=Number.isFinite(recent)&&Number.isFinite(prior)&&Math.abs(recent-prior)>=4?` Recent scoring sits at ${one(recent)} per game versus ${one(prior)} in the preceding stretch, so the direction of travel is starting to show.`:'';
+  const ctx=t.league_context||{},rank=Number(ctx.standings_rank),size=Number(ctx.league_size)||32,st=ctx.streak||{},week=Number(t.week_classification?.week)||1,
+    recent=Number(ctx.recent_avg_points),prior=Number(ctx.prior_five_avg_points);
+  const rankText=Number.isFinite(rank)?` No. ${rank} of ${size}.`:'';
+  const streakText=Number(st.length)>=2?` ${t.team_name} also carries a ${Number(st.length)}-game ${st.type==='W'?'winning':st.type==='L'?'losing':'result'} streak.`:'';
+  const form=(week>=3&&Number.isFinite(recent)&&Number.isFinite(prior)&&prior>0&&Math.abs(recent-prior)>=4)
+    ?` Its recent scoring average is ${one(recent)}, compared with ${one(prior)} in the preceding stretch.`:'';
   return deskChoice(t,r,[
-    [`${t.team_name} leaves Week ${week} at ${record(t)}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}, with ${streak}. September tables are temporary, but banked wins are not, and the old desk has learned not to confuse those two things.${form}`],
-    [`The table now seats ${t.team_name} at ${record(t)}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}, carrying ${streak}. It is far too early for coronations and exactly early enough for consequences; one can be tasteful without pretending the standings are imaginary.${form}`],
-    [`THE RECEIPT THAT LASTS: ${t.team_name} is ${record(t)}${Number.isFinite(rank)?', sitting No. '+rank+' of '+size:''}, with ${streak}. The Back Page can scream about stars all night, but this is the line that still matters when everybody wakes up Monday.${form}`],
-    [`The season file now reads ${t.team_name}: ${record(t)}${Number.isFinite(rank)?', standing No. '+rank+' of '+size:''}, ${streak}. One week never closes a case, but every result changes what the next one is allowed to mean.${form}`]
+    [`${t.team_name} is ${record(t)} after Week ${week}.${rankText}${streakText}${form} The record is young, but the result already changes the weight of the next Sunday.`],
+    [`${t.team_name} leaves Week ${week} at ${record(t)}.${rankText}${streakText}${form} It is much too early for a coronation and exactly early enough for a little consequence.`],
+    [`${t.team_name.toUpperCase()} IS ${record(t)}.${rankText}${streakText}${form} Keep the parade route folded for now, but nobody has to apologize for enjoying the scoreboard.`],
+    [`${t.team_name} is ${record(t)} through Week ${week}.${rankText}${streakText}${form} That does not settle anything; it does make the next matchup more expensive for whichever side wastes it.`]
   ]);
 }
-
 function currentOpponentFootballStory(t,r){
   const o=t.opponent_roster,rows=(o?.starters||o?.players||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points));
   const star=rows[0],second=rows[1];if(!star)return null;
-  const starLine=scopedFootballRead(t,star,'opponent'),won=Number(t.points)>Number(t.opponent_points);
+  const starLine=scopedFootballRead(t,star,'opponent'),won=Number(t.points)>Number(t.opponent_points),support=second?` ${second.name} added ${one(second.points)}.`:'';
   const open=deskChoice(t,r,[
-    [`${t.opponent_name} did not arrive empty-handed. ${star.name} gave them ${one(star.points)} fantasy points${second?' and '+second.name+' added '+one(second.points):''}. ${won?t.team_name+' absorbed that and still controlled the final score; that is a better description of the win than pretending the other side simply failed.':t.team_name+' never found enough counterweight, which is why the opponent’s best player became part of the final margin.'}`],
-    [`${t.opponent_name} brought its own leading man in ${star.name}, who produced ${one(star.points)} fantasy points${second?', with '+second.name+' supplying '+one(second.points)+' beside him':''}. ${won?'The pleasing part for '+t.team_name+' is that the evening survived somebody else getting a star turn.':'The unpleasant part for '+t.team_name+' is that the rival marquee performance never received a convincing answer.'}`],
-    [`${t.opponent_name.toUpperCase()} HAD A PUNCH TOO: ${star.name}, ${one(star.points)} fantasy points${second?', plus '+one(second.points)+' from '+second.name:''}. ${won?t.team_name+' took it and kept scoring.':'That punch landed because '+t.team_name+' did not build enough offense around its own headliners.'}`],
-    [`The opposing file starts with ${star.name}: ${one(star.points)} fantasy points for ${t.opponent_name}${second?', followed by '+one(second.points)+' from '+second.name:''}. ${won?t.team_name+' won despite the opponent producing a real centerpiece, which strengthens the result.':t.team_name+' lost while the opponent’s best evidence remained unanswered, a detail worth carrying into the rematch file.'}`]
+    [`${t.opponent_name} had a real answer in ${star.name}, who scored ${one(star.points)} fantasy points.${support} ${won?t.team_name+' survived the opponent’s best punch anyway.':t.team_name+' never found enough production elsewhere to answer it.'}`],
+    [`${star.name} gave ${t.opponent_name} ${one(star.points)} fantasy points.${support} ${won?'That makes the '+t.team_name+' win look better, not luckier.':'That was enough elegance on the other side of the table to make '+t.team_name+' pay.'}`],
+    [`${star.name.toUpperCase()} KEPT ${t.opponent_name.toUpperCase()} IN IT with ${one(star.points)}.${support} ${won?t.team_name+' took the hit and kept scoring.':t.team_name+' never produced the counterpunch it needed.'}`],
+    [`${star.name} was ${t.opponent_name}’s biggest problem for ${t.team_name}, scoring ${one(star.points)} fantasy points.${support} ${won?'Winning through that kind of opposing performance gives '+t.team_name+' a little more substance.':t.team_name+' could not make the rest of the matchup compensate.'}`]
   ]);
   return [open,starLine].filter(Boolean).join(' ');
 }
-
 function teamScoreConstructionStory(t,r){
   const rows=list(t);if(!rows.length||!valid(t.points))return null;
   const top=rows[0],top3=rows.slice(0,3),top3pts=top3.reduce((n,p)=>n+Number(p.points||0),0),share=Number(t.points)>0?top3pts/Number(t.points):0,margin=Number(t.points)-Number(t.opponent_points),projDelta=valid(t.projected)?Number(t.points)-Number(t.projected):null;
@@ -456,64 +455,87 @@ function supportingCastFootballStory(t,r){
   const pieces=[];
   for(const p of [second,third].filter(Boolean)){
     const ctx=scopedFootballRead(t,p,'supporting-cast'),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0;
-    const baseline=Number.isFinite(prior)&&prior>0&&priorGames>=6
-      ?(Number(p.points)>=prior*1.25?`That cleared last year’s ${one(prior)}-point average by enough to matter.`:Number(p.points)<=prior*.7?`That sat well below last year’s ${one(prior)}-point average, so the role matters as much as the disappointing total.`:`That lived near the ${one(prior)}-point average established across ${priorGames} games last season.`)
-      :'';
-    pieces.push(`${p.name} gave ${t.team_name} ${one(p.points)} fantasy points. ${ctx||''} ${baseline}`.trim());
+    let baseline='';
+    if(Number.isFinite(prior)&&prior>0&&priorGames>=6){
+      baseline=Number(p.points)>=prior*1.25
+        ?keyedChoice(p.id||p.name,[`${p.name} beat last season’s ${one(prior)}-point average by a healthy margin.`,`That was a louder ${p.name} Sunday than the ${one(prior)} he averaged last season.`,`${p.name} opened above his ${one(prior)}-point 2025 baseline, and the extra production mattered.`])
+        :Number(p.points)<=prior*.7
+          ?keyedChoice(p.id||p.name,[`${p.name} finished well below last season’s ${one(prior)}-point average.`,`The ${one(prior)}-point average ${p.name} carried last year makes this opener look unusually quiet.`,`${p.name} started well under the level he usually gave this roster last season.`])
+          :keyedChoice(p.id||p.name,[`${p.name} opened in roughly the same neighborhood as last season’s ${one(prior)}-point average.`,`This looked familiar from ${p.name}, who averaged ${one(prior)} across ${priorGames} games last year.`,`${p.name} gave ${t.team_name} something close to his established 2025 level.`]);
+    }
+    pieces.push([`${p.name} gave ${t.team_name} ${one(p.points)} fantasy points.`,ctx,baseline].filter(Boolean).join(' '));
   }
   const close=deskChoice(t,r,[
-    [`That supporting work matters for ${t.team_name} because ${rows[0]?.name||'the leading scorer'} cannot be the emergency plan every Sunday.`],
-    [`For ${t.team_name}, that is the difference between a star turn surrounded by furniture and an ensemble that can survive a less glamorous afternoon.`],
-    [`That is the part of the ${t.team_name} box score worth keeping in big type: more than one player gave the lineup somewhere to go.`],
-    [`The file looks healthier when ${t.team_name} can point to multiple usable roles instead of one witness carrying the entire case.`]
+    [`${rows[0]?.name||'The leading scorer'} still owned the headline, but ${t.team_name} had enough help behind it to keep the afternoon from becoming a one-man rescue job.`],
+    [`${t.team_name} looked better for having more than one useful place to turn. Even a star appreciates competent company.`],
+    [`That is the sort of secondary scoring ${t.team_name} can print in smaller type and still be very happy to have.`],
+    [`${t.team_name} did not ask one player to carry every useful possession of the afternoon. That balance mattered.`]
   ]);
-  return pieces.join(' ')+(pieces.length?' ':'')+close;
+  return pieces.join(' ')+' '+close;
 }
-
 function lineupProcessStory(t,r){
   const miss=t.best_lineup_miss,w=t.worst_starter,b=t.best_bench;
   if(miss?.reserve&&miss?.starter&&Number.isFinite(Number(miss.gap))&&Number(miss.gap)>0){
+    const slot=miss.slot||miss.starter.lineup_slot||'lineup';
     return deskChoice(t,r,[
-      [`${miss.reserve.name} was legally eligible for ${miss.starter.name}’s ${miss.slot||miss.starter.lineup_slot||'lineup'} spot and outscored him by ${one(miss.gap)}. That does not make the original call indefensible, but it does put a concrete lineup decision — not vague hindsight — into ${t.manager_name}’s Week 1 review.`],
-      [`There was one selection worth revisiting over a civilized drink: ${miss.reserve.name} could actually have replaced ${miss.starter.name} at ${miss.slot||miss.starter.lineup_slot||'the same lineup spot'} and scored ${one(miss.gap)} more. ${t.manager_name} need not confess to a crime; the next similar decision simply arrives with precedent.`],
-      [`LINEUP RECEIPT: ${miss.reserve.name} had a legal path into ${miss.starter.name}’s ${miss.slot||miss.starter.lineup_slot||'spot'} and left ${one(miss.gap)} more points on the bench. That is a real ${t.team_name} decision to argue about, not fantasy-manager fan fiction.`],
-      [`The lineup file contains an actual alternative: ${miss.reserve.name} was eligible for ${miss.starter.name}’s ${miss.slot||miss.starter.lineup_slot||'spot'} and produced ${one(miss.gap)} more points. The distinction matters because Filch prosecutes available choices, not impossible bench swaps.`]
+      [`${miss.reserve.name} could have replaced ${miss.starter.name} at ${slot} and scored ${one(miss.gap)} more. ${t.manager_name} survived that call this week; the next close matchup may be less forgiving.`],
+      [`${miss.reserve.name} was available for ${miss.starter.name}’s ${slot} spot and outscored him by ${one(miss.gap)}. A civilized manager calls that something to remember, not something to confess.`],
+      [`LINEUP RECEIPT: ${miss.reserve.name} could have been in ${miss.starter.name}’s ${slot} spot and left ${one(miss.gap)} extra points on the bench. That one will be louder if the same choice appears next Sunday.`],
+      [`${miss.reserve.name} had a path into ${miss.starter.name}’s ${slot} spot and scored ${one(miss.gap)} more. ${t.team_name} had a better lineup available; whether it mattered to the result is the only mercy.`]
     ]);
   }
   if(w&&b)return deskChoice(t,r,[
-    [`${w.name} was the quietest starter while ${b.name} led the bench, but there was no verified legal swap large enough to rewrite the result. For ${t.team_name}, that makes this more a production problem than a lineup-management scandal.`],
-    [`${b.name} had the bench headline and ${w.name} had the softest starting return, yet the eligible-lineup check did not produce a clean rescue. Sometimes the ugly chair really was the best chair available.`],
-    [`The bench had ${b.name}; the starting lineup had a quieter ${w.name}. No verified eligible swap turned that into an obvious managerial own-goal, so the Back Page is blaming the football before blaming the button-clicking.`],
-    [`${b.name} led the bench while ${w.name} supplied the weakest starting total, but the eligibility file does not support an easy “start the other guy” indictment. The roster still owns the weak point even when management does not own a clean alternative.`]
+    [`${w.name} was the quietest starter and ${b.name} led the bench, but there was no clean eligible swap that would have rescued the result. ${t.team_name} needed better production more than a different click.`],
+    [`${b.name} owned the bench headline while ${w.name} had the softest starting return. There was no obvious legal swap large enough to change the story, which leaves the roster itself with the awkward conversation.`],
+    [`${b.name} led the bench and ${w.name} gave the starting lineup very little. No obvious eligible swap fixes that after the fact; sometimes the roster simply needed more from the people already in the game.`],
+    [`${b.name} outscored the bench while ${w.name} struggled in the lineup, but there was no straightforward eligible replacement that rewrites Sunday. ${t.team_name} owns the weak spot without an easy hindsight escape hatch.`]
   ]);
   return null;
 }
-
 function chairFootballStory(t,kind,r){
   const rows=list(t).filter(p=>delta(p)!=null);if(!rows.length)return null;
   const p=kind==='hot-seat'?rows.slice().sort((a,b)=>delta(a)-delta(b))[0]:rows.slice().sort((a,b)=>delta(b)-delta(a))[0];
   if(!p)return null;
-  const ctx=scopedFootballRead(t,p,kind==='hot-seat'?'hot-seat':'cool-throne'),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0;
-  const hist=Number.isFinite(prior)&&prior>0&&priorGames>=6
-    ?(Number(p.points)<prior*.6?`Last season’s ${one(prior)}-point average across ${priorGames} games makes this look like a bad Sunday against an established floor, not proof that the floor disappeared.`:Number(p.points)>prior*1.3?`Last season’s ${one(prior)}-point average gives this spike context: ${p.name} beat an established baseline by a meaningful amount.`:`The result stayed in the neighborhood of last season’s ${one(prior)}-point average.`)
-    :'';
+  const ctx=scopedFootballRead(t,p,kind),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0;
+  let hist='';
+  if(Number.isFinite(prior)&&prior>0&&priorGames>=6){
+    if(Number(p.points)<prior*.6)hist=keyedChoice((p.id||p.name)+'low',[
+      `${p.name} averaged ${one(prior)} across ${priorGames} games last season, which makes this look more like a bad Sunday than a vanished floor.`,
+      `Last year, ${p.name} usually gave this roster ${one(prior)} per game. Week 1 came in well below that.`,
+      `${p.name} opened a long way beneath his ${one(prior)}-point 2025 average; one game is not enough to erase the older standard.`
+    ]);
+    else if(Number(p.points)>prior*1.3)hist=keyedChoice((p.id||p.name)+'high',[
+      `${p.name} opened well above the ${one(prior)}-point average he carried last season.`,
+      `That was a bigger ${p.name} afternoon than the ${one(prior)} per game he averaged in 2025.`,
+      `${p.name} cleared his established ${one(prior)}-point baseline by enough to make the opener stand out.`
+    ]);
+    else hist=keyedChoice((p.id||p.name)+'same',[
+      `${p.name} landed close to the ${one(prior)}-point level he established last season.`,
+      `This looked familiar from ${p.name}, who averaged ${one(prior)} across ${priorGames} games in 2025.`,
+      `${p.name} opened near his established 2025 scoring level.`
+    ]);
+  }
   return [ctx,hist].filter(Boolean).join(' ')||null;
 }
-
 function nextOpponentFootballStory(t,r){
   const o=t.next_opponent_roster,rows=(o?.starters||o?.players||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points)),star=rows[0],second=rows[1];
   if(!o||!star)return null;
-  const ctx=scopedFootballRead(t,star,'next-opponent'),opp=t.next_opponent_name||o.team_name,rec=t.next_opponent_context?.record,playoff=t.next_opponent_mida?.playoff;
+  const ctx=scopedFootballRead(t,star,'next-opponent'),opp=t.next_opponent_name||o.team_name,rec=t.next_opponent_context?.record,playoff=Number(t.next_opponent_mida?.playoff);
+  const support=second?` ${second.name} added ${one(second.points)}.`:'';
   const open=deskChoice(t,r,[
-    [`The next opponent is not anonymous: ${opp} just got ${one(star.points)} fantasy points from ${star.name}${second?' and '+one(second.points)+' from '+second.name:''}. That is the personnel problem ${t.team_name} is walking toward, not merely a projection number.`],
-    [`${opp} arrives with ${star.name} fresh off ${one(star.points)} fantasy points${second?', while '+second.name+' added '+one(second.points):''}. The appointment has enough actual Week 1 form to be more interesting than whatever the forecast says over cocktails.`],
-    [`NEXT WEEK HAS NAMES: ${star.name} just scored ${one(star.points)} for ${opp}${second?', with '+one(second.points)+' from '+second.name:''}. ${t.team_name} does not get to prepare for a logo; it gets that lineup.`],
-    [`The next file already has a lead witness. ${star.name} produced ${one(star.points)} fantasy points for ${opp}${second?', and '+second.name+' followed with '+one(second.points):''}. ${t.team_name} gets a specific football problem rather than a generic next-week placeholder.`]
+    [`${opp} is next, and ${star.name} arrives off a ${one(star.points)}-point week.${support} ${t.team_name} has a real personnel problem to prepare for before projections enter the conversation.`],
+    [`${star.name} just gave ${opp} ${one(star.points)} fantasy points.${support} That is enough form to make next week more interesting than the forecast alone.`],
+    [`NEXT WEEK HAS A HEADLINER: ${star.name}, fresh off ${one(star.points)} for ${opp}.${support} ${t.team_name} gets the player, not merely the logo.`],
+    [`${star.name} comes into next week after ${one(star.points)} for ${opp}.${support} ${t.team_name} will have to deal with that production before it worries about anything theoretical.`]
   ]);
-  const stakes=(t.next_divisional?`${opp} shares ${t.division_name||'the division'} with ${t.team_name}, so the result moves both sides of the standings ledger at once. `:'')+(rec?`${opp} enters at ${Number(rec.wins)||0}-${Number(rec.losses)||0}. `:'')+(valid(playoff)?`Its current playoff path sits around ${one(playoff)}%, which gives the matchup consequences on both sides of the table.`:'');
-  return [open,ctx,stakes].filter(Boolean).join(' ');
+  const stakes=[];
+  if(t.next_divisional)stakes.push(`${opp} shares ${t.division_name||'the division'} with ${t.team_name}, so the result moves both teams at once.`);
+  if(rec)stakes.push(`${opp} enters at ${Number(rec.wins)||0}-${Number(rec.losses)||0}.`);
+  if(Number.isFinite(playoff)&&(playoff>=70||playoff<20))stakes.push(playoff>=70
+    ?`${opp} already sits above ${one(playoff)}% in the current playoff outlook, so ${t.team_name} gets a team with real early-season expectations.`
+    :`${opp} sits around ${one(playoff)}% in the current playoff outlook, which only makes a winnable game more valuable to ${t.team_name}.`);
+  return [open,ctx,...stakes].filter(Boolean).join(' ');
 }
-
 function broadcastExpansionV26(t,kind,r){
   if(kind==='lede')return [seasonContextStoryV26(t,r),teamScoreConstructionStory(t,r),currentOpponentFootballStory(t,r)].filter(Boolean);
   if(kind==='players')return [supportingCastFootballStory(t,r)].filter(Boolean);

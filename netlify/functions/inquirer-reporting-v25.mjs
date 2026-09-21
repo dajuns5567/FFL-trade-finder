@@ -21,7 +21,7 @@ const escapeRe=value=>String(value??'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 function splitSentencesSafeV28(value){
   const protectedText=String(value??'')
     .replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§'))
-    .replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms)\.(?=\s+[A-Z])/g,m=>m.replace('.','§'));
+    .replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace('.','§'));
   return protectedText.split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.')).filter(Boolean);
 }
 
@@ -1399,8 +1399,8 @@ function playerContextV28(t,r){
     else if(defensivePlayer(top)&&raw)parts.push(`${top.name} produced ${one(top.points)} fantasy points from a defensive tackle-and-pressure line of ${raw}. For ${team}, that is actual IDP involvement rather than a fantasy total floating without context.`);
   }
   if(bad&&Number(delta(bad))<=-4){
-    const usage=teamOpportunity(bad);
-    parts.push(`${bad.name} finished ${one(Math.abs(delta(bad)))} points below projection${usage?.text?', despite '+usage.text:''}. ${Number(t.points)>Number(t.opponent_points)?`${team} won anyway, which buys ${bad.name} cover for one Sunday; another miss becomes a real roster problem.`:`${team} lost, so that empty space stays in the story instead of disappearing into the margins.`}`);
+    const usage=teamOpportunity(bad),won=Number(t.points)>Number(t.opponent_points);
+    parts.push(`${bad.name} finished ${one(Math.abs(delta(bad)))} points below projection${usage?.text?', despite '+usage.text:''}. ${won?`The result was still a win for ${team}, buying ${bad.name} cover for one Sunday; another miss becomes a real roster problem.`:`The result was a loss for ${team}, so that empty space stays in the story instead of disappearing into the margins.`}`);
   }
   if(trajectory)parts.push(trajectory.tr.text);
   if(!parts.length)return null;
@@ -1431,12 +1431,12 @@ function playerCounterpointV28(t,r){
 
 function ledeConsequenceV28(t,r,angle){
   const team=teamIdentityV28(t).mascot,ctx=t.league_context||{},rank=Number(ctx.standings_rank),size=Number(ctx.league_size)||32,m=t.mida_outlook,
-    playoff=valid(m?.playoff)?Number(m.playoff):null,won=Number(t.points)>Number(t.opponent_points),streak=ctx.streak||{};
+    playoff=valid(m?.playoff)?Number(m.playoff):null,streak=ctx.streak||{};
   return deskChoice(t,r,[
     [`That leaves ${team} at ${record(t)}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}${Number(streak.length)>=2?' on a '+Number(streak.length)+'-game '+(streak.type==='W'?'winning':'losing')+' run':''}. ${playoff!=null?`The current playoff outlook sits around ${one(playoff)}%, useful context without pretending September has become a verdict.`:`The standings are young enough that ${team} still gets to define what this result means.`}`],
     [`The table now lists ${team} at ${record(t)}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}. ${playoff!=null?`A ${one(playoff)}% playoff outlook gives the result an expectation level, not a coronation.`:'One result is too small for destiny and large enough for a columnist.'}`],
-    [`PRINT THE RECORD: ${team} is ${record(t)}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}. ${playoff!=null?`The playoff meter reads ${one(playoff)}%, which is enough to fuel exactly the wrong amount of confidence in the group chat.`:`The rest of the season remains wonderfully available for overreaction.`}`],
-    [`The formal record now has ${team} at ${record(t)}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}. ${playoff!=null?`The current playoff estimate is ${one(playoff)}%, a useful expectation to keep beside the evidence rather than on top of it.`:`The sample is still small; the next exhibit will carry more weight.`}`]
+    [`PRINT THE RECORD: ${record(t)} for ${team}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}. ${playoff!=null?`The playoff meter reads ${one(playoff)}%, which is enough to fuel exactly the wrong amount of confidence in the group chat.`:'The rest of the season remains wonderfully available for overreaction.'}`],
+    [`The formal record now has ${team} at ${record(t)}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}. ${playoff!=null?`The current playoff estimate is ${one(playoff)}%, a useful expectation to keep beside the evidence rather than on top of it.`:'The sample is still small; the next exhibit will carry more weight.'}`]
   ]);
 }
 
@@ -1450,7 +1450,7 @@ function managementStoryV28(t,facts,r){
     const counter=outgoing&&valid(outgoing.points)?`${outgoing.name} produced ${one(outgoing.points)} after leaving${outgoing.current_fantasy_team_name?' for '+outgoing.current_fantasy_team_name:''}, so the receipt remains inconveniently two-sided.`:'';
     ps.push(deskChoice(t,r,[
       [`${moveLead} ${impact} ${counter} For ${team}, the move now gets judged by the role it created rather than the dopamine of a transaction alert.`],
-      [`${moveLead} ${impact} ${counter} ${team} finally has actual football to place beside the receipt, which is much less decorative and much more useful.`],
+      [`${moveLead} ${impact} ${counter} There is finally actual football for ${team} to place beside the receipt, which is much less decorative and much more useful.`],
       [`${moveLead} ${impact} ${counter} For ${team}, transaction day was the trailer and Sunday was the first scene that counts.`],
       [`${moveLead} ${impact} ${counter} The timestamp proves ${manager} made the decision; the ${team} role begins telling us whether it was any good.`]
     ]));
@@ -1465,14 +1465,14 @@ function managementStoryV28(t,facts,r){
     ]));
   }
   if(!ps.length)ps.push(deskChoice(t,r,[
-    [`${team} has no transaction scandal or legal lineup miss large enough to steal this section. Sometimes ${manager}’s best contribution is giving the players no procedural excuse.`],
+    [`There is no transaction scandal or legal lineup miss large enough on the ${team} ledger to steal this section. Sometimes ${manager}’s best contribution is giving the players no procedural excuse.`],
     [`The ${team} front office managed the rare trick of leaving me without a tasteful grievance. ${manager} should enjoy the silence before next Sunday invents one.`],
     [`NO ${team.toUpperCase()} MANAGEMENT SIREN THIS WEEK. The roster has enough football to argue about without manufacturing a ${manager} crime.`],
     [`No material ${team} transaction or eligible lineup mistake clears the evidence threshold here. ${manager} gets to leave the result with the players.`]
   ]));
   if(ps.length<2)ps.push(deskChoice(t,r,[
     [`For ${manager}, the management standard is simple this week: remember what Sunday exposed and do not force ${team} to learn the same lesson twice.`],
-    [`${manager} gets one quiet management coda: ${team} has supplied enough evidence for a correction without requiring a palace coup.`],
+    [`${manager} gets one quiet management coda: the ${team} week supplied enough evidence for a correction without requiring a palace coup.`],
     [`${manager.toUpperCase()} GETS ONE NOTE IN THE MARGIN: keep the useful ${team} decision, fix the obvious one and do not make me recycle this headline.`],
     [`The ${team} paper trail gives ${manager} a follow-up assignment rather than a verdict; the next lineup will show whether the lesson stuck.`]
   ]));
@@ -1517,9 +1517,9 @@ function sentimentContextV28(t,r){
     playoff=valid(m?.playoff)?Number(m.playoff):null,won=Number(t.points)>Number(t.opponent_points),team=teamIdentityV28(t).mascot;
   const expectation=playoff==null?'no clean playoff estimate attached':playoff>=70?'a playoff expectation that has already become difficult to hide':playoff<20?'a playoff path narrow enough to make wasted weeks expensive':'a playoff case still sitting squarely in the argument';
   return deskChoice(t,r,[
-    [`The public mood has context behind the yelling: ${team} is ${rec}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}, with ${expectation}. ${titles?`${t.manager_name} has ${titles} championship${titles===1?'':'s'} on the résumé, which buys ${team} patience without purchasing immunity.`:''} ${won?`${team} can enjoy the result without pretending expectations disappeared.`:`For ${team}, next Sunday is already louder than it needed to be.`}`],
-    [`At ${rec}${Number.isFinite(rank)?' and No. '+rank+' of '+size:''}, ${team} has ${expectation}. ${titles?`${titles} championship${titles===1?'':'s'} make ${t.manager_name} fashionable enough to survive criticism; they do not make ${team} criticism impolite.`:''} ${won?`${team} gets permission to toast, not to engrave anything.`:`Every ${team} opinion gets to arrive overdressed after a loss.`}`],
-    [`PUBLIC MOOD: ${team} sits ${rec}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}. ${playoff!=null?'The current playoff outlook is '+one(playoff)+'%. ':''}${titles?`${t.manager_name} has ${titles} title${titles===1?'':'s'} worth of benefit-of-the-doubt coupons, and ${team} fans are already checking the expiration date. `:''}${won?`${team} gets one week of dangerous confidence.`:`The ${team} complaint desk is open early.`}`],
+    [`The public mood has context behind the yelling: the record for ${team} is ${rec}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}, with ${expectation}. ${titles?`${t.manager_name} has ${titles} championship${titles===1?'':'s'} on the résumé, which buys ${team} patience without purchasing immunity.`:''} ${won?`${team} can enjoy the result without pretending expectations disappeared.`:`For ${team}, next Sunday is already louder than it needed to be.`}`],
+    [`At ${rec}${Number.isFinite(rank)?' and No. '+rank+' of '+size:''}, the table gives ${team} ${expectation}. ${titles?`${titles} championship${titles===1?'':'s'} make ${t.manager_name} fashionable enough to survive criticism; they do not make ${team} criticism impolite.`:''} ${won?`${team} gets permission to toast, not to engrave anything.`:`Every ${team} opinion gets to arrive overdressed after a loss.`}`],
+    [`PUBLIC MOOD: ${rec} for ${team}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}. ${playoff!=null?'The current playoff outlook is '+one(playoff)+'%. ':''}${titles?`${t.manager_name} has ${titles} title${titles===1?'':'s'} worth of benefit-of-the-doubt coupons, and ${team} fans are already checking the expiration date. `:''}${won?`${team} gets one week of dangerous confidence.`:`The ${team} complaint desk is open early.`}`],
     [`The ${team} public record says ${rec}${Number.isFinite(rank)?', No. '+rank+' of '+size:''}; the current expectation is ${expectation}. ${titles?`${titles} championship${titles===1?'':'s'} count as ${t.manager_name}’s prior good conduct, not as a sealed record. `:''}${won?`${team} optimism survives cross-examination this week.`:`The ${team} loss gives suspicion fresh paperwork.`}`]
   ]);
 }
@@ -1542,7 +1542,7 @@ function outlookStoryV28(t,r){
   if(opp){
     ps.push(deskChoice(t,r,[
       [`Next comes ${opp}${rec?' at '+(Number(rec.wins)||0)+'-'+(Number(rec.losses)||0):''}${star?`, with ${star.name} arriving off a week in which ${star.name} ${clause||'led the opposing lineup'}; that work was worth ${one(star.points)} fantasy points`:''}. ${gap==null?'The forecast is incomplete, so the assignment has to be read through roles and availability.':Math.abs(gap)<6?'Only '+one(Math.abs(gap))+' projected points separate the teams; one ordinary mistake can own a game that close.':gap>0?'The forecast gives '+team+' the projected edge, which turns this into the kind of game good teams are expected to bank.':opp+' owns the projected edge, so '+team+' needs somebody to steal a piece of the afternoon.'}`],
-      [`${opp} is next on the guest list${rec?', carrying a '+(Number(rec.wins)||0)+'-'+(Number(rec.losses)||0)+' record':''}. ${star?`${star.name} arrives off ${one(star.points)} fantasy points after ${star.name} ${clause||'led the opposing lineup'}; one should not confuse advance warning with permission to panic. `:''}${gap==null?'The forecast has declined to accessorize the matchup with certainty.':Math.abs(gap)<6?'The projection is nearly even, which is terribly rude to anyone hoping for a relaxing Sunday.':gap>0?team+' gets the prettier side of the forecast and the obligation to use it.':team+' gets the underdog chair and an opportunity to make the forecast look tacky.'}`],
+      [`${opp} is next on the guest list${rec?', carrying a '+(Number(rec.wins)||0)+'-'+(Number(rec.losses)||0)+' record':''}. ${star?`${star.name} arrives off ${one(star.points)} fantasy points after ${star.name} ${clause||'led the opposing lineup'}; one should not confuse advance warning with permission to panic. `:''}${gap==null?'The forecast has declined to accessorize the matchup with certainty.':Math.abs(gap)<6?'The projection is nearly even, which is terribly rude to anyone hoping for a relaxing Sunday.':gap>0?'The prettier side of the forecast belongs to '+team+', along with the obligation to use it.':team+' gets the underdog chair and an opportunity to make the forecast look tacky.'}`],
       [`NEXT WEEK: ${opp}${rec?' ('+(Number(rec.wins)||0)+'-'+(Number(rec.losses)||0)+')':''}. ${star?`${star.name} is the first name on the warning label after ${one(star.points)} fantasy points; ${star.name} ${clause||'led the opposing lineup'}. `:''}${gap==null?'No clean projection gap yet; excellent, the chaos department remains funded.':Math.abs(gap)<6?'The teams are separated by just '+one(Math.abs(gap))+' projected points. Load the angry font and the cardiology waiver.':gap>0?'The forecast likes '+team+'. Fine. Put it on the scoreboard.':'The forecast likes '+opp+'. Even better — upsets make louder headlines.'}`],
       [`The next file is ${opp}${rec?', '+(Number(rec.wins)||0)+'-'+(Number(rec.losses)||0):''}. ${star?`${star.name} enters as the obvious person of interest after ${one(star.points)} fantasy points; ${star.name} ${clause||'led the opposing lineup'}. `:''}${gap==null?'No complete projection comparison has entered evidence.':Math.abs(gap)<6?'The projection gap is only '+one(Math.abs(gap))+' points, small enough that one lineup decision can become Exhibit A.':gap>0?'The paper forecast favors '+team+'; failure would create a very tidy management question.':opp+' is favored on paper, giving '+team+' a clean opportunity to contradict the file.'}`]
     ]));
@@ -1561,22 +1561,6 @@ function outlookStoryV28(t,r){
   if(absences.length)ps.push(`${naturalJoin(absences)}. For ${team}, that is not decorative depth-chart trivia; it changes which version of the lineup can actually show up next Sunday.`);
   ps.push(outlookStakesV28(t,r));
   return ps.filter(Boolean);
-}
-
-function contextualizeParagraphV28(t,value){
-  const text=String(value??''),id=teamIdentityV28(t),manager=String(t.manager_name||'').trim(),players=articlePlayers(t).flatMap(p=>{
-    const full=String(p?.name||'').trim(),first=full.split(/\s+/)[0];return [full,first].filter(Boolean);
-  }),entities=[id.full,id.city,id.mascot,String(t.opponent_name||''),String(t.next_opponent_name||''),manager,...players].filter(Boolean);
-  return splitSentencesSafeV28(text).map((sentence,index)=>{
-    if(sentence.trim().split(/\s+/).length<8)return sentence;
-    if(entities.some(e=>e&&sentence.toLowerCase().includes(e.toLowerCase())))return sentence;
-    const ref=(index%2===0?id.mascot:id.city)||id.full,lead=sentence.trim();
-    if(/^I\b/.test(lead))return `On the ${ref} beat, ${lead}`;
-    const common=/^(The|That|This|It|Everything|Losing|Winning|A|One|Every|Call|In|Around|For)\b/.test(lead);
-    const body=common?lead.charAt(0).toLowerCase()+lead.slice(1):lead;
-    const prefixes=[`For ${ref}, `,`In the ${ref} story, `,`Around ${ref}, `];
-    return prefixes[(Number(t.roster_id||0)+index)%prefixes.length]+body;
-  }).join(' ');
 }
 
 function headingV28(t,r,kind,base,angle){

@@ -582,7 +582,7 @@ function seasonContextStoryV26(t,r){
       :`${t.team_name} leaves Week ${week} at ${record(t)}${rankText}.${streakText}${form} The table is already less flattering. Kindly keep the commemorative silverware boxed.`],
     [won
       ?`${t.team_name.toUpperCase()} IS ${record(t)}${rankText}.${streakText}${form} Keep the parade route folded, but nobody has to apologize for enjoying the scoreboard.`
-      :`${t.team_name.toUpperCase()} IS ${record(t)}${rankText}.${streakText}${form} Put the parade route back in the drawer and circle next Sunday in angry ink.`],
+      :`${t.team_name.toUpperCase()} IS ${record(t)}${rankText}.${streakText}${form} ${t.team_name} can put the parade route back in the drawer and circle next Sunday in angry ink.`],
     [won
       ?`${t.team_name} is ${record(t)} through Week ${week}${rankText}.${streakText}${form} ${t.team_name}’s record is small; the consequences are not imaginary.`
       :`${t.team_name} is ${record(t)} through Week ${week}${rankText}.${streakText}${form} One loss is not a pattern. It is, however, already in the record.`]

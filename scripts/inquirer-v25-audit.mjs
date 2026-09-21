@@ -36,7 +36,9 @@ assert.ok(new Set(teams.filter(t=>body.includes(t.team_name)).map(t=>t.team_name
 
 const source=fs.readFileSync(new URL('../netlify/functions/inquirer-reporting-v25.mjs',import.meta.url),'utf8');
 for(const phrase of ['statistical lecture','arithmetic lesson','second source of points','absorb a quieter return','where sacks and forced fumbles can turn'])assert.ok(!source.includes(phrase),'Rejected arithmetic/explainer phrase survived: '+phrase);
-assert.ok(source.includes('chosen.length<5'),'Weekly Recap must be able to carry five selected matchups');
+assert.ok(source.includes('chosen.length>=5'),'Weekly Recap must cap editorial selection at five developed matchups');
+assert.ok(source.includes('topGame'),'Weekly Recap must explicitly reserve a story for the league high scorer');
+assert.ok(source.includes('weeklyStoryBlock'),'Weekly Recap matchup coverage must expose labeled story blocks');
 assert.ok(source.includes('implicationStory'),'Weekly Recap must attach divisional/playoff/future implications to selected games');
 assert.ok(source.includes('acquisitionCallback'),'Team columns must preserve ongoing trade-acquisition commentary');
 console.log(JSON.stringify({ok:true,version:26,breakout:true,editorial_selection:true,expanded_matchups:true,acquisition_memory:true}));

@@ -25,6 +25,7 @@ jobs:
           node scripts/inquirer-overview-quality-audit.mjs /tmp/week1-inquirer.json
           node scripts/pack-inquirer-preload.mjs /tmp/week1-inquirer.json /tmp/inquirer-week1-2026-preload.mjs
       - name: Upload generated V26 edition
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: inquirer-v26-week1

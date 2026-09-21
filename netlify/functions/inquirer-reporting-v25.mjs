@@ -1354,7 +1354,7 @@ function fourthWallV28(t,r,angle){
     [
       `For the record, I tried to leave myself out of the ${mascot} story. Then the story started leaving fingerprints on my notebook.`,
       `I am aware investigators are not supposed to root for cleaner evidence. Covering ${mascot} has also taught me reporters are supposed to sleep.`,
-      `Call it a fourth-wall breach if you like. I call it disclosure: ${mascot} is making the file personal.`
+      `Call it a fourth-wall breach if you like. I call it disclosure: covering ${mascot} is making the file personal.`
     ]
   ]);
 }
@@ -1518,9 +1518,9 @@ function sentimentContextV28(t,r){
   const expectation=playoff==null?'no clean playoff estimate attached':playoff>=70?'a playoff expectation that has already become difficult to hide':playoff<20?'a playoff path narrow enough to make wasted weeks expensive':'a playoff case still sitting squarely in the argument',
     rankText=Number.isFinite(rank)?`rank ${rank} in a ${size}-team league`:'an unsettled place in the table';
   return deskChoice(t,r,[
-    [`The public mood has context behind the yelling: ${team} carries a ${rec} record at ${rankText}, with ${expectation}. ${titles?`${t.manager_name} has ${titles} championship${titles===1?'':'s'} on the résumé, which buys patience without purchasing immunity.`:''} ${won?`The result gives ${team} something to enjoy without erasing the expectation.`:`For ${team}, next Sunday is already louder than it needed to be.`}`],
+    [`The public mood has context behind the yelling: the record for ${team} is ${rec}, ${rankText}, with ${expectation}. ${titles?`${t.manager_name} has ${titles} championship${titles===1?'':'s'} on the résumé, which buys patience without purchasing immunity.`:''} ${won?`The result gives ${team} something to enjoy without erasing the expectation.`:`For ${team}, next Sunday is already louder than it needed to be.`}`],
     [`The table shows ${rec} for ${team}, ${rankText}, and ${expectation}. ${titles?`${titles} championship${titles===1?'':'s'} make ${t.manager_name} fashionable enough to survive criticism; they do not make criticism impolite.`:''} ${won?`Permission to toast belongs to ${team}; engraving remains premature.`:`Every opinion around ${team} gets to arrive overdressed after a loss.`}`],
-    [`PUBLIC MOOD: ${team} carries a ${rec} record at ${rankText}. ${playoff!=null?'The current playoff outlook is '+one(playoff)+'%. ':''}${titles?`${t.manager_name} has ${titles} title${titles===1?'':'s'} worth of benefit-of-the-doubt coupons, and supporters are already checking the expiration date. `:''}${won?`One week of dangerous confidence belongs to ${team}.`:`The ${team} complaint desk is open early.`}`],
+    [`PUBLIC MOOD: ${rec} is the record for ${team}, ${rankText}. ${playoff!=null?'The current playoff outlook is '+one(playoff)+'%. ':''}${titles?`${t.manager_name} has ${titles} title${titles===1?'':'s'} worth of benefit-of-the-doubt coupons, and supporters are already checking the expiration date. `:''}${won?`One week of dangerous confidence belongs to ${team}.`:`The ${team} complaint desk is open early.`}`],
     [`The public record for ${team} reads ${rec}, ${rankText}; the current expectation is ${expectation}. ${titles?`${titles} championship${titles===1?'':'s'} count as ${t.manager_name}’s prior good conduct, not as a sealed record. `:''}${won?`Optimism around ${team} survives cross-examination this week.`:`The loss gives the ${team} file fresh paperwork.`}`]
   ]);
 }
@@ -1529,7 +1529,7 @@ function outlookStakesV28(t,r){
   const team=teamIdentityV28(t).mascot,m=t.mida_outlook,playoff=valid(m?.playoff)?Number(m.playoff):null,title=valid(m?.title)?Number(m.title):null,next=t.next_opponent_name||'the next opponent',
     gap=valid(t.next_projected)&&valid(t.next_opponent_projected)?Number(t.next_projected)-Number(t.next_opponent_projected):null;
   return deskChoice(t,r,[
-    [`The larger ${team} assignment is simple: ${playoff!=null?'a '+one(playoff)+'% playoff outlook':'an unsettled playoff path'} means ${next} is another chance to bank a result before the schedule starts charging interest. ${title!=null&&title>=5?`A ${one(title)}% title outlook raises the standard without changing the weekly job.`:''}`],
+    [`The larger ${team} assignment is simple: ${playoff!=null?'a '+one(playoff)+'% playoff outlook':'an unsettled playoff path'} means the game with ${next} is another chance to bank a result before the schedule starts charging interest. ${title!=null&&title>=5?`A ${one(title)}% title outlook raises the standard without changing the weekly job.`:''}`],
     [`For ${team}, ${playoff!=null?one(playoff)+'% playoff odds':'the still-unsettled playoff picture'} turn ${next} into something more vulgar than a talking point: a game that must actually be played. ${gap!=null?`The ${one(Math.abs(gap))}-point projection gap is merely the dress code; Sunday still writes the review.`:''}`],
     [`THE ROAD-AHEAD HEADLINE FOR ${team.toUpperCase()}: ${next}. ${playoff!=null?'Playoff outlook '+one(playoff)+'%. ':''}${gap!=null?`Projection gap ${one(Math.abs(gap))}. `:''}Everything else is pregame content until the lineup earns the next result.`],
     [`The ${team} file carries ${playoff!=null?'a '+one(playoff)+'% playoff estimate':'an unsettled playoff estimate'} into ${next}. ${title!=null&&title>=5?`A ${one(title)}% title chance is ambition, not exoneration. `:''}The next result gets admitted before any larger conclusion does.`]

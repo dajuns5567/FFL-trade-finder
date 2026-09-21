@@ -319,10 +319,10 @@ function management(t,facts,reporter){
     const addStar=m.add.filter(p=>valid(p.points)).sort((a,b)=>b.points-a.points)[0],dropStar=m.drop.filter(p=>valid(p.points)).sort((a,b)=>b.points-a.points)[0];
     const dropDestination=dropStar?.current_fantasy_team_name&&String(dropStar.current_fantasy_roster_id)!==String(t.roster_id)?` for ${dropStar.current_fantasy_team_name}`:` after leaving ${t.team_name}`;
     if(addStar&&strongTransactionPerformance(addStar))bits.push(deskChoice(moveTeam,reporter,[
-      [`${addStar.name} answered immediately with a genuinely strong first-week performance, useful football support for the move.`,`${addStar.name} gave the transaction an immediate football reason to matter with a strong debut.`],
-      [`${addStar.name} introduced himself with a strong first return. Tasteful, even.`,`${addStar.name} gave the move the sort of debut that makes a transaction look well dressed.`],
+      [`${addStar.name} was excellent immediately after the move.`,`${addStar.name} gave ${t.team_name} exactly the kind of debut it wanted.`],
+      [`${addStar.name} introduced himself with a strong debut. Tasteful, even.`,`${addStar.name} gave the move the sort of debut that makes a transaction look well dressed.`],
       [`${addStar.name} PAID OUT IMMEDIATELY with a genuinely strong debut.`,`${addStar.name} gave management exactly the kind of instant headline it wanted.`],
-      [`${addStar.name} produced a strong performance immediately after the move. ${t.manager_name} got the first useful return the move could have offered.`,`The initial return from ${addStar.name} was strong enough to make the move look useful immediately.`]
+      [`${addStar.name} produced a strong performance immediately after the move. ${t.manager_name} got an immediate payoff on Sunday.`,`${addStar.name} was strong enough in his debut to make the move look good immediately.`]
     ]));
     else if(dropStar&&strongTransactionPerformance(dropStar))bits.push(deskChoice(moveTeam,reporter,[
       [`${dropStar.name} answered the departure with ${one(dropStar.points)} points${dropDestination}, enough to keep the decision in next week’s notebook.`,`${dropStar.name} produced ${one(dropStar.points)} points${dropDestination}, so this exit gets a follow-up.`],

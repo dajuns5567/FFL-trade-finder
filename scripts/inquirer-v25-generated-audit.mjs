@@ -95,7 +95,7 @@ for(const [label,re] of [
   ['St. player name split by contextual prose',/\bSt\.\s+(?:For|Around|In the)\b/i],
   ['standings No. split by contextual prose',/\bNo\.\s+(?:For|Around|In the)\b/i],
   ['mangled public-mood ranking',/PUBLIC MOOD:[^.]*\bNo\.\s*(?:The|$)/i],
-  ['plural/unknown team name used as “is another chance” subject',/\b[A-Z][A-Za-z0-9'’.-]*(?:\s+[A-Z][A-Za-z0-9'’.-]*)+\s+is another chance to bank a result\b/i],
+  ['plural/unknown team name used as “is another chance” subject',/(?:^|[.!?]\s+)[A-Z][A-Za-z0-9'’.-]*(?:\s+[A-Z][A-Za-z0-9'’.-]*)+\s+is another chance to bank a result\b/im],
   ['team alias used as singular “is making the file personal” subject',/disclosure:\s+(?!covering\b)[^.]*\sis making the file personal\b/i]
 ]) assert.doesNotMatch(teamCopy,re,'Generated team prose has '+label);
 

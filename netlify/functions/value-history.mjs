@@ -88,6 +88,8 @@ const V495_BAD_TIMES=new Set(['2026-09-19T21:47:21.051Z']);
 const V496_CLEANUP_KEY='maintenance/v496-reset-value-history-baseline-20260919-180138-et.json';
 const V498_CLEANUP_KEY='maintenance/v498-remove-20260919-190948-et-invalid-scheduled.json';
 const V498_BAD_TIMES=new Set(['2026-09-19T23:09:48.738Z']);
+const V499_CLEANUP_KEY='maintenance/v499-remove-user-requested-20260919-20-points.json';
+const V499_BAD_TIMES=new Set(['2026-09-19T23:38:30.077Z','2026-09-20T06:20:50.829Z','2026-09-20T06:23:39.657Z','2026-09-20T12:25:37.233Z','2026-09-20T16:31:11.607Z','2026-09-20T19:29:04.241Z','2026-09-20T22:29:01.016Z']);
 const V496_BASELINE_T='2026-09-19T22:01:38.323Z';
 const V496_BASELINE_MS=Date.parse(V496_BASELINE_T);
 const V492_BAD_FROM_MS=Date.parse('2026-09-15T06:07:00.000Z');
@@ -112,7 +114,8 @@ const isV494BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinit
 const isV495BadTime=t=>V495_BAD_TIMES.has(String(t||''));
 const isV496PreBaseline=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms<V496_BASELINE_MS};
 const isV498BadTime=t=>V498_BAD_TIMES.has(String(t||''));
-const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t)||isV494BadTime(t)||isV495BadTime(t)||isV498BadTime(t)||isV496PreBaseline(t);
+const isV499BadTime=t=>V499_BAD_TIMES.has(String(t||''));
+const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t)||isV494BadTime(t)||isV495BadTime(t)||isV498BadTime(t)||isV499BadTime(t)||isV496PreBaseline(t);
 
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
@@ -187,7 +190,7 @@ async function readSnapshotsBounded(s,items,batchSize=25){
   for(let i=0;i<items.length;i+=batchSize){
     const batch=items.slice(i,i+batchSize);
     const rows=await Promise.all(batch.map(async item=>{try{return await s.get(item.key,{type:'json'})}catch{return null}}));
-    for(const snap of rows)if(snap?.t&&Array.isArray(snap?.rows))snaps.push(snap);
+    for(const snap of rows)if(snap?.t&&Array.isArray(snap?.rows)&&!isKnownBadHistoryTime(snap.t))snaps.push(snap);
   }
   snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   return snaps;
@@ -387,6 +390,19 @@ async function scrubV498InvalidScheduledSnapshot(s){
   else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
   const result={done:true,removed:bad.length,removed_times:bad.map(x=>x.t),reason:'invalid scheduled snapshot used stale valuation logic',completedAt:new Date().toISOString()};
   await retry(()=>s.setJSON(V498_CLEANUP_KEY,result),120);return result;
+}
+async function scrubV499UserRequestedSnapshots(s){
+  const marker=await safeGet(s,V499_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV499BadTime(item?.t)),keep=items.filter(item=>!isV499BadTime(item?.t));
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v499-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v499-history-reindex',e)}
+  const last=keep[keep.length-1]||null;
+  if(last){
+    const snap=await safeGet(s,last.key);
+    if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)
+  }else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,removed:bad.length,removed_times:bad.map(x=>x.t),reason:'user-requested Value History point deletion',completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V499_CLEANUP_KEY,result),120);return result;
 }
 async function scrubV496BaselineReset(s){
   const marker=await safeGet(s,V496_CLEANUP_KEY);if(marker?.done)return marker;
@@ -835,6 +851,8 @@ export default async (req)=>{
       try{await scrubV494RequestedInterval(s)}catch(e){console.warn('v494-history-scrub',e)}
       try{await scrubV495UnstableScheduledSnapshot(s)}catch(e){console.warn('v495-history-scrub',e)}
       try{await scrubV496BaselineReset(s)}catch(e){console.warn('v496-history-scrub',e)}
+      try{await scrubV498InvalidScheduledSnapshot(s)}catch(e){console.warn('v498-history-scrub',e)}
+      try{await scrubV499UserRequestedSnapshots(s)}catch(e){console.warn('v499-history-scrub',e)}
     }
     if(req.method==='GET'){
       if(url.searchParams.get('archive_export')==='1'){

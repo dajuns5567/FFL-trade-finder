@@ -1867,7 +1867,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
   ][v];
   ps.push(`${keyedChoice(`${t.roster_id}:top:${r?.id}`,openerBanks)} ${topStatusText}`.replace(/\s+/g,' ').trim());
 
-  const other=supports.filter(p=>String(p.id)!==String(top.id)).slice(0,2);
+  const other=[f.second,f.third,...supports].filter((p,i,a)=>p&&String(p.id)!==String(top.id)&&a.findIndex(x=>x&&String(x.id)===String(p.id))===i).slice(0,2);
   if(other.length){
     const notes=other.map(p=>{
       const c=statClause(p),tr=f.trajectories.find(x=>String(x.p.id)===String(p.id))?.tr,status=tr&&tr.kind!=='star'?classificationSentenceV29(p,tr,r):null;

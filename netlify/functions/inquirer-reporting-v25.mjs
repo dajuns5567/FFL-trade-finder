@@ -2121,8 +2121,20 @@ function outlookStoryV29(t,r,f=articleFrameV29(t,r)){
   return [nextOpponentLeadV29(t,r,f),thread||bridge,...(schedule.length?schedule:[broader])].filter(Boolean).slice(0,4);
 }
 
-function dedupeArticleSectionsV29(sections){
-  const seen=new Set();
+function dedupeArticleSectionsV29(sections,t){
+  const seen=new Set(),seenStatFacts=new Set(),players=articlePlayers(t||{}),firstCounts=new Map();
+  for(const p of players){const first=String(p?.name||'').trim().split(/\s+/)[0];if(first)firstCounts.set(first,(firstCounts.get(first)||0)+1)}
+  const canonicalizePlayerNames=sentence=>{
+    let x=String(sentence||'');
+    players.forEach((p,index)=>{
+      const full=String(p?.name||'').trim();if(!full)return;
+      const first=full.split(/\s+/)[0],token=`[PLAYER:${String(p?.id||index)}]`;
+      x=x.replace(new RegExp(escapeRe(full),'gi'),token);
+      if(firstCounts.get(first)===1)x=x.replace(new RegExp('\\b'+escapeRe(first)+'\\b','gi'),token);
+    });
+    return x;
+  };
+  const statHeavy=sentence=>/\b(?:yards?|targets?|carries|touchdowns?|passes?|completed|caught|ran|tackles?|solo|assists?|sacks?|TFL|QB hits?|interceptions?|receptions?)\b/i.test(sentence)&&/\b\d+(?:\.\d+)?\b/.test(sentence);
   return (sections||[]).map(sec=>{
     const paragraphs=(sec.paragraphs||[]).map(p=>{
       if(String(p||'').trim().toLowerCase()==='n/a')return'n/a';
@@ -2131,6 +2143,11 @@ function dedupeArticleSectionsV29(sections){
         const key=sentence.toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/\s+/g,' ').trim();
         if(key.length>55&&seen.has(key))continue;
         if(key.length>55)seen.add(key);
+        if(statHeavy(sentence)){
+          const fact=canonicalizePlayerNames(sentence).toLowerCase().replace(/\s+/g,' ').trim();
+          if(seenStatFacts.has(fact))continue;
+          seenStatFacts.add(fact);
+        }
         keep.push(sentence);
       }
       return keep.join(' ');
@@ -2329,7 +2346,7 @@ export function humanSectionsV25(args){
     return {...f,...c,heading:headingV28(t,args.reporter,c.kind,c.heading,frame.angle),paragraphs:paragraphs.length?paragraphs:['n/a']};
   });
   const state={count:0},aliased=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>teamAliasPassV28(t,p,state))}));
-  return dedupeArticleSectionsV29(dedupeArticleSections(aliased));
+  return dedupeArticleSectionsV29(dedupeArticleSections(aliased),t);
 }
 
 function uniqueGames(teams){

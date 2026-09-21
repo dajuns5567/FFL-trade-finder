@@ -59,7 +59,7 @@ for(const t of d.teams||[]){
   assert.ok((players?.paragraphs||[]).length>=3,'Player sections must add commentary beyond the stat line');
   if((management?.paragraphs||[])[0]!=='n/a')assert.ok((management?.paragraphs||[]).length>=2,'Meaningful management sections must include reporter follow-through');
   if((outlook?.paragraphs||[])[0]!=='n/a')assert.ok((outlook?.paragraphs||[]).length>=3,'Next-week sections must develop the matchup and road ahead');
-  const top=(t.starter_details||[])[0],playerCopy=(players?.paragraphs||[]).join(' ');
+  const top=(t.starter_details||[]).filter(p=>Number.isFinite(Number(p?.points))).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],playerCopy=(players?.paragraphs||[]).join(' ');
   if(top?.real_stat_line){
     assert.ok(playerCopy.includes(String(top.name||'')),'Player section must discuss the leading player by name for '+t.team_name);
     assert.match(playerCopy,/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|sacks?|snaps?|interceptions?)\b/i,'Player section must translate the leading player real-life stat line into football prose for '+t.team_name);

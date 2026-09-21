@@ -85,6 +85,152 @@ function scopedFootballRead(t,p,angle='matchup'){
   return prefix+compact+'.';
 }
 
+function teamOpportunity(p){
+  const s=p?.real_stats||{},position=String(p?.position||'').toUpperCase(),count=(n,oneWord,manyWord=oneWord+'s')=>Number(n)===1?oneWord:manyWord;
+  if(position==='RB'){
+    const carries=Number(s.rush_att),targets=Number(s.rec_tgt??s.targets),parts=[];
+    if(Number.isFinite(carries))parts.push(`${carries} ${count(carries,'carry','carries')}`);
+    if(Number.isFinite(targets))parts.push(`${targets} ${count(targets,'target')}`);
+    if(parts.length)return {strong:(carries||0)>=12||(targets||0)>=5,text:parts.join(' and ')};
+  }
+  if(position==='WR'||position==='TE'){
+    const targets=Number(s.rec_tgt??s.targets);
+    if(Number.isFinite(targets))return {strong:targets>=6,text:`${targets} ${count(targets,'target')}`};
+  }
+  if(position==='QB'){
+    const att=Number(s.pass_att),rush=Number(s.rush_att),parts=[];
+    if(Number.isFinite(att))parts.push(`${att} pass ${count(att,'attempt')}`);
+    if(Number.isFinite(rush))parts.push(`${rush} ${count(rush,'carry','carries')}`);
+    if(parts.length)return {strong:(att||0)>=25||(rush||0)>=6,text:parts.join(' and ')};
+  }
+  const snaps=Number(s.def_snp??s.def_snaps??s.defensive_snaps);
+  if(Number.isFinite(snaps))return {strong:snaps>=30,text:`${snaps} defensive snaps`};
+  return null;
+}
+
+function teamStatLine(p){
+  const s=p?.real_stats||{},pos=String(p?.position||'').toUpperCase(),n=p?.name||'The player',count=(x,oneWord,manyWord=oneWord+'s')=>Number(x)===1?oneWord:manyWord;
+  if(pos==='QB'){
+    const cmp=Number(s.pass_cmp),att=Number(s.pass_att),yd=Number(s.pass_yd),td=Number(s.pass_td),ints=Number(s.pass_int),rush=Number(s.rush_att),rushYd=Number(s.rush_yd),rushTd=Number(s.rush_td);
+    const parts=[];
+    if(Number.isFinite(cmp)&&Number.isFinite(att)){
+      let pass=`${n} completed ${cmp} of ${att} passes`;
+      if(Number.isFinite(yd))pass+=` for ${yd} yards`;
+      if(Number.isFinite(td)&&td>0)pass+=`, throwing ${td} ${count(td,'touchdown')}`;
+      if(Number.isFinite(ints)&&ints>0)pass+=` with ${ints} ${count(ints,'interception')}`;
+      parts.push(pass+'.');
+    }
+    if(Number.isFinite(rush)&&rush>0)parts.push(`${n} added ${rush} ${count(rush,'carry','carries')} for ${Number.isFinite(rushYd)?rushYd:0} rushing yards${Number.isFinite(rushTd)&&rushTd>0?', including '+rushTd+' rushing '+count(rushTd,'touchdown'):''}.`);
+    if(parts.length)return parts.join(' ');
+  }
+  if(pos==='RB'){
+    const carries=Number(s.rush_att),rushYd=Number(s.rush_yd),rushTd=Number(s.rush_td),targets=Number(s.rec_tgt??s.targets),rec=Number(s.rec),recYd=Number(s.rec_yd),recTd=Number(s.rec_td),parts=[];
+    if(Number.isFinite(carries))parts.push(`${n} carried ${carries} ${count(carries,'time')} for ${Number.isFinite(rushYd)?rushYd:0} yards${Number.isFinite(rushTd)&&rushTd>0?', scoring '+rushTd+' rushing '+count(rushTd,'touchdown'):''}.`);
+    if(Number.isFinite(targets))parts.push(`${n} caught ${Number.isFinite(rec)?rec:0} of ${targets} targets for ${Number.isFinite(recYd)?recYd:0} yards${Number.isFinite(recTd)&&recTd>0?', adding '+recTd+' receiving '+count(recTd,'touchdown'):''}.`);
+    if(parts.length)return parts.join(' ');
+  }
+  if(pos==='WR'||pos==='TE'){
+    const targets=Number(s.rec_tgt??s.targets),rec=Number(s.rec),yd=Number(s.rec_yd),td=Number(s.rec_td);
+    if(Number.isFinite(targets))return `${n} caught ${Number.isFinite(rec)?rec:0} of ${targets} targets for ${Number.isFinite(yd)?yd:0} yards${Number.isFinite(td)&&td>0?', scoring '+td+' '+count(td,'touchdown'):''}.`;
+  }
+  const solo=Number(s.tkl_solo),ast=Number(s.tkl_ast),sacks=Number(s.sack),tfl=Number(s.tkl_loss??s.tfl),qb=Number(s.qb_hit),pd=Number(s.pass_def),ints=Number(s.int),ff=Number(s.ff),snaps=Number(s.def_snp??s.def_snaps??s.defensive_snaps),bits=[];
+  if(Number.isFinite(solo))bits.push(`${solo} solo ${count(solo,'tackle')}`);
+  if(Number.isFinite(ast)&&ast>0)bits.push(`${ast} assisted ${count(ast,'tackle')}`);
+  if(Number.isFinite(sacks)&&sacks>0)bits.push(`${sacks} ${count(sacks,'sack')}`);
+  if(Number.isFinite(tfl)&&tfl>0)bits.push(`${tfl} ${count(tfl,'tackle for loss','tackles for loss')}`);
+  if(Number.isFinite(qb)&&qb>0)bits.push(`${qb} QB ${count(qb,'hit')}`);
+  if(Number.isFinite(pd)&&pd>0)bits.push(`${pd} ${count(pd,'pass breakup')}`);
+  if(Number.isFinite(ints)&&ints>0)bits.push(`${ints} ${count(ints,'interception')}`);
+  if(Number.isFinite(ff)&&ff>0)bits.push(`${ff} forced ${count(ff,'fumble')}`);
+  if(bits.length||Number.isFinite(snaps)){
+    const stat=bits.length?`${n} finished with ${bits.join(', ')}`:`${n} played`;
+    return stat+(Number.isFinite(snaps)?`${bits.length?' across':' '} ${snaps} defensive snaps.`:'.');
+  }
+  const line=String(p?.real_stat_line||'').replaceAll(' • ',', ');
+  return line?`${n} finished with ${line}.`:null;
+}
+
+function teamUsageComment(t,p,angle='star'){
+  const o=teamOpportunity(p);if(!o)return null;
+  const strong={
+    opponent:[
+      `${o.text} kept ${p.name} in the middle of the game. ${t.team_name} was dealing with volume, not a one-play cameo.`,
+      `${p.name} had ${o.text}, enough involvement that ${t.team_name} could not wait for the role to disappear.`,
+      `With ${o.text}, ${p.name} gave ${t.opponent_name||'the opponent'} a repeatable way to keep pressure on ${t.team_name}.`
+    ],
+    'next-opponent':[
+      `${p.name} is coming off ${o.text}. ${t.team_name} should expect him in the center of the next game plan.`,
+      `${o.text} put ${p.name} in the middle of last week’s offense. ${t.team_name} has to prepare for that job, not just the fantasy total.`,
+      `${p.name} just handled ${o.text}; that is the part of next week’s matchup ${t.team_name} cannot treat as a fluke.`
+    ],
+    'supporting-cast':[
+      `${o.text} gave ${t.team_name} another place to get real volume behind the headliner.`,
+      `With ${o.text}, ${p.name} was part of the weekly plan rather than background scoring.`,
+      `${p.name}’s ${o.text} gave ${t.team_name} another role it can reasonably ask to show up again.`
+    ],
+    'hot-seat':[
+      `${p.name} still handled ${o.text}; ${t.team_name} can demand better production before worrying that the role itself disappeared.`,
+      `${p.name} still had ${o.text}. The bad score belongs to the performance, not to a disappearing job.`,
+      `${o.text} kept the job intact even on a bad fantasy day. ${t.team_name} needs a rebound, not a new position on the depth chart.`
+    ],
+    'cool-throne':[
+      `${o.text} made the big week feel earned. ${t.team_name} can bank the role even if it cannot bank the same score.`,
+      `${p.name} reached the ceiling with ${o.text} underneath it, the kind of volume that gives a big fantasy day some staying power.`,
+      `The score was loud, but ${o.text} is what makes the afternoon useful to ${t.team_name} after the celebration ends.`
+    ],
+    star:[
+      `${o.text} made the production feel earned. ${t.team_name} can trust the role more than the exact point total.`,
+      `${p.name} had ${o.text}; that is enough work for ${t.team_name} to expect another meaningful chance next week.`,
+      `The bankable part was ${o.text}. ${p.name} did not need one isolated play to create the whole afternoon.`
+    ]
+  };
+  const light={
+    opponent:[
+      `${p.name} did the damage on ${o.text}. ${t.team_name} can regret the points without pretending the role was overwhelming.`,
+      `${o.text} was enough for ${p.name} this time, but ${t.team_name} at least kept the workload from becoming a weekly-sized problem.`,
+      `${t.team_name} let ${p.name} hurt it without giving him a huge role. That is fixable, even if the points still count.`
+    ],
+    'next-opponent':[
+      `${p.name} did his damage on ${o.text}. ${t.team_name} gets a chance to keep that role from growing.`,
+      `${o.text} leaves ${p.name} with a thinner path into next week. ${t.team_name} should make him prove the efficiency again.`,
+      `${p.name} is arriving off ${o.text}, useful production without an overwhelming workload. ${t.team_name} can attack that distinction.`
+    ],
+    'supporting-cast':[
+      `${p.name} produced on ${o.text}. Useful work, but not yet the kind of role ${t.team_name} can pencil in every Sunday.`,
+      `${o.text} made ${p.name} more efficient than central. ${t.team_name} can take the points without assuming the same path repeats.`,
+      `${p.name} helped on ${o.text}, a narrower job than the final score might suggest.`
+    ],
+    'hot-seat':[
+      `${o.text} is the concern. ${t.team_name} needs the job back before the fantasy total can recover.`,
+      `${p.name} only had ${o.text}; the quiet fantasy day followed a quiet role.`,
+      `The smaller problem is the point total. ${o.text} is what ${t.team_name} has to fix first.`
+    ],
+    'cool-throne':[
+      `The big score came on ${o.text}. ${t.team_name} can enjoy it without assuming that workload repeats.`,
+      `${p.name} made ${o.text} pay off. The ceiling was real; the weekly volume still needs another look.`,
+      `${o.text} was enough for a headline this time. ${t.team_name} should enjoy the result and ask for more work next week.`
+    ],
+    star:[
+      `${p.name} got there on ${o.text}. ${t.team_name} can enjoy the production without treating the role as settled.`,
+      `${o.text} leaves more volatility in the story. ${t.team_name} needs another Sunday before calling this a new level.`,
+      `${p.name} made a smaller workload count. The next week matters because ${t.team_name} cannot assume efficiency will do the same work twice.`
+    ]
+  };
+  const bank=(o.strong?strong:light)[angle]||(o.strong?strong.star:light.star);
+  return keyedChoice(`${p.id||p.name}:${angle}:${t.roster_id}`,bank);
+}
+
+function teamFootballRead(t,p,r,angle='star'){
+  const line=teamStatLine(p),comment=teamUsageComment(t,p,angle);
+  return [line,comment].filter(Boolean).join(' ')||null;
+}
+
+function teamTrajectory(p){
+  const tr=playerTrajectory(p);if(!tr)return null;
+  return {...tr,text:String(tr.text||'').replace(/\b1 targets\b/g,'1 target').replace(/\b1 pass attempts\b/g,'1 pass attempt')};
+}
+
+
 function playerTrajectory(p){
   const prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,current=Number(p?.season_avg),games=Number(p?.season_games)||0,age=Number(p?.age),opp=opportunity(p),pos=String(p?.position||'').toUpperCase(),key=p?.id||p?.name;
   if(!Number.isFinite(prior)||prior<=0||priorGames<6||!Number.isFinite(current)||games<1)return null;

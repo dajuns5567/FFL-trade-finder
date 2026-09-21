@@ -1,4 +1,5 @@
 import {humanSectionsV23,selectImportantMoves,divisionCopy} from './inquirer-editorial-v23.mjs';
+// Team prose is calibrated against the approved Weekly Recap style control.
 
 const valid=x=>x!==null&&x!==undefined&&x!==''&&Number.isFinite(Number(x));
 const one=x=>Number(x).toFixed(1);

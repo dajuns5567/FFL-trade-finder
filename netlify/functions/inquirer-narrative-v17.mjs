@@ -315,8 +315,33 @@ function buildSections(t,w,r,facts,sentiment){
   ];
 }
 
+function restoreSectionPlayerNamesV30(team,sections){
+  const players=[...new Map((team?.starter_details||[]).map(p=>[String(p?.name||'').trim(),p])).values()].filter(p=>p?.name),
+    lastCounts=new Map();
+  for(const p of players){
+    const last=String(p.name).trim().split(/\s+/).at(-1);
+    if(last)lastCounts.set(last,(lastCounts.get(last)||0)+1);
+  }
+  return (sections||[]).map(section=>{
+    const seen=new Set(),paragraphs=(section.paragraphs||[]).map(value=>{
+      let text=String(value??'');
+      for(const p of players){
+        const full=String(p.name).trim();if(!full||seen.has(full))continue;
+        const escape=x=>String(x).replace(/[.*+?^$\{\}()|[\]\\]/g,m=>'\\\\'+m);
+        if(new RegExp(escape(full),'i').test(text)){seen.add(full);continue}
+        const last=full.split(/\s+/).at(-1);
+        if(!last||lastCounts.get(last)!==1)continue;
+        const re=new RegExp('\\b'+escape(last)+'\\b');
+        if(re.test(text)){text=text.replace(re,full);seen.add(full)}
+      }
+      return text;
+    });
+    return {...section,paragraphs};
+  });
+}
+
 export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamClassification,aside}){
-  const sections=humanSectionsV25({team,week,reporter,facts,sentiment});
+  const sections=restoreSectionPlayerNamesV30(team,humanSectionsV25({team,week,reporter,facts,sentiment}));
   const paragraphs=sections.flatMap(s=>s.paragraphs||[]);
   return{
     schema_version:11,

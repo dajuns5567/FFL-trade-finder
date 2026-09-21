@@ -16,7 +16,7 @@ const deskChoice=(t,r,sets)=>choose(t,sets[voice(r)]||sets[0]);
 const keyedChoice=(key,items)=>{const s=String(key||''),h=[...s].reduce((n,ch)=>((n*31)+ch.charCodeAt(0))>>>0,7);return items[h%items.length]};
 const naturalJoin=xs=>{const a=(xs||[]).filter(Boolean);return a.length<2?(a[0]||''):a.length===2?a[0]+' and '+a[1]:a.slice(0,-1).join(', ')+', and '+a[a.length-1]};
 const defensivePlayer=p=>/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT)$/.test(String(p?.position||'').toUpperCase());
-const articlePlayers=t=>[...(t?.starter_details||[]),...(t?.opponent_roster?.starters||t?.opponent_roster?.players||[]),...(t?.next_opponent_roster?.starters||t?.next_opponent_roster?.players||[])].filter(p=>p?.name);
+const articlePlayers=t=>[...(t?.starter_details||[]),...(t?.opponent_roster?.starters||t?.opponent_roster?.players||[]),...(t?.next_opponent_roster?.starters||t?.next_opponent_roster?.players||[]),...Object.values(t?.transaction_player_facts||{})].filter(p=>p?.name);
 const escapeRe=value=>String(value??'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 function splitSentencesSafeV28(value){
   const protectedText=String(value??'')

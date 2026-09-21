@@ -10,7 +10,7 @@ const recap=recapSections.flatMap(s=>s?.paragraphs||[]).join(' ');
 const teamWords=(d.teams||[]).map(t=>words(articleText(t)));
 
 assert.equal(Number(d.inquirer_version),26,'Generated edition must be Inquirer V26');
-assert.equal(Number(d.editorial_revision),2,'Generated edition must carry recovered editorial revision 2');
+assert.equal(Number(d.editorial_revision),3,'Generated edition must carry contextual editorial revision 3');
 assert.equal((d.teams||[]).length,32,'Generated Week 1 edition must contain 32 team articles');
 assert.ok(recapSections.length>=4,'Weekly Recap must preserve a complete multi-desk edition');
 assert.ok(words(recap)>Math.max(...teamWords),'Editorial Weekly Recap should be deeper than the longest team column');
@@ -18,6 +18,12 @@ const mentioned=(d.teams||[]).filter(t=>String(t.team_name||'').trim()&&recap.in
 assert.ok(mentioned.length<(d.teams||[]).length,'Weekly Recap must select stories instead of mentioning every team by contract');
 const mattered=recapSections.find(s=>s?.heading==='What Actually Mattered This Week');
 assert.ok((mattered?.paragraphs||[]).length>=10,'What Actually Mattered This Week must develop at least five selected matchups with follow-up implications');
+const matterBlocks=(mattered?.blocks||[]).filter(x=>Array.isArray(x?.paragraphs)&&x.paragraphs.length);
+assert.ok(matterBlocks.length>=5,'What Actually Mattered This Week must expose labeled matchup/story blocks');
+assert.ok(matterBlocks.slice(0,5).every(x=>String(x.heading||'').trim()&&x.paragraphs.length>=2),'Each featured matchup must have a visible heading and developed analysis');
+const topScorer=(d.teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
+assert.ok(topScorer&&matterBlocks[0]?.heading?.includes(topScorer.team_name),'First Weekly Recap matchup block must feature the week’s top scoring team');
+assert.ok((matterBlocks[0]?.paragraphs||[]).join(' ').includes(topScorer.team_name),'Top scorer must receive actual Weekly Recap commentary, not merely a heading');
 assert.ok(((mattered?.paragraphs||[]).join(' ').match(/week’s cleanest upset/gi)||[]).length<=1,'Expanded recap must not call multiple games the week’s cleanest upset');
 const recapOpeners=(mattered?.paragraphs||[]).map(p=>String(p).trim().split(/\s+/).slice(0,7).join(' ').toLowerCase());
 const openerCounts=new Map();for(const x of recapOpeners)openerCounts.set(x,(openerCounts.get(x)||0)+1);
@@ -25,7 +31,7 @@ assert.ok(Math.max(0,...openerCounts.values())<=2,'Expanded matchup paragraphs m
 assert.ok(recapSections.some(s=>/Velvet Rope/i.test(String(s?.heading||''))),'Bartholomew’s Weekly Recap desk must retain his own identity instead of a generic analytics heading');
 
 const all=[recap,...(d.teams||[]).map(articleText)].join('\n').toLowerCase();
-for(const phrase of ['statistical lecture','arithmetic lesson','second source of points','absorb a quieter return','where sacks and forced fumbles can turn','awkward; deliciously so','the back page has not forgotten','the back page is keeping the receipt'])
+for(const phrase of ['statistical lecture','arithmetic lesson','second source of points','absorb a quieter return','where sacks and forced fumbles can turn','awkward; deliciously so','the back page has not forgotten','the back page is keeping the receipt','which tells us whether','the responsible read is simple','what i want to see next','this is where a weekly recap should','require no further explanation'])
   assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
 assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),'Generated Week 1 must carry a real prior-season player-history source');
 const historicalStarters=(d.teams||[]).flatMap(t=>t.starter_details||[]).filter(p=>Number(p.prior_season_games)>=6&&Number.isFinite(Number(p.prior_season_avg)));

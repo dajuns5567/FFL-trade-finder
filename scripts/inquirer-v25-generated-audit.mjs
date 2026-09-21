@@ -7,7 +7,7 @@ const words=s=>String(s||'').trim().split(/\s+/).filter(Boolean).length;
 const sentenceParts=s=>{
   const protectedText=String(s||'')
     .replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§'))
-    .replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms)\.(?=\s+[A-Z])/g,m=>m.replace('.','§'));
+    .replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace('.','§'));
   return protectedText.split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);
 };
 assert.equal(sentenceParts('On the other side, Amon-Ra St. Brown caught 10 passes.').length,1,'Sentence parser must preserve St. inside player names');
@@ -86,7 +86,30 @@ for(const t of d.teams||[]){
     assert.match(playerCopy,/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|sacks?|snaps?|interceptions?)\b/i,'Player section must contain real-football usage/stat commentary for '+t.team_name);
   }
 }
-for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=2,'Reporter '+rid+' must have more than one article structure across eight team stories');
+for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=4,'Reporter '+rid+' must generate at least four distinct article structures across eight team stories; got '+orders.size);
+
+const teamCopy=(d.teams||[]).map(t=>articleText(t)).join('\n');
+for(const [label,re] of [
+  ['stat clause joined with bad “by” grammar',/\bby\s+(?:carried|finished|completed|caught|ran)\b/i],
+  ['initialed player name split by contextual prose',/\b(?:C\.J\.|A\.J\.|D\.J\.|T\.J\.|P\.J\.)\s+(?:For|Around|In the)\b/i],
+  ['St. player name split by contextual prose',/\bSt\.\s+(?:For|Around|In the)\b/i],
+  ['standings No. split by contextual prose',/\bNo\.\s+(?:For|Around|In the)\b/i],
+  ['mangled public-mood ranking',/PUBLIC MOOD:[^.]*\bNo\.\s*(?:The|$)/i],
+  ['plural/unknown team name used as “is another chance” subject',/\b[A-Z][A-Za-z0-9'’.-]*(?:\s+[A-Z][A-Za-z0-9'’.-]*)+\s+is another chance to bank a result\b/i],
+  ['team alias used as singular “is making the file personal” subject',/disclosure:\s+(?!covering\b)[^.]*\sis making the file personal\b/i]
+]) assert.doesNotMatch(teamCopy,re,'Generated team prose has '+label);
+
+const escapeRe=s=>String(s||'').replace(/[.*+?^$\{\}()|[\]\\]/g,'\\for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=2,'Reporter '+rid+' must have more than one article structure across eight team stories');');
+let aliasArticles=0;
+for(const t of d.teams||[]){
+  const full=String(t.team_name||'').trim(),bits=full.split(/\s+/).filter(Boolean);if(bits.length<2)continue;
+  const city=bits.slice(0,-1).join(' '),mascot=bits.at(-1),withoutFull=articleText(t).replaceAll(full,' ');
+  if((city&&new RegExp('(?:^|\\W)'+escapeRe(city)+'(?:$|\\W)','i').test(withoutFull))||(mascot&&new RegExp('(?:^|\\W)'+escapeRe(mascot)+'(?:$|\\W)','i').test(withoutFull)))aliasArticles++;
+}
+assert.ok(aliasArticles>=24,'Most team articles must naturally use a Sleeper-derived city or mascot alias in addition to the full team name; got '+aliasArticles);
+
+const fourthWallHits=(teamCopy.match(/\b(?:sports journalist|journalism schools?|fourth-wall|beat-writer|press box|copy desk|editor|deadline|newsroom)\b/gi)||[]).length;
+assert.ok(fourthWallHits>=6,'Reporters should occasionally break the fourth wall across a full edition without making it every article; got '+fourthWallHits);
 const repeatedLong=new Map();
 for(const t of d.teams||[]){
   const body=articleText(t);

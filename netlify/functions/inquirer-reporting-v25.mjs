@@ -642,7 +642,7 @@ function teamScoreConstructionStory(t,r){
     else if(projDelta>0)expectation=' '+keyedChoice(ekey,[
       `${t.team_name} beat projection by ${one(projDelta)}, a meaningful overperformance that changed the shape of the matchup.`,
       `${t.team_name} finished ${one(projDelta)} above projection. ${t.team_name} bought itself room the pregame forecast never promised.`,
-      `The lineup cleared its projection by ${one(projDelta)}. ${won?'${t.team_name} used that cushion to turn a good Sunday into a win.':'${t.team_name} still could not turn that overperformance into a win.'}`
+      `The lineup cleared its projection by ${one(projDelta)}. ${won?`${t.team_name} used that cushion to turn a good Sunday into a win.`:`${t.team_name} still could not turn that overperformance into a win.`}`
     ]);
     else expectation=' '+keyedChoice(ekey,[
       `${t.team_name} left ${one(Math.abs(projDelta))} projected points on the table, and ${won?'the win kept the shortfall from becoming the story.':'the loss made that missing production impossible to ignore.'}`,
@@ -929,7 +929,7 @@ export function humanSectionsV25(args){
     let paragraphs;
     if(s.kind==='lede')paragraphs=naturalLede(t,args.reporter);
     else if(s.kind==='players')paragraphs=playerSection(t,args.reporter);
-    else if(s.kind==='management')paragraphs=mgmt;
+    else if(s.kind==='management')paragraphs=mgmt[0]==='n/a'?mgmt:[mgmt.filter(p=>p&&p!=='n/a').join(' ')];
     else if(s.kind==='value')paragraphs=valueSectionV26(t,args.reporter);
     else if(s.kind==='outlook')paragraphs=outlook(t,args.week,args.reporter);
     else if(s.kind==='sentiment')paragraphs=sentiment(t,args.reporter);
@@ -938,7 +938,9 @@ export function humanSectionsV25(args){
     else paragraphs=[...(s.paragraphs||[])];
     if(paragraphs.length&&paragraphs[0]!=='n/a'){
       if(s.kind==='players'){const traded=list(t).find(p=>p.acquisition);const callback=traded?acquisitionCallback(t,traded,args.reporter):null;if(callback)paragraphs.push(callback)}
-      paragraphs.push(...reporterExpansionV26(t,s.kind,args.reporter));
+      const expansion=reporterExpansionV26(t,s.kind,args.reporter);
+      if(s.kind==='management'&&expansion.length)paragraphs.push(expansion.join(' '));
+      else paragraphs.push(...expansion);
     }
     paragraphs=paragraphs.map(p=>specificityPass(t,s.kind,p));
     return {...s,paragraphs};

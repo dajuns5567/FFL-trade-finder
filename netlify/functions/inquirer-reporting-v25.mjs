@@ -161,7 +161,7 @@ function teamUsageComment(t,p,angle='star'){
       `With ${o.text}, ${p.name} gave ${t.opponent_name||'the opponent'} a repeatable way to keep pressure on ${t.team_name}.`,
       `${p.name} handled ${o.text}. ${t.team_name} spent the afternoon dealing with a real role, not a box-score accident.`,
       `${o.text} kept ${p.name} involved long enough to make the production hard for ${t.team_name} to dismiss as one big play.`,
-      `${t.team_name} saw ${p.name} get ${o.text}. That kind of involvement gave the opponent more than a single way to hurt the matchup.`
+      `${t.team_name} saw ${p.name} get ${o.text}. ${p.name}’s involvement gave ${t.opponent_name||'the opponent'} more than a single way to hurt ${t.team_name}.`
     ],
     'next-opponent':[
       `${p.name} is coming off ${o.text}. ${t.team_name} should expect him in the center of the next game plan.`,
@@ -190,7 +190,7 @@ function teamUsageComment(t,p,angle='star'){
       `${o.text} made the production feel earned. ${t.team_name} can trust the role more than the exact point total.`,
       `${p.name} had ${o.text}; that is enough work for ${t.team_name} to expect another meaningful chance next week.`,
       `${p.name} did not need one isolated play to build the afternoon; ${o.text} kept him involved from start to finish.`,
-      `The useful part for ${t.team_name} is the workload: ${o.text}. The final score can move around without erasing that job.`,
+      `The useful part for ${t.team_name} is the workload: ${o.text}. ${t.team_name} can live with the final score moving around if that job stays intact.`,
       `${o.text} gave ${p.name} a real foundation under the fantasy total. ${t.team_name} can ask the role to repeat even if the ceiling does not.`,
       `${p.name} was involved often enough — ${o.text} — that ${t.team_name} does not have to explain the week as one lucky play.`
     ]
@@ -614,16 +614,16 @@ function teamScoreConstructionStory(t,r){
     topNames=top3.map(p=>p.name).join(', '),pct=Math.round(share*100),key='score-shape:'+String(t.roster_id);
   let shape;
   if(share>=.7)shape=keyedChoice(key,[
-    `${topNames} accounted for about ${pct}% of ${t.team_name}’s scoring. That left the rest of the lineup very little room for an ordinary afternoon.`,
+    `${topNames} accounted for about ${pct}% of ${t.team_name}’s scoring. ${t.team_name} left the rest of the lineup very little room for an ordinary afternoon.`,
     `About ${pct}% of ${t.team_name}’s points came from ${topNames}. The stars did their part; the rest of the lineup had almost no margin to disappear.`,
-    `${t.team_name} leaned hard on ${topNames}, who combined for ${one(top3pts)} points — roughly ${pct}% of the team total. That is a lot of weight for three lineup spots to carry.`,
-    `The score was top-heavy: ${topNames} supplied roughly ${pct}% of ${t.team_name}’s production. A quieter day from any one of them would have changed the afternoon quickly.`
+    `${t.team_name} leaned hard on ${topNames}, who combined for ${one(top3pts)} points — roughly ${pct}% of the team total. ${t.team_name} asked three lineup spots to carry a lot of weight.`,
+    `The score was top-heavy: ${topNames} supplied roughly ${pct}% of ${t.team_name}’s production. ${t.team_name} would have felt a quieter day from any one of them very quickly.`
   ]);
   else if(share>=.58)shape=keyedChoice(key,[
-    `${topNames} supplied about ${pct}% of ${t.team_name}’s scoring. The stars carried most of the weight, but the supporting slots still had chances to change the result.`,
-    `${t.team_name} got roughly ${pct}% of its points from ${topNames}. That is star-driven without being a complete one-man rescue mission.`,
-    `${topNames} combined for ${one(top3pts)} points, about ${pct}% of the ${t.team_name} total. The core showed up; the rest of the roster still mattered.`,
-    `Most of ${t.team_name}’s scoring ran through ${topNames}, who produced about ${pct}% of the total. That is enough concentration to notice without calling the lineup fragile.`
+    `${topNames} supplied about ${pct}% of ${t.team_name}’s scoring. ${t.team_name}’s stars carried most of the weight, but the supporting slots still had chances to change the result.`,
+    `${t.team_name} got roughly ${pct}% of its points from ${topNames}. ${t.team_name} was star-driven without becoming a complete one-man rescue mission.`,
+    `${topNames} combined for ${one(top3pts)} points, about ${pct}% of the ${t.team_name} total. ${t.team_name}’s core showed up; the rest of the roster still mattered.`,
+    `Most of ${t.team_name}’s scoring ran through ${topNames}, who produced about ${pct}% of the total. ${t.team_name} showed enough concentration to notice without calling the lineup fragile.`
   ]);
   else shape=keyedChoice(key,[
     `${topNames} supplied about ${pct}% of ${t.team_name}’s scoring, enough balance that one ordinary star performance did not have to decide the entire week.`,
@@ -641,8 +641,8 @@ function teamScoreConstructionStory(t,r){
     ]);
     else if(projDelta>0)expectation=' '+keyedChoice(ekey,[
       `${t.team_name} beat projection by ${one(projDelta)}, a meaningful overperformance that changed the shape of the matchup.`,
-      `${t.team_name} finished ${one(projDelta)} above projection. That extra production bought the roster room the pregame forecast never promised.`,
-      `The lineup cleared its projection by ${one(projDelta)}. ${won?'That cushion helped turn a good Sunday into a win.':'Even that overperformance was not enough to rescue the result.'}`
+      `${t.team_name} finished ${one(projDelta)} above projection. ${t.team_name} bought itself room the pregame forecast never promised.`,
+      `The lineup cleared its projection by ${one(projDelta)}. ${won?'${t.team_name} used that cushion to turn a good Sunday into a win.':'${t.team_name} still could not turn that overperformance into a win.'}`
     ]);
     else expectation=' '+keyedChoice(ekey,[
       `${t.team_name} left ${one(Math.abs(projDelta))} projected points on the table, and ${won?'the win kept the shortfall from becoming the story.':'the loss made that missing production impossible to ignore.'}`,

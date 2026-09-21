@@ -13,6 +13,33 @@ const voice=r=>({'walter-mercer':0,'tess-delaney':1,'mack-hollis':2,'nora-voss':
 const choose=(t,items)=>items[Math.abs(Number(t?.roster_id)||0)%items.length];
 const deskChoice=(t,r,sets)=>choose(t,sets[voice(r)]||sets[0]);
 const keyedChoice=(key,items)=>{const s=String(key||''),h=[...s].reduce((n,ch)=>((n*31)+ch.charCodeAt(0))>>>0,7);return items[h%items.length]};
+const naturalJoin=xs=>{const a=(xs||[]).filter(Boolean);return a.length<2?(a[0]||''):a.length===2?a[0]+' and '+a[1]:a.slice(0,-1).join(', ')+', and '+a[a.length-1]};
+const defensivePlayer=p=>/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT)$/.test(String(p?.position||'').toUpperCase());
+const articlePlayers=t=>[...(t?.starter_details||[]),...(t?.opponent_roster?.starters||t?.opponent_roster?.players||[]),...(t?.next_opponent_roster?.starters||t?.next_opponent_roster?.players||[])].filter(p=>p?.name);
+function naturalizePlayerReferences(t,value){
+  const text=String(value??''),players=articlePlayers(t),firstCounts=new Map();
+  for(const p of players){const first=String(p.name).trim().split(/\s+/)[0];if(first)firstCounts.set(first,(firstCounts.get(first)||0)+1)}
+  const names=[...new Set(players.map(p=>String(p.name||'').trim()).filter(Boolean))].sort((a,b)=>b.length-a.length),last=new Map();
+  return text.split(/(?<=[.!?])\s+/).map((sentence,index)=>{
+    let out=sentence;
+    for(const name of names){
+      const first=name.split(/\s+/)[0];if(!first||firstCounts.get(first)!==1)continue;
+      const re=new RegExp(name.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\const keyedChoice=(key,items)=>{const s=String(key||''),h=[...s].reduce((n,ch)=>((n*31)+ch.charCodeAt(0))>>>0,7);return items[h%items.length]};'),'gi');
+      if(!re.test(out))continue;
+      re.lastIndex=0;
+      const prev=last.get(name);
+      if(Number.isInteger(prev)&&index-prev<=3)out=out.replace(re,first);
+      else last.set(name,index);
+    }
+    return out;
+  }).join(' ');
+}
+function statClause(p){
+  const line=teamStatLine(p);if(!line)return null;
+  const name=String(p?.name||'').trim(),re=new RegExp('^'+name.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\const keyedChoice=(key,items)=>{const s=String(key||''),h=[...s].reduce((n,ch)=>((n*31)+ch.charCodeAt(0))>>>0,7);return items[h%items.length]};')+'\\s+','i');
+  const clause=String(line).replace(re,'').replace(/\.$/,'');
+  return clause?clause.charAt(0).toLowerCase()+clause.slice(1):null;
+}
 
 function opportunity(p){
   const s=p?.real_stats||{},position=String(p?.position||'').toUpperCase();
@@ -175,7 +202,7 @@ function teamTrajectory(p){
   if(games===1&&young&&ratio>=1.4&&role?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[`${p.name} belongs on early breakout watch, not in the breakout-candidate victory parade yet. The opener beat last year’s baseline by a wide margin and the role gave it some legitimacy; another few Sundays have to make it sustained.`,`${p.name} is young enough and opened loudly enough to start a breakout watch. One week is not sustained evidence, so the label stays “candidate pending more football” for now.`,`${p.name} gave us the first ingredient of a breakout case: a young player beating the old baseline with a meaningful role. The missing ingredient is repetition.`])};
   if(games>=3&&veteran&&ratio<=.68)return {kind:'decline',strength:1-ratio,text:keyedChoice(key,[`${p.name} is a veteran and now a legitimate fall-off candidate. The production has stayed well below last season’s level for multiple weeks; age makes the trend worth taking seriously without declaring the career over.`,`Put veteran ${p.name} on fall-off watch. A sustained drop from last year’s baseline is more than one bad Sunday, and this is the stage of a career where role erosion deserves attention.`,`${p.name} has crossed from “slow start” into fall-off-candidate territory: veteran age, a multi-week decline, and a scoring level well below the old baseline. The next question is whether the role is shrinking with it.`])};
   if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:'reliable',strength:1-Math.abs(ratio-1),text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} is doing the boring valuable thing: producing near the established baseline over a real sample. That is reliability, not a breakout.`,`${p.name} has settled back into familiar territory over multiple weeks. Reliable production rarely wins the group chat, but it keeps ${p.name} from becoming a Tuesday problem.`])};
-  if(games===1&&Math.abs(points-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(points-prior)/prior,text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} opened near last season’s established level. Same neighborhood, same job description.`,`${p.name} started the year in familiar territory relative to last season. Nothing about ${p.name}’s opener required a new scouting report.`])};
+  if(games===1&&Math.abs(points-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(points-prior)/prior,text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} averaged ${one(prior)} last season and looked like the same player Sunday. No reinvention required.`,`${p.name} averaged ${one(prior)} last season, and Sunday fit that résumé comfortably. Nobody needs to invent a new version of him yet.`])};
   if(games===1&&points<=prior*.5)return {kind:'stumble',strength:1-points/prior,text:keyedChoice(key,[`${veteran?'Veteran ':''}${p.name} opened far below last season’s normal level. One ugly Sunday is a stumble, not a fall-off trend; another few weeks would change the classification.`,`${p.name} started well below the old baseline. The career did not disappear in one afternoon, but the next role now matters more.`])};
   if(veteran)return {kind:'veteran',strength:.25,text:`Veteran ${p.name} entered the season with an established baseline. Week 1 landed against that old standard, not a blank slate.`};
   return null;
@@ -236,6 +263,38 @@ function leaguePlayerPulse(teams){
     if(out.length>=3)break;
   }
   return out;
+}
+
+
+function bartholomewPlayerBoard(teams){
+  const rows=(teams||[]).flatMap(t=>(t.starter_details||[]).map(p=>{
+    const prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,pts=Number(p?.points),age=Number(p?.age),years=Number(p?.years_exp),
+      role=teamOpportunity(p),tr=teamTrajectory(p),ratio=Number.isFinite(prior)&&prior>0&&Number.isFinite(pts)?pts/prior:null;
+    return {t,p,tr,role,prior,priorGames,pts,ratio,young:(Number.isFinite(age)&&age<=26)||(Number.isFinite(years)&&years<=3)};
+  })).filter(x=>Number.isFinite(x.pts));
+  const breakoutScore=x=>{
+    if(['breakout','early-breakout'].includes(x.tr?.kind))return 200+Number(x.tr.strength||0)*100;
+    if(x.tr?.kind==='rookie'&&x.role?.strong)return 150+x.pts;
+    if(x.young&&x.priorGames>=6&&x.ratio!=null&&x.ratio>=1.2&&x.role?.strong)return 100+x.ratio*10+x.pts/10;
+    return -Infinity;
+  };
+  const reliableScore=x=>{
+    if(x.tr?.kind==='reliable')return 200+Number(x.tr.strength||0)*100;
+    if(x.priorGames>=6&&Number.isFinite(x.prior)&&x.prior>=6&&x.ratio!=null&&Math.abs(x.ratio-1)<=.3)return 100-Math.abs(x.ratio-1)*100+x.prior/10;
+    return -Infinity;
+  };
+  const take=(defense,n,score,exclude=new Set())=>rows.filter(x=>defensivePlayer(x.p)===defense&&!exclude.has(String(x.p.id))&&Number.isFinite(score(x))).sort((a,b)=>score(b)-score(a)||b.pts-a.pts).slice(0,n);
+  const bo=take(false,2,breakoutScore),bd=take(true,1,breakoutScore),used=new Set([...bo,...bd].map(x=>String(x.p.id))),
+    ro=take(false,2,reliableScore,used),rd=take(true,1,reliableScore,used);
+  const rolePhrase=x=>x.role?.text?` on ${x.role.text}`:'';
+  const ps=[];
+  if(bo.length===2&&bd.length===1){
+    ps.push(`Bartholomew’s offensive breakout watch admits ${bo[0].p.name} and ${bo[1].p.name} past the velvet rope. ${bo[0].p.name} gave ${bo[0].t.team_name} a louder Sunday${rolePhrase(bo[0])}; ${bo[1].p.name} did the same for ${bo[1].t.team_name}${rolePhrase(bo[1])}. On defense, ${bd[0].p.name} gets the breakout seat after giving ${bd[0].t.team_name} a performance with enough real involvement to deserve another look. Three names, no coronations; the guest list can change next Sunday.`);
+  }
+  if(ro.length===2&&rd.length===1){
+    ps.push(`Reliability is less glamorous and considerably more useful. ${ro[0].p.name} and ${ro[1].p.name} are the two offensive names Bartholomew trusts to keep doing familiar work for ${ro[0].t.team_name} and ${ro[1].t.team_name}; neither needed a reinvention story to matter. On defense, ${rd[0].p.name} gets the same designation for ${rd[0].t.team_name}. Dependability rarely gets champagne, which is probably why it survives the evening.`);
+  }
+  return ps;
 }
 
 export function breakoutWatch(t){
@@ -402,7 +461,7 @@ function naturalLede(t,r){
   const topScore=one(top.points);
   if(ps[0]&&!/fantasy points/i.test(ps[0])){
     if(ps[0].includes(topScore+' points'))ps[0]=ps[0].replace(topScore+' points',topScore+' fantasy points');
-    else if(ps[0].includes(topScore))ps[0]=ps[0].replace(topScore,topScore+' fantasy points');
+    // Bare numbers can be part of a joke (for example, “34.1 reasons”), so only explicit point labels are normalized.
   }
   return ps;
 }
@@ -428,6 +487,58 @@ function playerSection(t,r){
   const trajectoryLabel=kind=>({rookie:'ROOKIE WATCH',breakout:'BREAKOUT CANDIDATE','early-breakout':'EARLY BREAKOUT WATCH',decline:'FALL-OFF WATCH',reliable:'RELIABLE',stumble:'SLOW-START WATCH',veteran:'VETERAN CHECK-IN'}[kind]||'PLAYER WATCH');
   for(const x of trajectoryRows){if(used.has(String(x.p.id)))continue;used.add(String(x.p.id));ps.push(trajectoryLabel(x.tr.kind)+': '+x.tr.text);if(used.size>=2)break}
   return ps;
+}
+
+
+function teamLedeV27(t,r){
+  const core=naturalLede(t,r),rows=list(t),top=rows[0],topLine=top?teamStatLine(top):null,score=teamScoreConstructionStory(t,r),
+    opponent=currentOpponentFootballStory(t,r),season=seasonContextStoryV26(t,r),ps=[];
+  const starVerdict=top?deskChoice(t,r,[
+    [`${top.name} gave ${t.team_name} a real football foundation under the fantasy total; the box score and the role are telling the same story.`],
+    [`${top.name} was not merely decorative production. The football underneath the fantasy score was just as handsome.`],
+    [`THE STAR LINE WAS REAL. ${top.name} did not need accounting tricks to get onto the front page.`],
+    [`${top.name}’s fantasy total survives cross-examination because the underlying football line is sitting right there beside it.`]
+  ]):null;
+  ps.push([core[0],topLine,starVerdict].filter(Boolean).join(' '));
+  ps.push([core[1],score].filter(Boolean).join(' '));
+  ps.push([opponent,season].filter(Boolean).join(' '));
+  return ps.filter(Boolean);
+}
+function watchSentenceV27(x){
+  const p=x.p,tr=x.tr;
+  if(tr.kind==='breakout'||tr.kind==='early-breakout')return `Breakout watch belongs on ${p.name} now. ${tr.text}`;
+  if(tr.kind==='reliable')return `${p.name} is the steadier story. ${tr.text}`;
+  if(tr.kind==='decline')return `${p.name} has earned the uncomfortable paragraph. ${tr.text}`;
+  if(tr.kind==='stumble')return `${p.name} gets a mulligan, not a free pass. ${tr.text}`;
+  if(tr.kind==='rookie')return `${p.name} is the rookie worth tracking. ${tr.text}`;
+  return tr.text;
+}
+function teamPlayersV27(t,r){
+  const rows=list(t),top=rows[0];if(!top)return ['n/a'];
+  const bad=rows.filter(p=>delta(p)!=null&&delta(p)<-4&&String(p.id)!==String(top.id)).sort((a,b)=>delta(a)-delta(b))[0],
+    topLine=teamStatLine(top),support=supportingCastFootballStory(t,r),topUsage=teamUsageComment(t,top,'star'),
+    trajectoryRows=rows.map(p=>({p,tr:teamTrajectory(p)})).filter(x=>x.tr).sort((a,b)=>{
+      const priority={breakout:6,'early-breakout':5,decline:5,rookie:4,reliable:3,stumble:2,veteran:1};
+      return (priority[b.tr.kind]||0)-(priority[a.tr.kind]||0)||Number(b.tr.strength)-Number(a.tr.strength);
+    }).slice(0,2),ps=[];
+  const topOpen=deskChoice(t,r,[
+    [`${top.name} gets the lead paragraph after ${one(top.points)} fantasy points. The useful part is how cleanly the real football line supports the headline.`],
+    [`${top.name} gets the good china after ${one(top.points)} fantasy points. At least this indulgence comes with proper football underneath it.`],
+    [`PUT ${top.name.toUpperCase()} IN THE BIG TYPE: ${one(top.points)} fantasy points, and the real stat line can handle the attention.`],
+    [`${top.name} is the first name in the file after ${one(top.points)} fantasy points. The production is easier to trust when the role looks this substantial.`]
+  ]);
+  ps.push([topOpen,topLine,topUsage].filter(Boolean).join(' '));
+  if(support)ps.push(support);
+  const badRead=bad?teamFootballRead(t,bad,r,'hot-seat'):null;
+  const watch=trajectoryRows.map(watchSentenceV27).join(' ');
+  const close=deskChoice(t,r,[
+    [`That is the player page for ${t.team_name}: a headliner, useful company and at least one name worth checking again next Sunday.`],
+    [`A proper cast has stars, supporting actors and somebody making the critic reach for a sharper pen. ${t.team_name} supplied all three.`],
+    [`THAT IS A SPORTS PAGE, NOT A SPREADSHEET: stars, support and one problem ${t.team_name} would rather not run back next week.`],
+    [`The ${t.team_name} player page has names to trust, names to watch and at least one performance that deserves follow-up.`]
+  ]);
+  ps.push([badRead,watch,close].filter(Boolean).join(' '));
+  return ps.filter(Boolean);
 }
 
 function hotCool(t,kind,r){
@@ -592,14 +703,13 @@ function seasonContextStoryV26(t,r){
 function currentOpponentFootballStory(t,r){
   const o=t.opponent_roster,rows=(o?.starters||o?.players||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points));
   const star=rows[0],second=rows[1];if(!star)return null;
-  const starLine=teamFootballRead(t,star,r,'opponent'),won=Number(t.points)>Number(t.opponent_points),support=second?` ${second.name} added ${one(second.points)}.`:'';
-  const open=deskChoice(t,r,[
-    [`${t.opponent_name} had a real answer in ${star.name}, who scored ${one(star.points)} fantasy points.${support} ${won?t.team_name+' survived the opponent’s best punch anyway.':t.team_name+' never found enough production elsewhere to answer it.'}`],
-    [`${star.name} gave ${t.opponent_name} ${one(star.points)} fantasy points.${support} ${won?'That makes the '+t.team_name+' win look better, not luckier.':'That was enough elegance on the other side of the table to make '+t.team_name+' pay.'}`],
-    [`${star.name.toUpperCase()} KEPT ${t.opponent_name.toUpperCase()} IN IT with ${one(star.points)}.${support} ${won?t.team_name+' took the hit and kept scoring.':t.team_name+' never produced the counterpunch it needed.'}`],
-    [`${star.name} was ${t.opponent_name}’s biggest problem for ${t.team_name}, scoring ${one(star.points)} fantasy points.${support} ${won?'Winning through that gives '+t.team_name+' a little more substance.':t.team_name+' could not make the rest of the matchup compensate.'}`]
+  const won=Number(t.points)>Number(t.opponent_points),clause=statClause(star),support=second?` ${second.name} added ${one(second.points)} fantasy points.`:'';
+  return deskChoice(t,r,[
+    [`${t.opponent_name} did not go quietly. ${star.name} ${clause||'produced the best line on the other roster'}, a performance worth ${one(star.points)} fantasy points.${support} ${won?t.team_name+' absorbed the best counterpunch and kept scoring.':t.team_name+' never found enough elsewhere to answer it.'}`],
+    [`${star.name} was the attractive part of ${t.opponent_name}’s afternoon, ${clause||'carrying the useful work'} on the way to ${one(star.points)} fantasy points.${support} ${won?'Winning through that makes the '+t.team_name+' result look sturdier.':'That was enough elegance across the table to make '+t.team_name+' pay.'}`],
+    [`${star.name.toUpperCase()} KEPT ${t.opponent_name.toUpperCase()} ALIVE, ${clause||'doing the useful work'} and turning it into ${one(star.points)} fantasy points.${support} ${won?t.team_name+' took the punch and kept moving.':t.team_name+' never produced the counterpunch it needed.'}`],
+    [`${star.name} supplied the evidence for ${t.opponent_name}, ${clause||'leading the opposing lineup'} and producing ${one(star.points)} fantasy points.${support} ${won?t.team_name+' won anyway, which matters more than pretending the other side had no answers.':t.team_name+' had no answer of equal weight.'}`]
   ]);
-  return [open,starLine].filter(Boolean).join(' ');
 }
 
 function teamScoreConstructionStory(t,r){
@@ -649,25 +759,28 @@ function teamScoreConstructionStory(t,r){
 }
 
 function supportingCastFootballStory(t,r){
-  const rows=list(t),bad=rows.filter(p=>delta(p)!=null&&delta(p)<-4).sort((a,b)=>delta(a)-delta(b))[0],supportRows=rows.slice(1).filter(p=>!bad||String(p.id)!==String(bad.id)).slice(0,2);if(!supportRows.length)return null;
+  const rows=list(t),bad=rows.filter(p=>delta(p)!=null&&delta(p)<-4).sort((a,b)=>delta(a)-delta(b))[0],
+    supportRows=rows.slice(1).filter(p=>!bad||String(p.id)!==String(bad.id)).slice(0,2);
+  if(!supportRows.length)return null;
   const pieces=[];
   for(const p of supportRows){
-    const ctx=teamFootballRead(t,p,r,'supporting-cast'),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0;
-    let baseline='';
+    const line=teamStatLine(p),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0,pts=one(p.points);
+    let context='';
     if(Number.isFinite(prior)&&prior>0&&priorGames>=6){
-      baseline=Number(p.points)>=prior*1.25
-        ?keyedChoice(p.id||p.name,[`${p.name} beat last season’s ${one(prior)}-point average by a healthy margin.`,`That was a louder ${p.name} Sunday than the ${one(prior)} he averaged last season.`,`${p.name} opened above his ${one(prior)}-point 2025 baseline.`])
+      context=Number(p.points)>=prior*1.25
+        ?keyedChoice(p.id||p.name,[`That was a considerably louder Sunday than the ${one(prior)} fantasy points ${p.name} averaged last season.`,`Last year’s ${one(prior)}-point average suddenly looks modest beside this one.`,`${p.name} averaged ${one(prior)} last season; Sunday was the upgraded version.`])
         :Number(p.points)<=prior*.7
-          ?keyedChoice(p.id||p.name,[`${p.name} finished well below last season’s ${one(prior)}-point average.`,`The ${one(prior)}-point average ${p.name} carried last year makes this opener unusually quiet.`,`${p.name} started well under the level he usually gave this roster last season.`])
-          :keyedChoice(p.id||p.name,[`${p.name} opened near last season’s ${one(prior)}-point average.`,`This looked familiar from ${p.name}, who averaged ${one(prior)} across ${priorGames} games last year.`,`${p.name} gave ${t.team_name} something close to his established 2025 level.`]);
+          ?keyedChoice(p.id||p.name,[`Last season’s ${one(prior)}-point average makes the quiet day harder to wave away.`,`${p.name} averaged ${one(prior)} last year, which is why this one deserves a second look next Sunday.`,`The old ${one(prior)}-point average says ${t.team_name} is used to getting more here.`])
+          :keyedChoice(p.id||p.name,[`${p.name} averaged ${one(prior)} last season, and Sunday looked comfortably familiar.`,`This was the same neighborhood as last year’s ${one(prior)}-point average — useful, unsurprising production.`,`The ${one(prior)}-point average from last season still looks like a fair description of ${p.name}.`]);
     }
-    pieces.push([`${p.name} gave ${t.team_name} ${one(p.points)} fantasy points.`,ctx,baseline].filter(Boolean).join(' '));
+    if(line)pieces.push(`${line.replace(/\.$/,'')}; that work was worth ${pts} fantasy points. ${context}`.trim());
+    else pieces.push(`${p.name} supplied ${pts} fantasy points for ${t.team_name}. ${context}`.trim());
   }
   const close=deskChoice(t,r,[
-    [`${rows[0]?.name||'The leading scorer'} owned the headline, but ${t.team_name} had enough help behind it to avoid a one-man rescue job.`],
-    [`${t.team_name} looked better for having more than one useful place to turn. Even a star appreciates competent company.`],
-    [`That is secondary scoring ${t.team_name} can print in smaller type and still be very happy to have.`],
-    [`${t.team_name} did not ask one player to carry every useful possession of the afternoon. That balance mattered.`]
+    [`${rows[0]?.name||'The leading scorer'} owned the headline, but ${t.team_name} had enough competent company to make the lineup look like a roster instead of a rescue mission.`],
+    [`Stars prefer company, and ${t.team_name} supplied enough of it to keep the afternoon tastefully plural.`],
+    [`SECONDARY SCORING MADE THE PAPER TOO. ${t.team_name} did not need one superhero and eleven witnesses.`],
+    [`Two useful supporting lines make the ${t.team_name} result harder to dismiss as one player doing all the work.`]
   ]);
   return pieces.join(' ')+' '+close;
 }
@@ -1005,8 +1118,8 @@ export function humanSectionsV25(args){
   const {team:t,facts={}}=args,base=humanSectionsV23({...args,team:{...t,transactions:[]}}),mgmt=management(t,facts,args.reporter);
   const rewritten=base.map(s=>{
     let paragraphs;
-    if(s.kind==='lede')paragraphs=naturalLede(t,args.reporter);
-    else if(s.kind==='players')paragraphs=playerSection(t,args.reporter);
+    if(s.kind==='lede')paragraphs=teamLedeV27(t,args.reporter);
+    else if(s.kind==='players')paragraphs=teamPlayersV27(t,args.reporter);
     else if(s.kind==='management'){
       const moveParagraphs=mgmt.filter(p=>p&&p!=='n/a'),expansion=reporterExpansionV26(t,s.kind,args.reporter);
       paragraphs=[];
@@ -1033,9 +1146,9 @@ export function humanSectionsV25(args){
     else paragraphs=[...(s.paragraphs||[])];
     if(paragraphs.length&&paragraphs[0]!=='n/a'){
       if(s.kind==='players'){const traded=list(t).find(p=>p.acquisition);const callback=traded?acquisitionCallback(t,traded,args.reporter):null;if(callback)paragraphs.push(callback)}
-      if(s.kind!=='management')paragraphs.push(...reporterExpansionV26(t,s.kind,args.reporter));
+      if(!['management','lede','players'].includes(s.kind))paragraphs.push(...reporterExpansionV26(t,s.kind,args.reporter));
     }
-    paragraphs=paragraphs.map(p=>specificityPass(t,s.kind,p));
+    paragraphs=paragraphs.map(p=>naturalizePlayerReferences(t,specificityPass(t,s.kind,p)));
     return {...s,paragraphs};
   });
   return dedupeArticleSections(reporterStructureV26(rewritten,t,args.reporter));
@@ -1054,7 +1167,7 @@ function gameImportance(g){
 
 function divisionPressure(t,result){
   const rivals=t.division_results||[],winners=rivals.filter(x=>Number(x.points)>Number(x.opponent_points)).map(x=>x.team_name),losers=rivals.filter(x=>Number(x.points)<Number(x.opponent_points)).map(x=>x.team_name),
-    rivalSubject=xs=>xs.length?(xs[0]+(xs.length>1?' and '+String(xs.length-1)+' other division rival'+(xs.length>2?'s':''):'')):'';
+    rivalSubject=xs=>naturalJoin(xs);
   if(result==='W'){
     if(losers.length&&winners.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' gained ground because '+rivalSubject(losers)+' lost, while '+rivalSubject(winners)+' also won and kept the top of the race from opening up.';
     if(losers.length)return 'In '+(t.division_name||'the division')+', '+t.team_name+' also got help when '+rivalSubject(losers)+' lost.';
@@ -1239,14 +1352,14 @@ export function expandWeeklyRecapV25(o,teams,week){
     const k=[g.winner.roster_id,g.loser.roster_id].sort().join(':');
     if(!seen.has(k)){seen.add(k);chosen.push(g)}
   }
-  const upMove=movement(teams,1),downMove=movement(teams,-1),trend=playerTrend(teams),playerPulse=leaguePlayerPulse(teams),availability=availabilityStories(teams),
+  const upMove=movement(teams,1),downMove=movement(teams,-1),trend=playerTrend(teams),playerPulse=leaguePlayerPulse(teams),bartholomewBoard=bartholomewPlayerBoard(teams),availability=availabilityStories(teams),
     moves=teams.map(t=>({t,text:tillyManagementStory(t)})).filter(x=>x.text).sort((a,b)=>Number(b.t.current_week_trade_count||0)-Number(a.t.current_week_trade_count||0)||(b.t.transactions?.length||0)-(a.t.transactions?.length||0)).slice(0,2),
     next=nextGame(teams);
   const velvet=[
     upMove?`${upMove.team_name} gained ${Math.round(Number(upMove.value_history_week.delta)).toLocaleString('en-US')} in roster value this week. That is not a trophy, but it does make the front office portfolio look rather less like hotel-lobby art. The interesting part is whether the football keeps pace with the appraisal.`:null,
     downMove&&(!upMove||String(downMove.roster_id)!==String(upMove.roster_id))?`${downMove.team_name} moved the other way, down ${Math.abs(Math.round(Number(downMove.value_history_week.delta))).toLocaleString('en-US')} in roster value. One does not burn the chaise lounge over a weekly market move, but another slide would turn tasteful concern into an actual conversation.`:null,
     trend?`${trend.p.name} is the form worth setting the good china for: ${one(trend.p.recent_form.last3_avg)} per game over the last three after ${one(trend.p.recent_form.prior3_avg)} in the prior sample for ${trend.t.team_name}. ${trend.p.recent_form.label==='hot'?'The performance has earned attention; permanence still has to survive the next few Sundays.':'The decline has lasted long enough to be impolite, and the next matchup is an opportunity to restore some decorum.'}`:null,
-    ...playerPulse,...availability
+    ...(bartholomewBoard.length?bartholomewBoard:playerPulse),...availability
   ].filter(Boolean);
   const original=o.sections||[],reporter=i=>original[i]?.reporter||null,tillyFallback=(original[2]?.paragraphs||[]).filter(p=>String(p||'').trim()&&String(p).trim()!=='n/a').slice(0,2);
   const matterBlocks=chosen.map((g,i)=>weeklyStoryBlock(g,i,!!topGame&&String(g.winner.roster_id)===String(topGame.winner.roster_id)&&String(g.loser.roster_id)===String(topGame.loser.roster_id)));

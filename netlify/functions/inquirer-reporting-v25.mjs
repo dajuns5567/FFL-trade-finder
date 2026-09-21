@@ -1669,36 +1669,262 @@ function headingV28(t,r,kind,base,angle){
   return keyedChoice(`${t.roster_id}:${kind}:${angle}:${r?.id}`,set);
 }
 
-export function humanSectionsV25(args){
-  const {team:t,facts={}}=args,creative=humanSectionsV21(args),factual=humanSectionsV23(args),
-    factualByKind=new Map((factual||[]).map(s=>[s.kind,s])),angle=storyAngleV28(t,args.reporter),fw=fourthWallV28(t,args.reporter,angle);
-  const sections=(creative||[]).map(c=>{
-    const f=factualByKind.get(c.kind)||{},baseParagraphs=(c.paragraphs||[]).filter(p=>String(p||'').trim()&&String(p).trim().toLowerCase()!=='n/a');
-    let paragraphs;
-    if(c.kind==='lede'){
-      paragraphs=[angleLeadV28(t,args.reporter,angle),gameShapeV28(t,args.reporter),ledeConsequenceV28(t,args.reporter,angle),fw].filter(Boolean);
-    }else if(c.kind==='players'){
-      const current=playerContextV28(t,args.reporter),counter=playerCounterpointV28(t,args.reporter),acquired=list(t).find(p=>p.acquisition),callback=acquired?acquisitionCallback(t,acquired,args.reporter):null;
-      paragraphs=[baseParagraphs[0],counter,current,callback].filter(Boolean);
-    }else if(c.kind==='management'){
-      paragraphs=managementStoryV28(t,facts,args.reporter);
-    }else if(c.kind==='value'){
-      paragraphs=valueStoryV28(t,args.reporter);
-    }else if(c.kind==='sentiment'){
-      paragraphs=[sentimentVoiceV28(t,args.reporter),sentimentContextV28(t,args.reporter)].filter(Boolean);
-    }else if(c.kind==='outlook'){
-      paragraphs=outlookStoryV28(t,args.reporter);
-    }else if(c.kind==='hot-seat'||c.kind==='cool-throne'){
-      paragraphs=baseParagraphs.slice(0,1);
-      const extra=chairFootballStory(t,c.kind,args.reporter);if(extra)paragraphs.push(extra);
-    }else paragraphs=baseParagraphs;
-    if(!paragraphs.length)paragraphs=['n/a'];
-    paragraphs=paragraphs.map(p=>contextualizeParagraphV28(t,naturalizePlayerReferences(t,specificityPass(t,c.kind,p))))
-      .map(p=>String(p).replace(/Fix the production and the back page will happily find a new target\./gi,'Fix the production and the angry headline can move to somebody else.'));
-    return {...f,...c,heading:headingV28(t,args.reporter,c.kind,c.heading,angle),paragraphs};
+export function articleFrameV29(t,r){
+  const rows=list(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),
+    top=rows[0]||null,second=rows[1]||null,third=rows[2]||null,top3=rows.slice(0,3).reduce((n,p)=>n+Number(p.points||0),0),
+    share=Number(t.points)>0?top3/Number(t.points):0,angle=storyAngleV28(t,r),
+    concerns=rows.filter(p=>delta(p)!=null&&Number(delta(p))<=-4).slice().sort((a,b)=>Number(delta(a))-Number(delta(b))),
+    supports=rows.slice(1).filter(p=>{
+      const pts=Number(p.points),d=delta(p),prior=Number(p.prior_season_avg);
+      return Number.isFinite(pts)&&(pts>=12||(d!=null&&d>=2)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.1));
+    }).slice(0,3),
+    trajectories=rows.map(p=>({p,tr:teamTrajectory(p)})).filter(x=>x.tr),
+    ctx=t.league_context||{},rank=Number(ctx.standings_rank),size=Number(ctx.league_size)||32,playoff=valid(t.mida_outlook?.playoff)?Number(t.mida_outlook.playoff):null;
+  return {t,r,rows,won,lost:!won,margin,top,second,third,share,angle,concerns,supports,trajectories,rank,size,playoff};
+}
+
+function classificationSentenceV29(p,tr,r){
+  if(!p||!tr)return null;
+  const v=voice(r);
+  if(tr.kind==='star')return [
+    `${p.name} is already an established star. Sunday reinforced the standard instead of inventing a breakout story.`,
+    `${p.name} arrived with star status already secured; this performance belongs in the confirmation column, not the discovery column.`,
+    `${p.name.toUpperCase()} DOES NOT NEED A BREAKOUT LABEL. He already owns the résumé; this week simply gave it another loud line.`,
+    `${p.name} enters the file as an established star, so the relevant issue is consistency rather than discovery.`
+  ][v];
+  if(tr.kind==='breakout'||tr.kind==='early-breakout')return [
+    `${p.name} has earned breakout-watch attention because the role and production are rising together.`,
+    `${p.name} is the emerging name worth circling; youth alone is not the argument, the expanding role is.`,
+    `${p.name.toUpperCase()} GETS BREAKOUT WATCH, not a coronation. The job is getting bigger and the production followed.`,
+    `${p.name} qualifies as an emerging player because the workload has changed with the output; the label stays provisional.`
+  ][v];
+  if(tr.kind==='rookie')return [
+    `Rookie ${p.name} gave the staff enough useful work to keep his role in the weekly conversation.`,
+    `Rookie ${p.name} made a respectable first claim on future work.`,
+    `ROOKIE WATCH: ${p.name} gave us something worth printing again next week.`,
+    `Rookie ${p.name} has one useful exhibit now; another Sunday decides how much weight it deserves.`
+  ][v];
+  if(tr.kind==='decline')return [
+    `${p.name} is on fall-off watch because the multi-week drop has outgrown the phrase “slow start.”`,
+    `${p.name} has reached the unfashionable part of the veteran curve where decline has to be discussed plainly.`,
+    `FALL-OFF WATCH: ${p.name}. Age plus repeated lighter production is no longer background noise.`,
+    `${p.name} has accumulated enough decline markers that the old weekly floor cannot be presumed.`
+  ][v];
+  if(tr.kind==='reliable')return [
+    `${p.name} remains a reliability story: familiar role, familiar output, very little Tuesday drama.`,
+    `${p.name} keeps delivering the unfashionable luxury of predictability.`,
+    `RELIABLE: ${p.name}. Not every useful player needs a transformation arc.`,
+    `${p.name} continues to corroborate the same weekly expectation, which is valuable precisely because it is boring.`
+  ][v];
+  if(tr.kind==='stumble')return [
+    `${p.name} gets one bad week labeled as a stumble, not a trend.`,
+    `${p.name} receives one week of manners before the criticism gets sharper.`,
+    `${p.name.toUpperCase()} GETS A MULLIGAN, not immunity.`,
+    `${p.name} has one poor exhibit; the next one determines whether the file changes categories.`
+  ][v];
+  return null;
+}
+
+function gameShapeV29(t,r,f=articleFrameV29(t,r)){
+  const {won,top,second,third,share,margin}=f;if(!top)return null;
+  const topClause=statClause(top),support=[second,third].filter(Boolean).map(p=>p.name),pct=Math.round(share*100),
+    oppRows=(t.opponent_roster?.starters||t.opponent_roster?.players||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points)),
+    opp=oppRows[0],oppClause=opp?statClause(opp):null,team=teamIdentityV28(t).mascot;
+  if(voice(r)===0){
+    if(won)return `${top.name} ${topClause||'handled the largest piece of the weekly workload'}, while ${naturalJoin(support)||'the supporting lineup'} kept ${team} from asking one player to do everything. The leading three scorers supplied about ${pct}% of the total${pct>=75?', a concentration worth monitoring even in a win':''}. ${opp&&oppClause?`${opp.name} answered for ${t.opponent_name} by ${oppClause}, so the result was earned against an opponent that produced something real.`:''}`.trim();
+    return `${top.name} ${topClause||'gave the roster its strongest individual line'}, but ${team} still lost by ${one(margin)}. The leading three scorers accounted for about ${pct}% of the total${pct>=70?', which makes the missing production outside that core impossible to ignore':''}. ${opp&&oppClause?`${opp.name} gave ${t.opponent_name} the stronger counterpunch by ${oppClause}.`:''}`.trim();
+  }
+  if(voice(r)===1){
+    if(won)return `${top.name} supplied the most attractive football of the afternoon — ${topClause||'the best verified line on the roster'} — and ${naturalJoin(support)||'the supporting cast'} kept the performance from becoming a one-man vanity project. Roughly ${pct}% of the scoring belonged to the leading trio; tasteful enough, provided the rest of the roster keeps contributing.`;
+    return `${top.name} can keep the handsome individual line — ${topClause||'the roster’s best verified work'} — but ${team} still left with a loss. About ${pct}% of the scoring came from the top three names, and a defeat with that much useful work concentrated near the top is less elegant than it first appears.`;
+  }
+  if(voice(r)===2){
+    if(won)return `${top.name.toUpperCase()} GOT THE BIG TYPE after ${topClause||'doing the loudest work on the roster'}. ${naturalJoin(support)||'The rest of the lineup'} gave ${team} enough backup to turn the star performance into an actual win instead of a very expensive consolation prize.`;
+    return `${top.name.toUpperCase()} DID HIS PART — ${topClause||'the strongest line on the roster'} — and ${team} LOST ANYWAY. When roughly ${pct}% of the scoring comes from three players and the final still lands on the wrong side, the back page starts looking below the stars for suspects.`;
+  }
+  if(won)return `${top.name} supplied the cleanest affirmative exhibit: ${topClause||'the roster’s strongest verified work'}. ${naturalJoin(support)||'The supporting cast'} corroborated enough of it for ${team} to turn production into a win. The top three owned about ${pct}% of the total; concentration is acceptable when the rest of the file still supports the verdict.`;
+  return `${top.name} supplied the strongest affirmative exhibit — ${topClause||'the roster’s best verified work'} — and ${team} still lost. With about ${pct}% of the total coming from the leading three scorers, the contradiction is useful: the problem was not the absence of any good performances, but the absence of enough of them.`;
+}
+
+function playerStoryV29(t,r,f=articleFrameV29(t,r)){
+  const {top,supports,concerns,won}=f;if(!top)return ['n/a'];
+  const topStatus=f.trajectories.find(x=>String(x.p.id)===String(top.id))?.tr||null,topClause=statClause(top),team=teamIdentityV28(t).mascot,ps=[];
+  const topIntro=[
+    `${top.name} gets the lead player note after ${one(top.points)} fantasy points${topClause?`, built from a Sunday in which he ${topClause}`:''}. ${classificationSentenceV29(top,topStatus,r)||'The role was substantial enough to matter beyond the fantasy total.'}`,
+    `${top.name} was the player most worth keeping after deadline: ${one(top.points)} fantasy points${topClause?`, with ${topClause}`:''}. ${classificationSentenceV29(top,topStatus,r)||'The performance had enough real football underneath it to deserve the attention.'}`,
+    `PUT ${top.name.toUpperCase()} FIRST: ${one(top.points)} fantasy points${topClause?`, backed by a game in which he ${topClause}`:''}. ${classificationSentenceV29(top,topStatus,r)||'The week had enough substance to keep his name above the fold.'}`,
+    `${top.name} is the first cooperative witness: ${one(top.points)} fantasy points${topClause?`, after he ${topClause}`:''}. ${classificationSentenceV29(top,topStatus,r)||'The role gives the production enough support to remain relevant next week.'}`
+  ][voice(r)];
+  ps.push(topIntro);
+  const other=supports.filter(p=>String(p.id)!==String(top.id)).slice(0,2);
+  if(other.length){
+    const bits=other.map(p=>{
+      const c=statClause(p),tr=f.trajectories.find(x=>String(x.p.id)===String(p.id))?.tr;
+      return `${p.name}${c?' '+c:''}${tr?'; '+classificationSentenceV29(p,tr,r):''}`;
+    });
+    ps.push([
+      `${naturalJoin(bits)}. Those performances matter because ${team} needs more than a single headliner; ${won?'the supporting work helped turn the week into a win.':'their work made the loss more frustrating, not prettier.'}`,
+      `${naturalJoin(bits)}. ${won?'That is proper company for a winning star.':'Those are real contributions trapped inside a losing result, which is precisely why the quieter lineup spots deserve scrutiny.'}`,
+      `${naturalJoin(bits)}. ${won?'THE SUPPORTING CAST MADE THE WIN LEGAL.':'GOOD PERFORMANCES DO NOT GET TO ACQUIT A LOSING LINEUP; they make the missing production easier to find.'}`,
+      `${naturalJoin(bits)}. ${won?'The file contains more than one affirmative witness, which strengthens the result.':'The loss cannot be blamed on everyone equally; these players gave the roster useful work while other spots failed to match it.'}`
+    ][voice(r)]);
+  }
+  const bad=concerns[0];
+  if(bad&&String(bad.id)!==String(top.id)){
+    const c=statClause(bad),d=Math.abs(Number(delta(bad))),tr=f.trajectories.find(x=>String(x.p.id)===String(bad.id))?.tr;
+    ps.push([
+      `${bad.name} is the player Nick circles in the margin after finishing ${one(d)} points below projection${c?` while he ${c}`:''}. ${won?'The win buys one week of patience; another miss becomes harder to dismiss.':'In a loss, that empty space is part of the result rather than a footnote.'} ${classificationSentenceV29(bad,tr,r)||''}`.trim(),
+      `${bad.name} supplied the least flattering line of the main cast, landing ${one(d)} below projection${c?` after he ${c}`:''}. ${won?'Winning keeps the criticism civilized for a week.':'Losing removes that courtesy.'} ${classificationSentenceV29(bad,tr,r)||''}`.trim(),
+      `THE NAME IN RED IS ${bad.name.toUpperCase()}: ${one(d)} below projection${c?`, with a football line in which he ${c}`:''}. ${won?'The scoreboard hid it this time.':'The scoreboard put a spotlight on it.'} ${classificationSentenceV29(bad,tr,r)||''}`.trim(),
+      `${bad.name} is the adverse exhibit: ${one(d)} points below projection${c?` after he ${c}`:''}. ${won?'The team won despite it; that is mitigation, not exoneration.':'The team lost, so the shortfall belongs in the causal chain.'} ${classificationSentenceV29(bad,tr,r)||''}`.trim()
+    ][voice(r)]);
+  }
+  return ps;
+}
+
+function coolThroneV29(t,r,f=articleFrameV29(t,r)){
+  const candidates=f.rows.filter(p=>{
+    const pts=Number(p.points),d=delta(p),prior=Number(p.prior_season_avg);
+    return Number.isFinite(pts)&&(pts>=15||(d!=null&&d>=4)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.2));
+  }).slice(0,2);
+  if(!candidates.length)return ['n/a'];
+  const names=candidates.map(p=>p.name),team=teamIdentityV28(t).mascot;
+  return [[
+    `${names[0]} gets the main Cool Throne chair${names[1]?`, with ${names[1]} pulling up a second one`:''}. ${team} had more than one performance worth rewarding, which is healthier than turning every positive section into a shrine to the leading scorer.`
+  ],[
+    `${names[0]} receives the good chair${names[1]?`; ${names[1]} deserves a seat nearby`:''}. Excellence may be repeated across sections when the honor means something different, but Bartholomew is not rationing praise to one fashionable name.`
+  ],[
+    `COOL THRONE: ${names.join(' AND ').toUpperCase()}. ${team} produced ${names.length>1?'multiple':'one'} performance${names.length>1?'s':''} worth celebrating, and the back page is perfectly capable of printing more than one flattering photograph.`
+  ],[
+    `Positive finding: ${naturalJoin(names)} ${names.length===1?'earns':'earn'} Cool Throne recognition. The honor records the week’s best work; it does not reclassify an established star as a breakout player.`
+  ]][voice(r)];
+}
+
+function hotSeatV29(t,r,f=articleFrameV29(t,r)){
+  const candidates=f.concerns.slice(0,2);if(!candidates.length)return ['n/a'];
+  const names=candidates.map(p=>p.name),team=teamIdentityV28(t).mascot,won=f.won;
+  return [[
+    `${names[0]} gets the uncomfortable chair${names[1]?`, and ${names[1]} is close enough to feel the heat`:''}. ${won?`${team} won, so neither needs an obituary; the concern is what happens if the same shortfall returns.`:`${team} lost, so these quiet spots already belong in the explanation of the result.`}`
+  ],[
+    `${names[0]} has the least attractive seat in the room${names[1]?`, with ${names[1]} sharing the draft`:''}. ${won?'A win permits manners without requiring amnesia.':'A loss makes the poor performances considerably harder to accessorize.'}`
+  ],[
+    `HOT SEAT: ${names.join(' / ').toUpperCase()}. ${won?'THE WIN HID THE SMOKE; IT DID NOT PUT OUT THE FIRE.':'THE LOSS MADE THE SMOKE IMPOSSIBLE TO IGNORE.'}`
+  ],[
+    `${naturalJoin(names)} ${names.length===1?'is':'are'} the adverse finding this week. ${won?'The verdict was a win despite the shortfall.':'The verdict was a loss, so the shortfall already has consequence.'}`
+  ]][voice(r)];
+}
+
+function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
+  const team=teamIdentityV28(t).mascot,rec=record(t),rank=Number.isFinite(f.rank)?`rank ${f.rank} of ${f.size}`:'an unsettled place in the table',p=f.playoff,high=p!=null&&p>=70,low=p!=null&&p<25;
+  if(voice(r)===0){
+    if(f.won)return `The record for ${team} is ${rec}, ${rank}. ${p!=null?`A ${one(p)}% playoff outlook gives the win context without making it proof of anything.`:'One win is useful evidence, not a season verdict.'}`;
+    if(high)return `The record for ${team} is ${rec}, ${rank}. A ${one(p)}% playoff outlook still treats this roster like a contender; the loss does not remove that status, it simply burns some of the margin for error that status was supposed to provide.`;
+    return `The record for ${team} is ${rec}, ${rank}. ${low?`With the playoff outlook around ${one(p)}%, wasting a week is expensive.`:'The loss narrows the room for another ordinary mistake.'}`;
+  }
+  if(voice(r)===1){
+    if(f.won)return `${rec} looks rather nicer beside ${team}, ${rank}. ${p!=null?`The ${one(p)}% playoff outlook means the victory met an expectation instead of inventing one.`:'One should enjoy the result without commissioning silverware.'}`;
+    if(high)return `${team} remains seated at the serious table despite a ${rec} record; a ${one(p)}% playoff outlook did not evaporate because one Sunday was ugly. The vulgar part is donating a game while carrying expectations that high.`;
+    return `${rec} is an unattractive line beside ${team}, ${rank}. ${p!=null?`A ${one(p)}% playoff outlook makes the loss ${low?'expensive':'annoying'}, not transformative.`:'The table is young, but the loss is already real.'}`;
+  }
+  if(voice(r)===2){
+    if(f.won)return `PRINT THE RECORD: ${rec} FOR ${team.toUpperCase()}, ${rank.toUpperCase()}. ${p!=null?`PLAYOFF OUTLOOK: ${one(p)}%. Enjoy the win and keep the parade permit in the drawer.`:'The group chat gets one week of legal optimism.'}`;
+    if(high)return `${team.toUpperCase()} IS STILL A CONTENDER ON PAPER — ${one(p)}% PLAYOFF OUTLOOK — AND THAT IS WHY THIS LOSS IS SO ANNOYING. Good rosters are not supposed to donate comfortable opportunities.`;
+    return `${rec.toUpperCase()} FOR ${team.toUpperCase()}, ${rank.toUpperCase()}. ${p!=null?`The ${one(p)}% playoff outlook says there is ${low?'very little':'some'} room to keep doing this.`:'The complaint desk opens early after a loss.'}`;
+  }
+  if(f.won)return `The formal record for ${team} is ${rec}, ${rank}. ${p!=null?`A ${one(p)}% playoff estimate is corroboration of expectation, not proof created by one win.`:'The win enters as one favorable exhibit.'}`;
+  if(high)return `The formal record for ${team} is ${rec}, ${rank}. A ${one(p)}% playoff estimate remains favorable, so the loss is not disqualifying; it is an avoidable adverse exhibit inside a still-strong case.`;
+  return `The formal record for ${team} is ${rec}, ${rank}. ${p!=null?`The ${one(p)}% playoff estimate gives the loss its proper weight without exaggerating it.`:'The loss is one adverse exhibit, and the next result determines whether it gains company.'}`;
+}
+
+function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
+  const clean={...t,transactions:consolidateTransactions(t)},moves=selectImportantMoves(clean,facts),miss=t.best_lineup_miss,ps=[],manager=t.manager_name||'Management',team=teamIdentityV28(t).mascot;
+  if(moves.length){
+    const m=moves[0],trade=String(m.move?.type||'').toLowerCase()==='trade',incoming=(m.add||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],
+      outgoing=(m.drop||[]).slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],add=names(m.add||[]),drop=names(m.drop||[]),
+      moveLead=trade?(add&&drop?`${manager} traded for ${add} and sent out ${drop}.`:add?`${manager} traded for ${add}.`:`${manager} sent out ${drop} in a trade.`):(add&&drop?`${manager} added ${add} and moved on from ${drop}.`:add?`${manager} added ${add}.`:`${manager} cut ${drop}.`);
+    const inStrong=strongTransactionPerformance(incoming),outStrong=strongTransactionPerformance(outgoing);
+    let impact='';
+    if(incoming){
+      if(inStrong)impact=`${incoming.name} immediately produced ${one(incoming.points)} fantasy points${incoming.real_stat_line?', backed by '+String(incoming.real_stat_line).replaceAll(' • ',', '):''}.`;
+      else impact=`${incoming.name} did not need a headline game to make the move look sensible; the first Sunday at least gave ${team} usable football from the new piece.`;
+    }
+    let counter='';
+    if(outgoing&&outStrong)counter=`${outgoing.name} answered with ${one(outgoing.points)}${transactionDestination(t,outgoing)}, which keeps the other side of the receipt alive.`;
+    else if(outgoing&&transactionDestination(t,outgoing))counter=`${outgoing.name} is now producing${transactionDestination(t,outgoing)}, so the departure has to be tracked in the correct uniform rather than credited to ${team}.`;
+    ps.push([
+      `${moveLead} ${impact} ${counter} Nick’s note is simple: the transaction matters only insofar as it changed the usable football on Sunday.`,
+      `${moveLead} ${impact} ${counter} The receipt finally has football attached to it, which is considerably more interesting than transaction-day self-congratulation.`,
+      `${moveLead} ${impact} ${counter} TRANSACTION DAY WAS THE TRAILER. SUNDAY WAS THE FIRST SCENE THAT COUNTS.`,
+      `${moveLead} ${impact} ${counter} The timestamp proves the decision happened; the Sunday role begins showing what the decision actually changed.`
+    ][voice(r)].trim());
+  }
+  if(miss?.reserve&&miss?.starter&&Number(miss.gap)>0){
+    const slot=miss.slot||miss.starter.lineup_slot||'lineup',gap=Number(miss.gap),wouldFlip=f.lost&&gap>f.margin;
+    ps.push([
+      `${miss.reserve.name} could legally have replaced ${miss.starter.name} at ${slot} and added about ${one(gap)} points. ${wouldFlip?'That swing was large enough to change the result, which makes the decision part of the loss.':f.won?'The team won anyway, but the legal alternative still belongs in next week’s preparation.':'It would not have erased the loss by itself, so management owns a mistake without pretending it was the only cause.'}`,
+      `${miss.reserve.name} was a legal ${slot} alternative to ${miss.starter.name}, worth roughly ${one(gap)} more points. ${wouldFlip?'That is the rare Monday complaint with enough arithmetic to alter the final.':f.won?'Winning keeps the error from becoming the headline; it does not make the seating chart elegant.':'Even the better seating chart would not have saved the evening, which is useful restraint for the criticism.'}`,
+      `LINEUP RECEIPT: ${miss.reserve.name} OVER ${miss.starter.name} AT ${String(slot).toUpperCase()} WAS LEGAL AND WORTH ABOUT ${one(gap)}. ${wouldFlip?'THAT COULD HAVE FLIPPED THE GAME.':f.won?'THE WIN HID IT; THE NEXT CLOSE GAME MAY NOT.':'IT WOULD NOT HAVE FIXED THE WHOLE LOSS, SO DO NOT BLAME ONE BUTTON FOR THE FIRE.'}`,
+      `${miss.reserve.name} over ${miss.starter.name} at ${slot} was an admissible alternative worth about ${one(gap)} points. ${wouldFlip?'The counterfactual crosses the final margin, so the management decision belongs in the causal record.':f.won?'The favorable verdict does not erase the lineup discrepancy.':'The discrepancy is real but smaller than the losing margin, so it cannot honestly carry the entire case.'}`
+    ][voice(r)]);
+  }
+  if(!ps.length)ps.push([
+    `${manager} did not create a material transaction or legal lineup controversy this week. That is not praise so much as the absence of an avoidable second story.`,
+    `${manager} has denied Bartholomew the pleasure of a proper front-office grievance. Competence can be dreadfully inconvenient for a columnist.`,
+    `NO MANAGEMENT SIREN FOR ${team.toUpperCase()}. THE PLAYERS PRODUCED ENOUGH MATERIAL WITHOUT HELP FROM THE FRONT OFFICE.`,
+    `No material transaction or eligible lineup mistake clears the threshold for a management charge this week.`
+  ][voice(r)]);
+  return ps;
+}
+
+function outlookStoryV29(t,r,f=articleFrameV29(t,r)){
+  const base=outlookStoryV28(t,r).slice(0,1),schedule=scheduleSignificanceStory(t,r).slice(0,2),team=teamIdentityV28(t).mascot,next=t.next_opponent_name||'the next opponent';
+  const bridge=[
+    f.won?`${team} gets to approach ${next} from the useful side of the standings; the schedule beyond it decides whether this win becomes cushion or merely a pleasant opening note.`:`${team} arrives at ${next} needing a response, and the opponents behind that matchup determine whether Week 1 was a bruise or the beginning of schedule pressure.`,
+    f.won?`A winning week lets ${team} meet ${next} with a little leverage. The real elegance would be using it before the schedule changes the dress code.`:`The loss makes ${next} less decorative for ${team}; what follows on the schedule determines how expensive another stumble would become.`,
+    f.won?`${team.toUpperCase()} GETS TO BRING A WIN INTO ${String(next).toUpperCase()}. NOW READ THE REST OF THE SCHEDULE BEFORE SPENDING THAT CUSHION.`:`${team.toUpperCase()} NEEDS AN ANSWER AGAINST ${String(next).toUpperCase()}. THE GAMES AFTER IT DECIDE WHETHER THE PRESSURE STAYS LOCAL OR STARTS TRAVELING.`,
+    f.won?`The next exhibit is ${next}. ${team} has one favorable result in hand; the subsequent schedule determines how much procedural value that cushion actually carries.`:`The next exhibit is ${next}. ${team} has an adverse result already entered; the subsequent schedule determines how quickly a second one would become material.`
+  ][voice(r)];
+  return [...base,bridge,...schedule].filter(Boolean);
+}
+
+function dedupeArticleSectionsV29(sections){
+  const seen=new Set();
+  return (sections||[]).map(sec=>{
+    const paragraphs=(sec.paragraphs||[]).map(p=>{
+      if(String(p||'').trim().toLowerCase()==='n/a')return'n/a';
+      const keep=[];
+      for(const sentence of splitSentencesSafeV28(p)){
+        const key=sentence.toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/\s+/g,' ').trim();
+        if(key.length>55&&seen.has(key))continue;
+        if(key.length>55)seen.add(key);
+        keep.push(sentence);
+      }
+      return keep.join(' ');
+    }).filter(Boolean);
+    return {...sec,paragraphs:paragraphs.length?paragraphs:['n/a']};
   });
-  const state={count:0};
-  return dedupeArticleSections(sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>teamAliasPassV28(t,p,state))})));
+}
+
+function humanSectionsV25(args){
+  const {team:t,facts={}}=args,creative=humanSectionsV21(args),factual=humanSectionsV23(args),
+    factualByKind=new Map((factual||[]).map(s=>[s.kind,s])),frame=articleFrameV29(t,args.reporter),fw=fourthWallV28(t,args.reporter,frame.angle);
+  const sections=(creative||[]).map(c=>{
+    const f=factualByKind.get(c.kind)||{};let paragraphs;
+    if(c.kind==='lede')paragraphs=[angleLeadV28(t,args.reporter,frame.angle),gameShapeV29(t,args.reporter,frame),ledeConsequenceV29(t,args.reporter,frame),fw].filter(Boolean);
+    else if(c.kind==='players')paragraphs=playerStoryV29(t,args.reporter,frame);
+    else if(c.kind==='management')paragraphs=managementStoryV29(t,facts,args.reporter,frame);
+    else if(c.kind==='value')paragraphs=valueStoryV28(t,args.reporter);
+    else if(c.kind==='sentiment')paragraphs=[sentimentVoiceV28(t,args.reporter),sentimentContextV28(t,args.reporter)].filter(Boolean);
+    else if(c.kind==='outlook')paragraphs=outlookStoryV29(t,args.reporter,frame);
+    else if(c.kind==='hot-seat')paragraphs=hotSeatV29(t,args.reporter,frame);
+    else if(c.kind==='cool-throne')paragraphs=coolThroneV29(t,args.reporter,frame);
+    else paragraphs=['n/a'];
+    paragraphs=(paragraphs||[]).map(p=>contextualizeParagraphV28(t,naturalizePlayerReferences(t,specificityPass(t,c.kind,p))))
+      .map(p=>String(p).replace(/Fix the production and the back page will happily find a new target\./gi,'Fix the production and the angry headline can move to somebody else.'));
+    return {...f,...c,heading:headingV28(t,args.reporter,c.kind,c.heading,frame.angle),paragraphs:paragraphs.length?paragraphs:['n/a']};
+  });
+  const state={count:0},aliased=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>teamAliasPassV28(t,p,state))}));
+  return dedupeArticleSectionsV29(dedupeArticleSections(aliased));
 }
 
 function uniqueGames(teams){

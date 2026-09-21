@@ -1561,7 +1561,7 @@ function outlookStakesV28(t,r){
     gap=valid(t.next_projected)&&valid(t.next_opponent_projected)?Number(t.next_projected)-Number(t.next_opponent_projected):null;
   return deskChoice(t,r,[
     [`The larger ${team} assignment is simple: ${playoff!=null?'a '+one(playoff)+'% playoff outlook':'an unsettled playoff path'} means the game with ${next} is another chance to bank a result before the schedule starts charging interest. ${title!=null&&title>=5?`A ${one(title)}% title outlook raises the standard without changing the weekly job.`:''}`],
-    [`For ${team}, ${playoff!=null?one(playoff)+'% playoff odds':'the still-unsettled playoff picture'} turn ${next} into something more vulgar than a talking point: a game that must actually be played. ${gap!=null?`The ${one(Math.abs(gap))}-point projection gap is merely the dress code; Sunday still writes the review.`:''}`],
+    [`For ${team}, ${playoff!=null?one(playoff)+'% playoff odds':'the still-unsettled playoff picture'} make ${next} more than a talking point: it is another game this roster is expected to handle seriously. ${gap!=null?`The ${one(Math.abs(gap))}-point projection gap sets the expectation; Sunday still decides whether it was deserved.`:''}`],
     [`THE ROAD-AHEAD HEADLINE FOR ${team.toUpperCase()}: ${next}. ${playoff!=null?'Playoff outlook '+one(playoff)+'%. ':''}${gap!=null?`Projection gap ${one(Math.abs(gap))}. `:''}Everything else is pregame content until the lineup earns the next result.`],
     [`The ${team} file carries ${playoff!=null?'a '+one(playoff)+'% playoff estimate':'an unsettled playoff estimate'} into ${next}. ${title!=null&&title>=5?`A ${one(title)}% title chance is ambition, not exoneration. `:''}The next result gets admitted before any larger conclusion does.`]
   ]);
@@ -1819,8 +1819,8 @@ function gameShapeV29(t,r,f=articleFrameV29(t,r)){
     return `${topWork}, but ${team} still lost by ${one(margin)}. The leading three scorers accounted for about ${pct}% of the total${pct>=70?', which puts the missing production outside that core at the center of the postgame story':''}. ${oppWork?`${oppWork}; ${t.opponent_name} found the stronger answer.`:''}`.trim();
   }
   if(voice(r)===1){
-    if(won)return `${topWork}, the most attractive football of the afternoon. ${naturalJoin(support)||'The supporting cast'} kept the performance from becoming a one-man vanity project. Roughly ${pct}% of the scoring belonged to the leading trio; handsome concentration is still concentration, and Bartholomew will be checking whether the rest of the roster keeps its invitation.`;
-    return `${topWork}, and the individual line remains handsome even though ${team} lost. About ${pct}% of the scoring came from the top three names; losing with that much useful work near the top makes the emptier lineup spots considerably less charming.`;
+    if(won)return `${topWork}, the strongest individual football of the afternoon. ${naturalJoin(support)||'The supporting cast'} kept the performance from becoming a one-man vanity project. Roughly ${pct}% of the scoring belonged to the leading trio; even a winning lineup this concentrated gives Bartholomew a reason to inspect the quieter spots next week.`;
+    return `${topWork}, and the individual line remains excellent even though ${team} lost. About ${pct}% of the scoring came from the top three names; losing with that much useful work near the top makes the emptier lineup spots much harder to excuse.`;
   }
   if(voice(r)===2){
     if(won)return `${top.name.toUpperCase()} GOT THE BIG TYPE: ${topClause||'the loudest work on the roster'}. ${naturalJoin(support)||'The rest of the lineup'} supplied enough backup to turn the star performance into an actual ${team} win instead of a very expensive consolation prize.`;
@@ -1846,9 +1846,9 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       `${top.name} was the clearest successful piece of the ${team} week, worth ${one(top.points)} fantasy points. ${topFootball}`
     ],
     [
-      `PUT ${top.name.toUpperCase()} IN BIG TYPE: ${one(top.points)} FANTASY POINTS. ${topFootball}`,
-      `${top.name.toUpperCase()} GETS THE PHOTO: ${one(top.points)} FANTASY POINTS. ${topFootball}`,
-      `THE ${team.toUpperCase()} HEADLINER IS ${top.name.toUpperCase()}: ${one(top.points)} FANTASY POINTS. ${topFootball}`
+      `PUT ${top.name} IN BIG TYPE: ${one(top.points)} FANTASY POINTS. ${topFootball}`,
+      `${top.name} GETS THE PHOTO: ${one(top.points)} FANTASY POINTS. ${topFootball}`,
+      `THE ${team.toUpperCase()} HEADLINER IS ${top.name}: ${one(top.points)} FANTASY POINTS. ${topFootball}`
     ],
     [
       `${top.name} is the primary affirmative player finding after ${one(top.points)} fantasy points. ${topFootball}`,
@@ -1953,8 +1953,8 @@ function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
   }
   if(voice(r)===1){
     if(f.won)return `${rec} is the early ${team} record, ${rank}. ${p!=null?`The ${one(p)}% playoff outlook says the win met an existing expectation instead of inventing one.`:'The result deserves credit without pretending one week settled anything.'}`;
-    if(high)return `${team} is ${rec}, ${rank}, and the ${one(p)}% playoff outlook still treats this roster like a contender. The loss does not remove that status; it makes wasting a favorable week look considerably more careless.`;
-    return `${team} is ${rec}, ${rank}. ${p!=null?`A ${one(p)}% playoff outlook makes the loss ${low?'expensive':'annoying'}, not transformative.`:'The table is young, but the loss is already real.'}`;
+    if(high)return `The record beside ${team} is ${rec}, ${rank}, and the ${one(p)}% playoff outlook still treats this roster like a contender. The loss does not remove that status; it makes wasting a favorable week look considerably more careless.`;
+    return `The record beside ${team} is ${rec}, ${rank}. ${p!=null?`A ${one(p)}% playoff outlook makes the loss ${low?'expensive':'annoying'}, not transformative.`:'The table is young, but the loss is already real.'}`;
   }
   if(voice(r)===2){
     if(f.won)return `PRINT THE RECORD: ${rec} FOR ${team.toUpperCase()}, ${rank.toUpperCase()}. ${p!=null?`PLAYOFF OUTLOOK: ${one(p)}%. ENJOY THE ${team.toUpperCase()} WIN AND KEEP THE PARADE PERMIT IN THE DRAWER.`:'THE GROUP CHAT GETS ONE WEEK OF LEGAL OPTIMISM.'}`;

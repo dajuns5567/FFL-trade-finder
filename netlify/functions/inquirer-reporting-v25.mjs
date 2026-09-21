@@ -582,6 +582,25 @@ function specificityPass(t,kind,value){
     ['After that, every expensive accessory has to reveal whether it can actually play.','After kickoff, every expensive '+team+' accessory has to reveal whether it can actually play.'],
     ['A losing lineup cannot pretend it did not matter.','A losing '+team+' lineup cannot pretend it did not matter.'],
     ['A few clean wins would make the paperwork friendlier.','A few clean '+team+' wins would make the paperwork friendlier.'],
+    ['A civilized manager calls that something to remember, not something to confess.',team+' can call that something to remember rather than something to confess.'],
+    ['An inconvenient guest list, but at least the danger is not hiding.',team+' gets an inconvenient guest list, but at least the danger is not hiding.'],
+    ['That is enough form to make next week interesting before the forecast enters the room.',team+' gets enough recent form on the other side to make next week interesting before the forecast enters the room.'],
+    ['Keep the parade route folded, but nobody has to apologize for enjoying the scoreboard.',team+' can keep the parade route folded and still enjoy the scoreboard.'],
+    ['That one will be louder if the same choice appears next Sunday.',team+' will hear that choice much louder if it appears again next Sunday.'],
+    ['That is plenty of trouble for one headline.',team+' has plenty of trouble for one headline.'],
+    ['Nothing is settled, and the next matchup still got more expensive.',team+' has settled nothing, and the next matchup still got more expensive.'],
+    ['The problem was not the headliner; it was everything the lineup failed to build around him.',team+' did not lose because of the headliner; it lost because the rest of the lineup failed to build around him.'],
+    ['Another week with that kind of involvement would make the change harder to dismiss.',team+' would have a much harder time dismissing another week with that kind of involvement.'],
+    ['If the workload survives next week, the conversation changes quickly.',team+' gets a different conversation if that workload survives next week.'],
+    ['Useful Sundays like this make the price easier to admire.',team+' can admire the price a little more after a Sunday like this.'],
+    ['A little more ground next week and the table may deserve the good china.',team+' can make the table worthy of the good china with a little more ground next week.'],
+    ['The team lost, so the angry font is justified.',team+' lost, so the angry font is justified.'],
+    ['Put the favorite status on the scoreboard instead of the group chat.',team+' can put the favorite status on the scoreboard instead of the group chat.'],
+    ['A favorable matchup is only useful once it becomes a win.',team+' only gets value from the favorable matchup once it becomes a win.'],
+    ['The win buys patience; another quiet Sunday may not.',team+' bought patience with the win; another quiet Sunday may not.'],
+    ['That was good work trapped in a bad result.',team+' got good work trapped inside a bad result.'],
+    ['The role looked different enough to make the old expectation feel less comfortable.',team+' saw a role different enough to make the old expectation less comfortable.'],
+    ['His production now belongs in the ongoing judgment of that move.',team+' now has this production in the ongoing judgment of that move.'],
     ['September tables are temporary, but banked wins are not, and the old desk has learned not to confuse those two things.',team+' gets the usual September warning: the table is temporary, but the banked result is not.'],
     ['It is far too early for coronations and exactly early enough for consequences; one can be tasteful without pretending the standings are imaginary.',team+' is nowhere near a coronation and already close enough to consequences that the standings cannot be treated as imaginary.'],
     ['The Back Page can scream about stars all night, but this is the line that still matters when everybody wakes up Monday.','The Back Page can scream about '+team+' stars all night, but this is the line that still matters when everybody wakes up Monday.'],
@@ -630,6 +649,23 @@ function reporterStructureV26(sections,t,r){
   return order.map(k=>byKind.get(k)).filter(Boolean);
 }
 
+function dedupeArticleSections(sections){
+  const seen=new Set();
+  return (sections||[]).map(s=>({
+    ...s,
+    paragraphs:(s.paragraphs||[]).map(p=>{
+      const parts=String(p||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean),keep=[];
+      for(const sentence of parts){
+        const key=sentence.toLowerCase().replace(/\s+/g,' ').trim();
+        if(key&&seen.has(key))continue;
+        if(key)seen.add(key);
+        keep.push(sentence);
+      }
+      return keep.join(' ');
+    }).filter(Boolean)
+  }));
+}
+
 export function humanSectionsV25(args){
   const {team:t,facts={}}=args,base=humanSectionsV23({...args,team:{...t,transactions:[]}}),mgmt=management(t,facts,args.reporter);
   const rewritten=base.map(s=>{
@@ -650,7 +686,7 @@ export function humanSectionsV25(args){
     paragraphs=paragraphs.map(p=>specificityPass(t,s.kind,p));
     return {...s,paragraphs};
   });
-  return reporterStructureV26(rewritten,t,args.reporter);
+  return dedupeArticleSections(reporterStructureV26(rewritten,t,args.reporter));
 }
 
 function uniqueGames(teams){

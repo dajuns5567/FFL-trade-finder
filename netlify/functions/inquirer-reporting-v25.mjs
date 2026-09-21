@@ -202,87 +202,103 @@ function teamFootballRead(t,p,r,angle='star'){
   return [line,comment].filter(Boolean).join(' ')||null;
 }
 
+function establishedStarV29(p){
+  const prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,years=Number(p?.years_exp),pos=String(p?.position||'').toUpperCase();
+  if(!Number.isFinite(prior)||games<8)return false;
+  const threshold=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensivePlayer(p)?11:13;
+  if(prior>=threshold*1.2)return true;
+  return prior>=threshold&&(!Number.isFinite(years)||years>=1);
+}
+
 function teamTrajectory(p){
   const prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,current=Number(p?.season_avg),games=Number(p?.season_games)||0,age=Number(p?.age),years=Number(p?.years_exp),pos=String(p?.position||'').toUpperCase(),key=p?.id||p?.name,role=teamOpportunity(p),points=Number(p?.points);
   const rookie=Number.isFinite(years)&&years===0,young=(Number.isFinite(age)&&age<=26)||(Number.isFinite(years)&&years<=3),oldThreshold=pos==='QB'?34:pos==='RB'?28:(pos==='WR'||pos==='TE')?30:29,veteran=(Number.isFinite(years)&&years>=7)||(Number.isFinite(age)&&age>=oldThreshold);
   if(rookie)return {kind:'rookie',strength:1,text:keyedChoice(key,[
     `${p.name} is a rookie, and the first Sunday gave the coaching staff a reason to keep him involved.`,
-    `Rookie ${p.name} has already made himself difficult to ignore. The next ${p.name} question is whether the same role is waiting next week.`,
-    `${p.name} got his first real NFL Sunday on the page. ${p.name} earning another one is the useful part.`
+    `Rookie ${p.name} has already made himself difficult to ignore. The next question is whether the same role is waiting next week.`,
+    `${p.name} got his first real NFL Sunday on the page. Earning another one is the useful part.`
   ])};
   if(!Number.isFinite(prior)||prior<=0||priorGames<6||!Number.isFinite(current)||games<1)return null;
-  const ratio=current/prior;
-  if(games>=3&&young&&ratio>=1.28&&role?.strong)return {kind:'breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} has been too productive for too many weeks to call this a hot streak anymore. The role has grown with him.`,
-    `${p.name} is starting to look like a different weekly problem than he was last season. The workload says the jump has real support.`,
-    `The breakout case for ${p.name} has survived multiple Sundays. Young player, larger role, better production — that is enough to keep the label on him.`
-  ])};
-  if(games===1&&young&&ratio>=1.4&&role?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} belongs on early breakout watch after a first Sunday that was both loud and busy. One more ${p.name} week with the same role would make the story much harder to shrug off.`,
-    `${p.name} gave us a proper breakout teaser: young player, real involvement and a much bigger Sunday than fantasy managers were used to seeing.`,
-    `${p.name} changed the conversation for one week. Keep the same workload next Sunday and “breakout watch” starts losing the word “watch.”`
-  ])};
+  const ratio=current/prior,established=establishedStarV29(p);
   if(games>=3&&veteran&&ratio<=.68)return {kind:'decline',strength:1-ratio,text:keyedChoice(key,[
     `${p.name} is a veteran and the quiet stretch has lasted long enough to be a real concern. The old weekly floor is no longer automatic.`,
     `Put veteran ${p.name} on fall-off watch. Several weeks of lighter production have turned one bad Sunday into a pattern worth respecting.`,
     `${p.name} has moved past “slow start.” At this stage of his career, a multi-week drop deserves a sharper eye on the role.`
   ])};
-  if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:'reliable',strength:1-Math.abs(ratio-1),text:keyedChoice(key,[
+  if(!established&&games>=3&&young&&ratio>=1.28&&role?.strong)return {kind:'breakout',strength:ratio-1,text:keyedChoice(key,[
+    `${p.name} has been too productive for too many weeks to call this a hot streak anymore. The role has grown with him.`,
+    `${p.name} is starting to look like a different weekly problem than he was last season. The workload says the jump has real support.`,
+    `The breakout case for ${p.name} has survived multiple Sundays: young player, larger role and better production.`
+  ])};
+  if(!established&&games===1&&young&&ratio>=1.4&&role?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
+    `${p.name} belongs on early breakout watch after a first Sunday that was both loud and busy. One more week with the same role would make the story harder to shrug off.`,
+    `${p.name} gave us a proper breakout teaser: young player, real involvement and a much bigger Sunday than fantasy managers were used to seeing.`,
+    `${p.name} changed the conversation for one week. Keep the same workload next Sunday and “breakout watch” starts losing the word “watch.”`
+  ])};
+  if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:established?'star':'reliable',strength:1-Math.abs(ratio-1),text:keyedChoice(key,established?[
+    `${p.name} is already an established star; another week near his usual level reinforces the expectation instead of creating a breakout story.`,
+    `${p.name} did what established stars are supposed to do: make a strong weekly role look ordinary.`,
+    `Nothing about ${p.name} requires a discovery label. The production belongs to an established player doing established-player work.`
+  ]:[
     `${veteran?'Veteran ':''}${p.name} keeps showing up in the same useful neighborhood every week. That is reliability, and contenders need plenty of it.`,
-    `${p.name} has become pleasantly predictable. The production keeps landing where this roster expects it, which is exactly why nobody has to spend Tuesday solving his lineup spot.`
+    `${p.name} has become pleasantly predictable. The production keeps landing where this roster expects it.`
+  ])};
+  if(games===1&&points<=prior*.5)return {kind:'stumble',strength:1-points/prior,text:keyedChoice(key,[
+    `${veteran?'Veteran ':''}${p.name} had a bad opener. His longer track record earns him patience, not immunity.`,
+    `${p.name} started quietly enough to get noticed. One ugly Sunday is a stumble; two starts becoming a pattern.`,
+    `${p.name} gave the roster far less than it usually gets from him. The useful test comes next week, not in a Week 1 obituary.`
+  ])};
+  if(established)return {kind:'star',strength:Math.max(.5,ratio),text:keyedChoice(key,[
+    `${p.name} is already an established star. A big week strengthens that reputation; it does not make him a breakout candidate.`,
+    `${p.name} entered the season with a star-level track record, so Sunday belongs in the confirmation column rather than the discovery column.`,
+    `There is no need to rediscover ${p.name}. The question is whether the established star keeps delivering the role his roster already expects.`
   ])};
   if(games===1&&Math.abs(points-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(points-prior)/prior,text:keyedChoice(key,[
     `${veteran?'Veteran ':''}${p.name} averaged ${one(prior)} last season and looked like the same player Sunday. No reinvention required.`,
     `${p.name} gave his roster a very familiar Sunday after averaging ${one(prior)} last year. Boring can be profitable.`
-  ])};
-  if(games===1&&points<=prior*.5)return {kind:'stumble',strength:1-points/prior,text:keyedChoice(key,[
-    `${veteran?'Veteran ':''}${p.name} had a bad opener. ${p.name}’s longer track record earns him patience, not immunity.`,
-    `${p.name} started quietly enough to get noticed. One ugly Sunday is a stumble; two starts becoming a pattern.`,
-    `${p.name} gave the roster far less than it usually gets from him. ${p.name} gets the useful test next week, not a Week 1 obituary.`
   ])};
   if(veteran)return {kind:'veteran',strength:.25,text:`Veteran ${p.name} has too much history for one Sunday to rewrite him. The week belongs in the file, not on the tombstone.`};
   return null;
 }
 
 function playerTrajectory(p){
-  const prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,current=Number(p?.season_avg),games=Number(p?.season_games)||0,age=Number(p?.age),opp=opportunity(p),pos=String(p?.position||'').toUpperCase(),key=p?.id||p?.name;
+  const prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,current=Number(p?.season_avg),games=Number(p?.season_games)||0,age=Number(p?.age),opp=opportunity(p),pos=String(p?.position||'').toUpperCase(),key=p?.id||p?.name,established=establishedStarV29(p);
   if(!Number.isFinite(prior)||prior<=0||priorGames<6||!Number.isFinite(current)||games<1)return null;
   const ratio=current/prior,oldThreshold=pos==='QB'?34:pos==='RB'?28:(pos==='WR'||pos==='TE')?30:29;
-  if(games>=3&&Number.isFinite(age)&&age<=26&&ratio>=1.28&&opp?.strong)return {kind:'breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} has climbed from ${one(prior)} per game last season to ${one(current)} this year. The role has grown with the production; breakout watch is no longer premature.`,
-    `${p.name} is averaging ${one(current)} after sitting at ${one(prior)} last year. The old baseline is starting to look stale.`,
-    `Last year’s ${one(prior)}-point average looks small next to ${p.name}’s ${one(current)} this season. This has lasted long enough to call it a real leap.`,
-    `${p.name} has moved from ${one(prior)} per game last season to ${one(current)} this year. The hot start has outlived the fluke stage.`
-  ])};
-  if(games===1&&Number.isFinite(age)&&age<=26&&ratio>=1.4&&opp?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} opened far above last year’s ${one(prior)}-point average. Put him on breakout watch, not in the victory parade.`,
-    `${p.name} cleared last year’s ${one(prior)}-point average by a wide margin. One Sunday is not a trend, but it is enough to get attention.`,
-    `${p.name} entered from a ${one(prior)}-point baseline last year and opened this season much louder. The old expectation already looks a little uncomfortable.`,
-    `${p.name} averaged ${one(prior)} last season and opened well above it. Give the new job description another Sunday before calling it permanent.`
-  ])};
   if(games>=3&&Number.isFinite(age)&&age>=oldThreshold&&ratio<=.68)return {kind:'decline',strength:1-ratio,text:keyedChoice(key,[
     `${p.name} has earned a real decline watch: ${one(current)} per game this season versus ${one(prior)} last year. At age ${age}, the old weekly floor no longer gets the benefit of the doubt.`,
     `The uncomfortable veteran question belongs to ${p.name}: ${one(current)} now after ${one(prior)} last season. At age ${age}, the drop deserves attention.`,
-    `${p.name} is giving us a decline story worth monitoring. Production has fallen from ${one(prior)} last year to ${one(current)} this season, and age ${age} makes the slide harder to shrug off.`,
-    `${p.name} sits at ${one(current)} per game after a ${one(prior)} average last year. At age ${age}, “slow start” is beginning to run out of room.`
+    `${p.name} is giving us a decline story worth monitoring. Production has fallen from ${one(prior)} last year to ${one(current)} this season.`
   ])};
-  if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:'reliable',strength:1-Math.abs(ratio-1),text:keyedChoice(key,[
-    `${p.name} keeps doing the boring valuable thing: ${one(current)} per game this season after ${one(prior)} last year.`,
-    `${p.name} is almost aggressively familiar: ${one(current)} per game now, ${one(prior)} last year. A lineup spot that refuses to become a Tuesday problem has value.`,
-    `${p.name} is at ${one(current)} per game after ${one(prior)} last season. The weekly floor still looks intact.`,
-    `${p.name} is supplying continuity: ${one(current)} per game this season compared with ${one(prior)} last year. Reliable players rarely win the group chat, but they keep lineups out of rescue mode.`
+  if(!established&&games>=3&&Number.isFinite(age)&&age<=26&&ratio>=1.28&&opp?.strong)return {kind:'breakout',strength:ratio-1,text:keyedChoice(key,[
+    `${p.name} has climbed from ${one(prior)} per game last season to ${one(current)} this year. The role has grown with the production; breakout watch is no longer premature.`,
+    `${p.name} is averaging ${one(current)} after sitting at ${one(prior)} last year. The old expectation is starting to look stale.`,
+    `Last year’s ${one(prior)}-point average looks small next to ${p.name}’s ${one(current)} this season. This has lasted long enough to call it a real leap.`
   ])};
-  if(games===1&&Math.abs(Number(p.points)-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(Number(p.points)-prior)/prior,text:keyedChoice(key,[
-    `${p.name} opened near last season’s ${one(prior)}-point level. Familiar is a compliment here.`,
-    `${p.name} gave his team a familiar opening line after a ${one(prior)}-point baseline last year.`,
-    `There was nothing exotic about ${p.name}’s opener. Last season’s ${one(prior)}-point baseline still looks like home.`,
-    `${p.name} looked a lot like the player last season already taught us to expect, right around a ${one(prior)}-point baseline.`
+  if(!established&&games===1&&Number.isFinite(age)&&age<=26&&ratio>=1.4&&opp?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
+    `${p.name} cleared last year’s ${one(prior)}-point average by a wide margin. One Sunday is not a trend, but it is enough to get attention.`,
+    `${p.name} averaged ${one(prior)} last season and opened well above it. Give the new role another Sunday before calling it permanent.`,
+    `${p.name} opened far above last year’s ${one(prior)}-point level. Put him on breakout watch, not in the victory parade.`
   ])};
   if(games===1&&Number(p.points)<=prior*.5)return {kind:'stumble',strength:1-Number(p.points)/prior,text:keyedChoice(key,[
     `${p.name} opened well below last year’s ${one(prior)}-point average. One bad Sunday is a stumble, not a decline.`,
     `${p.name} started the year far under the ${one(prior)}-point average he carried last season. The next workload gets a brighter light.`,
-    `${p.name} opened a long way below last year’s ${one(prior)}-point average. The production disappeared for a week; the career did not.`,
-    `${p.name} opened far below the ${one(prior)}-point average he established last season. Another quiet Sunday would make the concern harder to dismiss.`
+    `${p.name} opened a long way below last year’s ${one(prior)}-point average. The production disappeared for a week; the career did not.`
+  ])};
+  if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:established?'star':'reliable',strength:1-Math.abs(ratio-1),text:keyedChoice(key,established?[
+    `${p.name} remains an established star, not a breakout story. ${one(current)} per game this season sits in the same conversation as last year’s ${one(prior)}.`,
+    `${p.name} is doing star-level work that the league already knew belonged in his range.`
+  ]:[
+    `${p.name} keeps doing the boring valuable thing: ${one(current)} per game this season after ${one(prior)} last year.`,
+    `${p.name} is supplying continuity: ${one(current)} per game this season compared with ${one(prior)} last year.`
+  ])};
+  if(established)return {kind:'star',strength:Math.max(.5,ratio),text:keyedChoice(key,[
+    `${p.name} already owns a star-level track record. This week can reinforce or dent that reputation, but it cannot honestly be sold as a breakout.`,
+    `${p.name} belongs in the established-star bucket; Sunday changes the weekly conversation, not his career category.`
+  ])};
+  if(games===1&&Math.abs(Number(p.points)-prior)<=Math.max(2,prior*.22)&&prior>=8)return {kind:'reliable',strength:1-Math.abs(Number(p.points)-prior)/prior,text:keyedChoice(key,[
+    `${p.name} gave his team a familiar opening line after a ${one(prior)}-point average last year.`,
+    `There was nothing exotic about ${p.name}’s opener. Last season’s ${one(prior)}-point level still looks like home.`
   ])};
   return null;
 }
@@ -305,18 +321,21 @@ function leaguePlayerPulse(teams){
 function bartholomewPlayerBoard(teams){
   const rows=(teams||[]).flatMap(t=>(t.starter_details||[]).map(p=>{
     const prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,pts=Number(p?.points),age=Number(p?.age),years=Number(p?.years_exp),
-      role=teamOpportunity(p),tr=teamTrajectory(p),ratio=Number.isFinite(prior)&&prior>0&&Number.isFinite(pts)?pts/prior:null;
-    return {t,p,tr,role,prior,priorGames,pts,ratio,young:(Number.isFinite(age)&&age<=26)||(Number.isFinite(years)&&years<=3)};
+      role=teamOpportunity(p),tr=teamTrajectory(p),ratio=Number.isFinite(prior)&&prior>0&&Number.isFinite(pts)?pts/prior:null,established=establishedStarV29(p);
+    return {t,p,tr,role,prior,priorGames,pts,ratio,established,young:(Number.isFinite(age)&&age<=26)||(Number.isFinite(years)&&years<=3)};
   })).filter(x=>Number.isFinite(x.pts));
   const breakoutScore=x=>{
+    if(x.established)return -Infinity;
     if(['breakout','early-breakout'].includes(x.tr?.kind))return 300+Number(x.tr.strength||0)*100;
     if(x.tr?.kind==='rookie'&&x.pts>=8)return 240+x.pts;
-    if(x.young&&x.priorGames>=6&&x.ratio!=null&&x.ratio>=1.15)return 180+x.ratio*10+x.pts/10+(x.role?.strong?20:0);
-    if(x.young&&x.pts>=12)return 120+x.pts+(x.role?.strong?20:0);
+    if(x.young&&x.priorGames>=6&&x.ratio!=null&&x.ratio>=1.2&&x.role?.strong)return 180+x.ratio*10+x.pts/10;
+    if(x.young&&x.pts>=12&&x.role?.strong)return 120+x.pts;
     return -Infinity;
   };
   const reliableScore=x=>{
+    if(x.tr?.kind==='star')return 360+Number(x.tr.strength||0)*50;
     if(x.tr?.kind==='reliable')return 300+Number(x.tr.strength||0)*100;
+    if(x.established&&x.pts>=x.prior*.7)return 250+x.pts/10;
     if(x.priorGames>=6&&Number.isFinite(x.prior)&&x.prior>=6&&x.ratio!=null&&Math.abs(x.ratio-1)<=.3)return 180-Math.abs(x.ratio-1)*100+x.prior/10;
     return -Infinity;
   };
@@ -325,21 +344,32 @@ function bartholomewPlayerBoard(teams){
     ro=take(false,2,reliableScore,used),rd=take(true,1,reliableScore,used);
   const rolePhrase=x=>x.role?.text?` The role included ${x.role.text}, enough substance to keep the champagne corked but the name circled.`:'';
   const ps=[];
-  if(bo.length===2&&bd.length===1){
-    ps.push(`Bartholomew’s offensive breakout watch admits ${bo[0].p.name} and ${bo[1].p.name} past the velvet rope. ${bo[0].p.name} earned the invitation.${rolePhrase(bo[0])} ${bo[1].p.name} did too.${rolePhrase(bo[1])} On defense, ${bd[0].p.name} gets the third seat after a Sunday loud enough to demand another look. Three names, no coronations; restraint remains fashionable for at least one more week.`);
+  if(bo.length||bd.length){
+    const offense=bo.length?`On offense, ${naturalJoin(bo.map(x=>x.p.name))} ${bo.length===1?'gets':'get'} the breakout-watch invitations.`:'No offensive player clears the breakout bar this week.';
+    const defense=bd.length?` On defense, ${bd[0].p.name} gets the watch list after a Sunday loud enough to demand another look.`:' No defensive player clears the breakout bar this week.';
+    const detail=bo.map(x=>`${x.p.name}:${rolePhrase(x)}`).join(' ');
+    ps.push(`${offense}${defense} ${detail} Established stars are deliberately excluded; breakout watch is for players still changing what the league thinks they are.`);
   }
-  if(ro.length===2&&rd.length===1){
-    ps.push(`Reliability is less glamorous and considerably more useful. ${ro[0].p.name} and ${ro[1].p.name} are the two offensive names Bartholomew trusts to keep doing familiar work; neither needed a reinvention story to matter. On defense, ${rd[0].p.name} gets the same designation. Dependability rarely gets champagne, which is probably why it survives the evening.`);
+  if(ro.length||rd.length){
+    const offense=ro.length?`${naturalJoin(ro.map(x=>x.p.name))} ${ro.length===1?'is the offensive reliability name':'are the two offensive reliability names'} Bartholomew trusts to keep doing familiar work.`:'No offensive player earns the reliability label this week.';
+    const defense=rd.length?` On defense, ${rd[0].p.name} gets the same designation.`:' No defensive player clears the reliability bar this week.';
+    ps.push(`Reliability is less glamorous and considerably more useful. ${offense}${defense} An established star can absolutely belong here; being excellent already is the opposite of being a breakout candidate.`);
   }
   return ps;
 }
 
 export function breakoutWatch(t){
-  const direct=(t.starter_details||[]).map(p=>({p,tr:playerTrajectory(p)})).filter(x=>['breakout','early-breakout'].includes(x.tr?.kind)).sort((a,b)=>Number(b.tr.strength)-Number(a.tr.strength))[0];
+  const direct=(t.starter_details||[]).map(p=>({p,tr:playerTrajectory(p)})).filter(x=>['breakout','early-breakout'].includes(x.tr?.kind)&&!establishedStarV29(x.p)).sort((a,b)=>Number(b.tr.strength)-Number(a.tr.strength))[0];
   if(direct)return direct.tr.text;
-  const candidates=(t.starter_details||[]).map(p=>{const age=Number(p.age),f=p.recent_form||{},baseline=Number(f.prior3_avg),current=Number(f.last3_avg),opp=opportunity(p);if(!Number.isFinite(age)||age>26||!Number.isFinite(baseline)||baseline<=0||!Number.isFinite(current)||!opp?.strong)return null;const lift=current-baseline;if(lift<3||current<baseline*1.2)return null;return {p,age,baseline,current,lift,opp,score:lift+Math.max(0,26-age)*.5}}).filter(Boolean).sort((a,b)=>b.score-a.score);
+  const candidates=(t.starter_details||[]).map(p=>{
+    if(establishedStarV29(p))return null;
+    const age=Number(p.age),f=p.recent_form||{},baseline=Number(f.prior3_avg),current=Number(f.last3_avg),opp=opportunity(p);
+    if(!Number.isFinite(age)||age>26||!Number.isFinite(baseline)||baseline<=0||!Number.isFinite(current)||!opp?.strong)return null;
+    const lift=current-baseline;if(lift<3||current<baseline*1.2)return null;
+    return {p,age,baseline,current,lift,opp,score:lift+Math.max(0,26-age)*.5};
+  }).filter(Boolean).sort((a,b)=>b.score-a.score);
   const x=candidates[0];if(!x)return null;
-  return `${x.p.name} is worth a breakout watch for ${t.team_name}. At age ${x.age}, the scoring has climbed from ${one(x.baseline)} per game across the prior sample to ${one(x.current)} over the last three, and this week’s ${x.opp.text} gives the jump actual opportunity behind it. The evidence is meaningful now, but the next few Sundays still decide whether the new level holds.`;
+  return `${x.p.name} is worth a breakout watch for ${t.team_name}. At age ${x.age}, the scoring has climbed from ${one(x.baseline)} per game across the prior sample to ${one(x.current)} over the last three, and this week’s ${x.opp.text} gives the jump actual opportunity behind it. The next few Sundays still decide whether the new level holds.`;
 }
 
 function consolidateTransactions(t){

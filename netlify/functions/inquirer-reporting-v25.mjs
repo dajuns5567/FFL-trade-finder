@@ -1763,10 +1763,10 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       return `${p.name}${c?' '+c:''}${tr?'; '+classificationSentenceV29(p,tr,r):''}`;
     });
     ps.push([
-      `${naturalJoin(bits)}. Those performances matter because ${team} needs more than a single headliner; ${won?'the supporting work helped turn the week into a win.':'their work made the loss more frustrating, not prettier.'}`,
-      `${naturalJoin(bits)}. ${won?'That is proper company for a winning star.':'Those are real contributions trapped inside a losing result, which is precisely why the quieter lineup spots deserve scrutiny.'}`,
-      `${naturalJoin(bits)}. ${won?'THE SUPPORTING CAST MADE THE WIN LEGAL.':'GOOD PERFORMANCES DO NOT GET TO ACQUIT A LOSING LINEUP; they make the missing production easier to find.'}`,
-      `${naturalJoin(bits)}. ${won?'The file contains more than one affirmative witness, which strengthens the result.':'The loss cannot be blamed on everyone equally; these players gave the roster useful work while other spots failed to match it.'}`
+      `${naturalJoin(bits)}. ${won?`That gave ${team} more than one dependable source of production and helped turn the week into a win.`:`Those are legitimate contributions trapped inside a losing result; the quiet lineup spots deserve more attention than the players who actually showed up.`}`,
+      `${naturalJoin(bits)}. ${won?`That is proper company for a winning star on ${team}.`:`The loss gets more revealing, not less: ${team} had useful secondary work and still could not find enough elsewhere.`}`,
+      `${naturalJoin(bits)}. ${won?`THE SUPPORTING CAST MADE THE ${team.toUpperCase()} WIN LEGAL.`:`GOOD PERFORMANCES DO NOT ACQUIT THE ${team.toUpperCase()} LINEUP; THEY HELP IDENTIFY WHAT WAS MISSING.`}`,
+      `${naturalJoin(bits)}. ${won?`The ${team} file contains more than one affirmative witness, which strengthens the result.`:`The ${team} loss cannot be assigned equally across the roster; these players did enough to narrow the search.`}`
     ][voice(r)]);
   }
   const bad=concerns[0];
@@ -1775,11 +1775,19 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
     ps.push([
       `${bad.name} is the player Nick circles in the margin after finishing ${one(d)} points below projection${c?` while he ${c}`:''}. ${won?'The win buys one week of patience; another miss becomes harder to dismiss.':'In a loss, that empty space is part of the result rather than a footnote.'} ${classificationSentenceV29(bad,tr,r)||''}`.trim(),
       `${bad.name} supplied the least flattering line of the main cast, landing ${one(d)} below projection${c?` after he ${c}`:''}. ${won?'Winning keeps the criticism civilized for a week.':'Losing removes that courtesy.'} ${classificationSentenceV29(bad,tr,r)||''}`.trim(),
-      `THE NAME IN RED IS ${bad.name.toUpperCase()}: ${one(d)} below projection${c?`, with a football line in which he ${c}`:''}. ${won?'The scoreboard hid it this time.':'The scoreboard put a spotlight on it.'} ${classificationSentenceV29(bad,tr,r)||''}`.trim(),
+      `THE NAME IN RED IS ${bad.name.toUpperCase()}: ${one(d)} BELOW PROJECTION${c?`, WITH A FOOTBALL LINE IN WHICH HE ${c.toUpperCase()}`:''}. ${won?'THE SCOREBOARD HID IT THIS TIME.':'THE SCOREBOARD PUT A SPOTLIGHT ON IT.'} ${classificationSentenceV29(bad,tr,r)||''}`.trim(),
       `${bad.name} is the adverse exhibit: ${one(d)} points below projection${c?` after he ${c}`:''}. ${won?'The team won despite it; that is mitigation, not exoneration.':'The team lost, so the shortfall belongs in the causal chain.'} ${classificationSentenceV29(bad,tr,r)||''}`.trim()
     ][voice(r)]);
   }
-  return ps;
+  while(ps.length<3){
+    ps.push([
+      `${team} does not need another stat dump here. The useful roster read is that ${top.name} established the weekly ceiling, while the next tier of starters now has to show whether this distribution of work can survive another opponent.`,
+      `${team} has enough material for a proper cast list now. ${top.name} owns the star turn; the rest of the roster gets another week to decide who becomes recurring company instead of a one-night guest.`,
+      `${team.toUpperCase()} HAS A HEADLINER IN ${top.name.toUpperCase()}. THE NEXT ISSUE IS WHETHER SOMEBODY ELSE FORCES HIS WAY INTO EQUALLY LARGE TYPE BEFORE THE STARS BECOME A WEEKLY RESCUE SERVICE.`,
+      `${top.name} is established as the primary affirmative finding for ${team}. The remaining roster question is which secondary role becomes dependable enough to stop every close week from turning into a one-player exhibit.`
+    ][voice(r)]);
+  }
+  return ps.slice(0,3);
 }
 
 function coolThroneV29(t,r,f=articleFrameV29(t,r)){
@@ -1850,12 +1858,12 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
     }
     let counter='';
     if(outgoing&&outStrong)counter=`${outgoing.name} answered with ${one(outgoing.points)}${transactionDestination(t,outgoing)}, which keeps the other side of the receipt alive.`;
-    else if(outgoing&&transactionDestination(t,outgoing))counter=`${outgoing.name} is now producing${transactionDestination(t,outgoing)}, so the departure has to be tracked in the correct uniform rather than credited to ${team}.`;
+    else if(outgoing)counter=`${outgoing.name} is now producing${transactionDestination(t,outgoing)}, so the departure has to be tracked in the correct uniform rather than credited to ${team}.`;
     ps.push([
-      `${moveLead} ${impact} ${counter} Nick’s note is simple: the transaction matters only insofar as it changed the usable football on Sunday.`,
-      `${moveLead} ${impact} ${counter} The receipt finally has football attached to it, which is considerably more interesting than transaction-day self-congratulation.`,
-      `${moveLead} ${impact} ${counter} TRANSACTION DAY WAS THE TRAILER. SUNDAY WAS THE FIRST SCENE THAT COUNTS.`,
-      `${moveLead} ${impact} ${counter} The timestamp proves the decision happened; the Sunday role begins showing what the decision actually changed.`
+      `${moveLead} ${impact} ${counter} Nick’s note is simple: the transaction belongs in the article only to the extent it changed usable football for ${team}.`,
+      `${moveLead} ${impact} ${counter} The ${team} receipt finally has football attached to it, which is considerably more interesting than transaction-day self-congratulation.`,
+      `${moveLead} ${impact} ${counter} TRANSACTION DAY WAS THE TRAILER FOR ${team.toUpperCase()}. SUNDAY WAS THE FIRST SCENE THAT COUNTS.`,
+      `${moveLead} ${impact} ${counter} The timestamp proves the ${team} decision happened; the Sunday role begins showing what actually changed.`
     ][voice(r)].trim());
   }
   if(miss?.reserve&&miss?.starter&&Number(miss.gap)>0){
@@ -1868,23 +1876,31 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
     ][voice(r)]);
   }
   if(!ps.length)ps.push([
-    `${manager} did not create a material transaction or legal lineup controversy this week. That is not praise so much as the absence of an avoidable second story.`,
-    `${manager} has denied Bartholomew the pleasure of a proper front-office grievance. Competence can be dreadfully inconvenient for a columnist.`,
-    `NO MANAGEMENT SIREN FOR ${team.toUpperCase()}. THE PLAYERS PRODUCED ENOUGH MATERIAL WITHOUT HELP FROM THE FRONT OFFICE.`,
-    `No material transaction or eligible lineup mistake clears the threshold for a management charge this week.`
+    `${manager} did not create a material transaction or legal lineup controversy for ${team} this week. That is not praise so much as the absence of an avoidable second story.`,
+    `${manager} has denied Bartholomew a proper ${team} front-office grievance. Competence can be dreadfully inconvenient for a columnist.`,
+    `NO ${team.toUpperCase()} MANAGEMENT SIREN THIS WEEK. THE PLAYERS PRODUCED ENOUGH MATERIAL WITHOUT HELP FROM THE FRONT OFFICE.`,
+    `No material ${team} transaction or eligible lineup mistake clears the threshold for a management charge this week.`
   ][voice(r)]);
-  return ps;
+  if(ps.length<2)ps.push([
+    `${manager} still has a follow-up assignment: preserve what worked for ${team}, correct what did not, and avoid turning one week’s manageable issue into a repeatable one.`,
+    `${manager} gets a second management note only because ${team} now has a real Sunday to learn from. The elegant move is to fix the obvious weakness before it needs a louder paragraph.`,
+    `${manager.toUpperCase()} GETS ONE MORE LINE: KEEP THE USEFUL ${team.toUpperCase()} DECISIONS, FIX THE OBVIOUS ONE, AND DO NOT MAKE THIS PAPER RECYCLE THE COMPLAINT NEXT WEEK.`,
+    `${manager} leaves the ${team} management file with a follow-up obligation rather than a verdict; the next lineup will show whether the first week changed any decisions.`
+  ][voice(r)]);
+  return ps.slice(0,2);
 }
 
 function outlookStoryV29(t,r,f=articleFrameV29(t,r)){
-  const base=outlookStoryV28(t,r).slice(0,1),schedule=scheduleSignificanceStory(t,r).slice(0,2),team=teamIdentityV28(t).mascot,next=t.next_opponent_name||'the next opponent';
+  const base=outlookStoryV28(t,r).slice(0,1),schedule=scheduleSignificanceStory(t,r).slice(0,2),team=teamIdentityV28(t).mascot,next=t.next_opponent_name||'the next opponent',
+    broader=outlookStakesV28(t,r);
   const bridge=[
     f.won?`${team} gets to approach ${next} from the useful side of the standings; the schedule beyond it decides whether this win becomes cushion or merely a pleasant opening note.`:`${team} arrives at ${next} needing a response, and the opponents behind that matchup determine whether Week 1 was a bruise or the beginning of schedule pressure.`,
     f.won?`A winning week lets ${team} meet ${next} with a little leverage. The real elegance would be using it before the schedule changes the dress code.`:`The loss makes ${next} less decorative for ${team}; what follows on the schedule determines how expensive another stumble would become.`,
     f.won?`${team.toUpperCase()} GETS TO BRING A WIN INTO ${String(next).toUpperCase()}. NOW READ THE REST OF THE SCHEDULE BEFORE SPENDING THAT CUSHION.`:`${team.toUpperCase()} NEEDS AN ANSWER AGAINST ${String(next).toUpperCase()}. THE GAMES AFTER IT DECIDE WHETHER THE PRESSURE STAYS LOCAL OR STARTS TRAVELING.`,
     f.won?`The next exhibit is ${next}. ${team} has one favorable result in hand; the subsequent schedule determines how much procedural value that cushion actually carries.`:`The next exhibit is ${next}. ${team} has an adverse result already entered; the subsequent schedule determines how quickly a second one would become material.`
   ][voice(r)];
-  return [...base,bridge,...schedule].filter(Boolean);
+  const road=schedule.length?schedule:[broader];
+  return [...base,bridge,...road].filter(Boolean).slice(0,4);
 }
 
 function dedupeArticleSectionsV29(sections){

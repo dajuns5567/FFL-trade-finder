@@ -529,6 +529,17 @@ function nextOpponentFootballStory(t,r){
   return [open,ctx,...stakes].filter(Boolean).join(' ');
 }
 
+function managementNarrativeCoda(t,r){
+  const tx=consolidateTransactions(t)||[];if(!tx.length)return null;
+  const count=tx.length,won=Number(t.points)>Number(t.opponent_points);
+  return deskChoice(t,r,[
+    [`${t.manager_name} made ${count} notable roster move${count===1?'':'s'} around this matchup. ${won?'${t.team_name} won, so the changes get to settle in under a good result.':'The loss means those choices will be judged against a roster that already needed more help.'}`],
+    [`${count===1?'One roster change':'Those '+count+' roster changes'} gave ${t.manager_name} something new to live with. ${won?'A win is a pleasant place to let the experiment breathe.':'A loss tends to make every rearranged chair look more important.'}`],
+    [`${t.manager_name.toUpperCase()} MOVED THE ROSTER ${count===1?'ONCE':count+' TIMES'}. ${won?'${t.team_name} got the win, which is the nicest possible first headline.':'The result was a loss, so the new configuration does not get a quiet opening week.'}`],
+    [`${t.manager_name} changed the roster ${count===1?'once':count+' times'} around Week 1. ${won?'${t.team_name} won with the new arrangement in place.':'The loss puts a little more pressure on those changes to produce something useful quickly.'}`]
+  ]);
+}
+
 function managementImpactStory(t,r){
   const facts=t.transaction_player_facts||{},clean={...t,transactions:consolidateTransactions(t)},moves=selectImportantMoves(clean,facts);if(!moves.length)return null;
   const m=moves[0],incoming=(m.add||[]).filter(p=>valid(p.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],outgoing=(m.drop||[]).filter(p=>valid(p.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],
@@ -562,7 +573,7 @@ function managementImpactStory(t,r){
 function broadcastExpansionV26(t,kind,r){
   if(kind==='lede')return [seasonContextStoryV26(t,r),teamScoreConstructionStory(t,r),currentOpponentFootballStory(t,r)].filter(Boolean);
   if(kind==='players')return [supportingCastFootballStory(t,r)].filter(Boolean);
-  if(kind==='management')return [lineupProcessStory(t,r),managementImpactStory(t,r)].filter(Boolean);
+  if(kind==='management')return [lineupProcessStory(t,r),managementImpactStory(t,r),managementNarrativeCoda(t,r)].filter(Boolean);
   if(kind==='outlook')return [nextOpponentFootballStory(t,r)].filter(Boolean);
   if(kind==='hot-seat'||kind==='cool-throne')return [chairFootballStory(t,kind,r)].filter(Boolean);
   return [];

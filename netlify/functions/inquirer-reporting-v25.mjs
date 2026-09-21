@@ -1973,7 +1973,15 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
   const clean={...t,transactions:consolidateTransactions(t)},moves=selectImportantMoves(clean,facts),miss=t.best_lineup_miss,ps=[],manager=t.manager_name||'Management',team=teamIdentityV28(t).mascot,v=voice(r);
   if(moves.length){
     const m=moves[0],trade=String(m.move?.type||'').toLowerCase()==='trade',
-      canonical=p=>({...p,name:t.transaction_player_facts?.[String(p?.id)]?.name||p?.name}),
+      tradeNameMap=new Map();
+    if(trade){
+      for(const a of (t.trade_acquisitions||[]).filter(a=>String(a.trade_id||'')===String(m.move?.id||''))){
+        if(a.player_id&&a.player_name)tradeNameMap.set(String(a.player_id),String(a.player_name));
+        const ids=a.outgoing_player_ids||[],ns=a.outgoing_player_names||[];
+        ids.forEach((id,i)=>{if(id&&ns[i])tradeNameMap.set(String(id),String(ns[i]))});
+      }
+    }
+    const canonical=p=>({...p,name:tradeNameMap.get(String(p?.id))||t.transaction_player_facts?.[String(p?.id)]?.name||p?.name}),
       adds=(m.add||[]).map(canonical),drops=(m.drop||[]).map(canonical),
       incoming=adds.slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],
       outgoing=drops.slice().sort((a,b)=>Number(b.points||0)-Number(a.points||0))[0],add=names(adds),drop=names(drops),

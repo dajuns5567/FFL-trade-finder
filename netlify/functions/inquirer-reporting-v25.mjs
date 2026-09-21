@@ -198,8 +198,8 @@ function teamTrajectory(p){
   const rookie=Number.isFinite(years)&&years===0,young=(Number.isFinite(age)&&age<=26)||(Number.isFinite(years)&&years<=3),oldThreshold=pos==='QB'?34:pos==='RB'?28:(pos==='WR'||pos==='TE')?30:29,veteran=(Number.isFinite(years)&&years>=7)||(Number.isFinite(age)&&age>=oldThreshold);
   if(rookie)return {kind:'rookie',strength:1,text:keyedChoice(key,[
     `${p.name} is a rookie, and the first Sunday gave the coaching staff a reason to keep him involved.`,
-    `Rookie ${p.name} has already made himself difficult to ignore. The next question is whether the same role is waiting next week.`,
-    `${p.name} got his first real NFL Sunday on the page. For a rookie, earning another one is the useful part.`
+    `Rookie ${p.name} has already made himself difficult to ignore. The next ${p.name} question is whether the same role is waiting next week.`,
+    `${p.name} got his first real NFL Sunday on the page. ${p.name} earning another one is the useful part.`
   ])};
   if(!Number.isFinite(prior)||prior<=0||priorGames<6||!Number.isFinite(current)||games<1)return null;
   const ratio=current/prior;
@@ -209,7 +209,7 @@ function teamTrajectory(p){
     `The breakout case for ${p.name} has survived multiple Sundays. Young player, larger role, better production — that is enough to keep the label on him.`
   ])};
   if(games===1&&young&&ratio>=1.4&&role?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} belongs on early breakout watch after a first Sunday that was both loud and busy. One more week with the same role would make the story much harder to shrug off.`,
+    `${p.name} belongs on early breakout watch after a first Sunday that was both loud and busy. One more ${p.name} week with the same role would make the story much harder to shrug off.`,
     `${p.name} gave us a proper breakout teaser: young player, real involvement and a much bigger Sunday than fantasy managers were used to seeing.`,
     `${p.name} changed the conversation for one week. Keep the same workload next Sunday and “breakout watch” starts losing the word “watch.”`
   ])};
@@ -227,9 +227,9 @@ function teamTrajectory(p){
     `${p.name} gave his roster a very familiar Sunday after averaging ${one(prior)} last year. Boring can be profitable.`
   ])};
   if(games===1&&points<=prior*.5)return {kind:'stumble',strength:1-points/prior,text:keyedChoice(key,[
-    `${veteran?'Veteran ':''}${p.name} had a bad opener. His longer track record earns him patience, not immunity.`,
+    `${veteran?'Veteran ':''}${p.name} had a bad opener. ${p.name}’s longer track record earns him patience, not immunity.`,
     `${p.name} started quietly enough to get noticed. One ugly Sunday is a stumble; two starts becoming a pattern.`,
-    `${p.name} gave the roster far less than it usually gets from him. The useful test comes next week, not in a Week 1 obituary.`
+    `${p.name} gave the roster far less than it usually gets from him. ${p.name} gets the useful test next week, not a Week 1 obituary.`
   ])};
   if(veteran)return {kind:'veteran',strength:.25,text:`Veteran ${p.name} has too much history for one Sunday to rewrite him. The week belongs in the file, not on the tombstone.`};
   return null;
@@ -551,19 +551,19 @@ function teamPlayersV27(t,r){
     }).slice(0,2),ps=[];
   const topOpen=deskChoice(t,r,[
     [`${top.name} gets the lead paragraph after ${one(top.points)} fantasy points. ${t.team_name} got the volume and efficiency it needed from him.`],
-    [`${top.name} gets the good china after ${one(top.points)} fantasy points. The performance was excessive, elegant and entirely welcome.`],
-    [`PUT ${top.name.toUpperCase()} IN THE BIG TYPE: ${one(top.points)} fantasy points. He did the heavy lifting and made the headline easy.`],
-    [`${top.name} is the first name in the file after ${one(top.points)} fantasy points. The workload makes the case cleaner than the headline does.`]
+    [`${top.name} gets the good china after ${one(top.points)} fantasy points. ${top.name}’s performance was excessive, elegant and entirely welcome.`],
+    [`PUT ${top.name.toUpperCase()} IN THE BIG TYPE: ${one(top.points)} fantasy points. ${top.name} did the heavy lifting and made the headline easy.`],
+    [`${top.name} is the first name in the file after ${one(top.points)} fantasy points. ${top.name}’s workload makes the case cleaner than the headline does.`]
   ]);
   ps.push([topOpen,topLine,topUsage].filter(Boolean).join(' '));
   if(support)ps.push(support);
   const badRead=bad?teamFootballRead(t,bad,r,'hot-seat'):null;
   const watch=trajectoryRows.map(watchSentenceV27).join(' ');
   const close=deskChoice(t,r,[
-    [`${t.team_name} has a headliner, useful company and at least one player worth checking again next Sunday. That is a healthier problem than searching the roster for a pulse.`],
-    [`A proper cast has stars, supporting actors and somebody making the critic reach for a sharper pen. ${t.team_name} supplied all three.`],
+    [`${t.team_name} has a headliner, useful company and at least one player worth checking again next Sunday. ${t.team_name} can live with that problem more easily than searching the roster for a pulse.`],
+    [`${t.team_name} has a proper cast: stars, supporting actors and somebody making the critic reach for a sharper pen.`],
     [`STARS, SUPPORT AND ONE PROBLEM TO FIX. ${t.team_name} gave the back page enough material without turning the article into an autopsy.`],
-    [`${t.team_name} has players to trust and players to watch. The next Sunday gets to separate the useful pattern from the convenient story.`]
+    [`${t.team_name} has players to trust and players to watch. ${t.team_name}’s next Sunday gets to separate the useful pattern from the convenient story.`]
   ]);
   ps.push([badRead,watch,close].filter(Boolean).join(' '));
   return ps.filter(Boolean);

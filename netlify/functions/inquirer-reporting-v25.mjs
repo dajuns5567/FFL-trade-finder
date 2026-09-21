@@ -2340,9 +2340,11 @@ export function humanSectionsV25(args){
     else if(c.kind==='hot-seat')paragraphs=hotSeatV29(t,args.reporter,frame);
     else if(c.kind==='cool-throne')paragraphs=coolThroneV29(t,args.reporter,frame);
     else paragraphs=['n/a'];
-    paragraphs=(paragraphs||[]).map(p=>contextualizeParagraphV28(t,naturalizePlayerReferences(t,specificityPass(t,c.kind,p))))
-      .map(p=>String(p).replace(/Fix the production and the back page will happily find a new target\./gi,'Fix the production and the angry headline can move to somebody else.'));
-    paragraphs=restoreSectionFullNamesV30(t,paragraphs).map(p=>repairPlayerNameCollisionsV31(t,p));
+    paragraphs=(paragraphs||[]).map(p=>{
+      const specific=specificityPass(t,c.kind,p),named=c.kind==='management'?specific:naturalizePlayerReferences(t,specific);
+      return contextualizeParagraphV28(t,named);
+    }).map(p=>String(p).replace(/Fix the production and the back page will happily find a new target\./gi,'Fix the production and the angry headline can move to somebody else.'));
+    paragraphs=(c.kind==='management'?paragraphs:restoreSectionFullNamesV30(t,paragraphs)).map(p=>repairPlayerNameCollisionsV31(t,p));
     return {...f,...c,heading:headingV28(t,args.reporter,c.kind,c.heading,frame.angle),paragraphs:paragraphs.length?paragraphs:['n/a']};
   });
   const state={count:0},aliased=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,p,state)))}));

@@ -80,7 +80,7 @@ function statSituation(p){
 }
 function scopedFootballRead(t,p,angle='matchup'){
   const raw=statSituation(p);if(!raw)return null;
-  const compact=String(raw).trim().replace(/\.\s+/g,'; ').replace(/\.$/,'');
+  const compact=String(raw).trim().replace(/\.\s+He\s+/g,', and he ').replace(/\.\s+/g,'; ').replace(/\.$/,'');
   const prefix=angle==='opponent'?`Against ${t.team_name}, `:angle==='next-opponent'?`Looking ahead to ${t.team_name}’s next matchup, `:angle==='supporting-cast'?`Behind the ${t.team_name} headline, `:`For ${t.team_name}, `;
   return prefix+compact+'.';
 }
@@ -175,56 +175,56 @@ function management(t,facts,reporter){
       [`${t.manager_name} brought in ${add} and moved on from ${drop}.`,`${t.manager_name} changed the room by adding ${add} and sending out ${drop}.`],
       [`${t.manager_name} welcomed ${add} and showed ${drop} the less glamorous side of the velvet rope.`,`${t.manager_name} rearranged the guest list: ${add} in, ${drop} out.`],
       [`${t.manager_name} MADE A MOVE: ${add} in, ${drop} out.`,`${t.manager_name} hit the transaction wire with ${add} arriving and ${drop} leaving.`],
-      [`The front-office file shows ${t.manager_name} bringing in ${add} and moving ${drop} out.`,`${t.manager_name} left a clean paper trail: ${add} arrived, ${drop} departed.`]
+      [`${t.manager_name} brought in ${add} and moved ${drop} out; the roster changed in a way Sunday can actually expose.`,`${t.manager_name} made the exchange plain enough: ${add} arrived and ${drop} departed.`]
     ]));
     else if(add)bits.push(trade?deskChoice(moveTeam,reporter,[
       [`${t.manager_name} acquired ${add} by trade, so this is part of a roster bet rather than waiver-wire housekeeping.`,`${add} came to ${t.manager_name} through a trade, which gives every useful Sunday a little more context.`],
       [`${t.manager_name} traded for ${add}; one does not send assets across the table merely to decorate the bench.`,`${add} arrived by trade, and the price of admission means the role deserves to be watched.`],
       [`TRADE ARRIVAL: ${t.manager_name} brought in ${add}. This one came with a receipt, not a waiver claim.`,`${add} landed via trade, which makes the next few weeks part performance review, part trade follow-up.`],
-      [`The transaction file is specific: ${t.manager_name} acquired ${add} in a trade.`,`${add} is a trade acquisition for ${t.manager_name}; subsequent production belongs in that deal’s evidence file.`]
+      [`${t.manager_name} traded for ${add}. The acquisition now has an actual Sunday attached to it.`,`${add} came to ${t.manager_name} by trade, so every useful week becomes part of how that deal ages.`]
     ]):deskChoice(moveTeam,reporter,[
       [`${t.manager_name} added ${add}, a move worth tracking beyond the transaction crawl.`,`${add} is the addition from ${t.manager_name} that earned space in the notebook.`],
       [`${t.manager_name} added ${add}; at least one waiver move came dressed for the column.`,`${add} joined ${t.manager_name}’s roster and, unlike most wire activity, deserves another look.`],
       [`${t.manager_name} went shopping and came home with ${add}. This one makes the back page.`,`ADD ALERT: ${t.manager_name} landed ${add}, a move loud enough to escape the ticker.`],
-      [`The transaction file highlights ${t.manager_name} adding ${add}.`,`${t.manager_name}’s notable incoming evidence is ${add}.`]
+      [`${t.manager_name} added ${add}, a move that now has to earn a place in the lineup rather than in a transaction log.`,`${add} is the incoming name worth remembering for ${t.manager_name}.`]
     ]));
     else bits.push(deskChoice(moveTeam,reporter,[
       [`${t.manager_name} cut ${drop}; the replacement plan now matters.`,`${drop} is gone from ${t.manager_name}’s roster, which makes the next move worth watching.`],
       [`${t.manager_name} showed ${drop} the door. ${t.team_name} now has to prove that roster spot has a better use.`,`${drop} was removed from ${t.manager_name}’s guest list; an empty chair is not a strategy.`],
       [`CUT: ${t.manager_name} moved on from ${drop}. ${t.team_name} now has to show the replacement can give the lineup something the old spot did not.`,`${drop} is off the ${t.team_name} roster. Fine. The next move should make the reason obvious on Sundays.`],
-      [`The file records ${t.manager_name} cutting ${drop}. The follow-up is what replaces that piece.`,`${drop} appears in the outgoing column for ${t.manager_name}; the inquiry now shifts to the replacement.`]
+      [`${t.manager_name} cut ${drop}. What replaces that production matters more than the paperwork.`,`${drop} is out for ${t.manager_name}; the replacement now has to make the roster better.`]
     ]));
     const incoming=m.add.filter(p=>valid(p.value)).sort((a,b)=>b.value-a.value)[0],outgoing=m.drop.filter(p=>valid(p.value)).sort((a,b)=>b.value-a.value)[0];
     if(incoming&&m.lineup)bits.push(deskChoice(moveTeam,reporter,[
       [`${incoming.name} went straight into the lineup, so the move already had a job attached to it.`,`${incoming.name} immediately drew a starting assignment; this was not a stash.`],
       [`${incoming.name} went directly into the lineup, an admirably decisive use of the new arrival.`,`The new arrival, ${incoming.name}, skipped the waiting room and started immediately.`],
       [`${incoming.name} HIT THE LINEUP IMMEDIATELY. That is a move with intent.`,`${incoming.name} was not brought in to collect dust; the starter card had his name on it right away.`],
-      [`${incoming.name} appears on the starting card immediately after arrival. Intent is established.`,`The paperwork shows ${incoming.name} went straight from acquisition to starting lineup.`]
+      [`${incoming.name} went straight into the starting lineup after arriving. The move had a real job attached to it.`,`${incoming.name} went directly from acquisition to the starting lineup. There was no waiting period.`]
     ]));
     else if(incoming)bits.push(deskChoice(moveTeam,reporter,[
       [`${incoming.name} is the biggest incoming market piece at ${Math.round(incoming.value).toLocaleString('en-US')}; the next question is whether a role follows.`,`${incoming.name}, valued at ${Math.round(incoming.value).toLocaleString('en-US')}, is the addition with enough market weight to keep watching.`],
       [`${incoming.name} carries ${Math.round(incoming.value).toLocaleString('en-US')} of current value, expensive enough to merit more than decorative depth.`,`At ${Math.round(incoming.value).toLocaleString('en-US')} in current value, ${incoming.name} is not merely a charming bench accessory.`],
       [`${incoming.name} brings ${Math.round(incoming.value).toLocaleString('en-US')} of value with him. The roster now has to turn that market weight into an actual Sunday role.`,`The biggest incoming chip is ${incoming.name} at ${Math.round(incoming.value).toLocaleString('en-US')}; the back page awaits the role.`],
-      [`${incoming.name} is the most substantial incoming asset at ${Math.round(incoming.value).toLocaleString('en-US')} in current value. A real Sunday role would make that market price feel less theoretical.`,`The incoming file is led by ${incoming.name}, currently worth ${Math.round(incoming.value).toLocaleString('en-US')}; the useful part now is whether the role matches the price.`]
+      [`${incoming.name} is the most substantial incoming asset at ${Math.round(incoming.value).toLocaleString('en-US')} in current value. A real Sunday role would make that market price feel less theoretical.`,`${incoming.name} is the largest incoming market piece at ${Math.round(incoming.value).toLocaleString('en-US')}; a real role would make that price feel less theoretical.`]
     ]));
     if(outgoing&&(!incoming||Number(outgoing.value)>Number(incoming.value)*1.15))bits.push(deskChoice(moveTeam,reporter,[
       [`${outgoing.name} is the meaningful cost; that departure has to be replaced somewhere.`,`${outgoing.name} carries enough value out the door that the rest of the plan cannot be ignored.`],
       [`${outgoing.name} is the expensive goodbye. ${t.team_name} now has to make the vacancy more useful than the player it surrendered.`,`${outgoing.name} leaves the larger bill behind, which makes the replacement more than a matter of taste.`],
       [`${outgoing.name} IS THE COST. If ${t.team_name} improves from here, management will have a football answer instead of a transaction explanation.`,`Moving ${outgoing.name} out created a hole with his name on it. The replacement has to make ${t.team_name} stop missing him.`],
-      [`${outgoing.name} is the material outgoing evidence. The replacement plan belongs in the next filing.`,`The cost side centers on ${outgoing.name}, a departure too substantial to wave away.`]
+      [`${outgoing.name} is the meaningful outgoing cost, and ${t.team_name} still has to replace what left with him.`,`The cost side centers on ${outgoing.name}, a departure too substantial to wave away.`]
     ]));
     const addStar=m.add.filter(p=>valid(p.points)).sort((a,b)=>b.points-a.points)[0],dropStar=m.drop.filter(p=>valid(p.points)).sort((a,b)=>b.points-a.points)[0];
     if(addStar&&Number(addStar.points)>=10)bits.push(deskChoice(moveTeam,reporter,[
       [`${addStar.name} answered immediately with ${one(addStar.points)} points, useful first-week evidence for the move.`,`${one(addStar.points)} points from ${addStar.name} gave the transaction an immediate football reason to matter.`],
       [`${addStar.name} introduced himself with ${one(addStar.points)} points. A tasteful first return.`,`${one(addStar.points)} points from ${addStar.name} is the sort of debut that makes a transaction look well dressed.`],
       [`${addStar.name} PAID OUT IMMEDIATELY: ${one(addStar.points)} points.`,`${one(addStar.points)} points from ${addStar.name} gave management exactly the kind of instant headline it wanted.`],
-      [`${addStar.name} produced ${one(addStar.points)} points immediately after the move. The first exhibit favors management.`,`The initial return is ${one(addStar.points)} points from ${addStar.name}; that belongs in the favorable evidence file.`]
+      [`${addStar.name} produced ${one(addStar.points)} points immediately after the move. Management got the first useful return it could have asked for.`,`The initial return is ${one(addStar.points)} points from ${addStar.name}, a useful first Sunday for the move.`]
     ]));
     else if(dropStar&&Number(dropStar.points)>=10)bits.push(deskChoice(moveTeam,reporter,[
       [`${dropStar.name} answered the cut with ${one(dropStar.points)} points, enough to keep the decision in next week’s notebook.`,`${one(dropStar.points)} points from departed ${dropStar.name} ensures this cut gets a follow-up.`],
       [`${dropStar.name} answered the move with ${one(dropStar.points)} points. That is enough to make ${t.manager_name} revisit the decision without pretending one Sunday settles it.`,`The departed ${dropStar.name} posted ${one(dropStar.points)} points, which is how an exit earns a second column.`],
       [`OF COURSE ${dropStar.name} SCORED ${one(dropStar.points)} AFTER THE CUT. See you next week.`,`${dropStar.name} left and immediately hung ${one(dropStar.points)} points on the board. For ${t.team_name}, that turns the cut into a decision worth tracking instead of a transaction-line footnote.`],
-      [`${dropStar.name} produced ${one(dropStar.points)} points after the cut. That decision remains under review.`,`The outgoing ${dropStar.name} answered with ${one(dropStar.points)} points; the file stays open.`]
+      [`${dropStar.name} produced ${one(dropStar.points)} points after the cut. ${t.team_name} will remember that if the replacement stays quiet.`,`The outgoing ${dropStar.name} answered with ${one(dropStar.points)} points, enough to keep the replacement under pressure.`]
     ]));
     return bits.join(' ');
   });
@@ -333,7 +333,7 @@ function hotCool(t,kind,r){
       [`${p.name} gets the Hot Seat after ${one(p.points)} points left ${t.team_name} wanting more. ${Number(t.points)>Number(t.opponent_points)?'The win buys patience; another quiet Sunday may not.':'The loss makes the quiet afternoon harder to shrug off.'}`],
       [`${p.name} occupies the uncomfortable chair after ${one(p.points)} points. ${Number(t.points)>Number(t.opponent_points)?'Winning makes it forgivable, briefly.':'Losing makes it memorable.'}`],
       [`HOT SEAT: ${p.name}, ${one(p.points)} points and a Sunday worth deleting from the camera roll. ${Number(t.points)>Number(t.opponent_points)?'The team won anyway. Do not test that magic twice.':'The team lost, so the angry font is justified.'}`],
-      [`${p.name} gets the uncomfortable mention after ${one(p.points)} points. ${Number(t.points)>Number(t.opponent_points)?'${t.team_name} survived it once.':'In a loss, that kind of miss becomes part of the story.'}`]
+      [`${p.name} gets the uncomfortable mention after ${one(p.points)} points. ${Number(t.points)>Number(t.opponent_points)?t.team_name+' survived it once.':t.team_name+' lost, so that miss becomes part of the story.'}`]
     ])];
   }
   const p=rows.slice().sort((a,b)=>delta(b)-delta(a))[0],d=delta(p);if(d<=2)return ['n/a'];
@@ -533,12 +533,12 @@ function nextOpponentFootballStory(t,r){
 
 function managementNarrativeCoda(t,r){
   const tx=consolidateTransactions(t)||[];if(!tx.length)return null;
-  const count=tx.length,won=Number(t.points)>Number(t.opponent_points),team=t.team_name;
+  const won=Number(t.points)>Number(t.opponent_points),team=t.team_name;
   return deskChoice(t,r,[
-    [`${t.manager_name} made ${count} notable roster move${count===1?'':'s'} around this matchup. ${won?team+' won, so those changes get to settle in under a good result.':team+' lost, which puts a little more pressure on those choices to help quickly.'}`],
-    [`${count===1?'One roster change':'Those '+count+' roster changes'} gave ${t.manager_name} something new to live with. ${won?team+' has a win to let the experiment breathe.':team+' has a loss making every rearranged chair look more important.'}`],
-    [`${t.manager_name.toUpperCase()} MOVED THE ROSTER ${count===1?'ONCE':count+' TIMES'}. ${won?team+' got the win, the nicest possible first headline.':team+' lost, so the new configuration does not get a quiet opening week.'}`],
-    [`${t.manager_name} changed the roster ${count===1?'once':count+' times'} around Week 1. ${won?team+' won with the new arrangement in place.':team+' lost, and those changes now have to earn their keep faster.'}`]
+    [won?`${team} won with the roster changes already in the lineup, which gives management a better place to evaluate what comes next.`:`${team} lost, so the recent roster changes have less room to hide behind patience.`],
+    [won?`${team} gets to let the new arrangement breathe under a win. A civilized opening, if nothing else.`:`${team} has a loss making every recent rearrangement look a little more important.`],
+    [won?`${team.toUpperCase()} WON WITH THE NEW LOOK. That buys the front office a quieter Tuesday.`:`${team.toUpperCase()} LOST WITH THE NEW LOOK. That makes every recent move louder before next Sunday.`],
+    [won?`${team} won with the recent changes in place. The result gives management some room before the next decision arrives.`:`${team} lost with the recent changes in place, which puts more pressure on the roster to show why those moves mattered.`]
   ]);
 }
 function managementImpactStory(t,r){

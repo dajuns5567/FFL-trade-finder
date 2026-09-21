@@ -31,8 +31,16 @@ assert.ok(Math.max(0,...openerCounts.values())<=2,'Expanded matchup paragraphs m
 assert.ok(recapSections.some(s=>/Velvet Rope/i.test(String(s?.heading||''))),'Bartholomew’s Weekly Recap desk must retain his own identity instead of a generic analytics heading');
 
 const all=[recap,...(d.teams||[]).map(articleText)].join('\n').toLowerCase();
-for(const phrase of ['statistical lecture','arithmetic lesson','second source of points','absorb a quieter return','where sacks and forced fumbles can turn','awkward; deliciously so','the back page has not forgotten','the back page is keeping the receipt','which tells us whether','the responsible read is simple','what i want to see next','this is where a weekly recap should','require no further explanation'])
-  assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
+for(const phrase of [
+  'statistical lecture','arithmetic lesson','second source of points','absorb a quieter return','where sacks and forced fumbles can turn',
+  'awkward; deliciously so','the back page has not forgotten','the back page is keeping the receipt','which tells us whether',
+  'the responsible read is simple','what i want to see next','this is where a weekly recap should','require no further explanation',
+  'opponent read on','the season file','the player file','the opposing file','the evidence reads','the inquiry stays','the case remains',
+  'the distinction matters because','the back page gets to','the back page will','league-wide football story','fantasy points tell us',
+  'the reporters will','the next useful signal','real sunday workload underneath','not a box-score tourist','more useful for forecasting',
+  'this should be judged','the point is not','the question is whether','the file records'
+]) assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
+assert.ok(!all.includes('${'),'Generated prose must never expose a template interpolation token');
 assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),'Generated Week 1 must carry a real prior-season player-history source');
 const historicalStarters=(d.teams||[]).flatMap(t=>t.starter_details||[]).filter(p=>Number(p.prior_season_games)>=6&&Number.isFinite(Number(p.prior_season_avg)));
 assert.ok(historicalStarters.length>=40,'Week 1 must propagate meaningful prior-season baselines into player reporting; got '+historicalStarters.length);

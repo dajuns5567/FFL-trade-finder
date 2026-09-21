@@ -1784,15 +1784,11 @@ function coolThroneV29(t,r,f=articleFrameV29(t,r)){
   }).slice(0,2);
   if(!candidates.length)return ['n/a'];
   const names=candidates.map(p=>p.name),team=teamIdentityV28(t).mascot;
-  return [[
-    `${names[0]} gets the main Cool Throne chair${names[1]?`, with ${names[1]} earning one beside him`:''}. ${f.won?`${team} needed both performances to make the win sturdier.`:`The loss does not erase good football; these were the ${team} performances worth carrying forward.`}`
-  ],[
-    `${names[0]} receives the good chair${names[1]?`; ${names[1]} deserves a seat nearby`:''}. ${f.won?'${team} gave Bartholomew enough good football to be generous without becoming sentimental.':'The ${team} loss still leaves room to recognize good football from ${naturalJoin(names)}.'}`
-  ],[
-    `COOL THRONE: ${names.join(' AND ').toUpperCase()}. ${f.won?`${team.toUpperCase()} HAD MORE THAN ONE REASON TO ENJOY THE SCOREBOARD.`:`THE ${team.toUpperCase()} RESULT WAS UGLY; THESE PERFORMANCES WERE NOT.`}`
-  ],[
-    `Positive finding: ${naturalJoin(names)} ${names.length===1?'earns':'earn'} Cool Throne recognition. ${f.won?'Their work supported the favorable result.':'${names.length===1?'That performance belongs':'Those performances belong'} on the favorable side of an otherwise adverse ${team} week.'}`
-  ]][voice(r)];
+  if(voice(r)===0)return [`${names[0]} gets the main Cool Throne chair${names[1]?`, with ${names[1]} earning one beside him`:''}. ${f.won?`${team} needed both performances to make the win sturdier.`:`The loss does not erase good football; these were the ${team} performances worth carrying forward.`}`];
+  if(voice(r)===1)return [`${names[0]} receives the good chair${names[1]?`; ${names[1]} deserves a seat nearby`:''}. ${f.won?`${team} gave Bartholomew enough good football to be generous without becoming sentimental.`:`The ${team} loss still leaves room to recognize good football from ${naturalJoin(names)}.`}`];
+  if(voice(r)===2)return [`COOL THRONE: ${names.join(' AND ').toUpperCase()}. ${f.won?`${team.toUpperCase()} HAD MORE THAN ONE REASON TO ENJOY THE SCOREBOARD.`:`THE ${team.toUpperCase()} RESULT WAS UGLY; THESE PERFORMANCES WERE NOT.`}`];
+  const finding=names.length===1?'That performance belongs':'Those performances belong';
+  return [`Positive finding: ${naturalJoin(names)} ${names.length===1?'earns':'earn'} Cool Throne recognition. ${f.won?'Their work supported the favorable result.':`${finding} on the favorable side of an otherwise adverse ${team} week.`}`];
 }
 
 function hotSeatV29(t,r,f=articleFrameV29(t,r)){

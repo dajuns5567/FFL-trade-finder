@@ -72,7 +72,7 @@ function statSituation(p){
   if(Number.isFinite(ff)&&ff>0)bits.push(`${ff} forced ${plural(ff,'fumble')}`);
   if(bits.length||Number.isFinite(snaps)){
     let text=bits.length?`${n} finished with ${bits.join(', ')}.`:'';
-    if(Number.isFinite(snaps))text+=` He played ${snaps} defensive snaps${snaps>=40?', a substantial role for the week':', so every splash play mattered a little more'}.`;
+    if(Number.isFinite(snaps))text+=` ${n} played ${snaps} defensive snaps${snaps>=40?', a substantial role for the week':', so every splash play mattered a little more'}.`;
     return text.trim();
   }
   const line=String(p?.real_stat_line||'').replaceAll(' • ',', ');

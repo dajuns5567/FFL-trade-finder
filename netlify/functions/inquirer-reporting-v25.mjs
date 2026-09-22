@@ -582,35 +582,38 @@ function bartholomewPlayerBoard(teams){
   })).filter(x=>Number.isFinite(x.pts));
   const breakoutScore=x=>{
     if(x.established)return -Infinity;
-    if(['breakout','early-breakout'].includes(x.tr?.kind))return 300+Number(x.tr.strength||0)*100;
-    if(x.tr?.kind==='rookie'&&x.pts>=8)return 240+x.pts;
+    if(["breakout","early-breakout"].includes(x.tr?.kind))return 300+Number(x.tr.strength||0)*100;
+    if(x.tr?.kind==="rookie"&&x.pts>=8)return 240+x.pts;
     if(x.young&&x.priorGames>=6&&x.ratio!=null&&x.ratio>=1.2&&x.role?.strong)return 180+x.ratio*10+x.pts/10;
     if(defensivePlayer(x.p)&&x.young&&x.priorGames>=6&&x.ratio!=null&&x.ratio>=1.35&&x.pts>=14)return 170+x.ratio*10+x.pts/10;
     if(x.young&&x.pts>=12&&x.role?.strong)return 120+x.pts;
     return -Infinity;
   };
   const reliableScore=x=>{
-    if(x.tr?.kind==='star')return 360+Number(x.tr.strength||0)*50;
-    if(x.tr?.kind==='reliable')return 300+Number(x.tr.strength||0)*100;
+    if(x.tr?.kind==="star")return 360+Number(x.tr.strength||0)*50;
+    if(x.tr?.kind==="reliable")return 300+Number(x.tr.strength||0)*100;
     if(x.established&&x.pts>=x.prior*.7)return 250+x.pts/10;
     if(x.priorGames>=6&&Number.isFinite(x.prior)&&x.prior>=6&&x.ratio!=null&&Math.abs(x.ratio-1)<=.3)return 180-Math.abs(x.ratio-1)*100+x.prior/10;
     return -Infinity;
   };
   const take=(defense,n,score,exclude=new Set())=>rows.filter(x=>defensivePlayer(x.p)===defense&&!exclude.has(String(x.p.id))&&Number.isFinite(score(x))).sort((a,b)=>score(b)-score(a)||b.pts-a.pts).slice(0,n);
   const bo=take(false,2,breakoutScore),bd=take(true,1,breakoutScore),used=new Set([...bo,...bd].map(x=>String(x.p.id))),
-    ro=take(false,2,reliableScore,used),rd=take(true,1,reliableScore,used);
-  const rolePhrase=x=>x.role?.text?` The role included ${x.role.text}, enough substance to keep the champagne corked but the name circled.`:'';
-  const ps=[];
+    ro=take(false,2,reliableScore,used),rd=take(true,1,reliableScore,used),ps=[];
+  const breakoutLine=x=>{
+    const opp=x.t.opponent_name||"the opponent",stat=statSituation(x.p),role=x.role?.text||"",won=Number(x.t.points)>Number(x.t.opponent_points);
+    return x.p.name+" gave "+x.t.team_name+" a Week 1 performance that changed how "+opp+" had to defend"+(role?" — "+role+" kept him involved even after the matchup knew where the ball was going":"")+". "+(stat||"")+" "+(won?opp+" never made that problem disappear before "+x.t.team_name+" took the win.":x.t.team_name+" lost, but "+x.p.name+" gave the next opponent a reason not to treat this role as opening-week noise.");
+  };
+  const reliableLine=x=>{
+    const opp=x.t.opponent_name||"the opponent",stat=statSituation(x.p),won=Number(x.t.points)>Number(x.t.opponent_points);
+    return x.p.name+" gave "+x.t.team_name+" the kind of familiar production that makes an opponent miserable because there was no surprise to solve. "+(stat||"")+" "+(won?opp+" knew what was coming and still had to live with it.":opp+" survived it, which makes the rest of "+x.t.team_name+" the more uncomfortable part of the review.");
+  };
   if(bo.length||bd.length){
-    const offense=bo.length?`On offense, ${naturalJoin(bo.map(x=>x.p.name))} ${bo.length===1?'gets':'get'} the breakout-watch invitations.`:'No offensive player clears the breakout bar this week.';
-    const defense=bd.length?` On defense, ${bd[0].p.name} gets the watch list after a Sunday loud enough to demand another look.`:' No defensive player clears the breakout bar this week.';
-    const detail=bo.map(x=>`${x.p.name}:${rolePhrase(x)}`).join(' ');
-    ps.push(`${offense}${defense} ${detail} These are the names whose weekly reputations moved enough to earn another look.`);
+    const picks=[...bo,...bd];
+    ps.push("Bartholomew’s breakout watch belongs to "+naturalJoin(picks.map(x=>x.p.name))+". "+picks.map(breakoutLine).join(" "));
   }
   if(ro.length||rd.length){
-    const offense=ro.length?`${naturalJoin(ro.map(x=>x.p.name))} ${ro.length===1?'is the offensive reliability name':'are the two offensive reliability names'} Bartholomew trusts to keep doing familiar work.`:'No offensive player earns the reliability label this week.';
-    const defense=rd.length?` On defense, ${rd[0].p.name} gets the same designation.`:' No defensive player clears the reliability bar this week.';
-    ps.push(`Reliability is less glamorous and considerably more useful. ${offense}${defense} Dependability rarely gets champagne, which is probably why it survives the evening.`);
+    const picks=[...ro,...rd];
+    ps.push("The veterans and established producers worth trusting after Week 1 are "+naturalJoin(picks.map(x=>x.p.name))+". "+picks.map(reliableLine).join(" "));
   }
   return ps;
 }
@@ -3007,17 +3010,26 @@ function nextGame(teams){
 function leagueTextureStory(teams){
   const usable=(teams||[]).filter(t=>valid(t.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points)),top=usable[0],low=usable[usable.length-1],
     all=(teams||[]).flatMap(t=>list(t).map(p=>({t,p,tr:playerTrajectory(p)}))),
-    breakout=all.find(x=>x.tr?.kind==='early-breakout'||x.tr?.kind==='breakout'),
-    reliable=all.find(x=>x.tr?.kind==='reliable'&&(!breakout||String(x.p.id)!==String(breakout.p.id))),
-    stumble=all.find(x=>x.tr?.kind==='stumble'||x.tr?.kind==='decline');
-  const ps=[];
-  if(top)ps.push(`${top.team_name} set the scoring pace at ${one(top.points)}, and the shape of the win was almost as encouraging as the total. The lineup had several places to turn, which matters more than asking one superstar to repeat a ceiling every week.`);
-  if(breakout)ps.push(`${breakout.p.name} gave ${breakout.t.team_name} one of the more interesting young-player performances of the opener. ${statSituation(breakout.p)||''} Last season’s baseline was ${one(breakout.p.prior_season_avg)} across ${breakout.p.prior_season_games} games, so the Week 1 jump deserves attention without pretending the story is finished.`);
-  if(reliable)ps.push(`${reliable.p.name} looked much more familiar than surprising for ${reliable.t.team_name}: ${one(reliable.p.points)} points against a 2025 average of ${one(reliable.p.prior_season_avg)}. Not every useful player needs a breakout label; some just keep making the lineup easier to trust.`);
-  if(stumble)ps.push(`${stumble.p.name} opened well below the level ${stumble.t.team_name} saw last season. One bad Sunday does not erase the old floor, but it gives next week a little more weight.`);
-  if(low&&top&&String(low.roster_id)!==String(top.roster_id))ps.push(`${low.team_name} sat at the other end of the weekly scoring table with ${one(low.points)}. September gives teams room to recover, but it does not give the points back.`);
-  return ps.join(' ');
+    breakout=all.find(x=>x.tr?.kind==="early-breakout"||x.tr?.kind==="breakout"),
+    reliable=all.find(x=>x.tr?.kind==="reliable"&&(!breakout||String(x.p.id)!==String(breakout.p.id))),
+    stumble=all.find(x=>x.tr?.kind==="stumble"||x.tr?.kind==="decline"),ps=[];
+  if(top)ps.push(top.team_name+" did not merely lead the league at "+one(top.points)+"; it made "+(top.opponent_name||"its opponent")+" spend Week 1 underneath the loudest score on the board. That is the kind of opener that turns the next matchup into a referendum on whether the explosion was identity or adrenaline.");
+  if(breakout){
+    const opp=breakout.t.opponent_name||"the opponent",stat=statSituation(breakout.p)||"";
+    ps.push(breakout.p.name+" forced "+opp+" to account for a player it may not have entered Sunday fearing. "+stat+" "+breakout.t.team_name+" now gets the fun problem of asking whether that new pressure point can travel, while the next opponent has to prepare as if it can.");
+  }
+  if(reliable){
+    const opp=reliable.t.opponent_name||"the opponent",stat=statSituation(reliable.p)||"";
+    ps.push(reliable.p.name+" gave "+reliable.t.team_name+" the opposite kind of headache for "+opp+": the familiar one. "+stat+" There is something cruel about knowing an established threat is coming and still watching it become part of the game anyway.");
+  }
+  if(stumble){
+    const opp=stumble.t.opponent_name||"the opponent";
+    ps.push(stumble.p.name+" gave "+stumble.t.team_name+" the Week 1 performance it will want to erase first. "+opp+" got to play through a quieter version of a player the roster expected to matter more, and the next opponent will notice until "+stumble.p.name+" makes the weakness disappear.");
+  }
+  if(low&&top&&String(low.roster_id)!==String(top.roster_id))ps.push(low.team_name+" finished at the other end of the board with "+one(low.points)+". Week 1 is forgiving about records and merciless about jokes; "+(low.opponent_name||"the opponent")+" owns the punch line until "+low.team_name+" gives the league something else to remember.");
+  return ps.join(" ");
 }
+
 function weeklyMatchupHeading(g,isTop=false){
   if(isTop)return `${g.winner.team_name} — Week ${g.winner?.week_classification?.week||1}’s High-Water Mark`;
   if(g.upset)return `${g.winner.team_name} vs. ${g.loser.team_name} — The Forecast Got Flipped`;

@@ -29,6 +29,7 @@ const teams=[
 const overview={sections:[0,1,2,3].map(i=>({reporter:{id:'r'+i,name:'Reporter '+i},heading:'old',paragraphs:['old']})),hot_takes:[]};
 const recap=expandWeeklyRecapV25(overview,teams,1);
 assert.equal(recap.inquirer_version,26);
+assert.equal(recap.editorial_revision,5);
 assert.equal(recap.sections.length,4);
 const body=recap.sections.flatMap(s=>s.paragraphs).join(' ');
 assert.match(body,/Alpha/);
@@ -51,4 +52,13 @@ assert.ok(source.includes('topGame'),'Weekly Recap must explicitly reserve a sto
 assert.ok(source.includes('weeklyStoryBlock'),'Weekly Recap matchup coverage must expose labeled story blocks');
 assert.ok(source.includes('implicationStory'),'Weekly Recap must attach divisional/playoff/future implications to selected games');
 assert.ok(source.includes('acquisitionCallback'),'Team columns must preserve ongoing trade-acquisition commentary');
+assert.ok(source.includes('threeHighScorersV33'),'Team articles must gate broad multi-scorer analysis to a genuine three-headliner week');
+assert.ok(source.includes("trio.every(p=>Number(p?.points)>=18)"),'Three-headliner gate must require all three highlighted scorers to clear 18 points');
+assert.ok(source.includes('playerStatInsightV33'),'Team player sections must attach reporter judgment to statistics');
+assert.ok(source.includes('losingRecordAsideV33'),'Bad-record teams must receive reporter-specific pessimistic commentary');
+assert.ok(source.includes('tradeHistoryCompleteV33'),'Trade Receipt must verify complete historical/current trade evidence before publishing');
+assert.ok(source.includes('if(!tr)continue'),'Missing trade history must be silently omitted rather than explained in an article');
+assert.ok(source.includes('if(!tradeHistoryCompleteV33(tr,facts))continue'),'Incomplete trade history must be silently omitted rather than explained in an article');
+assert.ok(source.includes('normalizeTillyCaseV33'),'Tilly output must pass through the no-shouting case normalizer');
+for(const phrase of ['which is exactly what an IDP league should reward when the work is real','The historical value snapshot is not available in this article packet'])assert.ok(!source.includes(phrase),'Rejected revision-5 phrase survived source: '+phrase);
 console.log(JSON.stringify({ok:true,version:26,breakout:true,editorial_selection:true,expanded_matchups:true,acquisition_memory:true}));

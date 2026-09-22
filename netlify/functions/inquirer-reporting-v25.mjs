@@ -2802,7 +2802,7 @@ export function expandWeeklyRecapV25(o,teams,week){
       arr.push(`My read is simple: this matchup can change the tone of the road ahead before it changes anything permanent in the standings. Bank it, and the next close game arrives with less pressure. Waste it, and the schedule gets less forgiving. Schedules are rude that way; they produce a receipt without asking whether management wants to see it.`);
       return arr
     })()]:['The next-week slate is not complete enough to identify a featured matchup without inventing certainty.'];
-  const nextBlocks=next?[{heading:`${next.a.team_name} vs. ${next.b.team_name} — Week ${Number(week)+1} Spotlight`,paragraphs:nextParagraphs}]:[];
+  const nextBlocks=next?[{heading:`${next.a.team_name} vs. ${next.b.team_name} — Week ${Number(week)+1} Spotlight`,paragraphs:[...nextParagraphs]}]:[];
   if(backPageParagraphs[0]==='n/a')backPageParagraphs.splice(0,1);
   backPageParagraphs.push(tillyRecapRead);
   if(backPageBlocks.length)backPageBlocks.push({heading:'AFTER THE RECEIPTS',paragraphs:[tillyRecapRead]});

@@ -55,7 +55,7 @@ for(const phrase of [
   'the reporters will','the next useful signal','real sunday workload underneath','not a box-score tourist','more useful for forecasting',
   'this should be judged','the point is not','the question is whether','the file records',
   'first return','useful support behind the headline','old notebook rule','without printing the same score twice',
-  'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is','which is exactly what an idp league should reward when the work is real','historical value snapshot is not available in this article packet',
+  'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is','which is exactly what an idp league should reward when the work is real','historical value snapshot is not available in this article packet','put ',' in big type','big type','angry font','angry type','name in red','remove the suspense','job underneath it','something concrete to test','gets the photo','earned the ink',
   'the result matters because','other division rival','fantasy points reasons','opened near last season','turning finished with',
   'the useful version is','nick’s note is simple','the transaction belongs in the article','survived that call','result look as good on monday','roster compliment sitting on the bench','other side of the receipt alive','playoff case still sitting squarely in the argument','this week gave the résumé another loud line','somebody else now needs to make the back page fight for space','sunday reinforced it with another performance worthy of that reputation',
   'nick will','nick wants','nick sees','bartholomew would','bartholomew will','tilly would','filch recommends','filch would','this desk is already documenting','a beat writer is supposed to'
@@ -94,7 +94,7 @@ for(const t of d.teams||[]){
   assert.ok(players&&Array.isArray(players.paragraphs),'Each team article must preserve a player reporting beat');
   const lede=(a.sections||[]).find(s=>s.kind==='lede'),management=(a.sections||[]).find(s=>s.kind==='management'),outlook=(a.sections||[]).find(s=>s.kind==='outlook');
   assert.ok((lede?.paragraphs||[]).length>=3,'Team ledes must carry result plus reporter commentary');
-  assert.ok((players?.paragraphs||[]).length>=4,'Player sections must retain the established reporting and add a substantive editorial read beyond the stat lines');
+  assert.ok((players?.paragraphs||[]).length>=6,'Player sections must retain the established reporting and add two additional football-analysis paragraphs beyond the stat lines');
   const managementParagraphs=management?.paragraphs||[],outlookParagraphs=outlook?.paragraphs||[];
   if(managementParagraphs.length&&managementParagraphs[0]!=='n/a')assert.ok(managementParagraphs.length>=2,'Meaningful management sections must include reporter follow-through for '+t.team_name+'; got '+JSON.stringify(managementParagraphs));
   if(outlookParagraphs.length&&outlookParagraphs[0]!=='n/a')assert.ok(outlookParagraphs.length>=3,'Next-week sections must develop the matchup and road ahead for '+t.team_name);
@@ -295,6 +295,6 @@ for(const t of d.teams||[]){
 const templateOffenders=[...templatePlacements.entries()].filter(([,rows])=>rows.length>3).map(([fingerprint,rows])=>({fingerprint,count:rows.length,examples:rows.slice(0,4)}));
 assert.deepEqual(templateOffenders,[],'Editorial sentence templates must not recur across more than three team articles after names/numbers are normalized');
 const avgTeamWords=teamWords.reduce((n,x)=>n+x,0)/Math.max(1,teamWords.length);
-assert.ok(Math.min(...teamWords)>=400,'Every team column must preserve substantial commentary; shortest='+Math.min(...teamWords));
-assert.ok(avgTeamWords>=500,'Team columns must average at least 500 words of reporting/commentary; average='+avgTeamWords.toFixed(1));
+assert.ok(Math.min(...teamWords)>=580,'Every team column must preserve the revision-5 depth increase; shortest='+Math.min(...teamWords));
+assert.ok(avgTeamWords>=790,'Team columns must average roughly 100+ words more commentary than the prior revision-5 build; average='+avgTeamWords.toFixed(1));
 console.log(JSON.stringify({ok:true,version:d.inquirer_version,teams:d.teams.length,recap_words:words(recap),max_team_words:Math.max(...teamWords),min_team_words:Math.min(...teamWords),avg_team_words:Number(avgTeamWords.toFixed(1)),mentioned_teams:mentioned.length,reporter_structures:Object.fromEntries([...orderByReporter].map(([k,v])=>[k,v.size]))}));

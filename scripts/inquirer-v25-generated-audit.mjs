@@ -18,7 +18,7 @@ const recap=recapSections.flatMap(s=>s?.paragraphs||[]).join(' ');
 const teamWords=(d.teams||[]).map(t=>words(articleText(t)));
 
 assert.equal(Number(d.inquirer_version),26,'Generated edition must be Inquirer V26');
-assert.equal(Number(d.editorial_revision),3,'Generated edition must carry contextual editorial revision 3');
+assert.equal(Number(d.editorial_revision),4,'Generated edition must carry contextual editorial revision 4');
 assert.equal((d.teams||[]).length,32,'Generated Week 1 edition must contain 32 team articles');
 assert.ok(recapSections.length>=4,'Weekly Recap must preserve a complete multi-desk edition');
 assert.ok(words(recap)>Math.max(...teamWords),'Editorial Weekly Recap should be deeper than the longest team column');
@@ -32,6 +32,13 @@ assert.ok(matterBlocks.slice(0,5).every(x=>String(x.heading||'').trim()&&x.parag
 const topScorer=(d.teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
 assert.ok(topScorer&&matterBlocks[0]?.heading?.includes(topScorer.team_name),'First Weekly Recap matchup block must feature the week’s top scoring team');
 assert.ok((matterBlocks[0]?.paragraphs||[]).join(' ').includes(topScorer.team_name),'Top scorer must receive actual Weekly Recap commentary, not merely a heading');
+const topThree=(topScorer?.starter_details||[]).filter(p=>Number.isFinite(Number(p?.points))).slice().sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,3);
+const topBlockCopy=(matterBlocks[0]?.paragraphs||[]).join(' ');
+for(const p of topThree)assert.ok(topBlockCopy.includes(String(p.name||'')),'Weekly top-scorer story must include every highlighted top-three player by name: '+p.name);
+const sharedStatParagraph=(matterBlocks[0]?.paragraphs||[]).find(p=>topThree.every(x=>String(p).includes(String(x.name||''))));
+assert.ok(sharedStatParagraph,'Weekly top-scorer story must place all highlighted players into a shared stat-focused paragraph before the commentary');
+assert.match(String(sharedStatParagraph),/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|solo|assists?|TFL|tackles? for loss|sacks?|QB hits?|pass breakups?|interceptions?|forced fumbles?)\b/i,'Weekly top-scorer trio paragraph must carry real-football stats rather than names and fantasy totals alone');
+assert.ok((matterBlocks[0]?.paragraphs||[]).some(p=>/lineup leverage|independent|different roster lanes|separate ways/i.test(String(p))),'Weekly top-scorer story must add a real roster/football judgment after the statistics');
 assert.ok(((mattered?.paragraphs||[]).join(' ').match(/week’s cleanest upset/gi)||[]).length<=1,'Expanded recap must not call multiple games the week’s cleanest upset');
 const recapOpeners=(mattered?.paragraphs||[]).map(p=>String(p).trim().split(/\s+/).slice(0,7).join(' ').toLowerCase());
 const openerCounts=new Map();for(const x of recapOpeners)openerCounts.set(x,(openerCounts.get(x)||0)+1);
@@ -50,7 +57,8 @@ for(const phrase of [
   'first return','useful support behind the headline','old notebook rule','without printing the same score twice',
   'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is',
   'the result matters because','other division rival','fantasy points reasons','opened near last season','turning finished with',
-  'the useful version is','nick’s note is simple','the transaction belongs in the article','survived that call','result look as good on monday','roster compliment sitting on the bench','other side of the receipt alive','playoff case still sitting squarely in the argument','this week gave the résumé another loud line','somebody else now needs to make the back page fight for space','sunday reinforced it with another performance worthy of that reputation'
+  'the useful version is','nick’s note is simple','the transaction belongs in the article','survived that call','result look as good on monday','roster compliment sitting on the bench','other side of the receipt alive','playoff case still sitting squarely in the argument','this week gave the résumé another loud line','somebody else now needs to make the back page fight for space','sunday reinforced it with another performance worthy of that reputation',
+  'nick will','nick wants','nick sees','bartholomew would','bartholomew will','tilly would','filch recommends','filch would','this desk is already documenting','a beat writer is supposed to'
 ]) assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
 assert.ok(!all.includes('${'),'Generated prose must never expose a template interpolation token');
 assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),'Generated Week 1 must carry a real prior-season player-history source');
@@ -71,12 +79,19 @@ const orderByReporter=new Map();
 for(const t of d.teams||[]){
   const a=t.inquirer_article||{};
   const rid=String(a?.reporter?.id||''),order=(a.sections||[]).map(s=>s.kind).join('>');if(!orderByReporter.has(rid))orderByReporter.set(rid,new Set());orderByReporter.get(rid).add(order);
-  assert.equal((a.sections||[]).length,8,'Each team article must preserve eight reporting beats');
+  const hasTrade=(t.transactions||[]).some(m=>String(m?.type||'').toLowerCase()==='trade');
+  const tradeCommentary=(a.sections||[]).find(s=>s.kind==='trade-commentary');
+  assert.equal((a.sections||[]).length,hasTrade?9:8,'Each team article must preserve eight core reporting beats plus a trade-commentary beat only when an applicable trade exists');
+  if(hasTrade){
+    assert.ok(tradeCommentary&&Array.isArray(tradeCommentary.paragraphs)&&tradeCommentary.paragraphs.length>=2,'Applicable team trades must receive a developed dedicated trade-commentary section for '+t.team_name);
+    const tradeCopy=tradeCommentary.paragraphs.join(' ');
+    assert.match(tradeCopy,/trade|received|receipt/i,'Trade-commentary section must discuss the actual exchange for '+t.team_name);
+  }else assert.equal(tradeCommentary,undefined,'Teams without an applicable trade must not receive a synthetic trade-commentary section');
   const players=(a.sections||[]).find(s=>s.kind==='players');
   assert.ok(players&&Array.isArray(players.paragraphs),'Each team article must preserve a player reporting beat');
   const lede=(a.sections||[]).find(s=>s.kind==='lede'),management=(a.sections||[]).find(s=>s.kind==='management'),outlook=(a.sections||[]).find(s=>s.kind==='outlook');
   assert.ok((lede?.paragraphs||[]).length>=3,'Team ledes must carry result plus reporter commentary');
-  assert.ok((players?.paragraphs||[]).length>=3,'Player sections must add commentary beyond the stat line');
+  assert.ok((players?.paragraphs||[]).length>=4,'Player sections must retain the established reporting and add a substantive editorial read beyond the stat lines');
   const managementParagraphs=management?.paragraphs||[],outlookParagraphs=outlook?.paragraphs||[];
   if(managementParagraphs.length&&managementParagraphs[0]!=='n/a')assert.ok(managementParagraphs.length>=2,'Meaningful management sections must include reporter follow-through for '+t.team_name+'; got '+JSON.stringify(managementParagraphs));
   if(outlookParagraphs.length&&outlookParagraphs[0]!=='n/a')assert.ok(outlookParagraphs.length>=3,'Next-week sections must develop the matchup and road ahead for '+t.team_name);
@@ -87,6 +102,12 @@ for(const t of d.teams||[]){
     assert.match(playerCopy,/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|solo|assists?|TFL|tackles? for loss|sacks?|QB hits?|pass breakups?|snaps?|interceptions?|forced fumbles?)\b/i,'Player section must contain real-football usage/stat commentary for '+t.team_name);
   }
 }
+const reporterFirstPerson=new Map();
+for(const t of d.teams||[]){
+  const rid=String(t.inquirer_article?.reporter?.id||''),copy=articleText(t),hits=(copy.match(/\bI(?:’m|'m|’ll|'ll|\s+(?:see|want|would|will|start|accept|respect|recommend|enter|treat|do|have|keep|call|think|expect|hate|resent|am))\b/gi)||[]).length;
+  reporterFirstPerson.set(rid,(reporterFirstPerson.get(rid)||0)+hits);
+}
+for(const rid of ['walter-mercer','tess-delaney','mack-hollis','nora-voss'])assert.ok((reporterFirstPerson.get(rid)||0)>=1,'Each reporter must naturally reference their own judgment at least once across the generated edition: '+rid);
 for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=4,'Reporter '+rid+' must generate at least four distinct article structures across eight team stories; got '+orders.size);
 
 const teamCopy=(d.teams||[]).map(t=>articleText(t)).join('\n');

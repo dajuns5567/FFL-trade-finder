@@ -249,62 +249,92 @@ function playerContextLabelV33(p){
   const stage=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24)?'young':(Number.isFinite(years)&&years>=7)||(Number.isFinite(age)&&age>=30)?'veteran':'prime-age';
   return stage+' '+pos;
 }
+function playerUsageReadV34(t,p){
+  const s=p?.real_stats||{},pos=String(p?.position||'').toUpperCase(),rows=articlePlayers(t)||[],
+    n=(...keys)=>{for(const k of keys){const v=Number(s?.[k]);if(Number.isFinite(v))return v}return null},
+    rowN=(row,...keys)=>{const rs=row?.real_stats||{};for(const k of keys){const v=Number(rs?.[k]);if(Number.isFinite(v))return v}return null};
+  if(pos==='WR'||pos==='TE'){
+    const targets=n('rec_tgt','targets'),rec=n('rec'),yards=n('rec_yd'),td=n('rec_td'),
+      teamTargets=rows.reduce((sum,row)=>{const v=rowN(row,'rec_tgt','targets');return sum+(Number.isFinite(v)?v:0)},0);
+    return {pos,targets,rec,yards,td,targetShare:Number.isFinite(targets)&&teamTargets>0?targets/teamTargets:null,
+      catchRate:Number.isFinite(rec)&&Number.isFinite(targets)&&targets>0?rec/targets:null,
+      yardsPerTarget:Number.isFinite(yards)&&Number.isFinite(targets)&&targets>0?yards/targets:null};
+  }
+  if(pos==='RB'){
+    const carries=n('rush_att'),rushYards=n('rush_yd'),rushTd=n('rush_td'),targets=n('rec_tgt','targets'),rec=n('rec'),recYards=n('rec_yd'),recTd=n('rec_td'),
+      touches=(Number.isFinite(carries)?carries:0)+(Number.isFinite(targets)?targets:0),
+      teamTouches=rows.reduce((sum,row)=>{const rs=row?.real_stats||{},c=Number(rs.rush_att),tg=Number(rs.rec_tgt??rs.targets);return sum+(Number.isFinite(c)?c:0)+(Number.isFinite(tg)?tg:0)},0);
+    return {pos,carries,rushYards,rushTd,targets,rec,recYards,recTd,touches,touchShare:teamTouches>0?touches/teamTouches:null,
+      ypc:Number.isFinite(rushYards)&&Number.isFinite(carries)&&carries>0?rushYards/carries:null};
+  }
+  if(pos==='QB'){
+    const attempts=n('pass_att'),passYards=n('pass_yd'),passTd=n('pass_td'),ints=n('pass_int'),rushAtt=n('rush_att'),rushYards=n('rush_yd');
+    return {pos,attempts,passYards,passTd,ints,rushAtt,rushYards,ypa:Number.isFinite(passYards)&&Number.isFinite(attempts)&&attempts>0?passYards/attempts:null};
+  }
+  const solo=n('tkl_solo','idp_tkl_solo'),ast=n('tkl_ast','idp_tkl_ast'),total=n('tkl','idp_tkl'),
+    tackles=Number.isFinite(total)?total:(Number.isFinite(solo)?solo:0)+(Number.isFinite(ast)?ast:0),
+    sacks=n('sack','idp_sack'),qbHits=n('qb_hit','idp_qb_hit'),ints=n('int','idp_int'),ff=n('ff','idp_ff'),
+    snaps=n('def_snp','def_snaps','defensive_snaps');
+  return {pos,tackles,sacks,qbHits,ints,ff,snaps,pressurePlays:(Number.isFinite(sacks)?sacks:0)+(Number.isFinite(qbHits)?qbHits:0)};
+}
+
 function playerStatInsightV33(t,p,r){
   if(!p)return null;
-  const d=delta(p),pts=Number(p.points),role=teamOpportunity(p),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0,team=teamIdentityV28(t).mascot,v=voice(r),name=p.name,roleLabel=playerContextLabelV33(p),resultLabel=Number(t?.points)>Number(t?.opponent_points)?'winning':'losing',key=String(t.roster_id)+':'+String(p.id||name)+':stat-insight:'+String(r?.id||'');
-  let banks;
-  if(d!=null&&d>=6){
-    banks=[
-      [name+' beat projection by '+one(d)+'. '+(role?.text?'The useful part is '+role.text+'; that workload gives the spike somewhere real to live.':'Nick wants another week of role evidence before budgeting the spike again.')],
-      [name+' finished '+one(d)+' above projection. '+(role?.text?'The line came with '+role.text+', which makes the excess easier to admire.':'Lovely result; Bartholomew is waiting for a sturdier role before ordering it by the case.')],
-      [name+' beat projection by '+one(d)+'. '+(role?.text?'For this '+roleLabel+' in a '+resultLabel+' team week, the job underneath it was '+role.text+', so next week has something concrete to test.':'Enjoy the points; do not spend next week’s before the role earns them.')],
-      [name+' exceeded projection by '+one(d)+'. '+(role?.text?'For a '+roleLabel+' inside a '+resultLabel+' team result, the opportunity included '+role.text+', making the role more probative than the surprise total.':'The spike is favorable evidence without enough workload yet to become a baseline.')]
-    ][v];
-  }else if(d!=null&&d<=-6){
-    const miss=Math.abs(d);
-    banks=[
-      [name+' missed projection by '+one(miss)+'. '+(role?.text?'The role still included '+role.text+'; the job survived, the conversion did not.':'Both the opportunity and the output need a better answer next week.')],
-      [name+' finished '+one(miss)+' below projection. '+(role?.text?'At least '+role.text+' showed up for this '+roleLabel+' in a '+resultLabel+' team week; the production was the guest who forgot the invitation.':'There is very little elegant about needing both more work and more production.')],
-      [name+' came in '+one(miss)+' under projection. '+(role?.text?'The work was there — '+role.text+'. The points were apparently on personal leave.':'That is two problems wearing one stat line: not enough work and not enough production.')],
-      [name+' missed projection by '+one(miss)+'. '+(role?.text?'The role still showed '+role.text+', which preserves the usage case and weakens the excuse for the output.':'The adverse result reaches both role and efficiency.')]
-    ][v];
-  }else if(Number.isFinite(prior)&&prior>0&&priorGames>=6&&Number.isFinite(pts)){
-    const ratio=pts/prior;
-    if(ratio>=1.25)banks=[
-      [name+' ran well above last year’s '+one(prior)+'-point average. Nick wants the next workload before calling the jump permanent.'],
-      [name+' made last year’s '+one(prior)+'-point average look modest for a day. Bartholomew will admire the upgrade and wait for a repeat.'],
-      [name+' jumped well past last year’s '+one(prior)+'-point average. Nice headline. Keep the job and do it again.'],
-      [name+' materially exceeded last year’s '+one(prior)+'-point average. The next role decides whether this becomes trend evidence.']
-    ][v];
-    else if(ratio<=.75)banks=[
-      [name+' fell well short of last year’s '+one(prior)+'-point average. One week gets context; repetition gets concern.'],
-      [name+' came in well below last year’s '+one(prior)+'-point average. Bartholomew grants one week of manners, not a season of immunity.'],
-      [name+' finished far below last year’s '+one(prior)+'-point average. One bad Sunday is a note. Two starts looking like a headline.'],
-      [name+' landed well below last year’s '+one(prior)+'-point baseline; '+name+'’s prior record argues for patience while the next week supplies the test.']
-    ][v];
+  const m=playerUsageReadV34(t,p),v=voice(r),d=delta(p),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0,
+    team=teamIdentityV28(t).mascot,name=p.name,won=Number(t.points)>Number(t.opponent_points);
+  let core='';
+  if(m.pos==='WR'||m.pos==='TE'){
+    if(Number.isFinite(m.targetShare)&&m.targetShare>=.25){
+      const share=Math.round(m.targetShare*100);
+      core=name+' drew about '+share+'% of the recorded starter targets. That concentration matters because the offense kept choosing him even when the defense had every reason to notice.';
+      if(Number.isFinite(m.yardsPerTarget)&&m.yardsPerTarget<7)core+=' The volume protected the fantasy result more than efficiency did, so a smaller target share would hurt quickly.';
+      else if(Number.isFinite(m.yardsPerTarget)&&m.yardsPerTarget>=10)core+=' He also created chunk yardage per opportunity, which is why the volume looked dangerous rather than merely busy.';
+    }else if(Number.isFinite(m.catchRate)&&m.catchRate>=.72){
+      core=name+' converted his opportunities efficiently instead of needing an oversized workload. That helps the weekly floor, but it also means a colder catch-rate day could pull the fantasy total back toward earth.';
+    }else if(Number.isFinite(m.targets)&&m.targets<=5){
+      core=name+' did not command enough passing-game attention to make the fantasy total feel secure. A touchdown can rescue a light target day once; relying on it every week is a shakier plan.';
+    }else core=name+' had a usable receiving day, but the passing-game share was not dominant enough to make the result feel automatic next week.';
+    if(Number.isFinite(m.td)&&m.td>=2)core+=' Multiple touchdowns pushed the ceiling higher than the workload alone would predict, so the scores should be treated as bonus rather than baseline.';
+  }else if(m.pos==='RB'){
+    if(Number.isFinite(m.touches)&&m.touches>=18){
+      core=name+' handled enough of the offense to survive an ordinary efficiency day. That is the part of a running-back profile that tends to travel: volume can keep the floor useful even when the highlight plays disappear.';
+      if(Number.isFinite(m.ypc)&&m.ypc<3.5)core+=' The rushing efficiency was poor, though, so the workload did more rescuing than the running did.';
+      if(Number.isFinite(m.targets)&&m.targets>=5)core+=' Passing-game involvement also gives him a second path to points when game script turns away from the run.';
+    }else if(Number.isFinite(m.targets)&&m.targets>=5){
+      core=name+' did not need a workhorse rushing load because the receiving role kept him involved. In PPR, that gives him a way to survive negative game script.';
+    }else core=name+' did not have enough touch volume to make the result feel insulated from game script. If the touchdowns or big plays disappear, there is not much margin for error.';
+  }else if(m.pos==='QB'){
+    if(Number.isFinite(m.ypa)&&m.ypa>=8.5)core=name+' created value efficiently through the air rather than living on attempt volume. That is a healthier way to beat expectation because the offense gained real yardage per dropback.';
+    else if(Number.isFinite(m.ypa)&&m.ypa<6.5)core=name+' needed volume, touchdowns or rushing production to cover for a modest passing-efficiency day. That can still score fantasy points, but it leaves less room when one of those paths disappears.';
+    else core=name+' was neither purely volume-driven nor dependent on one splash play. The result came from a fairly ordinary quarterback workload, which makes the next matchup more important than the raw point total.';
+    if(Number.isFinite(m.rushAtt)&&m.rushAtt>=5)core+=' The rushing work gives him an extra floor that pocket-only quarterbacks do not have.';
+    if(Number.isFinite(m.ints)&&m.ints>=2)core+=' The turnovers are the obvious tax: the fantasy score survived them this time, but a tighter game may not.';
+  }else{
+    if(Number.isFinite(m.qbHits)&&m.qbHits>=4)core=name+' was affecting the quarterback far more often than the sack total alone shows. Repeated pressure is the encouraging part because sacks fluctuate; getting into the backfield over and over is the stronger sign that the pass-rush role can keep producing.';
+    else if(Number.isFinite(m.tackles)&&m.tackles>=8)core=name+' built the IDP result on tackle volume rather than a single turnover or sack. That usually gives the weekly floor more stability because the production did not depend on one low-frequency splash play.';
+    else if((Number(m.ints)||0)+(Number(m.ff)||0)>=1)core=name+' got a major lift from a takeaway. The play deserves full credit, but turnovers are volatile, so next week should be judged more on snaps and recurring involvement than on another ball finding him.';
+    else if(Number.isFinite(m.snaps)&&m.snaps>=50)core=name+' had a full-time defensive role, which matters more than a modest one-week fantasy total. The opportunity is secure enough that a better box score does not require a role change first.';
+    else if(Number.isFinite(m.snaps)&&m.snaps<40)core=name+' was productive without a full defensive workload. That is useful ceiling evidence, but the weekly floor remains fragile until the snap share grows.';
+    else core=name+' produced a usable IDP line without one dominant underlying category. I would treat the result as encouraging evidence, not yet as proof of a new weekly floor.';
   }
-  if(!banks){
-    if(defensivePlayer(p)&&Number.isFinite(pts)&&pts>=14)banks=[
-      [name+' gave '+team+' a legitimate defensive advantage. Nick cares about whether the tackle-and-pressure work repeats, not about congratulating the league format for noticing it.'],
-      [name+' supplied defensive work worth building a paragraph around. Bartholomew will keep the football and discard the sermon about why IDP exists.'],
-      [name+' gave '+team+' a defensive headline with actual football behind it. The next question is whether the same role keeps showing up.'],
-      [name+' produced a defensible IDP result because the underlying defensive work was substantial. Another week of the same role would strengthen the finding.']
-    ][v];
-    else if(role?.text)banks=[
-      [name+' had '+role.text+'. Nick would rather follow that workload than reprint the fantasy total without an opinion.'],
-      [name+' had '+role.text+'. Bartholomew takes the role over a naked point total every time.'],
-      [name+' had '+role.text+'. That is an actual role to follow next week, not just a number to reprint.'],
-      [name+' had '+role.text+'. The opportunity is the repeatable part of the evidence.']
-    ][v];
-    else banks=[
-      [name+' has a useful fantasy line, but Nick is waiting for clearer role evidence before treating it as dependable.'],
-      [name+' has a useful line. Bartholomew is saving the larger compliment for a role that gives the number somewhere sturdy to live.'],
-      [name+' gets credit for the number. The role still has to earn the sequel.'],
-      [name+' supplies a favorable result without enough role evidence for a broader conclusion.']
-    ][v];
+  if(!core&&Number.isFinite(prior)&&prior>0&&priorGames>=6&&Number.isFinite(Number(p.points))){
+    const ratio=Number(p.points)/prior;
+    core=ratio>=1.25?name+' ran well above last year’s '+one(prior)+'-point average. One spike can happen for many reasons; another week with the same quality of opportunity would make the change harder to dismiss.':
+      ratio<=.75?name+' fell well below last year’s '+one(prior)+'-point average. The larger sample still earns patience, but the next week needs to show whether this was conversion noise or a smaller role.':
+      name+' landed close enough to last year’s established level that the week looks more like confirmation than a new category.';
   }
-  return keyedChoice(key,banks);
+  if(!core)core=d!=null&&d>=6?name+' finished well above expectation, but the fantasy total alone does not tell us whether the improvement is durable. The next week needs to confirm stronger efficiency or a larger role.':
+    d!=null&&d<=-6?name+' finished well below expectation. Stable opportunity would argue for patience; another smaller role would change the outlook.':
+    name+' produced a result worth noting, but there is not enough verified usage detail to turn one week into a larger claim.';
+  const close=[
+    won?'I would keep the praise narrow: the '+team+' win makes the line easier to enjoy, not automatically more repeatable.':'I would separate the player from the loss; this line can be encouraging even if the '+team+' result was not.',
+    won?'The attractive part is that the performance helped a win without needing a fictional lesson about everybody else on the roster.':'The loss makes the surrounding weak spots more important, not this performance less real.',
+    won?'That is a football reason to like the result, not just a fantasy number to repost.':'That is still worth keeping from a bad team result; losing does not make every individual line bad.',
+    won?'The evidence supports the player without requiring a broader roster conclusion.':'The team result is adverse; this individual result does not have to be.'
+  ][v];
+  return (core+' '+close).replace(/\s+/g,' ').trim();
 }
+
 function losingRecordAsideV33(t,r){
   const rec=t?.league_context?.record||{},w=Number(rec.wins)||0,l=Number(rec.losses)||0,ties=Number(rec.ties)||0,games=w+l+ties,rank=Number(t?.league_context?.standings_rank),size=Number(t?.league_context?.league_size)||32;
   if(!((l>=2&&l>w)||(games>=4&&Number.isFinite(rank)&&rank>Math.floor(size*.75))))return null;
@@ -2014,6 +2044,74 @@ function classificationSentenceV29(p,tr,r){
   return null;
 }
 
+function teamDeepReadV34(t,r,f){
+  const rows=f?.rows||articlePlayers(t),team=teamIdentityV28(t).mascot,top=f?.top,second=f?.second,bad=(f?.concerns||[]).find(p=>String(p?.id)!==String(top?.id))||null,
+    topShare=top&&Number(t.points)>0?Number(top.points)/Number(t.points):0,top3=rows.slice(0,3).reduce((n,p)=>n+Number(p?.points||0),0),
+    top3Share=Number(t.points)>0?top3/Number(t.points):0,defPts=rows.filter(defensivePlayer).reduce((n,p)=>n+Number(p?.points||0),0),
+    defShare=Number(t.points)>0?defPts/Number(t.points):0,projDelta=valid(t.projected)?Number(t.points)-Number(t.projected):null,
+    next=t?.next_opponent_name||null,v=voice(r),shape=resultShapeV33(f);
+  let p1;
+  if(defShare>=.28){
+    const pct=Math.round(defShare*100);
+    p1=[
+      'About '+pct+'% of the '+team+' score came from defensive starters. That is real weekly leverage, but sacks and takeaways can disappear faster than targets or carries. I would want the tackle and pressure volume to stay visible before assuming the same IDP total every Sunday.',
+      'Roughly '+pct+'% of the '+team+' total came from IDP slots. I like that more than an offense-only roster, but defensive splash points are volatile. The next good sign is recurring snaps, tackles and pressure rather than another perfectly timed turnover.',
+      'Defense produced about '+pct+'% of the '+team+' fantasy score. Good edge, volatile source. Sacks and turnovers are terrible employees: spectacular when they show up, impossible to schedule. Keep the snap volume and pressure; treat the exact point total as the bonus.',
+      'Defensive starters supplied roughly '+pct+'% of the '+team+' score. That materially changes the weekly profile because the offense had help from a second scoring channel. The stronger forward indicator is whether the defense keeps generating tackles, pressure and full-time participation.'
+    ][v];
+  }else if(topShare>=.27){
+    const pct=Math.round(topShare*100),pos=String(top?.position||'player').toUpperCase();
+    p1=[
+      top.name+' supplied about '+pct+'% of the entire '+team+' score. That is a star doing real work, but it also shows where the lineup is fragile: one ordinary '+pos+' week forces the middle of the roster to replace a large chunk of production.',
+      top.name+' produced about '+pct+'% of the '+team+' score by himself. Very flattering for '+top.name+', slightly rude to the rest of the seating chart. A lineup that concentrated needs another dependable source before it becomes comfortable.',
+      top.name+' owned roughly '+pct+'% of the '+team+' score. Great week for '+top.name+'; uncomfortable math for everybody else. If the '+pos+' result comes back to earth, '+team+' needs another position ready to matter instead of waiting for a sequel.',
+      top.name+' generated about '+pct+'% of the '+team+' total. That concentration is an affirmative player finding and a roster-level vulnerability at the same time. The next evaluation should focus on which secondary role can absorb production when the '+pos+' result is merely average.'
+    ][v];
+  }else if(top3Share>=.62&&!threeHighScorersV33(f)){
+    const pct=Math.round(top3Share*100);
+    p1=[
+      'The top three '+team+' scorers supplied about '+pct+'% of the total without all three clearing the high-end threshold. That is concentration, not a “balanced attack.” The middle of the lineup is where this roster either gets deeper or keeps asking the same few players to cover ordinary holes.',
+      'Roughly '+pct+'% of the '+team+' total came from its first three scorers, yet this was not three-star theater. That distinction matters. The roster is leaning on a small upper tier, which looks elegant until one chair is empty.',
+      'About '+pct+'% of the '+team+' score came from the top three names, and that still does not make this a three-star week. It means the middle of the lineup was too easy to skip over. One of those ordinary slots needs to become consequential next week.',
+      'Approximately '+pct+'% of the '+team+' score came from three players, but the underlying performances were not uniformly elite. Filch records that as concentration rather than depth. A stronger fourth or fifth contribution would reduce the weekly dependence on the same core.'
+    ][v];
+  }else{
+    const pd=projDelta==null?'close to the forecast':projDelta>=0?one(Math.abs(projDelta))+' points above projection':one(Math.abs(projDelta))+' points below projection';
+    p1=[
+      'The '+team+' scoring shape was less concentrated than most of the dramatic stories in this league, and that is fine. The team finished '+pd+'. The priority is keeping several playable roles intact so one cold player does not automatically become a crisis.',
+      'The '+team+' score was distributed well enough that no single player owned the entire evening, and the team finished '+pd+'. That is pleasantly functional. Stable opportunities matter more here than recreating the exact fantasy totals.',
+      'The '+team+' scoring was spread enough that there is no single rescue act to worship, and the lineup finished '+pd+'. Good. Keep the actual roles and forget the exact totals; several consistently involved players are more useful than waiting for the same splash play twice.',
+      'The '+team+' distribution did not depend on one overwhelming scorer, and the lineup finished '+pd+'. That reduces concentration risk. The next evidence should come from recurring workload across several starters rather than an attempt to reproduce the same fantasy totals exactly.'
+    ][v];
+  }
+
+  let p2;
+  if(bad){
+    const m=playerUsageReadV34(t,bad),pos=String(bad.position||'player').toUpperCase(),d=Math.abs(Number(delta(bad)));
+    let diagnosis='';
+    if((m.pos==='WR'||m.pos==='TE')&&Number.isFinite(m.targets)&&m.targets>=7)diagnosis='The targets were still there, so the problem looks more like conversion than disappearance from the offense.';
+    else if(m.pos==='RB'&&Number.isFinite(m.touches)&&m.touches>=15)diagnosis='The touch count remained healthy, which argues for patience with efficiency rather than panic about the role.';
+    else if(m.pos==='QB'&&Number.isFinite(m.attempts)&&m.attempts>=28)diagnosis='The offense kept the ball in his hands, so the miss came from what happened with the attempts rather than a shrinking assignment.';
+    else if(!['QB','RB','WR','TE'].includes(m.pos)&&Number.isFinite(m.snaps)&&m.snaps>=45)diagnosis='The defensive workload remained substantial, so the miss is easier to treat as a quiet box score than a disappearing role.';
+    else diagnosis='The usage was not strong enough to dismiss the miss as simple bad luck; next week needs either more opportunity or much better efficiency.';
+    p2=[
+      bad.name+' finished '+one(d)+' below projection, but the number alone is not the diagnosis. '+diagnosis+' That distinction determines whether '+pos+' is a buy-the-dip concern or a real lineup vulnerability.',
+      bad.name+' came in '+one(d)+' below projection. '+diagnosis+' Bartholomew separates an ugly fantasy line from an ugly role because those are not the same problem; one can recover naturally, while the other needs a lineup decision.',
+      bad.name+' missed expectation by '+one(d)+'. '+diagnosis+' Do not yell at the fantasy score until you know whether the '+pos+' role itself is broken. If the work returns, this was a bad result. If it disappears too, the problem is larger.',
+      bad.name+' finished '+one(d)+' below projection. '+diagnosis+' Filch treats that as the key distinction between outcome failure and role failure. The former can regress toward normal; the latter changes the starting-lineup decision.'
+    ][v];
+  }else{
+    const focus=second?second.name:'the next-best scoring option',nextLabel=next?' against '+next:' next week';
+    p2=[
+      'The next '+team+' test'+nextLabel+' is less about reproducing this score than proving the lineup has another reliable answer when '+top.name+' gets an ordinary week. I would watch '+focus+' first; a dependable secondary role would change the weekly floor.',
+      'The next '+team+' engagement'+nextLabel+' should answer whether this roster can remain functional when '+top.name+' is merely good instead of spectacular. Bartholomew’s eye goes to '+focus+' because a real second option makes the lineup less dependent on repeating this exact script.',
+      'Next'+nextLabel+', the assignment is simple: make '+focus+' matter enough that '+top.name+' does not need the same ceiling again. Replaying this exact box score is not a plan; building another dependable route to points is.',
+      'The next '+team+' file'+nextLabel+' should focus on whether a second stable role can reduce dependence on '+top.name+'. '+focus+' is the first place to look. A repeatable secondary contribution would improve the team-level floor more than another isolated ceiling game.'
+    ][v];
+  }
+  return [p1,p2].filter(Boolean);
+}
+
 function gameShapeV29(t,r,f=articleFrameV29(t,r)){
   const {won,top,second,third,share,margin}=f;if(!top)return null;
   const topClause=statClause(top),oppRows=(t.opponent_roster?.starters||t.opponent_roster?.players||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points)),
@@ -2173,7 +2271,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
   ][v];
   while(ps.length<4)ps.push(teamPlayerExtraV33(t,r,f,ps.length));
   const editorial=playerEditorialReadV32(t,r,f);if(editorial)ps.push(editorial);
-  return ps.slice(0,4);
+  return [...ps.slice(0,4),...teamDeepReadV34(t,r,f)].filter(Boolean);
 }
 
 function coolThroneV29(t,r,f=articleFrameV29(t,r)){

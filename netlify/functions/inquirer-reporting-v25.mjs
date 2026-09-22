@@ -498,15 +498,15 @@ function teamTrajectory(p){
     `${p.name} has moved past “slow start.” At this stage of his career, a multi-week drop deserves a sharper eye on the role.`
   ])};
   if(!established&&games>=3&&young&&ratio>=1.28&&role?.strong)return {kind:'breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} has been too productive for too many weeks to call this a hot streak anymore. The role has grown with him.`,
-    `${p.name} is starting to look like a different weekly problem than he was last season. The workload says the jump has real support.`,
-    `The breakout case for ${p.name} has survived multiple Sundays: young player, larger role and better production.`
+    `${p.name} is starting to look like one of this season’s breakout players. The role has grown with the production.`,
+    `${p.name} is becoming a much bigger weekly problem than he was last season, and the larger role keeps giving the jump room to breathe.`,
+    `${p.name} is making a real breakout case over multiple Sundays: a larger role keeps producing larger results.`
   ])};
   const earlyBreakoutFloor=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensivePlayer(p)?11:13;
   if(!established&&games===1&&young&&ratio>=1.4&&role?.strong&&points>=earlyBreakoutFloor)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} belongs on early breakout watch after a first Sunday that was both loud and busy. One more week with the same role would make the story harder to shrug off.`,
-    `${p.name} gave us a proper breakout teaser: young player, real involvement and a much bigger Sunday than fantasy managers were used to seeing.`,
-    `${p.name} changed the conversation for one week. Keep the same workload next Sunday and “breakout watch” starts losing the word “watch.”`
+    `${p.name} is making an early case to be a breakout player after a first Sunday that was both loud and busy. One more week with the same role would make it much harder to shrug off.`,
+    `${p.name} looked like a potential breakout player right away: real involvement and a much bigger Sunday than fantasy managers were used to seeing.`,
+    `${p.name} changed the conversation for one week. Keep the same workload next Sunday and the breakout case starts looking much more real.`
   ])};
   if(games>=3&&Math.abs(ratio-1)<=.15&&prior>=8)return {kind:established?'star':'reliable',strength:1-Math.abs(ratio-1),text:keyedChoice(key,established?[
     `${p.name} already owns a star-level baseline, and another week near it reinforces the expectation.`,
@@ -544,14 +544,14 @@ function playerTrajectory(p){
     `${p.name} is giving us a decline story worth monitoring. Production has fallen from ${one(prior)} last year to ${one(current)} this season.`
   ])};
   if(!established&&games>=3&&Number.isFinite(age)&&age<=26&&ratio>=1.28&&opp?.strong)return {kind:'breakout',strength:ratio-1,text:keyedChoice(key,[
-    `${p.name} has climbed from ${one(prior)} per game last season to ${one(current)} this year. The role has grown with the production; breakout watch is no longer premature.`,
+    `${p.name} has climbed from ${one(prior)} per game last season to ${one(current)} this year. The role has grown with the production, and he is starting to look like a genuine breakout player.`,
     `${p.name} is averaging ${one(current)} after sitting at ${one(prior)} last year. The old expectation is starting to look stale.`,
     `Last year’s ${one(prior)}-point average looks small next to ${p.name}’s ${one(current)} this season. This has lasted long enough to call it a real leap.`
   ])};
   if(!established&&games===1&&Number.isFinite(age)&&age<=26&&ratio>=1.4&&opp?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
     `${p.name} cleared last year’s ${one(prior)}-point average by a wide margin. One Sunday is not a trend, but it is enough to get attention.`,
     `${p.name} averaged ${one(prior)} last season and opened well above it. Give the new role another Sunday before calling it permanent.`,
-    `${p.name} opened far above last year’s ${one(prior)}-point level. Put him on breakout watch, not in the victory parade.`
+    `${p.name} opened far above last year’s ${one(prior)}-point level. He is making an early breakout case, but one Sunday is still only the beginning.`
   ])};
   if(games===1&&Number(p.points)<=prior*.5)return {kind:'stumble',strength:1-Number(p.points)/prior,text:keyedChoice(key,[
     `${p.name} opened well below last year’s ${one(prior)}-point average. One bad Sunday is a stumble, not a decline.`,
@@ -627,16 +627,16 @@ function bartholomewPlayerBoard(teams){
   };
   if(bo.length||bd.length){
     const picks=[...bo,...bd],lead=[];
-    if(bo.length>=2)lead.push("On offense, "+bo[0].p.name+" and "+bo[1].p.name+" get the breakout-watch invitations.");
-    else if(bo.length===1)lead.push("On offense, "+bo[0].p.name+" gets the breakout-watch invitation.");
-    if(bd.length)lead.push("On defense, "+bd[0].p.name+" gets the watch list.");
+    if(bo.length>=2)lead.push("On offense, "+bo[0].p.name+" and "+bo[1].p.name+" are making the strongest breakout cases this week.");
+    else if(bo.length===1)lead.push("On offense, "+bo[0].p.name+" is making one of the strongest breakout cases this week.");
+    if(bd.length)lead.push("On defense, "+bd[0].p.name+" is making a breakout case of his own.");
     ps.push(lead.join(" ")+" "+picks.map(breakoutLine).join(" "));
   }
   if(ro.length||rd.length){
     const picks=[...ro,...rd],lead=[];
-    if(ro.length>=2)lead.push("On offense, "+ro[0].p.name+" and "+ro[1].p.name+" are the two offensive reliability names Bartholomew trusts.");
-    else if(ro.length===1)lead.push("On offense, "+ro[0].p.name+" is Bartholomew’s reliability name.");
-    if(rd.length)lead.push("On defense, "+rd[0].p.name+" gets the same designation.");
+    if(ro.length>=2)lead.push("On offense, "+ro[0].p.name+" and "+ro[1].p.name+" look like the two players Bartholomew can trust to keep showing up.");
+    else if(ro.length===1)lead.push("On offense, "+ro[0].p.name+" looks like the player Bartholomew can trust to keep showing up.");
+    if(rd.length)lead.push("On defense, "+rd[0].p.name+" has been just as dependable.");
     ps.push(lead.join(" ")+" "+picks.map(reliableLine).join(" "));
   }
   return ps;
@@ -653,7 +653,7 @@ export function breakoutWatch(t){
     return {p,age,baseline,current,lift,opp,score:lift+Math.max(0,26-age)*.5};
   }).filter(Boolean).sort((a,b)=>b.score-a.score);
   const x=candidates[0];if(!x)return null;
-  return `${x.p.name} is worth a breakout watch for ${t.team_name}. At age ${x.age}, the scoring has climbed from ${one(x.baseline)} per game across the prior sample to ${one(x.current)} over the last three, and this week’s ${x.opp.text} gives the jump actual opportunity behind it. The next few Sundays still decide whether the new level holds.`;
+  return `${x.p.name} is making a breakout case for ${t.team_name}. At age ${x.age}, the scoring has climbed from ${one(x.baseline)} per game across the prior sample to ${one(x.current)} over the last three, and this week’s ${x.opp.text} gives the jump actual opportunity behind it. The next few Sundays still decide whether the new level holds.`;
 }
 
 function consolidateTransactions(t){
@@ -1921,124 +1921,124 @@ function classificationSentenceV29(p,tr,r){
   const choose=banks=>keyedChoice(key,banks[v]);
   if(tr.kind==='star')return choose([
     [
-      `${p.name} already owns a star-level standard; another substantial Sunday from this ${playerContextLabelV33(p)} reinforces what the league already knew rather than creating a new category.`,
-      `${p.name} came into the week with star status already earned. The performance confirms the expectation instead of introducing it.`,
-      `${p.name} does not need breakout language. This is an established player adding another useful week to an existing résumé.`
+      `${p.name} has already been a star in this league. Sunday was another reminder of why opponents build part of the plan around him.`,
+      `${p.name} came into the week with his reputation already earned, and the performance gave nobody a reason to lower the standard.`,
+      `${p.name} has been doing this too long for Sunday to feel like a discovery. It was another strong week from a player opponents already respect.`
     ],
     [
-      `${p.name} arrived with star status already settled; for this ${playerContextLabelV33(p)}, the interesting question is how long this level remains routine, not whether a breakout has begun.`,
-      `${p.name} is an established star, which makes the strong week confirmation rather than revelation.`,
-      `${p.name} needed no discovery narrative before kickoff and needs none now. The performance belongs to an already accomplished player.`
+      `${p.name} already has star status, which makes Sunday less a revelation than another unpleasant appointment for the defense across from him.`,
+      `${p.name} has already earned the expensive treatment from opponents. Another strong week merely explains why.`,
+      `There was no need to introduce ${p.name} before kickoff. The accomplished player simply gave the league another reason to remember him.`
     ],
     [
-      `${p.name} was already a star. This week added another strong line; it did not invent the player.`,
-      `${p.name} is an established star, not a breakout case. The performance strengthens an existing résumé instead of creating a new one.`,
-      `${p.name} does not need a breakout label. ${p.name} needed another strong Sunday, and he got one.`
+      `${p.name} is already a star. Sunday was another reason the next opponent will start with him on the whiteboard.`,
+      `${p.name} did star work again. Nobody needs to pretend this came out of nowhere.`,
+      `${p.name} has the résumé already. Add another strong Sunday to it.`
     ],
     [
-      `${p.name} entered with star status already supported by prior work; Sunday corroborates the ${playerContextLabelV33(p)} standard, making this confirmation and not a breakout investigation.`,
-      `${p.name} belongs in the established-star category. ${p.name}’s week changes the current evidence, not the career classification.`,
-      `${p.name} already had the résumé. This performance strengthens an existing finding rather than creating a new one.`
+      `${p.name} already had the résumé. Sunday added another strong performance and another problem for the next opponent to solve.`,
+      `${p.name} has established what he is in this league. This week strengthened the case that the standard is still intact.`,
+      `The prior work already made ${p.name} a star; Sunday simply added another useful line to the record.`
     ]
   ]);
   if(tr.kind==='breakout'||tr.kind==='early-breakout')return choose([
     [
-      `${p.name} has earned breakout-watch attention because the role and production are rising together.`,
-      `${p.name} is the young player worth tracking: the opportunity expanded and the production followed it.`,
-      `${p.name} has moved beyond a random spike. The role is changing enough to justify a provisional breakout label.`
+      `${p.name} is making a case to be a breakout star in this league. The role is growing and the production is following it.`,
+      `${p.name} is starting to look like one of this season’s breakout players. More opportunity keeps turning into more damage for the opponent.`,
+      `${p.name} has gone from an interesting name to a player defenses may have to plan around. Another Sunday like this would make the breakout case much louder.`
     ],
     [
-      `${p.name} is the emerging name worth circling. The appeal is not youth by itself; it is a larger job producing a larger result.`,
-      `${p.name} has made the old expectation look dated enough to deserve breakout-watch attention, though one should resist declaring the case closed.`,
-      `${p.name} is beginning to outgrow last year’s description. The expanding workload is the persuasive part.`
+      `${p.name} is making a rather convincing case to become one of the league’s breakout names. The larger role has come with larger consequences for the defense.`,
+      `${p.name} is beginning to outgrow last year’s expectations, and the extra work is producing exactly the sort of Sunday that makes opponents adjust.`,
+      `The charming little ${p.name} surprise is becoming a genuine football problem. If the role stays this large, the breakout conversation will take care of itself.`
     ],
     [
-      `${p.name} belongs on breakout watch because the role expanded and the production followed it.`,
-      `${p.name} has earned a provisional breakout label. Another week with this level of involvement would make the case much stronger.`,
-      `${p.name} is young, the role grew and the result followed. That is enough to deserve another close look.`
+      `${p.name} is making a real breakout case. The role got bigger and so did the damage.`,
+      `${p.name} looks like a player trying to become one of this season’s breakout stars. Give him another week like this and the league will notice.`,
+      `${p.name} got more work and turned it into a bigger problem for the opponent. That is how a breakout starts looking real.`
     ],
     [
-      `${p.name} qualifies as an emerging player because workload and production moved together. The finding remains provisional.`,
-      `${p.name} has enough changed-role evidence to justify breakout watch without pretending one week closes the inquiry.`,
-      `${p.name} is an emerging case rather than an established conclusion; the larger workload is the evidence worth preserving.`
+      `${p.name} is making a credible case to be one of this season’s breakout players. The expanded role and the production are moving in the same direction.`,
+      `${p.name} is becoming harder to treat as a one-week curiosity. The next opponent has to account for the larger role now.`,
+      `${p.name} has started turning increased opportunity into repeatable pressure on defenses. Another strong week would make the breakout case difficult to dismiss.`
     ]
   ]);
   if(tr.kind==='rookie')return choose([
     [
-      `Rookie ${p.name} gave the staff enough useful work to keep the role in next week’s conversation.`,
-      `${p.name} is still a rookie, but Sunday gave the staff a reason to keep the door open.`,
-      `The rookie note on ${p.name} is simple: the first useful role has been earned; the second still has to be.`
+      `Rookie ${p.name} did enough Sunday to make more work next week feel earned rather than charitable.`,
+      `${p.name} is still learning the league, but the first Sunday gave the staff a reason to keep him involved.`,
+      `${p.name} made a useful first impression. The next step is turning one good rookie Sunday into another.`
     ],
     [
-      `Rookie ${p.name} made a respectable first claim on future work without requiring anyone to confuse promise with permanence.`,
-      `${p.name} has one good rookie Sunday in hand. That earns attention, not mythology.`,
-      `The rookie case for ${p.name} now has a real performance attached to it, which is more useful than projection and hope.`
+      `Rookie ${p.name} made a respectable first claim on a larger role, which is a much nicer way to spend a debut than merely looking promising in theory.`,
+      `${p.name} has one good rookie Sunday in hand. That should buy more opportunity, not mythology.`,
+      `${p.name} now has a real NFL performance behind the promise, and the next Sunday gets to tell us how quickly the story grows.`
     ],
     [
-      `ROOKIE WATCH: ${p.name.toUpperCase()} GAVE US SOMETHING WORTH PRINTING AGAIN NEXT WEEK.`,
-      `${p.name.toUpperCase()} HAS ONE ROOKIE SUNDAY WORTH YELLING ABOUT. EARN ANOTHER.`,
-      `THE ROOKIE PAGE HAS A NAME: ${p.name.toUpperCase()}. NOW KEEP THE JOB.`
+      `${p.name} gave us a rookie Sunday worth remembering. Now earn another one.`,
+      `The rookie made noise: ${p.name} deserves another chance to matter next week.`,
+      `${p.name} got his first real chance and did something with it. Keep the job moving forward.`
     ],
     [
-      `Rookie ${p.name} has one useful exhibit. Another Sunday will tell us whether it deserves additional weight.`,
-      `${p.name} has supplied the first credible rookie data point; the role now requires corroboration.`,
-      `The rookie file on ${p.name} is no longer empty, which is meaningful without being conclusive.`
+      `Rookie ${p.name} gave the staff a reason to keep the role alive next week.`,
+      `${p.name} has one useful rookie Sunday behind him now. Another would start to make the role look permanent.`,
+      `${p.name} turned the first real opportunity into something worth following. The next opponent will have seen it too.`
     ]
   ]);
   if(tr.kind==='decline')return choose([
     [
-      `${p.name} is on fall-off watch because the multi-week drop has outgrown the phrase “slow start.”`,
-      `${p.name} has been quiet for long enough that age and shrinking production belong in the same paragraph.`,
-      `${p.name} no longer gets the old weekly floor by reputation alone. The decline has lasted long enough to require evidence in the other direction.`
+      `${p.name} has been quiet for long enough that the drop can no longer be dismissed as a slow start.`,
+      `${p.name} is showing enough decline over several weeks that the old standard cannot be assumed anymore.`,
+      `The old version of ${p.name} has not shown up often enough lately. The next few Sundays need to push the story back the other way.`
     ],
     [
-      `${p.name} has reached the veteran stage where decline has to be discussed plainly.`,
-      `${p.name} is forcing a veteran conversation nobody enjoys writing: the old standard is showing up less often.`,
+      `${p.name} has reached the uncomfortable veteran stage where repeated quiet Sundays deserve to be discussed plainly.`,
+      `${p.name} is forcing the sort of veteran conversation nobody enjoys: the old standard is appearing less often.`,
       `${p.name} has accumulated enough ordinary Sundays to make “temporary” a less convincing adjective.`
     ],
     [
-      `FALL-OFF WATCH: ${p.name.toUpperCase()}. AGE PLUS REPEATED LIGHTER PRODUCTION IS NOT BACKGROUND NOISE ANYMORE.`,
-      `${p.name.toUpperCase()} HAS USED UP THE “SLOW START” EXCUSE. THE NEXT SUNDAY NEEDS TO LOOK DIFFERENT.`,
-      `VETERAN WARNING LABEL: ${p.name.toUpperCase()}. THE OLD FLOOR IS NO LONGER AUTOMATIC.`
+      `${p.name} has used up the slow-start excuse. The next Sunday needs to look different.`,
+      `The old ${p.name} standard is not automatic anymore. Repeated lighter weeks made that obvious.`,
+      `${p.name} is trending the wrong way, and another quiet week will make the concern much harder to wave off.`
     ],
     [
-      `${p.name} has accumulated enough decline markers that the prior weekly floor cannot be presumed.`,
-      `${p.name} now has a multi-week adverse pattern rather than an isolated poor exhibit.`,
-      `${p.name} has moved from anomaly to monitored decline; the burden has shifted toward showing the old level still exists.`
+      `${p.name} has put enough quieter weeks together that the old baseline cannot simply be presumed.`,
+      `${p.name} now has a multi-week decline to answer rather than one isolated bad Sunday.`,
+      `The longer sample is beginning to move against ${p.name}. The cleanest rebuttal is a return to the old production.`
     ]
   ]);
   if(tr.kind==='reliable')return choose([
     [
-      `${p.name} remains a reliability story: familiar role, familiar output and very little Tuesday drama.`,
-      `${p.name} keeps making the weekly decision easy. That kind of predictability is valuable precisely because it is boring.`,
-      `${p.name} is giving the roster what it has learned to expect, which is often more useful than one spectacular outlier.`
+      `${p.name} keeps making the weekly decision easy. The role looks familiar and the production keeps arriving with it.`,
+      `${p.name} has become the kind of player a lineup can count on without needing a dramatic explanation every Tuesday.`,
+      `${p.name} is giving the roster what it has learned to expect, and opponents keep having to deal with it.`
     ],
     [
-      `${p.name} keeps delivering the less glamorous luxury of predictability.`,
+      `${p.name} keeps delivering the less glamorous luxury of predictability, which managers appreciate more than columnists do.`,
       `${p.name} is performing the difficult trick of making useful work look ordinary.`,
-      `${p.name} continues to be reliably good, a condition columnists appreciate less than managers do.`
+      `${p.name} continues to be reliably good, a condition that is terribly inconvenient for the next opponent and wonderfully dull for management.`
     ],
     [
-      `RELIABLE: ${p.name.toUpperCase()}. NOT EVERY USEFUL PLAYER NEEDS A TRANSFORMATION ARC.`,
-      `${p.name.toUpperCase()} DID THE BORING VALUABLE THING AGAIN. KEEP IT.`,
-      `NO DRAMA REQUIRED FROM ${p.name.toUpperCase()}. THE JOB LOOKS THE SAME AND THE OUTPUT FOLLOWED.`
+      `${p.name} did the boring valuable thing again. Keep it coming.`,
+      `No reinvention needed from ${p.name}. The job looked familiar and the production followed.`,
+      `${p.name} keeps showing up with the kind of week his team can plan around.`
     ],
     [
-      `${p.name} continues to corroborate the same weekly expectation, which is valuable because the role remains stable.`,
-      `${p.name} supplies a repeatable baseline rather than a new theory.`,
-      `${p.name} remains one of the cleaner weekly assumptions in the file.`
+      `${p.name} remains one of the cleaner weekly assumptions on the roster: familiar role, useful result.`,
+      `${p.name} keeps giving his team a dependable answer instead of a new question.`,
+      `The role has stayed steady and so has ${p.name}. That kind of continuity matters once the schedule gets less forgiving.`
     ]
   ]);
   if(tr.kind==='stumble')return choose([
     [
-      `${p.name} gets one bad week labeled as a stumble, not a trend.`,
-      `${p.name} has enough prior work to earn patience for one ugly Sunday; another would change the tone.`,
+      `${p.name} gets one bad week without turning it into a trend. Another one would change the tone quickly.`,
+      `${p.name} has enough prior work to earn patience for one ugly Sunday; the next matchup decides how much patience remains.`,
       `${p.name} had a bad week. The longer résumé keeps it from becoming a larger conclusion yet.`
     ],
     [
       `${p.name} receives one week of restraint before the criticism gets sharper.`,
-      `${p.name} has earned enough prior credit to make this an unpleasant footnote rather than a career review.`,
-      `${p.name} gets one ugly Sunday without a dramatic rewrite. A second would be less defensible.`
+      `${p.name} has earned enough prior credit to make this an unpleasant footnote rather than a crisis.`,
+      `${p.name} gets one ugly Sunday without a dramatic rewrite. A second would be much less fashionable.`
     ],
     [
       `${p.name} gets one mulligan, not immunity.`,
@@ -2046,14 +2046,13 @@ function classificationSentenceV29(p,tr,r){
       `${p.name} has enough history to survive this one. Next week is not free.`
     ],
     [
-      `${p.name} has one poor exhibit; the next one determines whether the category changes.`,
-      `${p.name} has an adverse week, not yet an adverse pattern.`,
-      `${p.name} retains the benefit of the larger sample for now; another poor result would materially change the file.`
+      `${p.name} has one poor Sunday to answer, not yet a pattern.`,
+      `${p.name} still gets the benefit of the larger sample for now. Another poor result would change that quickly.`,
+      `The longer résumé still protects ${p.name} from one ugly week. The next opponent will test how much protection remains.`
     ]
   ]);
   return null;
 }
-
 function teamDeepReadV34(t,r,f){
   const q=matchupMoodV35(t),team=q.team,opp=q.opp,v=voice(r),top=f?.top,
     bad=(f?.concerns||[]).find(p=>String(p?.id)!==String(top?.id))||null,next=t?.next_opponent_name||null,
@@ -3116,17 +3115,34 @@ function weeklyTopScorerStory(t,g){
   if(top){
     parts.push(focusedPlayerStatsV32(trio));
     const threeHigh=trio.length===3&&trio.every(p=>Number(p.points)>=18),names=naturalJoin(trio.map(p=>p.name));
-    if(threeHigh)parts.push(names+" all cleared the high-scorer line, so this is one of the rare places where the multiple-contributor point is earned. "+opp+" had three serious problems at once and never found a way to make solving one of them solve the game.");
+    if(threeHigh)parts.push(names+" each topped 18 fantasy points, giving "+t.team_name+" three different players capable of tilting the matchup. "+opp+" had three serious problems at once and never found a way to make solving one of them solve the game.");
     else parts.push(top.name+" was the true centerpiece of the explosion. "+(second?second.name+(third?" and "+third.name:"")+" supplied useful support, but ":"")+opp+" spent the afternoon dealing first with the damage "+top.name+" created. Calling every decent line a co-star would undersell the player who actually bent the matchup.");
   }
   parts.push(t.team_name+" gets the fun version of Week 1 now: everybody else has to decide whether that ceiling was an opening statement or the most expensive thing the league saw all month. "+opp+" gets to hope it was the latter.");
   return parts;
 }
 
+function weeklyPlayerStatsStory(g){
+  const winnerRows=list(g.winner),loserRows=list(g.loser),top=winnerRows[0],support=winnerRows[1],counter=loserRows[0],parts=[];
+  if(top){
+    const real=statSituation(top);
+    parts.push(top.name+" drove the winning side with "+one(top.points)+" fantasy points."+(real?" "+real:""));
+  }
+  if(support&&Number(support.points)>=18&&String(support.id)!==String(top?.id)){
+    const real=statSituation(support);
+    parts.push(support.name+" gave "+g.winner.team_name+" another major pressure point with "+one(support.points)+" fantasy points."+(real?" "+real:""));
+  }
+  if(counter){
+    const real=statSituation(counter);
+    parts.push(counter.name+" was "+g.loser.team_name+"’s strongest answer at "+one(counter.points)+" fantasy points."+(real?" "+real:""));
+  }
+  return parts.join(" ");
+}
+
 function weeklyStoryBlock(g,slot,isTop=false){
   const paragraphs=[];
   if(isTop)paragraphs.push(...weeklyTopScorerStory(g.winner,g),implicationStory(g,slot));
-  else paragraphs.push(gameStory(g,slot),implicationStory(g,slot));
+  else paragraphs.push(gameStory(g,slot),weeklyPlayerStatsStory(g),implicationStory(g,slot));
   return{heading:weeklyMatchupHeading(g,isTop),paragraphs:paragraphs.filter(Boolean)};
 }
 

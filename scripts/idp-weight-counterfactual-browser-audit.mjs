@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import { chromium } from 'playwright';
 
-const url=process.env.AUDIT_URL||'https://deploy-preview-386--inspiring-bombolone-be4489.netlify.app';
+const url=process.env.AUDIT_URL||'https://inspiring-bombolone-be4489.netlify.app';
 const outFile=process.env.AUDIT_OUT||'.tmp/idp-weight-counterfactual.json';
 const candidates=[
   {name:'20/50/30',consensus:.20,scoring:.50,context:.30},

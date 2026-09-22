@@ -2782,6 +2782,11 @@ export function expandWeeklyRecapV25(o,teams,week){
   const original=o.sections||[],reporter=i=>original[i]?.reporter||null,tillyFallback=(original[2]?.paragraphs||[]).filter(p=>String(p||'').trim()&&String(p).trim()!=='n/a').slice(0,2);
   const matterBlocks=chosen.map((g,i)=>weeklyStoryBlock(g,i,!!topGame&&String(g.winner.roster_id)===String(topGame.winner.roster_id)&&String(g.loser.roster_id)===String(topGame.loser.roster_id)));
   const synthesis=leagueSynthesis(teams),texture=leagueTextureStory(teams);if(synthesis||texture)matterBlocks.push({heading:'The League-Wide Read',paragraphs:[synthesis,texture].filter(Boolean)});
+  const nickRecapRead=(topTeam?topTeam.team_name:'The week’s best roster')+" gave me the cleanest argument for depth over dependency. The part I trust is not the loudest score; it is how many different lineup spots could have been ordinary without turning the result into a rescue operation. That matters once opponents stop cooperating. I have watched enough September coronations become October yard sales to know the distinction. Keep the balance, and this looks repeatable. Lose it, and somebody will discover how expensive star insurance gets.";
+  matterBlocks.push({heading:'What I’m Buying After the Noise',paragraphs:[nickRecapRead]});
+  const bartholomewRecapRead="The league is already trying to confuse glamour with structure, which is adorable. A beautiful ceiling means considerably more when the roster underneath it has several credible ways to survive an ugly afternoon. I am interested in the teams whose supporting cast can turn a star’s merely human game into a nuisance instead of a funeral. The rest may continue polishing the centerpiece while pretending the table is not wobbling. Taste matters; load-bearing depth matters rather more.";
+  velvet.push(bartholomewRecapRead);
+  const tillyRecapRead="I LOVE A LOUD MOVE. I LOVE A LOUDER WIN. I LOVE THEM LESS WHEN EVERYBODY DECIDES THE STORY IS FINISHED BEFORE THE NEXT KICKOFF. The managers worth trusting are the ones whose moves created another usable path instead of another excuse. If the new piece helped, good — now make it matter again. If the old piece went off elsewhere, congratulations on your new group-chat migraine. Transactions are decisions with sequels, and this league has never met a sequel it could discuss calmly.";
   const backPageParagraphs=moves.length?moves.map(x=>x.text):(tillyFallback.length?tillyFallback:['n/a']),
     backPageBlocks=moves.length?moves.map(x=>({heading:x.t.team_name+' — Transaction Follow-Up',paragraphs:[x.text]})):[],
     nextParagraphs=next?[`${next.a.team_name} and ${next.b.team_name} is the matchup to circle first. The current projection separates them by only ${one(next.gap)} points, which is close enough for one star performance, one bad lineup call or one quiet Sunday from a centerpiece to swing the whole thing.`,...(()=>{
@@ -2798,6 +2803,12 @@ export function expandWeeklyRecapV25(o,teams,week){
       return arr
     })()]:['The next-week slate is not complete enough to identify a featured matchup without inventing certainty.'];
   const nextBlocks=next?[{heading:`${next.a.team_name} vs. ${next.b.team_name} — Week ${Number(week)+1} Spotlight`,paragraphs:nextParagraphs}]:[];
+  if(backPageParagraphs[0]==='n/a')backPageParagraphs.splice(0,1);
+  backPageParagraphs.push(tillyRecapRead);
+  if(backPageBlocks.length)backPageBlocks.push({heading:'AFTER THE RECEIPTS',paragraphs:[tillyRecapRead]});
+  const filchRecapRead="I am less interested in who looks inevitable than in which assumptions are about to become expensive. A soft matchup can hide a shallow bench, a narrow win can disguise a lineup mistake, and one heroic player can make a bad roster decision look temporarily innocent. The schedule will sort some of that out without asking permission. My working rule is simple: trust the role that repeats, distrust the excuse that gets prettier, and keep the receipt when a manager insists there was never a problem.";
+  nextParagraphs.push(filchRecapRead);
+  if(nextBlocks.length)nextBlocks.push({heading:'What Still Needs Proving',paragraphs:[filchRecapRead]});
   const sections=[
     {reporter:reporter(0),heading:'What Actually Mattered This Week',blocks:matterBlocks,paragraphs:matterBlocks.length?flattenBlocks(matterBlocks):['The week did not produce enough verified matchup detail for a responsible lead story.']},
     {reporter:reporter(1),heading:'The Velvet Rope: Form, Fortune and the Week’s Unfashionable Truths',paragraphs:velvet.length?velvet:['n/a']},

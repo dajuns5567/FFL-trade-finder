@@ -38,7 +38,7 @@ export default async req=>{
     const url=new URL(req.url);
     if(url.searchParams.get('confirm')!==CONFIRM)return json({error:'confirmation required'},400);
 
-    const store=getStore(STORE,{consistency:'strong'});
+    const store=getStore(STORE);
     const prior=await store.get(MARKER,{type:'json'}).catch(()=>null);
     if(prior?.done===true)return json({ok:true,alreadyDone:true,...prior});
 

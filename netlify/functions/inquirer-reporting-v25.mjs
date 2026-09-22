@@ -278,62 +278,80 @@ function playerUsageReadV34(t,p){
   return {pos,tackles,sacks,qbHits,ints,ff,snaps,pressurePlays:(Number.isFinite(sacks)?sacks:0)+(Number.isFinite(qbHits)?qbHits:0)};
 }
 
+function matchupMoodV35(t){
+  const won=Number(t?.points)>Number(t?.opponent_points),margin=Math.abs(Number(t?.points)-Number(t?.opponent_points)),
+    projected=Number(t?.projected),oppProjected=Number(t?.opponent_projected),
+    hasProjection=Number.isFinite(projected)&&Number.isFinite(oppProjected),
+    underdog=hasProjection&&projected+5<=oppProjected,favorite=hasProjection&&projected>=oppProjected+5,
+    team=teamIdentityV28(t).mascot,opp=String(t?.opponent_name||"the opponent"),score=one(t?.points)+"–"+one(t?.opponent_points);
+  return{won,margin,projected,oppProjected,hasProjection,underdog,favorite,team,opp,score};
+}
+
 function playerStatInsightV33(t,p,r){
   if(!p)return null;
-  const m=playerUsageReadV34(t,p),v=voice(r),d=delta(p),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0,
-    team=teamIdentityV28(t).mascot,name=p.name,won=Number(t.points)>Number(t.opponent_points);
-  let core='';
-  if(m.pos==='WR'||m.pos==='TE'){
-    if(Number.isFinite(m.targetShare)&&m.targetShare>=.25){
-      const share=Math.round(m.targetShare*100);
-      core=name+' drew about '+share+'% of the recorded starter targets. That concentration matters because the offense kept choosing him even when the defense had every reason to notice.';
-      if(Number.isFinite(m.yardsPerTarget)&&m.yardsPerTarget<7)core+=' The volume protected the fantasy result more than efficiency did, so a smaller target share would hurt quickly.';
-      else if(Number.isFinite(m.yardsPerTarget)&&m.yardsPerTarget>=10)core+=' He also created chunk yardage per opportunity, which is why the volume looked dangerous rather than merely busy.';
-    }else if(Number.isFinite(m.catchRate)&&m.catchRate>=.72){
-      core=name+' converted his opportunities efficiently instead of needing an oversized workload. That helps the weekly floor, but it also means a colder catch-rate day could pull the fantasy total back toward earth.';
-    }else if(Number.isFinite(m.targets)&&m.targets<=5){
-      core=name+' did not command enough passing-game attention to make the fantasy total feel secure. A touchdown can rescue a light target day once; relying on it every week is a shakier plan.';
-    }else core=name+' had a usable receiving day, but the passing-game share was not dominant enough to make the result feel automatic next week.';
-    if(Number.isFinite(m.td)&&m.td>=2)core+=' Multiple touchdowns pushed the ceiling higher than the workload alone would predict, so the scores should be treated as bonus rather than baseline.';
-  }else if(m.pos==='RB'){
-    if(Number.isFinite(m.touches)&&m.touches>=18){
-      core=name+' handled enough of the offense to survive an ordinary efficiency day. That is the part of a running-back profile that tends to travel: volume can keep the floor useful even when the highlight plays disappear.';
-      if(Number.isFinite(m.ypc)&&m.ypc<3.5)core+=' The rushing efficiency was poor, though, so the workload did more rescuing than the running did.';
-      if(Number.isFinite(m.targets)&&m.targets>=5)core+=' Passing-game involvement also gives him a second path to points when game script turns away from the run.';
-    }else if(Number.isFinite(m.targets)&&m.targets>=5){
-      core=name+' did not need a workhorse rushing load because the receiving role kept him involved. In PPR, that gives him a way to survive negative game script.';
-    }else core=name+' did not have enough touch volume to make the result feel insulated from game script. If the touchdowns or big plays disappear, there is not much margin for error.';
-  }else if(m.pos==='QB'){
-    if(Number.isFinite(m.ypa)&&m.ypa>=8.5)core=name+' created value efficiently through the air rather than living on attempt volume. That is a healthier way to beat expectation because the offense gained real yardage per dropback.';
-    else if(Number.isFinite(m.ypa)&&m.ypa<6.5)core=name+' needed volume, touchdowns or rushing production to cover for a modest passing-efficiency day. That can still score fantasy points, but it leaves less room when one of those paths disappears.';
-    else core=name+' was neither purely volume-driven nor dependent on one splash play. The result came from a fairly ordinary quarterback workload, which makes the next matchup more important than the raw point total.';
-    if(Number.isFinite(m.rushAtt)&&m.rushAtt>=5)core+=' The rushing work gives him an extra floor that pocket-only quarterbacks do not have.';
-    if(Number.isFinite(m.ints)&&m.ints>=2)core+=' The turnovers are the obvious tax: the fantasy score survived them this time, but a tighter game may not.';
+  const m=playerUsageReadV34(t,p),q=matchupMoodV35(t),name=p.name,pos=String(p.position||"player").toUpperCase(),v=voice(r),
+    key=String(t.roster_id)+":"+String(p.id||name)+":matchup-commentary-v35:"+String(r?.id||"");
+  let football="";
+  if(pos==="QB"){
+    const rows=q.won&&q.underdog?[
+      name+" made "+q.opp+" spend the afternoon reacting instead of dictating. The pregame favorite never got the comfortable script it expected, and "+q.team+" kept pushing the pressure back across the matchup.",
+      name+" turned "+q.opp+"’s paper advantage into a bad joke. The favorite kept searching for control while "+q.team+" kept finding another answer.",
+      name+" was the reason "+q.opp+"’s favorite status aged badly. "+q.team+" did not need a miracle; it needed its quarterback to make the favorite chase.",
+      name+" changed the posture of the game. "+q.opp+" entered with the edge and finished reacting to "+q.team+"."
+    ]:q.won&&q.margin>=20?[
+      name+" gave "+q.team+" control instead of drama. Once "+q.opp+" fell behind, the game stopped asking for hero ball and started asking whether the opponent had any answer at all.",
+      name+" kept "+q.opp+" on the wrong side of the scoreboard until the matchup became damage control.",
+      q.team+" did not need late-game magic from "+name+"; it needed him to make "+q.opp+" chase early and keep chasing.",
+      name+" turned the afternoon into a long defensive meeting for "+q.opp+"."
+    ]:q.won&&q.margin<=7?[
+      name+" mattered because "+q.team+" had almost no room for a wasted possession. Against "+q.opp+", every successful answer kept a one-score game from tipping the other way.",
+      q.opp+" stayed close enough to punish one empty stretch, and "+name+" kept that punishment from arriving.",
+      name+" had to keep answering because "+q.opp+" never went away. In a game this tight, control mattered more than a pretty stat profile.",
+      q.opp+" made this uncomfortable, which made "+name+"’s best possessions more valuable."
+    ]:!q.won&&q.favorite?[
+      name+" never turned "+q.team+"’s pregame edge into control. "+q.opp+" kept the favorite uncomfortable long enough for the scoreboard to become an accusation rather than a surprise.",
+      q.team+" was supposed to make "+q.opp+" chase. Instead, "+name+" and the offense spent too much of the day answering someone else’s game.",
+      name+" had a matchup that was supposed to belong to "+q.team+"; "+q.opp+" stole the terms of engagement.",
+      q.opp+" refused to let "+name+" make the game orderly. For a favorite, losing control is the uglier story than any one fantasy total."
+    ]:[
+      name+" gave "+q.team+" moments, but "+q.opp+" kept the leverage. Useful quarterback production feels different when the opponent is still deciding what kind of game everyone is playing.",
+      q.opp+" kept forcing "+q.team+" to answer instead of letting "+name+" set the terms.",
+      name+" gave "+q.team+" something to work with, but "+q.opp+" kept finding the better response.",
+      q.team+" got enough from "+name+" to stay in the conversation and not enough to control it."
+    ];
+    football=keyedChoice(key,rows);
+  }else if(pos==="WR"||pos==="TE"){
+    const redZone=Number(m?.td)>=2;
+    const rows=[
+      q.won?name+" kept giving "+q.opp+" a coverage problem it never solved. "+q.team+" could return to the same matchup without making it feel predictable.":name+" gave "+q.opp+" a problem, but "+q.team+" could not make that problem decide the game.",
+      q.underdog&&q.won?name+" helped turn the favorite into the team doing the chasing. "+q.opp+" kept having to decide how much help it could afford to send his way.":name+" forced "+q.opp+" to keep accounting for him, which kept the defense from settling into a comfortable answer.",
+      q.margin<=7?name+" was dangerous in exactly the kind of game where one catch or one missed assignment becomes the story everyone remembers.":name+" made "+q.opp+" pay attention all afternoon. The defense saw the problem and still never made it disappear.",
+      q.won?name+" gave "+q.team+" a receiving threat "+q.opp+" never fully pushed out of the script.":name+" had enough success to make "+q.opp+" uncomfortable, but not enough help around him to turn discomfort into defeat."
+    ];
+    football=keyedChoice(key,rows)+(redZone?" By the high-leverage snaps, "+q.opp+" was already choosing between overreacting to "+name+" and risking another punishment.":"");
+  }else if(pos==="RB"){
+    football=keyedChoice(key,[
+      q.won?name+" gave "+q.team+" a way to make "+q.opp+" feel the score, not just see it. Every useful series shortened the opponent’s patience.":name+" gave "+q.team+" enough backfield work to stay credible, but "+q.opp+" never had to abandon its own plan.",
+      q.underdog&&q.won?name+" helped the underdog stay on schedule and kept "+q.opp+" from turning the afternoon into the chase it expected.":name+" kept "+q.opp+" from treating every snap like an obvious passing situation.",
+      q.margin<=7?name+" mattered in a game where every possession felt rented by the minute. "+q.opp+" never gave "+q.team+" room to waste touches.":name+" helped "+q.team+" control the temperature of the matchup instead of letting "+q.opp+" dictate pace.",
+      q.won?name+" helped turn a winning script into something "+q.opp+" could not easily speed up.":q.opp+" never let "+name+"’s work become game control, which left "+q.team+" with production that felt better in the box score than on the scoreboard."
+    ]);
   }else{
-    if(Number.isFinite(m.qbHits)&&m.qbHits>=4)core=name+' was affecting the quarterback far more often than the sack total alone shows. Repeated pressure is the encouraging part because sacks fluctuate; getting into the backfield over and over is the stronger sign that the pass-rush role can keep producing.';
-    else if(Number.isFinite(m.tackles)&&m.tackles>=8)core=name+' built the IDP result on tackle volume rather than a single turnover or sack. That usually gives the weekly floor more stability because the production did not depend on one low-frequency splash play.';
-    else if((Number(m.ints)||0)+(Number(m.ff)||0)>=1)core=name+' got a major lift from a takeaway. The play deserves full credit, but turnovers are volatile, so next week should be judged more on snaps and recurring involvement than on another ball finding him.';
-    else if(Number.isFinite(m.snaps)&&m.snaps>=50)core=name+' had a full-time defensive role, which matters more than a modest one-week fantasy total. The opportunity is secure enough that a better box score does not require a role change first.';
-    else if(Number.isFinite(m.snaps)&&m.snaps<40)core=name+' was productive without a full defensive workload. That is useful ceiling evidence, but the weekly floor remains fragile until the snap share grows.';
-    else core=name+' produced a usable IDP line without one dominant underlying category. I would treat the result as encouraging evidence, not yet as proof of a new weekly floor.';
+    const pressure=(Number(m?.qbHits)||0)+(Number(m?.sacks)||0),takeaway=(Number(m?.ints)||0)+(Number(m?.ff)||0);
+    football=keyedChoice(key,[
+      q.won&&pressure>=3?name+" kept dragging "+q.opp+" into hurried decisions. The opponent started calling plays while wondering where the next hit was coming from.":q.won?name+" made "+q.opp+" earn its offensive possessions instead of letting the game become an exchange of easy scores.":name+" gave "+q.team+" defensive resistance, but "+q.opp+" still found enough clean possessions to win.",
+      q.underdog&&q.won?name+" helped make the favorite uncomfortable on the side of the ball it expected to control. "+q.opp+" spent too many possessions playing through disruption.":name+" was part of the reason "+q.opp+" never got to treat this as a clean offensive afternoon.",
+      q.margin<=7?name+" mattered because there was no garbage time to hide in. Every tackle, pressure or broken play arrived in a game where one clean possession could have changed the result.":q.won?name+" helped keep "+q.opp+" from finding the easy path back into the game.":name+" made enough plays to deserve credit even though "+q.opp+" won.",
+      takeaway?name+" gave the matchup the kind of defensive jolt that changes a sideline instantly. "+q.opp+" went from building a drive to dealing with the consequences of losing the football.":name+" made "+q.opp+" work harder for its offense. The opponent felt him in the game; that matters more than reverse-engineering a fantasy floor."
+    ]);
   }
-  if(!core&&Number.isFinite(prior)&&prior>0&&priorGames>=6&&Number.isFinite(Number(p.points))){
-    const ratio=Number(p.points)/prior;
-    core=ratio>=1.25?name+' ran well above last year’s '+one(prior)+'-point average. One spike can happen for many reasons; another week with the same quality of opportunity would make the change harder to dismiss.':
-      ratio<=.75?name+' fell well below last year’s '+one(prior)+'-point average. The larger sample still earns patience, but the next week needs to show whether this was conversion noise or a smaller role.':
-      name+' landed close enough to last year’s established level that the week looks more like confirmation than a new category.';
-  }
-  if(!core)core=d!=null&&d>=6?name+' finished well above expectation, but the fantasy total alone does not tell us whether the improvement is durable. The next week needs to confirm stronger efficiency or a larger role.':
-    d!=null&&d<=-6?name+' finished well below expectation. Stable opportunity would argue for patience; another smaller role would change the outlook.':
-    name+' produced a result worth noting, but there is not enough verified usage detail to turn one week into a larger claim.';
   const close=[
-    won?'I would keep the praise narrow: the '+team+' win makes the line easier to enjoy, not automatically more repeatable.':'I would separate the player from the loss; this line can be encouraging even if the '+team+' result was not.',
-    won?'The attractive part is that the performance helped a win without needing a fictional lesson about everybody else on the roster.':'The loss makes the surrounding weak spots more important, not this performance less real.',
-    won?'That is a football reason to like the result, not just a fantasy number to repost.':'That is still worth keeping from a bad team result; losing does not make every individual line bad.',
-    won?'The evidence supports the player without requiring a broader roster conclusion.':'The team result is adverse; this individual result does not have to be.'
+    q.won?"Nick’s takeaway is that "+name+" changed how "+q.opp+" had to play, and "+q.team+" got the better end of that argument.":"Nick can praise "+name+" without pretending "+q.team+" won; "+q.opp+" gets the result, but the player still made part of the afternoon difficult.",
+    q.won?"Bartholomew will allow the compliment because "+q.opp+" spent too much of Sunday rearranging itself around "+name+".":"Bartholomew’s annoyance is that "+name+" gave "+q.team+" something real and "+q.opp+" still left with the better evening.",
+    q.won?name+" made "+q.opp+" miserable enough to matter. One team kept finding a pressure point; the other never found a comfortable answer.":name+" had a good stretch of Sunday and "+q.opp+" still got to celebrate. Tilly calls that useful football wasted on the wrong ending.",
+    q.won?"Filch records the consequence rather than the mechanism: "+q.opp+" had to alter the way it played because of "+name+", and that pressure showed up in the result.":"Filch separates the player from the verdict. "+name+" complicated "+q.opp+"’s afternoon; "+q.team+" still lost the larger case."
   ][v];
-  const flat=x=>String(x||'').replace(/\.\s+/g,'; ').replace(/\.$/,'').trim();
-  return (flat(core)+'; '+flat(close)+'.').replace(/\s+/g,' ').trim();
+  return (football+" "+close).replace(/\s+/g," ").trim();
 }
 
 function losingRecordAsideV33(t,r){

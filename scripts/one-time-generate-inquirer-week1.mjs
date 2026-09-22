@@ -73,13 +73,16 @@ function seasonContext(matchups,rosters,league){
       (games[id]||(games[id]=[])).push({week:1,points:pts,opponent_points:opp,result,opponent_roster_id:String(o.roster_id)});
     }
   }
-  const standings=(rosters||[]).map(r=>({
-    id:String(r.roster_id),
-    wins:Number(r?.settings?.wins)||0,
-    losses:Number(r?.settings?.losses)||0,
-    ties:Number(r?.settings?.ties)||0,
-    fpts:(Number(r?.settings?.fpts)||0)+(Number(r?.settings?.fpts_decimal)||0)/100
-  })).sort((a,b)=>b.wins-a.wins||a.losses-b.losses||b.fpts-a.fpts||Number(a.id)-Number(b.id));
+  const standings=(rosters||[]).map(r=>{
+    const id=String(r.roster_id),rg=games[id]||[];
+    return{
+      id,
+      wins:rg.filter(g=>g.result==='W').length,
+      losses:rg.filter(g=>g.result==='L').length,
+      ties:rg.filter(g=>g.result==='T').length,
+      fpts:rg.reduce((n,g)=>n+(Number(g.points)||0),0)
+    };
+  }).sort((a,b)=>b.wins-a.wins||a.losses-b.losses||b.ties-a.ties||b.fpts-a.fpts||Number(a.id)-Number(b.id));
   const rank=new Map(standings.map((x,i)=>[x.id,i+1])),playoffTeams=Number(league?.settings?.playoff_teams)||0,out={};
   for(const s of standings){
     const rg=games[s.id]||[],last=rg[rg.length-1],rnk=rank.get(s.id)||null;
@@ -90,7 +93,8 @@ function seasonContext(matchups,rosters,league){
       spots_from_playoff_line:playoffTeams?rnk-playoffTeams:null,
       streak:{type:last?.result||'',length:last?1:0},
       recent_games:rg,recent_avg_points:rg.length?rg.reduce((n,x)=>n+x.points,0)/rg.length:null,
-      prior_five_avg_points:null,season_context_available:rg.length>0
+      prior_five_avg_points:null,season_context_available:rg.length>0,
+      snapshot_through_week:1
     };
   }
   return out;
@@ -251,11 +255,14 @@ const byId=new Map(teams.map(t=>[String(t.roster_id),t]));
 const complete=teams.map(t=>{const upcoming_opponents=[...futureOpponentMaps.entries()].map(([futureWeek,map])=>{const rid=map[String(t.roster_id)];return rid?{week:futureWeek,roster_id:String(rid),team_name:teamName(rid),context:contextFor(rid)}:null}).filter(Boolean);return{...t,opponent_name:teamName(t.opponent_roster_id),opponent_projected:byId.get(String(t.opponent_roster_id))?.projected??null,opponent_context:contextFor(t.opponent_roster_id),next_opponent_name:teamName(t.next_opponent_roster_id),next_opponent_projected:byId.get(String(t.next_opponent_roster_id))?.next_projected??null,next_opponent_context:contextFor(t.next_opponent_roster_id),upcoming_opponents,division_results:teams.filter(x=>String(x.division)===String(t.division)&&x.roster_id!==t.roster_id).map(x=>({roster_id:x.roster_id,team_name:x.team_name,won:x.won,points:x.points})),league_context:contextFor(t.roster_id)}});
 const classification=inquirerWeekClassification(1,2026);
 const valueSnapshot={rows:[]}; // User-deleted Value History timestamps must not be reused as Week 1 valuation evidence.
-const midaTeams=attachMida(complete,await loadMida()),midaById=new Map(midaTeams.map(t=>[String(t.roster_id),t.mida_outlook||null])),enrichedTeams=midaTeams.map(t=>({...t,next_opponent_mida:midaById.get(String(t.next_opponent_roster_id))||null,upcoming_opponents:(t.upcoming_opponents||[]).map(x=>({...x,mida:midaById.get(String(x.roster_id))||null}))}));
+const liveMidaRows=await loadMida(),week1ContextCutoff=Date.parse('2026-09-15T00:00:00Z'),
+  frozenWeek1Mida=liveMidaRows.filter(row=>{const ts=Date.parse(String(row?.source_date||''));return Number.isFinite(ts)&&ts<=week1ContextCutoff}),
+  midaTeams=attachMida(complete,frozenWeek1Mida),midaById=new Map(midaTeams.map(t=>[String(t.roster_id),t.mida_outlook||null])),
+  enrichedTeams=midaTeams.map(t=>({...t,next_opponent_mida:midaById.get(String(t.next_opponent_roster_id))||null,upcoming_opponents:(t.upcoming_opponents||[]).map(x=>({...x,mida:midaById.get(String(x.roster_id))||null}))}));
 const inq=buildInquirerWeek({playerValues:Object.fromEntries((valueSnapshot.rows||[]).map(p=>[String(p.id),p.value])),season,week,teams:enrichedTeams,players,weeklyStats,weeklyStatHistory:{1:weeklyStats},historicalSeasonStats:historicalSeason?.stats||{},historicalSeasonYear,scoringSettings:league.scoring_settings||{},scoreFn:score,weekClassification:classification});
 const trades=canonicalWeekTrades;
 const overview=buildLeagueOverview({season,week,teams:inq.teams,players,transactions,canonicalTrades:trades,weekClassification:classification,valueHistoryMeta:{period:null,baseline:null,latest:null,source:'No valid seven-day Value History comparison yet'}});
-const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),broadcast_version:15,inquirer_version:26,editorial_revision:5,projection_source:Object.keys(currentProj).length&&Object.keys(nextProj).length?'Sleeper Week 1 and Week 2 projections scored with league settings':'projection data partially unavailable in preloaded Week 1 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:'No valid seven-day comparison available for Week 1 preloaded edition',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
+const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),broadcast_version:15,inquirer_version:26,editorial_revision:6,context_snapshot_through_week:1,projection_source:Object.keys(currentProj).length&&Object.keys(nextProj).length?'Sleeper Week 1 and Week 2 projections scored with league settings':'projection data partially unavailable in preloaded Week 1 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:'No valid seven-day comparison available for Week 1 preloaded edition',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
 if(result.teams.length!==32)throw new Error('Expected 32 team articles');
 for(const t of result.teams){const a=t.inquirer_article;if(!a?.headline||!a?.reporter?.id||!Array.isArray(a?.paragraphs)||a.paragraphs.length<9)throw new Error('Incomplete article '+t.roster_id)}
 fs.writeFileSync(process.env.OUT||'/tmp/week1-inquirer.json',JSON.stringify(result,null,2)+'\n');

@@ -2096,8 +2096,8 @@ function tradeCommentaryV32(t,r,facts={}){
     const recordClose=[
       "For "+t.team_name+" in "+scope+", that is the actual trade record; a hot Sunday does not get to rewrite the receipt.",
       "In "+scope+", "+t.team_name+" gets the unfashionable luxury of the original receipt; Sunday theater may change the review, not the terms.",
-      "IN "+scope.toUpperCase()+", "+t.team_name.toUpperCase()+" GETS THE REAL RECEIPT. ONE LOUD SUNDAY MAY CHANGE THE HEADLINE, NOT WHO ACTUALLY CHANGED HANDS.",
-      "For "+t.team_name+" in "+scope+", those are the verified terms. Hindsight may change the finding, but it does not get to edit the evidence."
+      "IN "+scope.toUpperCase()+", "+t.team_name.toUpperCase()+" GETS THE REAL RECEIPT. FOR "+t.team_name.toUpperCase()+" IN "+scope.toUpperCase()+", ONE LOUD SUNDAY MAY CHANGE THE HEADLINE, NOT WHO ACTUALLY CHANGED HANDS.",
+      "For "+t.team_name+" in "+scope+", those are the verified terms. For "+t.team_name+" in "+scope+", hindsight may change the finding, but it does not get to edit the evidence."
     ][v];
     paragraphs.push(t.team_name+" received "+(naturalJoin(ownAssets)||"no listed player asset")+"; "+otherName+" received "+(naturalJoin(otherAssets)||"no listed player asset")+". "+recordClose);
     const valueParts=tradeValueReadV32(t.team_name,otherName,tradeThenTotalV32(own),tradeThenTotalV32(other),tradeCurrentTotalV32(own,facts),tradeCurrentTotalV32(other,facts),scope);

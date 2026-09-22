@@ -1,0 +1,64 @@
+name: One-time pack current Inquirer revision 5 preload
+
+on:
+  push:
+    branches:
+      - inquirer-editorial-depth-r5
+    paths:
+      - '.github/workflows/one-time-pack-current-inquirer-r5.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: inquirer-editorial-depth-r5
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install generator dependency
+        run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Generate and audit current Week 1 edition
+        env:
+          OUT: /tmp/week1-inquirer-r5.json
+        run: |
+          for attempt in 1 2 3; do
+            echo "generation attempt $attempt"
+            node scripts/one-time-generate-inquirer-week1.mjs && break
+            if [ "$attempt" = "3" ]; then exit 1; fi
+            sleep 5
+          done
+          node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer-r5.json
+      - name: Pack preload
+        run: |
+          node scripts/pack-inquirer-preload.mjs /tmp/week1-inquirer-r5.json netlify/functions/inquirer-week1-2026-preload.mjs
+          node --input-type=module <<'NODE'
+          const edition=(await import('./netlify/functions/inquirer-week1-2026-preload.mjs?verify='+Date.now())).default;
+          if(Number(edition?.inquirer_version)!==26)throw new Error('preload version mismatch');
+          if(Number(edition?.editorial_revision)!==5)throw new Error('preload editorial revision mismatch');
+          if((edition?.teams||[]).length!==32)throw new Error('preload must contain 32 teams');
+          if(!edition?.league_overview)throw new Error('preload missing Weekly Recap');
+          const all=(edition.teams||[]).flatMap(t=>(t.inquirer_article?.sections||[]).flatMap(s=>s.paragraphs||[])).join(' ').toLowerCase();
+          for(const phrase of ['big type','angry font','name in red','remove the suspense','job underneath it','something concrete to test']) {
+            if(all.includes(phrase)) throw new Error('rejected phrase in packed preload: '+phrase);
+          }
+          console.log(JSON.stringify({season:edition.season,week:edition.week,revision:edition.editorial_revision,teams:edition.teams.length,weeklyRecap:!!edition.league_overview}));
+          NODE
+      - name: Commit bundled preload
+        run: |
+          if git diff --quiet -- netlify/functions/inquirer-week1-2026-preload.mjs; then
+            echo "Bundled preload already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add netlify/functions/inquirer-week1-2026-preload.mjs
+          git commit -m "Bundle deeper Inquirer revision 5 Week 1"
+          git push origin HEAD:inquirer-editorial-depth-r5

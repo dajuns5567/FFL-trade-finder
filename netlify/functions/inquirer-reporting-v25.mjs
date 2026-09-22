@@ -1506,116 +1506,60 @@ function storyAngleV28(t,r){
 }
 
 function angleLeadV28(t,r,angle){
-  const rows=list(t),top=rows[0],full=teamIdentityV28(t).full,opp=String(t.opponent_name||'the opponent'),
-    score=one(t.points)+'–'+one(t.opponent_points),oppScore=one(t.opponent_points)+'–'+one(t.points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),
-    miss=t.best_lineup_miss,tx=Number(t.current_week_trade_count||0),topName=top?.name||'the leading scorer',
-    seed=String(t.roster_id)+':'+angle+':'+String(r?.id||'');
-  const spines={
-    'rout-win':[
-      `${full} beat ${opp} ${score}, and a ${one(margin)}-point margin made the result obvious early. A win that comfortable shifts the review toward what can survive next week: which roles were genuinely strong, which scores were boosted by game script and which quiet spots were simply hidden by the margin.`,
-      `${score} flatters ${opp}. ${full} spent the afternoon turning a matchup into administrative paperwork, and a ${one(margin)}-point margin leaves very little room for fake modesty.`,
-      `There are wins, and then there are Sundays when the other side starts looking for the exits before the column is finished. ${full} gave ${opp} the latter, ${score}.`
+  const q=matchupMoodV35(t),full=teamIdentityV28(t).full,opp=q.opp,score=q.score,margin=q.margin,
+    seed=String(t.roster_id)+":lead-v35:"+String(angle||"")+":"+String(r?.id||"");
+  const banks={
+    "upset-win":[
+      full+" walked in as the underdog and pulled the rug out from under "+opp+", "+score+". "+opp+" had the comfortable pregame story; "+full+" left with the only story anyone is going to repeat.",
+      opp+" entered with the projection edge and left looking stunned. "+full+" stole the afternoon "+score+", turning a matchup that was supposed to favor "+opp+" into the first embarrassing receipt of its season.",
+      full+" was supposed to be the side chasing. Instead, "+opp+" spent Sunday trying to catch a game that kept moving away, and "+full+" walked out with an upset worth being obnoxious about.",
+      opp+" had the better forecast; "+full+" had the better Sunday. The upset matters because it made the favorite look ordinary in a game it expected to control."
     ],
-    'rout-loss':[
-      `${full} lost ${score}, a margin of ${one(margin)} that resists euphemism. This was not one unlucky lineup slot; it was the kind of Sunday that makes every department of the roster look complicit.`,
-      `${opp} beat ${full} ${oppScore}, and at that margin isolated excuses stop mattering. The whole ${full} lineup has to own a piece of the afternoon.`,
-      `${score} is the sort of final that makes analysis feel like an incident report. There are enough problems across ${full} that none deserves to hide behind the others.`
+    "favorite-collapse":[
+      full+" had the pregame advantage and handed it to "+opp+". The "+score+" loss is the kind favorites hate because the schedule offered a winnable Sunday and "+full+" returned it unopened.",
+      opp+" was supposed to be the inconvenience. Instead, "+full+" turned itself into the punch line, losing "+score+" after entering with the projection edge.",
+      full+" came in favored and left "+opp+" celebrating. That is the sort of Week 1 donation that makes the group chat unbearable until somebody wins again.",
+      full+" owned the paper advantage and "+opp+" owned the scoreboard, "+score+". Filch considers the latter the more persuasive document."
     ],
-    'close-win':[
-      `${full} escaped ${opp} ${score}, and the ${one(margin)}-point margin is exactly why the details matter. One lineup call, one target, one tackle or one ugly quarter could have turned a satisfying win into a week of recriminations.`,
-      `A ${one(margin)}-point win is less a cushion than permission to exhale. ${full} beat ${opp} ${score}, which means every flaw gets discussed from the much friendlier side of the standings.`,
-      `${full} beat ${opp} ${score}. Barely. That adverb is doing a lot of work, because the final margin was thin enough to make almost every decision in the lineup relevant.`
+    "rout-win":[
+      full+" made "+opp+" spend Sunday looking for an exit, "+score+". By the time the margin reached "+one(margin)+", the game was asking how much dignity "+opp+" could save.",
+      full+" beat "+opp+" "+score+" and made the matchup feel over before the app stopped updating. A "+one(margin)+"-point win gives the winner swagger and the loser a very long week.",
+      full+" turned "+opp+" into Week 1 target practice, "+score+". Tilly will not call one rout a dynasty, but "+opp+" is welcome to avoid the group chat until Wednesday.",
+      full+" controlled "+opp+" by "+one(margin)+" points. One roster dictated the afternoon and the other spent it reacting."
     ],
-    'close-loss':[
-      `${full} lost ${score}, and ${one(margin)} points is close enough to make the whole afternoon feel personally negotiable. Every quiet starter and every legal bench alternative suddenly has a lawyer.`,
-      `${opp} beat ${full} ${oppScore}. A ${one(margin)}-point loss is cruel because it gives hindsight too many places to stand and shout.`,
-      `${full} came away with a loss at ${score}, the kind that does not let anyone retreat into “we were never in it.” They were in it. That is what makes the autopsy irritating.`
+    "rout-loss":[
+      opp+" handed "+full+" a "+one(margin)+"-point loss, "+score+", and there is not enough tasteful language in the notebook to hide it.",
+      full+" lost "+score+", the kind of margin that makes one stop looking for a single culprit and start checking whether the whole room had a bad day.",
+      opp+" beat "+full+" "+one(t.opponent_points)+"–"+one(t.points)+" and made the loser look like it had wandered into somebody else’s highlight reel.",
+      full+" lost by "+one(margin)+" to "+opp+". Filch records a broad failure: too many parts of the matchup went the wrong way for one excuse to carry the file."
     ],
-    'upset-win':[
-      `${full} was supposed to be the lesser side on paper and then treated the forecast like junk mail, beating ${opp} ${score}. The upset matters less as a surprise than as proof that this lineup has a version capable of bending the matchup in its own direction.`,
-      `The projection liked ${opp}; Sunday liked ${full}. ${score} turned a pregame disadvantage into one of those wins that changes how seriously the next opponent has to read the roster.`,
-      `${full} entered as the projected underdog and left with ${score}. Forecasts are useful until somebody starts taking them personally.`
+    "close-win":[
+      full+" escaped "+opp+" "+score+". With only "+one(margin)+" points between them, every quiet starter and every late swing suddenly has a face and a name.",
+      full+" beat "+opp+" by "+one(margin)+" points, which is less a cushion than permission to exhale. "+opp+" was one good break from ruining the entire mood.",
+      full+" survived "+opp+" "+score+". Barely. Tilly recommends enjoying the win before anyone starts replaying all the ways it nearly became a disaster.",
+      full+" beat "+opp+" "+score+", and the "+one(margin)+"-point margin leaves no room for pretending the result was inevitable."
     ],
-    'favorite-collapse':[
-      `${full} owned the nicer forecast and still lost to ${opp} ${score}. Those are the defeats that linger because the schedule offered a reasonable assignment and the lineup returned it unopened.`,
-      `This was supposed to be one of the friendlier pieces of the schedule. Instead, ${full} turned a projected edge into a ${score} loss, which is how comfortable weeks become expensive ones.`,
-      `${full} had the forecast, ${opp} had the result. ${score} makes every pregame assumption look decorative after the fact.`
+    "close-loss":[
+      full+" lost "+score+", and "+one(margin)+" points is close enough to make every missed opportunity feel like a personal insult. "+opp+" gets the relief; "+full+" gets the replay loop.",
+      opp+" beat "+full+" by "+one(margin)+" points. Bartholomew considers close losses especially vulgar because they provide just enough hope to make hindsight unbearable.",
+      full+" lost "+score+". Tilly has already found six different moments worth blaming and plans to be unfair about all of them until next Sunday.",
+      full+" came up "+one(margin)+" points short against "+opp+". The distance between victory and defeat is small enough that no lineup decision gets to hide."
     ],
-    'lineup-regret':[
-      `${full} lost ${score}, and the bench has earned a paragraph whether management likes it or not. ${miss?.reserve?.name||'A reserve option'} had a legal path into the lineup worth about ${one(miss?.gap||0)} additional points; that is not imaginary Monday-morning roster gymnastics.`,
-      `The final was ${score}, but the sharper story is sitting on the bench. ${miss?.reserve?.name||'A reserve'} could legally have replaced ${miss?.starter?.name||'a starter'}, which turns regret into an actual management decision instead of talk-radio theater.`,
-      `${full} can complain about plenty after ${score}. The complaint with documentation is the lineup one: ${miss?.reserve?.name||'the reserve option'} was eligible, available and materially better this week.`
+    "win":[
+      full+" beat "+opp+" "+score+" and spent more of the afternoon imposing than reacting. The winner looked more comfortable in the matchup than the opponent.",
+      full+" handled "+opp+" "+score+". The game never needed a cinematic rescue; the winner simply found more answers and kept making "+opp+" live with them.",
+      full+" beat "+opp+" "+score+". Tilly’s summary: the winner looked like it knew what it wanted, the loser looked like it kept learning what had already happened.",
+      full+" beat "+opp+" "+score+". The margin was clear enough to establish control without being so large that the details stopped mattering."
     ],
-    'front-office-storm':[
-      `${full} made ${tx} completed roster moves this week, then asked Sunday to make sense of all that motion. The final was ${score}; the more interesting question is which of those decisions actually changed the football.`,
-      `The transaction log for ${full} needs its own table of contents after ${tx} moves. Sunday finally supplied the part the front office cannot manufacture with activity: consequences.`,
-      `${full} spent the week rearranging the roster at industrial scale — ${tx} completed moves — before landing at ${score}. Churn is easy to count; improvement is harder.`
-    ],
-    'defense-led':[
-      `${full} found its loudest fantasy voice on defense, where ${topName} led the team in scoring on the way to ${score}. In an IDP league, that is not a novelty; it is a reminder that a matchup can turn on the side of the ball casual recaps usually bury.`,
-      `${topName} put a defender at the center of the ${full} story, and ${score} followed. That is the kind of week that makes an IDP roster feel less like a specialty project and more like a weapon.`,
-      `${full} came out of ${score} with a defensive player as its headline act. ${topName} made sure nobody could write this one as an offense-only story.`
-    ],
-    'star-dependent':[
-      `${full} finished at ${one(t.points)}, but most of the oxygen belonged to ${topName} and the next few names on the card. The result against ${opp} was ${score}; the sustainability question is whether the rest of the roster can keep forcing itself into the article.`,
-      `${score} came with a concentrated cast. ${full} leaned so heavily on its top scorers that a single ordinary Sunday from one of them would have changed the shape of the entire matchup.`,
-      `${full} got what it needed at the top and not much permission to look away from the stars. ${score} worked this time; dependency is still dependency when it wins.`
-    ],
-    'projection-smash':[
-      `${full} blew past its own projection by ${one(Number(t.points)-Number(t.projected))} points and still had to live with the actual result, ${score}. Forecasts do not award wins, but beating one this badly tells us the roster found production the model did not price in.`,
-      `${score} arrived with ${full} running ${one(Number(t.points)-Number(t.projected))} points hotter than forecast. The useful story is not that the projection was wrong; it is where the unexpected production came from and whether that role can repeat.`,
-      `${full} treated its projection as a floor rather than a forecast, clearing it by ${one(Number(t.points)-Number(t.projected))}. The scoreboard against ${opp} tells us whether that eruption became useful or merely spectacular.`
-    ],
-    'projection-crater':[
-      `${full} finished ${one(Math.abs(Number(t.points)-Number(t.projected)))} points under projection, and ${score} shows what that missing production cost. A forecast can be wrong; a lineup this far below expectation still demands names.`,
-      `${score} came with ${full} leaving ${one(Math.abs(Number(t.points)-Number(t.projected)))} projected points somewhere between lineup lock and the final whistle. That gap is too large to dismiss as background noise.`,
-      `${full} missed its projection by ${one(Math.abs(Number(t.points)-Number(t.projected)))} and made the final against ${opp} much harder than the pregame numbers suggested it needed to be.`
-    ],
-    'breakout-week':[
-      `${full} came out of ${score} with at least one player forcing a new conversation about his weekly role. For ${full}, that is more interesting than a random spike: young-player production matters when opportunity grows with it.`,
-      `${score} gave ${full} a result; the player-development story may last longer. One of the roster’s younger pieces just made the old expectation look suspiciously small.`,
-      `${full} has a breakout argument to carry into next week after ${score}. One Sunday does not close the case, but it can absolutely change who gets the first question at practice.`
-    ],
-    'division-fight':[
-      `${full} and ${opp} put a divisional result directly into the standings with ${score}. Those games age differently; the same final can reappear months later disguised as a tiebreaker problem.`,
-      `${score} did double work because ${full} and ${opp} share a division. Somebody gained ground and somebody personally handed it over.`,
-      `${full} played ${opp} for more than one Sunday’s satisfaction. ${score} moved two teams inside the same race at once.`
-    ],
-    win:[
-      `${full} beat ${opp} ${score}, which is enough to make the week pleasant and not nearly enough to make it simple. The useful work starts with understanding what was repeatable.`,
-      `${score} goes in the win column for ${full}. Everything after that is the job: separate the parts worth trusting from the parts that happened to survive.`,
-      `${full} has the only argument that never needs a footnote — it beat ${opp} ${score}. Now the roster gets six days to decide whether the performance was a beginning or merely a good Sunday.`
-    ],
-    loss:[
-      `${full} lost to ${opp} ${score}. The standings will reduce that to one letter; a decent column has to explain which parts of the roster actually earned it.`,
-      `${score} leaves ${full} with a loss and several different levels of concern. Not every bad line deserves panic, but not every bad line gets to hide behind “one week” either.`,
-      `${full} takes the loss, ${score}, and the irritating part is that the box score contains both legitimate excuses and legitimate warnings.`
+    "loss":[
+      full+" lost "+score+" to "+opp+". The frustration is that "+opp+" found enough answers to keep every good "+full+" moment from changing the direction of the afternoon.",
+      opp+" beat "+full+" "+one(t.opponent_points)+"–"+one(t.points)+". Bartholomew can find attractive individual performances in the wreckage; the team result remains poorly dressed.",
+      full+" lost to "+opp+" "+score+". Tilly is willing to praise the players who earned it and equally willing to remind everybody that "+opp+" is the team doing the celebrating.",
+      full+" lost "+score+". Filch finds useful individual work inside the result, but "+opp+" controlled enough of the matchup to own the verdict."
     ]
   };
-  const spine=keyedChoice(seed+':spine',spines[angle]||spines[Number(t.points)>Number(t.opponent_points)?'win':'loss']);
-  const voiceLine=deskChoice(t,r,[
-    [
-      `I have seen enough ${full} Sundays to know the scoreboard is usually the easy part; deciding what deserves to survive into next week is harder.`,
-      `One week has fooled better teams than ${full}. I’m keeping what looked real for ${full} and ignoring the urge to declare a season.`,
-      `I trust the thing everyone will forget about ${full} by Thursday: role, usage and whether the good part can happen again.`
-    ],
-    [
-      `I was promised elegance from ${full} and received fantasy football instead, which is how one learns to admire useful chaos.`,
-      `I prefer elegance; around ${full}, the answer keeps arriving as group chats, questionable decisions and 30-point inconveniences.`,
-      `The cruel thing about being right about ${full} for one Sunday is that the next Sunday arrives with no respect for your theory.`
-    ],
-    [
-      `I WOULD LIKE ONE CALM ${full.toUpperCase()} WEEK. THE LEAGUE HAS DECLINED THE ${full.toUpperCase()} REQUEST. FINE.`,
-      `RESTRAINT WAS CONSIDERED FOR ${full.toUpperCase()} AND REJECTED. THE ${full.toUpperCase()} SCOREBOARD STARTED IT.`,
-      `I chase whoever ruined the ${full} group-chat mood first. This week, the ${full} trail is not subtle.`
-    ],
-    [
-      `The ${full} evidence is cleaner than my coffee and, regrettably, harder to ignore.`,
-      `I would love to invent a ${full} conspiracy here; the facts have been inconsiderate enough to make the simpler explanation more interesting.`,
-      `I keep ${full} receipts because managers develop selective memory by Tuesday. I can live with being unpopular about ${full}.`
-    ]
-  ]);
-  return spine+' '+voiceLine;
+  const key=banks[angle]?angle:(q.won?(q.underdog?"upset-win":q.margin>=20?"rout-win":q.margin<=7?"close-win":"win"):(q.favorite?"favorite-collapse":q.margin>=20?"rout-loss":q.margin<=7?"close-loss":"loss"));
+  return keyedChoice(seed,banks[key]);
 }
 
 function fourthWallV28(t,r,angle){

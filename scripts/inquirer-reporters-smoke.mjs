@@ -8,7 +8,7 @@ assert(REPORTERS.map(r=>r.name).join('|')==='Nick Swindell|Bartholomew Roycingto
 assert(INQUIRER_PLAYOFF_START_WEEK===14&&INQUIRER_FINAL_WEEK===17,'Inquirer season must classify Weeks 14-17 as playoffs and stop at Week 17');
 assert(week1Preload?.inquirer_version===26&&Number(week1Preload?.editorial_revision)>=2&&Number(week1Preload?.season)===2026&&Number(week1Preload?.week)===1,'Committed Week 1 preload must be the generated 2026 V26 revision-2 edition');
 assert(Array.isArray(week1Preload?.teams)&&week1Preload.teams.length===32,'Committed Week 1 preload must contain all 32 team articles');
-assert(week1Preload.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(t?.inquirer_article?.sections)&&t.inquirer_article.sections.length===8&&Array.isArray(t?.inquirer_article?.paragraphs)&&t.inquirer_article.paragraphs.length>=8),'Every preloaded Week 1 team must have an eight-section V26 article with Hot Seat and Cool Throne');
+assert(week1Preload.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(t?.inquirer_article?.sections)&&t.inquirer_article.sections.length>=8&&t.inquirer_article.sections.length<=9&&Array.isArray(t?.inquirer_article?.paragraphs)&&t.inquirer_article.paragraphs.length>=8),'Every preloaded Week 1 team must preserve the eight core V26 beats, with an optional ninth trade-commentary beat');
 const preloadReporterCounts=new Map(REPORTERS.map(r=>[r.name,0]));
 for(const t of week1Preload.teams){const n=t?.inquirer_article?.reporter?.name;preloadReporterCounts.set(n,(preloadReporterCounts.get(n)||0)+1)}
 for(const r of REPORTERS)assert(preloadReporterCounts.get(r.name)===8,'Week 1 preload must preserve exactly eight team stories for '+r.name);
@@ -69,7 +69,10 @@ for(const t of built.teams){
  assert(a.facts?.league_context?.standings_rank===t.league_context.standings_rank&&a.facts?.league_context?.record?.wins===t.league_context.record.wins,'Each article must preserve verified season/standings/streak/playoff context in its facts');
  assert((a.paragraphs||[]).some(p=>p.includes(String(t.league_context.record.wins)+'-'+String(t.league_context.record.losses))||/streak|Week 14|playoff/i.test(p)),'Each article must weave verified season context into narrative prose');
  assert((a.facts?.starter_details||[]).every(p=>p.recent_form!=null),'Player coverage must preserve multi-game performance context for the writer when history exists');
- assert((a.sections||[]).length===8&&(a.paragraphs||[]).length>=8,'Each V25 Inquirer story must preserve six reporting beats, Hot Seat, Cool Throne, and full section depth');
+ const hasTrade=(t.transactions||[]).some(m=>String(m?.type||'').toLowerCase()==='trade'),expectedSections=hasTrade?9:8,tradeSection=(a.sections||[]).find(s=>s.kind==='trade-commentary');
+ assert((a.sections||[]).length===expectedSections&&(a.paragraphs||[]).length>=8,'Each V26 Inquirer story must preserve eight core reporting beats plus a dynamic trade-commentary beat when applicable');
+ if(hasTrade)assert(tradeSection&&(tradeSection.paragraphs||[]).length>=1,'A team with an applicable trade must receive dedicated trade commentary');
+ else assert(!tradeSection,'A team without an applicable trade must not receive synthetic trade commentary');
  const articleWords=(a.paragraphs||[]).join(' ').trim().split(/\s+/).filter(Boolean).length;
  assert(articleWords>=200,'Each V25 Inquirer story must contain a complete human-readable beat column rather than a checklist summary; got '+articleWords+' words');
  assert((a.sections||[]).some(s=>s.kind==='players'&&(s.paragraphs||[]).length>=Math.min(2,t.starter_details.length)),'Each article must connect available leading and supporting player performances to the result');
@@ -192,6 +195,8 @@ assert(helper.includes('buildNarrativeArticle')&&narrative.includes('humanSectio
 assert(reporting.includes('function nickExpansion')&&reporting.includes('function bartholomewExpansion')&&reporting.includes('function tillyExpansion')&&reporting.includes('function filchExpansion')&&reporting.includes('reporterStructureV26'),'Recovered Work-state requires four structurally distinct reporter expansion paths, not one shared commentary template');
 assert(!reporting.includes('function sectionCommentary'),'Generic shared sectionCommentary must not return; it regresses the four reporters toward one article template');
 assert(reporting.includes('valueSectionV26')&&reporting.includes('acquisitionCallback'),'Active team articles must preserve reporter-specific Value History prose and ongoing trade-acquisition memory');
+assert(reporting.includes('tradeCommentaryV32')&&reporting.includes("kind:\"trade-commentary\""),'Active team articles must consume read-only Trade History in a dedicated dynamic trade-commentary section');
+assert(reporting.includes('focusedPlayerStatsV32')&&reporting.includes('playerEditorialReadV32'),'Active player reporting must preserve complete highlighted-player stats and add a substantive editorial read');
 assert(/section-order shuffling alone is not enough/i.test(helper),'House style must state that reporter differences require more than reordered sections');
 assert(overviewWriter.includes("kind:'championship'")&&overviewWriter.includes("kind:'fraud'")&&overviewWriter.includes("kind:'division'")&&overviewWriter.includes("kind:'player'")&&overviewWriter.includes("kind:'upset'"),'Hot Takes must remain explicit prediction types');
 assert(helper.includes('Hall of Fame Petition')&&helper.includes('Metaphorical Torches & Pitchforks')&&helper.includes('The Imaginary Mansion Is Under Siege'),'V16 fan sentiment must preserve the full creative positive-to-negative spectrum');

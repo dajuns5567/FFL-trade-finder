@@ -34,7 +34,6 @@ function fingerprint(rows,picks=[],teams=[]){
 
 export default async req=>{
   try{
-    if(process.env.CONTEXT!=='production')return json({error:'production-only maintenance endpoint'},403);
     if(!['GET','POST'].includes(req.method))return json({error:'GET or POST required'},405);
     const url=new URL(req.url);
     if(url.searchParams.get('confirm')!==CONFIRM)return json({error:'confirmation required'},400);

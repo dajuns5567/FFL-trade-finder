@@ -5,6 +5,8 @@ import {fetchBestSeason} from '../netlify/functions/history-fetch.mjs';
 
 const LEAGUE='1316867686394769408';
 const API='https://api.sleeper.app/v1';
+const INQUIRER_HISTORY_ORIGIN=String(process.env.INQUIRER_HISTORY_ORIGIN||'https://deploy-preview-385--precious-stroopwafel-196eae.netlify.app').replace(/\/$/,'');
+const INQUIRER_TRADE_HISTORY_URL=INQUIRER_HISTORY_ORIGIN+'/.netlify/functions/value-history?trades=1';
 const season=2026, week=1;
 
 async function j(url){
@@ -156,6 +158,20 @@ function tradeRows(transactions,teamName){
     return{id:String(t.transaction_id||''),season,week,roster_ids:ids,team_names:Object.fromEntries(ids.map(id=>[id,teamName(id)])),sides,created:Number(t.status_updated||t.created)||null};
   });
 }
+async function canonicalTradeHistoryReadOnly(){
+  let last=null;
+  for(let attempt=0;attempt<4;attempt++){
+    try{
+      const result=await j(INQUIRER_TRADE_HISTORY_URL);
+      if(!result||!Array.isArray(result.trades))throw new Error('Canonical Trade History response did not contain trades');
+      return result;
+    }catch(e){
+      last=e;
+      if(attempt<3)await new Promise(resolve=>setTimeout(resolve,750*(attempt+1)));
+    }
+  }
+  throw new Error('Read-only canonical Trade History unavailable: '+String(last?.message||last||'unknown error'));
+}
 
 const league=await j(API+'/league/'+LEAGUE);
 const historicalSeasonYear=season-1,historicalSeason=await fetchBestSeason(historicalSeasonYear).catch(()=>({stats:null,source:null,errors:['unavailable']}));
@@ -206,7 +222,13 @@ function bestEligibleLineupMiss(starters,bench){
   return best;
 }
 const teamName=id=>{const r=rb.get(String(id)),u=ub.get(String(r?.owner_id||''));return String(u?.metadata?.team_name||u?.display_name||('Roster '+id)).trim()};
-const canonicalWeekTrades=tradeRows(transactions,teamName);
+const sleeperWeekTrades=tradeRows(transactions,teamName);
+const canonicalTradeHistory=await canonicalTradeHistoryReadOnly();
+const canonicalWeekTrades=(canonicalTradeHistory.trades||[]).filter(tr=>Number(tr?.season)===season&&Number(tr?.week)===week);
+if(sleeperWeekTrades.length&&!canonicalWeekTrades.length)throw new Error('Canonical Trade History returned no Week 1 trades while Sleeper returned '+sleeperWeekTrades.length);
+const canonicalTradeIds=new Set(canonicalWeekTrades.map(tr=>String(tr?.id||'')));
+const missingCanonicalTradeIds=sleeperWeekTrades.map(tr=>String(tr?.id||'')).filter(id=>id&&!canonicalTradeIds.has(id));
+if(missingCanonicalTradeIds.length)throw new Error('Canonical Trade History is missing completed Week 1 trade IDs: '+missingCanonicalTradeIds.slice(0,8).join(', '));
 function tradeAcquisitionHistory(trades,rosterId,currentPlayerIds){
   const rid=String(rosterId),current=new Set((currentPlayerIds||[]).map(String)),seen=new Set(),out=[];
   const ordered=(trades||[]).slice().sort((a,b)=>Number(b?.created||0)-Number(a?.created||0));
@@ -240,8 +262,8 @@ const midaTeams=attachMida(complete,await loadMida()),midaById=new Map(midaTeams
 const inq=buildInquirerWeek({playerValues:Object.fromEntries((valueSnapshot.rows||[]).map(p=>[String(p.id),p.value])),season,week,teams:enrichedTeams,players,weeklyStats,weeklyStatHistory:{1:weeklyStats},historicalSeasonStats:historicalSeason?.stats||{},historicalSeasonYear,scoringSettings:league.scoring_settings||{},scoreFn:score,weekClassification:classification});
 const trades=canonicalWeekTrades;
 const overview=buildLeagueOverview({season,week,teams:inq.teams,players,transactions,canonicalTrades:trades,weekClassification:classification,valueHistoryMeta:{period:null,baseline:null,latest:null,source:'No valid seven-day Value History comparison yet'}});
-const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),broadcast_version:15,inquirer_version:26,editorial_revision:4,projection_source:Object.keys(currentProj).length&&Object.keys(nextProj).length?'Sleeper Week 1 and Week 2 projections scored with league settings':'projection data partially unavailable in preloaded Week 1 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:'No valid seven-day comparison available for Week 1 preloaded edition',trade_history_source:'Sleeper Week 1 completed trades',reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
+const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),broadcast_version:15,inquirer_version:26,editorial_revision:4,projection_source:Object.keys(currentProj).length&&Object.keys(nextProj).length?'Sleeper Week 1 and Week 2 projections scored with league settings':'projection data partially unavailable in preloaded Week 1 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:'No valid seven-day comparison available for Week 1 preloaded edition',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
 if(result.teams.length!==32)throw new Error('Expected 32 team articles');
 for(const t of result.teams){const a=t.inquirer_article;if(!a?.headline||!a?.reporter?.id||!Array.isArray(a?.paragraphs)||a.paragraphs.length<9)throw new Error('Incomplete article '+t.roster_id)}
 fs.writeFileSync(process.env.OUT||'/tmp/week1-inquirer.json',JSON.stringify(result,null,2)+'\n');
-console.log(JSON.stringify({season,week,teams:result.teams.length,reporters:result.reporters.map(x=>x.name),overview_sections:overview.sections.length,hot_takes:overview.hot_takes.length,weekly_stat_rows:Object.keys(weeklyStats||{}).length,historical_stat_rows:Object.keys(historicalSeason?.stats||{}).length,historical_source:historicalSeason?.source||null,transactions:transactions.length,trades:trades.length},null,2));
+console.log(JSON.stringify({season,week,teams:result.teams.length,reporters:result.reporters.map(x=>x.name),overview_sections:overview.sections.length,hot_takes:overview.hot_takes.length,weekly_stat_rows:Object.keys(weeklyStats||{}).length,historical_stat_rows:Object.keys(historicalSeason?.stats||{}).length,historical_source:historicalSeason?.source||null,transactions:transactions.length,trades:trades.length,trade_history_source:result.trade_history_source},null,2));

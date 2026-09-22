@@ -1,0 +1,70 @@
+name: One-time pack current Inquirer revision 6 preload
+
+on:
+  push:
+    branches:
+      - inquirer-editorial-depth-r5
+    paths:
+      - '.github/workflows/one-time-pack-current-inquirer-r6.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: inquirer-editorial-depth-r5
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install generator dependency
+        run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Generate and audit Week 1 revision 6
+        env:
+          OUT: /tmp/week1-inquirer-r6.json
+        run: |
+          for attempt in 1 2 3; do
+            echo "generation attempt $attempt"
+            node scripts/one-time-generate-inquirer-week1.mjs && break
+            if [ "$attempt" = "3" ]; then exit 1; fi
+            sleep 5
+          done
+          node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer-r6.json
+          node scripts/inquirer-overview-quality-audit.mjs /tmp/week1-inquirer-r6.json
+      - name: Pack preload
+        run: |
+          node scripts/pack-inquirer-preload.mjs /tmp/week1-inquirer-r6.json netlify/functions/inquirer-week1-2026-preload.mjs
+          node --input-type=module <<'NODE'
+          const edition=(await import('./netlify/functions/inquirer-week1-2026-preload.mjs?verify='+Date.now())).default;
+          if(Number(edition?.inquirer_version)!==26)throw new Error('preload version mismatch');
+          if(Number(edition?.editorial_revision)!==6)throw new Error('preload editorial revision mismatch');
+          if(Number(edition?.context_snapshot_through_week)!==1)throw new Error('preload context snapshot mismatch');
+          if((edition?.teams||[]).length!==32)throw new Error('preload must contain 32 teams');
+          if(!edition?.league_overview)throw new Error('preload missing Weekly Recap');
+          for(const t of edition.teams||[]){
+            const r=t?.league_context?.record||{},games=(Number(r.wins)||0)+(Number(r.losses)||0)+(Number(r.ties)||0);
+            if(games!==1)throw new Error('Week 1 record leaked later data for '+t.team_name+': '+JSON.stringify(r));
+            if(Number(t?.league_context?.snapshot_through_week)!==1)throw new Error('Week 1 snapshot cutoff mismatch for '+t.team_name);
+            if(t?.next_projected!==null)throw new Error('Week 1 archive contains regenerated Week 2 team projection for '+t.team_name);
+            if(t?.next_opponent_projected!==null)throw new Error('Week 1 archive contains regenerated Week 2 opponent projection for '+t.team_name);
+            if(t?.next_week_availability!==null)throw new Error('Week 1 archive contains later injury/availability state for '+t.team_name);
+          }
+          console.log(JSON.stringify({season:edition.season,week:edition.week,revision:edition.editorial_revision,teams:edition.teams.length,weeklyRecap:!!edition.league_overview,historicalCutoffVerified:true}));
+          NODE
+      - name: Commit bundled preload
+        run: |
+          if git diff --quiet -- netlify/functions/inquirer-week1-2026-preload.mjs; then
+            echo "Bundled preload already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add netlify/functions/inquirer-week1-2026-preload.mjs
+          git commit -m "Bundle historically frozen Inquirer revision 6 Week 1"
+          git push origin HEAD:inquirer-editorial-depth-r5

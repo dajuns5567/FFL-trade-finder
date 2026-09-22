@@ -1,0 +1,250 @@
+name: Scrub pre-cutoff IDP Value History
+
+on:
+  push:
+    branches:
+      - maintenance/idp-history-reset-20260921-2345-et
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scrub:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: value-history-data
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Netlify Blobs client
+        run: npm install --no-save --package-lock=false @netlify/blobs@10.0.0
+
+      - name: Scrub archive and live store
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { getStore } from '@netlify/blobs';
+
+          const CUTOFF_MS=Date.parse('2026-09-22T03:45:00.000Z');
+          const SITE_ID='207f3c9d-f09c-40bc-9e04-5161a43fb82e';
+          const isPre=t=>{const ms=Date.parse(String(t||''));return Number.isFinite(ms)&&ms<CUTOFF_MS};
+          const isIdp=r=>String(r?.pos||'').toUpperCase()==='IDP';
+
+          function fingerprint(rows,picks=[],teams=[]){
+            let h=2166136261;
+            for(const r of rows){const x=`${r.id}:${r.value}:${r.overall}:${r.posRank}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
+            for(const p of picks){const x=`P:${p.id}:${p.value}:${p.season}:${p.round}:${p.original_owner}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
+            for(const t of teams){const x=`T:${t.id}:${t.value}:${t.player_count}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
+            return (h>>>0).toString(36);
+          }
+
+          const archiveReport={cutoff_utc:'2026-09-22T03:45:00.000Z',snapshotsScanned:0,preCutoffSnapshots:0,snapshotsChanged:0,idpRowsRemoved:0,offenseRowsBefore:0,offenseRowsAfter:0};
+
+          const files=[];
+          function walk(dir){
+            if(!fs.existsSync(dir))return;
+            for(const ent of fs.readdirSync(dir,{withFileTypes:true})){
+              const p=path.join(dir,ent.name);
+              if(ent.isDirectory())walk(p);
+              else if(ent.isFile()&&ent.name.endsWith('.json'))files.push(p);
+            }
+          }
+          walk('value-history/snapshots');
+
+          const metaByPath=new Map();
+          for(const file of files){
+            archiveReport.snapshotsScanned++;
+            const snap=JSON.parse(fs.readFileSync(file,'utf8'));
+            if(!snap?.t||!Array.isArray(snap.rows))continue;
+            if(!isPre(snap.t)){
+              metaByPath.set(file,{count:snap.rows.length,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[])});
+              continue;
+            }
+            archiveReport.preCutoffSnapshots++;
+            const offense=snap.rows.filter(r=>!isIdp(r));
+            const removed=snap.rows.length-offense.length;
+            archiveReport.offenseRowsBefore+=offense.length;
+            if(removed>0){
+              const updated={...snap,rows:offense};
+              updated.fingerprint=fingerprint(updated.rows,updated.picks||[],updated.teams||[]);
+              fs.writeFileSync(file,JSON.stringify(updated,null,2)+'\n');
+              archiveReport.snapshotsChanged++;
+              archiveReport.idpRowsRemoved+=removed;
+              archiveReport.offenseRowsAfter+=updated.rows.length;
+              metaByPath.set(file,{count:updated.rows.length,fingerprint:updated.fingerprint});
+            } else {
+              archiveReport.offenseRowsAfter+=offense.length;
+              metaByPath.set(file,{count:snap.rows.length,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[])});
+            }
+          }
+          if(archiveReport.offenseRowsBefore!==archiveReport.offenseRowsAfter)throw new Error('Archive offense preservation failed');
+
+          const indexPath='value-history/index.json';
+          if(fs.existsSync(indexPath)){
+            const index=JSON.parse(fs.readFileSync(indexPath,'utf8'));
+            for(const item of index.items||[]){
+              const meta=metaByPath.get(String(item.path||''));
+              if(meta&&isPre(item.t)){item.count=meta.count;item.fingerprint=meta.fingerprint}
+            }
+            fs.writeFileSync(indexPath,JSON.stringify(index,null,2)+'\n');
+          }
+
+          const latestPath='value-history/latest.json';
+          if(fs.existsSync(latestPath)){
+            const latest=JSON.parse(fs.readFileSync(latestPath,'utf8'));
+            const ref=latest?.latest;
+            if(ref?.path&&isPre(ref.t)){
+              const meta=metaByPath.get(String(ref.path));
+              if(meta){ref.count=meta.count;ref.fingerprint=meta.fingerprint}
+            }
+            fs.writeFileSync(latestPath,JSON.stringify(latest,null,2)+'\n');
+          }
+
+          if(fs.existsSync('value-history/months')){
+            for(const name of fs.readdirSync('value-history/months')){
+              if(!name.endsWith('.json'))continue;
+              const p=path.join('value-history/months',name);
+              const bundle=JSON.parse(fs.readFileSync(p,'utf8'));
+              let changed=false;
+              if(Array.isArray(bundle.snapshots)){
+                bundle.snapshots=bundle.snapshots.map(snap=>{
+                  if(!snap?.t||!Array.isArray(snap.rows)||!isPre(snap.t))return snap;
+                  const offense=snap.rows.filter(r=>!isIdp(r));
+                  if(offense.length===snap.rows.length)return snap;
+                  changed=true;
+                  return {...snap,rows:offense,fingerprint:fingerprint(offense,snap.picks||[],snap.teams||[])};
+                });
+              }
+              if(changed)fs.writeFileSync(p,JSON.stringify(bundle,null,2)+'\n');
+            }
+          }
+
+          let remainingArchiveIdp=0,verifiedArchiveOffense=0;
+          for(const file of files){
+            const snap=JSON.parse(fs.readFileSync(file,'utf8'));
+            if(!snap?.t||!Array.isArray(snap.rows)||!isPre(snap.t))continue;
+            remainingArchiveIdp+=snap.rows.filter(isIdp).length;
+            verifiedArchiveOffense+=snap.rows.filter(r=>!isIdp(r)).length;
+          }
+          archiveReport.remainingPreCutoffIdpRows=remainingArchiveIdp;
+          archiveReport.verifiedOffenseRows=verifiedArchiveOffense;
+          if(remainingArchiveIdp!==0)throw new Error('Archive still has pre-cutoff IDP rows');
+          if(verifiedArchiveOffense!==archiveReport.offenseRowsBefore)throw new Error('Archive offense rows changed');
+
+          const tokens=[
+            ['NETLIFY_BLOBS_TOKEN',String(process.env.NETLIFY_BLOBS_TOKEN||'').trim()],
+            ['NETLIFY_AUTH_TOKEN',String(process.env.NETLIFY_AUTH_TOKEN||'').trim()]
+          ].filter(([,v])=>v).filter((x,i,a)=>a.findIndex(y=>y[1]===x[1])===i);
+          if(!tokens.length)throw new Error('No Netlify token configured');
+
+          let store=null,tokenName=null,lastError=null;
+          for(const [name,token] of tokens){
+            try{
+              const s=getStore({name:'fll-value-history-v2',siteID:SITE_ID,token,consistency:'strong'});
+              await s.list({prefix:'snapshots/'});
+              store=s;tokenName=name;break;
+            }catch(e){lastError=String(e?.message||e)}
+          }
+          if(!store){
+            const live={error:'Unable to open live Value History store: '+(lastError||'unknown')};
+            fs.writeFileSync('/tmp/idp-history-scrub-report.json',JSON.stringify({archive:archiveReport,live},null,2)+'\\n');
+            console.log(JSON.stringify({archive:archiveReport,live},null,2));
+            process.exit(0);
+          }
+
+          const listing=await store.list({prefix:'snapshots/'});
+          const keys=(listing?.blobs||[]).map(b=>String(b?.key||'')).filter(Boolean);
+
+          const liveReport={site_id:SITE_ID,token:tokenName,cutoff_utc:'2026-09-22T03:45:00.000Z',snapshotsScanned:0,preCutoffSnapshots:0,snapshotsChanged:0,idpRowsRemoved:0,offenseRowsBefore:0,offenseRowsAfter:0};
+          const updatedByKey=new Map();
+
+          for(let i=0;i<keys.length;i+=25){
+            const batch=keys.slice(i,i+25);
+            const snaps=await Promise.all(batch.map(k=>store.get(k,{type:'json'}).catch(()=>null)));
+            for(let j=0;j<snaps.length;j++){
+              const snap=snaps[j],key=batch[j];
+              if(!snap?.t||!Array.isArray(snap.rows))continue;
+              liveReport.snapshotsScanned++;
+              if(!isPre(snap.t))continue;
+              liveReport.preCutoffSnapshots++;
+              const offense=snap.rows.filter(r=>!isIdp(r));
+              const removed=snap.rows.length-offense.length;
+              liveReport.offenseRowsBefore+=offense.length;
+              if(removed>0){
+                const updated={...snap,rows:offense,fingerprint:fingerprint(offense,snap.picks||[],snap.teams||[])};
+                await store.setJSON(key,updated);
+                updatedByKey.set(key,updated);
+                liveReport.snapshotsChanged++;
+                liveReport.idpRowsRemoved+=removed;
+                liveReport.offenseRowsAfter+=updated.rows.length;
+              } else liveReport.offenseRowsAfter+=offense.length;
+            }
+          }
+          if(liveReport.offenseRowsBefore!==liveReport.offenseRowsAfter)throw new Error('Live offense preservation failed');
+
+          const latest=await store.get('latest.json',{type:'json'}).catch(()=>null);
+          if(latest?.key&&isPre(latest.t)){
+            const snap=updatedByKey.get(String(latest.key))||await store.get(String(latest.key),{type:'json'}).catch(()=>null);
+            if(snap?.t&&Array.isArray(snap.rows)){
+              await store.setJSON('latest.json',{...latest,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),count:snap.rows.length});
+            }
+          }
+
+          let remainingLiveIdp=0,verifiedLiveOffense=0,verifiedPre=0;
+          for(let i=0;i<keys.length;i+=25){
+            const batch=keys.slice(i,i+25);
+            const snaps=await Promise.all(batch.map(k=>store.get(k,{type:'json'}).catch(()=>null)));
+            for(const snap of snaps){
+              if(!snap?.t||!Array.isArray(snap.rows)||!isPre(snap.t))continue;
+              verifiedPre++;
+              remainingLiveIdp+=snap.rows.filter(isIdp).length;
+              verifiedLiveOffense+=snap.rows.filter(r=>!isIdp(r)).length;
+            }
+          }
+          liveReport.verifiedPreCutoffSnapshots=verifiedPre;
+          liveReport.remainingPreCutoffIdpRows=remainingLiveIdp;
+          liveReport.verifiedOffenseRows=verifiedLiveOffense;
+          if(remainingLiveIdp!==0)throw new Error('Live store still has pre-cutoff IDP rows');
+          if(verifiedLiveOffense!==liveReport.offenseRowsBefore)throw new Error('Live offense rows changed');
+
+          fs.writeFileSync('/tmp/idp-history-scrub-report.json',JSON.stringify({archive:archiveReport,live:liveReport},null,2)+'\n');
+          console.log(JSON.stringify({archive:archiveReport,live:liveReport},null,2));
+          NODE
+
+      - name: Commit scrubbed archive
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add value-history
+          git diff --cached --quiet && { echo "No archive changes"; exit 0; }
+          git commit -m "Remove pre-cutoff IDP Value History rows"
+          git push origin HEAD:value-history-data
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idp-value-history-scrub-report
+          path: /tmp/idp-history-scrub-report.json
+          if-no-files-found: error
+
+      - name: Require live-store scrub success
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const r=JSON.parse(fs.readFileSync('/tmp/idp-history-scrub-report.json','utf8'));
+          if(r?.live?.error)throw new Error(r.live.error);
+          if(Number(r?.live?.remainingPreCutoffIdpRows)!==0)throw new Error('Live IDP verification failed');
+          NODE

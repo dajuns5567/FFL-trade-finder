@@ -2,7 +2,7 @@ import { getStore } from '@netlify/blobs';
 
 const CUTOFF_MS = Date.parse('2026-09-22T03:45:00.000Z');
 const STORE = 'fll-value-history-v2';
-const CONFIRM = 'delete-idp-before-20260921-2345-et';
+const CONFIRM = 'maintenance-20260922-0345z';
 const MARKER = 'maintenance/idp-history-before-20260921-2345-et.json';
 
 const json=(body,status=200)=>new Response(JSON.stringify(body,null,2),{

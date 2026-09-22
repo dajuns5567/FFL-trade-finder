@@ -2007,7 +2007,7 @@ function gameShapeV29(t,r,f=articleFrameV29(t,r)){
   const {won,top,second,third,share,margin}=f;if(!top)return null;
   const topClause=statClause(top),oppRows=(t.opponent_roster?.starters||t.opponent_roster?.players||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points)),
     opp=oppRows[0],oppClause=opp?statClause(opp):null,support=[second,third].filter(Boolean).map(p=>p.name),pct=Math.round(share*100),
-    team=teamIdentityV28(t).mascot,topWork=topClause?`${top.name} ${topClause}`:`${top.name} handled the largest piece of the weekly workload`,
+    team=teamIdentityV28(t).mascot,topWork=`${top.name} supplied ${one(top.points)} fantasy points`,
     oppWork=opp&&oppClause?`${opp.name} ${oppClause}`:null;
   if(!threeHighScorersV33(f)){
     const topShare=Number(t.points)>0?Math.round(Number(top.points)/Number(t.points)*100):0,bad=f.concerns?.find(p=>String(p.id)!==String(top.id));

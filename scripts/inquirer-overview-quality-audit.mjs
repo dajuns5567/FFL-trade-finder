@@ -27,7 +27,7 @@ if(!bartholomew)fail('Weekly Recap must preserve Bartholomew Roycington III’s 
 const bartholomewCopy=(bartholomew.paragraphs||[]).join(' ');
 if(!/On offense,\s+[^.]+?\s+and\s+[^.]+?\s+are making the strongest breakout cases this week/i.test(bartholomewCopy))fail('Bartholomew must name two legitimate offensive breakout players in natural prose');
 if(!/On defense,\s+[^.]+?\s+is making a breakout case of his own/i.test(bartholomewCopy))fail('Bartholomew must name one legitimate defensive breakout player in natural prose');
-if(!/look like the two players Bartholomew can trust to keep showing up/i.test(bartholomewCopy))fail('Bartholomew must name two dependable offensive players');
+if(!/look like the two players I can trust to keep showing up/i.test(bartholomewCopy))fail('Bartholomew must name two dependable offensive players in the final first-person prose');
 if(!/On defense,\s+.+?\s+has been just as dependable/i.test(bartholomewCopy))fail('Bartholomew must name one dependable defensive player');
 
 const body=sections.flatMap(s=>s.paragraphs||[]).join(' ');

@@ -75,22 +75,122 @@ window.idpV25EligibilityAudit=function(){const allowed=new Set(['DL','DE','DT','
 window.idpV25PositionSetAudit=function(){const a=window.idpV25PropagationAudit();const meaningful=a.rows.filter(r=>Number.isFinite(r.v25)&&(Number(r.consensus)>180||Number(r.weightedPpg)>=8||Number(r.confidence)>=.42));const norm=id=>{const p=state.players?.[String(id)]||{},vals=[p.position,...(Array.isArray(p.fantasy_positions)?p.fantasy_positions:[])].filter(Boolean).map(v=>String(v).toUpperCase());return [...new Set(vals)].sort().join('+')||'NONE'};const map={};for(const r of meaningful){const set=norm(r.id);(map[set]??=[]).push(r)}const summarize=rows=>{const vals=rows.map(r=>r.v25).filter(Number.isFinite).sort((x,y)=>x-y),q=p=>q25(vals,p);return{n:rows.length,p25:q(.25),median:q(.5),p75:q(.75),p90:q(.9),max:vals.at(-1)||null}};return{criteria:'same meaningful-evidence filter; no forced role mapping',positionSets:Object.fromEntries(Object.entries(map).sort((a,b)=>b[1].length-a[1].length).map(([k,v])=>[k,{...summarize(v),top:[...v].sort((x,y)=>y.v25-x.v25).slice(0,8).map(x=>({name:x.name,pos:x.position,consensus:x.consensus,scoring:x.scoring,v25:x.v25,ppg:x.weightedPpg,conf:x.confidence}))}]))}};
 window.idpScoringAudit=function(nameOrId){generation25();const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):Object.keys(state.players||{}).find(pid=>playerName(pid).toLowerCase()===q);if(!id)return null;const base=baseAudit25(id),score=scoring25(id),ctx=context25(id,score),c=Number(base?.consensus);return{...base,consensus:Number.isFinite(c)?c:null,finalValue:Number.isFinite(c)?Math.round(.20*c+.55*score.value+.25*ctx.value):null,productionValue:Math.round(score.value),otherContextValue:Math.round(ctx.value),tackleRate:Number(ctx.tackleRate.toFixed(2)),spikeRate:Number(ctx.spikeRate.toFixed(2)),tacklePercentile:Number((ctx.tacklePct*100).toFixed(1)),spikePercentile:Number((ctx.spikePct*100).toFixed(1)),ageContext:Number((ctx.age*100).toFixed(0)),v25RuntimeTrace:{weightedPpg:score.m?.ppg??null,confidence:score.m?.confidence??null,coverage:score.m?.coverage??null,seasons:score.m?.seasons??null,ppgPercentile:score.ppgPct??null,relativeAboveP50:score.relative??null,rawStrength:score.raw??null,postConfidenceStrength:score.strength??null,benchmarkP50:score.benchmarkP50??null,benchmarkP99:score.benchmarkP99??null,benchmarkN:score.benchmarkN??null,benchmarkTopPpg:distributions25().topPpg,playerOnlyBenchmark:distributions25().playerOnlyBenchmark,productionValue:score.value??null,sourceSeasons:(score.a?.seasons||[]).map(s=>({season:s.season,games:s.games,assignedWeight:s.assignedWeight,currentSeason:s.currentSeason,ppg:s.ppg}))},modelWeights:{consensus:.20,scoringLookback:.55,otherLeagueDynastyContext:.25}}};
 window.idpV25WeightMixAudit=function(){
- const H='8289',mixes=[
-  {name:'20/50/30',consensus:.20,scoring:.50,context:.30},
-  {name:'20/45/35',consensus:.20,scoring:.45,context:.35},
-  {name:'20/40/40',consensus:.20,scoring:.40,context:.40},
-  {name:'20/35/45',consensus:.20,scoring:.35,context:.45}
- ],baseMix={name:'40/40/20',consensus:.40,scoring:.40,context:.20},clamp=(lo,x,hi)=>Math.max(lo,Math.min(x,hi)),softplus=x=>x>20?x:Math.log1p(Math.exp(x)),num=v=>{const n=Number(v);return Number.isFinite(n)?n:null},safe=fn=>{try{return fn()}catch{return null}},master=ensureMaster();
- const pname=id=>safe(()=>playerName(String(id)))||String(id);
- const age=id=>{const p=state.players?.[String(id)]||{},a=Number(p.age);if(Number.isFinite(a)&&a>0)return a;if(p.birth_date){const d=new Date(p.birth_date);if(!Number.isNaN(d.getTime()))return(Date.now()-d.getTime())/(365.2425*86400000)}return null};
- const role=id=>{const p=state.players?.[String(id)]||{},v=[p.position,...(Array.isArray(p.fantasy_positions)?p.fantasy_positions:[])].filter(Boolean).map(x=>String(x).toUpperCase());if(v.some(x=>['DE','EDGE','DL','DT','NT'].includes(x)))return'EDGE';if(v.some(x=>['LB','ILB','MLB','OLB'].includes(x)))return'LB';if(v.some(x=>['S','SS','FS'].includes(x)))return'S';if(v.some(x=>['CB','DB'].includes(x)))return'DB';return'IDP'};
- const shield=(r,b)=>{const id=r.id,p=r.production||{},a=age(id),ro=role(id),ev=clamp(0,Number(p.idpEvidenceV53)||0,1),ppg=clamp(0,(Number(p.idpPpgPercentileV53)||50)/100,1),sp=clamp(0,(Number(p.idpSpikePercentileV53)||50)/100,1),tk=clamp(0,(Number(p.idpTacklePercentileV53)||50)/100,1),aw=!Number.isFinite(a)?0:a<=26?1:a>=29?0:(29-a)/3,em=Number(p.idpEmergingDisruptiveFactorV62||1)>1.04||Boolean(p.idpYoungProjectionV65)||Boolean(p.idpRookieDraft2026V64);let x=0;if(ro==='EDGE'&&sp>=.85&&ev>=.20)x=Math.max(x,.68*aw);else if(ro==='EDGE'&&sp>=.75&&ev>=.15)x=Math.max(x,Math.max(.52,ppg>=.85?.58:0,ev>=.75&&sp>=.78?.56:0)*aw);if(ro==='EDGE'&&ppg>=.90&&ev>=.35)x=Math.max(x,.42);else if(ro==='EDGE'&&ppg>=.85&&ev>=.25)x=Math.max(x,.30);if(ro==='LB'&&tk>=.93&&ev>=.20)x=Math.max(x,.45*aw);if(em&&ro==='EDGE')x=Math.max(x,(ev<.10?.40:.50)*aw);if(em&&ro==='LB')x=Math.max(x,(ev<.10?.25:.35)*aw);if(ev>=.75&&sp>=.90)x=Math.max(x,.42);const elite=.82/(1+Math.exp(-(b-3000)/180));return clamp(0,Math.max(x,elite),.88)};
- const v72=(r,b)=>{b=Math.max(1,Number(b||1));const ro=role(r.id),a=age(r.id),depth=softplus((2900-b)/350),raw=Math.exp(-.075*Math.pow(depth,1.8)),sh=shield(r,b),rb=clamp(.46,raw,1),orig=1-(1-rb)*(1-sh);if(Math.abs(orig-1)<.002)return b;const t=clamp(0,(b-350)/375,1),bf=.60+.16*t,db=(ro==='S'||ro==='DB')?-.015:0,mat=ro==='EDGE'&&Number.isFinite(a)&&a>=29?-.05*clamp(0,(850-b)/250,1):0,floor=clamp(.56,bf+db+mat,.78),aware=Math.max(rb,floor),factor=aware+.75*Math.max(0,orig-aware);return b*factor};
- const idps=[];
- for(let i=0;i<master.length;i++){const z=master[i],id=String(z?.x?.id||''),pos=String(safe(()=>groupPos(z.x))||'').toUpperCase();if(pos!=='IDP'||!id)continue;const a=safe(()=>window.idpScoringAudit?.(id));if(!a)continue;const c=num(a.consensus),sc=num(a.productionValue),ctx=num(a.otherContextValue);if(c==null||sc==null||ctx==null)continue;idps.push({id,name:pname(id),consensus:c,scoring:sc,context:ctx,production:z.production||{},currentOverall:i+1})}
- const simulate=mix=>{const vals=new Map();for(const r of idps){const b=mix.consensus*r.consensus+mix.scoring*r.scoring+mix.context*r.context;vals.set(r.id,{baseline:b,exact:v72(r,b)})}const market=master.map((z,i)=>{const id=String(z?.x?.id||''),pos=String(safe(()=>groupPos(z.x))||'').toUpperCase();return{id,pos,name:pname(id),value:pos==='IDP'&&vals.has(id)?vals.get(id).exact:(num(z.marketPrecisionValueV386)??num(z.value)??1),prior:i}}).sort((a,b)=>b.value-a.value||a.prior-b.prior);let ir=0;const ranks=new Map();for(let i=0;i<market.length;i++){const x=market[i];if(x.pos==='IDP')ir++;ranks.set(x.id,{overall:i+1,idpRank:x.pos==='IDP'?ir:null,value:x.value})}return{vals,ranks}};
- const base=simulate(baseMix),q=(xs,p)=>{if(!xs.length)return null;const a=[...xs].sort((x,y)=>x-y),i=(a.length-1)*p,l=Math.floor(i),h=Math.ceil(i);return a[l]+(a[h]-a[l])*(i-l)};
- return{audit:'IDP 20%-consensus mix comparison',generatedAt:new Date().toISOString(),runtime:{weights:safe(()=>window.idpScoringAudit?.(H)?.modelWeights)||null,consensusRefresh:window.__fllConsensusRefresh||null,valueRefresh:window.__fllValueRefresh||null},baseline:baseMix,candidates:mixes.map(m=>{const cur=simulate(m),rows=idps.map(r=>{const b=base.vals.get(r.id),c=cur.vals.get(r.id),br=base.ranks.get(r.id),cr=cur.ranks.get(r.id);return{...r,oldBaseline:b.baseline,newBaseline:c.baseline,oldV72:b.exact,newV72:c.exact,delta:c.exact-b.exact,oldOverall:br.overall,newOverall:cr.overall,oldIdp:br.idpRank,newIdp:cr.idpRank,overallGain:br.overall-cr.overall,idpGain:br.idpRank-cr.idpRank}}),ds=rows.map(r=>r.delta),abs=ds.map(Math.abs),h=rows.find(r=>r.id===H),top15=[...rows].sort((a,b)=>a.newIdp-b.newIdp).slice(0,15).map(r=>({name:r.name,idpRank:r.newIdp,oldIdpRank:r.oldIdp,overall:r.newOverall,consensus:r.consensus,scoring:r.scoring,context:r.context,v72:Number(r.newV72.toFixed(2)),delta:Number(r.delta.toFixed(2))}));return{mix:m,marketEffect:{idpCount:rows.length,signed:{min:Number(Math.min(...ds).toFixed(2)),p25:Number(q(ds,.25).toFixed(2)),median:Number(q(ds,.5).toFixed(2)),p75:Number(q(ds,.75).toFixed(2)),max:Number(Math.max(...ds).toFixed(2))},absolute:{median:Number(q(abs,.5).toFixed(2)),p75:Number(q(abs,.75).toFixed(2)),p90:Number(q(abs,.9).toFixed(2))},up25:rows.filter(r=>r.delta>=25).length,down25:rows.filter(r=>r.delta<=-25).length,up50:rows.filter(r=>r.delta>=50).length,down50:rows.filter(r=>r.delta<=-50).length,overallUp10:rows.filter(r=>r.overallGain>=10).length,overallDown10:rows.filter(r=>r.overallGain<=-10).length},hutchinson:h?{oldBaseline:Number(h.oldBaseline.toFixed(2)),newBaseline:Number(h.newBaseline.toFixed(2)),oldV72:Number(h.oldV72.toFixed(2)),newV72:Number(h.newV72.toFixed(2)),v72Delta:Number(h.delta.toFixed(2)),oldOverall:h.oldOverall,newOverall:h.newOverall,oldIdpRank:h.oldIdp,newIdpRank:h.newIdp}:null,top15,largestAbsMovers:[...rows].sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,10).map(r=>({name:r.name,oldIdpRank:r.oldIdp,newIdpRank:r.newIdp,delta:Number(r.delta.toFixed(2)),consensus:r.consensus,scoring:r.scoring,context:r.context}))}})}};
+  const H='8289';
+  const mixes=[
+    {name:'20/50/30',consensus:.20,scoring:.50,context:.30},
+    {name:'20/45/35',consensus:.20,scoring:.45,context:.35},
+    {name:'20/40/40',consensus:.20,scoring:.40,context:.40},
+    {name:'20/35/45',consensus:.20,scoring:.35,context:.45}
+  ];
+  const baseMix={name:'40/40/20',consensus:.40,scoring:.40,context:.20};
+  const clamp=(lo,x,hi)=>Math.max(lo,Math.min(x,hi));
+  const softplus=x=>x>20?x:Math.log1p(Math.exp(x));
+  const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
+  const safe=fn=>{try{return fn()}catch{return null}};
+  const master=ensureMaster();
+  const pname=id=>safe(()=>playerName(String(id)))||String(id);
+  const age=id=>{
+    const p=state.players?.[String(id)]||{},a=Number(p.age);
+    if(Number.isFinite(a)&&a>0)return a;
+    if(p.birth_date){const d=new Date(p.birth_date);if(!Number.isNaN(d.getTime()))return(Date.now()-d.getTime())/(365.2425*86400000)}
+    return null;
+  };
+  const role=id=>{
+    const p=state.players?.[String(id)]||{};
+    const v=[p.position,...(Array.isArray(p.fantasy_positions)?p.fantasy_positions:[])].filter(Boolean).map(x=>String(x).toUpperCase());
+    if(v.some(x=>['DE','EDGE','DL','DT','NT'].includes(x)))return'EDGE';
+    if(v.some(x=>['LB','ILB','MLB','OLB'].includes(x)))return'LB';
+    if(v.some(x=>['S','SS','FS'].includes(x)))return'S';
+    if(v.some(x=>['CB','DB'].includes(x)))return'DB';
+    return'IDP';
+  };
+  const shield=(r,b)=>{
+    const id=r.id,p=r.production||{},a=age(id),ro=role(id);
+    const ev=clamp(0,Number(p.idpEvidenceV53)||0,1),ppg=clamp(0,(Number(p.idpPpgPercentileV53)||50)/100,1),sp=clamp(0,(Number(p.idpSpikePercentileV53)||50)/100,1),tk=clamp(0,(Number(p.idpTacklePercentileV53)||50)/100,1);
+    const aw=!Number.isFinite(a)?0:a<=26?1:a>=29?0:(29-a)/3;
+    const em=Number(p.idpEmergingDisruptiveFactorV62||1)>1.04||Boolean(p.idpYoungProjectionV65)||Boolean(p.idpRookieDraft2026V64);
+    let x=0;
+    if(ro==='EDGE'&&sp>=.85&&ev>=.20)x=Math.max(x,.68*aw);
+    else if(ro==='EDGE'&&sp>=.75&&ev>=.15)x=Math.max(x,Math.max(.52,ppg>=.85?.58:0,ev>=.75&&sp>=.78?.56:0)*aw);
+    if(ro==='EDGE'&&ppg>=.90&&ev>=.35)x=Math.max(x,.42);
+    else if(ro==='EDGE'&&ppg>=.85&&ev>=.25)x=Math.max(x,.30);
+    if(ro==='LB'&&tk>=.93&&ev>=.20)x=Math.max(x,.45*aw);
+    if(em&&ro==='EDGE')x=Math.max(x,(ev<.10?.40:.50)*aw);
+    if(em&&ro==='LB')x=Math.max(x,(ev<.10?.25:.35)*aw);
+    if(ev>=.75&&sp>=.90)x=Math.max(x,.42);
+    const elite=.82/(1+Math.exp(-(b-3000)/180));
+    return clamp(0,Math.max(x,elite),.88);
+  };
+  const v72=(r,b)=>{
+    b=Math.max(1,Number(b||1));
+    const ro=role(r.id),a=age(r.id),depth=softplus((2900-b)/350),raw=Math.exp(-.075*Math.pow(depth,1.8)),sh=shield(r,b),rb=clamp(.46,raw,1),orig=1-(1-rb)*(1-sh);
+    if(Math.abs(orig-1)<.002)return b;
+    const t=clamp(0,(b-350)/375,1),bf=.60+.16*t,db=(ro==='S'||ro==='DB')?-.015:0,mat=ro==='EDGE'&&Number.isFinite(a)&&a>=29?-.05*clamp(0,(850-b)/250,1):0,floor=clamp(.56,bf+db+mat,.78),aware=Math.max(rb,floor),factor=aware+.75*Math.max(0,orig-aware);
+    return b*factor;
+  };
+  const idps=[];
+  for(let i=0;i<master.length;i++){
+    const z=master[i],id=String(z?.x?.id||''),pos=String(safe(()=>groupPos(z.x))||'').toUpperCase();
+    if(pos!=='IDP'||!id)continue;
+    const a=safe(()=>window.idpScoringAudit?.(id));
+    if(!a)continue;
+    const c=num(a.consensus),sc=num(a.productionValue),ctx=num(a.otherContextValue);
+    if(c==null||sc==null||ctx==null)continue;
+    idps.push({id,name:pname(id),consensus:c,scoring:sc,context:ctx,production:z.production||{},currentOverall:i+1});
+  }
+  const simulate=mix=>{
+    const vals=new Map();
+    for(const r of idps){
+      const b=mix.consensus*r.consensus+mix.scoring*r.scoring+mix.context*r.context;
+      vals.set(r.id,{baseline:b,exact:v72(r,b)});
+    }
+    const market=master.map((z,i)=>{
+      const id=String(z?.x?.id||''),pos=String(safe(()=>groupPos(z.x))||'').toUpperCase();
+      return {id,pos,name:pname(id),value:pos==='IDP'&&vals.has(id)?vals.get(id).exact:(num(z.marketPrecisionValueV386)??num(z.value)??1),prior:i};
+    }).sort((a,b)=>b.value-a.value||a.prior-b.prior);
+    let ir=0;
+    const ranks=new Map();
+    for(let i=0;i<market.length;i++){
+      const x=market[i];
+      if(x.pos==='IDP')ir++;
+      ranks.set(x.id,{overall:i+1,idpRank:x.pos==='IDP'?ir:null,value:x.value});
+    }
+    return {vals,ranks};
+  };
+  const base=simulate(baseMix);
+  const q=(xs,p)=>{
+    if(!xs.length)return null;
+    const a=[...xs].sort((x,y)=>x-y),i=(a.length-1)*p,l=Math.floor(i),h=Math.ceil(i);
+    return a[l]+(a[h]-a[l])*(i-l);
+  };
+  const candidates=mixes.map(m=>{
+    const cur=simulate(m);
+    const rows=idps.map(r=>{
+      const b=base.vals.get(r.id),c=cur.vals.get(r.id),br=base.ranks.get(r.id),cr=cur.ranks.get(r.id);
+      return {...r,oldBaseline:b.baseline,newBaseline:c.baseline,oldV72:b.exact,newV72:c.exact,delta:c.exact-b.exact,oldOverall:br.overall,newOverall:cr.overall,oldIdp:br.idpRank,newIdp:cr.idpRank,overallGain:br.overall-cr.overall,idpGain:br.idpRank-cr.idpRank};
+    });
+    const ds=rows.map(r=>r.delta),abs=ds.map(Math.abs),h=rows.find(r=>r.id===H);
+    const top15=[...rows].sort((a,b)=>a.newIdp-b.newIdp).slice(0,15).map(r=>({name:r.name,idpRank:r.newIdp,oldIdpRank:r.oldIdp,overall:r.newOverall,consensus:r.consensus,scoring:r.scoring,context:r.context,v72:Number(r.newV72.toFixed(2)),delta:Number(r.delta.toFixed(2))}));
+    return {
+      mix:m,
+      marketEffect:{
+        idpCount:rows.length,
+        signed:{min:Number(Math.min(...ds).toFixed(2)),p25:Number(q(ds,.25).toFixed(2)),median:Number(q(ds,.5).toFixed(2)),p75:Number(q(ds,.75).toFixed(2)),max:Number(Math.max(...ds).toFixed(2))},
+        absolute:{median:Number(q(abs,.5).toFixed(2)),p75:Number(q(abs,.75).toFixed(2)),p90:Number(q(abs,.9).toFixed(2))},
+        up25:rows.filter(r=>r.delta>=25).length,down25:rows.filter(r=>r.delta<=-25).length,up50:rows.filter(r=>r.delta>=50).length,down50:rows.filter(r=>r.delta<=-50).length,overallUp10:rows.filter(r=>r.overallGain>=10).length,overallDown10:rows.filter(r=>r.overallGain<=-10).length
+      },
+      hutchinson:h?{oldBaseline:Number(h.oldBaseline.toFixed(2)),newBaseline:Number(h.newBaseline.toFixed(2)),oldV72:Number(h.oldV72.toFixed(2)),newV72:Number(h.newV72.toFixed(2)),v72Delta:Number(h.delta.toFixed(2)),oldOverall:h.oldOverall,newOverall:h.newOverall,oldIdpRank:h.oldIdp,newIdpRank:h.newIdp}:null,
+      top15,
+      largestAbsMovers:[...rows].sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,10).map(r=>({name:r.name,oldIdpRank:r.oldIdp,newIdpRank:r.newIdp,delta:Number(r.delta.toFixed(2)),consensus:r.consensus,scoring:r.scoring,context:r.context}))
+    };
+  });
+  return {
+    audit:'IDP 20%-consensus mix comparison',
+    generatedAt:new Date().toISOString(),
+    runtime:{weights:safe(()=>window.idpScoringAudit?.(H)?.modelWeights)||null,consensusRefresh:window.__fllConsensusRefresh||null,valueRefresh:window.__fllValueRefresh||null},
+    baseline:baseMix,
+    candidates
+  };
 };
 masterRankCache=null;valueCache.clear();fitCache.clear();stageCache.clear();
 const card=document.querySelector('#settings .card');if(card){const n=document.createElement('div');n.className='notice success';n.innerHTML='V25 IDP calibration staged: <b>20% consensus + 55% actual Sleeper scoring lookback + 25% other league/dynasty context</b>. The 25% context uses age plus small tackle-volume and spike-play-frequency signals (sacks, interceptions, forced fumbles, recoveries and pass defenses) from the same imported Sleeper history. All history-dependent pieces refresh with Update. Missing qualifying years shrink confidence toward neutral rather than transferring their full weight to a short sample.';card.appendChild(n)}

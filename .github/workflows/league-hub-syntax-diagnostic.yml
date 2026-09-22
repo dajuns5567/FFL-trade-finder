@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install declared function dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
       - name: Parse League Hub and Inquirer V26
         run: |
           node --check league-hub-v451.js

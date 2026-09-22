@@ -45,5 +45,15 @@ jobs:
           OUT: /tmp/week1-inquirer-r5.json
         run: node scripts/one-time-generate-inquirer-week1.mjs
 
+      - name: Inspect sparse defensive stat packets
+        run: |
+          node <<'NODE'
+          const x=require('/tmp/week1-inquirer-r5.json');
+          const t=(x.teams||[]).find(t=>String(t.team_name)==='Kansas City Chiefs');
+          const top=(t?.starter_details||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
+          const players=(t?.inquirer_article?.sections||[]).find(s=>s.kind==='players');
+          console.log(JSON.stringify({team:t?.team_name,top,players},null,2));
+          NODE
+
       - name: Audit generated prose
         run: node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer-r5.json

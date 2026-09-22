@@ -2953,12 +2953,11 @@ function gameStory(g,slot=0){
 }
 
 function leagueSynthesis(teams){
-  const usable=(teams||[]).map(t=>{const rows=list(t);if(rows.length<3||!valid(t.points)||Number(t.points)<=0)return null;return{t,rows,topShare:Number(rows[0].points)/Number(t.points),threeShare:rows.slice(0,3).reduce((n,p)=>n+Number(p.points||0),0)/Number(t.points)}}).filter(Boolean);
-  if(!usable.length)return null;
-  const balanced=usable.slice().sort((a,b)=>a.threeShare-b.threeShare)[0],starHeavy=usable.slice().sort((a,b)=>b.topShare-a.topShare)[0],bn=balanced?.rows?.slice(0,3).map(p=>p.name).join(', ');
-  if(!balanced)return null;
-  let text=`${balanced.t.team_name} got meaningful production from ${bn||'several places'} without asking one player to drag the whole lineup behind him. That balance becomes more valuable once the schedule starts testing depth instead of opening-week adrenaline.`;
-  if(starHeavy&&String(starHeavy.t.roster_id)!==String(balanced.t.roster_id))text+=` ${starHeavy.t.team_name} lived much closer to the other extreme, leaning hardest on ${starHeavy.rows[0].name}. A centerpiece is fine; the rest of the lineup still has to become dependable enough to survive one quiet game from its star.`;
+  const games=uniqueGames(teams).slice().sort((a,b)=>gameImportance(b)-gameImportance(a));
+  if(!games.length)return null;
+  const lead=games[0],second=games[1]||null;
+  let text="Week 1 already split the league into two emotional categories: "+lead.winner.team_name+" gets to spend the week believing a little more, while "+lead.loser.team_name+" has to explain why the opener belonged to somebody else. That is what early results do before the standings have enough history to feel serious — they change how confidently everyone tells the story.";
+  if(second)text+=" The same pressure lands on "+second.winner.team_name+" and "+second.loser.team_name+" in a different shape. "+second.winner.team_name+" banked a Sunday it never has to replay; "+second.loser.team_name+" gets the much less enjoyable task of proving the loss was an exception.";
   return text;
 }
 
@@ -3027,17 +3026,19 @@ function weeklyMatchupHeading(g,isTop=false){
   return `${g.winner.team_name} vs. ${g.loser.team_name} — ${one(g.winner.points)}–${one(g.loser.points)}`;
 }
 function weeklyTopScorerStory(t,g){
-  const rows=list(t),top=rows[0],second=rows[1],third=rows[2],trio=[top,second,third].filter(Boolean),parts=[];
-  parts.push(`${t.team_name} set the league’s weekly scoring ceiling at ${one(t.points)}, a ${one(Number(t.points)-Number(t.opponent_points))}-point win over ${t.opponent_name}. Nobody in the league put more points on the board. Anyone objecting can take the argument to the scoreboard.`);
+  const rows=list(t),top=rows[0],second=rows[1],third=rows[2],trio=[top,second,third].filter(Boolean),parts=[],
+    margin=Number(t.points)-Number(t.opponent_points),opp=t.opponent_name||g?.loser?.team_name||"the opponent";
+  parts.push(t.team_name+" set the Week 1 scoring ceiling at "+one(t.points)+" and beat "+opp+" by "+one(margin)+". This was the league’s loudest scoreboard, and "+opp+" gets the unpleasant distinction of being the team standing underneath it.");
   if(top){
     parts.push(focusedPlayerStatsV32(trio));
-    const supportStar=trio.slice(1).find(p=>establishedStarV29(p)),twoWay=trio.some(defensivePlayer)&&trio.some(p=>!defensivePlayer(p)),names=naturalJoin(trio.map(p=>p.name));
-    if(supportStar)parts.push(`${supportStar.name} being a supporting luxury instead of the emergency generator is the real flex here. ${names} give ${t.team_name} several independent ways to build a ceiling, so an opponent cannot simply wait for one star to cool off. That is lineup leverage, not a prettier way to recite three scores — and, yes, it is obnoxious.`);
-    else if(twoWay)parts.push(`${names} did their damage from both offensive and IDP spots. That matters because ${t.team_name} did not need one side of the lineup to bail out the other; the ceiling came from different roster lanes at once. Multiple failure points for the opponent is a much healthier problem than one weekly rescue act.`);
-    else parts.push(`${names} gave ${t.team_name} more than a pile of points: they gave the lineup separate ways to reach the same winning total. If one of those roles has an ordinary Sunday next week, the others can still carry useful weight. That is the difference between star power and simple dependency.`);
+    const threeHigh=trio.length===3&&trio.every(p=>Number(p.points)>=18),names=naturalJoin(trio.map(p=>p.name));
+    if(threeHigh)parts.push(names+" all cleared the high-scorer line, so this is one of the rare places where the multiple-contributor point is earned. "+opp+" had three serious problems at once and never found a way to make solving one of them solve the game.");
+    else parts.push(top.name+" was the true centerpiece of the explosion. "+(second?second.name+(third?" and "+third.name:"")+" supplied useful support, but ":"")+opp+" spent the afternoon dealing first with the damage "+top.name+" created. Calling every decent line a co-star would undersell the player who actually bent the matchup.");
   }
+  parts.push(t.team_name+" gets the fun version of Week 1 now: everybody else has to decide whether that ceiling was an opening statement or the most expensive thing the league saw all month. "+opp+" gets to hope it was the latter.");
   return parts;
 }
+
 function weeklyStoryBlock(g,slot,isTop=false){
   const paragraphs=[];
   if(isTop)paragraphs.push(...weeklyTopScorerStory(g.winner,g),implicationStory(g,slot));

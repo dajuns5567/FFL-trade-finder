@@ -12,7 +12,13 @@ assert(week1Preload.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(
 const preloadReporterCounts=new Map(REPORTERS.map(r=>[r.name,0]));
 for(const t of week1Preload.teams){const n=t?.inquirer_article?.reporter?.name;preloadReporterCounts.set(n,(preloadReporterCounts.get(n)||0)+1)}
 for(const r of REPORTERS)assert(preloadReporterCounts.get(r.name)===8,'Week 1 preload must preserve exactly eight team stories for '+r.name);
-assert(week1Preload?.league_overview?.sections?.length===4&&week1Preload?.league_overview?.hot_takes?.length>=5,'Week 1 preload must include the four-desk Weekly Recap and five prediction Hot Takes');
+const preloadTeamById=new Map((week1Preload?.teams||[]).map(t=>[String(t.roster_id),t]));
+const preloadHasFrozenNextProjectionMatchup=(week1Preload?.teams||[]).some(t=>{const o=preloadTeamById.get(String(t?.next_opponent_roster_id||'')),tp=t?.next_projected,op=o?.next_projected;return tp!=null&&op!=null&&Number.isFinite(Number(tp))&&Number.isFinite(Number(op))&&Number(tp)!==Number(op)});
+const preloadTakes=week1Preload?.league_overview?.hot_takes||[];
+assert(week1Preload?.league_overview?.sections?.length===4,'Week 1 preload must include the four-desk Weekly Recap');
+assert(preloadTakes.length>=(preloadHasFrozenNextProjectionMatchup?5:4),'Week 1 preload must preserve every evidence-backed prediction Hot Take');
+if(preloadHasFrozenNextProjectionMatchup)assert(preloadTakes.some(x=>x?.kind==='upset'),'Week 1 preload with frozen next-week projections must include the projected-underdog upset pick');
+else assert(!preloadTakes.some(x=>x?.kind==='upset'),'Week 1 preload must not reconstruct a projected-underdog upset pick without frozen next-week projections');
 assert(week1Preload?.week_classification?.label==='Week 1 • Regular Season','Week 1 preload must preserve the canonical Week 1 classification');
 assert(week1Preload.teams.every(t=>t?.value_history_week==null),'Week 1 preload must not invent team Value History movement when no valid 7D comparison exists');
 assert(inquirerWeekClassification(14,2026,'AFC').label==='Week 14 • AFC Wildcard Round','Week 14 AFC teams must be in the AFC Wildcard Round');

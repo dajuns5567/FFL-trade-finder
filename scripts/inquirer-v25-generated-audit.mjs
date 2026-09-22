@@ -18,7 +18,7 @@ const recap=recapSections.flatMap(s=>s?.paragraphs||[]).join(' ');
 const teamWords=(d.teams||[]).map(t=>words(articleText(t)));
 
 assert.equal(Number(d.inquirer_version),26,'Generated edition must be Inquirer V26');
-assert.equal(Number(d.editorial_revision),4,'Generated edition must carry contextual editorial revision 4');
+assert.equal(Number(d.editorial_revision),5,'Generated edition must carry editorial revision 5');
 assert.equal((d.teams||[]).length,32,'Generated Week 1 edition must contain 32 team articles');
 assert.ok(recapSections.length>=4,'Weekly Recap must preserve a complete multi-desk edition');
 assert.ok(words(recap)>Math.max(...teamWords),'Editorial Weekly Recap should be deeper than the longest team column');
@@ -55,7 +55,7 @@ for(const phrase of [
   'the reporters will','the next useful signal','real sunday workload underneath','not a box-score tourist','more useful for forecasting',
   'this should be judged','the point is not','the question is whether','the file records',
   'first return','useful support behind the headline','old notebook rule','without printing the same score twice',
-  'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is',
+  'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is','which is exactly what an idp league should reward when the work is real','historical value snapshot is not available in this article packet',
   'the result matters because','other division rival','fantasy points reasons','opened near last season','turning finished with',
   'the useful version is','nick’s note is simple','the transaction belongs in the article','survived that call','result look as good on monday','roster compliment sitting on the bench','other side of the receipt alive','playoff case still sitting squarely in the argument','this week gave the résumé another loud line','somebody else now needs to make the back page fight for space','sunday reinforced it with another performance worthy of that reputation',
   'nick will','nick wants','nick sees','bartholomew would','bartholomew will','tilly would','filch recommends','filch would','this desk is already documenting','a beat writer is supposed to'
@@ -81,12 +81,15 @@ for(const t of d.teams||[]){
   const rid=String(a?.reporter?.id||''),order=(a.sections||[]).map(s=>s.kind).join('>');if(!orderByReporter.has(rid))orderByReporter.set(rid,new Set());orderByReporter.get(rid).add(order);
   const hasTrade=(t.transactions||[]).some(m=>String(m?.type||'').toLowerCase()==='trade');
   const tradeCommentary=(a.sections||[]).find(s=>s.kind==='trade-commentary');
-  assert.equal((a.sections||[]).length,hasTrade?9:8,'Each team article must preserve eight core reporting beats plus a trade-commentary beat only when an applicable trade exists');
-  if(hasTrade){
-    assert.ok(tradeCommentary&&Array.isArray(tradeCommentary.paragraphs)&&tradeCommentary.paragraphs.length>=2,'Applicable team trades must receive a developed dedicated trade-commentary section for '+t.team_name);
+  assert.ok((a.sections||[]).length===8||(a.sections||[]).length===9,'Each team article must preserve eight core beats plus at most one verified trade-commentary beat');
+  assert.equal((a.sections||[]).length===9,!!tradeCommentary,'A ninth section is valid only when complete trade evidence produced a Trade Receipt');
+  if(tradeCommentary){
+    assert.ok(hasTrade,'Trade commentary requires an actual team trade');
+    assert.ok(Array.isArray(tradeCommentary.paragraphs)&&tradeCommentary.paragraphs.length>=2,'Complete trade evidence must receive developed commentary for '+t.team_name);
     const tradeCopy=tradeCommentary.paragraphs.join(' ');
     assert.match(tradeCopy,/trade|received|receipt/i,'Trade-commentary section must discuss the actual exchange for '+t.team_name);
-  }else assert.equal(tradeCommentary,undefined,'Teams without an applicable trade must not receive a synthetic trade-commentary section');
+    assert.doesNotMatch(tradeCopy,/unavailable|incomplete|unresolved|missing (?:history|valuation|rows?)/i,'Published Trade Receipt must never narrate unavailable trade-history evidence for '+t.team_name);
+  }
   const players=(a.sections||[]).find(s=>s.kind==='players');
   assert.ok(players&&Array.isArray(players.paragraphs),'Each team article must preserve a player reporting beat');
   const lede=(a.sections||[]).find(s=>s.kind==='lede'),management=(a.sections||[]).find(s=>s.kind==='management'),outlook=(a.sections||[]).find(s=>s.kind==='outlook');
@@ -108,6 +111,13 @@ for(const t of d.teams||[]){
   reporterFirstPerson.set(rid,(reporterFirstPerson.get(rid)||0)+hits);
 }
 for(const rid of ['walter-mercer','tess-delaney','mack-hollis','nora-voss'])assert.ok((reporterFirstPerson.get(rid)||0)>=1,'Each reporter must naturally reference their own judgment at least once across the generated edition: '+rid);
+for(const t of d.teams||[]){
+  if(String(t.inquirer_article?.reporter?.id)!=='mack-hollis')continue;
+  const copy=articleText(t);
+  assert.doesNotMatch(copy,/\b(?:[A-Z]{2,}\s+){3,}[A-Z]{2,}\b/,'Tilly must not use all-caps runs for emphasis in '+t.team_name);
+}
+const tillyRecap=(recapSections.find(s=>String(s?.reporter?.id)==='mack-hollis')?.paragraphs||[]).join(' ');
+assert.doesNotMatch(tillyRecap,/\b(?:[A-Z]{2,}\s+){3,}[A-Z]{2,}\b/,'Tilly must not use all-caps runs for emphasis in Weekly Recap');
 for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=4,'Reporter '+rid+' must generate at least four distinct article structures across eight team stories; got '+orders.size);
 
 const teamCopy=(d.teams||[]).map(t=>articleText(t)).join('\n');

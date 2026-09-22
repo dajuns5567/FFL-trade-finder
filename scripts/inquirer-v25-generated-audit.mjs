@@ -73,7 +73,7 @@ assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),
 const historicalStarters=(d.teams||[]).flatMap(t=>t.starter_details||[]).filter(p=>Number(p.prior_season_games)>=6&&Number.isFinite(Number(p.prior_season_avg)));
 assert.ok(historicalStarters.length>=40,'Week 1 must propagate meaningful prior-season baselines into player reporting; got '+historicalStarters.length);
 assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');
-assert.match(recap,/BREAKOUT WATCH|RELIABLE:|DECLINE WATCH|VETERAN CHECK-IN/i,'Weekly Recap must carry an evidence-backed player trajectory/reliability story');
+assert.match(recap,/breakout watch|established producers worth trusting|familiar kind of trouble|next opponent will attack the same weakness/i,'Weekly Recap must carry a player trajectory story tied to actual matchup consequences');
 
 const spedale=(d.teams||[]).find(t=>String(t.manager_name||'').toLowerCase()==='mike3spedale');
 if(spedale){

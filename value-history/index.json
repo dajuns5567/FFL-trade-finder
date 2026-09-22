@@ -55,6 +55,8 @@
       "source": null
     }
   ],
-  "months": [],
+  "months": [
+    "2026-09"
+  ],
   "archive_format": "append-only snapshots + monthly bundles"
 }

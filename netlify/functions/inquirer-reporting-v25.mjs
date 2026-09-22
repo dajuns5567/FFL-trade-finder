@@ -2548,14 +2548,14 @@ function nextOpponentLeadV29(t,r,f=articleFrameV29(t,r)){
     recText=rec?`${Number(rec.wins)||0}-${Number(rec.losses)||0}`:null,starText=star?`${star.name} just produced ${one(star.points)} fantasy points${clause?`; ${star.name} ${clause}`:''}.`:'',depthText=nextOpponentDepthV29(o,star,r);
   if(voice(r)===0){
     const forecast=gap==null?keyedChoice(String(t.roster_id)+':nick-no-projection-v36',[
-      `There is no honest projection edge to print for ${opp} yet.`,
-      `${opp} arrives without a trustworthy projection comparison attached.`,
-      `The ${t.team_name} forecast stays blank rather than borrowing a later-week number.`,
-      `No projection gap survived the historical cutoff, so ${opp} gets judged by the matchup instead.`,
-      `The paper forecast is intentionally missing; ${opp} still has to be played.`,
-      `There is no frozen projection edge for ${t.team_name} and ${opp}, and inventing one would be worse than leaving it blank.`,
-      `${t.team_name} gets no borrowed Week 2 number before facing ${opp}.`,
-      `The forecast column stays empty for ${opp}; Week 1 evidence is enough for now.`
+      `Against ${opp}, the next question is whether ${t.team_name} can force the matchup toward the same things that mattered in Week 1.`,
+      `${opp} gets a full week to adjust; ${t.team_name} now has to prove its Week 1 strengths still work when the opponent is ready for them.`,
+      `${t.team_name} already showed one version of itself. ${opp} is where that version either starts looking real or starts looking temporary.`,
+      `${opp} changes the assignment, but not the standard: ${t.team_name} has to make its best players dictate another afternoon.`,
+      `${opp} will not care what happened in Week 1; ${t.team_name} has to make that first result travel.`,
+      `${t.team_name} gets a different opponent in ${opp} and the same burden: make the matchup bend before the other side does.`,
+      `${opp} is the next chance for ${t.team_name} to turn a one-week performance into something the league has to account for.`,
+      `The next useful answer comes against ${opp}: can ${t.team_name} make the opponent spend Sunday reacting instead of dictating?`
     ]):Math.abs(gap)<6?`Only ${one(Math.abs(gap))} projected points separate the teams.`:gap>0?`The projected edge belongs to ${t.team_name}.`:`The projected edge belongs to ${opp}.`,
       lossClose=gap>0?'After a loss, being favored turns this into a game '+t.team_name+' cannot afford to donate.':keyedChoice(String(t.roster_id)+':nick-loss-response-v36',[
         `The loss makes ${opp} a response game before it becomes anything else.`,
@@ -2578,14 +2578,14 @@ function nextOpponentLeadV29(t,r,f=articleFrameV29(t,r)){
     return `NEXT WEEK: ${opp.toUpperCase()}${recText?` (${recText})`:''}. ${starText} ${depthText||''} ${forecast} ${f.won?'PROVE THE WIN TRAVELS.':'THE RESPONSE GAME HAS ARRIVED.'}`.trim();
   }
   const forecast=gap==null?keyedChoice(String(t.roster_id)+':filch-no-projection-v36',[
-    `No frozen projection comparison exists for the ${opp} matchup, so none enters the file.`,
-    `The ${opp} projection comparison is absent at the historical cutoff; the file stays silent on it.`,
-    `No contemporaneous projection edge is available for ${t.team_name} versus ${opp}.`,
-    `The projection exhibit for ${opp} is blank rather than reconstructed from later data.`,
-    `${t.team_name} carries no post-cutoff projection into the ${opp} file.`,
-    `The ${opp} forecast lacks a historical projection comparison and will not be backfilled.`,
-    `No Week 2 projection is admissible in this Week 1 ${t.team_name} record.`,
-    `The projection field remains empty for ${opp}; later information does not get retroactive admission.`
+    `${opp} is where ${t.team_name} has to show its Week 1 strengths can survive a prepared opponent.`,
+    `${opp} now gets a week of tape on ${t.team_name}; the next question is whether that preparation changes who controls the game.`,
+    `Against ${opp}, ${t.team_name} has to prove the Week 1 result came from something repeatable rather than something merely timely.`,
+    `${opp} will test whether ${t.team_name} can create the same leverage points once the surprise is gone.`,
+    `${t.team_name} gets one more chance against ${opp} to turn the first Sunday into a pattern opponents actually have to respect.`,
+    `${opp} is the next examination of whether ${t.team_name} can make its preferred game survive contact with a different roster.`,
+    `${opp} gets the next opportunity to attack whatever ${t.team_name} exposed in Week 1; the response matters more than the preview.`,
+    `${t.team_name} meets ${opp} with one completed game behind it and one obvious task ahead: make its best football matter twice.`
   ]):Math.abs(gap)<6?`The projection gap is only ${one(Math.abs(gap))} points.`:gap>0?`The paper forecast favors ${t.team_name}.`:`The paper forecast favors ${opp}.`;
   return `The next file is ${opp}${recText?`, ${recText}`:''}. ${starText} ${depthText||''} ${forecast} ${f.won?`The ${t.team_name} assignment is to corroborate a favorable result.`:`The ${t.team_name} assignment is to answer an adverse result without creating a second one.`}`.trim();
 }

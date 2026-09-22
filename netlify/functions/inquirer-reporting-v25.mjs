@@ -240,6 +240,23 @@ function teamProperNamesV33(t,r){
 function finalReporterCaseV33(t,r,value){
   return r?.id==='mack-hollis'?normalizeTillyCaseV33(value,teamProperNamesV33(t,r)):String(value??'');
 }
+function grammarSafeTeamVerbsV35(names,value){
+  let text=String(value??"");
+  const map={is:"are",has:"have",gets:"get",holds:"hold",brings:"bring",turns:"turn"};
+  const candidates=[...new Set((names||[]).map(x=>String(x||"").trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
+  for(const name of candidates){
+    const mascot=name.split(/\s+/).filter(Boolean).at(-1)||"";
+    if(!/s$/i.test(mascot))continue;
+    const re=new RegExp("(^|[^A-Za-z0-9])("+escapeRe(name)+")\\s+(is|has|gets|holds|brings|turns)\\b","gi");
+    text=text.replace(re,(m,p,n,v)=>p+n+" "+(map[String(v).toLowerCase()]||v));
+  }
+  return text;
+}
+function articleGrammarV35(t,value){
+  const id=teamIdentityV28(t),names=[t?.team_name,id?.mascot,t?.opponent_name,t?.next_opponent_name];
+  return grammarSafeTeamVerbsV35(names,value);
+}
+
 function threeHighScorersV33(f){
   const trio=[f?.top,f?.second,f?.third].filter(Boolean);
   return trio.length===3&&trio.every(p=>Number(p?.points)>=18);
@@ -2841,7 +2858,7 @@ export function humanSectionsV25(args){
     const managementIndex=aliased.findIndex(s=>s.kind==="management"),tradeSection={kind:"trade-commentary",heading:tradeCommentaryHeadingV32(args.reporter),paragraphs:tradeParagraphs};
     aliased.splice(managementIndex>=0?managementIndex:aliased.length,0,tradeSection);
   }
-  const cased=aliased.map(sec=>({...sec,heading:finalReporterCaseV33(t,args.reporter,sec.heading),paragraphs:(sec.paragraphs||[]).map(p=>finalReporterCaseV33(t,args.reporter,p))}));
+  const cased=aliased.map(sec=>({...sec,heading:articleGrammarV35(t,finalReporterCaseV33(t,args.reporter,sec.heading)),paragraphs:(sec.paragraphs||[]).map(p=>articleGrammarV35(t,finalReporterCaseV33(t,args.reporter,p)))}));
   return dedupeArticleSectionsV29(dedupeArticleSections(cased),t);
 }
 
@@ -3117,7 +3134,8 @@ export function expandWeeklyRecapV25(o,teams,week){
     {reporter:reporter(3),heading:'Next Week, Before Everyone Gets Smarter in Hindsight',blocks:nextBlocks,paragraphs:nextParagraphs}
   ].map(sec=>{
     const proper=[...(teams||[]).flatMap(t=>[t.team_name,t.manager_name,...articlePlayers(t).map(p=>p.name)]),sec.reporter?.name].filter(Boolean);
-    const tidy=value=>{const deMeta=deMetaReporterFunctionsV32(value,sec.reporter);return sec.reporter?.id==='mack-hollis'?normalizeTillyCaseV33(deMeta,proper):deMeta};
+    const teamNames=(teams||[]).flatMap(t=>[t?.team_name,teamIdentityV28(t)?.mascot]).filter(Boolean);
+    const tidy=value=>{const deMeta=deMetaReporterFunctionsV32(value,sec.reporter),cased=sec.reporter?.id==='mack-hollis'?normalizeTillyCaseV33(deMeta,proper):deMeta;return grammarSafeTeamVerbsV35(teamNames,cased)};
     return {...sec,heading:tidy(sec.heading),paragraphs:(sec.paragraphs||[]).map(tidy),blocks:(sec.blocks||[]).map(b=>({...b,heading:tidy(b.heading),paragraphs:(b.paragraphs||[]).map(tidy)}))};
   });
   return {...o,inquirer_version:26,editorial_revision:6,sections};

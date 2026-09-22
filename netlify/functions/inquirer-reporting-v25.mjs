@@ -2074,7 +2074,7 @@ function tradeValueReadV32(teamName,otherName,thenOwn,thenOther,nowOwn,nowOther)
   return parts;
 }
 function tradeCommentaryV32(t,r,facts={}){
-  const moves=consolidateTransactions(t).filter(m=>String(m?.type||"").toLowerCase()==="trade");
+  const moves=[...new Map((t.transactions||[]).filter(m=>String(m?.type||"").toLowerCase()==="trade").map(m=>[String(m?.id||""),m])).values()];
   if(!moves.length)return [];
   const history=t.trade_history||[],v=voice(r),paragraphs=[];
   for(const move of moves.slice(0,2)){

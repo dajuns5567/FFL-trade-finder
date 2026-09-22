@@ -2008,72 +2008,67 @@ function classificationSentenceV29(p,tr,r){
 }
 
 function teamDeepReadV34(t,r,f){
-  const rows=f?.rows||articlePlayers(t),team=teamIdentityV28(t).mascot,top=f?.top,second=f?.second,bad=(f?.concerns||[]).find(p=>String(p?.id)!==String(top?.id))||null,
-    topShare=top&&Number(t.points)>0?Number(top.points)/Number(t.points):0,top3=rows.slice(0,3).reduce((n,p)=>n+Number(p?.points||0),0),
-    top3Share=Number(t.points)>0?top3/Number(t.points):0,defPts=rows.filter(defensivePlayer).reduce((n,p)=>n+Number(p?.points||0),0),
-    defShare=Number(t.points)>0?defPts/Number(t.points):0,projDelta=valid(t.projected)?Number(t.points)-Number(t.projected):null,
-    next=t?.next_opponent_name||null,v=voice(r),shape=resultShapeV33(f);
-  let p1;
-  if(defShare>=.28){
-    const pct=Math.round(defShare*100);
-    p1=[
-      'About '+pct+'% of the '+team+' score came from defensive starters. That is real weekly leverage, but sacks and takeaways can disappear faster than targets or carries. I would want the tackle and pressure volume to stay visible before assuming the same IDP total every Sunday.',
-      'Roughly '+pct+'% of the '+team+' total came from IDP slots. I like that more than an offense-only roster, but defensive splash points are volatile. The next good sign is recurring snaps, tackles and pressure rather than another perfectly timed turnover.',
-      'Defense produced about '+pct+'% of the '+team+' fantasy score. Good edge, volatile source. Sacks and turnovers are terrible employees: spectacular when they show up, impossible to schedule. Keep the snap volume and pressure; treat the exact point total as the bonus.',
-      'Defensive starters supplied roughly '+pct+'% of the '+team+' score. That materially changes the weekly profile because the offense had help from a second scoring channel. The stronger forward indicator is whether the defense keeps generating tackles, pressure and full-time participation.'
-    ][v];
-  }else if(topShare>=.27){
-    const pct=Math.round(topShare*100),pos=String(top?.position||'player').toUpperCase();
-    p1=[
-      top.name+' supplied about '+pct+'% of the entire '+team+' score. That is a star doing real work, but it also shows where the lineup is fragile: one ordinary '+pos+' week forces the middle of the roster to replace a large chunk of production.',
-      top.name+' produced about '+pct+'% of the '+team+' score by himself. Very flattering for '+top.name+', slightly rude to the rest of the seating chart. A lineup that concentrated needs another dependable source before it becomes comfortable.',
-      top.name+' owned roughly '+pct+'% of the '+team+' score. Great week for '+top.name+'; uncomfortable math for everybody else. If the '+pos+' result comes back to earth, '+team+' needs another position ready to matter instead of waiting for a sequel.',
-      top.name+' generated about '+pct+'% of the '+team+' total. That concentration is an affirmative player finding and a roster-level vulnerability at the same time. The next evaluation should focus on which secondary role can absorb production when the '+pos+' result is merely average.'
-    ][v];
-  }else if(top3Share>=.62&&!threeHighScorersV33(f)){
-    const pct=Math.round(top3Share*100);
-    p1=[
-      'The top three '+team+' scorers supplied about '+pct+'% of the total without all three clearing the high-end threshold. That is concentration, not a “balanced attack.” The middle of the lineup is where this roster either gets deeper or keeps asking the same few players to cover ordinary holes.',
-      'Roughly '+pct+'% of the '+team+' total came from its first three scorers, yet this was not three-star theater. That distinction matters. The roster is leaning on a small upper tier, which looks elegant until one chair is empty.',
-      'About '+pct+'% of the '+team+' score came from the top three names, and that still does not make this a three-star week. It means the middle of the lineup was too easy to skip over. One of those ordinary slots needs to become consequential next week.',
-      'Approximately '+pct+'% of the '+team+' score came from three players, but the underlying performances were not uniformly elite. Filch records that as concentration rather than depth. A stronger fourth or fifth contribution would reduce the weekly dependence on the same core.'
-    ][v];
-  }else{
-    const pd=projDelta==null?'close to the forecast':projDelta>=0?one(Math.abs(projDelta))+' points above projection':one(Math.abs(projDelta))+' points below projection';
-    p1=[
-      'The '+team+' scoring shape was less concentrated than most of the dramatic stories in this league, and that is fine. The team finished '+pd+'. The priority is keeping several playable roles intact so one cold player does not automatically become a crisis.',
-      'The '+team+' score was distributed well enough that no single player owned the entire evening, and the team finished '+pd+'. That is pleasantly functional. Stable opportunities matter more here than recreating the exact fantasy totals.',
-      'The '+team+' scoring was spread enough that there is no single rescue act to worship, and the lineup finished '+pd+'. Good. Keep the actual roles and forget the exact totals; several consistently involved players are more useful than waiting for the same splash play twice.',
-      'The '+team+' distribution did not depend on one overwhelming scorer, and the lineup finished '+pd+'. That reduces concentration risk. The next evidence should come from recurring workload across several starters rather than an attempt to reproduce the same fantasy totals exactly.'
-    ][v];
-  }
+  const q=matchupMoodV35(t),team=q.team,opp=q.opp,v=voice(r),top=f?.top,
+    bad=(f?.concerns||[]).find(p=>String(p?.id)!==String(top?.id))||null,next=t?.next_opponent_name||null,
+    key=String(t.roster_id)+":deep-matchup-v35:"+String(r?.id||"");
+  let aftershock;
+  if(q.won&&q.underdog)aftershock=[
+    team+" did more than steal a win from "+opp+"; it stole the version of Sunday "+opp+" thought it was entitled to have. The favorite entered expecting control and spent the afternoon improvising. That is the kind of Week 1 result that can make an underdog carry itself differently the next time the projection says probably not.",
+    opp+" arrived with the nicer forecast and left with the uglier story. "+team+" pulled the rug out from underneath a favorite that expected to dictate the afternoon. The win gives "+team+" permission to be annoying until somebody proves it was a one-week stunt.",
+    team+" walked into the matchup as the side people were supposed to explain away and walked out having embarrassed the premise. "+opp+" can keep the pregame projection as a souvenir. The scoreboard belongs to "+team+".",
+    opp+" had the pregame advantage on paper; "+team+" took the paper, folded it and made the favorite carry the loss home. Week 1 is too early for destiny, but it is never too early for an opponent to feel a little humiliated."
+  ][v];
+  else if(!q.won&&q.favorite)aftershock=[
+    team+" had the matchup tilted in its favor before kickoff and still let "+opp+" take it. That is the kind of loss contenders hate because it feels less like being beaten by a better roster and more like donating a game the schedule had already made winnable.",
+    team+" entered with the nicer projection and left "+opp+" holding the celebration. Bartholomew calls that a very expensive way to discover that entitlement does not score points.",
+    team+" was supposed to make "+opp+" chase. Instead, "+opp+" made the favorite look like it had skipped the part where Sunday actually happens.",
+    team+" entered with the advantage and failed to convert it. Filch treats that as more consequential than an ordinary loss because "+opp+" removed a win from the part of the schedule management expected to bank."
+  ][v];
+  else if(q.won&&q.margin>=20)aftershock=[
+    team+" did not merely beat "+opp+"; it made the opponent spend most of the afternoon looking for a door back into a game that had already left the room. A "+one(q.margin)+"-point margin gives the winner something Week 1 rarely offers: swagger without inventing suspense.",
+    opp+" spent Sunday discovering new ways for the score to look worse. "+team+" kept widening the room between them until the matchup felt less like a contest and more like a public demonstration.",
+    team+" beat "+opp+" badly enough that the fourth-quarter argument was mostly about who deserved the first joke. One rout is not a championship claim. It is proof that "+opp+" had an awful time.",
+    team+" controlled "+opp+" by "+one(q.margin)+" points. One roster looked comfortable, the other looked trapped inside the wrong matchup."
+  ][v];
+  else if(!q.won&&q.margin>=20)aftershock=[
+    opp+" did not leave "+team+" much dignity to preserve. A "+one(q.margin)+"-point loss is too large to blame on one unlucky starter or one strange bounce.",
+    team+" spent the afternoon watching "+opp+" turn the matchup into a social event. At "+one(q.margin)+" points, this is no longer tasteful disappointment; it is a loss that should make the manager avoid the group chat for at least one dinner.",
+    opp+" handed "+team+" a "+one(q.margin)+"-point problem and then made everybody stare at it. Tilly is not calling the season dead, but the loser does have to live with being the easiest punch line until next Sunday.",
+    team+" lost to "+opp+" by "+one(q.margin)+". Filch does not need a complicated theory: the opponent kept finding answers and "+team+" kept running out of them."
+  ][v];
+  else if(q.margin<=7)aftershock=[
+    team+" and "+opp+" spent the afternoon one mistake away from swapping emotions. "+(q.won?team:opp)+" gets the relief; "+(q.won?opp:team)+" gets the replay loop.",
+    "There was barely enough space between "+team+" and "+opp+" to fit a comfortable opinion. "+(q.won?team+" escaped with the win":team+" got stuck with the loss")+", which means the matchup will be remembered for the handful of moments either side could have stolen.",
+    team+" and "+opp+" turned Week 1 into the kind of game managers refresh until the app feels personally hostile. "+(q.won?team+" survived it":team+" did not")+".",
+    "The margin between "+team+" and "+opp+" was "+one(q.margin)+" points. That is not enough distance for either side to pretend the game was inevitable."
+  ][v];
+  else aftershock=[
+    team+" "+(q.won?"beat":"lost to")+" "+opp+" without needing a melodramatic ending. The interesting part is how quickly the game settled into the winner’s preferred shape: one side kept finding answers, the other spent too much of Sunday reacting.",
+    team+" "+(q.won?"got the better of":"came up short against")+" "+opp+", and the margin was wide enough to make the winner feel in control without turning the game into a rout.",
+    (q.won?team:opp)+" kept "+(q.won?opp:team)+" at arm’s length for most of the day. There was no miracle finish to hide behind, just a steady accumulation of reasons the winner looked more comfortable.",
+    team+" and "+opp+" gave the league a result that was clear without being absurd. "+(q.won?team:opp)+" controlled more of the important moments."
+  ][v];
 
-  let p2;
-  if(bad){
-    const m=playerUsageReadV34(t,bad),pos=String(bad.position||'player').toUpperCase(),d=Math.abs(Number(delta(bad)));
-    let diagnosis='';
-    if((m.pos==='WR'||m.pos==='TE')&&Number.isFinite(m.targets)&&m.targets>=7)diagnosis='The targets were still there, so the problem looks more like conversion than disappearance from the offense.';
-    else if(m.pos==='RB'&&Number.isFinite(m.touches)&&m.touches>=15)diagnosis='The touch count remained healthy, which argues for patience with efficiency rather than panic about the role.';
-    else if(m.pos==='QB'&&Number.isFinite(m.attempts)&&m.attempts>=28)diagnosis='The offense kept the ball in his hands, so the miss came from what happened with the attempts rather than a shrinking assignment.';
-    else if(!['QB','RB','WR','TE'].includes(m.pos)&&Number.isFinite(m.snaps)&&m.snaps>=45)diagnosis='The defensive workload remained substantial, so the miss is easier to treat as a quiet box score than a disappearing role.';
-    else diagnosis=bad.name+' is a '+playerContextLabelV33(bad)+' coming out of this '+shape+', and the verified usage was not strong enough to dismiss the miss as simple bad luck; next week needs either more opportunity or much better efficiency.';
-    p2=[
-      bad.name+' finished '+one(d)+' below projection, but the number alone is not the diagnosis. '+diagnosis+' That distinction determines whether '+pos+' is a buy-the-dip concern or a real lineup vulnerability.',
-      bad.name+' came in '+one(d)+' below projection. '+diagnosis+' Bartholomew separates an ugly fantasy line from an ugly role because those are not the same problem; one can recover naturally, while the other needs a lineup decision.',
-      bad.name+' missed expectation by '+one(d)+'. '+diagnosis+' Do not yell at the fantasy score until you know whether the '+pos+' role itself is broken. If the work returns, this was a bad result. If it disappears too, the problem is larger.',
-      bad.name+' finished '+one(d)+' below projection. '+diagnosis+' Filch treats that as the key distinction between outcome failure and role failure. The former can regress toward normal; the latter changes the starting-lineup decision.'
-    ][v];
-  }else{
-    const focus=second?second.name:'the next-best scoring option',nextLabel=next?' against '+next:' next week';
-    p2=[
-      'The next '+team+' test'+nextLabel+' is less about reproducing this score than proving the lineup has another reliable answer when '+top.name+' gets an ordinary week. I would watch '+focus+' first; a dependable secondary role would change the weekly floor.',
-      'The next '+team+' engagement'+nextLabel+' should answer whether this roster can remain functional when '+top.name+' is merely good instead of spectacular. Bartholomew’s eye goes to '+focus+' because a real second option makes the lineup less dependent on repeating this exact script.',
-      'Next'+nextLabel+', the assignment is simple: make '+focus+' matter enough that '+top.name+' does not need the same ceiling again. Replaying this exact box score is not a plan; building another dependable route to points is.',
-      'The next '+team+' file'+nextLabel+' should focus on whether a second stable role can reduce dependence on '+top.name+'. '+focus+' is the first place to look. A repeatable secondary contribution would improve the team-level floor more than another isolated ceiling game.'
-    ][v];
-  }
-  const flatten=x=>String(x||'').replace(/\.\s+/g,'; ').replace(/\.$/,'').trim()+'.';
-  return [p1,p2].filter(Boolean).map(flatten);
+  let consequence;
+  if(bad)consequence=[
+    bad.name+" becomes more important because "+team+" cannot afford to waste a weak spot against opponents that make the margin tighter than "+opp+" did. The criticism is not score more fantasy points; it is that one quiet starter can turn a comfortable script into a chase.",
+    bad.name+" is the uncomfortable name because "+team+" already knows what happens when one part of the lineup does not arrive. "+opp+" provided the live demonstration. Bartholomew does not need the stat repeated; he needs the weak spot to stop making the rest of the roster compensate for it.",
+    bad.name+" gets the side-eye because "+team+" cannot keep asking the stronger parts of the lineup to cover the same hole. "+opp+" just gave management the first receipt. Fix the weak spot before a better opponent charges interest.",
+    bad.name+" matters because the shortfall had a real matchup consequence. "+team+" needs that lineup slot to stop giving opponents such an easy place to survive."
+  ][v];
+  else if(next)consequence=[
+    next+" is next, and the useful question is emotional as much as tactical: does "+team+" arrive carrying confidence from this result or merely nostalgia for it? The best Week 1 teams make the next opponent feel the first result before kickoff.",
+    team+" gets "+next+" next. Bartholomew wants to see whether the swagger from "+opp+" travels, because confidence that only works in one room is just décor with a scoreboard attached.",
+    next+" gets the next shot at "+team+". The assignment is simple: make this week feel like the start of a personality, not the only good story anyone can tell by October.",
+    team+" now turns to "+next+". Filch wants to know whether the pressure it created against "+opp+" becomes part of the team’s identity or remains one favorable afternoon."
+  ][v];
+  else consequence=[
+    team+" leaves Week 1 with an emotional baseline now: opponents know what made this roster dangerous and where it looked vulnerable.",
+    team+" has shown the league one version of itself. Bartholomew is less interested in repeating the score than in whether the next opponent is forced into the same uncomfortable decisions.",
+    team+" has one real Sunday on the record now. Good. The next one gets to decide whether this was personality or coincidence.",
+    team+" has established the first fact pattern of the season. The next matchup determines whether those facts begin to look like identity."
+  ][v];
+  return[aftershock,consequence];
 }
 
 function gameShapeV29(t,r,f=articleFrameV29(t,r)){

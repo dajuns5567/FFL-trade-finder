@@ -6,8 +6,9 @@ export function auditV22(edition){
   assert.equal(edition.teams.length,32);
   assert.match(edition.league_overview.headline,/Weekly Recap/);
   for(const t of edition.teams){
-    const s=t.inquirer_article.sections,body=s.flatMap(x=>x.paragraphs).join(' ');
-    assert.equal(s.length,8);
+    const s=t.inquirer_article.sections,body=s.flatMap(x=>x.paragraphs).join(' '),tradeBeat=s.filter(x=>x.kind==='trade-commentary');
+    assert.ok(s.length===8||s.length===9,'Inquirer compatibility audit expects eight core beats plus at most one trade-commentary beat');
+    assert.equal(s.length===9,tradeBeat.length===1,'A ninth section is valid only when it is the dedicated trade-commentary beat');
     for(const section of s){assert.ok(section.heading);assert.ok(section.paragraphs.length);assert.ok(section.paragraphs.every(p=>typeof p==='string'&&p.trim()))}
     assert.doesNotMatch(body,/leading trio|lead trio|next three names|next three contributors|taking the night off|truth-sized hole/);
     if(!t.value_history_week)assert.deepEqual(s.find(x=>x.kind==='value').paragraphs,['n/a']);

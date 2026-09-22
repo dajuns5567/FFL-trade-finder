@@ -36,7 +36,9 @@ export default async req=>{
   try{
     if(!['GET','POST'].includes(req.method))return json({error:'GET or POST required'},405);
     const url=new URL(req.url);
-    if(url.searchParams.get('confirm')!==CONFIRM)return json({error:'confirmation required'},400);
+    const scheduledBody=req.method==='POST'?await req.clone().json().catch(()=>null):null;
+    const scheduled=Boolean(scheduledBody?.next_run);
+    if(!scheduled&&url.searchParams.get('confirm')!==CONFIRM)return json({error:'confirmation required'},400);
 
     const store=getStore(STORE);
     const prior=await store.get(MARKER,{type:'json'}).catch(()=>null);
@@ -72,13 +74,14 @@ export default async req=>{
         report.offenseRowsBefore+=offense.length;
         if(removed>0){
           const updated={...snap,rows:offense,fingerprint:fingerprint(offense,snap.picks||[],snap.teams||[])};
-          await store.setJSON(key,updated);
           touched.set(key,updated);
           report.snapshotsChanged++;
           report.idpRowsRemoved+=removed;
         }
         report.offenseRowsAfter+=offense.length;
       }
+      const writes=[...touched.entries()].filter(([key])=>batch.includes(key));
+      await Promise.all(writes.map(([key,updated])=>store.setJSON(key,updated)));
     }
 
     if(report.offenseRowsBefore!==report.offenseRowsAfter){
@@ -122,4 +125,9 @@ export default async req=>{
     console.error('idp-history-live-scrub',e);
     return json({ok:false,error:String(e?.message||e)},500);
   }
+};
+
+
+export const config = {
+  schedule: '* * * * *'
 };

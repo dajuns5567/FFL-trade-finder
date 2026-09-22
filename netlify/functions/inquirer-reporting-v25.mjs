@@ -562,17 +562,18 @@ function playerTrajectory(p){
 function playerContextParagraph(p){return statSituation(p)||''}
 
 function leaguePlayerPulse(teams){
-  const rows=(teams||[]).flatMap(t=>(t.starter_details||[]).map(p=>({t,p,tr:playerTrajectory(p)}))).filter(x=>x.tr);
-  const pick=kind=>rows.filter(x=>x.tr.kind===kind).sort((a,b)=>Number(b.tr.strength)-Number(a.tr.strength))[0]||null,out=[],seen=new Set();
-  for(const kind of ['breakout','early-breakout','reliable','decline','stumble']){
+  const rows=(teams||[]).flatMap(t=>(t.starter_details||[]).map(p=>({t,p,tr:playerTrajectory(p)}))).filter(x=>x.tr),
+    pick=kind=>rows.filter(x=>x.tr.kind===kind).sort((a,b)=>Number(b.tr.strength)-Number(a.tr.strength))[0]||null,out=[],seen=new Set();
+  for(const kind of ["breakout","early-breakout","reliable","decline","stumble"]){
     const x=pick(kind);if(!x||seen.has(String(x.p.id)))continue;seen.add(String(x.p.id));
-    const situ=statSituation(x.p),tag=kind==='decline'?'DECLINE WATCH':kind==='stumble'?'VETERAN CHECK-IN':kind==='reliable'?'RELIABLE':kind.includes('breakout')?'BREAKOUT WATCH':'PLAYER WATCH';
-    out.push(`${tag}: ${x.tr.text}${situ?' '+situ:''}`);
+    const opp=x.t.opponent_name||"the opponent",stat=statSituation(x.p)||"",won=Number(x.t.points)>Number(x.t.opponent_points);
+    if(kind==="breakout"||kind==="early-breakout")out.push(x.p.name+" made "+opp+" account for a player it may not have entered Week 1 fearing. "+stat+" "+(won?x.t.team_name+" turned that new problem into a win; the next opponent now has to prepare as if the role is real.":x.t.team_name+" lost, but the performance gave the next opponent one more threat it cannot casually dismiss."));
+    else if(kind==="reliable")out.push(x.p.name+" gave "+x.t.team_name+" the familiar kind of trouble opponents hate. "+stat+" "+opp+" knew the established threat was coming and still had to spend the afternoon dealing with it.");
+    else out.push(x.p.name+" gave "+x.t.team_name+" a quieter Week 1 than its prior expectations promised. "+opp+" got the benefit of that absence; the next opponent will attack the same weakness until "+x.p.name+" makes it disappear.");
     if(out.length>=3)break;
   }
   return out;
 }
-
 
 function bartholomewPlayerBoard(teams){
   const rows=(teams||[]).flatMap(t=>(t.starter_details||[]).map(p=>{
@@ -600,8 +601,8 @@ function bartholomewPlayerBoard(teams){
   const bo=take(false,2,breakoutScore),bd=take(true,1,breakoutScore),used=new Set([...bo,...bd].map(x=>String(x.p.id))),
     ro=take(false,2,reliableScore,used),rd=take(true,1,reliableScore,used),ps=[];
   const breakoutLine=x=>{
-    const opp=x.t.opponent_name||"the opponent",stat=statSituation(x.p),role=x.role?.text||"",won=Number(x.t.points)>Number(x.t.opponent_points);
-    return x.p.name+" gave "+x.t.team_name+" a Week 1 performance that changed how "+opp+" had to defend"+(role?" — "+role+" kept him involved even after the matchup knew where the ball was going":"")+". "+(stat||"")+" "+(won?opp+" never made that problem disappear before "+x.t.team_name+" took the win.":x.t.team_name+" lost, but "+x.p.name+" gave the next opponent a reason not to treat this role as opening-week noise.");
+    const opp=x.t.opponent_name||"the opponent",stat=statSituation(x.p),won=Number(x.t.points)>Number(x.t.opponent_points);
+    return x.p.name+" gave "+x.t.team_name+" a Week 1 performance that changed how "+opp+" had to defend. "+(stat||"")+" "+(won?opp+" saw the problem and still never made it disappear before "+x.t.team_name+" took the win.":x.t.team_name+" lost, but "+x.p.name+" gave the next opponent a reason not to treat the performance as opening-week noise.");
   };
   const reliableLine=x=>{
     const opp=x.t.opponent_name||"the opponent",stat=statSituation(x.p),won=Number(x.t.points)>Number(x.t.opponent_points);

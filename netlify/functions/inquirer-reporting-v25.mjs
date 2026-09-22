@@ -181,7 +181,7 @@ function focusedPlayerStatsV32(players){
 
 function playerEditorialReadV32(t,r,f=articleFrameV29(t,r)){
   const trio=[f.top,f.second,f.third].filter(Boolean),team=teamIdentityV28(t).mascot,scope=String(t.division_name||t.conference||'this league');
-  if(trio.length<2)return null;
+  if(trio.length<3||trio.some(p=>Number(p?.points)<18))return null;
   const establishedSupport=trio.slice(1).find(p=>establishedStarV29(p)),twoWay=trio.some(defensivePlayer)&&trio.some(p=>!defensivePlayer(p)),
     concentrated=Number(f.share)>=.7,names=naturalJoin(trio.map(p=>p.name)),v=voice(r);
   if(v===0){
@@ -221,6 +221,93 @@ function deMetaReporterFunctionsV32(value,r){
   return text;
 }
 
+const TILLY_ACRONYMS_V33=new Set(['IDP','QB','RB','WR','TE','DL','DE','DT','LB','DB','CB','FS','SS','ILB','OLB','NT','NFL','TFL','PPR','AFC','NFC']);
+function normalizeTillyCaseV33(value,properNames=[]){
+  let text=String(value??'');
+  text=text.replace(/\b[A-Z][A-Z0-9'’.-]*[A-Z0-9]\b/g,w=>TILLY_ACRONYMS_V33.has(w)?w:w.toLowerCase());
+  text=text.replace(/(^|[.!?]\s+|:\s+)([“"'‘(]*)([a-z])/g,(m,p,q,c)=>p+q+c.toUpperCase());
+  const names=[...new Set((properNames||[]).map(x=>String(x||'').trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
+  for(const name of names)text=text.replace(new RegExp(escapeRe(name),'gi'),name);
+  return text;
+}
+function teamProperNamesV33(t,r){
+  return [...articlePlayers(t).map(p=>p.name),...(t?.trade_acquisitions||[]).flatMap(a=>[a?.player_name,...(a?.outgoing_player_names||[])]),t?.team_name,t?.manager_name,t?.opponent_name,t?.next_opponent_name,t?.division_name,t?.conference,r?.name].filter(Boolean);
+}
+function finalReporterCaseV33(t,r,value){
+  return r?.id==='mack-hollis'?normalizeTillyCaseV33(value,teamProperNamesV33(t,r)):String(value??'');
+}
+function threeHighScorersV33(f){
+  const trio=[f?.top,f?.second,f?.third].filter(Boolean);
+  return trio.length===3&&trio.every(p=>Number(p?.points)>=18);
+}
+function playerStatInsightV33(t,p,r){
+  if(!p)return null;
+  const d=delta(p),pts=Number(p.points),role=teamOpportunity(p),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0,team=teamIdentityV28(t).mascot,v=voice(r),name=p.name,key=String(t.roster_id)+':'+String(p.id||name)+':stat-insight:'+String(r?.id||'');
+  let banks;
+  if(d!=null&&d>=6){
+    banks=[
+      [name+' beat projection by '+one(d)+'. '+(role?.text?'The useful part is '+role.text+'; that workload gives the spike somewhere real to live.':'Nick wants another week of role evidence before budgeting the spike again.')],
+      [name+' finished '+one(d)+' above projection. '+(role?.text?'The line came with '+role.text+', which makes the excess easier to admire.':'Lovely result; Bartholomew is waiting for a sturdier role before ordering it by the case.')],
+      [name+' beat projection by '+one(d)+'. '+(role?.text?'The job underneath it was '+role.text+', so next week has something concrete to test.':'Enjoy the points; do not spend next week’s before the role earns them.')],
+      [name+' exceeded projection by '+one(d)+'. '+(role?.text?'The opportunity included '+role.text+', making the role more probative than the surprise total.':'The spike is favorable evidence without enough workload yet to become a baseline.')]
+    ][v];
+  }else if(d!=null&&d<=-6){
+    const miss=Math.abs(d);
+    banks=[
+      [name+' missed projection by '+one(miss)+'. '+(role?.text?'The role still included '+role.text+'; the job survived, the conversion did not.':'Both the opportunity and the output need a better answer next week.')],
+      [name+' finished '+one(miss)+' below projection. '+(role?.text?'At least '+role.text+' showed up to dinner; the production was the guest who forgot the invitation.':'There is very little elegant about needing both more work and more production.')],
+      [name+' came in '+one(miss)+' under projection. '+(role?.text?'The work was there — '+role.text+'. The points were apparently on personal leave.':'That is two problems wearing one stat line: not enough work and not enough production.')],
+      [name+' missed projection by '+one(miss)+'. '+(role?.text?'The role still showed '+role.text+', which preserves the usage case and weakens the excuse for the output.':'The adverse result reaches both role and efficiency.')]
+    ][v];
+  }else if(Number.isFinite(prior)&&prior>0&&priorGames>=6&&Number.isFinite(pts)){
+    const ratio=pts/prior;
+    if(ratio>=1.25)banks=[
+      [name+' ran well above last year’s '+one(prior)+'-point average. Nick wants the next workload before calling the jump permanent.'],
+      [name+' made last year’s '+one(prior)+'-point average look modest for a day. Bartholomew will admire the upgrade and wait for a repeat.'],
+      [name+' jumped well past last year’s '+one(prior)+'-point average. Nice headline. Keep the job and do it again.'],
+      [name+' materially exceeded last year’s '+one(prior)+'-point average. The next role decides whether this becomes trend evidence.']
+    ][v];
+    else if(ratio<=.75)banks=[
+      [name+' fell well short of last year’s '+one(prior)+'-point average. One week gets context; repetition gets concern.'],
+      [name+' came in well below last year’s '+one(prior)+'-point average. Bartholomew grants one week of manners, not a season of immunity.'],
+      [name+' finished far below last year’s '+one(prior)+'-point average. One bad Sunday is a note. Two starts looking like a headline.'],
+      [name+' landed well below last year’s '+one(prior)+'-point baseline. The prior record argues for patience; the next week supplies the test.']
+    ][v];
+  }
+  if(!banks){
+    if(defensivePlayer(p)&&Number.isFinite(pts)&&pts>=14)banks=[
+      [name+' gave '+team+' a legitimate defensive advantage. Nick cares about whether the tackle-and-pressure work repeats, not about congratulating the league format for noticing it.'],
+      [name+' supplied defensive work worth building a paragraph around. Bartholomew will keep the football and discard the sermon about why IDP exists.'],
+      [name+' gave '+team+' a defensive headline with actual football behind it. The next question is whether the same role keeps showing up.'],
+      [name+' produced a defensible IDP result because the underlying defensive work was substantial. Another week of the same role would strengthen the finding.']
+    ][v];
+    else if(role?.text)banks=[
+      [name+' had '+role.text+'. Nick would rather follow that workload than reprint the fantasy total without an opinion.'],
+      [name+' had '+role.text+'. Bartholomew takes the role over a naked point total every time.'],
+      [name+' had '+role.text+'. That is an actual role to follow next week, not just a number to reprint.'],
+      [name+' had '+role.text+'. The opportunity is the repeatable part of the evidence.']
+    ][v];
+    else banks=[
+      [name+' has a useful fantasy line, but Nick is waiting for clearer role evidence before treating it as dependable.'],
+      [name+' has a useful line. Bartholomew is saving the larger compliment for a role that gives the number somewhere sturdy to live.'],
+      [name+' gets credit for the number. The role still has to earn the sequel.'],
+      [name+' supplies a favorable result without enough role evidence for a broader conclusion.']
+    ][v];
+  }
+  return keyedChoice(key,banks);
+}
+function losingRecordAsideV33(t,r){
+  const rec=t?.league_context?.record||{},w=Number(rec.wins)||0,l=Number(rec.losses)||0,ties=Number(rec.ties)||0,games=w+l+ties,rank=Number(t?.league_context?.standings_rank),size=Number(t?.league_context?.league_size)||32;
+  if(!((l>=2&&l>w)||(games>=4&&Number.isFinite(rank)&&rank>Math.floor(size*.75))))return null;
+  const team=teamIdentityV28(t).mascot,manager=t.manager_name||'management',v=voice(r),key=String(t.roster_id)+':bad-record:'+w+'-'+l+':'+String(r?.id||'');
+  const banks=[
+    ['At '+w+'-'+l+', '+team+' has moved past the stage where “early” does much analytical work. '+manager+' needs wins before the explanations become their own losing streak.','Nick has covered enough '+w+'-'+l+' starts to know patience is useful right up until it becomes a hobby.'],
+    [team+' is '+w+'-'+l+', which is less a slow start than an increasingly committed aesthetic. '+manager+' may improve the décor by winning.','A '+w+'-'+l+' record is an awfully durable stain for '+team+'. Bartholomew recommends the radical cleansing agent known as victories.'],
+    [team+' is '+w+'-'+l+'. The good news is nobody can accuse this roster of peaking too early. '+manager+' should try the fashionable new trend called winning.','At '+w+'-'+l+', '+team+' has made pessimism look less like a mood and more like responsible preparation.'],
+    ['The '+team+' record is '+w+'-'+l+'. The standings have filed enough adverse exhibits that '+manager+' needs wins, not a more persuasive closing argument.',team+' sits '+w+'-'+l+'; the file has stopped treating each loss as an isolated incident. '+manager+' can rebut the pattern only on the scoreboard.']
+  ][v];
+  return keyedChoice(key,banks);
+}
 function teamUsageComment(t,p,angle='star'){
   const o=teamOpportunity(p);if(!o)return null;
   if(o.limited_snap)return keyedChoice(`${p.id||p.name}:${angle}:limited`,[`${p.name} squeezed that production out of only ${o.snaps} defensive snaps.`,`${p.name} did all of that in a genuinely limited defensive role.`]);
@@ -2418,7 +2505,7 @@ function articleThreadV30(t,r,f,phase){
       management:`For ${manager}, the roster question is depth of production rather than star quality; ${top} already did enough to make that distinction clear.`
     },
     'defense-led':{
-      sentiment:`${top} made sure the ${team} conversation starts on defense, which is exactly what an IDP league should reward when the work is real.`,
+      sentiment:[`${top} gave ${team} its best defensive line; Nick starts with the tackles, pressure and fantasy impact instead of explaining why IDP exists.`,`${top} put the best defensive work on the ${team} page. Bartholomew will praise the player and spare everyone the sermon about league format.`,`${top} made the ${team} defense worth leading with. The stat line earned the ink; the format does not need a sales pitch.`,`${top} is the strongest defensive exhibit in the ${team} file. The underlying work earns the finding without explanatory language about IDP itself.`][voice(r)],
       outlook:`The next ${team} game asks whether the defensive carry can remain an advantage instead of becoming a weekly rescue plan.`,
       management:`For ${manager}, a defensive headliner is roster construction paying off; the rest of the lineup still has to meet that standard.`
     },

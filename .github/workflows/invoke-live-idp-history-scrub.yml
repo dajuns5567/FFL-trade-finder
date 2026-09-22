@@ -1,7 +1,7 @@
-name: Invoke live IDP history scrub
+name: Invoke production IDP history scrub
 
 on:
-  pull_request:
+  push:
     branches:
       - main
   workflow_dispatch:
@@ -12,30 +12,31 @@ permissions:
 jobs:
   invoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
-      - name: Invoke exact live-store scrub
+      - name: Wait for production maintenance endpoint and scrub live buffer
         shell: bash
         run: |
-          URL='https://deploy-preview-387--inspiring-bombolone-be4489.netlify.app/.netlify/functions/idp-history-live-scrub?confirm=delete-idp-before-20260921-2345-et'
-          for i in 1 2 3 4 5 6; do
-            echo "Attempt $i"
-            CODE=$(curl -L -sS -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/152 Safari/537.36' -o /tmp/live-scrub.json -w '%{http_code}' "$URL" || true)
-            echo "HTTP $CODE"
-            cat /tmp/live-scrub.json || true
-            echo
+          set -euo pipefail
+          URL='https://inspiring-bombolone-be4489.netlify.app/.netlify/functions/idp-history-live-scrub?confirm=delete-idp-before-20260921-2345-et'
+          rm -f /tmp/live-scrub.json
+          for i in $(seq 1 120); do
+            CODE=$(curl -L -sS -o /tmp/live-scrub.json -w '%{http_code}' "$URL" || true)
+            echo "Attempt $i HTTP $CODE"
             if [ "$CODE" = "200" ]; then
-              node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('/tmp/live-scrub.json','utf8'));if(r?.ok!==true)throw new Error('Scrub endpoint did not return ok');if(Number(r?.remainingPreCutoffIdpRows)!==0)throw new Error('Pre-cutoff IDP rows remain');if(Number(r?.offenseRowsBefore)!==Number(r?.offenseRowsAfter))throw new Error('Offensive rows changed');console.log('Verified live scrub',JSON.stringify(r));"
+              cat /tmp/live-scrub.json
+              node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('/tmp/live-scrub.json','utf8'));if(r?.ok!==true)throw new Error('scrub endpoint did not return ok');if(Number(r?.remainingPreCutoffIdpRows)!==0)throw new Error('pre-cutoff IDP rows remain');if(Number(r?.offenseRowsBefore)!==Number(r?.offenseRowsAfter))throw new Error('offensive rows changed');if(Number(r?.verifiedOffenseRows)!==Number(r?.offenseRowsBefore))throw new Error('offensive verification mismatch');console.log('Verified production live scrub',JSON.stringify(r));"
               exit 0
             fi
             sleep 10
           done
-          echo "Unable to invoke preview scrub endpoint" >&2
+          echo "Production maintenance endpoint did not become available" >&2
+          cat /tmp/live-scrub.json || true
           exit 1
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: live-idp-history-scrub-response
+          name: production-live-idp-history-scrub-response
           path: /tmp/live-scrub.json
           if-no-files-found: warn

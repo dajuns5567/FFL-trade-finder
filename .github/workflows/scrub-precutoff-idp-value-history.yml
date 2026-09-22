@@ -158,13 +158,8 @@ jobs:
           }
           if(!store)throw new Error('Unable to open live Value History store: '+(lastError||'unknown'));
 
-          const keys=[];
-          let cursor;
-          do{
-            const page=await store.list({prefix:'snapshots/',...(cursor?{cursor}:{})});
-            for(const b of page?.blobs||[])if(b?.key)keys.push(String(b.key));
-            cursor=page?.cursor||null;
-          }while(cursor);
+          const listing=await store.list({prefix:'snapshots/'});
+          const keys=(listing?.blobs||[]).map(b=>String(b?.key||'')).filter(Boolean);
 
           const liveReport={site_id:SITE_ID,token:tokenName,cutoff_utc:'2026-09-22T03:45:00.000Z',snapshotsScanned:0,preCutoffSnapshots:0,snapshotsChanged:0,idpRowsRemoved:0,offenseRowsBefore:0,offenseRowsAfter:0};
           const updatedByKey=new Map();

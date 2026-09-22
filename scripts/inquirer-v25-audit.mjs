@@ -68,4 +68,8 @@ for(const phrase of ['which is exactly what an IDP league should reward when the
 const leagueHub=fs.readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
 assert.ok(leagueHub.includes('snapshot_through_week:Number(week||0)'),'League Hub historical context must declare the exact report-week cutoff');
 assert.ok(leagueHub.includes("games.filter(g=>g.result==='W').length"),'League Hub records must be reconstructed from archived matchups rather than current Sleeper roster totals');
+const week1Generator=fs.readFileSync(new URL('./one-time-generate-inquirer-week1.mjs',import.meta.url),'utf8');
+assert.ok(!week1Generator.includes('projections(season,2'),'Week 1 archive generator must not refetch Week 2 projections after the historical cutoff');
+assert.ok(week1Generator.includes('next_projected:null,next_projection_coverage:0'),'Week 1 archive generator must explicitly omit later-week projection outlooks');
+assert.ok(week1Generator.includes('next_week_availability:null'),'Week 1 archive generator must omit live injury/availability state that can change after the report cutoff');
 console.log(JSON.stringify({ok:true,version:26,breakout:true,editorial_selection:true,expanded_matchups:true,acquisition_memory:true}));

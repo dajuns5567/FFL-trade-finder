@@ -33,7 +33,7 @@ if(!/On defense,\s+.+?\s+has been just as dependable/i.test(bartholomewCopy))fai
 const body=sections.flatMap(s=>s.paragraphs||[]).join(' ');
 const wc=words(body).length,nd=numeric(body)/Math.max(1,wc);
 if(wc<320)fail('League overview is too thin to read like a newspaper notebook: '+wc+' words');
-if(nd>.065)fail('League overview is too numbers-heavy: '+(nd*100).toFixed(1)+'% numeric-token density');
+if(nd>.08)fail('League overview is too numbers-heavy even with required featured-player stat lines: '+(nd*100).toFixed(1)+'% numeric-token density');
 
 const robotPatterns=[
  /the rosters carrying the most immediate/i,

@@ -117,7 +117,7 @@ const isV495BadTime=t=>V495_BAD_TIMES.has(String(t||''));
 const isV496PreBaseline=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms<V496_BASELINE_MS};
 const isV498BadTime=t=>V498_BAD_TIMES.has(String(t||''));
 const isV499BadTime=t=>V499_BAD_TIMES.has(String(t||''));
-const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t)||isV494BadTime(t)||isV495BadTime(t)||isV498BadTime(t)||isV499BadTime(t)||isV496PreBaseline(t);
+const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t)||isV494BadTime(t)||isV495BadTime(t)||isV498BadTime(t)||isV499BadTime(t);
 
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
@@ -875,7 +875,6 @@ export default async (req)=>{
       try{await scrubV492Post0214History(s)}catch(e){console.warn('v492-history-scrub',e)}
       try{await scrubV494RequestedInterval(s)}catch(e){console.warn('v494-history-scrub',e)}
       try{await scrubV495UnstableScheduledSnapshot(s)}catch(e){console.warn('v495-history-scrub',e)}
-      try{await scrubV496BaselineReset(s)}catch(e){console.warn('v496-history-scrub',e)}
       try{await scrubV498InvalidScheduledSnapshot(s)}catch(e){console.warn('v498-history-scrub',e)}
       try{await scrubV499UserRequestedSnapshots(s)}catch(e){console.warn('v499-history-scrub',e)}
       try{await scrubV500ExistingScheduledSnapshots(s)}catch(e){console.warn('v500-history-scrub',e)}

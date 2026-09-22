@@ -1784,12 +1784,32 @@ function sentimentContextV28(t,r){
 
 function outlookStakesV28(t,r){
   const team=teamIdentityV28(t).mascot,m=t.mida_outlook,playoff=valid(m?.playoff)?Number(m.playoff):null,title=valid(m?.title)?Number(m.title):null,next=t.next_opponent_name||'the next opponent',
-    gap=valid(t.next_projected)&&valid(t.next_opponent_projected)?Number(t.next_projected)-Number(t.next_opponent_projected):null;
+    gap=valid(t.next_projected)&&valid(t.next_opponent_projected)?Number(t.next_projected)-Number(t.next_opponent_projected):null,
+    tillyClose=keyedChoice(String(t.roster_id)+':tilly-outlook-close-v36',[
+      `Pregame certainty can wait until ${team} makes ${next} live with an actual result.`,
+      `${next} gets the next chance to decide whether ${team}'s Week 1 story travels.`,
+      `The forecast can stay quiet; ${team} has another Sunday to make the argument itself.`,
+      `${team} does not need another prediction before ${next}; it needs another result worth yelling about.`,
+      `Nothing about ${next} gets promoted from preview copy until ${team} earns it on the field.`,
+      `The next useful headline belongs to whatever ${team} actually does against ${next}.`,
+      `${next} is where ${team} gets to prove the Week 1 noise had a second chapter.`,
+      `Save the pregame mythology for later; ${team} still has to deal with ${next}.`
+    ]),
+    filchClose=keyedChoice(String(t.roster_id)+':filch-outlook-close-v36',[
+      `${next} supplies the next admissible fact for the ${team} file.`,
+      `The ${team} file stays provisional until ${next} adds another result.`,
+      `${next} is the next piece of evidence; conclusions can wait their turn.`,
+      `The next ${team} conclusion depends on what survives the game with ${next}.`,
+      `No larger ${team} finding gets entered before the ${next} result exists.`,
+      `${next} gets the next opportunity to change the ${team} record from observation into pattern.`,
+      `The ${team} file remains open until ${next} supplies another completed game.`,
+      `One Week 1 result is in evidence; ${next} decides what deserves to follow it.`
+    ]);
   return deskChoice(t,r,[
     [`The larger ${team} assignment is simple: ${playoff!=null?'a '+one(playoff)+'% playoff outlook':'an unsettled playoff path'} means the game with ${next} is another chance to bank a result before the schedule starts charging interest. ${title!=null&&title>=5?`A ${one(title)}% title outlook raises the standard without changing the weekly job.`:''}`],
     [`For ${team}, ${playoff!=null?one(playoff)+'% playoff odds':'the still-unsettled playoff picture'} make ${next} more than a talking point: it is another game this roster is expected to handle seriously. ${gap!=null?`The ${one(Math.abs(gap))}-point projection gap sets the expectation; Sunday still decides whether it was deserved.`:''}`],
-    [`THE ROAD-AHEAD HEADLINE FOR ${team.toUpperCase()}: ${next}. ${playoff!=null?'Playoff outlook '+one(playoff)+'%. ':''}${gap!=null?`Projection gap ${one(Math.abs(gap))}. `:''}Everything else is pregame content until the lineup earns the next result.`],
-    [`The ${team} file carries ${playoff!=null?'a '+one(playoff)+'% playoff estimate':'an unsettled playoff estimate'} into ${next}. ${title!=null&&title>=5?`A ${one(title)}% title chance is ambition, not exoneration. `:''}The next result gets admitted before any larger conclusion does.`]
+    [`THE ROAD-AHEAD HEADLINE FOR ${team.toUpperCase()}: ${next}. ${playoff!=null?'Playoff outlook '+one(playoff)+'%. ':''}${gap!=null?`Projection gap ${one(Math.abs(gap))}. `:''}${tillyClose}`],
+    [`The ${team} file carries ${playoff!=null?'a '+one(playoff)+'% playoff estimate':'an unsettled playoff estimate'} into ${next}. ${title!=null&&title>=5?`A ${one(title)}% title chance is ambition, not exoneration. `:''}${filchClose}`]
   ]);
 }
 
@@ -2527,8 +2547,27 @@ function nextOpponentLeadV29(t,r,f=articleFrameV29(t,r)){
     star=rows[0],clause=star?statClause(star):null,rec=t.next_opponent_context?.record,gap=valid(t.next_projected)&&valid(t.next_opponent_projected)?Number(t.next_projected)-Number(t.next_opponent_projected):null,
     recText=rec?`${Number(rec.wins)||0}-${Number(rec.losses)||0}`:null,starText=star?`${star.name} just produced ${one(star.points)} fantasy points${clause?`; ${star.name} ${clause}`:''}.`:'',depthText=nextOpponentDepthV29(o,star,r);
   if(voice(r)===0){
-    const forecast=gap==null?'The projection is incomplete.':Math.abs(gap)<6?`Only ${one(Math.abs(gap))} projected points separate the teams.`:gap>0?`The projected edge belongs to ${t.team_name}.`:`The projected edge belongs to ${opp}.`;
-    return `Next comes ${opp}${recText?` at ${recText}`:''}. ${starText} ${depthText||''} ${forecast} ${f.won?`Nick will be watching whether the habits that produced the ${t.team_name} win travel.`:gap>0?'After a loss, being favored turns this into a game '+t.team_name+' cannot afford to donate.':'After a loss, the assignment is to produce a response without asking the schedule for mercy.'}`.trim();
+    const forecast=gap==null?keyedChoice(String(t.roster_id)+':nick-no-projection-v36',[
+      `There is no honest projection edge to print for ${opp} yet.`,
+      `${opp} arrives without a trustworthy projection comparison attached.`,
+      `The ${t.team_name} forecast stays blank rather than borrowing a later-week number.`,
+      `No projection gap survived the historical cutoff, so ${opp} gets judged by the matchup instead.`,
+      `The paper forecast is intentionally missing; ${opp} still has to be played.`,
+      `There is no frozen projection edge for ${t.team_name} and ${opp}, and inventing one would be worse than leaving it blank.`,
+      `${t.team_name} gets no borrowed Week 2 number before facing ${opp}.`,
+      `The forecast column stays empty for ${opp}; Week 1 evidence is enough for now.`
+    ]):Math.abs(gap)<6?`Only ${one(Math.abs(gap))} projected points separate the teams.`:gap>0?`The projected edge belongs to ${t.team_name}.`:`The projected edge belongs to ${opp}.`,
+      lossClose=gap>0?'After a loss, being favored turns this into a game '+t.team_name+' cannot afford to donate.':keyedChoice(String(t.roster_id)+':nick-loss-response-v36',[
+        `The loss makes ${opp} a response game before it becomes anything else.`,
+        `${t.team_name} gets one clean assignment against ${opp}: answer the loss with a better Sunday.`,
+        `The next ${t.team_name} story starts with whether the lineup can make ${opp} absorb the response.`,
+        `After the loss, ${opp} becomes the place where ${t.team_name} either steadies itself or compounds the damage.`,
+        `${t.team_name} does not need mercy from the schedule; it needs a response against ${opp}.`,
+        `The Week 1 loss puts the burden on ${t.team_name} to make ${opp} feel the correction.`,
+        `${opp} is where ${t.team_name} gets to turn a bad result into a one-week problem instead of a theme.`,
+        `The response belongs to ${t.team_name}; ${opp} is simply the next team standing in front of it.`
+      ]);
+    return `Next comes ${opp}${recText?` at ${recText}`:''}. ${starText} ${depthText||''} ${forecast} ${f.won?`Nick will be watching whether the habits that produced the ${t.team_name} win travel.`:lossClose}`.trim();
   }
   if(voice(r)===1){
     const forecast=gap==null?'The projection offers no clean edge yet.':Math.abs(gap)<6?`The projection is nearly even, which leaves very little room for a casual mistake.`:gap>0?`The forecast favors ${t.team_name}.`:`The forecast favors ${opp}.`;
@@ -2538,7 +2577,16 @@ function nextOpponentLeadV29(t,r,f=articleFrameV29(t,r)){
     const forecast=gap==null?'NO CLEAN PROJECTION YET. EXCELLENT.':Math.abs(gap)<6?`ONLY ${one(Math.abs(gap))} PROJECTED POINTS SEPARATE THEM.`:gap>0?`THE FORECAST LIKES ${t.team_name.toUpperCase()}.`:`THE FORECAST LIKES ${String(opp).toUpperCase()}.`;
     return `NEXT WEEK: ${opp.toUpperCase()}${recText?` (${recText})`:''}. ${starText} ${depthText||''} ${forecast} ${f.won?'PROVE THE WIN TRAVELS.':'THE RESPONSE GAME HAS ARRIVED.'}`.trim();
   }
-  const forecast=gap==null?'No complete projection comparison has entered the file.':Math.abs(gap)<6?`The projection gap is only ${one(Math.abs(gap))} points.`:gap>0?`The paper forecast favors ${t.team_name}.`:`The paper forecast favors ${opp}.`;
+  const forecast=gap==null?keyedChoice(String(t.roster_id)+':filch-no-projection-v36',[
+    `No frozen projection comparison exists for the ${opp} matchup, so none enters the file.`,
+    `The ${opp} projection comparison is absent at the historical cutoff; the file stays silent on it.`,
+    `No contemporaneous projection edge is available for ${t.team_name} versus ${opp}.`,
+    `The projection exhibit for ${opp} is blank rather than reconstructed from later data.`,
+    `${t.team_name} carries no post-cutoff projection into the ${opp} file.`,
+    `The ${opp} forecast lacks a historical projection comparison and will not be backfilled.`,
+    `No Week 2 projection is admissible in this Week 1 ${t.team_name} record.`,
+    `The projection field remains empty for ${opp}; later information does not get retroactive admission.`
+  ]):Math.abs(gap)<6?`The projection gap is only ${one(Math.abs(gap))} points.`:gap>0?`The paper forecast favors ${t.team_name}.`:`The paper forecast favors ${opp}.`;
   return `The next file is ${opp}${recText?`, ${recText}`:''}. ${starText} ${depthText||''} ${forecast} ${f.won?`The ${t.team_name} assignment is to corroborate a favorable result.`:`The ${t.team_name} assignment is to answer an adverse result without creating a second one.`}`.trim();
 }
 

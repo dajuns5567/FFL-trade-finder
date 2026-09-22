@@ -2244,27 +2244,54 @@ function hotSeatV29(t,r,f=articleFrameV29(t,r)){
 }
 
 function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
-  const team=teamIdentityV28(t).mascot,rec=record(t),rank=Number.isFinite(f.rank)?`rank ${f.rank} of ${f.size}`:'an unsettled place in the table',p=f.playoff,high=p!=null&&p>=70,low=p!=null&&p<25;
-  if(voice(r)===0){
-    if(f.won)return keyedChoice(`${t.roster_id}:nick-win-record`,[`The record for ${team} is ${rec}, ${rank}. ${p!=null?`A ${one(p)}% playoff outlook gives the win context without making it proof of anything.`:'One win is useful evidence, not a season verdict.'}`,`${team} leaves the week ${rec}, ${rank}. ${p!=null?`The ${one(p)}% playoff outlook says the result helped the case without settling it.`:'The standings contain one favorable result and plenty of unanswered season.'}`,`Put ${rec} beside ${team} and ${rank} beside the record. ${p!=null?`At ${one(p)}% for the playoffs, Nick sees context rather than permission to declare anything finished.`:'The first win belongs in the notebook, not on a banner.'}`]);
-    if(high)return `The record for ${team} is ${rec}, ${rank}. A ${one(p)}% playoff outlook still treats this roster like a contender; the loss does not remove that status, it simply burns some of the margin for error that status was supposed to provide.`;
-    return `The record for ${team} is ${rec}, ${rank}. ${low?`With the playoff outlook around ${one(p)}%, wasting a week is expensive.`:'The loss narrows the room for another ordinary mistake.'}`;
+  const team=teamIdentityV28(t).mascot,rec=record(t),opp=String(t.opponent_name||"the opponent"),rank=Number.isFinite(f.rank)?f.rank:null,
+    p=f.playoff,v=voice(r),won=f.won,key=String(t.roster_id)+":record-emotion-v35:"+String(r?.id||""),week=Number(t?.week_classification?.week)||1;
+  if(week===1){
+    const banks=[
+      won?[
+        team+" is 1-0, and "+opp+" is the first team that has to explain why. One win does not make a contender, but it does let "+team+" spend the week with the first laugh.",
+        team+" opens 1-0. The standings are too young for prophecy and old enough for "+opp+" to wish this result belonged to somebody else.",
+        "Week 1 leaves "+team+" at 1-0. Nick will not hang a banner for one Sunday, but the first week is a much better place to own a win than an explanation."
+      ]:[
+        team+" is 0-1, which is not a crisis and is definitely not nothing. "+opp+" gets the first celebration; "+team+" gets six days to make sure the feeling does not become familiar.",
+        team+" opens 0-1. One loss cannot define a season, but it can absolutely ruin the first week of optimism.",
+        "Week 1 puts "+team+" at 0-1. Nick has seen plenty of good seasons begin badly; none of them improved by pretending the opener did not sting."
+      ],
+      won?[
+        team+" is 1-0, which looks lovely because Week 1 has not yet had time to stain it. "+opp+" gets the sour version of opening weekend; "+team+" gets to enjoy the furniture before somebody spills on it.",
+        "The table says 1-0 for "+team+". Bartholomew considers that a perfectly acceptable opening accessory, particularly because "+opp+" is the one carrying the loss home.",
+        team+" opens 1-0. One should not order championship silverware, but one may absolutely make "+opp+" look at the clean record for a few days."
+      ]:[
+        team+" is 0-1, which is a terrible color on everyone. "+opp+" got the better opening weekend, and "+team+" now has to make sure one ugly accessory does not become the season’s entire wardrobe.",
+        "The table says 0-1 for "+team+". Bartholomew grants that September is forgiving; he does not grant that losing should be tasteful.",
+        team+" opens 0-1. The season is not in danger. The mood is, and "+opp+" is responsible."
+      ],
+      won?[
+        team+" is 1-0. Enjoy it. Mention it too often. Send "+opp+" screenshots. Week 1 is the only time irrational confidence is still tax-free.",
+        team+" starts 1-0, which means the group chat belongs to "+team+" until further notice. "+opp+" can mute notifications if necessary.",
+        "One game, one win, 1-0 for "+team+". Tilly will not call it destiny; Tilly will absolutely call "+opp+" if anybody wants to discuss the scoreboard."
+      ]:[
+        team+" is 0-1. Nobody is eliminated, nobody is doomed, and everybody is still allowed to be annoyed. "+opp+" gets the first laugh.",
+        "0-1 for "+team+". The good news is there are plenty of games left. The bad news is "+opp+" already has one more win than "+team+" does.",
+        team+" opens 0-1. Tilly has not reached the panic button. Tilly has, however, located it."
+      ],
+      won?[
+        team+" enters the historical record at 1-0 after Week 1. The important contextual fact is simple: "+opp+" was the first opponent and "+team+" banked the result.",
+        "Week 1 closes with "+team+" at 1-0. Filch treats that as a clean first fact, not a projection about the rest of the season.",
+        team+" is 1-0 through the only completed week in this report. "+opp+" owns the corresponding loss; no later-week record is admissible here."
+      ]:[
+        team+" enters the Week 1 record at 0-1. Filch will not convert one loss into a season verdict, but he will not let a later week rewrite it either.",
+        "Week 1 closes with "+team+" at 0-1. "+opp+" earned the first result, and that is the only record context this archive is allowed to use.",
+        team+" is 0-1 through the report’s cutoff. Filch records the loss without borrowing future wins or future excuses."
+      ]
+    ][v];
+    return keyedChoice(key,banks)+(rank?" Week 1 scoring places "+team+" "+(rank===1?"first":"No. "+rank)+" in the 32-team snapshot.":"");
   }
-  if(voice(r)===1){
-    if(f.won)return keyedChoice(`${t.roster_id}:bart-win-record`,[`${rec} is the early ${team} record, ${rank}. ${p!=null?`The ${one(p)}% playoff outlook says the win met an existing expectation instead of inventing one.`:'The result deserves credit without pretending one week settled anything.'}`,`The table gives ${team} ${rec}, ${rank}. ${p!=null?`At ${one(p)}% for the playoffs, the victory looks more like competent housekeeping than revelation.`:'A single win is attractive enough without pretending it is heirloom furniture.'}`,`${team} wears a ${rec} record, ${rank}. ${p!=null?`The ${one(p)}% playoff outlook was already inviting ambition; the win merely arrived dressed appropriately.`:'Bartholomew accepts the result and declines the coronation.'}`]);
-    if(high)return `The record beside ${team} is ${rec}, ${rank}, and the ${one(p)}% playoff outlook still treats this roster like a contender. The loss does not remove that status; it makes wasting a favorable week look considerably more careless.`;
-    return `The record beside ${team} is ${rec}, ${rank}. ${p!=null?`A ${one(p)}% playoff outlook makes the loss ${low?'expensive':'annoying'}, not transformative.`:'The table is young, but the loss is already real.'}`;
-  }
-  if(voice(r)===2){
-    if(f.won)return `PRINT THE RECORD: ${rec} FOR ${team.toUpperCase()}, ${rank.toUpperCase()}. ${p!=null?`PLAYOFF OUTLOOK: ${one(p)}%. ENJOY THE ${team.toUpperCase()} WIN AND KEEP THE PARADE PERMIT IN THE DRAWER.`:'THE GROUP CHAT GETS ONE WEEK OF LEGAL OPTIMISM.'}`;
-    if(high)return `THE PAPER STILL TREATS ${team.toUpperCase()} LIKE A CONTENDER — ${one(p)}% PLAYOFF OUTLOOK — AND THAT IS WHY THIS LOSS IS SO ANNOYING. GOOD ROSTERS ARE NOT SUPPOSED TO DONATE COMFORTABLE OPPORTUNITIES.`;
-    return `${rec.toUpperCase()} FOR ${team.toUpperCase()}, ${rank.toUpperCase()}. ${p!=null?`THE ${one(p)}% PLAYOFF OUTLOOK LEAVES ${low?'VERY LITTLE':'SOME'} ROOM TO KEEP DOING THIS.`:'THE COMPLAINT DESK OPENS EARLY AFTER A LOSS.'}`;
-  }
-  if(f.won)return `The formal record for ${team} is ${rec}, ${rank}. ${p!=null?`A ${one(p)}% playoff estimate corroborates the expectation already attached to the roster; one win did not create it.`:'The win enters as one favorable exhibit.'}`;
-  if(high)return `The formal record for ${team} is ${rec}, ${rank}. A ${one(p)}% playoff estimate remains favorable, so the loss is not disqualifying; it is an avoidable adverse exhibit inside a still-strong case.`;
-  return `The formal record for ${team} is ${rec}, ${rank}. ${p!=null?`The ${one(p)}% playoff estimate gives the loss its proper weight without exaggerating it.`:'The loss is one adverse exhibit, and the next result determines whether it gains company.'}`;
+  const aspiration=p!=null?(p>=70?"a roster carrying serious playoff expectations":p<25?"a roster already short on margin for error":"a roster still fighting for a clean playoff position"):"a season still taking shape";
+  return won?
+    team+" moves to "+rec+(rank?", No. "+rank+" in the league":"")+". Against "+opp+", the win gives "+aspiration+" one more reason to talk with confidence instead of explaining itself.":
+    team+" falls to "+rec+(rank?", No. "+rank+" in the league":"")+". "+opp+" gets the result, and "+aspiration+" now has one fewer comfortable Sunday available.";
 }
-
 
 function tradePlayerNameV32(t,facts,id){
   return String(facts?.[String(id)]?.name||t?.transaction_player_facts?.[String(id)]?.name||id);

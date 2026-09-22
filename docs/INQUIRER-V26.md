@@ -25,3 +25,9 @@ V26 editorial revision 2 restores the accepted Work-state that predates the V26 
 - Value History prose is reporter-specific instead of inherited from older mechanical copy.
 - Existing same-version V26 stored articles are not trusted automatically: `editorial_revision: 2` forces migration of stale V26 copy generated before this recovery.
 - Missing-evidence sections remain exactly `n/a`; added length must come from commentary, context and connective reporting rather than filler.
+
+## Editorial revision 5
+
+Revision 5 deepens individual team columns without changing the V26 article architecture. Player statistics now carry reporter interpretation about workload, repeatability and consequence; poor records receive reporter-specific pessimistic sarcasm; and broad balance/depth claims are gated to weeks with three 18+ point scorers.
+
+Incomplete canonical trade-history packets no longer generate explanatory Trade Receipt prose. The dedicated trade-history beat is omitted until the original and current value evidence is complete. Tilly Fleecer’s output is normalized away from capitalization-for-emphasis, and cross-article repetition remains subject to the generated-copy fingerprint audit.

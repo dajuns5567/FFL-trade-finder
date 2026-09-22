@@ -85,9 +85,9 @@ function fact(p){
 }
 function aside(t,w,r){
  const pools={
-  'walter-mercer':['We have now reached the dangerous stage where this fan base begins saying “maybe” out loud.','The press box has upgraded the situation from “annoying” to “interesting,” which is as close to optimism as management allows.','Keep the clipping. Hide the parade route. We have been hurt before.'],
+  'walter-mercer':['We have now reached the dangerous stage where this fan base begins saying “maybe” out loud.','I have upgraded the situation from “annoying” to “interesting,” which is as close to optimism as management allows.','Keep the clipping. Hide the parade route. We have been hurt before.'],
   'tess-delaney':['The spreadsheet says this is sustainable. The fan in me has asked the spreadsheet to please stop tempting fate.','The numbers are good enough that even the eye-test people have gone suspiciously quiet.','Regression remains undefeated, but for one week we are choosing not to invite it to dinner.'],
-  'mack-hollis':['Someone find the rival group chat. We have irresponsible journalism to conduct.','The back page has abandoned neutrality and frankly feels terrific about it.','If this keeps up, circulation is going to become unbearable by choice.'],
+  'mack-hollis':['Someone find the rival group chat. We have irresponsible conclusions to draw.','The back page has abandoned neutrality and frankly feels terrific about it.','If this keeps up, circulation is going to become unbearable by choice.'],
   'nora-voss':['The lineup card has been entered into evidence, and several prior complaints are being quietly withdrawn.','No subpoenas yet, but the rival manager may want counsel.','The front office has requested that we stop calling this “evidence.” Request denied.']
  };
  const a=pools[r.id]||pools['walter-mercer'];let h=0;for(const ch of String(t.manager_name||t.roster_id)+String(w)+r.id)h=(h*33+ch.charCodeAt(0))>>>0;return a[h%a.length];
@@ -269,10 +269,10 @@ function leagueContextParagraph(t,w,r){
  let playoff='';
  if(Number(c.playoff_teams)>0&&rank){
   if(Number(w)>=INQUIRER_PLAYOFF_START_WEEK&&Number(w)<=INQUIRER_FINAL_WEEK){
-   playoff=' The '+String(t?.week_classification?.round||'playoffs')+' is underway — this newsroom marks Week '+INQUIRER_PLAYOFF_START_WEEK+' as the start — so every lineup choice now carries elimination/seeding consequences. '+t.team_name+' enters this '+String(t?.week_classification?.round||'playoff round')+' file at #'+rank+' of '+size+'.';
+   playoff=' The '+String(t?.week_classification?.round||'playoffs')+' is underway — Week '+INQUIRER_PLAYOFF_START_WEEK+' is the start — so every lineup choice now carries elimination/seeding consequences. '+t.team_name+' enters this '+String(t?.week_classification?.round||'playoff round')+' file at #'+rank+' of '+size+'.';
   }else if(Number(c.games_until_playoffs)<=6){
    playoff=' The playoff push is live: '+t.team_name+' sits #'+rank+' of '+size+', '+(c.inside_playoff_line?'inside':'outside')+' a '+c.playoff_teams+'-team field with '+c.games_until_playoffs+' regular-season game'+(Number(c.games_until_playoffs)===1?'':'s')+' before Week '+INQUIRER_PLAYOFF_START_WEEK+' opens the playoffs.';
-  }else playoff=' In the early table, '+t.team_name+' is #'+rank+' of '+size+' with '+c.playoff_teams+' playoff places ultimately available. Week '+INQUIRER_PLAYOFF_START_WEEK+' is the postseason line this desk is tracking.';
+  }else playoff=' In the early table, '+t.team_name+' is #'+rank+' of '+size+' with '+c.playoff_teams+' playoff places ultimately available. Week '+INQUIRER_PLAYOFF_START_WEEK+' is the postseason line I am tracking.';
  }
  if(r.id==='walter-mercer')return 'The season ledger now reads '+record+', with a '+streak+'.'+stretch+playoff+' Longtime readers will recognize this as the exact moment optimism usually begins making irresponsible purchases.';
  if(r.id==='tess-delaney')return 'Zoom out before we start hanging banners: '+record+', league rank #'+(rank||'—')+', '+streak+'.'+stretch+playoff+' The numbers are either building a case or preparing an elaborate prank.';
@@ -360,7 +360,7 @@ function hotTakeRows(teams,reporters){
  }
 
  const worst=rows.slice().sort((a,b)=>Number(b?.league_context?.standings_rank||0)-Number(a?.league_context?.standings_rank||0))[0],pressure=rows.slice().sort((a,b)=>(b?.next_week_availability?.bye_current_starters?.length||0)+(b?.next_week_availability?.injury_current_starters?.length||0)-(a?.next_week_availability?.bye_current_starters?.length||0)-(a?.next_week_availability?.injury_current_starters?.length||0))[0];
- takes.push({reporter:reporterPublic(reporters[3]),title:'Jefferson Filch: The bottom of the table has consequences',take:worst?(worst.team_name+' currently sits #'+worst.league_context.standings_rank+' with a '+recordText(worst.league_context)+' record. If the losses continue, this is not only a bad season; it becomes a draft-position story. '+(pressure&&pressure.roster_id===worst.roster_id?'The next-week bye/injury pressure does not improve the defense.' :'And yes, I am already checking who actually has the schedule and roster depth to escape the basement. Somebody has to spoil the comforting excuses.')):'The standings file is too incomplete for a responsible No. 1-pick take, which is exactly the kind of sentence an investigative desk should be willing to print.'});
+ takes.push({reporter:reporterPublic(reporters[3]),title:'Jefferson Filch: The bottom of the table has consequences',take:worst?(worst.team_name+' currently sits #'+worst.league_context.standings_rank+' with a '+recordText(worst.league_context)+' record. If the losses continue, this is not only a bad season; it becomes a draft-position story. '+(pressure&&pressure.roster_id===worst.roster_id?'The next-week bye/injury pressure does not improve the defense.' :'And yes, I am already checking who actually has the schedule and roster depth to escape the basement. Somebody has to spoil the comforting excuses.')):'The standings file is too incomplete for a responsible No. 1-pick take, which is less fun than guessing and considerably more useful.'});
  return takes;
 }
 export function buildLeagueOverview(args){

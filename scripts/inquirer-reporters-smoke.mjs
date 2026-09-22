@@ -6,7 +6,7 @@ const assert=(x,m)=>{if(!x)throw new Error(m)};
 assert(REPORTERS.length===4,'Fleeced Inquirer must have exactly four permanent reporters');
 assert(REPORTERS.map(r=>r.name).join('|')==='Nick Swindell|Bartholomew Roycington III|Tilly Fleecer|Jefferson Filch','Fleeced Inquirer public reporter names must remain the approved names');
 assert(INQUIRER_PLAYOFF_START_WEEK===14&&INQUIRER_FINAL_WEEK===17,'Inquirer season must classify Weeks 14-17 as playoffs and stop at Week 17');
-assert(week1Preload?.inquirer_version===26&&Number(week1Preload?.editorial_revision)>=2&&Number(week1Preload?.season)===2026&&Number(week1Preload?.week)===1,'Committed Week 1 preload must be the generated 2026 V26 revision-2 edition');
+assert(week1Preload?.inquirer_version===26&&Number(week1Preload?.editorial_revision)>=5&&Number(week1Preload?.season)===2026&&Number(week1Preload?.week)===1,'Committed Week 1 preload must be the generated 2026 V26 editorial-revision-5 edition');
 assert(Array.isArray(week1Preload?.teams)&&week1Preload.teams.length===32,'Committed Week 1 preload must contain all 32 team articles');
 assert(week1Preload.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(t?.inquirer_article?.sections)&&t.inquirer_article.sections.length>=8&&t.inquirer_article.sections.length<=9&&Array.isArray(t?.inquirer_article?.paragraphs)&&t.inquirer_article.paragraphs.length>=8),'Every preloaded Week 1 team must preserve the eight core V26 beats, with an optional ninth trade-commentary beat');
 const preloadReporterCounts=new Map(REPORTERS.map(r=>[r.name,0]));
@@ -163,6 +163,8 @@ assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub mu
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
 assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
+assert(backend.includes("week1Preload2026")&&backend.includes("preloaded:true")&&backend.includes("editorial_revision||0)>=INQUIRER_EDITORIAL_REVISION"),'Broadcast archive must expose the bundled Week 1 edition when its editorial revision is current');
+assert(ui.includes("Open Full Inquirer ▾")&&ui.includes("Weekly Recap →")&&ui.includes("data-lh-archive-season"),'Held Inquirer state must keep both Open Full Inquirer and Weekly Recap controls when a published edition exists');
 assert(backend.includes("explicit V26 editorial-depth revision 5 rewrite"),'Older or stale-revision Inquirer articles must explicitly migrate to editorial revision 5');
 assert(backend.includes('INQUIRER_EDITORIAL_REVISION=5')&&backend.includes('editorial_revision||0)<INQUIRER_EDITORIAL_REVISION'),'Current-version stored articles must still migrate when they predate editorial revision 5');
 assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');

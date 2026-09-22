@@ -177,8 +177,13 @@ for(const t of d.teams||[]){
   }
 }
 
-const fourthWallHits=(teamCopy.match(/\b(?:sports journalist|journalism schools?|fourth-wall|beat-writer|press box|copy desk|editor|deadline|newsroom)\b/gi)||[]).length;
-assert.ok(fourthWallHits>=6,'Reporters should occasionally break the fourth wall across a full edition without making it every article; got '+fourthWallHits);
+const reporterFunctionMeta=[
+  /\bsports journalist\b/i,/\bjournalism schools?\b/i,/\bbeat[- ]writer\b/i,/\bpress box\b/i,/\bsports media\b/i,
+  /\bfourth-wall\b/i,/\bsome reporters chase access\b/i,/\breporter becomes part of\b/i,/\breporter who keeps receipts\b/i,
+  /\beditors? prefer\b/i,/\bsomewhere, an editor\b/i,/\bmeet deadlines?\b/i,/\bcovering .+? taught me reporters\b/i,
+  /\btrying very hard to become a respected\b/i,/\bthe back page would like everyone to know\b/i
+];
+for(const re of reporterFunctionMeta)assert.ok(!re.test(teamCopy),'Reporter-function exposition survived generated team copy: '+re);
 
 for(const t of d.teams||[]){
   const names=[...(t.starter_details||[]),...Object.values(t.transaction_player_facts||{}),...(t.trade_acquisitions||[]).flatMap(a=>[

@@ -494,7 +494,7 @@ function teamTrajectory(p){
   const ratio=current/prior,established=establishedStarV29(p);
   if(games>=3&&veteran&&ratio<=.68)return {kind:'decline',strength:1-ratio,text:keyedChoice(key,[
     `${p.name} is a veteran and the quiet stretch has lasted long enough to be a real concern. The old weekly floor is no longer automatic.`,
-    `Put veteran ${p.name} on fall-off watch. Several weeks of lighter production have turned one bad Sunday into a pattern worth respecting.`,
+    `${p.name} has been quiet for several weeks now, long enough that the old standard deserves a real challenge.`,
     `${p.name} has moved past “slow start.” At this stage of his career, a multi-week drop deserves a sharper eye on the role.`
   ])};
   if(!established&&games>=3&&young&&ratio>=1.28&&role?.strong)return {kind:'breakout',strength:ratio-1,text:keyedChoice(key,[
@@ -835,8 +835,7 @@ function playerSection(t,r){
   const topContext=teamFootballRead(t,top,r,'star');if(topContext)ps.push(topContext);
   if(bad&&String(bad.id)!==String(top.id)){const badContext=teamFootballRead(t,bad,r,'hot-seat');if(badContext)ps.push(badContext)}
   const trajectoryRows=rows.map(p=>({p,tr:teamTrajectory(p)})).filter(x=>x.tr).sort((a,b)=>{const priority={breakout:6,'early-breakout':5,decline:5,rookie:4,reliable:3,stumble:2,veteran:1};return (priority[b.tr.kind]||0)-(priority[a.tr.kind]||0)||Number(b.tr.strength)-Number(a.tr.strength)}),used=new Set();
-  const trajectoryLabel=kind=>({rookie:'ROOKIE WATCH',breakout:'BREAKOUT CANDIDATE','early-breakout':'EARLY BREAKOUT WATCH',decline:'FALL-OFF WATCH',reliable:'RELIABLE',stumble:'SLOW-START WATCH',veteran:'VETERAN CHECK-IN'}[kind]||'PLAYER WATCH');
-  for(const x of trajectoryRows){if(used.has(String(x.p.id)))continue;used.add(String(x.p.id));ps.push(trajectoryLabel(x.tr.kind)+': '+x.tr.text);if(used.size>=2)break}
+  for(const x of trajectoryRows){if(used.has(String(x.p.id)))continue;used.add(String(x.p.id));ps.push(x.tr.text);if(used.size>=2)break}
   return ps;
 }
 
@@ -858,9 +857,9 @@ function teamLedeV27(t,r){
 function watchSentenceV27(x){
   const p=x.p,tr=x.tr,key=p.id||p.name;
   if(tr.kind==='breakout'||tr.kind==='early-breakout')return keyedChoice(key,[
-    `Breakout watch belongs on ${p.name} now. ${tr.text}`,
-    `${p.name} is the upside name worth circling. ${tr.text}`,
-    `Keep ${p.name} on the breakout page for another week. ${tr.text}`
+    `${p.name} is making a real case to become one of this season’s breakout players. ${tr.text}`,
+    `${p.name} is the upside name worth circling because the role keeps getting harder for opponents to ignore. ${tr.text}`,
+    `${p.name} is starting to look like a player defenses may have to plan around every week. ${tr.text}`
   ]);
   if(tr.kind==='reliable')return keyedChoice(key,[
     `${p.name} is the steadier story. ${tr.text}`,
@@ -1159,8 +1158,8 @@ function lineupProcessStory(t,r){
 function chairFootballStory(t,kind,r){
   const rows=list(t).filter(p=>delta(p)!=null);if(!rows.length)return null;const p=kind==='hot-seat'?rows.slice().sort((a,b)=>delta(a)-delta(b))[0]:rows.slice().sort((a,b)=>delta(b)-delta(a))[0];if(!p)return null;const tr=teamTrajectory(p);if(!tr)return null;
   if(tr.kind==='rookie')return `${p.name} is a rookie, so this is the first checkpoint of a much longer season.`;
-  if(tr.kind==='breakout'||tr.kind==='early-breakout')return `${p.name} is on breakout watch now. Give ${p.name} a few more Sundays like this and the old baseline will look badly out of date.`;
-  if(tr.kind==='decline')return `Veteran ${p.name} is on fall-off watch after a multi-week slide. The old weekly floor is no longer automatic.`;
+  if(tr.kind==='breakout'||tr.kind==='early-breakout')return `${p.name} is making a real case to be one of this season’s breakout players. A few more Sundays like this will make the old baseline look badly out of date.`;
+  if(tr.kind==='decline')return `Veteran ${p.name} has slid for several weeks now. The old weekly standard is no longer automatic.`;
   if(tr.kind==='reliable')return kind==='hot-seat'?`${p.name} has usually been steadier than this. One bad week is an annoyance; another would be a story.`:`${p.name} landed near an established weekly level again. Boring can be very profitable.`;
   if(tr.kind==='stumble')return `${p.name} has a longer track record than this one result. Call ${p.name}’s week a stumble until repetition says otherwise.`;
   if(tr.kind==='veteran')return `Veteran ${p.name} already owns a long baseline. Week 1 barely moved ${p.name} away from it.`;
@@ -1882,7 +1881,7 @@ function headingV28(t,r,kind,base,angle){
       [`The Uncomfortable Name: ${bad?.name||'TBD'}`,`Where Patience Gets Tested`,`One More Week Before Concern Grows`],
       [`The Chair Nobody Wants`,`An Unflattering Appointment`,`The Least Elegant Line on the Card`],
       [`HOT SEAT: NO HIDING`,`Today’s Complaint Has a Name`,`The Player Who Has to Be Better`],
-      [`The Week’s Most Concerning Player`,`Primary Suspect for the Bad Feeling`,`A Provisional Finding`]
+      [`The Week’s Most Concerning Player`,`Primary Suspect for the Bad Feeling`,`The Week’s Uncomfortable Question`]
     ],
     'cool-throne':[
       [`Credit Where It’s Due`,`The Good Note in the Margin`,`A Sunday Worth Repeating`],
@@ -2135,10 +2134,10 @@ function gameShapeV29(t,r,f=articleFrameV29(t,r)){
   }
   const trio=[top,second,third],names=naturalJoin(trio.map(p=>p.name)),pct=Number(t.points)>0?Math.round(trio.reduce((n,p)=>n+Number(p.points||0),0)/Number(t.points)*100):0;
   return [
-    won?names+" all cleared the high-scorer line, which is when the more-than-one-contributor story is actually worth telling. "+opp+" could not remove one threat without another becoming expensive, and roughly "+pct+"% of the "+team+" score came from that trio.":names+" all delivered high-end performances and "+team+" still lost. That is a much sharper indictment of the quiet lineup spots than any generic complaint about needing help.",
-    won?opp+" had three separate problems in "+names+". That is not decorative depth; it is the rare Sunday when the supporting-cast argument has evidence strong enough to deserve the sentence.":names+" gave "+team+" three premium performances and received a loss in return. Bartholomew would like the rest of the roster to apologize in writing.",
-    won?names+" all went big, so "+team+" gets to use the phrase team effort without committing journalism malpractice. "+opp+" had three fires and not enough extinguishers.":names+" all showed up and "+team+" still lost. Tilly has located the part of the roster that should not be asking them for more.",
-    won?names+" each produced at a high-end level. That gave "+opp+" multiple matchup problems at once and gives Filch a legitimate basis for calling the win broad rather than star-dependent.":names+" each produced at a high-end level; the loss therefore narrows the adverse finding to the quieter parts of the "+team+" lineup."
+    won?names+" each produced at a high level. Every time "+opp+" leaned toward one threat, "+team+" had another place to attack, and that trio accounted for roughly "+pct+"% of the score.":names+" all delivered high-end performances and "+team+" still lost. The quiet lineup spots wasted too much good work.",
+    won?opp+" spent Sunday choosing which of "+names+" to fear most and discovering there was no elegant answer. Three different players kept changing where the defense had to spend its attention.":names+" gave "+team+" three premium performances and received a loss in return. Bartholomew would like the rest of the roster to apologize in writing.",
+    won?names+" all went big. "+opp+" had three fires and not enough extinguishers.":names+" all showed up and "+team+" still lost. Tilly has located the part of the roster that should not be asking them for more.",
+    won?names+" each produced at a high level, forcing "+opp+" to defend three pressure points instead of solving one.":names+" each produced at a high level; the loss belongs much more to the quieter parts of the "+team+" lineup."
   ][v];
 }
 
@@ -2173,24 +2172,24 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
   ][v];
   const topStatusText=classificationSentenceV29(top,topStatus,r)||keyedChoice(`${t.roster_id}:top-status-fallback:${r?.id}`,[
     [
-      `${top.name}’s ${String(top.position||'player')} workload gives this ${resultShapeV33(f)} performance enough substance to carry into next week.`,
-      `Nick keeps ${top.name} in the next-week file because the ${playerContextLabelV33(top)} role survived a ${resultShapeV33(f)} result with something repeatable underneath it.`,
+      `${top.name}’s ${String(top.position||'player')} role gives this ${resultShapeV33(f)} performance something worth carrying into next week.`,
+      `${top.name} handled a ${playerContextLabelV33(top)} role that looked repeatable even after a ${resultShapeV33(f)} result.`,
       `For ${top.name}, the useful carryover from this ${resultShapeV33(f)} is the ${String(top.position||'player')} job itself rather than the fantasy total.`
     ],
     [
-      `The football under ${top.name}’s fantasy total is the part Bartholomew keeps from this ${resultShapeV33(f)}.`,
-      `${top.name} leaves this ${resultShapeV33(f)} with a ${playerContextLabelV33(top)} role worth another inspection.`,
-      `Bartholomew’s useful note on ${top.name} is the ${String(top.position||'player')} workload that survived the scoreboard.`
+      `The football underneath ${top.name}’s fantasy total is what makes this ${resultShapeV33(f)} interesting beyond one Sunday.`,
+      `${top.name} leaves this ${resultShapeV33(f)} with a ${playerContextLabelV33(top)} role that deserves another long look.`,
+      `${top.name} had a ${String(top.position||'player')} workload sturdy enough to survive the scoreboard and matter again next week.`
     ],
     [
-      `${top.name} earned the headline with the ${String(top.position||'player')} role, not just the number from this ${resultShapeV33(f)}.`,
-      `Tilly keeps ${top.name} on the page because this ${playerContextLabelV33(top)} job has something worth checking again.`,
-      `The useful sequel for ${top.name} is the same ${String(top.position||'player')} role after this ${resultShapeV33(f)}.`
+      `${top.name} mattered because the ${String(top.position||'player')} role changed the matchup, not merely because the fantasy total looked good.`,
+      `${top.name} handled a ${playerContextLabelV33(top)} job that the next opponent will have to account for.`,
+      `The sequel for ${top.name} is simple: make the same ${String(top.position||'player')} role hurt the next opponent too.`
     ],
     [
-      `${top.name}’s ${String(top.position||'player')} role keeps the ${resultShapeV33(f)} performance relevant after the fantasy total is filed away.`,
-      `Filch carries ${top.name} forward because the ${playerContextLabelV33(top)} role remains a testable exhibit after this ${resultShapeV33(f)}.`,
-      `The next ${top.name} finding depends on whether this ${String(top.position||'player')} workload recurs after a ${resultShapeV33(f)}.`
+      `${top.name}’s ${String(top.position||'player')} role keeps the ${resultShapeV33(f)} performance relevant beyond the final fantasy total.`,
+      `${top.name} handled a ${playerContextLabelV33(top)} role that the next opponent now has to plan around.`,
+      `For ${top.name}, the next question is whether this ${String(top.position||'player')} workload changes another matchup after a ${resultShapeV33(f)}.`
     ]
   ][v]);
   ps.push(`${keyedChoice(`${t.roster_id}:top:${r?.id}`,openerBanks)} ${playerStatInsightV33(t,top,r)||''} ${topStatusText}`.replace(/\s+/g,' ').trim());
@@ -2779,8 +2778,8 @@ function articleThreadV30(t,r,f,phase){
     },
     'breakout-week':{
       sentiment:`The most interesting ${team} optimism belongs to the emerging player whose role grew with the production; that is a better story than a random spike.`,
-      outlook:`The next ${team} game gives the breakout candidate a chance to keep the larger role before the label becomes permanent.`,
-      management:`For ${manager}, the young player has earned another opportunity rather than a ceremonial label.`
+      outlook:`The next ${team} game gives the emerging player another chance to prove the larger role can keep changing matchups.`,
+      management:`For ${manager}, the young player has earned another opportunity because Sunday made the larger role matter.`
     },
     'division-fight':{
       sentiment:`A divisional result makes the ${team} mood louder because the same Sunday moved a rival in the opposite direction.`,
@@ -2792,9 +2791,9 @@ function articleThreadV30(t,r,f,phase){
   const core=base[phase],v=voice(r);
   const tails=[
     '',
-    ' That is the part Bartholomew would keep after the adjectives are edited out.',
-    ' THAT is the part Tilly would put above the fold.',
-    ` That is the ${team} thread Filch would keep attached to the next exhibit.`
+    ' Bartholomew will care whether that same advantage still looks elegant against a prepared opponent.',
+    ' Tilly will care whether the next opponent gets embarrassed by the same thing.',
+    ` Filch will care whether the next opponent finds a way to take that advantage away from ${team}.`
   ];
   return keyedChoice(key,[core,core+tails[v]]);
 }

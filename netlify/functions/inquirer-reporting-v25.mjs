@@ -251,20 +251,20 @@ function playerContextLabelV33(p){
 }
 function playerStatInsightV33(t,p,r){
   if(!p)return null;
-  const d=delta(p),pts=Number(p.points),role=teamOpportunity(p),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0,team=teamIdentityV28(t).mascot,v=voice(r),name=p.name,key=String(t.roster_id)+':'+String(p.id||name)+':stat-insight:'+String(r?.id||'');
+  const d=delta(p),pts=Number(p.points),role=teamOpportunity(p),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0,team=teamIdentityV28(t).mascot,v=voice(r),name=p.name,roleLabel=playerContextLabelV33(p),resultLabel=Number(t?.points)>Number(t?.opponent_points)?'winning':'losing',key=String(t.roster_id)+':'+String(p.id||name)+':stat-insight:'+String(r?.id||'');
   let banks;
   if(d!=null&&d>=6){
     banks=[
       [name+' beat projection by '+one(d)+'. '+(role?.text?'The useful part is '+role.text+'; that workload gives the spike somewhere real to live.':'Nick wants another week of role evidence before budgeting the spike again.')],
       [name+' finished '+one(d)+' above projection. '+(role?.text?'The line came with '+role.text+', which makes the excess easier to admire.':'Lovely result; Bartholomew is waiting for a sturdier role before ordering it by the case.')],
-      [name+' beat projection by '+one(d)+'. '+(role?.text?'The job underneath it was '+role.text+', so next week has something concrete to test.':'Enjoy the points; do not spend next week’s before the role earns them.')],
-      [name+' exceeded projection by '+one(d)+'. '+(role?.text?'The opportunity included '+role.text+', making the role more probative than the surprise total.':'The spike is favorable evidence without enough workload yet to become a baseline.')]
+      [name+' beat projection by '+one(d)+'. '+(role?.text?'For this '+roleLabel+' in a '+resultLabel+' team week, the job underneath it was '+role.text+', so next week has something concrete to test.':'Enjoy the points; do not spend next week’s before the role earns them.')],
+      [name+' exceeded projection by '+one(d)+'. '+(role?.text?'For a '+roleLabel+' inside a '+resultLabel+' team result, the opportunity included '+role.text+', making the role more probative than the surprise total.':'The spike is favorable evidence without enough workload yet to become a baseline.')]
     ][v];
   }else if(d!=null&&d<=-6){
     const miss=Math.abs(d);
     banks=[
       [name+' missed projection by '+one(miss)+'. '+(role?.text?'The role still included '+role.text+'; the job survived, the conversion did not.':'Both the opportunity and the output need a better answer next week.')],
-      [name+' finished '+one(miss)+' below projection. '+(role?.text?'At least '+role.text+' showed up to dinner; the production was the guest who forgot the invitation.':'There is very little elegant about needing both more work and more production.')],
+      [name+' finished '+one(miss)+' below projection. '+(role?.text?'At least '+role.text+' showed up for this '+roleLabel+' in a '+resultLabel+' team week; the production was the guest who forgot the invitation.':'There is very little elegant about needing both more work and more production.')],
       [name+' came in '+one(miss)+' under projection. '+(role?.text?'The work was there — '+role.text+'. The points were apparently on personal leave.':'That is two problems wearing one stat line: not enough work and not enough production.')],
       [name+' missed projection by '+one(miss)+'. '+(role?.text?'The role still showed '+role.text+', which preserves the usage case and weakens the excuse for the output.':'The adverse result reaches both role and efficiency.')]
     ][v];
@@ -2086,12 +2086,28 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       `${one(top.points)} fantasy points put ${top.name} on the favorable side of the weekly file. ${topFootball}`
     ]
   ][v];
-  const topStatusText=classificationSentenceV29(top,topStatus,r)||[
-    `${top.name}’s workload gives the performance enough substance to carry into next week.`,
-    `The football under ${top.name}’s fantasy total is the part worth keeping.`,
-    `${top.name.toUpperCase()} EARNED THE HEADLINE WITH THE ROLE, NOT JUST THE NUMBER.`,
-    `${top.name}’s role keeps the performance relevant after the fantasy total is filed away.`
-  ][v];
+  const topStatusText=classificationSentenceV29(top,topStatus,r)||keyedChoice(`${t.roster_id}:top-status-fallback:${r?.id}`,[
+    [
+      `${top.name}’s ${String(top.position||'player')} workload gives this ${resultShapeV33(f)} performance enough substance to carry into next week.`,
+      `Nick keeps ${top.name} in the next-week file because the ${playerContextLabelV33(top)} role survived a ${resultShapeV33(f)} result with something repeatable underneath it.`,
+      `For ${top.name}, the useful carryover from this ${resultShapeV33(f)} is the ${String(top.position||'player')} job itself rather than the fantasy total.`
+    ],
+    [
+      `The football under ${top.name}’s fantasy total is the part Bartholomew keeps from this ${resultShapeV33(f)}.`,
+      `${top.name} leaves this ${resultShapeV33(f)} with a ${playerContextLabelV33(top)} role worth another inspection.`,
+      `Bartholomew’s useful note on ${top.name} is the ${String(top.position||'player')} workload that survived the scoreboard.`
+    ],
+    [
+      `${top.name} earned the headline with the ${String(top.position||'player')} role, not just the number from this ${resultShapeV33(f)}.`,
+      `Tilly keeps ${top.name} on the page because this ${playerContextLabelV33(top)} job has something worth checking again.`,
+      `The useful sequel for ${top.name} is the same ${String(top.position||'player')} role after this ${resultShapeV33(f)}.`
+    ],
+    [
+      `${top.name}’s ${String(top.position||'player')} role keeps the ${resultShapeV33(f)} performance relevant after the fantasy total is filed away.`,
+      `Filch carries ${top.name} forward because the ${playerContextLabelV33(top)} role remains a testable exhibit after this ${resultShapeV33(f)}.`,
+      `The next ${top.name} finding depends on whether this ${String(top.position||'player')} workload recurs after a ${resultShapeV33(f)}.`
+    ]
+  ][v]);
   ps.push(`${keyedChoice(`${t.roster_id}:top:${r?.id}`,openerBanks)} ${playerStatInsightV33(t,top,r)||''} ${topStatusText}`.replace(/\s+/g,' ').trim());
 
   const other=[f.second,f.third,...supports].filter((p,i,a)=>p&&String(p.id)!==String(top.id)&&a.findIndex(x=>x&&String(x.id)===String(p.id))===i).slice(0,2);

@@ -91,9 +91,10 @@ function statSituation(p){
     const targets=Number(s.rec_tgt??s.targets),rec=Number(s.rec),yd=Number(s.rec_yd),td=Number(s.rec_td);
     if(Number.isFinite(targets))return `${n} caught ${Number.isFinite(rec)?rec:0} of ${targets} targets for ${Number.isFinite(yd)?yd:0} yards${Number.isFinite(td)&&td>0?', scoring '+td+' '+plural(td,'touchdown'):''}.`;
   }
-  const solo=Number(s.tkl_solo),ast=Number(s.tkl_ast),sacks=Number(s.sack),tfl=Number(s.tkl_loss??s.tfl),qb=Number(s.qb_hit),pd=Number(s.pass_def),ints=Number(s.int),ff=Number(s.ff),snaps=Number(s.def_snp??s.def_snaps??s.defensive_snaps),bits=[];
+  const solo=Number(s.tkl_solo??s.idp_tkl_solo),ast=Number(s.tkl_ast??s.idp_tkl_ast),total=Number(s.tkl??s.idp_tkl),sacks=Number(s.sack??s.idp_sack),tfl=Number(s.tkl_loss??s.tfl??s.idp_tkl_loss??s.idp_tfl),qb=Number(s.qb_hit??s.idp_qb_hit),pd=Number(s.pass_def??s.idp_pass_def),ints=Number(s.int??s.idp_int),ff=Number(s.ff??s.idp_ff),snaps=Number(s.def_snp??s.def_snaps??s.defensive_snaps),bits=[];
   if(Number.isFinite(solo))bits.push(`${solo} solo ${plural(solo,'tackle')}`);
   if(Number.isFinite(ast)&&ast>0)bits.push(`${ast} assisted ${plural(ast,'tackle')}`);
+  if(!Number.isFinite(solo)&&!Number.isFinite(ast)&&Number.isFinite(total)&&total>0)bits.push(`${total} total ${plural(total,'tackle')}`);
   if(Number.isFinite(sacks)&&sacks>0)bits.push(`${sacks} ${plural(sacks,'sack')}`);
   if(Number.isFinite(tfl)&&tfl>0)bits.push(`${tfl} ${plural(tfl,'tackle for loss','tackles for loss')}`);
   if(Number.isFinite(qb)&&qb>0)bits.push(`${qb} QB ${plural(qb,'hit')}`);
@@ -117,15 +118,16 @@ function scopedFootballRead(t,p,angle='matchup'){
 }
 
 function teamDefenseUsage(p){
-  const s=p?.real_stats||{},solo=Number(s.tkl_solo),ast=Number(s.tkl_ast),sacks=Number(s.sack),tfl=Number(s.tkl_loss??s.tfl),pd=Number(s.pass_def),ints=Number(s.int),ff=Number(s.ff),snaps=Number(s.def_snp??s.def_snaps??s.defensive_snaps),points=Number(p?.points),parts=[];
-  const tackles=(Number.isFinite(solo)?solo:0)+(Number.isFinite(ast)?ast:0);
+  const s=p?.real_stats||{},solo=Number(s.tkl_solo??s.idp_tkl_solo),ast=Number(s.tkl_ast??s.idp_tkl_ast),total=Number(s.tkl??s.idp_tkl),sacks=Number(s.sack??s.idp_sack),tfl=Number(s.tkl_loss??s.tfl??s.idp_tkl_loss??s.idp_tfl),qb=Number(s.qb_hit??s.idp_qb_hit),pd=Number(s.pass_def??s.idp_pass_def),ints=Number(s.int??s.idp_int),ff=Number(s.ff??s.idp_ff),snaps=Number(s.def_snp??s.def_snaps??s.defensive_snaps),points=Number(p?.points),parts=[];
+  const tackles=(Number.isFinite(total)&&total>0)?total:(Number.isFinite(solo)?solo:0)+(Number.isFinite(ast)?ast:0);
   if(tackles>0)parts.push(`${tackles} total ${tackles===1?'tackle':'tackles'}`);
   if(Number.isFinite(sacks)&&sacks>0)parts.push(`${sacks} ${sacks===1?'sack':'sacks'}`);
   if(Number.isFinite(tfl)&&tfl>0)parts.push(`${tfl} ${tfl===1?'tackle for loss':'tackles for loss'}`);
+  if(Number.isFinite(qb)&&qb>0)parts.push(`${qb} QB ${qb===1?'hit':'hits'}`);
   if(Number.isFinite(pd)&&pd>0)parts.push(`${pd} ${pd===1?'pass breakup':'pass breakups'}`);
   if(Number.isFinite(ints)&&ints>0)parts.push(`${ints} ${ints===1?'interception':'interceptions'}`);
   if(Number.isFinite(ff)&&ff>0)parts.push(`${ff} forced ${ff===1?'fumble':'fumbles'}`);
-  if(parts.length)return {strong:tackles>=6||Number(sacks)>=1.5||Number(ints)>=1||Number(ff)>=1,text:parts.slice(0,3).join(', '),limited_snap:false,snaps:Number.isFinite(snaps)?snaps:null};
+  if(parts.length)return {strong:tackles>=6||Number(sacks)>=1.5||Number(ints)>=1||Number(ff)>=1||Number(qb)>=2,text:parts.slice(0,3).join(', '),limited_snap:false,snaps:Number.isFinite(snaps)?snaps:null};
   if(Number.isFinite(snaps))return {strong:snaps>=40,text:`${snaps} defensive snaps`,limited_snap:snaps<=25,snaps};
   return null;
 }
@@ -160,8 +162,8 @@ function teamStatLine(p){
     if(Number.isFinite(targets)){const receiving=`caught ${Number.isFinite(rec)?rec:0} of ${targets} targets for ${Number.isFinite(recYd)?recYd:0} yards${Number.isFinite(recTd)&&recTd>0?', adding '+recTd+' receiving '+count(recTd,'touchdown'):''}`;text+=text?`, and ${receiving}`:`${n} ${receiving}`;}if(text)return text+'.';
   }
   if(pos==='WR'||pos==='TE'){const targets=Number(s.rec_tgt??s.targets),rec=Number(s.rec),yd=Number(s.rec_yd),td=Number(s.rec_td);if(Number.isFinite(targets))return `${n} caught ${Number.isFinite(rec)?rec:0} of ${targets} targets for ${Number.isFinite(yd)?yd:0} yards${Number.isFinite(td)&&td>0?', scoring '+td+' '+count(td,'touchdown'):''}.`;}
-  const solo=Number(s.tkl_solo),ast=Number(s.tkl_ast),sacks=Number(s.sack),tfl=Number(s.tkl_loss??s.tfl),qb=Number(s.qb_hit),pd=Number(s.pass_def),ints=Number(s.int),ff=Number(s.ff),bits=[];
-  if(Number.isFinite(solo))bits.push(`${solo} solo ${count(solo,'tackle')}`);if(Number.isFinite(ast)&&ast>0)bits.push(`${ast} assisted ${count(ast,'tackle')}`);if(Number.isFinite(sacks)&&sacks>0)bits.push(`${sacks} ${count(sacks,'sack')}`);if(Number.isFinite(tfl)&&tfl>0)bits.push(`${tfl} ${count(tfl,'tackle for loss','tackles for loss')}`);if(Number.isFinite(qb)&&qb>0)bits.push(`${qb} QB ${count(qb,'hit')}`);if(Number.isFinite(pd)&&pd>0)bits.push(`${pd} ${count(pd,'pass breakup')}`);if(Number.isFinite(ints)&&ints>0)bits.push(`${ints} ${count(ints,'interception')}`);if(Number.isFinite(ff)&&ff>0)bits.push(`${ff} forced ${count(ff,'fumble')}`);
+  const solo=Number(s.tkl_solo??s.idp_tkl_solo),ast=Number(s.tkl_ast??s.idp_tkl_ast),total=Number(s.tkl??s.idp_tkl),sacks=Number(s.sack??s.idp_sack),tfl=Number(s.tkl_loss??s.tfl??s.idp_tkl_loss??s.idp_tfl),qb=Number(s.qb_hit??s.idp_qb_hit),pd=Number(s.pass_def??s.idp_pass_def),ints=Number(s.int??s.idp_int),ff=Number(s.ff??s.idp_ff),bits=[];
+  if(Number.isFinite(solo))bits.push(`${solo} solo ${count(solo,'tackle')}`);if(Number.isFinite(ast)&&ast>0)bits.push(`${ast} assisted ${count(ast,'tackle')}`);if(!Number.isFinite(solo)&&!Number.isFinite(ast)&&Number.isFinite(total)&&total>0)bits.push(`${total} total ${count(total,'tackle')}`);if(Number.isFinite(sacks)&&sacks>0)bits.push(`${sacks} ${count(sacks,'sack')}`);if(Number.isFinite(tfl)&&tfl>0)bits.push(`${tfl} ${count(tfl,'tackle for loss','tackles for loss')}`);if(Number.isFinite(qb)&&qb>0)bits.push(`${qb} QB ${count(qb,'hit')}`);if(Number.isFinite(pd)&&pd>0)bits.push(`${pd} ${count(pd,'pass breakup')}`);if(Number.isFinite(ints)&&ints>0)bits.push(`${ints} ${count(ints,'interception')}`);if(Number.isFinite(ff)&&ff>0)bits.push(`${ff} forced ${count(ff,'fumble')}`);
   const role=teamDefenseUsage(p);
   if(bits.length){let text=`${n} finished with ${bits.join(', ')}.`;if(role?.limited_snap)text+=` He did it on only ${role.snaps} defensive snaps, one of the rare cases where the snap count actually makes the performance more interesting.`;return text;}
   if(role?.limited_snap)return `${n} produced ${one(p.points)} fantasy points on only ${role.snaps} defensive snaps, unusually efficient work in a genuinely limited role.`;
@@ -214,11 +216,12 @@ function deMetaReporterFunctionsV32(value,r){
   const id=String(r?.id||"");
   const banks={
     "walter-mercer":[[/\bNick’s\b/g,"my"],[/\bNick will\b/g,"I’ll"],[/\bNick wants\b/g,"I want"],[/\bNick sees\b/g,"I see"],[/\bNick circles\b/g,"I circle"],[/\bleaves Nick watching\b/g,"leaves me watching"],[/\bgets Nick’s\b/g,"gets my"]],
-    "tess-delaney":[[/\bBartholomew’s\b/g,"my"],[/\bBartholomew will\b/g,"I’ll"],[/\bBartholomew would\b/g,"I would"],[/\bBartholomew can\b/g,"I can"],[/\bBartholomew accepts\b/g,"I accept"],[/\bBartholomew respects\b/g,"I respect"],[/\bgave Bartholomew\b/g,"gave me"],[/\bleaves Bartholomew\b/g,"leaves me"]],
+    "tess-delaney":[[/\bBartholomew’s\b/g,"my"],[/\bBartholomew will\b/g,"I’ll"],[/\bBartholomew would\b/g,"I would"],[/\bBartholomew wants\b/g,"I want"],[/\bBartholomew can\b/g,"I can"],[/\bBartholomew accepts\b/g,"I accept"],[/\bBartholomew respects\b/g,"I respect"],[/\bgave Bartholomew\b/g,"gave me"],[/\bleaves Bartholomew\b/g,"leaves me"]],
     "mack-hollis":[[/\bTilly’s\b/g,"my"],[/\bTilly starts\b/g,"I start"],[/\bTilly does\b/g,"I do"],[/\bTilly would\b/g,"I would"],[/\bTilly resents\b/g,"I resent"]],
     "nora-voss":[[/\bFilch’s\b/g,"my"],[/\bFilch would\b/g,"I would"],[/\bFilch recommends\b/g,"I recommend"],[/\bFilch enters\b/g,"I enter"],[/\bFilch treats\b/g,"I treat"],[/\bFilch does\b/g,"I do"],[/\bFilch starts\b/g,"I start"]]
   };
   for(const [re,to] of banks[id]||[])text=text.replace(re,to);
+  text=text.replace(/(^|[.!?]\s+)(my\b)/g,(m,p)=>p+'My');
   return text;
 }
 
@@ -422,7 +425,8 @@ function teamTrajectory(p){
     `${p.name} is starting to look like a different weekly problem than he was last season. The workload says the jump has real support.`,
     `The breakout case for ${p.name} has survived multiple Sundays: young player, larger role and better production.`
   ])};
-  if(!established&&games===1&&young&&ratio>=1.4&&role?.strong)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
+  const earlyBreakoutFloor=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensivePlayer(p)?11:13;
+  if(!established&&games===1&&young&&ratio>=1.4&&role?.strong&&points>=earlyBreakoutFloor)return {kind:'early-breakout',strength:ratio-1,text:keyedChoice(key,[
     `${p.name} belongs on early breakout watch after a first Sunday that was both loud and busy. One more week with the same role would make the story harder to shrug off.`,
     `${p.name} gave us a proper breakout teaser: young player, real involvement and a much bigger Sunday than fantasy managers were used to seeing.`,
     `${p.name} changed the conversation for one week. Keep the same workload next Sunday and “breakout watch” starts losing the word “watch.”`

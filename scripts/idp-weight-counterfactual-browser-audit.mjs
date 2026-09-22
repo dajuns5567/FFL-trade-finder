@@ -10,21 +10,6 @@ const candidates=[
   {name:'20/35/45',consensus:.20,scoring:.35,context:.45}
 ];
 
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function waitForPreview(){
-  let last='';
-  for(let i=0;i<40;i++){
-    try{
-      const r=await fetch(url,{redirect:'follow'});
-      if(r.ok)return;
-      last=`${r.status} ${r.statusText}`;
-    }catch(e){last=String(e?.message||e)}
-    await sleep(15000);
-  }
-  throw new Error(`Deploy preview never became ready: ${last}`);
-}
-
-await waitForPreview();
 const browser=await chromium.launch({headless:true});
 try{
   const page=await browser.newPage();

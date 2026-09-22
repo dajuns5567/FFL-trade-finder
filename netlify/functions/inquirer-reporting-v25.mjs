@@ -2898,50 +2898,58 @@ function matchupRead(g,slot=0){
 }
 
 function gameStory(g,slot=0){
-  const star=list(g.winner)[0],loserStar=list(g.loser)[0],winnerSupport=list(g.winner)[1],loserMiss=list(g.loser).filter(p=>delta(p)!=null).sort((a,b)=>delta(a)-delta(b))[0],starContext=star?playerContextParagraph(star):'',supportContext=winnerSupport?playerContextParagraph(winnerSupport):'',starTrajectory=star?playerTrajectory(star):null,loserContext=loserStar?playerContextParagraph(loserStar):'',loserMissContext=loserMiss&&loserMiss.name!==loserStar?.name?playerContextParagraph(loserMiss):'',projectionContext=g.upset?' '+g.winner.team_name+' entered as the projected underdog and won anyway.':'';
-  const contextTail=(starContext?` ${starContext}`:'')+(supportContext?` ${supportContext}`:'')+(starTrajectory?` ${starTrajectory.text}`:'')+(loserContext?` On the other side, ${loserContext}`:'')+(loserMissContext?` ${loserMissContext}`:'')+projectionContext+' '+matchupRead(g,slot);
+  const w=g.winner,l=g.loser,star=list(w)[0],loserStar=list(l)[0],winnerSupport=list(w)[1],
+    loserMiss=list(l).filter(p=>delta(p)!=null).sort((a,b)=>delta(a)-delta(b))[0],
+    score=one(w.points)+"–"+one(l.points),key=String(w.roster_id)+":"+String(l.roster_id)+":game-story-v35:"+slot;
   if(g.upset){
-    const open=[
-      g.winner.team_name+' delivered the projection upset that deserves the lead, beating '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
-      g.winner.team_name+' ignored the pregame forecast and took '+g.loser.team_name+' down '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
-      'Another favorite learned the usual lesson when '+g.winner.team_name+' beat '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+': projections do not get lineup spots. ',
-      g.winner.team_name+' turned a projected disadvantage into a '+one(g.winner.points)+'–'+one(g.loser.points)+' win over '+g.loser.team_name+'. ',
-      'The quieter upset on the board belongs to '+g.winner.team_name+', '+one(g.winner.points)+'–'+one(g.loser.points)+' over '+g.loser.team_name+'. '
-    ][slot%5];
-    const supportLine=winnerSupport?[
-      winnerSupport.name+' gave the result enough support to keep it from becoming a one-player heist. ',
-      winnerSupport.name+' made sure the upset belonged to a lineup instead of one isolated eruption. ',
-      winnerSupport.name+' supplied the kind of second performance favorites hate seeing in an upset. ',
-      winnerSupport.name+' kept the winner from asking one star to do every bit of the stealing. ',
-      winnerSupport.name+' gave the result another sturdy leg to stand on. '
-    ][slot%5]:'';
-    const close=[
-      'That is the sort of Week 1 result that changes the tone before the standings have had time to settle.',
-      'The favorite leaves with a bruise and a simple assignment: make the projection look wiser over the next month than it did on Sunday.',
-      'The winner got big work from more than one place. That is a much sturdier way to steal a game than one lucky eruption.',
-      'Now the winner gets to prove this was the beginning of an identity rather than one excellent afternoon.',
-      'The loser gets a reminder, the winner gets a little belief, and the rest of the league gets one more reason to stop penciling in results before kickoff.'
-    ][slot%5];
-    return open+(star?star.name+' led the winning side with '+one(star.points)+' points. ':'')+supportLine+(loserStar?loserStar.name+' kept '+g.loser.team_name+' in the fight. ':'')+(loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+' is the quiet line the losing side will remember. ':'')+close+contextTail;
+    const opens=[
+      w.team_name+" walked in as the underdog and pulled the rug out from under "+l.team_name+", "+score+". "+l.team_name+" had the comfortable forecast; "+w.team_name+" left with the result and the right to be insufferable about it.",
+      l.team_name+" entered expecting to control the afternoon and ended up looking shocked. "+w.team_name+" stole the game "+score+", turning the favorite’s Week 1 optimism into a receipt it will be hearing about all week.",
+      w.team_name+" was supposed to be the team explaining how it could hang around. Instead, "+l.team_name+" spent Sunday explaining how the favorite let "+w.team_name+" walk out with a "+score+" win.",
+      l.team_name+" had the better pregame story; "+w.team_name+" had the better team once the scoring started. The upset made the favorite look ordinary in a game it expected to control.",
+      w.team_name+" took a game that belonged to "+l.team_name+" on paper and made paper look ridiculous, "+score+". That is the sort of opener that gives an underdog swagger and a favorite a very quiet ride home."
+    ];
+    const middle=[
+      star?star.name+" became the player "+l.team_name+" could not make disappear, and every successful answer made the favorite look a little less like the team in control.":"",
+      winnerSupport?winnerSupport.name+" gave "+w.team_name+" another place to hurt the favorite, which kept "+l.team_name+" from solving the game with one adjustment.":"",
+      loserStar?loserStar.name+" gave "+l.team_name+" something to fight with, but the rest of the matchup kept slipping toward the underdog.":"",
+      loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+" is the name "+l.team_name+" will stare at longest because favorites do not have many quiet spots available when the upset starts forming.":""
+    ].filter(Boolean).join(" ");
+    return keyedChoice(key,opens)+" "+middle+" "+matchupRead(g,slot);
   }
   if(g.margin<=6){
-    const open=[
-      g.winner.team_name+' escaped '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+' in one of the games everybody kept checking. ',
-      'The week’s best argument against multitasking was '+g.winner.team_name+' over '+g.loser.team_name+', '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
-      g.winner.team_name+' survived the kind of game that turns every lineup decision into a replay, edging '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
-      'There was almost nothing between '+g.winner.team_name+' and '+g.loser.team_name+' before '+g.winner.team_name+' came out '+one(g.margin)+' points ahead. ',
-      g.winner.team_name+' got the final word in a '+one(g.winner.points)+'–'+one(g.loser.points)+' grinder with '+g.loser.team_name+'. '
-    ][slot%5];
-    return open+(star?star.name+' mattered more because there was almost no room to waste his '+one(star.points)+' points. ':'')+(winnerSupport?winnerSupport.name+' supplied the kind of secondary performance close games punish teams for missing. ':'')+(loserStar?loserStar.name+' kept '+g.loser.team_name+' alive. ':'')+(loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+' had the kind of quiet line that looks enormous in a game this close. ':'')+'Nobody gets to call a game this close destiny; both teams leave knowing exactly which handful of plays and lineup spots decided it.'+contextTail;
+    const opens=[
+      w.team_name+" escaped "+l.team_name+" "+score+", a game close enough that every manager involved probably refreshed the app more often than was medically useful.",
+      w.team_name+" beat "+l.team_name+" by "+one(g.margin)+" points, which means the winner gets relief and the loser gets a week of inventing alternate endings.",
+      w.team_name+" survived "+l.team_name+" "+score+". Nothing about the margin allows either side to pretend the outcome was inevitable.",
+      l.team_name+" came within "+one(g.margin)+" points of changing the entire mood of Week 1. "+w.team_name+" gets the win; the loser gets the torture of knowing exactly how reachable it was.",
+      w.team_name+" got the final word over "+l.team_name+", "+score+", in the kind of matchup where one quiet starter can haunt a manager until Thursday."
+    ];
+    const middle=[
+      star?star.name+" mattered because there was no room for empty production; his best moments landed in a game where every point had a pulse.":"",
+      loserStar?loserStar.name+" kept "+l.team_name+" alive long enough to make the ending hurt more.":"",
+      loserMiss&&loserMiss.name!==loserStar?.name?loserMiss.name+" had the kind of quiet performance that looks enormous when the final gap is this small.":""
+    ].filter(Boolean).join(" ");
+    return keyedChoice(key,opens)+" "+middle+" "+matchupRead(g,slot);
+  }
+  if(g.margin>=20){
+    const opens=[
+      w.team_name+" ran "+l.team_name+" out of answers, "+score+". The loser spent most of the afternoon watching the comeback path get steeper.",
+      w.team_name+" beat "+l.team_name+" by "+one(g.margin)+" and made the second half feel like an extended reminder that the matchup had already chosen a side.",
+      l.team_name+" got caught in "+w.team_name+"’s version of the afternoon and never found the exit. "+score+" is not subtle.",
+      w.team_name+" turned "+l.team_name+" into the team everybody else was making jokes about by dinner, "+score+".",
+      w.team_name+" controlled "+l.team_name+" by "+one(g.margin)+" points. The loser spent too long without a credible way to change the game."
+    ];
+    return keyedChoice(key,opens)+" "+(star?star.name+" was the clearest face of the punishment. ":"")+(loserStar?loserStar.name+" supplied resistance, not rescue. ":"")+matchupRead(g,slot);
   }
   const opens=[
-    g.winner.team_name+' handled '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
-    g.winner.team_name+' spent Sunday making '+g.loser.team_name+' chase a game that never really came back, '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
-    'One of the week’s clearest statements came from '+g.winner.team_name+', which beat '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
-    g.winner.team_name+' never needed a dramatic ending against '+g.loser.team_name+', closing out a '+one(g.winner.points)+'–'+one(g.loser.points)+' win. ',
-    'The comfortable result worth keeping is '+g.winner.team_name+' over '+g.loser.team_name+', '+one(g.winner.points)+'–'+one(g.loser.points)+'. '
+    w.team_name+" handled "+l.team_name+" "+score+" and looked like the side with the clearer plan once the game settled in.",
+    w.team_name+" beat "+l.team_name+" "+score+". The winner kept finding answers; the loser kept finding reasons the answer had arrived too late.",
+    w.team_name+" spent more of Sunday dictating than reacting, and that was enough to beat "+l.team_name+" "+score+".",
+    l.team_name+" never disappeared, but "+w.team_name+" kept it at arm’s length long enough to own a "+score+" win.",
+    w.team_name+" beat "+l.team_name+" "+score+" without needing a miracle finish. Sometimes the statement is simply being the more comfortable team for more of the afternoon."
   ];
-  return opens[slot%5]+(star?star.name+' set the tone with '+one(star.points)+'. ':'')+(winnerSupport?winnerSupport.name+' made sure the winning side had more than one place to look for production. ':'')+(loserStar?loserStar.name+' was the best reply for '+g.loser.team_name+', but the scoreboard kept moving away. ':'')+'A comfortable early win is not a season verdict. '+g.winner.team_name+' just raised the standard for what next Sunday should look like.'+contextTail;
+  return keyedChoice(key,opens)+" "+(star?star.name+" gave "+l.team_name+" the problem it never fully solved. ":"")+(loserStar?loserStar.name+" was the best counterpunch, but the scoreboard kept favoring the other side. ":"")+matchupRead(g,slot);
 }
 
 function leagueSynthesis(teams){

@@ -2203,6 +2203,15 @@ function tradeCurrentTotalV32(side,facts){
   }
   return total;
 }
+function tradeHistoryCompleteV33(tr,facts){
+  const sides=tr?.sides||[];
+  if(sides.length<2)return false;
+  return sides.every(side=>{
+    const assetCount=(side?.player_ids||[]).length+(side?.picks||[]).length;
+    if(!assetCount)return false;
+    return Number.isFinite(tradeThenTotalV32(side))&&Number.isFinite(tradeCurrentTotalV32(side,facts));
+  });
+}
 function tradeValueReadV32(teamName,otherName,thenOwn,thenOther,nowOwn,nowOther,scope='the league'){
   const fmt=n=>Math.round(Number(n)).toLocaleString("en-US"),parts=[];
   if(Number.isFinite(thenOwn)&&Number.isFinite(thenOther)){
@@ -2226,18 +2235,10 @@ function tradeCommentaryV32(t,r,facts={}){
   const history=t.trade_history||[],v=voice(r),paragraphs=[],scope=String(t.division_name||t.conference||'the league');
   for(const move of moves.slice(0,2)){
     const tr=history.find(x=>String(x?.id||"")===String(move?.id||""))||null;
-    if(!tr){
-      const adds=(move.adds||[]).map(id=>tradePlayerNameV32(t,facts,id)),drops=(move.drops||[]).map(id=>tradePlayerNameV32(t,facts,id));
-      paragraphs.push((adds.length?t.team_name+" acquired "+naturalJoin(adds):t.team_name+" made a trade")+(drops.length?" and sent out "+naturalJoin(drops):"")+". The historical value snapshot is not available in this article packet, so the only responsible judgment is on what the moved players have actually done since. "+[
-        "For "+t.team_name+" in "+scope+", one Sunday can start an argument; it cannot finish a trade. I will keep this receipt nearby, not framed.",
-        "For "+t.team_name+" in "+scope+", a missing historical valuation is not an invitation to invent one. This deal may age beautifully or like dairy in a glove compartment; for now the football has to speak.",
-        "FOR "+t.team_name.toUpperCase()+" IN "+scope.toUpperCase()+", NO FAKE WINNER GRAPHICS. THE RECEIPT EXISTS, THE FULL VALUE HISTORY DOES NOT, AND I CAN WAIT ON THE VERDICT LIKE AN ADULT, ALLEGEDLY.",
-        "For "+t.team_name+" in "+scope+", the transaction is verified while a complete at-trade valuation is not. I am not converting missing evidence into confidence just because confidence photographs well."
-      ][v]);
-      continue;
-    }
+    if(!tr)continue;
     const own=(tr.sides||[]).find(s=>String(s?.roster_id)===String(t.roster_id)),others=(tr.sides||[]).filter(s=>String(s?.roster_id)!==String(t.roster_id));
     if(!own||!others.length)continue;
+    if(!tradeHistoryCompleteV33(tr,facts))continue;
     const other=others[0],otherName=String(tr.team_names?.[String(other.roster_id)]||"the other side"),
       ownAssets=tradeSideAssetNamesV32(t,facts,own),otherAssets=tradeSideAssetNamesV32(t,facts,other);
     const recordClose=[
@@ -2268,7 +2269,7 @@ function tradeCommentaryV32(t,r,facts={}){
   return paragraphs;
 }
 function tradeCommentaryHeadingV32(r){
-  return ["Trade Receipt: What the Deal Looks Like Now","Trade Receipt: How the Exchange Has Aged","TRADE RECEIPT — NO HIDING FROM THE SCREENSHOT","Trade Receipt: Terms, Outcomes and What Still Is Not Settled"][voice(r)];
+  return ["Trade Receipt: What the Deal Looks Like Now","Trade Receipt: How the Exchange Has Aged","Trade Receipt — No Hiding From the Screenshot","Trade Receipt: What the Complete Record Shows"][voice(r)];
 }
 
 function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
@@ -2625,7 +2626,8 @@ function sentimentStoryV30(t,r,f=articleFrameV29(t,r)){
     keyedChoice(`${t.roster_id}:sentiment-context-tilly`,[`RECORD: ${rec}. RANK: ${String(rank).toUpperCase()}.${p!=null?` PLAYOFF OUTLOOK: ${one(p)}%.`:''} ${titles?`${manager.toUpperCase()} HAS ${titles} TITLE${titles===1?'':'S'} OF PRIOR GOODWILL. THAT COUPON BOOK IS NOT INFINITE.`:''}`,`${team.mascot.toUpperCase()} RECEIPT: ${rec}, RANK ${String(rank).toUpperCase()}.${p!=null?` PLAYOFF METER: ${one(p)}%.`:''} ${titles?`${titles} TITLE${titles===1?'':'S'} FOR ${manager.toUpperCase()} BUY PATIENCE, NOT SILENCE.`:''}`,`THE BORING PART TILLY IS LEGALLY REQUIRED TO PRINT: ${rec}, RANK ${String(rank).toUpperCase()}${p!=null?`, ${one(p)}% PLAYOFF OUTLOOK`:''}. ${titles?`YES, ${manager.toUpperCase()} HAS ${titles} TITLE${titles===1?'':'S'}. NO, THAT DOES NOT DELETE SUNDAY.`:''}`]),
     keyedChoice(`${t.roster_id}:sentiment-context-filch`,[`The public record reads ${rec}, rank ${rank}${p!=null?`, with a ${one(p)}% playoff estimate`:''}. ${titles?`${manager} enters with ${titles} championship${titles===1?'':'s'} of prior good conduct; the current week is still admissible.`:''}`,`Filch enters ${rec} and rank ${rank} into the ${team.mascot} record${p!=null?`, alongside a ${one(p)}% playoff estimate`:''}. ${titles?`${manager}’s ${titles} championship${titles===1?'':'s'} count as history, not suppression of current evidence.`:''}`,`The ${team.mascot} public file shows ${rec}, rank ${rank}${p!=null?`, and a ${one(p)}% playoff estimate`:''}. ${titles?`${manager} has ${titles} championship${titles===1?'':'s'} in mitigation; the week remains admissible anyway.`:''}`])
   ][v];
-  return [primary,context,thread].filter(Boolean);
+  const badRecord=losingRecordAsideV33(t,r);
+  return [primary,context,thread,badRecord].filter(Boolean);
 }
 
 function restoreSectionFullNamesV30(t,paragraphs){
@@ -2713,7 +2715,8 @@ export function humanSectionsV25(args){
     const managementIndex=aliased.findIndex(s=>s.kind==="management"),tradeSection={kind:"trade-commentary",heading:tradeCommentaryHeadingV32(args.reporter),paragraphs:tradeParagraphs};
     aliased.splice(managementIndex>=0?managementIndex:aliased.length,0,tradeSection);
   }
-  return dedupeArticleSectionsV29(dedupeArticleSections(aliased),t);
+  const cased=aliased.map(sec=>({...sec,heading:finalReporterCaseV33(t,args.reporter,sec.heading),paragraphs:(sec.paragraphs||[]).map(p=>finalReporterCaseV33(t,args.reporter,p))}));
+  return dedupeArticleSectionsV29(dedupeArticleSections(cased),t);
 }
 
 function uniqueGames(teams){
@@ -2961,6 +2964,10 @@ export function expandWeeklyRecapV25(o,teams,week){
     {reporter:reporter(1),heading:'The Velvet Rope: Form, Fortune and the Week’s Unfashionable Truths',paragraphs:velvet.length?velvet:['n/a']},
     {reporter:reporter(2),heading:'The Back Page Has Receipts',blocks:backPageBlocks,paragraphs:backPageParagraphs},
     {reporter:reporter(3),heading:'Next Week, Before Everyone Gets Smarter in Hindsight',blocks:nextBlocks,paragraphs:nextParagraphs}
-  ].map(s=>({...s,paragraphs:(s.paragraphs||[]).map(p=>deMetaReporterFunctionsV32(p,s.reporter)),blocks:(s.blocks||[]).map(b=>({...b,paragraphs:(b.paragraphs||[]).map(p=>deMetaReporterFunctionsV32(p,s.reporter))}))}));
-  return {...o,inquirer_version:26,editorial_revision:4,sections};
+  ].map(sec=>{
+    const proper=[...(teams||[]).flatMap(t=>[t.team_name,t.manager_name,...articlePlayers(t).map(p=>p.name)]),sec.reporter?.name].filter(Boolean);
+    const tidy=value=>{const deMeta=deMetaReporterFunctionsV32(value,sec.reporter);return sec.reporter?.id==='mack-hollis'?normalizeTillyCaseV33(deMeta,proper):deMeta};
+    return {...sec,heading:tidy(sec.heading),paragraphs:(sec.paragraphs||[]).map(tidy),blocks:(sec.blocks||[]).map(b=>({...b,heading:tidy(b.heading),paragraphs:(b.paragraphs||[]).map(tidy)}))};
+  });
+  return {...o,inquirer_version:26,editorial_revision:5,sections};
 }

@@ -532,6 +532,10 @@ assert(valueHistoryUi.includes("sameSnapshotRows(firstRows,rows)"),'interactive 
 assert(headlessRefresh.includes("sameRows(first.rows,second.rows)"),'scheduled headless snapshots must verify stable canonical rows before persistence');
 assert(headlessRefresh.includes("page.waitForTimeout(1500)"),'scheduled headless snapshots must observe a stability interval before persistence');
 assert(headlessRefresh.includes("window.__fllValueRefresh"),'scheduled headless readiness must honor the full valuation refresh in-flight marker');
+assert(headlessRefresh.includes("refresh?.phase==='complete'"),'scheduled headless readiness must require the canonical valuation refresh to reach the completed phase');
+assert(headlessRefresh.includes("canonical.playerValue?.({type:'player',id:String(r.id)})"),'scheduled snapshots must verify every captured player against the live canonical Player Values API');
+assert(headlessRefresh.includes("valueParityMismatches"),'scheduled snapshots must fail closed when captured values diverge from the canonical Player Values scale');
+assert(headlessRefresh.includes("first.modeledVersion===second.modeledVersion"),'scheduled snapshots must keep the modeled-value runtime version stable across the capture interval');
 const consensusRuntime=fs.readFileSync('nonblocking-consensus-v277.js','utf8');
 assert(consensusRuntime.includes("setValueRefresh277({inFlight:true,phase:'core'"),'valuation refresh must expose core-load in-flight state before async work begins');
 assert(consensusRuntime.includes("setValueRefresh277({inFlight:false,phase:'complete'"),'valuation refresh must expose completed state only after consensus-derived values are rebuilt');

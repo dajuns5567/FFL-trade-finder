@@ -26,6 +26,9 @@ for(const t of d.teams||[]){
   if(Number(t.points)>Number(t.opponent_points)){assert.equal(wins,1,'Week 1 winner must be 1-0 for '+t.team_name);assert.equal(losses,0,'Week 1 winner must not borrow a later loss for '+t.team_name)}
   else if(Number(t.points)<Number(t.opponent_points)){assert.equal(wins,0,'Week 1 loser must not borrow a later win for '+t.team_name);assert.equal(losses,1,'Week 1 loser must be 0-1 for '+t.team_name)}
   assert.equal(Number(t?.league_context?.snapshot_through_week),1,'Archived Week 1 context must declare snapshot_through_week=1 for '+t.team_name);
+  assert.equal(t?.next_projected,null,'Archived Week 1 must not regenerate a Week 2 team projection from later lineup data for '+t.team_name);
+  assert.equal(t?.next_opponent_projected,null,'Archived Week 1 must not regenerate a Week 2 opponent projection from later lineup data for '+t.team_name);
+  assert.equal(t?.next_week_availability,null,'Archived Week 1 must not import later injury/availability state for '+t.team_name);
   if(t?.mida_outlook?.source_date){const ts=Date.parse(String(t.mida_outlook.source_date));assert.ok(Number.isFinite(ts)&&ts<=Date.parse('2026-09-15T00:00:00Z'),'Week 1 archive must not import a later MIDA snapshot for '+t.team_name)}
 }
 assert.ok(recapSections.length>=4,'Weekly Recap must preserve a complete multi-desk edition');

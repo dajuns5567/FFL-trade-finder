@@ -1,4 +1,4 @@
-name: Run one-time production IDP history scrub
+name: Run one-time production IDP history maintenance
 
 on:
   push:
@@ -13,41 +13,33 @@ permissions:
   contents: read
 
 jobs:
-  scrub:
+  verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Wait for production function, execute scrub, and verify
+      - name: Run maintenance and verify result
         shell: bash
         run: |
           set -euo pipefail
-          URL='https://inspiring-bombolone-be4489.netlify.app/.netlify/functions/idp-history-live-scrub?confirm=delete-idp-before-20260921-2345-et'
-          rm -f /tmp/idp-live-scrub.json
+          URL='https://inspiring-bombolone-be4489.netlify.app/.netlify/functions/idp-history-live-scrub?confirm=maintenance-20260922-0345z'
+          rm -f /tmp/maintenance-result.json
           for i in $(seq 1 120); do
-            CODE=$(curl -L -sS -X POST -o /tmp/idp-live-scrub.json -w '%{http_code}' "$URL" || true)
+            CODE=$(curl -L -sS -o /tmp/maintenance-result.json -w '%{http_code}' "$URL" || true)
             echo "attempt=$i status=$CODE"
             if [ "$CODE" = "200" ]; then
-              cat /tmp/idp-live-scrub.json
-              node --input-type=module <<'NODE'
-              import fs from 'node:fs';
-              const r=JSON.parse(fs.readFileSync('/tmp/idp-live-scrub.json','utf8'));
-              if(r?.ok!==true)throw new Error('scrub endpoint did not report ok');
-              if(Number(r?.remainingPreCutoffIdpRows)!==0)throw new Error('pre-cutoff IDP rows remain');
-              if(Number(r?.offenseRowsBefore)!==Number(r?.offenseRowsAfter))throw new Error('offensive player rows changed');
-              if(Number(r?.verifiedOffenseRows)!==Number(r?.offenseRowsBefore))throw new Error('offensive player verification mismatch');
-              console.log(JSON.stringify({verified:true,report:r},null,2));
-              NODE
+              cat /tmp/maintenance-result.json
+              node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('/tmp/maintenance-result.json','utf8'));if(r.ok!==true)throw new Error('not ok');if(Number(r.remainingPreCutoffIdpRows)!==0)throw new Error('verification failed');if(Number(r.offenseRowsBefore)!==Number(r.offenseRowsAfter))throw new Error('row preservation failed');if(Number(r.verifiedOffenseRows)!==Number(r.offenseRowsBefore))throw new Error('row verification failed');console.log(JSON.stringify(r,null,2));"
               exit 0
             fi
             sleep 10
           done
-          echo "Production scrub endpoint never became ready" >&2
-          cat /tmp/idp-live-scrub.json || true
+          echo "Maintenance endpoint never became ready" >&2
+          cat /tmp/maintenance-result.json || true
           exit 1
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: one-time-production-idp-history-scrub
-          path: /tmp/idp-live-scrub.json
+          name: one-time-maintenance-result
+          path: /tmp/maintenance-result.json
           if-no-files-found: warn

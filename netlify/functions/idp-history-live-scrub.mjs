@@ -22,9 +22,13 @@ function fingerprint(rows,picks=[],teams=[]){
 export default async req=>{
   try{
     const url=new URL(req.url);
+    if(process.env.CONTEXT!=='production')return json({error:'production-only maintenance endpoint'},403);
     if(url.searchParams.get('confirm')!==CONFIRM)return json({error:'confirmation required'},400);
 
     const store=getStore(STORE,{consistency:'strong'});
+    const markerKey='maintenance/idp-history-before-20260921-2345-et.json';
+    const marker=await store.get(markerKey,{type:'json'}).catch(()=>null);
+    if(marker?.done===true)return json({ok:true,alreadyDone:true,...marker});
     const listing=await store.list({prefix:'snapshots/'});
     const keys=(listing?.blobs||[]).map(x=>String(x?.key||'')).filter(Boolean);
 
@@ -101,7 +105,9 @@ export default async req=>{
     if(remainingIdp!==0)throw new Error(`verification found ${remainingIdp} pre-cutoff IDP rows`);
     if(verifiedOffense!==report.offenseRowsBefore)throw new Error('offense verification count changed');
 
-    return json({ok:true,...report});
+    const marker={done:true,...report,completedAt:new Date().toISOString()};
+    await store.setJSON(markerKey,marker);
+    return json({ok:true,...marker});
   }catch(e){
     console.error('idp-history-live-scrub',e);
     return json({ok:false,error:String(e?.message||e)},500);

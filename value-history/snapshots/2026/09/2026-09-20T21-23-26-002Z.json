@@ -2,7 +2,7 @@
   "version": 5,
   "league": "1316867686394769408",
   "t": "2026-09-20T21:23:26.002Z",
-  "fingerprint": "3smqgo",
+  "fingerprint": "1rhhlt9",
   "source": "page-load",
   "valuation_contract": null,
   "rows": [
@@ -98,13 +98,6 @@
       "posRank": 144
     },
     {
-      "id": "1052",
-      "value": 632,
-      "overall": 585,
-      "pos": "IDP",
-      "posRank": 134
-    },
-    {
       "id": "10859",
       "value": 5746,
       "overall": 66,
@@ -119,207 +112,11 @@
       "posRank": 83
     },
     {
-      "id": "10873",
-      "value": 318,
-      "overall": 725,
-      "pos": "IDP",
-      "posRank": 274
-    },
-    {
-      "id": "10879",
-      "value": 446,
-      "overall": 654,
-      "pos": "IDP",
-      "posRank": 203
-    },
-    {
-      "id": "10880",
-      "value": 4680,
-      "overall": 104,
-      "pos": "IDP",
-      "posRank": 11
-    },
-    {
-      "id": "10881",
-      "value": 595,
-      "overall": 595,
-      "pos": "IDP",
-      "posRank": 144
-    },
-    {
-      "id": "10882",
-      "value": 742,
-      "overall": 546,
-      "pos": "IDP",
-      "posRank": 103
-    },
-    {
-      "id": "10883",
-      "value": 525,
-      "overall": 622,
-      "pos": "IDP",
-      "posRank": 171
-    },
-    {
-      "id": "10885",
-      "value": 299,
-      "overall": 737,
-      "pos": "IDP",
-      "posRank": 286
-    },
-    {
-      "id": "10888",
-      "value": 2063,
-      "overall": 277,
-      "pos": "IDP",
-      "posRank": 57
-    },
-    {
-      "id": "10891",
-      "value": 1205,
-      "overall": 408,
-      "pos": "IDP",
-      "posRank": 78
-    },
-    {
-      "id": "10892",
-      "value": 6649,
-      "overall": 41,
-      "pos": "IDP",
-      "posRank": 1
-    },
-    {
-      "id": "10898",
-      "value": 4182,
-      "overall": 127,
-      "pos": "IDP",
-      "posRank": 13
-    },
-    {
-      "id": "10899",
-      "value": 315,
-      "overall": 728,
-      "pos": "IDP",
-      "posRank": 277
-    },
-    {
-      "id": "10905",
-      "value": 3889,
-      "overall": 140,
-      "pos": "IDP",
-      "posRank": 16
-    },
-    {
-      "id": "10913",
-      "value": 468,
-      "overall": 645,
-      "pos": "IDP",
-      "posRank": 194
-    },
-    {
-      "id": "10914",
-      "value": 1606,
-      "overall": 338,
-      "pos": "IDP",
-      "posRank": 64
-    },
-    {
-      "id": "10916",
-      "value": 490,
-      "overall": 636,
-      "pos": "IDP",
-      "posRank": 185
-    },
-    {
-      "id": "10917",
-      "value": 1286,
-      "overall": 391,
-      "pos": "IDP",
-      "posRank": 74
-    },
-    {
-      "id": "10921",
-      "value": 386,
-      "overall": 685,
-      "pos": "IDP",
-      "posRank": 234
-    },
-    {
-      "id": "10925",
-      "value": 941,
-      "overall": 479,
-      "pos": "IDP",
-      "posRank": 89
-    },
-    {
-      "id": "10927",
-      "value": 496,
-      "overall": 635,
-      "pos": "IDP",
-      "posRank": 184
-    },
-    {
-      "id": "10930",
-      "value": 1808,
-      "overall": 317,
-      "pos": "IDP",
-      "posRank": 62
-    },
-    {
-      "id": "10933",
-      "value": 1059,
-      "overall": 445,
-      "pos": "IDP",
-      "posRank": 83
-    },
-    {
-      "id": "10934",
-      "value": 355,
-      "overall": 702,
-      "pos": "IDP",
-      "posRank": 251
-    },
-    {
-      "id": "10940",
-      "value": 1323,
-      "overall": 383,
-      "pos": "IDP",
-      "posRank": 71
-    },
-    {
-      "id": "10947",
-      "value": 674,
-      "overall": 569,
-      "pos": "IDP",
-      "posRank": 118
-    },
-    {
-      "id": "10949",
-      "value": 626,
-      "overall": 586,
-      "pos": "IDP",
-      "posRank": 135
-    },
-    {
-      "id": "10974",
-      "value": 468,
-      "overall": 646,
-      "pos": "IDP",
-      "posRank": 195
-    },
-    {
       "id": "11199",
       "value": 1251,
       "overall": 399,
       "pos": "RB",
       "posRank": 95
-    },
-    {
-      "id": "11233",
-      "value": 482,
-      "overall": 638,
-      "pos": "IDP",
-      "posRank": 187
     },
     {
       "id": "11237",
@@ -341,20 +138,6 @@
       "overall": 774,
       "pos": "WR",
       "posRank": 191
-    },
-    {
-      "id": "11328",
-      "value": 412,
-      "overall": 670,
-      "pos": "IDP",
-      "posRank": 219
-    },
-    {
-      "id": "11352",
-      "value": 339,
-      "overall": 711,
-      "pos": "IDP",
-      "posRank": 260
     },
     {
       "id": "11370",
@@ -784,151 +567,11 @@
       "posRank": 48
     },
     {
-      "id": "11656",
-      "value": 647,
-      "overall": 578,
-      "pos": "IDP",
-      "posRank": 127
-    },
-    {
       "id": "1166",
       "value": 1420,
       "overall": 365,
       "pos": "QB",
       "posRank": 47
-    },
-    {
-      "id": "11665",
-      "value": 3205,
-      "overall": 181,
-      "pos": "IDP",
-      "posRank": 31
-    },
-    {
-      "id": "11667",
-      "value": 2986,
-      "overall": 195,
-      "pos": "IDP",
-      "posRank": 35
-    },
-    {
-      "id": "11668",
-      "value": 337,
-      "overall": 713,
-      "pos": "IDP",
-      "posRank": 262
-    },
-    {
-      "id": "11669",
-      "value": 2695,
-      "overall": 216,
-      "pos": "IDP",
-      "posRank": 40
-    },
-    {
-      "id": "11674",
-      "value": 429,
-      "overall": 662,
-      "pos": "IDP",
-      "posRank": 211
-    },
-    {
-      "id": "11675",
-      "value": 636,
-      "overall": 582,
-      "pos": "IDP",
-      "posRank": 131
-    },
-    {
-      "id": "11676",
-      "value": 666,
-      "overall": 572,
-      "pos": "IDP",
-      "posRank": 121
-    },
-    {
-      "id": "11677",
-      "value": 306,
-      "overall": 734,
-      "pos": "IDP",
-      "posRank": 283
-    },
-    {
-      "id": "11678",
-      "value": 1827,
-      "overall": 312,
-      "pos": "IDP",
-      "posRank": 60
-    },
-    {
-      "id": "11682",
-      "value": 537,
-      "overall": 616,
-      "pos": "IDP",
-      "posRank": 165
-    },
-    {
-      "id": "11685",
-      "value": 2848,
-      "overall": 205,
-      "pos": "IDP",
-      "posRank": 38
-    },
-    {
-      "id": "11687",
-      "value": 3271,
-      "overall": 177,
-      "pos": "IDP",
-      "posRank": 28
-    },
-    {
-      "id": "11693",
-      "value": 393,
-      "overall": 681,
-      "pos": "IDP",
-      "posRank": 230
-    },
-    {
-      "id": "11697",
-      "value": 505,
-      "overall": 630,
-      "pos": "IDP",
-      "posRank": 179
-    },
-    {
-      "id": "11703",
-      "value": 545,
-      "overall": 613,
-      "pos": "IDP",
-      "posRank": 162
-    },
-    {
-      "id": "11705",
-      "value": 2280,
-      "overall": 254,
-      "pos": "IDP",
-      "posRank": 53
-    },
-    {
-      "id": "11724",
-      "value": 419,
-      "overall": 666,
-      "pos": "IDP",
-      "posRank": 215
-    },
-    {
-      "id": "11726",
-      "value": 438,
-      "overall": 659,
-      "pos": "IDP",
-      "posRank": 208
-    },
-    {
-      "id": "11727",
-      "value": 1006,
-      "overall": 458,
-      "pos": "IDP",
-      "posRank": 85
     },
     {
       "id": "11729",
@@ -938,48 +581,6 @@
       "posRank": 104
     },
     {
-      "id": "11731",
-      "value": 366,
-      "overall": 695,
-      "pos": "IDP",
-      "posRank": 244
-    },
-    {
-      "id": "11739",
-      "value": 482,
-      "overall": 639,
-      "pos": "IDP",
-      "posRank": 188
-    },
-    {
-      "id": "11740",
-      "value": 355,
-      "overall": 701,
-      "pos": "IDP",
-      "posRank": 250
-    },
-    {
-      "id": "11742",
-      "value": 3539,
-      "overall": 160,
-      "pos": "IDP",
-      "posRank": 23
-    },
-    {
-      "id": "11760",
-      "value": 380,
-      "overall": 689,
-      "pos": "IDP",
-      "posRank": 238
-    },
-    {
-      "id": "11768",
-      "value": 446,
-      "overall": 655,
-      "pos": "IDP",
-      "posRank": 204
-    },
-    {
       "id": "11783",
       "value": 1992,
       "overall": 285,
@@ -987,25 +588,11 @@
       "posRank": 95
     },
     {
-      "id": "11830",
-      "value": 512,
-      "overall": 628,
-      "pos": "IDP",
-      "posRank": 177
-    },
-    {
       "id": "11834",
       "value": 2205,
       "overall": 263,
       "pos": "WR",
       "posRank": 86
-    },
-    {
-      "id": "1187",
-      "value": 463,
-      "overall": 647,
-      "pos": "IDP",
-      "posRank": 196
     },
     {
       "id": "11895",
@@ -1505,179 +1092,11 @@
       "posRank": 100
     },
     {
-      "id": "12552",
-      "value": 279,
-      "overall": 747,
-      "pos": "IDP",
-      "posRank": 296
-    },
-    {
-      "id": "12556",
-      "value": 457,
-      "overall": 651,
-      "pos": "IDP",
-      "posRank": 200
-    },
-    {
-      "id": "12557",
-      "value": 257,
-      "overall": 760,
-      "pos": "IDP",
-      "posRank": 309
-    },
-    {
-      "id": "12559",
-      "value": 452,
-      "overall": 652,
-      "pos": "IDP",
-      "posRank": 201
-    },
-    {
-      "id": "12561",
-      "value": 318,
-      "overall": 726,
-      "pos": "IDP",
-      "posRank": 275
-    },
-    {
-      "id": "12562",
-      "value": 264,
-      "overall": 755,
-      "pos": "IDP",
-      "posRank": 304
-    },
-    {
-      "id": "12565",
-      "value": 329,
-      "overall": 718,
-      "pos": "IDP",
-      "posRank": 267
-    },
-    {
-      "id": "12566",
-      "value": 898,
-      "overall": 492,
-      "pos": "IDP",
-      "posRank": 90
-    },
-    {
-      "id": "12567",
-      "value": 419,
-      "overall": 667,
-      "pos": "IDP",
-      "posRank": 216
-    },
-    {
-      "id": "12568",
-      "value": 473,
-      "overall": 644,
-      "pos": "IDP",
-      "posRank": 193
-    },
-    {
-      "id": "12571",
-      "value": 333,
-      "overall": 717,
-      "pos": "IDP",
-      "posRank": 266
-    },
-    {
-      "id": "12573",
-      "value": 368,
-      "overall": 693,
-      "pos": "IDP",
-      "posRank": 242
-    },
-    {
-      "id": "12574",
-      "value": 1814,
-      "overall": 316,
-      "pos": "IDP",
-      "posRank": 61
-    },
-    {
-      "id": "12578",
-      "value": 5165,
-      "overall": 86,
-      "pos": "IDP",
-      "posRank": 8
-    },
-    {
-      "id": "12585",
-      "value": 1153,
-      "overall": 420,
-      "pos": "IDP",
-      "posRank": 80
-    },
-    {
-      "id": "12588",
-      "value": 602,
-      "overall": 594,
-      "pos": "IDP",
-      "posRank": 143
-    },
-    {
-      "id": "12591",
-      "value": 615,
-      "overall": 589,
-      "pos": "IDP",
-      "posRank": 138
-    },
-    {
-      "id": "12597",
-      "value": 2444,
-      "overall": 238,
-      "pos": "IDP",
-      "posRank": 48
-    },
-    {
-      "id": "12602",
-      "value": 257,
-      "overall": 759,
-      "pos": "IDP",
-      "posRank": 308
-    },
-    {
-      "id": "12605",
-      "value": 436,
-      "overall": 661,
-      "pos": "IDP",
-      "posRank": 210
-    },
-    {
-      "id": "12617",
-      "value": 1518,
-      "overall": 349,
-      "pos": "IDP",
-      "posRank": 68
-    },
-    {
-      "id": "12622",
-      "value": 482,
-      "overall": 640,
-      "pos": "IDP",
-      "posRank": 189
-    },
-    {
-      "id": "12631",
-      "value": 333,
-      "overall": 715,
-      "pos": "IDP",
-      "posRank": 264
-    },
-    {
       "id": "12634",
       "value": 1002,
       "overall": 461,
       "pos": "WR",
       "posRank": 154
-    },
-    {
-      "id": "12638",
-      "value": 359,
-      "overall": 698,
-      "pos": "IDP",
-      "posRank": 247
     },
     {
       "id": "12641",
@@ -1687,46 +1106,11 @@
       "posRank": 146
     },
     {
-      "id": "12644",
-      "value": 426,
-      "overall": 665,
-      "pos": "IDP",
-      "posRank": 214
-    },
-    {
-      "id": "12646",
-      "value": 956,
-      "overall": 474,
-      "pos": "IDP",
-      "posRank": 87
-    },
-    {
-      "id": "12668",
-      "value": 438,
-      "overall": 658,
-      "pos": "IDP",
-      "posRank": 207
-    },
-    {
       "id": "12670",
       "value": 1050,
       "overall": 447,
       "pos": "WR",
       "posRank": 148
-    },
-    {
-      "id": "12672",
-      "value": 545,
-      "overall": 614,
-      "pos": "IDP",
-      "posRank": 163
-    },
-    {
-      "id": "12673",
-      "value": 341,
-      "overall": 710,
-      "pos": "IDP",
-      "posRank": 259
     },
     {
       "id": "12715",
@@ -2093,20 +1477,6 @@
       "posRank": 115
     },
     {
-      "id": "13340",
-      "value": 645,
-      "overall": 580,
-      "pos": "IDP",
-      "posRank": 129
-    },
-    {
-      "id": "13341",
-      "value": 310,
-      "overall": 731,
-      "pos": "IDP",
-      "posRank": 280
-    },
-    {
       "id": "13342",
       "value": 230,
       "overall": 783,
@@ -2156,104 +1526,6 @@
       "posRank": 104
     },
     {
-      "id": "13359",
-      "value": 325,
-      "overall": 722,
-      "pos": "IDP",
-      "posRank": 271
-    },
-    {
-      "id": "13360",
-      "value": 406,
-      "overall": 674,
-      "pos": "IDP",
-      "posRank": 223
-    },
-    {
-      "id": "13363",
-      "value": 779,
-      "overall": 532,
-      "pos": "IDP",
-      "posRank": 98
-    },
-    {
-      "id": "13364",
-      "value": 310,
-      "overall": 732,
-      "pos": "IDP",
-      "posRank": 281
-    },
-    {
-      "id": "13365",
-      "value": 1309,
-      "overall": 386,
-      "pos": "IDP",
-      "posRank": 73
-    },
-    {
-      "id": "13368",
-      "value": 518,
-      "overall": 626,
-      "pos": "IDP",
-      "posRank": 175
-    },
-    {
-      "id": "13370",
-      "value": 393,
-      "overall": 682,
-      "pos": "IDP",
-      "posRank": 231
-    },
-    {
-      "id": "13371",
-      "value": 822,
-      "overall": 517,
-      "pos": "IDP",
-      "posRank": 94
-    },
-    {
-      "id": "13372",
-      "value": 408,
-      "overall": 671,
-      "pos": "IDP",
-      "posRank": 220
-    },
-    {
-      "id": "13374",
-      "value": 645,
-      "overall": 579,
-      "pos": "IDP",
-      "posRank": 128
-    },
-    {
-      "id": "13375",
-      "value": 3154,
-      "overall": 185,
-      "pos": "IDP",
-      "posRank": 33
-    },
-    {
-      "id": "13376",
-      "value": 744,
-      "overall": 545,
-      "pos": "IDP",
-      "posRank": 102
-    },
-    {
-      "id": "13377",
-      "value": 1132,
-      "overall": 425,
-      "pos": "IDP",
-      "posRank": 81
-    },
-    {
-      "id": "13379",
-      "value": 2461,
-      "overall": 236,
-      "pos": "IDP",
-      "posRank": 46
-    },
-    {
       "id": "13380",
       "value": 1442,
       "overall": 361,
@@ -2261,74 +1533,11 @@
       "posRank": 121
     },
     {
-      "id": "13381",
-      "value": 582,
-      "overall": 599,
-      "pos": "IDP",
-      "posRank": 148
-    },
-    {
-      "id": "13384",
-      "value": 280,
-      "overall": 745,
-      "pos": "IDP",
-      "posRank": 294
-    },
-    {
-      "id": "13385",
-      "value": 339,
-      "overall": 712,
-      "pos": "IDP",
-      "posRank": 261
-    },
-    {
-      "id": "13386",
-      "value": 529,
-      "overall": 620,
-      "pos": "IDP",
-      "posRank": 169
-    },
-    {
-      "id": "13387",
-      "value": 279,
-      "overall": 749,
-      "pos": "IDP",
-      "posRank": 298
-    },
-    {
-      "id": "13388",
-      "value": 1931,
-      "overall": 293,
-      "pos": "IDP",
-      "posRank": 58
-    },
-    {
-      "id": "13389",
-      "value": 269,
-      "overall": 752,
-      "pos": "IDP",
-      "posRank": 301
-    },
-    {
       "id": "1339",
       "value": 1804,
       "overall": 319,
       "pos": "TE",
       "posRank": 44
-    },
-    {
-      "id": "13390",
-      "value": 299,
-      "overall": 738,
-      "pos": "IDP",
-      "posRank": 287
-    },
-    {
-      "id": "13391",
-      "value": 1583,
-      "overall": 341,
-      "pos": "IDP",
-      "posRank": 65
     },
     {
       "id": "13392",
@@ -2343,27 +1552,6 @@
       "overall": 394,
       "pos": "WR",
       "posRank": 126
-    },
-    {
-      "id": "13395",
-      "value": 315,
-      "overall": 729,
-      "pos": "IDP",
-      "posRank": 278
-    },
-    {
-      "id": "13397",
-      "value": 276,
-      "overall": 751,
-      "pos": "IDP",
-      "posRank": 300
-    },
-    {
-      "id": "13398",
-      "value": 698,
-      "overall": 562,
-      "pos": "IDP",
-      "posRank": 113
     },
     {
       "id": "13400",
@@ -2399,13 +1587,6 @@
       "overall": 231,
       "pos": "RB",
       "posRank": 53
-    },
-    {
-      "id": "13406",
-      "value": 522,
-      "overall": 624,
-      "pos": "IDP",
-      "posRank": 173
     },
     {
       "id": "13408",
@@ -2541,27 +1722,6 @@
       "posRank": 65
     },
     {
-      "id": "13445",
-      "value": 279,
-      "overall": 748,
-      "pos": "IDP",
-      "posRank": 297
-    },
-    {
-      "id": "13452",
-      "value": 553,
-      "overall": 611,
-      "pos": "IDP",
-      "posRank": 160
-    },
-    {
-      "id": "13453",
-      "value": 1614,
-      "overall": 337,
-      "pos": "IDP",
-      "posRank": 63
-    },
-    {
       "id": "13477",
       "value": 1063,
       "overall": 443,
@@ -2569,25 +1729,11 @@
       "posRank": 145
     },
     {
-      "id": "13488",
-      "value": 562,
-      "overall": 608,
-      "pos": "IDP",
-      "posRank": 157
-    },
-    {
       "id": "13491",
       "value": 876,
       "overall": 499,
       "pos": "WR",
       "posRank": 167
-    },
-    {
-      "id": "13524",
-      "value": 562,
-      "overall": 607,
-      "pos": "IDP",
-      "posRank": 156
     },
     {
       "id": "13533",
@@ -2639,25 +1785,11 @@
       "posRank": 35
     },
     {
-      "id": "13947",
-      "value": 440,
-      "overall": 657,
-      "pos": "IDP",
-      "posRank": 206
-    },
-    {
       "id": "1426",
       "value": 1535,
       "overall": 347,
       "pos": "WR",
       "posRank": 114
-    },
-    {
-      "id": "1430",
-      "value": 632,
-      "overall": 584,
-      "pos": "IDP",
-      "posRank": 133
     },
     {
       "id": "1466",
@@ -2681,32 +1813,11 @@
       "posRank": 44
     },
     {
-      "id": "2036",
-      "value": 660,
-      "overall": 575,
-      "pos": "IDP",
-      "posRank": 124
-    },
-    {
-      "id": "2064",
-      "value": 674,
-      "overall": 568,
-      "pos": "IDP",
-      "posRank": 117
-    },
-    {
       "id": "2078",
       "value": 769,
       "overall": 537,
       "pos": "WR",
       "posRank": 176
-    },
-    {
-      "id": "2110",
-      "value": 717,
-      "overall": 554,
-      "pos": "IDP",
-      "posRank": 109
     },
     {
       "id": "2133",
@@ -2716,25 +1827,11 @@
       "posRank": 26
     },
     {
-      "id": "2212",
-      "value": 756,
-      "overall": 541,
-      "pos": "IDP",
-      "posRank": 100
-    },
-    {
       "id": "2216",
       "value": 4886,
       "overall": 96,
       "pos": "WR",
       "posRank": 31
-    },
-    {
-      "id": "2227",
-      "value": 286,
-      "overall": 742,
-      "pos": "IDP",
-      "posRank": 291
     },
     {
       "id": "2306",
@@ -2751,32 +1848,11 @@
       "posRank": 67
     },
     {
-      "id": "2311",
-      "value": 654,
-      "overall": 576,
-      "pos": "IDP",
-      "posRank": 125
-    },
-    {
       "id": "232",
       "value": 238,
       "overall": 771,
       "pos": "RB",
       "posRank": 119
-    },
-    {
-      "id": "2393",
-      "value": 3606,
-      "overall": 156,
-      "pos": "IDP",
-      "posRank": 20
-    },
-    {
-      "id": "2395",
-      "value": 621,
-      "overall": 587,
-      "pos": "IDP",
-      "posRank": 136
     },
     {
       "id": "2449",
@@ -2807,20 +1883,6 @@
       "posRank": 187
     },
     {
-      "id": "2617",
-      "value": 575,
-      "overall": 601,
-      "pos": "IDP",
-      "posRank": 150
-    },
-    {
-      "id": "3160",
-      "value": 537,
-      "overall": 617,
-      "pos": "IDP",
-      "posRank": 166
-    },
-    {
       "id": "3161",
       "value": 2345,
       "overall": 247,
@@ -2833,13 +1895,6 @@
       "overall": 59,
       "pos": "QB",
       "posRank": 15
-    },
-    {
-      "id": "3172",
-      "value": 1087,
-      "overall": 437,
-      "pos": "IDP",
-      "posRank": 82
     },
     {
       "id": "3198",
@@ -2863,25 +1918,11 @@
       "posRank": 21
     },
     {
-      "id": "3233",
-      "value": 812,
-      "overall": 520,
-      "pos": "IDP",
-      "posRank": 96
-    },
-    {
       "id": "3257",
       "value": 3941,
       "overall": 138,
       "pos": "QB",
       "posRank": 29
-    },
-    {
-      "id": "3268",
-      "value": 373,
-      "overall": 691,
-      "pos": "IDP",
-      "posRank": 240
     },
     {
       "id": "3269",
@@ -2896,13 +1937,6 @@
       "overall": 371,
       "pos": "TE",
       "posRank": 48
-    },
-    {
-      "id": "3281",
-      "value": 264,
-      "overall": 757,
-      "pos": "IDP",
-      "posRank": 306
     },
     {
       "id": "3286",
@@ -2926,13 +1960,6 @@
       "posRank": 84
     },
     {
-      "id": "3558",
-      "value": 319,
-      "overall": 723,
-      "pos": "IDP",
-      "posRank": 272
-    },
-    {
       "id": "3634",
       "value": 1641,
       "overall": 334,
@@ -2940,25 +1967,11 @@
       "posRank": 111
     },
     {
-      "id": "3973",
-      "value": 6430,
-      "overall": 47,
-      "pos": "IDP",
-      "posRank": 4
-    },
-    {
       "id": "4017",
       "value": 1822,
       "overall": 313,
       "pos": "QB",
       "posRank": 39
-    },
-    {
-      "id": "4032",
-      "value": 293,
-      "overall": 740,
-      "pos": "IDP",
-      "posRank": 289
     },
     {
       "id": "4033",
@@ -3010,41 +2023,6 @@
       "posRank": 30
     },
     {
-      "id": "4070",
-      "value": 6099,
-      "overall": 56,
-      "pos": "IDP",
-      "posRank": 6
-    },
-    {
-      "id": "4071",
-      "value": 3689,
-      "overall": 151,
-      "pos": "IDP",
-      "posRank": 19
-    },
-    {
-      "id": "4081",
-      "value": 588,
-      "overall": 597,
-      "pos": "IDP",
-      "posRank": 146
-    },
-    {
-      "id": "4118",
-      "value": 582,
-      "overall": 600,
-      "pos": "IDP",
-      "posRank": 149
-    },
-    {
-      "id": "4135",
-      "value": 2614,
-      "overall": 223,
-      "pos": "IDP",
-      "posRank": 41
-    },
-    {
       "id": "4137",
       "value": 2225,
       "overall": 261,
@@ -3064,13 +2042,6 @@
       "overall": 530,
       "pos": "RB",
       "posRank": 113
-    },
-    {
-      "id": "4168",
-      "value": 286,
-      "overall": 743,
-      "pos": "IDP",
-      "posRank": 292
     },
     {
       "id": "4177",
@@ -3101,27 +2072,6 @@
       "posRank": 9
     },
     {
-      "id": "4224",
-      "value": 351,
-      "overall": 705,
-      "pos": "IDP",
-      "posRank": 254
-    },
-    {
-      "id": "4413",
-      "value": 564,
-      "overall": 606,
-      "pos": "IDP",
-      "posRank": 155
-    },
-    {
-      "id": "4415",
-      "value": 269,
-      "overall": 754,
-      "pos": "IDP",
-      "posRank": 303
-    },
-    {
       "id": "4454",
       "value": 1623,
       "overall": 336,
@@ -3141,13 +2091,6 @@
       "overall": 339,
       "pos": "WR",
       "posRank": 113
-    },
-    {
-      "id": "4837",
-      "value": 731,
-      "overall": 549,
-      "pos": "IDP",
-      "posRank": 106
     },
     {
       "id": "4866",
@@ -3185,62 +2128,6 @@
       "posRank": 120
     },
     {
-      "id": "4960",
-      "value": 4098,
-      "overall": 131,
-      "pos": "IDP",
-      "posRank": 15
-    },
-    {
-      "id": "4963",
-      "value": 573,
-      "overall": 603,
-      "pos": "IDP",
-      "posRank": 152
-    },
-    {
-      "id": "4964",
-      "value": 286,
-      "overall": 744,
-      "pos": "IDP",
-      "posRank": 293
-    },
-    {
-      "id": "4967",
-      "value": 571,
-      "overall": 605,
-      "pos": "IDP",
-      "posRank": 154
-    },
-    {
-      "id": "4968",
-      "value": 3154,
-      "overall": 184,
-      "pos": "IDP",
-      "posRank": 32
-    },
-    {
-      "id": "4969",
-      "value": 276,
-      "overall": 750,
-      "pos": "IDP",
-      "posRank": 299
-    },
-    {
-      "id": "4971",
-      "value": 2714,
-      "overall": 215,
-      "pos": "IDP",
-      "posRank": 39
-    },
-    {
-      "id": "4976",
-      "value": 293,
-      "overall": 739,
-      "pos": "IDP",
-      "posRank": 288
-    },
-    {
       "id": "4981",
       "value": 2398,
       "overall": 242,
@@ -3269,13 +2156,6 @@
       "posRank": 35
     },
     {
-      "id": "4999",
-      "value": 522,
-      "overall": 623,
-      "pos": "IDP",
-      "posRank": 172
-    },
-    {
       "id": "5001",
       "value": 3336,
       "overall": 173,
@@ -3290,13 +2170,6 @@
       "posRank": 16
     },
     {
-      "id": "5017",
-      "value": 1219,
-      "overall": 405,
-      "pos": "IDP",
-      "posRank": 76
-    },
-    {
       "id": "5022",
       "value": 4943,
       "overall": 94,
@@ -3304,207 +2177,11 @@
       "posRank": 11
     },
     {
-      "id": "5030",
-      "value": 547,
-      "overall": 612,
-      "pos": "IDP",
-      "posRank": 161
-    },
-    {
-      "id": "5036",
-      "value": 531,
-      "overall": 618,
-      "pos": "IDP",
-      "posRank": 167
-    },
-    {
-      "id": "5041",
-      "value": 3062,
-      "overall": 190,
-      "pos": "IDP",
-      "posRank": 34
-    },
-    {
       "id": "5045",
       "value": 4614,
       "overall": 107,
       "pos": "WR",
       "posRank": 37
-    },
-    {
-      "id": "5049",
-      "value": 269,
-      "overall": 753,
-      "pos": "IDP",
-      "posRank": 302
-    },
-    {
-      "id": "5054",
-      "value": 357,
-      "overall": 699,
-      "pos": "IDP",
-      "posRank": 248
-    },
-    {
-      "id": "5061",
-      "value": 351,
-      "overall": 704,
-      "pos": "IDP",
-      "posRank": 253
-    },
-    {
-      "id": "5071",
-      "value": 686,
-      "overall": 566,
-      "pos": "IDP",
-      "posRank": 115
-    },
-    {
-      "id": "5297",
-      "value": 408,
-      "overall": 672,
-      "pos": "IDP",
-      "posRank": 221
-    },
-    {
-      "id": "5330",
-      "value": 364,
-      "overall": 696,
-      "pos": "IDP",
-      "posRank": 245
-    },
-    {
-      "id": "5332",
-      "value": 3414,
-      "overall": 168,
-      "pos": "IDP",
-      "posRank": 25
-    },
-    {
-      "id": "5341",
-      "value": 325,
-      "overall": 720,
-      "pos": "IDP",
-      "posRank": 269
-    },
-    {
-      "id": "5346",
-      "value": 679,
-      "overall": 567,
-      "pos": "IDP",
-      "posRank": 116
-    },
-    {
-      "id": "5361",
-      "value": 560,
-      "overall": 609,
-      "pos": "IDP",
-      "posRank": 158
-    },
-    {
-      "id": "5372",
-      "value": 744,
-      "overall": 544,
-      "pos": "IDP",
-      "posRank": 101
-    },
-    {
-      "id": "5404",
-      "value": 473,
-      "overall": 643,
-      "pos": "IDP",
-      "posRank": 192
-    },
-    {
-      "id": "5466",
-      "value": 280,
-      "overall": 746,
-      "pos": "IDP",
-      "posRank": 295
-    },
-    {
-      "id": "5493",
-      "value": 401,
-      "overall": 676,
-      "pos": "IDP",
-      "posRank": 225
-    },
-    {
-      "id": "5520",
-      "value": 293,
-      "overall": 741,
-      "pos": "IDP",
-      "posRank": 290
-    },
-    {
-      "id": "5543",
-      "value": 818,
-      "overall": 519,
-      "pos": "IDP",
-      "posRank": 95
-    },
-    {
-      "id": "5580",
-      "value": 479,
-      "overall": 642,
-      "pos": "IDP",
-      "posRank": 191
-    },
-    {
-      "id": "5726",
-      "value": 2102,
-      "overall": 273,
-      "pos": "IDP",
-      "posRank": 56
-    },
-    {
-      "id": "5792",
-      "value": 391,
-      "overall": 683,
-      "pos": "IDP",
-      "posRank": 232
-    },
-    {
-      "id": "5815",
-      "value": 703,
-      "overall": 560,
-      "pos": "IDP",
-      "posRank": 111
-    },
-    {
-      "id": "5816",
-      "value": 2552,
-      "overall": 228,
-      "pos": "IDP",
-      "posRank": 42
-    },
-    {
-      "id": "5839",
-      "value": 426,
-      "overall": 664,
-      "pos": "IDP",
-      "posRank": 213
-    },
-    {
-      "id": "5840",
-      "value": 3302,
-      "overall": 175,
-      "pos": "IDP",
-      "posRank": 26
-    },
-    {
-      "id": "5841",
-      "value": 518,
-      "overall": 625,
-      "pos": "IDP",
-      "posRank": 174
-    },
-    {
-      "id": "5843",
-      "value": 2158,
-      "overall": 267,
-      "pos": "IDP",
-      "posRank": 54
     },
     {
       "id": "5844",
@@ -3519,13 +2196,6 @@
       "overall": 98,
       "pos": "WR",
       "posRank": 33
-    },
-    {
-      "id": "5847",
-      "value": 310,
-      "overall": 730,
-      "pos": "IDP",
-      "posRank": 279
     },
     {
       "id": "5848",
@@ -3570,39 +2240,11 @@
       "posRank": 20
     },
     {
-      "id": "5862",
-      "value": 5722,
-      "overall": 67,
-      "pos": "IDP",
-      "posRank": 7
-    },
-    {
-      "id": "5864",
-      "value": 608,
-      "overall": 592,
-      "pos": "IDP",
-      "posRank": 141
-    },
-    {
-      "id": "5865",
-      "value": 341,
-      "overall": 709,
-      "pos": "IDP",
-      "posRank": 258
-    },
-    {
       "id": "5870",
       "value": 3985,
       "overall": 136,
       "pos": "QB",
       "posRank": 28
-    },
-    {
-      "id": "5871",
-      "value": 2904,
-      "overall": 200,
-      "pos": "IDP",
-      "posRank": 37
     },
     {
       "id": "5872",
@@ -3612,25 +2254,11 @@
       "posRank": 46
     },
     {
-      "id": "5876",
-      "value": 2363,
-      "overall": 245,
-      "pos": "IDP",
-      "posRank": 50
-    },
-    {
       "id": "5892",
       "value": 4798,
       "overall": 99,
       "pos": "RB",
       "posRank": 25
-    },
-    {
-      "id": "5893",
-      "value": 894,
-      "overall": 493,
-      "pos": "IDP",
-      "posRank": 91
     },
     {
       "id": "5906",
@@ -3640,20 +2268,6 @@
       "posRank": 51
     },
     {
-      "id": "5908",
-      "value": 529,
-      "overall": 619,
-      "pos": "IDP",
-      "posRank": 168
-    },
-    {
-      "id": "5912",
-      "value": 436,
-      "overall": 660,
-      "pos": "IDP",
-      "posRank": 209
-    },
-    {
       "id": "5927",
       "value": 4660,
       "overall": 105,
@@ -3661,32 +2275,11 @@
       "posRank": 36
     },
     {
-      "id": "5944",
-      "value": 1209,
-      "overall": 407,
-      "pos": "IDP",
-      "posRank": 77
-    },
-    {
-      "id": "5946",
-      "value": 1315,
-      "overall": 385,
-      "pos": "IDP",
-      "posRank": 72
-    },
-    {
       "id": "5947",
       "value": 4289,
       "overall": 122,
       "pos": "WR",
       "posRank": 45
-    },
-    {
-      "id": "5960",
-      "value": 1476,
-      "overall": 355,
-      "pos": "IDP",
-      "posRank": 69
     },
     {
       "id": "5967",
@@ -3710,13 +2303,6 @@
       "posRank": 69
     },
     {
-      "id": "5991",
-      "value": 6509,
-      "overall": 45,
-      "pos": "IDP",
-      "posRank": 2
-    },
-    {
       "id": "5995",
       "value": 1026,
       "overall": 453,
@@ -3738,53 +2324,11 @@
       "posRank": 105
     },
     {
-      "id": "6056",
-      "value": 419,
-      "overall": 668,
-      "pos": "IDP",
-      "posRank": 217
-    },
-    {
-      "id": "6118",
-      "value": 595,
-      "overall": 596,
-      "pos": "IDP",
-      "posRank": 145
-    },
-    {
-      "id": "6124",
-      "value": 960,
-      "overall": 473,
-      "pos": "IDP",
-      "posRank": 86
-    },
-    {
-      "id": "6125",
-      "value": 3497,
-      "overall": 163,
-      "pos": "IDP",
-      "posRank": 24
-    },
-    {
       "id": "6130",
       "value": 1372,
       "overall": 374,
       "pos": "RB",
       "posRank": 86
-    },
-    {
-      "id": "6131",
-      "value": 717,
-      "overall": 555,
-      "pos": "IDP",
-      "posRank": 110
-    },
-    {
-      "id": "6141",
-      "value": 386,
-      "overall": 684,
-      "pos": "IDP",
-      "posRank": 233
     },
     {
       "id": "6149",
@@ -3801,27 +2345,6 @@
       "posRank": 116
     },
     {
-      "id": "6183",
-      "value": 6212,
-      "overall": 53,
-      "pos": "IDP",
-      "posRank": 5
-    },
-    {
-      "id": "6214",
-      "value": 756,
-      "overall": 540,
-      "pos": "IDP",
-      "posRank": 99
-    },
-    {
-      "id": "6217",
-      "value": 3285,
-      "overall": 176,
-      "pos": "IDP",
-      "posRank": 27
-    },
-    {
       "id": "6271",
       "value": 880,
       "overall": 498,
@@ -3829,53 +2352,11 @@
       "posRank": 166
     },
     {
-      "id": "6301",
-      "value": 345,
-      "overall": 707,
-      "pos": "IDP",
-      "posRank": 256
-    },
-    {
-      "id": "6302",
-      "value": 2151,
-      "overall": 268,
-      "pos": "IDP",
-      "posRank": 55
-    },
-    {
-      "id": "6333",
-      "value": 2481,
-      "overall": 234,
-      "pos": "IDP",
-      "posRank": 44
-    },
-    {
       "id": "638",
       "value": 1923,
       "overall": 295,
       "pos": "WR",
       "posRank": 99
-    },
-    {
-      "id": "6416",
-      "value": 666,
-      "overall": 571,
-      "pos": "IDP",
-      "posRank": 120
-    },
-    {
-      "id": "6485",
-      "value": 737,
-      "overall": 547,
-      "pos": "IDP",
-      "posRank": 104
-    },
-    {
-      "id": "6711",
-      "value": 452,
-      "overall": 653,
-      "pos": "IDP",
-      "posRank": 202
     },
     {
       "id": "6768",
@@ -3892,13 +2373,6 @@
       "posRank": 6
     },
     {
-      "id": "6782",
-      "value": 2923,
-      "overall": 199,
-      "pos": "IDP",
-      "posRank": 36
-    },
-    {
       "id": "6783",
       "value": 2574,
       "overall": 226,
@@ -3906,25 +2380,11 @@
       "posRank": 74
     },
     {
-      "id": "6784",
-      "value": 479,
-      "overall": 641,
-      "pos": "IDP",
-      "posRank": 190
-    },
-    {
       "id": "6786",
       "value": 8068,
       "overall": 16,
       "pos": "WR",
       "posRank": 6
-    },
-    {
-      "id": "6788",
-      "value": 844,
-      "overall": 510,
-      "pos": "IDP",
-      "posRank": 93
     },
     {
       "id": "6790",
@@ -3946,20 +2406,6 @@
       "overall": 29,
       "pos": "QB",
       "posRank": 12
-    },
-    {
-      "id": "6799",
-      "value": 406,
-      "overall": 673,
-      "pos": "IDP",
-      "posRank": 222
-    },
-    {
-      "id": "6800",
-      "value": 264,
-      "overall": 756,
-      "pos": "IDP",
-      "posRank": 305
     },
     {
       "id": "6801",
@@ -3990,32 +2436,11 @@
       "posRank": 35
     },
     {
-      "id": "6807",
-      "value": 588,
-      "overall": 598,
-      "pos": "IDP",
-      "posRank": 147
-    },
-    {
       "id": "6813",
       "value": 7520,
       "overall": 24,
       "pos": "RB",
       "posRank": 6
-    },
-    {
-      "id": "6815",
-      "value": 4966,
-      "overall": 93,
-      "pos": "IDP",
-      "posRank": 9
-    },
-    {
-      "id": "6818",
-      "value": 501,
-      "overall": 631,
-      "pos": "IDP",
-      "posRank": 180
     },
     {
       "id": "6819",
@@ -4032,46 +2457,11 @@
       "posRank": 39
     },
     {
-      "id": "6860",
-      "value": 380,
-      "overall": 687,
-      "pos": "IDP",
-      "posRank": 236
-    },
-    {
       "id": "6865",
       "value": 1804,
       "overall": 318,
       "pos": "TE",
       "posRank": 43
-    },
-    {
-      "id": "6888",
-      "value": 1867,
-      "overall": 304,
-      "pos": "IDP",
-      "posRank": 59
-    },
-    {
-      "id": "6896",
-      "value": 380,
-      "overall": 688,
-      "pos": "IDP",
-      "posRank": 237
-    },
-    {
-      "id": "6900",
-      "value": 1167,
-      "overall": 417,
-      "pos": "IDP",
-      "posRank": 79
-    },
-    {
-      "id": "6901",
-      "value": 543,
-      "overall": 615,
-      "pos": "IDP",
-      "posRank": 164
     },
     {
       "id": "6904",
@@ -4081,39 +2471,11 @@
       "posRank": 7
     },
     {
-      "id": "6911",
-      "value": 1331,
-      "overall": 382,
-      "pos": "IDP",
-      "posRank": 70
-    },
-    {
-      "id": "693",
-      "value": 698,
-      "overall": 561,
-      "pos": "IDP",
-      "posRank": 112
-    },
-    {
       "id": "6931",
       "value": 230,
       "overall": 780,
       "pos": "RB",
       "posRank": 123
-    },
-    {
-      "id": "6949",
-      "value": 3784,
-      "overall": 146,
-      "pos": "IDP",
-      "posRank": 18
-    },
-    {
-      "id": "6995",
-      "value": 731,
-      "overall": 550,
-      "pos": "IDP",
-      "posRank": 107
     },
     {
       "id": "7002",
@@ -4123,13 +2485,6 @@
       "posRank": 17
     },
     {
-      "id": "7016",
-      "value": 793,
-      "overall": 527,
-      "pos": "IDP",
-      "posRank": 97
-    },
-    {
       "id": "7021",
       "value": 3643,
       "overall": 154,
@@ -4137,32 +2492,11 @@
       "posRank": 33
     },
     {
-      "id": "7044",
-      "value": 457,
-      "overall": 650,
-      "pos": "IDP",
-      "posRank": 199
-    },
-    {
       "id": "7049",
       "value": 2687,
       "overall": 217,
       "pos": "WR",
       "posRank": 70
-    },
-    {
-      "id": "7058",
-      "value": 325,
-      "overall": 721,
-      "pos": "IDP",
-      "posRank": 270
-    },
-    {
-      "id": "7069",
-      "value": 505,
-      "overall": 629,
-      "pos": "IDP",
-      "posRank": 178
     },
     {
       "id": "7083",
@@ -4179,39 +2513,11 @@
       "posRank": 109
     },
     {
-      "id": "7113",
-      "value": 4778,
-      "overall": 100,
-      "pos": "IDP",
-      "posRank": 10
-    },
-    {
-      "id": "7133",
-      "value": 401,
-      "overall": 677,
-      "pos": "IDP",
-      "posRank": 226
-    },
-    {
-      "id": "7136",
-      "value": 573,
-      "overall": 604,
-      "pos": "IDP",
-      "posRank": 153
-    },
-    {
       "id": "7203",
       "value": 1631,
       "overall": 335,
       "pos": "RB",
       "posRank": 74
-    },
-    {
-      "id": "7342",
-      "value": 368,
-      "overall": 692,
-      "pos": "IDP",
-      "posRank": 241
     },
     {
       "id": "7437",
@@ -4396,90 +2702,6 @@
       "posRank": 26
     },
     {
-      "id": "7626",
-      "value": 397,
-      "overall": 678,
-      "pos": "IDP",
-      "posRank": 227
-    },
-    {
-      "id": "7627",
-      "value": 4522,
-      "overall": 111,
-      "pos": "IDP",
-      "posRank": 12
-    },
-    {
-      "id": "7633",
-      "value": 412,
-      "overall": 669,
-      "pos": "IDP",
-      "posRank": 218
-    },
-    {
-      "id": "7635",
-      "value": 853,
-      "overall": 507,
-      "pos": "IDP",
-      "posRank": 92
-    },
-    {
-      "id": "7640",
-      "value": 3803,
-      "overall": 145,
-      "pos": "IDP",
-      "posRank": 17
-    },
-    {
-      "id": "7648",
-      "value": 2333,
-      "overall": 248,
-      "pos": "IDP",
-      "posRank": 51
-    },
-    {
-      "id": "7651",
-      "value": 621,
-      "overall": 588,
-      "pos": "IDP",
-      "posRank": 137
-    },
-    {
-      "id": "7659",
-      "value": 662,
-      "overall": 574,
-      "pos": "IDP",
-      "posRank": 123
-    },
-    {
-      "id": "7664",
-      "value": 306,
-      "overall": 735,
-      "pos": "IDP",
-      "posRank": 284
-    },
-    {
-      "id": "7666",
-      "value": 351,
-      "overall": 703,
-      "pos": "IDP",
-      "posRank": 252
-    },
-    {
-      "id": "7667",
-      "value": 636,
-      "overall": 583,
-      "pos": "IDP",
-      "posRank": 132
-    },
-    {
-      "id": "7669",
-      "value": 668,
-      "overall": 570,
-      "pos": "IDP",
-      "posRank": 119
-    },
-    {
       "id": "7670",
       "value": 1262,
       "overall": 396,
@@ -4487,67 +2709,11 @@
       "posRank": 128
     },
     {
-      "id": "7672",
-      "value": 3251,
-      "overall": 178,
-      "pos": "IDP",
-      "posRank": 29
-    },
-    {
-      "id": "7677",
-      "value": 501,
-      "overall": 632,
-      "pos": "IDP",
-      "posRank": 181
-    },
-    {
-      "id": "7678",
-      "value": 395,
-      "overall": 680,
-      "pos": "IDP",
-      "posRank": 229
-    },
-    {
-      "id": "7682",
-      "value": 306,
-      "overall": 733,
-      "pos": "IDP",
-      "posRank": 282
-    },
-    {
-      "id": "7685",
-      "value": 345,
-      "overall": 708,
-      "pos": "IDP",
-      "posRank": 257
-    },
-    {
       "id": "7694",
       "value": 989,
       "overall": 463,
       "pos": "TE",
       "posRank": 61
-    },
-    {
-      "id": "7696",
-      "value": 299,
-      "overall": 736,
-      "pos": "IDP",
-      "posRank": 285
-    },
-    {
-      "id": "7711",
-      "value": 333,
-      "overall": 716,
-      "pos": "IDP",
-      "posRank": 265
-    },
-    {
-      "id": "7715",
-      "value": 602,
-      "overall": 593,
-      "pos": "IDP",
-      "posRank": 142
     },
     {
       "id": "7716",
@@ -4564,53 +2730,11 @@
       "posRank": 121
     },
     {
-      "id": "7726",
-      "value": 490,
-      "overall": 637,
-      "pos": "IDP",
-      "posRank": 186
-    },
-    {
-      "id": "7770",
-      "value": 525,
-      "overall": 621,
-      "pos": "IDP",
-      "posRank": 170
-    },
-    {
-      "id": "7811",
-      "value": 686,
-      "overall": 565,
-      "pos": "IDP",
-      "posRank": 114
-    },
-    {
-      "id": "7819",
-      "value": 315,
-      "overall": 727,
-      "pos": "IDP",
-      "posRank": 276
-    },
-    {
       "id": "7828",
       "value": 977,
       "overall": 468,
       "pos": "TE",
       "posRank": 63
-    },
-    {
-      "id": "7841",
-      "value": 2492,
-      "overall": 233,
-      "pos": "IDP",
-      "posRank": 43
-    },
-    {
-      "id": "7921",
-      "value": 318,
-      "overall": 724,
-      "pos": "IDP",
-      "posRank": 273
     },
     {
       "id": "8110",
@@ -4907,270 +3031,11 @@
       "posRank": 28
     },
     {
-      "id": "8265",
-      "value": 951,
-      "overall": 476,
-      "pos": "IDP",
-      "posRank": 88
-    },
-    {
-      "id": "8266",
-      "value": 2290,
-      "overall": 253,
-      "pos": "IDP",
-      "posRank": 52
-    },
-    {
-      "id": "8267",
-      "value": 3586,
-      "overall": 157,
-      "pos": "IDP",
-      "posRank": 21
-    },
-    {
-      "id": "8269",
-      "value": 329,
-      "overall": 719,
-      "pos": "IDP",
-      "posRank": 268
-    },
-    {
-      "id": "8270",
-      "value": 337,
-      "overall": 714,
-      "pos": "IDP",
-      "posRank": 263
-    },
-    {
-      "id": "8275",
-      "value": 496,
-      "overall": 634,
-      "pos": "IDP",
-      "posRank": 183
-    },
-    {
-      "id": "8280",
-      "value": 4160,
-      "overall": 128,
-      "pos": "IDP",
-      "posRank": 14
-    },
-    {
-      "id": "8286",
-      "value": 463,
-      "overall": 649,
-      "pos": "IDP",
-      "posRank": 198
-    },
-    {
-      "id": "8289",
-      "value": 6479,
-      "overall": 46,
-      "pos": "IDP",
-      "posRank": 3
-    },
-    {
-      "id": "8290",
-      "value": 264,
-      "overall": 758,
-      "pos": "IDP",
-      "posRank": 307
-    },
-    {
-      "id": "8294",
-      "value": 357,
-      "overall": 700,
-      "pos": "IDP",
-      "posRank": 249
-    },
-    {
-      "id": "8305",
-      "value": 386,
-      "overall": 686,
-      "pos": "IDP",
-      "posRank": 235
-    },
-    {
-      "id": "8308",
-      "value": 1039,
-      "overall": 450,
-      "pos": "IDP",
-      "posRank": 84
-    },
-    {
-      "id": "8311",
-      "value": 1551,
-      "overall": 345,
-      "pos": "IDP",
-      "posRank": 67
-    },
-    {
-      "id": "8314",
-      "value": 1241,
-      "overall": 401,
-      "pos": "IDP",
-      "posRank": 75
-    },
-    {
-      "id": "8323",
-      "value": 643,
-      "overall": 581,
-      "pos": "IDP",
-      "posRank": 130
-    },
-    {
-      "id": "8329",
-      "value": 3586,
-      "overall": 158,
-      "pos": "IDP",
-      "posRank": 22
-    },
-    {
-      "id": "8330",
-      "value": 3220,
-      "overall": 180,
-      "pos": "IDP",
-      "posRank": 30
-    },
-    {
-      "id": "8331",
-      "value": 257,
-      "overall": 761,
-      "pos": "IDP",
-      "posRank": 310
-    },
-    {
-      "id": "8333",
-      "value": 723,
-      "overall": 553,
-      "pos": "IDP",
-      "posRank": 108
-    },
-    {
-      "id": "8339",
-      "value": 2444,
-      "overall": 237,
-      "pos": "IDP",
-      "posRank": 47
-    },
-    {
-      "id": "8343",
-      "value": 496,
-      "overall": 633,
-      "pos": "IDP",
-      "posRank": 182
-    },
-    {
-      "id": "8348",
-      "value": 1574,
-      "overall": 342,
-      "pos": "IDP",
-      "posRank": 66
-    },
-    {
-      "id": "8355",
-      "value": 364,
-      "overall": 697,
-      "pos": "IDP",
-      "posRank": 246
-    },
-    {
-      "id": "8359",
-      "value": 575,
-      "overall": 602,
-      "pos": "IDP",
-      "posRank": 151
-    },
-    {
-      "id": "8364",
-      "value": 737,
-      "overall": 548,
-      "pos": "IDP",
-      "posRank": 105
-    },
-    {
-      "id": "8365",
-      "value": 446,
-      "overall": 656,
-      "pos": "IDP",
-      "posRank": 205
-    },
-    {
-      "id": "8376",
-      "value": 403,
-      "overall": 675,
-      "pos": "IDP",
-      "posRank": 224
-    },
-    {
-      "id": "8384",
-      "value": 615,
-      "overall": 590,
-      "pos": "IDP",
-      "posRank": 139
-    },
-    {
-      "id": "8385",
-      "value": 654,
-      "overall": 577,
-      "pos": "IDP",
-      "posRank": 126
-    },
-    {
-      "id": "8392",
-      "value": 2375,
-      "overall": 244,
-      "pos": "IDP",
-      "posRank": 49
-    },
-    {
-      "id": "8395",
-      "value": 463,
-      "overall": 648,
-      "pos": "IDP",
-      "posRank": 197
-    },
-    {
-      "id": "8398",
-      "value": 345,
-      "overall": 706,
-      "pos": "IDP",
-      "posRank": 255
-    },
-    {
-      "id": "8406",
-      "value": 373,
-      "overall": 690,
-      "pos": "IDP",
-      "posRank": 239
-    },
-    {
       "id": "8408",
       "value": 2998,
       "overall": 194,
       "pos": "RB",
       "posRank": 41
-    },
-    {
-      "id": "843",
-      "value": 608,
-      "overall": 591,
-      "pos": "IDP",
-      "posRank": 140
-    },
-    {
-      "id": "8476",
-      "value": 662,
-      "overall": 573,
-      "pos": "IDP",
-      "posRank": 122
-    },
-    {
-      "id": "8487",
-      "value": 512,
-      "overall": 627,
-      "pos": "IDP",
-      "posRank": 176
     },
     {
       "id": "8489",
@@ -5180,32 +3045,11 @@
       "posRank": 82
     },
     {
-      "id": "8659",
-      "value": 2472,
-      "overall": 235,
-      "pos": "IDP",
-      "posRank": 45
-    },
-    {
-      "id": "8667",
-      "value": 553,
-      "overall": 610,
-      "pos": "IDP",
-      "posRank": 159
-    },
-    {
       "id": "8676",
       "value": 2892,
       "overall": 201,
       "pos": "WR",
       "posRank": 65
-    },
-    {
-      "id": "8680",
-      "value": 397,
-      "overall": 679,
-      "pos": "IDP",
-      "posRank": 228
     },
     {
       "id": "8698",
@@ -5222,25 +3066,11 @@
       "posRank": 91
     },
     {
-      "id": "8838",
-      "value": 366,
-      "overall": 694,
-      "pos": "IDP",
-      "posRank": 243
-    },
-    {
       "id": "8917",
       "value": 1022,
       "overall": 454,
       "pos": "WR",
       "posRank": 149
-    },
-    {
-      "id": "903",
-      "value": 426,
-      "overall": 663,
-      "pos": "IDP",
-      "posRank": 212
     },
     {
       "id": "9221",

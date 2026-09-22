@@ -244,6 +244,11 @@ function threeHighScorersV33(f){
   const trio=[f?.top,f?.second,f?.third].filter(Boolean);
   return trio.length===3&&trio.every(p=>Number(p?.points)>=18);
 }
+function playerContextLabelV33(p){
+  const pos=String(p?.position||'player').toUpperCase(),age=Number(p?.age),years=Number(p?.years_exp);
+  const stage=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24)?'young':(Number.isFinite(years)&&years>=7)||(Number.isFinite(age)&&age>=30)?'veteran':'prime-age';
+  return stage+' '+pos;
+}
 function playerStatInsightV33(t,p,r){
   if(!p)return null;
   const d=delta(p),pts=Number(p.points),role=teamOpportunity(p),prior=Number(p.prior_season_avg),priorGames=Number(p.prior_season_games)||0,team=teamIdentityV28(t).mascot,v=voice(r),name=p.name,key=String(t.roster_id)+':'+String(p.id||name)+':stat-insight:'+String(r?.id||'');
@@ -275,7 +280,7 @@ function playerStatInsightV33(t,p,r){
       [name+' fell well short of last year’s '+one(prior)+'-point average. One week gets context; repetition gets concern.'],
       [name+' came in well below last year’s '+one(prior)+'-point average. Bartholomew grants one week of manners, not a season of immunity.'],
       [name+' finished far below last year’s '+one(prior)+'-point average. One bad Sunday is a note. Two starts looking like a headline.'],
-      [name+' landed well below last year’s '+one(prior)+'-point baseline. The prior record argues for patience; the next week supplies the test.']
+      [name+' landed well below last year’s '+one(prior)+'-point baseline; '+name+'’s prior record argues for patience while the next week supplies the test.']
     ][v];
   }
   if(!banks){
@@ -340,13 +345,13 @@ function teamPlayerCodaV33(t,r,f){
   ][v];
 }
 function teamPlayerExtraV33(t,r,f,slot){
-  const top=f?.top,team=teamIdentityV28(t).mascot,opp=t.opponent_name||'the opponent',next=t.next_opponent_name||'the next opponent',v=voice(r),kind=Math.abs(Number(slot)||0)%3,rec=record(t),key=String(t.roster_id)+':player-extra:'+kind+':'+String(r?.id||'');
+  const top=f?.top,team=teamIdentityV28(t).mascot,opp=t.opponent_name||'the opponent',next=t.next_opponent_name||'the next opponent',v=voice(r),kind=Math.abs(Number(slot)||0)%3,rec=record(t),shape=String(f?.angle|| (f?.won?'win':'loss')).replace(/-/g,' '),roleLabel=playerContextLabelV33(top),key=String(t.roster_id)+':player-extra:'+kind+':'+String(r?.id||'');
   const banks=[
     [
-      [top.name+' gets the useful follow-up: can the same role survive when '+team+' is not playing this exact opponent? Nick trusts repeatable work more than a pretty total.',top.name+' already supplied the headline. Nick’s next note is whether the workload survives a different game script instead of asking the fantasy total to predict itself.','There is one '+team+' player result worth carrying forward in '+top.name+'. The next Sunday decides whether the role travels or the box score was simply well timed.','Nick is keeping '+top.name+' on the short list for next week because the role has something testable about it. That is more useful than handing every scorer a paragraph.'],
-      ['Bartholomew’s useful question for '+top.name+' is whether the role survives a less accommodating afternoon. One good total is lovely; a repeatable job is much better furniture.',top.name+' already owns the flattering paragraph. Bartholomew now wants to know whether the workload travels when the matchup stops cooperating.',team+' can enjoy '+top.name+' without turning one Sunday into mythology. The tasteful next step is the same role under less convenient circumstances.','The number belongs to '+top.name+'. Bartholomew is more interested in whether the same job appears next week, when the décor will be different and excuses more expensive.'],
-      [top.name+' gets the headline. Next test: same job, different Sunday. Tilly is done giving ordinary box-score neighbors honorary co-star billing.','The '+team+' player story centers on '+top.name+'. Keep the role, repeat the work and the next headline writes itself without yelling at the font.',top.name+' earned the ink. Now do it when the matchup changes; that is how a good Sunday stops being a souvenir.','Tilly has one name circled for the useful reason: '+top.name+' gave next week a role worth checking, not just a score worth reposting.'],
-      [top.name+' remains the player exhibit worth carrying forward. The next file should test the same role against a different game environment rather than extrapolate from the fantasy total alone.','The repeatability question for '+team+' centers on '+top.name+': whether the workload persists when opponent and script change. That is the next probative data point.','The next inquiry on '+top.name+' is role continuity. A second comparable workload would strengthen the finding more than another sentence about this week’s total.','Filch keeps '+top.name+' in the next-week file because the role can be corroborated. The rest of the roster does not receive equal evidentiary weight by association.']
+      [top.name+' gets the useful follow-up: can the same role survive when '+team+' is not playing this exact opponent? After this '+shape+' review, Nick trusts repeatable '+roleLabel+' work more than a pretty total.',top.name+' already supplied the headline. Nick’s next note is whether the workload survives a different game script instead of asking the fantasy total to predict itself.','There is one '+team+' player result worth carrying forward in '+top.name+'. The next Sunday decides whether the role travels or the box score was simply well timed.','Nick is keeping '+top.name+' on the short list for next week because the role has something testable about it. That is more useful than handing every scorer a paragraph.'],
+      ['Bartholomew’s useful question for '+top.name+' is whether the '+roleLabel+' role survives a less accommodating afternoon; one good '+shape+' total is lovely, but a repeatable job is much better furniture.',top.name+' already owns the flattering paragraph. In this '+shape+' review, Bartholomew wants to know whether the '+roleLabel+' workload travels when the matchup stops cooperating.',team+' can enjoy '+top.name+' without turning one Sunday into mythology. The tasteful next step is the same role under less convenient circumstances.','The number belongs to '+top.name+'. Bartholomew is more interested in whether the same job appears next week, when the décor will be different and excuses more expensive.'],
+      [top.name+' gets the headline. After this '+shape+' review, Tilly is done giving ordinary '+roleLabel+' box-score neighbors honorary co-star billing.','The '+team+' player story centers on '+top.name+'; keep this '+roleLabel+' role after a '+shape+' week and the next headline writes itself without yelling at the font.',top.name+' earned the ink. Now do it when the matchup changes; that is how a good Sunday stops being a souvenir.','Tilly has one name circled for the useful reason: '+top.name+' gave next week a role worth checking, not just a score worth reposting.'],
+      [top.name+' remains the player exhibit worth carrying forward. The next file should test the same role against a different game environment rather than extrapolate from the fantasy total alone.','The repeatability question for '+team+' centers on '+top.name+': whether the workload persists when opponent and script change. That is the next probative data point.','The next inquiry on '+top.name+' is role continuity. A second comparable workload would strengthen the finding more than another sentence about this week’s total.','Filch keeps '+top.name+' in the next-week file because this '+roleLabel+' role can be corroborated after a '+shape+' week; the rest of the roster does not receive equal evidentiary weight by association.']
     ],
     [
       ['The '+team+' record is '+rec+', which is the part no individual stat line gets to negotiate away. Nick will praise the useful players and still make the team answer for the standings.','A good player line can survive a bad '+team+' result; the record is still '+rec+'. Nick keeps those judgments separate because the scoreboard does not issue group pardons.',team+' leaves this week at '+rec+'. The individual praise matters, but Nick is not letting one good line do public-relations work for the whole roster.','Nick’s player notes are favorable where they earned it; the '+team+' record remains '+rec+'. Those facts are allowed to coexist without a motivational poster.'],
@@ -1870,12 +1875,12 @@ function classificationSentenceV29(p,tr,r){
   const choose=banks=>keyedChoice(key,banks[v]);
   if(tr.kind==='star')return choose([
     [
-      `${p.name} already owns a star-level standard. Another substantial Sunday reinforces what the league already knew rather than creating a new category.`,
+      `${p.name} already owns a star-level standard; another substantial Sunday from this ${playerContextLabelV33(p)} reinforces what the league already knew rather than creating a new category.`,
       `${p.name} came into the week with star status already earned. The performance confirms the expectation instead of introducing it.`,
       `${p.name} does not need breakout language. This is an established player adding another useful week to an existing résumé.`
     ],
     [
-      `${p.name} arrived with star status already settled. The interesting question is how long this level remains routine, not whether a breakout has begun.`,
+      `${p.name} arrived with star status already settled; for this ${playerContextLabelV33(p)}, the interesting question is how long this level remains routine, not whether a breakout has begun.`,
       `${p.name} is an established star, which makes the strong week confirmation rather than revelation.`,
       `${p.name} needed no discovery narrative before kickoff and needs none now. The performance belongs to an already accomplished player.`
     ],
@@ -1885,7 +1890,7 @@ function classificationSentenceV29(p,tr,r){
       `${p.name.toUpperCase()} DOES NOT NEED A BREAKOUT LABEL. ${p.name.toUpperCase()} NEEDED ANOTHER BIG SUNDAY, AND HE GOT ONE.`
     ],
     [
-      `${p.name} entered with star status already supported by prior work. Sunday corroborates that status; it does not open a breakout investigation.`,
+      `${p.name} entered with star status already supported by prior work; Sunday corroborates the ${playerContextLabelV33(p)} standard rather than opening a breakout investigation.`,
       `${p.name} belongs in the established-star category. ${p.name}’s week changes the current evidence, not the career classification.`,
       `${p.name} already had the résumé. This performance strengthens an existing finding rather than creating a new one.`
     ]
@@ -2017,12 +2022,12 @@ function gameShapeV29(t,r,f=articleFrameV29(t,r)){
         [`${topWork}. ${won?'That is enough to explain the strongest part of the '+team+' win without pretending every secondary scorer was equally important.':'The individual line survives the '+team+' loss; the quieter slots do not inherit its credit.'}`]
       ],
       [
-        [`${topWork}. ${won?'Bartholomew gives the centerpiece its due and declines to manufacture an ensemble review from ordinary supporting lines.':'Lovely individual work, vulgar '+team+' result. '+(bad?bad.name+' gives the article a much less flattering counterpoint.':'The rest of the card gets no borrowed elegance.')}`],
+        [`${topWork}. ${won?'Bartholomew gives '+top.name+'’s '+String(top.position||'player')+' centerpiece its due in this '+String(f.angle||'win').replace(/-/g,' ')+' review and declines to manufacture an ensemble from ordinary supporting lines.':'Lovely individual work, vulgar '+team+' result. '+(bad?bad.name+' gives the article a much less flattering counterpoint.':'The rest of the card gets no borrowed elegance.')}`],
         [`${topWork}. ${won?'The '+team+' win needs no decorative claim that everyone contributed equally.':'One strong line is not absolution for a losing card, however nicely tailored.'}`]
       ],
       [
         [`${topWork}. ${won?'That is the '+team+' headline. Everybody else can earn bigger type with a bigger game.':'The '+team+' loss does not belong on '+top.name+' just because his name is easiest to print.'}`],
-        [`${topWork}. ${won?'Good star line, good result, no fake “team effort” slogan required.':'Credit the player, keep the complaint aimed at the parts of '+team+' that actually failed.'}`]
+        [`${topWork}. ${won?'Good '+String(top.position||'player')+' line from '+top.name+', good '+team+' result, no fake “team effort” slogan required.':'Credit the player, keep the complaint aimed at the parts of '+team+' that actually failed.'}`]
       ],
       [
         [`${topWork}. ${won?'That is the primary affirmative '+team+' finding; no broader depth conclusion is required by the evidence.':'The best individual exhibit remains favorable inside an adverse '+team+' result.'}`],
@@ -2103,9 +2108,9 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       const lead=`${p.name}${c?` ${c}`:` produced ${one(p.points)} fantasy points`}.`;
       const judgment=[
         `${p.name} earns a second paragraph because the line was individually relevant; Nick is not using it to declare the whole roster balanced.`,
-        `${p.name} earns separate praise or criticism on the merits. Bartholomew declines to turn one supporting line into a sweeping depth theory.`,
-        `${p.name} earned the extra ink. That is the analysis; nobody needs a fake “team effort” slogan stapled to it.`,
-        `${p.name} is independently relevant to the ${team} file. One secondary performance does not establish a broader depth finding.`
+        `${p.name} earns separate praise or criticism on the merits; in this ${String(f.angle||'weekly').replace(/-/g,' ')} review, Bartholomew declines to turn one ${String(p.position||'player')} line into a sweeping depth theory.`,
+        `${p.name} earned the extra ink in this ${String(f.angle||'weekly').replace(/-/g,' ')} review; that ${String(p.position||'player')} line is the analysis, and nobody needs a fake “team effort” slogan stapled to it.`,
+        `${p.name} is independently relevant to the ${team} ${String(f.angle||'weekly').replace(/-/g,' ')} file; one ${String(p.position||'player')} performance does not establish a broader depth finding.`
       ][v];
       ps.push([lead,insight,status,judgment].filter(Boolean).join(' '));
     }

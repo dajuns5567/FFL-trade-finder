@@ -15,7 +15,7 @@ jobs:
       - name: Inspect preview Value History export
         run: |
           node --input-type=module <<'NODE'
-          const url='https://deploy-preview-385--inspiring-bombolone-be4489.netlify.app/.netlify/functions/value-history?archive_export=1';
+          const url='https://inspiring-bombolone-be4489.netlify.app/.netlify/functions/value-history?archive_export=1';
           const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
           console.log('status',r.status);
           const text=await r.text();

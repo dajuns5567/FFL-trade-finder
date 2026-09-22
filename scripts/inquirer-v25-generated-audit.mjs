@@ -19,6 +19,8 @@ const teamWords=(d.teams||[]).map(t=>words(articleText(t)));
 
 assert.equal(Number(d.inquirer_version),26,'Generated edition must be Inquirer V26');
 assert.equal(Number(d.editorial_revision),6,'Generated edition must carry editorial revision 6');
+assert.equal(d.published_locked,true,'Generated Week 1 edition must be marked immutable once published');
+assert.equal(Number(d.context_snapshot_through_week),1,'Generated Week 1 edition must declare a Week 1 context snapshot');
 assert.equal((d.teams||[]).length,32,'Generated Week 1 edition must contain 32 team articles');
 for(const t of d.teams||[]){
   const rec=t?.league_context?.record||{},wins=Number(rec.wins)||0,losses=Number(rec.losses)||0,ties=Number(rec.ties)||0;
@@ -31,6 +33,8 @@ for(const t of d.teams||[]){
   assert.equal(t?.next_week_availability,null,'Archived Week 1 must not import later injury/availability state for '+t.team_name);
   if(t?.mida_outlook?.source_date){const ts=Date.parse(String(t.mida_outlook.source_date));assert.ok(Number.isFinite(ts)&&ts<=Date.parse('2026-09-15T00:00:00Z'),'Week 1 archive must not import a later MIDA snapshot for '+t.team_name)}
 }
+const expectedWeek1Ranks=(d.teams||[]).map(t=>{const r=t?.league_context?.record||{};return{t,w:Number(r.wins)||0,l:Number(r.losses)||0,ties:Number(r.ties)||0,fpts:Number(t.points)||0}}).sort((a,b)=>b.w-a.w||a.l-b.l||b.ties-a.ties||b.fpts-a.fpts||Number(a.t.roster_id)-Number(b.t.roster_id));
+for(const [i,row] of expectedWeek1Ranks.entries())assert.equal(Number(row.t?.league_context?.standings_rank),i+1,'Week 1 standings rank must be reconstructed only from Week 1 results for '+row.t.team_name);
 assert.ok(recapSections.length>=4,'Weekly Recap must preserve a complete multi-desk edition');
 assert.ok(words(recap)>Math.max(...teamWords),'Editorial Weekly Recap should be deeper than the longest team column');
 const mentioned=(d.teams||[]).filter(t=>String(t.team_name||'').trim()&&recap.includes(String(t.team_name).trim()));
@@ -40,6 +44,7 @@ assert.ok((mattered?.paragraphs||[]).length>=10,'What Actually Mattered This Wee
 const matterBlocks=(mattered?.blocks||[]).filter(x=>Array.isArray(x?.paragraphs)&&x.paragraphs.length);
 assert.ok(matterBlocks.length>=5,'What Actually Mattered This Week must expose labeled matchup/story blocks');
 assert.ok(matterBlocks.slice(0,5).every(x=>String(x.heading||'').trim()&&x.paragraphs.length>=2),'Each featured matchup must have a visible heading and developed analysis');
+assert.ok(matterBlocks.slice(0,5).every(x=>/fantasy points/i.test((x.paragraphs||[]).join(' '))),'Every featured Weekly Recap matchup must include fantasy production for the important players, not just the lead game');
 const topScorer=(d.teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
 assert.ok(topScorer&&matterBlocks[0]?.heading?.includes(topScorer.team_name),'First Weekly Recap matchup block must feature the week’s top scoring team');
 assert.ok((matterBlocks[0]?.paragraphs||[]).join(' ').includes(topScorer.team_name),'Top scorer must receive actual Weekly Recap commentary, not merely a heading');
@@ -69,14 +74,14 @@ for(const phrase of [
   'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is','which is exactly what an idp league should reward when the work is real','historical value snapshot is not available in this article packet','in big type','big type','angry font','angry type','name in red','remove the suspense','job underneath it','something concrete to test','gets the photo','earned the ink',
   'the result matters because','other division rival','fantasy points reasons','opened near last season','turning finished with',
   'the useful version is','nick’s note is simple','the transaction belongs in the article','survived that call','result look as good on monday','roster compliment sitting on the bench','other side of the receipt alive','playoff case still sitting squarely in the argument','this week gave the résumé another loud line','somebody else now needs to make the back page fight for space','sunday reinforced it with another performance worthy of that reputation',
-  'nick will','nick wants','nick sees','bartholomew would','bartholomew will','tilly would','filch recommends','filch would','this desk is already documenting','a beat writer is supposed to','ordinary quarterback workload','primary affirmative','no broader depth conclusion','favorable team verdict','entered as the projected underdog and won anyway','corroborates the expectation','projection liked'
+  'nick will','nick wants','nick sees','bartholomew would','bartholomew will','tilly would','filch recommends','filch would','this desk is already documenting','a beat writer is supposed to','ordinary quarterback workload','primary affirmative','no broader depth conclusion','favorable team verdict','entered as the projected underdog and won anyway','corroborates the expectation','projection liked','high-scorer line','multiple-contributor point is earned','provisional breakout label','breakout-watch invitation','gets the watch list','gets the same designation'
 ]) assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
 assert.ok(!all.includes('${'),'Generated prose must never expose a template interpolation token');
 assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),'Generated Week 1 must carry a real prior-season player-history source');
 const historicalStarters=(d.teams||[]).flatMap(t=>t.starter_details||[]).filter(p=>Number(p.prior_season_games)>=6&&Number.isFinite(Number(p.prior_season_avg)));
 assert.ok(historicalStarters.length>=40,'Week 1 must propagate meaningful prior-season baselines into player reporting; got '+historicalStarters.length);
 assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');
-assert.match(recap,/breakout[- ]watch|offensive reliability names|familiar production|next opponent will attack the same weakness/i,'Weekly Recap must carry a player trajectory story tied to actual matchup consequences');
+assert.match(recap,/breakout (?:star|case|players?)|can trust to keep showing up|familiar production|next opponent will attack the same weakness/i,'Weekly Recap must carry a natural player trajectory story tied to actual matchup consequences');
 
 const spedale=(d.teams||[]).find(t=>String(t.manager_name||'').toLowerCase()==='mike3spedale');
 if(spedale){

@@ -159,7 +159,12 @@ jobs:
               store=s;tokenName=name;break;
             }catch(e){lastError=String(e?.message||e)}
           }
-          if(!store)throw new Error('Unable to open live Value History store: '+(lastError||'unknown'));
+          if(!store){
+            const live={error:'Unable to open live Value History store: '+(lastError||'unknown')};
+            fs.writeFileSync('/tmp/idp-history-scrub-report.json',JSON.stringify({archive:archiveReport,live},null,2)+'\\n');
+            console.log(JSON.stringify({archive:archiveReport,live},null,2));
+            process.exit(0);
+          }
 
           const listing=await store.list({prefix:'snapshots/'});
           const keys=(listing?.blobs||[]).map(b=>String(b?.key||'')).filter(Boolean);
@@ -234,3 +239,12 @@ jobs:
           name: idp-value-history-scrub-report
           path: /tmp/idp-history-scrub-report.json
           if-no-files-found: error
+
+      - name: Require live-store scrub success
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const r=JSON.parse(fs.readFileSync('/tmp/idp-history-scrub-report.json','utf8'));
+          if(r?.live?.error)throw new Error(r.live.error);
+          if(Number(r?.live?.remainingPreCutoffIdpRows)!==0)throw new Error('Live IDP verification failed');
+          NODE

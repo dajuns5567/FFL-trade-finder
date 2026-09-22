@@ -180,7 +180,7 @@ function focusedPlayerStatsV32(players){
 }
 
 function playerEditorialReadV32(t,r,f=articleFrameV29(t,r)){
-  const trio=[f.top,f.second,f.third].filter(Boolean),team=teamIdentityV28(t).mascot;
+  const trio=[f.top,f.second,f.third].filter(Boolean),team=teamIdentityV28(t).mascot,scope=String(t.division_name||t.conference||'this league');
   if(trio.length<2)return null;
   const establishedSupport=trio.slice(1).find(p=>establishedStarV29(p)),twoWay=trio.some(defensivePlayer)&&trio.some(p=>!defensivePlayer(p)),
     concentrated=Number(f.share)>=.7,names=naturalJoin(trio.map(p=>p.name)),v=voice(r);
@@ -191,18 +191,18 @@ function playerEditorialReadV32(t,r,f=articleFrameV29(t,r)){
     return names+" gave "+team+" a genuinely layered scoring base. The useful takeaway is not that several players scored; it is that the roster had multiple ways to reach the same result. That is how a good week starts looking repeatable instead of lucky.";
   }
   if(v===1){
-    if(establishedSupport)return establishedSupport.name+" functioning as a luxury rather than a life raft is the indulgence here. "+names+" force opponents to wait for several good players to fail at once, an awfully rude requirement. I would call that roster leverage before I called it beautiful, though it is flirting with both.";
+    if(establishedSupport)return establishedSupport.name+" functioning as a luxury rather than a life raft is the indulgence here in "+scope+". "+names+" force opponents to wait for several good players to fail at once, an awfully rude requirement. For "+team+" in "+scope+", I would call that roster leverage before I called it beautiful, though it is flirting with both.";
     if(twoWay)return names+" turned "+team+" into a two-sided nuisance: offense and IDP both supplied real leverage. A roster that can win from different rooms of the house is harder to embarrass when one chandelier falls. How disappointingly practical.";
     if(concentrated)return names+" supplied a glamorous amount of the total, which is exactly why the quiet chairs still deserve inspection. A top-heavy lineup is exquisite until one star has the indecency to be human.";
     return names+" gave "+team+" an ensemble instead of a recital. The important part is that the paths to production were different enough to survive one performer missing a note. I hate to reward practicality, but here we are.";
   }
   if(v===2){
-    if(establishedSupport)return establishedSupport.name.toUpperCase()+" AS THE SUPPORTING LUXURY IS THE SCARY PART. "+names.toUpperCase()+" GIVE "+team.toUpperCase()+" MULTIPLE WAYS TO HURT SOMEBODY, SO ONE QUIET STAR WEEK DOES NOT AUTOMATICALLY BECOME A FIRE DRILL. I WOULD LIKE TO FILE A COMPLAINT ON BEHALF OF THE SCHEDULE.";
-    if(twoWay)return names.toUpperCase()+" HIT FROM OFFENSE AND IDP. THAT IS NOT JUST THREE NICE BOX-SCORE LINES; IT IS THREE DIFFERENT WAYS TO RUIN AN OPPONENT'S SUNDAY. VERY INCONSIDERATE. KEEP IT.";
+    if(establishedSupport)return establishedSupport.name.toUpperCase()+" AS THE SUPPORTING LUXURY IS THE SCARY PART IN "+scope.toUpperCase()+". "+names.toUpperCase()+" GIVE "+team.toUpperCase()+" MULTIPLE WAYS TO HURT SOMEBODY, SO ONE QUIET STAR WEEK DOES NOT AUTOMATICALLY BECOME A FIRE DRILL. FOR "+team.toUpperCase()+" IN "+scope.toUpperCase()+", I WOULD LIKE TO FILE A COMPLAINT ON BEHALF OF THE SCHEDULE.";
+    if(twoWay)return names.toUpperCase()+" HIT FROM OFFENSE AND IDP IN "+scope.toUpperCase()+". FOR "+team.toUpperCase()+", THAT IS NOT JUST THREE NICE BOX-SCORE LINES; IT IS THREE DIFFERENT WAYS TO RUIN AN OPPONENT'S SUNDAY. VERY INCONSIDERATE. KEEP IT.";
     if(concentrated)return names.toUpperCase()+" DID A LOT OF THE HEAVY LIFTING. GREAT. NOW THE REST OF "+team.toUpperCase()+" HAS TO PROVE THIS IS A LINEUP AND NOT THREE PEOPLE RUNNING A RESCUE MISSION WITH MATCHING UNIFORMS.";
     return names.toUpperCase()+" GAVE "+team.toUpperCase()+" REAL SCORING WIDTH. NOT ONE MIRACLE, NOT ONE LUCKY BUTTON, MULTIPLE USEFUL PATHS. I AM TRYING TO BE NORMAL ABOUT IT AND FAILING.";
   }
-  if(establishedSupport)return establishedSupport.name+" appearing as support instead of the sole source of oxygen changes the risk profile for "+team+". "+names+" create several independent scoring paths, so an opponent needs more than one favorable failure to crack the lineup. I am comfortable calling that meaningful leverage; I am not issuing immunity from next week.";
+  if(establishedSupport)return establishedSupport.name+" appearing as support instead of the sole source of oxygen changes the risk profile for "+team+" in "+scope+". "+names+" create several independent scoring paths, so an opponent needs more than one favorable failure to crack the lineup. For "+team+" in "+scope+", I am comfortable calling that meaningful leverage; I am not issuing immunity from next week.";
   if(twoWay)return names+" produced across offensive and IDP lanes, which makes the "+team+" total harder to dismiss as one isolated spike. Different sources of production reduce the chance that one role failure collapses the whole case. Annoyingly, the evidence is fairly clean.";
   if(concentrated)return names+" carried enough of the "+team+" total to create a dependency question alongside the praise. The evidence supports the stars; it does not yet clear the quieter lineup spots. One normal week from the leaders will test that distinction quickly.";
   return names+" gave "+team+" several independent sources of useful production. That is stronger evidence than a single ceiling game because the lineup did not need one player to explain everything. I will still be checking whether the same roles survive contact with Week 2.";
@@ -2056,19 +2056,19 @@ function tradeCurrentTotalV32(side,facts){
   }
   return total;
 }
-function tradeValueReadV32(teamName,otherName,thenOwn,thenOther,nowOwn,nowOther){
+function tradeValueReadV32(teamName,otherName,thenOwn,thenOther,nowOwn,nowOther,scope='the league'){
   const fmt=n=>Math.round(Number(n)).toLocaleString("en-US"),parts=[];
   if(Number.isFinite(thenOwn)&&Number.isFinite(thenOther)){
     const edge=thenOwn-thenOther,who=edge>0?teamName:edge<0?otherName:"neither side";
-    parts.push("At the recorded trade snapshot, "+teamName+" held "+fmt(thenOwn)+" of captured value against "+fmt(thenOther)+" for "+otherName+(edge===0?", essentially even.":", an early market lean toward "+who+" by "+fmt(Math.abs(edge))+"."));
+    parts.push("At the recorded "+scope+" trade snapshot, "+teamName+" held "+fmt(thenOwn)+" of captured value against "+fmt(thenOther)+" for "+otherName+(edge===0?", essentially even.":", an early market lean toward "+who+" by "+fmt(Math.abs(edge))+"."));
   }
   if(Number.isFinite(nowOwn)&&Number.isFinite(nowOther)){
     const edge=nowOwn-nowOther,who=edge>0?teamName:edge<0?otherName:"neither side";
-    parts.push("Using current player values and resolved drafted-player outcomes, the same ledger sits at "+fmt(nowOwn)+" to "+fmt(nowOther)+(edge===0?", still level.":", now leaning toward "+who+" by "+fmt(Math.abs(edge))+"."));
+    parts.push("On the current "+scope+" ledger, resolved player and drafted-player value sits at "+fmt(nowOwn)+" to "+fmt(nowOther)+(edge===0?", still level.":", now leaning toward "+who+" by "+fmt(Math.abs(edge))+"."));
     if(Number.isFinite(thenOwn)&&Number.isFinite(thenOther)){
       const before=Math.sign(thenOwn-thenOther),after=Math.sign(edge);
-      if(before&&after&&before!==after)parts.push("That is a genuine flip from the original value read, not just the same argument with fresher numbers.");
-      else if(before===after&&after)parts.push("The direction of the original value edge has held; only the size of the argument has changed.");
+      if(before&&after&&before!==after)parts.push("For "+teamName+" in "+scope+", that is a genuine flip from the original value read rather than the same argument with fresher numbers.");
+      else if(before===after&&after)parts.push("For "+teamName+" in "+scope+", the direction of the original value edge has held; only the size of the argument has changed.");
     }
   }
   return parts;
@@ -2076,16 +2076,16 @@ function tradeValueReadV32(teamName,otherName,thenOwn,thenOther,nowOwn,nowOther)
 function tradeCommentaryV32(t,r,facts={}){
   const moves=[...new Map((t.transactions||[]).filter(m=>String(m?.type||"").toLowerCase()==="trade").map(m=>[String(m?.id||""),m])).values()];
   if(!moves.length)return [];
-  const history=t.trade_history||[],v=voice(r),paragraphs=[];
+  const history=t.trade_history||[],v=voice(r),paragraphs=[],scope=String(t.division_name||t.conference||'the league');
   for(const move of moves.slice(0,2)){
     const tr=history.find(x=>String(x?.id||"")===String(move?.id||""))||null;
     if(!tr){
       const adds=(move.adds||[]).map(id=>tradePlayerNameV32(t,facts,id)),drops=(move.drops||[]).map(id=>tradePlayerNameV32(t,facts,id));
       paragraphs.push((adds.length?t.team_name+" acquired "+naturalJoin(adds):t.team_name+" made a trade")+(drops.length?" and sent out "+naturalJoin(drops):"")+". The historical value snapshot is not available in this article packet, so the only responsible judgment is on what the moved players have actually done since. "+[
-        "One Sunday can start an argument; it cannot finish a trade. I will keep the receipt where it belongs — nearby, not framed.",
-        "A trade without a complete historical valuation is not an invitation to invent one. The deal may age beautifully or like dairy in a glove compartment; for now the football has to speak.",
-        "NO FAKE WINNER GRAPHICS. THE RECEIPT EXISTS, THE FULL VALUE HISTORY DOES NOT. I CAN YELL ABOUT THE FOOTBALL AND WAIT ON THE VERDICT LIKE AN ADULT, ALLEGEDLY.",
-        "The transaction is verified; a complete at-trade valuation is not. I am not converting missing evidence into confidence just because confidence photographs well."
+        "For "+t.team_name+" in "+scope+", one Sunday can start an argument; it cannot finish a trade. I will keep this receipt nearby, not framed.",
+        "For "+t.team_name+" in "+scope+", a missing historical valuation is not an invitation to invent one. This deal may age beautifully or like dairy in a glove compartment; for now the football has to speak.",
+        "FOR "+t.team_name.toUpperCase()+" IN "+scope.toUpperCase()+", NO FAKE WINNER GRAPHICS. THE RECEIPT EXISTS, THE FULL VALUE HISTORY DOES NOT, AND I CAN WAIT ON THE VERDICT LIKE AN ADULT, ALLEGEDLY.",
+        "For "+t.team_name+" in "+scope+", the transaction is verified while a complete at-trade valuation is not. I am not converting missing evidence into confidence just because confidence photographs well."
       ][v]);
       continue;
     }
@@ -2093,16 +2093,28 @@ function tradeCommentaryV32(t,r,facts={}){
     if(!own||!others.length)continue;
     const other=others[0],otherName=String(tr.team_names?.[String(other.roster_id)]||"the other side"),
       ownAssets=tradeSideAssetNamesV32(t,facts,own),otherAssets=tradeSideAssetNamesV32(t,facts,other);
-    paragraphs.push(t.team_name+" received "+(naturalJoin(ownAssets)||"no listed player asset")+"; "+otherName+" received "+(naturalJoin(otherAssets)||"no listed player asset")+". This is the actual trade record, not the version reconstructed after somebody had a good Sunday.");
-    const valueParts=tradeValueReadV32(t.team_name,otherName,tradeThenTotalV32(own),tradeThenTotalV32(other),tradeCurrentTotalV32(own,facts),tradeCurrentTotalV32(other,facts));
+    const recordClose=[
+      "For "+t.team_name+" in "+scope+", that is the actual trade record; a hot Sunday does not get to rewrite the receipt.",
+      "In "+scope+", "+t.team_name+" gets the unfashionable luxury of the original receipt; Sunday theater may change the review, not the terms.",
+      "IN "+scope.toUpperCase()+", "+t.team_name.toUpperCase()+" GETS THE REAL RECEIPT. ONE LOUD SUNDAY MAY CHANGE THE HEADLINE, NOT WHO ACTUALLY CHANGED HANDS.",
+      "For "+t.team_name+" in "+scope+", those are the verified terms. Hindsight may change the finding, but it does not get to edit the evidence."
+    ][v];
+    paragraphs.push(t.team_name+" received "+(naturalJoin(ownAssets)||"no listed player asset")+"; "+otherName+" received "+(naturalJoin(otherAssets)||"no listed player asset")+". "+recordClose);
+    const valueParts=tradeValueReadV32(t.team_name,otherName,tradeThenTotalV32(own),tradeThenTotalV32(other),tradeCurrentTotalV32(own,facts),tradeCurrentTotalV32(other,facts),scope);
     const unresolved=[...(own.picks||[]),...(other.picks||[])].filter(p=>!p?.drafted_player_id).length;
     const ids=[...new Set([...(own.player_ids||[]),...(other.player_ids||[])].map(String))],statPlayers=ids.map(id=>facts?.[id]||t.transaction_player_facts?.[id]).filter(p=>p&&valid(p.points));
     const weekStats=statPlayers.length?focusedPlayerStatsV32(statPlayers):"";
+    const unresolvedNote=unresolved?[
+      " "+t.team_name+" still has "+unresolved+" unresolved draft-pick outcome"+(unresolved===1?"":"s")+" in this "+scope+" receipt, so the hindsight verdict remains provisional.",
+      " "+scope+" still owes "+t.team_name+" and "+otherName+" resolution on "+unresolved+" pick outcome"+(unresolved===1?"":"s")+"; the champagne can remain heroically corked.",
+      " "+unresolved+" PICK OUTCOME"+(unresolved===1?" IS":"S ARE")+" STILL OPEN FOR "+t.team_name.toUpperCase()+" IN "+scope.toUpperCase()+", SO NOBODY GETS A WINNER BANNER YET.",
+      " The "+scope+" record still has "+unresolved+" unresolved pick outcome"+(unresolved===1?"":"s")+" attached to "+t.team_name+", which keeps my hindsight finding provisional."
+    ][v]:"";
     const close=[
-      "The deal can be judged in layers: price paid, value now, and football actually delivered. "+(valueParts.length?valueParts.join(" "):"The market layer is incomplete, so I am not pretending the receipt says more than it does.")+(unresolved?" "+unresolved+" draft pick outcome"+(unresolved===1?" is":"s are")+" still unresolved, which keeps the hindsight verdict provisional.":"")+" "+(weekStats?"This week’s moved-player lines: "+weekStats+" ":"")+"I am comfortable calling the direction when the evidence agrees; I am not calling a parade over one data point.",
-      "A trade ages in public, which is cruel and therefore useful. "+(valueParts.length?valueParts.join(" "):"The valuation history is incomplete enough that a tuxedo would not make the conclusion respectable.")+(unresolved?" "+unresolved+" pick outcome"+(unresolved===1?" remains":"s remain")+" unsettled, so the champagne stays corked.":"")+" "+(weekStats?"The moved players supplied these current lines: "+weekStats+" ":"")+"I will happily mock a bad deal once the evidence earns the insult; premature elegance is still premature.",
-      "TRADE RECEIPT, NOW WITH CONSEQUENCES. "+(valueParts.length?valueParts.join(" "):"THE VALUE HISTORY IS NOT COMPLETE ENOUGH FOR A WINNER BANNER, SO PUT THE CONFETTI BACK.")+(unresolved?" "+unresolved+" PICK OUTCOME"+(unresolved===1?" IS":"S ARE")+" STILL OPEN.":"")+" "+(weekStats?"CURRENT MOVED-PLAYER LINES: "+weekStats+" ":"")+"I WILL CALL A FLEECE WHEN THE RECEIPT EARNS IT. UNTIL THEN, EVERYBODY KEEP THEIR SCREENSHOTS HOLSTERED.",
-      "The useful judgment is the change between the original terms and what those assets are worth now. "+(valueParts.length?valueParts.join(" "):"That comparison is incomplete here, so the record stays open rather than conveniently decisive.")+(unresolved?" "+unresolved+" unresolved pick outcome"+(unresolved===1?" keeps":"s keep")+" the hindsight finding provisional.":"")+" "+(weekStats?"Current moved-player evidence: "+weekStats+" ":"")+"I will update the conclusion when the evidence changes; certainty is not a substitute for missing rows."
+      "For "+t.team_name+" in "+scope+", the deal gets judged in layers: price paid, value now, and football actually delivered. "+(valueParts.length?valueParts.join(" "):"The "+scope+" market layer is incomplete, so I am not pretending this receipt says more than it does.")+unresolvedNote+" "+(weekStats?"This week’s moved-player lines for "+t.team_name+": "+weekStats+" ":"")+"With this "+scope+" deal, I will call the direction when the evidence agrees; one data point does not get a parade.",
+      "A "+scope+" trade involving "+t.team_name+" ages in public, which is cruel and therefore useful. "+(valueParts.length?valueParts.join(" "):"The "+scope+" valuation history is incomplete enough that even my best tailoring cannot make the conclusion respectable.")+unresolvedNote+" "+(weekStats?"The current moved-player lines around "+t.team_name+": "+weekStats+" ":"")+"When this "+scope+" evidence earns an insult, I will provide one; premature elegance is still premature.",
+      "TRADE RECEIPT FOR "+t.team_name.toUpperCase()+" IN "+scope.toUpperCase()+", NOW WITH CONSEQUENCES. "+(valueParts.length?valueParts.join(" "):"THE "+scope.toUpperCase()+" VALUE HISTORY IS NOT COMPLETE ENOUGH FOR A WINNER BANNER, SO THE CONFETTI STAYS IN THE BAG.")+unresolvedNote+" "+(weekStats?"CURRENT MOVED-PLAYER LINES AROUND "+t.team_name.toUpperCase()+": "+weekStats+" ":"")+"FOR THIS "+scope.toUpperCase()+" DEAL, I WILL CALL A FLEECE WHEN THE RECEIPT EARNS IT; UNTIL THEN, SCREENSHOTS STAY HOLSTERED.",
+      "For "+t.team_name+" in "+scope+", the useful judgment is the change between the original terms and what those assets are worth now. "+(valueParts.length?valueParts.join(" "):"This "+scope+" comparison is incomplete, so the record stays open rather than conveniently decisive.")+unresolvedNote+" "+(weekStats?"Current moved-player evidence tied to "+t.team_name+": "+weekStats+" ":"")+"On this "+scope+" transaction I will update the conclusion when the evidence changes; certainty is not a substitute for missing rows."
     ][v];
     paragraphs.push(close.replace(/\s+/g," ").trim());
   }

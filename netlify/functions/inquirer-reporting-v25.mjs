@@ -626,12 +626,18 @@ function bartholomewPlayerBoard(teams){
     return x.p.name+" gave "+x.t.team_name+" the kind of familiar production that makes an opponent miserable because there was no surprise to solve. "+(stat||"")+" "+(won?opp+" knew what was coming and still had to live with it.":opp+" survived it, which makes the rest of "+x.t.team_name+" the more uncomfortable part of the review.");
   };
   if(bo.length||bd.length){
-    const picks=[...bo,...bd];
-    ps.push("Bartholomew’s breakout watch belongs to "+naturalJoin(picks.map(x=>x.p.name))+". "+picks.map(breakoutLine).join(" "));
+    const picks=[...bo,...bd],lead=[];
+    if(bo.length>=2)lead.push("On offense, "+bo[0].p.name+" and "+bo[1].p.name+" get the breakout-watch invitations.");
+    else if(bo.length===1)lead.push("On offense, "+bo[0].p.name+" gets the breakout-watch invitation.");
+    if(bd.length)lead.push("On defense, "+bd[0].p.name+" gets the watch list.");
+    ps.push(lead.join(" ")+" "+picks.map(breakoutLine).join(" "));
   }
   if(ro.length||rd.length){
-    const picks=[...ro,...rd];
-    ps.push("The veterans and established producers worth trusting after Week 1 are "+naturalJoin(picks.map(x=>x.p.name))+". "+picks.map(reliableLine).join(" "));
+    const picks=[...ro,...rd],lead=[];
+    if(ro.length>=2)lead.push("On offense, "+ro[0].p.name+" and "+ro[1].p.name+" are the two offensive reliability names Bartholomew trusts.");
+    else if(ro.length===1)lead.push("On offense, "+ro[0].p.name+" is Bartholomew’s reliability name.");
+    if(rd.length)lead.push("On defense, "+rd[0].p.name+" gets the same designation.");
+    ps.push(lead.join(" ")+" "+picks.map(reliableLine).join(" "));
   }
   return ps;
 }

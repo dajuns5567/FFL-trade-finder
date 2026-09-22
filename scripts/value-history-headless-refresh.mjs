@@ -130,7 +130,7 @@ try{
       const vh=window.valueHistoryV331;
       const status=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();
       const busy=/loading|updating|refreshing/.test(status);
-      return Object.keys(players).length>=700&&sleeper?.complete===true&&consensus?.complete===true&&consensus?.ok===true&&Number(consensus?.successful)>=7&&refresh?.inFlight!==true&&modeled?.ready===true&&!busy&&typeof vh?.currentRows==='function';
+      return Object.keys(players).length>=700&&sleeper?.complete===true&&consensus?.complete===true&&consensus?.ok===true&&Number(consensus?.successful)>=7&&refresh?.inFlight===false&&refresh?.phase==='complete'&&modeled?.ready===true&&!busy&&typeof vh?.currentRows==='function';
     },null,{timeout:240000});
   }catch(e){
     const readiness=await page.evaluate(()=>{
@@ -144,6 +144,7 @@ try{
         valueRefresh:window.__fllValueRefresh||null,
         modeledReady:window.modeledPlayerValuesV319?.ready===true,
         modeledMeta:window.modeledPlayerValuesV319?.meta||null,
+        modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,
         consensusSources:Object.values(rankings).filter(src=>(Number(src?.playerCount)||Object.keys(src?.data||{}).length)>0).length,
         valueHistoryApi:!!window.valueHistoryV331,
         hasCurrentRows:typeof window.valueHistoryV331?.currentRows==='function',
@@ -164,6 +165,7 @@ try{
       valueRefresh:window.__fllValueRefresh||null,
       modeledReady:window.modeledPlayerValuesV319?.ready===true,
       modeledMeta:window.modeledPlayerValuesV319?.meta||null,
+      modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,
       consensusSources:Object.values(rankings).filter(src=>(Number(src?.playerCount)||Object.keys(src?.data||{}).length)>0).length,
       status:String(document.getElementById('updateStatus')?.textContent||'')
     };
@@ -176,7 +178,14 @@ try{
     let picks=[];let teams=[];
     try{picks=typeof vh.currentPickRows==='function'?vh.currentPickRows():[]}catch{}
     try{teams=typeof vh.currentTeamRows==='function'?vh.currentTeamRows(rows):[]}catch{}
-    return {rows,picks,teams,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,status:String(document.getElementById('updateStatus')?.textContent||'')};
+    const canonical=window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
+    const valueParityMismatches=[];
+    for(const r of rows){
+      const canonicalValue=Math.round(Number(canonical.playerValue?.({type:'player',id:String(r.id)})||0));
+      if(!Number.isFinite(canonicalValue)||canonicalValue!==Number(r.value))valueParityMismatches.push({id:String(r.id),history:Number(r.value),canonical:canonicalValue});
+      if(valueParityMismatches.length>=20)break;
+    }
+    return {rows,picks,teams,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
   });
   const sameRows=(a,b)=>{
     if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
@@ -191,20 +200,21 @@ try{
     const first=await captureCurrent();
     await page.waitForTimeout(1500);
     const second=await captureCurrent();
-    const stable=sameRows(first.rows,second.rows)&&second.refresh?.inFlight!==true&&second.modeledReady===true&&!/loading|updating|refreshing/i.test(second.status||'');
+    const stable=sameRows(first.rows,second.rows)&&first.modeledVersion===second.modeledVersion&&second.refresh?.inFlight===false&&second.refresh?.phase==='complete'&&second.modeledReady===true&&!second.valueParityMismatches?.length&&!/loading|updating|refreshing/i.test(second.status||'');
     if(stable){captured=second;break}
     if(attempt<3)await page.waitForTimeout(2000);
   }
   if(!captured)throw new Error('Scheduled capture never reached a stable canonical player-row state');
   if(!Array.isArray(captured.rows)||captured.rows.length<700)throw new Error(`Scheduled capture returned only ${captured.rows?.length||0} player rows`);
   if(captured.rows.some(r=>!Number.isFinite(Number(r?.value))||!Number.isFinite(Number(r?.overall))))throw new Error('Scheduled capture contains non-finite player values/ranks');
+  if(captured.valueParityMismatches?.length)throw new Error(`Scheduled capture diverged from canonical Player Values scale: ${JSON.stringify(captured.valueParityMismatches)}`);
 
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
   const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
 
-  console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,pageErrors:pageErrors.length,failedRequests:failedRequests.length,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
+  console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,canonicalParity:'exact',modeledVersion:captured.modeledVersion,pageErrors:pageErrors.length,failedRequests:failedRequests.length,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
 }finally{
   await browser.close();
   await new Promise(resolve=>server.close(resolve));

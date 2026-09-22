@@ -3178,7 +3178,7 @@ export function expandWeeklyRecapV25(o,teams,week){
   if(backPageParagraphs[0]==='n/a')backPageParagraphs.splice(0,1);
   backPageParagraphs.push(tillyRecapRead);
   if(backPageBlocks.length)backPageBlocks.push({heading:'AFTER THE RECEIPTS',paragraphs:[tillyRecapRead]});
-  const filchRecapRead=chosen.length?chosen[0].loser.team_name+" is the team Filch would least like to hear giving itself a tidy explanation. "+chosen[0].winner.team_name+" already showed where the matchup broke, and the loser now has to prove that weakness belonged to one Sunday instead of the roster. The next opponent will not care how persuasive the postgame story sounded. It will simply attack the same place until somebody stops it.":"Filch leaves Week 1 with one rule: the next opponent will attack whatever looked weakest, whether management has finished explaining it or not.";
+  const filchRecapRead=chosen.length?chosen[0].loser.team_name+" is the team Filch would least like to hear giving itself a tidy explanation. "+chosen[0].winner.team_name+" already showed where the matchup broke; the evidence is sitting in plain sight, and the loser now has to prove that weakness belonged to one Sunday instead of the roster. The next opponent will not care how persuasive the postgame story sounded. It will simply attack the same place until somebody stops it.":"Filch leaves Week 1 with one rule in the file: the next opponent will attack whatever looked weakest, whether management has finished explaining it or not.";
   nextParagraphs.push(filchRecapRead);
   if(nextBlocks.length)nextBlocks.push({heading:'What Still Needs Proving',paragraphs:[filchRecapRead]});
   const sections=[

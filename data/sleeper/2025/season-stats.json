@@ -15626,6 +15626,28 @@
     "fgm_50p": 1,
     "penalty": 1
   },
+  "7974": {
+    "gp": 11,
+    "_ppr_native_weeks": 0,
+    "_ppr_reconstructed_weeks": 0,
+    "def_snp": 421,
+    "gs": 4,
+    "pos_rank_half_ppr": 10989,
+    "pos_rank_ppr": 10989,
+    "pos_rank_std": 10989,
+    "st_snp": 97,
+    "tm_def_snp": 679,
+    "tm_off_snp": 748,
+    "tm_st_snp": 306,
+    "idp_tkl": 24,
+    "idp_tkl_solo": 16,
+    "pts_idp": 46,
+    "idp_tkl_ast": 8,
+    "penalty": 3,
+    "penalty_yd": 37,
+    "idp_pass_def": 2,
+    "st_tkl_solo": 1
+  },
   "7979": {
     "gp": 16,
     "_ppr_native_weeks": 0,

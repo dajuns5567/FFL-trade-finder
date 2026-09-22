@@ -168,6 +168,59 @@ function teamStatLine(p){
   const line=String(p?.real_stat_line||'').split(/\s*•\s*|\s*,\s*/).map(x=>x.trim()).filter(x=>x&&!/\b(?:def(?:ensive)?\s+)?snaps?\b/i.test(x)).join(', ');return line?`${n} finished with ${line}.`:null;
 }
 
+
+function focusedPlayerStatsV32(players){
+  return (players||[]).filter(Boolean).map(p=>{
+    const fp=valid(p?.points)?one(p.points)+" fantasy points":null,clause=statClause(p);
+    if(fp&&clause)return p.name+": "+fp+"; "+clause+".";
+    if(fp)return p.name+": "+fp+".";
+    if(clause)return p.name+": "+clause+".";
+    return p.name+".";
+  }).join(" ");
+}
+
+function playerEditorialReadV32(t,r,f=articleFrameV29(t,r)){
+  const trio=[f.top,f.second,f.third].filter(Boolean),team=teamIdentityV28(t).mascot;
+  if(trio.length<2)return null;
+  const establishedSupport=trio.slice(1).find(p=>establishedStarV29(p)),twoWay=trio.some(defensivePlayer)&&trio.some(p=>!defensivePlayer(p)),
+    concentrated=Number(f.share)>=.7,names=naturalJoin(trio.map(p=>p.name)),v=voice(r);
+  if(v===0){
+    if(establishedSupport)return establishedSupport.name+" showing up as support instead of emergency rescue is the part worth keeping. "+names+" give "+team+" more than one independent way to build a winning score, which makes one ordinary star week less dangerous. I have seen worse roster problems. Usually on purpose.";
+    if(twoWay)return names+" gave "+team+" production from both sides of the lineup. That matters because an IDP eruption did not have to cover for an empty offense, or vice versa. Depth that travels across positions is harder to game-plan around than one hot hand, inconveniently enough for everybody else.";
+    if(concentrated)return names+" did enough of the scoring that the compliment comes with a warning label. The stars are real; the lower half still has to prove it can survive one merely normal Sunday from the top of the card. Nothing ruins a nice September clipping like discovering it needed three perfect performances.";
+    return names+" gave "+team+" a genuinely layered scoring base. The useful takeaway is not that several players scored; it is that the roster had multiple ways to reach the same result. That is how a good week starts looking repeatable instead of lucky.";
+  }
+  if(v===1){
+    if(establishedSupport)return establishedSupport.name+" functioning as a luxury rather than a life raft is the indulgence here. "+names+" force opponents to wait for several good players to fail at once, an awfully rude requirement. I would call that roster leverage before I called it beautiful, though it is flirting with both.";
+    if(twoWay)return names+" turned "+team+" into a two-sided nuisance: offense and IDP both supplied real leverage. A roster that can win from different rooms of the house is harder to embarrass when one chandelier falls. How disappointingly practical.";
+    if(concentrated)return names+" supplied a glamorous amount of the total, which is exactly why the quiet chairs still deserve inspection. A top-heavy lineup is exquisite until one star has the indecency to be human.";
+    return names+" gave "+team+" an ensemble instead of a recital. The important part is that the paths to production were different enough to survive one performer missing a note. I hate to reward practicality, but here we are.";
+  }
+  if(v===2){
+    if(establishedSupport)return establishedSupport.name.toUpperCase()+" AS THE SUPPORTING LUXURY IS THE SCARY PART. "+names.toUpperCase()+" GIVE "+team.toUpperCase()+" MULTIPLE WAYS TO HURT SOMEBODY, SO ONE QUIET STAR WEEK DOES NOT AUTOMATICALLY BECOME A FIRE DRILL. I WOULD LIKE TO FILE A COMPLAINT ON BEHALF OF THE SCHEDULE.";
+    if(twoWay)return names.toUpperCase()+" HIT FROM OFFENSE AND IDP. THAT IS NOT JUST THREE NICE BOX-SCORE LINES; IT IS THREE DIFFERENT WAYS TO RUIN AN OPPONENT'S SUNDAY. VERY INCONSIDERATE. KEEP IT.";
+    if(concentrated)return names.toUpperCase()+" DID A LOT OF THE HEAVY LIFTING. GREAT. NOW THE REST OF "+team.toUpperCase()+" HAS TO PROVE THIS IS A LINEUP AND NOT THREE PEOPLE RUNNING A RESCUE MISSION WITH MATCHING UNIFORMS.";
+    return names.toUpperCase()+" GAVE "+team.toUpperCase()+" REAL SCORING WIDTH. NOT ONE MIRACLE, NOT ONE LUCKY BUTTON, MULTIPLE USEFUL PATHS. I AM TRYING TO BE NORMAL ABOUT IT AND FAILING.";
+  }
+  if(establishedSupport)return establishedSupport.name+" appearing as support instead of the sole source of oxygen changes the risk profile for "+team+". "+names+" create several independent scoring paths, so an opponent needs more than one favorable failure to crack the lineup. I am comfortable calling that meaningful leverage; I am not issuing immunity from next week.";
+  if(twoWay)return names+" produced across offensive and IDP lanes, which makes the "+team+" total harder to dismiss as one isolated spike. Different sources of production reduce the chance that one role failure collapses the whole case. Annoyingly, the evidence is fairly clean.";
+  if(concentrated)return names+" carried enough of the "+team+" total to create a dependency question alongside the praise. The evidence supports the stars; it does not yet clear the quieter lineup spots. One normal week from the leaders will test that distinction quickly.";
+  return names+" gave "+team+" several independent sources of useful production. That is stronger evidence than a single ceiling game because the lineup did not need one player to explain everything. I will still be checking whether the same roles survive contact with Week 2.";
+}
+
+function deMetaReporterFunctionsV32(value,r){
+  let text=String(value??"");
+  const id=String(r?.id||"");
+  const banks={
+    "walter-mercer":[[/\bNick’s\b/g,"my"],[/\bNick will\b/g,"I’ll"],[/\bNick wants\b/g,"I want"],[/\bNick sees\b/g,"I see"],[/\bNick circles\b/g,"I circle"],[/\bleaves Nick watching\b/g,"leaves me watching"],[/\bgets Nick’s\b/g,"gets my"]],
+    "tess-delaney":[[/\bBartholomew’s\b/g,"my"],[/\bBartholomew will\b/g,"I’ll"],[/\bBartholomew would\b/g,"I would"],[/\bBartholomew can\b/g,"I can"],[/\bBartholomew accepts\b/g,"I accept"],[/\bBartholomew respects\b/g,"I respect"],[/\bgave Bartholomew\b/g,"gave me"],[/\bleaves Bartholomew\b/g,"leaves me"]],
+    "mack-hollis":[[/\bTilly’s\b/g,"my"],[/\bTilly starts\b/g,"I start"],[/\bTilly does\b/g,"I do"],[/\bTilly would\b/g,"I would"],[/\bTilly resents\b/g,"I resent"]],
+    "nora-voss":[[/\bFilch’s\b/g,"my"],[/\bFilch would\b/g,"I would"],[/\bFilch recommends\b/g,"I recommend"],[/\bFilch enters\b/g,"I enter"],[/\bFilch treats\b/g,"I treat"],[/\bFilch does\b/g,"I do"],[/\bFilch starts\b/g,"I start"]]
+  };
+  for(const [re,to] of banks[id]||[])text=text.replace(re,to);
+  return text;
+}
+
 function teamUsageComment(t,p,angle='star'){
   const o=teamOpportunity(p);if(!o)return null;
   if(o.limited_snap)return keyedChoice(`${p.id||p.name}:${angle}:limited`,[`${p.name} squeezed that production out of only ${o.snaps} defensive snaps.`,`${p.name} did all of that in a genuinely limited defensive role.`]);
@@ -1916,7 +1969,8 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
     ]
   ][v];
   while(ps.length<3)ps.push(keyedChoice(`${t.roster_id}:filler:${ps.length}:${r?.id}`,fillerBanks));
-  return ps.slice(0,3);
+  const editorial=playerEditorialReadV32(t,r,f);if(editorial)ps.push(editorial);
+  return ps.slice(0,4);
 }
 
 function coolThroneV29(t,r,f=articleFrameV29(t,r)){
@@ -1967,6 +2021,95 @@ function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
   if(f.won)return `The formal record for ${team} is ${rec}, ${rank}. ${p!=null?`A ${one(p)}% playoff estimate corroborates the expectation already attached to the roster; one win did not create it.`:'The win enters as one favorable exhibit.'}`;
   if(high)return `The formal record for ${team} is ${rec}, ${rank}. A ${one(p)}% playoff estimate remains favorable, so the loss is not disqualifying; it is an avoidable adverse exhibit inside a still-strong case.`;
   return `The formal record for ${team} is ${rec}, ${rank}. ${p!=null?`The ${one(p)}% playoff estimate gives the loss its proper weight without exaggerating it.`:'The loss is one adverse exhibit, and the next result determines whether it gains company.'}`;
+}
+
+
+function tradePlayerNameV32(t,facts,id){
+  return String(facts?.[String(id)]?.name||t?.transaction_player_facts?.[String(id)]?.name||id);
+}
+function tradePickLabelV32(t,facts,p){
+  const season=String(p?.season||"Future"),round=Number(p?.round)||"?";
+  if(p?.drafted_player_id){
+    const name=tradePlayerNameV32(t,facts,p.drafted_player_id),slot=Number(p?.pick_no);
+    return season+" Round "+round+" pick"+(name?" (became "+name+(slot?" at "+season+" "+String(Math.floor((slot-1)/32)+1)+"."+String(((slot-1)%32)+1).padStart(2,"0"):"")+")":"");
+  }
+  return season+" Round "+round+" pick";
+}
+function tradeSideAssetNamesV32(t,facts,side){
+  const players=(side?.player_ids||[]).map(id=>tradePlayerNameV32(t,facts,id)),picks=(side?.picks||[]).map(p=>tradePickLabelV32(t,facts,p));
+  return [...players,...picks];
+}
+function tradeThenTotalV32(side){
+  const picks=side?.picks||[];
+  if(!side?.then_players_complete||!Number.isFinite(Number(side?.then_player_total)))return null;
+  if(picks.length&&(!side?.then_picks_complete||!Number.isFinite(Number(side?.then_pick_total))))return null;
+  return Number(side.then_player_total)+(picks.length?Number(side.then_pick_total):0);
+}
+function tradeCurrentTotalV32(side,facts){
+  if(!side?.current_players_complete||!Number.isFinite(Number(side?.current_player_total)))return null;
+  let total=Number(side.current_player_total);
+  for(const p of side?.picks||[]){
+    if(!p?.drafted_player_id)return null;
+    const v=Number(facts?.[String(p.drafted_player_id)]?.value);
+    if(!Number.isFinite(v))return null;
+    total+=v;
+  }
+  return total;
+}
+function tradeValueReadV32(teamName,otherName,thenOwn,thenOther,nowOwn,nowOther){
+  const fmt=n=>Math.round(Number(n)).toLocaleString("en-US"),parts=[];
+  if(Number.isFinite(thenOwn)&&Number.isFinite(thenOther)){
+    const edge=thenOwn-thenOther,who=edge>0?teamName:edge<0?otherName:"neither side";
+    parts.push("At the recorded trade snapshot, "+teamName+" held "+fmt(thenOwn)+" of captured value against "+fmt(thenOther)+" for "+otherName+(edge===0?", essentially even.":", an early market lean toward "+who+" by "+fmt(Math.abs(edge))+"."));
+  }
+  if(Number.isFinite(nowOwn)&&Number.isFinite(nowOther)){
+    const edge=nowOwn-nowOther,who=edge>0?teamName:edge<0?otherName:"neither side";
+    parts.push("Using current player values and resolved drafted-player outcomes, the same ledger sits at "+fmt(nowOwn)+" to "+fmt(nowOther)+(edge===0?", still level.":", now leaning toward "+who+" by "+fmt(Math.abs(edge))+"."));
+    if(Number.isFinite(thenOwn)&&Number.isFinite(thenOther)){
+      const before=Math.sign(thenOwn-thenOther),after=Math.sign(edge);
+      if(before&&after&&before!==after)parts.push("That is a genuine flip from the original value read, not just the same argument with fresher numbers.");
+      else if(before===after&&after)parts.push("The direction of the original value edge has held; only the size of the argument has changed.");
+    }
+  }
+  return parts;
+}
+function tradeCommentaryV32(t,r,facts={}){
+  const moves=consolidateTransactions(t).filter(m=>String(m?.type||"").toLowerCase()==="trade");
+  if(!moves.length)return [];
+  const history=t.trade_history||[],v=voice(r),paragraphs=[];
+  for(const move of moves.slice(0,2)){
+    const tr=history.find(x=>String(x?.id||"")===String(move?.id||""))||null;
+    if(!tr){
+      const adds=(move.adds||[]).map(id=>tradePlayerNameV32(t,facts,id)),drops=(move.drops||[]).map(id=>tradePlayerNameV32(t,facts,id));
+      paragraphs.push((adds.length?t.team_name+" acquired "+naturalJoin(adds):t.team_name+" made a trade")+(drops.length?" and sent out "+naturalJoin(drops):"")+". The historical value snapshot is not available in this article packet, so the only responsible judgment is on what the moved players have actually done since. "+[
+        "One Sunday can start an argument; it cannot finish a trade. I will keep the receipt where it belongs — nearby, not framed.",
+        "A trade without a complete historical valuation is not an invitation to invent one. The deal may age beautifully or like dairy in a glove compartment; for now the football has to speak.",
+        "NO FAKE WINNER GRAPHICS. THE RECEIPT EXISTS, THE FULL VALUE HISTORY DOES NOT. I CAN YELL ABOUT THE FOOTBALL AND WAIT ON THE VERDICT LIKE AN ADULT, ALLEGEDLY.",
+        "The transaction is verified; a complete at-trade valuation is not. I am not converting missing evidence into confidence just because confidence photographs well."
+      ][v]);
+      continue;
+    }
+    const own=(tr.sides||[]).find(s=>String(s?.roster_id)===String(t.roster_id)),others=(tr.sides||[]).filter(s=>String(s?.roster_id)!==String(t.roster_id));
+    if(!own||!others.length)continue;
+    const other=others[0],otherName=String(tr.team_names?.[String(other.roster_id)]||"the other side"),
+      ownAssets=tradeSideAssetNamesV32(t,facts,own),otherAssets=tradeSideAssetNamesV32(t,facts,other);
+    paragraphs.push(t.team_name+" received "+(naturalJoin(ownAssets)||"no listed player asset")+"; "+otherName+" received "+(naturalJoin(otherAssets)||"no listed player asset")+". This is the actual trade record, not the version reconstructed after somebody had a good Sunday.");
+    const valueParts=tradeValueReadV32(t.team_name,otherName,tradeThenTotalV32(own),tradeThenTotalV32(other),tradeCurrentTotalV32(own,facts),tradeCurrentTotalV32(other,facts));
+    const unresolved=[...(own.picks||[]),...(other.picks||[])].filter(p=>!p?.drafted_player_id).length;
+    const ids=[...new Set([...(own.player_ids||[]),...(other.player_ids||[])].map(String))],statPlayers=ids.map(id=>facts?.[id]||t.transaction_player_facts?.[id]).filter(p=>p&&valid(p.points));
+    const weekStats=statPlayers.length?focusedPlayerStatsV32(statPlayers):"";
+    const close=[
+      "The deal can be judged in layers: price paid, value now, and football actually delivered. "+(valueParts.length?valueParts.join(" "):"The market layer is incomplete, so I am not pretending the receipt says more than it does.")+(unresolved?" "+unresolved+" draft pick outcome"+(unresolved===1?" is":"s are")+" still unresolved, which keeps the hindsight verdict provisional.":"")+" "+(weekStats?"This week’s moved-player lines: "+weekStats+" ":"")+"I am comfortable calling the direction when the evidence agrees; I am not calling a parade over one data point.",
+      "A trade ages in public, which is cruel and therefore useful. "+(valueParts.length?valueParts.join(" "):"The valuation history is incomplete enough that a tuxedo would not make the conclusion respectable.")+(unresolved?" "+unresolved+" pick outcome"+(unresolved===1?" remains":"s remain")+" unsettled, so the champagne stays corked.":"")+" "+(weekStats?"The moved players supplied these current lines: "+weekStats+" ":"")+"I will happily mock a bad deal once the evidence earns the insult; premature elegance is still premature.",
+      "TRADE RECEIPT, NOW WITH CONSEQUENCES. "+(valueParts.length?valueParts.join(" "):"THE VALUE HISTORY IS NOT COMPLETE ENOUGH FOR A WINNER BANNER, SO PUT THE CONFETTI BACK.")+(unresolved?" "+unresolved+" PICK OUTCOME"+(unresolved===1?" IS":"S ARE")+" STILL OPEN.":"")+" "+(weekStats?"CURRENT MOVED-PLAYER LINES: "+weekStats+" ":"")+"I WILL CALL A FLEECE WHEN THE RECEIPT EARNS IT. UNTIL THEN, EVERYBODY KEEP THEIR SCREENSHOTS HOLSTERED.",
+      "The useful judgment is the change between the original terms and what those assets are worth now. "+(valueParts.length?valueParts.join(" "):"That comparison is incomplete here, so the record stays open rather than conveniently decisive.")+(unresolved?" "+unresolved+" unresolved pick outcome"+(unresolved===1?" keeps":"s keep")+" the hindsight finding provisional.":"")+" "+(weekStats?"Current moved-player evidence: "+weekStats+" ":"")+"I will update the conclusion when the evidence changes; certainty is not a substitute for missing rows."
+    ][v];
+    paragraphs.push(close.replace(/\s+/g," ").trim());
+  }
+  return paragraphs;
+}
+function tradeCommentaryHeadingV32(r){
+  return ["Trade Receipt: What the Deal Looks Like Now","Trade Receipt: How the Exchange Has Aged","TRADE RECEIPT — NO HIDING FROM THE SCREENSHOT","Trade Receipt: Terms, Outcomes and What Still Is Not Settled"][voice(r)];
 }
 
 function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
@@ -2405,7 +2548,12 @@ export function humanSectionsV25(args){
     paragraphs=(c.kind==='management'?paragraphs:restoreSectionFullNamesV30(t,paragraphs)).map(p=>repairPlayerNameCollisionsV31(t,p));
     return {...f,...c,heading:headingV28(t,args.reporter,c.kind,c.heading,frame.angle),paragraphs:paragraphs.length?paragraphs:['n/a']};
   });
-  const state={count:0},aliased=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,p,state)))}));
+  const state={count:0},aliased=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>deMetaReporterFunctionsV32(repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,p,state)),args.reporter))}));
+  const tradeParagraphs=tradeCommentaryV32(t,args.reporter,facts).map(p=>deMetaReporterFunctionsV32(repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,naturalizePlayerReferences(t,p),state)),args.reporter));
+  if(tradeParagraphs.length){
+    const managementIndex=aliased.findIndex(s=>s.kind==="management"),tradeSection={kind:"trade-commentary",heading:tradeCommentaryHeadingV32(args.reporter),paragraphs:tradeParagraphs};
+    aliased.splice(managementIndex>=0?managementIndex:aliased.length,0,tradeSection);
+  }
   return dedupeArticleSectionsV29(dedupeArticleSections(aliased),t);
 }
 
@@ -2458,8 +2606,8 @@ function matchupRead(g,slot=0){
 }
 
 function gameStory(g,slot=0){
-  const star=list(g.winner)[0],loserStar=list(g.loser)[0],winnerSupport=list(g.winner)[1],loserMiss=list(g.loser).filter(p=>delta(p)!=null).sort((a,b)=>delta(a)-delta(b))[0],starContext=star?playerContextParagraph(star):'',starTrajectory=star?playerTrajectory(star):null,loserContext=loserStar?playerContextParagraph(loserStar):'',projectionContext=g.upset?' '+g.winner.team_name+' entered as the projected underdog and won anyway.':'';
-  const contextTail=(starContext?` ${starContext}`:'')+(starTrajectory?` ${starTrajectory.text}`:'')+(loserContext&&g.margin<=6?` On the other side, ${loserContext}`:'')+projectionContext+' '+matchupRead(g,slot);
+  const star=list(g.winner)[0],loserStar=list(g.loser)[0],winnerSupport=list(g.winner)[1],loserMiss=list(g.loser).filter(p=>delta(p)!=null).sort((a,b)=>delta(a)-delta(b))[0],starContext=star?playerContextParagraph(star):'',supportContext=winnerSupport?playerContextParagraph(winnerSupport):'',starTrajectory=star?playerTrajectory(star):null,loserContext=loserStar?playerContextParagraph(loserStar):'',loserMissContext=loserMiss&&loserMiss.name!==loserStar?.name?playerContextParagraph(loserMiss):'',projectionContext=g.upset?' '+g.winner.team_name+' entered as the projected underdog and won anyway.':'';
+  const contextTail=(starContext?` ${starContext}`:'')+(supportContext?` ${supportContext}`:'')+(starTrajectory?` ${starTrajectory.text}`:'')+(loserContext?` On the other side, ${loserContext}`:'')+(loserMissContext?` ${loserMissContext}`:'')+projectionContext+' '+matchupRead(g,slot);
   if(g.upset){
     const open=[
       g.winner.team_name+' delivered the projection upset that deserves the lead, beating '+g.loser.team_name+' '+one(g.winner.points)+'–'+one(g.loser.points)+'. ',
@@ -2579,11 +2727,14 @@ function weeklyMatchupHeading(g,isTop=false){
   return `${g.winner.team_name} vs. ${g.loser.team_name} — ${one(g.winner.points)}–${one(g.loser.points)}`;
 }
 function weeklyTopScorerStory(t,g){
-  const rows=list(t),top=rows[0],second=rows[1],third=rows[2],parts=[];
+  const rows=list(t),top=rows[0],second=rows[1],third=rows[2],trio=[top,second,third].filter(Boolean),parts=[];
   parts.push(`${t.team_name} set the league’s weekly scoring ceiling at ${one(t.points)}, a ${one(Number(t.points)-Number(t.opponent_points))}-point win over ${t.opponent_name}. Nobody in the league put more points on the board. Anyone objecting can take the argument to the scoreboard.`);
   if(top){
-    const ctx=statSituation(top);
-    parts.push(`${top.name} led the avalanche with ${one(top.points)} fantasy points${second?', with '+second.name+' right behind him':''}${third?', and '+third.name+' giving the lineup a third headliner':''}. ${ctx||''} ${second&&second.real_stat_line?second.name+' backed it with '+String(second.real_stat_line).replaceAll(' • ',', ')+'.':''} ${t.team_name} had three headliners instead of one miracle carrying the entire total.`.trim());
+    parts.push(focusedPlayerStatsV32(trio));
+    const supportStar=trio.slice(1).find(p=>establishedStarV29(p)),twoWay=trio.some(defensivePlayer)&&trio.some(p=>!defensivePlayer(p)),names=naturalJoin(trio.map(p=>p.name));
+    if(supportStar)parts.push(`${supportStar.name} being a supporting luxury instead of the emergency generator is the real flex here. ${names} give ${t.team_name} several independent ways to build a ceiling, so an opponent cannot simply wait for one star to cool off. That is lineup leverage, not a prettier way to recite three scores — and, yes, it is obnoxious.`);
+    else if(twoWay)parts.push(`${names} did their damage from both offensive and IDP spots. That matters because ${t.team_name} did not need one side of the lineup to bail out the other; the ceiling came from different roster lanes at once. Multiple failure points for the opponent is a much healthier problem than one weekly rescue act.`);
+    else parts.push(`${names} gave ${t.team_name} more than a pile of points: they gave the lineup separate ways to reach the same winning total. If one of those roles has an ordinary Sunday next week, the others can still carry useful weight. That is the difference between star power and simple dependency.`);
   }
   return parts;
 }
@@ -2631,7 +2782,7 @@ export function expandWeeklyRecapV25(o,teams,week){
       const ar=next.a.league_context?.record||{},br=next.b.league_context?.record||{},ap=valid(next.a.mida_outlook?.playoff)?one(next.a.mida_outlook.playoff):null,bp=valid(next.b.mida_outlook?.playoff)?one(next.b.mida_outlook.playoff):null,sameDiv=String(next.a.division||'')!==''&&String(next.a.division)===String(next.b.division);
       arr.push(`The larger stakes are already visible. ${next.a.team_name} enters at ${Number(ar.wins)||0}-${Number(ar.losses)||0}; ${next.b.team_name} is ${Number(br.wins)||0}-${Number(br.losses)||0}. ${sameDiv?'They share '+(next.a.division_name||'a division')+', so the winner helps itself while putting a direct rival one result further behind.':'They do not share a division, but both are still spending from the same finite regular-season runway.'}`);
       if(ap||bp)arr.push(`${ap?next.a.team_name+' has around '+ap+'% chance of reaching the playoffs':''}${ap&&bp?', while ':''}${bp?next.b.team_name+' is around '+bp+'%':''}. The winner can approach the following weeks with one more result already banked; the loser has to find that missing win somewhere else on the schedule.`);
-      arr.push(`Filch’s evidence file is simple: this matchup can change the tone of the road ahead before it changes anything permanent in the standings. Bank it, and the next close game arrives with less pressure. Waste it, and the schedule gets a little less forgiving — and the docket gets heavier.`);
+      arr.push(`My read is simple: this matchup can change the tone of the road ahead before it changes anything permanent in the standings. Bank it, and the next close game arrives with less pressure. Waste it, and the schedule gets less forgiving. Schedules are rude that way; they keep receipts without needing a detective metaphor.`);
       return arr
     })()]:['The next-week slate is not complete enough to identify a featured matchup without inventing certainty.'];
   const nextBlocks=next?[{heading:`${next.a.team_name} vs. ${next.b.team_name} — Week ${Number(week)+1} Spotlight`,paragraphs:nextParagraphs}]:[];
@@ -2640,6 +2791,6 @@ export function expandWeeklyRecapV25(o,teams,week){
     {reporter:reporter(1),heading:'The Velvet Rope: Form, Fortune and the Week’s Unfashionable Truths',paragraphs:velvet.length?velvet:['n/a']},
     {reporter:reporter(2),heading:'The Back Page Has Receipts',blocks:backPageBlocks,paragraphs:backPageParagraphs},
     {reporter:reporter(3),heading:'Next Week, Before Everyone Gets Smarter in Hindsight',blocks:nextBlocks,paragraphs:nextParagraphs}
-  ];
-  return {...o,inquirer_version:26,editorial_revision:3,sections};
+  ].map(s=>({...s,paragraphs:(s.paragraphs||[]).map(p=>deMetaReporterFunctionsV32(p,s.reporter)),blocks:(s.blocks||[]).map(b=>({...b,paragraphs:(b.paragraphs||[]).map(p=>deMetaReporterFunctionsV32(p,s.reporter))}))}));
+  return {...o,inquirer_version:26,editorial_revision:4,sections};
 }

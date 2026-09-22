@@ -2157,9 +2157,9 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       `${top.name} was the clearest successful piece of the ${team} week, worth ${one(top.points)} fantasy points. ${topFootball}`
     ],
     [
-      `${top.name} was the best individual ${team} performer at ${one(top.points)} fantasy points. ${topFootball}`,
-      `${top.name} drove the strongest ${team} player result with ${one(top.points)} fantasy points. ${topFootball}`,
-      `${top.name} gave ${team} its strongest individual line at ${one(top.points)} fantasy points. ${topFootball}`
+      `I keep coming back to ${top.name}, the best individual ${team} performer at ${one(top.points)} fantasy points. ${topFootball}`,
+      `I saw ${top.name} drive the strongest ${team} player result with ${one(top.points)} fantasy points. ${topFootball}`,
+      `I want the next opponent starting with ${top.name} after he gave ${team} its strongest individual line at ${one(top.points)} fantasy points. ${topFootball}`
     ],
     [
       `${top.name} was the first player who changed the shape of the ${team} matchup, finishing with ${one(top.points)} fantasy points. ${topFootball}`,

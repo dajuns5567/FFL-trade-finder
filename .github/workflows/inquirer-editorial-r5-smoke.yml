@@ -25,6 +25,8 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install generator dependency
+        run: npm install --no-save --package-lock=false @netlify/blobs
       - name: Syntax check active Inquirer
         run: |
           node --check netlify/functions/inquirer-reporting-v25.mjs

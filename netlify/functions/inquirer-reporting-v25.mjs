@@ -332,7 +332,8 @@ function playerStatInsightV33(t,p,r){
     won?'That is a football reason to like the result, not just a fantasy number to repost.':'That is still worth keeping from a bad team result; losing does not make every individual line bad.',
     won?'The evidence supports the player without requiring a broader roster conclusion.':'The team result is adverse; this individual result does not have to be.'
   ][v];
-  return (core+' '+close).replace(/\s+/g,' ').trim();
+  const flat=x=>String(x||'').replace(/\.\s+/g,'; ').replace(/\.$/,'').trim();
+  return (flat(core)+'; '+flat(close)+'.').replace(/\s+/g,' ').trim();
 }
 
 function losingRecordAsideV33(t,r){
@@ -1923,7 +1924,7 @@ function classificationSentenceV29(p,tr,r){
     [
       `${p.name} was already a star. This week added another strong line; it did not invent the player.`,
       `${p.name} is an established star, not a breakout case. The performance strengthens an existing résumé instead of creating a new one.`,
-      `${p.name} does not need a breakout label. He needed another strong Sunday, and he got one.`
+      `${p.name} does not need a breakout label. ${p.name} needed another strong Sunday, and he got one.`
     ],
     [
       `${p.name} entered with star status already supported by prior work; Sunday corroborates the ${playerContextLabelV33(p)} standard, making this confirmation and not a breakout investigation.`,
@@ -2109,7 +2110,8 @@ function teamDeepReadV34(t,r,f){
       'The next '+team+' file'+nextLabel+' should focus on whether a second stable role can reduce dependence on '+top.name+'. '+focus+' is the first place to look. A repeatable secondary contribution would improve the team-level floor more than another isolated ceiling game.'
     ][v];
   }
-  return [p1,p2].filter(Boolean);
+  const flatten=x=>String(x||'').replace(/\.\s+/g,'; ').replace(/\.$/,'').trim()+'.';
+  return [p1,p2].filter(Boolean).map(flatten);
 }
 
 function gameShapeV29(t,r,f=articleFrameV29(t,r)){
@@ -2242,7 +2244,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
     ps.push([
       `${bad.name} is the player Nick circles in the margin after finishing ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`The ${team} win buys one week of patience; another ${bad.name} miss becomes harder to dismiss.`:`${bad.name} stays in the main ${team} story because the team lost.`}${status?` ${status}`:''}`,
       `${bad.name} supplied the least convincing line of the main ${team} cast, landing ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?`The ${team} win keeps criticism of ${bad.name} measured for a week.`:`The loss makes ${bad.name}’s poor Sunday impossible to hide behind better performances.`}${status?` ${status}`:''}`,
-      `${bad.name} was the clearest problem: ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?'The win kept the miss from deciding the week.':'The loss made the shortfall matter directly.'}${status?` ${status}`:''}`,
+      `${bad.name} was the clearest problem: ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?`${bad.name}’s miss did not decide the ${team} win.`:`${bad.name}’s shortfall mattered directly in the ${team} loss.`}${status?` ${status}`:''}`,
       `${bad.name} is the adverse player finding, ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`${team} won despite the shortfall; that is mitigation rather than exoneration.`:`The ${team} loss gives ${bad.name}’s shortfall direct consequence.`}${status?` ${status}`:''}`
     ][v]+' '+(playerStatInsightV33(t,bad,r)||''));
   }

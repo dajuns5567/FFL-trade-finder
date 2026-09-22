@@ -1,0 +1,37 @@
+name: Value History Public Recovery Inspect
+
+on:
+  push:
+    branches:
+      - release/precision-idp-runtime-20260919
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect public preview Value History export
+        run: |
+          node --input-type=module <<'NODE'
+          const url='https://deploy-preview-385--inspiring-bombolone-be4489.netlify.app/.netlify/functions/value-history?archive_export=1';
+          const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
+          console.log('status',r.status);
+          const text=await r.text();
+          if(!r.ok){console.log(text.slice(0,2000));process.exit(1)}
+          const j=JSON.parse(text);
+          const rows=(j.snapshots||[]).filter(s=>{
+            const ms=Date.parse(String(s?.t||''));
+            return Number.isFinite(ms)&&ms>=Date.parse('2026-09-19T22:01:38.323Z')&&ms<Date.parse('2026-09-21T04:00:00.000Z');
+          }).map(s=>({
+            t:String(s.t),
+            source:String(s.source||'page-load'),
+            fingerprint:String(s.fingerprint||''),
+            count:Array.isArray(s.rows)?s.rows.length:0,
+            pick_count:Array.isArray(s.picks)?s.picks.length:0,
+            team_count:Array.isArray(s.teams)?s.teams.length:0,
+            valuation_contract:s.valuation_contract||null
+          }));
+          console.log(JSON.stringify({source:j.source||null,total:j.snapshot_count||0,matching:rows.length,rows},null,2));
+          NODE

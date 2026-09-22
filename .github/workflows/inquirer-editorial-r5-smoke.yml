@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   inquirer-r6:
@@ -61,3 +61,26 @@ jobs:
           path: /tmp/week1-inquirer-r6.json
           if-no-files-found: error
           retention-days: 7
+
+      - name: One-time pack locked Week 1 preload
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if node -e "import('./netlify/functions/inquirer-week1-2026-preload.mjs').then(m=>process.exit(m.default?.published_locked===true?0:1))"; then
+            echo "Week 1 preload is already locked; refusing to rewrite it."
+            exit 0
+          fi
+          node scripts/pack-inquirer-preload.mjs /tmp/week1-inquirer-r6.json /tmp/inquirer-week1-2026-preload.mjs
+          git fetch origin "$HEAD_REF"
+          git checkout -B "$HEAD_REF" "origin/$HEAD_REF"
+          cp /tmp/inquirer-week1-2026-preload.mjs netlify/functions/inquirer-week1-2026-preload.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add netlify/functions/inquirer-week1-2026-preload.mjs
+          if git diff --cached --quiet; then
+            echo "Validated preload already matches."
+            exit 0
+          fi
+          git commit -m "Pack locked Inquirer Week 1 edition"
+          git push origin "HEAD:$HEAD_REF"

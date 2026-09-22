@@ -184,12 +184,59 @@ window.idpV25WeightMixAudit=function(){
       largestAbsMovers:[...rows].sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,10).map(r=>({name:r.name,oldIdpRank:r.oldIdp,newIdpRank:r.newIdp,delta:Number(r.delta.toFixed(2)),consensus:r.consensus,scoring:r.scoring,context:r.context}))
     };
   });
+  const neutralizedCandidates=mixes.map(m=>{
+    const rawById=new Map();
+    const positiveDeltas=[];
+    for(const r of idps){
+      const oldB=baseMix.consensus*r.consensus+baseMix.scoring*r.scoring+baseMix.context*r.context;
+      const rawB=m.consensus*r.consensus+m.scoring*r.scoring+m.context*r.context;
+      rawById.set(r.id,{oldB,rawB});
+      if(r.consensus>0)positiveDeltas.push(rawB-oldB);
+    }
+    const offset=q(positiveDeltas,.50)||0;
+    const vals=new Map();
+    for(const r of idps){
+      const x=rawById.get(r.id);
+      const adjusted=r.consensus>0?Math.max(1,x.rawB-offset):Math.max(1,x.oldB);
+      vals.set(r.id,{baseline:adjusted,exact:v72(r,adjusted),rawBaseline:x.rawB,oldBaseline:x.oldB});
+    }
+    const market=master.map((z,i)=>{
+      const id=String(z?.x?.id||''),pos=String(safe(()=>groupPos(z.x))||'').toUpperCase();
+      return {id,pos,name:pname(id),value:pos==='IDP'&&vals.has(id)?vals.get(id).exact:(num(z.marketPrecisionValueV386)??num(z.value)??1),prior:i};
+    }).sort((a,b)=>b.value-a.value||a.prior-b.prior);
+    let ir=0;
+    const ranks=new Map();
+    for(let i=0;i<market.length;i++){
+      const x=market[i];
+      if(x.pos==='IDP')ir++;
+      ranks.set(x.id,{overall:i+1,idpRank:x.pos==='IDP'?ir:null,value:x.value});
+    }
+    const rows=idps.map(r=>{
+      const b=base.vals.get(r.id),c=vals.get(r.id),br=base.ranks.get(r.id),cr=ranks.get(r.id);
+      return {...r,oldBaseline:b.baseline,newBaseline:c.baseline,rawBaseline:c.rawBaseline,oldV72:b.exact,newV72:c.exact,delta:c.exact-b.exact,oldOverall:br.overall,newOverall:cr.overall,oldIdp:br.idpRank,newIdp:cr.idpRank,overallGain:br.overall-cr.overall,idpGain:br.idpRank-cr.idpRank};
+    });
+    const ds=rows.map(r=>r.delta),abs=ds.map(Math.abs),h=rows.find(r=>r.id===H);
+    return {
+      mix:m,
+      marketNeutralization:{method:'median raw-baseline delta among positive-consensus IDPs; zero-consensus fallback unchanged',baselineOffset:Number(offset.toFixed(2)),positiveConsensusCount:positiveDeltas.length,zeroConsensusCount:rows.filter(r=>r.consensus<=0).length},
+      marketEffect:{
+        idpCount:rows.length,
+        signed:{min:Number(Math.min(...ds).toFixed(2)),p25:Number(q(ds,.25).toFixed(2)),median:Number(q(ds,.5).toFixed(2)),p75:Number(q(ds,.75).toFixed(2)),max:Number(Math.max(...ds).toFixed(2))},
+        absolute:{median:Number(q(abs,.5).toFixed(2)),p75:Number(q(abs,.75).toFixed(2)),p90:Number(q(abs,.9).toFixed(2))},
+        up25:rows.filter(r=>r.delta>=25).length,down25:rows.filter(r=>r.delta<=-25).length,up50:rows.filter(r=>r.delta>=50).length,down50:rows.filter(r=>r.delta<=-50).length,overallUp10:rows.filter(r=>r.overallGain>=10).length,overallDown10:rows.filter(r=>r.overallGain<=-10).length
+      },
+      hutchinson:h?{oldBaseline:Number(h.oldBaseline.toFixed(2)),rawBaseline:Number(h.rawBaseline.toFixed(2)),newBaseline:Number(h.newBaseline.toFixed(2)),oldV72:Number(h.oldV72.toFixed(2)),newV72:Number(h.newV72.toFixed(2)),v72Delta:Number(h.delta.toFixed(2)),oldOverall:h.oldOverall,newOverall:h.newOverall,oldIdpRank:h.oldIdp,newIdpRank:h.newIdp}:null,
+      top15:[...rows].sort((a,b)=>a.newIdp-b.newIdp).slice(0,15).map(r=>({name:r.name,idpRank:r.newIdp,oldIdpRank:r.oldIdp,overall:r.newOverall,consensus:r.consensus,scoring:r.scoring,context:r.context,v72:Number(r.newV72.toFixed(2)),delta:Number(r.delta.toFixed(2))})),
+      largestAbsMovers:[...rows].sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,10).map(r=>({name:r.name,oldIdpRank:r.oldIdp,newIdpRank:r.newIdp,delta:Number(r.delta.toFixed(2)),consensus:r.consensus,scoring:r.scoring,context:r.context}))
+    };
+  });
   return {
     audit:'IDP 20%-consensus mix comparison',
     generatedAt:new Date().toISOString(),
     runtime:{weights:safe(()=>window.idpScoringAudit?.(H)?.modelWeights)||null,consensusRefresh:window.__fllConsensusRefresh||null,valueRefresh:window.__fllValueRefresh||null},
     baseline:baseMix,
-    candidates
+    candidates,
+    neutralizedCandidates
   };
 };
 masterRankCache=null;valueCache.clear();fitCache.clear();stageCache.clear();

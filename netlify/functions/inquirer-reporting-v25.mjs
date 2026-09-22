@@ -2867,26 +2867,34 @@ function divisionPressure(t,result){
   return null;
 }
 function implicationStory(g,slot=0){
-  const w=g.winner,l=g.loser,sameDivision=String(w.division||'')!==''&&String(w.division)===String(l.division),wr=w.league_context?.record||{},lr=l.league_context?.record||{},wp=valid(w.mida_outlook?.playoff)?Number(w.mida_outlook.playoff):null,lp=valid(l.mida_outlook?.playoff)?Number(l.mida_outlook.playoff):null,wdiv=divisionPressure(w,'W'),ldiv=divisionPressure(l,'L');
-  const playoffLine=wp!=null||lp!=null?((wp!=null?w.team_name+' is around '+one(wp)+'% to reach the playoffs':'' )+(wp!=null&&lp!=null?', while ':'')+(lp!=null?l.team_name+' is around '+one(lp)+'%':''))+'. ':'';
-  if(sameDivision)return 'The standings consequence is immediate because these teams share '+(w.division_name||'a division')+'. '+w.team_name+' gets the win and hands the loss directly to '+l.team_name+', the sort of early result that matters again when tiebreaker conversations arrive months from now. '+playoffLine+w.team_name+' leaves at '+(Number(wr.wins)||0)+'-'+(Number(wr.losses)||0)+' with a little more control of its own road; '+l.team_name+' leaves at '+(Number(lr.wins)||0)+'-'+(Number(lr.losses)||0)+' knowing the return meeting just became more important.';
-  if(slot===0)return playoffLine+w.team_name+' can treat this as the first piece of cushion rather than proof of anything grand. '+l.team_name+' has the opposite assignment: turn the loss into an isolated bruise before a second bad Sunday turns it into the beginning of a chase. '+[wdiv,ldiv].filter(Boolean).join(' ');
-  if(slot===1)return w.team_name+' walks into next week '+(Number(wr.wins)||0)+'-'+(Number(wr.losses)||0)+', and that record gives it the luxury of building instead of repairing. '+l.team_name+' is '+(Number(lr.wins)||0)+'-'+(Number(lr.losses)||0)+', where another close loss would start making every future toss-up feel less optional.';
-  if(slot===2)return 'For '+w.team_name+', the value of this result is the freedom it buys later: one banked win is one fewer rescue mission the schedule has to provide. For '+l.team_name+', the road narrows by exactly one opportunity, which is why the next favorable matchup matters more now than it did a week ago.';
-  if(slot===3)return 'The winner gets to spend the next week talking about how to build on the result; the loser has to spend it explaining what must change. That difference sounds small in September and feels much larger when the middle of the season starts charging interest.';
-  return w.team_name+' earned the pleasant version of the future: keep stacking ordinary wins and let somebody else chase. '+l.team_name+' now needs a response before this becomes the kind of early loss that shows up again when playoff math gets uncomfortable.';
+  const w=g.winner,l=g.loser,wr=w.league_context?.record||{},lr=l.league_context?.record||{},
+    sameDivision=String(w.division||"")!==""&&String(w.division)===String(l.division),
+    wrec=(Number(wr.wins)||0)+"-"+(Number(wr.losses)||0),lrec=(Number(lr.wins)||0)+"-"+(Number(lr.losses)||0),
+    key=String(w.roster_id)+":"+String(l.roster_id)+":implication-v35:"+slot;
+  return keyedChoice(key,[
+    g.upset?
+      w.team_name+" did not just add a win; it stole the comfortable Week 1 story "+l.team_name+" thought it was getting. The underdog leaves "+wrec+" with swagger, while the favorite leaves "+lrec+" having to explain how a projected edge became somebody else’s celebration.":
+      w.team_name+" gets to carry the better mood into the next week at "+wrec+". "+l.team_name+" is "+lrec+", and the emotional difference is larger than one line in the standings: one locker room gets to build, the other has to answer for what just happened.",
+    sameDivision?
+      w.team_name+" took an early swing at a division rival and made "+l.team_name+" wear it. Division games have long memories; the winner gets the first bragging rights, and the loser knows the return meeting already carries a little extra spite.":
+      w.team_name+" banked a game "+l.team_name+" can never get back. That sounds dramatic in Week 1 because early playoff arguments are eventually built out of ordinary Sundays that somebody once called too early to matter.",
+    g.margin<=6?
+      l.team_name+" will replay this one because "+one(g.margin)+" points is close enough to make almost every choice feel reversible. "+w.team_name+" gets the relief of not having to perform that autopsy.":
+      l.team_name+" has to decide whether this was a bad matchup, a bad lineup or a bad warning. "+w.team_name+" has the much nicer assignment: figure out which parts of the win are worth making the next opponent fear.",
+    w.team_name+" gets the first emotional dividend of the result: confidence without apology. "+l.team_name+" gets the opposite — a week in which every optimistic preseason sentence sounds slightly more expensive.",
+    w.team_name+" owns the result and "+l.team_name+" owns the response. The standings only moved by one game; the pressure moved by much more."
+  ]);
 }
 
 function matchupRead(g,slot=0){
-  const w=g.winner,l=g.loser,star=list(w)[0],support=list(w)[1],loserStar=list(l)[0];
-  const reads=[
-    `${w.team_name} found a shape it can try to repeat: ${star?star.name+' as the headliner':''}${star&&support?' with '+support.name+' giving the lineup another place to lean':''}. ${l.team_name} leaves with too much of its useful work concentrated in too few places.`,
-    `${w.team_name} leaves with a clearer pecking order for tight matchups. ${l.team_name}, meanwhile, cannot keep asking ${loserStar?loserStar.name+' to carry the useful parts of the lineup alone':'the same weak spots to disappear again next week'}.`,
-    `${w.team_name} showed a version of itself that can travel if the same roles hold. ${l.team_name} gets one week to make the losing version look temporary instead of familiar.`,
-    `${w.team_name} can spend the week refining something that worked. ${l.team_name} has to fix the lineup spots and roster bets that failed before the same holes become a habit.`,
-    `${w.team_name}’s best players defined the matchup without making the rest of the roster fragile. ${l.team_name} needs its quiet pieces to rebound before the schedule makes another bad Sunday more expensive.`
-  ];
-  return reads[slot%reads.length];
+  const w=g.winner,l=g.loser,star=list(w)[0],loserStar=list(l)[0],key=String(w.roster_id)+":"+String(l.roster_id)+":matchup-read-v35:"+slot;
+  return keyedChoice(key,[
+    w.team_name+" kept forcing "+l.team_name+" to react. "+(star?star.name+" was the most obvious pressure point, ":"")+"and the loser never found the adjustment that changed the emotional direction of the game.",
+    l.team_name+" had chances to make this uncomfortable and kept watching "+w.team_name+" answer. "+(loserStar?loserStar.name+" gave the loser something to fight with, but ":"")+"the matchup kept bending back toward the winner.",
+    w.team_name+" looked more certain about where it wanted the game to go. "+l.team_name+" looked like the side discovering the problem one possession too late.",
+    w.team_name+" made its strengths feel like part of the matchup; "+l.team_name+" made too many of its strengths feel like isolated moments. That is how the scoreboard separates without one single play explaining everything.",
+    l.team_name+" did not lose because one star failed or one bench player existed. It lost because "+w.team_name+" found the parts of the matchup it could keep winning and returned to them until the afternoon belonged to the winner."
+  ]);
 }
 
 function gameStory(g,slot=0){

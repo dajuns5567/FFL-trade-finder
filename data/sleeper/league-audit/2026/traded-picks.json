@@ -1015,6 +1015,13 @@
     "previous_owner_id": 31
   },
   {
+    "round": 3,
+    "season": "2027",
+    "roster_id": 30,
+    "owner_id": 13,
+    "previous_owner_id": 30
+  },
+  {
     "round": 1,
     "season": "2026",
     "roster_id": 31,

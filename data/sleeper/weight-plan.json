@@ -1,16 +1,16 @@
 {
   "mode": "in-season",
-  "completedWeek": 1,
+  "completedWeek": 2,
   "weights": {
-    "currentYear": 0.1,
-    "previousYear": 0.55,
-    "twoYearsAgo": 0.25,
-    "threeYearsAgo": 0.1
+    "currentYear": 0.12941176470588237,
+    "previousYear": 0.5320261437908497,
+    "twoYearsAgo": 0.24183006535947713,
+    "threeYearsAgo": 0.09673202614379085
   },
   "yearWeights": {
-    "2023": 0.1,
-    "2024": 0.25,
-    "2025": 0.55,
-    "2026": 0.1
+    "2023": 0.09673202614379085,
+    "2024": 0.24183006535947713,
+    "2025": 0.5320261437908497,
+    "2026": 0.12941176470588237
   }
 }

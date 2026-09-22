@@ -1,11 +1,11 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-19T20:55:22.549Z",
+  "generatedAt": "2026-09-22T04:52:54.628Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
   "currentLeagueStatus": "in_season",
-  "currentSeasonCompletedWeek": 1,
+  "currentSeasonCompletedWeek": 2,
   "currentLeagueScoringSettings": {
     "sack": 1,
     "qb_hit": 0,
@@ -153,18 +153,18 @@
   },
   "productionWeightPlan": {
     "mode": "in-season",
-    "completedWeek": 1,
+    "completedWeek": 2,
     "weights": {
-      "currentYear": 0.1,
-      "previousYear": 0.55,
-      "twoYearsAgo": 0.25,
-      "threeYearsAgo": 0.1
+      "currentYear": 0.12941176470588237,
+      "previousYear": 0.5320261437908497,
+      "twoYearsAgo": 0.24183006535947713,
+      "threeYearsAgo": 0.09673202614379085
     },
     "yearWeights": {
-      "2023": 0.1,
-      "2024": 0.25,
-      "2025": 0.55,
-      "2026": 0.1
+      "2023": 0.09673202614379085,
+      "2024": 0.24183006535947713,
+      "2025": 0.5320261437908497,
+      "2026": 0.12941176470588237
     }
   },
   "productionSeasons": [
@@ -175,49 +175,49 @@
   ],
   "seasonDiagnostics": {
     "2023": {
-      "players": 866,
-      "withPpr": 718,
-      "withGames": 866
+      "players": 880,
+      "withPpr": 730,
+      "withGames": 880
     },
     "2024": {
-      "players": 934,
-      "withPpr": 776,
-      "withGames": 934
+      "players": 951,
+      "withPpr": 788,
+      "withGames": 951
     },
     "2025": {
-      "players": 1031,
-      "withPpr": 555,
-      "withGames": 1031
+      "players": 1046,
+      "withPpr": 565,
+      "withGames": 1046
     },
     "2026": {
-      "players": 1021,
-      "withPpr": 298,
-      "withGames": 1021,
+      "players": 1155,
+      "withPpr": 375,
+      "withGames": 1155,
       "currentSeasonQualified": true
     }
   },
   "compactDiagnostics": {
     "2023": {
-      "players": 866,
-      "withPpr": 718,
-      "withGames": 866
+      "players": 880,
+      "withPpr": 730,
+      "withGames": 880
     },
     "2024": {
-      "players": 934,
-      "withPpr": 776,
-      "withGames": 934
+      "players": 951,
+      "withPpr": 788,
+      "withGames": 951
     },
     "2025": {
-      "players": 1031,
-      "withPpr": 555,
-      "withGames": 1031
+      "players": 1046,
+      "withPpr": 565,
+      "withGames": 1046
     },
     "2026": {
-      "players": 1021,
-      "withPpr": 298,
-      "withGames": 1021,
+      "players": 1155,
+      "withPpr": 375,
+      "withGames": 1155,
       "currentSeasonQualified": true,
-      "compactPlayers": 1021
+      "compactPlayers": 1155
     }
   },
   "qualifyingHistoricalSeasonMinimumGames": 8,
@@ -265,6 +265,40 @@
         "DAL",
         "KC",
         "DEN"
+      ],
+      "2": [
+        "BUF",
+        "DET",
+        "ATL",
+        "CAR",
+        "CHI",
+        "MIN",
+        "TEN",
+        "PHI",
+        "NE",
+        "PIT",
+        "NYJ",
+        "GB",
+        "TB",
+        "CLE",
+        "BAL",
+        "NO",
+        "HOU",
+        "CIN",
+        "DEN",
+        "JAX",
+        "LAC",
+        "LV",
+        "DAL",
+        "WSH",
+        "ARI",
+        "SEA",
+        "SF",
+        "MIA",
+        "KC",
+        "IND",
+        "LAR",
+        "NYG"
       ]
     },
     "weekFinalityByWeek": {
@@ -405,12 +439,150 @@
             ]
           }
         ]
+      },
+      "2": {
+        "scheduledGames": 16,
+        "finalGames": 16,
+        "ignoredGames": 0,
+        "blockingGames": 0,
+        "complete": true,
+        "nullSlots": [],
+        "slots": [
+          {
+            "id": "401872932",
+            "state": "final",
+            "teams": [
+              "BUF",
+              "DET"
+            ]
+          },
+          {
+            "id": "401872933",
+            "state": "final",
+            "teams": [
+              "ATL",
+              "CAR"
+            ]
+          },
+          {
+            "id": "401872937",
+            "state": "final",
+            "teams": [
+              "CHI",
+              "MIN"
+            ]
+          },
+          {
+            "id": "401872939",
+            "state": "final",
+            "teams": [
+              "TEN",
+              "PHI"
+            ]
+          },
+          {
+            "id": "401872946",
+            "state": "final",
+            "teams": [
+              "NE",
+              "PIT"
+            ]
+          },
+          {
+            "id": "401872936",
+            "state": "final",
+            "teams": [
+              "NYJ",
+              "GB"
+            ]
+          },
+          {
+            "id": "401872935",
+            "state": "final",
+            "teams": [
+              "TB",
+              "CLE"
+            ]
+          },
+          {
+            "id": "401872938",
+            "state": "final",
+            "teams": [
+              "BAL",
+              "NO"
+            ]
+          },
+          {
+            "id": "401872934",
+            "state": "final",
+            "teams": [
+              "HOU",
+              "CIN"
+            ]
+          },
+          {
+            "id": "401872940",
+            "state": "final",
+            "teams": [
+              "DEN",
+              "JAX"
+            ]
+          },
+          {
+            "id": "401872941",
+            "state": "final",
+            "teams": [
+              "LAC",
+              "LV"
+            ]
+          },
+          {
+            "id": "401872944",
+            "state": "final",
+            "teams": [
+              "DAL",
+              "WSH"
+            ]
+          },
+          {
+            "id": "401872943",
+            "state": "final",
+            "teams": [
+              "ARI",
+              "SEA"
+            ]
+          },
+          {
+            "id": "401872942",
+            "state": "final",
+            "teams": [
+              "SF",
+              "MIA"
+            ]
+          },
+          {
+            "id": "401872945",
+            "state": "final",
+            "teams": [
+              "KC",
+              "IND"
+            ]
+          },
+          {
+            "id": "401872947",
+            "state": "final",
+            "teams": [
+              "LAR",
+              "NYG"
+            ]
+          }
+        ]
       }
     },
     "diagnostics": {
-      "finalGames": 16,
-      "qualifiedPlayerGames": 1021,
-      "rejectedPlayerGames": 1258,
+      "finalGames": 32,
+      "qualifiedPlayerGames": 2058,
+      "rejectedPlayerGames": 2537,
       "ignoredGames": 0
     }
   },
@@ -443,7 +615,6 @@
     "Delayed, postponed, suspended, or canceled games occupy a null scoring slot and do not block the rest of the week. If the same event is later made up, its stable event slot becomes final and the makeup result fills that original null slot rather than shifting later weeks.",
     "Offensive PPR is derived only from Sleeper-provided pts_ppr or deterministic standard-PPR scoring of Sleeper raw stats.",
     "offense-history.json is a compact delivery artifact derived only from the verified season aggregates; it does not recalculate or estimate player production.",
-    "Raw weekly stats remain available for exact league-specific IDP reconstruction, including stacked sack/interception scoring.",
-    "2026 Week 1 snapshot refreshed after the qualifying snap threshold moved from 20% to 18%; player 11583 (Jonathon Brooks) now qualifies at 13/68 offensive snaps (19.12%) with 7.2 PPR points."
+    "Raw weekly stats remain available for exact league-specific IDP reconstruction, including stacked sack/interception scoring."
   ]
 }

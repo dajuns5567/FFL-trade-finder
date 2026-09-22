@@ -1392,28 +1392,27 @@ function angleLeadV28(t,r,angle){
   const spine=keyedChoice(seed+':spine',spines[angle]||spines[Number(t.points)>Number(t.opponent_points)?'win':'loss']);
   const voiceLine=deskChoice(t,r,[
     [
-      `I have covered enough Sundays to know the scoreboard is usually the easy part; figuring out what deserves to survive into next week is the actual work.`,
-      `The old notebook has no patience for declaring a season after one game, but it has plenty of room for writing down what looked real.`,
-      `A beat writer gets paid to remember the thing everyone else forgets by Thursday. This week gave me several candidates.`
+      `I have seen enough Sundays to know the scoreboard is usually the easy part; deciding what deserves to survive into next week is harder.`,
+      `One week has fooled better teams than this. I’m keeping what looked real and ignoring the urge to declare a season.`,
+      `I trust the thing everyone will forget by Thursday: role, usage and whether the good part can happen again.`
     ],
     [
-      `I had hoped for a tidy thesis and received fantasy football instead, which is how one ends up writing about chaos in a jacket.`,
-      `One strives for elegance in this profession; the league continues to answer with group chats, questionable decisions and men scoring 30 points at inconvenient times.`,
-      `The cruel thing about being right for one Sunday is that the next Sunday arrives with no respect for one’s prose.`
+      `I was promised elegance and received fantasy football instead, which is how one learns to admire useful chaos.`,
+      `I prefer elegance; the league keeps answering with group chats, questionable decisions and 30-point inconveniences.`,
+      `The cruel thing about being right for one Sunday is that the next Sunday arrives with no respect for your theory.`
     ],
     [
-      `I am trying very hard to become a respected sports journalist, and this league keeps handing me material that belongs on a supermarket tabloid. I am grateful.`,
-      `The back page would like everyone to know that restraint was considered and rejected before deadline.`,
-      `Some reporters chase access. I chase whoever ruined the group chat first. This week, the trail is not subtle.`
+      `I WOULD LIKE ONE CALM WEEK. THIS LEAGUE HAS DECLINED THE REQUEST. FINE.`,
+      `RESTRAINT WAS CONSIDERED AND REJECTED. THE SCOREBOARD STARTED IT.`,
+      `I chase whoever ruined the group chat first. This week, the trail is not subtle.`
     ],
     [
       `The evidence is cleaner than my coffee and, regrettably, harder to ignore.`,
       `I would love to invent a conspiracy here. ${full}’s facts have been inconsiderate enough to make the simpler explanation more interesting.`,
-      `A reporter who keeps receipts eventually becomes unpopular with managers and very useful on Mondays. I can live with that arrangement.`
+      `I keep receipts because managers develop selective memory by Tuesday. I can live with being unpopular.`
     ]
   ]);
-  const beat=teamIdentityV28(t).mascot,lead=/^I\b/.test(voiceLine)?`On the ${beat} beat, ${voiceLine}`:`For ${beat}, ${voiceLine.charAt(0).toLowerCase()+voiceLine.slice(1)}`;
-  return spine+' '+lead;
+  return spine+' '+voiceLine;
 }
 
 function fourthWallV28(t,r,angle){
@@ -1421,24 +1420,24 @@ function fourthWallV28(t,r,angle){
   const mascot=teamIdentityV28(t).mascot;
   return deskChoice(t,r,[
     [
-      `This is the paragraph where I am supposed to sound detached about ${mascot}. I watched the whole thing; detachment has been postponed.`,
-      `There is probably a cleaner way to write about ${mascot}, but clean prose is a luxury the press box rarely earns by midnight.`,
-      `I will be accused of overreacting to ${mascot} by Tuesday and of missing the obvious by next Sunday. That is the beat-writer pension plan.`
+      `I am not buying the easy version of ${mascot}. Show me the same role next week and I will start believing it.`,
+      `I have been fooled by prettier Sundays than this. ${mascot} still has to make the useful parts travel.`,
+      `I will overreact when the evidence earns it. ${mascot} has one week of evidence.`
     ],
     [
-      `Editors prefer objectivity. ${mascot} has instead given me objectivity with a decent metaphor and enough sarcasm to survive the deadline.`,
-      `Somewhere, an editor is removing an adjective from my ${mascot} copy. I have added two more in self-defense.`,
-      `One does not enter sports media for peace. One enters to cover teams like ${mascot}, meet deadlines and occasionally describe a lineup decision as vulgar.`
+      `I would prefer ${mascot} to be elegant. Competence will have to do.`,
+      `I am willing to praise ${mascot}; I refuse to make it tasteful if the lineup decisions are ugly.`,
+      `I have seen enough fashionable nonsense to appreciate ${mascot} doing the practical thing.`
     ],
     [
-      `If the journalism schools object to the way I am writing about ${mascot}, they are welcome to cover waiver night themselves.`,
-      `I have a deadline, a coffee problem and access to every ${mascot} complaint in the league chat. Neutrality never had a chance.`,
-      `Yes, this is the part where the reporter becomes part of the ${mascot} story. Blame the team for making subtlety impossible.`
+      `I TRIED RESTRAINT WITH ${mascot}. THE SCOREBOARD MADE IT WEIRD.`,
+      `I HAVE QUESTIONS FOR ${mascot}, AND NONE OF THEM ARE QUIET.`,
+      `I AM NOT NEUTRAL ABOUT BAD LINEUP DECISIONS. ${mascot} CAN STOP MAKING THEM.`
     ],
     [
-      `For the record, I tried to leave myself out of the ${mascot} story. Then the story started leaving fingerprints on my notebook.`,
-      `I am aware investigators are not supposed to root for cleaner evidence. Covering ${mascot} has also taught me reporters are supposed to sleep.`,
-      `Call the ${mascot} aside a fourth-wall breach if you like. I call it disclosure: covering ${mascot} is making the file personal.`
+      `I tried the generous reading of ${mascot}. The evidence filed an objection.`,
+      `I would like a cleaner explanation for ${mascot}. The obvious one keeps surviving cross-examination.`,
+      `I am keeping the ${mascot} receipt because memory gets flexible after a win.`
     ]
   ]);
 }

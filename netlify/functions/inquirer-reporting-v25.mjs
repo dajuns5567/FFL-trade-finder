@@ -2072,46 +2072,28 @@ function teamDeepReadV34(t,r,f){
 }
 
 function gameShapeV29(t,r,f=articleFrameV29(t,r)){
-  const {won,top,second,third,share,margin}=f;if(!top)return null;
-  const topClause=statClause(top),oppRows=(t.opponent_roster?.starters||t.opponent_roster?.players||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points)),
-    opp=oppRows[0],oppClause=opp?statClause(opp):null,support=[second,third].filter(Boolean).map(p=>p.name),pct=Math.round(share*100),
-    team=teamIdentityV28(t).mascot,topWork=`${top.name} supplied ${one(top.points)} fantasy points`,
-    oppWork=opp&&oppClause?`${opp.name} ${oppClause}`:null;
+  const {won,top,second,third}=f;if(!top)return null;
+  const q=matchupMoodV35(t),team=q.team,opp=q.opp,v=voice(r),topWork=top.name+" supplied "+one(top.points)+" fantasy points";
   if(!threeHighScorersV33(f)){
-    const topShare=Number(t.points)>0?Math.round(Number(top.points)/Number(t.points)*100):0,bad=f.concerns?.find(p=>String(p.id)!==String(top.id));
-    return deskChoice(t,r,[
-      [
-        [`${topWork}. That was the clearest ${team} player advantage${topShare>=28?', worth about '+topShare+'% of the team total':''}. ${won?'Nick credits the role and leaves the generic depth speech unwritten.':bad?bad.name+' is a more useful place to look for missing production than the players who actually delivered.':'The loss still belongs to the roster, not to its best individual line.'}`],
-        [`${topWork}. ${won?'That is enough to explain the strongest part of the '+team+' win without pretending every secondary scorer was equally important.':'The individual line survives the '+team+' loss; the quieter slots do not inherit its credit.'}`]
-      ],
-      [
-        [`${topWork}. ${won?'Bartholomew gives '+top.name+'’s '+String(top.position||'player')+' centerpiece its due in this '+resultShapeV33(f)+' review and declines to manufacture an ensemble from ordinary supporting lines.':'Lovely individual work, vulgar '+team+' result. '+(bad?bad.name+' gives the article a much less flattering counterpoint.':'The rest of the card gets no borrowed elegance.')}`],
-        [`${topWork}. ${won?'The '+team+' win needs no decorative claim that everyone contributed equally.':'One strong line is not absolution for a losing card, however nicely tailored.'}`]
-      ],
-      [
-        [`${topWork}. ${won?top.name+' was the clear best '+team+' player, and the rest of the roster can earn equal praise by producing a genuinely comparable game.':'The '+team+' loss does not belong on '+top.name+' simply because he had the most visible individual line.'}`],
-        [`${topWork}. ${won?'Good '+String(top.position||'player')+' line from '+top.name+', good '+team+' result, no fake “team effort” slogan required.':'Credit the player, keep the complaint aimed at the parts of '+team+' that actually failed.'}`]
-      ],
-      [
-        [`${topWork}. ${won?'That is the primary affirmative '+team+' finding; no broader depth conclusion is required by the evidence.':'The best individual exhibit remains favorable inside an adverse '+team+' result.'}`],
-        [`${topWork}. ${won?'The favorable result is real without converting ordinary secondary production into a roster thesis.':'The team finding is negative; the player finding does not have to be.'}`]
-      ]
-    ]);
+    return won?[
+      topWork+". More importantly, "+top.name+" was the player "+opp+" never managed to make irrelevant. "+team+" kept returning to the part of the matchup that worked and forced the opponent to live with it.",
+      topWork+". "+top.name+" gave "+team+" the clearest leverage point against "+opp+"; the rest of the lineup does not need honorary credit to make that true.",
+      topWork+". "+top.name+" was the name "+opp+" kept seeing when the game tilted toward "+team+". Everybody else can earn equal praise when they produce an equally important Sunday.",
+      topWork+". "+top.name+" is the clearest reason "+team+" made "+opp+" uncomfortable. Filch does not need a broader theory when one matchup fact is already that obvious."
+    ][v]:[
+      topWork+". That performance deserved a better ending than "+team+" gave it. "+opp+" found enough weak spots elsewhere to make "+top.name+"’s work feel like resistance instead of control.",
+      topWork+". Bartholomew can admire "+top.name+" and still hate the result: "+opp+" simply found more places to win the afternoon.",
+      topWork+". "+top.name+" did enough to avoid the blame; "+team+" still let "+opp+" walk away celebrating. The complaint belongs somewhere else.",
+      topWork+". "+top.name+" complicated "+opp+"’s afternoon, but "+team+" lost the larger matchup. Filch keeps those two facts separate."
+    ][v];
   }
-  if(voice(r)===0){
-    if(won)return keyedChoice(`${t.roster_id}:nick-win-shape`,[`${topWork}. ${naturalJoin(support)||'The supporting lineup'} kept ${team} from asking one player to do everything. The leading three scorers supplied about ${pct}% of the total${pct>=75?', concentrated enough that Nick will watch how the workload spreads next week':''}. ${oppWork?`${oppWork}, so the win came against an opponent that produced a legitimate counterpunch.`:''}`.trim(),`${topWork}. Behind him, ${naturalJoin(support)||'the rest of the lineup'} gave ${team} enough real help to make the result look repeatable rather than accidental. About ${pct}% came from the first three scorers${pct>=75?', which still leaves Nick watching the lower half of the lineup':''}. ${oppWork?`${oppWork}; the opponent supplied an actual answer and ${team} survived it.`:''}`.trim(),`${team} did not win on one isolated eruption. ${topWork}, while ${naturalJoin(support)||'the supporting cast'} supplied the next layer. The first three scorers owned about ${pct}% of the total${pct>=75?', a useful warning against calling the lineup balanced just yet':''}.`]);
-    return `${topWork}, but ${team} still lost by ${one(margin)}. The leading three scorers accounted for about ${pct}% of the total${pct>=70?', which puts the missing production outside that core at the center of the postgame story':''}. ${oppWork?`${oppWork}; ${t.opponent_name} found the stronger answer.`:''}`.trim();
-  }
-  if(voice(r)===1){
-    if(won)return keyedChoice(`${t.roster_id}:bart-win-shape`,[`${topWork}, the strongest individual football of the afternoon. ${naturalJoin(support)||'The supporting cast'} kept the performance from becoming a one-man vanity project. Roughly ${pct}% of the scoring belonged to the first three scorers; even a winning lineup this concentrated gives Bartholomew a reason to inspect the quieter spots next week.`,`${topWork}. ${naturalJoin(support)||'The supporting cast'} provided enough company to keep ${team} from becoming a monologue. Those three names accounted for about ${pct}% of the scoring, an attractive arrangement until one remembers that Sunday eventually removes a chair.`,`The most tasteful line belonged to ${top.name}: ${topClause||'the best verified role on the roster'}. ${naturalJoin(support)||'The rest of the card'} made the ${team} win feel like an ensemble rather than an expensive solo, though ${pct}% of the score still lived near the top.`]);
-    return keyedChoice(`${t.roster_id}:bart-loss-shape`,[`${topWork}, and the individual line remains excellent even though ${team} lost. About ${pct}% of the scoring came from the top three names; losing with that much useful work near the top makes the emptier lineup spots much harder to excuse.`,`${topWork}. One should admire the line without confusing it for absolution: ${team} still lost, and roughly ${pct}% of the scoring sat with three names. The empty chairs are therefore not difficult to locate.`,`${top.name} gave ${team} genuinely good football — ${topClause||'the strongest verified role on the roster'} — and received a loss for his trouble. With about ${pct}% of the scoring supplied by three players, Bartholomew has little reason to flatter the rest of the card.`]);
-  }
-  if(voice(r)===2){
-    if(won)return `${top.name} supplied the strongest ${team} performance: ${topClause||'the best verified work on the roster'}. ${naturalJoin(support)||'The rest of the lineup'} supplied enough backup to turn the performance into an actual win instead of a very expensive consolation prize.`;
-    return keyedChoice(`${t.roster_id}:tilly-loss-shape`,[`${top.name.toUpperCase()} DID HIS PART: ${topClause||'the strongest line on the roster'}. ${team} LOST ANYWAY. When roughly ${pct}% of the scoring comes from three players and the final still lands on the wrong side, Tilly starts looking below the stars for the missing pages.`,`DO NOT PUT THIS LOSS ON ${top.name.toUpperCase()}: ${topClause||'he supplied the best line on the team'}. ${team.toUpperCase()} STILL LOST, AND ABOUT ${pct}% OF THE SCORE CAME FROM THREE NAMES. THE REST OF THE PAGE NEEDS AN EXPLANATION.`,`${top.name.toUpperCase()} BROUGHT THE HEADLINE; ${team.toUpperCase()} BROUGHT THE LOSS. THREE PLAYERS OWNED ABOUT ${pct}% OF THE SCORE, SO TILLY DOES NOT NEED BINOCULARS TO FIND THE QUIET PARTS.`]);
-  }
-  if(won)return `${topWork}, the cleanest affirmative exhibit on the roster. ${naturalJoin(support)||'The supporting cast'} corroborated enough of it for ${team} to turn production into a win. The top three owned about ${pct}% of the total; the distribution gets another look next week, but the favorable verdict is real.`;
-  return keyedChoice(`${t.roster_id}:filch-loss-shape`,[`${topWork}, the strongest affirmative exhibit on the roster, and ${team} still lost. With about ${pct}% of the total coming from the leading three scorers, the contradiction is useful: several players did their jobs, which narrows the search for where the loss was actually built.`,`${topWork}. That clears ${top.name} of being the primary problem, not ${team} of the loss. Roughly ${pct}% of the scoring came from three players, leaving a smaller and more useful set of places to investigate.`,`The cleanest ${team} evidence belongs to ${top.name}: ${topClause||'the strongest verified role on the roster'}. A loss still followed. When three players produce about ${pct}% of the total, Filch does not need to accuse everybody; the weak spots have already narrowed themselves.`]);
+  const trio=[top,second,third],names=naturalJoin(trio.map(p=>p.name)),pct=Number(t.points)>0?Math.round(trio.reduce((n,p)=>n+Number(p.points||0),0)/Number(t.points)*100):0;
+  return [
+    won?names+" all cleared the high-scorer line, which is when the more-than-one-contributor story is actually worth telling. "+opp+" could not remove one threat without another becoming expensive, and roughly "+pct+"% of the "+team+" score came from that trio.":names+" all delivered high-end performances and "+team+" still lost. That is a much sharper indictment of the quiet lineup spots than any generic complaint about needing help.",
+    won?opp+" had three separate problems in "+names+". That is not decorative depth; it is the rare Sunday when the supporting-cast argument has evidence strong enough to deserve the sentence.":names+" gave "+team+" three premium performances and received a loss in return. Bartholomew would like the rest of the roster to apologize in writing.",
+    won?names+" all went big, so "+team+" gets to use the phrase team effort without committing journalism malpractice. "+opp+" had three fires and not enough extinguishers.":names+" all showed up and "+team+" still lost. Tilly has located the part of the roster that should not be asking them for more.",
+    won?names+" each produced at a high-end level. That gave "+opp+" multiple matchup problems at once and gives Filch a legitimate basis for calling the win broad rather than star-dependent.":names+" each produced at a high-end level; the loss therefore narrows the adverse finding to the quieter parts of the "+team+" lineup."
+  ][v];
 }
 
 function playerStoryV29(t,r,f=articleFrameV29(t,r)){

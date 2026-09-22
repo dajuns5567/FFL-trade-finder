@@ -308,6 +308,33 @@ function losingRecordAsideV33(t,r){
   ][v];
   return keyedChoice(key,banks);
 }
+function teamPlayerCodaV33(t,r,f){
+  const top=f?.top,team=teamIdentityV28(t).mascot,v=voice(r),projDelta=valid(t.projected)?Number(t.points)-Number(t.projected):null,topShare=top&&Number(t.points)>0?Math.round(Number(top.points)/Number(t.points)*100):0;
+  if(f?.lost)return [
+    'The '+team+' loss needs a specific diagnosis, not a generic “more help” slogan. Nick is keeping the good individual lines separate from the lineup spots that actually failed.',
+    'Bartholomew has no interest in blaming every '+team+' player equally just because the final was ugly. The useful criticism belongs where the production actually disappeared.',
+    'The '+team+' loss is bad enough without lazy blame. Keep the useful player lines, circle the empty ones and stop pretending “team effort” explains anything.',
+    'The '+team+' finding is adverse, but the player findings are not uniform. The useful analysis is to separate the affirmative roles from the actual failures.'
+  ][v];
+  if(topShare>=28)return [
+    top.name+' supplied about '+topShare+'% of the '+team+' total. Nick sees a real centerpiece and a real concentration question; those are different claims.',
+    top.name+' produced about '+topShare+'% of the '+team+' score. Bartholomew admires a centerpiece and distrusts furniture that collapses when it leaves the room.',
+    top.name+' supplied about '+topShare+'% of the '+team+' score. Great star line. The rest of the roster can earn a broader compliment when it stops borrowing so much of the headline.',
+    top.name+' accounted for about '+topShare+'% of the '+team+' total. The concentration is the relevant finding; a broader depth claim would outrun the evidence.'
+  ][v];
+  if(projDelta!=null&&Math.abs(projDelta)>=12)return [
+    team+' finished '+one(Math.abs(projDelta))+' points '+(projDelta>0?'above':'below')+' projection. Nick cares about which player roles created that gap, not about celebrating or scolding the forecast itself.',
+    team+' landed '+one(Math.abs(projDelta))+' points '+(projDelta>0?'above':'below')+' forecast. Bartholomew would rather identify the role that caused the surprise than pretend the projection deserves a personality.',
+    team+' finished '+one(Math.abs(projDelta))+' points '+(projDelta>0?'above':'below')+' projection. Fine. The useful story is which roles moved the number and whether they can do it again.',
+    team+' ended '+one(Math.abs(projDelta))+' points '+(projDelta>0?'above':'below')+' projection. The variance matters only to the extent that repeatable player roles explain it.'
+  ][v];
+  return [
+    'Nick has enough '+team+' evidence for individual judgments without inventing a roster-wide moral from ordinary box-score contributions.',
+    'Bartholomew is leaving the '+team+' supporting cast out of the grand theory until another performance actually earns grand language.',
+    'The '+team+' page does not need filler. The players who changed the game get ink; everybody else can earn it next week.',
+    'The '+team+' file supports specific player findings. It does not require a generic conclusion about balance, depth or collective effort.'
+  ][v];
+}
 function teamUsageComment(t,p,angle='star'){
   const o=teamOpportunity(p);if(!o)return null;
   if(o.limited_snap)return keyedChoice(`${p.id||p.name}:${angle}:limited`,[`${p.name} squeezed that production out of only ${o.snaps} defensive snaps.`,`${p.name} did all of that in a genuinely limited defensive role.`]);
@@ -1953,6 +1980,27 @@ function gameShapeV29(t,r,f=articleFrameV29(t,r)){
     opp=oppRows[0],oppClause=opp?statClause(opp):null,support=[second,third].filter(Boolean).map(p=>p.name),pct=Math.round(share*100),
     team=teamIdentityV28(t).mascot,topWork=topClause?`${top.name} ${topClause}`:`${top.name} handled the largest piece of the weekly workload`,
     oppWork=opp&&oppClause?`${opp.name} ${oppClause}`:null;
+  if(!threeHighScorersV33(f)){
+    const topShare=Number(t.points)>0?Math.round(Number(top.points)/Number(t.points)*100):0,bad=f.concerns?.find(p=>String(p.id)!==String(top.id));
+    return deskChoice(t,r,[
+      [
+        [`${topWork}. That was the clearest ${team} player advantage${topShare>=28?', worth about '+topShare+'% of the team total':''}. ${won?'Nick credits the role and leaves the generic depth speech unwritten.':bad?bad.name+' is a more useful place to look for missing production than the players who actually delivered.':'The loss still belongs to the roster, not to its best individual line.'}`],
+        [`${topWork}. ${won?'That is enough to explain the strongest part of the '+team+' win without pretending every secondary scorer was equally important.':'The individual line survives the '+team+' loss; the quieter slots do not inherit its credit.'}`]
+      ],
+      [
+        [`${topWork}. ${won?'Bartholomew gives the centerpiece its due and declines to manufacture an ensemble review from ordinary supporting lines.':'Lovely individual work, vulgar '+team+' result. '+(bad?bad.name+' gives the article a much less flattering counterpoint.':'The rest of the card gets no borrowed elegance.')}`],
+        [`${topWork}. ${won?'The '+team+' win needs no decorative claim that everyone contributed equally.':'One strong line is not absolution for a losing card, however nicely tailored.'}`]
+      ],
+      [
+        [`${topWork}. ${won?'That is the '+team+' headline. Everybody else can earn bigger type with a bigger game.':'The '+team+' loss does not belong on '+top.name+' just because his name is easiest to print.'}`],
+        [`${topWork}. ${won?'Good star line, good result, no fake “team effort” slogan required.':'Credit the player, keep the complaint aimed at the parts of '+team+' that actually failed.'}`]
+      ],
+      [
+        [`${topWork}. ${won?'That is the primary affirmative '+team+' finding; no broader depth conclusion is required by the evidence.':'The best individual exhibit remains favorable inside an adverse '+team+' result.'}`],
+        [`${topWork}. ${won?'The favorable result is real without converting ordinary secondary production into a roster thesis.':'The team finding is negative; the player finding does not have to be.'}`]
+      ]
+    ]);
+  }
   if(voice(r)===0){
     if(won)return keyedChoice(`${t.roster_id}:nick-win-shape`,[`${topWork}. ${naturalJoin(support)||'The supporting lineup'} kept ${team} from asking one player to do everything. The leading three scorers supplied about ${pct}% of the total${pct>=75?', concentrated enough that Nick will watch how the workload spreads next week':''}. ${oppWork?`${oppWork}, so the win came against an opponent that produced a legitimate counterpunch.`:''}`.trim(),`${topWork}. Behind him, ${naturalJoin(support)||'the rest of the lineup'} gave ${team} enough real help to make the result look repeatable rather than accidental. About ${pct}% came from the first three scorers${pct>=75?', which still leaves Nick watching the lower half of the lineup':''}. ${oppWork?`${oppWork}; the opponent supplied an actual answer and ${team} survived it.`:''}`.trim(),`${team} did not win on one isolated eruption. ${topWork}, while ${naturalJoin(support)||'the supporting cast'} supplied the next layer. The first three scorers owned about ${pct}% of the total${pct>=75?', a useful warning against calling the lineup balanced just yet':''}.`]);
     return `${topWork}, but ${team} still lost by ${one(margin)}. The leading three scorers accounted for about ${pct}% of the total${pct>=70?', which puts the missing production outside that core at the center of the postgame story':''}. ${oppWork?`${oppWork}; ${t.opponent_name} found the stronger answer.`:''}`.trim();
@@ -2004,13 +2052,13 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
     `${top.name.toUpperCase()} EARNED THE HEADLINE WITH THE ROLE, NOT JUST THE NUMBER.`,
     `${top.name}’s role keeps the performance relevant after the fantasy total is filed away.`
   ][v];
-  ps.push(`${keyedChoice(`${t.roster_id}:top:${r?.id}`,openerBanks)} ${topStatusText}`.replace(/\s+/g,' ').trim());
+  ps.push(`${keyedChoice(`${t.roster_id}:top:${r?.id}`,openerBanks)} ${playerStatInsightV33(t,top,r)||''} ${topStatusText}`.replace(/\s+/g,' ').trim());
 
   const other=[f.second,f.third,...supports].filter((p,i,a)=>p&&String(p.id)!==String(top.id)&&a.findIndex(x=>x&&String(x.id)===String(p.id))===i).slice(0,2);
-  if(other.length){
+  if(other.length&&threeHighScorersV33(f)){
     const notes=other.map(p=>{
-      const c=statClause(p),tr=f.trajectories.find(x=>String(x.p.id)===String(p.id))?.tr,status=tr&&tr.kind!=='star'?classificationSentenceV29(p,tr,r):null;
-      return `${p.name}${c?` ${c}`:` contributed ${one(p.points)} fantasy points`}.${status?` ${status}`:''}`;
+      const c=statClause(p),tr=f.trajectories.find(x=>String(x.p.id)===String(p.id))?.tr,status=tr&&tr.kind!=='star'?classificationSentenceV29(p,tr,r):null,insight=playerStatInsightV33(t,p,r);
+      return `${p.name}${c?` ${c}`:` contributed ${one(p.points)} fantasy points`}. ${insight||''}${status?` ${status}`:''}`.replace(/\s+/g,' ').trim();
     });
     const close=[
       won?`${team} had real secondary production, enough to keep ${top.name} from becoming the entire explanation of the win.`:`Those performances make the ${team} loss more specific: useful work existed, so the quiet lineup spots deserve more of the blame.`,
@@ -2019,6 +2067,19 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       won?`The ${team} file contains multiple affirmative performances, enough to support the favorable result.`:`The ${team} loss cannot be assigned equally across the roster; these performances narrow the adverse finding.`
     ][v];
     ps.push(`${notes.join(' ')} ${close}`);
+  }else if(other.length){
+    const p=other.find(x=>{const d=delta(x),tr=f.trajectories.find(y=>String(y.p.id)===String(x.id))?.tr;return Number(x.points)>=15||(d!=null&&Math.abs(d)>=5)||(tr&&['breakout','early-breakout','decline','stumble','rookie'].includes(tr.kind));});
+    if(p){
+      const c=statClause(p),tr=f.trajectories.find(x=>String(x.p.id)===String(p.id))?.tr,status=tr?classificationSentenceV29(p,tr,r):null,insight=playerStatInsightV33(t,p,r);
+      const lead=`${p.name}${c?` ${c}`:` produced ${one(p.points)} fantasy points`}.`;
+      const judgment=[
+        `${p.name} earns a second paragraph because the line was individually relevant; Nick is not using it to declare the whole roster balanced.`,
+        `${p.name} earns separate praise or criticism on the merits. Bartholomew declines to turn one supporting line into a sweeping depth theory.`,
+        `${p.name} earned the extra ink. That is the analysis; nobody needs a fake “team effort” slogan stapled to it.`,
+        `${p.name} is independently relevant to the ${team} file. One secondary performance does not establish a broader depth finding.`
+      ][v];
+      ps.push([lead,insight,status,judgment].filter(Boolean).join(' '));
+    }
   }
 
   const bad=concerns[0];
@@ -2029,7 +2090,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       `${bad.name} supplied the least convincing line of the main ${team} cast, landing ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?`The ${team} win keeps criticism of ${bad.name} measured for a week.`:`The loss makes ${bad.name}’s poor Sunday impossible to hide behind better performances.`}${status?` ${status}`:''}`,
       `THE NAME IN RED IS ${bad.name}: ${one(d)} BELOW PROJECTION${c?`; ${bad.name} ${c}`:''}. ${won?'THE SCOREBOARD HID THE DAMAGE THIS TIME.':'THE SCOREBOARD PUT A SPOTLIGHT ON IT.'}${status?` ${status}`:''}`,
       `${bad.name} is the adverse player finding, ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`${team} won despite the shortfall; that is mitigation rather than exoneration.`:`The ${team} loss gives ${bad.name}’s shortfall direct consequence.`}${status?` ${status}`:''}`
-    ][v]);
+    ][v]+' '+(playerStatInsightV33(t,bad,r)||''));
   }
 
   const fillerBanks=[
@@ -2054,7 +2115,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       `${top.name} carries the strongest player finding. Filch would prefer the next file to contain more than one obvious affirmative exhibit.`
     ]
   ][v];
-  while(ps.length<3)ps.push(keyedChoice(`${t.roster_id}:filler:${ps.length}:${r?.id}`,fillerBanks));
+  while(ps.length<3)ps.push(teamPlayerCodaV33(t,r,f));
   const editorial=playerEditorialReadV32(t,r,f);if(editorial)ps.push(editorial);
   return ps.slice(0,4);
 }

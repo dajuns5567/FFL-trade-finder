@@ -169,12 +169,12 @@ async function syncReporterArchives(s,result,broadcastKey){
    return{k,entry:{season:Number(result.season),week:Number(result.week),roster_id:String(team.roster_id),team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),headline:String(article.headline||''),byline:String(article.byline||''),captured_at:String(result.generated_at||new Date().toISOString()),broadcast_key:broadcastKey,article_key:articleKey,inquirer_version:INQUIRER_VERSION,editorial_revision:INQUIRER_EDITORIAL_REVISION}};
   }));
   for(const {k,entry} of teamEntries){
-   if(seen.has(k)){const i=seen.get(k);if(Number(rows[i]?.inquirer_version||0)<INQUIRER_VERSION)rows[i]=entry}
+   if(seen.has(k)){const i=seen.get(k);if(Number(rows[i]?.inquirer_version||0)<INQUIRER_VERSION||Number(rows[i]?.editorial_revision||0)<INQUIRER_EDITORIAL_REVISION)rows[i]=entry}
    else{rows.push(entry);seen.set(k,rows.length-1)}
   }
   if(result?.league_overview){
    const k=[result.season,result.week,'__league__'].join('|'),articleKey='inquirer/league-overview/'+result.season+'/week-'+String(result.week).padStart(2,'0')+'.json',entry={season:Number(result.season),week:Number(result.week),roster_id:'__league__',team_name:'Weekly Recap',manager_name:'Co-authored by all four desks',headline:String(result.league_overview.headline||'Fleeced! Weekly Recap'),byline:String(result.league_overview.byline||''),captured_at:String(result.generated_at||new Date().toISOString()),broadcast_key:broadcastKey,article_key:articleKey,inquirer_version:INQUIRER_VERSION,editorial_revision:INQUIRER_EDITORIAL_REVISION};
-   if(seen.has(k)){const i=seen.get(k);if(Number(rows[i]?.inquirer_version||0)<INQUIRER_VERSION)rows[i]=entry}else{rows.push(entry);seen.set(k,rows.length-1)}
+   if(seen.has(k)){const i=seen.get(k);if(Number(rows[i]?.inquirer_version||0)<INQUIRER_VERSION||Number(rows[i]?.editorial_revision||0)<INQUIRER_EDITORIAL_REVISION)rows[i]=entry}else{rows.push(entry);seen.set(k,rows.length-1)}
   }
   rows.sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week)||String(a.team_name).localeCompare(String(b.team_name)));
   await s.setJSON(key,{schema_version:1,reporter,articles:rows});

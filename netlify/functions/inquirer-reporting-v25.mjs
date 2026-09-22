@@ -1421,7 +1421,7 @@ function fourthWallV28(t,r,angle){
   return deskChoice(t,r,[
     [
       `I am not buying the easy version of ${mascot}. Show me the same role next week and I will start believing it.`,
-      `I have been fooled by prettier Sundays than this. ${mascot} still has to make the useful parts travel.`,
+      `I have been fooled by prettier Sundays than this. The useful parts from ${mascot} still have to travel.`,
       `I will overreact when the evidence earns it. One week of ${mascot} evidence is all I have.`
     ],
     [

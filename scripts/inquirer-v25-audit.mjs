@@ -55,6 +55,9 @@ assert.ok(source.includes('acquisitionCallback'),'Team columns must preserve ong
 assert.ok(source.includes('threeHighScorersV33'),'Team articles must gate broad multi-scorer analysis to a genuine three-headliner week');
 assert.ok(source.includes("trio.every(p=>Number(p?.points)>=18)"),'Three-headliner gate must require all three highlighted scorers to clear 18 points');
 assert.ok(source.includes('playerStatInsightV33'),'Team player sections must attach reporter judgment to statistics');
+assert.ok(source.includes('playerUsageReadV34'),'Revision 5 must derive role/efficiency context instead of repeating the printed stat line');
+assert.ok(source.includes('teamDeepReadV34'),'Every team article must add two deeper lineup/role analysis paragraphs');
+for(const phrase of ['job underneath it was','something concrete to test','did not beat ${opp} so much as remove the suspense'])assert.ok(!source.includes(phrase),'Rejected repetitive/meta phrase survived active reporting source: '+phrase);
 assert.ok(source.includes('losingRecordAsideV33'),'Bad-record teams must receive reporter-specific pessimistic commentary');
 assert.ok(source.includes('tradeHistoryCompleteV33'),'Trade Receipt must verify complete historical/current trade evidence before publishing');
 assert.ok(source.includes('if(!tr)continue'),'Missing trade history must be silently omitted rather than explained in an article');

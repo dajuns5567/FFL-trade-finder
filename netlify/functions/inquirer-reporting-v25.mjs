@@ -1398,11 +1398,11 @@ function angleLeadV28(t,r,angle){
     ],
     [
       `I was promised elegance from ${full} and received fantasy football instead, which is how one learns to admire useful chaos.`,
-      `I prefer elegance; ${full} keeps answering with group chats, questionable decisions and 30-point inconveniences.`,
+      `I prefer elegance; around ${full}, the answer keeps arriving as group chats, questionable decisions and 30-point inconveniences.`,
       `The cruel thing about being right about ${full} for one Sunday is that the next Sunday arrives with no respect for your theory.`
     ],
     [
-      `I WOULD LIKE ONE CALM ${full.toUpperCase()} WEEK. ${full.toUpperCase()} HAS DECLINED THE REQUEST. FINE.`,
+      `I WOULD LIKE ONE CALM ${full.toUpperCase()} WEEK. THE LEAGUE HAS DECLINED THE ${full.toUpperCase()} REQUEST. FINE.`,
       `RESTRAINT WAS CONSIDERED FOR ${full.toUpperCase()} AND REJECTED. THE ${full.toUpperCase()} SCOREBOARD STARTED IT.`,
       `I chase whoever ruined the ${full} group-chat mood first. This week, the ${full} trail is not subtle.`
     ],

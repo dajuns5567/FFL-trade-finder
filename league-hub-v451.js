@@ -169,7 +169,9 @@ function dailyHTML(all,stats,w,md){
    '<button class="secondary small">'+(articleOpen?'Close Report':'Open Full Inquirer ▾')+'</button></div>'+
    recapLink+nav+body+archive+'</div>';
  }else{
-  report='<div class="lh-card lh-wide lh-report"><h3 class="lh-report-title">🎙️ Fleeced! Inquirer</h3><div class="lh-sub">'+esc(w?.reason||'The next completed-week report is being held until Sleeper advances the week.')+'</div>'+archive+'</div>';
+  const latestEdition=(broadcastArchive||[]).slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0]||null;
+  const heldActions=latestEdition?'<div class="lh-broadcast-summary" style="margin-top:12px"><div><b>'+esc('Latest published edition: '+latestEdition.season+' Week '+latestEdition.week)+'</b><div class="lh-sub">The next report can stay held without hiding the edition that is already published.</div></div><div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="secondary small" data-lh-archive-season="'+latestEdition.season+'" data-lh-archive-week="'+latestEdition.week+'">Open Full Inquirer ▾</button><button type="button" class="lh-inline-team" data-lh-archive-season="'+latestEdition.season+'" data-lh-archive-week="'+latestEdition.week+'">Weekly Recap →</button></div></div>':'';
+  report='<div class="lh-card lh-wide lh-report"><h3 class="lh-report-title">🎙️ Fleeced! Inquirer</h3><div class="lh-sub">'+esc(w?.reason||'The next completed-week report is being held until Sleeper advances the week.')+'</div>'+heldActions+archive+'</div>';
  }
 
  const tradeWire='<div class="lh-card lh-wide"><h3>📰 Fleeced! Daily — Trade Wire</h3><div class="lh-sub">'+

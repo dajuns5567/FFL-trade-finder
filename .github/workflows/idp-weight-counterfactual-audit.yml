@@ -21,7 +21,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run settled preview counterfactual
         env:
-          AUDIT_URL: https://deploy-preview-386--inspiring-bombolone-be4489.netlify.app
+          AUDIT_URL: https://inspiring-bombolone-be4489.netlify.app
           AUDIT_OUT: .tmp/idp-weight-counterfactual.json
         run: node scripts/idp-weight-counterfactual-browser-audit.mjs
       - uses: actions/upload-artifact@v4

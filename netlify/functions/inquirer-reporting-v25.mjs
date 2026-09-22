@@ -1316,7 +1316,7 @@ function angleLeadV28(t,r,angle){
     'rout-loss':[
       `${full} lost ${score}, a margin of ${one(margin)} that resists euphemism. This was not one unlucky lineup slot; it was the kind of Sunday that makes every department of the roster look complicit.`,
       `${opp} beat ${full} ${oppScore}, and at that margin isolated excuses stop mattering. The whole ${full} lineup has to own a piece of the afternoon.`,
-      `${score} is the sort of final that forces a beat writer to choose between analysis and an incident report. There are enough problems across ${full} that none deserves to hide behind the others.`
+      `${score} is the sort of final that makes analysis feel like an incident report. There are enough problems across ${full} that none deserves to hide behind the others.`
     ],
     'close-win':[
       `${full} escaped ${opp} ${score}, and the ${one(margin)}-point margin is exactly why the details matter. One lineup call, one target, one tackle or one ugly quarter could have turned a satisfying win into a week of recriminations.`,
@@ -1458,7 +1458,7 @@ function gameShapeV28(t,r){
       `The useful extravagance came from ${top.name}: ${topClause||'the best verified line on the roster'}. ${support?`${support} kept him from dining alone at the top of the card.`:'The rest of the table setting was sparse.'} The leading trio owned roughly ${share}% of the scoring, a concentration that looks elegant until one chair disappears. ${opp&&oppClause?`${opp.name} gave ${t.opponent_name} a legitimate counterargument — ${opp.name} ${oppClause}.`:''}`.trim()
     ],
     [
-      `${top.name.toUpperCase()} MADE THE COPY DESK WORK: ${topClause||'the biggest verified line on the team'}. ${support?`${support} showed up behind him, which saved me from writing a one-man rescue headline.`:'The supporting cast mostly left him yelling into the void.'} The top three starters owned about ${share}% of the score${projDelta!=null?', with the full lineup finishing '+one(Math.abs(projDelta))+' points '+(projDelta>=0?'above':'below')+' projection':''}. ${opp&&oppClause?`${opp.name} kept ${t.opponent_name} in the argument: ${opp.name} ${oppClause}.`:''}`.trim(),
+      `${top.name.toUpperCase()} EARNED THE BIG TYPE: ${topClause||'the biggest verified line on the team'}. ${support?`${support} showed up behind him, which saved me from writing a one-man rescue headline.`:'The supporting cast mostly left him yelling into the void.'} The top three starters owned about ${share}% of the score${projDelta!=null?', with the full lineup finishing '+one(Math.abs(projDelta))+' points '+(projDelta>=0?'above':'below')+' projection':''}. ${opp&&oppClause?`${opp.name} kept ${t.opponent_name} in the argument: ${opp.name} ${oppClause}.`:''}`.trim(),
       `${top.name} did the loud work — ${topClause||'the roster’s best football line'} — and ${support||'the rest of the starters'} decided whether the headline got to celebrate or complain. ${share}% of the total came from the first three names. ${opp&&oppClause?`Across the aisle, ${opp.name} was not exactly quiet: ${opp.name} ${oppClause}.`:''}`.trim()
     ],
     [
@@ -1959,7 +1959,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
     [
       `${top.name.toUpperCase()} IS THE ${team.toUpperCase()} HEADLINER. SOMEBODY ELSE NEEDS TO MAKE NEXT WEEK’S PAGE CROWDED.`,
       `THE BIG TYPE BELONGS TO ${top.name.toUpperCase()}. ${team.toUpperCase()} NEEDS ANOTHER NAME FIGHTING FOR IT NEXT WEEK.`,
-      `${top.name.toUpperCase()} WON THE PHOTO. THE REST OF ${team.toUpperCase()} SHOULD MAKE THE COPY DESK ARGUE NEXT TIME.`
+      `${top.name.toUpperCase()} WON THE PHOTO. THE REST OF ${team.toUpperCase()} SHOULD FIGHT FOR THE FRAME NEXT TIME.`
     ],
     [
       `${top.name} remains the primary affirmative finding for ${team}; another corroborating performance would make the roster case stronger.`,

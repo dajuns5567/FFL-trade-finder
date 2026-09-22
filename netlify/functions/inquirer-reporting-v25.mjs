@@ -301,9 +301,9 @@ function losingRecordAsideV33(t,r){
   if(!((l>=2&&l>w)||(games>=4&&Number.isFinite(rank)&&rank>Math.floor(size*.75))))return null;
   const team=teamIdentityV28(t).mascot,manager=t.manager_name||'management',v=voice(r),key=String(t.roster_id)+':bad-record:'+w+'-'+l+':'+String(r?.id||'');
   const banks=[
-    ['At '+w+'-'+l+', '+team+' has moved past the stage where “early” does much analytical work. '+manager+' needs wins before the explanations become their own losing streak.','Nick has covered enough '+w+'-'+l+' starts to know patience is useful right up until it becomes a hobby.'],
+    ['At '+w+'-'+l+', the '+team+' operation has moved past the stage where “early” does much analytical work. '+manager+' needs wins before the explanations become their own losing streak.','Nick has covered enough '+w+'-'+l+' starts to know patience is useful right up until it becomes a hobby.'],
     [team+' is '+w+'-'+l+', which is less a slow start than an increasingly committed aesthetic. '+manager+' may improve the décor by winning.','A '+w+'-'+l+' record is an awfully durable stain for '+team+'. Bartholomew recommends the radical cleansing agent known as victories.'],
-    [team+' is '+w+'-'+l+'. The good news is nobody can accuse this roster of peaking too early. '+manager+' should try the fashionable new trend called winning.','At '+w+'-'+l+', '+team+' has made pessimism look less like a mood and more like responsible preparation.'],
+    [team+' is '+w+'-'+l+'. The good news is nobody can accuse this roster of peaking too early. '+manager+' should try the fashionable new trend called winning.','At '+w+'-'+l+', the '+team+' operation has made pessimism look less like a mood and more like responsible preparation.'],
     ['The '+team+' record is '+w+'-'+l+'. The standings have filed enough adverse exhibits that '+manager+' needs wins, not a more persuasive closing argument.',team+' sits '+w+'-'+l+'; the file has stopped treating each loss as an isolated incident. '+manager+' can rebut the pattern only on the scoreboard.']
   ][v];
   return keyedChoice(key,banks);
@@ -2044,7 +2044,7 @@ function gameShapeV29(t,r,f=articleFrameV29(t,r)){
 function playerStoryV29(t,r,f=articleFrameV29(t,r)){
   const {top,supports,concerns,won}=f;if(!top)return ['n/a'];
   const topStatus=f.trajectories.find(x=>String(x.p.id)===String(top.id))?.tr||null,topClause=statClause(top),team=teamIdentityV28(t).mascot,ps=[],v=voice(r),
-    topFootball=topClause?`${top.name} ${topClause}.`:'';
+    topFootball=teamStatLine(top)||(topClause?`${top.name} ${topClause}.`:'');
   const openerBanks=[
     [
       `${top.name} gets the lead player note after ${one(top.points)} fantasy points. ${topFootball}`,

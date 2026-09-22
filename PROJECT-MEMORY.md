@@ -1,5 +1,12 @@
 # Fleeced! — Durable Project Memory
 
+> **CURRENT CANONICAL STATE — 2026-09-19**
+>
+> Before using any older rule in this file, read `docs/CANONICAL-SYSTEM-2026-09-19.md`.
+> That document records the current accepted valuation pipeline, scoring gates, Finder/Evaluator fairness engine, Trade History reference behavior, Value History baseline/persistence rules, Home data reuse, recent fixes, and recovery branches.
+>
+> If this older memory file conflicts with the current canonical document or active runtime source, treat the conflicting material below as **historical context only**. In particular, older Package Quality Penalty and older fairness-threshold descriptions do not override the current V256 runtime.
+
 This file is the durable, non-executable source of truth for the Fleeced! 32-team dynasty trade project. It exists so future work can recover the league context, valuation philosophy, trade-construction rules, UI expectations, deployment safeguards, and known validation examples without relying on chat history alone.
 
 **Important:** this document is documentation only. It must never be imported by runtime code and must not change player values, rankings, draft-pick values, consensus calculations, fairness formulas, or production behavior by itself.

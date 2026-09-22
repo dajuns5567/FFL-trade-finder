@@ -39,8 +39,8 @@ function rebuild36(z){
  raw=clamp36(c*.88,raw,c*1.26);
  if(Number.isFinite(rank)&&rank<=24)raw=Math.max(raw,c*.93);
  if(Number.isFinite(rank)&&rank>220)raw=Math.min(raw,c*1.12);
- const next=curve36(raw);
- return{...z,value:Math.max(1,Math.round(next)),context:Math.round(ctxYoung),production:{...(z.production||{}),youngIdentityV45:true,effectiveScoringValue:Math.round(prod),youngProjectionFactor:projection,youngIdentity:{confirmedRookie:ident.confirmedRookie,youngByAge:ident.youngByAge,sparseYoung:ident.sparseYoung,oneYearYoung:ident.oneYearYoung,marketSupported:ident.marketSupported,age:ident.age,draftYear:ident.draft},modelWeights:{consensus:.60,scoringLookback:.23,scarcityAndOtherContext:.12,ageContext:.05}}}
+ const next=curve36(raw),audit=typeof window.assetCurveAudit==='function'?window.assetCurveAudit(raw):null,exact=Number(audit?.exact);
+ return{...z,value:Math.max(1,Math.round(next)),context:Math.round(ctxYoung),production:{...(z.production||{}),youngIdentityV45:true,offenseTerminalRawV45:raw,offenseTerminalExactV45:Number.isFinite(exact)?exact:raw,effectiveScoringValue:Math.round(prod),youngProjectionFactor:projection,youngIdentity:{confirmedRookie:ident.confirmedRookie,youngByAge:ident.youngByAge,sparseYoung:ident.sparseYoung,oneYearYoung:ident.oneYearYoung,marketSupported:ident.marketSupported,age:ident.age,draftYear:ident.draft},modelWeights:{consensus:.60,scoringLookback:.23,scarcityAndOtherContext:.12,ageContext:.05}}}
 }
 masterRankings=function(){return priorMaster36().map(rebuild36).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};

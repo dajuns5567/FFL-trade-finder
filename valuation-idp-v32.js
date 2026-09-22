@@ -26,7 +26,6 @@ function profile32(z){
 function factor32(p){
   if(p.evidence<=0)return 1;
   let factor=1;
-  // Position/archetype translation: conventional IDP consensus can overstate moderate-PPR LBs and safeties.
   if(p.role==='LB'){
     if(p.consensus>=700){
       if(p.ppg<.55)factor*=.84;
@@ -41,14 +40,12 @@ function factor32(p){
     else if(p.consensus>=350&&p.ppg<.70)factor*=.96;
     else if(p.consensus>=350&&p.ppg<.80)factor*=.985;
   }
-  // Proven disruptive EDGE/DL production deserves a league-specific correction when generic IDP markets lag it.
   let edgeBoost=1;
   if(p.role==='EDGE'&&p.evidence>=.55&&p.ppg>=.68&&p.spike>=.85){
     if(p.ppg>=.88&&p.spike>=.93)edgeBoost=1.12;
     else if(p.ppg>=.80&&p.spike>=.90)edgeBoost=1.09;
     else edgeBoost=1.055;
   }
-  // Emerging-potential support is intentionally unavailable to already-high-value IDPs.
   let emergingBoost=1;
   const emergingEligible=p.baseline<500&&p.consensus>=200&&p.consensus<550&&Number.isFinite(p.age)&&p.age<=26&&p.evidence>=.15;
   if(emergingEligible){
@@ -59,25 +56,17 @@ function factor32(p){
     if(p.spike>=.97&&p.ppg>=.32)target=Math.max(target,1.32);
     else if(p.spike>=.93&&p.ppg>=.36)target=Math.max(target,1.25);
     else if(p.spike>=.88&&p.ppg>=.42)target=Math.max(target,1.18);
-    if(target>1){
-      const evidenceBlend=.75+.25*p.evidence;
-      emergingBoost=1+(target-1)*evidenceBlend;
-    }
+    if(target>1){const evidenceBlend=.75+.25*p.evidence;emergingBoost=1+(target-1)*evidenceBlend}
   }
   factor*=Math.max(edgeBoost,emergingBoost);
-  // Consensus-heavy moderate-production LBs cannot erase their PPG penalty with one secondary trait.
   if(p.role==='LB'&&p.consensus>=700&&p.ppg<.75)factor=Math.min(factor,p.ppg<.55?.84:p.ppg<.65?.88:.93);
-  // Protect the established elite/high-value tier from the emerging/upside layer; only small EDGE refinement is allowed.
-  if(p.baseline>=550||p.evidence>=.90&&p.ppg>=.90){
-    const cap=p.role==='EDGE'?1.025:1.01;
-    if(factor>1)factor=Math.min(factor,cap);
-  }
+  if(p.baseline>=550||p.evidence>=.90&&p.ppg>=.90){const cap=p.role==='EDGE'?1.025:1.01;if(factor>1)factor=Math.min(factor,cap)}
   return clamp32(.84,factor,1.28);
 }
 function rebuild32(z){
   if(groupPos(z.x)!=='IDP')return z;
-  const p=profile32(z),factor=factor32(p),next=Math.max(1,Math.round(p.baseline*factor));
-  return{...z,value:next,production:{...(z.production||{}),idpArchetypeCalibrationV61:true,idpArchetypeRoleV61:p.role,idpArchetypeFactorV61:Number(factor.toFixed(3)),idpArchetypeEmergingEligibleV61:Boolean(p.baseline<500&&p.consensus>=200&&p.consensus<550&&Number.isFinite(p.age)&&p.age<=26&&p.evidence>=.15),idpArchetypePrincipleV61:'position-aware-production-and-emerging-potential-on-v58-baseline'}};
+  const p=profile32(z),diagnosticFactor=factor32(p),factor=1,next=Math.max(1,Math.round(p.baseline*factor));
+  return{...z,value:next,production:{...(z.production||{}),idpArchetypeCalibrationV61:true,idpArchetypeRoleV61:p.role,idpArchetypeFactorV61:1,idpArchetypeDiagnosticFactorV61:Number(diagnosticFactor.toFixed(3)),idpArchetypeValueNeutralizedV61:true,idpArchetypeEmergingEligibleV61:Boolean(p.baseline<500&&p.consensus>=200&&p.consensus<550&&Number.isFinite(p.age)&&p.age<=26&&p.evidence>=.15),idpArchetypePrincipleV61:'controlled-audit-neutralized-position-aware-production-and-emerging-potential'}};
 }
 masterRankings=function(){return priorMaster32().map(rebuild32).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};

@@ -74,55 +74,39 @@ function renderTopPlayers(){
   if(!host)return false;
   if(!consensusRefreshComplete())return false;
 
-  const sourceRows=[...document.querySelectorAll('#playerValuesBody .valueRow19')];
-  if(!sourceRows.length)return false;
-
-  const rows=sourceRows.map(row=>{
-    const link=row.querySelector('[data-pv-history]');
-    const id=String(link?.dataset.pvHistory||row.dataset.playerId||'');
-    const title=(row.querySelector('.pv-history-name b')?.textContent||'').trim();
-    const meta=(row.querySelector('.pv-history-meta')?.textContent||'').trim();
-    const match=title.match(/^(\d+)\.\s*(.+)$/);
-    if(!id||!match)return null;
-    const name=match[2].trim();
-    if(!name||/^\d+$/.test(name))return null;
-    return {id,rank:Number(match[1]),name,meta};
-  }).filter(Boolean).sort((a,b)=>a.rank-b.rank).slice(0,10);
-
+  const rows=globalThis.playerValuesV139?.homeTopPlayers?.(10)||[];
   if(rows.length<10)return false;
 
-  const col=items=>items.map(r=>
-    '<div class="fleeced-home-data-row fleeced-home-player-row">'+
+  const col=items=>items.map(r=>{
+    const meta=[r.pos+(r.posRank?' #'+r.posRank:''),r.team,'Overall #'+r.rank,'Value '+fmt(r.value)].filter(Boolean).join(' • ');
+    return '<div class="fleeced-home-data-row fleeced-home-player-row">'+
       '<span class="fleeced-home-data-rank">'+esc(r.rank)+'</span>'+
       '<button type="button" class="fleeced-home-player-link" data-home-history="'+esc(r.id)+'">'+
-        '<b>'+esc(r.name)+'</b><small>'+esc(r.meta)+'</small>'+
+        '<b>'+esc(r.name)+'</b><small>'+esc(meta)+'</small>'+
       '</button>'+
-    '</div>'
-  ).join('');
+    '</div>';
+  }).join('');
 
   host.innerHTML='<div class="fleeced-home-list-title">Top 10 Current Players</div>'+
     '<div class="fleeced-home-two-col"><div>'+col(rows.slice(0,5))+'</div><div>'+col(rows.slice(5,10))+'</div></div>';
   return true;
 }
-let homeMarketCache=null;
 function consensusRefreshComplete(){
+  const marker=globalThis.__fllConsensusRefresh;
+  if(marker?.complete===true)return marker.ok===true&&Number(marker.successful)>=Number(marker.total||7);
   const status=document.getElementById('homeDataStatus');
   const text=String(status?.textContent||'');
   const match=text.match(/consensus sources:\s*(\d+)\/(\d+)\s*refreshed/i);
   return !!(match&&Number(match[1])>0&&Number(match[1])===Number(match[2]));
 }
-async function renderValueRisers(){
+async function renderValueRisers(force=false){
   const host=document.getElementById('homeValueRisers');
   if(!host)return false;
   if(!consensusRefreshComplete())return false;
   try{
-    if(!homeMarketCache){
-      const r=await fetch('/.netlify/functions/value-history?market=1',{cache:'no-store'});
-      if(!r.ok)throw Error('market history unavailable');
-      const payload=await r.json();
-      homeMarketCache=payload?.market||{};
-    }
-    const rows=(homeMarketCache.periods?.['7D']?.valueRisers||[])
+    const market=await globalThis.valueHistoryV331?.marketData?.(force);
+    if(!market)throw Error('Value History market data unavailable');
+    const rows=(market.periods?.['7D']?.valueRisers||[])
       .filter(x=>Number(x?.overall)<=300&&Number(x?.delta)>0)
       .sort((a,b)=>Number(b.delta||0)-Number(a.delta||0))
       .slice(0,10);
@@ -166,21 +150,21 @@ function scheduleTopPlayers(){
   };
   run();
 }
-function scheduleValueRisers(){
+function scheduleValueRisers(force=false){
   let tries=0;
   const run=async()=>{
     if(!consensusRefreshComplete()){if(++tries<120)setTimeout(run,500);return}
-    if(await renderValueRisers()||++tries>=120)return;
+    if(await renderValueRisers(force)||++tries>=120)return;
+    force=false;
     setTimeout(run,500);
   };
   run();
 }
 function refreshHomePreviewsAfterConsensus(){
   if(!consensusRefreshComplete())return false;
-  homeMarketCache=null;
   setHomePreviewWaiting();
   scheduleTopPlayers();
-  scheduleValueRisers();
+  scheduleValueRisers(true);
   return true;
 }
 function handleClick(e){
@@ -218,7 +202,7 @@ function install(){
   if(finder)new MutationObserver(()=>queueMicrotask(relocateFinderDiagnostics)).observe(finder,{childList:true});
   const tabs=document.querySelector('.tabs');
   if(tabs)new MutationObserver(()=>queueMicrotask(normalizeTabOrder)).observe(tabs,{childList:true});
-  document.getElementById('updateBtn')?.addEventListener('click',()=>{homeMarketCache=null;setTimeout(scheduleTopPlayers,500);setTimeout(scheduleValueRisers,500)},{passive:true});
+  document.getElementById('updateBtn')?.addEventListener('click',()=>{setTimeout(scheduleTopPlayers,500);setTimeout(()=>scheduleValueRisers(true),500)},{passive:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 window.fleecedHomeV431={activateTab,relocateFinderDiagnostics,normalizeTabOrder,renderTopPlayers,renderValueRisers,consensusRefreshComplete};

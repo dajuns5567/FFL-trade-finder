@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "snapshot_date": "2026-09-19",
+  "purpose": "Machine-readable recovery map for the accepted Fleeced runtime architecture. Documentation only; never import as valuation logic.",
+  "repository": "dajuns5567/FFL-trade-finder",
+  "work_branch": "release/precision-idp-runtime-20260919",
+  "pull_request": 385,
+  "primary_preview": "https://deploy-preview-385--precious-stroopwafel-196eae.netlify.app",
+  "canonical_document": "docs/CANONICAL-SYSTEM-2026-09-19.md",
+  "components": {
+    "scoring": "netlify/functions/ppr-scoring.mjs",
+    "idp_baseline": "docs/idp-valuation-baseline-2026-09-19.md",
+    "combined_precision": "combined-market-precision-v386.js",
+    "canonical_currency": "trade-value-normalization-v139.js",
+    "modeled_values": "modeled-player-values-v319.js",
+    "consensus_refresh": "nonblocking-consensus-v277.js",
+    "trade_engine": "trade-runtime-v256-compiled.js",
+    "trade_finder": "trade-finder-v256-compiled.js",
+    "value_history_backend": "netlify/functions/value-history.mjs",
+    "value_history_ui": "value-history-v276.js",
+    "headless_history": "scripts/value-history-headless-refresh.mjs",
+    "archive_writer": "scripts/archive-value-history.mjs",
+    "home": "fleeced-home-v424.js",
+    "league_hub": "league-hub-v451.js",
+    "league_hub_backend": "netlify/functions/league-hub.mjs",
+    "inquirer_reporters": "netlify/functions/inquirer-reporters.mjs",
+    "inquirer_contract": "docs/FLEECED-INQUIRER-VOICE-AND-REPORTERS.md"
+  },
+  "accepted_contracts": {
+    "current_game_qualification": "snap_share >= 0.18 OR league_fantasy_points >= 8",
+    "historical_season_min_qualifying_games": 8,
+    "current_week_requires_all_nonignored_games_final": true,
+    "idp_model_weights": {
+      "consensus": 0.4,
+      "scoring": 0.4,
+      "context": 0.2
+    },
+    "canonical_player_max": 9999,
+    "canonical_player_floor": 120,
+    "canonical_nearest_year_first_anchor": 7000,
+    "trade_consolidation": "Value Adjustment only; Package Quality Penalty is not active in current V256 runtime",
+    "trade_reject_if": "score < 55 OR effective_value_ratio < 0.62",
+    "trade_labels": {
+      "94-100": "Excellent Fit",
+      "82-93": "Fair",
+      "otherwise_nonrejected": "Negotiable"
+    },
+    "value_history_baseline_utc": "2026-09-19T22:01:38.323Z",
+    "value_history_baseline_et": "2026-09-19 18:01:38.323 ET",
+    "affected_trade_original_analysis_reference_minute_utc": "2026-09-19T22:01",
+    "affected_trade_original_analysis_reference_et": "2026-09-19 18:01 ET",
+    "production_merge_requires_explicit_user_authorization": true,
+    "inquirer_reporter_count": 4,
+    "inquirer_rotation": "8 teams per reporter per week; every reporter covers every team once across four consecutive weeks",
+    "inquirer_real_stats_source": "Sleeper weekly raw stats",
+    "inquirer_article_archives": "immutable standalone per-reporter article JSON + reporter archive index",
+    "inquirer_version": 21,
+    "inquirer_live_context": [
+      "season record and league rank",
+      "winning/losing streaks from completed Sleeper matchups",
+      "recent team scoring form",
+      "playoff-line/push context when season timing makes it meaningful",
+      "player fantasy points plus real-life Sleeper stat line",
+      "multi-game player hot/cold form when enough weekly history exists"
+    ],
+    "scheduled_value_history_contract": "precision-idp-runtime-20260919",
+    "invalid_value_history_times": [
+      "2026-09-19T23:09:48.738Z"
+    ],
+    "inquirer_reporters": [
+      {
+        "name": "Nick Swindell",
+        "desk": "The Old Desk"
+      },
+      {
+        "name": "Bartholomew Roycington III",
+        "desk": "The Numbers Desk"
+      },
+      {
+        "name": "Tilly Fleecer",
+        "desk": "The Back Page"
+      },
+      {
+        "name": "Jefferson Filch",
+        "desk": "The Inquiry Desk"
+      }
+    ],
+    "inquirer_house_style": "Passionate hometown beat reporter + fan. Every desk uses conversational sarcasm, one-liners, emotional investment and newsroom judgment. Personalities remain distinct; no reporter is assigned a dry numbers-presenter role. Facts remain grounded in league data.",
+    "inquirer_article_standard": "Six core reporting beats plus Hot Seat and Cool Throne, in variable story order; three connected paragraphs per section; minimum 24 narrative paragraphs; ~672 words average in audited 2026 Week 1 V21 edition; article must make matchup and transaction judgments rather than explain the data pipeline.",
+    "inquirer_season_classification": {
+      "regular_season_weeks": "1-13",
+      "playoffs_weeks": "14-17",
+      "playoffs_begin_week": 14,
+      "final_inquirer_week": 17
+    },
+    "inquirer_team_value_watch": {
+      "source": "canonical Value History team snapshots",
+      "target_period": "7D",
+      "fallback": "earliest valid observation when fewer than 7 days exist; label as AVAILABLE history"
+    },
+    "inquirer_league_overview": [
+      "game-week analysis",
+      "standings/playoff/bubble analysis",
+      "league-wide transactions",
+      "canonical Trade History reactions",
+      "canonical team Value History movement",
+      "bottom-five standings-based No. 1-pick race analysis",
+      "four-reporter Hot Takes",
+      "verified next-week bye/injury roster pressure"
+    ],
+    "inquirer_availability_sources": {
+      "byes": "verified NFL schedule source already used by scoring/import pipeline",
+      "injuries": "Sleeper player injury/status metadata",
+      "rule": "withhold unsupported claims when source data is unavailable"
+    },
+    "inquirer_league_overview_archive": "inquirer/league-overview/<season>/week-<NN>.json and indexed into all four reporter archives",
+    "inquirer_playoff_rounds": {
+      "14": "AFC/NFC Wildcard Round",
+      "15": "AFC/NFC Divisional Round",
+      "16": "AFC/NFC Championship",
+      "17": "Super Bowl",
+      "conference_source": "Sleeper roster settings.division -> league.metadata.division_<n> prefix"
+    },
+    "inquirer_fan_sentiment": {
+      "persistence": "previous archived week blended at 65% for the same manager; new evidence 35%",
+      "inputs": [
+        "recent weighted W/L form",
+        "streak",
+        "season record and standings",
+        "recent scoring trend",
+        "current projection performance",
+        "lineup/bench decisions",
+        "canonical team Value History movement",
+        "recent trade activity",
+        "career playoff wins",
+        "regular-season titles",
+        "prior championships",
+        "current Week 17 Sleeper championship",
+        "prior archived fan sentiment"
+      ],
+      "rule": "sentiment is management commentary only and cannot feed valuation/trade/standings systems",
+      "extreme_negative_style": "obviously fictional sports-fan hyperbole; metaphorical/cartoon torches and pitchforks, not literal violence",
+      "extreme_positive_style": "Hall of Fame petition reserved for sufficiently strong sentiment with repeated championships"
+    },
+    "inquirer_published_editions": {
+      "2026-week-1": {
+        "inquirer_version": 21,
+        "status": "audited immutable preload on PR #385; replaces the V20 passionate-newsroom edition",
+        "team_articles": 32,
+        "reporter_distribution": "8 team articles per reporter",
+        "team_article_sections": 8,
+        "minimum_team_article_paragraphs": 24,
+        "minimum_team_article_words": 588,
+        "average_team_article_words": 672,
+        "distinct_section_orders": 6,
+        "numeric_token_density": 0.0635,
+        "prose_audits": [
+          "scripts/inquirer-prose-quality-audit.mjs",
+          "scripts/inquirer-overview-quality-audit.mjs"
+        ],
+        "league_overview_sections": 4,
+        "hot_takes": 5,
+        "hot_take_types": [
+          "championship",
+          "fraud",
+          "division",
+          "player",
+          "upset"
+        ],
+        "legal_lineup_swap_only": true,
+        "idp_cannot_replace_offensive_slot": true,
+        "archive_filters": [
+          "year",
+          "week",
+          "team"
+        ],
+        "archive_default": "current completed week",
+        "preload_module": "netlify/functions/inquirer-week1-2026-preload.mjs",
+        "metadata": "data/inquirer/2026/week-01.meta.json"
+      }
+    },
+    "inquirer_article_structure": {
+      "canonical": "variable-order passionate beat column",
+      "required_beats": [
+        "game story / lede",
+        "player performance",
+        "management / lineup / transactions",
+        "Value Watch",
+        "rolling Fan Sentiment",
+        "next-week outlook / roster pressure"
+      ],
+      "order_rule": "section order varies by article; no one order may dominate more than 8 of 32 stories",
+      "required_impact_sections": [
+        "Hot Seat",
+        "Cool Throne"
+      ],
+      "minimum_paragraphs": 24,
+      "editorial_rule": "report the story, grade transaction quality, prioritize matchup/player impact, and add newsroom judgment, humor and emotion; do not explain the data pipeline"
+    },
+    "inquirer_prose_quality": {
+      "audit": "scripts/inquirer-prose-quality-audit.mjs",
+      "overview_audit": "scripts/inquirer-overview-quality-audit.mjs",
+      "permanent_ci_gate": true,
+      "minimum_team_article_words": 500,
+      "minimum_median_paragraph_words": 19,
+      "team_sections": 8,
+      "minimum_team_paragraphs": 24,
+      "max_numeric_token_density": 0.08,
+      "max_uppercase_word_density": 0.018,
+      "max_short_sentence_ratio": 0.22,
+      "minimum_normalized_headline_patterns_per_reporter": 6,
+      "maximum_reuse_of_same_five_word_paragraph_opener": 4,
+      "prohibited": [
+        "pipe-delimited stat-dump prose",
+        "legacy V16/V17 checklist language",
+        "provider or pipeline explanations in published body copy",
+        "usable real-life stat line missing-data narration",
+        "internal reporter voice prompt displayed to readers",
+        "all-caps body gimmick as substitute for voice"
+      ],
+      "rule": "fix generated prose when the edition fails; do not relax the audit merely to publish",
+      "required_distinct_section_orders": 4,
+      "maximum_articles_using_one_section_order": 8,
+      "maximum_reuse_of_same_normalized_sentence": 4
+    },
+    "inquirer_league_notebook": {
+      "canonical": "four-desk human League Notebook",
+      "hot_take_rule": "Hot Takes are predictions, not statistical analysis",
+      "required_prediction_types": [
+        "championship",
+        "fraud",
+        "division",
+        "player",
+        "upset"
+      ],
+      "audit": "scripts/inquirer-overview-quality-audit.mjs"
+    },
+    "inquirer_player_stat_enrichment": {
+      "starters": true,
+      "best_bench": true,
+      "worst_starter": true,
+      "transaction_players": true,
+      "defensive_alias_fallbacks": true,
+      "nate_landman_week1_regression": "player 8659 must resolve 5 solo, 3 assists, 1 QB hit, 1 PD"
+    },
+    "inquirer_lineup_hindsight": {
+      "source": "Sleeper lineup slots and player positions",
+      "rule": "criticize a bench/start decision only when reserve is legally eligible for the starter's actual lineup slot",
+      "offense_idp_isolation": true,
+      "prohibited": "IDP scorer presented as an RB/WR/QB/offensive replacement merely because bench fantasy points are higher"
+    },
+    "inquirer_archive_ui": {
+      "default": "current completed week",
+      "filters": [
+        "year",
+        "week",
+        "team"
+      ],
+      "preserve_team_across_year_change": true,
+      "reporter_archives": true,
+      "sources_display": "collapsed disclosure"
+    }
+  },
+  "recovery_branches": {
+    "code": "baseline/20260919-home-valuehistory-aligned",
+    "value_history_data": "baseline/20260919-value-history-reset",
+    "canonical_project_memory": "baseline/20260919-canonical-project-memory"
+  }
+}

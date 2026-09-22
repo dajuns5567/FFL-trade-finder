@@ -54,6 +54,29 @@ on:
       - 'value-history-v276.js'
       - 'value-history-ui-defaults-v386.js'
       - 'scripts/value-history-data-hub-v331-smoke.mjs'
+      - 'league-hub-v451.js'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/inquirer-reporters.mjs'
+      - 'netlify/functions/inquirer-narrative-v17.mjs'
+      - 'netlify/functions/inquirer-human-v19.mjs'
+      - 'netlify/functions/inquirer-human-v20.mjs'
+      - 'netlify/functions/inquirer-human-v21.mjs'
+      - 'netlify/functions/inquirer-context-v22.mjs'
+      - 'netlify/functions/inquirer-editorial-v23.mjs'
+      - 'netlify/functions/inquirer-reporting-v24.mjs'
+      - 'netlify/functions/inquirer-reporting-v25.mjs'
+      - 'scripts/inquirer-v24-audit.mjs'
+      - 'scripts/inquirer-v25-audit.mjs'
+      - 'scripts/inquirer-v23-audit.mjs'
+      - 'scripts/inquirer-v22-audit.mjs'
+      - 'netlify/functions/inquirer-overview-v19.mjs'
+      - 'netlify/functions/inquirer-week1-2026-preload.mjs'
+      - 'scripts/inquirer-reporters-smoke.mjs'
+      - 'scripts/inquirer-prose-quality-audit.mjs'
+      - 'scripts/inquirer-overview-quality-audit.mjs'
+      - 'scripts/pack-inquirer-preload.mjs'
+      - 'data/inquirer/2026/week-01.meta.json'
+      - 'docs/FLEECED-INQUIRER-VOICE-AND-REPORTERS.md'
       - 'netlify.toml'
       - '.github/workflows/finder-runtime-smoke.yml'
   workflow_dispatch:
@@ -66,6 +89,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Install declared function dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
       - name: V328 compiled Finder reproducibility
         run: |
           node scripts/compile-v256-runtimes.cjs
@@ -138,6 +163,31 @@ jobs:
           node --check netlify/functions/value-history-observability.mjs
           node --check scripts/resolve-active-netlify-site.mjs
           node --check scripts/value-history-headless-refresh.mjs
+      - name: Fleeced Inquirer V26 recovered newsroom, archives, and writing quality
+        run: |
+          node --check league-hub-v451.js
+          node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/inquirer-reporters.mjs
+          node --check netlify/functions/inquirer-narrative-v17.mjs
+          node --check netlify/functions/inquirer-human-v19.mjs
+          node --check netlify/functions/inquirer-human-v20.mjs
+          node --check netlify/functions/inquirer-human-v21.mjs
+          node --check netlify/functions/inquirer-context-v22.mjs
+          node --check netlify/functions/inquirer-editorial-v23.mjs
+          node --check netlify/functions/inquirer-reporting-v24.mjs
+          node --check netlify/functions/inquirer-reporting-v25.mjs
+          node --check netlify/functions/inquirer-overview-v19.mjs
+          node --check scripts/inquirer-prose-quality-audit.mjs
+          node --check scripts/inquirer-overview-quality-audit.mjs
+          node --check scripts/pack-inquirer-preload.mjs
+          node scripts/inquirer-reporters-smoke.mjs
+          node scripts/inquirer-prose-quality-audit.mjs
+          node scripts/inquirer-v23-audit.mjs
+          node scripts/inquirer-v24-audit.mjs
+          node scripts/inquirer-v25-audit.mjs
+          node scripts/one-time-generate-inquirer-week1.mjs
+          node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer.json
+          node scripts/inquirer-overview-quality-audit.mjs /tmp/week1-inquirer.json
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs
       - name: Value History data hub behavior and isolation

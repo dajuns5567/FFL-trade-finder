@@ -5,7 +5,7 @@ const token=process.env.GITHUB_TOKEN;
 const repository=process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder';
 const sourceBase=process.env.VALUE_HISTORY_SOURCE_URL||'https://subtle-genie-6167c5.netlify.app/.netlify/functions/value-history';
 const netlifySiteId=process.env.NETLIFY_SITE_ID||'0cc03543-09f9-4de9-9b52-6cbc4fbc4357';
-const netlifyToken=process.env.NETLIFY_BLOBS_TOKEN||process.env.NETLIFY_AUTH_TOKEN||'';
+const netlifyTokens=[process.env.NETLIFY_BLOBS_TOKEN,process.env.NETLIFY_AUTH_TOKEN].map(x=>String(x||'').trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i);
 const dataBranch='value-history-data';
 const root='value-history';
 const scheduledSnapshotFile=String(process.env.VALUE_HISTORY_SNAPSHOT_FILE||'').trim();
@@ -23,7 +23,22 @@ async function gh(path,init={}){
 async function readFile(path){
   const j=await gh(`/repos/${owner}/${repo}/contents/${encodeURIComponent(path).replace(/%2F/g,'/')}?ref=${encodeURIComponent(dataBranch)}`);
   if(!j)return null;
-  return{sha:j.sha,content:Buffer.from(j.content||'','base64').toString('utf8')};
+  let encoding=String(j.encoding||'').toLowerCase(),encoded=String(j.content||'').trim();
+  // GitHub's Contents API omits inline content for files larger than 1 MB.
+  // Monthly Value History bundles can exceed that size, so fall back to the
+  // Git blob endpoint using the authoritative blob SHA instead of treating the
+  // file as empty and falsely reporting every indexed snapshot as missing.
+  if((!encoded||encoding==='none')&&j.sha){
+    const blob=await gh(`/repos/${owner}/${repo}/git/blobs/${j.sha}`);
+    if(blob){
+      encoding=String(blob.encoding||'base64').toLowerCase();
+      encoded=String(blob.content||'').trim();
+    }
+  }
+  const content=encoding==='base64'
+    ?Buffer.from(encoded.replace(/\s+/g,''),'base64').toString('utf8')
+    :encoded;
+  return{sha:j.sha,content};
 }
 async function putFile(path,content,message,sha){
   const body={message,content:Buffer.from(content).toString('base64'),branch:dataBranch};
@@ -33,9 +48,16 @@ async function putFile(path,content,message,sha){
 const V380_BAD_WINDOW=[Date.parse('2026-09-10T03:25:00.000Z'),Date.parse('2026-09-10T03:35:00.000Z')];
 const V381_BAD_WINDOW=[Date.parse('2026-09-10T03:20:00.000Z'),Date.parse('2026-09-10T03:46:38.700Z')];
 const V391_BAD_WINDOW=[Date.parse('2026-09-10T03:51:00.000Z'),Date.parse('2026-09-10T03:52:00.000Z')];
-function isKnownBadSnapshot(s){const ms=new Date(s?.t||'').getTime();return Number.isFinite(ms)&&[V380_BAD_WINDOW,V381_BAD_WINDOW,V391_BAD_WINDOW].some(([a,b])=>ms>=a&&ms<b)}
+const V494_BAD_WINDOW=[Date.parse('2026-09-16T04:57:00.000Z'),Date.parse('2026-09-19T19:38:00.000Z')];
+const V495_BAD_TIMES=new Set(['2026-09-19T21:47:21.051Z']);
+const V498_BAD_TIMES=new Set(['2026-09-19T23:09:48.738Z']);
+const V499_BAD_TIMES=new Set(['2026-09-19T23:38:30.077Z','2026-09-20T06:20:50.829Z','2026-09-20T06:23:39.657Z','2026-09-20T12:25:37.233Z','2026-09-20T16:31:11.607Z','2026-09-20T19:29:04.241Z','2026-09-20T22:29:01.016Z']);
+const V496_BASELINE_T='2026-09-19T22:01:38.323Z';
+const V496_BASELINE_MS=Date.parse(V496_BASELINE_T);
+const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
+function isKnownBadSnapshot(s){const t=String(s?.t||''),ms=new Date(t).getTime();return V495_BAD_TIMES.has(t)||V498_BAD_TIMES.has(t)||V499_BAD_TIMES.has(t)||(Number.isFinite(ms)&&(ms<V496_BASELINE_MS||[V380_BAD_WINDOW,V381_BAD_WINDOW,V391_BAD_WINDOW,V494_BAD_WINDOW].some(([a,b])=>ms>=a&&ms<b)))}
 function validSnapshot(s){
-  return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100&&!isKnownBadSnapshot(s);
+  return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100&&!isKnownBadSnapshot(s)&&(String(s.source||'')!=='scheduled'||String(s.valuation_contract||'')===SCHEDULED_VALUATION_CONTRACT);
 }
 function monthOf(t){return String(t).slice(0,7)}
 function safeName(t){return String(t).replace(/[:.]/g,'-')}
@@ -44,17 +66,24 @@ const idxFile=await readFile(`${root}/index.json`);
 if(!idxFile)throw new Error('Value History archive index missing');
 const index=JSON.parse(idxFile.content),existing=new Set((index.items||[]).map(x=>String(x.t))),since=index.latest||'';
 async function snapshotsFromBlobStore(){
-  if(!netlifyToken)return null;
-  const live=getStore({name:'fll-value-history-v2',siteID:netlifySiteId,token:netlifyToken,consistency:'strong'});
-  const listing=await live.list({prefix:'snapshots/'});
-  const keys=(listing?.blobs||[]).map(x=>String(x?.key||'')).filter(Boolean).sort(),snapshots=[];
-  for(let i=0;i<keys.length;i+=25){
-    const batch=keys.slice(i,i+25);
-    const rows=await Promise.all(batch.map(key=>live.get(key,{type:'json'}).catch(()=>null)));
-    for(const snap of rows)if(validSnapshot(snap))snapshots.push(snap);
+  if(!netlifyTokens.length)return null;
+  let last=null;
+  for(const token of netlifyTokens){
+    try{
+      const live=getStore({name:'fll-value-history-v2',siteID:netlifySiteId,token,consistency:'strong'});
+      const listing=await live.list({prefix:'snapshots/'});
+      const keys=(listing?.blobs||[]).map(x=>String(x?.key||'')).filter(Boolean).sort(),snapshots=[];
+      for(let i=0;i<keys.length;i+=25){
+        const batch=keys.slice(i,i+25);
+        const rows=await Promise.all(batch.map(key=>live.get(key,{type:'json'}).catch(()=>null)));
+        for(const snap of rows)if(validSnapshot(snap))snapshots.push(snap);
+      }
+      snapshots.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+      return{schema_version:1,league_id:'1316867686394769408',source:'netlify-blobs-direct',snapshot_count:snapshots.length,snapshots};
+    }catch(e){last=e}
   }
-  snapshots.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  return{schema_version:1,league_id:'1316867686394769408',source:'netlify-blobs-direct',snapshot_count:snapshots.length,snapshots};
+  if(last)console.warn('Netlify Blob archive credentials unavailable; trying HTTP export:',String(last?.message||last));
+  return null;
 }
 async function snapshotsFromHttpExport(){
   const source=new URL(sourceBase);source.searchParams.set('archive_export','1');if(since)source.searchParams.set('since',since);

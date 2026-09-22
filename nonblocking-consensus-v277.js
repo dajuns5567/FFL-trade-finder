@@ -3,38 +3,56 @@
 if(typeof updateData!=='function'||typeof loadCore!=='function'||typeof refreshConsensus!=='function')return;
 const coreLoad277=loadCore;
 let consensusRun277=0;
+function setValueRefresh277(patch={}){
+  const prior=window.__fllValueRefresh||{};
+  window.__fllValueRefresh={...prior,...patch};
+}
+function refreshDerivedValuation277(reason){
+  try{masterRankCache=null}catch(_){}
+  try{valueCache?.clear?.()}catch(_){}
+  try{fitCache?.clear?.()}catch(_){}
+  try{stageCache?.clear?.()}catch(_){}
+  try{window.modeledPlayerValuesV319?.refresh?.(true)}catch(e){console.warn('Derived valuation refresh failed after '+reason,e)}
+}
 async function refreshConsensusBackground277(run){
   let consensusCount=0;
   try{
     consensusCount=await refreshConsensus(true);
     if(run!==consensusRun277)return;
+    refreshDerivedValuation277('consensus refresh');
     buildTeams();renderAll();
     window.__fllConsensusRefresh={complete:true,ok:Number(consensusCount)>=7,successful:Number(consensusCount)||0,total:7,completedAt:new Date().toISOString()};
     state.lastUpdate=new Date().toISOString();
     cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
     status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data and team projections ready; consensus sources: <b>${consensusCount}/7</b> freshly refreshed. See Consensus Refresh Diagnostics for any last-known-good fallback.`,'success');
+    setValueRefresh277({inFlight:false,phase:'complete',run,completedAt:new Date().toISOString()});
   }catch(e){
     if(run!==consensusRun277)return;
     console.warn('Background consensus refresh failed',e);
     window.__fllConsensusRefresh={complete:true,ok:false,successful:0,total:7,error:String(e?.message||e),completedAt:new Date().toISOString()};
     status(`Sleeper core data and team projections are ready. Consensus refresh did not complete; last validated consensus snapshots remain in use.`,'success');
+    setValueRefresh277({inFlight:false,phase:'complete-with-lkg',run,completedAt:new Date().toISOString()});
   }
 }
 updateData=async function(){
   const btn=document.getElementById('updateBtn');if(btn)btn.disabled=true;
+  const run=++consensusRun277;
+  setValueRefresh277({inFlight:true,phase:'core',run,startedAt:new Date().toISOString(),completedAt:null});
   try{
     await coreLoad277();
+    refreshDerivedValuation277('scoring/core refresh');
     state.lastUpdate=new Date().toISOString();
     cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
     status(`Core league data and team projections ready <b>${new Date().toLocaleString()}</b>. Refreshing consensus references in the background…`,'success');
-    const run=++consensusRun277;
     window.__fllConsensusRefresh={complete:false,ok:false,successful:0,total:7,startedAt:new Date().toISOString()};
+    setValueRefresh277({inFlight:true,phase:'consensus',run});
     refreshConsensusBackground277(run);
   }catch(e){
     console.error(e);
     const cached=cacheGet('fll_sleeper_snapshot');
     if(cached){state={...state,...cached};buildTeams();renderAll();status(`Live update failed: <b>${esc(e.message)}</b>. Cached Sleeper snapshot restored so the team selector remains usable.`,'error')}
     else status(`Update failed: <b>${esc(e.message)}</b>. Sleeper data could not be loaded in this browser.`,'error');
+    setValueRefresh277({inFlight:false,phase:'failed',run,error:String(e?.message||e),completedAt:new Date().toISOString()});
   }finally{if(btn)btn.disabled=false}
 };
 window.updateData=updateData;

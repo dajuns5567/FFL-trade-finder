@@ -150,7 +150,7 @@ async function main(){
     const fetched=year===current.season?{...qualifiedCurrent,weekly:gatedCurrent.weekly}:await fetchWeeklyStats(year);
     // Counterfactual PPG rebuild: use weekly player-games so the denominator follows
     // valuation qualification rather than generic season GP. Historical seasons require
-    // >=8 qualifying games; current season keeps the live >=20% snaps OR >=8 league-points gate.
+    // >=8 qualifying games; current season keeps the live >=18% snaps OR >=8 league-points gate.
     let aggregated;
     if(year===current.season){
       aggregated=aggregateWeeks(fetched.weekly);
@@ -159,7 +159,7 @@ async function main(){
       const qualifiedHistorical={};
       for(let week=1;week<=18;week++){
         const parsed=rows(fetched.weekly?.[week]),teamMax=new Map();
-        // Apply the SAME per-game qualification used by valuation: >=20% of team snaps
+        // Apply the SAME per-game qualification used by valuation: >=18% of team snaps
         // OR >=8 league fantasy points. Build team/phase snap maxima from that week's feed
         // so historical denominators count qualifying games, not generic games played.
         for(const [id,stats] of parsed){
@@ -188,8 +188,8 @@ async function main(){
   const manifest={
     ok:true,generatedAt:new Date().toISOString(),source:'Sleeper public API',currentLeagueId:START_LEAGUE_ID,
     currentSeason:current.season,currentLeagueStatus:current.league?.status||null,currentSeasonCompletedWeek:completedWeek,currentLeagueScoringSettings:current.league?.scoring_settings||{},
-    productionWeightPlan:plan,productionSeasons,seasonDiagnostics,compactDiagnostics,qualifyingHistoricalSeasonMinimumGames:8,qualifyingGameRule:{minimumSnapShare:0.20,minimumFantasyPoints:8,operator:'OR'},
-    currentSeasonQualification:{minimumSnapShare:.20,minimumFantasyPoints:8,finalGamesOnly:true,fullWeekValuationGate:true,finalTeamsByWeek:qualifiedCurrent.finalTeamsByWeek,weekFinalityByWeek:qualifiedCurrent.weekFinalityByWeek,diagnostics:qualifiedCurrent.diagnostics},
+    productionWeightPlan:plan,productionSeasons,seasonDiagnostics,compactDiagnostics,qualifyingHistoricalSeasonMinimumGames:8,qualifyingGameRule:{minimumSnapShare:0.18,minimumFantasyPoints:8,operator:'OR'},
+    currentSeasonQualification:{minimumSnapShare:.18,minimumFantasyPoints:8,finalGamesOnly:true,fullWeekValuationGate:true,finalTeamsByWeek:qualifiedCurrent.finalTeamsByWeek,weekFinalityByWeek:qualifiedCurrent.weekFinalityByWeek,diagnostics:qualifiedCurrent.diagnostics},
     pprMethod:'Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.',
     linkedLeagueSeasons:chain.map(x=>({leagueId:x.leagueId,season:x.season,previousLeagueId:x.previousLeagueId})),
     rosterMutation:false,
@@ -198,7 +198,7 @@ async function main(){
       'Production seasons are selected by season year from the active 60/30/10 or in-season weighting plan and are not dependent on previous_league_id links.',
       'Raw weekly Sleeper stat payloads are preserved. No player production number is fabricated.',
       'During the active current season, only player-games from NFL games verified final are eligible for scoring.',
-      'A finalized current-season player-game qualifies when Sleeper snap share is at least 20% or league fantasy points are at least 8. Missing snap data does not satisfy the snap criterion.',
+      'A finalized current-season player-game qualifies when Sleeper snap share is at least 18% or league fantasy points are at least 8. Missing snap data does not satisfy the snap criterion.',
       'Finalized games are collected immediately, but a new NFL week does not enter valuation until every non-ignored game slot in that week is final.',
       'Delayed, postponed, suspended, or canceled games occupy a null scoring slot and do not block the rest of the week. If the same event is later made up, its stable event slot becomes final and the makeup result fills that original null slot rather than shifting later weeks.',
       'Offensive PPR is derived only from Sleeper-provided pts_ppr or deterministic standard-PPR scoring of Sleeper raw stats.',

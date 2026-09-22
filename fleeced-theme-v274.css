@@ -1772,3 +1772,67 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
  #home #homeNavigation > button.fleeced-home-card:not(.fleeced-home-half){grid-column:span 1!important}
  #home #homeNavigation > .fleeced-home-wide,#home #homeNavigation > .fleeced-home-half{grid-column:1/-1!important}
 }
+
+
+/* V497 Home Player Values / Value History preview alignment */
+#home #homeTopPlayers,
+#home #homeValueRisers{
+  padding:2px 15px 14px!important;
+}
+#home #homeTopPlayers .fleeced-home-list-title,
+#home #homeValueRisers .fleeced-home-list-title{
+  font-size:10px!important;
+  line-height:14px!important;
+  font-weight:900!important;
+  letter-spacing:.065em!important;
+  padding:7px 0 6px!important;
+}
+#home #homeTopPlayers .fleeced-home-data-row,
+#home #homeValueRisers .fleeced-home-data-row{
+  grid-template-columns:24px minmax(0,1fr) 52px!important;
+  gap:9px!important;
+  min-height:50px!important;
+  padding:7px 0!important;
+  align-items:center!important;
+}
+#home #homeTopPlayers .fleeced-home-player-row::after{
+  content:"";
+  display:block;
+  width:52px;
+  height:1px;
+}
+#home #homeTopPlayers .fleeced-home-data-rank,
+#home #homeValueRisers .fleeced-home-data-rank{
+  font-size:12px!important;
+  line-height:14px!important;
+  font-weight:950!important;
+}
+#home #homeTopPlayers .fleeced-home-player-link b,
+#home #homeValueRisers .fleeced-home-player-link b{
+  font-size:12px!important;
+  line-height:14px!important;
+  font-weight:700!important;
+  margin:0!important;
+}
+#home #homeTopPlayers .fleeced-home-player-link small,
+#home #homeValueRisers .fleeced-home-player-link small{
+  font-size:10px!important;
+  line-height:13px!important;
+  margin-top:2px!important;
+  font-weight:400!important;
+}
+#home #homeValueRisers .fleeced-home-up{
+  width:52px!important;
+  padding-left:0!important;
+  text-align:right!important;
+  font-size:12px!important;
+  line-height:14px!important;
+  font-weight:950!important;
+  white-space:nowrap!important;
+}
+#home #homeTopPlayers .fleeced-home-two-col,
+#home #homeValueRisers .fleeced-home-two-col{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:0 18px!important;
+  align-items:start!important;
+}

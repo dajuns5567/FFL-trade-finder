@@ -1,0 +1,75 @@
+name: One-time audit Fleeced Inquirer V19 — pass 8
+
+on:
+  push:
+    branches:
+      - release/precision-idp-runtime-20260919
+    paths:
+      - '.github/workflows/one-time-audit-inquirer-v19.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit-v19:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/precision-idp-runtime-20260919
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax check V19 newsroom
+        run: |
+          node --check netlify/functions/inquirer-human-v19.mjs
+          node --check netlify/functions/inquirer-overview-v19.mjs
+          node --check netlify/functions/inquirer-narrative-v17.mjs
+          node --check netlify/functions/inquirer-reporters.mjs
+          node --check netlify/functions/league-hub.mjs
+          node --check league-hub-v451.js
+          node --check scripts/one-time-generate-inquirer-week1.mjs
+          node --check scripts/inquirer-prose-quality-audit.mjs
+          node --check scripts/inquirer-overview-quality-audit.mjs
+      - name: Generate V19 Week 1 candidate
+        run: |
+          OUT=/tmp/week1-v19.json node scripts/one-time-generate-inquirer-week1.mjs
+          node -e "const x=require('/tmp/week1-v19.json'); console.log(JSON.stringify({version:x.inquirer_version,teams:x.teams.length,hot_takes:x.league_overview.hot_takes.map(t=>t.kind)},null,2))"
+      - name: Run V19 writing audits
+        run: |
+          node scripts/inquirer-prose-quality-audit.mjs /tmp/week1-v19.json
+          node scripts/inquirer-overview-quality-audit.mjs /tmp/week1-v19.json
+      - name: Verify position-eligible lineup hindsight
+        run: |
+          node <<'NODE'
+          const x=require('/tmp/week1-v19.json');
+          const bad=[];
+          const offense=new Set(['QB','RB','FB','WR','TE','K']);
+          const idp=new Set(['DL','DE','DT','LB','DB','CB','S']);
+          for(const t of x.teams){
+            const m=t.best_lineup_miss;
+            if(!m?.reserve||!m?.starter)continue;
+            if(offense.has(String(m.reserve.position))&&idp.has(String(m.starter.position)))bad.push({team:t.team_name,m});
+            if(idp.has(String(m.reserve.position))&&offense.has(String(m.starter.position)))bad.push({team:t.team_name,m});
+          }
+          console.log(JSON.stringify({eligible_misses:x.teams.filter(t=>t.best_lineup_miss).map(t=>({team:t.team_name,slot:t.best_lineup_miss.slot,reserve:t.best_lineup_miss.reserve?.name,reserve_pos:t.best_lineup_miss.reserve?.position,starter:t.best_lineup_miss.starter?.name,starter_pos:t.best_lineup_miss.starter?.position,gap:t.best_lineup_miss.gap})),cross_side_bad:bad},null,2));
+          if(bad.length)process.exit(19);
+          const noa=x.teams.find(t=>/New Orleans Aints/i.test(t.team_name));
+          const body=noa?.inquirer_article?.paragraphs?.join(' ')||'';
+          console.log(JSON.stringify({new_orleans:noa?.team_name,lineup_miss:noa?.best_lineup_miss,article:body},null,2));
+          if(/Nate Landman.*J\.K\. Dobbins|J\.K\. Dobbins.*Nate Landman/i.test(body))process.exit(20);
+          NODE
+      - name: Print four reporter samples
+        run: |
+          node <<'NODE'
+          const x=require('/tmp/week1-v19.json');
+          const seen=new Set();
+          for(const t of x.teams){
+            const r=t.inquirer_article?.reporter?.name;
+            if(seen.has(r))continue;seen.add(r);
+            console.log('\n===== '+r+' :: '+t.team_name+' =====');
+            console.log(t.inquirer_article.headline);
+            for(const s of t.inquirer_article.sections){console.log('\n['+s.heading+']\n'+s.paragraphs.join('\n\n'))}
+          }
+          NODE

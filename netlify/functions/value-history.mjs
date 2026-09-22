@@ -5,6 +5,7 @@ const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:
 const store=()=>getStore('fll-value-history-v2');
 function safeStore(){try{return store()}catch(e){console.warn('value-history-store-init',e);return null}}
 const ARCHIVE_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history';
+const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
 let archiveIndexCache=null,archiveIndexCacheAt=0;
 async function archiveJson(path){
   const r=await fetch(`${ARCHIVE_RAW}/${path}?ts=${Date.now()}`,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryArchive/1.0'},cache:'no-store'});
@@ -78,6 +79,22 @@ const V487_CLEANUP_KEY='maintenance/v487-remove-20260915-011941-et-everywhere.js
 const V490_CLEANUP_KEY='maintenance/v490-remove-20260915-0100-through-0157-et.json';
 const V491_CLEANUP_KEY='maintenance/v491-remove-latest-bad-snapshot.json';
 const V492_CLEANUP_KEY='maintenance/v492b-remove-post-0207-et-bad-history-all-players.json';
+const V494_CLEANUP_KEY='maintenance/v494-remove-20260916-0057-through-20260919-1537-et.json';
+const V494_BAD_FROM_MS=Date.parse('2026-09-16T04:57:00.000Z');
+const V494_BAD_UNTIL_MS=Date.parse('2026-09-19T19:38:00.000Z');
+const V494_TRADE_REFERENCE_MINUTE='2026-09-19T22:01';
+const V495_CLEANUP_KEY='maintenance/v495-remove-20260919-174721-et-unstable-scheduled.json';
+const V495_BAD_TIMES=new Set(['2026-09-19T21:47:21.051Z']);
+const V496_CLEANUP_KEY='maintenance/v496-reset-value-history-baseline-20260919-180138-et.json';
+const V498_CLEANUP_KEY='maintenance/v498-remove-20260919-190948-et-invalid-scheduled.json';
+const V498_BAD_TIMES=new Set(['2026-09-19T23:09:48.738Z']);
+const V499_CLEANUP_KEY='maintenance/v499-remove-user-requested-20260919-20-points.json';
+const V499_BAD_TIMES=new Set(['2026-09-19T23:38:30.077Z','2026-09-20T06:20:50.829Z','2026-09-20T06:23:39.657Z','2026-09-20T12:25:37.233Z','2026-09-20T16:31:11.607Z','2026-09-20T19:29:04.241Z','2026-09-20T22:29:01.016Z']);
+const V500_CLEANUP_KEY='maintenance/v500-remove-existing-scheduled-refresh-points.json';
+const V500_EXISTING_SCHEDULED_CUTOFF_MS=Date.parse('2026-09-22T01:15:00.000Z');
+const V501_CLEANUP_KEY='maintenance/v501-remove-sep8-sep9-points.json';
+const V496_BASELINE_T='2026-09-19T22:01:38.323Z';
+const V496_BASELINE_MS=Date.parse(V496_BASELINE_T);
 const V492_BAD_FROM_MS=Date.parse('2026-09-15T06:07:00.000Z');
 const V492_BAD_UNTIL_MS=Date.parse('2026-09-16T00:20:00.000Z');
 const V486_BAD_FROM_MS=Date.parse('2026-09-15T05:00:00.000Z');
@@ -96,7 +113,12 @@ const V487_BAD_WINDOW=[Date.parse('2026-09-15T05:19:00.000Z'),Date.parse('2026-0
 const isV487BadTime=t=>isInWindow(t,V487_BAD_WINDOW);
 const isV490BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V490_BAD_FROM_MS&&ms<V490_BAD_UNTIL_MS};
 const isV492BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V492_BAD_FROM_MS&&ms<V492_BAD_UNTIL_MS};
-const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t);
+const isV494BadTime=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms>=V494_BAD_FROM_MS&&ms<V494_BAD_UNTIL_MS};
+const isV495BadTime=t=>V495_BAD_TIMES.has(String(t||''));
+const isV496PreBaseline=t=>{const ms=new Date(t||'').getTime();return Number.isFinite(ms)&&ms<V496_BASELINE_MS};
+const isV498BadTime=t=>V498_BAD_TIMES.has(String(t||''));
+const isV499BadTime=t=>V499_BAD_TIMES.has(String(t||''));
+const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t)||isV494BadTime(t)||isV495BadTime(t)||isV498BadTime(t)||isV499BadTime(t);
 
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
@@ -171,7 +193,7 @@ async function readSnapshotsBounded(s,items,batchSize=25){
   for(let i=0;i<items.length;i+=batchSize){
     const batch=items.slice(i,i+batchSize);
     const rows=await Promise.all(batch.map(async item=>{try{return await s.get(item.key,{type:'json'})}catch{return null}}));
-    for(const snap of rows)if(snap?.t&&Array.isArray(snap?.rows))snaps.push(snap);
+    for(const snap of rows)if(snap?.t&&Array.isArray(snap?.rows)&&!isKnownBadHistoryTime(snap.t))snaps.push(snap);
   }
   snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   return snaps;
@@ -339,6 +361,107 @@ async function scrubV492Post0214History(s){
   const result={done:true,window:['all players from 2026-09-15 02:07 EDT','before 2026-09-15 20:20 EDT'],removed:bad.length,completedAt:new Date().toISOString()};
   await retry(()=>s.setJSON(V492_CLEANUP_KEY,result),120);return result;
 }
+async function scrubV494RequestedInterval(s){
+  const marker=await safeGet(s,V494_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV494BadTime(item?.t)),keep=items.filter(item=>!isV494BadTime(item?.t));
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v494-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v494-history-reindex',e)}
+  const last=keep[keep.length-1]||null;
+  if(last){const snap=await safeGet(s,last.key);if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)}
+  else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,from:'2026-09-16 00:57 EDT',through:'2026-09-19 15:37 EDT',removed:bad.length,completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V494_CLEANUP_KEY,result),120);return result;
+}
+async function scrubV495UnstableScheduledSnapshot(s){
+  const marker=await safeGet(s,V495_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV495BadTime(item?.t)),keep=items.filter(item=>!isV495BadTime(item?.t));
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v495-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v495-history-reindex',e)}
+  const last=keep[keep.length-1]||null;
+  if(last){const snap=await safeGet(s,last.key);if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)}
+  else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,removed:bad.length,removed_times:bad.map(x=>x.t),completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V495_CLEANUP_KEY,result),120);return result;
+}
+async function scrubV498InvalidScheduledSnapshot(s){
+  const marker=await safeGet(s,V498_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV498BadTime(item?.t)),keep=items.filter(item=>!isV498BadTime(item?.t));
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v498-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v498-history-reindex',e)}
+  const last=keep[keep.length-1]||null;
+  if(last){const snap=await safeGet(s,last.key);if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)}
+  else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,removed:bad.length,removed_times:bad.map(x=>x.t),reason:'invalid scheduled snapshot used stale valuation logic',completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V498_CLEANUP_KEY,result),120);return result;
+}
+async function scrubV499UserRequestedSnapshots(s){
+  const marker=await safeGet(s,V499_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV499BadTime(item?.t)),keep=items.filter(item=>!isV499BadTime(item?.t));
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v499-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v499-history-reindex',e)}
+  const last=keep[keep.length-1]||null;
+  if(last){
+    const snap=await safeGet(s,last.key);
+    if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)
+  }else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,removed:bad.length,removed_times:bad.map(x=>x.t),reason:'user-requested Value History point deletion',completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V499_CLEANUP_KEY,result),120);return result;
+}
+async function scrubV500ExistingScheduledSnapshots(s){
+  const marker=await safeGet(s,V500_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await allItems(s),items=indexed.items||[],bad=[],keep=[];
+  for(let i=0;i<items.length;i+=25){
+    const batch=items.slice(i,i+25);
+    const rows=await Promise.all(batch.map(async item=>({item,snap:await safeGet(s,item.key)})));
+    for(const {item,snap} of rows){
+      const t=String(snap?.t||item?.t||''),ms=new Date(t).getTime(),scheduled=String(snap?.source||'').toLowerCase()==='scheduled';
+      if(scheduled&&Number.isFinite(ms)&&ms<=V500_EXISTING_SCHEDULED_CUTOFF_MS)bad.push({...item,t});
+      else keep.push(item);
+    }
+  }
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v500-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v500-history-reindex',e)}
+  const last=keep.slice().sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key))).at(-1)||null;
+  if(last){
+    const snap=await safeGet(s,last.key);
+    if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)
+  }else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,removed:bad.length,removed_times:bad.map(x=>x.t),cutoff:new Date(V500_EXISTING_SCHEDULED_CUTOFF_MS).toISOString(),criterion:'source === scheduled',preserved:keep.length,completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V500_CLEANUP_KEY,result),120);return result;
+}
+
+async function scrubV501Sep8Sep9Snapshots(s){
+  const marker=await safeGet(s,V501_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await allItems(s),items=indexed.items||[],bad=[],keep=[];
+  for(const item of items){
+    const t=String(item?.t||'');
+    if(/^2026-09-(08|09)T/.test(t))bad.push(item);else keep.push(item);
+  }
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v501-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v501-history-reindex',e)}
+  const last=keep.slice().sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key))).at(-1)||null;
+  if(last){
+    const snap=await safeGet(s,last.key);
+    if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)
+  }else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,removed:bad.length,removed_times:bad.map(x=>x.t),criterion:'2026-09-08 or 2026-09-09',preserved:keep.length,completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V501_CLEANUP_KEY,result),120);return result;
+}
+
+async function scrubV496BaselineReset(s){
+  const marker=await safeGet(s,V496_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV496PreBaseline(item?.t)),keep=items.filter(item=>!isV496PreBaseline(item?.t));
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v496-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v496-history-reindex',e)}
+  const last=keep[keep.length-1]||null;
+  if(last){
+    const snap=await safeGet(s,last.key);
+    if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)
+  }else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,baseline:V496_BASELINE_T,removed:bad.length,remaining:keep.length,completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V496_CLEANUP_KEY,result),120);
+  return result;
+}
 async function latestFallback(s,playerId){
   const latest=await safeGet(s,LATEST_KEY),key=String(latest?.key||'').trim();
   if(!key)return{reachable:true,points:[],source:'empty'};
@@ -391,6 +514,25 @@ async function getTeamNetHistory(s,playerIds,teamId=''){
   }
   const source=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
   return{points,playerCount:points.length?Number(points[points.length-1]?.playerCount)||ids.length:ids.length,source,snapshotCount:snaps.length,partial:indexed.source==='unavailable'&&archiveSnaps.length>0};
+}
+async function getAllTeamWeekMovement(s){
+  const archiveSnaps=await archiveAllSnapshots();
+  let indexed={items:[],source:s?'empty':'unavailable'},localSnaps=[];
+  if(s){try{indexed=await allItems(s);localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[]}catch(e){indexed={items:[],source:'unavailable',error:String(e?.message||e)}}}
+  const snaps=mergeSnapshots(archiveSnaps,localSnaps).filter(x=>x?.t&&Array.isArray(x?.teams)&&x.teams.length);
+  if(!snaps.length)return{teams:[],source:indexed.source,snapshotCount:0,trackingSince:null,latest:null};
+  const latest=snaps[snaps.length-1],latestMs=new Date(latest.t).getTime(),targetMs=latestMs-7*86400000;
+  let base=snaps[0];for(const snap of snaps){const ms=new Date(snap.t).getTime();if(Number.isFinite(ms)&&ms<=targetMs)base=snap;else if(Number.isFinite(ms)&&ms>targetMs)break}
+  const exactSeven=new Date(base.t).getTime()<=targetMs,baseMap=new Map((base.teams||[]).map(x=>[String(x?.id||''),x])),out=[];
+  for(const row of latest.teams||[]){
+    const id=String(row?.id||''),value=Number(row?.value),prior=baseMap.get(id),baseValue=Number(prior?.value);
+    if(!id||!Number.isFinite(value))continue;
+    const delta=Number.isFinite(baseValue)?Math.round(value-baseValue):null,pct=Number.isFinite(baseValue)&&baseValue!==0?delta/baseValue*100:null;
+    out.push({team_id:id,value:Math.round(value),baseline_value:Number.isFinite(baseValue)?Math.round(baseValue):null,delta,pct,baseline_t:base.t,latest_t:latest.t,period:exactSeven?'7D':'AVAILABLE',player_count:Number(row?.player_count)||0});
+  }
+  out.sort((a,b)=>(Number(b.delta)||0)-(Number(a.delta)||0)||Number(a.team_id)-Number(b.team_id));
+  const source=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
+  return{teams:out,source,snapshotCount:snaps.length,trackingSince:snaps[0].t,latest:latest.t,baseline:base.t,period:exactSeven?'7D':'AVAILABLE'};
 }
 function rowMap(snap){return new Map((snap?.rows||[]).map(r=>[String(r.id),r]))}
 function baselineFor(snaps,latestMs,days){
@@ -705,13 +847,14 @@ async function completedTradeHistory(s){
   if(!snaps.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',history_source:localState,tracking_since:null,latest:null,trades:trades.map(emptyTrade)};
   const latestSnap=snaps[snaps.length-1],latestMap=rowMap(latestSnap||{rows:[]});
   const closestSnap=ms=>{let best=null;for(const snap of snaps){const sm=new Date(snap?.t||'').getTime();if(!Number.isFinite(sm))continue;if(sm<=ms)best=snap;else break}return best};
+  const requestedTradeReference=snaps.find(snap=>String(snap?.t||'').slice(0,16)===V494_TRADE_REFERENCE_MINUTE)||null;
   const out=trades.map(trade=>{
-    const ms=new Date(trade.created).getTime(),histSnap=Number.isFinite(ms)?closestSnap(ms):null,histMap=rowMap(histSnap||{rows:[]}),histPickMap=pickMap(histSnap||{picks:[]});
+    const ms=new Date(trade.created).getTime(),inRequestedWindow=Number.isFinite(ms)&&ms>=V494_BAD_FROM_MS&&ms<V494_BAD_UNTIL_MS,histSnap=inRequestedWindow?requestedTradeReference:(Number.isFinite(ms)?closestSnap(ms):null),histMap=rowMap(histSnap||{rows:[]}),histPickMap=pickMap(histSnap||{picks:[]});
     const sides=trade.sides.map(side=>{
       const then=histSnap?playerValuesFromMap(side,histMap):{values:[],missing:[...(side.player_ids||[])],complete:false,total:null},thenPicks=histSnap?pickValuesFromSide(side,histPickMap):{values:[],missing:(side.picks||[]).map(p=>`pick-${p.season}-${p.round}-${p.original_roster_id}`),complete:false,total:null},current=playerValuesFromMap(side,latestMap);
       return{...side,then_players:then.values,then_players_complete:Boolean(histSnap&&then.complete),then_player_total:histSnap&&then.complete?then.total:null,then_picks:thenPicks.values,then_picks_complete:Boolean(histSnap&&thenPicks.complete),then_pick_total:histSnap&&thenPicks.complete?thenPicks.total:null,current_players:current.values,current_players_complete:current.complete,current_player_total:current.complete?current.total:null};
     });
-    return{...trade,trade_snapshot_t:histSnap?.t||null,current_snapshot_t:latestSnap?.t||null,sides};
+    return{...trade,trade_snapshot_t:histSnap?.t||null,trade_snapshot_reference:inRequestedWindow?'requested-2026-09-19-1801-et':null,current_snapshot_t:latestSnap?.t||null,sides};
   });
   const historySource=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
   return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',history_source:historySource,tracking_since:snaps[0]?.t||null,latest:latestSnap?.t||null,trades:out};
@@ -749,6 +892,12 @@ export default async (req)=>{
       try{await scrubV490RequestedInterval(s)}catch(e){console.warn('v490-history-scrub',e)}
       try{await scrubV491LatestSnapshot(s)}catch(e){console.warn('v491-history-scrub',e)}
       try{await scrubV492Post0214History(s)}catch(e){console.warn('v492-history-scrub',e)}
+      try{await scrubV494RequestedInterval(s)}catch(e){console.warn('v494-history-scrub',e)}
+      try{await scrubV495UnstableScheduledSnapshot(s)}catch(e){console.warn('v495-history-scrub',e)}
+      try{await scrubV498InvalidScheduledSnapshot(s)}catch(e){console.warn('v498-history-scrub',e)}
+      try{await scrubV499UserRequestedSnapshots(s)}catch(e){console.warn('v499-history-scrub',e)}
+      try{await scrubV500ExistingScheduledSnapshots(s)}catch(e){console.warn('v500-history-scrub',e)}
+      try{await scrubV501Sep8Sep9Snapshots(s)}catch(e){console.warn('v501-history-scrub',e)}
     }
     if(req.method==='GET'){
       if(url.searchParams.get('archive_export')==='1'){
@@ -775,6 +924,10 @@ export default async (req)=>{
         const result=await retry(()=>completedTradeHistory(s),180);
         return json(result);
       }
+      if(url.searchParams.get('team_net_all')==='1'){
+        const result=await retry(()=>getAllTeamWeekMovement(s),180);
+        return json({team_net_all:true,...result});
+      }
       if(url.searchParams.get('team_net')==='1'){
         const ids=String(url.searchParams.get('player_ids')||'').split(',').map(x=>x.trim()).filter(Boolean),teamId=String(url.searchParams.get('team_id')||'').trim();
         const result=await retry(()=>getTeamNetHistory(s,ids,teamId),180);
@@ -786,9 +939,6 @@ export default async (req)=>{
       return json({player_id:playerId,points:result.points||[],scoring_milestones:milestones,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
-    // Temporary safety freeze: current valuation outputs are under root-cause audit.
-    // Reads remain available; resume writes only after the corrected valuation build is verified.
-    return json({ok:true,recorded:false,paused:true,reason:'valuation-root-cause-audit'},202);
     if(!s)return json({error:'live history store unavailable'},503);
     const body=await req.json().catch(()=>null);
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);
@@ -797,7 +947,7 @@ export default async (req)=>{
     rows.sort((a,b)=>a.id.localeCompare(b.id));picks.sort((a,b)=>a.id.localeCompare(b.id));
     const fp=fingerprint(rows,picks,teams);
     const t=new Date().toISOString(),key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
-    const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,rows,picks,teams};
+    const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,rows,picks,teams};
     await retry(()=>s.setJSON(key,snapshot),120);
     await appendIndex(s,key,t);
     await retry(()=>s.setJSON(LATEST_KEY,{version:3,t,fingerprint:fp,key,count:rows.length,source}),120);

@@ -1,59 +1,10 @@
 {
   "schema_version": 1,
   "league_id": "1316867686394769408",
-  "snapshot_count": 29,
-  "tracking_since": "2026-09-10T00:33:39.472Z",
+  "snapshot_count": 22,
+  "tracking_since": "2026-09-19T22:01:38.323Z",
   "latest": "2026-09-20T21:42:50.649Z",
   "items": [
-    {
-      "t": "2026-09-10T00:33:39.472Z",
-      "path": "value-history/snapshots/2026/09/2026-09-10T00-33-39-472Z.json",
-      "fingerprint": "mjowl6",
-      "count": 803,
-      "source": null
-    },
-    {
-      "t": "2026-09-10T00:51:07.282Z",
-      "path": "value-history/snapshots/2026/09/2026-09-10T00-51-07-282Z.json",
-      "fingerprint": "cinrbl",
-      "count": 803,
-      "source": null
-    },
-    {
-      "t": "2026-09-10T01:01:01.542Z",
-      "path": "value-history/snapshots/2026/09/2026-09-10T01-01-01-542Z.json",
-      "fingerprint": "cinrbl",
-      "count": 803,
-      "source": null
-    },
-    {
-      "t": "2026-09-10T01:24:29.627Z",
-      "path": "value-history/snapshots/2026/09/2026-09-10T01-24-29-627Z.json",
-      "fingerprint": "19kigv0",
-      "count": 802,
-      "source": null
-    },
-    {
-      "t": "2026-09-10T01:44:41.925Z",
-      "path": "value-history/snapshots/2026/09/2026-09-10T01-44-41-925Z.json",
-      "fingerprint": "1o1idq5",
-      "count": 802,
-      "source": null
-    },
-    {
-      "t": "2026-09-10T02:14:15.262Z",
-      "path": "value-history/snapshots/2026/09/2026-09-10T02-14-15-262Z.json",
-      "fingerprint": "1srbr6c",
-      "count": 802,
-      "source": null
-    },
-    {
-      "t": "2026-09-10T02:28:04.474Z",
-      "path": "value-history/snapshots/2026/09/2026-09-10T02-28-04-474Z.json",
-      "fingerprint": "1lesvr4",
-      "count": 802,
-      "source": null
-    },
     {
       "t": "2026-09-19T22:01:38.323Z",
       "path": "value-history/snapshots/2026/09/2026-09-19T22-01-38-323Z.json",
@@ -209,8 +160,6 @@
       "source": "page-load"
     }
   ],
-  "months": [
-    "2026-09"
-  ],
+  "months": [],
   "archive_format": "append-only snapshots + monthly bundles"
 }

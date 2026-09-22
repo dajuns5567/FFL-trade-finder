@@ -163,8 +163,8 @@ assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub mu
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
 assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
-assert(backend.includes("explicit V26 recovered editorial contract rewrite"),'Older or stale-revision Inquirer articles must explicitly migrate to the recovered editorial contract');
-assert(backend.includes('INQUIRER_EDITORIAL_REVISION=4')&&backend.includes('editorial_revision||0)<INQUIRER_EDITORIAL_REVISION'),'Current-version stored articles must still migrate when they predate the current editorial revision');
+assert(backend.includes("explicit V26 editorial-depth revision 5 rewrite"),'Older or stale-revision Inquirer articles must explicitly migrate to editorial revision 5');
+assert(backend.includes('INQUIRER_EDITORIAL_REVISION=5')&&backend.includes('editorial_revision||0)<INQUIRER_EDITORIAL_REVISION'),'Current-version stored articles must still migrate when they predate editorial revision 5');
 assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');
 assert(backend.includes("Number(stored?.inquirer_version||0)<INQUIRER_VERSION"),'Only older-version archived reporter articles may be migrated; current-version articles stay preserved');
 assert(backend.includes('leagueSeasonContext('),'Inquirer backend must derive season standings/streak context from completed Sleeper matchups');

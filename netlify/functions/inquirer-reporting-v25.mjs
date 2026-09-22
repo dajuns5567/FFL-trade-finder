@@ -2094,7 +2094,7 @@ function teamDeepReadV34(t,r,f){
     else if(m.pos==='RB'&&Number.isFinite(m.touches)&&m.touches>=15)diagnosis='The touch count remained healthy, which argues for patience with efficiency rather than panic about the role.';
     else if(m.pos==='QB'&&Number.isFinite(m.attempts)&&m.attempts>=28)diagnosis='The offense kept the ball in his hands, so the miss came from what happened with the attempts rather than a shrinking assignment.';
     else if(!['QB','RB','WR','TE'].includes(m.pos)&&Number.isFinite(m.snaps)&&m.snaps>=45)diagnosis='The defensive workload remained substantial, so the miss is easier to treat as a quiet box score than a disappearing role.';
-    else diagnosis='The usage was not strong enough to dismiss the miss as simple bad luck; next week needs either more opportunity or much better efficiency.';
+    else diagnosis=bad.name+' is a '+playerContextLabelV33(bad)+' coming out of this '+shape+', and the verified usage was not strong enough to dismiss the miss as simple bad luck; next week needs either more opportunity or much better efficiency.';
     p2=[
       bad.name+' finished '+one(d)+' below projection, but the number alone is not the diagnosis. '+diagnosis+' That distinction determines whether '+pos+' is a buy-the-dip concern or a real lineup vulnerability.',
       bad.name+' came in '+one(d)+' below projection. '+diagnosis+' Bartholomew separates an ugly fantasy line from an ugly role because those are not the same problem; one can recover naturally, while the other needs a lineup decision.',

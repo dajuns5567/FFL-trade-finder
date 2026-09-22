@@ -1392,24 +1392,24 @@ function angleLeadV28(t,r,angle){
   const spine=keyedChoice(seed+':spine',spines[angle]||spines[Number(t.points)>Number(t.opponent_points)?'win':'loss']);
   const voiceLine=deskChoice(t,r,[
     [
-      `I have seen enough Sundays to know the scoreboard is usually the easy part; deciding what deserves to survive into next week is harder.`,
-      `One week has fooled better teams than this. I’m keeping what looked real and ignoring the urge to declare a season.`,
-      `I trust the thing everyone will forget by Thursday: role, usage and whether the good part can happen again.`
+      `I have seen enough ${full} Sundays to know the scoreboard is usually the easy part; deciding what deserves to survive into next week is harder.`,
+      `One week has fooled better teams than ${full}. I’m keeping what looked real for ${full} and ignoring the urge to declare a season.`,
+      `I trust the thing everyone will forget about ${full} by Thursday: role, usage and whether the good part can happen again.`
     ],
     [
-      `I was promised elegance and received fantasy football instead, which is how one learns to admire useful chaos.`,
-      `I prefer elegance; the league keeps answering with group chats, questionable decisions and 30-point inconveniences.`,
-      `The cruel thing about being right for one Sunday is that the next Sunday arrives with no respect for your theory.`
+      `I was promised elegance from ${full} and received fantasy football instead, which is how one learns to admire useful chaos.`,
+      `I prefer elegance; ${full} keeps answering with group chats, questionable decisions and 30-point inconveniences.`,
+      `The cruel thing about being right about ${full} for one Sunday is that the next Sunday arrives with no respect for your theory.`
     ],
     [
-      `I WOULD LIKE ONE CALM WEEK. THIS LEAGUE HAS DECLINED THE REQUEST. FINE.`,
-      `RESTRAINT WAS CONSIDERED AND REJECTED. THE SCOREBOARD STARTED IT.`,
-      `I chase whoever ruined the group chat first. This week, the trail is not subtle.`
+      `I WOULD LIKE ONE CALM ${full.toUpperCase()} WEEK. ${full.toUpperCase()} HAS DECLINED THE REQUEST. FINE.`,
+      `RESTRAINT WAS CONSIDERED FOR ${full.toUpperCase()} AND REJECTED. THE ${full.toUpperCase()} SCOREBOARD STARTED IT.`,
+      `I chase whoever ruined the ${full} group-chat mood first. This week, the ${full} trail is not subtle.`
     ],
     [
-      `The evidence is cleaner than my coffee and, regrettably, harder to ignore.`,
-      `I would love to invent a conspiracy here. ${full}’s facts have been inconsiderate enough to make the simpler explanation more interesting.`,
-      `I keep receipts because managers develop selective memory by Tuesday. I can live with being unpopular.`
+      `The ${full} evidence is cleaner than my coffee and, regrettably, harder to ignore.`,
+      `I would love to invent a ${full} conspiracy here; the facts have been inconsiderate enough to make the simpler explanation more interesting.`,
+      `I keep ${full} receipts because managers develop selective memory by Tuesday. I can live with being unpopular about ${full}.`
     ]
   ]);
   return spine+' '+voiceLine;
@@ -1420,24 +1420,24 @@ function fourthWallV28(t,r,angle){
   const mascot=teamIdentityV28(t).mascot;
   return deskChoice(t,r,[
     [
-      `I am not buying the easy version of ${mascot}. Show me the same role next week and I will start believing it.`,
-      `I have been fooled by prettier Sundays than this. The useful parts from ${mascot} still have to travel.`,
-      `I will overreact when the evidence earns it. One week of ${mascot} evidence is all I have.`
+      `I am not buying the easy version of ${mascot}. Show me the same ${mascot} role next week and I will start believing it.`,
+      `I have been fooled by prettier ${mascot} Sundays than this. The useful parts from ${mascot} still have to travel.`,
+      `I will overreact when the ${mascot} evidence earns it; one week of ${mascot} evidence is all I have.`
     ],
     [
-      `I would prefer ${mascot} to be elegant. Competence will have to do.`,
-      `I am willing to praise ${mascot}; I refuse to make it tasteful if the lineup decisions are ugly.`,
-      `I have seen enough fashionable nonsense to appreciate ${mascot} doing the practical thing.`
+      `I would prefer ${mascot} to be elegant. ${mascot} competence will have to do.`,
+      `I am willing to praise ${mascot}; I refuse to make ${mascot} tasteful if the lineup decisions are ugly.`,
+      `I have seen enough fashionable nonsense to appreciate ${mascot} doing the practical ${mascot} thing.`
     ],
     [
-      `I TRIED RESTRAINT WITH ${mascot}. THE SCOREBOARD MADE IT WEIRD.`,
-      `I HAVE QUESTIONS FOR ${mascot}, AND NONE OF THEM ARE QUIET.`,
-      `I AM NOT NEUTRAL ABOUT BAD LINEUP DECISIONS. ${mascot} CAN STOP MAKING THEM.`
+      `I TRIED RESTRAINT WITH ${mascot}. THE ${mascot.toUpperCase()} SCOREBOARD MADE IT WEIRD.`,
+      `I HAVE QUESTIONS FOR ${mascot}, AND NONE OF THE ${mascot.toUpperCase()} QUESTIONS ARE QUIET.`,
+      `I AM NOT NEUTRAL ABOUT BAD ${mascot.toUpperCase()} LINEUP DECISIONS. ${mascot} CAN STOP MAKING THEM.`
     ],
     [
-      `I tried the generous reading of ${mascot}. The evidence filed an objection.`,
-      `I would like a cleaner explanation for ${mascot}. The obvious one keeps surviving cross-examination.`,
-      `I am keeping the ${mascot} receipt because memory gets flexible after a win.`
+      `I tried the generous reading of ${mascot}. The ${mascot} evidence filed an objection.`,
+      `I would like a cleaner explanation for ${mascot}. The obvious ${mascot} one keeps surviving cross-examination.`,
+      `I am keeping the ${mascot} receipt because ${mascot} memory gets flexible after a win.`
     ]
   ]);
 }

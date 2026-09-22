@@ -49,10 +49,15 @@ const robotPatterns=[
 ];
 for(const re of robotPatterns)if(re.test(body)||takes.some(t=>re.test(String(t.title||'')+' '+String(t.take||''))))fail('Legacy statistical/checklist language survived: '+re);
 
-const required=['championship','fraud','division','player','upset'];
+const editionTeams=Array.isArray(edition?.teams)?edition.teams:[],teamById=new Map(editionTeams.map(t=>[String(t.roster_id),t]));
+const hasFrozenNextProjectionMatchup=editionTeams.some(t=>{
+  const o=teamById.get(String(t?.next_opponent_roster_id||'')),tp=t?.next_projected,op=o?.next_projected;
+  return tp!=null&&op!=null&&Number.isFinite(Number(tp))&&Number.isFinite(Number(op))&&Number(tp)!==Number(op);
+});
+const required=['championship','fraud','division','player',...(hasFrozenNextProjectionMatchup?['upset']:[])];
 const kinds=new Set(takes.map(t=>String(t.kind||'')));
 for(const k of required)if(!kinds.has(k))fail('Hot Takes missing required prediction type: '+k);
-if(takes.length<5)fail('Hot Takes must contain at least five actual predictions');
+if(takes.length<(hasFrozenNextProjectionMatchup?5:4))fail('Hot Takes are missing an evidence-backed prediction; got '+takes.length);
 
 for(const t of takes){
   const copy=String(t.title||'')+' '+String(t.take||'');
@@ -60,7 +65,11 @@ for(const t of takes){
   if(words(t.take).length<12)fail('Hot Take is too thin: '+String(t.title||'untitled'));
 }
 const upset=takes.find(t=>t.kind==='upset');
-if(!Number.isFinite(Number(upset?.underdog_projected))||!Number.isFinite(Number(upset?.favorite_projected))||Number(upset.underdog_projected)>=Number(upset.favorite_projected))fail('Upset pick must name a true projected underdog with a lower projected score than the favorite');
+if(hasFrozenNextProjectionMatchup){
+  if(!Number.isFinite(Number(upset?.underdog_projected))||!Number.isFinite(Number(upset?.favorite_projected))||Number(upset.underdog_projected)>=Number(upset.favorite_projected))fail('Upset pick must name a true projected underdog with a lower projected score than the favorite');
+}else if(upset){
+  fail('Upset pick must not be reconstructed from later projections when the archived edition has no frozen next-week projection matchup');
+}
 const report={
   inquirer_version:o.inquirer_version,
   headline:o.headline,

@@ -8,6 +8,7 @@ assert(REPORTERS.map(r=>r.name).join('|')==='Nick Swindell|Bartholomew Roycingto
 assert(INQUIRER_PLAYOFF_START_WEEK===14&&INQUIRER_FINAL_WEEK===17,'Inquirer season must classify Weeks 14-17 as playoffs and stop at Week 17');
 assert(week1Preload?.inquirer_version===26&&Number(week1Preload?.editorial_revision)===6&&Number(week1Preload?.season)===2026&&Number(week1Preload?.week)===1,'Committed Week 1 preload must be the generated 2026 V26 editorial-revision-6 edition');
 assert(week1Preload?.published_locked===true,'Committed Week 1 preload must be immutable after publication');
+assert(Number(week1Preload?.context_snapshot_through_week)===1,'Committed Week 1 preload must remain scoped to the Week 1 reporting snapshot');
 assert(Array.isArray(week1Preload?.teams)&&week1Preload.teams.length===32,'Committed Week 1 preload must contain all 32 team articles');
 assert(week1Preload.teams.every(t=>t?.inquirer_article?.headline&&Array.isArray(t?.inquirer_article?.sections)&&t.inquirer_article.sections.length>=8&&t.inquirer_article.sections.length<=9&&Array.isArray(t?.inquirer_article?.paragraphs)&&t.inquirer_article.paragraphs.length>=8),'Every preloaded Week 1 team must preserve the eight core V26 beats, with an optional ninth trade-commentary beat');
 const preloadReporterCounts=new Map(REPORTERS.map(r=>[r.name,0]));

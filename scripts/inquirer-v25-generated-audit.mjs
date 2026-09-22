@@ -178,12 +178,14 @@ for(const t of d.teams||[]){
 }
 
 const reporterFunctionMeta=[
-  /\bsports journalist\b/i,/\bjournalism schools?\b/i,/\bbeat[- ]writer\b/i,/\bpress box\b/i,/\bsports media\b/i,
+  /\bsports journalist\b/i,/\bjournalism schools?\b/i,/\bbeat[- ]writer\b/i,/\bpress box\b/i,/\bsports media\b/i,/\bcopy desk\b/i,
   /\bfourth-wall\b/i,/\bsome reporters chase access\b/i,/\breporter becomes part of\b/i,/\breporter who keeps receipts\b/i,
   /\beditors? prefer\b/i,/\bsomewhere, an editor\b/i,/\bmeet deadlines?\b/i,/\bcovering .+? taught me reporters\b/i,
-  /\btrying very hard to become a respected\b/i,/\bthe back page would like everyone to know\b/i
+  /\btrying very hard to become a respected\b/i,/\bthe back page would like everyone to know\b/i,
+  /\bseptember journalism\b/i,/\bthis newsroom marks\b/i,/\bpostseason line this desk is tracking\b/i,/\binvestigative desk should be willing to print\b/i
 ];
-for(const re of reporterFunctionMeta)assert.ok(!re.test(teamCopy),'Reporter-function exposition survived generated team copy: '+re);
+const publishedCopy=teamCopy+'\n'+recap;
+for(const re of reporterFunctionMeta)assert.ok(!re.test(publishedCopy),'Reporter-function exposition survived generated Inquirer copy: '+re);
 
 for(const t of d.teams||[]){
   const names=[...(t.starter_details||[]),...Object.values(t.transaction_player_facts||{}),...(t.trade_acquisitions||[]).flatMap(a=>[

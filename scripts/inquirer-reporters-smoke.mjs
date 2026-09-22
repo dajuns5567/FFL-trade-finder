@@ -165,8 +165,8 @@ assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter arch
 assert(backend.includes("Number(prior?.inquirer_version||0)>=INQUIRER_VERSION"),'Current-version completed-week articles must be reused without rewriting');
 assert(backend.includes("week1Preload2026")&&backend.includes("preloaded:true")&&backend.includes("editorial_revision||0)>=INQUIRER_EDITORIAL_REVISION"),'Broadcast archive must expose the bundled Week 1 edition when its editorial revision is current');
 assert(ui.includes("Open Full Inquirer ▾")&&ui.includes("Weekly Recap →")&&ui.includes("data-lh-archive-season"),'Held Inquirer state must keep both Open Full Inquirer and Weekly Recap controls when a published edition exists');
-assert(backend.includes("explicit V26 editorial-depth revision 5 rewrite"),'Older or stale-revision Inquirer articles must explicitly migrate to editorial revision 5');
-assert(backend.includes('INQUIRER_EDITORIAL_REVISION=5')&&backend.includes('editorial_revision||0)<INQUIRER_EDITORIAL_REVISION'),'Current-version stored articles must still migrate when they predate editorial revision 5');
+assert(backend.includes("explicit V26 matchup-commentary revision 6 rewrite"),'Older or stale-revision Inquirer articles must explicitly migrate to editorial revision 6');
+assert(backend.includes('INQUIRER_EDITORIAL_REVISION=6')&&backend.includes('editorial_revision||0)<INQUIRER_EDITORIAL_REVISION'),'Current-version stored articles must still migrate when they predate editorial revision 6');
 assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles/'"),'Each reporter must store standalone article files in addition to the archive index');
 assert(backend.includes("Number(stored?.inquirer_version||0)<INQUIRER_VERSION"),'Only older-version archived reporter articles may be migrated; current-version articles stay preserved');
 assert(backend.includes('leagueSeasonContext('),'Inquirer backend must derive season standings/streak context from completed Sleeper matchups');

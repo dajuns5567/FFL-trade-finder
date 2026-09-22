@@ -1,4 +1,4 @@
-name: Inquirer editorial revision 5
+name: Inquirer editorial revision 6
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  inquirer-r5:
+  inquirer-r6:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -40,9 +40,9 @@ jobs:
       - name: Run source contract
         run: node scripts/inquirer-v25-audit.mjs
 
-      - name: Generate Week 1 revision 5 candidate
+      - name: Generate Week 1 revision 6 candidate
         env:
-          OUT: /tmp/week1-inquirer-r5.json
+          OUT: /tmp/week1-inquirer-r6.json
         run: |
           for attempt in 1 2 3; do
             echo "generation attempt $attempt"
@@ -52,4 +52,4 @@ jobs:
           exit 1
 
       - name: Audit generated prose
-        run: node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer-r5.json
+        run: node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer-r6.json

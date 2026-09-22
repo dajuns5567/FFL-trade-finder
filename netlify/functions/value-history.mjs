@@ -90,6 +90,8 @@ const V498_CLEANUP_KEY='maintenance/v498-remove-20260919-190948-et-invalid-sched
 const V498_BAD_TIMES=new Set(['2026-09-19T23:09:48.738Z']);
 const V499_CLEANUP_KEY='maintenance/v499-remove-user-requested-20260919-20-points.json';
 const V499_BAD_TIMES=new Set(['2026-09-19T23:38:30.077Z','2026-09-20T06:20:50.829Z','2026-09-20T06:23:39.657Z','2026-09-20T12:25:37.233Z','2026-09-20T16:31:11.607Z','2026-09-20T19:29:04.241Z','2026-09-20T22:29:01.016Z']);
+const V500_CLEANUP_KEY='maintenance/v500-remove-existing-scheduled-refresh-points.json';
+const V500_EXISTING_SCHEDULED_CUTOFF_MS=Date.parse('2026-09-22T01:15:00.000Z');
 const V496_BASELINE_T='2026-09-19T22:01:38.323Z';
 const V496_BASELINE_MS=Date.parse(V496_BASELINE_T);
 const V492_BAD_FROM_MS=Date.parse('2026-09-15T06:07:00.000Z');
@@ -404,6 +406,29 @@ async function scrubV499UserRequestedSnapshots(s){
   const result={done:true,removed:bad.length,removed_times:bad.map(x=>x.t),reason:'user-requested Value History point deletion',completedAt:new Date().toISOString()};
   await retry(()=>s.setJSON(V499_CLEANUP_KEY,result),120);return result;
 }
+async function scrubV500ExistingScheduledSnapshots(s){
+  const marker=await safeGet(s,V500_CLEANUP_KEY);if(marker?.done)return marker;
+  const indexed=await allItems(s),items=indexed.items||[],bad=[],keep=[];
+  for(let i=0;i<items.length;i+=25){
+    const batch=items.slice(i,i+25);
+    const rows=await Promise.all(batch.map(async item=>({item,snap:await safeGet(s,item.key)})));
+    for(const {item,snap} of rows){
+      const t=String(snap?.t||item?.t||''),ms=new Date(t).getTime(),scheduled=String(snap?.source||'').toLowerCase()==='scheduled';
+      if(scheduled&&Number.isFinite(ms)&&ms<=V500_EXISTING_SCHEDULED_CUTOFF_MS)bad.push({...item,t});
+      else keep.push(item);
+    }
+  }
+  for(const item of bad){try{await retry(()=>s.delete(item.key),120)}catch(e){console.warn('v500-history-delete',item.key,e)}}
+  try{await writeFilteredIndexes(s,keep)}catch(e){console.warn('v500-history-reindex',e)}
+  const last=keep.slice().sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key))).at(-1)||null;
+  if(last){
+    const snap=await safeGet(s,last.key);
+    if(snap?.t&&Array.isArray(snap?.rows))await retry(()=>s.setJSON(LATEST_KEY,{version:3,t:snap.t,fingerprint:snap.fingerprint||fingerprint(snap.rows,snap.picks||[],snap.teams||[]),key:last.key,count:snap.rows.length,source:snap.source||null}),120)
+  }else await retry(()=>s.delete(LATEST_KEY),120).catch(()=>{});
+  const result={done:true,removed:bad.length,removed_times:bad.map(x=>x.t),cutoff:new Date(V500_EXISTING_SCHEDULED_CUTOFF_MS).toISOString(),criterion:'source === scheduled',preserved:keep.length,completedAt:new Date().toISOString()};
+  await retry(()=>s.setJSON(V500_CLEANUP_KEY,result),120);return result;
+}
+
 async function scrubV496BaselineReset(s){
   const marker=await safeGet(s,V496_CLEANUP_KEY);if(marker?.done)return marker;
   const indexed=await indexedItemsAll(s),items=indexed.items||[],bad=items.filter(item=>isV496PreBaseline(item?.t)),keep=items.filter(item=>!isV496PreBaseline(item?.t));
@@ -853,6 +878,7 @@ export default async (req)=>{
       try{await scrubV496BaselineReset(s)}catch(e){console.warn('v496-history-scrub',e)}
       try{await scrubV498InvalidScheduledSnapshot(s)}catch(e){console.warn('v498-history-scrub',e)}
       try{await scrubV499UserRequestedSnapshots(s)}catch(e){console.warn('v499-history-scrub',e)}
+      try{await scrubV500ExistingScheduledSnapshots(s)}catch(e){console.warn('v500-history-scrub',e)}
     }
     if(req.method==='GET'){
       if(url.searchParams.get('archive_export')==='1'){

@@ -1422,7 +1422,7 @@ function fourthWallV28(t,r,angle){
     [
       `I am not buying the easy version of ${mascot}. Show me the same role next week and I will start believing it.`,
       `I have been fooled by prettier Sundays than this. ${mascot} still has to make the useful parts travel.`,
-      `I will overreact when the evidence earns it. ${mascot} has one week of evidence.`
+      `I will overreact when the evidence earns it. One week of ${mascot} evidence is all I have.`
     ],
     [
       `I would prefer ${mascot} to be elegant. Competence will have to do.`,

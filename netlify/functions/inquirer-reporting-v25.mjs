@@ -1920,7 +1920,7 @@ function classificationSentenceV29(p,tr,r){
   const choose=banks=>keyedChoice(key,banks[v]);
   if(tr.kind==='star')return choose([
     [
-      `${p.name} has already been a star in this league. Sunday was another reminder of why opponents build part of the plan around him.`,
+      `${p.name} has already been a star in this league. ${p.name} gave opponents another reminder of why part of the plan has to start with him.`,
       `${p.name} came into the week with his reputation already earned, and the performance gave nobody a reason to lower the standard.`,
       `${p.name} has been doing this too long for Sunday to feel like a discovery. It was another strong week from a player opponents already respect.`
     ],
@@ -1935,8 +1935,8 @@ function classificationSentenceV29(p,tr,r){
       `${p.name} has the résumé already. Add another strong Sunday to it.`
     ],
     [
-      `${p.name} already had the résumé. Sunday added another strong performance and another problem for the next opponent to solve.`,
-      `${p.name} has established what he is in this league. This week strengthened the case that the standard is still intact.`,
+      `${p.name} already had the résumé. ${p.name} added another strong performance and another problem for the next opponent to solve.`,
+      `${p.name} has established what he is in this league. This week strengthened the case that ${p.name}’s standard is still intact.`,
       `The prior work already made ${p.name} a star; Sunday simply added another useful line to the record.`
     ]
   ]);
@@ -1949,7 +1949,7 @@ function classificationSentenceV29(p,tr,r){
     [
       `${p.name} is making a rather convincing case to become one of the league’s breakout names. The larger role has come with larger consequences for the defense.`,
       `${p.name} is beginning to outgrow last year’s expectations, and the extra work is producing exactly the sort of Sunday that makes opponents adjust.`,
-      `The charming little ${p.name} surprise is becoming a genuine football problem. If the role stays this large, the breakout conversation will take care of itself.`
+      `The charming little ${p.name} surprise is becoming a genuine football problem. If ${p.name}’s role stays this large, the breakout conversation will take care of itself.`
     ],
     [
       `${p.name} is making a real breakout case. The role got bigger and so did the damage.`,
@@ -1959,7 +1959,7 @@ function classificationSentenceV29(p,tr,r){
     [
       `${p.name} is making a credible case to be one of this season’s breakout players. The expanded role and the production are moving in the same direction.`,
       `${p.name} is becoming harder to treat as a one-week curiosity. The next opponent has to account for the larger role now.`,
-      `${p.name} has started turning increased opportunity into repeatable pressure on defenses. Another strong week would make the breakout case difficult to dismiss.`
+      `${p.name} has started turning increased opportunity into repeatable pressure on defenses. Another strong ${p.name} week would make the breakout case difficult to dismiss.`
     ]
   ]);
   if(tr.kind==='rookie')return choose([

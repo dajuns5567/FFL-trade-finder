@@ -39,6 +39,10 @@ test('active IDP runtime is value-driven rather than positional-rank driven',()=
   // Baseline contract established 2026-09-19. Intentional future model revisions may update
   // these assertions, but routine scoring/consensus refreshes must not mutate the architecture.
   assert(v25.includes("roleBlend=.20"),'20% LB same-role scoring blend drifted');
+  assert(v25.includes("let value=.20*c+.55*score.value+.25*ctx.value"),'IDP primary mix drifted from 20% consensus / 55% scoring / 25% context');
+  assert(v25.includes("const v=.55*score.value+.25*ctx.value"),'IDP no-consensus fallback no longer preserves the 55/25 non-consensus weights');
+  assert(v25.includes("modelWeights:{consensus:.20,scoringLookback:.55,otherLeagueDynastyContext:.25}"),'IDP audit metadata drifted from 20/55/25');
+  assert(!v25.includes("let value=.40*c+.40*score.value+.20*ctx.value"),'legacy 40/40/20 IDP primary mix is still active');
   assert(v25.includes("Math.max(m.confidence,.60)"),'established high-production EDGE confidence floor drifted');
   assert(v72.includes("baseFloor=.60+.16*t"),'M6 continuous IDP floor drifted');
   assert(v72.includes("idpOverallTradeCurveShieldContributionV72:.75"),'V72 shield contribution drifted');

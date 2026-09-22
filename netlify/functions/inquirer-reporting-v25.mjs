@@ -344,8 +344,14 @@ function teamPlayerCodaV33(t,r,f){
     'The '+team+' file supports specific player findings. It does not require a generic conclusion about balance, depth or collective effort.'
   ][v];
 }
+function resultShapeV33(f){
+  const margin=Math.abs(Number(f?.margin)||0);
+  if(margin<=7)return f?.won?'close win':'close loss';
+  if(margin>=35)return f?.won?'rout win':'rout loss';
+  return f?.won?'win':'loss';
+}
 function teamPlayerExtraV33(t,r,f,slot){
-  const top=f?.top,team=teamIdentityV28(t).mascot,opp=t.opponent_name||'the opponent',next=t.next_opponent_name||'the next opponent',v=voice(r),kind=Math.abs(Number(slot)||0)%3,rec=record(t),shape=String(f?.angle|| (f?.won?'win':'loss')).replace(/-/g,' '),shapePhrase=/^(?:win|loss)$/.test(shape)?'a '+shape:'a '+shape+' result',roleLabel=playerContextLabelV33(top),key=String(t.roster_id)+':player-extra:'+kind+':'+String(r?.id||'');
+  const top=f?.top,team=teamIdentityV28(t).mascot,opp=t.opponent_name||'the opponent',next=t.next_opponent_name||'the next opponent',v=voice(r),kind=Math.abs(Number(slot)||0)%3,rec=record(t),shape=resultShapeV33(f),shapePhrase=/^(?:win|loss)$/.test(shape)?'a '+shape:'a '+shape+' result',roleLabel=playerContextLabelV33(top),key=String(t.roster_id)+':player-extra:'+kind+':'+String(r?.id||'');
   const banks=[
     [
       [top.name+' gets the useful follow-up: can the same role survive when '+team+' is not playing this exact opponent? After this '+shape+' review, Nick trusts repeatable '+roleLabel+' work more than a pretty total.',top.name+' already supplied the headline. Nick’s next note is whether the workload survives a different game script instead of asking the fantasy total to predict itself.','There is one '+team+' player result worth carrying forward in '+top.name+'. The next Sunday decides whether the role travels or the box score was simply well timed.','Nick is keeping '+top.name+' on the short list for next week because the role has something testable about it. That is more useful than handing every scorer a paragraph.'],
@@ -2022,7 +2028,7 @@ function gameShapeV29(t,r,f=articleFrameV29(t,r)){
         [`${topWork}. ${won?'That is enough to explain the strongest part of the '+team+' win without pretending every secondary scorer was equally important.':'The individual line survives the '+team+' loss; the quieter slots do not inherit its credit.'}`]
       ],
       [
-        [`${topWork}. ${won?'Bartholomew gives '+top.name+'’s '+String(top.position||'player')+' centerpiece its due in this '+String(f.angle||'win').replace(/-/g,' ')+' review and declines to manufacture an ensemble from ordinary supporting lines.':'Lovely individual work, vulgar '+team+' result. '+(bad?bad.name+' gives the article a much less flattering counterpoint.':'The rest of the card gets no borrowed elegance.')}`],
+        [`${topWork}. ${won?'Bartholomew gives '+top.name+'’s '+String(top.position||'player')+' centerpiece its due in this '+resultShapeV33(f)+' review and declines to manufacture an ensemble from ordinary supporting lines.':'Lovely individual work, vulgar '+team+' result. '+(bad?bad.name+' gives the article a much less flattering counterpoint.':'The rest of the card gets no borrowed elegance.')}`],
         [`${topWork}. ${won?'The '+team+' win needs no decorative claim that everyone contributed equally.':'One strong line is not absolution for a losing card, however nicely tailored.'}`]
       ],
       [
@@ -2108,9 +2114,9 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       const lead=`${p.name}${c?` ${c}`:` produced ${one(p.points)} fantasy points`}.`;
       const judgment=[
         `${p.name} earns a second paragraph because the line was individually relevant; Nick is not using it to declare the whole roster balanced.`,
-        `${p.name} earns separate praise or criticism on the merits; in this ${String(f.angle||'weekly').replace(/-/g,' ')} review, Bartholomew declines to turn one ${String(p.position||'player')} line into a sweeping depth theory.`,
-        `${p.name} earned the extra ink in this ${String(f.angle||'weekly').replace(/-/g,' ')} review; that ${String(p.position||'player')} line is the analysis, and nobody needs a fake “team effort” slogan stapled to it.`,
-        `${p.name} is independently relevant to the ${team} ${String(f.angle||'weekly').replace(/-/g,' ')} file; one ${String(p.position||'player')} performance does not establish a broader depth finding.`
+        `${p.name} earns separate praise or criticism on the merits; in this ${resultShapeV33(f)} review, Bartholomew declines to turn one ${String(p.position||'player')} line into a sweeping depth theory.`,
+        `${p.name} earned the extra ink in this ${resultShapeV33(f)} review; that ${String(p.position||'player')} line is the analysis, and nobody needs a fake “team effort” slogan stapled to it.`,
+        `${p.name} is independently relevant to the ${team} ${resultShapeV33(f)} file; one ${String(p.position||'player')} performance does not establish a broader depth finding.`
       ][v];
       ps.push([lead,insight,status,judgment].filter(Boolean).join(' '));
     }

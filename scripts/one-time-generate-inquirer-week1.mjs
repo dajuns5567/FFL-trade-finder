@@ -2,11 +2,10 @@ import fs from 'node:fs';
 import {loadMida,attachMida} from '../netlify/functions/inquirer-context-v22.mjs';
 import {buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification} from '../netlify/functions/inquirer-reporters.mjs';
 import {fetchBestSeason} from '../netlify/functions/history-fetch.mjs';
+import valueHistoryHandler from '../netlify/functions/value-history.mjs';
 
 const LEAGUE='1316867686394769408';
 const API='https://api.sleeper.app/v1';
-const INQUIRER_HISTORY_ORIGIN=String(process.env.INQUIRER_HISTORY_ORIGIN||'https://deploy-preview-385--precious-stroopwafel-196eae.netlify.app').replace(/\/$/,'');
-const INQUIRER_TRADE_HISTORY_URL=INQUIRER_HISTORY_ORIGIN+'/.netlify/functions/value-history?trades=1';
 const season=2026, week=1;
 
 async function j(url){
@@ -159,18 +158,12 @@ function tradeRows(transactions,teamName){
   });
 }
 async function canonicalTradeHistoryReadOnly(){
-  let last=null;
-  for(let attempt=0;attempt<4;attempt++){
-    try{
-      const result=await j(INQUIRER_TRADE_HISTORY_URL);
-      if(!result||!Array.isArray(result.trades))throw new Error('Canonical Trade History response did not contain trades');
-      return result;
-    }catch(e){
-      last=e;
-      if(attempt<3)await new Promise(resolve=>setTimeout(resolve,750*(attempt+1)));
-    }
-  }
-  throw new Error('Read-only canonical Trade History unavailable: '+String(last?.message||last||'unknown error'));
+  const req=new Request('http://inquirer-local/.netlify/functions/value-history?trades=1',{method:'GET'});
+  const response=await valueHistoryHandler(req);
+  if(!response?.ok)throw new Error('Local read-only canonical Trade History handler returned '+String(response?.status||'no response'));
+  const result=await response.json();
+  if(!result||!Array.isArray(result.trades))throw new Error('Canonical Trade History response did not contain trades');
+  return result;
 }
 
 const league=await j(API+'/league/'+LEAGUE);

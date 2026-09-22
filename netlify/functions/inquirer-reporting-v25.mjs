@@ -386,19 +386,19 @@ function teamPlayerExtraV33(t,r,f,slot){
     [
       [top.name+' gets the useful follow-up: can the same role survive when '+team+' is not playing this exact opponent? After this '+shape+' review, Nick trusts repeatable '+roleLabel+' work more than a pretty total.',top.name+' already supplied the headline. Nick’s next note is whether the workload survives a different game script instead of asking the fantasy total to predict itself.','There is one '+team+' player result worth carrying forward in '+top.name+'. The next Sunday decides whether the role travels or the box score was simply well timed.','Nick is keeping '+top.name+' on the short list for next week because the role has something testable about it. That is more useful than handing every scorer a paragraph.'],
       ['Bartholomew’s useful question for '+top.name+' is whether the '+roleLabel+' role survives a less accommodating afternoon; one good total inside '+shapePhrase+' is lovely, but a repeatable job is much better furniture.',top.name+' already owns the flattering paragraph. In this '+shape+' review, Bartholomew wants to know whether the '+roleLabel+' workload travels when the matchup stops cooperating.',team+' can enjoy '+top.name+' without turning one Sunday into mythology. The tasteful next step is the same role under less convenient circumstances.','The number belongs to '+top.name+'. Bartholomew is more interested in whether the same job appears next week, when the décor will be different and excuses more expensive.'],
-      [top.name+' gets the headline. After this '+shape+' review, Tilly is done giving ordinary '+roleLabel+' box-score neighbors honorary co-star billing.','The '+team+' player story centers on '+top.name+'; keep this '+roleLabel+' role after '+shapePhrase+' and the next headline writes itself without yelling at the font.',top.name+' earned the ink. Now do it when the matchup changes; that is how a good Sunday stops being a souvenir.','Tilly has one name circled for the useful reason: '+top.name+' gave next week a role worth checking, not just a score worth reposting.'],
+      [top.name+' was the best '+team+' player in this '+shape+'. The next question is whether another '+roleLabel+' can become independently valuable instead of simply appearing next to him in the box score.','The '+team+' player story centers on '+top.name+'; keep this '+roleLabel+' role after '+shapePhrase+' and the performance becomes a trend instead of a one-week spike.',top.name+' earned the praise. Now do it when the matchup changes; that is how a good Sunday stops being a souvenir.','Tilly keeps '+top.name+' at the center of next week’s review because the role itself is worth checking again, not because the score looked nice.'],
       [top.name+' remains the player exhibit worth carrying forward. The next file should test the same role against a different game environment rather than extrapolate from the fantasy total alone.','The repeatability question for '+team+' centers on '+top.name+': whether the workload persists when opponent and script change. That is the next probative data point.','The next inquiry on '+top.name+' is role continuity. A second comparable workload would strengthen the finding more than another sentence about this week’s total.','Filch keeps '+top.name+' in the next-week file because this '+roleLabel+' role can be corroborated after '+shapePhrase+'; the rest of the roster does not receive equal evidentiary weight by association.']
     ],
     [
       ['The '+team+' record is '+rec+', which is the part no individual stat line gets to negotiate away. Nick will praise the useful players and still make the team answer for the standings.','A good player line can survive a bad '+team+' result; the record is still '+rec+'. Nick keeps those judgments separate because the scoreboard does not issue group pardons.',team+' leaves this week at '+rec+'. The individual praise matters, but Nick is not letting one good line do public-relations work for the whole roster.','Nick’s player notes are favorable where they earned it; the '+team+' record remains '+rec+'. Those facts are allowed to coexist without a motivational poster.'],
       ['The '+team+' record is '+rec+', and Bartholomew refuses to let one handsome player line redecorate the standings. Praise the player; leave the record where everyone can see it.','The '+team+' record reads '+rec+'. One elegant individual performance is not large enough to drape over that entire piece of furniture.','The '+team+' roster carries a '+rec+' record into the next column. Bartholomew can compliment the player page without pretending the standings suddenly acquired better taste.','At '+rec+', the '+team+' roster still has larger concerns than one player can solve alone. Bartholomew will keep the praise narrow and the team judgment appropriately impolite.'],
-      ['The '+team+' record is '+rec+'. Good player line, same standings. Tilly can hold two thoughts at once, which apparently puts the newsroom ahead of half the group chat.','The '+team+' roster leaves the week '+rec+'. Credit the player who earned it; do not use him as a tarp for the rest of the roster.','The '+team+' record is '+rec+'. The player page has some good news. The standings did not get the memo.','The '+team+' record is '+rec+'. Tilly will praise the right name and keep the team-wide optimism locked until the wins show up.'],
+      ['The '+team+' record is '+rec+'. Good player line, same standings. Both can be true, which still seems to be asking a lot of half the group chat.','The '+team+' roster leaves the week '+rec+'. Credit the player who earned it; do not use him as a tarp for the rest of the roster.','The '+team+' record is '+rec+'. The player page has some good news. The standings did not get the memo.','The '+team+' record is '+rec+'. Tilly will praise the right name and keep the team-wide optimism locked until the wins show up.'],
       ['The team-level record remains '+rec+' for '+team+'. Individual affirmative evidence does not alter that standing, and the article should not use it as a substitute for a favorable result.','At '+rec+', the '+team+' roster has separate player and team findings. Filch keeps them separate because strong individual evidence cannot erase an adverse record.','The '+team+' record is '+rec+'. Player-level credit remains admissible, but it does not rebut the standings by itself.','Filch records '+team+' at '+rec+' and leaves the individual praise in its proper scope. The larger team finding requires wins.']
     ],
     [
       ['Next comes '+next+'. Nick wants the player role that actually worked to travel, because the schedule has no interest in honoring this week’s explanation.','Against '+next+', Nick is watching whether '+team+' can preserve the useful player role without recreating every other condition from this week.','The next '+team+' article starts with '+next+'. Nick would like the good player evidence to survive before the bad habits become the recurring part.','The useful player assignment against '+next+' is simple: keep the role that worked and make the opponent solve it instead of asking the columnist to explain its disappearance.'],
       [next+' is next, and Bartholomew would appreciate the useful '+team+' roles arriving intact rather than as charming anecdotes from last Sunday.','Next for '+team+' is '+next+'. The elegant outcome would be the same useful role with fewer of the week’s less attractive accessories.','Next is '+next+', where Bartholomew wants the useful '+team+' role to travel; nostalgia for one Sunday is terribly common and rarely useful.','The next opponent is '+next+'. Bartholomew will judge the useful '+team+' role by whether it survives a new guest list, not by how fondly everyone remembers this week.'],
-      [next+' is next. Keep the useful '+team+' role, lose the excuses and give Tilly a reason to write a different joke.','Next for '+team+' is '+next+'. The player who earned ink this week can make it a trend; everybody else can stop volunteering for the wrong headline.',next+' is waiting. Tilly wants the good '+team+' role to travel and the bad one to miss the bus.','The next page says '+next+'. Repeat the useful role, fix the quiet one and spare Tilly another copy-and-paste complaint.'],
+      [next+' is next. Keep the useful '+team+' role, lose the excuses and give Tilly a reason to make a different joke.','Next for '+team+' is '+next+'. The best player this week can make it a trend; the weaker spots need to stop giving the opponent such easy places to attack.',next+' is waiting. Tilly wants the good '+team+' role to travel and the bad one to miss the bus.','The next page says '+next+'. Repeat the useful role, fix the quiet one and spare Tilly another copy-and-paste complaint.'],
       [next+' is the next opponent. Filch’s player-level follow-up is whether the affirmative role persists under a new matchup while the adverse roles are corrected.','The next '+team+' exhibit comes against '+next+'. Role persistence will matter more than the memory of this fantasy total.','Against '+next+', the useful '+team+' question is whether the same player role can be corroborated while the weaker slots change.','Filch carries the player finding into the '+next+' matchup with one condition: the role must recur before the conclusion gains weight.']
     ]
   ];
@@ -1493,7 +1493,7 @@ function angleLeadV28(t,r,angle){
     seed=String(t.roster_id)+':'+angle+':'+String(r?.id||'');
   const spines={
     'rout-win':[
-      `${full} did not beat ${opp} so much as remove the suspense from ${score}. By the time the margin reached ${one(margin)}, the interesting question was no longer who would win but which part of the performance could survive contact with next Sunday.`,
+      `${full} beat ${opp} ${score}, and a ${one(margin)}-point margin made the result obvious early. A win that comfortable shifts the review toward what can survive next week: which roles were genuinely strong, which scores were boosted by game script and which quiet spots were simply hidden by the margin.`,
       `${score} flatters ${opp}. ${full} spent the afternoon turning a matchup into administrative paperwork, and a ${one(margin)}-point margin leaves very little room for fake modesty.`,
       `There are wins, and then there are Sundays when the other side starts looking for the exits before the column is finished. ${full} gave ${opp} the latter, ${score}.`
     ],
@@ -1847,7 +1847,7 @@ function headingV28(t,r,kind,base,angle){
     players:[
       [`Why ${top?.name||'the Headliner'} Mattered`,`The Names Doing the Real Work`,`Stars, Support and the Missing Piece`],
       [`The Leading Men, Plus One Complaint`,`Who Looked Expensive in the Best Way`,`The Cast List Gets Reviewed`],
-      [`PUT ${String(top?.name||'THE STAR').toUpperCase()} IN BIG TYPE`,`Heroes, Villains and People on Probation`,`Who Earned Tomorrow’s Photo`],
+      [`What ${top?.name||'the Top Performer'} Actually Gave Them`,`Heroes, Villains and People on Probation`,`Who Earned Tomorrow’s Photo`],
       [`People of Interest: ${top?.name||'The Headliner'} First`,`Witnesses, Cooperative and Otherwise`,`Names Circled Before Tuesday`]
     ],
     management:[
@@ -1859,7 +1859,7 @@ function headingV28(t,r,kind,base,angle){
     value:[
       [`Market Page, in Its Proper Place`,`What the Number Changed — and Didn’t`,`The Price Tag in the Margin`],
       [`The Market, Since We Must`,`Roster Value in Evening Wear`,`A Number With Ambitions`],
-      [`VALUE WATCH, SMALL FONT`,`The Decimals Are Yelling Again`,`Market Gossip With Guardrails`],
+      [`Value Watch: What Actually Moved`,`The Decimals Are Yelling Again`,`Market Gossip With Guardrails`],
       [`Market Exhibit`,`What the Ledger Corroborates`,`Value History, Admitted as Evidence`]
     ],
     sentiment:[
@@ -1871,13 +1871,13 @@ function headingV28(t,r,kind,base,angle){
     'hot-seat':[
       [`The Uncomfortable Name: ${bad?.name||'TBD'}`,`Where Patience Gets Tested`,`One More Week Before Concern Grows`],
       [`The Chair Nobody Wants`,`An Unflattering Appointment`,`The Least Elegant Line on the Card`],
-      [`HOT SEAT: NO HIDING`,`Today’s Complaint Has a Name`,`The Angry Font Finds a Target`],
-      [`The Name Circled in Red`,`Primary Suspect for the Bad Feeling`,`A Provisional Finding`]
+      [`HOT SEAT: NO HIDING`,`Today’s Complaint Has a Name`,`The Player Who Has to Be Better`],
+      [`The Week’s Most Concerning Player`,`Primary Suspect for the Bad Feeling`,`A Provisional Finding`]
     ],
     'cool-throne':[
       [`Credit Where It’s Due`,`The Good Note in the Margin`,`A Sunday Worth Repeating`],
       [`The Good China Goes Here`,`A Tasteful Excess of Credit`,`The Chair With Better Upholstery`],
-      [`COOL THRONE: PRINT IT BIG`,`Somebody Earned the Nice Headline`,`The Back Page Says Something Kind`],
+      [`Cool Throne: Credit Earned`,`Somebody Earned the Nice Headline`,`The Back Page Says Something Kind`],
       [`Positive Finding`,`The Cooperative Witness`,`Credit Survives Review`]
     ],
     outlook:[
@@ -1921,9 +1921,9 @@ function classificationSentenceV29(p,tr,r){
       `${p.name} needed no discovery narrative before kickoff and needs none now. The performance belongs to an already accomplished player.`
     ],
     [
-      `${p.name.toUpperCase()} WAS ALREADY A STAR. THIS WEEK ADDED A LOUD LINE; IT DID NOT INVENT THE PLAYER.`,
-      `ESTABLISHED STAR, NOT BREAKOUT: ${p.name.toUpperCase()}. THE HEADLINE IS THE PERFORMANCE, NOT A FAKE ORIGIN STORY.`,
-      `${p.name.toUpperCase()} DOES NOT NEED A BREAKOUT LABEL. ${p.name.toUpperCase()} NEEDED ANOTHER BIG SUNDAY, AND HE GOT ONE.`
+      `${p.name} was already a star. This week added another strong line; it did not invent the player.`,
+      `${p.name} is an established star, not a breakout case. The performance strengthens an existing résumé instead of creating a new one.`,
+      `${p.name} does not need a breakout label. He needed another strong Sunday, and he got one.`
     ],
     [
       `${p.name} entered with star status already supported by prior work; Sunday corroborates the ${playerContextLabelV33(p)} standard, making this confirmation and not a breakout investigation.`,
@@ -1943,9 +1943,9 @@ function classificationSentenceV29(p,tr,r){
       `${p.name} is beginning to outgrow last year’s description. The expanding workload is the persuasive part.`
     ],
     [
-      `BREAKOUT WATCH: ${p.name.toUpperCase()}. THE JOB GOT BIGGER AND THE PRODUCTION CAME WITH IT.`,
-      `${p.name.toUpperCase()} GETS THE BREAKOUT HEADLINE FOR NOW. ANOTHER WEEK OF THIS ROLE MAKES IT HARDER TO TAKE BACK.`,
-      `YOUNG PLAYER, BIGGER ROLE, LOUDER RESULT: ${p.name.toUpperCase()} HAS EARNED ANOTHER LOOK.`
+      `${p.name} belongs on breakout watch because the role expanded and the production followed it.`,
+      `${p.name} has earned a provisional breakout label. Another week with this level of involvement would make the case much stronger.`,
+      `${p.name} is young, the role grew and the result followed. That is enough to deserve another close look.`
     ],
     [
       `${p.name} qualifies as an emerging player because workload and production moved together. The finding remains provisional.`,
@@ -2031,9 +2031,9 @@ function classificationSentenceV29(p,tr,r){
       `${p.name} gets one ugly Sunday without a dramatic rewrite. A second would be less defensible.`
     ],
     [
-      `${p.name.toUpperCase()} GETS A MULLIGAN, NOT IMMUNITY.`,
-      `ONE BAD WEEK FOR ${p.name.toUpperCase()}. DO IT AGAIN AND THE FONT GETS BIGGER.`,
-      `${p.name.toUpperCase()} HAS ENOUGH HISTORY TO SURVIVE THIS ONE. NEXT WEEK IS NOT FREE.`
+      `${p.name} gets one mulligan, not immunity.`,
+      `${p.name} gets one bad week. Do it again and the criticism gets much sharper.`,
+      `${p.name} has enough history to survive this one. Next week is not free.`
     ],
     [
       `${p.name} has one poor exhibit; the next one determines whether the category changes.`,
@@ -2130,7 +2130,7 @@ function gameShapeV29(t,r,f=articleFrameV29(t,r)){
         [`${topWork}. ${won?'The '+team+' win needs no decorative claim that everyone contributed equally.':'One strong line is not absolution for a losing card, however nicely tailored.'}`]
       ],
       [
-        [`${topWork}. ${won?'That is the '+team+' headline. Everybody else can earn bigger type with a bigger game.':'The '+team+' loss does not belong on '+top.name+' just because his name is easiest to print.'}`],
+        [`${topWork}. ${won?top.name+' was the clear best '+team+' player, and the rest of the roster can earn equal praise by producing a genuinely comparable game.':'The '+team+' loss does not belong on '+top.name+' simply because he had the most visible individual line.'}`],
         [`${topWork}. ${won?'Good '+String(top.position||'player')+' line from '+top.name+', good '+team+' result, no fake “team effort” slogan required.':'Credit the player, keep the complaint aimed at the parts of '+team+' that actually failed.'}`]
       ],
       [
@@ -2148,7 +2148,7 @@ function gameShapeV29(t,r,f=articleFrameV29(t,r)){
     return keyedChoice(`${t.roster_id}:bart-loss-shape`,[`${topWork}, and the individual line remains excellent even though ${team} lost. About ${pct}% of the scoring came from the top three names; losing with that much useful work near the top makes the emptier lineup spots much harder to excuse.`,`${topWork}. One should admire the line without confusing it for absolution: ${team} still lost, and roughly ${pct}% of the scoring sat with three names. The empty chairs are therefore not difficult to locate.`,`${top.name} gave ${team} genuinely good football — ${topClause||'the strongest verified role on the roster'} — and received a loss for his trouble. With about ${pct}% of the scoring supplied by three players, Bartholomew has little reason to flatter the rest of the card.`]);
   }
   if(voice(r)===2){
-    if(won)return `${top.name.toUpperCase()} GOT THE BIG TYPE: ${topClause||'the loudest work on the roster'}. ${naturalJoin(support)||'The rest of the lineup'} supplied enough backup to turn the star performance into an actual ${team} win instead of a very expensive consolation prize.`;
+    if(won)return `${top.name} supplied the strongest ${team} performance: ${topClause||'the best verified work on the roster'}. ${naturalJoin(support)||'The rest of the lineup'} supplied enough backup to turn the performance into an actual win instead of a very expensive consolation prize.`;
     return keyedChoice(`${t.roster_id}:tilly-loss-shape`,[`${top.name.toUpperCase()} DID HIS PART: ${topClause||'the strongest line on the roster'}. ${team} LOST ANYWAY. When roughly ${pct}% of the scoring comes from three players and the final still lands on the wrong side, Tilly starts looking below the stars for the missing pages.`,`DO NOT PUT THIS LOSS ON ${top.name.toUpperCase()}: ${topClause||'he supplied the best line on the team'}. ${team.toUpperCase()} STILL LOST, AND ABOUT ${pct}% OF THE SCORE CAME FROM THREE NAMES. THE REST OF THE PAGE NEEDS AN EXPLANATION.`,`${top.name.toUpperCase()} BROUGHT THE HEADLINE; ${team.toUpperCase()} BROUGHT THE LOSS. THREE PLAYERS OWNED ABOUT ${pct}% OF THE SCORE, SO TILLY DOES NOT NEED BINOCULARS TO FIND THE QUIET PARTS.`]);
   }
   if(won)return `${topWork}, the cleanest affirmative exhibit on the roster. ${naturalJoin(support)||'The supporting cast'} corroborated enough of it for ${team} to turn production into a win. The top three owned about ${pct}% of the total; the distribution gets another look next week, but the favorable verdict is real.`;
@@ -2171,9 +2171,9 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       `${top.name} was the clearest successful piece of the ${team} week, worth ${one(top.points)} fantasy points. ${topFootball}`
     ],
     [
-      `PUT ${top.name} IN BIG TYPE: ${one(top.points)} FANTASY POINTS. ${topFootball}`,
-      `${top.name} GETS THE PHOTO: ${one(top.points)} FANTASY POINTS. ${topFootball}`,
-      `THE ${team.toUpperCase()} HEADLINER IS ${top.name}: ${one(top.points)} FANTASY POINTS. ${topFootball}`
+      `${top.name} was the best individual ${team} performer at ${one(top.points)} fantasy points. ${topFootball}`,
+      `${top.name} drove the strongest ${team} player result with ${one(top.points)} fantasy points. ${topFootball}`,
+      `${top.name} gave ${team} its strongest individual line at ${one(top.points)} fantasy points. ${topFootball}`
     ],
     [
       `${top.name} is the primary affirmative player finding after ${one(top.points)} fantasy points. ${topFootball}`,
@@ -2242,7 +2242,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
     ps.push([
       `${bad.name} is the player Nick circles in the margin after finishing ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`The ${team} win buys one week of patience; another ${bad.name} miss becomes harder to dismiss.`:`${bad.name} stays in the main ${team} story because the team lost.`}${status?` ${status}`:''}`,
       `${bad.name} supplied the least convincing line of the main ${team} cast, landing ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?`The ${team} win keeps criticism of ${bad.name} measured for a week.`:`The loss makes ${bad.name}’s poor Sunday impossible to hide behind better performances.`}${status?` ${status}`:''}`,
-      `THE NAME IN RED IS ${bad.name}: ${one(d)} BELOW PROJECTION${c?`; ${bad.name} ${c}`:''}. ${won?'THE SCOREBOARD HID THE DAMAGE THIS TIME.':'THE SCOREBOARD PUT A SPOTLIGHT ON IT.'}${status?` ${status}`:''}`,
+      `${bad.name} was the clearest problem: ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?'The win kept the miss from deciding the week.':'The loss made the shortfall matter directly.'}${status?` ${status}`:''}`,
       `${bad.name} is the adverse player finding, ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`${team} won despite the shortfall; that is mitigation rather than exoneration.`:`The ${team} loss gives ${bad.name}’s shortfall direct consequence.`}${status?` ${status}`:''}`
     ][v]+' '+(playerStatInsightV33(t,bad,r)||''));
   }
@@ -2859,7 +2859,7 @@ export function humanSectionsV25(args){
     paragraphs=(paragraphs||[]).map(p=>{
       const specific=specificityPass(t,c.kind,p),named=c.kind==='management'?specific:naturalizePlayerReferences(t,specific);
       return contextualizeParagraphV28(t,named);
-    }).map(p=>String(p).replace(/Fix the production and the back page will happily find a new target\./gi,'Fix the production and the angry headline can move to somebody else.'));
+    }).map(p=>String(p).replace(/Fix the production and the back page will happily find a new target\./gi,'Fix the production and the criticism can move to somebody else.'));
     paragraphs=(c.kind==='management'?paragraphs:restoreSectionFullNamesV30(t,paragraphs)).map(p=>repairPlayerNameCollisionsV31(t,p));
     return {...f,...c,heading:headingV28(t,args.reporter,c.kind,c.heading,frame.angle),paragraphs:paragraphs.length?paragraphs:['n/a']};
   });

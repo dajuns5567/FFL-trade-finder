@@ -2253,40 +2253,40 @@ function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
   if(week===1){
     const banks=[
       won?[
-        team+" is 1-0, and "+opp+" is the first team that has to explain why. One win does not make a contender, but it does let "+team+" spend the week with the first laugh.",
-        team+" opens 1-0. The standings are too young for prophecy and old enough for "+opp+" to wish this result belonged to somebody else.",
+        "Week 1 leaves "+team+" at 1-0, and "+opp+" is the first team that has to explain why. One win does not make a contender, but it does let "+team+" spend the week with the first laugh.",
+        "The opening-week record for "+team+" is 1-0. The standings are too young for prophecy and old enough for "+opp+" to wish this result belonged to somebody else.",
         "Week 1 leaves "+team+" at 1-0. Nick will not hang a banner for one Sunday, but the first week is a much better place to own a win than an explanation."
       ]:[
-        team+" is 0-1, which is not a crisis and is definitely not nothing. "+opp+" gets the first celebration; "+team+" gets six days to make sure the feeling does not become familiar.",
-        team+" opens 0-1. One loss cannot define a season, but it can absolutely ruin the first week of optimism.",
+        "Week 1 leaves "+team+" at 0-1, which is not a crisis and is definitely not nothing. "+opp+" gets the first celebration; "+team+" gets six days to make sure the feeling does not become familiar.",
+        "The opening-week record for "+team+" is 0-1. One loss cannot define a season, but it can absolutely ruin the first week of optimism.",
         "Week 1 puts "+team+" at 0-1. Nick has seen plenty of good seasons begin badly; none of them improved by pretending the opener did not sting."
       ],
       won?[
-        team+" is 1-0, which looks lovely because Week 1 has not yet had time to stain it. "+opp+" gets the sour version of opening weekend; "+team+" gets to enjoy the furniture before somebody spills on it.",
+        "The Week 1 record for "+team+" is 1-0, which looks lovely because opening weekend has not yet had time to stain it. "+opp+" gets the sour version of opening weekend; "+team+" gets to enjoy the furniture before somebody spills on it.",
         "The table says 1-0 for "+team+". Bartholomew considers that a perfectly acceptable opening accessory, particularly because "+opp+" is the one carrying the loss home.",
-        team+" opens 1-0. One should not order championship silverware, but one may absolutely make "+opp+" look at the clean record for a few days."
+        "Opening weekend leaves "+team+" at 1-0. One should not order championship silverware, but one may absolutely make "+opp+" look at the clean record for a few days."
       ]:[
-        team+" is 0-1, which is a terrible color on everyone. "+opp+" got the better opening weekend, and "+team+" now has to make sure one ugly accessory does not become the season’s entire wardrobe.",
+        "The Week 1 record for "+team+" is 0-1, which is a terrible color on everyone. "+opp+" got the better opening weekend, and "+team+" now has to make sure one ugly accessory does not become the season’s entire wardrobe.",
         "The table says 0-1 for "+team+". Bartholomew grants that September is forgiving; he does not grant that losing should be tasteful.",
-        team+" opens 0-1. The season is not in danger. The mood is, and "+opp+" is responsible."
+        "Opening weekend leaves "+team+" at 0-1. The season is not in danger. The mood is, and "+opp+" is responsible."
       ],
       won?[
-        team+" is 1-0. Enjoy it. Mention it too often. Send "+opp+" screenshots. Week 1 is the only time irrational confidence is still tax-free.",
-        team+" starts 1-0, which means the group chat belongs to "+team+" until further notice. "+opp+" can mute notifications if necessary.",
+        "Week 1 leaves "+team+" at 1-0. Enjoy it. Mention it too often. Send "+opp+" screenshots. Week 1 is the only time irrational confidence is still tax-free.",
+        "The first-week record is 1-0 for "+team+", which means the group chat belongs to "+team+" until further notice. "+opp+" can mute notifications if necessary.",
         "One game, one win, 1-0 for "+team+". Tilly will not call it destiny; Tilly will absolutely call "+opp+" if anybody wants to discuss the scoreboard."
       ]:[
-        team+" is 0-1. Nobody is eliminated, nobody is doomed, and everybody is still allowed to be annoyed. "+opp+" gets the first laugh.",
+        "Week 1 leaves "+team+" at 0-1. Nobody is eliminated, nobody is doomed, and everybody is still allowed to be annoyed. "+opp+" gets the first laugh.",
         "0-1 for "+team+". The good news is there are plenty of games left. The bad news is "+opp+" already has one more win than "+team+" does.",
-        team+" opens 0-1. Tilly has not reached the panic button. Tilly has, however, located it."
+        "The first-week record is 0-1 for "+team+". Tilly has not reached the panic button. Tilly has, however, located it."
       ],
       won?[
-        team+" enters the historical record at 1-0 after Week 1. The important contextual fact is simple: "+opp+" was the first opponent and "+team+" banked the result.",
+        "The historical Week 1 record places "+team+" at 1-0. The important contextual fact is simple: "+opp+" was the first opponent and "+team+" banked the result.",
         "Week 1 closes with "+team+" at 1-0. Filch treats that as a clean first fact, not a projection about the rest of the season.",
-        team+" is 1-0 through the only completed week in this report. "+opp+" owns the corresponding loss; no later-week record is admissible here."
+        "The only completed week in this report leaves "+team+" at 1-0. "+opp+" owns the corresponding loss; no later-week record is admissible here."
       ]:[
-        team+" enters the Week 1 record at 0-1. Filch will not convert one loss into a season verdict, but he will not let a later week rewrite it either.",
+        "The Week 1 record places "+team+" at 0-1. Filch will not convert one loss into a season verdict, but he will not let a later week rewrite it either.",
         "Week 1 closes with "+team+" at 0-1. "+opp+" earned the first result, and that is the only record context this archive is allowed to use.",
-        team+" is 0-1 through the report’s cutoff. Filch records the loss without borrowing future wins or future excuses."
+        "The report cutoff leaves "+team+" at 0-1. Filch records the loss without borrowing future wins or future excuses."
       ]
     ][v];
     return keyedChoice(key,banks)+(rank?" Week 1 scoring places "+team+" "+(rank===1?"first":"No. "+rank)+" in the 32-team snapshot.":"");

@@ -342,7 +342,7 @@ function playerStatInsightV33(t,p,r){
     const rows=[
       q.won?name+" kept giving "+q.opp+" a coverage problem it never solved. "+q.team+" could return to the same matchup without making it feel predictable.":name+" gave "+q.opp+" a problem, but "+q.team+" could not make that problem decide the game.",
       q.underdog&&q.won?name+" helped turn the favorite into the team doing the chasing. "+q.opp+" kept having to decide how much help it could afford to send his way.":name+" forced "+q.opp+" to keep accounting for him, which kept the defense from settling into a comfortable answer.",
-      q.margin<=7?name+" was dangerous in exactly the kind of game where one catch or one missed assignment becomes the story everyone remembers.":name+" made "+q.opp+" pay attention all afternoon. The defense saw the problem and still never made it disappear.",
+      q.margin<=7?name+" was dangerous in exactly the kind of game where one catch or one missed assignment becomes the story everyone remembers.":name+" made "+q.opp+" pay attention all afternoon. "+q.opp+" saw "+name+" becoming the problem and still never made him disappear.",
       q.won?name+" gave "+q.team+" a receiving threat "+q.opp+" never fully pushed out of the script.":name+" had enough success to make "+q.opp+" uncomfortable, but not enough help around him to turn discomfort into defeat."
     ];
     football=keyedChoice(key,rows)+(redZone?" By the high-leverage snaps, "+q.opp+" was already choosing between overreacting to "+name+" and risking another punishment.":"");
@@ -359,13 +359,13 @@ function playerStatInsightV33(t,p,r){
       q.won&&pressure>=3?name+" kept dragging "+q.opp+" into hurried decisions. The opponent started calling plays while wondering where the next hit was coming from.":q.won?name+" made "+q.opp+" earn its offensive possessions instead of letting the game become an exchange of easy scores.":name+" gave "+q.team+" defensive resistance, but "+q.opp+" still found enough clean possessions to win.",
       q.underdog&&q.won?name+" helped make the favorite uncomfortable on the side of the ball it expected to control. "+q.opp+" spent too many possessions playing through disruption.":name+" was part of the reason "+q.opp+" never got to treat this as a clean offensive afternoon.",
       q.margin<=7?name+" mattered because there was no garbage time to hide in. Every tackle, pressure or broken play arrived in a game where one clean possession could have changed the result.":q.won?name+" helped keep "+q.opp+" from finding the easy path back into the game.":name+" made enough plays to deserve credit even though "+q.opp+" won.",
-      takeaway?name+" gave the matchup the kind of defensive jolt that changes a sideline instantly. "+q.opp+" went from building a drive to dealing with the consequences of losing the football.":name+" made "+q.opp+" work harder for its offense. The opponent felt him in the game; that matters more than reverse-engineering a fantasy floor."
+      takeaway?name+" gave the matchup the kind of defensive jolt that changes a sideline instantly. "+q.opp+" went from building a drive to dealing with the consequences of losing the football.":name+" made "+q.opp+" work harder for its offense. "+q.opp+" felt "+name+" in the game; the useful story is the disruption he imposed, not a made-up fantasy floor."
     ]);
   }
   const close=[
     q.won?"Nick’s takeaway is that "+name+" changed how "+q.opp+" had to play, and "+q.team+" got the better end of that argument.":"Nick can praise "+name+" without pretending "+q.team+" won; "+q.opp+" gets the result, but the player still made part of the afternoon difficult.",
     q.won?"Bartholomew will allow the compliment because "+q.opp+" spent too much of Sunday rearranging itself around "+name+".":"Bartholomew’s annoyance is that "+name+" gave "+q.team+" something real and "+q.opp+" still left with the better evening.",
-    q.won?name+" made "+q.opp+" miserable enough to matter. One team kept finding a pressure point; the other never found a comfortable answer.":name+" had a good stretch of Sunday and "+q.opp+" still got to celebrate. Tilly calls that useful football wasted on the wrong ending.",
+    q.won?name+" made "+q.opp+" miserable enough to matter. "+q.team+" kept finding the same pressure point and "+q.opp+" never found a comfortable answer.":name+" had a good stretch of Sunday and "+q.opp+" still got to celebrate. Tilly calls "+name+"’s work useful football wasted on a "+q.team+" ending nobody wanted.",
     q.won?"Filch records the consequence rather than the mechanism: "+q.opp+" had to alter the way it played because of "+name+", and that pressure showed up in the result.":"Filch separates the player from the verdict. "+name+" complicated "+q.opp+"’s afternoon; "+q.team+" still lost the larger case."
   ][v];
   return (football+" "+close).replace(/\s+/g," ").trim();
@@ -1552,7 +1552,7 @@ function angleLeadV28(t,r,angle){
       opp+" handed "+full+" a "+one(margin)+"-point loss, "+score+", and there is not enough tasteful language in the notebook to hide it.",
       full+" lost "+score+", the kind of margin that makes one stop looking for a single culprit and start checking whether the whole room had a bad day.",
       opp+" beat "+full+" "+one(t.opponent_points)+"–"+one(t.points)+" and made the loser look like it had wandered into somebody else’s highlight reel.",
-      full+" lost by "+one(margin)+" to "+opp+". Filch records a broad failure: too many parts of the matchup went the wrong way for one excuse to carry the file."
+      full+" lost by "+one(margin)+" to "+opp+". Filch records a broad "+full+" failure: "+opp+" found too many pressure points for one excuse to carry the file."
     ],
     "close-win":[
       full+" escaped "+opp+" "+score+". With only "+one(margin)+" points between them, every quiet starter and every late swing suddenly has a face and a name.",
@@ -2034,14 +2034,14 @@ function teamDeepReadV34(t,r,f){
     key=String(t.roster_id)+":deep-matchup-v35:"+String(r?.id||"");
   let aftershock;
   if(q.won&&q.underdog)aftershock=[
-    team+" did more than steal a win from "+opp+"; it stole the version of Sunday "+opp+" thought it was entitled to have. The favorite entered expecting control and spent the afternoon improvising. That is the kind of Week 1 result that can make an underdog carry itself differently the next time the projection says probably not.",
+    team+" did more than steal a win from "+opp+"; it stole the version of Sunday "+opp+" thought it was entitled to have. "+opp+" entered expecting control and spent the afternoon improvising around "+team+". That kind of Week 1 ambush lets "+team+" walk into the next supposed mismatch with considerably less interest in the forecast.",
     opp+" arrived with the nicer forecast and left with the uglier story. "+team+" pulled the rug out from underneath a favorite that expected to dictate the afternoon. The win gives "+team+" permission to be annoying until somebody proves it was a one-week stunt.",
     team+" walked into the matchup as the side people were supposed to explain away and walked out having embarrassed the premise. "+opp+" can keep the pregame projection as a souvenir. The scoreboard belongs to "+team+".",
     opp+" had the pregame advantage on paper; "+team+" took the paper, folded it and made the favorite carry the loss home. Week 1 is too early for destiny, but it is never too early for an opponent to feel a little humiliated."
   ][v];
   else if(!q.won&&q.favorite)aftershock=[
     team+" had the matchup tilted in its favor before kickoff and still let "+opp+" take it. That is the kind of loss contenders hate because it feels less like being beaten by a better roster and more like donating a game the schedule had already made winnable.",
-    team+" entered with the nicer projection and left "+opp+" holding the celebration. Bartholomew calls that a very expensive way to discover that entitlement does not score points.",
+    team+" entered with the nicer projection and left "+opp+" holding the celebration. Bartholomew calls the "+opp+" upset an expensive reminder that "+team+"’s pregame status bought exactly nothing once Sunday started.",
     team+" was supposed to make "+opp+" chase. Instead, "+opp+" made the favorite look like it had skipped the part where Sunday actually happens.",
     team+" entered with the advantage and failed to convert it. Filch treats that as more consequential than an ordinary loss because "+opp+" removed a win from the part of the schedule management expected to bank."
   ][v];
@@ -2072,9 +2072,9 @@ function teamDeepReadV34(t,r,f){
 
   let consequence;
   if(bad)consequence=[
-    bad.name+" becomes more important because "+team+" cannot afford to waste a weak spot against opponents that make the margin tighter than "+opp+" did. The criticism is not score more fantasy points; it is that one quiet starter can turn a comfortable script into a chase.",
-    bad.name+" is the uncomfortable name because "+team+" already knows what happens when one part of the lineup does not arrive. "+opp+" provided the live demonstration. Bartholomew does not need the stat repeated; he needs the weak spot to stop making the rest of the roster compensate for it.",
-    bad.name+" gets the side-eye because "+team+" cannot keep asking the stronger parts of the lineup to cover the same hole. "+opp+" just gave management the first receipt. Fix the weak spot before a better opponent charges interest.",
+    bad.name+" becomes more important because "+team+" cannot afford to waste a weak spot against opponents that make the margin tighter than "+opp+" did. Against "+opp+", that quiet "+bad.name+" spot made the rest of "+team+" work harder than it should have.",
+    bad.name+" is the uncomfortable name because "+team+" already knows what happens when one part of the lineup does not arrive. "+opp+" provided the live demonstration. Bartholomew wants "+bad.name+" to stop making the rest of "+team+" cover for the same weakness.",
+    bad.name+" gets the side-eye because "+team+" cannot keep asking the stronger parts of the lineup to cover the same hole. "+opp+" just gave management the first receipt. The next opponent will notice the same "+bad.name+" vulnerability unless "+team+" fixes it first.",
     bad.name+" matters because the shortfall had a real matchup consequence. "+team+" needs that lineup slot to stop giving opponents such an easy place to survive."
   ][v];
   else if(next)consequence=[
@@ -2099,7 +2099,7 @@ function gameShapeV29(t,r,f=articleFrameV29(t,r)){
     return won?[
       topWork+". More importantly, "+top.name+" was the player "+opp+" never managed to make irrelevant. "+team+" kept returning to the part of the matchup that worked and forced the opponent to live with it.",
       topWork+". "+top.name+" gave "+team+" the clearest leverage point against "+opp+"; the rest of the lineup does not need honorary credit to make that true.",
-      topWork+". "+top.name+" was the name "+opp+" kept seeing when the game tilted toward "+team+". Everybody else can earn equal praise when they produce an equally important Sunday.",
+      topWork+". "+top.name+" was the name "+opp+" kept seeing when the game tilted toward "+team+". The rest of "+team+" can share that billing when somebody else bends a matchup this sharply.",
       topWork+". "+top.name+" is the clearest reason "+team+" made "+opp+" uncomfortable. Filch does not need a broader theory when one matchup fact is already that obvious."
     ][v]:[
       topWork+". That performance deserved a better ending than "+team+" gave it. "+opp+" found enough weak spots elsewhere to make "+top.name+"’s work feel like resistance instead of control.",
@@ -2301,7 +2301,7 @@ function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
         "Week 1 closes with "+team+" at 1-0. Filch treats that as a clean first fact, not a projection about the rest of the season.",
         "The only completed week in this report leaves "+team+" at 1-0. "+opp+" owns the corresponding loss; no later-week record is admissible here."
       ]:[
-        "The Week 1 record places "+team+" at 0-1. Filch will not convert one loss into a season verdict, but he will not let a later week rewrite it either.",
+        "The Week 1 record places "+team+" at 0-1. Filch will not turn the "+opp+" loss into a season verdict, and he will not let a later "+team+" result rewrite what happened in this report.",
         "Week 1 closes with "+team+" at 0-1. "+opp+" earned the first result, and that is the only record context this archive is allowed to use.",
         "The report cutoff leaves "+team+" at 0-1. Filch records the loss without borrowing future wins or future excuses."
       ]

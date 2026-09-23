@@ -68,6 +68,7 @@ for(const phrase of ['which is exactly what an IDP league should reward when the
 const leagueHub=fs.readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
 assert.ok(leagueHub.includes('snapshot_through_week:Number(week||0)'),'League Hub historical context must declare the exact report-week cutoff');
 assert.ok(leagueHub.includes('if(Number.isFinite(sourceWeek)&&sourceWeek>snapshotWeek)continue'),'League Hub standings must ignore matchup weeks beyond the article snapshot');
+assert.ok(leagueHub.includes('next_opponent_division_context:divisionContextFor')&&leagueHub.includes('division_context:divisionContextFor(rid)'),'League Hub must attach report-week division context to next and upcoming opponents');
 assert.ok(leagueHub.includes("if(published?.available&&Array.isArray(published?.teams)&&published.teams.length)return published"),'Published Inquirer weeks must return their stored edition unchanged instead of regenerating from later data');
 assert.ok(leagueHub.includes("games.filter(g=>g.result==='W').length"),'League Hub records must be reconstructed from archived matchups rather than current Sleeper roster totals');
 const week1Generator=fs.readFileSync(new URL('./one-time-generate-inquirer-week1.mjs',import.meta.url),'utf8');
@@ -75,4 +76,7 @@ assert.ok(!week1Generator.includes('projections(season,2'),'Week 1 archive gener
 assert.ok(week1Generator.includes('next_projected:null,next_projection_coverage:0'),'Week 1 archive generator must explicitly omit later-week projection outlooks');
 assert.ok(week1Generator.includes('next_week_availability:null'),'Week 1 archive generator must omit live injury/availability state that can change after the report cutoff');
 assert.ok(week1Generator.includes('published_locked:true'),'Bundled Week 1 must be explicitly marked immutable once reported');
+assert.ok(week1Generator.includes('next_opponent_division_context:divisionContextFor')&&week1Generator.includes('snapshot_through_week:1'),'Week 1 generator must freeze next-opponent division context to the Week 1 snapshot');
+assert.ok(source.includes('nextOpponentLeagueContextV37')&&source.includes('division_rank')&&source.includes('same_record_teams'),'Next-week reporting must discuss opponent form and current division-race position');
+assert.ok(source.includes("strength(next)==='strong'&&laterSoft.length")&&source.includes('highest-leverage game in the short schedule window'),'Heavyweight-before-soft-games outlook must carry expanded schedule commentary');
 console.log(JSON.stringify({ok:true,version:26,breakout:true,editorial_selection:true,expanded_matchups:true,acquisition_memory:true}));

@@ -279,7 +279,7 @@ function w2Cohort(t){return Math.floor(Math.max(0,(Number(t?.roster_id)||1)-1)/4
 function w2Hash(s){let h=2166136261;for(const ch of String(s||"")){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
 function w2Stamp(t,r,key){
   const opens=["Two Sundays in,","After the second final,","With Week 2 on the books,","A week after the opener,","At the two-game mark,","Once the second Sunday settled,","With two results now attached to the roster,","Now that the league has two weeks to argue about,"];
-  const voice={"walter-mercer":"the plain football read is this:","tess-delaney":"the civilized version is this:","mack-hollis":"the loud version is simple:","nora-voss":"the funny version is also the useful one:"}[r?.id]||"the football read is this:";
+  const voice={"walter-mercer":"I think the plain football read is this:","tess-delaney":"I would put the civilized version this way:","mack-hollis":"I want the loud version on the page:","nora-voss":"I think the funny version is also the useful one:"}[r?.id]||"I think the football read is this:";
   return opens[(w2Cohort(t)+(w2Hash(key)%8))%8]+" "+voice;
 }
 function w2RecapLead(t,key){

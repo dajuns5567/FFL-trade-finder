@@ -28,6 +28,8 @@ for(const t of d.teams||[]){
   if(Number(t.points)>Number(t.opponent_points)){assert.equal(wins,1,'Week 1 winner must be 1-0 for '+t.team_name);assert.equal(losses,0,'Week 1 winner must not borrow a later loss for '+t.team_name)}
   else if(Number(t.points)<Number(t.opponent_points)){assert.equal(wins,0,'Week 1 loser must not borrow a later win for '+t.team_name);assert.equal(losses,1,'Week 1 loser must be 0-1 for '+t.team_name)}
   assert.equal(Number(t?.league_context?.snapshot_through_week),1,'Archived Week 1 context must declare snapshot_through_week=1 for '+t.team_name);
+  if(t?.next_opponent_division_context){assert.equal(Number(t.next_opponent_division_context.snapshot_through_week),1,'Next-opponent division context must stay frozen to Week 1 for '+t.team_name)}
+  for(const x of t?.upcoming_opponents||[])if(x?.division_context)assert.equal(Number(x.division_context.snapshot_through_week),1,'Upcoming-opponent division context must stay frozen to Week 1 for '+t.team_name);
   assert.equal(t?.next_projected,null,'Archived Week 1 must not regenerate a Week 2 team projection from later lineup data for '+t.team_name);
   assert.equal(t?.next_opponent_projected,null,'Archived Week 1 must not regenerate a Week 2 opponent projection from later lineup data for '+t.team_name);
   assert.equal(t?.next_week_availability,null,'Archived Week 1 must not import later injury/availability state for '+t.team_name);
@@ -115,6 +117,8 @@ for(const t of d.teams||[]){
   const managementParagraphs=management?.paragraphs||[],outlookParagraphs=outlook?.paragraphs||[];
   if(managementParagraphs.length&&managementParagraphs[0]!=='n/a')assert.ok(managementParagraphs.length>=2,'Meaningful management sections must include reporter follow-through for '+t.team_name+'; got '+JSON.stringify(managementParagraphs));
   if(outlookParagraphs.length&&outlookParagraphs[0]!=='n/a')assert.ok(outlookParagraphs.length>=3,'Next-week sections must develop the matchup and road ahead for '+t.team_name);
+  if(outlookParagraphs.length&&outlookParagraphs[0]!=='n/a'&&t?.next_opponent_division_context){const outlookCopy=outlookParagraphs.join(' '),divName=String(t.next_opponent_division_context.division_name||''),nrec=t.next_opponent_context?.record||{},recText=`${Number(nrec.wins)||0}-${Number(nrec.losses)||0}`;if(divName)assert.ok(outlookCopy.includes(divName),'Next-week section must name the upcoming opponent division context for '+t.team_name);assert.ok(outlookCopy.includes(recText),'Next-week section must state the upcoming opponent current record for '+t.team_name);}
+  if(outlookParagraphs.length&&outlookParagraphs[0]!=='n/a'){const up=(t.upcoming_opponents||[]).slice().sort((a,b)=>Number(a.week)-Number(b.week)),next=up[0],later=up.slice(1,3),strong=next&&Number(next?.context?.standings_rank)<=8,soft=later.filter(x=>Number(x?.context?.standings_rank)>=24);if(strong&&soft.length){const p=outlookParagraphs.find(p=>String(p).includes(String(next.team_name||''))&&soft.some(x=>String(p).includes(String(x.team_name||''))));if(p){const sentenceCount=String(p).split(/[.!?](?:\s|$)/).filter(Boolean).length;assert.ok(sentenceCount>=3,'Heavyweight-before-soft-games outlook must contain at least three sentences of context/commentary for '+t.team_name);}}}
   const top=(t.starter_details||[]).filter(p=>Number.isFinite(Number(p?.points))).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],playerCopy=(players?.paragraphs||[]).join(' ');
   if(top?.real_stat_line){
     const wholeArticle=articleText(t);

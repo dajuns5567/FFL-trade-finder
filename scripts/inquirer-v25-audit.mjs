@@ -75,6 +75,9 @@ assert.ok(leagueHub.includes('next_opponent_division_context:divisionContextFor'
 assert.ok(leagueHub.includes('division_context:divisionContextFor(t.roster_id)'),'League Hub must attach report-week division context to the article team itself');
 assert.ok(leagueHub.includes("if(published?.available&&Array.isArray(published?.teams)&&published.teams.length)return published"),'Published Inquirer weeks must return their stored edition unchanged instead of regenerating from later data');
 assert.ok(leagueHub.includes("games.filter(g=>g.result==='W').length"),'League Hub records must be reconstructed from archived matchups rather than current Sleeper roster totals');
+assert.ok(leagueHub.includes("import week2Preload2026 from './inquirer-week2-2026-preload.mjs'"),'League Hub must load the locked Week 2 preload');
+assert.ok(leagueHub.includes("['2026|1',week1Preload2026],['2026|2',week2Preload2026]"),'League Hub preload registry must preserve Week 1 and publish Week 2 together');
+assert.ok(leagueHub.includes('for(const p of PRELOADED_BROADCASTS.values())'),'Reporter and broadcast archives must iterate every bundled Inquirer week instead of hard-coding Week 1');
 const week1Generator=fs.readFileSync(new URL('./one-time-generate-inquirer-week1.mjs',import.meta.url),'utf8');
 assert.ok(!week1Generator.includes('projections(season,2'),'Week 1 archive generator must not refetch Week 2 projections after the historical cutoff');
 assert.ok(week1Generator.includes('next_projected:null,next_projection_coverage:0'),'Week 1 archive generator must explicitly omit later-week projection outlooks');
@@ -82,6 +85,11 @@ assert.ok(week1Generator.includes('next_week_availability:null'),'Week 1 archive
 assert.ok(week1Generator.includes('published_locked:true'),'Bundled Week 1 must be explicitly marked immutable once reported');
 assert.ok(week1Generator.includes('next_opponent_division_context:divisionContextFor')&&week1Generator.includes('snapshot_through_week:1'),'Week 1 generator must freeze next-opponent division context to the Week 1 snapshot');
 assert.ok(week1Generator.includes('division_context:divisionContextFor(t.roster_id)'),'Week 1 generator must freeze the article team division race to the Week 1 snapshot');
+const week2Generator=fs.readFileSync(new URL('./one-time-generate-inquirer-week2.mjs',import.meta.url),'utf8');
+assert.ok(week2Generator.includes('const season=2026, week=2'),'Week 2 generator must target the completed Week 2 edition');
+assert.ok(week2Generator.includes('published_locked:true')&&week2Generator.includes('context_snapshot_through_week:2'),'Bundled Week 2 must be immutable and frozen through Week 2');
+assert.ok(week2Generator.includes("if(matchups.length!==32)")&&week2Generator.includes('Week 2 player scoring is incomplete in Sleeper'),'Week 2 generator must refuse incomplete matchup/scoring data');
+assert.ok(week2Generator.includes('previousByRoster')&&week2Generator.includes('week1Preload2026'),'Week 2 generator must preserve Week 1 editorial continuity without rewriting Week 1');
 assert.ok(source.includes('nextOpponentLeagueContextV37')&&source.includes('division_rank')&&source.includes('same_record_teams'),'Next-week reporting must discuss opponent form and current division-race position');
 assert.ok(source.includes('t.division_context||{}')&&source.includes('selfLeading=leaders.some')&&source.includes('tied for the ${division} lead'),'Next-week division roundup must call out when the article team shares its division lead');
 assert.ok(source.includes("strength(next)==='strong'&&laterSoft.length")&&source.includes('highest-leverage game in the short schedule window'),'Heavyweight-before-soft-games outlook must carry expanded schedule commentary');

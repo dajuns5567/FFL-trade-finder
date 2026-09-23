@@ -347,10 +347,10 @@ function w2BuildSections(t,prev){
   for(let i=0;i<rememberedAcquisitions.length;i++){
     const acq=rememberedAcquisitions[i],out=(acq.outgoing_player_names||[]).filter(Boolean);
     const variants=[
-      acq.player_name+" belongs in the backward roster context even without a Week 2 scoring headline: "+t.team_name+" acquired "+acq.player_name+" by trade"+(out.length?", with "+w2Natural(out)+" among the players sent the other way":"")+". The deal still matters when judging what this roster is supposed to become.",
+      acq.player_name+" belongs in the backward roster context even without a Week 2 scoring headline: "+t.team_name+" acquired "+acq.player_name+" by trade"+(out.length?", with "+w2Natural(out)+" among the players sent the other way":"")+". "+t.team_name+" still has to judge that deal by what this version of the roster becomes.",
       "Do not lose "+acq.player_name+" in the Week 2 box score. "+t.team_name+" brought "+acq.player_name+" in by trade"+(out.length?" while moving "+w2Natural(out):"")+", so every useful role now adds another line to management’s return on that move.",
-      acq.player_name+" is part of this roster’s older story too: the route to "+t.team_name+" was a trade"+(out.length?" that sent "+w2Natural(out)+" away":"")+". Week 2 does not need a huge fantasy total from him for that acquisition to remain relevant to how the roster was built.",
-      "There is one roster-memory note worth keeping beside the Week 2 stars: "+acq.player_name+" arrived through a trade"+(out.length?" involving "+w2Natural(out)+" going out":"")+". That history matters because management chose this version of the roster, not merely the lineup that happened to score Sunday."
+      acq.player_name+" is part of this roster’s older story too: the route to "+t.team_name+" was a trade"+(out.length?" that sent "+w2Natural(out)+" away":"")+". Week 2 does not need a huge fantasy total from "+acq.player_name+" for that acquisition to remain relevant to how "+t.team_name+" was built.",
+      "There is one roster-memory note worth keeping beside the Week 2 stars: "+acq.player_name+" arrived through a trade"+(out.length?" involving "+w2Natural(out)+" going out":"")+". That history matters for "+t.team_name+" because management chose this version of the roster, not merely the lineup that happened to score Sunday."
     ];
     players.push(w2S(t,r,"player-acquisition-"+i,variants[(w2Cohort(t)+i)%variants.length]));
   }
@@ -366,7 +366,7 @@ function w2BuildSections(t,prev){
   ]:["n/a"];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],hot=[
     w2S(t,r,"hot-one",miss&&gap>0?(miss.starter.name+" gets the uncomfortable Week 2 spotlight because a legal alternative existed and the margin was "+w2One(gap)+" points."):(!won?(weak?.name||t.manager_name)+" gets the uncomfortable Week 2 spotlight because "+t.team_name+" lost and the quietest part of the lineup cannot be waved away.":(weak?.name||t.manager_name)+" gets the warning label even after the win because good results are when weak spots are cheapest to fix.")),
-    w2S(t,r,"hot-two",(prev&&weak?("Week 1 gives the comparison now: "+weak.name+" either had one odd Sunday or has started showing "+t.team_name+" a role problem. "):"")+"Week 3 will settle none of the season, but repeating the same weakness would make the joke much harder to dismiss.")
+    w2S(t,r,"hot-two",(prev&&weak?("Week 1 gives the comparison now: "+weak.name+" either had one odd Sunday or has started showing "+t.team_name+" a role problem. "):"")+"Week 3 will settle none of "+t.team_name+"’s season, but repeating the same weakness would make the joke much harder to dismiss.")
   ];
   const eligible=w2EligibleCool(t),coolNames=eligible.length?eligible.map(p=>p.name):top.filter(Boolean).slice(0,2).map(p=>p.name),cool=[
     w2S(t,r,"cool-one",(coolNames.length?w2Natural(coolNames):t.team_name)+" "+(coolNames.length>1?"both belong":"belongs")+" on the Week 2 credit list; the production was strong enough to matter to the result, not merely survive in the box score."),
@@ -374,7 +374,7 @@ function w2BuildSections(t,prev){
   ];
   const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=[
     w2S(t,r,"sent-one","the public mood sits at "+String(Number(fs.score)||0)+" on the Inquirer scale under “"+String(fs.title||"Week 2 reaction")+"”; after two games, supporters finally have enough material to argue from more than one Sunday."),
-    w2S(t,r,"sent-two",(Number.isFinite(Number(prevSent.score))?"Week 1 sat at "+String(Number(prevSent.score))+", so the move to "+String(Number(fs.score)||0)+" shows how much the second result changed the temperature. ":"")+(won?"Winning buys patience, but it also makes the next expectation louder.":"Losing burns patience quickly, and Week 3 arrives before anybody has time to make the disappointment tasteful."))
+    w2S(t,r,"sent-two",(Number.isFinite(Number(prevSent.score))?"Week 1 sat at "+String(Number(prevSent.score))+", so the move to "+String(Number(fs.score)||0)+" shows how much the second result changed the temperature. ":"")+(won?"Winning buys "+t.team_name+" patience, but it also makes the next expectation louder.":"Losing burns "+t.team_name+" patience quickly, and Week 3 arrives before anybody has time to make the disappointment tasteful."))
   ];
   const nctx=t.next_opponent_context||{},nrec=nctx.record||{},nrecord=String(Number(nrec.wins)||0)+"-"+String(Number(nrec.losses)||0),ndiv=t.next_opponent_division_context?.division_name||"its division",leaders=(t.division_context?.leaders||[]).filter(x=>x?.team_name),selfLead=leaders.some(x=>String(x.roster_id)===String(t.roster_id)),otherLeaders=leaders.filter(x=>String(x.roster_id)!==String(t.roster_id)),next=t.next_opponent_name||"the next opponent",
     nextStar=(t.next_opponent_roster?.starters||t.next_opponent_roster?.players||[]).filter(p=>p?.name).slice().sort((x,y)=>Number(y.season_fantasy_points||y.points||0)-Number(x.season_fantasy_points||x.points||0))[0],

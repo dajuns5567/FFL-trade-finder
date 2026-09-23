@@ -2,6 +2,7 @@ import { getStore } from '@netlify/blobs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
 import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
+import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 
 const LEAGUE='1316867686394769408';
@@ -12,15 +13,19 @@ const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
 const MANAGER_CACHE_VERSION=6;
 const BROADCAST_VERSION=15;
 const INQUIRER_EDITORIAL_REVISION=6;
-const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026]]);
+const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026],['2026|2',week2Preload2026]]);
 const preloadedBroadcast=(season,week)=>PRELOADED_BROADCASTS.get(String(Number(season))+'|'+String(Number(week)))||null;
 function preloadedReporterEntries(reporterId){
- const p=week1Preload2026,rows=[];if(!Array.isArray(p?.teams)||!p.teams.length)return rows;
- for(const team of p?.teams||[]){
-  const article=team?.inquirer_article;if(article?.reporter?.id!==reporterId)continue;
-  rows.push({season:Number(p.season),week:Number(p.week),roster_id:String(team.roster_id),team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),headline:String(article.headline||''),byline:String(article.byline||''),captured_at:String(p.generated_at||''),broadcast_key:'preloaded:2026:1',article_key:'preloaded:2026:1:'+String(team.roster_id),inquirer_version:Number(p.inquirer_version)||INQUIRER_VERSION,editorial_revision:Number(p.editorial_revision)||0,preloaded:true});
+ const rows=[];
+ for(const p of PRELOADED_BROADCASTS.values()){
+  if(!Array.isArray(p?.teams)||!p.teams.length)continue;
+  const season=Number(p.season),week=Number(p.week),broadcastKey='preloaded:'+season+':'+week;
+  for(const team of p.teams){
+   const article=team?.inquirer_article;if(article?.reporter?.id!==reporterId)continue;
+   rows.push({season,week,roster_id:String(team.roster_id),team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),headline:String(article.headline||''),byline:String(article.byline||''),captured_at:String(p.generated_at||''),broadcast_key:broadcastKey,article_key:broadcastKey+':'+String(team.roster_id),inquirer_version:Number(p.inquirer_version)||INQUIRER_VERSION,editorial_revision:Number(p.editorial_revision)||0,preloaded:true});
+  }
+  if(p?.league_overview)rows.push({season,week,roster_id:'__league__',team_name:'Weekly Recap',manager_name:'Co-authored by all four desks',headline:String(p.league_overview.headline||'Fleeced! Weekly Recap'),byline:String(p.league_overview.byline||''),captured_at:String(p.generated_at||''),broadcast_key:broadcastKey,article_key:broadcastKey+':league',inquirer_version:Number(p.inquirer_version)||INQUIRER_VERSION,editorial_revision:Number(p.editorial_revision)||0,preloaded:true});
  }
- if(p?.league_overview)rows.push({season:Number(p.season),week:Number(p.week),roster_id:'__league__',team_name:'Weekly Recap',manager_name:'Co-authored by all four desks',headline:String(p.league_overview.headline||'Fleeced! Weekly Recap'),byline:String(p.league_overview.byline||''),captured_at:String(p.generated_at||''),broadcast_key:'preloaded:2026:1',article_key:'preloaded:2026:1:league',inquirer_version:Number(p.inquirer_version)||INQUIRER_VERSION,editorial_revision:Number(p.editorial_revision)||0,preloaded:true});
  return rows;
 }
 function mergeArchiveEntries(primary,extra){
@@ -262,8 +267,12 @@ async function weeklyReport(req){
  const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),list=Array.isArray(idx)?idx:[];if(!list.some(x=>x.season===season&&x.week===week)){list.push({type:'week',season,week,key,captured_at:result.generated_at});list.sort((a,b)=>a.season-b.season||a.week-b.week);await s.setJSON('broadcasts/index.json',list)}return result;
 }
 async function broadcastArchive(){
- const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),rows=Array.isArray(idx)?idx.slice():[],p=week1Preload2026,key='2026|1';
- if(Array.isArray(p?.teams)&&p.teams.length&&!rows.some(x=>String(Number(x.season))+'|'+String(Number(x.week))===key))rows.push({type:'week',season:2026,week:1,key:'preloaded:2026:1',captured_at:String(p.generated_at||''),preloaded:true});
+ const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),rows=Array.isArray(idx)?idx.slice():[];
+ for(const p of PRELOADED_BROADCASTS.values()){
+  if(!Array.isArray(p?.teams)||!p.teams.length)continue;
+  const season=Number(p.season),week=Number(p.week),key=String(season)+'|'+String(week);
+  if(!rows.some(x=>String(Number(x.season))+'|'+String(Number(x.week))===key))rows.push({type:'week',season,week,key:'preloaded:'+season+':'+week,captured_at:String(p.generated_at||''),preloaded:true});
+ }
  rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
 }
 async function broadcastStored(season,week){

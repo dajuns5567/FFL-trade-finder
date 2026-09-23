@@ -168,7 +168,7 @@ function opponentContextParagraph(t,r){
  if(r.id==='walter-mercer')return 'The other sideline deserves context too. '+name+' came in '+record+', ranked #'+(rank||'—')+', with a '+streak+'. That is '+quality+'. Results mean more when you know who was standing on the other side.';
  if(r.id==='tess-delaney')return 'Opponent adjustment, because beating a contender and beating a crater are not the same data point: '+name+' entered '+record+', rank #'+(rank||'—')+', '+streak+'. In plain English, this was '+quality+'.';
  if(r.id==='mack-hollis')return 'ABOUT THE PEOPLE WE JUST BEAT/LOST TO: '+name+' entered '+record+', ranked #'+(rank||'—')+', with a '+streak+'. So yes, the résumé matters. Please include this paragraph in any rival-manager appeal.';
- return 'Cross-examination of the opponent: '+name+', '+record+', standing #'+(rank||'—')+', '+streak+'. Context does not excuse a loss or cheapen a win; it merely prevents us from prosecuting the wrong case.';
+ return 'The opponent context matters: '+name+', '+record+', standing #'+(rank||'—')+', '+streak+'. Context does not excuse a loss or cheapen a win; it tells us how much weight the result should carry.';
 }
 function nextWeekParagraph(t,w,r){
  const n=t?.next_opponent_context,name=t.next_opponent_name||'the next opponent',nextClass=Number(w)<INQUIRER_FINAL_WEEK?inquirerWeekClassification(Number(w)+1,t?.week_classification?.season||new Date().getFullYear(),t.conference):null,roundText=nextClass?.playoffs&&nextClass?.round?' in the '+nextClass.round:'';

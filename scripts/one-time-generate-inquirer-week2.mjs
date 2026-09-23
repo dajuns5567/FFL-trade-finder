@@ -282,7 +282,20 @@ function w2Stamp(t,r,key){
   const voice={"walter-mercer":"the plain football read is this:","tess-delaney":"the civilized version is this:","mack-hollis":"the loud version is simple:","nora-voss":"the funny version is also the useful one:"}[r?.id]||"the football read is this:";
   return opens[(w2Cohort(t)+(w2Hash(key)%8))%8]+" "+voice;
 }
-function w2S(t,r,key,body){return w2Stamp(t,r,key)+" "+String(body||"").trim()}
+function w2RecapLead(t,key){
+  const team=String(t?.team_name||"This matchup"),k=String(key||"");
+  if(k.startsWith("recap-game-"))return team+" gets the result first:";
+  if(k==="recap-top-stats")return "Under the loudest Week 2 score, the player lines say:";
+  if(k==="recap-top-impact")return "The league’s biggest score changed the matchup this way:";
+  if(k.startsWith("recap-stats-"))return "Inside "+team+"’s score, the important player lines read:";
+  if(k.startsWith("recap-impact-"))return team+" changed the shape of this matchup here:";
+  if(k.startsWith("recap-context-"))return "A week earlier, "+team+" supplied the comparison point:";
+  if(k==="recap-two-weeks")return "Across the league, the two-week shift is finally visible:";
+  if(k==="recap-trajectory")return "At the top of the early table, the second result matters:";
+  if(k==="recap-bottom")return "At the other end, two losses already change the mood:";
+  return team+" gets a separate Week 2 read:";
+}
+function w2S(t,r,key,body){return String(key||"").startsWith("recap-")?w2RecapLead(t,key)+" "+String(body||"").trim():w2Stamp(t,r,key)+" "+String(body||"").trim()}
 function w2Natural(xs){const a=(xs||[]).filter(Boolean);return a.length<=1?(a[0]||""):a.length===2?a[0]+" and "+a[1]:a.slice(0,-1).join(", ")+", and "+a.at(-1)}
 function w2Stat(p){const real=String(p?.real_stat_line||"").trim();return real?real.replaceAll(" • ",", "):"a useful NFL role without a complete stat line"}
 function w2PrevPlayer(prev,id){return (prev?.starter_details||[]).find(p=>String(p?.id)===String(id))||null}

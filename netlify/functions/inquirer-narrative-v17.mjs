@@ -90,7 +90,7 @@ export function narrativeHeadline(t,w,r){
     'nora-voss':[
       `Case File Closed for the Week: Receipts in Hand for ${team}`,
       `${star} Is Exhibit A in ${poss(team)} Winning Argument`,
-      `The Lineup Card Survives Cross-Examination for ${team}`,
+      `The Lineup Card Holds Up for ${team}`,
       `Evidence the Skeptics Will Hate: A Win for ${team}`,
       `No Alibi Required: A Real Win for ${team}`,
       `Very Little to Prosecute After ${poss(team)} Win`,

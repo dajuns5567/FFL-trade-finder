@@ -3273,7 +3273,7 @@ export function expandWeeklyRecapV25(o,teams,week){
   if(backPageParagraphs[0]==='n/a')backPageParagraphs.splice(0,1);
   backPageParagraphs.push(tillyRecapRead);
   if(backPageBlocks.length)backPageBlocks.push({heading:'AFTER THE RECEIPTS',paragraphs:[tillyRecapRead]});
-  const filchRecapRead=chosen.length?chosen[0].loser.team_name+" is the team I least want to hear explaining this away; "+chosen[0].winner.team_name+" already showed where the matchup broke, and the next opponent is going straight back to that weak spot until somebody fixes it. I do not need a tidy postgame story; I need the loser to stop giving opponents the same easy answer.":"I leave Week 1 with one simple rule: the next opponent is going after whatever looked weakest, so fix it before Sunday makes the joke louder.";
+  const filchRecapRead=chosen.length?chosen[0].loser.team_name+" is the team I least want to hear explaining this away; "+chosen[0].winner.team_name+" already showed where the matchup broke, and the next opponent is going straight back to that weak spot until somebody fixes it. I do not need a tidy postgame story; leave that weakness sitting there again and Sunday is going to write the joke for me.":"I leave Week 1 with one simple rule: the next opponent is going after whatever looked weakest; fix it before Sunday makes the joke louder.";
   nextParagraphs.push(filchRecapRead);
   if(nextBlocks.length)nextBlocks.push({heading:'What Still Needs Proving',paragraphs:[filchRecapRead]});
   const sections=[

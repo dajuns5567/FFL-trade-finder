@@ -215,16 +215,23 @@ function deMetaReporterFunctionsV32(value,r){
   let text=String(value??"");
   const id=String(r?.id||"");
   const banks={
-    "walter-mercer":[[/\bNick’s\b/g,"my"],[/\bNick will\b/g,"I’ll"],[/\bNick wants\b/g,"I want"],[/\bNick sees\b/g,"I see"],[/\bNick circles\b/g,"I circle"],[/\bleaves Nick watching\b/g,"leaves me watching"],[/\bgets Nick’s\b/g,"gets my"]],
-    "tess-delaney":[[/\bBartholomew’s\b/g,"my"],[/\bBartholomew will\b/g,"I’ll"],[/\bBartholomew would\b/g,"I would"],[/\bBartholomew wants\b/g,"I want"],[/\bBartholomew can\b/g,"I can"],[/\bBartholomew accepts\b/g,"I accept"],[/\bBartholomew respects\b/g,"I respect"],[/\bgave Bartholomew\b/g,"gave me"],[/\bleaves Bartholomew\b/g,"leaves me"]],
-    "mack-hollis":[[/\bTilly’s\b/g,"my"],[/\bTilly starts\b/g,"I start"],[/\bTilly does\b/g,"I do"],[/\bTilly would\b/g,"I would"],[/\bTilly resents\b/g,"I resent"]],
-    "nora-voss":[[/\bFilch’s\b/g,"my"],[/\bFilch would\b/g,"I would"],[/\bFilch recommends\b/g,"I recommend"],[/\bFilch enters\b/g,"I enter"],[/\bFilch treats\b/g,"I treat"],[/\bFilch does\b/g,"I do"],[/\bFilch starts\b/g,"I start"]]
+    "walter-mercer":[
+      [/\bNick’s\b/g,"my"],[/\bNick will\b/g,"I’ll"],[/\bNick would\b/g,"I would"],[/\bNick wants\b/g,"I want"],[/\bNick sees\b/g,"I see"],[/\bNick circles\b/g,"I circle"],[/\bNick can\b/g,"I can"],[/\bNick keeps\b/g,"I keep"],[/\bNick trusts\b/g,"I trust"],[/\bNick is keeping\b/g,"I’m keeping"],[/\bNick has seen\b/g,"I’ve seen"],[/\bNick calls\b/g,"I call"],[/\bNick starts\b/g,"I start"],[/\bNick refuses\b/g,"I refuse"],[/\bNick considers\b/g,"I consider"],[/\bleaves Nick watching\b/g,"leaves me watching"],[/\bgets Nick’s\b/g,"gets my"]
+    ],
+    "tess-delaney":[
+      [/\bBartholomew’s\b/g,"my"],[/\bBartholomew will\b/g,"I’ll"],[/\bBartholomew would\b/g,"I would"],[/\bBartholomew wants\b/g,"I want"],[/\bBartholomew can\b/g,"I can"],[/\bBartholomew accepts\b/g,"I accept"],[/\bBartholomew respects\b/g,"I respect"],[/\bBartholomew adores\b/g,"I adore"],[/\bBartholomew refuses\b/g,"I refuse"],[/\bBartholomew keeps\b/g,"I keep"],[/\bBartholomew is more interested\b/g,"I’m more interested"],[/\bBartholomew grants\b/g,"I grant"],[/\bBartholomew considers\b/g,"I consider"],[/\bBartholomew appreciates\b/g,"I appreciate"],[/\bBartholomew starts\b/g,"I start"],[/\bBartholomew calls\b/g,"I call"],[/\bBartholomew sees\b/g,"I see"],[/\bgave Bartholomew\b/g,"gave me"],[/\bleaves Bartholomew\b/g,"leaves me"]
+    ],
+    "mack-hollis":[
+      [/\bTilly’s\b/g,"my"],[/\bTilly starts\b/g,"I start"],[/\bTilly does\b/g,"I do"],[/\bTilly would\b/g,"I would"],[/\bTilly resents\b/g,"I resent"],[/\bTilly calls\b/g,"I call"],[/\bTilly will\b/g,"I’ll"],[/\bTilly keeps\b/g,"I keep"],[/\bTilly wants\b/g,"I want"],[/\bTilly has\b/g,"I have"],[/\bTilly is\b/g,"I’m"],[/\bTilly thinks\b/g,"I think"],[/\bTilly can\b/g,"I can"],[/\bTilly sees\b/g,"I see"]
+    ],
+    "nora-voss":[
+      [/\bFilch’s\b/g,"my"],[/\bFilch would\b/g,"I would"],[/\bFilch recommends\b/g,"I recommend"],[/\bFilch enters\b/g,"I enter"],[/\bFilch treats\b/g,"I treat"],[/\bFilch does\b/g,"I do"],[/\bFilch starts\b/g,"I start"],[/\bFilch wants\b/g,"I want"],[/\bFilch sees\b/g,"I see"],[/\bFilch considers\b/g,"I consider"],[/\bFilch records\b/g,"I record"],[/\bFilch separates\b/g,"I separate"],[/\bFilch keeps\b/g,"I keep"],[/\bFilch leaves\b/g,"I leave"],[/\bFilch reads\b/g,"I read"],[/\bFilch marks\b/g,"I mark"],[/\bFilch thinks\b/g,"I think"],[/\bFilch will\b/g,"I’ll"],[/\bFilch has\b/g,"I have"]
+    ]
   };
   for(const [re,to] of banks[id]||[])text=text.replace(re,to);
   text=text.replace(/(^|[.!?]\s+)(my\b)/g,(m,p)=>p+'My');
   return text;
 }
-
 const TILLY_ACRONYMS_V33=new Set(['IDP','QB','RB','WR','TE','DL','DE','DT','LB','DB','CB','FS','SS','ILB','OLB','NT','NFL','TFL','PPR','AFC','NFC']);
 function normalizeTillyCaseV33(value,properNames=[]){
   let text=String(value??'');
@@ -2911,14 +2918,14 @@ export function humanSectionsV25(args){
     else if(c.kind==='cool-throne')paragraphs=coolThroneV29(t,args.reporter,frame);
     else paragraphs=['n/a'];
     paragraphs=(paragraphs||[]).map(p=>{
-      const specific=specificityPass(t,c.kind,p),named=c.kind==='management'?specific:naturalizePlayerReferences(t,specific);
+      const specific=specificityPass(t,c.kind,p),firstPerson=deMetaReporterFunctionsV32(specific,args.reporter),named=c.kind==='management'?firstPerson:naturalizePlayerReferences(t,firstPerson);
       return contextualizeParagraphV28(t,named);
     }).map(p=>String(p).replace(/Fix the production and the back page will happily find a new target\./gi,'Fix the production and the criticism can move to somebody else.'));
     paragraphs=(c.kind==='management'?paragraphs:restoreSectionFullNamesV30(t,paragraphs)).map(p=>repairPlayerNameCollisionsV31(t,p));
     return {...f,...c,heading:headingV28(t,args.reporter,c.kind,c.heading,frame.angle),paragraphs:paragraphs.length?paragraphs:['n/a']};
   });
   const state={count:0},aliased=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>deMetaReporterFunctionsV32(repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,p,state)),args.reporter))}));
-  const tradeParagraphs=tradeCommentaryV32(t,args.reporter,facts).map(p=>deMetaReporterFunctionsV32(repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,naturalizePlayerReferences(t,p),state)),args.reporter));
+  const tradeParagraphs=tradeCommentaryV32(t,args.reporter,facts).map(p=>deMetaReporterFunctionsV32(repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,deMetaReporterFunctionsV32(naturalizePlayerReferences(t,p),args.reporter),state)),args.reporter));
   if(tradeParagraphs.length){
     const managementIndex=aliased.findIndex(s=>s.kind==="management"),tradeSection={kind:"trade-commentary",heading:tradeCommentaryHeadingV32(args.reporter),paragraphs:tradeParagraphs};
     aliased.splice(managementIndex>=0?managementIndex:aliased.length,0,tradeSection);

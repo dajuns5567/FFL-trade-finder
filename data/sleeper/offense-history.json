@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-23T16:55:58.050Z",
+  "generatedAt": "2026-09-23T20:20:39.475Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 2,
@@ -391,7 +391,7 @@
     "diagnostics": {
       "finalGames": 32,
       "qualifiedPlayerGames": 2101,
-      "rejectedPlayerGames": 2469,
+      "rejectedPlayerGames": 2473,
       "ignoredGames": 0
     }
   },
@@ -28841,9 +28841,9 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 884,
+      "players": 885,
       "withPpr": 733,
-      "withGames": 884
+      "withGames": 885
     },
     "2024": {
       "players": 953,
@@ -28851,9 +28851,9 @@
       "withGames": 953
     },
     "2025": {
-      "players": 1048,
+      "players": 1047,
       "withPpr": 566,
-      "withGames": 1048
+      "withGames": 1047
     },
     "2026": {
       "players": 1160,
@@ -37920,6 +37920,14 @@
         "rec_10_19": 2,
         "rec_yd": 155,
         "bonus_fd_te": 5
+      },
+      "7853": {
+        "gp": 8,
+        "def_snp": 142,
+        "idp_tkl": 13,
+        "idp_tkl_loss": 1,
+        "idp_tkl_solo": 3,
+        "idp_tkl_ast": 10
       },
       "7872": {
         "gp": 15,
@@ -68126,15 +68134,6 @@
         "fum": 1,
         "rec_yd": 85,
         "bonus_fd_te": 4
-      },
-      "7853": {
-        "gp": 9,
-        "def_snp": 145,
-        "idp_tkl": 11,
-        "idp_tkl_loss": 1,
-        "idp_tkl_solo": 7,
-        "idp_pass_def": 1,
-        "idp_tkl_ast": 4
       },
       "7872": {
         "gp": 15,

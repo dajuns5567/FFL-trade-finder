@@ -19118,6 +19118,26 @@
     "rec_rz_tgt": 1,
     "rec_20_29": 1
   },
+  "7853": {
+    "gp": 8,
+    "_ppr_native_weeks": 0,
+    "_ppr_reconstructed_weeks": 0,
+    "def_snp": 142,
+    "idp_tkl": 13,
+    "idp_tkl_ast": 10,
+    "pos_rank_half_ppr": 7992,
+    "pos_rank_ppr": 7992,
+    "pos_rank_std": 7992,
+    "st_snp": 25,
+    "tm_def_snp": 503,
+    "tm_off_snp": 507,
+    "tm_st_snp": 216,
+    "gs": 2,
+    "penalty": 2,
+    "penalty_yd": 8,
+    "idp_tkl_solo": 3,
+    "idp_tkl_loss": 1
+  },
   "7872": {
     "gp": 15,
     "_ppr_native_weeks": 0,

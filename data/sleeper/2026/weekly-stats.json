@@ -45257,7 +45257,11 @@
       "gp": 1,
       "pos_rank_half_ppr": 999,
       "pos_rank_ppr": 999,
-      "pos_rank_std": 999
+      "pos_rank_std": 999,
+      "st_snp": 14,
+      "tm_def_snp": 74,
+      "tm_off_snp": 65,
+      "tm_st_snp": 29
     },
     "7016": {
       "def_snp": 68,
@@ -55467,6 +55471,7 @@
       "tm_st_snp": 23
     },
     "11281": {
+      "def_snp": 4,
       "gms_active": 1,
       "gp": 1,
       "idp_tkl": 1,
@@ -55474,7 +55479,11 @@
       "pos_rank_half_ppr": 999,
       "pos_rank_ppr": 999,
       "pos_rank_std": 999,
-      "pts_idp": 2
+      "pts_idp": 2,
+      "st_snp": 12,
+      "tm_def_snp": 52,
+      "tm_off_snp": 59,
+      "tm_st_snp": 25
     },
     "11292": {
       "gms_active": 1,

@@ -1615,20 +1615,20 @@ function angleLeadV28(t,r,angle){
     "favorite-collapse":[
       full+" had the pregame advantage and handed it to "+opp+". The "+score+" loss is the kind favorites hate because the schedule offered a winnable Sunday and "+full+" returned it unopened.",
       opp+" was supposed to be the inconvenience. Instead, "+full+" turned itself into the punch line, losing "+score+" after entering with the projection edge.",
-      full+" came in favored and left "+opp+" celebrating. That is the sort of Week 1 donation that makes the group chat unbearable until somebody wins again.",
-      full+" owned the paper advantage and "+opp+" owned the scoreboard, "+score+". Filch considers the latter the more persuasive document."
+      full+" came in favored and left "+opp+" celebrating. That is the sort of Week 1 donation the favorite will hear about all week until it gives everyone a better result to discuss.",
+      full+" owned the paper advantage and "+opp+" owned the scoreboard, "+score+". I care much more about the scoreboard than the paper advantage."
     ],
     "rout-win":[
       full+" made "+opp+" spend Sunday looking for an exit, "+score+". By the time the margin reached "+one(margin)+", the game was asking how much dignity "+opp+" could save.",
       full+" beat "+opp+" "+score+" and made the matchup feel over before the app stopped updating. A "+one(margin)+"-point win gives the winner swagger and the loser a very long week.",
-      full+" turned "+opp+" into Week 1 target practice, "+score+". Tilly will not call one rout a dynasty, but "+opp+" is welcome to avoid the group chat until Wednesday.",
+      full+" turned "+opp+" into Week 1 target practice, "+score+". I will not call one rout a dynasty, but "+opp+" is welcome to avoid looking at the standings until Wednesday.",
       full+" controlled "+opp+" by "+one(margin)+" points. One roster dictated the afternoon and the other spent it reacting."
     ],
     "rout-loss":[
       opp+" handed "+full+" a "+one(margin)+"-point loss, "+score+", and there is not enough tasteful language in the notebook to hide it.",
       full+" lost "+score+", the kind of margin that makes one stop looking for a single culprit and start checking whether the whole room had a bad day.",
       opp+" beat "+full+" "+one(t.opponent_points)+"–"+one(t.points)+" and made the loser look like it had wandered into somebody else’s highlight reel.",
-      full+" lost by "+one(margin)+" to "+opp+". Filch records a broad "+full+" failure: "+opp+" found too many pressure points for one excuse to carry the file."
+      full+" lost by "+one(margin)+" to "+opp+". I am not pinning that loss on one player; "+opp+" found too many ways to hurt "+full+" for one excuse to survive the afternoon."
     ],
     "close-win":[
       full+" escaped "+opp+" "+score+". With only "+one(margin)+" points between them, every quiet starter and every late swing suddenly has a face and a name.",
@@ -2414,11 +2414,11 @@ function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
       won?[
         "Week 1 leaves "+team+" at 1-0, and "+opp+" is the first team that has to explain why. One win does not make a contender, but it does let "+team+" spend the week with the first laugh.",
         "The opening-week record for "+team+" is 1-0. The standings are too young for prophecy and old enough for "+opp+" to wish this result belonged to somebody else.",
-        "Week 1 leaves "+team+" at 1-0. Nick will not hang a banner for one Sunday, but the first week is a much better place to own a win than an explanation."
+        "Week 1 leaves "+team+" at 1-0; I will not hang a banner for one Sunday, but the first week is a much better place to own a win than an explanation."
       ]:[
         "Week 1 leaves "+team+" at 0-1, which is not a crisis and is definitely not nothing. "+opp+" gets the first celebration; "+team+" gets six days to make sure the feeling does not become familiar.",
         "The opening-week record for "+team+" is 0-1. One loss cannot define a season, but it can absolutely ruin the first week of optimism.",
-        "Week 1 puts "+team+" at 0-1. Nick has seen plenty of good seasons begin badly; none of them improved by pretending the opener did not sting."
+        "Week 1 puts "+team+" at 0-1; I have seen plenty of good seasons begin badly, and none improved by pretending the opener did not sting."
       ],
       won?[
         "The Week 1 record for "+team+" is 1-0, which looks lovely because opening weekend has not yet had time to stain it. "+opp+" gets the sour version of opening weekend; "+team+" gets to enjoy the furniture before somebody spills on it.",
@@ -2426,26 +2426,26 @@ function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
         "Opening weekend leaves "+team+" at 1-0. One should not order championship silverware, but one may absolutely make "+opp+" look at the clean record for a few days."
       ]:[
         "The Week 1 record for "+team+" is 0-1, which is a terrible color on everyone. "+opp+" got the better opening weekend, and "+team+" now has to make sure one ugly accessory does not become the season’s entire wardrobe.",
-        "The table says 0-1 for "+team+". Bartholomew grants that September is forgiving; he does not grant that losing should be tasteful.",
+        "The table says 0-1 for "+team+"; I grant that September is forgiving, and I still refuse to make losing tasteful.",
         "Opening weekend leaves "+team+" at 0-1. The season is not in danger. The mood is, and "+opp+" is responsible."
       ],
       won?[
         "Week 1 leaves "+team+" at 1-0. Enjoy it. Mention it too often. Send "+opp+" screenshots. Week 1 is the only time irrational confidence is still tax-free.",
-        "The first-week record is 1-0 for "+team+", which means the group chat belongs to "+team+" until further notice. "+opp+" can mute notifications if necessary.",
-        "One game, one win, 1-0 for "+team+". Tilly will not call it destiny; Tilly will absolutely call "+opp+" if anybody wants to discuss the scoreboard."
+        "The first-week record is 1-0 for "+team+"; supporters get to be insufferably happy for a week, and "+opp+" gets to live with being the first reason why.",
+        "One game, one win, 1-0 for "+team+"; I will not call it destiny, but I will absolutely make "+opp+" hear about the scoreboard for a week."
       ]:[
         "Week 1 leaves "+team+" at 0-1. Nobody is eliminated, nobody is doomed, and everybody is still allowed to be annoyed. "+opp+" gets the first laugh.",
         "0-1 for "+team+". The good news is there are plenty of games left. The bad news is "+opp+" already has one more win than "+team+" does.",
-        "The first-week record is 0-1 for "+team+". Tilly has not reached the panic button. Tilly has, however, located it."
+        "The first-week record is 0-1 for "+team+"; I have not hit the panic button, but I know exactly where it is."
       ],
       won?[
         "The historical Week 1 record places "+team+" at 1-0. The important contextual fact is simple: "+opp+" was the first opponent and "+team+" banked the result.",
-        "Week 1 closes with "+team+" at 1-0. Filch treats that as a clean first fact, not a projection about the rest of the season.",
-        "The only completed week in this report leaves "+team+" at 1-0. "+opp+" owns the corresponding loss; no later-week record is admissible here."
+        "Week 1 closes with "+team+" at 1-0; I like the win and I am not pretending it tells us the whole season.",
+        "The only completed week in this report leaves "+team+" at 1-0; "+opp+" owns the corresponding loss, and nothing that happens later gets to rewrite this snapshot."
       ]:[
-        "The Week 1 record places "+team+" at 0-1. Filch will not turn the "+opp+" loss into a season verdict, and he will not let a later "+team+" result rewrite what happened in this report.",
+        "The Week 1 record places "+team+" at 0-1; I am not turning the "+opp+" loss into a season obituary, and nothing from a later week gets to rewrite what happened here.",
         "Week 1 closes with "+team+" at 0-1. "+opp+" earned the first result, and that is the only record context this archive is allowed to use.",
-        "The report cutoff leaves "+team+" at 0-1. Filch records the loss without borrowing future wins or future excuses."
+        "The report cutoff leaves "+team+" at 0-1; I am keeping it there, because future wins and future excuses belong to future articles."
       ]
     ][v];
     return keyedChoice(key,banks)+(rank?" Week 1 scoring places "+team+" "+(rank===1?"first":"No. "+rank)+" in the 32-team snapshot.":"");
@@ -2622,25 +2622,25 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
   if(miss?.reserve&&miss?.starter&&Number(miss.gap)>0){
     const slot=miss.slot||miss.starter.lineup_slot||'lineup',gap=Number(miss.gap),wouldFlip=f.lost&&gap>f.margin;
     ps.push([
-      `${miss.reserve.name} could legally have replaced ${miss.starter.name} at ${slot} and added about ${one(gap)} points. ${wouldFlip?'That swing was large enough to change the result, which makes the decision part of the loss.':f.won?`${team} won anyway, but the legal alternative still belongs in ${manager}’s next-week preparation.`:`${manager} still owns the lineup mistake, but ${miss.reserve.name}’s extra points would not have erased the ${team} loss.`}`,
-      `${miss.reserve.name} was a legal ${slot} alternative to ${miss.starter.name}, worth roughly ${one(gap)} more points. ${wouldFlip?'That is the rare Monday complaint with enough arithmetic to alter the final.':f.won?`The ${team} win keeps ${manager}’s error from becoming the headline; it does not make the decision disappear.`:'Even the better lineup would not have saved the night, which keeps the criticism proportional.'}`,
-      `LINEUP RECEIPT: ${miss.reserve.name} OVER ${miss.starter.name} AT ${String(slot).toUpperCase()} WAS LEGAL AND WORTH ABOUT ${one(gap)}. ${wouldFlip?'THAT COULD HAVE FLIPPED THE GAME.':f.won?`THE ${team.toUpperCase()} WIN HID THE LINEUP MISS; ${manager.toUpperCase()} MAY NOT GET THAT COVER NEXT TIME.`:'IT WOULD NOT HAVE FIXED THE WHOLE LOSS, SO DO NOT BLAME ONE BUTTON FOR THE FIRE.'}`,
-      `${miss.reserve.name} over ${miss.starter.name} at ${slot} was an admissible alternative worth about ${one(gap)} points. ${wouldFlip?'The counterfactual crosses the final margin, so the management decision belongs in the causal record.':f.won?`The favorable ${team} verdict does not erase ${manager}’s lineup discrepancy.`:`${manager}’s discrepancy is real but smaller than the ${team} losing margin, so it cannot carry the entire case.`}`
+      `${miss.reserve.name} could have replaced ${miss.starter.name} at ${slot} and added about ${one(gap)} points; ${wouldFlip?'that swing was large enough to change the result, so the lineup choice belongs in the loss.':f.won?`${team} won anyway, but ${manager} may not get away with leaving those points unused next time.`:`Even the better choice would not have erased the ${team} loss, but it would have made the margin less wasteful.`}`,
+      `${miss.reserve.name} was available over ${miss.starter.name} at ${slot}, worth roughly ${one(gap)} more points; ${wouldFlip?'that is the rare Monday complaint where the math actually reaches the final score.':f.won?`The ${team} win keeps ${manager}’s mistake from becoming the headline, but the free points were still sitting there.`:'The better lineup would not have saved the night, so the criticism should stay proportional.'}`,
+      `${miss.reserve.name} over ${miss.starter.name} at ${slot} was worth about ${one(gap)} more points; ${wouldFlip?'that could have flipped the game, which is exactly why the choice matters.':f.won?`${team} won in spite of the lineup miss; ${manager} may not get that cover next time.`:'It would not have fixed the whole loss, so do not blame one button for the fire.'}`,
+      `${miss.reserve.name} over ${miss.starter.name} at ${slot} would have added about ${one(gap)} points; ${wouldFlip?'that was enough to swing the final, so ${manager} left a real win on the bench.':f.won?`${team} survived the choice, but another close game may not be so forgiving.`:`${team} still would have lost, but ${manager} made the margin harder than it needed to be.`}`
     ][v]);
   }
   const thread=articleThreadV30(t,r,f,'management');
   if(thread&&ps.length<2)ps.push(thread);
   if(!ps.length)ps.push([
-    `${manager} did not create a material transaction or legal lineup controversy for ${team} this week. That is not praise so much as the absence of an avoidable second story.`,
-    `${manager} left Bartholomew without a substantial ${team} front-office grievance. That is a quiet form of competence, which may be the nicest thing written here all week.`,
-    `NO ${team.toUpperCase()} MANAGEMENT SIREN THIS WEEK. THE PLAYERS PRODUCED ENOUGH MATERIAL WITHOUT HELP FROM THE FRONT OFFICE.`,
-    `No material ${team} transaction or eligible lineup mistake clears the threshold for a management charge this week.`
+    `${manager} gave ${team} no major transaction or lineup mistake to argue about this week; sometimes the best management story is simply not creating an extra problem.`,
+    `I have no substantial ${team} front-office grievance for ${manager} this week; quiet competence is not glamorous, but it travels well.`,
+    `${manager} gave ${team} no management disaster this week; the players produced enough drama on their own.`,
+    `I do not have a major ${team} lineup or transaction complaint for ${manager}; keep it that boring and let the football be the loud part.`
   ][v]);
   if(ps.length<2)ps.push([
-    `${manager} still has a follow-up assignment: preserve what worked for ${team}, correct what did not, and avoid turning one manageable issue into a repeatable one.`,
-    `${manager} gets a second note because ${team} now has a real Sunday to learn from. Fix the obvious weakness before it earns a larger column.`,
-    `${manager.toUpperCase()} GETS ONE MORE LINE: KEEP THE USEFUL ${team.toUpperCase()} DECISIONS, FIX THE OBVIOUS ONE, AND DO NOT MAKE THIS PAPER RECYCLE THE COMPLAINT NEXT WEEK.`,
-    `${manager} leaves the ${team} management section with a follow-up obligation rather than a verdict; the next lineup will show whether Week 1 changed any decisions.`
+    `${manager} still has one obvious job: keep what worked for ${team}, fix what did not, and do not make one manageable issue show up again next week.`,
+    `${team} now has a real Sunday to learn from; I want ${manager} fixing the obvious weakness before it becomes an expensive habit.`,
+    `${manager} gets one more instruction: keep the useful ${team} decisions, fix the obvious miss, and make me find a different complaint next week.`,
+    `${manager} gets another lineup next week; if Week 1 taught anything useful, the correction should be visible without anyone needing an explanation.`
   ][v]);
   return ps.slice(0,2);
 }
@@ -3235,7 +3235,7 @@ function weeklyPlayerStatsStory(g){
   }
   if(support&&Number(support.points)>=18&&String(support.id)!==String(top?.id)){
     const real=statSituation(support);
-    parts.push(support.name+" gave "+g.winner.team_name+" another major pressure point with "+one(support.points)+" fantasy points."+(real?" "+real:""));
+    parts.push(support.name+" backed the winner with "+one(support.points)+" fantasy points, giving "+g.winner.team_name+" another player the defense could not ignore."+(real?" "+real:""));
   }
   if(counter){
     const real=statSituation(counter);
@@ -3278,9 +3278,9 @@ export function expandWeeklyRecapV25(o,teams,week){
   const synthesis=leagueSynthesis(teams),texture=leagueTextureStory(teams);if(synthesis||texture)matterBlocks.push({heading:'The League-Wide Read',paragraphs:[synthesis,texture].filter(Boolean)});
   const nickRecapRead=topGame?topGame.winner.team_name+" made "+topGame.loser.team_name+" live inside a "+one(topGame.winner.points)+"–"+one(topGame.loser.points)+" result, and that is the game I keep coming back to. The winner looked like it knew where the pressure points were and kept pressing them; the loser spent too much of the afternoon trying to catch up to a problem it had already seen. Week 1 does not tell us who these teams are forever, but it absolutely tells us who owned Sunday.":(topTeam?topTeam.team_name+" owned the loudest Week 1 scoreboard. The useful question is not how impressive the total looks in isolation; it is which opponent had to live through it and whether that pressure shows up again.":"Week 1 produced enough noise that the first job is separating real matchup control from opening-week chaos.");
   matterBlocks.push({heading:'What I’m Buying After the Noise',paragraphs:[nickRecapRead]});
-  const bartholomewRecapRead=upset?upset.loser.team_name+" arrived with the nicer forecast and left "+upset.winner.team_name+" holding the better evening. That is the sort of result Bartholomew adores because entitlement looks dreadful under stadium lighting, and an upset this rude deserves the good china. The underdog gets swagger; the favorite gets a week of explaining why the expensive roster still got its pocket picked.":close?close.winner.team_name+" and "+close.loser.team_name+" gave the league the least elegant kind of entertainment: a game close enough that every bad lineup choice suddenly looks personally insulting. Serve the postmortem on the good china if you like; one side still gets relief and the other gets hindsight with sharp elbows.":"Week 1 already gave Bartholomew enough material to distinguish the teams that controlled a room from the ones that merely dressed for it. The good china can come out once somebody proves the performance travels.";
+  const bartholomewRecapRead=upset?upset.loser.team_name+" arrived with the nicer forecast and left "+upset.winner.team_name+" holding the better evening; I adore that sort of result because entitlement looks dreadful under stadium lighting. The underdog gets swagger, the favorite gets a week of explaining why the expensive roster still got its pocket picked, and the good china belongs to the winner.":close?close.winner.team_name+" and "+close.loser.team_name+" gave the league the least elegant kind of entertainment; a game close enough that every bad lineup choice suddenly looks personally insulting. One side gets relief, the other gets hindsight with sharp elbows, and I will happily serve both with the good china.":"Week 1 already gave me enough to distinguish the teams that controlled a room from the ones that merely dressed for it; the good china can come out once somebody proves the performance travels.";
   velvet.push(bartholomewRecapRead);
-  const tillyRecapRead=upset?upset.winner.team_name+" just made "+upset.loser.team_name+" look foolish, and Tilly is not wasting that gift. The favorite had the projection, the underdog has the screenshot, and screenshots are what survive in the group chat. If management wants the joke to die, win next week. If not, Tilly is perfectly comfortable making this a recurring feature.":"Week 1 already gave Tilly winners with swagger and losers with excuses. The fun part is that both groups think next Sunday will prove them right. One of those groups is about to become much less talkative.";
+  const tillyRecapRead=upset?upset.winner.team_name+" just made "+upset.loser.team_name+" look foolish, and I am not wasting that gift; the favorite had the projection, the underdog has the scoreboard, and that joke lasts until somebody changes the result. If management wants it to die, win next week.":"Week 1 already gave me winners with swagger and losers with excuses; both groups think next Sunday will prove them right, and one of them is about to become much less talkative.";
   const backPageParagraphs=moves.length?moves.map(x=>x.text):(tillyFallback.length?tillyFallback:['n/a']),
     backPageBlocks=moves.length?moves.map(x=>({heading:x.t.team_name+' — Transaction Follow-Up',paragraphs:[x.text]})):[],
     nextParagraphs=next?[`${next.a.team_name} and ${next.b.team_name} is the matchup to circle first. The current projection separates them by only ${one(next.gap)} points, which is close enough for one star performance, one bad lineup call or one quiet Sunday from a centerpiece to swing the whole thing.`,...(()=>{
@@ -3299,7 +3299,7 @@ export function expandWeeklyRecapV25(o,teams,week){
   if(backPageParagraphs[0]==='n/a')backPageParagraphs.splice(0,1);
   backPageParagraphs.push(tillyRecapRead);
   if(backPageBlocks.length)backPageBlocks.push({heading:'AFTER THE RECEIPTS',paragraphs:[tillyRecapRead]});
-  const filchRecapRead=chosen.length?chosen[0].loser.team_name+" is the team Filch would least like to hear giving itself a tidy explanation. "+chosen[0].winner.team_name+" already showed where the matchup broke; the evidence is sitting in plain sight, and the loser now has to prove that weakness belonged to one Sunday instead of the roster. The next opponent will not care how persuasive the postgame story sounded. It will simply attack the same place until somebody stops it.":"Filch leaves Week 1 with one rule in the file: the next opponent will attack whatever looked weakest, whether management has finished explaining it or not.";
+  const filchRecapRead=chosen.length?chosen[0].loser.team_name+" is the team I least want to hear explaining this away; "+chosen[0].winner.team_name+" already showed where the matchup broke, and the next opponent is going straight back to that weak spot until somebody fixes it. I do not need a tidy postgame story; I need the loser to stop giving opponents the same easy answer.":"I leave Week 1 with one simple rule: the next opponent is going after whatever looked weakest, so fix it before Sunday makes the joke louder.";
   nextParagraphs.push(filchRecapRead);
   if(nextBlocks.length)nextBlocks.push({heading:'What Still Needs Proving',paragraphs:[filchRecapRead]});
   const sections=[

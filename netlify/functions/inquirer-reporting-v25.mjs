@@ -374,10 +374,10 @@ function playerStatInsightV33(t,p,r){
     ]);
   }
   const close=[
-    q.won?"Nick’s takeaway is that "+name+" changed how "+q.opp+" had to play, and "+q.team+" got the better end of that argument.":"Nick can praise "+name+" without pretending "+q.team+" won; "+q.opp+" gets the result, but the player still made part of the afternoon difficult.",
-    q.won?"Bartholomew will allow the compliment because "+q.opp+" spent too much of Sunday rearranging itself around "+name+".":"Bartholomew’s annoyance is that "+name+" gave "+q.team+" something real and "+q.opp+" still left with the better evening.",
-    q.won?name+" made "+q.opp+" miserable enough to matter. "+q.team+" kept finding the same pressure point and "+q.opp+" never found a comfortable answer.":name+" had a good stretch of Sunday and "+q.opp+" still got to celebrate. Tilly calls "+name+"’s work useful football wasted on a "+q.team+" ending nobody wanted.",
-    q.won?"Filch records the consequence rather than the mechanism: "+q.opp+" had to alter the way it played because of "+name+", and that pressure showed up in the result.":"Filch separates the player from the verdict. "+name+" complicated "+q.opp+"’s afternoon; "+q.team+" still lost the larger case."
+    q.won?"I keep coming back to "+name+" because "+q.opp+" had to change how it played around him; "+q.team+" got the better end of that adjustment.":"I can praise "+name+" without pretending "+q.team+" won; "+q.opp+" got the result, but the player still made part of the afternoon difficult.",
+    q.won?"I’ll take the compliment because "+q.opp+" spent too much of Sunday rearranging itself around "+name+"; that is the sort of inconvenience a good player should create.":"I hate that "+name+" gave "+q.team+" something real and "+q.opp+" still left with the better evening; the performance deserved more help.",
+    q.won?name+" made "+q.opp+" miserable enough to matter; "+q.team+" kept finding the same pressure point and "+q.opp+" never found a comfortable answer.":name+" gave "+q.team+" useful football and "+q.opp+" still got to celebrate; that is a good performance trapped inside an ending nobody wanted.",
+    q.won?"I like this because "+name+" made "+q.opp+" change its afternoon; keep doing that and opponents start planning for him before kickoff.":name+" complicated "+q.opp+"’s afternoon; "+q.team+" still lost, so the next job is turning that individual problem into an actual team advantage."
   ][v];
   return (football+" "+close).replace(/\s+/g," ").trim();
 }
@@ -2124,68 +2124,66 @@ function classificationSentenceV29(p,tr,r){
 }
 function teamDeepReadV34(t,r,f){
   const q=matchupMoodV35(t),team=q.team,opp=q.opp,v=voice(r),top=f?.top,
-    bad=(f?.concerns||[]).find(p=>String(p?.id)!==String(top?.id))||null,next=t?.next_opponent_name||null,
-    key=String(t.roster_id)+":deep-matchup-v35:"+String(r?.id||"");
+    bad=(f?.concerns||[]).find(p=>String(p?.id)!==String(top?.id))||null,next=t?.next_opponent_name||null;
   let aftershock;
   if(q.won&&q.underdog)aftershock=[
-    team+" did more than steal a win from "+opp+"; it stole the version of Sunday "+opp+" thought it was entitled to have. "+opp+" entered expecting control and spent the afternoon improvising around "+team+". That kind of Week 1 ambush lets "+team+" walk into the next supposed mismatch with considerably less interest in the forecast.",
-    opp+" arrived with the nicer forecast and left with the uglier story. "+team+" pulled the rug out from underneath a favorite that expected to dictate the afternoon. The win gives "+team+" permission to be annoying until somebody proves it was a one-week stunt.",
-    team+" walked into the matchup as the side people were supposed to explain away and walked out having embarrassed the premise. "+opp+" can keep the pregame projection as a souvenir. The scoreboard belongs to "+team+".",
-    opp+" had the pregame advantage on paper; "+team+" took the paper, folded it and made the favorite carry the loss home. Week 1 is too early for destiny, but it is never too early for an opponent to feel a little humiliated."
+    team+' did more than steal a win from '+opp+'; it stole the version of Sunday '+opp+' thought it was entitled to have, and the favorite spent the afternoon improvising around a team it expected to control.',
+    opp+' arrived with the nicer forecast and left with the uglier story; '+team+' pulled the rug out from under the favorite and earned a week of swagger before somebody proves it was a one-Sunday stunt.',
+    team+' walked in as the side people were supposed to explain away and walked out having embarrassed the premise; '+opp+' can keep the projection, because the scoreboard belongs to '+team+'.',
+    opp+' had the pregame edge on paper; '+team+' took the afternoon instead, and there is nothing subtle about making a favorite carry home a loss it expected to avoid.'
   ][v];
   else if(!q.won&&q.favorite)aftershock=[
-    team+" had the matchup tilted in its favor before kickoff and still let "+opp+" take it. That is the kind of loss contenders hate because it feels less like being beaten by a better roster and more like donating a game the schedule had already made winnable.",
-    team+" entered with the nicer projection and left "+opp+" holding the celebration. Bartholomew calls the "+opp+" upset an expensive reminder that "+team+"’s pregame status bought exactly nothing once Sunday started.",
-    team+" was supposed to make "+opp+" chase. Instead, "+opp+" made the favorite look like it had skipped the part where Sunday actually happens.",
-    team+" entered with the advantage and failed to convert it. Filch treats that as more consequential than an ordinary loss because "+opp+" removed a win from the part of the schedule management expected to bank."
+    team+' had the matchup tilted in its favor and still let '+opp+' take it; that is the kind of loss contenders hate because it feels like donating a Sunday the schedule had already made winnable.',
+    team+' entered with the nicer projection and left '+opp+' holding the celebration; I am calling that an expensive reminder that pregame status buys nothing once Sunday starts.',
+    team+' was supposed to make '+opp+' chase; instead, '+opp+' made the favorite look like it had skipped the part where the game actually happens.',
+    team+' entered with the advantage and failed to use it; '+opp+' took a win from the part of the schedule management expected to bank, and that hurts more than an ordinary loss.'
   ][v];
   else if(q.won&&q.margin>=20)aftershock=[
-    team+" did not merely beat "+opp+"; it made the opponent spend most of the afternoon looking for a door back into a game that had already left the room. A "+one(q.margin)+"-point margin gives the winner something Week 1 rarely offers: swagger without inventing suspense.",
-    opp+" spent Sunday discovering new ways for the score to look worse. "+team+" kept widening the room between them until the matchup felt less like a contest and more like a public demonstration.",
-    team+" beat "+opp+" badly enough that the fourth-quarter argument was mostly about who deserved the first joke. One rout is not a championship claim. It is proof that "+opp+" had an awful time.",
-    team+" controlled "+opp+" by "+one(q.margin)+" points. One roster looked comfortable, the other looked trapped inside the wrong matchup."
+    team+' did not merely beat '+opp+'; it made the opponent spend most of the afternoon looking for a door back into a game that had already left the room, and a '+one(q.margin)+'-point margin gives the winner swagger without inventing suspense.',
+    opp+' spent Sunday discovering new ways for the score to look worse; '+team+' kept widening the room between them until the matchup felt less like a contest and more like a public demonstration.',
+    team+' beat '+opp+' badly enough that the fourth quarter was mostly about who deserved the first joke; one rout is not a championship claim, but it is proof that '+opp+' had an awful time.',
+    team+' controlled '+opp+' by '+one(q.margin)+' points; one roster looked comfortable and the other looked trapped inside the wrong matchup.'
   ][v];
   else if(!q.won&&q.margin>=20)aftershock=[
-    opp+" did not leave "+team+" much dignity to preserve. A "+one(q.margin)+"-point loss is too large to blame on one unlucky starter or one strange bounce.",
-    team+" spent the afternoon watching "+opp+" turn the matchup into a social event. At "+one(q.margin)+" points, this is no longer tasteful disappointment; it is a loss that should make the manager avoid the group chat for at least one dinner.",
-    opp+" handed "+team+" a "+one(q.margin)+"-point problem and then made everybody stare at it. Tilly is not calling the season dead, but the loser does have to live with being the easiest punch line until next Sunday.",
-    team+" lost to "+opp+" by "+one(q.margin)+". Filch does not need a complicated theory: the opponent kept finding answers and "+team+" kept running out of them."
+    opp+' did not leave '+team+' much dignity to preserve; a '+one(q.margin)+'-point loss is too large to blame on one unlucky starter or one strange bounce.',
+    team+' spent the afternoon watching '+opp+' make the score uglier; at '+one(q.margin)+' points, this is no longer tasteful disappointment and the whole roster has to wear it for a week.',
+    opp+' handed '+team+' a '+one(q.margin)+'-point problem and then made everybody stare at it; I am not calling the season dead, but the loser does have to live with being the easiest punch line until next Sunday.',
+    team+' lost to '+opp+' by '+one(q.margin)+'; there is no complicated theory here, because the opponent kept finding answers and '+team+' kept running out of them.'
   ][v];
   else if(q.margin<=7)aftershock=[
-    team+" and "+opp+" spent the afternoon one mistake away from swapping emotions. "+(q.won?team:opp)+" gets the relief; "+(q.won?opp:team)+" gets the replay loop.",
-    "There was barely enough space between "+team+" and "+opp+" to fit a comfortable opinion. "+(q.won?team+" escaped with the win":team+" got stuck with the loss")+", which means the matchup will be remembered for the handful of moments either side could have stolen.",
-    team+" and "+opp+" turned Week 1 into the kind of game managers refresh until the app feels personally hostile. "+(q.won?team+" survived it":team+" did not")+".",
-    "The margin between "+team+" and "+opp+" was "+one(q.margin)+" points. That is not enough distance for either side to pretend the game was inevitable."
+    team+' and '+opp+' spent the afternoon one mistake away from swapping emotions; '+(q.won?team:opp)+' gets the relief and '+(q.won?opp:team)+' gets to replay every choice that could have moved the margin.',
+    'There was barely enough space between '+team+' and '+opp+' to fit a comfortable opinion; '+(q.won?team+' escaped with the win':team+' got stuck with the loss')+', and a game that close makes every wasted chance feel personal.',
+    team+' and '+opp+' turned Week 1 into the kind of game nobody could look away from; '+(q.won?team+' survived it':team+' did not')+', and the margin will make the loser remember every missed chance.',
+    'Only '+one(q.margin)+' points separated '+team+' and '+opp+'; '+(q.won?team:opp)+' gets the celebration, while '+(q.won?opp:team)+' gets a week of wondering which small moment should have been different.'
   ][v];
   else aftershock=[
-    team+" "+(q.won?"beat":"lost to")+" "+opp+" without needing a melodramatic ending. The interesting part is how quickly the game settled into the winner’s preferred shape: one side kept finding answers, the other spent too much of Sunday reacting.",
-    team+" "+(q.won?"got the better of":"came up short against")+" "+opp+", and the margin was wide enough to make the winner feel in control without turning the game into a rout.",
-    (q.won?team:opp)+" kept "+(q.won?opp:team)+" at arm’s length for most of the day. There was no miracle finish to hide behind, just a steady accumulation of reasons the winner looked more comfortable.",
-    team+" and "+opp+" gave the league a result that was clear without being absurd. "+(q.won?team:opp)+" controlled more of the important moments."
+    team+' '+(q.won?'beat':'lost to')+' '+opp+' without needing a melodramatic ending; the game settled into the winner’s preferred shape, and the loser spent too much of Sunday reacting.',
+    team+' '+(q.won?'got the better of':'came up short against')+' '+opp+'; the margin was wide enough to make the winner feel in control without turning the afternoon into a rout.',
+    (q.won?team:opp)+' kept '+(q.won?opp:team)+' at arm’s length for most of the day; there was no miracle finish to hide behind, just a steady accumulation of reasons the winner looked more comfortable.',
+    team+' and '+opp+' gave the league a result that was clear without being absurd; '+(q.won?team:opp)+' controlled more of the important moments and made that control last.'
   ][v];
 
   let consequence;
   if(bad)consequence=[
-    bad.name+" becomes more important because "+team+" cannot afford to waste a weak spot against opponents that make the margin tighter than "+opp+" did. Against "+opp+", that quiet "+bad.name+" spot made the rest of "+team+" work harder than it should have.",
-    bad.name+" is the uncomfortable name because "+team+" already knows what happens when one part of the lineup does not arrive. "+opp+" provided the live demonstration. Bartholomew wants "+bad.name+" to stop making the rest of "+team+" cover for the same weakness.",
-    bad.name+" gets the side-eye because "+team+" cannot keep asking the stronger parts of the lineup to cover the same hole. "+opp+" just gave management the first receipt. The next opponent will notice the same "+bad.name+" vulnerability unless "+team+" fixes it first.",
-    keyedChoice(key+":filch-bad",[bad.name+" gave "+opp+" a quiet place to survive inside the "+team+" lineup. Filch wants that opening closed before another opponent decides to attack it on purpose.",opp+" found enough room around "+bad.name+" to keep "+team+" from turning the matchup into control. Filch treats that as a tactical weakness, not a generic plea for more points.",bad.name+" became one of the places "+opp+" could breathe. For Filch, the concern is not the number itself; it is that the opponent had a lineup spot it never had to fear.",team+" could not afford the silence from "+bad.name+" once "+opp+" found its footing. "+["Filch marks that stretch as the moment the opponent stopped feeling squeezed.","For Filch, that was where the game stopped feeling fully under control.","Filch sees that quiet spot as the crack the opponent kept leaning on.","That is the stretch Filch would circle when asking where the pressure disappeared.","Filch treats the "+bad.name+" stretch as the point where "+opp+" stopped feeling uncomfortable against "+team+".","That quiet patch is where Filch thinks the opponent found room to breathe.","Filch reads that as the place the matchup loosened just enough to matter.","That is the part of the game Filch would make the next opponent prove it can reproduce."][Math.abs(Number(t.roster_id)||0)%8]])
+    bad.name+' becomes even more important moving forward; '+team+' survived a quiet week from him against '+opp+', but another opponent may not leave enough margin for that luxury. Another week like this and '+team+' may not be so lucky.',
+    'The all-important role of '+bad.name+' only gets more important from here; '+team+' got through '+opp+' without enough from him, but asking the rest of the lineup to keep covering the same hole is a terribly unfashionable long-term plan.',
+    bad.name+' got away with a quiet Sunday because '+team+' survived it; do it again and the next opponent may turn that silence into the whole story. '+team+' needs him louder before the margin gets less forgiving.',
+    bad.name+' was a place '+opp+' could ignore for too long; '+team+' got away with it this time, but the next opponent will attack the same quiet spot until '+bad.name+' gives it a reason to stop.'
   ][v];
   else if(next)consequence=[
-    next+" is next, and the useful question is emotional as much as tactical: does "+team+" arrive carrying confidence from this result or merely nostalgia for it? The best Week 1 teams make the next opponent feel the first result before kickoff.",
-    team+" gets "+next+" next. Bartholomew wants to see whether the swagger from "+opp+" travels, because confidence that only works in one room is just décor with a scoreboard attached.",
-    next+" gets the next shot at "+team+". The assignment is simple: make this week feel like the start of a personality, not the only good story anyone can tell by October.",
-    team+" now turns to "+next+". Filch wants to know whether the pressure it created against "+opp+" becomes part of the team’s identity or remains one favorable afternoon."
+    next+' is next; '+team+' should carry the confidence from this result without carrying the idea that Sunday will solve itself, because the best follow-up is making a new opponent feel the same pressure.',
+    team+' gets '+next+' next; I want to see whether the swagger from '+opp+' travels, because confidence that only works in one room is just expensive décor.',
+    next+' gets the next shot at '+team+'; make this week feel like the start of a personality, not the only good story anyone can tell by October.',
+    team+' now turns to '+next+'; I want the same pressure it created against '+opp+' to show up again before anybody calls the first Sunday a habit.'
   ][v];
   else consequence=[
-    team+" leaves Week 1 with an emotional baseline now: opponents know what made this roster dangerous and where it looked vulnerable.",
-    team+" has shown the league one version of itself. Bartholomew is less interested in repeating the score than in whether the next opponent is forced into the same uncomfortable decisions.",
-    team+" has one real Sunday on the record now. Good. The next one gets to decide whether this was personality or coincidence.",
-    team+" has established the first fact pattern of the season. The next matchup determines whether those facts begin to look like identity."
+    team+' leaves Week 1 with a clear baseline; opponents know what made this roster dangerous and where it looked vulnerable, so the next Sunday starts with fewer secrets.',
+    team+' has shown the league one version of itself; I care much more about whether the next opponent is forced into the same uncomfortable choices than whether anyone repeats the score.',
+    team+' has one real Sunday behind it; good, now the next one gets to decide whether this was personality or coincidence.',
+    team+' has shown what worked and what did not; the next matchup gets to decide which parts were real enough to travel.'
   ][v];
-  return[aftershock,consequence];
+  return [aftershock,consequence];
 }
-
 function gameShapeV29(t,r,f=articleFrameV29(t,r)){
   const {won,top,second,third}=f;if(!top)return null;
   const q=matchupMoodV35(t),team=q.team,opp=q.opp,v=voice(r),topWork=top.name+' supplied '+one(top.points)+' fantasy points',key=String(t.roster_id)+':game-shape-v36:'+String(r?.id||'');
@@ -2386,33 +2384,28 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
 }
 
 function coolThroneV29(t,r,f=articleFrameV29(t,r)){
-  const candidates=f.rows.filter(p=>{
-    const pts=Number(p.points),d=delta(p),prior=Number(p.prior_season_avg);
-    return Number.isFinite(pts)&&(pts>=15||(d!=null&&d>=4)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.2));
-  }).slice(0,2);
+  const candidates=f.rows.filter(p=>{const pts=Number(p.points),d=delta(p),prior=Number(p.prior_season_avg);return Number.isFinite(pts)&&(pts>=15||(d!=null&&d>=4)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.2));}).slice(0,2);
   if(!candidates.length)return ['n/a'];
-  const names=candidates.map(p=>p.name),team=teamIdentityV28(t).mascot;
-  if(voice(r)===0)return [keyedChoice(`${t.roster_id}:cool-nick`,[`${names[0]} gets Nick’s first Cool Throne mention${names[1]?`, with ${names[1]} earning space beside him`:''}. ${f.won?`${team} needed that good football to make the win sturdier.`:`The loss does not erase those performances; Nick keeps them out of the blame column.`}`,`Credit starts with ${names[0]}${names[1]?` and extends to ${names[1]}`:''}. ${f.won?`Those were the ${team} performances most worth preserving from the win.`:`They were the useful parts of an otherwise losing ${team} Sunday.`}`,`Nick’s positive margin note belongs to ${naturalJoin(names)}. ${f.won?`The ${team} win had more than one dependable piece.`:`The team lost; these players did not.`}`])];
-  if(voice(r)===1)return [keyedChoice(`${t.roster_id}:cool-bart`,[`${names[0]} receives the best chair${names[1]?`; ${names[1]} may sit nearby without embarrassing the furniture`:''}. ${f.won?`Bartholomew can be generous after a ${team} win without becoming sentimental.`:`The ${team} loss still leaves room for properly dressed praise.`}`,`The good china goes first to ${names[0]}${names[1]?`, with ${names[1]} invited to the same table`:''}. ${f.won?`At least the ${team} victory produced more than one performance worth admiring.`:`A ${team} loss can be ugly without requiring every individual performance to be.`}`,`Bartholomew’s favorable review names ${naturalJoin(names)}. ${f.won?`Winning makes the compliments easier; the football makes them deserved.`:`The final score was vulgar. These performances were not.`}`])];
-  if(voice(r)===2)return [keyedChoice(`${t.roster_id}:cool-tilly`,[`COOL THRONE: ${names.join(' AND ').toUpperCase()}. ${f.won?`${team.toUpperCase()} HAD MORE THAN ONE REASON TO ENJOY THE SCOREBOARD.`:`THE ${team.toUpperCase()} RESULT WAS UGLY; THESE PERFORMANCES WERE NOT.`}`,`GOOD NEWS, WHICH TILLY RESENTS HAVING TO TYPE: ${names.join(', ').toUpperCase()}. ${f.won?'THEY HELPED BUILD THE WIN.':'THEY ARE EXEMPT FROM THE MAIN COMPLAINT.'}`,`PUT ${names.join(' / ').toUpperCase()} ON THE NICE SIDE OF THE PAGE. ${f.won?`THE ${team.toUpperCase()} WIN HAD MULTIPLE CONTRIBUTORS.`:`THE LOSS DOES NOT GET TO STEAL THEIR CREDIT.`}`])];
-  const finding=names.length===1?'That performance belongs':'Those performances belong';
-  return [keyedChoice(`${t.roster_id}:cool-filch`,[`Positive finding: ${naturalJoin(names)} ${names.length===1?'earns':'earn'} Cool Throne recognition. ${f.won?'Their work supported the favorable result.':`${finding} on the favorable side of an otherwise adverse ${team} week.`}`,`Filch gives ${naturalJoin(names)} credit for making the opponent deal with them. ${f.won?'The win lets those performances keep their proper weight.':'The loss changes the team story, not the quality of those individual efforts.'}`,`${naturalJoin(names)} gave ${team} performances worth keeping. ${f.won?'The opponent had to deal with more than one genuine problem.':`${naturalJoin(names)} did enough to deserve more than a losing footnote.`}`])];
+  const names=candidates.map(p=>p.name),team=teamIdentityV28(t).mascot,v=voice(r),joined=naturalJoin(names),key=String(t.roster_id)+':cool-v36:'+String(r?.id||'');
+  const banks=[
+    [`${joined} gave ${team} the performances I would carry forward first; ${f.won?'they helped make the win sturdier':'the loss does not erase what they did well'}.`,`Credit starts with ${joined}; ${f.won?`${team} needed that football to keep control of the afternoon`:`${team} lost, but these players were not the reason it slipped away`}.`,`${joined} belongs on the good side of this week; ${f.won?'the win had real help behind it':'the scoreboard was ugly and these performances were not'}.`],
+    [`The good china goes to ${joined}; ${f.won?'I can be generous after a win when the football actually earned it':'a loss can still contain performances worth admiring'}.`,`${joined} gave ${team} the sort of Sunday I am happy to praise; ${f.won?'winning makes the compliment prettier':'the final score does not cheapen the individual work'}.`,`I am saving the comfortable chairs for ${joined}; ${f.won?'they helped make the victory look deserved':'they gave the loss at least a few respectable pieces'}.`],
+    [`${joined} earned the nice headline; ${f.won?'they helped build the win':'the loss does not get to steal their credit'}.`,`I am not yelling at ${joined} this week; ${f.won?'they gave '+team+' reasons to enjoy the scoreboard':'they did enough to survive the complaint list'}.`,`${joined} gets the praise; ${f.won?'the win needed that production':'the rest of '+team+' can answer for the ending'}.`],
+    [`${joined} gave ${team} something worth keeping; ${f.won?'the opponent had to deal with them all afternoon':'the loss changes the team mood, not the quality of those performances'}.`,`I am giving ${joined} the easy praise this week; ${f.won?'they made the win harder to take away':'they did enough to deserve a better ending'}.`,`${joined} played well enough that I am leaving them out of the complaint; ${f.won?'keep it coming':'somebody else needs to make the next result match their work'}.`]
+  ];
+  return [keyedChoice(key,banks[v])];
 }
-
 function hotSeatV29(t,r,f=articleFrameV29(t,r)){
   const candidates=f.concerns.slice(0,2);if(!candidates.length)return ['n/a'];
-  const names=candidates.map(p=>p.name),team=teamIdentityV28(t).mascot,won=f.won;
-  return [[
-    keyedChoice(`${t.roster_id}:hot-nick`,[`${names[0]} gets Nick’s uncomfortable chair${names[1]?`, and ${names[1]} is close enough to feel the heat`:''}. ${won?`${team} won, so the concern gets another week before it grows teeth.`:`${team} lost, so those quiet spots already belong in the explanation.`}`,`Nick’s least comfortable note belongs to ${naturalJoin(names)}. ${won?'A win buys proportion, not amnesia.':`The ${team} loss gives the shortfall immediate consequence.`}`,`The names Nick circles in red are ${naturalJoin(names)}. ${won?'Nothing here needs a panic button yet; repetition would change that.':`The ${team} scoreboard removed the luxury of calling these misses harmless.`}`])
-  ],[
-    ([`${names[0]} takes the uncomfortable chair${names[1]?`, with ${names[1]} joining the less fashionable side of the room`:''}. ${won?'The win permits manners without requiring forgetfulness.':`The ${team} loss makes those performances impossible to hide behind better tailoring.`}`,`Bartholomew’s unflattering appointments go to ${naturalJoin(names)}. ${won?`A ${team} win keeps the review civilized for a week.`:'Losing removes several layers of polite upholstery.'}`,`No good seating is available for ${naturalJoin(names)} this week. ${won?`The ${team} win softens the criticism; it does not improve the individual lines.`:`The result was already bad enough without pretending these performances were decorative.`}`,`${naturalJoin(names)} receive the least flattering Bartholomew review this week. ${won?'A win keeps the prose polite; the individual work still deserves criticism.':`The ${team} loss supplies enough vulgarity without dressing these lines up.`}`,`The velvet rope closes early for ${naturalJoin(names)}. ${won?'Bartholomew can acknowledge the win and still object to these performances.':`The ${team} loss already has enough evidence; these names merely add emphasis.`}`][Math.abs(Number(t.roster_id)||0)%5])
-  ],[
-    keyedChoice(`${t.roster_id}:hot-tilly`,[`The uncomfortable ${team} name this week is ${names.join(' / ')}. ${won?'The win buys patience, not immunity.':'The loss makes the poor production impossible to wave away.'}`,`${names.join(', ')} needs a better week. ${won?'The team won, so this is a warning rather than a crisis.':'The team lost, so the shortfall belongs in the explanation.'}`,`${names.join(' and ')} gave ${team} the clearest reason for concern. ${won?'One win of cover is enough.':'There is no cover after that loss.'}`])
-  ],[
-    keyedChoice(`${t.roster_id}:hot-filch`,[`${naturalJoin(names)} ${names.length===1?'occupies':'occupy'} the uncomfortable chair this week. ${won?`${team} won despite the shortfall; that is mitigation, not exoneration.`:`The ${team} loss gives the shortfall immediate consequence.`}`,`Filch puts the hardest criticism on ${naturalJoin(names)}. ${won?'The win keeps the damage contained, but it does not make the weak performance disappear.':'The loss makes those quiet performances impossible to ignore.'}`,`The first uncomfortable names are ${naturalJoin(names)}. ${won?'Winning buys them one week before the criticism gets louder.':'Losing makes those performances part of the reason the week feels bad.'}`])
-  ]][voice(r)];
+  const names=candidates.map(p=>p.name),team=teamIdentityV28(t).mascot,won=f.won,v=voice(r),joined=naturalJoin(names),key=String(t.roster_id)+':hot-v36:'+String(r?.id||'');
+  const banks=[
+    [`${joined} is the name I am watching most closely; ${won?`${team} survived the quiet week, but another opponent may not leave enough room for it`:`the ${team} loss makes the missing production impossible to shrug off`}.`,`${joined} needs a better Sunday next time; ${won?'the win buys patience, not permission to repeat the miss':'the loss already showed how expensive another quiet week could be'}.`,`I am circling ${joined} for one simple reason; ${won?`${team} got away with the shortfall this time`:`${team} needed more and did not get it`}, so the next matchup cannot look the same.`],
+    [`${joined} gets the least flattering chair this week; ${won?'the win keeps the criticism civilized, but it does not improve the performance':'losing removes the need for polite upholstery'}.`,`I would like considerably more from ${joined}; ${won?`${team} won in spite of the quiet line`:`the loss makes the quiet line much harder to dress up`}.`,`${joined} is the name I would rather not see in this section again; ${won?'one win buys a little grace':'the scoreboard has already spent most of it'}.`],
+    [`${joined} needs a better week; ${won?'the team won, so this is a warning instead of a fire alarm':'the team lost, so the shortfall is already part of the problem'}.`,`I am watching ${joined}; ${won?'one win of cover is enough':'there is no cover after that loss'}.`,`${joined} gave ${team} the clearest reason to ask for more; do it again and the next opponent will be thrilled.`],
+    [`${joined} needs to be louder next week; ${won?`${team} got away with the shortfall this time`:`the ${team} loss showed exactly how little room there was for it`}.`,`I am putting the hardest criticism on ${joined}; ${won?'the win keeps the damage contained, but another quiet Sunday will not be as easy to survive':'the loss already made the missing production matter'}.`,`${joined} is where I want the quickest improvement; ${won?'winning bought one week of patience':'losing spent it immediately'}.`]
+  ];
+  return [keyedChoice(key,banks[v])];
 }
-
 function ledeConsequenceV29(t,r,f=articleFrameV29(t,r)){
   const team=teamIdentityV28(t).mascot,rec=record(t),opp=String(t.opponent_name||"the opponent"),rank=Number.isFinite(f.rank)?f.rank:null,
     p=f.playoff,v=voice(r),won=f.won,key=String(t.roster_id)+":record-emotion-v35:"+String(r?.id||""),week=Number(t?.week_classification?.week)||1;
@@ -2766,18 +2759,16 @@ function divisionRoundupV29(t,r,f=articleFrameV29(t,r)){
 }
 
 function outlookStoryV29(t,r,f=articleFrameV29(t,r)){
-  const team=teamIdentityV28(t).mascot,next=t.next_opponent_name||'the next opponent',schedule=scheduleSignificanceV29(t,r,f),broader=outlookStakesV28(t,r),
-    thread=articleThreadV30(t,r,f,'outlook'),division=divisionRoundupV29(t,r,f);
+  const team=teamIdentityV28(t).mascot,next=t.next_opponent_name||'the next opponent',schedule=scheduleSignificanceV29(t,r,f),broader=outlookStakesV28(t,r),thread=articleThreadV30(t,r,f,'outlook'),division=divisionRoundupV29(t,r,f);
   const bridge=[
-    f.won?`${team} approaches ${next} from the useful side of the standings; the next result decides whether Week 1 becomes cushion or merely a pleasant opening note.`:`${team} arrives at ${next} needing a response. Another ${team} loss would not resemble the first one; the schedule has already started moving.`,
-    f.won?`A winning week gives ${team} leverage entering ${next}. The follow-up matters because good teams convert favorable weeks into margin for error.`:`The loss makes ${next} more consequential for ${team}; a contender is allowed an ugly Sunday, not an endless collection of them.`,
-    f.won?`A WIN FOLLOWS ${team.toUpperCase()} INTO ${String(next).toUpperCase()}. NOW MAKE THE CUSHION USEFUL.`:`${team.toUpperCase()} NEEDS AN ANSWER AGAINST ${String(next).toUpperCase()}. THE FIRST LOSS ALREADY USED THE EASY EXCUSE.`,
-    f.won?`The next exhibit is ${next}. One favorable ${team} result is already in hand; the follow-up determines whether the first week deserves more weight.`:`The next exhibit is ${next}. One adverse ${team} result is manageable; a second begins changing the pattern in the file.`
+    f.won?`${team} approaches ${next} from the useful side of the standings; the next result decides whether Week 1 becomes cushion or merely a pleasant opening note.`:`${team} arrives at ${next} needing a response; another loss would make the schedule feel less forgiving in a hurry.`,
+    f.won?`A winning week gives ${team} leverage entering ${next}; the follow-up matters because good teams turn favorable Sundays into breathing room.`:`The loss makes ${next} more consequential for ${team}; a contender is allowed an ugly Sunday, not an endless collection of them.`,
+    f.won?`${team} carries a win into ${next}; now make the cushion useful.`:`${team} needs an answer against ${next}; the first loss already used the easy excuse.`,
+    f.won?`${next} is next; ${team} already banked one result, and I want to see whether the same strengths make a new opponent uncomfortable.`:`${next} is next; one ${team} loss is manageable, but a second would make the same weak spots much harder to dismiss.`
   ][voice(r)];
   const context=[thread||bridge,division].filter(Boolean).join(' ');
   return [nextOpponentLeadV29(t,r,f),context,...(schedule.length?schedule:[broader])].filter(Boolean).slice(0,4);
 }
-
 function dedupeArticleSectionsV29(sections,t){
   const seen=new Set(),seenStatFacts=new Set(),players=articlePlayers(t||{}),firstCounts=new Map(),statClauses=[];
   for(const p of players){
@@ -2924,32 +2915,22 @@ function articleThreadV30(t,r,f,phase){
 }
 
 function sentimentStoryV30(t,r,f=articleFrameV29(t,r)){
-  const team=teamIdentityV28(t),manager=t.manager_name||'management',rec=record(t),rank=Number.isFinite(f.rank)?`${f.rank} of ${f.size}`:'unsettled',
-    p=f.playoff,titles=Number(t.manager_career?.championships)||0,thread=articleThreadV30(t,r,f,'sentiment'),margin=one(f.margin),v=voice(r);
+  const team=teamIdentityV28(t),manager=t.manager_name||'management',rec=record(t),rank=Number.isFinite(f.rank)?`${f.rank} of ${f.size}`:'unsettled',p=f.playoff,titles=Number(t.manager_career?.championships)||0,thread=articleThreadV30(t,r,f,'sentiment'),margin=one(f.margin),v=voice(r);
   const primary=[
-    f.won
-      ? `${team.city} gets the better Monday after a ${margin}-point ${team.mascot} win. ${team.mascot} fans can celebrate what happened while keeping one eye on the parts that looked harder to repeat.`
-      : `${team.city} gets the irritated Monday after a ${margin}-point ${team.mascot} loss. The useful ${team.mascot} reaction is not to blame everybody equally; some performances survived the result and some helped create it.`,
-    f.won
-      ? `${team.mascot} supporters are understandably pleased, and Bartholomew will permit the optimism without pretending one week settled the order of things.`
-      : `${team.mascot} supporters have every right to be annoyed. Bartholomew’s only request for ${team.mascot} criticism is that it distinguish between the players who failed and the good performances trapped inside the loss.`,
-    f.won
-      ? keyedChoice(`${t.roster_id}:tilly-sentiment-win`,[`${team.city.toUpperCase()} HAS A WIN AND THE GROUP CHAT HAS LOST ITS MIND. ${manager} MAY ENJOY THE SCREENSHOTS UNTIL THE NEXT LINEUP LOCKS.`,`BREAKING: ${team.mascot.toUpperCase()} WON, AND HALF THE FAN BASE IS ALREADY SHOPPING FOR PARADE ROUTES. ${manager} GETS UNTIL NEXT SUNDAY BEFORE TILLY CONFISCATES THE CONFETTI.`,`THE ${team.mascot.toUpperCase()} GROUP CHAT IS CURRENTLY UNINSURABLE AFTER A WIN. ${manager} SHOULD SAVE THE GOOD SCREENSHOTS; SPORTS ARE RUDE ENOUGH TO REVERSE THEM QUICKLY.`])
-      : keyedChoice(`${t.roster_id}:tilly-sentiment-loss`,[`${team.city.toUpperCase()} HAS A LOSS AND THE GROUP CHAT HAS OPENED TWELVE INVESTIGATIONS BEFORE BREAKFAST. ${manager} SHOULD READ THE USEFUL COMPLAINTS AND MUTE THE REST.`,`${team.mascot.toUpperCase()} LOST, SO THE FAN BASE HAS DECLARED A MUNICIPAL EMERGENCY. ${manager} SHOULD FIND THE REAL PROBLEM BEFORE THE CHAT INVENTS FOURTEEN FAKE ONES.`,`THE COMPLAINT DESK IN ${team.city.toUpperCase()} IS OVERSTAFFED AFTER THIS LOSS. ${manager} NEEDS TO FIX THE PARTS THAT ACTUALLY FAILED AND IGNORE THE FAN FICTION.`]),
-    f.won
-      ? `The public case for ${team.mascot} is favorable this week: a win, a pile of screenshots and very little procedural restraint. ${manager} gets another hearing next Sunday.`
-      : keyedChoice(`${t.roster_id}:filch-sentiment-loss`,[`The public case against ${team.mascot} is loud this week, but the evidence is uneven. ${manager} should separate the actual roster problem from the emotional exhibits.`,`${team.mascot} supporters have filed a broad indictment after the loss. Filch recommends narrowing the charges before ${manager} starts answering for things the roster did not actually do.`,`The fan verdict is adverse for ${team.mascot}, as expected after a loss. ${manager} still has to distinguish admissible criticism from screenshots entered solely for emotional effect.`])
+    f.won?`${team.city} gets the better Monday after a ${margin}-point ${team.mascot} win; fans can enjoy what happened while keeping one eye on the parts that looked harder to repeat.`:`${team.city} gets the irritated Monday after a ${margin}-point ${team.mascot} loss; the useful reaction is not to blame everybody equally, because some players still gave the roster enough to win.`,
+    f.won?`${team.mascot} supporters are understandably pleased; I will permit the optimism without pretending one week settled the order of things.`:`${team.mascot} supporters have every right to be annoyed; I only ask that the criticism land on the players and decisions that actually made the loss worse.`,
+    f.won?keyedChoice(`${t.roster_id}:tilly-sentiment-win-v36`,[`${team.city} has a win and the fan base is already acting like patience was invented for other people; ${manager} can enjoy it until next Sunday.`,`${team.mascot} won and half the fan base is already planning the parade route; ${manager} gets one week before I confiscate the confetti.`,`${team.mascot} fans are irresponsibly happy after the win; good, sports are supposed to feel better when your team wins.`]):keyedChoice(`${t.roster_id}:tilly-sentiment-loss-v36`,[`${team.city} woke up angry after the loss; ${manager} should fix the real problem before the fan base invents six fake ones.`,`${team.mascot} lost, so every quiet lineup spot suddenly has an audience; ${manager} needs to fix the ones that actually mattered.`,`${team.mascot} fans are furious and I am not going to lecture them about perspective; give them better football and the mood will fix itself.`]),
+    f.won?`The ${team.mascot} crowd has every right to feel good this week; I want ${manager} to make that confidence survive another Sunday instead of explaining why it disappeared.`:keyedChoice(`${t.roster_id}:filch-sentiment-loss-v36`,[`The ${team.mascot} crowd is angry, and I do not blame it; ${manager} should fix the weak part of the lineup before asking anyone to be patient.`,`The loss gave ${team.mascot} supporters plenty to complain about; I want ${manager} solving the obvious football problem, not polishing the explanation.`,`The mood around ${team.mascot} is ugly because the result was ugly; the fastest way out is better football, not a better excuse.`])
   ][v];
   const context=[
-    keyedChoice(`${t.roster_id}:sentiment-context-nick`,[`The record is ${rec}, good for rank ${rank}${p!=null?`, with the playoff outlook around ${one(p)}%`:''}. ${titles?`${manager} has ${titles} championship${titles===1?'':'s'} on the résumé, enough to earn patience but not immunity.`:''}`,`${team.mascot} sits ${rec}, ranked ${rank}${p!=null?`, with a ${one(p)}% playoff outlook`:''}. ${titles?`${manager} has ${titles} title${titles===1?'':'s'} of earned goodwill, useful but finite.`:''}`,`The table gives ${team.mascot} a ${rec} record and rank ${rank}${p!=null?`; the playoff estimate is ${one(p)}%`:''}. ${titles?`${manager}’s ${titles} championship${titles===1?'':'s'} buy context, not immunity.`:''}`]),
-    keyedChoice(`${t.roster_id}:sentiment-context-bart`,[`${rec} and rank ${rank} are the unromantic facts${p!=null?`; the current playoff outlook remains ${one(p)}%`:''}. ${titles?`${titles} championship${titles===1?'':'s'} give ${manager} a résumé, not diplomatic immunity.`:''}`,`Strip away the tailoring and ${team.mascot} is ${rec}, rank ${rank}${p!=null?`, with a ${one(p)}% playoff outlook`:''}. ${titles?`${manager} has ${titles} championship${titles===1?'':'s'} in the cabinet; none comes with a lifetime press exemption.`:''}`,`The brutally plain numbers are ${rec}, rank ${rank}${p!=null?`, playoff outlook ${one(p)}%`:''}. ${titles?`Bartholomew respects ${manager}’s ${titles} title${titles===1?'':'s'} and declines to confuse them with current absolution.`:''}`]),
-    keyedChoice(`${t.roster_id}:sentiment-context-tilly`,[`RECORD: ${rec}. RANK: ${String(rank).toUpperCase()}.${p!=null?` PLAYOFF OUTLOOK: ${one(p)}%.`:''} ${titles?`${manager.toUpperCase()} HAS ${titles} TITLE${titles===1?'':'S'} OF PRIOR GOODWILL. THAT COUPON BOOK IS NOT INFINITE.`:''}`,`${team.mascot.toUpperCase()} RECEIPT: ${rec}, RANK ${String(rank).toUpperCase()}.${p!=null?` PLAYOFF METER: ${one(p)}%.`:''} ${titles?`${titles} TITLE${titles===1?'':'S'} FOR ${manager.toUpperCase()} BUY PATIENCE, NOT SILENCE.`:''}`,`THE BORING PART TILLY IS LEGALLY REQUIRED TO PRINT: ${rec}, RANK ${String(rank).toUpperCase()}${p!=null?`, ${one(p)}% PLAYOFF OUTLOOK`:''}. ${titles?`YES, ${manager.toUpperCase()} HAS ${titles} TITLE${titles===1?'':'S'}. NO, THAT DOES NOT DELETE SUNDAY.`:''}`]),
-    keyedChoice(`${t.roster_id}:sentiment-context-filch`,[`The public record reads ${rec}, rank ${rank}${p!=null?`, with a ${one(p)}% playoff estimate`:''}. ${titles?`${manager} enters with ${titles} championship${titles===1?'':'s'} of prior good conduct; the current week is still admissible.`:''}`,`Filch enters ${rec} and rank ${rank} into the ${team.mascot} record${p!=null?`, alongside a ${one(p)}% playoff estimate`:''}. ${titles?`${manager}’s ${titles} championship${titles===1?'':'s'} count as history, not suppression of current evidence.`:''}`,`The ${team.mascot} public file shows ${rec}, rank ${rank}${p!=null?`, and a ${one(p)}% playoff estimate`:''}. ${titles?`${manager} has ${titles} championship${titles===1?'':'s'} in mitigation; the week remains admissible anyway.`:''}`])
+    keyedChoice(`${t.roster_id}:sentiment-context-nick-v36`,[`The record is ${rec}, good for rank ${rank}${p!=null?`, with the playoff outlook around ${one(p)}%`:''}; ${titles?`${manager} has ${titles} championship${titles===1?'':'s'} on the résumé, enough to earn patience but not immunity.`:''}`,`${team.mascot} sits ${rec}, ranked ${rank}${p!=null?`, with a ${one(p)}% playoff outlook`:''}; ${titles?`${manager} has ${titles} title${titles===1?'':'s'} of earned goodwill, useful but finite.`:''}`,`The table gives ${team.mascot} a ${rec} record and rank ${rank}${p!=null?`; the playoff estimate is ${one(p)}%`:''}; ${titles?`${manager}’s ${titles} championship${titles===1?'':'s'} buy context, not immunity.`:''}`]),
+    keyedChoice(`${t.roster_id}:sentiment-context-bart-v36`,[`${rec} and rank ${rank} are the unromantic facts${p!=null?`; the current playoff outlook is ${one(p)}%`:''}; ${titles?`${titles} championship${titles===1?'':'s'} give ${manager} a résumé, not a lifetime exemption from criticism.`:''}`,`Strip away the tailoring and ${team.mascot} is ${rec}, rank ${rank}${p!=null?`, with a ${one(p)}% playoff outlook`:''}; ${titles?`${manager} has ${titles} championship${titles===1?'':'s'} in the cabinet, and Sunday still gets its own judgment.`:''}`,`The plain numbers are ${rec}, rank ${rank}${p!=null?`, playoff outlook ${one(p)}%`:''}; ${titles?`I respect ${manager}’s ${titles} title${titles===1?'':'s'}, and I still expect the current roster to earn this week on its own.`:''}`]),
+    keyedChoice(`${t.roster_id}:sentiment-context-tilly-v36`,[`Record: ${rec}; rank: ${String(rank).toUpperCase()}.${p!=null?` Playoff outlook: ${one(p)}%.`:''} ${titles?`${manager} has ${titles} title${titles===1?'':'s'} of goodwill; that coupon book is not infinite.`:''}`,`${team.mascot} sits ${rec}, rank ${String(rank).toUpperCase()}${p!=null?`, playoff outlook ${one(p)}%`:''}; ${titles?`${titles} title${titles===1?'':'s'} for ${manager} buy patience, not silence.`:''}`,`The boring part: ${rec}, rank ${String(rank).toUpperCase()}${p!=null?`, ${one(p)}% playoff outlook`:''}; ${titles?`yes, ${manager} has ${titles} title${titles===1?'':'s'}, and no, that does not delete Sunday.`:''}`]),
+    keyedChoice(`${t.roster_id}:sentiment-context-filch-v36`,[`The numbers are ${rec}, rank ${rank}${p!=null?`, with a ${one(p)}% playoff estimate`:''}; ${titles?`${manager} has ${titles} championship${titles===1?'':'s'} behind him, but this week still has to stand on its own.`:''}`,`${team.mascot} is ${rec}, rank ${rank}${p!=null?`, with a ${one(p)}% playoff estimate`:''}; ${titles?`${manager}’s ${titles} championship${titles===1?'':'s'} buy patience, not an excuse for a bad Sunday.`:''}`,`${team.mascot} sits ${rec}, rank ${rank}${p!=null?`, and a ${one(p)}% playoff estimate`:''}; ${titles?`${manager} has ${titles} championship${titles===1?'':'s'} in the past, and I still care about what this roster does next.`:''}`])
   ][v];
   const badRecord=losingRecordAsideV33(t,r);
   return [primary,context,thread,badRecord].filter(Boolean);
 }
-
 function restoreSectionFullNamesV30(t,paragraphs){
   const players=[...new Map(articlePlayers(t).map(p=>[String(p?.name||'').trim(),p])).values()].filter(p=>p?.name),
     lastCounts=new Map(),firstCounts=new Map(),seen=new Set();

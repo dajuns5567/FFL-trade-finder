@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   inquirer-r6:
@@ -53,23 +53,4 @@ jobs:
 
       - name: Audit generated prose
         run: node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer-r6.json
-
-      - name: Temporary pack audited Week 1 preload
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          HEAD_REF: ${{ github.head_ref }}
-        run: |
-          node scripts/pack-inquirer-preload.mjs /tmp/week1-inquirer-r6.json /tmp/inquirer-week1-2026-preload.mjs
-          git fetch origin "$HEAD_REF"
-          git checkout -B "$HEAD_REF" "origin/$HEAD_REF"
-          cp /tmp/inquirer-week1-2026-preload.mjs netlify/functions/inquirer-week1-2026-preload.mjs
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add netlify/functions/inquirer-week1-2026-preload.mjs
-          if git diff --cached --quiet; then
-            echo "Audited Week 1 preload already matches."
-            exit 0
-          fi
-          git commit -m "Pack audited natural-voice Inquirer Week 1"
-          git push origin "HEAD:$HEAD_REF"
 

@@ -2285,7 +2285,8 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       `For ${top.name}, the next question is whether this ${String(top.position||'player')} workload changes another matchup after a ${resultShapeV33(f)}.`
     ]
   ][v]);
-  ps.push(`${keyedChoice(`${t.roster_id}:top:${r?.id}`,openerBanks)} ${playerStatInsightV33(t,top,r)||''} ${topStatusText}`.replace(/\s+/g,' ').trim());
+  const topAcquisition=acquisitionCallback(t,top,r);
+  ps.push(`${keyedChoice(`${t.roster_id}:top:${r?.id}`,openerBanks)} ${playerStatInsightV33(t,top,r)||''} ${topStatusText}${topAcquisition?` ${topAcquisition}`:''}`.replace(/\s+/g,' ').trim());
 
   const other=[f.second,f.third,...supports].filter((p,i,a)=>p&&String(p.id)!==String(top.id)&&a.findIndex(x=>x&&String(x.id)===String(p.id))===i).slice(0,2);
   if(other.length&&threeHighScorersV33(f)){
@@ -2320,7 +2321,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
         `${p.name} made the ${String(p.position||'player')} spot matter in this ${resultShapeV33(f)}. The opponent had to deal with that performance whether the rest of ${team} helped enough or not.`,
         `${p.name} mattered independently in the ${team} ${resultShapeV33(f)}. One strong ${String(p.position||'player')} performance does not rescue every quiet spot around him.`
       ][v];
-      ps.push([lead,insight,status,judgment].filter(Boolean).join(' '));
+      ps.push([lead,insight,status,judgment,acquisitionCallback(t,p,r)].filter(Boolean).join(' '));
     }
   }
 
@@ -2332,7 +2333,7 @@ function playerStoryV29(t,r,f=articleFrameV29(t,r)){
       `${bad.name} supplied the least convincing line of the main ${team} cast, landing ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?`The ${team} win keeps criticism of ${bad.name} measured for a week.`:`The loss makes ${bad.name}’s poor Sunday impossible to hide behind better performances.`}${status?` ${status}`:''}`,
       `${bad.name} was the clearest problem: ${one(d)} below projection${c?`; ${bad.name} ${c}`:''}. ${won?`${bad.name}’s miss did not decide the ${team} win.`:`${bad.name}’s shortfall mattered directly in the ${team} loss.`}${status?` ${status}`:''}`,
       `${bad.name} is the player who has the most to answer for after finishing ${one(d)} points below projection${c?`; ${bad.name} ${c}`:''}. ${won?`${team} won despite the shortfall, which buys patience without erasing it.`:`The ${team} loss made ${bad.name}’s shortfall impossible to ignore.`}${status?` ${status}`:''}`
-    ][v]+' '+(playerStatInsightV33(t,bad,r)||''));
+    ][v]+' '+(playerStatInsightV33(t,bad,r)||'')+(acquisitionCallback(t,bad,r)?' '+acquisitionCallback(t,bad,r):''));
   }
 
   const fillerBanks=[

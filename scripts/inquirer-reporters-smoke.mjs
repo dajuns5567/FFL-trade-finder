@@ -217,7 +217,9 @@ assert(backend.includes("if(s==='FLEX')return ['RB','WR','TE'].includes(p)")&&ba
 assert(helper.includes('best_lineup_miss')&&human.includes('best_lineup_miss')&&newsroom.includes('best_lineup_miss'),'V21 writer must consume only the position-eligible lineup miss for management criticism');
 assert(ui.includes('data-lh-archive-year')&&ui.includes('data-lh-archive-week')&&ui.includes('data-lh-archive-team'),'Inquirer archive must expose year, week, and team filters');
 assert(ui.includes('It opens on the current completed week'),'Inquirer archive must default its filter view to the current completed week');
-assert(ui.includes('linkedNotebookText')&&ui.includes('class="lh-inline-team" data-lh-value-team'),'Weekly Recap team references must open the matching team Value History');
+assert(ui.includes('linkedNotebookText(value,teams,seenRecords,seenLinks)')&&ui.includes('class="lh-inline-team" data-lh-inquirer-team'),'Inquirer team references must use the Inquirer-only team-link action');
+assert(ui.includes('data-lh-inquirer-value')&&ui.includes('Team Value History')&&ui.includes('data-lh-inquirer-report')&&ui.includes('Weekly Team Report'),'Selecting an Inquirer team name must offer Value History or the matching Weekly Team Report');
+assert(ui.includes('if(seenLinks&&seenLinks.has(id))')&&ui.includes('map(s=>{const render=renderScope(new Set())'),'Each team may be underline-linked only once per Inquirer section');
 assert(ui.includes('data-lh-broadcast-article')&&ui.indexOf("nav+body+archive")>=0,'The clean team/manager article selector must render above the selected article');
 assert(ui.includes('.lh-article-picker span{font-size:16px')&&ui.includes('.lh-article-picker{display:grid')&&ui.includes('background:transparent'),'Choose an article must be prominent without a gold container');
 assert(ui.includes('.lh-reporter-byline{margin:8px 0 12px;padding:2px 0;border:0;background:transparent}'),'Author bylines must render without the gold box treatment');

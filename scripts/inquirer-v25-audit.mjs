@@ -36,14 +36,17 @@ assert.match(body,/Alpha/);
 assert.ok(new Set(teams.filter(t=>body.includes(t.team_name)).map(t=>t.team_name)).size<teams.length,'Editorial recap should select stories, not mention every team by contract');
 
 const hubSource=fs.readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
-assert.ok(hubSource.includes('linkedNotebookText(value,teams,seenRecords)'),'League Hub must track first team mentions while rendering Inquirer copy');
+assert.ok(hubSource.includes('linkedNotebookText(value,teams,seenRecords,seenLinks)'),'League Hub must track first team mentions and one link per section while rendering Inquirer copy');
 assert.ok(hubSource.includes('team?.league_context?.record'),'First-mention records must come from the archived edition’s league context');
 assert.ok(hubSource.includes("label=match[0]+(first&&rec?' ('+rec+')':'')"),'First visible team mention must render its current season record');
 assert.ok(hubSource.includes('seenRecords=new Set()'),'Each rendered Inquirer article/recap must reset first-mention record tracking');
 const storedStart=hubSource.indexOf('function storedInquirerArticle(t,teams){'),storedEnd=hubSource.indexOf('function reporterArchiveHTML',storedStart),storedBlock=hubSource.slice(storedStart,storedEnd);
 assert.ok(storedStart>=0&&storedEnd>storedStart,'League Hub must retain stored Inquirer article renderer');
-assert.ok(storedBlock.indexOf('headline=render(a.headline||t.team_name)')>=0,'Stored Inquirer renderer must pre-render the visible headline');
-assert.ok(storedBlock.indexOf('headline=render(a.headline||t.team_name)')<storedBlock.indexOf('const body='),'Headline must consume first-mention record tracking before visually later article body text');
+assert.ok(storedBlock.indexOf('headline=renderScope(new Set())(a.headline||t.team_name)')>=0,'Stored Inquirer renderer must pre-render the visible headline in its own link scope');
+assert.ok(storedBlock.indexOf('headline=renderScope(new Set())(a.headline||t.team_name)')<storedBlock.indexOf('const body='),'Headline must consume first-mention record tracking before visually later article body text');
+assert.ok(storedBlock.includes('map(s=>{const render=renderScope(new Set())'),'Every stored team-article section must reset its team-link scope');
+assert.ok(hubSource.includes('if(seenLinks&&seenLinks.has(id))')&&hubSource.includes('if(seenLinks)seenLinks.add(id)'),'Each team name may be underline-linked only once per Inquirer section');
+assert.ok(hubSource.includes('data-lh-inquirer-team')&&hubSource.includes('data-lh-inquirer-value')&&hubSource.includes('data-lh-inquirer-report'),'Inquirer team links must open the Value History / Weekly Team Report chooser');
 
 const source=fs.readFileSync(new URL('../netlify/functions/inquirer-reporting-v25.mjs',import.meta.url),'utf8');
 for(const phrase of ['statistical lecture','arithmetic lesson','second source of points','absorb a quieter return','where sacks and forced fumbles can turn'])assert.ok(!source.includes(phrase),'Rejected arithmetic/explainer phrase survived: '+phrase);
@@ -69,6 +72,7 @@ const leagueHub=fs.readFileSync(new URL('../netlify/functions/league-hub.mjs',im
 assert.ok(leagueHub.includes('snapshot_through_week:Number(week||0)'),'League Hub historical context must declare the exact report-week cutoff');
 assert.ok(leagueHub.includes('if(Number.isFinite(sourceWeek)&&sourceWeek>snapshotWeek)continue'),'League Hub standings must ignore matchup weeks beyond the article snapshot');
 assert.ok(leagueHub.includes('next_opponent_division_context:divisionContextFor')&&leagueHub.includes('division_context:divisionContextFor(rid)'),'League Hub must attach report-week division context to next and upcoming opponents');
+assert.ok(leagueHub.includes('division_context:divisionContextFor(t.roster_id)'),'League Hub must attach report-week division context to the article team itself');
 assert.ok(leagueHub.includes("if(published?.available&&Array.isArray(published?.teams)&&published.teams.length)return published"),'Published Inquirer weeks must return their stored edition unchanged instead of regenerating from later data');
 assert.ok(leagueHub.includes("games.filter(g=>g.result==='W').length"),'League Hub records must be reconstructed from archived matchups rather than current Sleeper roster totals');
 const week1Generator=fs.readFileSync(new URL('./one-time-generate-inquirer-week1.mjs',import.meta.url),'utf8');
@@ -77,6 +81,8 @@ assert.ok(week1Generator.includes('next_projected:null,next_projection_coverage:
 assert.ok(week1Generator.includes('next_week_availability:null'),'Week 1 archive generator must omit live injury/availability state that can change after the report cutoff');
 assert.ok(week1Generator.includes('published_locked:true'),'Bundled Week 1 must be explicitly marked immutable once reported');
 assert.ok(week1Generator.includes('next_opponent_division_context:divisionContextFor')&&week1Generator.includes('snapshot_through_week:1'),'Week 1 generator must freeze next-opponent division context to the Week 1 snapshot');
+assert.ok(week1Generator.includes('division_context:divisionContextFor(t.roster_id)'),'Week 1 generator must freeze the article team division race to the Week 1 snapshot');
 assert.ok(source.includes('nextOpponentLeagueContextV37')&&source.includes('division_rank')&&source.includes('same_record_teams'),'Next-week reporting must discuss opponent form and current division-race position');
+assert.ok(source.includes('t.division_context||{}')&&source.includes('selfLeading=leaders.some')&&source.includes('tied for the ${division} lead'),'Next-week division roundup must call out when the article team shares its division lead');
 assert.ok(source.includes("strength(next)==='strong'&&laterSoft.length")&&source.includes('highest-leverage game in the short schedule window'),'Heavyweight-before-soft-games outlook must carry expanded schedule commentary');
 console.log(JSON.stringify({ok:true,version:26,breakout:true,editorial_selection:true,expanded_matchups:true,acquisition_memory:true}));

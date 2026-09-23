@@ -74,7 +74,7 @@ for(const phrase of [
   'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is','which is exactly what an idp league should reward when the work is real','historical value snapshot is not available in this article packet','in big type','big type','angry font','angry type','name in red','remove the suspense','job underneath it','something concrete to test','gets the photo','earned the ink',
   'the result matters because','other division rival','fantasy points reasons','opened near last season','turning finished with',
   'the useful version is','nick’s note is simple','the transaction belongs in the article','survived that call','result look as good on monday','roster compliment sitting on the bench','other side of the receipt alive','playoff case still sitting squarely in the argument','this week gave the résumé another loud line','somebody else now needs to make the back page fight for space','sunday reinforced it with another performance worthy of that reputation',
-  'nick will','nick wants','nick sees','bartholomew would','bartholomew will','tilly would','filch recommends','filch would','this desk is already documenting','a beat writer is supposed to','ordinary quarterback workload','primary affirmative','no broader depth conclusion','favorable team verdict','entered as the projected underdog and won anyway','corroborates the expectation','projection liked','high-scorer line','multiple-contributor point is earned','provisional breakout label','breakout-watch invitation','gets the watch list','gets the same designation','supporting-cast argument','journalism malpractice','group-performance point','next-week file','player exhibit','probative data point','adverse finding'
+  'nick will','nick wants','nick sees','bartholomew would','bartholomew will','tilly would','filch recommends','filch would','this desk is already documenting','a beat writer is supposed to','ordinary quarterback workload','primary affirmative','no broader depth conclusion','favorable team verdict','entered as the projected underdog and won anyway','corroborates the expectation','projection liked','high-scorer line','multiple-contributor point is earned','provisional breakout label','breakout-watch invitation','gets the watch list','gets the same designation','supporting-cast argument','journalism malpractice','group-performance point','next-week file','player exhibit','probative data point','adverse finding','group chat','least comfortable note belongs to','separates the player from the verdict','records the consequence rather than the mechanism','admissible alternative','causal record','discrepancy is real','cannot carry the entire case','positive finding','division evidence','three pressure points','entered evidence','cross-examination'
 ]) assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
 assert.ok(!all.includes('${'),'Generated prose must never expose a template interpolation token');
 assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),'Generated Week 1 must carry a real prior-season player-history source');
@@ -128,6 +128,20 @@ for(const t of d.teams||[]){
   reporterFirstPerson.set(rid,(reporterFirstPerson.get(rid)||0)+hits);
 }
 for(const rid of ['walter-mercer','tess-delaney','mack-hollis','nora-voss'])assert.ok((reporterFirstPerson.get(rid)||0)>=1,'Each reporter must naturally reference their own judgment at least once across the generated edition: '+rid);
+const thirdPersonDeskPatterns={
+  'walter-mercer':/\bNick(?:’s|'s|\s+(?:will|would|wants|sees|circles|can|keeps|trusts|starts|refuses|considers|calls|thinks|recommends|records))\b/i,
+  'tess-delaney':/\bBartholomew(?:’s|'s|\s+(?:will|would|wants|sees|can|keeps|trusts|starts|refuses|considers|calls|thinks|recommends|records|adores|accepts|respects))\b/i,
+  'mack-hollis':/\bTilly(?:’s|'s|\s+(?:will|would|wants|sees|can|keeps|trusts|starts|refuses|considers|calls|thinks|recommends|records|resents))\b/i,
+  'nora-voss':/\bFilch(?:’s|'s|\s+(?:will|would|wants|sees|can|keeps|trusts|starts|refuses|considers|calls|thinks|recommends|records|separates|treats|enters|leaves|reads|marks))\b/i
+};
+for(const t of d.teams||[]){
+  const rid=String(t.inquirer_article?.reporter?.id||''),re=thirdPersonDeskPatterns[rid];
+  if(re)assert.doesNotMatch(articleText(t),re,'Reporter must speak in first person instead of naming themself in '+t.team_name);
+}
+for(const s of recapSections){
+  const rid=String(s?.reporter?.id||''),re=thirdPersonDeskPatterns[rid],copy=(s?.paragraphs||[]).join(' ');
+  if(re)assert.doesNotMatch(copy,re,'Weekly Recap reporter must speak in first person instead of naming themself: '+rid);
+}
 for(const t of d.teams||[]){
   if(String(t.inquirer_article?.reporter?.id)!=='mack-hollis')continue;
   const copy=articleText(t);

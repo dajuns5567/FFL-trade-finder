@@ -340,7 +340,7 @@ function playerStatInsightV33(t,p,r){
       name+" had a matchup that was supposed to belong to "+q.team+"; "+q.opp+" stole the terms of engagement.",
       q.opp+" refused to let "+name+" make the game orderly. For a favorite, losing control is the uglier story than any one fantasy total."
     ]:[
-      name+" gave "+q.team+" moments, but "+q.opp+" kept the leverage. Useful quarterback production feels different when the opponent is still deciding what kind of game everyone is playing.",
+      name+" gave "+q.team+" moments, but "+q.opp+" kept the leverage. Useful quarterback production from "+name+" feels different when the opponent is still deciding what kind of game everyone is playing.",
       q.opp+" kept forcing "+q.team+" to answer instead of letting "+name+" set the terms.",
       name+" gave "+q.team+" something to work with, but "+q.opp+" kept finding the better response.",
       q.team+" got enough from "+name+" to stay in the conversation and not enough to control it."
@@ -389,7 +389,7 @@ function losingRecordAsideV33(t,r){
   if(!((l>=2&&l>w)||(games>=4&&Number.isFinite(rank)&&rank>Math.floor(size*.75))))return null;
   const team=teamIdentityV28(t).mascot,manager=t.manager_name||'management',v=voice(r),key=String(t.roster_id)+':bad-record-v36:'+w+'-'+l+':'+String(r?.id||'');
   const banks=[
-    ['At '+w+'-'+l+', the '+team+' start has moved past the stage where “early” does much work; '+manager+' needs wins before the explanations become their own losing streak.','I have covered enough '+w+'-'+l+' starts to know patience is useful right up until it becomes a hobby.'],
+    ['At '+w+'-'+l+', the '+team+' start has moved past the stage where “early” does much work; '+manager+' needs wins before the explanations become their own losing streak.','I have covered enough '+team+' '+w+'-'+l+' starts to know patience is useful right up until it becomes a hobby.'],
     ['The '+team+' record is '+w+'-'+l+', which is less a slow start than an increasingly committed aesthetic; '+manager+' can improve the décor by winning.','A '+w+'-'+l+' record is an awfully durable stain for '+team+'; I recommend the radical cleansing agent known as victories.'],
     ['The '+team+' record is '+w+'-'+l+'; the good news is nobody can accuse this roster of peaking too early, and '+manager+' should try the fashionable new trend called winning.','At '+w+'-'+l+', '+team+' has made pessimism look less like a mood and more like responsible preparation.'],
     ['The '+team+' record is '+w+'-'+l+'; I have seen enough losses now that '+manager+' needs wins, not a cleaner explanation.','The '+team+' record sits at '+w+'-'+l+'; another loss starts looking like a habit, and '+manager+' can change that only on the scoreboard.']
@@ -1624,7 +1624,7 @@ function angleLeadV28(t,r,angle){
       full+" made "+opp+" spend Sunday looking for an exit, "+score+". By the time the margin reached "+one(margin)+", the game was asking how much dignity "+opp+" could save.",
       full+" beat "+opp+" "+score+" and made the matchup feel over before the app stopped updating. A "+one(margin)+"-point win gives the winner swagger and the loser a very long week.",
       full+" turned "+opp+" into Week 1 target practice, "+score+". I will not call one rout a dynasty, but "+opp+" is welcome to avoid looking at the standings until Wednesday.",
-      full+" controlled "+opp+" by "+one(margin)+" points. One roster dictated the afternoon and the other spent it reacting."
+      full+" controlled "+opp+" by "+one(margin)+" points. "+full+" dictated the afternoon and "+opp+" spent it reacting."
     ],
     "rout-loss":[
       opp+" handed "+full+" a "+one(margin)+"-point loss, "+score+", and there is not enough tasteful language in the notebook to hide it.",
@@ -1973,7 +1973,7 @@ function classificationSentenceV29(p,tr,r){
     [
       `${p.name} has already been a star in this league. ${p.name} gave opponents another reminder of why part of the plan has to start with him.`,
       `${p.name} came into the week with his reputation already earned, and the performance gave nobody a reason to lower the standard.`,
-      `${p.name} has been doing this too long for Sunday to feel like a discovery. It was another strong week from a player opponents already respect.`
+      `${p.name} has been doing this too long for Sunday to feel like a discovery. It was another strong week from ${p.name}, a player opponents already respect.`
     ],
     [
       `${p.name} already has star status, which makes Sunday less a revelation than another unpleasant appointment for the defense across from him.`,
@@ -2573,7 +2573,7 @@ function managementStoryV29(t,facts,r,f=articleFrameV29(t,r)){
       else impact=[
         `${incoming.name} did not post a headline game, but the first Sunday gave ${team} usable work from the new piece.`,
         keyedChoice(`${t.roster_id}:bart-incoming-quiet`,[`${incoming.name} arrived without a star turn, which is fine; the move now has a real football role to evaluate.`,`${incoming.name} did not make a grand entrance, but Bartholomew now has an actual Sunday role to judge instead of transaction-day perfume.`,`${incoming.name} joined ${team} without producing a headline. That is less glamorous and more useful than pretending one week already decided the transaction.`]),
-        `${incoming.name.toUpperCase()} DID NOT BLOW UP THE SCOREBOARD. THE MOVE CAN STILL BE RIGHT WITHOUT A PARADE.`,
+        `${incoming.name.toUpperCase()} DID NOT BLOW UP THE SCOREBOARD. THE ${team.toUpperCase()} MOVE CAN STILL BE RIGHT WITHOUT A PARADE.`,
         `${incoming.name} supplied enough first-week information to evaluate the role without pretending the transaction has already been decided.`
       ][v];
     }
@@ -2636,7 +2636,7 @@ function nextOpponentDepthV29(o,weeklyStar,r){
   const seasonNote=notes.find(x=>x.kind==='season')?.p,valueNote=notes.find(x=>x.kind==='value')?.p;
   if(voice(r)===0)return [seasonNote?`${seasonNote.name} is the longer-view warning after leading this roster’s season scoring so far.`:null,valueNote?`${valueNote.name} remains its highest-valued player, another reason the advance report cannot stop at last week’s box score.`:null].filter(Boolean).join(' ');
   if(voice(r)===1)return [seasonNote?`The weekly headline should not obscure ${seasonNote.name}, who still owns the stronger season-long scoring résumé.`:null,valueNote?`${valueNote.name} remains the roster’s most valuable piece, an inconvenient detail for anyone hoping one scouting note would suffice.`:null].filter(Boolean).join(' ');
-  if(voice(r)===2)return [seasonNote?`DO NOT READ ONE BOX SCORE AND FORGET ${seasonNote.name.toUpperCase()}: HE LEADS THIS ROSTER’S SEASON SCORING.`:null,valueNote?`${valueNote.name.toUpperCase()} STILL CARRIES THE HIGHEST ROSTER VALUE. THE WARNING LABEL HAS MORE THAN ONE NAME.`:null].filter(Boolean).join(' ');
+  if(voice(r)===2)return [seasonNote?`DO NOT READ ONE BOX SCORE AND FORGET ${seasonNote.name.toUpperCase()}: HE LEADS THIS ROSTER’S SEASON SCORING.`:null,valueNote?`${valueNote.name.toUpperCase()} STILL CARRIES THE HIGHEST ROSTER VALUE. ${valueNote.name.toUpperCase()} IS NOT THE ONLY NAME THE NEXT OPPONENT HAS TO RESPECT.`:null].filter(Boolean).join(' ');
   return [seasonNote?`${seasonNote.name} remains the roster’s season scoring leader, a separate concern from last week’s headline.`:null,valueNote?`${valueNote.name} still carries the roster’s highest current value, giving the opponent another centerpiece to account for.`:null].filter(Boolean).join(' ');
 }
 
@@ -2753,9 +2753,9 @@ function scheduleSignificanceV29(t,r,f=articleFrameV29(t,r)){
     `${naturalJoin(laterStrong.map(x=>x.team_name))} follow ${next.team_name}. The sequence leaves ${team} fewer cheap opportunities to correct whatever this week exposed.`
   ][v]);
   else if(next&&laterStrong.length===1)parts.push([
-    `${laterStrong[0].team_name} waits shortly after ${next.team_name}. ${f.won?`${team} would rather carry another win into the harder test.`:`The current loss makes banking the friendlier game in front of that test more important.`}`,
+    `${laterStrong[0].team_name} waits shortly after ${next.team_name}. ${f.won?`${team} would rather carry another win into the harder test.`:`The current ${team} loss makes banking the friendlier game in front of that test more important.`}`,
     `${laterStrong[0].team_name} appears soon after ${next.team_name}. The sensible ${team} move is to take care of the friendlier assignment before the degree of difficulty rises.`,
-    `AFTER ${String(next.team_name).toUpperCase()} COMES ${String(laterStrong[0].team_name).toUpperCase()}. ${f.won?'BANK THE CUSHION FIRST.':'DO NOT ASK THE HARDER GAME TO REPAIR AN AVOIDABLE LOSS.'}`,
+    `AFTER ${String(next.team_name).toUpperCase()} COMES ${String(laterStrong[0].team_name).toUpperCase()}. ${f.won?'BANK THE CUSHION FIRST.':`DO NOT ASK ${String(laterStrong[0].team_name).toUpperCase()} TO REPAIR AN AVOIDABLE ${team.toUpperCase()} LOSS.`}`,
     `${laterStrong[0].team_name} follows ${next.team_name}. The sequence gives ${team} a timing problem: accumulate margin before the stronger test instead of asking the stronger test to create it.`
   ][v]);
   else if(next&&strength(next)==='strong'&&laterSoft.length){
@@ -2876,7 +2876,7 @@ function articleThreadV30(t,r,f,phase){
     share=Math.round((f.share||0)*100),angle=f.angle,key=`${t.roster_id}:${angle}:${phase}:${r?.id}`;
   const base={
     'rout-loss':{
-      sentiment:[`A ${one(f.margin)}-point loss is too large for one scapegoat. ${team} supporters can be angry at individual misses, but Nick sees a margin this wide as evidence that the failure was distributed.`,`A ${one(f.margin)}-point loss is vulgar enough without pretending one unfortunate player caused all of it. Bartholomew finds the ${team} blame much more widely upholstered.`,`A ${one(f.margin)}-POINT LOSS NEEDS MORE THAN ONE VILLAIN. TILLY HAS PLENTY OF ANGRY INK AND NO REASON TO WASTE IT ON A SINGLE NAME.`,`A ${one(f.margin)}-point loss is too big to dump on one player; I see too many ${team} problems here for one scapegoat to make sense.`][voice(r)],
+      sentiment:[`A ${one(f.margin)}-point loss is too large for one scapegoat. ${team} supporters can be angry at individual misses, but Nick sees a margin this wide as evidence that the failure was distributed.`,`A ${one(f.margin)}-point loss is vulgar enough without pretending one unfortunate player caused all of it. Bartholomew finds the ${team} blame much more widely upholstered.`,`A ${one(f.margin)}-POINT ${team.toUpperCase()} LOSS NEEDS MORE THAN ONE VILLAIN. TILLY HAS PLENTY OF ANGRY INK AND NO REASON TO WASTE IT ON A SINGLE ${team.toUpperCase()} NAME.`,`A ${one(f.margin)}-point loss is too big to dump on one player; I see too many ${team} problems here for one scapegoat to make sense.`][voice(r)],
       outlook:`The next ${team} game is less about proving one player can rebound than proving the lineup can stop failing in clusters.`,
       management:`For ${manager}, the lesson is broader than one button: a loss this large usually needs more than one correction.`
     },
@@ -2950,8 +2950,8 @@ function articleThreadV30(t,r,f,phase){
   const core=base[phase],v=voice(r);
   const tails=[
     '',
-    ' I will care whether that same advantage still looks elegant against a prepared opponent.',
-    ' I will care whether the next opponent gets embarrassed by the same thing.',
+    ` I will care whether that same ${team} advantage still looks elegant against a prepared opponent.`,
+    ` I will care whether the next ${team} opponent gets embarrassed by the same thing.`,
     ` I will care whether the next opponent finds a way to take that advantage away from ${team}.`
   ];
   return keyedChoice(key,[core,core+tails[v]]);

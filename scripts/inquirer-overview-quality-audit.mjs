@@ -19,7 +19,7 @@ for(const s of sections){
   if(!noInfo&&s.paragraphs.length<2)fail('Weekly Recap section '+s.heading+' needs at least two connected paragraphs when evidence exists');
 }
 if(new Set(sections.map(s=>s.reporter.id)).size!==4)fail('All four desks must appear once in the overview');
-const humor=/\b(?:parade|rental shoes|gala|hotel[- ]lobby|good china|chaise|melodrama|elegant insult|group chat|honeymoon|front page|back page|receipt|rookie class|mock|burn it|ceremonially|evidence|file|paperwork|docket|deadline|confetti|argument|sigh|screenshot|decorative|decoration)\b/i;
+const humor=/\b(?:parade|rental shoes|gala|hotel[- ]lobby|good china|chaise|melodrama|elegant insult|honeymoon|front page|back page|receipt|rookie class|mock|burn it|ceremonially|deadline|confetti|argument|sigh|screenshot|decorative|decoration|joke|punch line|laugh|rude)\b/i;
 for(const s of sections){const copy=(s.paragraphs||[]).join(' ');if(copy.trim()==='n/a')continue;if(!humor.test(copy))fail((s.reporter?.name||'Reporter')+' Weekly Recap section is too straight; every desk must carry personality/humor');}
 
 const bartholomew=sections.find(s=>String(s?.reporter?.id||'')==='tess-delaney'||/Bartholomew Roycington III/i.test(String(s?.reporter?.name||'')));

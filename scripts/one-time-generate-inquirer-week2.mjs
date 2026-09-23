@@ -446,7 +446,24 @@ function assertWeek2Originality(result,previousEdition){
 
 const rawInq=buildInquirerWeek({playerValues:Object.fromEntries((playerMarket.marketRows||[]).map(p=>[String(p.id),p.value])),season,week,teams:enrichedTeams,players,weeklyStats,weeklyStatHistory:{1:week1Stats,2:weeklyStats},historicalSeasonStats:historicalSeason?.stats||{},historicalSeasonYear,scoringSettings:league.scoring_settings||{},scoreFn:score,weekClassification:classification});
 const prevWeek2ByRoster=new Map((week1Preload2026?.teams||[]).map(t=>[String(t.roster_id),t]));
-const inq={...rawInq,teams:(rawInq.teams||[]).map(t=>rewriteWeek2Team(t,prevWeek2ByRoster.get(String(t.roster_id))||null))};
+const rewrittenWeek2Teams=(rawInq.teams||[]).map(t=>rewriteWeek2Team(t,prevWeek2ByRoster.get(String(t.roster_id))||null));
+const reporterJudgmentSeen=new Set();
+for(const t of rewrittenWeek2Teams){
+  const a=t.inquirer_article||{},rid=String(a?.reporter?.id||"");
+  if(!rid||reporterJudgmentSeen.has(rid))continue;
+  const next=t.next_opponent_name||"the next opponent",judgment={
+    "walter-mercer":"I think "+t.team_name+" has a clean Week 3 assignment: make "+next+" take away the thing that worked in Week 2, then prove there is a second answer.",
+    "tess-delaney":"I would keep the good china within reach for "+t.team_name+", but "+next+" gets a vote before anybody starts acting established.",
+    "mack-hollis":"I want "+next+" to force "+t.team_name+" into a different kind of game. If the same stars still carry the headline, then the league has a real problem.",
+    "nora-voss":"I think "+t.team_name+" has one week to make its obvious flaw boring. If "+next+" can laugh at the same weakness, the joke belongs to the schedule now."
+  }[rid];
+  if(!judgment)continue;
+  const target=(a.sections||[]).find(s=>s.kind==="outlook")||(a.sections||[]).at(-1);
+  if(target?.paragraphs)target.paragraphs.push(judgment);
+  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+  reporterJudgmentSeen.add(rid);
+}
+const inq={...rawInq,teams:rewrittenWeek2Teams};
 const trades=canonicalWeekTrades;
 const rawOverview=buildLeagueOverview({season,week,teams:inq.teams,players,transactions,canonicalTrades:trades,weekClassification:classification,valueHistoryMeta:{period:teamValueHistory?.period||null,baseline:teamValueHistory?.baseline||null,latest:teamValueHistory?.latest||null,source:teamValueHistory?.source||null}});
 const overview=rewriteWeek2Overview(rawOverview,inq.teams,week1Preload2026);

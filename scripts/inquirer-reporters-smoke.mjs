@@ -179,7 +179,7 @@ assert(backend.includes("articleKey='inquirer/reporters/'+reporter.id+'/articles
 assert(backend.includes("if(!stored?.headline)await s.setJSON(articleKey")&&backend.includes("if(!seen.has(k)){rows.push(entry);seen.set(k,rows.length-1)}"),'Reporter article files and archive index rows must be write-once after publication');
 assert(backend.includes('leagueSeasonContext(')&&backend.includes('if(Number.isFinite(sourceWeek)&&sourceWeek>snapshotWeek)continue'),'Inquirer backend must derive standings only through the report week and ignore future matchup rows');
 assert(backend.includes('weeklyStatHistory'),'Inquirer backend must provide multi-week Sleeper stat history for player trend context');
-assert(ui.includes('storedInquirerArticle(t,teams)')&&ui.includes('headline=render(a.headline||t.team_name)'),'League Hub must render preserved Inquirer article copy through the record-aware headline-first renderer');
+assert(ui.includes('storedInquirerArticle(t,teams)')&&ui.includes('headline=renderScope(new Set())(a.headline||t.team_name)'),'League Hub must render preserved Inquirer article copy through the record-aware headline-first renderer');
 assert(ui.includes('reporterArchiveHTML(w)'),'League Hub must expose reporter archive UI');
 assert(ui.includes('data-lh-reporter-archive'),'Reporter archive controls missing');
 assert(ui.includes('leagueOverviewArticle(o)')&&ui.includes('Weekly Recap • All 4 Reporters'),'Weekly Recap must be a first-class archived Inquirer article in the UI');

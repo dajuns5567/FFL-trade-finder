@@ -397,28 +397,28 @@ function losingRecordAsideV33(t,r){
 function teamPlayerCodaV33(t,r,f){
   const top=f?.top,team=teamIdentityV28(t).mascot,v=voice(r),projDelta=valid(t.projected)?Number(t.points)-Number(t.projected):null,topShare=top&&Number(t.points)>0?Math.round(Number(top.points)/Number(t.points)*100):0;
   if(f?.lost)return [
-    'The '+team+' loss needs a specific diagnosis, not a generic “more help” slogan. Nick is keeping the good individual lines separate from the lineup spots that actually failed.',
-    'Bartholomew has no interest in blaming every '+team+' player equally just because the final was ugly. The useful criticism belongs where the production actually disappeared.',
-    'The '+team+' loss is bad enough without lazy blame. Keep the useful player lines, circle the empty ones and stop pretending “team effort” explains anything.',
-    'The '+team+' finding is adverse, but the player findings are not uniform. The useful analysis is to separate the affirmative roles from the actual failures.'
+    `The ${team} loss was not an equal-opportunity failure; the useful performances still matter, and the quieter lineup spots are where the pressure belongs next week.`,
+    `I am not spreading the blame evenly across ${team}; some players gave the roster enough to win, which makes the missing production elsewhere more irritating.`,
+    `The ${team} loss is ugly enough without blaming everybody equally; keep the players who changed the game, then demand more from the spots that went quiet.`,
+    `Some ${team} players did their jobs and still watched the result get away; I want the quiet parts of the lineup to stop making the useful performances feel wasted.`
   ][v];
   if(topShare>=28)return [
-    top.name+' supplied about '+topShare+'% of the '+team+' total. Nick sees a real centerpiece and a real concentration question; those are different claims.',
-    top.name+' produced about '+topShare+'% of the '+team+' score. Bartholomew admires a centerpiece and distrusts furniture that collapses when it leaves the room.',
-    top.name+' supplied about '+topShare+'% of the '+team+' score. Great star line. The rest of the roster can earn a broader compliment when it stops borrowing so much of the headline.',
-    top.name+' accounted for about '+topShare+'% of the '+team+' total. The concentration is the relevant finding; a broader depth claim would outrun the evidence.'
+    `${top.name} supplied about ${topShare}% of the ${team} total; that is star-level influence, and the next useful step is making sure ${team} does not need that much of one player every Sunday.`,
+    `${top.name} produced about ${topShare}% of the ${team} score; I admire the centerpiece, but I would also like the supporting cast to make the room less dependent on one chair.`,
+    `${top.name} supplied about ${topShare}% of the ${team} score; great star line, now give him enough help that the whole afternoon does not have to orbit one name.`,
+    `${top.name} accounted for about ${topShare}% of the ${team} total; I want that kind of star performance again, just with more resistance from the rest of the lineup.`
   ][v];
   if(projDelta!=null&&Math.abs(projDelta)>=12)return [
-    team+' finished '+one(Math.abs(projDelta))+' points '+(projDelta>0?'above':'below')+' projection. Nick cares about which player roles created that gap, not about celebrating or scolding the forecast itself.',
-    team+' landed '+one(Math.abs(projDelta))+' points '+(projDelta>0?'above':'below')+' forecast. Bartholomew would rather identify the role that caused the surprise than pretend the projection deserves a personality.',
-    team+' finished '+one(Math.abs(projDelta))+' points '+(projDelta>0?'above':'below')+' projection. Fine. The useful story is which roles moved the number and whether they can do it again.',
-    team+' ended '+one(Math.abs(projDelta))+' points '+(projDelta>0?'above':'below')+' projection. The variance matters only to the extent that repeatable player roles explain it.'
+    `${team} finished ${one(Math.abs(projDelta))} points ${projDelta>0?'above':'below'} projection; the interesting part is which player roles created that gap and whether those same roles can move another matchup.`,
+    `${team} landed ${one(Math.abs(projDelta))} points ${projDelta>0?'above':'below'} forecast; I care much more about the players who bent the afternoon than about giving the projection a personality.`,
+    `${team} finished ${one(Math.abs(projDelta))} points ${projDelta>0?'above':'below'} projection; fine, now show me which parts of that surprise can travel.`,
+    `${team} ended ${one(Math.abs(projDelta))} points ${projDelta>0?'above':'below'} projection; if the same players create the same stress next week, the number starts looking less accidental.`
   ][v];
   return [
-    'Nick has enough '+team+' evidence for individual judgments without inventing a roster-wide moral from ordinary box-score contributions.',
-    'Bartholomew is leaving the '+team+' supporting cast out of the grand theory until another performance actually earns grand language.',
-    'The '+team+' page does not need filler. The players who changed the game get ink; everybody else can earn it next week.',
-    'The '+team+' file supports specific player findings. It does not require a generic conclusion about balance, depth or collective effort.'
+    `${team} has enough real player stories here without inventing praise for everybody; the next opponent will tell us which roles deserve to keep growing.`,
+    `I have enough to like about the best ${team} performances without pretending every lineup spot deserves the same compliment; another Sunday can widen the cast.`,
+    `The players who changed the game get the praise; everybody else can make next week’s page harder to write by forcing their way into it.`,
+    `${team} has a few performances worth carrying forward; I want the next opponent to feel more of the roster before I call the lineup complete.`
   ][v];
 }
 function resultShapeV33(f){
@@ -428,25 +428,85 @@ function resultShapeV33(f){
   return f?.won?'win':'loss';
 }
 function teamPlayerExtraV33(t,r,f,slot){
-  const top=f?.top,team=teamIdentityV28(t).mascot,opp=t.opponent_name||'the opponent',next=t.next_opponent_name||'the next opponent',v=voice(r),kind=Math.abs(Number(slot)||0)%3,rec=record(t),shape=resultShapeV33(f),shapePhrase=/^(?:win|loss)$/.test(shape)?'a '+shape:'a '+shape+' result',roleLabel=playerContextLabelV33(top),key=String(t.roster_id)+':player-extra:'+kind+':'+String(r?.id||'');
+  const top=f?.top,team=teamIdentityV28(t).mascot,next=t.next_opponent_name||'the next opponent',v=voice(r),kind=Math.abs(Number(slot)||0)%3,rec=record(t),roleLabel=playerContextLabelV33(top),key=String(t.roster_id)+':player-extra-v36:'+kind+':'+String(r?.id||'');
   const banks=[
     [
-      [top.name+' gets the useful follow-up: can the same role survive when '+team+' is not playing this exact opponent? After this '+shape+' review, Nick trusts repeatable '+roleLabel+' work more than a pretty total.',top.name+' already supplied the headline. Nick’s next note is whether the workload survives a different game script instead of asking the fantasy total to predict itself.','There is one '+team+' player result worth carrying forward in '+top.name+'. The next Sunday decides whether the role travels or the box score was simply well timed.','Nick is keeping '+top.name+' on the short list for next week because the role has something testable about it. That is more useful than handing every scorer a paragraph.'],
-      ['Bartholomew’s useful question for '+top.name+' is whether the '+roleLabel+' role survives a less accommodating afternoon; one good total inside '+shapePhrase+' is lovely, but a repeatable job is much better furniture.',top.name+' already owns the flattering paragraph. In this '+shape+' review, Bartholomew wants to know whether the '+roleLabel+' workload travels when the matchup stops cooperating.',team+' can enjoy '+top.name+' without turning one Sunday into mythology. The tasteful next step is the same role under less convenient circumstances.','The number belongs to '+top.name+'. Bartholomew is more interested in whether the same job appears next week, when the décor will be different and excuses more expensive.'],
-      [top.name+' was the best '+team+' player in this '+shape+'. The next question is whether another '+roleLabel+' can become independently valuable instead of simply appearing next to him in the box score.','The '+team+' player story centers on '+top.name+'; keep this '+roleLabel+' role after '+shapePhrase+' and the performance becomes a trend instead of a one-week spike.',top.name+' earned the praise. Now do it when the matchup changes; that is how a good Sunday stops being a souvenir.','Tilly keeps '+top.name+' at the center of next week’s review because the role itself is worth checking again, not because the score looked nice.'],
-      [top.name+' is the player '+team+' most needs to carry forward. If the same role still creates pressure against a different opponent, '+top.name+' has something the league will have to keep respecting.','For '+team+', '+top.name+' now has to show the workload survives when the opponent and game script change. That is what would turn one strong Sunday into something dependable.','Next Sunday, '+top.name+' needs the same role to show up again. A second comparable workload would say much more than another celebration of this week’s total.','For '+top.name+', the next test is whether this '+roleLabel+' role still changes the matchup after '+shapePhrase+'; everybody else can earn their own share of the attention.']
+      [
+        `${top.name} has become one of the ${team} pieces that has to travel; if the ${roleLabel} role keeps creating the same stress next week, the next opponent will have to plan around him too.`,
+        `${top.name} gave ${team} something worth carrying forward; another Sunday with this ${roleLabel} role would make the performance feel a lot less temporary.`,
+        `${team} needs ${top.name} to make this role matter again; one strong Sunday is useful, two starts changing what opponents have to prepare for.`,
+        `${top.name} already made this matchup bend; now ${team} needs the same ${roleLabel} role to make the next opponent uncomfortable too.`
+      ],
+      [
+        `${top.name} looked important enough that I want the same ${roleLabel} role next week; good furniture is nice, but making another opponent rearrange the room is better.`,
+        `${team} can enjoy what ${top.name} did without turning one Sunday into mythology; repeat the role against a new opponent and the story gets much more persuasive.`,
+        `${top.name} already owns the flattering paragraph; I want to see whether the ${roleLabel} workload still looks elegant when the matchup gets less accommodating.`,
+        `${top.name} has my attention now; another week of this ${roleLabel} role would make the next opponent’s preparation considerably less pleasant.`
+      ],
+      [
+        `${top.name} was one of the best things ${team} had going; do it again and the next opponent can start worrying before kickoff.`,
+        `${team} got a real Sunday from ${top.name}; repeat the ${roleLabel} role and this stops looking like a one-week souvenir.`,
+        `${top.name} earned the praise; now make another opponent deal with the same problem.`,
+        `${top.name} mattered this week; if that same role travels, I will gladly make the next headline even louder.`
+      ],
+      [
+        `${top.name} needs to make the next opponent feel this role too; repeat it and ${team} has something opponents actually have to respect.`,
+        `${team} got a useful version of ${top.name}; I want that same ${roleLabel} job changing another matchup instead of living on one Week 1 page.`,
+        `${top.name} made himself hard to ignore; another Sunday like this turns one good performance into a recurring problem for the league.`,
+        `${top.name} has the next opponent’s attention now; keep it by making the same role hurt again.`
+      ]
     ],
     [
-      ['The '+team+' record is '+rec+', which is the part no individual stat line gets to negotiate away. Nick will praise the useful players and still make the team answer for the standings.','A good player line can survive a bad '+team+' result; the record is still '+rec+'. Nick keeps those judgments separate because the scoreboard does not issue group pardons.',team+' leaves this week at '+rec+'. The individual praise matters, but Nick is not letting one good line do public-relations work for the whole roster.','Nick’s player notes are favorable where they earned it; the '+team+' record remains '+rec+'. Those facts are allowed to coexist without a motivational poster.'],
-      ['The '+team+' record is '+rec+', and Bartholomew refuses to let one handsome player line redecorate the standings. Praise the player; leave the record where everyone can see it.','The '+team+' record reads '+rec+'. One elegant individual performance is not large enough to drape over that entire piece of furniture.','The '+team+' roster carries a '+rec+' record into the next column. Bartholomew can compliment the player page without pretending the standings suddenly acquired better taste.','At '+rec+', the '+team+' roster still has larger concerns than one player can solve alone. Bartholomew will keep the praise narrow and the team judgment appropriately impolite.'],
-      ['The '+team+' record is '+rec+'. Good player line, same standings. Both can be true, which still seems to be asking a lot of half the group chat.','The '+team+' roster leaves the week '+rec+'. Credit the player who earned it; do not use him as a tarp for the rest of the roster.','The '+team+' record is '+rec+'. The player page has some good news. The standings did not get the memo.','The '+team+' record is '+rec+'. Tilly will praise the right name and keep the team-wide optimism locked until the wins show up.'],
-      ['The team-level record remains '+rec+' for '+team+'. Individual affirmative evidence does not alter that standing, and the article should not use it as a substitute for a favorable result.','At '+rec+', the '+team+' roster has separate player and team findings. Filch keeps them separate because strong individual evidence cannot erase an adverse record.','The '+team+' record is '+rec+'. Player-level credit remains admissible, but it does not rebut the standings by itself.','Filch records '+team+' at '+rec+' and leaves the individual praise in its proper scope. The larger team finding requires wins.']
+      [
+        `${team} sits at ${rec}; ${top.name} gave it something worth carrying forward, but the standings still demand more good Sundays from the rest of the roster.`,
+        `${top.name} can be good while ${team} still has work to do at ${rec}; both things are true, and the next game gets to move the bigger story.`,
+        `${team} leaves the week at ${rec}; ${top.name} gave the roster a useful building block, not permission to relax.`,
+        `${top.name} gave ${team} one reason to feel better about a ${rec} record; now the rest of the lineup has to make that optimism less lonely.`
+      ],
+      [
+        `${team} is ${rec}; I can admire ${top.name} without pretending the standings suddenly became tasteful.`,
+        `${top.name} gave ${team} a handsome performance, but ${rec} is still hanging in the room; the next Sunday needs a fuller cast.`,
+        `At ${rec}, ${team} has larger concerns than one player can solve; ${top.name} at least gave the roster something worth dressing up next week.`,
+        `${team} carries ${rec} into the next game; ${top.name} deserves the compliment, and the rest of the roster can earn one beside him.`
+      ],
+      [
+        `${team} is ${rec}; ${top.name} did his part, and the standings are still asking for more.`,
+        `${top.name} gave ${team} good football; ${rec} says somebody else needs to join him.`,
+        `${team} leaves the week at ${rec}; I like what ${top.name} did, and I want more names making that sentence next week.`,
+        `${top.name} earned the praise; ${team} still has a ${rec} record that will not improve itself.`
+      ],
+      [
+        `${team} is ${rec}; ${top.name} gave it something useful, and the roster still needs more places where an opponent feels pressure.`,
+        `${top.name} did enough to help; a ${rec} record still says ${team} needs more of that from more people.`,
+        `${team} carries ${rec} forward; ${top.name} is one answer, not the whole solution.`,
+        `${top.name} gave ${team} a real advantage; at ${rec}, the next step is making that advantage less lonely.`
+      ]
     ],
     [
-      ['Next comes '+next+'. Nick wants the player role that actually worked to travel, because the schedule has no interest in honoring this week’s explanation.','Against '+next+', Nick is watching whether '+team+' can preserve the useful player role without recreating every other condition from this week.','The next '+team+' article starts with '+next+'. Nick would like the good player evidence to survive before the bad habits become the recurring part.','The useful player assignment against '+next+' is simple: keep the role that worked and make the opponent solve it instead of asking the columnist to explain its disappearance.'],
-      [next+' is next, and Bartholomew would appreciate the useful '+team+' roles arriving intact rather than as charming anecdotes from last Sunday.','Next for '+team+' is '+next+'. The elegant outcome would be the same useful role with fewer of the week’s less attractive accessories.','Next is '+next+', where Bartholomew wants the useful '+team+' role to travel; nostalgia for one Sunday is terribly common and rarely useful.','The next opponent is '+next+'. Bartholomew will judge the useful '+team+' role by whether it survives a new guest list, not by how fondly everyone remembers this week.'],
-      [next+' is next. Keep the useful '+team+' role, lose the excuses and give Tilly a reason to make a different joke.','Next for '+team+' is '+next+'. The best player this week can make it a trend; the weaker spots need to stop giving the opponent such easy places to attack.',next+' is waiting. Tilly wants the good '+team+' role to travel and the bad one to miss the bus.','The next page says '+next+'. Repeat the useful role, fix the quiet one and spare Tilly another copy-and-paste complaint.'],
-      [next+' is the next opponent. Filch’s player-level follow-up is whether the affirmative role persists under a new matchup while the adverse roles are corrected.','The next '+team+' exhibit comes against '+next+'. Role persistence will matter more than the memory of this fantasy total.','Against '+next+', the useful '+team+' question is whether the same player role can be corroborated while the weaker slots change.','Filch carries the player finding into the '+next+' matchup with one condition: the role must recur before the conclusion gains weight.']
+      [
+        `${next} is next; I want ${team} to carry the player role that worked and make the new opponent adjust first.`,
+        `Against ${next}, ${team} should keep feeding the role that mattered this week; make the opponent solve it before changing anything.`,
+        `${next} gets the next look at ${team}; keep what worked, clean up what did not, and make the opponent react.`,
+        `${team} turns to ${next}; the useful part of this week should travel before the bad habits get another chance to.`
+      ],
+      [
+        `${next} is next; I would very much like the useful ${team} roles to arrive intact instead of as charming stories from last Sunday.`,
+        `${team} gets ${next}; the elegant outcome is the same useful role with fewer of this week’s unattractive accessories.`,
+        `${next} is next, and I want ${team} to make the good part of this matchup travel; nostalgia is terribly common and not particularly useful.`,
+        `${team} meets ${next}; make the useful role survive a new guest list and the performance starts looking much more expensive.`
+      ],
+      [
+        `${next} is next; keep the good ${team} role, lose the excuses, and make me find a different joke.`,
+        `${team} gets ${next}; the best player can turn this into a trend while the weaker spots stop giving the opponent easy places to attack.`,
+        `${next} is waiting; I want the good ${team} role to travel and the bad one to miss the bus.`,
+        `${team} turns to ${next}; repeat what worked, fix what went quiet, and spare me the copy-and-paste complaint.`
+      ],
+      [
+        `${next} is next; keep the role that hurt this opponent and make the new one prove it has a better answer.`,
+        `${team} gets ${next}; I want the useful player role to travel and the weak spots to stop volunteering relief.`,
+        `${next} will see exactly what worked for ${team}; the job now is making that knowledge useless.`,
+        `${team} turns to ${next}; repeat the good part loudly enough that the new opponent still cannot stop it.`
+      ]
     ]
   ];
   return keyedChoice(key,banks[kind][v]);
@@ -1761,24 +1821,23 @@ function sentimentVoiceV28(t,r){
   const team=teamIdentityV28(t).mascot,manager=t.manager_name||'management',won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points));
   return deskChoice(t,r,[
     [
-      `${team} fans earned ${won?'a Sunday worth replaying':'a loss worth complaining about'}, and the ${one(margin)}-point margin decides how long the emotional hangover lasts. I have covered enough call-in shows to know ${manager} will be a genius or a criminal by breakfast, with almost no middle ground available.`,
-      `The town is ${won?'lighter':'irritated'} because ${team} gave it a ${won?'win':'loss'}, not because anyone suddenly became rational. ${manager} gets six days before the next result rewrites half of Monday’s certainty.`
+      `${team} fans earned ${won?'a Sunday worth replaying':'a loss that will linger'}, and a ${one(margin)}-point margin tells you how sharp the mood should be; I have covered enough call-in shows to know ${manager} will hear every version of the argument before breakfast.`,
+      `The town feels ${won?'lighter':'irritated'} because ${team} gave it a ${won?'win':'loss'}; ${manager} gets six days to enjoy the applause or answer the complaints before another Sunday changes the temperature again.`
     ],
     [
-      `${team} supporters have reached the dangerous stage where emotion has dressed itself as analysis. ${won?'Winning makes every opinion look tailored.':`Losing makes every ${team} grievance arrive in evening wear.`} ${manager} may enjoy or endure the performance review accordingly.`,
-      `Public opinion around ${team} is ${won?'briefly generous':'spectacularly ill-mannered'}, which is exactly what one should expect from people who scheduled their mood around a fantasy matchup. ${manager} remains invited to improve the décor next Sunday.`
+      `${team} supporters have already turned emotion into opinion, as supporters do; ${won?'winning makes every decision look beautifully tailored':'losing makes every grievance arrive overdressed'}, and ${manager} gets to wear the reaction until kickoff.`,
+      `Public opinion around ${team} is ${won?'briefly generous':'spectacularly ill-mannered'}; nobody schedules a fantasy Sunday hoping to feel neutral, and ${manager} gets the full mood swing that comes with the result.`
     ],
     [
-      `${team} WON${won?'':'— actually, no, that would have been nicer'}. ${won?'The group chat has become a municipal celebration and nobody is behaving responsibly.':`The group chat has skipped directly to the complaint department, and ${manager} should avoid searching his own name.`}`,
-      `${team} fans are ${won?'one headline away from planning a parade':'one bad screenshot away from a fake eviction notice for '+manager}. This is irresponsible ${team} civic behavior and therefore exactly the material the back page was built for.`
+      `${team} fans are ${won?'already talking like the season has discovered them':'already treating one bad Sunday like a personal insult'}; I am not going to calm them down, but the next game will do a much better job of deciding whether this feeling deserves to last.`,
+      `${won?`${team} gave its supporters permission to be obnoxiously happy for a week`:`${team} gave its supporters enough frustration to make Monday louder than it needed to be`}; ${manager} can change the tone fastest by giving them something different to react to next Sunday.`
     ],
     [
-      `The ${team} public has already filed a preliminary verdict: ${won?'optimism with suspiciously little cross-examination':'frustration with an impressive quantity of screenshots'}. ${manager} should remember appeals reopen at kickoff.`,
-      `${team} supporters have opinions, timestamps and almost no interest in procedural restraint. ${won?'The evidence is favorable this week.':'The evidence is hostile this week.'} ${manager} still gets another hearing.`
+      `${team} supporters are ${won?'enjoying this exactly as much as they should':'angry for reasons that do not require a courtroom metaphor'}; I care more about whether the football changes next week than whether anyone wins Monday’s argument.`,
+      `The mood around ${team} is ${won?'confident':'restless'}; ${manager} has another Sunday to either reward that confidence or make the restlessness considerably louder.`
     ]
   ]);
 }
-
 function sentimentContextV28(t,r){
   const ctx=t.league_context||{},rank=Number(ctx.standings_rank),size=Number(ctx.league_size)||32,m=t.mida_outlook,rec=record(t),career=t.manager_career||{},titles=Number(career.championships)||0,
     playoff=valid(m?.playoff)?Number(m.playoff):null,won=Number(t.points)>Number(t.opponent_points),team=teamIdentityV28(t).mascot;
@@ -2129,29 +2188,75 @@ function teamDeepReadV34(t,r,f){
 
 function gameShapeV29(t,r,f=articleFrameV29(t,r)){
   const {won,top,second,third}=f;if(!top)return null;
-  const q=matchupMoodV35(t),team=q.team,opp=q.opp,v=voice(r),topWork=top.name+" supplied "+one(top.points)+" fantasy points";
+  const q=matchupMoodV35(t),team=q.team,opp=q.opp,v=voice(r),topWork=top.name+' supplied '+one(top.points)+' fantasy points',key=String(t.roster_id)+':game-shape-v36:'+String(r?.id||'');
   if(!threeHighScorersV33(f)){
     return won?[
-      topWork+". More importantly, "+top.name+" was the player "+opp+" never managed to make irrelevant. "+team+" kept returning to the part of the matchup that worked and forced the opponent to live with it.",
-      topWork+". "+top.name+" gave "+team+" the clearest leverage point against "+opp+"; the rest of the lineup does not need honorary credit to make that true.",
-      topWork+". "+top.name+" was the name "+opp+" kept seeing when the game tilted toward "+team+". The rest of "+team+" can share that billing when somebody else bends a matchup this sharply.",
-      topWork+". "+top.name+" is the clearest reason "+team+" made "+opp+" uncomfortable. Filch does not need a broader theory when one matchup fact is already that obvious."
+      topWork+'; more importantly, '+top.name+' was the player '+opp+' never managed to make irrelevant, and '+team+' kept returning to the part of the matchup that worked.',
+      topWork+'; '+top.name+' gave '+team+' the cleanest leverage point against '+opp+', and I do not need to dress up the rest of the lineup to make that praise fit.',
+      topWork+'; '+top.name+' was the name '+opp+' kept seeing whenever the game tilted toward '+team+', so somebody else can fight for equal billing next week.',
+      topWork+'; '+top.name+' is the clearest reason '+team+' kept '+opp+' uncomfortable, and that is enough without turning the whole roster into a theory.'
     ][v]:[
-      topWork+". That performance deserved a better ending than "+team+" gave it. "+opp+" found enough weak spots elsewhere to make "+top.name+"’s work feel like resistance instead of control.",
-      topWork+". Bartholomew can admire "+top.name+" and still hate the result: "+opp+" simply found more places to win the afternoon.",
-      topWork+". "+top.name+" did enough to avoid the blame; "+team+" still let "+opp+" walk away celebrating. The complaint belongs somewhere else.",
-      topWork+". "+top.name+" complicated "+opp+"’s afternoon, but "+team+" lost the larger matchup. Filch keeps those two facts separate."
+      topWork+'; that performance deserved a better ending than '+team+' gave it, because '+opp+' found enough weak spots elsewhere to turn resistance into a loss.',
+      topWork+'; I can admire '+top.name+' and still hate the result, because '+opp+' simply found more places to win the afternoon.',
+      topWork+'; '+top.name+' did enough to stay out of the blame, while '+team+' still let '+opp+' leave celebrating.',
+      topWork+'; '+top.name+' made '+opp+' work, but '+team+' still lost the larger matchup and somebody else has to answer for the missing help.'
     ][v];
   }
-  const trio=[top,second,third],names=naturalJoin(trio.map(p=>p.name)),pct=Number(t.points)>0?Math.round(trio.reduce((n,p)=>n+Number(p.points||0),0)/Number(t.points)*100):0;
-  return [
-    won?names+" each produced at a high level. Every time "+opp+" leaned toward one threat, "+team+" had another place to attack, and that trio accounted for roughly "+pct+"% of the score.":names+" all delivered high-end performances and "+team+" still lost. The quiet lineup spots wasted too much good work.",
-    won?opp+" spent Sunday choosing which of "+names+" to fear most and discovering there was no elegant answer. Three different players kept changing where the defense had to spend its attention.":names+" gave "+team+" three premium performances and received a loss in return. Bartholomew would like the rest of the roster to apologize in writing.",
-    won?names+" all went big. "+opp+" had three fires and not enough extinguishers.":names+" all showed up and "+team+" still lost. Tilly has located the part of the roster that should not be asking them for more.",
-    won?names+" each produced at a high level, forcing "+opp+" to defend three pressure points instead of solving one.":names+" each produced at a high level; the loss belongs much more to the quieter parts of the "+team+" lineup."
-  ][v];
+  const trio=[top,second,third],names=naturalJoin(trio.map(p=>p.name)),stats=trio.map(p=>p.name+' '+one(p.points)).join(', '),pct=Number(t.points)>0?Math.round(trio.reduce((n,p)=>n+Number(p.points||0),0)/Number(t.points)*100):0;
+  const winBanks=[
+    [
+      stats+'; '+opp+' could not spend the afternoon erasing one star because '+team+' kept handing it another problem, and that trio supplied roughly '+pct+'% of the score.',
+      names+' all cleared 18 points; '+team+' never had to ask one player to carry the whole afternoon, and '+opp+' never got the quiet stretch it needed.',
+      stats+'; every time '+opp+' settled one part of the matchup, '+team+' had another scorer ready to keep the game tilted.',
+      names+' gave '+team+' three 18-plus performances; '+opp+' spent too much of Sunday chasing the damage instead of dictating anything itself.'
+    ],
+    [
+      stats+'; '+opp+' kept discovering that choosing which star to lean toward only opened another expensive part of the field.',
+      names+' all topped 18; I would call that a rather tasteful way to make '+opp+' spend the afternoon rearranging itself.',
+      stats+'; '+team+' made '+opp+' pay for every defensive preference it showed, which is much more fun than pretending one player did everything.',
+      names+' gave '+team+' three separate big performances; '+opp+' never found a version of the matchup that made all of them ordinary at once.'
+    ],
+    [
+      stats+'; '+opp+' had one fire after another and not nearly enough extinguishers.',
+      names+' all went past 18; '+team+' kept making '+opp+' choose the next bad option.',
+      stats+'; I am not overcomplicating this one, because '+opp+' got hit from three different directions and never got comfortable.',
+      names+' all went big; every attempted adjustment by '+opp+' just moved the pain somewhere else.'
+    ],
+    [
+      stats+'; '+opp+' kept trying to close one door and watching '+team+' come through another.',
+      names+' all topped 18; I do not need a fancy phrase for that, only the fact that '+opp+' never found a quiet part of the afternoon.',
+      stats+'; '+team+' kept making '+opp+' pay no matter which star drew the extra attention.',
+      names+' delivered three big lines; '+opp+' spent the afternoon reacting and never got far enough ahead of the problem.'
+    ]
+  ];
+  const lossBanks=[
+    [
+      stats+'; '+team+' still lost, which means too much good work died in the quieter parts of the lineup.',
+      names+' all topped 18 and still took a loss; the rest of '+team+' owes those performances a better ending.',
+      stats+'; '+opp+' survived all of that because '+team+' left too much empty space elsewhere.',
+      names+' gave '+team+' enough star production to win; losing anyway makes the quiet spots much harder to excuse.'
+    ],
+    [
+      stats+'; losing after that much high-end production is the sort of thing that should make the rest of '+team+' profoundly uncomfortable.',
+      names+' all delivered and '+team+' still lost; I would like the supporting cast to explain itself somewhere less elegantly furnished.',
+      stats+'; '+opp+' survived the stars because too many other '+team+' spots failed to add weight.',
+      names+' gave '+team+' three premium performances; the final score makes the missing help considerably less charming.'
+    ],
+    [
+      stats+'; '+team+' got three big performances and somehow still found a way to waste them.',
+      names+' all showed up; the part of '+team+' asking them for more should look somewhere else first.',
+      stats+'; this is not a star problem, it is a roster that failed to cash three excellent checks.',
+      names+' all topped 18; if '+team+' wants a different ending, the quieter names need to stop hiding behind them.'
+    ],
+    [
+      stats+'; '+team+' still lost, so the blame belongs much more naturally with the parts of the lineup that never joined them.',
+      names+' all delivered enough to matter; '+opp+' won because too much of '+team+' stayed quiet around them.',
+      stats+'; I would not ask those three for much more after a loss like this, because the missing help is elsewhere.',
+      names+' gave '+team+' three strong answers; '+opp+' won because the rest of the lineup left too many questions unanswered.'
+    ]
+  ];
+  return keyedChoice(key,won?winBanks[v]:lossBanks[v]);
 }
-
 function playerStoryV29(t,r,f=articleFrameV29(t,r)){
   const {top,supports,concerns,won}=f;if(!top)return ['n/a'];
   const topStatus=f.trajectories.find(x=>String(x.p.id)===String(top.id))?.tr||null,topClause=statClause(top),team=teamIdentityV28(t).mascot,ps=[],v=voice(r),

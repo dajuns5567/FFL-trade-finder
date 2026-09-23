@@ -453,7 +453,7 @@ function teamPlayerExtraV33(t,r,f,slot){
         `${top.name} needs to make the next opponent feel this role too; repeat it and ${team} has something opponents actually have to respect.`,
         `${team} got a useful version of ${top.name}; I want that same ${roleLabel} job changing another matchup instead of living on one Week 1 page.`,
         `${top.name} made himself hard to ignore; another Sunday like this turns one good performance into a recurring problem for the league.`,
-        `${top.name} has the next opponent’s attention now; keep it by making the same role hurt again.`
+        keyedChoice(key+':filch-role-close',[`${top.name} has the next opponent’s attention now; keep it by making the same role hurt again.`,`${top.name} forced his way into the next opponent’s preparation; make that extra attention feel justified on Sunday.`,`${top.name} gave the next opponent a reason to prepare for him; the useful follow-up is making that preparation fail.`,`${top.name} made this role matter once; repeat it and the next opponent has to start moving pieces around him.`,`${top.name} already changed one matchup; the next step is making a prepared opponent suffer through the same problem.`,`${top.name} earned a place in the next opponent’s plan; keep it there by turning the same role into another difficult afternoon.`,`${top.name} is no longer an easy part of the lineup to overlook; another week like this makes the next opponent spend real attention there.`,`${top.name} gave the league one reason to notice him; a second Sunday like this turns notice into preparation.`])
       ]
     ],
     [

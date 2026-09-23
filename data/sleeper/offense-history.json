@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-23T11:32:55.601Z",
+  "generatedAt": "2026-09-23T16:55:58.050Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 2,
@@ -391,7 +391,7 @@
     "diagnostics": {
       "finalGames": 32,
       "qualifiedPlayerGames": 2101,
-      "rejectedPlayerGames": 2496,
+      "rejectedPlayerGames": 2469,
       "ignoredGames": 0
     }
   },
@@ -28841,9 +28841,9 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 885,
-      "withPpr": 734,
-      "withGames": 885
+      "players": 884,
+      "withPpr": 733,
+      "withGames": 884
     },
     "2024": {
       "players": 953,
@@ -38714,29 +38714,6 @@
         "rec_yd": 591,
         "rush_td_40p": 2,
         "bonus_fd_rb": 59
-      },
-      "8157": {
-        "pts_ppr": 78.17999999999999,
-        "gp": 9,
-        "off_snp": 405,
-        "pass_att": 205,
-        "rush_att": 17,
-        "pass_int": 8,
-        "rush_td": 1,
-        "bonus_pass_cmp_25": 1,
-        "rush_fd": 5,
-        "pass_int_td": 1,
-        "fum_lost": 1,
-        "pass_sack": 25,
-        "pass_cmp": 124,
-        "pass_cmp_40p": 2,
-        "pass_fd": 46,
-        "pass_yd": 1247,
-        "pass_td": 6,
-        "bonus_fd_qb": 51,
-        "rush_yd": 83,
-        "fum": 2,
-        "pass_inc": 81
       },
       "8159": {
         "pts_ppr": 144.82,
@@ -68398,22 +68375,22 @@
         "idp_tkl_ast": 1
       },
       "8125": {
-        "pts_ppr": 84.39999999999999,
-        "gp": 13,
-        "off_snp": 397,
-        "rec_tgt": 54,
+        "pts_ppr": 86.19999999999999,
+        "gp": 14,
+        "off_snp": 409,
+        "rec_tgt": 55,
         "rec_0_4": 4,
         "rec_30_39": 2,
         "rec_td": 3,
         "rec_20_29": 3,
-        "bonus_fd_wr": 11,
-        "rec": 30,
-        "rec_fd": 11,
-        "rec_5_9": 11,
-        "bonus_rec_wr": 30,
+        "bonus_fd_wr": 12,
+        "rec": 31,
+        "rec_fd": 12,
+        "rec_5_9": 12,
+        "bonus_rec_wr": 31,
         "rec_10_19": 10,
-        "pr_yd": 92,
-        "rec_yd": 364
+        "pr_yd": 101,
+        "rec_yd": 372
       },
       "8126": {
         "pts_ppr": 217.9,

@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-23T11:32:55.601Z",
+  "generatedAt": "2026-09-23T16:55:58.050Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -175,9 +175,9 @@
   ],
   "seasonDiagnostics": {
     "2023": {
-      "players": 885,
-      "withPpr": 734,
-      "withGames": 885
+      "players": 884,
+      "withPpr": 733,
+      "withGames": 884
     },
     "2024": {
       "players": 953,
@@ -198,9 +198,9 @@
   },
   "compactDiagnostics": {
     "2023": {
-      "players": 885,
-      "withPpr": 734,
-      "withGames": 885
+      "players": 884,
+      "withPpr": 733,
+      "withGames": 884
     },
     "2024": {
       "players": 953,
@@ -582,7 +582,7 @@
     "diagnostics": {
       "finalGames": 32,
       "qualifiedPlayerGames": 2101,
-      "rejectedPlayerGames": 2496,
+      "rejectedPlayerGames": 2469,
       "ignoredGames": 0
     }
   },

@@ -342,6 +342,18 @@ function w2BuildSections(t,prev){
     players.push(w2S(t,r,"player-stat-"+i,p.name+" supplied "+w2One(p.points)+" fantasy points with "+w2Stat(p)+"; against "+opp+", that production "+(i===0?"bent the matchup toward the part of the lineup "+t.team_name+" trusted most":"kept "+opp+" from solving the game by taking away only one option")+"."));
     players.push(w2S(t,r,"player-read-"+i,(pp?(p.name+" had "+w2One(pp.points)+" fantasy points in Week 1, so the Week 2 line "+(Number(p.points)>Number(pp.points)?"raised the volume":"changed the shape of the contribution")+" without erasing what came before. "):"")+opp+" had to account for "+p.name+" as a real part of the plan, not a decorative total after the score was already decided."+(acq?" "+p.name+" arrived by trade"+(acq.season&&acq.week?" in Week "+acq.week+" of "+acq.season:"")+", so this Sunday is part of the return "+t.team_name+" paid for.":"")));
   }
+  const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));
+  const rememberedAcquisitions=(t.trade_acquisitions||[]).filter(x=>x?.player_name&&!discussed.has(String(x.player_id))).slice(0,2);
+  for(let i=0;i<rememberedAcquisitions.length;i++){
+    const acq=rememberedAcquisitions[i],out=(acq.outgoing_player_names||[]).filter(Boolean);
+    const variants=[
+      acq.player_name+" belongs in the backward roster context even without a Week 2 scoring headline: "+t.team_name+" acquired "+acq.player_name+" by trade"+(out.length?", with "+w2Natural(out)+" among the players sent the other way":"")+". The deal still matters when judging what this roster is supposed to become.",
+      "Do not lose "+acq.player_name+" in the Week 2 box score. "+t.team_name+" brought "+acq.player_name+" in by trade"+(out.length?" while moving "+w2Natural(out):"")+", so every useful role now adds another line to management’s return on that move.",
+      acq.player_name+" is part of this roster’s older story too: the route to "+t.team_name+" was a trade"+(out.length?" that sent "+w2Natural(out)+" away":"")+". Week 2 does not need a huge fantasy total from him for that acquisition to remain relevant to how the roster was built.",
+      "There is one roster-memory note worth keeping beside the Week 2 stars: "+acq.player_name+" arrived through a trade"+(out.length?" involving "+w2Natural(out)+" going out":"")+". That history matters because management chose this version of the roster, not merely the lineup that happened to score Sunday."
+    ];
+    players.push(w2S(t,r,"player-acquisition-"+i,variants[(w2Cohort(t)+i)%variants.length]));
+  }
   while(players.length<6)players.push(w2S(t,r,"player-fill-"+players.length,t.team_name+" needed more than one usable player to keep "+opp+" from shrinking the matchup to a single answer, and Week 2 supplied enough work to make that balance worth watching again."));
   const miss=t.best_lineup_miss,gap=Number(miss?.gap)||0,txCount=(t.transactions||[]).length;
   const management=[

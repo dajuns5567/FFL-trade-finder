@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-23T20:20:39.475Z",
+  "generatedAt": "2026-09-23T23:40:52.007Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 2,
@@ -28841,19 +28841,19 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 885,
-      "withPpr": 733,
-      "withGames": 885
+      "players": 887,
+      "withPpr": 735,
+      "withGames": 887
     },
     "2024": {
-      "players": 953,
-      "withPpr": 790,
-      "withGames": 953
+      "players": 954,
+      "withPpr": 791,
+      "withGames": 954
     },
     "2025": {
-      "players": 1047,
+      "players": 1048,
       "withPpr": 566,
-      "withGames": 1047
+      "withGames": 1048
     },
     "2026": {
       "players": 1160,
@@ -30641,6 +30641,19 @@
         "idp_pass_def": 4,
         "idp_qb_hit": 29,
         "idp_tkl_ast": 10
+      },
+      "3560": {
+        "pts_ppr": 3,
+        "gp": 17,
+        "def_snp": 640,
+        "idp_tkl": 46,
+        "idp_tkl_loss": 2,
+        "idp_tkl_solo": 24,
+        "idp_pass_def": 2,
+        "idp_fum_rec": 1,
+        "idp_qb_hit": 1,
+        "idp_ff": 1,
+        "idp_tkl_ast": 22
       },
       "3634": {
         "pts_ppr": 88.9,
@@ -34627,6 +34640,18 @@
         "idp_qb_hit": 3,
         "idp_ff": 2,
         "idp_tkl_ast": 20
+      },
+      "6467": {
+        "pts_ppr": 1,
+        "gp": 16,
+        "def_snp": 519,
+        "idp_tkl": 43,
+        "idp_sack_yd": 1,
+        "idp_tkl_loss": 4,
+        "idp_tkl_solo": 26,
+        "idp_sack": 1,
+        "idp_qb_hit": 4,
+        "idp_tkl_ast": 17
       },
       "6485": {
         "pts_ppr": 4,
@@ -45921,6 +45946,19 @@
         "idp_qb_hit": 20,
         "idp_ff": 1,
         "idp_tkl_ast": 18
+      },
+      "3560": {
+        "pts_ppr": 4.5,
+        "gp": 12,
+        "def_snp": 273,
+        "idp_tkl": 19,
+        "idp_tkl_solo": 7,
+        "idp_int": 2,
+        "idp_int_ret_yd": 9,
+        "idp_sack": 0.5,
+        "idp_pass_def": 2,
+        "idp_qb_hit": 1,
+        "idp_tkl_ast": 12
       },
       "3634": {
         "pts_ppr": 52.5,
@@ -62346,6 +62384,17 @@
         "idp_pass_def": 2,
         "idp_qb_hit": 25,
         "idp_tkl_ast": 14
+      },
+      "3560": {
+        "gp": 8,
+        "def_snp": 124,
+        "idp_tkl": 7,
+        "idp_tkl_solo": 4,
+        "idp_sack": 1,
+        "idp_pass_def": 1,
+        "idp_qb_hit": 1,
+        "idp_ff": 1,
+        "idp_tkl_ast": 3
       },
       "3634": {
         "pts_ppr": 62.30000000000001,

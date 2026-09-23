@@ -14840,6 +14840,29 @@
       "status": "complete",
       "type": "free_agent",
       "metadata": null,
+      "created": 1790199127230,
+      "settings": null,
+      "leg": 3,
+      "draft_picks": [],
+      "creator": "867991923552579584",
+      "transaction_id": "1408600869926195200",
+      "adds": {
+        "5944": 10
+      },
+      "drops": null,
+      "consenter_ids": [
+        10
+      ],
+      "roster_ids": [
+        10
+      ],
+      "status_updated": 1790199127230,
+      "waiver_budget": []
+    },
+    {
+      "status": "complete",
+      "type": "free_agent",
+      "metadata": null,
       "created": 1790177337168,
       "settings": null,
       "leg": 3,
@@ -14849,12 +14872,12 @@
       "adds": {
         "13489": 24
       },
-      "consenter_ids": [
-        24
-      ],
       "drops": {
         "8333": 24
       },
+      "consenter_ids": [
+        24
+      ],
       "roster_ids": [
         24
       ],
@@ -14874,12 +14897,12 @@
       "adds": {
         "2197": 24
       },
-      "consenter_ids": [
-        24
-      ],
       "drops": {
         "9479": 24
       },
+      "consenter_ids": [
+        24
+      ],
       "roster_ids": [
         24
       ],
@@ -14899,10 +14922,10 @@
       "adds": {
         "8330": 6
       },
+      "drops": null,
       "consenter_ids": [
         6
       ],
-      "drops": null,
       "roster_ids": [
         6
       ],
@@ -14922,10 +14945,10 @@
       "adds": {
         "4663": 27
       },
+      "drops": null,
       "consenter_ids": [
         27
       ],
-      "drops": null,
       "roster_ids": [
         27
       ],
@@ -14945,12 +14968,12 @@
       "adds": {
         "6828": 10
       },
-      "consenter_ids": [
-        10
-      ],
       "drops": {
         "6865": 10
       },
+      "consenter_ids": [
+        10
+      ],
       "roster_ids": [
         10
       ],
@@ -14970,12 +14993,12 @@
       "adds": {
         "11819": 28
       },
-      "consenter_ids": [
-        28
-      ],
       "drops": {
         "8168": 28
       },
+      "consenter_ids": [
+        28
+      ],
       "roster_ids": [
         28
       ],

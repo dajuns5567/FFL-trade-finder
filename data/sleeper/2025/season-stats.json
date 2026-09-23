@@ -2931,6 +2931,27 @@
     "idp_pass_def": 2,
     "bonus_sack_2p": 1
   },
+  "3560": {
+    "gp": 8,
+    "_ppr_native_weeks": 0,
+    "_ppr_reconstructed_weeks": 0,
+    "def_snp": 124,
+    "idp_pass_def": 1,
+    "pos_rank_half_ppr": 7992,
+    "pos_rank_ppr": 7992,
+    "pos_rank_std": 7992,
+    "pts_idp": 24,
+    "st_snp": 26,
+    "tm_def_snp": 516,
+    "tm_off_snp": 552,
+    "tm_st_snp": 205,
+    "idp_tkl": 7,
+    "idp_tkl_ast": 3,
+    "idp_tkl_solo": 4,
+    "idp_ff": 1,
+    "idp_qb_hit": 1,
+    "idp_sack": 1
+  },
   "3634": {
     "gp": 11,
     "_ppr_native_weeks": 9,

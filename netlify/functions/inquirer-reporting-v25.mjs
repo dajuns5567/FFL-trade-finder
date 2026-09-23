@@ -1492,7 +1492,7 @@ export function acquisitionCallback(t,p,r){
   return deskChoice(t,r,[
     [`${t.manager_name} traded for ${p.name}${when}${partner?' in a deal with '+partner:''}${price}. A week like this is part of the return ${t.team_name} paid for.`],
     [`${p.name} came to ${t.team_name} by trade${when}${price}. Useful Sundays like this make the price easier to admire.`],
-    [[`TRADE RECEIPT: ${p.name} arrived${when}${price}. A big ${p.name} Sunday puts the deal in the good-news column for another week.`,`THE TRADE BROUGHT ${p.name} TO ${t.team_name}${when}${price}. THIS SUNDAY IS PART OF WHAT THE PRICE BOUGHT.`,`${p.name} CAME IN BY TRADE${when}${price}; THE RECEIPT LOOKS BETTER EVERY TIME THE ROLE WORKS.`,`TRADE MEMORY: ${t.team_name} ADDED ${p.name}${when}${price}. ANOTHER USEFUL SUNDAY KEEPS THE MOVE LOOKING SMART.`][Math.abs(Number(t.roster_id)||0)%4]],
+    [[`TRADE RECEIPT: ${p.name} arrived${when}${price}. A big ${p.name} Sunday puts the deal in the good-news column for another week.`,`THE TRADE BROUGHT ${p.name} TO ${t.team_name}${when}${price}. THIS SUNDAY IS PART OF WHAT THE PRICE BOUGHT.`,`${p.name} CAME IN BY TRADE${when}${price}; THE RECEIPT LOOKS BETTER EVERY TIME THE ROLE WORKS.`,`TRADE MEMORY: ${t.team_name} ADDED ${p.name}${when}${price}. ANOTHER USEFUL ${p.name.toUpperCase()} SUNDAY KEEPS THE MOVE LOOKING SMART.`][Math.abs(Number(t.roster_id)||0)%4]],
     [`${p.name} was acquired by trade${when}${partner?' from '+partner:''}${price}. Every useful Sunday now becomes part of how ${t.team_name} judges that move.`]
   ]);
 }

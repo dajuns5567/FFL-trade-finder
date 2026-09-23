@@ -2721,12 +2721,15 @@ function scheduleSignificanceV29(t,r,f=articleFrameV29(t,r)){
     `AFTER ${String(next.team_name).toUpperCase()} COMES ${String(laterStrong[0].team_name).toUpperCase()}. ${f.won?'BANK THE CUSHION FIRST.':'DO NOT ASK THE HARDER GAME TO REPAIR AN AVOIDABLE LOSS.'}`,
     `${laterStrong[0].team_name} follows ${next.team_name}. The sequence gives ${team} a timing problem: accumulate margin before the stronger test instead of asking the stronger test to create it.`
   ][v]);
-  else if(next&&strength(next)==='strong'&&laterSoft.length)parts.push([
-    `The difficult part of this short stretch is ${next.team_name}, with softer ground behind it. ${f.won?'An upset would turn one win into real cushion.':'A loss would be understandable, but it would make the friendlier games behind it far less optional.'}`,
-    `${next.team_name} is the immediate heavyweight before the road softens. Steal this one and the later games become opportunity; lose it and they become obligation.`,
-    `${String(next.team_name).toUpperCase()} IS THE HEAVYWEIGHT BEFORE SOFTER GAMES ARRIVE. ${f.won?'STEAL IT AND BUILD CUSHION.':'MISS IT AND THE SOFTER GAMES BECOME MUST-HAVE MATERIAL.'}`,
-    `The strongest immediate test before the road eases is ${next.team_name}. The later schedule gives ${team} recovery opportunities, not permission to waste them.`
-  ][v]);
+  else if(next&&strength(next)==='strong'&&laterSoft.length){
+    const softer=naturalJoin(laterSoft.map(x=>x.team_name)),nrec=next.context?.record||{},nrecText=`${Number(nrec.wins)||0}-${Number(nrec.losses)||0}`,ndiv=next.division_context||{},nrank=Number(ndiv.division_rank),ndivName=String(ndiv.division_name||'its division'),race=Number.isFinite(nrank)?`${next.team_name} sits ${nrank===1?'first':nrank===2?'second':nrank===3?'third':String(nrank)+'th'} in ${ndivName} at ${nrecText}`:`${next.team_name} enters at ${nrecText}`;
+    parts.push([
+      `${next.team_name} is the heavyweight before the road softens toward ${softer}; ${race}, so ${team} is not catching an opponent with permission to coast. ${f.won?`Beat it and ${team} turns the opening win into real cushion before the schedule becomes friendlier; the softer games then become opportunities to separate instead of chores to survive.`:`Steal it and ${team} repairs the loss against the hardest immediate opponent; miss it and ${softer} stop looking like relief and start looking mandatory.`}`,
+      `${next.team_name} is the immediate heavyweight before ${softer}; ${race}, which means this opponent carries its own standings urgency into the matchup. ${f.won?`${team} can turn one good Sunday into leverage by winning the difficult game first; then the softer stretch becomes a chance to build, not merely protect, cushion.`:`A win here would erase much of the opening sting in one shot; a loss would make every friendlier game behind it feel less like opportunity and more like obligation.`}`,
+      `${next.team_name} is the hard game before ${softer} arrive; ${race}, so expect a team trying to protect its own position rather than one waiting politely for ${team}. ${f.won?`Take this one and ${team} has real cushion before the schedule loosens; that is how a good start becomes something opponents notice.`:`Take this one and the first loss looks temporary; miss it and the softer games behind it immediately become games ${team} cannot waste.`}`,
+      `${next.team_name} is the strongest immediate test before ${softer}; ${race}, which gives this matchup more weight than a generic next opponent. ${f.won?`Beat the heavyweight now and ${team} carries confidence and standings cushion into the easier stretch; that is a much better position than asking those later games to rescue an opportunity wasted here.`:`A win would stabilize ${team} against the toughest nearby test; another loss would turn the softer stretch from breathing room into repair work.`}`
+    ][v]);
+  }
   const unavailable=[];
   if((a.bye_current_starters||[]).length)unavailable.push(`${names((a.bye_current_starters||[]).slice(0,3))} ${a.bye_current_starters.length===1?'is':'are'} on verified NFL byes`);
   if((a.injury_current_starters||[]).length){

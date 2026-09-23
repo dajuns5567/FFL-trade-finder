@@ -31,12 +31,14 @@ function naturalizePlayerReferences(t,value){
   const names=[...new Set(players.map(p=>String(p.name||'').trim()).filter(Boolean))].sort((a,b)=>b.length-a.length),last=new Map();
   return splitSentencesSafeV28(text).map((sentence,index)=>{
     let out=sentence;
+    const preserveTradeNames=/\b(?:traded for|acquired by trade|came to .* by trade|trade receipt)\b/i.test(sentence);
     for(const name of names){
       const first=name.split(/\s+/)[0];if(!first||firstCounts.get(first)!==1)continue;
       const re=new RegExp(escapeRe(name),'gi');
       if(!re.test(out))continue;
       re.lastIndex=0;
       const prev=last.get(name);
+      if(preserveTradeNames){last.set(name,index);continue}
       if(Number.isInteger(prev)&&index-prev<=3)out=out.replace(re,first);
       else last.set(name,index);
     }

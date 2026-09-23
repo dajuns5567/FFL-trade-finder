@@ -354,7 +354,7 @@ function w2BuildSections(t,prev){
   ]:["n/a"];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],hot=[
     w2S(t,r,"hot-one",miss&&gap>0?(miss.starter.name+" gets the uncomfortable Week 2 spotlight because a legal alternative existed and the margin was "+w2One(gap)+" points."):(!won?(weak?.name||t.manager_name)+" gets the uncomfortable Week 2 spotlight because "+t.team_name+" lost and the quietest part of the lineup cannot be waved away.":(weak?.name||t.manager_name)+" gets the warning label even after the win because good results are when weak spots are cheapest to fix.")),
-    w2S(t,r,"hot-two",(prev&&weak?("Week 1 is the useful comparison now: the question is whether "+weak.name+" is giving "+t.team_name+" one odd Sunday or the beginning of a role problem. "):"")+"Week 3 will settle none of the season, but repeating the same weakness would make the joke much harder to dismiss.")
+    w2S(t,r,"hot-two",(prev&&weak?("Week 1 gives the comparison now: "+weak.name+" either had one odd Sunday or has started showing "+t.team_name+" a role problem. "):"")+"Week 3 will settle none of the season, but repeating the same weakness would make the joke much harder to dismiss.")
   ];
   const eligible=w2EligibleCool(t),coolNames=eligible.length?eligible.map(p=>p.name):top.filter(Boolean).slice(0,2).map(p=>p.name),cool=[
     w2S(t,r,"cool-one",(coolNames.length?w2Natural(coolNames):t.team_name)+" "+(coolNames.length>1?"both belong":"belongs")+" on the Week 2 credit list; the production was strong enough to matter to the result, not merely survive in the box score."),

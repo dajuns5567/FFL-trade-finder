@@ -6,6 +6,7 @@ on:
       - inquirer-editorial-depth-r5
     paths:
       - '.github/workflows/inquirer-week2-repack-once.yml'
+      - 'scripts/one-time-generate-inquirer-week2.mjs'
 
 permissions:
   contents: write

@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-22T22:07:36.695Z",
+  "generatedAt": "2026-09-23T00:31:21.729Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 2,
@@ -21113,7 +21113,7 @@
       "tm_st_snp": 53,
       "idp_tkl_solo": 1,
       "rec": 5,
-      "rec_yar": 10,
+      "rec_yar": 14,
       "rec_5_9": 2,
       "bonus_rec_wr": 5,
       "tm_off_snp": 131,
@@ -21121,7 +21121,7 @@
       "rec_rz_tgt": 2,
       "off_snp": 61,
       "pts_half_ppr": 13.3,
-      "rec_air_yd": 38,
+      "rec_air_yd": 34,
       "rec_ypr": 20.17,
       "pts_idp": 2,
       "rec_10_19": 1,
@@ -26420,9 +26420,7 @@
       "tm_def_snp": 138,
       "tm_off_snp": 123,
       "tm_st_snp": 51,
-      "fum": 1,
-      "rush_tkl_loss": 1,
-      "rush_tkl_loss_yd": -4
+      "fum": 1
     },
     "13453": {
       "gp": 2,
@@ -28843,19 +28841,19 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 884,
+      "players": 885,
       "withPpr": 734,
-      "withGames": 884
+      "withGames": 885
     },
     "2024": {
-      "players": 952,
-      "withPpr": 789,
-      "withGames": 952
+      "players": 953,
+      "withPpr": 790,
+      "withGames": 953
     },
     "2025": {
-      "players": 1047,
-      "withPpr": 565,
-      "withGames": 1047
+      "players": 1048,
+      "withPpr": 566,
+      "withGames": 1048
     },
     "2026": {
       "players": 1160,
@@ -29605,27 +29603,28 @@
         "off_snp": 1063
       },
       "2197": {
-        "pts_ppr": 138.7,
-        "gp": 8,
-        "off_snp": 414,
-        "rush_att": 4,
-        "rec_tgt": 45,
+        "pts_ppr": 173.2,
+        "gp": 16,
+        "off_snp": 809,
+        "rush_att": 5,
+        "rec_tgt": 81,
         "bonus_rec_yd_100": 1,
-        "rec_0_4": 7,
-        "rec_30_39": 4,
+        "rec_0_4": 9,
+        "rec_30_39": 5,
         "rec_td": 8,
-        "rec_20_29": 5,
-        "bonus_fd_wr": 21,
+        "rec_20_29": 6,
+        "bonus_fd_wr": 31,
         "bonus_rush_rec_yd_100": 1,
         "rec_2pt": 1,
         "rush_fd": 1,
-        "rec": 37,
-        "rec_fd": 20,
-        "rec_5_9": 13,
-        "bonus_rec_wr": 37,
-        "rec_10_19": 8,
-        "rush_yd": 29,
-        "rec_yd": 488
+        "rec": 54,
+        "rec_fd": 30,
+        "rec_5_9": 22,
+        "bonus_rec_wr": 54,
+        "rec_10_19": 12,
+        "rush_yd": 35,
+        "fum": 1,
+        "rec_yd": 657
       },
       "2216": {
         "pts_ppr": 282.5,
@@ -37856,6 +37855,15 @@
         "rec_yd": 305,
         "bonus_fd_te": 13
       },
+      "7833": {
+        "gp": 8,
+        "def_snp": 136,
+        "idp_tkl": 10,
+        "idp_tkl_solo": 3,
+        "idp_pass_def": 2,
+        "idp_qb_hit": 1,
+        "idp_tkl_ast": 7
+      },
       "7835": {
         "pts_ppr": 1,
         "gp": 15,
@@ -45074,6 +45082,24 @@
       "2172": {
         "gp": 17,
         "off_snp": 1118
+      },
+      "2197": {
+        "pts_ppr": 69.6,
+        "gp": 10,
+        "off_snp": 471,
+        "rush_att": 3,
+        "rec_tgt": 54,
+        "rec_0_4": 6,
+        "rec_td": 3,
+        "rec_20_29": 3,
+        "bonus_fd_wr": 16,
+        "rec": 26,
+        "rec_fd": 16,
+        "rec_5_9": 8,
+        "bonus_rec_wr": 26,
+        "rec_10_19": 8,
+        "rush_yd": -3,
+        "rec_yd": 259
       },
       "2216": {
         "pts_ppr": 240.4,
@@ -61538,6 +61564,25 @@
         "rec_tgt": 1,
         "idp_tkl": 1,
         "idp_tkl_ast": 1
+      },
+      "2197": {
+        "pts_ppr": 51.9,
+        "gp": 14,
+        "off_snp": 525,
+        "rec_tgt": 35,
+        "bonus_rec_yd_100": 1,
+        "rec_0_4": 2,
+        "rec_30_39": 1,
+        "rec_20_29": 2,
+        "bonus_fd_wr": 14,
+        "bonus_rush_rec_yd_100": 1,
+        "rec": 24,
+        "rec_fd": 14,
+        "rec_5_9": 13,
+        "bonus_rec_wr": 24,
+        "rec_40p": 1,
+        "rec_10_19": 5,
+        "rec_yd": 279
       },
       "2216": {
         "pts_ppr": 84.8,

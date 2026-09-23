@@ -20716,7 +20716,7 @@
     "tm_st_snp": 53,
     "idp_tkl_solo": 1,
     "rec": 5,
-    "rec_yar": 10,
+    "rec_yar": 14,
     "rec_5_9": 2,
     "bonus_rec_wr": 5,
     "tm_off_snp": 131,
@@ -20724,7 +20724,7 @@
     "rec_rz_tgt": 2,
     "off_snp": 61,
     "pts_half_ppr": 13.3,
-    "rec_air_yd": 38,
+    "rec_air_yd": 34,
     "rec_ypr": 20.17,
     "pts_idp": 2,
     "rec_10_19": 1,
@@ -26023,9 +26023,7 @@
     "tm_def_snp": 138,
     "tm_off_snp": 123,
     "tm_st_snp": 51,
-    "fum": 1,
-    "rush_tkl_loss": 1,
-    "rush_tkl_loss_yd": -4
+    "fum": 1
   },
   "13453": {
     "gp": 2,

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 const path=process.argv[2]||'/tmp/week1-inquirer.json';
 const d=JSON.parse(fs.readFileSync(path,'utf8'));
+const reportWeek=Number(d.week)||1;
 const words=s=>String(s||'').trim().split(/\s+/).filter(Boolean).length;
 const sentenceParts=s=>{
   const protectedText=String(s||'')
@@ -19,25 +20,29 @@ const teamWords=(d.teams||[]).map(t=>words(articleText(t)));
 
 assert.equal(Number(d.inquirer_version),26,'Generated edition must be Inquirer V26');
 assert.equal(Number(d.editorial_revision),6,'Generated edition must carry editorial revision 6');
-assert.equal(d.published_locked,true,'Generated Week 1 edition must be marked immutable once published');
-assert.equal(Number(d.context_snapshot_through_week),1,'Generated Week 1 edition must declare a Week 1 context snapshot');
-assert.equal((d.teams||[]).length,32,'Generated Week 1 edition must contain 32 team articles');
+assert.equal(d.published_locked,true,`Generated Week ${reportWeek} edition must be marked immutable once published`);
+assert.equal(Number(d.context_snapshot_through_week),reportWeek,`Generated Week ${reportWeek} edition must declare its own context snapshot`);
+assert.equal((d.teams||[]).length,32,`Generated Week ${reportWeek} edition must contain 32 team articles`);
 for(const t of d.teams||[]){
-  const rec=t?.league_context?.record||{},wins=Number(rec.wins)||0,losses=Number(rec.losses)||0,ties=Number(rec.ties)||0;
-  assert.equal(wins+losses+ties,1,'Week 1 archive record must contain exactly one completed game for '+t.team_name);
-  if(Number(t.points)>Number(t.opponent_points)){assert.equal(wins,1,'Week 1 winner must be 1-0 for '+t.team_name);assert.equal(losses,0,'Week 1 winner must not borrow a later loss for '+t.team_name)}
-  else if(Number(t.points)<Number(t.opponent_points)){assert.equal(wins,0,'Week 1 loser must not borrow a later win for '+t.team_name);assert.equal(losses,1,'Week 1 loser must be 0-1 for '+t.team_name)}
-  assert.equal(Number(t?.league_context?.snapshot_through_week),1,'Archived Week 1 context must declare snapshot_through_week=1 for '+t.team_name);
-  if(t?.division_context)assert.equal(Number(t.division_context.snapshot_through_week),1,'Article-team division context must stay frozen to Week 1 for '+t.team_name);
-  if(t?.next_opponent_division_context){assert.equal(Number(t.next_opponent_division_context.snapshot_through_week),1,'Next-opponent division context must stay frozen to Week 1 for '+t.team_name)}
-  for(const x of t?.upcoming_opponents||[])if(x?.division_context)assert.equal(Number(x.division_context.snapshot_through_week),1,'Upcoming-opponent division context must stay frozen to Week 1 for '+t.team_name);
-  assert.equal(t?.next_projected,null,'Archived Week 1 must not regenerate a Week 2 team projection from later lineup data for '+t.team_name);
-  assert.equal(t?.next_opponent_projected,null,'Archived Week 1 must not regenerate a Week 2 opponent projection from later lineup data for '+t.team_name);
-  assert.equal(t?.next_week_availability,null,'Archived Week 1 must not import later injury/availability state for '+t.team_name);
-  if(t?.mida_outlook?.source_date){const ts=Date.parse(String(t.mida_outlook.source_date));assert.ok(Number.isFinite(ts)&&ts<=Date.parse('2026-09-15T00:00:00Z'),'Week 1 archive must not import a later MIDA snapshot for '+t.team_name)}
+  const rec=t?.league_context?.record||{},wins=Number(rec.wins)||0,losses=Number(rec.losses)||0,ties=Number(rec.ties)||0,recent=t?.league_context?.recent_games||[],last=recent[recent.length-1]||null;
+  assert.equal(wins+losses+ties,reportWeek,`Week ${reportWeek} archive record must contain exactly ${reportWeek} completed games for ${t.team_name}`);
+  assert.equal(Number(t?.league_context?.snapshot_through_week),reportWeek,`Archived Week ${reportWeek} context must stay frozen to its report week for ${t.team_name}`);
+  assert.equal(recent.length,reportWeek,`Archived Week ${reportWeek} recent-games context must stop at the report week for ${t.team_name}`);
+  assert.equal(Number(last?.week),reportWeek,`Archived Week ${reportWeek} context must end on the current report week for ${t.team_name}`);
+  assert.equal(Number(last?.points),Number(t.points),`Current-week points must match the frozen Week ${reportWeek} game for ${t.team_name}`);
+  assert.equal(Number(last?.opponent_points),Number(t.opponent_points),`Current-week opponent points must match the frozen Week ${reportWeek} game for ${t.team_name}`);
+  if(t?.division_context)assert.equal(Number(t.division_context.snapshot_through_week),reportWeek,`Article-team division context must stay frozen to Week ${reportWeek} for ${t.team_name}`);
+  if(t?.next_opponent_division_context)assert.equal(Number(t.next_opponent_division_context.snapshot_through_week),reportWeek,`Next-opponent division context must stay frozen to Week ${reportWeek} for ${t.team_name}`);
+  for(const x of t?.upcoming_opponents||[])if(x?.division_context)assert.equal(Number(x.division_context.snapshot_through_week),reportWeek,`Upcoming-opponent division context must stay frozen to Week ${reportWeek} for ${t.team_name}`);
+  if(reportWeek===1){
+    assert.equal(t?.next_projected,null,'Archived Week 1 must not regenerate a Week 2 team projection from later lineup data for '+t.team_name);
+    assert.equal(t?.next_opponent_projected,null,'Archived Week 1 must not regenerate a Week 2 opponent projection from later lineup data for '+t.team_name);
+    assert.equal(t?.next_week_availability,null,'Archived Week 1 must not import later injury/availability state for '+t.team_name);
+    if(t?.mida_outlook?.source_date){const ts=Date.parse(String(t.mida_outlook.source_date));assert.ok(Number.isFinite(ts)&&ts<=Date.parse('2026-09-15T00:00:00Z'),'Week 1 archive must not import a later MIDA snapshot for '+t.team_name)}
+  }
 }
-const expectedWeek1Ranks=(d.teams||[]).map(t=>{const r=t?.league_context?.record||{};return{t,w:Number(r.wins)||0,l:Number(r.losses)||0,ties:Number(r.ties)||0,fpts:Number(t.points)||0}}).sort((a,b)=>b.w-a.w||a.l-b.l||b.ties-a.ties||b.fpts-a.fpts||Number(a.t.roster_id)-Number(b.t.roster_id));
-for(const [i,row] of expectedWeek1Ranks.entries())assert.equal(Number(row.t?.league_context?.standings_rank),i+1,'Week 1 standings rank must be reconstructed only from Week 1 results for '+row.t.team_name);
+const expectedRanks=(d.teams||[]).map(t=>{const r=t?.league_context?.record||{},recent=t?.league_context?.recent_games||[];return{t,w:Number(r.wins)||0,l:Number(r.losses)||0,ties:Number(r.ties)||0,fpts:recent.reduce((n,g)=>n+(Number(g.points)||0),0)}}).sort((a,b)=>b.w-a.w||a.l-b.l||b.ties-a.ties||b.fpts-a.fpts||Number(a.t.roster_id)-Number(b.t.roster_id));
+for(const [i,row] of expectedRanks.entries())assert.equal(Number(row.t?.league_context?.standings_rank),i+1,`Week ${reportWeek} standings rank must be reconstructed only from games through the report week for ${row.t.team_name}`);
 assert.ok(recapSections.length>=4,'Weekly Recap must preserve a complete multi-desk edition');
 assert.ok(words(recap)>Math.max(...teamWords),'Editorial Weekly Recap should be deeper than the longest team column');
 const mentioned=(d.teams||[]).filter(t=>String(t.team_name||'').trim()&&recap.includes(String(t.team_name).trim()));
@@ -80,9 +85,9 @@ for(const phrase of [
   'nick will','nick wants','nick sees','bartholomew would','bartholomew will','tilly would','filch recommends','filch would','this desk is already documenting','a beat writer is supposed to','ordinary quarterback workload','primary affirmative','no broader depth conclusion','favorable team verdict','entered as the projected underdog and won anyway','corroborates the expectation','projection liked','high-scorer line','multiple-contributor point is earned','provisional breakout label','breakout-watch invitation','gets the watch list','gets the same designation','supporting-cast argument','journalism malpractice','group-performance point','next-week file','player exhibit','probative data point','adverse finding','group chat','least comfortable note belongs to','separates the player from the verdict','records the consequence rather than the mechanism','admissible alternative','causal record','discrepancy is real','cannot carry the entire case','positive finding','division evidence','three pressure points','entered evidence','cross-examination'
 ]) assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
 const interpolationIndex=all.indexOf('${');assert.equal(interpolationIndex,-1,'Generated prose must never expose a template interpolation token; context: '+(interpolationIndex>=0?all.slice(Math.max(0,interpolationIndex-180),interpolationIndex+260):''));
-assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),'Generated Week 1 must carry a real prior-season player-history source');
+assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),`Generated Week ${reportWeek} must carry a real prior-season player-history source`);
 const historicalStarters=(d.teams||[]).flatMap(t=>t.starter_details||[]).filter(p=>Number(p.prior_season_games)>=6&&Number.isFinite(Number(p.prior_season_avg)));
-assert.ok(historicalStarters.length>=40,'Week 1 must propagate meaningful prior-season baselines into player reporting; got '+historicalStarters.length);
+assert.ok(historicalStarters.length>=40,`Week ${reportWeek} must propagate meaningful prior-season baselines into player reporting; got ${historicalStarters.length}`);
 assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');
 assert.match(recap,/breakout (?:star|case|players?)|can trust to keep showing up|familiar production|next opponent will attack the same weakness/i,'Weekly Recap must carry a natural player trajectory story tied to actual matchup consequences');
 

@@ -504,7 +504,7 @@ function w2BuildSections(t,prev){
     players.push(w2S(t,r,"player-acquisition-"+i,variants[(w2Cohort(t)+i)%variants.length]));
   }
   while(players.length<6)players.push(w2S(t,r,"player-fill-"+players.length,t.team_name+" needed more than one usable player to keep "+opp+" from shrinking the matchup to a single answer, and Week 2 supplied enough work to make that balance worth watching again."));
-  const identity=w2IdentityRead(t,prev,r,top,opp);
+  players.push(...w2IdentityRead(t,prev,r,top,opp));
   const miss=t.best_lineup_miss,gap=Number(miss?.gap)||0,txCount=(t.transactions||[]).length;
   const management=[
     w2S(t,r,"mgmt-one",miss&&gap>0?w2BenchRead(t,r,miss,gap,won,margin):(t.manager_name+" did not leave an obvious higher-scoring bench answer in a compatible spot, so the Week 2 review belongs on the players who actually had the matchup rather than a fantasy-perfect lineup that never existed.")),
@@ -543,8 +543,8 @@ function w2BuildSections(t,prev){
       w2S(t,r,"trade-two","The pieces "+t.team_name+" acquired now have to change Sundays in the direction management paid for. Week 2 adds one receipt; the next few will decide whether the trade looks clever or expensive.")
     ]
   }
-  const byKind={lede,players,identity,management,value,"hot-seat":hot,"cool-throne":cool,sentiment,outlook};if(trade)byKind["trade-commentary"]=trade;
-  const orders=[["lede","players","identity","management","hot-seat","cool-throne","value","sentiment","outlook"],["lede","players","identity","cool-throne","management","value","hot-seat","sentiment","outlook"],["lede","hot-seat","players","identity","management","cool-throne","sentiment","value","outlook"],["lede","players","identity","sentiment","management","hot-seat","value","cool-throne","outlook"]],order=orders[Math.floor(Math.max(0,(Number(t.roster_id)||1)-1)/4)%4].slice();
+  const byKind={lede,players,management,value,"hot-seat":hot,"cool-throne":cool,sentiment,outlook};if(trade)byKind["trade-commentary"]=trade;
+  const orders=[["lede","players","management","hot-seat","cool-throne","value","sentiment","outlook"],["lede","players","cool-throne","management","value","hot-seat","sentiment","outlook"],["lede","hot-seat","players","management","cool-throne","sentiment","value","outlook"],["lede","players","sentiment","management","hot-seat","value","cool-throne","outlook"]],order=orders[Math.floor(Math.max(0,(Number(t.roster_id)||1)-1)/4)%4].slice();
   if(trade){const i=order.indexOf("management");order.splice(i+1,0,"trade-commentary")}
   return order.map(kind=>({kind,heading:kind==="trade-commentary"?"Trade Receipt: What Week 2 Added":w2SectionHead(r,kind),paragraphs:byKind[kind]})).filter(x=>Array.isArray(x.paragraphs)&&x.paragraphs.length)
 }

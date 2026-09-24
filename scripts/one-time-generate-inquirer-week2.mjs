@@ -892,6 +892,40 @@ function w2RecapTradeParagraphs(teams,r){
 }
 
 
+function w2ClosingRead(t,r,won,margin,top,weak,next){
+  const a=w2Alias(t),rid=String(r?.id||""),v=w2Hash(String(t.roster_id)+"|closing|"+rid)%4,
+    star=top?.[0]?.name||"the top scorer",starPts=w2One(top?.[0]?.points||0),weakName=weak?.name||"the quietest lineup spot",
+    weakPts=w2One(weak?.points||0),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(t.opponent_name),nextName=w2DisplayTeam(next||t.next_opponent_name||"the Week 3 opponent"),
+    result=won?"win":"loss",rec=w2Record(t);
+  const rows={
+    "walter-mercer":[
+      "The Week 2 bottom line for "+team+" is not complicated: "+star+" supplied "+starPts+" points, "+weakName+" supplied "+weakPts+", and the "+w2One(margin)+"-point "+result+" showed how much room exists between the top and bottom of the lineup. At "+rec+", Week 3 against "+nextName+" is a test of whether the useful scoring can stay intact while one of the quiet slots contributes more.",
+      team+" leaves Week 2 with a clearer roster diagnosis than it had seven days ago. The top of the lineup was led by "+star+" at "+starPts+", while "+weakName+" finished at "+weakPts+"; that spread matters more than any generic claim about momentum. The "+rec+" record gives "+nextName+" real context: Week 3 is about improving the scoring floor without losing the production that already works.",
+      "Two games now give "+team+" enough information to separate a one-week oddity from a developing roster shape. "+star+" again sits at the center of the useful production, while "+weakName+" remains the obvious place to look for more than "+weakPts+" points. The "+result+" against "+foe+" is already final; the actionable part is whether the "+rec+" roster can raise its lower-end scoring before "+nextName+" arrives.",
+      "For "+team+", the most useful Week 2 takeaway is the gap inside its own lineup. "+star+" reached "+starPts+" while "+weakName+" managed "+weakPts+", and that distribution helps explain why the final margin against "+foe+" landed at "+w2One(margin)+". The record is "+rec+" now, so Week 3 against "+nextName+" should be judged by whether the roster becomes less dependent on its best few scores."
+    ],
+    "tess-delaney":[
+      "The "+a.mascot+" leave the second Sunday with the room arranged more clearly. "+star+" brought "+starPts+" points to the center of the table, while "+weakName+" offered only "+weakPts+" from the quieter end; one can admire the centerpiece without pretending the supporting furniture is finished. At "+rec+", "+nextName+" is the next occasion to see whether the whole roster can look as composed as its best piece.",
+      "I would not throw out the "+a.mascot+" table setting after this "+result+", but I would absolutely move a few chairs. "+star+" looked worthy of top billing at "+starPts+" points, while "+weakName+" left "+weakPts+" where sturdier support would have made the afternoon easier. The "+rec+" record now travels into "+nextName+", where elegance will mean getting useful production from more than the obvious names.",
+      "Week 2 gave "+team+" both something to display and something to hide from polite company. "+star+" posted "+starPts+" points; "+weakName+" finished at "+weakPts+". That contrast is the actual roster story behind the "+w2One(margin)+"-point "+result+" against "+foe+". With the record at "+rec+", the next appointment with "+nextName+" should tell us whether the supporting cast can finally match the quality of the centerpiece.",
+      "The good china can stay out for "+star+" after "+starPts+" points, but "+team+" should not confuse one lovely piece with a finished room. "+weakName+" contributed "+weakPts+", and the distance between those two ends of the lineup shaped the Week 2 experience as much as the final score did. At "+rec+", the "+a.mascot+" need a more complete presentation when "+nextName+" comes onto the calendar."
+    ],
+    "mack-hollis":[
+      "Here is the version I would put in giant type: "+star+" scored "+starPts+", "+weakName+" scored "+weakPts+", and "+team+" cannot keep asking the top of the roster to cover that much empty space forever. The "+w2One(margin)+"-point "+result+" against "+foe+" is done. The "+rec+" "+a.mascot+" now get "+nextName+", and Week 3 should be judged by whether somebody below the headline finally gets loud.",
+      "The scoreboard gave "+team+" a "+result+", but the roster gave us the better headline. "+star+" hit "+starPts+" while "+weakName+" sat down at "+weakPts+", which is a massive difference in how much each lineup spot helped. At "+rec+", the "+a.mascot+" do not need another speech before "+nextName+"; they need the bottom half of the scoring column to stop making the stars do all the shouting.",
+      "Put the record aside for one paragraph: "+team+" got "+starPts+" from "+star+" and "+weakPts+" from "+weakName+". That is the loudest Week 2 roster fact because it tells you exactly where the lineup is carrying weight and where it is dropping it. The record is "+rec+" anyway, and "+nextName+" is next, so the Week 3 assignment is simple—keep the fireworks and find more actual points underneath them.",
+      "The "+a.mascot+" can frame the "+result+" however they want, but I am circling two numbers: "+starPts+" from "+star+" and "+weakPts+" from "+weakName+". That spread is where the useful Week 2 argument lives. Now the record says "+rec+" and "+nextName+" is on deck; if the quiet spots stay quiet, even another huge star line may end up doing too much work."
+    ],
+    "nora-voss":[
+      "Rivals already have the Week 2 joke written, but "+team+" can make it stale fast. "+star+" gave the lineup "+starPts+" points while "+weakName+" gave it "+weakPts+", and that gap is much better material than pretending the opponent had some secret scheme. At "+rec+", "+nextName+" gets the next look; if the bottom of the lineup improves, the easy top-heavy punch line starts dying on contact.",
+      "The cruelly simple version for "+team+" is this: "+star+" posted "+starPts+", "+weakName+" posted "+weakPts+", and everybody in the league can read the same scoring column. The "+w2One(margin)+"-point "+result+" against "+foe+" is already somebody’s joke. With the record at "+rec+", Week 3 against "+nextName+" is a chance to make the weak-slot material obsolete instead of asking the stars for another rescue.",
+      "If I am a rival manager looking at "+team+", I circle the distance between "+star+" at "+starPts+" and "+weakName+" at "+weakPts+" before I circle anything else. That is the repeatable Week 2 story: the top can be dangerous while the bottom still gives people something to mock. The "+a.mascot+" are "+rec+" now, and "+nextName+" will tell us whether that gap is shrinking or becoming the brand.",
+      "The easiest criticism of "+team+" is sitting right in the scoring spread: "+star+" reached "+starPts+" and "+weakName+" stopped at "+weakPts+". That does not erase the "+result+" against "+foe+", but it explains why rivals know exactly where to point their jokes. At "+rec+", the next Sunday against "+nextName+" matters because another quiet bottom slot turns a one-week weakness into recurring material."
+    ]
+  };
+  return (rows[rid]||rows["walter-mercer"])[v];
+}
+
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,
     prevWon=prev?Number(prev.points)>Number(prev.opponent_points):null,prevOpp=w2DisplayTeam(prev?.opponent_name||"last week’s opponent"),prevScore=prev?w2One(prev.points)+"–"+w2One(prev.opponent_points):null,top=(t.starter_details||[]).slice(0,3),opp=t.opponent_name||"the opponent";
@@ -947,7 +981,8 @@ function w2BuildSections(t,prev){
     w2S(t,r,"outlook-one","Week 3 brings "+next+", currently "+nrecord+(Number(nctx.standings_rank)?" and No. "+String(nctx.standings_rank)+" overall":"")+", out of "+ndiv+"; for "+alias.mascot+", that means a real standings opponent with its own two-week story rather than a blank line on the schedule."),
     w2S(t,r,"outlook-two",w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders)),
     w2S(t,r,"outlook-three",nextStar?(w2NextStarRead(t,r,next,nextStar)):"Week 3 brings "+next+" without a complete player-level scoring benchmark, so the "+alias.mascot+" have to focus on raising their own weakest Week 2 lineup spot rather than inventing a matchup-specific story."),
-    later.length?w2S(t,r,"outlook-road",w2RoadRead(t,r,next,later)):w2S(t,r,"outlook-road","The schedule beyond Week 3 is not complete enough for a larger claim, so the next assignment stays simple: beat the team on the page.")
+    later.length?w2S(t,r,"outlook-road",w2RoadRead(t,r,next,later)):w2S(t,r,"outlook-road","The schedule beyond Week 3 is not complete enough for a larger claim, so the next assignment stays simple: beat the team on the page."),
+    w2S(t,r,"outlook-bottom-line",w2ClosingRead(t,r,won,margin,top,weak,next))
   ];
   let trade=null;const oldTrade=(a.sections||[]).find(s=>s.kind==="trade-commentary");
   if(oldTrade){

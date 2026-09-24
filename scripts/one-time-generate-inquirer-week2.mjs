@@ -545,7 +545,7 @@ function w2HotTrend(t,r,weak,weakPrev){
       "The two-week line for "+weak.name+" is "+w2One(old)+" then "+w2One(cur)+". The numbers are different, but neither week gave "+t.team_name+" enough production to celebrate.",
       weak.name+" technically moved from "+w2One(old)+" to "+w2One(cur)+", but the "+a.mascot+" should care more about the low level than the direction.",
       "Week 2 changed the number for "+weak.name+" without changing the problem. "+w2One(cur)+" points is still a quiet lineup spot.",
-      weak.name+" gave "+t.team_name+" "+w2One(cur)+" this week after "+w2One(old)+" in the opener. That is a change, not yet an improvement worth praising.",
+      weak.name+" gave "+t.team_name+" "+w2One(cur)+" this week after "+w2One(old)+" in the opener. That is the same problem twice, not progress.",
       "The arrow barely matters when both endpoints are this low: "+w2One(old)+" then "+w2One(cur)+" for "+weak.name+". The "+a.mascot+" need substance, not a technical uptick."
     ];return rows[k];
   }
@@ -960,7 +960,7 @@ function w2BuildSections(t,prev){
     players.push(w2S(t,r,"player-read-"+i,w2PlayerAngle(t,r,p,pp,i,opp).replace(/[.!?]+$/,"")+(pp&&(Number(pp.points)!==0||Number(p.points)!==0)?"; compared with "+w2One(pp.points)+" fantasy points in Week 1, this Week 2 line was "+w2One(p.points)+".":".")+(acq&&Number(acq.season)===season&&Number(acq.week)===week?" The Week 2 trade that brought "+p.name+" in now has an immediate on-field return to judge.":"")));
   }
   const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));
-  const rememberedAcquisitions=(t.trade_acquisitions||[]).filter(x=>x?.player_name&&!discussed.has(String(x.player_id))&&((Number(x?.season)===season&&Number(x?.week)===week)||String(x?.player_name)==="Dallas Goedert")).slice(0,1);
+  const rememberedAcquisitions=(t.trade_acquisitions||[]).filter(x=>{if(!x?.player_name||discussed.has(String(x.player_id)))return false;if(String(x.player_name)==="Dallas Goedert")return true;if(Number(x?.season)!==season||Number(x?.week)!==week)return false;const p=(t.starter_details||[]).find(p=>String(p?.id)===String(x.player_id)||p?.name===x.player_name);return Number(p?.points)>=8}).slice(0,1);
   for(let i=0;i<rememberedAcquisitions.length;i++){
     const acq=rememberedAcquisitions[i],out=(acq.outgoing_player_names||[]).filter(Boolean);
     const variants=[
@@ -971,7 +971,7 @@ function w2BuildSections(t,prev){
     ];
     players.push(w2S(t,r,"player-acquisition-"+i,variants[(w2Cohort(t)+i)%variants.length]));
   }
-  while(players.length<6)players.push(w2S(t,r,"player-fill-"+players.length,t.team_name+" needed more than one usable player to keep "+opp+" from shrinking the matchup to a single answer, and Week 2 supplied enough work to make that balance worth watching again."));
+  while(players.length<6){const useful=(t.starter_details||[]).filter(p=>Number(p.points)>=10).length;players.push(w2S(t,r,"player-fill-"+players.length,w2DisplayTeam(t.team_name)+" finished Week 2 with "+useful+" double-digit starter"+(useful===1?"":"s")+". That is the better measure of support behind the headline names."))}
   players.push(...w2IdentityRead(t,prev,r,top,opp));
   const miss=t.best_lineup_miss,gap=Number(miss?.gap)||0,txCount=(t.transactions||[]).length;
   const management=[
@@ -979,15 +979,15 @@ function w2BuildSections(t,prev){
     w2S(t,r,"mgmt-two",txCount?(t.manager_name+" made "+txCount+" completed roster move"+(txCount===1?"":"s")+" during the week; "+(won?"for "+alias.mascot+", the win buys those decisions time while Week 3 gets to show whether the churn fixed something real.":"after a "+w2One(margin)+"-point loss, "+t.team_name+" needs at least one of those moves to address the weakness that actually showed up Sunday.")):(t.manager_name+" left the transaction wire quiet, so the "+alias.mascot+" Week 3 response has to come from the roster already in the room rather than a late waiver-wire rescue."))
   ];
   const v=t.value_history_week,d=Number(v?.delta),pct=Math.abs(Number(v?.pct)),value=Number.isFinite(d)?[
-    w2S(t,r,"value-one","The "+alias.mascot+" moved "+(d>0?"up ":d<0?"down ":"sideways ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(pct)?" ("+w2One(pct)+"%)":"")+". "+(Number.isFinite(pct)&&pct<1?"For "+alias.mascot+", that is essentially flat, so the market move does not deserve a dramatic football story.":d>0?"For "+alias.mascot+", that is enough movement to improve trade flexibility, even though roster value and weekly wins are separate scoreboards.":d<0?"For "+alias.mascot+", that is enough movement to reduce trade flexibility, even though a market decline is not the same thing as a bad Sunday.":"The "+alias.mascot+" market barely moved." ))
+    w2S(t,r,"value-one","The "+alias.mascot+" moved "+(d>0?"up ":d<0?"down ":"sideways ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(pct)?" ("+w2One(pct)+"%)":"")+". "+(Number.isFinite(pct)&&pct<1?"That is effectively flat and does not materially change the club’s trade leverage.":d>0?"That gain gives the roster more leverage in trade talks than it had a week ago.":d<0?"That decline trims some trade leverage and raises the cost of selling low.":"The market barely moved." ))
   ]:["n/a"];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],weakPrev=weak?w2PrevPlayer(prev,weak.id):null,hot=[
     w2S(t,r,"hot-one",weak?weak.name+" is the Week 2 warning label after "+w2One(weak.points)+" fantasy points"+(weak.real_stat_line?" on "+w2Stat(weak):"")+"; "+(won?t.team_name+" can address that quiet spot while a win still makes the correction cheap.":"in a loss, that empty lineup slot forced the rest of "+t.team_name+" to carry more of the scoring burden."):"The weakest spot is not clear enough to invent one."),
     w2S(t,r,"hot-two",weak&&weakPrev?(w2HotTrend(t,r,weak,weakPrev)):"Week 3 will not settle anything for the "+alias.mascot+", but it can tell us whether their weakest Week 2 spot learned anything.")
   ];
-  const eligible=w2EligibleCool(t),coolNames=eligible.length?eligible.map(p=>p.name):top.filter(Boolean).slice(0,1).map(p=>p.name),cool=[
-    w2S(t,r,"cool-one",w2CoolRead(t,r,coolNames,won,margin))
-  ];
+  const topIds=new Set(top.filter(Boolean).map(p=>String(p.id))),support=(t.starter_details||[]).filter(p=>!topIds.has(String(p.id))&&Number(p.points)>=8).sort((a,b)=>Number(b.points)-Number(a.points))[0],cool=support?[
+    w2S(t,r,"cool-one",support.name+" gets the under-the-radar credit after "+w2One(support.points)+" fantasy points. That contribution came from outside the three names already carrying the main scoring story.")
+  ]:[];
   const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=[
     w2S(t,r,"sent-one",w2SentimentRead(t,prev,r,fs,prevSent,won))
   ];

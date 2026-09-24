@@ -677,8 +677,8 @@ function w2BuildSections(t,prev){
     w2S(t,r,"hot-one",weak?weak.name+" is the Week 2 warning label after "+w2One(weak.points)+" fantasy points"+(weak.real_stat_line?" on "+w2Stat(weak):"")+"; "+(won?t.team_name+" can address that quiet spot while a win still makes the correction cheap.":"in a loss, that empty lineup slot forced the rest of "+t.team_name+" to carry more of the scoring burden."):"The weakest spot is not clear enough to invent one."),
     w2S(t,r,"hot-two",weak&&weakPrev?(w2HotTrend(t,r,weak,weakPrev)):"Week 3 will not settle anything for the "+alias.mascot+", but it can tell us whether their weakest Week 2 spot learned anything.")
   ];
-  const support=(t.starter_details||[]).slice(3).filter(p=>Number(p.points)>=8).sort((a,b)=>Number(b.points)-Number(a.points))[0],eligible=w2EligibleCool(t),coolNames=support?[support.name]:(eligible.length?eligible.map(p=>p.name):top.filter(Boolean).slice(0,1).map(p=>p.name)),cool=[
-    w2S(t,r,"cool-one",support?(support.name+" gets the under-the-radar credit after "+w2One(support.points)+" fantasy points. That contribution mattered because it came from outside the three names already carrying the main player section."):w2CoolRead(t,r,coolNames,won,margin))
+  const eligible=w2EligibleCool(t),coolNames=eligible.length?eligible.map(p=>p.name):top.filter(Boolean).slice(0,1).map(p=>p.name),cool=[
+    w2S(t,r,"cool-one",w2CoolRead(t,r,coolNames,won,margin))
   ];
   const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=[
     w2S(t,r,"sent-one",w2SentimentRead(t,prev,r,fs,prevSent,won))

@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-24T19:08:37.236Z",
+  "generatedAt": "2026-09-24T22:23:04.811Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 2,
@@ -391,7 +391,7 @@
     "diagnostics": {
       "finalGames": 32,
       "qualifiedPlayerGames": 2101,
-      "rejectedPlayerGames": 2469,
+      "rejectedPlayerGames": 2473,
       "ignoredGames": 0
     }
   },
@@ -28840,9 +28840,9 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 887,
+      "players": 888,
       "withPpr": 735,
-      "withGames": 887
+      "withGames": 888
     },
     "2024": {
       "players": 954,
@@ -37878,6 +37878,15 @@
         "rush_yd": 1,
         "rec_yd": 305,
         "bonus_fd_te": 13
+      },
+      "7830": {
+        "gp": 8,
+        "def_snp": 299,
+        "idp_tkl": 19,
+        "idp_tkl_loss": 2,
+        "idp_tkl_solo": 18,
+        "idp_pass_def": 1,
+        "idp_tkl_ast": 1
       },
       "7833": {
         "gp": 8,

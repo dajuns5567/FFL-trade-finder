@@ -19030,6 +19030,27 @@
     "rush_yd": 1,
     "rec_rz_tgt": 3
   },
+  "7830": {
+    "gp": 8,
+    "_ppr_native_weeks": 0,
+    "_ppr_reconstructed_weeks": 0,
+    "def_snp": 299,
+    "idp_tkl": 19,
+    "idp_tkl_solo": 18,
+    "pos_rank_half_ppr": 7992,
+    "pos_rank_ppr": 7992,
+    "pos_rank_std": 7992,
+    "tm_def_snp": 543,
+    "tm_off_snp": 482,
+    "tm_st_snp": 227,
+    "gs": 6,
+    "st_snp": 17,
+    "idp_pass_def": 1,
+    "idp_tkl_ast": 1,
+    "idp_tkl_loss": 2,
+    "penalty": 1,
+    "penalty_yd": 5
+  },
   "7833": {
     "gp": 8,
     "_ppr_native_weeks": 0,

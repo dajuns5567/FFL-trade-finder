@@ -939,7 +939,8 @@ function w2ClosingRead(t,r,won,margin,top,weak,next){
       "The easiest criticism of "+team+" is sitting right in the scoring spread: "+star+" reached "+starPts+" and "+weakName+" stopped at "+weakPts+". That does not erase the "+result+" against "+foe+", but it explains why rivals know exactly where to point their jokes. At "+rec+", the next Sunday against "+nextName+" matters because another quiet bottom slot turns a one-week weakness into recurring material."
     ]
   };
-  return (rows[rid]||rows["walter-mercer"])[v];
+  const selected=(rows[rid]||rows["walter-mercer"])[v];
+  return selected.replace(/[.!?]$/,"; the Week 3 question is whether "+weakName+" can give "+team+" more than "+weakPts+" points.");
 }
 
 function w2BuildSections(t,prev){

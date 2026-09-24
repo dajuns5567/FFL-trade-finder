@@ -718,7 +718,7 @@ function w2IdentityRead(t,prev,r,top,opp){
     "tess-delaney":[
       "The top of the "+a.mascot+" table handled "+share+"% of the scoring, with "+star+" in the centerpiece seat.",
       star+" and "+second+" did the visible work; the top three owned "+share+"% of the total, leaving "+w2One(remainder)+" points for the rest of the room.",
-      "Week 2 put "+w2One(topPts)+" of "+w2One(pts)+" points in the hands of the top three "+a.mascot+" scorers. That distribution is more revealing than another adjective.",
+      "Week 2 put "+w2One(topPts)+" of "+w2One(pts)+" points in the hands of the top three "+a.mascot+" scorers. For "+team+", that distribution is more revealing than another adjective.",
       "The "+a.mascot+" stars supplied "+share+"% of the total. Lovely at the top; the supporting cast had "+w2One(remainder)+" points to offer."
     ],
     "mack-hollis":[
@@ -764,13 +764,13 @@ function w2IdentityRead(t,prev,r,top,opp){
         "The scoring moved "+d+" points from one Sunday to the next. That is barely enough to wrinkle the tablecloth."
       ],
       up:[
-        "The "+a.mascot+" scoring total rose "+d+" points from the opener. Even the good china notices a swing that large.",
+        "The "+a.mascot+" scoring total rose "+d+" points from the opener. The good china notices that kind of lift.",
         "Week 2 lifted the "+a.mascot+" total by "+d+" points. That is enough movement to change the room.",
         "The scoreboard moved "+d+" points north from Week 1 for "+team+". That is no decorative adjustment.",
         "A "+d+"-point rise from the opener gives the "+a.mascot+" a noticeably different profile."
       ],
       down:[
-        "The "+a.mascot+" scoring total fell "+d+" points from the opener. Even the good china notices a swing that large.",
+        "The "+a.mascot+" scoring total fell "+d+" points from the opener. The good china notices that kind of drop.",
         "Week 2 cut the "+a.mascot+" total by "+d+" points. That is enough movement to change the room.",
         "The scoreboard moved "+d+" points south from Week 1 for "+team+". That is no decorative adjustment.",
         "A "+d+"-point fall from the opener gives the "+a.mascot+" a noticeably different profile."
@@ -1192,28 +1192,89 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
     }
   };
   const moveSets={
-    up:[
-      " The fan rating climbed "+Math.abs(delta)+" points from Week 1, a noticeable swing toward confidence.",
-      " Week over week, sentiment moved "+Math.abs(delta)+" points warmer. The crowd is giving this result real credit.",
-      " The meter added "+Math.abs(delta)+" points since the opener, enough to change the tone around Week 3.",
-      " Sentiment rose "+Math.abs(delta)+" points from Week 1. Patience is being replaced by belief."
-    ],
-    down:[
-      " The fan rating fell "+Math.abs(delta)+" points from Week 1, a noticeable swing toward frustration.",
-      " Week over week, sentiment moved "+Math.abs(delta)+" points colder. The crowd is charging this result to management.",
-      " The meter lost "+Math.abs(delta)+" points since the opener, enough to change the tone around Week 3.",
-      " Sentiment dropped "+Math.abs(delta)+" points from Week 1. Patience is getting thinner."
-    ],
-    flat:[
-      " The Week 1-to-Week 2 rating barely moved, which says this result mostly confirmed the existing mood.",
-      " Sentiment hardly budged from the opener. The crowd already knew what it thought.",
-      " The meter stayed nearly level from Week 1. This Sunday reinforced more than it changed.",
-      " Week-over-week sentiment was basically flat, so the fan base is carrying the same argument into Week 3."
-    ],
-    none:["","","",""]
+    "walter-mercer":{
+      up:[
+        " The fan rating climbed "+Math.abs(delta)+" points from Week 1, a noticeable swing toward confidence.",
+        " Week over week, sentiment moved "+Math.abs(delta)+" points warmer. Supporters are giving this result real credit.",
+        " The meter added "+Math.abs(delta)+" points since the opener, enough to change the Week 3 conversation.",
+        " Sentiment rose "+Math.abs(delta)+" points from Week 1. Patience is giving way to belief."
+      ],
+      down:[
+        " The fan rating fell "+Math.abs(delta)+" points from Week 1, a noticeable swing toward frustration.",
+        " Week over week, sentiment moved "+Math.abs(delta)+" points colder. Supporters are charging this result to management.",
+        " The meter lost "+Math.abs(delta)+" points since the opener, enough to change the Week 3 conversation.",
+        " Sentiment dropped "+Math.abs(delta)+" points from Week 1. Patience is getting thinner."
+      ],
+      flat:[
+        " The Week 1-to-Week 2 rating barely moved; this result mostly confirmed the existing mood.",
+        " Sentiment hardly budged from the opener. The crowd already knew what it thought.",
+        " The meter stayed close to its Week 1 mark. Sunday reinforced more than it changed.",
+        " Week-over-week sentiment was nearly flat, so the same argument carries into Week 3."
+      ]
+    },
+    "tess-delaney":{
+      up:[
+        " The room warmed by "+Math.abs(delta)+" rating points from Week 1, enough to make optimism look newly presentable.",
+        " Sentiment climbed "+Math.abs(delta)+" points since the opener; the crowd has moved from polite interest toward actual belief.",
+        " A "+Math.abs(delta)+"-point rise on the meter means the room is dressing this result as progress.",
+        " The fan rating gained "+Math.abs(delta)+" points in one week. Confidence has found a better seat."
+      ],
+      down:[
+        " The room cooled by "+Math.abs(delta)+" rating points from Week 1, enough to make frustration impossible to hide.",
+        " Sentiment fell "+Math.abs(delta)+" points since the opener; the crowd has moved from concern toward open skepticism.",
+        " A "+Math.abs(delta)+"-point drop on the meter means the room is dressing this result as a warning.",
+        " The fan rating lost "+Math.abs(delta)+" points in one week. Patience has been moved to a smaller table."
+      ],
+      flat:[
+        " The room barely changed temperature from Week 1, so this Sunday confirmed the existing opinion.",
+        " Sentiment stayed almost level with the opener. The crowd has not changed outfits yet.",
+        " The meter hardly moved, which leaves the same fan argument seated at the table for Week 3.",
+        " Week-over-week mood was nearly unchanged; this result reinforced the room more than it rearranged it."
+      ]
+    },
+    "mack-hollis":{
+      up:[
+        " The meter jumped "+Math.abs(delta)+" points from Week 1. That is enough to turn optimism up a few notches.",
+        " Fan sentiment gained "+Math.abs(delta)+" points in a week. The volume knob is moving toward obnoxious.",
+        " A "+Math.abs(delta)+"-point rise means the crowd found fresh reasons to get loud.",
+        " The rating climbed "+Math.abs(delta)+" points from the opener. One more good Sunday and subtlety is finished."
+      ],
+      down:[
+        " The meter dropped "+Math.abs(delta)+" points from Week 1. That is enough to make the boos louder.",
+        " Fan sentiment lost "+Math.abs(delta)+" points in a week. The volume knob is moving toward furious.",
+        " A "+Math.abs(delta)+"-point fall means the crowd found fresh reasons to get loud for the wrong reason.",
+        " The rating sank "+Math.abs(delta)+" points from the opener. One more bad Sunday and subtlety is finished."
+      ],
+      flat:[
+        " The meter barely moved from Week 1. Same fan fight, new Sunday.",
+        " Sentiment stayed almost flat, so nobody gets to pretend the crowd changed its mind.",
+        " The rating hardly budged from the opener. The noise is basically the same noise.",
+        " Week-over-week mood was nearly level. Fans are carrying the same megaphone into Week 3."
+      ]
+    },
+    "nora-voss":{
+      up:[
+        " The rating rose "+Math.abs(delta)+" points from Week 1, making the easy rival jokes a little less useful.",
+        " Sentiment gained "+Math.abs(delta)+" points since the opener. The home crowd suddenly has more ammunition.",
+        " A "+Math.abs(delta)+"-point climb on the meter gives rivals less room to sell the same punch line.",
+        " The fan number moved "+Math.abs(delta)+" points upward. Skepticism just got a little more expensive."
+      ],
+      down:[
+        " The rating fell "+Math.abs(delta)+" points from Week 1, making the easy rival jokes a little more useful.",
+        " Sentiment lost "+Math.abs(delta)+" points since the opener. The home crowd is starting to borrow the rival material.",
+        " A "+Math.abs(delta)+"-point drop on the meter gives rivals more room to sell the same punch line.",
+        " The fan number moved "+Math.abs(delta)+" points downward. Optimism just got a little more expensive."
+      ],
+      flat:[
+        " The rating barely moved from Week 1, so rivals are working with the same mood they had last Sunday.",
+        " Sentiment stayed almost level. The joke changed less than the calendar did.",
+        " The meter hardly budged from the opener, leaving the same home-crowd argument in circulation.",
+        " Week-over-week mood was nearly flat. Nobody gets a fresh narrative for free."
+      ]
+    }
   };
   const base=(rows[rid]||rows["walter-mercer"])[type][v];
-  const move=delta==null?moveSets.none[v]:(Math.abs(delta)<=5?moveSets.flat[v]:delta>0?moveSets.up[v]:moveSets.down[v]);
+  const move=delta==null?"":(Math.abs(delta)<=5?(moveSets[rid]||moveSets["walter-mercer"]).flat[v]:delta>0?(moveSets[rid]||moveSets["walter-mercer"]).up[v]:(moveSets[rid]||moveSets["walter-mercer"]).down[v]);
   return base+move
 }
 
@@ -1369,7 +1430,7 @@ function w2BuildSections(t,prev){
           :([
               "There was no hidden fourth scorer for "+alias.mascot+". The headline names really did have to carry most of the useful production.",
               "No supporting scorer cleared the credit bar for "+alias.mascot+"; the absence of a second wave is the point.",
-              "The "+alias.mascot+" credit list stops with the headline group. Nobody underneath produced enough to force another name into the praise section.",
+              "The "+alias.mascot+" credit list stops with the headline group; for "+alias.mascot+", nobody underneath produced enough to force another name into the praise section.",
               "There is no secret contributor to promote here. The supporting scores stayed too quiet for a separate Week 2 compliment."
             ])[w2Hash(t.team_name+"|no-credit")%4])
   ];

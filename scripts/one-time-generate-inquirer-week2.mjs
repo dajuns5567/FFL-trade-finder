@@ -294,8 +294,8 @@ function w2PlayerAngle(t,r,p,pp,i,opp){
     return /TD/i.test(String(p?.real_stat_line||""))?p.name+" turned scoring opportunities into points instead of needing huge yardage volume; that efficiency gave "+a.mascot+" something that can survive a close fantasy matchup.":def?p.name+" made the defensive third of the scoring story matter against "+opp+", which kept the matchup from becoming offense-only.":p.name+" filled the third scoring lane well enough that "+opp+" never got the one-player game it needed.";
   }
   if(rid==="tess-delaney"){
-    if(i===0)return def?p.name+" brought "+w2One(pts)+" defensive points to the good china against "+opp+", the sort of IDP performance that changes who gets to act composed afterward.":pts>=20?p.name+" was the centerpiece against "+opp+" with "+w2One(pts)+" points, enough production to let the rest of the table play supporting roles.":p.name+" led the "+a.mascot+" against "+opp+" with "+w2One(pts)+" points, a modest centerpiece line that made every supporting contribution more important.";
-    if(i===1)return delta!=null&&delta>6?p.name+" arrived much louder against "+opp+" than in the opener, and the improvement gave "+a.mascot+" room to enjoy the afternoon instead of surviving it.":p.name+" supplied the kind of supporting score against "+opp+" that keeps a lovely first act from becoming a one-person production.";
+    if(i===0)return def?p.name+" brought "+w2One(pts)+" defensive points to the good china against "+opp+", the sort of IDP performance that changes who gets to act composed afterward.":pts>=20?p.name+" was the "+a.mascot+" centerpiece against "+opp+" with "+w2One(pts)+" points, enough production to let the rest of the table play supporting roles.":p.name+" led the "+a.mascot+" against "+opp+" with "+w2One(pts)+" points, a modest centerpiece line that made every supporting contribution more important.";
+    if(i===1)return delta!=null&&delta>6?p.name+" arrived much louder against "+opp+" than in the opener, and the improvement gave "+a.mascot+" room to enjoy the afternoon instead of surviving it.":p.name+" supplied the "+a.mascot+" supporting score against "+opp+" that keeps a lovely first act from becoming a one-person production.";
     return p.name+" did not need top billing to matter; "+a.mascot+" got enough from the third line to keep "+opp+" from turning the game into a referendum on one star.";
   }
   if(rid==="mack-hollis"){
@@ -303,8 +303,8 @@ function w2PlayerAngle(t,r,p,pp,i,opp){
     if(i===1)return delta!=null&&delta>8?p.name+" jumped "+w2One(delta)+" points from Week 1 against "+opp+" and kicked the volume up exactly when "+a.mascot+" needed another headline.":p.name+" gave "+a.mascot+" a second punch against "+opp+", which is how a big Sunday turns from one star going nuclear into an actual lineup problem.";
     return /TD/i.test(String(p?.real_stat_line||""))?p.name+" found the end zone enough to make the yardage argument irrelevant; for "+a.mascot+", those touchdowns were rude in exactly the right way.":p.name+" kept the scoreboard moving after the obvious stars had already announced themselves.";
   }
-  if(i===0)return p.name+" put up "+w2One(pts)+" against "+opp+" and stole the easiest joke from every rival: nobody can call the best player quiet after that.";
-  if(i===1)return delta!=null&&delta< -8?p.name+" cooled off against "+opp+" from Week 1, which makes the rest of this result more interesting; "+t.team_name+" survived without getting the same version twice.":p.name+" gave "+opp+" one more thing to account for, and that is how a lineup becomes annoying instead of merely top-heavy.";
+  if(i===0)return p.name+" put up "+w2One(pts)+" against "+opp+" for "+a.mascot+" and stole the easiest joke from every rival: nobody can call this team’s top line quiet after that.";
+  if(i===1)return delta!=null&&delta< -8?p.name+" cooled off against "+opp+" from Week 1, which makes the rest of this result more interesting; "+t.team_name+" survived without getting the same version twice.":p.name+" gave "+opp+" one more "+a.mascot+" problem to account for, which is how the lineup becomes annoying instead of merely top-heavy.";
   return p.name+" did enough behind the headline player that "+opp+" never got to laugh at a one-man roster, which matters more to "+a.mascot+" than a decorative third-place stat line.";
 }
 function w2BenchRead(t,r,miss,gap,won,margin){
@@ -318,7 +318,7 @@ function w2StatKind(p){
   const pos=String(p?.position||"").toUpperCase();
   if(/^(QB)$/.test(pos))return"passing";
   if(/^(RB|FB)$/.test(pos))return"rushing and receiving";
-  if(/^(WR|TE)$/.test(pos))return"receiving";
+  if(/^(WR|TE)$/.test(pos))return"receiving / receptions";
   return"defensive";
 }
 function w2LedeShape(t,r,won,margin,opp,top){
@@ -392,7 +392,7 @@ function w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders){
     (lead?t.team_name+" is tied atop "+div+" with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" race around "+t.team_name+" is already compressed. ")+(peers?"The rivals are "+peers+"; one Sunday can reorder the whole group.":"One Sunday can reorder the group."),
     (lead?"At the top of "+div+", "+leadNames+" are tied. ":"The "+a.mascot+" enter Week 3 with division leverage still available. ")+(peers?"Behind and around them are "+peers+", so every clean result carries immediate value.":"Every clean result carries immediate value."),
     (lead?leadNames+" are tied for first in "+div+". ":"Nobody around "+t.team_name+" has made "+div+" comfortable yet. ")+(peers?"For "+a.mascot+", the division board also includes "+peers+", and Week 3 gets first crack at breaking that cluster.":"Week 3 gets first crack at breaking the cluster."),
-    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"The other names are "+peers+", making the next result part of the race rather than an isolated game.":"The next result is part of the race."),
+    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For "+a.mascot+", the other division names are "+peers+", making the next result part of the race rather than an isolated game.":"The next result is part of the race."),
     (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"The surrounding records belong to "+peers+"; that is enough context to make Week 3 matter immediately.":"That is enough context to make Week 3 matter immediately.")
   ];
   return rows[k];
@@ -415,8 +415,8 @@ function w2RoadRead(t,r,next,later){
     "After "+next+", the "+a.mascot+" see "+rest+". A Week 3 win lowers the pressure on that stretch; a loss makes "+first+" feel like an early recovery assignment. For "+a.mascot+", the same schedule can look inviting or urgent depending on what happens against "+next+".",
     next+" comes first, then "+rest+". For "+t.team_name+", banking Week 3 turns the following games into chances to build; dropping it turns "+first+" into a repair job. That is why the "+a.mascot+" sequence through "+next+" and "+first+" matters as much as the names.",
     "The road after "+next+" runs through "+rest+". Win now and the "+a.mascot+" can attack that stretch from strength; lose and "+first+" immediately carries more weight. Week 3 changes the emotional math of everything behind it.",
-    "Beyond "+next+" are "+rest+". The "+a.mascot+" can make those games look manageable by winning Week 3, or make "+first+" feel mandatory by losing it. For "+t.team_name+", early-season schedule pressure gets created one result at a time, starting with "+next+".",
-    "The schedule does not stop with "+next+": "+rest+" follow. A win gives "+t.team_name+" room to breathe before "+first+"; a loss spends that room immediately. For "+a.mascot+", that is the difference between building on the start and asking "+first+" to repair it.",
+    "Beyond "+next+" are "+rest+". The "+a.mascot+" can make those games look manageable by winning Week 3, or make "+first+" feel mandatory by losing it; for this club, the pressure starts with "+next+" instead of some abstract future stretch.",
+    "For "+a.mascot+", the schedule does not stop with "+next+": "+rest+" follow. A win gives them room to breathe before "+first+"; a loss spends that room immediately, which is the difference between building on the start and asking "+first+" to repair it.",
     next+" is the hinge before "+rest+". If the "+a.mascot+" bank Week 3, "+first+" arrives with optional pressure; if they do not, it arrives with required pressure. For "+t.team_name+", that sequencing through "+next+" belongs in the outlook, not just the opponent list."
   ];
   return rows[k];
@@ -489,7 +489,7 @@ function w2BuildSections(t,prev){
   ]:["n/a"];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],weakPrev=weak?w2PrevPlayer(prev,weak.id):null,hot=[
     w2S(t,r,"hot-one",weak?weak.name+" is the Week 2 warning label after "+w2One(weak.points)+" fantasy points"+(weak.real_stat_line?" on "+w2Stat(weak):"")+"; "+(won?t.team_name+" can fix that quiet spot while a win still makes the correction cheap.":opp+" made that empty space expensive because the rest of "+t.team_name+" had to cover it."):"The weakest spot is not clear enough to invent one."),
-    w2S(t,r,"hot-two",weak&&weakPrev?(w2HotTrend(t,r,weak,weakPrev)):"Week 3 will not settle the season for "+t.team_name+", but it can tell us whether the weakest Week 2 spot learned anything.")
+    w2S(t,r,"hot-two",weak&&weakPrev?(w2HotTrend(t,r,weak,weakPrev)):"Week 3 will not settle the season, but for "+alias.mascot+" it can tell us whether the weakest Week 2 spot learned anything.")
   ];
   const eligible=w2EligibleCool(t),coolNames=eligible.length?eligible.map(p=>p.name):top.filter(Boolean).slice(0,2).map(p=>p.name),cool=[
     w2S(t,r,"cool-one",w2CoolRead(t,r,coolNames,won,margin)),
@@ -607,6 +607,9 @@ const overview=rewriteWeek2Overview(rawOverview,inq.teams,week1Preload2026);
 const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),published_locked:true,broadcast_version:15,inquirer_version:26,editorial_revision:6,context_snapshot_through_week:2,projection_source:Object.keys(currentProj).length?'Sleeper Week 2 projections scored with league settings; Week 3 projections captured only for the Week 2 next-opponent outlook':'projection data partially unavailable in preloaded Week 2 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
 
 if(result.teams.length!==32)throw new Error('Expected 32 team articles');
+const week2PublishedCopy=result.teams.flatMap(t=>t?.inquirer_article?.paragraphs||[]).join("\n");
+if(/\bhad a legal alternative\b/i.test(week2PublishedCopy))throw new Error("Week 2 still contains rules-engine bench wording");
+if(/\bscored \d+(?:\.\d+)? fantasy points; the receiving line was\b/i.test(week2PublishedCopy))throw new Error("Week 2 still contains the retired generic receiving-stat intro");
 assertWeek2Originality(result,week1Preload2026);
 for(const t of result.teams){const a=t.inquirer_article;if(!a?.headline||!a?.reporter?.id||!Array.isArray(a?.paragraphs)||a.paragraphs.length<9)throw new Error('Incomplete article '+t.roster_id)}
 fs.writeFileSync(process.env.OUT||'/tmp/week2-inquirer.json',JSON.stringify(result,null,2)+'\n');

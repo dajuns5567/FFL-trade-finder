@@ -547,8 +547,9 @@ function w2IdentityRead(t,prev,r,top,opp){
       ]
     ]
   };
-  const rows=byReporter[rid]||byReporter["walter-mercer"];
-  return rows[v]
+  const rows=byReporter[rid]||byReporter["walter-mercer"],picked=[...rows[v]],next=String(t.next_opponent_name||"the Week 3 opponent");
+  picked[2]=String(picked[2]||"").replace(/[.!?]$/,"")+"; Week 3 will show whether the "+a.mascot+" can carry that same scoring balance into "+next+" without asking the same stars to reproduce the same Sunday.";
+  return picked
 }
 
 function w2BuildSections(t,prev){

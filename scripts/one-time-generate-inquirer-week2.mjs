@@ -471,7 +471,7 @@ function w2IdentityRead(t,prev,r,top,opp){
       ],
       [
         star+" was the first name on the Week 2 story, but the broader number is "+share+"%: that is how much of "+t.team_name+"’s scoring came from the top three. The "+a.mascot+" looked "+shape+" against "+opp+".",
-        delta==null?"The opener cannot support a full team-total comparison, so the better checkpoint is role stability. Which Week 2 scorers can "+t.team_name+" reasonably expect to matter again?":("Compared with Week 1, "+t.team_name+" changed its total by "+deltaAbs+" points "+deltaDir+". That swing is large enough to ask what changed in usage, matchup or lineup quality rather than waving it off as noise."),
+        delta==null?"The opener cannot support a full team-total comparison, so the better checkpoint is role stability. Which Week 2 scorers can "+t.team_name+" reasonably expect to matter again?":("Compared with Week 1, "+t.team_name+" changed its total by "+deltaAbs+" points "+deltaDir+". For "+a.mascot+", that swing is large enough to ask what changed in usage, matchup or lineup quality rather than waving it off as noise."),
         "There were "+useful+" double-digit starters for "+a.mascot+". "+(useful>=5?"That kind of spread gives the roster room for one star to have an ordinary Sunday.":"That level of support leaves less margin for error if "+star+" comes back toward earth.")
       ],
       [
@@ -483,7 +483,7 @@ function w2IdentityRead(t,prev,r,top,opp){
     "tess-delaney":[
       [
         "The "+a.mascot+" are starting to dress like a "+shape+" roster: "+star+", "+second+" and the next scorer supplied "+w2One(topPts)+" of "+w2One(pts)+" points. At roughly "+share+"%, the expensive pieces looked more like the room’s foundation than its decoration.",
-        delta==null?"I will not pretend the trend line owns a tuxedo when Week 1 does not give us a complete team-total comparison. Week 2 can still tell us who looked comfortable under the lights.":("The whole outfit moved "+deltaAbs+" points "+deltaDir+" from the opener. That is a genuine change in silhouette, even if two Sundays are still too early to tailor the championship jacket."),
+        delta==null?"I will not pretend the trend line owns a tuxedo when Week 1 does not give us a complete team-total comparison. Week 2 can still tell us who looked comfortable under the lights.":("The whole outfit moved "+deltaAbs+" points "+deltaDir+" from the opener. For "+a.mascot+", that is a genuine change in silhouette, even if two Sundays are still too early to tailor the championship jacket."),
         useful+" starters reached at least 10 points against "+opp+". "+(useful>=5?"That supporting work is what keeps one quiet centerpiece from sending the whole table into disorder.":"That is not quite enough depth to let every centerpiece have an off night without somebody spilling the wine.")
       ],
       [
@@ -494,7 +494,7 @@ function w2IdentityRead(t,prev,r,top,opp){
       [
         "Week 2 put "+w2One(topPts)+" of "+w2One(pts)+" points in the hands of the top three "+a.mascot+" scorers, about "+share+"%. I would call that "+shape+", with "+star+" receiving top billing rather than the entire stage.",
         delta==null?"A missing complete Week 1 total saves us from one bad habit: inventing certainty. We can still see which pieces looked expensive in a good way against "+opp+".":("The total changed by "+deltaAbs+" points "+deltaDir+" from the opener. That gives "+t.team_name+" a noticeably different profile without granting anyone permission to call two weeks a finished product."),
-        useful+" starters reached 10 points. "+(useful>=5?"That is enough competent work around the stars to keep the room calm when one name inevitably has a quieter Sunday.":"That leaves the supporting cast with something to prove before the next formal occasion.")
+        useful+" starters reached 10 points. "+(useful>=5?"That is enough competent work around the stars to keep the room calm when one name inevitably has a quieter Sunday.":"For "+a.mascot+", the supporting cast still has something to prove before the next formal occasion.")
       ],
       [
         "The "+a.mascot+" did not ask one player to host the entire evening: their top three scorers combined for "+w2One(topPts)+" of "+w2One(pts)+" points, a "+share+"% share. The result was a "+shape+" scoring profile against "+opp+".",
@@ -510,7 +510,7 @@ function w2IdentityRead(t,prev,r,top,opp){
       ],
       [
         star+" got the headline, but "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three scorers together. That "+share+"% share made the "+a.mascot+" look "+shape+" and gave "+opp+" no easy place to hide.",
-        delta==null?"No complete opener total means I am not screaming “trend” just to hear myself. What I can scream is that Week 2 showed where the useful points actually came from.":("Compared with Week 1, "+t.team_name+" moved "+deltaAbs+" points "+deltaDir+". That is a big enough swing to change the Week 3 mood before anybody even sets a lineup."),
+        delta==null?"No complete opener total means I am not screaming “trend” just to hear myself. What I can scream is that Week 2 showed where the useful points actually came from.":("Compared with Week 1, "+t.team_name+" moved "+deltaAbs+" points "+deltaDir+". For "+a.mascot+", that is a big enough swing to change the Week 3 mood before anybody even sets a lineup."),
         useful>=5?"The depth number is loud too: "+useful+" starters hit double figures. That is the annoying kind of scoring where an opponent keeps waiting for the lineup to cool off and it refuses.":"The depth number is less fun: only "+useful+" starters reached double figures, which gives Week 3 opponents a very obvious dare."
       ],
       [
@@ -527,7 +527,7 @@ function w2IdentityRead(t,prev,r,top,opp){
     "nora-voss":[
       [
         "Rivals are going to remember the "+a.mascot+" as a "+shape+" team after Week 2. The top three produced "+w2One(topPts)+" of "+w2One(pts)+" points ("+share+"%), so the joke is either “stop "+star+"” or “good luck finding only one thing to stop.”",
-        delta==null?"The opener does not give us a complete team-total comparison, so I am not inventing a trend. Week 2 gives rivals enough material already.":("The "+a.mascot+" moved "+deltaAbs+" points "+deltaDir+" from Week 1. Repeat that kind of swing and rival managers stop calling it variance and start writing jokes around it."),
+        delta==null?"The opener does not give us a complete team-total comparison, so I am not inventing a trend. Week 2 gives rivals enough material already.":("The "+a.mascot+" moved "+deltaAbs+" points "+deltaDir+" from Week 1. Repeat that kind of swing for "+a.mascot+" and rival managers stop calling it variance and start writing jokes around it."),
         useful>=5?useful+" starters reached double figures against "+opp+", which is irritating depth because there is no single quiet name for rivals to root for.":"Only "+useful+" starters reached double figures, which gives Week 3 rivals a simple bit: make the stars carry everything again and wait for somebody else to blink."
       ],
       [

@@ -675,10 +675,10 @@ function w2CoolPairRead(t,r,eligible,won){
       "The good china belongs to "+names+" after "+sum+" combined points; one centerpiece is lovely, two is a much better room.",
       names+" share the polished part of the Week 2 story, combining for "+sum+" points and keeping the "+a.mascot+" from becoming a one-name production.",
       "I am setting two places at the good table: "+names+" combined for "+sum+" points, enough production to deserve equal billing.",
-      names+" gave the "+a.mascot+" "+sum+" combined points. That is the kind of paired performance that makes the rest of the table look less precarious."
+      names+" gave the "+a.mascot+" "+sum+" combined points, the kind of paired performance that makes the rest of the table look less precarious."
     ],
     "mack-hollis":[
-      "Put "+names+" together and you get "+sum+" points. That is not one star screaming into the void; that is two actual headline scores.",
+      "Put "+names+" together and you get "+sum+" points—two actual headline scores instead of one star screaming into the void.",
       names+" combined for "+sum+" and both earned the loud part of the Week 2 praise. "+a.mascot+" had two players worth yelling about, not one.",
       "The loud part comes in stereo: "+names+" gave "+a.mascot+" "+sum+" combined points.",
       names+" piled up "+sum+" together. If you want the clean Week 2 credit line, there it is."
@@ -691,7 +691,7 @@ function w2CoolPairRead(t,r,eligible,won){
     ]
   };
   const base=(rows[rid]||rows["walter-mercer"])[v];
-  return base+" "+(won?"The win turned that paired production into something useful.":"The loss means the rest of the lineup failed to convert that pair into a result.")
+  return base.replace(/[.!?]$/,"")+(won?"; for "+a.mascot+", the win converted that pair into a useful result.":"; for "+a.mascot+", the loss left that pair without enough support.")
 }
 function w2SectionHead(r,kind){
   const h={

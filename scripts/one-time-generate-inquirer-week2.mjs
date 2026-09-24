@@ -1067,6 +1067,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     }else{
       insight=wName+" finished with "+wDD+" double-digit starters versus "+lName+"’s "+lDD+", while the top-three totals were "+w2One(wTop3)+" and "+w2One(lTop3)+". The difference was lineup depth and concentration, not a vague claim that the loser simply 'didn’t have enough.'";
     }
+    if(i===0)insight=(ws[0]?.name||wName)+" was the true centerpiece, but the important part is what the numbers behind him say: "+insight;
     paras.push(w2S(w,r,"recap-impact-"+i,insight));
     paras.push(w2S(w,r,"recap-context-"+i,w2RecapContext(w,prev,i)));
     return{heading:(i===0?"Week 2’s Loudest Game: ":"")+wName+" vs. "+lName,paragraphs:paras}

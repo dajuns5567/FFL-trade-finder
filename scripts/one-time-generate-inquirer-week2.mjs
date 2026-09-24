@@ -289,22 +289,22 @@ function w2SlotLabel(slot){return String(slot||"lineup spot").replaceAll("_"," "
 function w2PlayerAngle(t,r,p,pp,i,opp){
   const a=w2Alias(t),pts=Number(p?.points)||0,prior=Number(pp?.points),delta=Number.isFinite(prior)?pts-prior:null,pos=String(p?.position||"").toUpperCase(),def=/^(DL|DE|DT|LB|DB|CB|S|EDGE|IDP)$/.test(pos),rid=String(r?.id||"");
   if(rid==="walter-mercer"){
-    if(i===0)return def?p.name+" supplied a defensive score large enough to swing a fantasy matchup on its own; that is not background production, it is part of why "+t.team_name+" could dictate the afternoon.":p.name+" gave "+t.team_name+" a genuine centerpiece score; when the top line reaches "+w2One(pts)+", the rest of the roster does not have to play perfect football.";
-    if(i===1)return delta!=null&&Math.abs(delta)>=8?p.name+" changed the week-to-week equation by "+w2One(Math.abs(delta))+" points "+(delta>0?"in the right direction":"from the opener")+"; that swing mattered because "+opp+" was already dealing with the top of the lineup.":p.name+" gave the "+a.mascot+" a second dependable lane to score through, which is more useful than simply calling the roster balanced.";
+    if(i===0)return def?p.name+" supplied a defensive score large enough to swing the matchup against "+opp+" on its own; that is not background production, it is part of why "+t.team_name+" could dictate the afternoon.":p.name+" gave "+t.team_name+" a genuine centerpiece score against "+opp+"; when the top line reaches "+w2One(pts)+", the rest of the roster does not have to play perfect football.";
+    if(i===1)return delta!=null&&Math.abs(delta)>=8?p.name+" changed the week-to-week equation against "+opp+" by "+w2One(Math.abs(delta))+" points "+(delta>0?"in the right direction":"from the opener")+"; that swing mattered because the opponent was already dealing with the top of the lineup.":p.name+" gave the "+a.mascot+" a second dependable lane against "+opp+", which is more useful than simply calling the roster balanced.";
     return /TD/i.test(String(p?.real_stat_line||""))?p.name+" turned scoring opportunities into points instead of needing huge yardage volume; that kind of efficiency is exactly what survives a close fantasy matchup.":p.name+" filled the third scoring lane well enough that "+opp+" never got the one-player game it needed.";
   }
   if(rid==="tess-delaney"){
-    if(i===0)return p.name+" was the centerpiece worthy of the good china: "+w2One(pts)+" points is the sort of performance that lets everyone else at the table look more composed.";
-    if(i===1)return delta!=null&&delta>6?p.name+" arrived much louder than in the opener, and the improvement gave "+a.mascot+" room to enjoy the afternoon instead of surviving it.":p.name+" supplied the kind of supporting score that keeps a lovely first act from becoming a one-person production.";
+    if(i===0)return p.name+" was the centerpiece worthy of the good china against "+opp+": "+w2One(pts)+" points is the sort of performance that lets everyone else at the table look more composed.";
+    if(i===1)return delta!=null&&delta>6?p.name+" arrived much louder against "+opp+" than in the opener, and the improvement gave "+a.mascot+" room to enjoy the afternoon instead of surviving it.":p.name+" supplied the kind of supporting score against "+opp+" that keeps a lovely first act from becoming a one-person production.";
     return p.name+" did not need top billing to matter; "+a.mascot+" got enough from the third line to keep "+opp+" from turning the game into a referendum on one star.";
   }
   if(rid==="mack-hollis"){
-    if(i===0)return p.name+" hung "+w2One(pts)+" on the board and made subtlety somebody else’s problem. That is the score people remember when they explain why "+a.mascot+" won.";
-    if(i===1)return delta!=null&&delta>8?p.name+" jumped "+w2One(delta)+" points from Week 1 and kicked the volume up exactly when "+a.mascot+" needed another headline.":p.name+" gave "+a.mascot+" a second punch, which is how a big Sunday turns from one star going nuclear into an actual lineup problem.";
+    if(i===0)return p.name+" hung "+w2One(pts)+" on "+opp+" and made subtlety somebody else’s problem. That is the score people remember when they explain why "+a.mascot+" won.";
+    if(i===1)return delta!=null&&delta>8?p.name+" jumped "+w2One(delta)+" points from Week 1 against "+opp+" and kicked the volume up exactly when "+a.mascot+" needed another headline.":p.name+" gave "+a.mascot+" a second punch against "+opp+", which is how a big Sunday turns from one star going nuclear into an actual lineup problem.";
     return /TD/i.test(String(p?.real_stat_line||""))?p.name+" found the end zone enough to make the yardage argument irrelevant. Touchdowns are allowed to be rude like that.":p.name+" kept the scoreboard moving after the obvious stars had already announced themselves.";
   }
-  if(i===0)return p.name+" put up "+w2One(pts)+" and stole the easiest joke from every rival: nobody can call the best player quiet after that.";
-  if(i===1)return delta!=null&&delta< -8?p.name+" cooled off from Week 1, which makes the rest of this win more interesting; "+t.team_name+" survived without getting the same version twice.":p.name+" gave rivals one more thing to account for, and that is how a lineup becomes annoying instead of merely top-heavy.";
+  if(i===0)return p.name+" put up "+w2One(pts)+" against "+opp+" and stole the easiest joke from every rival: nobody can call the best player quiet after that.";
+  if(i===1)return delta!=null&&delta< -8?p.name+" cooled off against "+opp+" from Week 1, which makes the rest of this result more interesting; "+t.team_name+" survived without getting the same version twice.":p.name+" gave "+opp+" one more thing to account for, and that is how a lineup becomes annoying instead of merely top-heavy.";
   return p.name+" did enough behind the headline player that "+opp+" never got to laugh at a one-man roster. That matters more than a decorative third-place stat line.";
 }
 function w2BenchRead(t,r,miss,gap,won,margin){

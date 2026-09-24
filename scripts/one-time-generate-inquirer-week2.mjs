@@ -679,7 +679,7 @@ function w2CoolPairRead(t,r,eligible,won){
     ],
     "mack-hollis":[
       "Put "+names+" together and you get "+sum+" points. That is not one star screaming into the void; that is two actual headline scores.",
-      names+" combined for "+sum+" and both get the big type. "+a.mascot+" had two players worth yelling about, not one.",
+      names+" combined for "+sum+" and both earned the loud part of the Week 2 praise. "+a.mascot+" had two players worth yelling about, not one.",
       "The loud part comes in stereo: "+names+" gave "+a.mascot+" "+sum+" combined points.",
       names+" piled up "+sum+" together. If you want the clean Week 2 credit line, there it is."
     ],

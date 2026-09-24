@@ -741,7 +741,7 @@ function w2IdentityRead(t,prev,r,top,opp){
   else depth=team+" got "+w2One(remainder)+" supporting points beyond the top three—enough to matter, but not enough to make the stars optional.";
   const change=delta==null?"The opener does not support a clean team-total comparison, so there is no reason to manufacture one.":(Math.abs(delta)<5
     ?team+" finished within "+w2One(Math.abs(delta))+" points of its Week 1 total. "+team+" stayed at basically the same scoring level even if the result felt different."
-    :team+" scored "+w2One(Math.abs(delta))+" points "+(delta>0?"more":"fewer")+" than in Week 1. That is a meaningful change in weekly output.");
+    :team+" scored "+w2One(Math.abs(delta))+" points "+(delta>0?"more":"fewer")+" than in Week 1. For "+team+", that is a meaningful change in weekly output.");
   return [intro[v],change,depth]
 }
 
@@ -841,7 +841,7 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
   const base=won
     ?(pts>=110?"The crowd did not just get a win; it got "+w2One(pts)+" points worth of reasons to believe the ceiling is real.":"The win helps, but "+w2One(pts)+" points keeps fans asking whether the scoring can travel into a tougher week.")
     :(pts>=100?"Scoring "+w2One(pts)+" and still losing to "+opp+" creates frustration more than panic: fans saw enough production to know the roster was alive, but not enough balance to finish the job.":pts<70?"Only "+w2One(pts)+" points leaves supporters with a specific complaint: too many lineup spots gave them almost nothing to cheer.":"A "+w2One(margin)+"-point loss gives fans something concrete to second-guess instead of a vague sense that the week went badly.");
-  const move=delta==null?"":delta>5?" The rating jumped "+delta+" points from Week 1, so optimism is moving faster than simple patience.":delta< -5?" The rating fell "+Math.abs(delta)+" points from Week 1, which means the crowd is losing patience quickly.":" The Week 1-to-Week 2 rating barely moved, which says the result confirmed more than it changed.";
+  const move=delta==null?"":delta>5?" The rating jumped "+delta+" points from Week 1, so optimism is moving faster than simple patience.":delta< -5?" The rating fell "+Math.abs(delta)+" points from Week 1, which means the crowd is losing patience quickly.":" The "+a.mascot+" Week 1-to-Week 2 rating barely moved, which says this result confirmed more than it changed.";
   if(rid==="tess-delaney")return base+move+" For "+a.mascot+", that is the difference between a room becoming hopeful and a room merely agreeing not to boo for another week.";
   if(rid==="mack-hollis")return base+move+" "+a.mascot+" fans do not need a spreadsheet to feel that. They need one more "+a.mascot+" Sunday that either makes the noise fun or makes it furious.";
   if(rid==="nora-voss")return base+move+" Rival jokes about "+a.mascot+" are one thing; the dangerous part is when the home crowd starts repeating them.";

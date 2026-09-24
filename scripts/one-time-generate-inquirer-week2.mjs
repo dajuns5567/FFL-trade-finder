@@ -717,14 +717,14 @@ function w2IdentityRead(t,prev,r,top,opp){
     "tess-delaney":[
       "The top of the "+a.mascot+" table handled "+share+"% of the scoring. That is a "+shape+" arrangement, with "+star+" receiving the centerpiece treatment.",
       star+" and "+second+" did the visible work, while the top three owned "+share+"% of the total. The rest of the table had "+w2One(remainder)+" points to contribute.",
-      "Week 2 put "+w2One(topPts)+" of "+w2One(pts)+" points in the hands of the top three "+a.mascot+" scorers. That tells me more about the room than another adjective would.",
+      "Week 2 put "+w2One(topPts)+" of "+w2One(pts)+" points in the hands of the top three "+a.mascot+" scorers. For "+team+", that tells me more about the room than another adjective would.",
       "The "+a.mascot+" stars supplied "+share+"% of the total. Lovely at the top; the question is how much company they actually had."
     ],
     "mack-hollis":[
       "Here is the back-page number: "+share+"% of "+team+"’s Week 2 points came from the top three. That tells you exactly how much weight the stars were carrying.",
       star+" got the headline, but the top three combined for "+w2One(topPts)+" of "+w2One(pts)+" points. The rest of the lineup gave them "+w2One(remainder)+".",
       "You want the loud number? "+share+"%. That is how much of the "+a.mascot+" total belonged to the top three scorers.",
-      "The stars put "+w2One(topPts)+" on the board; everybody else combined for "+w2One(remainder)+". That is the roster story hiding underneath the final score."
+      "The stars put "+w2One(topPts)+" on the board; everybody else combined for "+w2One(remainder)+". For "+team+", that is the roster story hiding underneath the final score."
     ],
     "nora-voss":[
       "Rivals are going to notice "+share+"% before they notice anything else: that is the share of "+a.mascot+" scoring owned by the top three.",
@@ -735,12 +735,12 @@ function w2IdentityRead(t,prev,r,top,opp){
   }[rid]||[];
   let depth;
   if(useful>=6)depth=useful+" starters reached double figures. That is unusual enough to matter: the scoring came from all over the lineup.";
-  else if(useful<=1)depth="Only "+useful+" starter"+(useful===1?"":"s")+" reached double figures. That is an extreme enough lack of depth to be part of the story.";
-  else if(share>=70)depth="Outside the top three, "+team+" produced only "+w2One(remainder)+" points. That is where the roster needs help if the stars cool off.";
+  else if(useful<=1)depth="Only "+useful+" starter"+(useful===1?"":"s")+" reached double figures. For "+team+", that lack of depth is extreme enough to be part of the story.";
+  else if(share>=70)depth="Outside the top three, "+team+" produced only "+w2One(remainder)+" points. That is where "+team+" needs help if the stars cool off.";
   else if(share<=50)depth="More than half of "+team+"’s scoring came from outside the top three. Week 2 was carried by depth, not one headline name.";
-  else depth="The supporting lineup added "+w2One(remainder)+" points beyond the top three—enough to matter, but not enough to make the stars optional.";
+  else depth=team+" got "+w2One(remainder)+" supporting points beyond the top three—enough to matter, but not enough to make the stars optional.";
   const change=delta==null?"The opener does not support a clean team-total comparison, so there is no reason to manufacture one.":(Math.abs(delta)<5
-    ?team+" finished within "+w2One(Math.abs(delta))+" points of its Week 1 total. The scoring level was basically stable even if the result felt different."
+    ?team+" finished within "+w2One(Math.abs(delta))+" points of its Week 1 total. "+team+" stayed at basically the same scoring level even if the result felt different."
     :team+" scored "+w2One(Math.abs(delta))+" points "+(delta>0?"more":"fewer")+" than in Week 1. That is a meaningful change in weekly output.");
   return [intro[v],change,depth]
 }
@@ -842,10 +842,10 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
     ?(pts>=110?"The crowd did not just get a win; it got "+w2One(pts)+" points worth of reasons to believe the ceiling is real.":"The win helps, but "+w2One(pts)+" points keeps fans asking whether the scoring can travel into a tougher week.")
     :(pts>=100?"Scoring "+w2One(pts)+" and still losing to "+opp+" creates frustration more than panic: fans saw enough production to know the roster was alive, but not enough balance to finish the job.":pts<70?"Only "+w2One(pts)+" points leaves supporters with a specific complaint: too many lineup spots gave them almost nothing to cheer.":"A "+w2One(margin)+"-point loss gives fans something concrete to second-guess instead of a vague sense that the week went badly.");
   const move=delta==null?"":delta>5?" The rating jumped "+delta+" points from Week 1, so optimism is moving faster than simple patience.":delta< -5?" The rating fell "+Math.abs(delta)+" points from Week 1, which means the crowd is losing patience quickly.":" The Week 1-to-Week 2 rating barely moved, which says the result confirmed more than it changed.";
-  if(rid==="tess-delaney")return base+move+" That is the difference between a room becoming hopeful and a room merely agreeing not to boo for another week.";
-  if(rid==="mack-hollis")return base+move+" Fans do not need a spreadsheet to feel that. They need one more Sunday that either makes the noise fun or makes it furious.";
-  if(rid==="nora-voss")return base+move+" Rival jokes are one thing; the dangerous part is when the home crowd starts repeating them.";
-  return base+move+" That is the part of the sentiment number worth carrying into Week 3.";
+  if(rid==="tess-delaney")return base+move+" For "+a.mascot+", that is the difference between a room becoming hopeful and a room merely agreeing not to boo for another week.";
+  if(rid==="mack-hollis")return base+move+" "+a.mascot+" fans do not need a spreadsheet to feel that. They need one more "+a.mascot+" Sunday that either makes the noise fun or makes it furious.";
+  if(rid==="nora-voss")return base+move+" Rival jokes about "+a.mascot+" are one thing; the dangerous part is when the home crowd starts repeating them.";
+  return base+move+" For "+a.mascot+", that is the part of the sentiment number worth carrying into Week 3.";
 }
 
 function w2RecapTradeParagraphs(teams,r){
@@ -976,8 +976,8 @@ function w2BuildSections(t,prev){
   ];
   const v=t.value_history_week,d=Number(v?.delta),pct=Math.abs(Number(v?.pct)),value=Number.isFinite(d)?[
     w2S(t,r,"value-one",Number.isFinite(pct)&&pct<1
-      ?("The "+alias.mascot+" market moved only "+w2One(pct)+"% over the tracked window. That is noise, not a roster referendum.")
-      :("The "+alias.mascot+" moved "+(d>0?"up ":"down ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(pct)?" ("+w2One(pct)+"%)":"")+". "+(d>0?"That gives management a little more leverage if it wants to deal; it does not turn a loss into a win.":"That trims some trade-market cushion, which matters for roster flexibility even though the standings remain a separate argument.")))
+      ?("The "+alias.mascot+" market moved only "+w2One(pct)+"% over the tracked window. For "+alias.mascot+", that is noise, not a roster referendum.")
+      :("The "+alias.mascot+" moved "+(d>0?"up ":"down ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(pct)?" ("+w2One(pct)+"%)":"")+". "+(d>0?"That gives "+alias.mascot+" a little more leverage if management wants to deal; it does not turn a loss into a win.":"That trims the "+alias.mascot+" trade-market cushion, which matters for roster flexibility even though the standings remain a separate argument.")))
   ]:["The market feed did not provide a valid Week 2 movement figure, so there is nothing responsible to grade here."];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],weakPrev=weak?w2PrevPlayer(prev,weak.id):null,hot=[
     w2S(t,r,"hot-one",weak?weak.name+" is the Week 2 warning label after "+w2One(weak.points)+" fantasy points"+(weak.real_stat_line?" on "+w2Stat(weak):"")+"; "+(won?t.team_name+" can address that quiet spot while a win still makes the correction cheap.":"in a loss, that empty lineup slot forced the rest of "+t.team_name+" to carry more of the scoring burden."):"The weakest spot is not clear enough to invent one."),
@@ -992,7 +992,7 @@ function w2BuildSections(t,prev){
           :w2Natural(supportCredit.map(p=>p.name))+" deserve the under-the-radar credit after "+w2One(supportCredit.reduce((n,p)=>n+Number(p.points||0),0))+" combined points from outside the three headline scorers.")
         :eligible.length===1
           ?eligible[0].name+" gets the credit line because the performance cleared a real production threshold; the point here is what that contribution meant to the total, not another recitation of the stat line."
-          :"There was no hidden fourth scorer to rescue the story for "+alias.mascot+". Outside the headline group, nobody produced enough to manufacture a second praise section.")
+          :"There was no hidden fourth scorer to rescue the story for "+alias.mascot+". Outside the "+alias.mascot+" headline group, nobody produced enough to manufacture a second praise section.")
   ];
   const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=[
     w2S(t,r,"sent-one",w2SentimentRead(t,prev,r,fs,prevSent,won)),

@@ -224,10 +224,24 @@
     "previous_owner_id": 2
   },
   {
+    "round": 1,
+    "season": "2028",
+    "roster_id": 5,
+    "owner_id": 10,
+    "previous_owner_id": 5
+  },
+  {
     "round": 2,
     "season": "2028",
     "roster_id": 5,
     "owner_id": 7,
+    "previous_owner_id": 5
+  },
+  {
+    "round": 3,
+    "season": "2028",
+    "roster_id": 5,
+    "owner_id": 10,
     "previous_owner_id": 5
   },
   {

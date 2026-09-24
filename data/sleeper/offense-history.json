@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-24T15:04:40.466Z",
+  "generatedAt": "2026-09-24T19:08:37.236Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 2,
@@ -391,7 +391,7 @@
     "diagnostics": {
       "finalGames": 32,
       "qualifiedPlayerGames": 2101,
-      "rejectedPlayerGames": 2473,
+      "rejectedPlayerGames": 2469,
       "ignoredGames": 0
     }
   },
@@ -35820,12 +35820,12 @@
       },
       "6946": {
         "pts_ppr": 5,
-        "gp": 17,
-        "def_snp": 849,
-        "idp_tkl": 77,
+        "gp": 9,
+        "def_snp": 468,
+        "idp_tkl": 46,
         "idp_sack_yd": 6,
         "idp_tkl_loss": 7,
-        "idp_tkl_solo": 65,
+        "idp_tkl_solo": 37,
         "idp_int": 1,
         "idp_int_ret_yd": 6,
         "kr_yd": 11,
@@ -35833,10 +35833,10 @@
         "idp_pass_def": 7,
         "bonus_tkl_10p": 1,
         "idp_qb_hit": 1,
-        "pr_yd": 105,
+        "pr_yd": 40,
         "fum": 1,
         "idp_ff": 2,
-        "idp_tkl_ast": 12
+        "idp_tkl_ast": 9
       },
       "6947": {
         "pts_ppr": 2,

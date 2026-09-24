@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-24T15:04:40.466Z",
+  "generatedAt": "2026-09-24T19:08:37.236Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -582,7 +582,7 @@
     "diagnostics": {
       "finalGames": 32,
       "qualifiedPlayerGames": 2101,
-      "rejectedPlayerGames": 2473,
+      "rejectedPlayerGames": 2469,
       "ignoredGames": 0
     }
   },

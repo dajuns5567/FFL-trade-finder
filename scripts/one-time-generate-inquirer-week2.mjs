@@ -518,7 +518,12 @@ function w2LedeShape(t,r,won,margin,opp,top){
       wide?team+" won by "+w2One(margin)+" because the top of the lineup produced and the rest did not leave much for "+foe+" to erase on the scoreboard.":team+" finished ahead of "+foe+" with "+w2One(support)+" points from its second scorer, a healthier shape than a one-player carry.",
       "The "+a.mascot+" headline belongs to "+star+", but the repeatable part is whether the production behind him keeps showing up. Week 2 had enough of it to beat "+foe+".",
       close?"A "+w2One(margin)+"-point win makes every useful score count. "+team+" got enough behind "+star+" that no single quiet slot decided the result.":"The final score favored "+team+", and the more useful read is that the roster produced in more than one place instead of asking "+star+" to cover every gap.",
-      star+" was the loudest "+a.mascot+" reason for the win, not the only one. The fantasy lesson is depth behind the leader, not the fiction that "+foe+" could scheme him away.",
+      ([
+        star+" was the loudest "+a.mascot+" reason for the win, but the supporting points behind him are what kept the result from becoming a one-player carry.",
+        star+" owned the headline for "+a.mascot+"; the quieter story is that enough secondary scoring showed up to make the top line useful.",
+        "The "+a.mascot+" got the star turn from "+star+" and enough production elsewhere to turn that performance into a win.",
+        star+" led the "+a.mascot+" scoring, while the rest of the lineup supplied enough points to keep the result from depending on one name."
+      ])[w2Hash(team+"|lede-depth")%4],
       "The box score says "+star+" led it. The result says the points behind him were sufficient for "+team+" to finish ahead of "+foe+"."
     ];return rows[k];
   }
@@ -614,7 +619,12 @@ function w2NextStarRead(t,r,next,nextStar){
     "Week 3 puts the "+a.mascot+" opposite a "+next+" roster that just got "+pts+" from "+nextStar.name+". The scoring comparison starts there.",
     "Recent form gives "+nextStar.name+" a "+pts+"-point line entering the "+a.mascot+" matchup. That is enough to shrink the margin for another quiet slot.",
     "The "+next+" side enters Week 3 with "+nextStar.name+" coming off "+pts+" points. "+a.mascot+" need their own secondary scoring to match that kind of top-end output.",
-    nextStar.name+" supplies the clearest Week 3 reference point: "+pts+" latest-game fantasy points for "+next+". The "+a.mascot+" scoring floor has to rise accordingly."
+    ([
+      nextStar.name+" is the clearest Week 3 scoring reference after "+pts+" latest-game points for "+next+"; the "+a.mascot+" need more from their own quiet slots to keep pace.",
+      "A "+pts+"-point latest game from "+nextStar.name+" gives "+next+" the clearest Week 3 benchmark; "+a.mascot+" cannot afford another empty scoring slot.",
+      next+" enters Week 3 with "+pts+" recent points from "+nextStar.name+". For "+a.mascot+", that makes secondary production more important than repeating any one star’s exact total.",
+      "The "+a.mascot+" get a concrete Week 3 comparison in "+nextStar.name+" at "+pts+" latest-game points for "+next+"; the answer has to come from better scoring depth."
+    ])[w2Hash(String(t.roster_id)+"|nextstar-12")%4]
   ];
   return rows[k];
 }

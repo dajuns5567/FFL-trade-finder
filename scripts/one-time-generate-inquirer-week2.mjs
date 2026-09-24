@@ -670,17 +670,15 @@ function w2BuildSections(t,prev){
     w2S(t,r,"mgmt-one",miss&&gap>0?w2BenchRead(t,r,miss,gap,won,margin):(t.manager_name+" did not leave an obvious higher-scoring bench answer in a compatible spot, so the Week 2 review belongs on the players who actually had the matchup rather than a fantasy-perfect lineup that never existed.")),
     w2S(t,r,"mgmt-two",txCount?(t.manager_name+" made "+txCount+" completed roster move"+(txCount===1?"":"s")+" during the week; "+(won?"for "+alias.mascot+", the win buys those decisions time while Week 3 gets to show whether the churn fixed something real.":"after a "+w2One(margin)+"-point loss, "+t.team_name+" needs at least one of those moves to address the weakness that actually showed up Sunday.")):(t.manager_name+" left the transaction wire quiet, so the "+alias.mascot+" Week 3 response has to come from the roster already in the room rather than a late waiver-wire rescue."))
   ];
-  const v=t.value_history_week,d=Number(v?.delta),value=Number.isFinite(d)?[
-    w2S(t,r,"value-one","The "+alias.mascot+" moved "+(d>0?"up ":d<0?"down ":"sideways ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(Number(v?.pct))?" ("+w2One(Math.abs(Number(v.pct)))+"%)":"")+"; that price move now has two Sundays of football sitting next to it."),
-    w2S(t,r,"value-two",(d>0?alias.mascot+" gained market room to maneuver, but the extra value does not get to substitute for another good Sunday.":d<0?alias.mascot+" lost some market cushion; better football can win it back, while another bad week makes the price and the record uglier together.":alias.mascot+" held steady in the market, which is permission to care more about the next matchup than the price tag."))
+  const v=t.value_history_week,d=Number(v?.delta),pct=Math.abs(Number(v?.pct)),value=Number.isFinite(d)?[
+    w2S(t,r,"value-one","The "+alias.mascot+" moved "+(d>0?"up ":d<0?"down ":"sideways ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(pct)?" ("+w2One(pct)+"%)":"")+". "+(Number.isFinite(pct)&&pct<1?"That is essentially flat, so it does not deserve a dramatic football story.":d>0?"That is enough movement to improve trade flexibility, even though roster value and weekly wins are separate scoreboards.":d<0?"That is enough movement to reduce trade flexibility, even though a market decline is not the same thing as a bad Sunday.":"The market barely moved." ))
   ]:["n/a"];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],weakPrev=weak?w2PrevPlayer(prev,weak.id):null,hot=[
-    w2S(t,r,"hot-one",weak?weak.name+" is the Week 2 warning label after "+w2One(weak.points)+" fantasy points"+(weak.real_stat_line?" on "+w2Stat(weak):"")+"; "+(won?t.team_name+" can fix that quiet spot while a win still makes the correction cheap.":opp+" made that empty space expensive because the rest of "+t.team_name+" had to cover it."):"The weakest spot is not clear enough to invent one."),
+    w2S(t,r,"hot-one",weak?weak.name+" is the Week 2 warning label after "+w2One(weak.points)+" fantasy points"+(weak.real_stat_line?" on "+w2Stat(weak):"")+"; "+(won?t.team_name+" can address that quiet spot while a win still makes the correction cheap.":"in a loss, that empty lineup slot forced the rest of "+t.team_name+" to carry more of the scoring burden."):"The weakest spot is not clear enough to invent one."),
     w2S(t,r,"hot-two",weak&&weakPrev?(w2HotTrend(t,r,weak,weakPrev)):"Week 3 will not settle anything for the "+alias.mascot+", but it can tell us whether their weakest Week 2 spot learned anything.")
   ];
-  const eligible=w2EligibleCool(t),coolNames=eligible.length?eligible.map(p=>p.name):top.filter(Boolean).slice(0,2).map(p=>p.name),cool=[
-    w2S(t,r,"cool-one",w2CoolRead(t,r,coolNames,won,margin)),
-    w2S(t,r,"cool-two",won?("The "+alias.mascot+" now get to ask for the same pressure in Week 3 without assuming the same stat line will magically repeat."):("The best "+alias.mascot+" performances still matter in a loss; Week 3 has to give them enough help that another good individual Sunday does not become wasted work."))
+  const support=(t.starter_details||[]).slice(3).filter(p=>Number(p.points)>=8).sort((a,b)=>Number(b.points)-Number(a.points))[0],eligible=w2EligibleCool(t),coolNames=support?[support.name]:(eligible.length?eligible.map(p=>p.name):top.filter(Boolean).slice(0,1).map(p=>p.name)),cool=[
+    w2S(t,r,"cool-one",support?(support.name+" gets the under-the-radar credit after "+w2One(support.points)+" fantasy points. That contribution mattered because it came from outside the three names already carrying the main player section."):w2CoolRead(t,r,coolNames,won,margin))
   ];
   const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=[
     w2S(t,r,"sent-one",w2SentimentRead(t,prev,r,fs,prevSent,won))
@@ -691,16 +689,19 @@ function w2BuildSections(t,prev){
   const outlook=[
     w2S(t,r,"outlook-one","Week 3 brings "+next+", currently "+nrecord+(Number(nctx.standings_rank)?" and No. "+String(nctx.standings_rank)+" overall":"")+", out of "+ndiv+"; for "+alias.mascot+", that means a real standings opponent with its own two-week story rather than a blank line on the schedule."),
     w2S(t,r,"outlook-two",w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders)),
-    w2S(t,r,"outlook-three",nextStar?(w2NextStarRead(t,r,next,nextStar)):next+" will get the first chance to attack the weakest part of the Week 2 lineup and see whether the correction was real."),
+    w2S(t,r,"outlook-three",nextStar?(w2NextStarRead(t,r,next,nextStar)):"Week 3 brings "+next+" without a complete player-level scoring benchmark, so the "+alias.mascot+" have to focus on raising their own weakest Week 2 lineup spot rather than inventing a matchup-specific story."),
     later.length?w2S(t,r,"outlook-road",w2RoadRead(t,r,next,later)):w2S(t,r,"outlook-road","The schedule beyond Week 3 is not complete enough for a larger claim, so the next assignment stays simple: beat the team on the page.")
   ];
   let trade=null;const oldTrade=(a.sections||[]).find(s=>s.kind==="trade-commentary");
   if(oldTrade){
     const tr=(t.trade_history||[])[0],own=(tr?.sides||[]).find(s=>String(s.roster_id)===String(t.roster_id)),other=(tr?.sides||[]).find(s=>String(s.roster_id)!==String(t.roster_id)),otherName=tr?.team_names?.[String(other?.roster_id)]||"the other side",ownAssets=w2TradeAssets(t,own),otherAssets=w2TradeAssets(t,other);
-    if(tr&&own&&other&&ownAssets.length&&otherAssets.length)trade=[
-      w2S(t,r,"trade-one",t.team_name+" received "+w2Natural(ownAssets)+" in the trade, while "+otherName+" received "+w2Natural(otherAssets)+"; that is the Week 2 receipt, and the football since the exchange now gets to add context without rewriting the terms."),
-      w2S(t,r,"trade-two","The pieces "+t.team_name+" acquired now have to change Sundays in the direction management paid for. Week 2 adds one receipt; the next few will decide whether the trade looks clever or expensive.")
-    ]
+    if(tr&&own&&other&&ownAssets.length&&otherAssets.length){
+      const ownPlayers=ownAssets.filter(x=>!/\bpick$/i.test(x)),ownPicks=ownAssets.filter(x=>/\bpick$/i.test(x)),otherPlayers=otherAssets.filter(x=>!/\bpick$/i.test(x)),otherPicks=otherAssets.filter(x=>/\bpick$/i.test(x));
+      trade=[
+        w2S(t,r,"trade-one",w2DisplayTeam(t.team_name)+" received "+w2Natural(ownAssets)+", while "+w2DisplayTeam(otherName)+" received "+w2Natural(otherAssets)+". Those are the actual terms; the two sides may be operating on different timelines."),
+        w2S(t,r,"trade-two",ownPlayers.length?("The "+alias.mascot+" acquired "+w2Natural(ownPlayers)+" for current roster value, so those players can be judged by present usage and production."+ (ownPicks.length?" The "+w2Natural(ownPicks)+" portion remains future value, not Week 2 scoring.":"")):("The "+alias.mascot+" took "+w2Natural(ownPicks)+" as deferred draft capital. Those assets cannot score now; their return will be judged when they are used in a future draft or moved in another trade."))
+      ]
+    }
   }
   const byKind={lede,players,management,value,"hot-seat":hot,"cool-throne":cool,sentiment,outlook};if(trade)byKind["trade-commentary"]=trade;
   const orders=[["lede","players","management","hot-seat","cool-throne","value","sentiment","outlook"],["lede","players","cool-throne","management","value","hot-seat","sentiment","outlook"],["lede","hot-seat","players","management","cool-throne","sentiment","value","outlook"],["lede","players","sentiment","management","hot-seat","value","cool-throne","outlook"]],order=orders[Math.floor(Math.max(0,(Number(t.roster_id)||1)-1)/4)%4].slice();
@@ -774,11 +775,11 @@ const reporterJudgmentSeen=new Set();
 for(const t of rewrittenWeek2Teams){
   const a=t.inquirer_article||{},rid=String(a?.reporter?.id||"");
   if(!rid||reporterJudgmentSeen.has(rid))continue;
-  const next=t.next_opponent_name||"the next opponent",judgment={
-    "walter-mercer":"I think "+t.team_name+" has a clean Week 3 assignment: make "+next+" take away the thing that worked in Week 2, then prove there is a second answer.",
-    "tess-delaney":"I would keep the good china within reach for "+t.team_name+", but "+next+" gets a vote before anybody starts acting established.",
-    "mack-hollis":"I want "+next+" to force "+t.team_name+" into a different kind of game. If the same stars still carry the headline, then the league has a real problem.",
-    "nora-voss":"I think "+t.team_name+" has one week to make its obvious flaw boring. If "+next+" can laugh at the same weakness, the joke belongs to the schedule now."
+  const next=w2DisplayTeam(t.next_opponent_name||"the next opponent"),judgment={
+    "walter-mercer":"I think "+w2DisplayTeam(t.team_name)+" has a clean Week 3 assignment: keep the useful Week 2 scoring, then get more from the quiet spots against a "+next+" roster with its own scoring strengths.",
+    "tess-delaney":"I would keep the good china within reach for "+w2DisplayTeam(t.team_name)+", but "+next+" sets a new scoring bar before anybody starts acting established.",
+    "mack-hollis":"I want "+w2DisplayTeam(t.team_name)+" to prove Week 2 was not just the same stars doing all the lifting. If the support shows up too, then the headline gets louder.",
+    "nora-voss":"I think "+w2DisplayTeam(t.team_name)+" has one week to make its obvious flaw boring. If the same slot stays quiet again, rivals will not need a new joke."
   }[rid];
   if(!judgment)continue;
   const target=(a.sections||[]).find(s=>s.kind==="outlook")||(a.sections||[]).at(-1);

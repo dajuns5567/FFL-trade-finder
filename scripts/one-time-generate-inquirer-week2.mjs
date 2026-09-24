@@ -983,10 +983,14 @@ function w2BuildSections(t,prev){
     w2S(t,r,"hot-one",weak?weak.name+" is the Week 2 warning label after "+w2One(weak.points)+" fantasy points"+(weak.real_stat_line?" on "+w2Stat(weak):"")+"; "+(won?t.team_name+" can address that quiet spot while a win still makes the correction cheap.":"in a loss, that empty lineup slot forced the rest of "+t.team_name+" to carry more of the scoring burden."):"The weakest spot is not clear enough to invent one."),
     w2S(t,r,"hot-two",weak&&weakPrev?(w2HotTrend(t,r,weak,weakPrev)):"Week 3 will not settle anything for the "+alias.mascot+", but it can tell us whether their weakest Week 2 spot learned anything.")
   ];
-  const topIds=new Set(top.filter(Boolean).map(p=>String(p.id))),support=(t.starter_details||[]).filter(p=>!topIds.has(String(p.id))&&Number(p.points)>=8).sort((a,b)=>Number(b.points)-Number(a.points))[0],cool=[
-    w2S(t,r,"cool-one",support
-      ?support.name+" gets the under-the-radar credit after "+w2One(support.points)+" fantasy points. That contribution came from outside the three names already carrying the main scoring story."
-      :"No starter outside the top three reached 8 fantasy points for "+alias.mascot+". That is the useful depth note here: there was no hidden fourth contributor worth inventing praise for.")
+  const eligible=w2EligibleCool(t),topIds=new Set(top.filter(Boolean).map(p=>String(p.id))),support=(t.starter_details||[]).filter(p=>!topIds.has(String(p.id))&&Number(p.points)>=8).sort((a,b)=>Number(b.points)-Number(a.points))[0],cool=[
+    w2S(t,r,"cool-one",eligible.length>=2
+      ?w2Natural(eligible.map(p=>p.name))+" both cleared the Week 2 credit threshold, combining for "+w2One(eligible.reduce((n,p)=>n+(Number(p.points)||0),0))+" points. "+(won?"That paired production gave "+alias.mascot+" more than a one-player carry.":"That paired production was real; the problem is that the rest of "+alias.mascot+" still left it stranded in a loss.")
+      :support
+        ?support.name+" gets the under-the-radar credit after "+w2One(support.points)+" fantasy points. That contribution came from outside the three names already carrying the main scoring story."
+        :eligible.length===1
+          ?eligible[0].name+" was the only starter who clearly crossed the credit threshold. That says as much about the missing support as it does about the headline player."
+          :"No starter outside the top three reached 8 fantasy points for "+alias.mascot+". The depth problem is the story; there is no hidden contributor worth manufacturing praise for.")
   ];
   const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=[
     w2S(t,r,"sent-one",w2SentimentRead(t,prev,r,fs,prevSent,won))

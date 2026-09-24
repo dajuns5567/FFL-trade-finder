@@ -522,9 +522,9 @@ function w2IdentityRead(t,prev,r,top,opp){
     ],
     "mack-hollis":[
       "The loud number is "+share+"%: that is how much of "+team+"’s Week 2 scoring came from the top three. That is a "+shape+" lineup, full stop.",
-      star+" got the headline, but "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three together. "+(w2Hash(team+"|tilly-concentration")%2?"That concentration is the story behind the story.":"The hidden headline is how much of the total lived in those three names."),
+      star+" got the headline, but "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three together; the hidden headline is how much of the "+a.mascot+" total lived in those three names.",
       "You want the back-page number? "+share+"% of the "+a.mascot+" total came from the top three. That is "+shape+", and it tells us how much the stars carried.",
-      "The "+a.mascot+" put "+share+"% of their Week 2 points in the top three scorers. "+(w2Hash(team+"|tilly-furniture")%2?"That is either depth with stars or stars carrying furniture.":"Now decide whether the stars had a supporting cast or a moving crew.")
+      "The "+a.mascot+" put "+share+"% of their Week 2 points in the top three scorers; whether that means depth with stars or stars carrying furniture depends on what the supporting cast does next."
     ],
     "nora-voss":[
       "Rivals are going to remember the "+a.mascot+" as a "+shape+" roster after Week 2. The top three produced "+share+"% of the points.",
@@ -537,23 +537,23 @@ function w2IdentityRead(t,prev,r,top,opp){
     "walter-mercer":[
       delta==null?"There is no complete Week 1 team-total comparison, so distribution is the honest read.":team+" scored "+change+" in Week 1; the week-over-week shift is large enough to change how the result is interpreted.",
       delta==null?"Without a clean opener total, there is no honest trend line to draw.":"Compared with the opener, "+team+" finished Week 2 "+change+". That is a measurable change in total output, not a stylistic impression.",
-      delta==null?"The opener cannot support a full team-total comparison, so role stability matters more than a fake trend.":"The Week 2 total was "+change+" the opener for "+team+". "+(w2Hash(team+"|nick-help")%2?"That difference changes how much support the stars needed.":"The shift changes how heavily the final total leaned on the top of the lineup."),
+      delta==null?"The opener cannot support a full team-total comparison, so role stability matters more than a fake trend.":"The Week 2 total was "+change+" the opener for "+team+", changing how heavily the final result leaned on the top of the lineup.",
       delta==null?"No complete Week 1 total means the before-and-after comparison stops here.":team+" changed its weekly output by "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+". That is enough movement to deserve attention."
     ],
     "tess-delaney":[
-      delta==null?"The measuring tape stays in the drawer because the opener does not offer a complete team total.":"The "+a.mascot+" scored "+change+" in Week 1. "+(w2Hash(team+"|tess-outfit")%2?"The outfit changed shape enough to notice without declaring it finished.":"The silhouette moved enough that even a cautious room should notice."),
+      delta==null?"The measuring tape stays in the drawer because the opener does not offer a complete team total.":"The "+a.mascot+" scored "+change+" in Week 1; the silhouette moved enough that even a cautious room should notice without declaring the outfit finished.",
       delta==null?"I refuse to tailor a trend from an incomplete opener.":"From the opener to Week 2, "+team+" moved "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+". That is a visible change in presentation.",
-      delta==null?"There is no proper Week 1 total to compare, so the honest compliment is narrower.":"Week 2 landed "+change+" the opener for "+a.mascot+". "+(w2Hash(team+"|tess-room")%2?"The room feels different because the scoring actually was.":"The scoring changed enough that the room should feel different."),
+      delta==null?"There is no proper Week 1 total to compare, so the honest compliment is narrower.":"Week 2 landed "+change+" the opener for "+a.mascot+", enough movement to change the room’s temperature without pretending two Sundays are a finished product.",
       delta==null?"An incomplete opener saves us from pretending two data points are a wardrobe.":"The "+a.mascot+" changed their total by "+w2One(Math.abs(delta))+" points from Week 1. Even good china notices a swing that large."
     ],
     "mack-hollis":[
       delta==null?"No clean Week 1 total, no fake trend speech. Week 2 gets the microphone by itself.":"The "+a.mascot+" scored "+change+" in Week 1. That is enough movement to change the Week 3 volume.",
       delta==null?"I am not screaming 'trend' without a complete opener total.":"Compared with Week 1, "+team+" moved "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+". That swing is loud enough to matter.",
       delta==null?"Week 1 does not give us a complete team total, so Week 2 stands alone.":"Week 2 landed "+change+" the opener for "+team+". That kind of change either becomes a pattern next Sunday or disappears.",
-      delta==null?"No clean opener, no fake graph.":"The "+a.mascot+" changed the weekly total by "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+". "+(w2Hash(team+"|tilly-watch")%2?"Put that on the Week 3 watch list.":"That is the number I am carrying into Week 3.")
+      delta==null?"No clean opener, no fake graph.":"The "+a.mascot+" changed the weekly total by "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+"; that swing is the number I am carrying into Week 3."
     ],
     "nora-voss":[
-      delta==null?"The opener does not give us a complete total, so I am saving the fake trend line for somebody else.":team+" scored "+change+" in Week 1. "+(w2Hash(team+"|filch-swing")%2?"Rivals will notice a swing that large even if they call it luck.":"Call it luck if you want; the week-to-week swing is still sitting on the scoreboard."),
+      delta==null?"The opener does not give us a complete total, so I am saving the fake trend line for somebody else.":team+" scored "+change+" in Week 1; call the swing luck if you want, but the week-to-week change is still sitting on the scoreboard.",
       delta==null?"No complete Week 1 total means no invented two-week graph.":"The "+a.mascot+" shifted "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+" from the opener. Repeat it and the joke changes.",
       delta==null?"The opener cannot support a full comparison, which is fine; Week 2 supplied enough material.":"Week 2 landed "+change+" Week 1 for "+team+". That is the sort of difference that turns next Sunday into proof or punchline.",
       delta==null?"There is no honest Week 1 baseline, so I will not manufacture one.":"The "+a.mascot+" total moved "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+" from Week 1. Do that again and nobody shrugs."

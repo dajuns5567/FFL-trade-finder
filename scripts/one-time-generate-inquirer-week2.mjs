@@ -586,7 +586,7 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
   const a=w2Alias(t),score=Number(fs?.score)||0,old=Number(prevSent?.score),hasOld=Number.isFinite(old),delta=hasOld?score-old:null,rid=String(r?.id||""),record=w2Record(t),v=w2Hash(t.team_name+"|sentiment")%4;
   const direction=delta==null?"":delta>0?"warmer":delta<0?"colder":"unchanged";
   const standing=score>=50?"the fan base is starting to expect wins, not merely hope for them":score>=15?"confidence is winning the argument for now":score>-15?"the crowd is split between patience and suspicion":score>-50?"skepticism is louder than optimism":"the fan base is already in open revolt";
-  const context=won?"A win gives supporters something concrete to defend the roster with.":"A loss gives every preseason concern a fresh microphone.";
+  const context=rid==="tess-delaney"?(won?"The win lets "+a.mascot+" supporters enjoy the room without apologizing for it.":"The loss gives the "+a.mascot+" skeptics the best seat in the room."):(rid==="mack-hollis"?(won?"The win gives "+a.mascot+" fans something loud to point at.":"The loss turns every old "+a.mascot+" complaint back up to full volume."):(rid==="nora-voss"?(won?"The win forces "+a.mascot+" rivals to work harder for the joke.":"The loss hands "+a.mascot+" rivals fresh material."):won?"The win gives "+a.mascot+" supporters a concrete result to defend.":"The loss gives "+a.mascot+" supporters a specific problem to argue about."));
   const rows={
     "walter-mercer":[
       "At "+record+", "+standing+". "+context+(hasOld?" The rating moved "+Math.abs(delta)+" points "+direction+" from Week 1, which shows how quickly one Sunday changed the burden of proof.":""),
@@ -601,7 +601,7 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
       "At "+record+", the "+a.mascot+" crowd is dressing its opinion accordingly: "+standing+". "+(won?"Another win would make restraint difficult.":"Another loss would make restraint impossible.")+(hasOld?" Week over week, the mood moved "+direction+".":"")
     ],
     "mack-hollis":[
-      "The "+a.mascot+" crowd has picked a lane: "+standing+". "+(won?"Winning made the optimism louder in the fun direction.":"Losing made every old complaint eligible for a comeback.")+(hasOld?" The meter jumped "+Math.abs(delta)+" points "+direction+" from Week 1.":""),
+      "The "+a.mascot+" crowd has picked a lane: "+standing+". "+(won?"Winning made the optimism louder in the fun direction.":"Losing made every old "+a.mascot+" complaint eligible for a comeback.")+(hasOld?" The meter jumped "+Math.abs(delta)+" points "+direction+" from Week 1.":""),
       "Here is the fan-base temperature check: "+standing+". "+(won?"One more Sunday like this and confidence gets obnoxious.":"One more Sunday like this and patience gets very short.")+(hasOld?" The move from "+old+" to "+score+" is the part worth watching.":""),
       "Nobody around "+t.team_name+" is neutral anymore: "+standing+". "+context+(hasOld?" The crowd moved "+direction+" by "+Math.abs(delta)+" points in one week.":""),
       "The "+a.mascot+" fan base is already arguing from a two-game sample, which means "+standing+". "+(won?"They have receipts now.":"They have complaints with timestamps now.")+(hasOld?" The Week 1-to-Week 2 move was "+Math.abs(delta)+" points "+direction+".":"")
@@ -610,7 +610,7 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
       "Rivals can laugh, but the "+a.mascot+" crowd has its own read: "+standing+". "+(won?"The win bought optimism another week.":"The loss turned every familiar complaint back into material.")+(hasOld?" The meter moved "+Math.abs(delta)+" points "+direction+" from Week 1.":""),
       "The fan-base joke depends on the number now: "+standing+". "+(won?"Another win makes skepticism harder to sell.":"Another loss makes optimism harder to defend.")+(hasOld?" Week 1 was "+old+"; Week 2 is "+score+", so the mood has plainly moved "+direction+".":""),
       "At "+record+", "+standing+". "+context+(hasOld?" A "+Math.abs(delta)+"-point move "+direction+" tells you how much this result changed the room.":""),
-      "The "+a.mascot+" crowd is not waiting for a third Sunday to have an opinion: "+standing+". "+(won?"Right now the jokes have to work around a win.":"Right now the jokes have a loss doing half the work.")+(hasOld?" The rating moved "+direction+" from "+old+" to "+score+".":"")
+      "The "+a.mascot+" crowd is not waiting for a third Sunday to have an opinion: "+standing+". "+(won?"Right now the jokes about "+a.mascot+" have to work around a win.":"Right now the jokes have a loss doing half the work.")+(hasOld?" The rating moved "+direction+" from "+old+" to "+score+".":"")
     ]
   };
   return (rows[rid]||rows["walter-mercer"])[v]
@@ -684,8 +684,7 @@ function w2BuildSections(t,prev){
     w2S(t,r,"cool-two",won?("The "+alias.mascot+" now get to ask for the same pressure in Week 3 without assuming the same stat line will magically repeat."):("The best "+alias.mascot+" performances still matter in a loss; Week 3 has to give them enough help that another good individual Sunday does not become wasted work."))
   ];
   const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=[
-    w2S(t,r,"sent-one",w2SentimentRead(t,prev,r,fs,prevSent,won)),
-    w2S(t,r,"sent-two","The meter above puts that mood on the same -100 to +100 scale as every other fan base, while the Week 1 marker shows whether this week actually changed the room or merely confirmed it.")
+    w2S(t,r,"sent-one",w2SentimentRead(t,prev,r,fs,prevSent,won))
   ];
   const nctx=t.next_opponent_context||{},nrec=nctx.record||{},nrecord=String(Number(nrec.wins)||0)+"-"+String(Number(nrec.losses)||0),ndiv=t.next_opponent_division_context?.division_name||"its division",leaders=(t.division_context?.leaders||[]).filter(x=>x?.team_name),selfLead=leaders.some(x=>String(x.roster_id)===String(t.roster_id)),otherLeaders=leaders.filter(x=>String(x.roster_id)!==String(t.roster_id)),divisionPeers=[...(t.division_context?.ahead_teams||[]),...(t.division_context?.same_record_teams||[]),...(t.division_context?.behind_teams||[])].filter((x,i,a)=>x?.team_name&&String(x.roster_id)!==String(t.roster_id)&&a.findIndex(y=>String(y.roster_id)===String(x.roster_id))===i),divisionPeerLine=divisionPeers.map(x=>x.team_name+" ("+String(Number(x?.record?.wins)||0)+"-"+String(Number(x?.record?.losses)||0)+")"),next=t.next_opponent_name||"the next opponent",
     nextStar=(t.next_opponent_roster?.starters||t.next_opponent_roster?.players||[]).filter(p=>p?.name).slice().sort((x,y)=>Number(y.season_fantasy_points||y.points||0)-Number(x.season_fantasy_points||x.points||0))[0],

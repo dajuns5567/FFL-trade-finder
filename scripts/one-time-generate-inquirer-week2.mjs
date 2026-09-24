@@ -1020,16 +1020,17 @@ function rewriteWeek2Team(t,prev){const a=t.inquirer_article||{},sections=w2Buil
 function w2Games(teams){const by=new Map((teams||[]).map(t=>[String(t.roster_id),t])),seen=new Set(),out=[];for(const t of teams||[]){const o=by.get(String(t.opponent_roster_id));if(!o)continue;const k=[String(t.roster_id),String(o.roster_id)].sort().join("|");if(seen.has(k))continue;seen.add(k);const w=Number(t.points)>=Number(o.points)?t:o,l=w===t?o:t,margin=Math.abs(Number(w.points)-Number(l.points)),proj=Number.isFinite(Number(w.projected))&&Number.isFinite(Number(l.projected)),upset=proj&&Number(w.projected)<Number(l.projected);out.push({winner:w,loser:l,margin,upset,combined:Number(w.points)+Number(l.points)})}return out}
 function w2RecapStat(p){return p?(p.name+" — "+w2One(p.points)+" fantasy points, "+w2Stat(p)):""}
 function w2RecapContext(w,prev,i){
-  if(!prev)return"Opening-week data is incomplete, so Week 2 is the first clean team-total benchmark.";
-  const team=w2DisplayTeam(w.team_name),opp=w2DisplayTeam(prev.opponent_name),won1=Number(prev.points)>Number(prev.opponent_points),prevPts=Number(prev.points)||0,now=Number(w.points)||0,diff=now-prevPts,abs=w2One(Math.abs(diff));
+  if(!prev)return"Week 1 does not give us a complete comparison here, so Week 2 gets to stand on its own.";
+  const team=w2DisplayTeam(w.team_name),opp=w2DisplayTeam(prev.opponent_name),won1=Number(prev.points)>Number(prev.opponent_points),
+    now=Number(w.points)||0,then=Number(prev.points)||0,diff=now-then;
   if(won1){
-    if(diff>=15)return team+" followed a "+w2One(prevPts)+"-point Week 1 win over "+opp+" by scoring "+abs+" more in Week 2. The 2-0 start now has a higher demonstrated ceiling.";
-    if(diff<=-15)return team+" scored "+abs+" fewer points than in its Week 1 win over "+opp+" and still moved to 2-0. Surviving that drop matters because the second win did not require the opener’s scoring level.";
-    return team+" scored "+w2One(prevPts)+" in its Week 1 win over "+opp+" and "+w2One(now)+" in Week 2. Two similar team totals give the 2-0 start a more stable scoring floor.";
+    if(Math.abs(diff)<5)return team+" opened by beating "+opp+" "+w2One(prev.points)+"–"+w2One(prev.opponent_points)+", then landed within "+w2One(Math.abs(diff))+" points of the same team total in Week 2. Two wins, nearly the same scoring floor, and suddenly 2-0 looks less accidental.";
+    if(diff>0)return team+" also won the opener over "+opp+", "+w2One(prev.points)+"–"+w2One(prev.opponent_points)+". Week 2 added "+w2One(diff)+" more points to the total, so the 2-0 start is getting louder instead of merely longer.";
+    return team+" beat "+opp+" "+w2One(prev.points)+"–"+w2One(prev.opponent_points)+" in Week 1 and still found a second win despite scoring "+w2One(Math.abs(diff))+" fewer points this time. That is two different kinds of Sunday ending the same way.";
   }
-  if(diff>=15)return team+" answered its Week 1 loss to "+opp+" by scoring "+abs+" more points in Week 2. The rebound came with a real jump in team output, not just a friendlier final score.";
-  if(diff<=-10)return team+" won Week 2 despite scoring "+abs+" fewer points than in its Week 1 loss to "+opp+". The record improved before the scoring profile did, so the lineup still has something to prove.";
-  return team+" moved from "+w2One(prevPts)+" points in the Week 1 loss to "+opp+" to "+w2One(now)+" in Week 2. The result changed more than the team total did.";
+  if(diff>=20)return team+" came into Week 2 off a "+w2One(prev.points)+"–"+w2One(prev.opponent_points)+" loss to "+opp+" and then jumped "+w2One(diff)+" points in team scoring. That is not a cosmetic rebound; the entire weekly ceiling moved.";
+  if(diff<=-20)return team+" lost the opener "+w2One(prev.points)+"–"+w2One(prev.opponent_points)+" to "+opp+" and scored even less in Week 2, yet still found a win. The record improved before the scoring profile did.";
+  return team+" lost Week 1 to "+opp+" "+w2One(prev.points)+"–"+w2One(prev.opponent_points)+". Winning the second Sunday keeps the opener from hardening into an identity, and the scoring total moved only "+w2One(Math.abs(diff))+" points from one week to the next.";
 }
 
 function rewriteWeek2Overview(overview,teams,previousEdition){
@@ -1040,34 +1041,50 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     const r=rep(0)||{},w=g.winner,l=g.loser,wName=w2DisplayTeam(w.team_name),lName=w2DisplayTeam(l.team_name),
       ws=(w.starter_details||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points)),ls=(l.starter_details||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points)),
       wTop=ws.slice(0,3),lTop=ls.slice(0,3),wTop3=wTop.reduce((n,p)=>n+(Number(p.points)||0),0),lTop3=lTop.reduce((n,p)=>n+(Number(p.points)||0),0),
-      wDD=ws.filter(p=>Number(p.points)>=10).length,lDD=ls.filter(p=>Number(p.points)>=10).length,
       wTop2=ws.slice(0,2).reduce((n,p)=>n+(Number(p.points)||0),0),lTop2=ls.slice(0,2).reduce((n,p)=>n+(Number(p.points)||0),0),
-      prev=previous.get(String(w.roster_id)),paras=[],projGap=Number(l.projected)-Number(w.projected),
-      loserMiss=Number(l?.best_lineup_miss?.gap)||0;
-    let resultLine=wName+" beat "+lName+" "+w2One(w.points)+"–"+w2One(l.points)+".";
-    if(g.upset&&Number.isFinite(projGap)&&projGap>0)resultLine+=" The projected underdog erased a "+w2One(projGap)+"-point pregame projection gap.";
-    else if(g.margin<=6)resultLine+=" The "+w2One(g.margin)+"-point margin made every lineup choice consequential.";
-    else if(g.margin>=25)resultLine+=" The "+w2One(g.margin)+"-point margin turned this into the week’s clearest mismatch.";
-    else resultLine+=" The winner separated by "+w2One(g.margin)+" without needing a single freak score to explain the result.";
-    paras.push(w2S(w,r,"recap-game-"+i,resultLine));
+      wShare=Number(w.points)>0?Math.round(wTop3/Number(w.points)*100):0,lShare=Number(l.points)>0?Math.round(lTop3/Number(l.points)*100):0,
+      wDD=ws.filter(p=>Number(p.points)>=10).length,lDD=ls.filter(p=>Number(p.points)>=10).length,
+      prev=previous.get(String(w.roster_id)),paras=[],projGap=Number(l.projected)-Number(w.projected),loserMiss=Number(l?.best_lineup_miss?.gap)||0,
+      shootout=g.combined>=240,blowout=g.margin>=25,knife=g.margin<=6;
 
-    const statNames=(i===0?wTop:[ws[0],ws[1],ls[0]]).filter(Boolean);
-    paras.push(w2S(w,r,"recap-stats-"+i,statNames.map(w2RecapStat).join("; ")+"."));    
+    let hook;
+    if(shootout)hook=wName+" and "+lName+" spent Week 2 trading haymakers until the scoreboard ran out of room. "+wName+" walked out with a "+w2One(w.points)+"–"+w2One(l.points)+" win, and nobody involved gets to call this a quiet Sunday.";
+    else if(g.upset&&knife)hook=wName+" kicked the projection sheet under the desk and stole a "+w2One(w.points)+"–"+w2One(l.points)+" win from "+lName+". A "+w2One(g.margin)+"-point upset is exactly the kind of game that ruins a favorite’s Monday morning.";
+    else if(g.upset)hook=wName+" tore up the pregame script and beat "+lName+" "+w2One(w.points)+"–"+w2One(l.points)+". The favorite had the projection; the underdog left with the standings point.";
+    else if(blowout)hook=wName+" did not merely beat "+lName+"; it buried the matchup "+w2One(w.points)+"–"+w2One(l.points)+". By the end, the only suspense left was how ugly the margin would become.";
+    else if(knife)hook=wName+" and "+lName+" turned Week 2 into a fantasy knife fight, with "+wName+" escaping "+w2One(w.points)+"–"+w2One(l.points)+". One ordinary lineup decision could have flipped the headline.";
+    else hook=wName+" beat "+lName+" "+w2One(w.points)+"–"+w2One(l.points)+" and spent most of the afternoon applying scoreboard pressure instead of waiting for one miracle player to save it.";
+    paras.push(w2S(w,r,"recap-game-"+i,hook));
 
-    let insight;
-    if(g.margin>=25){
-      insight=wTop3>Number(l.points)
-        ?wName+"’s top three combined for "+w2One(wTop3)+" points—more than "+lName+" scored as an entire lineup ("+w2One(l.points)+"). That is why the blowout was structural, not one player running hot."
-        :wName+" had "+wDD+" double-digit starters to "+lName+"’s "+lDD+". The blowout came from usable scoring across more lineup spots, not merely the top name.";
-    }else if(g.margin<=6){
-      insight=wName+"’s top two combined for "+w2One(wTop2)+" points; "+lName+"’s top two combined for "+w2One(lTop2)+". With only "+w2One(g.margin)+" separating the teams"+(loserMiss>0?", "+lName+" also left a "+w2One(loserMiss)+"-point best-lineup improvement on the bench":"")+", the ordinary lineup margins were large enough to decide the week.";
+    const statNames=[ws[0],ws[1],ls[0]].filter(Boolean);
+    paras.push(w2S(w,r,"recap-stats-"+i,"The stars were not shy: "+statNames.map(w2RecapStat).join("; ")+"."));    
+
+    let turn;
+    if(blowout&&wTop3>Number(l.points)){
+      turn=wName+"’s top three alone scored "+w2One(wTop3)+"—more than "+lName+"’s entire lineup at "+w2One(l.points)+". That is not a bad bounce or one missed start; that is a roster getting flattened across the scoring column.";
+    }else if(knife&&loserMiss>0){
+      turn=wName+"’s top two produced "+w2One(wTop2)+" while "+lName+"’s top two produced "+w2One(lTop2)+". The kicker is the bench: "+lName+" left a "+w2One(loserMiss)+"-point best-lineup improvement unused in a game decided by "+w2One(g.margin)+". That is the kind of regret that lasts until waivers.";
+    }else if(knife){
+      turn="The top-two battle finished "+w2One(wTop2)+" to "+w2One(lTop2)+". With only "+w2One(g.margin)+" separating the teams, every secondary score mattered; this was won in the ordinary lineup spots, not by a single cartoonishly large outlier.";
     }else if(g.upset){
-      insight=wName+" got "+wDD+" double-digit starters and "+w2One(wTop3)+" points from its top three; "+lName+" got "+lDD+" double-digit starters and "+w2One(lTop3)+" from its top three. The upset came from the underdog producing a better real lineup than the projection expected.";
+      turn=wName+" came in below "+lName+" on the projection board and still produced "+w2One(wTop3)+" points from its top three. "+lName+" answered with "+w2One(lTop3)+" from its top three, but the underdog’s actual lineup was better than the forecast where it counted.";
+    }else if(shootout){
+      turn=wName+" got "+w2One(wTop3)+" from its top three and still needed "+w2One(Number(w.points)-wTop3)+" from everybody else. "+lName+" kept firing back with "+w2One(lTop3)+" from its own top three. This was a full-lineup shootout, not a one-star fireworks show.";
     }else{
-      insight=wName+" finished with "+wDD+" double-digit starters versus "+lName+"’s "+lDD+", while the top-three totals were "+w2One(wTop3)+" and "+w2One(lTop3)+". The difference was lineup depth and concentration, not a vague claim that the loser simply 'didn’t have enough.'";
+      turn=wName+" put "+w2One(wTop3)+" points in its top three scorers, "+w2One(w.points-wTop3)+" everywhere else. "+lName+" had "+w2One(lTop3)+" at the top. The winner’s edge came from how the rest of the scoring column filled in behind the stars.";
     }
-    if(i===0)insight=(ws[0]?.name||wName)+" was the true centerpiece, but the important part is what the numbers behind him say: "+insight;
-    paras.push(w2S(w,r,"recap-impact-"+i,insight));
+    paras.push(w2S(w,r,"recap-turn-"+i,turn));
+
+    let column;
+    if(shootout)column=wName+" can feel good about the ceiling because "+wDD+" starters reached double figures in a game that demanded points everywhere. "+lName+" scored "+w2One(l.points)+" and still lost, which is brutal, but it also means this was not a collapse—it was a shootout where the other roster had one more answer on the fantasy scoreboard.";
+    else if(blowout)column=lName+" does not need poetry after this one. A "+w2One(g.margin)+"-point loss says the lineup failed in too many places at once, while "+wName+" gets the luxury of treating Week 2 like a depth-chart victory lap.";
+    else if(g.upset&&g.combined<120)column=wName+" is not suddenly an offensive machine; "+w2One(w.points)+" points is not a parade total. But an underdog finding just enough usable production while the favorite stalls is how ugly wins become standings wins—and those count the same.";
+    else if(g.upset)column="The upset matters because the projection gap did not survive contact with the actual lineup. "+wName+" now owns the receipt; "+lName+" owns a week of staring at the spots that were supposed to be safer than they looked.";
+    else if(knife)column="Close games make ordinary decisions look enormous. "+wName+" gets relief, "+lName+" gets the replay button, and both managers leave knowing the next five bench points can matter more than a preseason ranking ever will.";
+    else if(wShare>=70)column=wName+" won, but "+wShare+"% of its scoring lived in the top three. That is enough to celebrate and enough to worry about: the stars carried the paper this week, and Week 3 needs the supporting cast to keep the headline from becoming a dependency.";
+    else column=wName+" should like the shape of this win. The stars did their part without swallowing the entire score, which is the kind of balance that survives an ordinary week from one big name.";
+    paras.push(w2S(w,r,"recap-column-"+i,column));
+
     paras.push(w2S(w,r,"recap-context-"+i,w2RecapContext(w,prev,i)));
     return{heading:(i===0?"Week 2’s Loudest Game: ":"")+wName+" vs. "+lName,paragraphs:paras}
   });

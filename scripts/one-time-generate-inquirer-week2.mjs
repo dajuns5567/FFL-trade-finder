@@ -520,7 +520,7 @@ function w2IdentityRead(t,prev,r,top,opp){
       ],
       [
         "The "+a.mascot+" put "+share+"% of their Week 2 points in the hands of the top three scorers. "+star+" was the biggest noise, but "+w2One(topPts)+" combined points made this a "+shape+" lineup against "+opp+".",
-        delta==null?"No clean Week 1 total, no fake trend speech. Week 2 can still stand up and tell us whether the supporting cast showed enough life to matter.":("The team total moved "+deltaAbs+" points "+deltaDir+" from Week 1. That is enough movement to make Week 3 either a confirmation party or a very loud correction."),
+        delta==null?"No clean Week 1 total, no fake trend speech. Week 2 can still stand up and tell us whether the supporting cast showed enough life to matter.":("The "+a.mascot+" team total moved "+deltaAbs+" points "+deltaDir+" from Week 1, enough movement to make Week 3 either a confirmation party or a very loud correction."),
         useful>=5?"With "+useful+" starters at 10 or more, "+t.team_name+" had real depth behind the headline. That is how a roster turns one big performance into a scoreboard avalanche.":"With only "+useful+" double-digit starters, the "+a.mascot+" left rivals one obvious heckle: make the stars do all of it again."
       ]
     ],

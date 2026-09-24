@@ -977,7 +977,7 @@ function w2BuildSections(t,prev){
     w2S(t,r,"mgmt-two",txCount?(t.manager_name+" made "+txCount+" completed roster move"+(txCount===1?"":"s")+" during the week; "+(won?"for "+alias.mascot+", the win buys those decisions time while Week 3 gets to show whether the churn fixed something real.":"after a "+w2One(margin)+"-point loss, "+t.team_name+" needs at least one of those moves to address the weakness that actually showed up Sunday.")):(t.manager_name+" left the transaction wire quiet, so the "+alias.mascot+" Week 3 response has to come from the roster already in the room rather than a late waiver-wire rescue."))
   ];
   const v=t.value_history_week,d=Number(v?.delta),pct=Math.abs(Number(v?.pct)),value=Number.isFinite(d)?[
-    w2S(t,r,"value-one","The "+alias.mascot+" moved "+(d>0?"up ":d<0?"down ":"sideways ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(pct)?" ("+w2One(pct)+"%)":"")+". "+(Number.isFinite(pct)&&pct<1?"That is effectively flat and does not materially change the club’s trade leverage.":d>0?"That gain gives the roster more leverage in trade talks than it had a week ago.":d<0?"That decline trims some trade leverage and raises the cost of selling low.":"The market barely moved." ))
+    w2S(t,r,"value-one","The "+alias.mascot+" moved "+(d>0?"up ":d<0?"down ":"sideways ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(pct)?" ("+w2One(pct)+"%)":"")+". "+(Number.isFinite(pct)&&pct<1?"For "+alias.mascot+", that is effectively flat and does not materially change trade leverage.":d>0?"For "+alias.mascot+", that gain gives the roster more leverage in trade talks than it had a week ago.":d<0?"For "+alias.mascot+", that decline trims some trade leverage and raises the cost of selling low.":"The market barely moved." ))
   ]:["n/a"];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],weakPrev=weak?w2PrevPlayer(prev,weak.id):null,hot=[
     w2S(t,r,"hot-one",weak?weak.name+" is the Week 2 warning label after "+w2One(weak.points)+" fantasy points"+(weak.real_stat_line?" on "+w2Stat(weak):"")+"; "+(won?t.team_name+" can address that quiet spot while a win still makes the correction cheap.":"in a loss, that empty lineup slot forced the rest of "+t.team_name+" to carry more of the scoring burden."):"The weakest spot is not clear enough to invent one."),
@@ -989,7 +989,7 @@ function w2BuildSections(t,prev){
       :support
         ?support.name+" gets the under-the-radar credit after "+w2One(support.points)+" fantasy points. That contribution came from outside the three names already carrying the main scoring story."
         :eligible.length===1
-          ?eligible[0].name+" was the only starter who clearly crossed the credit threshold. That says as much about the missing support as it does about the headline player."
+          ?eligible[0].name+" was the only "+alias.mascot+" starter who clearly crossed the credit threshold. For "+alias.mascot+", that says as much about the missing support as it does about the headline player."
           :"No starter outside the top three reached 8 fantasy points for "+alias.mascot+". The depth problem is the story; there is no hidden contributor worth manufacturing praise for.")
   ];
   const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=[

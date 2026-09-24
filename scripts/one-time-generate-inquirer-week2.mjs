@@ -1052,7 +1052,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     else resultLine+=" The winner separated by "+w2One(g.margin)+" without needing a single freak score to explain the result.";
     paras.push(w2S(w,r,"recap-game-"+i,resultLine));
 
-    const statNames=[ws[0],ws[1],ls[0]].filter(Boolean);
+    const statNames=(i===0?wTop:[ws[0],ws[1],ls[0]]).filter(Boolean);
     paras.push(w2S(w,r,"recap-stats-"+i,statNames.map(w2RecapStat).join("; ")+"."));    
 
     let insight;

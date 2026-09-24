@@ -586,7 +586,7 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
   const a=w2Alias(t),score=Number(fs?.score)||0,old=Number(prevSent?.score),hasOld=Number.isFinite(old),delta=hasOld?score-old:null,rid=String(r?.id||""),record=w2Record(t),v=w2Hash(t.team_name+"|sentiment")%4;
   const direction=delta==null?"":delta>0?"warmer":delta<0?"colder":"unchanged";
   const standing=score>=50?"the fan base is starting to expect wins, not merely hope for them":score>=15?"confidence is winning the argument for now":score>-15?"the crowd is split between patience and suspicion":score>-50?"skepticism is louder than optimism":"the fan base is already in open revolt";
-  const context=won?"A win gives supporters evidence to defend the roster with.":"A loss gives every preseason concern a fresh microphone.";
+  const context=won?"A win gives supporters something concrete to defend the roster with.":"A loss gives every preseason concern a fresh microphone.";
   const rows={
     "walter-mercer":[
       "At "+record+", "+standing+". "+context+(hasOld?" The rating moved "+Math.abs(delta)+" points "+direction+" from Week 1, which shows how quickly one Sunday changed the burden of proof.":""),
@@ -607,7 +607,7 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
       "The "+a.mascot+" fan base is already arguing from a two-game sample, which means "+standing+". "+(won?"They have receipts now.":"They have complaints with timestamps now.")+(hasOld?" The Week 1-to-Week 2 move was "+Math.abs(delta)+" points "+direction+".":"")
     ],
     "nora-voss":[
-      "Rivals can laugh, but the "+a.mascot+" crowd has its own verdict: "+standing+". "+(won?"The win bought optimism another week.":"The loss turned every familiar complaint back into material.")+(hasOld?" The meter moved "+Math.abs(delta)+" points "+direction+" from Week 1.":""),
+      "Rivals can laugh, but the "+a.mascot+" crowd has its own read: "+standing+". "+(won?"The win bought optimism another week.":"The loss turned every familiar complaint back into material.")+(hasOld?" The meter moved "+Math.abs(delta)+" points "+direction+" from Week 1.":""),
       "The fan-base joke depends on the number now: "+standing+". "+(won?"Another win makes skepticism harder to sell.":"Another loss makes optimism harder to defend.")+(hasOld?" Week 1 was "+old+"; Week 2 is "+score+", so the mood has plainly moved "+direction+".":""),
       "At "+record+", "+standing+". "+context+(hasOld?" A "+Math.abs(delta)+"-point move "+direction+" tells you how much this result changed the room.":""),
       "The "+a.mascot+" crowd is not waiting for a third Sunday to have an opinion: "+standing+". "+(won?"Right now the jokes have to work around a win.":"Right now the jokes have a loss doing half the work.")+(hasOld?" The rating moved "+direction+" from "+old+" to "+score+".":"")

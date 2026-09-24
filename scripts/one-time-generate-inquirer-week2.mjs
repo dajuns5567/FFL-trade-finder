@@ -412,12 +412,12 @@ function w2NextStarRead(t,r,next,nextStar){
 function w2RoadRead(t,r,next,later){
   const a=w2Alias(t),rest=w2Natural(later.map(x=>x.team_name)),first=later[0]?.team_name||"the following opponent",k=w2Hash(String(t.roster_id)+"|road|"+String(r?.id||""))%6;
   const rows=[
-    "After "+next+", the "+a.mascot+" see "+rest+". A Week 3 win lowers the pressure on that stretch; a loss makes "+first+" feel like an early recovery assignment. The order matters because the same schedule can look inviting or urgent depending on Sunday.",
-    next+" comes first, then "+rest+". For "+t.team_name+", banking Week 3 turns the following games into chances to build; dropping it turns "+first+" into a repair job. That is why the sequence matters as much as the names.",
+    "After "+next+", the "+a.mascot+" see "+rest+". A Week 3 win lowers the pressure on that stretch; a loss makes "+first+" feel like an early recovery assignment. For "+a.mascot+", the same schedule can look inviting or urgent depending on what happens against "+next+".",
+    next+" comes first, then "+rest+". For "+t.team_name+", banking Week 3 turns the following games into chances to build; dropping it turns "+first+" into a repair job. That is why the "+a.mascot+" sequence through "+next+" and "+first+" matters as much as the names.",
     "The road after "+next+" runs through "+rest+". Win now and the "+a.mascot+" can attack that stretch from strength; lose and "+first+" immediately carries more weight. Week 3 changes the emotional math of everything behind it.",
-    "Beyond "+next+" are "+rest+". The "+a.mascot+" can make those games look manageable by winning Week 3, or make "+first+" feel mandatory by losing it. Early-season schedule pressure is created one result at a time.",
-    "The schedule does not stop with "+next+": "+rest+" follow. A win gives "+t.team_name+" room to breathe before "+first+"; a loss spends that room immediately. That is the difference between building a start and repairing one.",
-    next+" is the hinge before "+rest+". If the "+a.mascot+" bank Week 3, "+first+" arrives with optional pressure; if they do not, it arrives with required pressure. That sequencing belongs in the outlook, not just the opponent list."
+    "Beyond "+next+" are "+rest+". The "+a.mascot+" can make those games look manageable by winning Week 3, or make "+first+" feel mandatory by losing it. For "+t.team_name+", early-season schedule pressure gets created one result at a time, starting with "+next+".",
+    "The schedule does not stop with "+next+": "+rest+" follow. A win gives "+t.team_name+" room to breathe before "+first+"; a loss spends that room immediately. For "+a.mascot+", that is the difference between building on the start and asking "+first+" to repair it.",
+    next+" is the hinge before "+rest+". If the "+a.mascot+" bank Week 3, "+first+" arrives with optional pressure; if they do not, it arrives with required pressure. For "+t.team_name+", that sequencing through "+next+" belongs in the outlook, not just the opponent list."
   ];
   return rows[k];
 }

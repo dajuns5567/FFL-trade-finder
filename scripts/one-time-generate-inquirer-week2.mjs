@@ -443,12 +443,38 @@ function w2Headline(t,r){
 function w2EligibleCool(t){return (t.starter_details||[]).filter(p=>{const pts=Number(p.points),prior=Number(p.prior_season_avg),proj=Number(p.projected),d=Number.isFinite(proj)?pts-proj:null;return Number.isFinite(pts)&&(pts>=15||(d!=null&&d>=4)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.2))}).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2)}
 function w2SectionHead(r,kind){
   const h={
-    "walter-mercer":{lede:"What Week 2 Changed",players:"Who Actually Moved the Game",management:"The Decisions That Survived Sunday",value:"What the Market Said After Two Weeks","hot-seat":"The Problem That Cannot Follow Them Into Week 3","cool-throne":"Credit Where It Is Actually Due",sentiment:"What the Crowd Believes Now",outlook:"Week 3 Is Already Asking Questions"},
-    "tess-delaney":{lede:"The Second Sunday, Properly Dressed",players:"The People Who Made the Afternoon Interesting",management:"Management, Vanity and the Cost of Choices",value:"The Market Has Opinions, Naturally","hot-seat":"The Unfashionable Problem at the Table","cool-throne":"The Good China List",sentiment:"Public Emotion, Served Without Restraint",outlook:"The Next Appointment With Consequence"},
-    "mack-hollis":{lede:"Week 2: The Part Everybody Will Quote",players:"Who Made the Noise",management:"Management Has to Wear This One",value:"The Price Tag Moved","hot-seat":"Somebody Own the Bad Part","cool-throne":"Give Them the Good Headline",sentiment:"The Crowd Has Decided, Temporarily",outlook:"Week 3: No Hiding Now"},
-    "nora-voss":{lede:"Week 2 Was Not Subtle",players:"The Names Rivals Have to Respect",management:"Fix It Before It Becomes a Bit",value:"The Roster Price Moved, Fine","hot-seat":"The Thing Everybody Saw","cool-throne":"Yes, Somebody Deserves Credit",sentiment:"The Crowd Is Already Too Loud",outlook:"Week 3 Gets the Same Weak Spot First"}
+    "walter-mercer":{lede:"What Week 2 Changed",players:"Who Actually Moved the Game",identity:"What This Team Is Starting to Look Like",management:"The Decisions That Survived Sunday",value:"What the Market Said After Two Weeks","hot-seat":"The Problem That Cannot Follow Them Into Week 3","cool-throne":"Credit Where It Is Actually Due",sentiment:"What the Crowd Believes Now",outlook:"Week 3 Is Already Asking Questions"},
+    "tess-delaney":{lede:"The Second Sunday, Properly Dressed",players:"The People Who Made the Afternoon Interesting",identity:"What Kind of Outfit Is This, Exactly?",management:"Management, Vanity and the Cost of Choices",value:"The Market Has Opinions, Naturally","hot-seat":"The Unfashionable Problem at the Table","cool-throne":"The Good China List",sentiment:"Public Emotion, Served Without Restraint",outlook:"The Next Appointment With Consequence"},
+    "mack-hollis":{lede:"Week 2: The Part Everybody Will Quote",players:"Who Made the Noise",identity:"Okay, So What Are We Looking At Here?",management:"Management Has to Wear This One",value:"The Price Tag Moved","hot-seat":"Somebody Own the Bad Part","cool-throne":"Give Them the Good Headline",sentiment:"The Crowd Has Decided, Temporarily",outlook:"Week 3: No Hiding Now"},
+    "nora-voss":{lede:"Week 2 Was Not Subtle",players:"The Names Rivals Have to Respect",identity:"The Part Rivals Will Actually Remember",management:"Fix It Before It Becomes a Bit",value:"The Roster Price Moved, Fine","hot-seat":"The Thing Everybody Saw","cool-throne":"Yes, Somebody Deserves Credit",sentiment:"The Crowd Is Already Too Loud",outlook:"Week 3 Gets the Same Weak Spot First"}
   };
   return h[r?.id]?.[kind]||kind
+}
+function w2IdentityRead(t,prev,r,top,opp){
+  const a=w2Alias(t),pts=Number(t.points)||0,prevPts=Number(prev?.points),delta=Number.isFinite(prevPts)?pts-prevPts:null,
+    topPts=(top||[]).reduce((n,p)=>n+(Number(p?.points)||0),0),share=pts>0?Math.round(topPts/pts*100):0,
+    useful=(t.starter_details||[]).filter(p=>Number(p?.points)>=10).length,star=top?.[0]?.name||t.team_name,
+    second=top?.[1]?.name||"the supporting cast",rid=String(r?.id||"");
+  const shape=share>=65?"top-heavy":share<=45?"spread out":"star-led without being one-dimensional";
+  let p1,p2,p3;
+  if(rid==="tess-delaney"){
+    p1="The "+a.mascot+" are starting to dress like a "+shape+" roster. "+star+", "+second+" and the next scorer supplied "+w2One(topPts)+" of "+w2One(pts)+" points, or roughly "+share+"% of the Week 2 total. That tells us whether the expensive pieces are carrying the room or merely decorating it.";
+    p2=delta==null?"There is no complete Week 1 team total to compare, so I will resist pretending the trend line owns a tuxedo already.":("The whole outfit moved "+w2One(Math.abs(delta))+" points "+(delta>=0?"up":"down")+" from the opener. For "+a.mascot+", that is a real change in silhouette, not an excuse to declare the wardrobe finished after two Sundays.");
+    p3="There were "+useful+" starters at 10 or more fantasy points against "+opp+". I care about that number because a polished contender needs more than one centerpiece; it needs enough competent supporting work that one quiet star does not send the whole table into disorder.";
+  }else if(rid==="mack-hollis"){
+    p1="Here is the loud roster read: the "+a.mascot+" got "+w2One(topPts)+" of "+w2One(pts)+" Week 2 points from their top three scorers, about "+share+"%. That is "+shape+", and rivals should care because it tells them whether stopping "+star+" actually solves anything.";
+    p2=delta==null?"There is no clean Week 1 team total to yell about, so Week 2 has to stand on its own. Fine. The "+a.mascot+" still gave us enough to know what part of the lineup deserves the first headline.":("Compared with the opener, the "+a.mascot+" team total moved "+w2One(Math.abs(delta))+" points "+(delta>=0?"higher":"lower")+". That is the kind of swing that changes whether Week 3 feels like momentum, panic or just another excuse waiting to happen.");
+    p3=useful>=5?"The best part is depth: "+useful+" starters cleared 10 fantasy points against "+opp+". One star can win a headline; that many useful scores can win the annoying kind of game where the opponent keeps waiting for the lineup to cool off and it never does.":"Only "+useful+" starters reached 10 fantasy points against "+opp+". That is the part I would circle in red, because the "+a.mascot+" cannot keep asking the top of the lineup to carry every loud Sunday by itself.";
+  }else if(rid==="nora-voss"){
+    p1="Rivals are going to remember the "+a.mascot+" as a "+shape+" team after Week 2. The top three produced "+w2One(topPts)+" of "+w2One(pts)+" points ("+share+"%), which means the obvious joke is either “stop "+star+"” or “good luck finding only one thing to stop.”";
+    p2=delta==null?"The opener does not give us a complete team-total comparison, so I am not inventing a trend. The Week 2 shape is enough for now: "+star+" got the headline, and the rest of the roster decides whether that headline becomes a scouting shortcut.":("The "+a.mascot+" moved "+w2One(Math.abs(delta))+" total points "+(delta>=0?"up":"down")+" from Week 1. If that swing repeats, rival managers will stop calling it variance and start building their Sunday jokes around it.");
+    p3=useful>=5?useful+" starters reached double figures against "+opp+". That is irritating depth, which is exactly what a rival hates because there is no single benching, injury or quiet quarter to root for.":"Only "+useful+" starters reached double figures against "+opp+". That gives Week 3 rivals a simple heckling point: make the stars carry everything again and see whether the supporting cast blinks.";
+  }else{
+    p1="The Week 2 scoring shape matters as much as the final total. The "+a.mascot+" top three accounted for "+w2One(topPts)+" of "+w2One(pts)+" points, about "+share+"%, leaving the roster "+shape+". That tells the next opponent whether "+star+" is the whole problem or merely the first one.";
+    p2=delta==null?"Without a complete Week 1 team total, the safest read is about distribution rather than trajectory. The "+a.mascot+" showed where their reliable points came from against "+opp+", and Week 3 can tell us whether those same lanes remain available.":("The "+a.mascot+" changed their team total by "+w2One(Math.abs(delta))+" points from Week 1, moving "+(delta>=0?"up":"down")+" to "+w2One(pts)+". That swing gives the second Sunday context: it was not merely a different opponent, it was a materially different version of the lineup.");
+    p3=useful>=5?useful+" starters scored at least 10 fantasy points against "+opp+", which is the healthier part of the profile. Depth like that gives "+t.team_name+" multiple ways to survive when the top scorer comes back toward earth.":"Only "+useful+" starters reached 10 fantasy points against "+opp+". That concentration is the Week 3 question: if the opponent contains the top two names, does "+t.team_name+" have enough elsewhere to keep the score moving?";
+  }
+  return[p1,p2,p3]
 }
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,
@@ -478,6 +504,7 @@ function w2BuildSections(t,prev){
     players.push(w2S(t,r,"player-acquisition-"+i,variants[(w2Cohort(t)+i)%variants.length]));
   }
   while(players.length<6)players.push(w2S(t,r,"player-fill-"+players.length,t.team_name+" needed more than one usable player to keep "+opp+" from shrinking the matchup to a single answer, and Week 2 supplied enough work to make that balance worth watching again."));
+  const identity=w2IdentityRead(t,prev,r,top,opp);
   const miss=t.best_lineup_miss,gap=Number(miss?.gap)||0,txCount=(t.transactions||[]).length;
   const management=[
     w2S(t,r,"mgmt-one",miss&&gap>0?w2BenchRead(t,r,miss,gap,won,margin):(t.manager_name+" did not leave an obvious higher-scoring bench answer in a compatible spot, so the Week 2 review belongs on the players who actually had the matchup rather than a fantasy-perfect lineup that never existed.")),
@@ -516,8 +543,8 @@ function w2BuildSections(t,prev){
       w2S(t,r,"trade-two","The pieces "+t.team_name+" acquired now have to change Sundays in the direction management paid for. Week 2 adds one receipt; the next few will decide whether the trade looks clever or expensive.")
     ]
   }
-  const byKind={lede,players,management,value,"hot-seat":hot,"cool-throne":cool,sentiment,outlook};if(trade)byKind["trade-commentary"]=trade;
-  const orders=[["lede","players","management","hot-seat","cool-throne","value","sentiment","outlook"],["lede","players","cool-throne","management","value","hot-seat","sentiment","outlook"],["lede","hot-seat","players","management","cool-throne","sentiment","value","outlook"],["lede","players","sentiment","management","hot-seat","value","cool-throne","outlook"]],order=orders[Math.floor(Math.max(0,(Number(t.roster_id)||1)-1)/4)%4].slice();
+  const byKind={lede,players,identity,management,value,"hot-seat":hot,"cool-throne":cool,sentiment,outlook};if(trade)byKind["trade-commentary"]=trade;
+  const orders=[["lede","players","identity","management","hot-seat","cool-throne","value","sentiment","outlook"],["lede","players","identity","cool-throne","management","value","hot-seat","sentiment","outlook"],["lede","hot-seat","players","identity","management","cool-throne","sentiment","value","outlook"],["lede","players","identity","sentiment","management","hot-seat","value","cool-throne","outlook"]],order=orders[Math.floor(Math.max(0,(Number(t.roster_id)||1)-1)/4)%4].slice();
   if(trade){const i=order.indexOf("management");order.splice(i+1,0,"trade-commentary")}
   return order.map(kind=>({kind,heading:kind==="trade-commentary"?"Trade Receipt: What Week 2 Added":w2SectionHead(r,kind),paragraphs:byKind[kind]})).filter(x=>Array.isArray(x.paragraphs)&&x.paragraphs.length)
 }

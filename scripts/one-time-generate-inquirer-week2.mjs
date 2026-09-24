@@ -292,7 +292,7 @@ function w2PlayerAngle(t,r,p,pp,i,opp){
   const a=w2Alias(t),pts=Number(p?.points)||0,prior=Number(pp?.points),delta=Number.isFinite(prior)?pts-prior:null,pos=String(p?.position||"").toUpperCase(),
     def=/^(DL|DE|DT|LB|DB|CB|S|EDGE|IDP)$/.test(pos),rid=String(r?.id||""),won=Number(t.points)>Number(t.opponent_points),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(opp);
   if(i===2&&pts<8){
-    if(rid==="tess-delaney")return p.name+" was the third-highest "+a.mascot+" scorer at only "+w2One(pts)+" points. That is not supporting elegance; it is evidence that the table leaned too heavily on the names above him.";
+    if(rid==="tess-delaney")return p.name+" was the third-highest "+a.mascot+" scorer at only "+w2One(pts)+" points. That is not supporting elegance; it is a sign that the table leaned too heavily on the names above him.";
     if(rid==="mack-hollis")return p.name+" ranked third for "+a.mascot+" with just "+w2One(pts)+" points. That is not depth. That is the top of the lineup dragging a couch uphill.";
     if(rid==="nora-voss")return p.name+" was third on the "+a.mascot+" scoring list with "+w2One(pts)+" points. Rivals do not need a joke there; the number already says the roster was top-heavy.";
     return p.name+" was the third-highest "+a.mascot+" scorer at only "+w2One(pts)+" points, which says more about the lack of depth behind the top two than it does about "+p.name+" himself.";
@@ -441,11 +441,11 @@ function w2NextStarRead(t,r,next,nextStar){
   const a=w2Alias(t),pts=w2One(nextStar?.points||nextStar?.season_avg||0),pos=String(nextStar?.position||"").toUpperCase(),k=w2Hash(String(t.roster_id)+"|nextstar|"+String(r?.id||""))%6;
   const rows=[
     nextStar.name+" is the first Week 3 name to circle after "+pts+" fantasy points. If "+a.mascot+" repeat a quiet lineup spot, "+next+" already has enough top-end scoring to make the margin for error smaller.",
-    "The Week 3 comparison starts with "+nextStar.name+" ("+pos+"), fresh off "+pts+" fantasy points. "+t.team_name+" does not have to 'stop' him; it has to produce enough across its own lineup to keep pace.",
+    "The Week 3 comparison starts with "+nextStar.name+" ("+pos+"), fresh off "+pts+" fantasy points. "+t.team_name+" needs enough production across its own lineup to keep pace with that scoring benchmark.",
     nextStar.name+" brings "+pts+" points from the latest game into Week 3. That raises the scoring bar for "+a.mascot+" if their weakest Week 2 slot stays quiet.",
     "The "+a.mascot+" circle "+nextStar.name+" after "+pts+" fantasy points because "+next+" has a proven source of scoring entering Week 3. The response has to come from their own lineup.",
     next+" arrives with "+nextStar.name+" coming off "+pts+" points. That gives the "+a.mascot+" a concrete scoring benchmark instead of a generic warning about the next opponent.",
-    "For "+a.mascot+", "+nextStar.name+" and his "+pts+" latest-game points show what "+next+" can put on the board. Week 3 is about matching that kind of production, not pretending this is an NFL defensive game plan."
+    "For "+a.mascot+", "+nextStar.name+" and his "+pts+" latest-game points show what "+next+" can put on the board. Week 3 is about finding enough production of their own to match that level."
   ];
   return rows[k];
 }
@@ -474,9 +474,9 @@ function w2Headline(t,r){
     "nora-voss":[team+" Wins Again and the Joke Is Getting Harder to Make",star+" Gave "+team+" a Week 2 Performance Rivals Will Remember",team+" Got the Win; Everybody Else Gets the Annoying Part",opp+" Had a Plan Until "+team+" Started Scoring",team+" Is Two Weeks Into Making This Look Real",team+" Won Week 2 and I Am Running Out of Polite Doubt",team+" Put Another Result on the Board and Made It Loud",team+" Is Starting to Become Somebody Else’s Problem"]
   };
   const loss={
-    "walter-mercer":[team+" Leaves Week 2 With a Problem to Fix",team+" Gets the Second Sunday Wrong",opp+" Hands "+team+" a Week 2 Lesson It Did Not Want",team+" Has Two Weeks of Tape and One Fresh Complaint",team+" Falls in Week 2 and the Margin for Excuses Shrinks",star+" Could Not Keep "+team+" Out of Trouble",team+" Turns the Second Sunday Into a Longer Week",team+" Has Work to Do Before This Becomes a Habit"],
+    "walter-mercer":["Week 2 Leaves "+team+" With a Problem to Fix",team+" Gets the Second Sunday Wrong",opp+" Hands "+team+" a Week 2 Lesson It Did Not Want",team+" Has Two Weeks of Tape and One Fresh Complaint",team+" Falls in Week 2 and the Margin for Excuses Shrinks",star+" Could Not Keep "+team+" Out of Trouble",team+" Turns the Second Sunday Into a Longer Week",team+" Has Work to Do Before This Becomes a Habit"],
     "tess-delaney":[team+" Spills the Week 2 Wine on the Tablecloth",opp+" Ruins "+team+"’s Second Sunday",team+" Loses, and the Décor Cannot Save It",team+" Makes Week 2 Needlessly Dramatic",team+" Has a Second-Sunday Problem in Very Expensive Clothing","A Less Civilized Week 2 for "+team,team+" Falls and the Good China Goes Back in the Cabinet",team+" Gives the Rest of Us an Unfashionably Useful Warning"],
-    "mack-hollis":[team+" Loses Week 2 and the Excuses Get Smaller",opp+" Just Put "+team+" on the Wrong Side of the Headline",team+" Takes a Week 2 Hit and Everybody Saw It",team+" Made the Second Sunday Ugly",team+" Has Two Weeks of Results and One Big Problem",star+" Needed More Help; "+team+" Did Not Find It",team+" Lost, So the Rival Managers Get Their Joke",team+" Needs a Better Answer Before Next Sunday"],
+    "mack-hollis":[team+" Loses Week 2 and the Excuses Get Smaller",opp+" Just Put "+team+" on the Wrong Side of the Headline",team+" Takes a Week 2 Hit and Everybody Saw It",team+" Made the Second Sunday Ugly",team+" Has Two Weeks of Results and One Big Problem",star+" Needed More Help; "+team+" Did Not Find It",team+" Lost, So the Rival Managers Get Their Joke","A Better Answer Is Needed From "+team+" Before Next Sunday"],
     "nora-voss":[team+" Lost Week 2 and the Punch Line Is Too Easy",opp+" Found the Weak Spot; "+team+" Never Closed It",team+" Has a Week 2 Mess That Needs Fixing",team+" Lost, and No Amount of Polite Language Improves It",team+" Gave the Next Opponent Something Obvious to Copy",star+" Could Not Drag "+team+" Out of the Trouble",team+" Took the Hit; Now Fix the Part Everybody Saw",team+" Made Week 2 Much Funnier for Its Rivals"]
   };
   const bank=won?win:loss,arr=bank[r?.id]||bank["walter-mercer"];return arr[v]
@@ -507,7 +507,7 @@ function w2IdentityRead(t,prev,r,top,opp){
   const rows={
     "walter-mercer":[
       [base[0]+" That concentration tells us how much of "+team+"’s total depended on the top of the lineup against "+foe+".",base[1],base[2]],
-      ["Week 2 gave "+team+" a clear scoring shape: "+share+"% of the total came from the top three. That is more useful than pretending the opponent somehow schemed against fantasy players.",base[1],base[2]],
+      ["Week 2 gave "+team+" a clear scoring shape: "+share+"% of the total came from the top three. It shows how concentrated the scoring was at the top of the roster.",base[1],base[2]],
       [star+" was the first name on the page, but the broader number is "+share+"%. That is the share of "+team+"’s scoring owned by the top three.",base[1],base[2]],
       ["The score distribution is the cleaner clue: "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three "+a.mascot+" scorers, leaving the lineup "+shape+".",base[1],base[2]]
     ],
@@ -524,9 +524,9 @@ function w2IdentityRead(t,prev,r,top,opp){
       ["The "+a.mascot+" put "+share+"% of their Week 2 points in the top three scorers. "+star+" was the biggest noise, but the distribution says whether the roster had backup singers.",base[1],base[2]]
     ],
     "nora-voss":[
-      ["Rivals are going to remember the "+a.mascot+" as a "+shape+" roster after Week 2. The top three produced "+share+"% of the points, which is plenty of material without pretending anyone 'stopped' anybody.",base[1],base[2]],
+      ["Rivals are going to remember the "+a.mascot+" as a "+shape+" roster after Week 2. The top three produced "+share+"% of the points, which gives rivals plenty to talk about without inventing a defensive story that was never there.",base[1],base[2]],
       [star+" made himself the obvious headline, but the top three still owned "+share+"% of the "+a.mascot+" scoring. That is the useful rival’s-eye view.",base[1],base[2]],
-      ["The "+a.mascot+" top three combined for "+w2One(topPts)+" of "+w2One(pts)+" points. At "+share+"%, the joke is about concentration, not imaginary defensive game plans.",base[1],base[2]],
+      ["The "+a.mascot+" top three combined for "+w2One(topPts)+" of "+w2One(pts)+" points. At "+share+"%, the joke is about how concentrated the scoring became.",base[1],base[2]],
       ["The useful rival’s-eye view is simple: "+star+", "+second+" and the third scorer owned "+share+"% of "+team+"’s Week 2 points. That leaves the "+a.mascot+" looking "+shape+".",base[1],base[2]]
     ]
   };
@@ -541,8 +541,8 @@ function w2OpeningHook(t,r,won,margin,opp,top){
     "walter-mercer":[
       won?star+" gave "+t.team_name+" the performance it needed, but the more important part was how many answers followed behind him.":opp+" found the part of "+t.team_name+" that still needs fixing, and a "+w2One(margin)+"-point loss made it impossible to ignore.",
       won?"A close Week 2 win told "+t.team_name+" more than a comfortable one would have: the lineup had enough answers when the margin got tight.":t.team_name+" spent Week 2 chasing the game instead of shaping it, and the scoreboard left a useful list of reasons why.",
-      won?t.team_name+" finally looked like the version of itself the roster construction has been promising.":opp+" did not need a miracle to beat "+t.team_name+"; it needed the weaknesses already on the page to stay weak.",
-      won?"The "+a.mascot+" did not need a perfect lineup to win Week 2, only enough strong pieces to keep "+opp+" from finding one answer.":"The "+a.mascot+" leave Week 2 with a problem that is specific enough to fix and visible enough that the next opponent will test it immediately."
+      won?t.team_name+" finally looked like the version of itself the roster construction has been promising.":t.team_name+" did not lose because of one miracle score; too many weak lineup spots stayed weak while "+opp+" built the better total.",
+      won?"The "+a.mascot+" did not need a perfect lineup to win Week 2, only enough strong pieces to finish ahead of "+opp+".":"The "+a.mascot+" leave Week 2 with a problem that is specific enough to fix and visible enough to matter immediately."
     ],
     "tess-delaney":[
       won?"The "+a.mascot+" finally gave the room something worth applauding without qualification.":opp+" arrived, disturbed the table setting and left "+a.mascot+" with a stain they now have a week to remove.",
@@ -559,14 +559,14 @@ function w2OpeningHook(t,r,won,margin,opp,top){
     "nora-voss":[
       won?"The easiest joke about "+a.mascot+" got harder to make after Week 2.":"The easiest joke about "+a.mascot+" wrote itself before the final whistle, which is a terrible way to enter Week 3.",
       won?star+" made the first punch line disappear, and the rest of "+a.mascot+" did enough to ruin the sequel.":opp+" found the same thing every rival will now circle in the scouting report.",
-      won?"Rival managers wanted a reason to call "+a.mascot+" fake; Week 2 made them work harder for it.":"Rival managers do not need creativity this week—"+a.mascot+" handed them the material.",
+      won?"Rival managers wanted a reason to call "+a.mascot+" fake; Week 2 made them work harder for it.":"Rival managers do not need creativity this week—the "+a.mascot+" scoring gaps handed them the material.",
       won?"The "+a.mascot+" won the game and stole a week of easy criticism.":"The "+a.mascot+" lost, and the annoying part is that the explanation is simpler than they would like."
     ]
   };
   return (rows[rid]||rows["walter-mercer"])[v]
 }
 function w2SentimentRead(t,prev,r,fs,prevSent,won){
-  const a=w2Alias(t),score=Number(fs?.score)||0,old=Number(prevSent?.score),hasOld=Number.isFinite(old),delta=hasOld?score-old:null,rid=String(r?.id||""),record=w2Record(t),v=w2Hash(t.team_name+"|sentiment")%4;
+  const a=w2Alias(t),score=Number(fs?.score)||0,old=Number(prevSent?.score),hasOld=Number.isFinite(old),delta=hasOld?score-old:null,rid=String(r?.id||""),record=w2Record(t),v=w2Hash(t.team_name+"|sentiment")%4,pts=Number(t.points)||0,margin=Math.abs(Number(t.points)-Number(t.opponent_points)),scoreReason=won?(pts>=110?"Fans just watched "+w2DisplayTeam(t.team_name)+" clear "+w2One(pts)+" in a win, so optimism has an actual scoring performance behind it.":"The win gives supporters a result to point at, even if "+w2One(pts)+" points leaves room for a better scoring week."):(pts>=100?"The loss hurts, but "+w2One(pts)+" points keeps the fan reaction from becoming a simple claim that the lineup cannot score.":pts<70?"A "+w2One(pts)+"-point loss gives frustrated fans an obvious complaint: the lineup did not produce enough fantasy points.":"The "+w2One(margin)+"-point loss leaves fans arguing about both the result and where the missing points should have come from.");
   const direction=delta==null?"":delta>0?"warmer":delta<0?"colder":"unchanged";
   const standing=score>=50?"the fan base is starting to expect wins, not merely hope for them":score>=15?"confidence is winning the argument for now":score>-15?"the crowd is split between patience and suspicion":score>-50?"skepticism is louder than optimism":"the fan base is already in open revolt";
   const context=rid==="tess-delaney"?(won?"The win lets "+a.mascot+" supporters enjoy the room without apologizing for it.":"The loss gives the "+a.mascot+" skeptics the best seat in the room."):(rid==="mack-hollis"?(won?"The win gives "+a.mascot+" fans something loud to point at.":"The loss turns every old "+a.mascot+" complaint back up to full volume."):(rid==="nora-voss"?(won?"The win forces "+a.mascot+" rivals to work harder for the joke.":"The loss hands "+a.mascot+" rivals fresh material."):won?"The win gives "+a.mascot+" supporters a concrete result to defend.":"The loss gives "+a.mascot+" supporters a specific problem to argue about."));
@@ -596,7 +596,7 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
       "The "+a.mascot+" crowd is not waiting for a third Sunday to have an opinion: "+standing+". "+(won?"Right now the jokes about "+a.mascot+" have to work around a win.":"Right now the jokes have a loss doing half the work.")+(hasOld?" The rating moved "+direction+" from "+old+" to "+score+".":"")
     ]
   };
-  return (rows[rid]||rows["walter-mercer"])[v]
+  return (rows[rid]||rows["walter-mercer"])[v]+" "+scoreReason
 }
 function w2RecapTradeParagraphs(teams,r){
   const seen=new Set(),trades=[];
@@ -637,10 +637,10 @@ function w2RecapTradeParagraphs(teams,r){
 
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,
-    prevWon=prev?Number(prev.points)>Number(prev.opponent_points):null,prevOpp=prev?.opponent_name||"last week’s opponent",prevScore=prev?w2One(prev.points)+"–"+w2One(prev.opponent_points):null,top=(t.starter_details||[]).slice(0,3),opp=t.opponent_name||"the opponent";
+    prevWon=prev?Number(prev.points)>Number(prev.opponent_points):null,prevOpp=w2DisplayTeam(prev?.opponent_name||"last week’s opponent"),prevScore=prev?w2One(prev.points)+"–"+w2One(prev.opponent_points):null,top=(t.starter_details||[]).slice(0,3),opp=t.opponent_name||"the opponent";
   const lede=[
     w2S(t,r,"lede-hook",w2OpeningHook(t,r,won,margin,opp,top)),
-    w2S(t,r,"lede-result",t.team_name+" "+(won?"beat ":"lost to ")+opp+" "+w2One(t.points)+"–"+w2One(t.opponent_points)+", leaving the "+alias.mascot+" at "+rec+(rank?" and No. "+rank+" in the league order":"")+". "),
+    w2S(t,r,"lede-result",w2DisplayTeam(t.team_name)+" "+(won?"beat ":"lost to ")+w2DisplayTeam(opp)+" "+w2One(t.points)+"–"+w2One(t.opponent_points)+", leaving the "+alias.mascot+" at "+rec+(rank?" and No. "+rank+" in the league order":"")+". "),
     w2S(t,r,"lede-prev",prev?("The "+alias.mascot+" opened with a "+prevScore+" "+(prevWon?"win over ":"loss to ")+prevOpp+"; after Week 2, that leaves "+t.team_name+" with "+(prevWon===won?(won?"two straight wins and a standard worth defending":"two straight losses and a repair job that can no longer wait"):(won?"a response instead of a spiral":"a split start and an unanswered question"))+"."):"The "+alias.mascot+" have no complete opening-week snapshot to lean on, so this result has to carry the story by itself."),
     w2S(t,r,"lede-shape",w2LedeShape(t,r,won,margin,opp,top)),
     w2S(t,r,"lede-alias",prev?(prevWon===won?(won?"Two straight wins give the "+alias.mascot+" something real to defend in Week 3.":"Two straight losses mean the "+alias.mascot+" are past the point where everything can be dismissed as opening-week noise."):(won?"The "+alias.mascot+" answered the opener instead of letting it become a trend.":"The "+alias.mascot+" have now shown both versions of themselves, which makes Week 3 a choice about which one sticks.")):"Week 2 has to carry the argument by itself because the opening-week comparison is incomplete.")

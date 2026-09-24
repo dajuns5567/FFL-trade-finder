@@ -662,6 +662,37 @@ function w2Headline(t,r){
   const bank=won?win:loss,arr=bank[r?.id]||bank["walter-mercer"];return arr[v]
 }
 function w2EligibleCool(t){return (t.starter_details||[]).filter(p=>{const pts=Number(p.points),prior=Number(p.prior_season_avg),proj=Number(p.projected),d=Number.isFinite(proj)?pts-proj:null;return Number.isFinite(pts)&&(pts>=15||(d!=null&&d>=4)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.2))}).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2)}
+function w2CoolPairRead(t,r,eligible,won){
+  const a=w2Alias(t),names=w2Natural(eligible.map(p=>p.name)),sum=w2One(eligible.reduce((n,p)=>n+(Number(p.points)||0),0)),rid=String(r?.id||""),v=w2Hash(String(t.roster_id)+"|coolpair|"+rid)%4;
+  const rows={
+    "walter-mercer":[
+      names+" combined for "+sum+" points, giving "+w2DisplayTeam(t.team_name)+" two legitimate high-end contributors in the same lineup.",
+      "Two "+a.mascot+" starters earned real credit: "+names+" combined for "+sum+" points, which is a stronger signal than one isolated spike.",
+      names+" supplied "+sum+" combined points. For "+a.mascot+", that means the top-end production came from a pair rather than one player carrying the entire week.",
+      "The credit belongs to "+names+" together. Their "+sum+" combined points gave "+w2DisplayTeam(t.team_name)+" a two-player foundation worth carrying forward."
+    ],
+    "tess-delaney":[
+      "The good china belongs to "+names+" after "+sum+" combined points; one centerpiece is lovely, two is a much better room.",
+      names+" share the polished part of the Week 2 story, combining for "+sum+" points and keeping the "+a.mascot+" from becoming a one-name production.",
+      "I am setting two places at the good table: "+names+" combined for "+sum+" points, enough production to deserve equal billing.",
+      names+" gave the "+a.mascot+" "+sum+" combined points. That is the kind of paired performance that makes the rest of the table look less precarious."
+    ],
+    "mack-hollis":[
+      "Put "+names+" together and you get "+sum+" points. That is not one star screaming into the void; that is two actual headline scores.",
+      names+" combined for "+sum+" and both get the big type. "+a.mascot+" had two players worth yelling about, not one.",
+      "The loud part comes in stereo: "+names+" gave "+a.mascot+" "+sum+" combined points.",
+      names+" piled up "+sum+" together. If you want the clean Week 2 credit line, there it is."
+    ],
+    "nora-voss":[
+      "Rivals can complain about plenty, but "+names+" combined for "+sum+" points and both earned protection from the easy jokes.",
+      names+" gave "+a.mascot+" "+sum+" combined points. That is two real contributors, which ruins the lazy one-player-roster punch line.",
+      "The credit list needs two names: "+names+" combined for "+sum+" and made the top of the "+a.mascot+" lineup legitimately dangerous.",
+      names+" combined for "+sum+" points. Even rivals have to admit both performances belong on the positive side of the ledger."
+    ]
+  };
+  const base=(rows[rid]||rows["walter-mercer"])[v];
+  return base+" "+(won?"The win turned that paired production into something useful.":"The loss means the rest of the lineup failed to convert that pair into a result.")
+}
 function w2SectionHead(r,kind){
   const h={
     "walter-mercer":{lede:"What Week 2 Changed",players:"Who Actually Moved the Game",identity:"What This Team Is Starting to Look Like",management:"The Decisions That Survived Sunday",value:"What the Market Said After Two Weeks","hot-seat":"The Problem That Cannot Follow Them Into Week 3","cool-throne":"Credit Where It Is Actually Due",sentiment:"What the Crowd Believes Now",outlook:"Week 3 Is Already Asking Questions"},
@@ -985,7 +1016,7 @@ function w2BuildSections(t,prev){
   ];
   const eligible=w2EligibleCool(t),topIds=new Set(top.filter(Boolean).map(p=>String(p.id))),support=(t.starter_details||[]).filter(p=>!topIds.has(String(p.id))&&Number(p.points)>=8).sort((a,b)=>Number(b.points)-Number(a.points))[0],cool=[
     w2S(t,r,"cool-one",eligible.length>=2
-      ?w2Natural(eligible.map(p=>p.name))+" both cleared the Week 2 credit threshold, combining for "+w2One(eligible.reduce((n,p)=>n+(Number(p.points)||0),0))+" points. "+(won?"That paired production gave "+alias.mascot+" more than a one-player carry.":"That paired production was real; the problem is that the rest of "+alias.mascot+" still left it stranded in a loss.")
+      ?w2CoolPairRead(t,r,eligible,won)
       :support
         ?support.name+" gets the under-the-radar credit after "+w2One(support.points)+" fantasy points. That contribution came from outside the three names already carrying the main scoring story."
         :eligible.length===1

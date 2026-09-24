@@ -290,56 +290,209 @@ function w2DisplayTeam(name){const s=String(name||"").trim();return s&&s===s.toL
 function w2DeltaPhrase(delta){const d=Number(delta);if(!Number.isFinite(d)||Math.abs(d)<0.05)return"essentially the same as";return d>0?w2One(Math.abs(d))+" points more than":w2One(Math.abs(d))+" points fewer than"}
 function w2PlayerAngle(t,r,p,pp,i,opp){
   const a=w2Alias(t),pts=Number(p?.points)||0,prior=Number(pp?.points),delta=Number.isFinite(prior)?pts-prior:null,pos=String(p?.position||"").toUpperCase(),
-    def=/^(DL|DE|DT|LB|DB|CB|S|EDGE|IDP)$/.test(pos),rid=String(r?.id||""),won=Number(t.points)>Number(t.opponent_points),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(opp);
+    def=/^(DL|DE|DT|LB|DB|CB|S|EDGE|IDP)$/.test(pos),rid=String(r?.id||""),won=Number(t.points)>Number(t.opponent_points),
+    team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(opp),v=w2Hash(team+"|"+String(p?.id||p?.name)+"|"+i+"|"+rid)%4;
   if(i===2&&pts<8){
-    if(rid==="tess-delaney")return p.name+" was the third-highest "+a.mascot+" scorer at only "+w2One(pts)+" points. That is not supporting elegance; it is a sign that the table leaned too heavily on the names above him.";
-    if(rid==="mack-hollis")return p.name+" ranked third for "+a.mascot+" with just "+w2One(pts)+" points. That is not depth. That is the top of the lineup dragging a couch uphill.";
-    if(rid==="nora-voss")return p.name+" was third on the "+a.mascot+" scoring list with "+w2One(pts)+" points. Rivals do not need a joke there; the number already says the roster was top-heavy.";
-    return p.name+" was the third-highest "+a.mascot+" scorer at only "+w2One(pts)+" points, which says more about the lack of depth behind the top two than it does about "+p.name+" himself.";
+    const low={
+      "walter-mercer":[
+        p.name+" was third on the "+a.mascot+" scoring list at only "+w2One(pts)+" points. That exposes the lack of depth behind the top two.",
+        "Third-highest for "+a.mascot+" was "+p.name+" at "+w2One(pts)+". The ranking sounds better than the production.",
+        p.name+" finished as the third scorer with "+w2One(pts)+", which is more warning about the roster’s depth than praise for the line.",
+        "The "+a.mascot+" third scoring slot belonged to "+p.name+" at "+w2One(pts)+" points. That is too low to sell as meaningful support."
+      ],
+      "tess-delaney":[
+        p.name+" was the third-highest "+a.mascot+" scorer at only "+w2One(pts)+" points. That is not supporting elegance; the table leaned too heavily on the names above him.",
+        "The third chair at the "+a.mascot+" table went to "+p.name+" with "+w2One(pts)+" points. That is a seating chart problem, not a compliment.",
+        p.name+" ranked third for "+a.mascot+" at "+w2One(pts)+". A polished roster should not need to call that a supporting performance.",
+        "The "+a.mascot+" reached their third scorer at "+p.name+" and "+w2One(pts)+" points. The good china is doing too much work at the top of the table."
+      ],
+      "mack-hollis":[
+        p.name+" ranked third for "+a.mascot+" with just "+w2One(pts)+" points. That is the top of the lineup dragging a couch uphill.",
+        "Third place on the "+a.mascot+" scoring board was "+p.name+" at "+w2One(pts)+". Do not put confetti on that.",
+        p.name+" was the third scorer at "+w2One(pts)+". If that is the support line, the stars need overtime pay.",
+        "The "+a.mascot+" third-best score was "+w2One(pts)+" from "+p.name+". That is not depth; that is a warning siren."
+      ],
+      "nora-voss":[
+        p.name+" was third on the "+a.mascot+" scoring list with "+w2One(pts)+" points. Rivals do not need a joke there; the number already says top-heavy.",
+        "The third "+a.mascot+" scorer was "+p.name+" at "+w2One(pts)+". Rivals can save their creativity because the depth chart wrote the punch line.",
+        p.name+" landed third with "+w2One(pts)+" points. That is a very convenient number for anyone mocking the support behind the stars.",
+        "At "+w2One(pts)+" points, "+p.name+" was still third for "+a.mascot+". The top-heavy joke does not need editing."
+      ]
+    };
+    return (low[rid]||low["walter-mercer"])[v];
   }
   if(rid==="walter-mercer"){
-    if(i===0)return def
-      ?p.name+" gave "+team+" "+w2One(pts)+" IDP points, a premium defensive score that "+(won?"helped create the margin over ":"kept the loss to ")+foe+" from becoming worse."
-      :p.name+" gave "+team+" "+w2One(pts)+" points at the top of the lineup; "+(won?"that production supplied the foundation for the win over ":"even that centerpiece score was not enough to catch ")+foe+".";
-    if(i===1)return delta!=null&&Math.abs(delta)>=8
-      ?p.name+" moved "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+" from Week 1. That swing materially changed how much support "+team+" had behind its leading scorer against "+foe+"."
-      :p.name+" supplied "+w2One(pts)+" as the second scorer for "+team+". That is meaningful support when the top of the lineup is carrying this much of the total.";
-    return /TD/i.test(String(p?.real_stat_line||""))
-      ?p.name+" converted scoring chances into "+w2One(pts)+" fantasy points. The touchdowns mattered more than raw yardage to "+team+"’s final total."
-      :p.name+" added "+w2One(pts)+" behind the top two, enough to matter without pretending the third score carried the matchup.";
+    if(i===0){
+      const rows=def?[
+        p.name+" gave "+team+" "+w2One(pts)+" IDP points, a premium defensive score that "+(won?"helped create the margin over ":"kept the loss to ")+foe+" from becoming worse.",
+        team+" got "+w2One(pts)+" IDP points from "+p.name+". "+(won?"That defensive production materially helped the winning total against ":"Without it, the deficit to ")+foe+(won?".":" would have been larger."),
+        p.name+" produced "+w2One(pts)+" from an IDP slot for "+team+", the kind of positional edge that "+(won?"matters in a win over ":"keeps a loss to ")+foe+" in context.",
+        "An IDP led "+team+": "+p.name+" scored "+w2One(pts)+". "+(won?"That is a real source of separation in the win.":"The rest of the lineup did not supply enough around it.")
+      ]:[
+        p.name+" gave "+team+" "+w2One(pts)+" points at the top of the lineup; "+(won?"that production supplied the foundation for the win over ":"even that centerpiece score was not enough to catch ")+foe+".",
+        team+" got its best Week 2 score from "+p.name+" at "+w2One(pts)+". "+(won?"The rest of the roster did enough to turn it into a win.":"The total around him was not enough to reach "+foe+"."),
+        p.name+" led "+team+" with "+w2One(pts)+" points. "+(won?"That is centerpiece production attached to a useful result.":"It became wasted top-end production in the loss."),
+        "The top "+team+" line was "+p.name+" at "+w2One(pts)+". "+(won?"That gave the lineup a foundation.":"That foundation needed more help.")
+      ];
+      return rows[v];
+    }
+    if(i===1){
+      if(delta!=null&&Math.abs(delta)>=8){
+        const rows=[
+          p.name+" moved "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+" from Week 1, materially changing the support behind "+team+"’s leading scorer.",
+          "Week over week, "+p.name+" shifted by "+w2One(Math.abs(delta))+" points "+(delta>0?"higher":"lower")+". That altered the second layer of "+team+"’s scoring.",
+          p.name+" changed his contribution by "+w2One(Math.abs(delta))+" points from the opener. "+(delta>0?"The jump gave ":"The drop cost ")+team+" meaningful secondary production.",
+          "The second-scoring story is the swing: "+p.name+" moved "+w2One(Math.abs(delta))+" points "+(delta>0?"above":"below")+" his Week 1 total."
+        ];
+        return rows[v];
+      }
+      const rows=[
+        p.name+" gave "+team+" "+w2One(pts)+" as its second-highest score, a useful layer behind the weekly leader.",
+        team+" got "+w2One(pts)+" from second scorer "+p.name+". That kept the top line from standing alone.",
+        "Behind the leader, "+p.name+" supplied "+w2One(pts)+" for "+team+". That is the sort of secondary total a lineup can use.",
+        p.name+" checked in second for "+team+" at "+w2One(pts)+" points. The value is in giving the roster another meaningful score."
+      ];
+      return rows[v];
+    }
+    const rows=/TD/i.test(String(p?.real_stat_line||""))?[
+      p.name+" converted scoring chances into "+w2One(pts)+" fantasy points; the touchdowns mattered more than raw yardage to "+team+"’s total.",
+      "Touchdowns carried "+p.name+" to "+w2One(pts)+" for "+team+", which is the fantasy value of the line even without gaudy yardage.",
+      p.name+" reached "+w2One(pts)+" through scoring plays. For "+team+", conversion mattered more than volume.",
+      "The third-scoring contribution from "+p.name+" was "+w2One(pts)+", with touchdowns doing most of the fantasy work."
+    ]:[
+      p.name+" added "+w2One(pts)+" behind the top two, enough to matter without pretending the third score carried the matchup.",
+      "Third on the "+team+" scoring list was "+p.name+" at "+w2One(pts)+". That is support, not centerpiece production.",
+      team+" got "+w2One(pts)+" from "+p.name+" in the third slot, a useful contribution that belongs in context.",
+      p.name+" supplied the third "+team+" score at "+w2One(pts)+". It helped the total without defining it."
+    ];
+    return rows[v];
   }
   if(rid==="tess-delaney"){
-    if(i===0)return def
-      ?p.name+" brought "+w2One(pts)+" IDP points to the table. "+(won?"That is the sort of defensive luxury that makes a winning lineup look composed.":"It was one of the few pieces that deserved to stay on display after the loss.")
-      :p.name+" was the "+a.mascot+" centerpiece with "+w2One(pts)+" points. "+(won?"The rest of the lineup had enough around him to make the performance useful.":"The performance was lovely; the result around it was not.");
-    if(i===1)return delta!=null&&delta>6
-      ?p.name+" improved by "+w2One(delta)+" points from the opener, giving "+a.mascot+" materially more support behind the headline scorer."
-      :p.name+" supplied "+w2One(pts)+" as the second scorer, useful supporting work rather than another centerpiece pretending to be one.";
-    return p.name+" added "+w2One(pts)+" as the third scorer. That belongs in the supporting cast, not the starring role.";
+    if(i===0){
+      const rows=def?[
+        p.name+" brought "+w2One(pts)+" IDP points to the table. "+(won?"That defensive luxury helped the winning lineup look composed.":"It was one of the pieces worth keeping on display after the loss."),
+        "The "+a.mascot+" centerpiece came from IDP: "+p.name+" delivered "+w2One(pts)+". "+(won?"That is tasteful excess in a win.":"The result failed to match the quality of the piece."),
+        p.name+" supplied "+w2One(pts)+" from a defensive slot, an unusually valuable centerpiece for "+a.mascot+".",
+        "At "+w2One(pts)+" points, "+p.name+" turned an IDP slot into one of the "+a.mascot+" best pieces on the table."
+      ]:[
+        p.name+" was the "+a.mascot+" centerpiece with "+w2One(pts)+" points. "+(won?"The supporting cast did enough to make the performance useful.":"The performance was lovely; the result around it was not."),
+        "The good china belonged to "+p.name+" after "+w2One(pts)+" points for "+a.mascot+". "+(won?"The result matched the presentation.":"The rest of the evening did not."),
+        p.name+" received top billing for "+a.mascot+" at "+w2One(pts)+" points. "+(won?"That centerpiece had enough company.":"That centerpiece deserved better company."),
+        "A "+w2One(pts)+"-point line from "+p.name+" anchored the "+a.mascot+" table. "+(won?"The win made it worth displaying.":"The loss made it wasted elegance.")
+      ];
+      return rows[v];
+    }
+    if(i===1){
+      if(delta!=null&&delta>6){
+        const rows=[
+          p.name+" improved by "+w2One(delta)+" points from the opener, giving "+a.mascot+" materially more support behind the headline scorer.",
+          "The supporting cast got louder through "+p.name+", who added "+w2One(delta)+" points over Week 1.",
+          p.name+" moved "+w2One(delta)+" points above his opener total, the kind of improvement that gives the centerpiece room to breathe.",
+          "Compared with Week 1, "+p.name+" added "+w2One(delta)+" points. That is an upgrade in the second chair, not decorative movement."
+        ];
+        return rows[v];
+      }
+      const rows=[
+        p.name+" supplied "+w2One(pts)+" as the second scorer, useful support rather than another centerpiece pretending to be one.",
+        "Second billing went to "+p.name+" at "+w2One(pts)+" points, enough support to keep the table from becoming a solo act.",
+        p.name+" gave "+a.mascot+" "+w2One(pts)+" from the second scoring chair. That is supporting work, properly labeled.",
+        "The "+a.mascot+" second scorer was "+p.name+" with "+w2One(pts)+". A good supporting piece does not need to impersonate the centerpiece."
+      ];
+      return rows[v];
+    }
+    const rows=[
+      p.name+" added "+w2One(pts)+" as the third scorer. That belongs in the supporting cast, not the starring role.",
+      "Third billing belonged to "+p.name+" at "+w2One(pts)+" points. Useful company for the stars, not a new leading role.",
+      p.name+" supplied "+w2One(pts)+" from the third chair. That is enough to help the table without stealing the centerpiece.",
+      "The "+a.mascot+" third scorer was "+p.name+" at "+w2One(pts)+". Call it support and leave the top billing elsewhere."
+    ];
+    return rows[v];
   }
   if(rid==="mack-hollis"){
-    if(i===0)return p.name+" dropped "+w2One(pts)+" for "+a.mascot+". "+(won?"That is a headline score because it helped win the week.":"That is a headline score trapped inside a loss, which is a much less fun newspaper.");
-    if(i===1)return delta!=null&&delta>8
-      ?p.name+" jumped "+w2One(delta)+" points from Week 1 and gave "+a.mascot+" a real second source of scoring instead of making the leader do everything."
-      :p.name+" gave "+a.mascot+" "+w2One(pts)+" behind the leader. That is actual support, not decorative box-score confetti.";
+    if(i===0){
+      const rows=won?[
+        p.name+" dropped "+w2One(pts)+" for "+a.mascot+". That is a headline score because it helped win the week.",
+        a.mascot+" got "+w2One(pts)+" from "+p.name+" at the top. Put that on the front page of a win.",
+        p.name+" led the "+a.mascot+" with "+w2One(pts)+". Big score, winning result, no need to whisper.",
+        "The loudest "+a.mascot+" number was "+w2One(pts)+" from "+p.name+". That one belongs in the headline."
+      ]:[
+        p.name+" dropped "+w2One(pts)+" for "+a.mascot+", a headline score trapped inside a loss.",
+        a.mascot+" got "+w2One(pts)+" from "+p.name+" and still lost. That is exactly how a good stat line becomes an angry headline.",
+        p.name+" led the "+a.mascot+" with "+w2One(pts)+", then had to watch the rest of the total fall short.",
+        "The loudest "+a.mascot+" number was "+w2One(pts)+" from "+p.name+". The loss turned it into wasted noise."
+      ];
+      return rows[v];
+    }
+    if(i===1){
+      if(delta!=null&&delta>8){
+        const rows=[
+          p.name+" jumped "+w2One(delta)+" points from Week 1 and gave "+a.mascot+" a real second source of scoring.",
+          "The Week 1-to-Week 2 jump for "+p.name+" was "+w2One(delta)+" points. That is how a second scorer gets loud.",
+          p.name+" added "+w2One(delta)+" points over his opener line, giving "+a.mascot+" a much better second punch.",
+          "Second-scorer volume went up through "+p.name+", whose total improved by "+w2One(delta)+" points from Week 1."
+        ];
+        return rows[v];
+      }
+      const rows=[
+        p.name+" gave "+a.mascot+" "+w2One(pts)+" behind the leader. That is actual support, not decorative box-score confetti.",
+        "Behind the headline, "+p.name+" put up "+w2One(pts)+" for "+a.mascot+". That is the useful kind of second noise.",
+        p.name+" supplied "+w2One(pts)+" as the second "+a.mascot+" score. No confetti needed; it did its job.",
+        "The "+a.mascot+" second punch was "+p.name+" at "+w2One(pts)+" points. That is real support, not a footnote."
+      ];
+      return rows[v];
+    }
     if(/TD/i.test(String(p?.real_stat_line||""))){const rows=[
       p.name+" reached "+w2One(pts)+" through scoring plays. The touchdowns did the fantasy work even if the yardage line was ordinary.",
       p.name+" turned end-zone work into "+w2One(pts)+" points. That is the part of the stat line worth yelling about.",
       p.name+" got to "+w2One(pts)+" because scoring plays carried the line. Fantasy points do not award style bonuses for prettier yardage.",
       p.name+" produced "+w2One(pts)+" with touchdowns doing the heavy lifting. That is useful third-scorer noise, not a new centerpiece."
-    ];return rows[w2Hash(t.team_name+"|tilly-third-td")%rows.length]}
+    ];return rows[v]}
     {const rows=[
       p.name+" supplied "+w2One(pts)+" in the third slot. Useful, yes; something I am building a parade around, no.",
       p.name+" checked in at "+w2One(pts)+" as the third scorer. That helps the total without stealing the headline.",
       p.name+" added "+w2One(pts)+" behind the two louder names. Call it support, not spectacle.",
       p.name+" gave "+a.mascot+" "+w2One(pts)+" from the third scoring spot. That is enough to matter and not enough to hijack the page."
-    ];return rows[w2Hash(t.team_name+"|tilly-third")%rows.length]}
+    ];return rows[v]}
   }
-  if(i===0)return p.name+" put up "+w2One(pts)+" for "+a.mascot+". "+(won?"Rivals can complain about the rest, but they cannot call the top of this lineup quiet.":"The cruel part is that rivals still get the joke because a score that big ended up in a loss.");
-  if(i===1)return delta!=null&&delta< -8
-    ?p.name+" fell "+w2One(Math.abs(delta))+" points from Week 1. "+team+" still got "+w2One(pts)+" from him, but the drop put more pressure on the rest of the roster."
-    :p.name+" gave "+a.mascot+" "+w2One(pts)+" as the second scorer, enough to make the lineup more than a one-name headline.";
-  return p.name+" added "+w2One(pts)+" behind the top two. If rivals are looking for a weak spot, the useful question is whether that third score is repeatable—not whether "+foe+" somehow 'stopped' it.";
+  if(i===0){
+    const rows=won?[
+      p.name+" put up "+w2One(pts)+" for "+a.mascot+". Rivals can complain about the rest, but the top line was loud.",
+      "The "+a.mascot+" leader was "+p.name+" at "+w2One(pts)+". Harder to mock the top of a winning lineup after that.",
+      p.name+" gave "+a.mascot+" "+w2One(pts)+" at the top. The win makes that an inconvenient fact for rivals.",
+      "Rivals wanted a quiet centerpiece; "+p.name+" answered with "+w2One(pts)+" for "+a.mascot+"."
+    ]:[
+      p.name+" put up "+w2One(pts)+" for "+a.mascot+", and rivals still get the joke because the score ended up in a loss.",
+      "The "+a.mascot+" leader was "+p.name+" at "+w2One(pts)+". Nice number; ugly place to waste it.",
+      p.name+" gave "+a.mascot+" "+w2One(pts)+" at the top, which only makes the loss more annoying.",
+      "Rivals cannot mock "+p.name+"’s "+w2One(pts)+" points; they can mock the fact that "+a.mascot+" still lost."
+    ];
+    return rows[v];
+  }
+  if(i===1){
+    if(delta!=null&&delta< -8){
+      const rows=[
+        p.name+" fell "+w2One(Math.abs(delta))+" points from Week 1. "+team+" still got "+w2One(pts)+" from him, but the drop increased the burden elsewhere.",
+        "Week over week, "+p.name+" lost "+w2One(Math.abs(delta))+" points of production. Rivals will notice the missing secondary volume.",
+        p.name+" came in "+w2One(Math.abs(delta))+" points below his opener total, making the second scoring slot less comfortable for "+a.mascot+".",
+        "The "+a.mascot+" second scorer slipped through "+p.name+", down "+w2One(Math.abs(delta))+" points from Week 1."
+      ];
+      return rows[v];
+    }
+    const rows=[
+      p.name+" gave "+a.mascot+" "+w2One(pts)+" as the second scorer, enough to make the lineup more than a one-name headline.",
+      "Second on the "+a.mascot+" board was "+p.name+" at "+w2One(pts)+". Rivals have to account for more than the weekly leader when that holds.",
+      p.name+" supplied "+w2One(pts)+" behind the leader. That keeps the "+a.mascot+" from becoming a one-name punch line.",
+      "The "+a.mascot+" got "+w2One(pts)+" from second scorer "+p.name+". That is enough secondary production to complicate the cheap joke."
+    ];
+    return rows[v];
+  }
+  const rows=[
+    p.name+" added "+w2One(pts)+" behind the top two. Rivals should care whether that third score is repeatable.",
+    "Third on the "+a.mascot+" board was "+p.name+" at "+w2One(pts)+". The only useful joke is whether he can do it again.",
+    p.name+" supplied "+w2One(pts)+" from the third scoring slot. Repeatability is the real rival question.",
+    "The "+a.mascot+" third score came from "+p.name+" at "+w2One(pts)+". That is where the next round of heckling or respect gets decided."
+  ];
+  return rows[v];
 }
 
 function w2BenchRead(t,r,miss,gap,won,margin){
@@ -447,14 +600,21 @@ function w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders){
   return rows[k];
 }
 function w2NextStarRead(t,r,next,nextStar){
-  const a=w2Alias(t),pts=w2One(nextStar?.points||nextStar?.season_avg||0),pos=String(nextStar?.position||"").toUpperCase(),k=w2Hash(String(t.roster_id)+"|nextstar|"+String(r?.id||""))%6;
+  const a=w2Alias(t),pts=w2One(nextStar?.points||nextStar?.season_avg||0),pos=String(nextStar?.position||"").toUpperCase(),
+    k=w2Hash(String(t.roster_id)+"|nextstar|"+String(r?.id||""))%12;
   const rows=[
-    nextStar.name+" is the first Week 3 name to circle after "+pts+" fantasy points. If "+a.mascot+" repeat a quiet lineup spot, "+next+" already has enough top-end scoring to make the margin for error smaller.",
-    "The Week 3 comparison starts with "+nextStar.name+" ("+pos+"), fresh off "+pts+" fantasy points. "+t.team_name+" needs enough production across its own lineup to keep pace with that scoring benchmark.",
-    nextStar.name+" brings "+pts+" points from the latest game into Week 3. That raises the scoring bar for "+a.mascot+" if their weakest Week 2 slot stays quiet.",
-    "The "+a.mascot+" circle "+nextStar.name+" after "+pts+" fantasy points because "+next+" has a proven source of scoring entering Week 3. The "+a.mascot+" response has to come from their own lineup.",
-    next+" arrives with "+nextStar.name+" coming off "+pts+" points. That gives the "+a.mascot+" a concrete scoring benchmark instead of a generic warning about the next opponent.",
-    "For "+a.mascot+", "+nextStar.name+" and his "+pts+" latest-game points show what "+next+" can put on the board. Week 3 is about the "+a.mascot+" finding enough production of their own to match that level."
+    nextStar.name+" is the first Week 3 name to circle after "+pts+" fantasy points; if "+a.mascot+" repeat a quiet lineup spot, "+next+" already has top-end scoring to punish the margin.",
+    "The Week 3 benchmark starts with "+nextStar.name+" ("+pos+"), fresh off "+pts+" fantasy points. "+t.team_name+" needs enough production across its own lineup to keep pace.",
+    "Latest-game scoring puts "+nextStar.name+" at "+pts+" points for "+next+". That raises the bar for "+a.mascot+" if their weak Week 2 slot stays quiet.",
+    "The "+a.mascot+" circle "+nextStar.name+" because "+pts+" latest-game points give "+next+" a proven source of scoring entering Week 3.",
+    next+" carries a "+pts+"-point latest-game line from "+nextStar.name+" into Week 3. That is the concrete scoring benchmark for "+a.mascot+".",
+    "For "+a.mascot+", "+nextStar.name+" represents "+pts+" points of recent production on the "+next+" side. Their own lineup has to answer that level.",
+    "A "+pts+"-point latest game from "+nextStar.name+" is the first number in the Week 3 comparison with "+next+".",
+    nextStar.name+" posted "+pts+" most recently, giving "+next+" a clear high-end reference point before facing "+a.mascot+".",
+    "Week 3 puts the "+a.mascot+" opposite a "+next+" roster that just got "+pts+" from "+nextStar.name+". The scoring comparison starts there.",
+    "Recent form gives "+nextStar.name+" a "+pts+"-point line entering the "+a.mascot+" matchup. That is enough to shrink the margin for another quiet slot.",
+    "The "+next+" side enters Week 3 with "+nextStar.name+" coming off "+pts+" points. "+a.mascot+" need their own secondary scoring to match that kind of top-end output.",
+    nextStar.name+" supplies the clearest Week 3 reference point: "+pts+" latest-game fantasy points for "+next+". The "+a.mascot+" scoring floor has to rise accordingly."
   ];
   return rows[k];
 }
@@ -574,7 +734,12 @@ function w2IdentityRead(t,prev,r,top,opp){
     ],
     "mack-hollis":[
       useful>=5?useful+" starters cleared 10 points. That is how one big score turns into a real lineup instead of a solo act.":"Only "+useful+" "+starterWord+" cleared 10 points. That is not enough depth for me to call the lineup bulletproof.",
-      "The depth count is "+useful+" in double figures. "+(useful>=5?"That is a lot of places to get punched from.":"That is a lot of furniture being dragged by too few stars."),
+      ([
+        "The "+a.mascot+" depth count is "+useful+" double-digit "+starterWord+". "+(useful>=5?"That is a lot of places to get punched from.":"Too few stars are dragging too much furniture."),
+        useful+" "+starterWord+" reached double figures for "+a.mascot+". "+(useful>=5?"That is real volume behind the headline.":"That leaves the headline names carrying too much."),
+        "Count "+useful+" double-digit "+starterWord+" on the "+a.mascot+" side. "+(useful>=5?"That is depth worth yelling about.":"That is not enough help for the top."),
+        "The "+a.mascot+" got 10-plus points from "+useful+" "+starterWord+". "+(useful>=5?"Now the supporting cast has a pulse.":"Now somebody below the stars needs a megaphone.")
+      ])[w2Hash(team+"|tilly-depth-count")%4],
       useful>=5?"The "+a.mascot+" had "+useful+" double-digit starters. That is actual support behind the headline.":"The "+a.mascot+" had only "+useful+" double-digit "+starterWord+". Somebody below the stars has to get louder.",
       useful>=5?useful+" starters hit 10 or more, which is how a big Sunday becomes a roster story.":"Only "+useful+" "+starterWord+" hit 10 or more, which is why the stars still look overworked."
     ],

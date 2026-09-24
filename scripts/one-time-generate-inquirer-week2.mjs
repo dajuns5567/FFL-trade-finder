@@ -353,9 +353,9 @@ function w2HotTrend(t,r,weak,weakPrev){
     "The arrow for "+weak.name+" points up from "+w2One(weakPrev.points)+" to "+w2One(weak.points)+". Nobody in "+a.mascot+" colors should confuse an upward arrow with a finished repair."
   ];
   const rowsDown=[
-    weak.name+" fell from "+w2One(weakPrev.points)+" in Week 1 to "+w2One(weak.points)+" in Week 2; "+t.team_name+" has now seen the quiet role twice and Week 3 needs a response.",
+    weak.name+" fell from "+w2One(weakPrev.points)+" in Week 1 to "+w2One(weak.points)+" in Week 2; for "+a.mascot+", two quiet Sundays are enough to demand a Week 3 response.",
     "The two-week line for "+weak.name+" went the wrong way: "+w2One(weakPrev.points)+" to "+w2One(weak.points)+". The "+a.mascot+" cannot keep asking the rest of the lineup to absorb that decline.",
-    weak.name+" followed "+w2One(weakPrev.points)+" in the opener with "+w2One(weak.points)+" this week. For "+t.team_name+", that is enough of a sample to demand a different Week 3 answer.",
+    weak.name+" followed "+w2One(weakPrev.points)+" in the opener with "+w2One(weak.points)+" this week; the "+a.mascot+" now have enough of a sample to demand a different Week 3 answer.",
     "For "+a.mascot+", Week 2 made the "+weak.name+" problem harder to dismiss after a better opener; panic is unnecessary, but "+w2One(weak.points)+" cannot be the answer again.",
     weak.name+" lost ground from Week 1, and "+t.team_name+" now has a two-game sample saying the quiet spot deserves attention before it becomes identity.",
     "The opener gave "+weak.name+" more room than Week 2 did. After "+w2One(weak.points)+" this time, the "+a.mascot+" should treat the role as a Week 3 question, not a coincidence."
@@ -392,7 +392,7 @@ function w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders){
     (lead?t.team_name+" is tied atop "+div+" with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" race around "+t.team_name+" is already compressed. ")+(peers?"The rivals are "+peers+"; one Sunday can reorder the whole group.":"One Sunday can reorder the group."),
     (lead?"At the top of "+div+", "+leadNames+" are tied. ":"The "+a.mascot+" enter Week 3 with division leverage still available. ")+(peers?"Behind and around them are "+peers+", so every clean result carries immediate value.":"Every clean result carries immediate value."),
     (lead?leadNames+" are tied for first in "+div+". ":"Nobody around "+t.team_name+" has made "+div+" comfortable yet. ")+(peers?"For "+a.mascot+", the division board also includes "+peers+", and Week 3 gets first crack at breaking that cluster.":"Week 3 gets first crack at breaking the cluster."),
-    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For "+a.mascot+", the other division names are "+peers+", making the next result part of the race rather than an isolated game.":"The next result is part of the race."),
+    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For the "+a.mascot+", the other division names are "+peers+"; their next result belongs to the race, not an isolated September box score.":"The next result is part of the race."),
     (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"The surrounding records belong to "+peers+"; that is enough context to make Week 3 matter immediately.":"That is enough context to make Week 3 matter immediately.")
   ];
   return rows[k];
@@ -412,12 +412,12 @@ function w2NextStarRead(t,r,next,nextStar){
 function w2RoadRead(t,r,next,later){
   const a=w2Alias(t),rest=w2Natural(later.map(x=>x.team_name)),first=later[0]?.team_name||"the following opponent",k=w2Hash(String(t.roster_id)+"|road|"+String(r?.id||""))%6;
   const rows=[
-    "After "+next+", the "+a.mascot+" see "+rest+". A Week 3 win lowers the pressure on that stretch; a loss makes "+first+" feel like an early recovery assignment. For "+a.mascot+", the same schedule can look inviting or urgent depending on what happens against "+next+".",
+    "After "+next+", the "+a.mascot+" see "+rest+". For "+a.mascot+", a Week 3 win lowers the pressure on that stretch; a loss makes "+first+" feel like an early recovery assignment. The same schedule can look inviting or urgent depending on what happens against "+next+".",
     next+" comes first, then "+rest+". For "+t.team_name+", banking Week 3 turns the following games into chances to build; dropping it turns "+first+" into a repair job. That is why the "+a.mascot+" sequence through "+next+" and "+first+" matters as much as the names.",
     "The road after "+next+" runs through "+rest+". Win now and the "+a.mascot+" can attack that stretch from strength; lose and "+first+" immediately carries more weight. Week 3 changes the emotional math of everything behind it.",
-    "Beyond "+next+" are "+rest+". The "+a.mascot+" can make those games look manageable by winning Week 3, or make "+first+" feel mandatory by losing it. For this club, the pressure starts with "+next+" instead of some abstract future stretch.",
-    "For "+a.mascot+", the schedule does not stop with "+next+": "+rest+" follow. A win gives them room to breathe before "+first+"; a loss spends that room immediately. That turns "+first+" into either a chance to build or a game the "+a.mascot+" suddenly need to repair the start.",
-    next+" is the hinge before "+rest+". If the "+a.mascot+" bank Week 3, "+first+" arrives with optional pressure; if they do not, it arrives with required pressure. For "+t.team_name+", that sequencing through "+next+" belongs in the outlook, not just the opponent list."
+    "Beyond "+next+" are "+rest+". The "+a.mascot+" can make those games look manageable by winning Week 3, or make "+first+" feel mandatory by losing it. For "+a.mascot+", the pressure starts with "+next+" instead of some abstract future stretch.",
+    "For "+a.mascot+", the schedule does not stop with "+next+": "+rest+" follow. A win gives the "+a.mascot+" room to breathe before "+first+"; a loss spends that room immediately. That turns "+first+" into either a chance to build or a game this roster suddenly needs to repair the start.",
+    "For "+a.mascot+", "+next+" is the hinge before "+rest+". If the "+a.mascot+" bank Week 3, "+first+" arrives with optional pressure; if they do not, it arrives with required pressure. That sequence belongs in this team’s outlook, not just the opponent list."
   ];
   return rows[k];
 }
@@ -489,7 +489,7 @@ function w2BuildSections(t,prev){
   ]:["n/a"];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],weakPrev=weak?w2PrevPlayer(prev,weak.id):null,hot=[
     w2S(t,r,"hot-one",weak?weak.name+" is the Week 2 warning label after "+w2One(weak.points)+" fantasy points"+(weak.real_stat_line?" on "+w2Stat(weak):"")+"; "+(won?t.team_name+" can fix that quiet spot while a win still makes the correction cheap.":opp+" made that empty space expensive because the rest of "+t.team_name+" had to cover it."):"The weakest spot is not clear enough to invent one."),
-    w2S(t,r,"hot-two",weak&&weakPrev?(w2HotTrend(t,r,weak,weakPrev)):"Week 3 will not settle the season, but for "+alias.mascot+" it can tell us whether the weakest Week 2 spot learned anything.")
+    w2S(t,r,"hot-two",weak&&weakPrev?(w2HotTrend(t,r,weak,weakPrev)):"Week 3 will not settle anything for the "+alias.mascot+", but it can tell us whether their weakest Week 2 spot learned anything.")
   ];
   const eligible=w2EligibleCool(t),coolNames=eligible.length?eligible.map(p=>p.name):top.filter(Boolean).slice(0,2).map(p=>p.name),cool=[
     w2S(t,r,"cool-one",w2CoolRead(t,r,coolNames,won,margin)),

@@ -495,101 +495,43 @@ function w2IdentityRead(t,prev,r,top,opp){
   const a=w2Alias(t),pts=Number(t.points)||0,prevPts=Number(prev?.points),delta=Number.isFinite(prevPts)?pts-prevPts:null,
     topPts=(top||[]).reduce((n,p)=>n+(Number(p?.points)||0),0),share=pts>0?Math.round(topPts/pts*100):0,
     useful=(t.starter_details||[]).filter(p=>Number(p?.points)>=10).length,star=top?.[0]?.name||t.team_name,
-    second=top?.[1]?.name||"the supporting cast",rid=String(r?.id||""),v=w2Hash(t.team_name+"|identity")%4;
-  const shape=share>=65?"top-heavy":share<=45?"spread out":"star-led without being one-dimensional";
-  const deltaDir=delta==null?"":(delta>=0?"higher":"lower"),deltaAbs=delta==null?null:w2One(Math.abs(delta));
-  const byReporter={
+    second=top?.[1]?.name||"the second scorer",rid=String(r?.id||""),v=w2Hash(t.team_name+"|identity")%4,
+    shape=share>=65?"top-heavy":share<=45?"spread out":"star-led without being one-dimensional",
+    change=delta==null?null:w2DeltaPhrase(delta),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(opp),
+    starterWord=useful===1?"starter":"starters";
+  const base=[
+    star+" and "+second+" headline a "+shape+" Week 2 profile: the top three produced "+w2One(topPts)+" of "+w2One(pts)+" points ("+share+"%).",
+    delta==null?"There is no complete Week 1 team-total comparison, so the honest read is distribution rather than trend.":team+" scored "+change+" in Week 1, a real week-to-week change in output.",
+    useful+" "+starterWord+" reached double figures. "+(useful>=5?"That is real depth behind the headline scorer.":"That leaves less margin for error if the stars come back toward ordinary production.")
+  ];
+  const rows={
     "walter-mercer":[
-      [
-        "The "+a.mascot+" top three accounted for "+w2One(topPts)+" of "+w2One(pts)+" points, about "+share+"%, leaving the Week 2 offense "+shape+". Against "+opp+", that tells us whether "+star+" was the whole answer or simply the first one.",
-        delta==null?"There is no complete Week 1 team-total comparison, so the cleaner read is distribution: "+t.team_name+" showed where its reliable points came from and now has to prove those lanes survive a new opponent.":t.team_name+" moved "+deltaAbs+" points "+deltaDir+" from Week 1 to Week 2. That changes the context of the result because this was materially different scoring output, not merely a different opponent.",
-        useful+" starters reached 10 fantasy points against "+opp+". "+(useful>=5?"That gives "+t.team_name+" several ways to survive if the top scorer cools off.":"That leaves the Week 3 question obvious: can the lineup find more support if the top two names are contained?")
-      ],
-      [
-        "Week 2 gave "+t.team_name+" a clear scoring profile: "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three scorers, roughly "+share+"%. "+opp+" therefore spent the afternoon dealing with a "+shape+" lineup rather than one random spike.",
-        delta==null?"Without a clean opener total, I would not manufacture a trend line. The useful fact is that "+star+" had help against "+opp+", and Week 3 will show whether that help was matchup-specific.":("The team total shifted "+deltaAbs+" points "+deltaDir+" from the opener. For "+a.mascot+", that is enough movement to make Week 3 about confirmation rather than pretending the first two Sundays looked the same."),
-        useful>=5?"Depth did real work here: "+useful+" starters hit double figures, which kept "+opp+" from solving the matchup by erasing one position.":"Only "+useful+" starters cleared double figures, so the result still asks a depth question even if the headline player delivered."
-      ],
-      [
-        star+" was the first name on the Week 2 story, but the broader number is "+share+"%: that is how much of "+t.team_name+"’s scoring came from the top three. The "+a.mascot+" looked "+shape+" against "+opp+".",
-        delta==null?"The opener cannot support a full team-total comparison, so the better checkpoint is role stability. Which Week 2 scorers can "+t.team_name+" reasonably expect to matter again?":("Compared with Week 1, "+t.team_name+" changed its total by "+deltaAbs+" points "+deltaDir+". For "+a.mascot+", that swing is large enough to ask what changed in usage, matchup or lineup quality rather than waving it off as noise."),
-        "There were "+useful+" double-digit starters for "+a.mascot+". "+(useful>=5?"That kind of spread gives the roster room for one star to have an ordinary Sunday.":"That level of support leaves less margin for error if "+star+" comes back toward earth.")
-      ],
-      [
-        "The score distribution is the better clue than the final total: "+star+", "+second+" and the third scorer produced "+w2One(topPts)+" of "+w2One(pts)+" points. At "+share+"%, "+t.team_name+" came out of Week 2 looking "+shape+".",
-        delta==null?"No complete Week 1 total means there is no honest before-and-after team trend to print. There is still enough here to say "+opp+" had to defend more than one useful scoring lane.":("The "+a.mascot+" moved "+deltaAbs+" points "+deltaDir+" from the opener. That is the kind of team-level swing that changes what Week 3 needs to confirm."),
-        useful>=5?useful+" starters reached double figures, and that is the healthier part of the Week 2 result because the burden was shared.":"Only "+useful+" starters made it to double figures, which means the top of the roster still carried a larger share of the stress than the final score suggests."
-      ]
+      [base[0]+" That concentration tells us how much of "+team+"’s total depended on the top of the lineup against "+foe+".",base[1],base[2]],
+      ["Week 2 gave "+team+" a clear scoring shape: "+share+"% of the total came from the top three. That is more useful than pretending the opponent somehow schemed against fantasy players.",base[1],base[2]],
+      [star+" was the first name on the page, but the broader number is "+share+"%. That is the share of "+team+"’s scoring owned by the top three.",base[1],base[2]],
+      ["The score distribution is the cleaner clue: "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three "+a.mascot+" scorers, leaving the lineup "+shape+".",base[1],base[2]]
     ],
     "tess-delaney":[
-      [
-        "The "+a.mascot+" are starting to dress like a "+shape+" roster: "+star+", "+second+" and the next scorer supplied "+w2One(topPts)+" of "+w2One(pts)+" points. At roughly "+share+"%, the expensive pieces looked more like the room’s foundation than its decoration.",
-        delta==null?"I will not pretend the trend line owns a tuxedo when Week 1 does not give us a complete team-total comparison. Week 2 can still tell us who looked comfortable under the lights.":("The whole outfit moved "+deltaAbs+" points "+deltaDir+" from the opener. For "+a.mascot+", that is a genuine change in silhouette, even if two Sundays are still too early to tailor the championship jacket."),
-        useful+" starters reached at least 10 points against "+opp+". "+(useful>=5?"That supporting work is what keeps one quiet centerpiece from sending the whole table into disorder.":"That is not quite enough depth to let every centerpiece have an off night without somebody spilling the wine.")
-      ],
-      [
-        star+" and "+second+" did the visible work, but the elegant number is "+share+"%: the top three owned that share of the "+a.mascot+" total. Against "+opp+", the roster looked "+shape+" rather than accidentally glamorous.",
-        delta==null?"The opener does not offer a proper team-total comparison, so I am leaving the measuring tape in the drawer. The Week 2 ensemble still gave us a usable first look at where the reliable scoring lives.":("From Week 1 to Week 2, "+t.team_name+" moved "+deltaAbs+" points "+deltaDir+". That is enough movement to notice without pretending the wardrobe has finished evolving."),
-        useful>=5?"There were "+useful+" double-digit scorers, which is the sort of supporting cast a contender should insist upon before entering the ballroom.":"Only "+useful+" starters cleared double figures, so the top of the lineup still did more carrying than a polished contender would prefer."
-      ],
-      [
-        "Week 2 put "+w2One(topPts)+" of "+w2One(pts)+" points in the hands of the top three "+a.mascot+" scorers, about "+share+"%. I would call that "+shape+", with "+star+" receiving top billing rather than the entire stage.",
-        delta==null?"A missing complete Week 1 total saves us from one bad habit: inventing certainty. We can still see which pieces looked expensive in a good way against "+opp+".":("The total changed by "+deltaAbs+" points "+deltaDir+" from the opener. That gives "+t.team_name+" a noticeably different profile without granting anyone permission to call two weeks a finished product."),
-        useful+" starters reached 10 points. "+(useful>=5?"That is enough competent work around the stars to keep the room calm when one name inevitably has a quieter Sunday.":"For "+a.mascot+", the supporting cast still has something to prove before the next formal occasion.")
-      ],
-      [
-        "The "+a.mascot+" did not ask one player to host the entire evening: their top three scorers combined for "+w2One(topPts)+" of "+w2One(pts)+" points, a "+share+"% share. The result was a "+shape+" scoring profile against "+opp+".",
-        delta==null?"I cannot compare complete team totals to the opener, so the honest compliment is narrower: the Week 2 structure looked intentional enough to deserve another look.":("Compared with Week 1, the "+a.mascot+" moved "+deltaAbs+" points "+deltaDir+". That is a visible change in presentation, even before we know whether it lasts."),
-        useful>=5?useful+" starters reached double figures, and that is the kind of balance that lets the good china stay on the table.":"Only "+useful+" starters reached double figures, which means the expensive pieces still need sturdier company if this is meant to look sustainable."
-      ]
+      ["The "+a.mascot+" top three handled "+share+"% of the scoring. That is a "+shape+" table setting, with "+star+" as the centerpiece and everyone else deciding whether the room feels complete.",base[1],useful+" "+starterWord+" reached double figures. "+(useful>=5?"That is enough competent company around the stars to keep the evening civilized.":"That is not quite enough supporting work to let every centerpiece have an off night." )],
+      [star+" and "+second+" did the visible work, but the elegant number is "+share+"% from the top three. That makes the "+a.mascot+" look "+shape+" rather than accidentally glamorous.",base[1],useful>=5?"There were "+useful+" double-digit scorers, the sort of supporting cast a contender should insist upon.":"Only "+useful+" "+starterWord+" cleared double figures, so the expensive pieces still carried too much of the room."],
+      ["Week 2 put "+w2One(topPts)+" of "+w2One(pts)+" points in the hands of the top three "+a.mascot+" scorers. At "+share+"%, the lineup was "+shape+".",base[1],base[2]],
+      ["The "+a.mascot+" did not ask one player to host the entire evening, but "+share+"% of the scoring still lived in the top three. That is a "+shape+" profile.",base[1],base[2]]
     ],
     "mack-hollis":[
-      [
-        "The loud roster read is "+share+"%: that is how much of "+t.team_name+"’s Week 2 scoring came from the top three. "+star+" led a "+shape+" attack, and "+opp+" had more than one alarm going off.",
-        delta==null?"There is no clean Week 1 team total to yell about, so fine—Week 2 gets the microphone by itself. The "+a.mascot+" still showed us exactly which part of the lineup deserves the first headline.":("The "+a.mascot+" total jumped "+deltaAbs+" points "+deltaDir+" from the opener. That changes whether Week 3 feels like momentum, damage control or a demand for the same fireworks again."),
-        useful>=5?useful+" starters cleared 10 points against "+opp+", which is how a big Sunday becomes everybody else’s problem instead of one star’s highlight reel.":"Only "+useful+" starters cleared 10 points, so the stars still did too much heavy lifting for me to call the lineup bulletproof."
-      ],
-      [
-        star+" got the headline, but "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three scorers together. That "+share+"% share made the "+a.mascot+" look "+shape+" and gave "+opp+" no easy place to hide.",
-        delta==null?"No complete opener total means I am not screaming “trend” just to hear myself. What I can scream is that Week 2 showed where the useful points actually came from.":("Compared with Week 1, "+t.team_name+" moved "+deltaAbs+" points "+deltaDir+". For "+a.mascot+", that is a big enough swing to change the Week 3 mood before anybody even sets a lineup."),
-        useful>=5?"The depth number is loud too: "+useful+" starters hit double figures. That is the annoying kind of scoring where an opponent keeps waiting for the lineup to cool off and it refuses.":"The depth number is less fun: only "+useful+" starters reached double figures, which gives Week 3 opponents a very obvious dare."
-      ],
-      [
-        "You want the back-page number? The top three "+a.mascot+" scorers produced "+w2One(topPts)+" of "+w2One(pts)+" points, about "+share+"%. That is "+shape+", and it tells every rival whether “stop "+star+"” is an actual plan or wishful thinking.",
-        delta==null?"Week 1 does not give us a complete team-total comparison, so Week 2 stands alone. It still told us enough to know which names should be circled before the next kickoff.":("The Week 2 total landed "+deltaAbs+" points "+deltaDir+" than the opener. That kind of swing either becomes a story in Week 3 or gets exposed as one loud Sunday."),
-        useful>=5?useful+" starters made double figures against "+opp+", and that is enough supporting noise to make the top scorer’s job easier.":"Only "+useful+" starters made double figures, which means the top of the lineup is still being asked to drag too much furniture."
-      ],
-      [
-        "The "+a.mascot+" put "+share+"% of their Week 2 points in the hands of the top three scorers. "+star+" was the biggest noise, but "+w2One(topPts)+" combined points made this a "+shape+" lineup against "+opp+".",
-        delta==null?"No clean Week 1 total, no fake trend speech. Week 2 can still stand up and tell us whether the supporting cast showed enough life to matter.":("The "+a.mascot+" team total moved "+deltaAbs+" points "+deltaDir+" from Week 1, enough movement to make Week 3 either a confirmation party or a very loud correction."),
-        useful>=5?"With "+useful+" starters at 10 or more, "+t.team_name+" had real depth behind the headline. That is how a roster turns one big performance into a scoreboard avalanche.":"With only "+useful+" double-digit starters, the "+a.mascot+" left rivals one obvious heckle: make the stars do all of it again."
-      ]
+      ["The loud number is "+share+"%: that is how much of "+team+"’s Week 2 scoring came from the top three. "+star+" led a "+shape+" lineup, full stop.",base[1],useful>=5?useful+" starters cleared 10 points. That is how one big score turns into a real lineup instead of a solo act.":"Only "+useful+" "+starterWord+" cleared 10 points. That is not enough depth for me to call the lineup bulletproof."],
+      [star+" got the headline, but "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three together. That "+share+"% share is the story behind the story.",base[1],base[2]],
+      ["You want the back-page number? "+share+"% of the "+a.mascot+" total came from the top three. That is "+shape+", and it tells us whether the stars were carrying a crowd or dragging furniture.",base[1],base[2]],
+      ["The "+a.mascot+" put "+share+"% of their Week 2 points in the top three scorers. "+star+" was the biggest noise, but the distribution says whether the roster had backup singers.",base[1],base[2]]
     ],
     "nora-voss":[
-      [
-        "Rivals are going to remember the "+a.mascot+" as a "+shape+" team after Week 2. The top three produced "+w2One(topPts)+" of "+w2One(pts)+" points ("+share+"%), so the joke is either “stop "+star+"” or “good luck finding only one thing to stop.”",
-        delta==null?"The opener does not give us a complete team-total comparison, so I am not inventing a trend. Week 2 gives rivals enough material already.":("The "+a.mascot+" moved "+deltaAbs+" points "+deltaDir+" from Week 1. Repeat that kind of swing for "+a.mascot+" and rival managers stop calling it variance and start writing jokes around it."),
-        useful>=5?useful+" starters reached double figures against "+opp+", which is irritating depth because there is no single quiet name for rivals to root for.":"Only "+useful+" starters reached double figures, which gives Week 3 rivals a simple bit: make the stars carry everything again and wait for somebody else to blink."
-      ],
-      [
-        star+" made himself the obvious target, but the top three still owned "+share+"% of the "+a.mascot+" scoring. That made "+t.team_name+" look "+shape+" against "+opp+", which is useful material for anyone planning the next roast.",
-        delta==null?"No complete Week 1 total means no fake two-week graph from me. The cleaner joke is whether Week 3 can force a different supporting cast to matter.":("The team total shifted "+deltaAbs+" points "+deltaDir+" from the opener. If that movement becomes a habit, the schedule will do the heckling for us."),
-        useful>=5?"There were "+useful+" double-digit starters, which is bad news for anyone hoping one benching or one quiet quarter solves the matchup.":"There were only "+useful+" double-digit starters, so rivals do not need a sophisticated joke yet—just make the top of the roster carry the weight again."
-      ],
-      [
-        "The "+a.mascot+" top three combined for "+w2One(topPts)+" of "+w2One(pts)+" points. At "+share+"%, that is a "+shape+" profile and a very convenient scouting note for the next rival.",
-        delta==null?"The opener cannot support a complete team-total comparison, which is fine; Week 2 supplied enough material without manufacturing a trend.":("From Week 1 to Week 2, "+t.team_name+" moved "+deltaAbs+" points "+deltaDir+". That is the sort of swing that turns the next Sunday into either proof or punchline."),
-        useful>=5?useful+" starters hit double figures against "+opp+", so the easy “one-man roster” joke is currently unavailable.":"Only "+useful+" starters hit double figures, which means the “make somebody else beat us” joke remains very much in circulation."
-      ],
-      [
-        "The useful rival’s-eye view is this: "+star+", "+second+" and the third scorer owned "+share+"% of "+t.team_name+"’s Week 2 points. That left the "+a.mascot+" looking "+shape+" rather than accidentally hot.",
-        delta==null?"There is no honest Week 1 team-total baseline to compare, so I will save the fake trend line for somebody else. Week 2 still showed where the roster can be teased.":("The "+a.mascot+" total moved "+deltaAbs+" points "+deltaDir+" from Week 1. Do that again and the league stops shrugging; reverse it and the joke writes itself."),
-        useful>=5?useful+" starters reached 10 points, which gives rivals too many targets to heckle efficiently.":"Only "+useful+" starters reached 10 points, so Week 3 opponents can keep the game plan simple: squeeze the stars and make the rest answer."
-      ]
+      ["Rivals are going to remember the "+a.mascot+" as a "+shape+" roster after Week 2. The top three produced "+share+"% of the points, which is plenty of material without pretending anyone 'stopped' anybody.",base[1],base[2]],
+      [star+" made himself the obvious headline, but the top three still owned "+share+"% of the "+a.mascot+" scoring. That is the useful rival’s-eye view.",base[1],base[2]],
+      ["The "+a.mascot+" top three combined for "+w2One(topPts)+" of "+w2One(pts)+" points. At "+share+"%, the joke is about concentration, not imaginary defensive game plans.",base[1],base[2]],
+      ["The useful rival’s-eye view is simple: "+star+", "+second+" and the third scorer owned "+share+"% of "+team+"’s Week 2 points. That leaves the "+a.mascot+" looking "+shape+".",base[1],base[2]]
     ]
   };
-  const rows=byReporter[rid]||byReporter["walter-mercer"],picked=[...rows[v]],next=String(t.next_opponent_name||"the Week 3 opponent");
-  picked[2]=String(picked[2]||"").replace(/[.!?]$/,"")+"; Week 3 will show whether the "+a.mascot+" can carry that same scoring balance into "+next+" without asking the same stars to reproduce the same Sunday.";
+  const picked=[...(rows[rid]||rows["walter-mercer"])[v]],next=w2DisplayTeam(t.next_opponent_name||"the Week 3 opponent");
+  picked[2]=String(picked[2]).replace(/[.!?]$/,"")+"; Week 3 will show whether that same scoring balance is enough against "+next+" without requiring the exact same stars to reproduce the exact same totals.";
   return picked
 }
 
@@ -663,19 +605,35 @@ function w2RecapTradeParagraphs(teams,r){
   return trades.map((tr,i)=>{
     const sides=(tr?.sides||[]).filter(s=>s?.roster_id!=null);
     const descriptions=sides.map(side=>{
-      const team=(teams||[]).find(t=>String(t.roster_id)===String(side.roster_id)),name=tr?.team_names?.[String(side.roster_id)]||team?.team_name||("Roster "+side.roster_id),assets=team?w2TradeAssets(team,side):[];
-      return{name,team,assets}
+      const team=(teams||[]).find(t=>String(t.roster_id)===String(side.roster_id)),
+        name=w2DisplayTeam(tr?.team_names?.[String(side.roster_id)]||team?.team_name||("Roster "+side.roster_id)),
+        assets=team?w2TradeAssets(team,side):[],
+        players=assets.filter(x=>!/\bpick$/i.test(x)),
+        picks=assets.filter(x=>/\bpick$/i.test(x)),
+        starters=team?.starter_details||[],
+        playerLines=players.map(name=>starters.find(p=>p?.name===name)).filter(Boolean).sort((a,b)=>Number(b.points)-Number(a.points));
+      return{name,team,assets,players,picks,playerLines};
     }).filter(x=>x.assets.length);
     if(descriptions.length<2)return null;
     const receipt=descriptions.map(x=>x.name+" received "+w2Natural(x.assets)).join("; ");
-    const playerImpact=descriptions.map(x=>{
-      const acquired=x.assets.filter(a=>!/Round d+ pick$/i.test(a)),starters=x.team?.starter_details||[],hits=acquired.map(name=>starters.find(p=>p?.name===name)).filter(Boolean).sort((a,b)=>Number(b.points)-Number(a.points));
-      if(hits[0])return x.name+" already got "+w2One(hits[0].points)+" Week 2 points from "+hits[0].name;
-      return acquired.length?x.name+" now has to prove "+w2Natural(acquired.slice(0,2))+" changes Sundays, not just the transaction log":x.name+" took future draft capital, so the return will be judged later than this box score";
-    }).join("; ");
-    return w2S(descriptions[0].team||teams[0],r,"tilly-trade-detail-"+i,receipt+". "+playerImpact+". That is the actual pressure attached to the deal: the side that solved a Week 2 problem gets immediate validation, while the side that did not has to explain what it bought.");
+    const reads=descriptions.map((x,sideIndex)=>{
+      const hit=x.playerLines[0],hasPick=x.picks.length>0;
+      if(hit&&Number(hit.points)>=8)return x.name+" got "+w2One(hit.points)+" Week 2 points from "+hit.name+", so the player side of the return already has a meaningful current-season contribution.";
+      if(hit)return x.name+" got "+w2One(hit.points)+" Week 2 points from "+hit.name+", a modest contribution that is too small to declare the trade validated.";
+      if(x.players.length)return x.name+" acquired "+w2Natural(x.players)+" for present roster value, but Week 2 did not produce a meaningful scoring return from those players yet.";
+      if(hasPick)return x.name+" banked "+w2Natural(x.picks)+" as future draft capital. Those picks cannot help a Week 2 lineup; their value will be realized in a future draft or another trade.";
+      return x.name+" took the longer-term side of the deal, so Week 2 is not the right scoreboard for judging that return.";
+    });
+    const closers=[
+      "This trade is current production versus deferred value, so grading both sides from one Sunday would be nonsense.",
+      "One side bought help for now; the other bought flexibility for later. Those are different timelines and need different scorecards.",
+      "The Week 2 box score can tell us what the player side did immediately. It cannot tell us what an unused future pick will eventually become.",
+      "The correct pressure is asymmetric: current players can be judged now, while future picks stay unresolved until they are used or moved."
+    ];
+    return w2S(descriptions[0].team||teams[0],r,"tilly-trade-detail-"+i,receipt+". "+reads.join(" ")+" "+closers[i%closers.length]);
   }).filter(Boolean)
 }
+
 
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,

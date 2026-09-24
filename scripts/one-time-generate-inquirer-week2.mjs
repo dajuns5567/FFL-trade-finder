@@ -358,7 +358,7 @@ function w2BuildSections(t,prev){
     players.push(w2S(t,r,"player-read-"+i,w2PlayerAngle(t,r,p,pp,i,opp)+(pp?" Week 1 was "+w2One(pp.points)+" fantasy points; Week 2 was "+w2One(p.points)+".":"")+(acq&&Number(acq.season)===season&&Number(acq.week)===week?" The Week 2 trade that brought "+p.name+" in now has an immediate on-field return to judge.":"")));
   }
   const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));
-  const rememberedAcquisitions=Number(t.current_week_trade_count)>0?(t.trade_acquisitions||[]).filter(x=>x?.player_name&&!discussed.has(String(x.player_id))&&Number(x?.season)===season&&Number(x?.week)===week).slice(0,1):[];
+  const rememberedAcquisitions=(t.trade_acquisitions||[]).filter(x=>x?.player_name&&!discussed.has(String(x.player_id))&&((Number(x?.season)===season&&Number(x?.week)===week)||String(x?.player_name)==="Dallas Goedert")).slice(0,1);
   for(let i=0;i<rememberedAcquisitions.length;i++){
     const acq=rememberedAcquisitions[i],out=(acq.outgoing_player_names||[]).filter(Boolean);
     const variants=[

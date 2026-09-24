@@ -322,9 +322,18 @@ function w2PlayerAngle(t,r,p,pp,i,opp){
     if(i===1)return delta!=null&&delta>8
       ?p.name+" jumped "+w2One(delta)+" points from Week 1 and gave "+a.mascot+" a real second source of scoring instead of making the leader do everything."
       :p.name+" gave "+a.mascot+" "+w2One(pts)+" behind the leader. That is actual support, not decorative box-score confetti.";
-    return /TD/i.test(String(p?.real_stat_line||""))
-      ?p.name+" got to "+w2One(pts)+" through scoring plays, which is why the fantasy total matters more here than a pretty yardage line."
-      :p.name+" supplied "+w2One(pts)+" in the third slot. Useful, yes; something I am building a parade around, no.";
+    if(/TD/i.test(String(p?.real_stat_line||""))){const rows=[
+      p.name+" reached "+w2One(pts)+" through scoring plays. The touchdowns did the fantasy work even if the yardage line was ordinary.",
+      p.name+" turned end-zone work into "+w2One(pts)+" points. That is the part of the stat line worth yelling about.",
+      p.name+" got to "+w2One(pts)+" because scoring plays carried the line. Fantasy points do not award style bonuses for prettier yardage.",
+      p.name+" produced "+w2One(pts)+" with touchdowns doing the heavy lifting. That is useful third-scorer noise, not a new centerpiece."
+    ];return rows[w2Hash(t.team_name+"|tilly-third-td")%rows.length]}
+    {const rows=[
+      p.name+" supplied "+w2One(pts)+" in the third slot. Useful, yes; something I am building a parade around, no.",
+      p.name+" checked in at "+w2One(pts)+" as the third scorer. That helps the total without stealing the headline.",
+      p.name+" added "+w2One(pts)+" behind the two louder names. Call it support, not spectacle.",
+      p.name+" gave "+a.mascot+" "+w2One(pts)+" from the third scoring spot. That is enough to matter and not enough to hijack the page."
+    ];return rows[w2Hash(t.team_name+"|tilly-third")%rows.length]}
   }
   if(i===0)return p.name+" put up "+w2One(pts)+" for "+a.mascot+". "+(won?"Rivals can complain about the rest, but they cannot call the top of this lineup quiet.":"The cruel part is that rivals still get the joke because a score that big ended up in a loss.");
   if(i===1)return delta!=null&&delta< -8
@@ -497,41 +506,87 @@ function w2IdentityRead(t,prev,r,top,opp){
     useful=(t.starter_details||[]).filter(p=>Number(p?.points)>=10).length,star=top?.[0]?.name||t.team_name,
     second=top?.[1]?.name||"the second scorer",rid=String(r?.id||""),v=w2Hash(t.team_name+"|identity")%4,
     shape=share>=65?"top-heavy":share<=45?"spread out":"star-led without being one-dimensional",
-    change=delta==null?null:w2DeltaPhrase(delta),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(opp),
-    starterWord=useful===1?"starter":"starters";
-  const base=[
-    star+" and "+second+" headline a "+shape+" Week 2 profile: the top three produced "+w2One(topPts)+" of "+w2One(pts)+" points ("+share+"%).",
-    delta==null?"There is no complete Week 1 team-total comparison, so the honest read is distribution rather than trend.":team+" scored "+change+" in Week 1, a real week-to-week change in output.",
-    useful+" "+starterWord+" reached double figures. "+(useful>=5?"That is real depth behind the headline scorer.":"That leaves less margin for error if the stars come back toward ordinary production.")
-  ];
-  const rows={
+    change=delta==null?null:w2DeltaPhrase(delta),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(opp),starterWord=useful===1?"starter":"starters";
+  const intro={
     "walter-mercer":[
-      [base[0]+" That concentration tells us how much of "+team+"’s total depended on the top of the lineup against "+foe+".",base[1],base[2]],
-      ["Week 2 gave "+team+" a clear scoring shape: "+share+"% of the total came from the top three. It shows how concentrated the scoring was at the top of the roster.",base[1],base[2]],
-      [star+" was the first name on the page, but the broader number is "+share+"%. That is the share of "+team+"’s scoring owned by the top three.",base[1],base[2]],
-      ["The score distribution is the cleaner clue: "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three "+a.mascot+" scorers, leaving the lineup "+shape+".",base[1],base[2]]
+      star+" and "+second+" headline a "+shape+" Week 2 profile: the top three produced "+w2One(topPts)+" of "+w2One(pts)+" points ("+share+"%).",
+      "Week 2 gave "+team+" a clear scoring shape: "+share+"% of the total came from the top three, leaving the lineup "+shape+".",
+      star+" was the first name on the page, but the broader number is "+share+"% from the top three "+a.mascot+" scorers.",
+      "The score distribution is the cleaner clue: "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three, a "+shape+" profile."
     ],
     "tess-delaney":[
-      ["The "+a.mascot+" top three handled "+share+"% of the scoring. That is a "+shape+" table setting, with "+star+" as the centerpiece and everyone else deciding whether the room feels complete.",base[1],useful+" "+starterWord+" reached double figures. "+(useful>=5?"That is enough competent company around the stars to keep the evening civilized.":"That is not quite enough supporting work to let every centerpiece have an off night." )],
-      [star+" and "+second+" did the visible work, but the elegant number is "+share+"% from the top three. That makes the "+a.mascot+" look "+shape+" rather than accidentally glamorous.",base[1],useful>=5?"There were "+useful+" double-digit scorers, the sort of supporting cast a contender should insist upon.":"Only "+useful+" "+starterWord+" cleared double figures, so the expensive pieces still carried too much of the room."],
-      ["Week 2 put "+w2One(topPts)+" of "+w2One(pts)+" points in the hands of the top three "+a.mascot+" scorers. At "+share+"%, the lineup was "+shape+".",base[1],base[2]],
-      ["The "+a.mascot+" did not ask one player to host the entire evening, but "+share+"% of the scoring still lived in the top three. That is a "+shape+" profile.",base[1],base[2]]
+      "The "+a.mascot+" top three handled "+share+"% of the scoring, a "+shape+" table setting with "+star+" as the centerpiece.",
+      star+" and "+second+" did the visible work, but the elegant number is "+share+"% from the top three. The "+a.mascot+" looked "+shape+".",
+      "Week 2 put "+w2One(topPts)+" of "+w2One(pts)+" points in the hands of the top three "+a.mascot+" scorers. I would call that "+shape+".",
+      "The "+a.mascot+" did not ask one player to host the entire evening, but "+share+"% of the scoring still lived in the top three."
     ],
     "mack-hollis":[
-      ["The loud number is "+share+"%: that is how much of "+team+"’s Week 2 scoring came from the top three. "+star+" led a "+shape+" lineup, full stop.",base[1],useful>=5?useful+" starters cleared 10 points. That is how one big score turns into a real lineup instead of a solo act.":"Only "+useful+" "+starterWord+" cleared 10 points. That is not enough depth for me to call the lineup bulletproof."],
-      [star+" got the headline, but "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three together. That "+share+"% share is the story behind the story.",base[1],base[2]],
-      ["You want the back-page number? "+share+"% of the "+a.mascot+" total came from the top three. That is "+shape+", and it tells us whether the stars were carrying a crowd or dragging furniture.",base[1],base[2]],
-      ["The "+a.mascot+" put "+share+"% of their Week 2 points in the top three scorers. "+star+" was the biggest noise, but the distribution says whether the roster had backup singers.",base[1],base[2]]
+      "The loud number is "+share+"%: that is how much of "+team+"’s Week 2 scoring came from the top three. That is a "+shape+" lineup, full stop.",
+      star+" got the headline, but "+w2One(topPts)+" of "+w2One(pts)+" points came from the top three together. That concentration is the story behind the story.",
+      "You want the back-page number? "+share+"% of the "+a.mascot+" total came from the top three. That is "+shape+", and it tells us how much the stars carried.",
+      "The "+a.mascot+" put "+share+"% of their Week 2 points in the top three scorers. That is either depth with stars or stars carrying furniture."
     ],
     "nora-voss":[
-      ["Rivals are going to remember the "+a.mascot+" as a "+shape+" roster after Week 2. The top three produced "+share+"% of the points, which gives rivals plenty to talk about without inventing a defensive story that was never there.",base[1],base[2]],
-      [star+" made himself the obvious headline, but the top three still owned "+share+"% of the "+a.mascot+" scoring. That is the useful rival’s-eye view.",base[1],base[2]],
-      ["The "+a.mascot+" top three combined for "+w2One(topPts)+" of "+w2One(pts)+" points. At "+share+"%, the joke is about how concentrated the scoring became.",base[1],base[2]],
-      ["The useful rival’s-eye view is simple: "+star+", "+second+" and the third scorer owned "+share+"% of "+team+"’s Week 2 points. That leaves the "+a.mascot+" looking "+shape+".",base[1],base[2]]
+      "Rivals are going to remember the "+a.mascot+" as a "+shape+" roster after Week 2. The top three produced "+share+"% of the points.",
+      star+" made himself the obvious headline, but the top three still owned "+share+"% of the "+a.mascot+" scoring. That is the useful rival’s-eye view.",
+      "The "+a.mascot+" top three combined for "+w2One(topPts)+" of "+w2One(pts)+" points. At "+share+"%, the joke is about concentration.",
+      "The useful rival’s-eye view is simple: "+star+", "+second+" and the third scorer owned "+share+"% of "+team+"’s Week 2 points."
     ]
-  };
-  const picked=[...(rows[rid]||rows["walter-mercer"])[v]],next=w2DisplayTeam(t.next_opponent_name||"the Week 3 opponent");
-  picked[2]=String(picked[2]).replace(/[.!?]$/,"")+"; Week 3 will show whether that same scoring balance is enough against "+next+" without requiring the exact same stars to reproduce the exact same totals.";
+  }[rid]||[];
+  const deltaRows={
+    "walter-mercer":[
+      delta==null?"There is no complete Week 1 team-total comparison, so distribution is the honest read.":team+" scored "+change+" in Week 1; the week-over-week shift is large enough to change how the result is interpreted.",
+      delta==null?"Without a clean opener total, there is no honest trend line to draw.":"Compared with the opener, "+team+" finished Week 2 "+change+". That is a measurable change in total output, not a stylistic impression.",
+      delta==null?"The opener cannot support a full team-total comparison, so role stability matters more than a fake trend.":"The Week 2 total was "+change+" the opener for "+team+". That difference changes the amount of help the lineup needed from its stars.",
+      delta==null?"No complete Week 1 total means the before-and-after comparison stops here.":team+" changed its weekly output by "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+". That is enough movement to deserve attention."
+    ],
+    "tess-delaney":[
+      delta==null?"The measuring tape stays in the drawer because the opener does not offer a complete team total.":"The "+a.mascot+" scored "+change+" in Week 1. The outfit changed shape enough to notice without declaring it finished.",
+      delta==null?"I refuse to tailor a trend from an incomplete opener.":"From the opener to Week 2, "+team+" moved "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+". That is a visible change in presentation.",
+      delta==null?"There is no proper Week 1 total to compare, so the honest compliment is narrower.":"Week 2 landed "+change+" the opener for "+a.mascot+". The room feels different because the scoring actually was.",
+      delta==null?"An incomplete opener saves us from pretending two data points are a wardrobe.":"The "+a.mascot+" changed their total by "+w2One(Math.abs(delta))+" points from Week 1. Even good china notices a swing that large."
+    ],
+    "mack-hollis":[
+      delta==null?"No clean Week 1 total, no fake trend speech. Week 2 gets the microphone by itself.":"The "+a.mascot+" scored "+change+" in Week 1. That is enough movement to change the Week 3 volume.",
+      delta==null?"I am not screaming 'trend' without a complete opener total.":"Compared with Week 1, "+team+" moved "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+". That swing is loud enough to matter.",
+      delta==null?"Week 1 does not give us a complete team total, so Week 2 stands alone.":"Week 2 landed "+change+" the opener for "+team+". That kind of change either becomes a pattern next Sunday or disappears.",
+      delta==null?"No clean opener, no fake graph.":"The "+a.mascot+" changed the weekly total by "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+". Put that on the Week 3 watch list."
+    ],
+    "nora-voss":[
+      delta==null?"The opener does not give us a complete total, so I am saving the fake trend line for somebody else.":team+" scored "+change+" in Week 1. Rivals will notice a swing that large even if they call it luck.",
+      delta==null?"No complete Week 1 total means no invented two-week graph.":"The "+a.mascot+" shifted "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+" from the opener. Repeat it and the joke changes.",
+      delta==null?"The opener cannot support a full comparison, which is fine; Week 2 supplied enough material.":"Week 2 landed "+change+" Week 1 for "+team+". That is the sort of difference that turns next Sunday into proof or punchline.",
+      delta==null?"There is no honest Week 1 baseline, so I will not manufacture one.":"The "+a.mascot+" total moved "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+" from Week 1. Do that again and nobody shrugs."
+    ]
+  }[rid]||[];
+  const depthRows={
+    "walter-mercer":[
+      useful+" "+starterWord+" reached double figures. "+(useful>=5?"That spreads the scoring burden beyond the headline player.":"That leaves little margin if the top scorers cool off."),
+      useful>=5?"Depth did real work: "+useful+" starters cleared 10 points, giving "+team+" several usable sources of scoring.":"Only "+useful+" "+starterWord+" cleared 10 points, so the roster still leans heavily on the top.",
+      "There "+(useful===1?"was":"were")+" "+useful+" double-digit "+starterWord+" for "+a.mascot+". "+(useful>=5?"That is enough support to survive an ordinary star week.":"That is not enough support to make the lineup comfortable."),
+      useful>=5?useful+" starters reached double figures, the healthiest sign in the scoring distribution.":"Only "+useful+" "+starterWord+" made double figures, which keeps the depth question open."
+    ],
+    "tess-delaney":[
+      useful+" "+starterWord+" reached 10 points. "+(useful>=5?"That is competent company around the centerpiece.":"The supporting cast still needs a better evening."),
+      useful>=5?"There were "+useful+" double-digit scorers, the sort of company a contender should insist upon.":"Only "+useful+" "+starterWord+" cleared double figures, so the expensive pieces carried too much of the room.",
+      "The "+a.mascot+" got double figures from "+useful+" "+starterWord+". "+(useful>=5?"That keeps the table balanced.":"That leaves the good china wobbling on a very small number of shoulders."),
+      useful>=5?useful+" starters reached double figures, enough balance to keep the room calm.":"Only "+useful+" "+starterWord+" reached double figures, so the stars still need sturdier company."
+    ],
+    "mack-hollis":[
+      useful>=5?useful+" starters cleared 10 points. That is how one big score turns into a real lineup instead of a solo act.":"Only "+useful+" "+starterWord+" cleared 10 points. That is not enough depth for me to call the lineup bulletproof.",
+      "The depth count is "+useful+" in double figures. "+(useful>=5?"That is a lot of places to get punched from.":"That is a lot of furniture being dragged by too few stars."),
+      useful>=5?"The "+a.mascot+" had "+useful+" double-digit starters. That is actual support behind the headline.":"The "+a.mascot+" had only "+useful+" double-digit "+starterWord+". Somebody below the stars has to get louder.",
+      useful>=5?useful+" starters hit 10 or more, which is how a big Sunday becomes a roster story.":"Only "+useful+" "+starterWord+" hit 10 or more, which is why the stars still look overworked."
+    ],
+    "nora-voss":[
+      useful>=5?useful+" starters reached double figures, which ruins the easy one-man-roster joke.":"Only "+useful+" "+starterWord+" reached double figures. Rivals do not need a sophisticated joke for that.",
+      "The double-digit count is "+useful+". "+(useful>=5?"That gives rivals too many useful scorers to ignore.":"That gives rivals one obvious talking point: too much weight at the top."),
+      useful>=5?"There were "+useful+" double-digit scorers, so the cheap top-heavy joke needs more work.":"There were only "+useful+" double-digit "+starterWord+", so the cheap top-heavy joke still works.",
+      useful>=5?useful+" starters hit 10 points, enough depth to make the rival complaints less convenient.":"Only "+useful+" "+starterWord+" hit 10 points. If the stars cool, the joke gets easier."
+    ]
+  }[rid]||[];
+  const picked=[intro[v],deltaRows[v],depthRows[v]],next=w2DisplayTeam(t.next_opponent_name||"the Week 3 opponent");
+  picked[2]=String(picked[2]).replace(/[.!?]$/,"")+"; against "+next+", Week 3 will show whether that scoring shape travels without requiring the exact same stat lines.";
   return picked
 }
 
@@ -566,7 +621,34 @@ function w2OpeningHook(t,r,won,margin,opp,top){
   return (rows[rid]||rows["walter-mercer"])[v]
 }
 function w2SentimentRead(t,prev,r,fs,prevSent,won){
-  const a=w2Alias(t),score=Number(fs?.score)||0,old=Number(prevSent?.score),hasOld=Number.isFinite(old),delta=hasOld?score-old:null,rid=String(r?.id||""),record=w2Record(t),v=w2Hash(t.team_name+"|sentiment")%4,pts=Number(t.points)||0,margin=Math.abs(Number(t.points)-Number(t.opponent_points)),scoreReason=won?(pts>=110?"Fans just watched "+w2DisplayTeam(t.team_name)+" clear "+w2One(pts)+" in a win, so optimism has an actual scoring performance behind it.":"The win gives supporters a result to point at, even if "+w2One(pts)+" points leaves room for a better scoring week."):(pts>=100?"The loss hurts, but "+w2One(pts)+" points keeps the fan reaction from becoming a simple claim that the lineup cannot score.":pts<70?"A "+w2One(pts)+"-point loss gives frustrated fans an obvious complaint: the lineup did not produce enough fantasy points.":"The "+w2One(margin)+"-point loss leaves fans arguing about both the result and where the missing points should have come from.");
+  const a=w2Alias(t),score=Number(fs?.score)||0,old=Number(prevSent?.score),hasOld=Number.isFinite(old),delta=hasOld?score-old:null,rid=String(r?.id||""),record=w2Record(t),v=w2Hash(t.team_name+"|sentiment")%4,pts=Number(t.points)||0,margin=Math.abs(Number(t.points)-Number(t.opponent_points));
+  const reasonRows={
+    "walter-mercer":[
+      won?(pts>=110?w2DisplayTeam(t.team_name)+" just paired a win with "+w2One(pts)+" points, giving optimism both a result and a strong total.":"The win gives supporters a result to defend, though "+w2One(pts)+" points leaves room for a cleaner scoring week."):(pts>=100?"The loss came despite "+w2One(pts)+" points, so frustration is more about wasted production than a dead lineup.":pts<70?"At only "+w2One(pts)+" points in a loss, the fan complaint is straightforward: there was not enough scoring.":"A "+w2One(margin)+"-point loss leaves the crowd arguing about where the missing production should have come from."),
+      won?(pts>=110?"A "+w2One(pts)+"-point win gives the fan base something measurable to trust.":"The result is better than the total, and supporters know both can be true."):(pts>=100?"Scoring "+w2One(pts)+" and still losing creates a different kind of frustration: the useful performances were wasted.":pts<70?"The scoreboard did not reach 70, so skepticism has an obvious numerical reason.":"The loss was close enough that lineup choices, not hopelessness, dominate the fan conversation."),
+      won?"Supporters have a win on the board, and "+w2One(pts)+" points tells them how much of that confidence came from actual scoring.":"Supporters have a loss on the board, and "+w2One(pts)+" points tells them whether to blame a quiet lineup or a stronger opponent total.",
+      won?"The crowd can separate process from result later; right now a win and "+w2One(pts)+" points give it something concrete.":"The crowd is reacting to a "+w2One(margin)+"-point loss, with "+w2One(pts)+" team points supplying the context for how angry to be."
+    ],
+    "tess-delaney":[
+      won?"The room has a win and "+w2One(pts)+" points to admire, which is enough to make confidence look presentable.":"The room is staring at a loss and "+w2One(pts)+" points; whether that feels tragic or merely untidy depends on how much useful scoring was wasted.",
+      won?(pts>=110?"A "+w2One(pts)+"-point victory gives optimism excellent tailoring.":"The victory is doing more work than the "+w2One(pts)+"-point total, which keeps the applause tasteful rather than reckless."):(pts>=100?"Losing with "+w2One(pts)+" points is the sort of evening where the offense wore the good suit and the result spilled wine on it.":"The "+w2One(margin)+"-point loss has made skepticism the better-dressed opinion."),
+      won?"Supporters can point to "+w2One(pts)+" points and a win without inventing reasons to be pleased.":"The loss is real, but so is the "+w2One(pts)+"-point total; the crowd has to decide which part deserves more weight.",
+      won?"A win lets the fan base enjoy the room, while "+w2One(pts)+" points decides whether the mood is confidence or just relief.":"The crowd has a "+w2One(margin)+"-point loss to digest, and the scoring total tells us whether to blame the menu or the bill."
+    ],
+    "mack-hollis":[
+      won?"The fans have a win and "+w2One(pts)+" points to yell about. That is actual fuel, not motivational-poster nonsense.":"The fans have a loss and "+w2One(pts)+" points to yell about, which tells you whether the volume is panic or annoyance.",
+      won?(pts>=110?w2One(pts)+" points in a win? Fine, turn the radio up.":"The win gets the headline; the "+w2One(pts)+"-point total keeps me from pretending everything was perfect."):(pts>=100?"Putting up "+w2One(pts)+" and losing is exactly how good performances become angry phone calls.":"The "+w2One(margin)+"-point loss gives the complaint line plenty to work with."),
+      won?"The scoreboard says win, the total says "+w2One(pts)+", and the fan base is allowed to be louder because both exist.":"The scoreboard says loss, the total says "+w2One(pts)+", and nobody needs fake drama when those two numbers already disagree.",
+      won?"A win backed by "+w2One(pts)+" points gives supporters a real receipt.":"A "+w2One(margin)+"-point loss gives supporters a real complaint, and "+w2One(pts)+" points tells us how much of it belongs on the lineup."
+    ],
+    "nora-voss":[
+      won?"Rivals can complain, but "+w2One(pts)+" points and a win make the fan optimism harder to mock.":"Rivals get the loss joke; "+w2One(pts)+" points decide whether the fan base has a decent rebuttal.",
+      won?(pts>=110?"A "+w2One(pts)+"-point win makes the smugness annoyingly defensible.":"The win is real, but "+w2One(pts)+" points keeps the victory lap from becoming unbearable."):(pts>=100?"Losing after scoring "+w2One(pts)+" is cruel enough that rivals barely need to add material.":"The "+w2One(margin)+"-point loss already wrote half the fan-base argument."),
+      won?"The fan base has a win and "+w2One(pts)+" points to hide behind when rivals start talking.":"The fan base has a loss and "+w2One(pts)+" points to explain when rivals start talking.",
+      won?"Right now the joke has to work around a win; "+w2One(pts)+" points determine how hard that job is.":"Right now the joke starts with a loss; "+w2One(pts)+" points determine whether the crowd can laugh back."
+    ]
+  };
+  const scoreReason=(reasonRows[rid]||reasonRows["walter-mercer"])[v];
   const direction=delta==null?"":delta>0?"warmer":delta<0?"colder":"unchanged";
   const standing=score>=50?"the fan base is starting to expect wins, not merely hope for them":score>=15?"confidence is winning the argument for now":score>-15?"the crowd is split between patience and suspicion":score>-50?"skepticism is louder than optimism":"the fan base is already in open revolt";
   const context=rid==="tess-delaney"?(won?"The win lets "+a.mascot+" supporters enjoy the room without apologizing for it.":"The loss gives the "+a.mascot+" skeptics the best seat in the room."):(rid==="mack-hollis"?(won?"The win gives "+a.mascot+" fans something loud to point at.":"The loss turns every old "+a.mascot+" complaint back up to full volume."):(rid==="nora-voss"?(won?"The win forces "+a.mascot+" rivals to work harder for the joke.":"The loss hands "+a.mascot+" rivals fresh material."):won?"The win gives "+a.mascot+" supporters a concrete result to defend.":"The loss gives "+a.mascot+" supporters a specific problem to argue about."));

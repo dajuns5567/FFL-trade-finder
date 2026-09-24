@@ -1077,6 +1077,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     }else{
       turn=wName+" put "+w2One(wTop3)+" points in its top three scorers, "+w2One(w.points-wTop3)+" everywhere else. "+lName+" had "+w2One(lTop3)+" at the top. The winner’s edge came from how the rest of the scoring column filled in behind the stars.";
     }
+    if(i===0)turn=(ws[0]?.name||wName)+" was the true centerpiece, but the damage standing underneath it was the real story: "+turn;
     paras.push(w2S(w,r,"recap-turn-"+i,turn));
 
     let column;

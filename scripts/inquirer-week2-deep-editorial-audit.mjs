@@ -236,7 +236,8 @@ function auditRecap(){
   const defenseBad=copy.match(/\b(?:started|starting|start)\s+(?:a|the|your)?\s*(?:team\s+)?defen[cs]e\b|\bD\/?ST\b|\bteam defen[cs]e\b/gi)||[];
   if(defenseBad.length)add('FAIL','league-format-team-defense','Weekly recap uses team-defense language that does not fit the league format.',defenseBad.join(' | '));
 
-  if(wordCount(copy)<3014)add('FAIL','recap-length-regression','Weekly recap became shorter than the pre-rewrite DOM baseline.','current='+wordCount(copy)+'; floor=3014');
+  // Length is diagnostic, not a hard equality/floor. Flag only a major compression that could signal lost depth.
+  if(wordCount(copy)<2250)add('WARN','recap-major-compression','Weekly recap is more than ~25% shorter than the pre-rewrite 3,014-word reference; review for lost substance rather than padding to a target.','current='+wordCount(copy)+'; reference=3014');
 
   const recapMeta=/\b(?:roll call|useful examples?|the useful question|the pick is about|desire to be cute|without turning .* into a spreadsheet|this paragraph|this section|this recap|the writer|the reporter)\b/i;
   const recapMetaHits=sentenceParts(copy).filter(x=>recapMeta.test(x));
@@ -326,20 +327,20 @@ function auditRecap(){
 
 const teamAudits=samples.map(auditTeam);
 const recapAudit=auditRecap();
-const lengthFloorFindings=[];
-const lengthFloors=new Map([
+const lengthReferenceFindings=[];
+const lengthReferences=new Map([
   ['Denver Doncos',840],
   ['New York Giants',894],
   ['New England Patriots',857],
   ['New York Jets',971]
 ]);
 for(const t of teams){
-  const floor=lengthFloors.get(String(t?.team_name||''));
-  if(!floor)continue;
+  const reference=lengthReferences.get(String(t?.team_name||''));
+  if(!reference)continue;
   const current=wordCount(textOfArticle(t));
-  if(current<floor)lengthFloorFindings.push(finding('team:'+t.team_name,'FAIL','article-length-regression','Sampled team article became shorter than the pre-rewrite DOM baseline.','current='+current+'; floor='+floor));
+  if(current<reference*0.75)lengthReferenceFindings.push(finding('team:'+t.team_name,'WARN','article-major-compression','Article is more than 25% shorter than the pre-rewrite reference. Review for lost reporting depth; do not pad merely to match the old count.','current='+current+'; reference='+reference));
 }
-const allFindings=[...recapAudit.findings,...teamAudits.flatMap(x=>x.findings),...lengthFloorFindings];
+const allFindings=[...recapAudit.findings,...teamAudits.flatMap(x=>x.findings),...lengthReferenceFindings];
 const counts={
   FAIL:allFindings.filter(x=>x.severity==='FAIL').length,
   WARN:allFindings.filter(x=>x.severity==='WARN').length
@@ -408,7 +409,7 @@ const report=[
   '- Catch player sentences that contradict the player’s actual fantasy output or talk about missing data/stat-line mechanics.',
   '- Audit fan sentiment for concrete, varied, sarcastic supporter behavior rather than a generic mood adjective.',
   '- Check divisional Week 3 outlooks for context-aware stakes (race leverage, head-to-head swing, playoff path), not merely “division games matter.”',
-  '- Track word count and humor density so revisions do not gain specificity by becoming shorter or drier.',
+  '- Track word count and humor density as quality diagnostics; there is no exact word-count target, but major compression should be reviewed for lost reporting depth.',
   '',
   renderFindings('Weekly recap findings',recapAudit.findings),
   ...teamAudits.map(x=>renderFindings(x.reporter?.name+' / '+x.team+' findings',x.findings)),

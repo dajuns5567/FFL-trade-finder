@@ -671,6 +671,38 @@ function w2HistoricalColor(p,r,t=null,slot=0){
   };
   return (rows[rid]||rows["walter-mercer"])[v]
 }
+
+function w2Week1DeltaRead(t,r,p,pp,role){
+  const rid=String(r?.id||""),prior=w2One(pp?.points),now=w2One(p?.points),rise=Number(p?.points)>Number(pp?.points),v=w2Cohort(t)%4,
+    roleNames={
+      "walter-mercer":["lead score","second scorer","third scorer"],
+      "tess-delaney":["centerpiece","second setting","third setting"],
+      "mack-hollis":["headliner","second punch","third score"],
+      "nora-voss":["top rival target","second scorer","third scorer"]
+    },
+    label=(roleNames[rid]||roleNames["walter-mercer"])[Math.min(2,Number(role)||0)],
+    up={
+      "walter-mercer":["took a real step forward","raised the next expectation","gave the two-week trend some shape","made the improvement impossible to dismiss"],
+      "tess-delaney":["looked considerably more expensive","gave the room more to admire","improved the arrangement in a visible way","earned a noticeably better seat"],
+      "mack-hollis":["turned the volume up","made the scoreboard a lot louder","upgraded from useful to noisy","gave the role a real jolt"],
+      "nora-voss":["ruined an easy rival joke","gave supporters a stronger rebuttal","forced rivals to update the punch line","made the role harder to mock"]
+    },
+    down={
+      "walter-mercer":["took a real step backward","lowered the next expectation","gave Week 3 a legitimate question","made the decline impossible to ignore"],
+      "tess-delaney":["looked noticeably underfed","left the room asking where the rest went","made the arrangement less convincing","lost some of its polish"],
+      "mack-hollis":["turned the volume down","made the scoreboard noticeably quieter","went from noise to a question","put the role under the spotlight"],
+      "nora-voss":["handed rivals an easier joke","weakened the supporter rebuttal","gave rivals a cleaner comparison","made the role easier to mock"]
+    },
+    phrase=(rise?(up[rid]||up["walter-mercer"]):(down[rid]||down["walter-mercer"]))[v];
+  const rows=[
+    "The "+label+" moved from "+prior+" in Week 1 to "+now+" this week and "+phrase+".",
+    "Week 1 put the "+label+" at "+prior+"; Week 2 answered with "+now+" and "+phrase+".",
+    "From "+prior+" in the opener to "+now+" now, the "+label+" "+phrase+".",
+    "After a "+prior+"-point Week 1, the "+label+" reached "+now+" and "+phrase+"."
+  ];
+  return rows[v]
+}
+
 function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
   const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),foe=w2DisplayTeam(opp),pts=w2One(p.points),
     delta=pp?Number(p.points)-Number(pp.points):null,role=Math.min(2,Number(i)||0),v=w2Cohort(t)%4;
@@ -757,48 +789,7 @@ function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
     ]
   };
   let out=(rows[rid]||rows["walter-mercer"])[role][v];
-  if(pp&&Number.isFinite(delta)&&Math.abs(delta)>=5){
-    const prior=w2One(pp.points),rise=delta>0;
-    const deltaRows={
-      "walter-mercer":[
-        rise?["From "+prior+" in Week 1 to "+pts+" now, the lead score took a real step forward.","The top line moved from "+prior+" in the opener to "+pts+", enough improvement to raise the next expectation.","Week 1 gave this lead role "+prior+"; Week 2 answered with "+pts+" and a much sturdier trend.","The opener stopped at "+prior+", while "+pts+" this week gave the No. 1 scorer a meaningful lift."][v],
-        rise?["The second scorer climbed from "+prior+" in Week 1 to "+pts+", which matters because support is becoming repeatable.","Week 1 gave this support role "+prior+"; "+pts+" now is the kind of progress that changes lineup depth.","The secondary score moved from "+prior+" to "+pts+" in a week, giving the top of the lineup more balance.","After "+prior+" in the opener, the No. 2 contribution reached "+pts+" and made the lineup less dependent on one name."][v],
-        rise?["The third scorer improved from "+prior+" in Week 1 to "+pts+", exactly where useful depth starts becoming visible.","Week 1 had this supporting slot at "+prior+"; Week 2 pushed it to "+pts+" and gave the lineup another usable answer.","The No. 3 contribution rose from "+prior+" to "+pts+", a quiet but meaningful two-week improvement.","After "+prior+" in the opener, "+pts+" this week turned the third scoring slot into a real positive."][v]
-      ]:[
-        ["The lead score fell from "+prior+" in Week 1 to "+pts+", a drop large enough to change what the top of the lineup needs next.","Week 1 put the top line at "+prior+"; "+pts+" this time makes the decline impossible to ignore.","The No. 1 scorer moved from "+prior+" to "+pts+" in a week, giving management a real trend to watch.","After "+prior+" in the opener, the lead contribution slipped to "+pts+" and raised the Week 3 bar."][v],
-        ["The second scorer dropped from "+prior+" in Week 1 to "+pts+", thinning the support behind the leader.","Week 1 gave this support role "+prior+"; "+pts+" now leaves a meaningful hole behind the top score.","The secondary contribution fell from "+prior+" to "+pts+", which makes the lineup less forgiving.","After "+prior+" in the opener, the No. 2 score slid to "+pts+" and put more pressure elsewhere."][v],
-        ["The third scorer came down from "+prior+" in Week 1 to "+pts+", a depth loss the lineup felt.","Week 1 had this supporting slot at "+prior+"; "+pts+" this week made the bottom of the featured trio quieter.","The No. 3 contribution fell from "+prior+" to "+pts+", which matters because depth is where this role earns its value.","After "+prior+" in the opener, "+pts+" this week left the third scoring slot with something to repair."][v]
-      ],
-      "tess-delaney":[
-        rise?["The centerpiece rose from "+prior+" in Week 1 to "+pts+"; the room upgraded from tasteful to difficult to ignore.","Week 1 served "+prior+" at the head of the table; Week 2 brought "+pts+" and considerably more sparkle.","The leading place setting moved from "+prior+" to "+pts+", which is the sort of improvement the room notices without being asked.","After "+prior+" in the opener, "+pts+" this week made the centerpiece look much more expensive."][v],
-        rise?["The second setting improved from "+prior+" in Week 1 to "+pts+", giving the table actual balance.","Week 1 offered "+prior+" from this supporting chair; Week 2 brought "+pts+" and a much better arrangement.","The supporting course rose from "+prior+" to "+pts+", exactly what keeps the centerpiece from dining alone.","After "+prior+" in the opener, "+pts+" made the No. 2 contribution look properly invited."][v],
-        rise?["The third setting climbed from "+prior+" in Week 1 to "+pts+", useful polish at the quieter end of the table.","Week 1 had this chair at "+prior+"; Week 2 brought "+pts+" and made the arrangement feel less unfinished.","The supporting place moved from "+prior+" to "+pts+", a small luxury the room can actually use.","After "+prior+" in the opener, "+pts+" this week made the third contribution considerably more presentable."][v]
-      ]:[
-        ["The centerpiece fell from "+prior+" in Week 1 to "+pts+"; no amount of good china hides that missing production.","Week 1 served "+prior+" at the head of the table; Week 2 answered with "+pts+" and a noticeably smaller portion.","The leading place setting dropped from "+prior+" to "+pts+", which leaves the room asking where the rest went.","After "+prior+" in the opener, "+pts+" this week made the centerpiece look underfed."][v],
-        ["The second setting slid from "+prior+" in Week 1 to "+pts+", taking some balance out of the table.","Week 1 gave this supporting chair "+prior+"; Week 2 brought "+pts+" and a thinner arrangement.","The supporting course fell from "+prior+" to "+pts+", making the centerpiece work harder.","After "+prior+" in the opener, "+pts+" left the No. 2 contribution looking conspicuously light."][v],
-        ["The third setting dropped from "+prior+" in Week 1 to "+pts+", which is where an elegant table starts looking unfinished.","Week 1 had this chair at "+prior+"; Week 2 served "+pts+" and made the quiet end quieter.","The supporting place moved from "+prior+" to "+pts+", a loss of depth the room can actually feel.","After "+prior+" in the opener, "+pts+" this week made the third contribution much easier to overlook."][v]
-      ],
-      "mack-hollis":[
-        rise?["The headliner jumped from "+prior+" in Week 1 to "+pts+". That is not a bump; that is the volume knob breaking off.","Week 1 gave the big name "+prior+"; Week 2 detonated at "+pts+" and moved the ceiling.","The top score climbed from "+prior+" to "+pts+", which is how a player turns a good week into a headline trend.","After "+prior+" in the opener, "+pts+" this week made the lead scorer impossible to whisper about."][v],
-        rise?["The second punch went from "+prior+" in Week 1 to "+pts+", and suddenly the lineup has combinations instead of one haymaker.","Week 1 got "+prior+" from this support spot; Week 2 cranked it to "+pts+" and made the scoreboard louder.","The No. 2 score climbed from "+prior+" to "+pts+", which is exactly how backup noise becomes pressure.","After "+prior+" in the opener, "+pts+" made the second scorer a much bigger problem for opponents."][v],
-        rise?["The third score rose from "+prior+" in Week 1 to "+pts+", the kind of depth jump that keeps the lights on.","Week 1 had this slot at "+prior+"; Week 2 pushed it to "+pts+" and gave the lineup another live wire.","The No. 3 contribution climbed from "+prior+" to "+pts+", turning a background score into actual noise.","After "+prior+" in the opener, "+pts+" this week gave the third scorer a microphone."][v]
-      ]:[
-        ["The headliner fell from "+prior+" in Week 1 to "+pts+". That is enough missing noise to make everybody look up.","Week 1 gave the big name "+prior+"; Week 2 sputtered to "+pts+" and put the top line under the spotlight.","The lead score dropped from "+prior+" to "+pts+", which is how a headline becomes a Week 3 question.","After "+prior+" in the opener, "+pts+" this week turned the lead scorer from solution into conversation."][v],
-        ["The second punch fell from "+prior+" in Week 1 to "+pts+", leaving the leader with more of the fight.","Week 1 got "+prior+" from this support spot; Week 2 dropped to "+pts+" and made the scoreboard thinner.","The No. 2 score slid from "+prior+" to "+pts+", which is a lot of missing backup noise.","After "+prior+" in the opener, "+pts+" made the second scorer a quieter part of the fight."][v],
-        ["The third score dropped from "+prior+" in Week 1 to "+pts+", and the depth chart got quieter with it.","Week 1 had this slot at "+prior+"; Week 2 fell to "+pts+" and killed some useful background noise.","The No. 3 contribution slid from "+prior+" to "+pts+", turning a live wire into a loose connection.","After "+prior+" in the opener, "+pts+" this week took the microphone away from the third scorer."][v]
-      ],
-      "nora-voss":[
-        rise?["The top rival target jumped from "+prior+" in Week 1 to "+pts+", which ruins at least one easy joke.","Week 1 gave rivals "+prior+" to work with; Week 2 answered at "+pts+" and made the rebuttal much stronger.","The lead score rose from "+prior+" to "+pts+", forcing rival managers to update the punch line.","After "+prior+" in the opener, "+pts+" this week gave supporters a much better comeback."][v],
-        rise?["The second scorer climbed from "+prior+" in Week 1 to "+pts+", so rivals have one less soft spot to point at.","Week 1 left this support slot at "+prior+"; Week 2 reached "+pts+" and made the lineup harder to dismiss.","The No. 2 score rose from "+prior+" to "+pts+", which sends rival complaints farther down the roster.","After "+prior+" in the opener, "+pts+" made the second contribution inconveniently respectable."][v],
-        rise?["The third scorer improved from "+prior+" in Week 1 to "+pts+", enough to make the lazy rival joke move elsewhere.","Week 1 had this slot at "+prior+"; Week 2 reached "+pts+" and removed one obvious target.","The No. 3 contribution rose from "+prior+" to "+pts+", forcing rivals to scroll for easier material.","After "+prior+" in the opener, "+pts+" this week made the third score much harder to mock."][v]
-      ]:[
-        ["The top rival target fell from "+prior+" in Week 1 to "+pts+", and nobody in the other chat needs help finding the joke.","Week 1 gave supporters "+prior+" to defend; Week 2 dropped to "+pts+" and made the rebuttal weaker.","The lead score slid from "+prior+" to "+pts+", which hands rivals an annoyingly clean comparison.","After "+prior+" in the opener, "+pts+" this week gave the rival section fresh ammunition."][v],
-        ["The second scorer fell from "+prior+" in Week 1 to "+pts+", reopening a soft spot rivals had started to lose.","Week 1 had this support slot at "+prior+"; Week 2 dropped to "+pts+" and made the lineup easier to tease.","The No. 2 score slid from "+prior+" to "+pts+", which moves the rival joke closer to the top of the roster.","After "+prior+" in the opener, "+pts+" made the second contribution much easier to attack."][v],
-        ["The third scorer dropped from "+prior+" in Week 1 to "+pts+", exactly where lazy rival jokes like to live.","Week 1 had this slot at "+prior+"; Week 2 fell to "+pts+" and reopened an easy target.","The No. 3 contribution slid from "+prior+" to "+pts+", saving rivals the trouble of inventing material.","After "+prior+" in the opener, "+pts+" this week made the third score easier to mock than defend."][v]
-      ]
-    };
-    out+=" "+(deltaRows[rid]||deltaRows["walter-mercer"])[role];
-  }
+  if(pp&&Number.isFinite(delta)&&Math.abs(delta)>=5)out+=" "+w2Week1DeltaRead(t,r,p,pp,role);
   const history=w2HistoricalColor(p,r,t,role);if(history)out+=" "+history;
   return out.replace(/\.+$/,"")+"."
 }

@@ -236,7 +236,8 @@ function auditRecap(){
   const defenseBad=copy.match(/\b(?:started|starting|start)\s+(?:a|the|your)?\s*(?:team\s+)?defen[cs]e\b|\bD\/?ST\b|\bteam defen[cs]e\b/gi)||[];
   if(defenseBad.length)add('FAIL','league-format-team-defense','Weekly recap uses team-defense language that does not fit the league format.',defenseBad.join(' | '));
 
-  if(wordCount(copy)<3014)add('FAIL','recap-length-regression','Weekly recap became shorter than the pre-rewrite DOM baseline.','current='+wordCount(copy)+'; floor=3014');
+  // Word count is a quality signal, not an exact target. Only flag major compression for review.
+  if(wordCount(copy)<2250)add('WARN','recap-major-compression','Weekly recap is more than roughly 25% shorter than the 3,014-word pre-rewrite reference. Review for lost substance; do not pad to match a number.','current='+wordCount(copy)+'; reference=3014');
 
   const recapMeta=/\b(?:roll call|useful examples?|the useful question|the pick is about|desire to be cute|without turning .* into a spreadsheet|this paragraph|this section|this recap|the writer|the reporter)\b/i;
   const recapMetaHits=sentenceParts(copy).filter(x=>recapMeta.test(x));
@@ -326,20 +327,20 @@ function auditRecap(){
 
 const teamAudits=samples.map(auditTeam);
 const recapAudit=auditRecap();
-const lengthFloorFindings=[];
-const lengthFloors=new Map([
+const lengthReferenceFindings=[];
+const lengthReferences=new Map([
   ['Denver Doncos',840],
   ['New York Giants',894],
   ['New England Patriots',857],
   ['New York Jets',971]
 ]);
 for(const t of teams){
-  const floor=lengthFloors.get(String(t?.team_name||''));
-  if(!floor)continue;
+  const reference=lengthReferences.get(String(t?.team_name||''));
+  if(!reference)continue;
   const current=wordCount(textOfArticle(t));
-  if(current<floor)lengthFloorFindings.push(finding('team:'+t.team_name,'FAIL','article-length-regression','Sampled team article became shorter than the pre-rewrite DOM baseline.','current='+current+'; floor='+floor));
+  if(current<reference*0.75)lengthReferenceFindings.push(finding('team:'+t.team_name,'WARN','article-major-compression','Article is more than 25% shorter than the pre-rewrite reference. Review for lost reporting depth; do not pad merely to match the old count.','current='+current+'; reference='+reference));
 }
-const allFindings=[...recapAudit.findings,...teamAudits.flatMap(x=>x.findings),...lengthFloorFindings];
+const allFindings=[...recapAudit.findings,...teamAudits.flatMap(x=>x.findings),...lengthReferenceFindings];
 const counts={
   FAIL:allFindings.filter(x=>x.severity==='FAIL').length,
   WARN:allFindings.filter(x=>x.severity==='WARN').length

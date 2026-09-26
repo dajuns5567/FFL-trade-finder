@@ -758,11 +758,46 @@ function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
   };
   let out=(rows[rid]||rows["walter-mercer"])[role][v];
   if(pp&&Number.isFinite(delta)&&Math.abs(delta)>=5){
-    const prior=w2One(pp.points);
-    const cmp=delta>0
-      ?["That is a real lift from "+prior+" in Week 1.","Week 1 stopped at "+prior+", so this was a meaningful step forward.","The jump from "+prior+" in the opener gives the two-week trend some actual shape.","After "+prior+" in Week 1, this was the louder Sunday the role needed."][v]
-      :["That is a real drop from "+prior+" in Week 1.","Week 1 reached "+prior+", so this was a meaningful step backward.","The fall from "+prior+" in the opener makes the next usage decision more interesting.","After "+prior+" in Week 1, this was the quieter Sunday management cannot ignore."][v];
-    out+=" "+cmp;
+    const prior=w2One(pp.points),rise=delta>0;
+    const deltaRows={
+      "walter-mercer":[
+        rise?["From "+prior+" in Week 1 to "+pts+" now, the lead score took a real step forward.","The top line moved from "+prior+" in the opener to "+pts+", enough improvement to raise the next expectation.","Week 1 gave this lead role "+prior+"; Week 2 answered with "+pts+" and a much sturdier trend.","The opener stopped at "+prior+", while "+pts+" this week gave the No. 1 scorer a meaningful lift."][v],
+        rise?["The second scorer climbed from "+prior+" in Week 1 to "+pts+", which matters because support is becoming repeatable.","Week 1 gave this support role "+prior+"; "+pts+" now is the kind of progress that changes lineup depth.","The secondary score moved from "+prior+" to "+pts+" in a week, giving the top of the lineup more balance.","After "+prior+" in the opener, the No. 2 contribution reached "+pts+" and made the lineup less dependent on one name."][v],
+        rise?["The third scorer improved from "+prior+" in Week 1 to "+pts+", exactly where useful depth starts becoming visible.","Week 1 had this supporting slot at "+prior+"; Week 2 pushed it to "+pts+" and gave the lineup another usable answer.","The No. 3 contribution rose from "+prior+" to "+pts+", a quiet but meaningful two-week improvement.","After "+prior+" in the opener, "+pts+" this week turned the third scoring slot into a real positive."][v]
+      ]:[
+        ["The lead score fell from "+prior+" in Week 1 to "+pts+", a drop large enough to change what the top of the lineup needs next.","Week 1 put the top line at "+prior+"; "+pts+" this time makes the decline impossible to ignore.","The No. 1 scorer moved from "+prior+" to "+pts+" in a week, giving management a real trend to watch.","After "+prior+" in the opener, the lead contribution slipped to "+pts+" and raised the Week 3 bar."][v],
+        ["The second scorer dropped from "+prior+" in Week 1 to "+pts+", thinning the support behind the leader.","Week 1 gave this support role "+prior+"; "+pts+" now leaves a meaningful hole behind the top score.","The secondary contribution fell from "+prior+" to "+pts+", which makes the lineup less forgiving.","After "+prior+" in the opener, the No. 2 score slid to "+pts+" and put more pressure elsewhere."][v],
+        ["The third scorer came down from "+prior+" in Week 1 to "+pts+", a depth loss the lineup felt.","Week 1 had this supporting slot at "+prior+"; "+pts+" this week made the bottom of the featured trio quieter.","The No. 3 contribution fell from "+prior+" to "+pts+", which matters because depth is where this role earns its value.","After "+prior+" in the opener, "+pts+" this week left the third scoring slot with something to repair."][v]
+      ],
+      "tess-delaney":[
+        rise?["The centerpiece rose from "+prior+" in Week 1 to "+pts+"; the room upgraded from tasteful to difficult to ignore.","Week 1 served "+prior+" at the head of the table; Week 2 brought "+pts+" and considerably more sparkle.","The leading place setting moved from "+prior+" to "+pts+", which is the sort of improvement the room notices without being asked.","After "+prior+" in the opener, "+pts+" this week made the centerpiece look much more expensive."][v],
+        rise?["The second setting improved from "+prior+" in Week 1 to "+pts+", giving the table actual balance.","Week 1 offered "+prior+" from this supporting chair; Week 2 brought "+pts+" and a much better arrangement.","The supporting course rose from "+prior+" to "+pts+", exactly what keeps the centerpiece from dining alone.","After "+prior+" in the opener, "+pts+" made the No. 2 contribution look properly invited."][v],
+        rise?["The third setting climbed from "+prior+" in Week 1 to "+pts+", useful polish at the quieter end of the table.","Week 1 had this chair at "+prior+"; Week 2 brought "+pts+" and made the arrangement feel less unfinished.","The supporting place moved from "+prior+" to "+pts+", a small luxury the room can actually use.","After "+prior+" in the opener, "+pts+" this week made the third contribution considerably more presentable."][v]
+      ]:[
+        ["The centerpiece fell from "+prior+" in Week 1 to "+pts+"; no amount of good china hides that missing production.","Week 1 served "+prior+" at the head of the table; Week 2 answered with "+pts+" and a noticeably smaller portion.","The leading place setting dropped from "+prior+" to "+pts+", which leaves the room asking where the rest went.","After "+prior+" in the opener, "+pts+" this week made the centerpiece look underfed."][v],
+        ["The second setting slid from "+prior+" in Week 1 to "+pts+", taking some balance out of the table.","Week 1 gave this supporting chair "+prior+"; Week 2 brought "+pts+" and a thinner arrangement.","The supporting course fell from "+prior+" to "+pts+", making the centerpiece work harder.","After "+prior+" in the opener, "+pts+" left the No. 2 contribution looking conspicuously light."][v],
+        ["The third setting dropped from "+prior+" in Week 1 to "+pts+", which is where an elegant table starts looking unfinished.","Week 1 had this chair at "+prior+"; Week 2 served "+pts+" and made the quiet end quieter.","The supporting place moved from "+prior+" to "+pts+", a loss of depth the room can actually feel.","After "+prior+" in the opener, "+pts+" this week made the third contribution much easier to overlook."][v]
+      ],
+      "mack-hollis":[
+        rise?["The headliner jumped from "+prior+" in Week 1 to "+pts+". That is not a bump; that is the volume knob breaking off.","Week 1 gave the big name "+prior+"; Week 2 detonated at "+pts+" and moved the ceiling.","The top score climbed from "+prior+" to "+pts+", which is how a player turns a good week into a headline trend.","After "+prior+" in the opener, "+pts+" this week made the lead scorer impossible to whisper about."][v],
+        rise?["The second punch went from "+prior+" in Week 1 to "+pts+", and suddenly the lineup has combinations instead of one haymaker.","Week 1 got "+prior+" from this support spot; Week 2 cranked it to "+pts+" and made the scoreboard louder.","The No. 2 score climbed from "+prior+" to "+pts+", which is exactly how backup noise becomes pressure.","After "+prior+" in the opener, "+pts+" made the second scorer a much bigger problem for opponents."][v],
+        rise?["The third score rose from "+prior+" in Week 1 to "+pts+", the kind of depth jump that keeps the lights on.","Week 1 had this slot at "+prior+"; Week 2 pushed it to "+pts+" and gave the lineup another live wire.","The No. 3 contribution climbed from "+prior+" to "+pts+", turning a background score into actual noise.","After "+prior+" in the opener, "+pts+" this week gave the third scorer a microphone."][v]
+      ]:[
+        ["The headliner fell from "+prior+" in Week 1 to "+pts+". That is enough missing noise to make everybody look up.","Week 1 gave the big name "+prior+"; Week 2 sputtered to "+pts+" and put the top line under the spotlight.","The lead score dropped from "+prior+" to "+pts+", which is how a headline becomes a Week 3 question.","After "+prior+" in the opener, "+pts+" this week turned the lead scorer from solution into conversation."][v],
+        ["The second punch fell from "+prior+" in Week 1 to "+pts+", leaving the leader with more of the fight.","Week 1 got "+prior+" from this support spot; Week 2 dropped to "+pts+" and made the scoreboard thinner.","The No. 2 score slid from "+prior+" to "+pts+", which is a lot of missing backup noise.","After "+prior+" in the opener, "+pts+" made the second scorer a quieter part of the fight."][v],
+        ["The third score dropped from "+prior+" in Week 1 to "+pts+", and the depth chart got quieter with it.","Week 1 had this slot at "+prior+"; Week 2 fell to "+pts+" and killed some useful background noise.","The No. 3 contribution slid from "+prior+" to "+pts+", turning a live wire into a loose connection.","After "+prior+" in the opener, "+pts+" this week took the microphone away from the third scorer."][v]
+      ],
+      "nora-voss":[
+        rise?["The top rival target jumped from "+prior+" in Week 1 to "+pts+", which ruins at least one easy joke.","Week 1 gave rivals "+prior+" to work with; Week 2 answered at "+pts+" and made the rebuttal much stronger.","The lead score rose from "+prior+" to "+pts+", forcing rival managers to update the punch line.","After "+prior+" in the opener, "+pts+" this week gave supporters a much better comeback."][v],
+        rise?["The second scorer climbed from "+prior+" in Week 1 to "+pts+", so rivals have one less soft spot to point at.","Week 1 left this support slot at "+prior+"; Week 2 reached "+pts+" and made the lineup harder to dismiss.","The No. 2 score rose from "+prior+" to "+pts+", which sends rival complaints farther down the roster.","After "+prior+" in the opener, "+pts+" made the second contribution inconveniently respectable."][v],
+        rise?["The third scorer improved from "+prior+" in Week 1 to "+pts+", enough to make the lazy rival joke move elsewhere.","Week 1 had this slot at "+prior+"; Week 2 reached "+pts+" and removed one obvious target.","The No. 3 contribution rose from "+prior+" to "+pts+", forcing rivals to scroll for easier material.","After "+prior+" in the opener, "+pts+" this week made the third score much harder to mock."][v]
+      ]:[
+        ["The top rival target fell from "+prior+" in Week 1 to "+pts+", and nobody in the other chat needs help finding the joke.","Week 1 gave supporters "+prior+" to defend; Week 2 dropped to "+pts+" and made the rebuttal weaker.","The lead score slid from "+prior+" to "+pts+", which hands rivals an annoyingly clean comparison.","After "+prior+" in the opener, "+pts+" this week gave the rival section fresh ammunition."][v],
+        ["The second scorer fell from "+prior+" in Week 1 to "+pts+", reopening a soft spot rivals had started to lose.","Week 1 had this support slot at "+prior+"; Week 2 dropped to "+pts+" and made the lineup easier to tease.","The No. 2 score slid from "+prior+" to "+pts+", which moves the rival joke closer to the top of the roster.","After "+prior+" in the opener, "+pts+" made the second contribution much easier to attack."][v],
+        ["The third scorer dropped from "+prior+" in Week 1 to "+pts+", exactly where lazy rival jokes like to live.","Week 1 had this slot at "+prior+"; Week 2 fell to "+pts+" and reopened an easy target.","The No. 3 contribution slid from "+prior+" to "+pts+", saving rivals the trouble of inventing material.","After "+prior+" in the opener, "+pts+" this week made the third score easier to mock than defend."][v]
+      ]
+    };
+    out+=" "+(deltaRows[rid]||deltaRows["walter-mercer"])[role];
   }
   const history=w2HistoricalColor(p,r,t,role);if(history)out+=" "+history;
   return out.replace(/\.+$/,"")+"."
@@ -990,19 +1025,68 @@ function w2NextStarRead(t,r,next,nextStar){
   return rows[k];
 }
 
-function w2RoadRead(t,r,next,later){
-  const a=w2Alias(t),rest=w2Natural(later.map(x=>x.team_name)),first=later[0]?.team_name||"the following opponent",k=w2Hash(String(t.roster_id)+"|road|"+String(r?.id||""))%6;
-  const rows=[
-    "After "+next+", the "+a.mascot+" see "+rest+". A Week 3 win lowers the pressure on that stretch; a loss makes "+first+" feel like an early recovery assignment. Beat "+next+" and the road loosens; lose and the same schedule starts demanding a recovery game.",
-    next+" comes first, then "+rest+". For "+t.team_name+", banking Week 3 turns the following games into chances to build; dropping it turns "+first+" into a repair job. That is why the "+a.mascot+" sequence through "+next+" and "+first+" matters as much as the names.",
-    "The road after "+next+" runs through "+rest+". Win now and the "+a.mascot+" can attack that stretch from strength; lose and "+first+" immediately carries more weight. Week 3 changes the emotional math for the "+a.mascot+" games behind it.",
-    "Beyond "+next+" are "+rest+". The "+a.mascot+" can make those games look manageable by winning Week 3, or make "+first+" feel mandatory by losing it. The pressure starts with "+next+" because that result changes what the following game asks of the roster.",
-    "For "+a.mascot+", the schedule does not stop with "+next+": "+rest+" follow. A win gives the "+a.mascot+" room to breathe before "+first+"; a loss spends that room immediately. For "+a.mascot+", that turns "+first+" into either a chance to build or a game this roster suddenly needs to repair the start.",
-    "For "+a.mascot+", "+next+" is the hinge before "+rest+". If the "+a.mascot+" bank Week 3, "+first+" arrives with optional pressure; if they do not, it arrives with required pressure. The "+a.mascot+" sequence gets harder or easier based on what happens first."
-  ];
-  return rows[k];
+
+function w2OutlookLead(t,r,next,nrecord,nctx,ndiv){
+  const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),rank=Number(nctx?.standings_rank),rankText=rank?"No. "+String(rank)+" overall":"outside the current ranked snapshot",v=w2Cohort(t)%4;
+  const rows={
+    "walter-mercer":[
+      "Week 3 sends "+team+" to "+next+", currently "+nrecord+" and "+rankText+" in "+ndiv+". The standings make this a real test of the first two weeks, not another isolated score.",
+      next+" is next for "+team+" at "+nrecord+" ("+rankText+") from "+ndiv+". That matchup gives the "+a.mascot+" a direct chance to move the early standings instead of merely talking about them.",
+      "The Week 3 opponent is "+next+", carrying a "+nrecord+" record and "+rankText+" out of "+ndiv+". For "+team+", the useful part is simple: this result immediately changes the race around them.",
+      team+" gets "+next+" in Week 3, with "+next+" sitting "+nrecord+" and "+rankText+" in "+ndiv+". The next Sunday therefore comes with standings leverage attached."
+    ],
+    "tess-delaney":[
+      next+" arrives for Week 3 at "+nrecord+" and "+rankText+" from "+ndiv+". The "+a.mascot+" room has an actual standings guest now, so the next appointment is not decorative.",
+      "The next reservation belongs to "+next+", currently "+nrecord+" and "+rankText+" in "+ndiv+". "+team+" can improve the room or spill something expensive on the standings.",
+      "Week 3 puts "+next+" on the "+a.mascot+" guest list at "+nrecord+" ("+rankText+") from "+ndiv+". The next result comes with more than good manners at stake.",
+      next+" is the Week 3 appointment, carrying "+nrecord+" and "+rankText+" out of "+ndiv+". The "+a.mascot+" have a chance to make the early table look considerably prettier."
+    ],
+    "mack-hollis":[
+      next+" is next at "+nrecord+" and "+rankText+" out of "+ndiv+". That is a standings fight, not background music, and the "+a.mascot+" get first swing in Week 3.",
+      "Week 3 throws "+team+" at "+next+", sitting "+nrecord+" and "+rankText+" in "+ndiv+". One result can make the first two weeks look a lot louder.",
+      "The next target is "+next+": "+nrecord+", "+rankText+", "+ndiv+". The "+a.mascot+" do not need another speech; they need to move the standings.",
+      team+" gets "+next+" in Week 3, and "+next+" brings a "+nrecord+" record plus "+rankText+" from "+ndiv+". There is enough leverage here to make Sunday noisy before it starts."
+    ],
+    "nora-voss":[
+      next+" is waiting in Week 3 at "+nrecord+" and "+rankText+" from "+ndiv+". Rival managers get a standings result to laugh about or shut up about afterward.",
+      "The next rival is "+next+", carrying "+nrecord+" and "+rankText+" out of "+ndiv+". The "+a.mascot+" can either improve their argument or hand everybody fresh material.",
+      "Week 3 brings "+next+" with a "+nrecord+" record and "+rankText+" in "+ndiv+". The nice thing about a standings game is that rivals cannot pretend the result means nothing.",
+      team+" meets "+next+" next, and "+next+" enters at "+nrecord+" ("+rankText+") from "+ndiv+". Somebody’s early talking point is going to get worse."
+    ]
+  };
+  return (rows[rid]||rows["walter-mercer"])[v]
 }
 
+function w2RoadRead(t,r,next,later){
+  const rid=String(r?.id||""),a=w2Alias(t),rest=w2Natural(later.map(x=>x.team_name)),first=later[0]?.team_name||"the following opponent",v=w2Cohort(t)%4;
+  const rows={
+    "walter-mercer":[
+      "After "+next+", "+a.mascot+" see "+rest+". Bank Week 3 and "+first+" becomes a chance to build; drop it and the same opponent becomes an early recovery assignment.",
+      next+" comes before "+rest+". A win gives "+t.team_name+" room to evaluate the following stretch calmly; a loss makes "+first+" carry immediate repair pressure.",
+      "The road beyond "+next+" runs through "+rest+". Winning first lets the "+a.mascot+" attack that sequence from strength; losing first makes "+first+" matter sooner than anyone planned.",
+      "The next three names are "+next+", then "+rest+". For "+a.mascot+", Week 3 decides whether "+first+" arrives as an opportunity or an obligation."
+    ],
+    "tess-delaney":[
+      "After "+next+", the guest list reads "+rest+". Win the first appointment and "+first+" can arrive without emergency seating; lose it and the room starts rearranging itself.",
+      next+" enters before "+rest+". A pleasant Week 3 leaves the "+a.mascot+" enough room to host "+first+" calmly; a loss makes the next reservation considerably less civilized.",
+      "The schedule after "+next+" brings "+rest+". The "+a.mascot+" can keep the good china out with a win, or start counting chairs nervously before "+first+" with a loss.",
+      "Beyond "+next+", "+rest+" are waiting. One win keeps the room composed; one loss turns "+first+" into the sort of appointment nobody enjoys pretending is casual."
+    ],
+    "mack-hollis":[
+      "After "+next+" come "+rest+". Win Week 3 and "+first+" is another target; lose it and "+first+" becomes the first fire alarm.",
+      next+" is the first punch, then "+rest+" follow. The "+a.mascot+" can make that stretch look fun with a win or make "+first+" feel mandatory with a loss.",
+      "The next stretch runs "+next+", then "+rest+". Beat the first team and the noise stays fun; lose and the crowd starts treating "+first+" like a rescue mission.",
+      "Week 3 starts with "+next+" before "+rest+". Win it and the "+a.mascot+" get to attack; lose it and "+first+" shows up carrying everybody’s panic."
+    ],
+    "nora-voss":[
+      "After "+next+", the rivals on deck are "+rest+". A Week 3 win makes "+first+" another chance to brag; a loss gives that matchup considerably sharper teeth.",
+      next+" comes first, with "+rest+" behind it. Win now and rivals have to wait; lose and "+first+" gets handed a ready-made pressure joke.",
+      "The road beyond "+next+" includes "+rest+". The "+a.mascot+" can make rivals chase them with a win, or hand "+first+" an easy storyline by losing first.",
+      "The sequence is "+next+", then "+rest+". Beat "+next+" and the next rival has less material; lose and "+first+" arrives with the joke half-written."
+    ]
+  };
+  return (rows[rid]||rows["walter-mercer"])[v]
+}
 function w2PlayerName(t,id){const sid=String(id||"");const pools=[...(t?.starter_details||[]),...(t?.opponent_roster?.players||[]),...(t?.next_opponent_roster?.players||[]),...Object.values(t?.transaction_player_facts||{})];const p=pools.find(x=>String(x?.id)===sid);if(p?.name)return p.name;for(const a of t?.trade_acquisitions||[]){if(String(a?.player_id)===sid&&a?.player_name)return a.player_name;const i=(a?.outgoing_player_ids||[]).map(String).indexOf(sid);if(i>=0&&a?.outgoing_player_names?.[i])return a.outgoing_player_names[i]}return""}
 function w2TradeAssets(t,side){const out=[];for(const id of side?.player_ids||[]){const n=w2PlayerName(t,id);if(n)out.push(n)}for(const p of side?.picks||[])out.push(String(p?.season||"Future")+" Round "+String(p?.round||"?")+" pick");return out}
 function w2Headline(t,r){
@@ -1229,42 +1313,86 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
   const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),next=w2DisplayTeam(t.next_opponent_name||"the Week 3 opponent"),
     star=(t.starter_details||[])[0],weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],
     leaders=(t.division_context?.leaders||[]).filter(x=>x?.team_name),otherLeaders=leaders.filter(x=>String(x.roster_id)!==String(t.roster_id)),
-    selfLead=leaders.some(x=>String(x.roster_id)===String(t.roster_id)),dn=String(t.division_context?.division_name||"the division"),v=(w2Cohort(t)+1)%4;
+    selfLead=leaders.some(x=>String(x.roster_id)===String(t.roster_id)),dn=String(t.division_context?.division_name||"the division"),v=w2Cohort(t)%4;
   const division=otherLeaders.length
-    ?w2Natural(otherLeaders.map(x=>w2DisplayTeam(x.team_name)))+" "+(otherLeaders.length===1?"is":"are")+" sharing the top of "+dn+", so every fan argument now comes with a standings check."
+    ?w2Natural(otherLeaders.map(x=>w2DisplayTeam(x.team_name)))+" "+(otherLeaders.length===1?"is":"are")+" sharing the top of "+dn
     :selfLead&&leaders.length===1
-      ?team+" owns the early "+dn+" lead outright, which gives supporters something sturdier than vibes to brag about."
-      :"The "+dn+" race is still close enough that one Week 3 result can change how this crowd talks about the first two Sundays.";
-  const nextFocus=won
-    ?(star?star.name+" has earned the cheers, but fans want to see whether that production travels against "+next+".":"The win bought goodwill, and "+next+" gets the next chance to test it.")
-    :(weak?weak.name+" is already the name fans are putting into Week 3 lineup arguments before "+next+" arrives.":"The loss has fans asking for a visible lineup change before "+next+".");
-  const rows={
-    "walter-mercer":[
-      nextFocus+" "+division,
-      "Supporters are treating "+next+" as a confirmation game rather than a fresh start. "+division,
-      division+" The next crowd reaction will depend less on promises than on whether the same strengths and weak spots show up against "+next+".",
-      nextFocus+" Nobody needs another thermometer; the next result will tell the crowd what to believe."
+      ?team+" owns the early "+dn+" lead outright"
+      :"the "+dn+" race is still close enough for one Sunday to move everybody";
+  const focusRows={
+    "walter-mercer":won?[
+      star?star.name+" has earned the cheers; supporters are watching whether that production holds up against "+next+".":"The win bought goodwill, and supporters are asking whether the same strengths travel to "+next+".",
+      star?star.name+" is the name fans trust most after Sunday; "+next+" gets the next chance to test that confidence.":"Fans are treating "+next+" as a confirmation game after the win.",
+      star?star.name+" gave supporters the Week 2 performance they keep pointing back to; now they want to see it survive "+next+".":"The crowd has moved from relief to repeatability: do it again against "+next+".",
+      star?star.name+" owns the loudest praise this week, and fans are already asking what the encore looks like against "+next+".":"The win has supporters looking forward instead of backward, with "+next+" as the next checkpoint."
+    ]:[
+      weak?weak.name+" is already the player fans are moving around in imaginary Week 3 lineups before "+next+" arrives.":"The loss has fans asking for a visible lineup change before "+next+".",
+      weak?weak.name+" has become the first name in the supporter complaint about Week 2; "+next+" is where they expect an answer.":"Fans want the next lineup against "+next+" to look meaningfully different.",
+      weak?"Supporters are debating whether "+weak.name+" keeps the same role against "+next+" after only "+w2One(weak.points)+" points.":"The crowd wants a correction against "+next+", not another explanation.",
+      weak?weak.name+" is drawing the hardest Week 3 lineup questions from fans before the "+next+" matchup.":"The loss has pushed supporters into start/sit arguments before "+next+" even gets here."
     ],
-    "tess-delaney":[
-      nextFocus+" "+division,
-      division+" The room has already decided that "+next+" is the next appointment where the current mood has to justify its outfit.",
-      "The next reservation is "+next+", and supporters are already debating which chairs should change before then. "+division,
-      nextFocus+" "+dn+" is close enough that the room cannot treat Week 3 as decorative."
+    "tess-delaney":won?[
+      star?star.name+" is receiving the bouquets; the room now wants to know whether the same centerpiece looks this good when "+next+" walks in.":"The win has the room pleased, but "+next+" is already the next reservation under discussion.",
+      star?star.name+" earned the best seat from supporters this week; "+next+" gets to test whether it was a one-night arrangement.":"Fans have stopped rearranging the furniture long enough to ask whether the win travels to "+next+".",
+      star?star.name+" is the player the room is toasting; the next toast depends on doing it again against "+next+".":"The crowd is allowing itself optimism while circling "+next+" on the calendar.",
+      star?star.name+" has the supporters applauding without irony; now the room wants an encore against "+next+".":"The win has bought one calm week before "+next+" arrives."
+    ]:[
+      weak?weak.name+" has become the chair supporters keep trying to replace in their imaginary lineup for "+next+".":"The loss has the room rearranging next week’s table before "+next+" arrives.",
+      weak?weak.name+" is getting the longest stare from the crowd after Week 2; the "+next+" seating plan is already a public debate.":"Supporters want something visibly different when "+next+" walks in.",
+      weak?"The room keeps returning to "+weak.name+" at "+w2One(weak.points)+" and asking whether that place setting survives "+next+".":"The crowd is treating "+next+" as the next chance to clean up the arrangement.",
+      weak?weak.name+" is the player supporters keep moving around the Week 3 table before "+next+" arrives.":"The loss has fans asking which chair changes first against "+next+"."
     ],
-    "mack-hollis":[
-      nextFocus+" "+division,
-      division+" That means the Week 3 crowd will not wait until Monday to start yelling if the same problem comes back against "+next+".",
-      "Fans have already moved on to "+next+" and are arguing about the lineup before kickoff. "+division,
-      nextFocus+" The standings make sure the next complaint or celebration will have consequences attached."
+    "mack-hollis":won?[
+      star?star.name+" is getting the loudest cheers, and fans want to see whether the volume follows him into "+next+".":"The win bought noise; "+next+" gets the next chance to turn it up.",
+      star?star.name+" owns the call-in praise this week; the next question is whether "+next+" can quiet him.":"Fans are already daring the lineup to do it again against "+next+".",
+      star?star.name+" gave the fan base something worth shouting about; now everybody wants the sequel against "+next+".":"The crowd has moved from rescue talk to repeat-it talk before "+next+".",
+      star?star.name+" is the Week 2 hero on the phone lines, and "+next+" is already being treated like the encore.":"Winning moved the noise in a better direction, and "+next+" gets the next test."
+    ]:[
+      weak?weak.name+" is getting hammered in lineup arguments after "+w2One(weak.points)+" points; fans want a different answer against "+next+".":"The crowd wants a lineup correction before "+next+", not another postgame autopsy.",
+      weak?weak.name+" is the name fans keep yelling when they redraw the Week 3 lineup for "+next+".":"Supporters have already moved from anger to lineup edits before "+next+".",
+      weak?"The call-in complaint starts with "+weak.name+" at "+w2One(weak.points)+" and ends with 'fix it before "+next+".'":"The loss has the fan base demanding a visible change before "+next+".",
+      weak?weak.name+" is taking the loudest heat from supporters heading into "+next+".":"Fans are treating the "+next+" matchup like a deadline for the first real correction."
     ],
-    "nora-voss":[
-      nextFocus+" "+division,
-      division+" Rival managers will be watching "+next+" for the same flaw, and supporters know it.",
-      "Fans are already treating "+next+" like the answer key for the Week 2 argument. "+division,
-      nextFocus+" If the same talking point survives "+next+", rivals will not have to invent new material."
+    "nora-voss":won?[
+      star?star.name+" gave supporters a performance rivals cannot laugh away; "+next+" gets the next attempt.":"The win has forced rival jokes to wait for "+next+".",
+      star?star.name+" is the clean rebuttal fans keep using this week; now they want that answer available against "+next+".":"Supporters finally have a win to throw back at rivals, with "+next+" next in line.",
+      star?star.name+" has become the favorite counterargument in every rival conversation; another good Sunday against "+next+" would make it harder to dismiss.":"The win has bought supporters one week of swagger before "+next+".",
+      star?star.name+" is the name fans lead with when rivals start chirping; "+next+" gets the next chance to change that.":"Supporters have a result to defend until "+next+" arrives."
+    ]:[
+      weak?weak.name+" is already the name rivals are poking while supporters debate the Week 3 lineup for "+next+".":"The loss has handed rivals material and supporters a correction list before "+next+".",
+      weak?weak.name+" sits at the overlap between the rival joke and the legitimate fan complaint heading into "+next+".":"Fans are already deciding which argument they refuse to repeat after "+next+".",
+      weak?"Rivals keep pointing at "+weak.name+" and "+w2One(weak.points)+"; supporters want the "+next+" lineup to remove the punch line.":"The crowd wants "+next+" to take one familiar joke off the board.",
+      weak?weak.name+" is the easiest rival target after Week 2, and fans know another quiet game against "+next+" would make it stick.":"Supporters are asking for a different answer before rivals get another week with the same joke."
     ]
   };
-  return (rows[rid]||rows["walter-mercer"])[v]
+  const focus=(focusRows[rid]||focusRows["walter-mercer"])[v];
+  const tailRows={
+    "walter-mercer":[
+      division+"; supporters are checking the standings while they argue about the lineup.",
+      division+"; that makes the next crowd reaction partly a football argument and partly a race for position.",
+      division+"; the standings give Week 3 more weight than another isolated box score.",
+      division+"; the fan conversation now has an actual race attached to it."
+    ],
+    "tess-delaney":[
+      division+"; even a well-dressed opinion has to look at the standings.",
+      division+"; the room does not have enough breathing space to treat Week 3 as decorative.",
+      division+"; the standings are rude enough to keep the room from getting comfortable.",
+      division+"; nobody gets to enjoy the furniture without glancing at the table next door."
+    ],
+    "mack-hollis":[
+      division+"; that is why the Week 3 crowd will be loud before kickoff.",
+      division+"; the standings make sure the next complaint or celebration has consequences.",
+      division+"; nobody gets to call Week 3 background noise.",
+      division+"; the next result comes with a megaphone attached."
+    ],
+    "nora-voss":[
+      division+"; rivals will be watching the same race while supporters defend their own version of it.",
+      division+"; that gives every Week 3 joke a standings receipt.",
+      division+"; the next result either kills a rival punch line or writes a new one.",
+      division+"; nobody in the rival section is ignoring what Week 3 can do to the board."
+    ]
+  };
+  return focus+" "+(tailRows[rid]||tailRows["walter-mercer"])[v]
 }
 function w2RecapTradeParagraphs(teams,r){
   const seen=new Set(),trades=[];
@@ -1539,7 +1667,7 @@ function w2BuildSections(t,prev){
     nextStar=(t.next_opponent_roster?.starters||t.next_opponent_roster?.players||[]).filter(p=>p?.name).slice().sort((x,y)=>Number(y.season_fantasy_points||y.points||0)-Number(x.season_fantasy_points||x.points||0))[0],
     up=(t.upcoming_opponents||[]).slice().sort((x,y)=>Number(x.week)-Number(y.week)),later=up.slice(1,3);
   const outlook=[
-    w2S(t,r,"outlook-one","Week 3 brings "+next+", currently "+nrecord+(Number(nctx.standings_rank)?" and No. "+String(nctx.standings_rank)+" overall":"")+", out of "+ndiv+". The "+alias.mascot+" now have a standings result with immediate division consequences."),
+    w2S(t,r,"outlook-one",w2OutlookLead(t,r,next,nrecord,nctx,ndiv)),
     w2S(t,r,"outlook-two",w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders)),
     w2S(t,r,"outlook-three",nextStar?(w2NextStarRead(t,r,next,nextStar)):"Week 3 brings "+next+" without a complete player-level scoring benchmark, so the "+alias.mascot+" have to focus on raising their own weakest Week 2 lineup spot rather than inventing a matchup-specific story."),
     later.length?w2S(t,r,"outlook-road",w2RoadRead(t,r,next,later)):w2S(t,r,"outlook-road","The schedule beyond Week 3 is not complete enough for a larger claim, so the next assignment stays simple: beat the team on the page."),
@@ -1566,7 +1694,7 @@ function w2BuildSections(t,prev){
 function rewriteWeek2Team(t,prev){
   const normalized={...t,team_name:w2DisplayTeam(t.team_name),opponent_name:w2DisplayTeam(t.opponent_name),next_opponent_name:w2DisplayTeam(t.next_opponent_name)};
   const a=normalized.inquirer_article||{},sections=w2BuildSections(normalized,prev),paragraphs=sections.flatMap(s=>s.paragraphs||[]);
-  return{...normalized,inquirer_article:{...a,headline:w2Headline(normalized,a.reporter||{}),deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:6}}
+  return{...normalized,inquirer_article:{...a,headline:w2Headline(normalized,a.reporter||{}),deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:7}}
 }
 function w2Games(teams){const by=new Map((teams||[]).map(t=>[String(t.roster_id),t])),seen=new Set(),out=[];for(const t of teams||[]){const o=by.get(String(t.opponent_roster_id));if(!o)continue;const k=[String(t.roster_id),String(o.roster_id)].sort().join("|");if(seen.has(k))continue;seen.add(k);const w=Number(t.points)>=Number(o.points)?t:o,l=w===t?o:t,margin=Math.abs(Number(w.points)-Number(l.points)),proj=Number.isFinite(Number(w.projected))&&Number.isFinite(Number(l.projected)),upset=proj&&Number(w.projected)<Number(l.projected);out.push({winner:w,loser:l,margin,upset,combined:Number(w.points)+Number(l.points)})}return out}
 function w2RecapStat(p){return p?(p.name+" — "+w2One(p.points)+" fantasy points, "+w2Stat(p)):""}

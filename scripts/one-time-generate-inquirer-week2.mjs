@@ -680,7 +680,7 @@ function w2WeakSpotRead(t,r,weak,won,margin){
     ],
     "nora-voss":[
       weak.name+" left "+team+" with "+score+" points"+stat+"; "+(nearZero?"rivals did not need to write the joke because Sunday delivered it preassembled.":won?"the win takes enough oxygen out of the heckling to keep this minor.":tight?"the margin makes the heckling irritatingly relevant.":"the loss was bigger than one player, but rival managers are not known for nuance."),
-      "Rivals are going to circle "+weak.name+" at "+score+" for "+team+stat+"; "+(nearZero?"the circle may need more ink than the stat line.":won?"they can circle all they want because the win still counts.":tight?"this is one of those annoying cases where the heckler also has arithmetic.":"it is not the whole case against the lineup, merely the easiest exhibit."),
+      "Rivals are going to circle "+weak.name+" at "+score+" for "+team+stat+"; "+(nearZero?"the circle may need more ink than the stat line.":won?"they can circle all they want because the win still counts.":tight?"this is one of those annoying weeks where the heckler also has arithmetic.":"it is not the whole problem with the lineup, merely the easiest target."),
       weak.name+" produced "+score+" for the "+a.mascot+stat+"; "+(won?"rivals can laugh, but they still have to write the final score underneath it.":nearZero?"that number arrived gift-wrapped for anyone already rooting against this roster.":tight?"a close loss turns easy mockery into a legitimate lineup question.":"the roster has larger problems, but none with a cleaner punch line."),
       team+" got its softest Week 2 number from "+weak.name+" at "+score+stat+"; "+(won?"the standings point prevents a full roast.":tight?"the tiny margin gives rivals permission to be insufferably specific.":nearZero?"the stat line practically heckles itself.":"the loss does not belong to one starter, though this one supplied the easiest material.")
     ]
@@ -1343,9 +1343,9 @@ function w2PerformanceDepthRead(t,r,top,weak,won,margin){
       team+" had "+star+" and "+support+" throwing punches, then "+low+" produced "+lowPts+" and reached for the towel; "+(tight?"a close game makes that impossible to shrug off.":won?"the win keeps it funny.":"the loss turns it into Monday’s loudest roster question.")
     ],
     "nora-voss":[
-      star+" and "+support+" gave "+team+" enough ammunition to keep rivals busy, while "+low+" offered "+lowPts+"; "+(won?"the win removes most of the sting, not the evidence.":"the loss gives every rival manager one very easy place to point."),
+      star+" and "+support+" gave "+team+" enough ammunition to keep rivals busy, while "+low+" offered "+lowPts+"; "+(won?"the win removes most of the sting, not the ugly number.":"the loss gives every rival manager one very easy place to point."),
       "Rivals have to work around what "+star+" and "+support+" did, but they can walk straight through "+low+" at "+lowPts+"; "+(tight?"with a margin this small, that joke unfortunately has football value.":won?"the final score keeps the joke cheap.":"the final score makes it annoyingly relevant."),
-      team+" can defend the work from "+star+" and "+support+" without defending "+low+" at "+lowPts+"; "+(won?"a win means the weak spot is merely embarrassing.":"a loss means the weak spot gets subpoenaed by every obnoxious rival, metaphorically speaking."),
+      team+" can defend the work from "+star+" and "+support+" without defending "+low+" at "+lowPts+"; "+(won?"a win means the weak spot is merely embarrassing.":"a loss means every obnoxious rival gets to drag that weak spot back into the conversation."),
       "The rival version of this story skips past "+star+" and "+support+" and circles "+low+" at "+lowPts+"; "+(wide?"that is not the whole result by any sane reading.":tight?"in a game this close, sanity does not save the lineup card.":"it is still the easiest soft spot to heckle.")
     ]
   };

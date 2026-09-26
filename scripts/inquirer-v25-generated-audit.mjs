@@ -103,17 +103,20 @@ assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),
 const historicalStarters=(d.teams||[]).flatMap(t=>t.starter_details||[]).filter(p=>Number(p.prior_season_games)>=6&&Number.isFinite(Number(p.prior_season_avg)));
 assert.ok(historicalStarters.length>=40,`Week ${reportWeek} must propagate meaningful prior-season baselines into player reporting; got ${historicalStarters.length}`);
 if(reportWeek===2){
-let historicalContextExpected=0,historicalContextFound=0;
+let historicalContextExpected=0,historicalContextFound=0,historicalContextMissing=[];
 for(const t of d.teams||[]){
-  const body=articleText(t),sentences=sentenceParts(body),top=(t.starter_details||[]).slice(0,3);
+  const top=(t.starter_details||[]).slice(0,3);
   for(const p of top){
     const prior=Number(p?.prior_season_avg),pts=Number(p?.points),games=Number(p?.prior_season_games)||0;
     if(!Number.isFinite(prior)||prior<=0||!Number.isFinite(pts)||games<6||Math.abs(pts-prior)<Math.max(4,prior*.3))continue;
     historicalContextExpected++;
-    const pname=String(p.name||''),paragraphs=(t?.inquirer_article?.paragraphs||[]).map(String);if(paragraphs.some(paragraph=>paragraph.includes(pname)&&/\b(?:2025|last season)\b/i.test(paragraph)))historicalContextFound++;
+    const pname=String(p.name||''),paragraphs=(t?.inquirer_article?.paragraphs||[]).map(String),
+      found=paragraphs.some(paragraph=>paragraph.includes(pname)&&/\b(?:2025|last season)\b/i.test(paragraph));
+    if(found)historicalContextFound++;
+    else historicalContextMissing.push({team:t.team_name,player:pname,week2:pts,prior_avg:prior,prior_games:games,reporter:t?.inquirer_article?.reporter?.name});
   }
 }
-assert.equal(historicalContextFound,historicalContextExpected,'Every materially unusual top-three Week 2 player with a valid 2025 baseline must receive historical-average context; expected '+historicalContextExpected+', found '+historicalContextFound);
+assert.equal(historicalContextFound,historicalContextExpected,'Every materially unusual top-three Week 2 player with a valid 2025 baseline must receive historical-average context; expected '+historicalContextExpected+', found '+historicalContextFound+'; missing='+JSON.stringify(historicalContextMissing));
 }
 
 assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');

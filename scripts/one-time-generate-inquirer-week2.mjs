@@ -800,7 +800,7 @@ function w2WeakSpotRead(t,r,weak,won,margin){
   return (rows[rid]||rows["walter-mercer"])[v]
 }
 function w2RecapHook(g,wName,lName,i){
-  const v=w2Hash(wName+"|"+lName+"|hook|"+i)%4,score=w2One(g.winner.points)+"–"+w2One(g.loser.points);
+  const v=(Number(i)||0)%4,score=w2One(g.winner.points)+"–"+w2One(g.loser.points);
   if(g.combined>=240)return[
     wName+" and "+lName+" spent Week 2 playing fantasy football with the volume knob snapped off. "+wName+" escaped "+score+", and anyone who started a defense should probably look away.",
     "The scoreboard between "+wName+" and "+lName+" needed a second cup of coffee. "+wName+" won "+score+", which is less a normal matchup than two lineups throwing furniture at each other.",
@@ -853,7 +853,7 @@ function w2RecapBenchTurn(l,g,miss){
 }
 function w2RecapUpsetTurn(w,l,wStar,lWeak){
   const wName=w2DisplayTeam(w.team_name),lName=w2DisplayTeam(l.team_name);
-  if(lWeak&&Number(lWeak.points)<6)return(wStar?wStar.name+" gave "+wName+" "+w2One(wStar.points)+" at the top. ":"")+lWeak.name+" answered with "+w2One(lWeak.points)+" for "+lName+(lWeak.real_stat_line?"; "+w2Stat(lWeak):"")+". That is not the whole loss, but it is the sort of empty chair a favorite notices when the bill arrives.";
+  if(lWeak&&Number(lWeak.points)<6)return(wStar?wStar.name+" gave "+wName+" "+w2One(wStar.points)+" at the top. ":"")+lWeak.name+" answered with "+w2One(lWeak.points)+" for "+lName+(lWeak.real_stat_line?"; "+w2Stat(lWeak):"")+". That is not the whole loss, but it is the first quiet starter a favorite has to explain after losing.";
   return(wStar?wStar.name+" gave "+wName+" "+w2One(wStar.points)+" and made the upset possible. ":"")+lName+" kept waiting for the safer-looking lineup to become the better one. Sunday never signed that agreement.";
 }
 function w2RecapUpsetColumn(w,l,lStar){
@@ -1357,7 +1357,7 @@ function w2ManagementMoveRead(t,r,won,margin){
 function w2InjuryOutlookRead(t,r,x,next){
   const rid=String(r?.id||""),v=(Number(t.roster_id)||0)%2,d=String(x?.designation||"an injury").toLowerCase(),name=String(x?.name||"A starter"),foe=w2DisplayTeam(next);
   const hard=/^(?:out|ir|doubtful|pup)$/.test(d),rows={
-    "walter-mercer":hard?[name+" is listed "+d+" entering Week 3, so "+w2DisplayTeam(t.team_name)+" may need a replacement before facing "+foe+".",name+" carries an "+d+" status into the "+foe+" matchup; availability could force a real lineup change before Sunday."]
+    "walter-mercer":hard?[name+" is listed "+d+" entering Week 3, so "+w2DisplayTeam(t.team_name)+" may need a replacement before facing "+foe+".",name+" is listed "+d+" for the "+foe+" matchup; availability could force a real lineup change before Sunday."]
       :[name+" is "+d+" for Week 3, making his availability a lineup variable before "+w2DisplayTeam(t.team_name)+" faces "+foe+".",name+" brings a "+d+" tag into the "+foe+" game. That status matters because it can change who actually starts for "+w2DisplayTeam(t.team_name)+"."],
     "tess-delaney":hard?[name+" arrives at Week 3 listed "+d+", which may force the "+w2Alias(t).mascot+" to reset a place before "+foe+" enters the room.",name+" is "+d+" for the next appointment. The "+w2Alias(t).mascot+" may need a different place setting against "+foe+"."]
       :[name+" has a "+d+" tag for Week 3, so the "+w2Alias(t).mascot+" cannot finish the seating chart for "+foe+" just yet.",name+" reaches the "+foe+" appointment as "+d+". The room should care because one starting chair remains unsettled."],
@@ -1515,7 +1515,7 @@ function w2BuildSections(t,prev){
     nextStar=(t.next_opponent_roster?.starters||t.next_opponent_roster?.players||[]).filter(p=>p?.name).slice().sort((x,y)=>Number(y.season_fantasy_points||y.points||0)-Number(x.season_fantasy_points||x.points||0))[0],
     up=(t.upcoming_opponents||[]).slice().sort((x,y)=>Number(x.week)-Number(y.week)),later=up.slice(1,3);
   const outlook=[
-    w2S(t,r,"outlook-one","Week 3 brings "+next+", currently "+nrecord+(Number(nctx.standings_rank)?" and No. "+String(nctx.standings_rank)+" overall":"")+", out of "+ndiv+"; for "+alias.mascot+", that means a real standings opponent with its own two-week story rather than a blank line on the schedule."),
+    w2S(t,r,"outlook-one","Week 3 brings "+next+", currently "+nrecord+(Number(nctx.standings_rank)?" and No. "+String(nctx.standings_rank)+" overall":"")+", out of "+ndiv+". The "+alias.mascot+" now have a standings result with immediate division consequences."),
     w2S(t,r,"outlook-two",w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders)),
     w2S(t,r,"outlook-three",nextStar?(w2NextStarRead(t,r,next,nextStar)):"Week 3 brings "+next+" without a complete player-level scoring benchmark, so the "+alias.mascot+" have to focus on raising their own weakest Week 2 lineup spot rather than inventing a matchup-specific story."),
     later.length?w2S(t,r,"outlook-road",w2RoadRead(t,r,next,later)):w2S(t,r,"outlook-road","The schedule beyond Week 3 is not complete enough for a larger claim, so the next assignment stays simple: beat the team on the page."),
@@ -1590,11 +1590,11 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     const hook=w2RecapHook(g,wName,lName,i);
     paras.push(w2S(w,r,"recap-game-"+i,hook));
     const statNames=(i===0?wTop:[wStar,lStar,ws[1]]).filter((p,j,a)=>p&&a.findIndex(q=>String(q.id)===String(p.id))===j);
-    paras.push(w2S(w,r,"recap-stats-"+i,w2RecapStatLead(g,i)+statNames.map(w2RecapStat).join("; ")+"."));
+    paras.push(w2S(w,r,"recap-stats-"+i,w2RecapStatLead(g,i).trim()+"\n"+statNames.map(w2RecapStat).join("\n")));
     let turn;
     if(blowout&&wTop3>Number(l.points))turn=w2Natural(wTop.map(p=>p.name))+" combined for "+w2One(wTop3)+" points—more than "+lName+"’s entire "+w2One(l.points)+"-point lineup. That is the sort of blowout where the losing side starts checking whether the scoring app accidentally counted two Sundays.";
     else if(knife&&loserMiss>0&&l?.best_lineup_miss?.reserve&&l?.best_lineup_miss?.starter)turn=w2RecapBenchTurn(l,g,l.best_lineup_miss);
-    else if(shootout)turn=(lStar?lStar.name+" gave "+lName+" "+w2One(lStar.points)+" points and still had to watch a huge team total lose. ":"")+lName+" brought "+w2One(l.points)+" points—enough to win plenty of weeks. "+wName+" simply showed up carrying the bigger flamethrower.";
+    else if(shootout)turn=(lStar?lStar.name+" gave "+lName+" "+w2One(lStar.points)+" points and still had to watch a huge team total lose. ":"")+lName+" brought "+w2One(l.points)+" points—enough to win plenty of weeks. "+wName+" simply had one more scoring answer left.";
     else if(g.upset)turn=w2RecapUpsetTurn(w,l,wStar,lWeak);
     else if(knife)turn=(wStar?wStar.name+" led "+wName+" with "+w2One(wStar.points)+", while ":"")+(lStar?lStar.name+" answered with "+w2One(lStar.points)+" for "+lName+". ":"")+"The stars traded punches and left the ordinary lineup spots to decide who had to hate Monday.";
     else turn=(wStar?wStar.name+" supplied "+w2One(wStar.points)+" for "+wName+". ":"")+(lStar?lStar.name+" gave "+lName+" "+w2One(lStar.points)+", but ":"")+"the middle of the winning lineup kept answering often enough that the loser never found a clean comeback lane.";
@@ -1603,7 +1603,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     paras.push(w2S(w,r,"recap-turn-"+i,turn));
     let column;
     if(shootout)column=lName+" can be furious without being ashamed. "+w2One(l.points)+" is a winning-level fantasy score on most Sundays; this Sunday, "+wName+" answered with "+w2One(w.points)+" and made a great losing total feel like a parking ticket.";
-    else if(blowout)column=lName+" does not need poetry after this one. A "+w2One(g.margin)+"-point loss says too many lineup spots lost their individual fights, while "+wName+" gets to spend a week pretending this kind of demolition is normal.";
+    else if(blowout)column="There is no need for poetry around "+lName+" after this one. A "+w2One(g.margin)+"-point loss says too many lineup spots lost their individual fights, while "+wName+" gets to spend a week pretending this kind of demolition is normal.";
     else if(g.upset&&g.combined<120)column=wName+" is not suddenly a scoring machine; "+w2One(w.points)+" points is not a parade total. But the underdog found enough usable production while the favorite stalled, and ugly wins still change the standings.";
     else if(g.upset)column=w2RecapUpsetColumn(w,l,lStar);
     else if(knife&&loserMiss>0)column="A close game with a real bench alternative is where managers lose sleep. "+wName+" gets the relief; "+lName+" gets a Tuesday full of people politely asking why the better score was wearing sweatpants.";
@@ -1616,10 +1616,15 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
   const undefeated=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===2),winless=(teams||[]).filter(t=>Number(t?.league_context?.record?.losses)===2),upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
   blocks.push({heading:"What Two Weeks Are Starting to Say",paragraphs:[w2S(top,rep(0)||{},"recap-two-weeks","Two weeks have separated the league into three very different moods: 2-0 teams can start trusting the shape of their success, 0-2 teams have to stop calling everything bad luck, and the 1-1 crowd is still deciding which Sunday was the honest one."),w2S(top,rep(0)||{},"recap-trajectory",undefeated.length?(w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+" "+(undefeated.length===1?"is":"are")+" 2-0. Those starts are not identical: some are star-driven, some are deeper, and the teams that stay there will need familiar production they can trust to keep showing up without relying on the exact same box score every week."):("No team has separated cleanly enough to make 2-0 the league-wide story.")),w2S(top,rep(0)||{},"recap-bottom",winless.length?(w2Natural(winless.map(t=>w2DisplayTeam(t.team_name)))+" "+(winless.length===1?"is":"are")+" 0-2; that is still recoverable, but Week 3 starts with less room for experiments and much less patience from everybody watching."):("Nobody is 0-2, which is considerate of the managers who were already preparing excuses.")),w2S(top,rep(0)||{},"recap-middle",(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===1&&Number(t?.league_context?.record?.losses)===1).length+" teams sit at 1-1. That middle is where Week 3 gets interesting: one win creates a 2-1 start with momentum, while one loss turns the same two-week sample into a repair conversation.")]});
   const velvet=[w2S(top,rep(1)||{},"velvet-undefeated",undefeated.length?("The undefeated room now includes "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". Two wins are not a coronation, but they are enough to make opening-week charm look more like actual form."):"The league denied me an undefeated salon this week, which is rude but clarifying."),upValue?w2S(upValue,rep(1)||{},"velvet-up",upValue.team_name+" gained "+Math.abs(Math.round(Number(upValue.value_history_week.delta))).toLocaleString("en-US")+" in roster value. A rising price tag is charming; it becomes convincing when Sunday keeps giving the market a reason to be right."):null,downValue&&downValue!==upValue?w2S(downValue,rep(1)||{},"velvet-down",downValue.team_name+" moved the other direction by "+Math.abs(Math.round(Number(downValue.value_history_week.delta))).toLocaleString("en-US")+" in roster value. I am not throwing the chaise lounge into the street, but another bad Sunday would make the furniture nervous."):null,w2S(top,rep(1)||{},"velvet-close",close?(close.winner.team_name+" and "+close.loser.team_name+" gave us the week’s most impolite close game at "+w2One(close.margin)+" points apart; one side gets relief, the other gets seven days to discover how many tiny choices suddenly feel enormous."):"Week 2 declined to give us a properly rude close finish, so I will save the sharp elbows for next Sunday.")].filter(Boolean);
-  const active=(teams||[]).slice().sort((a,b)=>(b.transactions?.length||0)-(a.transactions?.length||0))[0],tradeParagraphs=w2RecapTradeParagraphs(teams,rep(2)||{});
+  const active=(teams||[]).slice().sort((a,b)=>(b.transactions?.length||0)-(a.transactions?.length||0))[0],tradeParagraphs=w2RecapTradeParagraphs(teams,rep(2)||{}),
+    activeMoves=active?w2TransactionMoveDetails(active):[],activeAddedIds=new Set((active?.transactions||[]).flatMap(tx=>tx.adds||[]).map(String)),
+    activeHit=(active?.starter_details||[]).filter(p=>activeAddedIds.has(String(p.id))).sort((a,b)=>Number(b.points)-Number(a.points))[0],
+    activeMoveSummary=activeMoves.length
+      ?active.manager_name+" was the busiest manager on the Week 2 wire. The moves worth keeping on the back page: "+activeMoves.slice(0,3).join("; ")+(activeMoves.length>3?". The rest was churn around those decisions.":".")+(activeHit?" "+activeHit.name+" went straight into the lineup and scored "+w2One(activeHit.points)+" points, so at least one move reached Sunday immediately.":" None of the new names became a Week 2 starter, so the churn has to prove its value later.")
+      :"The transaction wire did not produce a league-wide circus this week, so management has to earn the headline the old-fashioned way: get the lineup right and win.";
   const back=[
     w2S(top,rep(2)||{},"tilly-top",top.team_name+" put "+w2One(top.points)+" on the board and made the rest of the league stare at it. Week 1 was a first impression; Week 2 is where the loud result starts becoming a reputation."),
-    active&&active.transactions?.length?w2S(active,rep(2)||{},"tilly-moves",w2ManagementMoveRead(active,rep(2)||{},!!active.won,Math.abs(Number(active.points)-Number(active.opponent_points)))):w2S(top,rep(2)||{},"tilly-moves","The transaction wire did not produce a league-wide circus this week, so management has to earn the headline the old-fashioned way: get the lineup right and win."),
+    w2S(active||top,rep(2)||{},"tilly-moves",activeMoveSummary),
     ...(tradeParagraphs.length?tradeParagraphs:[w2S(top,rep(2)||{},"tilly-trade","No verified Week 2 trade story was large enough to hijack the league page, which means the games get to be the scandal for once.")]),
     w2S(top,rep(2)||{},"tilly-upset",upset?(upset.winner.team_name+" made "+upset.loser.team_name+" eat the projection. That joke is good for one full week, and the only way the favorite gets it back is by winning the next game instead of explaining this one."):"The projections mostly survived Week 2, which is terrible for comedy and probably healthy for everybody’s blood pressure.")
   ];
@@ -1647,7 +1652,29 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     }
     return{...x,title:"Week 2 call: "+subject.team_name,take:w2S(subject,reporter,"hot-other","Two weeks have changed the context for "+w2DisplayTeam(subject.team_name)+". Week 3 now has to confirm whether the first two results describe a real trend or two unrelated Sundays.")};
   });
-  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:6,inquirer_version:26}
+  const playerPool=(teams||[]).flatMap(t=>(t.starter_details||[]).map(p=>({t,p,delta:Number(p.points)-Number(p.prior_season_avg),games:Number(p.prior_season_games)||0})))
+    .filter(x=>x.games>=6&&Number.isFinite(x.delta)&&x.delta>=5)
+    .sort((a,b)=>b.delta-a.delta);
+  const usedHot=hot.map(x=>String(x.title||"")+" "+String(x.take||"")).join(" ");
+  const riser=playerPool.find(x=>!usedHot.includes(String(x.p.name||"")))||playerPool[0];
+  if(riser){
+    const rr=rep(1)||rep(0)||{};
+    hot.push({kind:"future-player",reporter:rr,title:"Week 3 player watch: "+riser.p.name,
+      take:w2S(riser.t,rr,"hot-future-player",riser.p.name+" just scored "+w2One(riser.p.points)+" after averaging "+w2One(riser.p.prior_season_avg)+" in 2025. One spike is fun; another week of the same role would force "+w2DisplayTeam(riser.t.team_name)+" to treat the jump as a developing expectation rather than a souvenir.")});
+  }
+  const pressure=(teams||[]).filter(t=>t?.best_lineup_miss?.reserve&&t?.best_lineup_miss?.starter&&Number(t.best_lineup_miss.gap)>0)
+    .slice().sort((a,b)=>Number(b.best_lineup_miss.gap)-Number(a.best_lineup_miss.gap))[0];
+  if(pressure){
+    const rr=rep(2)||rep(0)||{},m=pressure.best_lineup_miss;
+    hot.push({kind:"future-management",reporter:rr,title:"Week 3 management pressure: "+w2DisplayTeam(pressure.team_name),
+      take:w2S(pressure,rr,"hot-future-management",m.reserve.name+" outscored "+m.starter.name+" by "+w2One(m.gap)+" from a compatible bench spot. Week 3 is not about apologizing for hindsight; it is about whether management keeps asking the same lineup question after Sunday already supplied an alternative.")});
+  }
+  {
+    const rr=rep(3)||rep(0)||{},middle=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===1&&Number(t?.league_context?.record?.losses)===1).length;
+    hot.push({kind:"future-league",reporter:rr,title:"League trend: Week 3 is separation week",
+      take:w2S(top,rr,"hot-future-league",undefeated.length+" teams are 2-0, "+winless.length+" are 0-2 and "+middle+" sit at 1-1. Week 3 is where those groups start colliding with consequences: unbeaten teams can create daylight, winless teams can stop the bleed, and the middle of the league finally has to choose a direction.")});
+  }
+  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:7,inquirer_version:27}
 }
 function w2SentenceParts(s){return String(s||"").replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll(".","§")).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace(".","§")).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll("§",".").trim()).filter(Boolean)}
 // Week 2 publication-only rewrite: Week 1 remains an immutable comparison source, never a prose template.

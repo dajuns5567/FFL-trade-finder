@@ -236,6 +236,19 @@ function auditRecap(){
   const defenseBad=copy.match(/\b(?:started|starting|start)\s+(?:a|the|your)?\s*(?:team\s+)?defen[cs]e\b|\bD\/?ST\b|\bteam defen[cs]e\b/gi)||[];
   if(defenseBad.length)add('FAIL','league-format-team-defense','Weekly recap uses team-defense language that does not fit the league format.',defenseBad.join(' | '));
 
+  const staleTradeExplainer=/\b(?:chose the future side|parked in draft capital|delayed value rather than immediate lineup help|nothing honest to grade from a Week 2 box score yet|cannot score a fantasy point this September|judgment belongs to a future roster decision|future optionality, not Week 2 production)\b/i;
+  if(staleTradeExplainer.test(copy))add('FAIL','recap-trade-obvious-explainer','Weekly recap still states obvious draft-pick mechanics instead of evaluating the deal.',sentenceParts(copy).filter(x=>staleTradeExplainer.test(x)).join(' || '));
+  const uniqueTrades=new Map();
+  for(const t of teams)for(const tr of t?.trade_history||[]){const id=String(tr?.id||'');if(id&&!uniqueTrades.has(id))uniqueTrades.set(id,tr)}
+  const valueReady=[...uniqueTrades.values()].filter(tr=>(tr?.sides||[]).length>=2&&(tr.sides||[]).every(side=>{
+    const players=side?.player_ids||[],picks=side?.picks||[];
+    return (players.length===0||side?.then_players_complete===true)&&(picks.length===0||side?.then_picks_complete===true);
+  }));
+  if(valueReady.length){
+    const valueSentences=sentenceParts(copy).filter(x=>/\b(?:value points?|value edge|fleec\w*|priced almost even|fit bet)\b/i.test(x));
+    if(valueSentences.length<valueReady.length)add('FAIL','recap-trade-value-not-used','Weekly recap has complete historical all-asset values for '+valueReady.length+' trade(s) but does not evaluate each applicable receipt.','value_sentences='+valueSentences.length+'; trades='+valueReady.length+'; '+valueSentences.join(' || '));
+  }
+
   const sections=overview?.sections||[];
   const twoWeeks=sections.find(s=>/two weeks/i.test(String(s?.heading||'')));
   if(twoWeeks){

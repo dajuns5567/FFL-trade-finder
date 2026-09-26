@@ -178,7 +178,7 @@ for(const t of d.teams||[]){
     assert.doesNotMatch(sentCopy,/\b(?:meter|rating|temperature|sample doubled|process instead|actual scoring|projection)\b/i,'Week 2 Fan Sentiment must describe fans, not narrate the sentiment model, for '+t.team_name);
     assert.match(sentCopy,/\b(?:fans?|supporters?|crowd|call-in|lineup|argu(?:e|ing)|complaint|cheers?|boo|rivals?)\b/i,'Week 2 Fan Sentiment must describe concrete supporter behavior or conversation for '+t.team_name);
     const playerCopy=(players?.paragraphs||[]).filter((p,i)=>i<6&&i%2===1).map(String);
-    const normPlayer=p=>p.toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(new RegExp((t.starter_details||[]).map(x=>String(x.name||'')).filter(Boolean).map(escapeRe).join('|'),'gi'),'[player]').replace(/\s+/g,' ').trim();
+    const normPlayer=p=>{let q=String(p);for(const x of t.starter_details||[]){const n=String(x?.name||'');if(n)q=q.split(n).join('[player]')}return q.toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/\s+/g,' ').trim()};
     assert.equal(new Set(playerCopy.map(normPlayer)).size,playerCopy.length,'Three featured player commentary paragraphs must not collapse into the same template for '+t.team_name);
   }
   assert.ok(players&&Array.isArray(players.paragraphs),'Each team article must preserve a player reporting beat');

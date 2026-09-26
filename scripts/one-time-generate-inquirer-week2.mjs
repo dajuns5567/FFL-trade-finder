@@ -657,11 +657,35 @@ function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
 }
 function w2WeakSpotRead(t,r,weak,won,margin){
   if(!weak)return "The bottom of the lineup was not distinct enough to single out without inventing a villain.";
-  const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),pts=Number(weak.points)||0,stat=weak.real_stat_line?"; "+w2Stat(weak):"",nearZero=pts<=1.5,tight=margin<=6;
-  if(rid==="tess-delaney")return weak.name+" gave the "+a.mascot+" "+w2One(pts)+" points"+stat+". "+(nearZero?"That is less a quiet dinner guest than somebody who checked the coat and went home.":"The plate was not empty, but nobody is asking for seconds.")+" "+(won?"A win makes it a funny story for one week.":tight?"In a close loss, that empty-looking chair becomes impossible to ignore.":"The loss had other problems too, but this one came with its own place card.");
-  if(rid==="mack-hollis")return weak.name+" posted "+w2One(pts)+" for the "+a.mascot+stat+". "+(nearZero?"That is not a quiet line; that is a cameo with no dialogue.":"That is the kind of number that gets booed before the refresh button finishes spinning.")+" "+(won?"Winning keeps the siren off for now.":tight?"Lose this close and the low score starts screaming.":"The whole lineup took the loss, but this name is first on the angry-font list.");
-  if(rid==="nora-voss")return weak.name+" left "+team+" with "+w2One(pts)+" points"+stat+". "+(nearZero?"Rivals did not even have to write the joke; Sunday delivered it preassembled.":"Rivals will absolutely circle that one because subtlety is not a requirement.")+" "+(won?"The win takes some oxygen out of the heckling.":tight?"The margin makes the heckling irritatingly relevant.":"The loss was bigger than one player, but rival managers are not known for nuance.");
-  return weak.name+" finished at "+w2One(pts)+" for "+team+stat+". "+(nearZero?"That is the sort of line that sends a manager to the waiver screen before breakfast.":"It is not catastrophic by itself, but it is the easiest place to ask for more next Sunday.")+" "+(won?"The win gives management time to fix it calmly.":tight?"In a close loss, calm gets harder because one ordinary contribution could have changed the afternoon.":"The defeat had more than one cause, so this is a correction—not a scapegoat.");
+  const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),pts=Number(weak.points)||0,score=w2One(pts),
+    stat=weak.real_stat_line?"; "+w2Stat(weak):"",nearZero=pts<=1.5,tight=margin<=6,v=w2Hash(team+"|weak|"+weak.name+"|"+rid)%4;
+  const rows={
+    "walter-mercer":[
+      weak.name+" finished at "+score+" for "+team+stat+"; "+(nearZero?"that is the sort of line that has a manager opening waivers before the coffee cools.":tight?"in a close game, an ordinary Sunday from that slot could have changed the postgame conversation.":won?"the win gives management time to ask for more without overreacting.":"the loss had other causes, but this is the cleanest correction on the page."),
+      team+" got only "+score+" from "+weak.name+stat+"; "+(nearZero?"the number is small enough that pretending not to notice would be more dramatic than criticizing it.":won?"the result survived it, which is different from approving it.":tight?"a margin this narrow makes the quiet score matter more than it usually would.":"the defeat was broader than one starter, but this starter still has homework."),
+      weak.name+" is the starter "+team+" will want back above "+score+" next week"+stat+"; "+(won?"there is no emergency because the standings point is already banked.":tight?"the loss was close enough to make that request feel urgent.":"the loss was not caused by one name, but this is where a practical improvement can begin."),
+      "The quiet end of "+team+" belonged to "+weak.name+" at "+score+stat+"; "+(nearZero?"a near-empty line like that is a roster question, not background scenery.":won?"victory keeps the question from becoming a crisis.":"defeat means the question follows management into Week 3.")
+    ],
+    "tess-delaney":[
+      weak.name+" gave the "+a.mascot+" "+score+" points"+stat+"; "+(nearZero?"that is less a quiet dinner guest than someone who checked the coat and went home.":won?"the plate was modest, but victory is a forgiving host.":tight?"in a loss this close, even the bread course gets audited.":"the table had bigger problems, though this setting hardly improved the room."),
+      "The "+a.mascot+" received "+score+" from "+weak.name+stat+"; "+(nearZero?"I have seen decorative napkins contribute more atmosphere.":won?"we can tease the setting because the check was paid with a win.":tight?"one more useful bite there might have changed the evening.":"the loss was a full-table affair, but this chair remains conspicuously bare."),
+      weak.name+" brought "+score+" to the "+team+" table"+stat+"; "+(won?"the win turns that into an etiquette note instead of a scandal.":nearZero?"that is an RSVP without an arrival.":tight?"a close loss makes the missing course feel especially expensive.":"the room did not collapse because of one plate, yet nobody should call this one satisfying."),
+      "At "+score+" points, "+weak.name+" was the least convincing place setting for "+team+stat+"; "+(won?"fortunately, the centerpiece covered the blemish.":tight?"unfortunately, the final margin was small enough to make every crumb count.":"the defeat had several stains, and this was simply the easiest one to see.")
+    ],
+    "mack-hollis":[
+      weak.name+" posted "+score+" for the "+a.mascot+stat+"; "+(nearZero?"that is not a quiet line, that is a cameo with no dialogue.":won?"winning keeps the siren off, but somebody still needs to check that outlet.":tight?"lose this close and "+score+" starts flashing like a warning light.":"the loss was bigger than one starter, but this number still gets angry font."),
+      "The "+a.mascot+" got "+score+" from "+weak.name+stat+"; "+(nearZero?"the scoreboard practically had to file a missing-person report.":won?"the win saves this from becoming the lead story.":tight?"the margin was too small for that score to hide anywhere.":"nobody gets sole blame, but nobody gets to call that useful either."),
+      weak.name+" handed "+team+" "+score+" points"+stat+"; "+(won?"the rest of the lineup covered the tab.":nearZero?"that is the fantasy equivalent of showing up, waving, and leaving.":tight?"one normal contribution there would have made Monday much quieter.":"the team lost in several places, and this was one of the loudest silent ones."),
+      score+" points from "+weak.name+" left the "+a.mascot+" asking for more"+stat+"; "+(won?"fine—ask politely while holding the win.":tight?"after a close loss, politeness has already left the building.":nearZero?"that number barely made it through the door.":"the correction is obvious even if the whole loss is not.")
+    ],
+    "nora-voss":[
+      weak.name+" left "+team+" with "+score+" points"+stat+"; "+(nearZero?"rivals did not need to write the joke because Sunday delivered it preassembled.":won?"the win takes enough oxygen out of the heckling to keep this minor.":tight?"the margin makes the heckling irritatingly relevant.":"the loss was bigger than one player, but rival managers are not known for nuance."),
+      "Rivals are going to circle "+weak.name+" at "+score+" for "+team+stat+"; "+(nearZero?"the circle may need more ink than the stat line.":won?"they can circle all they want because the win still counts.":tight?"this is one of those annoying cases where the heckler also has arithmetic.":"it is not the whole case against the lineup, merely the easiest exhibit."),
+      weak.name+" produced "+score+" for the "+a.mascot+stat+"; "+(won?"rivals can laugh, but they still have to write the final score underneath it.":nearZero?"that number arrived gift-wrapped for anyone already rooting against this roster.":tight?"a close loss turns easy mockery into a legitimate lineup question.":"the roster has larger problems, but none with a cleaner punch line."),
+      team+" got its softest Week 2 number from "+weak.name+" at "+score+stat+"; "+(won?"the standings point prevents a full roast.":tight?"the tiny margin gives rivals permission to be insufferably specific.":nearZero?"the stat line practically heckles itself.":"the loss does not belong to one starter, though this one supplied the easiest material.")
+    ]
+  };
+  return (rows[rid]||rows["walter-mercer"])[v]
 }
 function w2RecapHook(g,wName,lName,i){
   const v=w2Hash(wName+"|"+lName+"|hook|"+i)%4,score=w2One(g.winner.points)+"–"+w2One(g.loser.points);
@@ -1297,21 +1321,35 @@ function w2ClosingRead(t,r,won,margin,top,weak,next){
 function w2PerformanceDepthRead(t,r,top,weak,won,margin){
   const rid=String(r?.id||""),a=w2Alias(t),team=w2DisplayTeam(t.team_name),star=top?.[0]?.name||"the top scorer",
     support=top?.[1]?.name||"the next-best starter",low=weak?.name||"the quiet end of the lineup",
-    lowPts=Number(weak?.points)||0,tight=margin<=6,wide=margin>=20;
-  if(rid==="tess-delaney"){
-    if(won)return star+" brought the good china, "+support+" remembered the silverware, and "+low+" tried to disappear behind the centerpiece with "+w2One(lowPts)+" points. "+(tight?"It worked, barely; another dinner this close and I am changing the seating chart.":"A comfortable win lets us laugh about the empty chair instead of sending the bill back.");
-    return star+" and "+support+" gave the "+a.mascot+" enough style to make the evening presentable, but "+low+" contributed "+w2One(lowPts)+" points and apparently left before dessert. "+(tight?"That is how a one-score loss turns into a very expensive place setting.":"The loss was broad enough that one chair did not ruin dinner, but it certainly did not help.");
-  }
-  if(rid==="mack-hollis"){
-    if(won)return star+" was throwing sparks, "+support+" kept the sirens on, and "+low+" showed up with "+w2One(lowPts)+" points like somebody had unplugged the microphone. "+(wide?"A blowout hides that for a night; it does not make it charming.":"The win buys a laugh, not immunity.");
-    return star+" and "+support+" gave the "+a.mascot+" something worth yelling about; "+low+" answered with "+w2One(lowPts)+" and made the bottom of the lineup look like a power outage. "+(tight?"Lose this close and every dead bulb becomes personal.":"The margin was bigger than one bad slot, but that slot is still first in line for Monday criticism.");
-  }
-  if(rid==="nora-voss"){
-    if(won)return "Rivals can complain about "+star+" and "+support+" all they want; the scoreboard still says "+team+" won. The funnier target is "+low+" at "+w2One(lowPts)+", because even a winning lineup can leave one joke sitting unattended.";
-    return star+" and "+support+" kept "+team+" respectable, while "+low+" handed rivals "+w2One(lowPts)+" points worth of free material. "+(tight?"When the loss is this small, the joke writes itself and then sends an invoice.":"The whole lineup owns a loss this size, but the softest spot is not exactly hiding.");
-  }
-  if(won)return star+" gave "+team+" the headline and "+support+" made sure it was not a solo act. "+low+" finished at "+w2One(lowPts)+" points; "+(tight?"in a close win, that is the spot management circles before the coffee gets cold.":"in a wider win, it is the flaw you fix while everybody is still in a good mood.");
-  return star+" and "+support+" did enough to keep "+team+" from looking helpless, which makes "+low+" at "+w2One(lowPts)+" points harder to shrug off. "+(tight?"A loss this close makes that line sting all week.":"The defeat had more than one cause, but this is the easiest one to put a name on.");
+    lowPts=w2One(weak?.points),tight=margin<=6,wide=margin>=20,v=w2Hash(team+"|meaning|"+rid)%4;
+  const result=won?"win":"loss";
+  const rows={
+    "walter-mercer":[
+      star+" gave "+team+" the headline, "+support+" kept it from becoming a one-man column, and "+low+" finished at "+lowPts+"; after a "+result+" like this, the useful Monday question is whether that quiet spot can become ordinary help instead of recurring copy.",
+      "The box score starts with "+star+" and "+support+", but "+low+" at "+lowPts+" is the part "+team+" cannot file away; "+(tight?"a margin this small turns one soft starter into a week-long conversation.":won?"the win gives management room to fix it without panic.":"the loss gives management no reason to pretend it was harmless."),
+      star+" and "+support+" did enough to give "+team+" a real top of the lineup, while "+low+" supplied "+lowPts+"; "+(wide?"the wide margin keeps one weak slot from becoming the whole story, but it still belongs in the notebook.":tight?"the narrow margin makes that weak slot expensive.":"the result was decided by more than one player, but the correction is easy to identify."),
+      team+" got the sort of work it needed from "+star+" and "+support+", then watched "+low+" stop at "+lowPts+"; "+(won?"winning lets the manager circle that problem in pencil.":"losing turns the same circle into ink.")+" Week 3 will tell us whether the note was read."
+    ],
+    "tess-delaney":[
+      star+" brought the centerpiece, "+support+" remembered the silverware, and "+low+" arrived with "+lowPts+" points; "+(won?"the "+a.mascot+" can laugh about that empty-looking chair for one evening.":"the "+a.mascot+" cannot send the whole bill to one chair, but nobody is asking it back for dessert."),
+      "The "+a.mascot+" table looked convincing around "+star+" and "+support+" until "+low+" placed "+lowPts+" on the linen; "+(tight?"in a finish this close, that is less a decorative flaw than a spilled glass beside the scorecard.":won?"the win keeps the maître d’ calm.":"the loss makes the stain considerably harder to ignore."),
+      star+" and "+support+" gave "+team+" enough sparkle to deserve a better room, while "+low+" managed "+lowPts+"; "+(wide?"the margin was too large to blame one setting.":"one ordinary serving there would have made the evening feel very different.") ,
+      "There was proper work from "+star+" and "+support+", then "+low+" supplied "+lowPts+" and tested everybody’s manners; "+(won?"fortunately for "+team+", victory is excellent upholstery.":"unfortunately for "+team+", defeat makes every bare cushion visible.")
+    ],
+    "mack-hollis":[
+      star+" brought the fireworks, "+support+" kept the fuse lit, and "+low+" answered with "+lowPts+"; "+(won?"the "+a.mascot+" won anyway, so the complaint can wait until after breakfast.":"the "+a.mascot+" lost, so yes, the complaint is already on the front porch."),
+      "The "+a.mascot+" got noise from "+star+" and "+support+" but only "+lowPts+" from "+low+"; "+(tight?"lose this close and that quiet slot starts sounding like a fire alarm.":wide?"the margin was too big for one culprit, but this is still the first name underlined.":"that is how a useful top end winds up dragging a dead battery."),
+      star+" and "+support+" kept the scoreboard alive for "+team+", while "+low+" showed up with "+lowPts+"; "+(won?"winning buys that spot one week of witness protection.":"losing means the disguise is off and everybody knows where the bad number came from."),
+      team+" had "+star+" and "+support+" throwing punches, then "+low+" produced "+lowPts+" and reached for the towel; "+(tight?"a close game makes that impossible to shrug off.":won?"the win keeps it funny.":"the loss turns it into Monday’s loudest roster question.")
+    ],
+    "nora-voss":[
+      star+" and "+support+" gave "+team+" enough ammunition to keep rivals busy, while "+low+" offered "+lowPts+"; "+(won?"the win removes most of the sting, not the evidence.":"the loss gives every rival manager one very easy place to point."),
+      "Rivals have to work around what "+star+" and "+support+" did, but they can walk straight through "+low+" at "+lowPts+"; "+(tight?"with a margin this small, that joke unfortunately has football value.":won?"the final score keeps the joke cheap.":"the final score makes it annoyingly relevant."),
+      team+" can defend the work from "+star+" and "+support+" without defending "+low+" at "+lowPts+"; "+(won?"a win means the weak spot is merely embarrassing.":"a loss means the weak spot gets subpoenaed by every obnoxious rival, metaphorically speaking."),
+      "The rival version of this story skips past "+star+" and "+support+" and circles "+low+" at "+lowPts+"; "+(wide?"that is not the whole result by any sane reading.":tight?"in a game this close, sanity does not save the lineup card.":"it is still the easiest soft spot to heckle.")
+    ]
+  };
+  return (rows[rid]||rows["walter-mercer"])[v]
 }
 function w2ManagementDepthRead(t,r,weak,next){
   const rid=String(r?.id||""),a=w2Alias(t),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(next||t.next_opponent_name||"the Week 3 opponent"),

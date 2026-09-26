@@ -1046,16 +1046,16 @@ function w2TransactionMoveDetails(t){
 }
 function w2ManagementMoveRead(t,r,won,margin){
   const moves=w2TransactionMoveDetails(t),rid=String(r?.id||""),v=(Number(t.roster_id)||0)%2,team=w2DisplayTeam(t.team_name),
-    weak=(t.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0],miss=t.best_lineup_miss;
+    weak=(t.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0],miss=t.best_lineup_miss,q=w2Hash(team+"|management-template")%4;
   if(!moves.length){
     const rows={
       "walter-mercer":[
-        t.manager_name+" made no completed Week 2 transaction. That leaves "+(weak?weak.name+" at "+w2One(weak.points)+" points":"the quiet end of the lineup")+" as a lineup issue to solve rather than something a new acquisition already addressed.",
+        t.manager_name+" made no completed Week 2 transaction. "+(q===0?((weak?weak.name+" at "+w2One(weak.points)+" points":"The quiet end of the lineup")+" remains the management problem already on the roster."):q===1?("With no new arrival to credit, "+(weak?weak.name+" and a "+w2One(weak.points)+"-point return":"the existing starters")+" stay at the center of the Week 2 review."):q===2?("The relevant management issue is therefore "+(weak?weak.name+" producing "+w2One(weak.points)+" points":"the lineup already in place")+", not a transaction that never happened."):("No acquisition changed Sunday, which puts the focus back on "+(weak?weak.name+" at "+w2One(weak.points):"the roster that actually started")+".")),
         "The Week 2 transaction log is empty for "+t.manager_name+". "+(miss?.reserve&&miss?.starter?miss.reserve.name+" over "+miss.starter.name+" is therefore the more relevant management question.":team+" has to read Sunday through the roster it already carried.")
       ],
       "tess-delaney":[
         t.manager_name+" did not rearrange the roster during Week 2. The management conversation stays with "+(weak?weak.name+" and the "+w2One(weak.points)+"-point quiet spot":"the existing table")+" rather than an imaginary new guest.",
-        "No completed add, drop or trade appears for "+t.manager_name+" this week. "+(miss?.reserve&&miss?.starter?"The more interesting seating choice is "+miss.reserve.name+" behind "+miss.starter.name+".":"Sunday belongs to the roster already seated at the table.")
+        (q===0?("No completed add, drop or trade appears for "+t.manager_name+" this week."):q===1?(t.manager_name+" left the Week 2 guest list unchanged."):q===2?("The "+a.mascot+" transaction ledger shows no completed Week 2 move from "+t.manager_name+"."):("No Week 2 roster invitation or departure was completed by "+t.manager_name+"."))+" "+(miss?.reserve&&miss?.starter?"The more interesting seating choice is "+miss.reserve.name+" behind "+miss.starter.name+".":"Sunday belongs to the roster already seated at the table.")
       ],
       "mack-hollis":[
         t.manager_name+" stayed off the Week 2 transaction wire. That means "+(weak?weak.name+" at "+w2One(weak.points)+" is":"the current lineup is")+" the management headline, not a move count.",
@@ -1063,7 +1063,7 @@ function w2ManagementMoveRead(t,r,won,margin){
       ],
       "nora-voss":[
         t.manager_name+" made no completed Week 2 move. Rivals can skip the transaction joke and look at "+(weak?weak.name+" at "+w2One(weak.points):"the lineup that actually played")+" instead.",
-        "The wire is quiet for "+t.manager_name+" this week. "+(miss?.reserve&&miss?.starter?miss.reserve.name+" sitting behind "+miss.starter.name+" gives management a real choice to answer.":"No roster-move alibi belongs in the Week 2 result.")
+        (q===0?("The wire is quiet for "+t.manager_name+" this week."):q===1?(t.manager_name+" completed no Week 2 roster move, so rivals can skip the transaction angle."):q===2?("There is no completed Week 2 add, drop or trade to pin on "+t.manager_name+"."):("Week 2 produced no completed roster transaction for "+t.manager_name+"."))+" "+(miss?.reserve&&miss?.starter?miss.reserve.name+" sitting behind "+miss.starter.name+" gives management a real choice to answer.":"No roster-move alibi belongs in the Week 2 result.")
       ]
     };
     return (rows[rid]||rows["walter-mercer"])[v]
@@ -1080,7 +1080,7 @@ function w2ManagementMoveRead(t,r,won,margin){
     const impactRows={
       "walter-mercer":[hit.name+" went straight into the lineup and produced "+w2One(hit.points)+" points, giving that acquisition an immediate Week 2 result.",hit.name+" started immediately after the move and scored "+w2One(hit.points)+"; that is present production management can evaluate now."],
       "tess-delaney":[hit.name+" received a starting chair immediately and returned "+w2One(hit.points)+" points. The new arrival already touched the Week 2 table.",hit.name+" was seated in the lineup at once and produced "+w2One(hit.points)+" points, so this was not merely decorative roster work."],
-      "mack-hollis":[hit.name+" was not paperwork: he entered the Week 2 lineup and scored "+w2One(hit.points)+" points.",hit.name+" cracked the starting card right away and put up "+w2One(hit.points)+". That move already has a Sunday number attached."],
+      "mack-hollis":[q===0?(hit.name+" was not paperwork: he entered the Week 2 lineup and scored "+w2One(hit.points)+" points."):q===1?(hit.name+" went from transaction log to starter immediately, returning "+w2One(hit.points)+" points in Week 2."):q===2?("The move reached the lineup right away when "+hit.name+" started and produced "+w2One(hit.points)+" points."):("Management put "+hit.name+" straight into the Week 2 starting card, where he scored "+w2One(hit.points)+" points."),hit.name+" cracked the starting card right away and put up "+w2One(hit.points)+". That move already has a Sunday number attached."],
       "nora-voss":[hit.name+" made the starting lineup immediately and scored "+w2One(hit.points)+" points. Rivals can judge the move on real Sunday production now.",hit.name+" went from transaction to starter and delivered "+w2One(hit.points)+" points. That is enough to move the discussion beyond the wire itself."]
     };
     impact=(impactRows[rid]||impactRows["walter-mercer"])[v];

@@ -1077,8 +1077,8 @@ function w2DivisionalOutlook(t,r,next,nrecord,ndiv){
     v=w2Cohort(t)%4,
     mida=ownM&&oppM?("MIDA has the division race at "+ownM+" for "+team+" and "+oppM+" for "+next+". "):"",
     leverage=lead
-      ?team+" can make a direct rival spend the next week chasing the same division lead."
-      :team+" can take a head-to-head bite out of the team sharing its playoff route instead of hoping somebody else does the work.";
+      ?team+" can make a direct "+ndiv+" rival spend the next week chasing the same division lead."
+      :team+" can take a head-to-head bite out of the "+ndiv+" race instead of hoping another result moves the same playoff route.";
   const rows={
     "walter-mercer":[
       "Week 3 is a "+ndiv+" head-to-head: "+team+" ("+own+") against "+next+" ("+nrecord+"). These games are scarce, and in this league the division winner owns a playoff berth, so "+leverage+" "+mida+"That is real leverage, not just a louder label on the schedule.",

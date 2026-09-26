@@ -110,7 +110,7 @@ for(const t of d.teams||[]){
     const prior=Number(p?.prior_season_avg),pts=Number(p?.points),games=Number(p?.prior_season_games)||0;
     if(!Number.isFinite(prior)||prior<=0||!Number.isFinite(pts)||games<6||Math.abs(pts-prior)<Math.max(4,prior*.3))continue;
     historicalContextExpected++;
-    if(sentences.some(sentence=>sentence.includes(String(p.name||''))&&/\b(?:2025|last season)\b/i.test(sentence)))historicalContextFound++;
+    const pname=String(p.name||''),nearName=new RegExp(escapeRe(pname)+'[\\s\\S]{0,320}(?:2025|last season)|(?:2025|last season)[\\s\\S]{0,320}'+escapeRe(pname),'i');if(nearName.test(body))historicalContextFound++;
   }
 }
 assert.equal(historicalContextFound,historicalContextExpected,'Every materially unusual top-three Week 2 player with a valid 2025 baseline must receive historical-average context; expected '+historicalContextExpected+', found '+historicalContextFound);

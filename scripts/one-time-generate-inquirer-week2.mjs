@@ -938,8 +938,28 @@ function w2DivisionBoardTake(flags,reporter,subject){
       midaFav=midaRows[0]||null,midaPct=midaFav?w2MidaPositivePct(midaFav.mida_outlook.division):null,
       titleRows=rows.filter(t=>Number.isFinite(Number(t?.mida_outlook?.title))&&Number(t.mida_outlook.title)>0).slice().sort((a,b)=>Number(b.mida_outlook.title)-Number(a.mida_outlook.title)),
       titleFav=titleRows[0]||null,titlePct=titleFav?w2MidaPositivePct(titleFav.mida_outlook.title):null,
-      midaNote=midaFav&&midaPct?(" MIDA’s division favorite is "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+"."):"",
-      titleNote=titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" also owns the strongest title outlook here at "+titlePct+"."):"",
+      divKey=String(y.d).toUpperCase(),
+      midaPhrases={
+        "AFC EAST":midaFav&&midaPct?(" The probability sheet prefers "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+" for the division."):"",
+        "AFC NORTH":midaFav&&midaPct?(" MIDA puts "+w2DisplayTeam(midaFav.team_name)+" highest here at "+midaPct+", so the tied record does not make the longer view perfectly even."):"",
+        "AFC SOUTH":midaFav&&midaPct?(" The strongest MIDA division chance belongs to "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+"."):"",
+        "AFC WEST":midaFav&&midaPct?(" The forecast still likes "+w2DisplayTeam(midaFav.team_name)+" most at "+midaPct+" to take the division."):"",
+        "NFC EAST":midaFav&&midaPct?(" "+w2DisplayTeam(midaFav.team_name)+" leads the MIDA division outlook at "+midaPct+"."):"",
+        "NFC NORTH":midaFav&&midaPct?(" The standings are level, but MIDA is not: "+w2DisplayTeam(midaFav.team_name)+" sits highest at "+midaPct+"."):"",
+        "NFC SOUTH":midaFav&&midaPct?(" MIDA’s current favorite is "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+"."):"",
+        "NFC WEST":midaFav&&midaPct?(" "+w2DisplayTeam(midaFav.team_name)+" owns the best MIDA division number at "+midaPct+"."):""
+      },
+      titlePhrases={
+        "AFC EAST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" also carries a "+titlePct+" title outlook, so the race reaches beyond local bragging rights."):"",
+        "AFC NORTH":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" The best championship number in the division belongs to "+w2DisplayTeam(titleFav.team_name)+" at "+titlePct+"."):"",
+        "AFC SOUTH":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" is also the division’s strongest title bet at "+titlePct+"."):"",
+        "AFC WEST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" The championship board gives "+w2DisplayTeam(titleFav.team_name)+" the best local number at "+titlePct+"."):"",
+        "NFC EAST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" For the bigger prize, "+w2DisplayTeam(titleFav.team_name)+" has the top title outlook here at "+titlePct+"."):"",
+        "NFC NORTH":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" carries the strongest championship probability at "+titlePct+"."):"",
+        "NFC SOUTH":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" The title model’s favorite from this group is "+w2DisplayTeam(titleFav.team_name)+" at "+titlePct+"."):"",
+        "NFC WEST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" also has the division’s best title number at "+titlePct+"."):""
+      },
+      midaNote=midaPhrases[divKey]||"",titleNote=titlePhrases[divKey]||"",
       chasePair=closest?(closestName+" ("+closestRec+")"+(nextName?" and "+nextName+" ("+nextRec+")":"")):"the field";
     let context;
     switch(String(y.d).toUpperCase()){

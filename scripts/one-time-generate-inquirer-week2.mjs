@@ -1368,7 +1368,7 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
         "The "+a.mascot+" fan forum has moved from 'nice start' to irresponsible levels of confidence. Even the optimists keep returning to "+focus+" before they start printing anything resembling parade routes."
       ],
       sinking:[
-        "At 0-2, "+team+" fans are no longer submitting polite suggestions. The message boards have reached mock-pitchfork status over "+focus+", and another repeat would turn lineup criticism into a weekly ritual.",
+        "At 0-2, "+team+" fans are no longer submitting polite suggestions. The message boards have reached mock-pitchfork status, panic memes are circulating, and bench demands have acquired the confidence of official policy over "+focus+". Another repeat would turn lineup criticism into a weekly ritual.",
         "The "+a.mascot+" crowd is 0-2 and already holding imaginary emergency meetings. "+focus+" is the motion on the floor, with patience losing the vote by a landslide.",
         "Two losses have supporters replaying lineup screenshots like security footage while the fan forum stages a small panic parade. The recurring argument is "+focus+", and Week 3 is where management either changes it or hears about it all week.",
         "At 0-2, nobody around "+team+" is asking for inspirational quotes. Fans are demanding a visible answer to "+focus+" before the complaint becomes the franchise hobby."
@@ -1506,43 +1506,37 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
 function w2RecapTradeParagraphs(teams,r){
   const seen=new Set(),trades=[];
   for(const t of teams||[])for(const tr of t.trade_history||[]){const id=String(tr?.id||"");if(!id||seen.has(id))continue;seen.add(id);trades.push(tr)}
-  const pickReads=[
-    (name,picks)=>name+" chose the future side with "+w2Natural(picks)+". That return is parked in draft capital until the pick is used or moved.",
-    (name,picks)=>w2Natural(picks)+" gives "+name+" ammunition for a future draft or another trade. There is nothing honest to grade from a Week 2 box score yet.",
-    (name,picks)=>name+" pushed its return down the calendar with "+w2Natural(picks)+". The asset can change value before draft day, but it cannot score a fantasy point this September.",
-    (name,picks)=>"For "+name+", "+w2Natural(picks)+" is delayed value rather than immediate lineup help. The judgment belongs to a future roster decision.",
-    (name,picks)=>name+" accepted "+w2Natural(picks)+" instead of a current scorer. That is flexibility and future optionality, not Week 2 production."
-  ];
   return trades.map((tr,i)=>{
     const sides=(tr?.sides||[]).map(side=>{
       const team=(teams||[]).find(t=>String(t.roster_id)===String(side.roster_id)),
         name=w2DisplayTeam(tr?.team_names?.[String(side.roster_id)]||team?.team_name||("Roster "+side.roster_id)),
-        assets=team?w2TradeAssets(team,side):[],players=assets.filter(x=>!/\bpick$/i.test(x)),picks=assets.filter(x=>/\bpick$/i.test(x)),
-        starters=team?.starter_details||[],scored=players.map(name=>starters.find(p=>p?.name===name)).filter(Boolean).sort((a,b)=>Number(b.points)-Number(a.points));
-      return{name,team,assets,players,picks,scored}
+        assets=team?w2TradeAssets(team,side):[],players=assets.filter(x=>!/\bpick$/i.test(x)),
+        starters=team?.starter_details||[],
+        scored=players.map(name=>starters.find(p=>p?.name===name)).filter(Boolean).sort((a,b)=>Number(b.points)-Number(a.points));
+      return{name,team,side,assets,players,scored}
     }).filter(x=>x.assets.length);
     if(sides.length<2)return null;
-    const [left,right]=sides,terms=left.name+" received "+w2Natural(left.assets)+"; "+right.name+" received "+w2Natural(right.assets)+".";
-    const reads=sides.map((x,sideIndex)=>{
-      const hit=x.scored[0],score=hit?Number(hit.points):null;
-      if(Number.isFinite(score)&&score>=12)return x.name+" already got "+w2One(score)+" Week 2 points from "+hit.name+". That is real immediate production, even if one Sunday cannot settle the deal.";
-      if(Number.isFinite(score)&&score>=6)return x.name+" got "+w2One(score)+" from "+hit.name+" in Week 2. Useful enough to note, nowhere near enough to close the argument.";
-      if(Number.isFinite(score))return x.name+" got only "+w2One(score)+" from "+hit.name+" this week, so the current-player side still has plenty to prove.";
-      if(x.players.length)return x.name+" bought present-day roster help in "+w2Natural(x.players)+", but Week 2 did not produce a meaningful contribution from that player side yet.";
-      if(x.picks.length)return pickReads[(i+sideIndex)%pickReads.length](x.name,x.picks);
-      return x.name+" took the longer-term side of the deal, so this week does not offer a fair grade.";
-    });
-    const closers=[
-      "Two clocks are running here: current players can help now, while draft capital is waiting for its moment.",
-      "One side can be judged by Sunday production immediately; the other is holding value for later. Those are different scorecards.",
-      "The real argument is timing—points and roster utility now versus leverage for a future draft or trade.",
-      "This is not a one-week winner/loser story. Week 2 only illuminates the part of the deal that can actually play right now."
-    ];
-    return w2S(left.team||right.team||teams[0],r,"tilly-trade-detail-"+i,terms+" "+reads.join(" ")+" "+closers[i%closers.length]);
+    const [left,right]=sides,
+      anchor=left.team||right.team||teams[0],
+      terms=left.name+" received "+w2Natural(left.assets)+"; "+right.name+" received "+w2Natural(right.assets)+".",
+      valueRead=w2TradeValueRead(anchor,r,left.side,right.side,right.name,left.assets,right.assets),
+      immediate=sides.map(x=>{
+        const hit=x.scored[0],score=hit?Number(hit.points):null;
+        if(!Number.isFinite(score))return null;
+        if(score>=12)return x.name+" already got "+w2One(score)+" Week 2 points from "+hit.name+", so the player side of the receipt produced immediately.";
+        if(score>=6)return x.name+" got "+w2One(score)+" from "+hit.name+" in Week 2; useful enough to affect the first review, not enough to erase the price paid.";
+        return x.name+" got only "+w2One(score)+" from "+hit.name+" this week, which gives the current-player side an early performance problem to answer.";
+      }).filter(Boolean),
+      context=sides.map(x=>{
+        if(!x.team)return null;
+        const rank=Number(x.team?.league_context?.standings_rank),m=x.team?.mida_outlook||{},play=Number(m.playoff);
+        if(Number.isFinite(play))return x.name+" sits "+w2Record(x.team)+" with a "+w2MidaPct(play)+" MIDA playoff outlook, so the deal belongs inside a live roster direction rather than an abstract asset lecture.";
+        return x.name+" sits "+w2Record(x.team)+(rank?" at No. "+rank+" overall":"")+", which gives the trade an actual competitive context this week.";
+      }).filter(Boolean);
+    const body=[terms,valueRead,...immediate,context[i%Math.max(1,context.length)]].filter(Boolean).join(" ");
+    return w2S(anchor,r,"recap-trade-detail-"+i,body)
   }).filter(Boolean)
 }
-
-
 function w2TransactionMoveDetails(t){
   return (t.transactions||[]).map(tx=>{
     const adds=(tx.adds||[]).map(id=>pname(String(id))).filter(Boolean),drops=(tx.drops||[]).map(id=>pname(String(id))).filter(Boolean),type=String(tx.type||"").toLowerCase();
@@ -1983,7 +1977,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     else if(g.upset)turn=w2RecapUpsetTurn(w,l,wStar,lWeak);
     else if(knife)turn=(wStar?wStar.name+" led "+wName+" with "+w2One(wStar.points)+", while ":"")+(lStar?lStar.name+" answered with "+w2One(lStar.points)+" for "+lName+". ":"")+"The stars traded punches and left the ordinary lineup spots to decide who had to hate Monday.";
     else turn=(wStar?wStar.name+" supplied "+w2One(wStar.points)+" for "+wName+". ":"")+(lStar?lStar.name+" gave "+lName+" "+w2One(lStar.points)+", but ":"")+"the middle of the winning lineup kept answering often enough that the loser never found a clean comeback lane.";
-    const histCandidate=[wStar,lStar,ws[1]].find(p=>w2HistoricalColor(p,r,w,i));if(histCandidate)turn+=" "+w2HistoricalColor(histCandidate,r,w,i);
+    const histCandidate=[wStar,lStar,ws[1]].find(p=>w2HistoricalColor(p,r,w,i));if(histCandidate){turn+=" "+w2HistoricalColor(histCandidate,r,w,i);if(i===0&&w.next_opponent_name)turn+=" For "+wName+", that is familiar production "+w2DisplayTeam(w.next_opponent_name)+" now has to account for rather than hope disappears."}
     if(i===0)turn=(wStar?.name||wName)+" lit the first match, but this game kept finding new ways to catch fire. "+turn;
     paras.push(w2S(w,r,"recap-turn-"+i,turn));
     let column;

@@ -288,7 +288,7 @@ function w2StatClause(p){const stat=w2Stat(p);return stat?"; "+w2StatKind(p)+": 
 function w2PrevPlayer(prev,id){return (prev?.starter_details||[]).find(p=>String(p?.id)===String(id))||null}
 function w2SlotLabel(slot){return String(slot||"lineup spot").replaceAll("_"," ").toLowerCase().replace(/^idp /,"IDP ")}
 
-function w2DisplayTeam(name){const s=String(name||"").trim();return s&&s===s.toLowerCase()?s.replace(/\b[a-z]/g,m=>m.toUpperCase()):s}
+function w2DisplayTeam(name){const raw=String(name||"").trim(),s=raw.replace(/\s+\(\d+-\d+(?:-\d+)?\)$/,"");return s&&s===s.toLowerCase()?s.replace(/\b[a-z]/g,m=>m.toUpperCase()):s}
 function w2PluralTeamName(name){const mascot=w2Alias({team_name:w2DisplayTeam(name)}).mascot;return /s$/i.test(String(mascot||""))}
 function w2EscRe(s){return [...String(s||"")].map(ch=>".*+?^$(){}|[]".includes(ch)||ch.charCodeAt(0)===92?"\\"+ch:ch).join("")}
 function w2TeamGrammar(t,body){
@@ -299,6 +299,7 @@ function w2TeamGrammar(t,body){
     const e=w2EscRe(name);
     out=out.replace(new RegExp(e+" is\\b","g"),name+" are")
       .replace(new RegExp(e+" has\\b","g"),name+" have")
+      .replace(new RegExp(e+" shares\\b","g"),name+" share")
       .replace(new RegExp(e+" was\\b","g"),name+" were")
       .replace(new RegExp(e+" gets\\b","g"),name+" get")
       .replace(new RegExp(e+" leaves\\b","g"),name+" leave")
@@ -922,49 +923,60 @@ function w2RecapUpsetColumn(w,l,lStar){
 function w2DivisionBoardTake(flags,reporter,subject){
   const rid=String(reporter?.id||"");
   const intro={
-    "walter-mercer":"Two weeks are enough to identify leverage, not enough to hand out crowns. The useful part of the board is who actually has room, who has company, and which early leader the longer-range outlook still distrusts.",
-    "tess-delaney":"Eight divisions, eight rooms, and almost none of them have agreed on a seating chart. I am less interested in the shiny record than in who is close enough to steal the chair.",
-    "mack-hollis":"The division board finally has enough information to stop yelling the same sentence eight times. Some leaders have a runway, some have somebody breathing on their neck, and a few are one bad Sunday from losing the microphone.",
-    "nora-voss":"Division bragging rights are now specific enough to be annoying. The fun part is finding which leader has actual separation and which one is borrowing the chair from a rival with a better long-term argument."
-  }[rid]||"The division board has enough context now to separate real leverage from a decorative two-week record.";
+    "walter-mercer":"Two weeks have put shape around eight different races. Some leaders have company, some have a one-game cushion that barely qualifies as personal space, and a few MIDA numbers are already arguing with the standings.",
+    "tess-delaney":"Eight divisions have finally stopped looking like the same empty ballroom. Some tables have one clear host, some have three people reaching for the same chair, and the MIDA place cards are not always honoring the current seating chart.",
+    "mack-hollis":"The division board has eight arguments now, not one argument copied eight times. There are clean starts, crowded pileups, fake breathing room and a few probability models already heckling the standings.",
+    "nora-voss":"The division races have developed enough personality to become properly annoying. A few leaders own real leverage; a few are renting first place by the week; and MIDA has already given rival managers numbers to throw at one another."
+  }[rid]||"Eight divisions have eight different problems now, which is a welcome improvement over pretending every early leader owns the same kind of advantage.";
   const line=y=>{
-    const rows=(y.rows||[]).slice(),leaders=y.leaders||[],leaderNames=w2Natural(leaders.map(t=>w2DisplayTeam(t.team_name))),
-      leaderIds=new Set(leaders.map(t=>String(t.roster_id))),chasers=rows.filter(t=>!leaderIds.has(String(t.roster_id))),
-      closest=chasers[0],closestName=closest?w2DisplayTeam(closest.team_name):null,closestRec=closest?w2Record(closest):null,
+    const rows=(y.rows||[]).slice(),leaders=y.leaders||[],leaderIds=new Set(leaders.map(t=>String(t.roster_id))),
+      leaderNames=w2Natural(leaders.map(t=>w2DisplayTeam(t.team_name))),chasers=rows.filter(t=>!leaderIds.has(String(t.roster_id))),
+      closest=chasers[0]||null,nextChaser=chasers[1]||null,
+      closestName=closest?w2DisplayTeam(closest.team_name):"nobody",closestRec=closest?w2Record(closest):"n/a",
+      nextName=nextChaser?w2DisplayTeam(nextChaser.team_name):null,nextRec=nextChaser?w2Record(nextChaser):null,
       midaRows=rows.filter(t=>Number.isFinite(Number(t?.mida_outlook?.division))&&Number(t.mida_outlook.division)>0).slice().sort((a,b)=>Number(b.mida_outlook.division)-Number(a.mida_outlook.division)),
-      midaFav=midaRows[0],midaPct=midaFav?w2MidaPositivePct(midaFav.mida_outlook.division):null,
-      titleRows=rows.filter(t=>Number.isFinite(Number(t?.mida_outlook?.title))).slice().sort((a,b)=>Number(b.mida_outlook.title)-Number(a.mida_outlook.title)),
-      titleFav=titleRows[0],titlePct=titleFav?w2MidaPositivePct(titleFav.mida_outlook.title):null,
-      sameMida=midaFav&&leaders.some(t=>String(t.roster_id)===String(midaFav.roster_id)),
-      v=w2Hash(y.d+"|"+rid)%4;
-    let context="";
-    if(leaders.length>1){
-      const favText=midaFav&&midaPct
-        ?(" MIDA leans "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+" for the division, so the tie on the page is not the same as a tie in the longer view. There is still no standings separation; the next head-to-head swing can change that.")
-        :" There is no standings separation yet, so the first head-to-head slip or clean rival win matters more than alphabetical order.";
-      const variants={
-        "walter-mercer":"The lead is shared by "+leaderNames+" at "+y.record+"."+favText,
-        "tess-delaney":leaderNames+" are sharing the top table at "+y.record+"."+favText+" Somebody is about to discover the reservation was not exclusive.",
-        "mack-hollis":leaderNames+" are jammed together at "+y.record+"."+favText+" This is not traffic for traffic’s sake; one bad Sunday hands somebody else the lane.",
-        "nora-voss":leaderNames+" all get to claim first place at "+y.record+", which is a very convenient way for several rivals to be insufferable at once."+favText
-      };
-      context=variants[rid]||variants["walter-mercer"];
-    }else{
-      const leader=w2DisplayTeam(leaders[0]?.team_name||"the leader"),
-        chase=closestName?closestName+" ("+closestRec+")":"the nearest challenger",
-        midaText=midaFav&&midaPct
-          ?(sameMida?" MIDA supports the lead at "+midaPct+" for the division.":" The standings say "+leader+", but MIDA’s division favorite is "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+", which is exactly why nobody should start engraving anything.")
-          :"";
-      const titleText=titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=20
-        ?" "+w2DisplayTeam(titleFav.team_name)+" also carries the division’s strongest title outlook at "+titlePct+", so this race has championship consequences beyond the local brag."
-        :" The current separation over "+chase+" is only one result, so the leader has not broken away.";
-      const variants={
-        "walter-mercer":leader+" leads at "+y.record+", with "+chase+" the first team positioned to punish a slip."+midaText+titleText,
-        "tess-delaney":leader+" owns the best chair at "+y.record+", but "+chase+" is close enough to reach across the table if Sunday gets messy."+midaText+titleText,
-        "mack-hollis":leader+" has the lane at "+y.record+"; "+chase+" is the first car in the mirror."+midaText+titleText,
-        "nora-voss":leader+" gets the current brag at "+y.record+", while "+chase+" gets to keep the screenshot ready."+midaText+titleText
-      };
-      context=variants[rid]||variants["walter-mercer"];
+      midaFav=midaRows[0]||null,midaPct=midaFav?w2MidaPositivePct(midaFav.mida_outlook.division):null,
+      titleRows=rows.filter(t=>Number.isFinite(Number(t?.mida_outlook?.title))&&Number(t.mida_outlook.title)>0).slice().sort((a,b)=>Number(b.mida_outlook.title)-Number(a.mida_outlook.title)),
+      titleFav=titleRows[0]||null,titlePct=titleFav?w2MidaPositivePct(titleFav.mida_outlook.title):null,
+      midaNote=midaFav&&midaPct?(" MIDA’s division favorite is "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+"."):"",
+      titleNote=titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" also owns the strongest title outlook here at "+titlePct+"."):"",
+      chasePair=closest?(closestName+" ("+closestRec+")"+(nextName?" and "+nextName+" ("+nextRec+")":"")):"the field";
+    let context;
+    switch(String(y.d).toUpperCase()){
+      case "AFC EAST":
+        context=leaders.length===1
+          ?leaderNames+" owns the early edge at "+y.record+", but "+chasePair+" keeps the room tight enough that nobody gets a velvet rope yet."+midaNote+titleNote
+          :leaderNames+" share the top at "+y.record+", while "+chasePair+" is close enough to turn one ordinary Sunday into a three-team argument."+midaNote+titleNote;
+        break;
+      case "AFC NORTH":
+        context=leaders.length>1
+          ?leaderNames+" are level at "+y.record+", which means neither has bought even a week of separation. "+closestName+" ("+closestRec+") is the first team waiting for one of them to blink."+midaNote+titleNote
+          :leaderNames+" has the cleanest record at "+y.record+", but "+chasePair+" keeps this from becoming a solo act."+midaNote+titleNote;
+        break;
+      case "AFC SOUTH":
+        context=leaderNames+" sits on "+y.record+" while "+chasePair+" forms the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
+        break;
+      case "AFC WEST":
+        context=leaderNames+" has the best record at "+y.record+"; "+chasePair+" is the immediate pursuit, and the bottom of the division is already spending September trying not to turn two losses into a season-long tax."+midaNote+titleNote;
+        break;
+      case "NFC EAST":
+        context=leaders.length>1
+          ?leaderNames+" share "+y.record+" and therefore share the privilege of annoying everybody else. "+chasePair+" has no margin to donate while the top two keep matching receipts."+midaNote+titleNote
+          :leaderNames+" controls the early record at "+y.record+", with "+chasePair+" close enough to make the lead provisional rather than ceremonial."+midaNote+titleNote;
+        break;
+      case "NFC NORTH":
+        context=leaders.length>=3
+          ?leaderNames+" are all "+y.record+", so this division currently resembles three people trying to leave an elevator at once. "+closestName+" ("+closestRec+") is not far enough away to make the mess polite."+midaNote+titleNote
+          :leaderNames+" holds the top line at "+y.record+", but "+chasePair+" keeps the race packed tightly enough that nobody can hide behind September."+midaNote+titleNote;
+        break;
+      case "NFC SOUTH":
+        context=leaderNames+" owns "+y.record+", with "+chasePair+" providing the nearest pressure. The gap is real but thin; one stumble turns the leader from front-runner into participant again."+midaNote+titleNote;
+        break;
+      case "NFC WEST":
+        context=leaderNames+" has banked "+y.record+", while "+chasePair+" keeps the division from becoming a postcard. The leader has daylight, not distance."+midaNote+titleNote;
+        break;
+      default:
+        context=leaderNames+" leads at "+y.record+" with "+chasePair+" nearest."+midaNote+titleNote;
     }
     return y.d+": "+leaderNames+" ("+y.record+") — "+context
   };
@@ -1015,7 +1027,7 @@ function w2CoolRead(t,r,coolNames,won,margin){
   ];
   const lossRows=[
     names+" still deserve the Week 2 credit in a "+w2One(margin)+"-point loss; "+t.team_name+" needs to give that production enough help that it stops becoming wasted work.",
-    "A loss does not erase "+names+". The useful question for the "+a.mascot+" is how to keep that production and replace the empty space around it.",
+    "A loss does not erase "+names+". Keep that production; replace the empty space around it before the good work becomes another wasted Sunday.",
     names+" gave "+t.team_name+" something worth carrying forward even in defeat. Week 3 is about building enough around it to change the final line.",
     "The good part of the loss belongs to "+names+". The "+a.mascot+" do not need them to be louder next week; they need more teammates to join them.",
     names+" are the reason the postgame review is not entirely negative. Their production held up; the rest of the lineup has to make it matter.",
@@ -1113,7 +1125,7 @@ function w2OutlookLead(t,r,next,nrecord,nctx,ndiv){
   const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),rank=Number(nctx?.standings_rank),rankText=rank?"No. "+String(rank)+" overall":"outside the current ranked snapshot",v=w2Cohort(t)%4;
   const rows={
     "walter-mercer":[
-      "Week 3 sends "+team+" to "+next+", currently "+nrecord+" and "+rankText+". The useful question is whether the Week 2 strengths travel against a team sitting in a different part of the league order.",
+      "Week 3 sends "+team+" to "+next+", currently "+nrecord+" and "+rankText+". Now the Week 2 strengths have to travel against a team sitting in a different part of the league order.",
       next+" is next for "+team+" at "+nrecord+" ("+rankText+"). That matchup gives the "+a.mascot+" a chance to test whether the first two weeks describe a repeatable lineup rather than a favorable start.",
       "The Week 3 opponent is "+next+", carrying a "+nrecord+" record and "+rankText+". For "+team+", the assignment is to make the same useful players matter without needing the same exact Sunday.",
       team+" gets "+next+" in Week 3, with "+next+" sitting "+nrecord+" and "+rankText+". The next Sunday is a new roster test, not a rerun of the first two."
@@ -1483,14 +1495,14 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
       "Supporters are already using "+next+" as the deadline for this week’s argument. "+(rival?"With "+rival+" also shaping "+div+", the fan reaction will have a standings receipt attached.":"The next result decides whether the noise cools or becomes routine.")
     ],
     "tess-delaney":[
-      "The next reservation is "+next+", and the room has already decided "+subject+" is the chair to watch. "+(lead?"A "+div+" lead lets the table enjoy itself, but one ugly seating decision can still ruin dinner.":"Nobody wants to serve the same complaint twice."),
+      "The next reservation is "+next+", and the room has already decided "+subject+" is the chair to watch. "+(lead?"The "+div+" lead lets the table enjoy itself, but one ugly seating decision can still ruin dinner.":"Nobody wants to serve the same complaint twice."),
       "Supporters have circled "+next+" as the next appointment where "+subject+" has to justify the current arrangement. "+(rival?rival+" is close enough in "+div+" that the room cannot treat this as decorative.":"The room wants an answer before the next bill arrives."),
       "The public mood now has a reservation time: Week 3 against "+next+". "+subject+" is the place setting everybody will inspect first, especially with "+div+" still unsettled.",
       "The room can gossip all week; "+next+" gets the final seating vote. Fans are watching "+subject+" because the "+div+" table is too crowded for another sloppy course."
     ],
     "mack-hollis":[
       "The next siren goes off against "+next+". Fans have already attached "+subject+" to the Week 3 lineup screenshot, and "+(lead?"a "+div+" lead means the result comes with actual leverage.":"another bad answer means the volume goes up again."),
-      "Week 3 against "+next+" is where the fan base stops yelling hypotheticals. "+subject+" is the decision everybody will screenshot before kickoff, "+(rival?"with "+rival+" lurking in the "+div+" race.":"and nobody wants the same postgame excuse twice."),
+      "When Week 3 brings "+next+", the fan base stops yelling hypotheticals. "+subject+" is the decision everybody will screenshot before kickoff, "+(rival?"with "+rival+" lurking in the "+div+" race.":"and nobody wants the same postgame excuse twice."),
       "The crowd has a deadline now: "+next+". Fix the argument around "+subject+" and the noise turns into swagger; repeat it and the complaint line catches fire again.",
       next+" is the next opponent and "+subject+" is the next debate. "+(lead?"Protect the "+div+" lead and the yelling stays fun.":"Lose the same way and the yelling stops being recreational.")
     ],
@@ -1619,7 +1631,7 @@ function w2InjuryOutlookRead(t,r,x,next){
     "mack-hollis":hard?[name+" is "+d+" for Week 3. If he cannot go, the "+w2Alias(t).mascot+" need a replacement before "+foe+" and that is a bigger story than another depth percentage.",name+" has "+d+" next to his name for the "+foe+" game, which could change the actual starting card before anybody starts yelling about trends."]
       :[name+" is carrying a "+d+" tag into Week 3, so the "+w2Alias(t).mascot+" have a real availability question before "+foe+".",name+" is "+d+" ahead of "+foe+". Put that on the Week 3 board because it may change the lineup, not just the pregame chatter."],
     "nora-voss":hard?[name+" is "+d+" heading toward "+foe+", giving rivals a concrete lineup uncertainty to watch before Week 3.",name+" carries "+d+" status into the "+foe+" matchup. If the "+w2Alias(t).mascot+" need a replacement, that changes the next joke before kickoff."]
-      :[name+" is "+d+" for the "+foe+" game, and rivals will notice whether that tag changes the "+w2Alias(t).mascot+" starting lineup.",name+" takes a "+d+" designation into Week 3 against "+foe+". The useful question is whether the "+w2Alias(t).mascot+" have to change starters because of it."]
+      :[name+" is "+d+" for the "+foe+" game, and rivals will notice whether that tag changes the "+w2Alias(t).mascot+" starting lineup.",name+" takes a "+d+" designation into Week 3 against "+foe+". The designation matters because it may force the "+w2Alias(t).mascot+" to change starters before kickoff."]
   };
   return (rows[rid]||rows["walter-mercer"])[v]
 }
@@ -1629,7 +1641,7 @@ function w2ClosingRead(t,r,won,margin,top,weak,next){
     rows={
       "walter-mercer":{
         unbeaten:team+" takes a 2-0 record into "+foe+". Week 3 is about proving the first two wins can survive a new opponent without leaning on the same explanation.",
-        winless:team+" goes to "+foe+" at 0-2, where the useful question is whether the Week 2 weakness gets corrected before the standings gap widens.",
+        winless:team+" goes to "+foe+" at 0-2. The Week 2 weakness has to be corrected before the standings gap widens and patience turns into archaeology.",
         close:"After a "+w2One(margin)+"-point decision, "+team+" meets "+foe+" with very little separating a reassuring trend from another week of second-guessing.",
         win:"The Week 2 win moves "+team+" to "+rec+" before "+foe+". The next test is whether the lineup can keep the useful production and trim the quiet spots.",
         loss:"The loss leaves "+team+" at "+rec+" with "+foe+" next. Week 3 needs a roster response to the weakness Sunday already identified."
@@ -1646,7 +1658,7 @@ function w2ClosingRead(t,r,won,margin,top,weak,next){
         winless:"The "+w2Alias(t).mascot+" are 0-2 with "+foe+" next. Enough autopsy—Week 3 needs a different lineup story, not a third version of the same complaint.",
         close:"A "+w2One(margin)+"-point Week 2 decision puts every ordinary lineup choice under the lights before "+team+" meets "+foe+".",
         win:team+" takes a "+rec+" record into "+foe+" after the win. Now make the good part repeat loudly enough that this week’s weak spot becomes old news.",
-        loss:w2Hash(team+"|mack-close-loss")%2===0?(team+" is "+rec+" after the loss with "+foe+" next. The quiet end of "+team+"’s lineup now has to produce before the same weakness becomes a Week 3 headline."):(foe+" gets "+team+" next after this loss dropped the "+w2Alias(t).mascot+" to "+rec+". The next edition should be about a response from the low-scoring spots, not another explanation of them.")
+        loss:w2Hash(team+"|mack-close-loss")%2===0?(team+" is "+rec+" after the loss with "+foe+" next. The quiet end of "+team+"’s lineup now has to produce before the same weakness becomes a Week 3 headline."):(foe+" gets "+team+" next after this loss dropped the "+w2Alias(t).mascot+" to "+rec+". The low-scoring spots owe the roster a response before another explanation starts sounding like a subscription service.")
       },
       "nora-voss":{
         unbeaten:w2Hash(team+"|filch-unbeaten-close")%2===0?("Rivals have to work around a 2-0 "+w2Alias(t).mascot+" record before "+foe+". Cleaning up "+team+"’s visible Week 2 weak spot would take away the easiest remaining rival material."):("The "+w2Alias(t).mascot+" carry 2-0 into "+foe+", so rivals are already short on ammunition. A cleaner bottom half of the lineup would make the next punch line even harder to find."),
@@ -1729,7 +1741,7 @@ function w2PlayerRoomClose(t,r,top,weak,opp,won){
     ],
     "mack-hollis":[
       starName+" brought the noise, "+secondName+" kept the speakers on, and suddenly "+team+" looked less like one star screaming into an empty stadium. That is the kind of chaos "+foe+" actually had to respect.",
-      team+" did not need eleven fireworks against "+foe+"; it needed enough live wires that "+weakName+" at "+weakPts+" could not short the whole board. The useful question is whether that backup noise shows up again.",
+      team+" did not need eleven fireworks against "+foe+"; it needed enough live wires that "+weakName+" at "+weakPts+" could not short the whole board. Now that backup noise has to show up again instead of sending management back to the breaker box.",
       "The loud part of the "+a.mascot+" lineup had actual backup: "+starName+" hit first, "+secondName+" answered, and "+weakName+" is the obvious circuit management still has to check. That is a much cleaner diagnosis than blaming everybody.",
       (won?"The win means ":"The loss means ")+team+" can stop pretending the whole lineup was equally responsible. "+starName+" did the yelling; "+weakName+" is where the volume disappeared."
     ],
@@ -1744,6 +1756,42 @@ function w2PlayerRoomClose(t,r,top,weak,opp,won){
 }
 function theRoom(mascot){return "the "+mascot+" room"}
 function theRivals(mascot){return mascot+" rivals"}
+
+
+function w2ColumnColorRead(t,r,top,weak,won,opp){
+  const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(opp),
+    star=top?.[0]?.name||"the top scorer",second=top?.[1]?.name||"the next scorer",
+    weakName=weak?.name||"the quietest starter",weakPts=weak?w2One(weak.points):"a quiet total",
+    v=w2Cohort(t)%4;
+  const rows={
+    "walter-mercer":[
+      star+" and "+second+" gave "+team+" the respectable part of Sunday. "+weakName+" at "+weakPts+" is why nobody in the building should laminate the lineup card yet.",
+      team+" can keep the production from "+star+" without pretending every starter earned a handshake. "+weakName+" at "+weakPts+" is the unpaid bill sitting under the coffee cup.",
+      star+" did enough to make the top of the lineup credible; "+weakName+" at "+weakPts+" kept the bottom from becoming comfortable. That is a useful distinction, even if it is not a pleasant one.",
+      "The good news is "+star+". The less decorative news is "+weakName+" at "+weakPts+", which is exactly how a clean headline acquires a footnote management actually has to read."
+    ],
+    "tess-delaney":[
+      star+" wore the room well, and "+second+" at least remembered the dress code. "+weakName+" at "+weakPts+" is the chair everybody keeps trying to move behind a plant.",
+      team+" had enough polish from "+star+" to look intentional. "+weakName+" at "+weakPts+" is the crooked place setting ruining the photograph.",
+      star+" gave the table a centerpiece; "+second+" kept dinner from becoming performance art. "+weakName+" at "+weakPts+" is still the guest nobody knows where to seat.",
+      "There is a perfectly respectable Sunday hiding in "+team+"’s top end. Then "+weakName+" arrives with "+weakPts+" and knocks over the water glass."
+    ],
+    "mack-hollis":[
+      star+" brought the fireworks, "+second+" kept the fuse alive, and "+weakName+" showed up with "+weakPts+" and a bucket of water. That is the whole lineup argument in one extremely loud sentence.",
+      team+" got actual noise from "+star+" and "+second+". "+weakName+" at "+weakPts+" is where the speakers cut out and somebody starts kicking the cabinet.",
+      star+" did the yelling, "+second+" gave the yelling backup, and "+weakName+" answered with "+weakPts+". If that sounds like three different Sundays sharing one lineup card, congratulations, you found the problem.",
+      "The top of "+team+"’s lineup had a pulse. "+weakName+" at "+weakPts+" had the emotional range of a disconnected smoke detector."
+    ],
+    "nora-voss":[
+      star+" removed one rival punch line and "+second+" made another harder to sell. "+weakName+" at "+weakPts+" kindly returned a fresh joke to circulation.",
+      team+" gave rivals less material at the top and then left "+weakName+" at "+weakPts+" sitting on the counter like a complimentary souvenir.",
+      star+" and "+second+" made the rival chat work for its jokes. "+weakName+" at "+weakPts+" then filed one in triplicate and saved everybody the effort.",
+      "Rivals cannot honestly complain about "+star+". They can, however, point at "+weakName+" and "+weakPts+" until somebody in "+team+" confiscates the laser pointer."
+    ]
+  };
+  const body=(rows[rid]||rows["walter-mercer"])[v];
+  return body+" "+(won?"Winning makes that imbalance easier to laugh at; it does not make it disappear.":"Losing makes the weak spot considerably less charming.")
+}
 
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,
@@ -1777,6 +1825,7 @@ function w2BuildSections(t,prev){
   players.push(...w2IdentityRead(t,prev,r,top,opp));
   const weakPreview=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0];
   players.push(w2S(t,r,"player-room-close",w2PlayerRoomClose(t,r,top,weakPreview,opp,won)));
+  players.push(w2S(t,r,"player-column-color",w2ColumnColorRead(t,r,top,weakPreview,won,opp)));
   const weakDepth=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0];
   players.push(w2S(t,r,"player-meaning",w2PerformanceDepthRead(t,r,top,weakDepth,won,margin)));
   const miss=t.best_lineup_miss,gap=Number(miss?.gap)||0;
@@ -1840,57 +1889,103 @@ function w2BuildSections(t,prev){
 function rewriteWeek2Team(t,prev){
   const normalized={...t,team_name:w2DisplayTeam(t.team_name),opponent_name:w2DisplayTeam(t.opponent_name),next_opponent_name:w2DisplayTeam(t.next_opponent_name)};
   const a=normalized.inquirer_article||{},sections=w2BuildSections(normalized,prev),paragraphs=sections.flatMap(s=>s.paragraphs||[]);
-  return{...normalized,inquirer_article:{...a,headline:w2Headline(normalized,a.reporter||{}),deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:8}}
+  return{...normalized,inquirer_article:{...a,headline:w2Headline(normalized,a.reporter||{}),deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:9}}
 }
 function w2Games(teams){const by=new Map((teams||[]).map(t=>[String(t.roster_id),t])),seen=new Set(),out=[];for(const t of teams||[]){const o=by.get(String(t.opponent_roster_id));if(!o)continue;const k=[String(t.roster_id),String(o.roster_id)].sort().join("|");if(seen.has(k))continue;seen.add(k);const w=Number(t.points)>=Number(o.points)?t:o,l=w===t?o:t,margin=Math.abs(Number(w.points)-Number(l.points)),proj=Number.isFinite(Number(w.projected))&&Number.isFinite(Number(l.projected)),upset=proj&&Number(w.projected)<Number(l.projected);out.push({winner:w,loser:l,margin,upset,combined:Number(w.points)+Number(l.points)})}return out}
 function w2RecapStat(p){if(!p)return"";const stat=w2Stat(p);return p.name+" — "+w2One(p.points)+" fantasy points"+(stat?", "+stat:"")}
 
 function w2TrajectorySentence(t,mode,r){
-  const team=w2DisplayTeam(t.team_name),rank=Number(t?.league_context?.standings_rank),m=t?.mida_outlook||{},top=(t?.starter_details||[])[0],
-    div=String(t?.division_context?.division_name||t?.division_name||"the division"),next=w2DisplayTeam(t?.next_opponent_name||"Week 3"),
-    same=w2SameDivisionNext(t),v=w2Hash(team+"|"+mode+"|"+String(r?.id||""))%4;
+  const team=w2DisplayTeam(t.team_name),rank=Number(t?.league_context?.standings_rank)||null,m=t?.mida_outlook||{},
+    top=(t?.starter_details||[])[0],second=(t?.starter_details||[])[1],
+    weak=(t?.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0],
+    prev=previousByRoster.get(String(t.roster_id))||null,
+    prevPts=Number(prev?.points),now=Number(t.points),delta=Number.isFinite(prevPts)?now-prevPts:null,
+    prevWon=prev?Number(prev.points)>Number(prev.opponent_points):null,won=Number(t.points)>Number(t.opponent_points),
+    playoff=Number(m.playoff),title=Number(m.title),v=w2Hash(team+"|two-week|"+mode+"|"+String(r?.id||""))%4;
+  const scoreRead=Number.isFinite(delta)
+    ?(Math.abs(delta)<8
+      ?team+" stayed within "+w2One(Math.abs(delta))+" points of its Week 1 scoring level, which is the closest thing two games can offer to a floor."
+      :team+" moved "+w2One(Math.abs(delta))+" points "+(delta>0?"up":"down")+" from Week 1, a swing large enough to change the shape of the two-week sample.")
+    :"The Week 2 total has to stand on its own because the opener is not complete enough for a clean team-score comparison.";
+  const starRead=top
+    ?top.name+" led Week 2 at "+w2One(top.points)+(second?", with "+second.name+" next at "+w2One(second.points):"")+"."
+    :"The top of the Week 2 lineup did not provide a clean individual anchor.";
+  const weakRead=weak?weak.name+" finished at "+w2One(weak.points)+", so the bottom of the lineup still has a receipt attached.":"";
   if(mode==="undefeated"){
-    if(same)return team+" is 2-0 with "+next+" coming inside "+div+", so the start gets an immediate head-to-head division test instead of another victory lap.";
-    if(Number.isFinite(Number(m.title))&&Number(m.title)>=18)return team+" is 2-0 and MIDA still gives it a "+w2MidaPct(m.title)+" title chance; the record and the long view are pointing in the same direction.";
-    if(top)return team+" is 2-0 at No. "+String(rank||"?")+" with "+top.name+" giving the lineup a repeatable centerpiece rather than a record built on anonymous luck.";
-    return team+" is 2-0 and sitting No. "+String(rank||"?")+", which is enough early leverage to make Week 3 more than a novelty.";
+    const longView=Number.isFinite(title)&&title>=10
+      ?" MIDA’s "+w2MidaPct(title)+" title outlook says the clean record is attached to more than September charm."
+      :Number.isFinite(playoff)&&playoff>=65
+        ?" MIDA has the playoff outlook at "+w2MidaPct(playoff)+", so the longer view is taking the start seriously too."
+        :"";
+    const rows=[
+      team+" is 2-0, but the interesting part is how it got there. "+scoreRead+" "+starRead+" "+weakRead+longView,
+      "Two wins have "+team+" clean in the standings without making the box scores identical. "+scoreRead+" "+starRead+" "+weakRead+longView,
+      team+" has banked both Sundays. "+scoreRead+" "+starRead+" "+weakRead+longView,
+      "The undefeated record is real; the method is still developing. "+scoreRead+" "+starRead+" "+weakRead+longView
+    ];
+    return rows[v]
   }
   if(mode==="winless"){
-    if(same)return team+" is 0-2 and gets "+next+" inside "+div+" next; a direct rival now controls whether the early hole gets deeper.";
-    if(Number.isFinite(Number(m.playoff)))return team+" is 0-2 with MIDA at "+w2MidaPct(m.playoff)+" for the playoffs; the model has not buried them, but Week 3 is running out of room for decorative fixes.";
-    if(top)return team+" is 0-2 even with "+top.name+" carrying the best part of the lineup, which puts the repair job below the star rather than on him.";
-    return team+" is 0-2 at No. "+String(rank||"?")+", and the next useful question is which lineup problem is real enough to fix first.";
+    const direction=Number.isFinite(delta)&&delta>12
+      ?"The second loss was at least attached to more offense than the first, which is progress in the same way finding one dry sock in a flooded basement is progress."
+      :Number.isFinite(delta)&&delta<-12
+        ?"The second Sunday got worse on the scoreboard, so nobody gets to sell 0-2 as two unlucky copies of the same game."
+        :"The two losses arrived with roughly the same scoring neighborhood, which makes the problem harder to dismiss as one freak Sunday.";
+    const longView=Number.isFinite(playoff)&&playoff>=20
+      ?" MIDA still leaves "+team+" a "+w2MidaPct(playoff)+" playoff path, so the model has not called the coroner."
+      :"";
+    const rows=[
+      team+" is 0-2, and the losses are already giving us different clues. "+scoreRead+" "+direction+" "+starRead+" "+weakRead+longView,
+      "The record says 0-2; the two Sundays explain why in different handwriting. "+scoreRead+" "+starRead+" "+weakRead+" "+direction+longView,
+      team+" has lost twice, but lumping the losses together would hide the useful part. "+scoreRead+" "+starRead+" "+weakRead+" "+direction+longView,
+      "Two losses have removed the luxury of calling everything noise. "+scoreRead+" "+direction+" "+starRead+" "+weakRead+longView
+    ];
+    return rows[v]
   }
-  if(same)return team+" is 1-1 with a division game against "+next+" next, a much sharper hinge than the generic phrase 'middle of the league' suggests.";
-  if(Number.isFinite(Number(m.playoff)))return team+" is 1-1 with a "+w2MidaPct(m.playoff)+" playoff outlook, which makes Week 3 about protecting or changing an actual path rather than choosing a mood.";
-  return team+" is 1-1 at No. "+String(rank||"?")+", with Week 3 deciding whether the good Sunday or the bad one gets the louder sequel."
+  const resultTurn=prev
+    ?(prevWon===won
+      ?"Both weeks landed on the same side of the result column, which makes the scoring change more interesting than the record change."
+      :won
+        ?"Week 2 answered a Week 1 loss, so the split record contains an actual correction rather than two unrelated Sundays."
+        :"Week 2 erased the comfort of the opening win, which is why 1-1 feels less neutral than it looks.")
+    :"The split record still needs the scoring underneath it to explain which Sunday deserves more trust.";
+  const longView=Number.isFinite(playoff)
+    ?" MIDA puts the playoff outlook at "+w2MidaPct(playoff)+", useful context for a team whose first two results are arguing with each other."
+    :"";
+  const rows=[
+    team+" is 1-1, which is where the first two Sundays start disagreeing in public. "+resultTurn+" "+scoreRead+" "+starRead+" "+weakRead+longView,
+    "At 1-1, "+team+" already has one Sunday it would frame and another it would hide behind the water heater. "+resultTurn+" "+scoreRead+" "+starRead+" "+weakRead+longView,
+    team+" split the first two games, but the scoring underneath them is not a coin flip. "+scoreRead+" "+resultTurn+" "+starRead+" "+weakRead+longView,
+    "One win and one loss have "+team+" sitting in the middle without actually feeling middle-of-the-road. "+scoreRead+" "+resultTurn+" "+starRead+" "+weakRead+longView
+  ];
+  return rows[v]
 }
 function w2RecordGroupRead(rows,mode,r){
   const scored=(rows||[]).map(t=>{
-    const mida=t?.mida_outlook||{},same=w2SameDivisionNext(t),rank=Number(t?.league_context?.standings_rank)||99,
-      playoff=Number(mida.playoff),title=Number(mida.title),division=Number(mida.division);
-    let interest=same?40:0;
-    if(Number.isFinite(title))interest+=Math.min(25,title/2);
-    if(Number.isFinite(division))interest+=Math.min(20,division/3);
-    if(Number.isFinite(playoff))interest+=Math.abs(playoff-50)/8;
-    interest+=Math.max(0,18-rank)/3;
+    const prev=previousByRoster.get(String(t.roster_id))||null,m=t?.mida_outlook||{},
+      delta=Number.isFinite(Number(prev?.points))?Math.abs(Number(t.points)-Number(prev.points)):0,
+      top=Number(t?.starter_details?.[0]?.points)||0,weak=Math.abs(Number((t?.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0]?.points)||0),
+      title=Number(m.title),playoff=Number(m.playoff);
+    let interest=delta/3+top/5+Math.max(0,8-weak);
+    if(Number.isFinite(title))interest+=title/5;
+    if(Number.isFinite(playoff))interest+=Math.abs(playoff-50)/12;
     return{t,interest}
   }).sort((a,b)=>b.interest-a.interest||Number(a.t.roster_id)-Number(b.t.roster_id));
-  const chosen=[],seenDiv=new Set();
-  for(const x of scored){
-    const div=String(x.t?.division_context?.division_name||x.t?.division_name||"");
-    if(chosen.length<2||!seenDiv.has(div)){chosen.push(x.t);seenDiv.add(div)}
-    if(chosen.length>=4)break
-  }
+  const chosen=scored.slice(0,4).map(x=>x.t);
   if(!chosen.length)return[];
   const copy=chosen.map(t=>w2TrajectorySentence(t,mode,r));
   const opener=mode==="undefeated"
-    ?"The undefeated group is not one story, so four useful examples beat a nine-team roll call. "
+    ?"The 2-0 teams have already arrived by different roads: some found a scoring floor, some found a star, and some are hiding a soft spot underneath a spotless record. "
     :mode==="winless"
-      ?"The 0-2 teams do not share the same problem; the sharpest examples have different repair bills. "
-      :"The 1-1 middle is too large for a roll call, so the useful cases are the teams standing on the clearest Week 3 hinges. ";
+      ?"The 0-2 records are not one diagnosis. Some teams are improving while losing, some are sliding, and some have one obvious lineup wound everybody can see. "
+      :"At 1-1, every team has one Sunday it would like framed and another it would rather leave in the trunk. The scoring underneath the split tells us more than the symmetry does. ";
   const mid=Math.ceil(copy.length/2),parts=[copy.slice(0,mid),copy.slice(mid)].filter(x=>x.length);
-  return parts.map((part,i)=>(i===0?opener:"The contrast continues: ")+part.join(" "))
+  const follow=mode==="undefeated"
+    ?"The same clean record looks different elsewhere. "
+    :mode==="winless"
+      ?"The losses wear different bruises elsewhere. "
+      :"The split records keep disagreeing in different ways. ";
+  return parts.map((part,i)=>(i===0?opener:follow)+part.join(" "))
 }
 function w2PlayerOfWeekRead(t,p,r){
   const team=w2DisplayTeam(t.team_name),won=Number(t.points)>Number(t.opponent_points),rid=String(r?.id||""),pts=w2One(p.points),
@@ -1906,25 +2001,23 @@ function w2PlayerOfWeekRead(t,p,r){
 }
 function w2UpsetCallRead(under,fav,r){
   const team=w2DisplayTeam(under.team_name),foe=fav?w2DisplayTeam(fav.team_name):"the favorite",rid=String(r?.id||""),
-    ur=w2Record(under),fr=fav?w2Record(fav):"n/a",uM=under?.mida_outlook||{},fM=fav?.mida_outlook||{},
+    uM=under?.mida_outlook||{},fM=fav?.mida_outlook||{},
     uTop=(under?.starter_details||[])[0],fWeak=(fav?.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0],
-    same=fav&&String(under?.division_context?.division_name||"")===String(fav?.division_context?.division_name||""),
-    mida=Number.isFinite(Number(uM.playoff))&&Number.isFinite(Number(fM.playoff))
-      ?("MIDA has "+team+" at "+w2MidaPct(uM.playoff)+" for the playoffs and "+foe+" at "+w2MidaPct(fM.playoff)+", so the long view is closer than the favorite label makes it sound. ")
-      :"";
-  const football=uTop&&fWeak
-    ?uTop.name+" gives "+team+" a player already capable of carrying the top of the lineup, while "+fWeak.name+" just gave "+foe+" "+w2One(fWeak.points)+" and offers the underdog a place to attack."
-    :team+" has enough useful Week 2 structure to make the favorite earn every projected point.";
-  const stakes=same?" This is also a division game, so the underdog can improve its own route while damaging the favorite’s at the same time.":"";
+    up=Number(uM.playoff),fp=Number(fM.playoff),
+    mida=Number.isFinite(up)&&Number.isFinite(fp)
+      ?("MIDA gives "+team+" a "+w2MidaPct(up)+" playoff outlook and "+foe+" "+w2MidaPct(fp)+". ")
+      :"",
+    football=uTop&&fWeak
+      ?uTop.name+" just gave "+team+" "+w2One(uTop.points)+" at the top of the lineup, while "+fWeak.name+" left "+foe+" only "+w2One(fWeak.points)+" at the soft end."
+      :team+" showed enough Week 2 scoring to make the favorite defend something real.";
   const rows={
-    "walter-mercer":team+" over "+foe+" is the Week 3 upset call. "+mida+football+stakes+" The pick is about matchup leverage and roster shape, not a desire to be cute with the projection.",
-    "tess-delaney":team+" over "+foe+" is my Week 3 upset. "+mida+football+stakes+" If the favorite wants the better seat, it can stop leaving a chair that inviting.",
-    "mack-hollis":team+" over "+foe+" is the upset call, and no, I did not pick it because chaos is funny—although it is. "+mida+football+stakes+" That is enough football reason to light the fuse without turning the paragraph into a spreadsheet.",
-    "nora-voss":team+" over "+foe+" is the Week 3 call. "+mida+football+stakes+" The favorite can keep the projection; the underdog gets the cleaner place to make it look stupid."
+    "walter-mercer":team+" over "+foe+" is the Week 3 upset call. "+mida+football+" The favorite has the better paperwork; the underdog has a cleaner place to apply pressure, and paperwork has never tackled anybody.",
+    "tess-delaney":team+" over "+foe+" is the Week 3 upset. "+mida+football+" If "+foe+" insists on wearing the favorite label, it should probably stop leaving that chair wobbling in public.",
+    "mack-hollis":team+" over "+foe+" is the upset call. "+mida+football+" "+foe+" can keep the favorite badge; "+team+" has already found the loose floorboard and brought a crowbar.",
+    "nora-voss":team+" over "+foe+" gets the Week 3 nod. "+mida+football+" Rival managers can frame the projection if they want. I would rather frame the weak spot the underdog gets to attack."
   };
   return rows[rid]||rows["walter-mercer"]
 }
-
 function w2RecapContext(w,prev,i){
   if(!prev)return"Week 1 does not give us a complete comparison here, so Week 2 gets to stand on its own.";
   const team=w2DisplayTeam(w.team_name),opp=w2DisplayTeam(prev.opponent_name),won1=Number(prev.points)>Number(prev.opponent_points),
@@ -1995,7 +2088,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
   const undefeated=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===2),winless=(teams||[]).filter(t=>Number(t?.league_context?.record?.losses)===2),upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
   const middleTeams=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===1&&Number(t?.league_context?.record?.losses)===1),trajectoryReporter=rep(0)||{};
   blocks.push({heading:"What Two Weeks Are Starting to Say",paragraphs:[
-    w2S(top,trajectoryReporter,"recap-two-weeks","Two weeks have separated the standings without making the teams interchangeable. The useful question now is why each record exists and what Week 3 can actually change."),
+    w2S(top,trajectoryReporter,"recap-two-weeks","Two weeks have separated the standings without making the teams interchangeable. The records are starting to acquire personalities now: stable scoring, sudden spikes, thin lineups, wasted stars and the occasional undefeated team quietly hiding a loose floorboard."),
     ...w2RecordGroupRead(undefeated,"undefeated",trajectoryReporter).map((p,i)=>w2S(top,trajectoryReporter,"recap-trajectory-"+i,p)),
     ...w2RecordGroupRead(winless,"winless",trajectoryReporter).map((p,i)=>w2S(top,trajectoryReporter,"recap-bottom-"+i,p)),
     ...w2RecordGroupRead(middleTeams,"middle",trajectoryReporter).map((p,i)=>w2S(top,trajectoryReporter,"recap-middle-"+i,p))
@@ -2068,7 +2161,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
         take:w2S(g.t,rr,"hot-future-division",a+"–"+b+" is the Week 3 game with the most useful kind of pressure: both teams are spending one of their limited head-to-head chances in the same division race, and the division winner gets a playoff berth."+mida+" The loser is not merely one game worse; it has handed a direct rival the exact result it wanted.")});
     }
   }
-  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:8,inquirer_version:28}
+  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:9,inquirer_version:29}
 }
 function w2SentenceParts(s){return String(s||"").replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll(".","§")).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace(".","§")).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll("§",".").trim()).filter(Boolean)}
 // Week 2 publication-only rewrite: Week 1 remains an immutable comparison source, never a prose template.
@@ -2109,7 +2202,7 @@ const inq={...rawInq,teams:rewrittenWeek2Teams};
 const trades=canonicalWeekTrades;
 const rawOverview=buildLeagueOverview({season,week,teams:inq.teams,players,transactions,canonicalTrades:trades,weekClassification:classification,valueHistoryMeta:{period:teamValueHistory?.period||null,baseline:teamValueHistory?.baseline||null,latest:teamValueHistory?.latest||null,source:teamValueHistory?.source||null}});
 const overview=rewriteWeek2Overview(rawOverview,inq.teams,week1Preload2026);
-const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),published_locked:true,broadcast_version:15,inquirer_version:28,editorial_revision:8,context_snapshot_through_week:2,projection_source:Object.keys(currentProj).length?'Sleeper Week 2 projections scored with league settings; Week 3 projections captured only for the Week 2 next-opponent outlook':'projection data partially unavailable in preloaded Week 2 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
+const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),published_locked:true,broadcast_version:15,inquirer_version:29,editorial_revision:9,context_snapshot_through_week:2,projection_source:Object.keys(currentProj).length?'Sleeper Week 2 projections scored with league settings; Week 3 projections captured only for the Week 2 next-opponent outlook':'projection data partially unavailable in preloaded Week 2 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
 
 if(result.teams.length!==32)throw new Error('Expected 32 team articles');
 const week2PublishedCopy=result.teams.flatMap(t=>t?.inquirer_article?.paragraphs||[]).join("\n");

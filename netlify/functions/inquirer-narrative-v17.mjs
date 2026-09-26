@@ -90,7 +90,7 @@ export function narrativeHeadline(t,w,r){
     'nora-voss':[
       `Case File Closed for the Week: Receipts in Hand for ${team}`,
       `${star} Is Exhibit A in ${poss(team)} Winning Argument`,
-      `The Lineup Card Survives Cross-Examination for ${team}`,
+      `The Lineup Card Holds Up for ${team}`,
       `Evidence the Skeptics Will Hate: A Win for ${team}`,
       `No Alibi Required: A Real Win for ${team}`,
       `Very Little to Prosecute After ${poss(team)} Win`,
@@ -354,7 +354,7 @@ export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamCl
   return{
     schema_version:11,
     inquirer_version:26,
-    editorial_revision:3,
+    editorial_revision:5,
     season:Number(teamClassification?.season||2026),
     week:Number(week),
     week_classification:teamClassification,

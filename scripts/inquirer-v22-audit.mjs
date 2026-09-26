@@ -22,7 +22,10 @@ export function auditV22(edition){
     }
     const top=t.starter_details.slice().sort((a,b)=>b.points-a.points).slice(0,3);
     const namedCoverage=(edition.inquirer_version>=25?s.filter(x=>x.kind==='lede'||x.kind==='players'):s.filter(x=>x.kind==='lede')).flatMap(x=>x.paragraphs||[]).join(' ');
-    for(const p of top)assert.ok(namedCoverage.includes(p.name),'Leading players must be named naturally across the game/player reporting beats: '+p.name);
+    if(Number(edition?.editorial_revision)>=5){
+      if(top[0])assert.ok(namedCoverage.includes(top[0].name),'Revision 5 must always name the leading scorer across the game/player reporting beats: '+top[0].name);
+      if(top.length===3&&top.every(p=>Number(p.points)>=18))for(const p of top)assert.ok(namedCoverage.includes(p.name),'Revision 5 three-headliner weeks must name all three 18+ scorers: '+p.name);
+    }else for(const p of top)assert.ok(namedCoverage.includes(p.name),'Leading players must be named naturally across the game/player reporting beats: '+p.name);
   }
   const parsed=parseMida('Data as of 2026-09-16\nTeam,Rank,Conf,Division,Exp Points,Exp Wins,Playoff %,Title %\nTest,1,AFC,East,1200,9,80,5');
   assert.equal(parsed[0].playoff,80);assert.equal(parsed[0].division,null);

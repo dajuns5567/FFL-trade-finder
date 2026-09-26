@@ -1,0 +1,72 @@
+name: Inquirer editorial revision 6
+
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/inquirer-*.mjs'
+      - 'netlify/functions/league-hub.mjs'
+      - 'scripts/inquirer-*.mjs'
+      - 'scripts/one-time-generate-inquirer-week1.mjs'
+      - 'scripts/one-time-generate-inquirer-week2.mjs'
+      - 'docs/FLEECED-INQUIRER-VOICE-AND-REPORTERS.md'
+      - 'docs/INQUIRER-V26.md'
+      - '.github/workflows/inquirer-editorial-r5-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inquirer-r6:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install generator dependency
+        run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Syntax check active Inquirer
+        run: |
+          node --check netlify/functions/inquirer-reporting-v25.mjs
+          node --check netlify/functions/inquirer-narrative-v17.mjs
+          node --check netlify/functions/inquirer-reporters.mjs
+          node --check netlify/functions/league-hub.mjs
+          node --check scripts/one-time-generate-inquirer-week1.mjs
+          node --check scripts/one-time-generate-inquirer-week2.mjs
+          node --check scripts/inquirer-v25-audit.mjs
+          node --check scripts/inquirer-v25-generated-audit.mjs
+
+      - name: Run source contract
+        run: node scripts/inquirer-v25-audit.mjs
+
+      - name: Generate Week 1 revision 6 candidate
+        env:
+          OUT: /tmp/week1-inquirer-r6.json
+        run: |
+          for attempt in 1 2 3; do
+            echo "generation attempt $attempt"
+            node scripts/one-time-generate-inquirer-week1.mjs && exit 0
+            sleep 5
+          done
+          exit 1
+
+      - name: Audit generated Week 1 prose
+        run: node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer-r6.json
+
+      - name: Generate Week 2 revision 6 candidate
+        env:
+          OUT: /tmp/week2-inquirer-r6.json
+        run: |
+          for attempt in 1 2 3; do
+            echo "Week 2 generation attempt $attempt"
+            node scripts/one-time-generate-inquirer-week2.mjs && exit 0
+            sleep 5
+          done
+          exit 1
+
+      - name: Audit generated Week 2 prose
+        run: node scripts/inquirer-v25-generated-audit.mjs /tmp/week2-inquirer-r6.json
+

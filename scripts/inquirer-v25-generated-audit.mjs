@@ -17,9 +17,24 @@ const articleText=t=>(t?.inquirer_article?.paragraphs||[]).filter(p=>String(p||'
 const recapSections=d?.league_overview?.sections||[];
 const recap=recapSections.flatMap(s=>s?.paragraphs||[]).join(' ');
 const teamWords=(d.teams||[]).map(t=>words(articleText(t)));
+if(reportWeek===2){
+  const hotTakes=d?.league_overview?.hot_takes||[];
+  assert.ok(hotTakes.length>=8,'Week 2 must publish at least eight Hot Takes after the future-facing expansion');
+  const divisionTake=hotTakes.find(x=>/division board/i.test(String(x?.title||'')));
+  assert.ok(divisionTake,'Week 2 Hot Takes must retain the division board');
+  const divisionLines=String(divisionTake.take||'').split(/\n/).map(x=>x.trim()).filter(Boolean).filter(x=>/^(?:AFC|NFC)\s+(?:EAST|NORTH|SOUTH|WEST):/i.test(x));
+  assert.equal(divisionLines.length,8,'Division Board must render all eight divisions on separate lines; got '+JSON.stringify(divisionLines));
+  for(const line of divisionLines)assert.match(line,/^\w+\s+\w+: .+\(\d+-\d+\)\s+—\s+.+/,'Every division line must preserve leaders/record and add commentary: '+line);
+}
 
-assert.equal(Number(d.inquirer_version),26,'Generated edition must be Inquirer V26');
-assert.equal(Number(d.editorial_revision),6,'Generated edition must carry editorial revision 6');
+
+if(reportWeek===2){
+  assert.equal(Number(d.inquirer_version),27,'Generated Week 2 edition must be Inquirer V27');
+  assert.equal(Number(d.editorial_revision),7,'Generated Week 2 edition must carry editorial revision 7');
+}else{
+  assert.equal(Number(d.inquirer_version),26,'Generated Week 1 edition must remain Inquirer V26');
+  assert.equal(Number(d.editorial_revision),6,'Generated Week 1 edition must remain editorial revision 6');
+}
 assert.equal(d.published_locked,true,`Generated Week ${reportWeek} edition must be marked immutable once published`);
 assert.equal(Number(d.context_snapshot_through_week),reportWeek,`Generated Week ${reportWeek} edition must declare its own context snapshot`);
 assert.equal((d.teams||[]).length,32,`Generated Week ${reportWeek} edition must contain 32 team articles`);
@@ -79,6 +94,13 @@ const statIntroFingerprints=matterBlocks.slice(0,5).map(block=>{
 }).filter(Boolean);
 const statIntroCounts=new Map();for(const x of statIntroFingerprints)statIntroCounts.set(x,(statIntroCounts.get(x)||0)+1);
 assert.ok(Math.max(0,...statIntroCounts.values())<=2,'Weekly Recap matchup stat introductions must vary instead of repeating one label in every game');
+for(const block of matterBlocks.slice(0,5)){
+  const statParagraph=String((block.paragraphs||[])[1]||'');
+  const lines=statParagraph.split(/\n/).map(x=>x.trim()).filter(Boolean);
+  assert.ok(lines.length>=4,'Each featured matchup stat trio must place its three players on separate lines after the intro: '+String(block.heading||''));
+  assert.ok(lines.slice(1).filter(x=>/—/.test(x)).length>=3,'Each featured matchup must show at least three player stat lines beneath the colon: '+String(block.heading||''));
+}
+
 }
 
 assert.ok(recapSections.some(s=>/Velvet Rope/i.test(String(s?.heading||''))),'Bartholomew’s Weekly Recap desk must retain his own identity instead of a generic analytics heading');
@@ -98,6 +120,10 @@ for(const phrase of [
   'the useful version is','nick’s note is simple','the transaction belongs in the article','survived that call','result look as good on monday','roster compliment sitting on the bench','other side of the receipt alive','playoff case still sitting squarely in the argument','this week gave the résumé another loud line','somebody else now needs to make the back page fight for space','sunday reinforced it with another performance worthy of that reputation',
   'nick will','nick wants','nick sees','bartholomew would','bartholomew will','tilly would','filch recommends','filch would','this desk is already documenting','a beat writer is supposed to','ordinary quarterback workload','primary affirmative','no broader depth conclusion','favorable team verdict','entered as the projected underdog and won anyway','corroborates the expectation','projection liked','high-scorer line','multiple-contributor point is earned','provisional breakout label','breakout-watch invitation','gets the watch list','gets the same designation','supporting-cast argument','journalism malpractice','group-performance point','next-week file','player exhibit','probative data point','adverse finding','group chat','least comfortable note belongs to','separates the player from the verdict','records the consequence rather than the mechanism','admissible alternative','causal record','discrepancy is real','cannot carry the entire case','positive finding','division evidence','three pressure points','entered evidence','cross-examination'
 ]) assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
+if(reportWeek===2){
+  assert.doesNotMatch(all,/result to compare with the process|sample doubled|temperature moved|meter moved|rating moved|belongs in the outlook|blank line on the schedule|the scoring comparison starts there/i,'Week 2 must not expose sentiment/editorial process language');
+  assert.doesNotMatch(all,/\.\.(?!\.)/,'Week 2 generated prose must not contain accidental double periods');
+}
 const interpolationIndex=all.indexOf('${');assert.equal(interpolationIndex,-1,'Generated prose must never expose a template interpolation token; context: '+(interpolationIndex>=0?all.slice(Math.max(0,interpolationIndex-180),interpolationIndex+260):''));
 assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),`Generated Week ${reportWeek} must carry a real prior-season player-history source`);
 const historicalStarters=(d.teams||[]).flatMap(t=>t.starter_details||[]).filter(p=>Number(p.prior_season_games)>=6&&Number.isFinite(Number(p.prior_season_avg)));
@@ -146,6 +172,15 @@ for(const t of d.teams||[]){
     assert.doesNotMatch(tradeCopy,/unavailable|incomplete|unresolved|missing (?:history|valuation|rows?)/i,'Published Trade Receipt must never narrate unavailable trade-history evidence for '+t.team_name);
   }
   const players=(a.sections||[]).find(s=>s.kind==='players');
+  if(reportWeek===2){
+    const sentiment=(a.sections||[]).find(s=>s.kind==='sentiment'),sentCopy=(sentiment?.paragraphs||[]).join(' ');
+    assert.ok((sentiment?.paragraphs||[]).length>=2,'Week 2 Fan Sentiment must contain developed supporter reaction for '+t.team_name);
+    assert.doesNotMatch(sentCopy,/\b(?:meter|rating|temperature|sample doubled|process instead|actual scoring|projection)\b/i,'Week 2 Fan Sentiment must describe fans, not narrate the sentiment model, for '+t.team_name);
+    assert.match(sentCopy,/\b(?:fans?|supporters?|crowd|call-in|lineup|argu(?:e|ing)|complaint|cheers?|boo|rivals?)\b/i,'Week 2 Fan Sentiment must describe concrete supporter behavior or conversation for '+t.team_name);
+    const playerCopy=(players?.paragraphs||[]).filter((p,i)=>i<6&&i%2===1).map(String);
+    const normPlayer=p=>p.toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(new RegExp((t.starter_details||[]).map(x=>String(x.name||'')).filter(Boolean).map(escapeRe).join('|'),'gi'),'[player]').replace(/\s+/g,' ').trim();
+    assert.equal(new Set(playerCopy.map(normPlayer)).size,playerCopy.length,'Three featured player commentary paragraphs must not collapse into the same template for '+t.team_name);
+  }
   assert.ok(players&&Array.isArray(players.paragraphs),'Each team article must preserve a player reporting beat');
   const lede=(a.sections||[]).find(s=>s.kind==='lede'),management=(a.sections||[]).find(s=>s.kind==='management'),outlook=(a.sections||[]).find(s=>s.kind==='outlook');
   assert.ok((lede?.paragraphs||[]).length>=3,'Team ledes must carry result plus reporter commentary');

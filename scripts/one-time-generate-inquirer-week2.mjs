@@ -734,7 +734,7 @@ function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
         "The "+a.mascot+" got "+pts+" from "+p.name+". If supporters want one obvious Week 3 correction, rivals have already highlighted it for them."
       ]
     };
-    let out=(low[rid]||low["walter-mercer"])[v];
+    let out=(low[rid]||low["walter-mercer"])[(v+role)%4];
     if(pp&&Number.isFinite(delta)&&Math.abs(delta)>=5)out+=" "+w2Week1DeltaRead(t,r,p,pp,role);
     return out.replace(/\.+$/,"")+"."
   }

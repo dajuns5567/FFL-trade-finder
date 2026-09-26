@@ -1597,6 +1597,41 @@ function w2ManagementDepthRead(t,r,weak,next){
     ? t.manager_name+" "+move+"; for "+team+", the value of that decision is tied to the roster problem it was meant to address, not to the fact that a transaction occurred. "+(hasPick?"Draft capital in the return is deferred value and cannot be graded from Week 2 scoring.":decision+" as "+foe+" approaches.")
     : "Because the "+a.mascot+" made no completed Week 2 roster move, management has to work from the lineup already in place rather than crediting an acquisition that never happened. "+decision+"; the Week 3 test against "+foe+" is whether the existing roster can correct that spot through selection or performance.";
 }
+
+function w2PlayerRoomClose(t,r,top,weak,opp,won){
+  const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),foe=w2DisplayTeam(opp),
+    star=top?.[0],second=top?.[1],v=w2Cohort(t)%4;
+  const rows={
+    "walter-mercer":[
+      (star?star.name:"The lead scorer")+" gave "+team+" the headline performance, but the more useful lesson is how much easier Sunday looked when "+(second?second.name:"the supporting lineup")+" supplied a second answer. "+foe+" had to defend more than one problem.",
+      team+" did not need every starter to be excellent against "+foe+"; it needed the useful scores to arrive in enough different places that "+(weak?weak.name+" at "+w2One(weak.points)+" could be survived":"one quiet spot did not control the game")+".",
+      "The box score works better when it has hierarchy: "+(star?star.name+" at the top, "+(second?second.name+" behind him, and ":"")+team+" asking the quieter starters to do ordinary work instead of rescue work. That is the Week 3 standard.",
+      (won?"The win lets ":"The loss forces ")+team+" separate the stars from the structure. "+(star?star.name+" did star-level work; ":"The top end did its part; ")+(weak?weak.name+" is where the lineup still needs a cleaner answer.":"the next improvement has to come from the supporting slots.")
+    ],
+    "tess-delaney":[
+      (star?star.name:"The centerpiece")+" handled the expensive part of the room, while "+(second?second.name:"the supporting cast")+" made sure the table did not look like one gorgeous plate surrounded by folding chairs. Even "+foe+" had to notice the balance.",
+      team+" did not need a perfect dinner against "+foe+"; it needed enough good courses that "+(weak?weak.name+" at "+w2One(weak.points)+" could remain a blemish instead of becoming the bill":"the quieter end could stay in the background")+".",
+      "The useful thing about this "+a.mascot+" table is that the best performance had company. "+(star?star.name+" set the tone, "+(second?second.name+" kept it respectable, and ":"")+(weak?weak.name+" now owns the least flattering chair.":"the remaining seats did enough not to ruin it."),
+      (won?"Victory gives ":"Defeat denies ")+theRoom(a.mascot)+" the luxury of pretending every chair worked. "+(star?star.name+" looked the part; ":"The centerpiece held; ")+(weak?weak.name+" is the place setting fans will keep moving around before Week 3.":"the next arrangement still needs one cleaner supporting answer.")
+    ],
+    "mack-hollis":[
+      (star?star.name:"The headliner")+" brought the noise, "+(second?second.name:"the support")+" kept the speakers on, and suddenly "+team+" looked less like one star screaming into an empty stadium. That is the kind of chaos "+foe+" actually had to respect.",
+      team+" did not need eleven fireworks against "+foe+"; it needed enough live wires that "+(weak?weak.name+" at "+w2One(weak.points)+" could not short the whole board":"one soft starter could not kill the power")+".",
+      "The loud part of the "+a.mascot+" lineup had actual backup this week. "+(star?star.name+" hit first, "+(second?second.name+" answered, and ":"")+(weak?weak.name+" is the obvious circuit management has to check next.":"the remaining outlets stayed useful enough."),
+      (won?"The win means ":"The loss means ")+team+" can stop pretending the whole lineup was equally responsible. "+(star?star.name+" did the yelling; ":"The top end showed up; ")+(weak?weak.name+" is where the volume disappeared.":"the quieter slots still decide how sustainable this gets.")
+    ],
+    "nora-voss":[
+      (star?star.name:"The top scorer")+" removed the easiest rival joke, and "+(second?second.name:"the support")+" made sure opponents had to scroll farther down the lineup for material. "+foe+" found softer targets, but not at the top.",
+      team+" gave rivals fewer obvious openings when the useful scores stacked up. "+(weak?weak.name+" at "+w2One(weak.points)+" is still the name everybody will circle, but ":"The bottom of the lineup still has questions, but ")+"the top of the card earned its defense.",
+      "The rival version of this game gets less convenient once "+(star?star.name:"the leader")+" and "+(second?second.name:"the next scorer")+" both show up. "+(weak?weak.name+" is still available for heckling, which is exactly where management should look next.":"That pushes the argument deeper into the roster."),
+      (won?"Winning lets ":"Losing makes ")+theRivals(a.mascot)+" pick their targets carefully. "+(star?star.name+" is off limits after that line; ":"The best player did enough; ")+(weak?weak.name+" is the much easier Week 3 talking point.":"the next joke has to come from somewhere below the top.")
+    ]
+  };
+  return (rows[rid]||rows["walter-mercer"])[v]
+}
+function theRoom(mascot){return "the "+mascot+" room"}
+function theRivals(mascot){return mascot+" rivals"}
+
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,
     prevWon=prev?Number(prev.points)>Number(prev.opponent_points):null,prevOpp=w2DisplayTeam(prev?.opponent_name||"last week’s opponent"),prevScore=prev?w2One(prev.points)+"–"+w2One(prev.opponent_points):null,top=(t.starter_details||[]).slice(0,3),opp=t.opponent_name||"the opponent";
@@ -1627,6 +1662,8 @@ function w2BuildSections(t,prev){
   }
 
   players.push(...w2IdentityRead(t,prev,r,top,opp));
+  const weakPreview=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0];
+  players.push(w2S(t,r,"player-room-close",w2PlayerRoomClose(t,r,top,weakPreview,opp,won)));
   const weakDepth=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0];
   players.push(w2S(t,r,"player-meaning",w2PerformanceDepthRead(t,r,top,weakDepth,won,margin)));
   const miss=t.best_lineup_miss,gap=Number(miss?.gap)||0;

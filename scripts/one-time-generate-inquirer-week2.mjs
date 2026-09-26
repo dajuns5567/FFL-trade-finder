@@ -1055,7 +1055,7 @@ function w2ManagementMoveRead(t,r,won,margin){
       ],
       "tess-delaney":[
         t.manager_name+" did not rearrange the roster during Week 2. The management conversation stays with "+(weak?weak.name+" and the "+w2One(weak.points)+"-point quiet spot":"the existing table")+" rather than an imaginary new guest.",
-        (q===0?("No completed add, drop or trade appears for "+t.manager_name+" this week."):q===1?(t.manager_name+" left the Week 2 guest list unchanged."):q===2?("The "+a.mascot+" transaction ledger shows no completed Week 2 move from "+t.manager_name+"."):("No Week 2 roster invitation or departure was completed by "+t.manager_name+"."))+" "+(miss?.reserve&&miss?.starter?"The more interesting seating choice is "+miss.reserve.name+" behind "+miss.starter.name+".":"Sunday belongs to the roster already seated at the table.")
+        (q===0?("No completed add, drop or trade appears for "+t.manager_name+" this week."):q===1?(t.manager_name+" left the Week 2 guest list unchanged."):q===2?("The "+w2Alias(t).mascot+" transaction ledger shows no completed Week 2 move from "+t.manager_name+"."):("No Week 2 roster invitation or departure was completed by "+t.manager_name+"."))+" "+(miss?.reserve&&miss?.starter?"The more interesting seating choice is "+miss.reserve.name+" behind "+miss.starter.name+".":"Sunday belongs to the roster already seated at the table.")
       ],
       "mack-hollis":[
         t.manager_name+" stayed off the Week 2 transaction wire. That means "+(weak?weak.name+" at "+w2One(weak.points)+" is":"the current lineup is")+" the management headline, not a move count.",

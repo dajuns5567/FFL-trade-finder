@@ -960,12 +960,13 @@ function w2DivisionBoardTake(flags,reporter,subject){
         "NFC WEST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" also has the division’s best title number at "+titlePct+"."):""
       },
       midaNote=midaPhrases[divKey]||"",titleNote=titlePhrases[divKey]||"",
-      chasePair=closest?(closestName+" ("+closestRec+")"+(nextName?" and "+nextName+" ("+nextRec+")":"")):"the field";
+      chasePair=closest?(closestName+" ("+closestRec+")"+(nextName?" and "+nextName+" ("+nextRec+")":"")):"the field",
+      chasePlural=Boolean(closest&&nextName),chaseBe=chasePlural?"are":"is",chaseHave=chasePlural?"have":"has",chaseVerb=chasePlural?"keep":"keeps";
     let context;
     switch(String(y.d).toUpperCase()){
       case "AFC EAST":
         context=leaders.length===1
-          ?leaderNames+" owns the early edge at "+y.record+", but "+chasePair+" keeps the room tight enough that nobody gets a velvet rope yet."+midaNote+titleNote
+          ?leaderNames+" owns the early edge at "+y.record+", but "+chasePair+" "+chaseVerb+" the chase tight enough that nobody gets a velvet rope yet."+midaNote+titleNote
           :leaderNames+" share the top at "+y.record+", while "+chasePair+" is close enough to turn one ordinary Sunday into a three-team argument."+midaNote+titleNote;
         break;
       case "AFC NORTH":
@@ -974,26 +975,26 @@ function w2DivisionBoardTake(flags,reporter,subject){
           :leaderNames+" has the cleanest record at "+y.record+", but "+chasePair+" keeps this from becoming a solo act."+midaNote+titleNote;
         break;
       case "AFC SOUTH":
-        context=leaderNames+" sits on "+y.record+" while "+chasePair+" forms the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
+        context=leaderNames+" sits on "+y.record+" while "+chasePair+" "+(chasePlural?"form":"forms")+" the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
         break;
       case "AFC WEST":
-        context=leaderNames+" has the best record at "+y.record+"; "+chasePair+" is the immediate pursuit, and the bottom of the division is already spending September trying not to turn two losses into a season-long tax."+midaNote+titleNote;
+        context=leaderNames+" has the best record at "+y.record+"; "+chasePair+" "+chaseBe+" the immediate chase, and the bottom of the division is already spending September trying not to turn two losses into a season-long tax."+midaNote+titleNote;
         break;
       case "NFC EAST":
         context=leaders.length>1
-          ?leaderNames+" share "+y.record+" and therefore share the privilege of annoying everybody else. "+chasePair+" has no margin to donate while the top two keep matching receipts."+midaNote+titleNote
+          ?leaderNames+" share "+y.record+" and therefore share the privilege of annoying everybody else. "+chasePair+" "+chaseHave+" no margin to donate in the chase while the top two keep matching receipts."+midaNote+titleNote
           :leaderNames+" controls the early record at "+y.record+", with "+chasePair+" close enough to make the lead provisional rather than ceremonial."+midaNote+titleNote;
         break;
       case "NFC NORTH":
         context=leaders.length>=3
-          ?leaderNames+" are all "+y.record+", so this division currently resembles three people trying to leave an elevator at once. "+closestName+" ("+closestRec+") is not far enough away to make the mess polite."+midaNote+titleNote
+          ?leaderNames+" are all "+y.record+", so the standings currently resemble three people trying to leave an elevator at once. "+closestName+" ("+closestRec+") is not far enough away to create meaningful separation."+midaNote+titleNote
           :leaderNames+" holds the top line at "+y.record+", but "+chasePair+" keeps the race packed tightly enough that nobody can hide behind September."+midaNote+titleNote;
         break;
       case "NFC SOUTH":
         context=leaderNames+" owns "+y.record+", with "+chasePair+" providing the nearest pressure. The gap is real but thin; one stumble turns the leader from front-runner into participant again."+midaNote+titleNote;
         break;
       case "NFC WEST":
-        context=leaderNames+" has banked "+y.record+", while "+chasePair+" keeps the division from becoming a postcard. The leader has daylight, not distance."+midaNote+titleNote;
+        context=leaderNames+" has banked "+y.record+", while "+chasePair+" "+chaseVerb+" the chase from becoming a postcard. The leader has daylight, not distance."+midaNote+titleNote;
         break;
       default:
         context=leaderNames+" leads at "+y.record+" with "+chasePair+" nearest."+midaNote+titleNote;
@@ -1661,7 +1662,7 @@ function w2ClosingRead(t,r,won,margin,top,weak,next){
     rows={
       "walter-mercer":{
         unbeaten:team+" takes a 2-0 record into "+foe+". Week 3 is about proving the first two wins can survive a new opponent without leaning on the same explanation.",
-        winless:team+" goes to "+foe+" at 0-2. The Week 2 weakness has to be corrected before the standings gap widens and patience turns into archaeology.",
+        winless:team+" goes to "+foe+" at 0-2. The Week 2 weakness has to be corrected before the standings gap widens and panic starts filling out the lineup card in permanent marker.",
         close:"After a "+w2One(margin)+"-point decision, "+team+" meets "+foe+" with very little separating a reassuring trend from another week of second-guessing.",
         win:"The Week 2 win moves "+team+" to "+rec+" before "+foe+". The next test is whether the lineup can keep the useful production and trim the quiet spots.",
         loss:"The loss leaves "+team+" at "+rec+" with "+foe+" next. Week 3 needs a roster response to the weakness Sunday already identified."
@@ -1785,10 +1786,10 @@ function w2ColumnColorRead(t,r,top,weak,won,opp){
     v=w2Cohort(t)%4;
   const rows={
     "walter-mercer":[
-      star+" and "+second+" gave "+team+" the respectable part of Sunday. "+weakName+" at "+weakPts+" is why nobody in the building should laminate the lineup card yet.",
-      team+" can keep the production from "+star+" without pretending every starter earned a handshake. "+weakName+" at "+weakPts+" is the unpaid bill sitting under the coffee cup.",
-      star+" did enough to make the top of the lineup credible; "+weakName+" at "+weakPts+" kept the bottom from becoming comfortable. That is a useful distinction, even if it is not a pleasant one.",
-      "The good news is "+star+". The less decorative news is "+weakName+" at "+weakPts+", which is exactly how a clean headline acquires a footnote management actually has to read."
+      star+" and "+second+" gave "+team+" the respectable part of Sunday. "+weakName+" at "+weakPts+" is why nobody in the building should laminate the lineup card yet; the joke stops being funny when the same blank spot keeps getting a locker.",
+      team+" can keep the production from "+star+" without pretending every starter earned a handshake. "+weakName+" at "+weakPts+" is the unpaid bill sitting under the coffee cup, and the receipt is getting difficult to lose.",
+      star+" did enough to make the top of the lineup credible; "+weakName+" at "+weakPts+" kept the bottom from becoming comfortable. The scoreboard can celebrate; the weak spot still has a parade permit nobody asked for.",
+      "The good news is "+star+". The less decorative news is "+weakName+" at "+weakPts+", which is exactly how a clean headline acquires a footnote with its own megaphone."
     ],
     "tess-delaney":[
       star+" wore the room well, and "+second+" at least remembered the dress code. "+weakName+" at "+weakPts+" is the chair everybody keeps trying to move behind a plant.",
@@ -2031,7 +2032,7 @@ function w2UpsetCallRead(under,fav,r){
       ?uTop.name+" just gave "+team+" "+w2One(uTop.points)+" at the top of the lineup, while "+fWeak.name+" left "+foe+" only "+w2One(fWeak.points)+" at the soft end."
       :team+" showed enough Week 2 scoring to make the favorite defend something real.";
   const rows={
-    "walter-mercer":team+" over "+foe+" is the Week 3 upset call. "+mida+football+" The favorite has the better paperwork; the underdog has a cleaner place to apply pressure, and paperwork has never tackled anybody.",
+    "walter-mercer":team+" over "+foe+" is the Week 3 upset call. "+mida+football+" The favorite has the better paperwork; the underdog has a cleaner place to apply pressure, and paperwork has never tackled anybody. If the favorite badge is the whole argument, the joke is already halfway written.",
     "tess-delaney":team+" over "+foe+" is the Week 3 upset. "+mida+football+" If "+foe+" insists on wearing the favorite label, it should probably stop leaving that chair wobbling in public.",
     "mack-hollis":team+" over "+foe+" is the upset call. "+mida+football+" "+foe+" can keep the favorite badge; "+team+" has already found the loose floorboard and brought a crowbar.",
     "nora-voss":team+" over "+foe+" gets the Week 3 nod. "+mida+football+" Rival managers can frame the projection if they want. I would rather frame the weak spot the underdog gets to attack."

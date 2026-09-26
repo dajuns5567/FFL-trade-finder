@@ -620,11 +620,11 @@ function w2HistoricalColor(p,r){
     "nora-voss":up?[
       "Rivals knew "+p.name+" as roughly a "+w2One(prior)+"-point player last season. Week 2 dropped "+w2One(pts)+" on the table and ruined the easy joke.",
       p.name+" averaged "+w2One(prior)+" in "+year+". After "+w2One(pts)+" this week, rivals may need a new script.",
-      "The old number on "+p.name+" was "+w2One(prior)+" per game. Week 2 said "+w2One(pts)+", rude to anyone who had already written the punch line."
+      "The "+year+" number on "+p.name+" was "+w2One(prior)+" per game. Week 2 said "+w2One(pts)+", rude to anyone who had already written the punch line."
     ]:[
       "Rivals knew "+p.name+" as roughly a "+w2One(prior)+"-point player last season. Week 2 coughed up "+w2One(pts)+", so the heckling has a receipt.",
       p.name+" averaged "+w2One(prior)+" in "+year+". A "+w2One(pts)+"-point Week 2 is exactly the sort of drop rival managers will refuse to forget.",
-      "The old number on "+p.name+" was "+w2One(prior)+" per game. Week 2 said "+w2One(pts)+", and rivals did not even have to write a new joke."
+      "The "+year+" number on "+p.name+" was "+w2One(prior)+" per game. Week 2 said "+w2One(pts)+", and rivals did not even have to write a new joke."
     ]
   };
   return (rows[rid]||rows["walter-mercer"])[v]

@@ -923,7 +923,7 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
         "The regrettable place setting was "+miss.starter.name+" over "+miss.reserve.name+"; the reserve offered "+w2One(gap)+" more compatible points, enough to make a "+w2One(margin)+"-point defeat feel avoidable."
       ],
       "mack-hollis":[
-        miss.reserve.name+" beat "+miss.starter.name+" by "+w2One(gap)+" from a compatible bench spot, and the game was lost by "+w2One(margin)+". That is not vague fan rage; that is a lineup decision with a scoreboard attached.",
+        w2Hash(team+"|mack-bench")%2===0?(miss.reserve.name+" beat "+miss.starter.name+" by "+w2One(gap)+" from a compatible bench spot in a "+w2One(margin)+"-point loss. The complaint line has a specific lineup choice to replay."):(team+" lost by "+w2One(margin)+" while "+miss.reserve.name+" outscored the compatible starter "+miss.starter.name+" by "+w2One(gap)+". That turns the postgame yelling into a management question with an actual alternative."),
         "Fans can point straight at "+miss.reserve.name+" on the bench and "+miss.starter.name+" in the lineup: the difference was "+w2One(gap)+" in a "+w2One(margin)+"-point loss. The phone lines do not need another topic."
       ],
       "nora-voss":[
@@ -948,9 +948,9 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
   }else if(won&&record==="2-0"){
     fact=pick({
       "walter-mercer":[team+" reached 2-0 with "+(star?star.name+" leading at "+w2One(star.points)+" points":"another winning total")+". The fan confidence is attached to both record and identifiable production.",team+" owns a 2-0 start"+(star?" after "+star.name+" supplied "+w2One(star.points)+" at the top":"")+". Supporters can now ask which part of the first two wins is most repeatable."],
-      "tess-delaney":["At 2-0, the "+a.mascot+" room has stopped pretending not to enjoy itself"+(star?"; "+star.name+" added "+w2One(star.points)+" to the Week 2 centerpiece":"")+". Confidence has earned a proper seat.","The "+a.mascot+" are 2-0"+(star?" with "+star.name+" just delivering "+w2One(star.points):"")+". The room has a result worth admiring and a star performance worth remembering separately."],
+      "tess-delaney":["At 2-0, the "+a.mascot+" room has stopped pretending not to enjoy itself"+(star?"; "+star.name+" added "+w2One(star.points)+" to the Week 2 centerpiece":"")+". Confidence has earned a proper seat.",w2Hash(team+"|tess-2-0")%2===0?("The "+a.mascot+" are 2-0"+(star?" with "+star.name+" just delivering "+w2One(star.points):"")+". The record has earned confidence without asking the room to forget how the points arrived."):("Two wins now belong to the "+a.mascot+(star?", and "+star.name+" added "+w2One(star.points)+" to the second one":"")+". The room can admire the record while keeping the Week 2 centerpiece in proper focus.")],
       "mack-hollis":[team+" is 2-0"+(star?" after "+star.name+" put up "+w2One(star.points):"")+". Fans have two actual wins to yell about now, which is different from preseason noise.", "Two wins are on the board for "+team+(star?", and "+star.name+" just supplied "+w2One(star.points):"")+". The volume is rising because the roster keeps giving the crowd something concrete."],
-      "nora-voss":["The annoying part for rivals is that "+team+" is 2-0"+(star?" with "+star.name+" coming off "+w2One(star.points):"")+". Supporters no longer need to defend optimism as a theory.","Rivals can keep the jokes, but the "+a.mascot+" are 2-0"+(star?" after "+star.name+" led Week 2 with "+w2One(star.points):"")+". The crowd has a record sturdy enough to laugh back."]
+      "nora-voss":["The annoying part for rivals is that "+team+" is 2-0"+(star?" with "+star.name+" coming off "+w2One(star.points):"")+". Supporters no longer need to defend optimism as a theory.",w2Hash(team+"|filch-2-0")%2===0?("Rivals can keep the jokes, but the "+a.mascot+" are 2-0"+(star?" after "+star.name+" led Week 2 with "+w2One(star.points):"")+". Two completed wins give the crowd more than swagger to answer with."):("The "+a.mascot+" are 2-0"+(star?" after "+star.name+" supplied "+w2One(star.points)+" in Week 2":"")+". Rivals still have jokes, but the standings now force them to work around two actual results.")]
     });
   }else if(won){
     fact=pick({
@@ -1086,8 +1086,8 @@ function w2ManagementMoveRead(t,r,won,margin){
     impact=(impactRows[rid]||impactRows["walter-mercer"])[v];
   }else{
     const tails={
-      "walter-mercer":["None of the additions entered the Week 2 starting lineup, so the activity changed the roster without changing the lineup that produced this result.","Those additions did not reach the Week 2 starters, which makes them roster work rather than an explanation for Sunday."],
-      "tess-delaney":["None of the new arrivals reached the Week 2 starting table, so the room changed without changing Sunday’s place settings.","The new guests did not make the Week 2 starting table. Their invitation may matter later, but it did not alter this score."],
+      "walter-mercer":[w2Hash(team+"|walter-nonstarter-adds")%2===0?("None of the additions started for "+team+" in Week 2, so the roster changed while Sunday’s scoring lineup stayed intact."):("The incoming players stayed outside "+team+"’s Week 2 starters; those moves altered the roster, not the lineup that produced this result."),"Those additions did not reach the Week 2 starters, which makes them roster work rather than an explanation for Sunday."],
+      "tess-delaney":["None of the new arrivals reached the Week 2 starting table, so the room changed without changing Sunday’s place settings.","The new guests did not make the Week 2 starting table for "+team+"; Sunday still belongs to the starters who were already seated."],
       "mack-hollis":["None of the new names cracked the Week 2 starting lineup, so do not hang Sunday’s result on the transaction count.","The additions stayed off the Week 2 starting card. That is roster churn, not a scoring explanation."],
       "nora-voss":["None of the additions made the Week 2 starting lineup, so rivals cannot credit or blame the transactions for this score yet.","The new names stayed outside the Week 2 starters. That keeps the move jokes on hold until somebody actually enters the lineup."]
     };
@@ -1132,10 +1132,10 @@ function w2ClosingRead(t,r,won,margin,top,weak,next){
         winless:"The "+w2Alias(t).mascot+" are 0-2 with "+foe+" next. Enough autopsy—Week 3 needs a different lineup story, not a third version of the same complaint.",
         close:"A "+w2One(margin)+"-point Week 2 decision puts every ordinary lineup choice under the lights before "+team+" meets "+foe+".",
         win:team+" takes a "+rec+" record into "+foe+" after the win. Now make the good part repeat loudly enough that this week’s weak spot becomes old news.",
-        loss:team+" is "+rec+" after the loss and "+foe+" is next. Week 3 needs an answer from the quiet end of the lineup, not another postgame explanation."
+        loss:w2Hash(team+"|mack-close-loss")%2===0?(team+" is "+rec+" after the loss with "+foe+" next. The quiet end of the lineup now has to produce before the same weakness becomes a Week 3 headline."):(foe+" gets "+team+" next after this loss dropped the "+w2Alias(t).mascot+" to "+rec+". The next edition should be about a response from the low-scoring spots, not another explanation of them.")
       },
       "nora-voss":{
-        unbeaten:"Rivals have to work around a 2-0 "+w2Alias(t).mascot+" record before "+foe+". Fix the visible weak spot and the easy joke gets even harder.",
+        unbeaten:w2Hash(team+"|filch-unbeaten-close")%2===0?("Rivals have to work around a 2-0 "+w2Alias(t).mascot+" record before "+foe+". Cleaning up the Week 2 weak spot would take away the easiest remaining material."):("The "+w2Alias(t).mascot+" carry 2-0 into "+foe+", so rivals are already short on ammunition. A cleaner bottom half of the lineup would make the next punch line even harder to find."),
         winless:"At 0-2, "+team+" has already supplied rivals enough material. "+foe+" is next, and changing the obvious Week 2 problem is the fastest way to retire the joke.",
         close:"A "+w2One(margin)+"-point decision means the punch line could have changed with one ordinary score. "+foe+" gets the next look at whether "+team+" learned anything from it.",
         win:"The win puts "+team+" at "+rec+" before "+foe+". Rivals can keep the Week 2 joke only if the same flaw survives into the next lineup.",

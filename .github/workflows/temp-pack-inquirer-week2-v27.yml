@@ -1,0 +1,49 @@
+name: Temporary Week 2 Inquirer V27 pack
+
+on:
+  push:
+    branches:
+      - inquirer-editorial-depth-r5
+    paths:
+      - '.github/workflows/temp-pack-inquirer-week2-v27.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  pack-week2:
+    if: github.event.head_commit.message != 'Remove temporary Week 2 V27 packer'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: inquirer-editorial-depth-r5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install generator dependency
+        run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Generate and audit Week 2 V27
+        env:
+          OUT: /tmp/week2-inquirer-v27.json
+        run: |
+          for attempt in 1 2 3; do
+            node scripts/one-time-generate-inquirer-week2.mjs && break
+            if [ "$attempt" = "3" ]; then exit 1; fi
+            sleep 5
+          done
+          node scripts/inquirer-v25-generated-audit.mjs /tmp/week2-inquirer-v27.json
+      - name: Pack Week 2 preload
+        run: node scripts/pack-inquirer-preload.mjs /tmp/week2-inquirer-v27.json netlify/functions/inquirer-week2-2026-preload.mjs
+      - name: Commit Week 2 preload only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add netlify/functions/inquirer-week2-2026-preload.mjs
+          if git diff --cached --quiet; then
+            echo "Week 2 preload already current"
+            exit 0
+          fi
+          git commit -m "Pack audited Week 2 Inquirer V27 preload"
+          git push origin HEAD:inquirer-editorial-depth-r5

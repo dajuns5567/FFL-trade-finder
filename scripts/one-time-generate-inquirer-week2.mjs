@@ -290,6 +290,7 @@ function w2SlotLabel(slot){return String(slot||"lineup spot").replaceAll("_"," "
 
 function w2DisplayTeam(name){const raw=String(name||"").trim(),s=raw.replace(/\s+\(\d+-\d+(?:-\d+)?\)$/,"");return s&&s===s.toLowerCase()?s.replace(/\b[a-z]/g,m=>m.toUpperCase()):s}
 function w2PluralTeamName(name){const mascot=w2Alias({team_name:w2DisplayTeam(name)}).mascot;return /s$/i.test(String(mascot||""))}
+function w2TeamVerb(name,singular,plural){return w2PluralTeamName(name)?plural:singular}
 function w2EscRe(s){return [...String(s||"")].map(ch=>".*+?^$(){}|[]".includes(ch)||ch.charCodeAt(0)===92?"\\"+ch:ch).join("")}
 function w2TeamGrammar(t,body){
   let out=String(body||"");
@@ -938,26 +939,27 @@ function w2DivisionBoardTake(flags,reporter,subject){
       midaFav=midaRows[0]||null,midaPct=midaFav?w2MidaPositivePct(midaFav.mida_outlook.division):null,
       titleRows=rows.filter(t=>Number.isFinite(Number(t?.mida_outlook?.title))&&Number(t.mida_outlook.title)>0).slice().sort((a,b)=>Number(b.mida_outlook.title)-Number(a.mida_outlook.title)),
       titleFav=titleRows[0]||null,titlePct=titleFav?w2MidaPositivePct(titleFav.mida_outlook.title):null,
+      leadOne=leaders.length===1?w2DisplayTeam(leaders[0].team_name):null,
       divKey=String(y.d).toUpperCase(),
       midaPhrases={
         "AFC EAST":midaFav&&midaPct?(" The probability sheet prefers "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+" for the division."):"",
         "AFC NORTH":midaFav&&midaPct?(" MIDA puts "+w2DisplayTeam(midaFav.team_name)+" highest here at "+midaPct+", so the tied record does not make the longer view perfectly even."):"",
         "AFC SOUTH":midaFav&&midaPct?(" The strongest MIDA division chance belongs to "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+"."):"",
         "AFC WEST":midaFav&&midaPct?(" The forecast still likes "+w2DisplayTeam(midaFav.team_name)+" most at "+midaPct+" to take the division."):"",
-        "NFC EAST":midaFav&&midaPct?(" "+w2DisplayTeam(midaFav.team_name)+" leads the MIDA division outlook at "+midaPct+"."):"",
-        "NFC NORTH":midaFav&&midaPct?(" The standings are level, but MIDA is not: "+w2DisplayTeam(midaFav.team_name)+" sits highest at "+midaPct+"."):"",
+        "NFC EAST":midaFav&&midaPct?(" "+w2DisplayTeam(midaFav.team_name)+" "+w2TeamVerb(midaFav.team_name,"leads","lead")+" the MIDA division outlook at "+midaPct+"."):"",
+        "NFC NORTH":midaFav&&midaPct?(" The standings are level, but MIDA is not: "+w2DisplayTeam(midaFav.team_name)+" "+w2TeamVerb(midaFav.team_name,"sits","sit")+" highest at "+midaPct+"."):"",
         "NFC SOUTH":midaFav&&midaPct?(" MIDA’s current favorite is "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+"."):"",
-        "NFC WEST":midaFav&&midaPct?(" "+w2DisplayTeam(midaFav.team_name)+" owns the best MIDA division number at "+midaPct+"."):""
+        "NFC WEST":midaFav&&midaPct?(" "+w2DisplayTeam(midaFav.team_name)+" "+w2TeamVerb(midaFav.team_name,"owns","own")+" the best MIDA division number at "+midaPct+"."):""
       },
       titlePhrases={
-        "AFC EAST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" also carries a "+titlePct+" title outlook, so the race reaches beyond local bragging rights."):"",
+        "AFC EAST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" also "+w2TeamVerb(titleFav.team_name,"carries","carry")+" a "+titlePct+" title outlook, so the race reaches beyond local bragging rights."):"",
         "AFC NORTH":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" The best championship number in the division belongs to "+w2DisplayTeam(titleFav.team_name)+" at "+titlePct+"."):"",
-        "AFC SOUTH":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" is also the division’s strongest title bet at "+titlePct+"."):"",
+        "AFC SOUTH":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" "+w2TeamVerb(titleFav.team_name,"is","are")+" also the division’s strongest title bet at "+titlePct+"."):"",
         "AFC WEST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" The championship board gives "+w2DisplayTeam(titleFav.team_name)+" the best local number at "+titlePct+"."):"",
-        "NFC EAST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" For the bigger prize, "+w2DisplayTeam(titleFav.team_name)+" has the top title outlook here at "+titlePct+"."):"",
-        "NFC NORTH":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" carries the strongest championship probability at "+titlePct+"."):"",
+        "NFC EAST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" For the bigger prize, "+w2DisplayTeam(titleFav.team_name)+" "+w2TeamVerb(titleFav.team_name,"has","have")+" the top title outlook here at "+titlePct+"."):"",
+        "NFC NORTH":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" "+w2TeamVerb(titleFav.team_name,"carries","carry")+" the strongest championship probability at "+titlePct+"."):"",
         "NFC SOUTH":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" The title model’s favorite from this group is "+w2DisplayTeam(titleFav.team_name)+" at "+titlePct+"."):"",
-        "NFC WEST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" also has the division’s best title number at "+titlePct+"."):""
+        "NFC WEST":titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=10?(" "+w2DisplayTeam(titleFav.team_name)+" also "+w2TeamVerb(titleFav.team_name,"has","have")+" the division’s best title number at "+titlePct+"."):""
       },
       midaNote=midaPhrases[divKey]||"",titleNote=titlePhrases[divKey]||"",
       chasePair=closest?(closestName+" ("+closestRec+")"+(nextName?" and "+nextName+" ("+nextRec+")":"")):"the field",
@@ -966,38 +968,38 @@ function w2DivisionBoardTake(flags,reporter,subject){
     switch(String(y.d).toUpperCase()){
       case "AFC EAST":
         context=leaders.length===1
-          ?leaderNames+" owns the early edge at "+y.record+", but "+chasePair+" "+chaseVerb+" the chase tight enough that nobody gets a velvet rope yet."+midaNote+titleNote
+          ?leadOne+" "+w2TeamVerb(leadOne,"owns","own")+" the early edge at "+y.record+", but "+chasePair+" "+chaseVerb+" the chase tight enough that nobody gets a velvet rope yet."+midaNote+titleNote
           :leaderNames+" share the top at "+y.record+", while "+chasePair+" is close enough to turn one ordinary Sunday into a three-team argument."+midaNote+titleNote;
         break;
       case "AFC NORTH":
         context=leaders.length>1
           ?leaderNames+" are level at "+y.record+", which means neither has bought even a week of separation. "+closestName+" ("+closestRec+") is the first team waiting for one of them to blink."+midaNote+titleNote
-          :leaderNames+" has the cleanest record at "+y.record+", but "+chasePair+" keeps this from becoming a solo act."+midaNote+titleNote;
+          :leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the cleanest record at "+y.record+", but "+chasePair+" keeps this from becoming a solo act."+midaNote+titleNote;
         break;
       case "AFC SOUTH":
-        context=leaderNames+" sits on "+y.record+" while "+chasePair+" "+(chasePlural?"form":"forms")+" the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
+        context=leadOne+" "+w2TeamVerb(leadOne,"sits","sit")+" on "+y.record+" while "+chasePair+" "+(chasePlural?"form":"forms")+" the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
         break;
       case "AFC WEST":
-        context=leaderNames+" has the best record at "+y.record+"; "+chasePair+" "+chaseBe+" the immediate chase, and the bottom of the division is already spending September trying not to turn two losses into a season-long tax."+midaNote+titleNote;
+        context=leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the best record at "+y.record+"; "+chasePair+" "+chaseBe+" the immediate chase, and the bottom of the division is already spending September trying not to turn two losses into a season-long tax."+midaNote+titleNote;
         break;
       case "NFC EAST":
         context=leaders.length>1
           ?leaderNames+" share "+y.record+" and therefore share the privilege of annoying everybody else. "+chasePair+" "+chaseHave+" no margin to donate in the chase while the top two keep matching receipts."+midaNote+titleNote
-          :leaderNames+" controls the early record at "+y.record+", with "+chasePair+" close enough to make the lead provisional rather than ceremonial."+midaNote+titleNote;
+          :leadOne+" "+w2TeamVerb(leadOne,"controls","control")+" the early record at "+y.record+", with "+chasePair+" close enough to make the lead provisional rather than ceremonial."+midaNote+titleNote;
         break;
       case "NFC NORTH":
         context=leaders.length>=3
           ?leaderNames+" are all "+y.record+", so the standings currently resemble three people trying to leave an elevator at once. "+closestName+" ("+closestRec+") is not far enough away to create meaningful separation."+midaNote+titleNote
-          :leaderNames+" holds the top line at "+y.record+", but "+chasePair+" keeps the race packed tightly enough that nobody can hide behind September."+midaNote+titleNote;
+          :(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"holds","hold"):leaderNames+" hold")+" the top line at "+y.record+", but "+chasePair+" keeps the race packed tightly enough that nobody can hide behind September."+midaNote+titleNote;
         break;
       case "NFC SOUTH":
-        context=leaderNames+" owns "+y.record+", with "+chasePair+" providing the nearest pressure. The gap is real but thin; one stumble turns the leader from front-runner into participant again."+midaNote+titleNote;
+        context=leadOne+" "+w2TeamVerb(leadOne,"owns","own")+" "+y.record+", with "+chasePair+" providing the nearest pressure. The gap is real but thin; one stumble turns the leader from front-runner into participant again."+midaNote+titleNote;
         break;
       case "NFC WEST":
-        context=leaderNames+" has banked "+y.record+", while "+chasePair+" "+chaseVerb+" the chase from becoming a postcard. The leader has daylight, not distance."+midaNote+titleNote;
+        context=leadOne+" "+w2TeamVerb(leadOne,"has","have")+" banked "+y.record+", while "+chasePair+" "+chaseVerb+" the chase from becoming a postcard. The leader has daylight, not distance."+midaNote+titleNote;
         break;
       default:
-        context=leaderNames+" leads at "+y.record+" with "+chasePair+" nearest."+midaNote+titleNote;
+        context=(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"leads","lead"):leaderNames+" lead")+" at "+y.record+" with "+chasePair+" nearest."+midaNote+titleNote;
     }
     return y.d+": "+leaderNames+" ("+y.record+") — "+context
   };

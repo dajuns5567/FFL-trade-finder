@@ -1052,28 +1052,28 @@ function w2RoadRead(t,r,next,later){
   const rid=String(r?.id||""),a=w2Alias(t),rest=w2Natural(later.map(x=>x.team_name)),first=later[0]?.team_name||"the following opponent",v=w2Cohort(t)%4;
   const rows={
     "walter-mercer":[
-      "After "+next+", "+a.mascot+" see "+rest+". Bank Week 3 and "+first+" becomes a chance to build; drop it and the same opponent becomes an early recovery assignment.",
-      next+" comes before "+rest+". A win gives "+t.team_name+" room to evaluate the following stretch calmly; a loss makes "+first+" carry immediate repair pressure.",
-      "The road beyond "+next+" runs through "+rest+". Winning first lets the "+a.mascot+" attack that sequence from strength; losing first makes "+first+" matter sooner than anyone planned.",
-      "The next three names are "+next+", then "+rest+". For "+a.mascot+", Week 3 decides whether "+first+" arrives as an opportunity or an obligation."
+      "After "+next+", "+a.mascot+" see "+rest+". Bank Week 3 and "+first+" becomes a chance to build; drop it and the same opponent becomes an early recovery assignment. That sequence makes the next result more valuable than any isolated projection.",
+      next+" comes before "+rest+". A win gives "+t.team_name+" room to evaluate the following stretch calmly; a loss makes "+first+" carry immediate repair pressure. The practical difference is whether the later games begin from strength or from urgency.",
+      "The road beyond "+next+" runs through "+rest+". Winning first lets the "+a.mascot+" attack that sequence from strength; losing first makes "+first+" matter sooner than anyone planned. Week 3 therefore changes the meaning of the games behind it, not just the record in front of them.",
+      "The next three names are "+next+", then "+rest+". For "+a.mascot+", Week 3 decides whether "+first+" arrives as an opportunity or an obligation. That is why the first game in the sequence deserves more attention than the softer names behind it."
     ],
     "tess-delaney":[
-      "After "+next+", the guest list reads "+rest+". Win the first appointment and "+first+" can arrive without emergency seating; lose it and the room starts rearranging itself.",
-      next+" enters before "+rest+". A pleasant Week 3 leaves the "+a.mascot+" enough room to host "+first+" calmly; a loss makes the next reservation considerably less civilized.",
-      "The schedule after "+next+" brings "+rest+". The "+a.mascot+" can keep the good china out with a win, or start counting chairs nervously before "+first+" with a loss.",
-      "Beyond "+next+", "+rest+" are waiting. One win keeps the room composed; one loss turns "+first+" into the sort of appointment nobody enjoys pretending is casual."
+      "After "+next+", the guest list reads "+rest+". Win the first appointment and "+first+" can arrive without emergency seating; lose it and the room starts rearranging itself. The schedule looks much more elegant when Week 3 does not leave the table wobbling.",
+      next+" enters before "+rest+". A pleasant Week 3 leaves the "+a.mascot+" enough room to host "+first+" calmly; a loss makes the next reservation considerably less civilized. One result decides whether the later stretch feels luxurious or necessary.",
+      "The schedule after "+next+" brings "+rest+". The "+a.mascot+" can keep the good china out with a win, or start counting chairs nervously before "+first+" with a loss. Week 3 sets the tone for every appointment that follows it.",
+      "Beyond "+next+", "+rest+" are waiting. One win keeps the room composed; one loss turns "+first+" into the sort of appointment nobody enjoys pretending is casual. The first result decides whether the later games feel like opportunities or obligations."
     ],
     "mack-hollis":[
-      "After "+next+" come "+rest+". Win Week 3 and "+first+" is another target; lose it and "+first+" becomes the first fire alarm.",
-      next+" is the first punch, then "+rest+" follow. The "+a.mascot+" can make that stretch look fun with a win or make "+first+" feel mandatory with a loss.",
-      "The next stretch runs "+next+", then "+rest+". Beat the first team and the noise stays fun; lose and the crowd starts treating "+first+" like a rescue mission.",
-      "Week 3 starts with "+next+" before "+rest+". Win it and the "+a.mascot+" get to attack; lose it and "+first+" shows up carrying everybody’s panic."
+      "After "+next+" come "+rest+". Win Week 3 and "+first+" is another target; lose it and "+first+" becomes the first fire alarm. One Sunday decides whether the next stretch sounds like momentum or an emergency broadcast.",
+      next+" is the first punch, then "+rest+" follow. The "+a.mascot+" can make that stretch look fun with a win or make "+first+" feel mandatory with a loss. Week 3 is the volume knob for everything behind it.",
+      "The next stretch runs "+next+", then "+rest+". Beat the first team and the noise stays fun; lose and the crowd starts treating "+first+" like a rescue mission. That is how one result turns a schedule into either runway or rubble.",
+      "Week 3 starts with "+next+" before "+rest+". Win it and the "+a.mascot+" get to attack; lose it and "+first+" shows up carrying everybody’s panic. The rest of the road changes personality based on what happens first."
     ],
     "nora-voss":[
-      "After "+next+", the rivals on deck are "+rest+". A Week 3 win makes "+first+" another chance to brag; a loss gives that matchup considerably sharper teeth.",
-      next+" comes first, with "+rest+" behind it. Win now and rivals have to wait; lose and "+first+" gets handed a ready-made pressure joke.",
-      "The road beyond "+next+" includes "+rest+". The "+a.mascot+" can make rivals chase them with a win, or hand "+first+" an easy storyline by losing first.",
-      "The sequence is "+next+", then "+rest+". Beat "+next+" and the next rival has less material; lose and "+first+" arrives with the joke half-written."
+      "After "+next+", the rivals on deck are "+rest+". A Week 3 win makes "+first+" another chance to brag; a loss gives that matchup considerably sharper teeth. Rivals know the difference between chasing a winner and kicking a team already wobbling.",
+      next+" comes first, with "+rest+" behind it. Win now and rivals have to wait; lose and "+first+" gets handed a ready-made pressure joke. Week 3 decides which side of that joke the "+a.mascot+" occupy.",
+      "The road beyond "+next+" includes "+rest+". The "+a.mascot+" can make rivals chase them with a win, or hand "+first+" an easy storyline by losing first. One result decides whether the later schedule supplies swagger or ammunition.",
+      "The sequence is "+next+", then "+rest+". Beat "+next+" and the next rival has less material; lose and "+first+" arrives with the joke half-written. Week 3 decides whether the rest of the road is a rebuttal or a setup."
     ]
   };
   return (rows[rid]||rows["walter-mercer"])[v]

@@ -58,11 +58,11 @@ function namesMentioned(text,names){
   return names.filter(n=>n&&String(text||'').toLowerCase().includes(n.toLowerCase()));
 }
 function humorSignals(text){
-  const re=/\b(?:joke|punchline|punch line|panic|riot|riots|fire alarm|flowers|good china|coat check|furniture|wine|bill|table|lunch money|trash|hostage|siren|megaphone|heckl\w*|swagger|chaos|ridiculous|roast|meltdown|circus|funeral|parade|therapy|crime scene|alarm|mess|brag|chirp\w*|yell\w*|scream\w*|wet matches|folding chairs|gift-wrapped|weaponize|insufferable)\b/gi;
+  const re=/\b(?:joke|punchline|punch line|panic|riot|riots|pitchfork|fire alarm|flowers|good china|coat check|furniture|wine|bill|table|lunch money|trash|hostage|siren|megaphone|heckl\w*|swagger|chaos|ridiculous|roast|meltdown|circus|funeral|parade|therapy|crime scene|alarm|mess|brag|chirp\w*|yell\w*|scream\w*|caps lock|group chat|meme\w*|receipts?|wet matches|folding chairs|gift-wrapped|weaponize|insufferable)\b/gi;
   return countMatches(text,re);
 }
 function behaviorSignals(text){
-  const re=/\b(?:riot\w*|pitchfork\w*|torch\w*|boo\w*|chant\w*|call-in|lineup screenshot\w*|meme\w*|parade\w*|jersey\w*|waiver\w*|bench\w*|panic\w*|meltdown\w*|celebrat\w*|tailgate\w*|group chat\w*|petition\w*|applau\w*|cheer\w*|heckl\w*|rage\w*|copium|swagger|grumbl\w*|demand\w*|argument\w*|yell\w*|chirp\w*|roast\w*|funeral\w*|therapy|boycott\w*|burn\w*|storm\w*|mob\w*|revolt\w*)\b/gi;
+  const re=/\b(?:riot\w*|pitchfork\w*|torch\w*|boo\w*|chant\w*|call-in|lineup screenshot\w*|lineup poll\w*|meme\w*|receipt\w*|parade\w*|jersey\w*|waiver\w*|bench\w*|panic\w*|siren\w*|meltdown\w*|celebrat\w*|tailgate\w*|group chat\w*|emergency meeting\w*|petition\w*|applau\w*|cheer\w*|heckl\w*|rage\w*|copium|swagger|grumbl\w*|demand\w*|argument\w*|yell\w*|chirp\w*|roast\w*|funeral\w*|therapy|boycott\w*|burn\w*|storm\w*|mob\w*|revolt\w*)\b/gi;
   return countMatches(text,re);
 }
 function contextSignals(text){
@@ -150,7 +150,7 @@ function auditTeam(t){
   const defenseBad=copy.match(/\b(?:started|starting|start)\s+(?:a|the|your)?\s*(?:team\s+)?defen[cs]e\b|\bD\/?ST\b|\bteam defen[cs]e\b/gi)||[];
   if(defenseBad.length)add('FAIL','league-format-team-defense','Team-defense language conflicts with this league, which starts IDPs rather than a team defense.',defenseBad.join(' | '));
 
-  const metaRe=/\b(?:a useful NFL role without a complete stat line|complete stat line|stat line|fantasy volume|current leader|player-level scoring benchmark|invent(?:ing)? a matchup-specific story|on the page|context available|data is unavailable)\b/gi;
+  const metaRe=/\b(?:a useful NFL role without a complete stat line|without a complete stat line|complete player-level scoring benchmark|player-level scoring benchmark|invent(?:ing)? a matchup-specific story|context available|data is unavailable|historical player snapshot unavailable|overall value exchanged:\s*n\/a)\b/gi;
   const meta=copy.match(metaRe)||[];
   if(meta.length)add('FAIL','meta-writing-language','Article contains prose about missing data/writing mechanics instead of football commentary.',[...new Set(meta)].join(' | '));
 
@@ -179,10 +179,20 @@ function auditTeam(t){
     const tradeCopy=(trade?.paragraphs||[]).join(' ');
     const obvious=/\b(?:future side|parked in draft capital|cannot score now|deferred draft capital|used in a future draft or moved|current roster value|operating on different timelines|those are the actual terms)\b/i;
     if(obvious.test(tradeCopy))add('WARN','trade-obvious-explainer','Trade commentary spends space stating obvious mechanics instead of evaluating the deal.',tradeCopy);
-    const facts=(t?.trade_history||[]).flatMap(tr=>recursiveNumericFacts(tr));
-    const hasValueOpinion=/\b(?:fleec\w*|won the trade|lost the trade|value points?|value edge|surplus|deficit|overpaid|underpaid|robbed|stole|gave away)\b/i.test(tradeCopy);
+    const applicable=(t?.trade_history||[]).filter(tr=>(tr?.sides||[]).length>=2&&(tr.sides||[]).every(side=>{
+      const players=(side?.player_ids||[]),picks=(side?.picks||[]);
+      return (players.length===0||side?.then_players_complete===true)&&(picks.length===0||side?.then_picks_complete===true)&&
+        Number.isFinite((Number(side?.then_player_total)||0)+(Number(side?.then_pick_total)||0));
+    }));
+    const facts=applicable.flatMap(tr=>(tr?.sides||[]).map(side=>({
+      roster_id:side.roster_id,
+      then_player_total:Number(side?.then_player_total)||0,
+      then_pick_total:Number(side?.then_pick_total)||0,
+      total:(Number(side?.then_player_total)||0)+(Number(side?.then_pick_total)||0)
+    })));
+    const hasValueOpinion=/\b(?:fleec\w*|won the trade|lost the trade|value points?|value edge|surplus|deficit|overpaid|underpaid|robbed|stole|gave away|priced almost even|fit bet)\b/i.test(tradeCopy);
     const numericValue=/\b\d+(?:\.\d+)?\s+(?:value\s+)?points?\b/i.test(tradeCopy);
-    if(facts.length&&!hasValueOpinion&&!numericValue)add('FAIL','trade-value-not-used','Numeric trade/value context exists in the trade object, but the reporter does not evaluate who gained/lost value.',JSON.stringify(facts.slice(0,12)));
+    if(facts.length&&!hasValueOpinion&&!numericValue)add('FAIL','trade-value-not-used','Historical all-asset trade values are complete, but the reporter does not evaluate who gained/lost value.',JSON.stringify(facts.slice(0,12)));
   }
 
   const articleHumor=humorSignals(copy),articleWords=wordCount(copy);

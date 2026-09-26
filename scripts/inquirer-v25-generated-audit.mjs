@@ -110,7 +110,7 @@ for(const t of d.teams||[]){
     const prior=Number(p?.prior_season_avg),pts=Number(p?.points),games=Number(p?.prior_season_games)||0;
     if(!Number.isFinite(prior)||prior<=0||!Number.isFinite(pts)||games<6||Math.abs(pts-prior)<Math.max(4,prior*.3))continue;
     historicalContextExpected++;
-    const pname=String(p.name||''),lowerBody=body.toLowerCase(),lowerName=pname.toLowerCase(),positions=[];let from=0,hit=-1;while((hit=lowerBody.indexOf(lowerName,from))>=0){positions.push(hit);from=hit+Math.max(1,lowerName.length)}if(positions.some(pos=>/\b(?:2025|last season)\b/i.test(body.slice(Math.max(0,pos-320),Math.min(body.length,pos+pname.length+320)))))historicalContextFound++;
+    const pname=String(p.name||''),paragraphs=(t?.inquirer_article?.paragraphs||[]).map(String);if(paragraphs.some(paragraph=>paragraph.includes(pname)&&/\b(?:2025|last season)\b/i.test(paragraph)))historicalContextFound++;
   }
 }
 assert.equal(historicalContextFound,historicalContextExpected,'Every materially unusual top-three Week 2 player with a valid 2025 baseline must receive historical-average context; expected '+historicalContextExpected+', found '+historicalContextFound);

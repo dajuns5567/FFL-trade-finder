@@ -1,0 +1,29 @@
+name: Temporary Week 2 final checks
+
+on:
+  push:
+    branches:
+      - inquirer-editorial-depth-r5
+    paths:
+      - '.github/workflows/temp-final-week2-checks.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-week2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: inquirer-editorial-depth-r5
+          fetch-depth: 0
+      - name: Verify frozen Week 1 preload
+        run: |
+          git fetch origin main
+          git diff origin/main...HEAD -- netlify/functions/inquirer-week1-2026-preload.mjs
+          test -z "$(git diff origin/main...HEAD -- netlify/functions/inquirer-week1-2026-preload.mjs)"
+          echo "Week 1 preload diff: clean"
+      - name: Run preload smoke test
+        run: node scripts/inquirer-preload-smoke-test.mjs

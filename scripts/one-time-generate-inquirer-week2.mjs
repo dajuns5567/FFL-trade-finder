@@ -594,7 +594,7 @@ function w2HistoricalColor(p,r,t=null,slot=0){
   const rows={
     "walter-mercer":up?[
       p.name+" averaged "+old+" fantasy points in "+year+"; "+now+" this week is enough of a jump to make that old baseline worth reopening.",
-      "A year ago, "+p.name+" lived at "+old+" per game; Week 2 reached "+now+", which is a real departure from the established level.",
+      "In "+year+", "+p.name+" lived at "+old+" per game; Week 2 reached "+now+", which is a real departure from the established level.",
       "The "+year+" book on "+p.name+" says "+old+" per game, while this Sunday says "+now+"; that is a spike worth remembering before anybody calls it normal.",
       p.name+" came out of "+year+" with a "+old+"-point average; a "+now+"-point Week 2 moved far enough above it to earn a second look next Sunday.",
       "Last season’s average for "+p.name+" was "+old+"; this week’s "+now+" cleared that bar by enough that the role deserves fresh attention.",
@@ -603,7 +603,7 @@ function w2HistoricalColor(p,r,t=null,slot=0){
       "The prior-season marker for "+p.name+" was "+old+" per game in "+year+"; "+now+" this week put genuine daylight between the old expectation and Sunday."
     ]:[
       p.name+" averaged "+old+" fantasy points in "+year+"; "+now+" this week fell far enough below that baseline to deserve attention.",
-      "A year ago, "+p.name+" lived at "+old+" per game; Week 2 stopped at "+now+", which is a real miss against the established level.",
+      "In "+year+", "+p.name+" lived at "+old+" per game; Week 2 stopped at "+now+", which is a real miss against the established level.",
       "The "+year+" book on "+p.name+" says "+old+" per game, while this Sunday says "+now+"; that drop is too large to wave away as routine noise.",
       p.name+" came out of "+year+" with a "+old+"-point average; a "+now+"-point Week 2 landed far enough below it to make the next usage report interesting.",
       "Last season’s average for "+p.name+" was "+old+"; this week’s "+now+" missed that bar by enough that the quiet Sunday deserves its own note.",
@@ -618,7 +618,7 @@ function w2HistoricalColor(p,r,t=null,slot=0){
       p.name+" spent last season around "+old+" a game, and "+now+" this week was the statistical equivalent of arriving in evening wear to brunch.",
       "A "+old+" average followed "+p.name+" out of "+year+"; Week 2’s "+now+" was not subtle, tasteful, or remotely interested in matching it.",
       p.name+" carried a "+year+" baseline of "+old+"; Sunday answered with "+now+", and suddenly the centerpiece needed more room.",
-      "Last year’s usual serving for "+p.name+" was "+old+" points; Week 2 brought "+now+" and asked whether anyone had ordered the larger platter.",
+      "The "+year+" usual serving for "+p.name+" was "+old+" points; Week 2 brought "+now+" and asked whether anyone had ordered the larger platter.",
       "The old average beside "+p.name+" was "+old+" in "+year+"; a "+now+"-point Week 2 turned that baseline into background décor."
     ]:[
       "Last season, "+p.name+" averaged "+old+"; Week 2 offered "+now+", which is less a variation than a missing course.",
@@ -627,7 +627,7 @@ function w2HistoricalColor(p,r,t=null,slot=0){
       p.name+" spent last season around "+old+" a game, and "+now+" this week was the statistical equivalent of leaving before the entrée.",
       "A "+old+" average followed "+p.name+" out of "+year+"; Week 2’s "+now+" made that old standard look rather painfully well-fed.",
       p.name+" carried a "+year+" baseline of "+old+"; Sunday answered with "+now+", and no amount of good china makes the portion larger.",
-      "Last year’s usual serving for "+p.name+" was "+old+" points; Week 2 brought "+now+" and left everyone staring at the empty side of the plate.",
+      "The "+year+" usual serving for "+p.name+" was "+old+" points; Week 2 brought "+now+" and left everyone staring at the empty side of the plate.",
       "The old average beside "+p.name+" was "+old+" in "+year+"; a "+now+"-point Week 2 made the baseline feel less like décor and more like a complaint."
     ],
     "mack-hollis":up?[

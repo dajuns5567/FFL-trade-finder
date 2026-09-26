@@ -1662,7 +1662,7 @@ function w2ClosingRead(t,r,won,margin,top,weak,next){
     rows={
       "walter-mercer":{
         unbeaten:team+" takes a 2-0 record into "+foe+". Week 3 is about proving the first two wins can survive a new opponent without leaning on the same explanation.",
-        winless:team+" goes to "+foe+" at 0-2. The Week 2 weakness has to be corrected before the standings gap widens and panic starts filling out the lineup card in permanent marker.",
+        winless:team+" goes to "+foe+" at 0-2. For "+team+", the Week 2 weakness has to be corrected before the standings gap widens and panic starts filling out the lineup card in permanent marker.",
         close:"After a "+w2One(margin)+"-point decision, "+team+" meets "+foe+" with very little separating a reassuring trend from another week of second-guessing.",
         win:"The Week 2 win moves "+team+" to "+rec+" before "+foe+". The next test is whether the lineup can keep the useful production and trim the quiet spots.",
         loss:"The loss leaves "+team+" at "+rec+" with "+foe+" next. Week 3 needs a roster response to the weakness Sunday already identified."
@@ -1810,8 +1810,54 @@ function w2ColumnColorRead(t,r,top,weak,won,opp){
       "Rivals cannot honestly complain about "+star+". They can, however, point at "+weakName+" and "+weakPts+" until somebody in "+team+" confiscates the laser pointer."
     ]
   };
-  const body=(rows[rid]||rows["walter-mercer"])[v];
-  return body+" "+(won?"Winning makes that imbalance easier to laugh at; it does not make it disappear.":"Losing makes the weak spot considerably less charming.")
+  const body=(rows[rid]||rows["walter-mercer"])[v],
+    tails={
+      "walter-mercer":won?[
+        "For "+team+", winning makes the imbalance easier to tolerate; it does not make "+weakName+" disappear.",
+        team+" gets the win and therefore the luxury of laughing first. "+weakName+" still has to answer the same Monday question.",
+        "The standings give "+team+" the good news. "+weakName+" keeps the lineup review from becoming a victory parade.",
+        team+" can celebrate the result without pretending "+weakName+" suddenly became decorative."
+      ]:[
+        "For "+team+", losing removes the polite version of the conversation around "+weakName+".",
+        team+" did not get the result, so "+weakName+" loses the protection a win would have provided.",
+        "The loss makes "+weakName+" harder for "+team+" to file under harmless noise.",
+        team+" has less room to laugh this off after a loss; "+weakName+" stays on the repair list."
+      ],
+      "tess-delaney":won?[
+        "The win lets "+team+" keep dessert on the table. "+weakName+" still gets the crooked chair.",
+        team+" may toast the result; "+weakName+" remains the place setting everyone notices after the glasses come down.",
+        "Victory keeps the room pleasant for "+team+", but "+weakName+" is still the stain the tablecloth cannot negotiate with.",
+        team+" gets to enjoy the evening. "+weakName+" still has a reservation with the seating chart."
+      ]:[
+        "A loss gives "+team+" considerably less reason to pretend "+weakName+" is tasteful background noise.",
+        team+" leaves without the result, which makes "+weakName+" the chair nobody can politely ignore.",
+        "The room is less forgiving after a loss; "+weakName+" becomes part of the bill "+team+" actually has to pay.",
+        team+" cannot hide "+weakName+" behind good manners after losing."
+      ],
+      "mack-hollis":won?[
+        team+" won, so the fire alarm gets one night off. "+weakName+" still smells like smoke.",
+        "The win keeps "+team+" from calling the electrician tonight. "+weakName+" is still the outlet making sparks.",
+        team+" gets the scoreboard and the victory song; "+weakName+" still gets the maintenance ticket.",
+        "Winning keeps the speakers loud enough for "+team+". "+weakName+" is still the cable somebody has to replace."
+      ]:[
+        team+" lost, so nobody gets to call "+weakName+" a harmless sound effect.",
+        "The loss turns "+weakName+" from background noise into a siren "+team+" actually has to answer.",
+        team+" did not win, which means "+weakName+" has officially lost the right to be a funny little glitch.",
+        "After a loss, "+team+" cannot keep pretending "+weakName+" is merely where the volume dipped."
+      ],
+      "nora-voss":won?[
+        team+" gets the win and the rival-chat receipt. "+weakName+" still gets quoted in the replies.",
+        "Victory lets "+team+" talk first; "+weakName+" gives rivals one annoying comeback anyway.",
+        team+" owns the result. "+weakName+" remains the screenshot rivals refuse to delete.",
+        "The win narrows the rival joke inventory around "+team+". "+weakName+" keeps one shelf stocked."
+      ]:[
+        team+" lost, so rivals do not need permission to keep circling "+weakName+".",
+        "The loss hands rivals the microphone, and "+weakName+" is the first name they are reading into it.",
+        team+" has no victory receipt to wave back, which makes "+weakName+" an especially easy reply.",
+        "Losing keeps the rival joke alive; "+weakName+" is where "+team+" supplied the setup."
+      ]
+    };
+  return body+" "+(tails[rid]||tails["walter-mercer"])[v]
 }
 
 function w2BuildSections(t,prev){

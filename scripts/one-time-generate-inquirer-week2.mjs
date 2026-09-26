@@ -1144,6 +1144,32 @@ function w2ClosingRead(t,r,won,margin,top,weak,next){
     };
   return (rows[rid]||rows["walter-mercer"])[key]
 }
+function w2PerformanceDepthRead(t,r,top,weak,won,margin){
+  const rid=String(r?.id||""),a=w2Alias(t),star=top?.[0]?.name||"the top scorer",support=top?.[1]?.name||"the next-best starter",
+    low=weak?.name||"the quiet end of the lineup",tight=margin<=6,wide=margin>=20;
+  if(rid==="tess-delaney")return "For the "+a.mascot+", "+star+" was the centerpiece, but the table was not only one setting: "+support+" gave the lineup another useful place to lean while "+low+" marked the part that still looked unfinished. "+(won?(tight?"Escaping a close game makes that weak setting worth fixing before it costs the next dinner.":"The win lets the room enjoy the centerpiece without pretending every chair was equally convincing."):(tight?"A narrow loss makes the quiet setting feel expensive because one ordinary contribution could have changed the room.":"The loss turns the quiet setting into a roster concern instead of a decorative flaw."));
+  if(rid==="mack-hollis")return "The "+a.mascot+" headline belongs to "+star+", but do not skip the rest of the page: "+support+" helped keep the scoring alive, and "+low+" is the name that drags the conversation back toward the bottom of the lineup. "+(won?(wide?"A blowout can hide a bad starter for a week; it should not buy that spot permanent immunity.":"Winning buys a little patience, not permission to ignore the weak spot."):(tight?"In a close loss, that low-output slot is the sort of thing everybody circles on Monday morning.":"When the scoreboard already says loss, the weakest starter becomes a correction, not background noise."));
+  if(rid==="nora-voss")return "Rivals will start with "+star+" because that is the obvious headline for the "+a.mascot+", but "+support+" matters to the counterargument and "+low+" is where the pressure lands. "+(won?(tight?"A narrow win keeps the joke away for now, yet one soft lineup spot is still available to attack next week.":"The result protects the roster from a full roast, not from questions about the starter who gave the least."):(tight?"A close loss makes the weakest starter an easy punch line precisely because the margin left so little room to waste.":"The loss gives rivals material, and the quiet starter gives them a specific place to aim it."));
+  return "The "+a.mascot+" Week 2 takeaway should not stop at "+star+" as the headline performer. "+support+" supplied another usable piece, while "+low+" identifies the starter spot that most needs context before Week 3. "+(won?(tight?"Because the win was close, the low-output position still matters to the result even though it did not overturn it.":"Because the team won, management can address that weak spot without confusing correction with panic."):(tight?"Because the loss was close, an ordinary improvement at the low end could have changed the shape of the matchup.":"Because the team lost, the contrast between the reliable names and the quiet starter becomes the clearest roster lesson."));
+}
+function w2ManagementDepthRead(t,r,weak,next){
+  const rid=String(r?.id||""),a=w2Alias(t),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(next||t.next_opponent_name||"the Week 3 opponent"),
+    moves=w2TransactionMoveDetails(t),move=moves[0]||null,hasPick=move&&/\bpick\b/i.test(move),low=weak?.name||"the weakest starter",
+    miss=t.best_lineup_miss,reserve=miss?.reserve?.name,starter=miss?.starter?.name;
+  const decision=reserve&&starter?reserve+" remaining behind "+starter+" gives management a real lineup alternative to revisit":low+" still defines the clearest low-output starting spot";
+  if(rid==="tess-delaney")return move
+    ? t.manager_name+" "+move+"; for the "+a.mascot+", the transaction belongs beside the Week 3 seating plan rather than in a victory lap. "+(hasPick?"Any draft capital in that deal lives on a later timetable and cannot repair Sunday’s starting table by itself.":decision+" before "+foe+" enters the room.")
+    : "With no completed Week 2 move to rearrange the guest list, the "+a.mascot+" management story stays with the chairs already occupied. "+decision+"; before "+foe+" arrives, the practical choice is whether to change that seat or trust the same starter to answer.";
+  if(rid==="mack-hollis")return move
+    ? t.manager_name+" "+move+"; now the "+a.mascot+" need the roster change to solve an actual football problem instead of merely winning transaction-day applause. "+(hasPick?"Future draft capital belongs to a later headline, so Week 3 still has to be handled by the players available now.":decision+" with "+foe+" coming next.")
+    : "No Week 2 transaction is coming to rescue the "+a.mascot+" from the lineup they already own. "+decision+", and that puts the Week 3 management pressure on a start/sit choice rather than another count of moves when "+foe+" shows up.";
+  if(rid==="nora-voss")return move
+    ? t.manager_name+" "+move+"; rivals can joke about the transaction only after separating what can help now from what belongs to the future. "+(hasPick?"The pick portion is optionality, not a Sunday scorer, so it cannot be used as an excuse for the current lineup.":decision+" before the "+foe+" matchup gives the move a practical next test.")
+    : "The "+a.mascot+" did not alter the roster during Week 2, so rivals do not get to blame a phantom transaction for this result. "+decision+"; the sharper management story is what "+t.manager_name+" does with that choice before "+foe+".";
+  return move
+    ? t.manager_name+" "+move+"; for "+team+", the value of that decision is tied to the roster problem it was meant to address, not to the fact that a transaction occurred. "+(hasPick?"Draft capital in the return is deferred value and cannot be graded from Week 2 scoring.":decision+" as "+foe+" approaches.")
+    : "Because "+team+" made no completed Week 2 roster move, management has to work from the lineup already in place rather than crediting an acquisition that never happened. "+decision+"; the Week 3 test against "+foe+" is whether the existing roster can correct that spot through selection or performance.";
+}
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,
     prevWon=prev?Number(prev.points)>Number(prev.opponent_points):null,prevOpp=w2DisplayTeam(prev?.opponent_name||"last week’s opponent"),prevScore=prev?w2One(prev.points)+"–"+w2One(prev.opponent_points):null,top=(t.starter_details||[]).slice(0,3),opp=t.opponent_name||"the opponent";
@@ -1174,10 +1200,13 @@ function w2BuildSections(t,prev){
   }
 
   players.push(...w2IdentityRead(t,prev,r,top,opp));
+  const weakDepth=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0];
+  players.push(w2S(t,r,"player-meaning",w2PerformanceDepthRead(t,r,top,weakDepth,won,margin)));
   const miss=t.best_lineup_miss,gap=Number(miss?.gap)||0;
   const management=[
     w2S(t,r,"mgmt-one",miss&&gap>0?w2BenchRead(t,r,miss,gap,won,margin):(t.manager_name+" did not leave an obvious higher-scoring bench answer in a compatible spot, so the Week 2 review belongs on the players who actually had the matchup rather than a fantasy-perfect lineup that never existed.")),
-    w2S(t,r,"mgmt-two",w2ManagementMoveRead(t,r,won,margin))
+    w2S(t,r,"mgmt-two",w2ManagementMoveRead(t,r,won,margin)),
+    w2S(t,r,"mgmt-meaning",w2ManagementDepthRead(t,r,weakDepth,t.next_opponent_name))
   ];
   const v=t.value_history_week,d=Number(v?.delta),pct=Math.abs(Number(v?.pct)),showMarket=Number.isFinite(d)&&(Number.isFinite(pct)?pct>=3:Math.abs(d)>=1500),value=showMarket?[
     w2S(t,r,"value-one",Number.isFinite(pct)&&pct<1

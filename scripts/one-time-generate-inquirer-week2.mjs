@@ -1117,6 +1117,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     else if(g.upset)turn=(wStar?wStar.name+" gave the underdog "+w2One(wStar.points)+" at the top of the lineup. ":"")+(lWeak&&Number(lWeak.points)<6?lWeak.name+" answered with only "+w2One(lWeak.points)+" at the quiet end for "+lName+", and a favorite cannot waste that many ordinary points in an upset.":"The favorite had the projection edge, but "+wName+" got the useful scores when the games actually counted.");
     else if(knife)turn=(wStar?wStar.name+" led "+wName+" with "+w2One(wStar.points)+", while ":"")+(lStar?lStar.name+" answered with "+w2One(lStar.points)+" for "+lName+". ":"")+"Neither star settled it alone; the margin stayed small enough for the ordinary lineup spots to decide the newspaper headline.";
     else turn=(wStar?wStar.name+" supplied "+w2One(wStar.points)+" for "+wName+". ":"")+(lStar?lStar.name+" gave "+lName+" "+w2One(lStar.points)+", but ":"")+"the winning lineup found the better collection of usable scores around its headline player.";
+    if(i===0)turn=(wStar?.name||wName)+" was the true centerpiece, but the matchup consequence was bigger than one fantasy total. "+turn;
     paras.push(w2S(w,r,"recap-turn-"+i,turn));
     let column;
     if(shootout)column=lName+" scored "+w2One(l.points)+" and still lost. That is a wasted big Sunday, not a collapse, and "+wName+" earns the stronger conclusion: it survived an opponent at full volume and still had one more haymaker.";

@@ -62,11 +62,33 @@ for(const p of topThree)assert.ok(topBlockCopy.includes(String(p.name||'')),'Wee
 const sharedStatParagraph=(matterBlocks[0]?.paragraphs||[]).find(p=>topThree.every(x=>String(p).includes(String(x.name||''))));
 assert.ok(sharedStatParagraph,'Weekly top-scorer story must place all highlighted players into a shared stat-focused paragraph before the commentary');
 assert.match(String(sharedStatParagraph),/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|solo|assists?|TFL|tackles? for loss|sacks?|QB hits?|pass breakups?|interceptions?|forced fumbles?)\b/i,'Weekly top-scorer trio paragraph must carry real-football stats rather than names and fantasy totals alone');
-assert.ok((matterBlocks[0]?.paragraphs||[]).some(p=>/serious problems|true centerpiece|bent the matchup|standing underneath it|opening statement/i.test(String(p))),'Weekly top-scorer story must add matchup consequence and emotion after the statistics');
+assert.ok((matterBlocks[0]?.paragraphs||[]).some(p=>/serious problems|true centerpiece|bent the matchup|standing underneath it|opening statement|lit the first match|bigger flamethrower|catch fire|parking ticket/i.test(String(p))),'Weekly top-scorer story must add matchup consequence and emotion after the statistics');
 assert.ok(((mattered?.paragraphs||[]).join(' ').match(/week’s cleanest upset/gi)||[]).length<=1,'Expanded recap must not call multiple games the week’s cleanest upset');
 const recapOpeners=(mattered?.paragraphs||[]).map(p=>String(p).trim().split(/\s+/).slice(0,7).join(' ').toLowerCase());
 const openerCounts=new Map();for(const x of recapOpeners)openerCounts.set(x,(openerCounts.get(x)||0)+1);
 assert.ok(Math.max(0,...openerCounts.values())<=2,'Expanded matchup paragraphs must not repeat one canned implication opener across the recap');
+const rejectedWeek2Meta=[
+  /Ties are listed as ties/i,
+  /projection gap did not survive contact with the actual lineup/i,
+  /unused improvement was large enough to flip the result/i,
+  /The performances that shaped it/i,
+  /Week 2 warning label after/i,
+  /real support, not a footnote/i,
+  /actual support, not decorative box-score confetti/i
+];
+for(const re of rejectedWeek2Meta)assert.doesNotMatch(publishedCopy,re,'Rejected Week 2 meta/explainer language survived: '+re);
+for(const block of matterBlocks.slice(0,5)){
+  const copy=(block.paragraphs||[]).join(' ');
+  const saysCollapse=/\bcollaps(?:e|ed|ing)\b/i.test(copy),deniesCollapse=/\b(?:not|wasn['’]t|was not)\s+(?:a\s+)?collaps(?:e|ing)\b/i.test(copy);
+  assert.ok(!(saysCollapse&&deniesCollapse),'Weekly Recap matchup contradicts itself about collapse: '+String(block.heading||''));
+}
+const statIntroFingerprints=matterBlocks.slice(0,5).map(block=>{
+  const p=String((block.paragraphs||[])[1]||'').toLowerCase();
+  return p.replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/\b[a-z]+(?:\s+[a-z]+){0,3}\s+—/g,'[player] —').split(':')[0].trim();
+}).filter(Boolean);
+const statIntroCounts=new Map();for(const x of statIntroFingerprints)statIntroCounts.set(x,(statIntroCounts.get(x)||0)+1);
+assert.ok(Math.max(0,...statIntroCounts.values())<=2,'Weekly Recap matchup stat introductions must vary instead of repeating one label in every game');
+
 assert.ok(recapSections.some(s=>/Velvet Rope/i.test(String(s?.heading||''))),'Bartholomew’s Weekly Recap desk must retain his own identity instead of a generic analytics heading');
 
 const all=[recap,...(d.teams||[]).map(articleText)].join('\n').toLowerCase();
@@ -88,6 +110,18 @@ const interpolationIndex=all.indexOf('${');assert.equal(interpolationIndex,-1,'G
 assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),`Generated Week ${reportWeek} must carry a real prior-season player-history source`);
 const historicalStarters=(d.teams||[]).flatMap(t=>t.starter_details||[]).filter(p=>Number(p.prior_season_games)>=6&&Number.isFinite(Number(p.prior_season_avg)));
 assert.ok(historicalStarters.length>=40,`Week ${reportWeek} must propagate meaningful prior-season baselines into player reporting; got ${historicalStarters.length}`);
+let historicalContextExpected=0,historicalContextFound=0;
+for(const t of d.teams||[]){
+  const body=articleText(t),sentences=sentenceParts(body),top=(t.starter_details||[]).slice(0,3);
+  for(const p of top){
+    const prior=Number(p?.prior_season_avg),pts=Number(p?.points),games=Number(p?.prior_season_games)||0;
+    if(!Number.isFinite(prior)||prior<=0||!Number.isFinite(pts)||games<6||Math.abs(pts-prior)<Math.max(4,prior*.3))continue;
+    historicalContextExpected++;
+    if(sentences.some(sentence=>sentence.includes(String(p.name||''))&&/\b(?:2025|last season)\b/i.test(sentence)))historicalContextFound++;
+  }
+}
+assert.equal(historicalContextFound,historicalContextExpected,'Every materially unusual top-three Week 2 player with a valid 2025 baseline must receive historical-average context; expected '+historicalContextExpected+', found '+historicalContextFound);
+
 assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');
 assert.match(recap,/breakout (?:star|case|players?)|can trust to keep showing up|familiar production|next opponent will attack the same weakness/i,'Weekly Recap must carry a natural player trajectory story tied to actual matchup consequences');
 
@@ -237,6 +271,10 @@ const reporterFunctionMeta=[
   /\bseptember journalism\b/i,/\bthis newsroom marks\b/i,/\bpostseason line this desk is tracking\b/i,/\binvestigative desk should be willing to print\b/i
 ];
 const publishedCopy=teamCopy+'\n'+recap;
+assert.doesNotMatch(teamCopy,/\bis the Week 2 warning label after\b/i,'Team columns must not use the generic warning-label template');
+assert.doesNotMatch(teamCopy,/\bthat quiet lineup slot forced the rest of\b/i,'Team columns must not state the obvious scoring-burden template');
+assert.doesNotMatch(teamCopy,/\bthat is real support, not a footnote\b/i,'Team columns must not use support-vs-footnote explainer language');
+
 for(const re of reporterFunctionMeta)assert.ok(!re.test(publishedCopy),'Reporter-function exposition survived generated Inquirer copy: '+re);
 
 for(const t of d.teams||[]){

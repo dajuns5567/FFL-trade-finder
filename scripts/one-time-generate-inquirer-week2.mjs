@@ -681,18 +681,18 @@ function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
       p.name+" supplied the third useful voice in the "+team+" lineup"
     ],
     "tess-delaney":[
-      won?p.name+" was the centerpiece and "+team+" finally gave it a suitable room:p.name+" brought the centerpiece to a "+team+" dinner that still ended badly",
-      won?p.name+" gave the "+a.mascot+" a second proper place setting:p.name+" provided respectable support while the "+a.mascot+" evening went sour",
+      won?p.name+" was the centerpiece and "+team+" finally gave it a suitable room":p.name+" brought the centerpiece to a "+team+" dinner that still ended badly",
+      won?p.name+" gave the "+a.mascot+" a second proper place setting":p.name+" provided respectable support while the "+a.mascot+" evening went sour",
       p.name+" handled the quieter supporting role for the "+a.mascot
     ],
     "mack-hollis":[
-      won?p.name+" kicked the door in and "+team+" actually followed:p.name+" kicked the door in and "+team+" still found a way to lose the building",
-      won?p.name+" gave the "+a.mascot+" a second punch:p.name+" supplied another live wire for the "+a.mascot+" in a loss",
+      won?p.name+" kicked the door in and "+team+" actually followed":p.name+" kicked the door in and "+team+" still found a way to lose the building",
+      won?p.name+" gave the "+a.mascot+" a second punch":p.name+" supplied another live wire for the "+a.mascot+" in a loss",
       p.name+" kept the middle of the "+a.mascot+" scoreboard alive"
     ],
     "nora-voss":[
-      won?p.name+" gave "+team+" a top-line number rivals cannot laugh away:p.name+" did his part even while the final score gave rivals custody of the joke",
-      won?p.name+" gave "+team+" a second reason rival managers had to stay quiet:p.name+" removed the easy 'no help' excuse from the "+team+" loss",
+      won?p.name+" gave "+team+" a top-line number rivals cannot laugh away":p.name+" did his part even while the final score gave rivals custody of the joke",
+      won?p.name+" gave "+team+" a second reason rival managers had to stay quiet":p.name+" removed the easy 'no help' excuse from the "+team+" loss",
       p.name+" contributed enough that the rival complaints have to move farther down the "+team+" lineup"
     ]
   };

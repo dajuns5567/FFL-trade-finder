@@ -768,7 +768,7 @@ function w2IdentityRead(t,prev,r,top,opp){
         team+" landed "+d+" points "+dir+" than a week ago. The room genuinely changed shape."
       ],
       "mack-hollis":[
-        team+" swung "+d+" points "+dir+" from Week 1. Put that change in big type; the tiny distribution stats can wait.",
+        team+" swung "+d+" points "+dir+" from Week 1. That is large enough to change the argument about what this lineup can produce.",
         "A "+d+"-point move from the opener is the week-over-week number that matters for "+team+". The scoreboard got materially "+dir+".",
         "Week 2 shifted "+team+" by "+d+" points from its opener. That is loud enough to make the trend page.",
         team+" changed its weekly output by "+d+" points. That is the swing worth shouting about."

@@ -651,7 +651,7 @@ function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
     ]
   };
   let out=(bank[rid]||bank["walter-mercer"])[v];
-  if(pp&&Number.isFinite(delta)&&Math.abs(delta)>=5)out+=" A week ago, "+p.name+" scored "+w2One(pp.points)+"; moving to "+pts+" this time "+(delta>0?"changed the volume of the performance, not just the decimal.":"was a noticeable step backward, not statistical wallpaper.");
+  if(pp&&Number.isFinite(delta)&&Math.abs(delta)>=5)out+=" In Week 1, "+p.name+" scored "+w2One(pp.points)+"; moving to "+pts+" this time "+(delta>0?"changed the volume of the performance, not just the decimal.":"was a noticeable step backward, not statistical wallpaper.");
   const history=w2HistoricalColor(p,r);if(history)out+=" "+history;
   return out
 }

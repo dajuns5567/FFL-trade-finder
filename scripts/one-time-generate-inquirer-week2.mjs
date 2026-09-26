@@ -730,7 +730,7 @@ function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
       "nora-voss":[
         p.name+" gave "+team+" "+pts+" points. Rivals do not need to invent a joke when the number arrives prewritten.",
         pts+" from "+p.name+" is the easiest target on the "+a.mascot+" roster, and pretending otherwise only saves rivals the trouble of pointing.",
-        p.name+" finished at "+pts+". That is not useful support; it is exactly where the rival group chat is putting the red circle.",
+        p.name+" finished at "+pts+". That is not useful support; it is exactly where the rival thread is putting the red circle.",
         "The "+a.mascot+" got "+pts+" from "+p.name+". If supporters want one obvious Week 3 correction, rivals have already highlighted it for them."
       ]
     };
@@ -940,8 +940,8 @@ function w2DivisionBoardTake(flags,reporter,subject){
     let context="";
     if(leaders.length>1){
       const favText=midaFav&&midaPct
-        ?(" MIDA leans "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+" for the division, so the tie on the page is not the same as a tie in the longer view.")
-        :" The tie is real enough that the first head-to-head slip matters more than alphabetical order.";
+        ?(" MIDA leans "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+" for the division, so the tie on the page is not the same as a tie in the longer view. There is still no standings separation; the next head-to-head swing can change that.")
+        :" There is no standings separation yet, so the first head-to-head slip or clean rival win matters more than alphabetical order.";
       const variants={
         "walter-mercer":"The lead is shared by "+leaderNames+" at "+y.record+"."+favText,
         "tess-delaney":leaderNames+" are sharing the top table at "+y.record+"."+favText+" Somebody is about to discover the reservation was not exclusive.",
@@ -957,7 +957,7 @@ function w2DivisionBoardTake(flags,reporter,subject){
           :"";
       const titleText=titleFav&&titlePct&&Number(titleFav.mida_outlook.title)>=20
         ?" "+w2DisplayTeam(titleFav.team_name)+" also carries the division’s strongest title outlook at "+titlePct+", so this race has championship consequences beyond the local brag."
-        :"";
+        :" The current separation over "+chase+" is only one result, so the leader has not broken away.";
       const variants={
         "walter-mercer":leader+" leads at "+y.record+", with "+chase+" the first team positioned to punish a slip."+midaText+titleText,
         "tess-delaney":leader+" owns the best chair at "+y.record+", but "+chase+" is close enough to reach across the table if Sunday gets messy."+midaText+titleText,
@@ -1365,12 +1365,12 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
         "At 2-0, "+team+" fans have graduated from cautious optimism to screenshotting the standings. The sober argument underneath the victory laps is "+focus+"; supporters want the weak spot fixed before a better opponent finds it.",
         "The "+a.mascot+" crowd is already treating 2-0 like permission to raise expectations. Jerseys are getting worn a little louder, but the lineup debate still circles "+focus+".",
         "Two wins have "+team+" supporters comparing playoff paths instead of survival plans. The one item keeping the celebration useful is "+focus+", because good records make preventable holes less charming.",
-        "The "+a.mascot+" group chat has moved from 'nice start' to irresponsible levels of confidence. Even the optimists keep returning to "+focus+" before they start printing anything resembling parade routes."
+        "The "+a.mascot+" fan forum has moved from 'nice start' to irresponsible levels of confidence. Even the optimists keep returning to "+focus+" before they start printing anything resembling parade routes."
       ],
       sinking:[
-        "At 0-2, "+team+" fans are no longer submitting polite suggestions. The group chat has reached mock-pitchfork status over "+focus+", and another repeat would turn lineup criticism into a weekly ritual.",
+        "At 0-2, "+team+" fans are no longer submitting polite suggestions. The message boards have reached mock-pitchfork status over "+focus+", and another repeat would turn lineup criticism into a weekly ritual.",
         "The "+a.mascot+" crowd is 0-2 and already holding imaginary emergency meetings. "+focus+" is the motion on the floor, with patience losing the vote by a landslide.",
-        "Two losses have supporters replaying lineup screenshots like security footage while the group chat stages a small panic parade. The recurring argument is "+focus+", and Week 3 is where management either changes it or hears about it all week.",
+        "Two losses have supporters replaying lineup screenshots like security footage while the fan forum stages a small panic parade. The recurring argument is "+focus+", and Week 3 is where management either changes it or hears about it all week.",
         "At 0-2, nobody around "+team+" is asking for inspirational quotes. Fans are demanding a visible answer to "+focus+" before the complaint becomes the franchise hobby."
       ],
       rebounding:[
@@ -1391,7 +1391,7 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
         "The 2-0 "+a.mascot+" room has started making reservations under 'contender,' which is adorable this early. Between toasts, supporters keep rearranging the seating chart around "+focus+".",
         "Two wins have the "+a.mascot+" public wearing confidence like it was tailored. The one loose thread everybody keeps tugging is "+focus+".",
         "The "+a.mascot+" room is already polishing glasses for a 2-0 toast, but even the happy table keeps gossiping about "+focus+".",
-        "At 2-0, supporters have put the good china out without being asked, victory screenshots are making the rounds, and lineup polls have already become a minor civic institution. The only chair still getting side-eye belongs to "+focus+"."
+        "At 2-0, supporters have put the good china out without being asked, victory screenshots are making the rounds, celebratory memes are multiplying, and lineup polls have already become a minor civic institution. The only chair still getting side-eye belongs to "+focus+"."
       ],
       sinking:[
         "The 0-2 "+a.mascot+" room has stopped pretending this is a tasteful inconvenience. Supporters are rearranging the entire table around "+focus+", and somebody is about to lose a chair.",
@@ -1443,13 +1443,13 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
         "At 2-0, "+a.mascot+" supporters are collecting rival receipts like coupons. The annoying part for them is "+focus+" still gives the other side one joke worth keeping.",
         "Two wins have fans weaponizing screenshots in every rival chat they can find. Then somebody mentions "+focus+" and the swagger develops a small limp.",
         "The "+a.mascot+" are 2-0, so supporters have become professionally unbearable on schedule. "+focus+" is the only rival punch line still surviving quality control.",
-        "The victory receipts are flying around the group chat. Fans are enjoying them, while quietly hoping "+focus+" does not give rivals a sequel."
+        "The victory receipts are flying around the rival thread. Fans are enjoying them, while quietly hoping "+focus+" does not give rivals a sequel."
       ],
       sinking:[
         "At 0-2, the rival chats are doing free comedy and "+a.mascot+" fans are replying with increasingly desperate lineup edits. Most of them start with "+focus+".",
         "Two losses have supporters muting rival notifications, posting increasingly desperate lineup screenshots, and unmuting the bench debate. "+focus+" is the joke they are desperate to retire before Week 3.",
         "The "+a.mascot+" crowd has reached the stage where every rival meme feels personally researched. "+focus+" is the easiest punch line and fans know it.",
-        "At 0-2, supporters are fighting on two fronts: the lineup and everybody else’s group chat; rival memes are piling up while bench demands arrive like junk mail. "+focus+" is losing both battles."
+        "At 0-2, supporters are fighting on two fronts: the lineup and everybody else’s timeline; rival memes are piling up while bench demands arrive like junk mail. "+focus+" is losing both battles."
       ],
       rebounding:[
         "The win gave "+a.mascot+" fans a fresh screenshot to throw at rivals. They are using it enthusiastically while pretending "+focus+" has disappeared.",
@@ -1461,7 +1461,7 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
         "At 1-1, supporters and rivals can each cherry-pick a Sunday and feel brilliant. "+focus+" is the one argument neither side has managed to kill.",
         "The "+a.mascot+" crowd is split between swagger and damage control. Rivals keep steering both conversations back to "+focus+".",
         "One win and one loss have produced equal parts receipts and ammunition. "+focus+" is where the rival jokes still find oxygen.",
-        "At 1-1, nobody owns the argument. That has not stopped supporters and rivals from treating "+focus+" like the deciding exhibit in the group chat."
+        "At 1-1, nobody owns the argument. That has not stopped supporters and rivals from treating "+focus+" like the deciding exhibit in the rival thread."
       ]
     }
   };

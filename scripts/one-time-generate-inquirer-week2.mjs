@@ -1108,7 +1108,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     else if(knife)hook=wName+" and "+lName+" turned Week 2 into a fantasy knife fight, with "+wName+" escaping "+w2One(w.points)+"–"+w2One(l.points)+". One ordinary lineup decision could have flipped the headline.";
     else hook=wName+" beat "+lName+" "+w2One(w.points)+"–"+w2One(l.points)+" and spent most of the afternoon applying scoreboard pressure instead of waiting for one miracle player to save it.";
     paras.push(w2S(w,r,"recap-game-"+i,hook));
-    const statNames=[wStar,lStar,ws[1]].filter((p,j,a)=>p&&a.findIndex(q=>String(q.id)===String(p.id))===j);
+    const statNames=(i===0?wTop:[wStar,lStar,ws[1]]).filter((p,j,a)=>p&&a.findIndex(q=>String(q.id)===String(p.id))===j);
     paras.push(w2S(w,r,"recap-stats-"+i,"The performances that shaped it: "+statNames.map(w2RecapStat).join("; ")+"."));
     let turn;
     if(blowout&&wTop3>Number(l.points))turn=w2Natural(wTop.map(p=>p.name))+" combined for "+w2One(wTop3)+" points—more than "+lName+"’s entire "+w2One(l.points)+"-point lineup. In a blowout this extreme, that comparison is worth making because it shows how completely "+wName+" owned the scoring column.";

@@ -58,7 +58,7 @@ function namesMentioned(text,names){
   return names.filter(n=>n&&String(text||'').toLowerCase().includes(n.toLowerCase()));
 }
 function humorSignals(text){
-  const re=/\b(?:joke|punchline|punch line|panic|riot|riots|pitchfork|fire alarm|flowers|good china|coat check|furniture|wine|bill|table|lunch money|trash|hostage|siren|megaphone|heckl\w*|swagger|chaos|ridiculous|roast|meltdown|circus|funeral|parade|therapy|crime scene|alarm|mess|brag|chirp\w*|yell\w*|scream\w*|caps lock|group chat|meme\w*|receipts?|wet matches|folding chairs|gift-wrapped|weaponize|insufferable)\b/gi;
+  const re=/\b(?:joke|punchline|punch line|panic|riot|riots|pitchfork|fire alarm|flowers|good china|coat check|furniture|wine|bill|table|lunch money|trash|hostage|siren|megaphone|heckl\w*|swagger|chaos|ridiculous|roast|meltdown|circus|funeral|parade|therapy|crime scene|alarm|mess|brag|chirp\w*|yell\w*|scream\w*|caps lock|group chat|meme\w*|receipts?|wet matches|folding chairs|gift-wrapped|weaponize|insufferable|crowbar|floorboard|water heater|smoke detector|breaker box|subscription service|flooded basement|coroner|elevator)\b/gi;
   return countMatches(text,re);
 }
 function behaviorSignals(text){
@@ -150,7 +150,7 @@ function auditTeam(t){
   const defenseBad=copy.match(/\b(?:started|starting|start)\s+(?:a|the|your)?\s*(?:team\s+)?defen[cs]e\b|\bD\/?ST\b|\bteam defen[cs]e\b/gi)||[];
   if(defenseBad.length)add('FAIL','league-format-team-defense','Team-defense language conflicts with this league, which starts IDPs rather than a team defense.',defenseBad.join(' | '));
 
-  const metaRe=/\b(?:a useful NFL role without a complete stat line|without a complete stat line|complete player-level scoring benchmark|player-level scoring benchmark|invent(?:ing)? a matchup-specific story|context available|data is unavailable|historical player snapshot unavailable|overall value exchanged:\s*n\/a)\b/gi;
+  const metaRe=/\b(?:a useful NFL role without a complete stat line|without a complete stat line|complete player-level scoring benchmark|player-level scoring benchmark|invent(?:ing)? a matchup-specific story|context available|data is unavailable|historical player snapshot unavailable|overall value exchanged:\s*n\/a|the useful question|the next edition)\b/gi;
   const meta=copy.match(metaRe)||[];
   if(meta.length)add('FAIL','meta-writing-language','Article contains prose about missing data/writing mechanics instead of football commentary.',[...new Set(meta)].join(' | '));
 
@@ -236,6 +236,12 @@ function auditRecap(){
   const defenseBad=copy.match(/\b(?:started|starting|start)\s+(?:a|the|your)?\s*(?:team\s+)?defen[cs]e\b|\bD\/?ST\b|\bteam defen[cs]e\b/gi)||[];
   if(defenseBad.length)add('FAIL','league-format-team-defense','Weekly recap uses team-defense language that does not fit the league format.',defenseBad.join(' | '));
 
+  if(wordCount(copy)<3014)add('FAIL','recap-length-regression','Weekly recap became shorter than the pre-rewrite DOM baseline.','current='+wordCount(copy)+'; floor=3014');
+
+  const recapMeta=/\b(?:roll call|useful examples?|the useful question|the pick is about|desire to be cute|without turning .* into a spreadsheet|this paragraph|this section|this recap|the writer|the reporter)\b/i;
+  const recapMetaHits=sentenceParts(copy).filter(x=>recapMeta.test(x));
+  if(recapMetaHits.length)add('FAIL','recap-meta-language','Weekly recap contains editorial-process/meta language instead of in-world reporting.',recapMetaHits.join(' || '));
+
   const staleTradeExplainer=/\b(?:chose the future side|parked in draft capital|delayed value rather than immediate lineup help|nothing honest to grade from a Week 2 box score yet|cannot score a fantasy point this September|judgment belongs to a future roster decision|future optionality, not Week 2 production)\b/i;
   if(staleTradeExplainer.test(copy))add('FAIL','recap-trade-obvious-explainer','Weekly recap still states obvious draft-pick mechanics instead of evaluating the deal.',sentenceParts(copy).filter(x=>staleTradeExplainer.test(x)).join(' || '));
   const uniqueTrades=new Map();
@@ -252,11 +258,14 @@ function auditRecap(){
   const sections=overview?.sections||[];
   const twoWeeks=sections.find(s=>/two weeks/i.test(String(s?.heading||'')));
   if(twoWeeks){
+    const twoWeeksCopy=(twoWeeks?.paragraphs||[]).join(' ');
+    const universalDivision=sentenceParts(twoWeeksCopy).filter(x=>/\b(?:division game|division test|head-to-head division|inside AFC|inside NFC|direct rival|AFC EAST|AFC NORTH|AFC SOUTH|AFC WEST|NFC EAST|NFC NORTH|NFC SOUTH|NFC WEST)\b/i.test(x));
+    if(universalDivision.length)add('FAIL','two-weeks-division-overuse','“What two weeks are starting to say” should explain Weeks 1-2, not preview the universal Week 3 divisional slate.',universalDivision.join(' || '));
     for(const p of twoWeeks?.paragraphs||[]){
       const namedTeams=namesMentioned(p,teamNames);
       const namedPlayers=namesMentioned(p,playerNames);
       if(namedTeams.length>=4&&namedPlayers.length===0&&contextSignals(p)<2){
-        add('WARN','two-weeks-generic-list','“What two weeks are starting to say” lists many teams but gives little team-specific evidence/context. Each claim should be tied to actual league position, roster shape, MIDA, matchup, player, or transaction context.',p);
+        add('WARN','two-weeks-generic-list','“What two weeks are starting to say” lists many teams but gives little team-specific evidence/context. Each claim should be tied to actual Week 1-2 scoring shape, player role, MIDA, management or roster context.',p);
       }
     }
   }
@@ -269,7 +278,12 @@ function auditRecap(){
     for(const tail of tails){const k=norm(tail);counts.set(k,(counts.get(k)||0)+1);}
     const repeats=[...counts.entries()].filter(([,n])=>n>1);
     if(repeats.length)add('FAIL','division-board-repetition','Division Board repeats the same normalized commentary across divisions instead of using each race’s actual competitors and leverage.',JSON.stringify(repeats));
-    const contextual=lines.filter(x=>/\b(?:playoff|title|championship|MIDA|%|expected wins|rank|chasing|ahead of|behind|head-to-head|separation|two-game swing|inside track)\b/i.test(x)).length;
+    const staleBoardPhrases=['has the lane','first car in the mirror','jammed together','no standings separation','first head-to-head slip','clean rival win','traffic for traffic','has not broken away','current separation over'];
+    for(const phrase of staleBoardPhrases){
+      const hits=lines.filter(x=>x.toLowerCase().includes(phrase));
+      if(hits.length>=2)add('FAIL','division-board-repeated-scaffold','Division Board still repeats the old “'+phrase+'” scaffold across divisions.',hits.join(' || '));
+    }
+    const contextual=lines.filter(x=>/\b(?:playoff|title|championship|MIDA|%|expected wins|rank|chasing|ahead of|behind|head-to-head|separation|two-game swing|inside track|probability|forecast|front-runner|cushion|chase)\b/i.test(x)).length;
     if(lines.length>=8&&contextual<6)add('WARN','division-board-context-thin','Most Division Board entries do not use available contender/challenger/MIDA context.','contextual_lines='+contextual+'/'+lines.length+'\n'+lines.join('\n'));
   }else add('FAIL','division-board-missing','Could not locate the eight-division board in the weekly recap.');
 
@@ -286,7 +300,9 @@ function auditRecap(){
     const named=namesMentioned(take,teamNames),players=namesMentioned(take,playerNames);
     if(sents.length<3)add('WARN','upset-call-too-shallow','Upset call needs a real argument, not a one-sentence underdog preference.','sentences='+sents.length+'; '+take);
     if(named.length<2)add('FAIL','upset-call-missing-both-teams','Upset call should explicitly compare the underdog and favorite.',take);
-    if(contextSignals(take)<2&&players.length===0)add('WARN','upset-call-context-free','Upset rationale does not use team context, MIDA, division leverage, roster shape, or a relevant player without becoming a stat dump.',take);
+    if(contextSignals(take)<2&&players.length===0)add('WARN','upset-call-context-free','Upset rationale does not use team context, MIDA, roster shape or a relevant player without becoming a stat dump.',take);
+    if(/\b(?:the pick is about|desire to be cute|i did not pick|i didn't pick|without turning .* into a spreadsheet)\b/i.test(take))add('FAIL','upset-call-meta-language','Upset call explains the columnist’s selection process instead of making the football argument in voice.',take);
+    if(humorSignals(take)<1)add('WARN','upset-call-voice-too-straight','Upset call has context but not enough sarcastic/humorous columnist voice.',take);
   }else add('FAIL','upset-call-missing','No Week 3 upset call was found.');
 
   const genericKnown=[
@@ -310,7 +326,20 @@ function auditRecap(){
 
 const teamAudits=samples.map(auditTeam);
 const recapAudit=auditRecap();
-const allFindings=[...recapAudit.findings,...teamAudits.flatMap(x=>x.findings)];
+const lengthFloorFindings=[];
+const lengthFloors=new Map([
+  ['Denver Doncos',840],
+  ['New York Giants',894],
+  ['New England Patriots',857],
+  ['New York Jets',971]
+]);
+for(const t of teams){
+  const floor=lengthFloors.get(String(t?.team_name||''));
+  if(!floor)continue;
+  const current=wordCount(textOfArticle(t));
+  if(current<floor)lengthFloorFindings.push(finding('team:'+t.team_name,'FAIL','article-length-regression','Sampled team article became shorter than the pre-rewrite DOM baseline.','current='+current+'; floor='+floor));
+}
+const allFindings=[...recapAudit.findings,...teamAudits.flatMap(x=>x.findings),...lengthFloorFindings];
 const counts={
   FAIL:allFindings.filter(x=>x.severity==='FAIL').length,
   WARN:allFindings.filter(x=>x.severity==='WARN').length

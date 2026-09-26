@@ -967,18 +967,18 @@ function w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders){
 }
 function w2NextStarRead(t,r,next,nextStar){
   const a=w2Alias(t),pts=w2One(nextStar?.points||nextStar?.season_avg||0),pos=String(nextStar?.position||"").toUpperCase(),
-    k=w2Hash(String(t.roster_id)+"|nextstar|"+String(r?.id||""))%12;
+    k=(Math.max(1,Number(t.roster_id)||1)-1)%12;
   const rows=[
     nextStar.name+" is the first Week 3 name to circle after "+pts+" fantasy points; if "+a.mascot+" repeat a quiet lineup spot, "+next+" already has top-end scoring to punish the margin.",
     "The Week 3 benchmark starts with "+nextStar.name+" ("+pos+"), fresh off "+pts+" fantasy points. "+t.team_name+" needs enough production across its own lineup to keep pace.",
     "Latest-game scoring puts "+nextStar.name+" at "+pts+" points for "+next+". That raises the bar for "+a.mascot+" if their weak Week 2 slot stays quiet.",
     "The "+a.mascot+" circle "+nextStar.name+" because "+pts+" latest-game points give "+next+" a proven source of scoring entering Week 3.",
     next+" carries a "+pts+"-point latest-game line from "+nextStar.name+" into Week 3. That is the concrete scoring benchmark for "+a.mascot+".",
-    "For "+a.mascot+", "+nextStar.name+" represents "+pts+" points of recent production on the "+next+" side. Their own lineup has to answer that level.",
+    "For "+a.mascot+", "+nextStar.name+" represents "+pts+" points of recent production on the "+next+" side. The "+a.mascot+" lineup has to answer that level.",
     "A "+pts+"-point latest game from "+nextStar.name+" is the first number in the Week 3 comparison with "+next+".",
     nextStar.name+" posted "+pts+" most recently, giving "+next+" a clear high-end reference point before facing "+a.mascot+".",
-    "Week 3 puts the "+a.mascot+" opposite a "+next+" roster that just got "+pts+" from "+nextStar.name+". That is the first matchup problem the lineup has to answer.",
-    "Recent form gives "+nextStar.name+" a "+pts+"-point line entering the "+a.mascot+" matchup. That is enough to shrink the margin for another quiet slot.",
+    "Week 3 puts the "+a.mascot+" opposite a "+next+" roster that just got "+pts+" from "+nextStar.name+", making that production the first matchup problem the "+a.mascot+" lineup has to answer.",
+    "Recent form gives "+nextStar.name+" a "+pts+"-point line entering the "+a.mascot+" matchup. That is enough to shrink the margin for another quiet "+a.mascot+" slot.",
     "The "+next+" side enters Week 3 with "+nextStar.name+" coming off "+pts+" points. "+a.mascot+" need their own secondary scoring to match that kind of top-end output.",
     ([
       nextStar.name+" is the clearest Week 3 scoring reference after "+pts+" latest-game points for "+next+"; the "+a.mascot+" need more from their own quiet slots to keep pace.",
@@ -995,10 +995,10 @@ function w2RoadRead(t,r,next,later){
   const rows=[
     "After "+next+", the "+a.mascot+" see "+rest+". A Week 3 win lowers the pressure on that stretch; a loss makes "+first+" feel like an early recovery assignment. Beat "+next+" and the road loosens; lose and the same schedule starts demanding a recovery game.",
     next+" comes first, then "+rest+". For "+t.team_name+", banking Week 3 turns the following games into chances to build; dropping it turns "+first+" into a repair job. That is why the "+a.mascot+" sequence through "+next+" and "+first+" matters as much as the names.",
-    "The road after "+next+" runs through "+rest+". Win now and the "+a.mascot+" can attack that stretch from strength; lose and "+first+" immediately carries more weight. Week 3 changes the emotional math of everything behind it.",
+    "The road after "+next+" runs through "+rest+". Win now and the "+a.mascot+" can attack that stretch from strength; lose and "+first+" immediately carries more weight. Week 3 changes the emotional math for the "+a.mascot+" games behind it.",
     "Beyond "+next+" are "+rest+". The "+a.mascot+" can make those games look manageable by winning Week 3, or make "+first+" feel mandatory by losing it. The pressure starts with "+next+" because that result changes what the following game asks of the roster.",
     "For "+a.mascot+", the schedule does not stop with "+next+": "+rest+" follow. A win gives the "+a.mascot+" room to breathe before "+first+"; a loss spends that room immediately. For "+a.mascot+", that turns "+first+" into either a chance to build or a game this roster suddenly needs to repair the start.",
-    "For "+a.mascot+", "+next+" is the hinge before "+rest+". If the "+a.mascot+" bank Week 3, "+first+" arrives with optional pressure; if they do not, it arrives with required pressure. The sequence gets harder or easier based on what happens first."
+    "For "+a.mascot+", "+next+" is the hinge before "+rest+". If the "+a.mascot+" bank Week 3, "+first+" arrives with optional pressure; if they do not, it arrives with required pressure. The "+a.mascot+" sequence gets harder or easier based on what happens first."
   ];
   return rows[k];
 }
@@ -1170,9 +1170,33 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
     :weak?weak.name+" finishing at "+w2One(weak.points)+" points"
     :star?star.name+" leading the lineup at "+w2One(star.points)+" points"
     :"the shape of the Week 2 lineup";
-  const shift=prev==null?"":prevWon===won
-    ?(won?"A second good result has moved the conversation from surprise to expectation.":"A second loss has made the complaints sound less temporary.")
-    :(won?"The win cooled the Week 1 frustration, but nobody has forgotten what the opener looked like.":"The loss reopened every concern that the Week 1 result had quieted.");
+  const shiftRows={
+    "walter-mercer":[
+      prev==null?"":prevWon===won?(won?team+" supporters are treating two good Sundays as a standard now, not a surprise.":team+" supporters are replaying the same complaints because the second result did not quiet them."):(won?team+" cooled the Week 1 frustration without erasing it.":team+" reopened the Week 1 concerns that had briefly gone quiet."),
+      prev==null?"":prevWon===won?(won?"Two positive results have moved "+team+" fans from relief toward expectation.":"Back-to-back disappointments have made "+team+" fans less interested in patience."):(won?"The Week 2 win gave "+team+" fans a reason to soften the opener’s criticism.":"The Week 2 loss pulled the opener’s concerns back into the "+team+" conversation."),
+      prev==null?"":prevWon===won?(won?team+" fans now expect the useful parts to repeat because they have seen them twice.":team+" fans have heard the same warning twice and are treating it as a roster problem."):(won?team+" answered enough of the opening-week complaint to buy some patience.":team+" brought the opening-week doubt back to the front of the room."),
+      prev==null?"":prevWon===won?(won?"A second good Sunday has "+team+" supporters asking how high the floor can stay.":"A second bad result has "+team+" supporters asking what management is actually changing."):(won?"The response win changed the tone around "+team+" without deleting the opener.":"The loss changed the tone around "+team+" because the opener no longer looks isolated.")
+    ],
+    "tess-delaney":[
+      prev==null?"":prevWon===won?(won?"Two pleasant Sundays have made the "+a.mascot+" room considerably less shy about confidence.":"Two unpleasant Sundays have stripped the "+a.mascot+" room of most remaining manners."):(won?"The "+a.mascot+" win has quieted the opening-night grumbling without sending it home.":"The "+a.mascot+" loss invited every opening-night complaint back through the front door."),
+      prev==null?"":prevWon===won?(won?"The room has seen enough twice to stop calling the good mood accidental.":"The room has seen the same disappointment twice and is no longer dressing it up as bad luck."):(won?"Week 2 repaired enough of the opener to let the "+a.mascot+" room sit down again.":"Week 2 dragged the opener’s doubts back to the "+a.mascot+" table."),
+      prev==null?"":prevWon===won?(won?"A second decent showing has the "+a.mascot+" public reserving confidence instead of borrowing it.":"A second bad evening has the "+a.mascot+" public checking who should lose a chair."):(won?"The response gave the "+a.mascot+" public permission to soften the opener’s verdict.":"The setback gave the "+a.mascot+" public permission to revisit every opening-week worry."),
+      prev==null?"":prevWon===won?(won?"The "+a.mascot+" room has now seen enough twice to expect another respectable table.":"The "+a.mascot+" room has now seen enough twice to start demanding a different menu."):(won?"One response win has the "+a.mascot+" room less interested in reliving Week 1.":"One loss has the "+a.mascot+" room relitigating every choice it had briefly forgiven.")
+    ],
+    "mack-hollis":[
+      prev==null?"":prevWon===won?(won?"Two good Sundays have "+team+" fans yelling expectations now, not hopes.":"Two bad Sundays have "+team+" fans yelling the same complaint with less patience."):(won?"The win turned down the Week 1 noise around "+team+", but it did not unplug the speakers.":"The loss cranked the Week 1 noise around "+team+" right back up."),
+      prev==null?"":prevWon===won?(won?team+" has given its fans the same happy ending twice, so the volume is rising.":team+" has given its fans two reasons to stop calling the problem temporary."):(won?team+" answered the opener loudly enough to buy a quieter Monday.":team+" made the opener relevant again with another result fans can hate."),
+      prev==null?"":prevWon===won?(won?"Back-to-back good results have "+team+" supporters asking for a third, not an explanation.":"Back-to-back bad results have "+team+" supporters asking for changes, not slogans."):(won?"The response win gave "+team+" fans a new argument to shout.":"The Week 2 loss handed "+team+" fans their old argument back."),
+      prev==null?"":prevWon===won?(won?"A second strong result has "+team+" fans acting like the good version is supposed to stay.":"A second rough result has "+team+" fans treating the weak spot like a recurring headline."):(won?team+" changed the conversation by winning after the opener.":team+" changed the conversation by making the opener’s warning look familiar.")
+    ],
+    "nora-voss":[
+      prev==null?"":prevWon===won?(won?"Two useful Sundays have made the "+a.mascot+" optimism harder for rivals to dismiss.":"Two ugly Sundays have made the "+a.mascot+" problem easier for rivals to name."):(won?"The Week 2 win made the opener a weaker rival punch line.":"The Week 2 loss handed rivals the opener’s favorite joke back."),
+      prev==null?"":prevWon===won?(won?team+" supporters have two results now whenever rivals try to call the start fake.":team+" supporters have heard the same rival complaint twice and cannot wave it away."):(won?team+" gave supporters enough of an answer to push back on the opening-week mockery.":team+" gave rivals enough of a repeat to reopen the opening-week mockery."),
+      prev==null?"":prevWon===won?(won?"A second good result has rivals working harder to find the "+a.mascot+" punch line.":"A second bad result has rivals repeating the "+a.mascot+" punch line because it still works."):(won?"The response win forced rivals to update their Week 1 material.":"The loss let rivals recycle their Week 1 material with almost no editing."),
+      prev==null?"":prevWon===won?(won?team+" has made the early rival jokes less convenient with two good outcomes.":team+" has made the early rival jokes more annoying by repeating the same weakness."):(won?team+" gave supporters a rebuttal after Week 1.":team+" gave rivals fresh permission to drag Week 1 back into the argument.")
+    ]
+  };
+  const shift=(shiftRows[rid]||shiftRows["walter-mercer"])[v];
   const rows={
     "walter-mercer":[
       "The "+a.mascot+" crowd is "+intensity+", and the conversation keeps coming back to "+focus+". Supporters are replaying the lineup instead of arguing with the final score. "+shift,

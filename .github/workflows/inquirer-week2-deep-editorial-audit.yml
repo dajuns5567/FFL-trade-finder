@@ -1,0 +1,72 @@
+name: Week 2 deep editorial sample audit
+
+on:
+  push:
+    branches:
+      - inquirer-editorial-depth-r5
+    paths:
+      - 'scripts/inquirer-week2-deep-editorial-audit.mjs'
+      - 'scripts/one-time-generate-inquirer-week2.mjs'
+      - '.github/workflows/inquirer-week2-deep-editorial-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sample-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install generator dependency
+        run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Syntax check audit and generator
+        run: |
+          node --check scripts/inquirer-week2-deep-editorial-audit.mjs
+          node --check scripts/one-time-generate-inquirer-week2.mjs
+      - name: Generate current Week 2 edition
+        env:
+          OUT: /tmp/week2-inquirer.json
+        run: |
+          for attempt in 1 2 3; do
+            node scripts/one-time-generate-inquirer-week2.mjs && break
+            if [ "$attempt" = "3" ]; then exit 1; fi
+            sleep 5
+          done
+      - name: Build deep editorial sample report
+        run: |
+          node scripts/inquirer-week2-deep-editorial-audit.mjs /tmp/week2-inquirer.json \
+            --out /tmp/week2-deep-editorial-audit.md \
+            --json /tmp/week2-deep-editorial-audit.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const j=JSON.parse(fs.readFileSync('/tmp/week2-deep-editorial-audit.json','utf8'));
+          console.log(JSON.stringify({
+            counts:j.counts,
+            recap:{word_count:j.recap.word_count,humor_signals:j.recap.humor_signals,context_signals:j.recap.context_signals},
+            samples:j.samples.map(x=>({
+              reporter:x.reporter?.name||x.reporter?.id,
+              team:x.team,
+              word_count:x.word_count,
+              humor_signals:x.humor_signals,
+              behavior_signals:x.behavior_signals,
+              context_signals:x.context_signals,
+              next_is_divisional:x.context?.next_is_divisional,
+              trade_count:x.context?.trades?.length||0
+            })),
+            findings:j.findings.map(x=>({severity:x.severity,id:x.id,scope:x.scope,message:x.message,evidence:x.evidence}))
+          },null,2));
+          NODE
+          cat /tmp/week2-deep-editorial-audit.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload full sampled audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: week2-deep-editorial-sample-audit
+          path: |
+            /tmp/week2-deep-editorial-audit.md
+            /tmp/week2-deep-editorial-audit.json
+          retention-days: 14

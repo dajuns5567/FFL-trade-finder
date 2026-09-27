@@ -695,15 +695,16 @@ function w2PlayerStatusProfile(p,slot=0){
     defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),
     starThreshold=pos==="QB"?18:pos==="RB"?14:pos==="WR"?14:pos==="TE"?11:defensive?11:13,
     young=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
+    earlyCareer=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)),
     established=Number.isFinite(prior)&&games>=8&&(prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1))),
     seasonLift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&seasonAvg>=Math.max(prior*1.35,prior+2.5),
     weekLift=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&pts>=Math.max(starThreshold*1.1,prior+5),
     roleLift=(Number.isFinite(snapPct)&&snapPct>=0.55)||
       (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
       (Number.isFinite(snaps)&&snaps>=(defensive?32:35)),
-    developmentalBreakout=young&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&seasonLift&&roleLift;
+    developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&seasonLift&&roleLift;
   let status="";
-  if(!Number.isFinite(pts))return{status:"",starThreshold,young,established,seasonLift,weekLift,roleLift,developmentalBreakout};
+  if(!Number.isFinite(pts))return{status:"",starThreshold,young,earlyCareer,established,seasonLift,weekLift,roleLift,developmentalBreakout};
   if(developmentalBreakout)status="breakout";
   else if(established&&pts>=Math.max(starThreshold*.8,prior*.65))status="established-star";
   else if(established&&pts<=prior*.55)status="struggling-star";
@@ -715,7 +716,7 @@ function w2PlayerStatusProfile(p,slot=0){
   else if(pts<=1.5&&role<=2)status="struggling";
   const lift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)?seasonAvg-prior:(Number.isFinite(pts)&&Number.isFinite(prior)?pts-prior:null);
   const breakoutScore=(status==="breakout"?100:status==="emerging"?60:0)+(young?18:0)+(roleLift?18:0)+(Number.isFinite(lift)?Math.max(0,lift):0);
-  return{status,starThreshold,young,established,seasonLift,weekLift,roleLift,breakoutScore,age,years,snaps,priorSnapPg,snapPct,seasonAvg,prior};
+  return{status,starThreshold,young,earlyCareer,established,seasonLift,weekLift,roleLift,breakoutScore,age,years,snaps,priorSnapPg,snapPct,seasonAvg,prior};
 }
 function w2BreakoutContext(p,profile){
   if(!profile||profile.status!=="breakout")return"";

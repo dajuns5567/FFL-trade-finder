@@ -9,7 +9,7 @@ const sentenceParts=s=>{
   const protectedText=String(s||'')
     .replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§'))
     .replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace('.','§'));
-  return protectedText.split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);
+  return protectedText.split(/(?<=[.!?]["'’”])\s+|(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);
 };
 assert.equal(sentenceParts('On the other side, Alex St. Clair caught 10 passes.').length,1,'Sentence parser must preserve St. inside names');
 assert.equal(sentenceParts('Next week, C.J. Example completed 26 passes.').length,1,'Sentence parser must preserve initialed names');

@@ -25,12 +25,32 @@ if(reportWeek===2){
   const divisionLines=String(divisionTake.take||'').split(/\n/).map(x=>x.trim()).filter(Boolean).filter(x=>/^(?:AFC|NFC)\s+(?:EAST|NORTH|SOUTH|WEST):/i.test(x));
   assert.equal(divisionLines.length,8,'Division Board must render all eight divisions on separate lines; got '+JSON.stringify(divisionLines));
   for(const line of divisionLines)assert.match(line,/^\w+\s+\w+: .+\(\d+-\d+\)\s+—\s+.+/,'Every division line must preserve leaders/record and add commentary: '+line);
+
+  // Filch's featured Week 3 projection comparison must be an actual reciprocal
+  // next-week matchup, not simply two teams with similar projected totals.
+  const byRoster=new Map((d.teams||[]).map(t=>[String(t.roster_id),t]));
+  const filchSection=(d?.league_overview?.sections||[]).find(x=>String(x?.reporter?.id||'')==='nora-voss'||/Next Week:/i.test(String(x?.heading||'')));
+  const filchLead=String((filchSection?.paragraphs||[])[0]||'');
+  const namedNextTeams=(d.teams||[]).filter(t=>filchLead.includes(String(t.team_name||'')));
+  if(namedNextTeams.length>=2){
+    const a=namedNextTeams[0],b=namedNextTeams[1];
+    assert.equal(String(a.next_opponent_roster_id||''),String(b.roster_id),'Filch Week 3 projection comparison must pair actual next opponents: '+filchLead);
+    assert.equal(String(b.next_opponent_roster_id||''),String(a.roster_id),'Filch Week 3 projection comparison must be reciprocal: '+filchLead);
+  }else{
+    assert.match(filchLead,/projection board is not clean enough/i,'Filch must either feature a verified Week 3 matchup or explicitly decline to manufacture one');
+  }
+
+  const week2HotCopy=hotTakes.map(x=>String(x?.take||'')).join(' ');
+  assert.doesNotMatch(week2HotCopy,/breakout player to watch because|current production has moved materially beyond|young enough for the role growth to matter even more/i,'Breakout Hot Take must use reporter commentary rather than classification/meta language');
+
+  const forcedCategorySentence=/(?:^|[.!?]\s+)(?:Breakout player|Established star|Steady veteran|Young breakout|Proven star|Veteran player)\s+[A-Z][A-Za-z.'’’-]+(?:\s+[A-Z][A-Za-z.'’’-]+){0,3}\s+(?:keeps|held|spoiled|remained|delivered|is|was)\b/i;
+  for(const t of d.teams||[])assert.doesNotMatch(articleText(t),forcedCategorySentence,'Player category must be woven into commentary instead of appended as a standalone label sentence: '+t.team_name);
 }
 
 
 if(reportWeek===2){
   assert.equal(Number(d.inquirer_version),31,'Generated Week 2 edition must be Inquirer V31');
-  assert.equal(Number(d.editorial_revision),11,'Generated Week 2 edition must carry editorial revision 11');
+  assert.equal(Number(d.editorial_revision),12,'Generated Week 2 edition must carry editorial revision 12');
 }else{
   assert.equal(Number(d.inquirer_version),26,'Generated Week 1 edition must remain Inquirer V26');
   assert.equal(Number(d.editorial_revision),6,'Generated Week 1 edition must remain editorial revision 6');

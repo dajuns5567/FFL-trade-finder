@@ -155,6 +155,22 @@ assert.equal(historicalContextFound,historicalContextExpected,'Every materially 
 assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');
 assert.match(recap,/breakout (?:star|case|players?)|can trust to keep showing up|familiar production|next opponent will attack the same weakness/i,'Weekly Recap must carry a natural player trajectory story tied to actual matchup consequences');
 
+if(reportWeek===2){
+  const dallasTeams=(d.teams||[]).filter(t=>(t.starter_details||[]).some(p=>/^Dallas Turner$/i.test(String(p?.name||''))));
+  assert.ok(dallasTeams.length>=1,'Frozen Week 2 edition must retain Dallas Turner in a starting lineup so his breakout can be evaluated');
+  for(const t of dallasTeams){
+    const p=(t.starter_details||[]).find(p=>/^Dallas Turner$/i.test(String(p?.name||'')));
+    const copy=articleText(t),sentences=sentenceParts(copy).filter(x=>/Dallas Turner/i.test(x));
+    assert.ok(sentences.length>=1,'Dallas Turner must be discussed in his Week 2 team article: '+t.team_name);
+    assert.ok(sentences.some(x=>/\bbreakout\b/i.test(x)),'Dallas Turner must be recognized as a breakout in Week 2, not flattened into an established-star label: '+sentences.join(' || '));
+    assert.ok(sentences.some(x=>/\b(?:age\s*23|23-year-old|snaps?|snap opportunity|role has grown|two-week average|last season)\b/i.test(x)),'Dallas Turner breakout commentary must cite role/age/history context rather than a label alone: '+sentences.join(' || '));
+    assert.ok(Number(p?.age)<=25,'Dallas Turner breakout guard expects a young-player profile');
+    assert.ok(Number(p?.current_snap_count)>=50,'Dallas Turner breakout guard expects meaningful Week 2 snap opportunity');
+    assert.ok(Number(p?.prior_season_snaps_per_game)>0&&Number(p.current_snap_count)>Number(p.prior_season_snaps_per_game),'Dallas Turner Week 2 snap opportunity must exceed his 2025 per-game level');
+    assert.ok(Number(p?.season_avg)>Number(p?.prior_season_avg)*2,'Dallas Turner two-week fantasy average must materially exceed his 2025 baseline');
+  }
+}
+
 const spedale=(d.teams||[]).find(t=>String(t.manager_name||'').toLowerCase()==='mike3spedale');
 if(spedale){
   const goedert=(spedale.starter_details||[]).find(p=>/Dallas Goedert/i.test(String(p.name||''))),spedaleText=articleText(spedale);

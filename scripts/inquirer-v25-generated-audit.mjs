@@ -156,18 +156,38 @@ assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receivi
 assert.match(recap,/breakout (?:star|case|players?)|can trust to keep showing up|familiar production|next opponent will attack the same weakness/i,'Weekly Recap must carry a natural player trajectory story tied to actual matchup consequences');
 
 if(reportWeek===2){
-  const dallasTeams=(d.teams||[]).filter(t=>(t.starter_details||[]).some(p=>/^Dallas Turner$/i.test(String(p?.name||''))));
-  assert.ok(dallasTeams.length>=1,'Frozen Week 2 edition must retain Dallas Turner in a starting lineup so his breakout can be evaluated');
-  for(const t of dallasTeams){
-    const p=(t.starter_details||[]).find(p=>/^Dallas Turner$/i.test(String(p?.name||'')));
-    const copy=articleText(t),sentences=sentenceParts(copy).filter(x=>/Dallas Turner/i.test(x));
-    assert.ok(sentences.length>=1,'Dallas Turner must be discussed in his Week 2 team article: '+t.team_name);
-    assert.ok(sentences.some(x=>/\bbreakout\b/i.test(x)),'Dallas Turner must be recognized as a breakout in Week 2, not flattened into an established-star label: '+sentences.join(' || '));
-    assert.ok(sentences.some(x=>/\b(?:age\s*23|23-year-old|snaps?|snap opportunity|role has grown|two-week average|last season)\b/i.test(x)),'Dallas Turner breakout commentary must cite role/age/history context rather than a label alone: '+sentences.join(' || '));
-    assert.ok(Number(p?.age)<=25,'Dallas Turner breakout guard expects a young-player profile');
-    assert.ok(Number(p?.current_snap_count)>=50,'Dallas Turner breakout guard expects meaningful Week 2 snap opportunity');
-    assert.ok(Number(p?.prior_season_snaps_per_game)>0&&Number(p.current_snap_count)>Number(p.prior_season_snaps_per_game),'Dallas Turner Week 2 snap opportunity must exceed his 2025 per-game level');
-    assert.ok(Number(p?.season_avg)>Number(p?.prior_season_avg)*2,'Dallas Turner two-week fantasy average must materially exceed his 2025 baseline');
+  const breakoutCandidates=[];
+  for(const t of d.teams||[]){
+    for(const p of t.starter_details||[]){
+      const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
+        seasonAvg=Number(p?.season_avg),age=Number(p?.age),years=Number(p?.years_exp),
+        snaps=p?.current_snap_count==null?null:Number(p.current_snap_count),
+        priorSnapPg=p?.prior_season_snaps_per_game==null?null:Number(p.prior_season_snaps_per_game),
+        snapPct=p?.current_snap_pct==null?null:Number(p.current_snap_pct),
+        pos=String(p?.position||'').toUpperCase(),
+        defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),
+        starThreshold=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13,
+        developing=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
+        productionJump=Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+          seasonAvg>=Math.max(prior*1.35,prior+2.5),
+        weekJump=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&
+          pts>=Math.max(starThreshold*1.1,prior+5),
+        meaningfulRole=(Number.isFinite(snapPct)&&snapPct>=0.55)||
+          (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
+          (Number.isFinite(snaps)&&snaps>=(defensive?32:35)),
+        historicalCeiling=Number.isFinite(prior)&&prior<starThreshold*1.4;
+      if(games>=6&&developing&&historicalCeiling&&meaningfulRole&&(productionJump||weekJump)){
+        breakoutCandidates.push({t,p,age,years,snaps,priorSnapPg,snapPct,prior,seasonAvg,pts});
+      }
+    }
+  }
+  assert.ok(breakoutCandidates.length>=1,'Week 2 breakout audit needs at least one data-qualified young/high-opportunity starter to exercise the systematic rule');
+  for(const {t,p} of breakoutCandidates){
+    const pname=String(p?.name||''),copy=articleText(t),
+      sentences=sentenceParts(copy).filter(x=>pname&&x.toLowerCase().includes(pname.toLowerCase()));
+    assert.ok(sentences.length>=1,'Every data-qualified young/high-opportunity breakout candidate must be discussed in the team article: '+t.team_name+' / '+pname);
+    assert.ok(sentences.some(x=>/\bbreakout\b/i.test(x)),'Every data-qualified young/high-opportunity breakout candidate must be recognized as a breakout rather than flattened into a generic or established-star label: '+t.team_name+' / '+pname+' :: '+sentences.join(' || '));
+    assert.ok(sentences.some(x=>/\b(?:age|year-old|years? old|snaps?|snap opportunity|role (?:has )?(?:grown|expanded)|two-week average|last season|per game)\b/i.test(x)),'Breakout commentary must explain the age/career, role/opportunity, or historical-production evidence behind the label: '+t.team_name+' / '+pname+' :: '+sentences.join(' || '));
   }
 }
 

@@ -2145,6 +2145,104 @@ function w2ProjectionOutlookRead(t,r,next){
   };
   return (rows[rid]||rows["walter-mercer"])[v]
 }
+function w2LedeAliasRead(t,r,prev,prevWon,won){
+  const a=w2Alias(t),team=w2DisplayTeam(t.team_name),rid=String(r?.id||"walter-mercer"),
+    state=!prev?"no-history":prevWon===won?(won?"ww":"ll"):(won?"lw":"wl"),
+    v=w2Hash(team+"|lede-alias|"+rid+"|"+state)%2;
+  const rows={
+    "walter-mercer":{
+      "ww":[
+        "Two wins have given "+team+" a useful early standard; the next job is proving the lineup can reproduce it without borrowing the same script.",
+        team+" has banked both results. That buys confidence, not immunity from the quieter lineup questions still sitting underneath the record."
+      ],
+      "ll":[
+        "Two losses have made the "+a.mascot+" correction list concrete. The next Sunday needs better production, not another explanation for why the same gaps stayed open.",
+        team+" has dropped both games, so the useful question has shifted from patience to repair: which lineup spots actually change the next result?"
+      ],
+      "lw":[
+        "The "+a.mascot+" answered the opening loss with a win. That is a response worth keeping without pretending one correction has settled the roster.",
+        team+" split the first two Sundays by responding to the opener. The win matters most as proof that the first result did not have to repeat."
+      ],
+      "wl":[
+        "The opening win no longer gets to carry the whole argument for "+team+". The second Sunday exposed enough friction to make the next answer matter.",
+        team+" has now shown a winning version and a losing one. The Week 3 assignment is deciding which lineup shape deserves to become familiar."
+      ],
+      "no-history":[
+        team+" has no complete opener to use as a clean comparison, so the second Sunday has to stand on its own merits.",
+        "Without a complete opening snapshot, "+team+" gets judged on the result and the football that actually survived into this report."
+      ]
+    },
+    "tess-delaney":{
+      "ww":[
+        "Two wins let the "+a.mascot+" keep the good china out for another week; the only vulgar move now would be confusing an early table with permanent seating.",
+        team+" has paid both dinner checks with wins. The room may enjoy that without declaring every place setting untouchable."
+      ],
+      "ll":[
+        "Two losses have made the "+a.mascot+" table considerably less decorative. Somebody needs to bring actual production before the next bill arrives.",
+        team+" is 0-2, and no amount of polished silverware can make that tasteful. The next course needs points from places that have been serving air."
+      ],
+      "lw":[
+        "The "+a.mascot+" followed the opening loss with a win, which is a much nicer second course than an excuse. Keep the correction; skip the coronation.",
+        team+" answered a bad first dinner with a better second one. That earns another reservation, not ownership of the restaurant."
+      ],
+      "wl":[
+        "The "+a.mascot+" opened with dessert and got handed the bill in Week 2. Now the table has to decide which version was actually dressed for the season.",
+        team+" has one win and one loss, which is exactly enough evidence for the room to argue and nowhere near enough to settle the seating chart."
+      ],
+      "no-history":[
+        "The opening place setting is incomplete, so the "+a.mascot+" get no elegant comparison to hide behind. This Sunday carries its own bill.",
+        "Without a clean opener, "+team+" has to let the current plate speak for itself. Fortunately, the numbers are already sitting on the table."
+      ]
+    },
+    "mack-hollis":{
+      "ww":[
+        "Two wins have the "+a.mascot+" making noise for a reason. Keep the speakers on; just do not confuse September volume with a parade permit.",
+        team+" has hit the scoreboard hard enough to leave 2-0 with receipts. The next test is whether the backup singers know the chorus too."
+      ],
+      "ll":[
+        "Two losses have killed the mystery for "+team+": there are weak spots, everybody can see them, and Week 3 is where the toolbox gets judged.",
+        "The "+a.mascot+" are 0-2, which means the siren is allowed to be audible now. Fix the dead outlets before another Sunday finds them first."
+      ],
+      "lw":[
+        team+" answered the opening loss with a win, and that is the kind of response worth yelling about. Now do it again without needing the same emergency.",
+        "The "+a.mascot+" punched back after Week 1. Good. The next headline asks whether that response had a sequel or just one loud page."
+      ],
+      "wl":[
+        team+" followed the opening win with a loss, so the victory lap has officially been interrupted. Week 3 gets to decide whether the stumble has company.",
+        "The "+a.mascot+" went from one good headline to one bad one. Nobody needs panic yet, but the next edition suddenly has real stakes."
+      ],
+      "no-history":[
+        team+" has no complete opener to compare against, which means this Sunday gets the microphone by itself. It had better say something useful.",
+        "The opening tape is incomplete, so the "+a.mascot+" cannot hide behind a trend line. This result gets the whole headline."
+      ]
+    },
+    "nora-voss":{
+      "ww":[
+        team+" has two wins, which is inconvenient for anybody hoping the first one was a typo. Rivals can wait for a cleaner weakness; the standings are not volunteering one.",
+        "The "+a.mascot+" are 2-0 and the easy rival joke has missed twice. That does not make them sacred; it does make lazy dismissal look cheap."
+      ],
+      "ll":[
+        team+" has lost twice, so rivals no longer need to manufacture the material. The roster has supplied enough of its own and now owes supporters a rebuttal.",
+        "The "+a.mascot+" are 0-2. At this point the group chat does not need creativity; it needs only screenshots and the confidence to keep sending them."
+      ],
+      "lw":[
+        team+" answered the opening loss, which ruins the easiest rival narrative. The useful question now is whether the correction survives another opponent.",
+        "The "+a.mascot+" turned an 0-1 joke into a 1-1 argument. Annoying for rivals, useful for supporters, and still very much unfinished."
+      ],
+      "wl":[
+        team+" gave rivals the sequel they wanted after an opening win. One loss is not a collapse, but it has restored everybody’s favorite screenshots.",
+        "The "+a.mascot+" split the first two games and handed rivals fresh material in the second. Week 3 decides whether the joke ages well."
+      ],
+      "no-history":[
+        "There is no clean opener for rivals to compare with "+team+", so this result gets judged without the usual screenshot war.",
+        "The first-week file is incomplete, which means the "+a.mascot+" get one less excuse and one less comparison. Sunday can stand on its own."
+      ]
+    }
+  };
+  const bank=(rows[rid]||rows["walter-mercer"])[state]||rows["walter-mercer"][state]||[];
+  return bank[v]||""
+}
+
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,
     prevWon=prev?Number(prev.points)>Number(prev.opponent_points):null,prevOpp=w2DisplayTeam(prev?.opponent_name||"last week’s opponent"),prevScore=prev?w2One(prev.points)+"–"+w2One(prev.opponent_points):null,top=(t.starter_details||[]).slice(0,3),opp=t.opponent_name||"the opponent";
@@ -2153,7 +2251,7 @@ function w2BuildSections(t,prev){
     w2S(t,r,"lede-result",w2DisplayTeam(t.team_name)+" "+(won?"beat ":"lost to ")+w2DisplayTeam(opp)+" "+w2One(t.points)+"–"+w2One(t.opponent_points)+", leaving the "+alias.mascot+" at "+rec+(rank?" and No. "+rank+" in the league order":"")+". "),
     w2S(t,r,"lede-prev",prev?("In Week 1, the "+alias.mascot+" opened with a "+prevScore+" "+(prevWon?"win over ":"loss to ")+prevOpp+"; after Week 2, that leaves "+t.team_name+" with "+(prevWon===won?(won?"two straight wins and a standard worth defending":"two straight losses and a repair job that can no longer wait"):(won?"a response instead of a spiral":"a split start and an unanswered question"))+"."):"The "+alias.mascot+" have no complete opening-week snapshot to lean on, so this result has to carry the story by itself."),
     w2S(t,r,"lede-shape",w2LedeShape(t,r,won,margin,opp,top)),
-    w2S(t,r,"lede-alias",prev?(prevWon===won?(won?"Two straight wins give the "+alias.mascot+" something real to defend in Week 3.":"Two straight losses mean the "+alias.mascot+" are past the point where everything can be dismissed as opening-week noise."):(won?"The "+alias.mascot+" answered the opener instead of letting it become a trend.":"The "+alias.mascot+" have now shown both versions of themselves, which makes Week 3 a choice about which one sticks.")):"Week 2 has to carry the argument by itself because the opening-week comparison is incomplete.")
+    w2S(t,r,"lede-alias",w2LedeAliasRead(t,r,prev,prevWon,won))
   ];
   const players=[];
   for(let i=0;i<3;i++){

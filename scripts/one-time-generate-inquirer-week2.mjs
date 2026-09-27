@@ -754,98 +754,66 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
   const pts=Number(p?.points),rid=String(r?.id||"walter-mercer"),
     profile=w2PlayerStatusProfile(p,slot),status=profile.status,name=String(p?.name||"this player");
   if(!Number.isFinite(pts)||!status)return "";
+
+  // Presentation only: the status is derived systematically above. Keep this color short
+  // so it livens up an already-relevant player mention without turning the article into
+  // a taxonomy report or forcing a special case for any individual player.
   const rows={
     "walter-mercer":{
-      "established-star":[
-        "That is familiar star work from "+name+".",
-        name+" remains the established star this lineup can plan around."
-      ],
-      "struggling-star":[
-        name+" is still a star, but this dip is now worth watching.",
-        "The star résumé stays; the current form from "+name+" needs a rebound."
-      ],
-      "declining-veteran":[
-        name+" is a veteran whose two-week level is slipping far enough to monitor.",
-        "The veteran baseline on "+name+" is trending down, not merely wobbling for one Sunday."
-      ],
-      "star-level":[
-        "That was star-level work from "+name+", even if one Sunday is not a résumé.",
-        name+" reached genuine star-level territory this week."
-      ],
-      "breakout":[
-        name+" is making a real young-player breakout case.",
-        "The breakout case around "+name+" is getting harder to dismiss."
-      ],
-      "emerging":[
-        name+" is starting to look like a real weekly piece.",
-        "The emerging role around "+name+" is becoming useful, not theoretical."
-      ],
-      "reliable-veteran":[
-        "Reliable veteran "+name+" gave the lineup another familiar answer.",
-        name+" remains a steady veteran piece."
-      ],
-      "reliable":[
-        name+" remains one of the steadier pieces in the lineup.",
-        "This was another reliable return from "+name+"."
-      ],
-      "rookie":[
-        "The rookie role around "+name+" is already becoming meaningful.",
-        name+" is a rookie earning real weekly responsibility."
-      ],
-      "young-player":[
-        "Young "+name+" is earning more weekly trust.",
-        name+" is a young player whose role is becoming worth tracking."
-      ],
-      "veteran":[
-        "Veteran "+name+" gave the lineup a familiar useful return.",
-        name+" supplied the kind of veteran contribution this roster expects."
-      ],
-      "struggling":[
-        name+" is running below his recent standard.",
-        "The recent form from "+name+" is becoming a real lineup concern."
-      ]
+      "established-star":["Established star "+name+" delivered.","Proven star "+name+" held form."],
+      "struggling-star":["Star "+name+" is in a slump.","Star "+name+" needs a rebound."],
+      "declining-veteran":["Veteran "+name+" is trending down.","Declining veteran "+name+" bears watching."],
+      "star-level":[name+" flashed star-level form.",name+" reached star-level territory."],
+      "breakout":["Young breakout "+name+" keeps climbing.","Breakout player "+name+" keeps building."],
+      "emerging":["Emerging "+name+" keeps earning work.","Rising "+name+" looks more weekly-ready."],
+      "reliable-veteran":["Steady veteran "+name+" delivered.","Reliable veteran "+name+" held form."],
+      "reliable":["Reliable "+name+" held steady.","Steady "+name+" delivered."],
+      "rookie":["Promising rookie "+name+" keeps earning work.","Rookie "+name+" is gaining trust."],
+      "young-player":["Young riser "+name+" keeps earning trust.","Young "+name+" is gaining ground."],
+      "veteran":["Veteran "+name+" remained useful.","Seasoned veteran "+name+" held up."],
+      "struggling":[name+" is running below his standard.",name+" is in a real dip."]
     },
     "tess-delaney":{
-      "established-star":["Established star "+name+" looked properly expensive again.","The star place card still belongs in front of "+name+"."],
-      "struggling-star":["Star "+name+" is in a slump; the table has noticed.","The résumé is still star-level, even if this serving from "+name+" was not."],
-      "declining-veteran":["Veteran "+name+" is starting to look like the portion size is shrinking.","The veteran decline around "+name+" has lasted long enough to stop blaming the china."],
-      "star-level":[name+" just served star-level production.","That was a centerpiece-level week from "+name+"."],
-      "breakout":["Young "+name+" is making a convincing breakout case.","The breakout chair is getting harder to keep away from "+name+"."],
-      "emerging":[name+" is moving from side dish to real weekly piece.","The emerging role around "+name+" deserves a better seat."],
-      "reliable-veteran":["Steady veteran "+name+" remains a dependable place setting.","Reliable veteran "+name+" delivered the familiar course."],
-      "reliable":[name+" remains a reliably useful piece.","Steady "+name+" kept the table from wobbling."],
-      "rookie":["Rookie "+name+" is already earning a real seat at the table.","The rookie role around "+name+" is getting difficult to treat as decorative."],
-      "young-player":["Young "+name+" is earning a larger place in the weekly plan.",name+" is a young piece worth keeping near the centerpiece."],
-      "veteran":["Veteran "+name+" still knows how to fill the plate.","The veteran hand from "+name+" remained useful."],
-      "struggling":[name+" is serving less than his recent standard promised.","The current form from "+name+" belongs on the concern list."]
+      "established-star":["Established star "+name+" still owns the centerpiece.","Proven star "+name+" looked the part."],
+      "struggling-star":["Star "+name+" is in a slump.","Star "+name+" needs a better serving."],
+      "declining-veteran":["Veteran "+name+" is trending down.","Declining veteran "+name+" is losing his place setting."],
+      "star-level":[name+" served star-level work.",name+" reached centerpiece-level form."],
+      "breakout":["Young breakout "+name+" deserves a bigger seat.","Breakout player "+name+" keeps moving up the table."],
+      "emerging":["Emerging "+name+" deserves more room.","Rising "+name+" is becoming a weekly piece."],
+      "reliable-veteran":["Steady veteran "+name+" delivered.","Reliable veteran "+name+" kept his place."],
+      "reliable":["Reliable "+name+" held steady.","Steady "+name+" kept the table level."],
+      "rookie":["Promising rookie "+name+" is earning a seat.","Rookie "+name+" keeps gaining trust."],
+      "young-player":["Young riser "+name+" is earning room.","Young "+name+" keeps moving up."],
+      "veteran":["Veteran "+name+" remained useful.","Seasoned veteran "+name+" still contributed."],
+      "struggling":[name+" is running below his standard.",name+" is in a real dip."]
     },
     "mack-hollis":{
-      "established-star":["Established star "+name+" brought the noise again.","That is star work from "+name+", not a surprise siren."],
-      "struggling-star":["Star "+name+" is in a real dip; circle it, do not bury the résumé.","The star label survives, but "+name+" needs the volume back."],
-      "declining-veteran":["Veteran "+name+" is losing enough voltage for the decline alarm to matter.","The veteran signal on "+name+" has been fading for more than one blip."],
-      "star-level":[name+" hit star-level voltage this week.","That was star-level noise from "+name+"."],
-      "breakout":["Young "+name+" is turning a breakout spark into actual voltage.","The breakout alarm around "+name+" is getting louder for a reason."],
-      "emerging":[name+" is becoming a real weekly live wire.","The emerging role around "+name+" has actual voltage now."],
-      "reliable-veteran":["Reliable veteran "+name+" kept the circuit working.","Steady veteran "+name+" did exactly the useful work expected."],
-      "reliable":[name+" remains a dependable outlet.","That was another steady return from "+name+"."],
-      "rookie":["Rookie "+name+" already has real voltage in the weekly role.","The rookie is no longer just background wiring; "+name+" is earning work."],
-      "young-player":["Young "+name+" is starting to demand weekly attention.","The role for young "+name+" keeps getting harder to ignore."],
-      "veteran":["Veteran "+name+" kept the circuit useful.","The veteran hand from "+name+" still carries some voltage."],
-      "struggling":[name+" is running below his usual voltage.","The recent signal from "+name+" is weak enough to put on the repair list."]
+      "established-star":["Established star "+name+" brought the noise.","Proven star "+name+" stayed loud."],
+      "struggling-star":["Star "+name+" is in a slump.","Star "+name+" needs the volume back."],
+      "declining-veteran":["Veteran "+name+" is trending down.","Declining veteran "+name+" is losing voltage."],
+      "star-level":[name+" hit star-level voltage.",name+" reached star-level territory."],
+      "breakout":["Young breakout "+name+" keeps sparking.","Breakout player "+name+" keeps getting louder."],
+      "emerging":["Emerging "+name+" has real voltage.","Rising "+name+" is becoming weekly-relevant."],
+      "reliable-veteran":["Steady veteran "+name+" kept the circuit working.","Reliable veteran "+name+" delivered."],
+      "reliable":["Reliable "+name+" held steady.","Steady "+name+" kept the lights on."],
+      "rookie":["Promising rookie "+name+" has real voltage.","Rookie "+name+" keeps earning work."],
+      "young-player":["Young riser "+name+" is getting louder.","Young "+name+" keeps earning trust."],
+      "veteran":["Veteran "+name+" remained useful.","Seasoned veteran "+name+" still carried voltage."],
+      "struggling":[name+" is running below his standard.",name+" is in a real dip."]
     },
     "nora-voss":{
-      "established-star":["Established star "+name+" remains a terrible place for rivals to hunt an easy joke.","The star label on "+name+" already had receipts before Sunday."],
-      "struggling-star":["Star "+name+" finally gave rivals a real slump to point at.","The résumé survives, but "+name+" handed rivals a useful bad-week screenshot."],
-      "declining-veteran":["Veteran "+name+" is sliding enough that rivals no longer need to invent the decline joke.","The veteran baseline on "+name+" is moving down in a way opponents can actually cite."],
-      "star-level":[name+" reached star-level territory, inconveniently for everyone rooting against it.","That was star-level work from "+name+", which ruins the easy rival script."],
-      "breakout":["Young "+name+" is building a breakout profile rivals may have to stop laughing at.","The breakout profile around "+name+" has become annoyingly credible."],
-      "emerging":[name+" is becoming an emerging weekly problem for opponents.","The emerging role around "+name+" is getting harder for rivals to dismiss."],
-      "reliable-veteran":["Reliable veteran "+name+" remains irritatingly steady.","Steady veteran "+name+" gave rivals very little to mock."],
-      "reliable":[name+" remains reliably difficult to turn into a punch line.","That was another steady return from "+name+"."],
-      "rookie":["Rookie "+name+" is already giving rivals a weekly problem.","The rookie role around "+name+" is becoming inconveniently real."],
-      "young-player":["Young "+name+" is earning more respect than rivals planned to give.","The young-player role around "+name+" is becoming harder to mock."],
-      "veteran":["Veteran "+name+" still gave supporters a clean rebuttal.","The veteran contribution from "+name+" remained useful."],
-      "struggling":[name+" is giving rivals a genuine form issue to point at.","The current dip from "+name+" is real enough to survive the jokes."]
+      "established-star":["Established star "+name+" spoiled the easy joke.","Proven star "+name+" held up again."],
+      "struggling-star":["Star "+name+" is in a slump.","Star "+name+" gave rivals a real dip to cite."],
+      "declining-veteran":["Veteran "+name+" is trending down.","Declining veteran "+name+" is giving rivals material."],
+      "star-level":[name+" reached star-level territory.",name+" flashed star-level form."],
+      "breakout":["Young breakout "+name+" is getting annoyingly credible.","Breakout player "+name+" keeps ruining the easy joke."],
+      "emerging":["Emerging "+name+" is becoming a problem.","Rising "+name+" is getting harder to dismiss."],
+      "reliable-veteran":["Steady veteran "+name+" stayed irritatingly useful.","Reliable veteran "+name+" delivered."],
+      "reliable":["Reliable "+name+" held steady.","Steady "+name+" spoiled the punch line."],
+      "rookie":["Promising rookie "+name+" is becoming inconvenient.","Rookie "+name+" keeps earning trust."],
+      "young-player":["Young riser "+name+" is getting harder to mock.","Young "+name+" keeps gaining ground."],
+      "veteran":["Veteran "+name+" remained useful.","Seasoned veteran "+name+" gave rivals little help."],
+      "struggling":[name+" is running below his standard.",name+" is in a real dip."]
     }
   };
   const bank=(rows[rid]||rows["walter-mercer"])[status]||[];

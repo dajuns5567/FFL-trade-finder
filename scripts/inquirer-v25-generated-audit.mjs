@@ -276,7 +276,11 @@ const isEstablishedStar=p=>{
   const prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,pos=String(p?.position||'').toUpperCase();
   if(!Number.isFinite(prior)||games<8)return false;
   const defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT)$/.test(pos),threshold=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13;
-  const years=Number(p?.years_exp);
+  const years=Number(p?.years_exp),age=Number(p?.age),seasonAvg=Number(p?.season_avg),snaps=Number(p?.current_snap_count),priorSnapPg=Number(p?.prior_season_snaps_per_game),
+    earlyCareer=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)),
+    developmentalBreakout=earlyCareer&&Number.isFinite(seasonAvg)&&seasonAvg>=Math.max(prior*1.35,prior+2.5)&&
+      Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=priorSnapPg*1.1&&prior<threshold*1.4;
+  if(developmentalBreakout)return false;
   return prior>=threshold*1.2||(prior>=threshold&&(!Number.isFinite(years)||years>=1));
 };
 for(const t of d.teams||[]){

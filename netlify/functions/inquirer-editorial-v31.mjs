@@ -167,8 +167,9 @@ function evolveSentence(sentence,reporterId,seed){
   out=out.trim();if(out)out=out[0].toUpperCase()+out.slice(1);
   const intro=EVOLUTION_INTROS[rid][h%EVOLUTION_INTROS[rid].length],tail=EVOLUTION_TAILS[rid][Math.floor(h/11)%EVOLUTION_TAILS[rid].length];
   out=intro+' '+out;
-  if(!/[.!?]$/.test(out))out+='.';
-  return out+' '+tail;
+  out=out.replace(/[.!?]+$/,'');
+  const tailClause=tail.replace(/[.!?]+$/,'').replace(/^./,m=>m.toLowerCase());
+  return out+' — '+tailClause+'.';
 }
 function paragraphSentenceRows(paragraph){
   return forwardSentenceParts(paragraph).map(sentence=>({sentence,norm:forwardNormSentence(sentence,[]),words:forwardWordCount(sentence)}));
@@ -189,18 +190,40 @@ function evolveForwardTeams(teams,previousEdition,week,salt){
     return{...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
   });
 }
-function evolveForwardOverview(overview,previousOverview,week,salt){
+function evolveForwardOverview(overview,previousOverview,week,salt,entities=[]){
   if(!overview)return overview;
-  const priorSentences=new Set(forwardSentenceParts((previousOverview?.sections||[]).flatMap(s=>s.paragraphs||[]).join(' ')).filter(s=>forwardWordCount(s)>=10).map(s=>forwardNormSentence(s,[]))),
+  const sectionParagraphs=section=>Array.isArray(section?.blocks)&&section.blocks.length
+    ?section.blocks.flatMap(b=>b?.paragraphs||[])
+    :(section?.paragraphs||[]);
+  const priorText=[
+    ...(previousOverview?.sections||[]).flatMap(sectionParagraphs),
+    ...(previousOverview?.hot_takes||[]).flatMap(x=>[x?.title,x?.take]).filter(Boolean)
+  ].join(' ');
+  const currentText=[
+    ...(overview?.sections||[]).flatMap(sectionParagraphs),
+    ...(overview?.hot_takes||[]).flatMap(x=>[x?.title,x?.take]).filter(Boolean)
+  ].join(' ');
+  const priorSentences=new Set(forwardSentenceParts(priorText).filter(s=>forwardWordCount(s)>=10).map(s=>forwardNormSentence(s,entities))),
     counts=new Map();
-  for(const s of forwardSentenceParts((overview.sections||[]).flatMap(x=>x.paragraphs||[]).join(' ')).filter(s=>forwardWordCount(s)>=10)){const n=forwardNormSentence(s,[]);counts.set(n,(counts.get(n)||0)+1)}
-  const sections=(overview.sections||[]).map((section,si)=>({...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>forwardSentenceParts(p).map((sentence,sj)=>{
-    const n=forwardNormSentence(sentence,[]),offender=forwardWordCount(sentence)>=10&&(priorSentences.has(n)||(counts.get(n)||0)>1);
-    return offender?evolveSentence(sentence,String(section?.reporter?.id||'walter-mercer'),[week,salt,'recap',section.heading,si,pi,sj,n].join('|')):sentence;
-  }).join(' '))}));
-  return{...overview,sections};
+  for(const s of forwardSentenceParts(currentText).filter(s=>forwardWordCount(s)>=10)){const n=forwardNormSentence(s,entities);counts.set(n,(counts.get(n)||0)+1)}
+  const evolveParagraph=(p,rid,seedBase)=>forwardSentenceParts(p).map((sentence,sj)=>{
+    const n=forwardNormSentence(sentence,entities),offender=forwardWordCount(sentence)>=10&&(priorSentences.has(n)||(counts.get(n)||0)>1);
+    return offender?evolveSentence(sentence,rid,[week,salt,seedBase,sj,n].join('|')):sentence;
+  }).join(' ');
+  const sections=(overview.sections||[]).map((section,si)=>{
+    const rid=String(section?.reporter?.id||'walter-mercer');
+    if(Array.isArray(section?.blocks)&&section.blocks.length){
+      const blocks=section.blocks.map((block,bi)=>({...block,paragraphs:(block.paragraphs||[]).map((p,pi)=>evolveParagraph(p,rid,['recap-block',section.heading,si,block.heading||block.title,bi,pi].join('|')))}));
+      return{...section,blocks,paragraphs:blocks.flatMap(b=>b.paragraphs||[])};
+    }
+    return{...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>evolveParagraph(p,rid,['recap-section',section.heading,si,pi].join('|')))};
+  });
+  const hot_takes=(overview.hot_takes||[]).map((take,i)=>{
+    const rid=String(take?.reporter?.id||'walter-mercer'),title=String(take?.title||''),body=String(take?.take||'');
+    return{...take,title:evolveParagraph(title,rid,['hot-title',i].join('|')),take:evolveParagraph(body,rid,['hot-take',i].join('|'))};
+  });
+  return{...overview,sections,hot_takes};
 }
-
 export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,weekClassification=null,variationSalt=0}={}){
   season=Number(season);week=Number(week);variationSalt=Number(variationSalt)||0;
   if(!rawInquirer||!Array.isArray(rawInquirer.teams))throw new Error('V31 forward editorial layer requires raw team articles');
@@ -2813,7 +2836,7 @@ function assertWeek2Originality(result,previousEdition){
   overview=deepStrings(overview,s=>adaptWeekLanguage(s,week,weekClassification));
   if(week>=3){
     teams=evolveForwardTeams(teams,previousEdition,week,variationSalt);
-    overview=evolveForwardOverview(overview,previousEdition?.league_overview||null,week,variationSalt);
+    overview=evolveForwardOverview(overview,previousEdition?.league_overview||null,week,variationSalt,[...forwardEntities({teams}),...forwardEntities(previousEdition)]);
   }
 
   const trajectory=(overview.sections||[]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
@@ -2851,7 +2874,7 @@ function forwardEscRe(s){return [...String(s||'')].map(ch=>'.*+?^$(){}|[]'.inclu
 function forwardEntities(edition){return[...(edition?.teams||[])].flatMap(t=>[t.team_name,t.manager_name,t.opponent_name,t.next_opponent_name,...(t.starter_details||[]).map(p=>p.name)]).filter(Boolean).map(String).sort((a,b)=>b.length-a.length)}
 function forwardNormSentence(s,entities=[]){let x=String(s||'');for(const e of entities)x=x.replace(new RegExp(forwardEscRe(e),'gi'),'[ENTITY]');return x.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,'[#]').replace(/\s+/g,' ').trim()}
 function forwardArticleSentences(t){return forwardSentenceParts((t?.inquirer_article?.paragraphs||[]).join(' ')).filter(x=>forwardWordCount(x)>=10)}
-function forwardRecapSentences(e){return forwardSentenceParts((e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]).join(' ')).filter(x=>forwardWordCount(x)>=10)}
+function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(e?.league_overview?.hot_takes||[]).flatMap(x=>[x?.title,x?.take])].filter(Boolean).join(' ')).filter(x=>forwardWordCount(x)>=10)}
 
 export function evaluateInquirerEditionQuality(current,previous=null){
   const issues=[],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));

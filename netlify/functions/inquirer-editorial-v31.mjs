@@ -1901,6 +1901,66 @@ function w2TransactionMoveDetails(t){
     return null
   }).filter(Boolean)
 }
+
+function w2ValueMoverRosterPath(t,row){
+  const id=String(row?.player_id||"");
+  if(!id)return "transaction path unavailable";
+  const txs=(t.transactions||[]).filter(tx=>!tx?.status||String(tx.status).toLowerCase()==="complete");
+  for(const tx of txs){
+    const adds=(tx.adds||[]).map(String),drops=(tx.drops||[]).map(String),
+      added=adds.includes(id),dropped=drops.includes(id);
+    if(!added&&!dropped)continue;
+    const type=String(tx.type||"").toLowerCase();
+    if(type==="trade")return added?"acquired by trade this week":"traded away this week";
+    if(added){
+      if(type.includes("waiver"))return "claimed on waivers this week";
+      if(type.includes("free"))return "added in free agency this week";
+      return "added this week";
+    }
+    return "dropped this week";
+  }
+  const acquired=(t.trade_acquisitions||[]).find(a=>String(a?.player_id||"")===id);
+  if(acquired){
+    const when=acquired?.season&&acquired?.week?" in Week "+String(acquired.week)+" of "+String(acquired.season):"";
+    return "acquired by trade"+when;
+  }
+  const sent=(t.trade_acquisitions||[]).find(a=>(a?.outgoing_player_ids||[]).map(String).includes(id));
+  if(sent){
+    const when=sent?.season&&sent?.week?" in Week "+String(sent.week)+" of "+String(sent.season):"";
+    return "traded away"+when;
+  }
+  return "already rostered; no Week "+String(week)+" add, trade or drop";
+}
+function w2ValueMoverReads(t,r){
+  const movers=t.value_history_player_movers||{},
+    risers=(movers.risers||[]).filter(x=>Number.isFinite(Number(x?.delta))&&Number(x.delta)>0).slice(0,3),
+    fallers=(movers.fallers||[]).filter(x=>Number.isFinite(Number(x?.delta))&&Number(x.delta)<0).slice(0,3),
+    rid=String(r?.id||"walter-mercer"),q=Math.abs(Number(t.roster_id)||0)%4;
+  const item=x=>String(x?.player_name||x?.player_id||"Unknown player")+" ("+(Number(x.delta)>0?"+":"")+Math.round(Number(x.delta)).toLocaleString("en-US")+"; "+w2ValueMoverRosterPath(t,x)+")";
+  const leads={
+    "walter-mercer":{
+      rise:["At player level, the strongest gains belonged to ","The value ledger’s top risers were ","The individual market gains were led by ","The roster’s biggest upward player moves came from "],
+      fall:["The largest player-level declines came from ","The value ledger’s top fallers were ","The individual market losses were led by ","The roster’s biggest downward player moves came from "]
+    },
+    "tess-delaney":{
+      rise:["The market rewarded these players most: ","The strongest individual value gains came from ","The upward side of the player board belongs to ","The week’s clearest player-level gains were "],
+      fall:["The market marked these players down most: ","The sharpest individual value losses came from ","The downward side of the player board belongs to ","The week’s clearest player-level declines were "]
+    },
+    "mack-hollis":{
+      rise:["Biggest risers on the board: ","The loudest player-value gains: ","The names climbing fastest this week: ","The biggest green arrows belong to "],
+      fall:["Biggest fallers on the board: ","The loudest player-value drops: ","The names sliding fastest this week: ","The biggest red arrows belong to "]
+    },
+    "nora-voss":{
+      rise:["Rivals watching the value board saw the biggest gains from ","The player values opponents noticed rising most were ","The strongest market gains on this roster came from ","The week’s biggest upward player moves were "],
+      fall:["Rivals watching the value board saw the biggest drops from ","The player values opponents noticed falling most were ","The sharpest market losses on this roster came from ","The week’s biggest downward player moves were "]
+    }
+  },bank=leads[rid]||leads["walter-mercer"],out=[];
+  if(risers.length)out.push(w2S(t,r,"value-risers",bank.rise[q]+w2Natural(risers.map(item))+"."));
+  if(fallers.length)out.push(w2S(t,r,"value-fallers",bank.fall[(q+1)%4]+w2Natural(fallers.map(item))+"."));
+  if(!out.length)out.push(w2S(t,r,"value-movers-missing","The team-level value move is verified, but no player-level mover rows were available for this tracked window."));
+  return out;
+}
+
 function w2ManagementMoveRead(t,r,won,margin){
   const moves=w2TransactionMoveDetails(t),rid=String(r?.id||""),v=(Number(t.roster_id)||0)%2,team=w2DisplayTeam(t.team_name),
     weak=(t.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0],miss=t.best_lineup_miss,q=w2Hash(team+"|management-template")%4;
@@ -2438,10 +2498,11 @@ function w2BuildSections(t,prev){
     w2S(t,r,"mgmt-two",w2ManagementMoveRead(t,r,won,margin)),
     w2S(t,r,"mgmt-meaning",w2ManagementDepthRead(t,r,weakDepth,t.next_opponent_name))
   ];
-  const v=t.value_history_week,d=Number(v?.delta),pct=Math.abs(Number(v?.pct)),showMarket=Number.isFinite(d)&&(Number.isFinite(pct)?pct>=3:Math.abs(d)>=1500),value=showMarket?[
+  const v=t.value_history_week,d=Number(v?.delta),pct=Math.abs(Number(v?.pct)),showMarket=Number.isFinite(d)&&(Number.isFinite(pct)?pct>=3:Math.abs(d)>=1500),moverReads=w2ValueMoverReads(t,r),value=showMarket?[
     w2S(t,r,"value-one",Number.isFinite(pct)&&pct<1
       ?("The "+alias.mascot+" market moved only "+w2One(pct)+"% over the tracked window. For "+alias.mascot+", that is noise, not a roster referendum.")
-      :("The "+alias.mascot+" moved "+(d>0?"up ":"down ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(pct)?" ("+w2One(pct)+"%)":"")+". "+(d>0?"That gives "+alias.mascot+" a little more leverage if management wants to deal; it does not turn a loss into a win.":"That trims the "+alias.mascot+" trade-market cushion, which matters for roster flexibility even though the standings remain a separate argument.")))
+      :("The "+alias.mascot+" moved "+(d>0?"up ":"down ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(pct)?" ("+w2One(pct)+"%)":"")+". "+(d>0?"That gives "+alias.mascot+" a little more leverage if management wants to deal; it does not turn a loss into a win.":"That trims the "+alias.mascot+" trade-market cushion, which matters for roster flexibility even though the standings remain a separate argument."))),
+    ...moverReads
   ]:["n/a"];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],weakPrev=weak?w2PrevPlayer(prev,weak.id):null,hot=[
     w2S(t,r,"hot-one",weak&&weakPrev?w2HotTrend(t,r,weak,weakPrev):w2WeakSpotRead(t,r,weak,won,margin))

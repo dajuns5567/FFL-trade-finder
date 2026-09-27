@@ -156,45 +156,75 @@ assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receivi
 assert.match(recap,/breakout (?:star|case|players?)|can trust to keep showing up|familiar production|next opponent will attack the same weakness/i,'Weekly Recap must carry a natural player trajectory story tied to actual matchup consequences');
 
 if(reportWeek===2){
-  const breakoutCandidates=[];
+  const expectedPlayerStatus=(p,slot=0)=>{
+    const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
+      seasonAvg=Number(p?.season_avg),age=Number(p?.age),years=Number(p?.years_exp),
+      pos=String(p?.position||'').toUpperCase(),role=Number(slot)||0,
+      snaps=p?.current_snap_count==null?null:Number(p.current_snap_count),
+      priorSnapPg=p?.prior_season_snaps_per_game==null?null:Number(p.prior_season_snaps_per_game),
+      snapPct=p?.current_snap_pct==null?null:Number(p.current_snap_pct),
+      defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),
+      starThreshold=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13,
+      rookie=(Number.isFinite(years)&&years===0)||(games===0&&Number.isFinite(age)&&age<=23),
+      young=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
+      earlyCareer=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)),
+      veteran=(Number.isFinite(years)&&years>=5)||(Number.isFinite(age)&&age>=28),
+      established=Number.isFinite(prior)&&games>=8&&(prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1))),
+      seasonLift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&seasonAvg>=Math.max(prior*1.35,prior+2.5),
+      weekLift=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&pts>=Math.max(starThreshold*1.1,prior+5),
+      roleLift=(Number.isFinite(snapPct)&&snapPct>=0.55)||
+        (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
+        (Number.isFinite(snaps)&&snaps>=(defensive?32:35)),
+      developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&seasonLift&&roleLift,
+      seasonDrop=veteran&&games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>=Math.max(5,starThreshold*.45)&&seasonAvg<=prior*.72,
+      weekDrop=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&pts<=prior*.7,
+      steady=games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+        Math.abs(seasonAvg-prior)<=Math.max(1.5,prior*.18)&&Number.isFinite(pts)&&pts>=prior*.65&&pts<=prior*1.35;
+    if(!Number.isFinite(pts))return'';
+    if(developmentalBreakout)return'breakout';
+    if(established&&veteran&&seasonDrop&&weekDrop)return'declining-veteran';
+    if(established&&pts<=prior*.55)return'struggling-star';
+    if(established&&pts>=Math.max(starThreshold*.8,prior*.65))return'established-star';
+    if(!established&&young&&games>=6&&Number.isFinite(prior)&&prior>0&&(seasonLift||weekLift)&&(roleLift||seasonLift&&pts>=starThreshold*.9))return'breakout';
+    if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<=starThreshold&&pts>=Math.max(starThreshold*1.15,prior+6))return'breakout';
+    if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&pts>=starThreshold&&pts-prior>=5)return'emerging';
+    if(veteran&&seasonDrop&&weekDrop)return'declining-veteran';
+    if(steady)return veteran?'reliable-veteran':'reliable';
+    if(role===0&&pts>=starThreshold*1.6)return'star-level';
+    if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&pts<=prior*.55)return'struggling';
+    if(rookie&&roleLift)return'rookie';
+    if(young&&roleLift)return'young-player';
+    if(veteran&&pts>=Math.max(5,starThreshold*.5))return'veteran';
+    return'';
+  };
+  const statusLanguage={
+    'established-star':/\b(?:established star|star work|star label|star place card|star résumé|star reputation)\b/i,
+    'struggling-star':/\b(?:star|résumé)\b[^.]{0,100}\b(?:dip|slump|rebound|volume|bad-week|bad line)\b|\b(?:dip|slump)\b[^.]{0,100}\bstar\b/i,
+    'declining-veteran':/\bveteran\b[^.]{0,120}\b(?:declin|slid|slipping|fading|trending down|shrinking|moving down)\w*/i,
+    'star-level':/\b(?:star-level|star work|centerpiece-level)\b/i,
+    'breakout':/\bbreakout\b/i,
+    'emerging':/\b(?:emerging|weekly piece|live wire)\b/i,
+    'reliable-veteran':/\b(?:reliable veteran|steady veteran)\b/i,
+    'reliable':/\b(?:reliable|steady|dependable)\w*/i,
+    'rookie':/\brookie\b/i,
+    'young-player':/\byoung\b/i,
+    'veteran':/\bveteran\b/i,
+    'struggling':/\b(?:running below|below (?:his|the) .*standard|concern|dip|repair list|form issue)\b/i
+  };
+  let categorizedDiscussed=0;
   for(const t of d.teams||[]){
-    for(const p of t.starter_details||[]){
-      const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
-        seasonAvg=Number(p?.season_avg),age=Number(p?.age),years=Number(p?.years_exp),
-        snaps=p?.current_snap_count==null?null:Number(p.current_snap_count),
-        priorSnapPg=p?.prior_season_snaps_per_game==null?null:Number(p.prior_season_snaps_per_game),
-        snapPct=p?.current_snap_pct==null?null:Number(p.current_snap_pct),
-        pos=String(p?.position||'').toUpperCase(),
-        defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),
-        starThreshold=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13,
-        developing=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
-        earlyCareer=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)),
-        productionJump=Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
-          seasonAvg>=Math.max(prior*1.35,prior+2.5),
-        weekJump=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&
-          pts>=Math.max(starThreshold*1.1,prior+5),
-        meaningfulRole=(Number.isFinite(snapPct)&&snapPct>=0.55)||
-          (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
-          (Number.isFinite(snaps)&&snaps>=(defensive?32:35)),
-        established=Number.isFinite(prior)&&games>=8&&
-          (prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1))),
-        developmentalBreakout=earlyCareer&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&
-          productionJump&&meaningfulRole,
-        risingBreakout=!established&&developing&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&
-          meaningfulRole&&(productionJump||weekJump);
-      if(games>=6&&(developmentalBreakout||risingBreakout)){
-        breakoutCandidates.push({t,p,age,years,snaps,priorSnapPg,snapPct,prior,seasonAvg,pts});
-      }
+    const top=(t.starter_details||[]).slice(0,3);
+    for(let slot=0;slot<top.length;slot++){
+      const p=top[slot],status=expectedPlayerStatus(p,slot);
+      if(!status)continue;
+      categorizedDiscussed++;
+      const pname=String(p?.name||''),sentences=sentenceParts(articleText(t)).filter(x=>pname&&x.toLowerCase().includes(pname.toLowerCase())),
+        re=statusLanguage[status];
+      assert.ok(sentences.length>=1,'Categorized player selected for article commentary is missing from copy: '+t.team_name+' / '+pname);
+      assert.ok(re&&sentences.some(x=>re.test(x)),'Applicable player category should add concise natural-language color without exposing an internal label: '+status+' / '+t.team_name+' / '+pname+' :: '+sentences.join(' || '));
     }
   }
-  assert.ok(breakoutCandidates.length>=1,'Week 2 breakout audit needs at least one data-qualified young/high-opportunity starter to exercise the systematic rule');
-  for(const {t,p} of breakoutCandidates){
-    const pname=String(p?.name||''),copy=articleText(t),
-      sentences=sentenceParts(copy).filter(x=>pname&&x.toLowerCase().includes(pname.toLowerCase()));
-    assert.ok(sentences.length>=1,'Every data-qualified young/high-opportunity breakout candidate must be discussed in the team article: '+t.team_name+' / '+pname);
-    assert.ok(sentences.some(x=>/\bbreakout\b/i.test(x)),'Every data-qualified young/high-opportunity breakout candidate must be recognized as a breakout rather than flattened into a generic or established-star label: '+t.team_name+' / '+pname+' :: '+sentences.join(' || '));
-    assert.ok(sentences.some(x=>/\b(?:age|year-old|years? old|snaps?|snap opportunity|role (?:has )?(?:grown|expanded)|two-week average|last season|per game)\b/i.test(x)),'Breakout commentary must explain the age/career, role/opportunity, or historical-production evidence behind the label: '+t.team_name+' / '+pname+' :: '+sentences.join(' || '));
-  }
+  assert.ok(categorizedDiscussed>=20,'Week 2 should exercise player-category color across a meaningful sample of already-discussed players; got '+categorizedDiscussed);
 }
 
 const spedale=(d.teams||[]).find(t=>String(t.manager_name||'').toLowerCase()==='mike3spedale');

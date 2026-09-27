@@ -700,10 +700,12 @@ function w2PlayerStatusProfile(p,slot=0){
     weekLift=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&pts>=Math.max(starThreshold*1.1,prior+5),
     roleLift=(Number.isFinite(snapPct)&&snapPct>=0.55)||
       (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
-      (Number.isFinite(snaps)&&snaps>=(defensive?32:35));
+      (Number.isFinite(snaps)&&snaps>=(defensive?32:35)),
+    developmentalBreakout=young&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&seasonLift&&roleLift;
   let status="";
-  if(!Number.isFinite(pts))return{status:"",starThreshold,young,established,seasonLift,weekLift,roleLift};
-  if(established&&pts>=Math.max(starThreshold*.8,prior*.65))status="established-star";
+  if(!Number.isFinite(pts))return{status:"",starThreshold,young,established,seasonLift,weekLift,roleLift,developmentalBreakout};
+  if(developmentalBreakout)status="breakout";
+  else if(established&&pts>=Math.max(starThreshold*.8,prior*.65))status="established-star";
   else if(established&&pts<=prior*.55)status="struggling-star";
   else if(!established&&young&&games>=6&&Number.isFinite(prior)&&prior>0&&(seasonLift||weekLift)&&(roleLift||seasonLift&&pts>=starThreshold*.9))status="breakout";
   else if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<=starThreshold&&pts>=Math.max(starThreshold*1.15,prior+6))status="breakout";

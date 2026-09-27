@@ -43,7 +43,7 @@ const moverSentence=(t,rid,rows,rising)=>{
     verbsDown={'walter-mercer':['fell','lost','slipped'],'tess-delaney':['fell','slipped','lost'],'mack-hollis':['dropped','slid','lost'],'nora-voss':['fell','lost','slipped']},
     verbs=(rising?verbsUp:verbsDown)[rid]||(rising?verbsUp['walter-mercer']:verbsDown['walter-mercer']);
   (rows||[]).forEach((x,i)=>{const method=moverMethod(t,x),rawName=String(x?.player_name||x?.player_id||'Unknown player'),tag=method.key==='hold'?moverTag(x):'',name=tag?tag+' '+rawName:rawName,amount=Math.abs(Math.round(Number(x.delta))).toLocaleString('en-US'),verb=verbs[(hash(rawName+'|value-move')+i)%verbs.length],move=name+' '+verb+' '+amount+' point'+(Math.abs(Math.round(Number(x.delta)))===1?'':'s');if(!groups.has(method.key))groups.set(method.key,{method,moves:[]});groups.get(method.key).moves.push(move)});
-  return [...groups.values()].map(g=>{const suffix=g.moves.length===1?g.method.one:g.method.many;return natural(g.moves)+(suffix?' '+suffix:'')}).join('; ')+'.';
+  return [...groups.values()].map((g,gi)=>{const suffix=g.moves.length===1?g.method.one:g.method.many,line=natural(g.moves)+(suffix?' '+suffix:'');return gi===0&&line?line[0].toUpperCase()+line.slice(1):line}).join('; ')+'.';
 };
 const marketRead=(t,rid,d,pct)=>{
   const team=displayTeam(t.team_name),amount=Math.abs(Math.round(d)).toLocaleString('en-US'),pctText=Number.isFinite(pct)?' ('+one(pct)+'%)':'',q=hash(t.team_name+'|value-voice')%4,

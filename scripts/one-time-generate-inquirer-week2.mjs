@@ -1350,7 +1350,7 @@ function w2IdentityRead(t,prev,r,top,opp){
     };
     out.push((changeRows[rid]||changeRows["walter-mercer"])[v]);
   }
-  return out
+  return out.slice(0,1)
 }
 function w2OpeningHook(t,r,won,margin,opp,top){
   const a=w2Alias(t),star=top?.[0]?.name||t.team_name,v=w2Hash(t.team_name+"|opening-hook")%4,rid=String(r?.id||"");
@@ -1503,37 +1503,36 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
   return ((rows[rid]||rows["walter-mercer"])[state]||rows["walter-mercer"].split)[v]
 }
 function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
-  const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),next=w2DisplayTeam(t.next_opponent_name||"the Week 3 opponent"),
+  const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),
     star=(t.starter_details||[])[0],weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],
-    div=String(t.division_context?.division_name||"the division"),leaders=(t.division_context?.leaders||[]).filter(x=>x?.team_name),
-    rivals=[...(t.division_context?.ahead_teams||[]),...(t.division_context?.same_record_teams||[]),...(t.division_context?.behind_teams||[])].filter(x=>x?.team_name&&String(x.roster_id)!==String(t.roster_id)),
-    v=(w2Cohort(t)+1)%4,lead=leaders.some(x=>String(x.roster_id)===String(t.roster_id)),
-    rival=rivals[0]?.team_name? w2DisplayTeam(rivals[0].team_name):null;
-  const subject=won?(star?.name||"the lineup"):((weak?.name||"the quietest starter"));
+    miss=t.best_lineup_miss,gap=Number(miss?.gap)||0,v=(w2Cohort(t)+1)%4,
+    subject=miss?.reserve&&miss?.starter&&gap>=5
+      ?miss.reserve.name+" sitting behind "+miss.starter.name
+      :won?(star?.name||"the top of the lineup"):(weak?.name||"the quietest starter");
   const rows={
     "walter-mercer":[
-      "The next fan checkpoint is "+next+". "+(lead?team+" currently has a hand on the "+div+" lead, so supporters know the next result changes more than the mood.":rival?rival+" is already part of the "+div+" traffic, so Week 3 gives the complaints a standings consequence.":"The next result will decide whether the current argument has legs."),
-      "Fans have moved from Sunday’s result to the Week 3 decision: what does "+team+" do with "+subject+" against "+next+"? "+(lead?"Holding the division lead would turn that argument into confidence; giving ground would reopen it.":"The answer has to show up in the lineup, not the postgame explanation."),
-      "The crowd’s next test is practical, not emotional: "+next+" arrives and "+subject+" is the player attached to the debate. "+(lead?"A division lead makes patience easier to afford, but not free.":"Another repeat will make the debate much harder to dismiss."),
-      "Supporters are already using "+next+" as the deadline for this week’s argument. "+(rival?"With "+rival+" also shaping "+div+", the fan reaction will have a standings receipt attached.":"The next result decides whether the noise cools or becomes routine.")
+      "Supporters have moved from the final score to screenshots of "+subject+". The optimists call it fixable; the pessimists are saving the image in case they need it next Sunday.",
+      "The fan reaction has settled into two camps: people celebrating what worked and people asking why "+subject+" survived the lineup review. Neither side appears interested in lowering its voice.",
+      "The message boards are treating "+subject+" as the week’s referendum. The jokes are cheap after a win and considerably more researched after a loss.",
+      "Fans are already rewriting their preferred lineup around "+subject+". The calm version is a suggestion. The louder version has somehow acquired bullet points."
     ],
     "tess-delaney":[
-      "The next reservation is "+next+", and the room has already decided "+subject+" is the chair to watch. "+(lead?"The "+div+" lead lets the table enjoy itself, but one ugly seating decision can still ruin dinner.":"Nobody wants to serve the same complaint twice."),
-      "Supporters have circled "+next+" as the next appointment where "+subject+" has to justify the current arrangement. "+(rival?rival+" is close enough in "+div+" that the room cannot treat this as decorative.":"The room wants an answer before the next bill arrives."),
-      "The public mood now has a reservation time: Week 3 against "+next+". "+subject+" is the place setting everybody will inspect first, especially with "+div+" still unsettled.",
-      "The room can gossip all week; "+next+" gets the final seating vote. Fans are watching "+subject+" because the "+div+" table is too crowded for another sloppy course."
+      "The room has moved on from the final score and started rearranging chairs around "+subject+". Half the table calls it housekeeping; the other half is already asking for the manager.",
+      "Supporters are passing the seating chart around like a menu with one item circled in red: "+subject+". The room would like proof that somebody learned something from Sunday.",
+      "The complaint cards all seem to mention "+subject+". Even the happy tables have started folding them neatly beside the silverware.",
+      "Fans have turned "+subject+" into the room’s favorite piece of gossip. It is funny now; another Sunday of the same thing and somebody starts moving furniture."
     ],
     "mack-hollis":[
-      "The next siren goes off against "+next+". Fans have already attached "+subject+" to the Week 3 lineup screenshot, and "+(lead?"a "+div+" lead means the result comes with actual leverage.":"another bad answer means the volume goes up again."),
-      "When Week 3 brings "+next+", the fan base stops yelling hypotheticals. "+subject+" is the decision everybody will screenshot before kickoff, "+(rival?"with "+rival+" lurking in the "+div+" race.":"and nobody wants the same postgame excuse twice."),
-      "The crowd has a deadline now: "+next+". Fix the argument around "+subject+" and the noise turns into swagger; repeat it and the complaint line catches fire again.",
-      next+" is the next opponent and "+subject+" is the next debate. "+(lead?"Protect the "+div+" lead and the yelling stays fun.":"Lose the same way and the yelling stops being recreational.")
+      "The fan base has screenshots, memes and exactly one volume setting about "+subject+". Nobody needs a siren yet, but the siren has been located.",
+      "Supporters are doing what supporters do best: turning "+subject+" into twelve different lineup arguments and one extremely loud thread.",
+      "The call-in crowd has "+subject+" circled so hard the screen may file a complaint. Some of it is comedy. Some of it is management getting free advice at dangerous volume.",
+      "The memes are already built around "+subject+". If the issue disappears, everybody laughs and moves on. If it stays, the joke gets a season ticket."
     ],
     "nora-voss":[
-      "Rivals have already bookmarked "+next+" because "+subject+" is the easiest Week 3 callback. "+(lead?"If "+team+" protects the "+div+" lead, that joke gets expensive.":"If the same flaw repeats, rivals get to recycle it for free."),
-      "The next rival-chat deadline is "+next+". Supporters want "+subject+" to remove one obvious punch line before "+(rival?rival+" gets another look at the "+div+" race.":"the joke becomes a weekly feature."),
-      next+" gets first chance to test whether this week’s argument was real. "+subject+" is the name supporters are defending or replacing, and the "+div+" table gives rivals a scoreboard to go with the joke.",
-      "Fans can mute the rival chat until "+next+" arrives. After that, "+subject+" either kills the bit or writes the sequel, "+(lead?"with the "+div+" lead sitting in the background.":"and nobody will need fresh material.")
+      "Rival chats keep returning to "+subject+" because it is the easiest material available. Supporters are responding with lineup screenshots, excuses and the occasional respectable counterargument.",
+      "Fans have started hoarding receipts around "+subject+". If the choice works next time, those receipts become weapons; if it does not, rivals get free recycling.",
+      "The rival thread has "+subject+" bookmarked. Supporters know exactly which joke they are tired of hearing, which is usually how a lineup debate graduates into a weekly ritual.",
+      "Supporters are trying to retire the joke around "+subject+" before rivals turn it into a franchise logo. The internet, as always, is showing admirable restraint by showing none."
     ]
   };
   return (rows[rid]||rows["walter-mercer"])[v]
@@ -1727,24 +1726,14 @@ function w2PerformanceDepthRead(t,r,top,weak,won,margin){
   return (rows[rid]||rows["walter-mercer"])[v]
 }
 function w2ManagementDepthRead(t,r,weak,next){
-  const rid=String(r?.id||""),a=w2Alias(t),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(next||t.next_opponent_name||"the Week 3 opponent"),
-    moves=w2TransactionMoveDetails(t),move=moves[0]||null,hasPick=move&&/\bpick\b/i.test(move),low=weak?.name||"the weakest starter",
-    miss=t.best_lineup_miss,reserve=miss?.reserve?.name,starter=miss?.starter?.name;
-  const decision=reserve&&starter?reserve+" remaining behind "+starter+" gives management a real lineup alternative to revisit":low+" still defines the clearest low-output starting spot";
-  if(rid==="tess-delaney")return move
-    ? t.manager_name+" "+move+"; for the "+a.mascot+", the transaction belongs beside the Week 3 seating plan rather than in a victory lap. "+(hasPick?"Any draft capital in that deal lives on a later timetable and cannot repair Sunday’s starting table by itself.":decision+" before "+foe+" enters the room.")
-    : "With no completed Week 2 move to rearrange the guest list, the "+a.mascot+" management story stays with the chairs already occupied. "+decision+"; before "+foe+" arrives, the practical choice is whether to change that seat or trust the same starter to answer.";
-  if(rid==="mack-hollis")return move
-    ? t.manager_name+" "+move+"; now the "+a.mascot+" need the roster change to solve an actual football problem instead of merely winning transaction-day applause. "+(hasPick?"Future draft capital belongs to a later headline, so Week 3 still has to be handled by the players available now.":decision+" with "+foe+" coming next.")
-    : "No Week 2 transaction is coming to rescue the "+a.mascot+" from the lineup they already own. "+decision+", and that puts the Week 3 management pressure on a start/sit choice rather than another count of moves when "+foe+" shows up.";
-  if(rid==="nora-voss")return move
-    ? t.manager_name+" "+move+"; rivals can joke about the transaction only after separating what can help now from what belongs to the future. "+(hasPick?"The pick portion is optionality, not a Sunday scorer, so it cannot be used as an excuse for the current lineup.":decision+" before the "+foe+" matchup gives the move a practical next test.")
-    : "The "+a.mascot+" did not alter the roster during Week 2, so rivals do not get to blame a phantom transaction for this result. "+decision+"; the sharper management story is what "+t.manager_name+" does with that choice before "+foe+".";
-  return move
-    ? t.manager_name+" "+move+"; for "+team+", the value of that decision is tied to the roster problem it was meant to address, not to the fact that a transaction occurred. "+(hasPick?"Draft capital in the return is deferred value and cannot be graded from Week 2 scoring.":decision+" as "+foe+" approaches.")
-    : "Because the "+a.mascot+" made no completed Week 2 roster move, management has to work from the lineup already in place rather than crediting an acquisition that never happened. "+decision+"; the Week 3 test against "+foe+" is whether the existing roster can correct that spot through selection or performance.";
+  const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(next||t.next_opponent_name||"the Week 3 opponent"),
+    low=weak?.name||"the weakest starter",miss=t.best_lineup_miss,reserve=miss?.reserve?.name,starter=miss?.starter?.name,
+    decision=reserve&&starter?reserve+" over "+starter:low+" in the current starting spot";
+  if(rid==="tess-delaney")return "The Week 3 seating decision is "+decision+". "+foe+" gets the next reservation, so management has to choose whether that chair changes before dinner starts.";
+  if(rid==="mack-hollis")return "The Week 3 decision is "+decision+". "+foe+" is next, which gives management one clean chance to change the lineup before the same complaint reaches the megaphone again.";
+  if(rid==="nora-voss")return "The next lineup argument is "+decision+". "+foe+" gets first chance to test it, and rivals will not need fresh material if the same choice survives unchanged.";
+  return "The next management decision is "+decision+". Against "+foe+", the answer has to come from selection or performance rather than another explanation after the score is final."
 }
-
 function w2PlayerRoomClose(t,r,top,weak,opp,won){
   const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),foe=w2DisplayTeam(opp),v=w2Cohort(t)%4,
     starName=top?.[0]?.name||"the lead scorer",secondName=top?.[1]?.name||"the supporting scorer",
@@ -1862,6 +1851,62 @@ function w2ColumnColorRead(t,r,top,weak,won,opp){
   return body+" "+(tails[rid]||tails["walter-mercer"])[v]
 }
 
+
+function w2PlayerSynthesisRead(t,r,top,opp,won){
+  const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),foe=w2DisplayTeam(opp),
+    star=top?.[0]?.name||"the lead scorer",support=top?.[1]?.name||"the supporting scorer",third=top?.[2]?.name||null,
+    v=w2Cohort(t)%4,names=w2Natural([star,support,third].filter(Boolean));
+  const rows={
+    "walter-mercer":[
+      names+" gave "+team+" a usable top end against "+foe+". The point to carry forward is the support behind the lead score, not an expectation that the same exact totals repeat.",
+      star+" gave "+team+" the headline and "+support+" kept it from becoming a solo act. That is the part worth carrying forward from "+foe+": useful support travels better than one spectacular box score.",
+      team+" got enough from "+names+" to establish a real scoring spine against "+foe+". "+(won?"The win lets management build around it.":"The loss says the next job is supplying enough around it to stop wasting it."),
+      "The top of "+team+"’s lineup did its job through "+names+". "+(won?"That is a foundation, not permission to assume the same Sunday repeats.":"That is why the loss belongs to the roster around them rather than the names already producing.")
+    ],
+    "tess-delaney":[
+      names+" gave the "+a.mascot+" table enough real food that nobody needs another decorative centerpiece. "+(won?"Keep the menu; fix the empty chairs.":"The meal was respectable. The bill still arrived."),
+      star+" handled the expensive course and "+support+" kept dinner from becoming performance art. "+(won?"That is a table worth setting again.":"That is the part of the evening worth keeping when the room gets rearranged."),
+      "The "+a.mascot+" got a proper center of gravity from "+names+". The next reservation does not require the same dishes; it requires the rest of the table to stop freeloading.",
+      names+" gave "+team+" enough polish to look intentional. "+(won?"Victory gets the toast.":"Defeat gets the check.")+" The balance at the top mattered more than another recital of the same numbers."
+    ],
+    "mack-hollis":[
+      star+" brought the noise and "+support+" made sure it was not one guy screaming into an empty stadium. "+(won?"That is how a win gets loud without getting stupid.":"The rest of the lineup still managed to waste a perfectly good amplifier."),
+      team+" had actual voltage from "+names+". "+(won?"Keep the circuit.":"Keep the circuit and stop plugging a toaster into the weak outlet.")+" Nobody needs the same exact box score next week.",
+      "The "+a.mascot+" got punches from "+names+" instead of one lonely haymaker. "+(won?"That is the good kind of chaos.":"That is why the loss cannot be dumped on the stars."),
+      names+" gave "+team+" enough real scoring to make the result interesting. The next step is backup, not asking the same people to shout even louder."
+    ],
+    "nora-voss":[
+      star+" removed the easiest rival joke and "+support+" made another one harder to sell. "+(won?"Rivals can keep scrolling.":"Rivals can keep the final score, but they do not get to blame the useful part of the lineup."),
+      team+" gave rivals fewer openings because "+names+" actually showed up. The honest criticism has to move elsewhere instead of pretending those performances were the problem.",
+      names+" forced rival managers to work for their material. "+(won?"That is the kind of inconvenience a win can afford.":"The loss still belongs farther down the lineup."),
+      "The rival version of Sunday gets less convenient once "+names+" are included. "+(won?"Keep the receipt.":"Keep the production and make the rest of the lineup earn its own defense.")
+    ]
+  };
+  return (rows[rid]||rows["walter-mercer"])[v]
+}
+
+function w2ProjectionOutlookRead(t,r,next){
+  const own=Number(t?.next_projected),opp=Number(t?.next_opponent_projected);
+  if(!Number.isFinite(own)||!Number.isFinite(opp))return null;
+  const team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(next||t.next_opponent_name||"the opponent"),
+    rid=String(r?.id||""),gap=Math.abs(own-opp),fav=own===opp?null:(own>opp?team:foe),
+    line=team+" projects for "+w2One(own)+" points and "+foe+" for "+w2One(opp)+". ",
+    read=!fav
+      ?"The projection is dead even, which is a polite way of saying nobody gets to outsource confidence to the model."
+      :gap<3
+        ?"That gives "+fav+" only a "+w2One(gap)+"-point edge—close enough for one lineup decision to make the forecast look decorative."
+        :gap<8
+          ?"That makes "+fav+" the modest favorite by "+w2One(gap)+", an edge worth noticing without treating it like a court order."
+          :"That makes "+fav+" the clear projection favorite by "+w2One(gap)+", enough separation that the other side needs an actual scoring answer rather than optimism.";
+  const tails={
+    "walter-mercer":" The number sets the expectation; the lineup still has to earn it.",
+    "tess-delaney":" The reservation has a favorite now, but the table is still allowed to misbehave.",
+    "mack-hollis":" The spreadsheet can point. Sunday still gets to throw a chair.",
+    "nora-voss":" Rivals may quote the projection all week; somebody still has to survive the screenshot afterward."
+  };
+  return line+read+(tails[rid]||tails["walter-mercer"])
+}
+
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,
     prevWon=prev?Number(prev.points)>Number(prev.opponent_points):null,prevOpp=w2DisplayTeam(prev?.opponent_name||"last week’s opponent"),prevScore=prev?w2One(prev.points)+"–"+w2One(prev.opponent_points):null,top=(t.starter_details||[]).slice(0,3),opp=t.opponent_name||"the opponent";
@@ -1893,10 +1938,8 @@ function w2BuildSections(t,prev){
 
   players.push(...w2IdentityRead(t,prev,r,top,opp));
   const weakPreview=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0];
-  players.push(w2S(t,r,"player-room-close",w2PlayerRoomClose(t,r,top,weakPreview,opp,won)));
-  players.push(w2S(t,r,"player-column-color",w2ColumnColorRead(t,r,top,weakPreview,won,opp)));
-  const weakDepth=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0];
-  players.push(w2S(t,r,"player-meaning",w2PerformanceDepthRead(t,r,top,weakDepth,won,margin)));
+  players.push(w2S(t,r,"player-synthesis",w2PlayerSynthesisRead(t,r,top,opp,won)));
+  const weakDepth=weakPreview;
   const miss=t.best_lineup_miss,gap=Number(miss?.gap)||0;
   const management=[
     w2S(t,r,"mgmt-one",miss&&gap>0?w2BenchRead(t,r,miss,gap,won,margin):(t.manager_name+" did not leave an obvious higher-scoring bench answer in a compatible spot, so the Week 2 review belongs on the players who actually had the matchup rather than a fantasy-perfect lineup that never existed.")),
@@ -1909,8 +1952,7 @@ function w2BuildSections(t,prev){
       :("The "+alias.mascot+" moved "+(d>0?"up ":"down ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(pct)?" ("+w2One(pct)+"%)":"")+". "+(d>0?"That gives "+alias.mascot+" a little more leverage if management wants to deal; it does not turn a loss into a win.":"That trims the "+alias.mascot+" trade-market cushion, which matters for roster flexibility even though the standings remain a separate argument.")))
   ]:["n/a"];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],weakPrev=weak?w2PrevPlayer(prev,weak.id):null,hot=[
-    w2S(t,r,"hot-one",w2WeakSpotRead(t,r,weak,won,margin)),
-    w2S(t,r,"hot-two",weak&&weakPrev?(w2HotTrend(t,r,weak,weakPrev)):"Week 3 will not settle anything for the "+alias.mascot+", but it can tell us whether their weakest Week 2 spot learned anything.")
+    w2S(t,r,"hot-one",weak&&weakPrev?w2HotTrend(t,r,weak,weakPrev):w2WeakSpotRead(t,r,weak,won,margin))
   ];
   const eligibleCredit=w2EligibleCool(t),topIds=new Set(top.filter(Boolean).map(p=>String(p.id))),supportCredit=(t.starter_details||[]).filter(p=>!topIds.has(String(p.id))&&Number(p.points)>=10).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2);
   const cool=eligibleCredit.length<2&&supportCredit.length?[
@@ -1922,11 +1964,13 @@ function w2BuildSections(t,prev){
     w2S(t,r,"sent-one",w2SentimentRead(t,prev,r,fs,prevSent,won)),
     w2S(t,r,"sent-two",w2SentimentFollowup(t,prev,r,fs,prevSent,won))
   ];
-  const nctx=t.next_opponent_context||{},nrec=nctx.record||{},nrecord=String(Number(nrec.wins)||0)+"-"+String(Number(nrec.losses)||0),ndiv=t.next_opponent_division_context?.division_name||"its division",leaders=(t.division_context?.leaders||[]).filter(x=>x?.team_name),selfLead=leaders.some(x=>String(x.roster_id)===String(t.roster_id)),otherLeaders=leaders.filter(x=>String(x.roster_id)!==String(t.roster_id)),divisionPeers=[...(t.division_context?.ahead_teams||[]),...(t.division_context?.same_record_teams||[]),...(t.division_context?.behind_teams||[])].filter((x,i,a)=>x?.team_name&&String(x.roster_id)!==String(t.roster_id)&&a.findIndex(y=>String(y.roster_id)===String(x.roster_id))===i),divisionPeerLine=divisionPeers.map(x=>x.team_name+" ("+String(Number(x?.record?.wins)||0)+"-"+String(Number(x?.record?.losses)||0)+")"),next=t.next_opponent_name||"the next opponent",
+  const nctx=t.next_opponent_context||{},nrec=nctx.record||{},nrecord=String(Number(nrec.wins)||0)+"-"+String(Number(nrec.losses)||0),ndiv=t.next_opponent_division_context?.division_name||"its division",leaders=(t.division_context?.leaders||[]).filter(x=>x?.team_name),selfLead=leaders.some(x=>String(x.roster_id)===String(t.roster_id)),otherLeaders=leaders.filter(x=>String(x.roster_id)!==String(t.roster_id)),divisionPeers=[...(t.division_context?.ahead_teams||[]),...(t.division_context?.same_record_teams||[]),...(t.division_context?.behind_teams||[])].filter((x,i,a)=>x?.team_name&&String(x.roster_id)!==String(t.roster_id)&&a.findIndex(y=>String(y.roster_id)===String(x.roster_id))===i),divisionPeerLine=divisionPeers.map(x=>w2DisplayTeam(x.team_name)+" ("+String(Number(x?.record?.wins)||0)+"-"+String(Number(x?.record?.losses)||0)+")"),next=t.next_opponent_name||"the next opponent",
     nextStar=(t.next_opponent_roster?.starters||t.next_opponent_roster?.players||[]).filter(p=>p?.name).slice().sort((x,y)=>Number(y.season_fantasy_points||y.points||0)-Number(x.season_fantasy_points||x.points||0))[0],
     up=(t.upcoming_opponents||[]).slice().sort((x,y)=>Number(x.week)-Number(y.week)),later=up.slice(1,3);
+  const projectionRead=w2ProjectionOutlookRead(t,r,next);
   const outlook=[
     w2S(t,r,"outlook-one",w2OutlookLead(t,r,next,nrecord,nctx,ndiv)),
+    ...(projectionRead?[w2S(t,r,"outlook-projection",projectionRead)]:[]),
     w2S(t,r,"outlook-two",w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders)),
     w2S(t,r,"outlook-three",nextStar?(w2NextStarRead(t,r,next,nextStar)):"The "+alias.mascot+" do not need a manufactured opponent star to understand Week 3: their own quietest Week 2 lineup spot is already the obvious place to demand more against "+next+"."),
     later.length?w2S(t,r,"outlook-road",w2RoadRead(t,r,next,later)):w2S(t,r,"outlook-road","The schedule beyond Week 3 is not complete enough for a larger claim, so the next assignment stays simple: beat the team on the page."),

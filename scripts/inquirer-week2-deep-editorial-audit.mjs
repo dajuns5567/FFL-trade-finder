@@ -262,6 +262,19 @@ function auditRecap(){
   }
 
   const sections=overview?.sections||[];
+  const velvet=sections.find(s=>/velvet rope|entered the room/i.test(String(s?.heading||'')));
+  const velvetCopy=(velvet?.paragraphs||[]).join(' ');
+  const positiveMover=teams.filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0]||null;
+  const negativeMover=teams.filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0]||null;
+  if(positiveMover){
+    if(!velvetCopy.includes(String(positiveMover.team_name||'')))add('FAIL','velvet-biggest-positive-mover-missing','“Week 2 Has Entered the Room” must name the league’s biggest positive value mover from value history.',String(positiveMover.team_name)+' delta='+one(positiveMover.value_history_week.delta));
+    if(!/biggest positive value mover/i.test(velvetCopy))add('WARN','velvet-positive-mover-context-thin','The positive value leader is named but not clearly identified as the biggest positive mover.',velvetCopy);
+  }
+  if(negativeMover){
+    if(!velvetCopy.includes(String(negativeMover.team_name||'')))add('FAIL','velvet-biggest-negative-mover-missing','“Week 2 Has Entered the Room” must name the league’s biggest negative value mover from value history.',String(negativeMover.team_name)+' delta='+one(negativeMover.value_history_week.delta));
+    if(!/biggest negative value mover/i.test(velvetCopy))add('WARN','velvet-negative-mover-context-thin','The negative value leader is named but not clearly identified as the biggest negative mover.',velvetCopy);
+  }
+
   const twoWeeks=[...sections,...sections.flatMap(s=>s?.blocks||[])].find(s=>/two weeks/i.test(String(s?.heading||'')));
   if(twoWeeks){
     const twoWeeksCopy=(twoWeeks?.paragraphs||[]).join(' '),twoWeeksWords=wordCount(twoWeeksCopy);

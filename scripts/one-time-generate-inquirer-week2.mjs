@@ -685,23 +685,60 @@ function w2PlayerStatusVariant(t,r,status,count){
   for(let step=0;step<count;step++){const candidate=(base+step)%count;if(!used.has(candidate)){pick=candidate;break}}
   used.add(pick);w2PlayerStatusVariantsUsed.set(key,used);return pick
 }
-function w2PlayerStatusColor(t,r,p,pp,slot=0){
+
+function w2PlayerStatusProfile(p,slot=0){
   const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
-    rid=String(r?.id||"walter-mercer"),team=w2DisplayTeam(t?.team_name),role=Number(slot)||0,
-    pos=String(p?.position||"").toUpperCase(),years=Number(p?.years_exp),
+    seasonAvg=Number(p?.season_avg),age=Number(p?.age),years=Number(p?.years_exp),
+    pos=String(p?.position||"").toUpperCase(),role=Number(slot)||0,
+    snaps=Number(p?.current_snap_count),priorSnapPg=Number(p?.prior_season_snaps_per_game),
+    snapPct=Number(p?.current_snap_pct),
     defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),
     starThreshold=pos==="QB"?18:pos==="RB"?14:pos==="WR"?14:pos==="TE"?11:defensive?11:13,
-    established=Number.isFinite(prior)&&games>=8&&(prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1)));
-  if(!Number.isFinite(pts))return "";
+    young=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
+    established=Number.isFinite(prior)&&games>=8&&(prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1))),
+    seasonLift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&seasonAvg>=Math.max(prior*1.35,prior+2.5),
+    weekLift=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&pts>=Math.max(starThreshold*1.1,prior+5),
+    roleLift=(Number.isFinite(snapPct)&&snapPct>=0.55)||
+      (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
+      (Number.isFinite(snaps)&&snaps>=(defensive?32:35));
   let status="";
+  if(!Number.isFinite(pts))return{status:"",starThreshold,young,established,seasonLift,weekLift,roleLift};
   if(established&&pts>=Math.max(starThreshold*.8,prior*.65))status="established-star";
   else if(established&&pts<=prior*.55)status="struggling-star";
+  else if(!established&&young&&games>=6&&Number.isFinite(prior)&&prior>0&&(seasonLift||weekLift)&&(roleLift||seasonLift&&pts>=starThreshold*.9))status="breakout";
   else if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<=starThreshold&&pts>=Math.max(starThreshold*1.15,prior+6))status="breakout";
   else if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&pts>=starThreshold&&pts-prior>=5)status="emerging";
   else if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&pts<=prior*.55)status="struggling";
   else if(role===0&&pts>=starThreshold*1.6)status="star-level";
   else if(pts<=1.5&&role<=2)status="struggling";
-  if(!status)return "";
+  const lift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)?seasonAvg-prior:(Number.isFinite(pts)&&Number.isFinite(prior)?pts-prior:null);
+  const breakoutScore=(status==="breakout"?100:status==="emerging"?60:0)+(young?18:0)+(roleLift?18:0)+(Number.isFinite(lift)?Math.max(0,lift):0);
+  return{status,starThreshold,young,established,seasonLift,weekLift,roleLift,breakoutScore,age,years,snaps,priorSnapPg,snapPct,seasonAvg,prior};
+}
+function w2BreakoutContext(p,profile){
+  if(!profile||profile.status!=="breakout")return"";
+  const bits=[];
+  if(Number.isFinite(profile.age)&&profile.age<=25)bits.push("At age "+Math.round(profile.age));
+  else if(Number.isFinite(profile.years)&&profile.years<=2)bits.push("Still early in his NFL career");
+  const snapRole=Number.isFinite(profile.snapPct)
+    ?Math.round(profile.snapPct*100)+"% of the available snaps"
+    :Number.isFinite(profile.snaps)?Math.round(profile.snaps)+" snaps":null;
+  if(snapRole&&Number.isFinite(profile.priorSnapPg)&&profile.priorSnapPg>0&&profile.snaps>=profile.priorSnapPg*1.1){
+    bits.push("the role has grown to "+snapRole+" from "+profile.priorSnapPg.toFixed(1)+" snaps per game last season");
+  }else if(snapRole&&profile.roleLift){
+    bits.push("the current opportunity is already substantial at "+snapRole);
+  }
+  if(Number.isFinite(profile.seasonAvg)&&Number.isFinite(profile.prior)&&profile.prior>0){
+    bits.push("his two-week average of "+w2One(profile.seasonAvg)+" fantasy points is well above last season’s "+w2One(profile.prior));
+  }
+  if(!bits.length)return"";
+  return bits.join(", ")+"."
+}
+
+function w2PlayerStatusColor(t,r,p,pp,slot=0){
+  const pts=Number(p?.points),rid=String(r?.id||"walter-mercer"),team=w2DisplayTeam(t?.team_name),
+    profile=w2PlayerStatusProfile(p,slot),status=profile.status;
+  if(!Number.isFinite(pts)||!status)return "";
 
   const leads={
     "established-star":[
@@ -901,7 +938,8 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
   if(!leadBank.length||!tailBank.length)return "";
   const combo=w2PlayerStatusVariant(t,r,status,leadBank.length*tailBank.length),
     lead=leadBank[combo%leadBank.length],tail=tailBank[Math.floor(combo/leadBank.length)%tailBank.length];
-  return lead+tail
+  const context=w2BreakoutContext(p,profile);
+  return lead+tail+(context?" "+context:"")
 }
 
 function w2Week1DeltaRead(t,r,p,pp,role){
@@ -2565,15 +2603,18 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     }
     return{...x,title:"Week 2 call: "+subject.team_name,take:w2S(subject,reporter,"hot-other","Two weeks have changed the outlook for "+w2DisplayTeam(subject.team_name)+". Week 3 now has to confirm whether the first two results describe a real trend or two unrelated Sundays.")};
   });
-  const playerPool=(teams||[]).flatMap(t=>(t.starter_details||[]).map(p=>({t,p,delta:Number(p.points)-Number(p.prior_season_avg),games:Number(p.prior_season_games)||0})))
-    .filter(x=>x.games>=6&&Number.isFinite(x.delta)&&x.delta>=5)
-    .sort((a,b)=>b.delta-a.delta);
+  const playerPool=(teams||[]).flatMap(t=>(t.starter_details||[]).map((p,slot)=>{
+    const profile=w2PlayerStatusProfile(p,slot);
+    return{t,p,profile,delta:Number(p.points)-Number(p.prior_season_avg),games:Number(p.prior_season_games)||0}
+  }))
+    .filter(x=>["breakout","emerging"].includes(x.profile.status))
+    .sort((a,b)=>b.profile.breakoutScore-a.profile.breakoutScore||b.delta-a.delta);
   const usedHot=hot.map(x=>String(x.title||"")+" "+String(x.take||"")).join(" ");
   const riser=playerPool.find(x=>!usedHot.includes(String(x.p.name||"")))||playerPool[0];
   if(riser){
-    const rr=rep(1)||rep(0)||{};
+    const rr=rep(1)||rep(0)||{},ctx=w2BreakoutContext(riser.p,riser.profile);
     hot.push({kind:"future-player",reporter:rr,title:"Breakout Player to Watch: "+riser.p.name,
-      take:w2S(riser.t,rr,"hot-future-player",riser.p.name+" is the breakout player to watch because Week 2 moved well beyond his 2025 baseline without needing a gimmick role. "+w2DisplayTeam(riser.t.team_name)+" now has a reason to treat him as part of the weekly plan; one more Sunday with the same responsibility would turn the jump from a spike into a role change.")});
+      take:w2S(riser.t,rr,"hot-future-player",riser.p.name+" is the breakout player to watch because the current production has moved materially beyond his prior-season baseline"+(riser.profile.young?" while he is still young enough for the role growth to matter even more":"")+". "+(ctx?ctx+" ":"")+w2DisplayTeam(riser.t.team_name)+" now has a reason to treat him as part of the weekly plan rather than a one-Sunday surprise.")});
   }
   const pressure=(teams||[]).filter(t=>t?.best_lineup_miss?.reserve&&t?.best_lineup_miss?.starter&&Number(t.best_lineup_miss.gap)>0)
     .slice().sort((a,b)=>Number(b.best_lineup_miss.gap)-Number(a.best_lineup_miss.gap))[0];

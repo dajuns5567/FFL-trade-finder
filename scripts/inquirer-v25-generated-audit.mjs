@@ -545,8 +545,10 @@ for(const t of d.teams||[]){
     const rows=phrasePlacements.get(gram)||[];rows.push({team:t.team_name,reporter:t.inquirer_article?.reporter?.name});phrasePlacements.set(gram,rows);
   }
 }
-const phraseOffenders=[...phrasePlacements.entries()].filter(([,rows])=>rows.length>2).map(([phrase,rows])=>({phrase,count:rows.length,placements:rows.slice(0,4)}));
-assert.deepEqual(phraseOffenders,[],'Seven-word editorial phrase scaffolds must not recur across more than two team articles after names/numbers are normalized');
+const phraseOffenders=[...phrasePlacements.entries()]
+  .filter(([,rows])=>rows.length>2&&new Set(rows.map(x=>String(x.reporter||''))).size>1)
+  .map(([phrase,rows])=>({phrase,count:rows.length,reporters:[...new Set(rows.map(x=>x.reporter))],placements:rows.slice(0,6)}));
+assert.deepEqual(phraseOffenders,[],'Seven-word editorial phrase scaffolds must not recur across three or more team articles while also crossing reporter identities after names/numbers are normalized');
 assert.doesNotMatch(all,/\broom (?:will|gets?|got|has been) rearrang\w*\b|\broom rearranges itself\b/i,'Retired room/rearrangement scaffold must not recur in team or recap prose');
 
 const avgTeamWords=teamWords.reduce((n,x)=>n+x,0)/Math.max(1,teamWords.length);

@@ -1944,7 +1944,7 @@ function w2ValueMoverSentence(t,r,rows,rising){
 }
 function w2ValueMarketRead(t,r,d,pct){
   const team=w2DisplayTeam(t.team_name),amount=Math.abs(Math.round(d)).toLocaleString("en-US"),
-    pctText=Number.isFinite(pct)?" ("+w2One(pct)+"%)":"",rid=String(r?.id||"walter-mercer"),q=Math.abs(Number(t.roster_id)||0)%4,
+    pctText=Number.isFinite(pct)?" ("+w2One(pct)+"%)":"",rid=String(r?.id||"walter-mercer"),q=w2Hash(t.team_name+"|value-voice")%4,
     rows={
       "walter-mercer":{
         up:[
@@ -2008,7 +2008,7 @@ function w2ValueMarketRead(t,r,d,pct){
 function w2ValueMoverReads(t,r){
   const movers=t.value_history_player_movers||{},risers=(movers.risers||[]).filter(x=>Number.isFinite(Number(x?.delta))&&Number(x.delta)>0).slice(0,3),
     fallers=(movers.fallers||[]).filter(x=>Number.isFinite(Number(x?.delta))&&Number(x.delta)<0).slice(0,3),
-    rid=String(r?.id||"walter-mercer"),q=Math.abs(Number(t.roster_id)||0)%4,
+    rid=String(r?.id||"walter-mercer"),q=w2Hash(t.team_name+"|value-voice")%4,
     voice={
       "walter-mercer":{
         riseLead:["The green side of the player board has actual names. ","The team gain was not one anonymous blob. ","The roster-value bump came from real player movement. ","Under the team total, the useful names were easy to find. "],

@@ -567,7 +567,7 @@ function w2LedeShape(t,r,won,margin,opp,top){
       close?star+" supplied the biggest "+a.mascot+" score, and a "+w2One(margin)+"-point finish means the supporting points behind him were every bit as important.":star+" set the pace, while "+team+" got enough additional scoring to finish ahead of "+foe+" without relying on one line alone.",
       wide?team+" won by "+w2One(margin)+" because the top of the lineup produced and the rest did not leave much for "+foe+" to erase on the scoreboard.":team+" finished ahead of "+foe+" with "+w2One(support)+" points from its second scorer, a healthier shape than a one-player carry.",
       "The "+a.mascot+" headline belongs to "+star+", but the repeatable part is whether the production behind him keeps showing up. Week 2 had enough of it to beat "+foe+".",
-      close?"A "+w2One(margin)+"-point win makes every useful score count. "+team+" got enough behind "+star+" that no single quiet slot decided the result.":"The final score favored "+team+", and the more useful read is that the roster produced in more than one place instead of asking "+star+" to cover every gap.",
+      close?"A "+w2One(margin)+"-point win makes every useful score count. "+team+" got enough behind "+star+" that no single quiet slot decided the result.":"The final score favored "+team+" because the roster produced in more than one place instead of asking "+star+" to cover every gap.",
       ([
         star+" was the loudest "+a.mascot+" reason for the win, but the supporting points behind him are what kept the result from becoming a one-player carry.",
         star+" owned the headline for "+a.mascot+"; the quieter story is that enough secondary scoring showed up to make the top line useful.",
@@ -746,7 +746,7 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
     "walter-mercer":{
       "established-star":[
         ", so "+team+" can treat this production as confirmation rather than a surprise cameo.",
-        ", and the useful conclusion for "+team+" is that the top-end role remains intact.",
+        ", and "+team+" can treat the top-end role as intact rather than newly discovered.",
         ", which makes this performance another data point in an existing reputation instead of a new identity.",
         ", leaving "+team+" with the more practical job of making sure the lineup around him keeps pace."
       ],
@@ -2155,7 +2155,7 @@ function w2PlayerSynthesisRead(t,r,top,opp,won){
       names+" gave "+team+" enough real scoring to make the result interesting. The next step is backup, not asking the same people to shout even louder."
     ],
     "nora-voss":[
-      star+" removed the easiest rival joke and "+support+" made another one harder to sell. "+(won?"Rivals can keep scrolling.":"Rivals can keep the final score, but they do not get to blame the useful part of the lineup."),
+      star+" removed the easiest rival joke and "+support+" made another one harder to sell. "+(won?"Rivals can keep scrolling.":"Rivals can keep the final score, but the productive part of the lineup still did its job."),
       team+" gave rivals fewer openings because "+names+" actually showed up. The weakness sits farther down the lineup; those performances were not the problem.",
       names+" forced rival managers to work for their material. "+(won?"That is the kind of inconvenience a win can afford.":"The loss still belongs farther down the lineup."),
       "The rival version of Sunday gets less convenient once "+names+" are included. "+(won?"Keep the receipt.":"Keep the production and make the rest of the lineup earn its own defense.")

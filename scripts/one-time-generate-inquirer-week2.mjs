@@ -691,7 +691,7 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
     "walter-mercer":{
       "established-star":p.name+" is already carrying an established star profile, so this production reads as confirmation rather than a surprise cameo.",
       "star-level":p.name+" delivered star-level work in Week 2; "+team+" now has to make sure the supporting lineup keeps that performance from becoming emergency labor.",
-      "breakout":p.name+" is building a legitimate breakout case, not merely a one-line curiosity; the role is producing enough above the old level to change expectations.",
+      "breakout":p.name+" is building a legitimate breakout profile, not merely a one-line curiosity; the role is producing enough above the old level to change expectations.",
       "emerging":p.name+" is moving from useful contributor toward an emerging weekly piece, which matters because "+team+" can plan around roles before it can plan around miracles.",
       "struggling":p.name+" is playing below the standard his recent history established, so the concern is form and role rather than one bad decimal."
     },
@@ -710,9 +710,9 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
       "struggling":p.name+" is in a real slump against his established level. The alarm is not on fire yet, but somebody has definitely tested the siren."
     },
     "nora-voss":{
-      "established-star":p.name+" already owns an established-star reputation, so rivals cannot file this one under fluke without doing violence to the evidence.",
+      "established-star":p.name+" already owns an established-star reputation, so rivals cannot call this one a fluke without ignoring the history already sitting in front of them.",
       "star-level":p.name+" put up star-level work, which is inconvenient for every rival hoping the top of "+team+" was the easy part to mock.",
-      "breakout":p.name+" is building a breakout case strong enough that rivals may need to retire the old scouting joke.",
+      "breakout":p.name+" is building a breakout profile strong enough that rivals may need to retire the old scouting joke.",
       "emerging":p.name+" is starting to look like an emerging weekly problem instead of a one-Sunday inconvenience.",
       "struggling":p.name+" is running below the level his own history established, which gives rivals a real football criticism instead of a recycled punch line."
     }
@@ -923,7 +923,7 @@ function w2RecapHook(g,wName,lName,i){
   if(g.upset)return[
     wName+" took the favorite label off "+lName+" and stuck it under the table, winning "+score+".",
     lName+" arrived with the safer forecast and left with a "+score+" loss to "+wName+". Somebody is deleting a screenshot.",
-    wName+" made the pregame favorite look like a paperwork error, beating "+lName+" "+score+".",
+    wName+" made the pregame favorite look like a bad forecast, beating "+lName+" "+score+".",
     "The upset belonged to "+wName+", "+score+" over "+lName+". The favorite had the expectation; the underdog had the useful Sunday."
   ][v];
   if(g.margin>=25)return[
@@ -1701,7 +1701,7 @@ function w2ManagementMoveRead(t,r,won,margin){
     const impactRows={
       "walter-mercer":[hit.name+" went straight into the lineup and produced "+w2One(hit.points)+" points, giving that acquisition an immediate Week 2 result.",hit.name+" started immediately after the move and scored "+w2One(hit.points)+"; that is present production management can evaluate now."],
       "tess-delaney":[hit.name+" received a starting chair immediately and returned "+w2One(hit.points)+" points. The new arrival already touched the Week 2 table.",hit.name+" was seated in the lineup at once and produced "+w2One(hit.points)+" points, so this was not merely decorative roster work."],
-      "mack-hollis":[q===0?(hit.name+" was not paperwork: he entered the Week 2 lineup and scored "+w2One(hit.points)+" points."):q===1?(hit.name+" went from transaction log to starter immediately, returning "+w2One(hit.points)+" points in Week 2."):q===2?("The move reached the lineup right away when "+hit.name+" started and produced "+w2One(hit.points)+" points."):("Management put "+hit.name+" straight into the Week 2 starting card, where he scored "+w2One(hit.points)+" points."),hit.name+" cracked the starting card right away and put up "+w2One(hit.points)+". That move already has a Sunday number attached."],
+      "mack-hollis":[q===0?(hit.name+" was not just a transaction line: he entered the Week 2 lineup and scored "+w2One(hit.points)+" points."):q===1?(hit.name+" went from transaction log to starter immediately, returning "+w2One(hit.points)+" points in Week 2."):q===2?("The move reached the lineup right away when "+hit.name+" started and produced "+w2One(hit.points)+" points."):("Management put "+hit.name+" straight into the Week 2 starting card, where he scored "+w2One(hit.points)+" points."),hit.name+" cracked the starting card right away and put up "+w2One(hit.points)+". That move already has a Sunday number attached."],
       "nora-voss":[hit.name+" made the starting lineup immediately and scored "+w2One(hit.points)+" points. Rivals can judge the move on real Sunday production now.",hit.name+" went from transaction to starter and delivered "+w2One(hit.points)+" points. That is enough to move the discussion beyond the wire itself."]
     };
     impact=(impactRows[rid]||impactRows["walter-mercer"])[v];
@@ -2233,7 +2233,7 @@ function w2UpsetCallRead(under,fav,r){
       ?uTop.name+" just gave "+team+" "+w2One(uTop.points)+" at the top of the lineup, while "+fWeak.name+" left "+foe+" only "+w2One(fWeak.points)+" at the soft end."
       :team+" showed enough Week 2 scoring to make the favorite defend something real.";
   const rows={
-    "walter-mercer":team+" over "+foe+" is the Week 3 upset call. "+mida+football+" The favorite has the better paperwork; the underdog has a cleaner place to apply pressure, and paperwork has never tackled anybody. If the favorite badge is the whole argument, the joke is already halfway written.",
+    "walter-mercer":team+" over "+foe+" is the Week 3 upset call. "+mida+football+" The favorite has the cleaner forecast; the underdog has a clearer place to apply pressure, and forecasts have never tackled anybody. If the favorite badge is the whole argument, the joke is already halfway written.",
     "tess-delaney":team+" over "+foe+" is the Week 3 upset. "+mida+football+" If "+foe+" insists on wearing the favorite label, it should probably stop leaving that chair wobbling in public.",
     "mack-hollis":team+" over "+foe+" is the upset call. "+mida+football+" "+foe+" can keep the favorite badge; "+team+" has already found the loose floorboard and brought a crowbar.",
     "nora-voss":team+" over "+foe+" gets the Week 3 nod. "+mida+football+" Rival managers can frame the projection if they want. I would rather frame the weak spot the underdog gets to attack."

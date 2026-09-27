@@ -823,7 +823,7 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
       "established-star":[
         ", so "+team+" does not need a breakout siren; it needs the rest of the lineup to stop acting surprised when the building shakes.",
         ", and the headline is confirmation: the established weapon fired again and everybody else needs to keep up.",
-        ", which means the big number belongs under STAR DOING STAR THINGS, not under NEW DISCOVERY in giant type.",
+        ", which means the big number is an established star doing established-star work, not some brand-new discovery.",
         ", leaving "+team+" with a familiar source of noise and no excuse for the quieter outlets around him."
       ],
       "struggling-star":[

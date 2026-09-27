@@ -1822,62 +1822,142 @@ function w2TransactionMoveDetails(t){
   }).filter(Boolean)
 }
 
-function w2ValueMoverRosterPath(t,row){
-  const id=String(row?.player_id||"");
-  if(!id)return "transaction path unavailable";
-  const txs=(t.transactions||[]).filter(tx=>!tx?.status||String(tx.status).toLowerCase()==="complete");
+function w2ValueMoverMethod(t,row){
+  const id=String(row?.player_id||""),txs=(t.transactions||[]).filter(tx=>!tx?.status||String(tx.status).toLowerCase()==="complete");
   for(const tx of txs){
-    const adds=(tx.adds||[]).map(String),drops=(tx.drops||[]).map(String),
-      added=adds.includes(id),dropped=drops.includes(id);
+    const adds=(tx.adds||[]).map(String),drops=(tx.drops||[]).map(String),added=adds.includes(id),dropped=drops.includes(id);
     if(!added&&!dropped)continue;
     const type=String(tx.type||"").toLowerCase();
-    if(type==="trade")return added?"acquired by trade this week":"traded away this week";
-    if(added){
-      if(type.includes("waiver"))return "claimed on waivers this week";
-      if(type.includes("free"))return "added in free agency this week";
-      return "added this week";
-    }
-    return "dropped this week";
+    if(type==="trade")return added
+      ?{key:"trade-in-"+week,one:"after arriving in a Week "+week+" trade",many:"after arriving in Week "+week+" trades"}
+      :{key:"trade-out-"+week,one:"after leaving in a Week "+week+" trade",many:"after leaving in Week "+week+" trades"};
+    if(added&&type.includes("waiver"))return{key:"waiver-"+week,one:"after a Week "+week+" waiver claim",many:"after Week "+week+" waiver claims"};
+    if(added&&type.includes("free"))return{key:"free-"+week,one:"after a Week "+week+" free-agent add",many:"after Week "+week+" free-agent adds"};
+    if(added)return{key:"add-"+week,one:"after a Week "+week+" add",many:"after Week "+week+" adds"};
+    return{key:"drop-"+week,one:"after being dropped in Week "+week,many:"after being dropped in Week "+week};
   }
   const acquired=(t.trade_acquisitions||[]).find(a=>String(a?.player_id||"")===id);
   if(acquired){
-    const when=acquired?.season&&acquired?.week?" in Week "+String(acquired.week)+" of "+String(acquired.season):"";
-    return "acquired by trade"+when;
+    const when=acquired?.season&&acquired?.week?"Week "+String(acquired.week)+" of "+String(acquired.season):"an earlier week";
+    return{key:"old-trade-in-"+when,one:"after arriving by trade in "+when,many:"after arriving by trade in "+when};
   }
   const sent=(t.trade_acquisitions||[]).find(a=>(a?.outgoing_player_ids||[]).map(String).includes(id));
   if(sent){
-    const when=sent?.season&&sent?.week?" in Week "+String(sent.week)+" of "+String(sent.season):"";
-    return "traded away"+when;
+    const when=sent?.season&&sent?.week?"Week "+String(sent.week)+" of "+String(sent.season):"an earlier week";
+    return{key:"old-trade-out-"+when,one:"after leaving by trade in "+when,many:"after leaving by trade in "+when};
   }
-  return "already rostered; no Week "+String(week)+" add, trade or drop";
+  return{key:"hold",one:"as a player already on the roster when Week "+week+" began",many:"as players already on the roster when Week "+week+" began"};
+}
+function w2ValueMoverSentence(t,r,rows,rising){
+  const groups=new Map(),rid=String(r?.id||"walter-mercer"),
+    verbsUp={ "walter-mercer":["gained","climbed","rose"],"tess-delaney":["rose","gained","climbed"],"mack-hollis":["jumped","climbed","gained"],"nora-voss":["rose","gained","climbed"]},
+    verbsDown={ "walter-mercer":["fell","lost","slipped"],"tess-delaney":["fell","slipped","lost"],"mack-hollis":["dropped","slid","lost"],"nora-voss":["fell","lost","slipped"]},
+    verbs=(rising?verbsUp:verbsDown)[rid]||(rising?verbsUp["walter-mercer"]:verbsDown["walter-mercer"]);
+  for(let i=0;i<(rows||[]).length;i++){
+    const x=rows[i],method=w2ValueMoverMethod(t,x),name=String(x?.player_name||x?.player_id||"Unknown player"),
+      amount=Math.abs(Math.round(Number(x.delta))).toLocaleString("en-US"),verb=verbs[(w2Hash(name+"|value-move")+i)%verbs.length],
+      move=name+" "+verb+" "+amount+" point"+(Math.abs(Math.round(Number(x.delta)))===1?"":"s");
+    if(!groups.has(method.key))groups.set(method.key,{method,moves:[]});
+    groups.get(method.key).moves.push(move);
+  }
+  return [...groups.values()].map(g=>w2Natural(g.moves)+" "+(g.moves.length===1?g.method.one:g.method.many)).join("; ")+".";
+}
+function w2ValueMarketRead(t,r,d,pct){
+  const team=w2DisplayTeam(t.team_name),amount=Math.abs(Math.round(d)).toLocaleString("en-US"),
+    pctText=Number.isFinite(pct)?" ("+w2One(pct)+"%)":"",rid=String(r?.id||"walter-mercer"),q=Math.abs(Number(t.roster_id)||0)%4,
+    rows={
+      "walter-mercer":{
+        up:[
+          team+" gained "+amount+" points of roster value over the tracked window"+pctText+". Useful leverage, yes; the standings still refuse to accept a spreadsheet as payment.",
+          team+" climbed "+amount+" points in roster value"+pctText+". That is worth having, provided nobody mistakes a better price tag for a completed Sunday.",
+          team+" added "+amount+" points of roster value"+pctText+". Nice week for the market page; the lineup still has to earn the rest.",
+          team+" moved up "+amount+" points in roster value"+pctText+". Management gets more options, not immunity from the next matchup."
+        ],
+        down:[
+          team+" lost "+amount+" points of roster value over the tracked window"+pctText+". One red week is not a fire drill, but it is enough to make the next move worth watching.",
+          team+" slid "+amount+" points in roster value"+pctText+". Nobody needs panic; somebody should still read the number before making the next decision.",
+          team+" dropped "+amount+" points of roster value"+pctText+". The roster is not on fire, but the smoke detector has earned one glance.",
+          team+" moved down "+amount+" points in roster value"+pctText+". That is context, not catastrophe, and pretending otherwise in either direction would be lazy."
+        ]
+      },
+      "tess-delaney":{
+        up:[
+          team+" gained "+amount+" points of roster value"+pctText+". That buys flexibility, not forgiveness; the next lineup still has to play football.",
+          team+" climbed "+amount+" points on the market"+pctText+". Pleasant leverage. Now make the football justify it.",
+          team+" added "+amount+" points of roster value"+pctText+". The market can compliment the roster; the next opponent is under no obligation.",
+          team+" moved up "+amount+" points in roster value"+pctText+". A rising price is useful. A useful lineup remains mandatory."
+        ],
+        down:[
+          team+" lost "+amount+" points of roster value"+pctText+". A roster can survive that; it should not volunteer for a sequel.",
+          team+" fell "+amount+" points on the market"+pctText+". That does not ruin the roster, but it does remove a little room for careless decisions.",
+          team+" shed "+amount+" points of roster value"+pctText+". The useful response is football, not pretending the number never happened.",
+          team+" moved down "+amount+" points in roster value"+pctText+". The market has filed a complaint in plain English: make the next week better."
+        ]
+      },
+      "mack-hollis":{
+        up:[
+          team+" gained "+amount+" points of roster value"+pctText+". The market handed the back page a green arrow; now the roster has to avoid wasting it.",
+          team+" jumped "+amount+" points in roster value"+pctText+". Good news, large font. The standings remain annoyingly unmoved by typography.",
+          team+" climbed "+amount+" points on the market"+pctText+". Lovely. Keep the screenshot, then make Sunday worthy of it.",
+          team+" added "+amount+" points of roster value"+pctText+". The price tag got louder. The lineup still has to say something useful."
+        ],
+        down:[
+          team+" lost "+amount+" points of roster value"+pctText+". The market handed the back page a red arrow and, mercifully, not a eulogy.",
+          team+" dropped "+amount+" points in roster value"+pctText+". Bad news, readable font. Nobody needs a siren yet.",
+          team+" slid "+amount+" points on the market"+pctText+". The group chat has a screenshot now; management gets the next move.",
+          team+" shed "+amount+" points of roster value"+pctText+". Red ink is not a funeral, but it does ruin a perfectly good attempt to ignore the market."
+        ]
+      },
+      "nora-voss":{
+        up:[
+          team+" gained "+amount+" points of roster value"+pctText+". Rivals can call it inflation; management can call it leverage until Sunday asks for proof.",
+          team+" climbed "+amount+" points on the market"+pctText+". Opponents are welcome to dislike the number. They are not allowed to make it disappear.",
+          team+" added "+amount+" points of roster value"+pctText+". Rivals will complain about the market right up until they ask what a trade costs.",
+          team+" moved up "+amount+" points in roster value"+pctText+". The gain is real enough for rivals to mock and useful enough for management to keep."
+        ],
+        down:[
+          team+" lost "+amount+" points of roster value"+pctText+". Rivals will enjoy the number. Management should be more interested in the names underneath it.",
+          team+" fell "+amount+" points on the market"+pctText+". Opponents did not cause the decline; they will simply be unbearable about noticing it.",
+          team+" shed "+amount+" points of roster value"+pctText+". Rivals have a fresh screenshot. Management has the more difficult job of making it age badly.",
+          team+" moved down "+amount+" points in roster value"+pctText+". The market supplied rivals with material and management with a reason to look closer."
+        ]
+      }
+    },bank=rows[rid]||rows["walter-mercer"];
+  return (d>=0?bank.up:bank.down)[q];
 }
 function w2ValueMoverReads(t,r){
-  const movers=t.value_history_player_movers||{},
-    risers=(movers.risers||[]).filter(x=>Number.isFinite(Number(x?.delta))&&Number(x.delta)>0).slice(0,3),
+  const movers=t.value_history_player_movers||{},risers=(movers.risers||[]).filter(x=>Number.isFinite(Number(x?.delta))&&Number(x.delta)>0).slice(0,3),
     fallers=(movers.fallers||[]).filter(x=>Number.isFinite(Number(x?.delta))&&Number(x.delta)<0).slice(0,3),
-    rid=String(r?.id||"walter-mercer"),q=Math.abs(Number(t.roster_id)||0)%4;
-  const item=x=>String(x?.player_name||x?.player_id||"Unknown player")+" ("+(Number(x.delta)>0?"+":"")+Math.round(Number(x.delta)).toLocaleString("en-US")+"; "+w2ValueMoverRosterPath(t,x)+")";
-  const leads={
-    "walter-mercer":{
-      rise:["At player level, the strongest gains belonged to ","The value ledger’s top risers were ","The individual market gains were led by ","The roster’s biggest upward player moves came from "],
-      fall:["The largest player-level declines came from ","The value ledger’s top fallers were ","The individual market losses were led by ","The roster’s biggest downward player moves came from "]
-    },
-    "tess-delaney":{
-      rise:["The market rewarded these players most: ","The strongest individual value gains came from ","The upward side of the player board belongs to ","The week’s clearest player-level gains were "],
-      fall:["The market marked these players down most: ","The sharpest individual value losses came from ","The downward side of the player board belongs to ","The week’s clearest player-level declines were "]
-    },
-    "mack-hollis":{
-      rise:["Biggest risers on the board: ","The loudest player-value gains: ","The names climbing fastest this week: ","The biggest green arrows belong to "],
-      fall:["Biggest fallers on the board: ","The loudest player-value drops: ","The names sliding fastest this week: ","The biggest red arrows belong to "]
-    },
-    "nora-voss":{
-      rise:["Rivals watching the value board saw the biggest gains from ","The player values opponents noticed rising most were ","The strongest market gains on this roster came from ","The week’s biggest upward player moves were "],
-      fall:["Rivals watching the value board saw the biggest drops from ","The player values opponents noticed falling most were ","The sharpest market losses on this roster came from ","The week’s biggest downward player moves were "]
-    }
-  },bank=leads[rid]||leads["walter-mercer"],out=[];
-  if(risers.length)out.push(w2S(t,r,"value-risers",bank.rise[q]+w2Natural(risers.map(item))+"."));
-  if(fallers.length)out.push(w2S(t,r,"value-fallers",bank.fall[(q+1)%4]+w2Natural(fallers.map(item))+"."));
-  if(!out.length)out.push(w2S(t,r,"value-movers-missing","The team-level value move is verified, but no player-level mover rows were available for this tracked window."));
+    rid=String(r?.id||"walter-mercer"),q=Math.abs(Number(t.roster_id)||0)%4,
+    voice={
+      "walter-mercer":{
+        riseLead:["The green side of the player board has actual names. ","The team gain was not one anonymous blob. ","The roster-value bump came from real player movement. ","Under the team total, the useful names were easy to find. "],
+        riseTail:["Nice work by the spreadsheet; Sunday still gets veto power.","Useful leverage, not a parade route.","Management can enjoy the number right up until the next lineup locks.","That is value worth having, provided nobody mistakes it for a win."],
+        fallLead:["The red side deserves the same honesty. ","The losses were just as specific. ","The team total also has a debit column. ","Not everybody rode the market upward. "],
+        fallTail:["One bad market week is a warning, not a funeral.","No panic button yet; ignoring it would be lazier than fixing it.","The next week gets to decide whether that was noise or the start of a habit.","Red ink is context, not destiny, but it still belongs in the notebook."]
+      },
+      "tess-delaney":{
+        riseLead:["The player-level move is cleaner than the headline number. ","The useful part of the market story sits underneath the team total. ","The gain came from identifiable players, not magic. ","There is football substance under the value jump. "],
+        riseTail:["That buys options; it does not buy a pass on Sunday.","Good leverage. Now make the lineup justify it.","The market can compliment the roster; the next opponent is under no obligation.","A rising price is pleasant. A useful lineup remains mandatory."],
+        fallLead:["The player-level decline is where the useful answer lives. ","The team drop has identifiable sources. ","The market did not mark the whole roster down by magic. ","The red side of the board has names worth remembering. "],
+        fallTail:["A roster can survive that; it should not volunteer for a sequel.","The useful correction is better football, not a prettier explanation.","Those losses are manageable until they become repeat customers.","The next week gets to decide whether the decline was temporary or contagious."]
+      },
+      "mack-hollis":{
+        riseLead:["Now for the names behind the green arrow. ","The team number moved, but the back page wants culprits. ","A green week is more fun when somebody can be named. ","The market made noise; these players supplied the volume. "],
+        riseTail:["Wonderful. Frame the screenshot after somebody wins with it.","The market handed out applause; Sunday still controls the encore.","Good news, large font. The standings remain annoyingly unimpressed.","Enjoy the green arrows before the next kickoff starts charging rent."],
+        fallLead:["And now the part management would prefer cropped out of the screenshot. ","Red arrows also come with names. How thoughtful. ","The market did not only bring confetti. ","Somebody had to feed the red side of the chart. "],
+        fallTail:["No siren yet, but the group chat has definitely found the image.","That is enough red ink to earn a stare, not a eulogy.","The market has spoken loudly enough. Management may now answer with football.","Nobody is calling the morgue. Somebody should still check the damage."]
+      },
+      "nora-voss":{
+        riseLead:["Rivals looking for the source of the gain do not need binoculars. ","The team number has names underneath it. ","The rise did not happen by rumor. ","Rivals can stop blaming the spreadsheet and look at the players. "],
+        riseTail:["Opponents may call it inflation. The roster still gets to keep the value.","Rivals can dislike the number without making it disappear.","The market gave management leverage; opponents get Sunday to argue back.","That is the sort of gain rivals remember right before proposing a bad trade."],
+        fallLead:["Rivals will also enjoy the names on the red side. ","The drop was not anonymous either. ","The market left a few names circled in red. ","Opponents looking for weak spots received a short list. "],
+        fallTail:["Rivals did not cause the decline. They will simply be unbearable about it.","Management owns the problem; rivals merely own the screenshots.","The red arrows are not a scandal. Repeating them would be convenient for everybody else.","Opponents will remember the slide until the numbers give them something newer to mock."]
+      }
+    },bank=voice[rid]||voice["walter-mercer"],out=[];
+  if(risers.length)out.push(w2S(t,r,"value-risers",bank.riseLead[q]+w2ValueMoverSentence(t,r,risers,true)+" "+bank.riseTail[q]));
+  if(fallers.length)out.push(w2S(t,r,"value-fallers",bank.fallLead[(q+1)%4]+w2ValueMoverSentence(t,r,fallers,false)+" "+bank.fallTail[(q+1)%4]));
+  if(!out.length)out.push(w2S(t,r,"value-movers-missing","The team-level value move is real, but the player-level mover rows are missing, so the article stops there instead of inventing culprits."));
   return out;
 }
 
@@ -2419,9 +2499,7 @@ function w2BuildSections(t,prev){
     w2S(t,r,"mgmt-meaning",w2ManagementDepthRead(t,r,weakDepth,t.next_opponent_name))
   ];
   const v=t.value_history_week,d=Number(v?.delta),pct=Math.abs(Number(v?.pct)),showMarket=Number.isFinite(d)&&(Number.isFinite(pct)?pct>=3:Math.abs(d)>=1500),moverReads=w2ValueMoverReads(t,r),value=showMarket?[
-    w2S(t,r,"value-one",Number.isFinite(pct)&&pct<1
-      ?("The "+alias.mascot+" market moved only "+w2One(pct)+"% over the tracked window. For "+alias.mascot+", that is noise, not a roster referendum.")
-      :("The "+alias.mascot+" moved "+(d>0?"up ":"down ")+Math.abs(Math.round(d)).toLocaleString("en-US")+" points in team value over the tracked window"+(Number.isFinite(pct)?" ("+w2One(pct)+"%)":"")+". "+(d>0?"That gives "+alias.mascot+" a little more leverage if management wants to deal; it does not turn a loss into a win.":"That trims the "+alias.mascot+" trade-market cushion, which matters for roster flexibility even though the standings remain a separate argument."))),
+    w2S(t,r,"value-one",w2ValueMarketRead(t,r,d,pct)),
     ...moverReads
   ]:["n/a"];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],weakPrev=weak?w2PrevPlayer(prev,weak.id):null,hot=[

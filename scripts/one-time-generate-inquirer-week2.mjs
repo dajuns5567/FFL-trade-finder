@@ -2157,7 +2157,7 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
       ],
       "ll":[
         "Two losses have made the "+a.mascot+" correction list concrete. The next Sunday needs better production, not another explanation for why the same gaps stayed open.",
-        team+" has dropped both games, so the useful question has shifted from patience to repair: which lineup spots actually change the next result?"
+        team+" has dropped both games, so the focus has shifted from patience to repair: which lineup spots actually change the next result?"
       ],
       "lw":[
         "The "+a.mascot+" answered the opening loss with a win. That is a response worth keeping without pretending one correction has settled the roster.",
@@ -2209,7 +2209,7 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
       ],
       "wl":[
         team+" followed the opening win with a loss, so the victory lap has officially been interrupted. Week 3 gets to decide whether the stumble has company.",
-        "The "+a.mascot+" went from one good headline to one bad one. Nobody needs panic yet, but the next edition suddenly has real stakes."
+        "The "+a.mascot+" went from one good headline to one bad one. Nobody needs panic yet, but the next Sunday suddenly has real stakes."
       ],
       "no-history":[
         team+" has no complete opener to compare against, which means this Sunday gets the microphone by itself. It had better say something useful.",
@@ -2226,7 +2226,7 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
         "The "+a.mascot+" are 0-2. At this point the group chat does not need creativity; it needs only screenshots and the confidence to keep sending them."
       ],
       "lw":[
-        team+" answered the opening loss, which ruins the easiest rival narrative. The useful question now is whether the correction survives another opponent.",
+        team+" answered the opening loss, which ruins the easiest rival narrative. What matters now is whether the correction survives another opponent.",
         "The "+a.mascot+" turned an 0-1 joke into a 1-1 argument. Annoying for rivals, useful for supporters, and still very much unfinished."
       ],
       "wl":[

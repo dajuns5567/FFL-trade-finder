@@ -43,6 +43,10 @@ if(reportWeek===2){
   const week2HotCopy=hotTakes.map(x=>String(x?.take||'')).join(' ');
   assert.doesNotMatch(week2HotCopy,/breakout player to watch because|current production has moved materially beyond|young enough for the role growth to matter even more/i,'Breakout Hot Take must use reporter commentary rather than classification/meta language');
 
+  for(const t of d.teams||[]){
+    const valueCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='value').flatMap(s=>s?.paragraphs||[]).join(' ');
+    assert.doesNotMatch(valueCopy,/already on the roster when Week \d+ began/i,'Value coverage should omit no-op roster-status filler and use natural player context instead: '+t.team_name);
+  }
   const forcedCategorySentence=/(?:^|[.!?]\s+)(?:Breakout player|Established star|Steady veteran|Young breakout|Proven star|Veteran player)\s+[A-Z][A-Za-z.'’’-]+(?:\s+[A-Z][A-Za-z.'’’-]+){0,3}\s+(?:keeps|held|spoiled|remained|delivered|is|was)\b/i;
   for(const t of d.teams||[])assert.doesNotMatch(articleText(t),forcedCategorySentence,'Player category must be woven into commentary instead of appended as a standalone label sentence: '+t.team_name);
 

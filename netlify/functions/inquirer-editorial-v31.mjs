@@ -1956,7 +1956,7 @@ function w2ValueMoverSentence(t,r,rows,rising){
     if(!groups.has(method.key))groups.set(method.key,{method,moves:[]});
     groups.get(method.key).moves.push(move);
   }
-  return [...groups.values()].map(g=>{const suffix=g.moves.length===1?g.method.one:g.method.many;return w2Natural(g.moves)+(suffix?" "+suffix:"")}).join("; ")+".";
+  return [...groups.values()].map((g,gi)=>{const suffix=g.moves.length===1?g.method.one:g.method.many,line=w2Natural(g.moves)+(suffix?" "+suffix:"");return gi===0?w2Sentence(line):line}).join("; ")+".";
 }
 function w2ValueMarketRead(t,r,d,pct){
   const team=w2DisplayTeam(t.team_name),amount=Math.abs(Math.round(d)).toLocaleString("en-US"),

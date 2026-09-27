@@ -5,6 +5,21 @@ const natural=rows=>{const a=(rows||[]).filter(Boolean);return a.length<=1?(a[0]
 const one=v=>Number(v||0).toFixed(1);
 const displayTeam=name=>{const s=String(name||'Team').replace(/\s+\(\d+-\d+(?:-\d+)?\)$/,'');return s&&s===s.toLowerCase()?s.replace(/\b[a-z]/g,m=>m.toUpperCase()):s};
 const hash=s=>{let h=2166136261;for(const ch of String(s||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
+const playerMetaById=new Map();
+const rememberPlayer=p=>{if(!p?.id||!p?.name)return;const id=String(p.id),prior=playerMetaById.get(id)||{},merged={...prior};for(const [k,v] of Object.entries(p))if(v!=null&&v!=='')merged[k]=v;playerMetaById.set(id,merged)};
+for(const t of week2.teams||[]){
+  const pools=[...(t?.starter_details||[]),...(t?.opponent_roster?.players||[]),...(t?.opponent_roster?.starters||[]),...(t?.next_opponent_roster?.players||[]),...(t?.next_opponent_roster?.starters||[]),...Object.values(t?.transaction_player_facts||{})];
+  pools.forEach(rememberPlayer);
+}
+const moverTag=row=>{
+  const p=playerMetaById.get(String(row?.player_id||''));if(!p)return'';
+  const years=Number(p?.years_exp),age=Number(p?.age),games=Number(p?.prior_season_games)||0,prior=Number(p?.prior_season_avg),pos=String(p?.position||'').toUpperCase(),
+    defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),starThreshold=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13,
+    rookie=(Number.isFinite(years)&&years===0)||(games===0&&Number.isFinite(age)&&age<=23),
+    established=Number.isFinite(prior)&&games>=8&&(prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1))),
+    veteran=(Number.isFinite(years)&&years>=5)||(Number.isFinite(age)&&age>=28);
+  if(established)return'star';if(rookie)return'rookie';if(veteran)return'veteran';return'';
+};
 const moverMethod=(t,row)=>{
   const id=String(row?.player_id||''),week=2,txs=(t.transactions||[]).filter(tx=>!tx?.status||String(tx.status).toLowerCase()==='complete');
   for(const tx of txs){
@@ -21,14 +36,14 @@ const moverMethod=(t,row)=>{
   if(acquired){const when=acquired?.season&&acquired?.week?'Week '+String(acquired.week)+' of '+String(acquired.season):'an earlier week';return{key:'old-trade-in-'+when,one:'after arriving by trade in '+when,many:'after arriving by trade in '+when}}
   const sent=(t.trade_acquisitions||[]).find(a=>(a?.outgoing_player_ids||[]).map(String).includes(id));
   if(sent){const when=sent?.season&&sent?.week?'Week '+String(sent.week)+' of '+String(sent.season):'an earlier week';return{key:'old-trade-out-'+when,one:'after leaving by trade in '+when,many:'after leaving by trade in '+when}}
-  return{key:'hold',one:'as a player already on the roster when Week 2 began',many:'as players already on the roster when Week 2 began'};
+  return{key:'hold',one:'',many:''};
 };
 const moverSentence=(t,rid,rows,rising)=>{
   const groups=new Map(),verbsUp={'walter-mercer':['gained','climbed','rose'],'tess-delaney':['rose','gained','climbed'],'mack-hollis':['jumped','climbed','gained'],'nora-voss':['rose','gained','climbed']},
     verbsDown={'walter-mercer':['fell','lost','slipped'],'tess-delaney':['fell','slipped','lost'],'mack-hollis':['dropped','slid','lost'],'nora-voss':['fell','lost','slipped']},
     verbs=(rising?verbsUp:verbsDown)[rid]||(rising?verbsUp['walter-mercer']:verbsDown['walter-mercer']);
-  (rows||[]).forEach((x,i)=>{const method=moverMethod(t,x),name=String(x?.player_name||x?.player_id||'Unknown player'),amount=Math.abs(Math.round(Number(x.delta))).toLocaleString('en-US'),verb=verbs[(hash(name+'|value-move')+i)%verbs.length],move=name+' '+verb+' '+amount+' point'+(Math.abs(Math.round(Number(x.delta)))===1?'':'s');if(!groups.has(method.key))groups.set(method.key,{method,moves:[]});groups.get(method.key).moves.push(move)});
-  return [...groups.values()].map(g=>natural(g.moves)+' '+(g.moves.length===1?g.method.one:g.method.many)).join('; ')+'.';
+  (rows||[]).forEach((x,i)=>{const method=moverMethod(t,x),rawName=String(x?.player_name||x?.player_id||'Unknown player'),tag=method.key==='hold'?moverTag(x):'',name=tag?tag+' '+rawName:rawName,amount=Math.abs(Math.round(Number(x.delta))).toLocaleString('en-US'),verb=verbs[(hash(rawName+'|value-move')+i)%verbs.length],move=name+' '+verb+' '+amount+' point'+(Math.abs(Math.round(Number(x.delta)))===1?'':'s');if(!groups.has(method.key))groups.set(method.key,{method,moves:[]});groups.get(method.key).moves.push(move)});
+  return [...groups.values()].map(g=>{const suffix=g.moves.length===1?g.method.one:g.method.many;return natural(g.moves)+(suffix?' '+suffix:'')}).join('; ')+'.';
 };
 const marketRead=(t,rid,d,pct)=>{
   const team=displayTeam(t.team_name),amount=Math.abs(Math.round(d)).toLocaleString('en-US'),pctText=Number.isFinite(pct)?' ('+one(pct)+'%)':'',q=hash(t.team_name+'|value-voice')%4,

@@ -165,11 +165,10 @@ function evolveSentence(sentence,reporterId,seed){
     const choice=choices[(h+i*7)%choices.length];out=out.replace(re,choice);
   }
   out=out.trim();if(out)out=out[0].toUpperCase()+out.slice(1);
-  const intro=EVOLUTION_INTROS[rid][h%EVOLUTION_INTROS[rid].length],tail=EVOLUTION_TAILS[rid][Math.floor(h/11)%EVOLUTION_TAILS[rid].length];
+  const intro=EVOLUTION_INTROS[rid][h%EVOLUTION_INTROS[rid].length];
   out=intro+' '+out;
-  out=out.replace(/[.!?]+$/,'');
-  const tailClause=tail.replace(/[.!?]+$/,'').replace(/^./,m=>m.toLowerCase());
-  return out+' — '+tailClause+'.';
+  if(!/[.!?]$/.test(out))out+='.';
+  return out;
 }
 function paragraphSentenceRows(paragraph){
   return forwardSentenceParts(paragraph).map(sentence=>({sentence,norm:forwardNormSentence(sentence,[]),words:forwardWordCount(sentence)}));

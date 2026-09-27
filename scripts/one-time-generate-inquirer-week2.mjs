@@ -1846,7 +1846,14 @@ function w2ValueMoverMethod(t,row){
     const when=sent?.season&&sent?.week?"Week "+String(sent.week)+" of "+String(sent.season):"an earlier week";
     return{key:"old-trade-out-"+when,one:"after leaving by trade in "+when,many:"after leaving by trade in "+when};
   }
-  return{key:"hold",one:"as a player already on the roster when Week "+week+" began",many:"as players already on the roster when Week "+week+" began"};
+  return{key:"hold",one:"",many:""};
+}
+function w2ValueMoverTag(row){
+  const p=players?.[String(row?.player_id||"")];if(!p)return"";
+  const years=Number(p?.years_exp),age=Number(p?.age);
+  if((Number.isFinite(years)&&years===0)||(!Number.isFinite(years)&&Number.isFinite(age)&&age<=23))return"rookie";
+  if((Number.isFinite(years)&&years>=5)||(Number.isFinite(age)&&age>=28))return"veteran";
+  return"";
 }
 function w2ValueMoverSentence(t,r,rows,rising){
   const groups=new Map(),rid=String(r?.id||"walter-mercer"),
@@ -1854,13 +1861,14 @@ function w2ValueMoverSentence(t,r,rows,rising){
     verbsDown={ "walter-mercer":["fell","lost","slipped"],"tess-delaney":["fell","slipped","lost"],"mack-hollis":["dropped","slid","lost"],"nora-voss":["fell","lost","slipped"]},
     verbs=(rising?verbsUp:verbsDown)[rid]||(rising?verbsUp["walter-mercer"]:verbsDown["walter-mercer"]);
   for(let i=0;i<(rows||[]).length;i++){
-    const x=rows[i],method=w2ValueMoverMethod(t,x),name=String(x?.player_name||x?.player_id||"Unknown player"),
-      amount=Math.abs(Math.round(Number(x.delta))).toLocaleString("en-US"),verb=verbs[(w2Hash(name+"|value-move")+i)%verbs.length],
+    const x=rows[i],method=w2ValueMoverMethod(t,x),rawName=String(x?.player_name||x?.player_id||"Unknown player"),
+      tag=method.key==="hold"?w2ValueMoverTag(x):"",name=tag?tag+" "+rawName:rawName,
+      amount=Math.abs(Math.round(Number(x.delta))).toLocaleString("en-US"),verb=verbs[(w2Hash(rawName+"|value-move")+i)%verbs.length],
       move=name+" "+verb+" "+amount+" point"+(Math.abs(Math.round(Number(x.delta)))===1?"":"s");
     if(!groups.has(method.key))groups.set(method.key,{method,moves:[]});
     groups.get(method.key).moves.push(move);
   }
-  return [...groups.values()].map(g=>w2Natural(g.moves)+" "+(g.moves.length===1?g.method.one:g.method.many)).join("; ")+".";
+  return [...groups.values()].map(g=>{const suffix=g.moves.length===1?g.method.one:g.method.many;return w2Natural(g.moves)+(suffix?" "+suffix:"")}).join("; ")+".";
 }
 function w2ValueMarketRead(t,r,d,pct){
   const team=w2DisplayTeam(t.team_name),amount=Math.abs(Math.round(d)).toLocaleString("en-US"),

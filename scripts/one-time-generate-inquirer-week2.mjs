@@ -592,8 +592,8 @@ function w2LedeShape(t,r,won,margin,opp,top){
   ];return rows[k];
 }
 
-function w2HistoricalColor(p,r,t=null,slot=0){
-  const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0;
+function w2HistoricalColor(p,r,t=null,slot=0,ref=""){
+  const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,name=ref||String(p?.name||"this player");
   if(!Number.isFinite(pts)||!Number.isFinite(prior)||prior<=0||games<6)return "";
   const delta=pts-prior;if(Math.abs(delta)<Math.max(4,prior*.3))return "";
   const rid=String(r?.id||""),up=delta>0,year=Number(p?.prior_season_year)||historicalSeasonYear,
@@ -601,80 +601,80 @@ function w2HistoricalColor(p,r,t=null,slot=0){
     old=w2One(prior),now=w2One(pts);
   const rows={
     "walter-mercer":up?[
-      p.name+" averaged "+old+" fantasy points in "+year+"; "+now+" this week is enough of a jump to make that old baseline worth reopening.",
-      "In "+year+", "+p.name+" lived at "+old+" per game; Week 2 reached "+now+", which is a real departure from the established level.",
-      "The "+year+" book on "+p.name+" says "+old+" per game, while this Sunday says "+now+"; that is a spike worth remembering before anybody calls it normal.",
-      p.name+" came out of "+year+" with a "+old+"-point average; a "+now+"-point Week 2 moved far enough above it to earn a second look next Sunday.",
-      "Last season’s average for "+p.name+" was "+old+"; this week’s "+now+" cleared that bar by enough that the role deserves fresh attention.",
-      p.name+" spent "+year+" around "+old+" a game; landing at "+now+" in Week 2 is the sort of jump that changes what the next box score is allowed to tell us.",
-      "Use "+old+" as the "+year+" baseline for "+p.name+"; Week 2 answered with "+now+", a gain large enough to matter beyond one happy decimal.",
-      "The prior-season marker for "+p.name+" was "+old+" per game in "+year+"; "+now+" this week put genuine daylight between the old expectation and Sunday."
+      name+" averaged "+old+" fantasy points in "+year+"; "+now+" this week is enough of a jump to make that old baseline worth reopening.",
+      "In "+year+", "+name+" lived at "+old+" per game; Week 2 reached "+now+", which is a real departure from the established level.",
+      "The "+year+" book on "+name+" says "+old+" per game, while this Sunday says "+now+"; that is a spike worth remembering before anybody calls it normal.",
+      name+" came out of "+year+" with a "+old+"-point average; a "+now+"-point Week 2 moved far enough above it to earn a second look next Sunday.",
+      "Last season’s average for "+name+" was "+old+"; this week’s "+now+" cleared that bar by enough that the role deserves fresh attention.",
+      name+" spent "+year+" around "+old+" a game; landing at "+now+" in Week 2 is the sort of jump that changes what the next box score is allowed to tell us.",
+      "Use "+old+" as the "+year+" baseline for "+name+"; Week 2 answered with "+now+", a gain large enough to matter beyond one happy decimal.",
+      "The prior-season marker for "+name+" was "+old+" per game in "+year+"; "+now+" this week put genuine daylight between the old expectation and Sunday."
     ]:[
-      p.name+" averaged "+old+" fantasy points in "+year+"; "+now+" this week fell far enough below that baseline to deserve attention.",
-      "In "+year+", "+p.name+" lived at "+old+" per game; Week 2 stopped at "+now+", which is a real miss against the established level.",
-      "The "+year+" book on "+p.name+" says "+old+" per game, while this Sunday says "+now+"; that drop is too large to wave away as routine noise.",
-      p.name+" came out of "+year+" with a "+old+"-point average; a "+now+"-point Week 2 landed far enough below it to make the next usage report interesting.",
-      "Last season’s average for "+p.name+" was "+old+"; this week’s "+now+" missed that bar by enough that the quiet Sunday deserves its own note.",
-      p.name+" spent "+year+" around "+old+" a game; landing at "+now+" in Week 2 is the kind of dip that makes one check the role before blaming luck.",
-      "Use "+old+" as the "+year+" baseline for "+p.name+"; Week 2 answered with "+now+", a decline large enough to matter beyond one bad bounce.",
-      "The prior-season marker for "+p.name+" was "+old+" per game in "+year+"; "+now+" this week left real daylight on the wrong side of that standard."
+      name+" averaged "+old+" fantasy points in "+year+"; "+now+" this week fell far enough below that baseline to deserve attention.",
+      "In "+year+", "+name+" lived at "+old+" per game; Week 2 stopped at "+now+", which is a real miss against the established level.",
+      "The "+year+" book on "+name+" says "+old+" per game, while this Sunday says "+now+"; that drop is too large to wave away as routine noise.",
+      name+" came out of "+year+" with a "+old+"-point average; a "+now+"-point Week 2 landed far enough below it to make the next usage report interesting.",
+      "Last season’s average for "+name+" was "+old+"; this week’s "+now+" missed that bar by enough that the quiet Sunday deserves its own note.",
+      name+" spent "+year+" around "+old+" a game; landing at "+now+" in Week 2 is the kind of dip that makes one check the role before blaming luck.",
+      "Use "+old+" as the "+year+" baseline for "+name+"; Week 2 answered with "+now+", a decline large enough to matter beyond one bad bounce.",
+      "The prior-season marker for "+name+" was "+old+" per game in "+year+"; "+now+" this week left real daylight on the wrong side of that standard."
     ],
     "tess-delaney":up?[
-      "Last season, "+p.name+" averaged "+old+"; Week 2 arrived at "+now+" wearing considerably more jewelry.",
-      p.name+" brought a "+year+" average of "+old+" into this season, then served "+now+" in Week 2 as if the old portion size had offended him.",
-      "The "+year+" place card for "+p.name+" read "+old+" per game; this Sunday’s "+now+" required a larger table.",
-      p.name+" spent last season around "+old+" a game, and "+now+" this week was the statistical equivalent of arriving in evening wear to brunch.",
-      "A "+old+" average followed "+p.name+" out of "+year+"; Week 2’s "+now+" was not subtle, tasteful, or remotely interested in matching it.",
-      p.name+" carried a "+year+" baseline of "+old+"; Sunday answered with "+now+", and suddenly the centerpiece needed more room.",
-      "The "+year+" usual serving for "+p.name+" was "+old+" points; Week 2 brought "+now+" and asked whether anyone had ordered the larger platter.",
-      "The old average beside "+p.name+" was "+old+" in "+year+"; a "+now+"-point Week 2 turned that baseline into background décor."
+      "Last season, "+name+" averaged "+old+"; Week 2 arrived at "+now+" wearing considerably more jewelry.",
+      name+" brought a "+year+" average of "+old+" into this season, then served "+now+" in Week 2 as if the old portion size had offended him.",
+      "The "+year+" place card for "+name+" read "+old+" per game; this Sunday’s "+now+" required a larger table.",
+      name+" spent last season around "+old+" a game, and "+now+" this week was the statistical equivalent of arriving in evening wear to brunch.",
+      "A "+old+" average followed "+name+" out of "+year+"; Week 2’s "+now+" was not subtle, tasteful, or remotely interested in matching it.",
+      name+" carried a "+year+" baseline of "+old+"; Sunday answered with "+now+", and suddenly the centerpiece needed more room.",
+      "The "+year+" usual serving for "+name+" was "+old+" points; Week 2 brought "+now+" and asked whether anyone had ordered the larger platter.",
+      "The old average beside "+name+" was "+old+" in "+year+"; a "+now+"-point Week 2 turned that baseline into background décor."
     ]:[
-      "Last season, "+p.name+" averaged "+old+"; Week 2 offered "+now+", which is less a variation than a missing course.",
-      p.name+" brought a "+year+" average of "+old+" into this season, then served only "+now+" in Week 2; the table noticed.",
-      "The "+year+" place card for "+p.name+" read "+old+" per game; this Sunday’s "+now+" looked conspicuously underdressed beside it.",
-      p.name+" spent last season around "+old+" a game, and "+now+" this week was the statistical equivalent of leaving before the entrée.",
-      "A "+old+" average followed "+p.name+" out of "+year+"; Week 2’s "+now+" made that old standard look rather painfully well-fed.",
-      p.name+" carried a "+year+" baseline of "+old+"; Sunday answered with "+now+", and no amount of good china makes the portion larger.",
-      "The "+year+" usual serving for "+p.name+" was "+old+" points; Week 2 brought "+now+" and left everyone staring at the empty side of the plate.",
-      "The old average beside "+p.name+" was "+old+" in "+year+"; a "+now+"-point Week 2 made the baseline feel less like décor and more like a complaint."
+      "Last season, "+name+" averaged "+old+"; Week 2 offered "+now+", which is less a variation than a missing course.",
+      name+" brought a "+year+" average of "+old+" into this season, then served only "+now+" in Week 2; the table noticed.",
+      "The "+year+" place card for "+name+" read "+old+" per game; this Sunday’s "+now+" looked conspicuously underdressed beside it.",
+      name+" spent last season around "+old+" a game, and "+now+" this week was the statistical equivalent of leaving before the entrée.",
+      "A "+old+" average followed "+name+" out of "+year+"; Week 2’s "+now+" made that old standard look rather painfully well-fed.",
+      name+" carried a "+year+" baseline of "+old+"; Sunday answered with "+now+", and no amount of good china makes the portion larger.",
+      "The "+year+" usual serving for "+name+" was "+old+" points; Week 2 brought "+now+" and left everyone staring at the empty side of the plate.",
+      "The old average beside "+name+" was "+old+" in "+year+"; a "+now+"-point Week 2 made the baseline feel less like décor and more like a complaint."
     ],
     "mack-hollis":up?[
-      p.name+" averaged "+old+" last season; "+now+" in Week 2 did not beat that number so much as kick the door off it.",
-      "The "+year+" baseline for "+p.name+" was "+old+"; Week 2 showed up at "+now+" with a megaphone and no indoor voice.",
-      p.name+" lived around "+old+" a game in "+year+"; Sunday’s "+now+" moved the number to a different ZIP code.",
-      "Last season gave "+p.name+" a "+old+"-point average; Week 2 gave us "+now+" and a perfectly good reason to use the big headline.",
-      "Put "+old+" next to "+p.name+" as the "+year+" norm; now put "+now+" next to Week 2 and try pretending nothing changed.",
-      p.name+" carried a "+old+" average out of last season; "+now+" this week is the kind of jump that makes the desk phone start ringing.",
-      "The old number for "+p.name+" was "+old+" per game in "+year+"; Week 2 screamed "+now+" and made the old number look shy.",
-      p.name+" spent "+year+" at "+old+" a game; the "+now+" that followed in Week 2 is how a performance steals tomorrow’s back page."
+      name+" averaged "+old+" last season; "+now+" in Week 2 did not beat that number so much as kick the door off it.",
+      "The "+year+" baseline for "+name+" was "+old+"; Week 2 showed up at "+now+" with a megaphone and no indoor voice.",
+      name+" lived around "+old+" a game in "+year+"; Sunday’s "+now+" moved the number to a different ZIP code.",
+      "Last season gave "+name+" a "+old+"-point average; Week 2 gave us "+now+" and a perfectly good reason to use the big headline.",
+      "Put "+old+" next to "+name+" as the "+year+" norm; now put "+now+" next to Week 2 and try pretending nothing changed.",
+      name+" carried a "+old+" average out of last season; "+now+" this week is the kind of jump that makes the desk phone start ringing.",
+      "The old number for "+name+" was "+old+" per game in "+year+"; Week 2 screamed "+now+" and made the old number look shy.",
+      name+" spent "+year+" at "+old+" a game; the "+now+" that followed in Week 2 is how a performance steals tomorrow’s back page."
     ]:[
-      p.name+" averaged "+old+" last season; "+now+" in Week 2 is the kind of drop that gets booed before breakfast.",
-      "The "+year+" baseline for "+p.name+" was "+old+"; Week 2 showed up at "+now+" and somebody immediately reached for the complaint box.",
-      p.name+" lived around "+old+" a game in "+year+"; Sunday’s "+now+" moved the number to the wrong neighborhood.",
-      "Last season gave "+p.name+" a "+old+"-point average; Week 2 gave us "+now+" and an excellent reason to ask where the rest went.",
-      "Put "+old+" next to "+p.name+" as the "+year+" norm; now put "+now+" beside Week 2 and tell me the missing points are not loud.",
-      p.name+" carried a "+old+" average out of last season; "+now+" this week is the kind of dip that makes the desk phone start ringing.",
-      "The old number for "+p.name+" was "+old+" per game in "+year+"; Week 2 muttered "+now+" and left everybody else to do the yelling.",
-      p.name+" spent "+year+" at "+old+" a game; the "+now+" that followed in Week 2 is how a performance volunteers for Monday criticism."
+      name+" averaged "+old+" last season; "+now+" in Week 2 is the kind of drop that gets booed before breakfast.",
+      "The "+year+" baseline for "+name+" was "+old+"; Week 2 showed up at "+now+" and somebody immediately reached for the complaint box.",
+      name+" lived around "+old+" a game in "+year+"; Sunday’s "+now+" moved the number to the wrong neighborhood.",
+      "Last season gave "+name+" a "+old+"-point average; Week 2 gave us "+now+" and an excellent reason to ask where the rest went.",
+      "Put "+old+" next to "+name+" as the "+year+" norm; now put "+now+" beside Week 2 and tell me the missing points are not loud.",
+      name+" carried a "+old+" average out of last season; "+now+" this week is the kind of dip that makes the desk phone start ringing.",
+      "The old number for "+name+" was "+old+" per game in "+year+"; Week 2 muttered "+now+" and left everybody else to do the yelling.",
+      name+" spent "+year+" at "+old+" a game; the "+now+" that followed in Week 2 is how a performance volunteers for Monday criticism."
     ],
     "nora-voss":up?[
-      "Rivals knew "+p.name+" as roughly a "+old+"-point player last season; Week 2 dropped "+now+" on the table and ruined the easy joke.",
-      p.name+" averaged "+old+" in "+year+"; after "+now+" this week, rival managers may need a different script.",
-      "The "+year+" number on "+p.name+" was "+old+" per game; Week 2 answered with "+now+", which is rude to anyone who had already written the punch line.",
-      p.name+" spent last season around "+old+"; a "+now+"-point Week 2 made the usual rival heckling look badly under-researched.",
-      "A "+old+" average followed "+p.name+" out of "+year+"; Sunday’s "+now+" forced rivals to delete at least one prewritten insult.",
-      p.name+" carried a "+year+" baseline of "+old+" into this season; "+now+" this week made that old target considerably harder to mock.",
-      "Last season gave rivals a "+old+"-point expectation for "+p.name+"; Week 2 gave them "+now+" and an inconvenient shortage of material.",
-      "The old rival shorthand for "+p.name+" was "+old+" a game in "+year+"; "+now+" this Sunday spoiled the shorthand."
+      "Rivals knew "+name+" as roughly a "+old+"-point player last season; Week 2 dropped "+now+" on the table and ruined the easy joke.",
+      name+" averaged "+old+" in "+year+"; after "+now+" this week, rival managers may need a different script.",
+      "The "+year+" number on "+name+" was "+old+" per game; Week 2 answered with "+now+", which is rude to anyone who had already written the punch line.",
+      name+" spent last season around "+old+"; a "+now+"-point Week 2 made the usual rival heckling look badly under-researched.",
+      "A "+old+" average followed "+name+" out of "+year+"; Sunday’s "+now+" forced rivals to delete at least one prewritten insult.",
+      name+" carried a "+year+" baseline of "+old+" into this season; "+now+" this week made that old target considerably harder to mock.",
+      "Last season gave rivals a "+old+"-point expectation for "+name+"; Week 2 gave them "+now+" and an inconvenient shortage of material.",
+      "The old rival shorthand for "+name+" was "+old+" a game in "+year+"; "+now+" this Sunday spoiled the shorthand."
     ]:[
-      "Rivals knew "+p.name+" as roughly a "+old+"-point player last season; Week 2 coughed up "+now+", so the heckling has a receipt.",
-      p.name+" averaged "+old+" in "+year+"; a "+now+"-point Week 2 is exactly the sort of drop rival managers refuse to forget.",
-      "The "+year+" number on "+p.name+" was "+old+" per game; Week 2 answered with "+now+", and rivals did not have to invent the joke.",
-      p.name+" spent last season around "+old+"; a "+now+"-point Week 2 handed the rival section material with the tags still on it.",
-      "A "+old+" average followed "+p.name+" out of "+year+"; Sunday’s "+now+" made the old standard an annoyingly convenient comparison.",
-      p.name+" carried a "+year+" baseline of "+old+" into this season; "+now+" this week gave every rival manager the same smug screenshot.",
-      "Last season gave rivals a "+old+"-point expectation for "+p.name+"; Week 2 gave them "+now+" and far too much confidence.",
-      "The old rival shorthand for "+p.name+" was "+old+" a game in "+year+"; "+now+" this Sunday made the shorthand look generous."
+      "Rivals knew "+name+" as roughly a "+old+"-point player last season; Week 2 coughed up "+now+", so the heckling has a receipt.",
+      name+" averaged "+old+" in "+year+"; a "+now+"-point Week 2 is exactly the sort of drop rival managers refuse to forget.",
+      "The "+year+" number on "+name+" was "+old+" per game; Week 2 answered with "+now+", and rivals did not have to invent the joke.",
+      name+" spent last season around "+old+"; a "+now+"-point Week 2 handed the rival section material with the tags still on it.",
+      "A "+old+" average followed "+name+" out of "+year+"; Sunday’s "+now+" made the old standard an annoyingly convenient comparison.",
+      name+" carried a "+year+" baseline of "+old+" into this season; "+now+" this week gave every rival manager the same smug screenshot.",
+      "Last season gave rivals a "+old+"-point expectation for "+name+"; Week 2 gave them "+now+" and far too much confidence.",
+      "The old rival shorthand for "+name+" was "+old+" a game in "+year+"; "+now+" this Sunday made the shorthand look generous."
     ]
   };
   return (rows[rid]||rows["walter-mercer"])[v]
@@ -875,124 +875,130 @@ function w2Week1DeltaRead(t,r,p,pp,role){
 
 function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
   const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),foe=w2DisplayTeam(opp),pts=w2One(p.points),
-    delta=pp?Number(p.points)-Number(pp.points):null,role=Math.min(2,Number(i)||0),v=w2Cohort(t)%4;
+    delta=pp?Number(p.points)-Number(pp.points):null,role=Math.min(2,Number(i)||0),v=w2Cohort(t)%4,
+    profile=w2PlayerStatusProfile(p,role,pp),name=w2PlayerReference(t,r,p,profile,role);
   if(Number(p?.points)<=1.5){
     const low={
       "walter-mercer":[
-        p.name+" gave "+team+" only "+pts+" points. That is not support behind the leader; it is the lineup spot management has to solve first.",
-        pts+" from "+p.name+" left "+team+" effectively playing a scorer short. The fair question is replacement or role, not whether to praise the ranking.",
-        p.name+" reached "+pts+" for "+team+". A contribution that small belongs in the Week 3 correction plan, not the credit column.",
-        "At "+pts+" points, "+p.name+" was a quiet starter for "+team+". The lineup needs a real answer there before the same hole decides a closer game."
+        name+" gave "+team+" only "+pts+" points. That is not support behind the leader; it is the lineup spot management has to solve first.",
+        pts+" from "+name+" left "+team+" effectively playing a scorer short. The fair question is replacement or role, not whether to praise the ranking.",
+        name+" reached "+pts+" for "+team+". A contribution that small belongs in the Week 3 correction plan, not the credit column.",
+        "At "+pts+" points, "+name+" was a quiet starter for "+team+". The lineup needs a real answer there before the same hole decides a closer game."
       ],
       "tess-delaney":[
-        p.name+" brought "+pts+" points to the "+a.mascot+" table. That is less a second course than an empty plate with excellent posture.",
-        "The "+a.mascot+" received "+pts+" from "+p.name+". I have seen decorative napkins contribute more to an evening.",
-        p.name+" produced "+pts+" points, which means this chair is being saved by the people seated around it. That arrangement gets expensive quickly.",
-        pts+" from "+p.name+" is the place setting everybody politely pretends not to stare at. Week 3 is where the room either replaces it or owns it."
+        name+" brought "+pts+" points to the "+a.mascot+" table. That is less a second course than an empty plate with excellent posture.",
+        "The "+a.mascot+" received "+pts+" from "+name+". I have seen decorative napkins contribute more to an evening.",
+        name+" produced "+pts+" points, which means this chair is being saved by the people seated around it. That arrangement gets expensive quickly.",
+        pts+" from "+name+" is the place setting everybody politely pretends not to stare at. Week 3 is where the room either replaces it or owns it."
       ],
       "mack-hollis":[
-        p.name+" scored "+pts+". That is not a second punch; that is somebody holding the coat while the lineup gets into a fight.",
-        pts+" from "+p.name+" is not a live wire. It is the outlet everybody keeps smacking because nothing came on.",
-        p.name+" gave the "+a.mascot+" "+pts+" points. Put the confetti away and find a Week 3 answer.",
-        "The scoreboard got "+pts+" from "+p.name+". Calling that support would be an insult to support."
+        name+" scored "+pts+". That is not a second punch; that is somebody holding the coat while the lineup gets into a fight.",
+        pts+" from "+name+" is not a live wire. It is the outlet everybody keeps smacking because nothing came on.",
+        name+" gave the "+a.mascot+" "+pts+" points. Put the confetti away and find a Week 3 answer.",
+        "The scoreboard got "+pts+" from "+name+". Calling that support would be an insult to support."
       ],
       "nora-voss":[
-        p.name+" gave "+team+" "+pts+" points. Rivals do not need to invent a joke when the number arrives prewritten.",
-        pts+" from "+p.name+" is the easiest target on the "+a.mascot+" roster, and pretending otherwise only saves rivals the trouble of pointing.",
-        p.name+" finished at "+pts+". That is not useful support; it is exactly where the rival thread is putting the red circle.",
-        "The "+a.mascot+" got "+pts+" from "+p.name+". If supporters want one obvious Week 3 correction, rivals have already highlighted it for them."
+        name+" gave "+team+" "+pts+" points. Rivals do not need to invent a joke when the number arrives prewritten.",
+        pts+" from "+name+" is the easiest target on the "+a.mascot+" roster, and pretending otherwise only saves rivals the trouble of pointing.",
+        name+" finished at "+pts+". That is not useful support; it is exactly where the rival thread is putting the red circle.",
+        "The "+a.mascot+" got "+pts+" from "+name+". If supporters want one obvious Week 3 correction, rivals have already highlighted it for them."
       ]
     };
     let out=(low[rid]||low["walter-mercer"])[(v+role)%4];
-    if(pp&&Number.isFinite(delta)&&Math.abs(delta)>=5)out+=" "+w2Week1DeltaRead(t,r,p,pp,role);
+    const trajectory=w2PlayerTrajectoryContext(t,r,p,pp,role,name);
+    if(trajectory)out+=" "+trajectory;
+    else if(pp&&Number.isFinite(delta)&&Math.abs(delta)>=5)out+=" "+w2Week1DeltaRead(t,r,p,pp,role);
     return out.replace(/\.+$/,"")+"."
   }
   const rows={
     "walter-mercer":[
       [
-        won?p.name+" did the heavy lifting for "+team+"; the rest of the lineup finally treated the star performance like something worth protecting.":p.name+" gave "+team+" a performance good enough to deserve a better result; the loss belongs farther down the lineup.",
-        won?p.name+" supplied the anchor and let "+team+" play normal football around it.":p.name+" supplied the anchor, which makes the quieter starters harder to excuse.",
-        won?p.name+" gave "+team+" a top-end answer that held up all afternoon.":p.name+" produced the kind of top-line score that usually keeps a team out of trouble, and the roster wasted it.",
-        won?p.name+" set the level for "+team+" and made the rest of the winning score easier to trust.":p.name+" set a winning level for "+team+" even though the final result refused to cooperate."
+        won?name+" did the heavy lifting for "+team+"; the rest of the lineup finally treated the star performance like something worth protecting.":name+" gave "+team+" a performance good enough to deserve a better result; the loss belongs farther down the lineup.",
+        won?name+" supplied the anchor and let "+team+" play normal football around it.":name+" supplied the anchor, which makes the quieter starters harder to excuse.",
+        won?name+" gave "+team+" a top-end answer that held up all afternoon.":name+" produced the kind of top-line score that usually keeps a team out of trouble, and the roster wasted it.",
+        won?name+" set the level for "+team+" and made the rest of the winning score easier to trust.":name+" set a winning level for "+team+" even though the final result refused to cooperate."
       ],
       [
-        won?p.name+" mattered because "+foe+" had to deal with a second real scorer instead of spending the whole day chasing the leader.":p.name+" gave "+team+" a legitimate second answer, so the defeat cannot be filed under 'no help.'",
-        won?p.name+" turned the top of the lineup into a two-player problem for "+foe+".":p.name+" kept the loss from becoming a one-star rescue attempt; the trouble started after the first two names.",
-        won?p.name+" was the supporting score that kept "+team+" from becoming predictable.":p.name+" did enough secondary work that the postgame questions belong elsewhere.",
-        won?p.name+" gave the lineup a second dependable foothold.":p.name+" supplied usable support, which makes the remaining quiet slots more important than another excuse."
+        won?name+" mattered because "+foe+" had to deal with a second real scorer instead of spending the whole day chasing the leader.":name+" gave "+team+" a legitimate second answer, so the defeat cannot be filed under 'no help.'",
+        won?name+" turned the top of the lineup into a two-player problem for "+foe+".":name+" kept the loss from becoming a one-star rescue attempt; the trouble started after the first two names.",
+        won?name+" was the supporting score that kept "+team+" from becoming predictable.":name+" did enough secondary work that the postgame questions belong elsewhere.",
+        won?name+" gave the lineup a second dependable foothold.":name+" supplied usable support, which makes the remaining quiet slots more important than another excuse."
       ],
       [
-        p.name+" was the third score that made the lineup feel complete rather than top-heavy.",
-        p.name+" did not need the headline; the value was giving "+team+" another place where Sunday did not break.",
-        p.name+" filled in the middle of the box score with exactly the kind of production winning lineups keep finding.",
-        p.name+" gave "+team+" another usable starter instead of another problem to solve."
+        name+" was the third score that made the lineup feel complete rather than top-heavy.",
+        name+" did not need the headline; the value was giving "+team+" another place where Sunday did not break.",
+        name+" filled in the middle of the box score with exactly the kind of production winning lineups keep finding.",
+        name+" gave "+team+" another usable starter instead of another problem to solve."
       ]
     ],
     "tess-delaney":[
       [
-        won?p.name+" was the centerpiece and, for once, the rest of "+team+" remembered a centerpiece needs a table around it.":p.name+" brought the centerpiece to a dinner that still ended with "+team+" holding the check.",
-        won?p.name+" gave the "+a.mascot+" the expensive-looking performance the room had been waiting for.":p.name+" dressed the afternoon properly; the result was the guest who ruined it.",
-        won?p.name+" arrived as the centerpiece and left with the win to match.":p.name+" looked magnificent in the middle of an evening the "+a.mascot+" otherwise mishandled.",
-        won?p.name+" gave "+team+" one performance nobody needed to rearrange after the fact.":p.name+" was the one part of the room nobody should blame for how the evening ended."
+        won?name+" was the centerpiece and, for once, the rest of "+team+" remembered a centerpiece needs a table around it.":name+" brought the centerpiece to a dinner that still ended with "+team+" holding the check.",
+        won?name+" gave the "+a.mascot+" the expensive-looking performance the room had been waiting for.":name+" dressed the afternoon properly; the result was the guest who ruined it.",
+        won?name+" arrived as the centerpiece and left with the win to match.":name+" looked magnificent in the middle of an evening the "+a.mascot+" otherwise mishandled.",
+        won?name+" gave "+team+" one performance nobody needed to rearrange after the fact.":name+" was the one part of the room nobody should blame for how the evening ended."
       ],
       [
-        won?p.name+" gave the "+a.mascot+" a second proper setting, which kept the centerpiece from looking lonely.":p.name+" provided respectable support; the empty chairs were elsewhere.",
-        won?p.name+" made the table feel balanced instead of merely expensive at one end.":p.name+" did enough to avoid the bill for this loss.",
-        won?p.name+" supplied the second course the lineup actually needed.":p.name+" brought useful support to a table with other, much louder problems.",
-        won?p.name+" kept the winning arrangement from becoming a one-guest performance.":p.name+" was useful enough that the postgame seating complaints need another target."
+        won?name+" gave the "+a.mascot+" a second proper setting, which kept the centerpiece from looking lonely.":name+" provided respectable support; the empty chairs were elsewhere.",
+        won?name+" made the table feel balanced instead of merely expensive at one end.":name+" did enough to avoid the bill for this loss.",
+        won?name+" supplied the second course the lineup actually needed.":name+" brought useful support to a table with other, much louder problems.",
+        won?name+" kept the winning arrangement from becoming a one-guest performance.":name+" was useful enough that the postgame seating complaints need another target."
       ],
       [
-        p.name+" did the quiet work that keeps the table from looking unfinished.",
-        p.name+" was not the centerpiece, but the room looked considerably cheaper without this contribution.",
-        p.name+" gave the "+a.mascot+" a useful third setting and asked for no unnecessary applause.",
-        p.name+" handled the supporting role cleanly enough that the room can complain somewhere else."
+        name+" did the quiet work that keeps the table from looking unfinished.",
+        name+" was not the centerpiece, but the room looked considerably cheaper without this contribution.",
+        name+" gave the "+a.mascot+" a useful third setting and asked for no unnecessary applause.",
+        name+" handled the supporting role cleanly enough that the room can complain somewhere else."
       ]
     ],
     "mack-hollis":[
       [
-        won?p.name+" kicked the door in and "+team+" actually followed through it.":p.name+" kicked the door in and the rest of "+team+" still managed to lose the building.",
-        won?p.name+" supplied the big number and got a win instead of a sympathy card.":p.name+" supplied the big number and got paid back with a loss. Somebody owes him flowers.",
-        won?p.name+" gave the "+a.mascot+" the kind of line that makes the scoreboard start yelling first.":p.name+" gave the "+a.mascot+" a headline score inside a result nobody wants framed.",
-        won?p.name+" brought the fireworks and the rest of the lineup remembered to light something too.":p.name+" brought the fireworks; too many teammates showed up holding wet matches."
+        won?name+" kicked the door in and "+team+" actually followed through it.":name+" kicked the door in and the rest of "+team+" still managed to lose the building.",
+        won?name+" supplied the big number and got a win instead of a sympathy card.":name+" supplied the big number and got paid back with a loss. Somebody owes him flowers.",
+        won?name+" gave the "+a.mascot+" the kind of line that makes the scoreboard start yelling first.":name+" gave the "+a.mascot+" a headline score inside a result nobody wants framed.",
+        won?name+" brought the fireworks and the rest of the lineup remembered to light something too.":name+" brought the fireworks; too many teammates showed up holding wet matches."
       ],
       [
-        won?p.name+" gave "+team+" a second punch and made "+foe+" defend more than one emergency.":p.name+" supplied another live wire, which means the loss belongs to the dead outlets around him.",
-        won?p.name+" kept the scoreboard loud after the first star had already made noise.":p.name+" was not the problem; if anything, the score makes the silent starters look louder.",
-        won?p.name+" turned a good top score into actual pressure.":p.name+" gave the "+a.mascot+" a second useful jolt and still watched the rest of the circuit fail.",
-        won?p.name+" made sure the leader did not have to win the bar fight alone.":p.name+" threw a second punch; too many teammates responded by holding the coat."
+        won?name+" gave "+team+" a second punch and made "+foe+" defend more than one emergency.":name+" supplied another live wire, which means the loss belongs to the dead outlets around him.",
+        won?name+" kept the scoreboard loud after the first star had already made noise.":name+" was not the problem; if anything, the score makes the silent starters look louder.",
+        won?name+" turned a good top score into actual pressure.":name+" gave the "+a.mascot+" a second useful jolt and still watched the rest of the circuit fail.",
+        won?name+" made sure the leader did not have to win the bar fight alone.":name+" threw a second punch; too many teammates responded by holding the coat."
       ],
       [
-        p.name+" kept the middle of the scoreboard from going dark.",
-        p.name+" did enough useful work that this name stays off the angry list.",
-        p.name+" was the third reason the lineup still had a pulse after the stars.",
-        p.name+" gave "+team+" one more working outlet on a Sunday that needed all of them."
+        name+" kept the middle of the scoreboard from going dark.",
+        name+" did enough useful work that this name stays off the angry list.",
+        name+" was the third reason the lineup still had a pulse after the stars.",
+        name+" gave "+team+" one more working outlet on a Sunday that needed all of them."
       ]
     ],
     "nora-voss":[
       [
-        won?p.name+" gave rivals a big number and no final score to hide behind.":p.name+" did the work; rivals only get to laugh because the final score overruled it.",
-        won?p.name+" made the top of the "+a.mascot+" lineup difficult to mock.":p.name+" gave "+team+" one performance rivals have to skip past on the way to the joke.",
-        won?p.name+" supplied the kind of line that makes the rival complaint department change subjects.":p.name+" did enough individually that the rival joke has to start somewhere else.",
-        won?p.name+" put up the number that forces rivals to argue about somebody else.":p.name+" gave supporters one clean rebuttal even though the scoreboard gave rivals the last word."
+        won?name+" gave rivals a big number and no final score to hide behind.":name+" did the work; rivals only get to laugh because the final score overruled it.",
+        won?name+" made the top of the "+a.mascot+" lineup difficult to mock.":name+" gave "+team+" one performance rivals have to skip past on the way to the joke.",
+        won?name+" supplied the kind of line that makes the rival complaint department change subjects.":name+" did enough individually that the rival joke has to start somewhere else.",
+        won?name+" put up the number that forces rivals to argue about somebody else.":name+" gave supporters one clean rebuttal even though the scoreboard gave rivals the last word."
       ],
       [
-        won?p.name+" gave "+team+" a second reason rival managers had to keep quiet for a few hours.":p.name+" removed the easy 'no help' excuse from the "+team+" loss.",
-        won?p.name+" made the lineup harder to dismiss because the second answer was real.":p.name+" supplied enough help that rivals have to attack deeper than the first two names.",
-        won?p.name+" kept the leader from becoming a one-player magic trick.":p.name+" did enough support work to make the quieter starters fair game.",
-        won?p.name+" gave the "+a.mascot+" another score worth respecting.":p.name+" kept the loss from becoming a simple story about one star being abandoned."
+        won?name+" gave "+team+" a second reason rival managers had to keep quiet for a few hours.":name+" removed the easy 'no help' excuse from the "+team+" loss.",
+        won?name+" made the lineup harder to dismiss because the second answer was real.":name+" supplied enough help that rivals have to attack deeper than the first two names.",
+        won?name+" kept the leader from becoming a one-player magic trick.":name+" did enough support work to make the quieter starters fair game.",
+        won?name+" gave the "+a.mascot+" another score worth respecting.":name+" kept the loss from becoming a simple story about one star being abandoned."
       ],
       [
-        p.name+" was useful enough that rival managers need to keep scrolling for an easier target.",
-        p.name+" did the kind of quiet damage that ruins a lazy rival punch line.",
-        p.name+" gave "+team+" another respectable name in a lineup that still had softer places to attack.",
-        p.name+" contributed enough that the rival jokes belong somewhere else."
+        name+" was useful enough that rival managers need to keep scrolling for an easier target.",
+        name+" did the kind of quiet damage that ruins a lazy rival punch line.",
+        name+" gave "+team+" another respectable name in a lineup that still had softer places to attack.",
+        name+" contributed enough that the rival jokes belong somewhere else."
       ]
     ]
   };
   let out=(rows[rid]||rows["walter-mercer"])[role][v];
-  if(pp&&Number.isFinite(delta)&&Math.abs(delta)>=5)out+=" "+w2Week1DeltaRead(t,r,p,pp,role);
-  const history=w2HistoricalColor(p,r,t,role);if(history)out+=" "+history;
-  const status=w2PlayerStatusColor(t,r,p,pp,role);if(status)out+=" "+status;
+  const trajectory=w2PlayerTrajectoryContext(t,r,p,pp,role,name);
+  if(trajectory)out+=" "+trajectory;
+  else{
+    if(pp&&Number.isFinite(delta)&&Math.abs(delta)>=5)out+=" "+w2Week1DeltaRead(t,r,p,pp,role);
+    const history=w2HistoricalColor(p,r,t,role,w2ShortPlayerName(t,r,p,"history-"+role));if(history)out+=" "+history;
+  }
   return out.replace(/\.+$/,"")+"."
 }
 function w2WeakSpotRead(t,r,weak,won,margin){
@@ -1458,7 +1464,7 @@ function w2SectionHead(r,kind){
 function w2IdentityRead(t,prev,r,top,opp){
   const pts=Number(t.points)||0,prevPts=Number(prev?.points),delta=Number.isFinite(prevPts)?pts-prevPts:null,
     topPts=(top||[]).reduce((n,p)=>n+(Number(p?.points)||0),0),share=pts>0?Math.round(topPts/pts*100):0,
-    names=(top||[]).filter(Boolean).map(p=>p.name),rid=String(r?.id||""),v=w2Hash(t.team_name+"|identity")%4,
+    names=(top||[]).filter(Boolean).map((p,i)=>w2ShortPlayerName(t,r,p,"identity-"+i)),rid=String(r?.id||""),v=w2Hash(t.team_name+"|identity")%4,
     team=w2DisplayTeam(t.team_name),out=[];
   if(names.length>=3&&share>=80){
     const rows={
@@ -2071,7 +2077,9 @@ function w2ColumnColorRead(t,r,top,weak,won,opp){
 
 function w2PlayerSynthesisRead(t,r,top,opp,won){
   const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),foe=w2DisplayTeam(opp),
-    star=top?.[0]?.name||"the lead scorer",support=top?.[1]?.name||"the supporting scorer",third=top?.[2]?.name||null,
+    star=top?.[0]?w2ShortPlayerName(t,r,top[0],"synthesis-0"):"the lead scorer",
+    support=top?.[1]?w2ShortPlayerName(t,r,top[1],"synthesis-1"):"the supporting scorer",
+    third=top?.[2]?w2ShortPlayerName(t,r,top[2],"synthesis-2"):null,
     v=w2Cohort(t)%4,names=w2Natural([star,support,third].filter(Boolean));
   const rows={
     "walter-mercer":[
@@ -2082,7 +2090,7 @@ function w2PlayerSynthesisRead(t,r,top,opp,won){
     ],
     "tess-delaney":[
       names+" gave the "+a.mascot+" table enough real food that nobody needs another decorative centerpiece. "+(won?"Keep the menu; fix the empty chairs.":"The meal was respectable. The bill still arrived."),
-      star+" handled the expensive course and "+support+" kept dinner from becoming performance art. "+(won?"That is a table worth setting again.":"That is the part of the evening worth keeping when the room gets rearranged."),
+      star+" handled the expensive course and "+support+" kept dinner from becoming performance art. "+(won?"That is a table worth setting again.":"That is the part of the evening worth carrying into the next reservation."),
       "The "+a.mascot+" got a proper center of gravity from "+names+". The next reservation does not require the same dishes; it requires the rest of the table to stop freeloading.",
       names+" gave "+team+" enough polish to look intentional. "+(won?"Victory gets the toast.":"Defeat gets the check.")+" The balance at the top kept the room from depending on one chair to carry dinner."
     ],

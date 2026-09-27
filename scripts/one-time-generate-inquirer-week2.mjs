@@ -877,7 +877,7 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
         ", which makes the star-level label less flattering than factual and therefore much harder for rivals to argue with."
       ],
       "breakout":[
-        ", so rivals may need to retire the old scouting joke before it becomes evidence of their own laziness.",
+        ", so rivals may need to retire the old scouting joke before their own laziness becomes the punch line.",
         ", and another Sunday like this would make the breakout label considerably harder to heckle away.",
         ", which is how a player goes from convenient rival afterthought to somebody the group chat has to actually respect.",
         ", leaving opponents one more strong week away from needing a new script entirely."

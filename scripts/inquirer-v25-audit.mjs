@@ -41,6 +41,9 @@ assert.ok(hubSource.includes('team?.league_context?.record'),'First-mention reco
 assert.ok(hubSource.includes('authoredRecord=')&&hubSource.includes('first&&rec&&!authoredRecord'),'First visible team mention must render its current season record exactly once and must not duplicate a record already written in the copy');
 assert.ok(hubSource.includes('seenRecords=new Set()'),'Each rendered Inquirer article/recap must reset first-mention record tracking');
 assert.ok(hubSource.includes('pct=n=>(clamp(n)+100)/2')&&hubSource.includes("style=\"left:'+pct(current)+'%\""),'Fan sentiment marker must use the same -100..+100 to 0%..100% mapping as the displayed sentiment score');
+assert.ok(hubSource.includes('.lh-sentiment-scale{position:relative;height:34px')&&hubSource.includes('font-size:11px;font-weight:800'),'Fan sentiment scale labels and numeric anchors must remain legible at the enlarged presentation size');
+assert.ok(hubSource.includes('.lh-sentiment-marker{position:absolute;top:50%;width:16px;height:16px')&&hubSource.includes('cursor:pointer')&&hubSource.includes('.lh-sentiment-marker:hover,#leagueHub .lh-sentiment-marker:focus-visible'),'Fan sentiment markers must retain enlarged hover/focus highlighting');
+assert.ok(hubSource.includes('tabindex="0" role="img" aria-label="Week 2 fan sentiment'),'Current fan sentiment point must remain keyboard-focusable and explicitly labeled');
 const storedStart=hubSource.indexOf('function storedInquirerArticle(t,teams){'),storedEnd=hubSource.indexOf('function reporterArchiveHTML',storedStart),storedBlock=hubSource.slice(storedStart,storedEnd);
 assert.ok(storedStart>=0&&storedEnd>storedStart,'League Hub must retain stored Inquirer article renderer');
 assert.ok(storedBlock.indexOf('headline=renderScope(new Set())(a.headline||t.team_name)')>=0,'Stored Inquirer renderer must pre-render the visible headline in its own link scope');

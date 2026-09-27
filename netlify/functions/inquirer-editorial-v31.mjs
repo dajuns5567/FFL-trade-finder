@@ -116,6 +116,23 @@ export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,p
   if(!rawInquirer||!Array.isArray(rawInquirer.teams))throw new Error('V31 forward editorial layer requires raw team articles');
   const historicalSeasonYear=season-1;
   const previousByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
+  const playerNameById=new Map();
+  for(const t of rawInquirer.teams||[]){
+    const pools=[
+      ...(t?.starter_details||[]),
+      ...(t?.opponent_roster?.players||[]),
+      ...(t?.opponent_roster?.starters||[]),
+      ...(t?.next_opponent_roster?.players||[]),
+      ...(t?.next_opponent_roster?.starters||[]),
+      ...Object.values(t?.transaction_player_facts||{})
+    ];
+    for(const p of pools)if(p?.id&&p?.name)playerNameById.set(String(p.id),String(p.name));
+    for(const a of t?.trade_acquisitions||[]){
+      if(a?.player_id&&a?.player_name)playerNameById.set(String(a.player_id),String(a.player_name));
+      for(let i=0;i<(a?.outgoing_player_ids||[]).length;i++)if(a?.outgoing_player_names?.[i])playerNameById.set(String(a.outgoing_player_ids[i]),String(a.outgoing_player_names[i]));
+    }
+  }
+  const pname=id=>playerNameById.get(String(id))||String(id||'');
 function w2One(v){return Number(v||0).toFixed(1)}
 function w2Record(t){const r=t?.league_context?.record||{};return String(Number(r.wins)||0)+"-"+String(Number(r.losses)||0)+(Number(r.ties)?"-"+String(Number(r.ties)):"")}
 function w2Alias(t){const full=String(t?.team_name||"Team").trim(),bits=full.split(/\s+/).filter(Boolean);return{full,city:bits.length>1?bits.slice(0,-1).join(" "):full,mascot:bits.length>1?bits.at(-1):full}}

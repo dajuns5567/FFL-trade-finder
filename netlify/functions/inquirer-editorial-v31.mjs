@@ -340,7 +340,7 @@ export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,p
   if(!rawInquirer||!Array.isArray(rawInquirer.teams))throw new Error('V31 forward editorial layer requires raw team articles');
   const historicalSeasonYear=season-1;
   const previousByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
-  const playerNameById=new Map();
+  const playerNameById=new Map(),playerMetaById=new Map();
   for(const t of rawInquirer.teams||[]){
     const pools=[
       ...(t?.starter_details||[]),
@@ -350,13 +350,17 @@ export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,p
       ...(t?.next_opponent_roster?.starters||[]),
       ...Object.values(t?.transaction_player_facts||{})
     ];
-    for(const p of pools)if(p?.id&&p?.name)playerNameById.set(String(p.id),String(p.name));
+    for(const p of pools)if(p?.id&&p?.name){
+      const id=String(p.id),prior=playerMetaById.get(id)||{},merged={...prior};
+      for(const [k,v] of Object.entries(p))if(v!=null&&v!=="")merged[k]=v;
+      playerMetaById.set(id,merged);playerNameById.set(id,String(p.name));
+    }
     for(const a of t?.trade_acquisitions||[]){
       if(a?.player_id&&a?.player_name)playerNameById.set(String(a.player_id),String(a.player_name));
       for(let i=0;i<(a?.outgoing_player_ids||[]).length;i++)if(a?.outgoing_player_names?.[i])playerNameById.set(String(a.outgoing_player_ids[i]),String(a.outgoing_player_names[i]));
     }
   }
-  const pname=id=>playerNameById.get(String(id))||String(id||'');
+  const pname=id=>playerNameById.get(String(id))||String(id||''),pmeta=id=>playerMetaById.get(String(id))||null;
 function w2One(v){return Number(v||0).toFixed(1)}
 function w2Record(t){const r=t?.league_context?.record||{};return String(Number(r.wins)||0)+"-"+String(Number(r.losses)||0)+(Number(r.ties)?"-"+String(Number(r.ties)):"")}
 function w2Alias(t){const full=String(t?.team_name||"Team").trim(),bits=full.split(/\s+/).filter(Boolean);return{full,city:bits.length>1?bits.slice(0,-1).join(" "):full,mascot:bits.length>1?bits.at(-1):full}}
@@ -1926,7 +1930,18 @@ function w2ValueMoverMethod(t,row){
     const when=sent?.season&&sent?.week?"Week "+String(sent.week)+" of "+String(sent.season):"an earlier week";
     return{key:"old-trade-out-"+when,one:"after leaving by trade in "+when,many:"after leaving by trade in "+when};
   }
-  return{key:"hold",one:"as a player already on the roster when Week "+week+" began",many:"as players already on the roster when Week "+week+" began"};
+  return{key:"hold",one:"",many:""};
+}
+function w2ValueMoverTag(row){
+  const p=pmeta(row?.player_id);if(!p)return"";
+  const profile=w2PlayerStatusProfile(p,1,null),status=String(profile?.status||"");
+  if(status==="breakout")return"breakout";
+  if(status==="emerging")return"emerging";
+  if(status==="established-star"||status==="star-level")return"star";
+  if(profile?.rookie)return"rookie";
+  if(status==="reliable-veteran")return"reliable veteran";
+  if(status==="veteran"||status==="declining-veteran"||profile?.veteran)return"veteran";
+  return"";
 }
 function w2ValueMoverSentence(t,r,rows,rising){
   const groups=new Map(),rid=String(r?.id||"walter-mercer"),
@@ -1934,13 +1949,14 @@ function w2ValueMoverSentence(t,r,rows,rising){
     verbsDown={ "walter-mercer":["fell","lost","slipped"],"tess-delaney":["fell","slipped","lost"],"mack-hollis":["dropped","slid","lost"],"nora-voss":["fell","lost","slipped"]},
     verbs=(rising?verbsUp:verbsDown)[rid]||(rising?verbsUp["walter-mercer"]:verbsDown["walter-mercer"]);
   for(let i=0;i<(rows||[]).length;i++){
-    const x=rows[i],method=w2ValueMoverMethod(t,x),name=String(x?.player_name||x?.player_id||"Unknown player"),
-      amount=Math.abs(Math.round(Number(x.delta))).toLocaleString("en-US"),verb=verbs[(w2Hash(name+"|value-move")+i)%verbs.length],
+    const x=rows[i],method=w2ValueMoverMethod(t,x),rawName=String(x?.player_name||x?.player_id||"Unknown player"),
+      tag=method.key==="hold"?w2ValueMoverTag(x):"",name=tag?tag+" "+rawName:rawName,
+      amount=Math.abs(Math.round(Number(x.delta))).toLocaleString("en-US"),verb=verbs[(w2Hash(rawName+"|value-move")+i)%verbs.length],
       move=name+" "+verb+" "+amount+" point"+(Math.abs(Math.round(Number(x.delta)))===1?"":"s");
     if(!groups.has(method.key))groups.set(method.key,{method,moves:[]});
     groups.get(method.key).moves.push(move);
   }
-  return [...groups.values()].map(g=>w2Natural(g.moves)+" "+(g.moves.length===1?g.method.one:g.method.many)).join("; ")+".";
+  return [...groups.values()].map(g=>{const suffix=g.moves.length===1?g.method.one:g.method.many;return w2Natural(g.moves)+(suffix?" "+suffix:"")}).join("; ")+".";
 }
 function w2ValueMarketRead(t,r,d,pct){
   const team=w2DisplayTeam(t.team_name),amount=Math.abs(Math.round(d)).toLocaleString("en-US"),
@@ -3184,7 +3200,9 @@ export function evaluateInquirerEditionQuality(current,previous=null){
       const ratio=norms.length?overlap.length/norms.length:0;
       if(overlap.length>=5||ratio>.16)issues.push({id:'same-team-copy-forward',team:t.team_name,overlap:overlap.length,ratio:Number(ratio.toFixed(3))});
     }
-    const rid=String(t?.inquirer_article?.reporter?.id||''),copy=(t?.inquirer_article?.paragraphs||[]).join(' ');
+    const rid=String(t?.inquirer_article?.reporter?.id||''),copy=(t?.inquirer_article?.paragraphs||[]).join(' '),
+      valueCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='value').flatMap(s=>s?.paragraphs||[]).join(' ');
+    if(/already on the roster when Week \d+ began/i.test(valueCopy))issues.push({id:'value-roster-status-filler',team:t.team_name});
     if(rid==='tess-delaney'&&/\b(?:furniture|chair|chairs|tablecloth|linen|napkin|china|silverware|place setting|dining room|dinner|centerpiece|velvet rope|chaise|ballroom|salon|coat check)\b/i.test(copy))issues.push({id:'roycington-retired-metaphor',team:t.team_name});
     if(rid==='nora-voss'&&/\b(?:docket|cross-examination|defendant|prosecution|indictment|courtroom)\b/i.test(copy))issues.push({id:'filch-courtroom-scaffold',team:t.team_name});
   }

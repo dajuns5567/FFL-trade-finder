@@ -2209,7 +2209,7 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
       ],
       "wl":[
         team+" followed the opening win with a loss, so the victory lap has officially been interrupted. Week 3 gets to decide whether the stumble has company.",
-        "The "+a.mascot+" went from one good headline to one bad one. Nobody needs panic yet, but the next Sunday suddenly has real stakes."
+        "The "+a.mascot+" went from one good headline to one bad one. Nobody needs panic about "+team+" yet, but the next Sunday suddenly has real stakes."
       ],
       "no-history":[
         team+" has no complete opener to compare against, which means this Sunday gets the microphone by itself. It had better say something useful.",
@@ -2219,7 +2219,7 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
     "nora-voss":{
       "ww":[
         team+" has two wins, which is inconvenient for anybody hoping the first one was a typo. Rivals can wait for a cleaner weakness; the standings are not volunteering one.",
-        "The "+a.mascot+" are 2-0 and the easy rival joke has missed twice. That does not make them sacred; it does make lazy dismissal look cheap."
+        "The "+a.mascot+" are 2-0 and the easy rival joke has missed twice. That does not make "+team+" sacred; it does make lazy dismissal look cheap."
       ],
       "ll":[
         team+" has lost twice, so rivals no longer need to manufacture the material. The roster has supplied enough of its own and now owes supporters a rebuttal.",

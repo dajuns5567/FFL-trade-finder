@@ -45,12 +45,23 @@ if(reportWeek===2){
 
   const forcedCategorySentence=/(?:^|[.!?]\s+)(?:Breakout player|Established star|Steady veteran|Young breakout|Proven star|Veteran player)\s+[A-Z][A-Za-z.'’’-]+(?:\s+[A-Z][A-Za-z.'’’-]+){0,3}\s+(?:keeps|held|spoiled|remained|delivered|is|was)\b/i;
   for(const t of d.teams||[])assert.doesNotMatch(articleText(t),forcedCategorySentence,'Player category must be woven into commentary instead of appended as a standalone label sentence: '+t.team_name);
+
+  const roycingtonFurniture=/\b(?:furniture|chair|chairs|table|tables|tablecloth|linen|napkin|napkins|china|silverware|place setting|place settings|seating|centerpiece|dining room|dinner|plate|plates|reservation|reservations|guest list|velvet rope|chaise|ballroom|salon|coat check)\b/i;
+  const roycingtonTeams=(d.teams||[]).filter(t=>String(t?.inquirer_article?.reporter?.id||'')==='tess-delaney');
+  for(const t of roycingtonTeams){
+    const full=[t?.inquirer_article?.headline,...(t?.inquirer_article?.sections||[]).flatMap(s=>[s?.heading,...(s?.paragraphs||[])])].join(' ');
+    assert.doesNotMatch(full,roycingtonFurniture,'Roycington must not use the retired furniture/dining/linen metaphor system: '+t.team_name);
+  }
+  const breakoutHot=hotTakes.find(x=>/breakout player to watch/i.test(String(x?.title||'')));
+  assert.ok(breakoutHot,'Week 2 must retain the Breakout Player to Watch hot take');
+  assert.doesNotMatch(String(breakoutHot?.take||''),roycingtonFurniture,'Breakout Player to Watch must not use furniture/dining/linen metaphors');
+  assert.match(String(breakoutHot?.take||''),/\bbreakout\b/i,'Breakout Player to Watch commentary should use the supported breakout category naturally');
 }
 
 
 if(reportWeek===2){
   assert.equal(Number(d.inquirer_version),31,'Generated Week 2 edition must be Inquirer V31');
-  assert.equal(Number(d.editorial_revision),12,'Generated Week 2 edition must carry editorial revision 12');
+  assert.equal(Number(d.editorial_revision),13,'Generated Week 2 edition must carry editorial revision 13');
 }else{
   assert.equal(Number(d.inquirer_version),26,'Generated Week 1 edition must remain Inquirer V26');
   assert.equal(Number(d.editorial_revision),6,'Generated Week 1 edition must remain editorial revision 6');
@@ -95,6 +106,9 @@ const matterBlocks=(mattered?.blocks||[]).filter(x=>Array.isArray(x?.paragraphs)
 assert.ok(matterBlocks.length>=5,'What Actually Mattered This Week must expose labeled matchup/story blocks');
 assert.ok(matterBlocks.slice(0,5).every(x=>String(x.heading||'').trim()&&x.paragraphs.length>=2),'Each featured matchup must have a visible heading and developed analysis');
 assert.ok(matterBlocks.slice(0,5).every(x=>/fantasy points/i.test((x.paragraphs||[]).join(' '))),'Every featured Weekly Recap matchup must include fantasy production for the important players, not just the lead game');
+const matteredCopy=(mattered?.paragraphs||[]).join(' ');
+const categoryMentions=matteredCopy.match(/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/gi)||[];
+assert.ok(categoryMentions.length>=3,'What Actually Mattered This Week must naturally use supported player categorization language where the player profiles justify it; got '+categoryMentions.length);
 const topScorer=(d.teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
 assert.ok(topScorer&&matterBlocks[0]?.heading?.includes(topScorer.team_name),'First Weekly Recap matchup block must feature the week’s top scoring team');
 assert.ok((matterBlocks[0]?.paragraphs||[]).join(' ').includes(topScorer.team_name),'Top scorer must receive actual Weekly Recap commentary, not merely a heading');

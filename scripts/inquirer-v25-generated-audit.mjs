@@ -52,7 +52,7 @@ if(reportWeek===2){
     const ledeCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='lede').flatMap(s=>s?.paragraphs||[]).join(' ');
     assert.doesNotMatch(ledeCopy,metaJokeLede,'Team ledes should deliver sarcasm directly instead of describing the joke: '+t.team_name);
   }
-  const scheduleDifficultyLanguage=/stiffen|rougher|difficult stretch|hard part|hard stretch|hardens|gauntlet|resistance|heavy part|friendlier|softer|manageable|forgiving|breathing room|favorable|mercy|soft landing|mixed|split schedule|split the|uneven|difficulty level|lands in the middle|split screen/i;
+  const scheduleDifficultyLanguage=/stiffen|rougher|difficult stretch|hard part|hard stretch|hardens|gauntlet|resistance|heavy part|friendlier|friendly part|softer|manageable|forgiving|breathing room|favorable|mercy|soft landing|lowering the volume|mixed|split schedule|split the|uneven|difficulty level|lands in the middle|split screen/i;
   for(const t of d.teams||[]){
     const up=(t?.upcoming_opponents||[]).slice().sort((a,b)=>Number(a.week)-Number(b.week)),later=up.slice(1,3);
     if(!later.length)continue;

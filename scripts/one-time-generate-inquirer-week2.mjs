@@ -2258,12 +2258,13 @@ function w2BuildSections(t,prev){
     players.push(w2S(t,r,"player-read-"+i,w2PlayerColumnRead(t,r,p,pp,i,opp,won)+(acq&&Number(acq.season)===season&&Number(acq.week)===week?" The Week 2 trade that brought "+p.name+" in put the new arrival on the Sunday stage immediately.":"")));
   }
   const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));
-  const extraBreakout=(t.starter_details||[]).map((p,slot)=>({p,slot,profile:w2PlayerStatusProfile(p,slot)}))
+  const extraBreakouts=(t.starter_details||[]).map((p,slot)=>({p,slot,profile:w2PlayerStatusProfile(p,slot)}))
     .filter(x=>x.profile.status==="breakout"&&!discussed.has(String(x.p.id)))
-    .sort((a,b)=>b.profile.breakoutScore-a.profile.breakoutScore)[0];
-  if(extraBreakout){
-    const p=extraBreakout.p,status=w2PlayerStatusColor(t,r,p,w2PrevPlayer(prev,p.id),extraBreakout.slot);
-    players.push(w2S(t,r,"player-breakout-extra",p.name+" finished Week 2 with "+w2One(p.points)+" fantasy points"+w2StatClause(p)+". "+status));
+    .sort((a,b)=>b.profile.breakoutScore-a.profile.breakoutScore);
+  for(let extraIndex=0;extraIndex<extraBreakouts.length;extraIndex++){
+    const extraBreakout=extraBreakouts[extraIndex],p=extraBreakout.p,
+      status=w2PlayerStatusColor(t,r,p,w2PrevPlayer(prev,p.id),extraBreakout.slot);
+    players.push(w2S(t,r,"player-breakout-extra-"+extraIndex,p.name+" finished Week 2 with "+w2One(p.points)+" fantasy points"+w2StatClause(p)+". "+status));
     discussed.add(String(p.id));
   }
   const rememberedAcquisitions=(t.trade_acquisitions||[]).filter(x=>{if(!x?.player_name||discussed.has(String(x.player_id)))return false;if(String(x.player_name)==="Dallas Goedert")return true;if(Number(x?.season)!==season||Number(x?.week)!==week)return false;const p=(t.starter_details||[]).find(p=>String(p?.id)===String(x.player_id)||p?.name===x.player_name);return Number(p?.points)>=12}).slice(0,1);

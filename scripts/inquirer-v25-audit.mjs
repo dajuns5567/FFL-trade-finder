@@ -92,6 +92,10 @@ const forwardSource=fs.readFileSync(new URL('../netlify/functions/inquirer-edito
 assert.ok(forwardSource.includes('FORWARD_INQUIRER_VERSION=31')&&forwardSource.includes('FORWARD_EDITORIAL_REVISION=14'),'Forward newsroom must preserve the approved V31 / editorial revision 14 baseline');
 assert.ok(forwardSource.includes('same-team-copy-forward')&&forwardSource.includes('cross-team-copy-scaffold')&&forwardSource.includes('recap-copy-forward'),'Forward newsroom must reject same-team, cross-team, and recap copy-forward repetition');
 assert.ok(forwardSource.includes('The Playoff Race Is No Longer Background Noise')&&forwardSource.includes('Who Advanced and Who Went Home'),'Forward newsroom must evolve from playoff-race coverage into round-specific advancement/elimination coverage');
+const scheduledSource=fs.readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
+const netlifyConfig=fs.readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
+assert.ok(scheduledSource.includes("weeklyReport")&&scheduledSource.includes("waiting_for_week"),'Scheduled publisher must invoke the same sequential weeklyReport publication path and surface wait state');
+assert.ok(netlifyConfig.includes('[functions."inquirer-publish-scheduled"]')&&netlifyConfig.includes('schedule = "0 * * * *"'),'Netlify must check for newly completed Inquirer weeks hourly');
 assert.ok(leagueHub.includes("games.filter(g=>g.result==='W').length"),'League Hub records must be reconstructed from archived matchups rather than current Sleeper roster totals');
 assert.ok(leagueHub.includes("import week2Preload2026 from './inquirer-week2-2026-preload.mjs'"),'League Hub must load the locked Week 2 preload');
 assert.ok(leagueHub.includes("['2026|1',week1Preload2026],['2026|2',week2Preload2026]"),'League Hub preload registry must preserve Week 1 and publish Week 2 together');

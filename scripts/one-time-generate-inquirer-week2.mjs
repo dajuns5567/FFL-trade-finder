@@ -838,7 +838,7 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
       "struggling-star":["Star "+name+" finally gave rivals a real slump to point at.","The résumé survives, but "+name+" handed rivals a useful bad-week screenshot."],
       "declining-veteran":["Veteran "+name+" is sliding enough that rivals no longer need to invent the decline joke.","The veteran baseline on "+name+" is moving down in a way opponents can actually cite."],
       "star-level":[name+" reached star-level territory, inconveniently for everyone rooting against it.","That was star-level work from "+name+", which ruins the easy rival script."],
-      "breakout":["Young "+name+" is making a breakout case rivals may have to stop laughing at.","The breakout case around "+name+" has become annoyingly credible."],
+      "breakout":["Young "+name+" is building a breakout profile rivals may have to stop laughing at.","The breakout profile around "+name+" has become annoyingly credible."],
       "emerging":[name+" is becoming an emerging weekly problem for opponents.","The emerging role around "+name+" is getting harder for rivals to dismiss."],
       "reliable-veteran":["Reliable veteran "+name+" remains irritatingly steady.","Steady veteran "+name+" gave rivals very little to mock."],
       "reliable":[name+" remains reliably difficult to turn into a punch line.","That was another steady return from "+name+"."],

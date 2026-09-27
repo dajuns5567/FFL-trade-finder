@@ -157,6 +157,13 @@ function auditTeam(t){
   const forcedCategorySentence=/(?:^|[.!?]\s+)(?:Breakout player|Established star|Steady veteran|Young breakout|Proven star|Veteran player)\s+[A-Z][A-Za-z.'’’-]+(?:\s+[A-Z][A-Za-z.'’’-]+){0,3}\s+(?:keeps|held|spoiled|remained|delivered|is|was)\b/i;
   if(forcedCategorySentence.test(copy))add('FAIL','forced-player-category-sentence','Player category is appended as a label sentence instead of being woven naturally into the surrounding commentary.',sentenceParts(copy).filter(x=>forcedCategorySentence.test(x)).join(' || '));
 
+  if(String(t?.inquirer_article?.reporter?.id||'')==='tess-delaney'){
+    const furniture=/\b(?:furniture|chair|chairs|table|tables|tablecloth|linen|napkin|napkins|china|silverware|place setting|place settings|seating|centerpiece|dining room|dinner|plate|plates|reservation|reservations|guest list|velvet rope|chaise|ballroom|salon|coat check)\b/i;
+    const full=[t?.inquirer_article?.headline,...(t?.inquirer_article?.sections||[]).flatMap(s=>[s?.heading,...(s?.paragraphs||[])])].join(' ');
+    const hits=sentenceParts(full).filter(x=>furniture.test(x));
+    if(hits.length)add('FAIL','roycington-furniture-metaphor','Roycington still uses the retired furniture/dining/linen metaphor system instead of sharper football commentary.',hits.join(' || '));
+  }
+
   for(const p of (t?.starter_details||[])){
     if(Number(p?.points)>0.05||!p?.name)continue;
     const sentences=sentenceParts(copy).filter(s=>s.toLowerCase().includes(String(p.name).toLowerCase()));
@@ -250,6 +257,10 @@ function auditRecap(){
   const recapMeta=/\b(?:roll call|useful examples?|the useful question|the useful part|the pick is about|desire to be cute|without turning .* into a spreadsheet|this paragraph|this section|this recap|the writer|the reporter|abstract asset lecture|not because i needed another adjective|not one argument copied|breakout player to watch because|current production has moved materially beyond|young enough for the role growth to matter even more)\b/i;
   const recapMetaHits=sentenceParts(copy).filter(x=>recapMeta.test(x));
   if(recapMetaHits.length)add('FAIL','recap-meta-language','Weekly recap contains editorial-process/meta language instead of in-world reporting.',recapMetaHits.join(' || '));
+  const mattered=sections.find(s=>String(s?.heading||'')==='What Actually Mattered This Week');
+  const matteredCopy=(mattered?.paragraphs||[]).join(' ');
+  const categoryMentions=matteredCopy.match(/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/gi)||[];
+  if(categoryMentions.length<3)add('FAIL','recap-player-categories-thin','“What Actually Mattered This Week” is not naturally using enough supported player-status language.','category_mentions='+categoryMentions.length+'; '+matteredCopy);
 
   const staleTradeExplainer=/\b(?:chose the future side|parked in draft capital|delayed value rather than immediate lineup help|nothing honest to grade from a Week 2 box score yet|cannot score a fantasy point this September|judgment belongs to a future roster decision|future optionality, not Week 2 production)\b/i;
   if(staleTradeExplainer.test(copy))add('FAIL','recap-trade-obvious-explainer','Weekly recap still states obvious draft-pick mechanics instead of evaluating the deal.',sentenceParts(copy).filter(x=>staleTradeExplainer.test(x)).join(' || '));
@@ -277,7 +288,7 @@ function auditRecap(){
     add('FAIL','filch-week3-matchup-unverified','Filch’s featured Week 3 projection sentence could not be tied to a verified reciprocal matchup.',filchLead);
   }
 
-  const velvet=sections.find(s=>/velvet rope|entered the room/i.test(String(s?.heading||'')));
+  const velvet=sections.find(s=>/week 2 contender line|velvet rope|entered the room/i.test(String(s?.heading||'')));
   const velvetCopy=(velvet?.paragraphs||[]).join(' ');
   const positiveMover=teams.filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0]||null;
   const negativeMover=teams.filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0]||null;
@@ -345,6 +356,12 @@ function auditRecap(){
   if(!titles.some(x=>/player of the week/i.test(x)))add('FAIL','hot-take-player-of-week-missing','No “Player of the Week” hot take exists.');
   if(titles.some(x=>/league trend/i.test(x)))add('FAIL','hot-take-league-trend','“League trend” remains and duplicates broader recap material.',titles.filter(x=>/league trend/i.test(x)).join(' | '));
   if(!titles.some(x=>/breakout player to watch/i.test(x)))add('FAIL','hot-take-breakout-missing','No “Breakout Player to Watch” hot take exists.');
+  const breakoutHot=hot.find(x=>/breakout player to watch/i.test(String(x?.title||'')));
+  if(breakoutHot){
+    const take=String(breakoutHot?.take||'');
+    if(/\b(?:furniture|chair|chairs|table|tables|linen|china|silverware|place setting|dining room|reservation|velvet rope|chaise)\b/i.test(take))add('FAIL','breakout-hot-furniture-metaphor','Breakout Player to Watch still uses furniture/dining metaphor scaffolding.',take);
+    if(!/\bbreakout\b/i.test(take))add('FAIL','breakout-hot-category-missing','Breakout Player to Watch should use the supported breakout category naturally in the commentary.',take);
+  }
 
   const upset=hot.find(x=>/upset call/i.test(String(x?.title||'')));
   if(upset){

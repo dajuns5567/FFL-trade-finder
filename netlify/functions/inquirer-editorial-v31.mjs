@@ -2287,13 +2287,55 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
   return bank[v]||""
 }
 
+function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
+  const a=w2Alias(t),team=w2DisplayTeam(t.team_name),rid=String(r?.id||"walter-mercer");
+  if(!prev){
+    const missing={
+      "walter-mercer":"There is no complete opening-week snapshot for "+team+", so Sunday gets evaluated on the result in front of us instead of a comparison we do not have.",
+      "tess-delaney":"The opener is incomplete for "+team+", which removes the temptation to dress up a comparison that does not exist. This Sunday can answer for itself.",
+      "mack-hollis":team+" has no complete Week 1 tape in the packet, so the latest Sunday gets the whole spotlight. No fake trend line required.",
+      "nora-voss":"Rivals do not get a clean Week 1 comparison for "+team+". Fine. The current result supplied enough material without borrowing any."
+    };
+    return missing[rid]||missing["walter-mercer"]
+  }
+  const outcome=prevWon?"beat":"lost to",score=String(prevScore||""),foe=w2DisplayTeam(prevOpp),v=w2Hash(team+"|previous-week-bridge|"+rid)%4;
+  const banks={
+    "walter-mercer":[
+      "A week earlier, "+team+" "+outcome+" "+foe+" "+score+". That opener belongs in the comparison, but the current Sunday gets its own evaluation.",
+      "Week 1 put a "+score+" "+(prevWon?"win over ":"loss to ")+foe+" on "+team+"’s ledger. Week 2 adds a second result without turning either one into a permanent identity.",
+      team+" came out of Week 1 with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". The next Sunday changes the season sample; it does not simply photocopy the first conclusion.",
+      "The opening entry for "+team+" was "+score+" against "+foe+", a "+(prevWon?"win":"loss")+". Week 2 now gives that result context instead of permission to speak for the whole season."
+    ],
+    "tess-delaney":[
+      team+" arrived from Week 1 carrying a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". The second Sunday changes the conversation without requiring us to pretend the opener vanished.",
+      "The opener gave "+team+" a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". Week 2 is the next chapter, not a decorative reprint of the first one.",
+      "One week earlier, "+team+" "+outcome+" "+foe+" "+score+". That result still belongs in the story, but Sunday has earned the right to change the tone.",
+      team+" opened at "+score+" against "+foe+" and left with "+(prevWon?"a win":"a loss")+". The current result gets compared with that beginning without being forced to imitate it."
+    ],
+    "mack-hollis":[
+      "Week 1 had "+team+" at "+score+" against "+foe+", good for "+(prevWon?"a win":"a loss")+". Week 2 just gave the season a new headline instead of recycling the old one.",
+      team+" left the opener with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". Another Sunday means another piece of evidence and, thankfully, a different argument.",
+      "The first scoreboard for "+team+" read "+score+" against "+foe+". That "+(prevWon?"win":"loss")+" was loud then; Week 2 gets its own volume knob.",
+      "A "+score+" "+(prevWon?"win over ":"loss to ")+foe+" started "+team+"’s season. The latest Sunday does not need to borrow the opener’s punch line."
+    ],
+    "nora-voss":[
+      "Rivals entered Week 2 with "+team+"’s "+score+" "+(prevWon?"win over ":"loss to ")+foe+" already in the chat. Sunday gave them new material, for better or worse.",
+      team+" opened with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". That screenshot stays in the archive; Week 2 gets judged on the fresh one.",
+      "The first result on "+team+" was "+score+" against "+foe+", a "+(prevWon?"win":"loss")+". Rivals can keep it, but they do not get to pretend the second Sunday said the exact same thing.",
+      "Week 1 handed the rival chat a "+score+" "+(prevWon?"win over ":"loss to ")+foe+" for "+team+". Week 2 changed the material instead of asking everyone to resend it."
+    ]
+  };
+  const bank=banks[rid]||banks["walter-mercer"];
+  return bank[v]
+}
+
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,
     prevWon=prev?Number(prev.points)>Number(prev.opponent_points):null,prevOpp=w2DisplayTeam(prev?.opponent_name||"last week’s opponent"),prevScore=prev?w2One(prev.points)+"–"+w2One(prev.opponent_points):null,top=(t.starter_details||[]).slice(0,3),opp=t.opponent_name||"the opponent";
   const lede=[
     w2S(t,r,"lede-hook",w2OpeningHook(t,r,won,margin,opp,top)),
     w2S(t,r,"lede-result",w2DisplayTeam(t.team_name)+" "+(won?"beat ":"lost to ")+w2DisplayTeam(opp)+" "+w2One(t.points)+"–"+w2One(t.opponent_points)+", leaving the "+alias.mascot+" at "+rec+(rank?" and No. "+rank+" in the league order":"")+". "),
-    w2S(t,r,"lede-prev",prev?("In Week 1, the "+alias.mascot+" opened with a "+prevScore+" "+(prevWon?"win over ":"loss to ")+prevOpp+"; after Week 2, that leaves "+t.team_name+" with "+(prevWon===won?(won?"two straight wins and a standard worth defending":"two straight losses and a repair job that can no longer wait"):(won?"a response instead of a spiral":"a split start and an unanswered question"))+"."):"The "+alias.mascot+" have no complete opening-week snapshot to lean on, so this result has to carry the story by itself."),
+    w2S(t,r,"lede-prev",w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore)),
     w2S(t,r,"lede-shape",w2LedeShape(t,r,won,margin,opp,top)),
     w2S(t,r,"lede-alias",w2LedeAliasRead(t,r,prev,prevWon,won))
   ];

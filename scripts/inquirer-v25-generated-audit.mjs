@@ -147,7 +147,10 @@ for(const t of d.teams||[]){
       paragraphs=(t?.inquirer_article?.paragraphs||[]).map(String),article=paragraphs.join(' '),
       firstFull=article.indexOf(pname),
       candidateRefs=[pname,first.length>=4?first:'',last.length>=4?last:''].filter(Boolean),
-      found=firstFull>=0&&paragraphs.some(paragraph=>/\b(?:2025|last season)\b/i.test(paragraph)&&candidateRefs.some(ref=>new RegExp('(?:^|\\W)'+ref.replace(/[.*+?^$\{\}()|[\]\\]/g,m=>'\\\\'+m)+'(?:$|\\W)','i').test(paragraph)));
+      contextRe=/\b(?:2025|last season)\b/i,
+      direct=paragraphs.some(paragraph=>contextRe.test(paragraph)&&candidateRefs.some(ref=>new RegExp('(?:^|\\W)'+ref.replace(/[.*+?^$\{\}()|[\]\\]/g,m=>'\\\\'+m)+'(?:$|\\W)','i').test(paragraph))),
+      adjacent=paragraphs.some((paragraph,i)=>paragraph.includes(pname)&&contextRe.test(String(paragraphs[i+1]||''))),
+      found=firstFull>=0&&(direct||adjacent);
     if(found)historicalContextFound++;
     else historicalContextMissing.push({team:t.team_name,player:pname,week2:pts,prior_avg:prior,prior_games:games,reporter:t?.inquirer_article?.reporter?.name});
   }

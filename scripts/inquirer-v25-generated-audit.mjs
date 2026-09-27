@@ -156,8 +156,8 @@ assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receivi
 assert.match(recap,/breakout (?:star|case|players?)|can trust to keep showing up|familiar production|next opponent will attack the same weakness/i,'Weekly Recap must carry a natural player trajectory story tied to actual matchup consequences');
 
 if(reportWeek===2){
-  const expectedPlayerStatus=(p,slot=0)=>{
-    const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
+  const expectedPlayerProfile=(p,slot=0)=>{
+    const pts=Number(p?.points),week1=Number(p?.week1_points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
       seasonAvg=Number(p?.season_avg),age=Number(p?.age),years=Number(p?.years_exp),
       pos=String(p?.position||'').toUpperCase(),role=Number(slot)||0,
       snaps=p?.current_snap_count==null?null:Number(p.current_snap_count),
@@ -169,65 +169,78 @@ if(reportWeek===2){
       young=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
       earlyCareer=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)),
       veteran=(Number.isFinite(years)&&years>=5)||(Number.isFinite(age)&&age>=28),
+      hasTwoWeeks=Number.isFinite(pts)&&Number.isFinite(week1),
       established=Number.isFinite(prior)&&games>=8&&(prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1))),
-      seasonLift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&seasonAvg>=Math.max(prior*1.35,prior+2.5),
-      weekLift=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&pts>=Math.max(starThreshold*1.1,prior+5),
       roleLift=(Number.isFinite(snapPct)&&snapPct>=0.55)||
         (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
         (Number.isFinite(snaps)&&snaps>=(defensive?32:35)),
-      developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&seasonLift&&roleLift,
-      seasonDrop=veteran&&games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>=Math.max(5,starThreshold*.45)&&seasonAvg<=prior*.72,
-      weekDrop=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&pts<=prior*.7,
-      steady=games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
-        Math.abs(seasonAvg-prior)<=Math.max(1.5,prior*.18)&&Number.isFinite(pts)&&pts>=prior*.65&&pts<=prior*1.35;
-    if(!Number.isFinite(pts))return'';
-    if(developmentalBreakout)return'breakout';
-    if(established&&veteran&&seasonDrop&&weekDrop)return'declining-veteran';
-    if(established&&pts<=prior*.55)return'struggling-star';
-    if(established&&pts>=Math.max(starThreshold*.8,prior*.65))return'established-star';
-    if(!established&&young&&games>=6&&Number.isFinite(prior)&&prior>0&&(seasonLift||weekLift)&&(roleLift||seasonLift&&pts>=starThreshold*.9))return'breakout';
-    if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<=starThreshold&&pts>=Math.max(starThreshold*1.15,prior+6))return'breakout';
-    if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&pts>=starThreshold&&pts-prior>=5)return'emerging';
-    if(veteran&&seasonDrop&&weekDrop)return'declining-veteran';
-    if(steady)return veteran?'reliable-veteran':'reliable';
-    if(role===0&&pts>=starThreshold*1.6)return'star-level';
-    if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&pts<=prior*.55)return'struggling';
-    if(rookie&&roleLift)return'rookie';
-    if(young&&roleLift)return'young-player';
-    if(veteran&&pts>=Math.max(5,starThreshold*.5))return'veteran';
-    return'';
+      twoWeekRise=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+        seasonAvg>=Math.max(prior*1.25,prior+2,starThreshold*.75)&&Math.min(pts,week1)>=Math.max(prior*.8,starThreshold*.5),
+      strongTwoWeekRise=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+        seasonAvg>=Math.max(prior*1.4,prior+3,starThreshold*.9)&&Math.min(pts,week1)>=Math.max(prior*.9,starThreshold*.6),
+      twoWeekDrop=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+        seasonAvg<=prior*.75&&Math.max(pts,week1)<=prior*.85,
+      steady=hasTwoWeeks&&games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+        Math.abs(seasonAvg-prior)<=Math.max(1.5,prior*.18)&&Math.min(pts,week1)>=prior*.6&&Math.max(pts,week1)<=prior*1.4,
+      developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&strongTwoWeekRise&&roleLift;
+    let status='';
+    if(!Number.isFinite(pts))return{status,hasTwoWeeks};
+    if(developmentalBreakout)status='breakout';
+    else if(established&&veteran&&twoWeekDrop)status='declining-veteran';
+    else if(established&&twoWeekDrop)status='struggling-star';
+    else if(established)status='established-star';
+    else if(!established&&young&&games>=6&&strongTwoWeekRise&&roleLift)status='breakout';
+    else if(!established&&games>=6&&twoWeekRise)status='emerging';
+    else if(veteran&&twoWeekDrop)status='declining-veteran';
+    else if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&twoWeekDrop)status='struggling';
+    else if(steady)status=veteran?'reliable-veteran':'reliable';
+    else if(role===0&&pts>=starThreshold*1.6)status='star-level';
+    else if(rookie&&hasTwoWeeks&&roleLift)status='rookie';
+    else if(young&&hasTwoWeeks&&roleLift)status='young-player';
+    else if(veteran&&pts>=Math.max(5,starThreshold*.5))status='veteran';
+    return{status,hasTwoWeeks,twoWeekRise,strongTwoWeekRise,twoWeekDrop,established,young,veteran,week1,pts,seasonAvg,prior};
   };
-  const statusLanguage={
-    'established-star':/\b(?:established star|proven star|star work|star label|star place card|star résumé|star reputation)\b/i,
-    'struggling-star':/\b(?:star|résumé)\b[^.]{0,100}\b(?:dip|slump|rebound|volume|bad-week|bad line)\b|\b(?:dip|slump)\b[^.]{0,100}\bstar\b/i,
-    'declining-veteran':/\b(?:declining|fading) veteran\b|\bveteran\b[^.]{0,120}\b(?:declin|slid|slipping|fading|trending down|shrinking|moving down)\w*/i,
-    'star-level':/\b(?:star-level|star work|centerpiece-level)\b/i,
-    'breakout':/\bbreakout\b/i,
-    'emerging':/\b(?:emerging|rising|weekly piece|weekly-ready|weekly-relevant|live wire)\b/i,
-    'reliable-veteran':/\b(?:reliable veteran|steady veteran)\b/i,
-    'reliable':/\b(?:reliab\w*|stead\w*|depend\w*)/i,
-    'rookie':/\brookie\b/i,
-    'young-player':/\byoung\b/i,
-    'veteran':/\bveteran\b/i,
-    'struggling':/\b(?:running below|below (?:his|the) .*standard|concern|dip|repair list|form issue)\b/i
-  };
-  let categorizedDiscussed=0;
+  const growthLanguage=/\b(?:breakout|emerging|young riser|rising player|riser|rise has earned|early surge|role growth)\b/i,
+    declineLanguage=/\b(?:declining veteran|veteran decline|trending down|fading veteran|slow-start trend|repeated drop)\b/i,
+    struggleLanguage=/\b(?:struggling star|struggling player|in a slump|slow start)\b/i;
+  let twoWeekTrajectoryProfiles=0,articlesWithShortPlayerReference=0;
   for(const t of d.teams||[]){
-    const top=(t.starter_details||[]).slice(0,3);
+    const copy=articleText(t),top=(t.starter_details||[]).slice(0,3);
+    let hasShort=false;
     for(let slot=0;slot<top.length;slot++){
-      const p=top[slot],status=expectedPlayerStatus(p,slot);
-      if(!status)continue;
-      categorizedDiscussed++;
-      const pname=String(p?.name||''),sentences=sentenceParts(articleText(t)).filter(x=>pname&&x.toLowerCase().includes(pname.toLowerCase())),
-        re=statusLanguage[status];
-      assert.ok(sentences.length>=1,'Categorized player selected for article commentary is missing from copy: '+t.team_name+' / '+pname);
-      const statusSentences=re?sentences.filter(x=>re.test(x)):[];
-      assert.ok(statusSentences.length>=1,'Applicable player category should add concise natural-language color without exposing an internal label: '+status+' / '+t.team_name+' / '+pname+' :: '+sentences.join(' || '));
-      const shortest=statusSentences.slice().sort((a,b)=>words(a)-words(b))[0];
-      assert.ok(words(shortest)<=14,'Player-category color should stay a brief descriptor/reporter aside, not become a mini scouting report: '+status+' / '+t.team_name+' / '+pname+' :: '+shortest);
+      const p=top[slot],profile=expectedPlayerProfile(p,slot),pname=String(p?.name||'').trim();
+      if(!pname)continue;
+      const bits=pname.split(/\s+/).filter(Boolean),first=bits[0]||'',last=bits.at(-1)||'';
+      assert.ok(copy.includes(pname),'Every discussed top-three player must first be introduced by full name somewhere in the article: '+t.team_name+' / '+pname);
+      const withoutFull=copy.replaceAll(pname,' ');
+      const shortTokens=[first,last].filter(x=>x&&x.length>=4);
+      if(shortTokens.some(x=>new RegExp('(?:^|\\W)'+escapeRe(x)+'(?:$|\\W)','i').test(withoutFull)))hasShort=true;
+
+      const refs=[pname,last.length>=4?last:''].filter(Boolean),
+        related=sentenceParts(copy).filter(sentence=>refs.some(ref=>new RegExp('(?:^|\\W)'+escapeRe(ref)+'(?:$|\\W)','i').test(sentence)));
+      const growth=related.filter(x=>growthLanguage.test(x)),decline=related.filter(x=>declineLanguage.test(x)),struggle=related.filter(x=>struggleLanguage.test(x));
+      if(growth.length){
+        assert.ok(profile.hasTwoWeeks,'Growth/breakout language requires at least two completed weekly performances: '+t.team_name+' / '+pname+' :: '+growth.join(' || '));
+        assert.ok(['breakout','emerging'].includes(profile.status),'Growth/breakout language must be supported by the systematic two-week profile, not one hot game: '+profile.status+' / '+t.team_name+' / '+pname+' :: '+growth.join(' || '));
+      }
+      if(decline.length){
+        assert.ok(profile.hasTwoWeeks,'Decline language requires at least two completed weekly performances: '+t.team_name+' / '+pname+' :: '+decline.join(' || '));
+        assert.ok(['declining-veteran','struggling-star','struggling'].includes(profile.status),'Decline language must be supported by a repeated two-week drop: '+profile.status+' / '+t.team_name+' / '+pname+' :: '+decline.join(' || '));
+      }
+      if(struggle.length){
+        assert.ok(profile.hasTwoWeeks,'Struggle/slump language requires at least two completed weekly performances: '+t.team_name+' / '+pname+' :: '+struggle.join(' || '));
+        assert.ok(['declining-veteran','struggling-star','struggling'].includes(profile.status),'Struggle/slump language must be supported by a repeated two-week drop: '+profile.status+' / '+t.team_name+' / '+pname+' :: '+struggle.join(' || '));
+      }
+      if(['breakout','emerging','declining-veteran','struggling-star','struggling'].includes(profile.status)){
+        twoWeekTrajectoryProfiles++;
+        assert.ok(profile.hasTwoWeeks,'Every trajectory category must carry an actual two-week sample: '+profile.status+' / '+t.team_name+' / '+pname);
+      }
     }
+    if(hasShort)articlesWithShortPlayerReference++;
   }
-  assert.ok(categorizedDiscussed>=20,'Week 2 should exercise player-category color across a meaningful sample of already-discussed players; got '+categorizedDiscussed);
+  assert.doesNotMatch(all,/\byoung riser\b/i,'Team/recap prose must not use the forced “young riser” label; describe the supported two-week change naturally instead');
+  assert.ok(twoWeekTrajectoryProfiles>=1,'Week 2 should contain at least one genuinely data-qualified two-week trajectory profile so the systematic guard is exercised');
+  assert.ok(articlesWithShortPlayerReference>=20,'Natural player naming should use first/last-name references after full-name introduction in most team articles; got '+articlesWithShortPlayerReference+'/32');
 }
 
 for(const t of d.teams||[]){

@@ -520,7 +520,7 @@ async function getAllTeamWeekMovement(s){
   let indexed={items:[],source:s?'empty':'unavailable'},localSnaps=[];
   if(s){try{indexed=await allItems(s);localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[]}catch(e){indexed={items:[],source:'unavailable',error:String(e?.message||e)}}}
   const snaps=mergeSnapshots(archiveSnaps,localSnaps).filter(x=>x?.t&&Array.isArray(x?.teams)&&x.teams.length);
-  if(!snaps.length)return{teams:[],source:indexed.source,snapshotCount:0,trackingSince:null,latest:null};
+  if(!snaps.length)return{teams:[],player_deltas:[],source:indexed.source,snapshotCount:0,trackingSince:null,latest:null};
   const latest=snaps[snaps.length-1],latestMs=new Date(latest.t).getTime(),targetMs=latestMs-7*86400000;
   let base=snaps[0];for(const snap of snaps){const ms=new Date(snap.t).getTime();if(Number.isFinite(ms)&&ms<=targetMs)base=snap;else if(Number.isFinite(ms)&&ms>targetMs)break}
   const exactSeven=new Date(base.t).getTime()<=targetMs,baseMap=new Map((base.teams||[]).map(x=>[String(x?.id||''),x])),out=[];
@@ -531,8 +531,31 @@ async function getAllTeamWeekMovement(s){
     out.push({team_id:id,value:Math.round(value),baseline_value:Number.isFinite(baseValue)?Math.round(baseValue):null,delta,pct,baseline_t:base.t,latest_t:latest.t,period:exactSeven?'7D':'AVAILABLE',player_count:Number(row?.player_count)||0});
   }
   out.sort((a,b)=>(Number(b.delta)||0)-(Number(a.delta)||0)||Number(a.team_id)-Number(b.team_id));
+
+  // Use the exact same baseline/latest snapshots as the team movement window so
+  // team-level Week movement and the player movers explaining it cannot drift.
+  const basePlayers=new Map((base.rows||[]).map(x=>[String(x?.id||''),x])),playerDeltas=[];
+  for(const row of latest.rows||[]){
+    const id=String(row?.id||''),value=Number(row?.value),prior=basePlayers.get(id),baseValue=Number(prior?.value);
+    if(!id||!Number.isFinite(value)||!Number.isFinite(baseValue))continue;
+    const delta=Math.round(value-baseValue);
+    if(!delta)continue;
+    playerDeltas.push({
+      player_id:id,
+      value:Math.round(value),
+      baseline_value:Math.round(baseValue),
+      delta,
+      pct:baseValue!==0?delta/baseValue*100:null,
+      position:String(row?.pos||''),
+      baseline_t:base.t,
+      latest_t:latest.t,
+      period:exactSeven?'7D':'AVAILABLE'
+    });
+  }
+  playerDeltas.sort((a,b)=>Math.abs(Number(b.delta))-Math.abs(Number(a.delta))||Number(b.delta)-Number(a.delta)||String(a.player_id).localeCompare(String(b.player_id)));
+
   const source=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
-  return{teams:out,source,snapshotCount:snaps.length,trackingSince:snaps[0].t,latest:latest.t,baseline:base.t,period:exactSeven?'7D':'AVAILABLE'};
+  return{teams:out,player_deltas:playerDeltas,source,snapshotCount:snaps.length,trackingSince:snaps[0].t,latest:latest.t,baseline:base.t,period:exactSeven?'7D':'AVAILABLE'};
 }
 function rowMap(snap){return new Map((snap?.rows||[]).map(r=>[String(r.id),r]))}
 function baselineFor(snaps,latestMs,days){

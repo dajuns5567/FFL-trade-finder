@@ -136,26 +136,26 @@ const EVOLUTION_TAILS={
   'nora-voss':['Rivals will remember it even if management would rather they did not.','The next matchup gets first chance to dispute it.','That is enough material for the rival chat.','The next Sunday decides whether this becomes a pattern.','Opponents now know exactly where to look.','Management gets one week to make the note boring.','Rivals do not need a second invitation to test it.','The season will either confirm the note or embarrass it.']
 };
 const EVOLUTION_LEXICON=[
-  [/the result/gi,['the final score','Sunday’s outcome','the finished result','the scoreboard answer']],
-  [/the lineup/gi,['the starting group','the lineup card','the starters','the weekly lineup']],
-  [/the roster/gi,['the squad','the roster construction','the team','the full roster']],
-  [/the scoreboard/gi,['the score','the scoring column','the final tally','the board']],
-  [/this week/gi,['this Sunday','the current week','this round of games','the latest Sunday']],
-  [/next week/gi,['the next matchup','the coming week','next Sunday','the following game']],
-  [/scored/gi,['posted','put up','finished with','produced']],
-  [/supplied/gi,['provided','delivered','added','produced']],
-  [/finished/gi,['ended up','closed the week','came in','landed']],
-  [/quiet/gi,['muted','low-output','soft','subdued']],
-  [/useful/gi,['usable','valuable','helpful','repeatable']],
-  [/the top of the lineup/gi,['the front of the lineup','the leading scorers','the lineup’s top end','the first names on the scoring sheet']],
-  [/the bottom of the lineup/gi,['the low end of the lineup','the quiet end of the starters','the lineup’s bottom end','the last few scoring spots']],
-  [/the next opponent/gi,['the upcoming opponent','next week’s opponent','the other side next','the next team on the schedule']],
-  [/a loss/gi,['a defeat','a losing Sunday','a dropped matchup','a loss']],
-  [/the loss/gi,['the defeat','the losing result','the dropped matchup','the loss']],
-  [/a win/gi,['a victory','a winning Sunday','a banked result','a win']],
-  [/the win/gi,['the victory','the winning result','the banked result','the win']],
-  [/the week-over-week/gi,['the one-week change','the latest weekly shift','the change from last week','the week-to-week']],
-  [/management/gi,['the manager','the front office','the decision-makers','management']]
+  [/\bthe result\b/gi,['the final score','Sunday’s outcome','the finished result','the scoreboard answer']],
+  [/\bthe lineup\b/gi,['the starting group','the lineup card','the starters','the weekly lineup']],
+  [/\bthe roster\b/gi,['the squad','the roster construction','the team','the full roster']],
+  [/\bthe scoreboard\b/gi,['the score','the scoring column','the final tally','the board']],
+  [/\bthis week\b/gi,['this Sunday','the current week','this round of games','the latest Sunday']],
+  [/\bnext week\b/gi,['the next matchup','the coming week','next Sunday','the following game']],
+  [/\bscored\b/gi,['posted','put up','finished with','produced']],
+  [/\bsupplied\b/gi,['provided','delivered','added','produced']],
+  [/\bfinished\b/gi,['ended up','closed the week','came in','landed']],
+  [/\bquiet\b/gi,['muted','low-output','soft','subdued']],
+  [/\buseful\b/gi,['usable','valuable','helpful','repeatable']],
+  [/\bthe top of the lineup\b/gi,['the front of the lineup','the leading scorers','the lineup’s top end','the first names on the scoring sheet']],
+  [/\bthe bottom of the lineup\b/gi,['the low end of the lineup','the quiet end of the starters','the lineup’s bottom end','the last few scoring spots']],
+  [/\bthe next opponent\b/gi,['the upcoming opponent','next week’s opponent','the other side next','the next team on the schedule']],
+  [/\ba loss\b/gi,['a defeat','a losing Sunday','a dropped matchup','a loss']],
+  [/\bthe loss\b/gi,['the defeat','the losing result','the dropped matchup','the loss']],
+  [/\ba win\b/gi,['a victory','a winning Sunday','a banked result','a win']],
+  [/\bthe win\b/gi,['the victory','the winning result','the banked result','the win']],
+  [/\bthe week-over-week\b/gi,['the one-week change','the latest weekly shift','the change from last week','the week-to-week']],
+  [/\bmanagement\b/gi,['the manager','the front office','the decision-makers','management']]
 ];
 function evolveSentence(sentence,reporterId,seed){
   let out=String(sentence||'').trim();if(!out)return out;
@@ -188,6 +188,53 @@ function evolveForwardTeams(teams,previousEdition,week,salt){
     })}));
     return{...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
   });
+}
+function enforceRecapEvolution(overview,previousOverview,week,salt,entities=[]){
+  if(!overview)return overview;
+  const prior=new Set(),addPrior=value=>{
+    for(const sentence of forwardSentenceParts(String(value||''))){
+      if(forwardWordCount(sentence)>=6)prior.add(forwardNormSentence(sentence,entities));
+    }
+  };
+  for(const section of previousOverview?.sections||[]){
+    for(const p of section?.paragraphs||[])addPrior(p);
+    for(const block of section?.blocks||[])for(const p of block?.paragraphs||[])addPrior(p);
+  }
+  for(const take of previousOverview?.hot_takes||[]){addPrior(take?.title);addPrior(take?.take)}
+  const seen=new Set();
+  const rewrite=(value,rid,seedBase)=>{
+    const parts=forwardSentenceParts(String(value||''));
+    return parts.map((sentence,i)=>{
+      const n=forwardNormSentence(sentence,entities),longEnough=forwardWordCount(sentence)>=6,
+        collision=longEnough&&(prior.has(n)||seen.has(n));
+      let out=collision?evolveSentence(sentence,rid,[week,salt,'enforce',seedBase,i,n].join('|')):sentence;
+      let outNorm=forwardNormSentence(out,entities);
+      // A lexical rewrite can theoretically normalize back to the same sentence. Prefix once more with a
+      // different deterministic seed rather than allowing a copy-forward sentence through.
+      if(collision&&(prior.has(outNorm)||seen.has(outNorm))){
+        out=evolveSentence(out,rid,[week,salt,'enforce-second-pass',seedBase,i,n].join('|'));
+        outNorm=forwardNormSentence(out,entities);
+      }
+      if(longEnough)seen.add(outNorm);
+      return out;
+    }).join(' ');
+  };
+  const sections=(overview.sections||[]).map((section,si)=>{
+    const rid=String(section?.reporter?.id||'walter-mercer');
+    if(Array.isArray(section?.blocks)&&section.blocks.length){
+      const blocks=section.blocks.map((block,bi)=>({...block,paragraphs:(block.paragraphs||[]).map((p,pi)=>rewrite(p,rid,['block',si,bi,pi].join('|')))}));
+      return{...section,blocks,paragraphs:blocks.flatMap(b=>b.paragraphs||[])};
+    }
+    return{...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>rewrite(p,rid,['section',si,pi].join('|')))};
+  });
+  // Hot-take bodies are deliberately evolved every forward week. Their segment labels may recur as a
+  // newspaper convention, but the actual commentary must not be the prior week's copy with names/numbers swapped.
+  const hot_takes=(overview.hot_takes||[]).map((take,i)=>{
+    const rid=String(take?.reporter?.id||'walter-mercer'),body=String(take?.take||''),
+      evolvedBody=body?evolveSentence(body,rid,[week,salt,'hot-body',i,forwardNormSentence(body,entities)].join('|')):body;
+    return{...take,take:evolvedBody};
+  });
+  return{...overview,sections,hot_takes};
 }
 function evolveForwardOverview(overview,previousOverview,week,salt,entities=[]){
   if(!overview)return overview;
@@ -2854,8 +2901,12 @@ function assertWeek2Originality(result,previousEdition){
     if(race)overview.sections=[...(overview.sections||[]).slice(0,1),race,...(overview.sections||[]).slice(1)];
   }
 
-  if(week>=3)overview=evolveForwardOverview(overview,previousEdition?.league_overview||null,week,variationSalt,[...forwardEntities({teams}),...forwardEntities(previousEdition)]);
-    overview.headline='Fleeced! Weekly Recap — '+String(weekClassification?.label||('Week '+week));
+  if(week>=3){
+    const recapEntities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    overview=evolveForwardOverview(overview,previousEdition?.league_overview||null,week,variationSalt,recapEntities);
+    overview=enforceRecapEvolution(overview,previousEdition?.league_overview||null,week,variationSalt,recapEntities);
+  }
+  overview.headline='Fleeced! Weekly Recap — '+String(weekClassification?.label||('Week '+week));
   overview.deck=weekClassification?.playoffs
     ?String(weekClassification.round||'The playoffs')+' gets its own newspaper: who advanced, who was eliminated, and which surviving roster now has to answer for the next round.'
     :'Week '+week+' gets its own newspaper: new games, new arguments, and enough season memory to know which developments are starting to repeat.';

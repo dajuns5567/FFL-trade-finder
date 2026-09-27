@@ -691,8 +691,8 @@ function w2PlayerStatusVariant(t,r,status,count){
   used.add(pick);w2PlayerStatusVariantsUsed.set(key,used);return pick
 }
 
-function w2PlayerStatusProfile(p,slot=0){
-  const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
+function w2PlayerStatusProfile(p,slot=0,pp=null){
+  const pts=Number(p?.points),week1=Number(pp?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
     seasonAvg=Number(p?.season_avg),age=Number(p?.age),years=Number(p?.years_exp),
     pos=String(p?.position||"").toUpperCase(),role=Number(slot)||0,
     snaps=p?.current_snap_count==null?null:Number(p.current_snap_count),priorSnapPg=p?.prior_season_snaps_per_game==null?null:Number(p.prior_season_snaps_per_game),
@@ -703,39 +703,65 @@ function w2PlayerStatusProfile(p,slot=0){
     young=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
     earlyCareer=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)),
     veteran=(Number.isFinite(years)&&years>=5)||(Number.isFinite(age)&&age>=28),
+    hasTwoWeeks=Number.isFinite(pts)&&Number.isFinite(week1),
     established=Number.isFinite(prior)&&games>=8&&(prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1))),
-    seasonLift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&seasonAvg>=Math.max(prior*1.35,prior+2.5),
-    weekLift=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&pts>=Math.max(starThreshold*1.1,prior+5),
     roleLift=(Number.isFinite(snapPct)&&snapPct>=0.55)||
       (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
       (Number.isFinite(snaps)&&snaps>=(defensive?32:35)),
-    developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&seasonLift&&roleLift,
-    seasonDrop=veteran&&games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>=Math.max(5,starThreshold*.45)&&seasonAvg<=prior*.72,
-    weekDrop=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&pts<=prior*.7,
-    steady=games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
-      Math.abs(seasonAvg-prior)<=Math.max(1.5,prior*.18)&&Number.isFinite(pts)&&pts>=prior*.65&&pts<=prior*1.35;
+    twoWeekRise=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+      seasonAvg>=Math.max(prior*1.25,prior+2,starThreshold*.75)&&
+      Math.min(pts,week1)>=Math.max(prior*.8,starThreshold*.5),
+    strongTwoWeekRise=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+      seasonAvg>=Math.max(prior*1.4,prior+3,starThreshold*.9)&&
+      Math.min(pts,week1)>=Math.max(prior*.9,starThreshold*.6),
+    twoWeekDrop=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+      seasonAvg<=prior*.75&&Math.max(pts,week1)<=prior*.85,
+    steady=hasTwoWeeks&&games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+      Math.abs(seasonAvg-prior)<=Math.max(1.5,prior*.18)&&
+      Math.min(pts,week1)>=prior*.6&&Math.max(pts,week1)<=prior*1.4,
+    developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&strongTwoWeekRise&&roleLift;
   let status="";
-  if(!Number.isFinite(pts))return{status:"",starThreshold,rookie,young,earlyCareer,veteran,established,seasonLift,weekLift,roleLift,developmentalBreakout,seasonDrop,weekDrop,steady};
+  if(!Number.isFinite(pts))return{status:"",starThreshold,rookie,young,earlyCareer,veteran,established,roleLift,hasTwoWeeks,twoWeekRise,strongTwoWeekRise,twoWeekDrop,steady,developmentalBreakout};
   if(developmentalBreakout)status="breakout";
-  else if(established&&veteran&&seasonDrop&&weekDrop)status="declining-veteran";
-  else if(established&&pts<=prior*.55)status="struggling-star";
-  else if(established&&pts>=Math.max(starThreshold*.8,prior*.65))status="established-star";
-  else if(!established&&young&&games>=6&&Number.isFinite(prior)&&prior>0&&(seasonLift||weekLift)&&(roleLift||seasonLift&&pts>=starThreshold*.9))status="breakout";
-  else if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<=starThreshold&&pts>=Math.max(starThreshold*1.15,prior+6))status="breakout";
-  else if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&pts>=starThreshold&&pts-prior>=5)status="emerging";
-  else if(veteran&&seasonDrop&&weekDrop)status="declining-veteran";
+  else if(established&&veteran&&twoWeekDrop)status="declining-veteran";
+  else if(established&&twoWeekDrop)status="struggling-star";
+  else if(established)status="established-star";
+  else if(!established&&young&&games>=6&&strongTwoWeekRise&&roleLift)status="breakout";
+  else if(!established&&games>=6&&twoWeekRise)status="emerging";
+  else if(veteran&&twoWeekDrop)status="declining-veteran";
+  else if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&twoWeekDrop)status="struggling";
   else if(steady)status=veteran?"reliable-veteran":"reliable";
   else if(role===0&&pts>=starThreshold*1.6)status="star-level";
-  else if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&pts<=prior*.55)status="struggling";
-  else if(rookie&&roleLift)status="rookie";
-  else if(young&&roleLift)status="young-player";
+  else if(rookie&&hasTwoWeeks&&roleLift)status="rookie";
+  else if(young&&hasTwoWeeks&&roleLift)status="young-player";
   else if(veteran&&pts>=Math.max(5,starThreshold*.5))status="veteran";
-  const lift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)?seasonAvg-prior:(Number.isFinite(pts)&&Number.isFinite(prior)?pts-prior:null);
-  const breakoutScore=(status==="breakout"?100:status==="emerging"?60:0)+(young?18:0)+(roleLift?18:0)+(Number.isFinite(lift)?Math.max(0,lift):0);
-  return{status,starThreshold,rookie,young,earlyCareer,veteran,established,seasonLift,weekLift,roleLift,developmentalBreakout,seasonDrop,weekDrop,steady,breakoutScore,age,years,snaps,priorSnapPg,snapPct,seasonAvg,prior};
+  const lift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)?seasonAvg-prior:null,
+    breakoutScore=(status==="breakout"?100:status==="emerging"?60:0)+(young?18:0)+(roleLift?18:0)+(Number.isFinite(lift)?Math.max(0,lift):0);
+  return{status,starThreshold,rookie,young,earlyCareer,veteran,established,roleLift,hasTwoWeeks,twoWeekRise,strongTwoWeekRise,twoWeekDrop,steady,developmentalBreakout,breakoutScore,age,years,snaps,priorSnapPg,snapPct,seasonAvg,prior,week1,pts};
+}
+function w2PlayerNameParts(p){
+  const full=String(p?.name||"this player").trim(),bits=full.split(/\s+/).filter(Boolean);
+  return{full,first:bits[0]||full,last:bits.length>1?bits.at(-1):full}
+}
+function w2PlayerPositionNoun(p){
+  const pos=String(p?.position||"").toUpperCase();
+  return({QB:"quarterback",RB:"back",FB:"back",WR:"receiver",TE:"tight end",DL:"lineman",DE:"edge rusher",DT:"tackle",LB:"linebacker",ILB:"linebacker",OLB:"linebacker",EDGE:"edge rusher",DB:"defender",CB:"corner",S:"safety",FS:"safety",SS:"safety",IDP:"defender"})[pos]||"player"
+}
+function w2ShortPlayerName(t,r,p,seed=""){
+  const n=w2PlayerNameParts(p),choices=[n.last,n.first].filter((x,i,a)=>x&&a.indexOf(x)===i);
+  return choices[w2Hash(String(t?.team_name||"")+"|"+String(r?.id||"")+"|"+String(p?.id||n.full)+"|"+seed)%choices.length]||n.full
+}
+function w2PlayerReference(t,r,p,profile,slot=0){
+  const n=w2PlayerNameParts(p),short=w2ShortPlayerName(t,r,p,"ref-"+slot),noun=w2PlayerPositionNoun(p),status=String(profile?.status||""),
+    descriptive=status==="rookie"?"the rookie "+noun:
+      status==="young-player"||status==="breakout"||status==="emerging"?"the young "+noun:
+      status==="established-star"||status==="struggling-star"?"the proven "+noun:
+      status==="reliable-veteran"||status==="veteran"||status==="declining-veteran"?"the veteran "+noun:"",
+    choices=[short,n.first!==short?n.first:"",n.last!==short?n.last:"",descriptive].filter((x,i,a)=>x&&a.indexOf(x)===i);
+  return choices[w2Hash(String(t?.team_name||"")+"|"+String(r?.id||"")+"|"+String(p?.id||n.full)+"|reference|"+slot)%choices.length]||n.full
 }
 function w2BreakoutContext(p,profile){
-  if(!profile||profile.status!=="breakout")return"";
+  if(!profile||profile.status!=="breakout"||!profile.hasTwoWeeks)return"";
   const clauses=[];
   if(Number.isFinite(profile.age)&&profile.age<=25)clauses.push("only "+Math.round(profile.age));
   else if(Number.isFinite(profile.years)&&profile.years<=2)clauses.push("still early in his NFL career");
@@ -745,8 +771,6 @@ function w2BreakoutContext(p,profile){
     clauses.push("his Week 2 role was "+snapCount+" snaps"+(snapShare!=null?" ("+snapShare+"% of the team’s unit snaps)":"")+", up from "+profile.priorSnapPg.toFixed(1)+" snaps per game last season");
   }else if(snapCount!=null&&profile.roleLift){
     clauses.push("the current opportunity is already substantial at "+snapCount+" snaps"+(snapShare!=null?" ("+snapShare+"% of the team’s unit snaps)":""));
-  }else if(snapShare!=null&&profile.roleLift){
-    clauses.push("the current opportunity is already substantial at "+snapShare+"% of the team’s unit snaps");
   }
   if(Number.isFinite(profile.seasonAvg)&&Number.isFinite(profile.prior)&&profile.prior>0){
     clauses.push("his two-week average is "+w2One(profile.seasonAvg)+" fantasy points after "+w2One(profile.prior)+" per game last season");
@@ -755,75 +779,68 @@ function w2BreakoutContext(p,profile){
   const first=clauses.shift();
   return p.name+" is "+first+(clauses.length?", "+w2Natural(clauses):"")+"."
 }
-function w2PlayerStatusColor(t,r,p,pp,slot=0){
-  const pts=Number(p?.points),rid=String(r?.id||"walter-mercer"),
-    profile=w2PlayerStatusProfile(p,slot),status=profile.status,name=String(p?.name||"this player");
-  if(!Number.isFinite(pts)||!status)return "";
-
-  // Presentation only: the status is derived systematically above. Keep this color short
-  // so it livens up an already-relevant player mention without turning the article into
-  // a taxonomy report or forcing a special case for any individual player.
+function w2PlayerTrajectoryContext(t,r,p,pp,slot=0,ref=""){
+  const profile=w2PlayerStatusProfile(p,slot,pp),status=profile.status,
+    trendStatuses=new Set(["breakout","emerging","declining-veteran","struggling-star","struggling"]);
+  if(!profile.hasTwoWeeks||!trendStatuses.has(status)||!Number.isFinite(profile.seasonAvg)||!Number.isFinite(profile.prior)||profile.prior<=0)return"";
+  const who=ref||w2PlayerReference(t,r,p,profile,slot),avg=w2One(profile.seasonAvg),prior=w2One(profile.prior),
+    rid=String(r?.id||"walter-mercer"),v=w2Hash(String(t?.team_name||"")+"|"+String(p?.id||p?.name)+"|trajectory|"+rid)%4;
+  if(status==="breakout"||status==="emerging"){
+    const rows={
+      "walter-mercer":[
+        "Two Sundays now have "+who+" at "+avg+" per game after "+prior+" last season, enough evidence to treat the early jump as more than one hot box score.",
+        who+" is averaging "+avg+" through two weeks after "+prior+" last year; paired with the larger opportunity, the rise has earned another week of serious attention.",
+        "The two-week number is "+avg+" for "+who+" versus "+prior+" last season, which gives the early role growth something sturdier than one Sunday underneath it.",
+        "At "+avg+" per game across both weeks after "+prior+" last year, "+who+" has moved beyond the one-game-flier stage without pretending September has settled the season."
+      ],
+      "tess-delaney":[
+        "Two Sundays at "+avg+" per game after "+prior+" last season give "+who+" enough substance that the larger role no longer looks like decorative optimism.",
+        who+" has served "+avg+" per game across two weeks after "+prior+" last year, and the extra opportunity is beginning to look like part of the arrangement.",
+        "The early table has "+who+" at "+avg+" a game versus "+prior+" last season; two servings make the rise worth noticing without ordering a coronation.",
+        "Across both weeks, "+who+" is at "+avg+" after "+prior+" last year, which is enough runway to treat the bigger role as something more than one flashy course."
+      ],
+      "mack-hollis":[
+        "Two weeks at "+avg+" per game after "+prior+" last season give "+who+" actual signal, not one Sunday with the volume knob ripped off.",
+        who+" is sitting at "+avg+" through two games after "+prior+" last year; with the workload up too, the early surge has real voltage behind it.",
+        "The two-week average is "+avg+" for "+who+" versus "+prior+" last season, enough repeated noise to stop treating the jump like one lucky blast.",
+        "Both Sundays have pushed "+who+" to "+avg+" per game after "+prior+" last year, which makes the larger role worth tracking instead of screaming about one box score."
+      ],
+      "nora-voss":[
+        "Two weeks at "+avg+" per game after "+prior+" last season give "+who+" a rise rivals actually have to account for, not one inconvenient screenshot.",
+        who+" is averaging "+avg+" through two Sundays after "+prior+" last year; that is enough repetition to make the larger role harder to laugh off.",
+        "The early average sits at "+avg+" for "+who+" versus "+prior+" last season, so rivals now need more than 'one good game' if they want to dismiss the change.",
+        "Across both weeks, "+who+" has reached "+avg+" per game after "+prior+" last year, which is annoyingly real enough to keep on the radar."
+      ]
+    };
+    return (rows[rid]||rows["walter-mercer"])[v]
+  }
   const rows={
-    "walter-mercer":{
-      "established-star":["Established star "+name+" delivered.","Proven star "+name+" held form."],
-      "struggling-star":["Star "+name+" is in a slump.","Star "+name+" needs a rebound."],
-      "declining-veteran":["Veteran "+name+" is trending down.","Declining veteran "+name+" bears watching."],
-      "star-level":[name+" flashed star-level form.",name+" reached star-level territory."],
-      "breakout":["Young breakout "+name+" keeps climbing.","Breakout player "+name+" keeps building."],
-      "emerging":["Emerging "+name+" keeps earning work.","Rising "+name+" looks more weekly-ready."],
-      "reliable-veteran":["Steady veteran "+name+" delivered.","Reliable veteran "+name+" held form."],
-      "reliable":["Reliable "+name+" held steady.","Steady "+name+" delivered."],
-      "rookie":["Promising rookie "+name+" keeps earning work.","Rookie "+name+" is gaining trust."],
-      "young-player":["Young riser "+name+" keeps earning trust.","Young "+name+" is gaining ground."],
-      "veteran":["Veteran "+name+" remained useful.","Seasoned veteran "+name+" held up."],
-      "struggling":[name+" is running below his standard.",name+" is in a real dip."]
-    },
-    "tess-delaney":{
-      "established-star":["Established star "+name+" still owns the centerpiece.","Proven star "+name+" looked the part."],
-      "struggling-star":["Star "+name+" is in a slump.","Star "+name+" needs a better serving."],
-      "declining-veteran":["Veteran "+name+" is trending down.","Declining veteran "+name+" is losing his place setting."],
-      "star-level":[name+" served star-level work.",name+" reached centerpiece-level form."],
-      "breakout":["Young breakout "+name+" deserves a bigger seat.","Breakout player "+name+" keeps moving up the table."],
-      "emerging":["Emerging "+name+" deserves more room.","Rising "+name+" is becoming a weekly piece."],
-      "reliable-veteran":["Steady veteran "+name+" delivered.","Reliable veteran "+name+" kept his place."],
-      "reliable":["Reliable "+name+" held steady.","Steady "+name+" kept the table level."],
-      "rookie":["Promising rookie "+name+" is earning a seat.","Rookie "+name+" keeps gaining trust."],
-      "young-player":["Young riser "+name+" is earning room.","Young "+name+" keeps moving up."],
-      "veteran":["Veteran "+name+" remained useful.","Seasoned veteran "+name+" still contributed."],
-      "struggling":[name+" is running below his standard.",name+" is in a real dip."]
-    },
-    "mack-hollis":{
-      "established-star":["Established star "+name+" brought the noise.","Proven star "+name+" stayed loud."],
-      "struggling-star":["Star "+name+" is in a slump.","Star "+name+" needs the volume back."],
-      "declining-veteran":["Veteran "+name+" is trending down.","Declining veteran "+name+" is losing voltage."],
-      "star-level":[name+" hit star-level voltage.",name+" reached star-level territory."],
-      "breakout":["Young breakout "+name+" keeps sparking.","Breakout player "+name+" keeps getting louder."],
-      "emerging":["Emerging "+name+" has real voltage.","Rising "+name+" is becoming weekly-relevant."],
-      "reliable-veteran":["Steady veteran "+name+" kept the circuit working.","Reliable veteran "+name+" delivered."],
-      "reliable":["Reliable "+name+" held steady.","Steady "+name+" kept the lights on."],
-      "rookie":["Promising rookie "+name+" has real voltage.","Rookie "+name+" keeps earning work."],
-      "young-player":["Young riser "+name+" is getting louder.","Young "+name+" keeps earning trust."],
-      "veteran":["Veteran "+name+" remained useful.","Seasoned veteran "+name+" still carried voltage."],
-      "struggling":[name+" is running below his standard.",name+" is in a real dip."]
-    },
-    "nora-voss":{
-      "established-star":["Established star "+name+" spoiled the easy joke.","Proven star "+name+" held up again."],
-      "struggling-star":["Star "+name+" is in a slump.","Star "+name+" gave rivals a real dip to cite."],
-      "declining-veteran":["Veteran "+name+" is trending down.","Declining veteran "+name+" is giving rivals material."],
-      "star-level":[name+" reached star-level territory.",name+" flashed star-level form."],
-      "breakout":["Young breakout "+name+" is getting annoyingly credible.","Breakout player "+name+" keeps ruining the easy joke."],
-      "emerging":["Emerging "+name+" is becoming a problem.","Rising "+name+" is getting harder to dismiss."],
-      "reliable-veteran":["Steady veteran "+name+" stayed irritatingly useful.","Reliable veteran "+name+" delivered."],
-      "reliable":["Reliable "+name+" held steady.","Steady "+name+" spoiled the punch line."],
-      "rookie":["Promising rookie "+name+" is becoming inconvenient.","Rookie "+name+" keeps earning trust."],
-      "young-player":["Young riser "+name+" is getting harder to mock.","Young "+name+" keeps gaining ground."],
-      "veteran":["Veteran "+name+" remained useful.","Seasoned veteran "+name+" gave rivals little help."],
-      "struggling":[name+" is running below his standard.",name+" is in a real dip."]
-    }
+    "walter-mercer":[
+      who+" is at "+avg+" per game through two weeks after "+prior+" last season, so the slow start has enough repetition to monitor without pretending the résumé disappeared.",
+      "Two quiet Sundays have pulled "+who+" to "+avg+" per game from a "+prior+" baseline; that turns the concern into a trend worth checking again next week.",
+      "The two-week average is "+avg+" for "+who+" after "+prior+" last year. One bad Sunday is noise; two in the same direction deserve a note.",
+      who+" has opened at "+avg+" per game across both weeks after "+prior+" last season, enough of a repeated drop to make Week 3 matter."
+    ],
+    "tess-delaney":[
+      "Two weeks at "+avg+" per game after "+prior+" last season leave "+who+" with a smaller early serving than the old table expected.",
+      who+" has managed "+avg+" per game across both Sundays after "+prior+" last year; the smaller portion has repeated often enough to notice.",
+      "The early table has "+who+" at "+avg+" a game versus "+prior+" last season. One thin course is manners; two starts to look like a pattern.",
+      "Across both weeks, "+who+" sits at "+avg+" after a "+prior+" baseline, enough repeated shrinkage to make the next serving matter."
+    ],
+    "mack-hollis":[
+      "Two weeks at "+avg+" per game after "+prior+" last season have turned "+who+" from one quiet Sunday into a real early signal.",
+      who+" is averaging "+avg+" across both games after "+prior+" last year; the volume has stayed low long enough to put Week 3 under the spotlight.",
+      "The two-week number is "+avg+" for "+who+" versus "+prior+" last season, and repeated silence is harder to blame on one busted afternoon.",
+      "Both Sundays have "+who+" at "+avg+" per game after "+prior+" last year, enough of a repeated drop to keep the alarm on low."
+    ],
+    "nora-voss":[
+      "Two weeks at "+avg+" per game after "+prior+" last season give rivals an actual slow-start trend on "+who+", not one cherry-picked bad Sunday.",
+      who+" is sitting at "+avg+" across both games after "+prior+" last year; the dip has repeated enough that supporters need a better answer than 'small sample.'",
+      "The early average is "+avg+" for "+who+" versus "+prior+" last season. One bad screenshot is cheap; two in the same direction are harder to wave away.",
+      "Across both Sundays, "+who+" has averaged "+avg+" after "+prior+" last year, enough of a repeated drop to make the next game matter."
+    ]
   };
-  const bank=(rows[rid]||rows["walter-mercer"])[status]||[];
-  if(!bank.length)return "";
-  return bank[w2PlayerStatusVariant(t,r,status,bank.length)]
+  return (rows[rid]||rows["walter-mercer"])[v]
 }
 function w2Week1DeltaRead(t,r,p,pp,role){
   const rid=String(r?.id||""),prior=w2One(pp?.points),now=w2One(p?.points),rise=Number(p?.points)>Number(pp?.points),v=w2Cohort(t)%4,

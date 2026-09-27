@@ -276,6 +276,9 @@ function auditRecap(){
   const matteredCopy=(mattered?.paragraphs||[]).join(' ');
   const categoryMentions=matteredCopy.match(/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/gi)||[];
   if(categoryMentions.length<3)add('FAIL','recap-player-categories-thin','“What Actually Mattered This Week” is not naturally using enough supported player-status language.','category_mentions='+categoryMentions.length+'; '+matteredCopy);
+  const recapExplainerMeta=/\b(?:baseline|worth reopening|real departure from the established level|changes what the next box score is allowed to tell us|role deserves fresh attention|large enough to matter|matter beyond one|that is (?:star|veteran|breakout|emerging|rookie|reliable) production|useful veteran work)\b/i;
+  const explainerHits=sentenceParts(matteredCopy).filter(x=>recapExplainerMeta.test(x));
+  if(explainerHits.length)add('FAIL','recap-player-explainer-meta','“What Actually Mattered This Week” still explains player baselines/categories instead of turning the evidence into reporter commentary.',explainerHits.join(' || '));
   const filchSection=sections.find(s=>String(s?.reporter?.id||'')==='nora-voss'||/Next Week:/i.test(String(s?.heading||'')));
   const filchLead=String((filchSection?.paragraphs||[])[0]||'');
   const filchNamedTeams=teams.filter(t=>filchLead.includes(String(t.team_name||'')));

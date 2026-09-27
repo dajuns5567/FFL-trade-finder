@@ -167,6 +167,8 @@ jobs:
         run: |
           node --check league-hub-v451.js
           node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/inquirer-editorial-v31.mjs
+          node --check netlify/functions/inquirer-publish-scheduled.mjs
           node --check netlify/functions/inquirer-reporters.mjs
           node --check netlify/functions/inquirer-narrative-v17.mjs
           node --check netlify/functions/inquirer-human-v19.mjs

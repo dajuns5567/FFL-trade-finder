@@ -3117,8 +3117,12 @@ export function humanSectionsV25(args){
   const cased=aliased.map(sec=>({...sec,heading:articleGrammarV35(t,finalReporterCaseV33(t,styleReporter,sec.heading)),paragraphs:(sec.paragraphs||[]).map(p=>articleGrammarV35(t,finalReporterCaseV33(t,styleReporter,p)))}));
   const deduped=dedupeArticleSectionsV29(dedupeArticleSections(cased),t);
   if(originalReporter?.id!=='tess-delaney')return deduped;
-  const roycingtonHeadings={lede:'What the Result Actually Says',players:'Who Made the Afternoon Interesting',identity:'What Kind of Team Is This, Exactly?',management:'Management, Vanity and the Cost of Choices',value:'The Market Has Opinions, Naturally',sentiment:'Public Emotion, Without Restraint','hot-seat':'The Problem Everybody Can See','cool-throne':'Credit, With Appropriate Drama',outlook:'The Next Matchup With Consequence','trade-commentary':'Trade Receipt: What the Week Added'};
-  return deduped.map(sec=>({...sec,heading:roycingtonHeadings[sec.kind]||sec.heading}));
+  const roycingtonHeadings={lede:'What the Result Actually Says',players:'Who Made the Afternoon Interesting',identity:'What Kind of Team Is This, Exactly?',management:'Management, Vanity and the Cost of Choices',value:'The Market Has Opinions, Naturally',sentiment:'Public Emotion, Without Restraint','hot-seat':'The Problem Everybody Can See','cool-throne':'Credit, With Appropriate Drama',outlook:'The Next Matchup With Consequence','trade-commentary':'Trade Receipt: What the Week Added'},
+    roycingtonPolish=p=>String(p)
+      .replaceAll('Nobody is eliminated, nobody is doomed, and everybody is still allowed to be annoyed.','September has not eliminated '+t.team_name+'; it has merely given '+t.team_name+' supporters fresh material for an argument.')
+      .replaceAll('Sunday was another reason the next opponent will start with him on the whiteboard.','For '+t.team_name+', Sunday was another reason the next opponent will start its plan with him on the whiteboard.')
+      .replaceAll('Week 1 is the only time irrational confidence is still tax-free.','Opening week is the one time '+t.team_name+' supporters can spend reckless confidence without paying interest.');
+  return deduped.map(sec=>({...sec,heading:roycingtonHeadings[sec.kind]||sec.heading,paragraphs:(sec.paragraphs||[]).map(roycingtonPolish)}));
 }
 function uniqueGames(teams){
   const byId=new Map(teams.map(t=>[String(t.roster_id),t])),seen=new Set(),games=[];

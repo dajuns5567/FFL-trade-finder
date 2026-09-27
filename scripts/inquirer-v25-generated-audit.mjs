@@ -594,11 +594,12 @@ for(const t of d.teams||[]){
     }
   }
 }
-const styleScaffold=/\b(?:room|table|chair|seating|rearrang\w*|headline|screenshot|joke|punchline|megaphone|receipt|reservation|silverware|china|wardrobe|decorative|parade|siren|menu|dinner|bill|gossip|guest list)\b/i;
+const styleScaffold=/\b(?:room|table|chair|seating|rearrang\w*|headline|screenshot|joke|punchline|megaphone|receipt|reservation|silverware|china|wardrobe|decorative|parade|siren|menu|dinner|bill|gossip|guest list|repair|spiral|standard|unanswered|pressure|urgency|runway|rubble|identity|rebuttal|warning|panic|collapse|argument|response)\b/i;
 const phraseOffenders=[...phrasePlacements.entries()]
-  .filter(([phrase,rows])=>rows.length>2&&styleScaffold.test(phrase)&&new Set(rows.map(x=>String(x.reporter||''))).size>1)
+  .filter(([phrase,rows])=>rows.length>1&&styleScaffold.test(phrase)&&new Set(rows.map(x=>String(x.reporter||''))).size>1)
   .map(([phrase,rows])=>({phrase,count:rows.length,reporters:[...new Set(rows.map(x=>x.reporter))],placements:rows.slice(0,6)}));
-assert.deepEqual(phraseOffenders,[],'Nine-word editorial scaffold phrases must not recur across three or more team articles while also crossing reporter identities after names/numbers are normalized');
+assert.deepEqual(phraseOffenders,[],'Nine-word editorial scaffold phrases must not recur across multiple team articles when they cross reporter identities after names/numbers are normalized');
+assert.doesNotMatch(all,/two straight losses and a repair job that can no longer wait|two straight wins and a standard worth defending|a response instead of a spiral|a split start and an unanswered question/i,'Shared generic record-state bridge language must not survive across reporter articles');
 assert.doesNotMatch(all,/\broom (?:will|gets?|got|has been) rearrang\w*\b|\broom rearranges itself\b/i,'Retired room/rearrangement scaffold must not recur in team or recap prose');
 
 

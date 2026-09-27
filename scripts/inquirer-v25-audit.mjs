@@ -38,7 +38,7 @@ assert.ok(new Set(teams.filter(t=>body.includes(t.team_name)).map(t=>t.team_name
 const hubSource=fs.readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
 assert.ok(hubSource.includes('linkedNotebookText(value,teams,seenRecords,seenLinks)'),'League Hub must track first team mentions and one link per section while rendering Inquirer copy');
 assert.ok(hubSource.includes('team?.league_context?.record'),'First-mention records must come from the archived edition’s league context');
-assert.ok(hubSource.includes("label=match[0]+(first&&rec?' ('+rec+')':'')"),'First visible team mention must render its current season record');
+assert.ok(hubSource.includes('authoredRecord=')&&hubSource.includes('first&&rec&&!authoredRecord'),'First visible team mention must render its current season record exactly once and must not duplicate a record already written in the copy');
 assert.ok(hubSource.includes('seenRecords=new Set()'),'Each rendered Inquirer article/recap must reset first-mention record tracking');
 const storedStart=hubSource.indexOf('function storedInquirerArticle(t,teams){'),storedEnd=hubSource.indexOf('function reporterArchiveHTML',storedStart),storedBlock=hubSource.slice(storedStart,storedEnd);
 assert.ok(storedStart>=0&&storedEnd>storedStart,'League Hub must retain stored Inquirer article renderer');

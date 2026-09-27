@@ -711,12 +711,12 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
       "struggling":p.name+" is dining well below the standard on his old place card, and no amount of polished silver makes that slump decorative."
     },
     "mack-hollis":{
-      "established-star":p.name+" already had star credentials. Week 2 was less an introduction than another reminder to stop acting surprised when the building shakes.",
-      "struggling-star":p.name+" has an established-star résumé and a Week 2 line that looked nothing like it. Keep the résumé; circle the slump.",
-      "star-level":p.name+" just gave "+team+" star-level work. The emergency is not finding another hero; it is making sure the rest of the lineup quits making him wear a cape every Sunday.",
-      "breakout":p.name+" is starting to look like a breakout instead of a hot box score. One more week of this role and the old expectations need to get thrown in the dumpster.",
+      "established-star":p.name+" already had star credentials; for "+p.name+", Week 2 was less an introduction than another reminder to stop acting surprised when the building shakes.",
+      "struggling-star":p.name+" has an established-star résumé and a Week 2 line that looked nothing like it; keep "+p.name+"’s résumé and circle the slump.",
+      "star-level":p.name+" just gave "+team+" star-level work; the emergency is not finding another hero, it is making sure the rest of the lineup quits making "+p.name+" wear a cape every Sunday.",
+      "breakout":p.name+" is starting to look like a breakout instead of a hot box score; one more week of this role from "+p.name+" and the old expectations need to get thrown in the dumpster.",
       "emerging":p.name+" is turning into an emerging weekly weapon, which is considerably more useful than being this week’s random loud noise.",
-      "struggling":p.name+" is in a real slump against his established level. The alarm is not on fire yet, but somebody has definitely tested the siren."
+      "struggling":p.name+" is in a real slump against his established level; the "+team+" alarm is not on fire yet, but somebody has definitely tested the siren for "+p.name+"."
     },
     "nora-voss":{
       "established-star":p.name+" already owns an established-star reputation, so rivals cannot call this one a fluke without ignoring the history already sitting in front of them.",

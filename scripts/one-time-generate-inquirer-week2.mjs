@@ -2476,6 +2476,7 @@ function w2RoycingtonFootballPolish(t,body){
     ["Week 3 starts with ","The next stretch starts with "]
   ];
   for(const [from,to] of voiceSwaps)s=s.replaceAll(from,to);
+  s=s.replace(/Win it and the ([^.;]+?) get to attack; lose it and ([^.;]+?) shows up carrying everybody’s panic\./g,"Win it and the $1 can treat the next game as opportunity; lose and $2 becomes the matchup that turns every unresolved flaw into a louder question.");
   s=s.replaceAll(" a headline score inside a result nobody wants framed"," a top-end score inside a loss nobody wants remembered");
   if(s.includes(" headline belongs to ")&&s.includes(", but the repeatable part is"))s=s.replace(" headline belongs to "," lead credit goes to ").replace(", but the repeatable part is",", but the part worth trusting again is");
   return s

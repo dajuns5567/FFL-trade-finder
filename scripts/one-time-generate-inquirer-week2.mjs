@@ -725,7 +725,7 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
     "breakout":[
       p.name+" is beginning to build a real breakout profile",
       "Week 2 pushed "+p.name+" farther into breakout territory",
-      p.name+" is no longer easy to file under one-week curiosity",
+      p.name+" is no longer easy to dismiss as a one-week curiosity",
       "The old expectation on "+p.name+" is starting to look too small for the role now showing up"
     ],
     "emerging":[

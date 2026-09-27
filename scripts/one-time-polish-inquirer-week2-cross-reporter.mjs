@@ -48,8 +48,8 @@ function bridge(t,r,prev){
       'Week 1 handed the rival chat a '+score+' '+(prevWon?'win over ':'loss to ')+foe+' for '+team+'. Week 2 changed the material instead of asking everyone to resend it.'
     ]
   };
-  const bank=banks[rid]||banks['walter-mercer'];
-  return bank[v];
+  const bank=banks[rid]||banks['walter-mercer'],chosen=bank[v],cut=chosen.indexOf('. ');
+  return cut>=0?chosen.slice(0,cut)+'; '+chosen.slice(cut+2,cut+3).toLowerCase()+chosen.slice(cut+3):chosen;
 }
 
 let bridgeChanges=0,roadChanges=0;

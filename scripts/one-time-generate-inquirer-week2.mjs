@@ -2647,10 +2647,33 @@ function w2RecapPlayerRead(t,p,prev,r,slot=0){
     category=w2PlayerCategoryReference(p,profile),team=w2DisplayTeam(t.team_name),short=w2ShortPlayerName(t,r||{id:"recap"},p,"recap-read"),
     pts=w2One(p.points),prior=Number(profile.prior),avg=Number(profile.seasonAvg),hasPrior=Number.isFinite(prior)&&prior>0&&Number(p?.prior_season_games)>=6,
     material=hasPrior&&Math.abs(Number(p.points)-prior)>=Math.max(4,prior*.3),
-    Ref=(category||short).charAt(0).toUpperCase()+(category||short).slice(1);
-  if(status==="breakout"&&Number.isFinite(avg)&&hasPrior)return Ref+" is at "+w2One(avg)+" per game through two Sundays after "+w2One(prior)+" last season. "+team+" can stop calling this a lucky weekend; opponents now have to put "+short+" in the part of the scouting report nobody enjoys.";
-  if(status==="emerging"&&Number.isFinite(avg)&&hasPrior)return Ref+" has climbed to "+w2One(avg)+" per game through two weeks after "+w2One(prior)+" last season. Two Sundays do not make a career, but they are enough to make dismissing "+short+" a lazy argument.";
-  if(status==="established-star")return Ref+" just gave "+team+" "+pts+" points"+(hasPrior?" after averaging "+w2One(prior)+" last season":"")+". Nobody discovered a new player here; "+team+" simply got the expensive version of "+short+" at a very convenient time.";
+    Ref=(category||short).charAt(0).toUpperCase()+(category||short).slice(1),
+    v=w2Hash(team+"|"+String(p?.id||p?.name)+"|recap-player-read")%4;
+  if(status==="breakout"&&Number.isFinite(avg)&&hasPrior){
+    const rows=[
+      Ref+" is at "+w2One(avg)+" per game through two Sundays after "+w2One(prior)+" last season. "+team+" can stop calling this a lucky weekend; opponents now have to put "+short+" in the part of the scouting report nobody enjoys.",
+      Ref+" has two weeks at "+w2One(avg)+" a game after "+w2One(prior)+" last season. One Sunday can lie; two in a row make the next opponent waste meeting time on "+short+".",
+      Ref+" is averaging "+w2One(avg)+" through two games after "+w2One(prior)+" last year. The breakout label is no longer doing promotional work by itself; the box scores have started helping.",
+      Ref+" has pushed the two-week average to "+w2One(avg)+" after "+w2One(prior)+" last season. "+team+" can call it early if it wants; the next opponent still has to prepare for it."
+    ];return rows[v]
+  }
+  if(status==="emerging"&&Number.isFinite(avg)&&hasPrior){
+    const rows=[
+      Ref+" has climbed to "+w2One(avg)+" per game through two weeks after "+w2One(prior)+" last season. Two Sundays do not make a career, but they are enough to make dismissing "+short+" a lazy argument.",
+      Ref+" sits at "+w2One(avg)+" a game through two weeks after "+w2One(prior)+" last year. That is enough repeated noise for "+team+" to stop treating the role like a temporary accident.",
+      Ref+" has two Sundays averaging "+w2One(avg)+" after "+w2One(prior)+" last season. The emerging label now has actual box scores attached to it, which is inconvenient for anyone waiting for the role to disappear.",
+      Ref+" is up to "+w2One(avg)+" per game through two weeks after "+w2One(prior)+" last year. Nobody needs a coronation; the next opponent just needs a plan."
+    ];return rows[v]
+  }
+  if(status==="established-star"){
+    const hist=hasPrior?" after averaging "+w2One(prior)+" last season":"";
+    const rows=[
+      Ref+" just gave "+team+" "+pts+" points"+hist+". That is not a discovery; it is the expensive name on the roster reminding everybody why the price tag exists.",
+      Ref+" put "+pts+" on the board"+hist+". The résumé did not need help, but Sunday added another page loudly enough to annoy the opponent.",
+      Ref+" delivered "+pts+" for "+team+hist+". Stars are supposed to make difficult Sundays look routine; this one did the job without asking permission.",
+      Ref+" finished at "+pts+hist+". Nobody learned the name on Sunday; they just got reminded why ignoring it is expensive."
+    ];return rows[v]
+  }
   if(status==="struggling-star")return Ref+" is wearing the star label into a second quiet Sunday, which is exactly why the next one gets louder instead of easier to excuse.";
   if(status==="declining-veteran")return Ref+" has opened with two quieter Sundays than the résumé promises. Veteran status buys patience; it does not buy invisibility.";
   if(status==="reliable-veteran")return Ref+" keeps giving "+team+" the veteran floor good lineups quietly live on. Nobody throws a parade for stability until the week it disappears.";
@@ -2658,7 +2681,19 @@ function w2RecapPlayerRead(t,p,prev,r,slot=0){
   if(status==="rookie")return Ref+" already has enough Week 2 responsibility to make the rookie label relevant to the next opponent instead of just the transaction page.";
   if(status==="young-player")return Ref+" is young enough that this role can still grow teeth, and "+team+" has already seen enough to keep feeding it.";
   if(status==="reliable")return Ref+" gave "+team+" another dependable answer. Contenders call that boring right up until the boring answer goes missing.";
-  if(material)return short+" lived around "+w2One(prior)+" per game last season and just posted "+pts+". "+(Number(p.points)>prior?"If that was supposed to be ordinary, Sunday forgot the assignment.":"That is enough of a detour for the next opponent to check whether the role changed or the box score simply picked a fight.");
+  if(material){
+    const up=Number(p.points)>prior,rows=up?[
+      short+" lived around "+w2One(prior)+" per game last season and just posted "+pts+". If that was supposed to be ordinary, Sunday forgot the assignment.",
+      short+" carried a "+w2One(prior)+"-point average out of last season and dropped "+pts+" this week. The opponent is welcome to call it an outlier after it finishes explaining the scoreboard.",
+      short+" came in with "+w2One(prior)+" per game as last year’s usual and left Sunday with "+pts+". Subtlety was apparently scratched before kickoff.",
+      short+" was around "+w2One(prior)+" a game last season; "+pts+" this week turned the old expectation into a very bad alibi for the opponent."
+    ]:[
+      short+" averaged "+w2One(prior)+" last season and stopped at "+pts+" this week. That is the kind of quiet Sunday opponents notice before managers finish calling it weird.",
+      short+" brought a "+w2One(prior)+"-point average from last year into a "+pts+"-point Sunday. The next game gets to decide whether that was a bruise or a warning label.",
+      short+" lived around "+w2One(prior)+" a game last season and landed at "+pts+" this week. The résumé survives; the easy explanation does not.",
+      short+" came in with "+w2One(prior)+" per game as the old normal and left with "+pts+". One bad Sunday is survivable, but it still gets circled."
+    ];return rows[v]
+  }
   return""
 }
 function rewriteWeek2Overview(overview,teams,previousEdition){

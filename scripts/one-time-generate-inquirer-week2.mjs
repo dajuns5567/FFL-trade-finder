@@ -723,13 +723,14 @@ function w2BreakoutContext(p,profile){
   const clauses=[];
   if(Number.isFinite(profile.age)&&profile.age<=25)clauses.push("only "+Math.round(profile.age));
   else if(Number.isFinite(profile.years)&&profile.years<=2)clauses.push("still early in his NFL career");
-  const snapRole=Number.isFinite(profile.snapPct)&&profile.snapPct>0
-    ?Math.round(profile.snapPct*100)+"% of the defensive/offensive snaps"
-    :Number.isFinite(profile.snaps)?Math.round(profile.snaps)+" snaps":null;
-  if(snapRole&&Number.isFinite(profile.priorSnapPg)&&profile.priorSnapPg>0&&Number.isFinite(profile.snaps)&&profile.snaps>=profile.priorSnapPg*1.1){
-    clauses.push("his Week 2 role grew to "+snapRole+" after "+profile.priorSnapPg.toFixed(1)+" snaps per game last season");
-  }else if(snapRole&&profile.roleLift){
-    clauses.push("the current opportunity is already substantial at "+snapRole);
+  const snapShare=Number.isFinite(profile.snapPct)&&profile.snapPct>0?Math.round(profile.snapPct*100):null,
+    snapCount=Number.isFinite(profile.snaps)?Math.round(profile.snaps):null;
+  if(snapCount!=null&&Number.isFinite(profile.priorSnapPg)&&profile.priorSnapPg>0&&profile.snaps>=profile.priorSnapPg*1.1){
+    clauses.push("his Week 2 role was "+snapCount+" snaps"+(snapShare!=null?" ("+snapShare+"% of the team’s unit snaps)":"")+", up from "+profile.priorSnapPg.toFixed(1)+" snaps per game last season");
+  }else if(snapCount!=null&&profile.roleLift){
+    clauses.push("the current opportunity is already substantial at "+snapCount+" snaps"+(snapShare!=null?" ("+snapShare+"% of the team’s unit snaps)":""));
+  }else if(snapShare!=null&&profile.roleLift){
+    clauses.push("the current opportunity is already substantial at "+snapShare+"% of the team’s unit snaps");
   }
   if(Number.isFinite(profile.seasonAvg)&&Number.isFinite(profile.prior)&&profile.prior>0){
     clauses.push("his two-week average is "+w2One(profile.seasonAvg)+" fantasy points after "+w2One(profile.prior)+" per game last season");

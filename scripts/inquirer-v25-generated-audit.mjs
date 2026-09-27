@@ -61,7 +61,7 @@ if(reportWeek===2){
 
 if(reportWeek===2){
   assert.equal(Number(d.inquirer_version),31,'Generated Week 2 edition must be Inquirer V31');
-  assert.equal(Number(d.editorial_revision),13,'Generated Week 2 edition must carry editorial revision 13');
+  assert.equal(Number(d.editorial_revision),14,'Generated Week 2 edition must carry editorial revision 14');
 }else{
   assert.equal(Number(d.inquirer_version),26,'Generated Week 1 edition must remain Inquirer V26');
   assert.equal(Number(d.editorial_revision),6,'Generated Week 1 edition must remain editorial revision 6');
@@ -110,6 +110,8 @@ if(reportWeek===2){
   const matteredCopy=(mattered?.paragraphs||[]).join(' ');
   const categoryMentions=matteredCopy.match(/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/gi)||[];
   assert.ok(categoryMentions.length>=3,'What Actually Mattered This Week must naturally use supported player categorization language where the player profiles justify it; got '+categoryMentions.length);
+  const recapExplainerMeta=/\b(?:baseline|worth reopening|real departure from the established level|changes what the next box score is allowed to tell us|role deserves fresh attention|large enough to matter|matter beyond one|that is (?:star|veteran|breakout|emerging|rookie|reliable) production|useful veteran work)\b/i;
+  assert.doesNotMatch(matteredCopy,recapExplainerMeta,'What Actually Mattered This Week must turn player history/status evidence into reporter commentary instead of baseline/category explainer language');
 }
 const topScorer=(d.teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
 assert.ok(topScorer&&matterBlocks[0]?.heading?.includes(topScorer.team_name),'First Weekly Recap matchup block must feature the week’s top scoring team');

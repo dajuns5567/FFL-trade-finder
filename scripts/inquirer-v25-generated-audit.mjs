@@ -47,6 +47,11 @@ if(reportWeek===2){
     const valueCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='value').flatMap(s=>s?.paragraphs||[]).join(' ');
     assert.doesNotMatch(valueCopy,/already on the roster when Week \d+ began/i,'Value coverage should omit no-op roster-status filler and use natural player context instead: '+t.team_name);
   }
+  const metaJokeLede=/easy rival joke has missed twice|turned an 0-1 joke into a 1-1 argument|joke ages well|borrow the opener’s punch line|best joke still had to include the final score|erased the first rival punch line|easiest joke about .* arrived before the final whistle/i;
+  for(const t of d.teams||[]){
+    const ledeCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='lede').flatMap(s=>s?.paragraphs||[]).join(' ');
+    assert.doesNotMatch(ledeCopy,metaJokeLede,'Team ledes should deliver sarcasm directly instead of describing the joke: '+t.team_name);
+  }
   const forcedCategorySentence=/(?:^|[.!?]\s+)(?:Breakout player|Established star|Steady veteran|Young breakout|Proven star|Veteran player)\s+[A-Z][A-Za-z.'’’-]+(?:\s+[A-Z][A-Za-z.'’’-]+){0,3}\s+(?:keeps|held|spoiled|remained|delivered|is|was)\b/i;
   for(const t of d.teams||[])assert.doesNotMatch(articleText(t),forcedCategorySentence,'Player category must be woven into commentary instead of appended as a standalone label sentence: '+t.team_name);
 

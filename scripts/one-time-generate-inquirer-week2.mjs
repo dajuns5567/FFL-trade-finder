@@ -1598,13 +1598,13 @@ function w2OpeningHook(t,r,won,margin,opp,top){
       won?"Week 2 gave "+team+" a headline it can actually hang on the wall.":"Week 2 gave "+team+" the kind of headline that usually gets folded underneath the newspaper."
     ],
     "nora-voss":[
-      won?"The easiest joke about the "+a.mascot+" got harder to make after Week 2.":"The easiest joke about the "+a.mascot+" arrived before the final whistle and brought its own caption.",
-      won?star+" erased the first rival punch line, and the rest of the "+a.mascot+" did enough to ruin the sequel.":foe+" found the same soft spot every rival chat will now circle without being asked.",
+      won?"Week 2 made the "+a.mascot+" considerably harder to dismiss than anyone waiting on a quick collapse had planned.":"The "+a.mascot+" made the loss easy to criticize before the final whistle had even finished the paperwork.",
+      won?star+" made the loudest argument, and the rest of the "+a.mascot+" kept the win from becoming a one-man rescue mission.":foe+" found the same soft spot every rival chat will now circle without being asked.",
       won?"Rival managers wanted a reason to call the "+a.mascot+" fake; Week 2 made them work for the screenshot.":"Rival managers do not need creativity this week—the "+a.mascot+" left the material sitting on the counter.",
       won?"The "+a.mascot+" won the game and stole a week of easy criticism.":"The "+a.mascot+" lost, and the annoying part is that the explanation does not require a conspiracy thread.",
       won?(wide?team+" won loudly enough that the rival chat had to change subjects before halftime was metaphorically over.":team+" left "+foe+" just enough room to talk and then took the final score away from them."):tight?team+" lost by "+w2One(margin)+", which means every rival with a calculator suddenly thinks it has a journalism degree.":foe+" gave the rival thread a final score and "+team+" supplied the captions.",
       won?team+" put enough useful performances on the page that rivals had to scroll for softer material.":team+" gave rivals a few respectable lines to ignore and several much easier targets to enjoy.",
-      won?"The "+a.mascot+" turned Week 2 into the rare rival thread where the best joke still had to include the final score.":"The "+a.mascot+" spent Week 2 supplying rival ammunition at wholesale prices.",
+      won?"The "+a.mascot+" made Week 2 deeply inconvenient for anyone waiting on a collapse; the final score gave them nothing useful.":"The "+a.mascot+" spent Week 2 supplying rival ammunition at wholesale prices.",
       won?"The rival receipts are less funny when the "+a.mascot+" are the ones holding the win.":"The "+a.mascot+" leave Sunday with a loss and a week of notifications they should probably mute on purpose."
     ]
   };
@@ -2396,7 +2396,7 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
     "nora-voss":{
       "ww":[
         team+" has two wins, which is inconvenient for anybody hoping the first one was a typo. Rivals can wait for a cleaner weakness; the standings are not volunteering one.",
-        "The "+a.mascot+" are 2-0 and the easy rival joke has missed twice. That does not make "+team+" sacred; it does make lazy dismissal look cheap."
+        "The "+a.mascot+" are 2-0, which means anybody still calling this start a fluke is now arguing with two Sundays and losing both."
       ],
       "ll":[
         team+" has lost twice, so rivals no longer need to manufacture the material. The roster has supplied enough of its own and now owes supporters a rebuttal.",
@@ -2404,11 +2404,11 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
       ],
       "lw":[
         team+" answered the opening loss, which ruins the easiest rival narrative. What matters now is whether the correction survives another opponent.",
-        "The "+a.mascot+" turned an 0-1 joke into a 1-1 argument. Annoying for rivals, useful for supporters, and still very much unfinished."
+        "The "+a.mascot+" dragged the season from 0-1 to 1-1. Not glamorous, but considerably more useful than spending another week digging."
       ],
       "wl":[
         team+" gave rivals the sequel they wanted after an opening win. One loss is not a collapse, but it has restored everybody’s favorite screenshots.",
-        "The "+a.mascot+" split the first two games and handed rivals fresh material in the second. Week 3 decides whether the joke ages well."
+        "The "+a.mascot+" split the first two games. Week 3 gets to decide whether Week 2 was a bruise or the beginning of a habit."
       ],
       "no-history":[
         "There is no clean opener for rivals to compare with "+team+", so this result gets judged without the usual screenshot war.",
@@ -2449,7 +2449,7 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
       "Week 1 had "+team+" at "+score+" against "+foe+", good for "+(prevWon?"a win":"a loss")+". Week 2 just gave the season a new headline instead of recycling the old one.",
       team+" left the opener with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". Another Sunday means another piece of evidence and, thankfully, a different argument.",
       "The first scoreboard for "+team+" read "+score+" against "+foe+". That "+(prevWon?"win":"loss")+" was loud then; Week 2 gets its own volume knob.",
-      "A "+score+" "+(prevWon?"win over ":"loss to ")+foe+" started "+team+"’s season. The latest Sunday does not need to borrow the opener’s punch line."
+      "A "+score+" "+(prevWon?"win over ":"loss to ")+foe+" started "+team+"’s season. The latest Sunday changed the evidence enough to stand on its own."
     ],
     "nora-voss":[
       "Rivals entered Week 2 with "+team+"’s "+score+" "+(prevWon?"win over ":"loss to ")+foe+" already in the chat. Sunday gave them new material, for better or worse.",

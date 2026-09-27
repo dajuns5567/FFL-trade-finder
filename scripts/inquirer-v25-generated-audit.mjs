@@ -546,7 +546,7 @@ for(const t of d.teams||[]){
     // Factual score/stat/standings scaffolds are expected to share syntax.
     // This guard is specifically for reusable editorial phrasing, not the data
     // sentences that tell readers what happened.
-    const factual=/(?:fantasy points?|solo tackles?|assisted tackles?|tackle for loss|qb hits?|passes?|targets?|receptions?|rushing yards?|receiving yards?|touchdowns?|carries|projection|projected|league order|standings|\brecord\b|division race|current tiebreaks|\blost to\b|\bbeat \[entity\]|\bleaving the\b|\bno \[#\]\b|\[#\] - \[#\])/i;
+    const factual=/(?:fantasy points?|solo tackles?|assisted tackles?|tackle for loss|qb hits?|passes?|targets?|receptions?|rushing yards?|receiving yards?|touchdowns?|carries|projection|projected|league order|standings|\brecord\b|division race|current tiebreaks|\blost to\b|\bloss to\b|\bwin over\b|\bbeat \[entity\]|\bopened with\b|\bafter week \[#\]\b|\bleaving the\b|\bno \[#\]\b|\[#\] - \[#\])/i;
     if(factual.test(gram))continue;
     seenHere.add(gram);
     const rows=phrasePlacements.get(gram)||[];rows.push({team:t.team_name,reporter:t.inquirer_article?.reporter?.name});phrasePlacements.set(gram,rows);

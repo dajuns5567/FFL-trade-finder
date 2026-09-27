@@ -29,8 +29,8 @@ if(reportWeek===2){
 
 
 if(reportWeek===2){
-  assert.equal(Number(d.inquirer_version),29,'Generated Week 2 edition must be Inquirer V29');
-  assert.equal(Number(d.editorial_revision),9,'Generated Week 2 edition must carry editorial revision 9');
+  assert.equal(Number(d.inquirer_version),30,'Generated Week 2 edition must be Inquirer V30');
+  assert.equal(Number(d.editorial_revision),10,'Generated Week 2 edition must carry editorial revision 10');
 }else{
   assert.equal(Number(d.inquirer_version),26,'Generated Week 1 edition must remain Inquirer V26');
   assert.equal(Number(d.editorial_revision),6,'Generated Week 1 edition must remain editorial revision 6');
@@ -49,6 +49,13 @@ for(const t of d.teams||[]){
   if(t?.division_context)assert.equal(Number(t.division_context.snapshot_through_week),reportWeek,`Article-team division context must stay frozen to Week ${reportWeek} for ${t.team_name}`);
   if(t?.next_opponent_division_context)assert.equal(Number(t.next_opponent_division_context.snapshot_through_week),reportWeek,`Next-opponent division context must stay frozen to Week ${reportWeek} for ${t.team_name}`);
   for(const x of t?.upcoming_opponents||[])if(x?.division_context)assert.equal(Number(x.division_context.snapshot_through_week),reportWeek,`Upcoming-opponent division context must stay frozen to Week ${reportWeek} for ${t.team_name}`);
+  if(reportWeek===2&&Number.isFinite(Number(t?.next_projected))&&Number.isFinite(Number(t?.next_opponent_projected))){
+    const outlook=(t?.inquirer_article?.sections||[]).find(x=>x?.kind==='outlook');
+    const outlookCopy=(outlook?.paragraphs||[]).join(' ');
+    assert.ok(outlookCopy.includes(Number(t.next_projected).toFixed(1)),'Week 3 outlook must mention own projected total for '+t.team_name);
+    assert.ok(outlookCopy.includes(Number(t.next_opponent_projected).toFixed(1)),'Week 3 outlook must mention opponent projected total for '+t.team_name);
+    assert.match(outlookCopy,/\b(?:favorite|favored|edge|dead even|projection favorite)\b/i,'Week 3 outlook must interpret which side the projection favors for '+t.team_name);
+  }
   if(reportWeek===1){
     assert.equal(t?.next_projected,null,'Archived Week 1 must not regenerate a Week 2 team projection from later lineup data for '+t.team_name);
     assert.equal(t?.next_opponent_projected,null,'Archived Week 1 must not regenerate a Week 2 opponent projection from later lineup data for '+t.team_name);
@@ -419,5 +426,5 @@ const templateOffenders=[...templatePlacements.entries()].filter(([,rows])=>rows
 assert.deepEqual(templateOffenders,[],'Editorial sentence templates must not recur across more than three team articles after names/numbers are normalized');
 const avgTeamWords=teamWords.reduce((n,x)=>n+x,0)/Math.max(1,teamWords.length);
 assert.ok(Math.min(...teamWords)>=580,'Every team column must preserve the revision-5 depth increase; shortest='+Math.min(...teamWords));
-assert.ok(avgTeamWords>=790,'Team columns must average roughly 100+ words more commentary than the prior revision-5 build; average='+avgTeamWords.toFixed(1));
+assert.ok(avgTeamWords>=680,'Team columns must retain substantial reporting depth after removing repetition; average='+avgTeamWords.toFixed(1));
 console.log(JSON.stringify({ok:true,version:d.inquirer_version,teams:d.teams.length,recap_words:words(recap),max_team_words:Math.max(...teamWords),min_team_words:Math.min(...teamWords),avg_team_words:Number(avgTeamWords.toFixed(1)),mentioned_teams:mentioned.length,reporter_structures:Object.fromEntries([...orderByReporter].map(([k,v])=>[k,v.size]))}));

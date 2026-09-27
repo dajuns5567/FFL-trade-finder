@@ -116,49 +116,16 @@ function linkedNotebookText(value,teams,seenRecords,seenLinks){
  for(const t of teams||[]){const name=String(t?.team_name||'').trim();if(!name)continue;counts.set(name,(counts.get(name)||0)+1);byName.set(name,String(t.roster_id));teamByName.set(name,t)}
  const names=[...counts.entries()].filter(([,count])=>count===1).map(([name])=>name).sort((a,b)=>b.length-a.length);
  if(!names.length)return esc(text);
- const re=new RegExp(names.map(name=>name.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\function linkedNotebookText(value,teams,seenRecords,seenLinks){
- const text=String(value??''),counts=new Map(),byName=new Map(),teamByName=new Map();
- for(const t of teams||[]){const name=String(t?.team_name||'').trim();if(!name)continue;counts.set(name,(counts.get(name)||0)+1);byName.set(name,String(t.roster_id));teamByName.set(name,t)}
- const names=[...counts.entries()].filter(([,count])=>count===1).map(([name])=>name).sort((a,b)=>b.length-a.length);
- if(!names.length)return esc(text);
  const re=new RegExp(names.map(name=>name.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&')).join('|'),'g');let out='',last=0,match;
  while((match=re.exec(text))){
   const start=match.index,end=start+match[0].length,before=text[start-1]||'',after=text[end]||'';if(/[A-Za-z0-9]/.test(before)||/[A-Za-z0-9]/.test(after))continue;
   const team=teamByName.get(match[0]),id=String(team?.roster_id||byName.get(match[0])||'');
   if(seenLinks&&seenLinks.has(id)){out+=esc(text.slice(last,start))+esc(match[0]);last=end;continue}
-  const rr=team?.league_context?.record||{},hasRecord=Number.isFinite(Number(rr.wins))&&Number.isFinite(Number(rr.losses)),rec=hasRecord?String(Number(rr.wins))+'-'+String(Number(rr.losses))+(Number(rr.ties)?'-'+String(Number(rr.ties)):''):'',first=seenRecords&&!seenRecords.has(id),label=match[0]+(first&&rec?' ('+rec+')':'');
-  if(first)seenRecords.add(id);if(seenLinks)seenLinks.add(id);
-  out+=esc(text.slice(last,start))+'<button type="button" class="lh-inline-team" data-lh-inquirer-team="'+esc(id)+'" data-lh-inquirer-name="'+esc(match[0])+'">'+esc(label)+'</button>';last=end
- }
- return out+esc(text.slice(last));
-}
-')).join('|'),'g');let out='',last=0,match;
- while((match=re.exec(text))){
-  const start=match.index,end=start+match[0].length,before=text[start-1]||'',after=text[end]||'';if(/[A-Za-z0-9]/.test(before)||/[A-Za-z0-9]/.test(after))continue;
-  const team=teamByName.get(match[0]),id=String(team?.roster_id||byName.get(match[0])||'');
-  if(seenLinks&&seenLinks.has(id)){out+=esc(text.slice(last,start))+esc(match[0]);last=end;continue}
-  const rr=team?.league_context?.record||{},hasRecord=Number.isFinite(Number(rr.wins))&&Number.isFinite(Number(rr.losses)),rec=hasRecord?String(Number(rr.wins))+'-'+String(Number(rr.losses))+(Number(rr.ties)?'-'+String(Number(rr.ties)):''):'',
+  const rr=team?.league_context?.record||{},hasRecord=Number.isFinite(Number(rr.wins))&&Number.isFinite(Number(rr.losses)),
+    rec=hasRecord?String(Number(rr.wins))+'-'+String(Number(rr.losses))+(Number(rr.ties)?'-'+String(Number(rr.ties)):''):'',
     first=seenRecords&&!seenRecords.has(id),
-    // If the authored sentence already prints this exact record immediately
-    // after the team name, treat the record as shown instead of injecting it
-    // a second time into the linked label.
-    authoredRecord=!!(first&&rec&&new RegExp('^\\s*\\(\\s*'+rec.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\function linkedNotebookText(value,teams,seenRecords,seenLinks){
- const text=String(value??''),counts=new Map(),byName=new Map(),teamByName=new Map();
- for(const t of teams||[]){const name=String(t?.team_name||'').trim();if(!name)continue;counts.set(name,(counts.get(name)||0)+1);byName.set(name,String(t.roster_id));teamByName.set(name,t)}
- const names=[...counts.entries()].filter(([,count])=>count===1).map(([name])=>name).sort((a,b)=>b.length-a.length);
- if(!names.length)return esc(text);
- const re=new RegExp(names.map(name=>name.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&')).join('|'),'g');let out='',last=0,match;
- while((match=re.exec(text))){
-  const start=match.index,end=start+match[0].length,before=text[start-1]||'',after=text[end]||'';if(/[A-Za-z0-9]/.test(before)||/[A-Za-z0-9]/.test(after))continue;
-  const team=teamByName.get(match[0]),id=String(team?.roster_id||byName.get(match[0])||'');
-  if(seenLinks&&seenLinks.has(id)){out+=esc(text.slice(last,start))+esc(match[0]);last=end;continue}
-  const rr=team?.league_context?.record||{},hasRecord=Number.isFinite(Number(rr.wins))&&Number.isFinite(Number(rr.losses)),rec=hasRecord?String(Number(rr.wins))+'-'+String(Number(rr.losses))+(Number(rr.ties)?'-'+String(Number(rr.ties)):''):'',first=seenRecords&&!seenRecords.has(id),label=match[0]+(first&&rec?' ('+rec+')':'');
-  if(first)seenRecords.add(id);if(seenLinks)seenLinks.add(id);
-  out+=esc(text.slice(last,start))+'<button type="button" class="lh-inline-team" data-lh-inquirer-team="'+esc(id)+'" data-lh-inquirer-name="'+esc(match[0])+'">'+esc(label)+'</button>';last=end
- }
- return out+esc(text.slice(last));
-}
-')+'\\s*\\)').test(text.slice(end))),
+    recEsc=rec.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&'),
+    authoredRecord=!!(first&&rec&&new RegExp('^\\s*\\(\\s*'+recEsc+'\\s*\\)').test(text.slice(end))),
     label=match[0]+(first&&rec&&!authoredRecord?' ('+rec+')':'');
   if(first)seenRecords.add(id);if(seenLinks)seenLinks.add(id);
   out+=esc(text.slice(last,start))+'<button type="button" class="lh-inline-team" data-lh-inquirer-team="'+esc(id)+'" data-lh-inquirer-name="'+esc(match[0])+'">'+esc(label)+'</button>';last=end

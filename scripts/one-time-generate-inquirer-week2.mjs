@@ -676,6 +676,15 @@ function w2HistoricalColor(p,r,t=null,slot=0){
 }
 
 
+
+const w2PlayerStatusVariantsUsed=new Map();
+function w2PlayerStatusVariant(t,r,status,count){
+  const rid=String(r?.id||"walter-mercer"),key=rid+"|"+status,used=w2PlayerStatusVariantsUsed.get(key)||new Set(),
+    base=w2Hash(String(t?.team_name||"")+"|"+String(status)+"|"+rid+"|status")%count;
+  let pick=base;
+  for(let step=0;step<count;step++){const candidate=(base+step)%count;if(!used.has(candidate)){pick=candidate;break}}
+  used.add(pick);w2PlayerStatusVariantsUsed.set(key,used);return pick
+}
 function w2PlayerStatusColor(t,r,p,pp,slot=0){
   const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
     rid=String(r?.id||"walter-mercer"),team=w2DisplayTeam(t?.team_name),role=Number(slot)||0,
@@ -693,41 +702,206 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
   else if(role===0&&pts>=starThreshold*1.6)status="star-level";
   else if(pts<=1.5&&role<=2)status="struggling";
   if(!status)return "";
-  const rows={
+
+  const leads={
+    "established-star":[
+      p.name+" entered Sunday with an established-star standard",
+      "This was familiar star territory for "+p.name,
+      p.name+" did not need Week 2 to introduce the star label",
+      "The established-star reputation attached to "+p.name+" already had history behind it"
+    ],
+    "struggling-star":[
+      p.name+" entered Week 2 with established-star expectations and missed them badly",
+      "A star résumé makes "+p.name+"’s quiet Sunday more noticeable, not less",
+      p.name+" has enough established production behind him that this dip reads as a slump",
+      "The star standard around "+p.name+" makes this Week 2 line an obvious outlier on the wrong side"
+    ],
+    "star-level":[
+      p.name+" reached star-level territory in Week 2",
+      "Week 2 gave "+p.name+" the kind of line that belongs in a star conversation",
+      p.name+" played above ordinary contributor territory this Sunday",
+      "The top-end work from "+p.name+" was loud enough to earn star-level treatment"
+    ],
+    "breakout":[
+      p.name+" is beginning to build a real breakout profile",
+      "Week 2 pushed "+p.name+" farther into breakout territory",
+      p.name+" is no longer easy to file under one-week curiosity",
+      "The old expectation on "+p.name+" is starting to look too small for the role now showing up"
+    ],
+    "emerging":[
+      p.name+" is moving from useful contributor toward an emerging weekly piece",
+      "There is an emerging-role argument forming around "+p.name,
+      p.name+" is starting to look less like support and more like part of the weekly plan",
+      "Week 2 strengthened the idea that "+p.name+" belongs in the emerging-core conversation"
+    ],
+    "struggling":[
+      p.name+" is running below the level his recent history established",
+      "The Week 2 version of "+p.name+" looked materially smaller than the player his recent baseline describes",
+      p.name+" has moved from a quiet Sunday into a form question",
+      "Recent history gives "+p.name+" a better standard than the one he reached this week"
+    ]
+  };
+
+  const tails={
     "walter-mercer":{
-      "established-star":p.name+" is already carrying an established-star profile, so this production reads as confirmation rather than a surprise cameo.",
-      "struggling-star":p.name+" came into the week with an established-star standard and landed well below it; that makes the quiet Sunday a form question, not a discovery about who he is.",
-      "star-level":p.name+" delivered star-level work in Week 2; "+team+" now has to make sure the supporting lineup keeps that performance from becoming emergency labor.",
-      "breakout":p.name+" is building a legitimate breakout profile; the role is producing far enough above the old level to change expectations.",
-      "emerging":p.name+" is moving from useful contributor toward an emerging weekly piece, which matters because "+team+" can build around roles before it can build around miracles.",
-      "struggling":p.name+" is playing below the standard his recent history established, so the concern is form and role rather than one bad decimal."
+      "established-star":[
+        ", so "+team+" can treat this production as confirmation rather than a surprise cameo.",
+        ", and the useful conclusion for "+team+" is that the top-end role remains intact.",
+        ", which makes this performance another data point in an existing reputation instead of a new identity.",
+        ", leaving "+team+" with the more practical job of making sure the lineup around him keeps pace."
+      ],
+      "struggling-star":[
+        ", so "+team+" should inspect form and role before questioning the longer résumé.",
+        ", which turns the next week into a test of whether the established level returns.",
+        ", and that gap from the usual standard deserves attention without rewriting what the player already is.",
+        ", leaving "+team+" with a slump to manage rather than a mystery about the player’s ceiling."
+      ],
+      "star-level":[
+        ", giving "+team+" a genuine top-end performance to build around instead of a random useful score.",
+        ", and the next question is whether the supporting lineup can make that level count again.",
+        ", which raises the ceiling of the current lineup without requiring anybody to pretend one Sunday is a career.",
+        ", giving "+team+" exactly the sort of high-end answer that changes how an opponent has to view the roster."
+      ],
+      "breakout":[
+        ", because the jump above the old baseline is now large enough for "+team+" to adjust expectations.",
+        ", and another week of comparable responsibility would make the new role harder to call a spike.",
+        ", which gives "+team+" a reason to plan for more than the old baseline used to promise.",
+        ", and the attraction is not the label itself but the possibility that the role has genuinely expanded."
+      ],
+      "emerging":[
+        ", giving "+team+" another repeatable piece instead of asking the established stars to solve every Sunday.",
+        ", and that matters because dependable secondary roles are how a roster develops an actual floor.",
+        ", which gives "+team+" a player whose responsibility may be growing faster than his old reputation.",
+        ", and another useful Sunday would make the role easier to trust than the early-season sample."
+      ],
+      "struggling":[
+        ", so "+team+" has a form-and-role problem to watch rather than one bad decimal to explain.",
+        ", and the next lineup decision should be informed by the drop instead of assuming the old level will appear automatically.",
+        ", which is enough distance from the baseline that "+team+" should treat the slump as actionable.",
+        ", leaving "+team+" with a clear question about whether usage, matchup or execution is pulling the output down."
+      ]
     },
     "tess-delaney":{
-      "established-star":p.name+" is already dressed like an established star, and Week 2 did nothing to send that reputation back to coat check.",
-      "struggling-star":p.name+" arrived with an established-star place card and served something much smaller; one bad course does not revoke the reservation, but the table noticed.",
-      "star-level":p.name+" gave the room star-level work; asking for another centerpiece is greed when the real question is who bothers to set the rest of the table.",
-      "breakout":p.name+" is beginning to look like the breakout guest who was invited for dinner and somehow ended up owning the room.",
-      "emerging":p.name+" has moved beyond pleasant surprise territory and into emerging-piece territory; the seating chart has to start accounting for him.",
-      "struggling":p.name+" is dining well below the standard on his old place card, and no amount of polished silver makes that slump decorative."
+      "established-star":[
+        ", so the "+w2Alias(t).mascot+" are not discovering a new guest so much as watching the usual headliner arrive properly dressed.",
+        ", and the table can keep the star place card exactly where it was without pretending this was a surprise reservation.",
+        ", which means the room should admire the course without acting shocked that the expensive guest knew the menu.",
+        ", leaving the "+w2Alias(t).mascot+" to worry about the chairs around the centerpiece rather than the centerpiece itself."
+      ],
+      "struggling-star":[
+        ", so the "+w2Alias(t).mascot+" can keep the star place card while still sending this particular course back to the kitchen.",
+        ", and one undersized serving does not revoke the reservation even if the entire table noticed it.",
+        ", which makes the slump a stain on the linen rather than a reason to throw away the dining room.",
+        ", leaving the room to ask when the usual portion returns instead of whether the guest belongs at the table."
+      ],
+      "star-level":[
+        ", giving the "+w2Alias(t).mascot+" a centerpiece substantial enough that the rest of the table has no excuse to arrive empty.",
+        ", and the room looked considerably more expensive the moment that production hit the plate.",
+        ", which is the sort of performance that moves a player from supporting décor to the center of the seating chart.",
+        ", leaving the "+w2Alias(t).mascot+" with the pleasant problem of deciding how much of the menu can now run through him."
+      ],
+      "breakout":[
+        ", and the "+w2Alias(t).mascot+" may need a larger place card if this version keeps inviting itself to dinner.",
+        ", which is how a pleasant surprise starts stealing the centerpiece without asking permission.",
+        ", and another Sunday at this level would make the old seating arrangement look comically undersized.",
+        ", leaving the room one more strong course away from treating the breakout label as part of the permanent décor."
+      ],
+      "emerging":[
+        ", so the "+w2Alias(t).mascot+" should probably stop seating him like an afterthought.",
+        ", and the room now has enough evidence in the role—without needing a grand speech—to move him closer to the centerpiece.",
+        ", which gives the table another real setting instead of another decorative napkin.",
+        ", leaving the "+w2Alias(t).mascot+" with a contributor whose chair is getting harder to move back toward the wall."
+      ],
+      "struggling":[
+        ", so the "+w2Alias(t).mascot+" can call it a slump without pretending the empty plate is fashionable.",
+        ", and the room has enough history to know this serving was too small even before anyone asks for the check.",
+        ", which makes the next course a response test rather than another opportunity to compliment the china.",
+        ", leaving the table with a player whose usual place setting promises more than Week 2 actually served."
+      ]
     },
     "mack-hollis":{
-      "established-star":p.name+" already had star credentials; for "+p.name+", Week 2 was less an introduction than another reminder to stop acting surprised when the building shakes.",
-      "struggling-star":p.name+" has an established-star résumé and a Week 2 line that looked nothing like it; keep "+p.name+"’s résumé and circle the slump.",
-      "star-level":p.name+" just gave "+team+" star-level work; the emergency is not finding another hero, it is making sure the rest of the lineup quits making "+p.name+" wear a cape every Sunday.",
-      "breakout":p.name+" is starting to look like a breakout instead of a hot box score; one more week of this role from "+p.name+" and the old expectations need to get thrown in the dumpster.",
-      "emerging":p.name+" is turning into an emerging weekly weapon, which is considerably more useful than being this week’s random loud noise.",
-      "struggling":p.name+" is in a real slump against his established level; the "+team+" alarm is not on fire yet, but somebody has definitely tested the siren for "+p.name+"."
+      "established-star":[
+        ", so "+team+" does not need a breakout siren; it needs the rest of the lineup to stop acting surprised when the building shakes.",
+        ", and the headline is confirmation: the established weapon fired again and everybody else needs to keep up.",
+        ", which means the big number belongs under STAR DOING STAR THINGS, not under NEW DISCOVERY in giant type.",
+        ", leaving "+team+" with a familiar source of noise and no excuse for the quieter outlets around him."
+      ],
+      "struggling-star":[
+        ", so keep the résumé and circle the slump before anybody starts yelling about a disappearing ceiling.",
+        ", which is exactly why the bad line gets angry font: stars are allowed bad Sundays, but nobody has to enjoy them.",
+        ", and the alarm is about the gap from the usual level, not some ridiculous claim that the player forgot how to play.",
+        ", leaving "+team+" with a proven star and one very loud request for the old volume to come back."
+      ],
+      "star-level":[
+        ", and "+team+" should be more worried about finding backup than finding another cape.",
+        ", which is the kind of Sunday that puts a player in the big headline and makes every quiet teammate look quieter.",
+        ", giving the "+w2Alias(t).mascot+" a legitimate hammer instead of another middling tool in the box.",
+        ", and the scoreboard finally had a number loud enough to make the rest of the lineup answer to it."
+      ],
+      "breakout":[
+        ", so one more week of this role and "+team+" can throw the old expectations straight into the dumpster.",
+        ", and the volume is getting too consistent to dismiss as somebody accidentally sitting on the horn.",
+        ", which is how a hot box score starts becoming a player the league actually has to plan around.",
+        ", leaving "+team+" one strong Sunday away from replacing the surprise label with a much louder expectation."
+      ],
+      "emerging":[
+        ", giving "+team+" another live wire instead of another name waiting for the stars to do everything.",
+        ", and that is considerably more useful than being this week’s random loud noise.",
+        ", which moves him closer to weekly weapon territory and farther from emergency cameo duty.",
+        ", leaving the "+w2Alias(t).mascot+" with another source of voltage opponents may actually have to respect."
+      ],
+      "struggling":[
+        ", so the "+team+" alarm is not on fire yet but somebody has absolutely tested the siren.",
+        ", and the drop is loud enough that even the victory-lap crowd has to stop and point at it.",
+        ", which puts the role on the Week 3 repair list without turning one bad Sunday into a funeral.",
+        ", leaving the "+w2Alias(t).mascot+" with a weak signal that needs fixing before it becomes the station’s permanent programming."
+      ]
     },
     "nora-voss":{
-      "established-star":p.name+" already owns an established-star reputation, so rivals cannot call this one a fluke without ignoring the history already sitting in front of them.",
-      "struggling-star":p.name+" came in with established-star expectations and handed rivals a Week 2 line well below them. The reputation survives; the screenshot does too.",
-      "star-level":p.name+" put up star-level work, which is inconvenient for every rival hoping the top of "+team+" was the easy part to mock.",
-      "breakout":p.name+" is building a breakout profile strong enough that rivals may need to retire the old scouting joke.",
-      "emerging":p.name+" is starting to look like an emerging weekly problem instead of a one-Sunday inconvenience.",
-      "struggling":p.name+" is running below the level his own history established, which gives rivals a real football criticism instead of a recycled punch line."
+      "established-star":[
+        ", so rivals calling the performance a fluke are mostly volunteering to ignore the history already sitting in front of them.",
+        ", which forces the rival thread to find a softer target than a player whose star reputation already has receipts.",
+        ", and opponents do not get to downgrade an established reputation simply because admitting the obvious ruins the joke.",
+        ", leaving rivals with the irritating task of acknowledging that the star label existed before this particular Sunday."
+      ],
+      "struggling-star":[
+        ", so the reputation survives even if the screenshot is going to live in the rival chat for another week.",
+        ", and rivals finally have a bad line worth using without pretending the longer star history disappeared.",
+        ", which makes this excellent heckling material and terrible grounds for rewriting an established player.",
+        ", leaving supporters to defend the résumé while rivals enjoy the one Sunday that did not resemble it."
+      ],
+      "star-level":[
+        ", which is inconvenient for every rival hoping the top of "+team+" was going to provide the easy punch line.",
+        ", and the rival thread now has to scroll farther down the lineup before the jokes get cheap.",
+        ", giving supporters one clean rebuttal before opponents start searching for softer Week 2 material.",
+        ", which makes the star-level label less flattering than factual and therefore much harder for rivals to argue with."
+      ],
+      "breakout":[
+        ", so rivals may need to retire the old scouting joke before it becomes evidence of their own laziness.",
+        ", and another Sunday like this would make the breakout label considerably harder to heckle away.",
+        ", which is how a player goes from convenient rival afterthought to somebody the group chat has to actually respect.",
+        ", leaving opponents one more strong week away from needing a new script entirely."
+      ],
+      "emerging":[
+        ", giving "+team+" an emerging weekly problem for rivals rather than a one-Sunday inconvenience.",
+        ", and the rival jokes get considerably worse when the supposedly secondary name keeps demanding real attention.",
+        ", which pushes opponents toward a more annoying conclusion: the role may actually be growing.",
+        ", leaving the rival thread with fewer reasons to call the contribution accidental and more reasons to plan for it."
+      ],
+      "struggling":[
+        ", giving rivals a real football criticism instead of forcing them to recycle a punch line.",
+        ", and the screenshot is useful because the recent standard gives the bad line actual context.",
+        ", which lets rivals point at a genuine slump without inventing a fake collapse around it.",
+        ", leaving supporters with a reasonable defense of the player and no reasonable defense of this particular Sunday."
+      ]
     }
   };
-  return (rows[rid]||rows["walter-mercer"])[status]||""
+
+  const leadBank=leads[status]||[],tailBank=(tails[rid]||tails["walter-mercer"])[status]||[];
+  if(!leadBank.length||!tailBank.length)return "";
+  const combo=w2PlayerStatusVariant(t,r,status,leadBank.length*tailBank.length),
+    lead=leadBank[combo%leadBank.length],tail=tailBank[Math.floor(combo/leadBank.length)%tailBank.length];
+  return lead+tail
 }
 
 function w2Week1DeltaRead(t,r,p,pp,role){

@@ -168,6 +168,7 @@ if(reportWeek===2){
         defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),
         starThreshold=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13,
         developing=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
+        earlyCareer=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)),
         productionJump=Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
           seasonAvg>=Math.max(prior*1.35,prior+2.5),
         weekJump=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&
@@ -175,8 +176,13 @@ if(reportWeek===2){
         meaningfulRole=(Number.isFinite(snapPct)&&snapPct>=0.55)||
           (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
           (Number.isFinite(snaps)&&snaps>=(defensive?32:35)),
-        historicalCeiling=Number.isFinite(prior)&&prior<starThreshold*1.4;
-      if(games>=6&&developing&&historicalCeiling&&meaningfulRole&&(productionJump||weekJump)){
+        established=Number.isFinite(prior)&&games>=8&&
+          (prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1))),
+        developmentalBreakout=earlyCareer&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&
+          productionJump&&meaningfulRole,
+        risingBreakout=!established&&developing&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&
+          meaningfulRole&&(productionJump||weekJump);
+      if(games>=6&&(developmentalBreakout||risingBreakout)){
         breakoutCandidates.push({t,p,age,years,snaps,priorSnapPg,snapPct,prior,seasonAvg,pts});
       }
     }

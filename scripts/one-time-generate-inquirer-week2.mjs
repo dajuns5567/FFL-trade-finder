@@ -2163,7 +2163,8 @@ function w2BuildSections(t,prev){
     players.push(w2S(t,r,"player-stat-"+i,(i===0?("Against "+w2DisplayTeam(opp)+", "+p.name+" led the "+alias.mascot+" with "+w2One(p.points)+" fantasy points"+w2StatClause(p)+"."):i===1?("Against "+w2DisplayTeam(opp)+", "+p.name+" added "+w2One(p.points)+" for the "+alias.mascot+w2StatClause(p)+"."):(alias.mascot+" also got "+w2One(p.points)+" from "+p.name+w2StatClause(p)+"."))));
     players.push(w2S(t,r,"player-read-"+i,w2PlayerColumnRead(t,r,p,pp,i,opp,won)+(acq&&Number(acq.season)===season&&Number(acq.week)===week?" The Week 2 trade that brought "+p.name+" in put the new arrival on the Sunday stage immediately.":"")));
   }
-  const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));\n  const rememberedAcquisitions=(t.trade_acquisitions||[]).map(x=>{
+  const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));
+  const rememberedAcquisitions=(t.trade_acquisitions||[]).map(x=>{
     const p=(t.starter_details||[]).find(p=>String(p?.id)===String(x?.player_id)||p?.name===x?.player_name);
     return{x,p};
   }).filter(({x,p})=>x?.player_name&&p&&!discussed.has(String(x.player_id))&&Number(p?.points)>=10)

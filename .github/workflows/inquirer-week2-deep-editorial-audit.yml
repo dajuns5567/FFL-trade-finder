@@ -69,6 +69,7 @@ jobs:
           path: |
             /tmp/week2-deep-editorial-audit.md
             /tmp/week2-deep-editorial-audit.json
+            /tmp/week2-inquirer.json
           retention-days: 14
       - name: Enforce deep editorial audit
         run: |

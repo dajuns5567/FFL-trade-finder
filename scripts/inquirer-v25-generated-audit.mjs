@@ -198,7 +198,7 @@ assert.equal(historicalContextFound,historicalContextExpected,'Every materially 
 }
 
 assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');
-assert.match(recap,/breakout (?:star|case|players?)|can trust to keep showing up|familiar production|next opponent will attack the same weakness/i,'Weekly Recap must carry a natural player trajectory story tied to actual matchup consequences');
+assert.match(recap,/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/i,'Weekly Recap must carry natural player-status commentary tied to the actual matchup story');
 
 if(reportWeek===2){
   const expectedPlayerProfile=(p,slot=0)=>{

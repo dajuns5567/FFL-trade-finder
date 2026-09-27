@@ -1890,7 +1890,7 @@ function w2ValueMarketRead(t,r,d,pct){
         down:[
           team+" lost "+amount+" points of roster value"+pctText+". A roster can survive that; it should not volunteer for a sequel.",
           team+" fell "+amount+" points on the market"+pctText+". That does not ruin the roster, but it does remove a little room for careless decisions.",
-          team+" shed "+amount+" points of roster value"+pctText+". The useful response is football, not pretending the number never happened.",
+          team+" gave back "+amount+" points of roster value"+pctText+". The useful response is football, not pretending the number never happened.",
           team+" moved down "+amount+" points in roster value"+pctText+". The market has filed a complaint in plain English: make the next week better."
         ]
       },
@@ -1905,7 +1905,7 @@ function w2ValueMarketRead(t,r,d,pct){
           team+" lost "+amount+" points of roster value"+pctText+". The market handed the back page a red arrow and, mercifully, not a eulogy.",
           team+" dropped "+amount+" points in roster value"+pctText+". Bad news, readable font. Nobody needs a siren yet.",
           team+" slid "+amount+" points on the market"+pctText+". The league thread has a screenshot now; management gets the next move.",
-          team+" shed "+amount+" points of roster value"+pctText+". Red ink is not a funeral, but it does ruin a perfectly good attempt to ignore the market."
+          team+" coughed up "+amount+" points of roster value"+pctText+". Red ink is not a funeral, but it does ruin a perfectly good attempt to ignore the market."
         ]
       },
       "nora-voss":{
@@ -1918,7 +1918,7 @@ function w2ValueMarketRead(t,r,d,pct){
         down:[
           team+" lost "+amount+" points of roster value"+pctText+". Rivals will enjoy the number. Management should be more interested in the names underneath it.",
           team+" fell "+amount+" points on the market"+pctText+". Opponents did not cause the decline; they will simply be unbearable about noticing it.",
-          team+" shed "+amount+" points of roster value"+pctText+". Rivals have a fresh screenshot. Management has the more difficult job of making it age badly.",
+          team+" watched "+amount+" points come off the roster price"+pctText+". Rivals have a fresh screenshot. Management has the more difficult job of making it age badly.",
           team+" moved down "+amount+" points in roster value"+pctText+". The market supplied rivals with material and management with a reason to look closer."
         ]
       }

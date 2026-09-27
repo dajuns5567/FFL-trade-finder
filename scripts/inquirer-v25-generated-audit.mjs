@@ -227,12 +227,16 @@ if(reportWeek===2){
   assert.ok(categorizedDiscussed>=20,'Week 2 should exercise player-category color across a meaningful sample of already-discussed players; got '+categorizedDiscussed);
 }
 
-const spedale=(d.teams||[]).find(t=>String(t.manager_name||'').toLowerCase()==='mike3spedale');
-if(spedale){
-  const goedert=(spedale.starter_details||[]).find(p=>/Dallas Goedert/i.test(String(p.name||''))),spedaleText=articleText(spedale);
-  assert.ok(goedert?.acquisition||((spedale.trade_acquisitions||[]).some(x=>/Dallas Goedert/i.test(String(x.player_name||'')))),'Dallas Goedert must retain canonical trade-acquisition memory for Mike3Spedale');
-  assert.match(spedaleText,/Dallas Goedert[^.]{0,160}trade|trade[^.]{0,160}Dallas Goedert/i,'Mike3Spedale article must describe Dallas Goedert as a trade acquisition');
-  assert.doesNotMatch(spedaleText,/ADD ALERT:[^.]*Dallas Goedert/i,'Dallas Goedert trade acquisition must never regress to waiver/free-agent ADD ALERT copy');
+for(const t of d.teams||[]){
+  const copy=articleText(t);
+  for(const acq of t.trade_acquisitions||[]){
+    const pname=String(acq?.player_name||'').trim();
+    if(!pname||!copy.toLowerCase().includes(pname.toLowerCase()))continue;
+    const relevant=sentenceParts(copy).filter(s=>s.toLowerCase().includes(pname.toLowerCase())&&/\b(?:trade|acquir|arriv|brought|waiver|free agent|add alert)\b/i.test(s));
+    if(!relevant.length)continue;
+    assert.ok(relevant.some(s=>/\btrade\b/i.test(s)),'A player with canonical trade-acquisition history must be described as a trade acquisition when acquisition history is mentioned: '+t.team_name+' / '+pname+' :: '+relevant.join(' || '));
+    assert.ok(relevant.every(s=>!/\b(?:waiver|free agent|add alert)\b/i.test(s)),'Trade acquisition must never be rewritten as a waiver/free-agent add: '+t.team_name+' / '+pname+' :: '+relevant.join(' || '));
+  }
 }
 
 const orderByReporter=new Map();

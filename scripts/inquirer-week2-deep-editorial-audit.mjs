@@ -154,6 +154,9 @@ function auditTeam(t){
   const meta=copy.match(metaRe)||[];
   if(meta.length)add('FAIL','meta-writing-language','Article contains prose about missing data/writing mechanics instead of football commentary.',[...new Set(meta)].join(' | '));
 
+  const forcedCategorySentence=/(?:^|[.!?]\s+)(?:Breakout player|Established star|Steady veteran|Young breakout|Proven star|Veteran player)\s+[A-Z][A-Za-z.'’’-]+(?:\s+[A-Z][A-Za-z.'’’-]+){0,3}\s+(?:keeps|held|spoiled|remained|delivered|is|was)\b/i;
+  if(forcedCategorySentence.test(copy))add('FAIL','forced-player-category-sentence','Player category is appended as a label sentence instead of being woven naturally into the surrounding commentary.',sentenceParts(copy).filter(x=>forcedCategorySentence.test(x)).join(' || '));
+
   for(const p of (t?.starter_details||[])){
     if(Number(p?.points)>0.05||!p?.name)continue;
     const sentences=sentenceParts(copy).filter(s=>s.toLowerCase().includes(String(p.name).toLowerCase()));
@@ -244,7 +247,7 @@ function auditRecap(){
   // Word count is a quality signal, not an exact target. Only flag major compression for review.
   if(wordCount(copy)<2250)add('WARN','recap-major-compression','Weekly recap is more than roughly 25% shorter than the 3,014-word pre-rewrite reference. Review for lost substance; do not pad to match a number.','current='+wordCount(copy)+'; reference=3014');
 
-  const recapMeta=/\b(?:roll call|useful examples?|the useful question|the useful part|the pick is about|desire to be cute|without turning .* into a spreadsheet|this paragraph|this section|this recap|the writer|the reporter|abstract asset lecture|not because i needed another adjective|not one argument copied)\b/i;
+  const recapMeta=/\b(?:roll call|useful examples?|the useful question|the useful part|the pick is about|desire to be cute|without turning .* into a spreadsheet|this paragraph|this section|this recap|the writer|the reporter|abstract asset lecture|not because i needed another adjective|not one argument copied|breakout player to watch because|current production has moved materially beyond|young enough for the role growth to matter even more)\b/i;
   const recapMetaHits=sentenceParts(copy).filter(x=>recapMeta.test(x));
   if(recapMetaHits.length)add('FAIL','recap-meta-language','Weekly recap contains editorial-process/meta language instead of in-world reporting.',recapMetaHits.join(' || '));
 
@@ -262,6 +265,18 @@ function auditRecap(){
   }
 
   const sections=overview?.sections||[];
+  const filchSection=sections.find(s=>String(s?.reporter?.id||'')==='nora-voss'||/Next Week:/i.test(String(s?.heading||'')));
+  const filchLead=String((filchSection?.paragraphs||[])[0]||'');
+  const filchNamedTeams=teams.filter(t=>filchLead.includes(String(t.team_name||'')));
+  if(filchNamedTeams.length>=2){
+    const a=filchNamedTeams[0],b=filchNamedTeams[1];
+    if(String(a.next_opponent_roster_id||'')!==String(b.roster_id)||String(b.next_opponent_roster_id||'')!==String(a.roster_id)){
+      add('FAIL','filch-week3-not-real-matchup','Filch compares Week 3 projections for two teams that are not actually scheduled against each other.',filchLead);
+    }
+  }else if(!/projection board is not clean enough/i.test(filchLead)){
+    add('FAIL','filch-week3-matchup-unverified','Filch’s featured Week 3 projection sentence could not be tied to a verified reciprocal matchup.',filchLead);
+  }
+
   const velvet=sections.find(s=>/velvet rope|entered the room/i.test(String(s?.heading||'')));
   const velvetCopy=(velvet?.paragraphs||[]).join(' ');
   const positiveMover=teams.filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0]||null;
@@ -480,7 +495,8 @@ const json={
   counts,
   recap:recapAudit,
   samples:teamAudits,
-  findings:allFindings
+  findings:allFindings,
+  generated_edition:edition
 };
 if(jsonPath)fs.writeFileSync(jsonPath,JSON.stringify(json,null,2)+'\n');
 

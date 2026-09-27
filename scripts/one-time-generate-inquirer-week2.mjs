@@ -2401,6 +2401,39 @@ function w2RoycingtonFootballPolish(t,body){
     ["The rest of the road changes personality based on what happens first.","Everything after Week 3 feels different depending on which result comes first."]
   ];
   for(const [from,to] of swaps)s=s.replaceAll(from,to);
+
+  const noMovePrefixes=[
+    "The Week 2 transaction log stayed empty for ",
+    "No completed Week 2 roster move came from ",
+    "Week 2 passed without a completed roster move from ",
+    "The roster wire shows no completed Week 2 move from ",
+    "Management left the Week 2 transaction line blank for ",
+    "No Week 2 add, drop or trade was completed by ",
+    "The Week 2 roster ledger has no completed move from ",
+    "Week 2 produced no completed roster move from "
+  ];
+  if(s.includes("There was no completed Week 2 roster move for "))s=s.replace("There was no completed Week 2 roster move for ",pick(noMovePrefixes));
+
+  const voiceSwaps=[
+    [" are next, which gives management one clean chance to change the lineup before the same complaint reaches the megaphone again."," are next; management gets one clean Sunday to make the obvious adjustment before the complaint hardens into habit."],
+    ["The projection board screams ","The forecast refuses to whisper: "],
+    ["Win Week 3 and ","Take care of Week 3 and "],
+    [" becomes the first fire alarm."," becomes the game that makes everybody nervous."],
+    [" more than Week 2 did."," more than Week 2 managed."],
+    [" on the forecast and "," on the Week 3 board; "],
+    [" projection edge, enough to put the favorite badge on the door."," projection edge, enough to justify the favorite label without pretending the game is settled."],
+    [" are the first punch, then "," come first; "],
+    [" shows up next, so management can either press it or explain why it ignored the light."," shows up next; management has to act on the warning before it becomes another Monday argument."],
+    ["Week 3 projects ","The Week 3 forecast settles at "],
+    ["The next stretch runs ","After this one, the schedule reads "],
+    ["Beat the first team and the noise stays fun; lose and the crowd starts treating ","Handle Week 3 and the swagger survives; lose and the crowd starts treating "],
+    [" because the top of the lineup produced and the rest did not leave much for ","; the top of the lineup produced, and that left "],
+    [" to erase on the scoreboard."," chasing too much scoreboard ground."],
+    [" are the clear projection favorite by "," carry the cleaner projection by "],
+    ["The numbers put ","The Week 3 math puts "],
+    ["Week 3 starts with ","The next stretch starts with "]
+  ];
+  for(const [from,to] of voiceSwaps)s=s.replaceAll(from,to);
   return s
 }
 function rewriteWeek2Team(t,prev){

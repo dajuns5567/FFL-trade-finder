@@ -2429,7 +2429,7 @@ function w2RoycingtonFootballPolish(t,body){
     ["Beat the first team and the noise stays fun; lose and the crowd starts treating ","Handle Week 3 and the swagger survives; lose and the crowd starts treating "],
     [" because the top of the lineup produced and the rest did not leave much for ","; the top of the lineup produced, and that left "],
     [" to erase on the scoreboard."," chasing too much scoreboard ground."],
-    [" are the clear projection favorite by "," carry the cleaner projection by "],
+    [" are the clear projection favorite by "," hold the projection edge at "],
     ["The numbers put ","The Week 3 math puts "],
     ["Week 3 starts with ","The next stretch starts with "]
   ];

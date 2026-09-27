@@ -203,7 +203,7 @@ if(reportWeek===2){
     'declining-veteran':/\b(?:declining|fading) veteran\b|\bveteran\b[^.]{0,120}\b(?:declin|slid|slipping|fading|trending down|shrinking|moving down)\w*/i,
     'star-level':/\b(?:star-level|star work|centerpiece-level)\b/i,
     'breakout':/\bbreakout\b/i,
-    'emerging':/\b(?:emerging|rising|weekly piece|weekly-relevant|live wire)\b/i,
+    'emerging':/\b(?:emerging|rising|weekly piece|weekly-ready|weekly-relevant|live wire)\b/i,
     'reliable-veteran':/\b(?:reliable veteran|steady veteran)\b/i,
     'reliable':/\b(?:reliab\w*|stead\w*|depend\w*)/i,
     'rookie':/\brookie\b/i,

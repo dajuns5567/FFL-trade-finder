@@ -2163,7 +2163,7 @@ function w2ProjectionOutlookRead(t,r,next){
       "The projection board screams "+team+" "+ownPts+", "+foe+" "+oppPts+". "+(fav?fav+" is the favorite by "+edge+" points.":"There is no projection favorite; the numbers are tied and apparently afraid of commitment.")+" Now somebody has to survive the actual noise.",
       team+" gets "+ownPts+" on the forecast and "+foe+" gets "+oppPts+". "+(fav?fav+" owns a "+edge+"-point projection edge, enough to put the favorite badge on the door.":"Nobody owns a projection edge, so keep the favorite badge in the drawer.")+" One busted lineup call can still set the whole thing on fire.",
       "Week 3 projects "+ownPts+" for "+team+" against "+oppPts+" for "+foe+". "+(fav?fav+" carries the "+edge+"-point favorite edge.":"The projection favorite is a shrug.")+" Put it on the marquee if you want; the margin is where the yelling starts.",
-      "The numbers put "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?fav+" is "+label+" by "+edge+".":"No projection favorite survives the math.")+" The spreadsheet has picked as much of a fight as it can; Sunday gets the chair."
+      "The numbers put "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?fav+" is "+label+" by "+edge+".":"No projection favorite survives the math.")+" The spreadsheet has picked as much of a fight as it can; Sunday gets the final word."
     ],
     "nora-voss":[
       team+" projects to "+ownPts+" and "+foe+" to "+oppPts+". "+(fav?fav+" gets the favorite label with a "+edge+"-point projection edge.":"There is no projection favorite, which deprives rivals of one easy screenshot.")+" Somebody still has to survive the result afterward.",

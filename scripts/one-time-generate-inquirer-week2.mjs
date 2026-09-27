@@ -675,28 +675,36 @@ function w2HistoricalColor(p,r,t=null,slot=0){
   return (rows[rid]||rows["walter-mercer"])[v]
 }
 
+
 function w2PlayerStatusColor(t,r,p,pp,slot=0){
   const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
-    rid=String(r?.id||"walter-mercer"),team=w2DisplayTeam(t?.team_name),role=Number(slot)||0;
+    rid=String(r?.id||"walter-mercer"),team=w2DisplayTeam(t?.team_name),role=Number(slot)||0,
+    pos=String(p?.position||"").toUpperCase(),years=Number(p?.years_exp),
+    defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),
+    starThreshold=pos==="QB"?18:pos==="RB"?14:pos==="WR"?14:pos==="TE"?11:defensive?11:13,
+    established=Number.isFinite(prior)&&games>=8&&(prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1)));
   if(!Number.isFinite(pts))return "";
   let status="";
-  if(games>=6&&Number.isFinite(prior)&&prior>=14&&pts>=Math.max(16,prior*.9))status="established-star";
-  else if(games>=6&&Number.isFinite(prior)&&prior>0&&prior<=12&&pts>=Math.max(15,prior+6))status="breakout";
-  else if(games>=6&&Number.isFinite(prior)&&prior>0&&pts>=12&&pts-prior>=5)status="emerging";
-  else if(games>=6&&Number.isFinite(prior)&&prior>=8&&pts<=prior*.55)status="struggling";
-  else if(role===0&&pts>=25)status="star-level";
+  if(established&&pts>=Math.max(starThreshold*.8,prior*.65))status="established-star";
+  else if(established&&pts<=prior*.55)status="struggling-star";
+  else if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<=starThreshold&&pts>=Math.max(starThreshold*1.15,prior+6))status="breakout";
+  else if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&pts>=starThreshold&&pts-prior>=5)status="emerging";
+  else if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&pts<=prior*.55)status="struggling";
+  else if(role===0&&pts>=starThreshold*1.6)status="star-level";
   else if(pts<=1.5&&role<=2)status="struggling";
   if(!status)return "";
   const rows={
     "walter-mercer":{
-      "established-star":p.name+" is already carrying an established star profile, so this production reads as confirmation rather than a surprise cameo.",
+      "established-star":p.name+" is already carrying an established-star profile, so this production reads as confirmation rather than a surprise cameo.",
+      "struggling-star":p.name+" came into the week with an established-star standard and landed well below it; that makes the quiet Sunday a form question, not a discovery about who he is.",
       "star-level":p.name+" delivered star-level work in Week 2; "+team+" now has to make sure the supporting lineup keeps that performance from becoming emergency labor.",
-      "breakout":p.name+" is building a legitimate breakout profile, not merely a one-line curiosity; the role is producing enough above the old level to change expectations.",
-      "emerging":p.name+" is moving from useful contributor toward an emerging weekly piece, which matters because "+team+" can plan around roles before it can plan around miracles.",
+      "breakout":p.name+" is building a legitimate breakout profile; the role is producing far enough above the old level to change expectations.",
+      "emerging":p.name+" is moving from useful contributor toward an emerging weekly piece, which matters because "+team+" can build around roles before it can build around miracles.",
       "struggling":p.name+" is playing below the standard his recent history established, so the concern is form and role rather than one bad decimal."
     },
     "tess-delaney":{
       "established-star":p.name+" is already dressed like an established star, and Week 2 did nothing to send that reputation back to coat check.",
+      "struggling-star":p.name+" arrived with an established-star place card and served something much smaller; one bad course does not revoke the reservation, but the table noticed.",
       "star-level":p.name+" gave the room star-level work; asking for another centerpiece is greed when the real question is who bothers to set the rest of the table.",
       "breakout":p.name+" is beginning to look like the breakout guest who was invited for dinner and somehow ended up owning the room.",
       "emerging":p.name+" has moved beyond pleasant surprise territory and into emerging-piece territory; the seating chart has to start accounting for him.",
@@ -704,6 +712,7 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
     },
     "mack-hollis":{
       "established-star":p.name+" already had star credentials. Week 2 was less an introduction than another reminder to stop acting surprised when the building shakes.",
+      "struggling-star":p.name+" has an established-star résumé and a Week 2 line that looked nothing like it. Keep the résumé; circle the slump.",
       "star-level":p.name+" just gave "+team+" star-level work. The emergency is not finding another hero; it is making sure the rest of the lineup quits making him wear a cape every Sunday.",
       "breakout":p.name+" is starting to look like a breakout instead of a hot box score. One more week of this role and the old expectations need to get thrown in the dumpster.",
       "emerging":p.name+" is turning into an emerging weekly weapon, which is considerably more useful than being this week’s random loud noise.",
@@ -711,6 +720,7 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
     },
     "nora-voss":{
       "established-star":p.name+" already owns an established-star reputation, so rivals cannot call this one a fluke without ignoring the history already sitting in front of them.",
+      "struggling-star":p.name+" came in with established-star expectations and handed rivals a Week 2 line well below them. The reputation survives; the screenshot does too.",
       "star-level":p.name+" put up star-level work, which is inconvenient for every rival hoping the top of "+team+" was the easy part to mock.",
       "breakout":p.name+" is building a breakout profile strong enough that rivals may need to retire the old scouting joke.",
       "emerging":p.name+" is starting to look like an emerging weekly problem instead of a one-Sunday inconvenience.",
@@ -719,7 +729,6 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
   };
   return (rows[rid]||rows["walter-mercer"])[status]||""
 }
-
 
 function w2Week1DeltaRead(t,r,p,pp,role){
   const rid=String(r?.id||""),prior=w2One(pp?.points),now=w2One(p?.points),rise=Number(p?.points)>Number(pp?.points),v=w2Cohort(t)%4,

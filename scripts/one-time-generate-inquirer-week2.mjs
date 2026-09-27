@@ -2163,7 +2163,12 @@ function w2BuildSections(t,prev){
     players.push(w2S(t,r,"player-stat-"+i,(i===0?("Against "+w2DisplayTeam(opp)+", "+p.name+" led the "+alias.mascot+" with "+w2One(p.points)+" fantasy points"+w2StatClause(p)+"."):i===1?("Against "+w2DisplayTeam(opp)+", "+p.name+" added "+w2One(p.points)+" for the "+alias.mascot+w2StatClause(p)+"."):(alias.mascot+" also got "+w2One(p.points)+" from "+p.name+w2StatClause(p)+"."))));
     players.push(w2S(t,r,"player-read-"+i,w2PlayerColumnRead(t,r,p,pp,i,opp,won)+(acq&&Number(acq.season)===season&&Number(acq.week)===week?" The Week 2 trade that brought "+p.name+" in put the new arrival on the Sunday stage immediately.":"")));
   }
-  const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));\n  const rememberedAcquisitions=(t.trade_acquisitions||[]).filter(x=>{if(!x?.player_name||discussed.has(String(x.player_id)))return false;if(String(x.player_name)==="Dallas Goedert")return true;if(Number(x?.season)!==season||Number(x?.week)!==week)return false;const p=(t.starter_details||[]).find(p=>String(p?.id)===String(x.player_id)||p?.name===x.player_name);return Number(p?.points)>=12}).slice(0,1);
+  const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));\n  const rememberedAcquisitions=(t.trade_acquisitions||[]).map(x=>{
+    const p=(t.starter_details||[]).find(p=>String(p?.id)===String(x?.player_id)||p?.name===x?.player_name);
+    return{x,p};
+  }).filter(({x,p})=>x?.player_name&&p&&!discussed.has(String(x.player_id))&&Number(p?.points)>=10)
+    .sort((a,b)=>Number(b.p?.points)-Number(a.p?.points)||Number(b.x?.season)-Number(a.x?.season)||Number(b.x?.week)-Number(a.x?.week))
+    .slice(0,1).map(({x})=>x);
   for(let i=0;i<rememberedAcquisitions.length;i++){
     const acq=rememberedAcquisitions[i],out=(acq.outgoing_player_names||[]).filter(Boolean);
     const variants=[

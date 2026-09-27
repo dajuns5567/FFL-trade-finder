@@ -150,7 +150,7 @@ function auditTeam(t){
   const defenseBad=copy.match(/\b(?:started|starting|start)\s+(?:a|the|your)?\s*(?:team\s+)?defen[cs]e\b|\bD\/?ST\b|\bteam defen[cs]e\b/gi)||[];
   if(defenseBad.length)add('FAIL','league-format-team-defense','Team-defense language conflicts with this league, which starts IDPs rather than a team defense.',defenseBad.join(' | '));
 
-  const metaRe=/\b(?:a useful NFL role without a complete stat line|without a complete stat line|complete player-level scoring benchmark|player-level scoring benchmark|invent(?:ing)? a matchup-specific story|context available|data is unavailable|historical player snapshot unavailable|overall value exchanged:\s*n\/a|the useful question|the next edition)\b/gi;
+  const metaRe=/\b(?:a useful NFL role without a complete stat line|without a complete stat line|complete player-level scoring benchmark|player-level scoring benchmark|invent(?:ing)? a matchup-specific story|context available|data is unavailable|historical player snapshot unavailable|overall value exchanged:\s*n\/a|the useful question|the useful part|the next edition|abstract asset lecture|not because i needed another adjective|this paragraph|this section|this article|the writer|the reporter)\b/gi;
   const meta=copy.match(metaRe)||[];
   if(meta.length)add('FAIL','meta-writing-language','Article contains prose about missing data/writing mechanics instead of football commentary.',[...new Set(meta)].join(' | '));
 
@@ -169,6 +169,11 @@ function auditTeam(t){
 
   const outlook=section(t)('outlook');
   const outlookCopy=(outlook?.paragraphs||[]).join(' ');
+  if(Number.isFinite(Number(t?.next_projected))&&Number.isFinite(Number(t?.next_opponent_projected))){
+    const own=Number(t.next_projected).toFixed(1),opp=Number(t.next_opponent_projected).toFixed(1);
+    if(!outlookCopy.includes(own)||!outlookCopy.includes(opp))add('FAIL','week3-projected-totals-missing','Next Week outlook must state both teams’ projected scoring totals when available.','expected '+own+' and '+opp+'; '+outlookCopy);
+    if(!/\b(?:favorite|favored|edge|dead even|projection favorite)\b/i.test(outlookCopy))add('FAIL','week3-projection-not-interpreted','Next Week outlook states projections but does not explain which team appears favored or how close the edge is.',outlookCopy);
+  }
   if(sameDivisionNext(t)){
     const stakes=/\b(?:head-to-head|division lead|division race|separation|playoff|postseason|guarantee|automatic|tiebreak|direct rival|limited|inside track|control of the division|two-game swing)\b/i;
     if(!stakes.test(outlookCopy))add('FAIL','divisional-week3-stakes','Next opponent is a division rival, but the outlook does not translate that into concrete team-context stakes.',outlookCopy);
@@ -239,7 +244,7 @@ function auditRecap(){
   // Word count is a quality signal, not an exact target. Only flag major compression for review.
   if(wordCount(copy)<2250)add('WARN','recap-major-compression','Weekly recap is more than roughly 25% shorter than the 3,014-word pre-rewrite reference. Review for lost substance; do not pad to match a number.','current='+wordCount(copy)+'; reference=3014');
 
-  const recapMeta=/\b(?:roll call|useful examples?|the useful question|the pick is about|desire to be cute|without turning .* into a spreadsheet|this paragraph|this section|this recap|the writer|the reporter)\b/i;
+  const recapMeta=/\b(?:roll call|useful examples?|the useful question|the useful part|the pick is about|desire to be cute|without turning .* into a spreadsheet|this paragraph|this section|this recap|the writer|the reporter|abstract asset lecture|not because i needed another adjective|not one argument copied)\b/i;
   const recapMetaHits=sentenceParts(copy).filter(x=>recapMeta.test(x));
   if(recapMetaHits.length)add('FAIL','recap-meta-language','Weekly recap contains editorial-process/meta language instead of in-world reporting.',recapMetaHits.join(' || '));
 
@@ -257,19 +262,21 @@ function auditRecap(){
   }
 
   const sections=overview?.sections||[];
-  const twoWeeks=sections.find(s=>/two weeks/i.test(String(s?.heading||'')));
+  const twoWeeks=[...sections,...sections.flatMap(s=>s?.blocks||[])].find(s=>/two weeks/i.test(String(s?.heading||'')));
   if(twoWeeks){
-    const twoWeeksCopy=(twoWeeks?.paragraphs||[]).join(' ');
+    const twoWeeksCopy=(twoWeeks?.paragraphs||[]).join(' '),twoWeeksWords=wordCount(twoWeeksCopy);
     const universalDivision=sentenceParts(twoWeeksCopy).filter(x=>/\b(?:division game|division test|head-to-head division|inside AFC|inside NFC|direct rival|AFC EAST|AFC NORTH|AFC SOUTH|AFC WEST|NFC EAST|NFC NORTH|NFC SOUTH|NFC WEST)\b/i.test(x));
     if(universalDivision.length)add('FAIL','two-weeks-division-overuse','“What two weeks are starting to say” should explain Weeks 1-2, not preview the universal Week 3 divisional slate.',universalDivision.join(' || '));
+    if(twoWeeksWords>550)add('FAIL','two-weeks-too-long','“What two weeks are starting to say” has become too long for a league-level synthesis; use selective examples and broader context instead of mini team articles.','words='+twoWeeksWords);
+    const mentioned=namesMentioned(twoWeeksCopy,teamNames);
+    if(mentioned.length>8)add('FAIL','two-weeks-too-team-by-team','“What two weeks are starting to say” names too many teams and is drifting back into a league roll call.','teams='+mentioned.length+'; '+mentioned.join(', '));
+    const nums=twoWeeksCopy.match(/\b\d+(?:\.\d+)?%?\b/g)||[],density=nums.length/Math.max(1,twoWeeksWords)*100;
+    if(density>3.2)add('WARN','two-weeks-stat-dense','League synthesis is carrying too many numbers relative to commentary. Keep only figures that support the broader Week 1-2 read.','numbers='+nums.length+'; words='+twoWeeksWords+'; per100='+density.toFixed(1));
     for(const p of twoWeeks?.paragraphs||[]){
       const namedTeams=namesMentioned(p,teamNames);
-      const namedPlayers=namesMentioned(p,playerNames);
-      if(namedTeams.length>=4&&namedPlayers.length===0&&contextSignals(p)<2){
-        add('WARN','two-weeks-generic-list','“What two weeks are starting to say” lists many teams but gives little team-specific evidence/context. Each claim should be tied to actual Week 1-2 scoring shape, player role, MIDA, management or roster context.',p);
-      }
+      if(namedTeams.length>=4&&contextSignals(p)<2)add('WARN','two-weeks-generic-list','League synthesis lists many teams without enough broader context.',p);
     }
-  }
+  }else add('FAIL','two-weeks-missing','Could not find the “What Two Weeks Are Starting to Say” recap block.');
 
   const board=divisionBoardText();
   if(board){
@@ -409,7 +416,8 @@ const report=[
   '- Catch player sentences that contradict the player’s actual fantasy output or talk about missing data/stat-line mechanics.',
   '- Audit fan sentiment for concrete, varied, sarcastic supporter behavior rather than a generic mood adjective.',
   '- Check divisional Week 3 outlooks for context-aware stakes (race leverage, head-to-head swing, playoff path), not merely “division games matter.”',
-  '- Preserve or exceed the user-captured pre-rewrite word-count baselines while improving style; slightly longer is acceptable.',
+  '- Require both Week 3 projected scoring totals and an in-voice explanation of which team the projection favors when those totals are available.',
+  '- Treat word count as a depth diagnostic rather than a target; remove repetition without collapsing reporting substance.',
   '',
   renderFindings('Weekly recap findings',recapAudit.findings),
   ...teamAudits.map(x=>renderFindings(x.reporter?.name+' / '+x.team+' findings',x.findings)),

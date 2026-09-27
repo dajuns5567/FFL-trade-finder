@@ -91,6 +91,8 @@ assert.ok(leagueHub.includes("buildPlayoffContexts")&&leagueHub.includes("elimin
 const forwardSource=fs.readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
 assert.ok(forwardSource.includes('FORWARD_INQUIRER_VERSION=31')&&forwardSource.includes('FORWARD_EDITORIAL_REVISION=14'),'Forward newsroom must preserve the approved V31 / editorial revision 14 baseline');
 assert.ok(forwardSource.includes('same-team-copy-forward')&&forwardSource.includes('cross-team-copy-scaffold')&&forwardSource.includes('recap-copy-forward'),'Forward newsroom must reject same-team, cross-team, and recap copy-forward repetition');
+assert.ok(forwardSource.includes('forwardCrossReporterPhraseOffenders')&&forwardSource.includes('cross-reporter-phrase-scaffold'),'Forward newsroom must reject long editorial phrases that repeat across different reporter identities');
+assert.ok(forwardSource.includes('function w2PreviousWeekBridge')&&!forwardSource.includes('two straight losses and a repair job that can no longer wait'),'Forward newsroom must keep previous-week context reporter-specific instead of restoring the shared record-state bridge');
 assert.ok(forwardSource.includes('The Playoff Race Is No Longer Background Noise')&&forwardSource.includes('Who Advanced and Who Went Home'),'Forward newsroom must evolve from playoff-race coverage into round-specific advancement/elimination coverage');
 const scheduledSource=fs.readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
 const netlifyConfig=fs.readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
@@ -112,6 +114,8 @@ assert.ok(week2Generator.includes('const season=2026, week=2'),'Week 2 generator
 assert.ok(week2Generator.includes('published_locked:true')&&week2Generator.includes('context_snapshot_through_week:2'),'Bundled Week 2 must be immutable and frozen through Week 2');
 assert.ok(week2Generator.includes("if(matchups.length!==32)")&&week2Generator.includes('Week 2 player scoring is incomplete in Sleeper'),'Week 2 generator must refuse incomplete matchup/scoring data');
 assert.ok(week2Generator.includes('previousByRoster')&&week2Generator.includes('week1Preload2026'),'Week 2 generator must preserve Week 1 editorial continuity without rewriting Week 1');
+assert.ok(week2Generator.includes('function w2PreviousWeekBridge')&&!week2Generator.includes('two straight losses and a repair job that can no longer wait'),'Week 2 generator must vary prior-week bridge language by reporter instead of sharing one record-state sentence');
+assert.ok(week2Generator.includes('turns every unresolved flaw into a louder question'),'Roycington polish must separate his road-to-next-week phrasing from Tilly’s inherited panic scaffold');
 assert.ok(source.includes('nextOpponentLeagueContextV37')&&source.includes('division_rank')&&source.includes('same_record_teams'),'Next-week reporting must discuss opponent form and current division-race position');
 assert.ok(source.includes('t.division_context||{}')&&source.includes('selfLeading=leaders.some')&&source.includes('tied for the ${division} lead'),'Next-week division roundup must call out when the article team shares its division lead');
 assert.ok(source.includes("strength(next)==='strong'&&laterSoft.length")&&source.includes('highest-leverage game in the short schedule window'),'Heavyweight-before-soft-games outlook must carry expanded schedule commentary');

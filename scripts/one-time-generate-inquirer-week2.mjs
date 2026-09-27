@@ -690,8 +690,8 @@ function w2PlayerStatusProfile(p,slot=0){
   const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
     seasonAvg=Number(p?.season_avg),age=Number(p?.age),years=Number(p?.years_exp),
     pos=String(p?.position||"").toUpperCase(),role=Number(slot)||0,
-    snaps=Number(p?.current_snap_count),priorSnapPg=Number(p?.prior_season_snaps_per_game),
-    snapPct=Number(p?.current_snap_pct),
+    snaps=p?.current_snap_count==null?null:Number(p.current_snap_count),priorSnapPg=p?.prior_season_snaps_per_game==null?null:Number(p.prior_season_snaps_per_game),
+    snapPct=p?.current_snap_pct==null?null:Number(p.current_snap_pct),
     defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),
     starThreshold=pos==="QB"?18:pos==="RB"?14:pos==="WR"?14:pos==="TE"?11:defensive?11:13,
     young=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
@@ -720,24 +720,24 @@ function w2PlayerStatusProfile(p,slot=0){
 }
 function w2BreakoutContext(p,profile){
   if(!profile||profile.status!=="breakout")return"";
-  const bits=[];
-  if(Number.isFinite(profile.age)&&profile.age<=25)bits.push("At age "+Math.round(profile.age));
-  else if(Number.isFinite(profile.years)&&profile.years<=2)bits.push("Still early in his NFL career");
-  const snapRole=Number.isFinite(profile.snapPct)
-    ?Math.round(profile.snapPct*100)+"% of the available snaps"
+  const clauses=[];
+  if(Number.isFinite(profile.age)&&profile.age<=25)clauses.push("only "+Math.round(profile.age));
+  else if(Number.isFinite(profile.years)&&profile.years<=2)clauses.push("still early in his NFL career");
+  const snapRole=Number.isFinite(profile.snapPct)&&profile.snapPct>0
+    ?Math.round(profile.snapPct*100)+"% of the defensive/offensive snaps"
     :Number.isFinite(profile.snaps)?Math.round(profile.snaps)+" snaps":null;
-  if(snapRole&&Number.isFinite(profile.priorSnapPg)&&profile.priorSnapPg>0&&profile.snaps>=profile.priorSnapPg*1.1){
-    bits.push("the role has grown to "+snapRole+" from "+profile.priorSnapPg.toFixed(1)+" snaps per game last season");
+  if(snapRole&&Number.isFinite(profile.priorSnapPg)&&profile.priorSnapPg>0&&Number.isFinite(profile.snaps)&&profile.snaps>=profile.priorSnapPg*1.1){
+    clauses.push("his Week 2 role grew to "+snapRole+" after "+profile.priorSnapPg.toFixed(1)+" snaps per game last season");
   }else if(snapRole&&profile.roleLift){
-    bits.push("the current opportunity is already substantial at "+snapRole);
+    clauses.push("the current opportunity is already substantial at "+snapRole);
   }
   if(Number.isFinite(profile.seasonAvg)&&Number.isFinite(profile.prior)&&profile.prior>0){
-    bits.push("his two-week average of "+w2One(profile.seasonAvg)+" fantasy points is well above last season’s "+w2One(profile.prior));
+    clauses.push("his two-week average is "+w2One(profile.seasonAvg)+" fantasy points after "+w2One(profile.prior)+" per game last season");
   }
-  if(!bits.length)return"";
-  return bits.join(", ")+"."
+  if(!clauses.length)return"";
+  const first=clauses.shift();
+  return p.name+" is "+first+(clauses.length?", "+w2Natural(clauses):"")+"."
 }
-
 function w2PlayerStatusColor(t,r,p,pp,slot=0){
   const pts=Number(p?.points),rid=String(r?.id||"walter-mercer"),team=w2DisplayTeam(t?.team_name),
     profile=w2PlayerStatusProfile(p,slot),status=profile.status;
@@ -765,8 +765,8 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
     "breakout":[
       p.name+" is beginning to build a real breakout profile",
       "Week 2 pushed "+p.name+" farther into breakout territory",
-      p.name+" is no longer easy to dismiss as a one-week curiosity",
-      "The old expectation on "+p.name+" is starting to look too small for the role now showing up"
+      p.name+" is no longer easy to dismiss as a one-week curiosity; the breakout case is becoming real",
+      "The breakout case for "+p.name+" starts with an old expectation that now looks too small for the role showing up"
     ],
     "emerging":[
       p.name+" is moving from useful contributor toward an emerging weekly piece",

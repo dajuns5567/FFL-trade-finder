@@ -34,6 +34,8 @@ jobs:
           node --check netlify/functions/inquirer-narrative-v17.mjs
           node --check netlify/functions/inquirer-reporters.mjs
           node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/inquirer-editorial-v31.mjs
+          node --check netlify/functions/inquirer-publish-scheduled.mjs
           node --check scripts/one-time-generate-inquirer-week1.mjs
           node --check scripts/one-time-generate-inquirer-week2.mjs
           node --check scripts/inquirer-v25-audit.mjs

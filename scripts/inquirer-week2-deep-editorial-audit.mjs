@@ -269,11 +269,27 @@ function auditRecap(){
   if(positiveMover){
     if(!velvetCopy.includes(String(positiveMover.team_name||'')))add('FAIL','velvet-biggest-positive-mover-missing','“Week 2 Has Entered the Room” must name the league’s biggest positive value mover from value history.',String(positiveMover.team_name)+' delta='+one(positiveMover.value_history_week.delta));
     if(!/biggest positive value mover/i.test(velvetCopy))add('WARN','velvet-positive-mover-context-thin','The positive value leader is named but not clearly identified as the biggest positive mover.',velvetCopy);
+    const risers=(positiveMover?.value_history_player_movers?.risers||[]).filter(x=>Number(x?.delta)>0).slice(0,3);
+    if(!risers.length)add('FAIL','velvet-positive-player-risers-missing-data','Biggest positive team mover must carry its same-window player risers into the Week 2 packet.',String(positiveMover.team_name));
+    for(const p of risers){
+      if(!velvetCopy.includes(String(p.player_name||'')))add('FAIL','velvet-positive-player-riser-not-mentioned','“Week 2 Has Entered the Room” must name the biggest player risers for the team with the largest positive value move.',String(positiveMover.team_name)+' / '+String(p.player_name)+' delta='+one(p.delta));
+      const signed='+'+Math.round(Number(p.delta)).toLocaleString('en-US');
+      if(!velvetCopy.includes(signed))add('FAIL','velvet-positive-player-riser-delta-missing','Positive mover player commentary must show the player’s same-window value change, not merely the name.',String(p.player_name)+' expected '+signed);
+    }
   }
   if(negativeMover){
     if(!velvetCopy.includes(String(negativeMover.team_name||'')))add('FAIL','velvet-biggest-negative-mover-missing','“Week 2 Has Entered the Room” must name the league’s biggest negative value mover from value history.',String(negativeMover.team_name)+' delta='+one(negativeMover.value_history_week.delta));
     if(!/biggest negative value mover/i.test(velvetCopy))add('WARN','velvet-negative-mover-context-thin','The negative value leader is named but not clearly identified as the biggest negative mover.',velvetCopy);
+    const fallers=(negativeMover?.value_history_player_movers?.fallers||[]).filter(x=>Number(x?.delta)<0).slice(0,3);
+    if(!fallers.length)add('FAIL','velvet-negative-player-fallers-missing-data','Biggest negative team mover must carry its same-window player fallers into the Week 2 packet.',String(negativeMover.team_name));
+    for(const p of fallers){
+      if(!velvetCopy.includes(String(p.player_name||'')))add('FAIL','velvet-negative-player-faller-not-mentioned','“Week 2 Has Entered the Room” must name the biggest player fallers for the team with the largest negative value move.',String(negativeMover.team_name)+' / '+String(p.player_name)+' delta='+one(p.delta));
+      const signed=Math.round(Number(p.delta)).toLocaleString('en-US');
+      if(!velvetCopy.includes(signed))add('FAIL','velvet-negative-player-faller-delta-missing','Negative mover player commentary must show the player’s same-window value change, not merely the name.',String(p.player_name)+' expected '+signed);
+    }
   }
+
+  if(/\broom (?:will|gets?|got|has been) rearrang\w*\b|\broom rearranges itself\b/i.test(copy))add('FAIL','repeated-room-rearrangement-scaffold','Retired repeated “room/rearrangement” scaffold survived generated prose.',copy.match(/[^.]*room[^.]*rearrang[^.]*/i)?.[0]||'');
 
   const twoWeeks=[...sections,...sections.flatMap(s=>s?.blocks||[])].find(s=>/two weeks/i.test(String(s?.heading||'')));
   if(twoWeeks){

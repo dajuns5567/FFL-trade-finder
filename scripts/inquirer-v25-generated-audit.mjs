@@ -52,6 +52,15 @@ if(reportWeek===2){
     const ledeCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='lede').flatMap(s=>s?.paragraphs||[]).join(' ');
     assert.doesNotMatch(ledeCopy,metaJokeLede,'Team ledes should deliver sarcasm directly instead of describing the joke: '+t.team_name);
   }
+  const scheduleDifficultyLanguage=/stiffen|rougher|difficult stretch|hard part|hard stretch|hardens|gauntlet|resistance|heavy part|friendlier|softer|manageable|forgiving|breathing room|favorable|mercy|soft landing|mixed|split schedule|split the|uneven|difficulty level|lands in the middle|split screen/i;
+  for(const t of d.teams||[]){
+    const up=(t?.upcoming_opponents||[]).slice().sort((a,b)=>Number(a.week)-Number(b.week)),later=up.slice(1,3);
+    if(!later.length)continue;
+    const outlook=(t?.inquirer_article?.sections||[]).find(s=>String(s?.kind||'')==='outlook'),road=String(outlook?.paragraphs?.at?.(-2)||'');
+    assert.match(road,scheduleDifficultyLanguage,'Next-week outlook must interpret the difficulty of the schedule stretch behind the upcoming game: '+t.team_name);
+    for(const x of later)assert.ok(road.toLowerCase().includes(String(x.team_name||'').toLowerCase()),'Schedule-stretch read must name the later opponent: '+t.team_name+' -> '+String(x.team_name||''));
+    assert.match(road,/Week 3|win|bank|beat|handle/i,'Schedule-stretch read must explain why the upcoming result matters: '+t.team_name);
+  }
   const forcedCategorySentence=/(?:^|[.!?]\s+)(?:Breakout player|Established star|Steady veteran|Young breakout|Proven star|Veteran player)\s+[A-Z][A-Za-z.'’’-]+(?:\s+[A-Z][A-Za-z.'’’-]+){0,3}\s+(?:keeps|held|spoiled|remained|delivered|is|was)\b/i;
   for(const t of d.teams||[])assert.doesNotMatch(articleText(t),forcedCategorySentence,'Player category must be woven into commentary instead of appended as a standalone label sentence: '+t.team_name);
 

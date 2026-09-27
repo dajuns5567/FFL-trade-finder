@@ -1461,36 +1461,116 @@ function w2OutlookLead(t,r,next,nrecord,nctx,ndiv){
   };
   return (rows[rid]||rows["walter-mercer"])[v]
 }
-function w2RoadRead(t,r,next,later){
-  const rid=String(r?.id||""),a=w2Alias(t),rest=w2Natural(later.map(x=>x.team_name)),first=later[0]?.team_name||"the following opponent",v=w2Cohort(t)%4;
-  const rows={
-    "walter-mercer":[
-      "After "+next+", "+a.mascot+" see "+rest+". Bank Week 3 and "+first+" becomes a chance to build; drop it and the same opponent becomes an early recovery assignment. That sequence makes the next result more valuable than any isolated projection.",
-      next+" comes before "+rest+". A win gives "+t.team_name+" room to evaluate the following stretch calmly; a loss makes "+first+" carry immediate repair pressure. The practical difference is whether the later games begin from strength or from urgency.",
-      "The road beyond "+next+" runs through "+rest+". Winning first lets the "+a.mascot+" attack that sequence from strength; losing first makes "+first+" matter sooner than anyone planned. Week 3 therefore changes the meaning of the games behind it, not just the record in front of them.",
-      "The next three names are "+next+", then "+rest+". For "+a.mascot+", Week 3 decides whether "+first+" arrives as an opportunity or an obligation. That is why the first game in the sequence deserves more attention than the softer names behind it."
-    ],
-    "tess-delaney":[
-      "After "+next+", the guest list reads "+rest+". Win the first appointment and "+first+" can arrive without emergency seating; lose it and every comfortable assumption gets renegotiated. The schedule looks much more elegant when Week 3 does not leave the table wobbling.",
-      next+" enters before "+rest+". A pleasant Week 3 leaves the "+a.mascot+" enough room to host "+first+" calmly; a loss makes the next reservation considerably less civilized. One result decides whether the later stretch feels luxurious or necessary.",
-      "The schedule after "+next+" brings "+rest+". The "+a.mascot+" can keep the good china out with a win, or start counting chairs nervously before "+first+" with a loss. Week 3 sets the tone for every appointment that follows it.",
-      "Beyond "+next+", "+rest+" are waiting. One win keeps the room composed; one loss turns "+first+" into the sort of appointment nobody enjoys pretending is casual. The first result decides whether the later games feel like opportunities or obligations."
-    ],
-    "mack-hollis":[
-      "After "+next+" come "+rest+". Win Week 3 and "+first+" is another target; lose it and "+first+" becomes the first fire alarm. One Sunday decides whether the next stretch sounds like momentum or an emergency broadcast.",
-      next+" is the first punch, then "+rest+" follow. The "+a.mascot+" can make that stretch look fun with a win or make "+first+" feel mandatory with a loss. Week 3 is the volume knob for everything behind it.",
-      "The next stretch runs "+next+", then "+rest+". Beat the first team and the noise stays fun; lose and the crowd starts treating "+first+" like a rescue mission. That is how one result turns a schedule into either runway or rubble.",
-      "Week 3 starts with "+next+" before "+rest+". Win it and the "+a.mascot+" get to attack; lose it and "+first+" shows up carrying everybody’s panic. The rest of the road changes personality based on what happens first."
-    ],
-    "nora-voss":[
-      "After "+next+", the rivals on deck are "+rest+". A Week 3 win makes "+first+" another chance to brag; a loss gives that matchup considerably sharper teeth. Rivals know the difference between chasing a winner and kicking a team already wobbling.",
-      next+" comes first, with "+rest+" behind it. Win now and rivals have to wait; lose and "+first+" gets handed a ready-made pressure joke. Week 3 decides which side of that joke the "+a.mascot+" occupy.",
-      "The road beyond "+next+" includes "+rest+". The "+a.mascot+" can make rivals chase them with a win, or hand "+first+" an easy storyline by losing first. One result decides whether the later schedule supplies swagger or ammunition.",
-      "The sequence is "+next+", then "+rest+". Beat "+next+" and the next rival has less material; lose and "+first+" arrives with the joke half-written. Week 3 decides whether the rest of the road is a rebuttal or a setup."
-    ]
-  };
-  return (rows[rid]||rows["walter-mercer"])[v]
+function w2OpponentScheduleGrade(x){
+  const rank=Number(x?.context?.standings_rank),playoff=Number(x?.mida?.playoff),rec=x?.context?.record||{},
+    wins=Number(rec.wins),losses=Number(rec.losses),played=(Number.isFinite(wins)?wins:0)+(Number.isFinite(losses)?losses:0);
+  let score=0,weight=0;
+  if(Number.isFinite(rank)&&rank>=1&&rank<=32){score+=((33-rank)/32)*0.55;weight+=0.55}
+  if(Number.isFinite(playoff)){score+=(Math.max(0,Math.min(100,playoff))/100)*0.30;weight+=0.30}
+  if(played>0){score+=((Number.isFinite(wins)?wins:0)/played)*0.15;weight+=0.15}
+  const strength=weight?score/weight:0.5;
+  return{strength,label:strength>=0.62?"hard":strength<=0.38?"soft":"middle"}
 }
+function w2ScheduleOpponentLabel(x){
+  const name=w2DisplayTeam(x?.team_name||"opponent"),rec=x?.context?.record||{},wins=Number(rec.wins),losses=Number(rec.losses),
+    rank=Number(x?.context?.standings_rank),parts=[];
+  if(Number.isFinite(wins)&&Number.isFinite(losses))parts.push(String(wins)+"-"+String(losses));
+  if(Number.isFinite(rank)&&rank>=1&&rank<=32)parts.push("No. "+String(rank));
+  return name+(parts.length?" ("+parts.join(", ")+")":"")
+}
+function w2ScheduleStretchRead(t,r,next,later){
+  const rid=String(r?.id||"walter-mercer"),team=w2DisplayTeam(t.team_name),a=w2Alias(t),
+    graded=(later||[]).map(x=>({...x,...w2OpponentScheduleGrade(x)})),
+    hard=graded.filter(x=>x.label==="hard"),soft=graded.filter(x=>x.label==="soft"),
+    avg=graded.length?graded.reduce((n,x)=>n+x.strength,0)/graded.length:0.5,
+    profile=hard.length===graded.length||avg>=0.61?"hard":soft.length===graded.length||avg<=0.39?"soft":"mixed",
+    detail=w2Natural(graded.map(w2ScheduleOpponentLabel)),first=w2DisplayTeam(graded[0]?.team_name||"the following opponent"),
+    v=w2Hash(team+"|schedule-stretch|"+rid+"|"+profile)%4;
+  const rows={
+    "walter-mercer":{
+      hard:[
+        "The schedule stiffens after "+next+": "+detail+". That makes Week 3 especially valuable. Bank it now and "+a.mascot+" enter the hard part from strength instead of asking the hard part to rescue them.",
+        "Behind "+next+" sits the rougher part of the road: "+detail+". A Week 3 win buys "+team+" margin before that resistance arrives; a loss turns "+first+" into an immediate recovery assignment.",
+        detail+" are waiting after "+next+", and the numbers grade that as a difficult stretch. Week 3 is the clean place to build a cushion before the schedule starts charging more for mistakes.",
+        "The road does not get friendlier after "+next+"; it runs through "+detail+". Winning Week 3 matters because "+team+" would rather carry momentum into that stretch than ask it for a bailout."
+      ],
+      soft:[
+        "The schedule loosens after "+next+": "+detail+". That makes Week 3 useful in a different way—win it and "+a.mascot+" can turn the softer stretch into runway; lose it and a favorable patch starts with unnecessary repair work.",
+        "There is some breathing room behind "+next+" in "+detail+". Bank Week 3 and "+team+" gets a chance to stack wins against the more manageable part of the schedule instead of using it to undo a mistake.",
+        detail+" make the road after "+next+" more forgiving than frightening. A Week 3 win could turn that softer patch into momentum; a loss would waste the cleanest chance to build before it.",
+        "After "+next+", "+team+" gets the more manageable pairing of "+detail+". Week 3 is not desperation; it is the chance to reach that softer stretch already moving forward."
+      ],
+      mixed:[
+        "The road after "+next+" is mixed: "+detail+". One part offers breathing room and another can punish it, so Week 3 matters because a win lets "+team+" enter the uneven stretch without manufacturing urgency.",
+        detail+" give "+team+" a split schedule behind "+next+" rather than a clean gauntlet or soft landing. Bank Week 3 and the "+a.mascot+" can take those games on their own terms; lose and the harder half gets louder.",
+        "After "+next+" comes an uneven pair in "+detail+". There is opportunity in that stretch and resistance too. Week 3 decides whether "+team+" reaches it with room to choose or with points already owed.",
+        "The next two after "+next+" refuse to pick one difficulty level: "+detail+". That makes Week 3 the hinge—win and the mixed stretch stays manageable; lose and the tougher side starts dictating the conversation."
+      ]
+    },
+    "tess-delaney":{
+      hard:[
+        "The schedule gets considerably less polite after "+next+": "+detail+". Week 3 is the result to bank before the difficult stretch starts asking for perfect manners and better lineups.",
+        detail+" sit behind "+next+", which turns the next two games into the hard part of the route. Win Week 3 and "+team+" meets that stretch with leverage; lose and the schedule immediately starts collecting interest.",
+        "There is no soft landing behind "+next+" because "+detail+" are waiting. That makes Week 3 especially important: take the win now before the road begins charging full price for every lineup flaw.",
+        "After "+next+", the resistance rises through "+detail+". A Week 3 win gives "+a.mascot+" room to absorb a difficult stretch; a loss hands that same stretch permission to become a problem."
+      ],
+      soft:[
+        "The schedule offers some mercy after "+next+" with "+detail+". Win Week 3 and "+team+" can carry momentum into the softer patch; lose it and the friendlier part of the road gets demoted to cleanup duty.",
+        detail+" make the stretch behind "+next+" noticeably more manageable. Week 3 is a chance to arrive there with a win already banked instead of asking the easier games to repair the record.",
+        "There is a softer landing after "+next+": "+detail+". That does not make Week 3 disposable; it makes a win more valuable because "+a.mascot+" could turn the following stretch into actual momentum.",
+        "Behind "+next+" sits the friendlier pairing of "+detail+". Handle Week 3 and "+team+" gets to attack that stretch; drop it and a comfortable-looking schedule suddenly has chores."
+      ],
+      mixed:[
+        "The schedule behind "+next+" is deliberately unhelpful: "+detail+". One game offers room, the other brings real resistance. A Week 3 win keeps that mixed stretch from choosing the terms for "+team+".",
+        detail+" split the road after "+next+" between opportunity and trouble. Bank Week 3 and "+a.mascot+" can treat the uneven stretch calmly; lose and the harder half starts looking much larger.",
+        "After "+next+", the schedule lands in the middle with "+detail+". There is no clean gauntlet and no vacation either, which makes Week 3 the useful result to secure before the road starts changing moods.",
+        "The next two after "+next+" are a mixed assignment in "+detail+". Win now and "+team+" has room for the tougher half; lose and even the softer half starts feeling like something that must be recovered."
+      ]
+    },
+    "mack-hollis":{
+      hard:[
+        "Then the schedule puts on shoulder pads: "+detail+" are waiting after "+next+". Win Week 3 and "+a.mascot+" hit that wall with momentum; lose and the wall gets to introduce itself while everybody is already yelling.",
+        "The heavy part comes after "+next+": "+detail+". Bank Week 3 before that stretch arrives, because asking those games to fix a loss is how September starts sounding like an emergency broadcast.",
+        detail+" are next behind "+next+", and that is a real gauntlet. Week 3 is the one to grab before the schedule turns the resistance up and starts charging extra for every bad lineup call.",
+        "After "+next+", "+team+" runs into "+detail+". That is the hard stretch, full stop. Win now and attack it; lose now and the next two games show up carrying a much louder problem."
+      ],
+      soft:[
+        "The road actually gets friendlier after "+next+": "+detail+". Win Week 3 and the schedule starts looking like runway; lose and "+a.mascot+" have somehow turned the soft part into an apology tour.",
+        detail+" are waiting behind "+next+", which is the schedule offering "+team+" a little oxygen. Bank Week 3 and use it. Drop Week 3 and suddenly the easier stretch is doing repair work instead of building anything.",
+        "After "+next+" come "+detail+", and that is about as close as the schedule gets to lowering the volume. Win now and "+a.mascot+" can stack momentum; lose and they waste the friendly part paying off the mistake.",
+        "The schedule takes its foot off the gas after "+next+" with "+detail+". Week 3 is the chance to hit that softer stretch moving forward instead of dragging a problem into games that should be opportunities."
+      ],
+      mixed:[
+        "The schedule after "+next+" is a split screen: "+detail+". One game looks like oxygen, the other looks like work. Win Week 3 and "+a.mascot+" choose the volume; lose and the harder half gets the microphone.",
+        detail+" give the road behind "+next+" one soft edge and one sharp one. Bank Week 3 and "+team+" can take the mixed stretch as it comes; lose and the difficult half immediately feels twice as loud.",
+        "After "+next+" comes the uneven pair of "+detail+". It is not a gauntlet and it is definitely not a vacation. Week 3 decides whether "+a.mascot+" enter that mix with momentum or with a repair bill.",
+        "The next two after "+next+" split the difference: "+detail+". Win now and the favorable half feels useful; lose and the tougher half starts looming before anybody has earned the panic."
+      ]
+    },
+    "nora-voss":{
+      hard:[
+        "Rivals looking ahead can see the problem: "+detail+" wait after "+next+". That is the hard stretch. Beat "+next+" first and "+team+" carries a cushion into it; lose and opponents get to watch the schedule apply the pressure for them.",
+        detail+" are sitting behind "+next+", which is exactly the stretch rivals would choose if they were allowed to write the schedule. Week 3 matters because "+a.mascot+" should bank the win before the road starts helping everybody else.",
+        "The next two after "+next+" are "+detail+", and the difficulty jumps. Win Week 3 and "+team+" makes rivals chase through the gauntlet; lose and the gauntlet gets to do their heckling for them.",
+        "After "+next+", the road hardens through "+detail+". A Week 3 win is especially valuable because "+a.mascot+" would rather enter that stretch with leverage than become everybody’s favorite rebound target."
+      ],
+      soft:[
+        "Rivals will hate the schedule behind "+next+": "+detail+" make the next two look considerably softer. Bank Week 3 and "+team+" gets a real chance to stack wins; lose and opponents get to laugh at a gift returned unopened.",
+        detail+" give "+a.mascot+" a friendlier road after "+next+". That makes Week 3 less desperate but more useful—win it and the softer stretch becomes runway instead of recovery.",
+        "After "+next+", the schedule relaxes into "+detail+". A Week 3 win could send "+team+" into the manageable part already rolling; a loss would turn two opportunities into an embarrassing repair kit.",
+        "The road behind "+next+" is favorable: "+detail+". Handle Week 3 and rivals have to watch "+a.mascot+" attack a softer stretch from strength; drop it and they get to enjoy the waste."
+      ],
+      mixed:[
+        "Rivals get one comfortable name and one problem after "+next+": "+detail+". That mixed stretch makes Week 3 the hinge. Win and "+team+" controls the mood; lose and the difficult half suddenly owns the conversation.",
+        detail+" split the schedule behind "+next+" between opportunity and resistance. Bank Week 3 and "+a.mascot+" can make rivals wait for the hard game; lose and everybody skips straight to circling it.",
+        "After "+next+", the road is mixed through "+detail+". One game can help and one can bite. A Week 3 win keeps "+team+" from letting the tougher half dictate the whole stretch.",
+        "The next two after "+next+" refuse to cooperate: "+detail+". There is a softer side and a harder side, which makes Week 3 the cleanest chance for "+a.mascot+" to keep rivals from choosing which one matters most."
+      ]
+    }
+  },bank=(rows[rid]||rows["walter-mercer"])[profile]||rows["walter-mercer"][profile];
+  return bank[v]
+}
+function w2RoadRead(t,r,next,later){return w2ScheduleStretchRead(t,r,next,later)}
 function w2PlayerName(t,id){const sid=String(id||"");const pools=[...(t?.starter_details||[]),...(t?.opponent_roster?.players||[]),...(t?.next_opponent_roster?.players||[]),...Object.values(t?.transaction_player_facts||{})];const p=pools.find(x=>String(x?.id)===sid);if(p?.name)return p.name;for(const a of t?.trade_acquisitions||[]){if(String(a?.player_id)===sid&&a?.player_name)return a.player_name;const i=(a?.outgoing_player_ids||[]).map(String).indexOf(sid);if(i>=0&&a?.outgoing_player_names?.[i])return a.outgoing_player_names[i]}return""}
 
 function w2TradeThenValue(side){

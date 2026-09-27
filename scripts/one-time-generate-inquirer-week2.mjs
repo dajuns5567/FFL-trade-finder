@@ -2578,10 +2578,10 @@ function w2RecapCategoryRead(t,p,prev){
     pp=w2PrevPlayer(prev,p.id),profile=w2PlayerStatusProfile(p,slot,pp),ref=w2PlayerCategoryReference(p,profile),status=profile.status;
   if(!ref)return"";
   const Ref=ref.charAt(0).toUpperCase()+ref.slice(1),team=w2DisplayTeam(t.team_name),pts=w2One(p.points);
-  if(status==="breakout")return Ref+" has now earned the breakout label across two Sundays, and "+team+" can treat "+w2ShortPlayerName(t,{id:"recap"},p,"recap-breakout")+" as part of the weekly plan instead of a one-game surprise.";
+  if(status==="breakout")return Ref+" has now done this across two Sundays, and "+team+" can treat "+w2ShortPlayerName(t,{id:"recap"},p,"recap-breakout")+" as part of the weekly plan instead of a one-game surprise.";
   if(status==="emerging")return Ref+" is becoming a real two-week development for "+team+", not just a good box score that happened once.";
-  if(status==="established-star")return Ref+" gave "+team+" "+pts+" points; that is star production doing exactly what the label promises.";
-  if(status==="struggling-star")return Ref+" now has two quiet Sundays against an established standard, which makes the star label part of the pressure rather than a shield from it.";
+  if(status==="established-star")return Ref+" gave "+team+" "+pts+" points; that is star production keeping the rest of the lineup from needing a miracle.";
+  if(status==="struggling-star")return Ref+" now has two quiet Sundays against an established standard; the star résumé only makes Week 3 louder.";
   if(status==="declining-veteran")return Ref+" has opened with two weeks below the old baseline, so the veteran résumé does not erase the current trend.";
   if(status==="reliable-veteran")return Ref+" is giving "+team+" the kind of veteran floor that keeps a lineup from needing a rescue every week.";
   if(status==="veteran")return Ref+" supplied "+pts+" points, useful veteran work in a week where ordinary support mattered.";
@@ -2743,7 +2743,9 @@ for(const t of rewrittenWeek2Teams){
   if(!rid||reporterJudgmentSeen.has(rid))continue;
   const next=w2DisplayTeam(t.next_opponent_name||"the next opponent"),judgment={
     "walter-mercer":"I think "+w2DisplayTeam(t.team_name)+" has a clean Week 3 assignment: keep the useful Week 2 scoring, then get more from the quiet spots against a "+next+" roster with its own scoring strengths.",
-    "tess-delaney":"I want "+w2DisplayTeam(t.team_name)+" to enjoy Week 2 without getting precious about it. "+next+" sets a new scoring bar, and the useful parts of this lineup have to survive a different opponent before anybody starts acting established.",
+    "tess-delaney":Number(t.points)>Number(t.opponent_points)
+      ?("I want "+w2DisplayTeam(t.team_name)+" to enjoy the win without getting precious about it. "+next+" sets a new scoring bar, and the useful parts of this lineup have to survive a different opponent before anybody starts acting established.")
+      :("I want "+w2DisplayTeam(t.team_name)+" to stop dressing up the loss and fix the part Sunday exposed. "+next+" gets the next test, and another quiet answer turns a Week 2 complaint into a pattern."),
     "mack-hollis":"I want "+w2DisplayTeam(t.team_name)+" to prove Week 2 was not just the same stars doing all the lifting. If the support shows up too, then the headline gets louder.",
     "nora-voss":"I think "+w2DisplayTeam(t.team_name)+" has one week to make its obvious flaw boring. If the same slot stays quiet again, rivals will not need a new joke."
   }[rid];

@@ -675,6 +675,52 @@ function w2HistoricalColor(p,r,t=null,slot=0){
   return (rows[rid]||rows["walter-mercer"])[v]
 }
 
+function w2PlayerStatusColor(t,r,p,pp,slot=0){
+  const pts=Number(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
+    rid=String(r?.id||"walter-mercer"),team=w2DisplayTeam(t?.team_name),role=Number(slot)||0;
+  if(!Number.isFinite(pts))return "";
+  let status="";
+  if(games>=6&&Number.isFinite(prior)&&prior>=14&&pts>=Math.max(16,prior*.9))status="established-star";
+  else if(games>=6&&Number.isFinite(prior)&&prior>0&&prior<=12&&pts>=Math.max(15,prior+6))status="breakout";
+  else if(games>=6&&Number.isFinite(prior)&&prior>0&&pts>=12&&pts-prior>=5)status="emerging";
+  else if(games>=6&&Number.isFinite(prior)&&prior>=8&&pts<=prior*.55)status="struggling";
+  else if(role===0&&pts>=25)status="star-level";
+  else if(pts<=1.5&&role<=2)status="struggling";
+  if(!status)return "";
+  const rows={
+    "walter-mercer":{
+      "established-star":p.name+" is already carrying an established star profile, so this production reads as confirmation rather than a surprise cameo.",
+      "star-level":p.name+" delivered star-level work in Week 2; "+team+" now has to make sure the supporting lineup keeps that performance from becoming emergency labor.",
+      "breakout":p.name+" is building a legitimate breakout case, not merely a one-line curiosity; the role is producing enough above the old level to change expectations.",
+      "emerging":p.name+" is moving from useful contributor toward an emerging weekly piece, which matters because "+team+" can plan around roles before it can plan around miracles.",
+      "struggling":p.name+" is playing below the standard his recent history established, so the concern is form and role rather than one bad decimal."
+    },
+    "tess-delaney":{
+      "established-star":p.name+" is already dressed like an established star, and Week 2 did nothing to send that reputation back to coat check.",
+      "star-level":p.name+" gave the room star-level work; asking for another centerpiece is greed when the real question is who bothers to set the rest of the table.",
+      "breakout":p.name+" is beginning to look like the breakout guest who was invited for dinner and somehow ended up owning the room.",
+      "emerging":p.name+" has moved beyond pleasant surprise territory and into emerging-piece territory; the seating chart has to start accounting for him.",
+      "struggling":p.name+" is dining well below the standard on his old place card, and no amount of polished silver makes that slump decorative."
+    },
+    "mack-hollis":{
+      "established-star":p.name+" already had star credentials. Week 2 was less an introduction than another reminder to stop acting surprised when the building shakes.",
+      "star-level":p.name+" just gave "+team+" star-level work. The emergency is not finding another hero; it is making sure the rest of the lineup quits making him wear a cape every Sunday.",
+      "breakout":p.name+" is starting to look like a breakout instead of a hot box score. One more week of this role and the old expectations need to get thrown in the dumpster.",
+      "emerging":p.name+" is turning into an emerging weekly weapon, which is considerably more useful than being this week’s random loud noise.",
+      "struggling":p.name+" is in a real slump against his established level. The alarm is not on fire yet, but somebody has definitely tested the siren."
+    },
+    "nora-voss":{
+      "established-star":p.name+" already owns an established-star reputation, so rivals cannot file this one under fluke without doing violence to the evidence.",
+      "star-level":p.name+" put up star-level work, which is inconvenient for every rival hoping the top of "+team+" was the easy part to mock.",
+      "breakout":p.name+" is building a breakout case strong enough that rivals may need to retire the old scouting joke.",
+      "emerging":p.name+" is starting to look like an emerging weekly problem instead of a one-Sunday inconvenience.",
+      "struggling":p.name+" is running below the level his own history established, which gives rivals a real football criticism instead of a recycled punch line."
+    }
+  };
+  return (rows[rid]||rows["walter-mercer"])[status]||""
+}
+
+
 function w2Week1DeltaRead(t,r,p,pp,role){
   const rid=String(r?.id||""),prior=w2One(pp?.points),now=w2One(p?.points),rise=Number(p?.points)>Number(pp?.points),v=w2Cohort(t)%4,
     roleNames={
@@ -825,6 +871,7 @@ function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
   let out=(rows[rid]||rows["walter-mercer"])[role][v];
   if(pp&&Number.isFinite(delta)&&Math.abs(delta)>=5)out+=" "+w2Week1DeltaRead(t,r,p,pp,role);
   const history=w2HistoricalColor(p,r,t,role);if(history)out+=" "+history;
+  const status=w2PlayerStatusColor(t,r,p,pp,role);if(status)out+=" "+status;
   return out.replace(/\.+$/,"")+"."
 }
 function w2WeakSpotRead(t,r,weak,won,margin){
@@ -1042,7 +1089,7 @@ function w2CoolRead(t,r,coolNames,won,margin){
   const a=w2Alias(t),names=coolNames.length?w2Natural(coolNames):t.team_name,k=w2Hash(String(t.roster_id)+"|cool|"+String(r?.id||""))%6;
   const winRows=[
     names+" get the Week 2 applause because a "+w2One(margin)+"-point win left no room for empty calories; their production actually moved the result.",
-    "The credit line belongs to "+names+". In a win by "+w2One(margin)+", the useful part was forcing the opponent to survive more than the obvious top scorer.",
+    "The credit line belongs to "+names+". In a win by "+w2One(margin)+", the win forced the opponent to survive more than the obvious top scorer.",
     names+" did more than decorate a winning box score; the "+a.mascot+" needed that production to keep the matchup from collapsing onto one star.",
     "A winning Sunday gives "+names+" the good headline, and the "+w2One(margin)+"-point margin explains why: those points were part of the outcome, not an appendix.",
     names+" earned the clean part of the story. The "+a.mascot+" can ask for the same pressure next week without pretending the exact performance will repeat.",
@@ -1155,7 +1202,7 @@ function w2OutlookLead(t,r,next,nrecord,nctx,ndiv){
     ],
     "tess-delaney":[
       next+" arrives for Week 3 at "+nrecord+" and "+rankText+". The "+a.mascot+" have another appointment to prove the current outfit travels.",
-      "The next reservation belongs to "+next+", currently "+nrecord+" and "+rankText+". "+team+" can keep the good china out only if the useful parts of Week 2 survive a different guest.",
+      "The next reservation belongs to "+next+", currently "+nrecord+" and "+rankText+". "+team+" can keep the good china out only if the parts that actually worked in Week 2 survive a different guest.",
       "Week 3 puts "+next+" on the "+a.mascot+" guest list at "+nrecord+" ("+rankText+"). The next result asks whether the room has style or merely had a nice evening.",
       next+" is the Week 3 appointment, carrying "+nrecord+" and "+rankText+". The "+a.mascot+" get a fresh room to prove this version of themselves is portable."
     ],
@@ -1352,35 +1399,61 @@ function w2IdentityRead(t,prev,r,top,opp){
   }
   return out.slice(0,1)
 }
+const w2OpeningVariantsUsed=new Map();
+function w2OpeningVariant(t,r,count){
+  const rid=String(r?.id||"walter-mercer"),key=rid+"|"+String(count),used=w2OpeningVariantsUsed.get(key)||new Set(),
+    base=w2Hash(String(t?.team_name||"")+"|"+rid+"|opening")%count;
+  let pick=base;
+  for(let step=0;step<count;step++){const candidate=(base+step)%count;if(!used.has(candidate)){pick=candidate;break}}
+  used.add(pick);w2OpeningVariantsUsed.set(key,used);return pick
+}
 function w2OpeningHook(t,r,won,margin,opp,top){
-  const a=w2Alias(t),star=top?.[0]?.name||t.team_name,v=w2Hash(t.team_name+"|opening-hook")%4,rid=String(r?.id||"");
+  const a=w2Alias(t),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(opp),star=top?.[0]?.name||team,
+    rid=String(r?.id||"walter-mercer"),tight=margin<=6,wide=margin>=25;
   const rows={
     "walter-mercer":[
-      won?star+" gave "+t.team_name+" the performance it needed, but the more important part was how many answers followed behind him.":opp+" found the part of "+t.team_name+" that still needs fixing, and a "+w2One(margin)+"-point loss made it impossible to ignore.",
-      won?"A close Week 2 win told "+t.team_name+" more than a comfortable one would have: the lineup had enough answers when the margin got tight.":t.team_name+" spent Week 2 chasing the game instead of shaping it, and the scoreboard left a useful list of reasons why.",
-      won?t.team_name+" finally looked like the version of itself the roster construction has been promising.":t.team_name+" did not lose because of one miracle score; too many weak lineup spots stayed weak while "+opp+" built the better total.",
-      won?"The "+a.mascot+" did not need a perfect lineup to win Week 2, only enough strong pieces to finish ahead of "+opp+".":"The "+a.mascot+" leave Week 2 with a problem that is specific enough to fix and visible enough to matter immediately."
+      won?star+" gave "+team+" the performance it needed, and the rest of the lineup supplied enough answers to make it count.":foe+" found the part of "+team+" that still needs fixing, and a "+w2One(margin)+"-point loss made the flaw impossible to hide.",
+      won?(tight?team+" survived a Week 2 finish with no room for decorative points; every useful starter had to matter.":team+" controlled enough of Sunday that the final margin never needed a rescue mission."):team+" spent too much of Week 2 chasing "+foe+" instead of forcing the matchup onto its own terms.",
+      won?team+" finally looked like a roster whose useful pieces know how to arrive on the same Sunday.":team+" did not need a miracle to beat "+foe+"; it needed more ordinary production in too many ordinary places.",
+      won?"The "+a.mascot+" beat "+foe+" without asking one player to impersonate the entire roster.":"The "+a.mascot+" leave Week 2 with a problem specific enough to fix and visible enough that pretending otherwise would be expensive.",
+      won?(wide?team+" turned Week 2 into an afternoon where the only suspense was how rude the margin would become.":star+" set the pace and "+team+" found just enough company behind him to keep "+foe+" from stealing it."):wide?foe+" did not expose one crack in "+team+"; it found enough of them to make the final margin look like an inspection report.":team+" stayed close enough to "+foe+" that every quiet starter now has a Monday appointment.",
+      won?team+" put together the kind of Sunday that makes roster construction look smarter in retrospect.":team+" has useful pieces, but Week 2 showed how quickly a few quiet slots can turn those pieces into wasted decoration.",
+      won?"Week 2 gave "+team+" a result worth trusting a little more because the win came from multiple useful answers, not one emergency flare.":foe+" made "+team+" pay for every lineup spot that tried to disappear into the wallpaper.",
+      won?"The "+a.mascot+" left Sunday with a win and, more importantly, a lineup shape that did not require an alibi.":"The "+a.mascot+" have a clean Week 3 assignment now: keep the parts that worked and stop subsidizing the ones that did not."
     ],
     "tess-delaney":[
-      won?"The "+a.mascot+" finally gave the room something worth applauding without qualification.":opp+" arrived, disturbed the table setting and left "+a.mascot+" with a stain they now have a week to remove.",
-      won?star+" was the centerpiece, but the "+a.mascot+" won because the rest of the table did not collapse around him.":"There was nothing elegant about the way "+a.mascot+" lost this one, which at least makes the cleanup instructions obvious.",
-      won?"For one Sunday, "+a.mascot+" looked expensive in the flattering way.":"The good china can stay in the cabinet; "+a.mascot+" have football work to do before appearances matter again.",
-      won?"The second Sunday fit "+a.mascot+" much better than the first.":"Week 2 was an ill-fitting afternoon for "+a.mascot+", and "+opp+" had the good manners to point out every seam."
+      won?"The "+a.mascot+" finally gave the room something worth applauding without asking the waiter for qualifications.":foe+" arrived, disturbed the table setting and left the "+a.mascot+" with a stain that will not come out by complimenting the linen.",
+      won?star+" was the centerpiece, but the "+a.mascot+" won because the rest of the table did not collapse around him.":"There was nothing elegant about this loss, which at least means the cleanup instructions can fit on one card.",
+      won?"For one Sunday, the "+a.mascot+" looked expensive in the flattering way.":"The good china can stay in the cabinet; the "+a.mascot+" have football work to do before appearances matter again.",
+      won?"Week 2 fit the "+a.mascot+" considerably better than the opener, and nobody had to tug at the seams.":"Week 2 was an ill-fitting afternoon for the "+a.mascot+", and "+foe+" had the good manners to point out every seam.",
+      won?(wide?"The "+a.mascot+" did not host a football game so much as a private demonstration of who owned the dining room.":"The "+a.mascot+" got through dinner with the silverware still on the table and the better number on the bill."):tight?"The "+a.mascot+" lost a dinner check by "+w2One(margin)+" points, which is how every small mistake suddenly becomes the expensive bottle nobody remembers ordering.":"The "+a.mascot+" spent Sunday serving courses "+foe+" was much happier to eat.",
+      won?"The room finally matched the wardrobe: enough polish, enough substance, and a final score that did not ruin the photograph.":"The "+a.mascot+" dressed for a better evening than the one "+foe+" actually gave them.",
+      won?star+" brought the centerpiece and, shockingly, several teammates remembered dinner requires more than one plate.":foe+" left the "+a.mascot+" staring at a table where too many chairs had technically been occupied and practically been empty.",
+      won?"The "+a.mascot+" earned dessert this week. The next question can wait until somebody clears the glasses.":"The bill is already paid: "+foe+" won, and the "+a.mascot+" now get a week to decide which place settings were decorative."
     ],
     "mack-hollis":[
-      won?star+" kicked the door in and "+a.mascot+" made sure the rest of the lineup followed him through it.":opp+" put "+a.mascot+" on the wrong side of the headline, and there is no quiet way to dress that up.",
-      won?"The "+a.mascot+" finally gave us the loud Sunday this roster keeps threatening to have.":"The "+a.mascot+" got exposed in enough places that Week 3 does not need a mystery—just fixes.",
-      won?"This is the kind of win that makes rivals check the schedule twice.":"Everybody saw where "+a.mascot+" cracked, including the team waiting next week.",
-      won?"The scoreboard got loud early enough that "+opp+" spent the afternoon reacting to "+a.mascot+".":"The worst part for "+a.mascot+" is not the loss; it is how easy the weak spot was to describe afterward."
+      won?star+" kicked the door in and the "+a.mascot+" made sure the rest of the lineup followed him through it.":foe+" put the "+a.mascot+" on the wrong side of the headline, and there is no quiet font for a "+w2One(margin)+"-point loss.",
+      won?"The "+a.mascot+" finally gave us the loud Sunday this roster keeps threatening to have.":"The "+a.mascot+" got exposed in enough places that Week 3 does not need a mystery—just a toolbox.",
+      won?"This is the kind of win that makes the league chat scroll back up and check what just happened.":"Everybody saw where the "+a.mascot+" cracked, including managers who were not even trying to scout them.",
+      won?"The scoreboard got loud early enough that "+foe+" spent the afternoon answering the "+a.mascot+" instead of writing the script.":"The worst part for the "+a.mascot+" is not the loss; it is how many weak spots volunteered for the headline.",
+      won?(wide?team+" hit Week 2 like somebody had taped the accelerator down.":team+" found just enough live wires to keep "+foe+" from cutting the power."):tight?team+" lost close enough that every quiet starter can hear the replay machine warming up.":foe+" kept landing punches while "+team+" waited for too many lineup spots to swing back.",
+      won?team+" put together a Sunday with enough noise from enough directions that nobody could mute the whole thing.":team+" had some useful noise, but "+foe+" found the dead outlets and charged rent.",
+      won?"The "+a.mascot+" got a win without asking the same hero to save every paragraph of the box score.":"The "+a.mascot+" do not need an autopsy montage; the bad numbers are already standing under bright lights.",
+      won?"Week 2 gave "+team+" a headline it can actually hang on the wall.":"Week 2 gave "+team+" the kind of headline that usually gets folded underneath the newspaper."
     ],
     "nora-voss":[
-      won?"The easiest joke about "+a.mascot+" got harder to make after Week 2.":"The easiest joke about "+a.mascot+" wrote itself before the final whistle, which is a terrible way to enter Week 3.",
-      won?star+" made the first punch line disappear, and the rest of "+a.mascot+" did enough to ruin the sequel.":opp+" found the same thing every rival will now circle in the scouting report.",
-      won?"Rival managers wanted a reason to call "+a.mascot+" fake; Week 2 made them work harder for it.":"Rival managers do not need creativity this week—the "+a.mascot+" scoring gaps handed them the material.",
-      won?"The "+a.mascot+" won the game and stole a week of easy criticism.":"The "+a.mascot+" lost, and the annoying part is that the explanation is simpler than they would like."
+      won?"The easiest joke about the "+a.mascot+" got harder to make after Week 2.":"The easiest joke about the "+a.mascot+" arrived before the final whistle and brought its own caption.",
+      won?star+" erased the first rival punch line, and the rest of the "+a.mascot+" did enough to ruin the sequel.":foe+" found the same soft spot every rival chat will now circle without being asked.",
+      won?"Rival managers wanted a reason to call the "+a.mascot+" fake; Week 2 made them work for the screenshot.":"Rival managers do not need creativity this week—the "+a.mascot+" left the material sitting on the counter.",
+      won?"The "+a.mascot+" won the game and stole a week of easy criticism.":"The "+a.mascot+" lost, and the annoying part is that the explanation does not require a conspiracy thread.",
+      won?(wide?team+" won loudly enough that the rival chat had to change subjects before halftime was metaphorically over.":team+" left "+foe+" just enough room to talk and then took the final score away from them."):tight?team+" lost by "+w2One(margin)+", which means every rival with a calculator suddenly thinks it has a journalism degree.":foe+" gave the rival thread a final score and "+team+" supplied the captions.",
+      won?team+" put enough useful performances on the page that rivals had to scroll for softer material.":team+" gave rivals a few respectable lines to ignore and several much easier targets to enjoy.",
+      won?"The "+a.mascot+" turned Week 2 into the rare rival thread where the best joke still had to include the final score.":"The "+a.mascot+" spent Week 2 supplying rival ammunition at wholesale prices.",
+      won?"The rival receipts are less funny when the "+a.mascot+" are the ones holding the win.":"The "+a.mascot+" leave Sunday with a loss and a week of notifications they should probably mute on purpose."
     ]
   };
-  return (rows[rid]||rows["walter-mercer"])[v]
+  const bank=rows[rid]||rows["walter-mercer"],v=w2OpeningVariant(t,r,bank.length);
+  return bank[v]
 }
 function w2SentimentRead(t,prev,r,fs,prevSent,won){
   const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),record=w2Record(t),
@@ -1881,7 +1954,7 @@ function w2PlayerSynthesisRead(t,r,top,opp,won){
     v=w2Cohort(t)%4,names=w2Natural([star,support,third].filter(Boolean));
   const rows={
     "walter-mercer":[
-      names+" gave "+team+" a usable top end against "+foe+". The point to carry forward is the support behind the lead score, not an expectation that the same exact totals repeat.",
+      names+" gave "+team+" a usable top end against "+foe+". Against "+foe+", the support behind the lead score made the top of "+team+" sustainable instead of solitary.",
       star+" gave "+team+" the headline and "+support+" kept it from becoming a solo act. That is the part worth carrying forward from "+foe+": useful support travels better than one spectacular box score.",
       team+" got enough from "+names+" to establish a real scoring spine against "+foe+". "+(won?"The win lets management build around it.":"The loss says the next job is supplying enough around it to stop wasting it."),
       "The top of "+team+"’s lineup did its job through "+names+". "+(won?"That is a foundation, not permission to assume the same Sunday repeats.":"That is why the loss belongs to the roster around them rather than the names already producing.")
@@ -1890,7 +1963,7 @@ function w2PlayerSynthesisRead(t,r,top,opp,won){
       names+" gave the "+a.mascot+" table enough real food that nobody needs another decorative centerpiece. "+(won?"Keep the menu; fix the empty chairs.":"The meal was respectable. The bill still arrived."),
       star+" handled the expensive course and "+support+" kept dinner from becoming performance art. "+(won?"That is a table worth setting again.":"That is the part of the evening worth keeping when the room gets rearranged."),
       "The "+a.mascot+" got a proper center of gravity from "+names+". The next reservation does not require the same dishes; it requires the rest of the table to stop freeloading.",
-      names+" gave "+team+" enough polish to look intentional. "+(won?"Victory gets the toast.":"Defeat gets the check.")+" The balance at the top mattered more than another recital of the same numbers."
+      names+" gave "+team+" enough polish to look intentional. "+(won?"Victory gets the toast.":"Defeat gets the check.")+" The balance at the top kept the room from depending on one chair to carry dinner."
     ],
     "mack-hollis":[
       star+" brought the noise and "+support+" made sure it was not one guy screaming into an empty stadium. "+(won?"That is how a win gets loud without getting stupid.":"The rest of the lineup still managed to waste a perfectly good amplifier."),
@@ -1900,7 +1973,7 @@ function w2PlayerSynthesisRead(t,r,top,opp,won){
     ],
     "nora-voss":[
       star+" removed the easiest rival joke and "+support+" made another one harder to sell. "+(won?"Rivals can keep scrolling.":"Rivals can keep the final score, but they do not get to blame the useful part of the lineup."),
-      team+" gave rivals fewer openings because "+names+" actually showed up. The honest criticism has to move elsewhere instead of pretending those performances were the problem.",
+      team+" gave rivals fewer openings because "+names+" actually showed up. The weakness sits farther down the lineup; those performances were not the problem.",
       names+" forced rival managers to work for their material. "+(won?"That is the kind of inconvenience a win can afford.":"The loss still belongs farther down the lineup."),
       "The rival version of Sunday gets less convenient once "+names+" are included. "+(won?"Keep the receipt.":"Keep the production and make the rest of the lineup earn its own defense.")
     ]
@@ -2086,7 +2159,7 @@ function w2TrajectorySentence(t,mode,r){
     const rows=[
       team+" is 0-2, and the losses are already giving us different clues. "+scoreRead+" "+direction+" "+starRead+" "+weakRead+longView,
       "The record says 0-2; the two Sundays explain why in different handwriting. "+scoreRead+" "+starRead+" "+weakRead+" "+direction+longView,
-      team+" has lost twice, but lumping the losses together would hide the useful part. "+scoreRead+" "+starRead+" "+weakRead+" "+direction+longView,
+      team+" has lost twice, and the two defeats are already pointing in different directions. "+scoreRead+" "+starRead+" "+weakRead+" "+direction+longView,
       "Two losses have removed the luxury of calling everything noise. "+scoreRead+" "+direction+" "+starRead+" "+weakRead+longView
     ];
     return rows[v]
@@ -2267,12 +2340,12 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     paras.push(w2S(w,r,"recap-context-"+i,w2RecapContext(w,prev,i)));
     return{heading:(i===0?"Week 2’s Loudest Game: ":"")+wName+" vs. "+lName,paragraphs:paras}
   });
-  const undefeated=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===2),winless=(teams||[]).filter(t=>Number(t?.league_context?.record?.losses)===2),upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
+  const undefeated=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===2),winless=(teams||[]).filter(t=>Number(t?.league_context?.record?.losses)===2),upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
   const middleTeams=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===1&&Number(t?.league_context?.record?.losses)===1),trajectoryReporter=rep(0)||{};
   blocks.push({heading:"What Two Weeks Are Starting to Say",paragraphs:
     w2TwoWeekLeagueRead(teams,trajectoryReporter).map((p,i)=>w2S(top,trajectoryReporter,"recap-two-weeks-"+i,p))
   });
-  const velvet=[w2S(top,rep(1)||{},"velvet-undefeated",undefeated.length?("The undefeated room now includes "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". Two wins are not a coronation, but they are enough to make opening-week charm look more like actual form."):"The league denied me an undefeated salon this week, which is rude but clarifying."),upValue?w2S(upValue,rep(1)||{},"velvet-up",upValue.team_name+" gained "+Math.abs(Math.round(Number(upValue.value_history_week.delta))).toLocaleString("en-US")+" in roster value. A rising price tag is charming; it becomes convincing when Sunday keeps giving the market a reason to be right."):null,downValue&&downValue!==upValue?w2S(downValue,rep(1)||{},"velvet-down",downValue.team_name+" moved the other direction by "+Math.abs(Math.round(Number(downValue.value_history_week.delta))).toLocaleString("en-US")+" in roster value. I am not throwing the chaise lounge into the street, but another bad Sunday would make the furniture nervous."):null,w2S(top,rep(1)||{},"velvet-close",close?(close.winner.team_name+" and "+close.loser.team_name+" gave us the week’s most impolite close game at "+w2One(close.margin)+" points apart; one side gets relief, the other gets seven days to discover how many tiny choices suddenly feel enormous."):"Week 2 declined to give us a properly rude close finish, so I will save the sharp elbows for next Sunday.")].filter(Boolean);
+  const velvet=[w2S(top,rep(1)||{},"velvet-undefeated",undefeated.length?("The undefeated room now includes "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". Two wins are not a coronation, but they are enough to make opening-week charm look more like actual form."):"The league denied me an undefeated salon this week, which is rude but clarifying."),upValue?w2S(upValue,rep(1)||{},"velvet-up","The biggest positive value mover is "+w2DisplayTeam(upValue.team_name)+", up "+Math.abs(Math.round(Number(upValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(upValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(upValue.value_history_week.pct)))+"%)":"")+". The market has moved its chair closer to the velvet rope; Sunday still decides whether it belongs there."):null,downValue?w2S(downValue,rep(1)||{},"velvet-down","The biggest negative value mover is "+w2DisplayTeam(downValue.team_name)+", down "+Math.abs(Math.round(Number(downValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(downValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(downValue.value_history_week.pct)))+"%)":"")+". I am not throwing the chaise lounge into the street, but the market has already started measuring the doorway."):null,w2S(top,rep(1)||{},"velvet-close",close?(close.winner.team_name+" and "+close.loser.team_name+" gave us the week’s most impolite close game at "+w2One(close.margin)+" points apart; one side gets relief, the other gets seven days to discover how many tiny choices suddenly feel enormous."):"Week 2 declined to give us a properly rude close finish, so I will save the sharp elbows for next Sunday.")].filter(Boolean);
   const active=(teams||[]).slice().sort((a,b)=>(b.transactions?.length||0)-(a.transactions?.length||0))[0],tradeParagraphs=w2RecapTradeParagraphs(teams,rep(2)||{}),
     activeMoves=active?w2TransactionMoveDetails(active):[],activeAddedIds=new Set((active?.transactions||[]).flatMap(tx=>tx.adds||[]).map(String)),
     activeHit=(active?.starter_details||[]).filter(p=>activeAddedIds.has(String(p.id))).sort((a,b)=>Number(b.points)-Number(a.points))[0],
@@ -2307,7 +2380,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
       const under=(teams||[]).find(t=>String(t.roster_id)===String(x?.underdog_roster_id))||subject,fav=(teams||[]).find(t=>String(t.roster_id)===String(x?.favorite_roster_id));
       return{...x,title:"Week 3 upset call: "+under.team_name+(fav?" over "+fav.team_name:""),take:w2S(under,reporter,"hot-upset",w2UpsetCallRead(under,fav,reporter))};
     }
-    return{...x,title:"Week 2 call: "+subject.team_name,take:w2S(subject,reporter,"hot-other","Two weeks have changed the context for "+w2DisplayTeam(subject.team_name)+". Week 3 now has to confirm whether the first two results describe a real trend or two unrelated Sundays.")};
+    return{...x,title:"Week 2 call: "+subject.team_name,take:w2S(subject,reporter,"hot-other","Two weeks have changed the outlook for "+w2DisplayTeam(subject.team_name)+". Week 3 now has to confirm whether the first two results describe a real trend or two unrelated Sundays.")};
   });
   const playerPool=(teams||[]).flatMap(t=>(t.starter_details||[]).map(p=>({t,p,delta:Number(p.points)-Number(p.prior_season_avg),games:Number(p.prior_season_games)||0})))
     .filter(x=>x.games>=6&&Number.isFinite(x.delta)&&x.delta>=5)
@@ -2337,10 +2410,10 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
       const a=w2DisplayTeam(g.t.team_name),b=w2DisplayTeam(g.foe.team_name),ma=w2MidaPositivePct(g.t?.mida_outlook?.division),mb=w2MidaPositivePct(g.foe?.mida_outlook?.division),
         mida=ma&&mb?(" MIDA has the division chances at "+ma+" for "+a+" and "+mb+" for "+b+"."):"";
       hot.push({kind:"future-division-game",reporter:rr,title:"Week 3 division pressure game: "+a+" vs. "+b,
-        take:w2S(g.t,rr,"hot-future-division",a+"–"+b+" is the Week 3 game with the most useful kind of pressure: both teams are spending one of their limited head-to-head chances in the same division race, and the division winner gets a playoff berth."+mida+" The loser is not merely one game worse; it has handed a direct rival the exact result it wanted.")});
+        take:w2S(g.t,rr,"hot-future-division",a+"–"+b+" is the Week 3 game with the sharpest kind of pressure: both teams are spending one of their limited head-to-head chances in the same division race, and the division winner gets a playoff berth."+mida+" The loser is not merely one game worse; it has handed a direct rival the exact result it wanted.")});
     }
   }
-  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:10,inquirer_version:30}
+  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:11,inquirer_version:31}
 }
 function w2SentenceParts(s){return String(s||"").replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll(".","§")).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace(".","§")).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll("§",".").trim()).filter(Boolean)}
 // Week 2 publication-only rewrite: Week 1 remains an immutable comparison source, never a prose template.

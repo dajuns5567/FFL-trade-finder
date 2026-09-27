@@ -147,9 +147,10 @@ for(const t of d.teams||[]){
       paragraphs=(t?.inquirer_article?.paragraphs||[]).map(String),article=paragraphs.join(' '),
       firstFull=article.indexOf(pname),
       candidateRefs=[pname,first.length>=4?first:'',last.length>=4?last:''].filter(Boolean),
-      contextRe=/\b(?:2025|last season|last year|prior-season)\b/i,
-      direct=paragraphs.some(paragraph=>contextRe.test(paragraph)&&candidateRefs.some(ref=>new RegExp('(?:^|\\W)'+ref.replace(/[.*+?^$\{\}()|[\]\\]/g,m=>'\\\\'+m)+'(?:$|\\W)','i').test(paragraph))),
-      adjacent=paragraphs.some((paragraph,i)=>paragraph.includes(pname)&&contextRe.test(String(paragraphs[i+1]||''))),
+      contextRe=/\b(?:2025|last season|last year|prior-season)\b/i,priorText=prior.toFixed(1),
+      historicalEvidence=paragraph=>contextRe.test(String(paragraph||''))||(String(paragraph||'').includes(priorText)&&/\b(?:average|baseline|per game|prior|last)\b/i.test(String(paragraph||''))),
+      direct=paragraphs.some(paragraph=>historicalEvidence(paragraph)&&candidateRefs.some(ref=>new RegExp('(?:^|\\W)'+ref.replace(/[.*+?^$\{\}()|[\]\\]/g,m=>'\\\\'+m)+'(?:$|\\W)','i').test(paragraph))),
+      adjacent=paragraphs.some((paragraph,i)=>paragraph.includes(pname)&&historicalEvidence(String(paragraphs[i+1]||''))),
       found=firstFull>=0&&(direct||adjacent);
     if(found)historicalContextFound++;
     else historicalContextMissing.push({team:t.team_name,player:pname,week2:pts,prior_avg:prior,prior_games:games,reporter:t?.inquirer_article?.reporter?.name});

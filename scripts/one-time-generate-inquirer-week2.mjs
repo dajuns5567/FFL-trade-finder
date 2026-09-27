@@ -286,58 +286,7 @@ function w2Sentence(body){
   const s=String(body||"").trim();
   return s?s[0].toUpperCase()+s.slice(1):s;
 }
-function w2RoycingtonRewrite(body){
-  let s=String(body||"");
-  const phraseSwaps=[
-    [/has started making reservations under 'contender'/gi,"has started printing 'contender' on every victory screenshot"],
-    [/paid both dinner checks with wins/gi,"banked both Sundays as wins"],
-    [/less a second course than an empty plate with excellent posture/gi,"less useful support than a blank line trying to look respectable"],
-    [/I have seen decorative napkins contribute more (?:to an evening|atmosphere)/gi,"I have seen dead roster spots make more noise"],
-    [/the place setting everybody politely pretends not to stare at/gi,"the lineup number everybody politely pretends not to stare at"],
-    [/Supporters are passing the seating chart around like a menu with one item circled in red:/gi,"Supporters keep passing around the lineup screenshot with one name circled in red:"],
-    [/The room would like proof that somebody learned something from Sunday\./gi,"The crowd would like proof that somebody learned something from Sunday."],
-    [/The room may enjoy that without declaring every place setting untouchable\./gi,"Supporters can enjoy that without declaring every lineup spot untouchable."],
-    [/Keep the menu; fix the empty chairs\./gi,"Keep the game plan; fix the empty lineup spots."],
-    [/after the glasses come down/gi,"after the celebration ends"],
-    [/the room has started polishing glasses for a 2-0 toast/gi,"supporters have started turning 2-0 into a victory montage"],
-    [/put the good china out without being asked/gi,"started celebrating without being asked"],
-    [/the good china is back in storage/gi,"the victory lap is on hold"],
-    [/put the tablecloth back on/gi,"start enjoying the scoreboard again"],
-    [/the dinner-table argument/gi,"the postgame argument"],
-    [/order champagne or ask for the check/gi,"plan a parade or demand a lineup change"],
-    [/The good china can stay in the cabinet/gi,"The victory speech can wait"],
-    [/earned dessert this week/gi,"earned the celebration this week"],
-    [/clears the glasses/gi,"the noise dies down"],
-    [/spent Sunday serving courses/gi,"spent Sunday giving"],
-    [/got through dinner with the silverware still on the table and the better number on the bill/gi,"got through Sunday with the better number on the scoreboard"],
-    [/did not host a football game so much as a private demonstration of who owned the dining room/gi,"did not play a close football game so much as stage a public demonstration of who owned the matchup"],
-    [/The bill is already paid:/gi,"The result is already final:"]
-  ];
-  for(const [re,to] of phraseSwaps)s=s.replace(re,to);
-  const wordSwaps=[
-    [/\bplace settings\b/gi,"lineup spots"],[/\bplace setting\b/gi,"lineup spot"],
-    [/\bseating chart\b/gi,"depth chart"],[/\bseating decision\b/gi,"lineup decision"],[/\bseating choice\b/gi,"lineup choice"],[/\bseating issue\b/gi,"lineup issue"],[/\bseating\b/gi,"lineup"],
-    [/\bstarting chairs\b/gi,"starting spots"],[/\bstarting chair\b/gi,"starting spot"],[/\bchairs\b/gi,"lineup spots"],[/\bchair\b/gi,"lineup spot"],
-    [/\bcenterpieces\b/gi,"headliners"],[/\bcenterpiece\b/gi,"headliner"],
-    [/\btablecloth\b/gi,"box score"],[/\blinen\b/gi,"box score"],[/\bnapkins\b/gi,"bench points"],
-    [/\bgood china\b/gi,"victory lap"],[/\bchina\b/gi,"celebration"],[/\bsilverware\b/gi,"celebration"],
-    [/\bdining room\b/gi,"weekly plan"],[/\bballroom\b/gi,"division race"],[/\bsalon\b/gi,"contender list"],[/\bvelvet rope\b/gi,"contender line"],[/\bchaise lounge\b/gi,"old plan"],[/\bcoat check\b/gi,"sideline"],
-    [/\bplace cards\b/gi,"projections"],[/\bplace card\b/gi,"projection"],
-    [/\bguest list\b/gi,"schedule"],[/\bguests\b/gi,"opponents"],[/\bguest\b/gi,"opponent"],
-    [/\breservations\b/gi,"matchups"],[/\breservation\b/gi,"matchup"],[/\bappointments\b/gi,"matchups"],[/\bappointment\b/gi,"matchup"],
-    [/\bmenus\b/gi,"game plans"],[/\bmenu\b/gi,"game plan"],[/\bdinner\b/gi,"Sunday"],[/\bcourses\b/gi,"scoring stretches"],[/\bcourse\b/gi,"scoring stretch"],
-    [/\bplates\b/gi,"scores"],[/\bplate\b/gi,"score"],[/\bdessert\b/gi,"celebration"],[/\bwine\b/gi,"result"],[/\bupholstery\b/gi,"cover"],
-    [/\bdécor\b/gi,"window dressing"],[/\bdecor\b/gi,"window dressing"],[/\bdecorative\b/gi,"cosmetic"],[/\bportion size\b/gi,"expectation"],[/\bportion\b/gi,"output"],
-    [/\bservings\b/gi,"games"],[/\bserving\b/gi,"output"],[/\bserved\b/gi,"produced"],[/\bserve\b/gi,"produce"],[/\bRSVP\b/g,"lineup spot"],[/\boutfit\b/gi,"form"],
-    [/\bthe table\b/gi,"the lineup"],[/\btable\b/gi,"lineup"],[/\bthe room\b/gi,"the roster"],[/\broom\b/gi,"space"]
-  ];
-  for(const [re,to] of wordSwaps)s=s.replace(re,to);
-  return s.replace(/\s+/g," ").trim()
-}
-function w2S(t,r,key,body){
-  const styled=String(r?.id||"")==="tess-delaney"?w2RoycingtonRewrite(body):body;
-  return w2TeamGrammar(t,w2Sentence(styled))
-}
+function w2S(t,r,key,body){return w2TeamGrammar(t,w2Sentence(body))}
 function w2Natural(xs){const a=(xs||[]).filter(Boolean);return a.length<=1?(a[0]||""):a.length===2?a[0]+" and "+a[1]:a.slice(0,-1).join(", ")+", and "+a.at(-1)}
 function w2Stat(p){const real=String(p?.real_stat_line||"").trim();return real?real.replaceAll(" • ",", "):""}
 function w2StatClause(p){const stat=w2Stat(p);return stat?"; "+w2StatKind(p)+": "+stat:""}
@@ -2424,10 +2373,12 @@ function rewriteWeek2Team(t,prev){
   const normalized={...t,team_name:w2DisplayTeam(t.team_name),opponent_name:w2DisplayTeam(t.opponent_name),next_opponent_name:w2DisplayTeam(t.next_opponent_name),
     starter_details:(t.starter_details||[]).map(p=>({...p,week1_points:w2PrevPlayer(prev,p.id)?.points??null}))};
   const a=normalized.inquirer_article||{},roycington=String(a?.reporter?.id||"")==="tess-delaney",
-    built=w2BuildSections(normalized,prev),
-    sections=roycington?built.map(s=>({...s,heading:w2RoycingtonRewrite(s.heading),paragraphs:(s.paragraphs||[]).map(w2RoycingtonRewrite)})):built,
+    styleReporter=roycington?{...(a.reporter||{}),id:"mack-hollis"}:(a.reporter||{}),
+    styleTeam=roycington?{...normalized,inquirer_article:{...a,reporter:styleReporter}}:normalized,
+    built=w2BuildSections(styleTeam,prev),
+    sections=roycington?built.map(s=>({...s,heading:s.kind==="trade-commentary"?"Trade Receipt: What Week 2 Added":w2SectionHead(a.reporter||{},s.kind)})):built,
     paragraphs=sections.flatMap(s=>s.paragraphs||[]),
-    headline=roycington?w2RoycingtonRewrite(w2Headline(normalized,a.reporter||{})):w2Headline(normalized,a.reporter||{});
+    headline=w2Headline(normalized,a.reporter||{});
   return{...normalized,inquirer_article:{...a,headline,deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:13}}
 }
 function w2Games(teams){const by=new Map((teams||[]).map(t=>[String(t.roster_id),t])),seen=new Set(),out=[];for(const t of teams||[]){const o=by.get(String(t.opponent_roster_id));if(!o)continue;const k=[String(t.roster_id),String(o.roster_id)].sort().join("|");if(seen.has(k))continue;seen.add(k);const w=Number(t.points)>=Number(o.points)?t:o,l=w===t?o:t,margin=Math.abs(Number(w.points)-Number(l.points)),proj=Number.isFinite(Number(w.projected))&&Number.isFinite(Number(l.projected)),upset=proj&&Number(w.projected)<Number(l.projected);out.push({winner:w,loser:l,margin,upset,combined:Number(w.points)+Number(l.points)})}return out}
@@ -2688,7 +2639,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
   blocks.push({heading:"What Two Weeks Are Starting to Say",paragraphs:
     w2TwoWeekLeagueRead(teams,trajectoryReporter).map((p,i)=>w2S(top,trajectoryReporter,"recap-two-weeks-"+i,p))
   });
-  const velvet=[w2S(top,rep(1)||{},"velvet-undefeated",undefeated.length?("The undefeated room now includes "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". Two wins are not a coronation, but they are enough to make opening-week charm look more like actual form."):"The league denied me an undefeated salon this week, which is rude but clarifying."),upValue?w2S(upValue,rep(1)||{},"velvet-up","The biggest positive value mover is "+w2DisplayTeam(upValue.team_name)+", up "+Math.abs(Math.round(Number(upValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(upValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(upValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(upValue,"risers","risers")+" The market has moved its chair closer to the velvet rope; Sunday still decides whether it belongs there."):null,downValue?w2S(downValue,rep(1)||{},"velvet-down","The biggest negative value mover is "+w2DisplayTeam(downValue.team_name)+", down "+Math.abs(Math.round(Number(downValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(downValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(downValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(downValue,"fallers","fallers")+" I am not throwing the chaise lounge into the street, but the market has already started measuring the doorway."):null,w2S(top,rep(1)||{},"velvet-close",close?(close.winner.team_name+" and "+close.loser.team_name+" gave us the week’s most impolite close game at "+w2One(close.margin)+" points apart; one side gets relief, the other gets seven days to discover how many tiny choices suddenly feel enormous."):"Week 2 declined to give us a properly rude close finish, so I will save the sharp elbows for next Sunday.")].filter(Boolean);
+  const velvet=[w2S(top,rep(1)||{},"contender-undefeated",undefeated.length?("The 2-0 club now includes "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". Two wins are not a coronation, but they are enough to make opening-week charm look more like actual form."):"Nobody escaped Week 2 undefeated, which is rude to the optimists and excellent for the rest of us."),upValue?w2S(upValue,rep(1)||{},"contender-up","The biggest positive value mover is "+w2DisplayTeam(upValue.team_name)+", up "+Math.abs(Math.round(Number(upValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(upValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(upValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(upValue,"risers","risers")+" The market has pushed this roster closer to contender territory; Sunday still decides whether that optimism survives contact."):null,downValue?w2S(downValue,rep(1)||{},"contender-down","The biggest negative value mover is "+w2DisplayTeam(downValue.team_name)+", down "+Math.abs(Math.round(Number(downValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(downValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(downValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(downValue,"fallers","fallers")+" I am not declaring the roster doomed, but the market has already started asking which assumptions deserve to survive the drop."):null,w2S(top,rep(1)||{},"contender-close",close?(close.winner.team_name+" and "+close.loser.team_name+" gave us the week’s most impolite close game at "+w2One(close.margin)+" points apart; one side gets relief, the other gets seven days to discover how many tiny choices suddenly feel enormous."):"Week 2 declined to give us a properly rude close finish, so I will save the sharp elbows for next Sunday.")].filter(Boolean);
   const active=(teams||[]).slice().sort((a,b)=>(b.transactions?.length||0)-(a.transactions?.length||0))[0],tradeParagraphs=w2RecapTradeParagraphs(teams,rep(2)||{}),
     activeMoves=active?w2TransactionMoveDetails(active):[],activeAddedIds=new Set((active?.transactions||[]).flatMap(tx=>tx.adds||[]).map(String)),
     activeHit=(active?.starter_details||[]).filter(p=>activeAddedIds.has(String(p.id))).sort((a,b)=>Number(b.points)-Number(a.points))[0],

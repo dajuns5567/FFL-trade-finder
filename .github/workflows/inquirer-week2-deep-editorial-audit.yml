@@ -37,6 +37,13 @@ jobs:
             if [ "$attempt" = "3" ]; then exit 1; fi
             sleep 5
           done
+      - name: Capture generated prose contract
+        run: |
+          set +e
+          node scripts/inquirer-v25-generated-audit.mjs /tmp/week2-inquirer.json > /tmp/week2-generated-audit.log 2>&1
+          code=$?
+          echo "EXIT_CODE=$code" >> /tmp/week2-generated-audit.log
+          exit 0
       - name: Build deep editorial sample report
         run: |
           node scripts/inquirer-week2-deep-editorial-audit.mjs /tmp/week2-inquirer.json \
@@ -70,6 +77,7 @@ jobs:
             /tmp/week2-deep-editorial-audit.md
             /tmp/week2-deep-editorial-audit.json
             /tmp/week2-inquirer.json
+            /tmp/week2-generated-audit.log
           retention-days: 14
       - name: Enforce deep editorial audit
         run: |

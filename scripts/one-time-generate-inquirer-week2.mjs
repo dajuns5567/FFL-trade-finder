@@ -1904,7 +1904,7 @@ function w2ValueMarketRead(t,r,d,pct){
         down:[
           team+" lost "+amount+" points of roster value"+pctText+". The market handed the back page a red arrow and, mercifully, not a eulogy.",
           team+" dropped "+amount+" points in roster value"+pctText+". Bad news, readable font. Nobody needs a siren yet.",
-          team+" slid "+amount+" points on the market"+pctText+". The group chat has a screenshot now; management gets the next move.",
+          team+" slid "+amount+" points on the market"+pctText+". The league thread has a screenshot now; management gets the next move.",
           team+" shed "+amount+" points of roster value"+pctText+". Red ink is not a funeral, but it does ruin a perfectly good attempt to ignore the market."
         ]
       },
@@ -1946,7 +1946,7 @@ function w2ValueMoverReads(t,r){
         riseLead:["Now for the names behind the green arrow. ","The team number moved, but the back page wants culprits. ","A green week is more fun when somebody can be named. ","The market made noise; these players supplied the volume. "],
         riseTail:["Wonderful. Frame the screenshot after somebody wins with it.","The market handed out applause; Sunday still controls the encore.","Good news, large font. The standings remain annoyingly unimpressed.","Enjoy the green arrows before the next kickoff starts charging rent."],
         fallLead:["And now the part management would prefer cropped out of the screenshot. ","Red arrows also come with names. How thoughtful. ","The market did not only bring confetti. ","Somebody had to feed the red side of the chart. "],
-        fallTail:["No siren yet, but the group chat has definitely found the image.","That is enough red ink to earn a stare, not a eulogy.","The market has spoken loudly enough. Management may now answer with football.","Nobody is calling the morgue. Somebody should still check the damage."]
+        fallTail:["No siren yet, but the league thread has definitely found the image.","That is enough red ink to earn a stare, not a eulogy.","The market has spoken loudly enough. Management may now answer with football.","Nobody is calling the morgue. Somebody should still check the damage."]
       },
       "nora-voss":{
         riseLead:["Rivals looking for the source of the gain do not need binoculars. ","The team number has names underneath it. ","The rise did not happen by rumor. ","Rivals can stop blaming the spreadsheet and look at the players. "],

@@ -2369,6 +2369,40 @@ function w2BuildSections(t,prev){
   if(trade){const i=order.indexOf("management");order.splice(i+1,0,"trade-commentary")}
   return order.map(kind=>({kind,heading:kind==="trade-commentary"?"Trade Receipt: What Week 2 Added":w2SectionHead(r,kind),paragraphs:byKind[kind]})).filter(x=>Array.isArray(x.paragraphs)&&x.paragraphs.length)
 }
+function w2RoycingtonFootballPolish(t,body){
+  let s=String(body||""),v=Math.floor(Math.max(0,(Number(t?.roster_id)||1)-1)/4)%8,
+    pick=xs=>xs[v%xs.length];
+  const swaps=[
+    ["The additions stayed off the Week 2 starting card.",pick(["None of the new names reached the Week 2 lineup.","Week 2 came and went without the new additions starting.","The fresh transactions never made it onto the Week 2 starting card.","The new arrivals stayed on the sideline when the Week 2 lineup locked."])],
+    ["That is roster churn, not a scoring explanation.",pick(["That is activity, not an explanation for the score.","The transaction count is movement, not the reason Sunday went wrong.","Those moves belong to the roster log, not the scoring alibi.","Busy management still does not explain the points that actually reached the lineup."])],
+    ["Division shots are limited, the division winner gets a playoff berth, and one head-to-head result hits both teams at once.","Division chances are scarce, and one head-to-head result moves both teams while the winner still earns the playoff berth."],
+    ["Now somebody has to survive the actual noise.","The projection has spoken; the actual game still gets to embarrass it."],
+    ["One Sunday decides whether the next stretch sounds like momentum or an emergency broadcast.","Win this one and the next stretch feels like momentum; lose it and every game behind it gets louder."],
+    ["Enough autopsy—Week 3 needs a different lineup story, not a third version of the same complaint.","The autopsy has gone on long enough; Week 3 needs a new answer."],
+    ["Now make the good part repeat loudly enough that this week’s weak spot becomes old news.","Repeat what worked loudly enough and this week’s weakness becomes yesterday’s complaint."],
+    ["Nobody needs the same exact box score next week.","Next week does not require the same box score, only another useful version of the role."],
+    ["Leave it alone and the same circuit gets another chance to spark.","Ignore it and the same weakness gets another Sunday to hurt them."],
+    ["Some of it is management getting free advice at dangerous volume.","Some of the noise is the fan base handing management free advice at full volume."],
+    ["The division crown punches a playoff ticket in this league.","Win the division and the playoff berth comes with it; that is why this game carries extra weight."],
+    ["That is why this one gets the megaphone.","That is why this matchup deserves more volume than an ordinary September game."],
+    ["One busted lineup call can still set the whole thing on fire.","One bad lineup decision can still turn a close game into a week of regret."],
+    ["Week 3 is the volume knob for everything behind it.","Week 3 decides whether the rest of this stretch gets discussed as opportunity or damage control."],
+    ["The headline gets louder only if the supporting lineup stops making the stars do all the shouting.",pick(["The next headline only gets better if the supporting lineup stops outsourcing everything to the stars.","A bigger headline requires more than the stars doing emergency work again.","The stars have done enough shouting; the supporting lineup has to give the next headline some depth.","The next headline belongs to the whole lineup only if the support finally earns a line of its own."])],
+    ["That is why the loss cannot be dumped on the stars.","The stars did enough to keep this loss from belonging to them."],
+    ["If the issue disappears, everybody laughs and moves on.","Fix the issue and the joke dies before next Sunday."],
+    ["If it stays, the joke gets a season ticket.","Let it survive another week and the punch line starts looking like a roster identity."],
+    ["There are not many direct swings like this, and the prize for winning the division is a playoff berth.","Direct division swings are limited, and the winner’s playoff berth makes each one expensive."],
+    ["Put it on the marquee if you want; the margin is where the yelling starts.","The projection can have the marquee; the margin is where the argument actually begins."],
+    ["That is how one result turns a schedule into either runway or rubble.","One result can make the games behind it look like runway or repair work."],
+    ["The next step is backup, not asking the same people to shout even louder.","The next answer is support, not asking the same stars for an encore."],
+    ["Nobody needs a siren yet, but the siren has been located.","This is not alarm territory yet, but everyone now knows exactly where the problem lives."],
+    ["The answer belongs on the starting card, not in Monday’s emergency broadcast.","The correction has to appear in the lineup before it shows up in Monday’s excuses."],
+    ["The spreadsheet has picked as much of a fight as it can; Sunday gets the final word.","The spreadsheet has finished its argument. Sunday gets the ruling."],
+    ["The rest of the road changes personality based on what happens first.","Everything after Week 3 feels different depending on which result comes first."]
+  ];
+  for(const [from,to] of swaps)s=s.replaceAll(from,to);
+  return s
+}
 function rewriteWeek2Team(t,prev){
   const normalized={...t,team_name:w2DisplayTeam(t.team_name),opponent_name:w2DisplayTeam(t.opponent_name),next_opponent_name:w2DisplayTeam(t.next_opponent_name),
     starter_details:(t.starter_details||[]).map(p=>({...p,week1_points:w2PrevPlayer(prev,p.id)?.points??null}))};
@@ -2376,7 +2410,7 @@ function rewriteWeek2Team(t,prev){
     styleReporter=roycington?{...(a.reporter||{}),id:"mack-hollis"}:(a.reporter||{}),
     styleTeam=roycington?{...normalized,inquirer_article:{...a,reporter:styleReporter}}:normalized,
     built=w2BuildSections(styleTeam,prev),
-    sections=roycington?built.map(s=>({...s,heading:s.kind==="trade-commentary"?"Trade Receipt: What Week 2 Added":w2SectionHead(a.reporter||{},s.kind)})):built,
+    sections=roycington?built.map(s=>({...s,heading:s.kind==="trade-commentary"?"Trade Receipt: What Week 2 Added":w2SectionHead(a.reporter||{},s.kind),paragraphs:(s.paragraphs||[]).map(p=>w2RoycingtonFootballPolish(normalized,p))})):built,
     paragraphs=sections.flatMap(s=>s.paragraphs||[]),
     headline=w2Headline(normalized,a.reporter||{});
   return{...normalized,inquirer_article:{...a,headline,deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:13}}

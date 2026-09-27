@@ -157,6 +157,40 @@ const EVOLUTION_LEXICON=[
   [/\bthe week-over-week\b/gi,['the one-week change','the latest weekly shift','the change from last week','the week-to-week']],
   [/\bmanagement\b/gi,['the manager','the front office','the decision-makers','management']]
 ];
+const CROSS_REPORTER_WORDS={
+  'walter-mercer':[
+    [/\bheadline\b/gi,'story'],[/\bargument\b/gi,'read'],[/\bresponse\b/gi,'answer'],[/\bpanic\b/gi,'pressure'],[/\bsiren\b/gi,'warning'],[/\bevidence\b/gi,'proof'],[/\broom\b/gi,'margin'],[/\bparade\b/gi,'celebration'],[/\bvolume\b/gi,'noise'],[/\bexplanation\b/gi,'excuse'],[/\bflexibility\b/gi,'options']
+  ],
+  'tess-delaney':[
+    [/\bheadline\b/gi,'storyline'],[/\bargument\b/gi,'debate'],[/\bresponse\b/gi,'correction'],[/\bpanic\b/gi,'nerves'],[/\bsiren\b/gi,'alarm'],[/\bevidence\b/gi,'support'],[/\broom\b/gi,'breathing space'],[/\bparade\b/gi,'victory lap'],[/\bvolume\b/gi,'noise level'],[/\bexplanation\b/gi,'defense'],[/\bflexibility\b/gi,'maneuvering room']
+  ],
+  'mack-hollis':[
+    [/\bheadline\b/gi,'banner'],[/\bargument\b/gi,'fight'],[/\bresponse\b/gi,'counterpunch'],[/\bpanic\b/gi,'alarm'],[/\bsiren\b/gi,'fire alarm'],[/\bevidence\b/gi,'proof'],[/\broom\b/gi,'space'],[/\bparade\b/gi,'victory parade'],[/\bvolume\b/gi,'decibels'],[/\bexplanation\b/gi,'alibi'],[/\bflexibility\b/gi,'wiggle room']
+  ],
+  'nora-voss':[
+    [/\bheadline\b/gi,'talking point'],[/\bargument\b/gi,'rival case'],[/\bresponse\b/gi,'rebuttal'],[/\bpanic\b/gi,'rival excitement'],[/\bsiren\b/gi,'warning light'],[/\bevidence\b/gi,'material'],[/\broom\b/gi,'space'],[/\bparade\b/gi,'celebration'],[/\bvolume\b/gi,'noise'],[/\bexplanation\b/gi,'excuse'],[/\bflexibility\b/gi,'options']
+  ]
+};
+function evolveCrossReporterSentence(sentence,reporterId,seed){
+  let out=String(sentence||''),rid=CROSS_REPORTER_WORDS[reporterId]?reporterId:'walter-mercer',
+    rows=CROSS_REPORTER_WORDS[rid],h=evolutionHash(seed+'|cross-reporter');
+  let changed=0;
+  for(let i=0;i<rows.length;i++){
+    const [re,repl]=rows[(i+h)%rows.length];re.lastIndex=0;
+    if(re.test(out)){re.lastIndex=0;out=out.replace(re,repl);changed++}
+    if(changed>=3)break;
+  }
+  if(!changed){
+    const tails={
+      'walter-mercer':' The next week gets to test that read.',
+      'tess-delaney':' The next Sunday can improve the wording if it objects.',
+      'mack-hollis':' Next week can yell back if it disagrees.',
+      'nora-voss':' Rivals get the next chance to prove the point wrong.'
+    };
+    out=out.replace(/[.!?]?$/,'.')+tails[rid];
+  }
+  return out;
+}
 function evolveSentence(sentence,reporterId,seed){
   let out=String(sentence||'').trim();if(!out)return out;
   const h=evolutionHash(seed),rid=EVOLUTION_INTROS[reporterId]?reporterId:'walter-mercer';
@@ -210,8 +244,11 @@ function evolveForwardTeams(teams,previousEdition,week,salt){
     const sections=(a.sections||[]).map((section,si)=>({...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>{
       const rows=forwardSentenceParts(p);return rows.map((sentence,sj)=>{
         const n=forwardNormSentence(sentence,entities),phraseCollision=forwardEditorialPhraseKeys(sentence,entities).some(x=>phraseOffenders.has(x)),
-          offender=forwardWordCount(sentence)>=10&&(prior.has(n)||(currentCounts.get(n)||0)>3||phraseCollision);
-        return offender?evolveSentence(sentence,rid,[week,salt,t.roster_id,section.kind||section.heading,si,pi,sj,n].join('|')):sentence;
+          offender=forwardWordCount(sentence)>=10&&(prior.has(n)||(currentCounts.get(n)||0)>3||phraseCollision),
+          seed=[week,salt,t.roster_id,section.kind||section.heading,si,pi,sj,n].join('|');
+        if(!offender)return sentence;
+        const evolved=evolveSentence(sentence,rid,seed);
+        return phraseCollision?evolveCrossReporterSentence(evolved,rid,seed):evolved;
       }).join(' ');
     })}));
     return{...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};

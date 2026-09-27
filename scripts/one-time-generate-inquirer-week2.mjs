@@ -286,7 +286,58 @@ function w2Sentence(body){
   const s=String(body||"").trim();
   return s?s[0].toUpperCase()+s.slice(1):s;
 }
-function w2S(t,r,key,body){return w2TeamGrammar(t,w2Sentence(body))}
+function w2RoycingtonRewrite(body){
+  let s=String(body||"");
+  const phraseSwaps=[
+    [/has started making reservations under 'contender'/gi,"has started printing 'contender' on every victory screenshot"],
+    [/paid both dinner checks with wins/gi,"banked both Sundays as wins"],
+    [/less a second course than an empty plate with excellent posture/gi,"less useful support than a blank line trying to look respectable"],
+    [/I have seen decorative napkins contribute more (?:to an evening|atmosphere)/gi,"I have seen dead roster spots make more noise"],
+    [/the place setting everybody politely pretends not to stare at/gi,"the lineup number everybody politely pretends not to stare at"],
+    [/Supporters are passing the seating chart around like a menu with one item circled in red:/gi,"Supporters keep passing around the lineup screenshot with one name circled in red:"],
+    [/The room would like proof that somebody learned something from Sunday\./gi,"The crowd would like proof that somebody learned something from Sunday."],
+    [/The room may enjoy that without declaring every place setting untouchable\./gi,"Supporters can enjoy that without declaring every lineup spot untouchable."],
+    [/Keep the menu; fix the empty chairs\./gi,"Keep the game plan; fix the empty lineup spots."],
+    [/after the glasses come down/gi,"after the celebration ends"],
+    [/the room has started polishing glasses for a 2-0 toast/gi,"supporters have started turning 2-0 into a victory montage"],
+    [/put the good china out without being asked/gi,"started celebrating without being asked"],
+    [/the good china is back in storage/gi,"the victory lap is on hold"],
+    [/put the tablecloth back on/gi,"start enjoying the scoreboard again"],
+    [/the dinner-table argument/gi,"the postgame argument"],
+    [/order champagne or ask for the check/gi,"plan a parade or demand a lineup change"],
+    [/The good china can stay in the cabinet/gi,"The victory speech can wait"],
+    [/earned dessert this week/gi,"earned the celebration this week"],
+    [/clears the glasses/gi,"the noise dies down"],
+    [/spent Sunday serving courses/gi,"spent Sunday giving"],
+    [/got through dinner with the silverware still on the table and the better number on the bill/gi,"got through Sunday with the better number on the scoreboard"],
+    [/did not host a football game so much as a private demonstration of who owned the dining room/gi,"did not play a close football game so much as stage a public demonstration of who owned the matchup"],
+    [/The bill is already paid:/gi,"The result is already final:"]
+  ];
+  for(const [re,to] of phraseSwaps)s=s.replace(re,to);
+  const wordSwaps=[
+    [/\bplace settings\b/gi,"lineup spots"],[/\bplace setting\b/gi,"lineup spot"],
+    [/\bseating chart\b/gi,"depth chart"],[/\bseating decision\b/gi,"lineup decision"],[/\bseating choice\b/gi,"lineup choice"],[/\bseating issue\b/gi,"lineup issue"],[/\bseating\b/gi,"lineup"],
+    [/\bstarting chairs\b/gi,"starting spots"],[/\bstarting chair\b/gi,"starting spot"],[/\bchairs\b/gi,"lineup spots"],[/\bchair\b/gi,"lineup spot"],
+    [/\bcenterpieces\b/gi,"headliners"],[/\bcenterpiece\b/gi,"headliner"],
+    [/\btablecloth\b/gi,"box score"],[/\blinen\b/gi,"box score"],[/\bnapkins\b/gi,"bench points"],
+    [/\bgood china\b/gi,"victory lap"],[/\bchina\b/gi,"celebration"],[/\bsilverware\b/gi,"celebration"],
+    [/\bdining room\b/gi,"weekly plan"],[/\bballroom\b/gi,"division race"],[/\bsalon\b/gi,"contender list"],[/\bvelvet rope\b/gi,"contender line"],[/\bchaise lounge\b/gi,"old plan"],[/\bcoat check\b/gi,"sideline"],
+    [/\bplace cards\b/gi,"projections"],[/\bplace card\b/gi,"projection"],
+    [/\bguest list\b/gi,"schedule"],[/\bguests\b/gi,"opponents"],[/\bguest\b/gi,"opponent"],
+    [/\breservations\b/gi,"matchups"],[/\breservation\b/gi,"matchup"],[/\bappointments\b/gi,"matchups"],[/\bappointment\b/gi,"matchup"],
+    [/\bmenus\b/gi,"game plans"],[/\bmenu\b/gi,"game plan"],[/\bdinner\b/gi,"Sunday"],[/\bcourses\b/gi,"scoring stretches"],[/\bcourse\b/gi,"scoring stretch"],
+    [/\bplates\b/gi,"scores"],[/\bplate\b/gi,"score"],[/\bdessert\b/gi,"celebration"],[/\bwine\b/gi,"result"],[/\bupholstery\b/gi,"cover"],
+    [/\bdécor\b/gi,"window dressing"],[/\bdecor\b/gi,"window dressing"],[/\bdecorative\b/gi,"cosmetic"],[/\bportion size\b/gi,"expectation"],[/\bportion\b/gi,"output"],
+    [/\bservings\b/gi,"games"],[/\bserving\b/gi,"output"],[/\bserved\b/gi,"produced"],[/\bserve\b/gi,"produce"],[/\bRSVP\b/g,"lineup spot"],[/\boutfit\b/gi,"form"],
+    [/\bthe table\b/gi,"the lineup"],[/\btable\b/gi,"lineup"],[/\bthe room\b/gi,"the roster"],[/\broom\b/gi,"space"]
+  ];
+  for(const [re,to] of wordSwaps)s=s.replace(re,to);
+  return s.replace(/\s+/g," ").trim()
+}
+function w2S(t,r,key,body){
+  const styled=String(r?.id||"")==="tess-delaney"?w2RoycingtonRewrite(body):body;
+  return w2TeamGrammar(t,w2Sentence(styled))
+}
 function w2Natural(xs){const a=(xs||[]).filter(Boolean);return a.length<=1?(a[0]||""):a.length===2?a[0]+" and "+a[1]:a.slice(0,-1).join(", ")+", and "+a.at(-1)}
 function w2Stat(p){const real=String(p?.real_stat_line||"").trim();return real?real.replaceAll(" • ",", "):""}
 function w2StatClause(p){const stat=w2Stat(p);return stat?"; "+w2StatKind(p)+": "+stat:""}
@@ -751,12 +802,22 @@ function w2ShortPlayerName(t,r,p,seed=""){
   const n=w2PlayerNameParts(p),choices=[n.last,n.first].filter((x,i,a)=>x&&a.indexOf(x)===i);
   return choices[w2Hash(String(t?.team_name||"")+"|"+String(r?.id||"")+"|"+String(p?.id||n.full)+"|"+seed)%choices.length]||n.full
 }
+function w2PlayerCategoryReference(p,profile){
+  const noun=w2PlayerPositionNoun(p),status=String(profile?.status||"");
+  return status==="breakout"?"the breakout "+noun:
+    status==="emerging"?"the emerging "+noun:
+    status==="established-star"?"the star "+noun:
+    status==="struggling-star"?"the struggling star":
+    status==="reliable-veteran"?"the reliable veteran "+noun:
+    status==="declining-veteran"?"the struggling veteran "+noun:
+    status==="veteran"?"the veteran "+noun:
+    status==="rookie"?"the rookie "+noun:
+    status==="young-player"?"the young "+noun:
+    status==="reliable"?"the reliable "+noun:
+    status==="star-level"?"the high-end "+noun:""
+}
 function w2PlayerReference(t,r,p,profile,slot=0){
-  const n=w2PlayerNameParts(p),short=w2ShortPlayerName(t,r,p,"ref-"+slot),noun=w2PlayerPositionNoun(p),status=String(profile?.status||""),
-    descriptive=status==="rookie"?"the rookie "+noun:
-      status==="young-player"||status==="breakout"||status==="emerging"?"the young "+noun:
-      status==="established-star"||status==="struggling-star"?"the proven "+noun:
-      status==="reliable-veteran"||status==="veteran"||status==="declining-veteran"?"the veteran "+noun:"",
+  const n=w2PlayerNameParts(p),short=w2ShortPlayerName(t,r,p,"ref-"+slot),descriptive=w2PlayerCategoryReference(p,profile),
     choices=[short,n.first!==short?n.first:"",n.last!==short?n.last:"",descriptive].filter((x,i,a)=>x&&a.indexOf(x)===i);
   return choices[w2Hash(String(t?.team_name||"")+"|"+String(r?.id||"")+"|"+String(p?.id||n.full)+"|reference|"+slot)%choices.length]||n.full
 }
@@ -876,7 +937,10 @@ function w2Week1DeltaRead(t,r,p,pp,role){
 function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
   const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),foe=w2DisplayTeam(opp),pts=w2One(p.points),
     delta=pp?Number(p.points)-Number(pp.points):null,role=Math.min(2,Number(i)||0),v=w2Cohort(t)%4,
-    profile=w2PlayerStatusProfile(p,role,pp),name=w2PlayerReference(t,r,p,profile,role);
+    profile=w2PlayerStatusProfile(p,role,pp),categoryRef=w2PlayerCategoryReference(p,profile),
+    categoryPriority=new Set(["breakout","emerging","established-star","struggling-star","declining-veteran"]),
+    useCategory=!!categoryRef&&(categoryPriority.has(profile.status)||role===0||w2Hash(String(t?.team_name||"")+"|"+String(p?.id||p?.name)+"|category-ref|"+role)%2===0),
+    name=useCategory?categoryRef:w2PlayerReference(t,r,p,profile,role);
   if(Number(p?.points)<=1.5){
     const low={
       "walter-mercer":[
@@ -1424,13 +1488,13 @@ function w2Headline(t,r){
   const team=t.team_name,opp=t.opponent_name||"the opponent",star=(t.starter_details||[])[0]?.name||team,v=w2Cohort(t),won=Number(t.points)>Number(t.opponent_points);
   const win={
     "walter-mercer":[team+" Has Two Weeks of Proof Now",team+" Banks Another Sunday and Raises the Standard",star+" Gives "+team+" a Week 2 Answer Worth Keeping",team+" Leaves Week 2 With Less to Explain",team+" Turns the Second Sunday Into Something Useful",team+" Had More Week 2 Firepower Than "+opp,team+" Makes the Opening Week Look Less Accidental",team+" Wins Again, Which Is How Expectations Get Expensive"],
-    "tess-delaney":[team+" Makes the Second Course Look Better Than the First",star+" Gives "+team+" Another Reason to Be Unreasonably Pleased",team+" Wins Week 2 and the Furniture Survives","A Second Sunday With Style for "+team,team+" Has Earned Another Evening With the Good China",team+" Wins, and I Regret to Report the Confidence Is Spreading",team+" Left "+opp+" With the Smaller Scorecard",team+" Turns Week 2 Into a Very Attractive Problem"],
+    "tess-delaney":[team+" Makes the Second Sunday Look Less Accidental",star+" Gives "+team+" Another Reason to Get Loud",team+" Wins Week 2 and the Confidence Is Spreading","A Second Sunday Worth Talking About for "+team,team+" Has Earned a Little More Swagger",team+" Wins, and I Regret to Report the Confidence Is Spreading",team+" Left "+opp+" With the Smaller Scorecard",team+" Turns Week 2 Into a Very Attractive Problem"],
     "mack-hollis":[team+" Wins Week 2 and the Volume Goes Up",star+" Just Gave "+team+" Another Headline",team+" Makes It Two Sundays Worth Talking About",team+" Put More on the Board and Took the Win",team+" Keeps Winning and the Rival Managers Hate the Trend",team+" Put Week 2 on the Front Door","The Second Sunday Belongs to "+team,team+" Is Starting to Look Annoyingly Real"],
     "nora-voss":[team+" Wins Again and the Joke Is Getting Harder to Make",star+" Gave "+team+" a Week 2 Performance Rivals Will Remember",team+" Got the Win; Everybody Else Gets the Annoying Part",team+" Scored Enough to Make "+opp+"’s Total Irrelevant",team+" Is Two Weeks Into Making This Look Real",team+" Won Week 2 and I Am Running Out of Polite Doubt",team+" Put Another Result on the Board and Made It Loud",team+" Is Starting to Become Somebody Else’s Problem"]
   };
   const loss={
     "walter-mercer":["Week 2 Leaves "+team+" With a Problem to Fix",team+" Gets the Second Sunday Wrong",opp+" Hands "+team+" a Week 2 Lesson It Did Not Want",team+" Has Two Weeks of Tape and One Fresh Complaint",team+" Falls in Week 2 and the Margin for Excuses Shrinks",star+" Could Not Keep "+team+" Out of Trouble",team+" Turns the Second Sunday Into a Longer Week",team+" Has Work to Do Before This Becomes a Habit"],
-    "tess-delaney":[team+" Spills the Week 2 Wine on the Tablecloth",opp+" Ruins "+team+"’s Second Sunday",team+" Loses, and the Décor Cannot Save It",team+" Makes Week 2 Needlessly Dramatic",team+" Has a Second-Sunday Problem in Very Expensive Clothing","A Less Civilized Week 2 for "+team,team+" Falls and the Good China Goes Back in the Cabinet",team+" Gives the Rest of Us an Unfashionably Useful Warning"],
+    "tess-delaney":[team+" Spills Week 2 All Over the Scoreboard",opp+" Ruins "+team+"’s Second Sunday",team+" Loses, and the Polish Cannot Save It",team+" Makes Week 2 Needlessly Dramatic",team+" Has a Second-Sunday Problem With Nowhere to Hide","A Less Civilized Week 2 for "+team,team+" Falls and the Excuses Get Smaller",team+" Gives the Rest of Us an Uncomfortably Useful Warning"],
     "mack-hollis":[team+" Loses Week 2 and the Excuses Get Smaller",opp+" Just Put "+team+" on the Wrong Side of the Headline",team+" Takes a Week 2 Hit and Everybody Saw It",team+" Made the Second Sunday Ugly",team+" Has Two Weeks of Results and One Big Problem",star+" Needed More Help; "+team+" Did Not Find It",team+" Lost, So the Rival Managers Get Their Joke","A Better Answer Is Needed From "+team+" Before Next Sunday"],
     "nora-voss":[team+" Lost Week 2 and the Punch Line Is Too Easy",team+" Exposed Its Own Weak Spot in a Week 2 Loss",team+" Has a Week 2 Mess That Needs Fixing",team+" Lost, and No Amount of Polite Language Improves It",team+" Put an Obvious Weak Number on the Week 2 Page",star+" Could Not Drag "+team+" Out of the Trouble",team+" Took the Hit; Now Fix the Part Everybody Saw",team+" Made Week 2 Much Funnier for Its Rivals"]
   };
@@ -1471,7 +1535,7 @@ function w2CoolPairRead(t,r,eligible,won){
 function w2SectionHead(r,kind){
   const h={
     "walter-mercer":{lede:"What Week 2 Changed",players:"Who Actually Moved the Game",identity:"What This Team Is Starting to Look Like",management:"The Decisions That Survived Sunday",value:"What the Market Said After Two Weeks","hot-seat":"The Problem That Cannot Follow Them Into Week 3","cool-throne":"Credit Where It Is Actually Due",sentiment:"What the Crowd Believes Now",outlook:"Week 3 Is Already Asking Questions"},
-    "tess-delaney":{lede:"The Second Sunday, Properly Dressed",players:"The People Who Made the Afternoon Interesting",identity:"What Kind of Outfit Is This, Exactly?",management:"Management, Vanity and the Cost of Choices",value:"The Market Has Opinions, Naturally","hot-seat":"The Unfashionable Problem at the Table","cool-throne":"The Good China List",sentiment:"Public Emotion, Served Without Restraint",outlook:"The Next Appointment With Consequence"},
+    "tess-delaney":{lede:"The Second Sunday, Properly Dressed",players:"The People Who Made the Afternoon Interesting",identity:"What Kind of Team Is This, Exactly?",management:"Management, Vanity and the Cost of Choices",value:"The Market Has Opinions, Naturally","hot-seat":"The Problem Everybody Can See","cool-throne":"Credit, With Appropriate Drama",sentiment:"Public Emotion, Without Restraint",outlook:"The Next Matchup With Consequence"},
     "mack-hollis":{lede:"Week 2: The Part Everybody Will Quote",players:"Who Made the Noise",identity:"Okay, So What Are We Looking At Here?",management:"Management Has to Wear This One",value:"The Price Tag Moved","hot-seat":"Somebody Own the Bad Part","cool-throne":"Give Them the Good Headline",sentiment:"The Crowd Has Decided, Temporarily",outlook:"Week 3: No Hiding Now"},
     "nora-voss":{lede:"Week 2 Was Not Subtle",players:"The Names Rivals Have to Respect",identity:"The Part Rivals Will Actually Remember",management:"Fix It Before It Becomes a Bit",value:"The Roster Price Moved, Fine","hot-seat":"The Thing Everybody Saw","cool-throne":"Yes, Somebody Deserves Credit",sentiment:"The Crowd Is Already Too Loud",outlook:"Week 3 Gets the Same Weak Spot First"}
   };
@@ -2359,8 +2423,12 @@ function w2BuildSections(t,prev){
 function rewriteWeek2Team(t,prev){
   const normalized={...t,team_name:w2DisplayTeam(t.team_name),opponent_name:w2DisplayTeam(t.opponent_name),next_opponent_name:w2DisplayTeam(t.next_opponent_name),
     starter_details:(t.starter_details||[]).map(p=>({...p,week1_points:w2PrevPlayer(prev,p.id)?.points??null}))};
-  const a=normalized.inquirer_article||{},sections=w2BuildSections(normalized,prev),paragraphs=sections.flatMap(s=>s.paragraphs||[]);
-  return{...normalized,inquirer_article:{...a,headline:w2Headline(normalized,a.reporter||{}),deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:12}}
+  const a=normalized.inquirer_article||{},roycington=String(a?.reporter?.id||"")==="tess-delaney",
+    built=w2BuildSections(normalized,prev),
+    sections=roycington?built.map(s=>({...s,heading:w2RoycingtonRewrite(s.heading),paragraphs:(s.paragraphs||[]).map(w2RoycingtonRewrite)})):built,
+    paragraphs=sections.flatMap(s=>s.paragraphs||[]),
+    headline=roycington?w2RoycingtonRewrite(w2Headline(normalized,a.reporter||{})):w2Headline(normalized,a.reporter||{});
+  return{...normalized,inquirer_article:{...a,headline,deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:13}}
 }
 function w2Games(teams){const by=new Map((teams||[]).map(t=>[String(t.roster_id),t])),seen=new Set(),out=[];for(const t of teams||[]){const o=by.get(String(t.opponent_roster_id));if(!o)continue;const k=[String(t.roster_id),String(o.roster_id)].sort().join("|");if(seen.has(k))continue;seen.add(k);const w=Number(t.points)>=Number(o.points)?t:o,l=w===t?o:t,margin=Math.abs(Number(w.points)-Number(l.points)),proj=Number.isFinite(Number(w.projected))&&Number.isFinite(Number(l.projected)),upset=proj&&Number(w.projected)<Number(l.projected);out.push({winner:w,loser:l,margin,upset,combined:Number(w.points)+Number(l.points)})}return out}
 function w2RecapStat(p){if(!p)return"";const stat=w2Stat(p);return p.name+" — "+w2One(p.points)+" fantasy points"+(stat?", "+stat:"")}
@@ -2553,6 +2621,24 @@ function w2TwoWeekLeagueRead(teams,r){
   const p4="The larger lesson is that depth is starting to matter more than novelty. The strongest teams are pairing a star performance with enough ordinary production behind it, while shakier rosters keep asking one or two good players to turn every Sunday into a rescue mission. Two games are not enough to crown anybody, but they are enough to tell the difference between a roster building a floor and one living on weekly emergency labor.";
   return[p1,p2,p3,p4]
 }
+function w2RecapCategoryRead(t,p,prev){
+  if(!t||!p)return"";
+  const slot=Math.max(0,(t.starter_details||[]).findIndex(x=>String(x?.id)===String(p?.id))),
+    pp=w2PrevPlayer(prev,p.id),profile=w2PlayerStatusProfile(p,slot,pp),ref=w2PlayerCategoryReference(p,profile),status=profile.status;
+  if(!ref)return"";
+  const Ref=ref.charAt(0).toUpperCase()+ref.slice(1),team=w2DisplayTeam(t.team_name),pts=w2One(p.points);
+  if(status==="breakout")return Ref+" has now earned the breakout label across two Sundays, and "+team+" can treat "+w2ShortPlayerName(t,{id:"recap"},p,"recap-breakout")+" as part of the weekly plan instead of a one-game surprise.";
+  if(status==="emerging")return Ref+" is becoming a real two-week development for "+team+", not just a good box score that happened once.";
+  if(status==="established-star")return Ref+" gave "+team+" "+pts+" points; that is star production doing exactly what the label promises.";
+  if(status==="struggling-star")return Ref+" now has two quiet Sundays against an established standard, which makes the star label part of the pressure rather than a shield from it.";
+  if(status==="declining-veteran")return Ref+" has opened with two weeks below the old baseline, so the veteran résumé does not erase the current trend.";
+  if(status==="reliable-veteran")return Ref+" is giving "+team+" the kind of veteran floor that keeps a lineup from needing a rescue every week.";
+  if(status==="veteran")return Ref+" supplied "+pts+" points, useful veteran work in a week where ordinary support mattered.";
+  if(status==="rookie")return Ref+" is already carrying enough Week 2 responsibility to matter to the next scouting report.";
+  if(status==="young-player")return Ref+" is young enough that the current role still has room to become a larger part of "+team+"’s identity.";
+  if(status==="reliable")return Ref+" gave "+team+" another dependable answer, exactly the kind of ordinary production contenders need behind their stars.";
+  return""
+}
 function rewriteWeek2Overview(overview,teams,previousEdition){
   const previous=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t])),games=w2Games(teams),top=(teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],topGame=games.find(g=>[String(g.winner.roster_id),String(g.loser.roster_id)].includes(String(top?.roster_id))),close=games.slice().sort((a,b)=>a.margin-b.margin)[0],upset=games.find(g=>g.upset),big=games.slice().sort((a,b)=>b.margin-a.margin)[0],chosen=[],seen=new Set();
   for(const g of [topGame,upset,close,big,...games.slice().sort((a,b)=>b.combined-a.combined)]){if(!g||chosen.length>=5)continue;const k=[g.winner.roster_id,g.loser.roster_id].sort().join("|");if(!seen.has(k)){seen.add(k);chosen.push(g)}}
@@ -2575,6 +2661,8 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     else if(knife)turn=(wStar?wStar.name+" led "+wName+" with "+w2One(wStar.points)+", while ":"")+(lStar?lStar.name+" answered with "+w2One(lStar.points)+" for "+lName+". ":"")+"The stars traded punches and left the ordinary lineup spots to decide who had to hate Monday.";
     else turn=(wStar?wStar.name+" supplied "+w2One(wStar.points)+" for "+wName+". ":"")+(lStar?lStar.name+" gave "+lName+" "+w2One(lStar.points)+", but ":"")+"the middle of the winning lineup kept answering often enough that the loser never found a clean comeback lane.";
     const histCandidate=[wStar,lStar,ws[1]].find(p=>w2HistoricalColor(p,r,w,i));if(histCandidate){turn+=" "+w2HistoricalColor(histCandidate,r,w,i);if(i===0&&w.next_opponent_name)turn+=" For "+wName+", that is familiar production "+w2DisplayTeam(w.next_opponent_name)+" now has to account for rather than hope disappears."}
+    const statusCandidates=[{t:w,p:wStar},{t:l,p:lStar},{t:w,p:ws[1]},{t:l,p:ls[1]}].filter(x=>x.p);
+    for(const x of statusCandidates){const statusLine=w2RecapCategoryRead(x.t,x.p,previous.get(String(x.t.roster_id))||null);if(statusLine){turn+=" "+statusLine;break}}
     if(i===0)turn=(wStar?.name||wName)+" lit the first match, but this game kept finding new ways to catch fire. "+turn;
     paras.push(w2S(w,r,"recap-turn-"+i,turn));
     let column;
@@ -2615,7 +2703,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
   ];
   const nextGames=w2NextWeekGames(teams).filter(x=>Number.isFinite(Number(x.gap))).sort((a,b)=>Number(a.gap)-Number(b.gap)),next=nextGames[0],filchTeam=winless[0]||downValue||top;
   const filch=[next?w2S(next.a,rep(3)||{},"filch-next",w2DisplayTeam(next.a.team_name)+" and "+w2DisplayTeam(next.b.team_name)+" are separated by only "+w2One(next.gap)+" projected points for Week 3. That is close enough for one star, one bad lineup call or one ridiculous quiet game to turn the whole thing, so save the confident speeches for afterward."):w2S(filchTeam,rep(3)||{},"filch-next","The Week 3 projection board is not clean enough to crown a featured matchup, so I am not going to fake suspense the schedule did not supply."),w2S(filchTeam,rep(3)||{},"filch-weak",w2DisplayTeam(filchTeam.team_name)+" cannot bring the same weakness into Week 3 and call it bad luck again. Everybody saw it. If the same lineup slot stays quiet again, the flaw becomes a pattern instead of an excuse."),w2S(filchTeam,rep(3)||{},"filch-tilly","If rival managers are laughing at the same problem two Sundays in a row, congratulations: it is no longer bad luck. It is your brand."),w2S(top,rep(3)||{},"filch-end","The free trial is over. Good starts have to survive a third opponent, bad starts have to show an actual fix, and Week 3 gets first crack at exposing both.")];
-  const sections=[{reporter:rep(0),heading:"What Actually Mattered This Week",blocks,paragraphs:blocks.flatMap(b=>b.paragraphs||[])},{reporter:rep(1),heading:"The Velvet Rope: Week 2 Has Entered the Room",paragraphs:velvet},{reporter:rep(2),heading:"The Back Page: The Second Sunday Gets a Headline",paragraphs:back},{reporter:rep(3),heading:"Next Week: Fix It Before It Becomes a Running Joke",paragraphs:filch}];
+  const sections=[{reporter:rep(0),heading:"What Actually Mattered This Week",blocks,paragraphs:blocks.flatMap(b=>b.paragraphs||[])},{reporter:rep(1),heading:"The Week 2 Contender Line",paragraphs:velvet},{reporter:rep(2),heading:"The Back Page: The Second Sunday Gets a Headline",paragraphs:back},{reporter:rep(3),heading:"Next Week: Fix It Before It Becomes a Running Joke",paragraphs:filch}];
   const mentionTeam=x=>(teams||[]).find(t=>(String(x?.title||"")+" "+String(x?.take||"")).includes(String(t.team_name||"")));
   const hot=(overview?.hot_takes||[]).map((x,i)=>{
     const reporter=sections[i%4]?.reporter||rep(0)||{},kind=String(x?.kind||""),subject=mentionTeam(x)||top;
@@ -2649,7 +2737,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     const rr=rep(1)||rep(0)||{},rid=String(rr?.id||"walter-mercer"),short=w2ShortPlayerName(riser.t,rr,riser.p,"hot-breakout"),ctx=w2BreakoutContext(riser.p,riser.profile,short),team=w2DisplayTeam(riser.t.team_name),
       lead={
         "walter-mercer":riser.p.name+" has made two Sundays in a row feel like the beginning of a much larger assignment. The old expectations are already starting to look undersized.",
-        "tess-delaney":riser.p.name+" has spent two straight Sundays making the old place setting look cheap. I am not handing over the keys to the dining room yet, but I am absolutely saving him a better chair.",
+        "tess-delaney":riser.p.name+" has spent two straight Sundays looking like a breakout instead of a one-week stunt. I am not calling two games a season, but opponents have already lost the luxury of treating him like background noise.",
         "mack-hollis":riser.p.name+" has hit the first two weeks hard enough that the noise is no longer coming from one lucky afternoon. Keep the volume up and everybody else has to adjust.",
         "nora-voss":riser.p.name+" has now ruined the easy rival joke twice. That is irritatingly close to becoming something opponents actually have to plan around."
       }[rid]||riser.p.name+" has put together two Sundays worth taking seriously.";
@@ -2677,7 +2765,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
         take:w2S(g.t,rr,"hot-future-division",a+"–"+b+" is the Week 3 game with the sharpest kind of pressure: both teams are spending one of their limited head-to-head chances in the same division race, and the division winner gets a playoff berth."+mida+" The loser is not merely one game worse; it has handed a direct rival the exact result it wanted.")});
     }
   }
-  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:12,inquirer_version:31}
+  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:13,inquirer_version:31}
 }
 function w2SentenceParts(s){return String(s||"").replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll(".","§")).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace(".","§")).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll("§",".").trim()).filter(Boolean)}
 // Week 2 publication-only rewrite: Week 1 remains an immutable comparison source, never a prose template.
@@ -2704,7 +2792,7 @@ for(const t of rewrittenWeek2Teams){
   if(!rid||reporterJudgmentSeen.has(rid))continue;
   const next=w2DisplayTeam(t.next_opponent_name||"the next opponent"),judgment={
     "walter-mercer":"I think "+w2DisplayTeam(t.team_name)+" has a clean Week 3 assignment: keep the useful Week 2 scoring, then get more from the quiet spots against a "+next+" roster with its own scoring strengths.",
-    "tess-delaney":"I would keep the good china within reach for "+w2DisplayTeam(t.team_name)+", but "+next+" sets a new scoring bar before anybody starts acting established.",
+    "tess-delaney":"I want "+w2DisplayTeam(t.team_name)+" to enjoy Week 2 without getting precious about it. "+next+" sets a new scoring bar, and the useful parts of this lineup have to survive a different opponent before anybody starts acting established.",
     "mack-hollis":"I want "+w2DisplayTeam(t.team_name)+" to prove Week 2 was not just the same stars doing all the lifting. If the support shows up too, then the headline gets louder.",
     "nora-voss":"I think "+w2DisplayTeam(t.team_name)+" has one week to make its obvious flaw boring. If the same slot stays quiet again, rivals will not need a new joke."
   }[rid];
@@ -2718,11 +2806,15 @@ const inq={...rawInq,teams:rewrittenWeek2Teams};
 const trades=canonicalWeekTrades;
 const rawOverview=buildLeagueOverview({season,week,teams:inq.teams,players,transactions,canonicalTrades:trades,weekClassification:classification,valueHistoryMeta:{period:teamValueHistory?.period||null,baseline:teamValueHistory?.baseline||null,latest:teamValueHistory?.latest||null,source:teamValueHistory?.source||null}});
 const overview=rewriteWeek2Overview(rawOverview,inq.teams,week1Preload2026);
-const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),published_locked:true,broadcast_version:16,inquirer_version:31,editorial_revision:12,context_snapshot_through_week:2,projection_source:Object.keys(currentProj).length?'Sleeper Week 2 projections scored with league settings; Week 3 projections captured only for the Week 2 next-opponent outlook':'projection data partially unavailable in preloaded Week 2 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
+const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),published_locked:true,broadcast_version:16,inquirer_version:31,editorial_revision:13,context_snapshot_through_week:2,projection_source:Object.keys(currentProj).length?'Sleeper Week 2 projections scored with league settings; Week 3 projections captured only for the Week 2 next-opponent outlook':'projection data partially unavailable in preloaded Week 2 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
 
 if(result.teams.length!==32)throw new Error('Expected 32 team articles');
 const week2PublishedCopy=result.teams.flatMap(t=>t?.inquirer_article?.paragraphs||[]).join("\n");
 if(/\bhad a legal alternative\b/i.test(week2PublishedCopy))throw new Error("Week 2 still contains rules-engine bench wording");
+const roycingtonPublishedCopy=result.teams.filter(t=>String(t?.inquirer_article?.reporter?.id)==="tess-delaney").flatMap(t=>[t?.inquirer_article?.headline,...(t?.inquirer_article?.sections||[]).flatMap(s=>[s?.heading,...(s?.paragraphs||[])])]).join("\n");
+if(/\b(?:furniture|chair|chairs|table|tables|tablecloth|linen|napkin|napkins|china|silverware|place setting|place settings|seating|centerpiece|dining room|dinner|plate|plates|reservation|reservations|guest list|velvet rope|chaise|ballroom|salon|coat check)\b/i.test(roycingtonPublishedCopy))throw new Error("Roycington still contains furniture/dining/linen metaphor scaffolding");
+const breakoutHot=(result?.league_overview?.hot_takes||[]).find(x=>/breakout player to watch/i.test(String(x?.title||"")));
+if(breakoutHot&&/\b(?:furniture|chair|chairs|table|tables|linen|china|silverware|place setting|dining room|reservation|velvet rope|chaise)\b/i.test(String(breakoutHot.take||"")))throw new Error("Breakout hot take still contains furniture/dining metaphor scaffolding");
 if(/\bscored \d+(?:\.\d+)? fantasy points; the receiving line was\b/i.test(week2PublishedCopy))throw new Error("Week 2 still contains the retired generic receiving-stat intro");
 assertWeek2Originality(result,week1Preload2026);
 for(const t of result.teams){const a=t.inquirer_article;if(!a?.headline||!a?.reporter?.id||!Array.isArray(a?.paragraphs)||a.paragraphs.length<9)throw new Error('Incomplete article '+t.roster_id)}

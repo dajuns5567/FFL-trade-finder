@@ -173,16 +173,44 @@ function evolveSentence(sentence,reporterId,seed){
 function paragraphSentenceRows(paragraph){
   return forwardSentenceParts(paragraph).map(sentence=>({sentence,norm:forwardNormSentence(sentence,[]),words:forwardWordCount(sentence)}));
 }
+const FORWARD_CROSS_REPORTER_STYLE=/\b(?:room|table|chair|seating|rearrang\w*|headline|screenshot|joke|punchline|megaphone|receipt|reservation|silverware|china|wardrobe|decorative|parade|siren|menu|dinner|bill|gossip|guest list|repair|spiral|standard|unanswered|pressure|urgency|runway|rubble|identity|rebuttal|warning|panic|collapse|argument|response)\b/i;
+function forwardEditorialPhraseKeys(sentence,entities,width=9){
+  const raw=String(sentence||''),numeric=(raw.match(/\b\d+(?:\.\d+)?%?\b/g)||[]).length,
+    factual=/\b(?:fantasy points?|solo tackles?|assisted tackles?|tackle for loss|qb hits?|passes?|targets?|receptions?|rushing yards?|receiving yards?|touchdowns?|carries|projection|projected)\b/i;
+  if(numeric>=2&&factual.test(raw))return[];
+  const norm=forwardNormSentence(raw,entities).replace(/[^a-z0-9#\[\]’'-]+/g,' ').replace(/\s+/g,' ').trim(),
+    ws=norm.split(/\s+/).filter(Boolean),out=[];
+  for(let i=0;i+width<=ws.length;i++){
+    const gram=ws.slice(i,i+width).join(' ');
+    if(FORWARD_CROSS_REPORTER_STYLE.test(gram))out.push(gram);
+  }
+  return[...new Set(out)];
+}
+function forwardCrossReporterPhraseOffenders(teams,entities){
+  const placements=new Map();
+  for(const t of teams||[]){
+    const rid=String(t?.inquirer_article?.reporter?.id||''),seen=new Set();
+    for(const sentence of forwardArticleSentences(t)){
+      for(const gram of forwardEditorialPhraseKeys(sentence,entities)){
+        if(seen.has(gram))continue;seen.add(gram);
+        const rows=placements.get(gram)||[];rows.push({team:String(t.team_name||''),reporter:rid});placements.set(gram,rows);
+      }
+    }
+  }
+  return new Map([...placements.entries()].filter(([,rows])=>rows.length>1&&new Set(rows.map(x=>x.reporter)).size>1));
+}
 function evolveForwardTeams(teams,previousEdition,week,salt){
   const currentEntities=forwardEntities({teams}),previousEntities=forwardEntities(previousEdition),entities=[...currentEntities,...previousEntities],
     priorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),new Set(forwardArticleSentences(t).map(s=>forwardNormSentence(s,entities)))])),
     currentCounts=new Map();
   for(const t of teams||[])for(const s of forwardArticleSentences(t)){const n=forwardNormSentence(s,entities);currentCounts.set(n,(currentCounts.get(n)||0)+1)}
+  const phraseOffenders=new Set(forwardCrossReporterPhraseOffenders(teams,entities).keys());
   return (teams||[]).map(t=>{
     const a=t?.inquirer_article;if(!a)return t;const rid=String(a?.reporter?.id||'walter-mercer'),prior=priorByRoster.get(String(t.roster_id))||new Set();
     const sections=(a.sections||[]).map((section,si)=>({...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>{
       const rows=forwardSentenceParts(p);return rows.map((sentence,sj)=>{
-        const n=forwardNormSentence(sentence,entities),offender=forwardWordCount(sentence)>=10&&(prior.has(n)||(currentCounts.get(n)||0)>3);
+        const n=forwardNormSentence(sentence,entities),phraseCollision=forwardEditorialPhraseKeys(sentence,entities).some(x=>phraseOffenders.has(x)),
+          offender=forwardWordCount(sentence)>=10&&(prior.has(n)||(currentCounts.get(n)||0)>3||phraseCollision);
         return offender?evolveSentence(sentence,rid,[week,salt,t.roster_id,section.kind||section.heading,si,pi,sj,n].join('|')):sentence;
       }).join(' ');
     })}));
@@ -2985,6 +3013,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     if(rid==='nora-voss'&&/\b(?:docket|cross-examination|defendant|prosecution|indictment|courtroom)\b/i.test(copy))issues.push({id:'filch-courtroom-scaffold',team:t.team_name});
   }
   for(const [sentence,ids] of articleScaffold)if(ids.size>=4)issues.push({id:'cross-team-copy-scaffold',teams:ids.size,sentence});
+  for(const [phrase,rows] of forwardCrossReporterPhraseOffenders(teams,entities))issues.push({id:'cross-reporter-phrase-scaffold',phrase,teams:rows.map(x=>x.team),reporters:[...new Set(rows.map(x=>x.reporter))]});
 
   if(previous){
     const pset=new Set(forwardRecapSentences(previous).map(s=>forwardNormSentence(s,entities))),curr=forwardRecapSentences(current).map(s=>forwardNormSentence(s,entities)),overlap=curr.filter(n=>pset.has(n));

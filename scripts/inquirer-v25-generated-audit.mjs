@@ -143,8 +143,11 @@ for(const t of d.teams||[]){
     const prior=Number(p?.prior_season_avg),pts=Number(p?.points),games=Number(p?.prior_season_games)||0;
     if(!Number.isFinite(prior)||prior<=0||!Number.isFinite(pts)||games<6||Math.abs(pts-prior)<Math.max(4,prior*.3))continue;
     historicalContextExpected++;
-    const pname=String(p.name||''),paragraphs=(t?.inquirer_article?.paragraphs||[]).map(String),
-      found=paragraphs.some(paragraph=>paragraph.includes(pname)&&/\b(?:2025|last season)\b/i.test(paragraph));
+    const pname=String(p.name||''),bits=pname.split(/\s+/).filter(Boolean),first=bits[0]||'',last=bits.at(-1)||'',
+      paragraphs=(t?.inquirer_article?.paragraphs||[]).map(String),article=paragraphs.join(' '),
+      firstFull=article.indexOf(pname),
+      candidateRefs=[pname,first.length>=4?first:'',last.length>=4?last:''].filter(Boolean),
+      found=firstFull>=0&&paragraphs.some(paragraph=>/\b(?:2025|last season)\b/i.test(paragraph)&&candidateRefs.some(ref=>new RegExp('(?:^|\\W)'+ref.replace(/[.*+?^$\{\}()|[\]\\]/g,m=>'\\\\'+m)+'(?:$|\\W)','i').test(paragraph)));
     if(found)historicalContextFound++;
     else historicalContextMissing.push({team:t.team_name,player:pname,week2:pts,prior_avg:prior,prior_games:games,reporter:t?.inquirer_article?.reporter?.name});
   }

@@ -2434,6 +2434,8 @@ function w2RoycingtonFootballPolish(t,body){
     ["Week 3 starts with ","The next stretch starts with "]
   ];
   for(const [from,to] of voiceSwaps)s=s.replaceAll(from,to);
+  s=s.replaceAll(" a headline score inside a result nobody wants framed"," a top-end score inside a loss nobody wants remembered");
+  if(s.includes(" headline belongs to ")&&s.includes(", but the repeatable part is"))s=s.replace(" headline belongs to "," lead credit goes to ").replace(", but the repeatable part is",", but the part worth trusting again is");
   return s
 }
 function rewriteWeek2Team(t,prev){

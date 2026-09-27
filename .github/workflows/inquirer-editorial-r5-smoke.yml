@@ -53,6 +53,21 @@ jobs:
           done
           exit 1
 
+      - name: Capture Week 1 generated audit diagnostic
+        run: |
+          set +e
+          node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer-r6.json > /tmp/week1-generated-audit.log 2>&1
+          code=$?
+          echo "EXIT_CODE=$code" >> /tmp/week1-generated-audit.log
+          exit 0
+      - name: Upload Week 1 diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: week1-generated-audit-diagnostic
+          path: |
+            /tmp/week1-inquirer-r6.json
+            /tmp/week1-generated-audit.log
+          retention-days: 2
       - name: Audit generated Week 1 prose
         run: node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer-r6.json
 

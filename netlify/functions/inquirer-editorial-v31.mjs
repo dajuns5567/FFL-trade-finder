@@ -207,7 +207,7 @@ function evolveForwardOverview(overview,previousOverview,week,salt,entities=[]){
     counts=new Map();
   for(const s of forwardSentenceParts(currentText).filter(s=>forwardWordCount(s)>=10)){const n=forwardNormSentence(s,entities);counts.set(n,(counts.get(n)||0)+1)}
   const evolveParagraph=(p,rid,seedBase)=>forwardSentenceParts(p).map((sentence,sj)=>{
-    const n=forwardNormSentence(sentence,entities),offender=forwardWordCount(sentence)>=10&&(priorSentences.has(n)||(counts.get(n)||0)>1);
+    const n=forwardNormSentence(sentence,entities),offender=forwardWordCount(sentence)>=6&&(priorSentences.has(n)||(counts.get(n)||0)>1);
     return offender?evolveSentence(sentence,rid,[week,salt,seedBase,sj,n].join('|')):sentence;
   }).join(' ');
   const sections=(overview.sections||[]).map((section,si)=>{
@@ -2834,10 +2834,7 @@ function assertWeek2Originality(result,previousEdition){
   let overview=rewriteWeek2Overview(rawOverview||{},rewritten,previousEdition||{teams:[]});
   let teams=deepStrings(rewritten,s=>adaptWeekLanguage(s,week,weekClassification));
   overview=deepStrings(overview,s=>adaptWeekLanguage(s,week,weekClassification));
-  if(week>=3){
-    teams=evolveForwardTeams(teams,previousEdition,week,variationSalt);
-    overview=evolveForwardOverview(overview,previousEdition?.league_overview||null,week,variationSalt,[...forwardEntities({teams}),...forwardEntities(previousEdition)]);
-  }
+  if(week>=3)teams=evolveForwardTeams(teams,previousEdition,week,variationSalt);
 
   const trajectory=(overview.sections||[]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
   if(trajectory)trajectory.paragraphs=forwardTrajectoryParagraphs(teams,week);
@@ -2858,7 +2855,8 @@ function assertWeek2Originality(result,previousEdition){
     if(race)overview.sections=[...(overview.sections||[]).slice(0,1),race,...(overview.sections||[]).slice(1)];
   }
 
-  overview.headline='Fleeced! Weekly Recap — '+String(weekClassification?.label||('Week '+week));
+  if(week>=3)overview=evolveForwardOverview(overview,previousEdition?.league_overview||null,week,variationSalt,[...forwardEntities({teams}),...forwardEntities(previousEdition)]);
+    overview.headline='Fleeced! Weekly Recap — '+String(weekClassification?.label||('Week '+week));
   overview.deck=weekClassification?.playoffs
     ?String(weekClassification.round||'The playoffs')+' gets its own newspaper: who advanced, who was eliminated, and which surviving roster now has to answer for the next round.'
     :'Week '+week+' gets its own newspaper: new games, new arguments, and enough season memory to know which developments are starting to repeat.';
@@ -2897,7 +2895,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
 
   if(previous){
     const pset=new Set(forwardRecapSentences(previous).map(s=>forwardNormSentence(s,entities))),curr=forwardRecapSentences(current).map(s=>forwardNormSentence(s,entities)),overlap=curr.filter(n=>pset.has(n));
-    if(overlap.length>=4)issues.push({id:'recap-copy-forward',overlap:overlap.length});
+    if(overlap.length>=4)issues.push({id:'recap-copy-forward',overlap:overlap.length,examples:overlap.slice(0,8)});
   }
   const mattered=(current?.league_overview?.sections||[]).find(s=>String(s?.heading||'')==='What Actually Mattered This Week');
   const matteredCopy=(mattered?.paragraphs||[]).join(' ');

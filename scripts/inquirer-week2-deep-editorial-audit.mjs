@@ -257,10 +257,6 @@ function auditRecap(){
   const recapMeta=/\b(?:roll call|useful examples?|the useful question|the useful part|the pick is about|desire to be cute|without turning .* into a spreadsheet|this paragraph|this section|this recap|the writer|the reporter|abstract asset lecture|not because i needed another adjective|not one argument copied|breakout player to watch because|current production has moved materially beyond|young enough for the role growth to matter even more)\b/i;
   const recapMetaHits=sentenceParts(copy).filter(x=>recapMeta.test(x));
   if(recapMetaHits.length)add('FAIL','recap-meta-language','Weekly recap contains editorial-process/meta language instead of in-world reporting.',recapMetaHits.join(' || '));
-  const mattered=sections.find(s=>String(s?.heading||'')==='What Actually Mattered This Week');
-  const matteredCopy=(mattered?.paragraphs||[]).join(' ');
-  const categoryMentions=matteredCopy.match(/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/gi)||[];
-  if(categoryMentions.length<3)add('FAIL','recap-player-categories-thin','“What Actually Mattered This Week” is not naturally using enough supported player-status language.','category_mentions='+categoryMentions.length+'; '+matteredCopy);
 
   const staleTradeExplainer=/\b(?:chose the future side|parked in draft capital|delayed value rather than immediate lineup help|nothing honest to grade from a Week 2 box score yet|cannot score a fantasy point this September|judgment belongs to a future roster decision|future optionality, not Week 2 production)\b/i;
   if(staleTradeExplainer.test(copy))add('FAIL','recap-trade-obvious-explainer','Weekly recap still states obvious draft-pick mechanics instead of evaluating the deal.',sentenceParts(copy).filter(x=>staleTradeExplainer.test(x)).join(' || '));
@@ -276,6 +272,10 @@ function auditRecap(){
   }
 
   const sections=overview?.sections||[];
+  const mattered=sections.find(s=>String(s?.heading||'')==='What Actually Mattered This Week');
+  const matteredCopy=(mattered?.paragraphs||[]).join(' ');
+  const categoryMentions=matteredCopy.match(/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/gi)||[];
+  if(categoryMentions.length<3)add('FAIL','recap-player-categories-thin','“What Actually Mattered This Week” is not naturally using enough supported player-status language.','category_mentions='+categoryMentions.length+'; '+matteredCopy);
   const filchSection=sections.find(s=>String(s?.reporter?.id||'')==='nora-voss'||/Next Week:/i.test(String(s?.heading||'')));
   const filchLead=String((filchSection?.paragraphs||[])[0]||'');
   const filchNamedTeams=teams.filter(t=>filchLead.includes(String(t.team_name||'')));

@@ -3118,10 +3118,39 @@ export function humanSectionsV25(args){
   const deduped=dedupeArticleSectionsV29(dedupeArticleSections(cased),t);
   if(originalReporter?.id!=='tess-delaney')return deduped;
   const roycingtonHeadings={lede:'What the Result Actually Says',players:'Who Made the Afternoon Interesting',identity:'What Kind of Team Is This, Exactly?',management:'Management, Vanity and the Cost of Choices',value:'The Market Has Opinions, Naturally',sentiment:'Public Emotion, Without Restraint','hot-seat':'The Problem Everybody Can See','cool-throne':'Credit, With Appropriate Drama',outlook:'The Next Matchup With Consequence','trade-commentary':'Trade Receipt: What the Week Added'},
+    royVariant=Math.floor(Math.max(0,(Number(t.roster_id)||2)-2)/4)%8,
+    royPick=xs=>xs[royVariant%xs.length],
     roycingtonPolish=p=>String(p)
-      .replaceAll('Nobody is eliminated, nobody is doomed, and everybody is still allowed to be annoyed.','September has not eliminated '+t.team_name+'; it has merely given '+t.team_name+' supporters fresh material for an argument.')
-      .replaceAll('Sunday was another reason the next opponent will start with him on the whiteboard.','For '+t.team_name+', Sunday was another reason the next opponent will start its plan with him on the whiteboard.')
-      .replaceAll('Week 1 is the only time irrational confidence is still tax-free.','Opening week is the one time '+t.team_name+' supporters can spend reckless confidence without paying interest.');
+      .replaceAll('Nobody is eliminated, nobody is doomed, and everybody is still allowed to be annoyed.',royPick([
+        'September has not buried anyone yet, but it has already made the first complaint impossible to ignore.',
+        'One loss is not a season; it is merely enough evidence to make Tuesday considerably less pleasant.',
+        'The calendar is still young enough for patience and old enough for the first argument to have receipts.',
+        'Nobody should be pricing draft picks after one loss, although the first wave of optimism has certainly lost some tailoring.',
+        'A single Sunday cannot ruin the year, but it can make the next one feel much less optional.',
+        'September remains forgiving; the scoreboard, inconveniently, has already started keeping records.',
+        'There is ample season left and considerably less patience than there was before kickoff.',
+        'One bad opening result is survivable; pretending it said nothing would be a much sillier mistake.'
+      ]))
+      .replaceAll('Sunday was another reason the next opponent will start with him on the whiteboard.',royPick([
+        'Sunday gave the next opponent one more reason to begin the scouting meeting with his name.',
+        'The next opponent now has one fewer excuse to treat him as anything but the first problem on the plan.',
+        'That performance is going straight onto the next opponent’s first page of problems.',
+        'The next defensive meeting can start with somebody else if it likes; it will end up back on him soon enough.',
+        'Another Sunday like that and the next opponent’s plan begins with his name before the coffee gets cold.',
+        'He has made himself too important for the next opponent to bury below the first line of the scouting report.',
+        'The next opponent can call it an early sample; it still has to build a plan for him.',
+        'That is the sort of Sunday that turns a player from a note in the margin into the opening problem.'
+      ]))
+      .replaceAll('Week 1 is the only time irrational confidence is still tax-free.',royPick([
+        'Opening week is the brief annual window when reckless confidence can still masquerade as reasonable enthusiasm.',
+        'This is the one week when an undefeated record can be enjoyed before arithmetic starts charging interest.',
+        'Week 1 gives optimism exactly seven days to behave irresponsibly without needing an alibi.',
+        'For one glorious week, confidence gets to arrive before evidence and nobody has to apologize for it.',
+        'September’s first win is permission to be insufferable, provided everyone remembers the permit expires quickly.',
+        'The opening win buys one week of swagger before the schedule starts collecting receipts.',
+        'A 1-0 record is not a résumé, but it is an excellent excuse to make the rival chat miserable for a few days.',
+        'The first win of the year comes with complimentary confidence and a very short return policy.'
+      ]));
   return deduped.map(sec=>({...sec,heading:roycingtonHeadings[sec.kind]||sec.heading,paragraphs:(sec.paragraphs||[]).map(roycingtonPolish)}));
 }
 function uniqueGames(teams){

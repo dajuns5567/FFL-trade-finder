@@ -694,29 +694,40 @@ function w2PlayerStatusProfile(p,slot=0){
     snapPct=p?.current_snap_pct==null?null:Number(p.current_snap_pct),
     defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),
     starThreshold=pos==="QB"?18:pos==="RB"?14:pos==="WR"?14:pos==="TE"?11:defensive?11:13,
+    rookie=(Number.isFinite(years)&&years===0)||(games===0&&Number.isFinite(age)&&age<=23),
     young=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
     earlyCareer=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)),
+    veteran=(Number.isFinite(years)&&years>=5)||(Number.isFinite(age)&&age>=28),
     established=Number.isFinite(prior)&&games>=8&&(prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1))),
     seasonLift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&seasonAvg>=Math.max(prior*1.35,prior+2.5),
     weekLift=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&pts>=Math.max(starThreshold*1.1,prior+5),
     roleLift=(Number.isFinite(snapPct)&&snapPct>=0.55)||
       (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
       (Number.isFinite(snaps)&&snaps>=(defensive?32:35)),
-    developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&seasonLift&&roleLift;
+    developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&seasonLift&&roleLift,
+    seasonDrop=veteran&&games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>=Math.max(5,starThreshold*.45)&&seasonAvg<=prior*.72,
+    weekDrop=Number.isFinite(pts)&&Number.isFinite(prior)&&prior>0&&pts<=prior*.7,
+    steady=games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+      Math.abs(seasonAvg-prior)<=Math.max(1.5,prior*.18)&&Number.isFinite(pts)&&pts>=prior*.65&&pts<=prior*1.35;
   let status="";
-  if(!Number.isFinite(pts))return{status:"",starThreshold,young,earlyCareer,established,seasonLift,weekLift,roleLift,developmentalBreakout};
+  if(!Number.isFinite(pts))return{status:"",starThreshold,rookie,young,earlyCareer,veteran,established,seasonLift,weekLift,roleLift,developmentalBreakout,seasonDrop,weekDrop,steady};
   if(developmentalBreakout)status="breakout";
-  else if(established&&pts>=Math.max(starThreshold*.8,prior*.65))status="established-star";
+  else if(established&&veteran&&seasonDrop&&weekDrop)status="declining-veteran";
   else if(established&&pts<=prior*.55)status="struggling-star";
+  else if(established&&pts>=Math.max(starThreshold*.8,prior*.65))status="established-star";
   else if(!established&&young&&games>=6&&Number.isFinite(prior)&&prior>0&&(seasonLift||weekLift)&&(roleLift||seasonLift&&pts>=starThreshold*.9))status="breakout";
   else if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<=starThreshold&&pts>=Math.max(starThreshold*1.15,prior+6))status="breakout";
   else if(!established&&games>=6&&Number.isFinite(prior)&&prior>0&&pts>=starThreshold&&pts-prior>=5)status="emerging";
-  else if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&pts<=prior*.55)status="struggling";
+  else if(veteran&&seasonDrop&&weekDrop)status="declining-veteran";
+  else if(steady)status=veteran?"reliable-veteran":"reliable";
   else if(role===0&&pts>=starThreshold*1.6)status="star-level";
-  else if(pts<=1.5&&role<=2)status="struggling";
+  else if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&pts<=prior*.55)status="struggling";
+  else if(rookie&&roleLift)status="rookie";
+  else if(young&&roleLift)status="young-player";
+  else if(veteran&&pts>=Math.max(5,starThreshold*.5))status="veteran";
   const lift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)?seasonAvg-prior:(Number.isFinite(pts)&&Number.isFinite(prior)?pts-prior:null);
   const breakoutScore=(status==="breakout"?100:status==="emerging"?60:0)+(young?18:0)+(roleLift?18:0)+(Number.isFinite(lift)?Math.max(0,lift):0);
-  return{status,starThreshold,young,earlyCareer,established,seasonLift,weekLift,roleLift,breakoutScore,age,years,snaps,priorSnapPg,snapPct,seasonAvg,prior};
+  return{status,starThreshold,rookie,young,earlyCareer,veteran,established,seasonLift,weekLift,roleLift,developmentalBreakout,seasonDrop,weekDrop,steady,breakoutScore,age,years,snaps,priorSnapPg,snapPct,seasonAvg,prior};
 }
 function w2BreakoutContext(p,profile){
   if(!profile||profile.status!=="breakout")return"";
@@ -740,212 +751,107 @@ function w2BreakoutContext(p,profile){
   return p.name+" is "+first+(clauses.length?", "+w2Natural(clauses):"")+"."
 }
 function w2PlayerStatusColor(t,r,p,pp,slot=0){
-  const pts=Number(p?.points),rid=String(r?.id||"walter-mercer"),team=w2DisplayTeam(t?.team_name),
-    profile=w2PlayerStatusProfile(p,slot),status=profile.status;
+  const pts=Number(p?.points),rid=String(r?.id||"walter-mercer"),
+    profile=w2PlayerStatusProfile(p,slot),status=profile.status,name=String(p?.name||"this player");
   if(!Number.isFinite(pts)||!status)return "";
-
-  const leads={
-    "established-star":[
-      p.name+" entered Sunday with an established-star standard",
-      "This was familiar star territory for "+p.name,
-      p.name+" did not need Week 2 to introduce the star label",
-      "The established-star reputation attached to "+p.name+" already had history behind it"
-    ],
-    "struggling-star":[
-      p.name+" entered Week 2 with established-star expectations and missed them badly",
-      "A star résumé makes "+p.name+"’s quiet Sunday more noticeable, not less",
-      p.name+" has enough established production behind him that this dip reads as a slump",
-      "The star standard around "+p.name+" makes this Week 2 line an obvious outlier on the wrong side"
-    ],
-    "star-level":[
-      p.name+" reached star-level territory in Week 2",
-      "Week 2 gave "+p.name+" the kind of line that belongs in a star conversation",
-      p.name+" played above ordinary contributor territory this Sunday",
-      "The top-end work from "+p.name+" was loud enough to earn star-level treatment"
-    ],
-    "breakout":[
-      p.name+" is beginning to build a real breakout profile",
-      "Week 2 pushed "+p.name+" farther into breakout territory",
-      p.name+" is no longer easy to dismiss as a one-week curiosity; the breakout profile is becoming real",
-      "The breakout profile for "+p.name+" starts with an old expectation that now looks too small for the role showing up"
-    ],
-    "emerging":[
-      p.name+" is moving from useful contributor toward an emerging weekly piece",
-      "There is an emerging-role argument forming around "+p.name,
-      p.name+" is starting to look less like support and more like part of the weekly plan",
-      "Week 2 strengthened the idea that "+p.name+" belongs in the emerging-core conversation"
-    ],
-    "struggling":[
-      p.name+" is running below the level his recent history established",
-      "The Week 2 version of "+p.name+" looked materially smaller than the player his recent baseline describes",
-      p.name+" has moved from a quiet Sunday into a form question",
-      "Recent history gives "+p.name+" a better standard than the one he reached this week"
-    ]
-  };
-
-  const tails={
+  const rows={
     "walter-mercer":{
       "established-star":[
-        ", so "+team+" can treat this production as confirmation rather than a surprise cameo.",
-        ", and "+team+" can treat the top-end role as intact rather than newly discovered.",
-        ", which makes this performance another data point in an existing reputation instead of a new identity.",
-        ", leaving "+team+" with the more practical job of making sure the lineup around him keeps pace."
+        "That is familiar star work from "+name+".",
+        name+" remains the established star this lineup can plan around."
       ],
       "struggling-star":[
-        ", so "+team+" should inspect form and role before questioning the longer résumé.",
-        ", which turns the next week into a test of whether the established level returns.",
-        ", and that gap from the usual standard deserves attention without rewriting what the player already is.",
-        ", leaving "+team+" with a slump to manage rather than a mystery about the player’s ceiling."
+        name+" is still a star, but this dip is now worth watching.",
+        "The star résumé stays; the current form from "+name+" needs a rebound."
+      ],
+      "declining-veteran":[
+        name+" is a veteran whose two-week level is slipping far enough to monitor.",
+        "The veteran baseline on "+name+" is trending down, not merely wobbling for one Sunday."
       ],
       "star-level":[
-        ", giving "+team+" a genuine top-end performance to build around instead of a random useful score.",
-        ", and the next question is whether the supporting lineup can make that level count again.",
-        ", which raises the ceiling of the current lineup without requiring anybody to pretend one Sunday is a career.",
-        ", giving "+team+" exactly the sort of high-end answer that changes how an opponent has to view the roster."
+        "That was star-level work from "+name+", even if one Sunday is not a résumé.",
+        name+" reached genuine star-level territory this week."
       ],
       "breakout":[
-        ", because the jump above the old baseline is now large enough for "+team+" to adjust expectations.",
-        ", and another week of comparable responsibility would make the new role harder to call a spike.",
-        ", which gives "+team+" a reason to plan for more than the old baseline used to promise.",
-        ", and the attraction is not the label itself but the possibility that the role has genuinely expanded."
+        name+" is making a real young-player breakout case.",
+        "The breakout case around "+name+" is getting harder to dismiss."
       ],
       "emerging":[
-        ", giving "+team+" another repeatable piece instead of asking the established stars to solve every Sunday.",
-        ", and that matters because dependable secondary roles are how a roster develops an actual floor.",
-        ", which gives "+team+" a player whose responsibility may be growing faster than his old reputation.",
-        ", and another useful Sunday would make the role easier to trust than the early-season sample."
+        name+" is starting to look like a real weekly piece.",
+        "The emerging role around "+name+" is becoming useful, not theoretical."
+      ],
+      "reliable-veteran":[
+        "Reliable veteran "+name+" gave the lineup another familiar answer.",
+        name+" remains a steady veteran piece."
+      ],
+      "reliable":[
+        name+" remains one of the steadier pieces in the lineup.",
+        "This was another reliable return from "+name+"."
+      ],
+      "rookie":[
+        "The rookie role around "+name+" is already becoming meaningful.",
+        name+" is a rookie earning real weekly responsibility."
+      ],
+      "young-player":[
+        "Young "+name+" is earning more weekly trust.",
+        name+" is a young player whose role is becoming worth tracking."
+      ],
+      "veteran":[
+        "Veteran "+name+" gave the lineup a familiar useful return.",
+        name+" supplied the kind of veteran contribution this roster expects."
       ],
       "struggling":[
-        ", so "+team+" has a form-and-role problem to watch rather than one bad decimal to explain.",
-        ", and the next lineup decision should be informed by the drop instead of assuming the old level will appear automatically.",
-        ", which is enough distance from the baseline that "+team+" should treat the slump as actionable.",
-        ", leaving "+team+" with a clear question about whether usage, matchup or execution is pulling the output down."
+        name+" is running below his recent standard.",
+        "The recent form from "+name+" is becoming a real lineup concern."
       ]
     },
     "tess-delaney":{
-      "established-star":[
-        ", so the "+w2Alias(t).mascot+" are not discovering a new guest so much as watching the usual headliner arrive properly dressed.",
-        ", and the table can keep the star place card exactly where it was without pretending this was a surprise reservation.",
-        ", which means the room should admire the course without acting shocked that the expensive guest knew the menu.",
-        ", leaving the "+w2Alias(t).mascot+" to worry about the chairs around the centerpiece rather than the centerpiece itself."
-      ],
-      "struggling-star":[
-        ", so the "+w2Alias(t).mascot+" can keep the star place card while still sending this particular course back to the kitchen.",
-        ", and one undersized serving does not revoke the reservation even if the entire table noticed it.",
-        ", which makes the slump a stain on the linen rather than a reason to throw away the dining room.",
-        ", leaving the room to ask when the usual portion returns instead of whether the guest belongs at the table."
-      ],
-      "star-level":[
-        ", giving the "+w2Alias(t).mascot+" a centerpiece substantial enough that the rest of the table has no excuse to arrive empty.",
-        ", and the room looked considerably more expensive the moment that production hit the plate.",
-        ", which is the sort of performance that moves a player from supporting décor to the center of the seating chart.",
-        ", leaving the "+w2Alias(t).mascot+" with the pleasant problem of deciding how much of the menu can now run through him."
-      ],
-      "breakout":[
-        ", and the "+w2Alias(t).mascot+" may need a larger place card if this version keeps inviting itself to dinner.",
-        ", which is how a pleasant surprise starts stealing the centerpiece without asking permission.",
-        ", and another Sunday at this level would make the old seating arrangement look comically undersized.",
-        ", leaving the room one more strong course away from treating the breakout label as part of the permanent décor."
-      ],
-      "emerging":[
-        ", so the "+w2Alias(t).mascot+" should probably stop seating him like an afterthought.",
-        ", and the room now has enough evidence in the role—without needing a grand speech—to move him closer to the centerpiece.",
-        ", which gives the table another real setting instead of another decorative napkin.",
-        ", leaving the "+w2Alias(t).mascot+" with a contributor whose chair is getting harder to move back toward the wall."
-      ],
-      "struggling":[
-        ", so the "+w2Alias(t).mascot+" can call it a slump without pretending the empty plate is fashionable.",
-        ", and the room has enough history to know this serving was too small even before anyone asks for the check.",
-        ", which makes the next course a response test rather than another opportunity to compliment the china.",
-        ", leaving the table with a player whose usual place setting promises more than Week 2 actually served."
-      ]
+      "established-star":["Established star "+name+" looked properly expensive again.","The star place card still belongs in front of "+name+"."],
+      "struggling-star":["Star "+name+" is in a slump; the table has noticed.","The résumé is still star-level, even if this serving from "+name+" was not."],
+      "declining-veteran":["Veteran "+name+" is starting to look like the portion size is shrinking.","The veteran decline around "+name+" has lasted long enough to stop blaming the china."],
+      "star-level":[name+" just served star-level production.","That was a centerpiece-level week from "+name+"."],
+      "breakout":["Young "+name+" is making a convincing breakout case.","The breakout chair is getting harder to keep away from "+name+"."],
+      "emerging":[name+" is moving from side dish to real weekly piece.","The emerging role around "+name+" deserves a better seat."],
+      "reliable-veteran":["Steady veteran "+name+" remains a dependable place setting.","Reliable veteran "+name+" delivered the familiar course."],
+      "reliable":[name+" remains a reliably useful piece.","Steady "+name+" kept the table from wobbling."],
+      "rookie":["Rookie "+name+" is already earning a real seat at the table.","The rookie role around "+name+" is getting difficult to treat as decorative."],
+      "young-player":["Young "+name+" is earning a larger place in the weekly plan.",name+" is a young piece worth keeping near the centerpiece."],
+      "veteran":["Veteran "+name+" still knows how to fill the plate.","The veteran hand from "+name+" remained useful."],
+      "struggling":[name+" is serving less than his recent standard promised.","The current form from "+name+" belongs on the concern list."]
     },
     "mack-hollis":{
-      "established-star":[
-        ", so "+team+" does not need a breakout siren; it needs the rest of the lineup to stop acting surprised when the building shakes.",
-        ", and the headline is confirmation: the established weapon fired again and everybody else needs to keep up.",
-        ", which means the big number is an established star doing established-star work, not some brand-new discovery.",
-        ", leaving "+team+" with a familiar source of noise and no excuse for the quieter outlets around him."
-      ],
-      "struggling-star":[
-        ", so keep the résumé and circle the slump before anybody starts yelling about a disappearing ceiling.",
-        ", which is exactly why the bad line gets an all-caps complaint: stars are allowed bad Sundays, but nobody has to enjoy them.",
-        ", and the alarm is about the gap from the usual level, not some ridiculous claim that the player forgot how to play.",
-        ", leaving "+team+" with a proven star and one very loud request for the old volume to come back."
-      ],
-      "star-level":[
-        ", and "+team+" should be more worried about finding backup than finding another cape.",
-        ", which is the kind of Sunday that puts a player in the big headline and makes every quiet teammate look quieter.",
-        ", giving the "+w2Alias(t).mascot+" a legitimate hammer instead of another middling tool in the box.",
-        ", and the scoreboard finally had a number loud enough to make the rest of the lineup answer to it."
-      ],
-      "breakout":[
-        ", so one more week of this role and "+team+" can throw the old expectations straight into the dumpster.",
-        ", and the volume is getting too consistent to dismiss as somebody accidentally sitting on the horn.",
-        ", which is how a hot box score starts becoming a player the league actually has to plan around.",
-        ", leaving "+team+" one strong Sunday away from replacing the surprise label with a much louder expectation."
-      ],
-      "emerging":[
-        ", giving "+team+" another live wire instead of another name waiting for the stars to do everything.",
-        ", and that is considerably more useful than being this week’s random loud noise.",
-        ", which moves him closer to weekly weapon territory and farther from emergency cameo duty.",
-        ", leaving the "+w2Alias(t).mascot+" with another source of voltage opponents may actually have to respect."
-      ],
-      "struggling":[
-        ", so the "+team+" alarm is not on fire yet but somebody has absolutely tested the siren.",
-        ", and the drop is loud enough that even the victory-lap crowd has to stop and point at it.",
-        ", which puts the role on the Week 3 repair list without turning one bad Sunday into a funeral.",
-        ", leaving the "+w2Alias(t).mascot+" with a weak signal that needs fixing before it becomes the station’s permanent programming."
-      ]
+      "established-star":["Established star "+name+" brought the noise again.","That is star work from "+name+", not a surprise siren."],
+      "struggling-star":["Star "+name+" is in a real dip; circle it, do not bury the résumé.","The star label survives, but "+name+" needs the volume back."],
+      "declining-veteran":["Veteran "+name+" is losing enough voltage for the decline alarm to matter.","The veteran signal on "+name+" has been fading for more than one blip."],
+      "star-level":[name+" hit star-level voltage this week.","That was star-level noise from "+name+"."],
+      "breakout":["Young "+name+" is turning a breakout spark into actual voltage.","The breakout alarm around "+name+" is getting louder for a reason."],
+      "emerging":[name+" is becoming a real weekly live wire.","The emerging role around "+name+" has actual voltage now."],
+      "reliable-veteran":["Reliable veteran "+name+" kept the circuit working.","Steady veteran "+name+" did exactly the useful work expected."],
+      "reliable":[name+" remains a dependable outlet.","That was another steady return from "+name+"."],
+      "rookie":["Rookie "+name+" already has real voltage in the weekly role.","The rookie is no longer just background wiring; "+name+" is earning work."],
+      "young-player":["Young "+name+" is starting to demand weekly attention.","The role for young "+name+" keeps getting harder to ignore."],
+      "veteran":["Veteran "+name+" kept the circuit useful.","The veteran hand from "+name+" still carries some voltage."],
+      "struggling":[name+" is running below his usual voltage.","The recent signal from "+name+" is weak enough to put on the repair list."]
     },
     "nora-voss":{
-      "established-star":[
-        ", so rivals calling the performance a fluke are mostly volunteering to ignore the history already sitting in front of them.",
-        ", which forces the rival thread to find a softer target than a player whose star reputation already has receipts.",
-        ", and opponents do not get to downgrade an established reputation simply because admitting the obvious ruins the joke.",
-        ", leaving rivals with the irritating task of acknowledging that the star label existed before this particular Sunday."
-      ],
-      "struggling-star":[
-        ", so the reputation survives even if the screenshot is going to live in the rival chat for another week.",
-        ", and rivals finally have a bad line worth using without pretending the longer star history disappeared.",
-        ", which makes this excellent heckling material and terrible grounds for rewriting an established player.",
-        ", leaving supporters to defend the résumé while rivals enjoy the one Sunday that did not resemble it."
-      ],
-      "star-level":[
-        ", which is inconvenient for every rival hoping the top of "+team+" was going to provide the easy punch line.",
-        ", and the rival thread now has to scroll farther down the lineup before the jokes get cheap.",
-        ", giving supporters one clean rebuttal before opponents start searching for softer Week 2 material.",
-        ", which makes the star-level label less flattering than factual and therefore much harder for rivals to argue with."
-      ],
-      "breakout":[
-        ", so rivals may need to retire the old scouting joke before their own laziness becomes the punch line.",
-        ", and another Sunday like this would make the breakout label considerably harder to heckle away.",
-        ", which is how a player goes from convenient rival afterthought to somebody the rival thread has to actually respect.",
-        ", leaving opponents one more strong week away from needing a new script entirely."
-      ],
-      "emerging":[
-        ", giving "+team+" an emerging weekly problem for rivals rather than a one-Sunday inconvenience.",
-        ", and the rival jokes get considerably worse when the supposedly secondary name keeps demanding real attention.",
-        ", which pushes opponents toward a more annoying conclusion: the role may actually be growing.",
-        ", leaving the rival thread with fewer reasons to call the contribution accidental and more reasons to plan for it."
-      ],
-      "struggling":[
-        ", giving rivals a real football criticism instead of forcing them to recycle a punch line.",
-        ", and the screenshot is useful because the recent standard gives the bad line actual context.",
-        ", which lets rivals point at a genuine slump without inventing a fake collapse around it.",
-        ", leaving supporters with a reasonable defense of the player and no reasonable defense of this particular Sunday."
-      ]
+      "established-star":["Established star "+name+" remains a terrible place for rivals to hunt an easy joke.","The star label on "+name+" already had receipts before Sunday."],
+      "struggling-star":["Star "+name+" finally gave rivals a real slump to point at.","The résumé survives, but "+name+" handed rivals a useful bad-week screenshot."],
+      "declining-veteran":["Veteran "+name+" is sliding enough that rivals no longer need to invent the decline joke.","The veteran baseline on "+name+" is moving down in a way opponents can actually cite."],
+      "star-level":[name+" reached star-level territory, inconveniently for everyone rooting against it.","That was star-level work from "+name+", which ruins the easy rival script."],
+      "breakout":["Young "+name+" is making a breakout case rivals may have to stop laughing at.","The breakout case around "+name+" has become annoyingly credible."],
+      "emerging":[name+" is becoming an emerging weekly problem for opponents.","The emerging role around "+name+" is getting harder for rivals to dismiss."],
+      "reliable-veteran":["Reliable veteran "+name+" remains irritatingly steady.","Steady veteran "+name+" gave rivals very little to mock."],
+      "reliable":[name+" remains reliably difficult to turn into a punch line.","That was another steady return from "+name+"."],
+      "rookie":["Rookie "+name+" is already giving rivals a weekly problem.","The rookie role around "+name+" is becoming inconveniently real."],
+      "young-player":["Young "+name+" is earning more respect than rivals planned to give.","The young-player role around "+name+" is becoming harder to mock."],
+      "veteran":["Veteran "+name+" still gave supporters a clean rebuttal.","The veteran contribution from "+name+" remained useful."],
+      "struggling":[name+" is giving rivals a genuine form issue to point at.","The current dip from "+name+" is real enough to survive the jokes."]
     }
   };
-
-  const leadBank=leads[status]||[],tailBank=(tails[rid]||tails["walter-mercer"])[status]||[];
-  if(!leadBank.length||!tailBank.length)return "";
-  const combo=w2PlayerStatusVariant(t,r,status,leadBank.length*tailBank.length),
-    lead=leadBank[combo%leadBank.length],tail=tailBank[Math.floor(combo/leadBank.length)%tailBank.length];
-  const context=w2BreakoutContext(p,profile);
-  return lead+tail+(context?" "+context:"")
+  const bank=(rows[rid]||rows["walter-mercer"])[status]||[];
+  if(!bank.length)return "";
+  return bank[w2PlayerStatusVariant(t,r,status,bank.length)]
 }
-
 function w2Week1DeltaRead(t,r,p,pp,role){
   const rid=String(r?.id||""),prior=w2One(pp?.points),now=w2One(p?.points),rise=Number(p?.points)>Number(pp?.points),v=w2Cohort(t)%4,
     roleNames={
@@ -2257,17 +2163,7 @@ function w2BuildSections(t,prev){
     players.push(w2S(t,r,"player-stat-"+i,(i===0?("Against "+w2DisplayTeam(opp)+", "+p.name+" led the "+alias.mascot+" with "+w2One(p.points)+" fantasy points"+w2StatClause(p)+"."):i===1?("Against "+w2DisplayTeam(opp)+", "+p.name+" added "+w2One(p.points)+" for the "+alias.mascot+w2StatClause(p)+"."):(alias.mascot+" also got "+w2One(p.points)+" from "+p.name+w2StatClause(p)+"."))));
     players.push(w2S(t,r,"player-read-"+i,w2PlayerColumnRead(t,r,p,pp,i,opp,won)+(acq&&Number(acq.season)===season&&Number(acq.week)===week?" The Week 2 trade that brought "+p.name+" in put the new arrival on the Sunday stage immediately.":"")));
   }
-  const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));
-  const extraBreakouts=(t.starter_details||[]).map((p,slot)=>({p,slot,profile:w2PlayerStatusProfile(p,slot)}))
-    .filter(x=>x.profile.status==="breakout"&&!discussed.has(String(x.p.id)))
-    .sort((a,b)=>b.profile.breakoutScore-a.profile.breakoutScore);
-  for(let extraIndex=0;extraIndex<extraBreakouts.length;extraIndex++){
-    const extraBreakout=extraBreakouts[extraIndex],p=extraBreakout.p,
-      status=w2PlayerStatusColor(t,r,p,w2PrevPlayer(prev,p.id),extraBreakout.slot);
-    players.push(w2S(t,r,"player-breakout-extra-"+extraIndex,p.name+" finished Week 2 with "+w2One(p.points)+" fantasy points"+w2StatClause(p)+". "+status));
-    discussed.add(String(p.id));
-  }
-  const rememberedAcquisitions=(t.trade_acquisitions||[]).filter(x=>{if(!x?.player_name||discussed.has(String(x.player_id)))return false;if(String(x.player_name)==="Dallas Goedert")return true;if(Number(x?.season)!==season||Number(x?.week)!==week)return false;const p=(t.starter_details||[]).find(p=>String(p?.id)===String(x.player_id)||p?.name===x.player_name);return Number(p?.points)>=12}).slice(0,1);
+  const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));\n  const rememberedAcquisitions=(t.trade_acquisitions||[]).filter(x=>{if(!x?.player_name||discussed.has(String(x.player_id)))return false;if(String(x.player_name)==="Dallas Goedert")return true;if(Number(x?.season)!==season||Number(x?.week)!==week)return false;const p=(t.starter_details||[]).find(p=>String(p?.id)===String(x.player_id)||p?.name===x.player_name);return Number(p?.points)>=12}).slice(0,1);
   for(let i=0;i<rememberedAcquisitions.length;i++){
     const acq=rememberedAcquisitions[i],out=(acq.outgoing_player_names||[]).filter(Boolean);
     const variants=[

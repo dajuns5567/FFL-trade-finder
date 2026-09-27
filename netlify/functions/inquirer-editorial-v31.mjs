@@ -111,6 +111,96 @@ function regularPlayoffRaceSection(teams,week,classification,reporter){
   return{reporter,heading:'The Playoff Race Is No Longer Background Noise',paragraphs};
 }
 
+
+function evolutionHash(value){
+  let h=2166136261;for(const ch of String(value||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0;
+}
+const EVOLUTION_INTROS={
+  'walter-mercer':[
+    'The football read is straightforward:','Strip away the noise and this is what remains:','The weekly ledger is blunt here:','The useful football answer is simpler:','Put the emotion to one side for a second:','The Sunday note that survives review is this:','The cleanest read from the result is this:','Start with the part that will still matter Tuesday:'
+  ],
+  'tess-delaney':[
+    'The less glamorous truth is this:','There is no elegant detour around it:','The cleaner football answer is this:','No need to romanticize the result:','The civilized version is still fairly obvious:','Once the postgame swagger wears off, this remains:','The part worth keeping after the applause is this:','Even a dramatic Sunday can be reduced to one useful point:'
+  ],
+  'mack-hollis':[
+    'Here is the loud part:','Put this on the big screen:','The back-page version is simple:','Skip the polite introduction:','Here is what survives the shouting:','The part rival managers will screenshot is this:','No tiny print required:','This is the sentence the group chat will keep:'
+  ],
+  'nora-voss':[
+    'Rivals can circle this:','The rival-chat version is uncomfortable:','No conspiracy is required here:','The part opponents will remember is this:','The annoying fact survives review:','Rivals do not need help finding this one:','The useful weakness-or-strength note is this:','This is the detail that will follow them into next week:'
+  ]
+};
+const EVOLUTION_TAILS={
+  'walter-mercer':['That is the part worth carrying forward.','The next matchup gets to test whether it travels.','That belongs in the season ledger now.','The following Sunday gets the rebuttal.','That is enough to change the next conversation.','The point is useful precisely because it can be tested again.','The season has another data point to answer now.','Keep that in the notebook when the next lineup locks.'],
+  'tess-delaney':['Elegant or not, the score keeps the receipt.','The next opponent is allowed to object.','Good manners do not make the point less true.','The following Sunday can improve the presentation.','That is the version I am willing to keep.','The next matchup can either polish it or ruin it.','There is plenty of time for the season to make this look foolish.','For now, the football has earned the sentence.'],
+  'mack-hollis':['Nobody needs a committee meeting to understand it.','Next week can yell back if it disagrees.','Save the screenshot; the next game gets a vote.','That one is going straight into the group chat.','The next opponent can file the complaint.','If it repeats, the headline gets bigger.','If it disappears, we will happily print the correction.','Either way, the next Sunday is already booked.'],
+  'nora-voss':['Rivals will remember it even if management would rather they did not.','The next matchup gets first chance to dispute it.','That is enough material for the rival chat.','The next Sunday decides whether this becomes a pattern.','Opponents now know exactly where to look.','Management gets one week to make the note boring.','Rivals do not need a second invitation to test it.','The season will either confirm the note or embarrass it.']
+};
+const EVOLUTION_LEXICON=[
+  [/the result/gi,['the final score','Sunday’s outcome','the finished result','the scoreboard answer']],
+  [/the lineup/gi,['the starting group','the lineup card','the starters','the weekly lineup']],
+  [/the roster/gi,['the squad','the roster construction','the team','the full roster']],
+  [/the scoreboard/gi,['the score','the scoring column','the final tally','the board']],
+  [/this week/gi,['this Sunday','the current week','this round of games','the latest Sunday']],
+  [/next week/gi,['the next matchup','the coming week','next Sunday','the following game']],
+  [/scored/gi,['posted','put up','finished with','produced']],
+  [/supplied/gi,['provided','delivered','added','produced']],
+  [/finished/gi,['ended up','closed the week','came in','landed']],
+  [/quiet/gi,['muted','low-output','soft','subdued']],
+  [/useful/gi,['usable','valuable','helpful','repeatable']],
+  [/the top of the lineup/gi,['the front of the lineup','the leading scorers','the lineup’s top end','the first names on the scoring sheet']],
+  [/the bottom of the lineup/gi,['the low end of the lineup','the quiet end of the starters','the lineup’s bottom end','the last few scoring spots']],
+  [/the next opponent/gi,['the upcoming opponent','next week’s opponent','the other side next','the next team on the schedule']],
+  [/a loss/gi,['a defeat','a losing Sunday','a dropped matchup','a loss']],
+  [/the loss/gi,['the defeat','the losing result','the dropped matchup','the loss']],
+  [/a win/gi,['a victory','a winning Sunday','a banked result','a win']],
+  [/the win/gi,['the victory','the winning result','the banked result','the win']],
+  [/the week-over-week/gi,['the one-week change','the latest weekly shift','the change from last week','the week-to-week']],
+  [/management/gi,['the manager','the front office','the decision-makers','management']]
+];
+function evolveSentence(sentence,reporterId,seed){
+  let out=String(sentence||'').trim();if(!out)return out;
+  const h=evolutionHash(seed),rid=EVOLUTION_INTROS[reporterId]?reporterId:'walter-mercer';
+  for(let i=0;i<EVOLUTION_LEXICON.length;i++){
+    const [re,choices]=EVOLUTION_LEXICON[i];if(!re.test(out)){re.lastIndex=0;continue}re.lastIndex=0;
+    const choice=choices[(h+i*7)%choices.length];out=out.replace(re,choice);
+  }
+  out=out.trim();if(out)out=out[0].toUpperCase()+out.slice(1);
+  const intro=EVOLUTION_INTROS[rid][h%EVOLUTION_INTROS[rid].length],tail=EVOLUTION_TAILS[rid][Math.floor(h/11)%EVOLUTION_TAILS[rid].length];
+  out=intro+' '+out;
+  if(!/[.!?]$/.test(out))out+='.';
+  return out+' '+tail;
+}
+function paragraphSentenceRows(paragraph){
+  return forwardSentenceParts(paragraph).map(sentence=>({sentence,norm:forwardNormSentence(sentence,[]),words:forwardWordCount(sentence)}));
+}
+function evolveForwardTeams(teams,previousEdition,week,salt){
+  const currentEntities=forwardEntities({teams}),previousEntities=forwardEntities(previousEdition),entities=[...currentEntities,...previousEntities],
+    priorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),new Set(forwardArticleSentences(t).map(s=>forwardNormSentence(s,entities)))])),
+    currentCounts=new Map();
+  for(const t of teams||[])for(const s of forwardArticleSentences(t)){const n=forwardNormSentence(s,entities);currentCounts.set(n,(currentCounts.get(n)||0)+1)}
+  return (teams||[]).map(t=>{
+    const a=t?.inquirer_article;if(!a)return t;const rid=String(a?.reporter?.id||'walter-mercer'),prior=priorByRoster.get(String(t.roster_id))||new Set();
+    const sections=(a.sections||[]).map((section,si)=>({...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>{
+      const rows=forwardSentenceParts(p);return rows.map((sentence,sj)=>{
+        const n=forwardNormSentence(sentence,entities),offender=forwardWordCount(sentence)>=10&&(prior.has(n)||(currentCounts.get(n)||0)>3);
+        return offender?evolveSentence(sentence,rid,[week,salt,t.roster_id,section.kind||section.heading,si,pi,sj,n].join('|')):sentence;
+      }).join(' ');
+    })}));
+    return{...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
+  });
+}
+function evolveForwardOverview(overview,previousOverview,week,salt){
+  if(!overview)return overview;
+  const priorSentences=new Set(forwardSentenceParts((previousOverview?.sections||[]).flatMap(s=>s.paragraphs||[]).join(' ')).filter(s=>forwardWordCount(s)>=10).map(s=>forwardNormSentence(s,[]))),
+    counts=new Map();
+  for(const s of forwardSentenceParts((overview.sections||[]).flatMap(x=>x.paragraphs||[]).join(' ')).filter(s=>forwardWordCount(s)>=10)){const n=forwardNormSentence(s,[]);counts.set(n,(counts.get(n)||0)+1)}
+  const sections=(overview.sections||[]).map((section,si)=>({...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>forwardSentenceParts(p).map((sentence,sj)=>{
+    const n=forwardNormSentence(sentence,[]),offender=forwardWordCount(sentence)>=10&&(priorSentences.has(n)||(counts.get(n)||0)>1);
+    return offender?evolveSentence(sentence,String(section?.reporter?.id||'walter-mercer'),[week,salt,'recap',section.heading,si,pi,sj,n].join('|')):sentence;
+  }).join(' '))}));
+  return{...overview,sections};
+}
+
 export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,weekClassification=null,variationSalt=0}={}){
   season=Number(season);week=Number(week);variationSalt=Number(variationSalt)||0;
   if(!rawInquirer||!Array.isArray(rawInquirer.teams))throw new Error('V31 forward editorial layer requires raw team articles');
@@ -2721,6 +2811,10 @@ function assertWeek2Originality(result,previousEdition){
   let overview=rewriteWeek2Overview(rawOverview||{},rewritten,previousEdition||{teams:[]});
   let teams=deepStrings(rewritten,s=>adaptWeekLanguage(s,week,weekClassification));
   overview=deepStrings(overview,s=>adaptWeekLanguage(s,week,weekClassification));
+  if(week>=3){
+    teams=evolveForwardTeams(teams,previousEdition,week,variationSalt);
+    overview=evolveForwardOverview(overview,previousEdition?.league_overview||null,week,variationSalt);
+  }
 
   const trajectory=(overview.sections||[]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
   if(trajectory)trajectory.paragraphs=forwardTrajectoryParagraphs(teams,week);

@@ -68,6 +68,12 @@ assert.ok(source.includes('tradeHistoryCompleteV33'),'Trade Receipt must verify 
 assert.ok(source.includes('if(!tr)continue'),'Missing trade history must be silently omitted rather than explained in an article');
 assert.ok(source.includes('if(!tradeHistoryCompleteV33(tr,facts))continue'),'Incomplete trade history must be silently omitted rather than explained in an article');
 assert.ok(source.includes('normalizeTillyCaseV33'),'Tilly output must pass through the no-shouting case normalizer');
+assert.ok(source.includes("styleReporter=originalReporter?.id==='tess-delaney'?{...originalReporter,id:'mack-hollis'}:originalReporter"),'Roycington team prose must route through the punchier football-first style bank instead of the retired furniture/dining motif');
+assert.ok(source.includes("roycingtonHeadings={lede:'What the Result Actually Says'"),'Roycington must retain his own clean section identity after football-first style routing');
+const narrativeSource=fs.readFileSync(new URL('../netlify/functions/inquirer-narrative-v17.mjs',import.meta.url),'utf8');
+assert.ok(!narrativeSource.includes('Served With the Good China')&&!narrativeSource.includes('The Bad China Comes Out After'),'Roycington headline bank must not restore the retired dining-room motif');
+const reporterSource=fs.readFileSync(new URL('../netlify/functions/inquirer-reporters.mjs',import.meta.url),'utf8');
+assert.ok(!/Bartholomew Roycington III[^\\n]+good china/i.test(reporterSource),'Roycington public voice profile must stay furniture/dining-free');
 for(const phrase of ['which is exactly what an IDP league should reward when the work is real','The historical value snapshot is not available in this article packet','ordinary quarterback workload','entered as the projected underdog and won anyway','high-scorer line','multiple-contributor point is earned','provisional breakout label','breakout-watch invitation'])assert.ok(!source.includes(phrase),'Rejected explainer/meta phrase survived revision 6 source: '+phrase);
 const leagueHub=fs.readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
 assert.ok(leagueHub.includes('snapshot_through_week:Number(week||0)'),'League Hub historical context must declare the exact report-week cutoff');

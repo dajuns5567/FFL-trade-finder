@@ -3086,36 +3086,40 @@ function repairPlayerNameCollisionsV31(t,value){
 }
 
 export function humanSectionsV25(args){
-  const {team:t,facts={}}=args,creative=humanSectionsV21(args),factual=humanSectionsV23(args),
-    factualByKind=new Map((factual||[]).map(s=>[s.kind,s])),frame=articleFrameV29(t,args.reporter),fw=fourthWallV28(t,args.reporter,frame.angle);
+  const originalReporter=args.reporter,styleReporter=originalReporter?.id==='tess-delaney'?{...originalReporter,id:'mack-hollis'}:originalReporter,
+    styledArgs=styleReporter===originalReporter?args:{...args,reporter:styleReporter},
+    {team:t,facts={}}=styledArgs,creative=humanSectionsV21(styledArgs),factual=humanSectionsV23(styledArgs),
+    factualByKind=new Map((factual||[]).map(s=>[s.kind,s])),frame=articleFrameV29(t,styleReporter),fw=fourthWallV28(t,styleReporter,frame.angle);
   const sections=(creative||[]).map(c=>{
     const f=factualByKind.get(c.kind)||{};let paragraphs;
-    if(c.kind==='lede')paragraphs=[angleLeadV28(t,args.reporter,frame.angle),gameShapeV29(t,args.reporter,frame),ledeConsequenceV29(t,args.reporter,frame),fw].filter(Boolean);
-    else if(c.kind==='players')paragraphs=playerStoryV29(t,args.reporter,frame);
-    else if(c.kind==='management')paragraphs=managementStoryV29(t,facts,args.reporter,frame);
-    else if(c.kind==='value')paragraphs=valueStoryV28(t,args.reporter);
-    else if(c.kind==='sentiment')paragraphs=sentimentStoryV30(t,args.reporter,frame);
-    else if(c.kind==='outlook')paragraphs=outlookStoryV29(t,args.reporter,frame);
-    else if(c.kind==='hot-seat')paragraphs=hotSeatV29(t,args.reporter,frame);
-    else if(c.kind==='cool-throne')paragraphs=coolThroneV29(t,args.reporter,frame);
+    if(c.kind==='lede')paragraphs=[angleLeadV28(t,styleReporter,frame.angle),gameShapeV29(t,styleReporter,frame),ledeConsequenceV29(t,styleReporter,frame),fw].filter(Boolean);
+    else if(c.kind==='players')paragraphs=playerStoryV29(t,styleReporter,frame);
+    else if(c.kind==='management')paragraphs=managementStoryV29(t,facts,styleReporter,frame);
+    else if(c.kind==='value')paragraphs=valueStoryV28(t,styleReporter);
+    else if(c.kind==='sentiment')paragraphs=sentimentStoryV30(t,styleReporter,frame);
+    else if(c.kind==='outlook')paragraphs=outlookStoryV29(t,styleReporter,frame);
+    else if(c.kind==='hot-seat')paragraphs=hotSeatV29(t,styleReporter,frame);
+    else if(c.kind==='cool-throne')paragraphs=coolThroneV29(t,styleReporter,frame);
     else paragraphs=['n/a'];
     paragraphs=(paragraphs||[]).map(p=>{
-      const specific=specificityPass(t,c.kind,p),firstPerson=deMetaReporterFunctionsV32(specific,args.reporter),named=c.kind==='management'?firstPerson:naturalizePlayerReferences(t,firstPerson);
+      const specific=specificityPass(t,c.kind,p),firstPerson=deMetaReporterFunctionsV32(specific,styleReporter),named=c.kind==='management'?firstPerson:naturalizePlayerReferences(t,firstPerson);
       return contextualizeParagraphV28(t,named);
     }).map(p=>String(p).replace(/Fix the production and the back page will happily find a new target\./gi,'Fix the production and the criticism can move to somebody else.'));
     paragraphs=(c.kind==='management'?paragraphs:restoreSectionFullNamesV30(t,paragraphs)).map(p=>repairPlayerNameCollisionsV31(t,p));
-    return {...f,...c,heading:headingV28(t,args.reporter,c.kind,c.heading,frame.angle),paragraphs:paragraphs.length?paragraphs:['n/a']};
+    return {...f,...c,heading:headingV28(t,styleReporter,c.kind,c.heading,frame.angle),paragraphs:paragraphs.length?paragraphs:['n/a']};
   });
-  const state={count:0},aliased=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>deMetaReporterFunctionsV32(repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,p,state)),args.reporter))}));
-  const tradeParagraphs=tradeCommentaryV32(t,args.reporter,facts).map(p=>deMetaReporterFunctionsV32(repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,deMetaReporterFunctionsV32(naturalizePlayerReferences(t,p),args.reporter),state)),args.reporter));
+  const state={count:0},aliased=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>deMetaReporterFunctionsV32(repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,p,state)),styleReporter))}));
+  const tradeParagraphs=tradeCommentaryV32(t,styleReporter,facts).map(p=>deMetaReporterFunctionsV32(repairPlayerNameCollisionsV31(t,teamAliasPassV28(t,deMetaReporterFunctionsV32(naturalizePlayerReferences(t,p),styleReporter),state)),styleReporter));
   if(tradeParagraphs.length){
-    const managementIndex=aliased.findIndex(s=>s.kind==="management"),tradeSection={kind:"trade-commentary",heading:tradeCommentaryHeadingV32(args.reporter),paragraphs:tradeParagraphs};
+    const managementIndex=aliased.findIndex(s=>s.kind==="management"),tradeSection={kind:"trade-commentary",heading:tradeCommentaryHeadingV32(styleReporter),paragraphs:tradeParagraphs};
     aliased.splice(managementIndex>=0?managementIndex:aliased.length,0,tradeSection);
   }
-  const cased=aliased.map(sec=>({...sec,heading:articleGrammarV35(t,finalReporterCaseV33(t,args.reporter,sec.heading)),paragraphs:(sec.paragraphs||[]).map(p=>articleGrammarV35(t,finalReporterCaseV33(t,args.reporter,p)))}));
-  return dedupeArticleSectionsV29(dedupeArticleSections(cased),t);
+  const cased=aliased.map(sec=>({...sec,heading:articleGrammarV35(t,finalReporterCaseV33(t,styleReporter,sec.heading)),paragraphs:(sec.paragraphs||[]).map(p=>articleGrammarV35(t,finalReporterCaseV33(t,styleReporter,p)))}));
+  const deduped=dedupeArticleSectionsV29(dedupeArticleSections(cased),t);
+  if(originalReporter?.id!=='tess-delaney')return deduped;
+  const roycingtonHeadings={lede:'What the Result Actually Says',players:'Who Made the Afternoon Interesting',identity:'What Kind of Team Is This, Exactly?',management:'Management, Vanity and the Cost of Choices',value:'The Market Has Opinions, Naturally',sentiment:'Public Emotion, Without Restraint','hot-seat':'The Problem Everybody Can See','cool-throne':'Credit, With Appropriate Drama',outlook:'The Next Matchup With Consequence','trade-commentary':'Trade Receipt: What the Week Added'};
+  return deduped.map(sec=>({...sec,heading:roycingtonHeadings[sec.kind]||sec.heading}));
 }
-
 function uniqueGames(teams){
   const byId=new Map(teams.map(t=>[String(t.roster_id),t])),seen=new Set(),games=[];
   for(const t of teams){const o=byId.get(String(t.opponent_roster_id));if(!o)continue;const key=[String(t.roster_id),String(o.roster_id)].sort().join(':');if(seen.has(key))continue;seen.add(key);const winner=Number(t.points)>=Number(o.points)?t:o,loser=winner===t?o:t,margin=Math.abs(Number(t.points)-Number(o.points)),combined=Number(t.points)+Number(o.points),projGap=valid(t.projected)&&valid(o.projected)?Math.abs(Number(t.projected)-Number(o.projected)):null,upset=projGap!=null&&projGap>=8&&((Number(t.points)>Number(o.points)&&Number(t.projected)<Number(o.projected))||(Number(o.points)>Number(t.points)&&Number(o.projected)<Number(t.projected)));games.push({winner,loser,margin,combined,upset})}

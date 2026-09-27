@@ -70,7 +70,7 @@ export function narrativeHeadline(t,w,r){
     'tess-delaney':[
       `A Civilized Sunday at Last for ${team}`,
       `${star} Ruins My Planned Complaint in the Best Way`,
-      `A Win for ${team}, Served With the Good China`,
+      `A Win for ${team}, and the Swagger Is Getting Expensive`,
       `I Had Criticisms Ready; ${team} Had Other Plans`,
       `A Rather Attractive Sunday for ${team}`,
       `${team} Wins, and I Am Forced to Be Pleasant`,
@@ -114,7 +114,7 @@ export function narrativeHeadline(t,w,r){
       `${star} Deserved Better Company From ${team}`,
       `${team} Loses, and So Does My Good Mood`,
       `A Sunday ${team} Should Return for Store Credit`,
-      `The Bad China Comes Out After ${poss(team)} Loss`,
+      `The Polite Version Ends After ${poss(team)} Loss`,
       `${team} Produced a Result With No Taste at All`,
       `I Regret to Inform You ${team} Has Annoyed Me`,
       `A Loss for ${team}, Followed by Several Theatrical Sighs`

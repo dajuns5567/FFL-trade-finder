@@ -146,7 +146,7 @@ for(const block of matterBlocks.slice(0,5)){
 
 }
 
-assert.ok(recapSections.some(s=>/Velvet Rope/i.test(String(s?.heading||''))),'Bartholomew’s Weekly Recap desk must retain his own identity instead of a generic analytics heading');
+assert.ok(recapSections.some(s=>/(?:Velvet Rope|Contender Line)/i.test(String(s?.heading||''))),'Bartholomew’s Weekly Recap desk must retain his own identity instead of a generic analytics heading');
 
 const all=[recap,...(d.teams||[]).map(articleText)].join('\n').toLowerCase();
 for(const phrase of [

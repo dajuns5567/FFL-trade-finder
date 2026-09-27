@@ -852,16 +852,16 @@ function w2Week1DeltaRead(t,r,p,pp,role){
     },
     label=(roleNames[rid]||roleNames["walter-mercer"])[Math.min(2,Number(role)||0)],
     up={
-      "walter-mercer":["took a real step forward","raised the next expectation","gave the two-week trend some shape","made the improvement impossible to dismiss"],
-      "tess-delaney":["looked considerably more expensive","gave the room more to admire","improved the arrangement in a visible way","earned a noticeably better seat"],
-      "mack-hollis":["turned the volume up","made the scoreboard a lot louder","upgraded from useful to noisy","gave the role a real jolt"],
-      "nora-voss":["ruined an easy rival joke","gave supporters a stronger rebuttal","forced rivals to update the punch line","made the role harder to mock"]
+      "walter-mercer":["put a brighter number on the second Sunday","scored more than in the opener","made the week-over-week jump easy to see","turned Week 2 into the louder of the two"],
+      "tess-delaney":["served a fuller second Sunday","gave Week 2 a larger portion","made the week-over-week jump visible","brought more to the second setting"],
+      "mack-hollis":["turned the Week 2 volume up","made the second scoreboard louder","put a bigger number on Sunday","gave Week 2 the stronger jolt"],
+      "nora-voss":["gave supporters a better second screenshot","put more on the board in Week 2","forced rivals to acknowledge the bigger number","made the second Sunday harder to mock"]
     },
     down={
-      "walter-mercer":["took a real step backward","lowered the next expectation","gave Week 3 a legitimate question","made the decline impossible to ignore"],
-      "tess-delaney":["looked noticeably underfed","left the room asking where the rest went","made the arrangement less convincing","lost some of its polish"],
-      "mack-hollis":["turned the volume down","made the scoreboard noticeably quieter","went from noise to a question","put the role under the spotlight"],
-      "nora-voss":["handed rivals an easier joke","weakened the supporter rebuttal","gave rivals a cleaner comparison","made the role easier to mock"]
+      "walter-mercer":["put a quieter number on the second Sunday","finished below the opener","gave Week 3 a question about whether the lower score repeats","made the week-over-week drop easy to see"],
+      "tess-delaney":["served a smaller second Sunday","left Week 2 with the thinner portion","made the second setting less convincing","brought less to the table than in the opener"],
+      "mack-hollis":["turned the Week 2 volume down","made the second scoreboard quieter","put a smaller number on Sunday","gave Week 3 a question instead of a verdict"],
+      "nora-voss":["handed rivals an easier second screenshot","put less on the board in Week 2","gave rivals a cleaner week-over-week comparison","made the second Sunday easier to mock"]
     },
     phrase=(rise?(up[rid]||up["walter-mercer"]):(down[rid]||down["walter-mercer"]))[v];
   const rows=[
@@ -936,7 +936,7 @@ function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
         won?name+" was the centerpiece and, for once, the rest of "+team+" remembered a centerpiece needs a table around it.":name+" brought the centerpiece to a dinner that still ended with "+team+" holding the check.",
         won?name+" gave the "+a.mascot+" the expensive-looking performance the room had been waiting for.":name+" dressed the afternoon properly; the result was the guest who ruined it.",
         won?name+" arrived as the centerpiece and left with the win to match.":name+" looked magnificent in the middle of an evening the "+a.mascot+" otherwise mishandled.",
-        won?name+" gave "+team+" one performance nobody needed to rearrange after the fact.":name+" was the one part of the room nobody should blame for how the evening ended."
+        won?name+" gave "+team+" one performance nobody needed to explain away after the fact.":name+" was the one part of the room nobody should blame for how the evening ended."
       ],
       [
         won?name+" gave the "+a.mascot+" a second proper setting, which kept the centerpiece from looking lonely.":name+" provided respectable support; the empty chairs were elsewhere.",
@@ -1358,7 +1358,7 @@ function w2RoadRead(t,r,next,later){
       "The next three names are "+next+", then "+rest+". For "+a.mascot+", Week 3 decides whether "+first+" arrives as an opportunity or an obligation. That is why the first game in the sequence deserves more attention than the softer names behind it."
     ],
     "tess-delaney":[
-      "After "+next+", the guest list reads "+rest+". Win the first appointment and "+first+" can arrive without emergency seating; lose it and the room starts rearranging itself. The schedule looks much more elegant when Week 3 does not leave the table wobbling.",
+      "After "+next+", the guest list reads "+rest+". Win the first appointment and "+first+" can arrive without emergency seating; lose it and every comfortable assumption gets renegotiated. The schedule looks much more elegant when Week 3 does not leave the table wobbling.",
       next+" enters before "+rest+". A pleasant Week 3 leaves the "+a.mascot+" enough room to host "+first+" calmly; a loss makes the next reservation considerably less civilized. One result decides whether the later stretch feels luxurious or necessary.",
       "The schedule after "+next+" brings "+rest+". The "+a.mascot+" can keep the good china out with a win, or start counting chairs nervously before "+first+" with a loss. Week 3 sets the tone for every appointment that follows it.",
       "Beyond "+next+", "+rest+" are waiting. One win keeps the room composed; one loss turns "+first+" into the sort of appointment nobody enjoys pretending is casual. The first result decides whether the later games feel like opportunities or obligations."
@@ -1623,13 +1623,13 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
     },
     "tess-delaney":{
       rolling:[
-        "The 2-0 "+a.mascot+" room has started making reservations under 'contender,' which is adorable this early. Between toasts, supporters keep rearranging the seating chart around "+focus+".",
+        "The 2-0 "+a.mascot+" room has started making reservations under 'contender,' which is adorable this early. Between toasts, supporters keep arguing over which names deserve the expensive chairs around "+focus+".",
         "Two wins have the "+a.mascot+" public wearing confidence like it was tailored. The one loose thread everybody keeps tugging is "+focus+".",
         "The "+a.mascot+" room is already polishing glasses for a 2-0 toast, but even the happy table keeps gossiping about "+focus+".",
         "At 2-0, supporters have put the good china out without being asked, victory screenshots are making the rounds, celebratory memes are multiplying, and lineup polls have already become a minor civic institution. The only chair still getting side-eye belongs to "+focus+"."
       ],
       sinking:[
-        "The 0-2 "+a.mascot+" room has stopped pretending this is a tasteful inconvenience. Supporters are rearranging the entire table around "+focus+", and somebody is about to lose a chair.",
+        "The 0-2 "+a.mascot+" room has stopped pretending this is a tasteful inconvenience. Supporters are already demanding a different table around "+focus+", and somebody is about to lose a chair.",
         "Two losses have stripped the room of its indoor voice. "+focus+" is the seating dispute everyone is bringing to the Week 3 reservation.",
         "At 0-2, the good china is back in storage and the complaint cards are multiplying. Most of them somehow mention "+focus+".",
         "The "+a.mascot+" public is one bad Sunday from replacing the seating chart with a fire-exit map. "+focus+" is the problem nobody can leave at coat check."
@@ -1717,7 +1717,7 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
       "Fans are already rewriting their preferred lineup around "+subject+". The calm version is a suggestion. The louder version has somehow acquired bullet points."
     ],
     "tess-delaney":[
-      "The room has moved on from the final score and started rearranging chairs around "+subject+". Half the table calls it housekeeping; the other half is already asking for the manager.",
+      "The room has moved on from the final score and started arguing about who still deserves a chair beside "+subject+". Half the table calls it housekeeping; the other half is already asking for the manager.",
       "Supporters are passing the seating chart around like a menu with one item circled in red: "+subject+". The room would like proof that somebody learned something from Sunday.",
       "The complaint cards all seem to mention "+subject+". Even the happy tables have started folding them neatly beside the silverware.",
       "Fans have turned "+subject+" into the room’s favorite piece of gossip. It is funny now; another Sunday of the same thing and somebody starts moving furniture."
@@ -1802,7 +1802,7 @@ function w2ManagementMoveRead(t,r,won,margin){
         "The Week 2 transaction log is empty for "+t.manager_name+". "+(miss?.reserve&&miss?.starter?miss.reserve.name+" over "+miss.starter.name+" is therefore the more relevant management question.":team+" has to read Sunday through the roster it already carried.")
       ],
       "tess-delaney":[
-        t.manager_name+" did not rearrange the roster during Week 2. The management conversation stays with "+(weak?weak.name+" and the "+w2One(weak.points)+"-point quiet spot":"the existing table")+" rather than an imaginary new guest.",
+        t.manager_name+" did not remake the roster during Week 2. The management conversation stays with "+(weak?weak.name+" and the "+w2One(weak.points)+"-point quiet spot":"the existing table")+" rather than an imaginary new guest.",
         (q===0?("No completed add, drop or trade appears for "+t.manager_name+" this week."):q===1?(t.manager_name+" left the Week 2 guest list unchanged."):q===2?("The "+w2Alias(t).mascot+" transaction ledger shows no completed Week 2 move from "+t.manager_name+"."):("No Week 2 roster invitation or departure was completed by "+t.manager_name+"."))+" "+(miss?.reserve&&miss?.starter?"The more interesting seating choice is "+miss.reserve.name+" behind "+miss.starter.name+".":"Sunday belongs to the roster already seated at the table.")
       ],
       "mack-hollis":[
@@ -1819,7 +1819,7 @@ function w2ManagementMoveRead(t,r,won,margin){
   const addedIds=new Set((t.transactions||[]).flatMap(tx=>tx.adds||[]).map(String)),starters=(t.starter_details||[]).filter(p=>addedIds.has(String(p.id))).sort((x,y)=>Number(y.points)-Number(x.points)),hit=starters[0],
     leadRows={
       "walter-mercer":[t.manager_name+"’s Week 2 roster work: "+moves.join("; ")+".",t.manager_name+" changed the roster this week by "+moves.join("; ")+"."] ,
-      "tess-delaney":[t.manager_name+" rearranged the Week 2 table: "+moves.join("; ")+".",t.manager_name+" adjusted the guest list this week by "+moves.join("; ")+"."],
+      "tess-delaney":[t.manager_name+" changed the Week 2 table: "+moves.join("; ")+".",t.manager_name+" adjusted the guest list this week by "+moves.join("; ")+"."],
       "mack-hollis":[t.manager_name+" hit the Week 2 wire and "+moves.join("; ")+".",t.manager_name+" made the roster headline concrete: "+moves.join("; ")+"."],
       "nora-voss":[t.manager_name+" changed the Week 2 roster: "+moves.join("; ")+".",t.manager_name+" gave rivals actual transaction terms to discuss: "+moves.join("; ")+"."]
     },lead=(leadRows[rid]||leadRows["walter-mercer"])[v];

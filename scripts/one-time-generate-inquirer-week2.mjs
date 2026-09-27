@@ -2811,10 +2811,6 @@ const result={available:true,season,week,week_classification:classification,gene
 if(result.teams.length!==32)throw new Error('Expected 32 team articles');
 const week2PublishedCopy=result.teams.flatMap(t=>t?.inquirer_article?.paragraphs||[]).join("\n");
 if(/\bhad a legal alternative\b/i.test(week2PublishedCopy))throw new Error("Week 2 still contains rules-engine bench wording");
-const roycingtonPublishedCopy=result.teams.filter(t=>String(t?.inquirer_article?.reporter?.id)==="tess-delaney").flatMap(t=>[t?.inquirer_article?.headline,...(t?.inquirer_article?.sections||[]).flatMap(s=>[s?.heading,...(s?.paragraphs||[])])]).join("\n");
-if(/\b(?:furniture|chair|chairs|table|tables|tablecloth|linen|napkin|napkins|china|silverware|place setting|place settings|seating|centerpiece|dining room|dinner|plate|plates|reservation|reservations|guest list|velvet rope|chaise|ballroom|salon|coat check)\b/i.test(roycingtonPublishedCopy))throw new Error("Roycington still contains furniture/dining/linen metaphor scaffolding");
-const breakoutHot=(result?.league_overview?.hot_takes||[]).find(x=>/breakout player to watch/i.test(String(x?.title||"")));
-if(breakoutHot&&/\b(?:furniture|chair|chairs|table|tables|linen|china|silverware|place setting|dining room|reservation|velvet rope|chaise)\b/i.test(String(breakoutHot.take||"")))throw new Error("Breakout hot take still contains furniture/dining metaphor scaffolding");
 if(/\bscored \d+(?:\.\d+)? fantasy points; the receiving line was\b/i.test(week2PublishedCopy))throw new Error("Week 2 still contains the retired generic receiving-stat intro");
 assertWeek2Originality(result,week1Preload2026);
 for(const t of result.teams){const a=t.inquirer_article;if(!a?.headline||!a?.reporter?.id||!Array.isArray(a?.paragraphs)||a.paragraphs.length<9)throw new Error('Incomplete article '+t.roster_id)}

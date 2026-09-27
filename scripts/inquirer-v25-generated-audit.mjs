@@ -200,6 +200,7 @@ if(reportWeek===2){
     else if(veteran&&pts>=Math.max(5,starThreshold*.5))status='veteran';
     return{status,hasTwoWeeks,twoWeekRise,strongTwoWeekRise,twoWeekDrop,established,young,veteran,week1,pts,seasonAvg,prior};
   };
+  const escapePlayerRe=value=>String(value||'').replace(/[.*+?^$\{\}()|[\]\\]/g,m=>'\\\\'+m);
   const growthLanguage=/\b(?:breakout|emerging|young riser|rising player|riser|rise has earned|early surge|role growth)\b/i,
     declineLanguage=/\b(?:declining veteran|veteran decline|trending down|fading veteran|slow-start trend|repeated drop)\b/i,
     struggleLanguage=/\b(?:struggling star|struggling player|in a slump|slow start)\b/i;
@@ -214,10 +215,10 @@ if(reportWeek===2){
       assert.ok(copy.includes(pname),'Every discussed top-three player must first be introduced by full name somewhere in the article: '+t.team_name+' / '+pname);
       const withoutFull=copy.replaceAll(pname,' ');
       const shortTokens=[first,last].filter(x=>x&&x.length>=4);
-      if(shortTokens.some(x=>new RegExp('(?:^|\\W)'+escapeRe(x)+'(?:$|\\W)','i').test(withoutFull)))hasShort=true;
+      if(shortTokens.some(x=>new RegExp('(?:^|\\W)'+escapePlayerRe(x)+'(?:$|\\W)','i').test(withoutFull)))hasShort=true;
 
       const refs=[pname,last.length>=4?last:''].filter(Boolean),
-        related=sentenceParts(copy).filter(sentence=>refs.some(ref=>new RegExp('(?:^|\\W)'+escapeRe(ref)+'(?:$|\\W)','i').test(sentence)));
+        related=sentenceParts(copy).filter(sentence=>refs.some(ref=>new RegExp('(?:^|\\W)'+escapePlayerRe(ref)+'(?:$|\\W)','i').test(sentence)));
       const growth=related.filter(x=>growthLanguage.test(x)),decline=related.filter(x=>declineLanguage.test(x)),struggle=related.filter(x=>struggleLanguage.test(x));
       if(growth.length){
         assert.ok(profile.hasTwoWeeks,'Growth/breakout language requires at least two completed weekly performances: '+t.team_name+' / '+pname+' :: '+growth.join(' || '));
@@ -520,6 +521,31 @@ for(const t of d.teams||[]){
 }
 const templateOffenders=[...templatePlacements.entries()].filter(([,rows])=>rows.length>3).map(([fingerprint,rows])=>({fingerprint,count:rows.length,examples:rows.slice(0,4)}));
 assert.deepEqual(templateOffenders,[],'Editorial sentence templates must not recur across more than three team articles after names/numbers are normalized');
+
+// Catch repeated editorial scaffolds that are shorter than a full sentence.
+// Names and numbers are normalized first; one article contributes at most one
+// placement for a given phrase so repetition inside a single article does not
+// create a false cross-article failure.
+const phrasePlacements=new Map(),phraseWidth=7;
+for(const t of d.teams||[]){
+  let body=articleText(t);
+  for(const entity of editorialEntities)body=body.replace(new RegExp(escapeRe(entity),'gi'),' [ENTITY] ');
+  body=body.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,' [#] ').replace(/[^a-z0-9#\[\]’'-]+/g,' ').replace(/\s+/g,' ').trim();
+  const ws=body.split(/\s+/).filter(Boolean),seenHere=new Set();
+  for(let i=0;i+phraseWidth<=ws.length;i++){
+    const gram=ws.slice(i,i+phraseWidth).join(' ');
+    if(!/[a-z]/.test(gram)||seenHere.has(gram))continue;
+    // Pure stat scaffolds and generic schedule boilerplate are factual rather
+    // than editorial voice; the sentence/template audits cover those separately.
+    if(/fantasy points? \[#\]|week \[#\]|\[#\] points?/.test(gram)&&/(?:yards?|carries|targets|receptions|tackles|sacks)/.test(gram))continue;
+    seenHere.add(gram);
+    const rows=phrasePlacements.get(gram)||[];rows.push({team:t.team_name,reporter:t.inquirer_article?.reporter?.name});phrasePlacements.set(gram,rows);
+  }
+}
+const phraseOffenders=[...phrasePlacements.entries()].filter(([,rows])=>rows.length>2).map(([phrase,rows])=>({phrase,count:rows.length,placements:rows.slice(0,4)}));
+assert.deepEqual(phraseOffenders,[],'Seven-word editorial phrase scaffolds must not recur across more than two team articles after names/numbers are normalized');
+assert.doesNotMatch(all,/\broom (?:will|gets?|got|has been) rearrang\w*\b|\broom rearranges itself\b/i,'Retired room/rearrangement scaffold must not recur in team or recap prose');
+
 const avgTeamWords=teamWords.reduce((n,x)=>n+x,0)/Math.max(1,teamWords.length);
 assert.ok(Math.min(...teamWords)>=580,'Every team column must preserve the revision-5 depth increase; shortest='+Math.min(...teamWords));
 assert.ok(avgTeamWords>=680,'Team columns must retain substantial reporting depth after removing repetition; average='+avgTeamWords.toFixed(1));

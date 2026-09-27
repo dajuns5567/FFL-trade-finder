@@ -299,13 +299,19 @@ export function buildInquirerWeek({season,week,teams,players,weeklyStats,weeklyS
   const seasonPoints=series.reduce((n,x)=>n+Number(x.points||0),0),seasonGames=series.length,seasonAvg=seasonGames?seasonPoints/seasonGames:null,priorRaw=historicalSeasonStats?.[id]||{},
    defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/i.test(position),
    currentSnaps=first(stats,...(defensive?['def_snp','def_snaps','defensive_snaps']:['off_snp','off_snaps','offensive_snaps'])),
+   teamSnaps=first(stats,...(defensive?['tm_def_snp','team_def_snaps']:['tm_off_snp','team_off_snaps'])),
    currentSnapPctRaw=first(stats,...(defensive?['def_snp_pct','def_snap_pct','def_pct','snap_pct']:['off_snp_pct','off_snap_pct','off_pct','snap_pct'])),
-   currentSnapPct=currentSnapPctRaw==null?null:(Number(currentSnapPctRaw)>1.5?Number(currentSnapPctRaw)/100:Number(currentSnapPctRaw));
+   currentSnapPct=currentSnapPctRaw!=null&&Number(currentSnapPctRaw)>0
+     ?(Number(currentSnapPctRaw)>1.5?Number(currentSnapPctRaw)/100:Number(currentSnapPctRaw))
+     :(Number.isFinite(Number(currentSnaps))&&Number.isFinite(Number(teamSnaps))&&Number(teamSnaps)>0?Number(currentSnaps)/Number(teamSnaps):null);
   const priorGames=['gp','gms_active','games_played','games','gms'].map(k=>Number(priorRaw?.[k])).find(n=>Number.isFinite(n)&&n>0)||0,priorTotal=priorGames&&typeof scoreFn==='function'?scoreFn(priorRaw,scoringSettings):null,priorSeasonAvg=priorGames&&Number.isFinite(Number(priorTotal))?Number(priorTotal)/priorGames:null,
    priorSnaps=first(priorRaw,...(defensive?['def_snp','def_snaps','defensive_snaps']:['off_snp','off_snaps','offensive_snaps'])),
+   priorTeamSnaps=first(priorRaw,...(defensive?['tm_def_snp','team_def_snaps']:['tm_off_snp','team_off_snaps'])),
    priorSnapsPerGame=priorGames&&Number.isFinite(Number(priorSnaps))?Number(priorSnaps)/priorGames:null,
    priorSnapPctRaw=first(priorRaw,...(defensive?['def_snp_pct','def_snap_pct','def_pct','snap_pct']:['off_snp_pct','off_snap_pct','off_pct','snap_pct'])),
-   priorSnapPct=priorSnapPctRaw==null?null:(Number(priorSnapPctRaw)>1.5?Number(priorSnapPctRaw)/100:Number(priorSnapPctRaw));
+   priorSnapPct=priorSnapPctRaw!=null&&Number(priorSnapPctRaw)>0
+     ?(Number(priorSnapPctRaw)>1.5?Number(priorSnapPctRaw)/100:Number(priorSnapPctRaw))
+     :(Number.isFinite(Number(priorSnaps))&&Number.isFinite(Number(priorTeamSnaps))&&Number(priorTeamSnaps)>0?Number(priorSnaps)/Number(priorTeamSnaps):null);
   const fantasyOwner=currentFantasyOwner.get(String(id))||null;
   facts[id]={id,name,position,nfl_team:String(m.team||'FA'),age:Number.isFinite(Number(m.age))?Number(m.age):null,years_exp:Number.isFinite(Number(m.years_exp))?Number(m.years_exp):null,current_fantasy_roster_id:fantasyOwner?.roster_id||null,current_fantasy_team_name:fantasyOwner?.team_name||null,points:fp!=null&&Number.isFinite(Number(fp))?Number(fp):null,real_stats:stats,real_stat_line:realStatLine(position,stats),current_snap_count:Number.isFinite(Number(currentSnaps))?Number(currentSnaps):null,current_snap_pct:Number.isFinite(Number(currentSnapPct))?Number(currentSnapPct):null,season_fantasy_points:seasonPoints,season_games:seasonGames,season_avg:seasonAvg,prior_season_year:Number.isFinite(Number(historicalSeasonYear))?Number(historicalSeasonYear):null,prior_season_games:priorGames,prior_season_fantasy_points:Number.isFinite(Number(priorTotal))?Number(priorTotal):null,prior_season_avg:Number.isFinite(Number(priorSeasonAvg))?Number(priorSeasonAvg):null,prior_season_snaps:Number.isFinite(Number(priorSnaps))?Number(priorSnaps):null,prior_season_snaps_per_game:Number.isFinite(Number(priorSnapsPerGame))?Number(priorSnapsPerGame):null,prior_season_snap_pct:Number.isFinite(Number(priorSnapPct))?Number(priorSnapPct):null,recent_form:{games:series.length,last3_avg:lastAvg,prior3_avg:priorAvg,delta,label,series}};
  }

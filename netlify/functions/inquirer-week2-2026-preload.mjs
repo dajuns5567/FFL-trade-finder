@@ -75,4 +75,19 @@ for(const t of week2.teams||[]){
   section.paragraphs=[marketRead(t,rid,d,pct),...moverReads(t)];
   article.paragraphs=(article.sections||[]).flatMap(s=>s?.paragraphs||[]);
 }
+const directLede=p=>String(p||'')
+  .replace(/The (.+?) are 2-0 and the easy rival joke has missed twice\. That does not make .+? sacred; it does make lazy dismissal look cheap\./g,'The $1 are 2-0, which means anybody still calling this start a fluke is now arguing with two Sundays and losing both.')
+  .replace(/The (.+?) turned an 0-1 joke into a 1-1 argument\. Annoying for rivals, useful for supporters, and still very much unfinished\./g,'The $1 dragged the season from 0-1 to 1-1. Not glamorous, but considerably more useful than spending another week digging.')
+  .replace(/The (.+?) split the first two games and handed rivals fresh material in the second\. Week 3 decides whether the joke ages well\./g,'The $1 split the first two games. Week 3 gets to decide whether Week 2 was a bruise or the beginning of a habit.')
+  .replace(/The easiest joke about the (.+?) got harder to make after Week 2\./g,'Week 2 made the $1 considerably harder to dismiss than anyone waiting on a quick collapse had planned.')
+  .replace(/The easiest joke about the (.+?) arrived before the final whistle and brought its own caption\./g,'The $1 made the loss easy to criticize before the final whistle had even finished the paperwork.')
+  .replace(/(.+?) erased the first rival punch line, and the rest of the (.+?) did enough to ruin the sequel\./g,'$1 made the loudest argument, and the rest of the $2 kept the win from becoming a one-man rescue mission.')
+  .replace(/The (.+?) turned Week 2 into the rare rival thread where the best joke still had to include the final score\./g,'The $1 made Week 2 deeply inconvenient for anyone waiting on a collapse; the final score gave them nothing useful.')
+  .replace(/the latest Sunday does not need to borrow the opener’s punch line\./g,'the latest Sunday changed the evidence enough to stand on its own.');
+for(const t of week2.teams||[]){
+  const article=t?.inquirer_article,lede=(article?.sections||[]).find(s=>s?.kind==='lede');
+  if(!article||!lede||!Array.isArray(lede.paragraphs))continue;
+  lede.paragraphs=lede.paragraphs.map(directLede);
+  article.paragraphs=(article.sections||[]).flatMap(s=>s?.paragraphs||[]);
+}
 export default week2;

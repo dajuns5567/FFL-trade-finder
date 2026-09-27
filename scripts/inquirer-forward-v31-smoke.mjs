@@ -30,14 +30,14 @@ const rawForWeek=(week)=>{
 };
 
 const week3raw=rawForWeek(3),w3class=inquirerWeekClassification(3,2026);
-let week3=null,quality=null;
+let week3=null,quality=null,lastQuality=null;
 for(let salt=0;salt<8;salt++){
   const edited=applyInquirerEditorialV31({season:2026,week:3,...week3raw,previousEdition:week2,weekClassification:w3class,variationSalt:salt});
   const candidate={available:true,season:2026,week:3,inquirer_version:FORWARD_INQUIRER_VERSION,editorial_revision:FORWARD_EDITORIAL_REVISION,teams:edited.inquirer.teams,league_overview:edited.leagueOverview,editorial_generation:{variation_salt:salt}};
-  const q=evaluateInquirerEditionQuality(candidate,week2);
+  const q=evaluateInquirerEditionQuality(candidate,week2);lastQuality=q;
   if(q.ok){week3=candidate;quality=q;break}
 }
-assert.ok(week3,'Forward engine must find a non-copying Week 3 variant within the live retry budget; last quality='+JSON.stringify(quality));
+assert.ok(week3,'Forward engine must find a non-copying Week 3 variant within the live retry budget; last quality='+JSON.stringify(lastQuality));
 assert.equal(week3.teams.length,32);
 assert.equal(week3.inquirer_version,31);
 assert.equal(week3.editorial_revision,14);

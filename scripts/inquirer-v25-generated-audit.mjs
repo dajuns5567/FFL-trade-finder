@@ -536,20 +536,20 @@ if(reportWeek===2){
 // create a false cross-article failure.
 const phrasePlacements=new Map(),phraseWidth=9;
 for(const t of d.teams||[]){
-  let body=articleText(t);
-  for(const entity of editorialEntities)body=body.replace(new RegExp(escapeRe(entity),'gi'),' [ENTITY] ');
-  body=body.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,' [#] ').replace(/[^a-z0-9#\[\]’'-]+/g,' ').replace(/\s+/g,' ').trim();
-  const ws=body.split(/\s+/).filter(Boolean),seenHere=new Set();
-  for(let i=0;i+phraseWidth<=ws.length;i++){
-    const gram=ws.slice(i,i+phraseWidth).join(' ');
-    if(!/[a-z]/.test(gram)||seenHere.has(gram))continue;
-    // Factual score/stat/standings scaffolds are expected to share syntax.
-    // This guard is specifically for reusable editorial phrasing, not the data
-    // sentences that tell readers what happened.
-    const factual=/(?:fantasy points?|solo tackles?|assisted tackles?|tackle for loss|qb hits?|passes?|targets?|receptions?|rushing yards?|receiving yards?|touchdowns?|carries|projection|projected|league order|standings|\brecord\b|division race|current tiebreaks|\blost to\b|\bloss to\b|\bwin over\b|\bbeat \[entity\]|\bopened with\b|\bafter week \[#\]\b|\bleaving the\b|\bno \[#\]\b|\[#\] - \[#\])/i;
-    if(factual.test(gram))continue;
-    seenHere.add(gram);
-    const rows=phrasePlacements.get(gram)||[];rows.push({team:t.team_name,reporter:t.inquirer_article?.reporter?.name});phrasePlacements.set(gram,rows);
+  const seenHere=new Set();
+  for(const sentence of sentenceParts(articleText(t))){
+    const factualSentence=/(?:fantasy points?|solo tackles?|assisted tackles?|tackle for loss|qb hits?|passes?|targets?|receptions?|rushing yards?|receiving yards?|touchdowns?|carries|projection|projected|league order|standings|current tiebreaks|\blost to\b|\bloss to\b|\bwin over\b|\bbeat\b|\bopened with\b|\bweek 1\b|\bweek 2\b)/i;
+    const numeric=(String(sentence).match(/\b\d+(?:\.\d+)?%?\b/g)||[]).length;
+    if(factualSentence.test(sentence)||numeric>=2)continue;
+    const fp=editorialFingerprint(sentence);if(!fp)continue;
+    const normalized=fp.replace(/[^a-z0-9#\[\]’'-]+/g,' ').replace(/\s+/g,' ').trim(),
+      ws=normalized.split(/\s+/).filter(Boolean);
+    for(let i=0;i+phraseWidth<=ws.length;i++){
+      const gram=ws.slice(i,i+phraseWidth).join(' ');
+      if(!/[a-z]/.test(gram)||seenHere.has(gram))continue;
+      seenHere.add(gram);
+      const rows=phrasePlacements.get(gram)||[];rows.push({team:t.team_name,reporter:t.inquirer_article?.reporter?.name});phrasePlacements.set(gram,rows);
+    }
   }
 }
 const phraseOffenders=[...phrasePlacements.entries()]

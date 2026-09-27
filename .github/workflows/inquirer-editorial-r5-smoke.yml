@@ -40,9 +40,13 @@ jobs:
           node --check scripts/one-time-generate-inquirer-week2.mjs
           node --check scripts/inquirer-v25-audit.mjs
           node --check scripts/inquirer-v25-generated-audit.mjs
+          node --check scripts/inquirer-forward-v31-smoke.mjs
 
       - name: Run source contract
         run: node scripts/inquirer-v25-audit.mjs
+
+      - name: Run forward V31 season smoke
+        run: node scripts/inquirer-forward-v31-smoke.mjs
 
       - name: Generate Week 1 revision 6 candidate
         env:

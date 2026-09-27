@@ -1889,7 +1889,7 @@ function w2ProjectionOutlookRead(t,r,next){
   const own=Number(t?.next_projected),opp=Number(t?.next_opponent_projected);
   if(!Number.isFinite(own)||!Number.isFinite(opp))return null;
   const team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(next||t.next_opponent_name||"the opponent"),
-    rid=String(r?.id||""),gap=Math.abs(own-opp),fav=own===opp?null:(own>opp?team:foe),
+    rid=String(r?.id||""),gap=Math.abs(own-opp),fav=own===opp?null:(own>opp?team:foe),v=w2Cohort(t)%4,
     line=team+" projects for "+w2One(own)+" points and "+foe+" for "+w2One(opp)+". ",
     read=!fav
       ?"The projection is dead even, which is a polite way of saying nobody gets to outsource confidence to the model."
@@ -1899,14 +1899,33 @@ function w2ProjectionOutlookRead(t,r,next){
           ?"That makes "+fav+" the modest favorite by "+w2One(gap)+", an edge worth noticing without treating it like a court order."
           :"That makes "+fav+" the clear projection favorite by "+w2One(gap)+", enough separation that the other side needs an actual scoring answer rather than optimism.";
   const tails={
-    "walter-mercer":" The number sets the expectation; the lineup still has to earn it.",
-    "tess-delaney":" The reservation has a favorite now, but the table is still allowed to misbehave.",
-    "mack-hollis":" The spreadsheet can point. Sunday still gets to throw a chair.",
-    "nora-voss":" Rivals may quote the projection all week; somebody still has to survive the screenshot afterward."
+    "walter-mercer":[
+      " The number sets the expectation; "+team+" still has to earn the part that matters.",
+      " That is a useful baseline, not a permission slip for "+fav+".",
+      " The projection gives the matchup a shape before kickoff; the lineup gets the last word.",
+      " Treat the edge as a starting point, not a verdict with shoulder pads."
+    ],
+    "tess-delaney":[
+      " The reservation has a favorite now, but this table has already demonstrated poor manners.",
+      " The place card says "+fav+"; the room is still fully capable of embarrassing the seating chart.",
+      " That is enough to set expectations and nowhere near enough to order champagne.",
+      " The forecast has chosen a chair. Sunday is under no obligation to respect it."
+    ],
+    "mack-hollis":[
+      " The spreadsheet can point at "+fav+". Sunday still gets to throw the chair.",
+      " Put "+fav+" on the marquee if you want; the margin is where the yelling starts.",
+      " The projection has picked a side. Good. Now somebody has to survive the actual noise.",
+      " That edge is loud enough to notice and small enough for one busted lineup call to set it on fire."
+    ],
+    "nora-voss":[
+      " Rivals may quote "+fav+"’s edge all week; somebody still has to survive the screenshot afterward.",
+      " The projection gives "+fav+" bragging rights before kickoff, which is famously the safest kind.",
+      " Rivals can frame the number. The losing screenshot will still be larger.",
+      " The model has supplied the opening joke; the matchup decides who has to live with it."
+    ]
   };
-  return line+read+(tails[rid]||tails["walter-mercer"])
+  return line+read+((tails[rid]||tails["walter-mercer"])[v])
 }
-
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,
     prevWon=prev?Number(prev.points)>Number(prev.opponent_points):null,prevOpp=w2DisplayTeam(prev?.opponent_name||"last week’s opponent"),prevScore=prev?w2One(prev.points)+"–"+w2One(prev.opponent_points):null,top=(t.starter_details||[]).slice(0,3),opp=t.opponent_name||"the opponent";

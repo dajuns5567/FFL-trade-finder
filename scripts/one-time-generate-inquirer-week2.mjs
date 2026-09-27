@@ -1223,7 +1223,7 @@ function w2TradeValueRead(t,r,own,other,otherName,ownAssets,otherAssets){
   const rows={
     "walter-mercer":winner+" came out "+edge.toLocaleString("en-US")+" value points ahead at the trade snapshot when "+exchange+" changed hands. On price, "+loser+" got fleeced by "+edge.toLocaleString("en-US")+" points; Sunday can change the players’ trajectories, but it cannot rewrite what the receipt said that day.",
     "tess-delaney":"The receipt was not subtle: "+winner+" held a "+edge.toLocaleString("en-US")+"-point value edge when "+exchange+" changed hands. That leaves "+loser+" wearing the word 'fleeced' by "+edge.toLocaleString("en-US")+" points, which is an awfully expensive accessory.",
-    "mack-hollis":"Here is the number worth yelling: "+winner+" was "+edge.toLocaleString("en-US")+" value points ahead at the snapshot when "+exchange+" was made. That is a "+edge.toLocaleString("en-US")+"-point fleece on "+loser+" by the market’s own price tag, not because I needed another adjective.",
+    "mack-hollis":winner+" was "+edge.toLocaleString("en-US")+" value points ahead at the snapshot when "+exchange+" was made. That leaves "+loser+" on the wrong side of a "+edge.toLocaleString("en-US")+"-point fleece by the market’s recorded price.",
     "nora-voss":"Rival managers do not need to invent the punch line here. "+winner+" held a "+edge.toLocaleString("en-US")+"-point value edge when "+exchange+" changed hands, so "+loser+" got fleeced by "+edge.toLocaleString("en-US")+" points on the recorded price."
   };
   return rows[rid]||rows["walter-mercer"]
@@ -1728,11 +1728,34 @@ function w2PerformanceDepthRead(t,r,top,weak,won,margin){
 function w2ManagementDepthRead(t,r,weak,next){
   const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(next||t.next_opponent_name||"the Week 3 opponent"),
     low=weak?.name||"the weakest starter",miss=t.best_lineup_miss,reserve=miss?.reserve?.name,starter=miss?.starter?.name,
-    decision=reserve&&starter?reserve+" over "+starter:low+" in the current starting spot";
-  if(rid==="tess-delaney")return "The Week 3 seating decision is "+decision+". "+foe+" gets the next reservation, so management has to choose whether that chair changes before dinner starts.";
-  if(rid==="mack-hollis")return "The Week 3 decision is "+decision+". "+foe+" is next, which gives management one clean chance to change the lineup before the same complaint reaches the megaphone again.";
-  if(rid==="nora-voss")return "The next lineup argument is "+decision+". "+foe+" gets first chance to test it, and rivals will not need fresh material if the same choice survives unchanged.";
-  return "The next management decision is "+decision+". Against "+foe+", the answer has to come from selection or performance rather than another explanation after the score is final."
+    decision=reserve&&starter?reserve+" over "+starter:low+" in the current starting spot",v=w2Cohort(t)%4;
+  const rows={
+    "walter-mercer":[
+      "The next management decision is "+decision+". Against "+foe+", selection or performance has to supply the answer before the score becomes another postgame explanation.",
+      team+" has one practical lineup question to settle: "+decision+". "+foe+" gets the next look, so management has a week to decide whether Sunday earned a change.",
+      "Management leaves Week 2 with "+decision+" circled. The "+foe+" matchup turns that from a review note into an actual lineup choice.",
+      "The roster question now is "+decision+". "+foe+" supplies the next test, and the decision has to be made before the result provides the hindsight."
+    ],
+    "tess-delaney":[
+      "The Week 3 seating decision is "+decision+". "+foe+" gets the next reservation, so management has to decide whether that chair changes before dinner starts.",
+      decision+" is the chair management has to inspect before "+foe+" arrives. The table can keep its personality; the seating chart still has to make sense.",
+      "The guest-list question is no longer theoretical: "+decision+". With "+foe+" due next, management either moves the chair or serves the same arrangement again.",
+      "Before "+foe+" enters the room, the practical seating issue is "+decision+". Somebody has to own that place card before the first course."
+    ],
+    "mack-hollis":[
+      "The Week 3 decision is "+decision+". "+foe+" is next, which gives management one clean chance to change the lineup before the same complaint reaches the megaphone again.",
+      decision+" is the switch management gets to throw before "+foe+". Leave it alone and the same circuit gets another chance to spark.",
+      "The lineup button flashing now is "+decision+". "+foe+" shows up next, so management can either press it or explain why it ignored the light.",
+      "Management has one loud question before "+foe+": "+decision+". The answer belongs on the starting card, not in Monday’s emergency broadcast."
+    ],
+    "nora-voss":[
+      "The next lineup argument is "+decision+". "+foe+" gets first chance to test it, and rivals will not need fresh material if the same choice survives unchanged.",
+      decision+" is the choice rivals have already bookmarked. "+foe+" gets the next screenshot, so management can retire the joke or renew it.",
+      "The Week 3 receipt starts with "+decision+". Against "+foe+", the easiest rival punch line disappears only if the lineup choice changes or the production does.",
+      "Rivals are already circling "+decision+" before "+foe+". Management gets one week to make that screenshot age badly."
+    ]
+  };
+  return (rows[rid]||rows["walter-mercer"])[v]
 }
 function w2PlayerRoomClose(t,r,top,weak,opp,won){
   const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),foe=w2DisplayTeam(opp),v=w2Cohort(t)%4,
@@ -1890,41 +1913,35 @@ function w2ProjectionOutlookRead(t,r,next){
   if(!Number.isFinite(own)||!Number.isFinite(opp))return null;
   const team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(next||t.next_opponent_name||"the opponent"),
     rid=String(r?.id||""),gap=Math.abs(own-opp),fav=own===opp?null:(own>opp?team:foe),v=w2Cohort(t)%4,
-    line=team+" projects for "+w2One(own)+" points and "+foe+" for "+w2One(opp)+". ",
-    read=!fav
-      ?"The projection is dead even, which is a polite way of saying nobody gets to outsource confidence to the model."
-      :gap<3
-        ?"That gives "+fav+" only a "+w2One(gap)+"-point edge—close enough for one lineup decision to make the forecast look decorative."
-        :gap<8
-          ?"That makes "+fav+" the modest favorite by "+w2One(gap)+", an edge worth noticing without treating it like a court order."
-          :"That makes "+fav+" the clear projection favorite by "+w2One(gap)+", enough separation that the other side needs an actual scoring answer rather than optimism.";
-  const tails={
+    ownPts=w2One(own),oppPts=w2One(opp),edge=w2One(gap),
+    label=!fav?"no projection favorite":gap<3?"a paper-thin favorite":gap<8?"the modest projection favorite":"the clear projection favorite";
+  const rows={
     "walter-mercer":[
-      " The number sets the expectation; "+team+" still has to earn the part that matters.",
-      " That is a useful baseline, not a permission slip for "+fav+".",
-      " The projection gives the matchup a shape before kickoff; the lineup gets the last word.",
-      " Treat the edge as a starting point, not a verdict with shoulder pads."
+      team+" is projected at "+ownPts+" against "+foe+" at "+oppPts+". "+(fav?fav+" is "+label+" by "+edge+", enough to set an expectation without settling the argument.":"There is no projection favorite; the numbers have declined to pick a side.")+" The lineup still has to earn the part that matters.",
+      "The Week 3 board has "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?fav+" carries the projection edge of "+edge+", which is useful context rather than a permission slip.":"That leaves no projection favorite and no numerical excuse for confidence.")+" Sunday gets the final word.",
+      ownPts+" for "+team+" and "+oppPts+" for "+foe+" is the current projection. "+(fav?fav+" enters as "+label+" with a "+edge+"-point edge.":"The projection favorite is nobody; the line is even.")+" Treat that as the starting expectation, not a verdict with shoulder pads.",
+      "Projection-wise, "+team+" brings "+ownPts+" to "+foe+"’s "+oppPts+". "+(fav?fav+" owns the "+edge+"-point edge and therefore the favorite label for now.":"Neither side owns a projection edge.")+" The actual lineup remains inconveniently necessary."
     ],
     "tess-delaney":[
-      " The reservation has a favorite now, but this table has already demonstrated poor manners.",
-      " The place card says "+fav+"; the room is still fully capable of embarrassing the seating chart.",
-      " That is enough to set expectations and nowhere near enough to order champagne.",
-      " The forecast has chosen a chair. Sunday is under no obligation to respect it."
+      "The place cards read "+team+" "+ownPts+", "+foe+" "+oppPts+". "+(fav?fav+" is "+label+" by "+edge+", so the reservation has a favorite without becoming a coronation.":"There is no projection favorite; even the seating chart has refused to gossip.")+" This table has already demonstrated poor manners.",
+      team+" arrives with a "+ownPts+" projection while "+foe+" carries "+oppPts+". "+(fav?fav+" gets the favorite chair by "+edge+" points.":"The projection edge is zero, so nobody gets the favorite chair.")+" The room is still fully capable of embarrassing the place cards.",
+      "For the next reservation, the forecast serves "+ownPts+" to "+team+" and "+oppPts+" to "+foe+". "+(fav?fav+" holds a "+edge+"-point projection edge.":"No projection favorite appears on the menu.")+" That is enough to set expectations and nowhere near enough to order champagne.",
+      team+" is penciled in for "+ownPts+" and "+foe+" for "+oppPts+". "+(fav?fav+" wears the favorite label with a "+edge+"-point edge.":"The projection refuses to name a favorite.")+" Sunday is under no obligation to respect the seating chart."
     ],
     "mack-hollis":[
-      " The spreadsheet can point at "+fav+". Sunday still gets to throw the chair.",
-      " Put "+fav+" on the marquee if you want; the margin is where the yelling starts.",
-      " The projection has picked a side. Good. Now somebody has to survive the actual noise.",
-      " That edge is loud enough to notice and small enough for one busted lineup call to set it on fire."
+      "The projection board screams "+team+" "+ownPts+", "+foe+" "+oppPts+". "+(fav?fav+" is the favorite by "+edge+" points.":"There is no projection favorite; the numbers are tied and apparently afraid of commitment.")+" Now somebody has to survive the actual noise.",
+      team+" gets "+ownPts+" on the forecast and "+foe+" gets "+oppPts+". "+(fav?fav+" owns a "+edge+"-point projection edge, enough to put the favorite badge on the door.":"Nobody owns a projection edge, so keep the favorite badge in the drawer.")+" One busted lineup call can still set the whole thing on fire.",
+      "Week 3 projects "+ownPts+" for "+team+" against "+oppPts+" for "+foe+". "+(fav?fav+" carries the "+edge+"-point favorite edge.":"The projection favorite is a shrug.")+" Put it on the marquee if you want; the margin is where the yelling starts.",
+      "The numbers put "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?fav+" is "+label+" by "+edge+".":"No projection favorite survives the math.")+" The spreadsheet has picked as much of a fight as it can; Sunday gets the chair."
     ],
     "nora-voss":[
-      " Rivals may quote "+fav+"’s edge all week; somebody still has to survive the screenshot afterward.",
-      " The projection gives "+fav+" bragging rights before kickoff, which is famously the safest kind.",
-      " Rivals can frame the number. The losing screenshot will still be larger.",
-      " The model has supplied the opening joke; the matchup decides who has to live with it."
+      team+" projects to "+ownPts+" and "+foe+" to "+oppPts+". "+(fav?fav+" gets the favorite label with a "+edge+"-point projection edge.":"There is no projection favorite, which deprives rivals of one easy screenshot.")+" Somebody still has to survive the result afterward.",
+      "The pregame screenshot shows "+team+" "+ownPts+" and "+foe+" "+oppPts+". "+(fav?fav+" owns a "+edge+"-point edge and the favorite tag.":"The projection edge is zero; neither side gets free bragging rights.")+" Rivals can frame the number until kickoff.",
+      ownPts+" is the projection for "+team+"; "+oppPts+" is the number for "+foe+". "+(fav?fav+" is "+label+" by "+edge+".":"The model declines to name a projection favorite.")+" The losing screenshot will still be larger.",
+      "The forecast gives "+team+" "+ownPts+" and "+foe+" "+oppPts+". "+(fav?fav+" carries a "+edge+"-point favorite edge.":"There is no projection favorite and therefore no pregame punch line.")+" The matchup decides who has to live with it."
     ]
   };
-  return line+read+((tails[rid]||tails["walter-mercer"])[v])
+  return (rows[rid]||rows["walter-mercer"])[v]
 }
 function w2BuildSections(t,prev){
   const a=t.inquirer_article||{},r=a.reporter||{},alias=w2Alias(t),won=Number(t.points)>Number(t.opponent_points),margin=Math.abs(Number(t.points)-Number(t.opponent_points)),rec=w2Record(t),rank=Number(t?.league_context?.standings_rank)||null,
@@ -2195,26 +2212,25 @@ function w2TwoWeekLeagueRead(teams,r){
     sliding=winless.filter(x=>Number.isFinite(x.delta)).slice().sort((a,b)=>a.delta-b.delta)[0]||null,
     rebound=middle.filter(x=>Number.isFinite(x.delta)).slice().sort((a,b)=>b.delta-a.delta)[0]||null,
     volatile=middle.filter(x=>Number.isFinite(x.delta)).slice().sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta))[0]||null;
-  const name=x=>x?w2DisplayTeam(x.t.team_name):null,pct=x=>x&&Number.isFinite(x.playoff)?w2MidaPct(x.playoff):null;
+  const name=x=>x?w2DisplayTeam(x.t.team_name):null;
   const p1="The 2-0 group is already separating into teams with a floor and teams surviving a roller coaster. "+(best
-    ?name(best)+" has the strongest long-view case among the clean records"+(pct(best)?" with a "+pct(best)+" MIDA playoff outlook":"")+". "
+    ?name(best)+" has the strongest long-view MIDA case among the clean records. "
     :"The clean records still need more evidence before the long view separates them. ")+(stable&&stable!==best
     ?name(stable)+" has been steadier from one Sunday to the next, which matters because contenders eventually need ordinary wins as much as spectacular ones. "
-    :"The best starts are the ones beginning to pair wins with a repeatable scoring shape. ")+"A perfect record is nice; a roster that can survive when the fireworks stop is considerably more expensive.";
+    :"The best starts are beginning to pair wins with a repeatable scoring shape. ")+"A perfect record is nice; a roster that can survive when the fireworks stop is considerably more expensive.";
   const p2="At 0-2, the standings hide very different kinds of trouble. "+(improving
-    ?name(improving)+" raised its team total by "+w2One(Math.max(0,improving.delta))+" from the opener despite losing again, so there is at least a usable correction underneath the record. "
-    :"Some winless teams at least showed a healthier scoring shape in Week 2. ")+(sliding&&sliding!==improving
-    ?name(sliding)+" went the other direction, dropping "+w2One(Math.abs(Math.min(0,sliding.delta)))+" from Week 1; that is much harder to wave away as bad luck. "
+    ?name(improving)+" materially improved its team scoring from the opener despite losing again, so there is at least a usable correction underneath the record. "
+    :"Some winless teams at least showed a healthier scoring shape on the second Sunday. ")+(sliding&&sliding!==improving
+    ?name(sliding)+" went sharply the other direction; that is much harder to wave away as bad luck. "
     :"The teams that also lost scoring ground have the more urgent problem. ")+"Two losses can describe a team getting closer or a team digging. Those are not the same September.";
   const p3="The 1-1 middle is where the league looks calmest on paper and messiest underneath. "+(rebound
-    ?name(rebound)+" delivered one of the clearest Week 2 rebounds, climbing "+w2One(Math.max(0,rebound.delta))+" from the opener. "
-    :"Several split-record teams materially changed their scoring level from Week 1. ")+(volatile&&volatile!==rebound
+    ?name(rebound)+" delivered one of the clearest rebounds from its opener. "
+    :"Several split-record teams materially changed their scoring level from the opener. ")+(volatile&&volatile!==rebound
     ?name(volatile)+" has been one of the more volatile two-week profiles, so the tidy record is hiding a much less tidy lineup. "
-    :"That volatility is why the middle of the table is not one giant coin flip. ")+"A 1-1 team can be finding itself, wobbling, or simply trading one extreme Sunday for another.";
-  const p4="The larger Week 2 lesson is that depth is starting to matter more than novelty. The strongest teams are pairing a star performance with enough ordinary production behind it, while shakier rosters keep asking one or two good players to turn every Sunday into a rescue mission. Two games are not enough to crown anybody, but they are enough to tell the difference between a roster building a floor and one living on weekly emergency labor.";
+    :"That volatility is why the middle of the table is not one giant coin flip. ")+"A split record can belong to a team finding itself, a team wobbling, or a team that simply traded one extreme Sunday for another.";
+  const p4="The larger lesson is that depth is starting to matter more than novelty. The strongest teams are pairing a star performance with enough ordinary production behind it, while shakier rosters keep asking one or two good players to turn every Sunday into a rescue mission. Two games are not enough to crown anybody, but they are enough to tell the difference between a roster building a floor and one living on weekly emergency labor.";
   return[p1,p2,p3,p4]
 }
-
 function rewriteWeek2Overview(overview,teams,previousEdition){
   const previous=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t])),games=w2Games(teams),top=(teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],topGame=games.find(g=>[String(g.winner.roster_id),String(g.loser.roster_id)].includes(String(top?.roster_id))),close=games.slice().sort((a,b)=>a.margin-b.margin)[0],upset=games.find(g=>g.upset),big=games.slice().sort((a,b)=>b.margin-a.margin)[0],chosen=[],seen=new Set();
   for(const g of [topGame,upset,close,big,...games.slice().sort((a,b)=>b.combined-a.combined)]){if(!g||chosen.length>=5)continue;const k=[g.winner.roster_id,g.loser.roster_id].sort().join("|");if(!seen.has(k)){seen.add(k);chosen.push(g)}}

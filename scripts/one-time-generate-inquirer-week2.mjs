@@ -727,7 +727,7 @@ function w2PlayerStatusProfile(p,slot=0,pp=null){
   else if(established&&twoWeekDrop)status="struggling-star";
   else if(established)status="established-star";
   else if(!established&&young&&games>=6&&strongTwoWeekRise&&roleLift)status="breakout";
-  else if(!established&&games>=6&&twoWeekRise)status="emerging";
+  else if(!established&&(young||earlyCareer)&&games>=6&&twoWeekRise)status="emerging";
   else if(veteran&&twoWeekDrop)status="declining-veteran";
   else if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&twoWeekDrop)status="struggling";
   else if(steady)status=veteran?"reliable-veteran":"reliable";
@@ -760,7 +760,7 @@ function w2PlayerReference(t,r,p,profile,slot=0){
     choices=[short,n.first!==short?n.first:"",n.last!==short?n.last:"",descriptive].filter((x,i,a)=>x&&a.indexOf(x)===i);
   return choices[w2Hash(String(t?.team_name||"")+"|"+String(r?.id||"")+"|"+String(p?.id||n.full)+"|reference|"+slot)%choices.length]||n.full
 }
-function w2BreakoutContext(p,profile){
+function w2BreakoutContext(p,profile,ref=""){
   if(!profile||profile.status!=="breakout"||!profile.hasTwoWeeks)return"";
   const clauses=[];
   if(Number.isFinite(profile.age)&&profile.age<=25)clauses.push("only "+Math.round(profile.age));
@@ -777,7 +777,7 @@ function w2BreakoutContext(p,profile){
   }
   if(!clauses.length)return"";
   const first=clauses.shift();
-  return p.name+" is "+first+(clauses.length?", "+w2Natural(clauses):"")+"."
+  return (ref||p.name)+" is "+first+(clauses.length?", "+w2Natural(clauses):"")+"."
 }
 function w2PlayerTrajectoryContext(t,r,p,pp,slot=0,ref=""){
   const profile=w2PlayerStatusProfile(p,slot,pp),status=profile.status,
@@ -1072,6 +1072,22 @@ function w2RecapHook(g,wName,lName,i){
     "Week 2 gave "+wName+" a "+score+" win over "+lName+". The interesting part was who kept showing up after the stars."
   ][v]
 }
+function w2NextWeekGames(teams){
+  const by=new Map((teams||[]).map(t=>[String(t.roster_id),t])),seen=new Set(),out=[];
+  for(const t of teams||[]){
+    const oid=String(t?.next_opponent_roster_id||""),o=by.get(oid);
+    if(!oid||!o)continue;
+    const k=[String(t.roster_id),oid].sort().join("|");
+    if(seen.has(k))continue;seen.add(k);
+    // Only accept reciprocal pairings. If the packet is inconsistent, omit the
+    // game rather than manufacturing a matchup from one-sided data.
+    if(String(o?.next_opponent_roster_id||"")!==String(t.roster_id))continue;
+    const aProj=Number(t.next_projected),bProj=Number(o.next_projected);
+    out.push({a:t,b:o,gap:Number.isFinite(aProj)&&Number.isFinite(bProj)?Math.abs(aProj-bProj):null})
+  }
+  return out
+}
+
 function w2RecapStatLead(g,i){
   const rows=g.combined>=240?["The arson report starts with: ","The people responsible for all that smoke: ","Three names kept the scoreboard overheated: ","The loudest stat lines in the room: "]:
     g.upset?["The upset had accomplices: ","Circle these names before blaming the projection: ","The names who actually bent Sunday: ","Start the upset autopsy here: "]:
@@ -2344,7 +2360,7 @@ function rewriteWeek2Team(t,prev){
   const normalized={...t,team_name:w2DisplayTeam(t.team_name),opponent_name:w2DisplayTeam(t.opponent_name),next_opponent_name:w2DisplayTeam(t.next_opponent_name),
     starter_details:(t.starter_details||[]).map(p=>({...p,week1_points:w2PrevPlayer(prev,p.id)?.points??null}))};
   const a=normalized.inquirer_article||{},sections=w2BuildSections(normalized,prev),paragraphs=sections.flatMap(s=>s.paragraphs||[]);
-  return{...normalized,inquirer_article:{...a,headline:w2Headline(normalized,a.reporter||{}),deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:11}}
+  return{...normalized,inquirer_article:{...a,headline:w2Headline(normalized,a.reporter||{}),deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:12}}
 }
 function w2Games(teams){const by=new Map((teams||[]).map(t=>[String(t.roster_id),t])),seen=new Set(),out=[];for(const t of teams||[]){const o=by.get(String(t.opponent_roster_id));if(!o)continue;const k=[String(t.roster_id),String(o.roster_id)].sort().join("|");if(seen.has(k))continue;seen.add(k);const w=Number(t.points)>=Number(o.points)?t:o,l=w===t?o:t,margin=Math.abs(Number(w.points)-Number(l.points)),proj=Number.isFinite(Number(w.projected))&&Number.isFinite(Number(l.projected)),upset=proj&&Number(w.projected)<Number(l.projected);out.push({winner:w,loser:l,margin,upset,combined:Number(w.points)+Number(l.points)})}return out}
 function w2RecapStat(p){if(!p)return"";const stat=w2Stat(p);return p.name+" — "+w2One(p.points)+" fantasy points"+(stat?", "+stat:"")}
@@ -2597,7 +2613,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     ...(tradeParagraphs.length?tradeParagraphs:[w2S(top,rep(2)||{},"tilly-trade","No verified Week 2 trade story was large enough to hijack the league page, which means the games get to be the scandal for once.")]),
     w2S(top,rep(2)||{},"tilly-upset",upset?(upset.winner.team_name+" made "+upset.loser.team_name+" eat the projection. That joke is good for one full week, and the only way the favorite gets it back is by winning the next game instead of explaining this one."):"The projections mostly survived Week 2, which is terrible for comedy and probably healthy for everybody’s blood pressure.")
   ];
-  const nextGames=w2Games(teams).map(g=>{const a=g.winner,b=g.loser;return{a,b,gap:Number.isFinite(Number(a.next_projected))&&Number.isFinite(Number(b.next_projected))?Math.abs(Number(a.next_projected)-Number(b.next_projected)):999}}).filter(x=>x.gap<999).sort((a,b)=>a.gap-b.gap),next=nextGames[0],filchTeam=winless[0]||downValue||top;
+  const nextGames=w2NextWeekGames(teams).filter(x=>Number.isFinite(Number(x.gap))).sort((a,b)=>Number(a.gap)-Number(b.gap)),next=nextGames[0],filchTeam=winless[0]||downValue||top;
   const filch=[next?w2S(next.a,rep(3)||{},"filch-next",w2DisplayTeam(next.a.team_name)+" and "+w2DisplayTeam(next.b.team_name)+" are separated by only "+w2One(next.gap)+" projected points for Week 3. That is close enough for one star, one bad lineup call or one ridiculous quiet game to turn the whole thing, so save the confident speeches for afterward."):w2S(filchTeam,rep(3)||{},"filch-next","The Week 3 projection board is not clean enough to crown a featured matchup, so I am not going to fake suspense the schedule did not supply."),w2S(filchTeam,rep(3)||{},"filch-weak",w2DisplayTeam(filchTeam.team_name)+" cannot bring the same weakness into Week 3 and call it bad luck again. Everybody saw it. If the same lineup slot stays quiet again, the flaw becomes a pattern instead of an excuse."),w2S(filchTeam,rep(3)||{},"filch-tilly","If rival managers are laughing at the same problem two Sundays in a row, congratulations: it is no longer bad luck. It is your brand."),w2S(top,rep(3)||{},"filch-end","The free trial is over. Good starts have to survive a third opponent, bad starts have to show an actual fix, and Week 3 gets first crack at exposing both.")];
   const sections=[{reporter:rep(0),heading:"What Actually Mattered This Week",blocks,paragraphs:blocks.flatMap(b=>b.paragraphs||[])},{reporter:rep(1),heading:"The Velvet Rope: Week 2 Has Entered the Room",paragraphs:velvet},{reporter:rep(2),heading:"The Back Page: The Second Sunday Gets a Headline",paragraphs:back},{reporter:rep(3),heading:"Next Week: Fix It Before It Becomes a Running Joke",paragraphs:filch}];
   const mentionTeam=x=>(teams||[]).find(t=>(String(x?.title||"")+" "+String(x?.take||"")).includes(String(t.team_name||"")));
@@ -2630,9 +2646,15 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
   const usedHot=hot.map(x=>String(x.title||"")+" "+String(x.take||"")).join(" ");
   const riser=playerPool.find(x=>!usedHot.includes(String(x.p.name||"")))||playerPool[0];
   if(riser){
-    const rr=rep(1)||rep(0)||{},ctx=w2BreakoutContext(riser.p,riser.profile);
+    const rr=rep(1)||rep(0)||{},rid=String(rr?.id||"walter-mercer"),short=w2ShortPlayerName(riser.t,rr,riser.p,"hot-breakout"),ctx=w2BreakoutContext(riser.p,riser.profile,short),team=w2DisplayTeam(riser.t.team_name),
+      lead={
+        "walter-mercer":riser.p.name+" has made two Sundays in a row feel like the beginning of a much larger assignment. The old expectations are already starting to look undersized.",
+        "tess-delaney":riser.p.name+" has spent two straight Sundays making the old place setting look cheap. I am not handing over the keys to the dining room yet, but I am absolutely saving him a better chair.",
+        "mack-hollis":riser.p.name+" has hit the first two weeks hard enough that the noise is no longer coming from one lucky afternoon. Keep the volume up and everybody else has to adjust.",
+        "nora-voss":riser.p.name+" has now ruined the easy rival joke twice. That is irritatingly close to becoming something opponents actually have to plan around."
+      }[rid]||riser.p.name+" has put together two Sundays worth taking seriously.";
     hot.push({kind:"future-player",reporter:rr,title:"Breakout Player to Watch: "+riser.p.name,
-      take:w2S(riser.t,rr,"hot-future-player",riser.p.name+" is the breakout player to watch because the current production has moved materially beyond his prior-season baseline"+(riser.profile.young?" while he is still young enough for the role growth to matter even more":"")+". "+(ctx?ctx+" ":"")+w2DisplayTeam(riser.t.team_name)+" now has a reason to treat him as part of the weekly plan rather than a one-Sunday surprise.")});
+      take:w2S(riser.t,rr,"hot-future-player",lead+" "+(ctx?ctx+" ":"")+team+" now has a reason to treat "+short+" as part of the weekly plan rather than a one-Sunday surprise.")});
   }
   const pressure=(teams||[]).filter(t=>t?.best_lineup_miss?.reserve&&t?.best_lineup_miss?.starter&&Number(t.best_lineup_miss.gap)>0)
     .slice().sort((a,b)=>Number(b.best_lineup_miss.gap)-Number(a.best_lineup_miss.gap))[0];
@@ -2655,7 +2677,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
         take:w2S(g.t,rr,"hot-future-division",a+"–"+b+" is the Week 3 game with the sharpest kind of pressure: both teams are spending one of their limited head-to-head chances in the same division race, and the division winner gets a playoff berth."+mida+" The loser is not merely one game worse; it has handed a direct rival the exact result it wanted.")});
     }
   }
-  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:11,inquirer_version:31}
+  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:12,inquirer_version:31}
 }
 function w2SentenceParts(s){return String(s||"").replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll(".","§")).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace(".","§")).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll("§",".").trim()).filter(Boolean)}
 // Week 2 publication-only rewrite: Week 1 remains an immutable comparison source, never a prose template.
@@ -2696,7 +2718,7 @@ const inq={...rawInq,teams:rewrittenWeek2Teams};
 const trades=canonicalWeekTrades;
 const rawOverview=buildLeagueOverview({season,week,teams:inq.teams,players,transactions,canonicalTrades:trades,weekClassification:classification,valueHistoryMeta:{period:teamValueHistory?.period||null,baseline:teamValueHistory?.baseline||null,latest:teamValueHistory?.latest||null,source:teamValueHistory?.source||null}});
 const overview=rewriteWeek2Overview(rawOverview,inq.teams,week1Preload2026);
-const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),published_locked:true,broadcast_version:15,inquirer_version:31,editorial_revision:11,context_snapshot_through_week:2,projection_source:Object.keys(currentProj).length?'Sleeper Week 2 projections scored with league settings; Week 3 projections captured only for the Week 2 next-opponent outlook':'projection data partially unavailable in preloaded Week 2 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
+const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),published_locked:true,broadcast_version:16,inquirer_version:31,editorial_revision:12,context_snapshot_through_week:2,projection_source:Object.keys(currentProj).length?'Sleeper Week 2 projections scored with league settings; Week 3 projections captured only for the Week 2 next-opponent outlook':'projection data partially unavailable in preloaded Week 2 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
 
 if(result.teams.length!==32)throw new Error('Expected 32 team articles');
 const week2PublishedCopy=result.teams.flatMap(t=>t?.inquirer_article?.paragraphs||[]).join("\n");

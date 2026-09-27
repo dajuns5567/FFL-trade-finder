@@ -198,12 +198,12 @@ if(reportWeek===2){
     return'';
   };
   const statusLanguage={
-    'established-star':/\b(?:established star|star work|star label|star place card|star résumé|star reputation)\b/i,
+    'established-star':/\b(?:established star|proven star|star work|star label|star place card|star résumé|star reputation)\b/i,
     'struggling-star':/\b(?:star|résumé)\b[^.]{0,100}\b(?:dip|slump|rebound|volume|bad-week|bad line)\b|\b(?:dip|slump)\b[^.]{0,100}\bstar\b/i,
-    'declining-veteran':/\bveteran\b[^.]{0,120}\b(?:declin|slid|slipping|fading|trending down|shrinking|moving down)\w*/i,
+    'declining-veteran':/\b(?:declining|fading) veteran\b|\bveteran\b[^.]{0,120}\b(?:declin|slid|slipping|fading|trending down|shrinking|moving down)\w*/i,
     'star-level':/\b(?:star-level|star work|centerpiece-level)\b/i,
     'breakout':/\bbreakout\b/i,
-    'emerging':/\b(?:emerging|weekly piece|live wire)\b/i,
+    'emerging':/\b(?:emerging|rising|weekly piece|weekly-relevant|live wire)\b/i,
     'reliable-veteran':/\b(?:reliable veteran|steady veteran)\b/i,
     'reliable':/\b(?:reliab\w*|stead\w*|depend\w*)/i,
     'rookie':/\brookie\b/i,
@@ -221,7 +221,10 @@ if(reportWeek===2){
       const pname=String(p?.name||''),sentences=sentenceParts(articleText(t)).filter(x=>pname&&x.toLowerCase().includes(pname.toLowerCase())),
         re=statusLanguage[status];
       assert.ok(sentences.length>=1,'Categorized player selected for article commentary is missing from copy: '+t.team_name+' / '+pname);
-      assert.ok(re&&sentences.some(x=>re.test(x)),'Applicable player category should add concise natural-language color without exposing an internal label: '+status+' / '+t.team_name+' / '+pname+' :: '+sentences.join(' || '));
+      const statusSentences=re?sentences.filter(x=>re.test(x)):[];
+      assert.ok(statusSentences.length>=1,'Applicable player category should add concise natural-language color without exposing an internal label: '+status+' / '+t.team_name+' / '+pname+' :: '+sentences.join(' || '));
+      const shortest=statusSentences.slice().sort((a,b)=>words(a).length-words(b).length)[0];
+      assert.ok(words(shortest).length<=14,'Player-category color should stay a brief descriptor/reporter aside, not become a mini scouting report: '+status+' / '+t.team_name+' / '+pname+' :: '+shortest);
     }
   }
   assert.ok(categorizedDiscussed>=20,'Week 2 should exercise player-category color across a meaningful sample of already-discussed players; got '+categorizedDiscussed);

@@ -223,8 +223,8 @@ if(reportWeek===2){
       assert.ok(sentences.length>=1,'Categorized player selected for article commentary is missing from copy: '+t.team_name+' / '+pname);
       const statusSentences=re?sentences.filter(x=>re.test(x)):[];
       assert.ok(statusSentences.length>=1,'Applicable player category should add concise natural-language color without exposing an internal label: '+status+' / '+t.team_name+' / '+pname+' :: '+sentences.join(' || '));
-      const shortest=statusSentences.slice().sort((a,b)=>words(a).length-words(b).length)[0];
-      assert.ok(words(shortest).length<=14,'Player-category color should stay a brief descriptor/reporter aside, not become a mini scouting report: '+status+' / '+t.team_name+' / '+pname+' :: '+shortest);
+      const shortest=statusSentences.slice().sort((a,b)=>words(a)-words(b))[0];
+      assert.ok(words(shortest)<=14,'Player-category color should stay a brief descriptor/reporter aside, not become a mini scouting report: '+status+' / '+t.team_name+' / '+pname+' :: '+shortest);
     }
   }
   assert.ok(categorizedDiscussed>=20,'Week 2 should exercise player-category color across a meaningful sample of already-discussed players; got '+categorizedDiscussed);

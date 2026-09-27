@@ -828,7 +828,7 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
       ],
       "struggling-star":[
         ", so keep the résumé and circle the slump before anybody starts yelling about a disappearing ceiling.",
-        ", which is exactly why the bad line gets angry font: stars are allowed bad Sundays, but nobody has to enjoy them.",
+        ", which is exactly why the bad line gets an all-caps complaint: stars are allowed bad Sundays, but nobody has to enjoy them.",
         ", and the alarm is about the gap from the usual level, not some ridiculous claim that the player forgot how to play.",
         ", leaving "+team+" with a proven star and one very loud request for the old volume to come back."
       ],
@@ -879,7 +879,7 @@ function w2PlayerStatusColor(t,r,p,pp,slot=0){
       "breakout":[
         ", so rivals may need to retire the old scouting joke before their own laziness becomes the punch line.",
         ", and another Sunday like this would make the breakout label considerably harder to heckle away.",
-        ", which is how a player goes from convenient rival afterthought to somebody the group chat has to actually respect.",
+        ", which is how a player goes from convenient rival afterthought to somebody the rival thread has to actually respect.",
         ", leaving opponents one more strong week away from needing a new script entirely."
       ],
       "emerging":[

@@ -127,7 +127,7 @@ const scheduleStretch=(t,rid,next,later)=>{
         mixed:[
           'The road after '+next+' is mixed: '+detail+'. One part offers breathing room and another can punish it, so Week 3 matters because a win lets '+team+' enter the uneven stretch without manufacturing urgency.',
           detail+' give '+team+' a split schedule behind '+next+' rather than a clean gauntlet or soft landing. Bank Week 3 and the '+mascot+' can take those games on their own terms; lose and the harder half gets louder.',
-          'After '+next+' comes an uneven pair in '+detail+'. There is opportunity in that stretch and resistance too. Week 3 decides whether '+team+' reaches it with room to choose or with points already owed.',
+          'After '+next+' comes an uneven pair in '+detail+'. For '+team+', one side offers breathing room and the other brings resistance. Week 3 decides whether the stretch starts with room to choose or with points already owed.',
           'The next two after '+next+' refuse to pick one difficulty level: '+detail+'. That makes Week 3 the hinge—win and the mixed stretch stays manageable; lose and the tougher side starts dictating the conversation.'
         ]
       },

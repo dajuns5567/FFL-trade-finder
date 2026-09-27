@@ -106,6 +106,10 @@ const matterBlocks=(mattered?.blocks||[]).filter(x=>Array.isArray(x?.paragraphs)
 assert.ok(matterBlocks.length>=5,'What Actually Mattered This Week must expose labeled matchup/story blocks');
 assert.ok(matterBlocks.slice(0,5).every(x=>String(x.heading||'').trim()&&x.paragraphs.length>=2),'Each featured matchup must have a visible heading and developed analysis');
 assert.ok(matterBlocks.slice(0,5).every(x=>/fantasy points/i.test((x.paragraphs||[]).join(' '))),'Every featured Weekly Recap matchup must include fantasy production for the important players, not just the lead game');
+const featuredRecapSentences=matterBlocks.slice(0,5).flatMap(x=>sentenceParts((x.paragraphs||[]).join(' '))).map(x=>String(x||'').trim()).filter(x=>words(x)>=8);
+const featuredSentenceCounts=new Map();for(const s of featuredRecapSentences)featuredSentenceCounts.set(s,(featuredSentenceCounts.get(s)||0)+1);
+const featuredSentenceRepeats=[...featuredSentenceCounts].filter(([,n])=>n>1);
+assert.deepEqual(featuredSentenceRepeats,[],'Featured Weekly Recap matchup blocks must not repeat the same developed commentary sentence across games');
 if(reportWeek===2){
   const matteredCopy=(mattered?.paragraphs||[]).join(' ');
   const categoryMentions=matteredCopy.match(/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/gi)||[];

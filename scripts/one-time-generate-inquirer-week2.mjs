@@ -2641,20 +2641,21 @@ function w2TwoWeekLeagueRead(teams,r){
   const p4="The larger lesson is that depth is starting to matter more than novelty. The strongest teams are pairing a star performance with enough ordinary production behind it, while shakier rosters keep asking one or two good players to turn every Sunday into a rescue mission. Two games are not enough to crown anybody, but they are enough to tell the difference between a roster building a floor and one living on weekly emergency labor.";
   return[p1,p2,p3,p4]
 }
-function w2RecapPlayerRead(t,p,prev,r,slot=0){
+function w2RecapPlayerRead(t,p,prev,r,slot=0,blockIndex=0){
   if(!t||!p)return"";
   const pp=w2PrevPlayer(prev,p.id),profile=w2PlayerStatusProfile(p,slot,pp),status=String(profile.status||""),
     category=w2PlayerCategoryReference(p,profile),team=w2DisplayTeam(t.team_name),short=w2ShortPlayerName(t,r||{id:"recap"},p,"recap-read"),
     pts=w2One(p.points),prior=Number(profile.prior),avg=Number(profile.seasonAvg),hasPrior=Number.isFinite(prior)&&prior>0&&Number(p?.prior_season_games)>=6,
     material=hasPrior&&Math.abs(Number(p.points)-prior)>=Math.max(4,prior*.3),
     Ref=(category||short).charAt(0).toUpperCase()+(category||short).slice(1),
-    v=w2Hash(team+"|"+String(p?.id||p?.name)+"|recap-player-read")%4;
+    v=Math.abs(Number(blockIndex)||0)%5;
   if(status==="breakout"&&Number.isFinite(avg)&&hasPrior){
     const rows=[
       Ref+" is at "+w2One(avg)+" per game through two Sundays after "+w2One(prior)+" last season. "+team+" can stop calling this a lucky weekend; opponents now have to put "+short+" in the part of the scouting report nobody enjoys.",
       Ref+" has two weeks at "+w2One(avg)+" a game after "+w2One(prior)+" last season. One Sunday can lie; two in a row make the next opponent waste meeting time on "+short+".",
       Ref+" is averaging "+w2One(avg)+" through two games after "+w2One(prior)+" last year. The breakout label is no longer doing promotional work by itself; the box scores have started helping.",
-      Ref+" has pushed the two-week average to "+w2One(avg)+" after "+w2One(prior)+" last season. "+team+" can call it early if it wants; the next opponent still has to prepare for it."
+      Ref+" has pushed the two-week average to "+w2One(avg)+" after "+w2One(prior)+" last season. "+team+" can call it early if it wants; the next opponent still has to prepare for it.",
+      Ref+" has two Sundays averaging "+w2One(avg)+" after "+w2One(prior)+" last year. The breakout label can stop doing the talking now; the next opponent has two box scores to complain about."
     ];return rows[v]
   }
   if(status==="emerging"&&Number.isFinite(avg)&&hasPrior){
@@ -2662,7 +2663,8 @@ function w2RecapPlayerRead(t,p,prev,r,slot=0){
       Ref+" has climbed to "+w2One(avg)+" per game through two weeks after "+w2One(prior)+" last season. Two Sundays do not make a career, but they are enough to make dismissing "+short+" a lazy argument.",
       Ref+" sits at "+w2One(avg)+" a game through two weeks after "+w2One(prior)+" last year. That is enough repeated noise for "+team+" to stop treating the role like a temporary accident.",
       Ref+" has two Sundays averaging "+w2One(avg)+" after "+w2One(prior)+" last season. The emerging label now has actual box scores attached to it, which is inconvenient for anyone waiting for the role to disappear.",
-      Ref+" is up to "+w2One(avg)+" per game through two weeks after "+w2One(prior)+" last year. Nobody needs a coronation; the next opponent just needs a plan."
+      Ref+" is up to "+w2One(avg)+" per game through two weeks after "+w2One(prior)+" last year. Nobody needs a coronation; the next opponent just needs a plan.",
+      Ref+" has reached "+w2One(avg)+" per game through two Sundays after "+w2One(prior)+" last season. That is enough evidence for "+team+" to stop acting surprised when the role shows up again."
     ];return rows[v]
   }
   if(status==="established-star"){
@@ -2671,7 +2673,8 @@ function w2RecapPlayerRead(t,p,prev,r,slot=0){
       Ref+" just gave "+team+" "+pts+" points"+hist+". That is not a discovery; it is the expensive name on the roster reminding everybody why the price tag exists.",
       Ref+" put "+pts+" on the board"+hist+". The résumé did not need help, but Sunday added another page loudly enough to annoy the opponent.",
       Ref+" delivered "+pts+" for "+team+hist+". Stars are supposed to make difficult Sundays look routine; this one did the job without asking permission.",
-      Ref+" finished at "+pts+hist+". Nobody learned the name on Sunday; they just got reminded why ignoring it is expensive."
+      Ref+" finished at "+pts+hist+". Nobody learned the name on Sunday; they just got reminded why ignoring it is expensive.",
+      Ref+" gave "+team+" "+pts+" points"+hist+". The star label was already there; Sunday merely underlined it hard enough to tear the page."
     ];return rows[v]
   }
   if(status==="struggling-star")return Ref+" is wearing the star label into a second quiet Sunday, which is exactly why the next one gets louder instead of easier to excuse.";
@@ -2686,12 +2689,14 @@ function w2RecapPlayerRead(t,p,prev,r,slot=0){
       short+" lived around "+w2One(prior)+" per game last season and just posted "+pts+". If that was supposed to be ordinary, Sunday forgot the assignment.",
       short+" carried a "+w2One(prior)+"-point average out of last season and dropped "+pts+" this week. The opponent is welcome to call it an outlier after it finishes explaining the scoreboard.",
       short+" came in with "+w2One(prior)+" per game as last year’s usual and left Sunday with "+pts+". Subtlety was apparently scratched before kickoff.",
-      short+" was around "+w2One(prior)+" a game last season; "+pts+" this week turned the old expectation into a very bad alibi for the opponent."
+      short+" was around "+w2One(prior)+" a game last season; "+pts+" this week turned the old expectation into a very bad alibi for the opponent.",
+      short+" averaged "+w2One(prior)+" last season and just dropped "+pts+". The opponent can file that under 'unexpected' after it finishes filing the loss."
     ]:[
       short+" averaged "+w2One(prior)+" last season and stopped at "+pts+" this week. That is the kind of quiet Sunday opponents notice before managers finish calling it weird.",
       short+" brought a "+w2One(prior)+"-point average from last year into a "+pts+"-point Sunday. The next game gets to decide whether that was a bruise or a warning label.",
       short+" lived around "+w2One(prior)+" a game last season and landed at "+pts+" this week. The résumé survives; the easy explanation does not.",
-      short+" came in with "+w2One(prior)+" per game as the old normal and left with "+pts+". One bad Sunday is survivable, but it still gets circled."
+      short+" came in with "+w2One(prior)+" per game as the old normal and left with "+pts+". One bad Sunday is survivable, but it still gets circled.",
+      short+" carried "+w2One(prior)+" per game from last season into a "+pts+"-point week. The résumé is fine; the next opponent just found a fresh question to ask."
     ];return rows[v]
   }
   return""
@@ -2718,7 +2723,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     else if(knife)turn=(wStar?wStar.name+" led "+wName+" with "+w2One(wStar.points)+", while ":"")+(lStar?lStar.name+" answered with "+w2One(lStar.points)+" for "+lName+". ":"")+"The stars traded punches and left the ordinary lineup spots to decide who had to hate Monday.";
     else turn=(wStar?wStar.name+" supplied "+w2One(wStar.points)+" for "+wName+". ":"")+(lStar?lStar.name+" gave "+lName+" "+w2One(lStar.points)+", but ":"")+"the middle of the winning lineup kept answering often enough that the loser never found a clean comeback lane.";
     const commentaryCandidates=[{t:w,p:wStar,slot:0},{t:l,p:lStar,slot:0},{t:w,p:ws[1],slot:1},{t:l,p:ls[1],slot:1}].filter(x=>x.p);
-    for(const x of commentaryCandidates){const read=w2RecapPlayerRead(x.t,x.p,previous.get(String(x.t.roster_id))||null,r,x.slot);if(read){turn+=" "+read;break}}
+    for(const x of commentaryCandidates){const read=w2RecapPlayerRead(x.t,x.p,previous.get(String(x.t.roster_id))||null,r,x.slot,i);if(read){turn+=" "+read;break}}
     if(i===0)turn=(wStar?.name||wName)+" lit the first match, but this game kept finding new ways to catch fire. "+turn;
     paras.push(w2S(w,r,"recap-turn-"+i,turn));
     let column;

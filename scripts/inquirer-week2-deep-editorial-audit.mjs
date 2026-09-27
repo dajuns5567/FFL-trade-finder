@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import {gzipSync} from 'node:zlib';
 
 const args=process.argv.slice(2);
 const input=args.find(x=>!x.startsWith('--'))||'/tmp/week2-inquirer.json';
@@ -496,16 +495,9 @@ const json={
   counts,
   recap:recapAudit,
   samples:teamAudits,
-  findings:allFindings,
-  generated_edition:edition
+  findings:allFindings
 };
 if(jsonPath)fs.writeFileSync(jsonPath,JSON.stringify(json,null,2)+'\n');
 
-// One-time CI handoff for refreshing the locked preload from the exact audited
-// candidate. Chunking keeps GitHub Actions from truncating one very long line.
-if(process.env.GITHUB_ACTIONS==='true'&&!strict){
-  const packed=gzipSync(Buffer.from(JSON.stringify(edition)),{level:9,mtime:0}).toString('base64'),size=48000,total=Math.ceil(packed.length/size);
-  for(let i=0;i<total;i++)console.log('W2_PRELOAD_CHUNK '+(i+1)+'/'+total+' '+packed.slice(i*size,(i+1)*size));
-}
 
 if(strict&&counts.FAIL)process.exitCode=1;

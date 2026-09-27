@@ -2448,7 +2448,7 @@ function rewriteWeek2Team(t,prev){
     sections=roycington?built.map(s=>({...s,heading:s.kind==="trade-commentary"?"Trade Receipt: What Week 2 Added":w2SectionHead(a.reporter||{},s.kind),paragraphs:(s.paragraphs||[]).map(p=>w2RoycingtonFootballPolish(normalized,p))})):built,
     paragraphs=sections.flatMap(s=>s.paragraphs||[]),
     headline=w2Headline(normalized,a.reporter||{});
-  return{...normalized,inquirer_article:{...a,headline,deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:13}}
+  return{...normalized,inquirer_article:{...a,headline,deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:14}}
 }
 function w2Games(teams){const by=new Map((teams||[]).map(t=>[String(t.roster_id),t])),seen=new Set(),out=[];for(const t of teams||[]){const o=by.get(String(t.opponent_roster_id));if(!o)continue;const k=[String(t.roster_id),String(o.roster_id)].sort().join("|");if(seen.has(k))continue;seen.add(k);const w=Number(t.points)>=Number(o.points)?t:o,l=w===t?o:t,margin=Math.abs(Number(w.points)-Number(l.points)),proj=Number.isFinite(Number(w.projected))&&Number.isFinite(Number(l.projected)),upset=proj&&Number(w.projected)<Number(l.projected);out.push({winner:w,loser:l,margin,upset,combined:Number(w.points)+Number(l.points)})}return out}
 function w2RecapStat(p){if(!p)return"";const stat=w2Stat(p);return p.name+" — "+w2One(p.points)+" fantasy points"+(stat?", "+stat:"")}
@@ -2641,22 +2641,24 @@ function w2TwoWeekLeagueRead(teams,r){
   const p4="The larger lesson is that depth is starting to matter more than novelty. The strongest teams are pairing a star performance with enough ordinary production behind it, while shakier rosters keep asking one or two good players to turn every Sunday into a rescue mission. Two games are not enough to crown anybody, but they are enough to tell the difference between a roster building a floor and one living on weekly emergency labor.";
   return[p1,p2,p3,p4]
 }
-function w2RecapCategoryRead(t,p,prev){
+function w2RecapPlayerRead(t,p,prev,r,slot=0){
   if(!t||!p)return"";
-  const slot=Math.max(0,(t.starter_details||[]).findIndex(x=>String(x?.id)===String(p?.id))),
-    pp=w2PrevPlayer(prev,p.id),profile=w2PlayerStatusProfile(p,slot,pp),ref=w2PlayerCategoryReference(p,profile),status=profile.status;
-  if(!ref)return"";
-  const Ref=ref.charAt(0).toUpperCase()+ref.slice(1),team=w2DisplayTeam(t.team_name),pts=w2One(p.points);
-  if(status==="breakout")return Ref+" has now done this across two Sundays, and "+team+" can treat "+w2ShortPlayerName(t,{id:"recap"},p,"recap-breakout")+" as part of the weekly plan instead of a one-game surprise.";
-  if(status==="emerging")return Ref+" is becoming a real two-week development for "+team+", not just a good box score that happened once.";
-  if(status==="established-star")return Ref+" gave "+team+" "+pts+" points; that is star production keeping the rest of the lineup from needing a miracle.";
-  if(status==="struggling-star")return Ref+" now has two quiet Sundays against an established standard; the star résumé only makes Week 3 louder.";
-  if(status==="declining-veteran")return Ref+" has opened with two weeks below the old baseline, so the veteran résumé does not erase the current trend.";
-  if(status==="reliable-veteran")return Ref+" is giving "+team+" the kind of veteran floor that keeps a lineup from needing a rescue every week.";
-  if(status==="veteran")return Ref+" supplied "+pts+" points, useful veteran work in a week where ordinary support mattered.";
-  if(status==="rookie")return Ref+" is already carrying enough Week 2 responsibility to matter to the next scouting report.";
-  if(status==="young-player")return Ref+" is young enough that the current role still has room to become a larger part of "+team+"’s identity.";
-  if(status==="reliable")return Ref+" gave "+team+" another dependable answer, exactly the kind of ordinary production contenders need behind their stars.";
+  const pp=w2PrevPlayer(prev,p.id),profile=w2PlayerStatusProfile(p,slot,pp),status=String(profile.status||""),
+    category=w2PlayerCategoryReference(p,profile),team=w2DisplayTeam(t.team_name),short=w2ShortPlayerName(t,r||{id:"recap"},p,"recap-read"),
+    pts=w2One(p.points),prior=Number(profile.prior),avg=Number(profile.seasonAvg),hasPrior=Number.isFinite(prior)&&prior>0&&Number(p?.prior_season_games)>=6,
+    material=hasPrior&&Math.abs(Number(p.points)-prior)>=Math.max(4,prior*.3),
+    Ref=(category||short).charAt(0).toUpperCase()+(category||short).slice(1);
+  if(status==="breakout"&&Number.isFinite(avg)&&hasPrior)return Ref+" is at "+w2One(avg)+" per game through two Sundays after "+w2One(prior)+" last season. "+team+" can stop calling this a lucky weekend; opponents now have to put "+short+" in the part of the scouting report nobody enjoys.";
+  if(status==="emerging"&&Number.isFinite(avg)&&hasPrior)return Ref+" has climbed to "+w2One(avg)+" per game through two weeks after "+w2One(prior)+" last season. Two Sundays do not make a career, but they are enough to make dismissing "+short+" a lazy argument.";
+  if(status==="established-star")return Ref+" just gave "+team+" "+pts+" points"+(hasPrior?" after averaging "+w2One(prior)+" last season":"")+". Nobody discovered a new player here; "+team+" simply got the expensive version of "+short+" at a very convenient time.";
+  if(status==="struggling-star")return Ref+" is wearing the star label into a second quiet Sunday, which is exactly why the next one gets louder instead of easier to excuse.";
+  if(status==="declining-veteran")return Ref+" has opened with two quieter Sundays than the résumé promises. Veteran status buys patience; it does not buy invisibility.";
+  if(status==="reliable-veteran")return Ref+" keeps giving "+team+" the veteran floor good lineups quietly live on. Nobody throws a parade for stability until the week it disappears.";
+  if(status==="veteran")return Ref+" gave "+team+" "+pts+" points. It was veteran work without the ceremony, which is usually how useful Sundays look before somebody needs them.";
+  if(status==="rookie")return Ref+" already has enough Week 2 responsibility to make the rookie label relevant to the next opponent instead of just the transaction page.";
+  if(status==="young-player")return Ref+" is young enough that this role can still grow teeth, and "+team+" has already seen enough to keep feeding it.";
+  if(status==="reliable")return Ref+" gave "+team+" another dependable answer. Contenders call that boring right up until the boring answer goes missing.";
+  if(material)return short+" lived around "+w2One(prior)+" per game last season and just posted "+pts+". "+(Number(p.points)>prior?"If that was supposed to be ordinary, Sunday forgot the assignment.":"That is enough of a detour for the next opponent to check whether the role changed or the box score simply picked a fight.");
   return""
 }
 function rewriteWeek2Overview(overview,teams,previousEdition){
@@ -2680,9 +2682,8 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     else if(g.upset)turn=w2RecapUpsetTurn(w,l,wStar,lWeak);
     else if(knife)turn=(wStar?wStar.name+" led "+wName+" with "+w2One(wStar.points)+", while ":"")+(lStar?lStar.name+" answered with "+w2One(lStar.points)+" for "+lName+". ":"")+"The stars traded punches and left the ordinary lineup spots to decide who had to hate Monday.";
     else turn=(wStar?wStar.name+" supplied "+w2One(wStar.points)+" for "+wName+". ":"")+(lStar?lStar.name+" gave "+lName+" "+w2One(lStar.points)+", but ":"")+"the middle of the winning lineup kept answering often enough that the loser never found a clean comeback lane.";
-    const histCandidate=[wStar,lStar,ws[1]].find(p=>w2HistoricalColor(p,r,w,i));if(histCandidate){turn+=" "+w2HistoricalColor(histCandidate,r,w,i);if(i===0&&w.next_opponent_name)turn+=" For "+wName+", that is familiar production "+w2DisplayTeam(w.next_opponent_name)+" now has to account for rather than hope disappears."}
-    const statusCandidates=[{t:w,p:wStar},{t:l,p:lStar},{t:w,p:ws[1]},{t:l,p:ls[1]}].filter(x=>x.p);
-    for(const x of statusCandidates){const statusLine=w2RecapCategoryRead(x.t,x.p,previous.get(String(x.t.roster_id))||null);if(statusLine){turn+=" "+statusLine;break}}
+    const commentaryCandidates=[{t:w,p:wStar,slot:0},{t:l,p:lStar,slot:0},{t:w,p:ws[1],slot:1},{t:l,p:ls[1],slot:1}].filter(x=>x.p);
+    for(const x of commentaryCandidates){const read=w2RecapPlayerRead(x.t,x.p,previous.get(String(x.t.roster_id))||null,r,x.slot);if(read){turn+=" "+read;break}}
     if(i===0)turn=(wStar?.name||wName)+" lit the first match, but this game kept finding new ways to catch fire. "+turn;
     paras.push(w2S(w,r,"recap-turn-"+i,turn));
     let column;
@@ -2785,7 +2786,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
         take:w2S(g.t,rr,"hot-future-division",a+"–"+b+" is the Week 3 game with the sharpest kind of pressure: both teams are spending one of their limited head-to-head chances in the same division race, and the division winner gets a playoff berth."+mida+" The loser is not merely one game worse; it has handed a direct rival the exact result it wanted.")});
     }
   }
-  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:13,inquirer_version:31}
+  return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:14,inquirer_version:31}
 }
 function w2SentenceParts(s){return String(s||"").replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll(".","§")).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace(".","§")).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll("§",".").trim()).filter(Boolean)}
 // Week 2 publication-only rewrite: Week 1 remains an immutable comparison source, never a prose template.
@@ -2828,7 +2829,7 @@ const inq={...rawInq,teams:rewrittenWeek2Teams};
 const trades=canonicalWeekTrades;
 const rawOverview=buildLeagueOverview({season,week,teams:inq.teams,players,transactions,canonicalTrades:trades,weekClassification:classification,valueHistoryMeta:{period:teamValueHistory?.period||null,baseline:teamValueHistory?.baseline||null,latest:teamValueHistory?.latest||null,source:teamValueHistory?.source||null}});
 const overview=rewriteWeek2Overview(rawOverview,inq.teams,week1Preload2026);
-const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),published_locked:true,broadcast_version:16,inquirer_version:31,editorial_revision:13,context_snapshot_through_week:2,projection_source:Object.keys(currentProj).length?'Sleeper Week 2 projections scored with league settings; Week 3 projections captured only for the Week 2 next-opponent outlook':'projection data partially unavailable in preloaded Week 2 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
+const result={available:true,season,week,week_classification:classification,generated_at:new Date().toISOString(),published_locked:true,broadcast_version:16,inquirer_version:31,editorial_revision:14,context_snapshot_through_week:2,projection_source:Object.keys(currentProj).length?'Sleeper Week 2 projections scored with league settings; Week 3 projections captured only for the Week 2 next-opponent outlook':'projection data partially unavailable in preloaded Week 2 edition',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:String(canonicalTradeHistory.source||'Canonical Trade History')+' / '+String(canonicalTradeHistory.history_source||'history source unavailable'),reporters:inq.reporters,league_overview:overview,teams:inq.teams,preloaded_archive:true};
 
 if(result.teams.length!==32)throw new Error('Expected 32 team articles');
 const week2PublishedCopy=result.teams.flatMap(t=>t?.inquirer_article?.paragraphs||[]).join("\n");

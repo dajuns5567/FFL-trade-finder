@@ -40,6 +40,7 @@ assert.ok(hubSource.includes('linkedNotebookText(value,teams,seenRecords,seenLin
 assert.ok(hubSource.includes('team?.league_context?.record'),'First-mention records must come from the archived edition’s league context');
 assert.ok(hubSource.includes('authoredRecord=')&&hubSource.includes('first&&rec&&!authoredRecord'),'First visible team mention must render its current season record exactly once and must not duplicate a record already written in the copy');
 assert.ok(hubSource.includes('seenRecords=new Set()'),'Each rendered Inquirer article/recap must reset first-mention record tracking');
+assert.ok(hubSource.includes('pct=n=>(clamp(n)+100)/2')&&hubSource.includes("style=\"left:'+pct(current)+'%\""),'Fan sentiment marker must use the same -100..+100 to 0%..100% mapping as the displayed sentiment score');
 const storedStart=hubSource.indexOf('function storedInquirerArticle(t,teams){'),storedEnd=hubSource.indexOf('function reporterArchiveHTML',storedStart),storedBlock=hubSource.slice(storedStart,storedEnd);
 assert.ok(storedStart>=0&&storedEnd>storedStart,'League Hub must retain stored Inquirer article renderer');
 assert.ok(storedBlock.indexOf('headline=renderScope(new Set())(a.headline||t.team_name)')>=0,'Stored Inquirer renderer must pre-render the visible headline in its own link scope');

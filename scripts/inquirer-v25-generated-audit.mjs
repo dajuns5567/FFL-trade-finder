@@ -232,7 +232,7 @@ for(const t of d.teams||[]){
   for(const acq of t.trade_acquisitions||[]){
     const pname=String(acq?.player_name||'').trim();
     if(!pname||!copy.toLowerCase().includes(pname.toLowerCase()))continue;
-    const relevant=sentenceParts(copy).filter(s=>s.toLowerCase().includes(pname.toLowerCase())&&/\b(?:trade|acquir|arriv|brought|waiver|free agent|add alert)\b/i.test(s));
+    const relevant=sentenceParts(copy).filter(s=>s.toLowerCase().includes(pname.toLowerCase())&&/\b(?:trade|acquir\w*|arriv\w*|brought\s+in|waiver|free agent|add alert)\b/i.test(s));
     if(!relevant.length)continue;
     assert.ok(relevant.some(s=>/\btrade\b/i.test(s)),'A player with canonical trade-acquisition history must be described as a trade acquisition when acquisition history is mentioned: '+t.team_name+' / '+pname+' :: '+relevant.join(' || '));
     assert.ok(relevant.every(s=>!/\b(?:waiver|free agent|add alert)\b/i.test(s)),'Trade acquisition must never be rewritten as a waiver/free-agent add: '+t.team_name+' / '+pname+' :: '+relevant.join(' || '));

@@ -205,7 +205,7 @@ if(reportWeek===2){
     'breakout':/\bbreakout\b/i,
     'emerging':/\b(?:emerging|weekly piece|live wire)\b/i,
     'reliable-veteran':/\b(?:reliable veteran|steady veteran)\b/i,
-    'reliable':/\b(?:reliable|steady|dependable)\w*/i,
+    'reliable':/\b(?:reliab\w*|steady\w*|dependab\w*)/i,
     'rookie':/\brookie\b/i,
     'young-player':/\byoung\b/i,
     'veteran':/\bveteran\b/i,

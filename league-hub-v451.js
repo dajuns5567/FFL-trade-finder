@@ -190,14 +190,14 @@ function dailyHTML(all,stats,w,md,spotlightW=w){
   else if(opened)body=teamArticle(opened,w.week,teams);
   else if(first&&!w.league_overview)body='<div class="lh-story"><b>'+esc(first.team_name)+'</b><small>'+esc(weeklyCopy(first))+'</small><span class="lh-badge">'+(first.won?'W':'L')+' • '+first.points.toFixed(1)+' pts</span></div>';
 
-  const recapLink=w.league_overview&&!overviewOpen?'<div class="lh-story"><button type="button" class="lh-brand-button lh-brand-button-compact" data-lh-broadcast-team="__league__">'+esc(w.league_overview.headline||'Fleeced! Weekly Recap')+' →</button><small>'+esc(w.league_overview.byline||'All four Fleeced! Inquirer desks')+'</small></div>':'';
+  const recapLink=w.league_overview?'<div class="lh-story"><button type="button" class="lh-brand-button lh-brand-button-compact" data-lh-broadcast-team="__league__">'+esc(w.league_overview.headline||'Fleeced! Weekly Recap')+' →</button><small>'+esc(w.league_overview.byline||'All four Fleeced! Inquirer desks')+'</small></div>':'';
   const nav=articleOpen?'<label class="lh-article-picker"><span>Choose an article</span><select data-lh-broadcast-article><option value="__league__"'+(overviewOpen?' selected':'')+'>Weekly Recap • All 4 Reporters</option>'+teams.map(t=>'<option value="'+esc(t.roster_id)+'"'+(opened&&String(opened.roster_id)===String(t.roster_id)?' selected':'')+'>'+esc(t.team_name)+' • GM '+esc(t.manager_name)+' • '+esc(t.inquirer_article?.reporter?.name||'Reporter')+'</option>').join('')+'</select></label>':'';
 
   report='<div class="lh-card lh-wide lh-report">'+
    '<div class="lh-broadcast-summary" data-lh-broadcast-toggle="__league__"><div><h3 class="lh-report-title">🎙️ '+esc(w.week_classification?.label||('Week '+w.week))+' Fleeced! Inquirer</h3>'+
    '<div class="lh-sub">'+w.season+' • full team beat columns + Weekly Recap • Week 14 begins the archived Playoffs classification</div></div>'+
    '<button type="button" class="lh-brand-button"'+(articleOpen?' data-lh-inquirer-back':'')+'>'+(articleOpen?'← Back to League Hub':'Open Full Inquirer ▾')+'</button></div>'+
-   topArchive+recapLink+nav+body+archive+'</div>';
+   topArchive+(overviewOpen?'':recapLink)+nav+body+archive+'</div>';
  }else{
   const latestEdition=(broadcastArchive||[]).slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0]||null;
   const heldActions=latestEdition?'<div class="lh-broadcast-summary" style="margin-top:12px"><div><b>'+esc('Latest published edition: '+latestEdition.season+' Week '+latestEdition.week)+'</b><div class="lh-sub">The next report can stay held without hiding the edition that is already published.</div></div><div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="lh-brand-button" data-lh-archive-season="'+latestEdition.season+'" data-lh-archive-week="'+latestEdition.week+'">Open Full Inquirer ▾</button><button type="button" class="lh-brand-button" data-lh-archive-season="'+latestEdition.season+'" data-lh-archive-week="'+latestEdition.week+'">Weekly Recap →</button></div></div>':'';

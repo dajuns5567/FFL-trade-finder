@@ -329,7 +329,7 @@ function linkedNotebookText(value,teams,seenRecords,seenLinks){
  for(const t of teams||[]){const name=String(t?.team_name||'').trim();if(!name)continue;counts.set(name,(counts.get(name)||0)+1);byName.set(name,String(t.roster_id));teamByName.set(name,t)}
  const teamNames=[...counts.entries()].filter(([,count])=>count===1).map(([name])=>name),players=inquirerPlayerEntities(),names=[...new Set([...teamNames,...players.names])].sort((a,b)=>b.length-a.length);
  if(!names.length)return esc(text);
- const reEsc=v=>String(v).replace(/[.*+?^${}()|[]\]/g,'\$&'),re=new RegExp(names.map(reEsc).join('|'),'g');let out='',last=0,match;
+ const reEsc=v=>String(v).replace(/[.*+?^$(){}|[\]\\]/g,'\\$&'),re=new RegExp(names.map(reEsc).join('|'),'g');let out='',last=0,match;
  while((match=re.exec(text))){
   const start=match.index,end=start+match[0].length,before=text[start-1]||'',after=text[end]||'';if(/[A-Za-z0-9]/.test(before)||/[A-Za-z0-9]/.test(after))continue;
   const matched=match[0],team=teamByName.get(matched);
@@ -339,7 +339,7 @@ function linkedNotebookText(value,teams,seenRecords,seenLinks){
    if(seenLinks&&seenLinks.has(linkKey)){out+=esc(matched);last=end;continue}
    const rr=team?.league_context?.record||{},hasRecord=Number.isFinite(Number(rr.wins))&&Number.isFinite(Number(rr.losses)),
     rec=hasRecord?String(Number(rr.wins))+'-'+String(Number(rr.losses))+(Number(rr.ties)?'-'+String(Number(rr.ties)):''):'',
-    first=seenRecords&&!seenRecords.has(id),recEsc=rec.replace(/[.*+?^${}()|[]\]/g,'\$&'),
+    first=seenRecords&&!seenRecords.has(id),recEsc=rec.replace(/[.*+?^$(){}|[\]\\]/g,'\\$&'),
     authoredRecord=!!(first&&rec&&new RegExp('^\\s*\\(\\s*'+recEsc+'(?:\\s*,\\s*(?:No\\.?\\s*#?\\d+|#\\d+))?\\s*\\)','i').test(text.slice(end))),
     label=matched+(first&&rec&&!authoredRecord?' ('+rec+')':'');
    if(first)seenRecords.add(id);if(seenLinks)seenLinks.add(linkKey);

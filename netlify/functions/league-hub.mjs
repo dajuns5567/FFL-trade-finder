@@ -11,7 +11,7 @@ const API='https://api.sleeper.app/v1';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const fetchJson=async url=>{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-League-Hub/2.0'},cache:'no-store'});if(!r.ok)throw new Error(`Sleeper ${r.status}`);return r.json()};
 const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
-const MANAGER_CACHE_VERSION=8;
+const MANAGER_CACHE_VERSION=9;
 const BROADCAST_VERSION=17;
 const INQUIRER_EDITORIAL_REVISION=14;
 const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026],['2026|2',week2Preload2026]]);

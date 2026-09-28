@@ -35,38 +35,69 @@ function managerNameForRoster(id){const rid=String(id);const cur=(managerCache?.
 function tradeKey(t){return String(t?.id||t?.transaction_id||((t?.created||'unknown')+':'+(t?.roster_ids||[]).join('-')))}
 function hindsightDelta(trade){try{const fn=globalThis.tradeHistoryAdjustedHindsightV477;if(typeof fn!=='function')return null;const h=fn(trade);if(!h||!Number.isFinite(Number(h.a))||!Number.isFinite(Number(h.b))||!Number.isFinite(Number(h.edge)))return null;return h}catch{return null}}
 function originalTradeDelta(trade){try{const fn=globalThis.tradeHistoryAdjustedOriginalV505;if(typeof fn!=='function')return null;const h=fn(trade);if(!h||!Number.isFinite(Number(h.aRaw))||!Number.isFinite(Number(h.bRaw))||!Number.isFinite(Number(h.edge))||!String(h.label||'').trim())return null;return h}catch{return null}}
-function inquirerTradeClassificationQuip(label,rid,loserName){
- const key=/^fleeced!?$/i.test(label)?'fleeced':/^fair$/i.test(label)?'fair':/^excellent fit$/i.test(label)?'excellent':/^negotiable$/i.test(label)?'negotiable':'other',
-  rows={
-   'walter-mercer':{
-    fleeced:'That is Fleeced! territory. '+loserName+' can defend the idea of the move, but the value gap is doing the heckling now.',
-    fair:'That lands in Fair territory, which means neither side gets a parade and neither side needs to change the subject.',
-    excellent:'That lands as an Excellent Fit; both sides can point to the value and keep moving.',
-    negotiable:'That sits in Negotiable territory—close enough to defend, wide enough to keep the argument alive.',
-    other:'The adjusted numbers put this one at '+label+', and there is no need to decorate that answer.'
+function inquirerTradeClassificationQuip(label,rid,loserName,context={}){
+ const key=/^fleeced!?$/i.test(label)?'fleeced':/^fair$/i.test(label)?'fair':/^excellent fit$/i.test(label)?'excellent':/^negotiable$/i.test(label)?'negotiable':'other';
+ if(key==='fleeced'){
+  const manager=String(context?.managerName||'').trim(),ownLoss=!!context?.loserIsTeam,
+   subject=loserName+' got fleeced',
+   management=ownLoss&&manager?('GM '+manager):'management',
+   seed=String(context?.salt||'')+'|'+String(rid||'')+'|'+loserName,
+   index=[...seed].reduce((n,ch)=>(Math.imul(n,33)+ch.charCodeAt(0))>>>0,5381)%4,
+   banks={
+    'walter-mercer':[
+     subject+', and the fans have every right to ask what '+management+' saw that the value did not. One bad deal can be survived; if this becomes a habit, the patience around this roster will disappear faster than the excuses.',
+     subject+'. The fan base can live with an aggressive move, but not with repeatedly paying the premium and getting the smaller package back. If this turns into a pattern, '+management+' is going to have a much harder question to answer than this week’s score.',
+     subject+', which puts the front office under a brighter light than it was under before the trade. Do it once and people grumble; do it again and the fans start wondering whether '+management+' is solving roster problems or creating new ones.',
+     subject+'. Fans will forgive a swing that misses, but there is a difference between taking a risk and repeatedly donating value. If another deal looks like this, '+management+' should expect the next round of questions to be louder.'
+    ],
+    'tess-delaney':[
+     subject+', and suddenly the fan base is less interested in the ambition of the move than in why '+management+' paid so much for it. One expensive misread is survivable; a second begins to look less like courage and more like a management philosophy nobody asked for.',
+     subject+'. Supporters can tolerate boldness, but boldness becomes exhausting when the other side keeps leaving with more value. If this becomes a recurring habit, '+management+' will have to explain why every grand idea seems to come with a surcharge.',
+     subject+', which is the sort of thing fans remember the next time '+management+' announces another aggressive move. One deal can be defended. A pattern of deals like this would turn every future negotiation into a referendum on the person making it.',
+     subject+'. The fans are not going to revolt over one trade, but they are entitled to wonder why '+management+' came away lighter after spending so heavily. Repeat it and patience becomes a much scarcer asset than anything in the deal.'
+    ],
+    'mack-hollis':[
+     subject+'. Fans are already looking at '+management+' and asking the obvious question: how many times can you lose the value before “aggressive” stops sounding brave? Do this again and the back page writes itself.',
+     subject+', and that puts '+management+' on notice. One ugly deal is a mistake; two starts looking like a hobby, and the fan base will not be gentle about the distinction.',
+     subject+'. The fans can shrug off one bad swing. If '+management+' keeps sending out more value than comes back, the next headline is not about the trade—it is about who keeps approving them.',
+     subject+', and nobody needs a calculator to understand why the fan base is annoyed. If this becomes a pattern, '+management+' will be answering for the roster construction before Sunday even gets a chance to.'
+    ],
+    'nora-voss':[
+     subject+'. Fans now have a legitimate reason to question the decision-making behind it, because the adjusted gap survived every charitable interpretation. If another trade ends the same way, '+management+' is no longer dealing with an isolated miss; it is dealing with a pattern.',
+     subject+', and that moves the scrutiny from the transaction to '+management+'. One bad outcome can happen to anyone. Repeated outcomes like this would force a much less comfortable question about how this front office values its own assets.',
+     subject+'. The concern is not that one trade went badly; it is whether '+management+' learns anything from it. If this same value loss shows up again, the fans will have reason to stop treating it as an exception.',
+     subject+', which gives the fan base something more substantial than ordinary post-trade complaining. One miss is noise. If '+management+' repeats it, the noise becomes evidence of a decision-making problem.'
+    ]
    },
-   'tess-delaney':{
-    fleeced:'That is Fleeced! territory, and '+loserName+' has somehow turned conviction into the most expensive emotion on the roster.',
-    fair:'That lands in Fair territory—an almost suspiciously adult outcome for fantasy football.',
-    excellent:'That lands as an Excellent Fit, the rare transaction that looks better the longer one resists the urge to be dramatic about it.',
-    negotiable:'That is Negotiable—close enough for confidence, not close enough for smugness.',
-    other:'The adjusted numbers leave it at '+label+', which is already a sufficiently interesting football answer.'
-   },
-   'mack-hollis':{
-    fleeced:'That is Fleeced! territory. '+loserName+' did not lose the press conference; '+loserName+' lost the value.',
-    fair:'That is Fair. Disappointing for the back page, useful for both rosters.',
-    excellent:'Excellent Fit. Clean enough to annoy anyone hoping for a disaster headline.',
-    negotiable:'Negotiable. Nobody gets fleeced, nobody gets to stop arguing.',
-    other:'That leaves it at '+label+'. The numbers brought enough noise on their own.'
-   },
-   'nora-voss':{
-    fleeced:'That is Fleeced! territory. '+loserName+' can explain the intent all week; the adjusted gap is the part that survives the explanation.',
-    fair:'That is Fair, and the numbers do not give either side much reason to pretend otherwise.',
-    excellent:'That is an Excellent Fit, with the adjusted values leaving very little loose thread to pull.',
-    negotiable:'That remains Negotiable. The gap is real, but it is not large enough to make the conclusion do all the talking.',
-    other:'The adjusted numbers leave it at '+label+'. That is enough to keep the conclusion grounded.'
-   }
-  },bank=rows[rid]||rows['walter-mercer'];
+   bank=banks[rid]||banks['walter-mercer'];
+  return bank[index];
+ }
+ const rows={
+  'walter-mercer':{
+   fair:'That lands in Fair territory, which means neither side gets a parade and neither side needs to change the subject.',
+   excellent:'That lands as an Excellent Fit; both sides can point to the value and keep moving.',
+   negotiable:'That sits in Negotiable territory—close enough to defend, wide enough to keep the argument alive.',
+   other:'The adjusted numbers put this one at '+label+', and there is no need to decorate that answer.'
+  },
+  'tess-delaney':{
+   fair:'That lands in Fair territory—an almost suspiciously adult outcome for fantasy football.',
+   excellent:'That lands as an Excellent Fit, the rare transaction that looks better the longer one resists the urge to be dramatic about it.',
+   negotiable:'That is Negotiable—close enough for confidence, not close enough for smugness.',
+   other:'The adjusted numbers leave it at '+label+', which is already a sufficiently interesting football answer.'
+  },
+  'mack-hollis':{
+   fair:'That is Fair. Disappointing for the back page, useful for both rosters.',
+   excellent:'Excellent Fit. Clean enough to annoy anyone hoping for a disaster headline.',
+   negotiable:'Negotiable. Nobody gets fleeced, nobody gets to stop arguing.',
+   other:'That leaves it at '+label+'. The numbers brought enough noise on their own.'
+  },
+  'nora-voss':{
+   fair:'That is Fair, and the numbers do not give either side much reason to pretend otherwise.',
+   excellent:'That is an Excellent Fit, with the adjusted values leaving very little loose thread to pull.',
+   negotiable:'That remains Negotiable. The gap is real, but it is not large enough to make the conclusion do all the talking.',
+   other:'The adjusted numbers leave it at '+label+'. That is enough to keep the conclusion grounded.'
+  }
+ },bank=rows[rid]||rows['walter-mercer'];
  return bank[key]||bank.other;
 }
 function inquirerTeamTradeCommentary(t,reporter){
@@ -93,7 +124,7 @@ function inquirerTeamTradeCommentary(t,reporter){
     'nora-voss':'The transaction moved '+fmt(total)+' points of snapshot value—'+ownName+' received '+fmt(ownRaw)+', '+otherName+' received '+fmt(otherRaw)+'.'
    },
    adjusted=edge===0?'Value Adjustment brings it all the way back to even.':winnerName+' still comes out '+fmt(edge)+' points ahead after Value Adjustment.',
-   quip=inquirerTradeClassificationQuip(label,rid,loserName);
+   loserIsTeam=String(loserSide?.roster_id)===String(t?.roster_id),quip=inquirerTradeClassificationQuip(label,rid,loserName,{loserIsTeam,managerName:loserIsTeam?t?.manager_name:'',salt:key});
   rows.push((leads[rid]||leads['walter-mercer'])+' '+adjusted+' '+quip);
  }
  return rows;

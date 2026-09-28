@@ -879,7 +879,7 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #home .fleeced-home-card>span,
 #home .fleeced-home-card-main>span{
   display:block;
-  color:#e4b53f;
+  color:#f4f4f5;
   font-size:16px;
   font-weight:950;
   letter-spacing:.045em;

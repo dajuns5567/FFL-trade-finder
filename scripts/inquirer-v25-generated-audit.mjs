@@ -3,23 +3,117 @@ import assert from 'node:assert/strict';
 
 const path=process.argv[2]||'/tmp/week1-inquirer.json';
 const d=JSON.parse(fs.readFileSync(path,'utf8'));
+const reportWeek=Number(d.week)||1;
 const words=s=>String(s||'').trim().split(/\s+/).filter(Boolean).length;
 const sentenceParts=s=>{
   const protectedText=String(s||'')
     .replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§'))
     .replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace('.','§'));
-  return protectedText.split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);
+  return protectedText.split(/(?<=[.!?]["'’”])\s+|(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);
 };
-assert.equal(sentenceParts('On the other side, Amon-Ra St. Brown caught 10 passes.').length,1,'Sentence parser must preserve St. inside player names');
-assert.equal(sentenceParts('Next week, C.J. Stroud completed 26 passes.').length,1,'Sentence parser must preserve initialed player names');
+assert.equal(sentenceParts('On the other side, Alex St. Clair caught 10 passes.').length,1,'Sentence parser must preserve St. inside names');
+assert.equal(sentenceParts('Next week, C.J. Example completed 26 passes.').length,1,'Sentence parser must preserve initialed names');
 const articleText=t=>(t?.inquirer_article?.paragraphs||[]).filter(p=>String(p||'').trim()&&String(p).trim().toLowerCase()!=='n/a').join(' ');
 const recapSections=d?.league_overview?.sections||[];
 const recap=recapSections.flatMap(s=>s?.paragraphs||[]).join(' ');
 const teamWords=(d.teams||[]).map(t=>words(articleText(t)));
+if(reportWeek===2){
+  const hotTakes=d?.league_overview?.hot_takes||[];
+  assert.ok(hotTakes.length>=8,'Week 2 must publish at least eight Hot Takes after the future-facing expansion');
+  const divisionTake=hotTakes.find(x=>/division board/i.test(String(x?.title||'')));
+  assert.ok(divisionTake,'Week 2 Hot Takes must retain the division board');
+  const divisionLines=String(divisionTake.take||'').split(/\n/).map(x=>x.trim()).filter(Boolean).filter(x=>/^(?:AFC|NFC)\s+(?:EAST|NORTH|SOUTH|WEST):/i.test(x));
+  assert.equal(divisionLines.length,8,'Division Board must render all eight divisions on separate lines; got '+JSON.stringify(divisionLines));
+  for(const line of divisionLines)assert.match(line,/^\w+\s+\w+: .+\(\d+-\d+\)\s+—\s+.+/,'Every division line must preserve leaders/record and add commentary: '+line);
 
-assert.equal(Number(d.inquirer_version),26,'Generated edition must be Inquirer V26');
-assert.equal(Number(d.editorial_revision),4,'Generated edition must carry contextual editorial revision 4');
-assert.equal((d.teams||[]).length,32,'Generated Week 1 edition must contain 32 team articles');
+  // Filch's featured Week 3 projection comparison must be an actual reciprocal
+  // next-week matchup, not simply two teams with similar projected totals.
+  const byRoster=new Map((d.teams||[]).map(t=>[String(t.roster_id),t]));
+  const filchSection=(d?.league_overview?.sections||[]).find(x=>String(x?.reporter?.id||'')==='nora-voss'||/Next Week:/i.test(String(x?.heading||'')));
+  const filchLead=String((filchSection?.paragraphs||[])[0]||'');
+  const namedNextTeams=(d.teams||[]).filter(t=>filchLead.includes(String(t.team_name||'')));
+  if(namedNextTeams.length>=2){
+    const a=namedNextTeams[0],b=namedNextTeams[1];
+    assert.equal(String(a.next_opponent_roster_id||''),String(b.roster_id),'Filch Week 3 projection comparison must pair actual next opponents: '+filchLead);
+    assert.equal(String(b.next_opponent_roster_id||''),String(a.roster_id),'Filch Week 3 projection comparison must be reciprocal: '+filchLead);
+  }else{
+    assert.match(filchLead,/projection board is not clean enough/i,'Filch must either feature a verified Week 3 matchup or explicitly decline to manufacture one');
+  }
+
+  const week2HotCopy=hotTakes.map(x=>String(x?.take||'')).join(' ');
+  assert.doesNotMatch(week2HotCopy,/breakout player to watch because|current production has moved materially beyond|young enough for the role growth to matter even more/i,'Breakout Hot Take must use reporter commentary rather than classification/meta language');
+
+  for(const t of d.teams||[]){
+    const valueCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='value').flatMap(s=>s?.paragraphs||[]).join(' ');
+    assert.doesNotMatch(valueCopy,/already on the roster when Week \d+ began/i,'Value coverage should omit no-op roster-status filler and use natural player context instead: '+t.team_name);
+  }
+  const metaJokeLede=/easy rival joke has missed twice|turned an 0-1 joke into a 1-1 argument|joke ages well|borrow the opener’s punch line|best joke still had to include the final score|erased the first rival punch line|easiest joke about .* arrived before the final whistle/i;
+  for(const t of d.teams||[]){
+    const ledeCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='lede').flatMap(s=>s?.paragraphs||[]).join(' ');
+    assert.doesNotMatch(ledeCopy,metaJokeLede,'Team ledes should deliver sarcasm directly instead of describing the joke: '+t.team_name);
+  }
+  const scheduleDifficultyLanguage=/stiffen|rougher|difficult stretch|hard part|hard stretch|hardens|gauntlet|resistance|heavy part|friendlier|friendly part|softer|manageable|forgiving|breathing room|favorable|mercy|soft landing|lowering the volume|mixed|split schedule|split the|uneven|difficulty level|lands in the middle|split screen/i;
+  for(const t of d.teams||[]){
+    const up=(t?.upcoming_opponents||[]).slice().sort((a,b)=>Number(a.week)-Number(b.week)),later=up.slice(1,3);
+    if(!later.length)continue;
+    const outlook=(t?.inquirer_article?.sections||[]).find(s=>String(s?.kind||'')==='outlook'),road=String(outlook?.paragraphs?.at?.(-2)||'');
+    assert.match(road,scheduleDifficultyLanguage,'Next-week outlook must interpret the difficulty of the schedule stretch behind the upcoming game: '+t.team_name);
+    for(const x of later)assert.ok(road.toLowerCase().includes(String(x.team_name||'').toLowerCase()),'Schedule-stretch read must name the later opponent: '+t.team_name+' -> '+String(x.team_name||''));
+    assert.match(road,/Week 3|win|bank|beat|handle/i,'Schedule-stretch read must explain why the upcoming result matters: '+t.team_name);
+  }
+  const forcedCategorySentence=/(?:^|[.!?]\s+)(?:Breakout player|Established star|Steady veteran|Young breakout|Proven star|Veteran player)\s+[A-Z][A-Za-z.'’’-]+(?:\s+[A-Z][A-Za-z.'’’-]+){0,3}\s+(?:keeps|held|spoiled|remained|delivered|is|was)\b/i;
+  for(const t of d.teams||[])assert.doesNotMatch(articleText(t),forcedCategorySentence,'Player category must be woven into commentary instead of appended as a standalone label sentence: '+t.team_name);
+
+  const roycingtonFurniture=/\b(?:furniture|chair|chairs|table|tables|tablecloth|linen|napkin|napkins|china|silverware|place setting|place settings|seating|centerpiece|dining room|dinner|plate|plates|reservation|reservations|guest list|velvet rope|chaise|ballroom|salon|coat check)\b/i;
+  const roycingtonTeams=(d.teams||[]).filter(t=>String(t?.inquirer_article?.reporter?.id||'')==='tess-delaney');
+  for(const t of roycingtonTeams){
+    const full=[t?.inquirer_article?.headline,...(t?.inquirer_article?.sections||[]).flatMap(s=>[s?.heading,...(s?.paragraphs||[])])].join(' ');
+    assert.doesNotMatch(full,roycingtonFurniture,'Roycington must not use the retired furniture/dining/linen metaphor system: '+t.team_name);
+  }
+  const breakoutHot=hotTakes.find(x=>/breakout player to watch/i.test(String(x?.title||'')));
+  assert.ok(breakoutHot,'Week 2 must retain the Breakout Player to Watch hot take');
+  assert.doesNotMatch(String(breakoutHot?.take||''),roycingtonFurniture,'Breakout Player to Watch must not use furniture/dining/linen metaphors');
+  assert.match(String(breakoutHot?.take||''),/\bbreakout\b/i,'Breakout Player to Watch commentary should use the supported breakout category naturally');
+}
+
+
+if(reportWeek===2){
+  assert.equal(Number(d.inquirer_version),31,'Generated Week 2 edition must be Inquirer V31');
+  assert.equal(Number(d.editorial_revision),14,'Generated Week 2 edition must carry editorial revision 14');
+}else{
+  assert.equal(Number(d.inquirer_version),26,'Generated Week 1 edition must remain Inquirer V26');
+  assert.equal(Number(d.editorial_revision),6,'Generated Week 1 edition must remain editorial revision 6');
+}
+assert.equal(d.published_locked,true,`Generated Week ${reportWeek} edition must be marked immutable once published`);
+assert.equal(Number(d.context_snapshot_through_week),reportWeek,`Generated Week ${reportWeek} edition must declare its own context snapshot`);
+assert.equal((d.teams||[]).length,32,`Generated Week ${reportWeek} edition must contain 32 team articles`);
+for(const t of d.teams||[]){
+  const rec=t?.league_context?.record||{},wins=Number(rec.wins)||0,losses=Number(rec.losses)||0,ties=Number(rec.ties)||0,recent=t?.league_context?.recent_games||[],last=recent[recent.length-1]||null;
+  assert.equal(wins+losses+ties,reportWeek,`Week ${reportWeek} archive record must contain exactly ${reportWeek} completed games for ${t.team_name}`);
+  assert.equal(Number(t?.league_context?.snapshot_through_week),reportWeek,`Archived Week ${reportWeek} context must stay frozen to its report week for ${t.team_name}`);
+  assert.equal(recent.length,reportWeek,`Archived Week ${reportWeek} recent-games context must stop at the report week for ${t.team_name}`);
+  assert.equal(Number(last?.week),reportWeek,`Archived Week ${reportWeek} context must end on the current report week for ${t.team_name}`);
+  assert.equal(Number(last?.points),Number(t.points),`Current-week points must match the frozen Week ${reportWeek} game for ${t.team_name}`);
+  assert.equal(Number(last?.opponent_points),Number(t.opponent_points),`Current-week opponent points must match the frozen Week ${reportWeek} game for ${t.team_name}`);
+  if(t?.division_context)assert.equal(Number(t.division_context.snapshot_through_week),reportWeek,`Article-team division context must stay frozen to Week ${reportWeek} for ${t.team_name}`);
+  if(t?.next_opponent_division_context)assert.equal(Number(t.next_opponent_division_context.snapshot_through_week),reportWeek,`Next-opponent division context must stay frozen to Week ${reportWeek} for ${t.team_name}`);
+  for(const x of t?.upcoming_opponents||[])if(x?.division_context)assert.equal(Number(x.division_context.snapshot_through_week),reportWeek,`Upcoming-opponent division context must stay frozen to Week ${reportWeek} for ${t.team_name}`);
+  if(reportWeek===2&&Number.isFinite(Number(t?.next_projected))&&Number.isFinite(Number(t?.next_opponent_projected))){
+    const outlook=(t?.inquirer_article?.sections||[]).find(x=>x?.kind==='outlook');
+    const outlookCopy=(outlook?.paragraphs||[]).join(' ');
+    assert.ok(outlookCopy.includes(Number(t.next_projected).toFixed(1)),'Week 3 outlook must mention own projected total for '+t.team_name);
+    assert.ok(outlookCopy.includes(Number(t.next_opponent_projected).toFixed(1)),'Week 3 outlook must mention opponent projected total for '+t.team_name);
+    assert.match(outlookCopy,/\b(?:favorite|favored|edge|dead even|projection favorite)\b/i,'Week 3 outlook must interpret which side the projection favors for '+t.team_name);
+  }
+  if(reportWeek===1){
+    assert.equal(t?.next_projected,null,'Archived Week 1 must not regenerate a Week 2 team projection from later lineup data for '+t.team_name);
+    assert.equal(t?.next_opponent_projected,null,'Archived Week 1 must not regenerate a Week 2 opponent projection from later lineup data for '+t.team_name);
+    assert.equal(t?.next_week_availability,null,'Archived Week 1 must not import later injury/availability state for '+t.team_name);
+    if(t?.mida_outlook?.source_date){const ts=Date.parse(String(t.mida_outlook.source_date));assert.ok(Number.isFinite(ts)&&ts<=Date.parse('2026-09-15T00:00:00Z'),'Week 1 archive must not import a later MIDA snapshot for '+t.team_name)}
+  }
+}
+const expectedRanks=(d.teams||[]).map(t=>{const r=t?.league_context?.record||{},recent=t?.league_context?.recent_games||[];return{t,w:Number(r.wins)||0,l:Number(r.losses)||0,ties:Number(r.ties)||0,fpts:recent.reduce((n,g)=>n+(Number(g.points)||0),0)}}).sort((a,b)=>b.w-a.w||a.l-b.l||b.ties-a.ties||b.fpts-a.fpts||Number(a.t.roster_id)-Number(b.t.roster_id));
+for(const [i,row] of expectedRanks.entries())assert.equal(Number(row.t?.league_context?.standings_rank),i+1,`Week ${reportWeek} standings rank must be reconstructed only from games through the report week for ${row.t.team_name}`);
 assert.ok(recapSections.length>=4,'Weekly Recap must preserve a complete multi-desk edition');
 assert.ok(words(recap)>Math.max(...teamWords),'Editorial Weekly Recap should be deeper than the longest team column');
 const mentioned=(d.teams||[]).filter(t=>String(t.team_name||'').trim()&&recap.includes(String(t.team_name).trim()));
@@ -29,6 +123,18 @@ assert.ok((mattered?.paragraphs||[]).length>=10,'What Actually Mattered This Wee
 const matterBlocks=(mattered?.blocks||[]).filter(x=>Array.isArray(x?.paragraphs)&&x.paragraphs.length);
 assert.ok(matterBlocks.length>=5,'What Actually Mattered This Week must expose labeled matchup/story blocks');
 assert.ok(matterBlocks.slice(0,5).every(x=>String(x.heading||'').trim()&&x.paragraphs.length>=2),'Each featured matchup must have a visible heading and developed analysis');
+assert.ok(matterBlocks.slice(0,5).every(x=>/fantasy points/i.test((x.paragraphs||[]).join(' '))),'Every featured Weekly Recap matchup must include fantasy production for the important players, not just the lead game');
+const featuredRecapSentences=matterBlocks.slice(0,5).flatMap(x=>sentenceParts((x.paragraphs||[]).join(' '))).map(x=>String(x||'').trim()).filter(x=>words(x)>=8);
+const featuredSentenceCounts=new Map();for(const s of featuredRecapSentences)featuredSentenceCounts.set(s,(featuredSentenceCounts.get(s)||0)+1);
+const featuredSentenceRepeats=[...featuredSentenceCounts].filter(([,n])=>n>1);
+assert.deepEqual(featuredSentenceRepeats,[],'Featured Weekly Recap matchup blocks must not repeat the same developed commentary sentence across games');
+if(reportWeek===2){
+  const matteredCopy=(mattered?.paragraphs||[]).join(' ');
+  const categoryMentions=matteredCopy.match(/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/gi)||[];
+  assert.ok(categoryMentions.length>=3,'What Actually Mattered This Week must naturally use supported player categorization language where the player profiles justify it; got '+categoryMentions.length);
+  const recapExplainerMeta=/\b(?:baseline|worth reopening|real departure from the established level|changes what the next box score is allowed to tell us|role deserves fresh attention|large enough to matter|matter beyond one|that is (?:star|veteran|breakout|emerging|rookie|reliable) production|useful veteran work)\b/i;
+  assert.doesNotMatch(matteredCopy,recapExplainerMeta,'What Actually Mattered This Week must turn player history/status evidence into reporter commentary instead of baseline/category explainer language');
+}
 const topScorer=(d.teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
 assert.ok(topScorer&&matterBlocks[0]?.heading?.includes(topScorer.team_name),'First Weekly Recap matchup block must feature the week’s top scoring team');
 assert.ok((matterBlocks[0]?.paragraphs||[]).join(' ').includes(topScorer.team_name),'Top scorer must receive actual Weekly Recap commentary, not merely a heading');
@@ -38,12 +144,33 @@ for(const p of topThree)assert.ok(topBlockCopy.includes(String(p.name||'')),'Wee
 const sharedStatParagraph=(matterBlocks[0]?.paragraphs||[]).find(p=>topThree.every(x=>String(p).includes(String(x.name||''))));
 assert.ok(sharedStatParagraph,'Weekly top-scorer story must place all highlighted players into a shared stat-focused paragraph before the commentary');
 assert.match(String(sharedStatParagraph),/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|solo|assists?|TFL|tackles? for loss|sacks?|QB hits?|pass breakups?|interceptions?|forced fumbles?)\b/i,'Weekly top-scorer trio paragraph must carry real-football stats rather than names and fantasy totals alone');
-assert.ok((matterBlocks[0]?.paragraphs||[]).some(p=>/lineup leverage|independent|different roster lanes|separate ways/i.test(String(p))),'Weekly top-scorer story must add a real roster/football judgment after the statistics');
+assert.ok((matterBlocks[0]?.paragraphs||[]).some(p=>/serious problems|true centerpiece|bent the matchup|standing underneath it|opening statement|lit the first match|bigger flamethrower|catch fire|parking ticket/i.test(String(p))),'Weekly top-scorer story must add matchup consequence and emotion after the statistics');
 assert.ok(((mattered?.paragraphs||[]).join(' ').match(/week’s cleanest upset/gi)||[]).length<=1,'Expanded recap must not call multiple games the week’s cleanest upset');
 const recapOpeners=(mattered?.paragraphs||[]).map(p=>String(p).trim().split(/\s+/).slice(0,7).join(' ').toLowerCase());
 const openerCounts=new Map();for(const x of recapOpeners)openerCounts.set(x,(openerCounts.get(x)||0)+1);
 assert.ok(Math.max(0,...openerCounts.values())<=2,'Expanded matchup paragraphs must not repeat one canned implication opener across the recap');
-assert.ok(recapSections.some(s=>/Velvet Rope/i.test(String(s?.heading||''))),'Bartholomew’s Weekly Recap desk must retain his own identity instead of a generic analytics heading');
+if(reportWeek===2){
+for(const block of matterBlocks.slice(0,5)){
+  const copy=(block.paragraphs||[]).join(' ');
+  const saysCollapse=/\bcollaps(?:e|ed|ing)\b/i.test(copy),deniesCollapse=/\b(?:not|wasn['’]t|was not)\s+(?:a\s+)?collaps(?:e|ing)\b/i.test(copy);
+  assert.ok(!(saysCollapse&&deniesCollapse),'Weekly Recap matchup contradicts itself about collapse: '+String(block.heading||''));
+}
+const statIntroFingerprints=matterBlocks.slice(0,5).map(block=>{
+  const p=String((block.paragraphs||[])[1]||'').toLowerCase();
+  return p.replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/\b[a-z]+(?:\s+[a-z]+){0,3}\s+—/g,'[player] —').split(':')[0].trim();
+}).filter(Boolean);
+const statIntroCounts=new Map();for(const x of statIntroFingerprints)statIntroCounts.set(x,(statIntroCounts.get(x)||0)+1);
+assert.ok(Math.max(0,...statIntroCounts.values())<=2,'Weekly Recap matchup stat introductions must vary instead of repeating one label in every game');
+for(const block of matterBlocks.slice(0,5)){
+  const statParagraph=String((block.paragraphs||[])[1]||'');
+  const lines=statParagraph.split(/\n/).map(x=>x.trim()).filter(Boolean);
+  assert.ok(lines.length>=4,'Each featured matchup stat trio must place its three players on separate lines after the intro: '+String(block.heading||''));
+  assert.ok(lines.slice(1).filter(x=>/—/.test(x)).length>=3,'Each featured matchup must show at least three player stat lines beneath the colon: '+String(block.heading||''));
+}
+
+}
+
+assert.ok(recapSections.some(s=>/(?:Velvet Rope|Contender Line)/i.test(String(s?.heading||''))),'Bartholomew’s Weekly Recap desk must retain his own identity instead of a generic analytics heading');
 
 const all=[recap,...(d.teams||[]).map(articleText)].join('\n').toLowerCase();
 for(const phrase of [
@@ -55,24 +182,145 @@ for(const phrase of [
   'the reporters will','the next useful signal','real sunday workload underneath','not a box-score tourist','more useful for forecasting',
   'this should be judged','the point is not','the question is whether','the file records',
   'first return','useful support behind the headline','old notebook rule','without printing the same score twice',
-  'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is',
+  'the transaction should be judged by','that is useful trade context','the important part for','the larger football read is','which is exactly what an idp league should reward when the work is real','historical value snapshot is not available in this article packet','in big type','big type','angry font','angry type','name in red','remove the suspense','job underneath it','something concrete to test','gets the photo','earned the ink',
   'the result matters because','other division rival','fantasy points reasons','opened near last season','turning finished with',
   'the useful version is','nick’s note is simple','the transaction belongs in the article','survived that call','result look as good on monday','roster compliment sitting on the bench','other side of the receipt alive','playoff case still sitting squarely in the argument','this week gave the résumé another loud line','somebody else now needs to make the back page fight for space','sunday reinforced it with another performance worthy of that reputation',
-  'nick will','nick wants','nick sees','bartholomew would','bartholomew will','tilly would','filch recommends','filch would','this desk is already documenting','a beat writer is supposed to'
+  'nick will','nick wants','nick sees','bartholomew would','bartholomew will','tilly would','filch recommends','filch would','this desk is already documenting','a beat writer is supposed to','ordinary quarterback workload','primary affirmative','no broader depth conclusion','favorable team verdict','entered as the projected underdog and won anyway','corroborates the expectation','projection liked','high-scorer line','multiple-contributor point is earned','provisional breakout label','breakout-watch invitation','gets the watch list','gets the same designation','supporting-cast argument','journalism malpractice','group-performance point','next-week file','player exhibit','probative data point','adverse finding','group chat','least comfortable note belongs to','separates the player from the verdict','records the consequence rather than the mechanism','admissible alternative','causal record','discrepancy is real','cannot carry the entire case','positive finding','division evidence','three pressure points','entered evidence','cross-examination'
 ]) assert.ok(!all.includes(phrase),'Rejected explainer/meta/repeated phrase survived generated copy: '+phrase);
-assert.ok(!all.includes('${'),'Generated prose must never expose a template interpolation token');
-assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),'Generated Week 1 must carry a real prior-season player-history source');
+if(reportWeek===2){
+  assert.doesNotMatch(all,/result to compare with the process|sample doubled|temperature moved|meter moved|rating moved|belongs in the outlook|blank line on the schedule|the scoring comparison starts there/i,'Week 2 must not expose sentiment/editorial process language');
+  assert.doesNotMatch(all,/\.\.(?!\.)/,'Week 2 generated prose must not contain accidental double periods');
+}
+const interpolationIndex=all.indexOf('${');assert.equal(interpolationIndex,-1,'Generated prose must never expose a template interpolation token; context: '+(interpolationIndex>=0?all.slice(Math.max(0,interpolationIndex-180),interpolationIndex+260):''));
+assert.ok(!String(d.historical_player_stats_source||'').includes('unavailable'),`Generated Week ${reportWeek} must carry a real prior-season player-history source`);
 const historicalStarters=(d.teams||[]).flatMap(t=>t.starter_details||[]).filter(p=>Number(p.prior_season_games)>=6&&Number.isFinite(Number(p.prior_season_avg)));
-assert.ok(historicalStarters.length>=40,'Week 1 must propagate meaningful prior-season baselines into player reporting; got '+historicalStarters.length);
-assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');
-assert.match(recap,/BREAKOUT WATCH|RELIABLE:|DECLINE WATCH|VETERAN CHECK-IN/i,'Weekly Recap must carry an evidence-backed player trajectory/reliability story');
+assert.ok(historicalStarters.length>=40,`Week ${reportWeek} must propagate meaningful prior-season baselines into player reporting; got ${historicalStarters.length}`);
+if(reportWeek===2){
+let historicalContextExpected=0,historicalContextFound=0,historicalContextMissing=[];
+for(const t of d.teams||[]){
+  const top=(t.starter_details||[]).slice(0,3);
+  for(const p of top){
+    const prior=Number(p?.prior_season_avg),pts=Number(p?.points),games=Number(p?.prior_season_games)||0;
+    if(!Number.isFinite(prior)||prior<=0||!Number.isFinite(pts)||games<6||Math.abs(pts-prior)<Math.max(4,prior*.3))continue;
+    historicalContextExpected++;
+    const pname=String(p.name||''),bits=pname.split(/\s+/).filter(Boolean),first=bits[0]||'',last=bits.at(-1)||'',
+      paragraphs=(t?.inquirer_article?.paragraphs||[]).map(String),article=paragraphs.join(' '),
+      firstFull=article.indexOf(pname),
+      candidateRefs=[pname,first.length>=4?first:'',last.length>=4?last:''].filter(Boolean),
+      contextRe=/\b(?:2025|last season|last year|prior-season)\b/i,priorText=prior.toFixed(1),
+      historicalEvidence=paragraph=>contextRe.test(String(paragraph||''))||(String(paragraph||'').includes(priorText)&&/\b(?:average|baseline|per game|prior|last)\b/i.test(String(paragraph||''))),
+      direct=paragraphs.some(paragraph=>historicalEvidence(paragraph)&&candidateRefs.some(ref=>new RegExp('(?:^|\\W)'+ref.replace(/[.*+?^$\{\}()|[\]\\]/g,m=>'\\\\'+m)+'(?:$|\\W)','i').test(paragraph))),
+      adjacent=paragraphs.some((paragraph,i)=>paragraph.includes(pname)&&historicalEvidence(String(paragraphs[i+1]||''))),
+      found=firstFull>=0&&(direct||adjacent);
+    if(found)historicalContextFound++;
+    else historicalContextMissing.push({team:t.team_name,player:pname,week2:pts,prior_avg:prior,prior_games:games,reporter:t?.inquirer_article?.reporter?.name});
+  }
+}
+assert.equal(historicalContextFound,historicalContextExpected,'Every materially unusual top-three Week 2 player with a valid 2025 baseline must receive historical-average context; expected '+historicalContextExpected+', found '+historicalContextFound+'; missing='+JSON.stringify(historicalContextMissing));
+}
 
-const spedale=(d.teams||[]).find(t=>String(t.manager_name||'').toLowerCase()==='mike3spedale');
-if(spedale){
-  const goedert=(spedale.starter_details||[]).find(p=>/Dallas Goedert/i.test(String(p.name||''))),spedaleText=articleText(spedale);
-  assert.ok(goedert?.acquisition||((spedale.trade_acquisitions||[]).some(x=>/Dallas Goedert/i.test(String(x.player_name||'')))),'Dallas Goedert must retain canonical trade-acquisition memory for Mike3Spedale');
-  assert.match(spedaleText,/Dallas Goedert[^.]{0,160}trade|trade[^.]{0,160}Dallas Goedert/i,'Mike3Spedale article must describe Dallas Goedert as a trade acquisition');
-  assert.doesNotMatch(spedaleText,/ADD ALERT:[^.]*Dallas Goedert/i,'Dallas Goedert trade acquisition must never regress to waiver/free-agent ADD ALERT copy');
+assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');
+assert.match(recap,/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/i,'Weekly Recap must carry natural player-status commentary tied to the actual matchup story');
+
+if(reportWeek===2){
+  const expectedPlayerProfile=(p,slot=0)=>{
+    const pts=Number(p?.points),week1=Number(p?.week1_points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
+      seasonAvg=Number(p?.season_avg),age=Number(p?.age),years=Number(p?.years_exp),
+      pos=String(p?.position||'').toUpperCase(),role=Number(slot)||0,
+      snaps=p?.current_snap_count==null?null:Number(p.current_snap_count),
+      priorSnapPg=p?.prior_season_snaps_per_game==null?null:Number(p.prior_season_snaps_per_game),
+      snapPct=p?.current_snap_pct==null?null:Number(p.current_snap_pct),
+      defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),
+      starThreshold=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13,
+      rookie=(Number.isFinite(years)&&years===0)||(games===0&&Number.isFinite(age)&&age<=23),
+      young=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
+      earlyCareer=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)),
+      veteran=(Number.isFinite(years)&&years>=5)||(Number.isFinite(age)&&age>=28),
+      hasTwoWeeks=Number.isFinite(pts)&&Number.isFinite(week1),
+      established=Number.isFinite(prior)&&games>=8&&(prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1))),
+      roleLift=(Number.isFinite(snapPct)&&snapPct>=0.55)||
+        (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
+        (Number.isFinite(snaps)&&snaps>=(defensive?32:35)),
+      twoWeekRise=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+        seasonAvg>=Math.max(prior*1.25,prior+2,starThreshold*.75)&&Math.min(pts,week1)>=Math.max(prior*.8,starThreshold*.5),
+      strongTwoWeekRise=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+        seasonAvg>=Math.max(prior*1.4,prior+3,starThreshold*.9)&&Math.min(pts,week1)>=Math.max(prior*.9,starThreshold*.6),
+      twoWeekDrop=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+        seasonAvg<=prior*.75&&Math.max(pts,week1)<=prior*.85,
+      steady=hasTwoWeeks&&games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
+        Math.abs(seasonAvg-prior)<=Math.max(1.5,prior*.18)&&Math.min(pts,week1)>=prior*.6&&Math.max(pts,week1)<=prior*1.4,
+      developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&strongTwoWeekRise&&roleLift;
+    let status='';
+    if(!Number.isFinite(pts))return{status,hasTwoWeeks};
+    if(developmentalBreakout)status='breakout';
+    else if(established&&veteran&&twoWeekDrop)status='declining-veteran';
+    else if(established&&twoWeekDrop)status='struggling-star';
+    else if(established)status='established-star';
+    else if(!established&&young&&games>=6&&strongTwoWeekRise&&roleLift)status='breakout';
+    else if(!established&&games>=6&&twoWeekRise)status='emerging';
+    else if(veteran&&twoWeekDrop)status='declining-veteran';
+    else if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&twoWeekDrop)status='struggling';
+    else if(steady)status=veteran?'reliable-veteran':'reliable';
+    else if(role===0&&pts>=starThreshold*1.6)status='star-level';
+    else if(rookie&&hasTwoWeeks&&roleLift)status='rookie';
+    else if(young&&hasTwoWeeks&&roleLift)status='young-player';
+    else if(veteran&&pts>=Math.max(5,starThreshold*.5))status='veteran';
+    return{status,hasTwoWeeks,twoWeekRise,strongTwoWeekRise,twoWeekDrop,established,young,veteran,week1,pts,seasonAvg,prior};
+  };
+  const escapePlayerRe=value=>String(value||'').replace(/[.*+?^$\{\}()|[\]\\]/g,m=>'\\\\'+m);
+  const growthLanguage=/\b(?:breakout|emerging|young riser|rising player|riser|rise has earned|early surge|role growth)\b/i,
+    declineLanguage=/\b(?:declining veteran|veteran decline|trending down|fading veteran|slow-start trend|repeated drop)\b/i,
+    struggleLanguage=/\b(?:struggling star|struggling player|in a slump|slow start)\b/i;
+  let twoWeekTrajectoryProfiles=0,articlesWithShortPlayerReference=0;
+  for(const t of d.teams||[]){
+    const copy=articleText(t),top=(t.starter_details||[]).slice(0,3);
+    let hasShort=false;
+    for(let slot=0;slot<top.length;slot++){
+      const p=top[slot],profile=expectedPlayerProfile(p,slot),pname=String(p?.name||'').trim();
+      if(!pname)continue;
+      const bits=pname.split(/\s+/).filter(Boolean),first=bits[0]||'',last=bits.at(-1)||'';
+      assert.ok(copy.includes(pname),'Every discussed top-three player must first be introduced by full name somewhere in the article: '+t.team_name+' / '+pname);
+      const withoutFull=copy.replaceAll(pname,' ');
+      const shortTokens=[first,last].filter(x=>x&&x.length>=4);
+      if(shortTokens.some(x=>new RegExp('(?:^|\\W)'+escapePlayerRe(x)+'(?:$|\\W)','i').test(withoutFull)))hasShort=true;
+
+      const refs=[pname,last.length>=4?last:''].filter(Boolean),
+        related=sentenceParts(copy).filter(sentence=>refs.some(ref=>new RegExp('(?:^|\\W)'+escapePlayerRe(ref)+'(?:$|\\W)','i').test(sentence)));
+      const growth=related.filter(x=>growthLanguage.test(x)),decline=related.filter(x=>declineLanguage.test(x)),struggle=related.filter(x=>struggleLanguage.test(x));
+      if(growth.length){
+        assert.ok(profile.hasTwoWeeks,'Growth/breakout language requires at least two completed weekly performances: '+t.team_name+' / '+pname+' :: '+growth.join(' || '));
+        assert.ok(['breakout','emerging'].includes(profile.status),'Growth/breakout language must be supported by the systematic two-week profile, not one hot game: '+profile.status+' / '+t.team_name+' / '+pname+' :: '+growth.join(' || '));
+      }
+      if(decline.length){
+        assert.ok(profile.hasTwoWeeks,'Decline language requires at least two completed weekly performances: '+t.team_name+' / '+pname+' :: '+decline.join(' || '));
+        assert.ok(['declining-veteran','struggling-star','struggling'].includes(profile.status),'Decline language must be supported by a repeated two-week drop: '+profile.status+' / '+t.team_name+' / '+pname+' :: '+decline.join(' || '));
+      }
+      if(struggle.length){
+        assert.ok(profile.hasTwoWeeks,'Struggle/slump language requires at least two completed weekly performances: '+t.team_name+' / '+pname+' :: '+struggle.join(' || '));
+        assert.ok(['declining-veteran','struggling-star','struggling'].includes(profile.status),'Struggle/slump language must be supported by a repeated two-week drop: '+profile.status+' / '+t.team_name+' / '+pname+' :: '+struggle.join(' || '));
+      }
+      if(['breakout','emerging','declining-veteran','struggling-star','struggling'].includes(profile.status)){
+        twoWeekTrajectoryProfiles++;
+        assert.ok(profile.hasTwoWeeks,'Every trajectory category must carry an actual two-week sample: '+profile.status+' / '+t.team_name+' / '+pname);
+      }
+    }
+    if(hasShort)articlesWithShortPlayerReference++;
+  }
+  assert.doesNotMatch(all,/\byoung riser\b/i,'Team/recap prose must not use the forced “young riser” label; describe the supported two-week change naturally instead');
+  assert.ok(twoWeekTrajectoryProfiles>=1,'Week 2 should contain at least one genuinely data-qualified two-week trajectory profile so the systematic guard is exercised');
+  assert.ok(articlesWithShortPlayerReference>=20,'Natural player naming should use first/last-name references after full-name introduction in most team articles; got '+articlesWithShortPlayerReference+'/32');
+}
+
+for(const t of d.teams||[]){
+  const copy=articleText(t);
+  for(const acq of t.trade_acquisitions||[]){
+    const pname=String(acq?.player_name||'').trim();
+    if(!pname||!copy.toLowerCase().includes(pname.toLowerCase()))continue;
+    const relevant=sentenceParts(copy).filter(s=>s.toLowerCase().includes(pname.toLowerCase())&&/\b(?:trade|waiver|free agent|add alert|arrived\s+(?:via|through))\b/i.test(s));
+    if(!relevant.length)continue;
+    assert.ok(relevant.some(s=>/\btrade\b/i.test(s)),'A player with canonical trade-acquisition history must be described as a trade acquisition when acquisition history is mentioned: '+t.team_name+' / '+pname+' :: '+relevant.join(' || '));
+    assert.ok(relevant.every(s=>!/\b(?:waiver|free agent|add alert)\b/i.test(s)),'Trade acquisition must never be rewritten as a waiver/free-agent add: '+t.team_name+' / '+pname+' :: '+relevant.join(' || '));
+  }
 }
 
 const orderByReporter=new Map();
@@ -81,20 +329,36 @@ for(const t of d.teams||[]){
   const rid=String(a?.reporter?.id||''),order=(a.sections||[]).map(s=>s.kind).join('>');if(!orderByReporter.has(rid))orderByReporter.set(rid,new Set());orderByReporter.get(rid).add(order);
   const hasTrade=(t.transactions||[]).some(m=>String(m?.type||'').toLowerCase()==='trade');
   const tradeCommentary=(a.sections||[]).find(s=>s.kind==='trade-commentary');
-  assert.equal((a.sections||[]).length,hasTrade?9:8,'Each team article must preserve eight core reporting beats plus a trade-commentary beat only when an applicable trade exists');
-  if(hasTrade){
-    assert.ok(tradeCommentary&&Array.isArray(tradeCommentary.paragraphs)&&tradeCommentary.paragraphs.length>=2,'Applicable team trades must receive a developed dedicated trade-commentary section for '+t.team_name);
+  assert.ok((a.sections||[]).length===8||(a.sections||[]).length===9,'Each team article must preserve eight core beats plus at most one verified trade-commentary beat');
+  assert.equal((a.sections||[]).length===9,!!tradeCommentary,'A ninth section is valid only when complete trade evidence produced a Trade Receipt');
+  if(tradeCommentary){
+    assert.ok(hasTrade,'Trade commentary requires an actual team trade');
+    assert.ok(Array.isArray(tradeCommentary.paragraphs)&&tradeCommentary.paragraphs.length>=2,'Complete trade evidence must receive developed commentary for '+t.team_name);
     const tradeCopy=tradeCommentary.paragraphs.join(' ');
     assert.match(tradeCopy,/trade|received|receipt/i,'Trade-commentary section must discuss the actual exchange for '+t.team_name);
-  }else assert.equal(tradeCommentary,undefined,'Teams without an applicable trade must not receive a synthetic trade-commentary section');
+    assert.doesNotMatch(tradeCopy,/unavailable|incomplete|unresolved|missing (?:history|valuation|rows?)/i,'Published Trade Receipt must never narrate unavailable trade-history evidence for '+t.team_name);
+  }
   const players=(a.sections||[]).find(s=>s.kind==='players');
+  if(reportWeek===2){
+    const sentiment=(a.sections||[]).find(s=>s.kind==='sentiment'),sentCopy=(sentiment?.paragraphs||[]).join(' ');
+    assert.ok((sentiment?.paragraphs||[]).length>=2,'Week 2 Fan Sentiment must contain developed supporter reaction for '+t.team_name);
+    assert.doesNotMatch(sentCopy,/\b(?:meter|rating|temperature|sample doubled|process instead|actual scoring|projection)\b/i,'Week 2 Fan Sentiment must describe fans, not narrate the sentiment model, for '+t.team_name);
+    assert.match(sentCopy,/\b(?:fans?|supporters?|crowd|call-in|lineup|argu(?:e|ing)|complaint|cheers?|boo|rivals?)\b/i,'Week 2 Fan Sentiment must describe concrete supporter behavior or conversation for '+t.team_name);
+    const playerCopy=(players?.paragraphs||[]).filter((p,i)=>i<6&&i%2===1).map(String);
+    const normPlayer=p=>{let q=String(p);for(const x of t.starter_details||[]){const n=String(x?.name||'');if(n)q=q.split(n).join('[player]')}return q.toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/\s+/g,' ').trim()};
+    assert.equal(new Set(playerCopy.map(normPlayer)).size,playerCopy.length,'Three featured player commentary paragraphs must not collapse into the same template for '+t.team_name);
+  }
   assert.ok(players&&Array.isArray(players.paragraphs),'Each team article must preserve a player reporting beat');
   const lede=(a.sections||[]).find(s=>s.kind==='lede'),management=(a.sections||[]).find(s=>s.kind==='management'),outlook=(a.sections||[]).find(s=>s.kind==='outlook');
   assert.ok((lede?.paragraphs||[]).length>=3,'Team ledes must carry result plus reporter commentary');
-  assert.ok((players?.paragraphs||[]).length>=4,'Player sections must retain the established reporting and add a substantive editorial read beyond the stat lines');
+  assert.ok((players?.paragraphs||[]).length>=6,'Player sections must retain the established reporting and add two additional football-analysis paragraphs beyond the stat lines');
+  assert.ok((players?.paragraphs||[]).filter(p=>String(p).includes(String(t.opponent_name||''))).length>=2,'Player reporting must repeatedly connect performance to the actual opponent/matchup for '+t.team_name);
   const managementParagraphs=management?.paragraphs||[],outlookParagraphs=outlook?.paragraphs||[];
   if(managementParagraphs.length&&managementParagraphs[0]!=='n/a')assert.ok(managementParagraphs.length>=2,'Meaningful management sections must include reporter follow-through for '+t.team_name+'; got '+JSON.stringify(managementParagraphs));
   if(outlookParagraphs.length&&outlookParagraphs[0]!=='n/a')assert.ok(outlookParagraphs.length>=3,'Next-week sections must develop the matchup and road ahead for '+t.team_name);
+  if(outlookParagraphs.length&&outlookParagraphs[0]!=='n/a'&&t?.next_opponent_division_context){const outlookCopy=outlookParagraphs.join(' '),divName=String(t.next_opponent_division_context.division_name||''),nrec=t.next_opponent_context?.record||{},recText=`${Number(nrec.wins)||0}-${Number(nrec.losses)||0}`;if(divName)assert.ok(outlookCopy.toLowerCase().includes(divName.toLowerCase()),'Next-week section must name the upcoming opponent division context for '+t.team_name+'; division='+divName+'; outlook='+JSON.stringify(outlookParagraphs));assert.ok(outlookCopy.includes(recText),'Next-week section must state the upcoming opponent current record for '+t.team_name);}
+  if(outlookParagraphs.length&&outlookParagraphs[0]!=='n/a'&&t?.division_context){const leaders=(t.division_context.leaders||[]).filter(x=>x?.team_name),selfLeading=leaders.some(x=>String(x.roster_id)===String(t.roster_id)),otherLeaders=leaders.filter(x=>String(x.roster_id)!==String(t.roster_id));if(selfLeading&&otherLeaders.length){const outlookCopy=outlookParagraphs.join(' ').toLowerCase();assert.match(outlookCopy,/tied|shares|level/,'Next-week section must explicitly say the article team shares/ties the division lead for '+t.team_name);for(const x of otherLeaders)assert.ok(outlookCopy.includes(String(x.team_name).toLowerCase()),'Next-week section must name co-leader '+x.team_name+' for '+t.team_name);}}
+  if(outlookParagraphs.length&&outlookParagraphs[0]!=='n/a'){const up=(t.upcoming_opponents||[]).slice().sort((a,b)=>Number(a.week)-Number(b.week)),next=up[0],later=up.slice(1,3),strong=next&&Number(next?.context?.standings_rank)<=8,soft=later.filter(x=>Number(x?.context?.standings_rank)>=24);if(strong&&soft.length){const candidates=outlookParagraphs.filter(p=>String(p).includes(String(next.team_name||''))&&soft.some(x=>String(p).includes(String(x.team_name||''))));if(candidates.length){assert.ok(candidates.some(p=>String(p).split(/[.!?](?:\s|$)/).filter(Boolean).length>=3),'Heavyweight-before-soft-games outlook must contain at least one three-sentence context/commentary paragraph for '+t.team_name);}}}
   const top=(t.starter_details||[]).filter(p=>Number.isFinite(Number(p?.points))).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],playerCopy=(players?.paragraphs||[]).join(' ');
   if(top?.real_stat_line){
     const wholeArticle=articleText(t);
@@ -108,6 +372,27 @@ for(const t of d.teams||[]){
   reporterFirstPerson.set(rid,(reporterFirstPerson.get(rid)||0)+hits);
 }
 for(const rid of ['walter-mercer','tess-delaney','mack-hollis','nora-voss'])assert.ok((reporterFirstPerson.get(rid)||0)>=1,'Each reporter must naturally reference their own judgment at least once across the generated edition: '+rid);
+const thirdPersonDeskPatterns={
+  'walter-mercer':/\bNick(?:’s|'s|\s+(?:will|would|wants|sees|circles|can|keeps|trusts|starts|refuses|considers|calls|thinks|recommends|records))\b/i,
+  'tess-delaney':/\bBartholomew(?:’s|'s|\s+(?:will|would|wants|sees|can|keeps|trusts|starts|refuses|considers|calls|thinks|recommends|records|adores|accepts|respects))\b/i,
+  'mack-hollis':/\bTilly(?:’s|'s|\s+(?:will|would|wants|sees|can|keeps|trusts|starts|refuses|considers|calls|thinks|recommends|records|resents))\b/i,
+  'nora-voss':/\bFilch(?:’s|'s|\s+(?:will|would|wants|sees|can|keeps|trusts|starts|refuses|considers|calls|thinks|recommends|records|separates|treats|enters|leaves|reads|marks))\b/i
+};
+for(const t of d.teams||[]){
+  const rid=String(t.inquirer_article?.reporter?.id||''),re=thirdPersonDeskPatterns[rid];
+  if(re)assert.doesNotMatch(articleText(t),re,'Reporter must speak in first person instead of naming themself in '+t.team_name);
+}
+for(const s of recapSections){
+  const rid=String(s?.reporter?.id||''),re=thirdPersonDeskPatterns[rid],copy=(s?.paragraphs||[]).join(' ');
+  if(re)assert.doesNotMatch(copy,re,'Weekly Recap reporter must speak in first person instead of naming themself: '+rid);
+}
+for(const t of d.teams||[]){
+  if(String(t.inquirer_article?.reporter?.id)!=='mack-hollis')continue;
+  const copy=articleText(t);
+  assert.doesNotMatch(copy,/\b(?:[A-Z]{2,}\s+){3,}[A-Z]{2,}\b/,'Tilly must not use all-caps runs for emphasis in '+t.team_name);
+}
+const tillyRecap=(recapSections.find(s=>String(s?.reporter?.id)==='mack-hollis')?.paragraphs||[]).join(' ');
+assert.doesNotMatch(tillyRecap,/\b(?:[A-Z]{2,}\s+){3,}[A-Z]{2,}\b/,'Tilly must not use all-caps runs for emphasis in Weekly Recap');
 for(const [rid,orders] of orderByReporter)assert.ok(orders.size>=4,'Reporter '+rid+' must generate at least four distinct article structures across eight team stories; got '+orders.size);
 
 const teamCopy=(d.teams||[]).map(t=>articleText(t)).join('\n');
@@ -135,7 +420,11 @@ const isEstablishedStar=p=>{
   const prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,pos=String(p?.position||'').toUpperCase();
   if(!Number.isFinite(prior)||games<8)return false;
   const defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT)$/.test(pos),threshold=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13;
-  const years=Number(p?.years_exp);
+  const years=Number(p?.years_exp),age=Number(p?.age),seasonAvg=Number(p?.season_avg),snaps=Number(p?.current_snap_count),priorSnapPg=Number(p?.prior_season_snaps_per_game),
+    earlyCareer=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)),
+    developmentalBreakout=earlyCareer&&Number.isFinite(seasonAvg)&&seasonAvg>=Math.max(prior*1.35,prior+2.5)&&
+      Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=priorSnapPg*1.1&&prior<threshold*1.4;
+  if(developmentalBreakout)return false;
   return prior>=threshold*1.2||(prior>=threshold&&(!Number.isFinite(years)||years>=1));
 };
 for(const t of d.teams||[]){
@@ -185,6 +474,21 @@ const reporterFunctionMeta=[
   /\bseptember journalism\b/i,/\bthis newsroom marks\b/i,/\bpostseason line this desk is tracking\b/i,/\binvestigative desk should be willing to print\b/i
 ];
 const publishedCopy=teamCopy+'\n'+recap;
+if(reportWeek===2){
+  assert.doesNotMatch(teamCopy,/\bis the Week 2 warning label after\b/i,'Team columns must not use the generic warning-label template');
+  assert.doesNotMatch(teamCopy,/\bthat quiet lineup slot forced the rest of\b/i,'Team columns must not state the obvious scoring-burden template');
+  assert.doesNotMatch(teamCopy,/\bthat is real support, not a footnote\b/i,'Team columns must not use support-vs-footnote explainer language');
+  for(const re of [
+    /Ties are listed as ties/i,
+    /projection gap did not survive contact with the actual lineup/i,
+    /unused improvement was large enough to flip the result/i,
+    /The performances that shaped it/i,
+    /Week 2 warning label after/i,
+    /real support, not a footnote/i,
+    /actual support, not decorative box-score confetti/i
+  ])assert.doesNotMatch(publishedCopy,re,'Rejected Week 2 meta/explainer language survived: '+re);
+}
+
 for(const re of reporterFunctionMeta)assert.ok(!re.test(publishedCopy),'Reporter-function exposition survived generated Inquirer copy: '+re);
 
 for(const t of d.teams||[]){
@@ -284,7 +588,41 @@ for(const t of d.teams||[]){
 }
 const templateOffenders=[...templatePlacements.entries()].filter(([,rows])=>rows.length>3).map(([fingerprint,rows])=>({fingerprint,count:rows.length,examples:rows.slice(0,4)}));
 assert.deepEqual(templateOffenders,[],'Editorial sentence templates must not recur across more than three team articles after names/numbers are normalized');
+
+if(reportWeek===2){
+// Catch repeated editorial scaffolds that are shorter than a full sentence.
+// Names and numbers are normalized first; one article contributes at most one
+// placement for a given phrase so repetition inside a single article does not
+// create a false cross-article failure.
+const phrasePlacements=new Map(),phraseWidth=9;
+for(const t of d.teams||[]){
+  const seenHere=new Set();
+  for(const sentence of sentenceParts(articleText(t))){
+    const factualSentence=/(?:fantasy points?|solo tackles?|assisted tackles?|tackle for loss|qb hits?|passes?|targets?|receptions?|rushing yards?|receiving yards?|touchdowns?|carries|projection|projected|league order|standings|current tiebreaks|\blost to\b|\bloss to\b|\bwin over\b|\bbeat\b|\bopened with\b|\bweek 1\b|\bweek 2\b)/i;
+    const numeric=(String(sentence).match(/\b\d+(?:\.\d+)?%?\b/g)||[]).length;
+    if(factualSentence.test(sentence)||numeric>=2)continue;
+    const fp=editorialFingerprint(sentence);if(!fp)continue;
+    const normalized=fp.replace(/[^a-z0-9#\[\]’'-]+/g,' ').replace(/\s+/g,' ').trim(),
+      ws=normalized.split(/\s+/).filter(Boolean);
+    for(let i=0;i+phraseWidth<=ws.length;i++){
+      const gram=ws.slice(i,i+phraseWidth).join(' ');
+      if(!/[a-z]/.test(gram)||seenHere.has(gram))continue;
+      seenHere.add(gram);
+      const rows=phrasePlacements.get(gram)||[];rows.push({team:t.team_name,reporter:t.inquirer_article?.reporter?.name});phrasePlacements.set(gram,rows);
+    }
+  }
+}
+const styleScaffold=/\b(?:room|table|chair|seating|rearrang\w*|headline|screenshot|joke|punchline|megaphone|receipt|reservation|silverware|china|wardrobe|decorative|parade|siren|menu|dinner|bill|gossip|guest list|repair|spiral|standard|unanswered|pressure|urgency|runway|rubble|identity|rebuttal|warning|panic|collapse|argument|response)\b/i;
+const phraseOffenders=[...phrasePlacements.entries()]
+  .filter(([phrase,rows])=>rows.length>1&&styleScaffold.test(phrase)&&new Set(rows.map(x=>String(x.reporter||''))).size>1)
+  .map(([phrase,rows])=>({phrase,count:rows.length,reporters:[...new Set(rows.map(x=>x.reporter))],placements:rows.slice(0,6)}));
+assert.deepEqual(phraseOffenders,[],'Nine-word editorial scaffold phrases must not recur across multiple team articles when they cross reporter identities after names/numbers are normalized');
+assert.doesNotMatch(all,/two straight losses and a repair job that can no longer wait|two straight wins and a standard worth defending|a response instead of a spiral|a split start and an unanswered question/i,'Shared generic record-state bridge language must not survive across reporter articles');
+assert.doesNotMatch(all,/\broom (?:will|gets?|got|has been) rearrang\w*\b|\broom rearranges itself\b/i,'Retired room/rearrangement scaffold must not recur in team or recap prose');
+
+
+}
 const avgTeamWords=teamWords.reduce((n,x)=>n+x,0)/Math.max(1,teamWords.length);
-assert.ok(Math.min(...teamWords)>=400,'Every team column must preserve substantial commentary; shortest='+Math.min(...teamWords));
-assert.ok(avgTeamWords>=500,'Team columns must average at least 500 words of reporting/commentary; average='+avgTeamWords.toFixed(1));
+assert.ok(Math.min(...teamWords)>=580,'Every team column must preserve the revision-5 depth increase; shortest='+Math.min(...teamWords));
+assert.ok(avgTeamWords>=680,'Team columns must retain substantial reporting depth after removing repetition; average='+avgTeamWords.toFixed(1));
 console.log(JSON.stringify({ok:true,version:d.inquirer_version,teams:d.teams.length,recap_words:words(recap),max_team_words:Math.max(...teamWords),min_team_words:Math.min(...teamWords),avg_team_words:Number(avgTeamWords.toFixed(1)),mentioned_teams:mentioned.length,reporter_structures:Object.fromEntries([...orderByReporter].map(([k,v])=>[k,v.size]))}));

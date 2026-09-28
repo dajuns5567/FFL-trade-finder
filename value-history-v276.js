@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history';
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -21,6 +21,7 @@ function addStyles(){
   #valueHistory .vh-shell{display:grid;gap:16px}
   #valueHistory .vh-control-row{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:4px 0 0;padding-bottom:4px}
   #valueHistory .vh-hero{display:block;margin:0 0 4px}
+  #valueHistory .vh-hero[hidden]{display:none!important}
   #valueHistory .vh-search-wrap{width:min(440px,100%)}
   #valueHistory .vh-search-wrap label b{display:block;font-size:15px;font-weight:900;letter-spacing:.02em;color:#f4f4f5;margin-bottom:3px}
   #valueHistory .vh-search-wrap input{margin:7px 0 0}
@@ -130,7 +131,7 @@ function addStyles(){
   #valueHistory .vh-rank-arrow{font-size:12px;font-weight:900;line-height:1}
   #valueHistory .vh-rank-arrow.vh-up{color:var(--good,#1f9d68)}
   #valueHistory .vh-rank-arrow.vh-down{color:var(--bad,#c45151)}
-  #valueHistory .vh-subnav{display:inline-flex;gap:4px;align-items:center;width:max-content;max-width:100%;padding:5px;border:1px solid color-mix(in srgb,#e4b53f 26%,var(--line));border-radius:14px;background:color-mix(in srgb,var(--card) 88%,black);box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+  #valueHistory .vh-subnav{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap;width:max-content;max-width:100%;padding:5px;border:1px solid color-mix(in srgb,#e4b53f 26%,var(--line));border-radius:14px;background:color-mix(in srgb,var(--card) 88%,black);box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
   #valueHistory .vh-subnav button{border:0!important;border-radius:9px!important;padding:9px 16px!important;min-height:36px;background:transparent!important;color:var(--muted)!important;box-shadow:none!important;font-size:12px!important;font-weight:800}
   #valueHistory .vh-subnav button:hover{color:inherit!important;background:color-mix(in srgb,var(--card) 72%,white 4%)!important}
   #valueHistory .vh-subnav button.vh-subnav-active{color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 14%,var(--card))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 42%,transparent),0 3px 12px rgba(0,0,0,.18)!important}
@@ -144,6 +145,12 @@ function addStyles(){
   @media(max-width:900px){#valueHistory .vh-trade-filter-toolbar{grid-template-columns:1fr}#valueHistory .vh-trade-filter-toolbar .vh-trade-reset{width:100%}}
   #valueHistory .vh-team-picker{border-color:color-mix(in srgb,#e4b53f 28%,var(--line));background:var(--card)}
   #valueHistory .vh-team-picker h3{color:#e4b53f}
+  #valueHistory .vh-player-history-choice{background:transparent!important;border-color:var(--line)!important;box-shadow:none!important}
+  #valueHistory .vh-player-history-choice:before{display:none!important}
+  #valueHistory .vh-player-history-choice+.vh-player-history-choice{margin-top:0}
+  #valueHistory .vh-player-history-choice .vh-search-wrap{width:100%;max-width:620px}
+  #valueHistory .vh-team-toolbar select[data-vh-player-history-team]{background:color-mix(in srgb,var(--card) 78%,#0a0d12)!important;color:inherit!important;border-color:var(--line)!important;box-shadow:none!important}
+  #valueHistory .vh-milestone-award{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid color-mix(in srgb,#e4b53f 34%,var(--line));border-radius:999px;background:transparent;color:#f4f4f5;font-size:10px;font-weight:900;white-space:nowrap}
   #valueHistory .vh-team-toolbar select,#valueHistory #vhMarketSearch{border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important}
   #valueHistory .vh-team-toolbar select:focus,#valueHistory .vh-team-toolbar select:focus-visible,#valueHistory #vhMarketSearch:focus,#valueHistory #vhMarketSearch:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.18)!important}
   #valueHistory .vh-similar-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -373,7 +380,7 @@ function addShell(){
   tradeSec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-brand-head"><h2 class="vh-brand-title">Trade History</h2><p class="vh-brand-copy">Completed Sleeper trades with historical value presentation and a read-only analysis from the current Trade Evaluator logic.</p></div><div id="tradeHistoryContent"><div class="empty">Open Trade History to load completed trades.</div></div></div></div>';
   main.appendChild(sec);main.appendChild(tradeSec);
   const activate=(button,id)=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));button.classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!==id)};
-  valueBtn.addEventListener('click',()=>{activate(valueBtn,'valueHistory');setTimeout(initUI,0)});
+  valueBtn.addEventListener('click',()=>{activate(valueBtn,'valueHistory');setTimeout(()=>{if(!uiReady){initUI();return}syncSubnav();if(currentView==='fullMarket')loadFullMarketHistory();else if(currentView==='team')renderTrackMyTeam();else if(currentView==='playerHub')renderPlayerHistoryHub()},0)});
   tradeBtn.addEventListener('click',()=>{activate(tradeBtn,'tradeHistory');setTimeout(initTradeHistoryUI,0)});
   tradeSec.addEventListener('change',handleContentChange);
   tradeSec.addEventListener('click',handleContentClick);
@@ -381,15 +388,26 @@ function addShell(){
 function ranked(){try{return typeof ensureMaster==='function'?(ensureMaster()||[]):[]}catch{return[]}}
 function posRanks(list){const counts={},map=new Map();for(const z of list){const p=groupPos(z.x);counts[p]=(counts[p]||0)+1;map.set(String(z.x.id),counts[p])}return map}
 function currentRows(){const list=ranked();if(!list.length||!tv().playerValue)return[];const pr=posRanks(list),rows=[];for(let i=0;i<list.length;i++){const x=list[i]?.x;if(!x||x.type!=='player')continue;const pos=groupPos(x);if(!['QB','RB','WR','TE','IDP'].includes(pos))continue;const value=Math.round(Number(tv().playerValue(x)||0));if(!Number.isFinite(value)||value<=0)continue;rows.push({id:String(x.id),value,overall:i+1,pos,posRank:pr.get(String(x.id))||1})}return rows}
+function currentPickProjectionSlot(asset){
+  try{
+    const p=tv().pickContext?.(asset)||{},slot=Math.round(Number(p.projectedSlot));
+    const base=window.draftPickContext86,baseReady=base?.slots instanceof Map&&base.slots.size===32,projectionReady=Boolean(p.projectionContextUsed);
+    return (baseReady||projectionReady)&&slot>=1&&slot<=32?slot:null;
+  }catch{return null}
+}
+function projectedPickSlotText(round,slot,suffix=''){
+  const r=Number(round),s=Number(slot);
+  return Number.isFinite(r)&&r>=1&&Number.isFinite(s)&&s>=1&&s<=32?`projected ${r}.${String(Math.round(s)).padStart(2,'0')}${suffix?` ${suffix}`:''}`:'';
+}
 function currentPickRows(){
   const canonical=window.tradeValueNormalizationV130?.canonicalValue;
   if(typeof canonical!=='function')return[];
   const out=[];
   for(const a of state.allAssets||[]){
     if(a?.type!=='pick')continue;
-    const season=Number(a.season),round=Number(a.round),original=Number(a.original_owner)||Number(String(a.id||'').match(/^pick-\d+-\d+-(\d+)$/)?.[1])||0,value=Math.round(Number(canonical(a))||0);
+    const season=Number(a.season),round=Number(a.round),original=Number(a.original_owner)||Number(String(a.id||'').match(/^pick-\d+-\d+-(\d+)$/)?.[1])||0,value=Math.round(Number(canonical(a))||0),projectedSlot=currentPickProjectionSlot(a);
     if(!season||!round||!original||!(value>0))continue;
-    out.push({id:String(a.id||`pick-${season}-${round}-${original}`),value,season,round,original_owner:original,owner:Number(a.owner)||0});
+    out.push({id:String(a.id||`pick-${season}-${round}-${original}`),value,season,round,original_owner:original,owner:Number(a.owner)||0,...(projectedSlot?{projected_slot:projectedSlot}:{})});
   }
   out.sort((a,b)=>a.id.localeCompare(b.id));return out;
 }
@@ -450,6 +468,7 @@ async function recordSnapshot(source=pendingSnapshotSource){
       marketCache=null;teamNetCache.clear();
       if(uiReady){
         if(currentView==='market')loadMarket(true);
+        else if(currentView==='fullMarket')loadFullMarketHistory(true);
         else if(currentView==='team'&&trackedTeamId)loadTrackedTeam();
         else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId);
       }
@@ -466,7 +485,7 @@ function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){pendingSnaps
 function initUI(){
   if(uiReady)return;uiReady=true;
   const root=document.getElementById('vhLazy');if(!root)return;
-  root.innerHTML=`<div class="vh-control-row"><div class="vh-subnav"><button type="button" class="secondary small" data-vh-dashboard>Market dashboard</button><button type="button" class="secondary small" data-vh-track-team>Track my team</button></div><div class="vh-status" id="vhStatus">Loading market history…</div></div><div class="vh-hero"><div class="vh-search-wrap"><label for="vhSearch"><b>Search player history</b></label><input id="vhSearch" type="search" placeholder="Search a player…" autocomplete="off"><div id="vhResults" class="vh-search-results"></div></div></div><div id="vhContent"><div class="vh-empty">Loading market dashboard…</div></div>`;
+  root.innerHTML=`<div class="vh-control-row"><div class="vh-subnav"><button type="button" class="secondary small" data-vh-dashboard>Market dashboard</button><button type="button" class="secondary small" data-vh-track-team>Track my team</button><button type="button" class="secondary small" data-vh-player-history>Player Value History</button><button type="button" class="secondary small" data-vh-full-market>Full Market Value History</button></div><div class="vh-status" id="vhStatus">Loading market history…</div></div><div class="vh-hero"><div class="vh-search-wrap"><label for="vhSearch"><b>Search player history</b></label><input id="vhSearch" type="search" placeholder="Search a player…" autocomplete="off"><div id="vhResults" class="vh-search-results"></div></div></div><div id="vhContent"><div class="vh-empty">Loading market dashboard…</div></div>`;
   const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
   input.addEventListener('input',()=>renderSearchResults(input.value));
   results.addEventListener('click',e=>{const b=e.target.closest('button[data-vh-id]');if(!b)return;selectPlayer(b.dataset.vhId)});
@@ -476,14 +495,21 @@ function initUI(){
 }
 function syncSubnav(){
   document.querySelectorAll('#valueHistory .vh-subnav button').forEach(b=>b.classList.remove('vh-subnav-active'));
-  const selector=currentView==='team'?'#valueHistory [data-vh-track-team]':'#valueHistory [data-vh-dashboard]';
+  const selector=currentView==='team'?'#valueHistory [data-vh-track-team]':currentView==='fullMarket'?'#valueHistory [data-vh-full-market]':(currentView==='player'||currentView==='playerHub')?'#valueHistory [data-vh-player-history]':'#valueHistory [data-vh-dashboard]';
   document.querySelector(selector)?.classList.add('vh-subnav-active');
 }
-function renderSearchResults(value){
-  const results=document.getElementById('vhResults');if(!results)return;
-  const q=norm(value);if(!q){results.innerHTML='';return}
+function playerSearchResultsMarkup(value){
+  const q=norm(value);if(!q)return'';
   const matches=ranked().filter(z=>z?.x?.type==='player'&&norm(playerName(z.x.id)).includes(q)).slice(0,16);
-  results.innerHTML=matches.map(z=>`<button type="button" class="secondary small" data-vh-id="${esc(z.x.id)}">${esc(playerName(z.x.id))} • ${esc(groupPos(z.x))}</button>`).join('');
+  return matches.map(z=>`<button type="button" class="secondary small" data-vh-id="${esc(z.x.id)}">${esc(playerName(z.x.id))} • ${esc(groupPos(z.x))}</button>`).join('');
+}
+function renderSearchResults(value,target=document.getElementById('vhResults')){
+  if(!target)return;
+  target.innerHTML=playerSearchResultsMarkup(value);
+}
+function setPrimaryPlayerSearchVisible(show=true){
+  const hero=document.querySelector('#valueHistory .vh-hero');
+  if(hero)hero.hidden=!show;
 }
 function fitValueHistoryCellText(root=document){
   const targets=root.querySelectorAll('.vh-profile-primary h2,.vh-profile-fact small,.vh-profile-fact b,.vh-profile-fact span,.vh-current small,.vh-current .vh-big,.vh-metric>small,.vh-metric b,.vh-metric .vh-metric-time');
@@ -512,7 +538,7 @@ function syncPlayerSearchState(){
   if(label)label.textContent='Search player history';
 }
 function selectPlayer(id){
-  currentView='player';syncSubnav();currentPlayerId=String(id);const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
+  currentView='player';syncSubnav();setPrimaryPlayerSearchVisible(true);currentPlayerId=String(id);const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
   if(input)input.value=playerName(id);if(results)results.innerHTML='';syncPlayerSearchState();
   loadPlayer(id);
 }
@@ -529,8 +555,10 @@ function handleContentClick(e){
     return;
   }
   const player=e.target.closest('[data-vh-player]');if(player){selectPlayer(player.dataset.vhPlayer);return}
-  const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';syncPlayerSearchState();loadMarket(true);return}
-  const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();currentPlayerId=null;syncPlayerSearchState();renderTrackMyTeam();return}
+  const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';syncPlayerSearchState();loadMarket(true);return}
+  const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();setPrimaryPlayerSearchVisible(true);currentPlayerId=null;syncPlayerSearchState();renderTrackMyTeam();return}
+  const playerHub=e.target.closest('[data-vh-player-history]');if(playerHub){renderPlayerHistoryHub();return}
+  const fullMarket=e.target.closest('[data-vh-full-market]');if(fullMarket){loadFullMarketHistory();return}
   const openTrades=e.target.closest('[data-vh-open-trade-history]');if(openTrades){openTradeHistoryTab(openTrades.dataset.vhTradeTeam||'');return}
   const teamNetSortBtn=e.target.closest('[data-vh-team-net-sort]');if(teamNetSortBtn){const key=teamNetSortBtn.dataset.vhTeamNetSort;if(teamNetSort.key===key)teamNetSort.dir*=-1;else teamNetSort={key,dir:key==='name'?1:-1};openTeamNetModal();return}
   const attr=e.target.closest('[data-vh-team-attribution]');if(attr&&trackedTeamId){teamAttributionPeriod=attr.dataset.vhTeamAttribution;const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=teamNetCacheKey(ids,trackedTeamId);renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length});return}
@@ -542,9 +570,10 @@ function handleContentClick(e){
   const viewAll=e.target.closest('[data-vh-view-all]');if(viewAll&&marketCache){openMoverModal(viewAll.dataset.vhViewAll,viewAll.dataset.vhCategory,viewAll.dataset.vhPeriod,viewAll.dataset.vhScope||'market');return}
   const allNet=e.target.closest('[data-vh-team-net-all]');if(allNet){openTeamNetModal();return}
   const close=e.target.closest('[data-vh-modal-close]');if(close){closeMoverModal();return}
-  const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};if(currentView==='team'){const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=teamNetCacheKey(ids,trackedTeamId);renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length})}else renderMarketTable();return}
+  const sort=e.target.closest('[data-vh-sort]');if(sort&&marketCache){const key=sort.dataset.vhSort;if(marketSort.key===key)marketSort.dir*=-1;else marketSort={key,dir:key==='name'?1:-1};if(currentView==='team'){const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=teamNetCacheKey(ids,trackedTeamId);renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length})}else if(currentView==='playerHub'&&playerHistoryTeamId)renderPlayerHistoryTeamRoster();else renderMarketTable();return}
 }
 function handleContentChange(e){
+  const playerTeam=e.target.closest?.('[data-vh-player-history-team]');if(playerTeam){playerHistoryTeamId=playerTeam.value;loadPlayerHistoryTeamRoster();return}
   const team=e.target.closest?.('[data-vh-team-select]');if(team){trackedTeamId=team.value;loadTrackedTeam();return}
   const tradeTeam=e.target.closest?.('[data-vh-trade-team]');if(tradeTeam){tradeTeamFilter=tradeTeam.value;renderTradeHistory();return}
   const tradeYear=e.target.closest?.('[data-vh-trade-year]');if(tradeYear){tradeYearFilter=tradeYear.value;renderTradeHistory();return}
@@ -565,8 +594,14 @@ function handleChartPointer(e){
   else tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>Value <strong>${esc(hit.dataset.vhValue)}</strong></div><div>Overall #${esc(hit.dataset.vhOverall)} • ${esc(hit.dataset.vhPos)} #${esc(hit.dataset.vhPosRank)}</div>`;
   tip.style.left=`${x}px`;tip.style.top=`${y}px`;tip.style.display='block';
 }
+function primeTradeHistoryCache(data){
+  if(!Array.isArray(data?.trades))return false;
+  tradeHistoryCache=data;
+  return true;
+}
 async function tradeHistoryFetch(){
   if(tradeHistoryCache)return tradeHistoryCache;
+  if(primeTradeHistoryCache(globalThis.fleecedTradeHistorySharedCacheV515))return tradeHistoryCache;
   let last;
   for(let attempt=0;attempt<3;attempt++){
     try{
@@ -593,6 +628,10 @@ function tradePlayerAsset(id,receiver){return{type:'player',id:String(id),owner:
 function currentEvaluatorValue(asset){
   if(!asset)return null;
   try{
+    if(asset.type==='player'){
+      const pool=Array.isArray(state?.allAssets)?state.allAssets:[];
+      if(pool.length&&!pool.some(a=>a?.type==='player'&&String(a.id)===String(asset.id)))return 0;
+    }
     const canonical=window.tradeValueNormalizationV130?.canonicalValue;
     if(typeof canonical==='function'){const n=Number(canonical(asset));return Number.isFinite(n)?Math.round(n):null}
     if(typeof window.tradeAssetValue93==='function'){const n=Number(window.tradeAssetValue93(asset));return Number.isFinite(n)?Math.round(n):null}
@@ -643,7 +682,7 @@ function fairWithValue(give,recv,valueFn){
   const amp=asset=>{if(!asset||asset.type!=='player')return 1.10;const r=Math.max(1,rankOf(asset));return 1.10+.44*Math.exp(-(r-1)/35)};
   const eliteWeight=asset=>asset?.type==='player'?Math.exp(-(Math.max(1,rankOf(asset))-1)/28):0;
   const counterElitePressure=xs=>{const strengths=(xs||[]).filter(x=>x?.type==='player'&&(rankOf(x)<=20||av(x)>=8000)).map(x=>{const r=Math.max(1,rankOf(x)),v=av(x),rankStrength=clamp(0,(21-r)/20,1),valueStrength=clamp(0,(v-7800)/2200,1);return .7*rankStrength+.3*valueStrength});return strengths.length?clamp(0,Math.max(...strengths)+.18*Math.max(0,strengths.length-1),1):0};
-  const calc=(premium,otherTop,otherRaw,premiumRaw,asset,otherAssets)=>{if(premium<=otherTop||otherTop<=0)return 0;const depth=Math.max(0,otherRaw-otherTop);if(depth<=0)return 0;const rel=clamp(0,otherTop/premium,1),strength=premium/(premium+3500),rate=.075+.18*strength,counter=1-.75*Math.pow(rel,1.4),disp=1+.8*(1-rel),elite=1.3+1.5*clamp(0,(premium-5000)/5000,1),smooth=1+.39*clamp(0,(8800-premium)/1890,1),legacy=premium*rate*counter*disp*elite*smooth*amp(asset),rawGap=Math.max(0,otherRaw-premiumRaw),ew=eliteWeight(asset),gapTarget=rawGap>0?rawGap*(.50+.50*ew):0,depthCap=depth*(.55+(rawGap>0?.35*ew:0)),elitePressure=rawGap>0?counterElitePressure(otherAssets):0,eliteCounterCap=elitePressure>0?rawGap*(1-.72*elitePressure):Infinity,proximityRate=clamp(.18,.18+2.35*(1-rel),1),centerpieceProximityCap=rawGap>0?rawGap*proximityRate:Infinity;return Math.min(Math.max(legacy,gapTarget),depthCap,eliteCounterCap,centerpieceProximityCap)};
+  const calc=(premium,otherTop,otherRaw,premiumRaw,asset,otherAssets)=>{if(premium<=otherTop||otherTop<=0)return 0;const depth=Math.max(0,otherRaw-otherTop);if(depth<=0)return 0;const rel=clamp(0,otherTop/premium,1),strength=premium/(premium+3500),rate=.075+.18*strength,counter=1-.75*Math.pow(rel,1.4),disp=1+.8*(1-rel),elite=1.3+1.5*clamp(0,(premium-5000)/5000,1),smooth=1+.39*clamp(0,(8800-premium)/1890,1),legacy=premium*rate*counter*disp*elite*smooth*amp(asset),rawGap=Math.max(0,otherRaw-premiumRaw),ew=eliteWeight(asset),depthCap=depth*(.55+(rawGap>0?.35*ew:0)),elitePressure=counterElitePressure(otherAssets),scarcityPremium=legacy*(1-.25*elitePressure),packageGapFloor=rawGap>0?rawGap*(.50+.50*ew)*(1-.70*elitePressure):0;return Math.min(Math.max(scarcityPremium,packageGapFloor),depthCap)};
   if(am>bm)aa=calc(am,bm,br,ar,aTop,recv);else if(bm>am)ba=calc(bm,am,ar,br,bTop,give);
   const a=ar+aa,b=br+ba,hi=Math.max(a,b,1),rel=Math.abs(a-b)/hi,m=145+45*clamp(0,(hi-4000)/7000,1),score=Math.round(clamp(1,100-rel*m,100)),ratio=Math.min(a,b)/hi;
   return{aRaw:ar,bRaw:br,aAdj:aa,bAdj:ba,aEffective:a,bEffective:b,edgeRaw:b?br-ar:0,edgeEffective:b-a,ratio,score,rejected:score<55||ratio<.62,status:score>=94?'Excellent Fit':score>=82?'Fair':'Negotiable'};
@@ -654,9 +693,17 @@ function currentTradePlayerMeta(id){
   const sid=String(id),row=currentRows().find(r=>String(r?.id)===sid),asset=tradePlayerAsset(sid,0),pos=row?.pos||groupPos(asset),team=String(state.players?.[sid]?.team||'FA').toUpperCase(),overall=Number(row?.overall),posRank=Number(row?.posRank);
   return`${pos} • ${team}${Number.isFinite(overall)?` • Overall #${overall}`:''}${Number.isFinite(posRank)?` • ${pos} #${posRank}`:''}`;
 }
+function historicalPickSnapshotRow(side,p){
+  const id=`pick-${Number(p?.season)||0}-${Number(p?.round)||0}-${Number(p?.original_roster_id)||0}`;
+  return(side?.then_picks||[]).find(x=>String(x?.id)===id)||null;
+}
 function historicalPickValue(side,p){
-  const id=`pick-${Number(p?.season)||0}-${Number(p?.round)||0}-${Number(p?.original_roster_id)||0}`,row=(side?.then_picks||[]).find(x=>String(x?.id)===id),n=Number(row?.value);
+  const row=historicalPickSnapshotRow(side,p),n=Number(row?.value);
   return Number.isFinite(n)?Math.round(n):null;
+}
+function historicalPickProjectedSlot(side,p){
+  const n=Math.round(Number(historicalPickSnapshotRow(side,p)?.projected_slot));
+  return n>=1&&n<=32?n:null;
 }
 function historicalPlayerValue(side,id){
   const row=(side?.then_players||[]).find(x=>String(x?.id)===String(id)),n=Number(row?.value);return Number.isFinite(n)?Math.round(n):null
@@ -686,8 +733,8 @@ function sideValueModel(side,trade){
   for(const p of side.picks||[]){
     const pickAsset=tradePickAsset(p,side.roster_id),recorded=historicalPickValue(side,p),then=recorded??retroactiveTradeHistoryPickValue(pickAsset,trade);
     if(then==null)atTradeComplete=false;
-    const ownership=historicalPickOwnershipLabel(p,trade),slotLabel=historicalDraftSlotLabel(p);
-    atTradeItems.push({label:`Draft pick: ${p.season} R${p.round}`,meta:ownership,kind:'pick',value:then});
+    const ownership=historicalPickOwnershipLabel(p,trade),slotLabel=historicalDraftSlotLabel(p),projectedAtTrade=historicalPickProjectedSlot(side,p),projectedAtTradeText=projectedPickSlotText(p.round,projectedAtTrade,'at trade');
+    atTradeItems.push({label:`Draft pick: ${p.season} R${p.round}`,meta:`${projectedAtTradeText?projectedAtTradeText+' • ':''}${ownership}`,kind:'pick',value:then});
     if(p.drafted_player_id){
       const drafted=tradePlayerAsset(p.drafted_player_id,side.roster_id),now=currentEvaluatorValue(drafted);if(now==null)currentComplete=false;
       currentItems.push({label:playerName(p.drafted_player_id),meta:`From ${slotLabel||`${p.season} R${p.round}`} • ${ownership}`,kind:'drafted-player',value:now});
@@ -706,7 +753,7 @@ function tradeOutcomeAssets(side){
 }
 function tradeOriginalAssets(side){
   const out=(side?.player_ids||[]).map(id=>tradePlayerAsset(id,side.roster_id));
-  for(const p of side?.picks||[]){const pick=tradePickAsset(p,side.roster_id);if(pick){const recorded=historicalPickValue(side,p);if(recorded!=null)pick.historyRecordedValue=recorded;out.push(pick)}}
+  for(const p of side?.picks||[]){const pick=tradePickAsset(p,side.roster_id);if(pick){const recorded=historicalPickValue(side,p),projectedSlot=historicalPickProjectedSlot(side,p);if(recorded!=null)pick.historyRecordedValue=recorded;if(projectedSlot)pick.historyProjectedSlot=projectedSlot;out.push(pick)}}
   return out;
 }
 function tradeEvaluatorAnalysis(trade){
@@ -722,6 +769,18 @@ function tradeEvaluatorAnalysis(trade){
     return{available:true,incomplete:false,score,label,teamA:a,teamB:b,teamAName:histA,teamBName:histB,aReceived,bReceived,f};
   }catch(e){return{available:false,reason:`Current Trade Evaluator could not analyze this historical package: ${String(e?.message||e)}`}}
 }
+function tradeHistoryAdjustedOriginalSummary(trade){
+  const a=tradeEvaluatorAnalysis(trade);
+  if(!a?.available||a?.incomplete||!a?.f)return null;
+  const f=a.f,sideA=Number(f.bEffective),sideB=Number(f.aEffective),aRaw=Number(f.bRaw),bRaw=Number(f.aRaw);
+  if(![sideA,sideB,aRaw,bRaw].every(Number.isFinite))return null;
+  return{
+    a:sideA,b:sideB,edge:Math.abs(sideA-sideB),signedEdge:sideA-sideB,winner:sideA>=sideB?0:1,
+    aRaw,bRaw,aAdjustment:Number(f.bAdj)||0,bAdjustment:Number(f.aAdj)||0,
+    totalRawValueExchanged:aRaw+bRaw,score:Number(a.score)||0,label:String(a.label||'Trade')
+  };
+}
+window.tradeHistoryAdjustedOriginalV505=tradeHistoryAdjustedOriginalSummary;
 function tradeItemRows(items){
   return items.map(x=>`<div class="vh-driver-row"><div><b>${esc(x.label)}</b>${x.meta?`<small>${esc(x.meta)}</small>`:''}</div><div>${x.value==null?'—':fmt(x.value)}</div></div>`).join('')||'<div class="vh-empty">No assets.</div>'
 }
@@ -759,7 +818,8 @@ function hindsightAssetRow(asset,trade){
     const slotLabel=historicalDraftSlotLabel(p);
     meta=`${currentTradePlayerMeta(asset.id)} • from ${slotLabel||`${p.season} R${p.round}`} • original: ${original}`;
   }else if(asset?.type==='pick'){
-    meta=`Draft pick • original: ${historicalTradeTeamName(trade,asset.original_owner)}`;
+    const projectedNow=projectedPickSlotText(asset.round,currentPickProjectionSlot(asset),'now');
+    meta=`Draft pick${projectedNow?` • ${projectedNow}`:''} • original: ${historicalTradeTeamName(trade,asset.original_owner)}`;
   }else meta=currentTradePlayerMeta(asset?.id);
   return`<div class="vh-eval-asset"><div><b>${esc(label)}</b><small>${esc(meta)}</small></div><strong>${value==null?'N/A':fmt(value)}</strong></div>`;
 }
@@ -776,6 +836,25 @@ function hindsightAnalysis(trade){
     return{available:true,score,label,aAssets,bAssets,f,teamAName:historicalTradeTeamName(trade,sideA.roster_id),teamBName:historicalTradeTeamName(trade,sideB.roster_id)};
   }catch(e){return{available:false,reason:'Current outcome could not be evaluated.'}}
 }
+function tradeHistoryAdjustedHindsightSummary(trade){
+  const h=hindsightAnalysis(trade);if(!h?.available||!h?.f)return null;
+  const f=h.f,sideA=trade?.sides?.[0],sideB=trade?.sides?.[1],a=Number(f.bEffective),b=Number(f.aEffective);
+  if(!Number.isFinite(a)||!Number.isFinite(b))return null;
+  let playerValueExchanged=0;
+  for(const side of trade.sides||[])for(const id of side?.player_ids||[]){
+    const v=currentEvaluatorValue(tradePlayerAsset(id,side.roster_id));
+    if(Number.isFinite(Number(v)))playerValueExchanged+=Math.max(0,Number(v));
+  }
+  return{
+    a,b,edge:Math.abs(a-b),signedEdge:a-b,winner:a>=b?0:1,
+    aRaw:Number(f.bRaw)||0,bRaw:Number(f.aRaw)||0,
+    aAdjustment:Number(f.bAdj)||0,bAdjustment:Number(f.aAdj)||0,
+    totalRawValueExchanged:(Number(f.aRaw)||0)+(Number(f.bRaw)||0),
+    playerValueExchanged:Math.round(playerValueExchanged),
+    score:Number(h.score)||0,label:h.label||'Trade'
+  };
+}
+window.tradeHistoryAdjustedHindsightV477=tradeHistoryAdjustedHindsightSummary;
 function hindsightSection(trade){
   const h=hindsightAnalysis(trade);
   if(!h.available)return`<div class="vh-hindsight"><div class="vh-hindsight-head"><div><h4>Hindsight</h4><div class="vh-sub">How the trade's current outcome pieces compare today.</div></div></div><div class="vh-empty">${esc(h.reason)}</div></div>`;
@@ -793,8 +872,8 @@ function evaluatorAssetRow(asset,trade){
   const value=tradeHistoryEvaluatorValue(asset,trade),label=asset?.type==='pick'?(asset.name||`${asset.season} R${asset.round}`):playerName(asset?.id);
   let meta='';
   if(asset?.type==='pick'){
-    const original=historicalTradeTeamName(trade,asset.original_owner),slotLabel=historicalDraftSlotLabel({season:asset.season,round:asset.round,draft_slot:asset.historyPick?.draft_slot}),used=asset.historyPick?.drafted_player_id?` • selected ${playerName(asset.historyPick.drafted_player_id)}${slotLabel?` at ${slotLabel}`:''}`:'';
-    meta=`Draft pick • original: ${original}${used}`;
+    const original=historicalTradeTeamName(trade,asset.original_owner),slotLabel=historicalDraftSlotLabel({season:asset.season,round:asset.round,draft_slot:asset.historyPick?.draft_slot}),used=asset.historyPick?.drafted_player_id?` • selected ${playerName(asset.historyPick.drafted_player_id)}${slotLabel?` at ${slotLabel}`:''}`:'',projectedAtTrade=projectedPickSlotText(asset.round,asset.historyProjectedSlot,'at trade');
+    meta=`Draft pick${projectedAtTrade?` • ${projectedAtTrade}`:''} • original: ${original}${used}`;
   }else meta=currentTradePlayerMeta(asset?.id);
   return`<div class="vh-eval-asset"><div><b>${esc(label)}</b><small>${esc(meta)}</small></div><strong>${value==null?'—':fmt(value)}</strong></div>`
 }
@@ -836,6 +915,7 @@ window.openValueHistoryTeamV458=function(id,showLeagueComparison=false){
  const go=()=>{renderTrackMyTeam();if(trackedTeamId){loadTrackedTeam();if(showLeagueComparison){let n=0,t=setInterval(()=>{n++;if(document.querySelector('[data-vh-team-net-all]')){clearInterval(t);openTeamNetModal()}else if(n>40)clearInterval(t)},100)}}};
  setTimeout(go,80);
 };
+window.primeTradeHistoryCacheV515=primeTradeHistoryCache;
 window.openTradeHistoryTeamV455=function(id){
   tradeTeamFilter=String(id||'');tradeYearFilter='';tradeMonthFilter='';
   const show=()=>{renderTradeHistory();requestAnimationFrame(()=>{const sel=document.querySelector('#tradeHistory [data-vh-trade-team]');if(sel)sel.value=tradeTeamFilter;const box=document.getElementById('tradeHistoryContent');if(box){const top=Math.max(0,window.scrollY+box.getBoundingClientRect().top-110);window.scrollTo({top,behavior:'auto'})}})};
@@ -881,6 +961,12 @@ function teamTradeImpactCard(teamId){
   return`<div class="vh-card"><div class="vh-card-head"><div><h3>Recent Trade Impact</h3><div class="vh-sub">Latest completed trade involving ${esc(teamName(id))}: ${esc(dateShort(t.created))}</div></div></div><div class="vh-attribution-summary"><div class="vh-attribution-stat"><small>Value at trade</small><b>${m?.atTradeTotal==null?'—':fmt(m.atTradeTotal)}</b></div><div class="vh-attribution-stat"><small>Current outcome</small><b>${m?.currentTotal==null?'—':fmt(m.currentTotal)}</b></div><div class="vh-attribution-stat"><small>Change</small><b class="${delta==null?'vh-neutral':deltaClass(delta)}">${delta==null?'—':signed(delta)}</b></div></div><button type="button" class="secondary small" data-vh-open-trade-history data-vh-trade-team="${esc(id)}">View full Trade History</button></div>`
 }
 async function historyFetch(id){let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_id=${encodeURIComponent(id)}`,{cache:'no-store'});if(!r.ok)throw Error('history unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('history unavailable')}
+async function scoringFetch(id){
+  const key=String(id);if(playerScoringCache.has(key))return{player_id:key,scoring_milestones:playerScoringCache.get(key)};
+  if(playerScoringPending.has(key))return playerScoringPending.get(key);
+  const pending=(async()=>{let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_scoring=1&player_id=${encodeURIComponent(key)}`,{cache:'no-store'});if(!r.ok)throw Error('scoring milestones unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('scoring milestones unavailable')})();
+  playerScoringPending.set(key,pending);try{return await pending}finally{playerScoringPending.delete(key)}
+}
 async function marketFetch(){let last;for(let attempt=0;attempt<3;attempt++){try{const r=await fetch(`${API}?market=1`,{cache:'no-store'});if(!r.ok)throw Error(`market history unavailable (${r.status})`);return await r.json()}catch(e){last=e;if(attempt<2)await new Promise(r=>setTimeout(r,250*(attempt+1)))}}throw last||Error('market history unavailable')}
 function teamNetCacheKey(ids,teamId){return`${String(teamId||'')}|${(ids||[]).map(String).sort().join(',')}`}
 async function teamNetFetch(ids,teamId){
@@ -893,9 +979,29 @@ async function teamNetFetch(ids,teamId){
 async function ensureMarketCache(force=false){if(!marketCache||force){const data=await marketFetch();marketCache=data.market||{}}return marketCache}
 async function loadMarket(force=false){
   const box=document.getElementById('vhContent');if(!box)return;
-  currentView='market';syncSubnav();currentPlayerId=null;
-  if(!marketCache||force){box.innerHTML='<div class="vh-empty">Loading market dashboard…</div>';try{await ensureMarketCache(force)}catch{box.innerHTML='<div class="notice">Historical market data is temporarily unavailable. Current values and all trade tools are unaffected.</div>';return}}
+  currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;
+  if(!marketCache||force){
+    box.innerHTML='<div class="vh-empty">Loading market dashboard…</div>';
+    try{await ensureMarketCache(force)}catch{
+      if(currentView==='market')box.innerHTML='<div class="notice">Historical market data is temporarily unavailable. Current values and all trade tools are unaffected.</div>';
+      return
+    }
+  }
+  if(currentView!=='market')return;
   renderMarketDashboard();
+}
+async function loadFullMarketHistory(force=false){
+  const box=document.getElementById('vhContent');if(!box)return;
+  currentView='fullMarket';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;
+  if(!marketCache||force){
+    box.innerHTML='<div class="vh-empty">Loading full market value history…</div>';
+    try{await ensureMarketCache(force)}catch{
+      if(currentView==='fullMarket')box.innerHTML='<div class="notice">Full Market Value History is temporarily unavailable. Current values and all trade tools are unaffected.</div>';
+      return
+    }
+  }
+  if(currentView!=='fullMarket')return;
+  renderFullMarketHistory();
 }
 function deltaClass(n){return Number(n)>0?'vh-up':Number(n)<0?'vh-down':'vh-neutral'}
 function moverRows(rows,mode='value',limit=10){
@@ -946,8 +1052,13 @@ function renderMarketDashboard(){
   <div class="vh-grid-2">
     <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Risers',rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(applyMoverPool(rpR.rankRisers,'market','rankRisers'),'rank')}</div>
     <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Fallers',rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(applyMoverPool(rpF.rankFallers,'market','rankFallers'),'rank')}</div>
-  </div>
-  <details class="vh-card vh-market-table" open><summary><span>Full Market History Table</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
+  </div>`;
+}
+function renderFullMarketHistory(){
+  const box=document.getElementById('vhContent');if(!box||!marketCache)return;
+  const m=marketCache,status=document.getElementById('vhStatus');
+  if(status)status.textContent=m.latest?`Tracking since ${dateShort(m.tracking_since)} • Latest snapshot ${dateTime(m.latest)} • ${fmt(m.snapshot_count)} snapshots`:'Initializing first historical snapshot…';
+  box.innerHTML=`<details class="vh-card vh-market-table" open><summary><span>Full Market Value History</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Full Market History Table — sort the complete current market by value or historical movement. Select any player to open their Player Value History.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
   renderMarketTable();
 }
@@ -965,21 +1076,76 @@ function renderMarketTable(){
   const rows=sortedMarketRows(marketCache.marketRows||[],document.getElementById('vhMarketSearch')?.value||'');
   host.innerHTML=marketTableRowsMarkup(rows);
 }
+function scoringMilestonesRows(scoring,loading=false){
+  if(!scoring&&loading)return'<div class="vh-feed-row"><span class="vh-milestone-label">Scoring milestones<span class="vh-milestone-time">Loading completed-week scoring in the background…</span></span><b>…</b></div>';
+  return`
+      <div id="vhScoringMilestones">${scoringMilestonesRows(scoring,scoringLoading)}</div>`;
+}
+async function loadPlayerScoring(id){
+  const key=String(id);if(playerScoringCache.has(key))return;
+  try{const data=await scoringFetch(key);playerScoringCache.set(key,data?.scoring_milestones||null)}catch{return}
+  if(String(currentPlayerId)!==key)return;
+  const target=document.getElementById('vhScoringMilestones');if(target)target.innerHTML=scoringMilestonesRows(playerScoringCache.get(key),false);
+}
 async function loadPlayer(id){
   const box=document.getElementById('vhContent');if(!box)return;box.innerHTML='<div class="vh-empty">Loading player history…</div>';
-  try{const data=await historyFetch(id),pts=Array.isArray(data.points)?data.points:[];playerScoringCache.set(String(id),data.scoring_milestones||null);renderPlayerProfile(id,pts,'ALL')}catch{box.innerHTML='<div class="notice">Historical data is temporarily unavailable. Current values and all trade tools are unaffected.</div>'}
+  try{
+    const data=await historyFetch(id),pts=Array.isArray(data.points)?data.points:[],key=String(id);
+    if(data.scoring_milestones)playerScoringCache.set(key,data.scoring_milestones);
+    renderPlayerProfile(id,pts,'ALL');
+    if(!playerScoringCache.has(key))loadPlayerScoring(key);
+  }catch{box.innerHTML='<div class="notice">Historical data is temporarily unavailable. Current values and all trade tools are unaffected.</div>'}
 }
 
 function leagueTeamIds(){
   const ids=new Set();for(const a of state.allAssets||[])if(a?.owner!=null)ids.add(String(a.owner));
   return[...ids].sort((a,b)=>String(teamName(a)).localeCompare(String(teamName(b))));
 }
+function renderPlayerHistoryHub(){
+  currentView='playerHub';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;
+  const box=document.getElementById('vhContent');if(!box)return;
+  const ids=leagueTeamIds(),selected=playerHistoryTeamId&&ids.includes(String(playerHistoryTeamId))?String(playerHistoryTeamId):'';
+  const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
+  if(input)input.value='';if(results)results.innerHTML='';
+  const status=document.getElementById('vhStatus');if(status)status.textContent='Search any player or choose a fantasy team to browse its current roster.';
+  box.innerHTML=`
+    <div class="vh-card vh-player-history-choice">
+      <div class="vh-card-head"><div><h3>Player Value History</h3><div class="vh-sub">Search for a player to open that player's full Value History.</div></div></div>
+      <div class="vh-search-wrap">
+        <label for="vhPlayerHistorySearch"><b>Search Player Value History</b></label>
+        <input id="vhPlayerHistorySearch" type="search" placeholder="Search a player…" autocomplete="off">
+        <div id="vhPlayerHistoryResults" class="vh-search-results"></div>
+      </div>
+    </div>
+    <div class="vh-card vh-player-history-choice">
+      <div class="vh-card-head"><div><h3>View your team's value history</h3><div class="vh-sub">Choose a fantasy team to browse its current roster using the exact same Market Value History table as Track My Team.</div></div></div>
+      <div class="vh-team-toolbar"><label><b>Fantasy team</b><select data-vh-player-history-team><option value="">Select a team…</option>${ids.map(id=>`<option value="${esc(id)}" ${selected===id?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div>
+    </div>
+    <div id="vhPlayerHistoryTeam"></div>`;
+  const hubInput=document.getElementById('vhPlayerHistorySearch'),hubResults=document.getElementById('vhPlayerHistoryResults');
+  hubInput?.addEventListener('input',()=>renderSearchResults(hubInput.value,hubResults));
+  hubResults?.addEventListener('click',e=>{const b=e.target.closest('button[data-vh-id]');if(!b)return;selectPlayer(b.dataset.vhId)});
+  if(selected)loadPlayerHistoryTeamRoster();
+}
+function renderPlayerHistoryTeamRoster(){
+  const host=document.getElementById('vhPlayerHistoryTeam');if(!host||!marketCache||!playerHistoryTeamId)return;
+  const owned=new Set((state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(playerHistoryTeamId)).map(a=>String(a.id)));
+  const rows=sortedMarketRows((marketCache.marketRows||[]).filter(r=>owned.has(String(r.id))));
+  host.innerHTML=`<div class="vh-card"><div class="vh-card-head"><div><h3>${esc(teamName(playerHistoryTeamId))} — Player Value History</h3><div class="vh-sub">${rows.length} current players • exact same columns and Market Value History data used in Track My Team</div></div></div>${marketTableRowsMarkup(rows)}</div>`;
+}
+async function loadPlayerHistoryTeamRoster(){
+  currentView='playerHub';syncSubnav();const host=document.getElementById('vhPlayerHistoryTeam');if(!host)return;
+  if(!playerHistoryTeamId){host.innerHTML='';return}
+  host.innerHTML='<div class="vh-card"><div class="vh-empty">Loading roster from Market Value History…</div></div>';
+  try{await ensureMarketCache(!marketCache)}catch{host.innerHTML='<div class="notice">Player Value History is temporarily unavailable. Current values and all trade tools are unaffected.</div>';return}
+  if(currentView==='playerHub')renderPlayerHistoryTeamRoster();
+}
 function renderTrackMyTeam(){
-  currentView='team';syncSubnav();currentPlayerId=null;
+  currentView='team';syncSubnav();setPrimaryPlayerSearchVisible(true);currentPlayerId=null;
   const box=document.getElementById('vhContent');if(!box)return;
   const ids=leagueTeamIds(),selected=trackedTeamId&&ids.includes(String(trackedTeamId))?String(trackedTeamId):'';
-  const status=document.getElementById('vhStatus');if(status)status.textContent='Track a league roster using the same data as Full Market History.';
-  box.innerHTML=`<div class="vh-card vh-team-picker"><div class="vh-card-head"><div><h3>Track My Team</h3><div class="vh-sub">Select one of the 32 league teams. This table is the Full Market History dataset filtered to that team's current players.</div></div></div><div class="vh-team-toolbar"><label><b>Fantasy team</b><select data-vh-team-select><option value="">Select a team…</option>${ids.map(id=>`<option value="${esc(id)}" ${selected===id?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div></div><div id="vhTrackedTeam"></div>`;
+  const status=document.getElementById('vhStatus');if(status)status.textContent='Track a league roster using the same data as Full Market Value History.';
+  box.innerHTML=`<div class="vh-card vh-team-picker"><div class="vh-card-head"><div><h3>Track My Team</h3><div class="vh-sub">Select one of the 32 league teams. This table is the Full Market Value History dataset filtered to that team's current players.</div></div></div><div class="vh-team-toolbar"><label><b>Fantasy team</b><select data-vh-team-select><option value="">Select a team…</option>${ids.map(id=>`<option value="${esc(id)}" ${selected===id?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div></div><div id="vhTrackedTeam"></div>`;
   if(selected)loadTrackedTeam();
 }
 async function loadTrackedTeam(){
@@ -1166,7 +1332,7 @@ function recentChanges(pts){
 function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
   if(!allPts.length){box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
-  const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null;
+  const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCache.has(String(id));
   const latestMs=new Date(allPts[allPts.length-1].t).getTime(),rank30=allPts.filter(p=>new Date(p.t).getTime()>=latestMs-30*86400000),rankBase=rank30[0]||allPts[0],rankLast=rank30[rank30.length-1]||allPts[allPts.length-1],overallMove=Number(rankBase.overall)-Number(rankLast.overall),posMove=Number(rankBase.posRank)-Number(rankLast.posRank);
   const status=document.getElementById('vhStatus');if(status)status.textContent=`Tracked since ${dateShort(allPts[0].t)} • ${fmt(allPts.length)} player observations`;
   box.innerHTML=`
@@ -1209,6 +1375,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
       <div class="vh-feed-row"><span class="vh-milestone-label">Highest points in a week<span class="vh-milestone-time">${scoring?.highWeek?`${scoring.highWeek.season} Week ${scoring.highWeek.week}`:'No recorded NFL week yet'}</span></span><b>${scoring?.highWeek?Number(scoring.highWeek.points).toFixed(2):'—'}</b></div>
       <div class="vh-feed-row"><span class="vh-milestone-label">Highest points in a season<span class="vh-milestone-time">${scoring?.highSeason?`${scoring.highSeason.season} • ${scoring.highSeason.games} games`:'No qualifying 8+ game season yet'}</span></span><b>${scoring?.highSeason?Number(scoring.highSeason.points).toFixed(2):'—'}</b></div>
       <div class="vh-feed-row"><span class="vh-milestone-label">Highest PPG in qualifying season<span class="vh-milestone-time">${scoring?.highPpg?`${scoring.highPpg.season} • ${scoring.highPpg.games} games`:'No qualifying 8+ game season yet'}</span></span><b>${scoring?.highPpg?Number(scoring.highPpg.points).toFixed(2):'—'}</b></div>
+      ${(scoring?.weeklyAwards||[]).map(a=>`<div class="vh-feed-row"><span class="vh-milestone-label">${esc(a.title||'Player of the Week')}<span class="vh-milestone-time">${esc(String(a.season))} Week ${esc(String(a.week))} • ${a.week_started_at?dateShort(a.week_started_at):'date unavailable'}</span></span><span class="vh-milestone-award">🏅 ${Number(a.points||0).toFixed(2)} pts</span></div>`).join('')}
       <div class="vh-feed-row"><span class="vh-milestone-label">Observations</span><b>${fmt(allPts.length)}</b></div>
     </div><div class="tiny muted" style="margin-top:10px">Scoring milestones use Sleeper weekly regular-season stats and this league’s scoring settings. Informational only.</div></div>
   </div>
@@ -1217,5 +1384,5 @@ function renderPlayerProfile(id,allPts,period='ALL'){
 }
 function boot(){addShell();scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-window.valueHistoryV331={currentRows,currentPickRows,currentTeamRows,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)}};
+window.valueHistoryV331={currentRows,currentPickRows,currentTeamRows,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

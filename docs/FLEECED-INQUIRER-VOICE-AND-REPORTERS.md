@@ -734,3 +734,13 @@ Do not publish generation-process language such as:
 Fantasy and NFL stats support the reporter's observation; they are not the sentence template.
 
 Bartholomew is explicitly protected from regression into a dry analytics role. He should remain witty, sarcastic, cultured/pretentious, dramatic and funny while distinct from Tilly.
+
+## Editorial revision 5 — team-column depth
+
+- Team articles must interpret statistics, not merely print them. A fantasy total or football stat line should normally be followed by reporter judgment about role, repeatability, consequence, matchup, or what the number changes.
+- Do not explain the format to the reader. In particular, defensive production should be analyzed as football evidence rather than followed by a sentence explaining that IDP leagues are supposed to reward defense.
+- A broad “multiple contributors / not a one-player effort” thesis is reserved for genuinely exceptional distribution: three starters at 18+ fantasy points in the same team week. Ordinary secondary scoring does not qualify.
+- If canonical trade-history evidence is incomplete, omit the Trade Receipt beat entirely. Do not publish a paragraph whose subject is the absence of trade data.
+- Losing teams with established bad records invite pessimism and sarcasm from every desk. Keep the joke tied to the verified record and the football evidence.
+- Avoid name-swapped templates across team articles. Different teams should produce different angles based on their score shape, player roles, record, opponent and next-week stakes.
+- Tilly Fleecer never uses all-caps typography as emphasis. His voice stays loud through sentence construction, not capitalization.

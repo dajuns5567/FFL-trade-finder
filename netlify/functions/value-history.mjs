@@ -136,9 +136,9 @@ function cleanPicks(picks){
   if(!Array.isArray(picks))return[];
   const out=[];
   for(const p of picks){
-    const id=String(p?.id||'').trim(),value=Math.round(Number(p?.value)),season=Math.round(Number(p?.season)),round=Math.round(Number(p?.round)),original_owner=Math.round(Number(p?.original_owner)),owner=Math.round(Number(p?.owner));
+    const id=String(p?.id||'').trim(),value=Math.round(Number(p?.value)),season=Math.round(Number(p?.season)),round=Math.round(Number(p?.round)),original_owner=Math.round(Number(p?.original_owner)),owner=Math.round(Number(p?.owner)),projected_slot=Math.round(Number(p?.projected_slot));
     if(!id||!Number.isFinite(value)||value<0||value>12000||!Number.isFinite(season)||season<2020||season>2100||!Number.isFinite(round)||round<1||round>10||!Number.isFinite(original_owner)||original_owner<1)continue;
-    out.push({id,value,season,round,original_owner,owner:Number.isFinite(owner)?owner:0});
+    out.push({id,value,season,round,original_owner,owner:Number.isFinite(owner)?owner:0,...(projected_slot>=1&&projected_slot<=32?{projected_slot}:{})});
   }
   return out.slice(0,1000);
 }
@@ -155,7 +155,7 @@ function cleanTeams(teams){
 function fingerprint(rows,picks=[],teams=[]){
   let h=2166136261;
   for(const r of rows){const x=`${r.id}:${r.value}:${r.overall}:${r.posRank}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
-  for(const p of picks){const x=`P:${p.id}:${p.value}:${p.season}:${p.round}:${p.original_owner}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
+  for(const p of picks){const x=`P:${p.id}:${p.value}:${p.season}:${p.round}:${p.original_owner}:${Number(p.projected_slot)||0}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
   for(const t of teams){const x=`T:${t.id}:${t.value}:${t.player_count}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
   return (h>>>0).toString(36);
 }
@@ -520,7 +520,7 @@ async function getAllTeamWeekMovement(s){
   let indexed={items:[],source:s?'empty':'unavailable'},localSnaps=[];
   if(s){try{indexed=await allItems(s);localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[]}catch(e){indexed={items:[],source:'unavailable',error:String(e?.message||e)}}}
   const snaps=mergeSnapshots(archiveSnaps,localSnaps).filter(x=>x?.t&&Array.isArray(x?.teams)&&x.teams.length);
-  if(!snaps.length)return{teams:[],source:indexed.source,snapshotCount:0,trackingSince:null,latest:null};
+  if(!snaps.length)return{teams:[],player_deltas:[],source:indexed.source,snapshotCount:0,trackingSince:null,latest:null};
   const latest=snaps[snaps.length-1],latestMs=new Date(latest.t).getTime(),targetMs=latestMs-7*86400000;
   let base=snaps[0];for(const snap of snaps){const ms=new Date(snap.t).getTime();if(Number.isFinite(ms)&&ms<=targetMs)base=snap;else if(Number.isFinite(ms)&&ms>targetMs)break}
   const exactSeven=new Date(base.t).getTime()<=targetMs,baseMap=new Map((base.teams||[]).map(x=>[String(x?.id||''),x])),out=[];
@@ -531,8 +531,31 @@ async function getAllTeamWeekMovement(s){
     out.push({team_id:id,value:Math.round(value),baseline_value:Number.isFinite(baseValue)?Math.round(baseValue):null,delta,pct,baseline_t:base.t,latest_t:latest.t,period:exactSeven?'7D':'AVAILABLE',player_count:Number(row?.player_count)||0});
   }
   out.sort((a,b)=>(Number(b.delta)||0)-(Number(a.delta)||0)||Number(a.team_id)-Number(b.team_id));
+
+  // Use the exact same baseline/latest snapshots as the team movement window so
+  // team-level Week movement and the player movers explaining it cannot drift.
+  const basePlayers=new Map((base.rows||[]).map(x=>[String(x?.id||''),x])),playerDeltas=[];
+  for(const row of latest.rows||[]){
+    const id=String(row?.id||''),value=Number(row?.value),prior=basePlayers.get(id),baseValue=Number(prior?.value);
+    if(!id||!Number.isFinite(value)||!Number.isFinite(baseValue))continue;
+    const delta=Math.round(value-baseValue);
+    if(!delta)continue;
+    playerDeltas.push({
+      player_id:id,
+      value:Math.round(value),
+      baseline_value:Math.round(baseValue),
+      delta,
+      pct:baseValue!==0?delta/baseValue*100:null,
+      position:String(row?.pos||''),
+      baseline_t:base.t,
+      latest_t:latest.t,
+      period:exactSeven?'7D':'AVAILABLE'
+    });
+  }
+  playerDeltas.sort((a,b)=>Math.abs(Number(b.delta))-Math.abs(Number(a.delta))||Number(b.delta)-Number(a.delta)||String(a.player_id).localeCompare(String(b.player_id)));
+
   const source=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
-  return{teams:out,source,snapshotCount:snaps.length,trackingSince:snaps[0].t,latest:latest.t,baseline:base.t,period:exactSeven?'7D':'AVAILABLE'};
+  return{teams:out,player_deltas:playerDeltas,source,snapshotCount:snaps.length,trackingSince:snaps[0].t,latest:latest.t,baseline:base.t,period:exactSeven?'7D':'AVAILABLE'};
 }
 function rowMap(snap){return new Map((snap?.rows||[]).map(r=>[String(r.id),r]))}
 function baselineFor(snaps,latestMs,days){
@@ -666,7 +689,7 @@ const SCORING_API='https://api.sleeper.app/v1';
 const SCORING_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper';
 const TRADE_AUDIT_SEASONS=[2024,2025,2026];
 let tradeAuditCache=null;
-const scoringCache=new Map();
+const scoringCache=new Map(),playerMilestoneCache=new Map();
 async function scoringJson(url){
   const r=await fetch(url,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
   if(!r.ok)throw new Error(`scoring fetch ${r.status}`);
@@ -682,44 +705,95 @@ function weeklyPlayerRow(payload,id){
 function leagueScore(stats,scoring){
   let total=0,seen=false;
   for(const [key,weightRaw] of Object.entries(scoring||{})){
-    const weight=Number(weightRaw),value=Number(stats?.[key]);
+    const raw=stats?.[key]??(String(key).startsWith('idp_')?stats?.[String(key).slice(4)]:undefined),weight=Number(weightRaw),value=Number(raw);
     if(!Number.isFinite(weight)||!Number.isFinite(value))continue;
     seen=true;total+=weight*value;
   }
   return seen?Number(total.toFixed(2)):null;
 }
 function weeklyHasData(weekly){return Object.values(weekly||{}).some(v=>Array.isArray(v)?v.length>0:(v&&typeof v==='object'&&Object.keys(v).length>0))}
-async function liveSeasonWeeks(year){
-  const pairs=await Promise.all(Array.from({length:18},async(_,i)=>{const week=i+1;try{return[week,await scoringJson(`${SCORING_API}/stats/nfl/regular/${year}/${week}`)]}catch{return[week,{}]}}));
+async function liveSeasonWeeks(year,maxWeek=18){
+  const count=Math.max(0,Math.min(18,Number(maxWeek)||0));
+  const pairs=await Promise.all(Array.from({length:count},async(_,i)=>{const week=i+1;try{return[week,await scoringJson(`${SCORING_API}/stats/nfl/regular/${year}/${week}`)]}catch{return[week,{}]}}));
   return Object.fromEntries(pairs);
 }
-async function scoringSeasonWeeks(year,currentSeason){
-  const key=String(year),cached=scoringCache.get(key),now=Date.now();
-  if(cached&&now-cached.t<(Number(year)===Number(currentSeason)?30000:86400000))return cached.weekly;
+async function scoringSeasonWeeks(year,currentSeason,currentCompletedWeek=18){
+  const isCurrent=Number(year)===Number(currentSeason),limit=isCurrent?Math.max(0,Math.min(18,Number(currentCompletedWeek)||0)):18,key=String(year)+'|'+(isCurrent?limit:'final'),cached=scoringCache.get(key),now=Date.now();
+  if(cached&&now-cached.t<(isCurrent?30000:86400000))return cached.weekly;
   let weekly={};
-  if(Number(year)===Number(currentSeason)){
-    weekly=await liveSeasonWeeks(year);
-    if(!weeklyHasData(weekly))weekly=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
+  if(isCurrent){
+    weekly=await liveSeasonWeeks(year,limit);
+    if(!weeklyHasData(weekly)){
+      const raw=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
+      weekly=Object.fromEntries(Object.entries(raw||{}).filter(([week])=>Number(week)<=limit));
+    }
   }else{
     weekly=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
-    if(!weeklyHasData(weekly))weekly=await liveSeasonWeeks(year);
+    if(!weeklyHasData(weekly))weekly=await liveSeasonWeeks(year,18);
   }
   scoringCache.set(key,{t:now,weekly});return weekly;
 }
-async function scoringMilestones(playerId){
+function scoringPayloadRows(payload){
+  if(!payload)return[];
+  if(Array.isArray(payload))return payload.map((row,i)=>({id:String(row?.player_id||row?.id||i),stats:row?.stats&&typeof row.stats==='object'?row.stats:row}));
+  return Object.entries(payload||{}).map(([key,row])=>({id:String(row?.player_id||row?.id||key),stats:row?.stats&&typeof row.stats==='object'?row.stats:row}));
+}
+function weeklyAwardGroup(position){
+  const p=String(position||'').toUpperCase();
+  if(['QB','RB','WR','TE'].includes(p))return'offense';
+  if(['DL','DE','DT','NT','EDGE','LB','DB','CB','S'].includes(p))return'defense';
+  return'';
+}
+function nflWeekStartIso(season,week){
+  const y=Number(season),w=Number(week);if(!y||!w)return null;
+  const sep1=new Date(Date.UTC(y,8,1)),firstMonday=1+((8-sep1.getUTCDay())%7),kickoff=new Date(Date.UTC(y,8,firstMonday+3+(w-1)*7));
+  return kickoff.toISOString();
+}
+async function canonicalWeeklyAwards(origin){
   try{
-    const league=await scoringJson(`${SCORING_API}/league/${LEAGUE}`),currentSeason=Number(league?.season),scoring=league?.scoring_settings||{};
+    const base=String(origin||'').replace(/\/$/,'');if(!base)return[];
+    const r=await fetch(`${base}/.netlify/functions/league-hub?weekly_awards=1`,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
+    if(!r.ok)return[];
+    const payload=await r.json();
+    return Array.isArray(payload?.records)?payload.records:[];
+  }catch{return[]}
+}
+async function scoringMilestones(playerId){
+  const origin=String(arguments[1]||''),cacheKey=String(playerId),cachedMilestone=playerMilestoneCache.get(cacheKey),now=Date.now();
+  if(cachedMilestone&&now-cachedMilestone.t<300000)return cachedMilestone.value;
+  try{
+    const [league,players,canonicalRecords,nflState]=await Promise.all([
+      scoringJson(`${SCORING_API}/league/${LEAGUE}`),
+      scoringJson(`${SCORING_API}/players/nfl`).catch(()=>({})),
+      canonicalWeeklyAwards(origin),
+      scoringJson(`${SCORING_API}/state/nfl`).catch(()=>({}))
+    ]),currentSeason=Number(league?.season),currentCompletedWeek=Math.max(0,Math.min(18,(Number(nflState?.week)||1)-1)),scoring=league?.scoring_settings||{};
     if(!currentSeason||!Object.keys(scoring).length)return null;
-    const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={};
-    await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason)));
-    let highWeek=null,highSeason=null,highPpg=null;
+    const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={},canonicalByKey=new Map((canonicalRecords||[]).filter(r=>r?.players_of_week).map(r=>[Number(r.season)+'|'+Number(r.week),r]));
+    await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason,currentCompletedWeek)));
+    let highWeek=null,highSeason=null,highPpg=null;const weeklyAwards=[];
     for(const year of years){
       let total=0,games=0;
       for(let week=1;week<=18;week++){
-        const row=weeklyPlayerRow(weeklyByYear[year]?.[week],playerId);if(!row)continue;
-        const points=leagueScore(row,scoring);if(points==null)continue;
-        games++;total+=points;
-        if(!highWeek||points>highWeek.points)highWeek={points,season:year,week};
+        const payload=weeklyByYear[year]?.[week],row=weeklyPlayerRow(payload,playerId);
+        if(row){const points=leagueScore(row,scoring);if(points!=null){games++;total+=points;if(!highWeek||points>highWeek.points)highWeek={points,season:year,week}}}
+        const canonical=canonicalByKey.get(Number(year)+'|'+Number(week));
+        if(canonical){
+          for(const group of ['offense','defense']){
+            const leader=canonical?.players_of_week?.[group];
+            if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(Number(leader.points||0).toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
+          }
+        }else if(Number(year)<currentSeason){
+          const leaders={offense:null,defense:null};
+          for(const item of scoringPayloadRows(payload)){
+            const group=weeklyAwardGroup(players?.[item.id]?.position),points=leagueScore(item.stats,scoring);
+            if(!group||points==null)continue;
+            if(!leaders[group]||points>leaders[group].points||(points===leaders[group].points&&String(item.id)<String(leaders[group].player_id)))leaders[group]={player_id:String(item.id),points};
+          }
+          for(const group of ['offense','defense']){
+            const leader=leaders[group];if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(leader.points.toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
+          }
+        }
       }
       total=Number(total.toFixed(2));
       if(games>=8){
@@ -728,7 +802,9 @@ async function scoringMilestones(playerId){
         if(!highPpg||ppg>highPpg.points)highPpg={points:ppg,season:year,games,total};
       }
     }
-    return{source:'Sleeper weekly regular-season stats + league scoring settings',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,refreshedAt:new Date().toISOString()};
+    weeklyAwards.sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
+    const value={source:'Sleeper weekly regular-season stats + league scoring settings',weeklyAwardSource:'Fleeced locked completed-week awards with historical Sleeper fallback',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,weeklyAwards,refreshedAt:new Date().toISOString()};
+    playerMilestoneCache.set(cacheKey,{t:Date.now(),value});return value;
   }catch(e){console.warn('value-history-scoring',e);return null}
 }
 async function tradeJson(url){
@@ -828,7 +904,7 @@ function pickValuesFromSide(side,map){
   const values=[],missing=[];
   for(const p of side?.picks||[]){
     const id=`pick-${Number(p?.season)||0}-${Number(p?.round)||0}-${Number(p?.original_roster_id)||0}`,row=map.get(id),n=Number(row?.value);
-    if(Number.isFinite(n))values.push({id,value:Math.round(n),season:Number(p.season),round:Number(p.round),original_roster_id:Number(p.original_roster_id)||null});else missing.push(id);
+    if(Number.isFinite(n)){const projected_slot=Math.round(Number(row?.projected_slot));values.push({id,value:Math.round(n),season:Number(p.season),round:Number(p.round),original_roster_id:Number(p.original_roster_id)||null,...(projected_slot>=1&&projected_slot<=32?{projected_slot}:{})})}else missing.push(id);
   }
   return{values,missing,complete:missing.length===0,total:values.reduce((n,x)=>n+x.value,0)};
 }
@@ -924,6 +1000,12 @@ export default async (req)=>{
         const result=await retry(()=>completedTradeHistory(s),180);
         return json(result);
       }
+      if(url.searchParams.get('player_scoring')==='1'){
+        const playerId=String(url.searchParams.get('player_id')||'').trim();
+        if(!playerId)return json({error:'player_id required'},400);
+        const milestones=await scoringMilestones(playerId,url.origin);
+        return json({player_id:playerId,scoring_milestones:milestones});
+      }
       if(url.searchParams.get('team_net_all')==='1'){
         const result=await retry(()=>getAllTeamWeekMovement(s),180);
         return json({team_net_all:true,...result});
@@ -935,8 +1017,8 @@ export default async (req)=>{
       }
       const playerId=String(url.searchParams.get('player_id')||'').trim();
       if(!playerId)return json({error:'player_id required'},400);
-      const result=await retry(()=>getPlayerHistory(s,playerId),180),milestones=await scoringMilestones(playerId);
-      return json({player_id:playerId,points:result.points||[],scoring_milestones:milestones,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
+      const result=await retry(()=>getPlayerHistory(s,playerId),180);
+      return json({player_id:playerId,points:result.points||[],scoring_milestones:null,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
     if(!s)return json({error:'live history store unavailable'},503);

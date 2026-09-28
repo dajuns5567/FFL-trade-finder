@@ -19,21 +19,21 @@ for(const s of sections){
   if(!noInfo&&s.paragraphs.length<2)fail('Weekly Recap section '+s.heading+' needs at least two connected paragraphs when evidence exists');
 }
 if(new Set(sections.map(s=>s.reporter.id)).size!==4)fail('All four desks must appear once in the overview');
-const humor=/\b(?:parade|rental shoes|gala|hotel[- ]lobby|good china|chaise|melodrama|elegant insult|group chat|honeymoon|front page|back page|receipt|rookie class|mock|burn it|ceremonially|evidence|file|paperwork|docket|deadline|confetti|argument|sigh|screenshot|decorative|decoration)\b/i;
+const humor=/\b(?:parade|rental shoes|gala|hotel[- ]lobby|good china|chaise|melodrama|elegant insult|honeymoon|front page|back page|receipt|rookie class|mock|burn it|ceremonially|deadline|confetti|argument|sigh|screenshot|decorative|decoration|joke|punch line|laugh|rude)\b/i;
 for(const s of sections){const copy=(s.paragraphs||[]).join(' ');if(copy.trim()==='n/a')continue;if(!humor.test(copy))fail((s.reporter?.name||'Reporter')+' Weekly Recap section is too straight; every desk must carry personality/humor');}
 
 const bartholomew=sections.find(s=>String(s?.reporter?.id||'')==='tess-delaney'||/Bartholomew Roycington III/i.test(String(s?.reporter?.name||'')));
 if(!bartholomew)fail('Weekly Recap must preserve Bartholomew Roycington III’s section');
 const bartholomewCopy=(bartholomew.paragraphs||[]).join(' ');
-if(!/On offense,\s+[^.]+?\s+and\s+[^.]+?\s+get the breakout-watch invitations/i.test(bartholomewCopy))fail('Bartholomew must name two legitimate offensive breakout players to watch');
-if(!/On defense,\s+[^.]+?\s+gets the watch list/i.test(bartholomewCopy))fail('Bartholomew must name one legitimate defensive breakout player to watch');
-if(!/are the two offensive reliability names Bartholomew trusts/i.test(bartholomewCopy))fail('Bartholomew must name two offensive reliable players');
-if(!/On defense,\s+.+?\s+gets the same designation/i.test(bartholomewCopy))fail('Bartholomew must name one defensive reliable player');
+if(!/On offense,\s+[^.]+?\s+and\s+[^.]+?\s+are making the strongest breakout cases this week/i.test(bartholomewCopy))fail('Bartholomew must name two legitimate offensive breakout players in natural prose');
+if(!/On defense,\s+[^.]+?\s+is making a breakout case of his own/i.test(bartholomewCopy))fail('Bartholomew must name one legitimate defensive breakout player in natural prose');
+if(!/look like the two players I can trust to keep showing up/i.test(bartholomewCopy))fail('Bartholomew must name two dependable offensive players in the final first-person prose');
+if(!/On defense,\s+.+?\s+has been just as dependable/i.test(bartholomewCopy))fail('Bartholomew must name one dependable defensive player');
 
 const body=sections.flatMap(s=>s.paragraphs||[]).join(' ');
 const wc=words(body).length,nd=numeric(body)/Math.max(1,wc);
 if(wc<320)fail('League overview is too thin to read like a newspaper notebook: '+wc+' words');
-if(nd>.065)fail('League overview is too numbers-heavy: '+(nd*100).toFixed(1)+'% numeric-token density');
+if(nd>.08)fail('League overview is too numbers-heavy even with required featured-player stat lines: '+(nd*100).toFixed(1)+'% numeric-token density');
 
 const robotPatterns=[
  /the rosters carrying the most immediate/i,
@@ -49,10 +49,15 @@ const robotPatterns=[
 ];
 for(const re of robotPatterns)if(re.test(body)||takes.some(t=>re.test(String(t.title||'')+' '+String(t.take||''))))fail('Legacy statistical/checklist language survived: '+re);
 
-const required=['championship','fraud','division','player','upset'];
+const editionTeams=Array.isArray(edition?.teams)?edition.teams:[],teamById=new Map(editionTeams.map(t=>[String(t.roster_id),t]));
+const hasFrozenNextProjectionMatchup=editionTeams.some(t=>{
+  const o=teamById.get(String(t?.next_opponent_roster_id||'')),tp=t?.next_projected,op=o?.next_projected;
+  return tp!=null&&op!=null&&Number.isFinite(Number(tp))&&Number.isFinite(Number(op))&&Number(tp)!==Number(op);
+});
+const required=['championship','fraud','division','player',...(hasFrozenNextProjectionMatchup?['upset']:[])];
 const kinds=new Set(takes.map(t=>String(t.kind||'')));
 for(const k of required)if(!kinds.has(k))fail('Hot Takes missing required prediction type: '+k);
-if(takes.length<5)fail('Hot Takes must contain at least five actual predictions');
+if(takes.length<(hasFrozenNextProjectionMatchup?5:4))fail('Hot Takes are missing an evidence-backed prediction; got '+takes.length);
 
 for(const t of takes){
   const copy=String(t.title||'')+' '+String(t.take||'');
@@ -60,7 +65,11 @@ for(const t of takes){
   if(words(t.take).length<12)fail('Hot Take is too thin: '+String(t.title||'untitled'));
 }
 const upset=takes.find(t=>t.kind==='upset');
-if(!Number.isFinite(Number(upset?.underdog_projected))||!Number.isFinite(Number(upset?.favorite_projected))||Number(upset.underdog_projected)>=Number(upset.favorite_projected))fail('Upset pick must name a true projected underdog with a lower projected score than the favorite');
+if(hasFrozenNextProjectionMatchup){
+  if(!Number.isFinite(Number(upset?.underdog_projected))||!Number.isFinite(Number(upset?.favorite_projected))||Number(upset.underdog_projected)>=Number(upset.favorite_projected))fail('Upset pick must name a true projected underdog with a lower projected score than the favorite');
+}else if(upset){
+  fail('Upset pick must not be reconstructed from later projections when the archived edition has no frozen next-week projection matchup');
+}
 const report={
   inquirer_version:o.inquirer_version,
   headline:o.headline,

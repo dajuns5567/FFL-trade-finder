@@ -70,7 +70,7 @@ export function narrativeHeadline(t,w,r){
     'tess-delaney':[
       `A Civilized Sunday at Last for ${team}`,
       `${star} Ruins My Planned Complaint in the Best Way`,
-      `A Win for ${team}, Served With the Good China`,
+      `A Win for ${team}, and the Swagger Is Getting Expensive`,
       `I Had Criticisms Ready; ${team} Had Other Plans`,
       `A Rather Attractive Sunday for ${team}`,
       `${team} Wins, and I Am Forced to Be Pleasant`,
@@ -90,7 +90,7 @@ export function narrativeHeadline(t,w,r){
     'nora-voss':[
       `Case File Closed for the Week: Receipts in Hand for ${team}`,
       `${star} Is Exhibit A in ${poss(team)} Winning Argument`,
-      `The Lineup Card Survives Cross-Examination for ${team}`,
+      `The Lineup Card Holds Up for ${team}`,
       `Evidence the Skeptics Will Hate: A Win for ${team}`,
       `No Alibi Required: A Real Win for ${team}`,
       `Very Little to Prosecute After ${poss(team)} Win`,
@@ -114,7 +114,7 @@ export function narrativeHeadline(t,w,r){
       `${star} Deserved Better Company From ${team}`,
       `${team} Loses, and So Does My Good Mood`,
       `A Sunday ${team} Should Return for Store Credit`,
-      `The Bad China Comes Out After ${poss(team)} Loss`,
+      `The Polite Version Ends After ${poss(team)} Loss`,
       `${team} Produced a Result With No Taste at All`,
       `I Regret to Inform You ${team} Has Annoyed Me`,
       `A Loss for ${team}, Followed by Several Theatrical Sighs`
@@ -354,7 +354,7 @@ export function buildNarrativeArticle({team,week,reporter,facts,sentiment,teamCl
   return{
     schema_version:11,
     inquirer_version:26,
-    editorial_revision:3,
+    editorial_revision:5,
     season:Number(teamClassification?.season||2026),
     week:Number(week),
     week_classification:teamClassification,

@@ -167,6 +167,8 @@ jobs:
         run: |
           node --check league-hub-v451.js
           node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/inquirer-editorial-v31.mjs
+          node --check netlify/functions/inquirer-publish-scheduled.mjs
           node --check netlify/functions/inquirer-reporters.mjs
           node --check netlify/functions/inquirer-narrative-v17.mjs
           node --check netlify/functions/inquirer-human-v19.mjs
@@ -180,11 +182,13 @@ jobs:
           node --check scripts/inquirer-prose-quality-audit.mjs
           node --check scripts/inquirer-overview-quality-audit.mjs
           node --check scripts/pack-inquirer-preload.mjs
+          node --check scripts/inquirer-forward-v31-smoke.mjs
           node scripts/inquirer-reporters-smoke.mjs
           node scripts/inquirer-prose-quality-audit.mjs
           node scripts/inquirer-v23-audit.mjs
           node scripts/inquirer-v24-audit.mjs
           node scripts/inquirer-v25-audit.mjs
+          node scripts/inquirer-forward-v31-smoke.mjs
           node scripts/one-time-generate-inquirer-week1.mjs
           node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer.json
           node scripts/inquirer-overview-quality-audit.mjs /tmp/week1-inquirer.json

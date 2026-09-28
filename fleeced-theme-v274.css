@@ -110,6 +110,9 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
   border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line))!important;
   box-shadow:0 10px 24px rgba(0,0,0,.20)!important;
 }
+#finderResults .trade95-card{
+  border:0!important;
+}
 #finderResults .trade95-card:before,#evalResults .trade95-card:before,
 #finderResults .trade95-card.excellent:before,#evalResults .trade95-card.excellent:before,
 #finderResults .trade95-card.fair:before,#evalResults .trade95-card.fair:before,
@@ -879,7 +882,7 @@ html,body{background:color-mix(in srgb,var(--card) 72%,#06080c)!important}
 #home .fleeced-home-card>span,
 #home .fleeced-home-card-main>span{
   display:block;
-  color:#e4b53f;
+  color:#f4f4f5;
   font-size:16px;
   font-weight:950;
   letter-spacing:.045em;

@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history';
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -959,6 +959,12 @@ function teamTradeImpactCard(teamId){
   return`<div class="vh-card"><div class="vh-card-head"><div><h3>Recent Trade Impact</h3><div class="vh-sub">Latest completed trade involving ${esc(teamName(id))}: ${esc(dateShort(t.created))}</div></div></div><div class="vh-attribution-summary"><div class="vh-attribution-stat"><small>Value at trade</small><b>${m?.atTradeTotal==null?'—':fmt(m.atTradeTotal)}</b></div><div class="vh-attribution-stat"><small>Current outcome</small><b>${m?.currentTotal==null?'—':fmt(m.currentTotal)}</b></div><div class="vh-attribution-stat"><small>Change</small><b class="${delta==null?'vh-neutral':deltaClass(delta)}">${delta==null?'—':signed(delta)}</b></div></div><button type="button" class="secondary small" data-vh-open-trade-history data-vh-trade-team="${esc(id)}">View full Trade History</button></div>`
 }
 async function historyFetch(id){let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_id=${encodeURIComponent(id)}`,{cache:'no-store'});if(!r.ok)throw Error('history unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('history unavailable')}
+async function scoringFetch(id){
+  const key=String(id);if(playerScoringCache.has(key))return{player_id:key,scoring_milestones:playerScoringCache.get(key)};
+  if(playerScoringPending.has(key))return playerScoringPending.get(key);
+  const pending=(async()=>{let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_scoring=1&player_id=${encodeURIComponent(key)}`,{cache:'no-store'});if(!r.ok)throw Error('scoring milestones unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('scoring milestones unavailable')})();
+  playerScoringPending.set(key,pending);try{return await pending}finally{playerScoringPending.delete(key)}
+}
 async function marketFetch(){let last;for(let attempt=0;attempt<3;attempt++){try{const r=await fetch(`${API}?market=1`,{cache:'no-store'});if(!r.ok)throw Error(`market history unavailable (${r.status})`);return await r.json()}catch(e){last=e;if(attempt<2)await new Promise(r=>setTimeout(r,250*(attempt+1)))}}throw last||Error('market history unavailable')}
 function teamNetCacheKey(ids,teamId){return`${String(teamId||'')}|${(ids||[]).map(String).sort().join(',')}`}
 async function teamNetFetch(ids,teamId){
@@ -1050,9 +1056,25 @@ function renderMarketTable(){
   const rows=sortedMarketRows(marketCache.marketRows||[],document.getElementById('vhMarketSearch')?.value||'');
   host.innerHTML=marketTableRowsMarkup(rows);
 }
+function scoringMilestonesRows(scoring,loading=false){
+  if(!scoring&&loading)return'<div class="vh-feed-row"><span class="vh-milestone-label">Scoring milestones<span class="vh-milestone-time">Loading completed-week scoring in the background…</span></span><b>…</b></div>';
+  return`
+      <div id="vhScoringMilestones">${scoringMilestonesRows(scoring,scoringLoading)}</div>`;
+}
+async function loadPlayerScoring(id){
+  const key=String(id);if(playerScoringCache.has(key))return;
+  try{const data=await scoringFetch(key);playerScoringCache.set(key,data?.scoring_milestones||null)}catch{return}
+  if(String(currentPlayerId)!==key)return;
+  const target=document.getElementById('vhScoringMilestones');if(target)target.innerHTML=scoringMilestonesRows(playerScoringCache.get(key),false);
+}
 async function loadPlayer(id){
   const box=document.getElementById('vhContent');if(!box)return;box.innerHTML='<div class="vh-empty">Loading player history…</div>';
-  try{const data=await historyFetch(id),pts=Array.isArray(data.points)?data.points:[];playerScoringCache.set(String(id),data.scoring_milestones||null);renderPlayerProfile(id,pts,'ALL')}catch{box.innerHTML='<div class="notice">Historical data is temporarily unavailable. Current values and all trade tools are unaffected.</div>'}
+  try{
+    const data=await historyFetch(id),pts=Array.isArray(data.points)?data.points:[],key=String(id);
+    if(data.scoring_milestones)playerScoringCache.set(key,data.scoring_milestones);
+    renderPlayerProfile(id,pts,'ALL');
+    if(!playerScoringCache.has(key))loadPlayerScoring(key);
+  }catch{box.innerHTML='<div class="notice">Historical data is temporarily unavailable. Current values and all trade tools are unaffected.</div>'}
 }
 
 function leagueTeamIds(){
@@ -1290,7 +1312,7 @@ function recentChanges(pts){
 function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
   if(!allPts.length){box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
-  const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null;
+  const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCache.has(String(id));
   const latestMs=new Date(allPts[allPts.length-1].t).getTime(),rank30=allPts.filter(p=>new Date(p.t).getTime()>=latestMs-30*86400000),rankBase=rank30[0]||allPts[0],rankLast=rank30[rank30.length-1]||allPts[allPts.length-1],overallMove=Number(rankBase.overall)-Number(rankLast.overall),posMove=Number(rankBase.posRank)-Number(rankLast.posRank);
   const status=document.getElementById('vhStatus');if(status)status.textContent=`Tracked since ${dateShort(allPts[0].t)} • ${fmt(allPts.length)} player observations`;
   box.innerHTML=`

@@ -58,8 +58,10 @@ async function buildSignals(){
   for(const id of ids){
     const meta=players?.[id]||{},priorRaw=priorSeason?.stats?.[id]||{},series=[],signals=[];let previousSignal=null,previousPlayer=null;
     for(const week of weekNums){
-      const st=weekly[week]?.[id];if(!st)continue;
-      const pts=score(st,scoring);if(!Number.isFinite(Number(pts)))continue;
+      const st=weekly[week]?.[id];
+      if(!st){previousSignal=null;previousPlayer=null;continue}
+      const pts=score(st,scoring);
+      if(!Number.isFinite(Number(pts))){previousSignal=null;previousPlayer=null;continue}
       series.push({week,points:Number(pts)});
       const player=playerPacket(meta,id,st,priorRaw,series,scoring),form=recentFormProfile(series),
         signal=buildPlayerSignal({player,previousPlayer,recentForm:form,season,week,previousSignal,slot:1});

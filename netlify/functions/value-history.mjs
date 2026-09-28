@@ -136,9 +136,9 @@ function cleanPicks(picks){
   if(!Array.isArray(picks))return[];
   const out=[];
   for(const p of picks){
-    const id=String(p?.id||'').trim(),value=Math.round(Number(p?.value)),season=Math.round(Number(p?.season)),round=Math.round(Number(p?.round)),original_owner=Math.round(Number(p?.original_owner)),owner=Math.round(Number(p?.owner));
+    const id=String(p?.id||'').trim(),value=Math.round(Number(p?.value)),season=Math.round(Number(p?.season)),round=Math.round(Number(p?.round)),original_owner=Math.round(Number(p?.original_owner)),owner=Math.round(Number(p?.owner)),projected_slot=Math.round(Number(p?.projected_slot));
     if(!id||!Number.isFinite(value)||value<0||value>12000||!Number.isFinite(season)||season<2020||season>2100||!Number.isFinite(round)||round<1||round>10||!Number.isFinite(original_owner)||original_owner<1)continue;
-    out.push({id,value,season,round,original_owner,owner:Number.isFinite(owner)?owner:0});
+    out.push({id,value,season,round,original_owner,owner:Number.isFinite(owner)?owner:0,...(projected_slot>=1&&projected_slot<=32?{projected_slot}:{})});
   }
   return out.slice(0,1000);
 }
@@ -155,7 +155,7 @@ function cleanTeams(teams){
 function fingerprint(rows,picks=[],teams=[]){
   let h=2166136261;
   for(const r of rows){const x=`${r.id}:${r.value}:${r.overall}:${r.posRank}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
-  for(const p of picks){const x=`P:${p.id}:${p.value}:${p.season}:${p.round}:${p.original_owner}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
+  for(const p of picks){const x=`P:${p.id}:${p.value}:${p.season}:${p.round}:${p.original_owner}:${Number(p.projected_slot)||0}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
   for(const t of teams){const x=`T:${t.id}:${t.value}:${t.player_count}|`;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}}
   return (h>>>0).toString(36);
 }
@@ -851,7 +851,7 @@ function pickValuesFromSide(side,map){
   const values=[],missing=[];
   for(const p of side?.picks||[]){
     const id=`pick-${Number(p?.season)||0}-${Number(p?.round)||0}-${Number(p?.original_roster_id)||0}`,row=map.get(id),n=Number(row?.value);
-    if(Number.isFinite(n))values.push({id,value:Math.round(n),season:Number(p.season),round:Number(p.round),original_roster_id:Number(p.original_roster_id)||null});else missing.push(id);
+    if(Number.isFinite(n)){const projected_slot=Math.round(Number(row?.projected_slot));values.push({id,value:Math.round(n),season:Number(p.season),round:Number(p.round),original_roster_id:Number(p.original_roster_id)||null,...(projected_slot>=1&&projected_slot<=32?{projected_slot}:{})})}else missing.push(id);
   }
   return{values,missing,complete:missing.length===0,total:values.reduce((n,x)=>n+x.value,0)};
 }

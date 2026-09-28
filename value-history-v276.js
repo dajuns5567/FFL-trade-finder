@@ -593,6 +593,10 @@ function tradePlayerAsset(id,receiver){return{type:'player',id:String(id),owner:
 function currentEvaluatorValue(asset){
   if(!asset)return null;
   try{
+    if(asset.type==='player'){
+      const pool=Array.isArray(state?.allAssets)?state.allAssets:[];
+      if(pool.length&&!pool.some(a=>a?.type==='player'&&String(a.id)===String(asset.id)))return 0;
+    }
     const canonical=window.tradeValueNormalizationV130?.canonicalValue;
     if(typeof canonical==='function'){const n=Number(canonical(asset));return Number.isFinite(n)?Math.round(n):null}
     if(typeof window.tradeAssetValue93==='function'){const n=Number(window.tradeAssetValue93(asset));return Number.isFinite(n)?Math.round(n):null}

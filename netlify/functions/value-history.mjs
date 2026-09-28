@@ -745,14 +745,24 @@ function nflWeekStartIso(season,week){
   const sep1=new Date(Date.UTC(y,8,1)),firstMonday=1+((8-sep1.getUTCDay())%7),kickoff=new Date(Date.UTC(y,8,firstMonday+3+(w-1)*7));
   return kickoff.toISOString();
 }
-async function scoringMilestones(playerId){
+async function canonicalWeeklyAwards(origin){
   try{
-    const [league,players]=await Promise.all([
+    const base=String(origin||'').replace(/\/$/,'');if(!base)return[];
+    const r=await fetch(`${base}/.netlify/functions/league-hub?weekly_awards=1`,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
+    if(!r.ok)return[];
+    const payload=await r.json();
+    return Array.isArray(payload?.records)?payload.records:[];
+  }catch{return[]}
+}
+async function scoringMilestones(playerId,origin=''){
+  try{
+    const [league,players,canonicalRecords]=await Promise.all([
       scoringJson(`${SCORING_API}/league/${LEAGUE}`),
-      scoringJson(`${SCORING_API}/players/nfl`).catch(()=>({}))
+      scoringJson(`${SCORING_API}/players/nfl`).catch(()=>({})),
+      canonicalWeeklyAwards(origin)
     ]),currentSeason=Number(league?.season),scoring=league?.scoring_settings||{};
     if(!currentSeason||!Object.keys(scoring).length)return null;
-    const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={};
+    const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={},canonicalByKey=new Map((canonicalRecords||[]).filter(r=>r?.players_of_week).map(r=>[Number(r.season)+'|'+Number(r.week),r]));
     await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason)));
     let highWeek=null,highSeason=null,highPpg=null;const weeklyAwards=[];
     for(const year of years){
@@ -760,14 +770,22 @@ async function scoringMilestones(playerId){
       for(let week=1;week<=18;week++){
         const payload=weeklyByYear[year]?.[week],row=weeklyPlayerRow(payload,playerId);
         if(row){const points=leagueScore(row,scoring);if(points!=null){games++;total+=points;if(!highWeek||points>highWeek.points)highWeek={points,season:year,week}}}
-        const leaders={offense:null,defense:null};
-        for(const item of scoringPayloadRows(payload)){
-          const group=weeklyAwardGroup(players?.[item.id]?.position),points=leagueScore(item.stats,scoring);
-          if(!group||points==null)continue;
-          if(!leaders[group]||points>leaders[group].points||(points===leaders[group].points&&String(item.id)<String(leaders[group].player_id)))leaders[group]={player_id:String(item.id),points};
-        }
-        for(const group of ['offense','defense']){
-          const leader=leaders[group];if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(leader.points.toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
+        const canonical=canonicalByKey.get(Number(year)+'|'+Number(week));
+        if(canonical){
+          for(const group of ['offense','defense']){
+            const leader=canonical?.players_of_week?.[group];
+            if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(Number(leader.points||0).toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
+          }
+        }else if(Number(year)<currentSeason){
+          const leaders={offense:null,defense:null};
+          for(const item of scoringPayloadRows(payload)){
+            const group=weeklyAwardGroup(players?.[item.id]?.position),points=leagueScore(item.stats,scoring);
+            if(!group||points==null)continue;
+            if(!leaders[group]||points>leaders[group].points||(points===leaders[group].points&&String(item.id)<String(leaders[group].player_id)))leaders[group]={player_id:String(item.id),points};
+          }
+          for(const group of ['offense','defense']){
+            const leader=leaders[group];if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(leader.points.toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
+          }
         }
       }
       total=Number(total.toFixed(2));
@@ -778,7 +796,7 @@ async function scoringMilestones(playerId){
       }
     }
     weeklyAwards.sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
-    return{source:'Sleeper weekly regular-season stats + league scoring settings',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,weeklyAwards,refreshedAt:new Date().toISOString()};
+    return{source:'Sleeper weekly regular-season stats + league scoring settings',weeklyAwardSource:'Fleeced locked completed-week awards with historical Sleeper fallback',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,weeklyAwards,refreshedAt:new Date().toISOString()};
   }catch(e){console.warn('value-history-scoring',e);return null}
 }
 async function tradeJson(url){
@@ -985,7 +1003,7 @@ export default async (req)=>{
       }
       const playerId=String(url.searchParams.get('player_id')||'').trim();
       if(!playerId)return json({error:'player_id required'},400);
-      const result=await retry(()=>getPlayerHistory(s,playerId),180),milestones=await scoringMilestones(playerId);
+      const result=await retry(()=>getPlayerHistory(s,playerId),180),milestones=await scoringMilestones(playerId,url.origin);
       return json({player_id:playerId,points:result.points||[],scoring_milestones:milestones,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);

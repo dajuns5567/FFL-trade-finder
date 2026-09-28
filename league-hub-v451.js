@@ -15,7 +15,7 @@ function addStyles(){if(document.getElementById('leagueHubStyles'))return;const 
 #leagueHub .lh-sub{color:var(--muted);font-size:11px;margin-bottom:10px}#leagueHub .lh-story{padding:10px 0;border-top:1px solid var(--line)}#leagueHub .lh-story:first-of-type{border-top:0}#leagueHub .lh-story b{display:block;font-size:14px}#leagueHub .lh-story small{display:block;color:var(--muted);margin-top:3px;line-height:1.45}
 #leagueHub .lh-stat{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line);align-items:center}#leagueHub .lh-stat:first-of-type{border-top:0}#leagueHub .lh-stat strong{color:#e4b53f}#leagueHub .lh-action{margin-top:10px}#leagueHub .lh-action button,#leagueHub .lh-link{font-size:11px!important;padding:7px 10px!important}
 #leagueHub .lh-click{cursor:pointer;border-radius:9px;padding-left:8px;padding-right:8px;margin-left:-8px;margin-right:-8px}#leagueHub .lh-click:hover{background:color-mix(in srgb,#e4b53f 8%,transparent)}#leagueHub .lh-click b{text-decoration:underline;text-decoration-color:color-mix(in srgb,#e4b53f 55%,transparent);text-underline-offset:3px}
-#leagueHub .lh-year-filter{display:grid;gap:6px;margin:10px 0 12px}.lh-year-filter>b{font-size:12px;letter-spacing:.12em;color:#e4b53f}.lh-year-filter select{min-width:140px;max-width:220px;padding:8px 10px;border-radius:8px}#leagueHub .lh-archive-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:10px 0}#leagueHub .lh-archive-filter{display:grid;gap:4px}#leagueHub .lh-archive-filter span{font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#e4b53f;text-align:center}#leagueHub .lh-archive-filter select{width:100%;padding:8px 9px;border-radius:8px;background:var(--card);color:inherit;border:1px solid var(--line)}.lh-title-action{display:flex;align-items:center;justify-content:space-between;gap:12px}.lh-manager-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}#leagueHub .lh-manager{border:1px solid #e4b53f!important;border-radius:11px;padding:11px;text-align:center;background:transparent!important;color:#fff!important;box-shadow:none!important;text-shadow:none!important;filter:none!important}#leagueHub .lh-manager:hover,#leagueHub .lh-manager:focus-visible{border-color:#ffd967!important;background:transparent!important;box-shadow:none!important}#leagueHub .lh-manager b{display:block;color:#fff!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#leagueHub .lh-manager small{display:block;color:var(--muted);margin-top:4px}#leagueHub .lh-positive{color:var(--good,#1f9d68)}#leagueHub .lh-negative{color:var(--bad,#c45151)}
+#leagueHub .lh-year-filter{display:grid;gap:6px;margin:10px 0 12px}.lh-year-filter>b{font-size:12px;letter-spacing:.12em;color:#e4b53f}.lh-year-filter select{min-width:140px;max-width:220px;padding:8px 10px;border-radius:8px}#leagueHub .lh-archive-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:10px 0}#leagueHub .lh-archive-filter{display:grid;gap:4px}#leagueHub .lh-archive-filter span{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#e4b53f;text-align:center}#leagueHub .lh-archive-filter select{width:100%;padding:8px 9px;border-radius:8px;background:var(--card);color:inherit;border:1px solid var(--line)}.lh-title-action{display:flex;align-items:center;justify-content:space-between;gap:12px}.lh-manager-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}#leagueHub .lh-manager{border:1px solid #e4b53f!important;border-radius:11px;padding:11px;text-align:center;background:transparent!important;color:#fff!important;box-shadow:none!important;text-shadow:none!important;filter:none!important}#leagueHub .lh-manager:hover,#leagueHub .lh-manager:focus-visible{border-color:#ffd967!important;background:transparent!important;box-shadow:none!important}#leagueHub .lh-manager b{display:block;color:#fff!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#leagueHub .lh-manager small{display:block;color:var(--muted);margin-top:4px}#leagueHub .lh-positive{color:var(--good,#1f9d68)}#leagueHub .lh-negative{color:var(--bad,#c45151)}
 #leagueHub .lh-reporter-byline{margin:8px 0 12px;padding:2px 0;border:0;background:transparent}#leagueHub .lh-reporter-byline b{display:block;color:inherit;font-size:14px}#leagueHub .lh-reporter-byline small{display:block;color:var(--muted);margin-top:3px;line-height:1.4}#leagueHub .lh-reporter-desks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:9px}#leagueHub .lh-reporter-desk{border:1px solid color-mix(in srgb,var(--muted) 34%,transparent)!important;border-radius:10px!important;padding:9px!important;text-align:left!important;background:transparent!important;box-shadow:none!important;text-shadow:none!important;filter:none!important}#leagueHub .lh-reporter-desk b{display:block;color:#e4b53f;font-size:11px}#leagueHub .lh-reporter-desk small{display:block;color:var(--muted);font-size:9px;line-height:1.35;margin-top:3px}#leagueHub .lh-reporter-desk.active{border-color:#e4b53f!important;box-shadow:none!important}#leagueHub .lh-reporter-archive{margin-top:10px;padding:10px;border:1px solid color-mix(in srgb,#e4b53f 25%,var(--line));border-radius:10px}#leagueHub .lh-reporter-archive h4{margin:0 0 3px;color:#e4b53f}#leagueHub .lh-reporter-article-link{display:block;width:100%;text-align:left!important;margin-top:6px!important;white-space:normal!important}#leagueHub .lh-reporter-article-link small{display:block;color:var(--muted);margin-top:2px}#leagueHub .lh-article-picker{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:18px 0 8px;padding:2px 0 16px;border:0;border-bottom:1px solid var(--line);background:transparent}#leagueHub .lh-article-picker span{font-size:16px;font-weight:900;letter-spacing:.02em;color:inherit}#leagueHub .lh-article-picker select{width:100%;padding:12px 11px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:inherit;font-size:14px;font-weight:750}#leagueHub .lh-inline-team{display:inline!important;width:auto!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;color:inherit!important;font:inherit!important;font-weight:inherit!important;text-decoration:underline;text-decoration-color:#e4b53f;text-decoration-thickness:1px;text-underline-offset:3px;vertical-align:baseline;cursor:pointer;box-shadow:none!important;text-shadow:none!important;outline:none!important;filter:none!important;-webkit-tap-highlight-color:transparent}
 #leagueHub .lh-inline-team:hover,#leagueHub .lh-inline-team:focus,#leagueHub .lh-inline-team:focus-visible,#leagueHub .lh-inline-team:active{background:transparent!important;color:inherit!important;box-shadow:none!important;text-shadow:none!important;outline:none!important;filter:none!important}
 #leagueHub .lh-division-board .lh-division-board-lines{margin-top:8px!important}
@@ -39,32 +39,32 @@ function inquirerTradeClassificationQuip(label,rid,loserName){
  const key=/^fleeced!?$/i.test(label)?'fleeced':/^fair$/i.test(label)?'fair':/^excellent fit$/i.test(label)?'excellent':/^negotiable$/i.test(label)?'negotiable':'other',
   rows={
    'walter-mercer':{
-    fleeced:'That lands as Fleeced! on the same scale as the Weekly Recap; '+loserName+' can call it roster construction, but the receipt has already filed it under expensive optimism.',
-    fair:'That grades Fair, which is less entertaining for a columnist and considerably healthier for both front offices.',
-    excellent:'That grades Excellent Fit. Annoyingly sensible trades do happen; the newspaper survives them.',
-    negotiable:'That grades Negotiable—the polite middle ground between a clean handshake and a receipt somebody keeps folding smaller.',
-    other:'That leaves the trade at '+label+', which is the label the recorded numbers actually support.'
+    fleeced:'That is Fleeced! territory. '+loserName+' can defend the idea of the move, but the value gap is doing the heckling now.',
+    fair:'That lands in Fair territory, which means neither side gets a parade and neither side needs to change the subject.',
+    excellent:'That lands as an Excellent Fit; both sides can point to the value and keep moving.',
+    negotiable:'That sits in Negotiable territory—close enough to defend, wide enough to keep the argument alive.',
+    other:'The adjusted numbers put this one at '+label+', and there is no need to decorate that answer.'
    },
    'tess-delaney':{
-    fleeced:'The classification is Fleeced!, a rather elegant way of saying '+loserName+' brought the checkbook to a value fight and still paid for valet parking.',
-    fair:'The classification is Fair, tragically depriving the room of a proper scandal.',
-    excellent:'The classification is Excellent Fit, which is almost offensively tidy for a transaction that made it into my column.',
-    negotiable:'The classification is Negotiable; civilized language for a deal that still deserves one raised eyebrow over the good china.',
-    other:'The classification is '+label+'. I would dress it up, but the receipt has already chosen the outfit.'
+    fleeced:'That is Fleeced! territory, and '+loserName+' has somehow turned conviction into the most expensive emotion on the roster.',
+    fair:'That lands in Fair territory—an almost suspiciously adult outcome for fantasy football.',
+    excellent:'That lands as an Excellent Fit, the rare transaction that looks better the longer one resists the urge to be dramatic about it.',
+    negotiable:'That is Negotiable—close enough for confidence, not close enough for smugness.',
+    other:'The adjusted numbers leave it at '+label+', which is already a sufficiently interesting football answer.'
    },
    'mack-hollis':{
-    fleeced:'The board calls it Fleeced!, so '+loserName+' gets the rare honor of losing the value argument loudly enough to become copy.',
-    fair:'The board calls it Fair. No sirens, no parade, no manager getting fitted for clown shoes.',
-    excellent:'The board calls it Excellent Fit. That is a clean deal, even if clean deals are terrible for the volume around here.',
-    negotiable:'The board calls it Negotiable. Nobody gets a trophy, but somebody should probably keep the phone on.',
-    other:'The board calls it '+label+', and that is the number-backed version of the story.'
+    fleeced:'That is Fleeced! territory. '+loserName+' did not lose the press conference; '+loserName+' lost the value.',
+    fair:'That is Fair. Disappointing for the back page, useful for both rosters.',
+    excellent:'Excellent Fit. Clean enough to annoy anyone hoping for a disaster headline.',
+    negotiable:'Negotiable. Nobody gets fleeced, nobody gets to stop arguing.',
+    other:'That leaves it at '+label+'. The numbers brought enough noise on their own.'
    },
    'nora-voss':{
-    fleeced:'Fleeced! is the classification. Rival managers may now enjoy the punch line without having to invent one.',
-    fair:'Fair is the classification, which ruins the joke but at least keeps the spreadsheet honest.',
-    excellent:'Excellent Fit is the classification. Irritatingly competent work is still competent work.',
-    negotiable:'Negotiable is the classification—the kind of deal that keeps both the calculator and the group chat employed.',
-    other:label+' is the classification. No extra accusation is needed when the recorded values already did the talking.'
+    fleeced:'That is Fleeced! territory. '+loserName+' can explain the intent all week; the adjusted gap is the part that survives the explanation.',
+    fair:'That is Fair, and the numbers do not give either side much reason to pretend otherwise.',
+    excellent:'That is an Excellent Fit, with the adjusted values leaving very little loose thread to pull.',
+    negotiable:'That remains Negotiable. The gap is real, but it is not large enough to make the conclusion do all the talking.',
+    other:'The adjusted numbers leave it at '+label+'. That is enough to keep the conclusion grounded.'
    }
   },bank=rows[rid]||rows['walter-mercer'];
  return bank[key]||bank.other;
@@ -87,16 +87,65 @@ function inquirerTeamTradeCommentary(t,reporter){
     label=String(h.label||'Trade');
   if(![ownRaw,otherRaw,total,edge].every(Number.isFinite)||total<=0)continue;
   const leads={
-    'walter-mercer':'That trade deserves its receipt in the same paragraph: '+ownName+' took in '+fmt(ownRaw)+' points of snapshot value while '+otherName+' took in '+fmt(otherRaw)+', for '+fmt(total)+' total value exchanged.',
-    'tess-delaney':'Since management brought the trade into the room, the receipt gets a place setting too: '+ownName+' received '+fmt(ownRaw)+' points of snapshot value, '+otherName+' received '+fmt(otherRaw)+', and '+fmt(total)+' total value crossed the table.',
-    'mack-hollis':'Management put the trade on the page, so the numbers get a microphone: '+ownName+' got '+fmt(ownRaw)+' points of snapshot value, '+otherName+' got '+fmt(otherRaw)+', and '+fmt(total)+' total value changed hands.',
-    'nora-voss':'No need to manufacture the joke; the trade receipt brought its own material. '+ownName+' received '+fmt(ownRaw)+' points of snapshot value, '+otherName+' received '+fmt(otherRaw)+', for '+fmt(total)+' total value exchanged.'
+    'walter-mercer':ownName+' came out of the deal with '+fmt(ownRaw)+' points of snapshot value; '+otherName+' took '+fmt(otherRaw)+'. Across '+fmt(total)+' points changing hands, that is not a rounding error.',
+    'tess-delaney':'The deal moved '+fmt(total)+' points of snapshot value, with '+ownName+' taking '+fmt(ownRaw)+' and '+otherName+' taking '+fmt(otherRaw)+'.',
+    'mack-hollis':fmt(total)+' points of snapshot value changed hands: '+ownName+' got '+fmt(ownRaw)+'; '+otherName+' got '+fmt(otherRaw)+'.',
+    'nora-voss':'The transaction moved '+fmt(total)+' points of snapshot value—'+ownName+' received '+fmt(ownRaw)+', '+otherName+' received '+fmt(otherRaw)+'.'
    },
-   adjusted=edge===0?'Value Adjustment erased the gap completely, leaving the packages dead even.':'Value Adjustment still left '+fmt(edge)+' points between the packages, tilted toward '+winnerName+'.',
+   adjusted=edge===0?'Value Adjustment brings it all the way back to even.':winnerName+' still comes out '+fmt(edge)+' points ahead after Value Adjustment.',
    quip=inquirerTradeClassificationQuip(label,rid,loserName);
   rows.push((leads[rid]||leads['walter-mercer'])+' '+adjusted+' '+quip);
  }
  return rows;
+}
+function inquirerHeadToHeadCommentary(t,reporter){
+ const rid=String(t?.roster_id||''),oid=String(t?.next_opponent_roster_id||''),season=Number(t?.week_classification?.season||weeklyCache?.season),week=Number(t?.week_classification?.week||weeklyCache?.week);
+ if(!rid||!oid||!Number.isFinite(season)||!Number.isFinite(week))return[];
+ const games=(managerCache?.games||[]).filter(g=>{
+  const y=Number(g?.season),w=Number(g?.week);
+  return y>=2024&&y<=season&&String(g?.roster_id)===rid&&String(g?.opponent_roster_id)===oid&&(y<season||w<=week);
+ });
+ if(!games.length)return[];
+ let wins=0,losses=0,ties=0;
+ for(const g of games){const p=Number(g?.points),op=Number(g?.opponent_points);if(!Number.isFinite(p)||!Number.isFinite(op))continue;if(p>op)wins++;else if(p<op)losses++;else ties++}
+ const total=wins+losses+ties;if(!total)return[];
+ const own=String(t?.team_name||teamName(rid)),opp=String(t?.next_opponent_name||teamName(oid)),
+  ownRec=wins+'-'+losses+(ties?'-'+ties:''),oppRec=losses+'-'+wins+(ties?'-'+ties:''),
+  lead=wins-losses,leader=lead>0?own:lead<0?opp:'',trailer=lead>0?opp:lead<0?own:'',
+  absLead=Math.abs(lead),decided=Math.max(1,wins+losses),dominant=absLead>=2&&Math.max(wins,losses)/decided>=.75,
+  close=absLead===1,reporterId=String(reporter?.id||'walter-mercer');
+ const first='Since 2024, '+own+' is '+ownRec+' against '+opp+'; '+opp+' is '+oppRec+' going the other way.';
+ let second='',third='';
+ if(!lead){
+  const bank={
+   'walter-mercer':'The series is dead even, which is a good reminder that history has declined to do anybody a favor here.',
+   'tess-delaney':'The series is even, so neither side gets to arrive carrying ancestral rights to the result.',
+   'mack-hollis':'Dead even. Nobody gets to bring the old scores in like a permission slip.',
+   'nora-voss':'The history is even. There is no trend to hide behind and no old edge worth pretending is bigger than it is.'
+  };second=bank[reporterId]||bank['walter-mercer'];third='Next week gets to break the tie instead of merely adding another footnote to it.';
+ }else if(dominant){
+  const bank={
+   'walter-mercer':leader+' has owned the recent series, and '+trailer+' has spent this stretch doing most of the explaining.',
+   'tess-delaney':leader+' has controlled this matchup often enough that calling it coincidence is beginning to sound like wishful thinking.',
+   'mack-hollis':leader+' has been running this series. '+trailer+' would probably enjoy changing the headline for once.',
+   'nora-voss':leader+' has the clear historical edge, and '+trailer+' has not produced much evidence to soften it.'
+  };second=bank[reporterId]||bank['walter-mercer'];third='Another result in the same direction would turn a trend into something the losing side has to carry around all season.';
+ }else if(close){
+  const bank={
+   'walter-mercer':leader+' has the edge by one game, which is a lead, not a dynasty.',
+   'tess-delaney':leader+' owns the narrow edge; close enough to argue with, persistent enough to notice.',
+   'mack-hollis':leader+' is up one game. That is rivalry material, not a parade route.',
+   'nora-voss':leader+' leads by one, a small advantage that is visible without being conclusive.'
+  };second=bank[reporterId]||bank['walter-mercer'];third='This one can tighten the history or finally give that edge some real weight.';
+ }else{
+  const bank={
+   'walter-mercer':leader+' has the better of the series, but the margin is still close enough that nobody should frame it as ownership.',
+   'tess-delaney':leader+' has the stronger history without quite reaching domination; enough advantage to matter, not enough to swagger.',
+   'mack-hollis':leader+' has the edge, but '+trailer+' is still close enough to make one Sunday annoyingly important.',
+   'nora-voss':leader+' has the better record in the matchup, though the gap is still smaller than a full-blown pattern.'
+  };second=bank[reporterId]||bank['walter-mercer'];third='Next week either narrows that file or gives the leader another line to underline.';
+ }
+ return[first+' '+second+' '+third];
 }
 function managementSectionMentionsTrade(section){
  const text=(section?.paragraphs||[]).join(' ');
@@ -176,11 +225,14 @@ function storedInquirerArticle(t,teams){
  const body=sections?sections.map(s=>{
    const paragraphs=(s.paragraphs||[]).filter(p=>String(p||'').trim()&&String(p).trim().toLowerCase()!=='n/a'),
     managementEquivalent=s.kind==='management'||/\bmanagement\b|\bfront office\b|\bcost of choices\b/i.test(String(s.heading||'')),
-    commentary=managementEquivalent&&managementSectionMentionsTrade({...s,paragraphs})?inquirerTeamTradeCommentary(t,reporter):[];
-   return{...s,paragraphs:commentary.length?[...paragraphs,...commentary]:paragraphs};
+    outlookEquivalent=s.kind==='outlook'||/^\s*Week\s+\d+\s*:/i.test(String(s.heading||''))||/\bnext matchup\b|\bwhat comes next\b/i.test(String(s.heading||'')),
+    tradeCommentary=managementEquivalent&&managementSectionMentionsTrade({...s,paragraphs})?inquirerTeamTradeCommentary(t,reporter):[],
+    historyCommentary=outlookEquivalent?inquirerHeadToHeadCommentary(t,reporter):[],
+    additions=[...tradeCommentary,...historyCommentary];
+   return{...s,paragraphs:additions.length?[...paragraphs,...additions]:paragraphs};
   }).filter(s=>s.paragraphs.length).map(s=>{const render=renderScope(new Set());return '<section class="lh-team-story-section '+(s.kind==='sentiment'?'lh-fan-sentiment':'')+'"><h5>'+render(s.heading||'')+'</h5>'+(s.kind==='sentiment'?fanSentimentMeter(t,a):'')+s.paragraphs.map(p=>'<p>'+render(p).replace(/\n/g,'<br>')+'</p>').join('')+'</section>'}).join(''):((render)=>(a.paragraphs||[]).filter(p=>String(p||'').trim()&&String(p).trim().toLowerCase()!=='n/a').map(p=>/^(Fan Sentiment|Fan Sentiment Index|FAN SENTIMENT|Public Sentiment File)/.test(String(p))?'<div class="lh-fan-sentiment"><p>'+render(p)+'</p></div>':'<p>'+render(p)+'</p>').join(''))(renderScope(new Set()));
  const aside=a.aside?'<p class="lh-column-kicker"><i>'+renderScope(new Set())(a.aside)+'</i></p>':'';
- return '<div class="lh-article"><div class="lh-reporter-byline"><b>'+esc(a.byline||('By '+(reporter.name||'Fleeced! Inquirer')))+'</b><small>'+esc(a.deck||reporter.desk||'')+'</small></div><h4>'+headline+'</h4>'+body+aside+'<details class="lh-source-note"><summary>Sources</summary><div class="lh-sub">'+esc(a.real_stats_source||'Sleeper weekly stats')+' • fantasy scoring, real-life stat lines, matchup and transaction facts are preserved with this article. Trade-value commentary uses Original Trade Analysis snapshot values and Value Adjustment when a complete historical evaluation is available.'+(a.sources?.mida?' MIDA playoff/championship outlook • source data as of '+esc(a.sources.mida.as_of||'unavailable')+'.':'')+'</div></details></div>'
+ return '<div class="lh-article"><div class="lh-reporter-byline"><b>'+esc(a.byline||('By '+(reporter.name||'Fleeced! Inquirer')))+'</b><small>'+esc(a.deck||reporter.desk||'')+'</small></div><h4>'+headline+'</h4>'+body+aside+'<details class="lh-source-note"><summary>Sources</summary><div class="lh-sub">'+esc(a.real_stats_source||'Sleeper weekly stats')+' • fantasy scoring, real-life stat lines, matchup and transaction facts are preserved with this article. Trade-value commentary uses Original Trade Analysis snapshot values and Value Adjustment when a complete historical evaluation is available. Head-to-head records use Sleeper league matchups from 2024 through the article week.'+(a.sources?.mida?' MIDA playoff/championship outlook • source data as of '+esc(a.sources.mida.as_of||'unavailable')+'.':'')+'</div></details></div>'
 }
 function reporterArchiveHTML(w){
  const reporters=w?.reporters||reporterDirectoryCache?.reporters||[],buttons=reporters.map(r=>'<button type="button" class="lh-reporter-desk '+(openReporterArchive===r.id?'active':'')+'" data-lh-reporter-archive="'+esc(r.id)+'"><b>'+esc(r.name)+'</b><small>'+esc(r.title)+'<br>'+esc(r.desk)+'</small></button>').join('');
@@ -202,7 +254,7 @@ function linkedNotebookText(value,teams,seenRecords,seenLinks){
     rec=hasRecord?String(Number(rr.wins))+'-'+String(Number(rr.losses))+(Number(rr.ties)?'-'+String(Number(rr.ties)):''):'',
     first=seenRecords&&!seenRecords.has(id),
     recEsc=rec.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&'),
-    authoredRecord=!!(first&&rec&&new RegExp('^\\s*\\(\\s*'+recEsc+'\\s*\\)').test(text.slice(end))),
+    authoredRecord=!!(first&&rec&&new RegExp('^\\s*\\(\\s*'+recEsc+'(?:\\s*,\\s*(?:No\\.?\\s*#?\\d+|#\\d+))?\\s*\\)','i').test(text.slice(end))),
     label=match[0]+(first&&rec&&!authoredRecord?' ('+rec+')':'');
   if(first)seenRecords.add(id);if(seenLinks)seenLinks.add(id);
   out+=esc(text.slice(last,start))+'<button type="button" class="lh-inline-team" data-lh-inquirer-team="'+esc(id)+'" data-lh-inquirer-name="'+esc(match[0])+'">'+esc(label)+'</button>';last=end

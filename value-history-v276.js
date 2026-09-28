@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history',SIGNAL_API='/.netlify/functions/player-signals';
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),playerSignalCache=new Map(),playerSignalPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),playerSignalCache=new Map(),playerSignalPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -158,7 +158,38 @@ function addStyles(){
   #valueHistory .vh-signal-meta{color:var(--muted);font-size:11px;line-height:1.5;margin-top:7px}
   #valueHistory .vh-signal-evidence{font-size:11px;color:#f4f4f5;line-height:1.5;margin-top:8px}
   #valueHistory .vh-signal-timeline{margin-top:10px;border-top:1px solid var(--line)}
-  @media(max-width:720px){#valueHistory .vh-signal-summary{grid-template-columns:1fr}}
+  #valueHistory .vh-market-jump{position:sticky;top:8px;z-index:8;display:flex;gap:5px;align-items:center;overflow-x:auto;padding:7px;border:1px solid color-mix(in srgb,#e4b53f 30%,var(--line));border-radius:14px;background:color-mix(in srgb,var(--card) 94%,#05070a);box-shadow:0 8px 22px rgba(0,0,0,.22)}
+  #valueHistory .vh-market-jump button{flex:0 0 auto;border:0!important;border-radius:9px!important;padding:8px 11px!important;background:transparent!important;color:var(--muted)!important;font-size:10px!important;font-weight:900!important;letter-spacing:.045em;text-transform:uppercase;box-shadow:none!important}
+  #valueHistory .vh-market-jump button:hover,#valueHistory .vh-market-jump button:focus-visible{color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 10%,var(--card))!important;outline:none}
+  #valueHistory .vh-market-section{display:grid;gap:12px;scroll-margin-top:86px}
+  #valueHistory .vh-market-section-title{display:flex;justify-content:space-between;gap:14px;align-items:end;padding:3px 2px 0}
+  #valueHistory .vh-market-section-title h3{margin:0;color:#e4b53f;font-size:18px;font-weight:950;letter-spacing:.075em;text-transform:uppercase}
+  #valueHistory .vh-market-section-title p{margin:0;color:var(--muted);font-size:11px;text-align:right;max-width:620px}
+  #valueHistory .vh-index-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+  #valueHistory .vh-index-card{border:1px solid var(--line);border-radius:12px;padding:13px;background:color-mix(in srgb,var(--card) 82%,#090b10);min-width:0}
+  #valueHistory .vh-index-card small{display:block;color:var(--muted);font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+  #valueHistory .vh-index-card b{display:block;margin-top:6px;font-size:24px;line-height:1}
+  #valueHistory .vh-index-card span{display:block;margin-top:6px;font-size:10px}
+  #valueHistory .vh-heat-wrap{overflow-x:auto}
+  #valueHistory .vh-heat-grid{display:grid;grid-template-columns:78px repeat(4,minmax(110px,1fr));gap:6px;min-width:590px}
+  #valueHistory .vh-heat-head,#valueHistory .vh-heat-label,#valueHistory .vh-heat-cell{padding:10px;border-radius:9px;border:1px solid var(--line);font-size:10px}
+  #valueHistory .vh-heat-head,#valueHistory .vh-heat-label{font-weight:900;letter-spacing:.05em;text-transform:uppercase;background:color-mix(in srgb,var(--card) 86%,#090b10)}
+  #valueHistory .vh-heat-cell{text-align:center;font-weight:950;background:color-mix(in srgb,var(--card) 88%,#090b10)}
+  #valueHistory .vh-heat-cell.vh-up{background:color-mix(in srgb,var(--good,#1f9d68) 13%,var(--card))}
+  #valueHistory .vh-heat-cell.vh-down{background:color-mix(in srgb,var(--bad,#c45151) 13%,var(--card))}
+  #valueHistory .vh-intel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  #valueHistory .vh-intel-list{display:grid;gap:0}
+  #valueHistory .vh-intel-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+  #valueHistory .vh-intel-row:first-child{border-top:0}
+  #valueHistory .vh-intel-row small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+  #valueHistory .vh-intel-metric{text-align:right;font-weight:950;white-space:nowrap}
+  #valueHistory .vh-category-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  #valueHistory .vh-category-card{border:1px solid var(--line);border-radius:12px;padding:12px;background:color-mix(in srgb,var(--card) 84%,#090b10);min-width:0}
+  #valueHistory .vh-category-card small{display:block;color:#e4b53f;font-size:9px;font-weight:950;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+  #valueHistory .vh-category-card b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #valueHistory .vh-category-card span{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+  @media(max-width:1000px){#valueHistory .vh-index-grid{grid-template-columns:repeat(3,1fr)}#valueHistory .vh-category-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:720px){#valueHistory .vh-signal-summary{grid-template-columns:1fr}#valueHistory .vh-intel-grid{grid-template-columns:1fr}#valueHistory .vh-index-grid{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-market-section-title{display:block}#valueHistory .vh-market-section-title p{text-align:left;margin-top:4px}}
   #valueHistory .vh-team-toolbar select,#valueHistory #vhMarketSearch{border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important}
   #valueHistory .vh-team-toolbar select:focus,#valueHistory .vh-team-toolbar select:focus-visible,#valueHistory #vhMarketSearch:focus,#valueHistory #vhMarketSearch:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.18)!important}
   #valueHistory .vh-similar-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -562,6 +593,7 @@ function handleContentClick(e){
     }
     return;
   }
+  const jump=e.target.closest('[data-vh-market-jump]');if(jump){document.getElementById(jump.dataset.vhMarketJump||'')?.scrollIntoView({behavior:'smooth',block:'start'});return}
   const player=e.target.closest('[data-vh-player]');if(player){selectPlayer(player.dataset.vhPlayer);return}
   const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';syncPlayerSearchState();loadMarket(true);return}
   const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();setPrimaryPlayerSearchVisible(true);currentPlayerId=null;syncPlayerSearchState();renderTrackMyTeam();return}
@@ -1001,6 +1033,23 @@ async function loadPlayerSignals(id){
   const target=document.getElementById('vhPlayerSignals');if(target)target.innerHTML=signalCardMarkup(playerSignalCache.get(key),false);
 }
 async function marketFetch(){let last;for(let attempt=0;attempt<3;attempt++){try{const r=await fetch(`${API}?market=1`,{cache:'no-store'});if(!r.ok)throw Error(`market history unavailable (${r.status})`);return await r.json()}catch(e){last=e;if(attempt<2)await new Promise(r=>setTimeout(r,250*(attempt+1)))}}throw last||Error('market history unavailable')}
+async function marketInsightsFetch(force=false){
+  if(marketInsightsCache&&!force)return marketInsightsCache;
+  if(marketInsightsPending&&!force)return marketInsightsPending;
+  const pending=(async()=>{const r=await fetch(`${API}?market_insights=1`,{cache:'no-store'});if(!r.ok)throw Error('market insights unavailable');return await r.json()})();
+  marketInsightsPending=pending;try{marketInsightsCache=await pending;return marketInsightsCache}finally{marketInsightsPending=null}
+}
+async function marketSignalsFetch(force=false){
+  if(marketSignalCache&&!force)return marketSignalCache;
+  if(marketSignalsPending&&!force)return marketSignalsPending;
+  const pending=(async()=>{const r=await fetch(`${SIGNAL_API}?compact=1`,{cache:'no-store'});if(!r.ok)throw Error('market signals unavailable');return await r.json()})();
+  marketSignalsPending=pending;try{marketSignalCache=await pending;return marketSignalCache}finally{marketSignalsPending=null}
+}
+async function loadMarketIntelligence(force=false){
+  const tasks=[marketInsightsFetch(force).catch(()=>null),marketSignalsFetch(force).catch(()=>null)];
+  await Promise.all(tasks);
+  if(currentView==='market')renderMarketIntelligence();
+}
 function teamNetCacheKey(ids,teamId){return`${String(teamId||'')}|${(ids||[]).map(String).sort().join(',')}`}
 async function teamNetFetch(ids,teamId){
   const playerKey=(ids||[]).map(String).sort().join(','),key=teamNetCacheKey(ids,teamId),cached=teamNetCache.get(key);
@@ -1022,6 +1071,7 @@ async function loadMarket(force=false){
   }
   if(currentView!=='market')return;
   renderMarketDashboard();
+  loadMarketIntelligence(force);
 }
 async function loadFullMarketHistory(force=false){
   const box=document.getElementById('vhContent');if(!box)return;
@@ -1071,6 +1121,94 @@ function openMoverModal(_,category,period,scope='market'){
   const titleMap={valueRisers:'Value Risers',valueFallers:'Value Fallers',rankRisers:'Overall Rank Risers',rankFallers:'Overall Rank Fallers',posRankRisers:'Positional Rank Risers',posRankFallers:'Positional Rank Fallers'};
   const wrap=document.createElement('div');wrap.id='vhMoverModal';wrap.className='vh-modal-backdrop';wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="${esc(titleMap[category]||'Movers')}"><div class="vh-modal-head"><div><h3>${scope==='team'?`${esc(teamName(trackedTeamId))} — `:''}${esc(titleMap[category]||'Movers')} — ${esc(periodLabel(period,m))}</h3><div class="vh-sub">${rows.length} players moved in this period</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body">${moverRows(rows,mode,Infinity)}</div></div>`;document.getElementById('vhLazy')?.appendChild(wrap);
 }
+function marketSignalDirection(stateName){
+  const v=String(stateName||'');if(['breakout','emerging','surging'].includes(v))return 1;
+  if(['declining','cooling','struggling','struggling-star','declining-veteran'].includes(v))return-1;
+  return 0;
+}
+function marketPctChange(row,key){
+  const delta=Number(row?.[key]),value=Number(row?.value),base=value-delta;
+  return Number.isFinite(delta)&&Number.isFinite(base)&&base>0?delta/base*100:null;
+}
+function intelPlayerRow(id,sub,metric,tone=''){
+  return`<div class="vh-intel-row"><button class="vh-player-link" data-vh-player="${esc(id)}"><b>${esc(playerName(id))}</b><small>${esc(sub||'')}</small></button><div class="vh-intel-metric ${tone}">${metric}</div></div>`;
+}
+function positionIndexesMarkup(){
+  const rows=marketInsightsCache?.position_indexes||[];
+  if(!rows.length)return'<div class="vh-card"><div class="vh-empty">Building position indexes from tracked market history…</div></div>';
+  return`<div class="vh-index-grid">${rows.map(r=>`<div class="vh-index-card"><small>${esc(r.pos)} Index</small><b>${Number.isFinite(Number(r.index))?Number(r.index).toFixed(1):'—'}</b><span class="${deltaClass(r.change7_pct)}">${Number.isFinite(Number(r.change7_pct))?signedPct(r.change7_pct):'—'} over 7D</span><span class="muted">Top ${r.count} current ${esc(r.pos)} values • tracking baseline = 100</span></div>`).join('')}</div>`;
+}
+function marketHeatMapMarkup(){
+  const m=marketCache||{},period=m.has7?'7D':'ALL',key=period==='7D'?'delta7':'deltaAll',rows=m.marketRows||[],
+    positions=['QB','RB','WR','TE','IDP'],buckets=[['Top 100',1,100],['101–200',101,200],['201–300',201,300],['301+',301,Infinity]];
+  const cells=[];
+  cells.push('<div class="vh-heat-head">Position</div>',...buckets.map(b=>`<div class="vh-heat-head">${b[0]}</div>`));
+  for(const pos of positions){
+    cells.push(`<div class="vh-heat-label">${pos}</div>`);
+    for(const [,min,max] of buckets){
+      const sample=rows.filter(r=>String(r.pos)===pos&&Number(r.overall)>=min&&Number(r.overall)<=max).map(r=>marketPctChange(r,key)).filter(Number.isFinite),
+        avg=sample.length?sample.reduce((a,b)=>a+b,0)/sample.length:null;
+      cells.push(`<div class="vh-heat-cell ${deltaClass(avg)}">${avg==null?'—':signedPct(avg)}<small>${sample.length} players</small></div>`);
+    }
+  }
+  return`<div class="vh-card"><div class="vh-sub">Average player-value movement by position and overall-rank band • ${period==='7D'?'last 7 days':'available tracked history'}</div><div class="vh-heat-wrap"><div class="vh-heat-grid">${cells.join('')}</div></div></div>`;
+}
+function newHighLowMarkup(){
+  const data=marketInsightsCache;
+  if(!data)return'<div class="vh-card"><div class="vh-empty">Checking tracked market records…</div></div>';
+  const highs=(data.new_highs||[]).slice(0,10),lows=(data.new_lows||[]).slice(0,10);
+  const list=(rows,high)=>rows.length?rows.map(r=>intelPlayerRow(r.id,`${r.pos} • previous ${high?'high':'low'} ${fmt(high?r.previous_high:r.previous_low)}`,`${high?'+':''}${fmt(high?r.gain:r.drop)}`,high?'vh-up':'vh-down')).join(''):`<div class="vh-empty">No new tracked ${high?'highs':'lows'} on the latest snapshot.</div>`;
+  return`<div class="vh-intel-grid"><div class="vh-card"><h3>New Market Highs</h3><div class="vh-sub">Strict new player-value records versus every earlier tracked snapshot.</div><div class="vh-intel-list">${list(highs,true)}</div></div><div class="vh-card"><h3>New Market Lows</h3><div class="vh-sub">Strict new player-value lows versus every earlier tracked snapshot.</div><div class="vh-intel-list">${list(lows,false)}</div></div></div>`;
+}
+function momentumMarkup(){
+  const signals=marketSignalCache?.signals||[],market=new Map((marketCache?.marketRows||[]).map(r=>[String(r.id),r]));
+  if(!signals.length)return'<div class="vh-card"><div class="vh-empty">Loading completed-week Fleeced signals…</div></div>';
+  const score=s=>{const e=s.evidence||{},form=Math.abs(Number(e.recent_form_delta)||0),season=Math.abs((Number(e.season_avg)||0)-(Number(e.prior_season_avg)||0));return form*3+season+Math.abs(Number(market.get(String(s.player_id))?.delta7)||0)/500};
+  const up=signals.filter(s=>Number(s.direction==='positive')||s.momentum==='hot').sort((a,b)=>score(b)-score(a)).slice(0,10),
+    down=signals.filter(s=>s.direction==='negative'||s.momentum==='cold').sort((a,b)=>score(b)-score(a)).slice(0,10);
+  const rows=(list,positive)=>list.length?list.map(s=>{const m=market.get(String(s.player_id)),move=Number(m?.delta7);return intelPlayerRow(s.player_id,`${s.reporter_label||s.label} • ${signalMomentumLabel(s.momentum)} • ${s.confidence}`,Number.isFinite(move)?signed(move):esc(s.label),positive?'vh-up':'vh-down')}).join(''):'<div class="vh-empty">No qualified completed-week signals in this direction yet.</div>';
+  return`<div class="vh-intel-grid"><div class="vh-card"><h3>Heating Up</h3><div class="vh-sub">Positive Fleeced states and hot recent-form signals, strongest evidence first.</div><div class="vh-intel-list">${rows(up,true)}</div></div><div class="vh-card"><h3>Cooling Down</h3><div class="vh-sub">Negative Fleeced states and cold recent-form signals, strongest evidence first.</div><div class="vh-intel-list">${rows(down,false)}</div></div></div>`;
+}
+function reversalsMarkup(){
+  const signals=marketSignalCache?.signals||[],m=marketCache||{},period=m.has7?'delta7':'delta30',marketRows=m.marketRows||[],
+    signalRows=signals.filter(s=>s.changed&&marketSignalDirection(s.previous_state)&&marketSignalDirection(s.state)&&marketSignalDirection(s.previous_state)!==marketSignalDirection(s.state)).slice().sort((a,b)=>Number(b.week)-Number(a.week)).slice(0,10),
+    priceRows=marketRows.filter(r=>Number(r.delta1)&&Number(r[period])&&Math.sign(Number(r.delta1))!==Math.sign(Number(r[period]))).slice().sort((a,b)=>Math.abs(Number(b.delta1))-Math.abs(Number(a.delta1))).slice(0,10);
+  const signalList=signalRows.length?signalRows.map(s=>intelPlayerRow(s.player_id,`${s.previous_state} → ${s.state} • Week ${s.week}`,esc(s.label),signalTone(s.state))).join(''):'<div class="vh-empty">No positive↔negative Fleeced state reversals yet.</div>';
+  const priceList=priceRows.length?priceRows.map(r=>intelPlayerRow(r.id,`1D ${signed(r.delta1)} vs ${m.has7?'7D':'30D'} ${signed(r[period])}`,signed(r.delta1),deltaClass(r.delta1))).join(''):'<div class="vh-empty">No short-term value reversals in the current tracked sample.</div>';
+  return`<div class="vh-intel-grid"><div class="vh-card"><h3>Signal Reversals</h3><div class="vh-sub">Players whose structured Fleeced state flipped between positive and negative.</div><div class="vh-intel-list">${signalList}</div></div><div class="vh-card"><h3>Value Reversals</h3><div class="vh-sub">1-day value movement running opposite the broader ${m.has7?'7-day':'30-day'} direction.</div><div class="vh-intel-list">${priceList}</div></div></div>`;
+}
+function volatilityMarkup(){
+  const rows=(marketInsightsCache?.volatility||[]).filter(r=>Number(r.observations)>=2).slice(0,15);
+  if(!marketInsightsCache)return'<div class="vh-card"><div class="vh-empty">Measuring tracked value ranges…</div></div>';
+  if(!rows.length)return'<div class="vh-card"><div class="vh-empty">Not enough tracked history for volatility yet.</div></div>';
+  return`<div class="vh-card"><div class="vh-sub">Largest high-to-low value ranges since tracking began. Range % uses the midpoint of each player’s tracked high and low.</div><div class="vh-intel-list">${rows.map(r=>intelPlayerRow(r.id,`${r.pos} • low ${fmt(r.low)} • high ${fmt(r.high)} • ${r.observations} observations`,`${Number(r.range_pct).toFixed(1)}%`,'')).join('')}</div></div>`;
+}
+function categoryLeadersMarkup(){
+  const m=marketCache||{},rows=m.marketRows||[],period=m.has7?'7D':'ALL',p=m.periods?.[period]||{},signals=marketSignalCache?.signals||[];
+  if(!rows.length)return'<div class="vh-card"><div class="vh-empty">Market leaders unavailable.</div></div>';
+  const top=rows.slice().sort((a,b)=>Number(b.value)-Number(a.value)),cards=[];
+  const add=(label,row,detail)=>{if(row)cards.push(`<button type="button" class="vh-category-card vh-player-link" data-vh-player="${esc(row.id)}"><small>${esc(label)}</small><b>${esc(playerName(row.id))}</b><span>${esc(detail)}</span></button>`)};
+  add('Most Valuable',top[0],`Value ${fmt(top[0]?.value)} • Overall #${top[0]?.overall}`);
+  for(const pos of ['QB','RB','WR','TE','IDP']){const r=top.find(x=>String(x.pos)===pos);add(`Top ${pos}`,r,r?`Value ${fmt(r.value)} • ${pos} #${r.posRank}`:'')}
+  const gain=p.valueRisers?.[0];add(`Biggest ${period} Gainer`,gain,gain?`${signed(gain.delta)} value`:'');
+  const rank=p.rankRisers?.[0];add(`Biggest ${period} Rank Riser`,rank,rank?`+${rank.overallDelta} overall ranks`:'');
+  const breakout=signals.filter(x=>x.state==='breakout').slice().sort((a,b)=>Math.abs(Number(b.evidence?.season_avg)-Number(b.evidence?.prior_season_avg))-Math.abs(Number(a.evidence?.season_avg)-Number(a.evidence?.prior_season_avg)))[0];
+  if(breakout)add('Breakout Signal',{id:breakout.player_id},`${breakout.reporter_label||breakout.label} • ${breakout.confidence}`);
+  return`<div class="vh-category-grid">${cards.join('')}</div>`;
+}
+function marketIntelligenceMarkup(){
+  return`
+  <section class="vh-market-section" id="vhPositionIndexes"><div class="vh-market-section-title"><h3>Position Indexes</h3><p>Top-24 position cohorts rebased to 100 at the beginning of tracked history.</p></div>${positionIndexesMarkup()}</section>
+  <section class="vh-market-section" id="vhMarketHeat"><div class="vh-market-section-title"><h3>Market Heat Map</h3><p>Where value is heating up or cooling down across positions and rank bands.</p></div>${marketHeatMapMarkup()}</section>
+  <section class="vh-market-section" id="vhMarketHighLow"><div class="vh-market-section-title"><h3>New Market Highs / Lows</h3><p>Fresh tracking records—not merely players sitting near an old high or low.</p></div>${newHighLowMarkup()}</section>
+  <section class="vh-market-section" id="vhMomentumLeaders"><div class="vh-market-section-title"><h3>Momentum Leaders</h3><p>The reporter intelligence layer turned into a league-wide player trend board.</p></div>${momentumMarkup()}</section>
+  <section class="vh-market-section" id="vhMarketReversals"><div class="vh-market-section-title"><h3>Market Reversals</h3><p>Structured signal flips plus short-term price movement against the broader trend.</p></div>${reversalsMarkup()}</section>
+  <section class="vh-market-section" id="vhMarketVolatility"><div class="vh-market-section-title"><h3>Market Volatility</h3><p>Players with the widest verified value ranges in tracked Fleeced history.</p></div>${volatilityMarkup()}</section>
+  <section class="vh-market-section" id="vhCategoryLeaders"><div class="vh-market-section-title"><h3>Market Leaders by Category</h3><p>Current value, positional leadership, movement leadership, and breakout intelligence.</p></div>${categoryLeadersMarkup()}</section>`;
+}
+function renderMarketIntelligence(){
+  const host=document.getElementById('vhMarketIntelligence');if(host)host.innerHTML=marketIntelligenceMarkup();
+}
 function renderMarketDashboard(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
   const m=marketCache,status=document.getElementById('vhStatus');
@@ -1078,14 +1216,27 @@ function renderMarketDashboard(){
   const vr=marketPeriods.valueRisers,vf=marketPeriods.valueFallers,rr=marketPeriods.rankRisers,rf=marketPeriods.rankFallers;
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
-  <div class="vh-grid-2">
-    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Risers',vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(applyMoverPool(vpR.valueRisers,'market','valueRisers'))}</div>
-    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Fallers',vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(applyMoverPool(vpF.valueFallers,'market','valueFallers'))}</div>
+  <div class="vh-market-jump">
+    <button type="button" data-vh-market-jump="vhMarketMovers">Movers</button>
+    <button type="button" data-vh-market-jump="vhPositionIndexes">Position Indexes</button>
+    <button type="button" data-vh-market-jump="vhMarketHeat">Heat Map</button>
+    <button type="button" data-vh-market-jump="vhMarketHighLow">Highs / Lows</button>
+    <button type="button" data-vh-market-jump="vhMomentumLeaders">Momentum</button>
+    <button type="button" data-vh-market-jump="vhMarketReversals">Reversals</button>
+    <button type="button" data-vh-market-jump="vhMarketVolatility">Volatility</button>
+    <button type="button" data-vh-market-jump="vhCategoryLeaders">Category Leaders</button>
   </div>
-  <div class="vh-grid-2">
-    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Risers',rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(applyMoverPool(rpR.rankRisers,'market','rankRisers'),'rank')}</div>
-    <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Fallers',rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(applyMoverPool(rpF.rankFallers,'market','rankFallers'),'rank')}</div>
-  </div>`;
+  <section class="vh-market-section" id="vhMarketMovers"><div class="vh-market-section-title"><h3>Market Movers</h3><p>The original finished-value and overall-rank fluctuation boards remain unchanged.</p></div>
+    <div class="vh-grid-2">
+      <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Risers',vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(applyMoverPool(vpR.valueRisers,'market','valueRisers'))}</div>
+      <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Fallers',vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(applyMoverPool(vpF.valueFallers,'market','valueFallers'))}</div>
+    </div>
+    <div class="vh-grid-2">
+      <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Risers',rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(applyMoverPool(rpR.rankRisers,'market','rankRisers'),'rank')}</div>
+      <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Fallers',rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(applyMoverPool(rpF.rankFallers,'market','rankFallers'),'rank')}</div>
+    </div>
+  </section>
+  <div id="vhMarketIntelligence">${marketIntelligenceMarkup()}</div>`;
 }
 function renderFullMarketHistory(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
@@ -1393,12 +1544,12 @@ function renderPlayerProfile(id,allPts,period='ALL'){
     <div class="vh-metric"><small>Best Overall Rank</small><b>#${bestOverall}</b><div class="vh-metric-time">${bestOverallPoint?dateTime(bestOverallPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>Best ${esc(meta.pos)} Rank</small><b>#${bestPos}</b><div class="vh-metric-time">&nbsp;</div></div>
   </div>
-  <div class="vh-card" id="vhPlayerSignals">${signalCardMarkup(signals,signalsLoading)}</div>
   <div class="vh-card vh-chart-card"><h3 class="vh-section-heading">${period==='ALL'?'All-Time':period} Value History</h3>${valueChart(id,pts,allPts)}</div>
   <div class="vh-rank-grid">
     <div class="vh-card"><h3 class="vh-section-heading">Overall Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.overall} → #${rankLast.overall}</span><b class="${deltaClass(overallMove)}">${overallMove>0?'+':''}${overallMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'overall','Overall rank')}</div>
     <div class="vh-card"><h3 class="vh-section-heading">${esc(meta.pos)} Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.posRank} → #${rankLast.posRank}</span><b class="${deltaClass(posMove)}">${posMove>0?'+':''}${posMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'posRank',`${meta.pos} rank`)}</div>
   </div>
+  <div class="vh-card" id="vhPlayerSignals">${signalCardMarkup(signals,signalsLoading)}</div>
   <div class="vh-grid">
     <div class="vh-card" style="grid-column:span 2"><h3 class="vh-section-heading">Recent Changes</h3><div class="vh-sub">Latest recorded value or rank changes</div>${recentChanges(allPts)}</div>
     <div class="vh-card"><h3 class="vh-section-heading">All-Time Milestones</h3><div class="vh-feed">

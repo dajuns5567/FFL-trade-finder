@@ -55,25 +55,25 @@ function inquirerTradeClassificationQuip(label,rid,context={}){
    'walter-mercer':[
     own+' got fleeced, and the fans have every right to ask what '+ownManager+' saw that the value did not. One bad deal can be survived; if this becomes a habit, the patience around this roster will disappear faster than the excuses.',
     own+' got fleeced. The fan base can live with an aggressive move, but not with repeatedly paying the premium and getting the smaller package back. If this turns into a pattern, '+ownManager+' is going to have a much harder question to answer than this week’s score.',
-    own+' landed on the wrong side of a Fleeced! deal, which puts '+ownManager+' under a brighter light than before the trade. Do it once and people grumble; do it again and the fans start wondering whether management is solving roster problems or creating new ones.',
+    own+' got fleeced, which puts '+ownManager+' under a brighter light than before the trade. Do it once and people grumble; do it again and the fans start wondering whether management is solving roster problems or creating new ones.',
     own+' got fleeced. Fans will forgive a swing that misses, but there is a difference between taking a risk and repeatedly donating value. If another deal looks like this, '+ownManager+' should expect the next round of questions to be louder.'
    ],
    'tess-delaney':[
     own+' got fleeced, and suddenly the fan base is less interested in the ambition of the move than in why '+ownManager+' paid so much for it. One expensive misread is survivable; a second starts looking like a management philosophy nobody asked for.',
     own+' got fleeced. Supporters can tolerate boldness, but boldness becomes exhausting when the other side keeps leaving with more value. If this becomes a recurring habit, '+ownManager+' will have to explain why every grand idea seems to come with a surcharge.',
-    own+' wound up on the wrong side of a Fleeced! deal. One transaction can be defended; a pattern of them would turn every future negotiation into a referendum on '+ownManager+'.',
+    own+' got fleeced. One transaction can be defended; a pattern of them would turn every future negotiation into a referendum on '+ownManager+'.',
     own+' got fleeced. The fans are not going to revolt over one trade, but they are entitled to wonder why '+ownManager+' came away lighter after spending so heavily. Repeat it and patience becomes a scarcer asset than anything in the deal.'
    ],
    'mack-hollis':[
     own+' got fleeced. Fans are already looking at '+ownManager+' and asking the obvious question: how many times can you lose the value before “aggressive” stops sounding brave?',
     own+' got fleeced, and that puts '+ownManager+' on notice. One ugly deal is a mistake; two starts looking like a hobby, and the fan base will not be gentle about the distinction.',
-    own+' is on the wrong side of a Fleeced! deal. The fans can shrug off one bad swing; if '+ownManager+' keeps sending out more value than comes back, the next headline writes itself.',
+    own+' got fleeced. The fans can shrug off one bad swing; if '+ownManager+' keeps sending out more value than comes back, the next headline writes itself.',
     own+' got fleeced, and nobody needs a calculator to understand why the fan base is annoyed. If this becomes a pattern, '+ownManager+' will be answering for the roster construction before Sunday even gets a chance to.'
    ],
    'nora-voss':[
     own+' got fleeced. Fans now have a legitimate reason to question '+ownManager+', because the adjusted gap survived every charitable interpretation. If another trade ends the same way, this stops looking isolated.',
     own+' got fleeced, and that moves the scrutiny from the transaction to '+ownManager+'. One bad outcome can happen to anyone; repeated outcomes like this would force a much less comfortable question about how this roster values its own assets.',
-    own+' finished on the wrong side of a Fleeced! deal. The concern is not that one trade went badly; it is whether '+ownManager+' learns anything from it.',
+    own+' got fleeced. The concern is not that one trade went badly; it is whether '+ownManager+' learns anything from it.',
     own+' got fleeced, which gives the fan base something more substantial than ordinary post-trade complaining. One miss is noise. If '+ownManager+' repeats it, the noise becomes evidence of a decision-making problem.'
    ]
   };
@@ -107,22 +107,22 @@ function inquirerTradeClassificationQuip(label,rid,context={}){
  }
  const banks={
   fair:[
-   own+' comes out of this with a Fair deal—close enough that neither side needs to invent a victory parade.',
-   'From '+own+'’s side, this grades Fair. There is an edge to argue about, but not enough of one to call the deal a theft.',
-   own+' can live with a Fair result here. The value stayed close enough that the football case matters more than the bragging rights.',
-   'For '+own+', Fair is the right word: defensible value, no fleece, and very little room for a victory speech.'
+   own+' ended up getting a fair deal—close enough that neither side needs to invent a victory parade.',
+   own+' got a fair deal here. There is an edge to argue about, but not enough of one to call the deal a theft.',
+   own+' came away with a fair deal. The value stayed close enough that the football case matters more than the bragging rights.',
+   own+' ended up with a fair deal: defensible value, no fleece, and very little room for a victory speech.'
   ],
   excellent:[
-   'For '+own+', this lands as an Excellent Fit. The value holds up and the move makes sense without requiring a heroic explanation.',
-   own+' gets an Excellent Fit out of this deal, the sort of transaction management can point to without immediately changing the subject.',
-   'This reads as an Excellent Fit from '+own+'’s side: strong enough value and a clean enough match to justify the move.',
-   own+' can call this an Excellent Fit and move on. There is not much here for the critics to grab.'
+   'This ended up being an excellent fit for '+own+'. The value holds up and the move makes sense without requiring a heroic explanation.',
+   own+' got an excellent fit out of this deal, the sort of transaction management can point to without immediately changing the subject.',
+   'This ended up as an excellent fit for '+own+': strong enough value and a clean enough match to justify the move.',
+   own+' ended up with an excellent fit and can move on. There is not much here for the critics to grab.'
   ],
   negotiable:[
-   'For '+own+', this remains Negotiable—good enough to defend, not clean enough to stop the argument.',
-   own+' sits in Negotiable territory. The deal is close enough to make sense and loose enough to keep the group chat employed.',
-   'From '+own+'’s side, Negotiable fits: no fleece, no obvious steal, and enough value difference to keep both managers talking.',
-   own+' gets a Negotiable result here. The trade is defensible, but nobody should be engraving the trophy.'
+   own+' ended up in negotiable territory—good enough to defend, not clean enough to stop the argument.',
+   own+' got a negotiable deal. It is close enough to make sense and loose enough to keep the group chat employed.',
+   own+' ended up with a negotiable deal: no fleece, no obvious steal, and enough value difference to keep both managers talking.',
+   own+' got a negotiable deal here. The trade is defensible, but nobody should be engraving the trophy.'
   ],
   other:[
    'From '+own+'’s side, the adjusted numbers leave this at '+label+'.',

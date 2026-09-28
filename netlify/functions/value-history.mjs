@@ -754,7 +754,8 @@ async function canonicalWeeklyAwards(origin){
     return Array.isArray(payload?.records)?payload.records:[];
   }catch{return[]}
 }
-async function scoringMilestones(playerId,origin=''){
+async function scoringMilestones(playerId){
+  const origin=String(arguments[1]||'');
   try{
     const [league,players,canonicalRecords]=await Promise.all([
       scoringJson(`${SCORING_API}/league/${LEAGUE}`),

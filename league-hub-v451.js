@@ -335,14 +335,14 @@ function linkedNotebookText(value,teams,seenRecords,seenLinks){
   const matched=match[0],team=teamByName.get(matched);
   out+=esc(text.slice(last,start));
   if(team){
-   const id=String(team?.roster_id||byName.get(matched)||''),linkKey=id;
-   if(seenLinks&&seenLinks.has(linkKey)){out+=esc(matched);last=end;continue}
+   const id=String(team?.roster_id||byName.get(matched)||'');
+   if(seenLinks&&seenLinks.has(id)){out+=esc(matched);last=end;continue}
    const rr=team?.league_context?.record||{},hasRecord=Number.isFinite(Number(rr.wins))&&Number.isFinite(Number(rr.losses)),
     rec=hasRecord?String(Number(rr.wins))+'-'+String(Number(rr.losses))+(Number(rr.ties)?'-'+String(Number(rr.ties)):''):'',
     first=seenRecords&&!seenRecords.has(id),recEsc=rec.replace(/[.*+?^$(){}|[\]\\]/g,'\\$&'),
     authoredRecord=!!(first&&rec&&new RegExp('^\\s*\\(\\s*'+recEsc+'(?:\\s*,\\s*(?:No\\.?\\s*#?\\d+|#\\d+))?\\s*\\)','i').test(text.slice(end))),
     label=matched+(first&&rec&&!authoredRecord?' ('+rec+')':'');
-   if(first)seenRecords.add(id);if(seenLinks)seenLinks.add(linkKey);
+   if(first)seenRecords.add(id);if(seenLinks)seenLinks.add(id);
    out+='<button type="button" class="lh-inline-team" data-lh-inquirer-team="'+esc(id)+'" data-lh-inquirer-name="'+esc(matched)+'">'+esc(label)+'</button>';
   }else{
    const pid=String(players.byName.get(matched)||'');

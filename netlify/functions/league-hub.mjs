@@ -11,7 +11,14 @@ const API='https://api.sleeper.app/v1';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const fetchJson=async url=>{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-League-Hub/2.0'},cache:'no-store'});if(!r.ok)throw new Error(`Sleeper ${r.status}`);return r.json()};
 const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
-const MANAGER_CACHE_VERSION=12;
+const MANAGER_CACHE_VERSION=13;
+const VERIFIED_HISTORICAL_MANAGER_ASSIGNMENTS={
+  2025:{
+    '8':{user_id:'1114044533941133312',sleeper_id:'ryanpuccino',source:'sleeper-data audit: 2024 roster continuity + 2025 roster-8 activity'},
+    '14':{user_id:'1118978561446207488',sleeper_id:'TyScally',source:'sleeper-data audit: 2024 roster continuity + 2025 roster-14 activity'},
+    '26':{user_id:'736949448093097984',sleeper_id:'ImQuinning',source:'sleeper-data audit: 2024 roster continuity + 2025 roster-26 activity'}
+  }
+};
 const BROADCAST_VERSION=17;
 const INQUIRER_EDITORIAL_REVISION=14;
 const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026],['2026|2',week2Preload2026]]);
@@ -503,18 +510,22 @@ async function managerHistory(){
  const career={},assignments=[],current=[],games=[],scoringGames=[],assignmentKeys=new Set();
  const ensure=(uid,u={})=>career[uid]||(career[uid]={user_id:uid,sleeper_id:String(u.display_name||u.username||uid),wins:0,losses:0,playoff_wins:0,playoff_appearances:0,championships:0,division_wins:0,division_championships:0,regular_season_titles:0,seasons:[]});
  const addAssignment=(season,rosterId,uid,u,source)=>{const id=String(uid||'');if(!id)return;ensure(id,u||{});const key=Number(season)+'|'+String(rosterId)+'|'+id;if(assignmentKeys.has(key))return;assignmentKeys.add(key);assignments.push({season:Number(season),roster_id:String(rosterId),user_id:id,sleeper_id:career[id].sleeper_id,source:String(source||'sleeper')})};
+ const verifiedHistoricalAssignment=(season,rosterId)=>VERIFIED_HISTORICAL_MANAGER_ASSIGNMENTS?.[Number(season)]?.[String(rosterId)]||null;
  for(const lg of chain){const lid=String(lg.league_id),season=Number(lg.season),regularMax=season<currentSeason?13:Math.min(13,Math.max(0,currentWeek-1));
   const weekNums=Array.from({length:regularMax},(_,i)=>i+1);
-  const [rosters,users,bracket,weekRows,transactionRows]=await Promise.all([
+  const [rosters,users,bracket,weekRows]=await Promise.all([
    fetchJson(`${API}/league/${lid}/rosters`).catch(()=>[]),
    fetchJson(`${API}/league/${lid}/users`).catch(()=>[]),
    fetchJson(`${API}/league/${lid}/winners_bracket`).catch(()=>[]),
-   Promise.all(weekNums.map(w=>fetchJson(`${API}/league/${lid}/matchups/${w}`).catch(()=>[]))),
-   season>=2024&&season<currentSeason?Promise.all(weekNums.map(w=>fetchJson(`${API}/league/${lid}/transactions/${w}`).catch(()=>[]))):Promise.resolve([])
+   Promise.all(weekNums.map(w=>fetchJson(`${API}/league/${lid}/matchups/${w}`).catch(()=>[])))
   ]);
-  const ub=new Map(users.map(u=>[String(u.user_id),u])),rb=new Map(rosters.map(r=>[String(r.roster_id),r])),ownerByRoster={},creatorEvidence=new Map();
-  for(const weekTx of transactionRows||[])for(const tx of weekTx||[]){const creator=String(tx?.creator||''),type=String(tx?.type||''),status=String(tx?.status||''),rids=(tx?.roster_ids||[]).map(String).filter(Boolean);if(!creator||!['waiver','free_agent'].includes(type)||(status&&status!=='complete')||rids.length!==1)continue;const rid=rids[0];if(!creatorEvidence.has(rid))creatorEvidence.set(rid,new Set());creatorEvidence.get(rid).add(creator)}
-  for(const r of rosters){const rid=String(r.roster_id),uid=String(r.owner_id||'');if(uid){ownerByRoster[rid]=uid;addAssignment(season,rid,uid,ub.get(uid)||{},'primary-owner')}for(const co of Array.isArray(r.co_owners)?r.co_owners:[]){const cid=String(co||'');if(cid)addAssignment(season,rid,cid,ub.get(cid)||{},'co-owner')}for(const creator of creatorEvidence.get(rid)||[]){addAssignment(season,rid,creator,ub.get(creator)||{},'transaction-creator')}if(uid&&String(lg.league_id)===String(LEAGUE))current.push({roster_id:rid,user_id:uid,sleeper_id:career[uid].sleeper_id})}
+  const ub=new Map(users.map(u=>[String(u.user_id),u])),rb=new Map(rosters.map(r=>[String(r.roster_id),r])),ownerByRoster={};
+  for(const r of rosters){
+   const rid=String(r.roster_id),primaryUid=String(r.owner_id||''),verified=!primaryUid?verifiedHistoricalAssignment(season,rid):null,uid=primaryUid||String(verified?.user_id||'');
+   if(uid){ownerByRoster[rid]=uid;const u=ub.get(uid)||{display_name:String(verified?.sleeper_id||uid)};addAssignment(season,rid,uid,u,verified?'verified-audit-owner':'primary-owner')}
+   for(const co of Array.isArray(r.co_owners)?r.co_owners:[]){const cid=String(co||'');if(cid)addAssignment(season,rid,cid,ub.get(cid)||{},'co-owner')}
+   if(primaryUid&&String(lg.league_id)===String(LEAGUE))current.push({roster_id:rid,user_id:primaryUid,sleeper_id:career[primaryUid].sleeper_id})
+  }
   const seasonWins={},seasonPoints={};
   for(const r of rosters){const uid=ownerByRoster[String(r.roster_id)];if(!uid)continue;const rw=Number(r?.settings?.wins)||0,rl=Number(r?.settings?.losses)||0;career[uid].wins+=rw;career[uid].losses+=rl;seasonWins[uid]=rw}
   for(let wi=0;wi<weekRows.length;wi++){const w=weekNums[wi],ms=weekRows[wi]||[],groups={};for(const m of ms){const k=String(m.matchup_id??'');if(k)(groups[k]||(groups[k]=[])).push(m)}for(const pair of Object.values(groups)){if(pair.length!==2)continue;const [a,b]=pair;for(const [m,o] of [[a,b],[b,a]]){const uid=ownerByRoster[String(m.roster_id)];if(!uid)continue;const pts=Number(m.points)||0,opt=Number(o.points)||0,won=pts>opt;seasonPoints[uid]=(seasonPoints[uid]||0)+pts;const rd=rb.get(String(m.roster_id))?.settings?.division,od=rb.get(String(o.roster_id))?.settings?.division;if(won&&rd!=null&&od!=null&&String(rd)===String(od))career[uid].division_wins++;const division=rb.get(String(m.roster_id))?.settings?.division,conference=sleeperConference(lg,division),game={season,week:w,user_id:uid,roster_id:String(m.roster_id),opponent_roster_id:String(o.roster_id),points:pts,opponent_points:opt,won,playoff:false,conference,round_label:''};games.push(game);if(season>=2024)scoringGames.push(game)}}}

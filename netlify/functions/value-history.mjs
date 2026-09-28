@@ -729,20 +729,46 @@ async function scoringSeasonWeeks(year,currentSeason){
   }
   scoringCache.set(key,{t:now,weekly});return weekly;
 }
+function scoringPayloadRows(payload){
+  if(!payload)return[];
+  if(Array.isArray(payload))return payload.map((row,i)=>({id:String(row?.player_id||row?.id||i),stats:row?.stats&&typeof row.stats==='object'?row.stats:row}));
+  return Object.entries(payload||{}).map(([key,row])=>({id:String(row?.player_id||row?.id||key),stats:row?.stats&&typeof row.stats==='object'?row.stats:row}));
+}
+function weeklyAwardGroup(position){
+  const p=String(position||'').toUpperCase();
+  if(['QB','RB','WR','TE'].includes(p))return'offense';
+  if(['DL','DE','DT','NT','EDGE','LB','DB','CB','S'].includes(p))return'defense';
+  return'';
+}
+function nflWeekStartIso(season,week){
+  const y=Number(season),w=Number(week);if(!y||!w)return null;
+  const sep1=new Date(Date.UTC(y,8,1)),firstMonday=1+((8-sep1.getUTCDay())%7),kickoff=new Date(Date.UTC(y,8,firstMonday+3+(w-1)*7));
+  return kickoff.toISOString();
+}
 async function scoringMilestones(playerId){
   try{
-    const league=await scoringJson(`${SCORING_API}/league/${LEAGUE}`),currentSeason=Number(league?.season),scoring=league?.scoring_settings||{};
+    const [league,players]=await Promise.all([
+      scoringJson(`${SCORING_API}/league/${LEAGUE}`),
+      scoringJson(`${SCORING_API}/players/nfl`).catch(()=>({}))
+    ]),currentSeason=Number(league?.season),scoring=league?.scoring_settings||{};
     if(!currentSeason||!Object.keys(scoring).length)return null;
     const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={};
     await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason)));
-    let highWeek=null,highSeason=null,highPpg=null;
+    let highWeek=null,highSeason=null,highPpg=null;const weeklyAwards=[];
     for(const year of years){
       let total=0,games=0;
       for(let week=1;week<=18;week++){
-        const row=weeklyPlayerRow(weeklyByYear[year]?.[week],playerId);if(!row)continue;
-        const points=leagueScore(row,scoring);if(points==null)continue;
-        games++;total+=points;
-        if(!highWeek||points>highWeek.points)highWeek={points,season:year,week};
+        const payload=weeklyByYear[year]?.[week],row=weeklyPlayerRow(payload,playerId);
+        if(row){const points=leagueScore(row,scoring);if(points!=null){games++;total+=points;if(!highWeek||points>highWeek.points)highWeek={points,season:year,week}}}
+        const leaders={offense:null,defense:null};
+        for(const item of scoringPayloadRows(payload)){
+          const group=weeklyAwardGroup(players?.[item.id]?.position),points=leagueScore(item.stats,scoring);
+          if(!group||points==null)continue;
+          if(!leaders[group]||points>leaders[group].points||(points===leaders[group].points&&String(item.id)<String(leaders[group].player_id)))leaders[group]={player_id:String(item.id),points};
+        }
+        for(const group of ['offense','defense']){
+          const leader=leaders[group];if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(leader.points.toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
+        }
       }
       total=Number(total.toFixed(2));
       if(games>=8){
@@ -751,7 +777,8 @@ async function scoringMilestones(playerId){
         if(!highPpg||ppg>highPpg.points)highPpg={points:ppg,season:year,games,total};
       }
     }
-    return{source:'Sleeper weekly regular-season stats + league scoring settings',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,refreshedAt:new Date().toISOString()};
+    weeklyAwards.sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
+    return{source:'Sleeper weekly regular-season stats + league scoring settings',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,weeklyAwards,refreshedAt:new Date().toISOString()};
   }catch(e){console.warn('value-history-scoring',e);return null}
 }
 async function tradeJson(url){

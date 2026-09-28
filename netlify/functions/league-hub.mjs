@@ -11,7 +11,7 @@ const API='https://api.sleeper.app/v1';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const fetchJson=async url=>{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-League-Hub/2.0'},cache:'no-store'});if(!r.ok)throw new Error(`Sleeper ${r.status}`);return r.json()};
 const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
-const MANAGER_CACHE_VERSION=11;
+const MANAGER_CACHE_VERSION=12;
 const BROADCAST_VERSION=17;
 const INQUIRER_EDITORIAL_REVISION=14;
 const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026],['2026|2',week2Preload2026]]);
@@ -132,7 +132,7 @@ function sleeperConference(league,division){
 }
 function matchupComplete(rows){if(!Array.isArray(rows)||!rows.length)return false;const groups=new Map();for(const m of rows){const k=String(m?.matchup_id??'');if(!k)return false;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}return [...groups.values()].every(pair=>pair.length===2&&pair.every(m=>Number.isFinite(Number(m?.points))&&m?.players_points&&Object.keys(m.players_points).length>0))}
 function matchupGroups(rows){const groups=new Map();for(const m of rows||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}return groups}
-function resolvedBracketRoster(v){const s=String(v??'').trim();return s&&s!=='0'&&s!=='null'&&s!=='undefined'?s:''}
+function resolvedBracketRoster(v){if(v==null||typeof v==='object')return'';const s=String(v).trim();return s&&s!=='0'&&s!=='null'&&s!=='undefined'?s:''}
 function playoffRoundNumber(week){return Math.max(1,Number(week)-INQUIRER_PLAYOFF_START_WEEK+1)}
 function playoffRoundName(week,conference=''){return inquirerWeekClassification(Number(week),new Date().getFullYear(),conference)?.round||('Week '+week+' Playoffs')}
 function playoffRoundComplete(bracket,week){
@@ -195,7 +195,7 @@ function playoffRoundRosters(bracket,week){
 }
 function playoffPairKey(a,b){const ids=[String(a||''),String(b||'')].filter(Boolean).sort();return ids.length===2?ids.join('|'):''}
 function playoffRoundPairs(bracket,week){
- const round=playoffRoundNumber(week),pairs=new Set();for(const n of bracket||[]){if(Number(n?.r)!==round)continue;const a=resolvedBracketRoster(n?.t1),b=resolvedBracketRoster(n?.t2),key=playoffPairKey(a,b);if(key)pairs.add(key)}return pairs;
+ const round=playoffRoundNumber(week),pairs=new Set();for(const n of bracket||[]){if(Number(n?.r)!==round)continue;const winner=resolvedBracketRoster(n?.w),loser=resolvedBracketRoster(n?.l),a=winner||resolvedBracketRoster(n?.t1),b=loser||resolvedBracketRoster(n?.t2),key=playoffPairKey(a,b);if(key)pairs.add(key)}return pairs;
 }
 function managerPlayoffRoundLabel(week,conference=''){
  const w=Number(week),conf=/^(AFC|NFC)$/i.test(String(conference||''))?String(conference).toUpperCase():'';
@@ -513,7 +513,7 @@ async function managerHistory(){
    season>=2024&&season<currentSeason?Promise.all(weekNums.map(w=>fetchJson(`${API}/league/${lid}/transactions/${w}`).catch(()=>[]))):Promise.resolve([])
   ]);
   const ub=new Map(users.map(u=>[String(u.user_id),u])),rb=new Map(rosters.map(r=>[String(r.roster_id),r])),ownerByRoster={},creatorEvidence=new Map();
-  for(const weekTx of transactionRows||[])for(const tx of weekTx||[]){const creator=String(tx?.creator||''),type=String(tx?.type||''),rids=(tx?.roster_ids||[]).map(String).filter(Boolean);if(!creator||!['waiver','free_agent'].includes(type)||rids.length!==1)continue;const rid=rids[0];if(!creatorEvidence.has(rid))creatorEvidence.set(rid,new Set());creatorEvidence.get(rid).add(creator)}
+  for(const weekTx of transactionRows||[])for(const tx of weekTx||[]){const creator=String(tx?.creator||''),type=String(tx?.type||''),status=String(tx?.status||''),rids=(tx?.roster_ids||[]).map(String).filter(Boolean);if(!creator||!['waiver','free_agent'].includes(type)||(status&&status!=='complete')||rids.length!==1)continue;const rid=rids[0];if(!creatorEvidence.has(rid))creatorEvidence.set(rid,new Set());creatorEvidence.get(rid).add(creator)}
   for(const r of rosters){const rid=String(r.roster_id),uid=String(r.owner_id||'');if(uid){ownerByRoster[rid]=uid;addAssignment(season,rid,uid,ub.get(uid)||{},'primary-owner')}for(const co of Array.isArray(r.co_owners)?r.co_owners:[]){const cid=String(co||'');if(cid)addAssignment(season,rid,cid,ub.get(cid)||{},'co-owner')}for(const creator of creatorEvidence.get(rid)||[]){addAssignment(season,rid,creator,ub.get(creator)||{},'transaction-creator')}if(uid&&String(lg.league_id)===String(LEAGUE))current.push({roster_id:rid,user_id:uid,sleeper_id:career[uid].sleeper_id})}
   const seasonWins={},seasonPoints={};
   for(const r of rosters){const uid=ownerByRoster[String(r.roster_id)];if(!uid)continue;const rw=Number(r?.settings?.wins)||0,rl=Number(r?.settings?.losses)||0;career[uid].wins+=rw;career[uid].losses+=rl;seasonWins[uid]=rw}

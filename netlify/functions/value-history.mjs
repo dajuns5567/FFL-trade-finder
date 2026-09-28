@@ -1097,6 +1097,7 @@ export default async (req)=>{
     await retry(()=>s.setJSON(key,snapshot),120);
     await appendIndex(s,key,t);
     await retry(()=>s.setJSON(LATEST_KEY,{version:3,t,fingerprint:fp,key,count:rows.length,source}),120);
+    marketInsightsCache=null;marketInsightsCacheAt=0;
     return json({ok:true,stored:true,t,source,count:rows.length,pick_count:picks.length,team_count:teams.length});
   }catch(e){
     console.error('value-history',e);

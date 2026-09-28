@@ -42,5 +42,10 @@ assert(editorial.includes("import {reporterPlayerStatusProfile} from './player-s
 assert(editorial.includes('return reporterPlayerStatusProfile(p,slot,pp);'),'Inquirer status wrapper is not delegated to shared classifier');
 const vh=fs.readFileSync('value-history-v276.js','utf8');
 for(const marker of ['/.netlify/functions/player-signals','Fleeced Signals','loadPlayerSignals','playerSignalCache'])assert(vh.includes(marker),'Value History signal integration missing '+marker);
+for(const marker of ['vhPositionIndexes','vhMarketHeat','vhMarketHighLow','vhMomentumLeaders','vhMarketReversals','vhMarketVolatility','vhCategoryLeaders','market_insights=1','marketSignalsFetch'])assert(vh.includes(marker),'Market Dashboard intelligence integration missing '+marker);
+const rankPos=vh.indexOf('class="vh-rank-grid"'),signalPos=vh.indexOf('id="vhPlayerSignals"',rankPos),recentPos=vh.indexOf('Recent Changes',signalPos);
+assert(rankPos>=0&&signalPos>rankPos&&recentPos>signalPos,'Fleeced Signals must render below rank charts and above Recent Changes');
+const historyFn=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
+for(const marker of ['getMarketInsights','marketInsightsFromSnapshots',"url.searchParams.get('market_insights')==='1'",'position_indexes','new_highs','new_lows','volatility'])assert(historyFn.includes(marker),'Market intelligence backend missing '+marker);
 
-console.log('Fleeced player signal engine smoke passed');
+console.log('Fleeced player signal engine + Market Dashboard intelligence smoke passed');

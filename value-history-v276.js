@@ -576,8 +576,14 @@ function handleChartPointer(e){
   else tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>Value <strong>${esc(hit.dataset.vhValue)}</strong></div><div>Overall #${esc(hit.dataset.vhOverall)} • ${esc(hit.dataset.vhPos)} #${esc(hit.dataset.vhPosRank)}</div>`;
   tip.style.left=`${x}px`;tip.style.top=`${y}px`;tip.style.display='block';
 }
+function primeTradeHistoryCache(data){
+  if(!Array.isArray(data?.trades))return false;
+  tradeHistoryCache=data;
+  return true;
+}
 async function tradeHistoryFetch(){
   if(tradeHistoryCache)return tradeHistoryCache;
+  if(primeTradeHistoryCache(globalThis.fleecedTradeHistorySharedCacheV515))return tradeHistoryCache;
   let last;
   for(let attempt=0;attempt<3;attempt++){
     try{
@@ -891,6 +897,7 @@ window.openValueHistoryTeamV458=function(id,showLeagueComparison=false){
  const go=()=>{renderTrackMyTeam();if(trackedTeamId){loadTrackedTeam();if(showLeagueComparison){let n=0,t=setInterval(()=>{n++;if(document.querySelector('[data-vh-team-net-all]')){clearInterval(t);openTeamNetModal()}else if(n>40)clearInterval(t)},100)}}};
  setTimeout(go,80);
 };
+window.primeTradeHistoryCacheV515=primeTradeHistoryCache;
 window.openTradeHistoryTeamV455=function(id){
   tradeTeamFilter=String(id||'');tradeYearFilter='';tradeMonthFilter='';
   const show=()=>{renderTradeHistory();requestAnimationFrame(()=>{const sel=document.querySelector('#tradeHistory [data-vh-trade-team]');if(sel)sel.value=tradeTeamFilter;const box=document.getElementById('tradeHistoryContent');if(box){const top=Math.max(0,window.scrollY+box.getBoundingClientRect().top-110);window.scrollTo({top,behavior:'auto'})}})};

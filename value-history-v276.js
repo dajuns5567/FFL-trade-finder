@@ -380,7 +380,7 @@ function addShell(){
   tradeSec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-brand-head"><h2 class="vh-brand-title">Trade History</h2><p class="vh-brand-copy">Completed Sleeper trades with historical value presentation and a read-only analysis from the current Trade Evaluator logic.</p></div><div id="tradeHistoryContent"><div class="empty">Open Trade History to load completed trades.</div></div></div></div>';
   main.appendChild(sec);main.appendChild(tradeSec);
   const activate=(button,id)=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));button.classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!==id)};
-  valueBtn.addEventListener('click',()=>{activate(valueBtn,'valueHistory');setTimeout(initUI,0)});
+  valueBtn.addEventListener('click',()=>{activate(valueBtn,'valueHistory');setTimeout(()=>{if(!uiReady){initUI();return}syncSubnav();if(currentView==='fullMarket')loadFullMarketHistory();else if(currentView==='team')renderTrackMyTeam();else if(currentView==='playerHub')renderPlayerHistoryHub()},0)});
   tradeBtn.addEventListener('click',()=>{activate(tradeBtn,'tradeHistory');setTimeout(initTradeHistoryUI,0)});
   tradeSec.addEventListener('change',handleContentChange);
   tradeSec.addEventListener('click',handleContentClick);
@@ -1384,5 +1384,5 @@ function renderPlayerProfile(id,allPts,period='ALL'){
 }
 function boot(){addShell();scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-window.valueHistoryV331={currentRows,currentPickRows,currentTeamRows,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)}};
+window.valueHistoryV331={currentRows,currentPickRows,currentTeamRows,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

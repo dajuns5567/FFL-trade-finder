@@ -335,7 +335,7 @@ function linkedNotebookText(value,teams,seenRecords,seenLinks){
   const matched=match[0],team=teamByName.get(matched);
   out+=esc(text.slice(last,start));
   if(team){
-   const id=String(team?.roster_id||byName.get(matched)||''),linkKey='team:'+id;
+   const id=String(team?.roster_id||byName.get(matched)||''),linkKey=id;
    if(seenLinks&&seenLinks.has(linkKey)){out+=esc(matched);last=end;continue}
    const rr=team?.league_context?.record||{},hasRecord=Number.isFinite(Number(rr.wins))&&Number.isFinite(Number(rr.losses)),
     rec=hasRecord?String(Number(rr.wins))+'-'+String(Number(rr.losses))+(Number(rr.ties)?'-'+String(Number(rr.ties)):''):'',

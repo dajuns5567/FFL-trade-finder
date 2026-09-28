@@ -453,7 +453,7 @@ function weeklyAwardCardsHTML(data=weeklyAwardsCache){
  return '<div class="lh-card lh-wide"><h3>🏅 Weekly Manager Awards — '+esc(rec.season+' Week '+rec.week)+'</h3><div class="lh-sub">These badges are locked to the completed week and remain on the winning manager’s profile.</div><div class="lh-grid">'+rows.map(a=>'<div class="lh-card"><h3>'+esc(a.title)+'</h3><div class="lh-story"><b>'+esc(a.manager_name||teamName(a.roster_id))+'</b><small>'+esc(a.team_name||teamName(a.roster_id))+' • '+esc(a.detail||'')+'</small></div></div>').join('')+'</div></div>';
 }
 function managerWeeklyBadgesHTML(id,mgr,data=weeklyAwardsCache){
- const uid=String(mgr?.user_id||''),rid=String(id),badges=(data?.records||[]).flatMap(rec=>(rec.manager_awards||[]).filter(a=>(uid&&String(a.manager_user_id||'')===uid)||(!uid&&String(a.roster_id||'')===rid)).map(a=>({...a,season:rec.season,week:rec.week}))).sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
+ const uid=String(mgr?.user_id||''),rid=String(id),badges=(data?.records||[]).flatMap(rec=>(rec.manager_awards||[]).filter(a=>(uid&&a.manager_user_id&&String(a.manager_user_id)===uid)||String(a.roster_id||'')===rid).map(a=>({...a,season:rec.season,week:rec.week}))).sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
  if(!badges.length)return'<div class="lh-sub">No weekly manager badges yet.</div>';
  return '<div class="lh-weekly-badges">'+badges.map(a=>'<span class="lh-weekly-badge">'+esc(a.title)+' • '+esc(a.season+' Week '+a.week)+'</span>').join('')+'</div>';
 }

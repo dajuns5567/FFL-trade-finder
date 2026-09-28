@@ -149,7 +149,7 @@ function addStyles(){
   #valueHistory .vh-player-history-choice:before{display:none!important}
   #valueHistory .vh-player-history-choice+.vh-player-history-choice{margin-top:0}
   #valueHistory .vh-player-history-choice .vh-search-wrap{width:100%;max-width:620px}
-  #valueHistory [data-vh-player-history-team]{background:color-mix(in srgb,var(--card) 78%,#0a0d12)!important;color:inherit!important;border-color:var(--line)!important;box-shadow:none!important}
+  #valueHistory .vh-team-toolbar select[data-vh-player-history-team]{background:color-mix(in srgb,var(--card) 78%,#0a0d12)!important;color:inherit!important;border-color:var(--line)!important;box-shadow:none!important}
   #valueHistory .vh-milestone-award{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid color-mix(in srgb,#e4b53f 34%,var(--line));border-radius:999px;background:transparent;color:#f4f4f5;font-size:10px;font-weight:900;white-space:nowrap}
   #valueHistory .vh-team-toolbar select,#valueHistory #vhMarketSearch{border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important}
   #valueHistory .vh-team-toolbar select:focus,#valueHistory .vh-team-toolbar select:focus-visible,#valueHistory #vhMarketSearch:focus,#valueHistory #vhMarketSearch:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.18)!important}

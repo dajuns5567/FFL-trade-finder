@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-const API='/.netlify/functions/value-history';
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+const API='/.netlify/functions/value-history',SIGNAL_API='/.netlify/functions/player-signals';
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),playerSignalCache=new Map(),playerSignalPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -151,6 +151,14 @@ function addStyles(){
   #valueHistory .vh-player-history-choice .vh-search-wrap{width:100%;max-width:620px}
   #valueHistory .vh-team-toolbar select[data-vh-player-history-team]{background:color-mix(in srgb,var(--card) 78%,#0a0d12)!important;color:inherit!important;border-color:var(--line)!important;box-shadow:none!important}
   #valueHistory .vh-milestone-award{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid color-mix(in srgb,#e4b53f 34%,var(--line));border-radius:999px;background:transparent;color:#f4f4f5;font-size:10px;font-weight:900;white-space:nowrap}
+  #valueHistory .vh-signal-summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;margin-top:8px}
+  #valueHistory .vh-signal-pill{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:7px 10px;border:1px solid color-mix(in srgb,#e4b53f 45%,var(--line));border-radius:999px;background:color-mix(in srgb,#e4b53f 10%,transparent);font-size:11px;font-weight:950;letter-spacing:.055em;text-transform:uppercase}
+  #valueHistory .vh-signal-pill.vh-up{border-color:color-mix(in srgb,#42c978 50%,var(--line))}
+  #valueHistory .vh-signal-pill.vh-down{border-color:color-mix(in srgb,#ef6464 50%,var(--line))}
+  #valueHistory .vh-signal-meta{color:var(--muted);font-size:11px;line-height:1.5;margin-top:7px}
+  #valueHistory .vh-signal-evidence{font-size:11px;color:#f4f4f5;line-height:1.5;margin-top:8px}
+  #valueHistory .vh-signal-timeline{margin-top:10px;border-top:1px solid var(--line)}
+  @media(max-width:720px){#valueHistory .vh-signal-summary{grid-template-columns:1fr}}
   #valueHistory .vh-team-toolbar select,#valueHistory #vhMarketSearch{border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important}
   #valueHistory .vh-team-toolbar select:focus,#valueHistory .vh-team-toolbar select:focus-visible,#valueHistory #vhMarketSearch:focus,#valueHistory #vhMarketSearch:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.18)!important}
   #valueHistory .vh-similar-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -967,6 +975,31 @@ async function scoringFetch(id){
   const pending=(async()=>{let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_scoring=1&player_id=${encodeURIComponent(key)}`,{cache:'no-store'});if(!r.ok)throw Error('scoring milestones unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('scoring milestones unavailable')})();
   playerScoringPending.set(key,pending);try{return await pending}finally{playerScoringPending.delete(key)}
 }
+async function signalFetch(id){
+  const key=String(id);if(playerSignalCache.has(key))return playerSignalCache.get(key);
+  if(playerSignalPending.has(key))return playerSignalPending.get(key);
+  const pending=(async()=>{let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${SIGNAL_API}?player_id=${encodeURIComponent(key)}`,{cache:'no-store'});if(!r.ok)throw Error('player signals unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('player signals unavailable')})();
+  playerSignalPending.set(key,pending);try{const data=await pending;playerSignalCache.set(key,data);return data}finally{playerSignalPending.delete(key)}
+}
+function signalTone(state){return['breakout','emerging','surging'].includes(String(state))?'vh-up':['declining','cooling','struggling','struggling-star','declining-veteran'].includes(String(state))?'vh-down':'vh-neutral'}
+function signalMomentumLabel(v){return({hot:'Heating up',cold:'Cooling down',steady:'Steady',insufficient:'Building sample'})[String(v||'')]||String(v||'—')}
+function signalCardMarkup(data,loading=false){
+  if(loading)return`<div class="vh-card-head"><div><h3>Fleeced Signals</h3><div class="vh-sub">Loading completed-week reporter intelligence in the background…</div></div></div><div class="vh-empty">Building signal history…</div>`;
+  const current=data?.current,history=Array.isArray(data?.history)?data.history:[];
+  if(!current)return`<div class="vh-card-head"><div><h3>Fleeced Signals</h3><div class="vh-sub">The same evidence rules used by Fleeced reporters, separated from the prose.</div></div></div><div class="vh-empty">No completed-week signal is available yet. Fleeced does not manufacture a trend from missing evidence.</div>`;
+  const ev=current.evidence||{},started=current.started_at?.season&&current.started_at?.week?`${current.started_at.season} Week ${current.started_at.week}`:'this signal run',
+    evidence=[Number.isFinite(Number(ev.season_avg))&&Number.isFinite(Number(ev.prior_season_avg))?`Season ${Number(ev.season_avg).toFixed(2)} PPG vs ${Number(ev.prior_season_avg).toFixed(2)} last season`:'',Number.isFinite(Number(ev.last3_avg))&&Number.isFinite(Number(ev.prior3_avg))?`Last 3: ${Number(ev.last3_avg).toFixed(2)} vs prior 3: ${Number(ev.prior3_avg).toFixed(2)}`:'',ev.role_lift?'Role/snap lift verified':''].filter(Boolean),
+    recent=history.slice(-8).reverse();
+  return`<div class="vh-card-head"><div><h3>Fleeced Signals</h3><div class="vh-sub">Structured player states derived from the same production, role, age and trajectory evidence the reporters use.</div></div></div>
+    <div class="vh-signal-summary"><div><span class="vh-signal-pill ${signalTone(current.state)}">${esc(current.label||current.state)}</span><div class="vh-signal-meta">Reporter classification: <b>${esc(current.reporter_label||'No adjective')}</b> • Momentum: <b>${esc(signalMomentumLabel(current.momentum))}</b> • Confidence: <b>${esc(current.confidence||'—')}</b></div><div class="vh-signal-evidence">${evidence.length?esc(evidence.join(' • ')):'Signal is based on the completed-week sample currently available.'}</div></div><div class="vh-signal-meta">Started <b>${esc(started)}</b><br>${Number(current.duration_weeks||1)} signal week${Number(current.duration_weeks||1)===1?'':'s'}${current.changed&&current.previous_state?`<br>Previous: <b>${esc(current.previous_state)}</b>`:''}</div></div>
+    <div class="vh-signal-timeline">${recent.map(r=>`<div class="vh-feed-row"><span class="vh-milestone-label">${esc(r.label||r.state)}<span class="vh-milestone-time">${esc(String(r.season))} Week ${esc(String(r.week))} • ${esc(r.reporter_label||'No reporter adjective')} • ${esc(signalMomentumLabel(r.momentum))}</span></span><b class="${signalTone(r.state)}">${esc(r.changed?'Changed':'Held')}</b></div>`).join('')}</div>`;
+}
+async function loadPlayerSignals(id){
+  const key=String(id);if(playerSignalCache.has(key))return;
+  try{await signalFetch(key)}catch{return}
+  if(String(currentPlayerId)!==key)return;
+  const target=document.getElementById('vhPlayerSignals');if(target)target.innerHTML=signalCardMarkup(playerSignalCache.get(key),false);
+}
 async function marketFetch(){let last;for(let attempt=0;attempt<3;attempt++){try{const r=await fetch(`${API}?market=1`,{cache:'no-store'});if(!r.ok)throw Error(`market history unavailable (${r.status})`);return await r.json()}catch(e){last=e;if(attempt<2)await new Promise(r=>setTimeout(r,250*(attempt+1)))}}throw last||Error('market history unavailable')}
 function teamNetCacheKey(ids,teamId){return`${String(teamId||'')}|${(ids||[]).map(String).sort().join(',')}`}
 async function teamNetFetch(ids,teamId){
@@ -1094,6 +1127,7 @@ async function loadPlayer(id){
     if(data.scoring_milestones)playerScoringCache.set(key,data.scoring_milestones);
     renderPlayerProfile(id,pts,'ALL');
     if(!playerScoringCache.has(key))loadPlayerScoring(key);
+    if(!playerSignalCache.has(key))loadPlayerSignals(key);
   }catch{box.innerHTML='<div class="notice">Historical data is temporarily unavailable. Current values and all trade tools are unaffected.</div>'}
 }
 
@@ -1332,7 +1366,7 @@ function recentChanges(pts){
 function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
   if(!allPts.length){box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
-  const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCache.has(String(id));
+  const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCache.has(String(id)),signals=playerSignalCache.get(String(id))||null,signalsLoading=!playerSignalCache.has(String(id));
   const latestMs=new Date(allPts[allPts.length-1].t).getTime(),rank30=allPts.filter(p=>new Date(p.t).getTime()>=latestMs-30*86400000),rankBase=rank30[0]||allPts[0],rankLast=rank30[rank30.length-1]||allPts[allPts.length-1],overallMove=Number(rankBase.overall)-Number(rankLast.overall),posMove=Number(rankBase.posRank)-Number(rankLast.posRank);
   const status=document.getElementById('vhStatus');if(status)status.textContent=`Tracked since ${dateShort(allPts[0].t)} • ${fmt(allPts.length)} player observations`;
   box.innerHTML=`
@@ -1359,6 +1393,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
     <div class="vh-metric"><small>Best Overall Rank</small><b>#${bestOverall}</b><div class="vh-metric-time">${bestOverallPoint?dateTime(bestOverallPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>Best ${esc(meta.pos)} Rank</small><b>#${bestPos}</b><div class="vh-metric-time">&nbsp;</div></div>
   </div>
+  <div class="vh-card" id="vhPlayerSignals">${signalCardMarkup(signals,signalsLoading)}</div>
   <div class="vh-card vh-chart-card"><h3 class="vh-section-heading">${period==='ALL'?'All-Time':period} Value History</h3>${valueChart(id,pts,allPts)}</div>
   <div class="vh-rank-grid">
     <div class="vh-card"><h3 class="vh-section-heading">Overall Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.overall} → #${rankLast.overall}</span><b class="${deltaClass(overallMove)}">${overallMove>0?'+':''}${overallMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'overall','Overall rank')}</div>

@@ -131,7 +131,7 @@ function addStyles(){
   #valueHistory .vh-rank-arrow{font-size:12px;font-weight:900;line-height:1}
   #valueHistory .vh-rank-arrow.vh-up{color:var(--good,#1f9d68)}
   #valueHistory .vh-rank-arrow.vh-down{color:var(--bad,#c45151)}
-  #valueHistory .vh-subnav{display:inline-flex;gap:4px;align-items:center;width:max-content;max-width:100%;padding:5px;border:1px solid color-mix(in srgb,#e4b53f 26%,var(--line));border-radius:14px;background:color-mix(in srgb,var(--card) 88%,black);box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+  #valueHistory .vh-subnav{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap;width:max-content;max-width:100%;padding:5px;border:1px solid color-mix(in srgb,#e4b53f 26%,var(--line));border-radius:14px;background:color-mix(in srgb,var(--card) 88%,black);box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
   #valueHistory .vh-subnav button{border:0!important;border-radius:9px!important;padding:9px 16px!important;min-height:36px;background:transparent!important;color:var(--muted)!important;box-shadow:none!important;font-size:12px!important;font-weight:800}
   #valueHistory .vh-subnav button:hover{color:inherit!important;background:color-mix(in srgb,var(--card) 72%,white 4%)!important}
   #valueHistory .vh-subnav button.vh-subnav-active{color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 14%,var(--card))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 42%,transparent),0 3px 12px rgba(0,0,0,.18)!important}
@@ -468,6 +468,7 @@ async function recordSnapshot(source=pendingSnapshotSource){
       marketCache=null;teamNetCache.clear();
       if(uiReady){
         if(currentView==='market')loadMarket(true);
+        else if(currentView==='fullMarket')loadFullMarketHistory(true);
         else if(currentView==='team'&&trackedTeamId)loadTrackedTeam();
         else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId);
       }
@@ -484,7 +485,7 @@ function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){pendingSnaps
 function initUI(){
   if(uiReady)return;uiReady=true;
   const root=document.getElementById('vhLazy');if(!root)return;
-  root.innerHTML=`<div class="vh-control-row"><div class="vh-subnav"><button type="button" class="secondary small" data-vh-dashboard>Market dashboard</button><button type="button" class="secondary small" data-vh-track-team>Track my team</button><button type="button" class="secondary small" data-vh-player-history>Player Value History</button></div><div class="vh-status" id="vhStatus">Loading market history…</div></div><div class="vh-hero"><div class="vh-search-wrap"><label for="vhSearch"><b>Search player history</b></label><input id="vhSearch" type="search" placeholder="Search a player…" autocomplete="off"><div id="vhResults" class="vh-search-results"></div></div></div><div id="vhContent"><div class="vh-empty">Loading market dashboard…</div></div>`;
+  root.innerHTML=`<div class="vh-control-row"><div class="vh-subnav"><button type="button" class="secondary small" data-vh-dashboard>Market dashboard</button><button type="button" class="secondary small" data-vh-track-team>Track my team</button><button type="button" class="secondary small" data-vh-player-history>Player Value History</button><button type="button" class="secondary small" data-vh-full-market>Full Market Value History</button></div><div class="vh-status" id="vhStatus">Loading market history…</div></div><div class="vh-hero"><div class="vh-search-wrap"><label for="vhSearch"><b>Search player history</b></label><input id="vhSearch" type="search" placeholder="Search a player…" autocomplete="off"><div id="vhResults" class="vh-search-results"></div></div></div><div id="vhContent"><div class="vh-empty">Loading market dashboard…</div></div>`;
   const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
   input.addEventListener('input',()=>renderSearchResults(input.value));
   results.addEventListener('click',e=>{const b=e.target.closest('button[data-vh-id]');if(!b)return;selectPlayer(b.dataset.vhId)});
@@ -494,7 +495,7 @@ function initUI(){
 }
 function syncSubnav(){
   document.querySelectorAll('#valueHistory .vh-subnav button').forEach(b=>b.classList.remove('vh-subnav-active'));
-  const selector=currentView==='team'?'#valueHistory [data-vh-track-team]':(currentView==='player'||currentView==='playerHub')?'#valueHistory [data-vh-player-history]':'#valueHistory [data-vh-dashboard]';
+  const selector=currentView==='team'?'#valueHistory [data-vh-track-team]':currentView==='fullMarket'?'#valueHistory [data-vh-full-market]':(currentView==='player'||currentView==='playerHub')?'#valueHistory [data-vh-player-history]':'#valueHistory [data-vh-dashboard]';
   document.querySelector(selector)?.classList.add('vh-subnav-active');
 }
 function playerSearchResultsMarkup(value){
@@ -554,9 +555,10 @@ function handleContentClick(e){
     return;
   }
   const player=e.target.closest('[data-vh-player]');if(player){selectPlayer(player.dataset.vhPlayer);return}
-  const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(true);currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';syncPlayerSearchState();loadMarket(true);return}
+  const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';syncPlayerSearchState();loadMarket(true);return}
   const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();setPrimaryPlayerSearchVisible(true);currentPlayerId=null;syncPlayerSearchState();renderTrackMyTeam();return}
   const playerHub=e.target.closest('[data-vh-player-history]');if(playerHub){renderPlayerHistoryHub();return}
+  const fullMarket=e.target.closest('[data-vh-full-market]');if(fullMarket){loadFullMarketHistory();return}
   const openTrades=e.target.closest('[data-vh-open-trade-history]');if(openTrades){openTradeHistoryTab(openTrades.dataset.vhTradeTeam||'');return}
   const teamNetSortBtn=e.target.closest('[data-vh-team-net-sort]');if(teamNetSortBtn){const key=teamNetSortBtn.dataset.vhTeamNetSort;if(teamNetSort.key===key)teamNetSort.dir*=-1;else teamNetSort={key,dir:key==='name'?1:-1};openTeamNetModal();return}
   const attr=e.target.closest('[data-vh-team-attribution]');if(attr&&trackedTeamId){teamAttributionPeriod=attr.dataset.vhTeamAttribution;const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=teamNetCacheKey(ids,trackedTeamId);renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length});return}
@@ -977,7 +979,7 @@ async function teamNetFetch(ids,teamId){
 async function ensureMarketCache(force=false){if(!marketCache||force){const data=await marketFetch();marketCache=data.market||{}}return marketCache}
 async function loadMarket(force=false){
   const box=document.getElementById('vhContent');if(!box)return;
-  currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(true);currentPlayerId=null;
+  currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;
   if(!marketCache||force){
     box.innerHTML='<div class="vh-empty">Loading market dashboard…</div>';
     try{await ensureMarketCache(force)}catch{
@@ -987,6 +989,19 @@ async function loadMarket(force=false){
   }
   if(currentView!=='market')return;
   renderMarketDashboard();
+}
+async function loadFullMarketHistory(force=false){
+  const box=document.getElementById('vhContent');if(!box)return;
+  currentView='fullMarket';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;
+  if(!marketCache||force){
+    box.innerHTML='<div class="vh-empty">Loading full market value history…</div>';
+    try{await ensureMarketCache(force)}catch{
+      if(currentView==='fullMarket')box.innerHTML='<div class="notice">Full Market Value History is temporarily unavailable. Current values and all trade tools are unaffected.</div>';
+      return
+    }
+  }
+  if(currentView!=='fullMarket')return;
+  renderFullMarketHistory();
 }
 function deltaClass(n){return Number(n)>0?'vh-up':Number(n)<0?'vh-down':'vh-neutral'}
 function moverRows(rows,mode='value',limit=10){
@@ -1037,8 +1052,13 @@ function renderMarketDashboard(){
   <div class="vh-grid-2">
     <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Risers',rr,m)}</h3><div class="vh-sub">Largest improvements in overall rank</div></div>${moverCardActions('market','rankRisers',rr)}</div>${moverRows(applyMoverPool(rpR.rankRisers,'market','rankRisers'),'rank')}</div>
     <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Fallers',rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(applyMoverPool(rpF.rankFallers,'market','rankFallers'),'rank')}</div>
-  </div>
-  <details class="vh-card vh-market-table" open><summary><span>Full Market History Table</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Sort the current market by value or historical movement. Select any player to open their profile.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
+  </div>`;
+}
+function renderFullMarketHistory(){
+  const box=document.getElementById('vhContent');if(!box||!marketCache)return;
+  const m=marketCache,status=document.getElementById('vhStatus');
+  if(status)status.textContent=m.latest?`Tracking since ${dateShort(m.tracking_since)} • Latest snapshot ${dateTime(m.latest)} • ${fmt(m.snapshot_count)} snapshots`:'Initializing first historical snapshot…';
+  box.innerHTML=`<div class="vh-card vh-market-table"><div class="vh-card-head"><div><h3>Full Market Value History</h3><div class="vh-sub">Sort the complete current market by value or historical movement. Select any player to open their Player Value History.</div></div></div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></div>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
   renderMarketTable();
 }
@@ -1124,8 +1144,8 @@ function renderTrackMyTeam(){
   currentView='team';syncSubnav();setPrimaryPlayerSearchVisible(true);currentPlayerId=null;
   const box=document.getElementById('vhContent');if(!box)return;
   const ids=leagueTeamIds(),selected=trackedTeamId&&ids.includes(String(trackedTeamId))?String(trackedTeamId):'';
-  const status=document.getElementById('vhStatus');if(status)status.textContent='Track a league roster using the same data as Full Market History.';
-  box.innerHTML=`<div class="vh-card vh-team-picker"><div class="vh-card-head"><div><h3>Track My Team</h3><div class="vh-sub">Select one of the 32 league teams. This table is the Full Market History dataset filtered to that team's current players.</div></div></div><div class="vh-team-toolbar"><label><b>Fantasy team</b><select data-vh-team-select><option value="">Select a team…</option>${ids.map(id=>`<option value="${esc(id)}" ${selected===id?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div></div><div id="vhTrackedTeam"></div>`;
+  const status=document.getElementById('vhStatus');if(status)status.textContent='Track a league roster using the same data as Full Market Value History.';
+  box.innerHTML=`<div class="vh-card vh-team-picker"><div class="vh-card-head"><div><h3>Track My Team</h3><div class="vh-sub">Select one of the 32 league teams. This table is the Full Market Value History dataset filtered to that team's current players.</div></div></div><div class="vh-team-toolbar"><label><b>Fantasy team</b><select data-vh-team-select><option value="">Select a team…</option>${ids.map(id=>`<option value="${esc(id)}" ${selected===id?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div></div><div id="vhTrackedTeam"></div>`;
   if(selected)loadTrackedTeam();
 }
 async function loadTrackedTeam(){

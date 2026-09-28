@@ -689,7 +689,7 @@ const SCORING_API='https://api.sleeper.app/v1';
 const SCORING_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper';
 const TRADE_AUDIT_SEASONS=[2024,2025,2026];
 let tradeAuditCache=null;
-const scoringCache=new Map();
+const scoringCache=new Map(),playerMilestoneCache=new Map();
 async function scoringJson(url){
   const r=await fetch(url,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
   if(!r.ok)throw new Error(`scoring fetch ${r.status}`);
@@ -712,20 +712,24 @@ function leagueScore(stats,scoring){
   return seen?Number(total.toFixed(2)):null;
 }
 function weeklyHasData(weekly){return Object.values(weekly||{}).some(v=>Array.isArray(v)?v.length>0:(v&&typeof v==='object'&&Object.keys(v).length>0))}
-async function liveSeasonWeeks(year){
-  const pairs=await Promise.all(Array.from({length:18},async(_,i)=>{const week=i+1;try{return[week,await scoringJson(`${SCORING_API}/stats/nfl/regular/${year}/${week}`)]}catch{return[week,{}]}}));
+async function liveSeasonWeeks(year,maxWeek=18){
+  const count=Math.max(0,Math.min(18,Number(maxWeek)||0));
+  const pairs=await Promise.all(Array.from({length:count},async(_,i)=>{const week=i+1;try{return[week,await scoringJson(`${SCORING_API}/stats/nfl/regular/${year}/${week}`)]}catch{return[week,{}]}}));
   return Object.fromEntries(pairs);
 }
-async function scoringSeasonWeeks(year,currentSeason){
-  const key=String(year),cached=scoringCache.get(key),now=Date.now();
-  if(cached&&now-cached.t<(Number(year)===Number(currentSeason)?30000:86400000))return cached.weekly;
+async function scoringSeasonWeeks(year,currentSeason,currentCompletedWeek=18){
+  const isCurrent=Number(year)===Number(currentSeason),limit=isCurrent?Math.max(0,Math.min(18,Number(currentCompletedWeek)||0)):18,key=String(year)+'|'+(isCurrent?limit:'final'),cached=scoringCache.get(key),now=Date.now();
+  if(cached&&now-cached.t<(isCurrent?30000:86400000))return cached.weekly;
   let weekly={};
-  if(Number(year)===Number(currentSeason)){
-    weekly=await liveSeasonWeeks(year);
-    if(!weeklyHasData(weekly))weekly=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
+  if(isCurrent){
+    weekly=await liveSeasonWeeks(year,limit);
+    if(!weeklyHasData(weekly)){
+      const raw=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
+      weekly=Object.fromEntries(Object.entries(raw||{}).filter(([week])=>Number(week)<=limit));
+    }
   }else{
     weekly=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
-    if(!weeklyHasData(weekly))weekly=await liveSeasonWeeks(year);
+    if(!weeklyHasData(weekly))weekly=await liveSeasonWeeks(year,18);
   }
   scoringCache.set(key,{t:now,weekly});return weekly;
 }
@@ -755,16 +759,18 @@ async function canonicalWeeklyAwards(origin){
   }catch{return[]}
 }
 async function scoringMilestones(playerId){
-  const origin=String(arguments[1]||'');
+  const origin=String(arguments[1]||''),cacheKey=String(playerId),cachedMilestone=playerMilestoneCache.get(cacheKey),now=Date.now();
+  if(cachedMilestone&&now-cachedMilestone.t<300000)return cachedMilestone.value;
   try{
-    const [league,players,canonicalRecords]=await Promise.all([
+    const [league,players,canonicalRecords,nflState]=await Promise.all([
       scoringJson(`${SCORING_API}/league/${LEAGUE}`),
       scoringJson(`${SCORING_API}/players/nfl`).catch(()=>({})),
-      canonicalWeeklyAwards(origin)
-    ]),currentSeason=Number(league?.season),scoring=league?.scoring_settings||{};
+      canonicalWeeklyAwards(origin),
+      scoringJson(`${SCORING_API}/state/nfl`).catch(()=>({}))
+    ]),currentSeason=Number(league?.season),currentCompletedWeek=Math.max(0,Math.min(18,(Number(nflState?.week)||1)-1)),scoring=league?.scoring_settings||{};
     if(!currentSeason||!Object.keys(scoring).length)return null;
     const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={},canonicalByKey=new Map((canonicalRecords||[]).filter(r=>r?.players_of_week).map(r=>[Number(r.season)+'|'+Number(r.week),r]));
-    await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason)));
+    await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason,currentCompletedWeek)));
     let highWeek=null,highSeason=null,highPpg=null;const weeklyAwards=[];
     for(const year of years){
       let total=0,games=0;
@@ -797,7 +803,8 @@ async function scoringMilestones(playerId){
       }
     }
     weeklyAwards.sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
-    return{source:'Sleeper weekly regular-season stats + league scoring settings',weeklyAwardSource:'Fleeced locked completed-week awards with historical Sleeper fallback',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,weeklyAwards,refreshedAt:new Date().toISOString()};
+    const value={source:'Sleeper weekly regular-season stats + league scoring settings',weeklyAwardSource:'Fleeced locked completed-week awards with historical Sleeper fallback',qualifyingSeasonMinimumGames:8,highWeek,highSeason,highPpg,weeklyAwards,refreshedAt:new Date().toISOString()};
+    playerMilestoneCache.set(cacheKey,{t:Date.now(),value});return value;
   }catch(e){console.warn('value-history-scoring',e);return null}
 }
 async function tradeJson(url){
@@ -993,6 +1000,12 @@ export default async (req)=>{
         const result=await retry(()=>completedTradeHistory(s),180);
         return json(result);
       }
+      if(url.searchParams.get('player_scoring')==='1'){
+        const playerId=String(url.searchParams.get('player_id')||'').trim();
+        if(!playerId)return json({error:'player_id required'},400);
+        const milestones=await scoringMilestones(playerId,url.origin);
+        return json({player_id:playerId,scoring_milestones:milestones});
+      }
       if(url.searchParams.get('team_net_all')==='1'){
         const result=await retry(()=>getAllTeamWeekMovement(s),180);
         return json({team_net_all:true,...result});
@@ -1004,8 +1017,8 @@ export default async (req)=>{
       }
       const playerId=String(url.searchParams.get('player_id')||'').trim();
       if(!playerId)return json({error:'player_id required'},400);
-      const result=await retry(()=>getPlayerHistory(s,playerId),180),milestones=await scoringMilestones(playerId,url.origin);
-      return json({player_id:playerId,points:result.points||[],scoring_milestones:milestones,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
+      const result=await retry(()=>getPlayerHistory(s,playerId),180);
+      return json({player_id:playerId,points:result.points||[],scoring_milestones:null,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
     if(!s)return json({error:'live history store unavailable'},503);

@@ -76,7 +76,7 @@ function markSameTabNavigation(e){
   const cross=e.target.closest('[data-lh-inquirer-player],[data-lh-inquirer-trade-history],[data-lh-inquirer-trade-team-value],[data-lh-inquirer-trade-player-value],[data-lh-value-team],[data-lh-trade]');
   if(same&&!cross)entryFromTab='';
  }else if(tab==='valueHistory'){
-  if(e.target.closest('[data-vh-player],[data-vh-dashboard],[data-vh-track-team],[data-vh-team-select]'))entryFromTab='';
+  if(e.target.closest('[data-vh-player],[data-vh-dashboard],[data-vh-track-team],[data-vh-player-history],[data-vh-full-market],[data-vh-team-select]'))entryFromTab='';
  }
 }
 function tabButton(id){return document.querySelector('.tabs button[data-tab="'+CSS.escape(String(id))+'"]')}
@@ -162,12 +162,11 @@ function openValue(view){
   waitFor('#valueHistory [data-vh-player-history]',b=>{b.click();setTimeout(()=>scrollToEl($('#valueHistory')),20)});
   return
  }
- waitFor('#valueHistory [data-vh-dashboard]',b=>{
-  b.click();
-  if(view==='full-market'){
-   waitFor('#valueHistory .vh-market-table',table=>{table.open=true;scrollToEl(table)},50,100)
-  }else setTimeout(()=>scrollToEl($('#valueHistory')),20)
- })
+ if(view==='full-market'){
+  waitFor('#valueHistory [data-vh-full-market]',b=>{b.click();waitFor('#valueHistory .vh-market-table',table=>{table.open=true;scrollToEl(table)},50,100)});
+  return
+ }
+ waitFor('#valueHistory [data-vh-dashboard]',b=>{b.click();setTimeout(()=>scrollToEl($('#valueHistory')),20)})
  })
 }
 function openLeagueView(view){

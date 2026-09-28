@@ -776,6 +776,25 @@ function hindsightAnalysis(trade){
     return{available:true,score,label,aAssets,bAssets,f,teamAName:historicalTradeTeamName(trade,sideA.roster_id),teamBName:historicalTradeTeamName(trade,sideB.roster_id)};
   }catch(e){return{available:false,reason:'Current outcome could not be evaluated.'}}
 }
+function tradeHistoryAdjustedHindsightSummary(trade){
+  const h=hindsightAnalysis(trade);if(!h?.available||!h?.f)return null;
+  const f=h.f,sideA=trade?.sides?.[0],sideB=trade?.sides?.[1],a=Number(f.bEffective),b=Number(f.aEffective);
+  if(!Number.isFinite(a)||!Number.isFinite(b))return null;
+  let playerValueExchanged=0;
+  for(const side of trade.sides||[])for(const id of side?.player_ids||[]){
+    const v=currentEvaluatorValue(tradePlayerAsset(id,side.roster_id));
+    if(Number.isFinite(Number(v)))playerValueExchanged+=Math.max(0,Number(v));
+  }
+  return{
+    a,b,edge:Math.abs(a-b),signedEdge:a-b,winner:a>=b?0:1,
+    aRaw:Number(f.bRaw)||0,bRaw:Number(f.aRaw)||0,
+    aAdjustment:Number(f.bAdj)||0,bAdjustment:Number(f.aAdj)||0,
+    totalRawValueExchanged:(Number(f.aRaw)||0)+(Number(f.bRaw)||0),
+    playerValueExchanged:Math.round(playerValueExchanged),
+    score:Number(h.score)||0,label:h.label||'Trade'
+  };
+}
+window.tradeHistoryAdjustedHindsightV477=tradeHistoryAdjustedHindsightSummary;
 function hindsightSection(trade){
   const h=hindsightAnalysis(trade);
   if(!h.available)return`<div class="vh-hindsight"><div class="vh-hindsight-head"><div><h4>Hindsight</h4><div class="vh-sub">How the trade's current outcome pieces compare today.</div></div></div><div class="vh-empty">${esc(h.reason)}</div></div>`;

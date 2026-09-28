@@ -21,6 +21,7 @@ function addStyles(){
   #valueHistory .vh-shell{display:grid;gap:16px}
   #valueHistory .vh-control-row{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:4px 0 0;padding-bottom:4px}
   #valueHistory .vh-hero{display:block;margin:0 0 4px}
+  #valueHistory .vh-hero[hidden]{display:none!important}
   #valueHistory .vh-search-wrap{width:min(440px,100%)}
   #valueHistory .vh-search-wrap label b{display:block;font-size:15px;font-weight:900;letter-spacing:.02em;color:#f4f4f5;margin-bottom:3px}
   #valueHistory .vh-search-wrap input{margin:7px 0 0}
@@ -148,6 +149,8 @@ function addStyles(){
   #valueHistory .vh-player-history-choice:before{display:none!important}
   #valueHistory .vh-player-history-choice+.vh-player-history-choice{margin-top:0}
   #valueHistory .vh-player-history-choice .vh-search-wrap{width:100%;max-width:620px}
+  #valueHistory [data-vh-player-history-team]{background:color-mix(in srgb,var(--card) 78%,#0a0d12)!important;color:inherit!important;border-color:var(--line)!important;box-shadow:none!important}
+  #valueHistory .vh-milestone-award{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid color-mix(in srgb,#e4b53f 34%,var(--line));border-radius:999px;background:transparent;color:#f4f4f5;font-size:10px;font-weight:900;white-space:nowrap}
   #valueHistory .vh-team-toolbar select,#valueHistory #vhMarketSearch{border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important}
   #valueHistory .vh-team-toolbar select:focus,#valueHistory .vh-team-toolbar select:focus-visible,#valueHistory #vhMarketSearch:focus,#valueHistory #vhMarketSearch:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.18)!important}
   #valueHistory .vh-similar-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -1073,7 +1076,7 @@ function renderPlayerHistoryHub(){
       </div>
     </div>
     <div class="vh-card vh-player-history-choice">
-      <div class="vh-card-head"><div><h3>Select Team</h3><div class="vh-sub">Choose a fantasy team to browse its current roster using the exact same Market Value History table as Track My Team.</div></div></div>
+      <div class="vh-card-head"><div><h3>View your team's value history</h3><div class="vh-sub">Choose a fantasy team to browse its current roster using the exact same Market Value History table as Track My Team.</div></div></div>
       <div class="vh-team-toolbar"><label><b>Fantasy team</b><select data-vh-player-history-team><option value="">Select a team…</option>${ids.map(id=>`<option value="${esc(id)}" ${selected===id?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label></div>
     </div>
     <div id="vhPlayerHistoryTeam"></div>`;
@@ -1330,6 +1333,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
       <div class="vh-feed-row"><span class="vh-milestone-label">Highest points in a week<span class="vh-milestone-time">${scoring?.highWeek?`${scoring.highWeek.season} Week ${scoring.highWeek.week}`:'No recorded NFL week yet'}</span></span><b>${scoring?.highWeek?Number(scoring.highWeek.points).toFixed(2):'—'}</b></div>
       <div class="vh-feed-row"><span class="vh-milestone-label">Highest points in a season<span class="vh-milestone-time">${scoring?.highSeason?`${scoring.highSeason.season} • ${scoring.highSeason.games} games`:'No qualifying 8+ game season yet'}</span></span><b>${scoring?.highSeason?Number(scoring.highSeason.points).toFixed(2):'—'}</b></div>
       <div class="vh-feed-row"><span class="vh-milestone-label">Highest PPG in qualifying season<span class="vh-milestone-time">${scoring?.highPpg?`${scoring.highPpg.season} • ${scoring.highPpg.games} games`:'No qualifying 8+ game season yet'}</span></span><b>${scoring?.highPpg?Number(scoring.highPpg.points).toFixed(2):'—'}</b></div>
+      ${(scoring?.weeklyAwards||[]).map(a=>`<div class="vh-feed-row"><span class="vh-milestone-label">${esc(a.title||'Player of the Week')}<span class="vh-milestone-time">${esc(String(a.season))} Week ${esc(String(a.week))} • ${a.week_started_at?dateShort(a.week_started_at):'date unavailable'}</span></span><span class="vh-milestone-award">🏅 ${Number(a.points||0).toFixed(2)} pts</span></div>`).join('')}
       <div class="vh-feed-row"><span class="vh-milestone-label">Observations</span><b>${fmt(allPts.length)}</b></div>
     </div><div class="tiny muted" style="margin-top:10px">Scoring milestones use Sleeper weekly regular-season stats and this league’s scoring settings. Informational only.</div></div>
   </div>

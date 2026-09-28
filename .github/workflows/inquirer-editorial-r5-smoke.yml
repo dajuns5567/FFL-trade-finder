@@ -35,6 +35,9 @@ jobs:
           node --check netlify/functions/inquirer-reporters.mjs
           node --check netlify/functions/league-hub.mjs
           node --check netlify/functions/inquirer-editorial-v31.mjs
+          node --check netlify/functions/player-signal-engine.mjs
+          node --check netlify/functions/player-signals.mjs
+          node --check scripts/player-signal-engine-smoke.mjs
           node --check netlify/functions/inquirer-publish-scheduled.mjs
           node --check scripts/one-time-generate-inquirer-week1.mjs
           node --check scripts/one-time-generate-inquirer-week2.mjs
@@ -44,6 +47,8 @@ jobs:
 
       - name: Run source contract
         run: node scripts/inquirer-v25-audit.mjs
+      - name: Fleeced player signal classifier contract
+        run: node scripts/player-signal-engine-smoke.mjs
 
       - name: Capture forward V31 season smoke
         run: |

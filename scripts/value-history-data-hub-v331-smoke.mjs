@@ -243,9 +243,10 @@ for(const forbidden of [
   'Value Adjustment='
 ])assert(!ui.includes(forbidden),'Value History must remain read-only relative to trade/value systems: '+forbidden);
 assert(ui.includes('function tradeHistoryFair(give,recv,trade)'), 'Trade History must use an isolated historical evaluator adapter');
-assert(ui.includes('proximityRate=clamp(.18,.18+2.35*(1-rel),1)'),'Trade History value adjustment must scale continuously with centerpiece proximity');
-assert(ui.includes('centerpieceProximityCap=rawGap>0?rawGap*proximityRate:Infinity'),'Trade History value adjustment must cap raw-gap erasure when centerpieces are near peers');
-assert(ui.includes('eliteCounterCap,centerpieceProximityCap'),'centerpiece proximity cap must coexist with existing elite-counter protection rather than replacing it');
+assert(ui.includes('scarcityPremium=legacy*(1-.25*elitePressure)'),'Trade History value adjustment must preserve the shared centerpiece-scarcity premium');
+assert(ui.includes('packageGapFloor=rawGap>0?rawGap*(.50+.50*ew)*(1-.70*elitePressure):0'),'Trade History value adjustment must preserve the shared package-gap floor');
+assert(ui.includes('Math.min(Math.max(scarcityPremium,packageGapFloor),depthCap)'),'Trade History value adjustment must stay aligned with the shared evaluator depth cap');
+assert(!ui.includes('centerpieceProximityCap'),'Trade History must not reintroduce the stale solve-for-gap centerpiece proximity cap');
 assert(ui.includes('retroactiveTradeHistoryPickValue(asset,trade)'), 'Trade History retroactive pick timing adapter missing');
 assert(ui.includes("window.tradeValueNormalizationV130?.canonicalValue"),'Trade History current player and pick display must use the exact active evaluator canonical value function');
 assert(ui.includes('function currentPickRows()'),'Value History must capture live canonical draft-pick values for future exact trade history');

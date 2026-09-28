@@ -374,6 +374,60 @@ async function broadcastStored(season,week){
  return v||preloadedBroadcast(season,week)||{error:'broadcast not found'};
 }
 
+function weeklyAwardStatRows(payload){
+ if(!payload)return[];
+ if(Array.isArray(payload))return payload.map((row,i)=>({id:String(row?.player_id||row?.id||i),stats:row?.stats&&typeof row.stats==='object'?row.stats:row}));
+ return Object.entries(payload||{}).map(([key,row])=>({id:String(row?.player_id||row?.id||key),stats:row?.stats&&typeof row.stats==='object'?row.stats:row}));
+}
+function weeklyAwardPlayerGroup(position){
+ const p=String(position||'').toUpperCase();
+ if(['QB','RB','WR','TE'].includes(p))return'offense';
+ if(['DL','DE','DT','NT','EDGE','LB','DB','CB','S'].includes(p))return'defense';
+ return'';
+}
+function weeklyManagerAwards(broadcast){
+ const teams=Array.isArray(broadcast?.teams)?broadcast.teams:[],valid=teams.filter(t=>Number.isFinite(Number(t?.points)));
+ if(!valid.length)return[];
+ const high=valid.slice().sort((a,b)=>Number(b.points)-Number(a.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
+  low=valid.slice().sort((a,b)=>Number(a.points)-Number(b.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
+  losses=valid.filter(g=>g.won===false),wins=valid.filter(g=>g.won===true),
+  hot=losses.filter(g=>Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected))&&Number(g.projected)>Number(g.opponent_projected)).sort((a,b)=>(Number(b.projected)-Number(b.opponent_projected))-(Number(a.projected)-Number(a.opponent_projected))||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
+  cool=wins.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points))||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
+  item=(type,title,t,detail)=>t?{type,title,roster_id:String(t.roster_id||''),manager_user_id:String(t.manager_user_id||''),manager_name:String(t.manager_name||''),team_name:String(t.team_name||''),points:Number(t.points)||0,detail}:null;
+ return[
+  item('hot-seat','🔥 Hot Seat',hot,hot?`Projected by ${(Number(hot.projected)-Number(hot.opponent_projected)).toFixed(1)} to win • lost by ${Math.abs(Number(hot.points)-Number(hot.opponent_points)).toFixed(1)}`:''),
+  item('cool-throne','🧊 Cool Throne',cool,cool?`Won by ${Math.abs(Number(cool.points)-Number(cool.opponent_points)).toFixed(1)}`:''),
+  item('highest-scorer','🔥 Highest Scorer',high,high?`${Number(high.points).toFixed(1)} fantasy points`:''),
+  item('lowest-scorer','🥶 Lowest Scorer',low,low?`${Number(low.points).toFixed(1)} fantasy points`:'')
+ ].filter(Boolean);
+}
+function weeklyPlayersOfWeek(stats,players,scoring){
+ const leaders={offense:null,defense:null};
+ for(const row of weeklyAwardStatRows(stats)){
+  const meta=players?.[row.id]||{},group=weeklyAwardPlayerGroup(meta.position),points=score(row.stats,scoring);
+  if(!group||points==null)continue;
+  if(!leaders[group]||points>leaders[group].points||(points===leaders[group].points&&String(row.id)<String(leaders[group].player_id)))leaders[group]={player_id:String(row.id),player_name:String(meta.full_name||[meta.first_name,meta.last_name].filter(Boolean).join(' ')||row.id),position:String(meta.position||''),nfl_team:String(meta.team||'FA'),points:Number(points.toFixed(2))};
+ }
+ return{offense:leaders.offense,defense:leaders.defense};
+}
+async function weeklyAwards(){
+ const s=store(),archive=await broadcastArchive(),pairs=[],seen=new Set();
+ for(const row of archive.reports||[]){const season=Number(row?.season),week=Number(row?.week),key=season+'|'+week;if(season&&week&&!seen.has(key)){seen.add(key);pairs.push({season,week,captured_at:String(row?.captured_at||'')})}}
+ const old=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null),records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[],byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r]));
+ const missing=pairs.filter(p=>!byKey.has(p.season+'|'+p.week)||!byKey.get(p.season+'|'+p.week)?.players_of_week);
+ if(missing.length){
+  const [league,players]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/players/nfl`).catch(()=>({}))]),scoring=league?.scoring_settings||{};
+  const built=await Promise.all(missing.map(async p=>{
+   const broadcast=await broadcastStored(p.season,p.week),stats=await fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({})),captured=String(broadcast?.generated_at||p.captured_at||new Date().toISOString());
+   return{season:p.season,week:p.week,captured_at:captured,manager_awards:weeklyManagerAwards(broadcast),players_of_week:weeklyPlayersOfWeek(stats,players,scoring)};
+  }));
+  for(const rec of built)byKey.set(rec.season+'|'+rec.week,rec);
+  const next=[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
+  await s.setJSON('awards/weekly.json',{schema_version:1,records:next});
+ }
+ return{schema_version:1,records:[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week))};
+}
+
 async function draftAwards(){
  const league=await fetchJson(`${API}/league/${LEAGUE}`),current=Number(league?.season)||new Date().getFullYear(),years=[current,current-1,current-2,current-3],out=[];
  for(const season of years){
@@ -437,4 +491,4 @@ async function awards(req){
  if(!history.some(x=>x.period===period)){history.push({period,captured_at:new Date().toISOString(),awards:rows.slice(0,20).map(x=>({key:String(x.key||''),title:String(x.title||''),roster_id:String(x.roster_id||''),detail:String(x.detail||'')}))});history.sort((a,b)=>String(a.period).localeCompare(String(b.period)));await s.setJSON('awards/history.json',history)}
  return json({ok:true,history});
 }
-export default async req=>{try{const u=new URL(req.url);if(u.searchParams.get('weekly')==='1')return json(await weeklyReport(req));if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week'))return json(await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week')));if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);if(cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0))return json({...cached,cache_hit:true,stale:Date.now()-new Date(cached.cached_at||cached.generated_at||0).getTime()>=86400000});return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
+export default async req=>{try{const u=new URL(req.url);if(u.searchParams.get('weekly')==='1')return json(await weeklyReport(req));if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week'))return json(await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week')));if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards());if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);if(cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0))return json({...cached,cache_hit:true,stale:Date.now()-new Date(cached.cached_at||cached.generated_at||0).getTime()>=86400000});return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};

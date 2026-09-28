@@ -102,9 +102,9 @@ function signalConfidence(profile,form){
   if(status||Number(form?.games)>=3)return'early';
   return'insufficient';
 }
-function evidenceFor(profile,form){
+function evidenceFor(profile,form,player){
   return{
-    prior_season_games:Number(profile?.games)||0,
+    prior_season_games:Number(player?.prior_season_games)||0,
     prior_season_avg:Number.isFinite(Number(profile?.prior))?Number(profile.prior):null,
     season_avg:Number.isFinite(Number(profile?.seasonAvg))?Number(profile.seasonAvg):null,
     current_points:Number.isFinite(Number(profile?.pts))?Number(profile.pts):null,
@@ -152,6 +152,6 @@ export function buildPlayerSignal({player,previousPlayer=null,recentForm=null,se
     started_at,
     duration_weeks,
     direction:['breakout','emerging','surging'].includes(state)?'positive':['declining','cooling','struggling','struggling-star','declining-veteran'].includes(state)?'negative':'neutral',
-    evidence:evidenceFor(profile,form)
+    evidence:evidenceFor(profile,form,player)
   };
 }

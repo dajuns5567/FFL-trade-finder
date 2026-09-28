@@ -705,7 +705,7 @@ function weeklyPlayerRow(payload,id){
 function leagueScore(stats,scoring){
   let total=0,seen=false;
   for(const [key,weightRaw] of Object.entries(scoring||{})){
-    const weight=Number(weightRaw),value=Number(stats?.[key]);
+    const raw=stats?.[key]??(String(key).startsWith('idp_')?stats?.[String(key).slice(4)]:undefined),weight=Number(weightRaw),value=Number(raw);
     if(!Number.isFinite(weight)||!Number.isFinite(value))continue;
     seen=true;total+=weight*value;
   }

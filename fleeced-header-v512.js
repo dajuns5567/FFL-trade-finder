@@ -24,6 +24,7 @@ const MENUS={
  valueHistory:[
   ['Market Dashboard','value:market'],
   ['Track My Team','value:team'],
+  ['Player Value History','value:player'],
   ['Full Market Value History','value:full-market']
  ],
  leagueHub:[
@@ -155,6 +156,10 @@ function openValue(view){
  navigateTab('valueHistory',()=>{
  if(view==='team'){
   waitFor('#valueHistory [data-vh-track-team]',b=>{b.click();setTimeout(()=>scrollToEl($('#valueHistory')),20)});
+  return
+ }
+ if(view==='player'){
+  waitFor('#valueHistory [data-vh-player-history]',b=>{b.click();setTimeout(()=>scrollToEl($('#valueHistory')),20)});
   return
  }
  waitFor('#valueHistory [data-vh-dashboard]',b=>{

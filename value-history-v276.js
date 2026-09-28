@@ -745,6 +745,18 @@ function tradeEvaluatorAnalysis(trade){
     return{available:true,incomplete:false,score,label,teamA:a,teamB:b,teamAName:histA,teamBName:histB,aReceived,bReceived,f};
   }catch(e){return{available:false,reason:`Current Trade Evaluator could not analyze this historical package: ${String(e?.message||e)}`}}
 }
+function tradeHistoryAdjustedOriginalSummary(trade){
+  const a=tradeEvaluatorAnalysis(trade);
+  if(!a?.available||a?.incomplete||!a?.f)return null;
+  const f=a.f,sideA=Number(f.bEffective),sideB=Number(f.aEffective),aRaw=Number(f.bRaw),bRaw=Number(f.aRaw);
+  if(![sideA,sideB,aRaw,bRaw].every(Number.isFinite))return null;
+  return{
+    a:sideA,b:sideB,edge:Math.abs(sideA-sideB),signedEdge:sideA-sideB,winner:sideA>=sideB?0:1,
+    aRaw,bRaw,aAdjustment:Number(f.bAdj)||0,bAdjustment:Number(f.aAdj)||0,
+    totalRawValueExchanged:aRaw+bRaw,score:Number(a.score)||0,label:String(a.label||'Trade')
+  };
+}
+window.tradeHistoryAdjustedOriginalV505=tradeHistoryAdjustedOriginalSummary;
 function tradeItemRows(items){
   return items.map(x=>`<div class="vh-driver-row"><div><b>${esc(x.label)}</b>${x.meta?`<small>${esc(x.meta)}</small>`:''}</div><div>${x.value==null?'—':fmt(x.value)}</div></div>`).join('')||'<div class="vh-empty">No assets.</div>'
 }

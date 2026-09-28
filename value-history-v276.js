@@ -1058,7 +1058,7 @@ function renderFullMarketHistory(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
   const m=marketCache,status=document.getElementById('vhStatus');
   if(status)status.textContent=m.latest?`Tracking since ${dateShort(m.tracking_since)} • Latest snapshot ${dateTime(m.latest)} • ${fmt(m.snapshot_count)} snapshots`:'Initializing first historical snapshot…';
-  box.innerHTML=`<div class="vh-card vh-market-table"><div class="vh-card-head"><div><h3>Full Market Value History</h3><div class="vh-sub">Sort the complete current market by value or historical movement. Select any player to open their Player Value History.</div></div></div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></div>`;
+  box.innerHTML=`<div class="vh-card vh-market-table"><div class="vh-card-head"><div><h3>Full Market Value History</h3><div class="vh-sub">Full Market History Table — sort the complete current market by value or historical movement. Select any player to open their Player Value History.</div></div></div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></div>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
   renderMarketTable();
 }

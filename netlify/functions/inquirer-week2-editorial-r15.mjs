@@ -34,8 +34,22 @@ const GENERIC_RE=/\b(?:the next test is whether|there is nowhere to hide a Septe
 const SHARED_OUTLOOK_RE=/\b(?:take a head-to-head bite out of|instead of hoping another result moves the same playoff route|not alone in a crowded AFC EAST race|rest of the division reads)\b/i;
 
 function cleanSentence(s){
- const x=String(s||'').trim();
+ let x=String(s||'').trim();
  if(!x||PLAYER_SUPPORT_RE.test(x)||GENERIC_RE.test(x)||SHARED_OUTLOOK_RE.test(x))return'';
+ const tech=/\b(?:screenshots?|group chats?|rival chats?|rival threads?|memes?|lineup screen|apps?)\b/i;
+ if(tech.test(x)){
+  if(!/\d/.test(x))return'';
+  x=x
+   .replace(/\bthat screenshot stays in the archive\b/gi,'that result remains part of the season context')
+   .replace(/\bsaved the screenshot\b/gi,'kept the result in mind')
+   .replace(/\bscreenshots?\b/gi,'result')
+   .replace(/\bgroup chats?\b/gi,'rivals')
+   .replace(/\brival chats?\b/gi,'rivals')
+   .replace(/\brival threads?\b/gi,'rivals')
+   .replace(/\bmemes?\b/gi,'mockery')
+   .replace(/\blineup screen\b/gi,'lineup')
+   .replace(/\bapps?\b/gi,'scorebook');
+ }
  return x;
 }
 function cleanParagraph(p){

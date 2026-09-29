@@ -1,11 +1,11 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-24T22:23:04.811Z",
+  "generatedAt": "2026-09-29T08:28:12.579Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
   "currentLeagueStatus": "in_season",
-  "currentSeasonCompletedWeek": 2,
+  "currentSeasonCompletedWeek": 3,
   "currentLeagueScoringSettings": {
     "sack": 1,
     "qb_hit": 0,
@@ -153,18 +153,18 @@
   },
   "productionWeightPlan": {
     "mode": "in-season",
-    "completedWeek": 2,
+    "completedWeek": 3,
     "weights": {
-      "currentYear": 0.12941176470588237,
-      "previousYear": 0.5320261437908497,
-      "twoYearsAgo": 0.24183006535947713,
-      "threeYearsAgo": 0.09673202614379085
+      "currentYear": 0.1588235294117647,
+      "previousYear": 0.5140522875816994,
+      "twoYearsAgo": 0.23366013071895425,
+      "threeYearsAgo": 0.0934640522875817
     },
     "yearWeights": {
-      "2023": 0.09673202614379085,
-      "2024": 0.24183006535947713,
-      "2025": 0.5320261437908497,
-      "2026": 0.12941176470588237
+      "2023": 0.0934640522875817,
+      "2024": 0.23366013071895425,
+      "2025": 0.5140522875816994,
+      "2026": 0.1588235294117647
     }
   },
   "productionSeasons": [
@@ -175,49 +175,49 @@
   ],
   "seasonDiagnostics": {
     "2023": {
-      "players": 888,
+      "players": 890,
       "withPpr": 735,
-      "withGames": 888
+      "withGames": 890
     },
     "2024": {
-      "players": 954,
+      "players": 955,
       "withPpr": 791,
-      "withGames": 954
+      "withGames": 955
     },
     "2025": {
-      "players": 1048,
+      "players": 1050,
       "withPpr": 566,
-      "withGames": 1048
+      "withGames": 1050
     },
     "2026": {
-      "players": 1160,
-      "withPpr": 377,
-      "withGames": 1160,
+      "players": 1240,
+      "withPpr": 409,
+      "withGames": 1240,
       "currentSeasonQualified": true
     }
   },
   "compactDiagnostics": {
     "2023": {
-      "players": 888,
+      "players": 890,
       "withPpr": 735,
-      "withGames": 888
+      "withGames": 890
     },
     "2024": {
-      "players": 954,
+      "players": 955,
       "withPpr": 791,
-      "withGames": 954
+      "withGames": 955
     },
     "2025": {
-      "players": 1048,
+      "players": 1050,
       "withPpr": 566,
-      "withGames": 1048
+      "withGames": 1050
     },
     "2026": {
-      "players": 1160,
-      "withPpr": 377,
-      "withGames": 1160,
+      "players": 1240,
+      "withPpr": 409,
+      "withGames": 1240,
       "currentSeasonQualified": true,
-      "compactPlayers": 1160
+      "compactPlayers": 1240
     }
   },
   "qualifyingHistoricalSeasonMinimumGames": 8,
@@ -299,6 +299,40 @@
         "IND",
         "LAR",
         "NYG"
+      ],
+      "3": [
+        "GB",
+        "ATL",
+        "BUF",
+        "LAC",
+        "CLE",
+        "CAR",
+        "DET",
+        "NYJ",
+        "IND",
+        "HOU",
+        "MIA",
+        "KC",
+        "NYG",
+        "TEN",
+        "PIT",
+        "CIN",
+        "WSH",
+        "SEA",
+        "JAX",
+        "NE",
+        "SF",
+        "ARI",
+        "TB",
+        "MIN",
+        "DAL",
+        "BAL",
+        "NO",
+        "LV",
+        "DEN",
+        "LAR",
+        "CHI",
+        "PHI"
       ]
     },
     "weekFinalityByWeek": {
@@ -577,12 +611,150 @@
             ]
           }
         ]
+      },
+      "3": {
+        "scheduledGames": 16,
+        "finalGames": 16,
+        "ignoredGames": 0,
+        "blockingGames": 0,
+        "complete": true,
+        "nullSlots": [],
+        "slots": [
+          {
+            "id": "401872948",
+            "state": "final",
+            "teams": [
+              "GB",
+              "ATL"
+            ]
+          },
+          {
+            "id": "401872953",
+            "state": "final",
+            "teams": [
+              "BUF",
+              "LAC"
+            ]
+          },
+          {
+            "id": "401872949",
+            "state": "final",
+            "teams": [
+              "CLE",
+              "CAR"
+            ]
+          },
+          {
+            "id": "401872954",
+            "state": "final",
+            "teams": [
+              "DET",
+              "NYJ"
+            ]
+          },
+          {
+            "id": "401872951",
+            "state": "final",
+            "teams": [
+              "IND",
+              "HOU"
+            ]
+          },
+          {
+            "id": "401872952",
+            "state": "final",
+            "teams": [
+              "MIA",
+              "KC"
+            ]
+          },
+          {
+            "id": "401872956",
+            "state": "final",
+            "teams": [
+              "NYG",
+              "TEN"
+            ]
+          },
+          {
+            "id": "401872950",
+            "state": "final",
+            "teams": [
+              "PIT",
+              "CIN"
+            ]
+          },
+          {
+            "id": "401872955",
+            "state": "final",
+            "teams": [
+              "WSH",
+              "SEA"
+            ]
+          },
+          {
+            "id": "401872957",
+            "state": "final",
+            "teams": [
+              "JAX",
+              "NE"
+            ]
+          },
+          {
+            "id": "401872958",
+            "state": "final",
+            "teams": [
+              "SF",
+              "ARI"
+            ]
+          },
+          {
+            "id": "401872959",
+            "state": "final",
+            "teams": [
+              "TB",
+              "MIN"
+            ]
+          },
+          {
+            "id": "401872960",
+            "state": "final",
+            "teams": [
+              "DAL",
+              "BAL"
+            ]
+          },
+          {
+            "id": "401872961",
+            "state": "final",
+            "teams": [
+              "NO",
+              "LV"
+            ]
+          },
+          {
+            "id": "401872962",
+            "state": "final",
+            "teams": [
+              "DEN",
+              "LAR"
+            ]
+          },
+          {
+            "id": "401872963",
+            "state": "final",
+            "teams": [
+              "CHI",
+              "PHI"
+            ]
+          }
+        ]
       }
     },
     "diagnostics": {
-      "finalGames": 32,
-      "qualifiedPlayerGames": 2101,
-      "rejectedPlayerGames": 2473,
+      "finalGames": 48,
+      "qualifiedPlayerGames": 3120,
+      "rejectedPlayerGames": 3762,
       "ignoredGames": 0
     }
   },

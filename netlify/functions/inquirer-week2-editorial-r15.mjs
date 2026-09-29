@@ -356,10 +356,6 @@ function buildLede(t,a,id){
  return uniq([score,lines[0],week1,lines[1],lines[2]]).filter(Boolean).slice(0,5);
 }
 
-function buildLede(t,a,id){
- const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),score=facts.find(isScoreFact),week1=facts.find(x=>isWeek1Fact(x)&&x!==score),lines=ledeLines(t,id);
- return uniq([lines[0]?voiceShade(t,'lede-a|'+id,lines[0]):'',score,week1,lines[1]?voiceShade(t,'lede-b|'+id,lines[1]):'']).filter(Boolean).slice(0,4);
-}
 function topThreeStarters(t){return(t?.starter_details||[]).slice(0,3).filter(p=>Number.isFinite(Number(p?.points)))}
 function playerStatParagraph(t,p){
  const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim().replace(/\b1 rec yds\b/gi,'1 receiving yard').replace(/\b1 rush yds\b/gi,'1 rushing yard').replace(/\b1 pass yds\b/gi,'1 passing yard').replace(/\brec yds\b/gi,'receiving yards').replace(/\brush yds\b/gi,'rushing yards').replace(/\bpass yds\b/gi,'passing yards').replace(/\b1 yds\b/gi,'1 yard').replace(/\byds\b/gi,'yards').replace(/\brec\b/gi,'receptions');

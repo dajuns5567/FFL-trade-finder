@@ -470,6 +470,7 @@ function reviseTeam(t){
   else paragraphs=buildGeneric(sec);
   return{...sec,paragraphs};
  });
+ a.paragraphs=a.sections.flatMap(sec=>(sec?.paragraphs||[]).filter(Boolean));
  a.editorial_revision=WEEK2_EDITORIAL_REVISION;
  a.voice_revision='week2-r16';
  return t;

@@ -259,7 +259,7 @@ function buildLede(t,a,id){
 }
 function topThreeStarters(t){return(t?.starter_details||[]).slice(0,3).filter(p=>Number.isFinite(Number(p?.points)))}
 function playerStatParagraph(t,p){
- const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim().replace(/\brec yds\b/gi,'receiving yards').replace(/\brush yds\b/gi,'rushing yards').replace(/\bpass yds\b/gi,'passing yards').replace(/\byds\b/gi,'yards').replace(/\brec\b/gi,'receptions');
+ const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim().replace(/\b1 rec yds\b/gi,'1 receiving yard').replace(/\b1 rush yds\b/gi,'1 rushing yard').replace(/\b1 pass yds\b/gi,'1 passing yard').replace(/\brec yds\b/gi,'receiving yards').replace(/\brush yds\b/gi,'rushing yards').replace(/\bpass yds\b/gi,'passing yards').replace(/\b1 yds\b/gi,'1 yard').replace(/\byds\b/gi,'yards').replace(/\brec\b/gi,'receptions');
  return 'Against '+op+', '+name+' scored '+score+' fantasy points for '+tm+(line?' on a real-football line of '+line:'')+'.';
 }
 function playerAnalysisParagraph(t,p,id,slot){
@@ -292,7 +292,8 @@ function playerAnalysisParagraph(t,p,id,slot){
    name+' gave us '+score+'. That is evidence, not mood, and I am happy to let the exhibit do some work.'
   ]
  };
- return voiceShade(t,'player|'+id+'|'+String(slot)+'|'+name,pick(banks[id]||banks['walter-mercer'],seed,slot)+' '+history+tag);
+ const rows=banks[id]||banks['walter-mercer'],reaction=rows[(hash(key(t)+'|player-voice|'+id)+slot)%rows.length];
+ return voiceShade(t,'player|'+id+'|'+String(slot)+'|'+name,reaction+' '+history+tag);
 }
 function buildPlayers(t,a,id){
  const top=topThreeStarters(t),out=[];
@@ -345,7 +346,8 @@ function buildCoolThrone(t,id){
     'The favorable exhibit is '+name+' at '+score+'. I am preserving it because positive evidence disappears from rival memory with remarkable speed.'
    ]
   };
-  return voiceShade(t,'cool|'+id+'|'+String(i)+'|'+name,pick(banks[id]||banks['walter-mercer'],seed,i).replace('this team',tm));
+  const options=banks[id]||banks['walter-mercer'],reaction=options[(hash(key(t)+'|cool-voice|'+id)+i)%options.length];
+  return voiceShade(t,'cool|'+id+'|'+String(i)+'|'+name,reaction.replace('this team',tm));
  });
 }
 function buildValue(t,id){

@@ -1147,8 +1147,8 @@ function marketPctChange(row,key){
   const delta=Number(row?.[key]),value=Number(row?.value),base=value-delta;
   return Number.isFinite(delta)&&Number.isFinite(base)&&base>0?delta/base*100:null;
 }
-function intelDeltaKey(period=marketIntelPeriod){return({1D:'delta1',7D:'delta7',30D:'delta30',90D:'delta90',1Y:'delta365',ALL:'deltaAll'})[period]||'delta7'}
-function intelOverallDeltaKey(period=marketIntelPeriod){return({1D:'overallDelta1',7D:'overallDelta7',30D:'overallDelta30',90D:'overallDelta90',1Y:'overallDelta365',ALL:'overallDeltaAll'})[period]||'overallDelta7'}
+function intelDeltaKey(period=marketIntelPeriod){return({'1D':'delta1','7D':'delta7','30D':'delta30','90D':'delta90','1Y':'delta365','ALL':'deltaAll'})[period]||'delta7'}
+function intelOverallDeltaKey(period=marketIntelPeriod){return({'1D':'overallDelta1','7D':'overallDelta7','30D':'overallDelta30','90D':'overallDelta90','1Y':'overallDelta365','ALL':'overallDeltaAll'})[period]||'overallDelta7'}
 function intelPeriodLabel(period=marketIntelPeriod){
   const raw=periodLabel(period,marketCache||{});return raw==='Available History'?period+' / available history':raw;
 }
@@ -1213,7 +1213,7 @@ function momentumMarkup(){
   return`<div class="vh-intel-grid"><div class="vh-card"><h3>Heating Up</h3><div class="vh-sub">Positive Fleeced states and hot recent-form signals. The right-side number is explicitly the selected-window <b>market value change</b>; underlying PPG evidence is shown beneath the player.</div><div class="vh-intel-list">${rows(up,true)}</div></div><div class="vh-card"><h3>Cooling Down</h3><div class="vh-sub">Negative Fleeced states and cold recent-form signals. A player can cool statistically while value still rises—the two measures are intentionally shown separately.</div><div class="vh-intel-list">${rows(down,false)}</div></div></div>`;
 }
 function signalTransitionRows(){
-  const all=marketSignalCache?.transitions||[],through=Number(marketSignalCache?.through_week)||0,weeks=({1D:1,7D:1,30D:4,90D:13,1Y:99,ALL:99})[marketIntelPeriod]||1,floor=Math.max(1,through-weeks+1);
+  const all=marketSignalCache?.transitions||[],through=Number(marketSignalCache?.through_week)||0,weeks=({'1D':1,'7D':1,'30D':4,'90D':13,'1Y':99,'ALL':99})[marketIntelPeriod]||1,floor=Math.max(1,through-weeks+1);
   return all.filter(s=>Number(s.week)>=floor&&marketSignalDirection(s.previous_state)&&marketSignalDirection(s.state)&&marketSignalDirection(s.previous_state)!==marketSignalDirection(s.state));
 }
 function reversalsMarkup(){

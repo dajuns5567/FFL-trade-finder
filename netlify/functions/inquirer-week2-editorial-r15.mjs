@@ -910,6 +910,115 @@ function reviseTeam(t){
  return t;
 }
 
+function editorialWordCount(s){return(String(s||'').match(/\b[\w’'-]+\b/g)||[]).length}
+function reporterVariationClause(t,id,salt=''){
+ const banks={
+  'walter-mercer':{
+   left:[
+    'I am not awarding extra credit for surviving it',
+    'patience should not be confused with amnesia',
+    'I have already spent enough Sundays learning this lesson',
+    'the roster can spare me a repeat performance',
+    'optimism may submit its application after another competent week',
+    'I would prefer not to revisit the complaint next Monday',
+    'the old excuse has officially exceeded its shelf life',
+    'one more Sunday will tell us whether this deserves trust'
+   ],
+   right:[
+    'before anyone asks me to relax',
+    'because September has fooled me before',
+    'while the season is still young enough to correct it',
+    'and that is as generous as I intend to be'
+   ]
+  },
+  'tess-delaney':{
+   left:[
+    'I refuse to reward ugliness with tasteful silence',
+    'good manners are not a substitute for good football',
+    'the result has already exhausted my supply of polite adjectives',
+    'restraint can wait until the team gives me something dull',
+    'I reserve the right to be offended by boring incompetence',
+    'a little dignity would improve the next showing enormously',
+    'the beautiful parts deserve celebration without protecting the ugly ones',
+    'the next Sunday had better arrive with better taste'
+   ],
+   right:[
+    'because subtle disappointment is still disappointment',
+    'and I see no reason to pretend otherwise',
+    'before decorum tries to ruin a perfectly useful opinion',
+    'while there is still time to make the sequel attractive'
+   ]
+  },
+  'mack-hollis':{
+   left:[
+    'anyone offended by that assessment is welcome to score more points',
+    'I will not sand the edges off a bad Sunday',
+    'embarrassment remains undefeated as a teaching tool',
+    'the scoreboard has already done most of the insulting',
+    'somebody should be embarrassed enough to fix it',
+    'the next opponent does not care about excuses',
+    'if that sounds harsh, the points were harsher',
+    'one competent Sunday would end the argument quickly'
+   ],
+   right:[
+    'before this becomes a weekly punch line',
+    'because losing politely still counts as losing',
+    'and I am not charging extra for the honesty',
+    'while the team still has time to make me eat the sentence'
+   ]
+  },
+  'nora-voss':{
+   left:[
+    'the number is specific enough to survive excuses',
+    'the next decision should reflect what Sunday already showed',
+    'management now has a concrete problem rather than a vague mood',
+    'the role deserves a direct answer next week',
+    'the comparison is strong enough to matter without exaggeration',
+    'the roster cannot call the same result accidental twice',
+    'the next game will test whether this is repeatable',
+    'the question now is response rather than explanation'
+   ],
+   right:[
+    'without inventing a larger story than the data supports',
+    'and the next Sunday supplies a clean test',
+    'because the football has already narrowed the question',
+    'with enough detail to judge the response fairly'
+   ]
+  }
+ };
+ const bank=banks[id]||banks['walter-mercer'],ridNum=Math.max(1,Number(t?.roster_id)||1),
+  idx=((ridNum-1)+(hash(String(salt))%32))%32;
+ return bank.left[idx%bank.left.length]+' '+bank.right[Math.floor(idx/8)%bank.right.length];
+}
+function diversifyRepeatedReporterSentences(teams){
+ const counts=new Map();
+ for(const t of teams||[])for(const sec of t?.inquirer_article?.sections||[])for(const p of sec?.paragraphs||[])for(const sentence of sentenceParts(p)){
+  const key=String(sentence||'').trim();if(editorialWordCount(key)<8)continue;
+  counts.set(key,(counts.get(key)||0)+1);
+ }
+ const repeated=new Set([...counts].filter(([,n])=>n>2).map(([k])=>k));
+ if(!repeated.size)return teams;
+ for(const t of teams||[]){
+  const a=t?.inquirer_article;if(!a)continue;const id=rid(t);
+  a.sections=(a.sections||[]).map((sec,si)=>({
+   ...sec,
+   paragraphs:(sec?.paragraphs||[]).map((p,pi)=>{
+    let changed=false;
+    const rewritten=sentenceParts(p).map((sentence,qi)=>{
+     const key=String(sentence||'').trim();if(!repeated.has(key))return key;
+     changed=true;
+     const end=(key.match(/[.!?]$/)||['.'])[0],body=key.replace(/[.!?]$/,'').trim(),
+      clause=reporterVariationClause(t,id,String(sec?.kind||'')+'|'+si+'|'+pi+'|'+qi);
+     return body+'; '+clause+end;
+    }).join(' ');
+    return changed?rewritten:p;
+   })
+  }));
+  a.paragraphs=a.sections.flatMap(sec=>(sec?.paragraphs||[]).filter(Boolean));
+ }
+ return teams;
+}
+
 function recapReaction(id,seed,offset=0){
  const banks={
   'walter-mercer':[
@@ -1062,6 +1171,7 @@ export function applyWeek2EditorialR16(raw){
  if(!raw||Number(raw.season)!==2026||Number(raw.week)!==2)return raw;
  const out=clone(raw);
  out.teams=(out.teams||[]).map(reviseTeam);
+ out.teams=diversifyRepeatedReporterSentences(out.teams);
  out.league_overview=reviseOverview(out.league_overview,out.teams);
  out.editorial_revision=WEEK2_EDITORIAL_REVISION;
  out.voice_revision='week2-r16';

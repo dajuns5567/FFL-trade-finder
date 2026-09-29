@@ -376,19 +376,19 @@ function projectionLine(t,id){
  const banks={
   'walter-mercer':[
    'Week 3 projects '+tm+' at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The board calls it dead even.':'The projection gives '+fav+' the edge by '+edge+'.')+' I have trusted forecasts before and survived the embarrassment.',
-   'The Week 3 board has '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'That is dead even on paper.':'The board favors '+fav+' by '+edge+'.')+' Paper remains undefeated at being paper.'
+   'The Week 3 board has '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'That is dead even on paper.':'The board gives '+fav+' the edge by '+edge+'.')+' Paper remains undefeated at being paper.'
   ],
   'tess-delaney':[
-   'The projection puts '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The arithmetic is dead even, which is offensively tidy.':'The arithmetic favors '+fav+' by '+edge+', which is attractive and therefore suspicious.'),
-   'The spreadsheet enters '+tm+' at '+own.toFixed(1)+' versus '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even. How vulgar.':'It favors '+fav+' by '+edge+', and I refuse to confuse elegance with certainty.')
+   'The projection puts '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The arithmetic is dead even, which is offensively tidy.':'The arithmetic gives '+fav+' the edge by '+edge+', which is attractive and therefore suspicious.'),
+   'The spreadsheet enters '+tm+' at '+own.toFixed(1)+' versus '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even. How vulgar.':'It gives '+fav+' the edge by '+edge+', and I refuse to confuse elegance with certainty.')
   ],
   'mack-hollis':[
-   'The board screams '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Dead even. Great, no easy headline.':'The projection favors '+fav+' by '+edge+'.')+' Now somebody has to make the graphic age well.',
-   'The projection board gives '+tm+' '+own.toFixed(1)+' and '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Dead even.':'It favors '+fav+' by '+edge+'.')+' Save the screenshot.'
+   'The board screams '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Dead even. Great, no easy headline.':'The projection gives '+fav+' the edge by '+edge+'.')+' Now somebody has to make the graphic age well.',
+   'The projection board gives '+tm+' '+own.toFixed(1)+' and '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Dead even.':'It gives '+fav+' the edge by '+edge+'.')+' Save the screenshot.'
   ],
   'nora-voss':[
    'The projection file reads '+tm+' '+own.toFixed(1)+' and '+op+' '+opp.toFixed(1)+'. '+(own===opp?'The case is dead even.':'The file gives '+fav+' a '+edge+'-point edge.')+' I have marked the number as evidence, not destiny.',
-   'Week 3 projects '+tm+' for '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'That leaves the board dead even.':'The board favors '+fav+' by '+edge+'.')+' We will compare the forecast to the final exhibit.'
+   'Week 3 projects '+tm+' for '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'That leaves the board dead even.':'The board gives '+fav+' the edge by '+edge+'.')+' We will compare the forecast to the final exhibit.'
   ]
  };
  return pick(banks[id]||banks['walter-mercer'],seed);

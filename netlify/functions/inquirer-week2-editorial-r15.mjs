@@ -820,8 +820,8 @@ function projectionLine(t,id){
    'The Week 3 numbers are '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Perfectly even. How dull.':'The numbers give '+fav+' a '+edge+'-point edge.')+' Sunday may now attempt to be more interesting than arithmetic.'
   ],
   'mack-hollis':[
-   'Week 3 projects '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even.':'The projection favors '+fav+' by '+edge+'.')+' If the favorite blows that edge, I promise to be extremely normal about it.',
-   'The projection gives '+tm+' '+own.toFixed(1)+' points and '+op+' '+opp.toFixed(1)+'. '+(own===opp?'No edge.':'The projection favors '+fav+' by '+edge+'.')+' Now go play the game before the numbers get smug.'
+   'Week 3 projects '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even.':'The projection gives '+fav+' the edge by '+edge+'.')+' If the favorite blows that edge, I promise to be extremely normal about it.',
+   'The projection gives '+tm+' '+own.toFixed(1)+' points and '+op+' '+opp.toFixed(1)+'. '+(own===opp?'No edge.':'The projection gives '+fav+' the edge by '+edge+'.')+' Now go play the game before the numbers get smug.'
   ],
   'nora-voss':[
    'The projection puts '+tm+' at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The matchup is level.':'The numbers give '+fav+' a '+edge+'-point edge.')+' The projection establishes expectation, not outcome.',

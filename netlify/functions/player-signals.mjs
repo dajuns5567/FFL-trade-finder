@@ -85,7 +85,8 @@ export default async req=>{
       const history=data.history_by_player?.[id]||[],current=history.length?{...history[history.length-1],ownership:data.signals.find(x=>String(x.player_id)===id)?.ownership||null}:null;
       return json({available:!!current,signal_version:data.signal_version,season:data.season,through_week:data.through_week,generated_at:data.generated_at,source:data.source,player_id:id,current,history});
     }
-    const compact=url.searchParams.get('compact')==='1';
-    return json(compact?{available:true,signal_version:data.signal_version,season:data.season,through_week:data.through_week,generated_at:data.generated_at,source:data.source,summary:data.summary,signals:data.signals}:data);
+    const compact=url.searchParams.get('compact')==='1',
+      transitions=compact?Object.values(data.history_by_player||{}).flat().filter(x=>x?.changed).sort((a,b)=>Number(b.week)-Number(a.week)||String(a.player_name).localeCompare(String(b.player_name))):null;
+    return json(compact?{available:true,signal_version:data.signal_version,season:data.season,through_week:data.through_week,generated_at:data.generated_at,source:data.source,summary:data.summary,signals:data.signals,transitions}:data);
   }catch(e){return json({available:false,error:String(e?.message||e)},500)}
 };

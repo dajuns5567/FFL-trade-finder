@@ -486,7 +486,7 @@ function playerReaction(t,p,id,slot){
  const pos=String(p?.position||'').toUpperCase(),role=/^(?:DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos)?'defender':pos==='QB'?'quarterback':pos==='RB'?'back':pos==='TE'?'tight end':'receiver';
  const banks={
   'walter-mercer':[
-   name+' gave '+t.team_name+' '+shown+'. Good. A '+role+' doing his job should be appreciated without turning the press box into a shrine.',
+   name+' gave '+t.team_name+' '+shown+'. Good. A '+role+' doing his job should be appreciated without turning one competent Sunday into sainthood.',
    shown+' from '+name+' is useful work. I will praise it now and reserve the right to become unreasonable the moment it disappears.',
    name+' posted '+shown+'. I have no complaint with the production, which is an uncomfortable sentence I will survive.',
    shown+' from '+name+' is exactly the kind of Sunday that makes an old skeptic briefly run out of objections.'

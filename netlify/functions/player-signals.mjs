@@ -39,7 +39,7 @@ function playerPacket(meta,id,stats,priorRaw,seasonSeries,scoring){
   return{
     id:String(id),name:playerName(meta,id),position,nfl_team:String(meta?.team||'FA'),
     age:Number.isFinite(Number(meta?.age))?Number(meta.age):null,years_exp:Number.isFinite(Number(meta?.years_exp))?Number(meta.years_exp):null,
-    injury_status:String(meta?.injury_status||meta?.injury_body_part||'').trim(),
+    injury_status:String(meta?.injury_status||'').trim(),
     points:Number.isFinite(Number(currentPoints))?Number(currentPoints):null,
     season_games:seasonGames,season_fantasy_points:seasonPoints,season_avg:seasonGames?seasonPoints/seasonGames:null,
     prior_season_games:priorGames,prior_season_avg:Number.isFinite(Number(priorAvg))?Number(priorAvg):null,

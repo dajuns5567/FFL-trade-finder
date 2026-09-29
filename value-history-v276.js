@@ -1058,6 +1058,22 @@ async function signalFetch(id){
 }
 function signalTone(state){return['breakout','emerging','surging'].includes(String(state))?'vh-up':['declining','cooling','struggling','struggling-star','declining-veteran'].includes(String(state))?'vh-down':'vh-neutral'}
 function signalMomentumLabel(v){return({hot:'Heating up',cold:'Cooling down',steady:'Steady',insufficient:'Building sample'})[String(v||'')]||String(v||'—')}
+function signalStateDisplayLabel(v){
+  const key=String(v||'').trim(),labels={unclassified:'No Active Signal',established:'Established Star',declining:'Declining',stable:'Stable',breakout:'Breakout',emerging:'Emerging',surging:'Surging',cooling:'Cooling',struggling:'Struggling','struggling-star':'Struggling Star','declining-veteran':'Declining Veteran','reliable-veteran':'Reliable Veteran',reliable:'Reliable','star-level':'Star-Level Week',rookie:'Rookie','young-player':'Young Player',veteran:'Veteran'};
+  return labels[key]||(key?key.split('-').map(x=>x?x[0].toUpperCase()+x.slice(1):'').join(' '):'No Active Signal');
+}
+function signalSpecificLabel(sig){return String(sig?.reporter_label||sig?.label||signalStateDisplayLabel(sig?.state))}
+function signalPreviousSpecificLabel(sig){return String(sig?.previous_reporter_label||sig?.previous_label||signalStateDisplayLabel(sig?.previous_state))}
+function signalEvidenceCue(sig){
+  const e=sig?.evidence||{},cues=[];
+  if(e.developmental_breakout)cues.push('developmental breakout');else if(e.strong_two_week_rise)cues.push('strong two-week rise');else if(e.two_week_rise)cues.push('two-week rise');
+  if(e.role_lift)cues.push('role expanding');
+  if(e.two_week_drop)cues.push('production down');
+  if(!cues.length&&e.steady)cues.push('steady production');
+  if(!cues.length&&e.recent_form==='hot')cues.push('recent form heating');
+  if(!cues.length&&e.recent_form==='cold')cues.push('recent form cooling');
+  return cues.slice(0,2).join(' • ');
+}
 function signalCardMarkup(data,loading=false){
   if(loading)return`<div class="vh-card-head"><div><h3>Fleeced Signals</h3><div class="vh-sub">Loading completed-week reporter intelligence in the background…</div></div></div><div class="vh-empty">Building signal history…</div>`;
   const current=data?.current,history=Array.isArray(data?.history)?data.history:[];
@@ -1066,10 +1082,10 @@ function signalCardMarkup(data,loading=false){
     evidence=[Number.isFinite(Number(ev.season_avg))&&Number.isFinite(Number(ev.prior_season_avg))?`Season ${Number(ev.season_avg).toFixed(2)} PPG vs ${Number(ev.prior_season_avg).toFixed(2)} last season`:'',Number.isFinite(Number(ev.last3_avg))&&Number.isFinite(Number(ev.prior3_avg))?`Last 3: ${Number(ev.last3_avg).toFixed(2)} vs prior 3: ${Number(ev.prior3_avg).toFixed(2)}`:'',ev.role_lift?'Role/snap lift verified':''].filter(Boolean),
     currentAward=current.player_of_week||null,
     awardBadge=currentAward?`<span class="vh-milestone-award">🏅 ${esc(currentAward.title||'Player of the Week')} • ${esc(String(currentAward.season))} W${esc(String(currentAward.week))} • ${Number(currentAward.points||0).toFixed(2)} pts</span>`:'',
-    recent=history.slice(-8).reverse();
+    previousCurrent=history.length>1?history[history.length-2]:null,recent=history.slice(-8).reverse();
   return`<div class="vh-card-head"><div><h3>Fleeced Signals</h3><div class="vh-sub">Structured player states derived from the same production, role, age and trajectory evidence the reporters use.</div></div></div>
-    <div class="vh-signal-summary"><div><span class="vh-signal-pill ${signalTone(current.state)}">${esc(current.label||current.state)}</span>${awardBadge?`<div style="margin-top:8px">${awardBadge}</div>`:''}<div class="vh-signal-meta">Reporter classification: <b>${esc(current.reporter_label||'No adjective')}</b> • Momentum: <b>${esc(signalMomentumLabel(current.momentum))}</b> • Confidence: <b>${esc(current.confidence||'—')}</b></div><div class="vh-signal-evidence">${evidence.length?esc(evidence.join(' • ')):'Signal is based on the completed-week sample currently available.'}</div></div><div class="vh-signal-meta">Started <b>${esc(started)}</b><br>${Number(current.duration_weeks||1)} signal week${Number(current.duration_weeks||1)===1?'':'s'}${current.changed&&current.previous_state?`<br>Previous: <b>${esc(current.previous_state)}</b>`:''}</div></div>
-    <div class="vh-signal-timeline">${recent.map(r=>`<div class="vh-feed-row"><span class="vh-milestone-label">${esc(r.label||r.state)}<span class="vh-milestone-time">${esc(String(r.season))} Week ${esc(String(r.week))} • ${esc(r.reporter_label||'No reporter adjective')} • ${esc(signalMomentumLabel(r.momentum))}${r.player_of_week?` • 🏅 ${esc(r.player_of_week.title||'Player of the Week')} • ${Number(r.player_of_week.points||0).toFixed(2)} pts`:''}</span></span><b class="${signalTone(r.state)}">${esc(r.previous_state?(r.changed?'Changed':'Held'):'Started')}</b></div>`).join('')}</div>`;
+    <div class="vh-signal-summary"><div><span class="vh-signal-pill ${signalTone(current.state)}">${esc(signalSpecificLabel(current))}</span>${awardBadge?`<div style="margin-top:8px">${awardBadge}</div>`:''}<div class="vh-signal-meta">Normalized signal: <b>${esc(signalStateDisplayLabel(current.state))}</b> • Momentum: <b>${esc(signalMomentumLabel(current.momentum))}</b> • Confidence: <b>${esc(current.confidence||'—')}</b></div><div class="vh-signal-evidence">${evidence.length?esc(evidence.join(' • ')):'Signal is based on the completed-week sample currently available.'}</div></div><div class="vh-signal-meta">Started <b>${esc(started)}</b><br>${Number(current.duration_weeks||1)} signal week${Number(current.duration_weeks||1)===1?'':'s'}${current.changed&&current.previous_state?`<br>Previous: <b>${esc(previousCurrent?signalSpecificLabel(previousCurrent):signalStateDisplayLabel(current.previous_state))}</b>`:''}</div></div>
+    <div class="vh-signal-timeline">${recent.map(r=>`<div class="vh-feed-row"><span class="vh-milestone-label">${esc(signalSpecificLabel(r))}<span class="vh-milestone-time">${esc(String(r.season))} Week ${esc(String(r.week))} • normalized ${esc(signalStateDisplayLabel(r.state))} • ${esc(signalMomentumLabel(r.momentum))}${r.player_of_week?` • 🏅 ${esc(r.player_of_week.title||'Player of the Week')} • ${Number(r.player_of_week.points||0).toFixed(2)} pts`:''}</span></span><b class="${signalTone(r.state)}">${esc(r.previous_state?(r.changed?'Changed':'Held'):'Started')}</b></div>`).join('')}</div>`;
 }
 async function loadPlayerSignals(id){
   const key=String(id);if(playerSignalCache.has(key))return;
@@ -1247,7 +1263,7 @@ function openMarketIntelModal(kind){
   }else if(kind==='signal-reversals'){
     const list=signalTransitionRows().slice().sort((a,b)=>Math.abs(marketSignalDirection(b.state)-marketSignalDirection(b.previous_state))-Math.abs(marketSignalDirection(a.state)-marketSignalDirection(a.previous_state))||Number(b.week)-Number(a.week));
     title='All Signal Reversals';subtitle=`${list.length} completed-week directional state changes`;
-    rows=list.map(sig=>intelPlayerRow(sig.player_id,`${sig.previous_state} → ${sig.state} • ${sig.season} Week ${sig.week}`,'New state',sig.label,signalTone(sig.state)));
+    rows=list.map(sig=>{const before=signalPreviousSpecificLabel(sig),after=signalSpecificLabel(sig),cue=signalEvidenceCue(sig);return intelPlayerRow(sig.player_id,`${before} → ${after}${cue?` • ${cue}`:''} • ${sig.season} Week ${sig.week}`,'New tag',after,signalTone(sig.state))});
   }else if(kind==='value-reversals'){
     const list=marketRows.map(row=>({row,short:verifiedValueMove(row.id,'1D'),broad:verifiedValueMove(row.id,comparePeriod)})).filter(x=>x.short&&x.broad&&x.short.delta!==0&&x.broad.delta!==0&&Math.sign(x.short.delta)!==Math.sign(x.broad.delta)).sort((a,b)=>Math.abs(b.short.delta)-Math.abs(a.short.delta));
     title='All Value Reversals';subtitle=`${list.length} players with 1D movement opposite the ${comparePeriod} trend`;
@@ -1318,9 +1334,9 @@ function reversalsMarkup(){
   const comparePeriod=marketIntelPeriod==='1D'?'7D':marketIntelPeriod,marketRows=marketCache?.marketRows||[],
     signalRows=signalTransitionRows().slice().sort((a,b)=>Math.abs(marketSignalDirection(b.state)-marketSignalDirection(b.previous_state))-Math.abs(marketSignalDirection(a.state)-marketSignalDirection(a.previous_state))||Number(b.week)-Number(a.week)).slice(0,8),
     priceRows=marketRows.map(r=>({row:r,short:verifiedValueMove(r.id,'1D'),broad:verifiedValueMove(r.id,comparePeriod)})).filter(x=>x.short&&x.broad&&x.short.delta!==0&&x.broad.delta!==0&&Math.sign(x.short.delta)!==Math.sign(x.broad.delta)).sort((a,b)=>Math.abs(b.short.delta)-Math.abs(a.short.delta)).slice(0,8),
-    signalList=signalRows.length?signalRows.map(sig=>intelPlayerRow(sig.player_id,`${sig.previous_state} → ${sig.state} • ${sig.season} Week ${sig.week}`,'New state',sig.label,signalTone(sig.state))).join(''):'<div class="vh-empty">No meaningful Fleeced direction changes in this signal window.</div>',
+    signalList=signalRows.length?signalRows.map(sig=>{const before=signalPreviousSpecificLabel(sig),after=signalSpecificLabel(sig),cue=signalEvidenceCue(sig);return intelPlayerRow(sig.player_id,`${before} → ${after}${cue?` • ${cue}`:''} • ${sig.season} Week ${sig.week}`,'New tag',after,signalTone(sig.state))}).join(''):'<div class="vh-empty">No meaningful Fleeced direction changes in this signal window.</div>',
     priceList=priceRows.length?priceRows.map(x=>intelPlayerRow(x.row.id,`1D ${signed(x.short.delta)} vs ${comparePeriod} ${signed(x.broad.delta)}`,'1D reversal',signed(x.short.delta),deltaClass(x.short.delta))).join(''):'<div class="vh-empty">No verified 1-day value reversals against the selected broader trend.</div>';
-  return`<div class="vh-intel-grid"><div class="vh-card"><div class="vh-intel-card-title"><h3>Signal Reversals</h3>${intelViewAllButton('signal-reversals')}</div><div class="vh-sub">Completed-week Fleeced directional state changes, including recoveries into positive territory and deteriorations out of it.</div><div class="vh-intel-list">${signalList}</div></div><div class="vh-card"><div class="vh-intel-card-title"><h3>Value Reversals</h3>${intelViewAllButton('value-reversals')}</div><div class="vh-sub">Verified 1-day value movement running opposite the ${esc(comparePeriod)} direction.</div><div class="vh-intel-list">${priceList}</div></div></div>`;
+  return`<div class="vh-intel-grid"><div class="vh-card"><div class="vh-intel-card-title"><h3>Signal Reversals</h3>${intelViewAllButton('signal-reversals')}</div><div class="vh-sub">Completed-week Fleeced directional state changes shown with the most specific verified reporter tags and supporting evidence available.</div><div class="vh-intel-list">${signalList}</div></div><div class="vh-card"><div class="vh-intel-card-title"><h3>Value Reversals</h3>${intelViewAllButton('value-reversals')}</div><div class="vh-sub">Verified 1-day value movement running opposite the ${esc(comparePeriod)} direction.</div><div class="vh-intel-list">${priceList}</div></div></div>`;
 }
 function volatilityMarkup(){
   const data=intelRange(),allPlayerRows=(data?.volatility||[]).filter(r=>Number(r.observations)>=2),

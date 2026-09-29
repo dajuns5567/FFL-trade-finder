@@ -1256,7 +1256,7 @@ function opportunityMarkup(){
   for(const sig of signals){
     const row=byId.get(String(sig.player_id)),perf=signalPerformanceDelta(sig),pct=positionValuePercentile(rows,row),move=Number(row?.[key]),direction=marketSignalDirection(sig.state);
     if(!row||!Number.isFinite(perf)||!Number.isFinite(pct))continue;
-    const usableConfidence=!['insufficient'].includes(String(sig.confidence||'')),
+    const usableConfidence=['strong','established'].includes(String(sig.confidence||'')),
       positive=direction>0||sig.momentum==='hot',negative=direction<0||sig.momentum==='cold';
     if(usableConfidence&&positive&&perf>0&&pct>=.35)candidates.push({type:'buy',sig,row,perf,pct,move,score:perf*5+pct*8-Math.max(0,Number(move)||0)/1200});
     if(usableConfidence&&negative&&perf<0&&pct<=.40)candidates.push({type:'sell',sig,row,perf,pct,move,score:Math.abs(perf)*5+(1-pct)*8+(Number(row.value)||0)/2500});

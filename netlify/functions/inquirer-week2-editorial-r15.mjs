@@ -429,7 +429,7 @@ function divisionOutlookLine(t,id){
  const opponent=nextName?op+' enters Week 3 at '+nw+'-'+nl+' in the '+nextName+'.':op+' enters Week 3 at '+nw+'-'+nl+'.';
  const tails={
   'walter-mercer':'I do not need the standings to be dramatic; I need them to stop becoming more annoying.',
-  'tess-delaney':'The table is forbidden in this column, so I will simply say the stakes have become indecently visible.',
+  'tess-delaney':'The stakes have become indecently visible, and I resent how entertaining that makes the division race.',
   'mack-hollis':'That is enough standings material for one loud graphic and several irresponsible predictions.',
   'nora-voss':'Those are the division facts. I have highlighted the parts rivals will pretend not to notice.'
  };

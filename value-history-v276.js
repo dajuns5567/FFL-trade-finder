@@ -151,6 +151,7 @@ function addStyles(){
   #valueHistory .vh-player-history-choice .vh-search-wrap{width:100%;max-width:620px}
   #valueHistory .vh-team-toolbar select[data-vh-player-history-team]{background:color-mix(in srgb,var(--card) 78%,#0a0d12)!important;color:inherit!important;border-color:var(--line)!important;box-shadow:none!important}
   #valueHistory .vh-milestone-award{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid color-mix(in srgb,#e4b53f 34%,var(--line));border-radius:999px;background:transparent;color:#f4f4f5;font-size:10px;font-weight:900;white-space:nowrap}
+  #valueHistory #vhScoringMilestones{display:contents}
   #valueHistory .vh-signal-summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;margin-top:8px}
   #valueHistory .vh-signal-pill{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:7px 10px;border:1px solid color-mix(in srgb,#e4b53f 45%,var(--line));border-radius:999px;background:color-mix(in srgb,#e4b53f 10%,transparent);font-size:11px;font-weight:950;letter-spacing:.055em;text-transform:uppercase}
   #valueHistory .vh-signal-pill.vh-up{border-color:color-mix(in srgb,#42c978 50%,var(--line))}
@@ -1084,6 +1085,10 @@ async function loadMarket(force=false){
   if(!marketCache||force){
     box.innerHTML='<div class="vh-empty">Loading market dashboard…</div>';
     try{await ensureMarketCache(force)}catch{
+      if(currentView==='market'&&marketCache){
+        const status=document.getElementById('vhStatus');if(status)status.textContent='Showing the last successfully loaded market snapshot while a refresh retries.';
+        renderMarketDashboard();loadMarketIntelligence(false);return
+      }
       if(currentView==='market')box.innerHTML='<div class="notice">Historical market data is temporarily unavailable. Current values and all trade tools are unaffected.</div>';
       return
     }

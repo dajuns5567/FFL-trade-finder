@@ -395,8 +395,10 @@ async function broadcastArchive(){
  rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
 }
 async function broadcastStored(season,week){
- const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null);
- return servedPreload(v)||preloadedBroadcast(season,week)||{error:'broadcast not found'};
+ const y=Number(season),w=Number(week),canonicalPreload=preloadedBroadcast(y,w);
+ if(y===2026&&w===2&&canonicalPreload)return canonicalPreload;
+ const s=store(),v=await s.get(`broadcasts/${y}/week-${String(w).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null);
+ return servedPreload(v)||canonicalPreload||{error:'broadcast not found'};
 }
 
 function weeklyAwardStatRows(payload){

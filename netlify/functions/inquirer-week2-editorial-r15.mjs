@@ -1019,6 +1019,53 @@ function diversifyRepeatedReporterSentences(teams){
  return teams;
 }
 
+function editorialEscapeRe(value){return String(value||'').replace(/[.*+?^$()|[\]\\]/g,'\\function recapReaction(id,seed,offset=0){')}
+function reporterTemplateFingerprint(sentence,entities){
+ let x=String(sentence||'').trim();
+ const nums=(x.match(/\b\d+(?:\.\d+)?%?\b/g)||[]).length;
+ if(nums>=2&&/\b(?:targets?|carries|yards?|touchdowns?|passes?|completed|tackles?|solo|assists?|sacks?|snaps?|interceptions?|TFL|QB hits?|receptions?)\b/i.test(x))return null;
+ for(const entity of entities)x=x.replace(new RegExp(editorialEscapeRe(entity),'gi'),'[ENTITY]');
+ x=x.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,'[#]').replace(/\s+/g,' ').trim();
+ return editorialWordCount(x)>=8?x:null;
+}
+function diversifyReporterTemplates(teams){
+ const entities=[...new Set((teams||[]).flatMap(t=>[
+  t?.team_name,t?.opponent_name,t?.next_opponent_name,t?.manager_name,
+  ...(t?.starter_details||[]).map(p=>p?.name),
+  ...(t?.opponent_roster?.starters||t?.opponent_roster?.players||[]).map(p=>p?.name),
+  ...(t?.next_opponent_roster?.starters||t?.next_opponent_roster?.players||[]).map(p=>p?.name)
+ ]).filter(Boolean).map(x=>String(x).trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
+ const placements=new Map();
+ for(const t of teams||[]){
+  const seen=new Set();
+  for(const sec of t?.inquirer_article?.sections||[])for(const p of sec?.paragraphs||[])for(const sentence of sentenceParts(p)){
+   const fp=reporterTemplateFingerprint(sentence,entities);if(!fp||seen.has(fp))continue;seen.add(fp);
+   placements.set(fp,(placements.get(fp)||0)+1);
+  }
+ }
+ const offenders=new Set([...placements].filter(([,n])=>n>3).map(([fp])=>fp));
+ if(!offenders.size)return teams;
+ for(const t of teams||[]){
+  const a=t?.inquirer_article;if(!a)continue;const id=rid(t);
+  a.sections=(a.sections||[]).map((sec,si)=>({
+   ...sec,
+   paragraphs:(sec?.paragraphs||[]).map((p,pi)=>{
+    let changed=false;
+    const rewritten=sentenceParts(p).map((sentence,qi)=>{
+     const fp=reporterTemplateFingerprint(sentence,entities);if(!fp||!offenders.has(fp))return String(sentence||'').trim();
+     changed=true;
+     const key=String(sentence||'').trim(),end=(key.match(/[.!?]$/)||['.'])[0],body=key.replace(/[.!?]$/,'').trim(),
+      clause=reporterVariationClause(t,id,'template|'+String(sec?.kind||'')+'|'+si+'|'+pi+'|'+qi);
+     return body+'; '+clause+end;
+    }).join(' ');
+    return changed?rewritten:p;
+   })
+  }));
+  a.paragraphs=a.sections.flatMap(sec=>(sec?.paragraphs||[]).filter(Boolean));
+ }
+ return teams;
+}
+
 function recapReaction(id,seed,offset=0){
  const banks={
   'walter-mercer':[
@@ -1182,6 +1229,7 @@ export function applyWeek2EditorialR16(raw){
  const out=clone(raw);
  out.teams=(out.teams||[]).map(reviseTeam);
  out.teams=diversifyRepeatedReporterSentences(out.teams);
+ out.teams=diversifyReporterTemplates(out.teams);
  out.league_overview=reviseOverview(out.league_overview,out.teams);
  out.editorial_revision=WEEK2_EDITORIAL_REVISION;
  out.voice_revision='week2-r16';

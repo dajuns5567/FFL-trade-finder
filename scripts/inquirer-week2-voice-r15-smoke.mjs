@@ -25,6 +25,7 @@ const stripArticleProse=a=>{
 const paragraphs=t=>(t?.inquirer_article?.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(Boolean);
 const articleText=t=>paragraphs(t).join(' ');
 const sentenceParts=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
+const wordCount=s=>(String(s||'').match(/\b[\w’'-]+\b/g)||[]).length;
 
 const PLAYER_SUPPORT_RE=/\b(?:supporting cast|supporting score|supporting production|secondary scoring|second real scorer|second dependable foothold|second useful jolt|second punch|second answer|second scorer|third scorer|third score|third reason|one more working outlet|another usable starter|another meaningful score|rest of (?:the )?(?:lineup|roster)|whole lineup|one[- ]man|one[- ]player|solo effort|solo act|solo show|rescue mission|magic trick|lonely haymaker|did not have to .* alone|didn't have to .* alone|kept .* from (?:becoming|being)|prevented .* from (?:becoming|being)|top[- ]heavy|more than one emergency|same stars doing all the lifting|one guy screaming|backup singers|enough additional scoring|enough production elsewhere|cover every gap|the next answer is support|support behind the lead score)\b/i;
 const OLD_SCAFFOLD_RE=/\b(?:gave Week 2 the stronger jolt|put a brighter number on the second Sunday|put a quieter number on the second Sunday|turned the Week 2 volume up|usable top end|the issue is not the stars|there is nowhere to hide a September result|worth keeping beside the Week 2 stars|management chose this version of the roster|the lineup that happened to score Sunday)\b/i;
@@ -41,18 +42,21 @@ for(const t of revisedTeams){
  assert.equal(t?.inquirer_article?.voice_revision,'week2-r16','Article voice revision missing for '+t.team_name);
 
  const ps=paragraphs(t),text=ps.join(' '),sentences=sentenceParts(text);
- assert(ps.length<=26,'Week 2 rewrite retained too much old article scaffolding for '+t.team_name+': '+ps.length+' paragraphs');
+ assert(ps.length<=30,'Week 2 rewrite became overstuffed for '+t.team_name+': '+ps.length+' paragraphs');
+ assert(wordCount(text)>=580,'Week 2 rewrite became too shallow for '+t.team_name+': '+wordCount(text)+' words');
  assert(sentences.filter(s=>VOICE_RE.test(s)).length>=5,'Too little explicit reporter/fan voice in '+t.team_name);
  assert(!PLAYER_SUPPORT_RE.test(text),'Player-support/solo-effort motif survived Week 2 rewrite for '+t.team_name);
  assert(!OLD_SCAFFOLD_RE.test(text),'Old Week 2 scaffold survived rewrite for '+t.team_name);
  assert(!SHARED_OUTLOOK_RE.test(text),'Shared outlook boilerplate survived rewrite for '+t.team_name);
 
  const byKind=Object.fromEntries((t?.inquirer_article?.sections||[]).map(s=>[String(s?.kind||''),(s?.paragraphs||[]).length]));
- assert((byKind.lede||0)<=4,'Lede still overstuffed for '+t.team_name);
- assert((byKind.players||0)<=6,'Player section still overstuffed for '+t.team_name);
- assert((byKind.management||0)<=3,'Management section still repeats itself for '+t.team_name);
- assert((byKind.sentiment||0)<=2,'Sentiment section still repeats itself for '+t.team_name);
- assert((byKind.outlook||0)<=6,'Outlook section still overstuffed for '+t.team_name);
+ assert((byKind.lede||0)>=3&&(byKind.lede||0)<=4,'Lede must be developed without overstuffing for '+t.team_name);
+ assert((byKind.players||0)===6,'Player section must give three featured players distinct fact/reaction treatment for '+t.team_name);
+ assert((byKind.management||0)>=2&&(byKind.management||0)<=3,'Management section must be developed without repetition for '+t.team_name);
+ assert((byKind['cool-throne']||0)<=2,'Cool Throne is overstuffed for '+t.team_name);
+ assert((byKind.value||0)<=3,'Value section is overstuffed for '+t.team_name);
+ assert((byKind.sentiment||0)===2,'Sentiment must contain two distinct fan/reporter reactions for '+t.team_name);
+ assert((byKind.outlook||0)>=3&&(byKind.outlook||0)<=6,'Outlook must be developed without overstuffing for '+t.team_name);
 
  const id=String(t?.inquirer_article?.reporter?.id||'');
  reporterCounts.set(id,(reporterCounts.get(id)||0)+1);
@@ -63,7 +67,7 @@ const aints=revisedTeams.find(t=>/new orleans (?:aints|saints)/i.test(String(t?.
 assert(aints,'New Orleans Week 2 article not found');
 const aintsText=articleText(aints),aintsParagraphs=paragraphs(aints);
 assert(!/one-man rescue mission|one-player magic trick|enough production elsewhere|third scorer/i.test(aintsText),'New Orleans still contains the exact support/solo language called out by the live audit');
-assert(aintsParagraphs.length<=26,'New Orleans article was not materially rebuilt');
+assert(aintsParagraphs.length<=30&&wordCount(aintsText)>=580,'New Orleans article was not materially rebuilt with enough distinct reporting depth');
 
 const overview=revised?.league_overview||{};
 assert.equal(Number(overview.editorial_revision),16);

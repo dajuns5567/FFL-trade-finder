@@ -178,10 +178,10 @@ function addStyles(){
   #valueHistory .vh-index-card span{display:block;margin-top:6px;font-size:10px}
   #valueHistory .vh-heat-wrap{overflow-x:auto}
   #valueHistory .vh-heat-grid{display:grid;grid-template-columns:78px repeat(4,minmax(110px,1fr));gap:6px;min-width:590px;margin-top:9px}
-  #valueHistory .vh-heat-head,#valueHistory .vh-heat-label,#valueHistory .vh-heat-cell{padding:10px;border-radius:9px;border:1px solid var(--line);font-size:10px}
-  #valueHistory .vh-heat-head,#valueHistory .vh-heat-label{font-weight:900;letter-spacing:.05em;text-transform:uppercase;background:color-mix(in srgb,var(--card) 86%,#090b10)}
-  #valueHistory button.vh-heat-cell{width:100%;min-height:58px;margin:0!important;text-align:center!important;font-weight:950!important;color:inherit!important;background:color-mix(in srgb,var(--card) 88%,#090b10)!important;box-shadow:none!important;cursor:pointer}
-  #valueHistory button.vh-heat-cell small{display:block;margin-top:4px;color:var(--muted);font-size:9px;font-weight:700}
+  #valueHistory .vh-heat-head,#valueHistory .vh-heat-label,#valueHistory .vh-heat-cell{padding:11px;border-radius:9px;border:1px solid var(--line)}
+  #valueHistory .vh-heat-head,#valueHistory .vh-heat-label{display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:950;letter-spacing:.055em;text-transform:uppercase;background:color-mix(in srgb,var(--card) 86%,#090b10)}
+  #valueHistory button.vh-heat-cell{width:100%;min-height:64px;margin:0!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;text-align:center!important;font-size:14px!important;line-height:1.1;font-weight:950!important;color:inherit!important;background:color-mix(in srgb,var(--card) 88%,#090b10)!important;box-shadow:none!important;cursor:pointer}
+  #valueHistory button.vh-heat-cell small{display:block;margin-top:6px;color:var(--muted);font-size:10px;font-weight:800}
   #valueHistory button.vh-heat-cell.vh-up{background:color-mix(in srgb,var(--good,#1f9d68) 13%,var(--card))!important}
   #valueHistory button.vh-heat-cell.vh-down{background:color-mix(in srgb,var(--bad,#c45151) 13%,var(--card))!important}
   #valueHistory button.vh-heat-cell:hover,#valueHistory button.vh-heat-cell:focus-visible{border-color:#e4b53f!important;outline:none!important}
@@ -193,17 +193,24 @@ function addStyles(){
   #valueHistory .vh-intel-row:first-child{border-top:0}
   #valueHistory .vh-intel-row small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
   #valueHistory .vh-intel-metric{text-align:right;white-space:nowrap}
-  #valueHistory .vh-intel-metric small{display:block;margin:0 0 2px;color:var(--muted);font-size:8px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
-  #valueHistory .vh-intel-metric b{font-size:13px}
+  #valueHistory .vh-intel-metric small{display:block;margin:0 0 3px;color:var(--muted);font-size:10px;font-weight:950;letter-spacing:.045em;text-transform:uppercase}
+  #valueHistory .vh-intel-metric b{font-size:17px;line-height:1.05}
   #valueHistory .vh-intel-row .vh-view-history{justify-self:end}
   #valueHistory .vh-category-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-  #valueHistory .vh-category-card{display:block;text-align:left!important;border:1px solid var(--line)!important;border-radius:12px!important;padding:12px!important;background:color-mix(in srgb,var(--card) 84%,#090b10)!important;min-width:0;box-shadow:none!important}
-  #valueHistory .vh-category-card small{display:block;color:#e4b53f;font-size:9px;font-weight:950;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
-  #valueHistory .vh-category-card b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #valueHistory .vh-category-card span{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+  #valueHistory .vh-category-card{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center!important;border:1px solid var(--line)!important;border-radius:12px!important;padding:13px 12px!important;min-height:88px;background:color-mix(in srgb,var(--card) 84%,#090b10)!important;min-width:0;box-shadow:none!important}
+  #valueHistory .vh-category-card small{display:block;color:#e4b53f;font-size:9px;font-weight:950;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;text-align:center}
+  #valueHistory .vh-category-card b{display:block;width:100%;font-size:14px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #valueHistory .vh-category-card span{display:block;color:var(--muted);font-size:10px;margin-top:5px;text-align:center}
   #valueHistory button.vh-category-card:hover,#valueHistory button.vh-category-card:focus-visible{border-color:color-mix(in srgb,#e4b53f 65%,var(--line))!important;outline:none!important}
   #valueHistory .vh-category-card.vh-empty-card{opacity:.72}
   #valueHistory .vh-opportunity-note{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);color:var(--muted);font-size:9px;line-height:1.45}
+  #valueHistory .vh-volatility-layout{display:grid;grid-template-columns:minmax(270px,.8fr) minmax(0,1.65fr);gap:12px;align-items:start}
+  #valueHistory .vh-volatility-summary{display:grid;gap:12px}
+  #valueHistory .vh-volatility-stat{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+  #valueHistory .vh-volatility-stat:first-child{border-top:0}
+  #valueHistory .vh-volatility-stat small{display:block;color:var(--muted);font-size:9px}
+  #valueHistory .vh-volatility-stat b{font-size:16px}
+  @media(max-width:900px){#valueHistory .vh-volatility-layout{grid-template-columns:1fr}}
   @media(max-width:1000px){#valueHistory .vh-index-grid{grid-template-columns:repeat(3,1fr)}#valueHistory .vh-category-grid{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:720px){#valueHistory .vh-signal-summary{grid-template-columns:1fr}#valueHistory .vh-intel-grid{grid-template-columns:1fr}#valueHistory .vh-index-grid{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-market-section-title{display:block}#valueHistory .vh-market-section-title p{text-align:left;margin-top:4px}#valueHistory .vh-intel-row{grid-template-columns:minmax(0,1fr) auto}#valueHistory .vh-intel-row .vh-view-history{grid-column:1/-1;justify-self:start}}
   #valueHistory .vh-team-toolbar select,#valueHistory #vhMarketSearch{border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important}
@@ -1232,10 +1239,13 @@ function reversalsMarkup(){
   return`<div class="vh-intel-grid"><div class="vh-card"><h3>Signal Reversals</h3><div class="vh-sub">Completed-week Fleeced states that flipped between positive and negative inside the selected window.</div><div class="vh-intel-list">${signalList}</div></div><div class="vh-card"><h3>Value Reversals</h3><div class="vh-sub">1-day value movement running opposite the ${esc(comparePeriod)} direction.</div><div class="vh-intel-list">${priceList}</div></div></div>`;
 }
 function volatilityMarkup(){
-  const rows=(intelRange()?.volatility||[]).filter(r=>Number(r.observations)>=2).slice(0,12);
+  const data=intelRange(),rows=(data?.volatility||[]).filter(r=>Number(r.observations)>=2).slice(0,12),
+    overall=data?.market_volatility||null,posRows=(data?.position_volatility||[]).filter(r=>r?.available);
   if(!marketInsightsCache)return'<div class="vh-card"><div class="vh-empty">Measuring tracked value ranges…</div></div>';
-  if(!rows.length)return'<div class="vh-card"><div class="vh-empty">Not enough snapshots inside this window for volatility yet.</div></div>';
-  return`<div class="vh-card"><div class="vh-sub">Largest high-to-low value ranges inside ${esc(intelPeriodLabel())}. Range % uses the midpoint of each player’s verified high and low.</div><div class="vh-intel-list">${rows.map(r=>intelPlayerRow(r.id,`${r.pos} • low ${fmt(r.low)} • high ${fmt(r.high)} • ${r.observations} observations`,'Tracked range',`${Number(r.range_pct).toFixed(1)}%`,'')).join('')}</div></div>`;
+  const overallCard=overall?.available?`<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-sub">Top-300 market basket • ${esc(intelPeriodLabel())} • baseline index 100</div><div class="vh-volatility-stat"><span><b>Index range</b><small>${Number(overall.low_index).toFixed(1)} → ${Number(overall.high_index).toFixed(1)}</small></span><b>${Number(overall.range_pct).toFixed(2)}%</b></div><div class="vh-volatility-stat"><span><b>Average snapshot move</b><small>${overall.observations} verified snapshots</small></span><b>${Number(overall.avg_step_pct).toFixed(2)}%</b></div></div>`:'<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-empty">Not enough snapshots in this window.</div></div>',
+    positionCard=`<div class="vh-card"><h3>Positional Market Volatility</h3><div class="vh-sub">Top-24 positional baskets • high-to-low index range</div><div class="vh-intel-list">${posRows.length?posRows.map(r=>`<div class="vh-volatility-stat"><span><b>${esc(r.pos)}</b><small>Avg snapshot move ${Number(r.avg_step_pct).toFixed(2)}% • ${r.constituents||0} players</small></span><b>${Number(r.range_pct).toFixed(2)}%</b></div>`).join(''):'<div class="vh-empty">Not enough positional snapshots yet.</div>'}</div></div>`,
+    playerCard=`<div class="vh-card"><h3>Player Market Volatility</h3><div class="vh-sub">Largest verified player high-to-low value ranges inside ${esc(intelPeriodLabel())}. Cross-position identity changes are excluded.</div><div class="vh-intel-list">${rows.length?rows.map(r=>intelPlayerRow(r.id,`${r.pos} • low ${fmt(r.low)} • high ${fmt(r.high)} • ${r.observations} observations`,'Tracked range',`${Number(r.range_pct).toFixed(1)}%`,'')).join(''):'<div class="vh-empty">Not enough clean player history inside this window.</div>'}</div></div>`;
+  return`<div class="vh-volatility-layout"><div class="vh-volatility-summary">${overallCard}${positionCard}</div>${playerCard}</div>`;
 }
 function positionValuePercentile(rows,row){
   const group=rows.filter(x=>String(x.pos)===String(row?.pos)).slice().sort((a,b)=>Number(b.value)-Number(a.value)),i=group.findIndex(x=>String(x.id)===String(row?.id));
@@ -1244,15 +1254,16 @@ function positionValuePercentile(rows,row){
 function opportunityMarkup(){
   const rows=marketCache?.marketRows||[],byId=new Map(rows.map(r=>[String(r.id),r])),signals=marketSignalCache?.signals||[],key=intelDeltaKey(),candidates=[];
   for(const sig of signals){
-    const row=byId.get(String(sig.player_id)),perf=signalPerformanceDelta(sig),pct=positionValuePercentile(rows,row),move=Number(row?.[key]);
+    const row=byId.get(String(sig.player_id)),perf=signalPerformanceDelta(sig),pct=positionValuePercentile(rows,row),move=Number(row?.[key]),direction=marketSignalDirection(sig.state);
     if(!row||!Number.isFinite(perf)||!Number.isFinite(pct))continue;
-    const confidence=sig.confidence==='strong'||sig.confidence==='established';
-    if(confidence&&(sig.direction==='positive'||sig.momentum==='hot')&&perf>0&&pct>=.35)candidates.push({type:'buy',sig,row,perf,pct,move,score:perf*5+pct*8-(Number(move)||0)/1200});
-    if(confidence&&(sig.direction==='negative'||sig.momentum==='cold')&&perf<0&&pct<=.35)candidates.push({type:'sell',sig,row,perf,pct,move,score:Math.abs(perf)*5+(1-pct)*8+(Number(row.value)||0)/2500});
+    const usableConfidence=!['insufficient'].includes(String(sig.confidence||'')),
+      positive=direction>0||sig.momentum==='hot',negative=direction<0||sig.momentum==='cold';
+    if(usableConfidence&&positive&&perf>0&&pct>=.35)candidates.push({type:'buy',sig,row,perf,pct,move,score:perf*5+pct*8-Math.max(0,Number(move)||0)/1200});
+    if(usableConfidence&&negative&&perf<0&&pct<=.40)candidates.push({type:'sell',sig,row,perf,pct,move,score:Math.abs(perf)*5+(1-pct)*8+(Number(row.value)||0)/2500});
   }
   const buy=candidates.filter(x=>x.type==='buy').sort((a,b)=>b.score-a.score).slice(0,8),sell=candidates.filter(x=>x.type==='sell').sort((a,b)=>b.score-a.score).slice(0,8),
-    list=(arr,type)=>arr.length?arr.map(x=>intelPlayerRow(x.row.id,`${x.sig.reporter_label||x.sig.label} • underlying ${x.perf>=0?'+':''}${x.perf.toFixed(2)} PPG • ${x.row.pos} value percentile ${Math.round(x.pct*100)}%`,`${intelPeriodLabel()} value Δ`,Number.isFinite(x.move)?signed(x.move):'—',deltaClass(x.move))).join(''):`<div class="vh-empty">No players currently meet the ${type==='buy'?'Buy Low':'Sell High'} screen.</div>`;
-  return`<div class="vh-intel-grid"><div class="vh-card"><h3>Buy Low Watch</h3><div class="vh-sub">Lower-priced positional assets with established/strong positive signals and improving underlying production.</div><div class="vh-intel-list">${list(buy,'buy')}</div><div class="vh-opportunity-note">Screen only: positive Fleeced signal + improving PPG + player outside the top 35% of his positional value distribution. This does not change Fleeced value.</div></div><div class="vh-card"><h3>Sell High Watch</h3><div class="vh-sub">Higher-priced positional assets with established/strong negative signals and weakening underlying production.</div><div class="vh-intel-list">${list(sell,'sell')}</div><div class="vh-opportunity-note">Screen only: negative Fleeced signal + declining PPG + player inside the top 35% of his positional value distribution. This does not change Fleeced value.</div></div></div>`;
+    list=(arr,type)=>arr.length?arr.map(x=>intelPlayerRow(x.row.id,`${x.sig.reporter_label||x.sig.label} • underlying ${x.perf>=0?'+':''}${x.perf.toFixed(2)} PPG • ${x.row.pos} value rank ${Math.max(1,Math.round(x.pct*100))}th percentile from top`,`${intelPeriodLabel()} value Δ`,Number.isFinite(x.move)?signed(x.move):'—',deltaClass(x.move))).join(''):`<div class="vh-empty">No players currently meet the ${type==='buy'?'Buy Low':'Sell High'} evidence screen.</div>`;
+  return`<div class="vh-intel-grid"><div class="vh-card"><h3>Buy Low Watch</h3><div class="vh-sub">Lower-priced positional assets where positive Fleeced evidence is stronger than the current market tier.</div><div class="vh-intel-list">${list(buy,'buy')}</div><div class="vh-opportunity-note">Screen only: positive normalized Fleeced state/hot momentum + improving underlying PPG + outside the top 35% of positional value. It does not change Fleeced value.</div></div><div class="vh-card"><h3>Sell High Watch</h3><div class="vh-sub">Higher-priced positional assets where weakening Fleeced evidence conflicts with a premium market tier.</div><div class="vh-intel-list">${list(sell,'sell')}</div><div class="vh-opportunity-note">Screen only: negative normalized Fleeced state/cold momentum + declining underlying PPG + inside the top 40% of positional value. It does not change Fleeced value.</div></div></div>`;
 }
 function categoryLeadersMarkup(){
   const m=marketCache||{},rows=m.marketRows||[],p=m.periods?.[marketIntelPeriod]||{},signals=marketSignalCache?.signals||[],range=intelRange();

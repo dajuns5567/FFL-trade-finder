@@ -428,8 +428,8 @@ function playerStatParagraph(t,p){
  return 'Against '+op+', '+name+' scored '+score+' fantasy points for '+tm+(line?' on a real-football line of '+line:'')+'.';
 }
 function playerSignalProfile(p,slot){
- const prev=(p?.recent_form?.series||[]).find(x=>Number(x?.week)===1);
- return reporterPlayerStatusProfile(p,slot,prev?{points:Number(prev.points)}:null);
+ const week1=p?.week1_points;
+ return reporterPlayerStatusProfile(p,slot,week1==null?null:{points:Number(week1)});
 }
 function playerReaction(t,p,id,slot){
  const name=String(p?.name||'Player'),first=name.split(/\s+/)[0]||name,score=Number(p?.points),shown=one(score),seed=key(t)+'|player-reaction|'+id+'|'+slot+'|'+name;

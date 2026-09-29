@@ -79,7 +79,7 @@ if(reportWeek===2){
 
 if(reportWeek===2){
   assert.equal(Number(d.inquirer_version),31,'Generated Week 2 edition must be Inquirer V31');
-  assert.equal(Number(d.editorial_revision),14,'Generated Week 2 edition must carry editorial revision 14');
+  assert.ok(Number(d.editorial_revision)===14||(Number(d.editorial_revision)===15&&d.voice_revision==='week2-r15'),'Generated Week 2 edition must be the raw revision 14 preload or the explicit served revision 15 voice layer');
 }else{
   assert.equal(Number(d.inquirer_version),26,'Generated Week 1 edition must remain Inquirer V26');
   assert.equal(Number(d.editorial_revision),6,'Generated Week 1 edition must remain editorial revision 6');

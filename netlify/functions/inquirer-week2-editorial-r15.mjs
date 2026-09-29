@@ -253,7 +253,7 @@ function managementFollowupLine(t,id){
    'tess-delaney':['If '+tm+' repeats '+r+' behind '+st+' after a '+gap+'-point warning, that stops being unfortunate and starts becoming a preference.'],
    'mack-hollis':['Put '+r+' and '+st+' on the same Week 3 decision sheet and explain the '+gap+'-point gap out loud. If it sounds stupid, there is your answer.'],
    'nora-voss':['The actionable Week 3 question is '+r+' versus '+st+'. A '+gap+'-point Week 2 gap is enough information to demand a deliberate choice.']
-  };return banks[id]||banks['walter-mercer'];
+  };return pick(banks[id]||banks['walter-mercer'],seed);
  }
  if(lo){
   const score=one(lo.points);
@@ -262,7 +262,7 @@ function managementFollowupLine(t,id){
    'tess-delaney':['No lineup swap rescues this cleanly, so '+lo.name+' gets the less glamorous assignment: make '+score+' disappear through better football.'],
    'mack-hollis':['No bench fix? Then '+lo.name+' owns the sequel after '+score+'. Score something worth defending.'],
    'nora-voss':['Without a clear bench alternative, Week 3 puts the burden back on '+lo.name+' after '+score+'.']
-  };return banks[id]||banks['walter-mercer'];
+  };return pick(banks[id]||banks['walter-mercer'],seed);
  }
  return'';
 }
@@ -655,7 +655,7 @@ function playerTrendParagraph(t,p,id,slot){
    'mack-hollis':[name+' swung '+abs+' points '+(up?'up':'down')+' from Week 1. Small sample, large mood change.'],
    'nora-voss':[name+' moved '+abs+' points '+(up?'above':'below')+' the Week 1 result. The two-week sample is limited, but the change is large enough to record.']
   };
-  return banks[id]||banks['walter-mercer'];
+  return pick(banks[id]||banks['walter-mercer'],seed);
  }
  return name+' finished Week 2 at '+shown+'. The next useful question is whether the role and production repeat.';
 }

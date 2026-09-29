@@ -749,7 +749,8 @@ function marketInsightRange(snaps,label){
     const base=firstSeen.get(id),baseValue=Number(base?.value);
     if(base&&String(base.t)!==String(latest.t)&&String(base.pos||rowPos)===rowPos&&Number.isFinite(baseValue)&&baseValue>0){
       const delta=value-baseValue;
-      player_changes.push({id,pos:rowPos,value,overall:Number(row?.overall),posRank:Number(row?.posRank),from_value:baseValue,from_t:base.t,delta,pct:Number((delta/baseValue*100).toFixed(4)),through_t:latest.t});
+      const latestOverall=Number(row?.overall),latestPosRank=Number(row?.posRank),baseOverall=Number(base?.overall),basePosRank=Number(base?.posRank);
+      player_changes.push({id,pos:rowPos,value,overall:latestOverall,posRank:latestPosRank,from_value:baseValue,from_overall:Number.isFinite(baseOverall)?baseOverall:null,from_pos_rank:Number.isFinite(basePosRank)?basePosRank:null,from_t:base.t,delta,pct:Number((delta/baseValue*100).toFixed(4)),overall_delta:Number.isFinite(baseOverall)&&Number.isFinite(latestOverall)?baseOverall-latestOverall:null,pos_rank_delta:Number.isFinite(basePosRank)&&Number.isFinite(latestPosRank)?basePosRank-latestPosRank:null,through_t:latest.t});
     }
     if(p&&value>Number(p.high))new_highs.push({id,pos:rowPos,value,previous_high:Number(p.high),previous_high_t:p.high_t,gain:value-Number(p.high),t:latest.t});
     if(p&&value<Number(p.low))new_lows.push({id,pos:rowPos,value,previous_low:Number(p.low),previous_low_t:p.low_t,drop:value-Number(p.low),t:latest.t});

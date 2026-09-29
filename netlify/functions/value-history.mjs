@@ -20,6 +20,7 @@ async function archiveIndex(){
     archiveIndexCache=idx&&Array.isArray(idx.items)?{...idx,items:idx.items.filter(item=>!isKnownBadHistoryTime(item?.t)),reachable:true,error:null}:{items:[],months:[],reachable:true,error:null};
     archiveIndexCacheAt=now;return archiveIndexCache;
   }catch(e){
+    if(archiveIndexCache)return{...archiveIndexCache,reachable:false,error:String(e?.message||e)};
     return{items:[],months:[],reachable:false,error:String(e?.message||e)};
   }
 }

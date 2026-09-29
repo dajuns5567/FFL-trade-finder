@@ -28,7 +28,7 @@ function cleanParagraph(p){
 }
 function isScoreFact(p){return /\d+(?:\.\d+)?–\d+(?:\.\d+)?/.test(p)&&/\b(?:beat|lost|win|loss|escaped|stole|owned|landed|finished|leaving)\b/i.test(p)}
 function isWeek1Fact(p){return /\b(?:Week 1|opener|opened|arrived from)\b/i.test(p)&&/\d+(?:\.\d+)?/.test(p)}
-function isPlayerStat(p){return /\bfantasy points\b/i.test(p)&&/\b(?:Against|also got|led|added)\b/i.test(p)}
+function isPlayerStat(p){return /\b(?:Against|also got|led|added)\b/i.test(p)&&/\d+(?:\.\d+)?/.test(p)&&/\b(?:fantasy points|passing|rushing|receiving|defensive|rec|rush|pass|solo|assists?|sacks?|TFL|QB hits?)\b/i.test(p)}
 function isPlayerCompare(p){return /\b(?:2025|Week 1|opener|last season|average)\b/i.test(p)&&/\d+(?:\.\d+)?/.test(p)&&!isPlayerStat(p)}
 function isBenchFact(p){return /\bbench\b/i.test(p)&&/\d+(?:\.\d+)?/.test(p)}
 function isTransactionFact(p){return /\b(?:added|dropped|trade|traded|received|transaction)\b/i.test(p)}
@@ -45,12 +45,12 @@ function ledeLines(t,id){
  const tm=String(t.team_name||'This team'),op=String(t.opponent_name||'the opponent'),pts=one(t.points),opp=one(t.opponent_points),rec=record(t),won=!!t.won,seed=key(t)+'|lede|'+id;
  const banks={
   'walter-mercer':won?[
-   'I have spent enough Septembers getting lied to by hot starts, but '+tm+' is '+rec+' and I am running out of respectable reasons to complain about the record.',
+   'I have spent enough Septembers getting lied to by hot starts, but the '+rec+' record for '+tm+' is real and I am running out of respectable reasons to complain about the record.',
    tm+' beat '+op+'. I enjoyed it, which is already more emotional risk than I planned to take this early in the season.',
    'Fine. '+pts+'–'+opp+' is a win, '+rec+' is a record, and I will stop muttering for the length of one paragraph.'
   ]:[
    'I disliked the '+pts+'–'+opp+' loss before I finished reading the box score, and the details did not improve my mood.',
-   tm+' is '+rec+' after losing to '+op+'. My patience is technically intact, which is not the same thing as saying I am happy.',
+   'The record for '+tm+' is '+rec+' after losing to '+op+'. My patience is technically intact, which is not the same thing as saying I am happy.',
    'There are losses you file away and losses that follow you into breakfast. '+tm+' just volunteered for the second category.'
   ],
   'tess-delaney':won?[
@@ -60,7 +60,7 @@ function ledeLines(t,id){
   ]:[
    tm+' lost, and the lineup has forced me into the exhausting position of being dramatic and correct at the same time.',
    'I am offended by '+pts+'–'+opp+' less as mathematics than as theater. The ending lacked taste.',
-   tm+' is '+rec+', which is not fatal, merely ugly enough to deserve lighting and a monologue.'
+   'The record for '+tm+' is '+rec+', which is not fatal, merely ugly enough to deserve lighting and a monologue.'
   ],
   'mack-hollis':won?[
    tm+' won. Put it in 72-point type and let the rival chat spend the week pretending it is not bothered.',
@@ -69,7 +69,7 @@ function ledeLines(t,id){
   ]:[
    tm+' lost. The rival memes were uploaded before the lineup screen finished refreshing.',
    pts+'–'+opp+' is the kind of score that makes a back-page editor cancel dinner plans.',
-   'Bad result, loud consequences. '+tm+' is '+rec+' and the group chat has already appointed itself special counsel.'
+   'Bad result, loud consequences. '+'The record for '+tm+' is '+rec+' and the group chat has already appointed itself special counsel.'
   ],
   'nora-voss':won?[
    tm+' won, so I have placed the '+rec+' record into evidence and invited the rivals to explain why it supposedly does not count.',
@@ -77,7 +77,7 @@ function ledeLines(t,id){
    tm+' beat '+op+'. That closes one complaint file and guarantees somebody will open another by Tuesday.'
   ]:[
    'The '+pts+'–'+opp+' loss is now Exhibit A. I would prefer a less irritating file, but evidence does not care about my preferences.',
-   tm+' is '+rec+' after losing to '+op+'. Rivals have the screenshot and management has the burden of making it obsolete.',
+   'The record for '+tm+' is '+rec+' after losing to '+op+'. Rivals have the screenshot and management has the burden of making it obsolete.',
    'I checked the score twice. Unfortunately, the second reading still counted.'
   ]
  };
@@ -91,7 +91,7 @@ function playerLines(t,id){
  const praise={
   'walter-mercer':[
    hi.name+' put up '+hp+'. I am not turning that into a lesson about everybody else. It was a terrific performance, full stop.',
-   hp+' from '+hi.name+' is the kind of Sunday that lets an old beat writer stop searching for qualifiers.',
+   hp+' from '+hi.name+' is the kind of Sunday that lets an tired pessimist stop searching for qualifiers.',
    'Give '+hi.name+' the credit for '+hp+' and resist the urge to make it symbolize the entire roster. Sometimes a player simply wrecks a matchup.'
   ],
   'tess-delaney':[
@@ -235,18 +235,46 @@ function buildLede(t,a,id){
  const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),score=facts.find(isScoreFact),week1=facts.find(x=>isWeek1Fact(x)&&x!==score);
  return uniq([ledeLines(t,id)[0],score,week1,ledeLines(t,id)[1]]).filter(Boolean).slice(0,4);
 }
+function topThreeStarters(t){return(t?.starter_details||[]).slice().filter(p=>Number.isFinite(Number(p?.points))).sort((a,b)=>Number(b.points)-Number(a.points)||String(a.name||'').localeCompare(String(b.name||''))).slice(0,3)}
+function playerStatParagraph(t,p){
+ const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim();
+ return 'Against '+op+', '+name+' scored '+score+' fantasy points for '+tm+'.'+(line?' The real-football line was '+line+'.':'');
+}
+function playerAnalysisParagraph(t,p,id,slot){
+ const name=String(p?.name||'Player'),first=name.split(/\s+/)[0]||name,score=one(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
+  week1=(p?.recent_form?.series||[]).find(x=>Number(x?.week)===1),w1=Number(week1?.points),category=playerStatusLabel(p),seed=key(t)+'|player-analysis|'+id+'|'+String(slot)+'|'+name;
+ const history=games>=8&&Number.isFinite(prior)?first+' averaged '+prior.toFixed(1)+' fantasy points across '+games+' games in 2025; Week 2 landed at '+score+'.':(Number.isFinite(w1)?'The opener was '+w1.toFixed(1)+' for '+first+'; Week 2 was '+score+'.':'Week 2 put '+first+' at '+score+'.');
+ const tag=category?(' The '+category+' label fits the profile, but the number still has to earn the sentence.'):'';
+ const banks={
+  'walter-mercer':[
+   'I can live with '+score+' from '+name+'. What I refuse to do is turn one useful Sunday into a civic holiday.',
+   name+' gave me '+score+' and, for once, very little to mutter about. I will take the temporary inconvenience.',
+   'The useful thing about '+name+' at '+score+' is that the number does not require a sales pitch. I appreciate that more every year.'
+  ],
+  'tess-delaney':[
+   name+' delivered '+score+' with enough flair to make restraint feel deeply unfashionable. I approve.',
+   'I found '+score+' from '+name+' offensively enjoyable, which is the highest compliment available before noon.',
+   name+' gave us '+score+'. The number has drama, consequence and absolutely no interest in behaving modestly.'
+  ],
+  'mack-hollis':[
+   name+' put '+score+' on the board. Print it large, send it to the rival chat, and let somebody else write the disclaimer.',
+   score+' from '+name+' is headline material. No committee, no symposium, no polite little footnote.',
+   name+' posted '+score+' and made the back page easy. I love a player who respects the deadline.'
+  ],
+  'nora-voss':[
+   name+' posted '+score+'. I have checked the number, entered it into evidence and found no reason to soften it.',
+   score+' from '+name+' survives cross-examination. The file stays open because fantasy football enjoys ruining clean conclusions.',
+   name+' gave us '+score+'. That is evidence, not mood, and I am happy to let the exhibit do some work.'
+  ]
+ };
+ return pick(banks[id]||banks['walter-mercer'],seed,slot)+' '+history+tag;
+}
 function buildPlayers(t,a,id){
- const sec=sectionOf(a,'players'),facts=factualParagraphs(sec);
- const stats=facts.filter(isPlayerStat).slice(0,3);
- const compares=facts.filter(isPlayerCompare).filter(x=>!stats.includes(x)).slice(0,1);
- const reactions=playerLines(t,id);
- const out=[];
- if(stats[0])out.push(stats[0]);
- if(reactions[0])out.push(reactions[0]);
- if(stats[1])out.push(stats[1]);
- if(stats[2])out.push(stats[2]);
- if(compares[0])out.push(compares[0]);
- if(reactions[1])out.push(reactions[1]);
+ const top=topThreeStarters(t),out=[];
+ for(const [i,p] of top.entries()){
+  out.push(playerStatParagraph(t,p));
+  out.push(playerAnalysisParagraph(t,p,id,i));
+ }
  return uniq(out).slice(0,6);
 }
 function buildManagement(t,a,id){
@@ -266,27 +294,101 @@ function buildHotSeat(t,a,id){
  const line=(banks[id]&&banks[id].length)?pick(banks[id],seed):'';
  return uniq([first,line]).filter(Boolean).slice(0,2);
 }
+function buildCoolThrone(t,id){
+ const candidates=(t?.starter_details||[]).filter(p=>{
+  const pts=Number(p?.points),prior=Number(p?.prior_season_avg),proj=Number(p?.projected),delta=Number.isFinite(proj)?pts-proj:null;
+  return Number.isFinite(pts)&&(pts>=15||(delta!=null&&delta>=4)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.2));
+ }).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2);
+ const rows=candidates.length?candidates:topThreeStarters(t).slice(0,1),tm=String(t?.team_name||'this team');
+ return rows.map((p,i)=>{
+  const name=String(p?.name||'Player'),score=one(p?.points),seed=key(t)+'|cool|'+id+'|'+name;
+  const banks={
+   'walter-mercer':[
+    name+' gets the good note after '+score+'. I am writing it down before experience convinces me to qualify the compliment.',
+    'Credit to '+name+' for '+score+'. There, I said something nice. Please do not make this a weekly expectation.'
+   ],
+   'tess-delaney':[
+    name+' earns the velvet-rope treatment at '+score+'. Admiration is free tonight; moderation has been asked to wait outside.',
+    score+' from '+name+' deserves applause without a corrective paragraph attached. I find the freedom intoxicating.'
+   ],
+   'mack-hollis':[
+    name+' gets the friendly headline after '+score+'. Save the angry font for somebody who earned it.',
+    score+' from '+name+' is the kind of number that buys a full week of shameless screenshots.'
+   ],
+   'nora-voss':[
+    name+' earns the clean notation at '+score+'. No accusation, no caveat, no red string on the wall.',
+    'The favorable exhibit is '+name+' at '+score+'. I am preserving it because positive evidence disappears from rival memory with remarkable speed.'
+   ]
+  };
+  return pick(banks[id]||banks['walter-mercer'],seed,i).replace('this team',tm);
+ });
+}
+function buildValue(t,id){
+ const vh=t?.value_history_week||{},delta=Number(vh?.delta),pct=Number(vh?.pct),value=Number(vh?.value),m=t?.value_history_player_movers||{},
+  riser=(m?.risers||[])[0]||null,faller=(m?.fallers||[])[0]||null,tm=String(t?.team_name||'This team'),seed=key(t)+'|value|'+id,rows=[];
+ if(Number.isFinite(value)&&Number.isFinite(delta)){
+  const dir=delta>0?'up':delta<0?'down':'flat',pctText=Number.isFinite(pct)?Math.abs(pct).toFixed(1)+'%':'';
+  const banks={
+   'walter-mercer':[
+    'The market has '+tm+' at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I have seen markets panic before, so I am filing the move rather than worshipping it.',
+    tm+' carries a current roster value of '+Math.round(value)+', a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Useful information; terrible religion.'
+   ],
+   'tess-delaney':[
+    'The market now prices '+tm+' at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Numbers wearing evening clothes are still numbers, but I admit this one has presence.',
+    tm+' sits at '+Math.round(value)+' in roster value, '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I refuse to call a price tag destiny, though I will absolutely gossip about it.'
+   ],
+   'mack-hollis':[
+    'MARKET—no, relax, I am not shouting: '+tm+' is at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The number gets a headline, not a crown.',
+    'The value board has '+tm+' at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Screenshot it now; markets love making old screenshots look stupid.'
+   ],
+   'nora-voss':[
+    'The market file lists '+tm+' at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I have logged the change and declined to call it a verdict.',
+    tm+' is priced at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The number is evidence of movement, not evidence of innocence.'
+   ]
+  };
+  rows.push(pick(banks[id]||banks['walter-mercer'],seed));
+ }
+ if(riser&&Number.isFinite(Number(riser.delta))){
+  const n=String(riser.player_name||'A player'),dv=Math.round(Number(riser.delta)),pv=Number(riser.pct);
+  rows.push(({
+   'walter-mercer':n+' gained '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. I would like the roster to make that optimism look less temporary.',
+   'tess-delaney':n+' climbed '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+', which is the market equivalent of arriving late and still stealing the entrance.',
+   'mack-hollis':n+' jumped '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. That is a green arrow begging for a screenshot.',
+   'nora-voss':n+' rose '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. I have marked the gain and left room beside it for the next update.'
+  })[id]||n+' gained '+dv+' in value.');
+ }
+ if(faller&&Number.isFinite(Number(faller.delta))){
+  const n=String(faller.player_name||'A player'),dv=Math.abs(Math.round(Number(faller.delta))),pv=Number(faller.pct);
+  rows.push(({
+   'walter-mercer':n+' lost '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. That is not a funeral, but it is enough movement to earn an annoyed glance.',
+   'tess-delaney':n+' fell '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. The market has chosen melodrama; for once I cannot object.',
+   'mack-hollis':n+' dropped '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. Red arrow, bad screenshot, excellent content.',
+   'nora-voss':n+' declined '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. The loss is in the file; explanations may be submitted before the next update.'
+  })[id]||n+' lost '+dv+' in value.');
+ }
+ return uniq(rows).slice(0,3);
+}
 function buildSentiment(t,id){return sentimentLines(t,id)}
 function projectionLine(t,id){
  const own=Number(t?.next_projected),opp=Number(t?.next_opponent_projected);
  if(!Number.isFinite(own)||!Number.isFinite(opp))return'';
- const tm=String(t.team_name||'This team'),op=String(t.next_opponent_name||'the opponent'),edge=Math.abs(own-opp).toFixed(1),fav=own===opp?'dead even':(own>opp?tm:op),seed=key(t)+'|projection|'+id;
+ const tm=String(t.team_name||'This team'),op=String(t.next_opponent_name||'the opponent'),edge=Math.abs(own-opp).toFixed(1),fav=own===opp?'':(own>opp?tm:op),seed=key(t)+'|projection|'+id;
  const banks={
   'walter-mercer':[
-   tm+' is projected at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The board calls it dead even.':fav+' has the projection edge by '+edge+'.')+' I have trusted forecasts before and survived the embarrassment.',
-   'The Week 3 board has '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'That is dead even on paper.':fav+' is favored by '+edge+'.')+' Paper remains undefeated at being paper.'
+   'Week 3 projects '+tm+' at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The board calls it dead even.':'The projection gives '+fav+' the edge by '+edge+'.')+' I have trusted forecasts before and survived the embarrassment.',
+   'The Week 3 board has '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'That is dead even on paper.':'The board favors '+fav+' by '+edge+'.')+' Paper remains undefeated at being paper.'
   ],
   'tess-delaney':[
-   'The projection puts '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The arithmetic is dead even, which is offensively tidy.':fav+' carries a '+edge+'-point projection edge, which is attractive and therefore suspicious.'),
-   tm+' enters the spreadsheet at '+own.toFixed(1)+' versus '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even. How vulgar.':fav+' is favored by '+edge+', and I refuse to confuse elegance with certainty.')
+   'The projection puts '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The arithmetic is dead even, which is offensively tidy.':'The arithmetic favors '+fav+' by '+edge+', which is attractive and therefore suspicious.'),
+   'The spreadsheet enters '+tm+' at '+own.toFixed(1)+' versus '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even. How vulgar.':'It favors '+fav+' by '+edge+', and I refuse to confuse elegance with certainty.')
   ],
   'mack-hollis':[
-   'The board screams '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Dead even. Great, no easy headline.':fav+' is the projection favorite by '+edge+'.')+' Now somebody has to make the graphic age well.',
-   tm+' gets '+own.toFixed(1)+' on the projection board; '+op+' gets '+opp.toFixed(1)+'. '+(own===opp?'Dead even.':fav+' is favored by '+edge+'.')+' Save the screenshot.'
+   'The board screams '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Dead even. Great, no easy headline.':'The projection favors '+fav+' by '+edge+'.')+' Now somebody has to make the graphic age well.',
+   'The projection board gives '+tm+' '+own.toFixed(1)+' and '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Dead even.':'It favors '+fav+' by '+edge+'.')+' Save the screenshot.'
   ],
   'nora-voss':[
-   'The projection file reads '+tm+' '+own.toFixed(1)+' and '+op+' '+opp.toFixed(1)+'. '+(own===opp?'The case is dead even.':fav+' has a '+edge+'-point projection edge.')+' I have marked the number as evidence, not destiny.',
-   tm+' is projected for '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'That leaves the board dead even.':fav+' is favored by '+edge+'.')+' We will compare the forecast to the final exhibit.'
+   'The projection file reads '+tm+' '+own.toFixed(1)+' and '+op+' '+opp.toFixed(1)+'. '+(own===opp?'The case is dead even.':'The file gives '+fav+' a '+edge+'-point edge.')+' I have marked the number as evidence, not destiny.',
+   'Week 3 projects '+tm+' for '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'That leaves the board dead even.':'The board favors '+fav+' by '+edge+'.')+' We will compare the forecast to the final exhibit.'
   ]
  };
  return pick(banks[id]||banks['walter-mercer'],seed);
@@ -316,14 +418,31 @@ function scheduleStretchLine(t,id){
  };
  return pick(banks[id]||banks['walter-mercer'],seed);
 }
+function divisionOutlookLine(t,id){
+ const tm=String(t?.team_name||'This team'),op=String(t?.next_opponent_name||'the opponent'),own=t?.division_context||{},next=t?.next_opponent_division_context||{},nr=t?.next_opponent_context?.record||{},
+  nw=Number(nr.wins)||0,nl=Number(nr.losses)||0,ownName=String(own?.division_name||''),nextName=String(next?.division_name||''),leaders=(own?.leaders||[]).filter(x=>x?.team_name),
+  selfLeading=leaders.some(x=>String(x?.roster_id)===String(t?.roster_id)),others=leaders.filter(x=>String(x?.roster_id)!==String(t?.roster_id)).map(x=>String(x.team_name)),seed=key(t)+'|division|'+id;
+ let standing='';
+ if(selfLeading&&others.length)standing=tm+' shares the '+ownName+' lead with '+others.join(' and ')+'.';
+ else if(selfLeading)standing=tm+' leads the '+ownName+'.';
+ else if(ownName)standing='The '+ownName+' currently places '+tm+' at division rank '+String(Number(own?.division_rank)||'?')+'.';
+ const opponent=nextName?op+' enters Week 3 at '+nw+'-'+nl+' in the '+nextName+'.':op+' enters Week 3 at '+nw+'-'+nl+'.';
+ const tails={
+  'walter-mercer':'I do not need the standings to be dramatic; I need them to stop becoming more annoying.',
+  'tess-delaney':'The table is forbidden in this column, so I will simply say the stakes have become indecently visible.',
+  'mack-hollis':'That is enough standings material for one loud graphic and several irresponsible predictions.',
+  'nora-voss':'Those are the division facts. I have highlighted the parts rivals will pretend not to notice.'
+ };
+ return [standing,opponent,tails[id]||tails['walter-mercer']].filter(Boolean).join(' ');
+}
 function buildOutlook(t,a,id){
  const sec=sectionOf(a,'outlook'),facts=factualParagraphs(sec);
  const projection=projectionLine(t,id)||facts.find(isProjectionFact);
- const standings=facts.find(isStandingsFact);
+ const division=divisionOutlookLine(t,id)||facts.find(isStandingsFact);
  const injury=facts.find(isInjuryFact);
  const benchmark=facts.find(isOpponentBenchmark);
  const stretch=scheduleStretchLine(t,id)||facts.find(isScheduleFact);
- const selected=[projection,standings,injury,benchmark,stretch,outlookLine(t,id)].filter(Boolean);
+ const selected=[projection,division,injury,benchmark,stretch,outlookLine(t,id)].filter(Boolean);
  return uniq(selected).slice(0,6);
 }
 function buildGeneric(sec){
@@ -341,6 +460,8 @@ function reviseTeam(t){
   else if(kind==='players')paragraphs=buildPlayers(t,a,id);
   else if(kind==='management')paragraphs=buildManagement(t,a,id);
   else if(kind==='hot-seat')paragraphs=buildHotSeat(t,a,id);
+  else if(kind==='cool-throne')paragraphs=buildCoolThrone(t,id);
+  else if(kind==='value')paragraphs=buildValue(t,id);
   else if(kind==='sentiment')paragraphs=buildSentiment(t,id);
   else if(kind==='outlook')paragraphs=buildOutlook(t,a,id);
   else paragraphs=buildGeneric(sec);

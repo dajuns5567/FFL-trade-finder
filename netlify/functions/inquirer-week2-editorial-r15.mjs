@@ -1,235 +1,385 @@
-export const WEEK2_EDITORIAL_REVISION=15;
+export const WEEK2_EDITORIAL_REVISION=16;
 
 const clone=x=>JSON.parse(JSON.stringify(x));
 const one=v=>Number.isFinite(Number(v))?Number(v).toFixed(1):'0.0';
 const hash=s=>{let h=2166136261;for(const ch of String(s||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
-const pick=(rows,seed)=>rows[hash(seed)%rows.length];
-const sentences=s=>String(s||'').replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§')).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace('.','§')).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);
+const pick=(rows,seed,offset=0)=>rows[(hash(seed)+offset)%rows.length];
+const sentenceParts=s=>String(s||'').replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§')).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace('.','§')).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);
 const record=t=>{const r=t?.league_context?.record||{};return String(Number(r.wins)||0)+'-'+String(Number(r.losses)||0)+(Number(r.ties)?'-'+String(Number(r.ties)):'')};
 const rid=t=>String(t?.inquirer_article?.reporter?.id||'walter-mercer');
 const key=t=>String(t?.roster_id||t?.team_name||'team');
 const strongest=t=>(t?.starter_details||[]).slice().sort((a,b)=>Number(b?.points)-Number(a?.points))[0]||null;
 const weakest=t=>(t?.starter_details||[]).slice().sort((a,b)=>Number(a?.points)-Number(b?.points))[0]||null;
-const miss=t=>{const m=t?.best_lineup_miss;return m&&m.reserve&&m.starter&&Number(m.gap)>0?m:null};
+const sectionOf=(a,kind)=>(a?.sections||[]).find(s=>String(s?.kind||'')===kind)||null;
+const uniq=rows=>{const seen=new Set();return(rows||[]).filter(x=>{const k=String(x||'').replace(/\s+/g,' ').trim().toLowerCase();if(!k||seen.has(k))return false;seen.add(k);return true})};
 
-const SUPPORT_RE=/\b(?:supporting cast|supporting score|supporting production|secondary scoring|second real scorer|second dependable foothold|second useful jolt|second punch|second answer|third score|third reason|one more working outlet|another usable starter|rest of (?:the )?(?:lineup|roster)|whole lineup|one[- ]man|one[- ]guest|solo effort|lonely haymaker|did not have to .* alone|didn't have to .* alone|kept .* from (?:becoming|being) (?:a )?(?:one[- ]man|solo)|top[- ]heavy|more than one emergency|another meaningful score)\b/i;
+const PLAYER_SUPPORT_RE=/\b(?:supporting cast|supporting score|supporting production|secondary scoring|second real scorer|second dependable foothold|second useful jolt|second punch|second answer|second scorer|third scorer|third score|third reason|one more working outlet|another usable starter|another meaningful score|rest of (?:the )?(?:lineup|roster)|whole lineup|one[- ]man|one[- ]player|solo effort|solo act|solo show|rescue mission|magic trick|lonely haymaker|did not have to .* alone|didn't have to .* alone|kept .* from (?:becoming|being)|prevented .* from (?:becoming|being)|top[- ]heavy|more than one emergency|same stars doing all the lifting|one guy screaming|backup singers|enough additional scoring|enough production elsewhere|cover every gap|the next answer is support|support behind the lead score)\b/i;
+const GENERIC_RE=/\b(?:the next test is whether|there is nowhere to hide a September result|worth keeping beside the Week 2 stars|management chose this version of the roster|the lineup that happened to score Sunday|gave Week 2 the stronger jolt|put a brighter number on the second Sunday|put a quieter number on the second Sunday|turned the Week 2 volume up|usable top end|the issue is not the stars|the rest of the winning score)\b/i;
+const SHARED_OUTLOOK_RE=/\b(?:take a head-to-head bite out of|instead of hoping another result moves the same playoff route|not alone in a crowded AFC EAST race|rest of the division reads)\b/i;
 
-function lede(t,id){
+function cleanSentence(s){
+ const x=String(s||'').trim();
+ if(!x||PLAYER_SUPPORT_RE.test(x)||GENERIC_RE.test(x)||SHARED_OUTLOOK_RE.test(x))return'';
+ return x;
+}
+function cleanParagraph(p){
+ const kept=sentenceParts(p).map(cleanSentence).filter(Boolean);
+ return kept.join(' ').trim();
+}
+function isScoreFact(p){return /\d+(?:\.\d+)?–\d+(?:\.\d+)?/.test(p)&&/\b(?:beat|lost|win|loss|escaped|stole|owned|landed|finished|leaving)\b/i.test(p)}
+function isWeek1Fact(p){return /\b(?:Week 1|opener|opened|arrived from)\b/i.test(p)&&/\d+(?:\.\d+)?/.test(p)}
+function isPlayerStat(p){return /\bfantasy points\b/i.test(p)&&/\b(?:Against|also got|led|added)\b/i.test(p)}
+function isPlayerCompare(p){return /\b(?:2025|Week 1|opener|last season|average)\b/i.test(p)&&/\d+(?:\.\d+)?/.test(p)&&!isPlayerStat(p)}
+function isBenchFact(p){return /\bbench\b/i.test(p)&&/\d+(?:\.\d+)?/.test(p)}
+function isTransactionFact(p){return /\b(?:added|dropped|trade|traded|received|transaction)\b/i.test(p)}
+function isProjectionFact(p){return /\bproject(?:ed|ion)\b/i.test(p)&&/\d+(?:\.\d+)?/.test(p)}
+function isStandingsFact(p){return /\b(?:standings|AFC|NFC)\b/.test(p)&&/\(\d+-\d+/.test(p)}
+function isInjuryFact(p){return /\b(?:listed|status|questionable|doubtful|out|injur|IR)\b/i.test(p)&&/\bWeek 3\b|matchup|facing/i.test(p)}
+function isScheduleFact(p){return /\b(?:After|waiting|road|stretch|next)\b/i.test(p)&&/\(\d+-\d+/.test(p)}
+function isOpponentBenchmark(p){return /\b(?:latest-game|benchmark|fresh off)\b/i.test(p)&&/\d+(?:\.\d+)?/.test(p)}
+function factualParagraphs(sec){
+ return uniq((sec?.paragraphs||[]).map(cleanParagraph).filter(Boolean));
+}
+
+function ledeLines(t,id){
  const tm=String(t.team_name||'This team'),op=String(t.opponent_name||'the opponent'),pts=one(t.points),opp=one(t.opponent_points),rec=record(t),won=!!t.won,seed=key(t)+'|lede|'+id;
- const b={
+ const banks={
   'walter-mercer':won?[
-   'Good. '+tm+' won '+pts+'–'+opp+' and moved to '+rec+'. I am allowing myself one satisfied nod before remembering that September has made fools of more confident people than me.',
-   tm+' banked the win over '+op+'. Fine by me. I have lowered the blood pressure, not the standard.',
-   'A win is a win, and '+tm+' has '+rec+' to prove it. I am still hiding the parade route.'
+   'I have spent enough Septembers getting lied to by hot starts, but '+tm+' is '+rec+' and I am running out of respectable reasons to complain about the record.',
+   tm+' beat '+op+'. I enjoyed it, which is already more emotional risk than I planned to take this early in the season.',
+   'Fine. '+pts+'–'+opp+' is a win, '+rec+' is a record, and I will stop muttering for the length of one paragraph.'
   ]:[
-   tm+' lost '+pts+'–'+opp+', which is a wonderful way to make every quiet starter feel personally insulting by Monday morning.',
-   'There is no tasteful version of '+tm+' taking the loss to '+op+'. The score is already annoying enough.',
-   tm+' is '+rec+' after losing to '+op+'. Fans generally prefer lessons that do not charge them a full Sunday.'
+   'I disliked the '+pts+'–'+opp+' loss before I finished reading the box score, and the details did not improve my mood.',
+   tm+' is '+rec+' after losing to '+op+'. My patience is technically intact, which is not the same thing as saying I am happy.',
+   'There are losses you file away and losses that follow you into breakfast. '+tm+' just volunteered for the second category.'
   ],
   'tess-delaney':won?[
-   tm+' has earned the vulgar pleasure of a win, and I intend to enjoy it before statistical adulthood returns to ruin the mood.',
-   'The final score is flattering, the record is '+rec+', and for one gloriously irresponsible evening I am choosing joy over restraint.',
-   tm+' beat '+op+' and now expects us to behave sensibly about it. Absolutely not.'
+   tm+' won, and I see no reason to respond with dignity when delight is available.',
+   'The '+rec+' record is becoming indecently attractive. I intend to enjoy it until Sunday arrives with another objection.',
+   tm+' beat '+op+' and now wants us to act measured. What an appalling suggestion.'
   ]:[
-   tm+' lost to '+op+', and I regret to report that dignity has once again been asked to survive a fantasy lineup behaving like this.',
-   'The score says loss; my mood says the lineup should apologize in writing.',
-   tm+' leaves Week 2 at '+rec+', which is less a crisis than an invitation to spend six days dramatically resenting the exact same quiet spots.'
+   tm+' lost, and the lineup has forced me into the exhausting position of being dramatic and correct at the same time.',
+   'I am offended by '+pts+'–'+opp+' less as mathematics than as theater. The ending lacked taste.',
+   tm+' is '+rec+', which is not fatal, merely ugly enough to deserve lighting and a monologue.'
   ],
   'mack-hollis':won?[
-   tm+' won. Print it, screenshot it, send it to the rival chat and become unbearable until kickoff.',
-   pts+' points, a win over '+op+', and permission to talk reckless for seven days.',
-   tm+' gets the good headline this week. Enjoy it loudly.'
+   tm+' won. Put it in 72-point type and let the rival chat spend the week pretending it is not bothered.',
+   pts+' points and a win over '+op+'. That is enough material for a front page and at least three irresponsible texts.',
+   tm+' gets the big headline. Anybody asking for restraint can buy tomorrow’s paper somewhere else.'
   ]:[
-   tm+' lost, so congratulations to every rival manager who had the meme drafted before the fourth quarter.',
-   'Bad headline. Worse mood. '+tm+' handed '+op+' the win and now the group chat gets to behave like it discovered comedy.',
-   tm+' took the loss and the screenshot is already circulating.'
+   tm+' lost. The rival memes were uploaded before the lineup screen finished refreshing.',
+   pts+'–'+opp+' is the kind of score that makes a back-page editor cancel dinner plans.',
+   'Bad result, loud consequences. '+tm+' is '+rec+' and the group chat has already appointed itself special counsel.'
   ],
   'nora-voss':won?[
-   tm+' won, which means the rival thread has temporarily misplaced its favorite punch line. I saved the screenshot.',
-   'The '+rec+' record is real. Rivals are free to call it luck; the standings remain stubbornly unimpressed.',
-   tm+' beat '+op+'. That removes one easy rival joke and creates three new ways for supporters to become overconfident.'
+   tm+' won, so I have placed the '+rec+' record into evidence and invited the rivals to explain why it supposedly does not count.',
+   'The final says '+pts+'–'+opp+'. I saved the screenshot because selective memory tends to arrive right after a rival loses an argument.',
+   tm+' beat '+op+'. That closes one complaint file and guarantees somebody will open another by Tuesday.'
   ]:[
-   tm+' lost, and rivals did not need to manufacture the material. The final score arrived pre-highlighted.',
-   'I saved the '+pts+'–'+opp+' screenshot before management could call the loss complicated.',
-   tm+' is '+rec+' after the loss. Rivals have the receipt; the useful response is making it boring by next week.'
+   'The '+pts+'–'+opp+' loss is now Exhibit A. I would prefer a less irritating file, but evidence does not care about my preferences.',
+   tm+' is '+rec+' after losing to '+op+'. Rivals have the screenshot and management has the burden of making it obsolete.',
+   'I checked the score twice. Unfortunately, the second reading still counted.'
   ]
  };
- return pick(b[id]||b['walter-mercer'],seed)
+ const rows=banks[id]||banks['walter-mercer'];
+ return [pick(rows,seed,0),pick(rows,seed,1)].filter((x,i,a)=>a.indexOf(x)===i);
 }
 
-function players(t,id){
- const hi=strongest(t),lo=weakest(t);if(!hi||!lo)return'';
+function playerLines(t,id){
+ const hi=strongest(t),lo=weakest(t);if(!hi||!lo)return[];
  const hp=one(hi.points),lp=one(lo.points),seed=key(t)+'|players|'+id;
- const b={
+ const praise={
   'walter-mercer':[
-   hi.name+' can keep the game ball after '+hp+'. I am looking at '+lo.name+' and '+lp+' instead, because fandom is the art of locating the next thing that can ruin your afternoon.',
-   hp+' from '+hi.name+' deserves the credit. '+lp+' from '+lo.name+' deserves the uncomfortable silence right after it.',
-   hi.name+' gave them '+hp+'. Good. '+lo.name+' gave them '+lp+'. Less good. Praise in one pocket, aspirin in the other.'
+   hi.name+' put up '+hp+'. I am not turning that into a lesson about everybody else. It was a terrific performance, full stop.',
+   hp+' from '+hi.name+' is the kind of Sunday that lets an old beat writer stop searching for qualifiers.',
+   'Give '+hi.name+' the credit for '+hp+' and resist the urge to make it symbolize the entire roster. Sometimes a player simply wrecks a matchup.'
   ],
   'tess-delaney':[
-   hi.name+' produced '+hp+' and looked marvelous doing it. '+lo.name+' answered with '+lp+', which turns admiration into a very theatrical sigh.',
-   'I adore '+hp+' from '+hi.name+'. I am considerably less enchanted by '+lo.name+' at '+lp+'.',
-   hi.name+' supplied glamour at '+hp+'. '+lo.name+' supplied '+lp+' and reminded everybody why joy requires supervision.'
+   hi.name+' delivered '+hp+' with the subtlety of a chandelier falling through the ceiling. I adored it.',
+   hp+' from '+hi.name+' was shameless, excessive and exactly the sort of performance this column was built to celebrate.',
+   hi.name+' gave us '+hp+'. At last, something vulgar enough to deserve applause.'
   ],
   'mack-hollis':[
-   hi.name+' gets the headline for '+hp+'. '+lo.name+' gets the screenshot for '+lp+'. Everybody contributed to content.',
-   hp+' from '+hi.name+' is the fun part. '+lp+' from '+lo.name+' is the reaction image.',
-   hi.name+' put up '+hp+' and deserves noise. '+lo.name+' put up '+lp+' and deserves a much angrier kind.'
+   hi.name+' dropped '+hp+'. That is the headline. No committee meeting required.',
+   hp+' from '+hi.name+' is why the typeface gets bigger and the rival chat suddenly develops technical difficulties.',
+   hi.name+' hung '+hp+' on the board. Print the number and let everybody else cope.'
   ],
   'nora-voss':[
-   hi.name+' gave rivals less to say with '+hp+'. '+lo.name+' gave them the entire next paragraph at '+lp+'.',
-   hp+' from '+hi.name+' survives scrutiny. '+lp+' from '+lo.name+' is where the rival thread will keep zooming in.',
-   hi.name+' posted '+hp+' and closed one complaint. '+lo.name+' posted '+lp+' and opened another.'
+   hi.name+' posted '+hp+'. That is not a theory; that is evidence with a decimal point.',
+   hp+' from '+hi.name+' survives cross-examination. I have no objection.',
+   hi.name+' gave us '+hp+' and removed the need for creative interpretation. The exhibit speaks for itself.'
   ]
- };
- return pick(b[id]||b['walter-mercer'],seed)
+ }[id]||[];
+ const concern={
+  'walter-mercer':[
+   lo.name+' finished at '+lp+'. That is where my good mood encountered paperwork.',
+   'Then there is '+lo.name+' at '+lp+', because every fantasy lineup keeps one chair reserved for irritation.',
+   lp+' from '+lo.name+' is the number I would rather not carry into another Monday.'
+  ],
+  'tess-delaney':[
+   lo.name+' answered all that beauty with '+lp+'. Every opera apparently needs a man dropping scenery backstage.',
+   lp+' from '+lo.name+' is a small tragedy, which is still a tragedy if you own the lineup.',
+   'And then '+lo.name+' produced '+lp+', an offensively plain number in an otherwise interesting afternoon.'
+  ],
+  'mack-hollis':[
+   lo.name+' gave us '+lp+'. That screenshot is going to have a long week.',
+   lp+' from '+lo.name+' is where the rival memes get their funding.',
+   'Then '+lo.name+' posted '+lp+' and volunteered for the angry-font treatment.'
+  ],
+  'nora-voss':[
+   lo.name+' posted '+lp+'. I have circled it in red and left the file open.',
+   lp+' from '+lo.name+' is the number rivals will quote without being asked.',
+   'The unresolved item is '+lo.name+' at '+lp+'. I would like an explanation before the next docket.'
+  ]
+ }[id]||[];
+ return [pick(praise,seed,0),pick(concern,seed,1)];
 }
 
-function management(t,id){
- const m=miss(t),seed=key(t)+'|management|'+id;
- if(m){
-  const gap=one(m.gap),r=String(m.reserve.name||'the reserve'),s=String(m.starter.name||'the starter');
-  const b={
+function managementLine(t,id){
+ const m=t?.best_lineup_miss,seed=key(t)+'|management|'+id;
+ if(m&&m.reserve&&m.starter&&Number(m.gap)>0){
+  const r=String(m.reserve.name||'the reserve'),s=String(m.starter.name||'the starter'),gap=one(m.gap);
+  const banks={
    'walter-mercer':[
-    r+' outscored '+s+' by '+gap+' from the bench. I checked twice because I hoped the first look was me being cranky. It was not.',
-    'A '+gap+'-point bench miss between '+r+' and '+s+' is not a conspiracy; it is just the lineup card volunteering to ruin Monday morning.'
+    'I can forgive a lot in September. '+r+' beating '+s+' by '+gap+' from the bench is not currently on the forgiveness list.',
+    'The lineup card has '+r+' over '+s+' by '+gap+'. I stared at it long enough for it to become personal.'
    ],
    'tess-delaney':[
-    r+' had '+gap+' more than '+s+' on the bench, a detail so needlessly irritating it practically arrives with its own dramatic sigh.',
-    'The '+gap+'-point gap between '+r+' and '+s+' is how a calm Tuesday becomes a six-hour argument about one lineup button.'
+    r+' outscoring '+s+' by '+gap+' from the bench is exactly the sort of tiny cruelty this game performs with exquisite timing.',
+    'The '+gap+'-point '+r+' over '+s+' bench gap is a petty little tragedy, and therefore naturally irresistible.'
    ],
    'mack-hollis':[
-    r+' beat '+s+' by '+gap+' from the bench. Print the screenshot. Circle it. No caption needed.',
-    'A '+gap+'-point bench miss? Beautiful. Rival managers will live on '+r+' over '+s+' until somebody gives them a newer joke.'
+    r+' beat '+s+' by '+gap+' from the bench. Circle it, enlarge it, and send it to management with the subject line “quick question.”',
+    'The bench receipt says '+r+' over '+s+' by '+gap+'. That is tomorrow’s back page if nobody fixes it.'
    ],
    'nora-voss':[
-    'The bench receipt says '+r+' beat '+s+' by '+gap+'. Management gets to explain why the useful points were wearing sweatpants.',
-    r+' over '+s+' by '+gap+' is the sort of detail rivals bookmark because it is both petty and measurable.'
+    r+' over '+s+' by '+gap+' is the cleanest management exhibit in the file. No motive speculation required.',
+    'The lineup receipt is '+r+' plus '+gap+' over '+s+'. I have entered it into evidence and declined to redact the names.'
    ]
   };
-  return pick(b[id]||b['walter-mercer'],seed)
+  return pick(banks[id]||banks['walter-mercer'],seed);
  }
- const b={
-  'walter-mercer':['I checked the bench before complaining. There was no clean rescue hiding there. Irritatingly straightforward.','No obvious bench miracle was available. Fine. Judge the lineup that actually played.'],
-  'tess-delaney':['There was no obvious bench savior waiting to make management look foolish, which is almost disappointing.','No clean bench rescue existed. How terribly inconvenient for hindsight.'],
-  'mack-hollis':['No bench superhero was waiting to make management look stupid. Shame.','I checked for the easy bench outrage. It was not there. We will have to yell about the starters.'],
-  'nora-voss':['The bench offered no clean rescue, so management escapes that allegation. Rivals will move to the next complaint.','No obvious bench alternative changes the story. That closes one file and leaves the starters exposed.']
+ const banks={
+  'walter-mercer':['I checked the bench for an easy accusation and found none. Irritatingly, the starters own this one.','No obvious bench rescue existed. Management escapes that charge and receives no medal for it.'],
+  'tess-delaney':['There was no obvious bench savior. How disappointing for those of us who enjoy a clean villain.','Hindsight arrived without a magical replacement, which is terribly inconsiderate of it.'],
+  'mack-hollis':['No bench superhero. No free management scandal. We will have to yell about the actual starters.','I looked for the easy bench outrage and came up empty. Terrible day for lazy headlines.'],
+  'nora-voss':['The bench does not provide the easy indictment. That file is closed; others remain open.','No obvious bench alternative changes the result. One allegation dismissed, several questions preserved.']
  };
- return pick(b[id]||b['walter-mercer'],seed)
+ return pick(banks[id]||banks['walter-mercer'],seed);
 }
 
-function sentiment(t,id){
- const won=!!t.won,seed=key(t)+'|sentiment|'+id;
- const b={
-  'walter-mercer':won?['The fan base has reached the dangerous stage where “maybe” is being said out loud. I remain suspicious.','Optimism is back in circulation. Wonderful. Somebody label it fragile.']:['The fans are annoyed, I am annoyed, and the quiet starters should consider that a fair weather report.','Nobody is rioting. Yet. Every weak lineup spot has become a personal grievance.'],
-  'tess-delaney':won?['Supporters are euphoric enough to mistake two weeks for destiny, and I refuse to spoil the party yet.','Hope has become fashionable again, which is usually when this sport begins preparing something rude.']:['Supporters are offended, dramatically and with cause.','There is enough frustration here to power several unnecessary arguments, which at least means nobody is emotionally detached.'],
-  'mack-hollis':won?['Fans are loud, the memes are positive, and rival chats are being entered without permission. Correct behavior.','The fan base has one volume setting after this result: obnoxious. I support it.']:['The memes are hostile now. Good luck to every quiet starter opening social media.','The group chat is furious and productive, so the jokes are improving faster than the roster mood.'],
-  'nora-voss':won?['Supporters are weaponizing the record in rival chats. I support this use of evidence.','The fan base has screenshots, receipts and temporary confidence. Keep copies.']:['Supporters have the screenshot saved and the complaint memorized.','Rivals have the joke, supporters have the grievance, and management has one week to make both stale.']
+function sentimentLines(t,id){
+ const won=!!t.won,seed=key(t)+'|sentiment|'+id,tm=String(t.team_name||'This team');
+ const banks={
+  'walter-mercer':won?[
+   'The fans are happy. I am happy enough to distrust how happy everybody is.',
+   tm+' supporters have rediscovered optimism, a substance I recommend handling with gloves.'
+  ]:[
+   'The fans are annoyed. I am annoyed. At least the community remains united on something.',
+   tm+' supporters have moved past patience and into itemized complaints, which is usually how Tuesday begins.'
+  ],
+  'tess-delaney':won?[
+   'Supporters are drunk on possibility and I refuse to be the designated driver tonight.',
+   'Hope is back in fashion around '+tm+'. It looks fabulous and is almost certainly dangerous.'
+  ]:[
+   'The fan base is wounded, theatrical and entirely justified in refusing to whisper about it.',
+   'Disappointment has become the local dress code. I would call it excessive if I were not already wearing it.'
+  ],
+  'mack-hollis':won?[
+   'The fans are loud, the memes are positive, and rival chats are being entered without permission. Correct.',
+   tm+' supporters have chosen obnoxiousness. I endorse the decision until further notice.'
+  ]:[
+   'The group chat is furious and productive. The jokes are improving faster than the mood.',
+   tm+' fans have switched from analysis to captions. Nobody involved should expect mercy.'
+  ],
+  'nora-voss':won?[
+   'Supporters have screenshots, receipts and temporary confidence. I advise keeping all three.',
+   tm+' fans are using the record as evidence in every available rival argument. Procedurally sound.'
+  ]:[
+   'Supporters have the grievance memorized and the screenshot saved. Management should make both obsolete.',
+   tm+' fans are no longer asking whether there is a problem. They are assigning blame exhibits.'
+  ]
  };
- return pick(b[id]||b['walter-mercer'],seed)
+ const rows=banks[id]||banks['walter-mercer'];
+ return [pick(rows,seed,0),pick(rows,seed,1)].filter((x,i,a)=>a.indexOf(x)===i);
 }
 
-function outlook(t,id){
- const tm=String(t.team_name||'This team'),next=String(t.next_opponent_name||'the next opponent'),rec=record(t),seed=key(t)+'|outlook|'+id;
- const b={
-  'walter-mercer':[next+' is next. Beat them and I may permit one more week of optimism. Lose and I am reopening every complaint we just closed.',tm+' takes '+rec+' into '+next+'. I do not need perfection; I need the same obvious problem to stop introducing itself every Sunday.'],
-  'tess-delaney':[next+' gets the next appointment. Win and we become unbearable; lose and every elegant theory gets thrown into the complaint pile.',tm+' carries '+rec+' into '+next+'. I would prefer a convincing answer, but this sport makes a living selling suspense.'],
-  'mack-hollis':[next+' is next. Win and the headline gets bigger. Lose and the back page becomes a hostile workplace.',tm+' takes '+rec+' into '+next+'. Fix the weak spot, score points, ruin somebody else’s group chat.'],
-  'nora-voss':[next+' gets the next look. If the same flaw survives, rivals no longer have a joke; they have a recurring feature.',tm+' carries '+rec+' into '+next+'. Management has one week to make the obvious Week 2 complaint boring.']
+function outlookLine(t,id){
+ const tm=String(t.team_name||'This team'),next=String(t.next_opponent_name||'the next opponent'),seed=key(t)+'|outlook|'+id;
+ const banks={
+  'walter-mercer':[
+   next+' is next. I would like one week in which the same complaint does not walk back through the door wearing a new score.',
+   tm+' gets '+next+' next. Win and I will loosen the grip on my skepticism by perhaps three percent.',
+   'Week 3 brings '+next+'. Good. Another chance for the roster to make me sound unnecessarily worried.'
+  ],
+  'tess-delaney':[
+   next+' gets the next appointment. I want conviction, preferably with enough drama to justify the wardrobe.',
+   tm+' meets '+next+' next, and I am already emotionally overcommitted to an outcome that has not happened.',
+   'Week 3 offers '+next+', which means today’s beautiful theory has seven days before cross-examination by reality.'
+  ],
+  'mack-hollis':[
+   next+' is next. Win and the headline grows. Lose and I am buying more red ink.',
+   tm+' gets '+next+' next. Fix what was ugly, keep what was loud, ruin somebody else’s group chat.',
+   'Week 3 brings '+next+'. Excellent. I was worried we might have to behave normally for a few days.'
+  ],
+  'nora-voss':[
+   next+' is the next file. If the same flaw appears again, it stops being an incident and becomes a pattern.',
+   tm+' gets '+next+' next. I have left the Week 2 evidence on the desk for comparison.',
+   'Week 3 brings '+next+'. Management now gets a chance to make the most annoying exhibit irrelevant.'
+  ]
  };
- return pick(b[id]||b['walter-mercer'],seed)
+ return pick(banks[id]||banks['walter-mercer'],seed);
 }
 
-function rewriteStock(s,t,id){
- let out=String(s||''),tm=String(t.team_name||'this team');
- if(/There is one roster-memory note worth keeping beside the Week 2 stars:/i.test(out)){
-  const p={'walter-mercer':'One management receipt still belongs in this story:','tess-delaney':'Before management gets drunk on Sunday’s score, one old transaction still wants a word:','mack-hollis':'Do not let the scoreboard bury this roster receipt:','nora-voss':'I kept one transaction receipt on the desk:'}[id]||'One management receipt still belongs in this story:';
-  out=out.replace(/There is one roster-memory note worth keeping beside the Week 2 stars:/i,p)
- }
- out=out.replace(/that history matters for [^.]+ because management chose this version of the roster, not merely the lineup that happened to score Sunday\./i,{
-  'walter-mercer':'That deal remains part of the roster management has to live with, good Sundays included.',
-  'tess-delaney':'A good Sunday does not erase the invoice; management still owns the bargain it made.',
-  'mack-hollis':'Win or lose, that receipt belongs to management. No hiding it behind a shiny Week 2 score.',
-  'nora-voss':'The trade stays attached to the roster; every useful Sunday either improves the receipt or makes it harder to defend.'
- }[id]||'That deal remains part of the roster management chose.');
- if(/there is nowhere to hide a September result/i.test(out)){
-  out=out.replace(/there is nowhere to hide a September result/i,{
-   'walter-mercer':'September is early, not consequence-free, and this division is already keeping receipts',
-   'tess-delaney':'September may be young, but the division has already developed the impolite habit of counting everything',
-   'mack-hollis':'September counts. Annoying, I know. The standings refuse to wait for everybody to feel ready',
-   'nora-voss':'The calendar says September; the division ledger still refuses to mark any result “practice”'
-  }[id]||'September still counts')
- }
- return out
+function buildLede(t,a,id){
+ const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),score=facts.find(isScoreFact),week1=facts.find(x=>isWeek1Fact(x)&&x!==score);
+ return uniq([ledeLines(t,id)[0],score,week1,ledeLines(t,id)[1]]).filter(Boolean).slice(0,4);
 }
-
-function reviseParas(ps,t,id,state){
+function buildPlayers(t,a,id){
+ const sec=sectionOf(a,'players'),facts=factualParagraphs(sec);
+ const stats=facts.filter(isPlayerStat).slice(0,3);
+ const compares=facts.filter(isPlayerCompare).filter(x=>!stats.includes(x)).slice(0,1);
+ const reactions=playerLines(t,id);
  const out=[];
- for(const raw of ps||[]){
-  if(!String(raw||'').trim()||String(raw).trim().toLowerCase()==='n/a'){out.push(raw);continue}
-  const keep=[];
-  for(let s of sentences(raw)){
-   s=rewriteStock(s,t,id);
-   if(SUPPORT_RE.test(s)){
-    state.support++;
-    if(state.support>1&&!/\d/.test(s))continue
-   }
-   keep.push(s)
-  }
-  if(keep.length)out.push(keep.join(' '))
- }
- return out
+ if(stats[0])out.push(stats[0]);
+ if(reactions[0])out.push(reactions[0]);
+ if(stats[1])out.push(stats[1]);
+ if(stats[2])out.push(stats[2]);
+ if(compares[0])out.push(compares[0]);
+ if(reactions[1])out.push(reactions[1]);
+ return uniq(out).slice(0,6);
 }
-function add(sections,kind,text){const s=(sections||[]).find(x=>String(x?.kind||'')===kind);if(!s||!Array.isArray(s.paragraphs)||!text)return;if(kind==='outlook')s.paragraphs.unshift(text);else s.paragraphs.push(text)}
+function buildManagement(t,a,id){
+ const sec=sectionOf(a,'management'),facts=factualParagraphs(sec);
+ const bench=facts.find(isBenchFact),tx=facts.find(isTransactionFact);
+ return uniq([bench,tx,managementLine(t,id)]).filter(Boolean).slice(0,3);
+}
+function buildHotSeat(t,a,id){
+ const sec=sectionOf(a,'hot-seat'),facts=factualParagraphs(sec),first=facts.find(x=>/\d+(?:\.\d+)?/.test(x))||facts[0];
+ const lo=weakest(t),lp=lo?one(lo.points):null,seed=key(t)+'|hot|'+id;
+ const banks={
+  'walter-mercer':lo?['I do not need a panic button. I need '+lo.name+' to make '+lp+' look like an old problem.','The hot-seat item is simple: '+lo.name+' at '+lp+' cannot become a weekly tradition.']:[],
+  'tess-delaney':lo?['I refuse to call '+lo.name+' at '+lp+' a crisis, but I am absolutely willing to call it ugly.','The offending number is '+lp+' from '+lo.name+'. I would like it removed from the set before the next performance.']:[],
+  'mack-hollis':lo?['The angry-font candidate is '+lo.name+' at '+lp+'. Fix it before the meme gets a sequel.','If '+lo.name+' posts '+lp+' again, the back page writes itself and nobody wants that more than I do.']:[],
+  'nora-voss':lo?['The unresolved exhibit is '+lo.name+' at '+lp+'. One bad week is noise; a repeat becomes evidence.','I have '+lo.name+' at '+lp+' circled. Week 3 decides whether the circle stays.']:[]
+ };
+ const line=(banks[id]&&banks[id].length)?pick(banks[id],seed):'';
+ return uniq([first,line]).filter(Boolean).slice(0,2);
+}
+function buildSentiment(t,id){return sentimentLines(t,id)}
+function buildOutlook(t,a,id){
+ const sec=sectionOf(a,'outlook'),facts=factualParagraphs(sec);
+ const projection=facts.find(isProjectionFact);
+ const standings=facts.find(isStandingsFact);
+ const injury=facts.find(isInjuryFact);
+ const benchmark=facts.find(isOpponentBenchmark);
+ const schedule=facts.find(isScheduleFact);
+ const selected=[outlookLine(t,id),projection,standings,injury,benchmark,schedule].filter(Boolean);
+ return uniq(selected).slice(0,6);
+}
+function buildGeneric(sec){
+ const facts=factualParagraphs(sec).filter(x=>/\d/.test(x)||isTransactionFact(x));
+ return facts.slice(0,3);
+}
 
 function reviseTeam(t){
  const a=t?.inquirer_article;if(!a)return t;
- const id=rid(t),state={support:0},sections=(a.sections||[]).map(s=>({...s,paragraphs:reviseParas(s.paragraphs,t,id,state)}));
- add(sections,'lede',lede(t,id));
- add(sections,'players',players(t,id));
- add(sections,'management',management(t,id));
- add(sections,'sentiment',sentiment(t,id));
- add(sections,'outlook',outlook(t,id));
- a.sections=sections;a.editorial_revision=WEEK2_EDITORIAL_REVISION;a.voice_revision='week2-r15';
- return t
+ const id=rid(t);
+ a.sections=(a.sections||[]).map(sec=>{
+  const kind=String(sec?.kind||'');
+  let paragraphs;
+  if(kind==='lede')paragraphs=buildLede(t,a,id);
+  else if(kind==='players')paragraphs=buildPlayers(t,a,id);
+  else if(kind==='management')paragraphs=buildManagement(t,a,id);
+  else if(kind==='hot-seat')paragraphs=buildHotSeat(t,a,id);
+  else if(kind==='sentiment')paragraphs=buildSentiment(t,id);
+  else if(kind==='outlook')paragraphs=buildOutlook(t,a,id);
+  else paragraphs=buildGeneric(sec);
+  return{...sec,paragraphs};
+ });
+ a.editorial_revision=WEEK2_EDITORIAL_REVISION;
+ a.voice_revision='week2-r16';
+ return t;
 }
 
-function recapReaction(id,i){
- const b={
-  'walter-mercer':['Two weeks in, I have seen enough to be interested and nowhere near enough to be comfortable. This league remains allergic to clean conclusions.','The standings have started talking. I am listening reluctantly.'],
-  'tess-delaney':['Week 2 supplied just enough competence to make optimism fashionable again, which is how this sport lures respectable people into reckless conclusions.','The league is acquiring a shape, and I resent how attractive several premature conclusions already look.'],
-  'mack-hollis':['Two weeks, several disasters, and at least one rival chat already behaving like the trophy has been engraved. Perfect.','The free sample of patience has expired. Week 3 gets the full-volume version of every good start and embarrassing excuse.'],
-  'nora-voss':['I saved the screenshots. Teams insisting their problems are temporary get one more Sunday to make that claim less funny.','Patterns are forming, which is bad news for every manager whose preferred defense remains “small sample.”']
+function recapReaction(id,seed,offset=0){
+ const banks={
+  'walter-mercer':[
+   'Two weeks in, I have seen enough to care and nowhere near enough to relax. That is usually when this league becomes expensive emotionally.',
+   'The standings have started talking. I am listening with the expression of a man who has been lied to by September before.',
+   'I would love one clean conclusion. The league has instead handed me thirty-two reasons to keep the aspirin nearby.'
+  ],
+  'tess-delaney':[
+   'Week 2 has made optimism fashionable again, which is dangerous because several of you wear it far too confidently.',
+   'The league is acquiring a shape, and I resent how attractive several premature conclusions already look.',
+   'We have reached the delightful stage where every record can support either a prophecy or a nervous breakdown.'
+  ],
+  'mack-hollis':[
+   'Two weeks, several disasters, and at least one rival chat already acting like the trophy is engraved. Perfect.',
+   'The free sample of patience has expired. Week 3 gets the full-volume version of every good start and every bad excuse.',
+   'If you are 2-0, start bragging. If you are 0-2, start deleting old messages. The back page accepts both forms of content.'
+  ],
+  'nora-voss':[
+   'I saved the screenshots. Teams calling their problems temporary now get one more Sunday to make that claim less funny.',
+   'Patterns are forming, which is bad news for every manager whose preferred defense remains “small sample.”',
+   'Week 3 is where excuses become exhibits. I have already labeled the folders.'
+  ]
  };
- const rows=b[id]||b['walter-mercer'];return rows[i%rows.length]
+ const rows=banks[id]||banks['walter-mercer'];return pick(rows,seed,offset);
+}
+function recapClean(p){
+ const x=cleanParagraph(p);
+ if(!x)return'';
+ if(PLAYER_SUPPORT_RE.test(x)||GENERIC_RE.test(x)||SHARED_OUTLOOK_RE.test(x))return'';
+ return x;
+}
+function chooseRecap(ps,id){
+ const rows=uniq((ps||[]).map(recapClean).filter(Boolean));
+ if(id==='walter-mercer'){
+  const game=rows.filter(x=>isScoreFact(x)||/\b(?:upset|blowout|knife fight|favorite|underdog)\b/i.test(x)).slice(0,5);
+  const standings=rows.filter(x=>/^\s*(?:The 2-0 group|At 0-2|The 1-1 middle)/i.test(x)).slice(0,3);
+  return uniq([...game,...standings]).slice(0,8);
+ }
+ if(id==='tess-delaney'){
+  return rows.filter(x=>/\b(?:2-0|value mover|market|points apart|contender)\b/i.test(x)).slice(0,5);
+ }
+ if(id==='mack-hollis'){
+  return rows.filter(x=>/\b(?:manager|added|dropped|received|trade|fleece|projection|upset|Browns|Billiards)\b/i.test(x)).slice(0,5);
+ }
+ if(id==='nora-voss'){
+  return rows.filter(x=>/\b(?:Week 3|problem|pattern|projected|laughing|free trial|same)\b/i.test(x)).slice(0,5);
+ }
+ return rows.slice(0,5);
 }
 function reviseOverview(o){
  if(!o)return o;
- let perf=0,trade=0;
  o.sections=(o.sections||[]).map((s,i)=>{
-  const id=String(s?.reporter?.id||'');
-  const ps=(s.paragraphs||[]).map(raw=>{
-   let x=String(raw||'');
-   if(/current-player side an early performance problem to answer/i.test(x)){
-    x=x.replace(/the current-player side an early performance problem to answer/i,[ 'the player return has already given management something uncomfortable to explain','the player return is already a Week 3 question instead of a victory lap' ][perf++%2])
-   }
-   if(/so the trade is attached to a roster that is still actively chasing something/i.test(x)){
-    x=x.replace(/so the trade is attached to a roster that is still actively chasing something/i,[ 'so that receipt belongs to a live roster and cannot be filed away as ancient history','so this is not a museum-piece transaction; the return still has to justify itself while the season is moving' ][trade++%2])
-   }
-   return x
-  });
-  if(id&&ps.length)ps.push(recapReaction(id,i));
-  return{...s,paragraphs:ps}
+  const id=String(s?.reporter?.id||''),seed='recap|'+id+'|'+i;
+  const chosen=chooseRecap(s.paragraphs,id);
+  const paragraphs=uniq([...chosen,recapReaction(id,seed,0),recapReaction(id,seed,1)]).slice(0,10);
+  return{...s,paragraphs};
  });
- o.editorial_revision=WEEK2_EDITORIAL_REVISION;o.voice_revision='week2-r15';return o
+ if(Array.isArray(o.hot_takes)){
+  o.hot_takes=o.hot_takes.map(h=>({
+   ...h,
+   body:recapClean(h?.body||''),
+   lines:(h?.lines||[]).map(recapClean).filter(Boolean)
+  }));
+ }
+ o.editorial_revision=WEEK2_EDITORIAL_REVISION;
+ o.voice_revision='week2-r16';
+ return o;
 }
 
-export function applyWeek2EditorialR15(raw){
+export function applyWeek2EditorialR16(raw){
  if(!raw||Number(raw.season)!==2026||Number(raw.week)!==2)return raw;
  const out=clone(raw);
  out.teams=(out.teams||[]).map(reviseTeam);
  out.league_overview=reviseOverview(out.league_overview);
  out.editorial_revision=WEEK2_EDITORIAL_REVISION;
- out.voice_revision='week2-r15';
- return out
+ out.voice_revision='week2-r16';
+ return out;
 }
+
+// Compatibility alias so the already-wired Week 2 serving path does not need a second routing implementation.
+export const applyWeek2EditorialR15=applyWeek2EditorialR16;

@@ -754,20 +754,20 @@ function projectionLine(t,id){
  const tm=String(t.team_name||'This team'),op=String(t.next_opponent_name||'the opponent'),edge=Math.abs(own-opp).toFixed(1),fav=own===opp?'':(own>opp?tm:op),seed=key(t)+'|projection|'+id;
  const banks={
   'walter-mercer':[
-   'Week 3 projects '+tm+' at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even on paper.':'The numbers favor '+fav+' by '+edge+'.')+' Projections are useful right up until actual players begin behaving like actual players.',
+   'Week 3 projects '+tm+' at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even on paper.':'The numbers give '+fav+' a '+edge+'-point edge.')+' Projections are useful right up until actual players begin behaving like actual players.',
    tm+' enters Week 3 at '+own.toFixed(1)+' projected points versus '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Nothing separates them.':fav+' owns a '+edge+'-point edge.')+' I will believe the forecast after the roster earns it.'
   ],
   'tess-delaney':[
-   tm+' is projected for '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The arithmetic is indecently even.':fav+' has the '+edge+'-point advantage.')+' I enjoy a favorite most when it has the manners to prove the point.',
-   'The Week 3 numbers are '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Perfectly even. How dull.':fav+' leads by '+edge+'.')+' Sunday may now attempt to be more interesting than arithmetic.'
+   tm+' is projected for '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The arithmetic is indecently even.':fav+' has a '+edge+'-point edge.')+' I enjoy a favorite most when it has the manners to prove the point.',
+   'The Week 3 numbers are '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Perfectly even. How dull.':fav+' has a '+edge+'-point edge.')+' Sunday may now attempt to be more interesting than arithmetic.'
   ],
   'mack-hollis':[
-   'Week 3 projects '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even.':fav+' is ahead by '+edge+'.')+' If the favorite blows that edge, I promise to be extremely normal about it.',
-   tm+' gets '+own.toFixed(1)+' projected points; '+op+' gets '+opp.toFixed(1)+'. '+(own===opp?'No edge.':fav+' has '+edge+' points of breathing room.')+' Now go play the game before the numbers get smug.'
+   'Week 3 projects '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even.':fav+' is favored by '+edge+'.')+' If the favorite blows that edge, I promise to be extremely normal about it.',
+   tm+' gets '+own.toFixed(1)+' projected points; '+op+' gets '+opp.toFixed(1)+'. '+(own===opp?'No edge.':fav+' is favored by '+edge+'.')+' Now go play the game before the numbers get smug.'
   ],
   'nora-voss':[
    tm+' is projected at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The matchup is level.':fav+' has a '+edge+'-point edge.')+' The projection establishes expectation, not outcome.',
-   'The Week 3 expectation is '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'No projected separation.':fav+' leads by '+edge+'.')+' A miss of that size would deserve a postgame explanation.'
+   'The Week 3 expectation is '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'No projected separation.':fav+' has a '+edge+'-point edge.')+' A miss of that size would deserve a postgame explanation.'
   ]
  };
  return pick(banks[id]||banks['walter-mercer'],seed);

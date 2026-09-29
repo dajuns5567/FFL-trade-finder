@@ -57,7 +57,7 @@ for(const t of revisedTeams){
  const sections=t?.inquirer_article?.sections||[],byKind=Object.fromEntries(sections.map(s=>[String(s?.kind||''),(s?.paragraphs||[]).length]));
  const lede=(sections.find(s=>String(s?.kind||'')==='lede')?.paragraphs||[]),scoreToken=Number(t.points).toFixed(1)+'–'+Number(t.opponent_points).toFixed(1);
  assert.equal(lede.filter(p=>String(p).includes(scoreToken)).length,1,'Current Week 2 result must be stated exactly once in the lede for '+t.team_name);
- assert((byKind.lede||0)>=3&&(byKind.lede||0)<=5,'Lede must be developed without repeating the result for '+t.team_name);
+ assert((byKind.lede||0)>=4&&(byKind.lede||0)<=6,'Lede must be developed without repeating the result for '+t.team_name);
  assert((byKind.players||0)===12,'Player section must give three featured players separate fact/reaction/context/trend treatment for '+t.team_name);
  assert((byKind.management||0)>=2&&(byKind.management||0)<=4,'Management section must be developed without repetition for '+t.team_name);
  assert((byKind['cool-throne']||0)<=2,'Cool Throne is overstuffed for '+t.team_name);

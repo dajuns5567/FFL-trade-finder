@@ -679,10 +679,23 @@ async function getMarketSummary(s){
   snaps=mergeSnapshots(snaps);
   const market=marketFromSnapshots(snaps);market.snapshot_count=timed.length;market.archive_snapshot_count=(arch.items||[]).length;market.local_snapshot_count=(local.items||[]).length;market.archive_reachable=arch.reachable!==false;return market;
 }
-function marketInsightAverage(snapshot,pos,limit=24){
-  const rows=(snapshot?.rows||[]).filter(r=>String(r?.pos||'')===String(pos)&&Number.isFinite(Number(r?.value))&&Number(r.value)>0).slice().sort((a,b)=>Number(b.value)-Number(a.value)).slice(0,limit);
+function marketInsightAverage(snapshot,pos=null,limit=24){
+  const rows=(snapshot?.rows||[]).filter(r=>(!pos||String(r?.pos||'')===String(pos))&&Number.isFinite(Number(r?.value))&&Number(r.value)>0).slice().sort((a,b)=>Number(b.value)-Number(a.value)).slice(0,limit);
   if(!rows.length)return{average:null,count:0};
   return{average:rows.reduce((n,r)=>n+Number(r.value),0)/rows.length,count:rows.length};
+}
+function marketVolatilitySummary(ordered,pos=null,limit=24){
+  const series=[];
+  for(const snap of ordered||[]){
+    const z=marketInsightAverage(snap,pos,limit);
+    if(Number.isFinite(Number(z.average))&&z.average>0)series.push({t:snap.t,value:Number(z.average),count:z.count});
+  }
+  if(series.length<2)return{pos:pos||'OVERALL',available:false,observations:series.length,range_pct:null,avg_step_pct:null,current_index:null};
+  const base=series[0].value,indexed=series.map(x=>({...x,index:base>0?x.value/base*100:null})).filter(x=>Number.isFinite(x.index)),
+    vals=indexed.map(x=>x.index),high=Math.max(...vals),low=Math.min(...vals),mid=(high+low)/2,
+    steps=indexed.slice(1).map((x,i)=>Math.abs((x.index-indexed[i].index)/indexed[i].index*100)).filter(Number.isFinite),
+    avgStep=steps.length?steps.reduce((a,b)=>a+b,0)/steps.length:null;
+  return{pos:pos||'OVERALL',available:true,observations:indexed.length,constituents:indexed.at(-1)?.count||0,current_index:Number(indexed.at(-1).index.toFixed(2)),high_index:Number(high.toFixed(2)),low_index:Number(low.toFixed(2)),range_pct:mid>0?Number(((high-low)/mid*100).toFixed(2)):null,avg_step_pct:Number.isFinite(avgStep)?Number(avgStep.toFixed(3)):null,tracking_since:indexed[0]?.t||null,through:indexed.at(-1)?.t||null};
 }
 function marketInsightWindow(ordered,label,days=null){
   if(!ordered.length)return[];
@@ -692,7 +705,7 @@ function marketInsightWindow(ordered,label,days=null){
 }
 function marketInsightRange(snaps,label){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  if(ordered.length<2)return{label,available:false,snapshot_count:ordered.length,tracking_since:ordered[0]?.t||null,through:ordered.at(-1)?.t||null,position_indexes:[],new_highs:[],new_lows:[],volatility:[]};
+  if(ordered.length<2)return{label,available:false,snapshot_count:ordered.length,tracking_since:ordered[0]?.t||null,through:ordered.at(-1)?.t||null,position_indexes:[],market_volatility:null,position_volatility:[],new_highs:[],new_lows:[],volatility:[]};
   const first=ordered[0],latest=ordered.at(-1),positions=['QB','RB','WR','TE','IDP'],position_indexes=[];
   for(const pos of positions){
     const base=marketInsightAverage(first,pos),z=marketInsightAverage(latest,pos);
@@ -705,13 +718,15 @@ function marketInsightRange(snaps,label){
       baseline_t:first.t,through_t:latest.t
     });
   }
+  const market_volatility=marketVolatilitySummary(ordered,null,300),
+    position_volatility=positions.map(pos=>marketVolatilitySummary(ordered,pos,24));
   const prior=new Map(),full=new Map();
   for(let i=0;i<ordered.length;i++){
     const snap=ordered[i],isLatest=i===ordered.length-1;
     for(const row of snap.rows||[]){
       const id=String(row?.id||''),value=Number(row?.value);if(!id||!Number.isFinite(value)||value<=0)continue;
-      const bucket=full.get(id)||{id,pos:String(row?.pos||''),high:value,low:value,high_t:snap.t,low_t:snap.t,observations:0};
-      bucket.pos=String(row?.pos||bucket.pos||'');bucket.observations++;
+      const rowPos=String(row?.pos||''),bucket=full.get(id)||{id,pos:rowPos,positions:new Set(rowPos?[rowPos]:[]),high:value,low:value,high_t:snap.t,low_t:snap.t,observations:0};
+      bucket.pos=rowPos||bucket.pos||'';if(rowPos)bucket.positions.add(rowPos);bucket.observations++;
       if(value>bucket.high){bucket.high=value;bucket.high_t=snap.t}
       if(value<bucket.low){bucket.low=value;bucket.low_t=snap.t}
       full.set(id,bucket);
@@ -726,16 +741,18 @@ function marketInsightRange(snaps,label){
   }
   const new_highs=[],new_lows=[],volatility=[];
   for(const row of latest.rows||[]){
-    const id=String(row?.id||''),value=Number(row?.value),p=prior.get(id),all=full.get(id);
+    const id=String(row?.id||''),value=Number(row?.value),p=prior.get(id),all=full.get(id),rowPos=String(row?.pos||'');
     if(!id||!Number.isFinite(value)||!all)continue;
-    if(p&&value>Number(p.high))new_highs.push({id,pos:String(row?.pos||''),value,previous_high:Number(p.high),previous_high_t:p.high_t,gain:value-Number(p.high),t:latest.t});
-    if(p&&value<Number(p.low))new_lows.push({id,pos:String(row?.pos||''),value,previous_low:Number(p.low),previous_low_t:p.low_t,drop:value-Number(p.low),t:latest.t});
+    const identityClean=(all.positions?.size||0)<=1&&(!all.pos||!rowPos||String(all.pos)===rowPos);
+    if(!identityClean)continue;
+    if(p&&value>Number(p.high))new_highs.push({id,pos:rowPos,value,previous_high:Number(p.high),previous_high_t:p.high_t,gain:value-Number(p.high),t:latest.t});
+    if(p&&value<Number(p.low))new_lows.push({id,pos:rowPos,value,previous_low:Number(p.low),previous_low_t:p.low_t,drop:value-Number(p.low),t:latest.t});
     const mid=(Number(all.high)+Number(all.low))/2,range=Number(all.high)-Number(all.low),drawdown=Number(all.high)>0?(value-Number(all.high))/Number(all.high)*100:null;
-    volatility.push({id,pos:String(row?.pos||''),value,high:Number(all.high),low:Number(all.low),range,range_pct:mid>0?Number((range/mid*100).toFixed(2)):null,drawdown_pct:Number.isFinite(drawdown)?Number(drawdown.toFixed(2)):null,observations:Number(all.observations)||0,high_t:all.high_t,low_t:all.low_t});
+    volatility.push({id,pos:rowPos,value,high:Number(all.high),low:Number(all.low),range,range_pct:mid>0?Number((range/mid*100).toFixed(2)):null,drawdown_pct:Number.isFinite(drawdown)?Number(drawdown.toFixed(2)):null,observations:Number(all.observations)||0,identity_clean:true,high_t:all.high_t,low_t:all.low_t});
   }
   new_highs.sort((a,b)=>b.gain-a.gain||b.value-a.value);new_lows.sort((a,b)=>a.drop-b.drop||b.value-a.value);
   volatility.sort((a,b)=>Number(b.range_pct||0)-Number(a.range_pct||0)||b.range-a.range);
-  return{label,available:true,snapshot_count:ordered.length,tracking_since:first.t,through:latest.t,position_indexes,new_highs:new_highs.slice(0,50),new_lows:new_lows.slice(0,50),volatility:volatility.slice(0,100)};
+  return{label,available:true,snapshot_count:ordered.length,tracking_since:first.t,through:latest.t,position_indexes,market_volatility,position_volatility,new_highs:new_highs.slice(0,50),new_lows:new_lows.slice(0,50),volatility:volatility.slice(0,100)};
 }
 function marketInsightsFromSnapshots(snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
@@ -871,7 +888,10 @@ async function scoringMilestones(playerId){
             const leader=canonical?.players_of_week?.[group];
             if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Offensive Player of the Week':'Defensive Player of the Week',points:Number(Number(leader.points||0).toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
           }
-        }else if(Number(year)<currentSeason){
+        }else if(payload){
+          // Canonical awards are preferred. If a completed current-season week has
+          // stats before the award archive is available, derive the same winner
+          // from that completed Sleeper payload instead of silently dropping it.
           const leaders={offense:null,defense:null};
           for(const item of scoringPayloadRows(payload)){
             const group=weeklyAwardGroup(players?.[item.id]?.position),points=leagueScore(item.stats,scoring);

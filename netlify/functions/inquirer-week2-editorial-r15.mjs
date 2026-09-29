@@ -267,6 +267,31 @@ function buildHotSeat(t,a,id){
  return uniq([first,line]).filter(Boolean).slice(0,2);
 }
 function buildSentiment(t,id){return sentimentLines(t,id)}
+function projectionLine(t,id){
+ const own=Number(t?.next_projected),opp=Number(t?.next_opponent_projected);
+ if(!Number.isFinite(own)||!Number.isFinite(opp))return'';
+ const tm=String(t.team_name||'This team'),op=String(t.next_opponent_name||'the opponent'),edge=Math.abs(own-opp).toFixed(1),fav=own===opp?'dead even':(own>opp?tm:op),seed=key(t)+'|projection|'+id;
+ const banks={
+  'walter-mercer':[
+   tm+' is projected at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The board calls it dead even.':fav+' has the projection edge by '+edge+'.')+' I have trusted forecasts before and survived the embarrassment.',
+   'The Week 3 board has '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'That is dead even on paper.':fav+' is favored by '+edge+'.')+' Paper remains undefeated at being paper.'
+  ],
+  'tess-delaney':[
+   'The projection puts '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The arithmetic is dead even, which is offensively tidy.':fav+' carries a '+edge+'-point projection edge, which is attractive and therefore suspicious.'),
+   tm+' enters the spreadsheet at '+own.toFixed(1)+' versus '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even. How vulgar.':fav+' is favored by '+edge+', and I refuse to confuse elegance with certainty.')
+  ],
+  'mack-hollis':[
+   'The board screams '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Dead even. Great, no easy headline.':fav+' is the projection favorite by '+edge+'.')+' Now somebody has to make the graphic age well.',
+   tm+' gets '+own.toFixed(1)+' on the projection board; '+op+' gets '+opp.toFixed(1)+'. '+(own===opp?'Dead even.':fav+' is favored by '+edge+'.')+' Save the screenshot.'
+  ],
+  'nora-voss':[
+   'The projection file reads '+tm+' '+own.toFixed(1)+' and '+op+' '+opp.toFixed(1)+'. '+(own===opp?'The case is dead even.':fav+' has a '+edge+'-point projection edge.')+' I have marked the number as evidence, not destiny.',
+   tm+' is projected for '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'That leaves the board dead even.':fav+' is favored by '+edge+'.')+' We will compare the forecast to the final exhibit.'
+  ]
+ };
+ return pick(banks[id]||banks['walter-mercer'],seed);
+}
+
 function scheduleStretchLine(t,id){
  const up=(t?.upcoming_opponents||[]).slice().sort((a,b)=>Number(a?.week)-Number(b?.week)),later=up.slice(1,3);
  if(!later.length)return'';
@@ -293,7 +318,7 @@ function scheduleStretchLine(t,id){
 }
 function buildOutlook(t,a,id){
  const sec=sectionOf(a,'outlook'),facts=factualParagraphs(sec);
- const projection=facts.find(isProjectionFact);
+ const projection=projectionLine(t,id)||facts.find(isProjectionFact);
  const standings=facts.find(isStandingsFact);
  const injury=facts.find(isInjuryFact);
  const benchmark=facts.find(isOpponentBenchmark);

@@ -876,31 +876,30 @@ async function scoringMilestones(playerId){
     if(!currentSeason||!Object.keys(scoring).length)return null;
     const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={},canonicalByKey=new Map((canonicalRecords||[]).filter(r=>r?.players_of_week).map(r=>[Number(r.season)+'|'+Number(r.week),r]));
     await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason,currentCompletedWeek)));
-    let highWeek=null,highSeason=null,highPpg=null;const weeklyAwards=[];
+    let highWeek=null,highSeason=null,highPpg=null;const weeklyAwards=[],weeklyAwardKeys=new Set(),
+      pushWeeklyAward=(group,leader,year,week)=>{
+        if(!leader||String(leader.player_id)!==String(playerId))return;
+        const key=`${year}|${week}|${group}`;if(weeklyAwardKeys.has(key))return;weeklyAwardKeys.add(key);
+        weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Offensive Player of the Week':'Defensive Player of the Week',points:Number(Number(leader.points||0).toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
+      };
     for(const year of years){
       let total=0,games=0;
       for(let week=1;week<=18;week++){
         const payload=weeklyByYear[year]?.[week],row=weeklyPlayerRow(payload,playerId);
         if(row){const points=leagueScore(row,scoring);if(points!=null){games++;total+=points;if(!highWeek||points>highWeek.points)highWeek={points,season:year,week}}}
         const canonical=canonicalByKey.get(Number(year)+'|'+Number(week));
-        if(canonical){
-          for(const group of ['offense','defense']){
-            const leader=canonical?.players_of_week?.[group];
-            if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Offensive Player of the Week':'Defensive Player of the Week',points:Number(Number(leader.points||0).toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
-          }
-        }else if(payload){
-          // Canonical awards are preferred. If a completed current-season week has
-          // stats before the award archive is available, derive the same winner
-          // from that completed Sleeper payload instead of silently dropping it.
+        if(canonical)for(const group of ['offense','defense'])pushWeeklyAward(group,canonical?.players_of_week?.[group],year,week);
+        if(payload&&(!canonical||Number(year)===currentSeason)){
+          // Re-derive completed current-season weeks from Sleeper as a recovery
+          // path for delayed/stale award archives. Dedupe keeps canonical awards
+          // authoritative when both sources agree.
           const leaders={offense:null,defense:null};
           for(const item of scoringPayloadRows(payload)){
             const group=weeklyAwardGroup(players?.[item.id]?.position),points=leagueScore(item.stats,scoring);
             if(!group||points==null)continue;
             if(!leaders[group]||points>leaders[group].points||(points===leaders[group].points&&String(item.id)<String(leaders[group].player_id)))leaders[group]={player_id:String(item.id),points};
           }
-          for(const group of ['offense','defense']){
-            const leader=leaders[group];if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Offensive Player of the Week':'Defensive Player of the Week',points:Number(leader.points.toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
-          }
+          for(const group of ['offense','defense'])pushWeeklyAward(group,leaders[group],year,week);
         }
       }
       total=Number(total.toFixed(2));

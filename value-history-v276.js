@@ -186,8 +186,11 @@ function addStyles(){
   #valueHistory button.vh-heat-cell.vh-down{background:color-mix(in srgb,var(--bad,#c45151) 13%,var(--card))!important}
   #valueHistory button.vh-heat-cell:hover,#valueHistory button.vh-heat-cell:focus-visible{border-color:#e4b53f!important;outline:none!important}
   #valueHistory .vh-intel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  #valueHistory .vh-intel-grid>.vh-card{padding:14px 15px}
+  #valueHistory .vh-intel-grid>.vh-card{padding:14px 15px;display:flex;flex-direction:column;height:100%}
   #valueHistory .vh-intel-grid>.vh-card h3{margin:0 0 3px;font-size:15px}
+  #valueHistory .vh-intel-grid>.vh-card>.vh-sub{min-height:42px}
+  #valueHistory .vh-intel-grid>.vh-card>.vh-intel-list{flex:1}
+  #valueHistory .vh-intel-row{min-height:58px}
   #valueHistory .vh-intel-list{display:grid;gap:0;margin-top:7px}
   #valueHistory .vh-intel-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
   #valueHistory .vh-intel-row:first-child{border-top:0}
@@ -1157,9 +1160,11 @@ function marketSignalDirection(stateName){
   if(['declining','cooling','struggling','struggling-star','declining-veteran'].includes(v))return-1;
   return 0;
 }
+function finiteMarketNumber(v){return v==null||v===''?null:(Number.isFinite(Number(v))?Number(v):null)}
 function marketPctChange(row,key){
-  const delta=Number(row?.[key]),value=Number(row?.value),base=value-delta;
-  return Number.isFinite(delta)&&Number.isFinite(base)&&base>0?delta/base*100:null;
+  const delta=finiteMarketNumber(row?.[key]),value=finiteMarketNumber(row?.value);
+  if(delta==null||value==null)return null;
+  const base=value-delta;return Number.isFinite(base)&&base>0?delta/base*100:null;
 }
 function intelDeltaKey(period=marketIntelPeriod){return({'1D':'delta1','7D':'delta7','30D':'delta30','90D':'delta90','1Y':'delta365','ALL':'deltaAll'})[period]||'delta7'}
 function intelOverallDeltaKey(period=marketIntelPeriod){return({'1D':'overallDelta1','7D':'overallDelta7','30D':'overallDelta30','90D':'overallDelta90','1Y':'overallDelta365','ALL':'overallDeltaAll'})[period]||'overallDelta7'}
@@ -1168,13 +1173,14 @@ function intelPeriodLabel(period=marketIntelPeriod){
 }
 function intelRange(){return marketInsightsCache?.ranges?.[marketIntelPeriod]||marketInsightsCache?.ranges?.ALL||marketInsightsCache||null}
 function signalPerformanceDelta(signal){
-  const e=signal?.evidence||{},recent=Number(e.recent_form_delta);
-  if(Number.isFinite(recent))return recent;
-  const season=Number(e.season_avg),prior=Number(e.prior_season_avg);
-  return Number.isFinite(season)&&Number.isFinite(prior)?season-prior:null;
+  const e=signal?.evidence||{},recent=finiteMarketNumber(e.recent_form_delta);
+  if(recent!=null)return recent;
+  const season=finiteMarketNumber(e.season_avg),prior=finiteMarketNumber(e.prior_season_avg);
+  return season!=null&&prior!=null?season-prior:null;
 }
 function intelPlayerRow(id,sub,metricLabel,metricValue,tone=''){
-  return`<div class="vh-intel-row"><button class="vh-player-link" data-vh-player="${esc(id)}"><b>${esc(playerName(id))}</b><small>${esc(sub||'')}</small></button><div class="vh-intel-metric ${tone}"><small>${esc(metricLabel||'')}</small><b>${esc(metricValue==null?'—':metricValue)}</b></div><button type="button" class="vh-view-history" data-vh-player="${esc(id)}">View history ↗</button></div>`;
+  const meta=livePlayerMeta(id),identity=[meta.pos||'—',meta.nfl||'FA',`Value ${fmt(meta.value)}`].join(' • '),detail=[identity,sub].filter(Boolean).join(' • ');
+  return`<div class="vh-intel-row"><button class="vh-player-link" data-vh-player="${esc(id)}"><b>${esc(playerName(id))}</b><small>${esc(detail)}</small></button><div class="vh-intel-metric ${tone}"><small>${esc(metricLabel||'')}</small><b>${esc(metricValue==null?'—':metricValue)}</b></div><button type="button" class="vh-view-history" data-vh-player="${esc(id)}">View history ↗</button></div>`;
 }
 function intelligencePeriodBar(){
   return`<div class="vh-intel-periodbar"><span>Market intelligence window</span>${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===marketIntelPeriod?'vh-active':'secondary'} small" data-vh-intel-period="${p}">${p}</button>`).join('')}<small class="muted">Value-based analytics use this window. Fleeced Signals always use completed NFL weeks only.</small></div>`;
@@ -1182,32 +1188,31 @@ function intelligencePeriodBar(){
 function positionIndexesMarkup(){
   const rows=intelRange()?.position_indexes||[];
   if(!rows.length)return'<div class="vh-card"><div class="vh-empty">Building position indexes from tracked market history…</div></div>';
-  return`<div class="vh-index-grid">${rows.map(r=>`<div class="vh-index-card"><small>${esc(r.pos)} Index</small><b>${Number.isFinite(Number(r.index))?Number(r.index).toFixed(1):'—'}</b><span class="${deltaClass(r.change_pct)}">${Number.isFinite(Number(r.change_pct))?signedPct(r.change_pct):'—'} over ${esc(intelPeriodLabel())}</span><span class="muted">Top ${r.count} current ${esc(r.pos)} values • selected-window baseline = 100</span></div>`).join('')}</div>`;
+  return`<div class="vh-index-grid">${rows.map(r=>{const idx=finiteMarketNumber(r.index),chg=finiteMarketNumber(r.change_pct);return`<div class="vh-index-card"><small>${esc(r.pos)} Index</small><b>${idx==null?'—':idx.toFixed(1)}</b><span class="${deltaClass(chg)}">${chg==null?'—':signedPct(chg)} over ${esc(intelPeriodLabel())}</span><span class="muted">Top ${r.count} current ${esc(r.pos)} values • selected-window baseline = 100</span></div>`}).join('')}</div>`;
 }
 function marketHeatMapMarkup(){
-  const key=intelDeltaKey(),rows=marketCache?.marketRows||[],positions=['QB','RB','WR','TE','IDP'],
+  const changes=intelRange()?.player_changes||[],positions=['QB','RB','WR','TE','IDP'],
     buckets=[['Top 100',1,100],['101–200',101,200],['201–300',201,300],['301+',301,Infinity]],cells=[];
   cells.push('<div class="vh-heat-head">Position</div>',...buckets.map(b=>`<div class="vh-heat-head">${b[0]}</div>`));
   for(const pos of positions){
     cells.push(`<div class="vh-heat-label">${pos}</div>`);
     for(const [label,min,max] of buckets){
-      const sample=rows.filter(r=>String(r.pos)===pos&&Number(r.overall)>=min&&Number(r.overall)<=max).map(r=>marketPctChange(r,key)).filter(Number.isFinite),
+      const sample=changes.filter(r=>String(r.pos)===pos&&Number(r.overall)>=min&&Number(r.overall)<=max&&Number.isFinite(Number(r.pct))).map(r=>Number(r.pct)),
         avg=sample.length?sample.reduce((a,b)=>a+b,0)/sample.length:null;
       cells.push(`<button type="button" class="vh-heat-cell ${deltaClass(avg)}" data-vh-heat-pos="${pos}" data-vh-heat-min="${min}" data-vh-heat-max="${Number.isFinite(max)?max:'INF'}" aria-label="View ${pos} ${label} players">${avg==null?'—':signedPct(avg)}<small>${sample.length} players • view ↗</small></button>`);
     }
   }
-  return`<div class="vh-card"><div class="vh-sub">Average player-value movement by position and overall-rank band • ${esc(intelPeriodLabel())}. Select any cell to inspect every player behind it.</div><div class="vh-heat-wrap"><div class="vh-heat-grid">${cells.join('')}</div></div></div>`;
+  return`<div class="vh-card"><div class="vh-sub">Average verified player-value movement by position and current overall-rank band • ${esc(intelPeriodLabel())}. Players use their earliest usable observation inside the selected window, so later-starting IDP history is included instead of shown as false 0.0%.</div><div class="vh-heat-wrap"><div class="vh-heat-grid">${cells.join('')}</div></div></div>`;
 }
 function openHeatMapModal(pos,min,max){
   closeMoverModal();
-  const key=intelDeltaKey(),lo=Number(min)||1,hi=String(max)==='INF'?Infinity:Number(max),rows=(marketCache?.marketRows||[])
+  const lo=Number(min)||1,hi=String(max)==='INF'?Infinity:Number(max),rows=(intelRange()?.player_changes||[])
     .filter(r=>String(r.pos)===String(pos)&&Number(r.overall)>=lo&&Number(r.overall)<=hi)
-    .map(r=>({...r,intelDelta:Number(r[key]),intelPct:marketPctChange(r,key)}))
-    .sort((a,b)=>Number(b.intelPct||0)-Number(a.intelPct||0)||Number(b.intelDelta||0)-Number(a.intelDelta||0)),
+    .slice().sort((a,b)=>Number(b.pct||0)-Number(a.pct||0)||Number(b.delta||0)-Number(a.delta||0)),
     band=hi===Infinity?`${lo}+`:lo===1&&hi===100?'Top 100':`${lo}–${hi}`,
-    body=rows.length?rows.map(r=>intelPlayerRow(r.id,`${r.pos} #${r.posRank} • Overall #${r.overall} • current value ${fmt(r.value)}`,`${intelPeriodLabel()} value Δ`,Number.isFinite(r.intelDelta)?signed(r.intelDelta):'—',deltaClass(r.intelDelta))).join(''):'<div class="vh-empty">No players in this heat-map cell.</div>',
+    body=rows.length?rows.map(r=>intelPlayerRow(r.id,`${r.pos} #${r.posRank} • Overall #${r.overall} • from ${fmt(r.from_value)}`,`${intelPeriodLabel()} value Δ`,signed(r.delta),deltaClass(r.delta))).join(''):'<div class="vh-empty">No verified player movement is available in this heat-map cell for the selected window.</div>',
     wrap=document.createElement('div');
-  wrap.id='vhMoverModal';wrap.className='vh-modal-backdrop';wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="${esc(pos)} ${esc(band)} heat map"><div class="vh-modal-head"><div><h3>${esc(pos)} • ${esc(band)}</h3><div class="vh-sub">${esc(intelPeriodLabel())} value movement • ${rows.length} players • sorted hottest to coolest</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-intel-list">${body}</div></div></div>`;
+  wrap.id='vhMoverModal';wrap.className='vh-modal-backdrop';wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="${esc(pos)} ${esc(band)} heat map"><div class="vh-modal-head"><div><h3>${esc(pos)} • ${esc(band)}</h3><div class="vh-sub">${esc(intelPeriodLabel())} verified value movement • ${rows.length} players • sorted hottest to coolest</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-intel-list">${body}</div></div></div>`;
   document.getElementById('vhLazy')?.appendChild(wrap);
 }
 function newHighLowMarkup(){
@@ -1220,23 +1225,23 @@ function newHighLowMarkup(){
 function momentumMarkup(){
   const signals=marketSignalCache?.signals||[],market=new Map((marketCache?.marketRows||[]).map(r=>[String(r.id),r])),key=intelDeltaKey();
   if(!signals.length)return'<div class="vh-card"><div class="vh-empty">Loading completed-week Fleeced signals…</div></div>';
-  const score=s=>{const perf=signalPerformanceDelta(s),move=Number(market.get(String(s.player_id))?.[key]);return Math.abs(Number(perf)||0)*4+Math.abs(Number(move)||0)/500+(s.confidence==='strong'?5:s.confidence==='established'?2:0)},
+  const score=s=>{const perf=signalPerformanceDelta(s),move=finiteMarketNumber(market.get(String(s.player_id))?.[key]);return Math.abs(perf||0)*4+Math.abs(move||0)/500+(s.confidence==='strong'?5:s.confidence==='established'?2:0)},
     up=signals.filter(s=>s.direction==='positive'||s.momentum==='hot').sort((a,b)=>score(b)-score(a)).slice(0,8),
     down=signals.filter(s=>s.direction==='negative'||s.momentum==='cold').sort((a,b)=>score(b)-score(a)).slice(0,8);
-  const rows=(list,positive)=>list.length?list.map(sig=>{const m=market.get(String(sig.player_id)),move=Number(m?.[key]),perf=signalPerformanceDelta(sig),sub=`${sig.reporter_label||sig.label} • ${signalMomentumLabel(sig.momentum)} • ${sig.confidence}${Number.isFinite(perf)?` • underlying ${perf>=0?'+':''}${perf.toFixed(2)} PPG`:''}`;return intelPlayerRow(sig.player_id,sub,`${intelPeriodLabel()} value Δ`,Number.isFinite(move)?signed(move):'—',deltaClass(move))}).join(''):'<div class="vh-empty">No qualified completed-week signals in this direction yet.</div>';
+  const rows=(list,positive)=>list.length?list.map(sig=>{const m=market.get(String(sig.player_id)),move=finiteMarketNumber(m?.[key]),perf=signalPerformanceDelta(sig),sub=`${sig.reporter_label||sig.label} • ${signalMomentumLabel(sig.momentum)} • ${sig.confidence}${Number.isFinite(perf)?` • underlying ${perf>=0?'+':''}${perf.toFixed(2)} PPG`:''}`;return intelPlayerRow(sig.player_id,sub,`${intelPeriodLabel()} value Δ`,Number.isFinite(move)?signed(move):'—',deltaClass(move))}).join(''):'<div class="vh-empty">No qualified completed-week signals in this direction yet.</div>';
   return`<div class="vh-intel-grid"><div class="vh-card"><h3>Heating Up</h3><div class="vh-sub">Positive Fleeced states and hot recent-form signals. The right-side number is explicitly the selected-window <b>market value change</b>; underlying PPG evidence is shown beneath the player.</div><div class="vh-intel-list">${rows(up,true)}</div></div><div class="vh-card"><h3>Cooling Down</h3><div class="vh-sub">Negative Fleeced states and cold recent-form signals. A player can cool statistically while value still rises—the two measures are intentionally shown separately.</div><div class="vh-intel-list">${rows(down,false)}</div></div></div>`;
 }
 function signalTransitionRows(){
   const all=marketSignalCache?.transitions||[],through=Number(marketSignalCache?.through_week)||0,weeks=({'1D':1,'7D':1,'30D':4,'90D':13,'1Y':99,'ALL':99})[marketIntelPeriod]||1,floor=Math.max(1,through-weeks+1);
-  return all.filter(s=>Number(s.week)>=floor&&marketSignalDirection(s.previous_state)&&marketSignalDirection(s.state)&&marketSignalDirection(s.previous_state)!==marketSignalDirection(s.state));
+  return all.filter(s=>{if(Number(s.week)<floor)return false;const before=marketSignalDirection(s.previous_state),after=marketSignalDirection(s.state);return before!==after&&(before!==0||after!==0)});
 }
 function reversalsMarkup(){
   const key=intelDeltaKey(),comparePeriod=marketIntelPeriod==='1D'?'7D':marketIntelPeriod,compareKey=intelDeltaKey(comparePeriod),marketRows=marketCache?.marketRows||[],
-    signalRows=signalTransitionRows().slice().sort((a,b)=>Number(b.week)-Number(a.week)).slice(0,8),
+    signalRows=signalTransitionRows().slice().sort((a,b)=>Math.abs(marketSignalDirection(b.state)-marketSignalDirection(b.previous_state))-Math.abs(marketSignalDirection(a.state)-marketSignalDirection(a.previous_state))||Number(b.week)-Number(a.week)).slice(0,8),
     priceRows=marketRows.filter(r=>Number(r.delta1)&&Number(r[compareKey])&&Math.sign(Number(r.delta1))!==Math.sign(Number(r[compareKey]))).slice().sort((a,b)=>Math.abs(Number(b.delta1))-Math.abs(Number(a.delta1))).slice(0,8),
-    signalList=signalRows.length?signalRows.map(sig=>intelPlayerRow(sig.player_id,`${sig.previous_state} → ${sig.state} • ${sig.season} Week ${sig.week}`,'New state',sig.label,signalTone(sig.state))).join(''):'<div class="vh-empty">No positive↔negative Fleeced state reversals in this signal window.</div>',
+    signalList=signalRows.length?signalRows.map(sig=>intelPlayerRow(sig.player_id,`${sig.previous_state} → ${sig.state} • ${sig.season} Week ${sig.week}`,'New state',sig.label,signalTone(sig.state))).join(''):'<div class="vh-empty">No meaningful Fleeced direction changes in this signal window.</div>',
     priceList=priceRows.length?priceRows.map(r=>intelPlayerRow(r.id,`1D ${signed(r.delta1)} vs ${comparePeriod} ${signed(r[compareKey])}`,'1D reversal',signed(r.delta1),deltaClass(r.delta1))).join(''):'<div class="vh-empty">No 1-day value reversals against the selected broader trend.</div>';
-  return`<div class="vh-intel-grid"><div class="vh-card"><h3>Signal Reversals</h3><div class="vh-sub">Completed-week Fleeced states that flipped between positive and negative inside the selected window.</div><div class="vh-intel-list">${signalList}</div></div><div class="vh-card"><h3>Value Reversals</h3><div class="vh-sub">1-day value movement running opposite the ${esc(comparePeriod)} direction.</div><div class="vh-intel-list">${priceList}</div></div></div>`;
+  return`<div class="vh-intel-grid"><div class="vh-card"><h3>Signal Reversals</h3><div class="vh-sub">Completed-week Fleeced directional state changes, including recoveries into positive territory and deteriorations out of it.</div><div class="vh-intel-list">${signalList}</div></div><div class="vh-card"><h3>Value Reversals</h3><div class="vh-sub">1-day value movement running opposite the ${esc(comparePeriod)} direction.</div><div class="vh-intel-list">${priceList}</div></div></div>`;
 }
 function volatilityMarkup(){
   const data=intelRange(),rows=(data?.volatility||[]).filter(r=>Number(r.observations)>=2).slice(0,12),
@@ -1269,18 +1274,21 @@ function categoryLeadersMarkup(){
   const m=marketCache||{},rows=m.marketRows||[],p=m.periods?.[marketIntelPeriod]||{},signals=marketSignalCache?.signals||[],range=intelRange();
   if(!rows.length)return'<div class="vh-card"><div class="vh-empty">Market leaders unavailable.</div></div>';
   const top=rows.slice().sort((a,b)=>Number(b.value)-Number(a.value)),cards=[];
-  const add=(label,id,detail)=>cards.push(id?`<button type="button" class="vh-category-card vh-player-link" data-vh-player="${esc(id)}"><small>${esc(label)}</small><b>${esc(playerName(id))}</b><span>${esc(detail||'')}</span></button>`:`<div class="vh-category-card vh-empty-card"><small>${esc(label)}</small><b>No qualified player</b><span>Waiting for enough evidence in this window.</span></div>`);
-  add('Most Valuable',top[0]?.id,`Value ${fmt(top[0]?.value)} • Overall #${top[0]?.overall}`);
-  for(const pos of ['QB','RB','WR','TE','IDP']){const r=top.find(x=>String(x.pos)===pos);add(`Top ${pos}`,r?.id,r?`Value ${fmt(r.value)} • ${pos} #${r.posRank}`:'')}
+  const add=(label,id,detail)=>{if(!id){cards.push(`<div class="vh-category-card vh-empty-card"><small>${esc(label)}</small><b>No qualified player</b><span>Waiting for enough evidence in this window.</span></div>`);return}
+    const meta=livePlayerMeta(id),identity=[meta.pos||'—',meta.nfl||'FA',`Value ${fmt(meta.value)}`,detail].filter(Boolean).join(' • ');
+    cards.push(`<button type="button" class="vh-category-card vh-player-link" data-vh-player="${esc(id)}"><small>${esc(label)}</small><b>${esc(playerName(id))}</b><span>${esc(identity)}</span></button>`)};
+  add('Most Valuable',top[0]?.id,`Overall #${top[0]?.overall}`);
+  for(const pos of ['QB','RB','WR','TE','IDP']){const r=top.find(x=>String(x.pos)===pos);add(`Top ${pos}`,r?.id,r?`${pos} #${r.posRank}`:'')}
   const gain=p.valueRisers?.[0],rank=p.rankRisers?.[0];add(`Biggest ${marketIntelPeriod} Gainer`,gain?.id,gain?`${signed(gain.delta)} value`:'');add(`Biggest ${marketIntelPeriod} Rank Riser`,rank?.id,rank?`+${rank.overallDelta} overall ranks`:'');
-  const breakoutScore=s=>Math.max(0,Number(signalPerformanceDelta(s))||0)*5+(s.confidence==='strong'?6:s.confidence==='established'?3:0),
-    offensive=signals.filter(x=>['QB','RB','WR','TE'].includes(String(x.position))&&['breakout','emerging'].includes(String(x.state))).sort((a,b)=>breakoutScore(b)-breakoutScore(a))[0],
-    defensive=signals.filter(x=>!['QB','RB','WR','TE'].includes(String(x.position))&&['breakout','emerging'].includes(String(x.state))).sort((a,b)=>breakoutScore(b)-breakoutScore(a))[0];
+  const breakoutScore=sig=>{const e=sig?.evidence||{},perf=signalPerformanceDelta(sig);return (sig.state==='breakout'?100:60)+(e.developmental_breakout?30:0)+(e.strong_two_week_rise?24:0)+(e.role_lift?18:0)+(sig.confidence==='strong'?14:sig.confidence==='established'?7:0)+Math.max(0,perf||0)*6},
+    stableSort=(a,b)=>breakoutScore(b)-breakoutScore(a)||String(a.player_id).localeCompare(String(b.player_id)),
+    offensive=signals.filter(x=>['QB','RB','WR','TE'].includes(String(x.position))&&['breakout','emerging'].includes(String(x.state))).sort(stableSort)[0],
+    defensive=signals.filter(x=>!['QB','RB','WR','TE'].includes(String(x.position))&&['breakout','emerging'].includes(String(x.state))).sort(stableSort)[0];
   add('Offensive Breakout Watch',offensive?.player_id,offensive?`${offensive.reporter_label||offensive.label} • ${offensive.confidence}`:'');
   add('Defensive Breakout Watch',defensive?.player_id,defensive?`${defensive.reporter_label||defensive.label} • ${defensive.confidence}`:'');
-  const rebound=signalTransitionRows().filter(x=>marketSignalDirection(x.previous_state)<0&&marketSignalDirection(x.state)>0).sort((a,b)=>Number(b.week)-Number(a.week)||breakoutScore(b)-breakoutScore(a))[0];
+  const rebound=signalTransitionRows().filter(x=>marketSignalDirection(x.state)>marketSignalDirection(x.previous_state)).sort((a,b)=>(marketSignalDirection(b.state)-marketSignalDirection(b.previous_state))-(marketSignalDirection(a.state)-marketSignalDirection(a.previous_state))||breakoutScore(b)-breakoutScore(a)||Number(b.week)-Number(a.week))[0];
   add('Strongest Rebound',rebound?.player_id,rebound?`${rebound.previous_state} → ${rebound.state} • Week ${rebound.week}`:'');
-  const drawdown=(range?.volatility||[]).filter(x=>Number.isFinite(Number(x.drawdown_pct))&&Number(x.drawdown_pct)<0).sort((a,b)=>Number(a.drawdown_pct)-Number(b.drawdown_pct))[0];
+  const drawdown=(range?.volatility||[]).filter(x=>finiteMarketNumber(x.drawdown_pct)!=null&&Number(x.drawdown_pct)<0).sort((a,b)=>Number(a.drawdown_pct)-Number(b.drawdown_pct))[0];
   add('Deepest Pullback',drawdown?.id,drawdown?`${Number(drawdown.drawdown_pct).toFixed(1)}% from selected-window high`:'');
   return`<div class="vh-category-grid">${cards.join('')}</div>`;
 }

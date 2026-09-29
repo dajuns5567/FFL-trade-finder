@@ -45,7 +45,7 @@ for(const t of revisedTeams){
 
  const ps=paragraphs(t),text=ps.join(' '),sentences=sentenceParts(text);
  assert.deepEqual(t?.inquirer_article?.paragraphs||[],ps,'Flattened Week 2 article body must exactly match rewritten section prose for '+t.team_name);
- assert(ps.length<=38,'Week 2 rewrite became overstuffed for '+t.team_name+': '+ps.length+' paragraphs');
+ assert(ps.length<=45,'Week 2 rewrite became overstuffed for '+t.team_name+': '+ps.length+' paragraphs');
  assert(wordCount(text)>=850,'Week 2 article is still too short for the deeper reporter treatment: '+t.team_name+' -> '+wordCount(text)+' words');
  assert(sentences.filter(s=>VOICE_RE.test(s)).length>=7,'Too little explicit reporter/fan voice in '+t.team_name);
  assert(!PLAYER_SUPPORT_RE.test(text),'Player-support/solo-effort motif survived Week 2 rewrite for '+t.team_name);
@@ -58,13 +58,13 @@ for(const t of revisedTeams){
  const lede=(sections.find(s=>String(s?.kind||'')==='lede')?.paragraphs||[]),scoreToken=Number(t.points).toFixed(1)+'–'+Number(t.opponent_points).toFixed(1);
  assert.equal(lede.filter(p=>String(p).includes(scoreToken)).length,1,'Current Week 2 result must be stated exactly once in the lede for '+t.team_name);
  assert((byKind.lede||0)>=3&&(byKind.lede||0)<=5,'Lede must be developed without repeating the result for '+t.team_name);
- assert((byKind.players||0)===9,'Player section must give three featured players separate fact/reaction/context treatment for '+t.team_name);
+ assert((byKind.players||0)===12,'Player section must give three featured players separate fact/reaction/context/trend treatment for '+t.team_name);
  assert((byKind.management||0)>=2&&(byKind.management||0)<=4,'Management section must be developed without repetition for '+t.team_name);
  assert((byKind['cool-throne']||0)<=2,'Cool Throne is overstuffed for '+t.team_name);
  assert((byKind.value||0)<=3,'Value section is overstuffed for '+t.team_name);
- assert((byKind.sentiment||0)===4,'Fan sentiment must contain four distinct, substantive reactions for '+t.team_name);
+ assert((byKind.sentiment||0)===5,'Fan sentiment must contain five distinct, substantive reactions for '+t.team_name);
  const sentimentText=(sections.find(s=>String(s?.kind||'')==='sentiment')?.paragraphs||[]).join(' ');
- assert(wordCount(sentimentText)>=80,'Fan sentiment is still too thin for '+t.team_name+': '+wordCount(sentimentText)+' words');
+ assert(wordCount(sentimentText)>=105,'Fan sentiment is still too thin for '+t.team_name+': '+wordCount(sentimentText)+' words');
  assert((byKind.outlook||0)>=3&&(byKind.outlook||0)<=6,'Outlook must be developed without overstuffing for '+t.team_name);
 
  const id=String(t?.inquirer_article?.reporter?.id||'');
@@ -77,7 +77,7 @@ assert(aints,'New Orleans Week 2 article not found');
 const aintsText=articleText(aints),aintsParagraphs=paragraphs(aints);
 assert(!/one-man rescue mission|one-player magic trick|enough production elsewhere|third scorer/i.test(aintsText),'New Orleans still contains the exact support/solo language called out by the live audit');
 assert(/Dallas Turner/i.test(aintsText)&&/Breakout Watch/i.test(aintsText),'Dallas Turner must be discussed naturally in the context of his verified Fleeced Breakout Watch signal');
-assert(aintsParagraphs.length<=38&&wordCount(aintsText)>=850,'New Orleans article was not materially rebuilt with enough distinct reporting depth');
+assert(aintsParagraphs.length<=45&&wordCount(aintsText)>=850,'New Orleans article was not materially rebuilt with enough distinct reporting depth');
 
 const chiefs=revisedTeams.find(t=>/kansas city chiefs/i.test(String(t?.team_name||'')));
 assert(chiefs,'Kansas City Week 2 article not found');

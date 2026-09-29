@@ -366,9 +366,40 @@ function outlookLine(t,id){
  };
  return pick(banks[id]||banks['walter-mercer'],seed);
 }
+function teamThesisLine(t,id){
+ const tm=String(t.team_name||'This team'),rec=record(t),seed=key(t)+'|team-thesis|'+id;
+ const banks={
+  'walter-mercer':[
+   'Two weeks in, '+tm+' has one job: make the useful parts repeatable enough that I can stop calling every good Sunday temporary.',
+   'The '+rec+' start tells me what happened. What I want from '+tm+' now is a reliable reason to believe the same strengths survive another opponent.',
+   tm+' has given us two weeks of information. Week 3 should tell us whether the best parts are habits or merely pleasant accidents.',
+   'My standard for '+tm+' is getting simpler: keep the things that worked, correct the things that did not, and make me find a new complaint.'
+  ],
+  'tess-delaney':[
+   'After two weeks, '+tm+' has developed an identity. I would now like that identity to become convincing rather than merely interesting.',
+   'The '+rec+' start has given '+tm+' enough personality to be judged properly. Week 3 should provide either confirmation or a much more entertaining crisis.',
+   tm+' has spent two Sundays making claims about what it is. The next game is where those claims either become attractive facts or embarrassing fiction.',
+   'What I want from '+tm+' next is not perfection. I want enough conviction that the team stops making uncertainty look like its most consistent trait.'
+  ],
+  'mack-hollis':[
+   'Two weeks in, '+tm+' has told us what kind of team it thinks it is. Week 3 gets to decide whether that story survives contact with another scoreboard.',
+   'The '+rec+' start gives '+tm+' exactly one assignment: make the good stuff repeat and make the stupid stuff stop happening.',
+   tm+' has had two Sundays to introduce itself. The next one should tell us whether we met a real identity or just a temporary collection of weird events.',
+   'My Week 3 request for '+tm+' is simple: do the competent things again and retire at least one of the reasons people have been yelling.'
+  ],
+  'nora-voss':[
+   'Two weeks of data is not enough for certainty, but it is enough for a working theory about '+tm+'. Week 3 should test that theory against the same weak points already visible.',
+   'The '+rec+' start gives '+tm+' a clearer burden now: prove the strengths are repeatable and show that management understands the weaknesses.',
+   tm+' has produced enough information to move beyond first impressions. The next game should tell us which Week 2 traits are structural and which were matchup noise.',
+   'The useful question for '+tm+' after two weeks is no longer “what happened?” It is “which parts are likely to happen again?”'
+  ]
+ };
+ return pick(banks[id]||banks['walter-mercer'],seed);
+}
+
 function buildLede(t,a,id){
- const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),score=facts.find(isScoreFact),week1=facts.find(x=>isWeek1Fact(x)&&x!==score),lines=ledeLines(t,id);
- return uniq([score,lines[0],week1,lines[1],lines[2]]).filter(Boolean).slice(0,5);
+ const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),score=facts.find(isScoreFact),week1=facts.find(x=>isWeek1Fact(x)&&x!==score),lines=ledeLines(t,id),thesis=teamThesisLine(t,id);
+ return uniq([score,lines[0],week1,lines[1],lines[2],thesis]).filter(Boolean).slice(0,6);
 }
 
 function topThreeStarters(t){return(t?.starter_details||[]).slice(0,3).filter(p=>Number.isFinite(Number(p?.points)))}

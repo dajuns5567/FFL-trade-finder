@@ -267,14 +267,38 @@ function buildHotSeat(t,a,id){
  return uniq([first,line]).filter(Boolean).slice(0,2);
 }
 function buildSentiment(t,id){return sentimentLines(t,id)}
+function scheduleStretchLine(t,id){
+ const up=(t?.upcoming_opponents||[]).slice().sort((a,b)=>Number(a?.week)-Number(b?.week)),later=up.slice(1,3);
+ if(!later.length)return'';
+ const names=later.map(x=>String(x?.team_name||'the next opponent')).filter(Boolean),joined=names.length===1?names[0]:names.slice(0,-1).join(', ')+' and '+names.at(-1),seed=key(t)+'|stretch|'+id;
+ const banks={
+  'walter-mercer':[
+   'After Week 3, '+joined+' are waiting. Bank the upcoming game and I can complain about that difficulty level later instead of calling it recovery work.',
+   'Week 3 comes first; then '+joined+'. Handle the game in front of you and the difficulty level behind it becomes planning instead of damage control.'
+  ],
+  'tess-delaney':[
+   'After Week 3 come '+joined+'. Win now and that difficulty level becomes suspense; lose and it becomes penance.',
+   'Week 3 gets the stage first, with '+joined+' waiting behind it. Bank this one and the difficulty level of the next stretch feels considerably less vulgar.'
+  ],
+  'mack-hollis':[
+   'After Week 3: '+joined+'. Bank the next win and whatever difficulty level follows becomes their problem instead of tomorrow’s apology headline.',
+   'Week 3 is the first headline; '+joined+' are the next two. Handle this one and the difficulty level behind it does not get to become a crisis graphic.'
+  ],
+  'nora-voss':[
+   'After Week 3, the file moves to '+joined+'. Win now; the difficulty level of that stretch is easier to investigate from a position of leverage.',
+   'Week 3 is the active case, with '+joined+' queued behind it. Bank the result now and the difficulty level of the next stretch cannot be used as an alibi.'
+  ]
+ };
+ return pick(banks[id]||banks['walter-mercer'],seed);
+}
 function buildOutlook(t,a,id){
  const sec=sectionOf(a,'outlook'),facts=factualParagraphs(sec);
  const projection=facts.find(isProjectionFact);
  const standings=facts.find(isStandingsFact);
  const injury=facts.find(isInjuryFact);
  const benchmark=facts.find(isOpponentBenchmark);
- const schedule=facts.find(isScheduleFact);
- const selected=[outlookLine(t,id),projection,standings,injury,benchmark,schedule].filter(Boolean);
+ const stretch=scheduleStretchLine(t,id)||facts.find(isScheduleFact);
+ const selected=[projection,standings,injury,benchmark,stretch,outlookLine(t,id)].filter(Boolean);
  return uniq(selected).slice(0,6);
 }
 function buildGeneric(sec){

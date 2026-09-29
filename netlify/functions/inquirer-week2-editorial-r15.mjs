@@ -400,12 +400,61 @@ function chooseRecap(ps,id){
  }
  return rows.slice(0,5);
 }
-function reviseOverview(o){
+function playerStatusLabel(p){
+ const pos=String(p?.position||'').toUpperCase(),years=Number(p?.years_exp),age=Number(p?.age),games=Number(p?.prior_season_games)||0,prior=Number(p?.prior_season_avg),season=Number(p?.season_avg),
+  defensive=/^(?:DL|DE|DT|NT|EDGE|LB|ILB|OLB|DB|CB|S|FS|SS|IDP)$/.test(pos),star=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13,
+  early=((Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)));
+ if(games>=8&&Number.isFinite(prior)&&prior>=star*1.2)return'star';
+ if(early&&games>0&&Number.isFinite(prior)&&Number.isFinite(season)&&season>=Math.max(prior*1.35,prior+2.5))return'breakout';
+ if((Number.isFinite(years)&&years===0)||(games===0&&Number.isFinite(age)&&age<=23))return'rookie';
+ if((Number.isFinite(years)&&years>=5)||(Number.isFinite(age)&&age>=28))return'veteran';
+ if(games>=8&&Number.isFinite(prior)&&prior>=star*.72)return'reliable';
+ return'';
+}
+function recapCategoryLines(teams){
+ const seen=new Set(),rows=[];
+ for(const t of teams||[])for(const p of t?.starter_details||[]){
+  const id=String(p?.id||p?.name||'');if(!id||seen.has(id))continue;seen.add(id);
+  const category=playerStatusLabel(p),pts=Number(p?.points);if(!category||!Number.isFinite(pts))continue;
+  rows.push({p,category,pts});
+ }
+ rows.sort((a,b)=>b.pts-a.pts||String(a.p?.name||'').localeCompare(String(b.p?.name||'')));
+ return rows.slice(0,3).map(({p,category,pts},i)=>{
+  const name=String(p?.name||'the player'),score=one(pts),seed='recap-category|'+name+'|'+category+'|'+i;
+  const banks={
+   star:[
+    'Star '+name+' put '+score+' on the board. I would like to pretend this was surprising, but that would require lying to the readership.',
+    name+' is a star and scored '+score+'. Rivals may file complaints with the usual department: nowhere.'
+   ],
+   breakout:[
+    'Breakout '+name+' posted '+score+', which is a rude way to make last year’s expectations look obsolete.',
+    name+' has earned the breakout conversation with '+score+'. Skepticism is still allowed; it just has more paperwork now.'
+   ],
+   rookie:[
+    'Rookie '+name+' delivered '+score+' and apparently skipped the part where rookies are supposed to ask permission.',
+    name+' is a rookie with '+score+' already attached to the résumé. I recommend veterans take the hint personally.'
+   ],
+   veteran:[
+    'Veteran '+name+' produced '+score+', so the retirement jokes can remain in drafts for another week.',
+    name+' is a veteran and still found '+score+' points worth of reasons to keep the obituary writers unemployed.'
+   ],
+   reliable:[
+    'Reliable '+name+' gave us '+score+', the sort of useful work fantasy managers only remember to appreciate when it disappears.',
+    name+' remains reliable at '+score+'. Not glamorous, perhaps, but neither is paying the electric bill and I still recommend doing it.'
+   ]
+  };
+  return pick(banks[category],seed);
+ });
+}
+
+function reviseOverview(o,teams){
  if(!o)return o;
+ const categoryLines=recapCategoryLines(teams);
  o.sections=(o.sections||[]).map((s,i)=>{
   const id=String(s?.reporter?.id||''),seed='recap|'+id+'|'+i;
   const chosen=chooseRecap(s.paragraphs,id);
-  const paragraphs=uniq([...chosen,recapReaction(id,seed,0),recapReaction(id,seed,1)]).slice(0,10);
+  const core=id==='walter-mercer'?[...chosen.slice(0,5),...categoryLines]:chosen;
+  const paragraphs=uniq([...core,recapReaction(id,seed,0),recapReaction(id,seed,1)]).slice(0,10);
   return{...s,paragraphs};
  });
  if(Array.isArray(o.hot_takes)){
@@ -424,7 +473,7 @@ export function applyWeek2EditorialR16(raw){
  if(!raw||Number(raw.season)!==2026||Number(raw.week)!==2)return raw;
  const out=clone(raw);
  out.teams=(out.teams||[]).map(reviseTeam);
- out.league_overview=reviseOverview(out.league_overview);
+ out.league_overview=reviseOverview(out.league_overview,out.teams);
  out.editorial_revision=WEEK2_EDITORIAL_REVISION;
  out.voice_revision='week2-r16';
  return out;

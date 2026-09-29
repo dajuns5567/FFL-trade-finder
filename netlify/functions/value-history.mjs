@@ -759,7 +759,7 @@ function marketInsightRange(snaps,label){
   }
   new_highs.sort((a,b)=>b.gain-a.gain||b.value-a.value);new_lows.sort((a,b)=>a.drop-b.drop||b.value-a.value);
   volatility.sort((a,b)=>Number(b.range_pct||0)-Number(a.range_pct||0)||b.range-a.range);
-  return{label,available:true,snapshot_count:ordered.length,tracking_since:first.t,through:latest.t,position_indexes,market_volatility,position_volatility,player_changes,new_highs:new_highs.slice(0,50),new_lows:new_lows.slice(0,50),volatility:volatility.slice(0,100)};
+  return{label,available:true,snapshot_count:ordered.length,tracking_since:first.t,through:latest.t,position_indexes,market_volatility,position_volatility,player_changes,new_highs:new_highs.slice(0,50),new_lows:new_lows.slice(0,50),volatility};
 }
 function marketInsightsFromSnapshots(snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));

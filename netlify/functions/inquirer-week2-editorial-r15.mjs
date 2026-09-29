@@ -180,7 +180,7 @@ function reviseParas(ps,t,id,state){
  }
  return out
 }
-function add(sections,kind,text){const s=(sections||[]).find(x=>String(x?.kind||'')===kind);if(s&&Array.isArray(s.paragraphs)&&text)s.paragraphs.push(text)}
+function add(sections,kind,text){const s=(sections||[]).find(x=>String(x?.kind||'')===kind);if(!s||!Array.isArray(s.paragraphs)||!text)return;if(kind==='outlook')s.paragraphs.unshift(text);else s.paragraphs.push(text)}
 
 function reviseTeam(t){
  const a=t?.inquirer_article;if(!a)return t;

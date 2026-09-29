@@ -461,14 +461,6 @@ function buildPlayers(t,a,id){
  return uniq(out).slice(0,9);
 }
 
-function buildPlayers(t,a,id){
- const top=topThreeStarters(t),out=[];
- for(const [i,p] of top.entries()){
-  out.push(playerStatParagraph(t,p));
-  out.push(playerAnalysisParagraph(t,p,id,i));
- }
- return uniq(out).slice(0,6);
-}
 function buildManagement(t,a,id){
  const sec=sectionOf(a,'management'),facts=factualParagraphs(sec);
  const bench=facts.find(isBenchFact),tx=facts.find(isTransactionFact),reaction=managementLine(t,id),follow=managementFollowupLine(t,id);

@@ -44,6 +44,7 @@ for(const t of revisedTeams){
  assert.equal(t?.inquirer_article?.voice_revision,'week2-r16','Article voice revision missing for '+t.team_name);
 
  const ps=paragraphs(t),text=ps.join(' '),sentences=sentenceParts(text);
+ assert(ps.every(p=>typeof p==='string'),'Every Week 2 article paragraph must render as prose, not an array/object, for '+t.team_name);
  assert.deepEqual(t?.inquirer_article?.paragraphs||[],ps,'Flattened Week 2 article body must exactly match rewritten section prose for '+t.team_name);
  assert(ps.length<=45,'Week 2 rewrite became overstuffed for '+t.team_name+': '+ps.length+' paragraphs');
  assert(wordCount(text)>=850,'Week 2 article is still too short for the deeper reporter treatment: '+t.team_name+' -> '+wordCount(text)+' words');
@@ -65,6 +66,7 @@ for(const t of revisedTeams){
  assert((byKind.sentiment||0)===6,'Fan sentiment must contain six distinct, substantive reactions for '+t.team_name);
  const sentimentText=(sections.find(s=>String(s?.kind||'')==='sentiment')?.paragraphs||[]).join(' ');
  assert(wordCount(sentimentText)>=120,'Fan sentiment is still too thin for '+t.team_name+': '+wordCount(sentimentText)+' words');
+ assert.doesNotMatch(sentimentText,/\b(?:projection(?: gap)?|sentiment model|rating|meter|temperature|model output|process instead)\b/i,'Fan Sentiment must describe fans and football, not narrate a model/projection, for '+t.team_name);
  assert((byKind.outlook||0)>=3&&(byKind.outlook||0)<=6,'Outlook must be developed without overstuffing for '+t.team_name);
 
  const id=String(t?.inquirer_article?.reporter?.id||'');

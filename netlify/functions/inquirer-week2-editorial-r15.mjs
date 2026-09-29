@@ -69,7 +69,7 @@ function ledeLines(t,id){
   ]:[
    tm+' lost. The rival memes were uploaded before the lineup screen finished refreshing.',
    pts+'–'+opp+' is the kind of score that makes a back-page editor cancel dinner plans.',
-   'Bad result, loud consequences. '+'The record for '+tm+' is '+rec+' and the group chat has already appointed itself special counsel.'
+   'Bad result, loud consequences. '+'The record for '+tm+' is '+rec+' and the rival thread has already appointed itself special counsel.'
   ],
   'nora-voss':won?[
    tm+' won, so I have placed the '+rec+' record into evidence and invited the rivals to explain why it supposedly does not count.',
@@ -106,7 +106,7 @@ function playerLines(t,id){
   ],
   'nora-voss':[
    hi.name+' posted '+hp+'. That is not a theory; that is evidence with a decimal point.',
-   hp+' from '+hi.name+' survives cross-examination. I have no objection.',
+   hp+' from '+hi.name+' survives scrutiny. I have no objection.',
    hi.name+' gave us '+hp+' and removed the need for creative interpretation. The exhibit speaks for itself.'
   ]
  }[id]||[];
@@ -189,7 +189,7 @@ function sentimentLines(t,id){
    'The fans are loud, the memes are positive, and rival chats are being entered without permission. Correct.',
    tm+' supporters have chosen obnoxiousness. I endorse the decision until further notice.'
   ]:[
-   'The group chat is furious and productive. The jokes are improving faster than the mood.',
+   'The rival thread is furious and productive. The jokes are improving faster than the mood.',
    tm+' fans have switched from analysis to captions. Nobody involved should expect mercy.'
   ],
   'nora-voss':won?[
@@ -208,23 +208,23 @@ function outlookLine(t,id){
  const tm=String(t.team_name||'This team'),next=String(t.next_opponent_name||'the next opponent'),seed=key(t)+'|outlook|'+id;
  const banks={
   'walter-mercer':[
-   next+' is next. I would like one week in which the same complaint does not walk back through the door wearing a new score.',
-   tm+' gets '+next+' next. Win and I will loosen the grip on my skepticism by perhaps three percent.',
+   'Next up: '+next+'. I would like one week in which the same complaint does not walk back through the door wearing a new score.',
+   'The next opponent for '+tm+' is '+next+'. Win and I will loosen the grip on my skepticism by perhaps three percent.',
    'Week 3 brings '+next+'. Good. Another chance for the roster to make me sound unnecessarily worried.'
   ],
   'tess-delaney':[
-   next+' gets the next appointment. I want conviction, preferably with enough drama to justify the wardrobe.',
+   'The next appointment belongs to '+next+'. I want conviction, preferably with enough drama to justify the wardrobe.',
    tm+' meets '+next+' next, and I am already emotionally overcommitted to an outcome that has not happened.',
-   'Week 3 offers '+next+', which means today’s beautiful theory has seven days before cross-examination by reality.'
+   'Week 3 offers '+next+', which means today’s beautiful theory has seven days before reality gets a vote.'
   ],
   'mack-hollis':[
-   next+' is next. Win and the headline grows. Lose and I am buying more red ink.',
-   tm+' gets '+next+' next. Fix what was ugly, keep what was loud, ruin somebody else’s group chat.',
+   'Next up is '+next+'. Win and the headline grows. Lose and I am buying more red ink.',
+   'The next opponent for '+tm+' is '+next+'. Fix what was ugly, keep what was loud, ruin somebody else’s rival thread.',
    'Week 3 brings '+next+'. Excellent. I was worried we might have to behave normally for a few days.'
   ],
   'nora-voss':[
-   next+' is the next file. If the same flaw appears again, it stops being an incident and becomes a pattern.',
-   tm+' gets '+next+' next. I have left the Week 2 evidence on the desk for comparison.',
+   'The next file is '+next+'. If the same flaw appears again, it stops being an incident and becomes a pattern.',
+   'The next opponent for '+tm+' is '+next+'. I have left the Week 2 evidence on the desk for comparison.',
    'Week 3 brings '+next+'. Management now gets a chance to make the most annoying exhibit irrelevant.'
   ]
  };
@@ -263,7 +263,7 @@ function playerAnalysisParagraph(t,p,id,slot){
   ],
   'nora-voss':[
    name+' posted '+score+'. I have checked the number, entered it into evidence and found no reason to soften it.',
-   score+' from '+name+' survives cross-examination. The file stays open because fantasy football enjoys ruining clean conclusions.',
+   score+' from '+name+' survives scrutiny. The file stays open because fantasy football enjoys ruining clean conclusions.',
    name+' gave us '+score+'. That is evidence, not mood, and I am happy to let the exhibit do some work.'
   ]
  };
@@ -312,7 +312,7 @@ function buildCoolThrone(t,id){
     score+' from '+name+' deserves applause without a corrective paragraph attached. I find the freedom intoxicating.'
    ],
    'mack-hollis':[
-    name+' gets the friendly headline after '+score+'. Save the angry font for somebody who earned it.',
+    name+' gets the friendly headline after '+score+'. Save the red ink for somebody who earned it.',
     score+' from '+name+' is the kind of number that buys a full week of shameless screenshots.'
    ],
    'nora-voss':[

@@ -30,7 +30,9 @@ const wordCount=s=>(String(s||'').match(/\b[\w’'-]+\b/g)||[]).length;
 const PLAYER_SUPPORT_RE=/\b(?:supporting cast|supporting score|supporting production|secondary scoring|second real scorer|second dependable foothold|second useful jolt|second punch|second answer|second scorer|third scorer|third score|third reason|one more working outlet|another usable starter|another meaningful score|rest of (?:the )?(?:lineup|roster)|whole lineup|one[- ]man|one[- ]player|solo effort|solo act|solo show|rescue mission|magic trick|lonely haymaker|did not have to .* alone|didn't have to .* alone|kept .* from (?:becoming|being)|prevented .* from (?:becoming|being)|top[- ]heavy|more than one emergency|same stars doing all the lifting|one guy screaming|backup singers|enough additional scoring|enough production elsewhere|cover every gap|the next answer is support|support behind the lead score)\b/i;
 const OLD_SCAFFOLD_RE=/\b(?:gave Week 2 the stronger jolt|put a brighter number on the second Sunday|put a quieter number on the second Sunday|turned the Week 2 volume up|usable top end|the issue is not the stars|there is nowhere to hide a September result|worth keeping beside the Week 2 stars|management chose this version of the roster|the lineup that happened to score Sunday)\b/i;
 const SHARED_OUTLOOK_RE=/\b(?:take a head-to-head bite out of|instead of hoping another result moves the same playoff route|not alone in a crowded AFC EAST race|rest of the division reads)\b/i;
-const VOICE_RE=/\b(?:I\b|me\b|my\b|fans?|supporters?|annoyed|annoying|joy|furious|hope|mood|parade|meme|group chat|screenshot|joke|complaint|reckless|unbearable|dramatic|suspicious|ridiculous|beautiful|hostile|receipt|rivals?|evidence|exhibit|headline|back page|therapy|aspirin|offended|adore|patience)\b/i;
+const VOICE_RE=/\b(?:I\b|me\b|my\b|fans?|supporters?|annoyed|annoying|joy|furious|hope|mood|parade|joke|complaint|reckless|unbearable|dramatic|suspicious|ridiculous|beautiful|hostile|rivals?|headline|back page|therapy|aspirin|offended|adore|patience|ugly|awful|insult|boo|praise|credit)\b/i;
+const TECH_JOKE_RE=/\b(?:screenshots?|group chats?|rival chats?|rival threads?|memes?|lineup screen|apps?)\b/i;
+const SYNTHETIC_CADENCE_RE=/(?:^|[.!?]\s+)(?:At the moment|At least today|From this angle|On this result|In this spot|For the moment|On the current read|By my count|On review|For now|This week|From here|As it stands|After Sunday|In plain terms|At first glance|In the short term|From the sideline|With that settled|For the record|Looking ahead|After a second look|From this score|In the meantime|For this matchup|Until next Sunday|On balance),/i;
 
 const reporterCounts=new Map();
 for(const t of revisedTeams){
@@ -43,20 +45,26 @@ for(const t of revisedTeams){
 
  const ps=paragraphs(t),text=ps.join(' '),sentences=sentenceParts(text);
  assert.deepEqual(t?.inquirer_article?.paragraphs||[],ps,'Flattened Week 2 article body must exactly match rewritten section prose for '+t.team_name);
- assert(ps.length<=30,'Week 2 rewrite became overstuffed for '+t.team_name+': '+ps.length+' paragraphs');
- assert(wordCount(text)>=580,'Week 2 rewrite became too shallow for '+t.team_name+': '+wordCount(text)+' words');
- assert(sentences.filter(s=>VOICE_RE.test(s)).length>=5,'Too little explicit reporter/fan voice in '+t.team_name);
+ assert(ps.length<=38,'Week 2 rewrite became overstuffed for '+t.team_name+': '+ps.length+' paragraphs');
+ assert(wordCount(text)>=850,'Week 2 article is still too short for the deeper reporter treatment: '+t.team_name+' -> '+wordCount(text)+' words');
+ assert(sentences.filter(s=>VOICE_RE.test(s)).length>=7,'Too little explicit reporter/fan voice in '+t.team_name);
  assert(!PLAYER_SUPPORT_RE.test(text),'Player-support/solo-effort motif survived Week 2 rewrite for '+t.team_name);
  assert(!OLD_SCAFFOLD_RE.test(text),'Old Week 2 scaffold survived rewrite for '+t.team_name);
  assert(!SHARED_OUTLOOK_RE.test(text),'Shared outlook boilerplate survived rewrite for '+t.team_name);
+ assert(!TECH_JOKE_RE.test(text),'Screenshot/chat/meme/app humor returned to Week 2 copy for '+t.team_name);
+ assert(!SYNTHETIC_CADENCE_RE.test(text),'Synthetic cadence-preface meta language returned for '+t.team_name);
 
- const byKind=Object.fromEntries((t?.inquirer_article?.sections||[]).map(s=>[String(s?.kind||''),(s?.paragraphs||[]).length]));
- assert((byKind.lede||0)>=3&&(byKind.lede||0)<=4,'Lede must be developed without overstuffing for '+t.team_name);
- assert((byKind.players||0)===6,'Player section must give three featured players distinct fact/reaction treatment for '+t.team_name);
- assert((byKind.management||0)>=2&&(byKind.management||0)<=3,'Management section must be developed without repetition for '+t.team_name);
+ const sections=t?.inquirer_article?.sections||[],byKind=Object.fromEntries(sections.map(s=>[String(s?.kind||''),(s?.paragraphs||[]).length]));
+ const lede=(sections.find(s=>String(s?.kind||'')==='lede')?.paragraphs||[]),scoreToken=Number(t.points).toFixed(1)+'–'+Number(t.opponent_points).toFixed(1);
+ assert.equal(lede.filter(p=>String(p).includes(scoreToken)).length,1,'Current Week 2 result must be stated exactly once in the lede for '+t.team_name);
+ assert((byKind.lede||0)>=3&&(byKind.lede||0)<=5,'Lede must be developed without repeating the result for '+t.team_name);
+ assert((byKind.players||0)===9,'Player section must give three featured players separate fact/reaction/context treatment for '+t.team_name);
+ assert((byKind.management||0)>=2&&(byKind.management||0)<=4,'Management section must be developed without repetition for '+t.team_name);
  assert((byKind['cool-throne']||0)<=2,'Cool Throne is overstuffed for '+t.team_name);
  assert((byKind.value||0)<=3,'Value section is overstuffed for '+t.team_name);
- assert((byKind.sentiment||0)===2,'Sentiment must contain two distinct fan/reporter reactions for '+t.team_name);
+ assert((byKind.sentiment||0)===4,'Fan sentiment must contain four distinct, substantive reactions for '+t.team_name);
+ const sentimentText=(sections.find(s=>String(s?.kind||'')==='sentiment')?.paragraphs||[]).join(' ');
+ assert(wordCount(sentimentText)>=80,'Fan sentiment is still too thin for '+t.team_name+': '+wordCount(sentimentText)+' words');
  assert((byKind.outlook||0)>=3&&(byKind.outlook||0)<=6,'Outlook must be developed without overstuffing for '+t.team_name);
 
  const id=String(t?.inquirer_article?.reporter?.id||'');
@@ -68,7 +76,14 @@ const aints=revisedTeams.find(t=>/new orleans (?:aints|saints)/i.test(String(t?.
 assert(aints,'New Orleans Week 2 article not found');
 const aintsText=articleText(aints),aintsParagraphs=paragraphs(aints);
 assert(!/one-man rescue mission|one-player magic trick|enough production elsewhere|third scorer/i.test(aintsText),'New Orleans still contains the exact support/solo language called out by the live audit');
-assert(aintsParagraphs.length<=30&&wordCount(aintsText)>=580,'New Orleans article was not materially rebuilt with enough distinct reporting depth');
+assert(/Dallas Turner/i.test(aintsText)&&/Breakout Watch/i.test(aintsText),'Dallas Turner must be discussed naturally in the context of his verified Fleeced Breakout Watch signal');
+assert(aintsParagraphs.length<=38&&wordCount(aintsText)>=850,'New Orleans article was not materially rebuilt with enough distinct reporting depth');
+
+const chiefs=revisedTeams.find(t=>/kansas city chiefs/i.test(String(t?.team_name||'')));
+assert(chiefs,'Kansas City Week 2 article not found');
+const chiefsText=articleText(chiefs);
+assert(/-0\.2/.test(chiefsText),'Kansas City negative Week 2 team score must remain explicit');
+assert(/below zero|negative points|less than zero|argument against arithmetic|full roster worked|fantasy team poorer/i.test(chiefsText),'Tilly must react directly and sarcastically to Kansas City scoring -0.2 instead of using generic newsroom/app humor');
 
 const overview=revised?.league_overview||{};
 assert.equal(Number(overview.editorial_revision),16);

@@ -705,27 +705,28 @@ function marketInsightWindow(ordered,label,days=null){
 }
 function marketInsightRange(snaps,label){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  if(ordered.length<2)return{label,available:false,snapshot_count:ordered.length,tracking_since:ordered[0]?.t||null,through:ordered.at(-1)?.t||null,position_indexes:[],market_volatility:null,position_volatility:[],new_highs:[],new_lows:[],volatility:[]};
+  if(ordered.length<2)return{label,available:false,snapshot_count:ordered.length,tracking_since:ordered[0]?.t||null,through:ordered.at(-1)?.t||null,position_indexes:[],market_volatility:null,position_volatility:[],player_changes:[],new_highs:[],new_lows:[],volatility:[]};
   const first=ordered[0],latest=ordered.at(-1),positions=['QB','RB','WR','TE','IDP'],position_indexes=[];
   for(const pos of positions){
-    const base=marketInsightAverage(first,pos),z=marketInsightAverage(latest,pos);
+    const baseSnap=ordered.find(s=>marketInsightAverage(s,pos).count>0)||first,base=marketInsightAverage(baseSnap,pos),z=marketInsightAverage(latest,pos);
     if(!Number.isFinite(z.average))continue;
     position_indexes.push({
       pos,count:z.count,current_avg:Number(z.average.toFixed(2)),
       baseline_avg:Number.isFinite(base.average)?Number(base.average.toFixed(2)):null,
       index:Number.isFinite(base.average)&&base.average>0?Number((z.average/base.average*100).toFixed(2)):null,
       change_pct:Number.isFinite(base.average)&&base.average>0?Number(((z.average-base.average)/base.average*100).toFixed(2)):null,
-      baseline_t:first.t,through_t:latest.t
+      baseline_t:baseSnap.t,through_t:latest.t
     });
   }
   const market_volatility=marketVolatilitySummary(ordered,null,300),
     position_volatility=positions.map(pos=>marketVolatilitySummary(ordered,pos,24));
-  const prior=new Map(),full=new Map();
+  const prior=new Map(),full=new Map(),firstSeen=new Map();
   for(let i=0;i<ordered.length;i++){
     const snap=ordered[i],isLatest=i===ordered.length-1;
     for(const row of snap.rows||[]){
       const id=String(row?.id||''),value=Number(row?.value);if(!id||!Number.isFinite(value)||value<=0)continue;
-      const rowPos=String(row?.pos||''),bucket=full.get(id)||{id,pos:rowPos,positions:new Set(rowPos?[rowPos]:[]),high:value,low:value,high_t:snap.t,low_t:snap.t,observations:0};
+      const rowPos=String(row?.pos||'');if(!firstSeen.has(id))firstSeen.set(id,{id,pos:rowPos,value,overall:Number(row?.overall),posRank:Number(row?.posRank),t:snap.t});
+      const bucket=full.get(id)||{id,pos:rowPos,positions:new Set(rowPos?[rowPos]:[]),high:value,low:value,high_t:snap.t,low_t:snap.t,observations:0};
       bucket.pos=rowPos||bucket.pos||'';if(rowPos)bucket.positions.add(rowPos);bucket.observations++;
       if(value>bucket.high){bucket.high=value;bucket.high_t=snap.t}
       if(value<bucket.low){bucket.low=value;bucket.low_t=snap.t}
@@ -739,12 +740,17 @@ function marketInsightRange(snaps,label){
       }
     }
   }
-  const new_highs=[],new_lows=[],volatility=[];
+  const new_highs=[],new_lows=[],volatility=[],player_changes=[];
   for(const row of latest.rows||[]){
     const id=String(row?.id||''),value=Number(row?.value),p=prior.get(id),all=full.get(id),rowPos=String(row?.pos||'');
     if(!id||!Number.isFinite(value)||!all)continue;
     const identityClean=(all.positions?.size||0)<=1&&(!all.pos||!rowPos||String(all.pos)===rowPos);
     if(!identityClean)continue;
+    const base=firstSeen.get(id),baseValue=Number(base?.value);
+    if(base&&String(base.t)!==String(latest.t)&&String(base.pos||rowPos)===rowPos&&Number.isFinite(baseValue)&&baseValue>0){
+      const delta=value-baseValue;
+      player_changes.push({id,pos:rowPos,value,overall:Number(row?.overall),posRank:Number(row?.posRank),from_value:baseValue,from_t:base.t,delta,pct:Number((delta/baseValue*100).toFixed(4)),through_t:latest.t});
+    }
     if(p&&value>Number(p.high))new_highs.push({id,pos:rowPos,value,previous_high:Number(p.high),previous_high_t:p.high_t,gain:value-Number(p.high),t:latest.t});
     if(p&&value<Number(p.low))new_lows.push({id,pos:rowPos,value,previous_low:Number(p.low),previous_low_t:p.low_t,drop:value-Number(p.low),t:latest.t});
     const mid=(Number(all.high)+Number(all.low))/2,range=Number(all.high)-Number(all.low),drawdown=Number(all.high)>0?(value-Number(all.high))/Number(all.high)*100:null;
@@ -752,7 +758,7 @@ function marketInsightRange(snaps,label){
   }
   new_highs.sort((a,b)=>b.gain-a.gain||b.value-a.value);new_lows.sort((a,b)=>a.drop-b.drop||b.value-a.value);
   volatility.sort((a,b)=>Number(b.range_pct||0)-Number(a.range_pct||0)||b.range-a.range);
-  return{label,available:true,snapshot_count:ordered.length,tracking_since:first.t,through:latest.t,position_indexes,market_volatility,position_volatility,new_highs:new_highs.slice(0,50),new_lows:new_lows.slice(0,50),volatility:volatility.slice(0,100)};
+  return{label,available:true,snapshot_count:ordered.length,tracking_since:first.t,through:latest.t,position_indexes,market_volatility,position_volatility,player_changes,new_highs:new_highs.slice(0,50),new_lows:new_lows.slice(0,50),volatility:volatility.slice(0,100)};
 }
 function marketInsightsFromSnapshots(snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));

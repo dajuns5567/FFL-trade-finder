@@ -429,7 +429,7 @@ function teamThesisLine(t,id){
    'Two weeks of data is not enough for certainty, but it is enough for a working theory about '+tm+'. Week 3 should test that theory against the same weak points already visible.',
    'The '+rec+' start gives '+tm+' a clearer burden now: prove the strengths are repeatable and show that management understands the weaknesses.',
    'There is enough information on '+tm+' to move beyond first impressions. The next game should tell us which Week 2 traits are structural and which were matchup noise.',
-   'The useful question for '+tm+' after two weeks is no longer “what happened?” It is “which parts are likely to happen again?”'
+   'The useful question for '+tm+' after two weeks has changed from what happened to which parts are likely to happen again.'
   ]
  };
  return pick(banks[id]||banks['walter-mercer'],seed);

@@ -42,10 +42,12 @@ assert(editorial.includes("import {reporterPlayerStatusProfile} from './player-s
 assert(editorial.includes('return reporterPlayerStatusProfile(p,slot,pp);'),'Inquirer status wrapper is not delegated to shared classifier');
 const vh=fs.readFileSync('value-history-v276.js','utf8');
 for(const marker of ['/.netlify/functions/player-signals','Fleeced Signals','loadPlayerSignals','playerSignalCache'])assert(vh.includes(marker),'Value History signal integration missing '+marker);
-for(const marker of ['vhPositionIndexes','vhMarketHeat','vhMarketHighLow','vhMomentumLeaders','vhMarketReversals','vhMarketVolatility','vhCategoryLeaders','market_insights=1','marketSignalsFetch'])assert(vh.includes(marker),'Market Dashboard intelligence integration missing '+marker);
+for(const marker of ['vhPositionIndexes','vhMarketHeat','vhCategoryLeaders','vhMarketHighLow','vhMomentumLeaders','vhOpportunityWatch','vhMarketReversals','vhMarketVolatility','market_insights=1','marketSignalsFetch','data-vh-intel-period','data-vh-heat-pos','openHeatMapModal','Buy Low Watch','Sell High Watch','Offensive Breakout Watch','Defensive Breakout Watch','Strongest Rebound','Deepest Pullback','View history ↗'])assert(vh.includes(marker),'Market Dashboard intelligence integration missing '+marker);
 const rankPos=vh.indexOf('class="vh-rank-grid"'),signalPos=vh.indexOf('id="vhPlayerSignals"',rankPos),recentPos=vh.indexOf('Recent Changes',signalPos);
 assert(rankPos>=0&&signalPos>rankPos&&recentPos>signalPos,'Fleeced Signals must render below rank charts and above Recent Changes');
 const historyFn=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
-for(const marker of ['getMarketInsights','marketInsightsFromSnapshots',"url.searchParams.get('market_insights')==='1'",'position_indexes','new_highs','new_lows','volatility'])assert(historyFn.includes(marker),'Market intelligence backend missing '+marker);
+for(const marker of ['getMarketInsights','marketInsightsFromSnapshots','marketInsightRange','marketInsightWindow',"url.searchParams.get('market_insights')==='1'",'ranges','position_indexes','new_highs','new_lows','volatility','drawdown_pct','delta90'])assert(historyFn.includes(marker),'Market intelligence backend missing '+marker);
+const signalsFn=fs.readFileSync('netlify/functions/player-signals.mjs','utf8');
+assert(signalsFn.includes('transitions=compact?Object.values(data.history_by_player||{}).flat().filter(x=>x?.changed)'), 'Compact signal API must expose historical transitions for range filtering');
 
 console.log('Fleeced player signal engine + Market Dashboard intelligence smoke passed');

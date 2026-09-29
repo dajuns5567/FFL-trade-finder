@@ -1206,7 +1206,7 @@ function marketLeaderEligible(id){
 function openMarketIntelModal(kind){
   closeMoverModal();
   const range=intelRange(),signals=marketSignalCache?.signals||[],marketRows=marketCache?.marketRows||[],comparePeriod=marketIntelPeriod==='1D'?'7D':marketIntelPeriod;
-  let title='Market Intelligence',subtitle=esc(intelPeriodLabel()),rows=[];
+  let title='Market Intelligence',subtitle=intelPeriodLabel(),rows=[];
   const momentumScore=sig=>{const perf=signalPerformanceDelta(sig),move=verifiedValueMove(sig.player_id)?.delta;return Math.abs(perf||0)*4+Math.abs(move||0)/500+(sig.confidence==='strong'?5:sig.confidence==='established'?2:0)};
   const renderSignal=sig=>{const movement=verifiedValueMove(sig.player_id),move=movement?.delta,perf=signalPerformanceDelta(sig),sub=`${sig.reporter_label||sig.label} • ${signalMomentumLabel(sig.momentum)} • ${sig.confidence}${Number.isFinite(perf)?` • underlying ${perf>=0?'+':''}${perf.toFixed(2)} PPG`:''}`;return intelPlayerRow(sig.player_id,sub,`${intelPeriodLabel()} value change`,move==null?'N/A':signed(move),deltaClass(move))};
   if(kind==='highs'||kind==='lows'){
@@ -1308,12 +1308,12 @@ function reversalsMarkup(){
   return`<div class="vh-intel-grid"><div class="vh-card"><div class="vh-intel-card-title"><h3>Signal Reversals</h3>${intelViewAllButton('signal-reversals')}</div><div class="vh-sub">Completed-week Fleeced directional state changes, including recoveries into positive territory and deteriorations out of it.</div><div class="vh-intel-list">${signalList}</div></div><div class="vh-card"><div class="vh-intel-card-title"><h3>Value Reversals</h3>${intelViewAllButton('value-reversals')}</div><div class="vh-sub">Verified 1-day value movement running opposite the ${esc(comparePeriod)} direction.</div><div class="vh-intel-list">${priceList}</div></div></div>`;
 }
 function volatilityMarkup(){
-  const data=intelRange(),rows=(data?.volatility||[]).filter(r=>Number(r.observations)>=2).slice(0,12),
+  const data=intelRange(),rows=(data?.volatility||[]).filter(r=>Number(r.observations)>=2&&marketLeaderEligible(r.id)).slice(0,12),
     overall=data?.market_volatility||null,posRows=(data?.position_volatility||[]).filter(r=>r?.available);
   if(!marketInsightsCache)return'<div class="vh-card"><div class="vh-empty">Measuring tracked value ranges…</div></div>';
   const overallCard=overall?.available?`<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-sub">Top-300 market basket • ${esc(intelPeriodLabel())} • baseline index 100</div><div class="vh-volatility-stat"><span><b>Index range</b><small>${Number(overall.low_index).toFixed(1)} → ${Number(overall.high_index).toFixed(1)}</small></span><b>${Number(overall.range_pct).toFixed(2)}%</b></div><div class="vh-volatility-stat"><span><b>Average snapshot move</b><small>${overall.observations} verified snapshots</small></span><b>${Number(overall.avg_step_pct).toFixed(2)}%</b></div></div>`:'<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-empty">Not enough snapshots in this window.</div></div>',
     positionCard=`<div class="vh-card"><h3>Positional Market Volatility</h3><div class="vh-sub">Top-24 positional baskets • high-to-low index range</div><div class="vh-intel-list">${posRows.length?posRows.map(r=>`<div class="vh-volatility-stat"><span><b>${esc(r.pos)}</b><small>Avg snapshot move ${Number(r.avg_step_pct).toFixed(2)}% • ${r.constituents||0} players</small></span><b>${Number(r.range_pct).toFixed(2)}%</b></div>`).join(''):'<div class="vh-empty">Not enough positional snapshots yet.</div>'}</div></div>`,
-    playerRows=rows.filter(r=>marketLeaderEligible(r.id)),
+    playerRows=rows,
     playerCard=`<div class="vh-card"><div class="vh-intel-card-title"><h3>Player Market Volatility</h3>${intelViewAllButton('volatility')}</div><div class="vh-sub">Largest verified high-to-low value ranges for active NFL players inside ${esc(intelPeriodLabel())}. Cross-position identity changes and free-agent noise are excluded from this leaderboard.</div><div class="vh-intel-list">${playerRows.length?playerRows.map(r=>intelPlayerRow(r.id,`low ${fmt(r.low)} • high ${fmt(r.high)} • ${r.observations} observations`,'Tracked range',`${Number(r.range_pct).toFixed(1)}%`,'')).join(''):'<div class="vh-empty">Not enough clean player history inside this window.</div>'}</div></div>`;
   return`<div class="vh-volatility-layout"><div class="vh-volatility-summary">${overallCard}${positionCard}</div>${playerCard}</div>`;
 }

@@ -131,30 +131,30 @@ function ledeLines(t,id){
  const banks={
   'walter-mercer':won?[
    'A '+rec+' start does not make '+tm+' immortal. It does, however, make calling the first win a fluke increasingly lazy.',
-   tm+' is '+rec+'. I remain professionally suspicious, but the burden of proof has shifted toward the people still insisting nothing is happening.'
+   'The record for '+tm+' is '+rec+'. I remain professionally suspicious, but the burden of proof has shifted toward the people still insisting nothing is happening.'
   ]:[
-   tm+' is '+rec+'. At some point patience stops being a virtue and becomes a hobby for people who enjoy suffering.',
+   'The record for '+tm+' is '+rec+'. At some point patience stops being a virtue and becomes a hobby for people who enjoy suffering.',
    'The '+rec+' record is not fatal, but '+tm+' has now used two Sundays without solving the same basic problem: score enough to stop making excuses relevant.'
   ],
   'tess-delaney':won?[
-   tm+' is '+rec+', and restraint is becoming harder to justify. Good. Restraint is terribly overrated when the team keeps rewarding bad behavior.',
+   'The record for '+tm+' is '+rec+', and restraint is becoming harder to justify. Good. Restraint is terribly overrated when the team keeps rewarding bad behavior.',
    'At '+rec+', '+tm+' has earned the right to be pleased and the obligation to remain interesting.'
   ]:[
-   tm+' is '+rec+', which is ugly but at least honest. I would rather inspect an ugly truth than applaud a beautiful excuse.',
+   'The record for '+tm+' is '+rec+', which is ugly but at least honest. I would rather inspect an ugly truth than applaud a beautiful excuse.',
    'A '+rec+' start has removed the luxury of pretending every flaw is adorable because September is young.'
   ],
   'mack-hollis':won?[
-   tm+' is '+rec+'. Keep winning and I will keep making the type bigger; it is a healthy arrangement.',
+   'The record for '+tm+' is '+rec+'. Keep winning and I will keep making the type bigger; it is a healthy arrangement.',
    'The '+rec+' start has bought '+tm+' one week of swagger. Waste it and I will be delighted to become unbearable in the other direction.'
   ]:[
-   tm+' is '+rec+'. The emergency glass is not broken yet, but somebody has already put a chair under it.',
+   'The record for '+tm+' is '+rec+'. The emergency glass is not broken yet, but somebody has already put a chair under it.',
    'A '+rec+' start means the jokes no longer need imagination. The team has been writing them for us.'
   ],
   'nora-voss':won?[
-   tm+' is '+rec+'. That does not erase the flaws; it simply means the flaws are currently occurring inside a winning operation.',
-   'A '+rec+' start changes the standard. '+tm+' is no longer being asked whether it can win; it is being asked whether the winning process survives scrutiny.'
+   'The record for '+tm+' is '+rec+'. That does not erase the flaws; it simply means the flaws are currently occurring inside a winning operation.',
+   'A '+rec+' start changes the standard. The question is no longer whether '+tm+' can win; it is whether the winning process survives scrutiny.'
   ]:[
-   tm+' is '+rec+'. Two results are not a career, but they are enough to stop dismissing every problem as random noise.',
+   'The record for '+tm+' is '+rec+'. Two results are not a career, but they are enough to stop dismissing every problem as random noise.',
    'The '+rec+' start gives '+tm+' a useful question: which weakness is temporary, and which one is already a pattern?'
   ]
  };
@@ -362,7 +362,7 @@ function sentimentLines(t,id){
    'I am not asking '+tm+' supporters to be rational. I am asking the team to stop giving irrational supporters so much excellent material.'
   ],
   'tess-delaney':[
-   'So yes, be delighted, furious, smug or wounded. Just be specific. '+tm+' has produced enough actual football for supporters to love the beautiful parts and boo the ugly ones without inventing a single grievance.',
+   'So yes, be delighted, furious, smug or wounded. Just be specific. There is enough actual football from '+tm+' for supporters to love the beautiful parts and boo the ugly ones without inventing a single grievance.',
    'The proper response is excess with standards: celebrate what deserved champagne, sneer at what deserved tomatoes, and arrive next Sunday ready to do both again.'
   ],
   'mack-hollis':[
@@ -384,7 +384,7 @@ function outlookLine(t,id){
   'walter-mercer':[
    next+' is next. '+tm+' does not need a speech; it needs the weak spots from Week 2 to look less weak.',
    'Week 3 brings '+next+'. If '+tm+' learned anything useful on Sunday, this is where the lesson becomes visible.',
-   tm+' gets '+next+' next. I would prefer improvement to another week of explaining why improvement should be coming.'
+   'The next opponent for '+tm+' is '+next+'. I would prefer improvement to another week of explaining why improvement should be coming.'
   ],
   'tess-delaney':[
    next+' is next, and '+tm+' now gets the pleasure of proving whether Week 2 was character development or merely an episode.',
@@ -393,13 +393,13 @@ function outlookLine(t,id){
   ],
   'mack-hollis':[
    next+' is next. Fix the bad football, keep the good football, and spare me the creative excuses.',
-   'Week 3 brings '+next+'. '+tm+' has seven days to decide whether the Week 2 weak spot was a mistake or a personality trait.',
-   tm+' gets '+next+'. Win cleanly and I will find somebody else to bother. Lose stupidly and congratulations on next week’s material.'
+   'Week 3 brings '+next+'. That gives '+tm+' seven days to decide whether the Week 2 weak spot was a mistake or a personality trait.',
+   'Week 3 sends '+tm+' against '+next+'. Win cleanly and I will find somebody else to bother. Lose stupidly and congratulations on next week’s material.'
   ],
   'nora-voss':[
    next+' is next. If the same weakness survives another Sunday, '+tm+' loses the right to call it temporary.',
    'Week 3 brings '+next+'. The useful standard for '+tm+' is simple: repeat the strengths and materially reduce the Week 2 failure points.',
-   tm+' gets '+next+' next. Management already knows what Week 2 exposed; now the lineup has to change accordingly.'
+   'The next opponent for '+tm+' is '+next+'. Management already knows what Week 2 exposed; now the lineup has to change accordingly.'
   ]
  };
  return pick(banks[id]||banks['walter-mercer'],seed);
@@ -410,25 +410,25 @@ function teamThesisLine(t,id){
   'walter-mercer':[
    'Two weeks in, '+tm+' has one job: make the useful parts repeatable enough that I can stop calling every good Sunday temporary.',
    'The '+rec+' start tells me what happened. What I want from '+tm+' now is a reliable reason to believe the same strengths survive another opponent.',
-   tm+' has given us two weeks of information. Week 3 should tell us whether the best parts are habits or merely pleasant accidents.',
+   'Two Sundays from '+tm+' have given us enough information to ask whether the best parts are habits or merely pleasant accidents.',
    'My standard for '+tm+' is getting simpler: keep the things that worked, correct the things that did not, and make me find a new complaint.'
   ],
   'tess-delaney':[
    'After two weeks, '+tm+' has developed an identity. I would now like that identity to become convincing rather than merely interesting.',
    'The '+rec+' start has given '+tm+' enough personality to be judged properly. Week 3 should provide either confirmation or a much more entertaining crisis.',
-   tm+' has spent two Sundays making claims about what it is. The next game is where those claims either become attractive facts or embarrassing fiction.',
+   'Two Sundays have let '+tm+' make claims about what it is. The next game is where those claims either become attractive facts or embarrassing fiction.',
    'What I want from '+tm+' next is not perfection. I want enough conviction that the team stops making uncertainty look like its most consistent trait.'
   ],
   'mack-hollis':[
    'Two weeks in, '+tm+' has told us what kind of team it thinks it is. Week 3 gets to decide whether that story survives contact with another scoreboard.',
    'The '+rec+' start gives '+tm+' exactly one assignment: make the good stuff repeat and make the stupid stuff stop happening.',
-   tm+' has had two Sundays to introduce itself. The next one should tell us whether we met a real identity or just a temporary collection of weird events.',
+   'Two Sundays have introduced us to '+tm+'. The next one should tell us whether we met a real identity or just a temporary collection of weird events.',
    'My Week 3 request for '+tm+' is simple: do the competent things again and retire at least one of the reasons people have been yelling.'
   ],
   'nora-voss':[
    'Two weeks of data is not enough for certainty, but it is enough for a working theory about '+tm+'. Week 3 should test that theory against the same weak points already visible.',
    'The '+rec+' start gives '+tm+' a clearer burden now: prove the strengths are repeatable and show that management understands the weaknesses.',
-   tm+' has produced enough information to move beyond first impressions. The next game should tell us which Week 2 traits are structural and which were matchup noise.',
+   'There is enough information on '+tm+' to move beyond first impressions. The next game should tell us which Week 2 traits are structural and which were matchup noise.',
    'The useful question for '+tm+' after two weeks is no longer “what happened?” It is “which parts are likely to happen again?”'
   ]
  };
@@ -770,11 +770,11 @@ function buildValue(t,id){
     'The market values '+tm+' at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I care more about whether the football gives the market a reason to stay there.'
    ],
    'tess-delaney':[
-    tm+' is priced at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I adore a dramatic repricing provided nobody mistakes it for divine truth.',
+    'The market prices '+tm+' at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I adore a dramatic repricing provided nobody mistakes it for divine truth.',
     'The market has '+tm+' at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Prices are useful; worship is tacky.'
    ],
    'mack-hollis':[
-    tm+' is worth '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Good. Now make the football justify the number.',
+    'The market values '+tm+' at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Good. Now make the football justify the number.',
     'The market moved '+tm+' '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+' to '+Math.round(value)+'. That is real movement, not a reason to start engraving anything.'
    ],
    'nora-voss':[
@@ -816,15 +816,15 @@ function projectionLine(t,id){
    tm+' enters Week 3 at '+own.toFixed(1)+' projected points versus '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Nothing separates them.':fav+' owns a '+edge+'-point edge.')+' I will believe the forecast after the roster earns it.'
   ],
   'tess-delaney':[
-   tm+' is projected for '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The arithmetic is indecently even.':fav+' has a '+edge+'-point edge.')+' I enjoy a favorite most when it has the manners to prove the point.',
+   'The Week 3 projection puts '+tm+' at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The arithmetic is indecently even.':fav+' has a '+edge+'-point edge.')+' I enjoy a favorite most when it has the manners to prove the point.',
    'The Week 3 numbers are '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Perfectly even. How dull.':fav+' has a '+edge+'-point edge.')+' Sunday may now attempt to be more interesting than arithmetic.'
   ],
   'mack-hollis':[
    'Week 3 projects '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even.':fav+' is favored by '+edge+'.')+' If the favorite blows that edge, I promise to be extremely normal about it.',
-   tm+' gets '+own.toFixed(1)+' projected points; '+op+' gets '+opp.toFixed(1)+'. '+(own===opp?'No edge.':fav+' is favored by '+edge+'.')+' Now go play the game before the numbers get smug.'
+   'The projection gives '+tm+' '+own.toFixed(1)+' points and '+op+' '+opp.toFixed(1)+'. '+(own===opp?'No edge.':fav+' is favored by '+edge+'.')+' Now go play the game before the numbers get smug.'
   ],
   'nora-voss':[
-   tm+' is projected at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The matchup is level.':fav+' has a '+edge+'-point edge.')+' The projection establishes expectation, not outcome.',
+   'The projection puts '+tm+' at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The matchup is level.':fav+' has a '+edge+'-point edge.')+' The projection establishes expectation, not outcome.',
    'The Week 3 expectation is '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'No projected separation.':fav+' has a '+edge+'-point edge.')+' A miss of that size would deserve a postgame explanation.'
   ]
  };

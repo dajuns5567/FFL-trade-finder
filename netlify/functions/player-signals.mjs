@@ -108,7 +108,7 @@ export default async req=>{
       return json({available:!!current,signal_version:data.signal_version,season:data.season,through_week:data.through_week,generated_at:data.generated_at,source:data.source,player_id:id,current,history});
     }
     const compact=url.searchParams.get('compact')==='1',
-      transitions=compact?Object.values(data.history_by_player||{}).flat().filter(x=>x?.changed).sort((a,b)=>Number(b.week)-Number(a.week)||String(a.player_name).localeCompare(String(b.player_name))):null;
+      transitions=compact?Object.values(data.history_by_player||{}).flatMap(history=>(history||[]).flatMap((x,i)=>x?.changed?[{...x,previous_reporter_label:history[i-1]?.reporter_label||null,previous_reporter_status:history[i-1]?.reporter_status||null,previous_label:history[i-1]?.label||null}]:[])).sort((a,b)=>Number(b.week)-Number(a.week)||String(a.player_name).localeCompare(String(b.player_name))):null;
     return json(compact?{available:true,signal_version:data.signal_version,season:data.season,through_week:data.through_week,generated_at:data.generated_at,source:data.source,summary:data.summary,signals:data.signals,transitions}:data);
   }catch(e){return json({available:false,error:String(e?.message||e)},500)}
 };

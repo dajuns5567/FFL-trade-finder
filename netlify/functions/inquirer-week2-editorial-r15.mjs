@@ -65,7 +65,7 @@ function ledeLines(t,id){
   'mack-hollis':won?[
    tm+' won. Put it in 72-point type and let the rival chat spend the week pretending it is not bothered.',
    pts+' points and a win over '+op+'. That is enough material for a front page and at least three irresponsible texts.',
-   tm+' gets the big headline. Anybody asking for restraint can buy tomorrow’s paper somewhere else.'
+   'The big headline belongs to '+tm+'. Anybody asking for restraint can buy tomorrow’s paper somewhere else.'
   ]:[
    tm+' lost. The rival memes were uploaded before the lineup screen finished refreshing.',
    pts+'–'+opp+' is the kind of score that makes a back-page editor cancel dinner plans.',
@@ -214,7 +214,7 @@ function outlookLine(t,id){
   ],
   'tess-delaney':[
    'The next appointment belongs to '+next+'. I want conviction, preferably with enough drama to justify the wardrobe.',
-   tm+' meets '+next+' next, and I am already emotionally overcommitted to an outcome that has not happened.',
+   'Week 3 matches '+tm+' with '+next+', and I am already emotionally overcommitted to an outcome that has not happened.',
    'Week 3 offers '+next+', which means today’s beautiful theory has seven days before reality gets a vote.'
   ],
   'mack-hollis':[
@@ -244,7 +244,10 @@ function playerAnalysisParagraph(t,p,id,slot){
  const name=String(p?.name||'Player'),first=name.split(/\s+/)[0]||name,score=one(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
   week1=(p?.recent_form?.series||[]).find(x=>Number(x?.week)===1),w1=Number(week1?.points),category=playerStatusLabel(p),seed=key(t)+'|player-analysis|'+id+'|'+String(slot)+'|'+name;
  const history=games>=8&&Number.isFinite(prior)?first+' averaged '+prior.toFixed(1)+' fantasy points across '+games+' games in 2025; Week 2 landed at '+score+'.':(Number.isFinite(w1)?'The opener was '+w1.toFixed(1)+' for '+first+'; Week 2 was '+score+'.':'Week 2 put '+first+' at '+score+'.');
- const tag=category?(' The '+category+' label fits the profile, but the number still has to earn the sentence.'):'';
+ const tag=category=== 'star'?(' '+first+' entered with star expectations; this Sunday kept them intact.'):
+  category==='rookie'?(' For a rookie, '+first+' is already making the learning curve somebody else’s problem.'):
+  category==='veteran'?(' The veteran résumé gives '+first+' context, not immunity; this Sunday held up its end.'):
+  category==='reliable'?(' '+first+' has earned a reliable reputation, and this number did nothing to damage it.') : '';
  const banks={
   'walter-mercer':[
    'I can live with '+score+' from '+name+'. What I refuse to do is turn one useful Sunday into a civic holiday.',
@@ -331,19 +334,19 @@ function buildValue(t,id){
   const banks={
    'walter-mercer':[
     'The market has '+tm+' at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I have seen markets panic before, so I am filing the move rather than worshipping it.',
-    tm+' carries a current roster value of '+Math.round(value)+', a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Useful information; terrible religion.'
+    'The market lists '+tm+' at '+Math.round(value)+', a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Useful information; terrible religion.'
    ],
    'tess-delaney':[
     'The market now prices '+tm+' at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Numbers wearing evening clothes are still numbers, but I admit this one has presence.',
-    tm+' sits at '+Math.round(value)+' in roster value, '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I refuse to call a price tag destiny, though I will absolutely gossip about it.'
+    'The market lists '+tm+' at '+Math.round(value)+' in roster value, '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I refuse to call a price tag destiny, though I will absolutely gossip about it.'
    ],
    'mack-hollis':[
-    'MARKET—no, relax, I am not shouting: '+tm+' is at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The number gets a headline, not a crown.',
+    'MARKET—no, relax, I am not shouting: the board lists '+tm+' at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The number gets a headline, not a crown.',
     'The value board has '+tm+' at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Screenshot it now; markets love making old screenshots look stupid.'
    ],
    'nora-voss':[
     'The market file lists '+tm+' at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I have logged the change and declined to call it a verdict.',
-    tm+' is priced at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The number is evidence of movement, not evidence of innocence.'
+    'The market prices '+tm+' at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The number is evidence of movement, not evidence of innocence.'
    ]
   };
   rows.push(pick(banks[id]||banks['walter-mercer'],seed));
@@ -423,10 +426,10 @@ function divisionOutlookLine(t,id){
   nw=Number(nr.wins)||0,nl=Number(nr.losses)||0,ownName=String(own?.division_name||''),nextName=String(next?.division_name||''),leaders=(own?.leaders||[]).filter(x=>x?.team_name),
   selfLeading=leaders.some(x=>String(x?.roster_id)===String(t?.roster_id)),others=leaders.filter(x=>String(x?.roster_id)!==String(t?.roster_id)).map(x=>String(x.team_name)),seed=key(t)+'|division|'+id;
  let standing='';
- if(selfLeading&&others.length)standing=tm+' shares the '+ownName+' lead with '+others.join(' and ')+'.';
- else if(selfLeading)standing=tm+' leads the '+ownName+'.';
+ if(selfLeading&&others.length)standing='The '+ownName+' lead is shared by '+[tm,...others].join(' and ')+'.';
+ else if(selfLeading)standing='The current '+ownName+' leader is '+tm+'.';
  else if(ownName)standing='The '+ownName+' currently places '+tm+' at division rank '+String(Number(own?.division_rank)||'?')+'.';
- const opponent=nextName?op+' enters Week 3 at '+nw+'-'+nl+' in the '+nextName+'.':op+' enters Week 3 at '+nw+'-'+nl+'.';
+ const opponent=nextName?'Week 3 brings '+op+' in at '+nw+'-'+nl+' in the '+nextName+'.':'Week 3 brings '+op+' in at '+nw+'-'+nl+'.';
  const tails={
   'walter-mercer':'I do not need the standings to be dramatic; I need them to stop becoming more annoying.',
   'tess-delaney':'The stakes have become indecently visible, and I resent how entertaining that makes the division race.',
@@ -526,7 +529,6 @@ function playerStatusLabel(p){
   defensive=/^(?:DL|DE|DT|NT|EDGE|LB|ILB|OLB|DB|CB|S|FS|SS|IDP)$/.test(pos),star=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13,
   early=((Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)));
  if(games>=8&&Number.isFinite(prior)&&prior>=star*1.2)return'star';
- if(early&&games>0&&Number.isFinite(prior)&&Number.isFinite(season)&&season>=Math.max(prior*1.35,prior+2.5))return'breakout';
  if((Number.isFinite(years)&&years===0)||(games===0&&Number.isFinite(age)&&age<=23))return'rookie';
  if((Number.isFinite(years)&&years>=5)||(Number.isFinite(age)&&age>=28))return'veteran';
  if(games>=8&&Number.isFinite(prior)&&prior>=star*.72)return'reliable';

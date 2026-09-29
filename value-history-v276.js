@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history',SIGNAL_API='/.netlify/functions/player-signals';
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),playerSignalCache=new Map(),playerSignalPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),playerSignalCache=new Map(),playerSignalPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -197,6 +197,10 @@ function addStyles(){
   #valueHistory .vh-intel-card-title{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:22px}
   #valueHistory .vh-intel-card-title h3{margin:0!important}
   #valueHistory .vh-intel-card-title .vh-view-history{flex:0 0 auto}
+  #valueHistory .vh-volatility-pools{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0 3px;padding:8px;border:1px solid color-mix(in srgb,#e4b53f 22%,var(--line));border-radius:10px;background:transparent}
+  #valueHistory .vh-volatility-pools>span{display:flex;align-items:center;margin-right:3px;color:var(--muted);font-size:9px;font-weight:950;letter-spacing:.07em;text-transform:uppercase}
+  #valueHistory .vh-volatility-pools button{min-width:0!important;padding:6px 9px!important;border:1px solid color-mix(in srgb,#e4b53f 38%,var(--line))!important;border-radius:8px!important;background:transparent!important;color:#f4f4f5!important;font-size:10px!important;font-weight:900!important;box-shadow:none!important}
+  #valueHistory .vh-volatility-pools button.vh-active{border-color:#e4b53f!important;color:#e4b53f!important;box-shadow:inset 0 -2px 0 #e4b53f!important}
   #valueHistory .vh-intel-grid>.vh-card>.vh-sub{min-height:42px}
   #valueHistory .vh-intel-grid>.vh-card>.vh-intel-list{flex:0 0 auto;align-content:start}
   #valueHistory .vh-intel-row{min-height:58px}
@@ -632,6 +636,7 @@ function handleContentClick(e){
   const intelPeriod=e.target.closest('[data-vh-intel-period]');if(intelPeriod){marketIntelPeriod=intelPeriod.dataset.vhIntelPeriod||'7D';renderMarketIntelligence();return}
   const heat=e.target.closest('[data-vh-heat-pos]');if(heat){openHeatMapModal(heat.dataset.vhHeatPos,heat.dataset.vhHeatMin,heat.dataset.vhHeatMax);return}
   const intelAll=e.target.closest('[data-vh-intel-view-all]');if(intelAll){openMarketIntelModal(intelAll.dataset.vhIntelViewAll||'');return}
+  const volatilityPool=e.target.closest('[data-vh-volatility-pool]');if(volatilityPool){marketVolatilityPool=volatilityPool.dataset.vhVolatilityPool||'ALL';renderMarketIntelligence();return}
   const player=e.target.closest('[data-vh-player]');if(player){selectPlayer(player.dataset.vhPlayer);return}
   const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';syncPlayerSearchState();loadMarket(true);return}
   const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();setPrimaryPlayerSearchVisible(true);currentPlayerId=null;syncPlayerSearchState();renderTrackMyTeam();return}
@@ -1203,6 +1208,16 @@ function marketLeaderEligible(id){
   const meta=livePlayerMeta(id),nfl=String(meta?.nfl||'').toUpperCase();
   return !!id&&finiteMarketNumber(meta?.value)>0&&nfl&&nfl!=='FA';
 }
+function volatilityPoolLimit(pool=marketVolatilityPool){
+  const n=Number(pool);return Number.isFinite(n)&&n>0?n:Infinity;
+}
+function volatilityPoolRows(rows,pool=marketVolatilityPool){
+  const limit=volatilityPoolLimit(pool);
+  return (rows||[]).filter(r=>{if(!marketLeaderEligible(r.id))return false;const overall=finiteMarketNumber(livePlayerMeta(r.id)?.overall);return limit===Infinity||(overall!=null&&overall<=limit)});
+}
+function volatilityPoolControls(){
+  return`<div class="vh-volatility-pools"><span>Player segment</span>${['10','50','100','200','300','500','ALL'].map(p=>`<button type="button" class="${p===marketVolatilityPool?'vh-active':''}" data-vh-volatility-pool="${p}">${p==='ALL'?'All':'Top '+p}</button>`).join('')}</div>`;
+}
 function openMarketIntelModal(kind){
   closeMoverModal();
   const range=intelRange(),signals=marketSignalCache?.signals||[],marketRows=marketCache?.marketRows||[],comparePeriod=marketIntelPeriod==='1D'?'7D':marketIntelPeriod;
@@ -1238,8 +1253,8 @@ function openMarketIntelModal(kind){
     title='All Value Reversals';subtitle=`${list.length} players with 1D movement opposite the ${comparePeriod} trend`;
     rows=list.map(x=>intelPlayerRow(x.row.id,`1D ${signed(x.short.delta)} vs ${comparePeriod} ${signed(x.broad.delta)}`,'1D reversal',signed(x.short.delta),deltaClass(x.short.delta)));
   }else if(kind==='volatility'){
-    const list=(range?.volatility||[]).filter(r=>Number(r.observations)>=2&&marketLeaderEligible(r.id)).slice().sort((a,b)=>Number(b.range_pct||0)-Number(a.range_pct||0)||Number(b.range||0)-Number(a.range||0));
-    title='All Player Market Volatility';subtitle=`${list.length} active NFL players with verified ranges inside ${intelPeriodLabel()}`;
+    const list=volatilityPoolRows((range?.volatility||[]).filter(r=>Number(r.observations)>=2)).slice().sort((a,b)=>Number(b.range_pct||0)-Number(a.range_pct||0)||Number(b.range||0)-Number(a.range||0));
+    title=`${marketVolatilityPool==='ALL'?'All':'Top '+marketVolatilityPool} Player Market Volatility`;subtitle=`${list.length} active NFL players in the selected overall-rank segment with verified ranges inside ${intelPeriodLabel()}`;
     rows=list.map(r=>intelPlayerRow(r.id,`low ${fmt(r.low)} • high ${fmt(r.high)} • ${r.observations} observations`,'Tracked range',`${Number(r.range_pct).toFixed(1)}%`,''));
   }
   const wrap=document.createElement('div');wrap.id='vhMoverModal';wrap.className='vh-modal-backdrop';
@@ -1308,13 +1323,14 @@ function reversalsMarkup(){
   return`<div class="vh-intel-grid"><div class="vh-card"><div class="vh-intel-card-title"><h3>Signal Reversals</h3>${intelViewAllButton('signal-reversals')}</div><div class="vh-sub">Completed-week Fleeced directional state changes, including recoveries into positive territory and deteriorations out of it.</div><div class="vh-intel-list">${signalList}</div></div><div class="vh-card"><div class="vh-intel-card-title"><h3>Value Reversals</h3>${intelViewAllButton('value-reversals')}</div><div class="vh-sub">Verified 1-day value movement running opposite the ${esc(comparePeriod)} direction.</div><div class="vh-intel-list">${priceList}</div></div></div>`;
 }
 function volatilityMarkup(){
-  const data=intelRange(),rows=(data?.volatility||[]).filter(r=>Number(r.observations)>=2&&marketLeaderEligible(r.id)).slice(0,12),
+  const data=intelRange(),allPlayerRows=(data?.volatility||[]).filter(r=>Number(r.observations)>=2),
+    rows=volatilityPoolRows(allPlayerRows).slice().sort((a,b)=>Number(b.range_pct||0)-Number(a.range_pct||0)||Number(b.range||0)-Number(a.range||0)).slice(0,12),
     overall=data?.market_volatility||null,posRows=(data?.position_volatility||[]).filter(r=>r?.available);
   if(!marketInsightsCache)return'<div class="vh-card"><div class="vh-empty">Measuring tracked value ranges…</div></div>';
   const overallCard=overall?.available?`<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-sub">Top-300 market basket • ${esc(intelPeriodLabel())} • baseline index 100</div><div class="vh-volatility-stat"><span><b>Index range</b><small>${Number(overall.low_index).toFixed(1)} → ${Number(overall.high_index).toFixed(1)}</small></span><b>${Number(overall.range_pct).toFixed(2)}%</b></div><div class="vh-volatility-stat"><span><b>Average snapshot move</b><small>${overall.observations} verified snapshots</small></span><b>${Number(overall.avg_step_pct).toFixed(2)}%</b></div></div>`:'<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-empty">Not enough snapshots in this window.</div></div>',
     positionCard=`<div class="vh-card"><h3>Positional Market Volatility</h3><div class="vh-sub">Top-24 positional baskets • high-to-low index range</div><div class="vh-intel-list">${posRows.length?posRows.map(r=>`<div class="vh-volatility-stat"><span><b>${esc(r.pos)}</b><small>Avg snapshot move ${Number(r.avg_step_pct).toFixed(2)}% • ${r.constituents||0} players</small></span><b>${Number(r.range_pct).toFixed(2)}%</b></div>`).join(''):'<div class="vh-empty">Not enough positional snapshots yet.</div>'}</div></div>`,
-    playerRows=rows,
-    playerCard=`<div class="vh-card"><div class="vh-intel-card-title"><h3>Player Market Volatility</h3>${intelViewAllButton('volatility')}</div><div class="vh-sub">Largest verified high-to-low value ranges for active NFL players inside ${esc(intelPeriodLabel())}. Cross-position identity changes and free-agent noise are excluded from this leaderboard.</div><div class="vh-intel-list">${playerRows.length?playerRows.map(r=>intelPlayerRow(r.id,`low ${fmt(r.low)} • high ${fmt(r.high)} • ${r.observations} observations`,'Tracked range',`${Number(r.range_pct).toFixed(1)}%`,'')).join(''):'<div class="vh-empty">Not enough clean player history inside this window.</div>'}</div></div>`;
+    segmentLabel=marketVolatilityPool==='ALL'?'All active NFL players':`Current overall Top ${marketVolatilityPool}`,
+    playerCard=`<div class="vh-card"><div class="vh-intel-card-title"><h3>Player Market Volatility</h3>${intelViewAllButton('volatility')}</div><div class="vh-sub">Largest verified high-to-low value ranges for ${esc(segmentLabel)} inside ${esc(intelPeriodLabel())}. Segment is based on current overall Fleeced rank.</div>${volatilityPoolControls()}<div class="vh-intel-list">${rows.length?rows.map(r=>intelPlayerRow(r.id,`low ${fmt(r.low)} • high ${fmt(r.high)} • ${r.observations} observations`,'Tracked range',`${Number(r.range_pct).toFixed(1)}%`,'')).join(''):'<div class="vh-empty">Not enough clean player history inside this segment and window.</div>'}</div></div>`;
   return`<div class="vh-volatility-layout"><div class="vh-volatility-summary">${overallCard}${positionCard}</div>${playerCard}</div>`;
 }
 function positionValuePercentile(rows,row){

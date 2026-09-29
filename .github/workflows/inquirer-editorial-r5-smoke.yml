@@ -111,9 +111,9 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import rawWeek2 from './netlify/functions/inquirer-week2-2026-preload.mjs';
-          import {applyWeek2EditorialR15} from './netlify/functions/inquirer-week2-editorial-r15.mjs';
-          const week2=applyWeek2EditorialR15(rawWeek2);
-          if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||Number(week2?.editorial_revision)!==15)throw new Error('Week 2 revision 15 did not materialize from the locked preload');
+          import {applyWeek2EditorialR16} from './netlify/functions/inquirer-week2-editorial-r15.mjs';
+          const week2=applyWeek2EditorialR16(rawWeek2);
+          if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||Number(week2?.editorial_revision)!==16||week2?.voice_revision!=='week2-r16')throw new Error('Week 2 revision 16 did not materialize from the locked preload');
           fs.writeFileSync('/tmp/week2-inquirer-r6.json',JSON.stringify(week2,null,2)+'\n');
           NODE
 

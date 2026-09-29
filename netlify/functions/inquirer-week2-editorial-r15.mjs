@@ -336,21 +336,45 @@ function sentimentLines(t,id){
   };
   lines.push(closer[id]||closer['walter-mercer']);
  }
- const next=String(t?.next_opponent_name||'the next opponent'),own=Number(t?.next_projected),opp=Number(t?.next_opponent_projected),edge=Number.isFinite(own)&&Number.isFinite(opp)?Math.abs(own-opp).toFixed(1):null;
+ const next=String(t?.next_opponent_name||'the next opponent'),nr=t?.next_opponent_context?.record||{},nextRec=String(Number(nr?.wins)||0)+'-'+String(Number(nr?.losses)||0);
  const nextMood={
-  'walter-mercer':edge!=null?'Next comes '+next+' with a '+edge+'-point projection gap. Fans will call that reassurance or doom depending on which side of the number '+tm+' occupies.':'Next comes '+next+'. Fans do not need a prediction yet; they need a reason to feel less ridiculous by Monday.',
-  'tess-delaney':edge!=null?'Now '+next+' arrives with a '+edge+'-point projection gap. The fan base will spend the week turning that number into confidence, dread or both.':'Now '+next+' arrives, and the emotional stakes are already much larger than good taste would recommend.',
-  'mack-hollis':edge!=null?'Next is '+next+', and the projection gap is '+edge+'. Fans are going to yell either way, so '+tm+' may as well give them something worth yelling about.':'Next is '+next+'. The crowd has one request: make Week 3 less stupid than the thing they are currently mad about.',
-  'nora-voss':edge!=null?'Next is '+next+' with a '+edge+'-point projection gap. That gives the fan base a concrete expectation instead of another vague feeling.':'Next is '+next+'. Fan confidence will move with the same issues this article has already identified.'
+  'walter-mercer':[
+   'Next is '+next+' at '+nextRec+'. Fans do not need a computer to understand the assignment: beat them and Monday gets quieter; lose and every old complaint comes back with friends.',
+   next+' is next. The people who sat through Week 2 are entitled to ask for one thing now—make the next Sunday less aggravating than the last one.'
+  ],
+  'tess-delaney':[
+   next+' is next at '+nextRec+', and supporters have already decided this is either the beginning of something glamorous or the prelude to another public humiliation. There will be no tasteful middle ground.',
+   'Now comes '+next+'. The fan base has spent enough time being emotionally reasonable; Week 3 may either reward the obsession or punish it properly.'
+  ],
+  'mack-hollis':[
+   next+' is next at '+nextRec+'. Win and the crowd will behave like a championship parade got lost in September. Lose badly and I suggest management learn several new synonyms for “embarrassing.”',
+   'Next is '+next+'. Fans are not asking for a statistical seminar. They want somebody in '+tm+' colors to make the other team miserable for three hours.'
+  ],
+  'nora-voss':[
+   next+' is next at '+nextRec+'. Supporters have a simple standard now: repeat the parts that worked and stop asking them to excuse the same failure twice.',
+   'Week 3 brings '+next+'. The fan base does not need another abstract promise; it needs the specific Week 2 problems to look materially better.'
+  ]
  };
- lines.push(nextMood[id]||nextMood['walter-mercer']);
+ lines.push(pick(nextMood[id]||nextMood['walter-mercer'],seed,1));
  const closingMood={
-  'walter-mercer':'The reasonable fan position on '+tm+' is simple: believe what worked, distrust what did not, and make the roster earn every additional ounce of confidence.',
-  'tess-delaney':'The proper emotional stance toward '+tm+' is neither calm nor hysterical; it is loudly interested, deeply judgmental and completely unwilling to accept boring football.',
-  'mack-hollis':'The crowd around '+tm+' should stay loud. Praise the players who earned it, boo the nonsense that did not, and make Week 3 deserve everybody’s attention.',
-  'nora-voss':'The fan base around '+tm+' has enough real information now to be specific. Praise the proven strengths, keep pressure on the weak spots and demand an answer next week.'
+  'walter-mercer':[
+   'That is where I land with '+tm+': happiness should be earned, anger should have a target, and nobody gets to demand patience forever. Fans gave up a Sunday for this. The roster can at least make the investment interesting.',
+   'I am not asking '+tm+' supporters to be rational. I am asking the team to stop giving irrational supporters so much excellent material.'
+  ],
+  'tess-delaney':[
+   'So yes, be delighted, furious, smug or wounded. Just be specific. '+tm+' has produced enough actual football for supporters to love the beautiful parts and boo the ugly ones without inventing a single grievance.',
+   'The proper response is excess with standards: celebrate what deserved champagne, sneer at what deserved tomatoes, and arrive next Sunday ready to do both again.'
+  ],
+  'mack-hollis':[
+   'Keep the crowd loud. Good football deserves shameless praise; awful football deserves mockery with proper nouns attached. '+tm+' chose to play in public, so public judgment is part of the uniform.',
+   'Fans should cheer the good, boo the stupid and stop apologizing for caring too much. Indifference is for preseason. This counts.'
+  ],
+  'nora-voss':[
+   'The anger and optimism around '+tm+' both have real football behind them now. Supporters do not need slogans; they need the strengths repeated and the weak spots corrected.',
+   'Fans have enough information to be precise now. Praise the players who earned it, pressure the decisions that failed and judge Week 3 by whether the same mistakes return.'
+  ]
  };
- lines.push(closingMood[id]||closingMood['walter-mercer']);
+ lines.push(pick(closingMood[id]||closingMood['walter-mercer'],seed,2));
  return uniq(lines).slice(0,6);
 }
 
@@ -418,13 +442,14 @@ function currentResultLine(t){
 }
 
 function buildLede(t,a,id){
- const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),week1=facts.find(isWeek1Fact),score=currentResultLine(t),lines=ledeLines(t,id),thesis=teamThesisLine(t,id);
- return uniq([score,lines[0],week1,lines[1],lines[2],thesis]).filter(Boolean).slice(0,6);
+ const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),week1=facts.find(isWeek1Fact),score=currentResultLine(t),lines=ledeLines(t,id),thesis=teamThesisLine(t,id),
+  total=Number(t?.points),scoreDeservesSecondBeat=Number.isFinite(total)&&(total<25||total>=130);
+ return uniq([score,scoreDeservesSecondBeat?lines[0]:'',week1,lines[1],lines[2],thesis]).filter(Boolean).slice(0,6);
 }
 
 function topThreeStarters(t){return(t?.starter_details||[]).slice(0,3).filter(p=>Number.isFinite(Number(p?.points)))}
 function playerStatParagraph(t,p){
- const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim().replace(/\b1 rec yds\b/gi,'1 receiving yard').replace(/\b1 rush yds\b/gi,'1 rushing yard').replace(/\b1 pass yds\b/gi,'1 passing yard').replace(/\brec yds\b/gi,'receiving yards').replace(/\brush yds\b/gi,'rushing yards').replace(/\bpass yds\b/gi,'passing yards').replace(/\b1 yds\b/gi,'1 yard').replace(/\byds\b/gi,'yards').replace(/\brec\b/gi,'receptions');
+ const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim().replace(/\b1 rec yds\b/gi,'1 receiving yard').replace(/\b1 rush yds\b/gi,'1 rushing yard').replace(/\b1 pass yds\b/gi,'1 passing yard').replace(/\brec yds\b/gi,'receiving yards').replace(/\brush yds\b/gi,'rushing yards').replace(/\bpass yds\b/gi,'passing yards').replace(/\b1 rec TD\b/gi,'1 receiving TD').replace(/\b(\d+) rec TD\b/gi,'$1 receiving TD').replace(/\b1 yds\b/gi,'1 yard').replace(/\byds\b/gi,'yards').replace(/\brec\b/gi,'receptions');
  return 'Against '+op+', '+name+' scored '+score+' fantasy points for '+tm+(line?' on a real-football line of '+line:'')+'.';
 }
 function playerSignalProfile(p,slot){
@@ -432,14 +457,15 @@ function playerSignalProfile(p,slot){
  return reporterPlayerStatusProfile(p,slot,week1==null?null:{points:Number(week1)});
 }
 function playerReaction(t,p,id,slot){
- const name=String(p?.name||'Player'),first=name.split(/\s+/)[0]||name,score=Number(p?.points),shown=one(score),seed=key(t)+'|player-reaction|'+id+'|'+slot+'|'+name;
+ const name=String(p?.name||'Player'),first=name.split(/\s+/)[0]||name,score=Number(p?.points),shown=one(score),seed=key(t)+'|player-reaction|'+id+'|'+slot+'|'+name,
+  choose=rows=>rows[(hash(key(t)+'|player-reaction-rotation|'+id)+Number(slot||0))%rows.length];
  if(Number.isFinite(score)&&score<0){
   const banks={
    'walter-mercer':[shown+' from '+name+'. I have no coaching note for negative fantasy production beyond “please stop doing that.”',name+' finished at '+shown+'. Somehow the number below zero still feels generous.'],
    'tess-delaney':[shown+' from '+name+' is spectacularly awful. I almost admire the commitment to giving us less than nothing.',name+' produced '+shown+'. Negative points are usually reserved for accountants and bad weather; this is intolerable.'],
    'mack-hollis':[shown+' from '+name+'? He played football and somehow made the fantasy team poorer. Incredible work in the worst possible direction.',name+' scored '+shown+'. You could have benched the position, stared at the empty slot, and felt more productive.'],
    'nora-voss':[name+' finished at '+shown+'. Negative production is not a metaphor; it is a measurable problem.',shown+' from '+name+' means the lineup was actively worse for having received the score. That deserves an explanation.']
-  };return pick(banks[id]||banks['walter-mercer'],seed);
+  };return choose(banks[id]||banks['walter-mercer']);
  }
  if(score===0){
   const banks={
@@ -447,7 +473,7 @@ function playerReaction(t,p,id,slot){
    'tess-delaney':[name+' scored 0.0, a number so empty it should echo.',name+' produced 0.0. I have seen decorative statues with more fantasy impact.'],
    'mack-hollis':[name+' scored 0.0. Zero. A whole afternoon of football and the fantasy contribution was the same as staying home.',name+' gave us 0.0. Somewhere an unused roster slot is demanding equal pay.'],
    'nora-voss':[name+' finished at 0.0. Whatever the role was supposed to produce, it did not arrive.',name+' posted 0.0. The question is no longer whether the spot underperformed; it is why it produced nothing.']
-  };return pick(banks[id]||banks['walter-mercer'],seed);
+  };return choose(banks[id]||banks['walter-mercer']);
  }
  if(Number.isFinite(score)&&score<4){
   const banks={
@@ -455,7 +481,7 @@ function playerReaction(t,p,id,slot){
    'tess-delaney':[shown+' from '+name+' is offensively plain. If disappointment must arrive, it could at least make an entrance.',name+' gave us '+shown+'. Tiny numbers can still be rude.'],
    'mack-hollis':[shown+' from '+name+' is a rounding error wearing shoulder pads.',name+' posted '+shown+'. That score needs a magnifying glass and an apology.'],
    'nora-voss':[name+' finished at '+shown+'. Small sample or not, the lineup spot failed its assignment.',shown+' from '+name+' is not enough production to hide behind variance.']
-  };return pick(banks[id]||banks['walter-mercer'],seed);
+  };return choose(banks[id]||banks['walter-mercer']);
  }
  const pos=String(p?.position||'').toUpperCase(),role=/^(?:DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos)?'defender':pos==='QB'?'quarterback':pos==='RB'?'back':pos==='TE'?'tight end':'receiver';
  const banks={
@@ -484,7 +510,7 @@ function playerReaction(t,p,id,slot){
    shown+' from '+name+' holds up on its own. No embellishment is necessary.'
   ]
  };
- return pick(banks[id]||banks['walter-mercer'],seed);
+ return choose(banks[id]||banks['walter-mercer']);
 }
 function playerContextParagraph(t,p,id,slot){
  const name=String(p?.name||'Player'),first=name.split(/\s+/)[0]||name,score=one(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
@@ -501,19 +527,51 @@ function playerContextParagraph(t,p,id,slot){
  const status=String(profile?.status||'');
  if(status==='established-star'){
   const banks={
-   'walter-mercer':[history+' That is established-star work: expensive expectations, followed by production large enough to justify them.'],
-   'tess-delaney':[history+' An established star is supposed to make excellence look slightly indecent; '+first+' obliged.'],
-   'mack-hollis':[history+' Established stars get paid in expectations. '+first+' paid the bill this week.'],
-   'nora-voss':[history+' The established-star label fits because the baseline was already high before Week 2 arrived.']
-  };return banks[id]||banks['walter-mercer'];
+   'walter-mercer':[
+    history+' That is what a proven player is supposed to do: make a high standard look ordinary for one afternoon.',
+    history+' The résumé already demanded production. '+first+' actually delivered it, which saves me from a much grumpier paragraph.',
+    history+' Nobody needed a breakout speech here. '+first+' was already good and spent Sunday reminding everybody.'
+   ],
+   'tess-delaney':[
+    history+' Excellence was already expected; '+first+' had the good manners to make expectation look entertaining.',
+    history+' A star is allowed to be expensive when the performance is this deliciously unreasonable.',
+    history+' Reputation arrived first, production followed, and for once the billing department has no complaint.'
+   ],
+   'mack-hollis':[
+    history+' The famous name actually did famous-name work. Wonderful concept. More teams should try it.',
+    history+' That is what the expensive part of the roster is for: ruin somebody else’s afternoon and skip the apology.',
+    history+' No comeback story, no miracle, no inspirational montage. '+first+' is supposed to be good and was.'
+   ],
+   'nora-voss':[
+    history+' The prior baseline was already strong, so this is confirmation rather than discovery.',
+    history+' Nothing about the performance requires a new label. '+first+' had a high established baseline and cleared it.',
+    history+' The useful context is simple: '+first+' was already a high-end producer before Week 2 and performed like one again.'
+   ]
+  };return pick(banks[id]||banks['walter-mercer'],key(t)+'|star-context|'+id,slot);
  }
  if(status==='declining-veteran'||status==='struggling-star'||status==='struggling'){
   const banks={
-   'walter-mercer':[history+' The decline concern is not decorative; the recent production has earned it.'],
-   'tess-delaney':[history+' The decline conversation is unpleasant, which does not make it optional.'],
-   'mack-hollis':[history+' The warning light is real. Reputation does not score fantasy points.'],
-   'nora-voss':[history+' The current signal is negative because the recent production and role no longer match the prior baseline.']
-  };return banks[id]||banks['walter-mercer'];
+   'walter-mercer':[
+    history+' The old standard is doing this week no favors. If the player wants patience, better football would be a strong opening argument.',
+    history+' The name still carries weight; the recent scoring does not. I know which one helps the lineup.',
+    history+' Reputation can explain why expectations were high. It cannot score the missing points.'
+   ],
+   'tess-delaney':[
+    history+' The decline is unpleasant, visible and therefore impossible to hide behind good manners.',
+    history+' Nostalgia is lovely at dinner and useless in a starting lineup. The recent production needs to improve.',
+    history+' The résumé remains handsome. The current number is dressed for a much worse occasion.'
+   ],
+   'mack-hollis':[
+    history+' Reputation does not score fantasy points, and the scoreboard has become aggressively aware of that fact.',
+    history+' The old version of this player would be offended by the current output. Good. Somebody should be.',
+    history+' If the name is doing more work than the player, the lineup has a problem.'
+   ],
+   'nora-voss':[
+    history+' The prior baseline and current production no longer agree. That gap is the concern.',
+    history+' The recent output is materially below the established level, which makes the Week 3 response worth tracking.',
+    history+' The decline case comes from the comparison itself: a stronger prior baseline and weaker current production.'
+   ]
+  };return pick(banks[id]||banks['walter-mercer'],key(t)+'|struggle-context|'+id,slot);
  }
  return history;
 }

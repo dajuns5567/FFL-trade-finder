@@ -258,7 +258,7 @@ function buildLede(t,a,id){
 }
 function topThreeStarters(t){return(t?.starter_details||[]).slice(0,3).filter(p=>Number.isFinite(Number(p?.points)))}
 function playerStatParagraph(t,p){
- const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim();
+ const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim().replace(/\brec\b/gi,'receptions').replace(/\byds\b/gi,'yards').replace(/\bTD\b/g,'touchdowns');
  return 'Against '+op+', '+name+' scored '+score+' fantasy points for '+tm+(line?' on a real-football line of '+line:'')+'.';
 }
 function playerAnalysisParagraph(t,p,id,slot){
@@ -281,7 +281,7 @@ function playerAnalysisParagraph(t,p,id,slot){
    name+' gave us '+score+'. The number has drama, consequence and absolutely no interest in behaving modestly.'
   ],
   'mack-hollis':[
-   name+' put '+score+' on the board. Print it large, send it to the rival chat, and let somebody else write the disclaimer.',
+   name+' put '+score+' on the board. Print '+first+' large, send the screenshot to the rival thread, and let somebody else write the disclaimer.',
    score+' from '+name+' is headline material. No committee, no symposium, no polite little footnote.',
    name+' posted '+score+' and made the back page easy. I love a player who respects the deadline.'
   ],

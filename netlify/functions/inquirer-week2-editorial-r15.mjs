@@ -235,7 +235,7 @@ function buildLede(t,a,id){
  const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),score=facts.find(isScoreFact),week1=facts.find(x=>isWeek1Fact(x)&&x!==score);
  return uniq([ledeLines(t,id)[0],score,week1,ledeLines(t,id)[1]]).filter(Boolean).slice(0,4);
 }
-function topThreeStarters(t){return(t?.starter_details||[]).slice().filter(p=>Number.isFinite(Number(p?.points))).sort((a,b)=>Number(b.points)-Number(a.points)||String(a.name||'').localeCompare(String(b.name||''))).slice(0,3)}
+function topThreeStarters(t){return(t?.starter_details||[]).slice(0,3).filter(p=>Number.isFinite(Number(p?.points)))}
 function playerStatParagraph(t,p){
  const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim();
  return 'Against '+op+', '+name+' scored '+score+' fantasy points for '+tm+'.'+(line?' The real-football line was '+line+'.':'');

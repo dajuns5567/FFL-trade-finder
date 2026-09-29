@@ -612,11 +612,11 @@ function marketFromSnapshots(snaps){
     const p=marketPeriod(latest,base);
     periods[label]={valueRisers:p.valueRisers,valueFallers:p.valueFallers,rankRisers:p.rankRisers,rankFallers:p.rankFallers,posRankRisers:p.posRankRisers,posRankFallers:p.posRankFallers,baseline:base?.t||null};
   }
-  const m1=marketPeriod(latest,bases['1D']).metrics,m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m365=marketPeriod(latest,bases['1Y']).metrics,mAll=marketPeriod(latest,bases['ALL']).metrics;
+  const m1=marketPeriod(latest,bases['1D']).metrics,m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m90=marketPeriod(latest,bases['90D']).metrics,m365=marketPeriod(latest,bases['1Y']).metrics,mAll=marketPeriod(latest,bases['ALL']).metrics;
   const latestMap=rowMap(latest);
   const marketRows=[...latestMap.values()].map(r=>{
-    const id=String(r.id),d1=m1.get(id),d7=m7.get(id),d30=m30.get(id),d365=m365.get(id),dAll=mAll.get(id);
-    return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta1:d1?.delta??null,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,deltaAll:dAll?.delta??null,posRankDelta1:d1?.posRankDelta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,posRankDeltaAll:dAll?.posRankDelta??null,overallDelta7:d7?.overallDelta??null,overallDelta30:d30?.overallDelta??null};
+    const id=String(r.id),d1=m1.get(id),d7=m7.get(id),d30=m30.get(id),d90=m90.get(id),d365=m365.get(id),dAll=mAll.get(id);
+    return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta1:d1?.delta??null,delta7:d7?.delta??null,delta30:d30?.delta??null,delta90:d90?.delta??null,delta365:d365?.delta??null,deltaAll:dAll?.delta??null,posRankDelta1:d1?.posRankDelta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta90:d90?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,posRankDeltaAll:dAll?.posRankDelta??null,overallDelta1:d1?.overallDelta??null,overallDelta7:d7?.overallDelta??null,overallDelta30:d30?.overallDelta??null,overallDelta90:d90?.overallDelta??null,overallDelta365:d365?.overallDelta??null,overallDeltaAll:dAll?.overallDelta??null};
   }).sort((a,b)=>b.value-a.value);
   return{
     tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,periods,marketRows,
@@ -673,20 +673,25 @@ function marketInsightAverage(snapshot,pos,limit=24){
   if(!rows.length)return{average:null,count:0};
   return{average:rows.reduce((n,r)=>n+Number(r.value),0)/rows.length,count:rows.length};
 }
-function marketInsightsFromSnapshots(snaps){
+function marketInsightWindow(ordered,label,days=null){
+  if(!ordered.length)return[];
+  if(label==='ALL'||!Number.isFinite(Number(days)))return ordered.slice();
+  const latest=ordered.at(-1),latestMs=new Date(latest.t).getTime(),base=baselineFor(ordered,latestMs,Number(days))||ordered[0],baseMs=new Date(base.t).getTime();
+  return ordered.filter(s=>new Date(s.t).getTime()>=baseMs);
+}
+function marketInsightRange(snaps,label){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  if(ordered.length<2)return{available:false,snapshot_count:ordered.length,through:ordered.at(-1)?.t||null,position_indexes:[],new_highs:[],new_lows:[],volatility:[]};
-  const first=ordered[0],latest=ordered.at(-1),latestMs=new Date(latest.t).getTime(),base7=baselineFor(ordered,latestMs,7)||first,
-    positions=['QB','RB','WR','TE','IDP'],position_indexes=[];
+  if(ordered.length<2)return{label,available:false,snapshot_count:ordered.length,tracking_since:ordered[0]?.t||null,through:ordered.at(-1)?.t||null,position_indexes:[],new_highs:[],new_lows:[],volatility:[]};
+  const first=ordered[0],latest=ordered.at(-1),positions=['QB','RB','WR','TE','IDP'],position_indexes=[];
   for(const pos of positions){
-    const a=marketInsightAverage(first,pos),b=marketInsightAverage(base7,pos),z=marketInsightAverage(latest,pos);
+    const base=marketInsightAverage(first,pos),z=marketInsightAverage(latest,pos);
     if(!Number.isFinite(z.average))continue;
     position_indexes.push({
       pos,count:z.count,current_avg:Number(z.average.toFixed(2)),
-      baseline_avg:Number.isFinite(a.average)?Number(a.average.toFixed(2)):null,
-      index:Number.isFinite(a.average)&&a.average>0?Number((z.average/a.average*100).toFixed(2)):null,
-      change7_pct:Number.isFinite(b.average)&&b.average>0?Number(((z.average-b.average)/b.average*100).toFixed(2)):null,
-      baseline_t:first.t,week_base_t:base7.t
+      baseline_avg:Number.isFinite(base.average)?Number(base.average.toFixed(2)):null,
+      index:Number.isFinite(base.average)&&base.average>0?Number((z.average/base.average*100).toFixed(2)):null,
+      change_pct:Number.isFinite(base.average)&&base.average>0?Number(((z.average-base.average)/base.average*100).toFixed(2)):null,
+      baseline_t:first.t,through_t:latest.t
     });
   }
   const prior=new Map(),full=new Map();
@@ -714,12 +719,24 @@ function marketInsightsFromSnapshots(snaps){
     if(!id||!Number.isFinite(value)||!all)continue;
     if(p&&value>Number(p.high))new_highs.push({id,pos:String(row?.pos||''),value,previous_high:Number(p.high),previous_high_t:p.high_t,gain:value-Number(p.high),t:latest.t});
     if(p&&value<Number(p.low))new_lows.push({id,pos:String(row?.pos||''),value,previous_low:Number(p.low),previous_low_t:p.low_t,drop:value-Number(p.low),t:latest.t});
-    const mid=(Number(all.high)+Number(all.low))/2,range=Number(all.high)-Number(all.low);
-    volatility.push({id,pos:String(row?.pos||''),value,high:Number(all.high),low:Number(all.low),range,range_pct:mid>0?Number((range/mid*100).toFixed(2)):null,observations:Number(all.observations)||0,high_t:all.high_t,low_t:all.low_t});
+    const mid=(Number(all.high)+Number(all.low))/2,range=Number(all.high)-Number(all.low),drawdown=Number(all.high)>0?(value-Number(all.high))/Number(all.high)*100:null;
+    volatility.push({id,pos:String(row?.pos||''),value,high:Number(all.high),low:Number(all.low),range,range_pct:mid>0?Number((range/mid*100).toFixed(2)):null,drawdown_pct:Number.isFinite(drawdown)?Number(drawdown.toFixed(2)):null,observations:Number(all.observations)||0,high_t:all.high_t,low_t:all.low_t});
   }
   new_highs.sort((a,b)=>b.gain-a.gain||b.value-a.value);new_lows.sort((a,b)=>a.drop-b.drop||b.value-a.value);
   volatility.sort((a,b)=>Number(b.range_pct||0)-Number(a.range_pct||0)||b.range-a.range);
-  return{available:true,snapshot_count:ordered.length,tracking_since:first.t,through:latest.t,position_indexes,new_highs:new_highs.slice(0,50),new_lows:new_lows.slice(0,50),volatility:volatility.slice(0,100)};
+  return{label,available:true,snapshot_count:ordered.length,tracking_since:first.t,through:latest.t,position_indexes,new_highs:new_highs.slice(0,50),new_lows:new_lows.slice(0,50),volatility:volatility.slice(0,100)};
+}
+function marketInsightsFromSnapshots(snaps){
+  const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  if(ordered.length<2)return{available:false,snapshot_count:ordered.length,through:ordered.at(-1)?.t||null,ranges:{}};
+  const defs={1:1,7:7,30:30,90:90,365:365},ranges={};
+  for(const [daysKey,days] of Object.entries(defs)){
+    const label=daysKey==='365'?'1Y':daysKey+'D';
+    ranges[label]=marketInsightRange(marketInsightWindow(ordered,label,days),label);
+  }
+  ranges.ALL=marketInsightRange(ordered,'ALL');
+  const all=ranges.ALL;
+  return{available:true,snapshot_count:ordered.length,tracking_since:ordered[0].t,through:ordered.at(-1).t,ranges,position_indexes:all.position_indexes,new_highs:all.new_highs,new_lows:all.new_lows,volatility:all.volatility};
 }
 async function getMarketInsights(s){
   const now=Date.now();if(marketInsightsCache&&now-marketInsightsCacheAt<300000)return marketInsightsCache;

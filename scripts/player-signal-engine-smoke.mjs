@@ -12,6 +12,7 @@ const base=(overrides={})=>({
 const breakout=reporterPlayerStatusProfile(base(),1,{points:14});
 assert(breakout.status==='breakout','young strong two-week rise + role lift must remain breakout');
 assert(breakout.strongTwoWeekRise===true&&breakout.roleLift===true,'breakout evidence flags missing');
+assert(PLAYER_SIGNAL_VERSION===3,'signal version must advance for corrected null evidence semantics');
 
 const star=reporterPlayerStatusProfile(base({age:26,years_exp:4,prior_season_avg:18,season_avg:18,points:18,current_snap_pct:.8}),1,{points:17});
 assert(star.status==='established-star','established star classification drifted');
@@ -30,6 +31,9 @@ const hot=recentFormProfile([{week:1,points:6},{week:2,points:7},{week:3,points:
 assert(hot.label==='hot','recent-form hot threshold drifted');
 const cold=recentFormProfile([{week:1,points:18},{week:2,points:17},{week:3,points:16},{week:4,points:10},{week:5,points:9},{week:6,points:8}]);
 assert(cold.label==='cold','recent-form cold threshold drifted');
+const shortForm=recentFormProfile([{week:1,points:10},{week:2,points:12}]);
+const shortSignal=buildPlayerSignal({player:base({prior_season_avg:8,season_avg:11,points:12}),previousPlayer:{points:10},recentForm:shortForm,season:2026,week:2,slot:1});
+assert(shortForm.delta===null&&shortSignal.evidence.recent_form_delta===null,'insufficient recent-form evidence must remain null instead of becoming 0');
 
 const first=buildPlayerSignal({player:base(),previousPlayer:{points:14},recentForm:hot,season:2026,week:6,slot:1});
 assert(first.version===PLAYER_SIGNAL_VERSION&&first.state==='breakout','signal must preserve reporter breakout as normalized state');
@@ -46,11 +50,11 @@ assert(editorial.includes("import {reporterPlayerStatusProfile} from './player-s
 assert(editorial.includes('return reporterPlayerStatusProfile(p,slot,pp);'),'Inquirer status wrapper is not delegated to shared classifier');
 const vh=fs.readFileSync('value-history-v276.js','utf8');
 for(const marker of ['/.netlify/functions/player-signals','Fleeced Signals','loadPlayerSignals','playerSignalCache'])assert(vh.includes(marker),'Value History signal integration missing '+marker);
-for(const marker of ['vhPositionIndexes','vhMarketHeat','vhCategoryLeaders','vhMarketHighLow','vhMomentumLeaders','vhOpportunityWatch','vhMarketReversals','vhMarketVolatility','market_insights=1','marketSignalsFetch','data-vh-intel-period','data-vh-heat-pos','openHeatMapModal','Buy Low Watch','Sell High Watch','Overall Market Volatility','Positional Market Volatility','Player Market Volatility','marketSignalDirection(sig.state)','Offensive Breakout Watch','Defensive Breakout Watch','Strongest Rebound','Deepest Pullback','View history ↗'])assert(vh.includes(marker),'Market Dashboard intelligence integration missing '+marker);
+for(const marker of ['vhPositionIndexes','vhMarketHeat','vhCategoryLeaders','vhMarketHighLow','vhMomentumLeaders','vhOpportunityWatch','vhMarketReversals','vhMarketVolatility','market_insights=1','marketSignalsFetch','data-vh-intel-period','data-vh-heat-pos','openHeatMapModal','Buy Low Watch','Sell High Watch','Overall Market Volatility','Positional Market Volatility','Player Market Volatility','marketSignalDirection(sig.state)','marketSignalDirection(x.state)>marketSignalDirection(x.previous_state)','finiteMarketNumber','livePlayerMeta(id)','player_changes','Offensive Breakout Watch','Defensive Breakout Watch','Strongest Rebound','Deepest Pullback','View history ↗'])assert(vh.includes(marker),'Market Dashboard intelligence integration missing '+marker);
 const rankPos=vh.indexOf('class="vh-rank-grid"'),signalPos=vh.indexOf('id="vhPlayerSignals"',rankPos),recentPos=vh.indexOf('Recent Changes',signalPos);
 assert(rankPos>=0&&signalPos>rankPos&&recentPos>signalPos,'Fleeced Signals must render below rank charts and above Recent Changes');
 const historyFn=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
-for(const marker of ['getMarketInsights','marketInsightsFromSnapshots','marketInsightRange','marketInsightWindow','marketVolatilitySummary',"url.searchParams.get('market_insights')==='1'",'ranges','position_indexes','market_volatility','position_volatility','identity_clean','new_highs','new_lows','volatility','drawdown_pct','delta90'])assert(historyFn.includes(marker),'Market intelligence backend missing '+marker);
+for(const marker of ['getMarketInsights','marketInsightsFromSnapshots','marketInsightRange','marketInsightWindow','marketVolatilitySummary',"url.searchParams.get('market_insights')==='1'",'ranges','position_indexes','market_volatility','position_volatility','player_changes','firstSeen','baseSnap=ordered.find','identity_clean','new_highs','new_lows','volatility','drawdown_pct','delta90'])assert(historyFn.includes(marker),'Market intelligence backend missing '+marker);
 const signalsFn=fs.readFileSync('netlify/functions/player-signals.mjs','utf8');
 assert(signalsFn.includes('transitions=compact?Object.values(data.history_by_player||{}).flat().filter(x=>x?.changed)'), 'Compact signal API must expose historical transitions for range filtering');
 

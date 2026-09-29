@@ -375,7 +375,7 @@ function outlookLine(t,id){
   'nora-voss':[
    next+' is next. If the same weakness survives another Sunday, '+tm+' loses the right to call it temporary.',
    'Week 3 brings '+next+'. The useful standard for '+tm+' is simple: repeat the strengths and materially reduce the Week 2 failure points.',
-   tm+' gets '+next+' next. Management already knows what Week 2 exposed; the question is whether the lineup changes accordingly.'
+   tm+' gets '+next+' next. Management already knows what Week 2 exposed; now the lineup has to change accordingly.'
   ]
  };
  return pick(banks[id]||banks['walter-mercer'],seed);
@@ -694,7 +694,7 @@ function buildCoolThrone(t,id){
    ],
    'nora-voss':[
     name+' earns clean credit at '+score+'. Strong production deserves to be stated plainly.',
-    score+' from '+name+' was one of the roster’s clearest successes. The question is whether the role sustains it.'
+    score+' from '+name+' was one of the roster’s clearest successes. Now the role has to sustain it.'
    ]
   };
   return pick(banks[id]||banks['walter-mercer'],seed,i);

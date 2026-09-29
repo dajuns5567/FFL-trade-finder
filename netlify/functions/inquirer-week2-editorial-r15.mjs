@@ -1118,10 +1118,14 @@ function recapDepthLine(id,teams){
  const rows=teams||[],records={perfect:0,split:0,winless:0};
  for(const t of rows){const r=t?.league_context?.record||{},w=Number(r.wins)||0,l=Number(r.losses)||0;if(w===2&&l===0)records.perfect++;else if(w===1&&l===1)records.split++;else if(w===0&&l===2)records.winless++}
  const top=rows.slice().sort((a,b)=>Number(b?.points)-Number(a?.points))[0]||null,
+  bottom=rows.slice().sort((a,b)=>Number(a?.points)-Number(b?.points))[0]||null,
+  closest=rows.slice().filter(t=>Number.isFinite(Number(t?.points))&&Number.isFinite(Number(t?.opponent_points))).sort((a,b)=>Math.abs(Number(a.points)-Number(a.opponent_points))-Math.abs(Number(b.points)-Number(b.opponent_points)))[0]||null,
   mover=rows.slice().filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))).sort((a,b)=>Math.abs(Number(b.value_history_week.delta))-Math.abs(Number(a.value_history_week.delta)))[0]||null,
   swing=rows.slice().filter(t=>Number.isFinite(Number(t?.next_projected))&&Number.isFinite(Number(t?.next_opponent_projected))).sort((a,b)=>Math.abs(Number(b.next_projected)-Number(b.next_opponent_projected))-Math.abs(Number(a.next_projected)-Number(a.next_opponent_projected)))[0]||null,
   seed='recap-depth|'+id;
- const topName=String(top?.team_name||'the week’s high scorer'),topPts=one(top?.points),moveName=String(mover?.team_name||'the biggest market mover'),move=Math.round(Math.abs(Number(mover?.value_history_week?.delta)||0)),
+ const topName=String(top?.team_name||'the week’s high scorer'),topPts=one(top?.points),bottomName=String(bottom?.team_name||'the week’s low scorer'),bottomPts=one(bottom?.points),
+  scoringSpread=Math.abs((Number(top?.points)||0)-(Number(bottom?.points)||0)).toFixed(1),closeName=String(closest?.team_name||'one team'),closeOpp=String(closest?.opponent_name||'its opponent'),closeMargin=Math.abs((Number(closest?.points)||0)-(Number(closest?.opponent_points)||0)).toFixed(1),
+  moveName=String(mover?.team_name||'the biggest market mover'),move=Math.round(Math.abs(Number(mover?.value_history_week?.delta)||0)),
   swingName=String(swing?.team_name||'one Week 3 roster'),swingOpp=String(swing?.next_opponent_name||'its next opponent'),gap=Math.abs((Number(swing?.next_projected)||0)-(Number(swing?.next_opponent_projected)||0)).toFixed(1);
  const banks={
   'walter-mercer':[
@@ -1141,7 +1145,13 @@ function recapDepthLine(id,teams){
    'Two completed weeks leave '+records.perfect+' perfect records, '+records.split+' split records and '+records.winless+' winless records. '+swingName+' and '+swingOpp+' are separated by '+gap+' projected points for Week 3. I have logged the spread, the records and the matchup; Sunday can decide which part of the file ages badly.'
   ]
  };
- return pick(banks[id]||banks['walter-mercer'],seed);
+ const tails={
+  'walter-mercer':'At the other end, '+bottomName+' managed '+bottomPts+', leaving a '+scoringSpread+'-point gulf between the week’s loudest and quietest team totals. That is not a subtle difference; that is two completely different Sundays wearing the same league logo. The closest game was '+closeName+' against '+closeOpp+', decided by '+closeMargin+'. Those are the results I trust more than easy narratives, because one lineup choice or one disappearing starter can move a whole week. The '+records.perfect+' unbeaten teams may enjoy the view, but the '+records.winless+' winless teams have officially exhausted the portion of September where everybody politely says “small sample” and changes the subject.',
+  'tess-delaney':'For contrast, '+bottomName+' finished at '+bottomPts+', a '+scoringSpread+'-point descent from '+topName+'. I adore excess when it climbs upward; downward excess is just ugliness with ambition. The closest affair was '+closeName+'–'+closeOpp+', separated by '+closeMargin+', which is exactly enough margin to turn one harmless lineup decision into a personal insult. That is the real Week 2 shape: the glamorous teams are already demanding attention, the winless teams are running out of charming explanations, and the enormous middle class at 1-1 is one Sunday away from either becoming interesting or becoming background furniture.',
+  'mack-hollis':bottomName+' scored '+bottomPts+'. '+topName+' scored '+topPts+'. That is a '+scoringSpread+'-point spread, and if anybody wants me to describe both performances with the same polite vocabulary, they have mistaken this publication for a hostage negotiation. The week’s tightest game was '+closeName+' against '+closeOpp+' at '+closeMargin+' points apart. That is where every bench mistake becomes a crime scene and every half-point becomes family history. Meanwhile the '+records.perfect+' teams can brag, the '+records.winless+' teams can panic, and the '+records.split+' teams can stop pretending 1-1 is a personality. Week 3 will be much less forgiving.',
+  'nora-voss':'The scoring range matters too: '+topName+' posted '+topPts+' while '+bottomName+' finished at '+bottomPts+', a '+scoringSpread+'-point gap. That tells us how little a league-wide average can explain when individual lineups are moving in opposite directions. The closest completed matchup was '+closeName+' versus '+closeOpp+', separated by '+closeMargin+' points, so a single start-sit decision had genuine outcome-level importance there. Add the '+records.perfect+' teams at 2-0, the '+records.winless+' teams at 0-2 and the Week 3 projection spread above, and the useful conclusion is not that the league has settled. It is that the next set of results now has specific expectations to confirm or break.'
+ };
+ return pick(banks[id]||banks['walter-mercer'],seed)+' '+(tails[id]||tails['walter-mercer']);
 }
 
 function reviseOverview(o,teams){

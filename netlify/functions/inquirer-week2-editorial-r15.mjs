@@ -322,7 +322,15 @@ function sentimentLines(t,id){
   };
   lines.push(closer[id]||closer['walter-mercer']);
  }
- return uniq(lines).slice(0,4);
+ const next=String(t?.next_opponent_name||'the next opponent'),own=Number(t?.next_projected),opp=Number(t?.next_opponent_projected),edge=Number.isFinite(own)&&Number.isFinite(opp)?Math.abs(own-opp).toFixed(1):null;
+ const nextMood={
+  'walter-mercer':edge!=null?'Next comes '+next+' with a '+edge+'-point projection gap. Fans will call that reassurance or doom depending on which side of the number '+tm+' occupies.':'Next comes '+next+'. Fans do not need a prediction yet; they need a reason to feel less ridiculous by Monday.',
+  'tess-delaney':edge!=null?'Now '+next+' arrives with a '+edge+'-point projection gap. The fan base will spend the week turning that number into confidence, dread or both.':'Now '+next+' arrives, and the emotional stakes are already much larger than good taste would recommend.',
+  'mack-hollis':edge!=null?'Next is '+next+', and the projection gap is '+edge+'. Fans are going to yell either way, so '+tm+' may as well give them something worth yelling about.':'Next is '+next+'. The crowd has one request: make Week 3 less stupid than the thing they are currently mad about.',
+  'nora-voss':edge!=null?'Next is '+next+' with a '+edge+'-point projection gap. That gives the fan base a concrete expectation instead of another vague feeling.':'Next is '+next+'. Fan confidence will move with the same issues this article has already identified.'
+ };
+ lines.push(nextMood[id]||nextMood['walter-mercer']);
+ return uniq(lines).slice(0,5);
 }
 
 function outlookLine(t,id){
@@ -451,14 +459,100 @@ function playerContextParagraph(t,p,id,slot){
  }
  return history;
 }
+function playerTrendParagraph(t,p,id,slot){
+ const name=String(p?.name||'Player'),pts=Number(p?.points),shown=one(pts),proj=Number(p?.projected),
+  week1=(p?.recent_form?.series||[]).find(x=>Number(x?.week)===1),w1=Number(week1?.points),
+  snap=Number(p?.current_snap_pct),priorSnap=Number(p?.prior_season_snap_pct),seed=key(t)+'|player-trend|'+id+'|'+slot+'|'+name;
+ if(Number.isFinite(snap)&&Number.isFinite(priorSnap)&&priorSnap>0){
+  const now=(snap*100).toFixed(1),before=(priorSnap*100).toFixed(1),up=snap>=priorSnap;
+  const banks={
+   'walter-mercer':up?[
+    name+' played '+now+'% of the available snaps after a '+before+'% share last season. More opportunity makes the production easier to trust, which is annoyingly sensible.',
+    'The role matters here: '+name+' was at '+now+'% of snaps in Week 2 versus '+before+'% last year. Bigger work and bigger output usually deserve attention.'
+   ]:[
+    name+' handled '+now+'% of the snaps after '+before+'% last season. The smaller role is the part I would keep one eye on before assuming the fantasy score repeats.',
+    'Week 2 put '+name+' at '+now+'% of snaps versus '+before+'% last year. Good fantasy points can survive a smaller role; they should not make us ignore it.'
+   ],
+   'tess-delaney':up?[
+    name+' has expanded from a '+before+'% snap share last year to '+now+'% in Week 2. The role is getting larger, which makes the production considerably more interesting.',
+    'The '+now+'% Week 2 snap share for '+name+' is up from '+before+'% last year. Opportunity has stopped whispering and started making demands.'
+   ]:[
+    name+' fell from a '+before+'% snap share last year to '+now+'% in Week 2. I can adore the points and still dislike the shrinking stage.',
+    'The role contracted to '+now+'% of snaps from '+before+'% last season. That is not fatal, but it is too ugly to hide beneath a pleasant fantasy total.'
+   ],
+   'mack-hollis':up?[
+    name+' jumped from '+before+'% of snaps last year to '+now+'% in Week 2. More field, more chances, fewer excuses. I like the arrangement.',
+    'A '+now+'% snap share after '+before+'% last season tells me '+name+' is not producing from the cheap seats. The role is real.'
+   ]:[
+    name+' was down to '+now+'% of snaps from '+before+'% last year. If the role keeps shrinking, the points are going to need a very good lawyer.',
+    'The Week 2 role was '+now+'% of snaps versus '+before+'% last year. That is the sort of decline a good fantasy score can distract from exactly once.'
+   ],
+   'nora-voss':up?[
+    name+' played '+now+'% of the snaps in Week 2 compared with '+before+'% last season. The role increase supports the idea that the production has structural backing.',
+    'The snap share moved from '+before+'% last year to '+now+'% in Week 2 for '+name+'. That is meaningful because production tied to a larger role is easier to project forward.'
+   ]:[
+    name+' played '+now+'% of snaps in Week 2 after '+before+'% last season. The reduced role is a real counterweight to the fantasy result.',
+    'The snap share fell from '+before+'% last year to '+now+'% in Week 2 for '+name+'. That does not erase the score, but it changes how confidently the score should be projected.'
+   ]
+  };
+  return pick(banks[id]||banks['walter-mercer'],seed);
+ }
+ if(Number.isFinite(proj)){
+  const diff=pts-proj,abs=Math.abs(diff).toFixed(1),up=diff>=0;
+  const banks={
+   'walter-mercer':up?[
+    name+' beat the Week 2 projection by '+abs+' points. I do not worship projections, but outperforming one by that much is preferable to explaining why it was missed.',
+    name+' finished '+abs+' above projection. That is useful context even if projections remain professional guesswork with decimals.'
+   ]:[
+    name+' missed the Week 2 projection by '+abs+' points. The forecast is not sacred; falling that far short still deserves a complaint.',
+    name+' landed '+abs+' below projection. I am willing to forgive forecasts before I forgive production that never showed up.'
+   ],
+   'tess-delaney':up?[
+    name+' beat projection by '+abs+' points. Expectations were invited to the party and promptly made to look underdressed.',
+    name+' finished '+abs+' above projection, which is the correct way to embarrass a forecast.'
+   ]:[
+    name+' missed projection by '+abs+' points. Expectations arrived with more dignity than the actual result.',
+    name+' came in '+abs+' below projection. I resent being promised a larger number and then handed this.'
+   ],
+   'mack-hollis':up?[
+    name+' beat projection by '+abs+' points. That is how you make the pregame number look stupid.',
+    name+' finished '+abs+' above projection. Good. Make the forecast chase you.'
+   ]:[
+    name+' missed projection by '+abs+' points. That is not variance; that is material for a very unpleasant Monday.',
+    name+' came in '+abs+' below projection. The number before kickoff was optimistic; the number after kickoff was the problem.'
+   ],
+   'nora-voss':up?[
+    name+' exceeded projection by '+abs+' points. The useful takeaway is not that the forecast was wrong; it is that the player produced materially above expectation.',
+    name+' finished '+abs+' above projection. That changes the short-term expectation, though one week is not enough to rewrite the full baseline.'
+   ]:[
+    name+' finished '+abs+' below projection. The miss is large enough to ask whether usage, matchup or performance drove it.',
+    name+' missed projection by '+abs+' points. The size of the miss matters more than the existence of a miss.'
+   ]
+  };
+  return pick(banks[id]||banks['walter-mercer'],seed);
+ }
+ if(Number.isFinite(w1)){
+  const diff=pts-w1,abs=Math.abs(diff).toFixed(1),up=diff>=0;
+  const banks={
+   'walter-mercer':[name+' moved '+abs+' points '+(up?'up':'down')+' from Week 1. Two weeks is not a trend line I trust blindly, but it is enough to notice the direction.'],
+   'tess-delaney':[name+' moved '+abs+' points '+(up?'higher':'lower')+' from the opener. The season is already developing a personality.'],
+   'mack-hollis':[name+' swung '+abs+' points '+(up?'up':'down')+' from Week 1. Small sample, large mood change.'],
+   'nora-voss':[name+' moved '+abs+' points '+(up?'above':'below')+' the Week 1 result. The two-week sample is limited, but the change is large enough to record.']
+  };
+  return banks[id]||banks['walter-mercer'];
+ }
+ return name+' finished Week 2 at '+shown+'. The next useful question is whether the role and production repeat.';
+}
+
 function buildPlayers(t,a,id){
  const top=topThreeStarters(t),out=[];
  for(const [i,p] of top.entries()){
   out.push(playerStatParagraph(t,p));
   out.push(playerReaction(t,p,id,i));
   out.push(playerContextParagraph(t,p,id,i));
+  out.push(playerTrendParagraph(t,p,id,i));
  }
- return uniq(out).slice(0,9);
+ return uniq(out).slice(0,12);
 }
 
 function buildManagement(t,a,id){
@@ -466,6 +560,33 @@ function buildManagement(t,a,id){
  const bench=facts.find(isBenchFact),tx=facts.find(isTransactionFact),reaction=managementLine(t,id),follow=managementFollowupLine(t,id);
  return uniq([bench,tx,reaction,follow]).filter(Boolean).slice(0,4);
 }
+function hotSeatFollowupLine(t,p,id){
+ const name=String(p?.name||'Player'),pts=Number(p?.points),shown=one(pts),prior=Number(p?.prior_season_avg),proj=Number(p?.projected),
+  week1=(p?.recent_form?.series||[]).find(x=>Number(x?.week)===1),w1=Number(week1?.points),seed=key(t)+'|hot-follow|'+id+'|'+name;
+ if(Number.isFinite(prior)&&prior>0){
+  const gap=(pts-prior).toFixed(1),down=pts<prior;
+  const banks={
+   'walter-mercer':[name+' averaged '+prior.toFixed(1)+' last season and gave us '+shown+' in Week 2. '+(down?'That gap is too large to wave away with “early season.”':'At least the old baseline has not become a museum piece.')],
+   'tess-delaney':[name+' carried a '+prior.toFixed(1)+' average out of last season and answered with '+shown+'. '+(down?'The decline is ugly enough to deserve its own lighting.':'For once, the comparison is flattering rather than cruel.')],
+   'mack-hollis':[name+' averaged '+prior.toFixed(1)+' last year and scored '+shown+' now. '+(down?'That is a drop of '+Math.abs(Number(gap)).toFixed(1)+' points, which is not subtle.':'Fine. The old standard survived this week.')],
+   'nora-voss':[name+' averaged '+prior.toFixed(1)+' last season versus '+shown+' in Week 2. '+(down?'The size of that decline is why the concern is specific rather than emotional.':'The prior baseline does not create an immediate decline case here.')]
+  };return pick(banks[id]||banks['walter-mercer'],seed);
+ }
+ if(Number.isFinite(proj)){
+  const gap=(pts-proj).toFixed(1),down=pts<proj;
+  const banks={
+   'walter-mercer':[name+' was projected for '+proj.toFixed(1)+' and finished at '+shown+'. '+(down?'Missing by '+Math.abs(Number(gap)).toFixed(1)+' gives me something concrete to complain about.':'The result at least cleared the expectation.')],
+   'tess-delaney':[name+' entered with a '+proj.toFixed(1)+' projection and left with '+shown+'. '+(down?'Expectations were treated with appalling disrespect.':'The number behaved, which I appreciate.')],
+   'mack-hollis':[name+' was projected at '+proj.toFixed(1)+' and posted '+shown+'. '+(down?'That miss is why the hot seat has a name on it.':'Projection cleared. Complaint temporarily reduced.')],
+   'nora-voss':[name+' was projected for '+proj.toFixed(1)+' and produced '+shown+'. '+(down?'The projection miss gives Week 3 a clear performance benchmark.':'The player exceeded the immediate expectation.')]
+  };return pick(banks[id]||banks['walter-mercer'],seed);
+ }
+ if(Number.isFinite(w1)){
+  return name+' moved from '+w1.toFixed(1)+' in Week 1 to '+shown+' in Week 2. The direction matters because Week 3 will tell us whether the change continues.';
+ }
+ return'';
+}
+
 function buildHotSeat(t,a,id){
  const sec=sectionOf(a,'hot-seat'),facts=factualParagraphs(sec),first=facts.find(x=>/\d+(?:\.\d+)?/.test(x))||facts[0];
  const lo=weakest(t),lp=lo?Number(lo.points):null,shown=lo?one(lo.points):null,seed=key(t)+'|hot|'+id;
@@ -488,7 +609,8 @@ function buildHotSeat(t,a,id){
   ]:[]
  };
  const line=(banks[id]&&banks[id].length)?pick(banks[id],seed):'';
- return uniq([first,line]).filter(Boolean).slice(0,2);
+ const follow=lo?hotSeatFollowupLine(t,lo,id):'';
+ return uniq([first,line,follow]).filter(Boolean).slice(0,3);
 }
 
 function buildCoolThrone(t,id){

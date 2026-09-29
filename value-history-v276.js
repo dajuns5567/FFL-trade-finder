@@ -162,10 +162,16 @@ function addStyles(){
   #valueHistory .vh-market-jump{position:sticky;top:8px;z-index:8;display:flex;gap:5px;align-items:center;overflow-x:auto;padding:7px;border:1px solid color-mix(in srgb,#e4b53f 30%,var(--line));border-radius:14px;background:color-mix(in srgb,var(--card) 95%,#05070a);box-shadow:0 8px 22px rgba(0,0,0,.22)}
   #valueHistory .vh-market-jump button{flex:0 0 auto;border:0!important;border-radius:9px!important;padding:8px 11px!important;background:transparent!important;color:var(--muted)!important;font-size:10px!important;font-weight:900!important;letter-spacing:.045em;text-transform:uppercase;box-shadow:none!important}
   #valueHistory .vh-market-jump button:hover,#valueHistory .vh-market-jump button:focus-visible{color:#e4b53f!important;background:color-mix(in srgb,#e4b53f 10%,var(--card))!important;outline:none}
-  #valueHistory .vh-intel-periodbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:10px 12px;border:1px solid color-mix(in srgb,#e4b53f 22%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--card) 90%,#080a0e)}
-  #valueHistory .vh-intel-periodbar>span{margin-right:4px;color:#e4b53f;font-size:10px;font-weight:950;letter-spacing:.06em;text-transform:uppercase}
-  #valueHistory .vh-intel-periodbar button{min-width:48px}
-  #valueHistory .vh-intel-periodbar button.vh-active{color:#0a0d12!important;background:#e4b53f!important;border-color:#e4b53f!important}
+  #valueHistory .vh-intel-periodbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 22px;align-items:center;padding:17px 18px;border:1px solid color-mix(in srgb,#e4b53f 38%,var(--line));border-radius:14px;background:color-mix(in srgb,var(--card) 94%,#080a0e);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+  #valueHistory .vh-intel-period-copy{min-width:0}
+  #valueHistory .vh-intel-kicker{display:block;color:var(--muted);font-size:9px;font-weight:950;letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px}
+  #valueHistory .vh-intel-title{color:#e4b53f;font-size:22px;font-weight:950;letter-spacing:.065em;text-transform:uppercase;line-height:1.05}
+  #valueHistory .vh-intel-period-copy small{display:block;color:var(--muted);font-size:10px;line-height:1.45;margin-top:6px;max-width:560px}
+  #valueHistory .vh-intel-period-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+  #valueHistory .vh-intel-period-actions button{min-width:58px;padding:10px 14px!important;border:1px solid color-mix(in srgb,#e4b53f 58%,var(--line))!important;border-radius:10px!important;background:transparent!important;color:#f4f4f5!important;font-size:11px!important;font-weight:950!important;letter-spacing:.04em;box-shadow:none!important}
+  #valueHistory .vh-intel-period-actions button:hover,#valueHistory .vh-intel-period-actions button:focus-visible{border-color:#e4b53f!important;color:#fff!important;background:transparent!important;box-shadow:0 0 0 1px rgba(228,181,63,.18)!important;outline:none!important}
+  #valueHistory .vh-intel-period-actions button.vh-active{color:#fff!important;background:transparent!important;border-color:#e4b53f!important;box-shadow:inset 0 -3px 0 #e4b53f,0 0 0 1px rgba(228,181,63,.16)!important}
+  #valueHistory .vh-intel-period-note{grid-column:1/-1;padding-top:10px;border-top:1px solid color-mix(in srgb,#e4b53f 18%,var(--line));color:var(--muted);font-size:10px;line-height:1.4}
   #valueHistory .vh-market-section{display:grid;gap:10px;scroll-margin-top:86px;margin-top:3px}
   #valueHistory .vh-market-section+.vh-market-section{margin-top:8px}
   #valueHistory .vh-market-section-title{display:flex;justify-content:space-between;gap:14px;align-items:end;padding:2px 2px 0}
@@ -185,13 +191,13 @@ function addStyles(){
   #valueHistory button.vh-heat-cell.vh-up{background:color-mix(in srgb,var(--good,#1f9d68) 13%,var(--card))!important}
   #valueHistory button.vh-heat-cell.vh-down{background:color-mix(in srgb,var(--bad,#c45151) 13%,var(--card))!important}
   #valueHistory button.vh-heat-cell:hover,#valueHistory button.vh-heat-cell:focus-visible{border-color:#e4b53f!important;outline:none!important}
-  #valueHistory .vh-intel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  #valueHistory .vh-intel-grid>.vh-card{padding:14px 15px;display:flex;flex-direction:column;height:100%}
+  #valueHistory .vh-intel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+  #valueHistory .vh-intel-grid>.vh-card{padding:14px 15px;display:flex;flex-direction:column;justify-content:flex-start;height:100%}
   #valueHistory .vh-intel-grid>.vh-card h3{margin:0 0 3px;font-size:15px}
   #valueHistory .vh-intel-grid>.vh-card>.vh-sub{min-height:42px}
-  #valueHistory .vh-intel-grid>.vh-card>.vh-intel-list{flex:1}
+  #valueHistory .vh-intel-grid>.vh-card>.vh-intel-list{flex:0 0 auto;align-content:start}
   #valueHistory .vh-intel-row{min-height:58px}
-  #valueHistory .vh-intel-list{display:grid;gap:0;margin-top:7px}
+  #valueHistory .vh-intel-list{display:grid;gap:0;margin-top:7px;align-content:start;grid-auto-rows:minmax(58px,auto)}
   #valueHistory .vh-intel-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
   #valueHistory .vh-intel-row:first-child{border-top:0}
   #valueHistory .vh-intel-row small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
@@ -215,7 +221,7 @@ function addStyles(){
   #valueHistory .vh-volatility-stat b{font-size:16px}
   @media(max-width:900px){#valueHistory .vh-volatility-layout{grid-template-columns:1fr}}
   @media(max-width:1000px){#valueHistory .vh-index-grid{grid-template-columns:repeat(3,1fr)}#valueHistory .vh-category-grid{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:720px){#valueHistory .vh-signal-summary{grid-template-columns:1fr}#valueHistory .vh-intel-grid{grid-template-columns:1fr}#valueHistory .vh-index-grid{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-market-section-title{display:block}#valueHistory .vh-market-section-title p{text-align:left;margin-top:4px}#valueHistory .vh-intel-row{grid-template-columns:minmax(0,1fr) auto}#valueHistory .vh-intel-row .vh-view-history{grid-column:1/-1;justify-self:start}}
+  @media(max-width:720px){#valueHistory .vh-signal-summary{grid-template-columns:1fr}#valueHistory .vh-intel-grid{grid-template-columns:1fr}#valueHistory .vh-index-grid{grid-template-columns:repeat(2,1fr)}#valueHistory .vh-market-section-title{display:block}#valueHistory .vh-market-section-title p{text-align:left;margin-top:4px}#valueHistory .vh-intel-row{grid-template-columns:minmax(0,1fr) auto}#valueHistory .vh-intel-row .vh-view-history{grid-column:1/-1;justify-self:start}#valueHistory .vh-intel-periodbar{grid-template-columns:1fr;padding:15px}#valueHistory .vh-intel-period-actions{justify-content:flex-start}#valueHistory .vh-intel-period-note{grid-column:1}}
   #valueHistory .vh-team-toolbar select,#valueHistory #vhMarketSearch{border-color:color-mix(in srgb,#e4b53f 22%,var(--line))!important;box-shadow:none!important}
   #valueHistory .vh-team-toolbar select:focus,#valueHistory .vh-team-toolbar select:focus-visible,#valueHistory #vhMarketSearch:focus,#valueHistory #vhMarketSearch:focus-visible{outline:none!important;border-color:#e4b53f!important;box-shadow:0 0 0 2px rgba(228,181,63,.30),0 0 18px rgba(228,181,63,.18)!important}
   #valueHistory .vh-similar-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -1171,7 +1177,13 @@ function intelOverallDeltaKey(period=marketIntelPeriod){return({'1D':'overallDel
 function intelPeriodLabel(period=marketIntelPeriod){
   const raw=periodLabel(period,marketCache||{});return raw==='Available History'?period+' / available history':raw;
 }
-function intelRange(){return marketInsightsCache?.ranges?.[marketIntelPeriod]||marketInsightsCache?.ranges?.ALL||marketInsightsCache||null}
+function intelRange(period=marketIntelPeriod){return marketInsightsCache?.ranges?.[period]||marketInsightsCache?.ranges?.ALL||marketInsightsCache||null}
+function verifiedValueMove(id,period=marketIntelPeriod){
+  const key=String(id),range=intelRange(period),hit=(range?.player_changes||[]).find(r=>String(r.id)===key);
+  if(hit&&finiteMarketNumber(hit.delta)!=null)return{delta:Number(hit.delta),pct:finiteMarketNumber(hit.pct),from_value:finiteMarketNumber(hit.from_value),from_t:hit.from_t||null,through_t:hit.through_t||null,overall_delta:finiteMarketNumber(hit.overall_delta),pos_rank_delta:finiteMarketNumber(hit.pos_rank_delta),source:'verified-window'};
+  const row=(marketCache?.marketRows||[]).find(r=>String(r.id)===key),delta=finiteMarketNumber(row?.[intelDeltaKey(period)]);
+  return delta==null?null:{delta,pct:marketPctChange(row,intelDeltaKey(period)),overall_delta:finiteMarketNumber(row?.[intelOverallDeltaKey(period)]),source:'summary-baseline'};
+}
 function signalPerformanceDelta(signal){
   const e=signal?.evidence||{},recent=finiteMarketNumber(e.recent_form_delta);
   if(recent!=null)return recent;
@@ -1183,7 +1195,7 @@ function intelPlayerRow(id,sub,metricLabel,metricValue,tone=''){
   return`<div class="vh-intel-row"><button class="vh-player-link" data-vh-player="${esc(id)}"><b>${esc(playerName(id))}</b><small>${esc(detail)}</small></button><div class="vh-intel-metric ${tone}"><small>${esc(metricLabel||'')}</small><b>${esc(metricValue==null?'—':metricValue)}</b></div><button type="button" class="vh-view-history" data-vh-player="${esc(id)}">View history ↗</button></div>`;
 }
 function intelligencePeriodBar(){
-  return`<div class="vh-intel-periodbar"><span>Market intelligence window</span>${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===marketIntelPeriod?'vh-active':'secondary'} small" data-vh-intel-period="${p}">${p}</button>`).join('')}<small class="muted">Value-based analytics use this window. Fleeced Signals always use completed NFL weeks only.</small></div>`;
+  return`<div class="vh-intel-periodbar"><div class="vh-intel-period-copy"><span class="vh-intel-kicker">Fleeced analytics</span><div class="vh-intel-title">Market Intelligence</div><small>Choose the value-history window used across indexes, heat, records, opportunities, reversals, and volatility.</small></div><div class="vh-intel-period-actions" role="group" aria-label="Market Intelligence time range">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===marketIntelPeriod?'vh-active':''}" data-vh-intel-period="${p}">${p}</button>`).join('')}</div><div class="vh-intel-period-note">Value movement uses verified observations inside the selected window. Fleeced player signals remain based on completed NFL weeks only.</div></div>`;
 }
 function positionIndexesMarkup(){
   const rows=intelRange()?.position_indexes||[];
@@ -1219,29 +1231,29 @@ function newHighLowMarkup(){
   const data=intelRange();
   if(!data)return'<div class="vh-card"><div class="vh-empty">Checking tracked market records…</div></div>';
   const highs=(data.new_highs||[]).slice(0,8),lows=(data.new_lows||[]).slice(0,8),
-    list=(rows,high)=>rows.length?rows.map(r=>intelPlayerRow(r.id,`${r.pos} • previous ${high?'high':'low'} ${fmt(high?r.previous_high:r.previous_low)}`,`${intelPeriodLabel()} record move`,`${high?'+':''}${fmt(high?r.gain:r.drop)}`,high?'vh-up':'vh-down')).join(''):`<div class="vh-empty">No new ${high?'highs':'lows'} in the selected window.</div>`;
+    list=(rows,high)=>rows.length?rows.map(r=>intelPlayerRow(r.id,`Previous ${high?'high':'low'} ${fmt(high?r.previous_high:r.previous_low)}`,`${high?'Above prior':'Below prior'} ${intelPeriodLabel()} ${high?'high':'low'}`,`${high?'+':''}${fmt(high?r.gain:r.drop)}`,high?'vh-up':'vh-down')).join(''):`<div class="vh-empty">No new ${high?'highs':'lows'} in the selected window.</div>`;
   return`<div class="vh-intel-grid"><div class="vh-card"><h3>New Market Highs</h3><div class="vh-sub">Strict new player-value records versus earlier snapshots inside ${esc(intelPeriodLabel())}.</div><div class="vh-intel-list">${list(highs,true)}</div></div><div class="vh-card"><h3>New Market Lows</h3><div class="vh-sub">Strict new player-value lows versus earlier snapshots inside ${esc(intelPeriodLabel())}.</div><div class="vh-intel-list">${list(lows,false)}</div></div></div>`;
 }
 function momentumMarkup(){
-  const signals=marketSignalCache?.signals||[],market=new Map((marketCache?.marketRows||[]).map(r=>[String(r.id),r])),key=intelDeltaKey();
+  const signals=marketSignalCache?.signals||[];
   if(!signals.length)return'<div class="vh-card"><div class="vh-empty">Loading completed-week Fleeced signals…</div></div>';
-  const score=s=>{const perf=signalPerformanceDelta(s),move=finiteMarketNumber(market.get(String(s.player_id))?.[key]);return Math.abs(perf||0)*4+Math.abs(move||0)/500+(s.confidence==='strong'?5:s.confidence==='established'?2:0)},
-    up=signals.filter(s=>s.direction==='positive'||s.momentum==='hot').sort((a,b)=>score(b)-score(a)).slice(0,8),
-    down=signals.filter(s=>s.direction==='negative'||s.momentum==='cold').sort((a,b)=>score(b)-score(a)).slice(0,8);
-  const rows=(list,positive)=>list.length?list.map(sig=>{const m=market.get(String(sig.player_id)),move=finiteMarketNumber(m?.[key]),perf=signalPerformanceDelta(sig),sub=`${sig.reporter_label||sig.label} • ${signalMomentumLabel(sig.momentum)} • ${sig.confidence}${Number.isFinite(perf)?` • underlying ${perf>=0?'+':''}${perf.toFixed(2)} PPG`:''}`;return intelPlayerRow(sig.player_id,sub,`${intelPeriodLabel()} value Δ`,Number.isFinite(move)?signed(move):'—',deltaClass(move))}).join(''):'<div class="vh-empty">No qualified completed-week signals in this direction yet.</div>';
-  return`<div class="vh-intel-grid"><div class="vh-card"><h3>Heating Up</h3><div class="vh-sub">Positive Fleeced states and hot recent-form signals. The right-side number is explicitly the selected-window <b>market value change</b>; underlying PPG evidence is shown beneath the player.</div><div class="vh-intel-list">${rows(up,true)}</div></div><div class="vh-card"><h3>Cooling Down</h3><div class="vh-sub">Negative Fleeced states and cold recent-form signals. A player can cool statistically while value still rises—the two measures are intentionally shown separately.</div><div class="vh-intel-list">${rows(down,false)}</div></div></div>`;
+  const score=s=>{const perf=signalPerformanceDelta(s),move=verifiedValueMove(s.player_id)?.delta;return Math.abs(perf||0)*4+Math.abs(move||0)/500+(s.confidence==='strong'?5:s.confidence==='established'?2:0)},
+    up=signals.filter(s=>marketSignalDirection(s.state)>0||s.momentum==='hot').sort((a,b)=>score(b)-score(a)).slice(0,8),
+    down=signals.filter(s=>marketSignalDirection(s.state)<0||s.momentum==='cold').sort((a,b)=>score(b)-score(a)).slice(0,8);
+  const rows=list=>list.length?list.map(sig=>{const movement=verifiedValueMove(sig.player_id),move=movement?.delta,perf=signalPerformanceDelta(sig),sub=`${sig.reporter_label||sig.label} • ${signalMomentumLabel(sig.momentum)} • ${sig.confidence}${Number.isFinite(perf)?` • underlying ${perf>=0?'+':''}${perf.toFixed(2)} PPG`:''}`;return intelPlayerRow(sig.player_id,sub,`${intelPeriodLabel()} value change`,move==null?'N/A':signed(move),deltaClass(move))}).join(''):'<div class="vh-empty">No qualified completed-week signals in this direction yet.</div>';
+  return`<div class="vh-intel-grid"><div class="vh-card"><h3>Heating Up</h3><div class="vh-sub">Positive Fleeced states and hot recent-form signals. The right-side number is the verified selected-window <b>market value change</b>; underlying PPG evidence is shown beneath the player.</div><div class="vh-intel-list">${rows(up)}</div></div><div class="vh-card"><h3>Cooling Down</h3><div class="vh-sub">Negative Fleeced states and cold recent-form signals. A player can cool statistically while value still rises—the two measures are intentionally shown separately.</div><div class="vh-intel-list">${rows(down)}</div></div></div>`;
 }
 function signalTransitionRows(){
   const all=marketSignalCache?.transitions||[],through=Number(marketSignalCache?.through_week)||0,weeks=({'1D':1,'7D':1,'30D':4,'90D':13,'1Y':99,'ALL':99})[marketIntelPeriod]||1,floor=Math.max(1,through-weeks+1);
   return all.filter(s=>{if(Number(s.week)<floor)return false;const before=marketSignalDirection(s.previous_state),after=marketSignalDirection(s.state);return before!==after&&(before!==0||after!==0)});
 }
 function reversalsMarkup(){
-  const key=intelDeltaKey(),comparePeriod=marketIntelPeriod==='1D'?'7D':marketIntelPeriod,compareKey=intelDeltaKey(comparePeriod),marketRows=marketCache?.marketRows||[],
+  const comparePeriod=marketIntelPeriod==='1D'?'7D':marketIntelPeriod,marketRows=marketCache?.marketRows||[],
     signalRows=signalTransitionRows().slice().sort((a,b)=>Math.abs(marketSignalDirection(b.state)-marketSignalDirection(b.previous_state))-Math.abs(marketSignalDirection(a.state)-marketSignalDirection(a.previous_state))||Number(b.week)-Number(a.week)).slice(0,8),
-    priceRows=marketRows.filter(r=>Number(r.delta1)&&Number(r[compareKey])&&Math.sign(Number(r.delta1))!==Math.sign(Number(r[compareKey]))).slice().sort((a,b)=>Math.abs(Number(b.delta1))-Math.abs(Number(a.delta1))).slice(0,8),
+    priceRows=marketRows.map(r=>({row:r,short:verifiedValueMove(r.id,'1D'),broad:verifiedValueMove(r.id,comparePeriod)})).filter(x=>x.short&&x.broad&&x.short.delta!==0&&x.broad.delta!==0&&Math.sign(x.short.delta)!==Math.sign(x.broad.delta)).sort((a,b)=>Math.abs(b.short.delta)-Math.abs(a.short.delta)).slice(0,8),
     signalList=signalRows.length?signalRows.map(sig=>intelPlayerRow(sig.player_id,`${sig.previous_state} → ${sig.state} • ${sig.season} Week ${sig.week}`,'New state',sig.label,signalTone(sig.state))).join(''):'<div class="vh-empty">No meaningful Fleeced direction changes in this signal window.</div>',
-    priceList=priceRows.length?priceRows.map(r=>intelPlayerRow(r.id,`1D ${signed(r.delta1)} vs ${comparePeriod} ${signed(r[compareKey])}`,'1D reversal',signed(r.delta1),deltaClass(r.delta1))).join(''):'<div class="vh-empty">No 1-day value reversals against the selected broader trend.</div>';
-  return`<div class="vh-intel-grid"><div class="vh-card"><h3>Signal Reversals</h3><div class="vh-sub">Completed-week Fleeced directional state changes, including recoveries into positive territory and deteriorations out of it.</div><div class="vh-intel-list">${signalList}</div></div><div class="vh-card"><h3>Value Reversals</h3><div class="vh-sub">1-day value movement running opposite the ${esc(comparePeriod)} direction.</div><div class="vh-intel-list">${priceList}</div></div></div>`;
+    priceList=priceRows.length?priceRows.map(x=>intelPlayerRow(x.row.id,`1D ${signed(x.short.delta)} vs ${comparePeriod} ${signed(x.broad.delta)}`,'1D reversal',signed(x.short.delta),deltaClass(x.short.delta))).join(''):'<div class="vh-empty">No verified 1-day value reversals against the selected broader trend.</div>';
+  return`<div class="vh-intel-grid"><div class="vh-card"><h3>Signal Reversals</h3><div class="vh-sub">Completed-week Fleeced directional state changes, including recoveries into positive territory and deteriorations out of it.</div><div class="vh-intel-list">${signalList}</div></div><div class="vh-card"><h3>Value Reversals</h3><div class="vh-sub">Verified 1-day value movement running opposite the ${esc(comparePeriod)} direction.</div><div class="vh-intel-list">${priceList}</div></div></div>`;
 }
 function volatilityMarkup(){
   const data=intelRange(),rows=(data?.volatility||[]).filter(r=>Number(r.observations)>=2).slice(0,12),
@@ -1257,29 +1269,31 @@ function positionValuePercentile(rows,row){
   return i<0||!group.length?null:(i+1)/group.length;
 }
 function opportunityMarkup(){
-  const rows=marketCache?.marketRows||[],byId=new Map(rows.map(r=>[String(r.id),r])),signals=marketSignalCache?.signals||[],key=intelDeltaKey(),candidates=[];
+  const rows=marketCache?.marketRows||[],byId=new Map(rows.map(r=>[String(r.id),r])),signals=marketSignalCache?.signals||[],candidates=[];
   for(const sig of signals){
-    const row=byId.get(String(sig.player_id)),perf=signalPerformanceDelta(sig),pct=positionValuePercentile(rows,row),move=Number(row?.[key]),direction=marketSignalDirection(sig.state);
+    const row=byId.get(String(sig.player_id)),perf=signalPerformanceDelta(sig),pct=positionValuePercentile(rows,row),movement=verifiedValueMove(sig.player_id),move=movement?.delta,direction=marketSignalDirection(sig.state);
     if(!row||!Number.isFinite(perf)||!Number.isFinite(pct))continue;
     const usableConfidence=['strong','established'].includes(String(sig.confidence||'')),
       positive=direction>0||sig.momentum==='hot',negative=direction<0||sig.momentum==='cold';
-    if(usableConfidence&&positive&&perf>0&&pct>=.35)candidates.push({type:'buy',sig,row,perf,pct,move,score:perf*5+pct*8-Math.max(0,Number(move)||0)/1200});
+    if(usableConfidence&&positive&&perf>0&&pct>=.35)candidates.push({type:'buy',sig,row,perf,pct,move,score:perf*5+pct*8-Math.max(0,move||0)/1200});
     if(usableConfidence&&negative&&perf<0&&pct<=.40)candidates.push({type:'sell',sig,row,perf,pct,move,score:Math.abs(perf)*5+(1-pct)*8+(Number(row.value)||0)/2500});
   }
   const buy=candidates.filter(x=>x.type==='buy').sort((a,b)=>b.score-a.score).slice(0,8),sell=candidates.filter(x=>x.type==='sell').sort((a,b)=>b.score-a.score).slice(0,8),
-    list=(arr,type)=>arr.length?arr.map(x=>intelPlayerRow(x.row.id,`${x.sig.reporter_label||x.sig.label} • underlying ${x.perf>=0?'+':''}${x.perf.toFixed(2)} PPG • ${x.row.pos} value rank ${Math.max(1,Math.round(x.pct*100))}th percentile from top`,`${intelPeriodLabel()} value Δ`,Number.isFinite(x.move)?signed(x.move):'—',deltaClass(x.move))).join(''):`<div class="vh-empty">No players currently meet the ${type==='buy'?'Buy Low':'Sell High'} evidence screen.</div>`;
+    list=(arr,type)=>arr.length?arr.map(x=>intelPlayerRow(x.row.id,`${x.sig.reporter_label||x.sig.label} • underlying ${x.perf>=0?'+':''}${x.perf.toFixed(2)} PPG • ${x.row.pos} value rank ${Math.max(1,Math.round(x.pct*100))}th percentile from top`,`${intelPeriodLabel()} value change`,x.move==null?'N/A':signed(x.move),deltaClass(x.move))).join(''):`<div class="vh-empty">No players currently meet the ${type==='buy'?'Buy Low':'Sell High'} evidence screen.</div>`;
   return`<div class="vh-intel-grid"><div class="vh-card"><h3>Buy Low Watch</h3><div class="vh-sub">Lower-priced positional assets where positive Fleeced evidence is stronger than the current market tier.</div><div class="vh-intel-list">${list(buy,'buy')}</div><div class="vh-opportunity-note">Screen only: positive normalized Fleeced state/hot momentum + improving underlying PPG + outside the top 35% of positional value. It does not change Fleeced value.</div></div><div class="vh-card"><h3>Sell High Watch</h3><div class="vh-sub">Higher-priced positional assets where weakening Fleeced evidence conflicts with a premium market tier.</div><div class="vh-intel-list">${list(sell,'sell')}</div><div class="vh-opportunity-note">Screen only: negative normalized Fleeced state/cold momentum + declining underlying PPG + inside the top 40% of positional value. It does not change Fleeced value.</div></div></div>`;
 }
 function categoryLeadersMarkup(){
   const m=marketCache||{},rows=m.marketRows||[],p=m.periods?.[marketIntelPeriod]||{},signals=marketSignalCache?.signals||[],range=intelRange();
   if(!rows.length)return'<div class="vh-card"><div class="vh-empty">Market leaders unavailable.</div></div>';
-  const top=rows.slice().sort((a,b)=>Number(b.value)-Number(a.value)),cards=[];
+  const top=rows.slice().sort((a,b)=>Number(b.value)-Number(a.value)),verifiedChanges=(range?.player_changes||[]).slice(),cards=[];
   const add=(label,id,detail)=>{if(!id){cards.push(`<div class="vh-category-card vh-empty-card"><small>${esc(label)}</small><b>No qualified player</b><span>Waiting for enough evidence in this window.</span></div>`);return}
     const meta=livePlayerMeta(id),identity=[meta.pos||'—',meta.nfl||'FA',`Value ${fmt(meta.value)}`,detail].filter(Boolean).join(' • ');
     cards.push(`<button type="button" class="vh-category-card vh-player-link" data-vh-player="${esc(id)}"><small>${esc(label)}</small><b>${esc(playerName(id))}</b><span>${esc(identity)}</span></button>`)};
   add('Most Valuable',top[0]?.id,`Overall #${top[0]?.overall}`);
   for(const pos of ['QB','RB','WR','TE','IDP']){const r=top.find(x=>String(x.pos)===pos);add(`Top ${pos}`,r?.id,r?`${pos} #${r.posRank}`:'')}
-  const gain=p.valueRisers?.[0],rank=p.rankRisers?.[0];add(`Biggest ${marketIntelPeriod} Gainer`,gain?.id,gain?`${signed(gain.delta)} value`:'');add(`Biggest ${marketIntelPeriod} Rank Riser`,rank?.id,rank?`+${rank.overallDelta} overall ranks`:'');
+  const gain=verifiedChanges.filter(x=>finiteMarketNumber(x.delta)>0).sort((a,b)=>Number(b.delta)-Number(a.delta))[0],
+    rank=verifiedChanges.filter(x=>finiteMarketNumber(x.overall_delta)>0).sort((a,b)=>Number(b.overall_delta)-Number(a.overall_delta))[0];
+  add(`Biggest ${marketIntelPeriod} Gainer`,gain?.id,gain?`${signed(gain.delta)} value`:'');add(`Biggest ${marketIntelPeriod} Rank Riser`,rank?.id,rank?`+${rank.overall_delta} overall ranks`:'');
   const breakoutScore=sig=>{const e=sig?.evidence||{},perf=signalPerformanceDelta(sig);return (sig.state==='breakout'?100:60)+(e.developmental_breakout?30:0)+(e.strong_two_week_rise?24:0)+(e.role_lift?18:0)+(sig.confidence==='strong'?14:sig.confidence==='established'?7:0)+Math.max(0,perf||0)*6},
     stableSort=(a,b)=>breakoutScore(b)-breakoutScore(a)||String(a.player_id).localeCompare(String(b.player_id)),
     offensive=signals.filter(x=>['QB','RB','WR','TE'].includes(String(x.position))&&['breakout','emerging'].includes(String(x.state))).sort(stableSort)[0],

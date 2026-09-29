@@ -652,21 +652,31 @@ async function getMarketSummary(s){
   }
   const latestItem=timed[timed.length-1],latestMs=new Date(latestItem.t).getTime(),wanted=[timed[0],archiveItemAtOrBefore(timed,latestMs-1*86400000),archiveItemAtOrBefore(timed,latestMs-7*86400000),archiveItemAtOrBefore(timed,latestMs-30*86400000),archiveItemAtOrBefore(timed,latestMs-90*86400000),archiveItemAtOrBefore(timed,latestMs-365*86400000),latestItem].filter(Boolean);
   const unique=[],seen=new Set();for(const item of wanted){const k=`${item.source}:${item.key||item.path||item.t}`;if(!seen.has(k)){seen.add(k);unique.push(item)}}
-  const snaps=[];
-  for(const item of unique){
+  const loadSparseItem=async item=>{
     let snap=null;
     if(item.source==='archive')snap=await archiveSnapshot(item);
     else if(s){try{snap=await s.get(item.key,{type:'json'})}catch{}}
-    // A timestamp can exist in both stores. If the live blob is missing/corrupt,
-    // fall back to the durable GitHub archive instead of failing the whole market.
+    // A timestamp can exist in both stores. If one side is slow/missing, use the
+    // other side rather than failing the entire Market Dashboard.
     if((!snap?.t||!Array.isArray(snap.rows))&&item.source==='local'){
       const archived=(arch.items||[]).find(x=>String(x?.t||'')===String(item.t||''));
       if(archived)snap=await archiveSnapshot(archived);
     }
-    if(snap?.t&&Array.isArray(snap.rows))snaps.push(snap);
+    if((!snap?.t||!Array.isArray(snap.rows))&&item.source==='archive'&&s){
+      const localItem=(local.items||[]).find(x=>String(x?.t||'')===String(item.t||''));
+      if(localItem){try{snap=await s.get(localItem.key,{type:'json'})}catch{}}
+    }
+    return snap?.t&&Array.isArray(snap.rows)?snap:null;
+  };
+  let snaps=(await Promise.all(unique.map(loadSparseItem))).filter(Boolean);
+  // Last-resort live-store fallback: a partial but valid market is preferable to
+  // taking down the dashboard because the durable archive is temporarily slow.
+  if(!snaps.length&&s&&(local.items||[]).length){
+    const localWanted=[local.items[0],local.items.at(-1)].filter(Boolean);
+    snaps=await readSnapshotsBounded(s,localWanted,25).catch(()=>[]);
   }
-  snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  const market=marketFromSnapshots(snaps);market.snapshot_count=timed.length;market.archive_snapshot_count=(arch.items||[]).length;market.local_snapshot_count=(local.items||[]).length;return market;
+  snaps=mergeSnapshots(snaps);
+  const market=marketFromSnapshots(snaps);market.snapshot_count=timed.length;market.archive_snapshot_count=(arch.items||[]).length;market.local_snapshot_count=(local.items||[]).length;market.archive_reachable=arch.reachable!==false;return market;
 }
 function marketInsightAverage(snapshot,pos,limit=24){
   const rows=(snapshot?.rows||[]).filter(r=>String(r?.pos||'')===String(pos)&&Number.isFinite(Number(r?.value))&&Number(r.value)>0).slice().sort((a,b)=>Number(b.value)-Number(a.value)).slice(0,limit);
@@ -858,7 +868,7 @@ async function scoringMilestones(playerId){
         if(canonical){
           for(const group of ['offense','defense']){
             const leader=canonical?.players_of_week?.[group];
-            if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(Number(leader.points||0).toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
+            if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Offensive Player of the Week':'Defensive Player of the Week',points:Number(Number(leader.points||0).toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
           }
         }else if(Number(year)<currentSeason){
           const leaders={offense:null,defense:null};
@@ -868,7 +878,7 @@ async function scoringMilestones(playerId){
             if(!leaders[group]||points>leaders[group].points||(points===leaders[group].points&&String(item.id)<String(leaders[group].player_id)))leaders[group]={player_id:String(item.id),points};
           }
           for(const group of ['offense','defense']){
-            const leader=leaders[group];if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(leader.points.toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
+            const leader=leaders[group];if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Offensive Player of the Week':'Defensive Player of the Week',points:Number(leader.points.toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
           }
         }
       }

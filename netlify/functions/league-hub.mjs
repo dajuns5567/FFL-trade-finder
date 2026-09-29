@@ -396,7 +396,7 @@ async function broadcastArchive(){
 }
 async function broadcastStored(season,week){
  const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null);
- return v||preloadedBroadcast(season,week)||{error:'broadcast not found'};
+ return servedPreload(v)||preloadedBroadcast(season,week)||{error:'broadcast not found'};
 }
 
 function weeklyAwardStatRows(payload){

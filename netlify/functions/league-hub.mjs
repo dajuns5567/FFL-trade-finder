@@ -3,6 +3,7 @@ import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
 import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
 import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
+import {applyWeek2EditorialR15} from './inquirer-week2-editorial-r15.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 
@@ -22,10 +23,11 @@ const VERIFIED_HISTORICAL_MANAGER_ASSIGNMENTS={
 const BROADCAST_VERSION=17;
 const INQUIRER_EDITORIAL_REVISION=14;
 const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026],['2026|2',week2Preload2026]]);
-const preloadedBroadcast=(season,week)=>PRELOADED_BROADCASTS.get(String(Number(season))+'|'+String(Number(week)))||null;
+const servedPreload=p=>p&&Number(p.season)===2026&&Number(p.week)===2?applyWeek2EditorialR15(p):p;
+const preloadedBroadcast=(season,week)=>servedPreload(PRELOADED_BROADCASTS.get(String(Number(season))+'|'+String(Number(week)))||null);
 function preloadedReporterEntries(reporterId){
  const rows=[];
- for(const p of PRELOADED_BROADCASTS.values()){
+ for(const raw of PRELOADED_BROADCASTS.values()){const p=servedPreload(raw);
   if(!Array.isArray(p?.teams)||!p.teams.length)continue;
   const season=Number(p.season),week=Number(p.week),broadcastKey='preloaded:'+season+':'+week;
   for(const team of p.teams){

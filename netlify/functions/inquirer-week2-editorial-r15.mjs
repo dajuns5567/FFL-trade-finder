@@ -411,8 +411,14 @@ function teamThesisLine(t,id){
  return pick(banks[id]||banks['walter-mercer'],seed);
 }
 
+function currentResultLine(t){
+ const tm=String(t.team_name||'This team'),op=String(t.opponent_name||'the opponent'),pts=one(t.points),opp=one(t.opponent_points),rec=record(t);
+ if(t?.won)return tm+' beat '+op+' '+pts+'–'+opp+', moving to '+rec+'.';
+ return tm+' lost to '+op+' '+pts+'–'+opp+', moving to '+rec+'.';
+}
+
 function buildLede(t,a,id){
- const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),score=facts.find(isScoreFact),week1=facts.find(x=>isWeek1Fact(x)&&x!==score),lines=ledeLines(t,id),thesis=teamThesisLine(t,id);
+ const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),week1=facts.find(isWeek1Fact),score=currentResultLine(t),lines=ledeLines(t,id),thesis=teamThesisLine(t,id);
  return uniq([score,lines[0],week1,lines[1],lines[2],thesis]).filter(Boolean).slice(0,6);
 }
 

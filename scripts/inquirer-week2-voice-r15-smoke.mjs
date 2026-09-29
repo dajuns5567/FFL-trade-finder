@@ -19,7 +19,7 @@ assert.equal(revisedTeams.length,rawTeams.size,'Week 2 team count changed');
 const stripArticle=t=>{const x=JSON.parse(JSON.stringify(t));delete x.inquirer_article;return x};
 const stripArticleProse=a=>{
  const x=JSON.parse(JSON.stringify(a||{}));
- delete x.sections;delete x.editorial_revision;delete x.voice_revision;
+ delete x.sections;delete x.paragraphs;delete x.editorial_revision;delete x.voice_revision;
  return x;
 };
 const paragraphs=t=>(t?.inquirer_article?.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(Boolean);
@@ -42,6 +42,7 @@ for(const t of revisedTeams){
  assert.equal(t?.inquirer_article?.voice_revision,'week2-r16','Article voice revision missing for '+t.team_name);
 
  const ps=paragraphs(t),text=ps.join(' '),sentences=sentenceParts(text);
+ assert.deepEqual(t?.inquirer_article?.paragraphs||[],ps,'Flattened Week 2 article body must exactly match rewritten section prose for '+t.team_name);
  assert(ps.length<=30,'Week 2 rewrite became overstuffed for '+t.team_name+': '+ps.length+' paragraphs');
  assert(wordCount(text)>=580,'Week 2 rewrite became too shallow for '+t.team_name+': '+wordCount(text)+' words');
  assert(sentences.filter(s=>VOICE_RE.test(s)).length>=5,'Too little explicit reporter/fan voice in '+t.team_name);

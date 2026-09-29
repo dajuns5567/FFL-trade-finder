@@ -330,7 +330,14 @@ function sentimentLines(t,id){
   'nora-voss':edge!=null?'Next is '+next+' with a '+edge+'-point projection gap. That gives the fan base a concrete expectation instead of another vague feeling.':'Next is '+next+'. Fan confidence will move with the same issues this article has already identified.'
  };
  lines.push(nextMood[id]||nextMood['walter-mercer']);
- return uniq(lines).slice(0,5);
+ const closingMood={
+  'walter-mercer':'The reasonable fan position on '+tm+' is simple: believe what worked, distrust what did not, and make the roster earn every additional ounce of confidence.',
+  'tess-delaney':'The proper emotional stance toward '+tm+' is neither calm nor hysterical; it is loudly interested, deeply judgmental and completely unwilling to accept boring football.',
+  'mack-hollis':'The crowd around '+tm+' should stay loud. Praise the players who earned it, boo the nonsense that did not, and make Week 3 deserve everybody’s attention.',
+  'nora-voss':'The fan base around '+tm+' has enough real information now to be specific. Praise the proven strengths, keep pressure on the weak spots and demand an answer next week.'
+ };
+ lines.push(closingMood[id]||closingMood['walter-mercer']);
+ return uniq(lines).slice(0,6);
 }
 
 function outlookLine(t,id){

@@ -15,11 +15,12 @@ function voiceLead(t,salt=''){
  return VOICE_LEADS[(rid*7+hash(String(salt)))%VOICE_LEADS.length];
 }
 function voiceShade(t,salt,p){
- const entities=[t?.team_name,t?.opponent_name,t?.next_opponent_name,...(t?.starter_details||[]).map(x=>x?.name)].filter(Boolean).map(String);
+ const entities=[t?.team_name,t?.opponent_name,t?.next_opponent_name,...(t?.starter_details||[]).flatMap(x=>{const n=String(x?.name||'').trim(),first=n.split(/\s+/)[0];return[n,first]})].filter(Boolean).map(String);
  return sentenceParts(p).map((sentence,i)=>{
   const lead=voiceLead(t,String(salt)+'|'+i);
   let body=String(sentence||'').trim();
-  const proper=body==='I'||body.startsWith('I ')||entities.some(x=>body.startsWith(x));
+  const firstToken=(body.match(/^([A-Z][A-Z0-9-]{1,})(?:\b|—)/)||[])[1]||'';
+  const proper=body==='I'||body.startsWith('I ')||body.startsWith('Week ')||!!firstToken||entities.some(x=>body.startsWith(x));
   if(body&&!proper&&/^[A-Z]/.test(body))body=body[0].toLowerCase()+body.slice(1);
   return lead+', '+body;
  }).join(' ');
@@ -258,7 +259,7 @@ function buildLede(t,a,id){
 }
 function topThreeStarters(t){return(t?.starter_details||[]).slice(0,3).filter(p=>Number.isFinite(Number(p?.points)))}
 function playerStatParagraph(t,p){
- const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim().replace(/\brec\b/gi,'receptions').replace(/\byds\b/gi,'yards').replace(/\bTD\b/g,'touchdowns');
+ const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim().replace(/\brec yds\b/gi,'receiving yards').replace(/\brush yds\b/gi,'rushing yards').replace(/\bpass yds\b/gi,'passing yards').replace(/\byds\b/gi,'yards').replace(/\brec\b/gi,'receptions');
  return 'Against '+op+', '+name+' scored '+score+' fantasy points for '+tm+(line?' on a real-football line of '+line:'')+'.';
 }
 function playerAnalysisParagraph(t,p,id,slot){

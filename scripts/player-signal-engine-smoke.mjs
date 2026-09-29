@@ -50,4 +50,9 @@ for(const marker of ['getMarketInsights','marketInsightsFromSnapshots','marketIn
 const signalsFn=fs.readFileSync('netlify/functions/player-signals.mjs','utf8');
 assert(signalsFn.includes('transitions=compact?Object.values(data.history_by_player||{}).flat().filter(x=>x?.changed)'), 'Compact signal API must expose historical transitions for range filtering');
 
-console.log('Fleeced player signal engine + Market Dashboard intelligence smoke passed');
+for(const marker of ['canonicalWeeklyAwards(origin)','awardByPlayerWeek','player_of_week:playerOfWeek','Offensive Player of the Week','Defensive Player of the Week'])assert(signalsFn.includes(marker),'Fleeced Signals Player of the Week integration missing '+marker);
+for(const marker of ['Promise.all(unique.map(loadSparseItem))','market.archive_reachable=arch.reachable!==false',"title:group==='offense'?'Offensive Player of the Week':'Defensive Player of the Week'"])assert(historyFn.includes(marker),'Market/POTW backend regression missing '+marker);
+for(const marker of ['Permanent Fleeced weekly award','current.player_of_week','id="vhScoringMilestones"','Player of the Week'])assert(vh.includes(marker),'Player Value History POTW milestone integration missing '+marker);
+assert(!vh.includes('scoringMilestonesRows(scoring,scoringLoading)'), 'Scoring milestone renderer must not recurse');
+
+console.log('Fleeced player signal engine + Market Dashboard intelligence + Player of the Week smoke passed');

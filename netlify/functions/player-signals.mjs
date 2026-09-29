@@ -15,6 +15,14 @@ function statsMap(payload){
   return out;
 }
 function playerName(meta,id){return String(meta?.full_name||((meta?.first_name||'')+' '+(meta?.last_name||'')).trim()||id)}
+async function canonicalWeeklyAwards(origin){
+  try{
+    const base=String(origin||'').replace(/\/$/,'');if(!base)return[];
+    const r=await fetch(`${base}/.netlify/functions/league-hub?weekly_awards=1`,{headers:{accept:'application/json','user-agent':'Fleeced-PlayerSignals/1.0'},cache:'no-store'});
+    if(!r.ok)return[];
+    const payload=await r.json();return Array.isArray(payload?.records)?payload.records:[];
+  }catch{return[]}
+}
 function playerPacket(meta,id,stats,priorRaw,seasonSeries,scoring){
   const position=String(meta?.position||meta?.fantasy_positions?.[0]||'FLEX'),defensive=isDefensive(position),
     currentPoints=score(stats,scoring),seasonPoints=seasonSeries.reduce((n,x)=>n+Number(x.points||0),0),seasonGames=seasonSeries.length,
@@ -39,9 +47,9 @@ function playerPacket(meta,id,stats,priorRaw,seasonSeries,scoring){
     prior_season_snap_pct:Number.isFinite(Number(priorSnapPct))?Number(priorSnapPct):null
   };
 }
-async function buildSignals(){
-  const [league,state,rosters,users,players]=await Promise.all([
-    getJson(`${API}/league/${LEAGUE}`),getJson(`${API}/state/nfl`),getJson(`${API}/league/${LEAGUE}/rosters`),getJson(`${API}/league/${LEAGUE}/users`),getJson(`${API}/players/nfl`)
+async function buildSignals(origin){
+  const [league,state,rosters,users,players,awardRecords]=await Promise.all([
+    getJson(`${API}/league/${LEAGUE}`),getJson(`${API}/state/nfl`),getJson(`${API}/league/${LEAGUE}/rosters`),getJson(`${API}/league/${LEAGUE}/users`),getJson(`${API}/players/nfl`),canonicalWeeklyAwards(origin)
   ]);
   const season=Number(league?.season)||Number(state?.season)||new Date().getUTCFullYear(),rawWeek=Number(state?.week)||1,
     completedWeek=Math.max(0,Math.min(18,rawWeek-1)),cacheKey=season+'|'+completedWeek;
@@ -54,7 +62,18 @@ async function buildSignals(){
     const rid=String(roster.roster_id),owner=String(roster.owner_id||''),u=userById.get(owner)||{},teamName=String(u?.metadata?.team_name||u?.display_name||u?.username||('Roster '+rid));
     for(const raw of roster.players||[]){const id=String(raw||'');if(!id)continue;ids.add(id);ownership.set(id,{roster_id:rid,user_id:owner,manager_name:String(u?.display_name||u?.username||owner),team_name:teamName})}
   }
-  const scoring=league?.scoring_settings||{},historyByPlayer={},currentSignals=[];
+  const scoring=league?.scoring_settings||{},historyByPlayer={},currentSignals=[],awardByPlayerWeek=new Map();
+  for(const rec of awardRecords||[]){
+    const recSeason=Number(rec?.season),recWeek=Number(rec?.week);if(!recSeason||!recWeek)continue;
+    for(const group of ['offense','defense']){
+      const winner=rec?.players_of_week?.[group],pid=String(winner?.player_id||'');if(!pid)continue;
+      awardByPlayerWeek.set(`${recSeason}|${recWeek}|${pid}`,{
+        type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',
+        title:group==='offense'?'Offensive Player of the Week':'Defensive Player of the Week',
+        season:recSeason,week:recWeek,points:Number(Number(winner?.points||0).toFixed(2))
+      });
+    }
+  }
   for(const id of ids){
     const meta=players?.[id]||{},priorRaw=priorSeason?.stats?.[id]||{},series=[],signals=[];let previousSignal=null,previousPlayer=null;
     for(const week of weekNums){
@@ -64,8 +83,10 @@ async function buildSignals(){
       if(!Number.isFinite(Number(pts))){previousSignal=null;previousPlayer=null;continue}
       series.push({week,points:Number(pts)});
       const player=playerPacket(meta,id,st,priorRaw,series,scoring),form=recentFormProfile(series),
-        signal=buildPlayerSignal({player,previousPlayer,recentForm:form,season,week,previousSignal,slot:1});
-      signals.push(signal);previousSignal=signal;previousPlayer=player;
+        signal=buildPlayerSignal({player,previousPlayer,recentForm:form,season,week,previousSignal,slot:1}),
+        playerOfWeek=awardByPlayerWeek.get(`${season}|${week}|${id}`)||null,
+        decorated=playerOfWeek?{...signal,player_of_week:playerOfWeek}:{...signal,player_of_week:null};
+      signals.push(decorated);previousSignal=decorated;previousPlayer=player;
     }
     if(!signals.length)continue;
     historyByPlayer[id]=signals;
@@ -74,13 +95,13 @@ async function buildSignals(){
   }
   currentSignals.sort((a,b)=>String(a.state).localeCompare(String(b.state))||String(a.player_name).localeCompare(String(b.player_name)));
   const byState={},byMomentum={};for(const s of currentSignals){byState[s.state]=(byState[s.state]||0)+1;byMomentum[s.momentum]=(byMomentum[s.momentum]||0)+1}
-  const data={available:true,signal_version:PLAYER_SIGNAL_VERSION,season,through_week:completedWeek,generated_at:new Date().toISOString(),source:'Sleeper completed-week stats + Fleeced reporter classifier',prior_season_source:priorSeason?.source||null,summary:{players:currentSignals.length,by_state:byState,by_momentum:byMomentum,transitions:currentSignals.filter(x=>x.changed).length},signals:currentSignals,history_by_player:historyByPlayer};
+  const data={available:true,signal_version:PLAYER_SIGNAL_VERSION,season,through_week:completedWeek,generated_at:new Date().toISOString(),source:'Sleeper completed-week stats + Fleeced reporter classifier + canonical weekly awards',prior_season_source:priorSeason?.source||null,summary:{players:currentSignals.length,by_state:byState,by_momentum:byMomentum,transitions:currentSignals.filter(x=>x.changed).length,player_of_week_badges:Object.values(historyByPlayer).flat().filter(x=>x?.player_of_week).length},signals:currentSignals,history_by_player:historyByPlayer};
   memo={key:cacheKey,at:Date.now(),data};return data;
 }
 export default async req=>{
   try{
     if(req.method!=='GET')return json({error:'method not allowed'},405);
-    const data=await buildSignals(),url=new URL(req.url),id=String(url.searchParams.get('player_id')||'');
+    const url=new URL(req.url),data=await buildSignals(url.origin),id=String(url.searchParams.get('player_id')||'');
     if(id){
       const history=data.history_by_player?.[id]||[],current=history.length?{...history[history.length-1],ownership:data.signals.find(x=>String(x.player_id)===id)?.ownership||null}:null;
       return json({available:!!current,signal_version:data.signal_version,season:data.season,through_week:data.through_week,generated_at:data.generated_at,source:data.source,player_id:id,current,history});

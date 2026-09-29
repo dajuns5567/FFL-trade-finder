@@ -568,7 +568,6 @@ function buildValue(t,id){
 }
 function buildSentiment(t,id){return sentimentLines(t,id);}
 
-function buildSentiment(t,id){return sentimentLines(t,id).map((p,i)=>voiceShade(t,'sentiment|'+id+'|'+String(i),p))}
 function projectionLine(t,id){
  const own=Number(t?.next_projected),opp=Number(t?.next_opponent_projected);
  if(!Number.isFinite(own)||!Number.isFinite(opp))return'';

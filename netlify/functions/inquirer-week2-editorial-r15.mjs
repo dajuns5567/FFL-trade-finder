@@ -325,42 +325,6 @@ function sentimentLines(t,id){
  return uniq(lines).slice(0,4);
 }
 
-function sentimentLines(t,id){
- const won=!!t.won,seed=key(t)+'|sentiment|'+id,tm=String(t.team_name||'This team');
- const banks={
-  'walter-mercer':won?[
-   'The fans are happy. I am happy enough to distrust how happy everybody is.',
-   tm+' supporters have rediscovered optimism, a substance I recommend handling with gloves.'
-  ]:[
-   'The fans are annoyed. I am annoyed. At least the community remains united on something.',
-   tm+' supporters have moved past patience and into itemized complaints, which is usually how Tuesday begins.'
-  ],
-  'tess-delaney':won?[
-   'Supporters are drunk on possibility and I refuse to be the designated driver tonight.',
-   'Hope is back in fashion around '+tm+'. It looks fabulous and is almost certainly dangerous.'
-  ]:[
-   'The fan base is wounded, theatrical and entirely justified in refusing to whisper about it.',
-   'Disappointment has become the local dress code. I would call it excessive if I were not already wearing it.'
-  ],
-  'mack-hollis':won?[
-   'The fans are loud, the mockery are positive, and oppositions are being entered without permission. Correct.',
-   tm+' supporters have chosen obnoxiousness. I endorse the decision until further notice.'
-  ]:[
-   'The opposition is furious and productive. The jokes are improving faster than the mood.',
-   tm+' fans have switched from analysis to captions. Nobody involved should expect mercy.'
-  ],
-  'nora-voss':won?[
-   'Supporters have receipts, receipts and temporary confidence. I advise keeping all three.',
-   tm+' fans are using the record as evidence in every available rival argument. Procedurally sound.'
-  ]:[
-   'Supporters have the grievance memorized and the receipt saved. Management should make both obsolete.',
-   tm+' fans are no longer asking whether there is a problem. They are assigning blame exhibits.'
-  ]
- };
- const rows=banks[id]||banks['walter-mercer'];
- return [pick(rows,seed,0),pick(rows,seed,1)].filter((x,i,a)=>a.indexOf(x)===i);
-}
-
 function outlookLine(t,id){
  const tm=String(t.team_name||'This team'),next=String(t.next_opponent_name||'the next opponent'),seed=key(t)+'|outlook|'+id;
  const banks={

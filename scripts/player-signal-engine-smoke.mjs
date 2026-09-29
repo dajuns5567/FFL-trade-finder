@@ -16,8 +16,12 @@ assert(breakout.strongTwoWeekRise===true&&breakout.roleLift===true,'breakout evi
 const star=reporterPlayerStatusProfile(base({age:26,years_exp:4,prior_season_avg:18,season_avg:18,points:18,current_snap_pct:.8}),1,{points:17});
 assert(star.status==='established-star','established star classification drifted');
 
-const declining=reporterPlayerStatusProfile(base({age:30,years_exp:7,prior_season_avg:16,season_avg:10,points:9,current_snap_pct:.7}),1,{points:10});
+const declining=reporterPlayerStatusProfile(base({age:30,years_exp:7,prior_season_avg:16,season_avg:10,points:9,current_snap_count:18,current_snap_pct:.35,prior_season_snaps_per_game:52,prior_season_snap_pct:.82}),1,{points:10});
 assert(declining.status==='declining-veteran','declining veteran classification drifted');
+const injuredStar=reporterPlayerStatusProfile(base({age:30,years_exp:8,prior_season_avg:18,season_avg:10,points:8,current_snap_count:12,current_snap_pct:.2,prior_season_snaps_per_game:50,prior_season_snap_pct:.8,injury_status:'OUT'}),1,{points:9});
+assert(injuredStar.status==='established-star','injured established star must not be mislabeled declining veteran');
+const youngDrop=reporterPlayerStatusProfile(base({age:24,years_exp:3,prior_season_avg:15,season_avg:9,points:8,current_snap_count:24,current_snap_pct:.4,prior_season_snaps_per_game:55,prior_season_snap_pct:.82}),1,{points:9});
+assert(youngDrop.status!=='declining-veteran','young player must never be mislabeled declining veteran');
 
 const reliable=reporterPlayerStatusProfile(base({position:'RB',age:29,years_exp:6,prior_season_avg:12,season_avg:12,points:12,current_snap_pct:.6}),1,{points:12});
 assert(reliable.status==='reliable-veteran','reliable veteran classification drifted');
@@ -42,16 +46,16 @@ assert(editorial.includes("import {reporterPlayerStatusProfile} from './player-s
 assert(editorial.includes('return reporterPlayerStatusProfile(p,slot,pp);'),'Inquirer status wrapper is not delegated to shared classifier');
 const vh=fs.readFileSync('value-history-v276.js','utf8');
 for(const marker of ['/.netlify/functions/player-signals','Fleeced Signals','loadPlayerSignals','playerSignalCache'])assert(vh.includes(marker),'Value History signal integration missing '+marker);
-for(const marker of ['vhPositionIndexes','vhMarketHeat','vhCategoryLeaders','vhMarketHighLow','vhMomentumLeaders','vhOpportunityWatch','vhMarketReversals','vhMarketVolatility','market_insights=1','marketSignalsFetch','data-vh-intel-period','data-vh-heat-pos','openHeatMapModal','Buy Low Watch','Sell High Watch','Offensive Breakout Watch','Defensive Breakout Watch','Strongest Rebound','Deepest Pullback','View history ↗'])assert(vh.includes(marker),'Market Dashboard intelligence integration missing '+marker);
+for(const marker of ['vhPositionIndexes','vhMarketHeat','vhCategoryLeaders','vhMarketHighLow','vhMomentumLeaders','vhOpportunityWatch','vhMarketReversals','vhMarketVolatility','market_insights=1','marketSignalsFetch','data-vh-intel-period','data-vh-heat-pos','openHeatMapModal','Buy Low Watch','Sell High Watch','Overall Market Volatility','Positional Market Volatility','Player Market Volatility','marketSignalDirection(sig.state)','Offensive Breakout Watch','Defensive Breakout Watch','Strongest Rebound','Deepest Pullback','View history ↗'])assert(vh.includes(marker),'Market Dashboard intelligence integration missing '+marker);
 const rankPos=vh.indexOf('class="vh-rank-grid"'),signalPos=vh.indexOf('id="vhPlayerSignals"',rankPos),recentPos=vh.indexOf('Recent Changes',signalPos);
 assert(rankPos>=0&&signalPos>rankPos&&recentPos>signalPos,'Fleeced Signals must render below rank charts and above Recent Changes');
 const historyFn=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
-for(const marker of ['getMarketInsights','marketInsightsFromSnapshots','marketInsightRange','marketInsightWindow',"url.searchParams.get('market_insights')==='1'",'ranges','position_indexes','new_highs','new_lows','volatility','drawdown_pct','delta90'])assert(historyFn.includes(marker),'Market intelligence backend missing '+marker);
+for(const marker of ['getMarketInsights','marketInsightsFromSnapshots','marketInsightRange','marketInsightWindow','marketVolatilitySummary',"url.searchParams.get('market_insights')==='1'",'ranges','position_indexes','market_volatility','position_volatility','identity_clean','new_highs','new_lows','volatility','drawdown_pct','delta90'])assert(historyFn.includes(marker),'Market intelligence backend missing '+marker);
 const signalsFn=fs.readFileSync('netlify/functions/player-signals.mjs','utf8');
 assert(signalsFn.includes('transitions=compact?Object.values(data.history_by_player||{}).flat().filter(x=>x?.changed)'), 'Compact signal API must expose historical transitions for range filtering');
 
 for(const marker of ['canonicalWeeklyAwards(origin)','awardByPlayerWeek','player_of_week:playerOfWeek','Offensive Player of the Week','Defensive Player of the Week'])assert(signalsFn.includes(marker),'Fleeced Signals Player of the Week integration missing '+marker);
-for(const marker of ['Promise.all(unique.map(loadSparseItem))','market.archive_reachable=arch.reachable!==false',"title:group==='offense'?'Offensive Player of the Week':'Defensive Player of the Week'"])assert(historyFn.includes(marker),'Market/POTW backend regression missing '+marker);
+for(const marker of ['Promise.all(unique.map(loadSparseItem))','market.archive_reachable=arch.reachable!==false',"title:group==='offense'?'Offensive Player of the Week':'Defensive Player of the Week'","else if(payload)"])assert(historyFn.includes(marker),'Market/POTW backend regression missing '+marker);
 for(const marker of ['Permanent Fleeced weekly award','current.player_of_week','id="vhScoringMilestones"','Player of the Week'])assert(vh.includes(marker),'Player Value History POTW milestone integration missing '+marker);
 const scoringFn=vh.slice(vh.indexOf('function scoringMilestonesRows('),vh.indexOf('async function loadPlayerScoring',vh.indexOf('function scoringMilestonesRows(')));assert(!scoringFn.includes('scoringMilestonesRows(scoring,scoringLoading)'), 'Scoring milestone renderer must not recurse');
 

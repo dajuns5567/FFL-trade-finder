@@ -1,4 +1,4 @@
-export const PLAYER_SIGNAL_VERSION=2;
+export const PLAYER_SIGNAL_VERSION=3;
 
 const DEFENSIVE_RE=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/;
 export const PLAYER_SIGNAL_LABELS={
@@ -108,16 +108,17 @@ function signalConfidence(profile,form){
   if(status||Number(form?.games)>=3)return'early';
   return'insufficient';
 }
+function finiteEvidence(v){return v==null||v===''?null:(Number.isFinite(Number(v))?Number(v):null)}
 function evidenceFor(profile,form,player){
   return{
     prior_season_games:Number(player?.prior_season_games)||0,
-    prior_season_avg:Number.isFinite(Number(profile?.prior))?Number(profile.prior):null,
-    season_avg:Number.isFinite(Number(profile?.seasonAvg))?Number(profile.seasonAvg):null,
-    current_points:Number.isFinite(Number(profile?.pts))?Number(profile.pts):null,
-    previous_week_points:Number.isFinite(Number(profile?.week1))?Number(profile.week1):null,
-    current_snap_count:Number.isFinite(Number(profile?.snaps))?Number(profile.snaps):null,
-    current_snap_pct:Number.isFinite(Number(profile?.snapPct))?Number(profile.snapPct):null,
-    prior_snaps_per_game:Number.isFinite(Number(profile?.priorSnapPg))?Number(profile.priorSnapPg):null,
+    prior_season_avg:finiteEvidence(profile?.prior),
+    season_avg:finiteEvidence(profile?.seasonAvg),
+    current_points:finiteEvidence(profile?.pts),
+    previous_week_points:finiteEvidence(profile?.week1),
+    current_snap_count:finiteEvidence(profile?.snaps),
+    current_snap_pct:finiteEvidence(profile?.snapPct),
+    prior_snaps_per_game:finiteEvidence(profile?.priorSnapPg),
     role_lift:!!profile?.roleLift,
     established:!!profile?.established,
     two_week_rise:!!profile?.twoWeekRise,
@@ -126,9 +127,9 @@ function evidenceFor(profile,form,player){
     steady:!!profile?.steady,
     developmental_breakout:!!profile?.developmentalBreakout,
     recent_form:String(form?.label||'insufficient'),
-    recent_form_delta:Number.isFinite(Number(form?.delta))?Number(form.delta):null,
-    last3_avg:Number.isFinite(Number(form?.last3_avg))?Number(form.last3_avg):null,
-    prior3_avg:Number.isFinite(Number(form?.prior3_avg))?Number(form.prior3_avg):null
+    recent_form_delta:finiteEvidence(form?.delta),
+    last3_avg:finiteEvidence(form?.last3_avg),
+    prior3_avg:finiteEvidence(form?.prior3_avg)
   };
 }
 

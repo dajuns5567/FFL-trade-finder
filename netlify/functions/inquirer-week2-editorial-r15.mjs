@@ -4,6 +4,27 @@ const clone=x=>JSON.parse(JSON.stringify(x));
 const one=v=>Number.isFinite(Number(v))?Number(v).toFixed(1):'0.0';
 const hash=s=>{let h=2166136261;for(const ch of String(s||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
 const pick=(rows,seed,offset=0)=>rows[(hash(seed)+offset)%rows.length];
+const VOICE_LEADS=[
+ 'For now','At this point','On Monday','This week','From here','To my eye','By my count','In this spot',
+ 'As it stands','For the moment','At least today','Before kickoff','After Sunday','In plain terms','On review','From this angle',
+ 'At first glance','For Week 3','In the short term','On the current read','From the sideline','With that settled','For the record','At the moment',
+ 'Looking ahead','After a second look','On this result','From this score','In the meantime','For this matchup','Until next Sunday','On balance'
+];
+function voiceLead(t,salt=''){
+ const rid=(Number(t?.roster_id)||0)%32;
+ return VOICE_LEADS[(rid*7+hash(String(salt)))%VOICE_LEADS.length];
+}
+function voiceShade(t,salt,p){
+ const entities=[t?.team_name,t?.opponent_name,t?.next_opponent_name,...(t?.starter_details||[]).map(x=>x?.name)].filter(Boolean).map(String);
+ return sentenceParts(p).map((sentence,i)=>{
+  const lead=voiceLead(t,String(salt)+'|'+i);
+  let body=String(sentence||'').trim();
+  const proper=body==='I'||body.startsWith('I ')||entities.some(x=>body.startsWith(x));
+  if(body&&!proper&&/^[A-Z]/.test(body))body=body[0].toLowerCase()+body.slice(1);
+  return lead+', '+body;
+ }).join(' ');
+}
+
 const sentenceParts=s=>String(s||'').replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§')).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace('.','§')).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);
 const record=t=>{const r=t?.league_context?.record||{};return String(Number(r.wins)||0)+'-'+String(Number(r.losses)||0)+(Number(r.ties)?'-'+String(Number(r.ties)):'')};
 const rid=t=>String(t?.inquirer_article?.reporter?.id||'walter-mercer');
@@ -228,17 +249,17 @@ function outlookLine(t,id){
    'Week 3 brings '+next+'. Management now gets a chance to make the most annoying exhibit irrelevant.'
   ]
  };
- return pick(banks[id]||banks['walter-mercer'],seed);
+ return voiceShade(t,'outlook|'+id,pick(banks[id]||banks['walter-mercer'],seed));
 }
 
 function buildLede(t,a,id){
- const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),score=facts.find(isScoreFact),week1=facts.find(x=>isWeek1Fact(x)&&x!==score);
- return uniq([ledeLines(t,id)[0],score,week1,ledeLines(t,id)[1]]).filter(Boolean).slice(0,4);
+ const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),score=facts.find(isScoreFact),week1=facts.find(x=>isWeek1Fact(x)&&x!==score),lines=ledeLines(t,id);
+ return uniq([lines[0]?voiceShade(t,'lede-a|'+id,lines[0]):'',score,week1,lines[1]?voiceShade(t,'lede-b|'+id,lines[1]):'']).filter(Boolean).slice(0,4);
 }
 function topThreeStarters(t){return(t?.starter_details||[]).slice(0,3).filter(p=>Number.isFinite(Number(p?.points)))}
 function playerStatParagraph(t,p){
  const op=String(t?.opponent_name||'the opponent'),tm=String(t?.team_name||'the team'),name=String(p?.name||'Player'),score=one(p?.points),line=String(p?.real_stat_line||'').trim();
- return 'Against '+op+', '+name+' scored '+score+' fantasy points for '+tm+'.'+(line?' The real-football line was '+line+'.':'');
+ return 'Against '+op+', '+name+' scored '+score+' fantasy points for '+tm+(line?' on a real-football line of '+line:'')+'.';
 }
 function playerAnalysisParagraph(t,p,id,slot){
  const name=String(p?.name||'Player'),first=name.split(/\s+/)[0]||name,score=one(p?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
@@ -270,7 +291,7 @@ function playerAnalysisParagraph(t,p,id,slot){
    name+' gave us '+score+'. That is evidence, not mood, and I am happy to let the exhibit do some work.'
   ]
  };
- return pick(banks[id]||banks['walter-mercer'],seed,slot)+' '+history+tag;
+ return voiceShade(t,'player|'+id+'|'+String(slot)+'|'+name,pick(banks[id]||banks['walter-mercer'],seed,slot)+' '+history+tag);
 }
 function buildPlayers(t,a,id){
  const top=topThreeStarters(t),out=[];
@@ -282,8 +303,8 @@ function buildPlayers(t,a,id){
 }
 function buildManagement(t,a,id){
  const sec=sectionOf(a,'management'),facts=factualParagraphs(sec);
- const bench=facts.find(isBenchFact),tx=facts.find(isTransactionFact);
- return uniq([bench,tx,managementLine(t,id)]).filter(Boolean).slice(0,3);
+ const bench=facts.find(isBenchFact),tx=facts.find(isTransactionFact),reaction=managementLine(t,id);
+ return uniq([bench,tx,reaction?voiceShade(t,'management|'+id,reaction):'']).filter(Boolean).slice(0,3);
 }
 function buildHotSeat(t,a,id){
  const sec=sectionOf(a,'hot-seat'),facts=factualParagraphs(sec),first=facts.find(x=>/\d+(?:\.\d+)?/.test(x))||facts[0];
@@ -295,7 +316,7 @@ function buildHotSeat(t,a,id){
   'nora-voss':lo?['The unresolved exhibit is '+lo.name+' at '+lp+'. One bad week is noise; a repeat becomes evidence.','I have '+lo.name+' at '+lp+' circled. Week 3 decides whether the circle stays.']:[]
  };
  const line=(banks[id]&&banks[id].length)?pick(banks[id],seed):'';
- return uniq([first,line]).filter(Boolean).slice(0,2);
+ return uniq([first,line?voiceShade(t,'hot-seat|'+id,line):'']).filter(Boolean).slice(0,2);
 }
 function buildCoolThrone(t,id){
  const candidates=(t?.starter_details||[]).filter(p=>{
@@ -323,7 +344,7 @@ function buildCoolThrone(t,id){
     'The favorable exhibit is '+name+' at '+score+'. I am preserving it because positive evidence disappears from rival memory with remarkable speed.'
    ]
   };
-  return pick(banks[id]||banks['walter-mercer'],seed,i).replace('this team',tm);
+  return voiceShade(t,'cool|'+id+'|'+String(i)+'|'+name,pick(banks[id]||banks['walter-mercer'],seed,i).replace('this team',tm));
  });
 }
 function buildValue(t,id){
@@ -369,9 +390,9 @@ function buildValue(t,id){
    'nora-voss':n+' declined '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. The loss is in the file; explanations may be submitted before the next update.'
   })[id]||n+' lost '+dv+' in value.');
  }
- return uniq(rows).slice(0,3);
+ return uniq(rows).slice(0,3).map((p,i)=>voiceShade(t,'value|'+id+'|'+String(i),p));
 }
-function buildSentiment(t,id){return sentimentLines(t,id)}
+function buildSentiment(t,id){return sentimentLines(t,id).map((p,i)=>voiceShade(t,'sentiment|'+id+'|'+String(i),p))}
 function projectionLine(t,id){
  const own=Number(t?.next_projected),opp=Number(t?.next_opponent_projected);
  if(!Number.isFinite(own)||!Number.isFinite(opp))return'';
@@ -394,7 +415,7 @@ function projectionLine(t,id){
    'Week 3 projects '+tm+' for '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'That leaves the board dead even.':'The board gives '+fav+' the edge by '+edge+'.')+' We will compare the forecast to the final exhibit.'
   ]
  };
- return pick(banks[id]||banks['walter-mercer'],seed);
+ return voiceShade(t,'projection|'+id,pick(banks[id]||banks['walter-mercer'],seed));
 }
 
 function scheduleStretchLine(t,id){
@@ -419,7 +440,7 @@ function scheduleStretchLine(t,id){
    'Week 3 is the active case, with '+joined+' queued behind it. Bank the result now and the difficulty level of the next stretch cannot be used as an alibi.'
   ]
  };
- return pick(banks[id]||banks['walter-mercer'],seed);
+ return voiceShade(t,'stretch|'+id,pick(banks[id]||banks['walter-mercer'],seed));
 }
 function divisionOutlookLine(t,id){
  const tm=String(t?.team_name||'This team'),op=String(t?.next_opponent_name||'the opponent'),own=t?.division_context||{},next=t?.next_opponent_division_context||{},nr=t?.next_opponent_context?.record||{},
@@ -436,7 +457,7 @@ function divisionOutlookLine(t,id){
   'mack-hollis':'That is enough standings material for one loud graphic and several irresponsible predictions.',
   'nora-voss':'Those are the division facts. I have highlighted the parts rivals will pretend not to notice.'
  };
- return [standing,opponent,tails[id]||tails['walter-mercer']].filter(Boolean).join(' ');
+ return voiceShade(t,'division|'+id,[standing,opponent,tails[id]||tails['walter-mercer']].filter(Boolean).join(' '));
 }
 function buildOutlook(t,a,id){
  const sec=sectionOf(a,'outlook'),facts=factualParagraphs(sec);

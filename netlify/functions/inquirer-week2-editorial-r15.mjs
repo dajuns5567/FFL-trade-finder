@@ -592,6 +592,36 @@ function recapCategoryLines(teams){
  });
 }
 
+function recapDepthLine(id,teams){
+ const rows=teams||[],records={perfect:0,split:0,winless:0};
+ for(const t of rows){const r=t?.league_context?.record||{},w=Number(r.wins)||0,l=Number(r.losses)||0;if(w===2&&l===0)records.perfect++;else if(w===1&&l===1)records.split++;else if(w===0&&l===2)records.winless++}
+ const top=rows.slice().sort((a,b)=>Number(b?.points)-Number(a?.points))[0]||null,
+  mover=rows.slice().filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))).sort((a,b)=>Math.abs(Number(b.value_history_week.delta))-Math.abs(Number(a.value_history_week.delta)))[0]||null,
+  swing=rows.slice().filter(t=>Number.isFinite(Number(t?.next_projected))&&Number.isFinite(Number(t?.next_opponent_projected))).sort((a,b)=>Math.abs(Number(b.next_projected)-Number(b.next_opponent_projected))-Math.abs(Number(a.next_projected)-Number(a.next_opponent_projected)))[0]||null,
+  seed='recap-depth|'+id;
+ const topName=String(top?.team_name||'the week’s high scorer'),topPts=one(top?.points),moveName=String(mover?.team_name||'the biggest market mover'),move=Math.round(Math.abs(Number(mover?.value_history_week?.delta)||0)),
+  swingName=String(swing?.team_name||'one Week 3 roster'),swingOpp=String(swing?.next_opponent_name||'its next opponent'),gap=Math.abs((Number(swing?.next_projected)||0)-(Number(swing?.next_opponent_projected)||0)).toFixed(1);
+ const banks={
+  'walter-mercer':[
+   'After two weeks, the table has '+records.perfect+' teams at 2-0, '+records.split+' at 1-1 and '+records.winless+' at 0-2. '+topName+' just posted '+topPts+', but one loud Sunday does not erase the quieter evidence underneath the records. I want Week 3 to tell us which starts have a floor and which ones have simply had better timing.',
+   'The standings now split into '+records.perfect+' perfect starts, '+records.split+' split starts and '+records.winless+' winless starts. '+topName+' owns the week’s biggest team score at '+topPts+'. I have been around long enough to know that September loves certainty right before it changes the subject, so Week 3 gets the burden of proving which records travel.'
+  ],
+  'tess-delaney':[
+   'The league has '+records.perfect+' teams wearing 2-0, '+records.split+' wearing 1-1 and '+records.winless+' wearing 0-2. '+moveName+' also carries the largest absolute roster-value move in this edition at '+move+' points. Records and prices are flirting openly now; I am enjoying the spectacle while refusing to pretend either one has become a marriage certificate.',
+   'Two Sundays have produced '+records.perfect+' perfect records, '+records.split+' split records and '+records.winless+' winless ones. The market’s sharpest absolute team move belongs to '+moveName+' at '+move+' points. That is enough motion for a very attractive argument and nowhere near enough time for a respectable coronation.'
+  ],
+  'mack-hollis':[
+   topName+' put '+topPts+' on the board while the league settled into '+records.perfect+' teams at 2-0, '+records.split+' at 1-1 and '+records.winless+' at 0-2. Those are three different headline factories. Week 3 gets to decide who keeps the celebratory typeface and who wakes up to a correction printed twice as large.',
+   'Week 2 leaves '+records.perfect+' perfect teams, '+records.split+' split teams and '+records.winless+' winless teams. '+topName+' owns the loudest team number at '+topPts+'. Fine—enjoy the screenshot. The next Sunday exists specifically to make old screenshots embarrassing.'
+  ],
+  'nora-voss':[
+   'The record file now contains '+records.perfect+' teams at 2-0, '+records.split+' at 1-1 and '+records.winless+' at 0-2. The widest verified Week 3 projection gap attached to this edition is '+gap+' points in '+swingName+'–'+swingOpp+'. That is not a verdict; it is the next piece of evidence most likely to become uncomfortable if the favorite fails.',
+   'Two completed weeks leave '+records.perfect+' perfect records, '+records.split+' split records and '+records.winless+' winless records. '+swingName+' and '+swingOpp+' are separated by '+gap+' projected points for Week 3. I have logged the spread, the records and the matchup; Sunday can decide which part of the file ages badly.'
+  ]
+ };
+ return pick(banks[id]||banks['walter-mercer'],seed);
+}
+
 function reviseOverview(o,teams){
  if(!o)return o;
  const categoryLines=recapCategoryLines(teams);
@@ -599,7 +629,8 @@ function reviseOverview(o,teams){
   const id=String(s?.reporter?.id||''),seed='recap|'+id+'|'+i;
   const chosen=chooseRecap(s.paragraphs,id);
   const core=id==='walter-mercer'?[...chosen.slice(0,5),...categoryLines]:chosen;
-  const paragraphs=uniq([...core,recapReaction(id,seed,0),recapReaction(id,seed,1)]).slice(0,10);
+  const depth=recapDepthLine(id,teams);
+  const paragraphs=uniq([...core,depth,recapReaction(id,seed,0),recapReaction(id,seed,1)]).slice(0,10);
   return{...s,paragraphs};
  });
  if(Array.isArray(o.hot_takes)){

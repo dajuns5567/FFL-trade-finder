@@ -1,4 +1,4 @@
-export const PLAYER_SIGNAL_VERSION=1;
+export const PLAYER_SIGNAL_VERSION=2;
 
 const DEFENSIVE_RE=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/;
 export const PLAYER_SIGNAL_LABELS={
@@ -25,7 +25,8 @@ export function reporterPlayerStatusProfile(p,slot=0,pp=null){
     seasonAvg=Number(p?.season_avg),age=Number(p?.age),years=Number(p?.years_exp),
     pos=String(p?.position||'').toUpperCase(),role=Number(slot)||0,
     snaps=p?.current_snap_count==null?null:Number(p.current_snap_count),priorSnapPg=p?.prior_season_snaps_per_game==null?null:Number(p.prior_season_snaps_per_game),
-    snapPct=p?.current_snap_pct==null?null:Number(p.current_snap_pct),
+    snapPct=p?.current_snap_pct==null?null:Number(p.current_snap_pct),priorSnapPct=p?.prior_season_snap_pct==null?null:Number(p.prior_season_snap_pct),
+    injuryStatus=String(p?.injury_status||'').trim().toUpperCase(),injuryLimited=!!injuryStatus&&!['NA','N/A','HEALTHY','NONE'].includes(injuryStatus),
     defensive=DEFENSIVE_RE.test(pos),
     starThreshold=pos==='QB'?18:pos==='RB'?14:pos==='WR'?14:pos==='TE'?11:defensive?11:13,
     rookie=(Number.isFinite(years)&&years===0)||(games===0&&Number.isFinite(age)&&age<=23),
@@ -48,16 +49,21 @@ export function reporterPlayerStatusProfile(p,slot=0,pp=null){
     steady=hasTwoWeeks&&games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
       Math.abs(seasonAvg-prior)<=Math.max(1.5,prior*.18)&&
       Math.min(pts,week1)>=prior*.6&&Math.max(pts,week1)<=prior*1.4,
+    roleLoss=(Number.isFinite(snapPct)&&Number.isFinite(priorSnapPct)&&priorSnapPct>0&&snapPct<=priorSnapPct*.82)||
+      (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps<=priorSnapPg*.75)||
+      (Number.isFinite(snapPct)&&snapPct<.42),
+    declineAge=(Number.isFinite(age)&&age>=29)||(Number.isFinite(years)&&years>=7&&(!Number.isFinite(age)||age>=28)),
+    declineVeteranEvidence=veteran&&declineAge&&!young&&!injuryLimited&&twoWeekDrop&&roleLoss,
     developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&strongTwoWeekRise&&roleLift;
   let status='';
   if(!Number.isFinite(pts))return{status:'',starThreshold,rookie,young,earlyCareer,veteran,established,roleLift,hasTwoWeeks,twoWeekRise,strongTwoWeekRise,twoWeekDrop,steady,developmentalBreakout};
   if(developmentalBreakout)status='breakout';
-  else if(established&&veteran&&twoWeekDrop)status='declining-veteran';
-  else if(established&&twoWeekDrop)status='struggling-star';
+  else if(established&&declineVeteranEvidence)status='declining-veteran';
+  else if(established&&twoWeekDrop&&!injuryLimited&&roleLoss)status='struggling-star';
   else if(established)status='established-star';
   else if(!established&&young&&games>=6&&strongTwoWeekRise&&roleLift)status='breakout';
   else if(!established&&(young||earlyCareer)&&games>=6&&twoWeekRise)status='emerging';
-  else if(veteran&&twoWeekDrop)status='declining-veteran';
+  else if(declineVeteranEvidence)status='declining-veteran';
   else if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&twoWeekDrop)status='struggling';
   else if(steady)status=veteran?'reliable-veteran':'reliable';
   else if(role===0&&pts>=starThreshold*1.6)status='star-level';
@@ -66,7 +72,7 @@ export function reporterPlayerStatusProfile(p,slot=0,pp=null){
   else if(veteran&&pts>=Math.max(5,starThreshold*.5))status='veteran';
   const lift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)?seasonAvg-prior:null,
     breakoutScore=(status==='breakout'?100:status==='emerging'?60:0)+(young?18:0)+(roleLift?18:0)+(Number.isFinite(lift)?Math.max(0,lift):0);
-  return{status,starThreshold,rookie,young,earlyCareer,veteran,established,roleLift,hasTwoWeeks,twoWeekRise,strongTwoWeekRise,twoWeekDrop,steady,developmentalBreakout,breakoutScore,age,years,snaps,priorSnapPg,snapPct,seasonAvg,prior,week1,pts};
+  return{status,starThreshold,rookie,young,earlyCareer,veteran,established,roleLift,roleLoss,declineAge,declineVeteranEvidence,injuryLimited,injuryStatus,hasTwoWeeks,twoWeekRise,strongTwoWeekRise,twoWeekDrop,steady,developmentalBreakout,breakoutScore,age,years,snaps,priorSnapPg,snapPct,priorSnapPct,seasonAvg,prior,week1,pts};
 }
 
 export function recentFormProfile(series=[]){

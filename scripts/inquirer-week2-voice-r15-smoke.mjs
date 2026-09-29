@@ -62,9 +62,9 @@ for(const t of revisedTeams){
  assert((byKind.management||0)>=2&&(byKind.management||0)<=4,'Management section must be developed without repetition for '+t.team_name);
  assert((byKind['cool-throne']||0)<=2,'Cool Throne is overstuffed for '+t.team_name);
  assert((byKind.value||0)<=3,'Value section is overstuffed for '+t.team_name);
- assert((byKind.sentiment||0)===5,'Fan sentiment must contain five distinct, substantive reactions for '+t.team_name);
+ assert((byKind.sentiment||0)===6,'Fan sentiment must contain six distinct, substantive reactions for '+t.team_name);
  const sentimentText=(sections.find(s=>String(s?.kind||'')==='sentiment')?.paragraphs||[]).join(' ');
- assert(wordCount(sentimentText)>=105,'Fan sentiment is still too thin for '+t.team_name+': '+wordCount(sentimentText)+' words');
+ assert(wordCount(sentimentText)>=120,'Fan sentiment is still too thin for '+t.team_name+': '+wordCount(sentimentText)+' words');
  assert((byKind.outlook||0)>=3&&(byKind.outlook||0)<=6,'Outlook must be developed without overstuffing for '+t.team_name);
 
  const id=String(t?.inquirer_article?.reporter?.id||'');

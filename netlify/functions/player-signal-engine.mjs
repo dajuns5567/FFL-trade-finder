@@ -52,7 +52,7 @@ export function reporterPlayerStatusProfile(p,slot=0,pp=null){
     roleLoss=(Number.isFinite(snapPct)&&Number.isFinite(priorSnapPct)&&priorSnapPct>0&&snapPct<=priorSnapPct*.82)||
       (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps<=priorSnapPg*.75)||
       (Number.isFinite(snapPct)&&snapPct<.42),
-    declineAge=(Number.isFinite(age)&&age>=29)||(Number.isFinite(years)&&years>=7&&(!Number.isFinite(age)||age>=28)),
+    declineAge=(Number.isFinite(age)&&age>=29)||(!Number.isFinite(age)&&Number.isFinite(years)&&years>=8),
     declineVeteranEvidence=veteran&&declineAge&&!young&&!injuryLimited&&twoWeekDrop&&roleLoss,
     developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&strongTwoWeekRise&&roleLift;
   let status='';

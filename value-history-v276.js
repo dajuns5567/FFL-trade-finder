@@ -1286,7 +1286,7 @@ function categoryLeadersMarkup(){
     defensive=signals.filter(x=>!['QB','RB','WR','TE'].includes(String(x.position))&&['breakout','emerging'].includes(String(x.state))).sort(stableSort)[0];
   add('Offensive Breakout Watch',offensive?.player_id,offensive?`${offensive.reporter_label||offensive.label} • ${offensive.confidence}`:'');
   add('Defensive Breakout Watch',defensive?.player_id,defensive?`${defensive.reporter_label||defensive.label} • ${defensive.confidence}`:'');
-  const rebound=signalTransitionRows().filter(x=>marketSignalDirection(x.state)>marketSignalDirection(x.previous_state)).sort((a,b)=>(marketSignalDirection(b.state)-marketSignalDirection(b.previous_state))-(marketSignalDirection(a.state)-marketSignalDirection(a.previous_state))||breakoutScore(b)-breakoutScore(a)||Number(b.week)-Number(a.week))[0];
+  const rebound=signalTransitionRows().filter(x=>marketSignalDirection(x.previous_state)<0&&marketSignalDirection(x.state)>=0).sort((a,b)=>marketSignalDirection(b.state)-marketSignalDirection(a.state)||breakoutScore(b)-breakoutScore(a)||Number(b.week)-Number(a.week))[0];
   add('Strongest Rebound',rebound?.player_id,rebound?`${rebound.previous_state} → ${rebound.state} • Week ${rebound.week}`:'');
   const drawdown=(range?.volatility||[]).filter(x=>finiteMarketNumber(x.drawdown_pct)!=null&&Number(x.drawdown_pct)<0).sort((a,b)=>Number(a.drawdown_pct)-Number(b.drawdown_pct))[0];
   add('Deepest Pullback',drawdown?.id,drawdown?`${Number(drawdown.drawdown_pct).toFixed(1)}% from selected-window high`:'');

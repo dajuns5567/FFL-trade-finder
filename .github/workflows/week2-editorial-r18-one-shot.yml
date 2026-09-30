@@ -1,0 +1,34 @@
+name: Week 2 editorial r18 one-shot
+
+on:
+  push:
+    branches:
+      - player-signal-layer-r1
+    paths:
+      - .github/workflows/week2-editorial-r18-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: player-signal-layer-r1
+          fetch-depth: 0
+
+      - name: Apply Week 2 r18 editorial patch
+        run: python scripts/week2-editorial-r18-patch.py
+
+      - name: Run Week 2 editorial smoke
+        run: node scripts/inquirer-week2-voice-r15-smoke.mjs
+
+      - name: Commit focused revision
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Refine Week 2 humor and recap voice"
+          git push origin HEAD:player-signal-layer-r1

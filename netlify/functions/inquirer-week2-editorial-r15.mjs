@@ -1393,7 +1393,7 @@ function recapDeskExpansion(id,teams){
   seed='recap-desk-expansion|'+id;
  const banks={
   'walter-mercer':[
-   topName+' led the individual scoring at '+topPts+' for '+topTeam+', while '+lowName+' finished the week at '+lowPts+' as an entire roster. I have been doing this too long to call that “variance” and move on. One player can have a great Sunday; a whole team scoring that little is a management problem, a roster problem or both. Week 3 gets to tell us which explanation survives.',
+   topName+' led the individual scoring at '+topPts+' for '+topTeam+', while '+lowName+' finished the week at '+lowPts+' as an entire roster. I have been doing this too long to call that “variance” and move on. A great individual Sunday can happen in any matchup; a full team scoring that little is a management problem, a roster problem or both. Week 3 gets to tell us which explanation survives.',
    'The league’s loudest individual performance belonged to '+topName+' at '+topPts+' for '+topTeam+'. At the other extreme, '+lowName+' managed '+lowPts+' with a full lineup. That spread is useful because it strips away the polite language: some teams are already producing enough to scare people, and some are making basic competence look like a long-term project.'
   ],
   'tess-delaney':[

@@ -1094,7 +1094,7 @@ function cleanEditorialMeta(t,sentence){
  if(!x)return'';
  x=x
   .replace(/^No comeback story, no miracle, no inspirational montage\.$/i,tm+' did not need a miracle; the expensive talent simply did the job.')
-  .replace(/^That is enough standings material for one loud graphic and several irresponsible predictions\.$/i,tm+' has already given supporters enough confidence to make several irresponsible predictions.')
+  .replace(/^That is enough standings material for one loud graphic and several irresponsible predictions\.$/i,'Supporters around '+tm+' already have enough confidence to make several irresponsible predictions.')
   .replace(/^The team has been writing them for us\.$/i,tm+' keeps supplying its own punchlines; nobody needs to help.')
   .replace(/^I am writing that sentence without a complaint attached, so please appreciate the sacrifice\.$/i,'I said that about '+tm+' without a complaint attached, so please appreciate the sacrifice.')
   .replace(/^Anybody demanding restraint may read a different column\.$/i,tm+' did not earn restraint, and I see no reason to donate any.')

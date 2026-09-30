@@ -7,9 +7,9 @@ const revised=applyWeek2EditorialR16(rawWeek2);
 
 assert.equal(Number(rawWeek2?.season),2026);
 assert.equal(Number(rawWeek2?.week),2);
-assert.equal(Number(WEEK2_EDITORIAL_REVISION),17);
-assert.equal(Number(revised?.editorial_revision),17);
-assert.equal(revised?.voice_revision,'week2-r17');
+assert.equal(Number(WEEK2_EDITORIAL_REVISION),18);
+assert.equal(Number(revised?.editorial_revision),18);
+assert.equal(revised?.voice_revision,'week2-r18');
 assert.equal(JSON.stringify(rawWeek2),rawSnapshot,'Revision layer must not mutate the locked raw Week 2 preload');
 
 const rawTeams=new Map((rawWeek2?.teams||[]).map(t=>[String(t.roster_id),t]));
@@ -32,7 +32,10 @@ const OLD_SCAFFOLD_RE=/\b(?:gave Week 2 the stronger jolt|put a brighter number 
 const SHARED_OUTLOOK_RE=/\b(?:take a head-to-head bite out of|instead of hoping another result moves the same playoff route|not alone in a crowded AFC EAST race|rest of the division reads)\b/i;
 const VOICE_RE=/\b(?:I\b|me\b|my\b|fans?|supporters?|annoyed|annoying|joy|furious|hope|mood|parade|joke|complaint|reckless|unbearable|dramatic|suspicious|ridiculous|beautiful|hostile|rivals?|headline|back page|therapy|aspirin|offended|adore|patience|ugly|awful|insult|boo|praise|credit)\b/i;
 const TECH_JOKE_RE=/\b(?:screenshots?|group chats?|rival chats?|rival threads?|memes?|lineup screen|apps?)\b/i;
-const EDITORIAL_META_RE=/\b(?:headline|story|paragraph|editor|narrative|graphic|typeface|print|column|publication|writing|write|written)\b/i;
+const EDITORIAL_META_RE=/\b(?:headline|story|paragraph|editor|narrative|graphic|typeface|print|column|publication|writing|write|written|evidence|verdict|receipt|record file|crime scene|file complaints)\b/i;
+const SELF_EXPLAIN_RE=/\b(?:strong result, good contribution, still only one completed Sunday|the production actually changed the matchup|there is enough information .* move beyond first impressions|that is enough movement to track|the standard the actual result will be measured against)\b/i;
+const CONTRAST_CRUTCH_RE=/\b(?:that|this|it)\s+(?:is|was)\s+not\b[^.!?]{0,90}(?:;|,)\s*(?:it|that)\s+(?:is|was)\b/i;
+const HUMOR_R18_RE=/\b(?:joke|laugh|laughing|mock|ridicul|tomatoes|champagne|soup with a fork|parking ticket|warning label|blood-pressure|pharmacy|entrance music|spotlight|theater|tuxedo|tailgate|parade permit|documentary|charging rent|rent|dare|admission|bribe|complaint desk|grievance|obituary|hostage negotiation|shoulder pads|arithmetic|neighbors|fishing|swagger|heckling|villain|brochure|jewelry|drama|public embarrassment|diagram|premium package|complaint forms|old coat|orchestra|dimmer switch|lyrics|forwarding address|fine print|opening night|reviews|brochure|jewelry|Monday|scoreboard|philosophical defense|committee|bragging|sulking|unpaid labor)\b/i;
 const SYNTHETIC_CADENCE_RE=/(?:^|[.!?]\s+)(?:At the moment|At least today|From this angle|On this result|In this spot|For the moment|On the current read|By my count|On review|For now|This week|From here|As it stands|After Sunday|In plain terms|At first glance|In the short term|From the sideline|With that settled|For the record|Looking ahead|After a second look|From this score|In the meantime|For this matchup|Until next Sunday|On balance),/i;
 
 const reporterCounts=new Map();
@@ -41,8 +44,8 @@ for(const t of revisedTeams){
  assert(before,'Missing raw team '+t.roster_id);
  assert.deepEqual(stripArticle(t),stripArticle(before),'Non-article Week 2 facts changed for '+t.team_name);
  assert.deepEqual(stripArticleProse(t.inquirer_article),stripArticleProse(before.inquirer_article),'Article metadata/facts changed outside prose for '+t.team_name);
- assert.equal(Number(t?.inquirer_article?.editorial_revision),17,'Article revision missing for '+t.team_name);
- assert.equal(t?.inquirer_article?.voice_revision,'week2-r17','Article voice revision missing for '+t.team_name);
+ assert.equal(Number(t?.inquirer_article?.editorial_revision),18,'Article revision missing for '+t.team_name);
+ assert.equal(t?.inquirer_article?.voice_revision,'week2-r18','Article voice revision missing for '+t.team_name);
 
  const ps=paragraphs(t),text=ps.join(' '),sentences=sentenceParts(text);
  assert(ps.every(p=>typeof p==='string'),'Every Week 2 article paragraph must render as prose, not an array/object, for '+t.team_name);
@@ -72,6 +75,10 @@ for(const t of revisedTeams){
  assert((byKind.outlook||0)>=3&&(byKind.outlook||0)<=6,'Outlook must be developed without overstuffing for '+t.team_name);
 
  const id=String(t?.inquirer_article?.reporter?.id||'');
+ if(id==='nora-voss')assert(!SELF_EXPLAIN_RE.test(text),'Jefferson still contains self-explanatory analysis prose for '+t.team_name);
+ const contrastCount=sentences.filter(s=>CONTRAST_CRUTCH_RE.test(s)).length;
+ assert(contrastCount<=2,'The not-X/it-is-Y contrast crutch is still overused for '+t.team_name+': '+contrastCount);
+ if(id!=='tess-delaney')assert(sentences.filter(s=>HUMOR_R18_RE.test(s)).length>=4,'Non-Tilly reporter still lacks enough real joke/punchline sentences for '+t.team_name);
  reporterCounts.set(id,(reporterCounts.get(id)||0)+1);
 }
 for(const id of ['walter-mercer','tess-delaney','mack-hollis','nora-voss'])assert((reporterCounts.get(id)||0)>0,'Reporter missing from revised Week 2: '+id);
@@ -105,8 +112,8 @@ assert(/-0\.2/.test(chiefsText),'Kansas City negative Week 2 team score must rem
 assert(/below zero|negative points|less than zero|argument against arithmetic|full roster worked|fantasy team poorer/i.test(chiefsText),'Tilly must react directly and sarcastically to Kansas City scoring -0.2 instead of using generic newsroom/app humor');
 
 const overview=revised?.league_overview||{};
-assert.equal(Number(overview.editorial_revision),17);
-assert.equal(overview.voice_revision,'week2-r17');
+assert.equal(Number(overview.editorial_revision),18);
+assert.equal(overview.voice_revision,'week2-r18');
 const overviewParagraphs=(overview.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(Boolean);
 const overviewText=overviewParagraphs.join(' ');
 assert(overviewParagraphs.length<=32,'Weekly recap still carries too much revision-14 body copy: '+overviewParagraphs.length);
@@ -114,7 +121,12 @@ assert(!PLAYER_SUPPORT_RE.test(overviewText),'Weekly recap still frames results 
 assert(!OLD_SCAFFOLD_RE.test(overviewText),'Weekly recap still contains old shared scaffolding');
 assert(!/current-player side an early performance problem to answer/i.test(overviewText),'Weekly recap still repeats current-player-side scaffold');
 assert(!/trade is attached to a roster that is still actively chasing something/i.test(overviewText),'Weekly recap still repeats active-roster trade scaffold');
-assert(!/\b(?:headline|back page|copy desk|newsroom|publication|typeface|evidence|verdict|exhibits?|case files?|folders?|receipts?|screenshots?|group chats?|rival chats?|rival threads?|memes?|apps?)\b/i.test(overviewText),'Weekly recap still leans on newsroom/file/tech crutches');
+assert(!/\b(?:headline|back page|copy desk|newsroom|publication|typeface|evidence|verdict|exhibits?|case files?|folders?|receipts?|record file|crime scene|file complaints|screenshots?|group chats?|rival chats?|rival threads?|memes?|apps?)\b/i.test(overviewText),'Weekly recap still leans on newsroom/file/tech crutches');
+const overviewSentences=sentenceParts(overviewText).filter(s=>wordCount(s)>=8);
+const overviewSeen=new Set(),overviewDupes=[];
+for(const s of overviewSentences){const k=s.replace(/\s+/g,' ').trim().toLowerCase();if(overviewSeen.has(k))overviewDupes.push(s);else overviewSeen.add(k);}
+assert.deepEqual(overviewDupes,[],'Weekly recap still repeats exact commentary sentences');
+assert(sentenceParts(overviewText).filter(s=>HUMOR_R18_RE.test(s)).length>=8,'Weekly recap still lacks enough real jokes/sarcastic punchlines');
 const jeffersonText=revisedTeams.filter(t=>String(t?.inquirer_article?.reporter?.id||'')==='nora-voss').map(articleText).join(' ');
 assert(!/\b(?:strong production; now the role has to sustain it|the next game should tell us which Week 2 traits are structural and which were matchup noise|supporters have a measurable lineup decision to question|the useful standard .* materially reduce the Week 2 failure points)\b/i.test(jeffersonText),'Jefferson still contains the clinical prose called out by the Week 2 audit');
 
@@ -124,6 +136,7 @@ for(const id of ['walter-mercer','tess-delaney','mack-hollis','nora-voss']){
  assert(sections.length,'Weekly recap reporter section missing: '+id);
  const copy=sections.flatMap(s=>s?.paragraphs||[]).join(' ');
  assert(VOICE_RE.test(copy),'Weekly recap reporter section lacks explicit voice: '+id);
+ assert(sentenceParts(copy).filter(s=>HUMOR_R18_RE.test(s)).length>=2,'Weekly recap reporter section lacks real joke/punchline density: '+id);
  assert(sections.flatMap(s=>s?.paragraphs||[]).length<=10,'Weekly recap reporter section is overstuffed: '+id);
 }
 

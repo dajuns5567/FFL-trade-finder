@@ -1,6 +1,6 @@
 import {reporterPlayerStatusProfile} from './player-signal-engine.mjs';
 
-export const WEEK2_EDITORIAL_REVISION=17;
+export const WEEK2_EDITORIAL_REVISION=18;
 
 const clone=x=>JSON.parse(JSON.stringify(x));
 const one=v=>Number.isFinite(Number(v))?Number(v).toFixed(1):'0.0';
@@ -1159,128 +1159,308 @@ function buildGeneric(sec){
 }
 
 
-function sharpenTeamParagraph(t,id,kind,p,index){
- let x=String(p||'').trim();
- if(!x||id==='mack-hollis')return x;
- const tm=String(t?.team_name||'This team');
- x=x
-  .replace(/The next game should tell us which Week 2 traits are structural and which were matchup noise\./gi,'Week 3 gives '+tm+' one job: prove Week 2 was football and not a one-Sunday costume; if the same weakness shows up again, stop calling it noise.')
-  .replace(/Strong production; now the role has to sustain it\./gi,'Good; '+tm+' can applaud the production, but one useful Sunday does not come with diplomatic immunity.')
-  .replace(/For ([^.!?]+), the role increase supports the idea that the production has structural backing\./gi,'For $1, the bigger role matters; if the points disappear with that workload, '+tm+' can retire the excuses for a week.')
-  .replace(/Strong production deserves to be stated plainly\./gi,'Good production deserves credit; '+tm+' still has to make it happen again before anybody starts acting smug.')
-  .replace(/Now the role has to sustain it\./gi,'Now '+tm+' needs it again; one decent Sunday is a contribution, not a lifetime appointment.')
-  .replace(/Supporters have a measurable lineup decision to question, which is fair, and Week 3 will provide an equally measurable response\./gi,'Supporters saw the '+tm+' lineup mistake with their own eyes; make it again and nobody needs advanced math to boo it.')
-  .replace(/The useful standard for ([^.!?]+) is simple: repeat the strengths and materially reduce the Week 2 failure points\./gi,'The assignment for $1 is simple: keep what worked and stop repeating the stupid parts; nobody gets extra credit for making that sound complicated.')
-  .replace(/\bmaterially changed\b/gi,'actually changed')
-  .replace(/\bmaterially better\b/gi,'actually better')
-  .replace(/\buseful contribution\b/gi,'good contribution')
-  .replace(/\buseful standard\b/gi,'simple standard')
-  .replace(/\buseful conclusion\b/gi,'obvious conclusion')
-  .replace(/\bspecific expectations\b/gi,'expectations')
-  .replace(/\bstructural backing\b/gi,'something real behind it')
-  .replace(/\bstructural\b/gi,'real')
-  .replace(/\bmatchup noise\b/gi,'one-Sunday nonsense')
-  .replace(/\bmeasurable\b/gi,'obvious');
+function teamJokeR18(t,id,kind,p,index){
+ const tm=String(t?.team_name||'This team'),seed=key(t)+'|r18-joke|'+id+'|'+kind+'|'+index+'|'+String(p||'').slice(0,90);
+ const text=String(p||'');
+ let context='general';
+ if(/\b(?:bench|lineup|start(?:er)?|management)\b/i.test(text))context='management';
+ else if(/\b(?:value|market|valuation)\b/i.test(text))context='value';
+ else if(/\b(?:Week 3|next opponent|projected|projection|forecast)\b/i.test(text))context='outlook';
+ else if(/\b(?:fans?|supporters?|crowd)\b/i.test(text))context='fans';
+ else if(/\b(?:points?|scored|averaged|snap|receptions?|carries|sacks?)\b/i.test(text))context='player';
  const banks={
-  'walter-mercer':[
-   'For '+tm+', good football gets credit and bad football gets named; I am too old to pretend the stupid parts did not happen.',
-   tm+' can enjoy the good part, and '+tm+' can still boo the stupid part.',
-   'If '+tm+' repeats that mistake, nobody gets to call '+tm+' unlucky with a straight face.',
-   'I have watched enough '+tm+' Sundays to know when “small sample” is becoming an alibi, and I am not buying another week of it.',
-   tm+' earned the result, not immunity from criticism; those are different privileges for '+tm+'.',
-   'That is the sort of thing '+tm+' can survive once; twice would be '+tm+' volunteering for ridicule.',
-   'I am old-fashioned about this: '+tm+' should reward the players producing points and stop donating chances to the ones producing excuses.',
-   tm+' does not need a sermon here; '+tm+' needs the bad football to stop before I run out of polite synonyms for bad.'
-  ],
-  'tess-delaney':[
-   'For '+tm+', competence is attractive and repeating avoidable nonsense is not; I will praise one and sneer at the other without apology.',
-   tm+' may keep the points, but the ugly decision beside them still deserves tomatoes from '+tm+' supporters.',
-   'There is something almost elegant about '+tm+' doing the hard part and then tripping over the easy one—almost.',
-   'If '+tm+' insists on repeating that mistake, '+tm+' should at least have the decency to make it funny.',
-   'I adore excess when '+tm+' earns it and despise '+tm+' waste with equal commitment.',
-   'A little swagger suits '+tm+'; so would fewer self-inflicted problems from '+tm+'.',
-   tm+' has earned applause, not absolution, and I refuse to confuse the two.',
-   'The football was good enough for '+tm+' champagne in spots and ugly enough for '+tm+' heckling in others.'
-  ],
-  'nora-voss':[
-   'For '+tm+', the mistake is too obvious to hide behind “small sample”; if '+tm+' does it again, call it a habit instead of bad luck.',
-   tm+' can keep the win, but '+tm+' does not get a pardon for the bad decision just because the scoreboard was friendly.',
-   'If '+tm+' repeats this lineup mistake, '+tm+' management is not unlucky; it is stubborn.',
-   'Good, now do it again: '+tm+' does not get lifetime credit for one competent Sunday.',
-   'The '+tm+' weak spot is not mysterious; '+tm+' either fixes it or invites rivals to keep laughing.',
-   tm+' has enough information now, and repeating the same mistake would be a stupid choice by '+tm+'.',
-   'One good number is welcome, but '+tm+' still owes us football that survives contact with another Sunday.',
-   'I am done treating '+tm+' lineup problems like philosophical questions; '+tm+' should start the better option and spare everyone the ceremony.'
-  ]
+  'walter-mercer':{
+   player:[
+    tm+' can keep the good number. I have spent too many Sundays watching bad ones breed in pairs.',
+    'A useful Sunday buys applause. It does not buy a pension, and I have the complaint forms ready for next week.',
+    'If '+tm+' wants me cheerful, producing more of this is a remarkably efficient bribe.'
+   ],
+   management:[
+    'Leaving useful points on the bench is a fine hobby for anyone trying to make Monday morning unbearable.',
+    'Management is welcome to prove me wrong. I have kept the chair warm for decades.',
+    'I have seen cheaper ways to create regret than a bad lineup decision, but apparently '+tm+' prefers the premium package.'
+   ],
+   value:[
+    'The market can move all it wants; I have watched enough Sundays to know a price tag cannot tackle anybody.',
+    'A value bump is pleasant. So is finding five dollars in an old coat, and neither one wins the next matchup.'
+   ],
+   outlook:[
+    'I am willing to be surprised by '+tm+'. I am less willing to schedule my week around the possibility.',
+    'The next opponent has my permission to make this interesting. '+tm+' has my permission to make it less aggravating.'
+   ],
+   fans:[
+    'The fans paid with three hours of their Sunday. Complaining is included in the ticket price.',
+    'Supporters are entitled to be loud. Quiet patience has produced enough disappointing sequels already.'
+   ],
+   general:[
+    tm+' keeps giving me new reasons to inspect the blood-pressure aisle at the pharmacy.',
+    'I would enjoy a calm week from '+tm+', mostly because I have forgotten what one looks like.'
+   ]
+  },
+  'mack-hollis':{
+   player:[
+    'The scoreboard has no manners, which is precisely why I adore it.',
+    'That stat line arrived dressed for attention. I respect the commitment to spectacle.',
+    tm+' paid for talent and, for one Sunday, received the deluxe package.'
+   ],
+   management:[
+    'A bench mistake this visible deserves entrance music and a spotlight.',
+    'If management insists on drama, the league should at least charge admission.',
+    tm+' has discovered the glamorous art of making one lineup decision feel unnecessarily expensive.'
+   ],
+   value:[
+    'The market is flirting again. I recommend enjoying the attention without naming the children.',
+    'A value swing adds jewelry to the conversation. Sunday still decides whether it is tasteful.'
+   ],
+   outlook:[
+    tm+' has the confidence of a tuxedo at a tailgate. The next Sunday decides whether that is charming or ridiculous.',
+    'The projection has arrived in formalwear. I will wait to see whether the football remembers its shoes.'
+   ],
+   fans:[
+    'Fans came for football and accidentally received theater. At least the concessions were optional.',
+    'The crowd has chosen emotional excess. Finally, some sensible decision-making around here.'
+   ],
+   general:[
+    tm+' keeps turning ordinary fantasy football into dinner theater, and I refuse to complain about the entertainment value.',
+    'Subtlety has left the building. Good. It was taking up a perfectly useful seat.'
+   ]
+  },
+  'nora-voss':{
+   player:[
+    'The scoreboard has already completed the argument. Management can stop submitting amendments.',
+    'That number is useful enough to spare us another motivational speech, which is a public service.',
+    'The player did the job. Management may celebrate quietly and resist the urge to turn one Sunday into a documentary.'
+   ],
+   management:[
+    'Management had several options and somehow selected the one that makes Monday require a diagram.',
+    'That bench gap is large enough to stop being a footnote and start charging rent.',
+    'If '+tm+' wants fewer questions, the cheapest solution is to stop creating such obvious ones.'
+   ],
+   value:[
+    'The market moved. Fine. The scoreboard still gets the final vote.',
+    'A value change is useful information and a terrible substitute for winning, which should save us a meeting.'
+   ],
+   outlook:[
+    'The projection is hanging over Sunday like a very expensive dare.',
+    'The roster can keep experimenting. Rivals are under no obligation to stop laughing while it does.'
+   ],
+   fans:[
+    'Fans have already located the obvious mistake. Management does not need a committee to find it again.',
+    'Supporters are being asked for patience. They have countered with pointing at the scoreboard.'
+   ],
+   general:[
+    tm+' has enough moving parts to keep management busy and enough witnesses to make excuses inconvenient.',
+    'The next bad decision will arrive with precedent, which is an awkward accessory for management.'
+   ]
+  }
  };
  const rows=banks[id];
- if(!rows)return x;
- const eligible=/^(?:lede|players|management|hot-seat|cool-throne|sentiment|outlook|value)$/.test(kind);
- const mod=id==='tess-delaney'?3:2;
- const seed=key(t)+'|r17-bite|'+id+'|'+kind+'|'+index;
- if(eligible&&hash(seed)%mod===0){
-  const bite=pick(rows,seed);
-  if(bite&&!x.includes(bite))x=(x+' '+bite).trim();
+ if(!rows)return'';
+ return pick(rows[context]||rows.general,seed);
+}
+
+function cleanTeamR18(t,id,p){
+ const tm=String(t?.team_name||'This team');
+ let x=String(p||'').trim();
+ if(!x)return'';
+ x=x
+  .replace(/I would like a second receipt before calling it durable\./gi,'I would like to see it again before calling it durable.')
+  .replace(/points worth of evidence that at least one part of Sunday worked exactly as intended\./gi,'points and gave supporters one part of Sunday worth enjoying.')
+  .replace(/The emotional verdict is appropriately excessive:/gi,'The emotional response is appropriately excessive:')
+  .replace(/The Week 3 benchmark starts with/gi,'The Week 3 assignment starts with')
+  .replace(/That is not genius; it is reading the last box score\./gi,'Reading the last box score should be the minimum qualification for this job.')
+  .replace(/That is not nitpicking; that is a scoreboard-backed reason to holler/gi,'That is a scoreboard-backed reason to holler')
+  .replace(/That is not the whole loss, but/gi,'It did not cause the whole loss, but')
+  .replace(/\breceipts?\b/gi,'repeat performance')
+  .replace(/\bevidence\b/gi,'result')
+  .replace(/\bverdict\b/gi,'reaction');
+ if(id==='nora-voss'){
+  x=x
+   .replace(/There is enough information on ([^.!?]+) to move beyond first impressions\./gi,'$1 has used up the “too early to tell” coupon.')
+   .replace(/Strong result, good contribution, still only one completed Sunday\./gi,'Good Sunday. I am withholding the parade permit until it happens twice.')
+   .replace(/The production actually changed the matchup\./gi,'The points were useful enough that even management could not misplace them.')
+   .replace(/That is enough movement to track without pretending it settles the roster’s quality\./gi,'The market moved. Fine. The scoreboard still gets the final vote.')
+   .replace(/That part is not debatable\./gi,'Anyone arguing otherwise can spend Monday alone.')
+   .replace(/That is the standard the actual result will be measured against\./gi,'That projection is hanging over Sunday like a very expensive dare.')
+   .replace(/The designation matters because it may force ([^.!?]+)\./gi,'The designation may force $1.')
+   .replace(/That sequence matters, but only after the current weaknesses get a response\./gi,'Handle the current weakness first; the rest of the schedule can wait.')
+   .replace(/The prior baseline was already strong, so this is confirmation rather than discovery\./gi,'Nobody discovered fire here; the player did the job the track record already advertised.')
+   .replace(/The next lineup should reflect that information instead of treating it as trivia\./gi,'Put the better scorer in the lineup and save trivia night for Thursday.')
+   .replace(/The decline is obvious and does not need embellishment\./gi,'The decline is obvious. I will save the embellishment for something less depressing.')
+   .replace(/Fans have enough information to be precise now\./gi,'Fans already know exactly which mistake they are booing.')
+   .replace(/Management already knows what Week 2 exposed; now the lineup has to change accordingly\./gi,'Management saw the same Sunday everybody else did. The lineup should act like it.')
+   .replace(/The concern around ([^.!?]+) is specific:/gi,'The problem with $1 is plain:')
+   .replace(/Strong production;\s*now the role has to sustain it\.?/gi,'Good Sunday. I am withholding the parade permit until it happens twice.')
+   .replace(/The next game should tell us which Week 2 traits are structural and which were matchup noise\.?/gi,'Week 3 can settle the argument. If the same weakness returns, management gets to own it.')
+   .replace(/Supporters have a measurable lineup decision to question[^.!?]*\.?/gi,'Supporters already saw the lineup mistake. Repeat it and the boos will explain the rest.')
+   .replace(/The useful standard for ([^.!?]+) is simple:\s*repeat the strengths and materially reduce the Week 2 failure points\.?/gi,'For $1, keep what worked and stop repeating the stupid parts. Nobody gets bonus points for making that complicated.');
  }
  return x;
 }
 
-function sharpenRecapParagraph(id,p,index){
+function sharpenTeamParagraph(t,id,kind,p,index){
+ let x=cleanTeamR18(t,id,p);
+ if(!x)return'';
+ if(id==='tess-delaney')return x;
+ const jokeSlots=id==='walter-mercer'
+  ?((kind==='players'&&(index===1||index===3))||(kind==='management'&&index===0)||(kind==='sentiment'&&index===1)||(kind==='outlook'&&index===1))
+  :((kind==='players'&&index===1)||(kind==='management'&&index===0)||(kind==='sentiment'&&index===1)||(kind==='outlook'&&index===1));
+ if(!jokeSlots)return x;
+ const tm=String(t?.team_name||'This team');
+ const guaranteed={
+  'walter-mercer':{
+   'players:1':tm+' can keep the good number. The '+tm+' complaint desk is closed for this player, which may be the nicest thing I say all week.',
+   'players:3':'A useful Sunday from '+tm+' buys applause and one quiet Monday. I am not promising '+tm+' gets Tuesday too.',
+   'management:0':'Leaving useful points on the bench is how '+tm+' turns a lineup decision into a Monday regret with its own mailing address.',
+   'sentiment:1':tm+' supporters have already paid in blood pressure; asking them for quiet patience feels greedy.',
+   'outlook:1':tm+' can let the projection keep its brochure; the actual Sunday still has to be survived.'
+  },
+  'mack-hollis':{
+   'players:1':'That '+tm+' stat line arrived with a spotlight and absolutely no interest in subtlety. I respect '+tm+' for committing to the theater.',
+   'management:0':tm+' made one lineup decision feel expensive enough to deserve its own orchestra.',
+   'sentiment:1':'The '+tm+' crowd has chosen emotional excess. Finally, some sensible decision-making around '+tm+'.',
+   'outlook:1':'The '+tm+' projection has arrived in formalwear. Football around '+tm+' is already reaching for the dimmer switch.'
+  },
+  'nora-voss':{
+   'players:1':'The '+tm+' scoreboard already finished this argument. '+tm+' management can stop requesting another committee meeting.',
+   'management:0':tm+' made the lineup mistake obvious enough to require a diagram only if management plans to frame it.',
+   'sentiment:1':tm+' supporters have located the problem. The '+tm+' scoreboard even highlighted it for management.',
+   'outlook:1':'The projection is confident enough to become embarrassing if '+tm+' trips over its own lineup again.'
+  }
+ };
+ const jokeKey=kind+':'+index;
+ const reporterGuaranteed=(guaranteed[id]||{})[jokeKey];
+ const joke=reporterGuaranteed||teamJokeR18(t,id,kind,x,index);
+ if(joke&&!x.includes(joke))x=(x+' '+joke).trim();
+ return x;
+}
+
+function recapJokeR18(id,p,index){
+ const text=String(p||''),seed='recap-r18|'+id+'|'+index+'|'+text.slice(0,100);
+ let context='general';
+ if(/\b(?:bench|lineup|start-sit|manager|management)\b/i.test(text))context='management';
+ else if(/\b(?:value|market|roster-value)\b/i.test(text))context='value';
+ else if(/\b(?:trade|received|pick)\b/i.test(text))context='trade';
+ else if(/\b(?:projected|projection|Week 3)\b/i.test(text))context='outlook';
+ else if(/\b(?:2-0|0-2|standings|record)\b/i.test(text))context='standings';
+ const banks={
+  'walter-mercer':{
+   management:['A manager can survive one bad lineup call. Repeating it is how you get your own chair at the complaint desk.','Bench points have a wonderful talent for becoming twice as large on Monday morning.'],
+   value:['The market may be excited. I have met excited markets before; none of them could set a lineup.','A value swing is interesting right up until kickoff makes it irrelevant.'],
+   trade:['Every trade looks clever when the paperwork is fresh. Sunday eventually reads the fine print.','A manager who wins the trade and loses the week still has an inconvenient scoreboard to explain.'],
+   outlook:['Projections are useful until football begins behaving like football again.','I have no objection to a favorite. I object when the favorite starts believing the brochure.'],
+   standings:['September standings are young enough to be reckless and old enough to start arguments. Perfect.','Two wins buy confidence. Two losses buy unsolicited advice from everybody with a pulse.'],
+   general:['I have watched enough fantasy football to know dignity is usually the first roster casualty.','The league remains undefeated at turning a normal Sunday into a week-long grievance.']
+  },
+  'tess-delaney':{
+   management:['A bench mistake this visible deserves tomatoes, preferably thrown with accuracy.','Management has produced drama without even charging us for orchestra seats.'],
+   value:['The market is flirting shamelessly again. I approve of the energy and distrust the commitment.','Value moved, everyone gasped, and Sunday remained wonderfully unimpressed.'],
+   trade:['A trade should improve the roster or at least improve the gossip. Anything less is poor hospitality.','The deal has entered its glamorous phase: everybody is certain they won and nobody has played the next game yet.'],
+   outlook:['A projection this confident is practically begging football to spill a drink on it.','Week 3 has arrived wearing expectations like jewelry. I hope somebody loses an earring.'],
+   standings:['The unbeaten teams may strut. The winless teams may sulk. The rest are pretending 1-1 is mysterious.','September has given everyone just enough information to become irresponsibly confident. Delicious.'],
+   general:['The league keeps offering beauty and stupidity on the same plate. I continue to order seconds.','Subtlety had its chance. The standings chose theater.']
+  },
+  'mack-hollis':{
+   management:['One lineup mistake can be forgiven. Two starts looking like a touring production.','Management wanted suspense and accidentally cast itself as the villain.'],
+   value:['The market has put on a tuxedo for numbers that still have to survive Sunday.','A roster-value swing is financial theater with shoulder pads waiting backstage.'],
+   trade:['Every trade is a love story until one side checks the box score.','The deal has all the confidence of opening night and none of the reviews yet.'],
+   outlook:['The projection has entered with a spotlight. Football is already reaching for the dimmer switch.','Week 3 has the manners of an encore: everybody expects more and somebody will forget the lyrics.'],
+   standings:['The standings are young, loud and overdressed. I could not be happier.','A 2-0 team walks differently in September. An 0-2 team checks the exits.'],
+   general:['This league has once again mistaken restraint for a character flaw. Splendid.','Fantasy football remains theater for people who insist they are simply “checking scores.”']
+  },
+  'nora-voss':{
+   management:['Management had all week to avoid that lineup mistake. Monday has now been assigned to explaining it.','A bench gap that large should come with rent and a forwarding address.'],
+   value:['The market moved. Nobody on the roster learned to tackle because of it.','Value is useful context. The scoreboard remains aggressively uninterested.'],
+   trade:['The trade can keep its victory lap until the players provide transportation.','Managers love declaring a trade won early. Sunday enjoys collecting those declarations.'],
+   outlook:['The projection is confident enough to become embarrassing if the favorite trips.','Week 3 has been given expectations. Management has been given nowhere convenient to hide them.'],
+   standings:['Two weeks is plenty of time for confidence to become annoying. The league is right on schedule.','The standings are early. The bragging is not.'],
+   general:['Several managers have requested patience. The scoreboard has declined to participate.','The league keeps generating obvious problems and then acting surprised when fans notice them.']
+  }
+ };
+ const rows=(banks[id]||{})[context]||(banks[id]||{}).general||[];
+ return rows.length?pick(rows,seed):'';
+}
+
+function cleanRecapR18(p){
  let x=String(p||'').trim();
  if(!x)return'';
- x=x
-  .replace(/That is the sort of blowout where the losing side starts checking whether the scoring app accidentally counted two Sundays\./gi,'That is the sort of blowout where the losing side starts wondering whether the scoreboard has developed a personal grudge.')
-  .replace(/The moves worth keeping on the back page:/gi,'The moves worth remembering:')
-  .replace(/The back page accepts both forms of content\./gi,'Sunday has room for both.')
-  .replace(/saved the receipts/gi,'remembered exactly what happened')
-  .replace(/next piece of evidence/gi,'next ugly answer')
-  .replace(/headline factories/gi,'ways to get mocked')
-  .replace(/keeps the celebratory typeface/gi,'keeps strutting')
-  .replace(/correction printed twice as large/gi,'correction twice as loud')
-  .replace(/\bheadlines?\b/gi,'jokes')
+ return x
+  .replace(/Rivals may file complaints with the usual department: nowhere\./gi,'Rivals may complain all week. Nobody has to listen.')
+  .replace(/The record file now contains/gi,'The standings now contain')
+  .replace(/every bench mistake becomes a crime scene/gi,'every bench mistake becomes a public embarrassment')
+  .replace(/That matters because it was not random league-wide noise; it was one bad decision with a price everybody could see\./gi,'Everybody saw the bad decision and its price. Pittsburgh can skip the philosophical defense.')
+  .replace(/That tells us how little a league-wide average can explain when individual lineups are moving in opposite directions\./gi,'League-wide averages can sit this one out; those lineups were headed in opposite directions.')
+  .replace(/That is not a subtle difference; that is two completely different Sundays wearing the same league logo\./gi,'Those were two completely different Sundays wearing the same league logo.')
+  .replace(/That is not a answer; it is the next ugly answer most likely to become uncomfortable if the favorite fails\./gi,'That 90.8-point projection is begging the favorite to make things awkward.')
+  .replace(/the obvious conclusion is not that the league has settled\. It is that the next set of results now has expectations to justify or embarrass\./gi,'The league has plenty left unsettled, and the next results now have expectations to justify or embarrass.')
+  .replace(/The response was big enough to change what Week 3 can reasonably expect\./gi,'A jump that large earns Miami a much louder Week 3.')
+  .replace(/That is the real Week 2 shape:/gi,'Week 2 left us with this:')
+  .replace(/\brecord file\b/gi,'standings')
+  .replace(/\bfile complaints\b/gi,'complain')
+  .replace(/\bcrime scene\b/gi,'public embarrassment')
+  .replace(/\bevidence\b/gi,'football')
+  .replace(/\bverdict\b/gi,'reaction')
+  .replace(/\bexhibits?\b/gi,'examples')
+  .replace(/\bcase files?\b/gi,'problems')
+  .replace(/\bfolders?\b/gi,'problems')
+  .replace(/\breceipts?\b/gi,'memory')
+  .replace(/\bheadlines?\b/gi,'results')
   .replace(/\bback page\b/gi,'Sunday')
   .replace(/\bcopy desk\b/gi,'league')
   .replace(/\bnewsroom\b/gi,'league')
   .replace(/\bpublication\b/gi,'league')
   .replace(/\btypeface\b/gi,'swagger')
-  .replace(/\bevidence\b/gi,'football')
-  .replace(/\bverdict\b/gi,'answer')
-  .replace(/\bexhibits?\b/gi,'examples')
-  .replace(/\bcase files?\b/gi,'problems')
-  .replace(/\bfolders?\b/gi,'problems')
-  .replace(/\breceipts?\b/gi,'memories')
   .replace(/\bscreenshots?\b/gi,'jokes')
   .replace(/\bgroup chats?\b/gi,'rivals')
   .replace(/\brival chats?\b/gi,'rivals')
   .replace(/\brival threads?\b/gi,'rivals')
   .replace(/\bmemes?\b/gi,'mockery')
-  .replace(/\bapps?\b/gi,'scoreboard')
-  .replace(/\buseful conclusion\b/gi,'obvious conclusion')
-  .replace(/specific expectations to confirm or break/gi,'expectations to justify or embarrass')
-  .replace(/one concrete decision with measurable cost/gi,'one bad decision with a price everybody could see');
- if(id==='mack-hollis')return x;
- const banks={
-  'walter-mercer':[
-   'Two Sundays are enough to stop handing out free excuses; bad football becomes a habit when everybody keeps calling it temporary.',
-   'I have seen September optimism before, and the teams worth trusting are the ones that stop repeating the dumb parts.',
-   'Enjoy the wins, complain about the mistakes and spare me the idea that caring less would be more sophisticated.'
-  ],
-  'tess-delaney':[
-   'The league served excellent football beside several decisions that deserved tomatoes, and I see no reason to be diplomatic about either.',
-   'Some teams earned champagne, others earned heckling, and a few ambitious clubs managed both in the same afternoon.',
-   'September has already produced enough beauty and stupidity to justify being emotionally unreasonable about all of it.'
-  ],
-  'nora-voss':[
-   'By Week 2, repeating the same lineup mistake is no longer mysterious; it is management volunteering to be mocked.',
-   'The league has enough information to distinguish bad luck from stubbornness, and several managers should be nervous about the distinction.',
-   'One ugly Sunday can happen; repeating the same ugly decision is how a mistake starts introducing itself as policy.'
-  ]
+  .replace(/\bapps?\b/gi,'scoreboard');
+}
+
+function dedupeRecapSentencesR18(sections){
+ const seen=new Set();
+ return (sections||[]).map(s=>{
+  const paragraphs=(s?.paragraphs||[]).map(p=>{
+   const kept=[];
+   for(const sentence of sentenceParts(p)){
+    const k=sentence.replace(/\s+/g,' ').trim().toLowerCase();
+    if(k.split(/\s+/).length>=8){
+     if(seen.has(k))continue;
+     seen.add(k);
+    }
+    kept.push(sentence);
+   }
+   return kept.join(' ').trim();
+  }).filter(Boolean);
+  return{...s,paragraphs};
+ });
+}
+
+function sharpenRecapParagraph(id,p,index){
+ let x=cleanRecapR18(p);
+ if(!x)return'';
+ const guaranteed={
+  'walter-mercer':{
+   1:'Fantasy football has a wonderful talent for turning one quiet Sunday decision into a loud Monday.',
+   4:'The projection can keep its brochure. Sunday has never read one.'
+  },
+  'tess-delaney':{
+   1:'The league has produced enough drama for orchestra seats, and September is still young.',
+   4:'Week 2 arrived wearing jewelry and throwing tomatoes. Subtlety never had a chance.'
+  },
+  'mack-hollis':{
+   1:'The standings have entered under a spotlight, and subtlety has been escorted from the theater.',
+   4:'Week 3 is already reaching for the dimmer switch. Naturally, everybody thinks the spotlight belongs to them.'
+  },
+  'nora-voss':{
+   1:'The scoreboard has declined another committee meeting.',
+   4:'A mistake this obvious should be paying rent by Monday.'
+  }
  };
- const rows=banks[id];
- if(rows&&hash('recap-r17|'+id+'|'+index)%2===0){
-  const bite=pick(rows,'recap-r17|'+id+'|'+index);
-  if(bite&&!x.includes(bite))x=(x+' '+bite).trim();
- }
+ const fixed=(guaranteed[id]||{})[index];
+ const joke=fixed||((index===1||index===4)?recapJokeR18(id,x,index):'');
+ if(joke&&!x.includes(joke))x=(x+' '+joke).trim();
  return x;
 }
 
@@ -1304,7 +1484,7 @@ function reviseTeam(t){
  });
  a.paragraphs=a.sections.flatMap(sec=>(sec?.paragraphs||[]).filter(Boolean));
  a.editorial_revision=WEEK2_EDITORIAL_REVISION;
- a.voice_revision='week2-r17';
+ a.voice_revision='week2-r18';
  return t;
 }
 
@@ -1532,6 +1712,7 @@ function reviseOverview(o,teams){
   const paragraphs=uniq([...core,developedDepth,recapReaction(id,seed,0),recapReaction(id,seed,1)]).map((p,j)=>sharpenRecapParagraph(id,p,j)).filter(Boolean).slice(0,10);
   return{...s,paragraphs};
  });
+ o.sections=dedupeRecapSentencesR18(o.sections);
  if(Array.isArray(o.hot_takes)){
   o.hot_takes=o.hot_takes.map(h=>({
    ...h,
@@ -1540,7 +1721,7 @@ function reviseOverview(o,teams){
   }));
  }
  o.editorial_revision=WEEK2_EDITORIAL_REVISION;
- o.voice_revision='week2-r17';
+ o.voice_revision='week2-r18';
  return o;
 }
 
@@ -1550,7 +1731,7 @@ export function applyWeek2EditorialR16(raw){
  out.teams=(out.teams||[]).map(reviseTeam).map(dedupeArticleSentences);
  out.league_overview=reviseOverview(out.league_overview,out.teams);
  out.editorial_revision=WEEK2_EDITORIAL_REVISION;
- out.voice_revision='week2-r17';
+ out.voice_revision='week2-r18';
  return out;
 }
 

@@ -134,11 +134,11 @@ function ledeLines(t,id){
    'The record for '+tm+' is '+rec+'. I remain professionally suspicious, but the burden of proof has shifted toward the people still insisting nothing is happening.'
   ]:[
    'The record for '+tm+' is '+rec+'. At some point patience stops being a virtue and becomes a hobby for people who enjoy suffering.',
-   'The '+rec+' record is not fatal, but '+tm+' has now used two Sundays without solving the same basic problem: score enough to stop making excuses relevant.'
+   'The '+rec+' record is not fatal, but two Sundays from '+tm+' have passed without solving the same basic problem: score enough to stop making excuses relevant.'
   ],
   'tess-delaney':won?[
    'The record for '+tm+' is '+rec+', and restraint is becoming harder to justify. Good. Restraint is terribly overrated when the team keeps rewarding bad behavior.',
-   'At '+rec+', '+tm+' has earned the right to be pleased and the obligation to remain interesting.'
+   'At '+rec+', the record gives '+tm+' the right to be pleased and the obligation to remain interesting.'
   ]:[
    'The record for '+tm+' is '+rec+', which is ugly but at least honest. I would rather inspect an ugly truth than applaud a beautiful excuse.',
    'A '+rec+' start has removed the luxury of pretending every flaw is adorable because September is young.'
@@ -251,12 +251,12 @@ function managementFollowupLine(t,id){
   const banks={
    'walter-mercer':[
     'Week 3 should remember that '+r+' just beat '+st+' by '+gap+' from the bench. That is not genius; it is reading the last box score.',
-    tm+' has a '+gap+'-point lesson sitting between '+r+' and '+st+'. I would prefer management not pay tuition twice.',
+    'A '+gap+'-point lesson for '+tm+' sits between '+r+' and '+st+'. I would prefer management not pay tuition twice.',
     r+' over '+st+' is the obvious Week 3 question after a '+gap+'-point difference. I am old enough to enjoy simple answers.',
     'The lineup decision is now '+r+' versus '+st+' after a '+gap+'-point swing. Make the next choice look informed.'
    ],
    'tess-delaney':[
-    'If '+tm+' repeats '+r+' behind '+st+' after a '+gap+'-point warning, that stops being unfortunate and starts becoming a preference.',
+    'If management for '+tm+' repeats '+r+' behind '+st+' after a '+gap+'-point warning, that stops being unfortunate and starts becoming a preference.',
     r+' just made '+st+' look like the less attractive choice by '+gap+' points. Management is invited to develop better taste.',
     'A '+gap+'-point advantage for '+r+' over '+st+' is not subtle. Week 3 should not require a séance to interpret it.',
     'The next lineup gets one chance to prove the '+r+'–'+st+' lesson was actually learned. The difference was '+gap+' points, not a rounding error.'
@@ -279,7 +279,7 @@ function managementFollowupLine(t,id){
   const score=one(lo.points);
   const banks={
    'walter-mercer':[
-    'With no obvious bench correction, '+tm+' needs '+lo.name+' to make '+score+' look like an outlier instead of a habit.',
+    'With no obvious bench correction, the lineup needs '+lo.name+' to make '+score+' look like an outlier instead of a habit.',
     'There is no clean reserve to blame, so '+lo.name+' gets the Week 3 burden after '+score+'. Better football would simplify my mood.',
     lo.name+' remains the starter problem because the bench offered no obvious escape from '+score+'. That leaves improvement as the least complicated solution.',
     'No bench swap fixes this neatly. '+lo.name+' owns the next answer after '+score+', whether anybody enjoys that arrangement or not.'
@@ -423,14 +423,14 @@ function outlookLine(t,id){
  const tm=String(t.team_name||'This team'),next=String(t.next_opponent_name||'the next opponent'),seed=key(t)+'|outlook|'+id;
  const banks={
   'walter-mercer':[
-   next+' is next. '+tm+' does not need a speech; it needs the weak spots from Week 2 to look less weak.',
+   next+' is next. The roster for '+tm+' does not need a speech; it needs the weak spots from Week 2 to look less weak.',
    'Week 3 brings '+next+'. If '+tm+' learned anything useful on Sunday, this is where the lesson becomes visible.',
    'The next opponent for '+tm+' is '+next+'. I would prefer improvement to another week of explaining why improvement should be coming.'
   ],
   'tess-delaney':[
-   next+' is next, and '+tm+' now gets the pleasure of proving whether Week 2 was character development or merely an episode.',
+   next+' is next, and Week 3 gives '+tm+' the pleasure of proving whether Week 2 was character development or merely an episode.',
    'Week 3 brings '+next+'. I want '+tm+' to be decisive enough that nobody needs to manufacture drama afterward.',
-   tm+' meets '+next+' next. Another ugly answer would be repetitive, and repetition is unforgivable when it is also losing.'
+   'Week 3 matches '+tm+' with '+next+'. Another ugly answer would be repetitive, and repetition is unforgivable when it is also losing.'
   ],
   'mack-hollis':[
    next+' is next. Fix the bad football, keep the good football, and spare me the creative excuses.',
@@ -438,7 +438,7 @@ function outlookLine(t,id){
    'Week 3 sends '+tm+' against '+next+'. Win cleanly and I will find somebody else to bother. Lose stupidly and congratulations on next week’s material.'
   ],
   'nora-voss':[
-   next+' is next. If the same weakness survives another Sunday, '+tm+' loses the right to call it temporary.',
+   next+' is next. If the same weakness survives another Sunday, the “temporary” excuse disappears for '+tm+'.',
    'Week 3 brings '+next+'. The useful standard for '+tm+' is simple: repeat the strengths and materially reduce the Week 2 failure points.',
    'The next opponent for '+tm+' is '+next+'. Management already knows what Week 2 exposed; now the lineup has to change accordingly.'
   ]
@@ -449,19 +449,19 @@ function teamThesisLine(t,id){
  const tm=String(t.team_name||'This team'),rec=record(t),seed=key(t)+'|team-thesis|'+id;
  const banks={
   'walter-mercer':[
-   'Two weeks in, '+tm+' has one job: make the useful parts repeatable enough that I can stop calling every good Sunday temporary.',
+   'Two weeks in, the assignment for '+tm+' is simple: make the useful parts repeatable enough that I can stop calling every good Sunday temporary.',
    'The '+rec+' start tells me what happened. What I want from '+tm+' now is a reliable reason to believe the same strengths survive another opponent.',
    'Two Sundays from '+tm+' have given us enough information to ask whether the best parts are habits or merely pleasant accidents.',
    'My standard for '+tm+' is getting simpler: keep the things that worked, correct the things that did not, and make me find a new complaint.'
   ],
   'tess-delaney':[
-   'After two weeks, '+tm+' has developed an identity. I would now like that identity to become convincing rather than merely interesting.',
+   'After two weeks, an identity has started to form around '+tm+'. I would now like it to become convincing rather than merely interesting.',
    'The '+rec+' start has given '+tm+' enough personality to be judged properly. Week 3 should provide either confirmation or a much more entertaining crisis.',
    'Two Sundays have let '+tm+' make claims about what it is. The next game is where those claims either become attractive facts or embarrassing fiction.',
    'What I want from '+tm+' next is not perfection. I want enough conviction that the team stops making uncertainty look like its most consistent trait.'
   ],
   'mack-hollis':[
-   'Two weeks in, '+tm+' has told us what kind of team it thinks it is. Week 3 gets to decide whether that story survives contact with another scoreboard.',
+   'Two weeks of '+tm+' have told us what kind of team this might be. Week 3 gets to decide whether that story survives contact with another scoreboard.',
    'The '+rec+' start gives '+tm+' exactly one assignment: make the good stuff repeat and make the stupid stuff stop happening.',
    'Two Sundays have introduced us to '+tm+'. The next one should tell us whether we met a real identity or just a temporary collection of weird events.',
    'My Week 3 request for '+tm+' is simple: do the competent things again and retire at least one of the reasons people have been yelling.'
@@ -481,53 +481,53 @@ function currentResultLine(t,id){
   token=pts+'–'+opp,seed=key(t)+'|result-line|'+id;
  const banks=t?.won?{
   'walter-mercer':[
-   tm+' moved to '+rec+' by beating '+op+' '+token+'.',
-   'A '+token+' win over '+op+' leaves '+tm+' at '+rec+'.',
-   tm+' is '+rec+' after putting away '+op+' '+token+'.',
-   'Week 2 belongs to '+tm+': '+token+' over '+op+', and '+rec+' in the standings.'
+   tm+' beat '+op+' '+token+' and finished Week 2 at '+rec+'.',
+   'A '+token+' win over '+op+' put '+tm+' at '+rec+'.',
+   tm+' put away '+op+' '+token+' and closed the week at '+rec+'.',
+   'Week 2 belonged to '+tm+': '+token+' over '+op+', with the record now '+rec+'.'
   ],
   'tess-delaney':[
-   tm+' handled '+op+' '+token+' and walks away at '+rec+'.',
-   'The pretty part is the result: '+tm+' '+token+', '+op+' on the wrong side, and a '+rec+' record.',
-   tm+' leaves Week 2 at '+rec+' after a '+token+' win against '+op+'.',
-   'A '+token+' victory over '+op+' gives '+tm+' a '+rec+' start and permission to enjoy it.'
+   tm+' handled '+op+' '+token+' and finished the week at '+rec+'.',
+   'The pretty part is the result: '+tm+' '+token+', '+op+' on the wrong side, with the record at '+rec+'.',
+   'A '+token+' victory over '+op+' put '+tm+' at '+rec+' and made restraint considerably less appealing.',
+   tm+' defeated '+op+' '+token+' and ended Week 2 at '+rec+'.'
   ],
   'mack-hollis':[
-   tm+' beat '+op+' '+token+'. That makes the record '+rec+'.',
-   'Put '+token+' next to '+tm+' over '+op+'; the record is now '+rec+'.',
-   tm+' walks out '+rec+' after dropping '+op+' '+token+'.',
-   'Final: '+tm+' '+token+', '+op+' behind it, '+tm+' at '+rec+'.'
+   tm+' beat '+op+' '+token+'. The record finished the week at '+rec+'.',
+   'Put '+token+' next to '+tm+' over '+op+'; the record now reads '+rec+'.',
+   tm+' dropped '+op+' '+token+' and finished Week 2 at '+rec+'.',
+   'Final: '+tm+' '+token+', '+op+' behind it, with '+rec+' in the standings.'
   ],
   'nora-voss':[
-   tm+' reaches '+rec+' with a '+token+' win over '+op+'.',
-   'The completed result is '+tm+' '+token+' over '+op+', moving the record to '+rec+'.',
-   'A '+token+' victory against '+op+' puts '+tm+' at '+rec+'.',
-   tm+' is '+rec+' after finishing Week 2 '+token+' against '+op+'.'
+   'A '+token+' win over '+op+' put '+tm+' at '+rec+'.',
+   'The completed result: '+tm+' '+token+' over '+op+', with the record now '+rec+'.',
+   tm+' defeated '+op+' '+token+' and finished Week 2 at '+rec+'.',
+   'Week 2 ended with '+tm+' over '+op+' '+token+' and the record at '+rec+'.'
   ]
  }:{
   'walter-mercer':[
-   tm+' fell to '+rec+' after a '+token+' loss to '+op+'.',
-   op+' beat '+tm+' '+token+'; '+tm+' leaves Week 2 at '+rec+'.',
-   'A '+token+' defeat against '+op+' drops '+tm+' to '+rec+'.',
-   tm+' is '+rec+' after '+op+' handed it a '+token+' loss.'
+   tm+' lost '+token+' to '+op+' and finished Week 2 at '+rec+'.',
+   op+' beat '+tm+' '+token+'; the loss left '+tm+' at '+rec+'.',
+   'A '+token+' defeat against '+op+' put '+tm+' at '+rec+'.',
+   op+' handed '+tm+' a '+token+' loss, leaving the record at '+rec+'.'
   ],
   'tess-delaney':[
-   tm+' leaves Week 2 at '+rec+' after losing '+token+' to '+op+'.',
-   op+' spoiled the afternoon '+token+', dropping '+tm+' to '+rec+'.',
-   'The ugly fact is '+op+' '+token+' over '+tm+', which is now '+rec+'.',
-   'A '+token+' loss to '+op+' leaves '+tm+' wearing a '+rec+' record.'
+   tm+' lost '+token+' to '+op+' and ended Week 2 at '+rec+'.',
+   op+' spoiled the afternoon '+token+', leaving '+tm+' at '+rec+'.',
+   'The ugly fact: '+op+' '+token+' over '+tm+', with the record now '+rec+'.',
+   'A '+token+' loss to '+op+' left '+tm+' wearing a '+rec+' record.'
   ],
   'mack-hollis':[
-   tm+' lost '+token+' to '+op+'. The damage is a '+rec+' record.',
-   'Final: '+op+' '+token+', '+tm+' behind it and now '+rec+'.',
-   op+' dropped '+tm+' '+token+', sending the record to '+rec+'.',
-   tm+' walks away '+rec+' after taking a '+token+' loss from '+op+'.'
+   tm+' lost '+token+' to '+op+'. The damage left the record at '+rec+'.',
+   'Final: '+op+' '+token+', '+tm+' behind it, with '+rec+' in the standings.',
+   op+' dropped '+tm+' '+token+' and sent the record to '+rec+'.',
+   'A '+token+' loss to '+op+' left '+tm+' at '+rec+'.'
   ],
   'nora-voss':[
-   tm+' falls to '+rec+' after a '+token+' defeat against '+op+'.',
-   'The completed result is '+op+' '+token+' over '+tm+', leaving '+tm+' at '+rec+'.',
-   'A '+token+' loss against '+op+' moves '+tm+' to '+rec+'.',
-   tm+' is '+rec+' after finishing Week 2 on the wrong side of '+token+' against '+op+'.'
+   'A '+token+' defeat against '+op+' put '+tm+' at '+rec+'.',
+   'The completed result: '+op+' '+token+' over '+tm+', leaving the record at '+rec+'.',
+   tm+' lost '+token+' to '+op+' and finished Week 2 at '+rec+'.',
+   'Week 2 ended with '+tm+' on the wrong side of '+token+' against '+op+', with the record at '+rec+'.'
   ]
  };
  return pick(banks[id]||banks['walter-mercer'],seed);
@@ -856,7 +856,7 @@ function buildHotSeat(t,a,id){
  const lo=weakest(t),lp=lo?Number(lo.points):null,shown=lo?one(lo.points):null,seed=key(t)+'|hot|'+id;
  const banks={
   'walter-mercer':lo?[
-   lo.name+' at '+shown+' cannot become a weekly tradition unless '+t.team_name+' is trying to turn me into a miserable old man ahead of schedule.',
+   lo.name+' at '+shown+' cannot become a weekly tradition unless management for '+t.team_name+' is trying to turn me into a miserable old man ahead of schedule.',
    'The hot-seat question is '+lo.name+' after '+shown+'. I am not asking for a miracle; I am asking for production visible without binoculars.'
   ]:[],
   'tess-delaney':lo?[
@@ -914,27 +914,27 @@ function buildValue(t,id){
   const dir=delta>0?'up':delta<0?'down':'flat',pctText=Number.isFinite(pct)?Math.abs(pct).toFixed(1)+'%':'';
   const banks={
    'walter-mercer':[
-    tm+' sits at '+Math.round(value)+' in roster value after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Useful information, but I have lived through enough price swings to know a number can change its mind.',
+    'Roster value puts '+tm+' at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Useful information, but I have lived through enough price swings to know a number can change its mind.',
     'The market values '+tm+' at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I care more about whether the football gives the market a reason to stay there.',
-    tm+' now sits at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Price is useful; permanence is another question.',
+    'The current market puts '+tm+' at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Price is useful; permanence is another question.',
     'Roster value puts '+tm+' at '+Math.round(value)+', a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I will let the next Sunday decide how much of that move deserves trust.'
    ],
    'tess-delaney':[
     'The market prices '+tm+' at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I adore a dramatic repricing provided nobody mistakes it for divine truth.',
     'The market has '+tm+' at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Prices are useful; worship is tacky.',
-    tm+' is valued at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. A dramatic number is entertaining; a dramatic number that lasts is much prettier.',
+    'The current valuation puts '+tm+' at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. A dramatic number is entertaining; a dramatic number that lasts is much prettier.',
     'Value now reads '+Math.round(value)+' for '+tm+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I enjoy the movement and reserve the right to mock anyone who calls it destiny.'
    ],
    'mack-hollis':[
     'The market values '+tm+' at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Good. Now make the football justify the number.',
     'The market moved '+tm+' '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+' to '+Math.round(value)+'. That is real movement, not a reason to start engraving anything.',
-    tm+' checks in at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Fine. Make the football justify it.',
+    'The market checks '+tm+' in at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Fine. Make the football justify it.',
     'Roster value says '+Math.round(value)+' for '+tm+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Numbers move; winning is still the part people remember.'
    ],
    'nora-voss':[
     tm+' now carries a roster value of '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The move is useful context; it is not a verdict on the roster.',
     'The market prices '+tm+' at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The next question is what underlying player changes caused it.',
-    tm+' carries a '+Math.round(value)+' roster value after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The movement matters; the cause matters more.',
+    'Roster value stands at '+Math.round(value)+' for '+tm+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The movement matters; the cause matters more.',
     'Current roster value is '+Math.round(value)+' for '+tm+', a '+dir+' change of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. That is enough movement to track without pretending it settles the roster’s quality.'
    ]
   };
@@ -1009,7 +1009,7 @@ function scheduleStretchLine(t,id){
   'walter-mercer':[
    'After Week 3, '+joined+' are waiting. By the current records, that is a '+difficulty+'. Win first and complain about the rest later.',
    'Week 3 comes first; '+joined+' follow. Their current records make the next segment a '+difficulty+', which is enough reason to stop borrowing trouble from the calendar.',
-   joined+' sit beyond Week 3, and the Week 2 records make that a '+difficulty+'. I would prefer '+t.team_name+' earn the right to worry about them by winning the one directly in front of it.',
+   joined+' sit beyond Week 3, and the Week 2 records make that a '+difficulty+'. I would prefer a Week 3 win from '+t.team_name+' before anybody worries about them.',
    'The schedule turns to '+joined+' after Week 3. On the records we have now, that is a '+difficulty+', and it looks much less irritating if the next result is already in the bank.'
   ],
   'tess-delaney':[

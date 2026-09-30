@@ -1009,24 +1009,24 @@ function scheduleStretchLine(t,id){
   'walter-mercer':[
    'After Week 3, '+joined+' are waiting. By the current records, that is a '+difficulty+'. Win first and complain about the rest later.',
    'Week 3 comes first; '+joined+' follow. Their current records make the next segment a '+difficulty+', which is enough reason to stop borrowing trouble from the calendar.',
-   joined+' sit beyond the next game, and the Week 2 records make that a '+difficulty+'. I would prefer '+t.team_name+' earn the right to worry about it by winning the one directly in front of it.',
+   joined+' sit beyond Week 3, and the Week 2 records make that a '+difficulty+'. I would prefer '+t.team_name+' earn the right to worry about them by winning the one directly in front of it.',
    'The schedule turns to '+joined+' after Week 3. On the records we have now, that is a '+difficulty+', and it looks much less irritating if the next result is already in the bank.'
   ],
   'tess-delaney':[
    'After Week 3 come '+joined+'. Their current records make that a '+difficulty+'. Win now and the sequence becomes suspense; lose and it becomes penance.',
-   joined+' wait behind the next matchup. At the moment that qualifies as a '+difficulty+', and I would rather meet it with momentum than with another week of wounded explanations.',
+   joined+' wait behind Week 3. At the moment that qualifies as a '+difficulty+', and I would rather meet it after a win than after another week of wounded explanations.',
    'The calendar puts '+joined+' after Week 3. By current records, that is a '+difficulty+'. How vulgar of it. '+t.team_name+' can make the sequence prettier by winning first.',
    'Week 3 gets the stage; '+joined+' are already waiting in the wings. Their Week 2 records make the next act a '+difficulty+', so one good result now would improve the lighting considerably.'
   ],
   'mack-hollis':[
    'After Week 3: '+joined+'. Their current records make it a '+difficulty+'. Bank the next win and make the later problem wait its turn.',
-   joined+' are the next two names after this week. By the standings we have now, that is a '+difficulty+'. Fix the immediate mess before the schedule gets ambitious.',
+   joined+' are the next two names after Week 3. By the standings we have now, that is a '+difficulty+'. Handle the immediate game before the schedule gets ambitious.',
    'Week 3 first, then '+joined+'. The Week 2 records make that a '+difficulty+'. Anybody looking ahead before handling the next game is volunteering for a very stupid lesson.',
    'The schedule serves '+joined+' after Week 3, and the current records call it a '+difficulty+'. Win now, because “we knew the schedule was coming” is an awful excuse and I refuse to print it.'
   ],
   'nora-voss':[
    'After Week 3, the schedule moves to '+joined+'. Their current records classify that as a '+difficulty+'. The next result determines whether the stretch begins from leverage or recovery.',
-   joined+' follow the immediate matchup. Based on records through Week 2, that is a '+difficulty+'. The practical goal is to enter it with fewer unresolved problems than the roster has today.',
+   joined+' follow Week 3. Based on records through Week 2, that is a '+difficulty+'. The practical goal is to handle the upcoming game and enter the stretch with fewer unresolved problems than the roster has today.',
    'Week 3 is the near-term test; '+joined+' come after it. Their current records make the following segment a '+difficulty+', so success now changes the pressure attached to both later games.',
    'The next two opponents after Week 3 are '+joined+'. Through Week 2, that reads as a '+difficulty+'. That sequence matters, but only after the current weaknesses get a response.'
   ]

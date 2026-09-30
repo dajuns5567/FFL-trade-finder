@@ -22,13 +22,13 @@ function sharpenTeamParagraph(t,id,kind,p,index){
  if(!x||id==='mack-hollis')return x;
  const tm=String(t?.team_name||'This team');
  x=x
-  .replace(/The next game should tell us which Week 2 traits are structural and which were matchup noise\./gi,'Week 3 gets one job: prove Week 2 was football and not a one-Sunday costume. If the same weakness shows up again, stop calling it noise.')
-  .replace(/Strong production; now the role has to sustain it\./gi,'Good. Do it again. One useful Sunday earns applause, not diplomatic immunity.')
-  .replace(/For ([^.!?]+), the role increase supports the idea that the production has structural backing\./gi,'For $1, the bigger role matters. If the points disappear with that workload, the excuse department can take Sunday off.')
-  .replace(/Strong production deserves to be stated plainly\./gi,'Good production deserves credit. It also deserves the basic courtesy of happening again before anyone starts acting smug.')
-  .replace(/Now the role has to sustain it\./gi,'Now do it again. One decent Sunday is a contribution, not a lifetime appointment.')
-  .replace(/Supporters have a measurable lineup decision to question, which is fair, and Week 3 will provide an equally measurable response\./gi,'Supporters saw the lineup mistake with their own eyes. Make the same mistake again and nobody needs a spreadsheet to boo it.')
-  .replace(/The useful standard for ([^.!?]+) is simple: repeat the strengths and materially reduce the Week 2 failure points\./gi,'The assignment for $1 is simple: keep what worked and stop repeating the stupid parts. Nobody gets extra credit for making that sound complicated.')
+  .replace(/The next game should tell us which Week 2 traits are structural and which were matchup noise\./gi,'Week 3 gives '+tm+' one job: prove Week 2 was football and not a one-Sunday costume; if the same weakness shows up again, stop calling it noise.')
+  .replace(/Strong production; now the role has to sustain it\./gi,'Good; '+tm+' can applaud the production, but one useful Sunday does not come with diplomatic immunity.')
+  .replace(/For ([^.!?]+), the role increase supports the idea that the production has structural backing\./gi,'For $1, the bigger role matters; if the points disappear with that workload, '+tm+' can retire the excuses for a week.')
+  .replace(/Strong production deserves to be stated plainly\./gi,'Good production deserves credit; '+tm+' still has to make it happen again before anybody starts acting smug.')
+  .replace(/Now the role has to sustain it\./gi,'Now '+tm+' needs it again; one decent Sunday is a contribution, not a lifetime appointment.')
+  .replace(/Supporters have a measurable lineup decision to question, which is fair, and Week 3 will provide an equally measurable response\./gi,'Supporters saw the '+tm+' lineup mistake with their own eyes; make it again and nobody needs advanced math to boo it.')
+  .replace(/The useful standard for ([^.!?]+) is simple: repeat the strengths and materially reduce the Week 2 failure points\./gi,'The assignment for $1 is simple: keep what worked and stop repeating the stupid parts; nobody gets extra credit for making that sound complicated.')
   .replace(/\bmaterially changed\b/gi,'actually changed')
   .replace(/\bmaterially better\b/gi,'actually better')
   .replace(/\buseful contribution\b/gi,'good contribution')
@@ -41,34 +41,34 @@ function sharpenTeamParagraph(t,id,kind,p,index){
   .replace(/\bmeasurable\b/gi,'obvious');
  const banks={
   'walter-mercer':[
-   'For '+tm+', good football gets credit and bad football gets named. I am too old to pretend the stupid parts did not happen.',
-   tm+' can enjoy the good part. The stupid part still gets booed.',
-   'If '+tm+' repeats that mistake, nobody gets to call it unlucky with a straight face.',
-   'I have watched enough '+tm+' Sundays to know when “small sample” is becoming an alibi. I am not buying another week of it.',
-   tm+' earned the result, not immunity from criticism. Those are different privileges.',
-   'That is the sort of thing '+tm+' can survive once. Twice would be volunteering for ridicule.',
+   'For '+tm+', good football gets credit and bad football gets named; I am too old to pretend the stupid parts did not happen.',
+   tm+' can enjoy the good part, and '+tm+' can still boo the stupid part.',
+   'If '+tm+' repeats that mistake, nobody gets to call '+tm+' unlucky with a straight face.',
+   'I have watched enough '+tm+' Sundays to know when “small sample” is becoming an alibi, and I am not buying another week of it.',
+   tm+' earned the result, not immunity from criticism; those are different privileges for '+tm+'.',
+   'That is the sort of thing '+tm+' can survive once; twice would be '+tm+' volunteering for ridicule.',
    'I am old-fashioned about this: '+tm+' should reward the players producing points and stop donating chances to the ones producing excuses.',
-   tm+' does not need a sermon here. It needs the bad football to stop before I run out of polite synonyms for bad.'
+   tm+' does not need a sermon here; '+tm+' needs the bad football to stop before I run out of polite synonyms for bad.'
   ],
   'tess-delaney':[
-   'For '+tm+', competence is attractive; repeating avoidable nonsense is not. I will praise one and sneer at the other without apology.',
-   tm+' may keep the points. The ugly decision beside them still deserves tomatoes.',
-   'There is something almost elegant about '+tm+' doing the hard part and then tripping over the easy one. Almost.',
-   'If '+tm+' insists on repeating that mistake, at least have the decency to make it funny.',
-   'I adore excess when '+tm+' earns it. I despise waste with equal commitment.',
-   'A little swagger suits '+tm+'. So would fewer self-inflicted problems.',
-   tm+' has earned applause, not absolution. Those are very different accessories.',
-   'The football was good enough for champagne in spots and ugly enough for heckling in others. '+tm+' can live with both.'
+   'For '+tm+', competence is attractive and repeating avoidable nonsense is not; I will praise one and sneer at the other without apology.',
+   tm+' may keep the points, but the ugly decision beside them still deserves tomatoes from '+tm+' supporters.',
+   'There is something almost elegant about '+tm+' doing the hard part and then tripping over the easy one—almost.',
+   'If '+tm+' insists on repeating that mistake, '+tm+' should at least have the decency to make it funny.',
+   'I adore excess when '+tm+' earns it and despise '+tm+' waste with equal commitment.',
+   'A little swagger suits '+tm+'; so would fewer self-inflicted problems from '+tm+'.',
+   tm+' has earned applause, not absolution, and I refuse to confuse the two.',
+   'The football was good enough for '+tm+' champagne in spots and ugly enough for '+tm+' heckling in others.'
   ],
   'nora-voss':[
-   'For '+tm+', the mistake is now too obvious to hide behind “small sample.” Do it again and it becomes a habit, not bad luck.',
-   tm+' can keep the win. The bad decision does not get pardoned just because the scoreboard was friendly.',
-   'If '+tm+' repeats this lineup mistake, management is not unlucky; management is stubborn.',
-   'Good. Now do it again. '+tm+' does not get lifetime credit for one competent Sunday.',
-   'The weak spot is not mysterious. '+tm+' either fixes it or invites rivals to keep laughing.',
-   tm+' has enough information now. Repeating the same mistake would be a choice, and a stupid one.',
-   'One good number is welcome. '+tm+' still owes us football that survives contact with another Sunday.',
-   'I am done treating obvious lineup problems like philosophical questions. '+tm+' should start the better option and spare everyone the ceremony.'
+   'For '+tm+', the mistake is too obvious to hide behind “small sample”; if '+tm+' does it again, call it a habit instead of bad luck.',
+   tm+' can keep the win, but '+tm+' does not get a pardon for the bad decision just because the scoreboard was friendly.',
+   'If '+tm+' repeats this lineup mistake, '+tm+' management is not unlucky; it is stubborn.',
+   'Good, now do it again: '+tm+' does not get lifetime credit for one competent Sunday.',
+   'The '+tm+' weak spot is not mysterious; '+tm+' either fixes it or invites rivals to keep laughing.',
+   tm+' has enough information now, and repeating the same mistake would be a stupid choice by '+tm+'.',
+   'One good number is welcome, but '+tm+' still owes us football that survives contact with another Sunday.',
+   'I am done treating '+tm+' lineup problems like philosophical questions; '+tm+' should start the better option and spare everyone the ceremony.'
   ]
  };
  const rows=banks[id];
@@ -119,19 +119,19 @@ function sharpenRecapParagraph(id,p,index){
  if(id==='mack-hollis')return x;
  const banks={
   'walter-mercer':[
-   'Two Sundays are enough to stop handing out free excuses. Bad football has a way of becoming a habit when everybody keeps calling it temporary.',
-   'I have seen September optimism before. The teams worth trusting are the ones that stop repeating the dumb parts.',
+   'Two Sundays are enough to stop handing out free excuses; bad football becomes a habit when everybody keeps calling it temporary.',
+   'I have seen September optimism before, and the teams worth trusting are the ones that stop repeating the dumb parts.',
    'Enjoy the wins, complain about the mistakes and spare me the idea that caring less would be more sophisticated.'
   ],
   'tess-delaney':[
-   'The league served excellent football beside several decisions that deserved tomatoes. I see no reason to be diplomatic about either.',
-   'Some teams earned champagne. Others earned heckling. A few ambitious clubs managed both in the same afternoon.',
+   'The league served excellent football beside several decisions that deserved tomatoes, and I see no reason to be diplomatic about either.',
+   'Some teams earned champagne, others earned heckling, and a few ambitious clubs managed both in the same afternoon.',
    'September has already produced enough beauty and stupidity to justify being emotionally unreasonable about all of it.'
   ],
   'nora-voss':[
-   'By Week 2, repeating the same lineup mistake is no longer mysterious. It is just management volunteering to be mocked.',
-   'The league has enough information now to distinguish bad luck from stubbornness. Several managers should be nervous about the distinction.',
-   'One ugly Sunday can happen. Repeating the same ugly decision is how a mistake starts introducing itself as policy.'
+   'By Week 2, repeating the same lineup mistake is no longer mysterious; it is management volunteering to be mocked.',
+   'The league has enough information to distinguish bad luck from stubbornness, and several managers should be nervous about the distinction.',
+   'One ugly Sunday can happen; repeating the same ugly decision is how a mistake starts introducing itself as policy.'
   ]
  };
  const rows=banks[id];

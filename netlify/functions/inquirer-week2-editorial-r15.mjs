@@ -1194,7 +1194,7 @@ function diversifyRepeatedReporterSentences(teams){
  return teams;
 }
 
-function editorialEscapeRe(value){return String(value||'').replace(/[.*+?^${}()|[\]\\]/g,'\\function editorialEscapeRe(value){return String(value||'').replace(/[.*+?^$()|[\]\\]/g,'\\function recapReaction(id,seed,offset=0){')}')}
+function editorialEscapeRe(value){return String(value||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
 function reporterTemplateFingerprint(sentence,entities){
  let x=String(sentence||'').trim();
  const nums=(x.match(/\b\d+(?:\.\d+)?%?\b/g)||[]).length;

@@ -19,7 +19,37 @@ jobs:
           ref: player-signal-layer-r1
           fetch-depth: 0
       - name: Apply reporter repetition cleanup
-        run: python scripts/tmp-week2-reporter-repeat-cleanup.py
+        shell: bash
+        run: |
+          python scripts/tmp-week2-reporter-repeat-cleanup.py
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('netlify/functions/inquirer-week2-editorial-r15.mjs')
+          s=p.read_text()
+          replacements={
+            'Winning can postpone that argument; it does not erase it.':'Winning can postpone that argument; it does not erase it, and supporters have every right to remember those missed points next Sunday.',
+            'A win buys management patience, not amnesia.':'A win buys management patience, not amnesia; the bench still left a decision worth revisiting before Week 3.',
+            'Fans can enjoy the result and still remember the points left sitting down.':'Fans can enjoy the result and still remember the points left sitting down, because victory does not make the lineup choice disappear.',
+            'That decision gets one quieter Monday, not a pardon.':'That decision gets one quieter Monday, not a pardon; the next lineup will show whether anyone actually learned from it.',
+            'Supporters will bring that up with unnecessary passion and complete justification.':'Supporters will bring that up with unnecessary passion and complete justification; ugly lineup choices are much easier to remember than tasteful excuses.',
+            'That is the sort of choice fans can turn into a grievance with excellent posture.':'That is the sort of choice fans can turn into a grievance with excellent posture, especially when the missing points are sitting in plain view.',
+            'A bench gap like that deserves dramatic indignation, and I fully endorse it.':'A bench gap like that deserves dramatic indignation, and I fully endorse it; supporters should not be asked to pretend those points were harmless.',
+            'Supporters have found a specific decision to resent. How efficient.':'Supporters have found a specific decision to resent. How efficient. Management even supplied the point total and player names for them.',
+            'If fans want to yell about that, hand them a microphone and get out of the way.':'If fans want to yell about that, hand them a microphone and get out of the way; the scoreboard already wrote the opening argument for them.',
+            'That is not nitpicking; that is a scoreboard-backed reason to holler.':'That is not nitpicking; that is a scoreboard-backed reason to holler, and nobody should expect the crowd to forget it by Week 3.',
+            'Fans saw the points too. Good luck convincing them not to bring it up.':'Fans saw the points too. Good luck convincing them not to bring it up when the next lineup card puts those names side by side again.',
+            'That choice deserves boos with the player names included.':'That choice deserves boos with the player names included, because vague anger would actually be less fair than what the numbers support.',
+            'That complaint is grounded in a real lineup decision, not generalized anger.':'That complaint is grounded in a real lineup decision, not generalized anger, and the next lineup gives management a clear chance to answer it.',
+            'The criticism is specific because the missed points are specific.':'The criticism is specific because the missed points are specific; supporters can identify the exact decision that made the final total worse.',
+            'Supporters have a measurable lineup decision to question, which is fair.':'Supporters have a measurable lineup decision to question, which is fair, and Week 3 will provide an equally measurable response.',
+            'The frustration has evidence attached to it; management owns that part.':'The frustration has evidence attached to it; management owns that part, and the next starting lineup will show whether the evidence changed the decision.'
+          }
+          for old,new in replacements.items():
+            if s.count(old)!=1:
+              raise SystemExit(f'expected one fan-tail phrase, found {s.count(old)}: {old}')
+            s=s.replace(old,new)
+          p.write_text(s)
+          PY
       - name: Check syntax and Week 2 voice regression
         run: |
           node --check netlify/functions/inquirer-week2-editorial-r15.mjs

@@ -1039,7 +1039,7 @@ function divisionOutlookLine(t,id){
   nw=Number(nr.wins)||0,nl=Number(nr.losses)||0,ownName=String(own?.division_name||''),nextName=String(next?.division_name||''),leaders=(own?.leaders||[]).filter(x=>x?.team_name),
   selfLeading=leaders.some(x=>String(x?.roster_id)===String(t?.roster_id)),others=leaders.filter(x=>String(x?.roster_id)!==String(t?.roster_id)).map(x=>String(x.team_name)),seed=key(t)+'|division|'+id;
  let standing='';
- if(selfLeading&&others.length)standing='The '+ownName+' lead is shared by '+[tm,...others].join(' and ')+'.';
+ if(selfLeading&&others.length)standing=tm+' are tied for the '+ownName+' lead with '+others.join(' and ')+'.';
  else if(selfLeading)standing='The current '+ownName+' leader is '+tm+'.';
  else if(ownName)standing='The '+ownName+' currently places '+tm+' at division rank '+String(Number(own?.division_rank)||'?')+'.';
  const opponent=nextName?'Week 3 brings '+op+' in at '+nw+'-'+nl+' in the '+nextName+'.':'Week 3 brings '+op+' in at '+nw+'-'+nl+'.';

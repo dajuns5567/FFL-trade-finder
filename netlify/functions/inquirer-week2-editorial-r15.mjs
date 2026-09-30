@@ -478,7 +478,7 @@ function teamThesisLine(t,id){
 
 function currentResultLine(t,id){
  const tm=String(t.team_name||'This team'),op=String(t.opponent_name||'the opponent'),pts=one(t.points),opp=one(t.opponent_points),rec=record(t),
-  token=pts+'–'+opp,seed=key(t)+'|result-line|'+id;
+  token=pts+'–'+opp,opToken=opp+'–'+pts,seed=key(t)+'|result-line|'+id;
  const banks=t?.won?{
   'walter-mercer':[
    tm+' beat '+op+' '+token+' and finished Week 2 at '+rec+'.',
@@ -507,25 +507,25 @@ function currentResultLine(t,id){
  }:{
   'walter-mercer':[
    tm+' lost '+token+' to '+op+' and finished Week 2 at '+rec+'.',
-   op+' beat '+tm+' '+token+'; the loss left '+tm+' at '+rec+'.',
+   op+' beat '+tm+' '+opToken+'; the loss left '+tm+' at '+rec+'.',
    'A '+token+' defeat against '+op+' put '+tm+' at '+rec+'.',
-   op+' handed '+tm+' a '+token+' loss, leaving the record at '+rec+'.'
+   op+' handed '+tm+' a '+opToken+' loss, leaving the record at '+rec+'.'
   ],
   'tess-delaney':[
    tm+' lost '+token+' to '+op+' and ended Week 2 at '+rec+'.',
-   op+' spoiled the afternoon '+token+', leaving '+tm+' at '+rec+'.',
-   'The ugly fact: '+op+' '+token+' over '+tm+', with the record now '+rec+'.',
+   op+' spoiled the afternoon '+opToken+', leaving '+tm+' at '+rec+'.',
+   'The ugly fact: '+op+' '+opToken+' over '+tm+', with the record now '+rec+'.',
    'A '+token+' loss to '+op+' left '+tm+' wearing a '+rec+' record.'
   ],
   'mack-hollis':[
    tm+' lost '+token+' to '+op+'. The damage left the record at '+rec+'.',
-   'Final: '+op+' '+token+', '+tm+' behind it, with '+rec+' in the standings.',
-   op+' dropped '+tm+' '+token+' and sent the record to '+rec+'.',
+   'Final: '+op+' '+opToken+', '+tm+' behind it, with '+rec+' in the standings.',
+   op+' dropped '+tm+' '+opToken+' and sent the record to '+rec+'.',
    'A '+token+' loss to '+op+' left '+tm+' at '+rec+'.'
   ],
   'nora-voss':[
    'A '+token+' defeat against '+op+' put '+tm+' at '+rec+'.',
-   'The completed result: '+op+' '+token+' over '+tm+', leaving the record at '+rec+'.',
+   'The completed result: '+op+' '+opToken+' over '+tm+', leaving the record at '+rec+'.',
    tm+' lost '+token+' to '+op+' and finished Week 2 at '+rec+'.',
    'Week 2 ended with '+tm+' on the wrong side of '+token+' against '+op+', with the record at '+rec+'.'
   ]

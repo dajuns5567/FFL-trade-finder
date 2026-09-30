@@ -499,7 +499,7 @@ function currentResultLine(t,id){
    'Final: '+tm+' '+token+', '+op+' behind it, with '+rec+' in the standings.'
   ],
   'nora-voss':[
-   'A '+token+' win over '+op+' put '+tm+' at '+rec+'.',
+   tm+' used a '+token+' win over '+op+' to move the record to '+rec+'.',
    'The completed result: '+tm+' '+token+' over '+op+', with the record now '+rec+'.',
    tm+' defeated '+op+' '+token+' and finished Week 2 at '+rec+'.',
    'Week 2 ended with '+tm+' over '+op+' '+token+' and the record at '+rec+'.'
@@ -524,7 +524,7 @@ function currentResultLine(t,id){
    'A '+token+' loss to '+op+' left '+tm+' at '+rec+'.'
   ],
   'nora-voss':[
-   'A '+token+' defeat against '+op+' put '+tm+' at '+rec+'.',
+   tm+' came out of a '+token+' loss to '+op+' with the record at '+rec+'.',
    'The completed result: '+op+' '+opToken+' over '+tm+', leaving the record at '+rec+'.',
    tm+' lost '+token+' to '+op+' and finished Week 2 at '+rec+'.',
    'Week 2 ended with '+tm+' on the wrong side of '+token+' against '+op+', with the record at '+rec+'.'

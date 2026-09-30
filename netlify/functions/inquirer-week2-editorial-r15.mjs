@@ -1392,6 +1392,10 @@ function recapDeskExpansion(id,teams){
   reserve=String(benchMiss?.best_lineup_miss?.reserve?.name||'the reserve'),starter=String(benchMiss?.best_lineup_miss?.starter?.name||'the starter'),benchTeam=String(benchMiss?.team_name||'one roster'),benchGap=one(benchMiss?.best_lineup_miss?.gap),
   seed='recap-desk-expansion|'+id;
  const banks={
+  'walter-mercer':[
+   topName+' led the individual scoring at '+topPts+' for '+topTeam+', while '+lowName+' finished the week at '+lowPts+' as an entire roster. I have been doing this too long to call that “variance” and move on. One player can have a great Sunday; a whole team scoring that little is a management problem, a roster problem or both. Week 3 gets to tell us which explanation survives.',
+   'The league’s loudest individual performance belonged to '+topName+' at '+topPts+' for '+topTeam+'. At the other extreme, '+lowName+' managed '+lowPts+' with a full lineup. That spread is useful because it strips away the polite language: some teams are already producing enough to scare people, and some are making basic competence look like a long-term project.'
+  ],
   'tess-delaney':[
    topName+' gave '+topTeam+' '+topPts+' fantasy points, while '+lowName+' managed only '+lowPts+' as an entire team. That is the kind of contrast I enjoy because subtlety has clearly taken the week off. One performance deserves applause with both hands; the other deserves the long, disappointed silence normally reserved for a restaurant that has just served soup with a fork.',
    'Week 2’s most glamorous individual number belonged to '+topName+' at '+topPts+'. Meanwhile '+lowName+' produced '+lowPts+' as a full roster. I would call that range “healthy parity,” but I have standards. One end of the league looked magnificent; the other looked like it had been assembled during a fire drill.'

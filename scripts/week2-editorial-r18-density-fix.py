@@ -13,7 +13,8 @@ if s.count(old_slots)!=1:
 s=s.replace(old_slots,new_slots,1)
 old_joke=""" const joke=teamJokeR18(t,id,kind,x,index);
  if(joke&&!x.includes(joke))x=(x+' '+joke).trim();"""
-new_joke=""" const nickGuaranteed={
+new_joke=""" const tm=String(t?.team_name||'This team');
+ const nickGuaranteed={
   'players:1':tm+' can keep the good number. The complaint desk is closed for this player, which may be the nicest thing I say all week.',
   'players:3':'A useful Sunday from '+tm+' buys applause and one quiet Monday. I am not promising Tuesday.',
   'management:0':'Leaving useful points on the bench is how '+tm+' turns a lineup decision into a Monday regret with its own mailing address.',

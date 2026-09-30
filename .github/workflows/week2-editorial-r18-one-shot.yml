@@ -28,6 +28,9 @@ jobs:
       - name: Ensure bounded team-specific contextual punchlines
         run: python scripts/week2-editorial-r18-density-fix.py
 
+      - name: Tighten recap meta-language scrub
+        run: python scripts/week2-editorial-r18-recap-scrub.py
+
       - name: Run Week 2 editorial smoke
         run: node scripts/inquirer-week2-voice-r15-smoke.mjs
 

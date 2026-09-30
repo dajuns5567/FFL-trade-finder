@@ -31,6 +31,9 @@ jobs:
       - name: Tighten recap meta-language scrub
         run: python scripts/week2-editorial-r18-recap-scrub.py
 
+      - name: Scrub remaining Jefferson clinical phrasing
+        run: python scripts/week2-editorial-r18-jefferson-fix.py
+
       - name: Run Week 2 editorial smoke
         run: node scripts/inquirer-week2-voice-r15-smoke.mjs
 

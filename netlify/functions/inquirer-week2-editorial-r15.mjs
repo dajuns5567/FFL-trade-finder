@@ -1201,6 +1201,35 @@ function recapDepthLine(id,teams){
  return pick(banks[id]||banks['walter-mercer'],seed)+' '+(tails[id]||tails['walter-mercer']);
 }
 
+function recapDeskExpansion(id,teams){
+ const rows=teams||[],
+  topPlayer=rows.flatMap(t=>(t?.starter_details||[]).map(p=>({team:t,player:p}))).filter(x=>Number.isFinite(Number(x?.player?.points))).sort((a,b)=>Number(b.player.points)-Number(a.player.points))[0]||null,
+  benchMiss=rows.filter(t=>Number(t?.best_lineup_miss?.gap)>0).slice().sort((a,b)=>Number(b.best_lineup_miss.gap)-Number(a.best_lineup_miss.gap))[0]||null,
+  blowout=rows.filter(t=>Number.isFinite(Number(t?.points))&&Number.isFinite(Number(t?.opponent_points))).slice().sort((a,b)=>Math.abs(Number(b.points)-Number(b.opponent_points))-Math.abs(Number(a.points)-Number(a.opponent_points)))[0]||null,
+  low=rows.filter(t=>Number.isFinite(Number(t?.points))).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0]||null,
+  topName=String(topPlayer?.player?.name||'the week’s top scorer'),topPts=one(topPlayer?.player?.points),topTeam=String(topPlayer?.team?.team_name||'his team'),
+  lowName=String(low?.team_name||'the week’s lowest scorer'),lowPts=one(low?.points),
+  blowName=String(blowout?.team_name||'one side'),blowOpp=String(blowout?.opponent_name||'the opponent'),blowMargin=Math.abs((Number(blowout?.points)||0)-(Number(blowout?.opponent_points)||0)).toFixed(1),
+  reserve=String(benchMiss?.best_lineup_miss?.reserve?.name||'the reserve'),starter=String(benchMiss?.best_lineup_miss?.starter?.name||'the starter'),benchTeam=String(benchMiss?.team_name||'one roster'),benchGap=one(benchMiss?.best_lineup_miss?.gap),
+  seed='recap-desk-expansion|'+id;
+ const banks={
+  'tess-delaney':[
+   topName+' gave '+topTeam+' '+topPts+' fantasy points, while '+lowName+' managed only '+lowPts+' as an entire team. That is the kind of contrast I enjoy because subtlety has clearly taken the week off. One performance deserves applause with both hands; the other deserves the long, disappointed silence normally reserved for a restaurant that has just served soup with a fork.',
+   'Week 2’s most glamorous individual number belonged to '+topName+' at '+topPts+'. Meanwhile '+lowName+' produced '+lowPts+' as a full roster. I would call that range “healthy parity,” but I have standards. One end of the league looked magnificent; the other looked like it had been assembled during a fire drill.'
+  ],
+  'mack-hollis':[
+   lowName+' scored '+lowPts+' as a team. I am going to repeat that number because somebody should have to hear it twice. The same week also gave us a '+blowMargin+'-point margin in '+blowName+'–'+blowOpp+'. If your Sunday landed anywhere near the ugly end of that spectrum, spare me the inspirational language and score more points.',
+   benchTeam+' left '+benchGap+' points on the bench by starting '+starter+' over '+reserve+'. That is not advanced strategy; that is paying full price to watch your better answer sit down. Pair it with a '+blowMargin+'-point result in '+blowName+'–'+blowOpp+' and Week 2 becomes a useful reminder that fantasy football can humiliate both players and managers with equal enthusiasm.'
+  ],
+  'nora-voss':[
+   'The largest identifiable lineup miss belonged to '+benchTeam+': '+reserve+' outscored '+starter+' by '+benchGap+' from the bench. That matters because it was not random league-wide noise; it was one concrete decision with measurable cost. The largest team margin was '+blowMargin+' in '+blowName+'–'+blowOpp+', so Week 2 gave us both kinds of failure at once—execution and selection.',
+   topName+' led the individual scoring at '+topPts+' for '+topTeam+', while the widest team margin landed at '+blowMargin+' in '+blowName+'–'+blowOpp+'. Those are different signals. One tells us who dominated his assignment; the other tells us where a matchup stopped being competitive. Week 3 should be judged with the same specificity.'
+  ]
+ };
+ if(!banks[id])return'';
+ return pick(banks[id],seed);
+}
+
 function reviseOverview(o,teams){
  if(!o)return o;
  const categoryLines=recapCategoryLines(teams);
@@ -1208,8 +1237,8 @@ function reviseOverview(o,teams){
   const id=String(s?.reporter?.id||''),seed='recap|'+id+'|'+i;
   const chosen=chooseRecap(s.paragraphs,id);
   const core=id==='walter-mercer'?[...chosen.slice(0,5),...categoryLines]:chosen;
-  const depth=recapDepthLine(id,teams);
-  const paragraphs=uniq([...core,depth,recapReaction(id,seed,0),recapReaction(id,seed,1)]).slice(0,10);
+  const depth=recapDepthLine(id,teams),expansion=recapDeskExpansion(id,teams);
+  const paragraphs=uniq([...core,depth,expansion,recapReaction(id,seed,0),recapReaction(id,seed,1)]).slice(0,10);
   return{...s,paragraphs};
  });
  if(Array.isArray(o.hot_takes)){

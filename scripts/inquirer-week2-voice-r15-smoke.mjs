@@ -32,6 +32,7 @@ const OLD_SCAFFOLD_RE=/\b(?:gave Week 2 the stronger jolt|put a brighter number 
 const SHARED_OUTLOOK_RE=/\b(?:take a head-to-head bite out of|instead of hoping another result moves the same playoff route|not alone in a crowded AFC EAST race|rest of the division reads)\b/i;
 const VOICE_RE=/\b(?:I\b|me\b|my\b|fans?|supporters?|annoyed|annoying|joy|furious|hope|mood|parade|joke|complaint|reckless|unbearable|dramatic|suspicious|ridiculous|beautiful|hostile|rivals?|headline|back page|therapy|aspirin|offended|adore|patience|ugly|awful|insult|boo|praise|credit)\b/i;
 const TECH_JOKE_RE=/\b(?:screenshots?|group chats?|rival chats?|rival threads?|memes?|lineup screen|apps?)\b/i;
+const EDITORIAL_META_RE=/\b(?:headline|story|paragraph|editor|narrative|graphic|typeface|print|column|publication|writing|write|written)\b/i;
 const SYNTHETIC_CADENCE_RE=/(?:^|[.!?]\s+)(?:At the moment|At least today|From this angle|On this result|In this spot|For the moment|On the current read|By my count|On review|For now|This week|From here|As it stands|After Sunday|In plain terms|At first glance|In the short term|From the sideline|With that settled|For the record|Looking ahead|After a second look|From this score|In the meantime|For this matchup|Until next Sunday|On balance),/i;
 
 const reporterCounts=new Map();
@@ -53,6 +54,7 @@ for(const t of revisedTeams){
  assert(!OLD_SCAFFOLD_RE.test(text),'Old Week 2 scaffold survived rewrite for '+t.team_name);
  assert(!SHARED_OUTLOOK_RE.test(text),'Shared outlook boilerplate survived rewrite for '+t.team_name);
  assert(!TECH_JOKE_RE.test(text),'Screenshot/chat/meme/app humor returned to Week 2 copy for '+t.team_name);
+ assert(!EDITORIAL_META_RE.test(text),'Newsroom/meta commentary returned to Week 2 copy for '+t.team_name);
  assert(!SYNTHETIC_CADENCE_RE.test(text),'Synthetic cadence-preface meta language returned for '+t.team_name);
 
  const sections=t?.inquirer_article?.sections||[],byKind=Object.fromEntries(sections.map(s=>[String(s?.kind||''),(s?.paragraphs||[]).length]));

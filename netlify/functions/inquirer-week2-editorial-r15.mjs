@@ -1134,10 +1134,10 @@ function divisionOutlookLine(t,id){
    'The division is close enough that nobody gets to waste a Sunday quietly.'
   ],
   'nora-voss':[
-   'Those are the division facts; the useful question is which team changes them next.',
-   'The table is early, but the leverage attached to the next result is already measurable.',
-   'The standings do not settle anything yet; they do make the cost of another mistake easier to see.',
-   'The division position is real enough to matter without pretending September has finished the argument.'
+   'I see the division facts clearly; the useful question is which team changes them next.',
+   'I treat the table as early, but the leverage attached to the next result is already measurable.',
+   'I do not think the standings settle anything yet; they do make the cost of another mistake easier to see.',
+   'I would treat the division position as real enough to matter without pretending September has finished the argument.'
   ]
  };
  const tail=pick(tails[id]||tails['walter-mercer'],seed+'|tail');

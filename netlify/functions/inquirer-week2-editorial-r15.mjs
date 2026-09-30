@@ -361,13 +361,38 @@ function sentimentLines(t,id){
   lines.push(praise[id]||praise['walter-mercer']);
  }
  if(m&&m.reserve&&m.starter&&Number(m.gap)>0){
-  const r=String(m.reserve.name),st=String(m.starter.name),gap=one(m.gap),mgmt={
-   'walter-mercer':'Fans are also staring at '+r+' beating '+st+' by '+gap+' from the bench. Winning can postpone that argument; it does not erase it.',
-   'tess-delaney':'The '+gap+' points separating benched '+r+' from started '+st+' is exactly the kind of management choice supporters will bring up with unnecessary passion and complete justification.',
-   'mack-hollis':'And then there is '+r+' beating '+st+' by '+gap+' from the bench. If fans want to yell about that, somebody hand them a microphone.',
-   'nora-voss':'The fan criticism of '+r+' over '+st+' by '+gap+' is grounded in a real lineup decision, not generalized anger.'
+  const r=String(m.reserve.name),st=String(m.starter.name),gap=one(m.gap),lead={
+   'walter-mercer':'Fans are staring at '+r+' beating '+st+' by '+gap+' from the bench.',
+   'tess-delaney':'Benched '+r+' outscored started '+st+' by '+gap+' points.',
+   'mack-hollis':r+' beat '+st+' by '+gap+' from the bench.',
+   'nora-voss':'The fan criticism starts with '+r+' over '+st+' by '+gap+' points.'
+  },tails={
+   'walter-mercer':[
+    'Winning can postpone that argument; it does not erase it, and supporters have every right to remember those missed points next Sunday.',
+    'A win buys management patience, not amnesia; the bench still left a decision worth revisiting before Week 3.',
+    'Fans can enjoy the result and still remember the points left sitting down, because victory does not make the lineup choice disappear.',
+    'That decision gets one quieter Monday, not a pardon; the next lineup will show whether anyone actually learned from it.'
+   ],
+   'tess-delaney':[
+    'Supporters will bring that up with unnecessary passion and complete justification; ugly lineup choices are much easier to remember than tasteful excuses.',
+    'That is the sort of choice fans can turn into a grievance with excellent posture, especially when the missing points are sitting in plain view.',
+    'A bench gap like that deserves dramatic indignation, and I fully endorse it; supporters should not be asked to pretend those points were harmless.',
+    'Supporters have found a specific decision to resent. How efficient. Management even supplied the point total and player names for them.'
+   ],
+   'mack-hollis':[
+    'If fans want to yell about that, hand them a microphone and get out of the way; the scoreboard already wrote the opening argument for them.',
+    'That is not nitpicking; that is a scoreboard-backed reason to holler, and nobody should expect the crowd to forget it by Week 3.',
+    'Fans saw the points too. Good luck convincing them not to bring it up when the next lineup card puts those names side by side again.',
+    'That choice deserves boos with the player names included, because vague anger would actually be less fair than what the numbers support.'
+   ],
+   'nora-voss':[
+    'That complaint is grounded in a real lineup decision, not generalized anger, and the next lineup gives management a clear chance to answer it.',
+    'The criticism is specific because the missed points are specific; supporters can identify the exact decision that made the final total worse.',
+    'Supporters have a measurable lineup decision to question, which is fair, and Week 3 will provide an equally measurable response.',
+    'The frustration has evidence attached to it; management owns that part, and the next starting lineup will show whether the evidence changed the decision.'
+   ]
   };
-  lines.push(mgmt[id]||mgmt['walter-mercer']);
+  lines.push((lead[id]||lead['walter-mercer'])+' '+pick(tails[id]||tails['walter-mercer'],seed+'|management-fan'));
  }else{
   const closer={
    'walter-mercer':'The mood around '+tm+' is therefore simple: enjoy what worked, complain about what did not, and do not ask me to call Week 2 destiny.',
@@ -712,10 +737,10 @@ function playerTrendParagraph(t,p,id,slot){
     'The Week 2 role was '+now+'% of snaps versus '+before+'% last year. That is the sort of decline a good fantasy score can distract from exactly once.'
    ],
    'nora-voss':up?[
-    name+' played '+now+'% of the snaps in Week 2 compared with '+before+'% last season. The role increase supports the idea that the production has structural backing.',
+    name+' played '+now+'% of the snaps in Week 2 compared with '+before+'% last season. For '+name+', the role increase supports the idea that the production has structural backing.',
     'The snap share moved from '+before+'% last year to '+now+'% in Week 2 for '+name+'. That is meaningful because production tied to a larger role is easier to project forward.'
    ]:[
-    name+' played '+now+'% of snaps in Week 2 after '+before+'% last season. The reduced role is a real counterweight to the fantasy result.',
+    name+' played '+now+'% of snaps in Week 2 after '+before+'% last season. For '+name+', the reduced role is a real counterweight to the fantasy result.',
     'The snap share fell from '+before+'% last year to '+now+'% in Week 2 for '+name+'. That does not erase the score, but it changes how confidently the score should be projected.'
    ]
   };
@@ -888,7 +913,7 @@ function buildCoolThrone(t,id){
   const banks={
    'walter-mercer':[
     name+' gets the good note after '+score+'. I am writing that sentence without a complaint attached, so please appreciate the sacrifice.',
-    'Credit to '+name+' for '+score+'. Sometimes the correct analysis is simply “well done,” irritating though that may be.'
+    'Credit to '+name+' for '+score+'. For '+name+', sometimes the correct analysis is simply “well done,” irritating though that may be.'
    ],
    'tess-delaney':[
     name+' gets the praise after '+score+'. Excellence should be enjoyed before somebody ruins the mood with regression analysis.',
@@ -941,22 +966,68 @@ function buildValue(t,id){
   rows.push(pick(banks[id]||banks['walter-mercer'],seed));
  }
  if(riser&&Number.isFinite(Number(riser.delta))){
-  const n=String(riser.player_name||'A player'),dv=Math.round(Number(riser.delta)),pv=Number(riser.pct);
-  rows.push(({
-   'walter-mercer':n+' gained '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. Fine. I would now like the football to make the optimism less temporary.',
-   'tess-delaney':n+' climbed '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. The market has developed a crush; somebody make sure it has reasons.',
-   'mack-hollis':n+' jumped '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. That is a real move. Keep scoring or give it back.',
-   'nora-voss':n+' rose '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. The increase matters because it changes what the roster can buy, sell or hold.'
-  })[id]||n+' gained '+dv+' in value.');
+  const n=String(riser.player_name||'A player'),dv=Math.round(Number(riser.delta)),pv=Number(riser.pct),move=n+' '+({
+   'walter-mercer':'gained','tess-delaney':'climbed','mack-hollis':'jumped','nora-voss':'rose'
+  }[id]||'gained')+' '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. ';
+  const reactions={
+   'walter-mercer':[
+    'One Sunday bought some optimism; I would like a second receipt before calling it durable.',
+    'The number has my attention; the football still owes me confirmation.',
+    'Useful rise. I am old enough to distrust anything that improves this quickly.',
+    'That is progress. Keep producing and I may run out of objections, which would be inconvenient.'
+   ],
+   'tess-delaney':[
+    'The market is smitten; it should bring evidence with the flowers.',
+    'Dynasty pricing caught feelings. Adorable. Now earn the infatuation.',
+    'The valuation crowd is flirting with optimism; I expect substance before commitment.',
+    'A prettier price is lovely, but beauty without production is how people end up regretting Sundays.'
+   ],
+   'mack-hollis':[
+    'That move has teeth. Keep scoring or the market can spit it back out.',
+    'Real jump. Make it look smart next Sunday.',
+    'The number moved fast. Good—now make the football keep up.',
+    'That is actual value gained, not free applause. Earn the next bump.'
+   ],
+   'nora-voss':[
+    'That increase changes the roster’s options, which is the useful part.',
+    'The gain matters because it changes what the team can realistically buy or hold.',
+    'A larger value creates flexibility; whether it lasts depends on role and production.',
+    'The move is material enough to affect roster decisions, not just aesthetics.'
+   ]
+  };
+  rows.push(move+pick(reactions[id]||reactions['walter-mercer'],seed+'|riser|'+n));
  }
  if(faller&&Number.isFinite(Number(faller.delta))){
-  const n=String(faller.player_name||'A player'),dv=Math.abs(Math.round(Number(faller.delta))),pv=Number(faller.pct);
-  rows.push(({
-   'walter-mercer':n+' lost '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. Not a funeral, but certainly not a compliment.',
-   'tess-delaney':n+' fell '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. The market has become judgmental, which is one of its more relatable qualities.',
-   'mack-hollis':n+' dropped '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. That is the market saying “show me something better.”',
-   'nora-voss':n+' declined '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. The loss is material enough to ask whether role, production or expectation changed.'
-  })[id]||n+' lost '+dv+' in value.');
+  const n=String(faller.player_name||'A player'),dv=Math.abs(Math.round(Number(faller.delta))),pv=Number(faller.pct),move=n+' '+({
+   'walter-mercer':'lost','tess-delaney':'fell','mack-hollis':'dropped','nora-voss':'declined'
+  }[id]||'lost')+' '+dv+' in value'+(Number.isFinite(pv)?' ('+Math.abs(pv).toFixed(1)+'%)':'')+'. ';
+  const reactions={
+   'walter-mercer':[
+    'Not a funeral, but enough of a loss to cancel the cheerful music.',
+    'That is not fatal. It is, however, the opposite of a compliment.',
+    'The market has registered a complaint. I would prefer the player answer it with points.',
+    'A drop like that gets my attention faster than a motivational speech ever could.'
+   ],
+   'tess-delaney':[
+    'The market has become judgmental; for once, I sympathize with its standards.',
+    'The valuation crowd has turned cold. Cruel, perhaps, but not mysterious.',
+    'That price decline is ugly enough to deserve a response in actual football.',
+    'The market has withdrawn its affection with impressive speed. Earn it back.'
+   ],
+   'mack-hollis':[
+    'That is the market saying “show me something better,” and it is not whispering.',
+    'The price got punched. Score more and punch back.',
+    'That drop is real. The fastest rebuttal is points, not excuses.',
+    'The market took a bite out of the value. Sunday gets the chance to bite back.'
+   ],
+   'nora-voss':[
+    'The loss is large enough to ask whether role, production or expectation changed.',
+    'That decline is material; the useful question is what underlying evidence moved with it.',
+    'A value loss of that size belongs in the roster decision, not in the background.',
+    'The market moved down enough that role and production both deserve another look.'
+   ]
+  };
+  rows.push(move+pick(reactions[id]||reactions['walter-mercer'],seed+'|faller|'+n));
  }
  return uniq(rows).slice(0,3);
 }
@@ -1044,12 +1115,33 @@ function divisionOutlookLine(t,id){
  else if(ownName)standing='The '+ownName+' currently places '+tm+' at division rank '+String(Number(own?.division_rank)||'?')+'.';
  const opponent=nextName?'Week 3 brings '+op+' in at '+nw+'-'+nl+' in the '+nextName+'.':'Week 3 brings '+op+' in at '+nw+'-'+nl+'.';
  const tails={
-  'walter-mercer':'I do not need the standings to be dramatic; I need them to stop becoming more annoying.',
-  'tess-delaney':'The stakes have become indecently visible, and I resent how entertaining that makes the division race.',
-  'mack-hollis':'That is enough standings material for one loud graphic and several irresponsible predictions.',
-  'nora-voss':'Those are the division facts. I have highlighted the parts rivals will pretend not to notice.'
+  'walter-mercer':[
+   'The standings are dramatic enough without my help; I would settle for them becoming less annoying.',
+   'Division math this early is mostly an invitation to overreact. I accept cautiously.',
+   'September standings are young, but they are old enough to make a bad Sunday expensive.',
+   'I do not trust an early table completely, but I trust it enough to dislike wasted opportunities.'
+  ],
+  'tess-delaney':[
+   'The stakes are indecently visible already, which is exactly how I prefer my division races.',
+   'The division has developed tension before October. Delicious. Somebody please make it worse.',
+   'There is already enough pressure here to ruin a perfectly pleasant Sunday, which makes it worth watching.',
+   'The race is crowded, petty and prematurely important. At last, September has some taste.'
+  ],
+  'mack-hollis':[
+   'That is enough division fuel for several irresponsible predictions and at least one loud argument.',
+   'The standings have given everybody a reason to yell early. Excellent use of September.',
+   'One bad result can turn this race stupid in a hurry, and I mean that as a compliment.',
+   'The division is close enough that nobody gets to waste a Sunday quietly.'
+  ],
+  'nora-voss':[
+   'Those are the division facts; the useful question is which team changes them next.',
+   'The table is early, but the leverage attached to the next result is already measurable.',
+   'The standings do not settle anything yet; they do make the cost of another mistake easier to see.',
+   'The division position is real enough to matter without pretending September has finished the argument.'
+  ]
  };
- return voiceShade(t,'division|'+id,[standing,opponent,tails[id]||tails['walter-mercer']].filter(Boolean).join(' '));
+ const tail=pick(tails[id]||tails['walter-mercer'],seed+'|tail');
+ return voiceShade(t,'division|'+id,[standing,opponent,tail].filter(Boolean).join(' '));
 }
 function buildOutlook(t,a,id){
  const sec=sectionOf(a,'outlook'),facts=factualParagraphs(sec);

@@ -76,6 +76,21 @@ for(const t of revisedTeams){
 }
 for(const id of ['walter-mercer','tess-delaney','mack-hollis','nora-voss'])assert((reporterCounts.get(id)||0)>0,'Reporter missing from revised Week 2: '+id);
 
+const leagueSentenceUse=new Map();
+for(const team of revisedTeams){
+ const reporter=String(team?.inquirer_article?.reporter?.id||'');
+ for(const sentence of sentenceParts(articleText(team))){
+  if(wordCount(sentence)<8)continue;
+  const k=sentence.replace(/\s+/g,' ').trim().toLowerCase();
+  const rows=leagueSentenceUse.get(k)||[];
+  rows.push({team:String(team?.team_name||''),reporter,sentence});
+  leagueSentenceUse.set(k,rows);
+ }
+}
+const nearUniversalReporterBoilerplate=[...leagueSentenceUse.values()].filter(rows=>new Set(rows.map(x=>x.team)).size>6);
+assert.deepEqual(nearUniversalReporterBoilerplate,[],'A long reporter sentence must not be reused across seven or eight different Week 2 team reports');
+
+
 const aints=revisedTeams.find(t=>/new orleans (?:aints|saints)/i.test(String(t?.team_name||'')));
 assert(aints,'New Orleans Week 2 article not found');
 const aintsText=articleText(aints),aintsParagraphs=paragraphs(aints);

@@ -34,6 +34,9 @@ jobs:
       - name: Scrub remaining Jefferson clinical phrasing
         run: python scripts/week2-editorial-r18-jefferson-fix.py
 
+      - name: Ensure bounded reporter-level recap punchlines
+        run: python scripts/week2-editorial-r18-recap-density-fix.py
+
       - name: Run Week 2 editorial smoke
         run: node scripts/inquirer-week2-voice-r15-smoke.mjs
 

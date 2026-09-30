@@ -25,7 +25,7 @@ jobs:
       - name: Expand deadpan punchline detector
         run: python scripts/week2-editorial-r18-fix.py
 
-      - name: Ensure bounded contextual punchlines for all non-Tilly reporters
+      - name: Ensure bounded team-specific contextual punchlines
         run: python scripts/week2-editorial-r18-density-fix.py
 
       - name: Run Week 2 editorial smoke

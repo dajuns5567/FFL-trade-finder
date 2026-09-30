@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-30T00:25:58.728Z",
+  "generatedAt": "2026-09-30T06:41:46.011Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -180,9 +180,9 @@
       "withGames": 889
     },
     "2024": {
-      "players": 955,
+      "players": 956,
       "withPpr": 791,
-      "withGames": 955
+      "withGames": 956
     },
     "2025": {
       "players": 1052,
@@ -190,9 +190,9 @@
       "withGames": 1052
     },
     "2026": {
-      "players": 1241,
-      "withPpr": 410,
-      "withGames": 1241,
+      "players": 1242,
+      "withPpr": 411,
+      "withGames": 1242,
       "currentSeasonQualified": true
     }
   },
@@ -203,9 +203,9 @@
       "withGames": 889
     },
     "2024": {
-      "players": 955,
+      "players": 956,
       "withPpr": 791,
-      "withGames": 955
+      "withGames": 956
     },
     "2025": {
       "players": 1052,
@@ -213,11 +213,11 @@
       "withGames": 1052
     },
     "2026": {
-      "players": 1241,
-      "withPpr": 410,
-      "withGames": 1241,
+      "players": 1242,
+      "withPpr": 411,
+      "withGames": 1242,
       "currentSeasonQualified": true,
-      "compactPlayers": 1241
+      "compactPlayers": 1242
     }
   },
   "qualifyingHistoricalSeasonMinimumGames": 8,
@@ -753,8 +753,8 @@
     },
     "diagnostics": {
       "finalGames": 48,
-      "qualifiedPlayerGames": 3162,
-      "rejectedPlayerGames": 3704,
+      "qualifiedPlayerGames": 3165,
+      "rejectedPlayerGames": 3701,
       "ignoredGames": 0
     }
   },

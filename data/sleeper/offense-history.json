@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-30T00:25:58.728Z",
+  "generatedAt": "2026-09-30T06:41:46.011Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 3,
@@ -562,8 +562,8 @@
     },
     "diagnostics": {
       "finalGames": 48,
-      "qualifiedPlayerGames": 3162,
-      "rejectedPlayerGames": 3704,
+      "qualifiedPlayerGames": 3165,
+      "rejectedPlayerGames": 3701,
       "ignoredGames": 0
     }
   },
@@ -30628,6 +30628,37 @@
       "penalty": 1,
       "xpmiss": 1
     },
+    "14026": {
+      "gp": 3,
+      "_ppr_native_weeks": 1,
+      "_ppr_reconstructed_weeks": 0,
+      "off_snp": 59,
+      "pos_rank_half_ppr": 2997,
+      "pos_rank_ppr": 2997,
+      "pos_rank_std": 2997,
+      "st_snp": 13,
+      "tm_def_snp": 172,
+      "tm_off_snp": 188,
+      "tm_st_snp": 69,
+      "fum": 1,
+      "gs": 2,
+      "pts_half_ppr": 2.3,
+      "pts_ppr": 2.8,
+      "pts_std": 1.8,
+      "rec": 1,
+      "rec_10_19": 1,
+      "rec_air_yd": 7,
+      "rec_fd": 1,
+      "rec_lng": 18,
+      "rec_tgt": 3,
+      "rec_yar": 11,
+      "rec_yd": 18,
+      "rec_ypr": 18,
+      "rec_ypt": 6,
+      "rush_rec_yd": 18,
+      "penalty": 1,
+      "penalty_yd": 10
+    },
     "HOU": {
       "gp": 3,
       "_ppr_native_weeks": 3,
@@ -32329,9 +32360,9 @@
       "withGames": 889
     },
     "2024": {
-      "players": 955,
+      "players": 956,
       "withPpr": 791,
-      "withGames": 955
+      "withGames": 956
     },
     "2025": {
       "players": 1052,
@@ -32339,11 +32370,11 @@
       "withGames": 1052
     },
     "2026": {
-      "players": 1241,
-      "withPpr": 410,
-      "withGames": 1241,
+      "players": 1242,
+      "withPpr": 411,
+      "withGames": 1242,
       "currentSeasonQualified": true,
-      "compactPlayers": 1241
+      "compactPlayers": 1242
     }
   },
   "stats": {
@@ -54499,6 +54530,14 @@
         "fum": 1,
         "idp_ff": 1,
         "idp_tkl_ast": 12
+      },
+      "7451": {
+        "gp": 8,
+        "def_snp": 202,
+        "idp_tkl": 20,
+        "idp_tkl_solo": 6,
+        "idp_qb_hit": 4,
+        "idp_tkl_ast": 14
       },
       "7496": {
         "pts_ppr": 127.80000000000001,
@@ -94405,6 +94444,17 @@
         "fgm_20_29": 1,
         "xpm": 5,
         "fgm_50p": 1
+      },
+      "14026": {
+        "pts_ppr": 2.8,
+        "gp": 3,
+        "off_snp": 59,
+        "rec_tgt": 3,
+        "rec": 1,
+        "rec_fd": 1,
+        "rec_10_19": 1,
+        "fum": 1,
+        "rec_yd": 18
       },
       "HOU": {
         "pts_ppr": 18,

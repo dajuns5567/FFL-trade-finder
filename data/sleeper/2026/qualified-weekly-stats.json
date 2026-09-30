@@ -21231,6 +21231,18 @@
       "tm_off_snp": 69,
       "tm_st_snp": 28
     },
+    "14026": {
+      "gms_active": 1,
+      "gp": 1,
+      "off_snp": 15,
+      "pos_rank_half_ppr": 999,
+      "pos_rank_ppr": 999,
+      "pos_rank_std": 999,
+      "st_snp": 3,
+      "tm_def_snp": 68,
+      "tm_off_snp": 56,
+      "tm_st_snp": 26
+    },
     "HOU": {
       "sack": 2,
       "qb_hit": 4,
@@ -44463,6 +44475,35 @@
       "tm_st_snp": 27,
       "xpa": 2,
       "xpm": 2,
+      "_pts_ppr_native": 1
+    },
+    "14026": {
+      "fum": 1,
+      "gms_active": 1,
+      "gp": 1,
+      "gs": 1,
+      "off_snp": 17,
+      "pos_rank_half_ppr": 999,
+      "pos_rank_ppr": 999,
+      "pos_rank_std": 999,
+      "pts_half_ppr": 2.3,
+      "pts_ppr": 2.8,
+      "pts_std": 1.8,
+      "rec": 1,
+      "rec_10_19": 1,
+      "rec_air_yd": 7,
+      "rec_fd": 1,
+      "rec_lng": 18,
+      "rec_tgt": 3,
+      "rec_yar": 11,
+      "rec_yd": 18,
+      "rec_ypr": 18,
+      "rec_ypt": 6,
+      "rush_rec_yd": 18,
+      "st_snp": 6,
+      "tm_def_snp": 52,
+      "tm_off_snp": 59,
+      "tm_st_snp": 25,
       "_pts_ppr_native": 1
     },
     "HOU": {
@@ -67708,6 +67749,21 @@
       "xpm": 3,
       "xpmiss": 1,
       "_pts_ppr_native": 1
+    },
+    "14026": {
+      "gms_active": 1,
+      "gp": 1,
+      "gs": 1,
+      "off_snp": 27,
+      "penalty": 1,
+      "penalty_yd": 10,
+      "pos_rank_half_ppr": 999,
+      "pos_rank_ppr": 999,
+      "pos_rank_std": 999,
+      "st_snp": 4,
+      "tm_def_snp": 52,
+      "tm_off_snp": 73,
+      "tm_st_snp": 18
     },
     "HOU": {
       "sack": 4,

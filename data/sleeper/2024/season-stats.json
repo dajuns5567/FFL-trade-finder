@@ -13774,6 +13774,23 @@
     "idp_sack_yd": 11,
     "pts_idp": 3
   },
+  "7451": {
+    "gp": 8,
+    "_ppr_native_weeks": 0,
+    "_ppr_reconstructed_weeks": 0,
+    "def_snp": 202,
+    "pos_rank_half_ppr": 7992,
+    "pos_rank_ppr": 7992,
+    "pos_rank_std": 7992,
+    "st_snp": 138,
+    "tm_def_snp": 610,
+    "tm_off_snp": 475,
+    "tm_st_snp": 230,
+    "idp_tkl": 20,
+    "idp_tkl_ast": 14,
+    "idp_tkl_solo": 6,
+    "idp_qb_hit": 4
+  },
   "7496": {
     "gp": 15,
     "_ppr_native_weeks": 12,

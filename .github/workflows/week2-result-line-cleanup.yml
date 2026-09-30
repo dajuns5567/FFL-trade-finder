@@ -1,0 +1,32 @@
+name: Week 2 result-line cleanup
+
+on:
+  push:
+    branches: [player-signal-layer-r1]
+    paths:
+      - .github/workflows/week2-result-line-cleanup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: player-signal-layer-r1
+          fetch-depth: 0
+      - name: Apply result-line cleanup
+        run: python scripts/tmp-week2-result-lines.py
+      - name: Check syntax
+        run: node --check netlify/functions/inquirer-week2-editorial-r15.mjs
+      - name: Commit cleanup and remove helpers
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add netlify/functions/inquirer-week2-editorial-r15.mjs
+          git rm .github/workflows/week2-result-line-cleanup.yml scripts/tmp-week2-result-lines.py
+          git diff --cached --check
+          git commit -m "Differentiate Week 2 result reporting"
+          git push origin HEAD:player-signal-layer-r1

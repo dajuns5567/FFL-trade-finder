@@ -249,23 +249,64 @@ function managementFollowupLine(t,id){
  if(m&&m.reserve&&m.starter&&Number(m.gap)>0){
   const r=String(m.reserve.name||'the reserve'),st=String(m.starter.name||'the starter'),gap=one(m.gap);
   const banks={
-   'walter-mercer':['Week 3 does not require genius from '+tm+'. It requires remembering that '+r+' just put '+gap+' more points on the bench than '+st+' put in the lineup.'],
-   'tess-delaney':['If '+tm+' repeats '+r+' behind '+st+' after a '+gap+'-point warning, that stops being unfortunate and starts becoming a preference.'],
-   'mack-hollis':['Put '+r+' and '+st+' on the same Week 3 decision sheet and explain the '+gap+'-point gap out loud. If it sounds stupid, there is your answer.'],
-   'nora-voss':['The actionable Week 3 question is '+r+' versus '+st+'. A '+gap+'-point Week 2 gap is enough information to demand a deliberate choice.']
+   'walter-mercer':[
+    'Week 3 should remember that '+r+' just beat '+st+' by '+gap+' from the bench. That is not genius; it is reading the last box score.',
+    tm+' has a '+gap+'-point lesson sitting between '+r+' and '+st+'. I would prefer management not pay tuition twice.',
+    r+' over '+st+' is the obvious Week 3 question after a '+gap+'-point difference. I am old enough to enjoy simple answers.',
+    'The lineup decision is now '+r+' versus '+st+' after a '+gap+'-point swing. Make the next choice look informed.'
+   ],
+   'tess-delaney':[
+    'If '+tm+' repeats '+r+' behind '+st+' after a '+gap+'-point warning, that stops being unfortunate and starts becoming a preference.',
+    r+' just made '+st+' look like the less attractive choice by '+gap+' points. Management is invited to develop better taste.',
+    'A '+gap+'-point advantage for '+r+' over '+st+' is not subtle. Week 3 should not require a séance to interpret it.',
+    'The next lineup gets one chance to prove the '+r+'–'+st+' lesson was actually learned. The difference was '+gap+' points, not a rounding error.'
+   ],
+   'mack-hollis':[
+    'Put '+r+' and '+st+' on the same Week 3 decision sheet and explain the '+gap+'-point gap out loud. If it sounds stupid, there is your answer.',
+    r+' beat '+st+' by '+gap+' from the bench. Start the wrong one again and management becomes the punch line.',
+    'A '+gap+'-point bench lesson involving '+r+' and '+st+' should be difficult to forget unless the manager is actively trying.',
+    'Week 3 gives management a rematch with the '+r+' versus '+st+' decision. After '+gap+' points, choose like an adult.'
+   ],
+   'nora-voss':[
+    'The actionable Week 3 question is '+r+' versus '+st+'. A '+gap+'-point Week 2 gap demands a deliberate choice.',
+    r+' outscored '+st+' by '+gap+' from the bench. The next lineup should reflect that information instead of treating it as trivia.',
+    'Management has a specific decision after '+r+' beat '+st+' by '+gap+'. Week 3 should show whether the roster learned from it.',
+    'The '+gap+'-point difference between '+r+' and '+st+' creates a clear Week 3 lineup decision. There is no need to make it more mysterious.'
+   ]
   };return pick(banks[id]||banks['walter-mercer'],seed);
  }
  if(lo){
   const score=one(lo.points);
   const banks={
-   'walter-mercer':['With no obvious bench correction, '+tm+' needs '+lo.name+' to make '+score+' look like an outlier instead of a habit.'],
-   'tess-delaney':['No lineup swap rescues this cleanly, so '+lo.name+' gets the less glamorous assignment: make '+score+' disappear through better football.'],
-   'mack-hollis':['No bench fix? Then '+lo.name+' owns the sequel after '+score+'. Score something worth defending.'],
-   'nora-voss':['Without a clear bench alternative, Week 3 puts the burden back on '+lo.name+' after '+score+'.']
+   'walter-mercer':[
+    'With no obvious bench correction, '+tm+' needs '+lo.name+' to make '+score+' look like an outlier instead of a habit.',
+    'There is no clean reserve to blame, so '+lo.name+' gets the Week 3 burden after '+score+'. Better football would simplify my mood.',
+    lo.name+' remains the starter problem because the bench offered no obvious escape from '+score+'. That leaves improvement as the least complicated solution.',
+    'No bench swap fixes this neatly. '+lo.name+' owns the next answer after '+score+', whether anybody enjoys that arrangement or not.'
+   ],
+   'tess-delaney':[
+    'No lineup swap rescues this cleanly, so '+lo.name+' gets the less glamorous assignment: make '+score+' disappear through better football.',
+    'The bench has no beautiful answer. Unfortunately for '+lo.name+', that means '+score+' must be corrected by the person who produced it.',
+    'There is no elegant replacement waiting. '+lo.name+' keeps the stage after '+score+' and now has to make the sequel less hideous.',
+    'The roster cannot solve '+score+' with a tasteful substitution, so '+lo.name+' gets another chance to offend me less.'
+   ],
+   'mack-hollis':[
+    'No bench fix? Then '+lo.name+' owns the sequel after '+score+'. Score something worth defending.',
+    'The bench cannot rescue '+tm+' here. Fine. '+lo.name+' gets another shot after '+score+', and the next number had better look like football.',
+    'Nobody on the bench produced a clean escape hatch. That leaves '+lo.name+' and '+score+' staring directly at Week 3.',
+    'There is no clever lineup trick available. '+lo.name+' simply has to stop making '+score+' look repeatable.'
+   ],
+   'nora-voss':[
+    'Without a clear bench alternative, Week 3 puts the burden back on '+lo.name+' after '+score+'.',
+    'The bench offers no obvious replacement, so the Week 3 test remains '+lo.name+' after '+score+'.',
+    'No reserve creates a clean solution. The response therefore has to come from '+lo.name+' improving on '+score+'.',
+    'The roster lacks a straightforward bench correction. That makes '+lo.name+' the direct Week 3 follow-up after '+score+'.'
+   ]
   };return pick(banks[id]||banks['walter-mercer'],seed);
  }
  return'';
 }
+
 function sentimentLines(t,id){
  const won=!!t.won,tm=String(t.team_name||'This team'),rec=record(t),hi=strongest(t),lo=weakest(t),m=t?.best_lineup_miss,seed=key(t)+'|sentiment|'+id,
   hp=hi?one(hi.points):'',lp=lo?one(lo.points):'';
@@ -435,14 +476,65 @@ function teamThesisLine(t,id){
  return pick(banks[id]||banks['walter-mercer'],seed);
 }
 
-function currentResultLine(t){
- const tm=String(t.team_name||'This team'),op=String(t.opponent_name||'the opponent'),pts=one(t.points),opp=one(t.opponent_points),rec=record(t);
- if(t?.won)return tm+' beat '+op+' '+pts+'–'+opp+', moving to '+rec+'.';
- return tm+' lost to '+op+' '+pts+'–'+opp+', moving to '+rec+'.';
+function currentResultLine(t,id){
+ const tm=String(t.team_name||'This team'),op=String(t.opponent_name||'the opponent'),pts=one(t.points),opp=one(t.opponent_points),rec=record(t),
+  token=pts+'–'+opp,seed=key(t)+'|result-line|'+id;
+ const banks=t?.won?{
+  'walter-mercer':[
+   tm+' moved to '+rec+' by beating '+op+' '+token+'.',
+   'A '+token+' win over '+op+' leaves '+tm+' at '+rec+'.',
+   tm+' is '+rec+' after putting away '+op+' '+token+'.',
+   'Week 2 belongs to '+tm+': '+token+' over '+op+', and '+rec+' in the standings.'
+  ],
+  'tess-delaney':[
+   tm+' handled '+op+' '+token+' and walks away at '+rec+'.',
+   'The pretty part is the result: '+tm+' '+token+', '+op+' on the wrong side, and a '+rec+' record.',
+   tm+' leaves Week 2 at '+rec+' after a '+token+' win against '+op+'.',
+   'A '+token+' victory over '+op+' gives '+tm+' a '+rec+' start and permission to enjoy it.'
+  ],
+  'mack-hollis':[
+   tm+' beat '+op+' '+token+'. That makes the record '+rec+'.',
+   'Put '+token+' next to '+tm+' over '+op+'; the record is now '+rec+'.',
+   tm+' walks out '+rec+' after dropping '+op+' '+token+'.',
+   'Final: '+tm+' '+token+', '+op+' behind it, '+tm+' at '+rec+'.'
+  ],
+  'nora-voss':[
+   tm+' reaches '+rec+' with a '+token+' win over '+op+'.',
+   'The completed result is '+tm+' '+token+' over '+op+', moving the record to '+rec+'.',
+   'A '+token+' victory against '+op+' puts '+tm+' at '+rec+'.',
+   tm+' is '+rec+' after finishing Week 2 '+token+' against '+op+'.'
+  ]
+ }:{
+  'walter-mercer':[
+   tm+' fell to '+rec+' after a '+token+' loss to '+op+'.',
+   op+' beat '+tm+' '+token+'; '+tm+' leaves Week 2 at '+rec+'.',
+   'A '+token+' defeat against '+op+' drops '+tm+' to '+rec+'.',
+   tm+' is '+rec+' after '+op+' handed it a '+token+' loss.'
+  ],
+  'tess-delaney':[
+   tm+' leaves Week 2 at '+rec+' after losing '+token+' to '+op+'.',
+   op+' spoiled the afternoon '+token+', dropping '+tm+' to '+rec+'.',
+   'The ugly fact is '+op+' '+token+' over '+tm+', which is now '+rec+'.',
+   'A '+token+' loss to '+op+' leaves '+tm+' wearing a '+rec+' record.'
+  ],
+  'mack-hollis':[
+   tm+' lost '+token+' to '+op+'. The damage is a '+rec+' record.',
+   'Final: '+op+' '+token+', '+tm+' behind it and now '+rec+'.',
+   op+' dropped '+tm+' '+token+', sending the record to '+rec+'.',
+   tm+' walks away '+rec+' after taking a '+token+' loss from '+op+'.'
+  ],
+  'nora-voss':[
+   tm+' falls to '+rec+' after a '+token+' defeat against '+op+'.',
+   'The completed result is '+op+' '+token+' over '+tm+', leaving '+tm+' at '+rec+'.',
+   'A '+token+' loss against '+op+' moves '+tm+' to '+rec+'.',
+   tm+' is '+rec+' after finishing Week 2 on the wrong side of '+token+' against '+op+'.'
+  ]
+ };
+ return pick(banks[id]||banks['walter-mercer'],seed);
 }
 
 function buildLede(t,a,id){
- const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),week1=facts.find(isWeek1Fact),score=currentResultLine(t),lines=ledeLines(t,id),thesis=teamThesisLine(t,id),
+ const sec=sectionOf(a,'lede'),facts=factualParagraphs(sec),week1=facts.find(isWeek1Fact),score=currentResultLine(t,id),lines=ledeLines(t,id),thesis=teamThesisLine(t,id),
   total=Number(t?.points),scoreDeservesSecondBeat=Number.isFinite(total)&&(total<25||total>=130);
  return uniq([score,scoreDeservesSecondBeat?lines[0]:'',week1,lines[1],lines[2],thesis]).filter(Boolean).slice(0,6);
 }
@@ -489,25 +581,41 @@ function playerReaction(t,p,id,slot){
    name+' gave '+t.team_name+' '+shown+'. Good. A '+role+' doing his job should be appreciated without turning one competent Sunday into sainthood.',
    shown+' from '+name+' is useful work. I will praise it now and reserve the right to become unreasonable the moment it disappears.',
    name+' posted '+shown+'. I have no complaint with the production, which is an uncomfortable sentence I will survive.',
-   shown+' from '+name+' is exactly the kind of Sunday that makes an old skeptic briefly run out of objections.'
+   shown+' from '+name+' is exactly the kind of Sunday that makes an old skeptic briefly run out of objections.',
+   name+' turned in '+shown+'. I am prepared to call that good football without attaching a warning label.',
+   'A '+shown+' afternoon from '+name+' is the sort of competence I would happily become accustomed to.',
+   name+' supplied '+shown+' and temporarily deprived me of a complaint. I assume the inconvenience will pass.',
+   shown+' belongs in the praise column for '+name+'. No sermon, no caveat, just credit.'
   ],
   'tess-delaney':[
    name+' delivered '+shown+' and had the decency to make the afternoon interesting. I approve.',
    shown+' from '+name+' was excessive enough to be enjoyable and useful enough to avoid becoming nonsense.',
    name+' gave us '+shown+'. Finally, a number with some nerve.',
-   shown+' from '+name+' is the sort of performance that makes moderation feel like a character flaw.'
+   shown+' from '+name+' is the sort of performance that makes moderation feel like a character flaw.',
+   name+' produced '+shown+' with enough flair to make responsible analysis feel terribly dull.',
+   'A '+shown+' day from '+name+' is exactly the sort of excess I am willing to defend shamelessly.',
+   name+' gave us '+shown+'. Gorgeous. Anybody demanding restraint may read a different column.',
+   shown+' from '+name+' was both useful and rude to the opponent, which is my preferred combination.'
   ],
   'mack-hollis':[
    name+' put up '+shown+'. That is football production, not a marketing campaign, and it is plenty loud on its own.',
    shown+' from '+name+' is nasty work. The next opponent can deal with the emotional consequences.',
    name+' posted '+shown+'. No gimmick required; the number is mean enough by itself.',
-   shown+' from '+name+' is the kind of Sunday that makes defensive coordinators age in public.'
+   shown+' from '+name+' is the kind of Sunday that makes defensive coordinators age in public.',
+   name+' dropped '+shown+' and made the matchup somebody else’s emergency.',
+   'A '+shown+' day from '+name+' is the kind of work that makes the other sideline reconsider its life choices.',
+   name+' gave the lineup '+shown+'. Good. That number has enough attitude without me helping it.',
+   shown+' from '+name+' is what happens when a player decides the opponent has had enough peace.'
   ],
   'nora-voss':[
-   name+' posted '+shown+'. The useful part is straightforward: the production materially changed the matchup.',
+   name+' posted '+shown+'. The production materially changed the matchup.',
    shown+' from '+name+' deserves credit without pretending one game settles every question around the player.',
-   name+' gave '+t.team_name+' '+shown+'. That is strong production; the next task is proving the role can sustain it.',
-   shown+' from '+name+' holds up on its own. No embellishment is necessary.'
+   name+' gave '+t.team_name+' '+shown+'. Strong production; now the role has to sustain it.',
+   shown+' from '+name+' stands on its own. The performance does not need decoration.',
+   name+' finished at '+shown+'. That is enough output to matter without turning one Sunday into a season-long conclusion.',
+   'A '+shown+' day from '+name+' changed the competitive math immediately. The next question is whether the usage repeats.',
+   name+' supplied '+shown+' and made the roster materially better for one week. That part is not debatable.',
+   shown+' belongs next to '+name+' this week. Strong result, useful contribution, still only one completed Sunday.'
   ]
  };
  return choose(banks[id]||banks['walter-mercer']);
@@ -680,21 +788,61 @@ function hotSeatFollowupLine(t,p,id){
  const name=String(p?.name||'Player'),pts=Number(p?.points),shown=one(pts),prior=Number(p?.prior_season_avg),proj=Number(p?.projected),
   week1=(p?.recent_form?.series||[]).find(x=>Number(x?.week)===1),w1=Number(week1?.points),seed=key(t)+'|hot-follow|'+id+'|'+name;
  if(Number.isFinite(prior)&&prior>0){
-  const gap=(pts-prior).toFixed(1),down=pts<prior;
+  const gap=Math.abs(pts-prior).toFixed(1),down=pts<prior;
   const banks={
-   'walter-mercer':[name+' averaged '+prior.toFixed(1)+' last season and gave us '+shown+' in Week 2. '+(down?'That gap is too large to wave away with “early season.”':'At least the old baseline has not become a museum piece.')],
-   'tess-delaney':[name+' carried a '+prior.toFixed(1)+' average out of last season and answered with '+shown+'. '+(down?'The decline is ugly enough to deserve its own lighting.':'For once, the comparison is flattering rather than cruel.')],
-   'mack-hollis':[name+' averaged '+prior.toFixed(1)+' last year and scored '+shown+' now. '+(down?'That is a drop of '+Math.abs(Number(gap)).toFixed(1)+' points, which is not subtle.':'Fine. The old standard survived this week.')],
-   'nora-voss':[name+' averaged '+prior.toFixed(1)+' last season versus '+shown+' in Week 2. '+(down?'The size of that decline is why the concern is specific rather than emotional.':'The prior baseline does not create an immediate decline case here.')]
+   'walter-mercer':[
+    name+' averaged '+prior.toFixed(1)+' last season and gave us '+shown+' in Week 2. '+(down?'That '+gap+'-point drop is too large to wave away with “early season.”':'The old baseline still looks alive.'),
+    'Last year’s baseline for '+name+' was '+prior.toFixed(1)+'; Week 2 was '+shown+'. '+(down?'I do not need a trend lecture to dislike that gap.':'At least the comparison is not another complaint.'),
+    name+' came from a '+prior.toFixed(1)+' average in 2025 and landed at '+shown+' this week. '+(down?'The difference is exactly why patience has limits.':'The prior standard held up well enough.'),
+    'Put '+shown+' next to '+name+' and '+prior.toFixed(1)+' next to last season. '+(down?'That is a real decline, not a rounding argument.':'The comparison does not create a crisis.')
+   ],
+   'tess-delaney':[
+    name+' carried a '+prior.toFixed(1)+' average out of last season and answered with '+shown+'. '+(down?'The decline is ugly enough to deserve its own lighting.':'For once, the comparison is flattering rather than cruel.'),
+    'Last season gave '+name+' a '+prior.toFixed(1)+' baseline; Week 2 gave us '+shown+'. '+(down?'That is not the sort of before-and-after anyone frames proudly.':'The sequel has not embarrassed the original.'),
+    name+' went from a '+prior.toFixed(1)+' 2025 average to '+shown+' here. '+(down?'The drop has all the charm of wet socks.':'I have no aesthetic objection to that comparison.'),
+    'A '+prior.toFixed(1)+' prior average makes '+shown+' the relevant Week 2 comparison for '+name+'. '+(down?'It is an ugly little gap and I dislike it.':'The old standard remains intact enough to enjoy.')
+   ],
+   'mack-hollis':[
+    name+' averaged '+prior.toFixed(1)+' last year and scored '+shown+' now. '+(down?'That '+gap+'-point drop is not subtle.':'Fine. The old standard survived this week.'),
+    'Last year, '+name+' lived at '+prior.toFixed(1)+' per game. Week 2 delivered '+shown+'. '+(down?'That is how reputations start losing arguments.':'Nothing to yell about there.'),
+    name+' brought a '+prior.toFixed(1)+' baseline into this season and just posted '+shown+'. '+(down?'If the name is doing more work than the score, we have a problem.':'The number did its job.'),
+    'Compare '+shown+' now with '+prior.toFixed(1)+' last season for '+name+'. '+(down?'That gap deserves the hot seat more than any speech does.':'At least the comparison behaves.')
+   ],
+   'nora-voss':[
+    name+' averaged '+prior.toFixed(1)+' last season versus '+shown+' in Week 2. '+(down?'The size of that decline makes the concern specific.':'The prior baseline does not create an immediate decline case.'),
+    'The prior baseline for '+name+' is '+prior.toFixed(1)+'; Week 2 produced '+shown+'. '+(down?'That difference is large enough to track directly into Week 3.':'The comparison remains within a healthy range.'),
+    name+' came from '+prior.toFixed(1)+' per game in 2025 and posted '+shown+' here. '+(down?'The decline is measurable and does not need embellishment.':'The old baseline still fits the current result.'),
+    'Week 2 gave '+name+' '+shown+' against a '+prior.toFixed(1)+' prior-season average. '+(down?'That gap is the performance question for next week.':'No immediate decline signal comes from that comparison.')
+   ]
   };return pick(banks[id]||banks['walter-mercer'],seed);
  }
  if(Number.isFinite(proj)){
-  const gap=(pts-proj).toFixed(1),down=pts<proj;
+  const gap=Math.abs(pts-proj).toFixed(1),down=pts<proj;
   const banks={
-   'walter-mercer':[name+' was projected for '+proj.toFixed(1)+' and finished at '+shown+'. '+(down?'Missing by '+Math.abs(Number(gap)).toFixed(1)+' gives me something concrete to complain about.':'The result at least cleared the expectation.')],
-   'tess-delaney':[name+' entered with a '+proj.toFixed(1)+' projection and left with '+shown+'. '+(down?'Expectations were treated with appalling disrespect.':'The number behaved, which I appreciate.')],
-   'mack-hollis':[name+' was projected at '+proj.toFixed(1)+' and posted '+shown+'. '+(down?'That miss is why the hot seat has a name on it.':'Projection cleared. Complaint temporarily reduced.')],
-   'nora-voss':[name+' was projected for '+proj.toFixed(1)+' and produced '+shown+'. '+(down?'The projection miss gives Week 3 a clear performance benchmark.':'The player exceeded the immediate expectation.')]
+   'walter-mercer':[
+    name+' was projected for '+proj.toFixed(1)+' and finished at '+shown+'. '+(down?'Missing by '+gap+' gives me something concrete to complain about.':'The result cleared the expectation.'),
+    'The pregame number for '+name+' was '+proj.toFixed(1)+'; the final fantasy output was '+shown+'. '+(down?'That miss is large enough to remember.':'At least the forecast was not generous.'),
+    name+' entered Week 2 at '+proj.toFixed(1)+' projected points and left with '+shown+'. '+(down?'The gap belongs on the Week 3 checklist.':'The expectation survived contact with reality.'),
+    'Projection: '+proj.toFixed(1)+'. Result: '+shown+' for '+name+'. '+(down?'I dislike the order of those numbers.':'That comparison is acceptable.')
+   ],
+   'tess-delaney':[
+    name+' entered with a '+proj.toFixed(1)+' projection and left with '+shown+'. '+(down?'Expectations were treated with appalling disrespect.':'The number behaved, which I appreciate.'),
+    'The forecast offered '+proj.toFixed(1)+' for '+name+'; Sunday returned '+shown+'. '+(down?'That is a disappointing exchange rate.':'For once, reality dressed better than expectation.'),
+    name+' was expected at '+proj.toFixed(1)+' and produced '+shown+'. '+(down?'The shortfall is ugly enough to keep.':'The result exceeded the invitation.'),
+    'A '+proj.toFixed(1)+' projection met a '+shown+' reality for '+name+'. '+(down?'Reality arrived underdressed.':'Reality finally had better taste.')
+   ],
+   'mack-hollis':[
+    name+' was projected at '+proj.toFixed(1)+' and posted '+shown+'. '+(down?'That miss is why the hot seat has a name on it.':'Projection cleared. Complaint temporarily reduced.'),
+    'Pregame said '+proj.toFixed(1)+' for '+name+'. Postgame says '+shown+'. '+(down?'That is a loss of '+gap+' points and all my patience.':'Good. Beat the number and move on.'),
+    name+' entered at '+proj.toFixed(1)+' expected points and finished at '+shown+'. '+(down?'The forecast was optimistic; the production was the problem.':'The expectation got handled.'),
+    'The number before kickoff was '+proj.toFixed(1)+' for '+name+'; the number after was '+shown+'. '+(down?'Guess which one makes people angry.':'No complaint required.')
+   ],
+   'nora-voss':[
+    name+' was projected for '+proj.toFixed(1)+' and produced '+shown+'. '+(down?'The miss gives Week 3 a clear performance benchmark.':'The player exceeded the immediate expectation.'),
+    'The Week 2 expectation for '+name+' was '+proj.toFixed(1)+'; the result was '+shown+'. '+(down?'The gap is large enough to investigate.':'The expectation was met or bettered.'),
+    name+' entered at '+proj.toFixed(1)+' projected points and closed at '+shown+'. '+(down?'Usage and matchup are the next variables to inspect.':'The immediate baseline held.'),
+    'Projection and result for '+name+': '+proj.toFixed(1)+' versus '+shown+'. '+(down?'The difference is material.':'There is no shortfall to explain.')
+   ]
   };return pick(banks[id]||banks['walter-mercer'],seed);
  }
  if(Number.isFinite(w1)){
@@ -767,19 +915,27 @@ function buildValue(t,id){
   const banks={
    'walter-mercer':[
     tm+' sits at '+Math.round(value)+' in roster value after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Useful information, but I have lived through enough price swings to know a number can change its mind.',
-    'The market values '+tm+' at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I care more about whether the football gives the market a reason to stay there.'
+    'The market values '+tm+' at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I care more about whether the football gives the market a reason to stay there.',
+    tm+' now sits at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Price is useful; permanence is another question.',
+    'Roster value puts '+tm+' at '+Math.round(value)+', a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I will let the next Sunday decide how much of that move deserves trust.'
    ],
    'tess-delaney':[
     'The market prices '+tm+' at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I adore a dramatic repricing provided nobody mistakes it for divine truth.',
-    'The market has '+tm+' at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Prices are useful; worship is tacky.'
+    'The market has '+tm+' at '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Prices are useful; worship is tacky.',
+    tm+' is valued at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. A dramatic number is entertaining; a dramatic number that lasts is much prettier.',
+    'Value now reads '+Math.round(value)+' for '+tm+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. I enjoy the movement and reserve the right to mock anyone who calls it destiny.'
    ],
    'mack-hollis':[
     'The market values '+tm+' at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Good. Now make the football justify the number.',
-    'The market moved '+tm+' '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+' to '+Math.round(value)+'. That is real movement, not a reason to start engraving anything.'
+    'The market moved '+tm+' '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+' to '+Math.round(value)+'. That is real movement, not a reason to start engraving anything.',
+    tm+' checks in at '+Math.round(value)+' after a '+dir+' move of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Fine. Make the football justify it.',
+    'Roster value says '+Math.round(value)+' for '+tm+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. Numbers move; winning is still the part people remember.'
    ],
    'nora-voss':[
     tm+' now carries a roster value of '+Math.round(value)+', '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The move is useful context; it is not a verdict on the roster.',
-    'The market prices '+tm+' at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The next question is what underlying player changes caused it.'
+    'The market prices '+tm+' at '+Math.round(value)+' after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The next question is what underlying player changes caused it.',
+    tm+' carries a '+Math.round(value)+' roster value after moving '+dir+' '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. The movement matters; the cause matters more.',
+    'Current roster value is '+Math.round(value)+' for '+tm+', a '+dir+' change of '+Math.abs(Math.round(delta))+(pctText?' ('+pctText+')':'')+'. That is enough movement to track without pretending it settles the roster’s quality.'
    ]
   };
   rows.push(pick(banks[id]||banks['walter-mercer'],seed));
@@ -809,23 +965,33 @@ function buildSentiment(t,id){return sentimentLines(t,id);}
 function projectionLine(t,id){
  const own=Number(t?.next_projected),opp=Number(t?.next_opponent_projected);
  if(!Number.isFinite(own)||!Number.isFinite(opp))return'';
- const tm=String(t.team_name||'This team'),op=String(t.next_opponent_name||'the opponent'),edge=Math.abs(own-opp).toFixed(1),fav=own===opp?'':(own>opp?tm:op),seed=key(t)+'|projection|'+id;
+ const tm=String(t.team_name||'This team'),op=String(t.next_opponent_name||'the opponent'),edge=Math.abs(own-opp).toFixed(1),fav=own===opp?'':(own>opp?tm:op),seed=key(t)+'|projection|'+id,
+  a=own.toFixed(1),b=opp.toFixed(1);
+ const even='The matchup is dead even on paper.';
  const banks={
   'walter-mercer':[
-   'Week 3 projects '+tm+' at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even on paper.':'The numbers give '+fav+' a '+edge+'-point edge.')+' Projections are useful right up until actual players begin behaving like actual players.',
-   tm+' enters Week 3 at '+own.toFixed(1)+' projected points versus '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Nothing separates them.':'The projection gives '+fav+' a '+edge+'-point edge.')+' I will believe the forecast after the roster earns it.'
+   'Week 3 has '+tm+' at '+a+' and '+op+' at '+b+'. '+(own===opp?even:'That makes '+fav+' the projection favorite by '+edge+' points.')+' I have watched enough Sundays to know the decimal points do not get helmets.',
+   tm+' carries a '+a+' projection into '+op+', which sits at '+b+'. '+(own===opp?even:fav+' owns the projected edge at '+edge+'.')+' Fine. Earn it.',
+   'The forecast reads '+tm+' '+a+', '+op+' '+b+'. '+(own===opp?'No projected edge at all.':fav+' is favored by '+edge+' points.')+' I will trust the favorite after the favorite does something useful with it.',
+   'For Week 3, the board gives '+tm+' '+a+' and '+op+' '+b+'. '+(own===opp?even:'The edge belongs to '+fav+' by '+edge+'.')+' Numbers may set expectations; players still have to survive Sunday.'
   ],
   'tess-delaney':[
-   'The Week 3 projection puts '+tm+' at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The arithmetic is indecently even.':'The numbers give '+fav+' a '+edge+'-point edge.')+' I enjoy a favorite most when it has the manners to prove the point.',
-   'The Week 3 numbers are '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'Perfectly even. How dull.':'The numbers give '+fav+' a '+edge+'-point edge.')+' Sunday may now attempt to be more interesting than arithmetic.'
+   tm+' enters Week 3 at '+a+' against '+op+' at '+b+'. '+(own===opp?even:'The projection favorite is '+fav+' by '+edge+'.')+' I enjoy confidence much more when it has the manners to become true.',
+   'The Week 3 forecast is '+tm+' '+a+' to '+op+' '+b+'. '+(own===opp?'Deliciously dead even.':fav+' carries a '+edge+'-point edge.')+' Sunday may now decide whether arithmetic deserves applause or ridicule.',
+   'On paper, '+tm+' gets '+a+' and '+op+' gets '+b+'. '+(own===opp?'There is no favorite here.':fav+' is favored by '+edge+'.')+' A favorite is just a future embarrassment until proven otherwise.',
+   'The numbers place '+tm+' at '+a+' and '+op+' at '+b+'. '+(own===opp?even:'That leaves '+fav+' with the edge, '+edge+' points wide.')+' I expect the game to have the decency to be less tidy.'
   ],
   'mack-hollis':[
-   'Week 3 projects '+tm+' at '+own.toFixed(1)+' and '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'Dead even.':'The projection gives '+fav+' the edge by '+edge+'.')+' If the favorite blows that edge, I promise to be extremely normal about it.',
-   'The projection gives '+tm+' '+own.toFixed(1)+' points and '+op+' '+opp.toFixed(1)+'. '+(own===opp?'No edge.':'The projection gives '+fav+' the edge by '+edge+'.')+' Now go play the game before the numbers get smug.'
+   'Week 3 starts with '+tm+' at '+a+' and '+op+' at '+b+'. '+(own===opp?even:fav+' is favored by '+edge+'.')+' Blow the edge and I will not be subtle about it.',
+   tm+' gets '+a+' on the forecast; '+op+' gets '+b+'. '+(own===opp?'No edge. Nobody gets to hide.':'The projected edge goes to '+fav+' by '+edge+'.')+' Now play football before the decimals get cocky.',
+   'The board says '+tm+' '+a+', '+op+' '+b+'. '+(own===opp?'Dead even.':fav+' is the favorite by '+edge+' points.')+' If that favorite face-plants, the jokes write themselves.',
+   'Pregame math gives '+tm+' '+a+' and '+op+' '+b+'. '+(own===opp?even:'That gives '+fav+' a '+edge+'-point edge.')+' Good. Somebody now has something specific to blow.'
   ],
   'nora-voss':[
-   'The projection puts '+tm+' at '+own.toFixed(1)+' against '+op+' at '+opp.toFixed(1)+'. '+(own===opp?'The matchup is level.':'The numbers give '+fav+' a '+edge+'-point edge.')+' The projection establishes expectation, not outcome.',
-   'The Week 3 expectation is '+tm+' '+own.toFixed(1)+', '+op+' '+opp.toFixed(1)+'. '+(own===opp?'No projected separation.':'The numbers give '+fav+' a '+edge+'-point edge.')+' A miss of that size would deserve a postgame explanation.'
+   'Week 3 projects '+tm+' at '+a+' and '+op+' at '+b+'. '+(own===opp?even:fav+' has a '+edge+'-point edge.')+' The expectation is clear; the result will tell us whether it was useful.',
+   tm+' is forecast at '+a+' against '+op+' at '+b+'. '+(own===opp?'No projection favorite exists.':'The favorite is '+fav+' by '+edge+' points.')+' That creates a concrete benchmark without pretending the game is settled.',
+   'The expected totals are '+tm+' '+a+' and '+op+' '+b+'. '+(own===opp?even:'The projected edge belongs to '+fav+' at '+edge+'.')+' A miss large enough to reverse that advantage deserves explanation afterward.',
+   'For Week 3, '+tm+' sits at '+a+' and '+op+' at '+b+'. '+(own===opp?'The projection is dead even.':fav+' is favored by '+edge+'.')+' That is the standard the actual result will be measured against.'
   ]
  };
  return pick(banks[id]||banks['walter-mercer'],seed);
@@ -837,24 +1003,33 @@ function scheduleStretchLine(t,id){
  const names=later.map(x=>String(x?.team_name||'the next opponent')).filter(Boolean),joined=names.length===1?names[0]:names.slice(0,-1).join(', ')+' and '+names.at(-1),seed=key(t)+'|stretch|'+id;
  const banks={
   'walter-mercer':[
-   'After Week 3, '+joined+' are waiting. Bank the upcoming game and I can complain about that difficulty level later instead of calling it recovery work.',
-   'Week 3 comes first; then '+joined+'. Handle the game in front of you and the difficulty level behind it becomes planning instead of damage control.'
+   'After Week 3, '+joined+' are waiting. Win first and complain about the difficulty later.',
+   'Week 3 comes first; '+joined+' follow. Handle the immediate job before borrowing trouble from the calendar.',
+   joined+' sit beyond the next game. I would prefer '+t.team_name+' earn the right to worry about them by winning the one directly in front of it.',
+   'The schedule turns to '+joined+' after Week 3. That stretch looks much less irritating if the next result is already in the bank.'
   ],
   'tess-delaney':[
-   'After Week 3 come '+joined+'. Win now and that difficulty level becomes suspense; lose and it becomes penance.',
-   'Week 3 gets the stage first, with '+joined+' waiting behind it. Bank this one and the difficulty level of the next stretch feels considerably less vulgar.'
+   'After Week 3 come '+joined+'. Win now and that stretch becomes suspense; lose and it becomes penance.',
+   joined+' wait behind the next matchup. I would rather meet them with momentum than with another week of wounded explanations.',
+   'The calendar puts '+joined+' after Week 3. How vulgar of it. '+t.team_name+' can make the sequence prettier by winning first.',
+   'Week 3 gets the stage; '+joined+' are already waiting in the wings. One good result turns dread into drama, which is much more attractive.'
   ],
   'mack-hollis':[
-   'After Week 3: '+joined+'. Bank the next win and whatever difficulty level follows becomes their problem instead of tomorrow’s apology headline.',
-   'Week 3 is the first headline; '+joined+' are the next two. Handle this one and the difficulty level behind it does not get to become a crisis graphic.'
+   'After Week 3: '+joined+'. Bank the next win and make the later problem wait its turn.',
+   joined+' are the next two names after this week. Fix the immediate mess before the schedule gets ambitious.',
+   'Week 3 first, then '+joined+'. Anybody looking ahead before handling the next game is volunteering for a very stupid lesson.',
+   'The schedule serves '+joined+' after Week 3. Win now, because “we knew the hard stretch was coming” is an awful excuse and I refuse to print it.'
   ],
   'nora-voss':[
-   'After Week 3, the schedule moves to '+joined+'. Win now; the difficulty level of that stretch is easier to investigate from a position of leverage.',
-   'Week 3 is the immediate matchup, with '+joined+' queued behind it. Bank the result now and the difficulty level of the next stretch cannot be used as an alibi.'
+   'After Week 3, the schedule moves to '+joined+'. The next result determines whether that stretch begins from leverage or recovery.',
+   joined+' follow the immediate matchup. The practical goal is simple: enter that stretch with fewer unresolved problems than the roster has today.',
+   'Week 3 is the near-term test; '+joined+' come after it. Success now changes the pressure attached to both later games.',
+   'The next two opponents after Week 3 are '+joined+'. That sequence matters, but only after the current weaknesses get a response.'
   ]
  };
- return voiceShade(t,'stretch|'+id,pick(banks[id]||banks['walter-mercer'],seed));
+ return pick(banks[id]||banks['walter-mercer'],seed);
 }
+
 function divisionOutlookLine(t,id){
  const tm=String(t?.team_name||'This team'),op=String(t?.next_opponent_name||'the opponent'),own=t?.division_context||{},next=t?.next_opponent_division_context||{},nr=t?.next_opponent_context?.record||{},
   nw=Number(nr.wins)||0,nl=Number(nr.losses)||0,ownName=String(own?.division_name||''),nextName=String(next?.division_name||''),leaders=(own?.leaders||[]).filter(x=>x?.team_name),
@@ -1019,14 +1194,14 @@ function diversifyRepeatedReporterSentences(teams){
  return teams;
 }
 
-function editorialEscapeRe(value){return String(value||'').replace(/[.*+?^$()|[\]\\]/g,'\\function recapReaction(id,seed,offset=0){')}
+function editorialEscapeRe(value){return String(value||'').replace(/[.*+?^${}()|[\]\\]/g,'\\function editorialEscapeRe(value){return String(value||'').replace(/[.*+?^$()|[\]\\]/g,'\\function recapReaction(id,seed,offset=0){')}')}
 function reporterTemplateFingerprint(sentence,entities){
  let x=String(sentence||'').trim();
  const nums=(x.match(/\b\d+(?:\.\d+)?%?\b/g)||[]).length;
  if(nums>=2&&/\b(?:targets?|carries|yards?|touchdowns?|passes?|completed|tackles?|solo|assists?|sacks?|snaps?|interceptions?|TFL|QB hits?|receptions?)\b/i.test(x))return null;
  for(const entity of entities)x=x.replace(new RegExp(editorialEscapeRe(entity),'gi'),'[ENTITY]');
  x=x.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,'[#]').replace(/\s+/g,' ').trim();
- return editorialWordCount(x)>=8?x:null;
+ return editorialWordCount(x)>=5?x:null;
 }
 function diversifyReporterTemplates(teams){
  const entities=[...new Set((teams||[]).flatMap(t=>[

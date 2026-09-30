@@ -147,7 +147,7 @@ function ledeLines(t,id){
    'The record for '+tm+' is '+rec+'. Keep winning and I will keep making the type bigger; it is a healthy arrangement.',
    'The '+rec+' start has bought '+tm+' one week of swagger. Waste it and I will be delighted to become unbearable in the other direction.'
   ]:[
-   'The record for '+tm+' is '+rec+'. The emergency glass is not broken yet, but somebody has already put a chair under it.',
+   'The record for '+tm+' is '+rec+'. Nobody needs to declare a crisis yet, but another Sunday like this will make restraint look ridiculous.',
    'A '+rec+' start means the jokes no longer need imagination. The team has been writing them for us.'
   ],
   'nora-voss':won?[
@@ -1089,169 +1089,22 @@ function reviseTeam(t){
  return t;
 }
 
-function editorialWordCount(s){return(String(s||'').match(/\b[\w’'-]+\b/g)||[]).length}
-function reporterVariationClause(t,id,salt=''){
- const banks={
-  'walter-mercer':[
-   'I have heard enough excuses already',
-   'that buys exactly one quiet Monday',
-   'I am keeping my skepticism handy',
-   'I will complain again if it repeats',
-   'fine, prove it again',
-   'I have seen worse, which is not praise',
-   'somebody can explain it after they fix it',
-   'I am not grading this on a curve',
-   'one decent Sunday does not buy immunity',
-   'I would prefer not to learn this lesson twice',
-   'that is enough optimism for one week',
-   'I am not calling the problem solved',
-   'the praise can stay modest for now',
-   'I will remember this the next time patience is requested',
-   'competence remains the easiest way to silence me',
-   'that answer gets one week before I ask again'
-  ],
-  'tess-delaney':[
-   'I refuse to make that sound prettier',
-   'bad football does not become elegant through wording',
-   'that deserves boos, not euphemisms',
-   'some ugliness should be allowed to remain ugly',
-   'I dislike it on aesthetic grounds too',
-   'good taste cannot rescue bad football',
-   'I would like a prettier sequel',
-   'mercifully, embarrassment is still free',
-   'I am not dressing that failure for dinner',
-   'the performance has already offended decorum enough',
-   'I would rather be dramatic than dishonest about it',
-   'there is no tasteful version of that number',
-   'the football was rude before I was',
-   'I am declining the invitation to be polite',
-   'that deserves a better sequel, not a softer adjective',
-   'if it was ugly, the sentence may say so'
-  ],
-  'mack-hollis':[
-   'score more and I will shut up',
-   'the scoreboard was rude first',
-   'somebody fix it before I get louder',
-   'you cannot sue arithmetic',
-   'I am not lowering my voice for that',
-   'bad football earned bad manners',
-   'do better and ruin my material',
-   'that deserved every boo it got',
-   'the easiest rebuttal is scoring more points',
-   'I am not apologizing for laughing at that',
-   'some numbers arrive pre-roasted',
-   'the team can end the joke by playing better',
-   'I did not make the scoreboard this mean',
-   'that is exactly as ridiculous as it sounds',
-   'fix it and I lose the punchline, everybody wins',
-   'the volume matches the failure'
-  ],
-  'nora-voss':[
-   'the number already makes the case',
-   'management has a specific decision now',
-   'that belongs on the Week 3 checklist',
-   'the roster owns the correction',
-   'the comparison is clear enough',
-   'the lineup has one obvious question',
-   'there is no mystery left in the problem',
-   'the next game can answer it directly',
-   'the football has narrowed the issue for us',
-   'the weak spot is specific enough to track',
-   'there is a measurable correction available',
-   'the next lineup can show whether anything changed',
-   'the concern does not need decoration',
-   'the decision is concrete now',
-   'the result gives management something usable to fix',
-   'the next game will tell us whether the correction held'
-  ]
- };
- const bank=banks[id]||banks['walter-mercer'],ridNum=Math.max(1,Number(t?.roster_id)||1),
-  idx=((ridNum*7)+hash(String(salt)))%bank.length;
- return bank[idx];
-}
-
-function diversifyRepeatedReporterSentences(teams){
- const counts=new Map();
- for(const t of teams||[])for(const sec of t?.inquirer_article?.sections||[])for(const p of sec?.paragraphs||[])for(const sentence of sentenceParts(p)){
-  const k=String(sentence||'').trim();if(editorialWordCount(k)<8)continue;
-  counts.set(k,(counts.get(k)||0)+1);
- }
- const repeated=new Set([...counts].filter(([,n])=>n>2).map(([k])=>k));
- if(!repeated.size)return teams;
- const seen=new Map();
- for(const t of teams||[]){
-  const a=t?.inquirer_article;if(!a)continue;const id=rid(t);
-  a.sections=(a.sections||[]).map((sec,si)=>({
-   ...sec,
-   paragraphs:(sec?.paragraphs||[]).map((p,pi)=>{
-    let changed=false;
-    const rewritten=sentenceParts(p).map((sentence,qi)=>{
-     const k=String(sentence||'').trim();if(!repeated.has(k))return k;
-     const n=seen.get(k)||0;seen.set(k,n+1);
-     if(n<2)return k;
-     changed=true;
-     const end=(k.match(/[.!?]$/)||['.'])[0],body=k.replace(/[.!?]$/,'').trim(),
-      clause=reporterVariationClause(t,id,String(sec?.kind||'')+'|'+si+'|'+pi+'|'+qi);
-     return body+'; '+clause+end;
-    }).join(' ');
-    return changed?rewritten:p;
-   })
-  }));
-  a.paragraphs=a.sections.flatMap(sec=>(sec?.paragraphs||[]).filter(Boolean));
- }
- return teams;
-}
-
-function editorialEscapeRe(value){return String(value||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
-function reporterTemplateFingerprint(sentence,entities){
- let x=String(sentence||'').trim();
- const nums=(x.match(/\b\d+(?:\.\d+)?%?\b/g)||[]).length;
- if(nums>=2&&/\b(?:targets?|carries|yards?|touchdowns?|passes?|completed|tackles?|solo|assists?|sacks?|snaps?|interceptions?|TFL|QB hits?|receptions?)\b/i.test(x))return null;
- for(const entity of entities)x=x.replace(new RegExp(editorialEscapeRe(entity),'gi'),'[ENTITY]');
- x=x.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,'[#]').replace(/\s+/g,' ').trim();
- return editorialWordCount(x)>=5?x:null;
-}
-function diversifyReporterTemplates(teams){
- const entities=[...new Set((teams||[]).flatMap(t=>[
-  t?.team_name,t?.opponent_name,t?.next_opponent_name,t?.manager_name,
-  ...(t?.starter_details||[]).map(p=>p?.name),
-  ...(t?.opponent_roster?.starters||t?.opponent_roster?.players||[]).map(p=>p?.name),
-  ...(t?.next_opponent_roster?.starters||t?.next_opponent_roster?.players||[]).map(p=>p?.name)
- ]).filter(Boolean).map(x=>String(x).trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
- const placements=new Map();
- for(const t of teams||[]){
-  const seenHere=new Set();
-  for(const sec of t?.inquirer_article?.sections||[])for(const p of sec?.paragraphs||[])for(const sentence of sentenceParts(p)){
-   const fp=reporterTemplateFingerprint(sentence,entities);if(!fp||seenHere.has(fp))continue;seenHere.add(fp);
-   placements.set(fp,(placements.get(fp)||0)+1);
-  }
- }
- const offenders=new Set([...placements].filter(([,n])=>n>3).map(([fp])=>fp));
- if(!offenders.size)return teams;
- const used=new Map();
- for(const t of teams||[]){
-  const a=t?.inquirer_article;if(!a)continue;const id=rid(t),seenHere=new Set();
-  a.sections=(a.sections||[]).map((sec,si)=>({
-   ...sec,
-   paragraphs:(sec?.paragraphs||[]).map((p,pi)=>{
-    let changed=false;
-    const rewritten=sentenceParts(p).map((sentence,qi)=>{
-     const fp=reporterTemplateFingerprint(sentence,entities),key=String(sentence||'').trim();
-     if(!fp||!offenders.has(fp)||seenHere.has(fp))return key;
-     seenHere.add(fp);
-     const n=used.get(fp)||0;used.set(fp,n+1);
-     if(n<3)return key;
-     changed=true;
-     const end=(key.match(/[.!?]$/)||['.'])[0],body=key.replace(/[.!?]$/,'').trim(),
-      clause=reporterVariationClause(t,id,'template|'+String(sec?.kind||'')+'|'+si+'|'+pi+'|'+qi);
-     return body+'; '+clause+end;
-    }).join(' ');
-    return changed?rewritten:p;
-   })
-  }));
-  a.paragraphs=a.sections.flatMap(sec=>(sec?.paragraphs||[]).filter(Boolean));
- }
- return teams;
+function dedupeArticleSentences(t){
+ const a=t?.inquirer_article;if(!a)return t;
+ const seen=new Set();
+ a.sections=(a.sections||[]).map(sec=>({
+  ...sec,
+  paragraphs:(sec?.paragraphs||[]).map(p=>{
+   const kept=sentenceParts(p).filter(sentence=>{
+    const key=String(sentence||'').replace(/\s+/g,' ').trim().toLowerCase();
+    if(!key||seen.has(key))return false;
+    seen.add(key);return true;
+   });
+   return kept.join(' ').trim();
+  }).filter(Boolean)
+ }));
+ a.paragraphs=a.sections.flatMap(sec=>(sec?.paragraphs||[]).filter(Boolean));
+ return t;
 }
 
 function recapReaction(id,seed,offset=0){
@@ -1449,9 +1302,7 @@ function reviseOverview(o,teams){
 export function applyWeek2EditorialR16(raw){
  if(!raw||Number(raw.season)!==2026||Number(raw.week)!==2)return raw;
  const out=clone(raw);
- out.teams=(out.teams||[]).map(reviseTeam);
- out.teams=diversifyRepeatedReporterSentences(out.teams);
- out.teams=diversifyReporterTemplates(out.teams);
+ out.teams=(out.teams||[]).map(reviseTeam).map(dedupeArticleSentences);
  out.league_overview=reviseOverview(out.league_overview,out.teams);
  out.editorial_revision=WEEK2_EDITORIAL_REVISION;
  out.voice_revision='week2-r16';

@@ -16,22 +16,22 @@ old_joke=""" const joke=teamJokeR18(t,id,kind,x,index);
 new_joke=""" const tm=String(t?.team_name||'This team');
  const guaranteed={
   'walter-mercer':{
-   'players:1':tm+' can keep the good number. The complaint desk is closed for this player, which may be the nicest thing I say all week.',
-   'players:3':'A useful Sunday from '+tm+' buys applause and one quiet Monday. I am not promising Tuesday.',
+   'players:1':tm+' can keep the good number. The '+tm+' complaint desk is closed for this player, which may be the nicest thing I say all week.',
+   'players:3':'A useful Sunday from '+tm+' buys applause and one quiet Monday. I am not promising '+tm+' gets Tuesday too.',
    'management:0':'Leaving useful points on the bench is how '+tm+' turns a lineup decision into a Monday regret with its own mailing address.',
    'sentiment:1':tm+' supporters have already paid in blood pressure; asking them for quiet patience feels greedy.',
-   'outlook:1':'The projection can keep its brochure. '+tm+' still has to survive the actual Sunday.'
+   'outlook:1':tm+' can let the projection keep its brochure; the actual Sunday still has to be survived.'
   },
   'mack-hollis':{
-   'players:1':'That stat line arrived with a spotlight and absolutely no interest in subtlety. I respect the commitment to theater.',
+   'players:1':'That '+tm+' stat line arrived with a spotlight and absolutely no interest in subtlety. I respect '+tm+' for committing to the theater.',
    'management:0':tm+' made one lineup decision feel expensive enough to deserve its own orchestra.',
-   'sentiment:1':'The crowd has chosen emotional excess. Finally, some sensible decision-making around '+tm+'.',
-   'outlook:1':'The projection has arrived in formalwear. Football is already reaching for the dimmer switch.'
+   'sentiment:1':'The '+tm+' crowd has chosen emotional excess. Finally, some sensible decision-making around '+tm+'.',
+   'outlook:1':'The '+tm+' projection has arrived in formalwear. Football around '+tm+' is already reaching for the dimmer switch.'
   },
   'nora-voss':{
-   'players:1':'The scoreboard already finished this argument. Management can stop requesting another committee meeting.',
-   'management:0':'That lineup mistake is obvious enough to require a diagram only if management plans to frame it.',
-   'sentiment:1':tm+' supporters have located the problem. The scoreboard even highlighted it for management.',
+   'players:1':'The '+tm+' scoreboard already finished this argument. '+tm+' management can stop requesting another committee meeting.',
+   'management:0':tm+' made the lineup mistake obvious enough to require a diagram only if management plans to frame it.',
+   'sentiment:1':tm+' supporters have located the problem. The '+tm+' scoreboard even highlighted it for management.',
    'outlook:1':'The projection is confident enough to become embarrassing if '+tm+' trips over its own lineup again.'
   }
  };

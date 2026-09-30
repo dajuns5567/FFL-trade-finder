@@ -1237,8 +1237,9 @@ function reviseOverview(o,teams){
   const id=String(s?.reporter?.id||''),seed='recap|'+id+'|'+i;
   const chosen=chooseRecap(s.paragraphs,id);
   const core=id==='walter-mercer'?[...chosen.slice(0,5),...categoryLines]:chosen;
-  const depth=recapDepthLine(id,teams),expansion=recapDeskExpansion(id,teams);
-  const paragraphs=uniq([...core,depth,expansion,recapReaction(id,seed,0),recapReaction(id,seed,1)]).slice(0,10);
+  const depth=recapDepthLine(id,teams),expansion=recapDeskExpansion(id,teams),
+   developedDepth=[depth,expansion].filter(Boolean).join(' ');
+  const paragraphs=uniq([...core,developedDepth,recapReaction(id,seed,0),recapReaction(id,seed,1)]).slice(0,10);
   return{...s,paragraphs};
  });
  if(Array.isArray(o.hot_takes)){

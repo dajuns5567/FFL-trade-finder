@@ -7,9 +7,9 @@ const revised=applyWeek2EditorialR16(rawWeek2);
 
 assert.equal(Number(rawWeek2?.season),2026);
 assert.equal(Number(rawWeek2?.week),2);
-assert.equal(Number(WEEK2_EDITORIAL_REVISION),16);
-assert.equal(Number(revised?.editorial_revision),16);
-assert.equal(revised?.voice_revision,'week2-r16');
+assert.equal(Number(WEEK2_EDITORIAL_REVISION),17);
+assert.equal(Number(revised?.editorial_revision),17);
+assert.equal(revised?.voice_revision,'week2-r17');
 assert.equal(JSON.stringify(rawWeek2),rawSnapshot,'Revision layer must not mutate the locked raw Week 2 preload');
 
 const rawTeams=new Map((rawWeek2?.teams||[]).map(t=>[String(t.roster_id),t]));
@@ -41,8 +41,8 @@ for(const t of revisedTeams){
  assert(before,'Missing raw team '+t.roster_id);
  assert.deepEqual(stripArticle(t),stripArticle(before),'Non-article Week 2 facts changed for '+t.team_name);
  assert.deepEqual(stripArticleProse(t.inquirer_article),stripArticleProse(before.inquirer_article),'Article metadata/facts changed outside prose for '+t.team_name);
- assert.equal(Number(t?.inquirer_article?.editorial_revision),16,'Article revision missing for '+t.team_name);
- assert.equal(t?.inquirer_article?.voice_revision,'week2-r16','Article voice revision missing for '+t.team_name);
+ assert.equal(Number(t?.inquirer_article?.editorial_revision),17,'Article revision missing for '+t.team_name);
+ assert.equal(t?.inquirer_article?.voice_revision,'week2-r17','Article voice revision missing for '+t.team_name);
 
  const ps=paragraphs(t),text=ps.join(' '),sentences=sentenceParts(text);
  assert(ps.every(p=>typeof p==='string'),'Every Week 2 article paragraph must render as prose, not an array/object, for '+t.team_name);
@@ -105,8 +105,8 @@ assert(/-0\.2/.test(chiefsText),'Kansas City negative Week 2 team score must rem
 assert(/below zero|negative points|less than zero|argument against arithmetic|full roster worked|fantasy team poorer/i.test(chiefsText),'Tilly must react directly and sarcastically to Kansas City scoring -0.2 instead of using generic newsroom/app humor');
 
 const overview=revised?.league_overview||{};
-assert.equal(Number(overview.editorial_revision),16);
-assert.equal(overview.voice_revision,'week2-r16');
+assert.equal(Number(overview.editorial_revision),17);
+assert.equal(overview.voice_revision,'week2-r17');
 const overviewParagraphs=(overview.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(Boolean);
 const overviewText=overviewParagraphs.join(' ');
 assert(overviewParagraphs.length<=32,'Weekly recap still carries too much revision-14 body copy: '+overviewParagraphs.length);
@@ -114,6 +114,10 @@ assert(!PLAYER_SUPPORT_RE.test(overviewText),'Weekly recap still frames results 
 assert(!OLD_SCAFFOLD_RE.test(overviewText),'Weekly recap still contains old shared scaffolding');
 assert(!/current-player side an early performance problem to answer/i.test(overviewText),'Weekly recap still repeats current-player-side scaffold');
 assert(!/trade is attached to a roster that is still actively chasing something/i.test(overviewText),'Weekly recap still repeats active-roster trade scaffold');
+assert(!/\b(?:headline|back page|copy desk|newsroom|publication|typeface|evidence|verdict|exhibits?|case files?|folders?|receipts?|screenshots?|group chats?|rival chats?|rival threads?|memes?|apps?)\b/i.test(overviewText),'Weekly recap still leans on newsroom/file/tech crutches');
+const jeffersonText=revisedTeams.filter(t=>String(t?.inquirer_article?.reporter?.id||'')==='nora-voss').map(articleText).join(' ');
+assert(!/\b(?:strong production; now the role has to sustain it|the next game should tell us which Week 2 traits are structural and which were matchup noise|supporters have a measurable lineup decision to question|the useful standard .* materially reduce the Week 2 failure points)\b/i.test(jeffersonText),'Jefferson still contains the clinical prose called out by the Week 2 audit');
+
 
 for(const id of ['walter-mercer','tess-delaney','mack-hollis','nora-voss']){
  const sections=(overview.sections||[]).filter(s=>String(s?.reporter?.id||'')===id);

@@ -970,28 +970,28 @@ function projectionLine(t,id){
  const even='The matchup is dead even on paper.';
  const banks={
   'walter-mercer':[
-   'Week 3 has '+tm+' at '+a+' and '+op+' at '+b+'. '+(own===opp?even:'That makes '+fav+' the projection favorite by '+edge+' points.')+' I have watched enough Sundays to know the decimal points do not get helmets.',
-   tm+' carries a '+a+' projection into '+op+', which sits at '+b+'. '+(own===opp?even:fav+' owns the projected edge at '+edge+'.')+' Fine. Earn it.',
-   'The forecast reads '+tm+' '+a+', '+op+' '+b+'. '+(own===opp?'No projected edge at all.':fav+' is favored by '+edge+' points.')+' I will trust the favorite after the favorite does something useful with it.',
-   'For Week 3, the board gives '+tm+' '+a+' and '+op+' '+b+'. '+(own===opp?even:'The edge belongs to '+fav+' by '+edge+'.')+' Numbers may set expectations; players still have to survive Sunday.'
+   'The Week 3 board lists '+tm+' at '+a+' and '+op+' at '+b+'. '+(own===opp?even:'The projected edge goes to '+fav+' by '+edge+' points.')+' I have watched enough Sundays to know the decimal points do not get helmets.',
+   'The forecast sets '+tm+' at '+a+' versus '+op+' at '+b+'. '+(own===opp?even:'The numbers favor '+fav+', with a '+edge+'-point edge.')+' Fine. Earn it.',
+   'On paper: '+tm+' '+a+', '+op+' '+b+'. '+(own===opp?'No projected edge at all.':'The projection favorite is '+fav+', ahead by '+edge+'.')+' I will trust the favorite after the favorite does something useful with it.',
+   'For Week 3, the projection reads '+tm+' '+a+' and '+op+' '+b+'. '+(own===opp?even:'The edge belongs to '+fav+' by '+edge+' points.')+' Numbers may set expectations; players still have to survive Sunday.'
   ],
   'tess-delaney':[
-   tm+' enters Week 3 at '+a+' against '+op+' at '+b+'. '+(own===opp?even:'The projection favorite is '+fav+' by '+edge+'.')+' I enjoy confidence much more when it has the manners to become true.',
-   'The Week 3 forecast is '+tm+' '+a+' to '+op+' '+b+'. '+(own===opp?'Deliciously dead even.':fav+' carries a '+edge+'-point edge.')+' Sunday may now decide whether arithmetic deserves applause or ridicule.',
-   'On paper, '+tm+' gets '+a+' and '+op+' gets '+b+'. '+(own===opp?'There is no favorite here.':fav+' is favored by '+edge+'.')+' A favorite is just a future embarrassment until proven otherwise.',
-   'The numbers place '+tm+' at '+a+' and '+op+' at '+b+'. '+(own===opp?even:'That leaves '+fav+' with the edge, '+edge+' points wide.')+' I expect the game to have the decency to be less tidy.'
+   'The Week 3 projection lists '+tm+' at '+a+' against '+op+' at '+b+'. '+(own===opp?even:'The projection favorite is '+fav+', with a '+edge+'-point edge.')+' I enjoy confidence much more when it has the manners to become true.',
+   'The forecast reads '+tm+' '+a+' to '+op+' '+b+'. '+(own===opp?'Deliciously dead even.':'The projected edge goes to '+fav+' by '+edge+'.')+' Sunday may now decide whether arithmetic deserves applause or ridicule.',
+   'On paper: '+tm+' '+a+', '+op+' '+b+'. '+(own===opp?'There is no favorite here.':'The numbers favor '+fav+' by '+edge+' points.')+' A favorite is just a future embarrassment until proven otherwise.',
+   'The numbers place '+tm+' at '+a+' and '+op+' at '+b+'. '+(own===opp?even:'The edge belongs to '+fav+', '+edge+' points wide.')+' I expect the game to have the decency to be less tidy.'
   ],
   'mack-hollis':[
-   'Week 3 starts with '+tm+' at '+a+' and '+op+' at '+b+'. '+(own===opp?even:fav+' is favored by '+edge+'.')+' Blow the edge and I will not be subtle about it.',
-   tm+' gets '+a+' on the forecast; '+op+' gets '+b+'. '+(own===opp?'No edge. Nobody gets to hide.':'The projected edge goes to '+fav+' by '+edge+'.')+' Now play football before the decimals get cocky.',
-   'The board says '+tm+' '+a+', '+op+' '+b+'. '+(own===opp?'Dead even.':fav+' is the favorite by '+edge+' points.')+' If that favorite face-plants, the jokes write themselves.',
-   'Pregame math gives '+tm+' '+a+' and '+op+' '+b+'. '+(own===opp?even:'That gives '+fav+' a '+edge+'-point edge.')+' Good. Somebody now has something specific to blow.'
+   'The Week 3 board opens at '+tm+' '+a+' and '+op+' '+b+'. '+(own===opp?even:'The forecast favors '+fav+' by '+edge+' points.')+' Blow the edge and I will not be subtle about it.',
+   'The forecast gives '+tm+' '+a+' and '+op+' '+b+'. '+(own===opp?'No edge. Nobody gets to hide.':'The projected edge goes to '+fav+' by '+edge+'.')+' Now play football before the decimals get cocky.',
+   'The board says '+tm+' '+a+', '+op+' '+b+'. '+(own===opp?'Dead even.':'The projection favorite is '+fav+', with a '+edge+'-point edge.')+' If that favorite face-plants, the jokes write themselves.',
+   'Pregame math gives '+tm+' '+a+' and '+op+' '+b+'. '+(own===opp?even:'The numbers favor '+fav+' by '+edge+', so somebody now has something specific to blow.')+' Good.'
   ],
   'nora-voss':[
-   'Week 3 projects '+tm+' at '+a+' and '+op+' at '+b+'. '+(own===opp?even:fav+' has a '+edge+'-point edge.')+' The expectation is clear; the result will tell us whether it was useful.',
-   tm+' is forecast at '+a+' against '+op+' at '+b+'. '+(own===opp?'No projection favorite exists.':'The favorite is '+fav+' by '+edge+' points.')+' That creates a concrete benchmark without pretending the game is settled.',
+   'The Week 3 projection lists '+tm+' at '+a+' and '+op+' at '+b+'. '+(own===opp?even:'The edge goes to '+fav+' by '+edge+' points.')+' The expectation is clear; the result will tell us whether it was useful.',
+   'The forecast puts '+tm+' at '+a+' against '+op+' at '+b+'. '+(own===opp?'No projection favorite exists.':'The projection favorite is '+fav+', ahead by '+edge+'.')+' That creates a concrete benchmark without pretending the game is settled.',
    'The expected totals are '+tm+' '+a+' and '+op+' '+b+'. '+(own===opp?even:'The projected edge belongs to '+fav+' at '+edge+'.')+' A miss large enough to reverse that advantage deserves explanation afterward.',
-   'For Week 3, '+tm+' sits at '+a+' and '+op+' at '+b+'. '+(own===opp?'The projection is dead even.':fav+' is favored by '+edge+'.')+' That is the standard the actual result will be measured against.'
+   'For Week 3, the board reads '+tm+' '+a+' and '+op+' '+b+'. '+(own===opp?'The projection is dead even.':'The forecast favors '+fav+' by '+edge+' points.')+' That is the standard the actual result will be measured against.'
   ]
  };
  return pick(banks[id]||banks['walter-mercer'],seed);

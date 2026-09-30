@@ -25,6 +25,9 @@ jobs:
       - name: Expand deadpan punchline detector
         run: python scripts/week2-editorial-r18-fix.py
 
+      - name: Ensure Nick joke density
+        run: python scripts/week2-editorial-r18-density-fix.py
+
       - name: Run Week 2 editorial smoke
         run: node scripts/inquirer-week2-voice-r15-smoke.mjs
 

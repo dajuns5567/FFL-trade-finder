@@ -22,9 +22,17 @@ r20=replaceOnce(r20,
  'const out=applyWeek2EditorialR19Base(raw);',
  'R20 base call');
 r20=replaceOnce(r20,
+ 'That spread is why a win by itself tells you almost nothing about whether the offense was actually good.',
+ 'That spread is why a win by itself tells you almost nothing about whether the offense was actually good; the standings can keep the confetti.',
+ 'R20 Nick scoring-spread voice');
+r20=replaceOnce(r20,
+ 'Two games is early, but repeating the same scoring neighborhood twice is more useful than pretending every 1-1 or 2-0 record was built the same way.',
+ 'Two games is early, but repeating the same scoring neighborhood twice is more useful than early-season bragging built from one lucky matchup.',
+ 'R20 Nick consistency voice');
+r20=replaceOnce(r20,
  'Records matter. They also do not get permission to impersonate scoring quality.',
- 'Records matter, but they do not get permission to impersonate scoring quality.',
- 'R20 recap paragraph density');
+ 'Records matter, but letting them impersonate scoring quality is accounting in a cheap costume.',
+ 'R20 Jefferson record-quality voice');
 writeFileSync(r20Path,r20);
 
 const hubPath='netlify/functions/league-hub.mjs';

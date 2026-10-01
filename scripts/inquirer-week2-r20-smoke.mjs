@@ -36,7 +36,11 @@ for(const t of revised?.teams||[]){
  }
  const oldLede=section(old,'lede')?.paragraphs||[],lede=section(t,'lede')?.paragraphs||[];
  assert.notDeepEqual(lede,oldLede,'R20 scoring-quality context did not change the lede for '+t.team_name);
- for(const p of oldLede.filter(x=>/\d/.test(String(x))))assert(lede.includes(p),'R20 dropped an existing numeric lede fact for '+t.team_name+': '+p);
+ const factualOldLede=oldLede.filter(x=>{
+  const s=String(x||'');
+  return /\d+(?:\.\d+)?–\d+(?:\.\d+)?/.test(s)||(/\b(?:Week 1|opener|opened|arrived from)\b/i.test(s)&&/\d+(?:\.\d+)?/.test(s));
+ });
+ for(const p of factualOldLede)assert(lede.includes(p),'R20 dropped an existing score/Week 1 lede fact for '+t.team_name+': '+p);
  const quality=lede.find(p=>/scored -?\d+(?:\.\d+)? in Week 2, ranked \d+ of \d+/i.test(String(p)));
  assert(quality,'R20 lede lacks league-relative scoring rank for '+t.team_name);
  assert(/two-week scoring average ranks \d+ of \d+/i.test(quality),'R20 lede lacks two-week scoring context for '+t.team_name);

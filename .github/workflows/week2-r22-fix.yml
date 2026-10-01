@@ -29,7 +29,11 @@ jobs:
           node --check netlify/functions/league-hub.mjs
           node --check netlify/functions/inquirer-week2-editorial-r22.mjs
           node --check scripts/inquirer-v25-generated-audit.mjs
-      - name: Re-run all-32 R22 regression
+      - name: Preserve prior Week 2 regressions
+        run: |
+          node scripts/inquirer-week2-r20-smoke.mjs
+          node scripts/inquirer-week2-r21-smoke.mjs
+      - name: Run all-32 R22 repetition, humor, and tag regression
         run: node scripts/inquirer-week2-r22-smoke.mjs
       - name: Materialize R22 candidate
         run: |

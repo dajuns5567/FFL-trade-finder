@@ -29,6 +29,10 @@ r20=replaceOnce(r20,
  'Two games is early, but repeating the same scoring neighborhood twice is more useful than pretending every 1-1 or 2-0 record was built the same way.',
  'Two games is early, but repeating the same scoring neighborhood twice is more useful than early-season bragging built from one lucky matchup.',
  'R20 Nick consistency voice');
+const oldNoraNext="  s.next?p(`${s.next.name} carries the largest Week 3 projection gap at ${Math.abs(s.next-s.nextOpp).toFixed(1)} points after ranking ${s.next.rank} of ${count} in Week 2 scoring.`,`The projection creates an expectation. The last two Sundays decide how much trust that expectation deserves.`):''\n";
+r20=replaceOnce(r20,oldNoraNext,'','R20 remove old Jefferson projection paragraph');
+const newNoraNext="  s.next?p(`${s.next.name} projects at ${one(s.next.next)} against ${String(s.next.t?.next_opponent_name||'its next opponent')} at ${one(s.next.nextOpp)}, the largest Week 3 projection gap at ${Math.abs(s.next.next-s.next.nextOpp).toFixed(1)} points; ${s.next.name} ranked ${s.next.rank} of ${count} in Week 2 scoring.`,`The projection creates an expectation, but treating it as a result before kickoff is accounting with the game missing.`):'',\n";
+r20=replaceOnce(r20,' const nora=[\n',' const nora=[\n'+newNoraNext,'R20 lead Jefferson recap with verified matchup');
 r20=replaceOnce(r20,
  'Records matter. They also do not get permission to impersonate scoring quality.',
  'Records matter, but letting them impersonate scoring quality is accounting in a cheap costume.',

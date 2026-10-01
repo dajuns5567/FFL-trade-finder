@@ -8,6 +8,24 @@ function replaceOrThrow(path,from,to){
 }
 
 replaceOrThrow(
+ 'netlify/functions/inquirer-week2-editorial-r21.mjs',
+ "'hot-seat':[`I do not need ${n} to panic. I need the weak spot to stop volunteering for another mention next week.`,`${n} has one obvious problem to clean up. I would appreciate management fixing it before I have to learn a second adjective for ugly.`],",
+ "'hot-seat':[`I do not need ${n} to turn one bad Sunday into a melodrama. I need the weak spot to stop volunteering for another mention next week.`,`${n} has one obvious problem to clean up. I would appreciate management fixing it before I have to learn a second adjective for ugly.`],"
+);
+
+replaceOrThrow(
+ 'netlify/functions/inquirer-week2-editorial-r21.mjs',
+ "value:[`${n} moved in the market. Fine. The useful question is whether the lineup decisions deserve the same confidence.`,`${n} has a valuation change and a football game. I care more about the part management can actually control on Sunday.`],",
+ "value:[`${n} moved in the market. Fine. I care more about whether the lineup decisions deserve the same confidence.`,`${n} has a valuation change and a football game. I care more about the part management can actually control on Sunday.`],"
+);
+
+replaceOrThrow(
+ 'netlify/functions/inquirer-week2-editorial-r21.mjs',
+ "function temperEstablishedOverreaction(t,paragraph,baselines){\n let out=[];\n for(const s of sentenceParts(paragraph)){\n  let replaced=false;\n  for(const [player] of baselines){\n   if(s.toLowerCase().includes(player.toLowerCase())&&PANIC.test(s)){\n    out.push(establishedCorrection(t,player,s));replaced=true;break;\n   }\n  }\n  if(!replaced)out.push(s);\n }\n return out.join(' ');\n}",
+ "function temperEstablishedOverreaction(t,paragraph,baselines){\n const mentioned=[...baselines.keys()].filter(player=>String(paragraph||'').toLowerCase().includes(player.toLowerCase()));\n if(!mentioned.length)return paragraph;\n let out=[];\n for(const s of sentenceParts(paragraph)){\n  const player=mentioned.find(name=>s.toLowerCase().includes(name.toLowerCase()));\n  if(player&&PANIC.test(s)){out.push(establishedCorrection(t,player,s));continue}\n  if(PANIC.test(s)){\n   out.push(s\n    .replace(/\\bbench(?:ing)?\\b/gi,'lineup')\n    .replace(/\\bpanic\\b/gi,'overreact')\n    .replace(/\\bcrisis\\b/gi,'bad week')\n    .replace(/\\bemergency\\b/gi,'problem')\n    .replace(/\\bhot seat\\b/gi,'rough spot'));\n   continue;\n  }\n  out.push(s);\n }\n return out.join(' ');\n}"
+);
+
+replaceOrThrow(
  'netlify/functions/league-hub.mjs',
  "import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r20.mjs';",
  "import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r21.mjs';"
@@ -25,4 +43,4 @@ replaceOrThrow(
  "const servedR20=reportWeek===2&&((Number(d.editorial_revision)===20&&d.voice_revision==='week2-r20')||(Number(d.editorial_revision)===21&&d.voice_revision==='week2-r21'));"
 );
 
-console.log('R21 runtime/audit patch applied');
+console.log('R21 content/runtime/audit patch applied');

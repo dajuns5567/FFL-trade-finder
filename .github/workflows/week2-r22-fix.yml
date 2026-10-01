@@ -56,6 +56,12 @@ jobs:
           }
           for a,b in replacements.items():
               s=s.replace(a,b)
+          cleanup_anchor="x=x.replace(/found a player willing to carry a scene/gi,'found a player who owned the scene');"
+          cleanup_extra="x=x.replace(/; Week 2 landed at\\s+-?\\d+(?:\\.\\d+)?\\.?$/i,'.');\n x=x.replace(/; Week 2 produced\\s+-?\\d+(?:\\.\\d+)?\\.?$/i,'.');"
+          if cleanup_extra not in s:
+              if cleanup_anchor not in s:
+                  raise SystemExit('baseline dedupe anchor missing')
+              s=s.replace(cleanup_anchor,cleanup_anchor+'\n '+cleanup_extra,1)
           p.write_text(s)
           PY
       - name: Install generator dependency

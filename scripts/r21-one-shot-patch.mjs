@@ -38,6 +38,12 @@ replaceOrThrow(
 );
 
 replaceOrThrow(
+ 'scripts/inquirer-week2-r21-smoke.mjs',
+ "if((section(old,'players')?.paragraphs||[]).length>=12)assert(playerPs.length<=8,'R21 did not compact the repetitive player module for '+t.team_name+': '+playerPs.length);",
+ "const oldPlayerCount=(section(old,'players')?.paragraphs||[]).length;\n if(oldPlayerCount>=12)assert(playerPs.length<=Math.ceil(oldPlayerCount*0.75),'R21 did not compact the repetitive player module by at least 25% for '+t.team_name+': '+oldPlayerCount+' -> '+playerPs.length);"
+);
+
+replaceOrThrow(
  'netlify/functions/league-hub.mjs',
  "import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r20.mjs';",
  "import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r21.mjs';"

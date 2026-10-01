@@ -44,6 +44,18 @@ jobs:
               s=s.replace(old,new,1)
           elif new not in s:
               raise SystemExit('meaningfulLine return anchor missing')
+          replacements={
+            "The numbers describe the week. The decision-making tells me who actually learned anything.":"I want the numbers tied to a football consequence: the decision-making tells me who actually learned anything.",
+            "A record can hide a weak Sunday for a while. The scoring profile eventually collects the debt.":"I refuse to let a pretty record hide a weak Sunday; the scoring profile eventually collects the debt.",
+            "A pretty record is welcome; competent football remains considerably more attractive.":"I am happy to admire a pretty record, but competent football remains considerably more attractive.",
+            "The week produced drama for free. Any manager adding avoidable nonsense should at least bring champagne.":"I am already getting drama for free. Any manager adding avoidable nonsense should at least bring champagne.",
+            "The scoreboard closed the scene; the process still has lines to learn.":"The scoreboard closed the scene. I want the process to learn its lines before the next act.",
+            "The result changes the expectation: repeat the good process and remove the avoidable mistake.":"I want the result to change the expectation: repeat the good process and remove the avoidable mistake.",
+            "Scoring context matters because wins and losses can hide how well the lineup actually performed.":"I refuse to grade the lineup by the record alone; scoring context shows how well it actually performed.",
+            "The useful takeaway is the decision management can repeat or correct next week.":"I want one useful takeaway: identify the decision management should repeat or correct next week."
+          }
+          for a,b in replacements.items():
+              s=s.replace(a,b)
           p.write_text(s)
           PY
       - name: Install generator dependency

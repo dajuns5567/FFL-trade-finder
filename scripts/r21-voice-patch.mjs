@@ -48,7 +48,18 @@ const toEnsure=`function ensureVoice(t,sec){
  const ps=[...(sec?.paragraphs||[])].filter(Boolean),kind=String(sec?.kind||'');
  if(!ps.length)return ps;
  const targets=[];
- for(let i=0;i<ps.length;i+=3)targets.push(i);
+ if(kind==='outlook'){
+  const protectedRoad=ps.length>=2?ps.length-2:-1;
+  for(let i=0;i<ps.length;i+=3){
+   let idx=i;
+   if(idx===protectedRoad&&idx>0)idx-=1;
+   if(!targets.includes(idx))targets.push(idx);
+  }
+  const last=ps.length-1;
+  if(last>=0&&!targets.includes(last))targets.push(last);
+ }else{
+  for(let i=0;i<ps.length;i+=3)targets.push(i);
+ }
  let slot=0;
  for(const idx of targets){
   if(!VOICE_MARK.test(ps[idx]))ps[idx]=\`${'${ps[idx]}'} ${'${reporterVoiceLine(t,kind,slot++)}' }\`.trim();
@@ -78,7 +89,7 @@ const toFinal=` sections=dedupeArticleFacts(t,sections);
   const kind=String(sec?.kind||'');
   if(['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'].includes(kind)){
    const voiced=ensureVoice(t,sec).flatMap(p=>splitLongParagraph(p,82)).filter(Boolean);
-   return{...sec,paragraphs:fillVoiceGaps(t,{...sec,paragraphs:voiced})};
+   return{...sec,paragraphs:kind==='outlook'?voiced:fillVoiceGaps(t,{...sec,paragraphs:voiced})};
   }
   return sec;
  });
@@ -96,4 +107,4 @@ if(!smoke.includes(oldSmokeVoice))throw new Error('Expected smoke VOICE detector
 smoke=smoke.replace(oldSmokeVoice,newSmokeVoice);
 fs.writeFileSync(smokePath,smoke);
 
-console.log('R21 final voice-gap, natural voice detector, and established-player scoring fix applied');
+console.log('R21 final voice-gap, natural voice detector, established-player scoring, and outlook-road protection applied');

@@ -8,6 +8,32 @@ const newVoiceMark="const VOICE_MARK=/\\b(?:complaint|ridiculous|absurd|patience
 if(!text.includes(oldVoiceMark))throw new Error('Expected VOICE_MARK not found');
 text=text.replace(oldVoiceMark,newVoiceMark);
 
+const oldEstablished=`function establishedCorrection(t,player,sentence){
+ const id=reporterId(t),score=(sentence.match(/\\b-?\\d+(?:\\.\\d+)?\\b/)||[])[0],shown=score?\`${'${score}'} points\`:'the Week 2 number';
+ const banks={
+  'walter-mercer':\`${'${shown}'} from ${'${player}'} was bad. The established scoring record earns criticism without pretending one lousy Sunday erased the player.\`,
+  'tess-delaney':\`${'${shown}'} from ${'${player}'} was ugly. A proven scorer can have a rotten Sunday without management pretending one ugly game rewrote the résumé.\`,
+  'mack-hollis':\`${'${player}'} gave us ${'${shown}'}, and it was dreadful. The résumé is still too substantial for one bad scene to become a casting change.\`,
+  'nora-voss':\`${'${player}'} had a bad Week 2 at ${'${shown}'}. The established baseline says to fix the week, not invent a role crisis.\`
+ };
+ return banks[id]||banks['walter-mercer'];
+}`;
+const newEstablished=`function establishedCorrection(t,player,sentence){
+ const id=reporterId(t);
+ let m=String(sentence||'').match(/(-?\\d+(?:\\.\\d+)?)\\s+in Week 2/i);
+ if(!m)m=String(sentence||'').match(/Week 2[^0-9-]*(-?\\d+(?:\\.\\d+)?)/i);
+ const score=m?.[1]||null,shown=score?\`${'${score}'} points\`:'the bad Week 2 number';
+ const banks={
+  'walter-mercer':\`${'${shown}'} from ${'${player}'} was bad. The established scoring record earns criticism without pretending one lousy Sunday erased the player.\`,
+  'tess-delaney':\`${'${shown}'} from ${'${player}'} was ugly. A proven scorer can have a rotten Sunday without management pretending one ugly game rewrote the résumé.\`,
+  'mack-hollis':\`${'${player}'} gave us ${'${shown}'}, and it was dreadful. The résumé is still too substantial for one bad scene to become a casting change.\`,
+  'nora-voss':\`${'${player}'} had a bad Week 2 at ${'${shown}'}. The established baseline says to criticize the week without inventing a role controversy.\`
+ };
+ return banks[id]||banks['walter-mercer'];
+}`;
+if(!text.includes(oldEstablished))throw new Error('Expected establishedCorrection implementation not found');
+text=text.replace(oldEstablished,newEstablished);
+
 const fromEnsure=`function ensureVoice(t,sec){
  const ps=[...(sec?.paragraphs||[])].filter(Boolean),kind=String(sec?.kind||'');
  if(!ps.length)return ps;
@@ -70,4 +96,4 @@ if(!smoke.includes(oldSmokeVoice))throw new Error('Expected smoke VOICE detector
 smoke=smoke.replace(oldSmokeVoice,newSmokeVoice);
 fs.writeFileSync(smokePath,smoke);
 
-console.log('R21 final voice-gap guarantee and natural voice detector applied');
+console.log('R21 final voice-gap, natural voice detector, and established-player scoring fix applied');

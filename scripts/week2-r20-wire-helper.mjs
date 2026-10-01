@@ -14,6 +14,21 @@ r20=replaceOnce(r20,
  "import {applyWeek2EditorialR16 as applyWeek2EditorialR19Base} from './inquirer-week2-editorial-r19.mjs';",
  'R20 base import');
 r20=replaceOnce(r20,
+ "const teamName=t=>String(t?.team_name||'This team');",
+ `const teamName=t=>String(t?.team_name||'This team');
+const escapeGrammarRe=value=>String(value||'').replace(/[.*+?^\${}()|[\\]\\\\]/g,'\\\\$&');
+function fixPluralTeamGrammar(t,text){
+ const full=teamName(t).trim(),mascot=full.split(/\\s+/).filter(Boolean).at(-1)||'';
+ if(!full||!/s$/i.test(mascot))return String(text||'');
+ const re=new RegExp('(^|[.!?]\\\\s+)(?:'+escapeGrammarRe(full)+'|'+escapeGrammarRe(mascot)+')\\\\s+(is|has|gets|holds|brings|turns)\\\\b','gi');
+ const verbs={is:'are',has:'have',gets:'get',holds:'hold',brings:'bring',turns:'turn'};
+ return String(text||'').replace(re,(m,prefix,verb)=>{
+  const subject=m.slice(prefix.length,m.length-verb.length).trimEnd();
+  return prefix+subject+' '+(verbs[String(verb).toLowerCase()]||verb);
+ });
+}`,
+ 'R20 plural-team grammar helper');
+r20=replaceOnce(r20,
  'return{t,op,current,prior,avg,oppCurrent,oppPrior,rank,priorRank,avgRank,oppRank,oppPriorRank,category};',
  'return{t,op,current,prior,avg,oppCurrent,oppPrior,rank,priorRank,avgRank,oppRank,oppPriorRank,opponentDip,category};',
  'R20 opponent dip context');
@@ -37,6 +52,10 @@ r20=replaceOnce(r20,
  'Records matter. They also do not get permission to impersonate scoring quality.',
  'Records matter, but letting them impersonate scoring quality is accounting in a cheap costume.',
  'R20 Jefferson record-quality voice');
+r20=replaceOnce(r20,
+ " insertQualityIntoLede(t,ctx);\n a.paragraphs=(a.sections||[]).flatMap(s=>(s?.paragraphs||[]).filter(Boolean));",
+ " insertQualityIntoLede(t,ctx);\n a.sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec?.paragraphs||[]).map(p=>fixPluralTeamGrammar(t,p))}));\n a.paragraphs=(a.sections||[]).flatMap(s=>(s?.paragraphs||[]).filter(Boolean));",
+ 'R20 plural-team grammar pass');
 writeFileSync(r20Path,r20);
 
 const hubPath='netlify/functions/league-hub.mjs';

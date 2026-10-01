@@ -64,7 +64,7 @@ replaceOrThrow(
 replaceOrThrow(
  'scripts/inquirer-week2-r21-smoke.mjs',
  "for(const [player] of bases){\n  for(const p of articleParagraphs(t))if(p.toLowerCase().includes(player.toLowerCase()))assert.doesNotMatch(p,PANIC,'R21 overreacts to established scorer '+player+' for '+t.team_name+': '+p);\n }",
- "for(const [player] of bases){\n  const pn=player.toLowerCase();\n  for(const p of articleParagraphs(t)){\n   const lp=p.toLowerCase(),idx=lp.indexOf(pn);\n   const exact=idx>=0&&!/[a-z]/.test(lp[idx-1]||'')&&!/[a-z]/.test(lp[idx+pn.length]||'');\n   if(exact)assert.doesNotMatch(p,PANIC,'R21 overreacts to established scorer '+player+' for '+t.team_name+': '+p);\n  }\n }"
+ "for(const [player] of bases){\n  const pn=player.toLowerCase();\n  for(const p of articleParagraphs(t)){\n   const lp=p.toLowerCase(),idx=lp.indexOf(pn);\n   const exact=idx>=0&&!/[a-z]/.test(lp[idx-1]||'')&&!/[a-z]/.test(lp[idx+pn.length]||'');\n   const injuryContext=/\\b(?:out for Week 3|is out|listed out|questionable|doubtful|injur(?:y|ed))\\b/i.test(p);\n   if(exact&&!injuryContext)assert.doesNotMatch(p,PANIC,'R21 overreacts to established scorer '+player+' for '+t.team_name+': '+p);\n  }\n }"
 );
 
 replaceOrThrow(

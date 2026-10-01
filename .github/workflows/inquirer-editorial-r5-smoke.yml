@@ -63,8 +63,27 @@ jobs:
         run: node scripts/inquirer-week2-r20-smoke.mjs
       - name: Week 2 R21 all-team editorial regression
         run: node scripts/inquirer-week2-r21-smoke.mjs
-      - name: Week 2 R22 repetition, humor, and tag regression
-        run: node scripts/inquirer-week2-r22-smoke.mjs
+
+      - name: Capture Week 2 R22 repetition, humor, and tag regression
+        run: |
+          set +e
+          node scripts/inquirer-week2-r22-smoke.mjs > /tmp/week2-r22-smoke.log 2>&1
+          code=$?
+          echo "$code" > /tmp/week2-r22-smoke.exit
+          cat /tmp/week2-r22-smoke.log
+          exit 0
+      - name: Upload Week 2 R22 smoke diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: week2-r22-smoke-diagnostic
+          path: |
+            /tmp/week2-r22-smoke.log
+            /tmp/week2-r22-smoke.exit
+          retention-days: 2
+      - name: Enforce Week 2 R22 repetition, humor, and tag regression
+        run: |
+          cat /tmp/week2-r22-smoke.log
+          test "$(cat /tmp/week2-r22-smoke.exit)" = "0"
 
       - name: Capture forward V31 season smoke
         run: |

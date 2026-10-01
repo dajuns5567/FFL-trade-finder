@@ -107,6 +107,14 @@ function diversifyFeaturedPlayerCommentary(t,paragraphs){
   if(!String(ps[idx]).includes(line))ps[idx]=fitDistinctPlayerLine(ps[idx],line,slot);
  }
  return ps;
+}
+
+function fixPluralTeamGrammar(t,paragraphs){
+ const full=teamName(t),bits=full.split(/\\s+/).filter(Boolean),mascot=bits.at(-1)||'';
+ if(!/s$/i.test(mascot))return [...(paragraphs||[])];
+ const re=new RegExp('^('+esc(full)+'|'+esc(mascot)+')\\\\s+(is|has|gets|holds|brings|turns)\\\\b','i');
+ const verbs={is:'are',has:'have',gets:'get',holds:'hold',brings:'bring',turns:'turn'};
+ return (paragraphs||[]).map(p=>sentenceParts(p).map(s=>s.replace(re,(m,subject,verb)=>subject+' '+verbs[String(verb).toLowerCase()])).join(' '));
 }`;
 if(!text.includes(fromEnsure))throw new Error('Expected ensureVoice implementation not found');
 text=text.replace(fromEnsure,toEnsure);
@@ -121,9 +129,10 @@ const toFinal=` sections=dedupeArticleFacts(t,sections);
   if(['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'].includes(kind)){
    const voiced=ensureVoice(t,sec).flatMap(p=>splitLongParagraph(p,82)).filter(Boolean);
    const spaced=kind==='outlook'?voiced:fillVoiceGaps(t,{...sec,paragraphs:voiced});
-   return{...sec,paragraphs:kind==='players'?diversifyFeaturedPlayerCommentary(t,spaced):spaced};
+   const diversified=kind==='players'?diversifyFeaturedPlayerCommentary(t,spaced):spaced;
+   return{...sec,paragraphs:fixPluralTeamGrammar(t,diversified)};
   }
-  return sec;
+  return{...sec,paragraphs:fixPluralTeamGrammar(t,sec?.paragraphs||[])};
  });
  a.sections=sections;`;
 if(!text.includes(fromFinal))throw new Error('Expected final paragraph split block not found');
@@ -139,4 +148,4 @@ if(!smoke.includes(oldSmokeVoice))throw new Error('Expected smoke VOICE detector
 smoke=smoke.replace(oldSmokeVoice,newSmokeVoice);
 fs.writeFileSync(smokePath,smoke);
 
-console.log('R21 final voice-gap, natural voice detector, established-player scoring, outlook-road protection, and length-aware player-commentary diversity applied');
+console.log('R21 final voice-gap, natural voice detector, established-player scoring, outlook-road protection, length-aware player-commentary diversity, and plural team grammar applied');

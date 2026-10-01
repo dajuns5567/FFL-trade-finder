@@ -218,13 +218,56 @@ function ensureMeaningfulVoice(t,sec){
  return ps;
 }
 
+function normalizePluralTeamGrammar(t,text){
+ const full=teamName(t),bits=String(full||'').trim().split(/\s+/).filter(Boolean),mascot=bits.at(-1)||'';
+ if(!/s$/i.test(mascot))return String(text||'');
+ let out=String(text||'');
+ for(const subject of [full,mascot].filter(Boolean)){
+  const e=esc(subject);
+  out=out.replace(new RegExp('(^|[^A-Za-z])('+e+')\\s+has\\b','gi'),'$1$2 have');
+  out=out.replace(new RegExp('(^|[^A-Za-z])('+e+')\\s+is\\b','gi'),'$1$2 are');
+  out=out.replace(new RegExp('(^|[^A-Za-z])('+e+')\\s+gets\\b','gi'),'$1$2 get');
+  out=out.replace(new RegExp('(^|[^A-Za-z])('+e+')\\s+holds\\b','gi'),'$1$2 hold');
+  out=out.replace(new RegExp('(^|[^A-Za-z])('+e+')\\s+brings\\b','gi'),'$1$2 bring');
+  out=out.replace(new RegExp('(^|[^A-Za-z])('+e+')\\s+turns\\b','gi'),'$1$2 turn');
+ }
+ return out;
+}
+
+function ensureCoolThroneRecognition(t,sections){
+ const starters=[...(t?.starter_details||[])];
+ const eligible=starters.filter(p=>{
+  const pts=Number(p?.points),prior=Number(p?.prior_season_avg),proj=Number(p?.projected),delta=Number.isFinite(proj)?pts-proj:null;
+  return Number.isFinite(pts)&&(pts>=15||(delta!=null&&delta>=4)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.2));
+ }).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2);
+ if(eligible.length<2)return sections;
+ const names=eligible.map(p=>String(p?.name||'').trim()).filter(Boolean);
+ if(names.length<2)return sections;
+ const id=reporterId(t),pair=`${names[0]} and ${names[1]}`;
+ const lines={
+  'walter-mercer':`${pair} both earned the compliment here. I am not rationing credit just because praise makes me uncomfortable.`,
+  'tess-delaney':`${pair} both earned applause. Fine, there is enough champagne for two.`,
+  'mack-hollis':`${pair} both earned roses. The stage can survive two bows without losing the plot.`,
+  'nora-voss':`${pair} both earned credit. Two good performances deserve two names, not another theory.`
+ };
+ return (sections||[]).map(sec=>{
+  if(String(sec?.kind||'')!=='cool-throne')return sec;
+  const ps=[...(sec?.paragraphs||[])].filter(Boolean),copy=ps.join(' ').toLowerCase();
+  if(names.every(n=>copy.includes(n.toLowerCase())))return sec;
+  const line=lines[id]||lines['walter-mercer'];
+  if(ps.length)ps[0]=`${line} ${ps[0]}`.trim();else ps.push(line);
+  return{...sec,paragraphs:ps};
+ });
+}
+
 function finalArticleCleanup(t,sections){
  let out=sections.map(sec=>({...sec,paragraphs:(sec?.paragraphs||[]).map(p=>cleanParagraph(t,p)).filter(Boolean)}));
  out=dedupePlayerFacts(t,out);
+ out=ensureCoolThroneRecognition(t,out);
  const major=new Set(['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook']);
  out=out.map(sec=>{
   let ps=major.has(String(sec?.kind||''))?ensureMeaningfulVoice(t,sec):[...(sec?.paragraphs||[])];
-  ps=ps.flatMap(p=>split(p,82)).filter(Boolean);
+  ps=ps.flatMap(p=>split(p,82)).filter(Boolean).map(p=>normalizePluralTeamGrammar(t,p));
   return{...sec,paragraphs:ps};
  });
  return out;

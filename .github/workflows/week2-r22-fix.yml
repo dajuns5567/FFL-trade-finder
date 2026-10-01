@@ -22,8 +22,10 @@ jobs:
           node-version: '22'
       - name: Install generator dependency
         run: npm install --no-save --package-lock=false @netlify/blobs
-      - name: Apply verified R22 runtime wiring
-        run: python scripts/tmp-r22-wire.py
+      - name: Apply generic plural-team grammar fix and R22 runtime wiring
+        run: |
+          python scripts/tmp-r22-plural-grammar.py
+          python scripts/tmp-r22-wire.py
       - name: Syntax check permanent R22 wiring
         run: |
           node --check netlify/functions/league-hub.mjs
@@ -69,7 +71,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add netlify/functions/league-hub.mjs scripts/inquirer-v25-generated-audit.mjs
-          git rm -f scripts/tmp-r22-wire.py scripts/r22-fix-patch.mjs
+          git add netlify/functions/inquirer-week2-editorial-r22.mjs netlify/functions/league-hub.mjs scripts/inquirer-v25-generated-audit.mjs
+          git rm -f scripts/tmp-r22-plural-grammar.py scripts/tmp-r22-wire.py scripts/r22-fix-patch.mjs
           git commit -m 'Wire verified Week 2 R22 editorial layer'
           git push origin HEAD:player-signal-layer-r1

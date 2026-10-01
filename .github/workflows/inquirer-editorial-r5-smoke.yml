@@ -37,6 +37,8 @@ jobs:
           node --check netlify/functions/inquirer-editorial-v31.mjs
           node --check netlify/functions/inquirer-week2-editorial-r15.mjs
           node --check netlify/functions/inquirer-week2-editorial-r20.mjs
+          node --check netlify/functions/inquirer-week2-editorial-r21.mjs
+          node --check netlify/functions/inquirer-week2-editorial-r22.mjs
           node --check netlify/functions/player-signal-engine.mjs
           node --check netlify/functions/player-signals.mjs
           node --check scripts/player-signal-engine-smoke.mjs
@@ -48,6 +50,8 @@ jobs:
           node --check scripts/inquirer-forward-v31-smoke.mjs
           node --check scripts/inquirer-week2-voice-r15-smoke.mjs
           node --check scripts/inquirer-week2-r20-smoke.mjs
+          node --check scripts/inquirer-week2-r21-smoke.mjs
+          node --check scripts/inquirer-week2-r22-smoke.mjs
 
       - name: Run source contract
         run: node scripts/inquirer-v25-audit.mjs
@@ -57,6 +61,10 @@ jobs:
         run: node scripts/inquirer-week2-voice-r15-smoke.mjs
       - name: Week 2 R20 scoring and recap regression
         run: node scripts/inquirer-week2-r20-smoke.mjs
+      - name: Week 2 R21 all-team editorial regression
+        run: node scripts/inquirer-week2-r21-smoke.mjs
+      - name: Week 2 R22 repetition, humor, and tag regression
+        run: node scripts/inquirer-week2-r22-smoke.mjs
 
       - name: Capture forward V31 season smoke
         run: |

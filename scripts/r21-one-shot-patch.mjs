@@ -21,6 +21,18 @@ replaceOrThrow(
 
 replaceOrThrow(
  'netlify/functions/inquirer-week2-editorial-r21.mjs',
+ "function normalizeTeamChants(t,text){\n const n=teamName(t),re=new RegExp('\\\\b'+esc(n)+'\\\\b','g');let seen=0;\n return String(text||'').replace(re,m=>{seen++;return seen<=2?m:(seen===3?'the roster':'the team')});\n}",
+ "function normalizeTeamChants(t,text){\n const n=teamName(t),e=esc(n);\n return String(text||'')\n  .replace(new RegExp('(?:The\\\\s+)?'+e+'\\\\s+scoreboard','g'),'The scoreboard')\n  .replace(new RegExp(e+'\\\\s+management','g'),'management')\n  .replace(new RegExp(e+'\\\\s+supporters','g'),'supporters')\n  .replace(new RegExp(e+'\\\\s+fans','g'),'fans');\n}"
+);
+
+replaceOrThrow(
+ 'netlify/functions/inquirer-week2-editorial-r21.mjs',
+ "if(/does not need embellishment/i.test(s)){out.push(s.replace(/The decline is measurable and does not need embellishment\\.?/i,'The decline is real, and it was bad enough without adding drama.'));continue}\n  if(/clean chance/i.test(s)){out.push(s.replace(/a clean chance/ig,'a straightforward chance'));continue}",
+ "if(/does not need embellishment/i.test(s)){out.push(s.replace(/The decline is measurable and does not need embellishment\\.?/i,'The decline is real, and it was bad enough without adding drama.'));continue}\n  if(/role now has to justify another start/i.test(s)){out.push(s.replace(/the role now has to justify another start/ig,'the bad Week 2 number needs a better answer next Sunday'));continue}\n  if(/clean chance/i.test(s)){out.push(s.replace(/a clean chance/ig,'a straightforward chance'));continue}"
+);
+
+replaceOrThrow(
+ 'netlify/functions/inquirer-week2-editorial-r21.mjs',
  "function temperEstablishedOverreaction(t,paragraph,baselines){\n let out=[];\n for(const s of sentenceParts(paragraph)){\n  let replaced=false;\n  for(const [player] of baselines){\n   if(s.toLowerCase().includes(player.toLowerCase())&&PANIC.test(s)){\n    out.push(establishedCorrection(t,player,s));replaced=true;break;\n   }\n  }\n  if(!replaced)out.push(s);\n }\n return out.join(' ');\n}",
  "function temperEstablishedOverreaction(t,paragraph,baselines){\n const mentioned=[...baselines.keys()].filter(player=>String(paragraph||'').toLowerCase().includes(player.toLowerCase()));\n if(!mentioned.length)return paragraph;\n let out=[];\n for(const s of sentenceParts(paragraph)){\n  const player=mentioned.find(name=>s.toLowerCase().includes(name.toLowerCase()));\n  if(player&&PANIC.test(s)){out.push(establishedCorrection(t,player,s));continue}\n  if(PANIC.test(s)){\n   out.push(s\n    .replace(/\\bbench(?:ing)?\\b/gi,'lineup')\n    .replace(/\\bpanic\\b/gi,'overreact')\n    .replace(/\\bcrisis\\b/gi,'bad week')\n    .replace(/\\bemergency\\b/gi,'problem')\n    .replace(/\\bhot seat\\b/gi,'rough spot'));\n   continue;\n  }\n  out.push(s);\n }\n return out.join(' ');\n}"
 );

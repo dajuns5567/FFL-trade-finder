@@ -15,6 +15,17 @@ assert.equal(revised?.voice_revision,'week2-r20');
 const one=v=>Number(v).toFixed(1);
 const sentenceParts=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
 const wordCount=s=>(String(s||'').match(/\b[\w’'-]+\b/g)||[]).length;
+const escapeRe=value=>String(value||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const pluralGrammar=(t,text)=>{
+ const full=String(t?.team_name||'').trim(),mascot=full.split(/\s+/).filter(Boolean).at(-1)||'';
+ if(!full||!/s$/i.test(mascot))return String(text||'');
+ const re=new RegExp('(^|[.!?]\\s+)(?:'+escapeRe(full)+'|'+escapeRe(mascot)+')\\s+(is|has|gets|holds|brings|turns)\\b','gi');
+ const verbs={is:'are',has:'have',gets:'get',holds:'hold',brings:'bring',turns:'turn'};
+ return String(text||'').replace(re,(m,prefix,verb)=>{
+  const subject=m.slice(prefix.length,m.length-verb.length).trimEnd();
+  return prefix+subject+' '+(verbs[String(verb).toLowerCase()]||verb);
+ });
+};
 const stripArticle=t=>{const x=JSON.parse(JSON.stringify(t));delete x.inquirer_article;return x};
 const stripArticleMeta=a=>{const x=JSON.parse(JSON.stringify(a||{}));delete x.sections;delete x.paragraphs;delete x.editorial_revision;delete x.voice_revision;return x};
 const section=(t,kind)=>(t?.inquirer_article?.sections||[]).find(s=>String(s?.kind||'')===kind)||null;
@@ -32,7 +43,8 @@ for(const t of revised?.teams||[]){
  assert.deepEqual(stripArticleMeta(t.inquirer_article),stripArticleMeta(old.inquirer_article),'R20 changed article metadata/facts outside prose for '+t.team_name);
  assert.deepEqual((t.inquirer_article?.sections||[]).map(s=>s.kind),(old.inquirer_article?.sections||[]).map(s=>s.kind),'R20 changed team-article section format for '+t.team_name);
  for(const kind of ['players','management','hot-seat','cool-throne','value','sentiment','outlook']){
-  assert.deepEqual(section(t,kind)?.paragraphs||[],section(old,kind)?.paragraphs||[],'R20 should retain R19 '+kind+' information for '+t.team_name);
+  const expected=(section(old,kind)?.paragraphs||[]).map(p=>pluralGrammar(t,p));
+  assert.deepEqual(section(t,kind)?.paragraphs||[],expected,'R20 should retain R19 '+kind+' information except plural-team grammar corrections for '+t.team_name);
  }
  const oldLede=section(old,'lede')?.paragraphs||[],lede=section(t,'lede')?.paragraphs||[];
  assert.notDeepEqual(lede,oldLede,'R20 scoring-quality context did not change the lede for '+t.team_name);
@@ -40,7 +52,10 @@ for(const t of revised?.teams||[]){
   const s=String(x||'');
   return /\d+(?:\.\d+)?–\d+(?:\.\d+)?/.test(s)||(/\b(?:Week 1|opener|opened|arrived from)\b/i.test(s)&&/\d+(?:\.\d+)?/.test(s));
  });
- for(const p of factualOldLede)assert(lede.includes(p),'R20 dropped an existing score/Week 1 lede fact for '+t.team_name+': '+p);
+ for(const p of factualOldLede){
+  const expected=pluralGrammar(t,p);
+  assert(lede.includes(expected),'R20 dropped an existing score/Week 1 lede fact for '+t.team_name+': '+expected);
+ }
  const quality=lede.find(p=>/scored -?\d+(?:\.\d+)? in Week 2, ranked \d+ of \d+/i.test(String(p)));
  assert(quality,'R20 lede lacks league-relative scoring rank for '+t.team_name);
  assert(/two-week scoring average ranks \d+ of \d+/i.test(quality),'R20 lede lacks two-week scoring context for '+t.team_name);
@@ -49,6 +64,11 @@ for(const t of revised?.teams||[]){
  const r2=rank(t.points,w2Scores),r1=rank(prior,w1Scores),isWin=Number(t.points)>Number(t.opponent_points);
  if(isWin&&r2>24&&r1>24)assert(/bottom-quarter|not a strength|warning|low-scoring/i.test(quality),'Consistently low-scoring winner is being treated too generously: '+t.team_name);
  if(!isWin&&r2<=8&&rank(t.opponent_points,w2Scores)<=8)assert(/scored well|strong number|top-quarter|offense does not deserve/i.test(quality),'High-scoring loss lacks tough-matchup context: '+t.team_name);
+ const mascot=String(t.team_name||'').trim().split(/\s+/).at(-1)||'';
+ if(/s$/i.test(mascot)){
+  const subject=new RegExp('^(?:'+escapeRe(String(t.team_name||''))+'|'+escapeRe(mascot)+')\\s+(?:is|has|gets|holds|brings|turns)\\b','i');
+  for(const s of sentenceParts(articleParagraphs(t).join(' ')))assert.doesNotMatch(s,subject,'R20 left plural-team singular agreement in '+t.team_name+': '+s);
+ }
  assert.equal(Number(t.inquirer_article?.editorial_revision),20,'R20 article revision missing for '+t.team_name);
  assert.equal(t.inquirer_article?.voice_revision,'week2-r20','R20 article voice revision missing for '+t.team_name);
  assert.deepEqual(t.inquirer_article?.paragraphs||[],articleParagraphs(t),'Flattened article body is out of sync for '+t.team_name);

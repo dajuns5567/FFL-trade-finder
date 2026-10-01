@@ -85,5 +85,9 @@ audit=replaceOnce(audit,
  "assert.ok(recapSections.some(s=>/(?:Velvet Rope|Contender Line)/i.test(String(s?.heading||''))),'Bartholomew’s Weekly Recap desk must retain his own identity instead of a generic analytics heading');",
  "}\nassert.ok(recapSections.some(s=>/(?:Velvet Rope|Contender Line)/i.test(String(s?.heading||''))),'Bartholomew’s Weekly Recap desk must retain his own identity instead of a generic analytics heading');",
  'R20 recap novelty audit close');
+audit=replaceOnce(audit,
+ "assert.match(recap,/\\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');\nassert.match(recap,/\\b(?:breakout|emerging|star|veteran|rookie|reliable)\\b/i,'Weekly Recap must carry natural player-status commentary tied to the actual matchup story');",
+ "if(servedR20){\n  assert.match(recap,/\\b(?:median|ranked|two-week scoring average|highest-scoring|lowest-scoring|combined|margin|projection gap|scoring jump|scoring fall|dropped from)\\b/i,'R20 Weekly Recap must replace repeated player-detail coverage with new league-relative scoring insight');\n  assert.match(recap,/\\b(?:Week 1|Week 2|two-week|32|median)\\b/i,'R20 Weekly Recap must ground its new insights in completed-week comparison context');\n}else{\n  assert.match(recap,/\\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');\n  assert.match(recap,/\\b(?:breakout|emerging|star|veteran|rookie|reliable)\\b/i,'Weekly Recap must carry natural player-status commentary tied to the actual matchup story');\n}",
+ 'R20 cross-league insight replaces legacy recap player-detail contract');
 writeFileSync(auditPath,audit);
 console.log('R20 wiring helper patched editorial layer, runtime, CI, and generated audit');

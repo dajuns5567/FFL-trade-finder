@@ -6,6 +6,24 @@ const sentenceParts=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).fil
 const upper=s=>s?String(s).charAt(0).toUpperCase()+String(s).slice(1):'';
 const reporterId=t=>String(t?.inquirer_article?.reporter?.id||'');
 const teamName=t=>String(t?.team_name||'This team');
+const lowerFirst=s=>s?String(s).charAt(0).toLowerCase()+String(s).slice(1):'';
+function anchorVoiceR19(t,line,kind,index){
+ const n=teamName(t);
+ return sentenceParts(line).map((sentence,j)=>{
+  if(sentence.includes(n))return sentence;
+  let x=sentence
+   .replace(/\bmanagement\b/i,n+' management')
+   .replace(/\bmanagers\b/i,n+' managers')
+   .replace(/\bmanager\b/i,n+' manager')
+   .replace(/\bfans\b/i,n+' fans')
+   .replace(/\bsupporters\b/i,n+' supporters');
+  if(x!==sentence)return x;
+  const leads=[n+' gets this from me: ','Around '+n+', ','With '+n+', ',n+' can take this personally: ','For '+n+', '];
+  const seed=((Number(t?.roster_id)||0)*7+String(kind||'').length*3+Number(index||0)*5+j)%leads.length;
+  const lead=leads[seed];
+  return /, $/.test(lead)?lead+lowerFirst(sentence):lead+sentence;
+ }).join(' ');
+}
 const nextOpponent=t=>String(t?.next_opponent_name||'the next opponent');
 const didWin=t=>Number(t?.points)>Number(t?.opponent_points);
 
@@ -38,7 +56,7 @@ function teamVoiceBank(t,id,kind){
    ],
    management:[
     n+' can call it a lesson only if next week’s lineup looks like somebody learned it.',
-    'I have seen managers survive worse than this. I have also seen them repeat it, which is how the jokes get mean.',
+    n+' managers have survived worse than this. Repeat it next week and '+n+' can stop calling the jokes unfair.',
     'Management around '+n+' had a full week to make the decision. Sunday gets to grade it without mercy.'
    ],
    sentiment:[
@@ -48,10 +66,10 @@ function teamVoiceBank(t,id,kind){
    ],
    outlook:[
     'Week 3 can settle this the old-fashioned way: '+n+' either handles '+op+' or spends Monday explaining why it did not.',
-    n+' does not need a speech before '+op+'. It needs the right lineup and enough points.',
+    n+' can save the speech for after '+op+'; the lineup and the points need to arrive first.',
     'I am giving '+n+' exactly one more Sunday before today’s optimism or irritation gets upgraded.'
    ],
-   value:[n+' can move in the market all week. I still grade Sundays in points and wins.'],
+   value:[n+' can move in the market all week. I still grade '+n+' in points, wins, and how quickly management learns from an avoidable mistake.'],
    'hot-seat':['If '+n+' wants this criticism gone, score enough next week to make me look foolish. I can live with that.'],
    'cool-throne':['Credit where it is due: '+n+' earned a quiet minute. I doubt the quiet lasts.']
   },
@@ -62,15 +80,15 @@ function teamVoiceBank(t,id,kind){
     win?'The result is pretty. '+n+' should enjoy it before management touches anything else.':'The result is ugly. '+n+' can dress it up, but I will still recognize it.'
    ],
    players:[
-    'That part of '+n+'’s Sunday deserves applause. Please enjoy it before the next lineup decision ruins the mood.',
+    n+' gave us a part of Sunday worth applauding. Enjoy it before '+n+' management finds a creative way to ruin the mood.',
     'I adore a useful stat line. I adore it more when '+n+' does not immediately waste it.',
-    n+' has enough talent to make a dud look personally insulting. I am choosing to take it that way.',
+    n+' has enough talent to make a dud feel personally insulting, and I have chosen to take the insult on behalf of everyone who watched.',
     'Praise has been issued to '+n+'. Nobody get comfortable; I have more numbers.',
     n+' got something worth celebrating here, which is inconvenient for anyone committed to complaining full-time.',
-    'A player doing his job this loudly is beautiful. '+n+' should try the concept again next Sunday.'
+    n+' got a player doing his job loudly enough to be beautiful. Repeating the concept next Sunday would be a delightful lack of originality.'
    ],
    management:[
-    'Management had seven days to avoid looking silly. '+n+' somehow made the deadline exciting.',
+    n+' management had seven days to avoid looking silly and somehow made the deadline exciting.',
     n+' can blame chaos if it wants. I prefer blaming the person who chose the lineup.',
     'If management wanted privacy, fantasy football was a terrible hobby to choose.'
    ],
@@ -91,19 +109,19 @@ function teamVoiceBank(t,id,kind){
   'mack-hollis':{
    lede:[
     win?n+' won with enough flourish to make subtlety feel unemployed. I respect the commitment.':n+' lost with the confidence of a team that expected the curtain to fall before anyone noticed.',
-    n+' made Sunday loud. Whether that was triumph or public embarrassment is exactly why I kept watching.',
+    n+' made Sunday loud enough that triumph and public embarrassment shared the same stage, which is precisely why I kept watching.',
     win?'The win gives '+n+' the stage for a week. Try not to trip over the furniture.':'The loss gives '+n+' one very bright spotlight and nowhere tasteful to stand.'
    ],
    players:[
-    n+' produced a number with entrance music. If it vanishes next week, I reserve the right to boo the encore.',
-    'A stat line this useful deserves a little swagger. '+n+' should resist turning swagger into a hostage situation.',
-    n+' got real production here. The tasteful response is applause; naturally, I prefer louder applause.',
+    n+' produced a number with entrance music; if '+n+' loses it next week, I reserve the right to boo the encore.',
+    n+' got a stat line useful enough to deserve swagger, provided management does not turn the swagger into a hostage situation.',
+    n+' got real production here, and the tasteful response is applause. Naturally, I prefer '+n+' receive louder applause.',
     'That player gave '+n+' something worth admiring instead of explaining. What a luxurious change of pace.',
     n+' can put that performance in formalwear if it likes. It still has to survive another Sunday.',
     'If this is the version '+n+' gets again, the league may begin developing very ugly feelings.'
    ],
    management:[
-    n+' chose the lineup. The lineup responded by judging management in public.',
+    n+' chose the lineup, and the lineup returned the favor by judging '+n+' management in public.',
     'A manager can make one ugly choice. Repeating it turns '+n+' into a touring comedy.',
     'Management wanted drama and '+n+' supplied it at full volume. Everybody involved should own the production.'
    ],
@@ -129,11 +147,11 @@ function teamVoiceBank(t,id,kind){
    ],
    players:[
     n+' can stop negotiating with that number. The number already happened.',
-    'Management has enough information to make a better choice next week; repeating the same mistake would be stubbornness.',
-    n+' got the production. Now management has to prove it knows what to do with it.',
+    n+' already showed management the better option. Pick the wrong one again and stubbornness becomes a lineup strategy.',
+    n+' got the production. Bury it next week and management may as well make the bench send an invoice.',
     n+' should reward what worked and stop protecting what did not. There is no mystery in that.',
     'If '+n+' wants patience, it can buy some with points next Sunday.',
-    'That performance deserves a reaction stronger than a polite nod. '+n+' needed it and got it.'
+    n+' needed that performance badly enough to make a polite nod insulting. Somebody should at least spill a drink celebrating it.'
    ],
    management:[
     'The manager can call it variance once. Call it twice and '+n+' fans can call it a habit.',
@@ -141,18 +159,18 @@ function teamVoiceBank(t,id,kind){
     'Management made the choice. The score made the consequences difficult to ignore.'
    ],
    sentiment:[
-    n+' supporters already know what bothered them. Management should assume they noticed the same Sunday.',
+    n+' supporters saw the same Sunday management did. Pretending otherwise is how boos get organized.',
     'Fans around '+n+' are short on patience because the scoreboard keeps sending them itemized reasons.',
-    n+' supporters can handle bad luck. Repeated bad choices are where the mood gets expensive.'
+    n+' supporters can handle bad luck. Repeating the same bad choice turns Sunday into unpaid heckling practice.'
    ],
    outlook:[
-    n+' gets '+op+' next. The opponent does not care about this week’s explanation.',
+    n+' gets '+op+' next. The opponent will happily accept every excuse as long as it comes with free points.',
     'Week 3 gives '+n+' a clean chance to make the obvious corrections before they become habits.',
     n+' can quiet the criticism against '+op+' by doing the revolutionary thing: making the better decisions.'
    ],
-   value:[n+' moved in the market. Management should know why before it starts chasing the movement.'],
+   value:[n+' moved in the market. Chase the number without understanding it and '+n+' management is shopping with somebody else’s credit card.'],
    'hot-seat':[n+' has reached the point where another bad Sunday will sound less like bad luck and more like a pattern.'],
-   'cool-throne':['Credit to '+n+'. Something worked well enough that criticism can take a minute off.']
+   'cool-throne':['Credit to '+n+'. Criticism can sit down for a minute before it pulls a hamstring.']
   }
  };
  return voices[id]?.[kind]||[];
@@ -191,7 +209,8 @@ function reviseTeam(t){
   const kind=String(sec?.kind||'');
   const paragraphs=(sec?.paragraphs||[]).map((p,index)=>{
    let x=limitContrast(cleanClinical(t,p),contrast);
-   const s=slot(kind,index),bank=teamVoiceBank(t,id,kind),line=s>=0&&bank.length?bank[s%bank.length]:'';
+   const s=slot(kind,index),bank=teamVoiceBank(t,id,kind),rawLine=s>=0&&bank.length?bank[s%bank.length]:'';
+   const line=rawLine?anchorVoiceR19(t,rawLine,kind,index):'';
    if(line&&!x.includes(line))x=(x+' '+line).trim();
    return x;
   }).filter(Boolean);

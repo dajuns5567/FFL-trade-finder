@@ -1,18 +1,21 @@
 import assert from 'node:assert/strict';
 import rawWeek2 from '../netlify/functions/inquirer-week2-2026-preload.mjs';
-import {applyWeek2EditorialR16,WEEK2_EDITORIAL_REVISION} from '../netlify/functions/inquirer-week2-editorial-r15.mjs';
+import {applyWeek2EditorialR16 as applyWeek2EditorialR18} from '../netlify/functions/inquirer-week2-editorial-r15.mjs';
+import {applyWeek2EditorialR16,WEEK2_EDITORIAL_REVISION} from '../netlify/functions/inquirer-week2-editorial-r19.mjs';
 
 const rawSnapshot=JSON.stringify(rawWeek2);
+const r18Baseline=applyWeek2EditorialR18(rawWeek2);
 const revised=applyWeek2EditorialR16(rawWeek2);
 
 assert.equal(Number(rawWeek2?.season),2026);
 assert.equal(Number(rawWeek2?.week),2);
-assert.equal(Number(WEEK2_EDITORIAL_REVISION),18);
-assert.equal(Number(revised?.editorial_revision),18);
-assert.equal(revised?.voice_revision,'week2-r18');
+assert.equal(Number(WEEK2_EDITORIAL_REVISION),19);
+assert.equal(Number(revised?.editorial_revision),19);
+assert.equal(revised?.voice_revision,'week2-r19');
 assert.equal(JSON.stringify(rawWeek2),rawSnapshot,'Revision layer must not mutate the locked raw Week 2 preload');
 
 const rawTeams=new Map((rawWeek2?.teams||[]).map(t=>[String(t.roster_id),t]));
+const r18Teams=new Map((r18Baseline?.teams||[]).map(t=>[String(t.roster_id),t]));
 const revisedTeams=revised?.teams||[];
 assert.equal(revisedTeams.length,rawTeams.size,'Week 2 team count changed');
 
@@ -44,8 +47,21 @@ for(const t of revisedTeams){
  assert(before,'Missing raw team '+t.roster_id);
  assert.deepEqual(stripArticle(t),stripArticle(before),'Non-article Week 2 facts changed for '+t.team_name);
  assert.deepEqual(stripArticleProse(t.inquirer_article),stripArticleProse(before.inquirer_article),'Article metadata/facts changed outside prose for '+t.team_name);
- assert.equal(Number(t?.inquirer_article?.editorial_revision),18,'Article revision missing for '+t.team_name);
- assert.equal(t?.inquirer_article?.voice_revision,'week2-r18','Article voice revision missing for '+t.team_name);
+ const r18Team=r18Teams.get(String(t.roster_id));
+ assert(r18Team,'Missing R18 comparison team '+t.roster_id);
+ const coreKinds=['lede','players','management','sentiment','outlook'];
+ let changedCore=0,changedParagraphs=0;
+ for(const kind of coreKinds){
+  const oldPs=(r18Team?.inquirer_article?.sections||[]).find(s=>String(s?.kind||'')===kind)?.paragraphs||[];
+  const newPs=(t?.inquirer_article?.sections||[]).find(s=>String(s?.kind||'')===kind)?.paragraphs||[];
+  if(JSON.stringify(oldPs)!==JSON.stringify(newPs))changedCore++;
+  const n=Math.max(oldPs.length,newPs.length);
+  for(let i=0;i<n;i++)if(String(oldPs[i]||'')!==String(newPs[i]||''))changedParagraphs++;
+ }
+ assert.equal(changedCore,coreKinds.length,'R19 must visibly rewrite every core article area for '+t.team_name);
+ assert(changedParagraphs>=10,'R19 is still too shallow for '+t.team_name+': only '+changedParagraphs+' changed core paragraphs');
+ assert.equal(Number(t?.inquirer_article?.editorial_revision),19,'Article revision missing for '+t.team_name);
+ assert.equal(t?.inquirer_article?.voice_revision,'week2-r19','Article voice revision missing for '+t.team_name);
 
  const ps=paragraphs(t),text=ps.join(' '),sentences=sentenceParts(text);
  assert(ps.every(p=>typeof p==='string'),'Every Week 2 article paragraph must render as prose, not an array/object, for '+t.team_name);
@@ -77,7 +93,7 @@ for(const t of revisedTeams){
  const id=String(t?.inquirer_article?.reporter?.id||'');
  if(id==='nora-voss')assert(!SELF_EXPLAIN_RE.test(text),'Jefferson still contains self-explanatory analysis prose for '+t.team_name);
  const contrastCount=sentences.filter(s=>CONTRAST_CRUTCH_RE.test(s)).length;
- assert(contrastCount<=2,'The not-X/it-is-Y contrast crutch is still overused for '+t.team_name+': '+contrastCount);
+ assert(contrastCount<=1,'The not-X/it-is-Y contrast crutch is still overused for '+t.team_name+': '+contrastCount);
  if(id!=='tess-delaney')assert(sentences.filter(s=>HUMOR_R18_RE.test(s)).length>=4,'Non-Tilly reporter still lacks enough real joke/punchline sentences for '+t.team_name);
  reporterCounts.set(id,(reporterCounts.get(id)||0)+1);
 }
@@ -112,10 +128,20 @@ assert(/-0\.2/.test(chiefsText),'Kansas City negative Week 2 team score must rem
 assert(/below zero|negative points|less than zero|argument against arithmetic|full roster worked|fantasy team poorer/i.test(chiefsText),'Tilly must react directly and sarcastically to Kansas City scoring -0.2 instead of using generic newsroom/app humor');
 
 const overview=revised?.league_overview||{};
-assert.equal(Number(overview.editorial_revision),18);
-assert.equal(overview.voice_revision,'week2-r18');
+assert.equal(Number(overview.editorial_revision),19);
+assert.equal(overview.voice_revision,'week2-r19');
 const overviewParagraphs=(overview.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(Boolean);
 const overviewText=overviewParagraphs.join(' ');
+
+const r18Overview=r18Baseline?.league_overview||{};
+for(const id of ['walter-mercer','tess-delaney','mack-hollis','nora-voss']){
+ const oldPs=(r18Overview.sections||[]).filter(s=>String(s?.reporter?.id||'')===id).flatMap(s=>s?.paragraphs||[]);
+ const newPs=(overview.sections||[]).filter(s=>String(s?.reporter?.id||'')===id).flatMap(s=>s?.paragraphs||[]);
+ let changed=0;
+ const n=Math.max(oldPs.length,newPs.length);
+ for(let i=0;i<n;i++)if(String(oldPs[i]||'')!==String(newPs[i]||''))changed++;
+ assert(changed>=3,'R19 Weekly Recap voice is still too shallow for '+id+': '+changed+' changed paragraphs');
+}
 assert(overviewParagraphs.length<=32,'Weekly recap still carries too much revision-14 body copy: '+overviewParagraphs.length);
 assert(!PLAYER_SUPPORT_RE.test(overviewText),'Weekly recap still frames results through star-support/solo-effort boilerplate');
 assert(!OLD_SCAFFOLD_RE.test(overviewText),'Weekly recap still contains old shared scaffolding');

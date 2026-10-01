@@ -23,6 +23,17 @@ const toEnsure=`function ensureVoice(t,sec){
   if(!VOICE_MARK.test(ps[idx]))ps[idx]=\`${'${ps[idx]}'} ${'${reporterVoiceLine(t,kind,slot++)}' }\`.trim();
  }
  return ps;
+}
+
+function fillVoiceGaps(t,sec){
+ const kind=String(sec?.kind||''),out=[];let cold=0,slot=0;
+ for(const p of sec?.paragraphs||[]){
+  out.push(p);
+  if(VOICE_MARK.test(p)){cold=0;continue}
+  cold++;
+  if(cold>=3){out.push(reporterVoiceLine(t,kind,slot++));cold=0}
+ }
+ return out;
 }`;
 if(!text.includes(fromEnsure))throw new Error('Expected ensureVoice implementation not found');
 text=text.replace(fromEnsure,toEnsure);
@@ -35,8 +46,8 @@ const toFinal=` sections=dedupeArticleFacts(t,sections);
  sections=sections.map(sec=>{
   const kind=String(sec?.kind||'');
   if(['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'].includes(kind)){
-   const voiced=ensureVoice(t,sec);
-   return{...sec,paragraphs:voiced.flatMap(p=>splitLongParagraph(p,82)).filter(Boolean)};
+   const voiced=ensureVoice(t,sec).flatMap(p=>splitLongParagraph(p,82)).filter(Boolean);
+   return{...sec,paragraphs:fillVoiceGaps(t,{...sec,paragraphs:voiced})};
   }
   return sec;
  });
@@ -45,4 +56,4 @@ if(!text.includes(fromFinal))throw new Error('Expected final paragraph split blo
 text=text.replace(fromFinal,toFinal);
 
 fs.writeFileSync(path,text);
-console.log('R21 final voice distribution + re-split patch applied');
+console.log('R21 final voice-gap guarantee applied');

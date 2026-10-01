@@ -66,4 +66,12 @@ s=replaceOnce(s,
  " const quality=lede.find(p=>String(p).includes('Week 2')&&String(p).includes(one(t.points))&&/rank|No\\./i.test(String(p))&&/two-week|both weeks|Blend the two weeks|two-act average/i.test(String(p)));\n assert(quality,'R20 lede lacks reporter-voiced league-relative scoring context for '+t.team_name);\n assert(String(quality).includes(String(rank(t.points,w2Scores))),'R20 lede lacks the correct Week 2 scoring rank for '+t.team_name);\n const prior=w1ByRoster.get(String(t.roster_id));\n if(Number.isFinite(prior)){\n  assert(String(quality).includes(one(prior)),'R20 lede lacks the Week 1 score comparison for '+t.team_name);\n  assert(String(quality).includes(String(rank(prior,w1Scores))),'R20 lede lacks the correct Week 1 scoring rank for '+t.team_name);\n }",
  'R20 smoke reporter-specific scoring fact assertions');
 writeFileSync(smokePath,s);
-console.log('R20 scoring facts varied by reporter and smoke updated');
+
+const auditPath='scripts/inquirer-v25-generated-audit.mjs';
+let audit=readFileSync(auditPath,'utf8');
+audit=replaceOnce(audit,
+ 'mentioned_teams:mentioned.length',
+ "mentioned_teams:(d.teams||[]).filter(t=>String(t.team_name||'').trim()&&recap.includes(String(t.team_name).trim())).length",
+ 'R20 generated-audit summary mentioned-team count');
+writeFileSync(auditPath,audit);
+console.log('R20 scoring facts varied by reporter, smoke updated, and audit summary scope fixed');

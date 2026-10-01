@@ -50,6 +50,12 @@ replaceOrThrow(
 );
 
 replaceOrThrow(
+ 'netlify/functions/inquirer-week2-editorial-r21.mjs',
+ "function compactPlayerSection(t,sec){\n const ps=[...(sec?.paragraphs||[])].filter(Boolean);\n if(ps.length<4)return ps;\n const out=[];\n for(let i=0;i<ps.length;i+=4){\n  const chunk=ps.slice(i,i+4);\n  if(chunk.length<4){out.push(...chunk);continue}\n  out.push(`${chunk[0]} ${chunk[1]}`.trim());\n  out.push(`${chunk[2]} ${chunk[3]}`.trim());\n }\n return out;\n}",
+ "function compactPlayerSection(t,sec){\n const ps=[...(sec?.paragraphs||[])].filter(Boolean);\n if(ps.length<4)return ps;\n const out=[];\n for(let i=0;i<ps.length;i+=4){\n  const chunk=ps.slice(i,i+4);\n  if(chunk.length<4){out.push(...chunk);continue}\n  const stat=sentenceParts(chunk[0]);\n  const reaction=sentenceParts(chunk[1]);\n  const history=sentenceParts(chunk[2]);\n  const usage=sentenceParts(chunk[3]);\n  const first=[stat[0],reaction[0]].filter(Boolean).join(' ');\n  const second=[history[0],usage[0]].filter(Boolean).join(' ');\n  if(first)out.push(first);\n  if(second)out.push(second);\n }\n return out;\n}"
+);
+
+replaceOrThrow(
  'scripts/inquirer-week2-r21-smoke.mjs',
  "if((section(old,'players')?.paragraphs||[]).length>=12)assert(playerPs.length<=8,'R21 did not compact the repetitive player module for '+t.team_name+': '+playerPs.length);",
  "const oldPlayerCount=(section(old,'players')?.paragraphs||[]).length;\n if(oldPlayerCount>=12)assert(playerPs.length<=Math.ceil(oldPlayerCount*0.75),'R21 did not compact the repetitive player module by at least 25% for '+t.team_name+': '+oldPlayerCount+' -> '+playerPs.length);"

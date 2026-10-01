@@ -2,6 +2,14 @@ name: Week 2 R21 one-shot
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - player-signal-layer-r1
+    paths:
+      - '.github/workflows/r21-one-shot.yml'
+      - 'netlify/functions/inquirer-week2-editorial-r21.mjs'
+      - 'scripts/inquirer-week2-r21-smoke.mjs'
+      - 'scripts/r21-one-shot-patch.mjs'
 
 permissions:
   contents: write

@@ -11,9 +11,9 @@ const hash=s=>{let h=2166136261;for(const ch of String(s||'')){h^=ch.charCodeAt(
 const choose=(rows,key)=>rows[Math.abs(hash(key))%rows.length];
 
 const META_TECH=/\b(?:headline|back page|copy desk|newsroom|typeface|case file|receipts?|scoring app|group chat|notification|screenshot|social media|algorithm|meme)\b/i;
-const CARRY_MOTIF=/\b(?:carry(?:ing|ied|ies)? (?:the |this )?(?:entire |whole )?(?:roster|team|offense)|carried (?:the |this )?(?:entire |whole )?(?:roster|team|offense)|on (?:his|her|their) (?:back|shoulders)|one[- ]man show|one[- ]player show|one[- ]player magic trick|solo effort|supporting cast|second punch|third scorer|do it all (?:himself|herself|themselves)|all by (?:himself|herself|themselves)|drag(?:ged|ging)? (?:the |this )?(?:roster|team)|shoulder(?:ing|ed)? (?:the |this )?(?:whole |entire )?(?:roster|team)|everyone else (?:was|is) (?:a )?passenger|save(?:d|s|ing)? everyone else|prevent(?:ed|ing)? .* solo effort)\b/i;
+const CARRY_MOTIF=/\b(?:carry(?:ing|ied|ies)? (?:the |this )?(?:entire |whole )?(?:roster|team|offense)|carried (?:the |this )?(?:entire |whole )?(?:roster|team|offense)|on (?:his|her|their) (?:back|shoulders)|one[- ]man show|one[- ]player show|one[- ]player magic trick|solo effort|supporting cast|second punch|third scorer|do it all (?:himself|herself|themselves)|all by (?:himself|herself|themselves)|drag(?:ged|ging)? (?:the |this )?(?:roster|team)|shoulder(?:ing|ed)? (?:the |this )?(?:whole |entire )?(?:roster|team)|everyone else (?:was|is) (?:a )?passenger|save(?:d|s|ing)? everyone else|prevent(?:ed|ing)? .* solo effort|keep(?:ing)? (?:the |this )?(?:roster|team) afloat|hold(?:ing)? (?:the |this )?(?:roster|team) together|can(?:not|'t) do it alone|needs? (?:somebody|someone) else to help|rest of the roster .* help|one player .* everything)\b/i;
 const WEIGHTLESS=/\b(?:Subtlety was apparently scratched before kickoff|If the favorite badge is the whole argument, the joke is already halfway written|That difference is large enough to track directly into Week 3|excessive enough to be enjoyable and useful enough to avoid becoming nonsense|touring comedy)\b/i;
-const STYLE_MARK=/\b(?:I refuse|I resent|I want|I need|I am|I can|ridiculous|absurd|ugly|awful|pathetic|embarrass|tomatoes|champagne|applause|theater|stage|curtain|complaint|rent|committee|mock|rude|mercifully|annoy|nonsense|drama|rewrite|audience|roses|balcony|dialogue|ceremony|swagger|irresponsib|management owns|bad luck|explain that|fix it)\b/i;
+const STYLE_MARK=/\b(?:I refuse|I resent|I want|I need|I am|I can|ridiculous|absurd|ugly|awful|pathetic|embarrass|tomatoes|champagne|applause|theater|stage|curtain|complaint|rent|committee|mock|rude|mercifully|annoy|nonsense|drama|rewrite|audience|roses|balcony|dialogue|ceremony|swagger|irresponsib|management owns|bad luck|I would|I dislike|I adore|I expect|delicious|lovely|disgust|laugh)\b/i;
 
 function split(text,max=82){
  const p=String(text||'').trim();if(!p)return[];if(words(p)<=max)return[p];
@@ -43,6 +43,8 @@ function cleanSentence(t,s){
  if(/^Subtlety was apparently scratched before kickoff\.?$/i.test(x))return'';
  if(/If the favorite badge is the whole argument, the joke is already halfway written/i.test(x))return'The favorite still has to prove the matchup advantage on the scoreboard.';
  if(/That difference is large enough to track directly into Week 3/i.test(x))return'One lousy Sunday below the established baseline is worth watching. If the role stays intact, the usage matters more than the gap itself.';
+ if(/excessive enough to be enjoyable and useful enough to avoid becoming nonsense/i.test(x))return'The expanded role is the part worth watching; management now has a reason to keep the opportunity intact.';
+ if(/ugly little gap and I dislike it/i.test(x))return'The established role is still intact, so criticize the bad score without inventing a new problem unless the usage changes.';
  if(/Repeating it turns .* into a touring comedy/i.test(x))return'If the same mistake repeats, management owns it.';
  x=x.replace(/\bscoring app accidentally counted two Sundays\b/gi,'losing lineup offered almost no resistance');
  x=x.replace(/\breceipts?\b/gi,'results');
@@ -53,6 +55,8 @@ function cleanSentence(t,s){
  x=x.replace(/\bcopy desk\b/gi,'sideline');
  x=x.replace(/\bnewsroom\b/gi,'league');
  x=x.replace(/found a player willing to carry a scene/gi,'found a player who owned the scene');
+ x=x.replace(/; Week 2 landed at\s+-?\d+(?:\.\d+)?\.?$/i,'.');
+ x=x.replace(/; Week 2 produced\s+-?\d+(?:\.\d+)?\.?$/i,'.');
  return x.trim();
 }
 
@@ -67,6 +71,8 @@ function discoverPlayers(article){
   /^Against .+?,\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+scored\s+-?\d/i,
   /^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+averaged\s+\d/i,
   /^The prior baseline for\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+is\s+\d/i,
+  /^A\s+\d+(?:\.\d+)?\s+prior average .*? for\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\b/i,
+  /^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+answered with\s+-?\d/i,
   /^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+played\s+\d+(?:\.\d+)?%/i,
   /snap share for\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\b/i,
   /^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+entered Week 2 (?:on|tagged)\s+/i
@@ -83,15 +89,20 @@ function exactName(text,name){
 }
 
 function namedPlayer(sentence,players){return players.find(p=>exactName(sentence,p))||null}
+function canonicalPlayer(player,players){
+ const p=String(player||'').trim();if(!p)return'';if(/\s/.test(p))return p.toLowerCase();
+ const full=players.find(x=>/\s/.test(x)&&String(x).split(/\s+/)[0].toLowerCase()===p.toLowerCase());
+ return String(full||p).toLowerCase();
+}
 
 function factKey(sentence,players){
  const s=String(sentence||''),p=namedPlayer(s,players);
  if(p){
-  const k=p.toLowerCase();
-  if(/real-football line|\bscored\s+-?\d+(?:\.\d+)?\s+fantasy points|\bgave\s+(?:\w+\s+)?-?\d+(?:\.\d+)?\s+points|\bposted\s+-?\d+(?:\.\d+)?\b|Week 2 landed at\s+-?\d/i.test(s))return`score|${k}`;
+  const k=canonicalPlayer(p,players),escaped=esc(p);
   if(/averaged\s+\d+(?:\.\d+)?\s+fantasy points|prior baseline|prior average/i.test(s))return`baseline|${k}`;
   if(/snap share|played\s+\d+(?:\.\d+)?%|available snaps/i.test(s))return`usage|${k}`;
-  if(/Breakout Watch|Hot Seat|Cool Throne|Established Star|Steady Veteran|Young Breakout|Proven Star|Week 2 tag/i.test(s))return`tag|${k}`;
+  if(/Breakout Watch|Hot Seat|Cool Throne|Established Star|Steady Veteran|Young Breakout|Proven Star|Week 2 tag|entered Week 2 (?:on|tagged)/i.test(s))return`tag|${k}`;
+  if(/real-football line|\bscored\s+-?\d+(?:\.\d+)?\s+fantasy points|\bgave\s+(?:\w+\s+)?-?\d+(?:\.\d+)?\s+points|\bposted\s+-?\d+(?:\.\d+)?\b|\bdelivered\s+-?\d+(?:\.\d+)?\b|Week 2 landed at\s+-?\d|\b-?\d+(?:\.\d+)?\s+(?:fantasy\s+)?points?\s+from\b|^-?\d+(?:\.\d+)?\s+from\b/i.test(s)||new RegExp('^'+escaped+'\\s+at\\s+-?\\d+(?:\\.\\d+)?\\b','i').test(s))return`score|${k}`;
  }
  let m=s.match(/^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+(?:outscored|beat)\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+by\s+(\d+(?:\.\d+)?)/i);
  if(m)return`bench|${m[1].toLowerCase()}|${m[2].toLowerCase()}|${m[3]}`;
@@ -101,7 +112,7 @@ function factKey(sentence,players){
 function conclusionKey(sentence,players){
  if(/\d/.test(sentence))return'';
  const p=namedPlayer(sentence,players);if(!p)return'';
- const s=String(sentence||''),k=p.toLowerCase();
+ const s=String(sentence||''),k=canonicalPlayer(p,players);
  if(/keep .*?(?:involved|plan)|use .*?(?:again|what worked)|obvious answer|smart move is to use/i.test(s))return`use|${k}`;
  if(/bad week|ugly|dreadful|rough|problem|concern|not enough/i.test(s))return`concern|${k}`;
  if(/role|usage|snap|opportunity/i.test(s))return`role|${k}`;
@@ -139,7 +150,7 @@ function meaningfulLine(t,kind,slot=0){
  const n=teamName(t),id=reporterId(t);
  const banks={
   'walter-mercer':{
-   lede:[`The result is real. I still want ${n} management to explain the avoidable parts before the record starts hiding them.`,`Take the result. Keep the excuses in storage; ${n} has enough football on tape to know what needs fixing.`],
+   lede:[`The result is real. I want ${n} management to explain the avoidable parts before the record starts hiding them.`,`Take the result. I refuse to let the record hide the avoidable football; ${n} has enough tape to know what needs fixing.`],
    players:[`Useful production deserves trust. If ${n} management turns that into a committee project, the complaint belongs upstairs.`,`The player did the useful part. ${n} management can make this easier by recognizing the obvious before Sunday gets expensive.`],
    management:[`One bad lineup call is a mistake. Repeating it is ${n} management volunteering for ridicule.`,`I can forgive one wrong choice. ${n} management loses that privilege if the same mistake returns.`],
    'hot-seat':[`This deserves criticism, not theater. ${n} has a specific football problem and a week to fix it.`,`The weak spot is obvious enough. ${n} can fix it now or spend next Monday explaining why it ignored the warning.`],
@@ -169,7 +180,7 @@ function meaningfulLine(t,kind,slot=0){
    outlook:[`The next act belongs to ${n}. Better decisions would be a charming plot twist.`,`Another matchup is waiting. ${n} can improve the script without adding a monologue about why the last mistake happened.`]
   },
   'nora-voss':{
-   lede:[`${n} has a result and a process to judge separately. Keep the parts that worked and fix the avoidable mistake.`,`The record is one fact. ${n} management still has to explain the decisions that created the performance.`],
+   lede:[`${n} has a result and a process to judge separately. I want the avoidable mistake fixed before the next Sunday.`,`The record is one fact. I refuse to let it excuse ${n} management’s avoidable decisions.`],
    players:[`Useful production should simplify the plan. ${n} management does not need a theory when the role already gave an answer.`,`The player helped. Keep the role clear and stop turning a football answer into a management puzzle.`],
    management:[`The decision is the issue. ${n} management can fix it without inventing a larger story.`,`One wrong call happens. A repeated wrong call belongs to ${n} management, not bad luck.`],
    'hot-seat':[`Criticize the bad football and fix the role. ${n} does not need a manufactured crisis.`,`The problem is specific enough. ${n} can correct it without pretending one Sunday rewrote the player.`],
@@ -180,15 +191,30 @@ function meaningfulLine(t,kind,slot=0){
   }
  };
  const list=banks[id]?.[kind]||banks[id]?.players||banks['walter-mercer'].players;
- return choose(list,`${n}|${kind}|${slot}`);
+ const offset=hash(`${n}|${kind}`)%list.length;
+ const line=list[(offset+slot)%list.length];
+ if(STYLE_MARK.test(line))return line;
+ const lead={'walter-mercer':'I want this clear:','tess-delaney':'I am enjoying the drama, but the football still has to make sense:','mack-hollis':'The audience is allowed to boo when the football deserves it:','nora-voss':'I refuse the easy explanation:'}[id]||'I want this clear:';
+ return `${lead} ${line}`;
 }
 
 function ensureMeaningfulVoice(t,sec){
  const kind=String(sec?.kind||''),ps=[...(sec?.paragraphs||[])].filter(Boolean);
  if(!ps.length)return ps;
- if(ps.some(p=>STYLE_MARK.test(p)))return ps;
- const line=meaningfulLine(t,kind,0);
- if(words(ps[0])+words(line)<=82)ps[0]=`${ps[0]} ${line}`.trim();else ps.splice(Math.min(1,ps.length),0,line);
+ let dry=0,slot=0,anyVoice=false;
+ for(let i=0;i<ps.length;i++){
+  if(STYLE_MARK.test(ps[i])){dry=0;anyVoice=true;continue}
+  dry+=1;
+  if(dry>=4){
+   const line=meaningfulLine(t,kind,slot++);
+   ps[i]=`${line} ${ps[i]}`.trim();
+   dry=0;anyVoice=true;
+  }
+ }
+ if(!anyVoice){
+  const line=meaningfulLine(t,kind,slot++);
+  ps[0]=`${line} ${ps[0]}`.trim();
+ }
  return ps;
 }
 
@@ -208,13 +234,13 @@ function cleanRecapParagraph(section,text,index){
  let p=sentences(String(text||'')).map(s=>cleanSentence({team_name:'the league'},s)).filter(Boolean).join(' ');
  const id=String(section?.reporter?.id||'walter-mercer');
  const banks={
-  'walter-mercer':['If that pattern repeats, management owns it; bad luck has already used its one-week allowance.','The numbers describe the week. The decision-making tells me who actually learned anything.','A record can hide a weak Sunday for a while. The scoring profile eventually collects the debt.'],
-  'tess-delaney':['Celebrate the good part. The ugly part still gets tomatoes if management invites it back.','A pretty record is welcome; competent football remains considerably more attractive.','The week produced drama for free. Any manager adding avoidable nonsense should at least bring champagne.'],
-  'mack-hollis':['The result gets applause. The decision-making does not get to borrow it.','The scoreboard closed the scene; the process still has lines to learn.','A dramatic record is lovely theater. Repeating the same mistake is simply bad direction.'],
-  'nora-voss':['The result changes the expectation: repeat the good process and remove the avoidable mistake.','Scoring context matters because wins and losses can hide how well the lineup actually performed.','The useful takeaway is the decision management can repeat or correct next week.']
+  'walter-mercer':['If that pattern repeats, management owns it; bad luck has already used its one-week allowance.','I want the numbers tied to a football consequence: the decision-making tells me who actually learned anything.','I refuse to let a pretty record hide a weak Sunday; the scoring profile eventually collects the debt.'],
+  'tess-delaney':['Celebrate the good part. The ugly part still gets tomatoes if management invites it back.','I am happy to admire a pretty record, but competent football remains considerably more attractive.','I am already getting drama for free. Any manager adding avoidable nonsense should at least bring champagne.'],
+  'mack-hollis':['The result gets applause. The decision-making does not get to borrow it.','The scoreboard closed the scene. I want the process to learn its lines before the next act.','A dramatic record is lovely theater. Repeating the same mistake is simply bad direction.'],
+  'nora-voss':['I want the result to change the expectation: repeat the good process and remove the avoidable mistake.','I refuse to grade the lineup by the record alone; scoring context shows how well it actually performed.','I want one useful takeaway: identify the decision management should repeat or correct next week. If the same mistake returns, I am calling it a choice.']
  };
  const list=banks[id]||banks['walter-mercer'];
- if(!STYLE_MARK.test(p)){const line=list[index%list.length];p=`${p} ${line}`.trim()}
+ if(!STYLE_MARK.test(p)){const raw=list[index%list.length],parts=sentences(raw);const line=parts.find(x=>STYLE_MARK.test(x))||parts[0]||raw;p=`${p} ${line}`.trim()}
  return naturalizeSignalLanguage(p).replace(/\breceipts?\b/gi,'results').replace(/\bscoring app\b/gi,'scoreboard');
 }
 

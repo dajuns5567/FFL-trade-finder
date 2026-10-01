@@ -115,6 +115,26 @@ function fixPluralTeamGrammar(t,paragraphs){
  const re=new RegExp('^('+esc(full)+'|'+esc(mascot)+')\\\\s+(is|has|gets|holds|brings|turns)\\\\b','i');
  const verbs={is:'are',has:'have',gets:'get',holds:'hold',brings:'bring',turns:'turn'};
  return (paragraphs||[]).map(p=>sentenceParts(p).map(s=>s.replace(re,(m,subject,verb)=>subject+' '+verbs[String(verb).toLowerCase()])).join(' '));
+}
+
+function dedupeLongArticleSentences(t,sections){
+ const seen=new Set(),id=reporterId(t);let fallbackSlot=0;
+ const fallback={
+  'walter-mercer':['I still expect better football next Sunday.','Fix it now; spare me another Sunday.'],
+  'tess-delaney':['Save champagne; Sunday still gets a vote.','Keep tomatoes nearby; management knows why.'],
+  'mack-hollis':['The next act still needs better scoring.','Fix the scene before the curtain drops.'],
+  'nora-voss':['Use the obvious lineup and cut noise.','Fix the mistake and skip the theory.']
+ }[id]||['Fix it now; spare me another Sunday.'];
+ return (sections||[]).map(sec=>({...sec,paragraphs:(sec?.paragraphs||[]).map(p=>{
+  const kept=[];
+  for(const s of sentenceParts(p)){
+   const key=String(s||'').trim();
+   if(wordCount(key)>=8){if(seen.has(key))continue;seen.add(key)}
+   kept.push(s);
+  }
+  const next=kept.join(' ').trim();
+  return next||fallback[(fallbackSlot++)%fallback.length];
+ }).filter(Boolean)}));
 }`;
 if(!text.includes(fromEnsure))throw new Error('Expected ensureVoice implementation not found');
 text=text.replace(fromEnsure,toEnsure);
@@ -134,6 +154,7 @@ const toFinal=` sections=dedupeArticleFacts(t,sections);
   }
   return{...sec,paragraphs:fixPluralTeamGrammar(t,sec?.paragraphs||[])};
  });
+ sections=dedupeLongArticleSentences(t,sections);
  a.sections=sections;`;
 if(!text.includes(fromFinal))throw new Error('Expected final paragraph split block not found');
 text=text.replace(fromFinal,toFinal);
@@ -148,4 +169,4 @@ if(!smoke.includes(oldSmokeVoice))throw new Error('Expected smoke VOICE detector
 smoke=smoke.replace(oldSmokeVoice,newSmokeVoice);
 fs.writeFileSync(smokePath,smoke);
 
-console.log('R21 final voice-gap, natural voice detector, established-player scoring, outlook-road protection, length-aware player-commentary diversity, and plural team grammar applied');
+console.log('R21 final voice-gap, natural voice detector, established-player scoring, outlook-road protection, length-aware player-commentary diversity, plural team grammar, and article sentence dedupe applied');

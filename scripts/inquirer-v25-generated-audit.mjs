@@ -79,7 +79,7 @@ if(reportWeek===2){
 
 if(reportWeek===2){
   assert.equal(Number(d.inquirer_version),31,'Generated Week 2 edition must be Inquirer V31');
-  assert.ok(Number(d.editorial_revision)===14||(Number(d.editorial_revision)===16&&d.voice_revision==='week2-r16'),'Generated Week 2 edition must be the raw revision 14 preload or the explicit served revision 16 rewrite layer');
+  assert.ok(Number(d.editorial_revision)===14||(Number(d.editorial_revision)===20&&d.voice_revision==='week2-r20'),'Generated Week 2 edition must be the raw revision 14 preload or the explicit served revision 20 rewrite layer');
 }else{
   assert.equal(Number(d.inquirer_version),26,'Generated Week 1 edition must remain Inquirer V26');
   assert.equal(Number(d.editorial_revision),6,'Generated Week 1 edition must remain editorial revision 6');
@@ -115,6 +115,29 @@ for(const t of d.teams||[]){
 const expectedRanks=(d.teams||[]).map(t=>{const r=t?.league_context?.record||{},recent=t?.league_context?.recent_games||[];return{t,w:Number(r.wins)||0,l:Number(r.losses)||0,ties:Number(r.ties)||0,fpts:recent.reduce((n,g)=>n+(Number(g.points)||0),0)}}).sort((a,b)=>b.w-a.w||a.l-b.l||b.ties-a.ties||b.fpts-a.fpts||Number(a.t.roster_id)-Number(b.t.roster_id));
 for(const [i,row] of expectedRanks.entries())assert.equal(Number(row.t?.league_context?.standings_rank),i+1,`Week ${reportWeek} standings rank must be reconstructed only from games through the report week for ${row.t.team_name}`);
 assert.ok(recapSections.length>=4,'Weekly Recap must preserve a complete multi-desk edition');
+const servedR20=reportWeek===2&&Number(d.editorial_revision)===20&&d.voice_revision==='week2-r20';
+if(servedR20){
+  const r20Paragraphs=recapSections.flatMap(s=>s?.paragraphs||[]).filter(p=>String(p||'').trim());
+  assert.equal(r20Paragraphs.length,12,'R20 Weekly Recap must publish exactly twelve focused cross-league insight paragraphs');
+  assert.ok(words(recap)>=300,'R20 Weekly Recap must remain substantive while avoiding repeated team-article material');
+  for(const p of r20Paragraphs){
+    assert.ok(words(p)<=85,'R20 Weekly Recap paragraph exceeds the concise insight cap: '+p);
+    assert.ok(sentenceParts(p).length<=3,'R20 Weekly Recap paragraph bundles too many ideas: '+p);
+  }
+  const r20ReporterIds=['walter-mercer','tess-delaney','mack-hollis','nora-voss'];
+  for(const id of r20ReporterIds){
+    const ps=recapSections.filter(s=>String(s?.reporter?.id||'')===id).flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+    assert.equal(ps.length,3,'R20 Weekly Recap must distribute three focused insights to reporter '+id);
+  }
+  const insightParagraphs=r20Paragraphs.filter(p=>/\b(?:ranked|median|highest|lowest|average|projection|margin|combined|jump|fall|dropped|top-quarter|bottom-quarter|largest|weakest|strongest)\b/i.test(String(p)));
+  assert.ok(insightParagraphs.length>=10,'R20 Weekly Recap must add cross-league comparative insight instead of generic commentary; got '+insightParagraphs.length);
+  const articleSentences=new Set((d.teams||[]).flatMap(t=>sentenceParts(articleText(t))).filter(s=>words(s)>=8).map(s=>String(s).replace(/\s+/g,' ').trim().toLowerCase()));
+  const repeatedFromTeamArticles=sentenceParts(recap).filter(s=>words(s)>=8&&articleSentences.has(String(s).replace(/\s+/g,' ').trim().toLowerCase()));
+  assert.deepEqual(repeatedFromTeamArticles,[],'R20 Weekly Recap must not copy developed team-article sentences verbatim');
+  const r20Mentioned=(d.teams||[]).filter(t=>String(t.team_name||'').trim()&&recap.includes(String(t.team_name).trim()));
+  assert.ok(r20Mentioned.length<(d.teams||[]).length,'R20 Weekly Recap must select new cross-league insights instead of marching through every team');
+  assert.doesNotMatch(recap,/The league has \d+ teams wearing 2-0, \d+ wearing 1-1 and \d+ wearing 0-2|glamorous teams are already demanding attention|winless teams are running out of charming explanations|Week 2 arrived wearing jewelry/i,'R20 Weekly Recap must not restore the retired repeated summary block');
+}else{
 assert.ok(words(recap)>Math.max(...teamWords),'Editorial Weekly Recap should be deeper than the longest team column');
 const mentioned=(d.teams||[]).filter(t=>String(t.team_name||'').trim()&&recap.includes(String(t.team_name).trim()));
 assert.ok(mentioned.length<(d.teams||[]).length,'Weekly Recap must select stories instead of mentioning every team by contract');
@@ -170,6 +193,7 @@ for(const block of matterBlocks.slice(0,5)){
 
 }
 
+}
 assert.ok(recapSections.some(s=>/(?:Velvet Rope|Contender Line)/i.test(String(s?.heading||''))),'Bartholomew’s Weekly Recap desk must retain his own identity instead of a generic analytics heading');
 
 const all=[recap,...(d.teams||[]).map(articleText)].join('\n').toLowerCase();
@@ -219,8 +243,13 @@ for(const t of d.teams||[]){
 assert.equal(historicalContextFound,historicalContextExpected,'Every materially unusual top-three Week 2 player with a valid 2025 baseline must receive historical-average context; expected '+historicalContextExpected+', found '+historicalContextFound+'; missing='+JSON.stringify(historicalContextMissing));
 }
 
-assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');
-assert.match(recap,/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/i,'Weekly Recap must carry natural player-status commentary tied to the actual matchup story');
+if(servedR20){
+  assert.match(recap,/\b(?:median|ranked|two-week scoring average|highest-scoring|lowest-scoring|combined|margin|projection gap|scoring jump|scoring fall|dropped from)\b/i,'R20 Weekly Recap must replace repeated player-detail coverage with new league-relative scoring insight');
+  assert.match(recap,/\b(?:Week 1|Week 2|two-week|32|median)\b/i,'R20 Weekly Recap must ground its new insights in completed-week comparison context');
+}else{
+  assert.match(recap,/\b(?:targets|carries|pass attempts|solo|tackles|sack|receiving|rushing|passing)\b/i,'Weekly Recap must discuss real-life stat-line context, not fantasy points alone');
+  assert.match(recap,/\b(?:breakout|emerging|star|veteran|rookie|reliable)\b/i,'Weekly Recap must carry natural player-status commentary tied to the actual matchup story');
+}
 
 if(reportWeek===2){
   const expectedPlayerProfile=(p,slot=0)=>{
@@ -625,4 +654,4 @@ assert.doesNotMatch(all,/\broom (?:will|gets?|got|has been) rearrang\w*\b|\broom
 const avgTeamWords=teamWords.reduce((n,x)=>n+x,0)/Math.max(1,teamWords.length);
 assert.ok(Math.min(...teamWords)>=580,'Every team column must preserve the revision-5 depth increase; shortest='+Math.min(...teamWords));
 assert.ok(avgTeamWords>=680,'Team columns must retain substantial reporting depth after removing repetition; average='+avgTeamWords.toFixed(1));
-console.log(JSON.stringify({ok:true,version:d.inquirer_version,teams:d.teams.length,recap_words:words(recap),max_team_words:Math.max(...teamWords),min_team_words:Math.min(...teamWords),avg_team_words:Number(avgTeamWords.toFixed(1)),mentioned_teams:mentioned.length,reporter_structures:Object.fromEntries([...orderByReporter].map(([k,v])=>[k,v.size]))}));
+console.log(JSON.stringify({ok:true,version:d.inquirer_version,teams:d.teams.length,recap_words:words(recap),max_team_words:Math.max(...teamWords),min_team_words:Math.min(...teamWords),avg_team_words:Number(avgTeamWords.toFixed(1)),mentioned_teams:(d.teams||[]).filter(t=>String(t.team_name||'').trim()&&recap.includes(String(t.team_name).trim())).length,reporter_structures:Object.fromEntries([...orderByReporter].map(([k,v])=>[k,v.size]))}));

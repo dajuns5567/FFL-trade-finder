@@ -56,11 +56,14 @@ for(const t of revised?.teams||[]){
   const expected=pluralGrammar(t,p);
   assert(lede.includes(expected),'R20 dropped an existing score/Week 1 lede fact for '+t.team_name+': '+expected);
  }
- const quality=lede.find(p=>/scored -?\d+(?:\.\d+)? in Week 2, ranked \d+ of \d+/i.test(String(p)));
- assert(quality,'R20 lede lacks league-relative scoring rank for '+t.team_name);
- assert(/two-week scoring average ranks \d+ of \d+/i.test(quality),'R20 lede lacks two-week scoring context for '+t.team_name);
+ const quality=lede.find(p=>String(p).includes('Week 2')&&String(p).includes(one(t.points))&&/rank|No\./i.test(String(p))&&/two-week|both weeks|Blend the two weeks|two-act average/i.test(String(p)));
+ assert(quality,'R20 lede lacks reporter-voiced league-relative scoring context for '+t.team_name);
+ assert(String(quality).includes(String(rank(t.points,w2Scores))),'R20 lede lacks the correct Week 2 scoring rank for '+t.team_name);
  const prior=w1ByRoster.get(String(t.roster_id));
- if(Number.isFinite(prior))assert(/Week 1 was -?\d+(?:\.\d+)?, ranked \d+ of \d+/i.test(quality),'R20 lede lacks Week 1 comparison for '+t.team_name);
+ if(Number.isFinite(prior)){
+  assert(String(quality).includes(one(prior)),'R20 lede lacks the Week 1 score comparison for '+t.team_name);
+  assert(String(quality).includes(String(rank(prior,w1Scores))),'R20 lede lacks the correct Week 1 scoring rank for '+t.team_name);
+ }
  const r2=rank(t.points,w2Scores),r1=rank(prior,w1Scores),isWin=Number(t.points)>Number(t.opponent_points);
  if(isWin&&r2>24&&r1>24)assert(/bottom-quarter|not a strength|warning|low-scoring/i.test(quality),'Consistently low-scoring winner is being treated too generously: '+t.team_name);
  if(!isWin&&r2<=8&&rank(t.opponent_points,w2Scores)<=8)assert(/scored well|strong number|top-quarter|offense does not deserve/i.test(quality),'High-scoring loss lacks tough-matchup context: '+t.team_name);

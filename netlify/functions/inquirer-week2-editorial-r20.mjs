@@ -1,5 +1,5 @@
 import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
-import {applyWeek2EditorialR16 as applyWeek2EditorialR19} from './inquirer-week2-editorial-r19.mjs';
+import {applyWeek2EditorialR16 as applyWeek2EditorialR19Base} from './inquirer-week2-editorial-r19.mjs';
 
 export const WEEK2_EDITORIAL_REVISION=20;
 
@@ -7,6 +7,17 @@ const one=v=>Number.isFinite(Number(v))?Number(v).toFixed(1):'0.0';
 const sentenceParts=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
 const wordCount=s=>(String(s||'').match(/\b[\w’'-]+\b/g)||[]).length;
 const teamName=t=>String(t?.team_name||'This team');
+const escapeGrammarRe=value=>String(value||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function fixPluralTeamGrammar(t,text){
+ const full=teamName(t).trim(),mascot=full.split(/\s+/).filter(Boolean).at(-1)||'';
+ if(!full||!/s$/i.test(mascot))return String(text||'');
+ const re=new RegExp('(^|[.!?]\\s+)(?:'+escapeGrammarRe(full)+'|'+escapeGrammarRe(mascot)+')\\s+(is|has|gets|holds|brings|turns)\\b','gi');
+ const verbs={is:'are',has:'have',gets:'get',holds:'hold',brings:'bring',turns:'turn'};
+ return String(text||'').replace(re,(m,prefix,verb)=>{
+  const subject=m.slice(prefix.length,m.length-verb.length).trimEnd();
+  return prefix+subject+' '+(verbs[String(verb).toLowerCase()]||verb);
+ });
+}
 const reporterId=t=>String(t?.inquirer_article?.reporter?.id||'walter-mercer');
 const won=t=>Number(t?.points)>Number(t?.opponent_points);
 const record=t=>{const r=t?.league_context?.record||{};return `${Number(r.wins)||0}-${Number(r.losses)||0}${Number(r.ties)?'-'+Number(r.ties):''}`};
@@ -64,7 +75,7 @@ function qualityFor(t,ctx){
  else if(won(t)&&rank!=null&&rank>Math.ceil(ctx.currentScores.length*.5))category='soft-win';
  else if(!won(t)&&topNow&&topOpp)category='strong-loss';
  else if(!won(t)&&bottomNow)category='poor-loss';
- return{t,op,current,prior,avg,oppCurrent,oppPrior,rank,priorRank,avgRank,oppRank,oppPriorRank,category};
+ return{t,op,current,prior,avg,oppCurrent,oppPrior,rank,priorRank,avgRank,oppRank,oppPriorRank,opponentDip,category};
 }
 
 function qualityReaction(id,q){
@@ -114,13 +125,40 @@ function qualityReaction(id,q){
  return banks[id]?.[q.category]||banks['walter-mercer'][q.category]||banks['walter-mercer'].middle;
 }
 function qualityParagraph(t,ctx){
- const q=qualityFor(t,ctx),n=teamName(t),parts=[];
- const w1=Number.isFinite(q.prior)&&q.priorRank!=null?` Week 1 was ${one(q.prior)}, ranked ${q.priorRank} of ${week1Scores.length}.`:'';
- parts.push(`${n} scored ${one(q.current)} in Week 2, ranked ${q.rank} of ${ctx.currentScores.length}.${w1} Its two-week scoring average ranks ${q.avgRank} of ${ctx.avgScores.length}.`);
+ const q=qualityFor(t,ctx),n=teamName(t),id=reporterId(t),parts=[];
+ const count=ctx.currentScores.length,avgCount=ctx.avgScores.length,w1Count=week1Scores.length;
+ const currentFacts={
+  'walter-mercer':`${n} put up ${one(q.current)} in Week 2; that ranked ${q.rank} of ${count}.`,
+  'tess-delaney':`Week 2 gave ${n} ${one(q.current)} points, good for scoring rank ${q.rank} of ${count}.`,
+  'mack-hollis':`${n} finished Week 2 at ${one(q.current)}, No. ${q.rank} among ${count} team scores.`,
+  'nora-voss':`${n}’s Week 2 total was ${one(q.current)}; scoring rank: ${q.rank} of ${count}.`
+ };
+ const priorFacts={
+  'walter-mercer':`A week earlier, ${n} scored ${one(q.prior)} and ranked ${q.priorRank} of ${w1Count}.`,
+  'tess-delaney':`Week 1 had ${n} at ${one(q.prior)}, scoring rank ${q.priorRank} of ${w1Count}.`,
+  'mack-hollis':`The opening week had ${n} at ${one(q.prior)} and No. ${q.priorRank} of ${w1Count}.`,
+  'nora-voss':`For comparison, ${n}’s Week 1 score was ${one(q.prior)}; scoring rank: ${q.priorRank} of ${w1Count}.`
+ };
+ const averageFacts={
+  'walter-mercer':`Across both weeks, ${n}’s scoring average ranks ${q.avgRank} of ${avgCount}.`,
+  'tess-delaney':`Blend the two weeks and ${n} checks in at scoring rank ${q.avgRank} of ${avgCount}.`,
+  'mack-hollis':`Across the two-act average, ${n} sits No. ${q.avgRank} of ${avgCount}.`,
+  'nora-voss':`The two-week average places ${n} at scoring rank ${q.avgRank} of ${avgCount}.`
+ };
+ parts.push(currentFacts[id]||currentFacts['walter-mercer']);
+ if(Number.isFinite(q.prior)&&q.priorRank!=null)parts.push(priorFacts[id]||priorFacts['walter-mercer']);
+ parts.push(averageFacts[id]||averageFacts['walter-mercer']);
  if(q.category==='opponent-dip-win'&&q.opponentDip!==false&&Number.isFinite(q.oppPrior)&&q.oppPriorRank!=null){
-  parts.push(`${String(t?.opponent_name||'The opponent')} fell from ${one(q.oppPrior)} in Week 1 (${q.oppPriorRank} of ${week1Scores.length}) to ${one(q.oppCurrent)} this week (${q.oppRank} of ${ctx.currentScores.length}).`);
+  const op=String(t?.opponent_name||'The opponent');
+  const opponentFacts={
+   'walter-mercer':`${op} dropped from ${one(q.oppPrior)} in Week 1, rank ${q.oppPriorRank} of ${w1Count}, to ${one(q.oppCurrent)} this week, rank ${q.oppRank} of ${count}.`,
+   'tess-delaney':`${op} went from ${one(q.oppPrior)} in Week 1 (${q.oppPriorRank} of ${w1Count}) to ${one(q.oppCurrent)} now (${q.oppRank} of ${count}).`,
+   'mack-hollis':`${op}’s score fell from ${one(q.oppPrior)} in the opener, No. ${q.oppPriorRank} of ${w1Count}, to ${one(q.oppCurrent)} in Week 2, No. ${q.oppRank} of ${count}.`,
+   'nora-voss':`Opponent context: ${op} moved from ${one(q.oppPrior)} in Week 1, scoring rank ${q.oppPriorRank} of ${w1Count}, to ${one(q.oppCurrent)} in Week 2, rank ${q.oppRank} of ${count}.`
+  };
+  parts.push(opponentFacts[id]||opponentFacts['walter-mercer']);
  }
- parts.push(qualityReaction(reporterId(t),q));
+ parts.push(qualityReaction(id,q));
  return parts.join(' ');
 }
 function insertQualityIntoLede(t,ctx){
@@ -148,6 +186,7 @@ function insertQualityIntoLede(t,ctx){
 function reviseTeam(t,ctx){
  const a=t?.inquirer_article;if(!a)return t;
  insertQualityIntoLede(t,ctx);
+ a.sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec?.paragraphs||[]).map(p=>fixPluralTeamGrammar(t,p))}));
  a.paragraphs=(a.sections||[]).flatMap(s=>(s?.paragraphs||[]).filter(Boolean));
  a.editorial_revision=WEEK2_EDITORIAL_REVISION;
  a.voice_revision='week2-r20';
@@ -195,9 +234,9 @@ function p(...parts){return parts.filter(Boolean).join(' ')}
 function recapBanks(ctx){
  const s=recapStats(ctx),count=ctx.currentScores.length,med=one(ctx.median);
  const nick=[
-  p(`Week 2’s median team score was ${med}. ${s.top?.name||'The top scorer'} led the league at ${one(s.top?.current)}, while ${s.bottom?.name||'the bottom scorer'} finished at ${one(s.bottom?.current)}.`,`That spread is why a win by itself tells you almost nothing about whether the offense was actually good.`),
+  p(`Week 2’s median team score was ${med}. ${s.top?.name||'The top scorer'} led the league at ${one(s.top?.current)}, while ${s.bottom?.name||'the bottom scorer'} finished at ${one(s.bottom?.current)}.`,`That spread is why a win by itself tells you almost nothing about whether the offense was actually good; the standings can keep the confetti.`),
   s.lowWin&&s.highLoss?p(`${s.lowWin.name} was the lowest-scoring winner at ${one(s.lowWin.current)}; ${s.highLoss.name} was the highest-scoring loser at ${one(s.highLoss.current)}.`,`One record improved and the other did not, but the scoring quality points in the opposite direction. Fantasy football remains deeply committed to making simple conclusions look stupid.`):'',
-  s.consistentHigh&&s.consistentLow?p(`${s.consistentHigh.name} has been top-quarter in scoring in both weeks, while ${s.consistentLow.name} has been bottom-quarter in both.`,`Two games is early, but repeating the same scoring neighborhood twice is more useful than pretending every 1-1 or 2-0 record was built the same way.`):p(`The league has ${count} teams and only two weeks of results, so consistency is still scarce.`,`That makes repeated scoring quality more valuable than early-season bragging.`)
+  s.consistentHigh&&s.consistentLow?p(`${s.consistentHigh.name} has been top-quarter in scoring in both weeks, while ${s.consistentLow.name} has been bottom-quarter in both.`,`Two games is early, but repeating the same scoring neighborhood twice is more useful than early-season bragging built from one lucky matchup.`):p(`The league has ${count} teams and only two weeks of results, so consistency is still scarce.`,`That makes repeated scoring quality more valuable than early-season bragging.`)
  ];
  const tilly=[
   s.rise?p(`${s.rise.name} made the week’s biggest scoring jump, moving from ${one(s.rise.prior)} in Week 1 to ${one(s.rise.current)} in Week 2.`,`That is the sort of improvement that makes last week’s complaints look overdressed. I support this level of inconvenience.`):'',
@@ -210,9 +249,9 @@ function recapBanks(ctx){
   s.wideGame?p(`${teamName(s.wideGame.a)} and ${teamName(s.wideGame.b)} finished ${one(s.wideGame.margin)} points apart, the largest margin of the week.`,`That was less a finish than one side leaving the stage while the other was still bowing.`):''
  ];
  const nora=[
-  s.paperTiger&&s.unlucky&&!same(s.paperTiger,s.unlucky)?p(`${s.paperTiger.name} is 2-0 but owns the weakest two-week scoring average among undefeated teams at ${one(s.paperTiger.avg)}. ${s.unlucky.name} is 0-2 yet has the strongest two-week scoring average among winless teams at ${one(s.unlucky.avg)}.`,`Records matter. They also do not get permission to impersonate scoring quality.`):p(`Through two weeks, early records and scoring quality are already diverging for several teams.`,`Management should know which part is signal before celebrating or panicking.`),
+  s.next?p(`${s.next.name} projects at ${one(s.next.next)} against ${String(s.next.t?.next_opponent_name||'its next opponent')} at ${one(s.next.nextOpp)}, the largest Week 3 projection gap at ${Math.abs(s.next.next-s.next.nextOpp).toFixed(1)} points; ${s.next.name} ranked ${s.next.rank} of ${count} in Week 2 scoring.`,`The projection creates an expectation, but treating it as a result before kickoff is accounting with the game missing.`):'',
+  s.paperTiger&&s.unlucky&&!same(s.paperTiger,s.unlucky)?p(`${s.paperTiger.name} is 2-0 but owns the weakest two-week scoring average among undefeated teams at ${one(s.paperTiger.avg)}. ${s.unlucky.name} is 0-2 yet has the strongest two-week scoring average among winless teams at ${one(s.unlucky.avg)}.`,`Records matter, but letting them impersonate scoring quality is accounting in a cheap costume.`):p(`Through two weeks, early records and scoring quality are already diverging for several teams.`,`Management should know which part is signal before celebrating or panicking.`),
   s.market?p(`${s.market.name} had the week’s largest absolute roster-value move at ${Math.abs(Number(s.market.delta)).toFixed(0)} points while its Week 2 scoring rank was ${s.market.rank} of ${count}.`,`Market movement and weekly production are answering different questions; confusing them is how managers buy confidence at retail price.`):'',
-  s.next?p(`${s.next.name} carries the largest Week 3 projection gap at ${Math.abs(s.next-s.nextOpp).toFixed(1)} points after ranking ${s.next.rank} of ${count} in Week 2 scoring.`,`The projection creates an expectation. The last two Sundays decide how much trust that expectation deserves.`):''
  ];
  return{'walter-mercer':nick.filter(Boolean),'tess-delaney':tilly.filter(Boolean),'mack-hollis':mack.filter(Boolean),'nora-voss':nora.filter(Boolean)};
 }
@@ -244,7 +283,7 @@ function reviseOverview(o,ctx){
 }
 
 export function applyWeek2EditorialR16(raw){
- const out=applyWeek2EditorialR19(raw);
+ const out=applyWeek2EditorialR19Base(raw);
  if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
  const ctx=contextRows(out.teams||[]);
  out.teams=(out.teams||[]).map(t=>reviseTeam(t,ctx));

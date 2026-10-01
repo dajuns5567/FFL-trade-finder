@@ -76,6 +76,24 @@ function fillVoiceGaps(t,sec){
   if(cold>=3){out.push(reporterVoiceLine(t,kind,slot++));cold=0}
  }
  return out;
+}
+
+function diversifyFeaturedPlayerCommentary(t,paragraphs){
+ const ps=[...(paragraphs||[])];
+ const banks={
+  'walter-mercer':['I can live with this; alert the historians.','That still annoys me, which feels more normal.','Management owes this one an answer before Monday.'],
+  'tess-delaney':['Fine, this one gets its own argument.','I have tomatoes and applause; choose correctly.','Save the champagne until the role settles down.'],
+  'mack-hollis':['This scene gets its own note.','That act needs a rewrite, not an encore.','Cue the curtain before management adds dialogue.'],
+  'nora-voss':['Keep what worked; no committee meeting required.','Fix the choice before it starts charging rent.','Use the obvious answer and spare me the theory.']
+ };
+ const lines=banks[reporterId(t)]||banks['walter-mercer'];
+ for(let slot=0;slot<3;slot++){
+  const idx=1+(slot*2);
+  if(idx>=ps.length)break;
+  const line=lines[slot];
+  if(!String(ps[idx]).includes(line))ps[idx]=\`${'${ps[idx]}'} ${'${line}'}\`.trim();
+ }
+ return ps;
 }`;
 if(!text.includes(fromEnsure))throw new Error('Expected ensureVoice implementation not found');
 text=text.replace(fromEnsure,toEnsure);
@@ -89,7 +107,8 @@ const toFinal=` sections=dedupeArticleFacts(t,sections);
   const kind=String(sec?.kind||'');
   if(['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'].includes(kind)){
    const voiced=ensureVoice(t,sec).flatMap(p=>splitLongParagraph(p,82)).filter(Boolean);
-   return{...sec,paragraphs:kind==='outlook'?voiced:fillVoiceGaps(t,{...sec,paragraphs:voiced})};
+   const spaced=kind==='outlook'?voiced:fillVoiceGaps(t,{...sec,paragraphs:voiced});
+   return{...sec,paragraphs:kind==='players'?diversifyFeaturedPlayerCommentary(t,spaced):spaced};
   }
   return sec;
  });
@@ -107,4 +126,4 @@ if(!smoke.includes(oldSmokeVoice))throw new Error('Expected smoke VOICE detector
 smoke=smoke.replace(oldSmokeVoice,newSmokeVoice);
 fs.writeFileSync(smokePath,smoke);
 
-console.log('R21 final voice-gap, natural voice detector, established-player scoring, and outlook-road protection applied');
+console.log('R21 final voice-gap, natural voice detector, established-player scoring, outlook-road protection, and player-commentary diversity applied');

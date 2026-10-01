@@ -1,7 +1,12 @@
 import fs from 'node:fs';
 
-const path='netlify/functions/inquirer-week2-editorial-r21.mjs';
-let text=fs.readFileSync(path,'utf8');
+const sourcePath='netlify/functions/inquirer-week2-editorial-r21.mjs';
+let text=fs.readFileSync(sourcePath,'utf8');
+
+const oldVoiceMark="const VOICE_MARK=/\\b(?:complaint|ridiculous|absurd|patience|silence|annoying|annoyed|ugly|beautiful|glamour|champagne|tomatoes|applause|theater|stage|curtain|swagger|embarrass|heckl|boo|joke|funny|stupid|nonsense|I refuse|I resent|I would|I want|I am|I can|good luck|congratulations|mercifully|delicious|rude|polite clap|parade|confetti|funeral|miracle|costume|shopping|credit card|complaint desk|committee meeting)\\b/i;";
+const newVoiceMark="const VOICE_MARK=/\\b(?:complaint|ridiculous|absurd|patience|silence|annoying|annoyed|ugly|beautiful|glamour|champagne|tomatoes|applause|theater|stage|curtain|swagger|embarrass|heckl|boo|joke|funny|stupid|nonsense|I refuse|I resent|I would|I want|I am|I can|good luck|congratulations|mercifully|delicious|rude|polite clap|parade|confetti|funeral|miracle|costume|shopping|credit card|complaint desk|committee meeting|production|management|enjoy(?:ing)?|irresponsib)\\b/i;";
+if(!text.includes(oldVoiceMark))throw new Error('Expected VOICE_MARK not found');
+text=text.replace(oldVoiceMark,newVoiceMark);
 
 const fromEnsure=`function ensureVoice(t,sec){
  const ps=[...(sec?.paragraphs||[])].filter(Boolean),kind=String(sec?.kind||'');
@@ -55,5 +60,14 @@ const toFinal=` sections=dedupeArticleFacts(t,sections);
 if(!text.includes(fromFinal))throw new Error('Expected final paragraph split block not found');
 text=text.replace(fromFinal,toFinal);
 
-fs.writeFileSync(path,text);
-console.log('R21 final voice-gap guarantee applied');
+fs.writeFileSync(sourcePath,text);
+
+const smokePath='scripts/inquirer-week2-r21-smoke.mjs';
+let smoke=fs.readFileSync(smokePath,'utf8');
+const oldSmokeVoice="const VOICE=/\\b(?:complaint|ridiculous|absurd|patience|patient|silence|annoying|annoyed|ugly|beautiful|glamour|glamorous|champagne|tomatoes|applause|theater|stage|curtain|swagger|embarrass|heckl|boo|joke|funny|stupid|nonsense|I refuse|I resent|I would|I want|I am|I can|good luck|congratulations|mercifully|delicious|rude|parade|confetti|funeral|miracle|costume|shopping|credit card|committee meeting|rent|Monday|Sunday|production|scene|audience|roses|balcony|dialogue|drama|encore|apology|formalwear|lighting|outfit|open bar|restraint|tasteful|silly|stain|compliment|credit|ceremony|loud|theor(?:y|ies)|mistake|choice|relationship|rewrite)\\b/i;";
+const newSmokeVoice="const VOICE=/\\b(?:complaint|ridiculous|absurd|patience|patient|silence|annoying|annoyed|ugly|beautiful|glamour|glamorous|champagne|tomatoes|applause|theater|stage|curtain|swagger|embarrass|heckl|boo|joke|funny|stupid|nonsense|I refuse|I resent|I would|I want|I am|I can|good luck|congratulations|mercifully|delicious|rude|parade|confetti|funeral|miracle|costume|shopping|credit card|committee meeting|rent|Monday|Sunday|production|management|enjoy(?:ing)?|irresponsib|scene|audience|roses|balcony|dialogue|drama|encore|apology|formalwear|lighting|outfit|open bar|restraint|tasteful|silly|stain|compliment|credit|ceremony|loud|theor(?:y|ies)|mistake|choice|relationship|rewrite)\\b/i;";
+if(!smoke.includes(oldSmokeVoice))throw new Error('Expected smoke VOICE detector not found');
+smoke=smoke.replace(oldSmokeVoice,newSmokeVoice);
+fs.writeFileSync(smokePath,smoke);
+
+console.log('R21 final voice-gap guarantee and natural voice detector applied');

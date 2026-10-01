@@ -14,6 +14,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: player-signal-layer-r1
+          ref: ${{ github.sha }}
           fetch-depth: 0
-      - run: echo R19-helper-started
+      - name: Patch runtime and smoke
+        run: node scripts/week2-r19-wire-helper.mjs
+      - name: Verify R19 Week 2 output
+        run: node scripts/inquirer-week2-voice-r15-smoke.mjs
+      - name: Commit verified R19 and remove temporary helpers
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add netlify/functions/league-hub.mjs scripts/inquirer-week2-voice-r15-smoke.mjs
+          git commit -m "Wire Week 2 R19 article-wide rewrite"
+          git rm scripts/week2-r19-wire-helper.mjs .github/workflows/week2-r19-one-shot.yml
+          git commit -m "Remove temporary Week 2 R19 helpers"
+          git push origin HEAD:player-signal-layer-r1

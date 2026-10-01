@@ -36,6 +36,7 @@ jobs:
           node --check netlify/functions/league-hub.mjs
           node --check netlify/functions/inquirer-editorial-v31.mjs
           node --check netlify/functions/inquirer-week2-editorial-r15.mjs
+          node --check netlify/functions/inquirer-week2-editorial-r20.mjs
           node --check netlify/functions/player-signal-engine.mjs
           node --check netlify/functions/player-signals.mjs
           node --check scripts/player-signal-engine-smoke.mjs
@@ -46,6 +47,7 @@ jobs:
           node --check scripts/inquirer-v25-generated-audit.mjs
           node --check scripts/inquirer-forward-v31-smoke.mjs
           node --check scripts/inquirer-week2-voice-r15-smoke.mjs
+          node --check scripts/inquirer-week2-r20-smoke.mjs
 
       - name: Run source contract
         run: node scripts/inquirer-v25-audit.mjs
@@ -53,6 +55,8 @@ jobs:
         run: node scripts/player-signal-engine-smoke.mjs
       - name: Week 2 reporter voice regression
         run: node scripts/inquirer-week2-voice-r15-smoke.mjs
+      - name: Week 2 R20 scoring and recap regression
+        run: node scripts/inquirer-week2-r20-smoke.mjs
 
       - name: Capture forward V31 season smoke
         run: |
@@ -111,9 +115,9 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import rawWeek2 from './netlify/functions/inquirer-week2-2026-preload.mjs';
-          import {applyWeek2EditorialR16} from './netlify/functions/inquirer-week2-editorial-r15.mjs';
+          import {applyWeek2EditorialR16} from './netlify/functions/inquirer-week2-editorial-r20.mjs';
           const week2=applyWeek2EditorialR16(rawWeek2);
-          if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||Number(week2?.editorial_revision)!==16||week2?.voice_revision!=='week2-r16')throw new Error('Week 2 revision 16 did not materialize from the locked preload');
+          if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||Number(week2?.editorial_revision)!==20||week2?.voice_revision!=='week2-r20')throw new Error('Week 2 revision 20 did not materialize from the locked preload');
           fs.writeFileSync('/tmp/week2-inquirer-r6.json',JSON.stringify(week2,null,2)+'\n');
           NODE
 

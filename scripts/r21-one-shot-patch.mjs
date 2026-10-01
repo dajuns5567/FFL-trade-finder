@@ -15,6 +15,12 @@ replaceOrThrow(
 
 replaceOrThrow(
  'netlify/functions/inquirer-week2-editorial-r21.mjs',
+ "'hot-seat':[`Every respectable production needs a weak scene, apparently. ${n} has found theirs; now cut the unnecessary sequel.`,`${n} has one part of the show asking for a rewrite. I recommend doing it before the audience starts participating.`],",
+ "'hot-seat':[`Every respectable production needs a weak scene, apparently. ${n} has found theirs; now skip the unnecessary sequel.`,`${n} has one part of the show asking for a rewrite. I recommend doing it before the audience starts participating.`],"
+);
+
+replaceOrThrow(
+ 'netlify/functions/inquirer-week2-editorial-r21.mjs',
  "value:[`${n} moved in the market. Fine. The useful question is whether the lineup decisions deserve the same confidence.`,`${n} has a valuation change and a football game. I care more about the part management can actually control on Sunday.`],",
  "value:[`${n} moved in the market. Fine. I care more about whether the lineup decisions deserve the same confidence.`,`${n} has a valuation change and a football game. I care more about the part management can actually control on Sunday.`],"
 );
@@ -34,13 +40,19 @@ replaceOrThrow(
 replaceOrThrow(
  'netlify/functions/inquirer-week2-editorial-r21.mjs',
  "function temperEstablishedOverreaction(t,paragraph,baselines){\n let out=[];\n for(const s of sentenceParts(paragraph)){\n  let replaced=false;\n  for(const [player] of baselines){\n   if(s.toLowerCase().includes(player.toLowerCase())&&PANIC.test(s)){\n    out.push(establishedCorrection(t,player,s));replaced=true;break;\n   }\n  }\n  if(!replaced)out.push(s);\n }\n return out.join(' ');\n}",
- "function temperEstablishedOverreaction(t,paragraph,baselines){\n const mentioned=[...baselines.keys()].filter(player=>String(paragraph||'').toLowerCase().includes(player.toLowerCase()));\n if(!mentioned.length)return paragraph;\n let out=[];\n for(const s of sentenceParts(paragraph)){\n  const player=mentioned.find(name=>s.toLowerCase().includes(name.toLowerCase()));\n  if(player&&PANIC.test(s)){out.push(establishedCorrection(t,player,s));continue}\n  if(PANIC.test(s)){\n   out.push(s\n    .replace(/\\bbench(?:ing)?\\b/gi,'lineup')\n    .replace(/\\bpanic\\b/gi,'overreact')\n    .replace(/\\bcrisis\\b/gi,'bad week')\n    .replace(/\\bemergency\\b/gi,'problem')\n    .replace(/\\bhot seat\\b/gi,'rough spot'));\n   continue;\n  }\n  out.push(s);\n }\n return out.join(' ');\n}"
+ "function temperEstablishedOverreaction(t,paragraph,baselines){\n const hasPlayer=(text,player)=>new RegExp('(?:^|[^A-Za-z])'+esc(player)+'(?:$|[^A-Za-z])','i').test(String(text||''));\n const mentioned=[...baselines.keys()].filter(player=>hasPlayer(paragraph,player));\n if(!mentioned.length)return paragraph;\n let out=[];\n for(const s of sentenceParts(paragraph)){\n  const player=mentioned.find(name=>hasPlayer(s,name));\n  if(player&&PANIC.test(s)){out.push(establishedCorrection(t,player,s));continue}\n  if(PANIC.test(s)){\n   out.push(s\n    .replace(/\\bbench(?:ing)?\\b/gi,'lineup')\n    .replace(/\\bpanic\\b/gi,'overreact')\n    .replace(/\\bcrisis\\b/gi,'bad week')\n    .replace(/\\bemergency\\b/gi,'problem')\n    .replace(/\\bhot seat\\b/gi,'rough spot'));\n   continue;\n  }\n  out.push(s);\n }\n return out.join(' ');\n}"
 );
 
 replaceOrThrow(
  'scripts/inquirer-week2-r21-smoke.mjs',
  "if((section(old,'players')?.paragraphs||[]).length>=12)assert(playerPs.length<=8,'R21 did not compact the repetitive player module for '+t.team_name+': '+playerPs.length);",
  "const oldPlayerCount=(section(old,'players')?.paragraphs||[]).length;\n if(oldPlayerCount>=12)assert(playerPs.length<=Math.ceil(oldPlayerCount*0.75),'R21 did not compact the repetitive player module by at least 25% for '+t.team_name+': '+oldPlayerCount+' -> '+playerPs.length);"
+);
+
+replaceOrThrow(
+ 'scripts/inquirer-week2-r21-smoke.mjs',
+ "for(const [player] of bases){\n  for(const p of articleParagraphs(t))if(p.toLowerCase().includes(player.toLowerCase()))assert.doesNotMatch(p,PANIC,'R21 overreacts to established scorer '+player+' for '+t.team_name+': '+p);\n }",
+ "for(const [player] of bases){\n  const playerRe=new RegExp('(?:^|[^A-Za-z])'+player.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&')+'(?:$|[^A-Za-z])','i');\n  for(const p of articleParagraphs(t))if(playerRe.test(p))assert.doesNotMatch(p,PANIC,'R21 overreacts to established scorer '+player+' for '+t.team_name+': '+p);\n }"
 );
 
 replaceOrThrow(

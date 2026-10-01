@@ -21,17 +21,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Patch weightless arithmetic humor
+      - name: Patch R22 commentary quality
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('netlify/functions/inquirer-week2-editorial-r22.mjs')
           s=p.read_text()
-          old="if(/That difference is large enough to track directly into Week 3/i.test(x))return'One lousy Sunday below the established baseline is worth watching. If the role stays intact, the usage matters more than the gap itself.';"
-          new=old+"\n if(/excessive enough to be enjoyable and useful enough to avoid becoming nonsense/i.test(x))return'The expanded role is the part worth watching; management now has a reason to keep the opportunity intact.';"
-          if old not in s:
-              raise SystemExit('patch anchor missing')
-          p.write_text(s.replace(old,new,1))
+          anchor="if(/That difference is large enough to track directly into Week 3/i.test(x))return'One lousy Sunday below the established baseline is worth watching. If the role stays intact, the usage matters more than the gap itself.';"
+          extra="if(/excessive enough to be enjoyable and useful enough to avoid becoming nonsense/i.test(x))return'The expanded role is the part worth watching; management now has a reason to keep the opportunity intact.';"
+          if extra not in s:
+              if anchor not in s:
+                  raise SystemExit('weightless-humor patch anchor missing')
+              s=s.replace(anchor,anchor+'\n '+extra,1)
+          s=s.replace("`The result is real. I still want ${n} management to explain the avoidable parts before the record starts hiding them.`","`The result is real. I want ${n} management to explain the avoidable parts before the record starts hiding them.`")
+          s=s.replace("`Take the result. Keep the excuses in storage; ${n} has enough football on tape to know what needs fixing.`","`Take the result. I refuse to let the record hide the avoidable football; ${n} has enough tape to know what needs fixing.`")
+          s=s.replace("`${n} has a result and a process to judge separately. Keep the parts that worked and fix the avoidable mistake.`","`${n} has a result and a process to judge separately. I want the avoidable mistake fixed before the next Sunday.`")
+          s=s.replace("`The record is one fact. ${n} management still has to explain the decisions that created the performance.`","`The record is one fact. I refuse to let it excuse ${n} management’s avoidable decisions.`")
+          p.write_text(s)
           PY
       - name: Install generator dependency
         run: npm install --no-save --package-lock=false @netlify/blobs

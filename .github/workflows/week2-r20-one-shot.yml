@@ -47,6 +47,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add netlify/functions/inquirer-week2-editorial-r20.mjs netlify/functions/league-hub.mjs .github/workflows/inquirer-editorial-r5-smoke.yml scripts/inquirer-v25-generated-audit.mjs scripts/inquirer-week2-r20-smoke.mjs
           git commit -m "Wire Week 2 R20 scoring-aware recap rewrite"
-          git rm scripts/week2-r20-wire-helper.mjs scripts/week2-r20-helper-sanitize.mjs scripts/week2-r20-voice-facts-helper.mjs .github/workflows/week2-r20-one-shot.yml
+          git rm -f scripts/week2-r20-wire-helper.mjs scripts/week2-r20-helper-sanitize.mjs scripts/week2-r20-voice-facts-helper.mjs .github/workflows/week2-r20-one-shot.yml
           git commit -m "Remove temporary Week 2 R20 helpers"
           git push origin HEAD:player-signal-layer-r1

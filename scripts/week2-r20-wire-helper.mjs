@@ -70,4 +70,12 @@ w=replaceOnce(w,
  "if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||Number(week2?.editorial_revision)!==20||week2?.voice_revision!=='week2-r20')throw new Error('Week 2 revision 20 did not materialize from the locked preload');",
  'R20 materialization assertion');
 writeFileSync(workflowPath,w);
-console.log('R20 wiring helper patched editorial layer, runtime, and CI');
+
+const auditPath='scripts/inquirer-v25-generated-audit.mjs';
+let audit=readFileSync(auditPath,'utf8');
+audit=replaceOnce(audit,
+ "  assert.ok(Number(d.editorial_revision)===14||(Number(d.editorial_revision)===16&&d.voice_revision==='week2-r16'),'Generated Week 2 edition must be the raw revision 14 preload or the explicit served revision 16 rewrite layer');",
+ "  assert.ok(Number(d.editorial_revision)===14||(Number(d.editorial_revision)===20&&d.voice_revision==='week2-r20'),'Generated Week 2 edition must be the raw revision 14 preload or the explicit served revision 20 rewrite layer');",
+ 'R20 generated-audit revision gate');
+writeFileSync(auditPath,audit);
+console.log('R20 wiring helper patched editorial layer, runtime, CI, and generated audit');

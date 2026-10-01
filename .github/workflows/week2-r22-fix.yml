@@ -10,9 +10,9 @@ permissions:
   contents: write
 
 jobs:
-  fix-and-verify:
+  wire-and-verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,37 +20,52 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply R22 finishing patches
+      - name: Install generator dependency
+        run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Apply verified R22 runtime wiring
+        run: python scripts/tmp-r22-wire.py
+      - name: Syntax check permanent R22 wiring
         run: |
-          python scripts/tmp-r22-finish-patch.py
-          python scripts/tmp-r22-discovery-patch.py
-          python scripts/tmp-r22-recap-density-patch.py
-      - name: Syntax check R22
-        run: node --check netlify/functions/inquirer-week2-editorial-r22.mjs
-      - name: Capture R22 smoke
+          node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/inquirer-week2-editorial-r22.mjs
+          node --check scripts/inquirer-v25-generated-audit.mjs
+      - name: Re-run all-32 R22 regression
+        run: node scripts/inquirer-week2-r22-smoke.mjs
+      - name: Materialize R22 candidate
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import rawWeek2 from './netlify/functions/inquirer-week2-2026-preload.mjs';
+          import {applyWeek2EditorialR16} from './netlify/functions/inquirer-week2-editorial-r22.mjs';
+          const week2=applyWeek2EditorialR16(rawWeek2);
+          if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||Number(week2?.editorial_revision)!==22||week2?.voice_revision!=='week2-r22')throw new Error('Week 2 revision 22 did not materialize from the locked preload');
+          fs.writeFileSync('/tmp/week2-inquirer-r22.json',JSON.stringify(week2,null,2)+'\n');
+          NODE
+      - name: Capture full generated R22 audit
         run: |
           set +e
-          node scripts/inquirer-week2-r22-smoke.mjs > /tmp/r22.log 2>&1
+          node scripts/inquirer-v25-generated-audit.mjs /tmp/week2-inquirer-r22.json > /tmp/week2-r22-generated-audit.log 2>&1
           code=$?
-          echo "$code" > /tmp/r22.exit
-          cat /tmp/r22.log
+          echo "$code" > /tmp/week2-r22-generated-audit.exit
+          cat /tmp/week2-r22-generated-audit.log
           exit 0
-      - name: Upload R22 diagnostic
+      - name: Upload R22 generated diagnostic
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: week2-r22-fix-diagnostic
+          name: week2-r22-generated-diagnostic
           path: |
-            /tmp/r22.log
-            /tmp/r22.exit
+            /tmp/week2-inquirer-r22.json
+            /tmp/week2-r22-generated-audit.log
+            /tmp/week2-r22-generated-audit.exit
           retention-days: 2
-      - name: Enforce R22 smoke
-        run: test "$(cat /tmp/r22.exit)" = "0"
-      - name: Commit verified R22 patch
+      - name: Enforce full generated R22 audit
+        run: test "$(cat /tmp/week2-r22-generated-audit.exit)" = "0"
+      - name: Commit verified R22 runtime wiring
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add netlify/functions/inquirer-week2-editorial-r22.mjs
-          git rm scripts/tmp-r22-finish-patch.py scripts/tmp-r22-discovery-patch.py scripts/tmp-r22-recap-density-patch.py
-          git commit -m 'Finish Week 2 R22 repetition and tag cleanup'
+          git add netlify/functions/league-hub.mjs scripts/inquirer-v25-generated-audit.mjs
+          git rm -f scripts/tmp-r22-wire.py scripts/r22-fix-patch.mjs
+          git commit -m 'Wire verified Week 2 R22 editorial layer'
           git push origin HEAD:player-signal-layer-r1

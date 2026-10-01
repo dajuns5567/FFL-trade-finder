@@ -24,4 +24,10 @@ if old in s:
     s=s.replace(old,new,1)
 elif new not in s:
     raise SystemExit('R22 generated-audit served-layer anchor missing')
+old="assert.ok(sentenceParts(p).length<=3,'R20 Weekly Recap paragraph bundles too many ideas: '+p);"
+new="assert.ok(sentenceParts(p).length<=(Number(d.editorial_revision)>=22?4:3),'Served Week 2 Weekly Recap paragraph bundles too many ideas: '+p);"
+if old in s:
+    s=s.replace(old,new,1)
+elif new not in s:
+    raise SystemExit('R22 generated-audit recap sentence-cap anchor missing')
 audit.write_text(s)

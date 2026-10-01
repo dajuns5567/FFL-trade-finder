@@ -10,6 +10,7 @@ on:
       - 'netlify/functions/inquirer-week2-editorial-r21.mjs'
       - 'scripts/inquirer-week2-r21-smoke.mjs'
       - 'scripts/r21-one-shot-patch.mjs'
+      - 'scripts/r21-voice-patch.mjs'
 
 permissions:
   contents: write
@@ -25,8 +26,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply runtime/audit patch
+      - name: Apply content/runtime/audit patch
         run: node scripts/r21-one-shot-patch.mjs
+      - name: Apply voice-distribution patch
+        run: node scripts/r21-voice-patch.mjs
       - name: Syntax check R21
         run: |
           node --check netlify/functions/inquirer-week2-editorial-r21.mjs
@@ -57,10 +60,10 @@ jobs:
           retention-days: 2
       - name: Commit verified runtime wiring
         run: |
-          rm scripts/r21-one-shot-patch.mjs
+          rm scripts/r21-one-shot-patch.mjs scripts/r21-voice-patch.mjs
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add netlify/functions/inquirer-week2-editorial-r21.mjs netlify/functions/league-hub.mjs scripts/inquirer-v25-generated-audit.mjs scripts/r21-one-shot-patch.mjs
+          git add netlify/functions/inquirer-week2-editorial-r21.mjs netlify/functions/league-hub.mjs scripts/inquirer-v25-generated-audit.mjs scripts/inquirer-week2-r21-smoke.mjs scripts/r21-one-shot-patch.mjs scripts/r21-voice-patch.mjs
           git diff --cached --quiet && exit 0
           git commit -m "Wire verified Week 2 editorial R21"
           git push origin HEAD:player-signal-layer-r1

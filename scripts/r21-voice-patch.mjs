@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 
 const path='netlify/functions/inquirer-week2-editorial-r21.mjs';
-const before=fs.readFileSync(path,'utf8');
-const from=`function ensureVoice(t,sec){
+let text=fs.readFileSync(path,'utf8');
+
+const fromEnsure=`function ensureVoice(t,sec){
  const ps=[...(sec?.paragraphs||[])].filter(Boolean),kind=String(sec?.kind||'');
  if(!ps.length)return ps;
  const targets=ps.length>=4?[0,Math.floor(ps.length/2)]:[0];
@@ -12,7 +13,7 @@ const from=`function ensureVoice(t,sec){
  }
  return ps;
 }`;
-const to=`function ensureVoice(t,sec){
+const toEnsure=`function ensureVoice(t,sec){
  const ps=[...(sec?.paragraphs||[])].filter(Boolean),kind=String(sec?.kind||'');
  if(!ps.length)return ps;
  const targets=[];
@@ -23,6 +24,22 @@ const to=`function ensureVoice(t,sec){
  }
  return ps;
 }`;
-if(!before.includes(from))throw new Error('Expected ensureVoice implementation not found');
-fs.writeFileSync(path,before.replace(from,to));
-console.log('R21 voice distribution patch applied');
+if(!text.includes(fromEnsure))throw new Error('Expected ensureVoice implementation not found');
+text=text.replace(fromEnsure,toEnsure);
+
+const fromFinal=` sections=dedupeArticleFacts(t,sections);
+ sections=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).flatMap(p=>splitLongParagraph(p,82)).filter(Boolean)}));
+ a.sections=sections;`;
+const toFinal=` sections=dedupeArticleFacts(t,sections);
+ sections=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).flatMap(p=>splitLongParagraph(p,82)).filter(Boolean)}));
+ sections=sections.map(sec=>{
+  const kind=String(sec?.kind||'');
+  if(['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'].includes(kind))return{...sec,paragraphs:ensureVoice(t,sec)};
+  return sec;
+ });
+ a.sections=sections;`;
+if(!text.includes(fromFinal))throw new Error('Expected final paragraph split block not found');
+text=text.replace(fromFinal,toFinal);
+
+fs.writeFileSync(path,text);
+console.log('R21 final voice distribution patch applied');

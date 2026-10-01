@@ -37,6 +37,7 @@ jobs:
           s=s.replace("`Take the result. Keep the excuses in storage; ${n} has enough football on tape to know what needs fixing.`","`Take the result. I refuse to let the record hide the avoidable football; ${n} has enough tape to know what needs fixing.`")
           s=s.replace("`${n} has a result and a process to judge separately. Keep the parts that worked and fix the avoidable mistake.`","`${n} has a result and a process to judge separately. I want the avoidable mistake fixed before the next Sunday.`")
           s=s.replace("`The record is one fact. ${n} management still has to explain the decisions that created the performance.`","`The record is one fact. I refuse to let it excuse ${n} management’s avoidable decisions.`")
+          s=s.replace("|management owns|bad luck|explain that|fix it)\\b/i;","|management owns|bad luck)\\b/i;")
           old="const list=banks[id]?.[kind]||banks[id]?.players||banks['walter-mercer'].players;\n return choose(list,`${n}|${kind}|${slot}`);"
           new="const list=banks[id]?.[kind]||banks[id]?.players||banks['walter-mercer'].players;\n const line=choose(list,`${n}|${kind}|${slot}`);\n if(STYLE_MARK.test(line))return line;\n const lead={'walter-mercer':'I want this clear:','tess-delaney':'I am enjoying the drama, but the football still has to make sense:','mack-hollis':'The audience is allowed to boo when the football deserves it:','nora-voss':'I refuse the easy explanation:'}[id]||'I want this clear:';\n return `${lead} ${line}`;"
           if old in s:

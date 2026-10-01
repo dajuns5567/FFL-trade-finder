@@ -1,0 +1,63 @@
+name: Week 2 R22 one-shot fix
+
+on:
+  push:
+    branches: [player-signal-layer-r1]
+    paths:
+      - '.github/workflows/week2-r22-fix.yml'
+      - 'netlify/functions/inquirer-week2-editorial-r22.mjs'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: player-signal-layer-r1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch weightless arithmetic humor
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('netlify/functions/inquirer-week2-editorial-r22.mjs')
+          s=p.read_text()
+          old="if(/That difference is large enough to track directly into Week 3/i.test(x))return'One lousy Sunday below the established baseline is worth watching. If the role stays intact, the usage matters more than the gap itself.';"
+          new=old+"\n if(/excessive enough to be enjoyable and useful enough to avoid becoming nonsense/i.test(x))return'The expanded role is the part worth watching; management now has a reason to keep the opportunity intact.';"
+          if old not in s:
+              raise SystemExit('patch anchor missing')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Install generator dependency
+        run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Capture R22 smoke
+        run: |
+          set +e
+          node scripts/inquirer-week2-r22-smoke.mjs > /tmp/r22.log 2>&1
+          code=$?
+          echo "$code" > /tmp/r22.exit
+          cat /tmp/r22.log
+          exit 0
+      - name: Upload R22 diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: week2-r22-fix-diagnostic
+          path: |
+            /tmp/r22.log
+            /tmp/r22.exit
+          retention-days: 2
+      - name: Enforce R22 smoke
+        run: test "$(cat /tmp/r22.exit)" = "0"
+      - name: Commit verified R22 patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add netlify/functions/inquirer-week2-editorial-r22.mjs
+          git commit -m 'Fix Week 2 R22 commentary weight'
+          git push origin HEAD:player-signal-layer-r1

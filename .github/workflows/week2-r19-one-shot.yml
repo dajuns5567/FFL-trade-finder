@@ -1,114 +1,19 @@
-name: Week 2 editorial R19 one-shot
+name: Week 2 R19 helper
 
 on:
   push:
     branches:
       - player-signal-layer-r1
-    paths:
-      - .github/workflows/week2-r19-one-shot.yml
 
 permissions:
   contents: write
 
 jobs:
-  rewrite:
+  smoke:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: player-signal-layer-r1
           fetch-depth: 0
-
-      - name: Wire R19 and strengthen smoke
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          hub=Path('netlify/functions/league-hub.mjs')
-          text=hub.read_text()
-          old="import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r15.mjs';"
-          new="import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r19.mjs';"
-          if old in text:
-              text=text.replace(old,new)
-          elif new not in text:
-              raise SystemExit('unexpected Week 2 editorial import')
-          hub.write_text(text)
-
-          smoke=Path('scripts/inquirer-week2-voice-r15-smoke.mjs')
-          s=smoke.read_text()
-          old_import="import {applyWeek2EditorialR16,WEEK2_EDITORIAL_REVISION} from '../netlify/functions/inquirer-week2-editorial-r15.mjs';"
-          new_import="import {applyWeek2EditorialR16 as applyWeek2EditorialR18} from '../netlify/functions/inquirer-week2-editorial-r15.mjs';\nimport {applyWeek2EditorialR16,WEEK2_EDITORIAL_REVISION} from '../netlify/functions/inquirer-week2-editorial-r19.mjs';"
-          if old_import in s:
-              s=s.replace(old_import,new_import)
-          elif new_import not in s:
-              raise SystemExit('unexpected Week 2 smoke import')
-
-          marker="const rawSnapshot=JSON.stringify(rawWeek2);\nconst revised=applyWeek2EditorialR16(rawWeek2);"
-          replacement="const rawSnapshot=JSON.stringify(rawWeek2);\nconst r18Baseline=applyWeek2EditorialR18(rawWeek2);\nconst revised=applyWeek2EditorialR16(rawWeek2);"
-          if marker in s:
-              s=s.replace(marker,replacement)
-          elif 'const r18Baseline=applyWeek2EditorialR18(rawWeek2);' not in s:
-              raise SystemExit('missing R18 baseline insertion point')
-
-          s=s.replace("assert.equal(Number(WEEK2_EDITORIAL_REVISION),18);","assert.equal(Number(WEEK2_EDITORIAL_REVISION),19);")
-          s=s.replace("assert.equal(Number(revised?.editorial_revision),18);","assert.equal(Number(revised?.editorial_revision),19);")
-          s=s.replace("'week2-r18'","'week2-r19'")
-          s=s.replace("const rawTeams=new Map((rawWeek2?.teams||[]).map(t=>[String(t.roster_id),t]));\nconst revisedTeams=revised?.teams||[];","const rawTeams=new Map((rawWeek2?.teams||[]).map(t=>[String(t.roster_id),t]));\nconst r18Teams=new Map((r18Baseline?.teams||[]).map(t=>[String(t.roster_id),t]));\nconst revisedTeams=revised?.teams||[];")
-          s=s.replace("assert.equal(Number(t?.inquirer_article?.editorial_revision),18,'Article revision missing for '+t.team_name);","assert.equal(Number(t?.inquirer_article?.editorial_revision),19,'Article revision missing for '+t.team_name);")
-          s=s.replace("assert.equal(Number(overview.editorial_revision),18);","assert.equal(Number(overview.editorial_revision),19);")
-          s=s.replace("assert(contrastCount<=2,'The not-X/it-is-Y contrast crutch is still overused for '+t.team_name+': '+contrastCount);","assert(contrastCount<=1,'The not-X/it-is-Y contrast crutch is still overused for '+t.team_name+': '+contrastCount);")
-
-          article_marker=" assert.deepEqual(stripArticleProse(t.inquirer_article),stripArticleProse(before.inquirer_article),'Article metadata/facts changed outside prose for '+t.team_name);"
-          article_guard="""
- const r18Team=r18Teams.get(String(t.roster_id));
- assert(r18Team,'Missing R18 comparison team '+t.roster_id);
- const coreKinds=['lede','players','management','sentiment','outlook'];
- let changedCore=0,changedParagraphs=0;
- for(const kind of coreKinds){
-  const oldPs=(r18Team?.inquirer_article?.sections||[]).find(s=>String(s?.kind||'')===kind)?.paragraphs||[];
-  const newPs=(t?.inquirer_article?.sections||[]).find(s=>String(s?.kind||'')===kind)?.paragraphs||[];
-  if(JSON.stringify(oldPs)!==JSON.stringify(newPs))changedCore++;
-  const n=Math.max(oldPs.length,newPs.length);
-  for(let i=0;i<n;i++)if(String(oldPs[i]||'')!==String(newPs[i]||''))changedParagraphs++;
- }
- assert.equal(changedCore,coreKinds.length,'R19 must visibly rewrite every core article area for '+t.team_name);
- assert(changedParagraphs>=10,'R19 is still too shallow for '+t.team_name+': only '+changedParagraphs+' changed core paragraphs');"""
-          if 'R19 must visibly rewrite every core article area' not in s:
-              if article_marker not in s:
-                  raise SystemExit('missing article materiality insertion point')
-              s=s.replace(article_marker,article_marker+article_guard)
-
-          overview_marker="const overviewText=overviewParagraphs.join(' ');"
-          overview_guard="""
-const r18Overview=r18Baseline?.league_overview||{};
-for(const id of ['walter-mercer','tess-delaney','mack-hollis','nora-voss']){
- const oldPs=(r18Overview.sections||[]).filter(s=>String(s?.reporter?.id||'')===id).flatMap(s=>s?.paragraphs||[]);
- const newPs=(overview.sections||[]).filter(s=>String(s?.reporter?.id||'')===id).flatMap(s=>s?.paragraphs||[]);
- let changed=0;
- const n=Math.max(oldPs.length,newPs.length);
- for(let i=0;i<n;i++)if(String(oldPs[i]||'')!==String(newPs[i]||''))changed++;
- assert(changed>=3,'R19 Weekly Recap voice is still too shallow for '+id+': '+changed+' changed paragraphs');
-}
-"""
-          if 'R19 Weekly Recap voice is still too shallow' not in s:
-              if overview_marker not in s:
-                  raise SystemExit('missing recap materiality insertion point')
-              s=s.replace(overview_marker,overview_marker+'\n'+overview_guard)
-
-          smoke.write_text(s)
-          PY
-
-      - name: Run Week 2 R19 smoke
-        run: node scripts/inquirer-week2-voice-r15-smoke.mjs
-
-      - name: Commit R19 wiring and clean up helper
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add netlify/functions/league-hub.mjs scripts/inquirer-week2-voice-r15-smoke.mjs
-          git commit -m "Wire Week 2 R19 article-wide rewrite"
-          git rm .github/workflows/week2-r19-one-shot.yml
-          git commit -m "Remove Week 2 R19 one-shot workflow"
-          git push origin HEAD:player-signal-layer-r1
+      - run: echo R19-helper-started

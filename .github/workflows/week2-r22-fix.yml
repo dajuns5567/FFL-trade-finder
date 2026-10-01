@@ -24,6 +24,7 @@ jobs:
         run: |
           python scripts/tmp-r22-finish-patch.py
           python scripts/tmp-r22-discovery-patch.py
+          python scripts/tmp-r22-recap-density-patch.py
       - name: Syntax check R22
         run: node --check netlify/functions/inquirer-week2-editorial-r22.mjs
       - name: Capture R22 smoke
@@ -50,6 +51,6 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add netlify/functions/inquirer-week2-editorial-r22.mjs
-          git rm scripts/tmp-r22-finish-patch.py scripts/tmp-r22-discovery-patch.py
+          git rm scripts/tmp-r22-finish-patch.py scripts/tmp-r22-discovery-patch.py scripts/tmp-r22-recap-density-patch.py
           git commit -m 'Finish Week 2 R22 repetition and tag cleanup'
           git push origin HEAD:player-signal-layer-r1

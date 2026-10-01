@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-10-01T18:52:32.932Z",
+  "generatedAt": "2026-10-01T23:11:23.005Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 3,
@@ -563,7 +563,7 @@
     "diagnostics": {
       "finalGames": 48,
       "qualifiedPlayerGames": 3166,
-      "rejectedPlayerGames": 3661,
+      "rejectedPlayerGames": 3664,
       "ignoredGames": 0
     }
   },
@@ -32365,9 +32365,9 @@
       "withGames": 887
     },
     "2024": {
-      "players": 956,
-      "withPpr": 790,
-      "withGames": 956
+      "players": 957,
+      "withPpr": 791,
+      "withGames": 957
     },
     "2025": {
       "players": 1052,
@@ -57014,6 +57014,18 @@
         "idp_qb_hit": 24,
         "idp_ff": 2,
         "idp_tkl_ast": 15
+      },
+      "8287": {
+        "pts_ppr": 2,
+        "gp": 11,
+        "def_snp": 255,
+        "idp_tkl": 9,
+        "idp_sack_yd": 11,
+        "idp_tkl_loss": 2,
+        "idp_tkl_solo": 5,
+        "idp_sack": 2,
+        "idp_qb_hit": 6,
+        "idp_tkl_ast": 4
       },
       "8290": {
         "pts_ppr": 3,

@@ -142,9 +142,9 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import rawWeek2 from './netlify/functions/inquirer-week2-2026-preload.mjs';
-          import {applyWeek2EditorialR16} from './netlify/functions/inquirer-week2-editorial-r20.mjs';
+          import {applyWeek2EditorialR16} from './netlify/functions/inquirer-week2-editorial-r22.mjs';
           const week2=applyWeek2EditorialR16(rawWeek2);
-          if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||Number(week2?.editorial_revision)!==20||week2?.voice_revision!=='week2-r20')throw new Error('Week 2 revision 20 did not materialize from the locked preload');
+          if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||Number(week2?.editorial_revision)!==22||week2?.voice_revision!=='week2-r22')throw new Error('Week 2 revision 22 did not materialize from the locked preload');
           fs.writeFileSync('/tmp/week2-inquirer-r6.json',JSON.stringify(week2,null,2)+'\n');
           NODE
 
@@ -165,4 +165,3 @@ jobs:
           retention-days: 2
       - name: Audit revised Week 2 prose
         run: node scripts/inquirer-v25-generated-audit.mjs /tmp/week2-inquirer-r6.json
-

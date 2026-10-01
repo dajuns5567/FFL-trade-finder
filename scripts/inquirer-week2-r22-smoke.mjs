@@ -21,10 +21,10 @@ const stripArticleMeta=a=>{const x=JSON.parse(JSON.stringify(a||{}));delete x.se
 const baseByRoster=new Map((baseline?.teams||[]).map(t=>[String(t.roster_id),t]));
 
 const META_TECH=/\b(?:headline|back page|copy desk|newsroom|typeface|case file|receipts?|scoring app|group chat|notification|screenshot|social media|algorithm|meme)\b/i;
-const CARRY=/\b(?:carry(?:ing|ied|ies)? (?:the |this )?(?:entire |whole )?(?:roster|team|offense)|carried (?:the |this )?(?:entire |whole )?(?:roster|team|offense)|on (?:his|her|their) (?:back|shoulders)|one[- ]man show|one[- ]player show|one[- ]player magic trick|solo effort|supporting cast|second punch|third scorer|do it all (?:himself|herself|themselves)|all by (?:himself|herself|themselves)|drag(?:ged|ging)? (?:the |this )?(?:roster|team)|shoulder(?:ing|ed)? (?:the |this )?(?:whole |entire )?(?:roster|team)|everyone else (?:was|is) (?:a )?passenger|save(?:d|s|ing)? everyone else|prevent(?:ed|ing)? .* solo effort)\b/i;
-const BAD_SIGNAL=/\b(?:Fleeced Signal was|Fleeced\s+(?:Breakout Watch|Hot Seat|Cool Throne|Established Star|Steady Veteran|Young Breakout|Proven Star)\s+signal|carried a Fleeced\s+.+?\s+signal into Week 2)\b/i;
-const WEIGHTLESS=/\b(?:Subtlety was apparently scratched before kickoff|favorite badge is the whole argument|difference is large enough to track directly into Week 3|excessive enough to be enjoyable and useful enough to avoid becoming nonsense|touring comedy)\b/i;
-const VOICE=/\b(?:I refuse|I resent|I want|I need|I am|I can|ridiculous|absurd|ugly|awful|pathetic|embarrass|tomatoes|champagne|applause|theater|stage|curtain|complaint|rent|committee|mock|rude|mercifully|annoy|nonsense|drama|rewrite|audience|roses|balcony|dialogue|ceremony|swagger|irresponsib|management owns|bad luck|heckl|boo|criticism|generosity|suspicious)\b/i;
+const CARRY=/\b(?:carry(?:ing|ied|ies)? (?:the |this )?(?:entire |whole )?(?:roster|team|offense)|carried (?:the |this )?(?:entire |whole )?(?:roster|team|offense)|keep(?:ing)? (?:the |this )?(?:roster|team) afloat|hold(?:ing)? (?:the |this )?(?:roster|team) together|on (?:his|her|their) (?:back|shoulders)|one[- ]man show|one[- ]player show|one[- ]player magic trick|solo effort|supporting cast|second punch|third scorer|do it all (?:himself|herself|themselves)|all by (?:himself|herself|themselves)|drag(?:ged|ging)? (?:the |this )?(?:roster|team)|shoulder(?:ing|ed)? (?:the |this )?(?:whole |entire )?(?:roster|team)|everyone else (?:was|is) (?:a )?passenger|save(?:d|s|ing)? everyone else|prevent(?:ed|ing)? .* solo effort|can(?:not|'t) do it alone|needs? (?:somebody|someone) else to help|rest of the roster .* help|one player .* everything)\b/i;
+const BAD_SIGNAL=/\b(?:Fleeced Signal|Fleeced\s+(?:Breakout Watch|Hot Seat|Cool Throne|Established Star|Steady Veteran|Young Breakout|Proven Star)\s+signal|carried a Fleeced\s+.+?\s+signal into Week 2)\b/i;
+const WEIGHTLESS=/\b(?:Subtlety was apparently scratched before kickoff|favorite badge is the whole argument|difference is large enough to track directly into Week 3|excessive enough to be enjoyable and useful enough to avoid becoming nonsense|touring comedy|number is funny because|difference is funny because)\b/i;
+const VOICE=/\b(?:I refuse|I resent|I want|I need|I am|I can|I would|I dislike|I adore|I expect|ridiculous|absurd|ugly|awful|pathetic|embarrass|tomatoes|champagne|applause|theater|stage|curtain|complaint|rent|committee|mock|rude|mercifully|annoy|nonsense|drama|rewrite|audience|roses|balcony|dialogue|ceremony|swagger|irresponsib|management owns|bad luck|heckl|boo|criticism|generosity|suspicious|delicious|lovely|disgust|laugh)\b/i;
 const majorKinds=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
 
 function discoverPlayers(article){
@@ -33,6 +33,7 @@ function discoverPlayers(article){
   /^Against .+?,\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+scored\s+-?\d/i,
   /^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+averaged\s+\d/i,
   /^The prior baseline for\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+is\s+\d/i,
+  /^A\s+\d+(?:\.\d+)?\s+prior average .*? for\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\b/i,
   /^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+played\s+\d+(?:\.\d+)?%/i,
   /snap share for\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\b/i,
   /^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+entered Week 2 (?:on|tagged)\s+/i
@@ -46,21 +47,26 @@ function exactName(text,name){
  return !/[A-Za-z]/.test(before)&&!/[A-Za-z]/.test(after);
 }
 function namedPlayer(s,players){return players.find(p=>exactName(s,p))||null}
+function canonicalPlayer(player,players){
+ const p=String(player||'').trim();if(!p)return'';if(/\s/.test(p))return p.toLowerCase();
+ const full=players.find(x=>/\s/.test(x)&&String(x).split(/\s+/)[0].toLowerCase()===p.toLowerCase());
+ return String(full||p).toLowerCase();
+}
 function factKey(s,players){
  const p=namedPlayer(s,players);
  if(p){
-  const k=p.toLowerCase();
-  if(/real-football line|\bscored\s+-?\d+(?:\.\d+)?\s+fantasy points|\bgave\s+(?:\w+\s+)?-?\d+(?:\.\d+)?\s+points|\bposted\s+-?\d+(?:\.\d+)?\b|Week 2 landed at\s+-?\d/i.test(s))return`score|${k}`;
+  const k=canonicalPlayer(p,players),escaped=p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  if(/real-football line|\bscored\s+-?\d+(?:\.\d+)?\s+fantasy points|\bgave\s+(?:\w+\s+)?-?\d+(?:\.\d+)?\s+points|\bposted\s+-?\d+(?:\.\d+)?\b|\bdelivered\s+-?\d+(?:\.\d+)?\b|Week 2 landed at\s+-?\d|\b-?\d+(?:\.\d+)?\s+(?:fantasy\s+)?points?\s+from\b/i.test(s)||new RegExp('^'+escaped+'\\s+at\\s+-?\\d+(?:\\.\\d+)?\\b','i').test(s))return`score|${k}`;
   if(/averaged\s+\d+(?:\.\d+)?\s+fantasy points|prior baseline|prior average/i.test(s))return`baseline|${k}`;
   if(/snap share|played\s+\d+(?:\.\d+)?%|available snaps/i.test(s))return`usage|${k}`;
-  if(/Breakout Watch|Hot Seat|Cool Throne|Established Star|Steady Veteran|Young Breakout|Proven Star|Week 2 tag/i.test(s))return`tag|${k}`;
+  if(/Breakout Watch|Hot Seat|Cool Throne|Established Star|Steady Veteran|Young Breakout|Proven Star|Week 2 tag|entered Week 2 (?:on|tagged)/i.test(s))return`tag|${k}`;
  }
  const m=String(s||'').match(/^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+(?:outscored|beat)\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3})\s+by\s+(\d+(?:\.\d+)?)/i);
  if(m)return`bench|${m[1].toLowerCase()}|${m[2].toLowerCase()}|${m[3]}`;
  return'';
 }
 function conclusionKey(s,players){
- if(/\d/.test(s))return'';const p=namedPlayer(s,players);if(!p)return'';const k=p.toLowerCase();
+ if(/\d/.test(s))return'';const p=namedPlayer(s,players);if(!p)return'';const k=canonicalPlayer(p,players);
  if(/keep .*?(?:involved|plan)|use .*?(?:again|what worked)|obvious answer|smart move is to use/i.test(s))return`use|${k}`;
  if(/bad week|ugly|dreadful|rough|problem|concern|not enough/i.test(s))return`concern|${k}`;
  if(/role|usage|snap|opportunity/i.test(s))return`role|${k}`;
@@ -71,6 +77,9 @@ function conclusionKey(s,players){
 function maxExactLongRepeat(text){
  const m=new Map();for(const s of sentences(text)){if(words(s)<8)continue;const k=s.toLowerCase().replace(/\s+/g,' ').trim();m.set(k,(m.get(k)||0)+1)}
  return Math.max(0,...m.values());
+}
+function maxDryRun(paragraphs){
+ let cur=0,max=0;for(const p of paragraphs||[]){if(VOICE.test(p)){cur=0}else{cur+=1;max=Math.max(max,cur)}}return max;
 }
 
 const reporterCounts=new Map();
@@ -89,14 +98,22 @@ for(const t of revised?.teams||[]){
  assert.doesNotMatch(text,BAD_SIGNAL,'R22 uses unnatural Fleeced Signal phrasing in '+t.team_name);
  assert.doesNotMatch(text,WEIGHTLESS,'R22 left weightless arithmetic/meta humor in '+t.team_name);
  assert(maxExactLongRepeat(text)<=1,'R22 repeats a long sentence inside '+t.team_name);
+ const voiceSentences=sentences(text).filter(s=>VOICE.test(s)).length;
+ assert(voiceSentences>=7,'R22 article is still too dry for '+t.team_name+': '+voiceSentences+' voice sentences');
  for(const sec of t.inquirer_article?.sections||[]){
   for(const p of sec?.paragraphs||[])assert(words(p)<=82,'R22 left an overlong paragraph in '+t.team_name+' / '+sec?.kind+': '+words(p));
  }
- for(const kind of majorKinds){const ps=section(t,kind)?.paragraphs||[];if(!ps.length)continue;assert(ps.some(p=>VOICE.test(p)),'R22 '+kind+' section lacks sarcastic/emotional reporter voice for '+t.team_name)}
+ for(const kind of majorKinds){
+  const ps=section(t,kind)?.paragraphs||[];if(!ps.length)continue;
+  assert(ps.some(p=>VOICE.test(p)),'R22 '+kind+' section lacks sarcastic/emotional reporter voice for '+t.team_name);
+  if(ps.length>=4)assert(maxDryRun(ps)<=3,'R22 '+kind+' section has a long dry voice stretch for '+t.team_name+': '+maxDryRun(ps));
+ }
  const players=discoverPlayers(t.inquirer_article),facts=new Map(),conclusions=new Map();
- for(const s of articleParagraphs(t).flatMap(sentences)){
-  const fk=factKey(s,players);if(fk)facts.set(fk,(facts.get(fk)||0)+1);
-  const ck=conclusionKey(s,players);if(ck)conclusions.set(ck,(conclusions.get(ck)||0)+1);
+ for(const sec of t.inquirer_article?.sections||[]){
+  for(const s of (sec?.paragraphs||[]).flatMap(sentences)){
+   const fk=factKey(s,players);if(fk)facts.set(fk,(facts.get(fk)||0)+1);
+   const ck=conclusionKey(s,players);if(ck)conclusions.set(ck,(conclusions.get(ck)||0)+1);
+  }
  }
  for(const [k,c] of facts)assert(c<=1,'R22 repeats the same player fact across sections for '+t.team_name+': '+k+' -> '+c);
  for(const [k,c] of conclusions)assert(c<=1,'R22 repeats the same player conclusion across sections for '+t.team_name+': '+k+' -> '+c);
@@ -122,12 +139,13 @@ for(const id of ['walter-mercer','tess-delaney','mack-hollis','nora-voss']){
 const what=recapSections.find(s=>/What Actually Mattered This Week/i.test(String(s?.heading||'')));
 assert(what,'R22 must retain What Actually Mattered This Week');
 assert.equal((what.paragraphs||[]).length,3);
+for(const p of what.paragraphs||[])assert.match(p,VOICE,'R22 What Actually Mattered paragraph lacks reporter personality: '+p);
 
 const aints=(revised.teams||[]).find(t=>/new orleans aints/i.test(String(t.team_name||'')));
 if(aints){
  const text=articleParagraphs(aints).join(' ');
  if(/Dallas Turner/i.test(text)&&/Breakout Watch/i.test(text)){
-  assert.doesNotMatch(text,/Fleeced\s+Breakout Watch\s+signal|Fleeced Signal was/i,'Dallas Turner tag must read naturally');
+  assert.doesNotMatch(text,/Fleeced Signal|Fleeced\s+Breakout Watch\s+signal/i,'Dallas Turner tag must read naturally');
  }
 }
 

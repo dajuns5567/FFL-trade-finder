@@ -78,6 +78,19 @@ function fillVoiceGaps(t,sec){
  return out;
 }
 
+function fitDistinctPlayerLine(paragraph,line,slot){
+ const full=\`${'${paragraph}'} ${'${line}'}\`.trim();
+ if(wordCount(full)<=82)return full;
+ const parts=sentenceParts(paragraph);
+ while(parts.length>1){
+  parts.pop();
+  const candidate=\`${'${parts.join(" ")}'} ${'${line}'}\`.trim();
+  if(wordCount(candidate)<=82)return candidate;
+ }
+ const marks=['!','?!','!!'];
+ return String(paragraph||'').replace(/[.!?]+$/,'')+(marks[slot]||'!');
+}
+
 function diversifyFeaturedPlayerCommentary(t,paragraphs){
  const ps=[...(paragraphs||[])];
  const banks={
@@ -91,7 +104,7 @@ function diversifyFeaturedPlayerCommentary(t,paragraphs){
   const idx=1+(slot*2);
   if(idx>=ps.length)break;
   const line=lines[slot];
-  if(!String(ps[idx]).includes(line))ps[idx]=\`${'${ps[idx]}'} ${'${line}'}\`.trim();
+  if(!String(ps[idx]).includes(line))ps[idx]=fitDistinctPlayerLine(ps[idx],line,slot);
  }
  return ps;
 }`;
@@ -126,4 +139,4 @@ if(!smoke.includes(oldSmokeVoice))throw new Error('Expected smoke VOICE detector
 smoke=smoke.replace(oldSmokeVoice,newSmokeVoice);
 fs.writeFileSync(smokePath,smoke);
 
-console.log('R21 final voice-gap, natural voice detector, established-player scoring, outlook-road protection, and player-commentary diversity applied');
+console.log('R21 final voice-gap, natural voice detector, established-player scoring, outlook-road protection, and length-aware player-commentary diversity applied');

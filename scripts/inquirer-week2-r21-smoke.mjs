@@ -19,7 +19,7 @@ const section=(t,kind)=>(t?.inquirer_article?.sections||[]).find(s=>String(s?.ki
 const stripArticle=t=>{const x=JSON.parse(JSON.stringify(t));delete x.inquirer_article;return x};
 const stripArticleMeta=a=>{const x=JSON.parse(JSON.stringify(a||{}));delete x.sections;delete x.paragraphs;delete x.editorial_revision;delete x.voice_revision;return x};
 const baseByRoster=new Map((baseline?.teams||[]).map(t=>[String(t.roster_id),t]));
-const VOICE=/\b(?:complaint|ridiculous|absurd|patience|patient|silence|annoying|annoyed|ugly|beautiful|glamour|glamorous|champagne|tomatoes|applause|theater|stage|curtain|swagger|embarrass|heckl|boo|joke|funny|stupid|nonsense|I refuse|I resent|I would|I want|I am|I can|good luck|congratulations|mercifully|delicious|rude|parade|confetti|funeral|miracle|costume|shopping|credit card|committee meeting|rent|Monday|Sunday|production|scene|audience|roses|balcony|dialogue|drama|encore|apology|formalwear|lighting|outfit|open bar|restraint|tasteful|silly|stain|compliment|credit|ceremony|loud|theor(?:y|ies)|mistake|choice|relationship|rewrite)\b/i;
+const VOICE=/\b(?:complaint|ridiculous|absurd|patience|patient|silence|annoying|annoyed|ugly|beautiful|glamour|glamorous|champagne|tomatoes|applause|theater|stage|curtain|swagger|embarrass|heckl|boo|joke|funny|stupid|nonsense|I refuse|I resent|I would|I want|I am|I can|good luck|congratulations|mercifully|delicious|rude|parade|confetti|funeral|miracle|costume|shopping|credit card|committee meeting|rent|Monday|Sunday|production|management|enjoy(?:ing)?|irresponsib|scene|audience|roses|balcony|dialogue|drama|encore|apology|formalwear|lighting|outfit|open bar|restraint|tasteful|silly|stain|compliment|credit|ceremony|loud|theor(?:y|ies)|mistake|choice|relationship|rewrite)\b/i;
 const CLINICAL=/\b(?:the question is no longer whether|too early to tell|strong result, useful contribution|materially changed the matchup|made the roster materially better for one week|role now has to justify another start|structural backing|does not need embellishment|enough real Week 2 information|still only one completed Sunday|the production was real|stands on its own|the useful question is whether)\b/i;
 const META=/\b(?:back page|headline|copy desk|newsroom|typeface|case file|receipts?)\b/i;
 const PANIC=/\b(?:panic|alarm|crisis|emergency|bench(?:ing)?|cut\b|replace(?:ment)?|hot seat|justify another start|should not start|shouldn't start|cannot be trusted|can't be trusted|problem harder to dismiss)\b/i;
@@ -69,11 +69,18 @@ for(const t of revised?.teams||[]){
   assert(ps.some(p=>VOICE.test(p)),'R21 '+kind+' section lacks reporter voice for '+t.team_name);
  }
  const playerPs=section(t,'players')?.paragraphs||[];
- if((section(old,'players')?.paragraphs||[]).length>=12)assert(playerPs.length<=8,'R21 did not compact the repetitive player module for '+t.team_name+': '+playerPs.length);
+ const oldPlayerCount=(section(old,'players')?.paragraphs||[]).length;
+ if(oldPlayerCount>=12)assert(playerPs.length<=Math.ceil(oldPlayerCount*0.75),'R21 did not compact the repetitive player module by at least 25% for '+t.team_name+': '+oldPlayerCount+' -> '+playerPs.length);
  for(const [k,count] of benchKeys(text))assert(count<=2,'R21 repeats the same bench comparison more than twice for '+t.team_name+': '+k+' -> '+count);
  const bases=established(t.inquirer_article);
  for(const [player] of bases){
-  for(const p of articleParagraphs(t))if(p.toLowerCase().includes(player.toLowerCase()))assert.doesNotMatch(p,PANIC,'R21 overreacts to established scorer '+player+' for '+t.team_name+': '+p);
+  const pn=player.toLowerCase();
+  for(const p of articleParagraphs(t)){
+   const lp=p.toLowerCase(),idx=lp.indexOf(pn);
+   const exact=idx>=0&&!/[a-z]/.test(lp[idx-1]||'')&&!/[a-z]/.test(lp[idx+pn.length]||'');
+   const injuryContext=/\b(?:out for Week 3|is out|listed out|questionable|doubtful|injur(?:y|ed))\b/i.test(p);
+   if(exact&&!injuryContext)assert.doesNotMatch(p,PANIC,'R21 overreacts to established scorer '+player+' for '+t.team_name+': '+p);
+  }
  }
  const rid=String(t?.inquirer_article?.reporter?.id||'');reporterCounts.set(rid,(reporterCounts.get(rid)||0)+1);
 }

@@ -11,7 +11,7 @@ const hash=s=>{let h=2166136261;for(const ch of String(s||'')){h^=ch.charCodeAt(
 const choose=(rows,key)=>rows[Math.abs(hash(key))%rows.length];
 const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
-const VOICE_MARK=/\b(?:complaint|ridiculous|absurd|patience|silence|annoying|annoyed|ugly|beautiful|glamour|champagne|tomatoes|applause|theater|stage|curtain|swagger|embarrass|heckl|boo|joke|funny|stupid|nonsense|I refuse|I resent|I would|I want|I am|I can|good luck|congratulations|mercifully|delicious|rude|polite clap|parade|confetti|funeral|miracle|costume|shopping|credit card|complaint desk|committee meeting)\b/i;
+const VOICE_MARK=/\b(?:complaint|ridiculous|absurd|patience|silence|annoying|annoyed|ugly|beautiful|glamour|champagne|tomatoes|applause|theater|stage|curtain|swagger|embarrass|heckl|boo|joke|funny|stupid|nonsense|I refuse|I resent|I would|I want|I am|I can|good luck|congratulations|mercifully|delicious|rude|polite clap|parade|confetti|funeral|miracle|costume|shopping|credit card|complaint desk|committee meeting|production|management|enjoy(?:ing)?|irresponsib)\b/i;
 const PANIC=/\b(?:panic|alarm|crisis|emergency|bench(?:ing)?|cut\b|replace(?:ment)?|hot seat|justify another start|should not start|shouldn't start|cannot be trusted|can't be trusted|role .*justify another start|problem harder to dismiss)\b/i;
 
 function splitLongParagraph(text,maxWords=80){
@@ -26,8 +26,12 @@ function splitLongParagraph(text,maxWords=80){
 }
 
 function normalizeTeamChants(t,text){
- const n=teamName(t),re=new RegExp('\\b'+esc(n)+'\\b','g');let seen=0;
- return String(text||'').replace(re,m=>{seen++;return seen<=2?m:(seen===3?'the roster':'the team')});
+ const n=teamName(t),e=esc(n);
+ return String(text||'')
+  .replace(new RegExp('(?:The\\s+)?'+e+'\\s+scoreboard','g'),'The scoreboard')
+  .replace(new RegExp(e+'\\s+management','g'),'management')
+  .replace(new RegExp(e+'\\s+supporters','g'),'supporters')
+  .replace(new RegExp(e+'\\s+fans','g'),'fans');
 }
 
 function reporterVoiceLine(t,kind,slot=0){
@@ -36,7 +40,7 @@ function reporterVoiceLine(t,kind,slot=0){
   'walter-mercer':{
    players:[`${n} got enough useful production here that I can save one complaint for later. I make no promises about the rest of Monday.`,`${n} has players doing their jobs. Good. Management should resist the traditional urge to make that more complicated than necessary.`],
    management:[`${n} management had the same box score everybody else had. I am grading the decision, not the explanation that arrives after it.`,`${n} can survive one bad lineup call. Repeating it is how a mistake starts charging rent.`],
-   'hot-seat':[`I do not need ${n} to panic. I need the weak spot to stop volunteering for another mention next week.`,`${n} has one obvious problem to clean up. I would appreciate management fixing it before I have to learn a second adjective for ugly.`],
+   'hot-seat':[`I do not need ${n} to turn one bad Sunday into a melodrama. I need the weak spot to stop volunteering for another mention next week.`,`${n} has one obvious problem to clean up. I would appreciate management fixing it before I have to learn a second adjective for ugly.`],
    'cool-throne':[`Credit where it is due: ${n} gave me something I do not have to complain about. Please enjoy the rare occasion.`,`${n} earned this compliment. I dislike giving them out cheaply, which is why this one actually means something.`],
    value:[`${n} can move in the market all week. I still care more about ${score} points and whether management learned anything useful.`,`${n} has a price tag and a scoreboard. Only one of those can ruin my Sunday in real time.`],
    sentiment:[`${n} fans are allowed to be unreasonable after giving up a Sunday for this. The roster can earn calm the old-fashioned way: play better.`,`${n} supporters have enough material for either hope or irritation. I would prefer the team decide which one deserves overtime.`],
@@ -54,7 +58,7 @@ function reporterVoiceLine(t,kind,slot=0){
   'mack-hollis':{
    players:[`${n} has a performer worth keeping under the lights. The only vulgar move now would be pretending the production went unnoticed.`,`${n} found a player willing to carry a scene. Management should resist rewriting the script before the applause stops.`],
    management:[`${n} management has the least glamorous job in the building: admit the choice and correct it before the encore.`,`${n} made a decision with consequences, which is excellent theater and occasionally terrible fantasy management.`],
-   'hot-seat':[`Every respectable production needs a weak scene, apparently. ${n} has found theirs; now cut the unnecessary sequel.`,`${n} has one part of the show asking for a rewrite. I recommend doing it before the audience starts participating.`],
+   'hot-seat':[`Every respectable production needs a weak scene, apparently. ${n} has found theirs; now skip the unnecessary sequel.`,`${n} has one part of the show asking for a rewrite. I recommend doing it before the audience starts participating.`],
    'cool-throne':[`This is where ${n} gets the roses. They were earned, which makes the gesture considerably less embarrassing.`,`${n} deserves applause here. I will even allow the curtain call before asking what comes next.`],
    value:[`${n} moved in the market, and everyone loves a price tag until Sunday arrives with better dialogue.`,`${n} can admire the valuation from the balcony. The scoreboard still owns the stage.`],
    sentiment:[`${n} fans have reached the loud portion of the production. At least somebody in the building understands timing.`,`${n} supporters are reacting with appropriate theater. The roster wrote the material; the crowd is merely performing it.`],
@@ -65,7 +69,7 @@ function reporterVoiceLine(t,kind,slot=0){
    management:[`${n} management saw the same Sunday everybody else did. Correct the decision and spare us the explanation tour.`,`${n} has a management mistake worth fixing. One bad call is human; repeating the same one is a choice.`],
    'hot-seat':[`The weak spot for ${n} is obvious. Criticize the bad week, fix the usage, and do not pretend one ugly Sunday erased an established track record.`,`${n} has a problem to correct, not a reason to rewrite an established player’s résumé. Those are different jobs and management should know the difference.`],
    'cool-throne':[`Credit to ${n}: this part worked. Keep it simple and use the player who helped.`,`${n} earned a compliment here. I am not adding ceremony to a good decision.`],
-   value:[`${n} moved in the market. Fine. The useful question is whether the lineup decisions deserve the same confidence.`,`${n} has a valuation change and a football game. I care more about the part management can actually control on Sunday.`],
+   value:[`${n} moved in the market. Fine. I care more about whether the lineup decisions deserve the same confidence.`,`${n} has a valuation change and a football game. I care more about the part management can actually control on Sunday.`],
    sentiment:[`${n} fans have specific reasons to be loud. Management should address the reason instead of arguing with the volume.`,`${n} supporters saw the same mistakes. Fixing them is easier than asking everyone to become more patient.`],
    outlook:[`${n} gets ${next} next. The assignment is simple: keep the useful parts and stop repeating the avoidable mistake.`,`${n} has ${next} coming. I want fewer theories and one cleaner lineup.`]
   }
@@ -90,26 +94,37 @@ function establishedBaselines(article){
 }
 
 function establishedCorrection(t,player,sentence){
- const id=reporterId(t),score=(sentence.match(/\b-?\d+(?:\.\d+)?\b/)||[])[0],shown=score?`${score} points`:'the Week 2 number';
+ const id=reporterId(t);
+ let m=String(sentence||'').match(/(-?\d+(?:\.\d+)?)\s+in Week 2/i);
+ if(!m)m=String(sentence||'').match(/Week 2[^0-9-]*(-?\d+(?:\.\d+)?)/i);
+ const score=m?.[1]||null,shown=score?`${score} points`:'the bad Week 2 number';
  const banks={
   'walter-mercer':`${shown} from ${player} was bad. The established scoring record earns criticism without pretending one lousy Sunday erased the player.`,
   'tess-delaney':`${shown} from ${player} was ugly. A proven scorer can have a rotten Sunday without management pretending one ugly game rewrote the résumé.`,
   'mack-hollis':`${player} gave us ${shown}, and it was dreadful. The résumé is still too substantial for one bad scene to become a casting change.`,
-  'nora-voss':`${player} had a bad Week 2 at ${shown}. The established baseline says to fix the week, not invent a role crisis.`
+  'nora-voss':`${player} had a bad Week 2 at ${shown}. The established baseline says to criticize the week without inventing a role controversy.`
  };
  return banks[id]||banks['walter-mercer'];
 }
 
 function temperEstablishedOverreaction(t,paragraph,baselines){
+ const hasPlayer=(text,player)=>new RegExp('(?:^|[^A-Za-z])'+esc(player)+'(?:$|[^A-Za-z])','i').test(String(text||''));
+ const mentioned=[...baselines.keys()].filter(player=>hasPlayer(paragraph,player));
+ if(!mentioned.length)return paragraph;
  let out=[];
  for(const s of sentenceParts(paragraph)){
-  let replaced=false;
-  for(const [player] of baselines){
-   if(s.toLowerCase().includes(player.toLowerCase())&&PANIC.test(s)){
-    out.push(establishedCorrection(t,player,s));replaced=true;break;
-   }
+  const player=mentioned.find(name=>hasPlayer(s,name));
+  if(player&&PANIC.test(s)){out.push(establishedCorrection(t,player,s));continue}
+  if(PANIC.test(s)){
+   out.push(s
+    .replace(/\bbench(?:ing)?\b/gi,'lineup')
+    .replace(/\bpanic\b/gi,'overreact')
+    .replace(/\bcrisis\b/gi,'bad week')
+    .replace(/\bemergency\b/gi,'problem')
+    .replace(/\bhot seat\b/gi,'rough spot'));
+   continue;
   }
-  if(!replaced)out.push(s);
+  out.push(s);
  }
  return out.join(' ');
 }
@@ -128,6 +143,13 @@ function rewriteJefferson(t,paragraph){
   m=s.match(/^(.+?) posted (\d+(?:\.\d+)?)\. The production materially changed the matchup\.?$/i);if(m){out.push(`${m[1]} posted ${m[2]}. That helped. Keep the useful player in the plan.`);continue}
   if(/structural backing/i.test(s)){out.push(s.replace(/the production has structural backing/ig,'the larger role makes the production easier to trust'));continue}
   if(/does not need embellishment/i.test(s)){out.push(s.replace(/The decline is measurable and does not need embellishment\.?/i,'The decline is real, and it was bad enough without adding drama.'));continue}
+  if(/role now has to justify another start/i.test(s)){out.push(s.replace(/the role now has to justify another start/ig,'the bad Week 2 number needs a better answer next Sunday'));continue}
+  if(/stands on its own/i.test(s)){out.push(s.replace(/stands on its own/ig,'helped the lineup'));continue}
+  if(/performance does not need decoration/i.test(s)){out.push('Good. Use it again before anybody starts bragging.');continue}
+  if(/enough output to matter without turning one Sunday into a season-long conclusion/i.test(s)){out.push('That helped. I want it again before anybody starts bragging.');continue}
+  if(/meaningful because production tied to a larger role is easier to project forward/i.test(s)){out.push('A larger role makes that easier to trust next week.');continue}
+  if(/material enough to affect roster decisions, not just aesthetics/i.test(s)){out.push(s.replace(/The move is material enough to affect roster decisions, not just aesthetics\.?/i,'The move is large enough to matter when management weighs the next roster call.'));continue}
+  if(/size of that decline makes the concern specific/i.test(s)){out.push(s.replace(/The size of that decline makes the concern specific\.?/i,'That drop is real enough to watch without inventing a crisis.'));continue}
   if(/clean chance/i.test(s)){out.push(s.replace(/a clean chance/ig,'a straightforward chance'));continue}
   out.push(s);
  }
@@ -143,7 +165,9 @@ function cleanTeamPhrases(t,paragraph){
   .replace(/\bThe production materially changed the matchup\.?/gi,'That score helped.')
   .replace(/\bThe result is useful; the scoring profile still needs work\.?/gi,'Take the win and fix the scoring.')
   .replace(/\bThat is useful context before anybody turns one result into a personality\.?/gi,'Keep the result in perspective.');
- return normalizeTeamChants(t,p);
+ p=p.replace(/\bare winning more convincingly than it is scoring\b/gi,'are winning more convincingly than their scoring suggests');
+ const cleaned=normalizeTeamChants(t,p);
+ return sentenceParts(cleaned).map(s=>/^[a-z]/.test(s)?s[0].toUpperCase()+s.slice(1):s).join(' ');
 }
 
 function compactPlayerSection(t,sec){
@@ -153,8 +177,14 @@ function compactPlayerSection(t,sec){
  for(let i=0;i<ps.length;i+=4){
   const chunk=ps.slice(i,i+4);
   if(chunk.length<4){out.push(...chunk);continue}
-  out.push(`${chunk[0]} ${chunk[1]}`.trim());
-  out.push(`${chunk[2]} ${chunk[3]}`.trim());
+  const stat=sentenceParts(chunk[0]);
+  const reaction=sentenceParts(chunk[1]);
+  const history=sentenceParts(chunk[2]);
+  const usage=sentenceParts(chunk[3]);
+  const first=[stat[0],reaction[0]].filter(Boolean).join(' ');
+  const second=[history[0],usage[0]].filter(Boolean).join(' ');
+  if(first)out.push(first);
+  if(second)out.push(second);
  }
  return out;
 }
@@ -190,12 +220,94 @@ function dedupeArticleFacts(t,sections){
 function ensureVoice(t,sec){
  const ps=[...(sec?.paragraphs||[])].filter(Boolean),kind=String(sec?.kind||'');
  if(!ps.length)return ps;
- const targets=ps.length>=4?[0,Math.floor(ps.length/2)]:[0];
+ const targets=[];
+ if(kind==='outlook'){
+  const protectedRoad=ps.length>=2?ps.length-2:-1;
+  for(let i=0;i<ps.length;i+=3){
+   let idx=i;
+   if(idx===protectedRoad&&idx>0)idx-=1;
+   if(!targets.includes(idx))targets.push(idx);
+  }
+  const last=ps.length-1;
+  if(last>=0&&!targets.includes(last))targets.push(last);
+ }else{
+  for(let i=0;i<ps.length;i+=3)targets.push(i);
+ }
  let slot=0;
  for(const idx of targets){
   if(!VOICE_MARK.test(ps[idx]))ps[idx]=`${ps[idx]} ${reporterVoiceLine(t,kind,slot++)}`.trim();
  }
  return ps;
+}
+
+function fillVoiceGaps(t,sec){
+ const kind=String(sec?.kind||''),out=[];let cold=0,slot=0;
+ for(const p of sec?.paragraphs||[]){
+  out.push(p);
+  if(VOICE_MARK.test(p)){cold=0;continue}
+  cold++;
+  if(cold>=3){out.push(reporterVoiceLine(t,kind,slot++));cold=0}
+ }
+ return out;
+}
+
+function fitDistinctPlayerLine(paragraph,line,slot){
+ const full=`${paragraph} ${line}`.trim();
+ if(wordCount(full)<=82)return full;
+ const parts=sentenceParts(paragraph);
+ while(parts.length>1){
+  parts.pop();
+  const candidate=`${parts.join(" ")} ${line}`.trim();
+  if(wordCount(candidate)<=82)return candidate;
+ }
+ const marks=['!','?!','!!'];
+ return String(paragraph||'').replace(/[.!?]+$/,'')+(marks[slot]||'!');
+}
+
+function diversifyFeaturedPlayerCommentary(t,paragraphs){
+ const ps=[...(paragraphs||[])];
+ const banks={
+  'walter-mercer':['I can live with this; alert the historians.','That still annoys me, which feels more normal.','Management owes this one an answer before Monday.'],
+  'tess-delaney':['Fine, this one gets its own argument.','I have tomatoes and applause; choose correctly.','Save the champagne until the role settles down.'],
+  'mack-hollis':['This scene gets its own note.','That act needs a rewrite, not an encore.','Cue the curtain before management adds dialogue.'],
+  'nora-voss':['Keep what worked; no committee meeting required.','Fix the choice before it starts charging rent.','Use the obvious answer and spare me the theory.']
+ };
+ const lines=banks[reporterId(t)]||banks['walter-mercer'];
+ for(let slot=0;slot<3;slot++){
+  const idx=1+(slot*2);
+  if(idx>=ps.length)break;
+  const line=lines[slot];
+  if(!String(ps[idx]).includes(line))ps[idx]=fitDistinctPlayerLine(ps[idx],line,slot);
+ }
+ return ps;
+}
+
+function fixPluralTeamGrammar(t,paragraphs){
+ const full=teamName(t),bits=full.split(/\s+/).filter(Boolean),mascot=bits.at(-1)||'';
+ if(!/s$/i.test(mascot))return [...(paragraphs||[])];
+ const re=new RegExp('^('+esc(full)+'|'+esc(mascot)+')\\s+(is|has|gets|holds|brings|turns)\\b','i');
+ const verbs={is:'are',has:'have',gets:'get',holds:'hold',brings:'bring',turns:'turn'};
+ return (paragraphs||[]).map(p=>sentenceParts(p).map(s=>s.replace(re,(m,subject,verb)=>subject+' '+verbs[String(verb).toLowerCase()])).join(' '));
+}
+
+function dedupeLongArticleSentences(t,sections){
+ const seen=new Set(),id=reporterId(t);let fallbackSlot=0;
+ const fallback={
+  'walter-mercer':['I still expect better football next Sunday.','Fix it now; spare me another Sunday.'],
+  'tess-delaney':['Save champagne; Sunday still gets a vote.','Keep tomatoes nearby; management knows why.'],
+  'mack-hollis':['The next act still needs better scoring.','Fix the scene before the curtain drops.'],
+  'nora-voss':['Use the obvious lineup and cut noise.','Fix the mistake and skip the theory.']
+ }[id]||['Fix it now; spare me another Sunday.'];
+ return (sections||[]).map(sec=>({...sec,paragraphs:(sec?.paragraphs||[]).map(p=>{
+  const kept=[];
+  for(const s of sentenceParts(p)){
+   const key=String(s||'').trim();
+   if(wordCount(key)>=8){if(seen.has(key))continue;seen.add(key)}
+   kept.push(s);
+  }
+  const next=kept.join(' ').trim();
+  return next||fallback[(fallbackSlot++)%fallback.length];
+ }).filter(Boolean)}));
 }
 
 function cleanHeading(heading){
@@ -223,6 +335,17 @@ function reviseTeam(t){
  });
  sections=dedupeArticleFacts(t,sections);
  sections=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).flatMap(p=>splitLongParagraph(p,82)).filter(Boolean)}));
+ sections=sections.map(sec=>{
+  const kind=String(sec?.kind||'');
+  if(['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'].includes(kind)){
+   const voiced=ensureVoice(t,sec).flatMap(p=>splitLongParagraph(p,82)).filter(Boolean);
+   const spaced=kind==='outlook'?voiced:fillVoiceGaps(t,{...sec,paragraphs:voiced});
+   const diversified=kind==='players'?diversifyFeaturedPlayerCommentary(t,spaced):spaced;
+   return{...sec,paragraphs:fixPluralTeamGrammar(t,diversified)};
+  }
+  return{...sec,paragraphs:fixPluralTeamGrammar(t,sec?.paragraphs||[])};
+ });
+ sections=dedupeLongArticleSentences(t,sections);
  a.sections=sections;
  a.paragraphs=sections.flatMap(s=>(s?.paragraphs||[]).filter(Boolean));
  a.editorial_revision=WEEK2_EDITORIAL_REVISION;

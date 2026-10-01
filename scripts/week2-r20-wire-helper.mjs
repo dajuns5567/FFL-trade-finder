@@ -21,6 +21,10 @@ r20=replaceOnce(r20,
  'const out=applyWeek2EditorialR19(raw);',
  'const out=applyWeek2EditorialR19Base(raw);',
  'R20 base call');
+r20=replaceOnce(r20,
+ 'Records matter. They also do not get permission to impersonate scoring quality.',
+ 'Records matter, but they do not get permission to impersonate scoring quality.',
+ 'R20 recap paragraph density');
 writeFileSync(r20Path,r20);
 
 const hubPath='netlify/functions/league-hub.mjs';

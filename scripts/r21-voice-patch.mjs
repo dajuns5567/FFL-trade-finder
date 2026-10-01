@@ -34,7 +34,10 @@ const toFinal=` sections=dedupeArticleFacts(t,sections);
  sections=sections.map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).flatMap(p=>splitLongParagraph(p,82)).filter(Boolean)}));
  sections=sections.map(sec=>{
   const kind=String(sec?.kind||'');
-  if(['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'].includes(kind))return{...sec,paragraphs:ensureVoice(t,sec)};
+  if(['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'].includes(kind)){
+   const voiced=ensureVoice(t,sec);
+   return{...sec,paragraphs:voiced.flatMap(p=>splitLongParagraph(p,82)).filter(Boolean)};
+  }
   return sec;
  });
  a.sections=sections;`;
@@ -42,4 +45,4 @@ if(!text.includes(fromFinal))throw new Error('Expected final paragraph split blo
 text=text.replace(fromFinal,toFinal);
 
 fs.writeFileSync(path,text);
-console.log('R21 final voice distribution patch applied');
+console.log('R21 final voice distribution + re-split patch applied');

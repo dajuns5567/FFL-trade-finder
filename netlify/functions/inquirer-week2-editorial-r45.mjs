@@ -45,9 +45,36 @@ function reporterFollowThrough(rid,player,slot){
  return list[slot%list.length];
 }
 
+function reporterRoleLead(rid,name,opp,angle,slot){
+ const variants={
+  'walter-mercer':[
+   `Against ${opp}, ${name} built the Week 2 case on ${angle}.`,
+   `${name}'s matchup with ${opp} put the useful part of the role in ${angle}.`,
+   `For ${name} against ${opp}, the role was easiest to see in ${angle}.`
+  ],
+  'tess-delaney':[
+   `${name} met ${opp} with ${angle} doing the serious work beneath the sparkle.`,
+   `Against ${opp}, ${name} gave the performance some bones through ${angle}.`,
+   `${name}'s date with ${opp} was propped up by ${angle}, not pixie dust.`
+  ],
+  'mack-hollis':[
+   `${name} faced ${opp}, and ${angle} was the part of the role worth taking seriously.`,
+   `Against ${opp}, ${name} had something sturdier than the final score: ${angle}.`,
+   `${name}'s work against ${opp} rested on ${angle}, which is at least something I can evaluate.`
+  ],
+  'nora-voss':[
+   `What mattered against ${opp} for ${name} was ${angle}.`,
+   `${name} gave the ${opp} matchup a repeatable football basis through ${angle}.`,
+   `Against ${opp}, the useful clue for ${name} was ${angle}.`
+  ]
+ };
+ const list=variants[rid]||variants['walter-mercer'];
+ return list[slot%list.length];
+}
+
 function analysisParagraph(team,player,slot){
- const name=String(player?.name||'').trim(),opp=String(team?.opponent_name||'the opponent').trim(),rid=String(team?.inquirer_article?.reporter?.id||'');
- return `Against ${opp}, ${name}'s role showed up through ${roleAngle(player)}. ${reporterFollowThrough(rid,player,slot)}`;
+ const name=String(player?.name||'').trim(),opp=String(team?.opponent_name||'the opponent').trim(),rid=String(team?.inquirer_article?.reporter?.id||''),angle=roleAngle(player);
+ return `${reporterRoleLead(rid,name,opp,angle,slot)} ${reporterFollowThrough(rid,player,slot)}`;
 }
 
 function restorePlayerDepth(team){

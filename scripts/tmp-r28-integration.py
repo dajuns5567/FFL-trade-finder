@@ -6,6 +6,11 @@ def replace(path, old, new, *, required=True):
         raise SystemExit(f'missing expected text in {path}: {old[:100]!r}')
     p.write_text(s.replace(old,new))
 
+# Preserve the authoritative stat sentence before natural-language rewriting changes its text.
+replace('netlify/functions/inquirer-week2-editorial-r28.mjs',
+        "    s=naturalizeSentence(s);\n    if(hasNoBenchAnswer&&isManagement&&/did not leave an obvious higher-scoring bench answer in a compatible spot/i.test(s))s=s.replace(/;\\s*management had seven days.*$/i,'.');\n    s=rewriteRepeatedFact(s,facts);",
+        "    s=rewriteRepeatedFact(s,facts);\n    if(!s)continue;\n    s=naturalizeSentence(s);\n    if(hasNoBenchAnswer&&isManagement&&/did not leave an obvious higher-scoring bench answer in a compatible spot/i.test(s))s=s.replace(/;\\s*management had seven days.*$/i,'.');")
+
 # Serve R28 from League Hub.
 replace('netlify/functions/league-hub.mjs',
         "import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r27.mjs';",

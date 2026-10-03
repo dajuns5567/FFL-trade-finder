@@ -23,7 +23,14 @@ function rewriteLaterScore(s,name,score){
  x=x.replace(new RegExp(`^${n}\\s+(?:gave the lineup|scored|posted|delivered)\\s+${e}\\.?$`,'i'),'');
  x=x.replace(new RegExp(`^${n}\\s+at\\s+${e}\\s+is specific enough`,'i'),`${name}'s bad Sunday is specific enough`);
  x=x.replace(new RegExp(`\\b${e}\\s+in Week 2 was not enough`,'i'),'the Week 2 performance was not enough');
- return x.replace(/\s+/g,' ').trim();
+ if(hasExactScore(x,score)){
+  x=x.replace(new RegExp(`(^|[^0-9.])${e}\\s+(?:fantasy\\s+)?points?\\b`,'g'),'$1that performance');
+  x=x.replace(new RegExp(`(^|[^0-9.])${e}(?![0-9.])`,'g'),'$1that performance');
+  x=x.replace(/\bthat performance\s+(?:day|score|total|number)\b/gi,'that performance');
+  x=x.replace(/\bafter that performance\b/gi,'after the performance');
+  x=x.replace(/\bat that performance\b/gi,'in that performance');
+ }
+ return x.replace(/\s+/g,' ').replace(/\s+([,.;!?])/g,'$1').trim();
 }
 function dedupeArticleScores(t){
  const a=t?.inquirer_article;if(!a)return t;const scoreMap=scoreMapFromArticle(a),seen=new Set();

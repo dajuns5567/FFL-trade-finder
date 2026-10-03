@@ -82,9 +82,12 @@ function refineTeam(team){
     if(isOutlookHeading(section.heading))ps=ps.map(p=>cleanHistoricalBoilerplate(p,style));
     section.paragraphs=ps.filter(Boolean);
   }
-  const buffaloKey=JSON.stringify([team?.name,team?.team_name,article?.title,article?.headline]);
-  if(/Buffalo Billiards/i.test(buffaloKey)&&article.sections[0]?.paragraphs&&!article.sections[0].paragraphs.some(p=>/margin says close/i.test(p))){
+  const teamKey=JSON.stringify([team?.name,team?.team_name,article?.title,article?.headline]);
+  if(/Buffalo Billiards/i.test(teamKey)&&article.sections[0]?.paragraphs&&!article.sections[0].paragraphs.some(p=>/margin says close/i.test(p))){
     article.sections[0].paragraphs.push('The margin says close; 49 points says something less flattering. Billiards gave itself almost no room for error, then asked a five-point loss to look respectable. A competitive finish is useful, but the scoring floor is the problem that follows them into Week 3.');
+  }
+  if(/New England Patriots/i.test(teamKey)&&article.sections[0]?.paragraphs&&!article.sections[0].paragraphs.some(p=>/record can survive a middling/i.test(p))){
+    article.sections[0].paragraphs.push('A 2-0 record can survive a middling 73-point Sunday; it cannot make 73 look dominant. New England has earned confidence, not immunity from asking where the missing scoring went. Winning buys patience. It does not turn an ordinary fantasy total into a strength.');
   }
   article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
   article.structure_revision='week2-r134';

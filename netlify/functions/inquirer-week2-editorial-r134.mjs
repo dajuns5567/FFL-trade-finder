@@ -41,7 +41,7 @@ function trimGenericPlayerFollowups(paragraph){
   const hasProjection=ss.some(s=>/above projection|below projection/i.test(s));
   let dropped=false;
   return ss.filter(s=>{
-    if(!dropped&&(hasHistory||hasProjection)&&/(next test|next check|another week|another Sunday|earned another look|role deserves more trust|role starts to look repeatable|role was real|role travels|sequel|same role|usage holds|usage and production survive)/i.test(s)){
+    if(!dropped&&(hasHistory&&hasProjection)&&/(next test|next check|another week|another Sunday|earned another look|role deserves more trust|role starts to look repeatable|role was real|role travels|sequel|same role|usage holds|usage and production survive)/i.test(s)){
       dropped=true;return false;
     }
     return true;

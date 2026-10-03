@@ -30,6 +30,10 @@ jobs:
           s=s.replaceAll("),24", "),26");
           s=s.replace('|\\bi respect\\b','');
           s=s.replace(
+            "\\\\bdropped\\\\s+-?\\\\d+(?:\\\\.\\\\d+)?\\\\b|",
+            "\\\\bdropped\\\\s+-?\\\\d+(?:\\\\.\\\\d+)?,?\\\\s+and yes|"
+          );
+          s=s.replace(
             "||new RegExp(`^${esc(p)}\\\\s+(?:scored|gave|posted|delivered)\\\\b`,'i').test(s)",
             "||new RegExp(`^${esc(p)}\\\\s+(?:scored|gave|posted|delivered)\\\\s+-?\\\\d+(?:\\\\.\\\\d+)?\\\\b`,'i').test(s)"
           );

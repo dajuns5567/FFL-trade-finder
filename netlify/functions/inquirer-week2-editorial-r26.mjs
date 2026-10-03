@@ -6,11 +6,15 @@ const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
 function scoreMapFromArticle(article){
  const map=new Map();
- for(const s of (article?.sections||[]).flatMap(sec=>sec?.paragraphs||[]).flatMap(sentences)){
-  let m=s.match(/^Against .+?,\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+scored\s+(-?\d+(?:\.\d+)?)\s+fantasy points/i);
-  if(!m)m=s.match(/^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+had a bad Week 2 at\s+(-?\d+(?:\.\d+)?)\s+points?\b/i);
+ const all=(article?.sections||[]).flatMap(sec=>sec?.paragraphs||[]).flatMap(sentences);
+ for(const s of all){
+  const m=s.match(/^Against .+?,\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+scored\s+(-?\d+(?:\.\d+)?)\s+fantasy points/i);
+  if(m)map.set(m[1].toLowerCase(),{name:m[1],score:m[2],canonical:s});
+ }
+ for(const s of all){
+  let m=s.match(/^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+had a bad Week 2 at\s+(-?\d+(?:\.\d+)?)\s+points?\b/i);
   if(!m)m=s.match(/^The problem with\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+is plain:\s+(-?\d+(?:\.\d+)?)\s+in Week 2\b/i);
-  if(m&&!map.has(m[1].toLowerCase()))map.set(m[1].toLowerCase(),{name:m[1],score:m[2]});
+  if(m&&!map.has(m[1].toLowerCase()))map.set(m[1].toLowerCase(),{name:m[1],score:m[2],canonical:s});
  }
  return map;
 }
@@ -35,21 +39,20 @@ function rewriteLaterScore(s,name,score){
  return x.replace(/\s+/g,' ').replace(/\s+([,.;!?])/g,'$1').trim();
 }
 function dedupeArticleScores(t){
- const a=t?.inquirer_article;if(!a)return t;const scoreMap=scoreMapFromArticle(a),seen=new Set();
- const order=[...a.sections.keys()].sort((i,j)=>String(a.sections[i]?.kind||'')==='players'?-1:String(a.sections[j]?.kind||'')==='players'?1:i-j),rewritten=new Map();
- for(const idx of order){const sec=a.sections[idx],paras=[];
+ const a=t?.inquirer_article;if(!a)return t;const scoreMap=scoreMapFromArticle(a);
+ a.sections=(a.sections||[]).map(sec=>{const paras=[];
   for(const p of sec?.paragraphs||[]){const kept=[];
    for(let s of sentences(p)){
     let matched=null;
     for(const row of scoreMap.values())if(hasName(s,row.name)&&hasExactScore(s,row.score)){matched=row;break}
-    if(matched){const k=matched.name.toLowerCase();if(seen.has(k)){s=rewriteLaterScore(s,matched.name,matched.score);if(!s)continue}else seen.add(k)}
+    if(matched&&s!==matched.canonical){s=rewriteLaterScore(s,matched.name,matched.score);if(!s)continue}
     kept.push(s);
    }
    const next=kept.join(' ').replace(/\s+/g,' ').trim();if(next)paras.push(next);
   }
-  rewritten.set(idx,{...sec,paragraphs:paras});
- }
- a.sections=a.sections.map((s,i)=>rewritten.get(i)||s);a.paragraphs=a.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);a.editorial_revision=26;a.voice_revision='week2-r26';return t;
+  return{...sec,paragraphs:paras};
+ });
+ a.paragraphs=a.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);a.editorial_revision=26;a.voice_revision='week2-r26';return t;
 }
 function reviseOverview(o){if(!o)return o;o.editorial_revision=26;o.voice_revision='week2-r26';return o}
 

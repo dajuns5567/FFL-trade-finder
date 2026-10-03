@@ -35,8 +35,26 @@ jobs:
           node scripts/inquirer-week2-r20-smoke.mjs
           node scripts/inquirer-week2-r21-smoke.mjs
           node scripts/inquirer-week2-r22-smoke.mjs
-      - name: Run R28 all-32 natural-language regression
-        run: node scripts/inquirer-week2-r23-smoke.mjs
+      - name: Capture R28 all-32 natural-language regression
+        run: |
+          set +e
+          node scripts/inquirer-week2-r23-smoke.mjs > /tmp/r28-smoke.log 2>&1
+          code=$?
+          echo "$code" > /tmp/r28-smoke.exit
+          cat /tmp/r28-smoke.log
+          exit 0
+      - name: Upload R28 smoke diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: r28-smoke-diagnostic
+          path: |
+            /tmp/r28-smoke.log
+            /tmp/r28-smoke.exit
+          retention-days: 2
+      - name: Enforce R28 all-32 natural-language regression
+        run: |
+          cat /tmp/r28-smoke.log
+          test "$(cat /tmp/r28-smoke.exit)" = "0"
       - name: Materialize R28 and run full generated audit
         run: |
           node --input-type=module <<'NODE'

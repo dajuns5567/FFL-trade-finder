@@ -1,6 +1,7 @@
 import {applyWeek2EditorialR16 as applyR34} from './inquirer-week2-editorial-r34.mjs';
 
 const clean=s=>String(s||'').replace(/\s+/g,' ').replace(/\s+([,.;!?])/g,'$1').trim();
+const shortTeam=name=>String(name||'').trim().split(/\s+/).filter(Boolean).at(-1)||'Opponent';
 
 function ensureNextOpponentRecord(team){
  const article=team?.inquirer_article;if(!article)return team;
@@ -15,9 +16,12 @@ function ensureNextOpponentRecord(team){
  const copy=ps.join(' ');
  if(copy.includes(recText))return team;
  const week=Number(next?.week)||3;
- const idx=ps.findIndex(p=>String(p||'').includes(String(next?.team_name||team?.next_opponent_name||'')));
+ const nextName=String(next?.team_name||team?.next_opponent_name||'').trim();
+ const alias=shortTeam(nextName);
+ const verb=/s$/i.test(alias)?'sit':'sits';
+ const idx=ps.findIndex(p=>nextName&&String(p||'').includes(nextName));
  const target=idx>=0?idx:0;
- ps[target]=clean(`${ps[target]} That Week ${week} opponent comes in at ${recText}.`);
+ ps[target]=clean(`${ps[target]} ${alias} ${verb} at ${recText} entering Week ${week}.`);
  article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
  return team;
 }

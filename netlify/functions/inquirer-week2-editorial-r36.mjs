@@ -17,10 +17,25 @@ function roleSentence(reporterId,p){
   if(reporterId==='mack-hollis')return `${name} had no Week 2 snaps after carrying a ${pct(prior)} share last season.`;
   return `${name} logged no Week 2 snaps, down from a ${pct(prior)} share last season.`;
  }
- if(reporterId==='walter-mercer')return `${name} played ${pct(current)} of the snaps in Week 2 after a ${pct(prior)} share last season.`;
- if(reporterId==='tess-delaney')return `${name} was on the field for ${pct(current)} of the snaps in Week 2; last season's share was ${pct(prior)}.`;
- if(reporterId==='mack-hollis')return `${name} logged a ${pct(current)} Week 2 snap share, compared with ${pct(prior)} last season.`;
- return `${name}'s Week 2 snap share was ${pct(current)}, versus ${pct(prior)} last season.`;
+ const delta=current-prior;
+ if(reporterId==='walter-mercer'){
+  if(delta>0.005)return `${name}'s snap share climbed from ${pct(prior)} last season to ${pct(current)} in Week 2.`;
+  if(delta<-0.005)return `${name}'s snap share fell from ${pct(prior)} last season to ${pct(current)} in Week 2.`;
+  return `${name} stayed near last season's ${pct(prior)} snap share, playing ${pct(current)} in Week 2.`;
+ }
+ if(reporterId==='tess-delaney'){
+  if(delta>0.005)return `${name} was on the field for ${pct(current)} of the snaps in Week 2, up from ${pct(prior)} last season.`;
+  if(delta<-0.005)return `${name}'s Week 2 snap share slipped to ${pct(current)} from ${pct(prior)} last season.`;
+  return `${name} basically held the same role: ${pct(current)} of Week 2 snaps after ${pct(prior)} last season.`;
+ }
+ if(reporterId==='mack-hollis'){
+  if(delta>0.005)return `${name} expanded from a ${pct(prior)} snap share last season to ${pct(current)} in Week 2.`;
+  if(delta<-0.005)return `${name} contracted from ${pct(prior)} of the snaps last season to ${pct(current)} in Week 2.`;
+  return `${name} logged ${pct(current)} of Week 2 snaps, almost unchanged from ${pct(prior)} last season.`;
+ }
+ if(delta>0.005)return `${name}'s Week 2 snap share rose to ${pct(current)} from ${pct(prior)} last season.`;
+ if(delta<-0.005)return `${name}'s Week 2 snap share dropped to ${pct(current)} from ${pct(prior)} last season.`;
+ return `${name}'s Week 2 snap share held at ${pct(current)}, close to last season's ${pct(prior)}.`;
 }
 
 function coolThroneSentence(reporterId,names){

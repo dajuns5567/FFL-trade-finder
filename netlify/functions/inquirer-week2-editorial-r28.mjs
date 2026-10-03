@@ -5,6 +5,7 @@ const sentences=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(
 const cleanSpace=s=>String(s||'').replace(/\s+/g,' ').replace(/\s+([,.;!?])/g,'$1').trim();
 const words=s=>(String(s||'').match(/\b[\w’'-]+\b/g)||[]).length;
 const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const SCHEDULE_DIFFICULTY=/\b(?:stiffen|rougher|difficult stretch|hard part|hard stretch|hardens|gauntlet|resistance|heavy part|friendlier|friendly part|softer|manageable|forgiving|breathing room|favorable|mercy|soft landing|lowering the volume|mixed|split schedule|split the|uneven|difficulty level|lands in the middle|split screen)\b/i;
 
 const DROP_SENTENCE=[
  /^Fine, this one gets its own argument\.?$/i,
@@ -166,7 +167,7 @@ function removeCrossTeamBoilerplate(teams){
   for(const sec of t?.inquirer_article?.sections||[]){
    for(const p of sec?.paragraphs||[]){
     for(const s of sentences(p)){
-     if(words(s)<8)continue;
+     if(words(s)<8||SCHEDULE_DIFFICULTY.test(s))continue;
      const key=cleanSpace(s).toLowerCase();
      const set=seen.get(key)||new Set();set.add(String(t.team_name||''));seen.set(key,set);
     }
@@ -177,7 +178,7 @@ function removeCrossTeamBoilerplate(teams){
  if(!banned.size)return teams;
  for(const t of teams){
   const a=t?.inquirer_article;if(!a)continue;
-  a.sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec?.paragraphs||[]).map(p=>cleanSpace(sentences(p).filter(s=>!banned.has(cleanSpace(s).toLowerCase())).join(' '))).filter(Boolean)}));
+  a.sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec?.paragraphs||[]).map(p=>cleanSpace(sentences(p).filter(s=>SCHEDULE_DIFFICULTY.test(s)||!banned.has(cleanSpace(s).toLowerCase())).join(' '))).filter(Boolean)}));
   dedupeArticleCredit(a);
  }
  return teams;

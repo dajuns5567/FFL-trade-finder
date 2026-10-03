@@ -7,7 +7,8 @@ const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
 const DROP_SENTENCE=[
  /^Fine, this one gets its own argument\.?$/i,
- /^Give me a minute\. I have tomatoes and applause; choose correctly\.?$/i,
+ /^Give me a minute\.?$/i,
+ /^I have tomatoes and applause; choose correctly\.?$/i,
  /^Keep what worked; no committee meeting required\.?$/i,
  /^Use the obvious answer and spare me the theory\.?$/i,
  /^I can live with this; alert the historians\.?$/i,

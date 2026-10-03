@@ -6,6 +6,11 @@ function naturalList(items){
  return items.slice(0,-1).join(', ')+', and '+items.at(-1);
 }
 
+function shortTeam(name){
+ const bits=String(name||'').trim().split(/\s+/).filter(Boolean);
+ return bits.at(-1)||String(name||'').trim();
+}
+
 function ensureTopThreeFullNames(team){
  const article=team?.inquirer_article;if(!article)return team;
  const copy=(article.sections||[]).flatMap(s=>s?.paragraphs||[]).join(' ');
@@ -17,7 +22,7 @@ function ensureTopThreeFullNames(team){
  const players=(article.sections||[]).find(s=>String(s?.kind||'')==='players')||article.sections?.[0];
  if(!players)return team;
  const names=naturalList(missing.map(p=>String(p.name).trim()));
- players.paragraphs=[...(players.paragraphs||[]),`For ${team.team_name}, the rest of the top-three starter group included ${names}.`];
+ players.paragraphs=[...(players.paragraphs||[]),`Also in the top-three starter group for the ${shortTeam(team.team_name)}: ${names}.`];
  article.paragraphs=(article.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(Boolean);
  article.structure_revision='week2-r43';
  return team;

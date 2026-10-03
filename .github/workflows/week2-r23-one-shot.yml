@@ -1,0 +1,18 @@
+name: Week 2 R23 one-shot
+on:
+  push:
+    branches: [player-signal-layer-r1]
+    paths:
+      - 'netlify/functions/inquirer-week2-editorial-r23.mjs'
+      - 'scripts/inquirer-week2-r23-smoke.mjs'
+      - '.github/workflows/week2-r23-one-shot.yml'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run R23 regression smoke
+        run: node scripts/inquirer-week2-r23-smoke.mjs

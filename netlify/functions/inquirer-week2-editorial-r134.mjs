@@ -51,14 +51,22 @@ function trimGenericPlayerFollowups(paragraph){
 
 function fixBadDepth(paragraph,style){
   if(!/scoring depth behind the leaders/i.test(paragraph))return paragraph;
-  const replacement=style==='tilly'
-    ? 'That was not depth; it was a quiet score wearing a starter badge.'
-    : style==='bartholomew'
-      ? 'That was not scoring depth; it was an underwhelming supporting result with excellent tailoring.'
-      : style==='jefferson'
-        ? 'Calling that scoring depth would overstate the contribution; the number was part of the problem.'
-        : 'That was not useful scoring depth; the lineup needed more from that spot.';
-  return splitSentences(paragraph).map(s=>/scoring depth behind the leaders/i.test(s)?replacement:s).join(' ');
+  return splitSentences(paragraph).map(s=>{
+    if(!/scoring depth behind the leaders/i.test(s))return s;
+    const m=s.match(/^(.+?)\s+gave\s+(.+?)\s+scoring depth behind the leaders/i);
+    if(m){
+      const player=m[1].trim();
+      const team=m[2].trim();
+      if(style==='tilly')return `${player} did not give ${team} enough secondary scoring to call this depth; Week 3 needs more from that spot before anybody hangs bunting.`;
+      if(style==='bartholomew')return `${player} did not give ${team} enough secondary scoring to qualify as depth; Week 3 requires a more substantial contribution before we dress it up.`;
+      if(style==='jefferson')return `${player} did not give ${team} enough secondary scoring to call this depth; Week 3 needs more from that spot before the label survives inspection.`;
+      return `${player} did not give ${team} enough secondary scoring to call this depth; Week 3 needs more from that spot.`;
+    }
+    if(style==='tilly')return 'That was not useful depth; the lineup needed more scoring from that spot.';
+    if(style==='bartholomew')return 'That was not useful depth; the lineup needed a more substantial scoring contribution.';
+    if(style==='jefferson')return 'That was not useful depth; the scoring contribution was part of the problem.';
+    return 'That was not useful depth; the lineup needed more from that spot.';
+  }).join(' ');
 }
 
 function cleanHistoricalBoilerplate(paragraph,style){

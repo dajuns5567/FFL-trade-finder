@@ -171,6 +171,7 @@ function removeCrossTeamBoilerplate(teams){
      const set=seen.get(key)||new Set();set.add(String(t.team_name||''));seen.set(key,set);
     }
    }
+  }
  }
  const banned=new Set([...seen].filter(([,set])=>set.size>=3).map(([key])=>key));
  if(!banned.size)return teams;

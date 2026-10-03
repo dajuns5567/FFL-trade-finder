@@ -66,11 +66,12 @@ jobs:
           fs.writeFileSync('/tmp/week2-r28.json',JSON.stringify(week2,null,2)+'\n');
           NODE
           node scripts/inquirer-v25-generated-audit.mjs /tmp/week2-r28.json
-      - name: Commit verified R28 integration and remove temporary verifier
+      - name: Commit verified non-workflow R28 integration
         run: |
-          rm -f scripts/tmp-r28-integration.py .github/workflows/tmp-r28-integration.yml
+          git checkout -- .github/workflows/inquirer-editorial-r5-smoke.yml .github/workflows/tmp-r28-integration.yml
+          rm -f scripts/tmp-r28-integration.py
           git config user.name 'fleeced-r28-verifier'
           git config user.email 'actions@users.noreply.github.com'
-          git add -A
+          git add netlify/functions/league-hub.mjs scripts/inquirer-week2-r23-smoke.mjs scripts/inquirer-v25-generated-audit.mjs scripts/tmp-r28-integration.py
           git commit -m 'Wire verified R28 Week 2 editorial cleanup'
           git push origin HEAD:player-signal-layer-r1

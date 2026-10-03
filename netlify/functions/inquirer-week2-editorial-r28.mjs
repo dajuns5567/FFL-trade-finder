@@ -184,6 +184,20 @@ function removeCrossTeamBoilerplate(teams){
  return teams;
 }
 
+function normalizeScheduleRoadPosition(t){
+ const a=t?.inquirer_article;if(!a)return t;
+ const outlook=(a.sections||[]).find(sec=>String(sec?.kind||'')==='outlook');
+ const paragraphs=outlook?.paragraphs;if(!Array.isArray(paragraphs)||paragraphs.length<2)return t;
+ const later=(t?.upcoming_opponents||[]).slice().sort((x,y)=>Number(x?.week)-Number(y?.week)).slice(1,3);
+ if(!later.length)return t;
+ const idx=paragraphs.findIndex(p=>SCHEDULE_DIFFICULTY.test(String(p||''))&&later.every(x=>String(p||'').toLowerCase().includes(String(x?.team_name||'').toLowerCase()))&&/Week 3|win|bank|beat|handle/i.test(String(p||'')));
+ if(idx<0||idx===paragraphs.length-2)return t;
+ const [road]=paragraphs.splice(idx,1);
+ paragraphs.splice(Math.max(0,paragraphs.length-1),0,road);
+ a.paragraphs=a.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+ return t;
+}
+
 const RECAP_VOICE={
  'walter-mercer':[
   'I care more about what this changes next Sunday than how tidy the record looks tonight.',
@@ -230,7 +244,7 @@ function reviseOverview(o){
 
 export function applyWeek2EditorialR16(raw){
  const out=applyWeek2EditorialR27Base(raw);if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
- out.teams=removeCrossTeamBoilerplate((out.teams||[]).map(reviseTeam));
+ out.teams=removeCrossTeamBoilerplate((out.teams||[]).map(reviseTeam)).map(normalizeScheduleRoadPosition);
  out.league_overview=reviseOverview(out.league_overview);
  out.editorial_revision=28;out.voice_revision='week2-r28';return out;
 }

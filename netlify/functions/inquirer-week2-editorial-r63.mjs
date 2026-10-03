@@ -13,22 +13,22 @@ function addDistributionRead(team){
   const rows={
     'Nick Swindell':[
       `${names[0]}, ${names[1]}, and ${names[2]} combined for ${one(total)} points. That is the part of the Week 2 lineup worth preserving before the next matchup changes the assignment.`,
-      `${one(total)} points came from ${names[0]}, ${names[1]}, and ${names[2]}. The useful lesson is distribution: Week 2 had several answers, not one lucky box-score accident.`,
+      `${one(total)} points came from ${names[0]}, ${names[1]}, and ${names[2]}. The useful lesson is distribution: Week 2 had several productive spots, which gives Week 3 more than one workable starting point.`,
       `The top three Week 2 starters were ${names[0]}, ${names[1]}, and ${names[2]}, totaling ${one(total)} points. Keep that production in view when Week 3 asks for a different kind of win.`
     ],
     'Tilly Fleecer':[
-      `${names[0]}, ${names[1]}, and ${names[2]} gave this lineup ${one(total)} points between them. Three useful answers are much nicer than asking one Sunday hero to perform emergency services.`,
+      `${names[0]}, ${names[1]}, and ${names[2]} gave this lineup ${one(total)} points between them. Three productive spots are much nicer than watching the lineup depend on one fragile matchup.`,
       `${one(total)} points from ${names[0]}, ${names[1]}, and ${names[2]} is the kind of distribution that keeps the next loss from becoming an immediate comedy special.`,
-      `${names[0]}, ${names[1]}, and ${names[2]} supplied ${one(total)} points. That is enough production from multiple spots to keep us from inventing a one-player miracle story.`
+      `${names[0]}, ${names[1]}, and ${names[2]} supplied ${one(total)} points. That is enough production from multiple spots to make the lineup harder to predict and harder to defend.`
     ],
     'Bartholomew Roycington III':[
-      `${names[0]}, ${names[1]}, and ${names[2]} produced ${one(total)} points together. A lineup receiving competent work from several places is less dramatic than a rescue act and considerably more useful.`,
+      `${names[0]}, ${names[1]}, and ${names[2]} produced ${one(total)} points together. A lineup receiving competent work from several places is less dramatic and considerably more useful.`,
       `Between ${names[0]}, ${names[1]}, and ${names[2]}, the lineup collected ${one(total)} points. Distribution is not glamorous, which is precisely why contenders should treasure it.`,
-      `${one(total)} points came from the trio of ${names[0]}, ${names[1]}, and ${names[2]}. That is a healthier shape than demanding one star turn every Sunday into performance art.`
+      `${one(total)} points came from the trio of ${names[0]}, ${names[1]}, and ${names[2]}. That is a healthier scoring shape than asking the same position group to solve every matchup.`
     ],
     'Jefferson Filch':[
       `${names[0]}, ${names[1]}, and ${names[2]} accounted for ${one(total)} points. The important detail is that Week 2 production came from several places, which makes the result harder to dismiss as one isolated spike.`,
-      `${one(total)} points from ${names[0]}, ${names[1]}, and ${names[2]} gives the lineup more than one usable lead entering Week 3. That is worth keeping in the file.`,
+      `${one(total)} points from ${names[0]}, ${names[1]}, and ${names[2]} gives the lineup several usable leads entering Week 3. That is worth keeping in the file.`,
       `The three highest Week 2 starters were ${names[0]}, ${names[1]}, and ${names[2]}, combining for ${one(total)} points. Multiple productive spots make the next evaluation cleaner and the excuses thinner.`
     ]
   };

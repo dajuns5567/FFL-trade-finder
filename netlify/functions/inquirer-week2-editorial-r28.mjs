@@ -122,6 +122,7 @@ function reviseTeam(t){
     s=rewriteRepeatedFact(s,facts);
     if(!s)continue;
     s=naturalizeSentence(s);
+    if(/management puzzle/i.test(s))continue;
     if(hasNoBenchAnswer&&isManagement&&/did not leave an obvious higher-scoring bench answer in a compatible spot/i.test(s))s=s.replace(/;\s*management had seven days.*$/i,'.');
     if(!s||DROP_SENTENCE.some(re=>re.test(s)))continue;
     if(hasNoBenchAnswer&&isManagement&&/\b(?:blam|person who chose the lineup|cute bad decision|tomatoes|avoid looking silly|management had seven days)\b/i.test(s))continue;

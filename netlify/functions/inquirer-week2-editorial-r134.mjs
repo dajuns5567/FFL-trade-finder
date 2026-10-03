@@ -82,6 +82,10 @@ function refineTeam(team){
     if(isOutlookHeading(section.heading))ps=ps.map(p=>cleanHistoricalBoilerplate(p,style));
     section.paragraphs=ps.filter(Boolean);
   }
+  const buffaloKey=JSON.stringify([team?.name,team?.team_name,article?.title,article?.headline]);
+  if(/Buffalo Billiards/i.test(buffaloKey)&&article.sections[0]?.paragraphs&&!article.sections[0].paragraphs.some(p=>/margin says close/i.test(p))){
+    article.sections[0].paragraphs.push('The margin says close; 49 points says something less flattering. Billiards gave itself almost no room for error, then asked a five-point loss to look respectable. A competitive finish is useful, but the scoring floor is the problem that follows them into Week 3.');
+  }
   article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
   article.structure_revision='week2-r134';
   return team;

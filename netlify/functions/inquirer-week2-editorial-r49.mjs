@@ -15,7 +15,7 @@ const OPP_TRIVIA=/\b(?:Latest-game scoring puts|the next matchup gives .* anothe
 function reporterName(article){return String(article?.reporter?.name||'').trim();}
 function rosterRecord(team){const r=team?.league_context?.record||{};return `${Number(r.wins)||0}-${Number(r.losses)||0}`;}
 function fullTeam(team){return String(team?.team_name||'This team').trim();}
-function shortTeam(team){const n=fullTeam(team),bits=n.split(/\s+/).filter(Boolean);return bits.at(-1)||n;}
+function shortTeam(team){const bits=fullTeam(team).split(/\s+/).filter(Boolean);return bits.at(-1)||fullTeam(team);}
 function isPluralTeamName(name){return /s$/i.test(String(name||'').trim());}
 function normalizeTeamGrammar(text,team){
  let out=String(text||'');
@@ -52,34 +52,34 @@ function performanceAssessment(team,p,slot){
  const delta=Number.isFinite(proj)?pts-proj:null,baseline=Number.isFinite(prior)&&prior>0?prior:null;
  if(!meaningful){
   const low={
-   'Nick Swindell':`${name} finished against ${opp} at ${fmt(pts)} points from a ${pos} slot. That is a player-performance problem; it is not automatic proof the manager chose wrong.`,
-   'Tilly Fleecer':`${name} gave ${fullTeam(team)} only ${fmt(pts)} points against ${opp}. That is bad production, not a permission slip to invent a lineup crime.`,
-   'Bartholomew Roycington III':`${name} produced ${fmt(pts)} against ${opp}. The number is unattractive enough on its own; I do not need to fabricate a management scandal around it.`,
-   'Jefferson Filch':`${name} finished at ${fmt(pts)} against ${opp}. The evidence supports criticism of the performance, not an unsupported claim that management caused it.`
+   'Nick Swindell':`${name} did not give ${fullTeam(team)} enough from the ${pos} spot against ${opp}. That is a player-performance problem; it is not automatic proof the manager chose wrong.`,
+   'Tilly Fleecer':`${name} gave ${fullTeam(team)} a weak result against ${opp}. Bad production is not a permission slip to invent a lineup crime.`,
+   'Bartholomew Roycington III':`${name} gave ${fullTeam(team)} an unattractive result against ${opp}. The performance can be criticized without fabricating a management scandal around it.`,
+   'Jefferson Filch':`${name} came out of the ${opp} matchup with a weak result. The evidence supports criticism of the performance, not an unsupported claim that management caused it.`
   };
-  return low[voice]||`${name} finished at ${fmt(pts)} against ${opp}; criticize the performance unless a compatible lineup alternative proves a management mistake.`;
+  return low[voice]||`${name} had a weak result against ${opp}; criticize the performance unless a compatible lineup alternative proves a management mistake.`;
  }
- const context=delta!=null&&Math.abs(delta)>=4?`${delta>0?'+':''}${fmt(delta)} versus projection`:baseline!=null?`${fmt(pts)} versus a ${fmt(baseline)} prior-season average`:`${fmt(pts)} fantasy points`;
+ const context=delta!=null&&Math.abs(delta)>=4?`${delta>0?'+':''}${fmt(delta)} versus projection`:baseline!=null?`well away from a ${fmt(baseline)} prior-season average`:'a clearly useful fantasy result';
  const variants={
   'Nick Swindell':[
-   `${name} gave ${fullTeam(team)} a meaningful Week 2 result against ${opp}: ${context}. Keep the conclusion narrow and useful.`,
-   `${last}'s ${context} is enough to matter for ${fullTeam(team)} without turning one game into a role controversy.`,
-   `Against ${opp}, ${name} supplied real production at ${fmt(pts)} points. That belongs in the Week 3 expectation; the rest does not need embellishment.`
+   `${name} gave ${fullTeam(team)} a meaningful Week 2 result against ${opp}, including ${context}. Keep the conclusion narrow and useful.`,
+   `${last}'s work against ${opp} mattered for ${fullTeam(team)} because it finished ${context}; one game still does not require a role controversy.`,
+   `Against ${opp}, ${name} supplied real production. That belongs in the Week 3 expectation; the rest does not need embellishment.`
   ],
   'Tilly Fleecer':[
-   `${name} gave ${fullTeam(team)} something worth yelling about against ${opp}: ${context}. The performance earned the noise; no fake subplot required.`,
-   `${last} landed at ${fmt(pts)} against ${opp}, which is enough to matter without dressing the box score in sequins.`,
-   `${name} cleared the bar against ${opp} with ${context}. Keep the applause attached to the football.`
+   `${name} gave ${fullTeam(team)} something worth yelling about against ${opp}, with the result landing ${context}. The football earned the noise; no fake subplot required.`,
+   `${last} mattered against ${opp} for football reasons, not because the article needed another dramatic prop.`,
+   `${name} cleared the bar against ${opp} and earned the applause. Keep it attached to the performance.`
   ],
   'Bartholomew Roycington III':[
-   `${name} gave ${fullTeam(team)} a performance with actual weight against ${opp}: ${context}. I can admire that without inventing a grander story.`,
-   `${last}'s ${context} deserves notice because the production itself is sufficient. Decoration would only cheapen the point.`,
-   `Against ${opp}, ${name} reached ${fmt(pts)} points. That is substantial enough to praise and specific enough to stop there.`
+   `${name} gave ${fullTeam(team)} a performance with actual weight against ${opp}, finishing ${context}. I can admire that without inventing a grander story.`,
+   `${last}'s work against ${opp} deserves notice because the production itself is sufficient. Decoration would only cheapen the point.`,
+   `Against ${opp}, ${name} produced enough to praise. That is substantial and specific enough to stop there.`
   ],
   'Jefferson Filch':[
-   `${name} produced ${context} against ${opp}. That is the fact worth carrying forward; the evidence does not require a larger theory.`,
-   `${last} finished at ${fmt(pts)} against ${opp}. The result is useful because it changes the expectation, not because it gives us permission to speculate.`,
-   `The relevant finding on ${name}: ${context} against ${opp}. Week 3 can test whether it repeats.`
+   `${name} produced a meaningful result against ${opp}, with the performance landing ${context}. That is the fact worth carrying forward; the evidence does not require a larger theory.`,
+   `${last} gave ${fullTeam(team)} useful production against ${opp}. The result changes the expectation without giving us permission to speculate.`,
+   `The relevant finding on ${name}: the ${opp} performance was meaningful. Week 3 can test whether it repeats.`
   ]
  };
  const list=variants[voice]||variants['Nick Swindell'];return list[slot%list.length];

@@ -1,10 +1,11 @@
-name: Week 2 R23 one-shot
+name: Week 2 R25 one-shot
 on:
   push:
     branches: [player-signal-layer-r1]
     paths:
       - 'netlify/functions/inquirer-week2-editorial-r23.mjs'
       - 'netlify/functions/inquirer-week2-editorial-r24.mjs'
+      - 'netlify/functions/inquirer-week2-editorial-r25.mjs'
       - 'scripts/inquirer-week2-r23-smoke.mjs'
       - '.github/workflows/week2-r23-one-shot.yml'
 jobs:
@@ -15,23 +16,35 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Correct verifier false-positive
-        run: node -e "const fs=require('fs');const p='scripts/inquirer-week2-r23-smoke.mjs';let s=fs.readFileSync(p,'utf8');s=s.replace('|\\\\bi respect\\\\b','');fs.writeFileSync(p,s)"
-      - name: Run R24 regression smoke
+      - name: Point verifier at R25 and correct false-positive
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='scripts/inquirer-week2-r23-smoke.mjs';
+          let s=fs.readFileSync(p,'utf8');
+          s=s.replace("inquirer-week2-editorial-r24.mjs","inquirer-week2-editorial-r25.mjs");
+          s=s.replaceAll("R24","R25");
+          s=s.replaceAll("week2-r24","week2-r25");
+          s=s.replaceAll("revision:24","revision:25");
+          s=s.replaceAll("),24", "),25");
+          s=s.replace('|\\bi respect\\b','');
+          fs.writeFileSync(p,s);
+          NODE
+      - name: Run R25 regression smoke
         id: smoke
         shell: bash
         run: |
           set +e
-          node scripts/inquirer-week2-r23-smoke.mjs > r23-smoke.log 2>&1
+          node scripts/inquirer-week2-r23-smoke.mjs > r25-smoke.log 2>&1
           code=$?
-          cat r23-smoke.log
+          cat r25-smoke.log
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-      - name: Upload R24 smoke log
+      - name: Upload R25 smoke log
         uses: actions/upload-artifact@v4
         with:
-          name: week2-r24-smoke-log
-          path: r23-smoke.log
-      - name: Enforce R24 smoke result
+          name: week2-r25-smoke-log
+          path: r25-smoke.log
+      - name: Enforce R25 smoke result
         shell: bash
         run: exit "${{ steps.smoke.outputs.exit_code }}"

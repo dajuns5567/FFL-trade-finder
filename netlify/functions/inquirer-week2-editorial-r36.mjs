@@ -2,7 +2,6 @@ import {applyWeek2EditorialR16 as applyR35} from './inquirer-week2-editorial-r35
 
 const splitSentences=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
 const clean=s=>String(s||'').replace(/\s+/g,' ').replace(/\s+([,.;!?])/g,'$1').trim();
-const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const pct=n=>`${(Number(n)*100).toFixed(1)}%`;
 
 const ROLE_TEMPLATE=/^(.+?)'s Week 2 role was (?:larger than it was last season|smaller than it was last season|worth noting, but the fantasy result still matters more)\.$/i;
@@ -10,8 +9,14 @@ const PRAISE_TEMPLATE=/^(.+?) earned the praise this week\.$/i;
 
 function roleSentence(reporterId,p){
  const name=String(p?.name||'').trim();
- const current=Number(p?.current_snap_pct),prior=Number(p?.prior_season_snap_pct);
+ const current=Number(p?.current_snap_pct),prior=Number(p?.prior_season_snap_pct),count=Number(p?.current_snap_count);
  if(!name||!Number.isFinite(current)||!Number.isFinite(prior))return '';
+ if(current===0||count===0){
+  if(reporterId==='walter-mercer')return `${name} logged no Week 2 snaps; last season's share was ${pct(prior)}.`;
+  if(reporterId==='tess-delaney')return `${name} never logged a Week 2 snap; last season's share was ${pct(prior)}.`;
+  if(reporterId==='mack-hollis')return `${name} had no Week 2 snaps after carrying a ${pct(prior)} share last season.`;
+  return `${name} logged no Week 2 snaps, down from a ${pct(prior)} share last season.`;
+ }
  if(reporterId==='walter-mercer')return `${name} played ${pct(current)} of the snaps in Week 2 after a ${pct(prior)} share last season.`;
  if(reporterId==='tess-delaney')return `${name} was on the field for ${pct(current)} of the snaps in Week 2; last season's share was ${pct(prior)}.`;
  if(reporterId==='mack-hollis')return `${name} logged a ${pct(current)} Week 2 snap share, compared with ${pct(prior)} last season.`;

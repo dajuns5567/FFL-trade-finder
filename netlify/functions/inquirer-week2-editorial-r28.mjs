@@ -198,6 +198,26 @@ function normalizeScheduleRoadPosition(t){
  return t;
 }
 
+function ensureCoolThroneRecognition(t){
+ const a=t?.inquirer_article;if(!a)return t;
+ const cool=(a.sections||[]).find(sec=>String(sec?.kind||'')==='cool-throne');
+ if(!cool||!Array.isArray(cool.paragraphs)||!cool.paragraphs.length)return t;
+ const eligible=(t?.starter_details||[]).filter(p=>{
+  const pts=Number(p?.points),prior=Number(p?.prior_season_avg),proj=Number(p?.projected),delta=Number.isFinite(proj)?pts-proj:null;
+  return Number.isFinite(pts)&&(pts>=15||(delta!=null&&delta>=4)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.2));
+ }).sort((x,y)=>Number(y?.points)-Number(x?.points)).slice(0,2);
+ if(eligible.length<2)return t;
+ const names=eligible.map(p=>String(p?.name||'').trim()).filter(Boolean);
+ if(names.length<2)return t;
+ const copy=cool.paragraphs.join(' ').toLowerCase();
+ if(names.every(name=>copy.includes(name.toLowerCase())))return t;
+ const first=names.find(name=>String(cool.paragraphs[0]||'').toLowerCase().includes(name.toLowerCase()));
+ if(first)cool.paragraphs[0]=cleanSpace(String(cool.paragraphs[0]).replace(first,`${names[0]} and ${names[1]}`));
+ else cool.paragraphs[0]=cleanSpace(`${names[0]} and ${names[1]} both earned recognition here. ${cool.paragraphs[0]}`);
+ a.paragraphs=a.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+ return t;
+}
+
 const RECAP_VOICE={
  'walter-mercer':[
   'I care more about what this changes next Sunday than how tidy the record looks tonight.',
@@ -244,7 +264,7 @@ function reviseOverview(o){
 
 export function applyWeek2EditorialR16(raw){
  const out=applyWeek2EditorialR27Base(raw);if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
- out.teams=removeCrossTeamBoilerplate((out.teams||[]).map(reviseTeam)).map(normalizeScheduleRoadPosition);
+ out.teams=removeCrossTeamBoilerplate((out.teams||[]).map(reviseTeam)).map(normalizeScheduleRoadPosition).map(ensureCoolThroneRecognition);
  out.league_overview=reviseOverview(out.league_overview);
  out.editorial_revision=28;out.voice_revision='week2-r28';return out;
 }

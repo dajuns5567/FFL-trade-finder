@@ -171,7 +171,7 @@ assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub mu
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
 assert(backend.includes("for(let w=1;w<=cappedWeek;w++)")&&backend.includes("stored?.available&&Array.isArray(stored?.teams)&&stored.teams.length"),'Published completed-week broadcasts must remain locked and be skipped unchanged while the publisher searches sequentially for the next missing week');
-assert(backend.includes("const preloadedBroadcast=(season,week)=>PRELOADED_BROADCASTS.get")&&backend.includes("preloaded:true"),'Bundled Week 1 must stay available even if a future editorial revision changes');
+assert(backend.includes("['2026|1',week1Preload2026]")&&backend.includes("const servedPreload=p=>p&&Number(p.season)===2026&&Number(p.week)===2?applyWeek2EditorialR16(p):p")&&backend.includes("const preloadedBroadcast=(season,week)=>servedPreload(PRELOADED_BROADCASTS.get")&&backend.includes("if(y===2026&&w===2&&canonicalPreload)return canonicalPreload")&&backend.includes("return servedPreload(v)||canonicalPreload")&&backend.includes("preloaded:true"),'Bundled Week 1 must stay available unchanged while 2026 Week 2 is served from the canonical revision-16 rewrite before any persisted Blob fallback');
 assert(ui.includes("Open Full Inquirer ▾")&&ui.includes("Weekly Recap →")&&ui.includes("data-lh-archive-season"),'Held Inquirer state must keep both Open Full Inquirer and Weekly Recap controls when a published edition exists');
 assert(backend.includes('published_locked:true'),'Newly published Inquirer broadcasts and archive articles must be marked immutable');
 assert(!backend.includes('migration_reason:'),'Published Inquirer articles must not be silently rewritten by later editorial revisions');
@@ -192,7 +192,7 @@ assert(backend.includes("league?.metadata?.['division_'+d]"),'Conference must be
 assert(backend.includes("name.startsWith('AFC')")&&backend.includes("name.startsWith('NFC')"),'Sleeper AFC/NFC division labels must drive conference assignment');
 assert(backend.includes("managers/history-cache.json"),'Fan sentiment must consume persistent manager career history');
 assert(backend.includes("import week1Preload2026 from './inquirer-week1-2026-preload.mjs'")&&backend.includes("import week2Preload2026 from './inquirer-week2-2026-preload.mjs'"),'League Hub must import the locked Week 1 and Week 2 V26 preloads');
-assert(backend.includes('preloadedBroadcast(season,week)'), 'League Hub weekly/archive paths must recognize preloaded completed editions');
+assert(backend.includes('const preloadedBroadcast=(season,week)=>')&&backend.includes('canonicalPreload=preloadedBroadcast(y,w)'),'League Hub weekly/archive paths must recognize preloaded completed editions and route normalized archive coordinates through the canonical preload');
 assert(backend.includes('preloadedReporterEntries(reporter.id)')&&backend.includes('for(const p of PRELOADED_BROADCASTS.values())'),'Reporter archives must merge stories from every bundled Inquirer week');
 assert(backend.includes("['2026|1',week1Preload2026],['2026|2',week2Preload2026]"),'Weekly archive registry must preserve Week 1 and expose preloaded Week 2');
 assert(backend.includes("key:'preloaded:'+season+':'+week"),'Weekly archive index must build generic preloaded keys for all bundled editions');

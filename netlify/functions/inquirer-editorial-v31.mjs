@@ -3,6 +3,8 @@
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
+import {reporterPlayerStatusProfile} from './player-signal-engine.mjs';
+
 export const FORWARD_INQUIRER_VERSION=31;
 export const FORWARD_EDITORIAL_REVISION=14;
 
@@ -776,52 +778,7 @@ function w2PlayerStatusVariant(t,r,status,count){
 }
 
 function w2PlayerStatusProfile(p,slot=0,pp=null){
-  const pts=Number(p?.points),week1=Number(pp?.points),prior=Number(p?.prior_season_avg),games=Number(p?.prior_season_games)||0,
-    seasonAvg=Number(p?.season_avg),age=Number(p?.age),years=Number(p?.years_exp),
-    pos=String(p?.position||"").toUpperCase(),role=Number(slot)||0,
-    snaps=p?.current_snap_count==null?null:Number(p.current_snap_count),priorSnapPg=p?.prior_season_snaps_per_game==null?null:Number(p.prior_season_snaps_per_game),
-    snapPct=p?.current_snap_pct==null?null:Number(p.current_snap_pct),
-    defensive=/^(DL|DE|DT|LB|DB|CB|S|ILB|OLB|FS|SS|NT|EDGE|IDP)$/.test(pos),
-    starThreshold=pos==="QB"?18:pos==="RB"?14:pos==="WR"?14:pos==="TE"?11:defensive?11:13,
-    rookie=(Number.isFinite(years)&&years===0)||(games===0&&Number.isFinite(age)&&age<=23),
-    young=(Number.isFinite(age)&&age<=25)||(Number.isFinite(years)&&years<=2),
-    earlyCareer=(Number.isFinite(years)&&years<=2)||(Number.isFinite(age)&&age<=24&&(!Number.isFinite(years)||years<=3)),
-    veteran=(Number.isFinite(years)&&years>=5)||(Number.isFinite(age)&&age>=28),
-    hasTwoWeeks=Number.isFinite(pts)&&Number.isFinite(week1),
-    established=Number.isFinite(prior)&&games>=8&&(prior>=starThreshold*1.2||(prior>=starThreshold&&(!Number.isFinite(years)||years>=1))),
-    roleLift=(Number.isFinite(snapPct)&&snapPct>=0.55)||
-      (Number.isFinite(snaps)&&Number.isFinite(priorSnapPg)&&priorSnapPg>0&&snaps>=Math.max(20,priorSnapPg*1.1))||
-      (Number.isFinite(snaps)&&snaps>=(defensive?32:35)),
-    twoWeekRise=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
-      seasonAvg>=Math.max(prior*1.25,prior+2,starThreshold*.75)&&
-      Math.min(pts,week1)>=Math.max(prior*.8,starThreshold*.5),
-    strongTwoWeekRise=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
-      seasonAvg>=Math.max(prior*1.4,prior+3,starThreshold*.9)&&
-      Math.min(pts,week1)>=Math.max(prior*.9,starThreshold*.6),
-    twoWeekDrop=hasTwoWeeks&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
-      seasonAvg<=prior*.75&&Math.max(pts,week1)<=prior*.85,
-    steady=hasTwoWeeks&&games>=8&&Number.isFinite(seasonAvg)&&Number.isFinite(prior)&&prior>0&&
-      Math.abs(seasonAvg-prior)<=Math.max(1.5,prior*.18)&&
-      Math.min(pts,week1)>=prior*.6&&Math.max(pts,week1)<=prior*1.4,
-    developmentalBreakout=earlyCareer&&games>=6&&Number.isFinite(prior)&&prior>0&&prior<starThreshold*1.4&&strongTwoWeekRise&&roleLift;
-  let status="";
-  if(!Number.isFinite(pts))return{status:"",starThreshold,rookie,young,earlyCareer,veteran,established,roleLift,hasTwoWeeks,twoWeekRise,strongTwoWeekRise,twoWeekDrop,steady,developmentalBreakout};
-  if(developmentalBreakout)status="breakout";
-  else if(established&&veteran&&twoWeekDrop)status="declining-veteran";
-  else if(established&&twoWeekDrop)status="struggling-star";
-  else if(established)status="established-star";
-  else if(!established&&young&&games>=6&&strongTwoWeekRise&&roleLift)status="breakout";
-  else if(!established&&(young||earlyCareer)&&games>=6&&twoWeekRise)status="emerging";
-  else if(veteran&&twoWeekDrop)status="declining-veteran";
-  else if(games>=6&&Number.isFinite(prior)&&prior>=Math.max(7,starThreshold*.65)&&twoWeekDrop)status="struggling";
-  else if(steady)status=veteran?"reliable-veteran":"reliable";
-  else if(role===0&&pts>=starThreshold*1.6)status="star-level";
-  else if(rookie&&hasTwoWeeks&&roleLift)status="rookie";
-  else if(young&&hasTwoWeeks&&roleLift)status="young-player";
-  else if(veteran&&pts>=Math.max(5,starThreshold*.5))status="veteran";
-  const lift=Number.isFinite(seasonAvg)&&Number.isFinite(prior)?seasonAvg-prior:null,
-    breakoutScore=(status==="breakout"?100:status==="emerging"?60:0)+(young?18:0)+(roleLift?18:0)+(Number.isFinite(lift)?Math.max(0,lift):0);
-  return{status,starThreshold,rookie,young,earlyCareer,veteran,established,roleLift,hasTwoWeeks,twoWeekRise,strongTwoWeekRise,twoWeekDrop,steady,developmentalBreakout,breakoutScore,age,years,snaps,priorSnapPg,snapPct,seasonAvg,prior,week1,pts};
+  return reporterPlayerStatusProfile(p,slot,pp);
 }
 function w2PlayerNameParts(p){
   const full=String(p?.name||"this player").trim(),bits=full.split(/\s+/).filter(Boolean);

@@ -76,6 +76,26 @@ function dedupeCredit(ss){
  return out;
 }
 
+function dedupeArticleCredit(a){
+ const credit=/\b(?:credit|praise|deserve|earned)\b/i;
+ let prev='';
+ a.sections=(a.sections||[]).map(sec=>{
+  const paragraphs=[];
+  for(const p of sec?.paragraphs||[]){
+   const kept=[];
+   for(const s of sentences(p)){
+    if(credit.test(prev)&&credit.test(s)&&!/[0-9]/.test(s))continue;
+    kept.push(s);prev=s;
+   }
+   const next=cleanSpace(kept.join(' '));
+   if(next)paragraphs.push(next);
+  }
+  return {...sec,paragraphs};
+ });
+ a.paragraphs=a.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+ return a;
+}
+
 function scoreFacts(article){
  const all=(article?.sections||[]).flatMap(sec=>sec?.paragraphs||[]).flatMap(sentences);
  const facts=[];
@@ -136,7 +156,7 @@ function reviseTeam(t){
   }
   return {...sec,paragraphs};
  });
- a.paragraphs=a.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+ dedupeArticleCredit(a);
  a.editorial_revision=28;a.voice_revision='week2-r28';return t;
 }
 
@@ -151,14 +171,13 @@ function removeCrossTeamBoilerplate(teams){
      const set=seen.get(key)||new Set();set.add(String(t.team_name||''));seen.set(key,set);
     }
    }
-  }
  }
  const banned=new Set([...seen].filter(([,set])=>set.size>=3).map(([key])=>key));
  if(!banned.size)return teams;
  for(const t of teams){
   const a=t?.inquirer_article;if(!a)continue;
   a.sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec?.paragraphs||[]).map(p=>cleanSpace(sentences(p).filter(s=>!banned.has(cleanSpace(s).toLowerCase())).join(' '))).filter(Boolean)}));
-  a.paragraphs=a.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+  dedupeArticleCredit(a);
  }
  return teams;
 }

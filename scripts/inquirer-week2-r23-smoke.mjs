@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import rawWeek2 from '../netlify/functions/inquirer-week2-2026-preload.mjs';
-import {applyWeek2EditorialR16,WEEK2_EDITORIAL_REVISION} from '../netlify/functions/inquirer-week2-editorial-r23.mjs';
+import {applyWeek2EditorialR16,WEEK2_EDITORIAL_REVISION} from '../netlify/functions/inquirer-week2-editorial-r24.mjs';
 
 const snapshot=JSON.stringify(rawWeek2);
 const revised=applyWeek2EditorialR16(rawWeek2);
-assert.equal(Number(WEEK2_EDITORIAL_REVISION),23);
-assert.equal(Number(revised?.editorial_revision),23);
-assert.equal(revised?.voice_revision,'week2-r23');
-assert.equal(JSON.stringify(rawWeek2),snapshot,'R23 must not mutate frozen Week 2 preload');
-assert.equal((revised?.teams||[]).length,32,'R23 must retain all 32 Week 2 teams');
+assert.equal(Number(WEEK2_EDITORIAL_REVISION),24);
+assert.equal(Number(revised?.editorial_revision),24);
+assert.equal(revised?.voice_revision,'week2-r24');
+assert.equal(JSON.stringify(rawWeek2),snapshot,'R24 must not mutate frozen Week 2 preload');
+assert.equal((revised?.teams||[]).length,32,'R24 must retain all 32 Week 2 teams');
 
 const sentences=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
 const words=s=>(String(s||'').match(/\b[\w’'-]+\b/g)||[]).length;
@@ -37,15 +37,15 @@ function isScoreFact(s,p){return /real-football line|\bscored\s+-?\d+(?:\.\d+)?\
 const reporterCounts=new Map();
 for(const t of revised.teams){
  const a=t?.inquirer_article||{},sections=a.sections||[],text=fullText(t),full=String(t.team_name||''),short=shortTeam(full);
- assert.equal(Number(a.editorial_revision),23,`R23 article revision missing: ${full}`);
- assert.equal(a.voice_revision,'week2-r23',`R23 voice revision missing: ${full}`);
- assert(words(text)>=750,`R23 over-compressed ${full}: ${words(text)} words`);
- assert(!BAD_META.test(text),`Meta/method language survived in ${full}`);
- assert(!BAD_CARRY.test(text),`Carry/support motif survived in ${full}`);
- assert(!BAD_TAG.test(text),`Unnatural signal language survived in ${full}`);
- assert(!BAD_TEMPLATE.test(text),`Repeated decorative template survived in ${full}`);
- assert(!BAD_GRAMMAR.test(text),`Awkward grammar survived in ${full}`);
- assert(!BAD_SCORE_RESTATEMENT.test(text),`Score-restatement filler survived in ${full}`);
+ assert.equal(Number(a.editorial_revision),24,`R24 article revision missing: ${full}`);
+ assert.equal(a.voice_revision,'week2-r24',`R24 voice revision missing: ${full}`);
+ assert(words(text)>=750,`R24 over-compressed ${full}: ${words(text)} words`);
+ assert(!BAD_META.test(text),`Meta/method language survived in ${full}: ${sentences(text).find(s=>BAD_META.test(s))||''}`);
+ assert(!BAD_CARRY.test(text),`Carry/support motif survived in ${full}: ${sentences(text).find(s=>BAD_CARRY.test(s))||''}`);
+ assert(!BAD_TAG.test(text),`Unnatural signal language survived in ${full}: ${sentences(text).find(s=>BAD_TAG.test(s))||''}`);
+ assert(!BAD_TEMPLATE.test(text),`Repeated decorative template survived in ${full}: ${sentences(text).find(s=>BAD_TEMPLATE.test(s))||''}`);
+ assert(!BAD_GRAMMAR.test(text),`Awkward grammar survived in ${full}: ${sentences(text).find(s=>BAD_GRAMMAR.test(s))||''}`);
+ assert(!BAD_SCORE_RESTATEMENT.test(text),`Score-restatement filler survived in ${full}: ${sentences(text).find(s=>BAD_SCORE_RESTATEMENT.test(s))||''}`);
 
  let sectionsWithCopy=0;
  for(const sec of sections){
@@ -67,7 +67,7 @@ for(const t of revised.teams){
 
  const rid=String(a?.reporter?.id||'');reporterCounts.set(rid,(reporterCounts.get(rid)||0)+1);
 }
-for(const id of ['walter-mercer','tess-delaney','mack-hollis','nora-voss'])assert.equal(reporterCounts.get(id),8,`R23 must retain 8 Week 2 articles for ${id}`);
+for(const id of ['walter-mercer','tess-delaney','mack-hollis','nora-voss'])assert.equal(reporterCounts.get(id),8,`R24 must retain 8 Week 2 articles for ${id}`);
 
 const aints=revised.teams.find(t=>/new orleans aints/i.test(String(t.team_name||'')));
 assert(aints,'New Orleans Aints article missing');
@@ -76,11 +76,11 @@ assert.equal(sentences(aintsText).filter(s=>/Maxx Crosby/i.test(s)&&/\b3\.5\b/.t
 assert.equal(sentences(aintsText).filter(s=>/Jaxon Smith-Njigba/i.test(s)&&/\b42\.5\b/.test(s)).length,1,'JSN 42.5 should be stated once');
 
 const overview=revised?.league_overview||{},overviewText=(overview.sections||[]).flatMap(s=>s?.paragraphs||[]).join(' ');
-assert.equal(Number(overview.editorial_revision),23);
-assert.equal(overview.voice_revision,'week2-r23');
-assert(!BAD_META.test(overviewText),'Weekly Recap still contains meta/method language');
-assert(!BAD_CARRY.test(overviewText),'Weekly Recap carry/support motif returned');
-assert(!BAD_TAG.test(overviewText),'Weekly Recap unnatural signal language returned');
+assert.equal(Number(overview.editorial_revision),24);
+assert.equal(overview.voice_revision,'week2-r24');
+assert(!BAD_META.test(overviewText),`Weekly Recap still contains meta/method language: ${sentences(overviewText).find(s=>BAD_META.test(s))||''}`);
+assert(!BAD_CARRY.test(overviewText),`Weekly Recap carry/support motif returned: ${sentences(overviewText).find(s=>BAD_CARRY.test(s))||''}`);
+assert(!BAD_TAG.test(overviewText),`Weekly Recap unnatural signal language returned: ${sentences(overviewText).find(s=>BAD_TAG.test(s))||''}`);
 for(const sec of overview.sections||[]){
  for(const p of sec?.paragraphs||[]){
   for(const t of revised.teams){const full=String(t.team_name||'');if(full)assert(exactCount(p,full)<=1,`Weekly Recap repeats full team name in one paragraph: ${full} -> ${p}`)}
@@ -88,4 +88,4 @@ for(const sec of overview.sections||[]){
  assert(!/\b(?:headline|back page|receipts?)\b/i.test(String(sec?.heading||'')),`Weekly Recap meta heading survived: ${sec?.heading}`);
 }
 
-console.log(JSON.stringify({ok:true,revision:23,teams:revised.teams.length,reporters:Object.fromEntries(reporterCounts),overview_words:words(overviewText)},null,2));
+console.log(JSON.stringify({ok:true,revision:24,teams:revised.teams.length,reporters:Object.fromEntries(reporterCounts),overview_words:words(overviewText)},null,2));

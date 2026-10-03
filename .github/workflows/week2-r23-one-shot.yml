@@ -38,6 +38,10 @@ jobs:
             "for(const [p,n] of scoreCounts)assert(n<=1,`Player score fact repeated for ${p} in ${full}: ${n} times`);",
             "for(const [p,n] of scoreCounts){const rows=sentences(text).filter(s=>namedPlayer(s,players)===p&&isScoreFact(s,p));assert(n<=1,`Player score fact repeated for ${p} in ${full}: ${n} times :: ${rows.join(' || ')}`);}"
           );
+          s=s.replace(
+            "assert.equal(sentences(aintsText).filter(s=>/Jaxon Smith-Njigba/i.test(s)&&/\\b42\\.5\\b/.test(s)).length,1,'JSN 42.5 should be stated once');",
+            "{const rows=sentences(aintsText).filter(s=>/Jaxon Smith-Njigba/i.test(s)&&/\\b42\\.5\\b/.test(s));assert.equal(rows.length,1,`JSN 42.5 should be stated once :: ${rows.join(' || ')}`);}"
+          );
           fs.writeFileSync(p,s);
           NODE
       - name: Run R26 regression smoke

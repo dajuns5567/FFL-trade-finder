@@ -1,6 +1,7 @@
 import {applyWeek2EditorialR16 as applyR133} from './inquirer-week2-editorial-r133.mjs';
 
 const splitSentences=text=>String(text||'').split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(Boolean);
+const wordCount=text=>(String(text||'').match(/\b[\w’'-]+\b/g)||[]).length;
 const reporterStyle=article=>{
   const n=String(article?.reporter?.name||'Nick Swindell');
   if(n==='Tilly Fleecer')return'tilly';
@@ -71,6 +72,29 @@ function cleanHistoricalBoilerplate(paragraph,style){
   }).join(' ');
 }
 
+function depthInsight(article,style){
+  const lede=(article.sections?.[0]?.paragraphs||[]).join(' ');
+  const m=lede.match(/scored\s+(-?\d+(?:\.\d+)?)\s+in Week 2,\s+ranking\s+(\d+)(?:st|nd|rd|th)?/i);
+  const score=m?Number(m[1]):null,rank=m?Number(m[2]):null;
+  if(!Number.isFinite(score)||!Number.isFinite(rank))return null;
+  if(rank<=8){
+    if(style==='tilly')return `A top-eight Week 2 score is the useful part here. ${score} points buys applause, not sainthood; now the lineup has to prove it can keep the volume up when Sunday stops being cooperative.`;
+    if(style==='bartholomew')return `A top-eight Week 2 score deserves the good glassware. ${score} points is real production, but one elegant Sunday is not yet a lifestyle; the next game decides whether this was form or merely excellent tailoring.`;
+    if(style==='jefferson')return `The useful fact is the top-eight scoring finish: ${score} points gave the result substance. That is stronger than record-based optimism, but Week 3 still has to establish whether the production is repeatable.`;
+    return `The top-eight scoring finish matters more than the decoration around it. ${score} points is evidence of a functioning lineup; Week 3 has to show whether that standard can survive a different matchup.`;
+  }
+  if(rank>=25){
+    if(style==='tilly')return `The bottom-eight scoring rank is the part nobody gets to perfume. ${score} points leaves almost no margin for a lineup mistake, bad bounce or quiet star; Week 3 needs actual production, not a prettier explanation.`;
+    if(style==='bartholomew')return `The bottom-eight scoring finish is the stain on the jacket. ${score} points leaves far too little room for bad luck or one poor decision; Week 3 requires production before anyone requests sympathy.`;
+    if(style==='jefferson')return `The bottom-eight scoring finish is the central problem. ${score} points leaves too little room for variance, lineup error or an opponent spike; Week 3 needs a higher floor before the record gets a more flattering explanation.`;
+    return `The bottom-eight scoring finish is the part that matters. ${score} points leaves almost no margin for error, so Week 3 needs a better team total before anyone spends time blaming the schedule or variance.`;
+  }
+  if(style==='tilly')return `${score} points landed in the league's middle, which is fine if the goal is to avoid public embarrassment. It is less useful if the goal is to win consistently; Week 3 needs a clearer strength to emerge.`;
+  if(style==='bartholomew')return `${score} points landed in the league's middle, an acceptable place to visit and a dreary place to live. Week 3 needs one part of the lineup to become unmistakably good rather than merely presentable.`;
+  if(style==='jefferson')return `${score} points put the roster in the league's middle tier. That keeps the result in context: neither disaster nor proof of strength, and Week 3 needs a clearer source of reliable scoring.`;
+  return `${score} points landed in the league's middle tier. That is enough to keep the result in context, but not enough to answer whether this lineup has a dependable weekly advantage.`;
+}
+
 function refineTeam(team){
   const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return team;
   const style=reporterStyle(article);
@@ -90,6 +114,11 @@ function refineTeam(team){
     article.sections[0].paragraphs.push('A 2-0 record can survive a middling 73-point Sunday; it cannot make 73 look dominant. New England has earned confidence, not immunity from asking where the missing scoring went. Winning buys patience. It does not turn an ordinary fantasy total into a strength.');
   }
   article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+  if(wordCount(article.paragraphs.join(' '))<760){
+    const extra=depthInsight(article,style);
+    if(extra&&!article.sections[0].paragraphs.includes(extra))article.sections[0].paragraphs.push(extra);
+    article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+  }
   article.structure_revision='week2-r134';
   return team;
 }

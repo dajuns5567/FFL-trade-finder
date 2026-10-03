@@ -25,7 +25,7 @@ insert="const BAD_R28=/\\b(?:real[- ]football line|fantasy[- ]football line|usef
 s=s.replace(needle,insert)
 anchor="assert(!BAD_TEMPLATE.test(text),`Repeated decorative template survived in ${full}: ${sentences(text).find(s=>BAD_TEMPLATE.test(s))||''}`);"
 if anchor not in s: raise SystemExit('missing BAD_TEMPLATE assertion anchor')
-s=s.replace(anchor,anchor+"\n assert(!BAD_R28.test(text),`R28 canned/stat-meta language survived in ${full}: ${sentences(text).find(s=>BAD_R28.test(s))||''}`);")
+s=s.replace(anchor,anchor+"\n const badR28Match=text.match(BAD_R28)?.[0]||''; assert(!badR28Match,`R28 canned/stat-meta language survived in ${full}: ${badR28Match}`);")
 anchor2="const rid=String(a?.reporter?.id||'');reporterCounts.set(rid,(reporterCounts.get(rid)||0)+1);"
 if anchor2 not in s: raise SystemExit('missing reporter counter anchor')
 extra="""

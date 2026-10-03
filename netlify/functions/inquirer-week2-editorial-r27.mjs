@@ -53,7 +53,14 @@ function reviseTeam(t){
  });
  a.paragraphs=a.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);a.editorial_revision=27;a.voice_revision='week2-r27';return t;
 }
-function reviseOverview(o){if(!o)return o;o.editorial_revision=27;o.voice_revision='week2-r27';return o}
+function reviseOverview(o){
+ if(!o)return o;
+ o.sections=(o.sections||[]).map(sec=>({...sec,paragraphs:(sec?.paragraphs||[]).map(p=>String(p||'')
+  .replace('A clean record can still come from an ugly Sunday. Judge the performance before praising the record.','A clean record can still come from an ugly Sunday, so judge the performance before praising the record.')
+  .replace('I refuse to praise the record if the lineup played badly. The score still matters.','I refuse to praise the record if the lineup played badly; the score still matters.')
+  .replace(/\s+/g,' ').trim()).filter(Boolean)}));
+ o.editorial_revision=27;o.voice_revision='week2-r27';return o;
+}
 export function applyWeek2EditorialR16(raw){
  const out=applyWeek2EditorialR26Base(raw);if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
  out.teams=(out.teams||[]).map(reviseTeam);out.league_overview=reviseOverview(out.league_overview);out.editorial_revision=27;out.voice_revision='week2-r27';return out;

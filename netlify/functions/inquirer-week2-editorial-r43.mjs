@@ -17,7 +17,7 @@ function ensureTopThreeFullNames(team){
  const players=(article.sections||[]).find(s=>String(s?.kind||'')==='players')||article.sections?.[0];
  if(!players)return team;
  const names=naturalList(missing.map(p=>String(p.name).trim()));
- players.paragraphs=[...(players.paragraphs||[]),`The rest of ${team.team_name}'s top-three starter group included ${names}.`];
+ players.paragraphs=[...(players.paragraphs||[]),`For ${team.team_name}, the rest of the top-three starter group included ${names}.`];
  article.paragraphs=(article.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(Boolean);
  article.structure_revision='week2-r43';
  return team;

@@ -1,1 +1,1 @@
-export {applyWeek2EditorialR16,applyWeek2EditorialR32,applyWeek2EditorialR31,applyWeek2EditorialR30,applyWeek2EditorialR29,applyWeek2EditorialR28} from './inquirer-week2-editorial-r32.mjs';
+export {applyWeek2EditorialR16,applyWeek2EditorialR33,applyWeek2EditorialR32,applyWeek2EditorialR31,applyWeek2EditorialR30,applyWeek2EditorialR29,applyWeek2EditorialR28} from './inquirer-week2-editorial-r33.mjs';

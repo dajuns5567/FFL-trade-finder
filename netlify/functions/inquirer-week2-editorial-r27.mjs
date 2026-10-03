@@ -18,8 +18,9 @@ function canonicalScores(article){
  }
  return rows;
 }
+function scorePattern(score){return `(^|[^0-9.])${esc(score)}(?![0-9]|\\.[0-9])`}
 function literalScore(sentence,score){
- return new RegExp(`(^|[^0-9.])${esc(score)}(?![0-9.])`).test(String(sentence||''));
+ return new RegExp(scorePattern(score)).test(String(sentence||''));
 }
 function stripScore(sentence,row){
  let x=String(sentence||'').trim(),e=esc(row.score),n=esc(row.name);
@@ -31,7 +32,7 @@ function stripScore(sentence,row){
  x=x.replace(new RegExp(`^${n}\\s+at\\s+${e}\\s+is specific enough`,'i'),`${row.name}'s bad Sunday is specific enough`);
  x=x.replace(new RegExp(`\\b${e}\\s+in Week 2 was not enough`,'i'),'the Week 2 performance was not enough');
  x=x.replace(new RegExp(`(^|[^0-9.])${e}\\s+(?:fantasy\\s+)?points?\\b`,'g'),'$1that performance');
- x=x.replace(new RegExp(`(^|[^0-9.])${e}(?![0-9.])`,'g'),'$1that performance');
+ x=x.replace(new RegExp(scorePattern(row.score),'g'),'$1that performance');
  x=x.replace(/\bthat performance\s+(?:day|score|total|number)\b/gi,'that performance');
  x=x.replace(/\bafter that performance\b/gi,'after the performance');
  x=x.replace(/\bat that performance\b/gi,'in that performance');

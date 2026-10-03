@@ -3,6 +3,7 @@ import {applyWeek2EditorialR16 as applyWeek2EditorialR27Base} from './inquirer-w
 export const WEEK2_EDITORIAL_REVISION=28;
 const sentences=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
 const cleanSpace=s=>String(s||'').replace(/\s+/g,' ').replace(/\s+([,.;!?])/g,'$1').trim();
+const words=s=>(String(s||'').match(/\b[\w’'-]+\b/g)||[]).length;
 const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
 const DROP_SENTENCE=[
@@ -13,6 +14,11 @@ const DROP_SENTENCE=[
  /^Use the obvious answer and spare me the theory\.?$/i,
  /^I can live with this; alert the historians\.?$/i,
  /^This scene gets its own note\.?$/i,
+ /^Keep the player involved and stop turning obvious help into a management puzzle\.?$/i,
+ /^Another result in the same direction would turn a trend into something the losing side has to carry around all season\.?$/i,
+ /^Those are different jobs and management should know the difference\.?$/i,
+ /^The scoreboard even highlighted it for management\.?$/i,
+ /^\w+(?:\s+\w+){0,3} (?:finished|ended) in (?:the|that|this) performance\.?$/i,
  /^\w+(?:\s+\w+){0,3} got (?:enough )?useful production here(?: that I can save one complaint for later)?\.?$/i,
  /^\w+(?:\s+\w+){0,3} produced something worth enjoying here\.?$/i,
  /^The smart move is to use what worked instead of inventing a theory around it\.?$/i,
@@ -26,6 +32,13 @@ function naturalizeSentence(s){
  x=x.replace(/\s+on a fantasy-football line of\s+/gi,': ');
  x=x.replace(/^A that performance afternoon from ([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\b/i,'That performance from $1');
  x=x.replace(/^that performance belongs next to\s+/i,'That performance belongs next to ');
+ x=x.replace(/\bthe established baseline says to criticize the week without inventing a role controversy\.?/gi,'The bad week deserves criticism, but one poor Sunday does not erase what this player usually gives the lineup.');
+ x=x.replace(/^The prior baseline for ([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3}) is (-?\d+(?:\.\d+)?)\.?$/i,'$1 averaged $2 last season.');
+ x=x.replace(/\bestablished baseline\b/gi,'usual level');
+ x=x.replace(/\bprior baseline\b/gi,'2025 average');
+ x=x.replace(/\bbelow the baseline\b/gi,'below the usual level');
+ x=x.replace(/\bthe baseline itself\b/gi,'the usual level itself');
+ x=x.replace(/\bbaseline\b/gi,'usual level');
  x=x.replace(/\b([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3}) have a useful player line on the page, and I refuse to ruin every nice thing immediately\.?/gi,'$1 gave me something worth praising, and I refuse to ruin every nice thing immediately.');
  x=x.replace(/\b([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){0,3}) has a useful player line on the page, and I refuse to ruin every nice thing immediately\.?/gi,'$1 gave me something worth praising, and I refuse to ruin every nice thing immediately.');
  x=x.replace(/\bthe weak spot for ([A-Za-z0-9' -]+) are obvious\b/gi,'the weak spot for $1 is obvious');
@@ -38,7 +51,29 @@ function naturalizeSentence(s){
  x=x.replace(/\bthe production materially changed the matchup\b/gi,'the performance changed the matchup');
  x=x.replace(/\bCriticize the bad week, fix the usage, and do not pretend one ugly Sunday erased an established track record\.?/gi,'Criticize the bad week without inventing a role problem from one ugly Sunday.');
  x=x.replace(/^Week 3 needs either better production or a different plan\.?$/i,'Week 3 needs better production; the role only becomes a management question if the usage changes.');
+ x=x.replace(/\b(?:earned|deserves) clean credit\b/gi,'deserves credit');
  return cleanSpace(x);
+}
+
+function compressContextParagraph(p){
+ const ss=sentences(p);
+ if(ss.length!==2)return p;
+ const a=ss[0],b=ss[1];
+ const m1=a.match(/^([A-Z][A-Za-z'.-]+) averaged (-?\d+(?:\.\d+)?) fantasy points across (\d+) games in 2025\.?$/i);
+ const m2=b.match(/^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3}) (?:played|has expanded from|jumped from|fell from|moved from).+snap share.+$/i);
+ if(m1&&m2)return cleanSpace(`${m2[1]} averaged ${m1[2]} fantasy points across ${m1[3]} games in 2025; ${b.replace(new RegExp('^'+esc(m2[1])+'\\s+','i'),'its ')}`);
+ return p;
+}
+
+function dedupeCredit(ss){
+ const out=[];
+ const credit=/\b(?:credit|praise|deserve|earned)\b/i;
+ for(const s of ss){
+  const prev=out.at(-1)||'';
+  if(credit.test(prev)&&credit.test(s)&&!/[0-9]/.test(s))continue;
+  out.push(s);
+ }
+ return out;
 }
 
 function scoreFacts(article){
@@ -63,9 +98,9 @@ function rewriteRepeatedFact(s,facts){
   const score=esc(f.score),re=new RegExp(`(^|[^0-9.])${score}(?![0-9]|\\.[0-9])`);
   if(!re.test(x))continue;
   let m=x.match(new RegExp(`^${esc(f.name)} came from ([-0-9.]+) (?:per game|average) in 2025 and landed at ${score} this week\\.?$`,'i'));
-  if(m)return `${f.name} averaged ${m[1]} in 2025; one bad week does not erase that baseline.`;
+  if(m)return `${f.name} averaged ${m[1]} in 2025; one bad week does not erase that usual level.`;
   m=x.match(new RegExp(`^Week 2 gave ${esc(f.name)} ${score} against a ([-0-9.]+) prior-season average\\.?$`,'i'));
-  if(m)return `${f.name} entered the week with a ${m[1]} prior-season average; one poor result does not erase the established baseline.`;
+  if(m)return `${f.name} entered the week with a ${m[1]} prior-season average; one poor result does not erase what he usually gives this lineup.`;
   m=x.match(new RegExp(`^Compare ${score} now with ([-0-9.]+) last season for ${esc(f.name)}\\.?$`,'i'));
   if(m)return `${f.name} averaged ${m[1]} last season. One poor week is worth criticizing without inventing a new role problem.`;
   if(new RegExp(`^${esc(f.name)} at ${score}\\b`,'i').test(x))return '';
@@ -81,9 +116,9 @@ function reviseTeam(t){
  a.sections=(a.sections||[]).map(sec=>{
   const isManagement=/management|decision|fix it/i.test(String(sec?.heading||''));
   const paragraphs=[];
-  for(const p of sec?.paragraphs||[]){
-   const kept=[];
-   for(let s of sentences(p)){
+  for(const raw of sec?.paragraphs||[]){
+   let kept=[];
+   for(let s of sentences(raw)){
     s=rewriteRepeatedFact(s,facts);
     if(!s)continue;
     s=naturalizeSentence(s);
@@ -93,7 +128,10 @@ function reviseTeam(t){
     if(/\b(?:player|starter) still has homework\b/i.test(s))s=s.replace(/\b(?:player|starter) still has homework\b/i,'performance still needs a better answer');
     kept.push(cleanSpace(s));
    }
-   const next=cleanSpace(kept.join(' '));if(next)paragraphs.push(next);
+   kept=dedupeCredit(kept);
+   let next=cleanSpace(kept.join(' '));
+   if(/players?|names|people/i.test(String(sec?.kind||'')+' '+String(sec?.heading||'')))next=compressContextParagraph(next);
+   if(next)paragraphs.push(next);
   }
   return {...sec,paragraphs};
  });
@@ -101,16 +139,47 @@ function reviseTeam(t){
  a.editorial_revision=28;a.voice_revision='week2-r28';return t;
 }
 
+const RECAP_VOICE={
+ 'walter-mercer':[
+  'I care more about what this changes next Sunday than how tidy the record looks tonight.',
+  'The score matters; the decision behind it is what deserves another look.',
+  'That is where the argument belongs, because standings alone can hide a lousy process.'
+ ],
+ 'tess-delaney':[
+  'Enjoy the result, sure, but nobody gets a parade for surviving an opponent’s bad Sunday.',
+  'If management wants applause, it can earn some without borrowing it from the other team’s collapse.',
+  'Fantasy football hands out wins and then rudely asks how they happened.'
+ ],
+ 'mack-hollis':[
+  'I can applaud the result and still boo the way it arrived; both reactions fit.',
+  'A win can look handsome from across the room and deeply suspicious up close.',
+  'The score gets the curtain call; the decisions still have to survive the review.'
+ ],
+ 'nora-voss':[
+  'I am not giving management credit for an opponent having the worse Sunday.',
+  'The result matters, but the decision behind it is the part I would question first.',
+  'A clean record does not make a bad lineup choice disappear.'
+ ]
+};
+
 function reviseOverview(o){
  if(!o)return o;
- o.sections=(o.sections||[]).map(sec=>({...sec,paragraphs:(sec?.paragraphs||[]).map(p=>{
-  let x=String(p||'');
-  x=x.replace(/\bfavorite'?s badge\b/gi,'favorite label');
-  x=x.replace(/\bthe scoring profile eventually collects the debt\b/gi,'weak scoring eventually catches up with the record');
-  x=x.replace(/\bI want the numbers tied to a football consequence: the decision-making tells me who actually learned anything\.?/gi,'The useful question is whether the next lineup reflects what this week exposed.');
-  x=x.replace(/\brepeat the good process and remove the avoidable mistake\b/gi,'keep what worked and fix what did not');
-  return cleanSpace(x);
- }).filter(Boolean)}));
+ o.sections=(o.sections||[]).map(sec=>{
+  const rid=String(sec?.reporter?.id||''),voice=RECAP_VOICE[rid]||[];
+  const paragraphs=(sec?.paragraphs||[]).map((p,i)=>{
+   let x=String(p||'');
+   x=x.replace(/\bfavorite'?s badge\b/gi,'favorite label');
+   x=x.replace(/\bthe scoring profile eventually collects the debt\b/gi,'weak scoring eventually catches up with the record');
+   x=x.replace(/\bI want the numbers tied to a football consequence: the decision-making tells me who actually learned anything\.?/gi,'The useful question is whether the next lineup reflects what this week exposed.');
+   x=x.replace(/\brepeat the good process and remove the avoidable mistake\b/gi,'keep what worked and fix what did not');
+   x=x.replace(/\bkeep matching receipts\b/gi,'keep matching results');
+   x=cleanSpace(x);
+   const add=voice[i%voice.length];
+   if(add&&words(x)<=70&&!/\bI\b|\brefuse\b|\bapplause\b|\bboo\b/i.test(x))x=cleanSpace(`${x} ${add}`);
+   return x;
+  }).filter(Boolean);
+  return {...sec,paragraphs};
+ });
  o.editorial_revision=28;o.voice_revision='week2-r28';return o;
 }
 

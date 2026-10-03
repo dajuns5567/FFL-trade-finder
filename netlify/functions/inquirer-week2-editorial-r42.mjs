@@ -19,8 +19,14 @@ function materialTopThree(team){
  });
 }
 
+function naturalList(items){
+ if(items.length<=1)return items.join('');
+ if(items.length===2)return items.join(' and ');
+ return items.slice(0,-1).join(', ')+', and '+items.at(-1);
+}
+
 function contextParagraph(rid,players){
- const items=players.map(p=>`${p.name} at ${Number(p.prior_season_avg).toFixed(1)} per game`).join(players.length>2?', ':players.length===2?' and ': ');
+ const items=naturalList(players.map(p=>`${p.name} at ${Number(p.prior_season_avg).toFixed(1)} per game`));
  if(rid==='tess-delaney')return `For scale, the 2025 averages had ${items}; those old numbers make the Week 2 swings loud enough without another speech.`;
  if(rid==='mack-hollis')return `The 2025 averages offer an inconvenient little comparison: ${items}; those are the numbers that make this Sunday worth judging differently.`;
  if(rid==='nora-voss')return `The 2025 averages narrow the issue: ${items}; each Week 2 result moved far enough from that history to warrant specific attention.`;

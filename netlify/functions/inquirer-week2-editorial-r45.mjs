@@ -26,8 +26,8 @@ function reporterFollowThrough(rid,player,slot){
    `If ${last} keeps seeing work like that, I would rather follow the role than invent a problem that is not there.`
   ],
   'tess-delaney':[
-   `${last} had enough real work attached to the performance that I can postpone the dramatic fainting couch for another week.`,
-   `For ${last}, volume may not be couture, but it wears a lot better than a fluke dressed for dinner.`,
+   `${last} had enough real work attached to the performance that I can postpone the melodrama for another week.`,
+   `For ${last}, volume may not be glamorous, but it wears a lot better than a fluke.`,
    `${last} gave the performance a real football spine, which is wonderfully inconvenient for anyone hoping to dismiss it as theater.`
   ],
   'mack-hollis':[

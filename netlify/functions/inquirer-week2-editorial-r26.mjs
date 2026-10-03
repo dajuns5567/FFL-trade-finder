@@ -7,8 +7,10 @@ const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 function scoreMapFromArticle(article){
  const map=new Map();
  for(const s of (article?.sections||[]).flatMap(sec=>sec?.paragraphs||[]).flatMap(sentences)){
-  const m=s.match(/^Against .+?,\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+scored\s+(-?\d+(?:\.\d+)?)\s+fantasy points/i);
-  if(m)map.set(m[1].toLowerCase(),{name:m[1],score:m[2]});
+  let m=s.match(/^Against .+?,\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+scored\s+(-?\d+(?:\.\d+)?)\s+fantasy points/i);
+  if(!m)m=s.match(/^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+had a bad Week 2 at\s+(-?\d+(?:\.\d+)?)\s+points?\b/i);
+  if(!m)m=s.match(/^The problem with\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+is plain:\s+(-?\d+(?:\.\d+)?)\s+in Week 2\b/i);
+  if(m&&!map.has(m[1].toLowerCase()))map.set(m[1].toLowerCase(),{name:m[1],score:m[2]});
  }
  return map;
 }

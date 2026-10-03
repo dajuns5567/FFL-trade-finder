@@ -25,6 +25,7 @@ const BAD_TEMPLATE=/\b(?:found a player who owned the scene|resist rewriting the
 const BAD_R28=/\b(?:real[- ]football line|fantasy[- ]football line|useful player line on the page|got useful production here|produced something worth enjoying here|Fine, this one gets its own argument|Give me a minute\. I have tomatoes and applause; choose correctly|Keep what worked; no committee meeting required|Use the obvious answer and spare me the theory|I can live with this; alert the historians|This scene gets its own note|smart move is to use what worked instead of inventing a theory around it|management puzzle|finished in (?:the|that|this) performance|established baseline|prior baseline)\b/i;
 const BAD_GRAMMAR=/\b(?:The record for .+ are\b|My Week 3 request for .+ are simple\b|For [A-Z][^.]+, good\b|My standard for .+ are getting simpler\b|The next opponent for .+ are\b|[A-Z][A-Za-z0-9' -]+ either handles\b|Football around .+ are already\b)/i;
 const CREDIT=/\b(?:credit|praise|deserve|earned)\b/i;
+const SCHEDULE_DIFFICULTY=/\b(?:stiffen|rougher|difficult stretch|hard part|hard stretch|hardens|gauntlet|resistance|heavy part|friendlier|friendly part|softer|manageable|forgiving|breathing room|favorable|mercy|soft landing|lowering the volume|mixed|split schedule|split the|uneven|difficulty level|lands in the middle|split screen)\b/i;
 
 function canonicalScoreRows(text){
  const rows=[];
@@ -73,7 +74,9 @@ for(const t of revised.teams){
   if(words(s)<8)continue;
   const k=s.toLowerCase().replace(/\s+/g,' ').trim();
   assert(!seen.has(k),`Exact long sentence repeated in ${full}: ${s}`);seen.add(k);
-  const rows=crossSentenceMap.get(k)||[];rows.push(full);crossSentenceMap.set(k,rows);
+  if(!SCHEDULE_DIFFICULTY.test(s)){
+   const rows=crossSentenceMap.get(k)||[];rows.push(full);crossSentenceMap.set(k,rows);
+  }
  }
  for(const row of canonicalScoreRows(text)){
   const uses=sentences(text).filter(s=>s.toLowerCase().includes(row.name.toLowerCase())&&literalScore(s,row.score));

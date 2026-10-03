@@ -38,7 +38,7 @@ function reporterFollowThrough(rid,player,slot){
   'nora-voss':[
    `For ${last}, that role shape gives the performance a football reason to hold up instead of asking the point total for an alibi.`,
    `${last} supplied enough underlying work that I would judge the next result against the role, not against wishful thinking.`,
-   `With ${last}, the important clue is that the production had a repeatable job underneath it rather than appearing from nowhere.`
+   `With ${last}, the production came from a defined role rather than appearing from nowhere.`
   ]
  };
  const list=variants[rid]||variants['walter-mercer'];

@@ -84,9 +84,10 @@ function reviseTeam(t){
   for(const p of sec?.paragraphs||[]){
    const kept=[];
    for(let s of sentences(p)){
+    s=rewriteRepeatedFact(s,facts);
+    if(!s)continue;
     s=naturalizeSentence(s);
     if(hasNoBenchAnswer&&isManagement&&/did not leave an obvious higher-scoring bench answer in a compatible spot/i.test(s))s=s.replace(/;\s*management had seven days.*$/i,'.');
-    s=rewriteRepeatedFact(s,facts);
     if(!s||DROP_SENTENCE.some(re=>re.test(s)))continue;
     if(hasNoBenchAnswer&&isManagement&&/\b(?:blam|person who chose the lineup|cute bad decision|tomatoes|avoid looking silly|management had seven days)\b/i.test(s))continue;
     if(/\b(?:player|starter) still has homework\b/i.test(s))s=s.replace(/\b(?:player|starter) still has homework\b/i,'performance still needs a better answer');

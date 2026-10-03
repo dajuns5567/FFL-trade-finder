@@ -16,7 +16,7 @@ const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const fullText=t=>(t?.inquirer_article?.sections||[]).flatMap(s=>s?.paragraphs||[]).join(' ');
 const shortTeam=n=>String(n||'').trim().split(/\s+/).filter(Boolean).at(-1)||String(n||'').trim();
 const exactCount=(text,phrase)=>(String(text||'').match(new RegExp(`\\b${esc(phrase)}\\b`,'gi'))||[]).length;
-const literalScore=(sentence,score)=>new RegExp(`(^|[^0-9.])${esc(score)}(?![0-9.])`).test(String(sentence||''));
+const literalScore=(sentence,score)=>new RegExp(`(^|[^0-9.])${esc(score)}(?![0-9]|\\.[0-9])`).test(String(sentence||''));
 
 const BAD_META=/\b(?:headline|back page|copy desk|newsroom|typeface|case file|receipts?|scoring app|group chat|notification|screenshot|social media|algorithm|meme|MIDA|probability model|projection creates an expectation|accounting with the game missing|accounting in a cheap costume|scoring quality|market movement and weekly production are answering different questions|identify the decision management should repeat or correct)\b/i;
 const BAD_CARRY=/\b(?:one[- ]man show|one[- ]player show|one[- ]player magic trick|solo effort|supporting cast|second punch|third scorer|keep(?:ing)? (?:the |this )?(?:roster|team) afloat|hold(?:ing)? (?:the |this )?(?:roster|team) together|whole roster to repeat|asking the whole roster|carry(?:ing|ied|ies)? (?:the |this )?(?:whole |entire )?(?:roster|team|offense))\b/i;

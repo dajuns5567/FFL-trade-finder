@@ -1,4 +1,4 @@
-name: Week 2 R25 one-shot
+name: Week 2 R26 one-shot
 on:
   push:
     branches: [player-signal-layer-r1]
@@ -6,6 +6,7 @@ on:
       - 'netlify/functions/inquirer-week2-editorial-r23.mjs'
       - 'netlify/functions/inquirer-week2-editorial-r24.mjs'
       - 'netlify/functions/inquirer-week2-editorial-r25.mjs'
+      - 'netlify/functions/inquirer-week2-editorial-r26.mjs'
       - 'scripts/inquirer-week2-r23-smoke.mjs'
       - '.github/workflows/week2-r23-one-shot.yml'
 jobs:
@@ -16,35 +17,35 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Point verifier at R25 and correct false-positive
+      - name: Point verifier at R26 and correct false-positive
         run: |
           node - <<'NODE'
           const fs=require('fs');
           const p='scripts/inquirer-week2-r23-smoke.mjs';
           let s=fs.readFileSync(p,'utf8');
-          s=s.replace("inquirer-week2-editorial-r24.mjs","inquirer-week2-editorial-r25.mjs");
-          s=s.replaceAll("R24","R25");
-          s=s.replaceAll("week2-r24","week2-r25");
-          s=s.replaceAll("revision:24","revision:25");
-          s=s.replaceAll("),24", "),25");
+          s=s.replace("inquirer-week2-editorial-r24.mjs","inquirer-week2-editorial-r26.mjs");
+          s=s.replaceAll("R24","R26");
+          s=s.replaceAll("week2-r24","week2-r26");
+          s=s.replaceAll("revision:24","revision:26");
+          s=s.replaceAll("),24", "),26");
           s=s.replace('|\\bi respect\\b','');
           fs.writeFileSync(p,s);
           NODE
-      - name: Run R25 regression smoke
+      - name: Run R26 regression smoke
         id: smoke
         shell: bash
         run: |
           set +e
-          node scripts/inquirer-week2-r23-smoke.mjs > r25-smoke.log 2>&1
+          node scripts/inquirer-week2-r23-smoke.mjs > r26-smoke.log 2>&1
           code=$?
-          cat r25-smoke.log
+          cat r26-smoke.log
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-      - name: Upload R25 smoke log
+      - name: Upload R26 smoke log
         uses: actions/upload-artifact@v4
         with:
-          name: week2-r25-smoke-log
-          path: r25-smoke.log
-      - name: Enforce R25 smoke result
+          name: week2-r26-smoke-log
+          path: r26-smoke.log
+      - name: Enforce R26 smoke result
         shell: bash
         run: exit "${{ steps.smoke.outputs.exit_code }}"

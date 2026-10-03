@@ -3,6 +3,7 @@ import {applyWeek2EditorialR16 as applyWeek2EditorialR27Base} from './inquirer-w
 export const WEEK2_EDITORIAL_REVISION=28;
 const sentences=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
 const cleanSpace=s=>String(s||'').replace(/\s+/g,' ').replace(/\s+([,.;!?])/g,'$1').trim();
+const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
 const DROP_SENTENCE=[
  /^Fine, this one gets its own argument\.?$/i,
@@ -11,8 +12,7 @@ const DROP_SENTENCE=[
  /^Use the obvious answer and spare me the theory\.?$/i,
  /^I can live with this; alert the historians\.?$/i,
  /^This scene gets its own note\.?$/i,
- /^Patriots got useful production here\. Good\.?$/i,
- /^\w+(?:\s+\w+){0,3} got useful production here\. Good\.?$/i,
+ /^\w+(?:\s+\w+){0,3} got (?:enough )?useful production here(?: that I can save one complaint for later)?\.?$/i,
  /^\w+(?:\s+\w+){0,3} produced something worth enjoying here\.?$/i,
  /^The smart move is to use what worked instead of inventing a theory around it\.?$/i,
  /^Management should resist the traditional urge to make that more complicated than necessary\.?$/i,
@@ -35,34 +35,47 @@ function naturalizeSentence(s){
  x=x.replace(/\b([A-Z][A-Za-z0-9' -]+) does not need another explanation for the lineup\b/g,'$1 do not need another explanation for the lineup');
  x=x.replace(/\bFor ([A-Za-z0-9' -]+), good\.?/gi,'Good.');
  x=x.replace(/\bthe production materially changed the matchup\b/gi,'the performance changed the matchup');
+ x=x.replace(/\bCriticize the bad week, fix the usage, and do not pretend one ugly Sunday erased an established track record\.?/gi,'Criticize the bad week without inventing a role problem from one ugly Sunday.');
+ x=x.replace(/^Week 3 needs either better production or a different plan\.?$/i,'Week 3 needs better production; the role only becomes a management question if the usage changes.');
  return cleanSpace(x);
 }
 
-function removeScoreRestatements(article){
+function scoreFacts(article){
  const all=(article?.sections||[]).flatMap(sec=>sec?.paragraphs||[]).flatMap(sentences);
  const facts=[];
+ const add=(name,score,canonical)=>{if(!name||score==null)return;const key=name.toLowerCase()+'|'+score;if(!facts.some(f=>f.key===key))facts.push({key,name,score:String(score),canonical})};
  for(const s of all){
-  const m=s.match(/^Against .+?,\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+scored\s+(-?\d+(?:\.\d+)?)\s+fantasy points/i);
-  if(m)facts.push({name:m[1],score:m[2],canonical:s});
+  let m=s.match(/^Against .+?,\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+scored\s+(-?\d+(?:\.\d+)?)\s+fantasy points/i);if(m){add(m[1],m[2],s);continue}
+  m=s.match(/^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+scored\s+(-?\d+(?:\.\d+)?)\s+in both Week 1 and Week 2/i);if(m){add(m[1],m[2],s);continue}
+  m=s.match(/^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+(?:fell|improved) from\s+-?\d+(?:\.\d+)?\s+in Week 1 to\s+(-?\d+(?:\.\d+)?)\s+in Week 2/i);if(m){add(m[1],m[2],s);continue}
+  m=s.match(/^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+had a bad Week 2 at\s+(-?\d+(?:\.\d+)?)\s+points?/i);if(m){add(m[1],m[2],s);continue}
+  m=s.match(/^The problem with\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+is plain:\s+(-?\d+(?:\.\d+)?)\s+in Week 2/i);if(m){add(m[1],m[2],s);continue}
+  m=s.match(/^([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+){1,3})\s+at\s+(-?\d+(?:\.\d+)?)\b/i);if(m)add(m[1],m[2],s);
  }
  return facts;
 }
 
-function redundantPlayerSentence(s,facts){
- const low=String(s||'').toLowerCase();
+function rewriteRepeatedFact(s,facts){
+ let x=String(s||'').trim(),low=x.toLowerCase();
  for(const f of facts){
-  if(!low.includes(f.name.toLowerCase()))continue;
-  const score=f.score.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  const re=new RegExp(`(^|[^0-9.])${score}(?![0-9]|\\.[0-9])`);
-  if(!re.test(s)||s===f.canonical)continue;
-  if(/\b(?:at|after|landed at|week 2 gave|finished at|posted|scored)\b/i.test(s))return true;
+  if(!low.includes(f.name.toLowerCase())||x===f.canonical)continue;
+  const score=esc(f.score),re=new RegExp(`(^|[^0-9.])${score}(?![0-9]|\\.[0-9])`);
+  if(!re.test(x))continue;
+  let m=x.match(new RegExp(`^${esc(f.name)} came from ([-0-9.]+) (?:per game|average) in 2025 and landed at ${score} this week\\.?$`,'i'));
+  if(m)return `${f.name} averaged ${m[1]} in 2025; one bad week does not erase that baseline.`;
+  m=x.match(new RegExp(`^Week 2 gave ${esc(f.name)} ${score} against a ([-0-9.]+) prior-season average\\.?$`,'i'));
+  if(m)return `${f.name} entered the week with a ${m[1]} prior-season average; one poor result does not erase the established baseline.`;
+  m=x.match(new RegExp(`^Compare ${score} now with ([-0-9.]+) last season for ${esc(f.name)}\\.?$`,'i'));
+  if(m)return `${f.name} averaged ${m[1]} last season. One poor week is worth criticizing without inventing a new role problem.`;
+  if(new RegExp(`^${esc(f.name)} at ${score}\\b`,'i').test(x))return '';
+  if(/\b(?:landed at|Week 2 gave|finished at|posted|scored)\b/i.test(x))return '';
  }
- return false;
+ return x;
 }
 
 function reviseTeam(t){
  const a=t?.inquirer_article;if(!a)return t;
- const facts=removeScoreRestatements(a);
+ const facts=scoreFacts(a);
  const hasNoBenchAnswer=(a.sections||[]).some(sec=>(sec?.paragraphs||[]).some(p=>/did not leave an obvious higher-scoring bench answer in a compatible spot/i.test(String(p||''))));
  a.sections=(a.sections||[]).map(sec=>{
   const isManagement=/management|decision|fix it/i.test(String(sec?.heading||''));
@@ -71,11 +84,12 @@ function reviseTeam(t){
    const kept=[];
    for(let s of sentences(p)){
     s=naturalizeSentence(s);
+    if(hasNoBenchAnswer&&isManagement&&/did not leave an obvious higher-scoring bench answer in a compatible spot/i.test(s))s=s.replace(/;\s*management had seven days.*$/i,'.');
+    s=rewriteRepeatedFact(s,facts);
     if(!s||DROP_SENTENCE.some(re=>re.test(s)))continue;
-    if(redundantPlayerSentence(s,facts))continue;
     if(hasNoBenchAnswer&&isManagement&&/\b(?:blam|person who chose the lineup|cute bad decision|tomatoes|avoid looking silly|management had seven days)\b/i.test(s))continue;
     if(/\b(?:player|starter) still has homework\b/i.test(s))s=s.replace(/\b(?:player|starter) still has homework\b/i,'performance still needs a better answer');
-    kept.push(s);
+    kept.push(cleanSpace(s));
    }
    const next=cleanSpace(kept.join(' '));if(next)paragraphs.push(next);
   }

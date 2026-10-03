@@ -8,7 +8,6 @@ const reporterStyle=article=>{
   if(n==='Jefferson Filch')return'jefferson';
   return'nick';
 };
-const isFanHeading=h=>/crowd|public emotion|fan sentiment/i.test(String(h||''));
 const isOutlookHeading=h=>/week 3|next matchup/i.test(String(h||''));
 const isPlayerHeading=h=>/moved the game|made the noise|made the afternoon|names rivals|people who made|who actually|problem everybody saw|thing everybody saw/i.test(String(h||''));
 
@@ -75,29 +74,12 @@ function cleanHistoricalBoilerplate(paragraph,style){
 function refineTeam(team){
   const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return team;
   const style=reporterStyle(article);
-  for(let i=0;i<article.sections.length;i++){
-    const section=article.sections[i];
+  for(const section of article.sections){
     if(!Array.isArray(section?.paragraphs))continue;
     let ps=section.paragraphs.map(p=>trimProjectionRepeat(p));
     if(isPlayerHeading(section.heading))ps=ps.map(p=>trimGenericPlayerFollowups(trimRoutineSnap(p))).map(p=>fixBadDepth(p,style));
     else ps=ps.map(p=>fixBadDepth(p,style));
-
-    if(i===0&&ps.length>=6){
-      ps=ps.filter((p,idx)=>{
-        if(idx<2)return true;
-        if(/(?:won|lost) by .* after scoring|won by .* with .* points/i.test(p))return false;
-        return true;
-      });
-    }
-
-    if(isFanHeading(section.heading)&&ps.length>2){
-      ps=[ps[0],ps[ps.length-1]];
-    }
-
-    if(isOutlookHeading(section.heading)){
-      ps=ps.filter(p=>!/^(?:Handle |For .*?, )?Week 3 comes first|^.*next result should answer more than another projection can\.?$/i.test(String(p||'')));
-      ps=ps.map(p=>cleanHistoricalBoilerplate(p,style));
-    }
+    if(isOutlookHeading(section.heading))ps=ps.map(p=>cleanHistoricalBoilerplate(p,style));
     section.paragraphs=ps.filter(Boolean);
   }
   article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);

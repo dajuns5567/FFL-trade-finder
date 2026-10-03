@@ -45,6 +45,7 @@ function reviseTeam(t){
    for(let s of sentences(p)){
     const row=rows.find(r=>s.toLowerCase().includes(r.name.toLowerCase())&&literalScore(s,r.score));
     if(row&&s!==row.canonical){s=stripScore(s,row);if(!s)continue}
+    if(/^Management should treat the role like something worth keeping\.?$/i.test(s))continue;
     kept.push(s);
    }
    const next=kept.join(' ').replace(/\s+/g,' ').trim();if(next)paragraphs.push(next);

@@ -1,4 +1,4 @@
-name: Week 2 R26 one-shot
+name: Week 2 R27 one-shot
 on:
   push:
     branches: [player-signal-layer-r1]
@@ -7,6 +7,7 @@ on:
       - 'netlify/functions/inquirer-week2-editorial-r24.mjs'
       - 'netlify/functions/inquirer-week2-editorial-r25.mjs'
       - 'netlify/functions/inquirer-week2-editorial-r26.mjs'
+      - 'netlify/functions/inquirer-week2-editorial-r27.mjs'
       - 'scripts/inquirer-week2-r23-smoke.mjs'
       - '.github/workflows/week2-r23-one-shot.yml'
 jobs:
@@ -17,48 +18,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Point verifier at R26 and correct false-positives
-        run: |
-          node - <<'NODE'
-          const fs=require('fs');
-          const p='scripts/inquirer-week2-r23-smoke.mjs';
-          let s=fs.readFileSync(p,'utf8');
-          s=s.replace("inquirer-week2-editorial-r24.mjs","inquirer-week2-editorial-r26.mjs");
-          s=s.replaceAll("R24","R26");
-          s=s.replaceAll("week2-r24","week2-r26");
-          s=s.replaceAll("revision:24","revision:26");
-          s=s.replaceAll("),24", "),26");
-          s=s.replace('|\\bi respect\\b','');
-          s=s.replace(/\n\s*assert\(!BAD_SCORE_RESTATEMENT\.test\(text\),`Score-restatement filler survived in \$\{full\}: \$\{sentences\(text\)\.find\(s=>BAD_SCORE_RESTATEMENT\.test\(s\)\)\|\|''\}`\);/,'');
-          s=s.replace(
-            "||new RegExp(`^${esc(p)}\\\\s+(?:scored|gave|posted|delivered)\\\\b`,'i').test(s)",
-            "||new RegExp(`^${esc(p)}\\\\s+(?:scored|gave|posted|delivered)\\\\s+-?\\\\d+(?:\\\\.\\\\d+)?\\\\b`,'i').test(s)"
-          );
-          s=s.replace(
-            "for(const [p,n] of scoreCounts)assert(n<=1,`Player score fact repeated for ${p} in ${full}: ${n} times`);",
-            "for(const [p,n] of scoreCounts){const rows=sentences(text).filter(s=>namedPlayer(s,players)===p&&isScoreFact(s,p));assert(n<=1,`Player score fact repeated for ${p} in ${full}: ${n} times :: ${rows.join(' || ')}`);}"
-          );
-          s=s.replace(
-            "assert.equal(sentences(aintsText).filter(s=>/Jaxon Smith-Njigba/i.test(s)&&/\\b42\\.5\\b/.test(s)).length,1,'JSN 42.5 should be stated once');",
-            "{const rows=sentences(aintsText).filter(s=>/Jaxon Smith-Njigba/i.test(s)&&/\\b42\\.5\\b/.test(s));assert.equal(rows.length,1,`JSN 42.5 should be stated once :: ${rows.join(' || ')}`);}"
-          );
-          fs.writeFileSync(p,s);
-          NODE
-      - name: Run R26 regression smoke
+      - name: Run R27 regression smoke
         id: smoke
         shell: bash
         run: |
           set +e
-          node scripts/inquirer-week2-r23-smoke.mjs > r26-smoke.log 2>&1
+          node scripts/inquirer-week2-r23-smoke.mjs > r27-smoke.log 2>&1
           code=$?
-          cat r26-smoke.log
+          cat r27-smoke.log
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-      - name: Upload R26 smoke log
+      - name: Upload R27 smoke log
         uses: actions/upload-artifact@v4
         with:
-          name: week2-r26-smoke-log
-          path: r26-smoke.log
-      - name: Enforce R26 smoke result
+          name: week2-r27-smoke-log
+          path: r27-smoke.log
+      - name: Enforce R27 smoke result
         shell: bash
         run: exit "${{ steps.smoke.outputs.exit_code }}"

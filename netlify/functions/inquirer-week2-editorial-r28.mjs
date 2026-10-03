@@ -234,7 +234,7 @@ function reviseOverview(o){
    x=x.replace(/\bkeep matching receipts\b/gi,'keep matching results');
    x=cleanSpace(x);
    const add=voice[i%voice.length];
-   if(add&&words(x)<=70&&!/\bI\b|\brefuse\b|\bapplause\b|\bboo\b/i.test(x))x=cleanSpace(`${x} ${add}`);
+   if(add&&words(x)<=70&&sentences(x).length<4&&!/\bI\b|\brefuse\b|\bapplause\b|\bboo\b/i.test(x))x=cleanSpace(`${x} ${add}`);
    return x;
   }).filter(Boolean);
   return {...sec,paragraphs};

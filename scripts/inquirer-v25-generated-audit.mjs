@@ -79,7 +79,7 @@ if(reportWeek===2){
 
 if(reportWeek===2){
   assert.equal(Number(d.inquirer_version),31,'Generated Week 2 edition must be Inquirer V31');
-  assert.ok(Number(d.editorial_revision)===14||(Number(d.editorial_revision)===20&&d.voice_revision==='week2-r20')||(Number(d.editorial_revision)===21&&d.voice_revision==='week2-r21')||(Number(d.editorial_revision)===22&&d.voice_revision==='week2-r22')||(Number(d.editorial_revision)===27&&d.voice_revision==='week2-r27'),'Generated Week 2 edition must be the raw revision 14 preload or an explicit served Week 2 rewrite layer');
+  assert.ok(Number(d.editorial_revision)===14||(Number(d.editorial_revision)===20&&d.voice_revision==='week2-r20')||(Number(d.editorial_revision)===21&&d.voice_revision==='week2-r21')||(Number(d.editorial_revision)===22&&d.voice_revision==='week2-r22')||(Number(d.editorial_revision)===27&&d.voice_revision==='week2-r27')||(Number(d.editorial_revision)===28&&d.voice_revision==='week2-r28'),'Generated Week 2 edition must be the raw revision 14 preload or an explicit served Week 2 rewrite layer');
 }else{
   assert.equal(Number(d.inquirer_version),26,'Generated Week 1 edition must remain Inquirer V26');
   assert.equal(Number(d.editorial_revision),6,'Generated Week 1 edition must remain editorial revision 6');
@@ -115,7 +115,7 @@ for(const t of d.teams||[]){
 const expectedRanks=(d.teams||[]).map(t=>{const r=t?.league_context?.record||{},recent=t?.league_context?.recent_games||[];return{t,w:Number(r.wins)||0,l:Number(r.losses)||0,ties:Number(r.ties)||0,fpts:recent.reduce((n,g)=>n+(Number(g.points)||0),0)}}).sort((a,b)=>b.w-a.w||a.l-b.l||b.ties-a.ties||b.fpts-a.fpts||Number(a.t.roster_id)-Number(b.t.roster_id));
 for(const [i,row] of expectedRanks.entries())assert.equal(Number(row.t?.league_context?.standings_rank),i+1,`Week ${reportWeek} standings rank must be reconstructed only from games through the report week for ${row.t.team_name}`);
 assert.ok(recapSections.length>=4,'Weekly Recap must preserve a complete multi-desk edition');
-const servedR20=reportWeek===2&&((Number(d.editorial_revision)===20&&d.voice_revision==='week2-r20')||(Number(d.editorial_revision)===21&&d.voice_revision==='week2-r21')||(Number(d.editorial_revision)===22&&d.voice_revision==='week2-r22')||(Number(d.editorial_revision)===27&&d.voice_revision==='week2-r27'));
+const servedR20=reportWeek===2&&((Number(d.editorial_revision)===20&&d.voice_revision==='week2-r20')||(Number(d.editorial_revision)===21&&d.voice_revision==='week2-r21')||(Number(d.editorial_revision)===22&&d.voice_revision==='week2-r22')||(Number(d.editorial_revision)===27&&d.voice_revision==='week2-r27')||(Number(d.editorial_revision)===28&&d.voice_revision==='week2-r28'));
 if(servedR20){
   const r20Paragraphs=recapSections.flatMap(s=>s?.paragraphs||[]).filter(p=>String(p||'').trim());
   assert.equal(r20Paragraphs.length,12,'R20 Weekly Recap must publish exactly twelve focused cross-league insight paragraphs');

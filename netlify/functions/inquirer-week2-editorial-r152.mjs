@@ -7,6 +7,8 @@ const midaByName=new Map(WEEK2_MIDA_2026.map(row=>[norm(row.name),row]));
 const getMida=name=>midaByName.get(norm(name))||null;
 const sentences=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
 const difficulty=/\b(?:stiffen|rougher|difficult stretch|hard part|hard stretch|hardens|gauntlet|resistance|heavy part|friendlier|friendly part|softer|manageable|forgiving|breathing room|favorable|mercy|soft landing|lowering the volume|mixed|split schedule|split the|uneven|difficulty level|lands in the middle|split screen)\b/i;
+const shortTeam=n=>String(n||'').replace(/^(New England|New York|Los Angeles|Las Vegas|San Francisco|Kansas City|New Orleans|Tampa Bay)\s+/,'').trim();
+const pluralTeamNames=[...new Set(WEEK2_MIDA_2026.flatMap(x=>[x.name,shortTeam(x.name)]).filter(n=>/s$/i.test(n)))];
 
 function attachHistoricalMida(raw){
   const out=structuredClone(raw);
@@ -99,6 +101,30 @@ function restoreScheduleStretch(team){
   return team;
 }
 
+function cleanVisibleProse(team){
+  const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return team;
+  const starters=(team?.starter_details||[]).map(p=>String(p?.name||'').trim()).filter(Boolean);
+  const clean=text=>{
+    let s=String(text||'')
+      .replace(/survives cross-examination in Week 3/gi,'still holds up in Week 3')
+      .replace(/\bFor ([^,.!?]+), A second\b/g,'For $1, a second')
+      .replace(/\btwo separate reasons for optimism is\b/gi,'two separate reasons for optimism are');
+    for(const name of starters){
+      s=s.replace(new RegExp(`${esc(name)}'s\\s+that Week 2 (?:result|production)`,'gi'),`${name}'s Week 2 performance`);
+    }
+    for(const name of pluralTeamNames){
+      s=s.replace(new RegExp(`\\b${esc(name)}'s\\b`,'g'),`${name}'`);
+      s=s.replace(new RegExp(`\\b${esc(name)} is next\\b`,'g'),`${name} are next`);
+    }
+    return s;
+  };
+  for(const section of article.sections){
+    if(Array.isArray(section?.paragraphs))section.paragraphs=section.paragraphs.map(clean);
+  }
+  article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+  return team;
+}
+
 function normalizeDivisionBoard(out){
   const board=(out?.league_overview?.hot_takes||[]).find(x=>/division board/i.test(String(x?.title||'')));
   if(!board||typeof board.take!=='string')return;
@@ -119,7 +145,7 @@ function normalizeDivisionBoard(out){
 export function applyWeek2EditorialR16(raw){
   if(!raw||Number(raw.season)!==2026||Number(raw.week)!==2)return applyR151(raw);
   const out=applyR151(attachHistoricalMida(raw));
-  out.teams=(out.teams||[]).map(dedupePlayerScores).map(restoreScheduleStretch);
+  out.teams=(out.teams||[]).map(dedupePlayerScores).map(restoreScheduleStretch).map(cleanVisibleProse);
   normalizeDivisionBoard(out);
   if(out.league_overview)out.league_overview.structure_revision='week2-r152';
   out.structure_revision='week2-r152';

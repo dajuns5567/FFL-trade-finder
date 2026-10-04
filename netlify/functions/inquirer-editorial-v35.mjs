@@ -1,7 +1,7 @@
 // Fleeced! Inquirer forward reporter engine V35.
 // Narrow refinement over V34: diversify the last normalized team-article
-// reactions caught by the existing cross-team copy gate and remove residual
-// newsroom/social meta language after all forward rewrites have run.
+// reactions caught by the existing cross-team copy gate, remove residual
+// newsroom/social meta language, and preserve explicit playoff resolution.
 
 import {
   applyInquirerEditorialV34,
@@ -50,8 +50,6 @@ function diversifyFilchHotSeat(text,team,article,week){
 
 function scrubResidualMeta(text){
   return String(text||'')
-    // Exact vocabulary barred by the forward regression. These replacements run
-    // after V34 so no older template or evolution pass can reintroduce it.
     .replace(/\bplace setting\b/gi,'lineup spot')
     .replace(/\bballroom doors\b/gi,'matchup')
     .replace(/\bwardrobe\b/gi,'roster')
@@ -64,7 +62,6 @@ function scrubResidualMeta(text){
     .replace(/\bcopy desk\b/gi,'league')
     .replace(/\bnewsroom\b/gi,'league')
     .replace(/\b(?:tomorrow(?:’s|'s)\s+)?back[- ]page\b/gi,'league conversation')
-    // Repair phrases that earlier broad substitutions can make grammatically ugly.
     .replace(/\bthe part rival managers will talking point is this:\s*/gi,'Rivals will notice this: ')
     .replace(/\bthis is the sentence the rival managers will keep:\s*/gi,'This is what rivals will remember: ')
     .replace(/\bthe league conversation version is simple:\s*/gi,'The football consequence is simple: ')
@@ -97,11 +94,50 @@ function refineOverview(overview){
   for(const take of overview.hot_takes||[])take.take=scrubResidualMeta(take.take);
 }
 
+function ensurePostseasonResolution(out,args){
+  if(!args?.weekClassification?.playoffs)return;
+  const sourceByRoster=new Map((args?.rawInquirer?.teams||[]).map(t=>[String(t.roster_id),t?.playoff_context||null]));
+  const teams=out?.inquirer?.teams||[],overview=out?.leagueOverview,eliminated=[],advanced=[];
+  for(const team of teams){
+    const ctx=team?.playoff_context||sourceByRoster.get(String(team.roster_id));
+    if(!ctx)continue;
+    if(ctx.eliminated_this_week)eliminated.push({team,ctx});
+    if(ctx.advanced_this_week)advanced.push({team,ctx});
+  }
+  for(const {team,ctx} of eliminated){
+    const article=team?.inquirer_article;if(!article)continue;
+    if(!/eliminated from championship contention/i.test((article.paragraphs||[]).join(' '))){
+      const lede=(article.sections||[]).find(s=>s.kind==='lede')||(article.sections||[])[0];
+      if(lede?.paragraphs)lede.paragraphs.unshift(`${team.team_name} was eliminated from championship contention in ${ctx.current_round||args.weekClassification.round||'this playoff round'}. There is no softer fantasy interpretation: the title path ended here.`);
+      article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]).filter(Boolean);
+    }
+  }
+  for(const {team,ctx} of advanced){
+    const article=team?.inquirer_article;if(!article)continue;
+    const next=String(ctx.next_round||'the next round');
+    if(!new RegExp(`advances to ${next.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`,'i').test((article.paragraphs||[]).join(' '))){
+      const outlook=(article.sections||[]).find(s=>s.kind==='outlook')||(article.sections||[]).at(-1);
+      if(outlook?.paragraphs)outlook.paragraphs.push(`${team.team_name} advances to ${next}. Surviving the bracket is the only argument that matters now.`);
+      article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]).filter(Boolean);
+    }
+  }
+  const playoffSection=(overview?.sections||[]).find(s=>/Who Advanced and Who Went Home|Super Bowl/i.test(String(s?.heading||'')));
+  if(playoffSection){
+    const copy=(playoffSection.paragraphs||[]).join(' ');
+    if(eliminated.length&&!/eliminated from championship contention/i.test(copy))playoffSection.paragraphs.push(`${eliminated.map(x=>x.team.team_name).join(', ')} ${eliminated.length===1?'was':'were'} eliminated from championship contention.`);
+    if(advanced.length&&!/advances to .*Divisional Round/i.test(copy)){
+      const next=String(advanced[0]?.ctx?.next_round||'the next round');
+      playoffSection.paragraphs.push(`${advanced.map(x=>x.team.team_name).join(', ')} ${advanced.length===1?'advances':'advance'} to ${next}.`);
+    }
+  }
+}
+
 export function applyInquirerEditorialV35(args={}){
   const base=applyInquirerEditorialV34(args);
   if(!base||Number(args.week)<3)return base;
   const out=structuredClone(base),week=Number(args.week);
   for(const team of out?.inquirer?.teams||[])refineArticle(team,week);
   refineOverview(out?.leagueOverview);
+  ensurePostseasonResolution(out,args);
   return out;
 }

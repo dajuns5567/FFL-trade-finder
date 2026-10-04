@@ -35,6 +35,13 @@ function scrub(text){
     .trim();
 }
 
+function deepScrub(value){
+  if(typeof value==='string')return scrub(value);
+  if(Array.isArray(value))return value.map(deepScrub);
+  if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,deepScrub(v)]));
+  return value;
+}
+
 function scrubArticle(article){
   if(!article)return;
   article.headline=scrub(article.headline);
@@ -116,5 +123,5 @@ export function applyInquirerEditorialV37(args={}){
   for(const team of out?.inquirer?.teams||[])scrubArticle(team?.inquirer_article);
   scrubOverview(out?.leagueOverview);
   ensurePostseason(out,args);
-  return out;
+  return deepScrub(out);
 }

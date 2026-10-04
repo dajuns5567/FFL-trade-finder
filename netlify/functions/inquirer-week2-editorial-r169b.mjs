@@ -32,7 +32,7 @@ function rewriteMidaOutlook(team){
         return `${ref} sits at ${playoff}% for the playoffs${titleRead}. ${read}`;
       }
       if(who==='Jefferson Filch'){
-        const read=band==='strong'?`${next} is the next pressure point: a strong estimate raises the standard instead of ending the argument.`:band==='thin'?`${next} is where the roster gets a chance to make that skepticism look foolish.`:`${next} gets the next vote; the number supports neither a coronation nor complacency.`;
+        const read=band==='strong'?`${starRead} helps explain why the number is strong, but ${next} is still where that optimism gets challenged.`:band==='thin'?`${next} is where the roster gets a chance to make that skepticism look foolish.`:`${next} gets the next vote; the number supports neither a coronation nor complacency.`;
         return `${refPoss} playoff estimate is ${playoff}%${titleRead}. ${read}`;
       }
       const read=band==='strong'?`Good position. ${next} still has to be beaten before anyone starts treating the model like a trophy.`:band==='thin'?`${next} matters more because the margin for another ugly result is already small.`:`That is enough uncertainty to make ${next} genuinely informative instead of ceremonial.`;

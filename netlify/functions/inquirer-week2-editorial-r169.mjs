@@ -15,6 +15,7 @@ const pluralAlias=s=>/s$/i.test(String(s||''));
 const beVerb=s=>pluralAlias(s)?'are':'is';
 const sitVerb=s=>pluralAlias(s)?'sit':'sits';
 const escapeRegExp=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const fmt=n=>Number.isFinite(Number(n))?Number(n).toFixed(1):'n/a';
 
 function repairKnownPlayerNameSplits(team){
   const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return;
@@ -56,6 +57,26 @@ function replaceR167Additions(team){
     else line=`${ref} ${be} 1-1 after ${total} points, which is fantasy football's favorite way to make everybody sound certain with half the information. ${next} gets the next word.`;
   }
   sentiment.paragraphs.push(line);
+}
+
+function repairCoolThroneRecognition(team){
+  const article=team?.inquirer_article,cool=section(article,'cool-throne');
+  if(!article||!cool||!Array.isArray(cool.paragraphs)||!cool.paragraphs.length)return;
+  const eligible=(team?.starter_details||[]).filter(p=>{
+    const pts=Number(p?.points),prior=Number(p?.prior_season_avg),proj=Number(p?.projected),delta=Number.isFinite(proj)?pts-proj:null;
+    return Number.isFinite(pts)&&(pts>=15||(delta!=null&&delta>=4)||(Number.isFinite(prior)&&prior>0&&pts>=prior*1.2));
+  }).sort((a,b)=>Number(b?.points)-Number(a?.points)).slice(0,2);
+  if(eligible.length<2)return;
+  const copy=cool.paragraphs.join(' ').toLowerCase(),first=eligible[0],second=eligible[1];
+  if(!copy.includes(String(first?.name||'').toLowerCase())||copy.includes(String(second?.name||'').toLowerCase()))return;
+  const who=reporter(article),ref=shortRef(team),pts=Number(second?.points),proj=Number(second?.projected),delta=Number.isFinite(proj)?pts-proj:null;
+  const beatProj=Number.isFinite(delta)&&delta>=0.5?` and beat projection by ${fmt(delta)}`:'';
+  let line;
+  if(who==='Tilly Fleecer')line=`${second.name} barges into the second Cool Throne spot with ${fmt(pts)} points${beatProj}. ${ref} had two performances worth celebrating, which is terribly inconvenient for anyone committed to a single hero.`;
+  else if(who==='Bartholomew Roycington III')line=`${second.name} joins ${first.name} on the Cool Throne after ${fmt(pts)} points${beatProj}. Two deserving names do not cheapen the honor; they merely rescue it from bad arithmetic.`;
+  else if(who==='Jefferson Filch')line=`${second.name} belongs in the second Cool Throne spot with ${fmt(pts)} points${beatProj}. Leaving him out would make ${possessive(ref)} praise less accurate than the box score.`;
+  else line=`${second.name} gets the second Cool Throne spot with ${fmt(pts)} points${beatProj}. ${ref} had two players who earned the mention, so both names stay in.`;
+  if(cool.paragraphs.length>=2)cool.paragraphs[1]=line;else cool.paragraphs.push(line);
 }
 
 function repairPluralTeamGrammar(team){
@@ -116,7 +137,7 @@ function varyCrossTeamExactRepeats(teams){
 export function applyWeek2EditorialR16(raw){
   const out=applyR168(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
-  out.teams=(out.teams||[]).map(team=>{repairKnownPlayerNameSplits(team);replaceR167Additions(team);repairPluralTeamGrammar(team);return team;});
+  out.teams=(out.teams||[]).map(team=>{repairKnownPlayerNameSplits(team);replaceR167Additions(team);repairCoolThroneRecognition(team);repairPluralTeamGrammar(team);return team;});
   varyCrossTeamExactRepeats(out.teams);
   if(out.league_overview)out.league_overview.structure_revision='week2-r169';
   out.structure_revision='week2-r169';

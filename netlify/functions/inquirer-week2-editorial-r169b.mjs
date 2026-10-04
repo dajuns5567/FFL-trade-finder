@@ -24,7 +24,7 @@ function rewriteMidaOutlook(team){
       return `${refPoss} playoff estimate is ${playoff}%${titleRead}. ${read}`;
     }
     if(who==='Bartholomew Roycington III'){
-      const read=band==='strong'?`A handsome figure, certainly, but ${next} still has every right to ruin the table setting.`:band==='thin'?`${next} now carries the unpleasant duty of deciding whether September becomes merely discourteous or genuinely vulgar.`:`Respectable enough to matter, fragile enough that ${next} can still make the optimism look overdressed.`;
+      const read=band==='strong'?`A handsome figure, certainly, but ${next} still has every right to make the celebration look premature.`:band==='thin'?`${next} now carries the unpleasant duty of deciding whether September becomes merely discourteous or genuinely vulgar.`:`Respectable enough to matter, fragile enough that ${next} can still make the optimism look overdressed.`;
       return `${ref} sits at ${playoff}% for the playoffs${titleRead}. ${read}`;
     }
     if(who==='Jefferson Filch'){

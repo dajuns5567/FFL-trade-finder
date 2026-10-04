@@ -2,8 +2,10 @@ import {applyWeek2EditorialR16 as applyR151} from './inquirer-week2-editorial-r1
 import {WEEK2_MIDA_2026} from './inquirer-week2-2026-mida-snapshot.mjs';
 
 const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const midaByName=new Map(WEEK2_MIDA_2026.map(row=>[norm(row.name),row]));
 const getMida=name=>midaByName.get(norm(name))||null;
+const sentences=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
 
 function attachHistoricalMida(raw){
   const out=structuredClone(raw);
@@ -21,9 +23,37 @@ function attachHistoricalMida(raw){
   return out;
 }
 
+function dedupePlayerScores(team){
+  const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return team;
+  const players=(team?.starter_details||[]).filter(p=>String(p?.name||'').trim()&&Number.isFinite(Number(p?.points)));
+  for(const player of players){
+    const name=String(player.name).trim(),score=Number(player.points).toFixed(1);
+    const nameRe=new RegExp(esc(name),'i');
+    const scoreRe=new RegExp(`\\b${esc(score)}(?:-point|\\s+(?:fantasy\\s+)?points?)?\\b`,'i');
+    let seen=false;
+    for(const section of article.sections){
+      if(!Array.isArray(section?.paragraphs))continue;
+      section.paragraphs=section.paragraphs.map(paragraph=>sentences(paragraph).map(sentence=>{
+        if(!nameRe.test(sentence)||!scoreRe.test(sentence))return sentence;
+        if(!seen){seen=true;return sentence;}
+        return sentence
+          .replace(new RegExp(`after\\s+${esc(score)}\\s+(?:fantasy\\s+)?points?`,'i'),'after that Week 2 performance')
+          .replace(new RegExp(`with\\s+${esc(score)}\\s+(?:fantasy\\s+)?points?`,'i'),'with that Week 2 production')
+          .replace(new RegExp(`${esc(score)}-point`,'i'),'Week 2')
+          .replace(new RegExp(`${esc(score)}\\s+(?:fantasy\\s+)?points?`,'i'),'that Week 2 production')
+          .replace(new RegExp(`\\b${esc(score)}\\b`,'i'),'that Week 2 result');
+      }).join(' '));
+    }
+  }
+  article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+  article.structure_revision='week2-r152';
+  return team;
+}
+
 export function applyWeek2EditorialR16(raw){
   if(!raw||Number(raw.season)!==2026||Number(raw.week)!==2)return applyR151(raw);
   const out=applyR151(attachHistoricalMida(raw));
+  out.teams=(out.teams||[]).map(dedupePlayerScores);
   if(out.league_overview)out.league_overview.structure_revision='week2-r152';
   out.structure_revision='week2-r152';
   return out;

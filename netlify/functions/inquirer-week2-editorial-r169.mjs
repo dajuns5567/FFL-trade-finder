@@ -14,6 +14,7 @@ const possessive=s=>/s$/i.test(String(s||''))?`${s}'`:`${s}'s`;
 const pluralAlias=s=>/s$/i.test(String(s||''));
 const beVerb=s=>pluralAlias(s)?'are':'is';
 const sitVerb=s=>pluralAlias(s)?'sit':'sits';
+const escapeRegExp=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
 function repairKnownPlayerNameSplits(team){
   const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return;
@@ -55,6 +56,18 @@ function replaceR167Additions(team){
     else line=`${ref} ${be} 1-1 after ${total} points, which is fantasy football's favorite way to make everybody sound certain with half the information. ${next} gets the next word.`;
   }
   sentiment.paragraphs.push(line);
+}
+
+function repairPluralTeamGrammar(team){
+  const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return;
+  const full=teamName(team),ref=shortRef(team);
+  if(!pluralAlias(ref))return;
+  const subject=new RegExp(`^(?:${escapeRegExp(full)}|${escapeRegExp(ref)})\\s+(is|has|gets|holds|brings|turns)\\b`,'i');
+  const pluralVerb={is:'are',has:'have',gets:'get',holds:'hold',brings:'bring',turns:'turn'};
+  for(const s of article.sections){
+    if(!Array.isArray(s?.paragraphs))continue;
+    s.paragraphs=s.paragraphs.map(p=>sentences(p).map(sentence=>sentence.replace(subject,(match,verb)=>match.slice(0,match.length-verb.length)+pluralVerb[String(verb).toLowerCase()])).join(' '));
+  }
 }
 
 function factAnchor(team,sentence){
@@ -103,7 +116,7 @@ function varyCrossTeamExactRepeats(teams){
 export function applyWeek2EditorialR16(raw){
   const out=applyR168(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
-  out.teams=(out.teams||[]).map(team=>{repairKnownPlayerNameSplits(team);replaceR167Additions(team);return team;});
+  out.teams=(out.teams||[]).map(team=>{repairKnownPlayerNameSplits(team);replaceR167Additions(team);repairPluralTeamGrammar(team);return team;});
   varyCrossTeamExactRepeats(out.teams);
   if(out.league_overview)out.league_overview.structure_revision='week2-r169';
   out.structure_revision='week2-r169';

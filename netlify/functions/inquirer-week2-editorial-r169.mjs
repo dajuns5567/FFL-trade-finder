@@ -7,10 +7,18 @@ const reporter=article=>String(article?.reporter?.name||'Nick Swindell');
 const record=team=>{const r=team?.league_context?.record||{};return{wins:Number(r.wins)||0,losses:Number(r.losses)||0,ties:Number(r.ties)||0};};
 const score=team=>Number.isFinite(Number(team?.points))?Number(team.points):null;
 const opponent=team=>String(team?.next_opponent_name||team?.next_opponent||'the Week 3 opponent');
-const sentences=text=>String(text||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
+const sentences=text=>String(text||'').replace(/\bSt\.\s+(?=[A-Z])/g,'St.\u00a0').split(/(?<=[.!?])\s+/).map(x=>x.replace(/\u00a0/g,' ').trim()).filter(Boolean);
 const words=text=>String(text||'').trim().split(/\s+/).filter(Boolean).length;
 const lowerFirst=s=>s?`${s.charAt(0).toLowerCase()}${s.slice(1)}`:s;
 const possessive=s=>/s$/i.test(String(s||''))?`${s}'`:`${s}'s`;
+
+function repairKnownPlayerNameSplits(team){
+  const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return;
+  for(const s of article.sections){
+    if(!Array.isArray(s?.paragraphs))continue;
+    s.paragraphs=s.paragraphs.map(p=>String(p||'').replace(/\bAmon-Ra St\.\s+For [^,]+,\s+brown\b/gi,'Amon-Ra St. Brown'));
+  }
+}
 
 function replaceR167Additions(team){
   const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return;
@@ -92,7 +100,7 @@ function varyCrossTeamExactRepeats(teams){
 export function applyWeek2EditorialR16(raw){
   const out=applyR168(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
-  out.teams=(out.teams||[]).map(team=>{replaceR167Additions(team);return team;});
+  out.teams=(out.teams||[]).map(team=>{repairKnownPlayerNameSplits(team);replaceR167Additions(team);return team;});
   varyCrossTeamExactRepeats(out.teams);
   if(out.league_overview)out.league_overview.structure_revision='week2-r169';
   out.structure_revision='week2-r169';

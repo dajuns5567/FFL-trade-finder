@@ -50,16 +50,27 @@ function diversifyFilchHotSeat(text,team,article,week){
 
 function scrubResidualMeta(text){
   return String(text||'')
-    .replace(/\b(?:tomorrow(?:’s|'s)\s+)?back[- ]page\b/gi,'league conversation')
+    // Exact vocabulary barred by the forward regression. These replacements run
+    // after V34 so no older template or evolution pass can reintroduce it.
+    .replace(/\bplace setting\b/gi,'lineup spot')
+    .replace(/\bballroom doors\b/gi,'matchup')
+    .replace(/\bwardrobe\b/gi,'roster')
+    .replace(/\bempty plate\b/gi,'empty lineup spot')
+    .replace(/\bblaming one chair\b/gi,'blaming one player')
+    .replace(/\bmiserable table\b/gi,'miserable lineup')
     .replace(/\bgroup chat\b/gi,'rival managers')
     .replace(/\brival chat\b/gi,'rivals')
-    .replace(/\bscreenshots?\b/gi,'talking points')
+    .replace(/\bscreenshot(?:s|ting)?\b/gi,'talking point')
     .replace(/\bcopy desk\b/gi,'league')
     .replace(/\bnewsroom\b/gi,'league')
+    .replace(/\b(?:tomorrow(?:’s|'s)\s+)?back[- ]page\b/gi,'league conversation')
+    // Repair phrases that earlier broad substitutions can make grammatically ugly.
     .replace(/\bthe part rival managers will talking point is this:\s*/gi,'Rivals will notice this: ')
     .replace(/\bthis is the sentence the rival managers will keep:\s*/gi,'This is what rivals will remember: ')
     .replace(/\bthe league conversation version is simple:\s*/gi,'The football consequence is simple: ')
     .replace(/\bfan base has talking point, memes and exactly one volume setting\b/gi,'fan base has one complaint and exactly one volume setting')
+    .replace(/\bthe the decision-makers result\b/gi,'the management problem')
+    .replace(/\bhit the board hard enough to leave 2-0 with reminder\b/gi,'done enough to make an undefeated start feel earned rather than decorative')
     .replace(/\s{2,}/g,' ')
     .trim();
 }

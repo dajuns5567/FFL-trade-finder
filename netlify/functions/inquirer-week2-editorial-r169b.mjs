@@ -8,15 +8,20 @@ const opponent=team=>String(team?.next_opponent_name||team?.next_opponent||'the 
 const possessive=s=>/s$/i.test(String(s||''))?`${s}'`:`${s}'s`;
 const score=team=>Number.isFinite(Number(team?.points))?Number(team.points):null;
 const topStarter=team=>(team?.starter_details||[]).filter(p=>Number.isFinite(Number(p?.points))).sort((a,b)=>Number(b.points)-Number(a.points))[0]||null;
+const clean=s=>String(s||'').replace(/\s+/g,' ').trim();
+const normalized=s=>clean(s).toLowerCase().replace(/[’']/g,"'").replace(/\d+(?:\.\d+)?/g,'#').replace(/[^a-z#% ]+/g,' ').replace(/\s+/g,' ').trim();
+
+function rebuild(article){
+  if(article&&Array.isArray(article.sections))article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+}
 
 function rewriteMidaOutlook(team){
   const article=team?.inquirer_article,outlook=section(article,'outlook');
   if(!article||!outlook||!Array.isArray(outlook.paragraphs))return;
-  const who=reporter(article),ref=shortRef(team),next=opponent(team),refPoss=possessive(ref),pts=score(team),star=topStarter(team);
-  const total=Number.isFinite(pts)?pts.toFixed(1):'the Week 2 total';
+  const who=reporter(article),ref=shortRef(team),next=opponent(team),refPoss=possessive(ref),star=topStarter(team);
   const starRead=star?star.name:'the leading starter';
   outlook.paragraphs=outlook.paragraphs.map(p=>{
-    const text=String(p||'').trim();
+    const text=clean(p);
     if(/^MIDA\b/i.test(text)){
       const values=[...text.matchAll(/(\d+(?:\.\d+)?)%/g)].map(m=>m[1]);
       if(!values.length)return text;
@@ -39,8 +44,6 @@ function rewriteMidaOutlook(team){
       return `${refPoss} playoff estimate is ${playoff}%${titleRead}. ${read}`;
     }
 
-    // R169 already naturalized many MIDA lines. Only rewrite the few remaining
-    // normalized shapes that still repeat across teams in rendered Week 2 output.
     const escapedPoss=refPoss.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     const near=text.match(new RegExp(`^${escapedPoss} playoff estimate sits near (\\d+(?:\\.\\d+)?)%\\.`,'i'));
     if(near&&/burden of proof|narrows the room/i.test(text)){
@@ -66,13 +69,110 @@ function rewriteMidaOutlook(team){
 
     return text;
   });
-  article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+  rebuild(article);
+}
+
+function isScoreScaffold(text,team){
+  const pts=score(team);
+  if(!Number.isFinite(pts))return false;
+  const escaped=String(pts).replace('.','\\.');
+  const hasScore=new RegExp(`(?:scored|score|put up|finished).*?${escaped}(?:\\b|$)`,'i').test(text);
+  const genericFinish=/finished (?:in the )?bottom (?:eight|quarter)|bottom eight in scoring/i.test(text);
+  return hasScore||genericFinish;
+}
+
+function shapeArticle(team){
+  const article=team?.inquirer_article;
+  if(!article||!Array.isArray(article.sections))return;
+  const exactSeen=new Set(),familyCounts=new Map();
+  let scoreFacts=0,week3ProjectionFacts=0,rosterValueFacts=0;
+  for(const s of article.sections){
+    if(!Array.isArray(s?.paragraphs))continue;
+    const kept=[];
+    for(const raw of s.paragraphs){
+      const text=clean(raw);
+      if(!text)continue;
+      const exact=text.toLowerCase();
+      if(exactSeen.has(exact))continue;
+
+      const family=/snap share moved from .* last season to/i.test(text)?'snap-share':/week 2 role showed up as/i.test(text)?'role-showed':null;
+      if(family){
+        const count=familyCounts.get(family)||0;
+        if(count>=1)continue;
+        familyCounts.set(family,count+1);
+      }
+
+      if(isScoreScaffold(text,team)){
+        scoreFacts++;
+        if(scoreFacts>3)continue;
+      }
+      if(/week 3 projects .* making .* projection favorite/i.test(text)){
+        week3ProjectionFacts++;
+        if(week3ProjectionFacts>1)continue;
+      }
+      if(/roster value (?:rose|fell|moved) from/i.test(text)){
+        rosterValueFacts++;
+        if(rosterValueFacts>1)continue;
+      }
+
+      const norm=normalized(text);
+      const normKey=norm&&norm.length<80?`short:${norm}`:'';
+      if(normKey&&exactSeen.has(normKey))continue;
+      exactSeen.add(exact);
+      if(normKey)exactSeen.add(normKey);
+      kept.push(text);
+    }
+    s.paragraphs=kept;
+  }
+  rebuild(article);
+}
+
+function voiceLine(team){
+  const article=team?.inquirer_article,pts=score(team);
+  if(!article||!Number.isFinite(pts)||pts>55)return '';
+  const who=reporter(article),ref=shortRef(team),total=Number.isInteger(pts)?String(pts):pts.toFixed(1);
+  if(who==='Tilly Fleecer')return `${ref} just scored ${total}. That is less a fantasy total than an administrative error with a logo attached; there is no analytical varnish thick enough for it.`;
+  if(who==='Jefferson Filch')return `${ref} posted ${total}. At that point the box score stops asking for interpretation and starts looking for an alibi.`;
+  if(who==='Bartholomew Roycington III')return `${ref} produced ${total}, an afternoon so discourteous to competitive football that one is tempted to send the lineup a formal complaint.`;
+  return `${ref} scored ${total}. There is no clever way around it: that was a bad lineup result, and Week 3 has to show whether it was a collapse or a warning.`;
+}
+
+function enforceVoiceFloor(team){
+  const article=team?.inquirer_article,line=voiceLine(team);
+  if(!article||!line||!Array.isArray(article.sections))return;
+  if(article.sections.some(s=>(s?.paragraphs||[]).some(p=>clean(p)===line)))return;
+  const target=article.sections.find(s=>Array.isArray(s?.paragraphs)&&s.paragraphs.length)||article.sections.find(s=>Array.isArray(s?.paragraphs));
+  if(!target)return;
+  target.paragraphs.splice(Math.min(1,target.paragraphs.length),0,line);
+  rebuild(article);
+}
+
+function isolateBreakout(node,seen=new WeakSet()){
+  if(!node||typeof node!=='object')return;
+  if(seen.has(node))return;
+  seen.add(node);
+  if(Array.isArray(node)){node.forEach(x=>isolateBreakout(x,seen));return;}
+  const title=clean(node.title||node.headline||'');
+  const match=title.match(/^Breakout Player to Watch:\s*(.+)$/i);
+  if(match){
+    const player=clean(match[1]);
+    const copy=`${player} entered Week 2 on Breakout Watch, and Week 2 did not erase that case. Keep the watch on ${player} for Week 3; the role and trajectory still deserve another look.`;
+    for(const key of ['copy','text','body','description','summary'])if(typeof node[key]==='string')node[key]=copy;
+    if(Array.isArray(node.paragraphs))node.paragraphs=[copy];
+  }
+  Object.values(node).forEach(x=>isolateBreakout(x,seen));
 }
 
 export function applyWeek2EditorialR16(raw){
   const out=applyR169(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
-  out.teams=(out.teams||[]).map(team=>{rewriteMidaOutlook(team);return team;});
+  isolateBreakout(out);
+  out.teams=(out.teams||[]).map(team=>{
+    rewriteMidaOutlook(team);
+    shapeArticle(team);
+    enforceVoiceFloor(team);
+    return team;
+  });
   return out;
 }
 

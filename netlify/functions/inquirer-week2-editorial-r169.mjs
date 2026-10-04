@@ -10,6 +10,7 @@ const opponent=team=>String(team?.next_opponent_name||team?.next_opponent||'the 
 const sentences=text=>String(text||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
 const words=text=>String(text||'').trim().split(/\s+/).filter(Boolean).length;
 const lowerFirst=s=>s?`${s.charAt(0).toLowerCase()}${s.slice(1)}`:s;
+const possessive=s=>/s$/i.test(String(s||''))?`${s}'`:`${s}'s`;
 
 function replaceR167Additions(team){
   const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return;
@@ -51,7 +52,7 @@ function factAnchor(team,sentence){
   const thought=lowerFirst(sentence);
   if(who==='Tilly Fleecer')return `${ref} put up ${total}, so ${thought}`;
   if(who==='Bartholomew Roycington III')return `After ${total} points from ${ref}, ${thought}`;
-  if(who==='Jefferson Filch')return `${ref}'s ${total}-point Week 2 is why ${thought}`;
+  if(who==='Jefferson Filch')return `${possessive(ref)} ${total}-point Week 2 is why ${thought}`;
   return `${ref} scored ${total}, and ${thought}`;
 }
 

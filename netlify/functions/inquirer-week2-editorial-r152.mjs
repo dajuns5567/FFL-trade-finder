@@ -53,6 +53,7 @@ function dedupePlayerScores(team){
 
 function scheduleStretchLine(team,later){
   const article=team?.inquirer_article||{},reporter=String(article?.reporter?.name||'Nick Swindell');
+  const subject=String(team?.team_name||team?.name||'This team');
   const names=later.map(x=>String(x?.team_name||x?.name||'')).filter(Boolean);
   const own=Number(team?.mida_outlook?.playoff);
   const vals=later.map(x=>Number(x?.mida?.playoff)).filter(Number.isFinite);
@@ -60,23 +61,23 @@ function scheduleStretchLine(team,later){
   const relation=Number.isFinite(own)&&Number.isFinite(avg)?(avg>own+10?'rougher':avg<own-10?'friendlier':'mixed'):'mixed';
   const pair=names.length>1?`${names[0]} and ${names[1]}`:names[0];
   if(reporter==='Tilly Fleecer'){
-    if(relation==='friendlier')return `Handle Week 3 and ${pair} make the next stretch friendlier on paper. That is not mercy, but it is close enough that nobody gets to blame the road if the scoring disappears.`;
-    if(relation==='rougher')return `Handle Week 3 because ${pair} make the next stretch rougher on paper. Save the victory lap; the schedule has already booked a sequel.`;
-    return `Handle Week 3 and ${pair} leave a mixed stretch behind it. Some breathing room, some resistance, and absolutely no excuse to sleepwalk through either one.`;
+    if(relation==='friendlier')return `Handle Week 3 and ${pair} make the next stretch friendlier on paper. That is not mercy for ${subject}, but it is close enough that nobody gets to blame the road if the scoring disappears.`;
+    if(relation==='rougher')return `Handle Week 3 because ${pair} make the next stretch rougher on paper. ${subject} can save the victory lap; the schedule has already booked a sequel.`;
+    return `Handle Week 3 and ${pair} leave a mixed stretch behind it. ${subject} gets some breathing room, some resistance, and absolutely no excuse to sleepwalk through either one.`;
   }
   if(reporter==='Bartholomew Roycington III'){
-    if(relation==='friendlier')return `A Week 3 win would send them toward ${pair}, a friendlier stretch by the numbers. One should bank the advantage before asking the schedule for another favor.`;
-    if(relation==='rougher')return `Week 3 matters because ${pair} make the road rougher immediately afterward. Better to bank the result now than negotiate with the gauntlet later.`;
-    return `Week 3 leads into ${pair}, a mixed stretch rather than a ceremonial procession. Win first; then decide which part of the schedule deserves the expensive optimism.`;
+    if(relation==='friendlier')return `A Week 3 win would send ${subject} toward ${pair}, a friendlier stretch by the numbers. ${subject} should bank the advantage before asking the schedule for another favor.`;
+    if(relation==='rougher')return `Week 3 matters because ${pair} make the road rougher immediately afterward. ${subject} would be wise to bank the result now rather than negotiate with the gauntlet later.`;
+    return `Week 3 leads ${subject} into ${pair}, a mixed stretch rather than a ceremonial procession. Win first; then ${subject} can decide which part of the schedule deserves the expensive optimism.`;
   }
   if(reporter==='Jefferson Filch'){
-    if(relation==='friendlier')return `Bank Week 3 and ${pair} make the next stretch friendlier by the current MIDA outlook. That is useful leverage, not permission to manufacture certainty.`;
-    if(relation==='rougher')return `Week 3 is the result to bank before ${pair} make the next stretch rougher by the current MIDA outlook. The schedule is about to ask harder questions.`;
-    return `Week 3 comes before ${pair}, and the MIDA outlook reads the stretch as mixed. Win now and the later uncertainty is easier to investigate without inventing a crisis.`;
+    if(relation==='friendlier')return `Bank Week 3 and ${pair} make the next stretch friendlier by the current MIDA outlook. For ${subject}, that is useful leverage, not permission to manufacture certainty.`;
+    if(relation==='rougher')return `Week 3 is the result to bank before ${pair} make the next stretch rougher by the current MIDA outlook. ${subject} is about to face harder questions.`;
+    return `Week 3 comes before ${pair}, and the MIDA outlook reads the stretch as mixed. A ${subject} win now makes the later uncertainty easier to investigate without inventing a crisis.`;
   }
-  if(relation==='friendlier')return `Win Week 3 and ${pair} make the next stretch friendlier on paper. Bank the result now; favorable roads have a habit of looking obvious only after somebody wastes them.`;
-  if(relation==='rougher')return `Week 3 is the one to bank before ${pair} make the next stretch rougher. The schedule is about to stop accepting vague answers.`;
-  return `Week 3 sits in front of ${pair}, a mixed stretch with both breathing room and resistance. Win now and there is less reason to make the later schedule dramatic.`;
+  if(relation==='friendlier')return `Win Week 3 and ${pair} make the next stretch friendlier on paper. ${subject} should bank the result now; favorable roads have a habit of looking obvious only after somebody wastes them.`;
+  if(relation==='rougher')return `Week 3 is the one to bank before ${pair} make the next stretch rougher. ${subject} is about to run out of room for vague answers.`;
+  return `Week 3 sits in front of ${pair}, a mixed stretch with both breathing room and resistance. A ${subject} win now leaves less reason to make the later schedule dramatic.`;
 }
 
 function restoreScheduleStretch(team){

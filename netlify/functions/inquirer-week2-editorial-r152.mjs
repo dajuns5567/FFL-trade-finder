@@ -5,6 +5,7 @@ const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const midaByName=new Map(WEEK2_MIDA_2026.map(row=>[norm(row.name),row]));
 const getMida=name=>midaByName.get(norm(name))||null;
 const shortName=n=>String(n||'team').replace(/^(New England|New York|Los Angeles|Las Vegas|San Francisco|Kansas City|New Orleans|Tampa Bay)\s+/,'').trim();
+const possessive=n=>/s$/i.test(String(n||''))?`${n}'`:`${n}'s`;
 const styleOf=a=>{
   const n=String(a?.reporter?.name||'Nick Swindell');
   if(n==='Tilly Fleecer')return'tilly';
@@ -12,7 +13,6 @@ const styleOf=a=>{
   if(n==='Jefferson Filch')return'jefferson';
   return'nick';
 };
-const words=s=>(String(s||'').match(/\b[\w’'-]+\b/g)||[]).length;
 
 function attachHistoricalMida(raw){
   const out=structuredClone(raw);
@@ -50,7 +50,7 @@ function voicePunch(team){
     return `${short} landed ${rank}th with ${score.toFixed(1)}. Perfectly legal fantasy football, but nobody should be charging admission to the victory lap yet.`;
   }
   if(style==='bartholomew'){
-    if(rank<=8&&won)return `${short}'s ${rank}${rank===1?'st':rank===2?'nd':rank===3?'rd':'th'}-place Week 2 score of ${score.toFixed(1)} is the sort of arithmetic even I am willing to applaud. One must occasionally let competence into the drawing room.`;
+    if(rank<=8&&won)return `${possessive(short)} ${rank}${rank===1?'st':rank===2?'nd':rank===3?'rd':'th'}-place Week 2 score of ${score.toFixed(1)} is the sort of arithmetic even I am willing to applaud. One must occasionally let competence into the drawing room.`;
     if(rank>=25)return `${short} placed ${rank}th with ${score.toFixed(1)} points. We may dress the result for dinner, but the scoring total will still arrive wearing work boots.`;
     return `${short} finished ${rank}th with ${score.toFixed(1)} points, a thoroughly middle-class scoring afternoon. Respectable, certainly; intimidating, let us not become unserious.`;
   }
@@ -69,7 +69,7 @@ function boostVoice(team){
   const lede=article.sections[0];
   if(!Array.isArray(lede?.paragraphs))return team;
   const punch=voicePunch(team);
-  if(punch&&!lede.paragraphs.some(p=>String(p).includes(punch)))lede.paragraphs.push(punch);
+  if(punch&&!lede.paragraphs.includes(punch))lede.paragraphs.push(punch);
   article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
   article.structure_revision='week2-r152';
   return team;

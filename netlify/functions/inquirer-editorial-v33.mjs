@@ -13,15 +13,7 @@ export const evaluateInquirerEditionQuality=evaluateV32EditionQuality;
 
 const reporterId=a=>String(a?.reporter?.id||'walter-mercer');
 const teamName=t=>String(t?.team_name||'this team');
-const firstName=s=>String(s||'That player').trim().split(/\s+/)[0]||'That player';
-
-function playerForText(team,text){
-  const lower=String(text||'').toLowerCase();
-  return (team?.starter_details||[]).find(p=>{
-    const full=String(p?.name||'').toLowerCase(),bits=full.split(/\s+/).filter(x=>x.length>=3);
-    return (full&&lower.includes(full))||bits.some(x=>lower.includes(x));
-  })||null;
-}
+const one=v=>Number(v||0).toFixed(1);
 
 function removeRetiredMotifs(text){
   return String(text||'')
@@ -78,16 +70,19 @@ function interpretModerateDelta(team,article,player){
 }
 
 function rewriteDeltaScaffolds(text,team,article){
-  let s=String(text||'');
-  const player=playerForText(team,s);
-  if(!player)return s;
-  if(/normally lived around .*? a game and just dropped .*? into this matchup|not a cute statistical bump|role supports it again, opponents have a new problem/i.test(s)){
-    const replacement=interpretHighDelta(team,article,player);
-    s=s.replace(/[^.!?]*normally lived around [^.!?]*into this matchup\.[^.!?]*cute statistical bump[^.!?]*\.(?:[^.!?]*role supports it again[^.!?]*\.)?/i,replacement);
-  }
-  if(/actual breathing room|math lesson; it is that .* got a real matchup edge|far more interesting than congratulating the decimal point/i.test(s)){
-    const replacement=interpretModerateDelta(team,article,player);
-    s=s.replace(/[^.!?]*(?:beat his usual|meaningfully above his usual)[^.!?]*\.(?:[^.!?]*(?:math lesson|actual breathing room|decimal point)[^.!?]*\.)?/i,replacement);
+  let s=String(text||''),club=teamName(team);
+  for(const player of team?.starter_details||[]){
+    const prior=Number(player?.prior_season_avg),now=Number(player?.points),name=String(player?.name||'');
+    if(!name||!Number.isFinite(prior)||prior<=0||!Number.isFinite(now))continue;
+    const p=one(prior),n=one(now),high=interpretHighDelta(team,article,player),moderate=interpretModerateDelta(team,article,player);
+    const highThree=`${name} normally lived around ${p} a game and just dropped ${n} into this matchup. That is not a cute statistical bump; it is the kind of starter explosion that changes who gets to survive Sunday. If the role supports it again, opponents have a new problem.`;
+    const highTwo=`${name} normally lived around ${p} a game and just dropped ${n} into this matchup. That is not a cute statistical bump; it is the kind of starter explosion that changes who gets to survive Sunday.`;
+    if(s.includes(highThree))s=s.replace(highThree,high);
+    else if(s.includes(highTwo))s=s.replace(highTwo,high);
+    const modA=`${name} beat his usual ${p}-point neighborhood with ${n} this week. The important part is not the math lesson; it is that ${club} got a real matchup edge from a spot that normally asks for less attention.`;
+    const modB=`${n} from ${name} is meaningfully above his usual ${p}. That extra scoring bought ${club} actual breathing room, which is far more interesting than congratulating the decimal point.`;
+    if(s.includes(modA))s=s.replace(modA,moderate);
+    if(s.includes(modB))s=s.replace(modB,moderate);
   }
   return s;
 }

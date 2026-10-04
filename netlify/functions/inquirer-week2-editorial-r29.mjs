@@ -5,4 +5,5 @@ export {applyWeek2EditorialR163} from './inquirer-week2-editorial-r163.mjs';
 export {applyWeek2EditorialR164} from './inquirer-week2-editorial-r164.mjs';
 export {applyWeek2EditorialR165} from './inquirer-week2-editorial-r165.mjs';
 export {applyWeek2EditorialR166} from './inquirer-week2-editorial-r166.mjs';
-export {applyWeek2EditorialR16,applyWeek2EditorialR167} from './inquirer-week2-editorial-r167.mjs';
+export {applyWeek2EditorialR167} from './inquirer-week2-editorial-r167.mjs';
+export {applyWeek2EditorialR16,applyWeek2EditorialR168} from './inquirer-week2-editorial-r168.mjs';

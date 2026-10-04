@@ -91,6 +91,46 @@ function repairPluralTeamGrammar(team){
   }
 }
 
+function diversifyNormalizedTemplates(team){
+  const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return;
+  const who=reporter(article),ref=shortRef(team),refPoss=possessive(ref);
+  const starterByName=new Map((team?.starter_details||[]).map(p=>[String(p?.name||'').toLowerCase(),p]));
+  const scoreShare=/^(.+?) accounted for about (\d+(?:\.\d+)?)% of the team's Week 2 scoring\.$/i;
+  const secondThrone=/^(.+?) gets the second after that Week 2 result\.$/i;
+  const midaPlayoffs=/^MIDA has .+? around (\d+(?:\.\d+)?)% for the playoffs\.$/i;
+
+  const scoreShareLine=(player,pct)=>{
+    if(who==='Tilly Fleecer')return `${pct}% of ${refPoss} Week 2 points came from ${player}. That is the kind of share that makes the quiet lineup spots look guilty by association.`;
+    if(who==='Bartholomew Roycington III')return `${player} supplied roughly ${pct}% of ${refPoss} Week 2 scoring, an allocation far too concentrated to dismiss as a statistical curiosity.`;
+    if(who==='Jefferson Filch')return `${player} generated about ${pct}% of ${refPoss} Week 2 points. When one name owns that much of the total, every silent starter becomes part of the explanation.`;
+    return `${player} produced roughly ${pct}% of ${refPoss} Week 2 scoring. One starter carrying that much of the total is useful; needing it is the problem.`;
+  };
+  const secondThroneLine=player=>{
+    const p=starterByName.get(String(player||'').toLowerCase()),pts=Number(p?.points),total=Number.isFinite(pts)?`${fmt(pts)} points`:'that Week 2 line';
+    if(who==='Tilly Fleecer')return `${player} crashes the other Cool Throne seat with ${total}; subtlety was not invited.`;
+    if(who==='Bartholomew Roycington III')return `${player} occupies the other Cool Throne seat after ${total}; omitting that performance would be indefensible bookkeeping.`;
+    if(who==='Jefferson Filch')return `${player} takes the other Cool Throne spot with ${total}. The number is too loud to leave out of the finding.`;
+    return `${player} takes the other Cool Throne spot after ${total}. That performance belongs in the same sentence as the first one.`;
+  };
+  const midaLine=pct=>{
+    const odds=Number(pct),band=Number.isFinite(odds)?(odds>=65?'strong':odds>=35?'live':'thin'):'live';
+    if(who==='Tilly Fleecer')return `${refPoss} playoff estimate is hovering near ${pct}%. ${band==='strong'?'That is enough optimism to get dangerous with.':band==='thin'?'That is thin enough to make Week 3 feel rude already.':'That is the perfect range for confidence and panic to share a parking spot.'}`;
+    if(who==='Bartholomew Roycington III')return `The playoff model leaves ${ref} at roughly ${pct}%. ${band==='strong'?'A healthy figure, though hardly a coronation.':band==='thin'?'A figure so modest that September has already misplaced its manners.':'Substantial enough to matter, fragile enough to forbid self-congratulation.'}`;
+    if(who==='Jefferson Filch')return `${refPoss} playoff estimate sits near ${pct}%. ${band==='strong'?'The number supports confidence, but it does not close the case.':band==='thin'?'That narrows the room for another bad result considerably.':'The number keeps both the optimists and the skeptics under questioning.'}`;
+    return `${refPoss} playoff estimate is about ${pct}%. ${band==='strong'?'Good position, not permission to coast.':band==='thin'?'That makes Week 3 matter more than anyone wanted this early.':'That is enough uncertainty to make the next result genuinely informative.'}`;
+  };
+
+  for(const s of article.sections){
+    if(!Array.isArray(s?.paragraphs))continue;
+    s.paragraphs=s.paragraphs.map(p=>sentences(p).map(sentence=>{
+      let m=sentence.match(scoreShare);if(m)return scoreShareLine(m[1],m[2]);
+      m=sentence.match(secondThrone);if(m)return secondThroneLine(m[1]);
+      m=sentence.match(midaPlayoffs);if(m)return midaLine(m[1]);
+      return sentence;
+    }).join(' '));
+  }
+}
+
 function factAnchor(team,sentence){
   const article=team?.inquirer_article,who=reporter(article),ref=shortRef(team),pts=score(team);
   const total=Number.isFinite(pts)?pts.toFixed(1):'its Week 2 total';
@@ -137,7 +177,7 @@ function varyCrossTeamExactRepeats(teams){
 export function applyWeek2EditorialR16(raw){
   const out=applyR168(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
-  out.teams=(out.teams||[]).map(team=>{repairKnownPlayerNameSplits(team);replaceR167Additions(team);repairCoolThroneRecognition(team);repairPluralTeamGrammar(team);return team;});
+  out.teams=(out.teams||[]).map(team=>{repairKnownPlayerNameSplits(team);replaceR167Additions(team);repairCoolThroneRecognition(team);repairPluralTeamGrammar(team);diversifyNormalizedTemplates(team);return team;});
   varyCrossTeamExactRepeats(out.teams);
   if(out.league_overview)out.league_overview.structure_revision='week2-r169';
   out.structure_revision='week2-r169';

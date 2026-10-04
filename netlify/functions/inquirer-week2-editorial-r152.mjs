@@ -50,10 +50,28 @@ function dedupePlayerScores(team){
   return team;
 }
 
+function normalizeDivisionBoard(out){
+  const board=(out?.league_overview?.hot_takes||[]).find(x=>/division board/i.test(String(x?.title||'')));
+  if(!board||typeof board.take!=='string')return;
+  const lines=board.take.split('\n');
+  board.take=lines.map(line=>{
+    if(/^AFC EAST:/i.test(line))return line.replace(/^AFC EAST:\s*The standings say New England at\s*(\d+-\d+);\s*/i,'AFC EAST: New England Patriots ($1) — ');
+    if(/^AFC NORTH:/i.test(line))return line.replace(/^AFC NORTH:\s*Baltimore and Cleveland are both\s*(\d+-\d+),\s*/i,'AFC NORTH: Baltimore Ravens ($1) — Cleveland is also $1; ');
+    if(/^AFC SOUTH:/i.test(line))return line.replace(/^AFC SOUTH:\s*Tennessee is\s*(\d+-\d+)\s*/i,'AFC SOUTH: Tennessee Titans ($1) — ');
+    if(/^AFC WEST:/i.test(line))return line.replace(/^AFC WEST:\s*Denver is\s*(\d+-\d+)\s*/i,'AFC WEST: Denver Doncos ($1) — ');
+    if(/^NFC EAST:/i.test(line))return line.replace(/^NFC EAST:\s*Philadelphia and Dallas are both\s*(\d+-\d+)\.\s*/i,'NFC EAST: Philadelphia Eagles ($1) — Dallas is also $1. ');
+    if(/^NFC NORTH:/i.test(line))return line.replace(/^NFC NORTH:\s*Nobody gets to hide behind a perfect record because Minnesota, Detroit and Chicago are all\s*(\d+-\d+)\.\s*/i,'NFC NORTH: Minnesota Vikings ($1) — Detroit and Chicago are also $1. ');
+    if(/^NFC SOUTH:/i.test(line))return line.replace(/^NFC SOUTH:\s*New Orleans is\s*(\d+-\d+),\s*/i,'NFC SOUTH: New Orleans Aints ($1) — ');
+    if(/^NFC WEST:/i.test(line))return line.replace(/^NFC WEST:\s*Arizona is\s*(\d+-\d+)\s*/i,'NFC WEST: Arizona Cardinals ($1) — ');
+    return line;
+  }).join('\n');
+}
+
 export function applyWeek2EditorialR16(raw){
   if(!raw||Number(raw.season)!==2026||Number(raw.week)!==2)return applyR151(raw);
   const out=applyR151(attachHistoricalMida(raw));
   out.teams=(out.teams||[]).map(dedupePlayerScores);
+  normalizeDivisionBoard(out);
   if(out.league_overview)out.league_overview.structure_revision='week2-r152';
   out.structure_revision='week2-r152';
   return out;

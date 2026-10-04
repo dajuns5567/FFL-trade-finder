@@ -91,6 +91,32 @@ function repairPluralTeamGrammar(team){
   }
 }
 
+function repairExplicitMidaPhrasing(team){
+  const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return;
+  const ref=shortRef(team),refPoss=possessive(ref);
+  const matchup=/^MIDA has .+? around (\d+(?:\.\d+)?)% for the playoffs and (.+?) around (\d+(?:\.\d+)?)%\.\s+For [^,]+,\s+.*$/i;
+  const single=/^MIDA has .+? around (\d+(?:\.\d+)?)% to make the playoffs\.\s+.*$/i;
+  for(const s of article.sections){
+    if(!Array.isArray(s?.paragraphs))continue;
+    s.paragraphs=s.paragraphs.map(p=>{
+      const text=String(p||'');
+      let m=text.match(matchup);
+      if(m){
+        const own=Number(m[1]),oppName=String(m[2]||'the opponent'),opp=Number(m[3]),gap=own-opp;
+        let read;
+        if(gap>=40)read='The gap is enormous on paper. It still has to survive contact with an actual lineup.';
+        else if(gap>=0)read='That edge is worth using, not admiring; Week 3 still has to justify it.';
+        else if(gap<=-40)read='The model is openly skeptical. Week 3 is where the roster gets to make that look foolish.';
+        else read='The model leans the other way. Week 3 gives the roster a chance to change the argument.';
+        return `${refPoss} playoff estimate sits at ${m[1]}% against ${possessive(oppName)} ${m[3]}%. ${read}`;
+      }
+      m=text.match(single);
+      if(m)return `${refPoss} playoff estimate sits around ${m[1]}%. That is encouraging, but a strong model number is not a permission slip; the next result still has to agree.`;
+      return text;
+    });
+  }
+}
+
 function diversifyNormalizedTemplates(team){
   const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return;
   const who=reporter(article),ref=shortRef(team),refPoss=possessive(ref);
@@ -177,7 +203,7 @@ function varyCrossTeamExactRepeats(teams){
 export function applyWeek2EditorialR16(raw){
   const out=applyR168(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
-  out.teams=(out.teams||[]).map(team=>{repairKnownPlayerNameSplits(team);replaceR167Additions(team);repairCoolThroneRecognition(team);repairPluralTeamGrammar(team);diversifyNormalizedTemplates(team);return team;});
+  out.teams=(out.teams||[]).map(team=>{repairKnownPlayerNameSplits(team);replaceR167Additions(team);repairCoolThroneRecognition(team);repairPluralTeamGrammar(team);repairExplicitMidaPhrasing(team);diversifyNormalizedTemplates(team);return team;});
   varyCrossTeamExactRepeats(out.teams);
   if(out.league_overview)out.league_overview.structure_revision='week2-r169';
   out.structure_revision='week2-r169';

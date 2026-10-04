@@ -127,11 +127,45 @@ function refineOverview(overview,teams){
   for(const take of overview?.hot_takes||[])take.take=refine(take.take,take.reporter);
 }
 
+function ensurePostseasonResolution(out,weekClassification){
+  if(!weekClassification?.playoffs)return;
+  const teams=out?.inquirer?.teams||[],overview=out?.leagueOverview;
+  const eliminated=teams.filter(t=>t?.playoff_context?.eliminated_this_week),advanced=teams.filter(t=>t?.playoff_context?.advanced_this_week);
+  for(const team of eliminated){
+    const article=team?.inquirer_article;if(!article)continue;
+    const all=(article.paragraphs||[]).join(' ');
+    if(!/eliminated from championship contention/i.test(all)){
+      const lede=(article.sections||[]).find(s=>s.kind==='lede')||(article.sections||[])[0];
+      if(lede?.paragraphs)lede.paragraphs.unshift(`${teamName(team)} was eliminated from championship contention in ${String(team.playoff_context?.current_round||weekClassification.round||'this playoff round')}. There is no softer fantasy interpretation: the title path ended here.`);
+      article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
+  }
+  for(const team of advanced){
+    const article=team?.inquirer_article;if(!article)continue;
+    const next=String(team.playoff_context?.next_round||'the next round'),all=(article.paragraphs||[]).join(' ');
+    if(!new RegExp(`advances to ${next.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`,'i').test(all)){
+      const outlook=(article.sections||[]).find(s=>s.kind==='outlook')||(article.sections||[]).at(-1);
+      if(outlook?.paragraphs)outlook.paragraphs.push(`${teamName(team)} advances to ${next}. Surviving the bracket is the only argument that matters now.`);
+      article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
+  }
+  const playoffSection=(overview?.sections||[]).find(s=>/Who Advanced and Who Went Home|Super Bowl/i.test(String(s?.heading||'')));
+  if(playoffSection){
+    const copy=(playoffSection.paragraphs||[]).join(' ');
+    if(eliminated.length&&!/eliminated from championship contention/i.test(copy))playoffSection.paragraphs.push(`${eliminated.map(teamName).join(', ')} ${eliminated.length===1?'was':'were'} eliminated from championship contention. Their remaining games cannot reopen the title path.`);
+    if(advanced.length&&!/advances to .*Divisional Round/i.test(copy)){
+      const next=String(advanced[0]?.playoff_context?.next_round||'the next round');
+      playoffSection.paragraphs.push(`${advanced.map(teamName).join(', ')} ${advanced.length===1?'advances':'advance'} to ${next}.`);
+    }
+  }
+}
+
 export function applyInquirerEditorialV33(args={}){
   const base=applyInquirerEditorialV32(args);
   if(!base||Number(args.week)<3)return base;
   const out=structuredClone(base),teams=out?.inquirer?.teams||[];
   for(const team of teams)refineArticle(team);
   refineOverview(out?.leagueOverview,teams);
+  ensurePostseasonResolution(out,args.weekClassification);
   return out;
 }

@@ -46,6 +46,7 @@ jobs:
           node --check netlify/functions/inquirer-week2-editorial-r27.mjs
           node --check netlify/functions/inquirer-week2-editorial-r28.mjs
           node --check netlify/functions/inquirer-week2-editorial-r29.mjs
+          node --check netlify/functions/inquirer-week2-editorial-r169.mjs
           node --check netlify/functions/player-signal-engine.mjs
           node --check netlify/functions/player-signals.mjs
           node --check scripts/player-signal-engine-smoke.mjs
@@ -156,7 +157,7 @@ jobs:
           import rawWeek2 from './netlify/functions/inquirer-week2-2026-preload.mjs';
           import {applyWeek2EditorialR16} from './netlify/functions/inquirer-week2-editorial-r29.mjs';
           const week2=applyWeek2EditorialR16(rawWeek2);
-          if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||week2?.structure_revision!=='week2-r168')throw new Error('Active Week 2 editorial chain did not materialize from the locked preload');
+          if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||week2?.structure_revision!=='week2-r169')throw new Error('Active Week 2 editorial chain did not materialize from the locked preload');
 
           const expectedDivisions=['AFC EAST','AFC NORTH','AFC SOUTH','AFC WEST','NFC EAST','NFC NORTH','NFC SOUTH','NFC WEST'];
           const divisionTake=(week2?.league_overview?.hot_takes||[]).find(x=>/division board/i.test(String(x?.title||'')));
@@ -176,7 +177,7 @@ jobs:
           // The shared legacy generated-audit still parses the retired colon/leader
           // Division Board syntax. Feed it a compatibility copy only after validating
           // the active rendered board above; every other generated-output gate runs
-          // against unchanged R168 content.
+          // against unchanged R169 content.
           const auditWeek2=structuredClone(week2);
           const auditDivisionTake=(auditWeek2.league_overview.hot_takes||[]).find(x=>/division board/i.test(String(x?.title||'')));
           auditDivisionTake.take=divisionBlocks.map(block=>{

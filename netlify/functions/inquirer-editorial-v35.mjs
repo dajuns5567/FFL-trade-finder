@@ -1,6 +1,7 @@
 // Fleeced! Inquirer forward reporter engine V35.
 // Narrow refinement over V34: diversify the last normalized team-article
-// reactions caught by the existing cross-team copy gate.
+// reactions caught by the existing cross-team copy gate and remove residual
+// newsroom/social meta language after all forward rewrites have run.
 
 import {
   applyInquirerEditorialV34,
@@ -47,16 +48,42 @@ function diversifyFilchHotSeat(text,team,article,week){
   ]);
 }
 
+function scrubResidualMeta(text){
+  return String(text||'')
+    .replace(/\b(?:tomorrow(?:’s|'s)\s+)?back[- ]page\b/gi,'league conversation')
+    .replace(/\bgroup chat\b/gi,'rival managers')
+    .replace(/\brival chat\b/gi,'rivals')
+    .replace(/\bscreenshots?\b/gi,'talking points')
+    .replace(/\bcopy desk\b/gi,'league')
+    .replace(/\bnewsroom\b/gi,'league')
+    .replace(/\bthe part rival managers will talking point is this:\s*/gi,'Rivals will notice this: ')
+    .replace(/\bthis is the sentence the rival managers will keep:\s*/gi,'This is what rivals will remember: ')
+    .replace(/\bthe league conversation version is simple:\s*/gi,'The football consequence is simple: ')
+    .replace(/\bfan base has talking point, memes and exactly one volume setting\b/gi,'fan base has one complaint and exactly one volume setting')
+    .replace(/\s{2,}/g,' ')
+    .trim();
+}
+
 function refineArticle(team,week){
   const article=team?.inquirer_article;if(!article)return;
   for(const section of article.sections||[]){
     section.paragraphs=(section.paragraphs||[]).map(p=>{
       let out=diversifyNickWaste(p,team,article,week);
       out=diversifyFilchHotSeat(out,team,article,week);
-      return out;
+      return scrubResidualMeta(out);
     });
   }
   article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]).filter(Boolean);
+}
+
+function refineOverview(overview){
+  if(!overview)return;
+  overview.deck=scrubResidualMeta(overview.deck);
+  for(const section of overview.sections||[]){
+    section.paragraphs=(section.paragraphs||[]).map(scrubResidualMeta);
+    for(const block of section.blocks||[])block.paragraphs=(block.paragraphs||[]).map(scrubResidualMeta);
+  }
+  for(const take of overview.hot_takes||[])take.take=scrubResidualMeta(take.take);
 }
 
 export function applyInquirerEditorialV35(args={}){
@@ -64,5 +91,6 @@ export function applyInquirerEditorialV35(args={}){
   if(!base||Number(args.week)<3)return base;
   const out=structuredClone(base),week=Number(args.week);
   for(const team of out?.inquirer?.teams||[])refineArticle(team,week);
+  refineOverview(out?.leagueOverview);
   return out;
 }

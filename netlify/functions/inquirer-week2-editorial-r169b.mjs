@@ -72,20 +72,26 @@ function rewriteMidaOutlook(team){
   rebuild(article);
 }
 
-function isScoreScaffold(text,team){
+function exactTeamScorePattern(team){
   const pts=score(team);
-  if(!Number.isFinite(pts))return false;
-  const escaped=String(pts).replace('.','\\.');
-  const hasScore=new RegExp(`(?:scored|score|put up|finished).*?${escaped}(?:\\b|$)`,'i').test(text);
-  const genericFinish=/finished (?:in the )?bottom (?:eight|quarter)|bottom eight in scoring/i.test(text);
+  if(!Number.isFinite(pts))return null;
+  const token=String(pts).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return new RegExp(`(?:^|[^\\d])${token}(?:[^\\d]|$)`);
+}
+
+function isScoreScaffold(text,team){
+  const pts=score(team),scorePattern=exactTeamScorePattern(team);
+  if(!Number.isFinite(pts)||!scorePattern)return false;
+  const hasScore=scorePattern.test(text);
+  const genericFinish=/finished (?:in the )?(?:top|bottom) (?:eight|quarter)|(?:top|bottom)[- ](?:eight|quarter) in scoring/i.test(text);
   return hasScore||genericFinish;
 }
 
 function shapeArticle(team){
   const article=team?.inquirer_article;
   if(!article||!Array.isArray(article.sections))return;
-  const exactSeen=new Set(),familyCounts=new Map();
-  let scoreFacts=0,week3ProjectionFacts=0,rosterValueFacts=0;
+  const exactSeen=new Set(),familyCounts=new Map(),scorePattern=exactTeamScorePattern(team);
+  let scoreFacts=0,teamScoreMentions=0,resultFacts=0,rankingFacts=0,week3ProjectionFacts=0,rosterValueFacts=0;
   for(const s of article.sections){
     if(!Array.isArray(s?.paragraphs))continue;
     const kept=[];
@@ -102,9 +108,21 @@ function shapeArticle(team){
         familyCounts.set(family,count+1);
       }
 
+      if(scorePattern?.test(text)){
+        teamScoreMentions++;
+        if(teamScoreMentions>2)continue;
+      }
       if(isScoreScaffold(text,team)){
         scoreFacts++;
-        if(scoreFacts>3)continue;
+        if(scoreFacts>2)continue;
+      }
+      if(/\b(?:beat|defeated|won|lost to|fell to|lost)\b/i.test(text)){
+        resultFacts++;
+        if(resultFacts>2)continue;
+      }
+      if(/(?:rank(?:ed|ing)\s+\d+.*(?:32|teams)|top[- ](?:quarter|eight)|bottom[- ](?:quarter|eight)|finished (?:in the )?(?:top|bottom) (?:eight|quarter))/i.test(text)){
+        rankingFacts++;
+        if(rankingFacts>1)continue;
       }
       if(/week 3 projects .* making .* projection favorite/i.test(text)){
         week3ProjectionFacts++;
@@ -152,12 +170,19 @@ function isolateBreakout(node,seen=new WeakSet()){
   if(seen.has(node))return;
   seen.add(node);
   if(Array.isArray(node)){node.forEach(x=>isolateBreakout(x,seen));return;}
-  const title=clean(node.title||node.headline||'');
-  const match=title.match(/^Breakout Player to Watch:\s*(.+)$/i);
-  if(match){
-    const player=clean(match[1]);
-    const copy=`${player} entered Week 2 on Breakout Watch, and Week 2 did not erase that case. Keep the watch on ${player} for Week 3; the role and trajectory still deserve another look.`;
-    for(const key of ['copy','text','body','description','summary'])if(typeof node[key]==='string')node[key]=copy;
+
+  const copy='Dallas Turner remains the Breakout Player to Watch. Week 2 strengthened the case rather than ending it, so Week 3 is the next test.';
+  const titleFields=['title','headline','label','heading','name','kicker','section_title'];
+  const title=clean(titleFields.map(k=>typeof node[k]==='string'?node[k]:'').find(Boolean)||'');
+  const breakoutNode=/Breakout Player to Watch/i.test(title)&&/Dallas Turner/i.test(title);
+
+  for(const [key,value] of Object.entries(node)){
+    if(typeof value!=='string')continue;
+    if(/Dallas Turner/i.test(value)&&/Devin Lloyd/i.test(value)&&/breakout/i.test(value))node[key]=copy;
+  }
+
+  if(breakoutNode){
+    for(const key of ['copy','text','body','description','summary','content','value'])if(typeof node[key]==='string')node[key]=copy;
     if(Array.isArray(node.paragraphs))node.paragraphs=[copy];
   }
   Object.values(node).forEach(x=>isolateBreakout(x,seen));

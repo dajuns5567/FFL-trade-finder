@@ -11,6 +11,9 @@ const sentences=text=>String(text||'').replace(/\bSt\.\s+(?=[A-Z])/g,'St.\u00a0'
 const words=text=>String(text||'').trim().split(/\s+/).filter(Boolean).length;
 const lowerFirst=s=>s?`${s.charAt(0).toLowerCase()}${s.slice(1)}`:s;
 const possessive=s=>/s$/i.test(String(s||''))?`${s}'`:`${s}'s`;
+const pluralAlias=s=>/s$/i.test(String(s||''));
+const beVerb=s=>pluralAlias(s)?'are':'is';
+const sitVerb=s=>pluralAlias(s)?'sit':'sits';
 
 function repairKnownPlayerNameSplits(team){
   const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return;
@@ -32,24 +35,24 @@ function replaceR167Additions(team){
   const sentiment=section(article,'sentiment');
   if(!sentiment||!Array.isArray(sentiment.paragraphs))return;
   const who=reporter(article),ref=shortRef(team),rec=record(team),pts=score(team),next=opponent(team);
-  const total=Number.isFinite(pts)?pts.toFixed(1):'the Week 2 total';
+  const total=Number.isFinite(pts)?pts.toFixed(1):'the Week 2 total',be=beVerb(ref),sit=sitVerb(ref);
   let line;
   if(who==='Tilly Fleecer'){
-    if(rec.wins===2)line=`${ref} is 2-0, so the fans have permission to get obnoxious about ${total} points until ${next} gets a vote. Two wins buy confidence; they do not buy immunity from a bad Sunday.`;
-    else if(rec.losses===2)line=`${ref} is 0-2 after a ${total}-point Week 2, which means ${next} is no longer a casual appointment. The crowd does not need manufactured drama; the record brought plenty.`;
-    else line=`${ref} sits 1-1 after ${total} points, the exact record built to support both swagger and panic at the same tailgate. ${next} gets to decide which emotion was premature.`;
+    if(rec.wins===2)line=`${ref} ${be} 2-0, so the fans have permission to get obnoxious about ${total} points until ${next} gets a vote. Two wins buy confidence; they do not buy immunity from a bad Sunday.`;
+    else if(rec.losses===2)line=`${ref} ${be} 0-2 after a ${total}-point Week 2, which means ${next} is no longer a casual appointment. The crowd does not need manufactured drama; the record brought plenty.`;
+    else line=`${ref} ${sit} 1-1 after ${total} points, the exact record built to support both swagger and panic at the same tailgate. ${next} gets to decide which emotion was premature.`;
   }else if(who==='Bartholomew Roycington III'){
     if(rec.wins===2)line=`At 2-0, ${ref} may enjoy ${total} points without pretending the season has already signed the certificate of excellence. ${next} now has the discourteous opportunity to test the celebration.`;
     else if(rec.losses===2)line=`At 0-2 after ${total} points, ${ref} has exhausted the tasteful portion of September. ${next} is where concern either becomes relief or acquires considerably sharper language.`;
     else line=`A 1-1 ${ref} team coming off ${total} points has earned neither despair nor a coronation. ${next} gets the next opportunity to make the public mood look wise or magnificently premature.`;
   }else if(who==='Jefferson Filch'){
-    if(rec.wins===2)line=`${ref} is 2-0 after ${total} points. That raises the standard for ${next}: another win makes the opening look durable, while a loss gives the skeptics something specific to attack.`;
-    else if(rec.losses===2)line=`${ref} is 0-2 after ${total} points, so ${next} arrives with a simple burden. Win and the first two weeks become recoverable; lose and every unresolved weakness gets louder.`;
-    else line=`${ref} is 1-1 after ${total} points, which leaves the public argument appropriately unsettled. ${next} can turn that ambiguity into confidence or make the first two weeks look like competing warnings.`;
+    if(rec.wins===2)line=`${ref} ${be} 2-0 after ${total} points. That raises the standard for ${next}: another win makes the opening look durable, while a loss gives the skeptics something specific to attack.`;
+    else if(rec.losses===2)line=`${ref} ${be} 0-2 after ${total} points, so ${next} arrives with a simple burden. Win and the first two weeks become recoverable; lose and every unresolved weakness gets louder.`;
+    else line=`${ref} ${be} 1-1 after ${total} points, which leaves the public argument appropriately unsettled. ${next} can turn that ambiguity into confidence or make the first two weeks look like competing warnings.`;
   }else{
-    if(rec.wins===2)line=`${ref} is 2-0 after ${total} points. Fans can enjoy that without pretending ${next} is ceremonial; a third result will say more than another week of confidence speeches.`;
-    else if(rec.losses===2)line=`${ref} is 0-2 after ${total} points. Nobody needs a motivational slogan before ${next}; they need enough scoring to stop making the standings accurate.`;
-    else line=`${ref} is 1-1 after ${total} points, which is fantasy football's favorite way to make everybody sound certain with half the information. ${next} gets the next word.`;
+    if(rec.wins===2)line=`${ref} ${be} 2-0 after ${total} points. Fans can enjoy that without pretending ${next} is ceremonial; a third result will say more than another week of confidence speeches.`;
+    else if(rec.losses===2)line=`${ref} ${be} 0-2 after ${total} points. Nobody needs a motivational slogan before ${next}; they need enough scoring to stop making the standings accurate.`;
+    else line=`${ref} ${be} 1-1 after ${total} points, which is fantasy football's favorite way to make everybody sound certain with half the information. ${next} gets the next word.`;
   }
   sentiment.paragraphs.push(line);
 }

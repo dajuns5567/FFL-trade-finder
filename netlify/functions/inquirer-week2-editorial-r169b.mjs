@@ -14,7 +14,7 @@ function rewriteMidaOutlook(team){
   if(!article||!outlook||!Array.isArray(outlook.paragraphs))return;
   const who=reporter(article),ref=shortRef(team),next=opponent(team),refPoss=possessive(ref),pts=score(team),star=topStarter(team);
   const total=Number.isFinite(pts)?pts.toFixed(1):'the Week 2 total';
-  const starRead=star?`${star.name}'s ${Number(star.points).toFixed(1)} points`:`${total} team points`;
+  const starRead=star?star.name:'the leading starter';
   outlook.paragraphs=outlook.paragraphs.map(p=>{
     const text=String(p||'').trim();
     if(/^MIDA\b/i.test(text)){

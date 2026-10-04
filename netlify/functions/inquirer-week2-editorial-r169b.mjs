@@ -7,12 +7,14 @@ const reporter=article=>String(article?.reporter?.name||'Nick Swindell');
 const opponent=team=>String(team?.next_opponent_name||team?.next_opponent||'the Week 3 opponent');
 const possessive=s=>/s$/i.test(String(s||''))?`${s}'`:`${s}'s`;
 const score=team=>Number.isFinite(Number(team?.points))?Number(team.points):null;
+const topStarter=team=>(team?.starter_details||[]).filter(p=>Number.isFinite(Number(p?.points))).sort((a,b)=>Number(b.points)-Number(a.points))[0]||null;
 
 function rewriteMidaOutlook(team){
   const article=team?.inquirer_article,outlook=section(article,'outlook');
   if(!article||!outlook||!Array.isArray(outlook.paragraphs))return;
-  const who=reporter(article),ref=shortRef(team),next=opponent(team),refPoss=possessive(ref),pts=score(team);
+  const who=reporter(article),ref=shortRef(team),next=opponent(team),refPoss=possessive(ref),pts=score(team),star=topStarter(team);
   const total=Number.isFinite(pts)?pts.toFixed(1):'the Week 2 total';
+  const starRead=star?`${star.name}'s ${Number(star.points).toFixed(1)} points`:`${total} team points`;
   outlook.paragraphs=outlook.paragraphs.map(p=>{
     const text=String(p||'').trim();
     if(/^MIDA\b/i.test(text)){
@@ -39,26 +41,27 @@ function rewriteMidaOutlook(team){
 
     // R169 already naturalized many MIDA lines. Only rewrite the few remaining
     // normalized shapes that still repeat across teams in rendered Week 2 output.
-    const near=text.match(new RegExp(`^${refPoss.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\$&')} playoff estimate sits near (\\d+(?:\\.\\d+)?)%\\.`,'i'));
+    const escapedPoss=refPoss.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const near=text.match(new RegExp(`^${escapedPoss} playoff estimate sits near (\\d+(?:\\.\\d+)?)%\\.`,'i'));
     if(near&&/burden of proof|narrows the room/i.test(text)){
       const odds=Number(near[1]);
-      if(odds<10)return `${refPoss} playoff estimate is down at ${near[1]}% after ${total} points. ${next} is not a philosophical exercise now; it is a chance to stop the first two weeks from hardening into a verdict.`;
-      return `${refPoss} playoff estimate is ${near[1]}% after a ${total}-point Week 2. ${next} has to turn that number upward before skepticism becomes the easiest position in the room.`;
+      if(odds<10)return `${refPoss} playoff estimate is down at ${near[1]}% even with ${starRead} leading Week 2. ${next} is where the rest of the lineup has to stop making that number look reasonable.`;
+      return `${refPoss} playoff estimate is ${near[1]}% after ${starRead} carried the strongest individual line. ${next} needs more of the roster to match that standard.`;
     }
 
-    const hover=text.match(new RegExp(`^${refPoss.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\$&')} playoff estimate is hovering near (\\d+(?:\\.\\d+)?)%\\.`,'i'));
+    const hover=text.match(new RegExp(`^${escapedPoss} playoff estimate is hovering near (\\d+(?:\\.\\d+)?)%\\.`,'i'));
     if(hover&&/confidence and panic|useful context/i.test(text)){
       const odds=Number(hover[1]);
-      if(odds<30)return `${refPoss} playoff estimate is ${hover[1]}% after ${total} points. ${next} has officially graduated from “next game” to “please stop making September weird.”`;
-      if(odds<45)return `${ref} sits at ${hover[1]}% for the playoffs after scoring ${total}. ${next} gets to decide whether that middle ground was cautious or just cowardly.`;
-      return `${refPoss} playoff estimate is ${hover[1]}% after ${total} points. ${next} now gets the delightful job of separating real momentum from two weeks of emotional overreaction.`;
+      if(odds<30)return `${refPoss} playoff estimate is ${hover[1]}% after ${starRead} supplied the best Week 2 answer. ${next} needs the rest of the lineup to become less theatrical.`;
+      if(odds<45)return `${ref} sits at ${hover[1]}% for the playoffs with ${starRead} setting the Week 2 pace. ${next} gets to decide whether that middle ground was cautious or cowardly.`;
+      return `${refPoss} playoff estimate is ${hover[1]}%, and ${starRead} is one reason the season still has room to tilt either way. ${next} now gets to separate momentum from two weeks of emotional overreaction.`;
     }
 
-    const strong=text.match(new RegExp(`^${refPoss.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\$&')} playoff estimate is (\\d+(?:\\.\\d+)?)%\\.`,'i'));
+    const strong=text.match(new RegExp(`^${escapedPoss} playoff estimate is (\\d+(?:\\.\\d+)?)%\\.`,'i'));
     if(strong&&/next pressure point/i.test(text)){
       const odds=Number(strong[1]);
-      if(odds>=90)return `${refPoss} playoff estimate is already ${strong[1]}%. ${next} is where a great start either becomes authority or gets reminded that September is still capable of humiliation.`;
-      return `${refPoss} playoff estimate is ${strong[1]}%, which is strong enough to raise expectations without excusing anything. ${next} gets the first chance to punish that confidence.`;
+      if(odds>=90)return `${refPoss} playoff estimate is already ${strong[1]}%, with ${starRead} helping make that optimism look earned. ${next} is where a great start either becomes authority or gets humbled.`;
+      return `${refPoss} playoff estimate is ${strong[1]}%, and ${starRead} gives that confidence something concrete to lean on. ${next} gets the first chance to punish it.`;
     }
 
     return text;

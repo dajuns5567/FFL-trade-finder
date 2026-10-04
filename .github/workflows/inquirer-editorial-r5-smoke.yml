@@ -45,6 +45,7 @@ jobs:
           node --check netlify/functions/inquirer-week2-editorial-r26.mjs
           node --check netlify/functions/inquirer-week2-editorial-r27.mjs
           node --check netlify/functions/inquirer-week2-editorial-r28.mjs
+          node --check netlify/functions/inquirer-week2-editorial-r29.mjs
           node --check netlify/functions/player-signal-engine.mjs
           node --check netlify/functions/player-signals.mjs
           node --check scripts/player-signal-engine-smoke.mjs
@@ -152,9 +153,9 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import rawWeek2 from './netlify/functions/inquirer-week2-2026-preload.mjs';
-          import {applyWeek2EditorialR16} from './netlify/functions/inquirer-week2-editorial-r28.mjs';
+          import {applyWeek2EditorialR16} from './netlify/functions/inquirer-week2-editorial-r29.mjs';
           const week2=applyWeek2EditorialR16(rawWeek2);
-          if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||Number(week2?.editorial_revision)!==28||week2?.voice_revision!=='week2-r28')throw new Error('Week 2 revision 28 did not materialize from the locked preload');
+          if(!week2?.published_locked||Number(week2?.season)!==2026||Number(week2?.week)!==2||week2?.structure_revision!=='week2-r168')throw new Error('Active Week 2 editorial chain did not materialize from the locked preload');
           fs.writeFileSync('/tmp/week2-inquirer-r6.json',JSON.stringify(week2,null,2)+'\n');
           NODE
 

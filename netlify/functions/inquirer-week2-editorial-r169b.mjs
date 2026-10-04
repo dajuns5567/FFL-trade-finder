@@ -51,13 +51,13 @@ function rewriteMidaOutlook(team){
       const odds=Number(hover[1]);
       if(odds<30)return `${refPoss} playoff estimate is ${hover[1]}% after ${total} points. ${next} has officially graduated from “next game” to “please stop making September weird.”`;
       if(odds<45)return `${ref} sits at ${hover[1]}% for the playoffs after scoring ${total}. ${next} gets to decide whether that middle ground was cautious or just cowardly.`;
-      return `${ref} is sitting at ${hover[1]}% for the playoffs after ${total} points. ${next} now gets the delightful job of separating real momentum from two weeks of emotional overreaction.`;
+      return `${refPoss} playoff estimate is ${hover[1]}% after ${total} points. ${next} now gets the delightful job of separating real momentum from two weeks of emotional overreaction.`;
     }
 
     const strong=text.match(new RegExp(`^${refPoss.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\$&')} playoff estimate is (\\d+(?:\\.\\d+)?)%\\.`,'i'));
     if(strong&&/next pressure point/i.test(text)){
       const odds=Number(strong[1]);
-      if(odds>=90)return `${ref} is already at ${strong[1]}% for the playoffs. ${next} is where a great start either becomes authority or gets reminded that September is still capable of humiliation.`;
+      if(odds>=90)return `${refPoss} playoff estimate is already ${strong[1]}%. ${next} is where a great start either becomes authority or gets reminded that September is still capable of humiliation.`;
       return `${refPoss} playoff estimate is ${strong[1]}%, which is strong enough to raise expectations without excusing anything. ${next} gets the first chance to punish that confidence.`;
     }
 

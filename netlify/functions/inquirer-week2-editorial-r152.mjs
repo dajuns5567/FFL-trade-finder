@@ -6,6 +6,7 @@ const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const midaByName=new Map(WEEK2_MIDA_2026.map(row=>[norm(row.name),row]));
 const getMida=name=>midaByName.get(norm(name))||null;
 const sentences=s=>String(s||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean);
+const difficulty=/\b(?:stiffen|rougher|difficult stretch|hard part|hard stretch|hardens|gauntlet|resistance|heavy part|friendlier|friendly part|softer|manageable|forgiving|breathing room|favorable|mercy|soft landing|lowering the volume|mixed|split schedule|split the|uneven|difficulty level|lands in the middle|split screen)\b/i;
 
 function attachHistoricalMida(raw){
   const out=structuredClone(raw);
@@ -50,6 +51,53 @@ function dedupePlayerScores(team){
   return team;
 }
 
+function scheduleStretchLine(team,later){
+  const article=team?.inquirer_article||{},reporter=String(article?.reporter?.name||'Nick Swindell');
+  const names=later.map(x=>String(x?.team_name||x?.name||'')).filter(Boolean);
+  const own=Number(team?.mida_outlook?.playoff);
+  const vals=later.map(x=>Number(x?.mida?.playoff)).filter(Number.isFinite);
+  const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+  const relation=Number.isFinite(own)&&Number.isFinite(avg)?(avg>own+10?'rougher':avg<own-10?'friendlier':'mixed'):'mixed';
+  const pair=names.length>1?`${names[0]} and ${names[1]}`:names[0];
+  if(reporter==='Tilly Fleecer'){
+    if(relation==='friendlier')return `Handle Week 3 and ${pair} make the next stretch friendlier on paper. That is not mercy, but it is close enough that nobody gets to blame the road if the scoring disappears.`;
+    if(relation==='rougher')return `Handle Week 3 because ${pair} make the next stretch rougher on paper. Save the victory lap; the schedule has already booked a sequel.`;
+    return `Handle Week 3 and ${pair} leave a mixed stretch behind it. Some breathing room, some resistance, and absolutely no excuse to sleepwalk through either one.`;
+  }
+  if(reporter==='Bartholomew Roycington III'){
+    if(relation==='friendlier')return `A Week 3 win would send them toward ${pair}, a friendlier stretch by the numbers. One should bank the advantage before asking the schedule for another favor.`;
+    if(relation==='rougher')return `Week 3 matters because ${pair} make the road rougher immediately afterward. Better to bank the result now than negotiate with the gauntlet later.`;
+    return `Week 3 leads into ${pair}, a mixed stretch rather than a ceremonial procession. Win first; then decide which part of the schedule deserves the expensive optimism.`;
+  }
+  if(reporter==='Jefferson Filch'){
+    if(relation==='friendlier')return `Bank Week 3 and ${pair} make the next stretch friendlier by the current MIDA outlook. That is useful leverage, not permission to manufacture certainty.`;
+    if(relation==='rougher')return `Week 3 is the result to bank before ${pair} make the next stretch rougher by the current MIDA outlook. The schedule is about to ask harder questions.`;
+    return `Week 3 comes before ${pair}, and the MIDA outlook reads the stretch as mixed. Win now and the later uncertainty is easier to investigate without inventing a crisis.`;
+  }
+  if(relation==='friendlier')return `Win Week 3 and ${pair} make the next stretch friendlier on paper. Bank the result now; favorable roads have a habit of looking obvious only after somebody wastes them.`;
+  if(relation==='rougher')return `Week 3 is the one to bank before ${pair} make the next stretch rougher. The schedule is about to stop accepting vague answers.`;
+  return `Week 3 sits in front of ${pair}, a mixed stretch with both breathing room and resistance. Win now and there is less reason to make the later schedule dramatic.`;
+}
+
+function restoreScheduleStretch(team){
+  const article=team?.inquirer_article;if(!article||!Array.isArray(article.sections))return team;
+  const up=(team?.upcoming_opponents||[]).slice().sort((a,b)=>Number(a.week)-Number(b.week));
+  const later=up.slice(1,3);if(!later.length)return team;
+  const outlook=article.sections.find(s=>String(s?.kind||'')==='outlook');
+  if(!outlook||!Array.isArray(outlook.paragraphs))return team;
+  const names=later.map(x=>String(x?.team_name||'').toLowerCase()).filter(Boolean);
+  let idx=outlook.paragraphs.findIndex(p=>difficulty.test(String(p||''))&&names.every(n=>String(p||'').toLowerCase().includes(n)));
+  let road;
+  if(idx>=0)road=outlook.paragraphs.splice(idx,1)[0];
+  else road=scheduleStretchLine(team,later);
+  if(road){
+    const target=Math.max(0,outlook.paragraphs.length-1);
+    outlook.paragraphs.splice(target,0,road);
+  }
+  article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+  return team;
+}
+
 function normalizeDivisionBoard(out){
   const board=(out?.league_overview?.hot_takes||[]).find(x=>/division board/i.test(String(x?.title||'')));
   if(!board||typeof board.take!=='string')return;
@@ -70,7 +118,7 @@ function normalizeDivisionBoard(out){
 export function applyWeek2EditorialR16(raw){
   if(!raw||Number(raw.season)!==2026||Number(raw.week)!==2)return applyR151(raw);
   const out=applyR151(attachHistoricalMida(raw));
-  out.teams=(out.teams||[]).map(dedupePlayerScores);
+  out.teams=(out.teams||[]).map(dedupePlayerScores).map(restoreScheduleStretch);
   normalizeDivisionBoard(out);
   if(out.league_overview)out.league_overview.structure_revision='week2-r152';
   out.structure_revision='week2-r152';

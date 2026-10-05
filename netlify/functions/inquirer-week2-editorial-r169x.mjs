@@ -37,6 +37,7 @@ function fixArticleMetaAndGrammar(text,team,section){
   const full=String(team?.team_name||'').trim(),short=full.split(/\s+/).filter(Boolean).at(-1)||'',plural=/s$/i.test(short);
   out=out.replace(/Both thoughts can fit in the same paragraph\.?/gi,'Both things are true, and neither needs a committee meeting.');
   out=out.replace(/That performance belongs in the same sentence as the first one\.\s*/gi,'');
+  out=out.replace(/Two weeks is early, but standings are already old enough to annoy somebody; lose it and one loud Sunday starts looking like a cameo\.?/gi,'');
   out=out.replace(/I'm not asking for pessimism;\s*he is asking everyone/gi,"I'm not asking for pessimism; I'm asking everyone");
   out=out.replace(/I have no objection to a hero;\s*he objects when/gi,'I have no objection to a hero; I object when');
   if(plural){

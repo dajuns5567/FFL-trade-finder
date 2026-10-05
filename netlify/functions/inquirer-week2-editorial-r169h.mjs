@@ -105,6 +105,21 @@ function restoreFanSentiment(team){
   rebuild(article);
 }
 
+function managementFollowThrough(team){
+  const article=team?.inquirer_article,who=String(article?.reporter?.name||'Nick Swindell'),ref=String(team?.team_name||'this team').trim().split(/\s+/).filter(Boolean).at(-1)||'this team';
+  if(who==='Tilly Fleecer')return `No convenient bench villain appeared for ${ref}, so management does not get blamed just because the players made Sunday ugly. Sometimes the lineup choice is defensible and the performance is still dreadful; fantasy football is rude like that.`;
+  if(who==='Bartholomew Roycington III')return `There is no tasteful reason to invent a managerial offense for ${ref} when the bench offered no obvious rescue. The selected lineup was defensible; the players simply performed beneath the standard expected of them.`;
+  if(who==='Jefferson Filch')return `The evidence does not support turning ${ref}'s result into a management indictment. With no clear compatible bench answer, the sharper conclusion is that the chosen players failed to deliver rather than that the manager ignored an obvious fix.`;
+  return `${ref} does not need a fake management controversy. There was no clear compatible bench answer, so the Week 2 failure belongs primarily to player performance; the useful Week 3 question is whether those same roles produce a better result.`;
+}
+
+function restoreManagementFollowThrough(team){
+  const article=team?.inquirer_article,management=(article?.sections||[]).find(s=>String(s?.kind||'')==='management');
+  if(!article||!management||!Array.isArray(management.paragraphs)||!management.paragraphs.length||management.paragraphs[0]==='n/a'||management.paragraphs.length>=2)return;
+  management.paragraphs.push(managementFollowThrough(team));
+  rebuild(article);
+}
+
 function enforceBreakout(out){
   const take=(out?.league_overview?.hot_takes||[]).find(x=>/breakout player to watch/i.test(String(x?.title||'')));
   if(!take)return;
@@ -119,6 +134,7 @@ export function applyWeek2EditorialR16(raw){
     restoreHistoricalContext(team);
     restoreOpponentContext(team);
     restoreFanSentiment(team);
+    restoreManagementFollowThrough(team);
   }
   const aints=(out.teams||[]).find(t=>/new orleans aints/i.test(String(t?.team_name||'')));
   if(aints){

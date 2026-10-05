@@ -83,16 +83,25 @@ function looksStatOnly(text){
   return /\b(?:scored|gave|posted|finished with|put up)\b.*\b\d+(?:\.\d+)?\b/i.test(s)&&/\b(?:points?|against|rec|yds?|TD|solo|assist|sack|TFL|QB hit|carries|passing)\b/i.test(s);
 }
 
+function aliasesFor(player){
+  const full=String(player?.name||'').trim(),parts=full.split(/\s+/).filter(Boolean),last=parts.at(-1)||full;
+  return[full,last].filter((x,i,a)=>x&&a.indexOf(x)===i).sort((a,b)=>b.length-a.length);
+}
+
 function decorateParagraph(text,entries,article){
-  let row=norm(text),matched=null;
+  let row=norm(text),matched=null,alias='';
   for(const entry of entries){
-    const name=String(entry.player?.name||'').trim();if(!name)continue;
-    if(new RegExp(`^${esc(name)}\\b`).test(row)){matched=entry;break}
+    for(const candidate of aliasesFor(entry.player)){
+      if(new RegExp(`^${esc(candidate)}\\b`,'i').test(row)){matched=entry;alias=candidate;break}
+    }
+    if(matched)break;
   }
   if(!matched)return row;
-  const {player,signal}=matched,adj=inquirerSignalAdjective(signal,player),name=String(player.name||'');
-  if(adj&&!new RegExp(`^(?:${esc(adj)}\\s+)?${esc(name)}\\b`,'i').test(row))row=`${adj.charAt(0).toUpperCase()+adj.slice(1)} ${row}`;
-  if(adj&&new RegExp(`^${esc(name)}\\b`,'i').test(row))row=row.replace(new RegExp(`^${esc(name)}`),`${adj.charAt(0).toUpperCase()+adj.slice(1)} ${name}`);
+  const {player,signal}=matched,adj=inquirerSignalAdjective(signal,player),name=String(player.name||''),label=adj?adj.charAt(0).toUpperCase()+adj.slice(1):'';
+  if(adj){
+    const replacement=`${label} ${name}`;
+    row=row.replace(new RegExp(`^${esc(alias)}\\b`,'i'),replacement);
+  }
   if(looksStatOnly(row)){
     const pts=(row.match(/\b(-?\d+(?:\.\d+)?)\s+(?:fantasy\s+)?points?\b/i)||row.match(/\bscored\s+(-?\d+(?:\.\d+)?)\b/i)||[])[1];
     row+=` ${statReaction(signal,article,pts)}`;

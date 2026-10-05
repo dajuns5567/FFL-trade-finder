@@ -99,6 +99,22 @@ function addHistoricalInterpretation(team,article){
   }
 }
 
+function preserveTradeAcquisitionWording(team,article){
+  const tradeNames=(team?.trade_acquisitions||[]).map(x=>String(x?.player_name||'').trim()).filter(Boolean);
+  if(!tradeNames.length)return;
+  for(const section of article.sections||[]){
+    if(!Array.isArray(section?.paragraphs))continue;
+    section.paragraphs=section.paragraphs.map(paragraph=>{
+      let text=String(paragraph||'');
+      for(const name of tradeNames){
+        if(!text.toLowerCase().includes(name.toLowerCase()))continue;
+        text=text.replace(/\bwaiver wire\b/gi,'trade market').replace(/\bwaiver\b/gi,'trade').replace(/\bfree agent\b/gi,'trade acquisition').replace(/\badd alert\b/gi,'trade arrival');
+      }
+      return text;
+    });
+  }
+}
+
 export function applyWeek2EditorialR16(raw){
   const out=applyR169S(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
@@ -122,6 +138,7 @@ export function applyWeek2EditorialR16(raw){
       if(Array.isArray(section.paragraphs))section.paragraphs=section.paragraphs.map(p=>removeReporterMeta(p,team));
     }
     addHistoricalInterpretation(team,article);
+    preserveTradeAcquisitionWording(team,article);
     if(String(article?.reporter?.name||'')==='Bartholomew Roycington III'){
       article.headline=stripRetiredRoycingtonMotifs(article.headline);
       for(const section of article.sections||[]){

@@ -51,6 +51,11 @@ function stripRetiredRoycingtonMotifs(text){
     .replace(/\bcoat check\b/gi,'front desk');
 }
 
+function removeNickMeta(text,team){
+  const club=String(team?.team_name||'This team'),alias=club.trim().split(/\s+/).at(-1)||club;
+  return String(text||'').replace(/Nick wants the useful parts repeated, the dumb parts removed, and absolutely nobody pretending two weeks has solved fantasy football/gi,`${alias} has a simple Week 3 assignment: repeat what worked, cut the dumb mistakes, and stop pretending two weeks solved fantasy football`);
+}
+
 export function applyWeek2EditorialR16(raw){
   const out=applyR169S(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
@@ -69,6 +74,9 @@ export function applyWeek2EditorialR16(raw){
         existing.splice(projectionIndex,0,road);
       }
       outlook.paragraphs=existing;
+    }
+    for(const section of article.sections||[]){
+      if(Array.isArray(section.paragraphs))section.paragraphs=section.paragraphs.map(p=>removeNickMeta(p,team));
     }
     if(String(article?.reporter?.name||'')==='Bartholomew Roycington III'){
       article.headline=stripRetiredRoycingtonMotifs(article.headline);

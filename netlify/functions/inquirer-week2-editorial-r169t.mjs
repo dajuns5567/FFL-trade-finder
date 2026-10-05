@@ -69,15 +69,15 @@ function hasHistoricalContext(article,player){
 function historicalInterpretation(player,reporter){
   const name=String(player?.name||'This player'),prior=Number(player?.prior_season_avg),pts=Number(player?.points),avg=prior.toFixed(1),up=pts>prior;
   if(up){
-    if(reporter==='Tilly Fleecer')return `${name} averaged ${avg} fantasy points per game in 2025. Week 2 cleared that pace by enough to raise a rude possibility: last year's version may have been the opening act, not the ceiling.`;
-    if(reporter==='Bartholomew Roycington III')return `${name} averaged ${avg} fantasy points per game in 2025. This performance rose far enough above that standard that one must entertain the indecent possibility that last year's ceiling was simply too low.`;
-    if(reporter==='Jefferson Filch')return `${name} averaged ${avg} fantasy points per game in 2025. The jump is large enough to investigate as actual growth rather than wave away as a hot box score; Week 3 gets to test whether last year's ceiling still applies.`;
-    return `${name} averaged ${avg} fantasy points per game in 2025. This was far enough above that pace to make last year's ceiling look negotiable, which is more interesting than merely saying he beat his average.`;
+    if(reporter==='Tilly Fleecer')return `${name} averaged ${avg} fantasy points per game in 2025. ${name}'s Week 2 cleared that pace by enough to raise a rude possibility: last year's version may have been the opening act, not the ceiling.`;
+    if(reporter==='Bartholomew Roycington III')return `${name} averaged ${avg} fantasy points per game in 2025. ${name}'s performance rose far enough above that standard that one must entertain the indecent possibility that last year's ceiling was simply too low.`;
+    if(reporter==='Jefferson Filch')return `${name} averaged ${avg} fantasy points per game in 2025. ${name}'s jump is large enough to investigate as actual growth rather than wave away as a hot box score; Week 3 gets to test whether last year's ceiling still applies.`;
+    return `${name} averaged ${avg} fantasy points per game in 2025. ${name} rose far enough above that pace to make last year's ceiling look negotiable, which is more interesting than merely saying he beat his average.`;
   }
-  if(reporter==='Tilly Fleecer')return `${name} averaged ${avg} fantasy points per game in 2025. Falling this far below that level earns the performance a proper booing, but one ugly Sunday does not magically prove the role disappeared.`;
-  if(reporter==='Bartholomew Roycington III')return `${name} averaged ${avg} fantasy points per game in 2025. Week 2 fell far enough short that dignified silence is no longer available, though one poor result is still a performance problem before it becomes a role crisis.`;
-  if(reporter==='Jefferson Filch')return `${name} averaged ${avg} fantasy points per game in 2025. The gap is large enough to flag, but not large enough to invent a role crisis; if the opportunity stayed normal, the dud belongs to the player.`;
-  return `${name} averaged ${avg} fantasy points per game in 2025. That makes Week 2 a real miss, not a mystery; unless the role changed, the player owns the dud and the manager does not need to be invented as the culprit.`;
+  if(reporter==='Tilly Fleecer')return `${name} averaged ${avg} fantasy points per game in 2025. ${name} falling this far below that level earns a proper booing, but one ugly Sunday does not magically prove the role disappeared.`;
+  if(reporter==='Bartholomew Roycington III')return `${name} averaged ${avg} fantasy points per game in 2025. ${name}'s Week 2 fell far enough short that dignified silence is no longer available, though one poor result is still a performance problem before it becomes a role crisis.`;
+  if(reporter==='Jefferson Filch')return `${name} averaged ${avg} fantasy points per game in 2025. ${name}'s gap is large enough to flag, but not large enough to invent a role crisis; if the opportunity stayed normal, the dud belongs to the player.`;
+  return `${name} averaged ${avg} fantasy points per game in 2025. ${name}'s Week 2 is a real miss, not a mystery; unless the role changed, the player owns the dud and the manager does not need to be invented as the culprit.`;
 }
 
 function addHistoricalInterpretation(team,article){

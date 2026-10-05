@@ -61,10 +61,10 @@ function voiceDiversify(text,team,article,allTeams){
   });
 
   out=out.replace(new RegExp(`${PLAYER} scored (\\d+(?:\\.\\d+)?) fantasy points against ([^:]+): ([^.]+)\\.`,'g'),(_m,name,pts,opp,line)=>{
-    if(voice==='tilly')return `${name} put ${pts} fantasy points on ${opp}: ${line}. Numbers first; overreaction may begin in an orderly fashion.`;
-    if(voice==='bart')return `${name} contributed ${pts} fantasy points against ${opp}: ${line}. The production may now enter the record without a trumpet procession.`;
-    if(voice==='filch')return `${name}'s Week 2 evidence against ${opp}: ${pts} fantasy points from ${line}. The stat line is useful only if the role explains it.`;
-    return `${name}: ${pts} fantasy points against ${opp}, built from ${line}. Good line. Now explain whether it repeats.`;
+    if(voice==='tilly')return `${name} put ${pts} fantasy points on ${opp}: ${line}. ${name} has now earned one week of completely unreasonable celebration.`;
+    if(voice==='bart')return `${name} contributed ${pts} fantasy points against ${opp}: ${line}. ${name}'s production may enter the record without commissioning a trumpet procession.`;
+    if(voice==='filch')return `${name}'s Week 2 evidence against ${opp}: ${pts} fantasy points from ${line}. ${name}'s stat line matters only if the role explains it.`;
+    return `${name}: ${pts} fantasy points against ${opp}, built from ${line}. ${name} gave us a good line; Week 3 decides whether it repeats.`;
   });
 
   const teamNames=(allTeams||[]).map(t=>String(t?.team_name||'').trim()).filter(Boolean).sort((a,b)=>b.length-a.length);

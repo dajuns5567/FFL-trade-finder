@@ -26,4 +26,5 @@ export {applyWeek2EditorialR169P} from './inquirer-week2-editorial-r169p.mjs';
 export {applyWeek2EditorialR169Q} from './inquirer-week2-editorial-r169q.mjs';
 export {applyWeek2EditorialR169R} from './inquirer-week2-editorial-r169r.mjs';
 export {applyWeek2EditorialR169S} from './inquirer-week2-editorial-r169s.mjs';
-export {applyWeek2EditorialR16,applyWeek2EditorialR169T} from './inquirer-week2-editorial-r169t.mjs';
+export {applyWeek2EditorialR169T} from './inquirer-week2-editorial-r169t.mjs';
+export {applyWeek2EditorialR16,applyWeek2EditorialR169U} from './inquirer-week2-editorial-r169u.mjs';

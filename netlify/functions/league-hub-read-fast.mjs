@@ -10,7 +10,7 @@ const reporters=[
   {id:'nora-voss',name:'Jefferson Filch',title:'Investigations & Front Office',desk:'The Inquiry Desk',signature:'Every lineup leaves fingerprints.'}
 ];
 const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
-const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store, no-cache, must-revalidate','netlify-cdn-cache-control':'no-store','x-fleeced-read-fast':'1'}});
+const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store, no-cache, must-revalidate','netlify-cdn-cache-control':'no-store','x-fleeced-read-fast':'2'}});
 const week2=()=>applyWeek2EditorialR16(week2Preload2026);
 
 async function archiveRows(){
@@ -36,12 +36,26 @@ async function latest(){
   return week2();
 }
 
+async function managerSnapshot(){
+  const cached=await store().get('managers/history-cache.json',{type:'json'}).catch(()=>null);
+  return cached&&Array.isArray(cached.current)?{...cached,cache_hit:true,snapshot_only:true}:{current:[],graveyard:[],career:[],assignments:[],games:[],snapshot_only:true};
+}
+
+async function weeklyAwardsSnapshot(){
+  const cached=await store().get('awards/weekly.json',{type:'json'}).catch(()=>null);
+  if(Array.isArray(cached?.records))return{schema_version:Number(cached.schema_version)||1,records:cached.records,snapshot_only:true};
+  if(Array.isArray(cached))return{schema_version:1,records:cached,snapshot_only:true};
+  return{schema_version:1,records:[],snapshot_only:true};
+}
+
 export default async req=>{
   try{
     const u=new URL(req.url),mode=String(u.searchParams.get('mode')||'latest');
     if(mode==='archive')return json({reports:await archiveRows()});
     if(mode==='reporters')return json({schema_version:1,inquirer_version:26,reporters});
     if(mode==='latest')return json(await latest());
+    if(mode==='managers')return json(await managerSnapshot());
+    if(mode==='weekly-awards')return json(await weeklyAwardsSnapshot());
     return json({error:'unsupported mode'},400);
   }catch(e){
     console.error('league-hub-read-fast',e);

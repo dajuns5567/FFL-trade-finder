@@ -10,6 +10,8 @@ const score=team=>Number.isFinite(Number(team?.points))?Number(team.points):null
 const topStarter=team=>(team?.starter_details||[]).filter(p=>Number.isFinite(Number(p?.points))).sort((a,b)=>Number(b.points)-Number(a.points))[0]||null;
 const clean=s=>String(s||'').replace(/\s+/g,' ').trim();
 const normalized=s=>clean(s).toLowerCase().replace(/[’']/g,"'").replace(/\d+(?:\.\d+)?/g,'#').replace(/[^a-z#% ]+/g,' ').replace(/\s+/g,' ').trim();
+const hash=s=>{let h=2166136261;for(const c of String(s||'')){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
+const choose=(team,kind,rows)=>rows[hash(`${team?.roster_id||teamName(team)}|${kind}`)%rows.length];
 
 function rebuild(article){
   if(article&&Array.isArray(article.sections))article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
@@ -87,6 +89,121 @@ function isScoreScaffold(text,team){
   return hasScore||genericFinish;
 }
 
+function playerFrom(text){
+  const m=clean(text).match(/^([A-Z][A-Za-z.'’\-]+(?:\s+[A-Z][A-Za-z.'’\-]+){0,3})(?:'s|’s)\b/);
+  return m?.[1]||'That player';
+}
+
+function reactionLine(team,kind,text){
+  const article=team?.inquirer_article,who=reporter(article),ref=shortRef(team),next=opponent(team),won=!!team?.won,player=playerFrom(text);
+  const sets={
+    'score':{
+      'Nick Swindell':[
+        `${ref} has already made the scoring problem clear. Repeating the total would not improve the diagnosis; the useful question is whether the rest of the lineup can stop making one bad Sunday feel structural.`,
+        `${ref} does not need the same score read back again. The damage is obvious; what matters is whether Week 3 looks like a correction or confirmation.`
+      ],
+      'Tilly Fleecer':[
+        `${ref} already turned the scoreboard into a public complaint. Nobody needs the number again; somebody on this roster needs to make the next Sunday considerably less ridiculous.`,
+        `${ref} has supplied enough arithmetic for one week. The fun part now is deciding who gets mocked, who gets forgiven and who has to fix this by Sunday.`
+      ],
+      'Bartholomew Roycington III':[
+        `${ref} has made the arithmetic sufficiently impolite. Repeating the total would be vulgar even by fantasy standards; the interesting matter is whether this roster can produce a less embarrassing sequel.`,
+        `${ref} has already submitted the numerical portion of the humiliation. One need not read it twice to understand that the next performance requires considerably better manners.`
+      ],
+      'Jefferson Filch':[
+        `${ref} has already established the damage. Entering the same total again adds nothing; the decisions around it are what deserve scrutiny now.`,
+        `${ref} has made the numerical evidence plain. The next useful question is not the total again, but which choices created it and whether those choices survive Week 3.`
+      ]
+    },
+    'result':{
+      'Nick Swindell':[
+        `The result is settled for ${ref}. The only useful follow-up is whether the choices behind it were repeatable or merely survived by accident.`,
+        `${ref} cannot change the result now. It can only prove that the decisions underneath it were better than one Sunday made them look.`
+      ],
+      'Tilly Fleecer':[
+        `${ref} already gave us the result; replaying it will not make it prettier. Week 3 gets the privilege of deciding whether this was a warning or a running joke.`,
+        `The result has done enough damage to ${ref}. Now the roster gets to choose between a response and another week of providing free material.`
+      ],
+      'Bartholomew Roycington III':[
+        `The result is already on ${ref}'s permanent record. What remains is the less decorative question of whether the process beneath it deserves another invitation.`,
+        `${ref} can keep the result without another recital. The next opponent will decide whether it was merely unfortunate or an early habit in evening wear.`
+      ],
+      'Jefferson Filch':[
+        `The result is not in dispute for ${ref}. The open question is which decisions deserve to survive it.`,
+        `${ref} has already supplied the outcome. The investigation moves to cause, because repeating the verdict would only waste time.`
+      ]
+    },
+    'ranking':{
+      'Nick Swindell':[
+        `${ref}'s place in the weekly scoring order is bad enough without another ranking recital. The point is simple: too many lineups were plainly better.`,
+        `${ref} knows where this performance sits in the league. The useful response is not another ordinal; it is giving Week 3 something less bleak to compare.`
+      ],
+      'Tilly Fleecer':[
+        `${ref} does not need another reminder of where this landed in the weekly pecking order. The league already laughed; now make somebody else the punchline.`,
+        `${ref}'s neighborhood on the scoring board was ugly enough the first time. The assignment now is relocation.`
+      ],
+      'Bartholomew Roycington III':[
+        `${ref}'s social standing among this week's scorers requires no second announcement. The placement was rude; a better performance would be the only tasteful reply.`,
+        `${ref} has already been seated in an unpleasant part of the scoring order. One trusts the roster will object more convincingly next week.`
+      ],
+      'Jefferson Filch':[
+        `${ref}'s position in the weekly scoring order is already documented. Repeating the rank adds nothing; the concern is why the lineup ended up there.`,
+        `${ref} has no shortage of evidence that the weekly scoring order was unkind. The remaining question is which roster decisions earned that treatment.`
+      ]
+    },
+    'snap-share':{
+      'Nick Swindell':[
+        `${player}'s usage is the part worth carrying forward. The exact snap count needs no encore; what matters is whether the role gives this lineup something dependable next week.`,
+        `${player}'s role changed enough to matter. Now the football question is whether that opportunity becomes something a fantasy manager can trust.`
+      ],
+      'Tilly Fleecer':[
+        `${player} got a role worth noticing, which is more useful than reading another snap percentage aloud. Turn that opportunity into points and nobody will complain about the missing footnote.`,
+        `${player}'s usage has earned another look. The next step is wonderfully uncomplicated: do something with it before the role becomes trivia.`
+      ],
+      'Bartholomew Roycington III':[
+        `${player}'s role has become interesting enough that the percentage itself may leave the room. Opportunity is lovely; production would make it much better company.`,
+        `${player} received a more consequential role. One now waits to see whether the opportunity develops taste, purpose and actual fantasy value.`
+      ],
+      'Jefferson Filch':[
+        `${player}'s role changed enough to matter. The percentage is already documented; what matters next is whether the opportunity produces evidence worth trusting.`,
+        `${player} has a usage change worth tracking. Another recital of the snap count would add less than seeing whether the role survives contact with Week 3.`
+      ]
+    },
+    'role-showed':{
+      'Nick Swindell':[
+        `${player}'s workload already told us what the role looked like. The next useful piece is whether the same involvement produces something worth starting.`,
+        `${player} had enough opportunity to make the role real. Week 3 should tell us whether it is useful or merely busy.`
+      ],
+      'Tilly Fleecer':[
+        `${player} had enough involvement to get our attention. Great. Now turn all that activity into fantasy points before somebody mistakes motion for progress.`,
+        `${player}'s role was visible. The next trick is making it matter on the scoreboard instead of just keeping the stat crew employed.`
+      ],
+      'Bartholomew Roycington III':[
+        `${player}'s involvement was substantial enough to merit attention. Volume is charming; production remains the guest everyone actually hoped would arrive.`,
+        `${player} had a role one could see without binoculars. The elegant next step would be converting that opportunity into something useful.`
+      ],
+      'Jefferson Filch':[
+        `${player}'s workload is established. The unresolved point is whether the role creates value or merely creates more data to inspect.`,
+        `${player} had enough involvement to remove ambiguity about opportunity. Production is now the part still under questioning.`
+      ]
+    },
+    'projection':{
+      'Nick Swindell':[`The projection has already had its say for ${ref}. ${next} matters because another forecast is useless if the lineup cannot make it look wrong.`],
+      'Tilly Fleecer':[`The forecast has already been read to ${ref}. ${next} now gets to decide whether the model looks smart or deserves public ridicule.`],
+      'Bartholomew Roycington III':[`One projection is quite enough for ${ref}. ${next} may now determine whether the forecast was prudent or merely dressed for dinner.`],
+      'Jefferson Filch':[`The projection is already in the record for ${ref}. ${next} is where the lineup gets a chance to contradict it.`]
+    },
+    'market':{
+      'Nick Swindell':[`The roster-value move has been noted for ${ref}. Sunday performance is the part that can actually change the mood.`],
+      'Tilly Fleecer':[`The market has already voted on ${ref}. Fine. Fantasy points remain the much louder form of democracy.`],
+      'Bartholomew Roycington III':[`The market has registered its opinion of ${ref}. One prefers the less abstract pleasure of seeing the roster justify itself on Sunday.`],
+      'Jefferson Filch':[`The market movement is documented for ${ref}. The more useful evidence remains what the lineup does with its next game.`]
+    }
+  };
+  const rows=sets[kind]?.[who]||sets[kind]?.['Nick Swindell']||[text];
+  return choose(team,kind,rows);
+}
+
 function shapeArticle(team){
   const article=team?.inquirer_article;
   if(!article||!Array.isArray(article.sections))return;
@@ -96,7 +213,7 @@ function shapeArticle(team){
     if(!Array.isArray(s?.paragraphs))continue;
     const kept=[];
     for(const raw of s.paragraphs){
-      const text=clean(raw);
+      let text=clean(raw);
       if(!text)continue;
       const exact=text.toLowerCase();
       if(exactSeen.has(exact))continue;
@@ -104,39 +221,41 @@ function shapeArticle(team){
       const family=/snap share moved from .* last season to/i.test(text)?'snap-share':/week 2 role showed up as/i.test(text)?'role-showed':null;
       if(family){
         const count=familyCounts.get(family)||0;
-        if(count>=1)continue;
         familyCounts.set(family,count+1);
+        if(count>=1)text=reactionLine(team,family,text);
       }
 
       if(scorePattern?.test(text)){
         teamScoreMentions++;
-        if(teamScoreMentions>2)continue;
+        if(teamScoreMentions>2)text=reactionLine(team,'score',text);
       }
       if(isScoreScaffold(text,team)){
         scoreFacts++;
-        if(scoreFacts>2)continue;
+        if(scoreFacts>2)text=reactionLine(team,'score',text);
       }
       if(/\b(?:beat|defeated|won|lost to|fell to|lost)\b/i.test(text)){
         resultFacts++;
-        if(resultFacts>2)continue;
+        if(resultFacts>2)text=reactionLine(team,'result',text);
       }
       if(/(?:rank(?:ed|ing)\s+\d+.*(?:32|teams)|top[- ](?:quarter|eight)|bottom[- ](?:quarter|eight)|finished (?:in the )?(?:top|bottom) (?:eight|quarter))/i.test(text)){
         rankingFacts++;
-        if(rankingFacts>1)continue;
+        if(rankingFacts>1)text=reactionLine(team,'ranking',text);
       }
       if(/week 3 projects .* making .* projection favorite/i.test(text)){
         week3ProjectionFacts++;
-        if(week3ProjectionFacts>1)continue;
+        if(week3ProjectionFacts>1)text=reactionLine(team,'projection',text);
       }
       if(/roster value (?:rose|fell|moved) from/i.test(text)){
         rosterValueFacts++;
-        if(rosterValueFacts>1)continue;
+        if(rosterValueFacts>1)text=reactionLine(team,'market',text);
       }
 
+      const finalExact=text.toLowerCase();
+      if(exactSeen.has(finalExact))continue;
       const norm=normalized(text);
       const normKey=norm&&norm.length<80?`short:${norm}`:'';
       if(normKey&&exactSeen.has(normKey))continue;
-      exactSeen.add(exact);
+      exactSeen.add(finalExact);
       if(normKey)exactSeen.add(normKey);
       kept.push(text);
     }
@@ -171,18 +290,18 @@ function isolateBreakout(node,seen=new WeakSet()){
   seen.add(node);
   if(Array.isArray(node)){node.forEach(x=>isolateBreakout(x,seen));return;}
 
-  const copy='Dallas Turner remains the Breakout Player to Watch. Week 2 strengthened the case rather than ending it, so Week 3 is the next test.';
+  const copy='Dallas Turner keeps forcing his way into the fantasy conversation. Another disruptive Sunday made the Week 3 question simple: if that role holds, leaving him on the bench starts looking stubborn rather than cautious.';
   const titleFields=['title','headline','label','heading','name','kicker','section_title'];
   const title=clean(titleFields.map(k=>typeof node[k]==='string'?node[k]:'').find(Boolean)||'');
   const breakoutNode=/Breakout Player to Watch/i.test(title)&&/Dallas Turner/i.test(title);
 
   for(const [key,value] of Object.entries(node)){
     if(typeof value!=='string')continue;
-    if(/Dallas Turner/i.test(value)&&/Devin Lloyd/i.test(value)&&/breakout/i.test(value))node[key]=copy;
+    if(/Dallas Turner/i.test(value)&&/Devin Lloyd/i.test(value))node[key]=copy;
   }
 
   if(breakoutNode){
-    for(const key of ['copy','text','body','description','summary','content','value'])if(typeof node[key]==='string')node[key]=copy;
+    for(const key of ['copy','text','body','description','summary','content','value','take'])if(typeof node[key]==='string')node[key]=copy;
     if(Array.isArray(node.paragraphs))node.paragraphs=[copy];
   }
   Object.values(node).forEach(x=>isolateBreakout(x,seen));

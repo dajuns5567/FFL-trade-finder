@@ -51,9 +51,11 @@ function stripRetiredRoycingtonMotifs(text){
     .replace(/\bcoat check\b/gi,'front desk');
 }
 
-function removeNickMeta(text,team){
+function removeReporterMeta(text,team){
   const club=String(team?.team_name||'This team'),alias=club.trim().split(/\s+/).at(-1)||club;
-  return String(text||'').replace(/Nick wants the useful parts repeated, the dumb parts removed, and absolutely nobody pretending two weeks has solved fantasy football/gi,`${alias} has a simple Week 3 assignment: repeat what worked, cut the dumb mistakes, and stop pretending two weeks solved fantasy football`);
+  return String(text||'')
+    .replace(/Nick wants the useful parts repeated, the dumb parts removed, and absolutely nobody pretending two weeks has solved fantasy football/gi,`${alias} has a simple Week 3 assignment: repeat what worked, cut the dumb mistakes, and stop pretending two weeks solved fantasy football`)
+    .replace(/Bartholomew would like the performance examined for structural integrity before anyone commissions a portrait/gi,'the performance still needs a structural inspection before anyone commissions a portrait');
 }
 
 export function applyWeek2EditorialR16(raw){
@@ -76,7 +78,7 @@ export function applyWeek2EditorialR16(raw){
       outlook.paragraphs=existing;
     }
     for(const section of article.sections||[]){
-      if(Array.isArray(section.paragraphs))section.paragraphs=section.paragraphs.map(p=>removeNickMeta(p,team));
+      if(Array.isArray(section.paragraphs))section.paragraphs=section.paragraphs.map(p=>removeReporterMeta(p,team));
     }
     if(String(article?.reporter?.name||'')==='Bartholomew Roycington III'){
       article.headline=stripRetiredRoycingtonMotifs(article.headline);

@@ -12,17 +12,55 @@ function scheduleRoad(team,article){
   return `After Week 3 come ${named}, a stretch that currently looks like ${difficulty}. ${club} should bank the Week 3 win if it is there; the schedule behind it may change, but giving away the immediate result never becomes smarter in hindsight.`;
 }
 
+function stripRetiredRoycingtonMotifs(text){
+  return String(text||'')
+    .replace(/drawing room/gi,'public square')
+    .replace(/folding chairs/gi,'excuses')
+    .replace(/\bfurniture\b/gi,'nonsense')
+    .replace(/\bchairs\b/gi,'excuses')
+    .replace(/\bchair\b/gi,'excuse')
+    .replace(/\btablecloths?\b/gi,'ceremony')
+    .replace(/\blinens?\b/gi,'decorum')
+    .replace(/\bnapkins?\b/gi,'formalities')
+    .replace(/\bchina\b/gi,'ornament')
+    .replace(/\bsilverware\b/gi,'decoration')
+    .replace(/\bplace settings?\b/gi,'arrangements')
+    .replace(/\bseating\b/gi,'positioning')
+    .replace(/\bcenterpieces?\b/gi,'showpieces')
+    .replace(/\bdining room\b/gi,'private club')
+    .replace(/\bdinner\b/gi,'occasion')
+    .replace(/\bplates?\b/gi,'standards')
+    .replace(/\breservations?\b/gi,'expectations')
+    .replace(/\bguest list\b/gi,'pecking order')
+    .replace(/\bvelvet rope\b/gi,'gatekeeping')
+    .replace(/\bchaise\b/gi,'pedestal')
+    .replace(/\bballroom\b/gi,'grand hall')
+    .replace(/\bsalon\b/gi,'club')
+    .replace(/\bcoat check\b/gi,'front desk');
+}
+
 export function applyWeek2EditorialR16(raw){
   const out=applyR169S(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
   for(const team of out.teams||[]){
     const article=team?.inquirer_article,outlook=(article?.sections||[]).find(s=>String(s?.kind||'')==='outlook');
-    if(!article||!outlook||!Array.isArray(outlook.paragraphs)||outlook.paragraphs[0]==='n/a')continue;
-    const road=scheduleRoad(team,article);if(!road)continue;
-    const existing=outlook.paragraphs.filter(p=>!/(?:After|Beyond|Past) Week 3|After Week 3 come/i.test(String(p||'')));
-    const projectionIndex=Math.max(0,existing.length-1);
-    existing.splice(projectionIndex,0,road);
-    outlook.paragraphs=existing;
+    if(!article)continue;
+    if(outlook&&Array.isArray(outlook.paragraphs)&&outlook.paragraphs[0]!=='n/a'){
+      const road=scheduleRoad(team,article);
+      if(road){
+        const existing=outlook.paragraphs.filter(p=>!/(?:After|Beyond|Past) Week 3|After Week 3 come/i.test(String(p||'')));
+        const projectionIndex=Math.max(0,existing.length-1);
+        existing.splice(projectionIndex,0,road);
+        outlook.paragraphs=existing;
+      }
+    }
+    if(String(article?.reporter?.name||'')==='Bartholomew Roycington III'){
+      article.headline=stripRetiredRoycingtonMotifs(article.headline);
+      for(const section of article.sections||[]){
+        section.heading=stripRetiredRoycingtonMotifs(section.heading);
+        if(Array.isArray(section.paragraphs))section.paragraphs=section.paragraphs.map(stripRetiredRoycingtonMotifs);
+      }
+    }
     article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
   }
   return out;

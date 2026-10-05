@@ -72,6 +72,39 @@ function restoreOpponentContext(team){
   rebuild(article);
 }
 
+function sentimentLines(team){
+  const article=team?.inquirer_article,who=String(article?.reporter?.name||'Nick Swindell'),ref=String(team?.team_name||'this team').trim().split(/\s+/).filter(Boolean).at(-1)||'this team';
+  if(who==='Tilly Fleecer')return [
+    `${ref} fans are booing with purpose now, and frankly the commitment is admirable. They are not asking for elegance; they are asking for one Sunday that does not turn into free comedy for everybody else.`,
+    `Rivals are enjoying this far too much, which is exactly why the supporters want a response before the joke starts feeling permanent.`
+  ];
+  if(who==='Bartholomew Roycington III')return [
+    `${ref} supporters have lodged a complaint, and for once the indignation is entirely justified. They would like a Sunday that treats basic competence as something more than an optional accessory.`,
+    `The crowd is not demanding perfection; it is demanding enough resistance to keep rival fans from treating the result like a civic holiday.`
+  ];
+  if(who==='Jefferson Filch')return [
+    `${ref} fans are arguing about cause now, not whether the result was ugly. That distinction matters because frustration is turning into suspicion about which assumptions deserve another week.`,
+    `The call-in crowd wants evidence in Week 3, not reassurance. Another bad Sunday will make the complaints sound less emotional and more like a pattern.`
+  ];
+  return [
+    `${ref} fans are past pretending this was fine. The complaint is simple: they want a lineup that gives Sunday fewer obvious reasons for regret.`,
+    `The call-in crowd is still arguing about whether Week 2 was an outlier or the start of a habit, and Week 3 gets to settle some of that noise.`
+  ];
+}
+
+function restoreFanSentiment(team){
+  const article=team?.inquirer_article,sentiment=(article?.sections||[]).find(s=>String(s?.kind||'')==='sentiment');
+  if(!article||!sentiment)return;
+  if(!Array.isArray(sentiment.paragraphs))sentiment.paragraphs=[];
+  const existing=new Set(sentiment.paragraphs.map(p=>clean(p).toLowerCase()).filter(Boolean));
+  for(const line of sentimentLines(team)){
+    if(sentiment.paragraphs.length>=2)break;
+    const key=clean(line).toLowerCase();
+    if(!existing.has(key)){sentiment.paragraphs.push(line);existing.add(key)}
+  }
+  rebuild(article);
+}
+
 function enforceBreakout(out){
   const take=(out?.league_overview?.hot_takes||[]).find(x=>/breakout player to watch/i.test(String(x?.title||'')));
   if(!take)return;
@@ -85,6 +118,7 @@ export function applyWeek2EditorialR16(raw){
   for(const team of out.teams||[]){
     restoreHistoricalContext(team);
     restoreOpponentContext(team);
+    restoreFanSentiment(team);
   }
   const aints=(out.teams||[]).find(t=>/new orleans aints/i.test(String(t?.team_name||'')));
   if(aints){

@@ -23,7 +23,11 @@ function restoreDepth(team){
   const target=article.sections.find(s=>String(s?.kind||'')==='outlook')||article.sections.at(-1);
   if(!target)return;
   if(!Array.isArray(target.paragraphs))target.paragraphs=[];
-  target.paragraphs.push(synthesis(team));
+  // Keep the existing schedule-stretch read and the final Week 3 projection as
+  // the final two outlook paragraphs. The generated-output audit and the UI both
+  // rely on that semantic order. Add synthesis immediately before them.
+  const insertAt=Math.max(0,target.paragraphs.length-2);
+  target.paragraphs.splice(insertAt,0,synthesis(team));
   article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
 }
 

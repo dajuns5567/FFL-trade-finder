@@ -41,10 +41,6 @@ export function inquirerSignalAdjective(signal,p){
   return'';
 }
 
-function playerSections(article){
-  return (article?.sections||[]).filter(section=>/names rivals|moved the game|made the noise|made the afternoon|people who made|who actually|applause|cool throne/i.test(String(section?.heading||'')));
-}
-
 function voice(article){
   const n=String(article?.reporter?.name||'Nick Swindell');
   if(n==='Tilly Fleecer')return'tilly';
@@ -84,19 +80,24 @@ function aliasesFor(player){
   return[full,last].filter((x,i,a)=>x&&a.indexOf(x)===i).sort((a,b)=>b.length-a.length);
 }
 
-function decorateParagraph(text,entries,article,usage){
-  let row=norm(text),matched=null,alias='';
+function findMention(row,entries){
   for(const entry of entries){
-    for(const candidate of aliasesFor(entry.player)){
-      if(new RegExp(`^${esc(candidate)}\\b`,'i').test(row)){matched=entry;alias=candidate;break}
+    for(const alias of aliasesFor(entry.player)){
+      const re=new RegExp(`\\b${esc(alias)}\\b`,'i'),m=row.match(re);
+      if(m)return{entry,alias,start:m.index||0};
     }
-    if(matched)break;
   }
-  if(!matched)return row;
-  const {player,signal}=matched,adj=inquirerSignalAdjective(signal,player),name=String(player.name||''),label=adj?adj.charAt(0).toUpperCase()+adj.slice(1):'';
-  const id=String(player?.id||name),mayDecorate=!!adj&&!usage.has(id)&&usage.size<2;
-  if(mayDecorate){
-    row=row.replace(new RegExp(`^${esc(alias)}\\b`,'i'),`${label} ${name}`);
+  return null;
+}
+
+function decorateParagraph(text,entries,article,usage){
+  let row=norm(text);
+  const mention=findMention(row,entries);
+  if(!mention)return row;
+  const {entry,alias}=mention,{player,signal}=entry,adj=inquirerSignalAdjective(signal,player),name=String(player.name||''),id=String(player?.id||name);
+  if(adj&&!usage.has(id)){
+    const label=adj.charAt(0).toUpperCase()+adj.slice(1),replacement=`${label} ${name}`;
+    row=row.replace(new RegExp(`\\b${esc(alias)}\\b`,'i'),replacement);
     usage.add(id);
   }
   if(looksStatOnly(row)){
@@ -114,8 +115,14 @@ export function applyInquirerSignalLanguageToTeam(team,{season,week,previousTeam
     signal:inquirerPlayerSignal(player,{season,week,previousPlayer:previousById.get(String(player?.id||''))||null,slot})
   })).filter(x=>x.player?.name);
   const usage=new Set();
-  for(const section of playerSections(article))section.paragraphs=(section.paragraphs||[]).map(p=>decorateParagraph(p,entries,article,usage)).filter(Boolean);
-  article.paragraphs=(article.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+  for(const section of article.sections||[]){
+    if(!Array.isArray(section?.paragraphs))continue;
+    section.paragraphs=section.paragraphs.map(p=>decorateParagraph(p,entries,article,usage)).filter(Boolean);
+    for(const block of section?.blocks||[]){
+      if(Array.isArray(block?.paragraphs))block.paragraphs=block.paragraphs.map(p=>decorateParagraph(p,entries,article,usage)).filter(Boolean);
+    }
+  }
+  article.paragraphs=(article.sections||[]).flatMap(s=>[...(s?.paragraphs||[]),...(s?.blocks||[]).flatMap(b=>b?.paragraphs||[])]).filter(Boolean);
   return team;
 }
 

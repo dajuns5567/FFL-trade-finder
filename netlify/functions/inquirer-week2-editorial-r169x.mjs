@@ -32,6 +32,18 @@ function removeInjectedFollowups(text,team){
   return kept.join('; ');
 }
 
+function restoreTradeAcquisitionContext(text,team){
+  let out=String(text||'');
+  if(!/\b(?:outscored|bench|compatible bench spot)\b/i.test(out)||/\b(?:trade acquisition|acquired (?:by|via) trade)\b/i.test(out))return out;
+  for(const acquisition of team?.trade_acquisitions||[]){
+    const name=String(acquisition?.player_name||acquisition?.name||'').trim();
+    if(!name||!out.includes(name))continue;
+    out=out.replace(name,`Trade acquisition ${name}`);
+    break;
+  }
+  return out;
+}
+
 function fixArticleMetaAndGrammar(text,team,section){
   let out=removeInjectedFollowups(text,team);
   const full=String(team?.team_name||'').trim(),short=full.split(/\s+/).filter(Boolean).at(-1)||'',plural=/s$/i.test(short);
@@ -48,6 +60,7 @@ function fixArticleMetaAndGrammar(text,team,section){
   if(String(section?.kind||'').toLowerCase()==='sentiment'&&/^I note the fan base has already reached a verdict/i.test(out)){
     out=`${short} fans reached a verdict before the facts finished parking. Now they are shopping for evidence that agrees with them, which is cheaper than admitting the panic might have been premature.`;
   }
+  out=restoreTradeAcquisitionContext(out,team);
   out=out.replace(/\s+([,.!?])/g,'$1').replace(/\.{2,}/g,'.').replace(/;\s*\./g,'.').trim();
   return out;
 }

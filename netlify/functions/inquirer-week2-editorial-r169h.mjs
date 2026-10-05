@@ -62,6 +62,16 @@ function restoreHistoricalContext(team){
   }
 }
 
+function restoreOpponentContext(team){
+  const article=team?.inquirer_article,outlook=(article?.sections||[]).find(s=>String(s?.kind||'')==='outlook');
+  const ctx=team?.next_opponent_division_context,nctx=team?.next_opponent_context,division=String(ctx?.division_name||'').trim(),next=String(team?.next_opponent_name||team?.next_opponent||'').trim();
+  if(!article||!outlook||!Array.isArray(outlook.paragraphs)||!outlook.paragraphs.length||outlook.paragraphs[0]==='n/a'||!division||!next)return;
+  const wins=Number(nctx?.record?.wins)||0,losses=Number(nctx?.record?.losses)||0,record=`${wins}-${losses}`,copy=outlook.paragraphs.join(' ');
+  if(copy.toLowerCase().includes(division.toLowerCase())&&copy.includes(record))return;
+  outlook.paragraphs[0]=`${clean(outlook.paragraphs[0])} ${next} enters from the ${division} at ${record}.`;
+  rebuild(article);
+}
+
 function enforceBreakout(out){
   const take=(out?.league_overview?.hot_takes||[]).find(x=>/breakout player to watch/i.test(String(x?.title||'')));
   if(!take)return;
@@ -72,7 +82,10 @@ export function applyWeek2EditorialR16(raw){
   const out=applyR169G(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
   enforceBreakout(out);
-  for(const team of out.teams||[])restoreHistoricalContext(team);
+  for(const team of out.teams||[]){
+    restoreHistoricalContext(team);
+    restoreOpponentContext(team);
+  }
   const aints=(out.teams||[]).find(t=>/new orleans aints/i.test(String(t?.team_name||'')));
   if(aints){
     enforcePlayerScore(aints,'Maxx Crosby');

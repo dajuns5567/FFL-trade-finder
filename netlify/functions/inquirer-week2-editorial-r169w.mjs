@@ -1,6 +1,7 @@
 import {applyWeek2EditorialR16 as applyR169V} from './inquirer-week2-editorial-r169v.mjs';
 
 const PLAYER='([A-Z][A-Za-z’\'.-]+(?:\\s+[A-Z][A-Za-z’\'.-]+){0,3})';
+const escapeRe=value=>String(value||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
 function anchorGenericFollowups(text,team){
   let out=String(text||''),club=String(team?.team_name||'this team'),short=club.split(/\s+/).filter(Boolean).at(-1)||club;
@@ -26,6 +27,15 @@ function anchorGenericFollowups(text,team){
   out=out.replace(/The projection, in its infinite confidence, has (.+?) beating (.+?) (\d+(?:\.\d+)?) to (\d+(?:\.\d+)?)\./g,(_m,fav,dog,a,b)=>`The projection, in its infinite confidence, makes ${fav} the favorite over ${dog}, ${a} to ${b}.`);
   out=out.replace(/Week 3's number is (.+?) (\d+(?:\.\d+)?), (.+?) (\d+(?:\.\d+)?)\./g,(_m,fav,a,dog,b)=>`Week 3's projection favorite is ${fav}, ${a} to ${b} over ${dog}.`);
   return out;
+}
+
+function pluralAliasGrammar(text,team){
+  let out=String(text||'');
+  const full=String(team?.team_name||'').trim(),short=full.split(/\s+/).filter(Boolean).at(-1)||'';
+  if(!short||!/s$/i.test(short))return out;
+  const verbs={is:'are',has:'have',gets:'get',holds:'hold',brings:'bring',turns:'turn',sits:'sit'};
+  const re=new RegExp(`\\b${escapeRe(short)}\\s+(is|has|gets|holds|brings|turns|sits)\\b`,'gi');
+  return out.replace(re,(_all,verb)=>`${short} ${verbs[String(verb).toLowerCase()]||verb}`);
 }
 
 function hasHistoricalContext(article,p){
@@ -67,9 +77,12 @@ export function applyWeek2EditorialR16(raw){
     const article=team?.inquirer_article;
     if(!article)continue;
     for(const section of article.sections||[]){
-      if(Array.isArray(section?.paragraphs))section.paragraphs=section.paragraphs.map(paragraph=>anchorGenericFollowups(paragraph,team)).filter(Boolean);
+      if(Array.isArray(section?.paragraphs))section.paragraphs=section.paragraphs.map(paragraph=>pluralAliasGrammar(anchorGenericFollowups(paragraph,team),team)).filter(Boolean);
     }
     ensureHistoricalContext(team,article);
+    for(const section of article.sections||[]){
+      if(Array.isArray(section?.paragraphs))section.paragraphs=section.paragraphs.map(paragraph=>pluralAliasGrammar(paragraph,team));
+    }
     article.paragraphs=article.sections.flatMap(section=>section?.paragraphs||[]).filter(Boolean);
   }
   return out;

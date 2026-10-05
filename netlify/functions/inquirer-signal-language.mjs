@@ -33,15 +33,11 @@ export function inquirerSignalAdjective(signal,p){
   const state=String(signal?.state||''),status=String(signal?.reporter_status||''),noun=playerNoun(p);
   if(state==='breakout')return`breakout ${noun}`;
   if(state==='emerging')return`emerging ${noun}`;
-  if(state==='established'||status==='established-star')return`established ${noun}`;
   if(state==='declining'||['struggling-star','declining-veteran','struggling'].includes(status))return`struggling ${noun}`;
-  if(state==='stable'||['reliable','reliable-veteran'].includes(status))return`steady ${noun}`;
   if(state==='surging')return`surging ${noun}`;
   if(state==='cooling')return`cooling ${noun}`;
-  if(state==='star-level'||status==='star-level')return`high-end ${noun}`;
   if(state==='rookie'||status==='rookie')return`rookie ${noun}`;
   if(state==='young-player'||status==='young-player')return`young ${noun}`;
-  if(state==='veteran'||status==='veteran')return`veteran ${noun}`;
   return'';
 }
 
@@ -88,7 +84,7 @@ function aliasesFor(player){
   return[full,last].filter((x,i,a)=>x&&a.indexOf(x)===i).sort((a,b)=>b.length-a.length);
 }
 
-function decorateParagraph(text,entries,article){
+function decorateParagraph(text,entries,article,usage){
   let row=norm(text),matched=null,alias='';
   for(const entry of entries){
     for(const candidate of aliasesFor(entry.player)){
@@ -98,9 +94,10 @@ function decorateParagraph(text,entries,article){
   }
   if(!matched)return row;
   const {player,signal}=matched,adj=inquirerSignalAdjective(signal,player),name=String(player.name||''),label=adj?adj.charAt(0).toUpperCase()+adj.slice(1):'';
-  if(adj){
-    const replacement=`${label} ${name}`;
-    row=row.replace(new RegExp(`^${esc(alias)}\\b`,'i'),replacement);
+  const id=String(player?.id||name),mayDecorate=!!adj&&!usage.has(id)&&usage.size<2;
+  if(mayDecorate){
+    row=row.replace(new RegExp(`^${esc(alias)}\\b`,'i'),`${label} ${name}`);
+    usage.add(id);
   }
   if(looksStatOnly(row)){
     const pts=(row.match(/\b(-?\d+(?:\.\d+)?)\s+(?:fantasy\s+)?points?\b/i)||row.match(/\bscored\s+(-?\d+(?:\.\d+)?)\b/i)||[])[1];
@@ -116,7 +113,8 @@ export function applyInquirerSignalLanguageToTeam(team,{season,week,previousTeam
     player,
     signal:inquirerPlayerSignal(player,{season,week,previousPlayer:previousById.get(String(player?.id||''))||null,slot})
   })).filter(x=>x.player?.name);
-  for(const section of playerSections(article))section.paragraphs=(section.paragraphs||[]).map(p=>decorateParagraph(p,entries,article)).filter(Boolean);
+  const usage=new Set();
+  for(const section of playerSections(article))section.paragraphs=(section.paragraphs||[]).map(p=>decorateParagraph(p,entries,article,usage)).filter(Boolean);
   article.paragraphs=(article.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(Boolean);
   return team;
 }

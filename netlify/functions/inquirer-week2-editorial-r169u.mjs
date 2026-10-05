@@ -2,6 +2,31 @@ import {applyWeek2EditorialR16 as applyR169T} from './inquirer-week2-editorial-r
 
 const HISTORICAL=/\baveraged\s+\d+(?:\.\d+)?\s+fantasy points per game in 2025\b/i;
 
+function firstPersonReporterVoice(text){
+  return String(text||'')
+    .replace(/\bNick's read:/gi,'My read:')
+    .replace(/\bNick has no interest/gi,'I have no interest')
+    .replace(/\bNick also likes/gi,'I also like')
+    .replace(/\bNick likes/gi,'I like')
+    .replace(/\bTilly's verdict:/gi,'My verdict:')
+    .replace(/\bTilly has seen/gi,"I've seen")
+    .replace(/\bTilly recommends/gi,'I recommend')
+    .replace(/\bTilly respects/gi,'I respect')
+    .replace(/\bTilly requests/gi,'I request')
+    .replace(/\bTilly will/gi,"I'll")
+    .replace(/\bBartholomew's ruling, with all due ceremony:/gi,'My ruling, with all due ceremony:')
+    .replace(/\bBartholomew acknowledges/gi,'I acknowledge')
+    .replace(/\bBartholomew regrets to report/gi,'I regret to report')
+    .replace(/\bFilch's read:/gi,'My read:')
+    .replace(/\bFilch is not asking/gi,"I'm not asking")
+    .replace(/\bFilch has no objection/gi,'I have no objection')
+    .replace(/\bFilch is less interested/gi,"I'm less interested")
+    .replace(/\bFilch has begun/gi,"I've begun")
+    .replace(/\bFilch has seen/gi,"I've seen")
+    .replace(/\bFilch notes/gi,'I note')
+    .replace(/\bFilch will/gi,"I'll");
+}
+
 function depthRead(team,article,index){
   const starters=(team?.starter_details||[]).filter(x=>x?.name),p=starters[index%Math.max(1,starters.length)]||starters[0]||{},name=String(p?.name||'the next starter'),next=String(team?.next_opponent_name||team?.upcoming_opponents?.[0]?.team_name||'the Week 3 opponent'),who=String(article?.reporter?.name||'Nick Swindell'),shape=index%3;
   if(who==='Tilly Fleecer'){
@@ -123,6 +148,9 @@ export function applyWeek2EditorialR16(raw){
     const outlook=(article.sections||[]).find(s=>String(s?.kind||'')==='outlook');
     const shared=sharedDivisionLeadRead(team,article);
     if(shared&&outlook&&Array.isArray(outlook.paragraphs)&&!hasCompleteSharedLeadContext(team,outlook))outlook.paragraphs.splice(Math.min(2,outlook.paragraphs.length),0,shared);
+    for(const section of article.sections||[]){
+      if(Array.isArray(section.paragraphs))section.paragraphs=section.paragraphs.map(firstPersonReporterVoice);
+    }
     article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
   }
   return out;

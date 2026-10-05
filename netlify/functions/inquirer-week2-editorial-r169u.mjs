@@ -90,6 +90,16 @@ function diversifyFeatured(team,article,paras){
   }
 }
 
+function sharedDivisionLeadRead(team,article){
+  const context=team?.division_context,leaders=(context?.leaders||[]).filter(x=>x?.team_name),self=leaders.find(x=>String(x?.roster_id)===String(team?.roster_id)),others=leaders.filter(x=>String(x?.roster_id)!==String(team?.roster_id));
+  if(!self||!others.length)return null;
+  const club=String(team?.team_name||self.team_name||'This team'),division=String(context?.division_name||'the division'),record=`${Number(self?.wins??context?.record?.wins)||0}-${Number(self?.losses??context?.record?.losses)||0}`,names=others.map(x=>String(x.team_name)).join(others.length>1?', ':''),who=String(article?.reporter?.name||'Nick Swindell');
+  if(who==='Tilly Fleecer')return `${club} shares the ${division} lead at ${record} with ${names}. Cute. Week 3 is where somebody can stop sharing the throne like this is a kindergarten exercise in taking turns.`;
+  if(who==='Bartholomew Roycington III')return `${club} is level atop the ${division} at ${record} with ${names}. Sharing first place is perfectly civilized for the moment; retaining it will eventually require the vulgar act of winning more games.`;
+  if(who==='Jefferson Filch')return `${club} is level atop the ${division} at ${record} with ${names}. That turns Week 3 from pleasant early optimism into evidence: somebody has a chance to stop sharing the lead and make the standings say something sharper.`;
+  return `${club} shares the ${division} lead at ${record} with ${names}. Good start. Now comes the useful part: stop sharing it.`;
+}
+
 export function applyWeek2EditorialR16(raw){
   const out=applyR169T(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
@@ -103,6 +113,9 @@ export function applyWeek2EditorialR16(raw){
       diversifyFeatured(team,article,paras);
       players.paragraphs=paras;
     }
+    const outlook=(article.sections||[]).find(s=>String(s?.kind||'')==='outlook');
+    const shared=sharedDivisionLeadRead(team,article);
+    if(shared&&outlook&&Array.isArray(outlook.paragraphs)&&!outlook.paragraphs.some(p=>/\b(?:tied|shares|level)\b/i.test(String(p||''))))outlook.paragraphs.splice(Math.min(2,outlook.paragraphs.length),0,shared);
     article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
   }
   return out;

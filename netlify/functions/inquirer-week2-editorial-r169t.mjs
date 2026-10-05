@@ -12,6 +12,18 @@ function scheduleRoad(team,article){
   return `After Week 3 come ${named}, a stretch that currently looks like ${difficulty}. ${club} should bank the Week 3 win if it is there; the schedule behind it may change, but giving away the immediate result never becomes smarter in hindsight.`;
 }
 
+function projectionRead(team,article){
+  const own=Number(team?.next_projected),opp=Number(team?.next_opponent_projected);
+  if(!Number.isFinite(own)||!Number.isFinite(opp))return null;
+  const club=String(team?.team_name||'This team'),next=String(team?.next_opponent_name||team?.upcoming_opponents?.[0]?.team_name||'the next opponent'),who=String(article?.reporter?.name||'Nick Swindell');
+  const margin=Math.abs(own-opp),favored=own>opp,even=margin<0.05;
+  const verdict=even?`dead even at ${own.toFixed(1)} apiece`:favored?`${club} favored ${own.toFixed(1)} to ${opp.toFixed(1)} over ${next}`:`${next} favored ${opp.toFixed(1)} to ${own.toFixed(1)} over ${club}`;
+  if(who==='Tilly Fleecer')return `Week 3 opens with the projection ${verdict}. ${even?'Nobody even gets the courtesy of an excuse in advance.':favored?`That edge is permission to win, not permission to become unbearable before kickoff.`:`A ${margin.toFixed(1)}-point gap is ugly; fortunately, fantasy projections have been publicly humiliated before and will be again.`}`;
+  if(who==='Bartholomew Roycington III')return `The Week 3 projection has ${verdict}. ${even?'A perfectly level forecast is wonderfully useless, so performance will have to do the vulgar work of deciding it.':favored?`One accepts the edge graciously, then remembers that projections do not award victories.`:`The ${margin.toFixed(1)}-point deficit is impolite, but surrendering to a decimal before Sunday would be considerably more embarrassing.`}`;
+  if(who==='Jefferson Filch')return `The Week 3 projection has ${verdict}. ${even?'No edge means no alibi; somebody has to create the separation on the field.':favored?`The evidence gives ${club} the edge, and now the burden is simple: make the number look intelligent.`:`That ${margin.toFixed(1)}-point deficit is evidence, not a conviction; ${club} can beat it, but the lineup has to give us a reason instead of an appeal.`}`;
+  return `Week 3 has the projection ${verdict}. ${even?'Nothing to hide behind there.':favored?`Good; now ${club} has to play like the favorite instead of admiring the number.`:`A ${margin.toFixed(1)}-point deficit is a warning, not a funeral.`}`;
+}
+
 function stripRetiredRoycingtonMotifs(text){
   return String(text||'')
     .replace(/drawing room/gi,'public square')
@@ -46,13 +58,17 @@ export function applyWeek2EditorialR16(raw){
     const article=team?.inquirer_article,outlook=(article?.sections||[]).find(s=>String(s?.kind||'')==='outlook');
     if(!article)continue;
     if(outlook&&Array.isArray(outlook.paragraphs)&&outlook.paragraphs[0]!=='n/a'){
-      const road=scheduleRoad(team,article);
-      if(road){
-        const existing=outlook.paragraphs.filter(p=>!/(?:After|Beyond|Past) Week 3|After Week 3 come/i.test(String(p||'')));
-        const projectionIndex=Math.max(0,existing.length-1);
-        existing.splice(projectionIndex,0,road);
-        outlook.paragraphs=existing;
+      const road=scheduleRoad(team,article),projection=projectionRead(team,article);
+      let existing=outlook.paragraphs.filter(p=>!/(?:After|Beyond|Past) Week 3|After Week 3 come/i.test(String(p||'')));
+      if(projection){
+        existing=existing.filter(p=>!/\bprojects?\b|\bprojection\b/i.test(String(p||'')));
+        existing.push(projection);
       }
+      if(road){
+        const projectionIndex=projection?Math.max(0,existing.length-1):existing.length;
+        existing.splice(projectionIndex,0,road);
+      }
+      outlook.paragraphs=existing;
     }
     if(String(article?.reporter?.name||'')==='Bartholomew Roycington III'){
       article.headline=stripRetiredRoycingtonMotifs(article.headline);

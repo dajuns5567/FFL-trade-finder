@@ -55,7 +55,14 @@ function rewriteLede(t,a){
     : who==='Jefferson Filch'
     ? `${t.team_name} has a result worth keeping and several assumptions worth testing. Filch is not asking for pessimism; he is asking everyone to stop treating one Sunday like sworn testimony when Week 3 is already waiting to contradict it.`
     : `${t.team_name} can enjoy the result without turning it into mythology. Nick wants the useful parts repeated, the dumb parts removed, and absolutely nobody pretending two weeks has solved fantasy football.`;
-  s.paragraphs=[result,rankLine,projLine,divLine,voice,depth].filter(Boolean);
+  const depth2=who==='Tilly Fleecer'
+    ? `${t.team_name} also needs somebody outside the obvious stars to make Week 3 less dramatic. The glamorous answer is “trust the studs.” The useful answer is “please make sure the rest of the lineup remembers the game starts at the same time.”`
+    : who==='Bartholomew Roycington III'
+    ? `${t.team_name} would benefit from a touch more support from the less celebrated names. A roster cannot spend every Sunday asking its best players to arrive in formalwear while everyone else wanders in carrying folding chairs.`
+    : who==='Jefferson Filch'
+    ? `${t.team_name}'s next test is whether the secondary contributors can reduce the pressure on the obvious stars. Filch has no objection to a hero; he objects when the roster starts treating heroism as the weekly operating plan.`
+    : `${t.team_name} needs the middle of the lineup to be less decorative next week. Stars can win you Sundays, but if three players have to drag everybody else across the finish line, eventually somebody lets go.`;
+  s.paragraphs=[result,rankLine,projLine,divLine,voice,depth,depth2].filter(Boolean);
 }
 
 function rewritePlayers(t,a){

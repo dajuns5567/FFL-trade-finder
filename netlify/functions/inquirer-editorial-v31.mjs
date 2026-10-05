@@ -4,6 +4,7 @@
 // implementation delegates to the fully regression-tested V37 reporter engine.
 
 import {reporterPlayerStatusProfile} from './player-signal-engine.mjs';
+import {applyInquirerSignalLanguageToEdition} from './inquirer-signal-language.mjs';
 import {
   applyInquirerEditorialV37,
   evaluateInquirerEditionQuality as evaluateV37EditionQuality
@@ -12,7 +13,19 @@ import {
 export const FORWARD_INQUIRER_VERSION=31;
 export const FORWARD_EDITORIAL_REVISION=14;
 export const evaluateInquirerEditionQuality=evaluateV37EditionQuality;
-export const applyInquirerEditorialV31=applyInquirerEditorialV37;
+
+export function applyInquirerEditorialV31(args={}){
+  const out=applyInquirerEditorialV37(args);
+  if(!out||Number(args.week)<3)return out;
+  if(out?.inquirer?.teams){
+    applyInquirerSignalLanguageToEdition(out.inquirer,{
+      season:Number(args.season),
+      week:Number(args.week),
+      previousEdition:args.previousEdition||null
+    });
+  }
+  return out;
+}
 
 // Preserve the explicit shared-classifier contract at the public compatibility
 // boundary. The forward core invokes the same helper for live status reads.

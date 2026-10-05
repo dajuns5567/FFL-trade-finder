@@ -1,14 +1,16 @@
 import {applyWeek2EditorialR16 as applyR169W} from './inquirer-week2-editorial-r169w.mjs';
 
-const CANNED=/That is dominance from the top and a warning label for everybody beneath it:\s*three people should not have to carry the grocery bags, the couch, and the fantasy team at the same time\./g;
+const CANNED=/That is dominance from the top and a warning label for everybody beneath it:\s*three people should not have to carry the grocery bags, the couch, and the fantasy team at the same time([.;])/g;
 
 function rewriteTopHeavyScoring(text,team,article){
   const club=String(team?.team_name||'this team'),short=club.split(/\s+/).filter(Boolean).at(-1)||club,who=String(article?.reporter?.name||'Nick Swindell'),poss=/s$/i.test(short)?`${short}'`:`${short}'s`;
-  return String(text||'').replace(CANNED,()=>{
-    if(who==='Tilly Fleecer')return `${short} got the expensive seats right and left the rest of the lineup looking like it wandered in after intermission. Wonderful for the stars; mildly humiliating for everyone underneath them.`;
-    if(who==='Bartholomew Roycington III')return `${poss} best performers handled the aristocratic burden splendidly, while the lower order supplied enough mediocrity to keep the household from becoming unbearably pleased with itself.`;
-    if(who==='Jefferson Filch')return `${poss} top-end production did the heavy lifting. The useful follow-up is whether the rest of the lineup can contribute enough that the stars are not required to win the case by themselves every week.`;
-    return `${poss} best players did their jobs. The rest of the lineup now owns the obvious problem: stop making the top of the roster cover for everybody else.`;
+  return String(text||'').replace(CANNED,(_match,punctuation)=>{
+    let replacement;
+    if(who==='Tilly Fleecer')replacement=`${short} got the expensive seats right and left the rest of the lineup looking like it wandered in after intermission. Wonderful for the stars; mildly humiliating for everyone underneath them`;
+    else if(who==='Bartholomew Roycington III')replacement=`${poss} best performers handled the aristocratic burden splendidly, while the lower order supplied enough mediocrity to keep the household from becoming unbearably pleased with itself`;
+    else if(who==='Jefferson Filch')replacement=`${poss} top-end production did the heavy lifting. The rest of the lineup now has to contribute enough that the stars are not required to win the case by themselves every week`;
+    else replacement=`${poss} best players did their jobs. The rest of the lineup owns the obvious problem: stop making the top of the roster cover for everybody else`;
+    return replacement+punctuation;
   });
 }
 

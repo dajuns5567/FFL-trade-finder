@@ -1,6 +1,6 @@
 import {applyWeek2EditorialR16 as applyR169W} from './inquirer-week2-editorial-r169w.mjs';
 
-const CANNED=/That is dominance from the top and a warning label for everybody beneath it\./g;
+const CANNED=/That is dominance from the top and a warning label for everybody beneath it:\s*three people should not have to carry the grocery bags, the couch, and the fantasy team at the same time/g;
 
 function rewriteTopHeavyScoring(text,team,article){
   const club=String(team?.team_name||'this team'),short=club.split(/\s+/).filter(Boolean).at(-1)||club,who=String(article?.reporter?.name||'Nick Swindell');

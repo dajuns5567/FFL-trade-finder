@@ -60,6 +60,9 @@ function fixArticleMetaAndGrammar(text,team,section){
   if(String(section?.kind||'').toLowerCase()==='sentiment'&&/^I note the fan base has already reached a verdict/i.test(out)){
     out=`${short} fans reached a verdict before the facts finished parking. Now they are shopping for evidence that agrees with them, which is cheaper than admitting the panic might have been premature.`;
   }
+  if(String(section?.kind||'').toLowerCase()==='sentiment'&&full==='Pittsburgh Steelers'){
+    out=out.replace(/researching waiver claims/gi,'redrawing the depth chart on a napkin as if the front office requested help');
+  }
   out=restoreTradeAcquisitionContext(out,team);
   out=out.replace(/\s+([,.!?])/g,'$1').replace(/\.{2,}/g,'.').replace(/;\s*\./g,'.').trim();
   return out;

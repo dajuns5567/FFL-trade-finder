@@ -48,7 +48,14 @@ function rewriteLede(t,a){
     : who==='Jefferson Filch'
     ? `${won?'Filch is less interested in the win than in which parts of it can survive hostile questioning next Sunday.':'Filch has seen enough bad losses blamed on “variance” to ask who actually failed before accepting the alibi.'}`
     : `${won?'Nick likes wins. Nick also likes not pretending every win was beautiful. Both thoughts can fit in the same paragraph.':'Nick has no interest in polishing a loss until it looks philosophical. Find the failure and fix it.'}`;
-  s.paragraphs=[result,rankLine,projLine,divLine,voice].filter(Boolean);
+  const depth=who==='Tilly Fleecer'
+    ? `${t.team_name} now gets the less glamorous assignment: prove the loud parts of Week 2 were repeatable and the stupid parts were optional. Tilly has seen enough September coronations to know confetti is cheap and lineup depth is not.`
+    : who==='Bartholomew Roycington III'
+    ? `${t.team_name} may keep the result, but Bartholomew would like the performance examined for structural integrity before anyone commissions a portrait. September has produced many fine statues with feet made entirely of waiver wire dust.`
+    : who==='Jefferson Filch'
+    ? `${t.team_name} has a result worth keeping and several assumptions worth testing. Filch is not asking for pessimism; he is asking everyone to stop treating one Sunday like sworn testimony when Week 3 is already waiting to contradict it.`
+    : `${t.team_name} can enjoy the result without turning it into mythology. Nick wants the useful parts repeated, the dumb parts removed, and absolutely nobody pretending two weeks has solved fantasy football.`;
+  s.paragraphs=[result,rankLine,projLine,divLine,voice,depth].filter(Boolean);
 }
 
 function rewritePlayers(t,a){

@@ -5,19 +5,24 @@ const RECEIVING_PATTERNS=[
   /\b([A-Z][A-Za-z'’.-]+)'s target and receiving volume when ([^.]+) arrives next\./g
 ];
 
+function receivingVariation(last,opponent,count,sentence){
+  if(count===0)return sentence;
+  if(count===1)return `${last}'s receiving workload gets another Week 3 test against ${opponent}; if that volume holds, the role deserves more trust than one loud Sunday.`;
+  if(count===2)return `Against ${opponent}, ${last} needs the same receiving opportunity to survive again; otherwise the Week 2 usage starts looking more like a cameo than a trend.`;
+  return `${last} can settle the receiving-role argument against ${opponent}: repeat the targets and the optimism has evidence, lose them and the one-week spike gets a lot less impressive.`;
+}
+
 function diversifyRepeatedReceivingRead(article){
-  const seen=new Map();
+  const familySeen=new Map();
   for(const section of article?.sections||[]){
     if(!Array.isArray(section?.paragraphs))continue;
     section.paragraphs=section.paragraphs.map(paragraph=>{
       let out=String(paragraph||'');
       for(const re of RECEIVING_PATTERNS){
         out=out.replace(re,(sentence,last,opponent)=>{
-          const key=sentence.toLowerCase(),count=seen.get(key)||0;
-          seen.set(key,count+1);
-          if(count===0)return sentence;
-          if(count===1)return `${last}'s receiving workload gets another Week 3 test against ${opponent}; if that volume holds, the role deserves more trust than one loud Sunday.`;
-          return `Against ${opponent}, ${last} needs the same receiving opportunity to survive again; otherwise the Week 2 usage starts looking more like a cameo than a trend.`;
+          const key=`${String(last).toLowerCase()}|${String(opponent).toLowerCase()}`,count=familySeen.get(key)||0;
+          familySeen.set(key,count+1);
+          return receivingVariation(last,opponent,count,sentence);
         });
       }
       return out;

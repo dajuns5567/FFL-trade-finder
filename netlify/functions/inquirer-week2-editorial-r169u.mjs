@@ -100,6 +100,13 @@ function sharedDivisionLeadRead(team,article){
   return `${club} shares the ${division} lead at ${record} with ${names}. Good start. Now comes the useful part: stop sharing it.`;
 }
 
+function hasCompleteSharedLeadContext(team,outlook){
+  const context=team?.division_context,leaders=(context?.leaders||[]).filter(x=>x?.team_name),self=leaders.find(x=>String(x?.roster_id)===String(team?.roster_id)),others=leaders.filter(x=>String(x?.roster_id)!==String(team?.roster_id));
+  if(!self||!others.length)return true;
+  const copy=(outlook?.paragraphs||[]).join(' ').toLowerCase();
+  return /\b(?:tied|shares|level)\b/i.test(copy)&&others.every(x=>copy.includes(String(x.team_name).toLowerCase()));
+}
+
 export function applyWeek2EditorialR16(raw){
   const out=applyR169T(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
@@ -115,7 +122,7 @@ export function applyWeek2EditorialR16(raw){
     }
     const outlook=(article.sections||[]).find(s=>String(s?.kind||'')==='outlook');
     const shared=sharedDivisionLeadRead(team,article);
-    if(shared&&outlook&&Array.isArray(outlook.paragraphs)&&!outlook.paragraphs.some(p=>/\b(?:tied|shares|level)\b/i.test(String(p||''))))outlook.paragraphs.splice(Math.min(2,outlook.paragraphs.length),0,shared);
+    if(shared&&outlook&&Array.isArray(outlook.paragraphs)&&!hasCompleteSharedLeadContext(team,outlook))outlook.paragraphs.splice(Math.min(2,outlook.paragraphs.length),0,shared);
     article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
   }
   return out;

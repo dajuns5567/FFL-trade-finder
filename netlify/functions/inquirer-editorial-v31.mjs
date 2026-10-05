@@ -4,7 +4,7 @@
 // implementation delegates to the fully regression-tested V37 reporter engine.
 
 import {reporterPlayerStatusProfile} from './player-signal-engine.mjs';
-import {applyInquirerSignalLanguageToEdition} from './inquirer-signal-language.mjs';
+import {applyInquirerStoryContextToEdition} from './inquirer-story-context.mjs';
 import {
   applyInquirerEditorialV37,
   evaluateInquirerEditionQuality as evaluateV37EditionQuality
@@ -18,7 +18,7 @@ export function applyInquirerEditorialV31(args={}){
   const out=applyInquirerEditorialV37(args);
   if(!out||Number(args.week)<3)return out;
   if(out?.inquirer?.teams){
-    applyInquirerSignalLanguageToEdition(out.inquirer,{
+    applyInquirerStoryContextToEdition(out.inquirer,{
       season:Number(args.season),
       week:Number(args.week),
       previousEdition:args.previousEdition||null

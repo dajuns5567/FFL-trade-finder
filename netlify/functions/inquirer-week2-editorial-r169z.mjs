@@ -28,7 +28,7 @@ function matchup(article){
   return null;
 }
 
-const META=/\b(?:evidence|proof|investigat(?:e|ion)|verdict|case|witness|testimony|argument|conclusion|question|answer|whether (?:that|the|this)|whether .*?(?:real|repeats?|survives?)|role (?:case|argument|repeats?|survives?)|peer review|seminar on whether|new piece of proof|recycled conclusion|old expectation|ceiling was misidentified|ceiling still applies|trend beginning|one-week witness|sample size|data point)\b/i;
+const META=/\b(?:evidence|proof|investigat(?:e|ion)|verdict|case|witness|testimony|argument|conclusion|question|answer|whether (?:that|the|this)|whether .*?(?:real|repeats?|survives?)|role (?:case|argument|repeats?|survives?)|peer review|seminar on whether|new piece of proof|recycled conclusion|old expectation|ceiling was misidentified|ceiling still applies|trend beginning|one-week witness|sample size|data point|hostile questioning|assumptions? worth testing|treating one Sunday like gospel|Week 2 gets to argue with it|watch as actual growth|hot box score|survive hostile questioning|waiting to contradict it|theory; they are the annoying part everyone can count)\b/i;
 
 function splitSentences(text){
   return norm(text).split(/(?<=[.!?])\s+(?=[A-Z0-9“"'])/).map(norm).filter(Boolean);
@@ -65,12 +65,34 @@ function statComment(name,pts,tail,team,article,ctx){
 function cleanPlayerRows(rows,team,article,ctx){
   const out=[];
   for(const raw of rows){
-    const row=norm(raw),m=rawStat(row);
+    const row=norm(raw);
+    if(/\bgot about \d+% of (?:its|their) scoring from three players\b/i.test(row))continue;
+    if(/\bsupplied [\d.]+ points, about \d+% of .*Week 2 total\b/i.test(row))continue;
+    if(/\baveraged [\d.]+ fantasy points per game in 2025\b/i.test(row)&&/\b(?:Week 2 gets to argue|actual growth|hot box score|ceiling)\b/i.test(row))continue;
+    const m=rawStat(row);
     if(m){out.push(statComment(m[1],m[2],m[3],team,article,ctx));continue}
     const cleaned=cleanMeta(row);
     if(!cleaned)continue;
-    if(/^([A-Z][A-Za-z'’.-]+(?:\s+[A-Z][A-Za-z'’.-]+){1,3}) (?:scored|had|posted) -?\d+(?:\.\d+)?(?: fantasy)? points?\.?$/i.test(cleaned))continue;
+    if(/^([A-Z][A-Za-z'’.-]+(?:\s+[A-Z][A-Za-z'’.-]+){0,3}) (?:scored|had|posted) -?\d+(?:\.\d+)?(?: fantasy)? points?(?: against [^.]+)?\.?$/i.test(cleaned))continue;
     out.push(cleaned);
+  }
+  return out;
+}
+
+function cleanMarketRows(rows,team){
+  const {short}=bits(team),out=[];
+  for(const raw of rows){
+    const row=cleanMeta(raw);if(!row)continue;
+    if(/\bled the roster's value gains\b/i.test(row)||/\bled the losses\b/i.test(row))continue;
+    if(/\badded \d+ in value; .* dropped \d+\b/i.test(row))continue;
+    if(/^Useful market movement\.?$/i.test(row))continue;
+    if(/roster value (?:rose|fell) from \d+ to \d+/i.test(row)){
+      const delta=(row.match(/a ([\d,]+)-point move \(([-+]?\d+(?:\.\d+)?)%\)/i)||[]);
+      if(delta)out.push(`${short}'s roster value moved ${delta[1]} points (${delta[2]}%). Fine. Prices moved; Sunday already told us more.`);
+      else out.push(row);
+      continue;
+    }
+    out.push(row);
   }
   return out;
 }
@@ -93,13 +115,15 @@ function sectionIsPlayers(section){
   const h=String(section?.heading||'').toLowerCase();
   return /names rivals|moved the game|made the noise|made the afternoon|people who made|who actually/.test(h);
 }
+function sectionIsMarket(section){return /market|roster price|price moved/i.test(String(section?.heading||''));}
 
 function rewriteArticle(team){
   const article=team?.inquirer_article;if(!article)return;
   const ctx=matchup(article);
   for(const section of article.sections||[]){
     if(!Array.isArray(section?.paragraphs))continue;
-    section.paragraphs=sectionIsPlayers(section)?cleanPlayerRows(section.paragraphs,team,article,ctx):cleanGenericRows(section.paragraphs);
+    if(/what survived inspection/i.test(String(section.heading||'')))section.heading='Who Actually Earned It';
+    section.paragraphs=sectionIsPlayers(section)?cleanPlayerRows(section.paragraphs,team,article,ctx):sectionIsMarket(section)?cleanMarketRows(section.paragraphs,team):cleanGenericRows(section.paragraphs);
   }
   article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
 }

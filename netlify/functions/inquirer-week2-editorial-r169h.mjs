@@ -12,7 +12,6 @@ function enforcePlayerScore(team,name){
   const scoreRe=new RegExp(`(^|[^0-9.])${esc(score)}(?![0-9]|\\.[0-9])`);
   const nameRe=new RegExp(`\\b${esc(name)}\\b`,'i');
 
-  // Remove duplicate numeric statements while retaining the surrounding player commentary.
   for(const section of article.sections||[]){
     if(!Array.isArray(section?.paragraphs))continue;
     section.paragraphs=section.paragraphs.map(paragraph=>sentences(paragraph).map(sentence=>{
@@ -29,9 +28,16 @@ function enforcePlayerScore(team,name){
   article.paragraphs=(article.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(Boolean);
 }
 
+function enforceBreakout(out){
+  const take=(out?.league_overview?.hot_takes||[]).find(x=>/breakout player to watch/i.test(String(x?.title||'')));
+  if(!take)return;
+  take.take='Dallas Turner is still building a legitimate breakout case. Another disruptive Sunday made the Week 3 question simple: if that role holds, leaving him on the bench starts looking stubborn rather than cautious.';
+}
+
 export function applyWeek2EditorialR16(raw){
   const out=applyR169G(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
+  enforceBreakout(out);
   const aints=(out.teams||[]).find(t=>/new orleans aints/i.test(String(t?.team_name||'')));
   if(aints){
     enforcePlayerScore(aints,'Maxx Crosby');

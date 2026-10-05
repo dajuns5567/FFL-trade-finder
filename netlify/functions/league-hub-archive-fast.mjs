@@ -6,9 +6,14 @@ const json=(body,status=200)=>new Response(JSON.stringify(body),{
   status,
   headers:{
     'content-type':'application/json; charset=utf-8',
-    'cache-control':'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800',
-    'netlify-cdn-cache-control':'public, durable, max-age=86400, stale-while-revalidate=604800',
-    'x-fleeced-archive-fast':'1'
+    // During active preview development the publication must reflect the exact
+    // deployed editorial code. Never let browser/CDN stale-while-revalidate hide
+    // a new revision behind an older Week 2 payload.
+    'cache-control':'no-store, no-cache, must-revalidate',
+    'netlify-cdn-cache-control':'no-store',
+    'pragma':'no-cache',
+    'expires':'0',
+    'x-fleeced-archive-fast':'2'
   }
 });
 

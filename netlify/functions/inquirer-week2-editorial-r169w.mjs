@@ -20,6 +20,7 @@ function anchorGenericFollowups(text,team){
   out=out.replace(/That is the point, not the comparison itself\./g,`For ${short}, that is the point; the comparison itself is just context.`);
   out=out.replace(/That is not a rounding error; it changes the expectation\./g,`For ${short}, that gap is not a rounding error; it changes what Week 3 should reasonably expect.`);
   out=out.replace(/Repetition would make the old limit look terribly quaint\./g,`For ${short}, one repeat would make the old limit look terribly quaint.`);
+  out=out.replace(/The Week 3 line rather grandly favors (.+?) (\d+(?:\.\d+)?) to (\d+(?:\.\d+)?) over (.+?)\./g,(_m,fav,a,b,dog)=>`The Week 3 line makes ${fav} the favored side, ${a} to ${b} over ${dog}.`);
   return out;
 }
 

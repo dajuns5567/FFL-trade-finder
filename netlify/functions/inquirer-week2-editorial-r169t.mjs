@@ -58,6 +58,47 @@ function removeReporterMeta(text,team){
     .replace(/Bartholomew would like the performance examined for structural integrity before anyone commissions a portrait/gi,'the performance still needs a structural inspection before anyone commissions a portrait');
 }
 
+function hasHistoricalContext(article,player){
+  const name=String(player?.name||''),prior=Number(player?.prior_season_avg),bits=name.split(/\s+/).filter(Boolean),first=bits[0]||'',last=bits.at(-1)||'',refs=[name,first.length>=4?first:'',last.length>=4?last:''].filter(Boolean),priorText=Number.isFinite(prior)?prior.toFixed(1):'';
+  return (article?.sections||[]).flatMap(s=>s?.paragraphs||[]).some(paragraph=>{
+    const text=String(paragraph||''),historical=/\b(?:2025|last season|last year|prior-season)\b/i.test(text)||(priorText&&text.includes(priorText)&&/\b(?:average|per game|prior|last)\b/i.test(text));
+    return historical&&refs.some(ref=>text.toLowerCase().includes(ref.toLowerCase()));
+  });
+}
+
+function historicalInterpretation(player,reporter){
+  const name=String(player?.name||'This player'),prior=Number(player?.prior_season_avg),pts=Number(player?.points),avg=prior.toFixed(1),up=pts>prior;
+  if(up){
+    if(reporter==='Tilly Fleecer')return `${name} averaged ${avg} fantasy points per game in 2025. Week 2 cleared that pace by enough to raise a rude possibility: last year's version may have been the opening act, not the ceiling.`;
+    if(reporter==='Bartholomew Roycington III')return `${name} averaged ${avg} fantasy points per game in 2025. This performance rose far enough above that standard that one must entertain the indecent possibility that last year's ceiling was simply too low.`;
+    if(reporter==='Jefferson Filch')return `${name} averaged ${avg} fantasy points per game in 2025. The jump is large enough to investigate as actual growth rather than wave away as a hot box score; Week 3 gets to test whether last year's ceiling still applies.`;
+    return `${name} averaged ${avg} fantasy points per game in 2025. This was far enough above that pace to make last year's ceiling look negotiable, which is more interesting than merely saying he beat his average.`;
+  }
+  if(reporter==='Tilly Fleecer')return `${name} averaged ${avg} fantasy points per game in 2025. Falling this far below that level earns the performance a proper booing, but one ugly Sunday does not magically prove the role disappeared.`;
+  if(reporter==='Bartholomew Roycington III')return `${name} averaged ${avg} fantasy points per game in 2025. Week 2 fell far enough short that dignified silence is no longer available, though one poor result is still a performance problem before it becomes a role crisis.`;
+  if(reporter==='Jefferson Filch')return `${name} averaged ${avg} fantasy points per game in 2025. The gap is large enough to flag, but not large enough to invent a role crisis; if the opportunity stayed normal, the dud belongs to the player.`;
+  return `${name} averaged ${avg} fantasy points per game in 2025. That makes Week 2 a real miss, not a mystery; unless the role changed, the player owns the dud and the manager does not need to be invented as the culprit.`;
+}
+
+function addHistoricalInterpretation(team,article){
+  const reporter=String(article?.reporter?.name||'Nick Swindell'),top=(team?.starter_details||[]).slice(0,3);
+  for(const player of top){
+    const prior=Number(player?.prior_season_avg),pts=Number(player?.points),games=Number(player?.prior_season_games)||0;
+    if(!Number.isFinite(prior)||prior<=0||!Number.isFinite(pts)||games<6||Math.abs(pts-prior)<Math.max(4,prior*.3)||hasHistoricalContext(article,player))continue;
+    const name=String(player?.name||''),line=historicalInterpretation(player,reporter);
+    let inserted=false;
+    for(const section of article.sections||[]){
+      const paras=section?.paragraphs;if(!Array.isArray(paras))continue;
+      const i=paras.findIndex(p=>String(p||'').includes(name));
+      if(i>=0){paras.splice(i+1,0,line);inserted=true;break;}
+    }
+    if(!inserted){
+      const section=(article.sections||[]).find(s=>Array.isArray(s?.paragraphs)&&s.paragraphs[0]!=='n/a');
+      if(section)section.paragraphs.push(line);
+    }
+  }
+}
+
 export function applyWeek2EditorialR16(raw){
   const out=applyR169S(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
@@ -80,6 +121,7 @@ export function applyWeek2EditorialR16(raw){
     for(const section of article.sections||[]){
       if(Array.isArray(section.paragraphs))section.paragraphs=section.paragraphs.map(p=>removeReporterMeta(p,team));
     }
+    addHistoricalInterpretation(team,article);
     if(String(article?.reporter?.name||'')==='Bartholomew Roycington III'){
       article.headline=stripRetiredRoycingtonMotifs(article.headline);
       for(const section of article.sections||[]){

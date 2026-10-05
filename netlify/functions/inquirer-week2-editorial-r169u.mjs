@@ -1,6 +1,7 @@
 import {applyWeek2EditorialR16 as applyR169T} from './inquirer-week2-editorial-r169t.mjs';
 
 const HISTORICAL=/\baveraged\s+\d+(?:\.\d+)?\s+fantasy points per game in 2025\b/i;
+const escapeRe=value=>String(value||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
 function firstPersonReporterVoice(text){
   return String(text||'')
@@ -25,6 +26,18 @@ function firstPersonReporterVoice(text){
     .replace(/\bFilch has seen/gi,"I've seen")
     .replace(/\bFilch notes/gi,'I note')
     .replace(/\bFilch will/gi,"I'll");
+}
+
+function repairInterruptedPlayerNames(text,team){
+  let out=String(text||'');
+  for(const p of team?.starter_details||[]){
+    const name=String(p?.name||'').trim(),m=name.match(/^(.*\bSt\.)\s+(.+)$/i);
+    if(!m)continue;
+    const prefix=escapeRe(m[1]),suffix=escapeRe(m[2]);
+    const re=new RegExp(`${prefix}\\s+((?:For|Around)\\s+[^,.;]+,\\s+|In the\\s+[^,.;]+,\\s+)${suffix}`,'gi');
+    out=out.replace(re,(_all,context)=>`${context}${name}`);
+  }
+  return out;
 }
 
 function depthRead(team,article,index){
@@ -149,7 +162,7 @@ export function applyWeek2EditorialR16(raw){
     const shared=sharedDivisionLeadRead(team,article);
     if(shared&&outlook&&Array.isArray(outlook.paragraphs)&&!hasCompleteSharedLeadContext(team,outlook))outlook.paragraphs.splice(Math.min(2,outlook.paragraphs.length),0,shared);
     for(const section of article.sections||[]){
-      if(Array.isArray(section.paragraphs))section.paragraphs=section.paragraphs.map(firstPersonReporterVoice);
+      if(Array.isArray(section.paragraphs))section.paragraphs=section.paragraphs.map(p=>repairInterruptedPlayerNames(firstPersonReporterVoice(p),team));
     }
     article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
   }

@@ -21,6 +21,9 @@ function anchorGenericFollowups(text,team){
   out=out.replace(/That is not a rounding error; it changes the expectation\./g,`For ${short}, that gap is not a rounding error; it changes what Week 3 should reasonably expect.`);
   out=out.replace(/Repetition would make the old limit look terribly quaint\./g,`For ${short}, one repeat would make the old limit look terribly quaint.`);
   out=out.replace(/The Week 3 line rather grandly favors (.+?) (\d+(?:\.\d+)?) to (\d+(?:\.\d+)?) over (.+?)\./g,(_m,fav,a,b,dog)=>`The Week 3 line makes ${fav} the favored side, ${a} to ${b} over ${dog}.`);
+  out=out.replace(/The current Week 3 projection puts (.+?) ahead of (.+?), (\d+(?:\.\d+)?) to (\d+(?:\.\d+)?)\./g,(_m,fav,dog,a,b)=>`The current Week 3 projection gives ${fav} the edge over ${dog}, ${a} to ${b}.`);
+  out=out.replace(/The projection, in its infinite confidence, has (.+?) beating (.+?) (\d+(?:\.\d+)?) to (\d+(?:\.\d+)?)\./g,(_m,fav,dog,a,b)=>`The projection, in its infinite confidence, makes ${fav} the favorite over ${dog}, ${a} to ${b}.`);
+  out=out.replace(/Week 3's number is (.+?) (\d+(?:\.\d+)?), (.+?) (\d+(?:\.\d+)?)\./g,(_m,fav,a,dog,b)=>`Week 3's projection favorite is ${fav}, ${a} to ${b} over ${dog}.`);
   return out;
 }
 

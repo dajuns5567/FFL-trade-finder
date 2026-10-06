@@ -1,6 +1,7 @@
 import {getStore} from '@netlify/blobs';
 import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
 import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
+import week3Preload2026 from './inquirer-week3-2026-preload.mjs';
 import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r28.mjs';
 
 const reporters=[
@@ -14,14 +15,15 @@ const json=(body,status=200,ttl=60)=>new Response(JSON.stringify(body),{status,h
   'content-type':'application/json; charset=utf-8',
   'cache-control':`public, max-age=${Math.max(0,ttl)}, stale-while-revalidate=300`,
   'netlify-cdn-cache-control':`public, max-age=${Math.max(60,ttl*5)}, stale-while-revalidate=3600`,
-  'x-fleeced-read-fast':'3'
+  'x-fleeced-read-fast':'4'
 }});
-let week2Memo=null;
+let week2Memo=null,week3Memo=null;
 const week2=()=>week2Memo||(week2Memo=applyWeek2EditorialR16(week2Preload2026));
+const week3=()=>week3Memo||(week3Memo=week3Preload2026());
 
 async function archiveRows(){
   const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),rows=Array.isArray(idx)?idx.slice():[];
-  for(const p of [week1Preload2026,week2Preload2026]){
+  for(const p of [week1Preload2026,week2Preload2026,week3()]){
     const season=Number(p.season),week=Number(p.week),key=`${season}|${week}`;
     if(!rows.some(x=>`${Number(x.season)}|${Number(x.week)}`===key))rows.push({type:'week',season,week,key:`preloaded:${season}:${week}`,captured_at:String(p.generated_at||''),preloaded:true});
   }
@@ -33,13 +35,14 @@ async function latest(){
   const rows=await archiveRows(),candidates=rows.slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
   for(const row of candidates){
     const season=Number(row.season),week=Number(row.week);
+    if(season===2026&&week===3)return week3();
     if(season===2026&&week===2)return week2();
     if(season===2026&&week===1)return week1Preload2026;
     if(!season||!week)continue;
     const s=store(),stored=await s.get(`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null);
     if(stored?.available&&Array.isArray(stored.teams)&&stored.teams.length)return stored;
   }
-  return week2();
+  return week3();
 }
 
 async function managerSnapshot(){

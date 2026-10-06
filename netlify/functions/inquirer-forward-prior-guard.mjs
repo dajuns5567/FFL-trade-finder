@@ -11,7 +11,6 @@ const sentences=v=>norm(v)
   .map(x=>x.replaceAll('§','.').trim())
   .filter(Boolean);
 const key=s=>norm(s).toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').replace(/\s+/g,' ').trim();
-const lower=s=>String(s||'').replace(/^([“"']?)([A-Z])/,(_,q,c)=>q+c.toLowerCase());
 const esc=s=>[...String(s||'')].map(ch=>'.*+?^$(){}|[]'.includes(ch)||ch.charCodeAt(0)===92?'\\'+ch:ch).join('');
 function entityList(edition){return[...(edition?.teams||[])].flatMap(t=>[t.team_name,t.manager_name,t.opponent_name,t.next_opponent_name,...(t.starter_details||[]).map(p=>p.name)]).filter(Boolean).map(String).sort((a,b)=>b.length-a.length)}
 function structuralKey(s,entities=[]){let x=String(s||'');for(const e of entities)x=x.replace(new RegExp(esc(e),'gi'),'[ENTITY]');return x.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,'[#]').replace(/\s+/g,' ').trim()}
@@ -23,7 +22,6 @@ const LEADS={
   'nora-voss':['Still,','More specifically,','Meanwhile,','For now,','On review,','Even so,','On balance,','In context,','That said,','For once,','Next up,','At least,','Instead,','Then again,','All told,','So far,','In turn,','Even then,','Notably,','Predictably,','Separately,','Curiously,','Consequently,','Meanwhile,'],
   '__weekly_recap__':['Elsewhere,','Meanwhile,','Across town,','Looking ahead,','For now,','On balance,','In context,','That said,','Next up,','At least,','Instead,','Then again,','All told,','So far,','In turn,','Even then,','Around the league,','More broadly,','Separately,','Notably,','Consequently,','Afterward,','By contrast,','At minimum,']
 };
-
 function collect(previous,entities){
   const exact=new Set(),recapStructural=new Set();
   const addExact=rows=>{for(const s of (rows||[]).flatMap(sentences)){const n=key(s);if(n)exact.add(n)}};
@@ -36,12 +34,11 @@ function chooseLead(reporter,state){const bank=LEADS[reporter]||LEADS.__weekly_r
 function freshen(sentence,prior,reporter,state,keyFn=key){
   const original=norm(sentence);let out=original;
   if(!prior.has(keyFn(out)))return out;
-  for(let tries=0;tries<12&&prior.has(keyFn(out));tries++)out=`${chooseLead(reporter,state)} ${lower(original)}`;
+  for(let tries=0;tries<12&&prior.has(keyFn(out));tries++)out=`${chooseLead(reporter,state)} ${original}`;
   return out;
 }
 function rewrite(rows,prior,reporter,state,keyFn=key){return(rows||[]).map(p=>sentences(p).map(s=>freshen(s,prior,reporter,state,keyFn)).join(' ').trim()).filter(Boolean)}
 function article(a,prior,state){if(!a)return;const reporter=String(a?.reporter?.id||'walter-mercer');for(const sec of a.sections||[]){if(Array.isArray(sec?.paragraphs))sec.paragraphs=rewrite(sec.paragraphs,prior,reporter,state);for(const b of sec?.blocks||[])if(Array.isArray(b?.paragraphs))b.paragraphs=rewrite(b.paragraphs,prior,reporter,state)}a.paragraphs=(a.sections||[]).flatMap(s=>[...(s?.paragraphs||[]),...(s?.blocks||[]).flatMap(b=>b?.paragraphs||[])]).filter(Boolean)}
-
 export function guardInquirerForwardAgainstPrior(edition,{week,previousEdition=null}={}){
   if(!edition||!Array.isArray(edition.teams)||Number(week)<3||!previousEdition)return edition;
   const entities=[...entityList(edition),...entityList(previousEdition)],prior=collect(previousEdition,entities),state={index:Number(week)*11};

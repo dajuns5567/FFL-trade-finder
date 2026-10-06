@@ -75,7 +75,13 @@ export function applyInquirerEditorialV31(args={}){
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });
+    // Remove stock/editorial labels before uniqueness is finalized, otherwise
+    // stripping a label can expose duplicate core sentences after dedupe ran.
+    finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
+    enforceInquirerForwardContextTruth(edition,{week:Number(args.week)});
     dedupeInquirerForwardEdition(edition,{week:Number(args.week)});
+    // Dedupe uses natural comma transitions; this second truth pass is
+    // effectively idempotent and restores canonical entity casing if needed.
     enforceInquirerForwardContextTruth(edition,{week:Number(args.week)});
     finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
     normalizeInquirerForwardHeadlines(edition,{week:Number(args.week)});

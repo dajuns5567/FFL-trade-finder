@@ -5,7 +5,7 @@ on:
     paths:
       - 'netlify/functions/inquirer-editorial-v31.mjs'
       - 'netlify/functions/inquirer-forward-*.mjs'
-      - 'scripts/inquirer-week3-live-audit.mjs'
+      - 'scripts/inquirer-week3-direct-audit.mjs'
       - '.github/workflows/inquirer-week3-live-audit.yml'
   workflow_dispatch:
 
@@ -23,17 +23,17 @@ jobs:
           node-version: 22
       - name: Syntax check live audit
         run: |
-          node --check scripts/inquirer-week3-live-audit.mjs
+          node --check scripts/inquirer-week3-direct-audit.mjs
           node --check netlify/functions/inquirer-editorial-v31.mjs
       - name: Install generator dependency
         run: npm install --no-save --package-lock=false @netlify/blobs
-      - name: Regenerate and audit stored live Week 3 snapshot
-        run: node scripts/inquirer-week3-live-audit.mjs
+      - name: Generate and audit direct Sleeper Week 3 candidate
+        run: node scripts/inquirer-week3-direct-audit.mjs
       - name: Upload Week 3 candidate and audit
         uses: actions/upload-artifact@v4
         with:
           name: inquirer-week3-live-audit
           path: |
-            /tmp/inquirer-week3-live-candidate.json
-            /tmp/inquirer-week3-live-audit.json
+            /tmp/inquirer-week3-direct-candidate.json
+            /tmp/inquirer-week3-direct-audit.json
           retention-days: 7

@@ -71,17 +71,20 @@ export function applyInquirerEditorialV31(args={}){
       previousEdition:args.previousEdition||null
     });
     naturalizeInquirerForwardEdition(edition,{week:Number(args.week)});
+
+    // First clean the prose and factual context. Prior-week protection must run
+    // on this cleaned text, otherwise later cleanup can reveal old copy again.
+    finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
+    enforceInquirerForwardContextTruth(edition,{week:Number(args.week)});
+    finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
     guardInquirerForwardAgainstPrior(edition,{
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });
-    // Remove stock/editorial labels before uniqueness is finalized, otherwise
-    // stripping a label can expose duplicate core sentences after dedupe ran.
-    finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
-    enforceInquirerForwardContextTruth(edition,{week:Number(args.week)});
+
+    // Final edition dedupe now uses natural comma transitions and also limits
+    // repeated proper-name openings within each individual team article.
     dedupeInquirerForwardEdition(edition,{week:Number(args.week)});
-    // Dedupe uses natural comma transitions; this second truth pass is
-    // effectively idempotent and restores canonical entity casing if needed.
     enforceInquirerForwardContextTruth(edition,{week:Number(args.week)});
     finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
     normalizeInquirerForwardHeadlines(edition,{week:Number(args.week)});

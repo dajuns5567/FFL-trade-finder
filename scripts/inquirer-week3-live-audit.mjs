@@ -5,12 +5,17 @@ import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRE
 import {inquirerWeekClassification} from '../netlify/functions/inquirer-reporters.mjs';
 
 const configured=String(process.env.INQUIRER_LIVE_SITE||'').trim().replace(/\/$/,'');
-const sites=[configured,'https://precious-stroopwafel-196eae.netlify.app','https://subtle-genie-6167c5.netlify.app'].filter(Boolean);
+const sites=[
+  configured,
+  'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app',
+  'https://precious-stroopwafel-196eae.netlify.app',
+  'https://subtle-genie-6167c5.netlify.app'
+].filter(Boolean);
 let live=null,sourceUrl='',probes=[];
 for(const site of [...new Set(sites)]){
   const url=`${site}/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week=3`;
   try{
-    const res=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-Inquirer-Week3-Live-Audit/1.1'},cache:'no-store'});
+    const res=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-Inquirer-Week3-Live-Audit/1.2'},cache:'no-store'});
     const text=await res.text();let body=null;try{body=JSON.parse(text)}catch{}
     probes.push({site,status:res.status,season:body?.season??null,week:body?.week??null,teams:Array.isArray(body?.teams)?body.teams.length:null,error:body?.error||null});
     if(res.ok&&Number(body?.season)===2026&&Number(body?.week)===3&&Array.isArray(body?.teams)&&body.teams.length===32){live=body;sourceUrl=url;break;}

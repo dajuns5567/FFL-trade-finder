@@ -33,7 +33,9 @@ function correctPlayerLeader(text,team){
   const leader=topStarter(team);if(!leader?.name)return text;let out=String(text||'');
   for(const player of team?.starter_details||[]){
     const name=norm(player?.name);if(!name||name.toLowerCase()===norm(leader.name).toLowerCase())continue;
-    out=out.replace(new RegExp(`\\b${esc(name)}\\s+led\\b`,'gi'),`${name} gave`);
+    const detailed=new RegExp(`\\b${esc(name)}\\s+led\\s+([^.!?]{0,90}?)\\s+with\\s+(\\d+(?:\\.\\d+)?)\\s+fantasy points\\.?`,'gi');
+    out=out.replace(detailed,(_,target,points)=>`${name} gave ${norm(target)} ${points} fantasy points. It was useful production, just not the lineup's top score.`);
+    out=out.replace(new RegExp(`\\b${esc(name)}\\s+led\\b`,'gi'),`${name} contributed`);
   }
   return out;
 }

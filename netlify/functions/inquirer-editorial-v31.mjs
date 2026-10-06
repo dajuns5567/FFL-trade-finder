@@ -5,14 +5,24 @@
 
 import {reporterPlayerStatusProfile} from './player-signal-engine.mjs';
 import {applyInquirerStoryContextToEdition} from './inquirer-story-context.mjs';
+import {applyInquirerForwardFreshness,evaluateInquirerForwardFreshness} from './inquirer-forward-freshness.mjs';
 import {
   applyInquirerEditorialV37,
   evaluateInquirerEditionQuality as evaluateV37EditionQuality
 } from './inquirer-editorial-v37.mjs';
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=14;
-export const evaluateInquirerEditionQuality=evaluateV37EditionQuality;
+export const FORWARD_EDITORIAL_REVISION=15;
+
+export function evaluateInquirerEditionQuality(candidate,previousEdition=null){
+  const base=evaluateV37EditionQuality(candidate,previousEdition)||{ok:true,issues:[],metrics:{}};
+  const fresh=evaluateInquirerForwardFreshness(candidate,previousEdition);
+  return{
+    ok:!!base.ok&&!!fresh.ok,
+    issues:[...(base.issues||[]),...(fresh.issues||[])],
+    metrics:{...(base.metrics||{}),freshness:fresh.metrics||{}}
+  };
+}
 
 export function applyInquirerEditorialV31(args={}){
   const out=applyInquirerEditorialV37(args);
@@ -22,6 +32,11 @@ export function applyInquirerEditorialV31(args={}){
       season:Number(args.season),
       week:Number(args.week),
       previousEdition:args.previousEdition||null
+    });
+    applyInquirerForwardFreshness(out.inquirer,{
+      week:Number(args.week),
+      previousEdition:args.previousEdition||null,
+      variationSalt:Number(args.variationSalt)||0
     });
   }
   return out;

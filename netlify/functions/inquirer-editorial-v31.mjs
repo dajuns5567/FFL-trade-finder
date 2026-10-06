@@ -15,7 +15,7 @@ import {naturalizeInquirerForwardEdition} from './inquirer-forward-naturalize.mj
 import {guardInquirerForwardAgainstPrior} from './inquirer-forward-prior-guard.mjs';
 import {dedupeInquirerForwardEdition} from './inquirer-forward-edition-dedupe.mjs';
 import {enforceInquirerForwardContextTruth,findInquirerForwardContextTruthIssues} from './inquirer-forward-context-truth.mjs';
-import {finalSweepInquirerForwardEdition} from './inquirer-forward-final-sweep.mjs';
+import {finalSweepInquirerForwardEdition,findInquirerForwardSurfaceIssues} from './inquirer-forward-final-sweep.mjs';
 import {normalizeInquirerForwardHeadlines,findInquirerForwardHeadlineGrammarIssues} from './inquirer-forward-headline-grammar.mjs';
 import {
   applyInquirerEditorialV37,
@@ -29,11 +29,12 @@ export function evaluateInquirerEditionQuality(candidate,previousEdition=null){
   const base=evaluateV37EditionQuality(candidate,previousEdition)||{ok:true,issues:[],metrics:{}};
   const fresh=evaluateInquirerForwardFreshness(candidate,previousEdition);
   const contextIssues=findInquirerForwardContextTruthIssues(candidate,{week:Number(candidate?.week)});
+  const surfaceIssues=findInquirerForwardSurfaceIssues(candidate,{week:Number(candidate?.week)});
   const headlineIssues=findInquirerForwardHeadlineGrammarIssues(candidate,{week:Number(candidate?.week)});
   return{
-    ok:!!base.ok&&!!fresh.ok&&contextIssues.length===0&&headlineIssues.length===0,
-    issues:[...(base.issues||[]),...(fresh.issues||[]),...contextIssues.map(x=>({id:'context-truth',...x})),...headlineIssues.map(x=>({id:'headline-grammar',...x}))],
-    metrics:{...(base.metrics||{}),freshness:fresh.metrics||{},context_truth_issues:contextIssues.length,headline_grammar_issues:headlineIssues.length}
+    ok:!!base.ok&&!!fresh.ok&&contextIssues.length===0&&surfaceIssues.length===0&&headlineIssues.length===0,
+    issues:[...(base.issues||[]),...(fresh.issues||[]),...contextIssues.map(x=>({id:'context-truth',...x})),...surfaceIssues.map(x=>({id:'surface-prose',...x})),...headlineIssues.map(x=>({id:'headline-grammar',...x}))],
+    metrics:{...(base.metrics||{}),freshness:fresh.metrics||{},context_truth_issues:contextIssues.length,surface_prose_issues:surfaceIssues.length,headline_grammar_issues:headlineIssues.length}
   };
 }
 
@@ -69,8 +70,6 @@ export function applyInquirerEditorialV31(args={}){
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });
-    // Full naturalization happens before uniqueness passes so it can safely
-    // remove scaffolds/add interpretation without undoing final de-duplication.
     naturalizeInquirerForwardEdition(edition,{week:Number(args.week)});
     guardInquirerForwardAgainstPrior(edition,{
       week:Number(args.week),
@@ -78,8 +77,6 @@ export function applyInquirerEditorialV31(args={}){
     });
     dedupeInquirerForwardEdition(edition,{week:Number(args.week)});
     enforceInquirerForwardContextTruth(edition,{week:Number(args.week)});
-    // This last sweep is deliberately non-destructive: it only removes the
-    // forbidden synthetic lead grammar and repairs surface wording.
     finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
     normalizeInquirerForwardHeadlines(edition,{week:Number(args.week)});
     out.inquirer.teams=edition.teams;
@@ -88,13 +85,9 @@ export function applyInquirerEditorialV31(args={}){
   return out;
 }
 
-// Preserve the explicit shared-classifier contract at the public compatibility
-// boundary. The forward core invokes the same helper for live status reads.
 function reporterStatusCompatibility(p,slot,pp){return reporterPlayerStatusProfile(p,slot,pp);}
 void reporterStatusCompatibility;
 
-// Source-contract markers retained at this compatibility boundary. The actual
-// implementations live in the preserved V31 core / V37 forward layers.
 // same-team-copy-forward • cross-team-copy-scaffold • recap-copy-forward
 // forwardCrossReporterPhraseOffenders • cross-reporter-phrase-scaffold
 // function w2PreviousWeekBridge

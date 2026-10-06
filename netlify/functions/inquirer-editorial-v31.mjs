@@ -13,6 +13,7 @@ import {cleanupInquirerForwardRankings} from './inquirer-forward-ranking-cleanup
 import {sustainInquirerForwardEdition} from './inquirer-forward-sustainability.mjs';
 import {naturalizeInquirerForwardEdition} from './inquirer-forward-naturalize.mjs';
 import {guardInquirerForwardAgainstPrior} from './inquirer-forward-prior-guard.mjs';
+import {dedupeInquirerForwardEdition} from './inquirer-forward-edition-dedupe.mjs';
 import {normalizeInquirerForwardHeadlines,findInquirerForwardHeadlineGrammarIssues} from './inquirer-forward-headline-grammar.mjs';
 import {
   applyInquirerEditorialV37,
@@ -70,6 +71,7 @@ export function applyInquirerEditorialV31(args={}){
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });
+    dedupeInquirerForwardEdition(edition,{week:Number(args.week)});
     normalizeInquirerForwardHeadlines(edition,{week:Number(args.week)});
     out.inquirer.teams=edition.teams;
     out.leagueOverview=edition.league_overview;

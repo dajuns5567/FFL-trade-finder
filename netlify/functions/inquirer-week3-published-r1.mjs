@@ -32,14 +32,16 @@ function reporterMap(edition){
   };
 }
 function buildOverview(edition){
-  const teams=edition?.teams||[],week=Number(edition?.week)||3,season=Number(edition?.season)||2026,reps=reporterMap(edition),games=uniqueGames(teams);
+  const teams=edition?.teams||[],week=Number(edition?.week)||3,season=Number(edition?.season)||2026,reps=reporterMap(edition),games=uniqueGames(teams),
+    classification=edition?.week_classification||teams[0]?.week_classification||{},finalWeek=Number(classification?.final_week)||17,hasNext=week<finalWeek,playoffs=!!classification?.playoffs;
   const byScore=teams.slice().sort((a,b)=>Number(b.points)-Number(a.points)),top=byScore[0],low=byScore.at(-1);
   const close=games.slice().sort((a,b)=>a.margin-b.margin),blow=games.slice().sort((a,b)=>b.margin-a.margin)[0];
   const standings=teams.slice().sort((a,b)=>rank(a)-rank(b)),leaders=standings.filter(t=>rank(t)<999).slice(0,5);
   const undefeated=standings.filter(t=>{const r=t?.league_context?.record||{};return Number(r.wins)===week&&Number(r.losses)===0});
   const winless=standings.filter(t=>{const r=t?.league_context?.record||{};return Number(r.wins)===0&&Number(r.losses)===week});
   const topP=topStar(top),lead=leaders[0]||top,leadNext=lead?.next_opponent_name||null,scoreNext=top?.next_opponent_name||null;
-  const close1=close[0],close2=close[1],close3=close[2];
+  const close1=close[0],close2=close[1],close3=close[2],
+    advanced=teams.filter(t=>t?.playoff_context?.advanced_this_week),eliminated=teams.filter(t=>t?.playoff_context?.eliminated_this_week);
 
   const sections=[
     {reporter:reps.nick,heading:'What Actually Mattered This Week',paragraphs:[
@@ -49,6 +51,8 @@ function buildOverview(edition){
       lead?`${lead.team_name} leaves Week ${week} at ${record(lead)}, first in ${lead.league_context?.division_name||'its division'} and #${rank(lead)} overall. That does not settle anything in October. It does mean everybody else has to move them instead of explaining why the standings should not count yet.`:''
     ].filter(Boolean)},
     {reporter:reps.bart,heading:`The Week ${week} Contender Line`,paragraphs:[
+      playoffs&&advanced.length?`${advanced.map(t=>t.team_name).join(', ')} ${advanced.length===1?'advanced':'advanced'} this week. The bracket has stopped caring about September résumés; surviving the round is the only credential that matters now.`:'',
+      playoffs&&eliminated.length?`${eliminated.map(t=>t.team_name).join(', ')} ${eliminated.length===1?'was':'were'} eliminated from championship contention. There is no elegant way to decorate that sentence. The season ended where the bracket says it ended.`:'',
       undefeated.length?`The undefeated table is down to ${undefeated.map(t=>t.team_name+' ('+record(t)+', #'+rank(t)+')').join(', ')}. Perfect records are vulgar little things, but they remain more attractive than the alternative. At this point the interesting separation is not who is unbeaten; it is which unbeaten roster can keep scoring when the easy version of Sunday disappears.`:'No team remains undefeated after Week '+week+'.',
       leaders.length?`The current top five are ${leaders.map(t=>'#'+rank(t)+' '+t.team_name+' ('+record(t)+')').join(', ')}. That is the table we actually have, not the one anyone drafted in August. If a favorite is missing, I recommend the traditional remedy: win more games.`:'',
       top&&rank(top)>5?`${top.team_name} just scored ${one(top.points)} and still sits #${rank(top)}. Excellent. The standings have declined to applaud the performance retroactively. That is exactly why one explosive week should change the conversation without erasing the first ${week-1} results.`:'',
@@ -60,11 +64,11 @@ function buildOverview(edition){
       close3?`${sentenceGame(close3)} Three close games is enough evidence for one rule: depth mattered this week. Stars still get the screenshots, but the middling lineup spot that finds six extra points is the one that keeps Tuesday peaceful.`:'',
       blow?`${blow.winner.team_name} put ${one(blow.margin)} points between itself and ${blow.loser.team_name}. That was not a nail-biter, a coin flip, or a moral victory. It was a scoreboard with a restraining order.`:''
     ].filter(Boolean)},
-    {reporter:reps.filch,heading:`What Week ${week} Changed About Week ${week+1}`,paragraphs:[
-      lead&&leadNext?`${lead.team_name} takes the #${rank(lead)} overall spot into Week ${week+1} against ${leadNext}. The burden changes now: the league leader no longer gets to surprise anybody. The next opponent knows exactly which roster it is trying to knock off.`:'',
-      top&&scoreNext?`${top.team_name} carries the week’s highest score into a date with ${scoreNext}. One eruption does not establish a floor, so Week ${week+1} gets a very simple job: tell us whether ${one(top.points)} was a ceiling sighting or the beginning of a repeatable problem.`:'',
-      winless.length?`${winless.slice(0,5).map(t=>t.team_name).join(', ')} enter Week ${week+1} without a win. The schedule does not care how explainable the losses were. The next result either interrupts the story or makes 0-${week+1} the only sentence anybody reads first.`:'',
-      `There are ${Math.max(0,Number(lead?.league_context?.games_until_playoffs)||0)} regular-season games left before the playoff start shown in the league context. That is plenty of runway and no excuse for treating Week ${week+1} like background noise. Early standings are temporary; the wins already banked are not.`
+    {reporter:reps.filch,heading:hasNext?`What Week ${week} Changed About Week ${week+1}`:`What Week ${week} Settled`,paragraphs:[
+      hasNext&&lead&&leadNext?`${lead.team_name} takes the #${rank(lead)} overall spot into Week ${week+1} against ${leadNext}. The burden changes now: the league leader no longer gets to surprise anybody. The next opponent knows exactly which roster it is trying to knock off.`:'',
+      hasNext&&top&&scoreNext?`${top.team_name} carries the week’s highest score into a date with ${scoreNext}. One eruption does not establish a floor, so Week ${week+1} gets a very simple job: tell us whether ${one(top.points)} was a ceiling sighting or the beginning of a repeatable problem.`:'',
+      hasNext&&winless.length?`${winless.slice(0,5).map(t=>t.team_name).join(', ')} enter Week ${week+1} without a win. The schedule does not care how explainable the losses were. The next result either interrupts the story or makes 0-${week+1} the only sentence anybody reads first.`:'',
+      hasNext?`There are ${Math.max(0,Number(lead?.league_context?.games_until_playoffs)||0)} regular-season games left before the playoff start shown in the league context. That is plenty of runway and no excuse for treating Week ${week+1} like background noise. Early standings are temporary; the wins already banked are not.`:`Week ${week} closed the scheduled Inquirer run. At this point there is no next-week preview to invent; the record and bracket consequences are the story.`
     ].filter(Boolean)}
   ];
 
@@ -76,8 +80,8 @@ function buildOverview(edition){
 
   return {
     schema_version:5,inquirer_version:31,season,week,
-    week_classification:edition?.week_classification||teams[0]?.week_classification||null,
-    headline:`Fleeced! Weekly Recap — Week ${week} • Regular Season`,
+    week_classification:classification,
+    headline:`Fleeced! Weekly Recap — ${classification?.label||('Week '+week)}`,
     byline:`By ${[reps.nick,reps.bart,reps.tilly,reps.filch].filter(Boolean).map(r=>r.name).join(', ')}`,
     deck:`Week ${week} changed the league in specific ways: the score that mattered most, the standings that actually exist, the matchups that came down to decisions, and what Week ${week+1} has to answer.`,
     sections,hot_takes:hot,
@@ -126,11 +130,12 @@ function applySentiment(edition,previousEdition){
     };
   }
 }
-export function applyPublishedWeek3Fix(raw,previousEdition=null){
+export function applyPublishedForwardFix(raw,previousEdition=null){
   const out=structuredClone(raw);
-  if(Number(out?.season)!==2026||Number(out?.week)!==3)return out;
+  if(Number(out?.week)<3)return out;
   out.league_overview=buildOverview(out);
   applySentiment(out,previousEdition);
-  out.published_fix='week3-recap-sentiment-r1';
+  out.published_fix='forward-recap-sentiment-r1';
   return out;
 }
+export const applyPublishedWeek3Fix=applyPublishedForwardFix;

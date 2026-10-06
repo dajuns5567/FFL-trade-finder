@@ -2,7 +2,6 @@ import {applyWeek2EditorialR16 as applyR169Y} from './inquirer-week2-editorial-r
 
 const norm=v=>String(v||'').replace(/\s+/g,' ').trim();
 const esc=v=>String(v||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-const possessive=v=>{const s=String(v||'').trim();return /s$/i.test(s)?`${s}'`:`${s}'s`};
 
 function bits(team){
   const full=String(team?.team_name||'this team').trim();
@@ -40,15 +39,6 @@ function cleanMeta(text){
   return kept.join(' ').replace(/\s+([,.!?])/g,'$1').trim();
 }
 
-function normalizeTeamPossessive(text,team){
-  let row=String(text||'');
-  const {full,short}=bits(team);
-  for(const name of [full,short].filter(Boolean).sort((a,b)=>b.length-a.length)){
-    row=row.replace(new RegExp(`\\b${esc(name)}['’]s\\b`,'g'),possessive(name));
-  }
-  return row;
-}
-
 function rawStat(row){
   return row.match(/^([A-Z][A-Za-z'’.-]+(?:\s+[A-Z][A-Za-z'’.-]+){1,3}) scored (-?\d+(?:\.\d+)?) fantasy points in Week 2(?: with|:| on)?\s*(.*)$/i);
 }
@@ -81,7 +71,7 @@ function cleanPlayerRows(rows,team,article,ctx){
     if(/\baveraged [\d.]+ fantasy points per game in 2025\b/i.test(row)&&/\b(?:Week 2 gets to argue|actual growth|hot box score|ceiling)\b/i.test(row))continue;
     const m=rawStat(row);
     if(m){out.push(statComment(m[1],m[2],m[3],team,article,ctx));continue}
-    const cleaned=normalizeTeamPossessive(cleanMeta(row),team);
+    const cleaned=cleanMeta(row);
     if(!cleaned)continue;
     if(/^([A-Z][A-Za-z'’.-]+(?:\s+[A-Z][A-Za-z'’.-]+){0,3}) (?:scored|had|posted) -?\d+(?:\.\d+)?(?: fantasy)? points?(?: against [^.]+)?\.?$/i.test(cleaned))continue;
     out.push(cleaned);
@@ -92,13 +82,13 @@ function cleanPlayerRows(rows,team,article,ctx){
 function cleanMarketRows(rows,team){
   const {short}=bits(team),out=[];
   for(const raw of rows){
-    const row=normalizeTeamPossessive(cleanMeta(raw),team);if(!row)continue;
+    const row=cleanMeta(raw);if(!row)continue;
     if(/\bled the roster's value gains\b/i.test(row)||/\bled the losses\b/i.test(row))continue;
     if(/\badded \d+ in value; .* dropped \d+\b/i.test(row))continue;
     if(/^Useful market movement\.?$/i.test(row))continue;
     if(/roster value (?:rose|fell) from \d+ to \d+/i.test(row)){
       const delta=(row.match(/a ([\d,]+)-point move \(([-+]?\d+(?:\.\d+)?)%\)/i)||[]);
-      if(delta)out.push(`${possessive(short)} roster value moved ${delta[1]} points (${delta[2]}%). Fine. Prices moved; Sunday already told us more.`);
+      if(delta)out.push(`${short}'s roster value moved ${delta[1]} points (${delta[2]}%). Fine. Prices moved; Sunday already told us more.`);
       else out.push(row);
       continue;
     }
@@ -107,10 +97,10 @@ function cleanMarketRows(rows,team){
   return out;
 }
 
-function cleanGenericRows(rows,team){
+function cleanGenericRows(rows){
   const out=[];
   for(const raw of rows){
-    let row=normalizeTeamPossessive(cleanMeta(raw),team);
+    let row=cleanMeta(raw);
     if(!row)continue;
     row=row.replace(/\bFor ([A-Z][A-Za-z'’.-]+),?\s*/g,'');
     row=row.replace(/\bthe record narrows the question, but it does not answer it\.?/gi,'');
@@ -127,43 +117,14 @@ function sectionIsPlayers(section){
 }
 function sectionIsMarket(section){return /market|roster price|price moved/i.test(String(section?.heading||''));}
 
-function varyDuplicate(sentence){
-  const s=norm(sentence),punct=(s.match(/[.!?]$/)||['.'])[0],body=s.replace(/[.!?]$/,'');
-  if(/\d/.test(body))return'';
-  const lower=body.replace(/^([“"']?)([A-Z])/,(_,q,c)=>q+c.toLowerCase());
-  return `In this matchup, ${lower}${punct}`;
-}
-
-function dedupeLongSentences(article){
-  const seen=new Set();
-  for(const section of article?.sections||[]){
-    if(!Array.isArray(section?.paragraphs))continue;
-    section.paragraphs=section.paragraphs.map(row=>{
-      const kept=[];
-      for(const sentence of splitSentences(row)){
-        const key=norm(sentence).toLowerCase(),isLong=key.split(/\s+/).filter(Boolean).length>=8;
-        if(isLong&&seen.has(key)){
-          const varied=varyDuplicate(sentence);
-          if(varied)kept.push(varied);
-          continue;
-        }
-        if(isLong)seen.add(key);
-        kept.push(sentence);
-      }
-      return kept.join(' ').trim();
-    }).filter(Boolean);
-  }
-}
-
 function rewriteArticle(team){
   const article=team?.inquirer_article;if(!article)return;
   const ctx=matchup(article);
   for(const section of article.sections||[]){
     if(!Array.isArray(section?.paragraphs))continue;
     if(/what survived inspection/i.test(String(section.heading||'')))section.heading='Who Actually Earned It';
-    section.paragraphs=sectionIsPlayers(section)?cleanPlayerRows(section.paragraphs,team,article,ctx):sectionIsMarket(section)?cleanMarketRows(section.paragraphs,team):cleanGenericRows(section.paragraphs,team);
+    section.paragraphs=sectionIsPlayers(section)?cleanPlayerRows(section.paragraphs,team,article,ctx):sectionIsMarket(section)?cleanMarketRows(section.paragraphs,team):cleanGenericRows(section.paragraphs);
   }
-  dedupeLongSentences(article);
   article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
 }
 

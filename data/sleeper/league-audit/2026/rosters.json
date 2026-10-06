@@ -1146,7 +1146,9 @@
       "8204",
       "8489"
     ],
-    "reserve": null,
+    "reserve": [
+      "12641"
+    ],
     "roster_id": 15,
     "settings": {
       "division": 4,
@@ -1213,7 +1215,9 @@
       "8112",
       "8167"
     ],
-    "reserve": null,
+    "reserve": [
+      "12483"
+    ],
     "roster_id": 16,
     "settings": {
       "division": 4,
@@ -1236,8 +1240,8 @@
       "8167",
       "12512",
       "12545",
-      "11687",
-      "11665"
+      "11665",
+      "13377"
     ],
     "taxi": [
       "12502",
@@ -1996,6 +2000,7 @@
       "p_nick_11651": "Geronimo",
       "p_nick_11667": "DPOTY",
       "p_nick_11677": "3rd rounder",
+      "p_nick_11742": "any draft pick",
       "p_nick_12591": "Bates 2.0",
       "p_nick_13346": "Boston TD Party",
       "p_nick_13405": "Fatman",

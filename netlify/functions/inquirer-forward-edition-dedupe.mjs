@@ -1,7 +1,7 @@
 // Final Week 3+ edition-wide uniqueness pass.
 // The first natural occurrence of a sentence stays untouched. Later exact copies,
-// heavily shared openings, and adjacent repeated proper-name leads are reshaped
-// with short reporter-specific natural transitions. Facts, names and numbers are preserved.
+// heavily shared openings, and overused proper-name leads are reshaped with short
+// reporter-specific natural transitions. Facts, names and numbers are preserved.
 
 const norm=v=>String(v||'').replace(/\s+/g,' ').trim();
 const sentences=v=>norm(v)
@@ -81,10 +81,14 @@ function processParagraphs(rows,owner,reporter,state){
       const shape=opening(sentence);
       const owners=state.openOwners.get(shape)||new Set();
       const proper=properLead(sentence);
+      const properKey=proper?`${owner}|${proper}`:'';
+      const properCount=properKey?(state.properCounts.get(properKey)||0):0;
       const adjacent=!!(proper&&previousProper&&proper===previousProper);
+      const repeatedProper=!!(proper&&properCount>=3);
       const duplicate=state.seen.has(original);
       const overused=shape.split(' ').length>=5&&owners.size>=2&&!owners.has(owner);
-      if(duplicate||overused||adjacent)sentence=reshape(sentence,reporter,state);
+      if(duplicate||overused||adjacent||repeatedProper)sentence=reshape(sentence,reporter,state);
+      if(properKey)state.properCounts.set(properKey,properCount+1);
       const finalKey=key(sentence),finalShape=opening(sentence),finalOwners=state.openOwners.get(finalShape)||new Set();
       state.seen.add(finalKey);
       finalOwners.add(owner);
@@ -119,7 +123,7 @@ function overview(o,state){
 
 export function dedupeInquirerForwardEdition(edition,{week}={}){
   if(!edition||!Array.isArray(edition.teams)||Number(week)<3)return edition;
-  const state={seen:new Set(),openOwners:new Map(),usedLeadShapes:new Set(),lead:Number(week)*19};
+  const state={seen:new Set(),openOwners:new Map(),properCounts:new Map(),usedLeadShapes:new Set(),lead:Number(week)*19};
   for(const team of edition.teams)article(team,state);
   overview(edition.league_overview,state);
   return edition;

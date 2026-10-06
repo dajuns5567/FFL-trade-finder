@@ -11,6 +11,7 @@ import {finalizeInquirerForwardEdition} from './inquirer-forward-finalize.mjs';
 import {hardenInquirerForwardEdition} from './inquirer-forward-hardening.mjs';
 import {cleanupInquirerForwardRankings} from './inquirer-forward-ranking-cleanup.mjs';
 import {sustainInquirerForwardEdition} from './inquirer-forward-sustainability.mjs';
+import {naturalizeInquirerForwardEdition} from './inquirer-forward-naturalize.mjs';
 import {guardInquirerForwardAgainstPrior} from './inquirer-forward-prior-guard.mjs';
 import {normalizeInquirerForwardHeadlines,findInquirerForwardHeadlineGrammarIssues} from './inquirer-forward-headline-grammar.mjs';
 import {
@@ -64,6 +65,7 @@ export function applyInquirerEditorialV31(args={}){
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });
+    naturalizeInquirerForwardEdition(edition,{week:Number(args.week)});
     guardInquirerForwardAgainstPrior(edition,{
       week:Number(args.week),
       previousEdition:args.previousEdition||null

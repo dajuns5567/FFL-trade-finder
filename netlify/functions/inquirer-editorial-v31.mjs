@@ -15,6 +15,7 @@ import {naturalizeInquirerForwardEdition} from './inquirer-forward-naturalize.mj
 import {guardInquirerForwardAgainstPrior} from './inquirer-forward-prior-guard.mjs';
 import {dedupeInquirerForwardEdition} from './inquirer-forward-edition-dedupe.mjs';
 import {enforceInquirerForwardContextTruth,findInquirerForwardContextTruthIssues} from './inquirer-forward-context-truth.mjs';
+import {finalSweepInquirerForwardEdition} from './inquirer-forward-final-sweep.mjs';
 import {normalizeInquirerForwardHeadlines,findInquirerForwardHeadlineGrammarIssues} from './inquirer-forward-headline-grammar.mjs';
 import {
   applyInquirerEditorialV37,
@@ -68,13 +69,18 @@ export function applyInquirerEditorialV31(args={}){
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });
+    // Full naturalization happens before uniqueness passes so it can safely
+    // remove scaffolds/add interpretation without undoing final de-duplication.
+    naturalizeInquirerForwardEdition(edition,{week:Number(args.week)});
     guardInquirerForwardAgainstPrior(edition,{
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });
     dedupeInquirerForwardEdition(edition,{week:Number(args.week)});
     enforceInquirerForwardContextTruth(edition,{week:Number(args.week)});
-    naturalizeInquirerForwardEdition(edition,{week:Number(args.week)});
+    // This last sweep is deliberately non-destructive: it only removes the
+    // forbidden synthetic lead grammar and repairs surface wording.
+    finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
     normalizeInquirerForwardHeadlines(edition,{week:Number(args.week)});
     out.inquirer.teams=edition.teams;
     out.leagueOverview=edition.league_overview;

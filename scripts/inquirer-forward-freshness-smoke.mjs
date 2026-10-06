@@ -11,6 +11,9 @@ const articleSentences=a=>(a?.sections||[]).flatMap(s=>[...(s?.paragraphs||[]),.
 const normalize=s=>String(s||'').toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').replace(/\s+/g,' ').trim();
 const editionSentences=e=>[...(e?.teams||[]).flatMap(t=>articleSentences(t?.inquirer_article)),...articleSentences(e?.league_overview)].map(normalize).filter(Boolean);
 const ROBOTIC_LEAD=/\b(?:For|On|From|At|With)\s+(?:(?:a|an|this|the)\s+)?(?:direct|practical|measured|current|useful|immediate|grounded|clean|sharp|simple|focused|clear|realistic|tactical|strategic|repeatable|steady|specific|balanced|plain|decisive|careful|concrete|durable|short-term|season-long|matchup-specific|roster-wide|opponent-aware|standings-aware|scoring-driven|decision-level)\s+(?:football|lineup|scoring|matchup|standings|roster|management|season|opponent|division|result|pressure|leverage|performance|starter|bench|schedule|playoff|form|weekly)\s+(?:read|note|angle|lens|level|point|issue|view),/i;
+const STOCK_LABEL=/\b(?:The practical read|The clean read|The less glamorous truth|Here is the punch|Big letters first|The opponent already knows this|This much deserves criticism|The practical problem|One useful luxury remains|The next week begins with this|The next lineup meeting should start here|Rivals will notice this|This is what rivals will remember|Management may prefer another subject|No decoration needed|The next opponent gets this opportunity|Without dressing it up|Against this opponent|One sensible point|A little restraint|For all the theater|In the standings)\s*:/i;
+const AGREEMENT_ARTIFACT=/\b(?:the positioning are not a theory; they are|the race is not a theory; they are)\b/i;
+const GARBLED_MARGIN=/\bthe\s+\d+(?:\.\d+)?-point gap scoring to support behind the best scorers\b/i;
 
 function rawForWeek(week){
   const teams=clone(week2.teams).map((t,i)=>{
@@ -80,6 +83,9 @@ for(let week=3;week<=17;week++){
   assert.doesNotMatch(copy,/\b(?:the Fleeced signal says|Fleeced signal indicates|according to the Fleeced signal)\b/i,'Signals must read naturally, never as database citations');
   assert.doesNotMatch(copy,/\b(?:copy desk|newsroom|this article|same paragraph|same sentence|sample size|one repeat|new piece of proof|hostile questioning)\b/i,'Forward prose must remain free of newsroom/meta scaffolding');
   assert.doesNotMatch(copy,ROBOTIC_LEAD,`Week ${week} must not publish synthetic angle/lens/read scaffolding`);
+  assert.doesNotMatch(copy,STOCK_LABEL,`Week ${week} must not publish stock colon-label transitions`);
+  assert.doesNotMatch(copy,AGREEMENT_ARTIFACT,`Week ${week} must not publish agreement/pronoun artifacts`);
+  assert.doesNotMatch(copy,GARBLED_MARGIN,`Week ${week} must not publish garbled scoring-margin syntax`);
   assert.doesNotMatch(copy,/\bleague order\b/i,`Week ${week} must say standings naturally, not league order`);
   if(week<=13)assert.doesNotMatch(copy,/\b(?:round|Sunday)\s+\d{1,2}\b/i,`Week ${week} regular-season copy must use Week N wording`);
   assert.doesNotMatch(copy,/\ba (?:immediate|opponent-aware)\b/i,`Week ${week} must not publish article-agreement artifacts`);

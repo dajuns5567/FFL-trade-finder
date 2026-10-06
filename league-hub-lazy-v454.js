@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-if(window.__fleecedLeagueHubLazyV458)return;
-window.__fleecedLeagueHubLazyV458=true;
+if(window.__fleecedLeagueHubLazyV459)return;
+window.__fleecedLeagueHubLazyV459=true;
 let loading=null,loaded=false,warmed=false,publishCheck=null;
 
 function visible(){
@@ -13,17 +13,40 @@ function placeholder(){
   if(!tab||tab.querySelector('#leagueHubContent')||tab.textContent.trim())return;
   tab.innerHTML='<div class="card"><div class="lh-head"><h2>Fleeced! League Hub</h2><p class="muted">Checking for the latest completed Inquirer edition…</p></div></div>';
 }
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function archiveSnapshot(){
+  const url='/.netlify/functions/league-hub-read-fast?mode=archive&rev=459&t='+Date.now();
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok)throw new Error('Inquirer archive check failed: '+r.status);
+  return r.json();
+}
+function latestWeek(payload){
+  return Math.max(0,...(payload?.reports||[]).filter(x=>Number(x?.season)===2026).map(x=>Number(x?.week)||0));
+}
 function ensurePublished(){
   if(publishCheck)return publishCheck;
-  publishCheck=fetch('/.netlify/functions/inquirer-publish-on-load',{cache:'no-store'})
-    .then(async r=>{
-      if(!r.ok)throw new Error('Inquirer publish check failed: '+r.status);
-      return r.json().catch(()=>({ok:true}));
-    })
-    .catch(err=>{
-      console.warn('League Hub publish check failed; loading existing archive.',err);
+  publishCheck=(async()=>{
+    let before=0;
+    try{before=latestWeek(await archiveSnapshot())}catch{}
+    try{
+      const trigger=await fetch('/.netlify/functions/inquirer-publish-on-load-background',{cache:'no-store'});
+      if(!trigger.ok&&trigger.status!==202)throw new Error('Inquirer background publish trigger failed: '+trigger.status);
+    }catch(err){
+      console.warn('League Hub publish trigger failed; loading existing archive.',err);
       return null;
-    });
+    }
+    // Deploy Previews never run scheduled functions. The background publisher
+    // persists at most the next completed missing edition. Wait only for that
+    // archive advancement; do not mount a second Hub renderer while it runs.
+    for(let i=0;i<40;i++){
+      await sleep(1000);
+      try{
+        const snap=await archiveSnapshot();
+        if(latestWeek(snap)>before)return snap;
+      }catch{}
+    }
+    return null;
+  })();
   return publishCheck;
 }
 function prewarm(){
@@ -44,7 +67,7 @@ function prewarm(){
 function loadScript(src){
   return new Promise((resolve,reject)=>{
     const s=document.createElement('script');
-    s.src=src;s.async=true;s.onload=resolve;s.onerror=()=>reject(new Error('League Hub runtime failed to load: '+src));
+    s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('League Hub runtime failed to load: '+src));
     document.head.appendChild(s);
   });
 }
@@ -52,12 +75,12 @@ function load(){
   if(loaded)return Promise.resolve();
   if(loading)return loading;
   placeholder();prewarm();
-  // The fast fetch layer deliberately turns ?weekly=1 into a read-only request.
-  // Wait for the real publisher before loading the Hub runtime so a newly
-  // completed week is persisted and present in the archive dropdown on first render.
   loading=ensurePublished()
-    .then(()=>loadScript('/league-hub-v451.js?v=527'))
-    .then(()=>loadScript('/league-hub-reader-fast-v457.js?v=1'))
+    // Register the fast capture-phase article switcher first. The main Hub
+    // runtime otherwise receives the same change event first and both renderers
+    // replace the article, which causes the visible back-and-forth flash.
+    .then(()=>loadScript('/league-hub-reader-fast-v457.js?v=459'))
+    .then(()=>loadScript('/league-hub-v451.js?v=529'))
     .then(()=>{loaded=true})
     .catch(err=>{
       loading=null;

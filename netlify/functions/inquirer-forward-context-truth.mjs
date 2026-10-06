@@ -48,8 +48,8 @@ const LEADER_CORRECTIONS=[
   'The points deserve mention without being promoted to the lineup lead.'
 ];
 function leaderCorrection(team){
-  const raw=Number(team?.roster_id);const idx=Number.isFinite(raw)?Math.abs(Math.trunc(raw)-1)%LEADER_CORRECTIONS.length:0;
-  return LEADER_CORRECTIONS[idx];
+  const raw=Number(team?.roster_id),n=Number.isFinite(raw)?Math.max(1,Math.abs(Math.trunc(raw))):1,base=LEADER_CORRECTIONS[(n-1)%LEADER_CORRECTIONS.length];
+  return n<=LEADER_CORRECTIONS.length?base:base.replace(/\.$/,' in this week’s scoring review.');
 }
 function correctPlayerLeader(text,team){
   const leader=topStarter(team);if(!leader?.name)return text;let out=String(text||'');

@@ -1,8 +1,8 @@
 (()=>{
 'use strict';
-if(window.__fleecedLeagueHubLazyV461)return;
-window.__fleecedLeagueHubLazyV461=true;
-let loading=null,loaded=false,warmed=false,publishTriggered=false;
+if(window.__fleecedLeagueHubLazyV463)return;
+window.__fleecedLeagueHubLazyV463=true;
+let loading=null,loaded=false,warmed=false;
 
 function visible(){
   const tab=document.getElementById('leagueHub'),button=document.querySelector('.tabs button[data-tab="leagueHub"]');
@@ -11,12 +11,7 @@ function visible(){
 function placeholder(){
   const tab=document.getElementById('leagueHub');
   if(!tab||tab.querySelector('#leagueHubContent')||tab.textContent.trim())return;
-  tab.innerHTML='<div class="card"><div class="lh-head"><h2>Fleeced! League Hub</h2><p class="muted">Loading League Hub…</p></div></div>';
-}
-function triggerPublisherInBackground(){
-  if(publishTriggered)return;
-  publishTriggered=true;
-  fetch('/.netlify/functions/inquirer-publish-on-load-background',{cache:'no-store'}).catch(()=>{});
+  tab.innerHTML='<div class="card"><div class="lh-head"><h2>Fleeced! League Hub</h2><p class="muted">Loading the latest published league edition…</p></div></div>';
 }
 function prewarm(){
   if(warmed)return;
@@ -30,14 +25,11 @@ function prewarm(){
     '/.netlify/functions/value-history?trades=1'
   ];
   Promise.allSettled(jobs.map(url=>fetch(url,{cache:'default'}))).catch(()=>{});
-  // Publication is never part of the render-critical path. Production also has
-  // the hourly scheduler; previews use this fire-and-forget background trigger.
-  triggerPublisherInBackground();
 }
 function loadScript(src){
   return new Promise((resolve,reject)=>{
     const s=document.createElement('script');
-    s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('League Hub runtime failed to load: '+src));
+    s.src=src;s.async=true;s.onload=resolve;s.onerror=()=>reject(new Error('League Hub runtime failed to load: '+src));
     document.head.appendChild(s);
   });
 }
@@ -45,17 +37,12 @@ function load(){
   if(loaded)return Promise.resolve();
   if(loading)return loading;
   placeholder();prewarm();
-  // Never block Hub rendering on generation/publication. Register the fast
-  // capture-phase article switcher first so one renderer owns article changes.
-  loading=loadScript('/league-hub-reader-fast-v457.js?v=461')
-    .then(()=>loadScript('/league-hub-v451.js?v=531'))
-    .then(()=>{loaded=true})
-    .catch(err=>{
-      loading=null;
-      const tab=document.getElementById('leagueHub');
-      if(tab)tab.innerHTML='<div class="notice error">League Hub failed to load. Refresh and try again.</div>';
-      console.error(err);
-    });
+  loading=loadScript('/league-hub-v451.js?v=527').then(()=>loadScript('/league-hub-reader-fast-v457.js?v=1')).then(()=>{loaded=true}).catch(err=>{
+    loading=null;
+    const tab=document.getElementById('leagueHub');
+    if(tab)tab.innerHTML='<div class="notice error">League Hub failed to load. Refresh and try again.</div>';
+    console.error(err);
+  });
   return loading;
 }
 

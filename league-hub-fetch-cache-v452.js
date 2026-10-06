@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-if(window.__fleecedLeagueHubFetchCacheV457)return;
-window.__fleecedLeagueHubFetchCacheV457=true;
+if(window.__fleecedLeagueHubFetchCacheV461)return;
+window.__fleecedLeagueHubFetchCacheV461=true;
 
 const nativeFetch=window.fetch.bind(window),memory=new Map(),pending=new Map();
 const editions=window.__fleecedLeagueHubEditionsV457=window.__fleecedLeagueHubEditionsV457||new Map();
@@ -25,13 +25,16 @@ function fastRoute(url){
   if(url.origin!==location.origin||url.pathname!=='/.netlify/functions/league-hub')return null;
   const season=Number(url.searchParams.get('broadcast_season')),week=Number(url.searchParams.get('broadcast_week'));
   if(season===2026&&[1,2].includes(week)){
-    return{key:`archive:${season}|${week}`,target:`/.netlify/functions/league-hub-archive-fast?season=${season}&week=${week}&rev=457`};
+    return{key:`archive:${season}|${week}`,target:`/.netlify/functions/league-hub-archive-fast?season=${season}&week=${week}&rev=461`};
   }
-  if(url.searchParams.get('weekly')==='1')return{key:'publication:latest',target:'/.netlify/functions/league-hub-read-fast?mode=latest&rev=457'};
-  if(url.searchParams.get('broadcast_archive')==='1')return{key:'publication:archive',target:'/.netlify/functions/league-hub-read-fast?mode=archive&rev=457'};
-  if(url.searchParams.get('reporters')==='1')return{key:'publication:reporters',target:'/.netlify/functions/league-hub-read-fast?mode=reporters&rev=457'};
-  if(url.searchParams.get('managers')==='1')return{key:'snapshot:managers',target:'/.netlify/functions/league-hub-read-fast?mode=managers&rev=457'};
-  if(url.searchParams.get('weekly_awards')==='1')return{key:'snapshot:weekly-awards',target:'/.netlify/functions/league-hub-read-fast?mode=weekly-awards&rev=457'};
+  if(season===2026&&week===3){
+    return{key:'archive:2026|3',target:'/.netlify/functions/league-hub-week3-fast?rev=461'};
+  }
+  if(url.searchParams.get('weekly')==='1')return{key:'publication:latest',target:'/.netlify/functions/league-hub-read-fast?mode=latest&rev=461'};
+  if(url.searchParams.get('broadcast_archive')==='1')return{key:'publication:archive',target:'/.netlify/functions/league-hub-read-fast?mode=archive&rev=461'};
+  if(url.searchParams.get('reporters')==='1')return{key:'publication:reporters',target:'/.netlify/functions/league-hub-read-fast?mode=reporters&rev=461'};
+  if(url.searchParams.get('managers')==='1')return{key:'snapshot:managers',target:'/.netlify/functions/league-hub-read-fast?mode=managers&rev=461'};
+  if(url.searchParams.get('weekly_awards')==='1')return{key:'snapshot:weekly-awards',target:'/.netlify/functions/league-hub-read-fast?mode=weekly-awards&rev=461'};
   return null;
 }
 

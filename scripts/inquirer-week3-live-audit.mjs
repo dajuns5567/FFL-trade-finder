@@ -2,48 +2,54 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import week2 from '../netlify/functions/inquirer-week2-2026-preload.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
-import {inquirerWeekClassification} from '../netlify/functions/inquirer-reporters.mjs';
+import {buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,publicReporters} from '../netlify/functions/inquirer-reporters.mjs';
 
+const LEAGUE='1316867686394769408',API='https://api.sleeper.app/v1',SEASON=2026,WEEK=3;
+const clone=x=>JSON.parse(JSON.stringify(x));
+const getJson=async url=>{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-Inquirer-Week3-Live-Audit/2.0'},cache:'no-store'});if(!r.ok)throw Error(`${r.status} ${url}`);return r.json()};
 const configured=String(process.env.INQUIRER_LIVE_SITE||'').trim().replace(/\/$/,'');
-const sites=[
-  configured,
-  'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app',
-  'https://precious-stroopwafel-196eae.netlify.app',
-  'https://subtle-genie-6167c5.netlify.app'
-].filter(Boolean);
+const sites=[configured,'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app','https://precious-stroopwafel-196eae.netlify.app','https://subtle-genie-6167c5.netlify.app'].filter(Boolean);
 let live=null,sourceUrl='',probes=[];
 for(const site of [...new Set(sites)]){
-  const url=`${site}/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week=3`;
-  try{
-    const res=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-Inquirer-Week3-Live-Audit/1.2'},cache:'no-store'});
-    const text=await res.text();let body=null;try{body=JSON.parse(text)}catch{}
-    probes.push({site,status:res.status,season:body?.season??null,week:body?.week??null,teams:Array.isArray(body?.teams)?body.teams.length:null,error:body?.error||null});
-    if(res.ok&&Number(body?.season)===2026&&Number(body?.week)===3&&Array.isArray(body?.teams)&&body.teams.length===32){live=body;sourceUrl=url;break;}
-  }catch(e){probes.push({site,status:null,error:String(e?.message||e)});}
+  const url=`${site}/.netlify/functions/league-hub?broadcast_season=${SEASON}&broadcast_week=${WEEK}`;
+  try{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-Inquirer-Week3-Live-Audit/2.0'},cache:'no-store'}),text=await r.text();let body=null;try{body=JSON.parse(text)}catch{};probes.push({site,status:r.status,season:body?.season??null,week:body?.week??null,teams:Array.isArray(body?.teams)?body.teams.length:null,error:body?.error||null});if(r.ok&&Number(body?.season)===SEASON&&Number(body?.week)===WEEK&&Array.isArray(body?.teams)&&body.teams.length===32){live=body;sourceUrl=url;break}}catch(e){probes.push({site,status:null,error:String(e?.message||e)})}
 }
-assert.ok(live,'No readable stored 2026 Week 3 broadcast found on known Netlify archives: '+JSON.stringify(probes));
 
-const clone=x=>JSON.parse(JSON.stringify(x));
-const rawInquirer={reporters:clone(live.reporters||week2.reporters||[]),teams:clone(live.teams)};
-for(const t of rawInquirer.teams){delete t.inquirer_article;}
-const rawOverview=clone(live.league_overview||{});
-const weekClassification=inquirerWeekClassification(3,2026);
+const groupMatchups=rows=>{const m=new Map();for(const x of rows||[]){const k=String(x?.matchup_id??'');if(!k)continue;if(!m.has(k))m.set(k,[]);m.get(k).push(x)}return m};
+const rosterName=(roster,userById)=>{const u=userById.get(String(roster?.owner_id||''));return String(u?.metadata?.team_name||u?.display_name||u?.username||`Roster ${roster?.roster_id}`)};
+const managerName=(roster,userById)=>{const u=userById.get(String(roster?.owner_id||''));return String(u?.display_name||u?.username||`Roster ${roster?.roster_id}`)};
+const txByRoster=rows=>{const out={};for(const tx of rows||[]){const ids=new Set([...(tx?.roster_ids||[]).map(String),...Object.values(tx?.adds||{}).map(String),...Object.values(tx?.drops||{}).map(String)]);for(const rid of ids){out[rid]??=[];out[rid].push({id:String(tx?.transaction_id||''),type:String(tx?.type||''),status:String(tx?.status||''),adds:Object.keys(tx?.adds||{}).filter(p=>String(tx.adds[p])===rid),drops:Object.keys(tx?.drops||{}).filter(p=>String(tx.drops[p])===rid),created:Number(tx?.status_updated||tx?.created)||null})}}return out};
+const recordMap=(weeks)=>{const out={};for(const rows of weeks){for(const pair of groupMatchups(rows).values()){if(pair.length!==2)continue;const [a,b]=pair,ap=Number(a.points)||0,bp=Number(b.points)||0;for(const [x,y,xp,yp] of [[a,b,ap,bp],[b,a,bp,ap]]){const k=String(x.roster_id),r=out[k]??={wins:0,losses:0,ties:0,points_for:0};r.points_for+=xp;if(xp>yp)r.wins++;else if(xp<yp)r.losses++;else r.ties++;out[k]=r}}}return out};
+const rankRows=record=>Object.entries(record).sort((a,b)=>b[1].wins-a[1].wins||a[1].losses-b[1].losses||b[1].points_for-a[1].points_for);
+const divisionName=(league,roster)=>String(league?.metadata?.[`division_${roster?.settings?.division}`]||`Division ${roster?.settings?.division||''}`).trim();
+const starterSlots=league=>(league?.roster_positions||[]).map(String).filter(x=>!['BN','IR','TAXI'].includes(x.toUpperCase()));
+const position=p=>String(p?.position||p?.fantasy_positions?.[0]||'FLEX');
+const accepts=(slot,pos)=>{slot=String(slot||'').toUpperCase();pos=String(pos||'').toUpperCase();if(slot===pos)return true;if(slot==='FLEX')return['RB','WR','TE'].includes(pos);if(slot==='REC_FLEX')return['WR','TE'].includes(pos);if(slot==='WRRB_FLEX')return['RB','WR'].includes(pos);if(['SUPER_FLEX','OP'].includes(slot))return['QB','RB','WR','TE'].includes(pos);if(slot==='DL')return['DL','DE','DT'].includes(pos);if(slot==='DB')return['DB','CB','S'].includes(pos);if(['IDP','IDP_FLEX'].includes(slot))return['DL','DE','DT','LB','DB','CB','S'].includes(pos);return false};
 
+async function buildDirectSleeperWeek3(){
+  const [league,rosters,users,players,tx,w1,w2,w3,w4,stats1,stats2,stats3]=await Promise.all([
+    getJson(`${API}/league/${LEAGUE}`),getJson(`${API}/league/${LEAGUE}/rosters`),getJson(`${API}/league/${LEAGUE}/users`),getJson(`${API}/players/nfl`),getJson(`${API}/league/${LEAGUE}/transactions/${WEEK}`),
+    getJson(`${API}/league/${LEAGUE}/matchups/1`),getJson(`${API}/league/${LEAGUE}/matchups/2`),getJson(`${API}/league/${LEAGUE}/matchups/3`),getJson(`${API}/league/${LEAGUE}/matchups/4`).catch(()=>[]),
+    getJson('https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper/2026/week-01.json').catch(()=>({})),
+    getJson('https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper/2026/week-02.json').catch(()=>({})),
+    getJson('https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper/2026/week-03.json').catch(()=>({}))
+  ]);
+  assert.equal(rosters.length,32,'Sleeper league must have 32 rosters');assert.equal(w3.length,32,'Week 3 must have 32 matchup rows');
+  const userById=new Map(users.map(u=>[String(u.user_id),u])),rosterById=new Map(rosters.map(r=>[String(r.roster_id),r])),w3ByRoster=new Map(w3.map(m=>[String(m.roster_id),m])),w4Groups=groupMatchups(w4),nextOpp={};
+  for(const pair of w4Groups.values())if(pair.length===2){nextOpp[String(pair[0].roster_id)]=String(pair[1].roster_id);nextOpp[String(pair[1].roster_id)]=String(pair[0].roster_id)}
+  const record=recordMap([w1,w2,w3]),ranks=rankRows(record),rankById=new Map(ranks.map(([id],i)=>[id,i+1])),txMap=txByRoster(tx),slots=starterSlots(league),w3Groups=groupMatchups(w3),opp={};for(const pair of w3Groups.values())if(pair.length===2){opp[String(pair[0].roster_id)]=String(pair[1].roster_id);opp[String(pair[1].roster_id)]=String(pair[0].roster_id)}
+  const statPayload=stats3&&typeof stats3==='object'?stats3:{},weeklyStats={};for(const [id,row] of Object.entries(statPayload)){weeklyStats[id]=row?.stats&&typeof row.stats==='object'?{...row.stats}:{...row}}
+  for(const m of w3)for(const [id,pts] of Object.entries(m?.players_points||{})){weeklyStats[id]={...(weeklyStats[id]||{}),_audit_points:Number(pts)}}
+  const teams=rosters.map(r=>{const rid=String(r.roster_id),m=w3ByRoster.get(rid)||{},oid=opp[rid],or=rosterById.get(oid),starterIds=(m.starters||[]).map(String),rosterPlayers=(r.players||[]).map(String),details=starterIds.map((id,i)=>{const p=players[id]||{};return{id,name:String(p.full_name||`${p.first_name||''} ${p.last_name||''}`.trim()||id),position:position(p),nfl_team:String(p.team||'FA'),points:Number(m?.players_points?.[id]??0),lineup_slot:String(slots[i]||position(p))}}),bench=rosterPlayers.filter(id=>!starterIds.includes(id)).map(id=>{const p=players[id]||{};return{id,name:String(p.full_name||`${p.first_name||''} ${p.last_name||''}`.trim()||id),position:position(p),nfl_team:String(p.team||'FA'),points:Number(m?.players_points?.[id]??0)});const worst=details.slice().sort((a,b)=>a.points-b.points)[0]||null,best=bench.slice().sort((a,b)=>b.points-a.points)[0]||null;let miss=null;for(const s of details)for(const b of bench){if(!accepts(s.lineup_slot,b.position))continue;const gap=b.points-s.points;if(gap>0&&(!miss||gap>miss.gap))miss={gap,starter:s,reserve:b,slot:s.lineup_slot}}const rec=record[rid]||{wins:0,losses:0,ties:0,points_for:0},div=divisionName(league,r),divRows=rosters.filter(x=>divisionName(league,x)===div).map(x=>{const q=record[String(x.roster_id)]||{wins:0,losses:0,ties:0,points_for:0};return{id:String(x.roster_id),...q}}).sort((a,b)=>b.wins-a.wins||a.losses-b.losses||b.points_for-a.points_for),divRank=divRows.findIndex(x=>x.id===rid)+1,nid=nextOpp[rid],nr=rosterById.get(nid);return{roster_id:rid,team_name:rosterName(r,userById),manager_name:managerName(r,userById),division:String(r?.settings?.division||''),division_name:div,roster_player_ids:rosterPlayers,starter_ids:starterIds,starter_details:details,best_bench:best,worst_starter:worst,best_lineup_miss:miss,transactions:txMap[rid]||[],points:Number(m.points)||0,opponent_points:Number(w3ByRoster.get(oid)?.points)||0,won:Number(m.points)>Number(w3ByRoster.get(oid)?.points),projected:null,opponent_roster_id:oid,opponent_name:or?rosterName(or,userById):`Roster ${oid}`,next_opponent_roster_id:nid||null,next_opponent_name:nr?rosterName(nr,userById):'',division_context:{division_name:div,division_rank:divRank,division_size:divRows.length,record:{wins:rec.wins,losses:rec.losses,ties:rec.ties}},league_context:{snapshot_through_week:WEEK,standings_rank:rankById.get(rid)||null,record:{wins:rec.wins,losses:rec.losses,ties:rec.ties},division_name:div,division_rank:divRank,division_size:divRows.length},week_classification:inquirerWeekClassification(WEEK,SEASON)}}});
+  const scoreFn=stats=>Number.isFinite(Number(stats?._audit_points))?Number(stats._audit_points):null,weekClassification=inquirerWeekClassification(WEEK,SEASON),rawInquirer=buildInquirerWeek({season:SEASON,week:WEEK,teams,players,weeklyStats,weeklyStatHistory:{1:stats1,2:stats2,3:stats3},scoringSettings:league.scoring_settings||{},scoreFn,weekClassification,playerValues:{}}),rawOverview=buildLeagueOverview({season:SEASON,week:WEEK,teams:rawInquirer.teams,players,transactions:tx,canonicalTrades:[],weekClassification,valueHistoryMeta:{source:'direct-sleeper-audit'}});
+  return{available:true,season:SEASON,week:WEEK,reporters:publicReporters(),teams:rawInquirer.teams,league_overview:rawOverview,generated_at:new Date().toISOString(),source:'direct-sleeper-api',_rawInquirer:rawInquirer,_rawOverview:rawOverview};
+}
+
+if(!live){live=await buildDirectSleeperWeek3();sourceUrl='Sleeper API + persisted sleeper-data Week 3';probes.push({site:'direct-sleeper-fallback',status:200,season:live.season,week:live.week,teams:live.teams.length})}
+const rawInquirer=live._rawInquirer?clone(live._rawInquirer):{reporters:clone(live.reporters||week2.reporters||[]),teams:clone(live.teams)};if(!live._rawInquirer)for(const t of rawInquirer.teams)delete t.inquirer_article;
+const rawOverview=live._rawOverview?clone(live._rawOverview):clone(live.league_overview||{}),weekClassification=inquirerWeekClassification(WEEK,SEASON);
 let accepted=null,lastQuality=null;
-for(let salt=0;salt<8;salt++){
-  const edited=applyInquirerEditorialV31({season:2026,week:3,rawInquirer:clone(rawInquirer),rawOverview:clone(rawOverview),previousEdition:week2,weekClassification,variationSalt:salt});
-  const candidate={available:true,season:2026,week:3,inquirer_version:FORWARD_INQUIRER_VERSION,editorial_revision:FORWARD_EDITORIAL_REVISION,teams:edited.inquirer.teams,league_overview:edited.leagueOverview,editorial_generation:{variation_salt:salt,source:'stored-live-week3-snapshot'}};
-  const q=evaluateInquirerEditionQuality(candidate,week2);lastQuality=q;
-  if(q.ok){accepted=candidate;break;}
-}
-assert.ok(accepted,'Live Week 3 snapshot could not produce an accepted edition within 8 salts: '+JSON.stringify(lastQuality?.issues||[]).slice(0,8000));
-
-const paragraphs=a=>(a?.sections||[]).flatMap(s=>[...(s?.paragraphs||[]),...(s?.blocks||[]).flatMap(b=>b?.paragraphs||[])]).filter(Boolean);
-const words=s=>String(s||'').trim().split(/\s+/).filter(Boolean).length;
-const teamStats=accepted.teams.map(t=>({roster_id:String(t.roster_id),team_name:String(t.team_name||''),reporter:String(t?.inquirer_article?.reporter?.name||''),reporter_id:String(t?.inquirer_article?.reporter?.id||''),headline:String(t?.inquirer_article?.headline||''),paragraphs:paragraphs(t.inquirer_article).length,words:words(paragraphs(t.inquirer_article).join(' '))}));
-const reporterCounts=Object.fromEntries([...new Set(teamStats.map(x=>x.reporter_id))].sort().map(id=>[id,teamStats.filter(x=>x.reporter_id===id).length]));
-const minWords=Math.min(...teamStats.map(x=>x.words)),maxWords=Math.max(...teamStats.map(x=>x.words)),avgWords=Math.round(teamStats.reduce((n,x)=>n+x.words,0)/teamStats.length);
-
-fs.writeFileSync('/tmp/inquirer-week3-live-candidate.json',JSON.stringify(accepted,null,2)+'\n');
-fs.writeFileSync('/tmp/inquirer-week3-live-audit.json',JSON.stringify({ok:true,source:sourceUrl,probes,stored_generated_at:live.generated_at||null,stored_version:live.inquirer_version||null,stored_revision:live.editorial_revision||null,candidate_version:accepted.inquirer_version,candidate_revision:accepted.editorial_revision,variation_salt:accepted.editorial_generation.variation_salt,quality:lastQuality?.metrics||{},teams:accepted.teams.length,reporter_counts:reporterCounts,words:{min:minWords,max:maxWords,average:avgWords},team_stats:teamStats},null,2)+'\n');
-console.log(JSON.stringify({ok:true,source:sourceUrl,probes,teams:accepted.teams.length,variation_salt:accepted.editorial_generation.variation_salt,quality:lastQuality?.metrics||{},reporter_counts:reporterCounts,words:{min:minWords,max:maxWords,average:avgWords},stored_generated_at:live.generated_at||null},null,2));
+for(let salt=0;salt<8;salt++){const edited=applyInquirerEditorialV31({season:SEASON,week:WEEK,rawInquirer:clone(rawInquirer),rawOverview:clone(rawOverview),previousEdition:week2,weekClassification,variationSalt:salt}),candidate={available:true,season:SEASON,week:WEEK,inquirer_version:FORWARD_INQUIRER_VERSION,editorial_revision:FORWARD_EDITORIAL_REVISION,teams:edited.inquirer.teams,league_overview:edited.leagueOverview,editorial_generation:{variation_salt:salt,source:sourceUrl}};const q=evaluateInquirerEditionQuality(candidate,week2);lastQuality=q;if(q.ok){accepted=candidate;break}}
+assert.ok(accepted,'Real Week 3 data could not produce an accepted edition within 8 salts: '+JSON.stringify(lastQuality?.issues||[]).slice(0,12000));
+const paragraphs=a=>(a?.sections||[]).flatMap(s=>[...(s?.paragraphs||[]),...(s?.blocks||[]).flatMap(b=>b?.paragraphs||[])]).filter(Boolean),words=s=>String(s||'').trim().split(/\s+/).filter(Boolean).length,teamStats=accepted.teams.map(t=>({roster_id:String(t.roster_id),team_name:String(t.team_name||''),reporter:String(t?.inquirer_article?.reporter?.name||''),reporter_id:String(t?.inquirer_article?.reporter?.id||''),headline:String(t?.inquirer_article?.headline||''),paragraphs:paragraphs(t.inquirer_article).length,words:words(paragraphs(t.inquirer_article).join(' '))})),reporterCounts=Object.fromEntries([...new Set(teamStats.map(x=>x.reporter_id))].sort().map(id=>[id,teamStats.filter(x=>x.reporter_id===id).length])),minWords=Math.min(...teamStats.map(x=>x.words)),maxWords=Math.max(...teamStats.map(x=>x.words)),avgWords=Math.round(teamStats.reduce((n,x)=>n+x.words,0)/teamStats.length);
+fs.writeFileSync('/tmp/inquirer-week3-live-candidate.json',JSON.stringify(accepted,null,2)+'\n');fs.writeFileSync('/tmp/inquirer-week3-live-audit.json',JSON.stringify({ok:true,source:sourceUrl,probes,candidate_version:accepted.inquirer_version,candidate_revision:accepted.editorial_revision,variation_salt:accepted.editorial_generation.variation_salt,quality:lastQuality?.metrics||{},teams:accepted.teams.length,reporter_counts:reporterCounts,words:{min:minWords,max:maxWords,average:avgWords},team_stats:teamStats},null,2)+'\n');console.log(JSON.stringify({ok:true,source:sourceUrl,teams:accepted.teams.length,variation_salt:accepted.editorial_generation.variation_salt,quality:lastQuality?.metrics||{},reporter_counts:reporterCounts,words:{min:minWords,max:maxWords,average:avgWords}},null,2));

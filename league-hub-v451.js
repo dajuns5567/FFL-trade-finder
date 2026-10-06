@@ -502,7 +502,7 @@ function hallHTML(all){const rows=all.map(t=>({t,h:hindsightDelta(t)})).filter(x
 function mergeVisibleWeekScoring(md,w){
  if(!md||!w?.available||!Array.isArray(w.teams)||!w.teams.length)return md;
  const season=Number(w.season),week=Number(w.week);if(!season||!week)return md;
- const out=structuredClone?structuredClone(md):JSON.parse(JSON.stringify(md)),sc=out.scoring_history||(out.scoring_history={}),games=Array.isArray(sc.games)?sc.games.slice():[];
+ const out=typeof structuredClone==='function'?structuredClone(md):JSON.parse(JSON.stringify(md)),sc=out.scoring_history||(out.scoring_history={}),games=Array.isArray(sc.games)?sc.games.slice():[];
  const key=(s,wk,r)=>Number(s)+'|'+Number(wk)+'|'+String(r),seen=new Set(games.map(g=>key(g.season,g.week,g.roster_id)));
  for(const t of w.teams){const k=key(season,week,t.roster_id);if(seen.has(k))continue;games.push({season,week,user_id:String(t.manager_user_id||''),roster_id:String(t.roster_id||''),manager_name:String(t.manager_name||''),score:Number(t.points)||0,points:Number(t.points)||0,playoff:false,conference:String(t.conference||''),round_label:''});seen.add(k)}
  const rows=games.filter(g=>Number.isFinite(Number(g.score??g.points))).map(g=>({...g,season:Number(g.season),week:Number(g.week),score:Number(g.score??g.points)}));

@@ -1,8 +1,8 @@
 (()=>{
 'use strict';
-if(window.__fleecedLeagueHubLazyV457)return;
-window.__fleecedLeagueHubLazyV457=true;
-let loading=null,loaded=false,warmed=false;
+if(window.__fleecedLeagueHubLazyV458)return;
+window.__fleecedLeagueHubLazyV458=true;
+let loading=null,loaded=false,warmed=false,publishCheck=null;
 
 function visible(){
   const tab=document.getElementById('leagueHub'),button=document.querySelector('.tabs button[data-tab="leagueHub"]');
@@ -11,20 +11,35 @@ function visible(){
 function placeholder(){
   const tab=document.getElementById('leagueHub');
   if(!tab||tab.querySelector('#leagueHubContent')||tab.textContent.trim())return;
-  tab.innerHTML='<div class="card"><div class="lh-head"><h2>Fleeced! League Hub</h2><p class="muted">Loading the latest published league edition…</p></div></div>';
+  tab.innerHTML='<div class="card"><div class="lh-head"><h2>Fleeced! League Hub</h2><p class="muted">Checking for the latest completed Inquirer edition…</p></div></div>';
+}
+function ensurePublished(){
+  if(publishCheck)return publishCheck;
+  publishCheck=fetch('/.netlify/functions/inquirer-publish-scheduled',{cache:'no-store'})
+    .then(async r=>{
+      if(!r.ok)throw new Error('Inquirer publish check failed: '+r.status);
+      return r.json().catch(()=>({ok:true}));
+    })
+    .catch(err=>{
+      console.warn('League Hub publish check failed; loading existing archive.',err);
+      return null;
+    });
+  return publishCheck;
 }
 function prewarm(){
   if(warmed)return;
   warmed=true;
-  const jobs=[
-    '/.netlify/functions/league-hub?weekly=1',
-    '/.netlify/functions/league-hub?broadcast_archive=1',
-    '/.netlify/functions/league-hub?managers=1',
-    '/.netlify/functions/league-hub?reporters=1',
-    '/.netlify/functions/league-hub?weekly_awards=1',
-    '/.netlify/functions/value-history?trades=1'
-  ];
-  Promise.allSettled(jobs.map(url=>fetch(url,{cache:'default'}))).catch(()=>{});
+  ensurePublished().finally(()=>{
+    const jobs=[
+      '/.netlify/functions/league-hub?weekly=1',
+      '/.netlify/functions/league-hub?broadcast_archive=1',
+      '/.netlify/functions/league-hub?managers=1',
+      '/.netlify/functions/league-hub?reporters=1',
+      '/.netlify/functions/league-hub?weekly_awards=1',
+      '/.netlify/functions/value-history?trades=1'
+    ];
+    Promise.allSettled(jobs.map(url=>fetch(url,{cache:'default'}))).catch(()=>{});
+  });
 }
 function loadScript(src){
   return new Promise((resolve,reject)=>{
@@ -37,12 +52,19 @@ function load(){
   if(loaded)return Promise.resolve();
   if(loading)return loading;
   placeholder();prewarm();
-  loading=loadScript('/league-hub-v451.js?v=527').then(()=>loadScript('/league-hub-reader-fast-v457.js?v=1')).then(()=>{loaded=true}).catch(err=>{
-    loading=null;
-    const tab=document.getElementById('leagueHub');
-    if(tab)tab.innerHTML='<div class="notice error">League Hub failed to load. Refresh and try again.</div>';
-    console.error(err);
-  });
+  // The fast fetch layer deliberately turns ?weekly=1 into a read-only request.
+  // Wait for the real publisher before loading the Hub runtime so a newly
+  // completed week is persisted and present in the archive dropdown on first render.
+  loading=ensurePublished()
+    .then(()=>loadScript('/league-hub-v451.js?v=527'))
+    .then(()=>loadScript('/league-hub-reader-fast-v457.js?v=1'))
+    .then(()=>{loaded=true})
+    .catch(err=>{
+      loading=null;
+      const tab=document.getElementById('leagueHub');
+      if(tab)tab.innerHTML='<div class="notice error">League Hub failed to load. Refresh and try again.</div>';
+      console.error(err);
+    });
   return loading;
 }
 

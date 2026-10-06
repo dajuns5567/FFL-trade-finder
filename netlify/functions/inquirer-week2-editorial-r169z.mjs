@@ -2,6 +2,7 @@ import {applyWeek2EditorialR16 as applyR169Y} from './inquirer-week2-editorial-r
 
 const norm=v=>String(v||'').replace(/\s+/g,' ').trim();
 const esc=v=>String(v||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const possessive=v=>{const s=String(v||'').trim();return /s$/i.test(s)?`${s}'`:`${s}'s`};
 
 function bits(team){
   const full=String(team?.team_name||'this team').trim();
@@ -88,7 +89,7 @@ function cleanMarketRows(rows,team){
     if(/^Useful market movement\.?$/i.test(row))continue;
     if(/roster value (?:rose|fell) from \d+ to \d+/i.test(row)){
       const delta=(row.match(/a ([\d,]+)-point move \(([-+]?\d+(?:\.\d+)?)%\)/i)||[]);
-      if(delta)out.push(`${short}'s roster value moved ${delta[1]} points (${delta[2]}%). Fine. Prices moved; Sunday already told us more.`);
+      if(delta)out.push(`${possessive(short)} roster value moved ${delta[1]} points (${delta[2]}%). Fine. Prices moved; Sunday already told us more.`);
       else out.push(row);
       continue;
     }

@@ -29,13 +29,34 @@ function correctCurrentRecord(text,team){
   }
   return out;
 }
+const LEADER_CORRECTIONS=[
+  'Useful work, but somebody else still owned the top line.',
+  'That helped the roster without making it the lineup high-water mark.',
+  'Good production, just not the score that led this lineup.',
+  'The points mattered, although another starter still finished higher.',
+  'That contribution counted without taking the top-scoring chair.',
+  'A worthwhile line, but not the biggest one on this roster.',
+  'That was support scoring rather than the lineup-leading total.',
+  'It moved the matchup without being the roster’s best fantasy score.',
+  'That is useful secondary production, not the top line on the card.',
+  'The total belongs in the story, just not as the lineup leader.',
+  'That performance helped, while another starter still set the scoring pace.',
+  'Those points were real value without being the roster’s high score.',
+  'The contribution mattered even though the lineup had a higher finisher.',
+  'That was part of the scoring answer, not the biggest answer on the page.',
+  'A solid contribution, but the roster’s top total came from elsewhere.',
+  'The points deserve mention without being promoted to the lineup lead.'
+];
+function leaderCorrection(team){
+  const raw=Number(team?.roster_id);const idx=Number.isFinite(raw)?Math.abs(Math.trunc(raw)-1)%LEADER_CORRECTIONS.length:0;
+  return LEADER_CORRECTIONS[idx];
+}
 function correctPlayerLeader(text,team){
   const leader=topStarter(team);if(!leader?.name)return text;let out=String(text||'');
-  const teamName=norm(team?.team_name)||'this roster';
   for(const player of team?.starter_details||[]){
     const name=norm(player?.name);if(!name||name.toLowerCase()===norm(leader.name).toLowerCase())continue;
     const detailed=new RegExp(`\\b${esc(name)}\\s+led\\s+([^.!?]{0,90}?)\\s+with\\s+(\\d+(?:\\.\\d+)?)\\s+fantasy points\\.?`,'gi');
-    out=out.replace(detailed,(_,target,points)=>`${name} gave ${norm(target)} ${points} fantasy points. For ${teamName}, that was useful production without being the lineup's top score.`);
+    out=out.replace(detailed,(_,target,points)=>`${name} gave ${norm(target)} ${points} fantasy points. ${leaderCorrection(team)}`);
     out=out.replace(new RegExp(`\\b${esc(name)}\\s+led\\b`,'gi'),`${name} contributed`);
   }
   return out;

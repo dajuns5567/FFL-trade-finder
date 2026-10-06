@@ -10,6 +10,7 @@ const sentenceSplit=v=>String(v||'').replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAl
 const articleSentences=a=>(a?.sections||[]).flatMap(s=>[...(s?.paragraphs||[]),...(s?.blocks||[]).flatMap(b=>b?.paragraphs||[])]).flatMap(sentenceSplit);
 const normalize=s=>String(s||'').toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').replace(/\s+/g,' ').trim();
 const editionSentences=e=>[...(e?.teams||[]).flatMap(t=>articleSentences(t?.inquirer_article)),...articleSentences(e?.league_overview)].map(normalize).filter(Boolean);
+const ROBOTIC_LEAD=/\b(?:For|On|From|At|With)\s+(?:(?:a|an|this|the)\s+)?(?:direct|practical|measured|current|useful|immediate|grounded|clean|sharp|simple|focused|clear|realistic|tactical|strategic|repeatable|steady|specific|balanced|plain|decisive|careful|concrete|durable|short-term|season-long|matchup-specific|roster-wide|opponent-aware|standings-aware|scoring-driven|decision-level)\s+(?:football|lineup|scoring|matchup|standings|roster|management|season|opponent|division|result|pressure|leverage|performance|starter|bench|schedule|playoff|form|weekly)\s+(?:read|note|angle|lens|level|point|issue|view),/i;
 
 function rawForWeek(week){
   const teams=clone(week2.teams).map((t,i)=>{
@@ -44,8 +45,6 @@ function rawForWeek(week){
       }))
     };
   });
-  // Force a few materially different weekly storylines so the forward engine
-  // must use different score bands and commentary rather than coast on one form.
   teams[0].points=42+week;teams[0].opponent_points=132-week;teams[0].won=false;
   teams[1].points=176+week;teams[1].opponent_points=101+week/2;teams[1].won=true;
   teams[2].points=118+week;teams[2].opponent_points=117+week;teams[2].won=true;
@@ -80,6 +79,10 @@ for(let week=3;week<=17;week++){
   const copy=[...candidate.teams.flatMap(t=>articleSentences(t?.inquirer_article)),...articleSentences(candidate.league_overview)].join(' ');
   assert.doesNotMatch(copy,/\b(?:the Fleeced signal says|Fleeced signal indicates|according to the Fleeced signal)\b/i,'Signals must read naturally, never as database citations');
   assert.doesNotMatch(copy,/\b(?:copy desk|newsroom|this article|same paragraph|same sentence|sample size|one repeat|new piece of proof|hostile questioning)\b/i,'Forward prose must remain free of newsroom/meta scaffolding');
+  assert.doesNotMatch(copy,ROBOTIC_LEAD,`Week ${week} must not publish synthetic angle/lens/read scaffolding`);
+  assert.doesNotMatch(copy,/\bleague order\b/i,`Week ${week} must say standings naturally, not league order`);
+  if(week<=13)assert.doesNotMatch(copy,/\b(?:round|Sunday)\s+\d{1,2}\b/i,`Week ${week} regular-season copy must use Week N wording`);
+  assert.doesNotMatch(copy,/\ba (?:immediate|opponent-aware)\b/i,`Week ${week} must not publish article-agreement artifacts`);
 
   const currentSet=new Set(editionSentences(candidate)),priorSet=new Set(editionSentences(previous));
   const reused=[...currentSet].filter(x=>priorSet.has(x));

@@ -127,6 +127,13 @@ function sectionIsPlayers(section){
 }
 function sectionIsMarket(section){return /market|roster price|price moved/i.test(String(section?.heading||''));}
 
+function varyDuplicate(sentence){
+  const s=norm(sentence),punct=(s.match(/[.!?]$/)||['.'])[0],body=s.replace(/[.!?]$/,'');
+  if(/\d/.test(body))return'';
+  const lower=body.replace(/^([“"']?)([A-Z])/,(_,q,c)=>q+c.toLowerCase());
+  return `In this matchup, ${lower}${punct}`;
+}
+
 function dedupeLongSentences(article){
   const seen=new Set();
   for(const section of article?.sections||[]){
@@ -134,9 +141,12 @@ function dedupeLongSentences(article){
     section.paragraphs=section.paragraphs.map(row=>{
       const kept=[];
       for(const sentence of splitSentences(row)){
-        const key=norm(sentence).toLowerCase();
-        const isLong=key.split(/\s+/).filter(Boolean).length>=9;
-        if(isLong&&seen.has(key))continue;
+        const key=norm(sentence).toLowerCase(),isLong=key.split(/\s+/).filter(Boolean).length>=8;
+        if(isLong&&seen.has(key)){
+          const varied=varyDuplicate(sentence);
+          if(varied)kept.push(varied);
+          continue;
+        }
         if(isLong)seen.add(key);
         kept.push(sentence);
       }

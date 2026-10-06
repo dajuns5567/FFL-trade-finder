@@ -3,6 +3,7 @@ import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
 import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
 import week3Preload2026 from './inquirer-week3-2026-preload.mjs';
 import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r28.mjs';
+import {applyPublishedWeek3Fix} from './inquirer-week3-published-r1.mjs';
 
 const reporters=[
   {id:'walter-mercer',name:'Nick Swindell',title:'Senior Football Correspondent',desk:'The Old Desk',signature:'Keep the clipping. Hide the parade route.'},
@@ -19,7 +20,7 @@ const json=(body,status=200,ttl=60)=>new Response(JSON.stringify(body),{status,h
 }});
 let week2Memo=null,week3Memo=null;
 const week2=()=>week2Memo||(week2Memo=applyWeek2EditorialR16(week2Preload2026));
-const week3=()=>week3Memo||(week3Memo=week3Preload2026());
+const week3=()=>week3Memo||(week3Memo=applyPublishedWeek3Fix(week3Preload2026(),week2()));
 
 async function archiveRows(){
   const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),rows=Array.isArray(idx)?idx.slice():[];

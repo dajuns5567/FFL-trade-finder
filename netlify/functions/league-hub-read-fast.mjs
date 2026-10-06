@@ -10,8 +10,14 @@ const reporters=[
   {id:'nora-voss',name:'Jefferson Filch',title:'Investigations & Front Office',desk:'The Inquiry Desk',signature:'Every lineup leaves fingerprints.'}
 ];
 const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
-const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store, no-cache, must-revalidate','netlify-cdn-cache-control':'no-store','x-fleeced-read-fast':'2'}});
-const week2=()=>applyWeek2EditorialR16(week2Preload2026);
+const json=(body,status=200,ttl=60)=>new Response(JSON.stringify(body),{status,headers:{
+  'content-type':'application/json; charset=utf-8',
+  'cache-control':`public, max-age=${Math.max(0,ttl)}, stale-while-revalidate=300`,
+  'netlify-cdn-cache-control':`public, max-age=${Math.max(60,ttl*5)}, stale-while-revalidate=3600`,
+  'x-fleeced-read-fast':'3'
+}});
+let week2Memo=null;
+const week2=()=>week2Memo||(week2Memo=applyWeek2EditorialR16(week2Preload2026));
 
 async function archiveRows(){
   const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),rows=Array.isArray(idx)?idx.slice():[];
@@ -40,7 +46,6 @@ async function managerSnapshot(){
   const cached=await store().get('managers/history-cache.json',{type:'json'}).catch(()=>null);
   return cached&&Array.isArray(cached.current)?{...cached,cache_hit:true,snapshot_only:true}:{current:[],graveyard:[],career:[],assignments:[],games:[],snapshot_only:true};
 }
-
 async function weeklyAwardsSnapshot(){
   const cached=await store().get('awards/weekly.json',{type:'json'}).catch(()=>null);
   if(Array.isArray(cached?.records))return{schema_version:Number(cached.schema_version)||1,records:cached.records,snapshot_only:true};
@@ -51,14 +56,14 @@ async function weeklyAwardsSnapshot(){
 export default async req=>{
   try{
     const u=new URL(req.url),mode=String(u.searchParams.get('mode')||'latest');
-    if(mode==='archive')return json({reports:await archiveRows()});
-    if(mode==='reporters')return json({schema_version:1,inquirer_version:26,reporters});
-    if(mode==='latest')return json(await latest());
-    if(mode==='managers')return json(await managerSnapshot());
-    if(mode==='weekly-awards')return json(await weeklyAwardsSnapshot());
-    return json({error:'unsupported mode'},400);
+    if(mode==='archive')return json({reports:await archiveRows()},200,60);
+    if(mode==='reporters')return json({schema_version:1,inquirer_version:26,reporters},200,3600);
+    if(mode==='latest')return json(await latest(),200,60);
+    if(mode==='managers')return json(await managerSnapshot(),200,60);
+    if(mode==='weekly-awards')return json(await weeklyAwardsSnapshot(),200,60);
+    return json({error:'unsupported mode'},400,0);
   }catch(e){
     console.error('league-hub-read-fast',e);
-    return json({error:'League Hub read unavailable'},503);
+    return json({error:'League Hub read unavailable'},503,0);
   }
 };

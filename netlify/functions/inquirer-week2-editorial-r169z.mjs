@@ -127,6 +127,24 @@ function sectionIsPlayers(section){
 }
 function sectionIsMarket(section){return /market|roster price|price moved/i.test(String(section?.heading||''));}
 
+function dedupeLongSentences(article){
+  const seen=new Set();
+  for(const section of article?.sections||[]){
+    if(!Array.isArray(section?.paragraphs))continue;
+    section.paragraphs=section.paragraphs.map(row=>{
+      const kept=[];
+      for(const sentence of splitSentences(row)){
+        const key=norm(sentence).toLowerCase();
+        const isLong=key.split(/\s+/).filter(Boolean).length>=9;
+        if(isLong&&seen.has(key))continue;
+        if(isLong)seen.add(key);
+        kept.push(sentence);
+      }
+      return kept.join(' ').trim();
+    }).filter(Boolean);
+  }
+}
+
 function rewriteArticle(team){
   const article=team?.inquirer_article;if(!article)return;
   const ctx=matchup(article);
@@ -135,6 +153,7 @@ function rewriteArticle(team){
     if(/what survived inspection/i.test(String(section.heading||'')))section.heading='Who Actually Earned It';
     section.paragraphs=sectionIsPlayers(section)?cleanPlayerRows(section.paragraphs,team,article,ctx):sectionIsMarket(section)?cleanMarketRows(section.paragraphs,team):cleanGenericRows(section.paragraphs,team);
   }
+  dedupeLongSentences(article);
   article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
 }
 

@@ -1,6 +1,6 @@
 // Absolute Week 3+ prior-edition guard.
 // If a finished sentence still matches last week's normalized copy, reshape it
-// with a natural reporter transition instead of synthetic "angle/lens/read" prose.
+// with a natural reporter transition while preserving every fact and number.
 
 const norm=v=>String(v||'').replace(/\s+/g,' ').trim();
 const sentences=v=>norm(v)
@@ -10,55 +10,37 @@ const sentences=v=>norm(v)
   .map(x=>x.replaceAll('§','.').trim())
   .filter(Boolean);
 const key=s=>norm(s).toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').replace(/\s+/g,' ').trim();
-
-const SYNTHETIC_LEAD=/^(?:(?:For|On|From|At|With|Once|In|When|After|As|Looking|Before)\b[^,]{0,95},\s+)?/i;
+const lower=s=>String(s||'').replace(/^([“"']?)([A-Z])/,(_,q,c)=>q+c.toLowerCase());
 
 const LEADS={
   'walter-mercer':[
-    'The useful part is simpler:', 'One thing actually matters here:', 'The Sunday version is less complicated:',
-    'That leaves the football point:', 'No parade route required:', 'The part worth keeping is this:',
-    'The part worth fixing is obvious:', 'Put the record aside for a second:', 'The next opponent will care about this:',
-    'The scoreboard already settled one part:', 'Management should remember this much:', 'There is a cleaner way to say it:',
-    'The season has made this much clear:', 'The roster can live with this:', 'The roster cannot keep living with this:',
-    'The standings make one thing useful:', 'The margin makes one thing obvious:', 'Week to week, this is what survives:',
-    'The old desk will concede this:', 'The old desk will not concede this:', 'One Sunday does not erase this:',
-    'The next lineup decision starts here:', 'Before anybody gets comfortable:', 'Before anybody gets miserable:'
+    'More importantly,','For this roster,','On the scoreboard,','In practical terms,','Looking ahead,','For the lineup,',
+    'From here,','In the standings,','Against this opponent,','For management,','At this point,','By next week,',
+    'For one Sunday,','Across the roster,','In this matchup,','With the margin in mind,','With the record in mind,','For the season,',
+    'Before the next kickoff,','For the next opponent,','As things stand,','In plain football terms,','For now,','At minimum,'
   ],
   'tess-delaney':[
-    'The less flattering detail is this:', 'The elegant version ends here:', 'A more useful observation:',
-    'One may admire the result and still notice this:', 'The charming part is obvious:', 'The ugly part is equally available:',
-    'There is no tasteful way around this:', 'A little perspective helps:', 'The next opponent will be less polite about this:',
-    'The score permits one indulgence:', 'The score does not excuse this:', 'For all the celebration, this remains:',
-    'For all the misery, this remains:', 'One detail deserves better manners:', 'One detail deserves none at all:',
-    'The standings have already made this impolite:', 'The lineup has supplied its own critique:', 'The useful luxury is this:',
-    'The uncomfortable luxury is this:', 'Even a good Sunday has housekeeping:', 'Even a bad Sunday can leave something worth keeping:',
-    'The next week should inherit this:', 'The next week should not inherit this:', 'If we must be serious for a moment:'
+    'More elegantly,','Less glamorously,','On closer inspection,','In fairness,','For the scoreboard,','With the standings in view,',
+    'For this lineup,','Against this opponent,','For management,','Looking toward next week,','For the season,','More usefully,',
+    'More awkwardly,','With some restraint,','With equal honesty,','For one Sunday,','Across the roster,','Before the next kickoff,',
+    'For the next matchup,','As things stand,','In football terms,','For now,','At minimum,','In the larger picture,'
   ],
   'mack-hollis':[
-    'Here is the part worth yelling about:', 'Here is the part nobody should hide:', 'Put this in big type:',
-    'Put this in smaller type, but keep it:', 'Now the good part:', 'Now the bad part:',
-    'The scoreboard made this easy:', 'The scoreboard made this painful:', 'Rivals are going to screenshot this:',
-    'Management should screenshot this too:', 'The next opponent just got a warning:', 'The next opponent just got an invitation:',
-    'This is where the week got loud:', 'This is where the week got stupid:', 'The back page can work with this:',
-    'The back page cannot rescue this:', 'One thing survived the noise:', 'One thing got buried by the noise:',
-    'The margin tells the story here:', 'The lineup tells on itself here:', 'Save the speech and keep this:',
-    'Save the excuses and fix this:', 'That is enough setup:', 'This one does not need a committee:'
+    'More loudly,','For the back page,','On the scoreboard,','For this lineup,','In the standings,','For the rivals,',
+    'For management,','Against the next opponent,','With the margin in view,','With the record in view,','For one Sunday,','Across the roster,',
+    'From here,','Looking ahead,','For the next matchup,','Before next kickoff,','As things stand,','In plain football terms,',
+    'For now,','At minimum,','On the other side,','More importantly,','For the season,','In this matchup,'
   ],
   'nora-voss':[
-    'Rivals noticed this:', 'Management should have noticed this too:', 'The useful detail is harder to bury:',
-    'The uncomfortable detail is harder to bury:', 'The record now includes this:', 'The lineup now has to answer for this:',
-    'The opponent already supplied the warning:', 'The opponent already supplied the compliment:', 'One fact deserves to stay on the board:',
-    'One mistake deserves to stay on the board:', 'The standings make this harder to dismiss:', 'The margin makes this harder to excuse:',
-    'The next opponent will start here:', 'The next lineup meeting should start here:', 'The quiet part is not especially quiet:',
-    'The front office can call it whatever it wants:', 'The rival view is simpler:', 'The manager view should be simpler:',
-    'There is one useful loose end:', 'There is one irritating loose end:', 'The week left this behind:',
-    'The week did not clean this up:', 'The numbers are not the interesting part:', 'The consequence is the interesting part:'
+    'More specifically,','For the record,','Across the lineup,','In the standings,','With the margin in view,','For management,',
+    'For the rival view,','Against this opponent,','Looking toward next week,','For the next lineup meeting,','For one Sunday,','Across the roster,',
+    'From here,','With the record in mind,','For the season,','Before the next kickoff,','As things stand,','In football terms,',
+    'For now,','At minimum,','On closer review,','More importantly,','For the next opponent,','In this matchup,'
   ],
   '__weekly_recap__':[
-    'Around the league, one thing stood out:', 'The week left one clean takeaway:', 'The scoreboard added another wrinkle:',
-    'The standings added another wrinkle:', 'One result deserves a second look:', 'One trend deserves less patience:',
-    'One trend deserves more respect:', 'The league made this part obvious:', 'The next week inherits this story:',
-    'That leaves one useful league-wide point:', 'The recap can be blunt here:', 'The rest of the league already noticed:'
+    'Elsewhere around the league,','Across the standings,','On the scoreboard,','For the week as a whole,','Looking ahead,','Around the league,',
+    'For the next slate,','In the larger picture,','More importantly,','As things stand,','In football terms,','For now,',
+    'At minimum,','Across the matchups,','By next week,','On balance,'
   ]
 };
 
@@ -80,15 +62,15 @@ function chooseLead(reporter,state){
     const i=(state.index+tries)%bank.length,lead=bank[i],k=key(lead);
     if(!state.used.has(k)){state.index=i+1;state.used.add(k);return lead}
   }
-  const lead=bank[state.index++%bank.length];
-  return lead;
+  return bank[state.index++%bank.length];
 }
 
 function freshen(sentence,prior,reporter,state){
   let out=norm(sentence);
   if(!prior.has(key(out)))return out;
-  const body=out.replace(SYNTHETIC_LEAD,'').trim()||out;
-  for(let tries=0;tries<8&&prior.has(key(out));tries++)out=`${chooseLead(reporter,state)} ${body}`;
+  // Prefix the complete sentence so factual context such as "At 3-0" is never
+  // discarded merely to make the wording fresh.
+  for(let tries=0;tries<8&&prior.has(key(out));tries++)out=`${chooseLead(reporter,state)} ${lower(norm(sentence))}`;
   return out;
 }
 

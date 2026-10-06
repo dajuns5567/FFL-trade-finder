@@ -12,6 +12,7 @@ on:
       - 'netlify/functions/inquirer-forward-hardening.mjs'
       - 'netlify/functions/inquirer-forward-ranking-cleanup.mjs'
       - 'netlify/functions/inquirer-forward-sustainability.mjs'
+      - 'netlify/functions/inquirer-forward-naturalize.mjs'
       - 'netlify/functions/inquirer-forward-prior-guard.mjs'
       - 'netlify/functions/inquirer-forward-headline-grammar.mjs'
       - 'netlify/functions/inquirer-story-context.mjs'
@@ -40,6 +41,7 @@ jobs:
           node --check netlify/functions/inquirer-forward-hardening.mjs
           node --check netlify/functions/inquirer-forward-ranking-cleanup.mjs
           node --check netlify/functions/inquirer-forward-sustainability.mjs
+          node --check netlify/functions/inquirer-forward-naturalize.mjs
           node --check netlify/functions/inquirer-forward-prior-guard.mjs
           node --check netlify/functions/inquirer-forward-headline-grammar.mjs
           node --check netlify/functions/inquirer-editorial-v31.mjs

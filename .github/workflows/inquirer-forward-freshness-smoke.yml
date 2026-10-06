@@ -1,0 +1,34 @@
+name: Inquirer forward freshness
+
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/inquirer-editorial-v31.mjs'
+      - 'netlify/functions/inquirer-editorial-v31-core.mjs'
+      - 'netlify/functions/inquirer-editorial-v3*.mjs'
+      - 'netlify/functions/inquirer-forward-freshness.mjs'
+      - 'netlify/functions/inquirer-story-context.mjs'
+      - 'netlify/functions/player-signal-engine.mjs'
+      - 'scripts/inquirer-forward-freshness-smoke.mjs'
+      - '.github/workflows/inquirer-forward-freshness-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  forward-freshness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check forward newsroom
+        run: |
+          node --check netlify/functions/inquirer-forward-freshness.mjs
+          node --check netlify/functions/inquirer-editorial-v31.mjs
+          node --check scripts/inquirer-forward-freshness-smoke.mjs
+      - name: Simulate Weeks 3 through 6
+        run: node scripts/inquirer-forward-freshness-smoke.mjs

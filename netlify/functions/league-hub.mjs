@@ -3,6 +3,7 @@ import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
 import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
 import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
+import week3Preload2026 from './inquirer-week3-2026-preload.mjs';
 import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r28.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
@@ -23,8 +24,14 @@ const VERIFIED_HISTORICAL_MANAGER_ASSIGNMENTS={
 };
 const BROADCAST_VERSION=17;
 const INQUIRER_EDITORIAL_REVISION=14;
-const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026],['2026|2',week2Preload2026]]);
-const servedPreload=p=>p&&Number(p.season)===2026&&Number(p.week)===2?applyWeek2EditorialR16(p):p;
+const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026],['2026|2',week2Preload2026],['2026|3',week3Preload2026]]);
+const servedPreload=p=>{
+ if(!p)return p;
+ const season=Number(p.season),week=Number(p.week);
+ if(season===2026&&week===2)return applyWeek2EditorialR16(p);
+ if(season===2026&&week===3)return applyPublishedForwardFix(p,applyWeek2EditorialR16(week2Preload2026));
+ return p;
+};
 const preloadedBroadcast=(season,week)=>servedPreload(PRELOADED_BROADCASTS.get(String(Number(season))+'|'+String(Number(week)))||null);
 function preloadedReporterEntries(reporterId){
  const rows=[];
@@ -383,8 +390,14 @@ export async function weeklyReport(req){
   inquirer=accepted.inquirer;leagueOverview=accepted.leagueOverview;
  }
  const forward=week>=3,rawResult={available:true,season,week,week_classification:weekClassification,generated_at:new Date().toISOString(),published_locked:true,context_snapshot_through_week:week,broadcast_version:BROADCAST_VERSION,inquirer_version:forward?FORWARD_INQUIRER_VERSION:INQUIRER_VERSION,editorial_revision:forward?FORWARD_EDITORIAL_REVISION:INQUIRER_EDITORIAL_REVISION,editorial_generation:forward?{engine:'v31-forward',variation_salt:variationSalt,previous_week:week>1?week-1:null,quality_metrics:quality.metrics}:null,projection_source:Object.keys(proj).length?'Sleeper weekly projections scored with league scoring settings':'projection data unavailable',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:canonicalTrades?.source||'unavailable',reporters:inquirer.reporters,league_overview:leagueOverview,teams:inquirer.teams},result=forward?applyPublishedForwardFix(rawResult,previousBroadcast):rawResult;
- await s.setJSON(key,result);await syncReporterArchives(s,result,key);if(result.league_overview){const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json',storedOverview=await s.get(overviewKey,{type:'json'}).catch(()=>null);if(!storedOverview?.headline)await s.setJSON(overviewKey,{...result.league_overview,editorial_revision:result.editorial_revision,captured_at:result.generated_at,published_locked:true})}
- const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),list=Array.isArray(idx)?idx:[];if(!list.some(x=>x.season===season&&x.week===week)){list.push({type:'week',season,week,key,captured_at:result.generated_at});list.sort((a,b)=>a.season-b.season||a.week-b.week);await s.setJSON('broadcasts/index.json',list)}return result;
+ const integrity=publishedArticleIntegrity(result,(rosters||[]).length||32);
+ if(!integrity.ok)throw new Error('Week '+week+' publish integrity rejected: '+integrity.issues.join('; '));
+ const weeklyAwardRecord=await weeklyAwardRecordForBroadcast(result,{stats:weeklyStats,players,scoring:league?.scoring_settings||{},force:true});
+ await s.setJSON(key,{...result,publish_integrity:{...integrity,awards_verified:true,award_week:weeklyAwardRecord.week}});
+ const persisted=await s.get(key,{type:'json'}).catch(()=>null),roundTrip=publishedArticleIntegrity(persisted,(rosters||[]).length||32);
+ if(!roundTrip.ok||Number(persisted?.season)!==season||Number(persisted?.week)!==week)throw new Error('Week '+week+' persisted broadcast failed integrity verification: '+roundTrip.issues.join('; '));
+ await syncReporterArchives(s,persisted,key);if(persisted.league_overview){const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json',storedOverview=await s.get(overviewKey,{type:'json'}).catch(()=>null);if(!storedOverview?.headline)await s.setJSON(overviewKey,{...persisted.league_overview,editorial_revision:persisted.editorial_revision,captured_at:persisted.generated_at,published_locked:true})}
+ const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),list=Array.isArray(idx)?idx:[];if(!list.some(x=>x.season===season&&x.week===week)){list.push({type:'week',season,week,key,captured_at:persisted.generated_at,integrity_verified:true,awards_verified:true});list.sort((a,b)=>a.season-b.season||a.week-b.week);await s.setJSON('broadcasts/index.json',list)}return persisted;
 }
 async function broadcastArchive(){
  const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),rows=Array.isArray(idx)?idx.slice():[];
@@ -438,22 +451,72 @@ function weeklyPlayersOfWeek(stats,players,scoring){
  }
  return{offense:leaders.offense,defense:leaders.defense};
 }
-async function weeklyAwards(){
- const s=store(),archive=await broadcastArchive(),pairs=[],seen=new Set();
- for(const row of archive.reports||[]){const season=Number(row?.season),week=Number(row?.week),key=season+'|'+week;if(season&&week&&!seen.has(key)){seen.add(key);pairs.push({season,week,captured_at:String(row?.captured_at||'')})}}
- const old=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null),records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[],byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r]));
- const missing=pairs.filter(p=>!byKey.has(p.season+'|'+p.week)||!byKey.get(p.season+'|'+p.week)?.players_of_week);
- if(missing.length){
-  const [league,players]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/players/nfl`).catch(()=>({}))]),scoring=league?.scoring_settings||{};
-  const built=await Promise.all(missing.map(async p=>{
-   const broadcast=await broadcastStored(p.season,p.week),stats=await fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({})),captured=String(broadcast?.generated_at||p.captured_at||new Date().toISOString());
-   return{season:p.season,week:p.week,captured_at:captured,manager_awards:weeklyManagerAwards(broadcast),players_of_week:weeklyPlayersOfWeek(stats,players,scoring)};
-  }));
-  for(const rec of built)byKey.set(rec.season+'|'+rec.week,rec);
-  const next=[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
-  await s.setJSON('awards/weekly.json',{schema_version:1,records:next});
+
+function publishedArticleIntegrity(broadcast,expectedTeams=32){
+ const issues=[],teams=Array.isArray(broadcast?.teams)?broadcast.teams:[],expected=Math.max(1,Number(expectedTeams)||32);
+ if(!broadcast?.available)issues.push('broadcast unavailable');
+ if(!Number(broadcast?.season)||!Number(broadcast?.week))issues.push('missing season/week');
+ if(teams.length!==expected)issues.push('expected '+expected+' teams, found '+teams.length);
+ const rosterIds=new Set(teams.map(t=>String(t?.roster_id||'')));
+ if(rosterIds.size!==teams.length)issues.push('duplicate/missing roster ids');
+ if(!broadcast?.league_overview?.headline)issues.push('missing weekly recap headline');
+ if(!Array.isArray(broadcast?.league_overview?.sections)||broadcast.league_overview.sections.length<3)issues.push('weekly recap sections incomplete');
+ for(const t of teams){
+  const a=t?.inquirer_article,body=a?JSON.stringify(a):'';
+  if(!a?.headline)issues.push('missing article headline for roster '+String(t?.roster_id||'?'));
+  if(body.length<1800)issues.push('article payload too short for roster '+String(t?.roster_id||'?'));
  }
- return{schema_version:1,records:[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week))};
+ const serialized=JSON.stringify(broadcast||{});
+ if(serialized.length<Math.max(100000,expected*2500))issues.push('broadcast payload suspiciously small');
+ if(/(?:\.\.\.\s*truncated|\[truncated\])/i.test(serialized))issues.push('truncation marker detected');
+ return{ok:issues.length===0,issues,bytes:Buffer.byteLength(serialized,'utf8'),teams:teams.length};
+}
+async function weeklyAwardRecordForBroadcast(broadcast,{stats=null,players=null,scoring=null,force=false}={}){
+ const season=Number(broadcast?.season),week=Number(broadcast?.week);
+ if(!season||!week)throw new Error('weekly awards require a valid published season/week');
+ const s=store(),old=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null),
+  records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[],
+  byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r])),key=season+'|'+week,existing=byKey.get(key),
+  complete=existing?.players_of_week?.offense&&existing?.players_of_week?.defense&&(existing?.manager_awards||[]).some(a=>a?.type==='highest-scorer');
+ if(complete&&!force)return existing;
+ let p=players,sc=scoring,st=stats;
+ if(!p||!sc){
+  const [league,playerMap]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/players/nfl`).catch(()=>({}))]);
+  p=p||playerMap;sc=sc||league?.scoring_settings||{};
+ }
+ if(!st)st=await fetchJson(`${API}/stats/nfl/regular/${season}/${week}`).catch(()=>({}));
+ const rec={
+  season,week,captured_at:String(broadcast?.generated_at||new Date().toISOString()),
+  manager_awards:weeklyManagerAwards(broadcast),
+  players_of_week:weeklyPlayersOfWeek(st,p,sc)
+ };
+ const needed=['hot-seat','cool-throne','highest-scorer','lowest-scorer'],types=new Set((rec.manager_awards||[]).map(a=>a?.type));
+ if(!rec.players_of_week?.offense||!rec.players_of_week?.defense)throw new Error('Week '+week+' Players of the Week incomplete');
+ for(const type of needed)if(!types.has(type))throw new Error('Week '+week+' weekly manager award missing: '+type);
+ byKey.set(key,rec);
+ const next=[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
+ await s.setJSON('awards/weekly.json',{schema_version:2,records:next});
+ const verify=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null),verified=(verify?.records||[]).find(r=>Number(r.season)===season&&Number(r.week)===week);
+ if(!verified?.players_of_week?.offense||!verified?.players_of_week?.defense||!(verified?.manager_awards||[]).some(a=>a?.type==='highest-scorer'))throw new Error('Week '+week+' weekly awards failed persistence verification');
+ return verified;
+}
+export async function refreshWeeklyAwardsForBroadcast(broadcast,inputs={}){return weeklyAwardRecordForBroadcast(broadcast,inputs)}
+
+async function weeklyAwards(){
+ const archive=await broadcastArchive(),s=store(),old=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null),
+  records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[],
+  byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r]));
+ for(const row of archive.reports||[]){
+  const season=Number(row?.season),week=Number(row?.week),key=season+'|'+week;if(!season||!week)continue;
+  const existing=byKey.get(key),complete=existing?.players_of_week?.offense&&existing?.players_of_week?.defense&&(existing?.manager_awards||[]).some(a=>a?.type==='highest-scorer');
+  if(complete)continue;
+  const broadcast=await broadcastStored(season,week);
+  if(!broadcast?.available||!Array.isArray(broadcast?.teams)||!broadcast.teams.length)continue;
+  const rec=await weeklyAwardRecordForBroadcast(broadcast);
+  byKey.set(key,rec);
+ }
+ const fresh=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null);
+ return{schema_version:Number(fresh?.schema_version)||2,records:Array.isArray(fresh?.records)?fresh.records:[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week))};
 }
 
 async function draftAwards(){

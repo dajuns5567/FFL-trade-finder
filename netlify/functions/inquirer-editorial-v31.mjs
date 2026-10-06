@@ -5,6 +5,7 @@
 
 import {reporterPlayerStatusProfile} from './player-signal-engine.mjs';
 import {applyInquirerStoryContextToEdition} from './inquirer-story-context.mjs';
+import {applyInquirerForwardStructural} from './inquirer-forward-structural.mjs';
 import {applyInquirerForwardFreshness,evaluateInquirerForwardFreshness} from './inquirer-forward-freshness.mjs';
 import {
   applyInquirerEditorialV37,
@@ -30,6 +31,10 @@ export function applyInquirerEditorialV31(args={}){
   if(out?.inquirer?.teams){
     applyInquirerStoryContextToEdition(out.inquirer,{
       season:Number(args.season),
+      week:Number(args.week),
+      previousEdition:args.previousEdition||null
+    });
+    applyInquirerForwardStructural(out.inquirer,{
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });

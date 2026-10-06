@@ -1,7 +1,6 @@
 // Non-destructive final prose sweep for Week 3+.
-// Runs after prior-week guarding, edition-wide dedupe and context truth.
-// It removes synthetic/stacked transition grammar and repairs narrow surface
-// defects without adding facts, commentary or changing football numbers.
+// Runs after other prose transforms and removes editorial scaffolding without
+// changing football facts, names or numbers.
 
 const norm=v=>String(v||'').replace(/\s+/g,' ').trim();
 const sentences=v=>norm(v)
@@ -13,28 +12,21 @@ const sentences=v=>norm(v)
 const cap=s=>String(s||'').replace(/^([^A-Za-z]*)([a-z])/,(_,a,b)=>a+b.toUpperCase());
 
 const SYNTHETIC=/^(?:(?:For|On|From|At|With)\s+(?:(?:a|an|this|the)\s+)?(?:direct|practical|measured|current|useful|immediate|grounded|clean|sharp|simple|focused|clear|realistic|tactical|strategic|repeatable|steady|specific|balanced|plain|decisive|careful|concrete|durable|short-term|season-long|matchup-specific|roster-wide|opponent-aware|standings-aware|scoring-driven|decision-level)\s+(?:football|lineup|scoring|matchup|standings|roster|management|season|opponent|division|result|pressure|leverage|performance|starter|bench|schedule|playoff|form|weekly)\s+(?:read|note|angle|lens|level|point|issue|view),\s*)/i;
-const STOCK_LABEL=/^(?:(?:The practical read|The clean read|The less glamorous truth|Here is the punch|Big letters first|The opponent already knows this|This much deserves criticism|The practical problem|One useful luxury remains|The next week begins with this|The next lineup meeting should start here|Rivals will notice this|This is what rivals will remember|Management may prefer another subject|No decoration needed|The next opponent gets this opportunity|Without dressing it up|Against this opponent|One sensible point|A little restraint|For all the theater|In the standings)\s*:\s*)/i;
-const STACKED_LABEL=/(?:The practical read|The clean read|The less glamorous truth|Here is the punch|Big letters first|The opponent already knows this|This much deserves criticism|The practical problem|One useful luxury remains|The next week begins with this|The next lineup meeting should start here|Rivals will notice this|This is what rivals will remember|Management may prefer another subject|No decoration needed|The next opponent gets this opportunity|Without dressing it up|Against this opponent|One sensible point|A little restraint|For all the theater|In the standings)\s*:\s*(?:The practical read|The clean read|The less glamorous truth|Here is the punch|Big letters first|The opponent already knows this|This much deserves criticism|The practical problem|One useful luxury remains|The next week begins with this|The next lineup meeting should start here|Rivals will notice this|This is what rivals will remember|Management may prefer another subject|No decoration needed|The next opponent gets this opportunity|Without dressing it up|Against this opponent|One sensible point|A little restraint|For all the theater|In the standings)\s*:/i;
+const LABEL_SOURCE='(?:The practical read|The clean read|The less glamorous truth|Here is the punch|Big letters first|The opponent already knows this|The opponent has already noticed|This much deserves criticism|The practical problem|One useful luxury remains|The next week begins with this|The next lineup meeting should start here|Rivals will notice this|This is what rivals will remember|Management may prefer another subject|Management should screenshot this too|No decoration needed|The next opponent gets this opportunity|Without dressing it up|Against this opponent|For this matchup|One sensible point|A little restraint|For all the theater|In the standings)';
+const STOCK_LABEL_ANY=new RegExp(`\\b${LABEL_SOURCE}\\s*:\\s*`,'gi');
+const STACKED_LABEL=new RegExp(`${LABEL_SOURCE}\\s*:\\s*${LABEL_SOURCE}\\s*:`,'i');
+const STOCK_LABEL_CHECK=new RegExp(`\\b${LABEL_SOURCE}\\s*:`,'i');
 const AGREEMENT_ARTIFACT=/\b(?:the positioning are not a theory; they are|the race is not a theory; they are)\b/i;
 const GARBLED_MARGIN=/\bthe\s+(\d+(?:\.\d+)?)-point gap scoring to support behind the best scorers\b/i;
-
-function stripStockLead(s){
-  let out=s;
-  // These labels are editorial scaffolding, not football meaning. Remove all
-  // consecutive occurrences while preserving the factual sentence underneath.
-  for(let i=0;i<5;i++){
-    const next=out.replace(STOCK_LABEL,'').trim();
-    if(next===out)break;
-    out=next;
-  }
-  return out;
-}
 
 function cleanSentence(sentence,week){
   let s=norm(sentence);
   const before=s;
   s=s.replace(SYNTHETIC,'').trim();
-  s=stripStockLead(s);
+  // Labels sometimes sit behind another natural transition (for example,
+  // "For this roster, The practical read: ..."). Remove the editorial label
+  // wherever it occurs while preserving everything around it.
+  s=s.replace(STOCK_LABEL_ANY,'').replace(/\s{2,}/g,' ').trim();
   if(Number(week)<=13){
     s=s.replace(/\b(?:round|Sunday)\s+(\d{1,2})\b/gi,'Week $1');
     s=s.replace(/\bweek\s+(\d{1,2})\b/gi,(_,n)=>`Week ${n}`);
@@ -78,7 +70,7 @@ export function findInquirerForwardSurfaceIssues(edition,{week}={}){
   if(STACKED_LABEL.test(text))issues.push({kind:'stacked-stock-label'});
   if(AGREEMENT_ARTIFACT.test(text))issues.push({kind:'agreement-artifact'});
   if(GARBLED_MARGIN.test(text))issues.push({kind:'garbled-margin'});
-  if(/\b(?:The practical read|The clean read|The less glamorous truth|Here is the punch|Big letters first|The opponent already knows this|This much deserves criticism|The practical problem|One useful luxury remains|The next week begins with this|The next lineup meeting should start here|Rivals will notice this|This is what rivals will remember|Management may prefer another subject|No decoration needed|The next opponent gets this opportunity|Without dressing it up|Against this opponent|One sensible point|A little restraint|For all the theater|In the standings)\s*:/i.test(text))issues.push({kind:'stock-label'});
+  if(STOCK_LABEL_CHECK.test(text))issues.push({kind:'stock-label'});
   return issues;
 }
 

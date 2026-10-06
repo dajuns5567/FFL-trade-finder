@@ -27,11 +27,10 @@ export function normalizeInquirerForwardHeadline(headline,teamNames=[],week=null
   for(const name of names){
     if(!isPluralTeam(name))continue;
     const re=new RegExp(`^(${esc(name)})\\s+([A-Za-z]+)\\b`,'i'),m=h.match(re);
-    if(m){
-      const replacement=PLURAL_VERBS.get(String(m[2]||'').toLowerCase());
-      if(replacement)h=h.replace(re,`${m[1]} ${preserveCase(m[2],replacement)}`);
-      h=h.replace(new RegExp(`^(${esc(name)}\\b[^;:,.!?]{0,90})\\bIts\\b`,'i'),'$1Their');
-    }
+    if(!m)continue;
+    const replacement=PLURAL_VERBS.get(String(m[2]||'').toLowerCase());
+    if(replacement)h=h.replace(re,`${m[1]} ${preserveCase(m[2],replacement)}`);
+    h=h.replace(new RegExp(`^(${esc(name)}\\b[^;:,.!?]{0,90})\\bIts\\b`,'i'),'$1Their');
     break;
   }
   const w=Number(week);
@@ -65,13 +64,15 @@ export function findInquirerForwardHeadlineGrammarIssues(edition,{week}={}){
     for(const name of names){
       if(!isPluralTeam(name))continue;
       const m=h.match(new RegExp(`^${esc(name)}\\s+([A-Za-z]+)\\b`,'i'));
-      if(m&&PLURAL_VERBS.has(String(m[1]).toLowerCase()))issues.push({team:String(team?.team_name||''),headline:h,reason:`plural team subject uses singular verb ${m[1]}`});
-      if(m&&new RegExp(`^${esc(name)}\\b[^;:,.!?]{0,90}\\bIts\\b`,'i').test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'plural team subject uses singular possessive “its”'});
-      if(m)break;
+      if(!m)continue;
+      if(PLURAL_VERBS.has(String(m[1]).toLowerCase()))issues.push({team:String(team?.team_name||''),headline:h,reason:`plural team subject uses singular verb ${m[1]}`});
+      if(new RegExp(`^${esc(name)}\\b[^;:,.!?]{0,90}\\bIts\\b`,'i').test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'plural team subject uses singular possessive “its”'});
+      break;
     }
     if(/\b(?:Make|Makes|Made) the Week \d+ Look\b/i.test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'awkward “make the Week N look” phrasing'});
     if(/\bweeks? of result\b/i.test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'awkward result/result(s) phrasing'});
     if(/[’'] This Sunday\b/.test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'awkward possessive This Sunday phrasing'});
+    ORDINAL_SUNDAY.lastIndex=0;
     if(ORDINAL_SUNDAY.test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'stale ordinal-Sunday phrasing'});
     ORDINAL_SUNDAY.lastIndex=0;
     const weeksInto=h.match(/\b(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|\d+) Weeks Into\b/i);

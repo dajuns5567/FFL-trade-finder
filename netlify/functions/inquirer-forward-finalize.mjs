@@ -25,7 +25,7 @@ function diversify(sentence,state,seed){return `${lead(state,seed)} ${lower(norm
 
 function scrub(s,reporter=''){
   let x=norm(s);if(!x)return'';
-  if(/^(?:n\/a|[-+]?\d+(?:\.\d+)?[.)]?|[-+]?\d+(?:\.\d+)?\s+in the league order\.?)$/i.test(x))return'';
+  if(/^(?:n\/a|(?:No\.\s*)?[-+]?\d+(?:\.\d+)?(?:st|nd|rd|th)?(?:[.)]|\)\.)?|(?:No\.\s*)?[-+]?\d+(?:\.\d+)?(?:st|nd|rd|th)?\s+in the league order\.?)$/i.test(x))return'';
   x=x
     .replace(/\bchanged the evidence enough to stand on its own\b/gi,'changed the week enough to matter on its own')
     .replace(/\bchanged the evidence\b/gi,'changed the result')
@@ -59,6 +59,7 @@ function scrub(s,reporter=''){
     .replace(/\bdecides whether\b/gi,'will show whether')
     .replace(/\bthe argument actually begins\b/gi,'the matchup actually begins')
     .replace(/\bAt 1-1, nobody owns the argument\b/gi,'At 1-1, nobody owns much leverage')
+    .replace(/\barguments?\b/gi,'issues')
     .replace(/\s{2,}/g,' ').trim();
   if(reporter==='tess-delaney')x=x
     .replace(/\bfurniture\b/gi,'lineup pieces').replace(/\bchairs?\b/gi,'spots').replace(/\btables?\b/gi,'standings')
@@ -95,7 +96,7 @@ function shortenRepeatedLead(sentence,rows,counts,previousLead){
   return s;
 }
 
-const INTERPRET=/\b(?:because|which means|that means|but|however|therefore|matters?|problem|warning|useful|earned|deserved|embarrass|ridiculous|painful|good|bad|ugly|should|needs?|cannot|can't|did not|does not|enough|cost|saved|carried|wasted|exposed|punished|survived|buried|blew out|stole|dragged|leverage|standings|division|opponent|matchup|margin|relief|regret|pressure|damage)\b/i;
+const INTERPRET=/\b(?:because|which means|that means|but|however|therefore|matters?|problem|warning|useful|earned|deserved|embarrass|ridiculous|painful|good|bad|ugly|should|needs?|cannot|can't|did not|does not|enough|cost|saved|carried|wasted|exposed|punished|survived|buried|blew out|stole|dragged|leverage|standings|division|opponent|matchup|margin|regret|pressure|damage)\b/i;
 const STAT=/\b(?:scored|posted|finished with|put up|gave|produced|added|fantasy points|projection|projected|odds|chance|ranked|seed|Cool Throne|Hot Seat)\b[^.!?]*\d/i;
 const RECAP_TAKES=[
   'That mattered because the opponent had to answer it, not because the number looked tidy.',
@@ -109,9 +110,9 @@ const RECAP_TAKES=[
   'That left a real mark on the matchup instead of merely filling a row.',
   'The opponent felt that number, which is the only reason to linger on it.'
 ];
-function recapBareTake(sentence,state,seed){if(!STAT.test(sentence)||INTERPRET.test(sentence))return'';const row=RECAP_TAKES[(hash(seed)+state.recapAdds)%RECAP_TAKES.length];state.recapAdds++;return row}
+function recapBareTake(sentence,state,seed){const factual=STAT.test(sentence)||/\b\d+(?:\.\d+)?\s+(?:fantasy\s+)?points?\b/i.test(sentence);if(!factual||INTERPRET.test(sentence))return'';const row=RECAP_TAKES[(hash(seed)+state.recapAdds)%RECAP_TAKES.length];state.recapAdds++;return row}
 
-function priorByTeam(previous,entities){const out=new Map();for(const t of previous?.teams||[])out.set(String(t?.roster_id||''),new Set((t?.inquirer_article?.paragraphs||[]).flatMap(parts).filter(s=>wc(s)>=8).map(s=>entityNorm(s,entities))));return out}
+function priorByTeam(previous){const out=new Map();for(const t of previous?.teams||[])out.set(String(t?.roster_id||''),new Set((t?.inquirer_article?.paragraphs||[]).flatMap(parts).filter(s=>wc(s)>=8).map(simpleNorm)));return out}
 
 function rewriteArticle(team,article,ctx){
   if(!article)return;
@@ -120,8 +121,11 @@ function rewriteArticle(team,article,ctx){
     const out=[];
     for(let s of parts(p)){
       s=scrub(s,reporter);if(!s)continue;
-      s=shortenRepeatedLead(s,rows,counts,lastLead);lastLead=properLead(s)||'';
-      if(wc(s)>=8&&prior.has(entityNorm(s,ctx.entities)))s=diversify(s,ctx.state,`${ctx.week}|prior|${team?.roster_id}|${pi}|${s}`);
+      s=shortenRepeatedLead(s,rows,counts,lastLead);
+      const currentLead=properLead(s)||'';
+      if(currentLead&&lastLead&&currentLead.toLowerCase()===lastLead.toLowerCase())s=diversify(s,ctx.state,`${ctx.week}|adjacent|${team?.roster_id}|${pi}|${s}`);
+      if(wc(s)>=8&&prior.has(simpleNorm(s)))s=diversify(s,ctx.state,`${ctx.week}|prior|${team?.roster_id}|${pi}|${s}`);
+      lastLead=properLead(s)||currentLead;
       out.push(s);
     }
     return out.join(' ').trim();
@@ -140,7 +144,10 @@ function rewriteOverview(o,ctx){
     const out=[];
     for(let s of parts(p)){
       s=scrub(s,'');if(!s)continue;
-      s=shortenRepeatedLead(s,rows,counts,lastLead);lastLead=properLead(s)||'';
+      s=shortenRepeatedLead(s,rows,counts,lastLead);
+      const currentLead=properLead(s)||'';
+      if(currentLead&&lastLead&&currentLead.toLowerCase()===lastLead.toLowerCase())s=diversify(s,ctx.state,`${ctx.week}|recap-adjacent|${pi}|${s}`);
+      lastLead=properLead(s)||currentLead;
       const take=recapBareTake(s,ctx.state,`${ctx.week}|recap|${pi}|${s}`);out.push(take?`${s} ${take}`:s);
     }
     return out.join(' ').trim();
@@ -158,10 +165,11 @@ function globalFreshen(edition,ctx){
   const rewrite=(paragraphs,key)=>(paragraphs||[]).map((p,pi)=>{
     const out=[];let local=articleSeen.get(key);if(!local){local=new Set();articleSeen.set(key,local)}
     for(let s of parts(p)){
-      if(!s)continue;let n=entityNorm(s,ctx.entities),sh=shape(s),owners=shapes.get(sh)||new Set();
-      const duplicate=wc(s)>=8&&(seen.has(n)||local.has(simpleNorm(s))),overused=sh.split(' ').length>=5&&owners.size>=2&&!owners.has(key);
+      s=scrub(s,'');if(!s)continue;
+      let n=entityNorm(s,ctx.entities),sh=shape(s),owners=shapes.get(sh)||new Set();
+      const duplicate=wc(s)>=6&&(seen.has(n)||local.has(simpleNorm(s))),overused=sh.split(' ').length>=5&&owners.size>=2&&!owners.has(key);
       if(duplicate||overused){s=diversify(s,ctx.state,`${ctx.week}|global|${key}|${pi}|${occurrence++}|${n}`);n=entityNorm(s,ctx.entities);sh=shape(s);owners=shapes.get(sh)||new Set()}
-      if(wc(s)>=8){seen.add(n);local.add(simpleNorm(s))}owners.add(key);shapes.set(sh,owners);out.push(s);
+      if(wc(s)>=6){seen.add(n);local.add(simpleNorm(s))}owners.add(key);shapes.set(sh,owners);out.push(s);
     }
     return out.join(' ').trim();
   }).filter(Boolean);
@@ -171,7 +179,7 @@ function globalFreshen(edition,ctx){
 
 export function finalizeInquirerForwardEdition(edition,{week,previousEdition=null}={}){
   if(!edition||!Array.isArray(edition.teams)||Number(week)<3)return edition;
-  const entities=allEntities(edition,previousEdition),teamNames=(edition.teams||[]).map(t=>String(t?.team_name||'')).filter(Boolean).sort((a,b)=>b.length-a.length),state={week:Number(week),seq:0,used:new Set(),recapAdds:0},ctx={week:Number(week),entities,teamNames,state,prior:priorByTeam(previousEdition,entities)};
+  const entities=allEntities(edition,previousEdition),teamNames=(edition.teams||[]).map(t=>String(t?.team_name||'')).filter(Boolean).sort((a,b)=>b.length-a.length),state={week:Number(week),seq:0,used:new Set(),recapAdds:0},ctx={week:Number(week),entities,teamNames,state,prior:priorByTeam(previousEdition)};
   for(const team of edition.teams)rewriteArticle(team,team?.inquirer_article,ctx);
   rewriteOverview(edition.league_overview,ctx);
   globalFreshen(edition,ctx);

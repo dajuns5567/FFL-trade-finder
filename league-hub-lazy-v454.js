@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-if(window.__fleecedLeagueHubLazyV463)return;
-window.__fleecedLeagueHubLazyV463=true;
+if(window.__fleecedLeagueHubLazyV465)return;
+window.__fleecedLeagueHubLazyV465=true;
 let loading=null,loaded=false,warmed=false;
 
 function visible(){
@@ -21,8 +21,7 @@ function prewarm(){
     '/.netlify/functions/league-hub?broadcast_archive=1',
     '/.netlify/functions/league-hub?managers=1',
     '/.netlify/functions/league-hub?reporters=1',
-    '/.netlify/functions/league-hub?weekly_awards=1',
-    '/.netlify/functions/value-history?trades=1'
+    '/.netlify/functions/league-hub?weekly_awards=1'
   ];
   Promise.allSettled(jobs.map(url=>fetch(url,{cache:'default'}))).catch(()=>{});
 }
@@ -37,7 +36,7 @@ function load(){
   if(loaded)return Promise.resolve();
   if(loading)return loading;
   placeholder();prewarm();
-  loading=loadScript('/league-hub-v451.js?v=527').then(()=>loadScript('/league-hub-reader-fast-v457.js?v=1')).then(()=>{loaded=true}).catch(err=>{
+  loading=loadScript('/league-hub-v451.js?v=528').then(()=>loadScript('/league-hub-reader-fast-v457.js?v=1')).then(()=>{loaded=true}).catch(err=>{
     loading=null;
     const tab=document.getElementById('leagueHub');
     if(tab)tab.innerHTML='<div class="notice error">League Hub failed to load. Refresh and try again.</div>';

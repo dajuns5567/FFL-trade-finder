@@ -7,6 +7,7 @@ import {reporterPlayerStatusProfile} from './player-signal-engine.mjs';
 import {applyInquirerStoryContextToEdition} from './inquirer-story-context.mjs';
 import {applyInquirerForwardStructural} from './inquirer-forward-structural.mjs';
 import {applyInquirerForwardFreshness,evaluateInquirerForwardFreshness} from './inquirer-forward-freshness.mjs';
+import {finalizeInquirerForwardEdition} from './inquirer-forward-finalize.mjs';
 import {
   applyInquirerEditorialV37,
   evaluateInquirerEditionQuality as evaluateV37EditionQuality
@@ -34,15 +35,22 @@ export function applyInquirerEditorialV31(args={}){
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });
-    applyInquirerForwardStructural(out.inquirer,{
-      week:Number(args.week),
-      previousEdition:args.previousEdition||null
-    });
-    applyInquirerForwardFreshness(out.inquirer,{
+    const edition={teams:out.inquirer.teams,league_overview:out.leagueOverview};
+    applyInquirerForwardFreshness(edition,{
       week:Number(args.week),
       previousEdition:args.previousEdition||null,
       variationSalt:Number(args.variationSalt)||0
     });
+    applyInquirerForwardStructural(edition,{
+      week:Number(args.week),
+      previousEdition:args.previousEdition||null
+    });
+    finalizeInquirerForwardEdition(edition,{
+      week:Number(args.week),
+      previousEdition:args.previousEdition||null
+    });
+    out.inquirer.teams=edition.teams;
+    out.leagueOverview=edition.league_overview;
   }
   return out;
 }

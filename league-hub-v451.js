@@ -492,7 +492,7 @@ function managerWeeklyBadgesHTML(id,mgr,data=weeklyAwardsCache){
  return '<div class="lh-weekly-badges">'+badges.map(a=>'<span class="lh-weekly-badge">'+esc(a.title)+' • '+esc(a.season+' Week '+a.week)+(a.captured_at?' • '+esc(date(a.captured_at)):'')+'</span>').join('')+'</div>';
 }
 function playersOfWeekHTML(w,data=weeklyAwardsCache){
- const rows=Array.isArray(data?.records)?data.records:[],season=Number(w?.season),week=Number(w?.week),rec=rows.find(r=>Number(r.season)===season&&Number(r.week)===week)||latestWeeklyAwardRecord(data),p=rec?.players_of_week;if(!p?.offense&&!p?.defense)return'';
+ const rows=Array.isArray(data?.records)?data.records:[],season=Number(w?.season),week=Number(w?.week),rec=season&&week?rows.find(r=>Number(r.season)===season&&Number(r.week)===week):latestWeeklyAwardRecord(data),p=rec?.players_of_week;if(!p?.offense&&!p?.defense)return'';
  const card=(label,x)=>x?'<div class="lh-player-week-card"><small>'+esc(label)+'</small><button type="button" data-lh-inquirer-player="'+esc(x.player_id)+'">'+esc(x.player_name||playerName(x.player_id))+'</button><div class="lh-sub">'+esc(x.position||'')+' • '+esc(x.nfl_team||'FA')+' • '+Number(x.points||0).toFixed(2)+' pts</div></div>':'';
  return '<div class="lh-card lh-wide"><h3>⭐ Players of the Week</h3><div class="lh-sub">'+esc(rec.season+' Week '+rec.week)+' • highest fantasy scorer by side of the ball under this league’s scoring settings</div><div class="lh-player-week">'+card('Offense',p.offense)+card('Defense',p.defense)+'</div></div>';
 }
@@ -502,7 +502,7 @@ function hallHTML(all){const rows=all.map(t=>({t,h:hindsightDelta(t)})).filter(x
 function mergeVisibleWeekScoring(md,w){
  if(!md||!w?.available||!Array.isArray(w.teams)||!w.teams.length)return md;
  const season=Number(w.season),week=Number(w.week);if(!season||!week)return md;
- const out=typeof structuredClone==='function'?structuredClone(md):JSON.parse(JSON.stringify(md)),sc=out.scoring_history||(out.scoring_history={}),games=Array.isArray(sc.games)?sc.games.slice():[];
+ const out=typeof structuredClone==='function'?structuredClone(md):JSON.parse(JSON.stringify(md)),sc=out.scoring_history||(out.scoring_history={}),games=(Array.isArray(sc.games)?sc.games:[]).filter(g=>!(Number(g.season)===season&&Number(g.week)===week));
  const key=(s,wk,r)=>Number(s)+'|'+Number(wk)+'|'+String(r),seen=new Set(games.map(g=>key(g.season,g.week,g.roster_id)));
  for(const t of w.teams){const k=key(season,week,t.roster_id);if(seen.has(k))continue;games.push({season,week,user_id:String(t.manager_user_id||''),roster_id:String(t.roster_id||''),manager_name:String(t.manager_name||''),score:Number(t.points)||0,points:Number(t.points)||0,playoff:false,conference:String(t.conference||''),round_label:''});seen.add(k)}
  const rows=games.filter(g=>Number.isFinite(Number(g.score??g.points))).map(g=>({...g,season:Number(g.season),week:Number(g.week),score:Number(g.score??g.points)}));

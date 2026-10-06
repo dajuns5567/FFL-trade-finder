@@ -31,9 +31,73 @@ function reporterMap(edition){
     filch:publicReporter(rows.find(r=>r.id==='nora-voss')||rows[3])
   };
 }
+function playerRows(teams){
+  return (teams||[]).flatMap(t=>(t?.starter_details||[]).map(p=>({t,p}))).filter(x=>x?.p?.name&&Number.isFinite(Number(x?.p?.points)));
+}
+function titleFavorite(teams){
+  const rows=(teams||[]).filter(t=>rank(t)<999);
+  return rows.slice().sort((a,b)=>{
+    const ar=a?.league_context?.record||{},br=b?.league_context?.record||{},
+      aw=Number(ar.wins)||0,bw=Number(br.wins)||0,
+      aa=Number(a?.league_context?.recent_avg_points),ba=Number(b?.league_context?.recent_avg_points),
+      ap=Number.isFinite(aa)?aa:Number(a.points)||0,bp=Number.isFinite(ba)?ba:Number(b.points)||0;
+    return (rank(a)-rank(b))||(bw-aw)||(bp-ap);
+  })[0]||null;
+}
+function breakoutPick(teams){
+  const rows=playerRows(teams).map(({t,p})=>{
+    const age=Number(p?.age),prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,current=Number(p?.season_avg),games=Number(p?.season_games)||0,
+      ratio=Number.isFinite(prior)&&prior>0&&Number.isFinite(current)?current/prior:null,
+      young=(Number.isFinite(age)&&age<=26)||(Number.isFinite(Number(p?.years_exp))&&Number(p.years_exp)<=3),
+      established=Number.isFinite(prior)&&prior>=18&&priorGames>=8;
+    let score=-Infinity,reason='';
+    if(!established&&young&&games>=3&&priorGames>=6&&ratio!=null&&ratio>=1.25){score=300+(ratio-1)*100+current;reason='season-rise'}
+    else if(!established&&young&&games>=3&&Number.isFinite(current)&&current>=14){score=180+current;reason='young-production'}
+    return {t,p,age,prior,current,games,ratio,score,reason};
+  }).filter(x=>Number.isFinite(x.score)).sort((a,b)=>b.score-a.score);
+  return rows[0]||null;
+}
+function playerOfYearPick(teams){
+  return playerRows(teams).map(({t,p})=>{
+    const avg=Number(p?.season_avg),games=Number(p?.season_games)||0,pts=Number(p?.points)||0;
+    return {t,p,avg:Number.isFinite(avg)?avg:pts,games,score:(Number.isFinite(avg)?avg:pts)+(Math.min(games,3)*.25)};
+  }).filter(x=>Number.isFinite(x.score)).sort((a,b)=>b.score-a.score)[0]||null;
+}
+function fraudPick(teams,titleId=''){
+  const rows=(teams||[]).filter(t=>String(t.roster_id)!==String(titleId)&&rank(t)<=12);
+  return rows.map(t=>{
+    const recent=Number(t?.league_context?.recent_avg_points),pts=Number.isFinite(recent)?recent:Number(t.points)||0,r=t?.league_context?.record||{},
+      wins=Number(r.wins)||0,losses=Number(r.losses)||0,score=(13-rank(t))*3+wins*2-losses*2-pts/12;
+    return {t,score,pts};
+  }).sort((a,b)=>b.score-a.score)[0]?.t||null;
+}
+function divisionLeaders(teams){
+  const groups=new Map();
+  for(const t of teams||[]){
+    const d=String(t?.division_name||t?.league_context?.division_name||t?.division||'').trim(); if(!d)continue;
+    const arr=groups.get(d)||[];arr.push(t);groups.set(d,arr);
+  }
+  return [...groups.entries()].map(([division,rows])=>({division,team:rows.slice().sort((a,b)=>rank(a)-rank(b)||Number(b.points)-Number(a.points))[0]})).filter(x=>x.team);
+}
+function nextUpsetPick(teams){
+  const by=teamById(teams),seen=new Set(),rows=[];
+  for(const t of teams||[]){
+    const oid=String(t?.next_opponent_roster_id||'');if(!oid||!by.has(oid))continue;
+    const key=[String(t.roster_id),oid].sort().join('|');if(seen.has(key))continue;seen.add(key);
+    const o=by.get(oid),tp=Number(t?.next_projected),op=Number(o?.next_projected);
+    if(!Number.isFinite(tp)||!Number.isFinite(op)||tp===op)continue;
+    const under=tp<op?t:o,fav=under===t?o:t,up=Number(under.next_projected),fp=Number(fav.next_projected),gap=fp-up;
+    if(gap>18)continue;
+    const rankEdge=(rank(fav)-rank(under));
+    rows.push({under,fav,up,fp,gap,score:rankEdge-gap/3});
+  }
+  return rows.sort((a,b)=>b.score-a.score)[0]||null;
+}
+
 function buildOverview(edition){
   const teams=edition?.teams||[],week=Number(edition?.week)||3,season=Number(edition?.season)||2026,reps=reporterMap(edition),games=uniqueGames(teams),
-    classification=edition?.week_classification||teams[0]?.week_classification||{},finalWeek=Number(classification?.final_week)||17,hasNext=week<finalWeek,playoffs=!!classification?.playoffs;
+    sourceClassification=edition?.week_classification||teams[0]?.week_classification||{},finalWeek=Number(sourceClassification?.final_week)||17,hasNext=week<finalWeek,playoffs=!!sourceClassification?.playoffs,
+    classification={...sourceClassification,week,label:playoffs?(sourceClassification?.round||sourceClassification?.label||('Week '+week+' • Playoffs')):('Week '+week+' • Regular Season')};
   const byScore=teams.slice().sort((a,b)=>Number(b.points)-Number(a.points)),top=byScore[0],low=byScore.at(-1);
   const close=games.slice().sort((a,b)=>a.margin-b.margin),blow=games.slice().sort((a,b)=>b.margin-a.margin)[0];
   const standings=teams.slice().sort((a,b)=>rank(a)-rank(b)),leaders=standings.filter(t=>rank(t)<999).slice(0,5);
@@ -41,7 +105,8 @@ function buildOverview(edition){
   const winless=standings.filter(t=>{const r=t?.league_context?.record||{};return Number(r.wins)===0&&Number(r.losses)===week});
   const topP=topStar(top),lead=leaders[0]||top,leadNext=lead?.next_opponent_name||null,scoreNext=top?.next_opponent_name||null;
   const close1=close[0],close2=close[1],close3=close[2],
-    advanced=teams.filter(t=>t?.playoff_context?.advanced_this_week),eliminated=teams.filter(t=>t?.playoff_context?.eliminated_this_week);
+    advanced=teams.filter(t=>t?.playoff_context?.advanced_this_week),eliminated=teams.filter(t=>t?.playoff_context?.eliminated_this_week),
+    favorite=titleFavorite(teams),breakout=breakoutPick(teams),poy=playerOfYearPick(teams),fraud=fraudPick(teams,favorite?.roster_id),divFlags=divisionLeaders(teams),upset=hasNext?nextUpsetPick(teams):null;
 
   const sections=[
     {reporter:reps.nick,heading:'What Actually Mattered This Week',paragraphs:[
@@ -73,10 +138,30 @@ function buildOverview(edition){
   ];
 
   const hot=[];
-  if(lead)hot.push({kind:'standings',reporter:reps.nick,title:`The table says ${lead.team_name}`,take:`${lead.team_name} is #${rank(lead)} overall at ${record(lead)}. Until somebody moves them, that is the argument. Power rankings are free to file a complaint.`});
-  if(top)hot.push({kind:'scoreboard',reporter:reps.tilly,title:`Scoreboard warning: ${top.team_name}`,take:`${one(top.points)} points is enough to make the entire league look twice. I am not calling it the new floor. I am absolutely making the next opponent prove it was a one-week fire.`});
-  if(close1)hot.push({kind:'close-game',reporter:reps.filch,title:`The ${one(close1.margin)}-point receipt`,take:`${close1.loser.team_name} lost to ${close1.winner.team_name} by ${one(close1.margin)}. That is close enough that lineup management belongs in the postmortem whether management enjoys the invitation or not.`});
-  if(winless[0])hot.push({kind:'pressure',reporter:reps.bart,title:`The patience tax: ${winless[0].team_name}`,take:`${winless[0].team_name} is ${record(winless[0])} and #${rank(winless[0])}. I am not declaring the season dead. I am saying optimism now requires a receipt.`});
+  if(favorite)hot.push({
+    kind:'championship',reporter:reps.nick,title:'Title favorite: '+favorite.team_name,
+    take:`${favorite.team_name} is my title favorite after Week ${week}. They are ${record(favorite)}, #${rank(favorite)} overall${favorite?.league_context?.division_name?', first in '+favorite.league_context.division_name:''}. This is not a lifetime appointment; it is the strongest case on the board right now, and everybody else is welcome to improve theirs.`
+  });
+  if(breakout)hot.push({
+    kind:'breakout',reporter:reps.bart,title:'Breakout player: '+breakout.p.name,
+    take:`${breakout.p.name} is the breakout call after Week ${week}. ${Number.isFinite(breakout.current)&&Number.isFinite(breakout.prior)?'He is averaging '+one(breakout.current)+' this season after '+one(breakout.prior)+' last year. ':''}${breakout.t.team_name} has enough evidence now to treat the jump as more than one loud Sunday. The next few weeks decide whether it becomes the new normal.`
+  });
+  if(poy)hot.push({
+    kind:'player',reporter:reps.tilly,title:'Player of the Year pick: '+poy.p.name,
+    take:`${poy.p.name} is my Player of the Year pick today. ${Number.isFinite(poy.avg)?one(poy.avg)+' fantasy points per game':''} is the kind of production that earns the front page before the season is old enough to become polite. Someone else can take the award by outplaying him.`
+  });
+  if(fraud)hot.push({
+    kind:'fraud',reporter:reps.filch,title:'Fraud alert: '+fraud.team_name,
+    take:`${fraud.team_name} is my fraud watch after Week ${week}. The record is ${record(fraud)} and the table says #${rank(fraud)}, but the scoring profile is less convincing than the résumé. Win enough and this paragraph dies. Keep skating on the record and it gets louder.`
+  });
+  if(divFlags.length)hot.push({
+    kind:'division',reporter:reps.nick,title:'Division flags after Week '+week,
+    take:`If the season ended today, my flags go to ${divFlags.map(x=>x.team.team_name+' in '+x.division).join('; ')}. They are standings-based picks, not prophecies. That distinction will not stop anyone from saving this paragraph for December.`
+  });
+  if(upset)hot.push({
+    kind:'upset',reporter:reps.bart,title:`Upset special: ${upset.under.team_name} over ${upset.fav.team_name}`,
+    take:`I am taking the projected underdog before Week ${week+1}: ${upset.under.team_name} (${one(upset.up)}) over ${upset.fav.team_name} (${one(upset.fp)}). The gap is only ${one(upset.gap)}, close enough that one star performance or one management mistake can make the projection look decorative by Sunday night.`
+  });
 
   return {
     schema_version:5,inquirer_version:31,season,week,
@@ -135,7 +220,7 @@ export function applyPublishedForwardFix(raw,previousEdition=null){
   if(Number(out?.week)<3)return out;
   out.league_overview=buildOverview(out);
   applySentiment(out,previousEdition);
-  out.published_fix='forward-recap-sentiment-r1';
+  out.published_fix='forward-recap-sentiment-r2';
   return out;
 }
 export const applyPublishedWeek3Fix=applyPublishedForwardFix;

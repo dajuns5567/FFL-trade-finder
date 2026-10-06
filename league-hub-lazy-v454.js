@@ -15,7 +15,7 @@ function placeholder(){
 }
 function ensurePublished(){
   if(publishCheck)return publishCheck;
-  publishCheck=fetch('/.netlify/functions/inquirer-publish-scheduled',{cache:'no-store'})
+  publishCheck=fetch('/.netlify/functions/inquirer-publish-on-load',{cache:'no-store'})
     .then(async r=>{
       if(!r.ok)throw new Error('Inquirer publish check failed: '+r.status);
       return r.json().catch(()=>({ok:true}));

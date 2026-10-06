@@ -40,6 +40,15 @@ function cleanMeta(text){
   return kept.join(' ').replace(/\s+([,.!?])/g,'$1').trim();
 }
 
+function normalizeTeamPossessive(text,team){
+  let row=String(text||'');
+  const {full,short}=bits(team);
+  for(const name of [full,short].filter(Boolean).sort((a,b)=>b.length-a.length)){
+    row=row.replace(new RegExp(`\\b${esc(name)}['’]s\\b`,'g'),possessive(name));
+  }
+  return row;
+}
+
 function rawStat(row){
   return row.match(/^([A-Z][A-Za-z'’.-]+(?:\s+[A-Z][A-Za-z'’.-]+){1,3}) scored (-?\d+(?:\.\d+)?) fantasy points in Week 2(?: with|:| on)?\s*(.*)$/i);
 }
@@ -72,7 +81,7 @@ function cleanPlayerRows(rows,team,article,ctx){
     if(/\baveraged [\d.]+ fantasy points per game in 2025\b/i.test(row)&&/\b(?:Week 2 gets to argue|actual growth|hot box score|ceiling)\b/i.test(row))continue;
     const m=rawStat(row);
     if(m){out.push(statComment(m[1],m[2],m[3],team,article,ctx));continue}
-    const cleaned=cleanMeta(row);
+    const cleaned=normalizeTeamPossessive(cleanMeta(row),team);
     if(!cleaned)continue;
     if(/^([A-Z][A-Za-z'’.-]+(?:\s+[A-Z][A-Za-z'’.-]+){0,3}) (?:scored|had|posted) -?\d+(?:\.\d+)?(?: fantasy)? points?(?: against [^.]+)?\.?$/i.test(cleaned))continue;
     out.push(cleaned);
@@ -83,7 +92,7 @@ function cleanPlayerRows(rows,team,article,ctx){
 function cleanMarketRows(rows,team){
   const {short}=bits(team),out=[];
   for(const raw of rows){
-    const row=cleanMeta(raw);if(!row)continue;
+    const row=normalizeTeamPossessive(cleanMeta(raw),team);if(!row)continue;
     if(/\bled the roster's value gains\b/i.test(row)||/\bled the losses\b/i.test(row))continue;
     if(/\badded \d+ in value; .* dropped \d+\b/i.test(row))continue;
     if(/^Useful market movement\.?$/i.test(row))continue;
@@ -98,10 +107,10 @@ function cleanMarketRows(rows,team){
   return out;
 }
 
-function cleanGenericRows(rows){
+function cleanGenericRows(rows,team){
   const out=[];
   for(const raw of rows){
-    let row=cleanMeta(raw);
+    let row=normalizeTeamPossessive(cleanMeta(raw),team);
     if(!row)continue;
     row=row.replace(/\bFor ([A-Z][A-Za-z'’.-]+),?\s*/g,'');
     row=row.replace(/\bthe record narrows the question, but it does not answer it\.?/gi,'');
@@ -124,7 +133,7 @@ function rewriteArticle(team){
   for(const section of article.sections||[]){
     if(!Array.isArray(section?.paragraphs))continue;
     if(/what survived inspection/i.test(String(section.heading||'')))section.heading='Who Actually Earned It';
-    section.paragraphs=sectionIsPlayers(section)?cleanPlayerRows(section.paragraphs,team,article,ctx):sectionIsMarket(section)?cleanMarketRows(section.paragraphs,team):cleanGenericRows(section.paragraphs);
+    section.paragraphs=sectionIsPlayers(section)?cleanPlayerRows(section.paragraphs,team,article,ctx):sectionIsMarket(section)?cleanMarketRows(section.paragraphs,team):cleanGenericRows(section.paragraphs,team);
   }
   article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
 }

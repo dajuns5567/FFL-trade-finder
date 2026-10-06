@@ -316,6 +316,7 @@ export async function weeklyReport(req){
   if(stored?.available&&Array.isArray(stored?.teams)&&stored.teams.length){latestPublished=stored;continue}
   week=w;break;
  }
+ if(latestPublished)await weeklyAwardRecordForBroadcast(latestPublished).catch(e=>console.error('weekly award self-heal',e));
  if(!week)return latestPublished||{available:false,season,week:null,reason:'No completed Fleeced! Inquirer edition is available yet.'};
  const completion=await completedPublicationWeek(week);
  if(!completion.complete)return{available:false,season,week,waiting_for_week:week,reason:'The Fleeced! Inquirer is waiting for Sleeper to finalize Week '+week+': '+completion.reason+'.'};

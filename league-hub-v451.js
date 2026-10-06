@@ -403,7 +403,7 @@ function archiveFiltersHTML(w){
 async function fetchArchivedEdition(year,week){
  const y=Number(year),w=Number(week);if(!y||!w)return null;
  const url=(y===2026&&w===3)
-  ?'/.netlify/functions/league-hub-week3-fast?rev=468'
+  ?'/.netlify/functions/league-hub-week3-fast?rev=469'
   :'/.netlify/functions/league-hub?broadcast_season='+y+'&broadcast_week='+w;
  const r=await fetch(url,{cache:'no-store'});
  if(!r.ok)throw Error('archived edition unavailable: '+y+' Week '+w);

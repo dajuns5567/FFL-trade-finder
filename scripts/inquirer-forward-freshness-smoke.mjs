@@ -69,7 +69,7 @@ function buildWeek(week,previousEdition){
 
 let previous=week2;
 const results=[];
-for(let week=3;week<=6;week++){
+for(let week=3;week<=17;week++){
   const {candidate,quality,salt}=buildWeek(week,previous);
   assert.equal(candidate.teams.length,32,`Week ${week} must have 32 team articles`);
   assert.equal(candidate.inquirer_version,31);
@@ -97,4 +97,4 @@ for(let week=3;week<=6;week++){
   previous=candidate;
 }
 
-console.log(JSON.stringify({ok:true,version:FORWARD_INQUIRER_VERSION,revision:FORWARD_EDITORIAL_REVISION,weeks:results},null,2));
+console.log(JSON.stringify({ok:true,version:FORWARD_INQUIRER_VERSION,revision:FORWARD_EDITORIAL_REVISION,validated_through_week:17,weeks:results},null,2));

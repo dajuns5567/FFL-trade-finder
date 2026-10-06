@@ -68,13 +68,13 @@ export function applyInquirerEditorialV31(args={}){
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });
-    naturalizeInquirerForwardEdition(edition,{week:Number(args.week)});
     guardInquirerForwardAgainstPrior(edition,{
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });
     dedupeInquirerForwardEdition(edition,{week:Number(args.week)});
     enforceInquirerForwardContextTruth(edition,{week:Number(args.week)});
+    naturalizeInquirerForwardEdition(edition,{week:Number(args.week)});
     normalizeInquirerForwardHeadlines(edition,{week:Number(args.week)});
     out.inquirer.teams=edition.teams;
     out.leagueOverview=edition.league_overview;

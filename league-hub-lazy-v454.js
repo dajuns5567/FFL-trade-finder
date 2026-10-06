@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-if(window.__fleecedLeagueHubLazyV470)return;
-window.__fleecedLeagueHubLazyV470=true;
+if(window.__fleecedLeagueHubLazyV471)return;
+window.__fleecedLeagueHubLazyV471=true;
 let loading=null,loaded=false,warmed=false;
 
 function visible(){
@@ -36,7 +36,7 @@ function load(){
   if(loaded)return Promise.resolve();
   if(loading)return loading;
   placeholder();prewarm();
-  loading=loadScript('/league-hub-v451.js?v=533').then(()=>loadScript('/league-hub-reader-fast-v457.js?v=1')).then(()=>{loaded=true}).catch(err=>{
+  loading=loadScript('/league-hub-v451.js?v=534').then(()=>loadScript('/league-hub-reader-fast-v457.js?v=1')).then(()=>{loaded=true}).catch(err=>{
     loading=null;
     const tab=document.getElementById('leagueHub');
     if(tab)tab.innerHTML='<div class="notice error">League Hub failed to load. Refresh and try again.</div>';

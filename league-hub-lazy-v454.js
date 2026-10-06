@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-if(window.__fleecedLeagueHubLazyV459)return;
-window.__fleecedLeagueHubLazyV459=true;
+if(window.__fleecedLeagueHubLazyV460)return;
+window.__fleecedLeagueHubLazyV460=true;
 let loading=null,loaded=false,warmed=false,publishCheck=null;
 
 function visible(){
@@ -15,7 +15,7 @@ function placeholder(){
 }
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function archiveSnapshot(){
-  const url='/.netlify/functions/league-hub-read-fast?mode=archive&rev=459&t='+Date.now();
+  const url='/.netlify/functions/league-hub-read-fast?mode=archive&rev=460&t='+Date.now();
   const r=await fetch(url,{cache:'no-store'});
   if(!r.ok)throw new Error('Inquirer archive check failed: '+r.status);
   return r.json();
@@ -23,29 +23,48 @@ async function archiveSnapshot(){
 function latestWeek(payload){
   return Math.max(0,...(payload?.reports||[]).filter(x=>Number(x?.season)===2026).map(x=>Number(x?.week)||0));
 }
+async function completedTargetWeek(){
+  try{
+    const r=await fetch('https://api.sleeper.app/v1/state/nfl',{cache:'no-store'});
+    if(!r.ok)return 0;
+    const nfl=await r.json(),season=Number(nfl?.season),week=Number(nfl?.week)||1;
+    if(season!==2026)return 0;
+    return Math.min(17,Math.max(0,week-1));
+  }catch{return 0}
+}
+async function triggerPublisher(){
+  const trigger=await fetch('/.netlify/functions/inquirer-publish-on-load-background',{cache:'no-store'});
+  if(!trigger.ok&&trigger.status!==202)throw new Error('Inquirer background publish trigger failed: '+trigger.status);
+}
 function ensurePublished(){
   if(publishCheck)return publishCheck;
   publishCheck=(async()=>{
-    let before=0;
-    try{before=latestWeek(await archiveSnapshot())}catch{}
-    try{
-      const trigger=await fetch('/.netlify/functions/inquirer-publish-on-load-background',{cache:'no-store'});
-      if(!trigger.ok&&trigger.status!==202)throw new Error('Inquirer background publish trigger failed: '+trigger.status);
-    }catch(err){
+    let snap=null,before=0;
+    try{snap=await archiveSnapshot();before=latestWeek(snap)}catch{}
+    const target=await completedTargetWeek();
+    // Nothing completed is missing. Do not make the user wait on a no-op check.
+    if(target&&before>=target)return snap;
+    try{await triggerPublisher()}catch(err){
       console.warn('League Hub publish trigger failed; loading existing archive.',err);
-      return null;
+      return snap;
     }
-    // Deploy Previews never run scheduled functions. The background publisher
-    // persists at most the next completed missing edition. Wait only for that
-    // archive advancement; do not mount a second Hub renderer while it runs.
-    for(let i=0;i<40;i++){
+    // Deploy Previews never run scheduled functions. Wait for exactly the next
+    // missing completed edition to land, then mount the Hub once. This avoids
+    // two renderers fighting while a large edition is being written.
+    if(!target||before>=target)return snap;
+    for(let i=0;i<60;i++){
       await sleep(1000);
       try{
-        const snap=await archiveSnapshot();
-        if(latestWeek(snap)>before)return snap;
+        const next=await archiveSnapshot(),week=latestWeek(next);
+        if(week>before){
+          // If another completed week is still missing, kick off the next
+          // sequential publish without blocking this render.
+          if(week<target)triggerPublisher().catch(()=>{});
+          return next;
+        }
       }catch{}
     }
-    return null;
+    return snap;
   })();
   return publishCheck;
 }
@@ -79,8 +98,8 @@ function load(){
     // Register the fast capture-phase article switcher first. The main Hub
     // runtime otherwise receives the same change event first and both renderers
     // replace the article, which causes the visible back-and-forth flash.
-    .then(()=>loadScript('/league-hub-reader-fast-v457.js?v=459'))
-    .then(()=>loadScript('/league-hub-v451.js?v=529'))
+    .then(()=>loadScript('/league-hub-reader-fast-v457.js?v=460'))
+    .then(()=>loadScript('/league-hub-v451.js?v=530'))
     .then(()=>{loaded=true})
     .catch(err=>{
       loading=null;

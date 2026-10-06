@@ -31,10 +31,11 @@ function correctCurrentRecord(text,team){
 }
 function correctPlayerLeader(text,team){
   const leader=topStarter(team);if(!leader?.name)return text;let out=String(text||'');
+  const teamName=norm(team?.team_name)||'this roster';
   for(const player of team?.starter_details||[]){
     const name=norm(player?.name);if(!name||name.toLowerCase()===norm(leader.name).toLowerCase())continue;
     const detailed=new RegExp(`\\b${esc(name)}\\s+led\\s+([^.!?]{0,90}?)\\s+with\\s+(\\d+(?:\\.\\d+)?)\\s+fantasy points\\.?`,'gi');
-    out=out.replace(detailed,(_,target,points)=>`${name} gave ${norm(target)} ${points} fantasy points. It was useful production, just not the lineup's top score.`);
+    out=out.replace(detailed,(_,target,points)=>`${name} gave ${norm(target)} ${points} fantasy points. For ${teamName}, that was useful production without being the lineup's top score.`);
     out=out.replace(new RegExp(`\\b${esc(name)}\\s+led\\b`,'gi'),`${name} contributed`);
   }
   return out;

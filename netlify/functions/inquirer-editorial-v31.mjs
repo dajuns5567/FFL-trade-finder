@@ -72,8 +72,7 @@ export function applyInquirerEditorialV31(args={}){
     });
     naturalizeInquirerForwardEdition(edition,{week:Number(args.week)});
 
-    // First clean the prose and factual context. Prior-week protection must run
-    // on this cleaned text, otherwise later cleanup can reveal old copy again.
+    // Clean prose and factual context before the first prior-week guard.
     finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
     enforceInquirerForwardContextTruth(edition,{week:Number(args.week)});
     finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
@@ -82,12 +81,23 @@ export function applyInquirerEditorialV31(args={}){
       previousEdition:args.previousEdition||null
     });
 
-    // Final edition dedupe now uses natural comma transitions and also limits
-    // repeated proper-name openings within each individual team article.
+    // Resolve edition-wide structural reuse, then enforce truth once more.
     dedupeInquirerForwardEdition(edition,{week:Number(args.week)});
     enforceInquirerForwardContextTruth(edition,{week:Number(args.week)});
     finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
+
+    // Context/truth cleanup above can reconstruct wording that existed in the
+    // prior edition. Guard the final cleaned copy one last time, then only run
+    // non-destructive dedupe/surface normalization so old wording cannot be
+    // reintroduced before quality evaluation.
+    guardInquirerForwardAgainstPrior(edition,{
+      week:Number(args.week),
+      previousEdition:args.previousEdition||null
+    });
+    dedupeInquirerForwardEdition(edition,{week:Number(args.week)});
+    finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
     normalizeInquirerForwardHeadlines(edition,{week:Number(args.week)});
+
     out.inquirer.teams=edition.teams;
     out.leagueOverview=edition.league_overview;
   }

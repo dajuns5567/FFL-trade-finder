@@ -8,6 +8,7 @@ import {applyInquirerStoryContextToEdition} from './inquirer-story-context.mjs';
 import {applyInquirerForwardStructural} from './inquirer-forward-structural.mjs';
 import {applyInquirerForwardFreshness,evaluateInquirerForwardFreshness} from './inquirer-forward-freshness.mjs';
 import {finalizeInquirerForwardEdition} from './inquirer-forward-finalize.mjs';
+import {hardenInquirerForwardEdition} from './inquirer-forward-hardening.mjs';
 import {
   applyInquirerEditorialV37,
   evaluateInquirerEditionQuality as evaluateV37EditionQuality
@@ -46,6 +47,10 @@ export function applyInquirerEditorialV31(args={}){
       previousEdition:args.previousEdition||null
     });
     finalizeInquirerForwardEdition(edition,{
+      week:Number(args.week),
+      previousEdition:args.previousEdition||null
+    });
+    hardenInquirerForwardEdition(edition,{
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });

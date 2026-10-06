@@ -11,6 +11,7 @@ on:
       - 'netlify/functions/inquirer-forward-finalize.mjs'
       - 'netlify/functions/inquirer-forward-hardening.mjs'
       - 'netlify/functions/inquirer-forward-ranking-cleanup.mjs'
+      - 'netlify/functions/inquirer-forward-sustainability.mjs'
       - 'netlify/functions/inquirer-story-context.mjs'
       - 'netlify/functions/player-signal-engine.mjs'
       - 'scripts/inquirer-forward-freshness-smoke.mjs'
@@ -36,6 +37,7 @@ jobs:
           node --check netlify/functions/inquirer-forward-finalize.mjs
           node --check netlify/functions/inquirer-forward-hardening.mjs
           node --check netlify/functions/inquirer-forward-ranking-cleanup.mjs
+          node --check netlify/functions/inquirer-forward-sustainability.mjs
           node --check netlify/functions/inquirer-editorial-v31.mjs
           node --check scripts/inquirer-forward-freshness-smoke.mjs
       - name: Simulate Weeks 3 through 6

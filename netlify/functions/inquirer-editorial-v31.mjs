@@ -12,6 +12,7 @@ import {hardenInquirerForwardEdition} from './inquirer-forward-hardening.mjs';
 import {cleanupInquirerForwardRankings} from './inquirer-forward-ranking-cleanup.mjs';
 import {sustainInquirerForwardEdition} from './inquirer-forward-sustainability.mjs';
 import {guardInquirerForwardAgainstPrior} from './inquirer-forward-prior-guard.mjs';
+import {normalizeInquirerForwardHeadlines,findInquirerForwardHeadlineGrammarIssues} from './inquirer-forward-headline-grammar.mjs';
 import {
   applyInquirerEditorialV37,
   evaluateInquirerEditionQuality as evaluateV37EditionQuality
@@ -23,10 +24,11 @@ export const FORWARD_EDITORIAL_REVISION=14;
 export function evaluateInquirerEditionQuality(candidate,previousEdition=null){
   const base=evaluateV37EditionQuality(candidate,previousEdition)||{ok:true,issues:[],metrics:{}};
   const fresh=evaluateInquirerForwardFreshness(candidate,previousEdition);
+  const headlineIssues=findInquirerForwardHeadlineGrammarIssues(candidate,{week:Number(candidate?.week)});
   return{
-    ok:!!base.ok&&!!fresh.ok,
-    issues:[...(base.issues||[]),...(fresh.issues||[])],
-    metrics:{...(base.metrics||{}),freshness:fresh.metrics||{}}
+    ok:!!base.ok&&!!fresh.ok&&headlineIssues.length===0,
+    issues:[...(base.issues||[]),...(fresh.issues||[]),...headlineIssues.map(x=>({id:'headline-grammar',...x}))],
+    metrics:{...(base.metrics||{}),freshness:fresh.metrics||{},headline_grammar_issues:headlineIssues.length}
   };
 }
 
@@ -66,6 +68,7 @@ export function applyInquirerEditorialV31(args={}){
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });
+    normalizeInquirerForwardHeadlines(edition,{week:Number(args.week)});
     out.inquirer.teams=edition.teams;
     out.leagueOverview=edition.league_overview;
   }

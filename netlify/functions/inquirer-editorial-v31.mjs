@@ -10,6 +10,7 @@ import {applyInquirerForwardFreshness,evaluateInquirerForwardFreshness} from './
 import {finalizeInquirerForwardEdition} from './inquirer-forward-finalize.mjs';
 import {hardenInquirerForwardEdition} from './inquirer-forward-hardening.mjs';
 import {cleanupInquirerForwardRankings} from './inquirer-forward-ranking-cleanup.mjs';
+import {sustainInquirerForwardEdition} from './inquirer-forward-sustainability.mjs';
 import {
   applyInquirerEditorialV37,
   evaluateInquirerEditionQuality as evaluateV37EditionQuality
@@ -56,6 +57,10 @@ export function applyInquirerEditorialV31(args={}){
       previousEdition:args.previousEdition||null
     });
     cleanupInquirerForwardRankings(edition,{week:Number(args.week)});
+    sustainInquirerForwardEdition(edition,{
+      week:Number(args.week),
+      previousEdition:args.previousEdition||null
+    });
     out.inquirer.teams=edition.teams;
     out.leagueOverview=edition.league_overview;
   }

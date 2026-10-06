@@ -11,6 +11,7 @@ import {finalizeInquirerForwardEdition} from './inquirer-forward-finalize.mjs';
 import {hardenInquirerForwardEdition} from './inquirer-forward-hardening.mjs';
 import {cleanupInquirerForwardRankings} from './inquirer-forward-ranking-cleanup.mjs';
 import {sustainInquirerForwardEdition} from './inquirer-forward-sustainability.mjs';
+import {guardInquirerForwardAgainstPrior} from './inquirer-forward-prior-guard.mjs';
 import {
   applyInquirerEditorialV37,
   evaluateInquirerEditionQuality as evaluateV37EditionQuality
@@ -58,6 +59,10 @@ export function applyInquirerEditorialV31(args={}){
     });
     cleanupInquirerForwardRankings(edition,{week:Number(args.week)});
     sustainInquirerForwardEdition(edition,{
+      week:Number(args.week),
+      previousEdition:args.previousEdition||null
+    });
+    guardInquirerForwardAgainstPrior(edition,{
       week:Number(args.week),
       previousEdition:args.previousEdition||null
     });

@@ -12,7 +12,7 @@ import {
 } from './inquirer-editorial-v37.mjs';
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=15;
+export const FORWARD_EDITORIAL_REVISION=14;
 
 export function evaluateInquirerEditionQuality(candidate,previousEdition=null){
   const base=evaluateV37EditionQuality(candidate,previousEdition)||{ok:true,issues:[],metrics:{}};

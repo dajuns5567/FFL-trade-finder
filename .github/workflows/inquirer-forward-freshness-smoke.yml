@@ -7,6 +7,8 @@ on:
       - 'netlify/functions/inquirer-editorial-v31-core.mjs'
       - 'netlify/functions/inquirer-editorial-v3*.mjs'
       - 'netlify/functions/inquirer-forward-freshness.mjs'
+      - 'netlify/functions/inquirer-forward-structural.mjs'
+      - 'netlify/functions/inquirer-forward-finalize.mjs'
       - 'netlify/functions/inquirer-story-context.mjs'
       - 'netlify/functions/player-signal-engine.mjs'
       - 'scripts/inquirer-forward-freshness-smoke.mjs'
@@ -28,6 +30,8 @@ jobs:
       - name: Syntax check forward newsroom
         run: |
           node --check netlify/functions/inquirer-forward-freshness.mjs
+          node --check netlify/functions/inquirer-forward-structural.mjs
+          node --check netlify/functions/inquirer-forward-finalize.mjs
           node --check netlify/functions/inquirer-editorial-v31.mjs
           node --check scripts/inquirer-forward-freshness-smoke.mjs
       - name: Simulate Weeks 3 through 6

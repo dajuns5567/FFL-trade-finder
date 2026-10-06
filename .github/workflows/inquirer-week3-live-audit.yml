@@ -18,6 +18,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -38,7 +40,6 @@ jobs:
             /tmp/inquirer-week3-direct-audit.json
           retention-days: 7
       - name: Repair Week 3 preload from accepted candidate
-        if: github.event_name == 'workflow_dispatch'
         run: |
           node <<'NODE'
           const fs=require('fs'),zlib=require('zlib');
@@ -55,5 +56,5 @@ jobs:
             echo "Week 3 preload already matches accepted candidate"
           else
             git commit -m "Repair full Week 3 Inquirer preload"
-            git push origin HEAD:$GITHUB_REF_NAME
+            git push origin HEAD:${{ github.head_ref || github.ref_name }}
           fi

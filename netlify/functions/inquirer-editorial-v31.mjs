@@ -14,6 +14,7 @@ import {sustainInquirerForwardEdition} from './inquirer-forward-sustainability.m
 import {naturalizeInquirerForwardEdition} from './inquirer-forward-naturalize.mjs';
 import {guardInquirerForwardAgainstPrior} from './inquirer-forward-prior-guard.mjs';
 import {dedupeInquirerForwardEdition} from './inquirer-forward-edition-dedupe.mjs';
+import {enforceInquirerForwardContextTruth,findInquirerForwardContextTruthIssues} from './inquirer-forward-context-truth.mjs';
 import {normalizeInquirerForwardHeadlines,findInquirerForwardHeadlineGrammarIssues} from './inquirer-forward-headline-grammar.mjs';
 import {
   applyInquirerEditorialV37,
@@ -26,11 +27,12 @@ export const FORWARD_EDITORIAL_REVISION=14;
 export function evaluateInquirerEditionQuality(candidate,previousEdition=null){
   const base=evaluateV37EditionQuality(candidate,previousEdition)||{ok:true,issues:[],metrics:{}};
   const fresh=evaluateInquirerForwardFreshness(candidate,previousEdition);
+  const contextIssues=findInquirerForwardContextTruthIssues(candidate,{week:Number(candidate?.week)});
   const headlineIssues=findInquirerForwardHeadlineGrammarIssues(candidate,{week:Number(candidate?.week)});
   return{
-    ok:!!base.ok&&!!fresh.ok&&headlineIssues.length===0,
-    issues:[...(base.issues||[]),...(fresh.issues||[]),...headlineIssues.map(x=>({id:'headline-grammar',...x}))],
-    metrics:{...(base.metrics||{}),freshness:fresh.metrics||{},headline_grammar_issues:headlineIssues.length}
+    ok:!!base.ok&&!!fresh.ok&&contextIssues.length===0&&headlineIssues.length===0,
+    issues:[...(base.issues||[]),...(fresh.issues||[]),...contextIssues.map(x=>({id:'context-truth',...x})),...headlineIssues.map(x=>({id:'headline-grammar',...x}))],
+    metrics:{...(base.metrics||{}),freshness:fresh.metrics||{},context_truth_issues:contextIssues.length,headline_grammar_issues:headlineIssues.length}
   };
 }
 
@@ -72,6 +74,7 @@ export function applyInquirerEditorialV31(args={}){
       previousEdition:args.previousEdition||null
     });
     dedupeInquirerForwardEdition(edition,{week:Number(args.week)});
+    enforceInquirerForwardContextTruth(edition,{week:Number(args.week)});
     normalizeInquirerForwardHeadlines(edition,{week:Number(args.week)});
     out.inquirer.teams=edition.teams;
     out.leagueOverview=edition.league_overview;

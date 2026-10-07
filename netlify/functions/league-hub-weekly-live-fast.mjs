@@ -29,14 +29,15 @@ async function edition(season,week){
 }
 function managerAwards(b){
  const valid=(b?.teams||[]).filter(t=>Number.isFinite(Number(t?.points)));if(!valid.length)return[];
- const high=valid.slice().sort((a,b)=>Number(b.points)-Number(a.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
+ const byId=new Map(valid.map(t=>[String(t.roster_id),t])),oppProj=t=>Number(t?.opponent_projected??byId.get(String(t?.opponent_roster_id||''))?.projected),
+ high=valid.slice().sort((a,b)=>Number(b.points)-Number(a.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
  low=valid.slice().sort((a,b)=>Number(a.points)-Number(b.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
  losses=valid.filter(g=>g.won===false),wins=valid.filter(g=>g.won===true),
- hot=losses.filter(g=>Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected))&&Number(g.projected)>Number(g.opponent_projected)).sort((a,b)=>(Number(b.projected)-Number(b.opponent_projected))-(Number(a.projected)-Number(a.opponent_projected)))[0],
+ hot=losses.filter(g=>Number.isFinite(Number(g.projected))&&Number.isFinite(oppProj(g))&&Number(g.projected)>oppProj(g)).sort((a,b)=>(Number(b.projected)-oppProj(b))-(Number(a.projected)-oppProj(a)))[0],
  cool=wins.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points)))[0],
  item=(type,title,t,detail)=>t?{type,title,roster_id:String(t.roster_id||''),manager_user_id:String(t.manager_user_id||''),manager_name:String(t.manager_name||''),team_name:String(t.team_name||''),points:Number(t.points)||0,detail}:null;
  return[
-  item('hot-seat','🔥 Hot Seat',hot,hot?`Projected by ${(Number(hot.projected)-Number(hot.opponent_projected)).toFixed(1)} to win • lost by ${Math.abs(Number(hot.points)-Number(hot.opponent_points)).toFixed(1)}`:''),
+  item('hot-seat','🔥 Hot Seat',hot,hot?`Projected by ${(Number(hot.projected)-oppProj(hot)).toFixed(1)} to win • lost by ${Math.abs(Number(hot.points)-Number(hot.opponent_points)).toFixed(1)}`:''),
   item('cool-throne','🧊 Cool Throne',cool,cool?`Won by ${Math.abs(Number(cool.points)-Number(cool.opponent_points)).toFixed(1)}`:''),
   item('highest-scorer','🔥 Highest Scorer',high,high?`${Number(high.points).toFixed(1)} fantasy points`:''),
   item('lowest-scorer','🥶 Lowest Scorer',low,low?`${Number(low.points).toFixed(1)} fantasy points`:'')

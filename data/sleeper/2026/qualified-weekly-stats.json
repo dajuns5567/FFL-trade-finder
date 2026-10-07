@@ -69913,7 +69913,6 @@
       "rec_10_19": 1,
       "rec_5_9": 3,
       "rec_air_yd": 30,
-      "rec_drop": 1,
       "rec_fd": 1,
       "rec_lng": 10,
       "rec_tgt": 9,
@@ -71468,7 +71467,7 @@
     "4199": {
       "h1_rec_yd": 15,
       "rush_lng": 19,
-      "rec_drop": 3,
+      "rec_drop": 2,
       "pos_rank_std": 18,
       "gp": 1,
       "rec_0_4": 1,
@@ -74361,7 +74360,6 @@
     "6786": {
       "h1_rec_yd": 49,
       "rush_lng": -6,
-      "rec_drop": 1,
       "bonus_rec_yd_100": 1,
       "pos_rank_std": 2,
       "gp": 1,
@@ -77793,7 +77791,7 @@
     },
     "8121": {
       "h1_rec_yd": 29,
-      "rec_drop": 2,
+      "rec_drop": 1,
       "pos_rank_std": 6,
       "gp": 1,
       "rec_0_4": 1,
@@ -81153,7 +81151,7 @@
     },
     "9997": {
       "h1_rec_yd": 119,
-      "rec_drop": 2,
+      "rec_drop": 1,
       "bonus_rec_yd_100": 1,
       "pos_rank_std": 7,
       "gp": 1,

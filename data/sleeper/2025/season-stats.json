@@ -19636,6 +19636,25 @@
     "rush_rec_yd": 16,
     "rec_5_9": 1
   },
+  "8491": {
+    "gp": 9,
+    "_ppr_native_weeks": 0,
+    "_ppr_reconstructed_weeks": 0,
+    "off_snp": 437,
+    "pos_rank_half_ppr": 8991,
+    "pos_rank_ppr": 8991,
+    "pos_rank_std": 8991,
+    "st_snp": 35,
+    "tm_def_snp": 552,
+    "tm_off_snp": 604,
+    "tm_st_snp": 233,
+    "penalty": 5,
+    "penalty_yd": 35,
+    "gs": 4,
+    "idp_tkl": 1,
+    "idp_tkl_ast": 1,
+    "pts_idp": 1
+  },
   "8494": {
     "gp": 14,
     "_ppr_native_weeks": 1,

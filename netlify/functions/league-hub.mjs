@@ -392,7 +392,7 @@ export async function weeklyReport(req){
   if(!accepted)throw new Error('Forward Inquirer quality gate rejected Week '+week+': '+JSON.stringify(lastQuality?.issues||[]).slice(0,4000));
   inquirer=accepted.inquirer;leagueOverview=accepted.leagueOverview;
  }
- const forward=week>=3,rawResult={available:true,season,week,week_classification:weekClassification,generated_at:new Date().toISOString(),published_locked:true,context_snapshot_through_week:week,broadcast_version:BROADCAST_VERSION,inquirer_version:forward?FORWARD_INQUIRER_VERSION:INQUIRER_VERSION,editorial_revision:forward?FORWARD_EDITORIAL_REVISION:INQUIRER_EDITORIAL_REVISION,editorial_generation:forward?{engine:'v31-forward',variation_salt:variationSalt,previous_week:week>1?week-1:null,quality_metrics:quality.metrics}:null,projection_source:Object.keys(proj).length?'Sleeper weekly projections scored with league scoring settings':'projection data unavailable',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:canonicalTrades?.source||'unavailable',reporters:inquirer.reporters,league_overview:leagueOverview,teams:inquirer.teams},result=forward?applyPublishedForwardFix(rawResult,previousBroadcast):rawResult;
+ const forward=week>=3,rawResult={available:true,season,week,week_classification:weekClassification,generated_at:new Date().toISOString(),published_locked:true,context_snapshot_through_week:week,broadcast_version:BROADCAST_VERSION,inquirer_version:forward?FORWARD_INQUIRER_VERSION:INQUIRER_VERSION,editorial_revision:forward?FORWARD_EDITORIAL_REVISION:INQUIRER_EDITORIAL_REVISION,editorial_generation:forward?{engine:'v31-forward',logic_floor:'week2-approved-plus-forward-v31',variation_salt:variationSalt,previous_week:week>1?week-1:null,quality_metrics:quality.metrics}:null,projection_source:Object.keys(proj).length?'Sleeper weekly projections scored with league scoring settings':'projection data unavailable',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:canonicalTrades?.source||'unavailable',reporters:inquirer.reporters,league_overview:leagueOverview,teams:inquirer.teams},result=forward?applyPublishedForwardFix(rawResult,previousBroadcast):rawResult;
  const integrity=publishedArticleIntegrity(result,(rosters||[]).length||32);
  if(!integrity.ok)throw new Error('Week '+week+' publish integrity rejected: '+integrity.issues.join('; '));
  const weeklyAwardRecord=await weeklyAwardRecordForBroadcast(result,{stats:weeklyStats,players,scoring:league?.scoring_settings||{},force:true});
@@ -404,7 +404,8 @@ export async function weeklyReport(req){
 }
 async function broadcastArchive(){
  const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),rows=Array.isArray(idx)?idx.slice():[];
- for(const p of PRELOADED_BROADCASTS.values()){
+ for(const raw of PRELOADED_BROADCASTS.values()){
+  const p=servedPreload(raw);
   if(!Array.isArray(p?.teams)||!p.teams.length)continue;
   const season=Number(p.season),week=Number(p.week),key=String(season)+'|'+String(week);
   if(!rows.some(x=>String(Number(x.season))+'|'+String(Number(x.week))===key))rows.push({type:'week',season,week,key:'preloaded:'+season+':'+week,captured_at:String(p.generated_at||''),preloaded:true});
@@ -436,11 +437,16 @@ function weeklyManagerAwards(broadcast){
   high=valid.slice().sort((a,b)=>Number(b.points)-Number(a.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
   low=valid.slice().sort((a,b)=>Number(a.points)-Number(b.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
   losses=valid.filter(g=>g.won===false),wins=valid.filter(g=>g.won===true),
-  hot=losses.filter(g=>Number.isFinite(Number(g.projected))&&Number.isFinite(oppProj(g))&&Number(g.projected)>oppProj(g)).sort((a,b)=>(Number(b.projected)-oppProj(b))-(Number(a.projected)-oppProj(a))||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
+  projectedUpsets=losses.filter(g=>Number.isFinite(Number(g.projected))&&Number.isFinite(oppProj(g))&&Number(g.projected)>oppProj(g)).sort((a,b)=>(Number(b.projected)-oppProj(b))-(Number(a.projected)-oppProj(a))||String(a.roster_id).localeCompare(String(b.roster_id))),
+  hot=projectedUpsets[0]||losses.slice().sort((a,b)=>{
+    const au=Number.isFinite(Number(a.projected))?Number(a.projected)-Number(a.points):Number(a.opponent_points)-Number(a.points),
+      bu=Number.isFinite(Number(b.projected))?Number(b.projected)-Number(b.points):Number(b.opponent_points)-Number(b.points);
+    return bu-au||String(a.roster_id).localeCompare(String(b.roster_id))
+  })[0],
   cool=wins.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points))||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
   item=(type,title,t,detail)=>t?{type,title,roster_id:String(t.roster_id||''),manager_user_id:String(t.manager_user_id||''),manager_name:String(t.manager_name||''),team_name:String(t.team_name||''),points:Number(t.points)||0,detail}:null;
  return[
-  item('hot-seat','🔥 Hot Seat',hot,hot?`Projected by ${(Number(hot.projected)-oppProj(hot)).toFixed(1)} to win • lost by ${Math.abs(Number(hot.points)-Number(hot.opponent_points)).toFixed(1)}`:''),
+  item('hot-seat','🔥 Hot Seat',hot,hot?`${Number.isFinite(Number(hot.projected))&&Number.isFinite(oppProj(hot))?'Projected '+((Number(hot.projected)-oppProj(hot))>=0?'+':'')+(Number(hot.projected)-oppProj(hot)).toFixed(1)+' • ':''}lost by ${Math.abs(Number(hot.points)-Number(hot.opponent_points)).toFixed(1)}`:''),
   item('cool-throne','🧊 Cool Throne',cool,cool?`Won by ${Math.abs(Number(cool.points)-Number(cool.opponent_points)).toFixed(1)}`:''),
   item('highest-scorer','🔥 Highest Scorer',high,high?`${Number(high.points).toFixed(1)} fantasy points`:''),
   item('lowest-scorer','🥶 Lowest Scorer',low,low?`${Number(low.points).toFixed(1)} fantasy points`:'')

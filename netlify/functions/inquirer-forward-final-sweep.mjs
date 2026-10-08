@@ -25,7 +25,26 @@ function cleanSentence(sentence,week){
  let s=norm(sentence),before=s;
  s=s.replace(SYNTHETIC_ANY,'').replace(STOCK_LABEL_ANY,'').replace(FAKE_FUTURE,'').replace(/\s{2,}/g,' ').trim();
  if(Number(week)<=13)s=s.replace(/\b(?:round|Sunday)\s+(\d{1,2})\b/gi,'Week $1').replace(/\bweek\s+(\d{1,2})\b/gi,(_,n)=>`Week ${n}`);
- s=s.replace(/\bleague order\b/gi,'league standings').replace(/\ba immediate\b/gi,'an immediate').replace(/\ba opponent-aware\b/gi,'an opponent-aware').replace(/\bseptember\b/g,'September')
+ s=s
+  .replace(/\bcopy desks?\b/gi,'league')
+  .replace(/\bnewsrooms?\b/gi,'league')
+  .replace(/\bcase files?\b/gi,'record')
+  .replace(/\bthe file says\b/gi,'the result shows')
+  .replace(/\bevidence says\b/gi,'the result shows')
+  .replace(/\bthe evidence\b/gi,'the result')
+  .replace(/\binvestigations?\b/gi,'review')
+  .replace(/\binvestigate\b/gi,'watch')
+  .replace(/\bproof\b/gi,'reason')
+  .replace(/\bverdict\b/gi,'answer')
+  .replace(/\bexhibits?\b/gi,'examples')
+  .replace(/\bsample size\b/gi,'track record')
+  .replace(/\btest whether\b/gi,'show whether')
+  .replace(/\bgets to decide whether\b/gi,'will show whether')
+  .replace(/\bdecide whether it was real\b/gi,'show whether it lasts')
+  .replace(/\bwhether it was real\b/gi,'whether it lasts')
+  .replace(/\banother data point\b/gi,'another result')
+  .replace(/\bone repeat\b/gi,'one more result')
+  .replace(/\bleague order\b/gi,'league standings').replace(/\ba immediate\b/gi,'an immediate').replace(/\ba opponent-aware\b/gi,'an opponent-aware').replace(/\bseptember\b/g,'September')
   .replace(/\bthe positioning are not a theory; they are the part of the result everybody can see\.?/gi,'The standings position is not theoretical; it is visible in the result.')
   .replace(/\bthe race is not a theory; they are the part of the result everybody can see\.?/gi,'The race is not theoretical; the standings make that part of the result visible.')
   .replace(/\bthe order are not a theory; they are the part of the result everybody can see\.?/gi,'The standings position is not theoretical; it is visible in the result.')
@@ -40,7 +59,7 @@ function cleanSentence(sentence,week){
   .replace(/\bsunday\b/g,'Sunday').replace(/\s{2,}/g,' ').trim();
  return s!==before?cap(s):s;
 }
-function escRe(s){return String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\function rewrite(rows,week){')}
+function escRe(s){return String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\function escRe(s){return String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\function rewrite(rows,week){')}')}
 function repairTeamPossessive(text,team){
  const full=String(team?.team_name||'').trim(),short=full.split(/\s+/).filter(Boolean).at(-1)||'';let out=String(text||'');
  for(const name of [full,short].filter((v,i,a)=>v&&/s$/i.test(v)&&a.indexOf(v)===i))out=out.replace(new RegExp('\\b'+escRe(name)+"['’]s\\b",'gi'),name+"'");

@@ -102,7 +102,7 @@ assert.ok(netlifyConfig.includes('[functions."inquirer-publish-scheduled"]')&&ne
 assert.ok(leagueHub.includes("games.filter(g=>g.result==='W').length"),'League Hub records must be reconstructed from archived matchups rather than current Sleeper roster totals');
 assert.ok(leagueHub.includes("import week2Preload2026 from './inquirer-week2-2026-preload.mjs'"),'League Hub must load the locked Week 2 preload');
 assert.ok(leagueHub.includes("['2026|1',week1Preload2026],['2026|2',week2Preload2026]"),'League Hub preload registry must preserve Week 1 and publish Week 2 together');
-assert.ok(leagueHub.includes('for(const p of PRELOADED_BROADCASTS.values())'),'Reporter and broadcast archives must iterate every bundled Inquirer week instead of hard-coding Week 1');
+assert.ok(leagueHub.includes('for(const raw of PRELOADED_BROADCASTS.values())')&&leagueHub.includes('const p=servedPreload(raw)'),'Reporter and broadcast archives must iterate every bundled Inquirer week instead of hard-coding Week 1');
 const week1Generator=fs.readFileSync(new URL('./one-time-generate-inquirer-week1.mjs',import.meta.url),'utf8');
 assert.ok(!week1Generator.includes('projections(season,2'),'Week 1 archive generator must not refetch Week 2 projections after the historical cutoff');
 assert.ok(week1Generator.includes('next_projected:null,next_projection_coverage:0'),'Week 1 archive generator must explicitly omit later-week projection outlooks');

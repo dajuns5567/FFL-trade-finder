@@ -193,7 +193,7 @@ assert(backend.includes("name.startsWith('AFC')")&&backend.includes("name.starts
 assert(backend.includes("managers/history-cache.json"),'Fan sentiment must consume persistent manager career history');
 assert(backend.includes("import week1Preload2026 from './inquirer-week1-2026-preload.mjs'")&&backend.includes("import week2Preload2026 from './inquirer-week2-2026-preload.mjs'"),'League Hub must import the locked Week 1 and Week 2 V26 preloads');
 assert(backend.includes('const preloadedBroadcast=(season,week)=>')&&backend.includes('canonicalPreload=preloadedBroadcast(y,w)'),'League Hub weekly/archive paths must recognize preloaded completed editions and route normalized archive coordinates through the canonical preload');
-assert(backend.includes('preloadedReporterEntries(reporter.id)')&&backend.includes('for(const p of PRELOADED_BROADCASTS.values())'),'Reporter archives must merge stories from every bundled Inquirer week');
+assert(backend.includes('preloadedReporterEntries(reporter.id)')&&backend.includes('for(const raw of PRELOADED_BROADCASTS.values())')&&backend.includes('const p=servedPreload(raw)'),'Reporter archives must merge stories from every bundled Inquirer week, including function-backed preloads');
 assert(backend.includes("['2026|1',week1Preload2026],['2026|2',week2Preload2026]"),'Weekly archive registry must preserve Week 1 and expose preloaded Week 2');
 assert(backend.includes("key:'preloaded:'+season+':'+week"),'Weekly archive index must build generic preloaded keys for all bundled editions');
 assert(backend.includes('previous_fan_sentiment:previousSentiment'),'Fan sentiment must carry forward from the prior archived week for the same team/manager');

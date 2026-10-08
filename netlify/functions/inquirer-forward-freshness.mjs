@@ -302,7 +302,7 @@ function enrichArticle(team,article,{week,variationSalt,prior,used}){
   for(const section of article.sections||[]){
     if(!Array.isArray(section?.paragraphs))continue;
     section.paragraphs=section.paragraphs.map((p,i)=>{
-      let row=norm(p);if(additions>=2||!tooBare(row))return row;
+      let row=norm(p);if(!tooBare(row))return row;
       const kind=kindFor(section,row),take=pickFresh(bank[kind]||bank.player,[week,variationSalt,team?.roster_id,rid,kind,i,row].join('|'),used,prior);
       if(take){additions++;row=`${row} ${take}`}
       return norm(row);

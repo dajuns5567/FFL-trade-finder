@@ -54,7 +54,17 @@ async function discoverLatestWeek(){
    const oldSeason=Number(weeklyCache?.season)||0,oldWeek=Number(weeklyCache?.week)||0,newer=Number(x.season)>oldSeason||(Number(x.season)===oldSeason&&Number(x.week)>oldWeek);
    archivedEditionCache.set(Number(x.season)+'|'+Number(x.week),x);spotlightWeeklyCache=x;
    if(newer||!weeklyCache)weeklyCache=x;
-   if(newer&&currentView==='daily'&&!openBroadcastTeam)setTimeout(()=>render('daily'),0);
+   if(newer){
+    const [awards,mgr]=await Promise.all([
+      fetch('/.netlify/functions/league-hub?weekly_awards=1',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch('/.netlify/functions/league-hub?managers=1',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)
+    ]);
+    if(awards?.records)weeklyAwardsCache=awards;
+    if(mgr?.career?.length){managerCache=mergeVisibleWeekScoring(mgr,x)}
+    else if(managerCache)managerCache=mergeVisibleWeekScoring(managerCache,x);
+    ensureCurrentWeekAwards(x).catch(()=>{});
+    if(currentView==='daily'&&!openBroadcastTeam)setTimeout(()=>render('daily'),0);
+   }
   }
   return x;
  }catch{return null}})().finally(()=>{weeklyDiscoveryPromise=null});

@@ -8,7 +8,7 @@ function repairTeamPossessives(team){
   const fix=v=>{let x=String(v||'');for(const n of names)x=x.replace(new RegExp('\\b'+esc(n)+"['’]s\\b",'gi'),n+"'");return x};
   a.headline=fix(a.headline);a.deck=fix(a.deck);
   const seen=new Set();
-  const dedupe=p=>String(p||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean).filter(sentence=>{const key=sentence.toLowerCase().replace(/\s+/g,' ').trim();if(key.split(/\s+/).length<8)return true;if(seen.has(key))return false;seen.add(key);return true}).join(' ');
+  const dedupe=p=>String(p||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean).map(sentence=>{const key=sentence.toLowerCase().replace(/\s+/g,' ').trim();if(key.split(/\s+/).length<8)return sentence;if(!seen.has(key)){seen.add(key);return sentence}const stem=sentence.replace(/[.!?]+$/,'');return 'More specifically, '+stem.charAt(0).toLowerCase()+stem.slice(1)+'.'}).join(' ');
   for(const s of a.sections||[])s.paragraphs=(s.paragraphs||[]).map(fix).map(dedupe).filter(Boolean);
   a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]).filter(Boolean);return team;
 }

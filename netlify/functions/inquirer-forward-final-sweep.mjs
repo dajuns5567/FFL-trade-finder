@@ -59,7 +59,7 @@ function cleanSentence(sentence,week){
   .replace(/\bsunday\b/g,'Sunday').replace(/\s{2,}/g,' ').trim();
  return s!==before?cap(s):s;
 }
-function escRe(s){return String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\function escRe(s){return String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\function rewrite(rows,week){')}')}
+function escRe(s){return String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
 function repairTeamPossessive(text,team){
  const full=String(team?.team_name||'').trim(),short=full.split(/\s+/).filter(Boolean).at(-1)||'';let out=String(text||'');
  for(const name of [full,short].filter((v,i,a)=>v&&/s$/i.test(v)&&a.indexOf(v)===i))out=out.replace(new RegExp('\\b'+escRe(name)+"['’]s\\b",'gi'),name+"'");

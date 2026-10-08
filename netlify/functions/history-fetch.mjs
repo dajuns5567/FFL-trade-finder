@@ -23,7 +23,7 @@ export async function fetchWeeklyAggregate(year,{strict=true}={}){
 }
 export async function fetchBestSeason(year){
   const season=await fetchSeasonAggregate(year);if(season.stats)return season;
-  const weekly=await fetchWeeklyAggregate(year,{strict:true});if(weekly.stats)return weekly;
+  const weekly=await fetchWeeklyAggregate(year,{strict:false});if(weekly.stats)return weekly;
   return{stats:null,source:null,errors:[...(season.errors||[]),...(weekly.errors||[])]};
 }
 export {API,getJson};

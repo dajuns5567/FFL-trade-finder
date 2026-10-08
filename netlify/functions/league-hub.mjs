@@ -24,8 +24,10 @@ const VERIFIED_HISTORICAL_MANAGER_ASSIGNMENTS={
 };
 const BROADCAST_VERSION=17;
 const INQUIRER_EDITORIAL_REVISION=14;
-const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026],['2026|2',week2Preload2026],['2026|3',week3Preload2026()]]);
-const servedPreload=p=>{
+const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026],['2026|2',week2Preload2026],['2026|3',week3Preload2026]]);
+const resolvePreload=p=>typeof p==='function'?p():p;
+const servedPreload=raw=>{
+ const p=resolvePreload(raw);
  if(!p)return p;
  const season=Number(p.season),week=Number(p.week);
  if(season===2026&&week===2)return applyWeek2EditorialR16(p);

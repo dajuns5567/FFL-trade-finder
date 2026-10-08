@@ -158,7 +158,7 @@ const opp=opponentMap(w4),nextOpp=opponentMap(w5),record=records([w1,w2,w3,w4]),
 
 const teams=rosters.map(r=>{
   const rid=String(r.roster_id),m=week4ByRoster.get(rid)||{},oid=opp[rid],opponentRoster=rosterById.get(oid),nid=nextOpp[rid],nextRoster=rosterById.get(nid);
-  const starterIds=(m.starters||[]).filter(Boolean).map(String),rosterPlayers=(r.players||[]).filter(Boolean).map(String),pts=m.players_points||{};
+  const starterIds=(m.starters||[]).map(String).filter(id=>id&&id!=='0'),rosterPlayers=(r.players||[]).map(String).filter(id=>id&&id!=='0'),pts=m.players_points||{};
   const starterDetails=starterIds.map((id,i)=>{const p=players?.[id]||{};return{id,name:playerName(players,id),position:position(p),nfl_team:String(p.team||'FA'),lineup_slot:String(slots[i]||position(p)),points:Number(pts[id])||0,projected:null}});
   const bench=rosterPlayers.filter(id=>!starterIds.includes(id)).map(id=>{const p=players?.[id]||{};return{id,name:playerName(players,id),position:position(p),nfl_team:String(p.team||'FA'),points:Number(pts[id])||0,projected:null}});
   const rec=record[rid]||{wins:0,losses:0,ties:0,points_for:0},div=divisionName(league,r),divisionRows=rosters.filter(x=>divisionName(league,x)===div).map(x=>{const q=record[String(x.roster_id)]||{wins:0,losses:0,ties:0,points_for:0};return{id:String(x.roster_id),...q}}).sort((a,b)=>b.wins-a.wins||a.losses-b.losses||b.points_for-a.points_for),divisionRank=divisionRows.findIndex(x=>x.id===rid)+1;

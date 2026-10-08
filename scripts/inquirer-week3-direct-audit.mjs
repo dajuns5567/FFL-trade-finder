@@ -7,6 +7,7 @@ import {
   inquirerWeekClassification,
   publicReporters
 } from '../netlify/functions/inquirer-reporters.mjs';
+import {fetchBestSeason} from '../netlify/functions/history-fetch.mjs';
 import {
   applyInquirerEditorialV31,
   evaluateInquirerEditionQuality,
@@ -193,9 +194,20 @@ const teams=rosters.map(r=>{
 // can discuss player scoring without inventing unsupported box-score detail.
 const weeklyStats={};
 for(const m of w3)for(const [id,points] of Object.entries(m?.players_points||{}))weeklyStats[id]={_audit_points:Number(points)};
-const scoreFn=stats=>Number.isFinite(Number(stats?._audit_points))?Number(stats._audit_points):null;
+const scoreFn=(stats,scoring={})=>{
+  if(Number.isFinite(Number(stats?._audit_points)))return Number(stats._audit_points);
+  if(!stats)return null;
+  let total=0,used=false;
+  for(const [key,weight] of Object.entries(scoring||{})){
+    const raw=stats[key]??(String(key).startsWith('idp_')?stats[String(key).slice(4)]:undefined),v=Number(raw),w=Number(weight);
+    if(Number.isFinite(v)&&Number.isFinite(w)){total+=v*w;used=true}
+  }
+  return used?Number(total.toFixed(2)):null;
+};
+const historicalSeason=await fetchBestSeason(2025);
+assert.ok(historicalSeason?.stats&&Object.keys(historicalSeason.stats).length,'2025 historical player stats must be available for the Week 3 preload');
 const classification=inquirerWeekClassification(WEEK,SEASON);
-const rawInquirer=buildInquirerWeek({season:SEASON,week:WEEK,teams,players,weeklyStats,weeklyStatHistory:{3:weeklyStats},historicalSeasonStats:{},historicalSeasonYear:2025,scoringSettings:league.scoring_settings||{},scoreFn,weekClassification:classification,playerValues:{}});
+const rawInquirer=buildInquirerWeek({season:SEASON,week:WEEK,teams,players,weeklyStats,weeklyStatHistory:{3:weeklyStats},historicalSeasonStats:historicalSeason.stats,historicalSeasonYear:2025,scoringSettings:league.scoring_settings||{},scoreFn,weekClassification:classification,playerValues:{}});
 const rawOverview=buildLeagueOverview({season:SEASON,week:WEEK,teams:rawInquirer.teams,players,transactions,canonicalTrades:[],weekClassification:classification,valueHistoryMeta:{source:'direct-sleeper-read-only-audit'}});
 
 let accepted=null,lastQuality=null;
@@ -206,6 +218,9 @@ for(let salt=0;salt<8;salt++){
   if(q.ok){accepted=candidate;break;}
 }
 assert.ok(accepted,'Direct Sleeper Week 3 data could not produce an accepted edition within 8 salts: '+JSON.stringify(lastQuality?.issues||[]).slice(0,12000));
+const willAnderson=[...accepted.teams].flatMap(t=>t?.inquirer_article?.facts?.players||[]).find(p=>/Will Anderson/i.test(String(p?.name||'')))
+  ||accepted.teams.flatMap(t=>t?.starter_details||[]).find(p=>/Will Anderson/i.test(String(p?.name||'')));
+if(willAnderson)assert.ok(Number(willAnderson.prior_season_games)>0&&Number.isFinite(Number(willAnderson.prior_season_avg))&&Number(willAnderson.prior_season_avg)>0,'Will Anderson 2025 history must survive Week 3 generation');
 
 const paragraphs=a=>(a?.sections||[]).flatMap(s=>[...(s?.paragraphs||[]),...(s?.blocks||[]).flatMap(b=>b?.paragraphs||[])]).filter(Boolean);
 const words=s=>String(s||'').trim().split(/\s+/).filter(Boolean).length;

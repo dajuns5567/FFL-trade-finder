@@ -1,0 +1,63 @@
+name: Inquirer Week 4 live audit
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/inquirer-week4-direct-audit.mjs'
+      - 'netlify/functions/inquirer-editorial-v31.mjs'
+      - 'netlify/functions/inquirer-forward-*.mjs'
+      - 'netlify/functions/history-fetch.mjs'
+      - '.github/workflows/inquirer-week4-live-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  week4-live-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check Week 4 audit and forward newsroom
+        run: |
+          node --check scripts/inquirer-week4-direct-audit.mjs
+          node --check netlify/functions/inquirer-editorial-v31.mjs
+          node --check netlify/functions/inquirer-forward-prior-guard.mjs
+          node --check netlify/functions/inquirer-forward-final-sweep.mjs
+      - name: Install generator dependency
+        run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Generate and audit real Sleeper Week 4 candidate
+        run: node scripts/inquirer-week4-direct-audit.mjs
+      - name: Upload Week 4 candidate and audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: inquirer-week4-live-audit
+          path: |
+            /tmp/inquirer-week4-direct-candidate.json
+            /tmp/inquirer-week4-direct-audit.json
+          retention-days: 7
+      - name: Pack accepted Week 4 preload
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),zlib=require('zlib');
+          const raw=fs.readFileSync('/tmp/inquirer-week4-direct-candidate.json');
+          const encoded=zlib.gzipSync(raw,{level:9}).toString('base64');
+          const out="import {gunzipSync} from 'node:zlib';\n\n// Exact accepted Week 4 candidate from the successful real-data Inquirer audit.\n// Generated directly from the accepted CI candidate; do not hand-truncate.\nconst encoded='"+encoded+"';\nlet memo=null;\nexport default function week4Preload2026(){\n  if(memo)return memo;\n  memo=JSON.parse(gunzipSync(Buffer.from(encoded,'base64')).toString('utf8'));\n  return memo;\n}\n";
+          fs.writeFileSync('netlify/functions/inquirer-week4-2026-preload.mjs',out);
+          console.log('preload bytes',Buffer.byteLength(out),'candidate bytes',raw.length);
+          NODE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add netlify/functions/inquirer-week4-2026-preload.mjs
+          if git diff --cached --quiet; then
+            echo "Week 4 preload already matches accepted candidate"
+          else
+            git commit -m "Publish full Week 4 Inquirer preload"
+            git push origin HEAD:${{ github.head_ref || github.ref_name }}
+          fi

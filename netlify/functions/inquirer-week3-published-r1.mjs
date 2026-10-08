@@ -1,5 +1,6 @@
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const one=n=>Number(n||0).toFixed(1);
+const finiteOrNull=v=>v==null||v===''?null:(Number.isFinite(Number(v))?Number(v):null);
 const publicReporter=r=>r?{id:r.id,name:r.name,title:r.title,desk:r.desk,voice:r.voice,signature:r.signature}:null;
 const record=t=>{const r=t?.league_context?.record||{};return `${Number(r.wins)||0}-${Number(r.losses)||0}${Number(r.ties)?'-'+Number(r.ties):''}`};
 const rank=t=>Number(t?.league_context?.standings_rank)||999;
@@ -46,7 +47,7 @@ function titleFavorite(teams){
 }
 function breakoutPick(teams){
   const all=playerRows(teams).map(({t,p})=>{
-    const age=Number(p?.age),prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,current=Number(p?.season_avg),games=Number(p?.season_games)||0,weekPoints=Number(p?.points)||0,
+    const age=finiteOrNull(p?.age),prior=finiteOrNull(p?.prior_season_avg),priorGames=finiteOrNull(p?.prior_season_games)||0,current=finiteOrNull(p?.season_avg),games=finiteOrNull(p?.season_games)||0,weekPoints=finiteOrNull(p?.points)||0,
       ratio=Number.isFinite(prior)&&prior>0&&Number.isFinite(current)?current/prior:null,
       young=(Number.isFinite(age)&&age<=26)||(Number.isFinite(Number(p?.years_exp))&&Number(p.years_exp)<=3),
       established=Number.isFinite(prior)&&prior>=18&&priorGames>=8;
@@ -61,7 +62,7 @@ function breakoutPick(teams){
   const fallback=all.filter(x=>Number.isFinite(x.score)).sort((a,b)=>b.score-a.score||Number(b.p?.points||0)-Number(a.p?.points||0))[0];
   if(fallback)return fallback;
   const any=playerRows(teams).slice().sort((a,b)=>Number(b.p?.points||0)-Number(a.p?.points||0))[0];
-  return any?{...any,age:Number(any.p?.age),prior:Number(any.p?.prior_season_avg),current:Number(any.p?.season_avg),games:Number(any.p?.season_games)||0,ratio:null,score:Number(any.p?.points)||0,reason:'week-emergence'}:null;
+  return any?{...any,age:finiteOrNull(any.p?.age),prior:finiteOrNull(any.p?.prior_season_avg),current:finiteOrNull(any.p?.season_avg),games:finiteOrNull(any.p?.season_games)||0,ratio:null,score:finiteOrNull(any.p?.points)||0,reason:'week-emergence'}:null;
 }
 function playerOfYearPick(teams){
   return playerRows(teams).map(({t,p})=>{
@@ -151,7 +152,7 @@ function buildOverview(edition){
   });
   if(breakout)hot.push({
     kind:'breakout',reporter:reps.bart,title:'Breakout player: '+breakout.p.name,
-    take:`${breakout.p.name} is the breakout call after Week ${week}. ${Number.isFinite(breakout.current)&&Number.isFinite(breakout.prior)?'He is averaging '+one(breakout.current)+' this season after '+one(breakout.prior)+' last year. ':Number.isFinite(breakout.current)?'The current-season average is '+one(breakout.current)+', and the profile is young enough to keep the label honest. ':'Week '+week+' put enough production on the board to earn the watch list. '}${breakout.t.team_name} has a player worth tracking instead of waiting for the fourth good Sunday to admit the first three happened.`
+    take:`${breakout.p.name} is the breakout call after Week ${week}. ${Number.isFinite(breakout.current)&&Number.isFinite(breakout.prior)&&breakout.prior>0&&breakout.p?.prior_season_games>0?'He is averaging '+one(breakout.current)+' this season after '+one(breakout.prior)+' last year. ':Number.isFinite(breakout.current)?'The current-season average is '+one(breakout.current)+'. ':'Week '+week+' put enough production on the board to earn the watch list. '}${breakout.t.team_name} has a player worth tracking instead of waiting for the fourth good Sunday to admit the first three happened.`
   });
   if(poy)hot.push({
     kind:'player',reporter:reps.tilly,title:'Player of the Year pick: '+poy.p.name,

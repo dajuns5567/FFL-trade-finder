@@ -96,6 +96,17 @@ export function applyInquirerEditorialV31(args={}){
     });
     dedupeInquirerForwardEdition(edition,{week:Number(args.week)});
     finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
+    applyInquirerForwardFreshness(edition,{
+      week:Number(args.week),
+      previousEdition:args.previousEdition||null,
+      variationSalt:(Number(args.variationSalt)||0)+101
+    });
+    guardInquirerForwardAgainstPrior(edition,{
+      week:Number(args.week),
+      previousEdition:args.previousEdition||null
+    });
+    dedupeInquirerForwardEdition(edition,{week:Number(args.week)});
+    finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
     normalizeInquirerForwardHeadlines(edition,{week:Number(args.week)});
 
     out.inquirer.teams=edition.teams;

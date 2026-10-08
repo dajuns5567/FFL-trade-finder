@@ -45,17 +45,23 @@ function titleFavorite(teams){
   })[0]||null;
 }
 function breakoutPick(teams){
-  const rows=playerRows(teams).map(({t,p})=>{
-    const age=Number(p?.age),prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,current=Number(p?.season_avg),games=Number(p?.season_games)||0,
+  const all=playerRows(teams).map(({t,p})=>{
+    const age=Number(p?.age),prior=Number(p?.prior_season_avg),priorGames=Number(p?.prior_season_games)||0,current=Number(p?.season_avg),games=Number(p?.season_games)||0,weekPoints=Number(p?.points)||0,
       ratio=Number.isFinite(prior)&&prior>0&&Number.isFinite(current)?current/prior:null,
       young=(Number.isFinite(age)&&age<=26)||(Number.isFinite(Number(p?.years_exp))&&Number(p.years_exp)<=3),
       established=Number.isFinite(prior)&&prior>=18&&priorGames>=8;
     let score=-Infinity,reason='';
     if(!established&&young&&games>=3&&priorGames>=6&&ratio!=null&&ratio>=1.25){score=300+(ratio-1)*100+current;reason='season-rise'}
     else if(!established&&young&&games>=3&&Number.isFinite(current)&&current>=14){score=180+current;reason='young-production'}
+    else if(!established&&young){score=90+(Number.isFinite(current)?current:0)+weekPoints*.35;reason='young-watch'}
     return {t,p,age,prior,current,games,ratio,score,reason};
-  }).filter(x=>Number.isFinite(x.score)).sort((a,b)=>b.score-a.score);
-  return rows[0]||null;
+  });
+  const strict=all.filter(x=>Number.isFinite(x.score)&&x.score>=180).sort((a,b)=>b.score-a.score)[0];
+  if(strict)return strict;
+  const fallback=all.filter(x=>Number.isFinite(x.score)).sort((a,b)=>b.score-a.score||Number(b.p?.points||0)-Number(a.p?.points||0))[0];
+  if(fallback)return fallback;
+  const any=playerRows(teams).slice().sort((a,b)=>Number(b.p?.points||0)-Number(a.p?.points||0))[0];
+  return any?{...any,age:Number(any.p?.age),prior:Number(any.p?.prior_season_avg),current:Number(any.p?.season_avg),games:Number(any.p?.season_games)||0,ratio:null,score:Number(any.p?.points)||0,reason:'week-emergence'}:null;
 }
 function playerOfYearPick(teams){
   return playerRows(teams).map(({t,p})=>{
@@ -80,18 +86,19 @@ function divisionLeaders(teams){
   return [...groups.entries()].map(([division,rows])=>({division,team:rows.slice().sort((a,b)=>rank(a)-rank(b)||Number(b.points)-Number(a.points))[0]})).filter(x=>x.team);
 }
 function nextUpsetPick(teams){
-  const by=teamById(teams),seen=new Set(),rows=[];
+  const by=teamById(teams),seen=new Set(),rows=[],fallback=[];
   for(const t of teams||[]){
     const oid=String(t?.next_opponent_roster_id||'');if(!oid||!by.has(oid))continue;
     const key=[String(t.roster_id),oid].sort().join('|');if(seen.has(key))continue;seen.add(key);
     const o=by.get(oid),tp=Number(t?.next_projected),op=Number(o?.next_projected);
-    if(!Number.isFinite(tp)||!Number.isFinite(op)||tp===op)continue;
-    const under=tp<op?t:o,fav=under===t?o:t,up=Number(under.next_projected),fp=Number(fav.next_projected),gap=fp-up;
-    if(gap>18)continue;
-    const rankEdge=(rank(fav)-rank(under));
-    rows.push({under,fav,up,fp,gap,score:rankEdge-gap/3});
+    if(Number.isFinite(tp)&&Number.isFinite(op)&&tp!==op){
+      const under=tp<op?t:o,fav=under===t?o:t,up=Number(under.next_projected),fp=Number(fav.next_projected),gap=fp-up;
+      if(gap<=18)rows.push({under,fav,up,fp,gap,score:(rank(fav)-rank(under))-gap/3,basis:'projection'});
+    }
+    const better=rank(t)<=rank(o)?t:o,worse=better===t?o:t;
+    fallback.push({under:worse,fav:better,up:null,fp:null,gap:null,score:rank(worse)-rank(better),basis:'standings'});
   }
-  return rows.sort((a,b)=>b.score-a.score)[0]||null;
+  return rows.sort((a,b)=>b.score-a.score)[0]||fallback.sort((a,b)=>a.score-b.score)[0]||null;
 }
 
 function buildOverview(edition){
@@ -144,7 +151,7 @@ function buildOverview(edition){
   });
   if(breakout)hot.push({
     kind:'breakout',reporter:reps.bart,title:'Breakout player: '+breakout.p.name,
-    take:`${breakout.p.name} is the breakout call after Week ${week}. ${Number.isFinite(breakout.current)&&Number.isFinite(breakout.prior)?'He is averaging '+one(breakout.current)+' this season after '+one(breakout.prior)+' last year. ':''}${breakout.t.team_name} has enough evidence now to treat the jump as more than one loud Sunday. The next few weeks decide whether it becomes the new normal.`
+    take:`${breakout.p.name} is the breakout call after Week ${week}. ${Number.isFinite(breakout.current)&&Number.isFinite(breakout.prior)?'He is averaging '+one(breakout.current)+' this season after '+one(breakout.prior)+' last year. ':Number.isFinite(breakout.current)?'The current-season average is '+one(breakout.current)+', and the profile is young enough to keep the label honest. ':'Week '+week+' put enough production on the board to earn the watch list. '}${breakout.t.team_name} has a player worth tracking instead of waiting for the fourth good Sunday to admit the first three happened.`
   });
   if(poy)hot.push({
     kind:'player',reporter:reps.tilly,title:'Player of the Year pick: '+poy.p.name,
@@ -160,7 +167,7 @@ function buildOverview(edition){
   });
   if(upset)hot.push({
     kind:'upset',reporter:reps.bart,title:`Upset special: ${upset.under.team_name} over ${upset.fav.team_name}`,
-    take:`I am taking the projected underdog before Week ${week+1}: ${upset.under.team_name} (${one(upset.up)}) over ${upset.fav.team_name} (${one(upset.fp)}). The gap is only ${one(upset.gap)}, close enough that one star performance or one management mistake can make the projection look decorative by Sunday night.`
+    take:upset.basis==='projection'?`I am taking the projected underdog before Week ${week+1}: ${upset.under.team_name} (${one(upset.up)}) over ${upset.fav.team_name} (${one(upset.fp)}). The gap is only ${one(upset.gap)}, close enough that one star performance or one management mistake can make the projection look decorative by Sunday night.`:`I am taking ${upset.under.team_name} over ${upset.fav.team_name} as the Week ${week+1} upset call. This one is standings-driven because a trustworthy projection gap is not available; the point is simple: the lower-ranked roster has a live matchup and a chance to make the table look stupid for a week.`
   });
 
   return {

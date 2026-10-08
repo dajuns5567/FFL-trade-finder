@@ -27,6 +27,7 @@ export function normalizeInquirerForwardHeadline(headline,teamNames=[],week=null
  h=h.replace(/\b(Make|Makes|Made) the Week (\d+) Look\b/g,'$1 Week $2 Look')
    .replace(/([’'])\s+this Sunday\b/gi,'$1 Sunday')
    .replace(/\bthe\s+last\s+the\s+last\b/gi,'the last')
+   .replace(/\bMake It the last two Sundays\b/gi,'Make the Last Two Sundays')
    .replace(/\bTwo Weeks of result\b/gi,'Two Weeks of Results')
    .replace(/\bweeks? of result\b/gi,m=>m.replace(/result/i,'results')).replace(/^this\b/,'This');
  return norm(h)
@@ -47,6 +48,7 @@ export function findInquirerForwardHeadlineGrammarIssues(edition,{week}={}){
   if(/\b(?:Make|Makes|Made) the Week \d+ Look\b/i.test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'awkward “make the Week N look” phrasing'});
   if(/\bweeks? of result\b/i.test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'awkward result/result(s) phrasing'});
   if(/\bthe\s+last\s+the\s+last\b/i.test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'duplicated “the last” phrasing'});
+  if(/\bMake It the last two Sundays\b/i.test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'awkward “Make It the last two Sundays” phrasing'});
   if(/[’']\s+this Sunday\b/i.test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'awkward possessive this Sunday phrasing'});
   ORDINAL_SUNDAY.lastIndex=0;if(ORDINAL_SUNDAY.test(h))issues.push({team:String(team?.team_name||''),headline:h,reason:'stale ordinal-Sunday phrasing'});ORDINAL_SUNDAY.lastIndex=0;
   const weeksInto=h.match(/\b(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|\d+) Weeks Into\b/i);if(weeksInto&&w>=3&&String(weeksInto[1]).toLowerCase()!==String(NUMBER_WORD[w]||w).toLowerCase())issues.push({team:String(team?.team_name||''),headline:h,reason:'headline week count is stale'});

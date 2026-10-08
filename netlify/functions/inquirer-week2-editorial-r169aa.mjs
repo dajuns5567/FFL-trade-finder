@@ -7,8 +7,8 @@ function repairTeamPossessives(team){
   const full=String(team?.team_name||'').trim(),short=full.split(/\s+/).filter(Boolean).at(-1)||'',names=[full,short].filter((v,i,arr)=>v&&/s$/i.test(v)&&arr.indexOf(v)===i);
   const fix=v=>{let x=String(v||'');for(const n of names)x=x.replace(new RegExp('\\b'+esc(n)+"['’]s\\b",'gi'),n+"'");return x};
   a.headline=fix(a.headline);a.deck=fix(a.deck);
-  const seen=new Set();
-  const dedupe=p=>String(p||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean).map(sentence=>{const key=sentence.toLowerCase().replace(/\s+/g,' ').trim();if(key.split(/\s+/).length<8)return sentence;if(!seen.has(key)){seen.add(key);return sentence}const stem=sentence.replace(/[.!?]+$/,'');return 'More specifically, '+stem.charAt(0).toLowerCase()+stem.slice(1)+'.'}).join(' ');
+  const seen=new Set(),dupCounts=new Map(),duplicateLeads=['More specifically,','Separately,','In this case,','For this roster,','On the same point,'];
+  const dedupe=p=>String(p||'').split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean).map(sentence=>{const key=sentence.toLowerCase().replace(/\s+/g,' ').trim();if(key.split(/\s+/).length<8)return sentence;if(!seen.has(key)){seen.add(key);return sentence}const count=(dupCounts.get(key)||0)+1;dupCounts.set(key,count);const stem=sentence.replace(/[.!?]+$/,'');return duplicateLeads[(count-1)%duplicateLeads.length]+' '+stem.charAt(0).toLowerCase()+stem.slice(1)+'.'}).join(' ');
   for(const s of a.sections||[])s.paragraphs=(s.paragraphs||[]).map(fix).map(dedupe).filter(Boolean);
   a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]).filter(Boolean);return team;
 }

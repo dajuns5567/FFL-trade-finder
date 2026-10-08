@@ -616,15 +616,25 @@ async function render(view=currentView,managerId=''){if(view!=='daily')dailyRend
  managers().then(x=>{if(dailyToken!==dailyRenderToken)return;dailyMgr=x;drawDaily()}).catch(()=>{});
  reporterDirectory().then(x=>{if(dailyToken!==dailyRenderToken)return;reporterDirectoryCache=x;drawDaily()}).catch(()=>{});
  weeklyAwards().then(x=>{if(dailyToken!==dailyRenderToken)return;weeklyAwardsCache=x;drawDaily()}).catch(()=>{});
- fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'force-cache'})
-  .then(r=>r.ok?r.json():{reports:[]}).then(x=>{
+ fetch('/.netlify/functions/league-hub?preload_bootstrap=1',{cache:'force-cache'})
+  .then(r=>{if(!r.ok)throw Error('preload bootstrap unavailable');return r.json()})
+  .then(x=>{
    if(dailyToken!==dailyRenderToken)return;
-   broadcastArchive=x?.reports||[];drawDaily();
-   if(!publishedW&&broadcastArchive.length){
-    const latest=broadcastArchive.slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0];
-    if(latest)fetchArchivedEdition(Number(latest.season),Number(latest.week)).then(acceptEdition).catch(()=>{});
-   }
-  }).catch(()=>{});
+   broadcastArchive=Array.isArray(x?.reports)?x.reports:[];
+   acceptEdition(x?.latest);
+   drawDaily();
+  })
+  .catch(()=>{
+   fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'force-cache'})
+    .then(r=>r.ok?r.json():{reports:[]}).then(x=>{
+     if(dailyToken!==dailyRenderToken)return;
+     broadcastArchive=x?.reports||[];drawDaily();
+     if(!publishedW&&broadcastArchive.length){
+      const latest=broadcastArchive.slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0];
+      if(latest)fetchArchivedEdition(Number(latest.season),Number(latest.week)).then(acceptEdition).catch(()=>{});
+     }
+    }).catch(()=>{});
+  });
  weekly().then(acceptEdition).catch(()=>{});
  discoverLatestWeek();
  }catch{host.innerHTML='<div class="notice">League Hub intelligence is temporarily unavailable. Trade Finder, Value History, and Trade History are unaffected.</div>'}if(preserveY!=null)requestAnimationFrame(()=>{host.style.minHeight=priorMinHeight;window.scrollTo({top:preserveY,behavior:'auto'})})}

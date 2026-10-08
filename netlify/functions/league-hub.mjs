@@ -4,6 +4,7 @@ import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,i
 import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
 import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
 import week3Preload2026 from './inquirer-week3-2026-preload.mjs';
+import week4Preload2026 from './inquirer-week4-2026-preload.mjs';
 import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r28.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
@@ -24,7 +25,7 @@ const VERIFIED_HISTORICAL_MANAGER_ASSIGNMENTS={
 };
 const BROADCAST_VERSION=17;
 const INQUIRER_EDITORIAL_REVISION=14;
-const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026],['2026|2',week2Preload2026],['2026|3',week3Preload2026]]);
+const PRELOADED_BROADCASTS=new Map([['2026|1',week1Preload2026],['2026|2',week2Preload2026],['2026|3',week3Preload2026],['2026|4',week4Preload2026]]);
 const resolvePreload=p=>typeof p==='function'?p():p;
 const servedPreload=raw=>{
  const p=resolvePreload(raw);

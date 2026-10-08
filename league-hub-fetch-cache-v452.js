@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-if(window.__fleecedLeagueHubFetchCacheV475)return;
-window.__fleecedLeagueHubFetchCacheV475=true;
+if(window.__fleecedLeagueHubFetchCacheV476)return;
+window.__fleecedLeagueHubFetchCacheV476=true;
 
 const nativeFetch=window.fetch.bind(window),memory=new Map(),pending=new Map();
 const editions=window.__fleecedLeagueHubEditionsV457=window.__fleecedLeagueHubEditionsV457||new Map();
@@ -25,15 +25,15 @@ function fastRoute(url){
   if(url.origin!==location.origin||url.pathname!=='/.netlify/functions/league-hub')return null;
   const season=Number(url.searchParams.get('broadcast_season')),week=Number(url.searchParams.get('broadcast_week'));
   if(season===2026&&[1,2].includes(week)){
-    return{key:`archive:${season}|${week}`,target:`/.netlify/functions/league-hub-archive-fast?season=${season}&week=${week}&rev=475`};
+    return{key:`archive:${season}|${week}`,target:`/.netlify/functions/league-hub-archive-fast?season=${season}&week=${week}&rev=476`};
   }
   if(season===2026&&week===3){
-    return{key:'archive:2026|3',target:'/.netlify/functions/league-hub-week3-fast?rev=475'};
+    return{key:'archive:2026|3',target:'/.netlify/functions/league-hub-week3-fast?rev=476'};
   }
-  if(url.searchParams.get('weekly')==='1')return{key:'publication:latest',target:'/.netlify/functions/league-hub-read-fast?mode=latest&rev=475',fallback:'/.netlify/functions/league-hub-week3-fast?rev=475'};
-  if(url.searchParams.get('broadcast_archive')==='1')return{key:'publication:archive',target:'/.netlify/functions/league-hub-archive-index-fast?rev=475'};
-  if(url.searchParams.get('reporters')==='1')return{key:'publication:reporters',target:'/.netlify/functions/league-hub-read-fast?mode=reporters&rev=475'};
-  if(url.searchParams.get('managers')==='1')return{key:'snapshot:managers',target:'/.netlify/functions/league-hub-read-fast?mode=managers&rev=475'};
+  if(url.searchParams.get('weekly')==='1')return{key:'publication:latest',target:'/.netlify/functions/league-hub-read-fast?mode=latest&rev=476',fallback:'/.netlify/functions/league-hub-week3-fast?rev=476'};
+  if(url.searchParams.get('broadcast_archive')==='1')return{key:'publication:archive',target:'/.netlify/functions/league-hub-archive-index-fast?rev=476'};
+  if(url.searchParams.get('reporters')==='1')return{key:'publication:reporters',target:'/.netlify/functions/league-hub-read-fast?mode=reporters&rev=476'};
+  if(url.searchParams.get('managers')==='1')return{key:'snapshot:managers',target:'/.netlify/functions/league-hub-read-fast?mode=managers&rev=476'};
   return null;
 }
 

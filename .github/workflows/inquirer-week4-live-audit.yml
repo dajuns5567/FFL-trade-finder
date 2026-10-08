@@ -46,3 +46,27 @@ jobs:
         run: |
           test -s netlify/functions/inquirer-week4-2026-preload.mjs
           grep -q "Exact accepted Week 4 candidate" netlify/functions/inquirer-week4-2026-preload.mjs
+      - name: Verify every completed-week League Hub surface advances
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),assert=require('assert');
+          const hub=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');
+          const ui=fs.readFileSync('league-hub-v451.js','utf8');
+          const pub=fs.readFileSync('netlify/functions/inquirer-publish-scheduled.mjs','utf8');
+          assert(hub.includes("import week4Preload2026 from './inquirer-week4-2026-preload.mjs'"),'Week 4 preload must be imported');
+          assert(hub.includes("['2026|4',week4Preload2026]"),'Week 4 preload must be registered');
+          for(const type of ['hot-seat','cool-throne','highest-scorer','lowest-scorer'])assert(hub.includes("item('"+type+"'"),'Missing server weekly manager award '+type);
+          assert(hub.includes('async function latestPublishedRegularWeek(season)'),'Manager Spotlight must track latest published week');
+          assert(hub.includes('publishedWeek=await latestPublishedRegularWeek(currentSeason)'),'Manager history must advance through published weeks');
+          assert(pub.includes("league-hub?weekly_awards=1&scheduled_refresh=1"),'Scheduled publisher must refresh weekly awards/badges');
+          assert(pub.includes("league-hub?managers=1&scheduled_refresh=1"),'Scheduled publisher must refresh Manager Spotlight');
+          assert(pub.includes("weekly_awards_refreshed"),'Scheduled publisher must verify awards refresh');
+          assert(pub.includes("manager_spotlight_refreshed"),'Scheduled publisher must verify manager refresh');
+          assert(ui.includes("fetch('/.netlify/functions/league-hub?weekly_awards=1',{cache:'no-store'})"),'Client must refresh weekly awards on a new week');
+          assert(ui.includes("fetch('/.netlify/functions/league-hub?managers=1',{cache:'no-store'})"),'Client must refresh Manager Spotlight on a new week');
+          assert(ui.includes('weeklyAwardsCache=awards'),'Client must replace stale badge cache');
+          assert(ui.includes('managerCache=mergeVisibleWeekScoring(mgr,x)'),'Client must merge visible completed-week manager scoring');
+          assert(ui.includes("item('hot-seat','🔥 Hot Seat'"),'Client Hot Seat fallback missing');
+          assert(ui.includes("item('cool-throne','🧊 Cool Throne'"),'Client Cool Throne fallback missing');
+          console.log('completed-week League Hub surface wiring verified');
+          NODE

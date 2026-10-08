@@ -21,7 +21,7 @@ export default async () => {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'x-fll-release': 'section1-v263-selected-positions-add-assets-performance-methodology-v264-value-history-ktc-embedded-parser-ui-alignment-v347-theme-v274-nonblocking-consensus-v277-evaluator-roster-v285-specific-max-value-pick-display-v279-specific-tier-up-v282-specific-add-assets-v309-broad-acquire-specific-diversity-specific-max-tier-add-v300-recommended-pick-ownership-v301-specific-player-v309-value-adjustment-v321-modeled-player-values-v319-specific-blank-router-v325-value-history-market-defaults-v386-headless-observability-v387-scheduled-full-refresh-v390-headless-pipeline-v395-league-hub-week4-auto-refresh-v478'
+      'x-fll-release': 'section1-v263-selected-positions-add-assets-performance-methodology-v264-value-history-ktc-embedded-parser-ui-alignment-v347-theme-v274-nonblocking-consensus-v277-evaluator-roster-v285-specific-max-value-pick-display-v279-specific-tier-up-v282-specific-add-assets-v309-broad-acquire-specific-diversity-specific-max-tier-add-v300-recommended-pick-ownership-v301-specific-player-v309-value-adjustment-v321-modeled-player-values-v319-specific-blank-router-v325-value-history-market-defaults-v386-headless-observability-v387-scheduled-full-refresh-v390-headless-pipeline-v395-league-hub-week4-published-v479'
     }
   });
 };

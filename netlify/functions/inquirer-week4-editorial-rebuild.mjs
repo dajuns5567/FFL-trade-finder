@@ -13,16 +13,52 @@ const short=p=>p?.name||'an unnamed starter';
 const point=p=>valid(p?.points)?n(p.points)+' points':'an unavailable score';
 const clean=arr=>arr.filter(Boolean).map(x=>String(x).trim()).filter(Boolean);
 const win=t=>t.won===true||valid(t.points)&&valid(t.opponent_points)&&Number(t.points)>Number(t.opponent_points);
+const REPORTER_HEADS={
+ 'walter-mercer':[
+  'A long season has no use for imaginary wins. This is the one the roster actually earned.',
+  'The standings have seen prettier football. They only count the points that arrived.',
+  'The first job of a good Sunday is to survive the box score. This one did.',
+  'There is a reason the old coaches talk about the full lineup and not just the star.',
+  'The score is permanent now; the lessons should be a little more useful than the celebration.',
+  'I have seen enough October Sundays to know one box score never tells the whole story.'
+ ],
+ 'tess-delaney':[
+  'The scoreboard declined to consider anyone’s self-image. A refreshing change.',
+  'A lovely roster on paper still has to produce an unsentimental total on Sunday.',
+  'Nobody is owed a gracious verdict merely for arriving with better preseason expectations.',
+  'There is real elegance in a useful second scorer. There is very little in an empty lineup slot.',
+  'Confidence looks marvelous until the opponent begins adding up points.',
+  'A manager may prefer a more flattering narrative. The final score has no such obligation.'
+ ],
+ 'mack-hollis':[
+  'THIS is the number. The excuses can line up outside.',
+  'A fantasy team is not a movie trailer. Show the points or spare everybody the speech.',
+  'If this was supposed to be easy, somebody forgot to tell the other roster.',
+  'The highlights were loud. The silent starters were louder.',
+  'Put the result on the front page. Put the weak lineup slots on the next page.',
+  'The best part of this matchup? The scoreboard did not wait for a press conference.'
+ ],
+ 'nora-voss':[
+  'Rivals noticed exactly where the points came from, and where they did not.',
+  'Management can call the lineup balanced. Opponents will read the actual totals.',
+  'The division is not going to reward a manager for having excellent intentions.',
+  'There is no shortage of confident rosters. There is a shortage of repeatable production.',
+  'Every contender has a weak spot. The bad ones keep making it easy to find.',
+  'The opponent has already seen which positions can be pressured next Sunday.'
+ ]
+};
+const REPORTER_OUTLOOK={
+ 'walter-mercer':['Keep the good habits. Find more points from the quiet slots. That is how a season gets built.','The next game will reward the team that fixes its lineup without forgetting what worked.','A record moves one Sunday at a time; the useful adjustments are usually smaller than the speeches.'],
+ 'tess-delaney':['A winning résumé must be renewed every Sunday. The schedule has dreadful manners that way.','The roster may celebrate, but the next opponent is under no obligation to be accommodating.','Making the next lineup a little less theatrical would be an excellent start.'],
+ 'mack-hollis':['Next Sunday is not going to read this article. It is going to demand another score.','Fix the ugly part, keep the fireworks, and do not give rivals the same joke twice.','Another game, another chance to make the loudest claim with points instead of words.'],
+ 'nora-voss':['Rivals have a week to prepare for the same weaknesses. Make them find new ones.','The next opponent will have noticed the quiet positions. Management should notice them first.','A win protects the record. It does not protect the same lineup flaw forever.']
+};
 function teamStory(t,week){
  const a=t.inquirer_article;if(!a)return;
+ const voice=String(a?.reporter?.id||'walter-mercer');
  const players=topPlayers(t),star=players[0],support=players[1],third=players[2],weak=players.at(-1),bench=t.best_bench,miss=t.best_lineup_miss||null,old=t?.league_context||{},foe=t.opponent_name||'the opponent',next=t.next_opponent_name||null,won=win(t),gap=margin(t),team=name(t),id=t.roster_id,seed=week+'|'+id;
  const fact=valid(t.points)&&valid(t.opponent_points)?team+' '+(won?'beat ':'lost to ')+foe+' '+n(t.points)+'–'+n(t.opponent_points)+'.':team+' completed Week '+week+' without a verified matchup score.';
- const head=choose([
-  won?'A win is a fact. The interesting part is who earned it.':'The loss is settled. The explanation still has work to do.',
-  won?'This one belongs in the standings, not just the group chat.':'The score is already unkind enough without dressing it up.',
-  won?'The result held. That does not make every lineup decision right.':'There is a difference between being unlucky and being outscored.',
-  won?'Good teams bank these Sundays and study the uncomfortable details.':'The opponent got the points. The manager gets the questions.'
- ],seed+'lede');
+ const head=choose(REPORTER_HEADS[voice]||REPORTER_HEADS['walter-mercer'],seed+'lede');
  const starLine=star?short(star)+' led the starters with '+point(star)+'. '+(support?short(support)+' added '+point(support)+', which matters because the top score alone did not play every lineup position.':'That put a lot of the afternoon on one player’s shoulders.'):'The starters did not provide a complete player-by-player scoring breakdown.';
  const context=valid(old.standings_rank)?'At '+record(t)+' and '+rank(t)+' overall, '+team+' has to live with both its full-season work and this single result.':'The weekly result is verified; a reliable overall rank was not supplied with this edition.';
  const lede=clean([
@@ -61,7 +97,7 @@ function teamStory(t,week){
    star?short(star)+' just set the most visible individual benchmark for '+team+'. Another opponent can change coverage and opportunity, but '+point(star)+' is the performance rivals have to respect.':null,
    weak&&star&&weak!==star?'The quieter '+short(weak)+' line matters next week too. A manager cannot guarantee points, but can reconsider the role and alternatives before repeating the same decision.':null,
    'The team enters its next game at '+record(t)+'. '+(won?'A win supplies breathing room, not permission to ignore the soft positions.':'A loss raises the urgency, not the need to invent a dramatic explanation.'),
-   choose(['Bank what worked, improve what did not, and make the next opponent beat a better version of this lineup.','The next score will not care how good the postgame explanation sounded.','There is still time to move the standings; it starts with a lineup that earns its points.','The next useful answer comes from the field, not the Monday argument.'],seed+'outlook')
+   choose(REPORTER_OUTLOOK[voice]||REPORTER_OUTLOOK['walter-mercer'],seed+'outlook')
  ]);
  const rewritten={lede,players:playerRows,management,'hot-seat':[heat],'cool-throne':[praise],value:[market],sentiment:[emotion,won?'The result bought the manager a better week with the crowd. Whether that carries over depends on the next game.':'The fan base has a reason to ask questions, though a single loss is not a season sentence.'],outlook};
  for(const sec of a.sections||[])if(Object.prototype.hasOwnProperty.call(rewritten,sec.kind))sec.paragraphs=rewritten[sec.kind];

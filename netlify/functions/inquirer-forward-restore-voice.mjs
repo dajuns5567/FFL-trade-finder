@@ -256,6 +256,30 @@ function finalCopyQuality(edition,previousEdition){
   }
   article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
  }
+ // Final fallbacks can introduce another team's sentence after the first sweep.
+ // Compare the completed articles once more, including their replacement paragraphs.
+ const publishedSentences=new Set();
+ for(const team of edition.teams||[]){
+  const article=team.inquirer_article;if(!article)continue;
+  for(const section of article.sections||[]){
+   section.paragraphs=(section.paragraphs||[]).map(p=>{
+    const keep=[];
+    for(const line of sentences(p)){const k=normalizeExact(line);if(!k||publishedSentences.has(k))continue;publishedSentences.add(k);keep.push(line)}
+    return keep.join(' ');
+   }).filter(Boolean);
+   if(!section.paragraphs.length){
+    for(let tries=0;tries<16;tries++){
+     const candidate=uniqueSectionFallback(team,section.kind,Number(edition.week),globalSentences,previousExact);
+     const unique=sentences(candidate).filter(line=>!publishedSentences.has(normalizeExact(line)));
+     if(!unique.length)continue;
+     section.paragraphs=[unique.join(' ')];
+     for(const line of unique)publishedSentences.add(normalizeExact(line));
+     break;
+    }
+   }
+  }
+  article.paragraphs=article.sections.flatMap(sec=>sec.paragraphs||[]);
+ }
  // The recap carries both blocks and flattened section paragraphs; edit the blocks only.
  const recap=edition.league_overview,starts=new Map(),properCounts=new Map();
  if(recap)for(const section of recap.sections||[]){

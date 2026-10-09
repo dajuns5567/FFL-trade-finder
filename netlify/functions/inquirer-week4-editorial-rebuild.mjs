@@ -160,7 +160,7 @@ function leagueStory(edition){
     'No scoreboard was busier than the '+name(w)+'–'+name(l)+' contest. Their combined '+n(g.total)+' points produced a '+n(w.points)+'–'+n(l.points)+' victory for '+name(w)+'.',
     leader?short(leader)+' added '+point(leader)+' to the winner’s cause'+(support?', while '+short(support)+' followed with '+point(support):'')+'. This was not merely an opponent failing to score.':null,
     runner?short(runner)+' offered '+name(l)+' '+point(runner)+'. That individual effort deserves mention because the club lost despite meaningful production.':null,
-    'The headline is the win. The consequence is '+record(w)+' for '+name(w)+' and '+record(l)+' for '+name(l)+', records that will remain when the week's highlights are forgotten.'
+    'The headline is the win. The consequence is '+record(w)+' for '+name(w)+' and '+record(l)+' for '+name(l)+', records that will remain when the week’s highlights are forgotten.'
    ]);
    else if(i===1)paragraphs=clean([
     name(l)+' came within '+n(g.gap)+' of '+name(w)+', '+n(l.points)+' to '+n(w.points)+'. That is narrow enough for a manager to remember each overlooked lineup decision.',

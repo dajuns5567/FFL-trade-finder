@@ -6,6 +6,7 @@ on:
       - 'scripts/inquirer-week4-direct-audit.mjs'
       - 'scripts/inquirer-week4-rebuild-audit.mjs'
       - 'scripts/league-hub-latest-awards-regression.mjs'
+      - 'scripts/inquirer-final-copy-regression.mjs'
       - 'league-hub-v451.js'
       - 'netlify/functions/inquirer-week4-editorial-rebuild.mjs'
       - 'netlify/functions/league-hub-week4-fast.mjs'
@@ -40,6 +41,8 @@ jobs:
         run: npm install --no-save --package-lock=false @netlify/blobs
       - name: Verify Players of the Week and latest edition regression
         run: node scripts/league-hub-latest-awards-regression.mjs
+      - name: Verify final copy and Week 4 cache regression
+        run: node scripts/inquirer-final-copy-regression.mjs
       - name: Verify rebuilt Week 4 recap and all 32 articles
         run: node scripts/inquirer-week4-rebuild-audit.mjs
       - name: Generate and audit real Sleeper Week 4 candidate

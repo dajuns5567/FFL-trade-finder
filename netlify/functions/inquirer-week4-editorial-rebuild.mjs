@@ -190,6 +190,32 @@ function leagueStory(edition){
   low?.next_opponent_name?name(low)+' faces '+low.next_opponent_name+' next. The response to this week’s '+n(low.points)+' points has to come from a better lineup, not a better press release.':null,
   'Nothing from the upcoming slate is counted as complete. Week '+(week+1)+' will get its own results before the newspaper moves forward.'
  ])}
+ if(week%2===1){
+  if(sections[0]?.blocks?.length){
+   const summary=sections[0].blocks.at(-1);
+   summary.paragraphs=clean([
+    'A full slate of completed games put '+name(high)+' atop this week’s team-scoring column at '+n(high.points)+', with '+name(low)+' at '+n(low.points)+' on the other end.',
+    close?'Few results were finer than '+name(close.winner)+' over '+name(close.loser)+', a difference of '+n(close.gap)+'. The managers have an actual score to study rather than another forecast.':null,
+    wide?name(wide.loser)+' absorbed a '+n(wide.gap)+'-point defeat against '+name(wide.winner)+'. That result gives the losing roster a very different problem from a last-point decision.':null,
+    leaders[0]?'The best overall standing currently belongs to '+name(leaders[0])+' at '+record(leaders[0])+'. Weekly points can change dramatically; the record is accumulated more slowly.':null
+   ]);
+   sections[0].paragraphs=sections[0].blocks.flatMap(b=>b.paragraphs||[]);
+  }
+  if(sections[1])sections[1].paragraphs=clean([
+   leaders[0]?name(leaders[0])+' sits '+rank(leaders[0])+' with '+record(leaders[0])+'. The next challenge is sustaining useful scores across the entire starting lineup.':null,
+   high?'The most productive roster this week was '+name(high)+' at '+n(high.points)+'. A contender earns that label across opponents, not from one large total.':null
+  ]);
+  if(sections[2])sections[2].paragraphs=clean([
+   close?'The tightest result went to '+name(close.winner)+' against '+name(close.loser)+'. At '+n(close.gap)+' points apart, the matchup calls for attention to every eligible position.':null,
+   wide?'Elsewhere, '+name(wide.winner)+' outdistanced '+name(wide.loser)+' by '+n(wide.gap)+'. That margin cannot be blamed on a single ordinary bench choice.':null,
+   'Those games shaped the Week '+week+' table. Future forecasts do not change a result already posted.'
+  ]);
+  if(sections[3])sections[3].paragraphs=clean([
+   leaders[0]?.next_opponent_name?'Next is '+name(leaders[0])+' against '+leaders[0].next_opponent_name+'. A strong current record brings the attention, not an advance victory.':null,
+   low?.next_opponent_name?name(low)+' must prepare for '+low.next_opponent_name+' after scoring '+n(low.points)+' this week. Better starters, not a new press release, are the practical answer.':null,
+   'Week '+(week+1)+' has not been scored. These are upcoming appointments, not completed outcomes.'
+  ]);
+ }
  const star=topPlayers(high)[0],young=teams.flatMap(t=>topPlayers(t).filter(p=>valid(p.age)&&Number(p.age)<=26&&valid(p.season_avg)).map(p=>({t,p}))).sort((a,b)=>Number(b.p.season_avg)-Number(a.p.season_avg))[0],flags=new Map();
  for(const t of teams){const key=String(t.division_name||'').trim();if(!key)continue;const previous=flags.get(key),rk=Number(t?.league_context?.standings_rank)||999;if(!previous||rk<(Number(previous?.league_context?.standings_rank)||999))flags.set(key,t)}
  const hot=[

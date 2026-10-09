@@ -139,12 +139,45 @@ function uniqueSectionFallback(team,kind,week,seen,prior){
      valid(delta)?'A tracked change of '+Math.round(Number(delta))+' belongs to '+teamName+' for this interval, independent of lineup production.':'The available edition supports a scoring account for '+teamName+', not a numerical market-value judgment for Week '+week+'.'
    ]:[]
  ][0]||[];
+ if(kind==='cool-throne')available.push(
+   'The credit column for '+teamName+' starts with '+player+'. The final margin needed more than that individual effort.',
+   'Fantasy managers cannot borrow points from next week; '+player+' gave '+teamName+' a verified contribution right now.',
+   player+' stood out among the starters on '+teamName+'. Its significance lies in what the rest of the lineup did around it.',
+   'There was at least one dependable result for '+teamName+': '+player+'. A strong line deserves praise without turning it into a prediction.',
+   'Any account of '+teamName+' should give '+player+' an individual mention. That contribution did not play all the other positions.',
+   'Production, not reputation, earns this spot. '+teamName+' received its leading starter total from '+player+'.',
+   'The week gave '+teamName+' a clear offensive or defensive contributor in '+player+'. The manager must still evaluate the remaining starting roles.',
+   'One bright entry in the '+teamName+' lineup was '+player+'. Whether the team won or lost, the points were real.',
+   'Praise here belongs to '+player+' for the most productive verified start on '+teamName+'. One player cannot solve every position.',
+   'A completed fantasy score makes this recognition possible: '+player+' headed the contributions to '+teamName+'.',
+   'Instead of projecting what could happen, the Cool Throne examines what happened. '+player+' led the '+teamName+' starters.',
+   'Look past the matchup headline and '+player+' emerges as the top individual '+teamName+' scorer. The team result carries its own verdict.',
+   'The largest starter total for '+teamName+' came from '+player+'. Credit is deserved; a roster-wide verdict would be premature.',
+   'Not every part of this lineup answered the bell, but '+player+' supplied the strongest number for '+teamName+'.'
+ );
+ if(kind==='value'&&!valid(delta))available.push(
+   'A fantasy box score exists for '+teamName+', but there is no corresponding confirmed price change; scoring points cannot fill that gap.',
+   'The market column cannot assign a number to '+teamName+' this week. Only the matchup outcome is verified in the saved record.',
+   'No reliable value-history observation accompanies the latest '+teamName+' result. Treat the absence as unknown rather than flat.',
+   'For the value tracker, '+teamName+' has an unanswered question this interval. Its actual starter scores do not determine a market move.',
+   'The completed game tells us how '+teamName+' performed, not how its roster valuation shifted. That second figure is unavailable.',
+   'A price gain or loss would require stored market history for '+teamName+'. The Week '+week+' edition provides no such confirmed change.',
+   'Unlike the fantasy matchup, the value record for '+teamName+' lacks a verified before-and-after comparison. No adjustment is claimed.',
+   'The weekly standings and roster market operate on different records. '+teamName+' has no verified market delta for this interval.',
+   'A missing transaction-window valuation prevents a grounded price statement about '+teamName+'. It does not invalidate the game result.',
+   'The market desk cannot quantify movement for '+teamName+' from the current evidence. A fabricated zero would be misleading.',
+   'Only scoring data can be confirmed for '+teamName+' here; the separate roster-value timeline does not supply this week’s difference.',
+   'Nothing in this Week '+week+' snapshot supports assigning a market direction to '+teamName+'. Performance alone is not valuation.',
+   'An actual value-history entry would be necessary to judge '+teamName+' as gaining or losing market value this week.',
+   'There is a verified Sunday for '+teamName+', but not a verified value delta. Those are different information sources.'
+ );
  const options=available.length?available:[
    'For '+teamName+', this Week '+week+' section has no additional verified '+kind+' detail; the game and lineup facts reported elsewhere remain unchanged.',
    'The saved Week '+week+' record cannot support further claims about '+kind+' for '+teamName+'. That limit is better than inventing a story.'
  ];
  const normalize=x=>norm(x).toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').replace(/\s+/g,' ').trim();
- for(const x of options){const normalized=normalize(x);if(!prior.has(normalized)&&!seen.has(normalized)){seen.add(normalized);return x}}
+ const start=((Number(team.roster_id)||hash(teamName))+week*7)%options.length;
+ for(let i=0;i<options.length;i++){const x=options[(start+i)%options.length],normalized=normalize(x);if(!prior.has(normalized)&&!seen.has(normalized)){seen.add(normalized);return x}}
  return options[0];
 }
 function finalCopyQuality(edition,previousEdition){

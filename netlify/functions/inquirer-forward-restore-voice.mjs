@@ -263,17 +263,20 @@ function finalCopyQuality(edition,previousEdition){
  const publishedSentences=new Set();
  for(const team of edition.teams||[]){
   const article=team.inquirer_article;if(!article)continue;
+  const finalNameLeads=new Map();
+  const allowLead=line=>{const lead=properLead(line);if(!lead)return true;const n=finalNameLeads.get(lead)||0;if(n>=3)return false;finalNameLeads.set(lead,n+1);return true};
   for(const section of article.sections||[]){
    section.paragraphs=(section.paragraphs||[]).map(p=>{
     const keep=[];
-    for(const line of sentences(p)){const k=normalizeExact(line);if(!k||publishedSentences.has(k))continue;publishedSentences.add(k);keep.push(line)}
+    for(const line of sentences(p)){const k=normalizeExact(line);if(!k||publishedSentences.has(k)||!allowLead(line))continue;publishedSentences.add(k);keep.push(line)}
     return keep.join(' ');
    }).filter(Boolean);
    if(!section.paragraphs.length){
     for(let tries=0;tries<16;tries++){
      const candidate=uniqueSectionFallback(team,section.kind,Number(edition.week),globalSentences,previousExact);
      const unique=sentences(candidate).filter(line=>!publishedSentences.has(normalizeExact(line)));
-     if(!unique.length)continue;
+     if(!unique.length||unique.some(line=>{const lead=properLead(line);return lead&&(finalNameLeads.get(lead)||0)>=3}))continue;
+     unique.forEach(allowLead);
      section.paragraphs=[unique.join(' ')];
      for(const line of unique)publishedSentences.add(normalizeExact(line));
      break;
@@ -287,7 +290,7 @@ function finalCopyQuality(edition,previousEdition){
  if(recap)for(const section of recap.sections||[]){
   const groups=section.blocks?.length?section.blocks:[section];
   for(const group of groups){
-   group.paragraphs=(group.paragraphs||[]).map(p=>sentences(p).filter(sentence=>{
+   group.paragraphs=(group.paragraphs||[]).map(p=>sentences(p).map(sentence=>sentence.replace(/^(?:Broadly|In context|Accordingly|On balance|For this matchup|Next up|Instead|Then again|For now|That said|All told|Looking ahead),?\s+/i,'').replace(/^./,c=>c.toUpperCase())).filter(sentence=>{
     const head=opening(sentence),count=starts.get(head)||0,proper=properLead(sentence),pc=properCounts.get(proper)||0;
     if(previousExact.has(normalizeExact(sentence))||previous.has(keyFn(sentence)))return false;
     if(head.startsWith('that is the kind of')&&count>=2)return false;

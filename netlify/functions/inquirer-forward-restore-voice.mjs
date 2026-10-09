@@ -145,7 +145,6 @@ function uniqueSectionFallback(team,kind,week,seen,prior){
    player+' stood out among the starters on '+teamName+'. Its significance lies in what the rest of the lineup did around it.',
    'There was at least one dependable result for '+teamName+': '+player+'. A strong line deserves praise without turning it into a prediction.',
    'Any account of '+teamName+' should give '+player+' an individual mention. That contribution did not play all the other positions.',
-   'Production, not reputation, earns this spot. '+teamName+' received its leading starter total from '+player+'.',
    'One bright entry in the '+teamName+' lineup was '+player+'. Whether the team won or lost, the points were real.',
    'Praise here belongs to '+player+' for the most productive verified start on '+teamName+'. One player cannot solve every position.',
    'A completed fantasy score makes this recognition possible: '+player+' headed the contributions to '+teamName+'.',

@@ -61,6 +61,8 @@ export function evaluateInquirerEditionQuality(candidate,previousEdition=null){
 }
 
 export function applyInquirerEditorialV31(args={}){
+  // Never let reporter transforms alter the prior published edition across retry salts.
+  args={...args,previousEdition:args.previousEdition?structuredClone(args.previousEdition):null};
   const out=applyInquirerEditorialV37(args);
   if(!out||Number(args.week)<3)return out;
   if(out?.inquirer?.teams){

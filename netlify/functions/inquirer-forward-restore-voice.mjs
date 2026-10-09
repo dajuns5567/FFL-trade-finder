@@ -119,12 +119,14 @@ function polishRows(rows,owner,state){
 }
 function finalCopyQuality(edition,previousEdition){
  const entityNames=[...names(edition),...names(previousEdition)];
- const previous=new Set((previousEdition?.teams||[]).flatMap(t=>all(t.inquirer_article)).map(x=>key(x,entityNames)));
+ const priorSentences=[...(previousEdition?.teams||[]).flatMap(t=>all(t.inquirer_article)),...all(previousEdition?.league_overview)];
+ const previous=new Set(priorSentences.map(x=>key(x,entityNames)));
  const normalizeExact=x=>norm(x).toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').replace(/\s+/g,' ').trim();
- const previousExact=new Set((previousEdition?.teams||[]).flatMap(t=>all(t.inquirer_article)).map(normalizeExact));
+ const previousExact=new Set(priorSentences.map(normalizeExact));
  const keyFn=sentence=>key(sentence,entityNames);
  const used=new Map();
- const openingSeen=new Map();
+ const openingSeen=new Map(),globalSentences=new Set();
+ let afterWeekLeads=0;
  for(const team of edition.teams||[]){
   const article=team.inquirer_article;if(!article)continue;
   const leadCount=new Map(),seen=new Set();
@@ -133,13 +135,14 @@ function finalCopyQuality(edition,previousEdition){
     let out=[];
     for(const sentence of sentences(p)){
      const key=norm(sentence).toLowerCase(),keySentence=keyFn(sentence),proper=properLead(sentence),count=leadCount.get(proper)||0;
-     if(seen.has(key)||previous.has(keySentence)||previousExact.has(normalizeExact(sentence)))continue;
+     if(seen.has(key)||previous.has(keySentence)||previousExact.has(normalizeExact(sentence))||globalSentences.has(normalizeExact(sentence)))continue;
+     if(/^after a [-+]?\d+(?:\.\d+)?[- ]point week/i.test(sentence)&&afterWeekLeads>=2)continue;
      if(proper&&count>=3)continue;
      const shape=opening(sentence);
      const owners=openingSeen.get(shape)||new Set();
      if(shape.startsWith('from # in week #')&&owners.size>=2)continue;
      if(owners.size>=3&&!owners.has(String(team.roster_id)))continue;
-     seen.add(key);if(proper)leadCount.set(proper,count+1);
+     seen.add(key);globalSentences.add(normalizeExact(sentence));if(/^after a [-+]?\d+(?:\.\d+)?[- ]point week/i.test(sentence))afterWeekLeads++;if(proper)leadCount.set(proper,count+1);
      owners.add(String(team.roster_id));openingSeen.set(shape,owners);
      out.push(sentence);
     }

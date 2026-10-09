@@ -80,8 +80,8 @@ function managerAwardsFromWeek(w){
  losses=valid.filter(g=>g.won===false),wins=valid.filter(g=>g.won===true),
  projectedUpsets=losses.filter(g=>Number(g.projection_coverage)>0&&Number.isFinite(safeProjection(g.projected))&&Number.isFinite(oppProj(g))&&Number(g.projected)>oppProj(g)).sort((a,b)=>(Number(b.projected)-oppProj(b))-(Number(a.projected)-oppProj(a))||String(a.roster_id).localeCompare(String(b.roster_id))),
  hot=projectedUpsets[0]||losses.slice().sort((a,b)=>{
-   const au=Number.isFinite(safeProjection(a.projected))?Number(a.projected)-Number(a.points):Number(a.opponent_points)-Number(a.points),
-    bu=Number.isFinite(safeProjection(b.projected))?Number(b.projected)-Number(b.points):Number(b.opponent_points)-Number(b.points);
+   const au=Number(a.projection_coverage)>0&&Number.isFinite(safeProjection(a.projected))?Number(a.projected)-Number(a.points):Number(a.opponent_points)-Number(a.points),
+    bu=Number(b.projection_coverage)>0&&Number.isFinite(safeProjection(b.projected))?Number(b.projected)-Number(b.points):Number(b.opponent_points)-Number(b.points);
    return bu-au||String(a.roster_id).localeCompare(String(b.roster_id))
   })[0],
  cool=wins.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points))||String(a.roster_id).localeCompare(String(b.roster_id)))[0],

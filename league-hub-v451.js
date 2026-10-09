@@ -468,8 +468,8 @@ function archiveFiltersHTML(w){
 async function fetchArchivedEdition(year,week){
  const y=Number(year),w=Number(week);if(!y||!w)return null;const key=y+'|'+w;
  if(archivedEditionCache.has(key))return archivedEditionCache.get(key);
- const task=(async()=>{const url=(y===2026&&w===3)?'/.netlify/functions/league-hub-week3-fast?rev=476':(y===2026&&w===4)?'/.netlify/functions/league-hub-week4-fast?rev=481':'/.netlify/functions/league-hub?broadcast_season='+y+'&broadcast_week='+w;
-  const r=await fetch(url,{cache:'force-cache'});if(!r.ok)throw Error('archived edition unavailable: '+y+' Week '+w);const x=await r.json();
+ const task=(async()=>{const url=(y===2026&&w===3)?'/.netlify/functions/league-hub-week3-fast?rev=476':(y===2026&&w===4)?'/.netlify/functions/league-hub-week4-fast?rev=482':'/.netlify/functions/league-hub?broadcast_season='+y+'&broadcast_week='+w;
+  const r=await fetch(url,{cache:(y===2026&&w===4)?'no-store':'force-cache'});if(!r.ok)throw Error('archived edition unavailable: '+y+' Week '+w);const x=await r.json();
   return x?.available&&Array.isArray(x?.teams)&&x.teams.length?x:null})();
  archivedEditionCache.set(key,task);
  try{const x=await task;archivedEditionCache.set(key,x);return x}catch(e){archivedEditionCache.delete(key);throw e}

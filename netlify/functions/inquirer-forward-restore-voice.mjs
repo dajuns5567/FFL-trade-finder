@@ -141,6 +141,7 @@ function finalCopyQuality(edition,previousEdition){
     }
     return out.join(' ');
    }).filter(Boolean);
+   if(!sec.paragraphs.length){const backed=fallback(team,sec.kind,Number(edition.week));if(backed)sec.paragraphs=[backed];else if(sec.kind==='sentiment')sec.paragraphs=['Week '+edition.week+' ended with a verified result, but the fan reaction is not sufficiently documented to supply a numerical judgment.'];else sec.paragraphs=['Week '+edition.week+' provides no additional verified '+String(sec.kind||'story')+' detail for '+String(team.team_name||'this roster')+'.'];}
   }
   article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
  }

@@ -117,6 +117,35 @@ function polishRows(rows,owner,state){
  }
  return result;
 }
+function finalCopyQuality(edition,previousEdition){
+ const previous=new Set((previousEdition?.teams||[]).flatMap(t=>all(t.inquirer_article)).map(x=>norm(x).toLowerCase()));
+ const used=new Map();
+ const openingSeen=new Map();
+ for(const team of edition.teams||[]){
+  const article=team.inquirer_article;if(!article)continue;
+  const leadCount=new Map(),seen=new Set();
+  for(const sec of article.sections||[]){
+   sec.paragraphs=(sec.paragraphs||[]).map(p=>{
+    let out=[];
+    for(const sentence of sentences(p)){
+     const key=norm(sentence).toLowerCase(),proper=properLead(sentence),count=leadCount.get(proper)||0;
+     if(seen.has(key)||previous.has(key)&&count>0)continue;
+     if(proper&&count>=3)continue;
+     const shape=opening(sentence);
+     const owners=openingSeen.get(shape)||new Set();
+     if(shape.startsWith('from # in week #')&&owners.size>=2)continue;
+     if(owners.size>=3&&!owners.has(String(team.roster_id)))continue;
+     seen.add(key);if(proper)leadCount.set(proper,count+1);
+     owners.add(String(team.roster_id));openingSeen.set(shape,owners);
+     out.push(sentence);
+    }
+    return out.join(' ');
+   }).filter(Boolean);
+  }
+  article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+ }
+ return edition;
+}
 function polishEdition(edition,generated){
  const state={openOwners:new Map(),proper:new Map(),previousProper:''};
  for(const team of edition.teams||[]){
@@ -183,5 +212,5 @@ export function restoreReporterNarratives(rebuilt,original,{previousEdition=null
   a.editorial_rebuilt_for_week=Number(rebuilt.week);
   t.inquirer_article=a;
  }
- return polishEdition(rebuilt,generated);
+ return finalCopyQuality(polishEdition(rebuilt,generated),previousEdition);
 }

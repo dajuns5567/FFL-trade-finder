@@ -13,19 +13,19 @@ function supportedFallback(rows,t,kind,seed){
  const rid=Math.max(1,Number(t.roster_id)||1),i=rid-1,base=rows[i%rows.length];
  const angles={
   'cool-throne':[
-   'the other starters still had to carry their share of the matchup',
-   'the final opponent total determined whether that production became a win',
-   'the individual high and the roster result remain two separate facts'
+   'but the other starters still had to carry their share of the matchup',
+   'which matters because the opponent’s total determined whether the production became a win',
+   'but the individual high and the roster result remain two separate facts'
   ],
   'hot-seat':[
-   'an eligible alternative would need to be verified before judging the lineup call',
-   'a quiet starting return can matter even when the matchup was not close',
-   'the next opponent gives management a new choice rather than an automatic fix'
+   'but an eligible alternative would need verification before judging the lineup call',
+   'because a quiet starting return matters even when the matchup was not close',
+   'so the next opponent gives management a new choice rather than an automatic fix'
   ],
   value:[
-   'the absence of a market entry is not evidence of a flat week',
-   'the fantasy scoring result measures something different from a roster price',
-   'future games cannot retroactively establish an unrecorded value change'
+   'because the absence of a market entry cannot establish a flat week',
+   'but the fantasy scoring result measures something different from a roster price',
+   'which matters because future games cannot establish an unrecorded value change'
   ]
  };
  const tails=angles[kind]||angles.value,tail=tails[Math.floor(i/rows.length)%tails.length];

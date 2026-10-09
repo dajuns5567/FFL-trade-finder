@@ -154,6 +154,16 @@ function leagueStory(edition){
    'For '+name(l)+', the season record becomes '+record(l)+' and the overall position is '+rank(l)+'. One matchup is not a final judgment, but the standings do not wait for a better explanation.',
    w.next_opponent_name?name(w)+' turns next to '+w.next_opponent_name+'. The latest result is useful preparation, but that opponent has its own lineup and its own reasons to disrupt the form.':null
   ]);
+  // Alternate editorial framing by issue, not merely a different transition on a copied sentence.
+  if(week%2===1){
+   const leadName=leader?short(leader):'the leading scorer';
+   paragraphs=clean([
+    name(l)+' entered this contest with its own lineup and left with '+n(l.points)+' points; '+name(w)+' recorded '+n(w.points)+'. The '+n(g.gap)+'-point difference determined where the win went.',
+    'For '+name(w)+', '+leadName+(leader?' collected '+point(leader):' headed the available scores')+'. '+(support?short(support)+' also scored '+point(support)+', giving the winning roster two contributors to evaluate.':'The other positions needed to carry the remainder of the result.'),
+    runner?name(l)+' received '+point(runner)+' from '+short(runner)+'. That effort belongs in the account even though the opposing roster finished ahead.':'The losing side did not supply a complete individual breakdown alongside the final result.',
+    name(w)+' leaves Week '+week+' with '+record(w)+' in the standings; '+name(l)+' has '+record(l)+'. The result changes each club’s record, not what either manager must decide before the next lineup locks.'
+   ]);
+  }
   blocks.push({heading:g.storyTitle+': '+name(w)+' vs. '+name(l),paragraphs});
  }
  const leaders=sort(teams,(a,b)=>(Number(a?.league_context?.standings_rank)||999)-(Number(b?.league_context?.standings_rank)||999)).slice(0,5);

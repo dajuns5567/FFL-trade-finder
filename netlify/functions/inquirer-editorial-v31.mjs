@@ -14,6 +14,7 @@ import {sustainInquirerForwardEdition} from './inquirer-forward-sustainability.m
 import {naturalizeInquirerForwardEdition} from './inquirer-forward-naturalize.mjs';
 import {guardInquirerForwardAgainstPrior} from './inquirer-forward-prior-guard.mjs';
 import {dedupeInquirerForwardEdition} from './inquirer-forward-edition-dedupe.mjs';
+import {rebuildForwardInquirerEditorial} from './inquirer-week4-editorial-rebuild.mjs';
 import {enforceInquirerForwardContextTruth,findInquirerForwardContextTruthIssues} from './inquirer-forward-context-truth.mjs';
 import {finalSweepInquirerForwardEdition,findInquirerForwardSurfaceIssues} from './inquirer-forward-final-sweep.mjs';
 import {normalizeInquirerForwardHeadlines,findInquirerForwardHeadlineGrammarIssues} from './inquirer-forward-headline-grammar.mjs';
@@ -130,8 +131,11 @@ export function applyInquirerEditorialV31(args={}){
     finalSweepInquirerForwardEdition(edition,{week:Number(args.week)});
     normalizeInquirerForwardHeadlines(edition,{week:Number(args.week)});
 
-    out.inquirer.teams=edition.teams;
-    out.leagueOverview=edition.league_overview;
+    // Publish from the same fact-grounded sections used by the corrected Week 4 edition.
+    // Earlier narrative cleanup remains upstream; all final copy is revalidated below.
+    const rebuilt=rebuildForwardInquirerEditorial({...edition,season:Number(args.season),week:Number(args.week)});
+    out.inquirer.teams=rebuilt.teams;
+    out.leagueOverview=rebuilt.league_overview;
   }
   return out;
 }

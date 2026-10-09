@@ -132,7 +132,14 @@ function polishEdition(edition,generated){
    }
    sec.paragraphs=cleaned;
   }
-  if(team.inquirer_article)team.inquirer_article.paragraphs=(team.inquirer_article.sections||[]).flatMap(s=>s.paragraphs||[]);
+  if(team.inquirer_article){
+   const article=team.inquirer_article;
+   if(!article.sections.flatMap(sec=>sec.paragraphs||[]).some(p=>/\bWeek\s*\d+\b/i.test(p))){
+    const lede=article.sections.find(sec=>sec.kind==='lede')||article.sections[0];
+    if(lede?.paragraphs?.length)lede.paragraphs[0]='Week '+Number(edition.week)+': '+lede.paragraphs[0];
+   }
+   article.paragraphs=article.sections.flatMap(sec=>sec.paragraphs||[]);
+  }
  }
  state.proper=new Map();state.previousProper='';
  for(const sec of edition.league_overview?.sections||[]){

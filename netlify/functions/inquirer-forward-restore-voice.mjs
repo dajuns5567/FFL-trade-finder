@@ -151,7 +151,6 @@ function uniqueSectionFallback(team,kind,week,seen,prior){
    'Praise here belongs to '+player+' for the most productive verified start on '+teamName+'. One player cannot solve every position.',
    'A completed fantasy score makes this recognition possible: '+player+' headed the contributions to '+teamName+'.',
    'Instead of projecting what could happen, the Cool Throne examines what happened. '+player+' led the '+teamName+' starters.',
-   'Look past the matchup headline and '+player+' emerges as the top individual '+teamName+' scorer. The opposing roster total still determined whether those points were enough.',
    'The largest starter total for '+teamName+' came from '+player+'. Credit is deserved; a roster-wide verdict would be premature.',
    'Not every part of this lineup answered the bell, but '+player+' supplied the strongest number for '+teamName+'.'
  );
@@ -197,6 +196,21 @@ function uniqueSectionFallback(team,kind,week,seen,prior){
  for(let i=0;i<options.length;i++){let x=options[(start+i)%options.length];if(kind==='value'&&!valid(delta))x=x.replace(/\.\s+(?=[A-Z])/g,'; ').replace(/[.!?]$/,'')+' because the verified fantasy score cannot substitute for a missing market record.';
   if(kind==='value'&&valid(delta))x=x.replace(/\.\s+(?=[A-Z])/g,'; ').replace(/[.!?]$/,'')+' because market prices and weekly fantasy points measure different outcomes.';const normalized=normalize(x);if(!prior.has(normalized)&&!seen.has(normalized)){seen.add(normalized);return x}}
  return options[0];
+}
+function canonicalizePublishedTeamNames(edition){
+ const known=(edition?.teams||[]).map(t=>String(t.team_name||'')).filter(Boolean).sort((a,b)=>b.length-a.length);
+ const correct=s=>{let result=String(s||'');for(const label of known){const safe=label.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\function finalCopyQuality(edition,previousEdition){');result=result.replace(new RegExp('\\b'+safe+'\\b','gi'),label)}return result};
+ for(const team of edition.teams||[]){
+  const article=team.inquirer_article;
+  if(!article)continue;
+  for(const section of article.sections||[])section.paragraphs=(section.paragraphs||[]).map(correct);
+  article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
+ }
+ for(const section of edition.league_overview?.sections||[]){
+  if(section.blocks?.length){for(const block of section.blocks)block.paragraphs=(block.paragraphs||[]).map(correct);section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[])}
+  else section.paragraphs=(section.paragraphs||[]).map(correct);
+ }
+ return edition;
 }
 function finalCopyQuality(edition,previousEdition){
  const entityNames=[...names(edition),...names(previousEdition)];
@@ -252,7 +266,7 @@ function finalCopyQuality(edition,previousEdition){
   }
   if(section.blocks?.length)section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
  }
- return edition;
+ return canonicalizePublishedTeamNames(edition);
 }
 function polishEdition(edition,generated){
  const state={openOwners:new Map(),proper:new Map(),previousProper:''};

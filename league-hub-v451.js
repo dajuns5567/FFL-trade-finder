@@ -73,12 +73,12 @@ async function discoverLatestWeek(){
 async function weeklyAwards(){if(weeklyAwardsCache)return weeklyAwardsCache;const r=await fetch('/.netlify/functions/league-hub?weekly_awards=1',{cache:'no-store'}).catch(()=>null);weeklyAwardsCache=r?.ok?await r.json():{schema_version:2,records:[]};return weeklyAwardsCache}
 const safeProjection=x=>x==null||x===''?NaN:Number(x);
 function managerAwardsFromWeek(w){
- const teams=Array.isArray(w?.teams)?w.teams:[],valid=teams.filter(t=>Number.isFinite(Number(t?.points)));if(!valid.length)return[];
+ const teams=Array.isArray(w?.teams)?w.teams:[],valid=teams.filter(t=>t?.points!=null&&t.points!==''&&Number.isFinite(Number(t.points)));if(!valid.length)return[];
  const byId=new Map(valid.map(t=>[String(t.roster_id),t])),oppProj=t=>safeProjection(t?.opponent_projected??byId.get(String(t?.opponent_roster_id||''))?.projected),
  high=valid.slice().sort((a,b)=>Number(b.points)-Number(a.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
  low=valid.slice().sort((a,b)=>Number(a.points)-Number(b.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
  losses=valid.filter(g=>g.won===false),wins=valid.filter(g=>g.won===true),
- projectedUpsets=losses.filter(g=>Number.isFinite(safeProjection(g.projected))&&Number.isFinite(oppProj(g))&&Number(g.projected)>oppProj(g)).sort((a,b)=>(Number(b.projected)-oppProj(b))-(Number(a.projected)-oppProj(a))||String(a.roster_id).localeCompare(String(b.roster_id))),
+ projectedUpsets=losses.filter(g=>Number(g.projection_coverage)>0&&Number.isFinite(safeProjection(g.projected))&&Number.isFinite(oppProj(g))&&Number(g.projected)>oppProj(g)).sort((a,b)=>(Number(b.projected)-oppProj(b))-(Number(a.projected)-oppProj(a))||String(a.roster_id).localeCompare(String(b.roster_id))),
  hot=projectedUpsets[0]||losses.slice().sort((a,b)=>{
    const au=Number.isFinite(safeProjection(a.projected))?Number(a.projected)-Number(a.points):Number(a.opponent_points)-Number(a.points),
     bu=Number.isFinite(safeProjection(b.projected))?Number(b.projected)-Number(b.points):Number(b.opponent_points)-Number(b.points);

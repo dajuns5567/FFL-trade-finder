@@ -134,6 +134,8 @@ export function applyInquirerEditorialV31(args={}){
     // Publish from the same fact-grounded sections used by the corrected Week 4 edition.
     // Earlier narrative cleanup remains upstream; all final copy is revalidated below.
     const rebuilt=rebuildForwardInquirerEditorial({...edition,season:Number(args.season),week:Number(args.week)},{previousEdition:args.previousEdition||null});
+    // Recheck explanation depth after the rebuild; prior passes operated on discarded copy.
+    applyInquirerForwardFreshness(rebuilt,{week:Number(args.week),previousEdition:args.previousEdition||null,variationSalt:(Number(args.variationSalt)||0)+203});
     out.inquirer.teams=rebuilt.teams;
     out.leagueOverview=rebuilt.league_overview;
   }

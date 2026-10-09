@@ -118,7 +118,9 @@ function polishRows(rows,owner,state){
  return result;
 }
 function finalCopyQuality(edition,previousEdition){
- const previous=new Set((previousEdition?.teams||[]).flatMap(t=>all(t.inquirer_article)).map(x=>norm(x).toLowerCase()));
+ const entityNames=[...names(edition),...names(previousEdition)];
+ const previous=new Set((previousEdition?.teams||[]).flatMap(t=>all(t.inquirer_article)).map(x=>key(x,entityNames)));
+ const keyFn=sentence=>key(sentence,entityNames);
  const used=new Map();
  const openingSeen=new Map();
  for(const team of edition.teams||[]){
@@ -128,8 +130,8 @@ function finalCopyQuality(edition,previousEdition){
    sec.paragraphs=(sec.paragraphs||[]).map(p=>{
     let out=[];
     for(const sentence of sentences(p)){
-     const key=norm(sentence).toLowerCase(),proper=properLead(sentence),count=leadCount.get(proper)||0;
-     if(seen.has(key)||previous.has(key)&&count>0)continue;
+     const key=norm(sentence).toLowerCase(),keySentence=keyFn(sentence),proper=properLead(sentence),count=leadCount.get(proper)||0;
+     if(seen.has(key)||previous.has(keySentence))continue;
      if(proper&&count>=3)continue;
      const shape=opening(sentence);
      const owners=openingSeen.get(shape)||new Set();

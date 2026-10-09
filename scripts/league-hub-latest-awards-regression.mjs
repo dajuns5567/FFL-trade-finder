@@ -25,4 +25,18 @@ assert.doesNotMatch(officialHtml,/Receiver Two/);
 assert.match(context.playersOfWeekHTML({season:2026,week:5,teams:[]},{records:[]}),/Players of the Week/);
 assert(source.includes('discoverLatestWeek().then(x=>'),'Daily view must discover latest published week');
 assert(source.includes('if(x?.available&&Array.isArray(x.teams)&&x.teams.length)acceptEdition(x)'),'Latest edition must become selected');
+const awardFns=take('const safeProjection=x=>','async function ensureCurrentWeekAwards(w){');
+vm.runInContext(awardFns,context);
+const fixture={available:true,season:2026,week:4,teams:[
+ {roster_id:1,manager_name:'Projected Favorite',points:99,opponent_roster_id:2,opponent_points:101,won:false,projected:120,projection_coverage:9},
+ {roster_id:2,manager_name:'Narrow Winner',points:101,opponent_roster_id:1,opponent_points:99,won:true,projected:105,projection_coverage:9},
+ {roster_id:3,manager_name:'No Coverage',points:90,opponent_roster_id:4,opponent_points:130,won:false,projected:180,projection_coverage:0},
+ {roster_id:4,manager_name:'Big Winner',points:130,opponent_roster_id:3,opponent_points:90,won:true,projected:null,projection_coverage:0}
+]};
+const awards=context.managerAwardsFromWeek(fixture);
+assert.equal(awards.find(x=>x.type==='hot-seat')?.roster_id,'1','A verified favorite losing is Hot Seat before missing-coverage fallbacks');
+assert.equal(awards.find(x=>x.type==='cool-throne')?.roster_id,'4','Cool Throne should use strongest actual win');
+const noProjected=structuredClone(fixture);noProjected.teams[0].projection_coverage=0;
+const fallbackAwards=context.managerAwardsFromWeek(noProjected);
+assert.equal(fallbackAwards.find(x=>x.type==='hot-seat')?.roster_id,'3','Uncovered projections must not artificially determine Hot Seat');
 console.log('Players of the Week fallback, verified awards precedence, and latest-edition wiring passed');

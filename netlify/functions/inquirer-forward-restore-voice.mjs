@@ -224,24 +224,29 @@ function finalCopyQuality(edition,previousEdition){
  let afterWeekLeads=0;
  for(const team of edition.teams||[]){
   const article=team.inquirer_article;if(!article)continue;
-  const leadCount=new Map(),seen=new Set();
+  const leadCount=new Map(),seen=new Set();let lastProper='';
+  const r=team.league_context?.record||{},currentRecord=valid(r.wins)&&valid(r.losses)?String(r.wins)+'-'+String(r.losses):null;
   for(const sec of article.sections||[]){
    sec.paragraphs=(sec.paragraphs||[]).map(p=>{
     let out=[];
     for(const sentence of sentences(p)){
      if(/\b(?:matchup headline|roster-wide verdict|courtroom|docket|cross-examination|defendant|prosecution|indictment)\b/i.test(sentence))continue;
      if(/\balso got \d+(?:\.\d+)? from\b/i.test(sentence))continue;
+     if(/\bcrowd is back in rivals after the win\b/i.test(sentence))continue;
+     if(/^the week gave .+ a clear offensive or defensive contributor/i.test(sentence))continue;
+     if(currentRecord&&/\b\d{1,2}-\d{1,2}\b/.test(sentence)&&[...sentence.matchAll(/\b\d{1,2}-\d{1,2}\b/g)].some(m=>m[0]!==currentRecord)&&!(/\bin Week\s+\d+\b/i.test(sentence)&&!new RegExp('\\bWeek\\s*'+Number(edition.week)+'\\b','i').test(sentence)))continue;
      const key=norm(sentence).toLowerCase(),keySentence=keyFn(sentence),proper=properLead(sentence),count=leadCount.get(proper)||0;
      if(seen.has(key)||previous.has(keySentence)||previousExact.has(normalizeExact(sentence))||globalSentences.has(normalizeExact(sentence)))continue;
      if(/^(.+ registered a (?:gain|decline) of [-+]?\d+ tracked value points|roster value for .+ moved [-+]?\d+ during the documented interval)\b/i.test(sentence))continue;
      if(/^market history recorded [-+]?\d+ points of movement/i.test(sentence))continue;
      if(/^against .+? added [-+]?\d+(?:\.\d+)? for the .+?; (?:passing|rushing|receiving):/i.test(sentence))continue;
      if(/^after a [-+]?\d+(?:\.\d+)?[- ]point week/i.test(sentence)&&afterWeekLeads>=2)continue;
-     if(proper&&count>=3)continue;
+     if(proper&&(count>=3||proper===lastProper))continue;
      const shape=opening(sentence);
      const owners=openingSeen.get(shape)||new Set();
      if(shape.startsWith('from # in week #')&&owners.size>=2)continue;
      if(owners.size>=3&&!owners.has(String(team.roster_id)))continue;
+     if(proper)lastProper=proper;else lastProper='';
      seen.add(key);globalSentences.add(normalizeExact(sentence));if(/^after a [-+]?\d+(?:\.\d+)?[- ]point week/i.test(sentence))afterWeekLeads++;if(proper)leadCount.set(proper,count+1);
      owners.add(String(team.roster_id));openingSeen.set(shape,owners);
      out.push(sentence);

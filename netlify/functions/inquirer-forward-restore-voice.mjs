@@ -117,6 +117,36 @@ function polishRows(rows,owner,state){
  }
  return result;
 }
+function uniqueSectionFallback(team,kind,week,seen,prior){
+ const teamName=String(team.team_name||'the roster'),starters=(team.starter_details||[]).filter(p=>valid(p.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points));
+ const best=starters[0],worst=starters.at(-1),delta=team.value_history_week?.delta;
+ const player=best?String(best.name)+' ('+f(best.points)+' fantasy points)':'the available starting lineup';
+ const low=worst?String(worst.name)+' ('+f(worst.points)+' points)':'the lowest starting slot';
+ const available=[
+   kind==='cool-throne'?[
+     'In the Week '+week+' box score, '+player+' supplied '+teamName+' with the strongest individual return; the remaining starters still determined the matchup.',
+     'The most productive starting contribution for '+teamName+' came from '+player+'. That result matters even when the team outcome tells a less comfortable story.',
+     'For this completed matchup, '+player+' was the brightest line for '+teamName+'. It earned recognition without settling what happens next.',
+     'The starting lineup gives '+teamName+' a concrete reason to credit '+player+'; its other positions still had to earn the final total.'
+   ]:kind==='hot-seat'?[
+     'The difficult starting spot for '+teamName+' in Week '+week+' was '+low+'. That is a role to inspect rather than an excuse to invent a replacement.',
+     'A closer look at '+teamName+' finds '+low+' at the bottom of the starter scoring list; the next lineup offers a new decision.',
+     'Week '+week+' exposed one quiet contribution for '+teamName+': '+low+'. An actual eligible alternative would be needed before blaming the manager.'
+   ]:kind==='value'?[
+     valid(delta)?'During the recorded interval, '+teamName+' had a tracked value change of '+Math.round(Number(delta))+'. That measure is distinct from what the starters scored.':'No verified roster-value movement was reported for '+teamName+' in Week '+week+'. The matchup total cannot establish a market price.',
+     valid(delta)?'The value tracker moved '+teamName+' by '+Math.round(Number(delta))+' while the schedule produced a separate result. Neither figure substitutes for the other.':'For '+teamName+', the Week '+week+' market comparison is unavailable. That absence cannot establish a gain or loss.',
+     valid(delta)?'Market history recorded '+Math.round(Number(delta))+' points of movement for '+teamName+'. The week’s fantasy result answers a different question.':'Week '+week+' has a completed game for '+teamName+' but no validated change in roster value; an unknown change stays unknown.',
+     valid(delta)?'A tracked change of '+Math.round(Number(delta))+' belongs to '+teamName+' for this interval, independent of lineup production.':'The available edition supports a scoring account for '+teamName+', not a numerical market-value judgment for Week '+week+'.'
+   ]:[]
+ ][0]||[];
+ const options=available.length?available:[
+   'For '+teamName+', this Week '+week+' section has no additional verified '+kind+' detail; the game and lineup facts reported elsewhere remain unchanged.',
+   'The saved Week '+week+' record cannot support further claims about '+kind+' for '+teamName+'. That limit is better than inventing a story.'
+ ];
+ const normalize=x=>norm(x).toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').replace(/\s+/g,' ').trim();
+ for(const x of options){const normalized=normalize(x);if(!prior.has(normalized)&&!seen.has(normalized)){seen.add(normalized);return x}}
+ return options[0];
+}
 function finalCopyQuality(edition,previousEdition){
  const entityNames=[...names(edition),...names(previousEdition)];
  const priorSentences=[...(previousEdition?.teams||[]).flatMap(t=>all(t.inquirer_article)),...all(previousEdition?.league_overview)];
@@ -148,7 +178,7 @@ function finalCopyQuality(edition,previousEdition){
     }
     return out.join(' ');
    }).filter(Boolean);
-   if(!sec.paragraphs.length){const backed=fallback(team,sec.kind,Number(edition.week));if(backed)sec.paragraphs=[backed];else if(sec.kind==='sentiment')sec.paragraphs=['Week '+edition.week+' ended with a verified result, but the fan reaction is not sufficiently documented to supply a numerical judgment.'];else sec.paragraphs=['Week '+edition.week+' provides no additional verified '+String(sec.kind||'story')+' detail for '+String(team.team_name||'this roster')+'.'];}
+   if(!sec.paragraphs.length)sec.paragraphs=[uniqueSectionFallback(team,sec.kind,Number(edition.week),globalSentences,previousExact)];
   }
   article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
  }

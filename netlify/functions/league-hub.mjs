@@ -523,8 +523,13 @@ async function weeklyAwards(){
   if(complete)continue;
   const broadcast=await broadcastStored(season,week);
   if(!broadcast?.available||!Array.isArray(broadcast?.teams)||!broadcast.teams.length)continue;
-  const rec=await weeklyAwardRecordForBroadcast(broadcast);
-  byKey.set(key,rec);
+  try{
+   const rec=await weeklyAwardRecordForBroadcast(broadcast);
+   byKey.set(key,rec);
+  }catch(error){
+   // A missing or unpersistable historical award must not suppress newer completed weeks.
+   console.error('weekly awards refresh failed',season,week,error);
+  }
  }
  const fresh=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null);
  return{schema_version:Number(fresh?.schema_version)||2,records:Array.isArray(fresh?.records)?fresh.records:[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week))};

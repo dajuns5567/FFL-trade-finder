@@ -7,7 +7,7 @@
 const norm=v=>String(v||'').replace(/\s+/g,' ').trim();
 const hash=s=>{let h=2166136261;for(const c of String(s||'')){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
 const sentences=v=>norm(v).replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§')).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);
-const articleParagraphs=a=>(a?.sections||[]).flatMap(s=>[...(s?.paragraphs||[]),...(s?.blocks||[]).flatMap(b=>b?.paragraphs||[])]).filter(Boolean).map(norm);
+const articleParagraphs=a=>(a?.sections||[]).flatMap(s=>(s?.blocks||[]).length?(s.blocks||[]).flatMap(b=>b?.paragraphs||[]):s?.paragraphs||[]).filter(Boolean).map(norm);
 const articleSentences=a=>articleParagraphs(a).flatMap(sentences);
 const reporterId=a=>String(a?.reporter?.id||'walter-mercer');
 

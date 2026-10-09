@@ -31,6 +31,7 @@ jobs:
         run: |
           node --check scripts/inquirer-week4-direct-audit.mjs
           node --check netlify/functions/inquirer-editorial-v31.mjs
+          node --check netlify/functions/inquirer-week4-editorial-rebuild.mjs
           node --check netlify/functions/inquirer-forward-prior-guard.mjs
           node --check netlify/functions/inquirer-forward-final-sweep.mjs
       - name: Install generator dependency

@@ -155,6 +155,23 @@ function uniqueSectionFallback(team,kind,week,seen,prior){
    'The largest starter total for '+teamName+' came from '+player+'. Credit is deserved; a roster-wide verdict would be premature.',
    'Not every part of this lineup answered the bell, but '+player+' supplied the strongest number for '+teamName+'.'
  );
+ if(kind==='value'&&valid(delta)){
+  const move=Math.round(Number(delta)),signed=move>=0?'gain':'decline',magnitude=Math.abs(move);
+  available.push(
+    teamName+' changed by '+move+' tracked value points in the saved history; that direction describes the roster market rather than the Week '+week+' score.',
+    'The saved market record puts '+teamName+' at '+(move>=0?'+':'')+move+' for this interval. The matchup result cannot independently confirm that valuation.',
+    'A '+signed+' of '+magnitude+' value points accompanies '+teamName+' in the recorded window. Future roster prices are not implied by that single observation.',
+    'The roster valuation moved '+move+' for '+teamName+', a distinct measure from how its starters performed against their opponent.',
+    'For '+teamName+', the confirmed value-history difference is '+move+'. That movement does not award or remove a fantasy win.',
+    'Management can review a '+magnitude+'-point market '+signed+' for '+teamName+'; Week '+week+' lineup production remains a separate question.',
+    'Tracked roster value shifted '+(move>=0?'up':'down')+' '+magnitude+' for '+teamName+'. The change belongs to the saved interval, not a forecast.',
+    'A documented market delta of '+move+' belongs to '+teamName+' this week. The opponent still decides the on-field matchup margin.',
+    'The value timeline for '+teamName+' shows '+move+' during the measured period; standings and player scores tell different stories.',
+    'There was a '+signed+' worth '+magnitude+' in '+teamName+'’s market history. That alone cannot determine the next trade or result.',
+    'Roster history lists '+(move>=0?'an increase':'a decrease')+' of '+magnitude+' for '+teamName+'. Weekly performance should not be used to invent a different valuation.',
+    'Value tracking marked '+teamName+' '+(move>=0?'higher':'lower')+' by '+magnitude+' points; the club’s completed score is evidence of competition, not pricing.'
+  );
+ }
  if(kind==='value'&&!valid(delta))available.push(
    'A fantasy box score exists for '+teamName+', but there is no corresponding confirmed price change; scoring points cannot fill that gap.',
    'The market column cannot assign a number to '+teamName+' this week. Only the matchup outcome is verified in the saved record.',
@@ -177,7 +194,8 @@ function uniqueSectionFallback(team,kind,week,seen,prior){
  ];
  const normalize=x=>norm(x).toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').replace(/\s+/g,' ').trim();
  const start=((Number(team.roster_id)||hash(teamName))+week*7)%options.length;
- for(let i=0;i<options.length;i++){let x=options[(start+i)%options.length];if(kind==='value'&&!valid(delta))x=x.replace(/\.\s+(?=[A-Z])/g,'; ').replace(/[.!?]$/,'')+' because the verified fantasy score cannot substitute for a missing market record.';const normalized=normalize(x);if(!prior.has(normalized)&&!seen.has(normalized)){seen.add(normalized);return x}}
+ for(let i=0;i<options.length;i++){let x=options[(start+i)%options.length];if(kind==='value'&&!valid(delta))x=x.replace(/\.\s+(?=[A-Z])/g,'; ').replace(/[.!?]$/,'')+' because the verified fantasy score cannot substitute for a missing market record.';
+  if(kind==='value'&&valid(delta))x=x.replace(/\.\s+(?=[A-Z])/g,'; ').replace(/[.!?]$/,'')+' because market prices and weekly fantasy points measure different outcomes.';const normalized=normalize(x);if(!prior.has(normalized)&&!seen.has(normalized)){seen.add(normalized);return x}}
  return options[0];
 }
 function finalCopyQuality(edition,previousEdition){
@@ -202,6 +220,7 @@ function finalCopyQuality(edition,previousEdition){
      const key=norm(sentence).toLowerCase(),keySentence=keyFn(sentence),proper=properLead(sentence),count=leadCount.get(proper)||0;
      if(seen.has(key)||previous.has(keySentence)||previousExact.has(normalizeExact(sentence))||globalSentences.has(normalizeExact(sentence)))continue;
      if(/^(.+ registered a (?:gain|decline) of [-+]?\d+ tracked value points|roster value for .+ moved [-+]?\d+ during the documented interval)\b/i.test(sentence))continue;
+     if(/^market history recorded [-+]?\d+ points of movement/i.test(sentence))continue;
      if(/^against .+? added [-+]?\d+(?:\.\d+)? for the .+?; (?:passing|rushing|receiving):/i.test(sentence))continue;
      if(/^after a [-+]?\d+(?:\.\d+)?[- ]point week/i.test(sentence)&&afterWeekLeads>=2)continue;
      if(proper&&count>=3)continue;

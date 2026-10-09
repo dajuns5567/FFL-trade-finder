@@ -212,12 +212,22 @@ const classification=inquirerWeekClassification(WEEK,SEASON);
 const rawInquirer=buildInquirerWeek({season:SEASON,week:WEEK,teams,players,weeklyStats,weeklyStatHistory:{4:weeklyStats},historicalSeasonStats:historicalSeason.stats,historicalSeasonYear:2025,scoringSettings:league.scoring_settings||{},scoreFn,weekClassification:classification,playerValues:{}});
 const rawOverview=buildLeagueOverview({season:SEASON,week:WEEK,teams:rawInquirer.teams,players,transactions,canonicalTrades:[],weekClassification:classification,valueHistoryMeta:{source:'direct-sleeper-week4-read-only-audit'}});
 
-let accepted=null,lastQuality=null;
+let accepted=null,lastQuality=null,lastCandidate=null;
 for(let salt=0;salt<8;salt++){
   const edited=applyInquirerEditorialV31({season:SEASON,week:WEEK,rawInquirer:clone(rawInquirer),rawOverview:clone(rawOverview),previousEdition:week3,weekClassification:classification,variationSalt:salt});
   const candidate={available:true,season:SEASON,week:WEEK,inquirer_version:FORWARD_INQUIRER_VERSION,editorial_revision:FORWARD_EDITORIAL_REVISION,reporters:publicReporters(),teams:edited.inquirer.teams,league_overview:edited.leagueOverview,editorial_generation:{variation_salt:salt,source:'direct-sleeper-read-only-audit'}};
-  const q=evaluateInquirerEditionQuality(candidate,week3);lastQuality=q;
+  const q=evaluateInquirerEditionQuality(candidate,week3);lastQuality=q;lastCandidate=candidate;
   if(q.ok){accepted=candidate;break;}
+}
+if(!accepted&&lastCandidate){
+ const norm=s=>String(s||'').toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').replace(/\s+/g,' ').trim();
+ const parts=a=>(a?.sections||[]).flatMap(sec=>(sec?.blocks||[]).length?sec.blocks.flatMap(b=>b.paragraphs||[]):sec.paragraphs||[]).flatMap(p=>String(p||'').split(/(?<=[.!?])\s+/)).filter(Boolean);
+ const prior=new Set([...week3.teams.flatMap(t=>parts(t.inquirer_article)),...parts(week3.league_overview)].map(norm));
+ const suspects=['New England Patriots','Baltimore Ravens','Houston Texans'];
+ for(const team of lastCandidate.teams.filter(t=>suspects.includes(t.team_name))){
+  const overlap=parts(team.inquirer_article).filter(row=>prior.has(norm(row)));
+  console.error('WEEK4_REUSE_DIAGNOSTIC',JSON.stringify({team:team.team_name,overlap:overlap.slice(0,10)}));
+ }
 }
 assert.ok(accepted,'Direct Sleeper Week 4 data could not produce an accepted edition within 8 salts: '+JSON.stringify(lastQuality?.issues||[]).slice(0,12000));
 

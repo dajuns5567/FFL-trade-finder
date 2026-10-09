@@ -198,6 +198,10 @@ function polishEdition(edition,generated){
  }
  return edition;
 }
+export function finalizeReporterUniqueness(edition,previousEdition=null){
+ const originals=new Map((edition?.teams||[]).map(t=>[String(t.roster_id),structuredClone(t.inquirer_article)]));
+ return finalCopyQuality(edition,previousEdition);
+}
 export function restoreReporterNarratives(rebuilt,original,{previousEdition=null}={}){
  const allNames=[...names(original),...names(previousEdition)];
  const prior=new Set((previousEdition?.teams||[]).flatMap(t=>all(t.inquirer_article)).map(s=>key(strip(s),allNames)));

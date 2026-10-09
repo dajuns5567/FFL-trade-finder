@@ -15,6 +15,7 @@ import {naturalizeInquirerForwardEdition} from './inquirer-forward-naturalize.mj
 import {guardInquirerForwardAgainstPrior} from './inquirer-forward-prior-guard.mjs';
 import {dedupeInquirerForwardEdition} from './inquirer-forward-edition-dedupe.mjs';
 import {rebuildForwardInquirerEditorial} from './inquirer-week4-editorial-rebuild.mjs';
+import {finalizeReporterUniqueness} from './inquirer-forward-restore-voice.mjs';
 import {enforceInquirerForwardContextTruth,findInquirerForwardContextTruthIssues} from './inquirer-forward-context-truth.mjs';
 import {finalSweepInquirerForwardEdition,findInquirerForwardSurfaceIssues} from './inquirer-forward-final-sweep.mjs';
 import {normalizeInquirerForwardHeadlines,findInquirerForwardHeadlineGrammarIssues} from './inquirer-forward-headline-grammar.mjs';
@@ -138,6 +139,7 @@ export function applyInquirerEditorialV31(args={}){
     const rebuilt=rebuildForwardInquirerEditorial({...edition,season:Number(args.season),week:Number(args.week)},{previousEdition:args.previousEdition||null});
     // Recheck explanation depth after the rebuild; prior passes operated on discarded copy.
     applyInquirerForwardFreshness(rebuilt,{week:Number(args.week),previousEdition:args.previousEdition||null,variationSalt:(Number(args.variationSalt)||0)+203});
+    finalizeReporterUniqueness(rebuilt,args.previousEdition||null);
     out.inquirer.teams=rebuilt.teams;
     out.leagueOverview=rebuilt.league_overview;
   }

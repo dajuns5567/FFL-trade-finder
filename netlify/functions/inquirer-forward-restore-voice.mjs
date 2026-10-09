@@ -144,6 +144,20 @@ function finalCopyQuality(edition,previousEdition){
   }
   article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
  }
+ // The recap carries both blocks and flattened section paragraphs; edit the blocks only.
+ const recap=edition.league_overview,starts=new Map(),properCounts=new Map();
+ if(recap)for(const section of recap.sections||[]){
+  const groups=section.blocks?.length?section.blocks:[section];
+  for(const group of groups){
+   group.paragraphs=(group.paragraphs||[]).map(p=>sentences(p).filter(sentence=>{
+    const head=opening(sentence),count=starts.get(head)||0,proper=properLead(sentence),pc=properCounts.get(proper)||0;
+    if(head.startsWith('from # in week #')&&count>=2)return false;
+    if(proper&&pc>=3)return false;
+    starts.set(head,count+1);if(proper)properCounts.set(proper,pc+1);return true;
+   }).join(' ')).filter(Boolean);
+  }
+  if(section.blocks?.length)section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+ }
  return edition;
 }
 function polishEdition(edition,generated){

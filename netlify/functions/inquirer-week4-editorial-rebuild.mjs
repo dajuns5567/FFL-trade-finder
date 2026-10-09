@@ -1,3 +1,5 @@
+import week3Preload2026 from './inquirer-week3-2026-preload.mjs';
+import {restoreReporterNarratives} from './inquirer-forward-restore-voice.mjs';
 // Week 4 editorial replacement. Facts are taken only from the frozen, verified edition.
 // Do not rewrite awards, matchup scores, rosters, picks or publication metadata.
 const valid=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
@@ -160,13 +162,14 @@ function leagueStory(edition){
  overview.editorial_rebuilt_for_week=week;
 }
 // One editorial construction path for the current frozen Week 4 edition and future completed weeks.
-export function rebuildForwardInquirerEditorial(original){
+export function rebuildForwardInquirerEditorial(original,{previousEdition=null}={}){
  const week=Number(original?.week);
  if(!Number.isInteger(week)||week<3||week>17||!Array.isArray(original?.teams))return original;
  const out=structuredClone(original);
  for(const team of out.teams)teamStory(team,week);
  leagueStory(out);
- return out;
+ const prior=previousEdition||(Number(original?.season)===2026&&week===4?week3Preload2026():null);
+ return restoreReporterNarratives(out,original,{previousEdition:prior});
 }
 export function rebuildWeek4Editorial(original){
  if(Number(original?.season)!==2026||Number(original?.week)!==4)return original;

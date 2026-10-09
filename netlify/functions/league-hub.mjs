@@ -491,7 +491,7 @@ async function weeklyAwardRecordForBroadcast(broadcast,{stats=null,players=null,
  const s=store(),old=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null),
   records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[],
   byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r])),key=season+'|'+week,existing=byKey.get(key),
-  complete=existing?.players_of_week?.offense&&existing?.players_of_week?.defense&&(existing?.manager_awards||[]).some(a=>a?.type==='highest-scorer');
+  complete=existing?.players_of_week?.offense&&existing?.players_of_week?.defense&&(existing?.manager_awards||[]).some(a=>a?.type==='highest-scorer')&&(season<2026||season===2026&&week<4||Number(existing?.award_logic_revision)>=3);
  if(complete&&!force)return existing;
  let p=players,sc=scoring,st=stats;
  if(!p||!sc){
@@ -500,7 +500,7 @@ async function weeklyAwardRecordForBroadcast(broadcast,{stats=null,players=null,
  }
  if(!st)st=await fetchJson(`${API}/stats/nfl/regular/${season}/${week}`).catch(()=>({}));
  const rec={
-  season,week,captured_at:String(broadcast?.generated_at||new Date().toISOString()),
+  season,week,award_logic_revision:3,captured_at:String(broadcast?.generated_at||new Date().toISOString()),
   manager_awards:weeklyManagerAwards(broadcast),
   players_of_week:weeklyPlayersOfWeek(st,p,sc)
  };
@@ -522,7 +522,7 @@ async function weeklyAwards(){
   byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r]));
  for(const row of archive.reports||[]){
   const season=Number(row?.season),week=Number(row?.week),key=season+'|'+week;if(!season||!week)continue;
-  const existing=byKey.get(key),complete=existing?.players_of_week?.offense&&existing?.players_of_week?.defense&&(existing?.manager_awards||[]).some(a=>a?.type==='highest-scorer');
+  const existing=byKey.get(key),complete=existing?.players_of_week?.offense&&existing?.players_of_week?.defense&&(existing?.manager_awards||[]).some(a=>a?.type==='highest-scorer')&&(season<2026||season===2026&&week<4||Number(existing?.award_logic_revision)>=3);
   if(complete)continue;
   const broadcast=await broadcastStored(season,week);
   if(!broadcast?.available||!Array.isArray(broadcast?.teams)||!broadcast.teams.length)continue;

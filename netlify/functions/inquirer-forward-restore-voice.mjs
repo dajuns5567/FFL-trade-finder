@@ -93,10 +93,60 @@ function fallback(t,kind,week){
  }
  return '';
 }
+const interpretation=/\b(?:because|which means|that means|that is|that's|but|however|so |therefore|matters?|problem|warning|useful|useless|earned|deserved|embarrass|ridiculous|painful|good|bad|ugly|should|needs?|cannot|can't|did not|does not|cost|saved|carried|wasted|hid|exposed|punished|survived|buried|standings|division|opponent|matchup|margin)\b/i;
+const bareFact=/\b(?:scored|posted|finished with|put up|gave|produced|added)\b[^.!?]*\b\d+(?:\.\d+)?\b|\b(?:Cool Throne|Hot Seat|roster value|market|ranking|projected|projection)\b/i;
+const properLead=s=>{const m=norm(s).match(/^[“"']?([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,3})\b/);return m?m[1]:''};
+const opening=s=>norm(s).toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').split(/\s+/).slice(0,5).join(' ');
+function polishRows(rows,owner,state){
+ const result=[];
+ for(const p of rows||[]){
+  if(bareFact.test(p)&&!interpretation.test(p))continue;
+  const output=[];
+  for(const sentence of sentences(p)){
+   if(bad.test(sentence))continue;
+   const proper=properLead(sentence),count=proper?(state.proper.get(proper)||0):0;
+   if(proper&&((state.previousProper&&proper===state.previousProper)||count>=3))continue;
+   const shape=opening(sentence),owners=state.openOwners.get(shape)||new Set();
+   if(shape.split(' ').length>=5&&owners.size>=3&&!owners.has(owner))continue;
+   if(proper)state.proper.set(proper,count+1);
+   state.previousProper=proper;
+   owners.add(owner);state.openOwners.set(shape,owners);
+   output.push(sentence);
+  }
+  if(output.length)result.push(output.join(' '));
+ }
+ return result;
+}
+function polishEdition(edition,generated){
+ const state={openOwners:new Map(),proper:new Map(),previousProper:''};
+ for(const team of edition.teams||[]){
+  const owner=String(team.roster_id),original=generated.get(owner);
+  state.proper=new Map();state.previousProper='';
+  for(const sec of team.inquirer_article?.sections||[]){
+   const cleaned=polishRows(sec.paragraphs||[],owner,state);
+   if(!cleaned.length){
+    const backup=fallback(team,sec.kind,Number(edition.week));
+    const originalSection=(original?.sections||[]).find(x=>x.kind===sec.kind);
+    if(backup)cleaned.push(backup);
+    else if(originalSection?.paragraphs?.length)cleaned.push(originalSection.paragraphs[0]);
+   }
+   sec.paragraphs=cleaned;
+  }
+  if(team.inquirer_article)team.inquirer_article.paragraphs=(team.inquirer_article.sections||[]).flatMap(s=>s.paragraphs||[]);
+ }
+ state.proper=new Map();state.previousProper='';
+ for(const sec of edition.league_overview?.sections||[]){
+  if(sec.blocks?.length){
+   for(const block of sec.blocks)block.paragraphs=polishRows(block.paragraphs||[],'__recap__',state);
+   sec.paragraphs=sec.blocks.flatMap(b=>b.paragraphs||[]);
+  }else sec.paragraphs=polishRows(sec.paragraphs||[],'__recap__',state);
+ }
+ return edition;
+}
 export function restoreReporterNarratives(rebuilt,original,{previousEdition=null}={}){
  const allNames=[...names(original),...names(previousEdition)];
  const prior=new Set((previousEdition?.teams||[]).flatMap(t=>all(t.inquirer_article)).map(s=>key(strip(s),allNames)));
- const used=new Set(),byId=new Map((original?.teams||[]).map(t=>[String(t.roster_id),t]));
+ const used=new Set(),byId=new Map((original?.teams||[]).map(t=>[String(t.roster_id),t])),generated=new Map((rebuilt.teams||[]).map(t=>[String(t.roster_id),t.inquirer_article]));
  for(const t of rebuilt.teams||[]){
   const source=byId.get(String(t.roster_id))?.inquirer_article;
   if(!source||!t.inquirer_article)continue;
@@ -124,5 +174,5 @@ export function restoreReporterNarratives(rebuilt,original,{previousEdition=null
   a.editorial_rebuilt_for_week=Number(rebuilt.week);
   t.inquirer_article=a;
  }
- return rebuilt;
+ return polishEdition(rebuilt,generated);
 }

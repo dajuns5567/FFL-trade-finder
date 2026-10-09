@@ -156,12 +156,35 @@ function leagueStory(edition){
   ]);
   // Alternate editorial framing by issue, not merely a different transition on a copied sentence.
   if(week%2===1){
-   const leadName=leader?short(leader):'the leading scorer';
-   paragraphs=clean([
-    name(l)+' entered this contest with its own lineup and left with '+n(l.points)+' points; '+name(w)+' recorded '+n(w.points)+'. The '+n(g.gap)+'-point difference determined where the win went.',
-    'For '+name(w)+', '+leadName+(leader?' collected '+point(leader):' headed the available scores')+'. '+(support?short(support)+' also scored '+point(support)+', giving the winning roster two contributors to evaluate.':'The other positions needed to carry the remainder of the result.'),
-    runner?name(l)+' received '+point(runner)+' from '+short(runner)+'. That effort belongs in the account even though the opposing roster finished ahead.':'The losing side did not supply a complete individual breakdown alongside the final result.',
-    name(w)+' leaves Week '+week+' with '+record(w)+' in the standings; '+name(l)+' has '+record(l)+'. The result changes each club’s record, not what either manager must decide before the next lineup locks.'
+   if(i===0)paragraphs=clean([
+    'No scoreboard was busier than the '+name(w)+'–'+name(l)+' contest. Their combined '+n(g.total)+' points produced a '+n(w.points)+'–'+n(l.points)+' victory for '+name(w)+'.',
+    leader?short(leader)+' added '+point(leader)+' to the winner’s cause'+(support?', while '+short(support)+' followed with '+point(support):'')+'. This was not merely an opponent failing to score.':null,
+    runner?short(runner)+' offered '+name(l)+' '+point(runner)+'. That individual effort deserves mention because the club lost despite meaningful production.':null,
+    'The headline is the win. The consequence is '+record(w)+' for '+name(w)+' and '+record(l)+' for '+name(l)+', records that will remain when the week's highlights are forgotten.'
+   ]);
+   else if(i===1)paragraphs=clean([
+    name(l)+' came within '+n(g.gap)+' of '+name(w)+', '+n(l.points)+' to '+n(w.points)+'. That is narrow enough for a manager to remember each overlooked lineup decision.',
+    runner?'On the losing side, '+short(runner)+' delivered '+point(runner)+'. It is hard to call an entire roster lifeless with that kind of contribution.':null,
+    leader?name(w)+' leaned most on '+short(leader)+' for '+point(leader)+'. Its smaller contributions mattered precisely because the difference was so small.':null,
+    'After such a tight finish, '+name(l)+' must prepare for another opponent without pretending the points on this scoreboard can be recovered.'
+   ]);
+   else if(i===2)paragraphs=clean([
+    'The hard fall of the week belonged to '+name(l)+'. '+name(w)+' won '+n(w.points)+'–'+n(l.points)+', a '+n(g.gap)+'-point gap that no late narrative can make close.',
+    leader?short(leader)+' supplied '+point(leader)+' for '+name(w)+'. That was one of several reasons the contest escaped the losing roster’s control.':null,
+    runner?'Even '+short(runner)+' at '+point(runner)+' could not protect '+name(l)+' from its own final total. The numbers elsewhere deserve scrutiny.':null,
+    name(w)+' sits at '+record(w)+' with the result banked; '+name(l)+' has '+record(l)+'. The loser needs improvement across starting roles, not just another memorable top scorer.'
+   ]);
+   else if(i===3)paragraphs=clean([
+    'Another outcome worth preserving: '+name(w)+' beat '+name(l)+' by '+n(g.gap)+' points, recording '+n(w.points)+' against '+n(l.points)+'.',
+    support?short(support)+' earned '+point(support)+', helping '+name(w)+' avoid depending entirely on '+(leader?short(leader):'a single starting player')+'.':null,
+    losingSupport?name(l)+' found '+point(losingSupport)+' from '+short(losingSupport)+'. The trouble was that the rest of its totals did not finish the job.':null,
+    'The week rewards '+name(w)+' with a result, and the calendar immediately demands preparation for the next opponent.'
+   ]);
+   else paragraphs=clean([
+    'In a game that will matter to the middle of the table, '+name(w)+' collected '+n(w.points)+' and held '+name(l)+' to '+n(l.points)+'. The margin was '+n(g.gap)+'.',
+    runner?name(l)+' could at least point to '+short(runner)+' with '+point(runner)+'. One outstanding starter cannot erase every gap elsewhere.':null,
+    leader?short(leader)+' produced '+point(leader)+' for the victorious roster. That was part of a total sufficient for the standings, whatever comes next.':null,
+    w.next_opponent_name?'The next date on '+name(w)+'’s schedule is '+w.next_opponent_name+'. A manager cannot carry a past victory into a new matchup as if it were a projected score.':'The future schedule requires a new lineup; the completed result requires none.'
    ]);
   }
   blocks.push({heading:g.storyTitle+': '+name(w)+' vs. '+name(l),paragraphs});

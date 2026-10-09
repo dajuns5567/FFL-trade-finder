@@ -177,7 +177,7 @@ function uniqueSectionFallback(team,kind,week,seen,prior){
  ];
  const normalize=x=>norm(x).toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').replace(/\s+/g,' ').trim();
  const start=((Number(team.roster_id)||hash(teamName))+week*7)%options.length;
- for(let i=0;i<options.length;i++){const x=options[(start+i)%options.length],normalized=normalize(x);if(!prior.has(normalized)&&!seen.has(normalized)){seen.add(normalized);return x}}
+ for(let i=0;i<options.length;i++){let x=options[(start+i)%options.length];if(kind==='value'&&!valid(delta))x=x.replace(/\.\s+(?=[A-Z])/g,'; ').replace(/[.!?]$/,'')+' because the verified fantasy score cannot substitute for a missing market record.';const normalized=normalize(x);if(!prior.has(normalized)&&!seen.has(normalized)){seen.add(normalized);return x}}
  return options[0];
 }
 function finalCopyQuality(edition,previousEdition){
@@ -197,6 +197,7 @@ function finalCopyQuality(edition,previousEdition){
    sec.paragraphs=(sec.paragraphs||[]).map(p=>{
     let out=[];
     for(const sentence of sentences(p)){
+     if(/\b(?:matchup headline|roster-wide verdict|courtroom|docket|cross-examination|defendant|prosecution|indictment)\b/i.test(sentence))continue;
      const key=norm(sentence).toLowerCase(),keySentence=keyFn(sentence),proper=properLead(sentence),count=leadCount.get(proper)||0;
      if(seen.has(key)||previous.has(keySentence)||previousExact.has(normalizeExact(sentence))||globalSentences.has(normalizeExact(sentence)))continue;
      if(/^after a [-+]?\d+(?:\.\d+)?[- ]point week/i.test(sentence)&&afterWeekLeads>=2)continue;

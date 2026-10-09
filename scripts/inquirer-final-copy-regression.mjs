@@ -5,7 +5,8 @@ const edition={week:11,teams:[{
  roster_id:1,team_name:'Green Bay Packers',starter_details:[{name:'Player One',points:12}],
  inquirer_article:{sections:[
   {kind:'lede',paragraphs:['Green Bay Packers have a win this week. Green Bay Packers played hard this week. Green Bay Packers made an adjustment. Green Bay Packers need to improve.']},
-  {kind:'cool-throne',paragraphs:['Green Bay Packers enjoyed a starter performance.']}
+  {kind:'cool-throne',paragraphs:['Green Bay Packers enjoyed a starter performance.']},
+  {kind:'revisit',paragraphs:['Young receiver Marvin Harrison posted -0.6 in both round 14 and Week 15.']}
  ]}
 }],league_overview:{sections:[{paragraphs:['Broadly, The Week 11 score matters. Accordingly, A second result matters. For now, Another matchup awaits.']}]}};
 const checked=finalizeReporterUniqueness(edition,null);
@@ -14,6 +15,7 @@ assert(sections.every(s=>s.paragraphs?.length),'Final dedupe must not leave an a
 const copy=checked.teams[0].inquirer_article.paragraphs.join(' ');
 assert((copy.match(/Green Bay Packers/g)||[]).length>=1,'Preserve verified team references');
 assert((copy.match(/(?:^|[.!?]\s+)Green Bay Packers /g)||[]).length<=3,'Cap repeated team-name sentence leads');
+assert(!/in both round 14 and Week 15/.test(copy),'Reject bare round-to-week statistical repeats');
 const recap=checked.league_overview.sections[0].paragraphs.join(' ');
 assert(!/\b(Broadly|Accordingly|For now),?\b/i.test(recap),'No mechanical recap transitions');
 assert(/Week 11 score matters/.test(recap)&&/second result matters/i.test(recap),'Preserve substance when removing transitions');

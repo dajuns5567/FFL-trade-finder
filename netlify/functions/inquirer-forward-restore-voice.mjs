@@ -201,6 +201,8 @@ function finalCopyQuality(edition,previousEdition){
      if(/\balso got \d+(?:\.\d+)? from\b/i.test(sentence))continue;
      const key=norm(sentence).toLowerCase(),keySentence=keyFn(sentence),proper=properLead(sentence),count=leadCount.get(proper)||0;
      if(seen.has(key)||previous.has(keySentence)||previousExact.has(normalizeExact(sentence))||globalSentences.has(normalizeExact(sentence)))continue;
+     if(/^(.+ registered a (?:gain|decline) of [-+]?\d+ tracked value points|roster value for .+ moved [-+]?\d+ during the documented interval)\b/i.test(sentence))continue;
+     if(/^against .+? added [-+]?\d+(?:\.\d+)? for the .+?; (?:passing|rushing|receiving):/i.test(sentence))continue;
      if(/^after a [-+]?\d+(?:\.\d+)?[- ]point week/i.test(sentence)&&afterWeekLeads>=2)continue;
      if(proper&&count>=3)continue;
      const shape=opening(sentence);

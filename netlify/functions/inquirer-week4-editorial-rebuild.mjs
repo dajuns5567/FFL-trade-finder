@@ -23,7 +23,7 @@ function teamStory(t,week){
   won?'The result held. That does not make every lineup decision right.':'There is a difference between being unlucky and being outscored.',
   won?'Good teams bank these Sundays and study the uncomfortable details.':'The opponent got the points. The manager gets the questions.'
  ],seed+'lede');
- const starLine=star?short(star)+' led the starters with '+point(star)+'. '+(support?short(support)+' added '+point(support)+', which matters because the top score alone did not play every lineup position.':'That put a lot of the afternoon on one player's shoulders.'):'The starters did not provide a complete player-by-player scoring breakdown.';
+ const starLine=star?short(star)+' led the starters with '+point(star)+'. '+(support?short(support)+' added '+point(support)+', which matters because the top score alone did not play every lineup position.':'That put a lot of the afternoon on one player’s shoulders.'):'The starters did not provide a complete player-by-player scoring breakdown.';
  const context=valid(old.standings_rank)?'At '+record(t)+' and '+rank(t)+' overall, '+team+' has to live with both its full-season work and this single result.':'The weekly result is verified; a reliable overall rank was not supplied with this edition.';
  const lede=clean([
   fact+' '+head,

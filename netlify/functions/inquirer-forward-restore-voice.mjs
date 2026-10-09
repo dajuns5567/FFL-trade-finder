@@ -146,7 +146,6 @@ function uniqueSectionFallback(team,kind,week,seen,prior){
    'There was at least one dependable result for '+teamName+': '+player+'. A strong line deserves praise without turning it into a prediction.',
    'Any account of '+teamName+' should give '+player+' an individual mention. That contribution did not play all the other positions.',
    'Production, not reputation, earns this spot. '+teamName+' received its leading starter total from '+player+'.',
-   'The week gave '+teamName+' a clear offensive or defensive contributor in '+player+'. The manager must still evaluate the remaining starting roles.',
    'One bright entry in the '+teamName+' lineup was '+player+'. Whether the team won or lost, the points were real.',
    'Praise here belongs to '+player+' for the most productive verified start on '+teamName+'. One player cannot solve every position.',
    'A completed fantasy score makes this recognition possible: '+player+' headed the contributions to '+teamName+'.',
@@ -233,6 +232,7 @@ function finalCopyQuality(edition,previousEdition){
      if(/\b(?:matchup headline|roster-wide verdict|courtroom|docket|cross-examination|defendant|prosecution|indictment)\b/i.test(sentence))continue;
      if(/\balso got \d+(?:\.\d+)? from\b/i.test(sentence))continue;
      if(/\bcrowd is back in rivals after the win\b/i.test(sentence))continue;
+     if(/\brivals? now have a week of film\b|\brivals? turn it into a franchise logo\b|\bunder-the-radar credit after\b/i.test(sentence))continue;
      if(/^the week gave .+ a clear offensive or defensive contributor/i.test(sentence))continue;
      if(currentRecord&&/\b\d{1,2}-\d{1,2}\b/.test(sentence)&&[...sentence.matchAll(/\b\d{1,2}-\d{1,2}\b/g)].some(m=>m[0]!==currentRecord)&&!(/\bin Week\s+\d+\b/i.test(sentence)&&!new RegExp('\\bWeek\\s*'+Number(edition.week)+'\\b','i').test(sentence)))continue;
      const key=norm(sentence).toLowerCase(),keySentence=keyFn(sentence),proper=properLead(sentence),count=leadCount.get(proper)||0;

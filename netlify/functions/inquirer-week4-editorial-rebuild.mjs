@@ -123,10 +123,16 @@ function leagueStory(edition){
  overview.hot_takes=hot.filter(Boolean).map((h,i)=>({...h,reporter:sections[i%4]?.reporter||reporter}));
  overview.editorial_rebuilt_for_week=week;
 }
-export function rebuildWeek4Editorial(original){
- if(Number(original?.season)!==2026||Number(original?.week)!==4)return original;
+// One editorial construction path for the current frozen Week 4 edition and future completed weeks.
+export function rebuildForwardInquirerEditorial(original){
+ const week=Number(original?.week);
+ if(!Number.isInteger(week)||week<3||week>17||!Array.isArray(original?.teams))return original;
  const out=structuredClone(original);
- for(const team of out.teams||[])teamStory(team,4);
+ for(const team of out.teams)teamStory(team,week);
  leagueStory(out);
  return out;
+}
+export function rebuildWeek4Editorial(original){
+ if(Number(original?.season)!==2026||Number(original?.week)!==4)return original;
+ return rebuildForwardInquirerEditorial(original);
 }

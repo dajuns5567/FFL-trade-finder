@@ -34,5 +34,6 @@ for(const section of rebuilt.league_overview.sections){
  const text=[...(section.paragraphs||[]),...(section.blocks||[]).flatMap(b=>b.paragraphs||[])].join(' ');
  assert(!banned.test(text),'Legacy recap phrase');
 }
-const result={ok:true,season:2026,week:4,team_articles:rebuilt.teams.length,recap_blocks:rebuilt.league_overview.sections[0].blocks.length,hot_takes:rebuilt.league_overview.hot_takes.map(x=>x.kind),sample_headline:rebuilt.teams[0].inquirer_article.headline};
+const wordCounts=rebuilt.teams.map(t=>t.inquirer_article.sections.flatMap(sec=>sec.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length);
+const result={ok:true,season:2026,week:4,team_articles:rebuilt.teams.length,recap_blocks:rebuilt.league_overview.sections[0].blocks.length,hot_takes:rebuilt.league_overview.hot_takes.map(x=>x.kind),article_words:{min:Math.min(...wordCounts),max:Math.max(...wordCounts),mean:Math.round(wordCounts.reduce((a,b)=>a+b,0)/wordCounts.length)},sample_headline:rebuilt.teams[0].inquirer_article.headline};
 console.log(JSON.stringify(result,null,2));

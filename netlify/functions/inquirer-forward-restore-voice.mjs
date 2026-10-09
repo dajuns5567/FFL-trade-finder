@@ -89,7 +89,7 @@ function fallback(t,kind,week){
    'The current record supplies no numerical roster-value change for '+team+'.',
    'For '+team+', the market tracker has not supplied a supported gain or loss this week.',
    'Value history cannot confirm a new price direction for '+team+' at this publication point.'
-  ],seed)
+  ],t,kind,seed)
  }
  return '';
 }

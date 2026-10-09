@@ -134,7 +134,7 @@ function polishEdition(edition,generated){
   }
   if(team.inquirer_article){
    const article=team.inquirer_article;
-   if(!article.sections.flatMap(sec=>sec.paragraphs||[]).some(p=>/\bWeek\s*\d+\b/i.test(p))){
+   if(!article.sections.flatMap(sec=>sec.paragraphs||[]).some(p=>new RegExp('\\bWeek\\s*'+Number(edition.week)+'\\b','i').test(p))){
     const lede=article.sections.find(sec=>sec.kind==='lede')||article.sections[0];
     if(lede?.paragraphs?.length)lede.paragraphs[0]='Week '+Number(edition.week)+': '+lede.paragraphs[0];
    }
@@ -178,7 +178,7 @@ export function restoreReporterNarratives(rebuilt,original,{previousEdition=null
    sec.paragraphs=updated;
   }
   a.paragraphs=a.sections.flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
-  if(!a.paragraphs.some(p=>/\bweek\s*\d+\b/i.test(p))){const lede=(a.sections||[]).find(x=>x.kind==='lede')||a.sections?.[0];if(lede?.paragraphs?.length)lede.paragraphs[0]='In Week '+Number(rebuilt.week)+', '+lede.paragraphs[0].replace(/^[A-Z]/,m=>m.toLowerCase());}
+  if(!a.paragraphs.some(p=>new RegExp('\\bWeek\\s*'+Number(rebuilt.week)+'\\b','i').test(p))){const lede=(a.sections||[]).find(x=>x.kind==='lede')||a.sections?.[0];if(lede?.paragraphs?.length)lede.paragraphs[0]='In Week '+Number(rebuilt.week)+', '+lede.paragraphs[0].replace(/^[A-Z]/,m=>m.toLowerCase());}
   a.paragraphs=(a.sections||[]).flatMap(sec=>[...(sec.paragraphs||[]),...(sec.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.editorial_rebuilt_for_week=Number(rebuilt.week);
   t.inquirer_article=a;

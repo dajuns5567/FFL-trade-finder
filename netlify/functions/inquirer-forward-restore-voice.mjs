@@ -151,7 +151,7 @@ function uniqueSectionFallback(team,kind,week,seen,prior){
    'Praise here belongs to '+player+' for the most productive verified start on '+teamName+'. One player cannot solve every position.',
    'A completed fantasy score makes this recognition possible: '+player+' headed the contributions to '+teamName+'.',
    'Instead of projecting what could happen, the Cool Throne examines what happened. '+player+' led the '+teamName+' starters.',
-   'Look past the matchup headline and '+player+' emerges as the top individual '+teamName+' scorer. The team result carries its own verdict.',
+   'Look past the matchup headline and '+player+' emerges as the top individual '+teamName+' scorer. The opposing roster total still determined whether those points were enough.',
    'The largest starter total for '+teamName+' came from '+player+'. Credit is deserved; a roster-wide verdict would be premature.',
    'Not every part of this lineup answered the bell, but '+player+' supplied the strongest number for '+teamName+'.'
  );
@@ -198,6 +198,7 @@ function finalCopyQuality(edition,previousEdition){
     let out=[];
     for(const sentence of sentences(p)){
      if(/\b(?:matchup headline|roster-wide verdict|courtroom|docket|cross-examination|defendant|prosecution|indictment)\b/i.test(sentence))continue;
+     if(/\balso got \d+(?:\.\d+)? from\b/i.test(sentence))continue;
      const key=norm(sentence).toLowerCase(),keySentence=keyFn(sentence),proper=properLead(sentence),count=leadCount.get(proper)||0;
      if(seen.has(key)||previous.has(keySentence)||previousExact.has(normalizeExact(sentence))||globalSentences.has(normalizeExact(sentence)))continue;
      if(/^after a [-+]?\d+(?:\.\d+)?[- ]point week/i.test(sentence)&&afterWeekLeads>=2)continue;

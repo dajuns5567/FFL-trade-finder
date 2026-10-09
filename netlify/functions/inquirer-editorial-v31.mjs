@@ -31,7 +31,7 @@ function editorialContractIssues(candidate){
   const issues=[];
   const overview=candidate?.league_overview;
   if(!overview||!Array.isArray(overview.sections)||overview.sections.length<4)issues.push('Weekly Recap missing four reporter sections');
-  const required=['championship','breakout','player','fraud','division','upset'];
+  const required=['championship','breakout','player','fraud','division',...(Number(candidate?.week||overview?.week)<17?['upset']:[])];
   const kinds=new Set((overview?.hot_takes||[]).map(x=>String(x?.kind||'').toLowerCase()));
   for(const kind of required)if(!kinds.has(kind))issues.push('Weekly Recap missing Hot Take category: '+kind);
   const entries=[['Weekly Recap',overview],...(candidate?.teams||[]).map(t=>[String(t.team_name||t.roster_id),t.inquirer_article])];

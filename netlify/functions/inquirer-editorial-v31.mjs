@@ -27,7 +27,7 @@ export const FORWARD_INQUIRER_VERSION=31;
 export const FORWARD_EDITORIAL_REVISION=14;
 
 // Hard publication contract: rejecting mechanical copy is safer than locking it.
-const MECHANICAL_LEAD=/^(?:Broadly|In context|Accordingly|On balance|For this matchup|Next up|Instead|Then again|For now|That said|All told|Looking ahead),?\\b/i;
+const MECHANICAL_LEAD=/^(?:Broadly|In context|Accordingly|On balance|For this matchup|Next up|Instead|Then again|For now|That said|All told|Looking ahead),?\b/i;
 function editorialContractIssues(candidate){
   const issues=[];
   const overview=candidate?.league_overview;
@@ -39,7 +39,7 @@ function editorialContractIssues(candidate){
   for(const [name,article] of entries){
     if(!article?.sections?.length){issues.push(name+' missing structured article sections');continue}
     const paragraphs=(article.sections||[]).flatMap(x=>[...(x.paragraphs||[]),...(x.blocks||[]).flatMap(b=>b.paragraphs||[])]);
-    const transitions=paragraphs.flatMap(p=>String(p||'').split(/(?<=[.!?])\\s+/)).filter(s=>MECHANICAL_LEAD.test(s.trim()));
+    const transitions=paragraphs.flatMap(p=>String(p||'').split(/(?<=[.!?])\s+/)).filter(s=>MECHANICAL_LEAD.test(s.trim()));
     if(transitions.length>=3)issues.push(name+' uses '+transitions.length+' mechanical transition leads');
     if(paragraphs.some(p=>/for this matchup, the important bit|three stat lines kept|that is matchup pressure, not decorative arithmetic/i.test(String(p))))issues.push(name+' contains legacy formulaic reporter copy');
   }

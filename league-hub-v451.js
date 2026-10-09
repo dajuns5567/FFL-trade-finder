@@ -102,7 +102,7 @@ async function ensureCurrentWeekAwards(w){
  const task=(async()=>{
   let players_of_week=existing.players_of_week||null;
   try{
-   const r=await fetch('/.netlify/functions/league-hub-weekly-live-fast?season='+season+'&week='+week+'&rev=476',{cache:'force-cache'});
+   const r=await fetch('/.netlify/functions/league-hub-weekly-live-fast?season='+season+'&week='+week+'&rev=477',{cache:'no-store'});
    if(r.ok){const live=await r.json();if(live?.players_of_week?.offense&&live?.players_of_week?.defense)players_of_week=live.players_of_week}
   }catch{}
   const latest=weeklyAwardsCache||base,latestRows=Array.isArray(latest.records)?latest.records.slice():[],latestBy=new Map(latestRows.map(x=>[Number(x.season)+'|'+Number(x.week),x])),prior=latestBy.get(key)||existing;
@@ -553,7 +553,8 @@ function managerWeeklyBadgesHTML(id,mgr,data=weeklyAwardsCache){
  return '<div class="lh-weekly-badges">'+badges.map(a=>'<span class="lh-weekly-badge">'+esc(a.title)+' • '+esc(a.season+' Week '+a.week)+(a.captured_at?' • '+esc(date(a.captured_at)):'')+'</span>').join('')+'</div>';
 }
 function playersOfWeekHTML(w,data=weeklyAwardsCache){
- const rows=Array.isArray(data?.records)?data.records:[],season=Number(w?.season),week=Number(w?.week),rec=season&&week?rows.find(r=>Number(r.season)===season&&Number(r.week)===week):latestWeeklyAwardRecord(data),p=rec?.players_of_week;if(!p?.offense&&!p?.defense)return'';
+ const rows=Array.isArray(data?.records)?data.records:[],season=Number(w?.season),week=Number(w?.week),rec=season&&week?rows.find(r=>Number(r.season)===season&&Number(r.week)===week):latestWeeklyAwardRecord(data),p=rec?.players_of_week;
+  if(!p?.offense&&!p?.defense)return '<div class="lh-card lh-wide"><h3>⭐ Players of the Week</h3><div class="lh-sub">'+esc(season&&week?season+' Week '+week:'Latest published week')+' • Award records are loading or awaiting verified scoring. The section will update without being hidden.</div></div>';
  const card=(label,x)=>x?'<div class="lh-player-week-card"><small>'+esc(label)+'</small><button type="button" data-lh-inquirer-player="'+esc(x.player_id)+'">'+esc(x.player_name||playerName(x.player_id))+'</button><div class="lh-sub">'+esc(x.position||'')+' • '+esc(x.nfl_team||'FA')+' • '+Number(x.points||0).toFixed(2)+' pts</div></div>':'';
  return '<div class="lh-card lh-wide"><h3>⭐ Players of the Week</h3><div class="lh-sub">'+esc(rec.season+' Week '+rec.week)+' • highest fantasy scorer by side of the ball under this league’s scoring settings</div><div class="lh-player-week">'+card('Offense',p.offense)+card('Defense',p.defense)+'</div></div>';
 }

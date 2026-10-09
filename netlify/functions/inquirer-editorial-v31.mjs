@@ -63,7 +63,8 @@ export function evaluateInquirerEditionQuality(candidate,previousEdition=null){
 
 export function applyInquirerEditorialV31(args={}){
   // Never let reporter transforms alter the prior published edition across retry salts.
-  args={...args,previousEdition:args.previousEdition?structuredClone(args.previousEdition):null};
+  const immutablePrior=args.previousEdition?structuredClone(args.previousEdition):null;
+  args={...args,previousEdition:immutablePrior?structuredClone(immutablePrior):null};
   const out=applyInquirerEditorialV37(args);
   if(!out||Number(args.week)<3)return out;
   if(out?.inquirer?.teams){
@@ -139,7 +140,7 @@ export function applyInquirerEditorialV31(args={}){
     const rebuilt=rebuildForwardInquirerEditorial({...edition,season:Number(args.season),week:Number(args.week)},{previousEdition:args.previousEdition||null});
     // Recheck explanation depth after the rebuild; prior passes operated on discarded copy.
     applyInquirerForwardFreshness(rebuilt,{week:Number(args.week),previousEdition:args.previousEdition||null,variationSalt:(Number(args.variationSalt)||0)+203});
-    finalizeReporterUniqueness(rebuilt,args.previousEdition||null);
+    finalizeReporterUniqueness(rebuilt,immutablePrior);
     out.inquirer.teams=rebuilt.teams;
     out.leagueOverview=rebuilt.league_overview;
   }

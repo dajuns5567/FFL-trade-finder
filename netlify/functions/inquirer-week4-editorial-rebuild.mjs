@@ -252,6 +252,28 @@ function leagueStory(edition){
  if(match){const under=Number(match.a.next_projected)<Number(match.b.next_projected)?match.a:match.b,other=under===match.a?match.b:match.a;hot.push({kind:'upset',title:'Upset Special: '+name(under)+' over '+name(other),take:name(under)+' enters Week '+(week+1)+' as the verified projected underdog, '+n(under.next_projected)+' to '+n(other.next_projected)+'. That is a forecast, not a result; one efficient Sunday can turn the matchup around.'})}
  else{const pair=pairs.find(x=>valid(x?.league_context?.standings_rank));if(pair){const fav=by.get(String(pair.next_opponent_roster_id));if(fav){hot.push({kind:'upset',title:'Upset Watch: '+name(pair)+' vs. '+name(fav),take:name(pair)+' faces '+name(fav)+' in Week '+(week+1)+'. A verified projection is unavailable, so this is a matchup to watch rather than a fabricated projected upset.'})}}}
  if(week<17&&!hot.some(x=>x?.kind==='upset'))hot.push({kind:'upset',title:'Upset Special: Awaiting a Verified Matchup',take:'A confirmed next-week pairing is not available in this edition. The newspaper will not invent an opponent, projection or upset pick.'});
+ if(week%2===1)for(const h of hot){
+  if(!h)continue;
+  if(h.kind==='championship'){
+   h.title='The Title Conversation: '+name(leaders[0]||high);
+   h.take=name(leaders[0]||high)+' currently owns '+record(leaders[0]||high)+' and a '+rank(leaders[0]||high)+' position. That places the club near the front of the argument; it does not settle any playoff game.';
+  }else if(h.kind==='breakout'){
+   h.title=young?'Emerging Name: '+short(young.p):'Emerging Names: No Confirmed Candidate';
+   h.take=young?short(young.p)+' has established a '+n(young.p.season_avg)+' current-season average at '+young.p.age+' years old. The growing record is more persuasive than a single weekly spike.':'Without a verified age and current-season average, the report will not nominate an invented breakout player.';
+  }else if(h.kind==='player'){
+   h.title=star?'Individual Award Watch: '+short(star):'Individual Award Watch';
+   h.take=star?name(high)+' benefited from '+point(star)+' by '+short(star)+'. One productive Sunday is a reason to watch that player, not a completed season award.':'The published statistics do not support a named individual selection.';
+  }else if(h.kind==='fraud'){
+   h.title='Under the Microscope: '+name(low);
+   h.take=name(low)+' managed '+n(low.points)+' in its completed Week '+week+' lineup. It is a warning sign because that production gives rivals a clear point of pressure.';
+  }else if(h.kind==='division'){
+   h.title='Division Leaders at the Moment';
+   h.take=[...flags.entries()].map(([d,t])=>name(t)+' holds the current '+d+' position at '+record(t)).join('; ')+'. Those standings are already earned and can still change.';
+  }else if(h.kind==='upset'){
+   h.title=h.title.replace('Upset Special:','Next Week’s Upset Call:').replace('Upset Watch:','Next Week’s Matchup Watch:');
+   h.take='The Week '+(week+1)+' fixture deserves an underdog conversation only where the opponent and scoring basis are verified. '+h.take;
+  }
+ }
  overview.hot_takes=hot.filter(Boolean).map((h,i)=>({...h,reporter:sections[i%4]?.reporter||reporter}));
  overview.editorial_rebuilt_for_week=week;
 }

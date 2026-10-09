@@ -437,7 +437,7 @@ const projectionValue=v=>v==null||v===''?NaN:Number(v);
 function weeklyManagerAwards(broadcast){
  const teams=Array.isArray(broadcast?.teams)?broadcast.teams:[],valid=teams.filter(t=>t?.points!=null&&t.points!==''&&Number.isFinite(Number(t.points)));
  if(!valid.length)return[];
- const byId=new Map(valid.map(t=>[String(t.roster_id),t])),oppProj=t=>projectionValue(t?.opponent_projected??byId.get(String(t?.opponent_roster_id||''))?.projected),
+ const byId=new Map(valid.map(t=>[String(t.roster_id),t])),oppProj=t=>{const o=byId.get(String(t?.opponent_roster_id||''));return Number(o?.projection_coverage)>0?projectionValue(t?.opponent_projected??o?.projected):NaN},
   high=valid.slice().sort((a,b)=>Number(b.points)-Number(a.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
   low=valid.slice().sort((a,b)=>Number(a.points)-Number(b.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
   losses=valid.filter(g=>g.won===false),wins=valid.filter(g=>g.won===true),

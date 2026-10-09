@@ -552,11 +552,23 @@ function managerWeeklyBadgesHTML(id,mgr,data=weeklyAwardsCache){
  if(!badges.length)return'<div class="lh-sub">No weekly manager badges yet.</div>';
  return '<div class="lh-weekly-badges">'+badges.map(a=>'<span class="lh-weekly-badge">'+esc(a.title)+' • '+esc(a.season+' Week '+a.week)+(a.captured_at?' • '+esc(date(a.captured_at)):'')+'</span>').join('')+'</div>';
 }
+function publishedStarterLeaders(w){
+ const leaders={offense:null,defense:null},offense=new Set(['QB','RB','WR','TE']),defense=new Set(['DL','DE','DT','NT','EDGE','LB','DB','CB','S','ILB','OLB','FS','SS','IDP']);
+ for(const team of w?.teams||[])for(const p of team?.starter_details||[]){
+  const position=String(p?.position||'').toUpperCase(),group=offense.has(position)?'offense':defense.has(position)?'defense':'',points=p?.points;
+  if(!group||points==null||points===''||!Number.isFinite(Number(points)))continue;
+  const player_id=String(p.id||p.player_id||''),player_name=String(p.name||p.player_name||'');
+  if(!player_id||!player_name)continue;
+  const x={player_id,player_name,position,nfl_team:p.team||p.nfl_team||'FA',points:Number(points)};
+  if(!leaders[group]||x.points>leaders[group].points||(x.points===leaders[group].points&&x.player_id<leaders[group].player_id))leaders[group]=x;
+ }
+ return leaders;
+}
 function playersOfWeekHTML(w,data=weeklyAwardsCache){
- const rows=Array.isArray(data?.records)?data.records:[],season=Number(w?.season),week=Number(w?.week),rec=season&&week?rows.find(r=>Number(r.season)===season&&Number(r.week)===week):latestWeeklyAwardRecord(data),p=rec?.players_of_week;
+ const rows=Array.isArray(data?.records)?data.records:[],season=Number(w?.season),week=Number(w?.week),rec=season&&week?rows.find(r=>Number(r.season)===season&&Number(r.week)===week):latestWeeklyAwardRecord(data),verified=rec?.players_of_week||{},fallback=publishedStarterLeaders(w),p={offense:verified.offense||fallback.offense,defense:verified.defense||fallback.defense};
   if(!p?.offense&&!p?.defense)return '<div class="lh-card lh-wide"><h3>⭐ Players of the Week</h3><div class="lh-sub">'+esc(season&&week?season+' Week '+week:'Latest published week')+' • Award records are loading or awaiting verified scoring. The section will update without being hidden.</div></div>';
  const card=(label,x)=>x?'<div class="lh-player-week-card"><small>'+esc(label)+'</small><button type="button" data-lh-inquirer-player="'+esc(x.player_id)+'">'+esc(x.player_name||playerName(x.player_id))+'</button><div class="lh-sub">'+esc(x.position||'')+' • '+esc(x.nfl_team||'FA')+' • '+Number(x.points||0).toFixed(2)+' pts</div></div>':'';
- return '<div class="lh-card lh-wide"><h3>⭐ Players of the Week</h3><div class="lh-sub">'+esc(rec.season+' Week '+rec.week)+' • highest fantasy scorer by side of the ball under this league’s scoring settings</div><div class="lh-player-week">'+card('Offense',p.offense)+card('Defense',p.defense)+'</div></div>';
+ return '<div class="lh-card lh-wide"><h3>⭐ Players of the Week</h3><div class="lh-sub">'+esc((rec?.season||w?.season)+' Week '+(rec?.week||w?.week))+' • '+(verified.offense&&verified.defense?'highest fantasy scorer by side of the ball under this league’s scoring settings':'highest-scoring published starters by side of the ball; awaiting complete verified awards')</div><div class="lh-player-week">'+card('Offense',p.offense)+card('Defense',p.defense)+'</div></div>';
 }
 function awardsHTML(rows){if(rankingAwardKey)return rankingsHTML(rows,rankingAwardKey);return`<div class="lh-awards-page lh-awards-main"><div class="lh-sub">20 live awards are recalculated from current league data, plus four locked weekly manager awards: Hot Seat, Cool Throne, Highest Scorer and Lowest Scorer. Historic live-award snapshots begin Sep 14, 2026; weekly awards are tracked independently by season and week.</div><div class="lh-grid">${weeklyAwardCardsHTML()}${rows.map(awardCard).join('')}</div></div>`}
 function hallHTML(all){const rows=all.map(t=>({t,h:hindsightDelta(t)})).filter(x=>x.h).sort((a,b)=>b.h.edge-a.h.edge),fairRows=rows.filter(x=>Number(x.h.playerValueExchanged)>=500).slice().sort((a,b)=>a.h.edge-b.h.edge),shown=hallExpanded?rows:rows.slice(0,10),fairShown=hallExpanded?fairRows:fairRows.slice(0,10),renderFair=(x,i)=>{const winner=x.t.sides?.[x.h.winner]?.roster_id,detail=x.h.edge===0?'even trade-adjusted current outcome':'trade-adjusted current outcome gap '+fmtHall(x.h.edge)+' • slight advantage '+teamName(winner);return`<div class="lh-story lh-click" data-lh-trade="${esc(tradeKey(x.t))}"><b>#${i+1} ${esc((x.t.roster_ids||[]).map(teamName).join(' ↔ '))}</b><small>${esc(date(x.t.created))} • ${esc(detail)} • open exact trade →</small></div>`};

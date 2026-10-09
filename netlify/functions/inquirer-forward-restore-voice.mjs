@@ -199,7 +199,7 @@ function uniqueSectionFallback(team,kind,week,seen,prior){
 }
 function canonicalizePublishedTeamNames(edition){
  const known=(edition?.teams||[]).map(t=>String(t.team_name||'')).filter(Boolean).sort((a,b)=>b.length-a.length);
- const correct=s=>{let result=String(s||'');for(const label of known){const safe=label.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\function finalCopyQuality(edition,previousEdition){');result=result.replace(new RegExp('\\b'+safe+'\\b','gi'),label)}return result};
+ const correct=s=>{let result=String(s||'');for(const label of known){const safe=label.split('').map(c=>'\\.^$*+?()[]{}|'.includes(c)?'\\'+c:c).join('');result=result.replace(new RegExp('\\b'+safe+'\\b','gi'),label)}return result};
  for(const team of edition.teams||[]){
   const article=team.inquirer_article;
   if(!article)continue;

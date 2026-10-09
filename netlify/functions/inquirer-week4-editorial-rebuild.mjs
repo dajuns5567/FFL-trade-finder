@@ -111,16 +111,50 @@ function leagueStory(edition){
  const by=new Map(teams.map(t=>[String(t.roster_id),t])),games=[],used=new Set();
  for(const t of teams){const o=by.get(String(t.opponent_roster_id||''));if(!o||!valid(t.points)||!valid(o.points))continue;const key=[String(t.roster_id),String(o.roster_id)].sort().join('|');if(used.has(key))continue;used.add(key);const winner=Number(t.points)>=Number(o.points)?t:o,loser=winner===t?o:t;games.push({winner,loser,gap:Math.abs(Number(t.points)-Number(o.points)),total:Number(t.points)+Number(o.points)})}
  const sort=(rows,fn)=>rows.slice().sort(fn);
- const candidates=[...sort(games,(a,b)=>b.total-a.total),...sort(games,(a,b)=>a.gap-b.gap),...sort(games,(a,b)=>b.gap-a.gap)],chosen=[];for(const g of candidates){if(chosen.length>=5)break;if(!chosen.some(x=>x===g))chosen.push(g)}
+ const orders=[
+  {title:'The Week’s Loudest Game',games:sort(games,(a,b)=>b.total-a.total)},
+  {title:'The Closest Finish',games:sort(games,(a,b)=>a.gap-b.gap)},
+  {title:'The Biggest Margin',games:sort(games,(a,b)=>b.gap-a.gap)},
+  {title:'Another Scoring Headline',games:sort(games,(a,b)=>b.total-a.total)},
+  {title:'The Other Game That Deserves a Look',games:sort(games,(a,b)=>a.gap-b.gap)}
+ ],chosen=[],selected=new Set();
+ for(const row of orders){const game=row.games.find(g=>!selected.has(g));if(game){chosen.push({...game,storyTitle:row.title});selected.add(game)}}
  const reporter=overview.sections?.[0]?.reporter||null,blocks=[];
  for(const [i,g] of chosen.entries()){
-  const w=g.winner,l=g.loser,stars=topPlayers(w),leader=stars[0],losers=topPlayers(l),other=losers[0],close=g.gap<=8,wide=g.gap>=30;
-  blocks.push({heading:(i===0?'Week '+week+'’s Loudest Game: ':'')+name(w)+' vs. '+name(l),paragraphs:clean([
-    name(w)+' beat '+name(l)+' '+n(w.points)+'–'+n(l.points)+'. '+(close?'The narrow margin turned every secondary score into a significant one.':wide?'This was a decisive final score, not a coin flip dressed up as a storyline.':'The difference was large enough to see but close enough to expose individual lineup decisions.'),
-    leader?short(leader)+' led '+name(w)+' at '+point(leader)+(other?', while '+short(other)+' put up '+point(other)+' for '+name(l):'')+'. The best individual scores did not change who finished ahead.':null,
-    'The winner moves to '+record(w)+' ('+rank(w)+' overall); '+name(l)+' sits '+record(l)+' ('+rank(l)+'). A weekly score matters more when it is read alongside the standings rather than in isolation.',
-    choose([name(w)+' found a winning combination of stars and supporting points. '+name(l)+' has to make up the difference with actual lineup production, not a more convincing explanation.',name(l)+' can point to individual performances, but '+name(w)+' collected the result. That is the uncomfortable arithmetic every manager signs up for.',name(w)+' will enjoy this one. '+name(l)+' gets the week to decide which weakness is truly fixable before the next opponent arrives.'],'recap|'+week+'|'+i)
-  ])})
+  const w=g.winner,l=g.loser,leader=topPlayers(w)[0],runner=topPlayers(l)[0],
+   support=topPlayers(w)[1],losingSupport=topPlayers(l)[1],difference=n(g.gap);
+  let paragraphs=[];
+  if(i===0)paragraphs=clean([
+   name(w)+' survived the week’s highest combined-score game, '+n(w.points)+' to '+n(l.points)+'. Together these rosters put up '+n(g.total)+' fantasy points, enough to make ordinary depth feel unusually important.',
+   leader?short(leader)+' accounted for '+point(leader)+' on the winning side'+(runner?', while '+short(runner)+' answered with '+point(runner)+' for '+name(l):'')+'. The top names gave the matchup its pace.':null,
+   support?name(w)+' also got '+point(support)+' from '+short(support)+'. A high-scoring win is easier to understand when the second-best starter is carrying actual weight.':null,
+   'The table now has '+name(w)+' at '+record(w)+' and '+name(l)+' at '+record(l)+'. The losing score was substantial, but there are no extra standings points for keeping up in a shootout.'
+  ]);
+  else if(i===1)paragraphs=clean([
+   'Only '+difference+' points separated '+name(w)+' and '+name(l)+'. The winner posted '+n(w.points)+'; the loser reached '+n(l.points)+'. No manager in that matchup gets to call the margin comfortable.',
+   runner?name(l)+' had '+short(runner)+' contributing '+point(runner)+'. A strong individual performance could not completely cover the remaining difference.':null,
+   leader?short(leader)+' gave '+name(w)+' '+point(leader)+'. In a finish decided by '+difference+', the points behind that starter were every bit as consequential.':null,
+   'This is the kind of result that puts roster choices under scrutiny. '+name(w)+' banked the win; '+name(l)+' carries the narrower, more irritating question into the next slate.'
+  ]);
+  else if(i===2)paragraphs=clean([
+   name(w)+' put '+difference+' points between itself and '+name(l)+'. At '+n(w.points)+'–'+n(l.points)+', the widest gap of the week did not require a dramatic late twist.',
+   leader?'The largest winning-side contribution came from '+short(leader)+' with '+point(leader)+'. '+name(w)+' did not have to ask a quiet opponent to keep it close.':null,
+   runner?short(runner)+' led the defeated roster at '+point(runner)+'. The gap beyond that individual score is what '+name(l)+' has to address.':null,
+   'After the result, '+name(w)+' stands '+record(w)+' and '+rank(w)+' overall. '+name(l)+' is '+record(l)+' and '+rank(l)+'. Large margins do not count twice, but they reveal different problems from close losses.'
+  ]);
+  else if(i===3)paragraphs=clean([
+   'A separate scoring headline belongs to '+name(w)+', which beat '+name(l)+' by '+difference+'. '+n(w.points)+' points made this a good week for the winner’s total, not merely a story about an opponent falling short.',
+   support?short(support)+' provided '+point(support)+' alongside '+(leader?short(leader)+' at '+point(leader):'the rest of the starters')+'. That second source of points is what gives the winning lineup more than one route to a result.':null,
+   losingSupport?name(l)+' received '+point(losingSupport)+' from '+short(losingSupport)+'. There were usable totals on both sides, but not enough of them in the same lineup.':null,
+   name(w)+' now takes '+record(w)+' into its next appearance. Nobody gets to carry this exact box score forward; the useful achievement was producing across multiple starting spots.'
+  ]);
+  else paragraphs=clean([
+   name(w)+' took another completed Week '+week+' decision over '+name(l)+', '+n(w.points)+'–'+n(l.points)+'. Its '+difference+'-point margin helps explain the result without turning every matchup into the same story.',
+   leader?short(leader)+' was the high scorer for '+name(w)+' with '+point(leader)+'. The other starters supplied the difference between a personal highlight and a team result.':null,
+   'For '+name(l)+', the season record becomes '+record(l)+' and the overall position is '+rank(l)+'. One matchup is not a final judgment, but the standings do not wait for a better explanation.',
+   w.next_opponent_name?name(w)+' turns next to '+w.next_opponent_name+'. The latest result is useful preparation, but that opponent has its own lineup and its own reasons to disrupt the form.':null
+  ]);
+  blocks.push({heading:g.storyTitle+': '+name(w)+' vs. '+name(l),paragraphs});
  }
  const leaders=sort(teams,(a,b)=>(Number(a?.league_context?.standings_rank)||999)-(Number(b?.league_context?.standings_rank)||999)).slice(0,5);
  const scoring=sort(teams,(a,b)=>Number(b.points)-Number(a.points)),high=scoring[0],low=scoring.at(-1),close=sort(games,(a,b)=>a.gap-b.gap)[0],wide=sort(games,(a,b)=>b.gap-a.gap)[0];

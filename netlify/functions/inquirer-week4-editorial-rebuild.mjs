@@ -274,6 +274,28 @@ function leagueStory(edition){
    h.take='The Week '+(week+1)+' fixture deserves an underdog conversation only where the opponent and scoring basis are verified. '+h.take;
   }
  }
+ if(week%2===0)for(const h of hot){
+  if(!h)continue;
+  if(h.kind==='championship'){
+   h.title='Championship Race: '+name(leaders[0]||high);
+   h.take='In Week '+week+', '+name(leaders[0]||high)+' holds '+record(leaders[0]||high)+' and '+rank(leaders[0]||high)+' overall. The position is real; any championship conclusion would still be premature.';
+  }else if(h.kind==='breakout'){
+   h.title=young?'A Young Name to Follow: '+short(young.p):'Breakout Player: Undetermined';
+   h.take=young?'For '+name(young.t)+', '+short(young.p)+' has a '+n(young.p.season_avg)+'-point season average while still '+young.p.age+'. That development is worth watching across future starts.':'The published player history cannot substantiate a candidate for this category yet.';
+  }else if(h.kind==='player'){
+   h.title=star?'Player Honor Discussion: '+short(star):'Player Honor Discussion';
+   h.take=star?short(star)+' recorded '+point(star)+' for '+name(high)+' this week. A meaningful performance enters the conversation without deciding the year-end honor.':'The current snapshot cannot justify naming a player here.';
+  }else if(h.kind==='fraud'){
+   h.title='Alarm Bell: '+name(low);
+   h.take='The '+n(low.points)+'-point score from '+name(low)+' creates genuine pressure. A manager can answer it with a better next lineup, not an excuse for the completed matchup.';
+  }else if(h.kind==='division'){
+   h.title='Who Controls the Divisions Today';
+   h.take=[...flags.entries()].map(([d,t])=>d+' currently goes through '+name(t)+' ('+record(t)+')').join('; ')+'. Those positions may turn on the next result.';
+  }else if(h.kind==='upset'){
+   h.title=h.title.replace('Upset Special:','Upcoming Upset Watch:').replace('Upset Watch:','Next Slate to Watch:');
+   h.take='Week '+(week+1)+' is still ahead. '+h.take;
+  }
+ }
  overview.hot_takes=hot.filter(Boolean).map((h,i)=>({...h,reporter:sections[i%4]?.reporter||reporter}));
  overview.editorial_rebuilt_for_week=week;
 }

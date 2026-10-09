@@ -9,6 +9,29 @@ const valid=x=>x!=null&&x!==''&&Number.isFinite(Number(x));
 const f=x=>Number(x).toFixed(1);
 const hash=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
 const pick=(rows,seed)=>rows[hash(seed)%rows.length];
+function supportedFallback(rows,t,kind,seed){
+ const rid=Math.max(1,Number(t.roster_id)||1),i=rid-1,base=rows[i%rows.length];
+ const angles={
+  'cool-throne':[
+   'the other starters still had to carry their share of the matchup',
+   'the final opponent total determined whether that production became a win',
+   'the individual high and the roster result remain two separate facts'
+  ],
+  'hot-seat':[
+   'an eligible alternative would need to be verified before judging the lineup call',
+   'a quiet starting return can matter even when the matchup was not close',
+   'the next opponent gives management a new choice rather than an automatic fix'
+  ],
+  value:[
+   'the absence of a market entry is not evidence of a flat week',
+   'the fantasy scoring result measures something different from a roster price',
+   'future games cannot retroactively establish an unrecorded value change'
+  ]
+ };
+ const tails=angles[kind]||angles.value,tail=tails[Math.floor(i/rows.length)%tails.length];
+ return base.replace(/[.!?]\s+(?=[A-Z])/g,'; ').replace(/[.!?]+$/,'')+' — '+tail+'.';
+}
+
 const regexEscape=x=>String(x).replace(/[.*+?^$(){}|[\]\\]/g,'\\$&');
 const names=edition=>(edition?.teams||[]).flatMap(t=>[t.team_name,t.manager_name,t.opponent_name,t.next_opponent_name,...(t.starter_details||[]).map(p=>p?.name)]).filter(Boolean).map(String).sort((a,b)=>b.length-a.length);
 const strip=s=>{let x=norm(s);for(let i=0;i<3;i++){const y=x.replace(lead,'');if(y===x)break;x=y}return x?x[0].toUpperCase()+x.slice(1):''};
@@ -18,7 +41,7 @@ function fallback(t,kind,week){
  const ps=(t.starter_details||[]).filter(p=>valid(p?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points)),top=ps[0],weak=ps.at(-1),
   team=String(t.team_name||'This roster'),star=String(top?.name||'the top starter'),low=String(weak?.name||'the lowest-scoring starter'),
   high=top?f(top.points):'unavailable',lowScore=weak?f(weak.points):'unavailable',seed=week+'|'+t.roster_id+'|'+kind;
- if(kind==='cool-throne')return pick([
+ if(kind==='cool-throne')return supportedFallback([
   star+' supplied '+high+' fantasy points, the best verified starting total for '+team+'.',
   'The positive individual headline belongs to '+star+', whose '+high+' points were actually banked by '+team+'.',
   'At '+high+' points, '+star+' led '+team+' on the score sheet. Credit belongs where it was earned.',
@@ -31,8 +54,8 @@ function fallback(t,kind,week){
   'No need to embellish '+star+'’s '+high+' points. That was the largest starting total for '+team+'.',
   team+' can thank '+star+' for a '+high+'-point outing, the most productive individual line in this lineup.',
   'Of the starters available in the record, '+star+' set the pace for '+team+' with '+high+' points.'
- ],seed);
- if(kind==='hot-seat')return pick([
+ ],t,kind,seed);
+ if(kind==='hot-seat')return supportedFallback([
   low+' returned '+lowScore+' points in the starting lineup for '+team+'. That role merits another look.',
   'The difficult number for '+team+' was '+low+' at '+lowScore+'. The manager gets another chance to review the position.',
   'At '+lowScore+' points, '+low+' was the quietest verified starter on '+team+'.',
@@ -45,7 +68,7 @@ function fallback(t,kind,week){
   low+'’s '+lowScore+' points are the weak end of '+team+'’s verified starting totals.',
   'The lowest score in '+team+'’s starting lineup was '+low+' at '+lowScore+'.',
   'No need for blame theater: '+low+' recorded '+lowScore+' as a starter for '+team+'.'
- ],seed);
+ ],t,kind,seed);
  if(kind==='value'){
   const delta=t.value_history_week?.delta;
   if(valid(delta))return pick([
@@ -53,7 +76,7 @@ function fallback(t,kind,week){
    'The saved value-history delta for '+team+' was '+Math.round(Number(delta))+'. A matchup result is a different statistic.',
    'Roster value for '+team+' moved '+Math.round(Number(delta))+' during the documented interval. That does not change the points already scored.'
   ],seed);
-  return pick([
+  return supportedFallback([
    'No verified market-value delta accompanies '+team+' for Week '+week+'. A missing entry is not a zero change.',
    team+' has no recorded current-week change in its roster-value history. Matchup scoring cannot fill that gap.',
    'The edition does not establish a market adjustment for '+team+'. One should not be inferred from its final score.',

@@ -239,6 +239,8 @@ function finalCopyQuality(edition,previousEdition){
      if(/^(.+ registered a (?:gain|decline) of [-+]?\d+ tracked value points|roster value for .+ moved [-+]?\d+ during the documented interval)\b/i.test(sentence))continue;
      if(/^market history recorded [-+]?\d+ points of movement/i.test(sentence))continue;
      if(/^against .+? added [-+]?\d+(?:\.\d+)? for the .+?; (?:passing|rushing|receiving):/i.test(sentence))continue;
+     if(/^against .+? added [-+]?\d+(?:\.\d+)? for the .+?; (?:receiving\s*\/\s*receptions|passing|rushing|receiving):/i.test(sentence))continue;
+     if(/\b(?:produced|posted) [-+]?\d+(?:\.\d+)? in both Week \d+ and Week \d+\b/i.test(sentence))continue;
      if(/^after a [-+]?\d+(?:\.\d+)?[- ]point week/i.test(sentence)&&afterWeekLeads>=2)continue;
      if(proper&&(count>=3||proper===lastProper))continue;
      const shape=opening(sentence);
@@ -287,6 +289,8 @@ function finalCopyQuality(edition,previousEdition){
   for(const group of groups){
    group.paragraphs=(group.paragraphs||[]).map(p=>sentences(p).filter(sentence=>{
     const head=opening(sentence),count=starts.get(head)||0,proper=properLead(sentence),pc=properCounts.get(proper)||0;
+    if(previousExact.has(normalizeExact(sentence))||previous.has(keyFn(sentence)))return false;
+    if(head.startsWith('that is the kind of')&&count>=2)return false;
     if(head.startsWith('from # in week #')&&count>=2)return false;
     if(proper&&pc>=3)return false;
     starts.set(head,count+1);if(proper)properCounts.set(proper,pc+1);return true;

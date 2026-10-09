@@ -601,6 +601,21 @@ async function render(view=currentView,managerId=''){if(view!=='daily')dailyRend
  let drawnDailyOnce=false;
  let dailyTrades=tradeCache?.trades||globalThis.fleecedTradeHistorySharedCacheV515?.trades||[],dailyMgr=managerCache||null;
  let publishedW=(weeklyCache?.available&&Array.isArray(weeklyCache?.teams)&&weeklyCache.teams.length)?weeklyCache:null;
+ let scoringHydrationKey='';
+ const hydratePublishedSeasonScoring=()=>{
+  if(!dailyMgr||!publishedW?.available||!Number(publishedW.week)||!Number(publishedW.season))return;
+  const season=Number(publishedW.season),week=Number(publishedW.week),key=season+'|'+week;
+  if(scoringHydrationKey===key)return;
+  scoringHydrationKey=key;
+  Promise.all(Array.from({length:Math.min(17,week)},(_,i)=>fetchArchivedEdition(season,i+1).catch(()=>null)))
+   .then(editions=>{
+    if(dailyToken!==dailyRenderToken||!publishedW||Number(publishedW.season)!==season||Number(publishedW.week)!==week)return;
+    let reconciled=dailyMgr;
+    for(const edition of editions)if(edition?.available&&Array.isArray(edition.teams)&&edition.teams.length)reconciled=mergeVisibleWeekScoring(reconciled,edition);
+    dailyMgr=reconciled;managerCache=reconciled;drawDaily();
+   }).catch(()=>{scoringHydrationKey=''});
+ };
+
  const drawDaily=()=>{
   if(dailyToken!==dailyRenderToken||currentView!=='daily'||openBroadcastTeam||!document.getElementById('leagueHubContent'))return;
   const dataStats=teamTradeStats(dailyTrades),visibleMgr=mergeVisibleWeekScoring(dailyMgr,publishedW);
@@ -611,13 +626,13 @@ async function render(view=currentView,managerId=''){if(view!=='daily')dailyRend
  const acceptEdition=x=>{
   if(dailyToken!==dailyRenderToken||!x?.available||!Array.isArray(x.teams)||!x.teams.length)return;
   if(!publishedW||Number(x.season)>Number(publishedW.season)||(Number(x.season)===Number(publishedW.season)&&Number(x.week)>Number(publishedW.week))){
-   publishedW=x;weeklyCache=x;spotlightWeeklyCache=x;drawDaily();
+   publishedW=x;weeklyCache=x;spotlightWeeklyCache=x;drawDaily();hydratePublishedSeasonScoring();
    ensureCurrentWeekAwards(x).then(()=>drawDaily()).catch(()=>{});
   }
  };
  drawDaily();
  trades().then(x=>{if(dailyToken!==dailyRenderToken)return;dailyTrades=x?.trades||[];drawDaily()}).catch(()=>{});
- managers().then(x=>{if(dailyToken!==dailyRenderToken)return;dailyMgr=x;drawDaily()}).catch(()=>{});
+ managers().then(x=>{if(dailyToken!==dailyRenderToken)return;dailyMgr=x;drawDaily();hydratePublishedSeasonScoring()}).catch(()=>{});
  reporterDirectory().then(x=>{if(dailyToken!==dailyRenderToken)return;reporterDirectoryCache=x;drawDaily()}).catch(()=>{});
  weeklyAwards().then(x=>{if(dailyToken!==dailyRenderToken)return;weeklyAwardsCache=x;drawDaily();if(publishedW)ensureCurrentWeekAwards(publishedW).then(()=>drawDaily()).catch(()=>{})}).catch(()=>{});
  fetch('/.netlify/functions/league-hub?preload_bootstrap=1',{cache:'force-cache'})

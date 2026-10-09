@@ -149,7 +149,7 @@ function uniqueSectionFallback(team,kind,week,seen,prior){
    'Praise here belongs to '+player+' for the most productive verified start on '+teamName+'. One player cannot solve every position.',
    'A completed fantasy score makes this recognition possible: '+player+' headed the contributions to '+teamName+'.',
    'Instead of projecting what could happen, the Cool Throne examines what happened. '+player+' led the '+teamName+' starters.',
-   'The largest starter total for '+teamName+' came from '+player+'. Credit is deserved; a roster-wide verdict would be premature.',
+   'The largest starter total for '+teamName+' came from '+player+'. The other starting positions still determined the team result.',
    'Not every part of this lineup answered the bell, but '+player+' supplied the strongest number for '+teamName+'.'
  );
  if(kind==='value'&&valid(delta)){
@@ -240,7 +240,7 @@ function finalCopyQuality(edition,previousEdition){
      if(/^market history recorded [-+]?\d+ points of movement/i.test(sentence))continue;
      if(/^against .+? added [-+]?\d+(?:\.\d+)? for the .+?; (?:passing|rushing|receiving):/i.test(sentence))continue;
      if(/^against .+? added [-+]?\d+(?:\.\d+)? for the .+?; (?:receiving\s*\/\s*receptions|passing|rushing|receiving):/i.test(sentence))continue;
-     if(/\b(?:produced|posted) [-+]?\d+(?:\.\d+)? in both Week \d+ and Week \d+\b/i.test(sentence))continue;
+     if(/\b(?:produced|posted) [-+]?\d+(?:\.\d+)? in both (?:Week|round) \d+ and Week \d+\b/i.test(sentence))continue;
      if(/^after a [-+]?\d+(?:\.\d+)?[- ]point week/i.test(sentence)&&afterWeekLeads>=2)continue;
      if(proper&&(count>=3||proper===lastProper))continue;
      const shape=opening(sentence);

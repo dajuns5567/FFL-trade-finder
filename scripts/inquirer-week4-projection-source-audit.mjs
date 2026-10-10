@@ -18,3 +18,20 @@ for(const url of sources){try{
  console.log('PROJECTION_SOURCE_DIAGNOSTIC',JSON.stringify({url,status:r.status,bytes:raw.length,kind:Array.isArray(data)?'array':typeof data,topKeys:Object.keys(obj).slice(0,8),rows:rows.length,starterMatches:players.filter(x=>ids.has(x)).length,sample:rows.slice(0,2).map(x=>({id:x.player_id,keys:Object.keys(x).slice(0,12),statKeys:Object.keys(x.stats||x.projection||{}).slice(0,12)})),firstChars:r.ok?'':raw.slice(0,110)}))
 }catch(e){console.log('PROJECTION_SOURCE_DIAGNOSTIC',JSON.stringify({url,error:String(e?.message||e)}))}}
 console.log('WEEK4_STARTER_IDS',players.length);
+
+const [league,projectionRaw]=await Promise.all([
+ fetch('https://api.sleeper.app/v1/league/1316867686394769408').then(r=>r.json()),
+ fetch('https://api.sleeper.app/projections/nfl/2026/4?season_type=regular').then(r=>r.json())
+]);
+const scoring=league.scoring_settings||{};
+const rowsById=new Map(projectionRaw.map(r=>[String(r.player_id),r]));
+const score=stats=>{if(!stats||typeof stats!=='object')return null;let sum=0,used=0;for(const [key,weight] of Object.entries(scoring)){
+ const raw=stats[key]??(key.startsWith('idp_')?stats[key.slice(4)]:undefined);
+ if(raw==null||raw==='')continue;
+ const v=Number(raw),w=Number(weight);if(Number.isFinite(v)&&Number.isFinite(w)){sum+=v*w;used++;}
+}return used?Number(sum.toFixed(2)):null};
+const teamRows=week.teams.map(t=>{const starters=(t.starter_details||[]),scored=starters.map(p=>({id:String(p.id),position:p.position,projected:score(rowsById.get(String(p.id))?.stats)})),missing=scored.filter(p=>p.projected==null);
+ return {team:t.team_name,roster:t.roster_id,starters:starters.length,coverage:scored.length-missing.length,total:missing.length?null:Number(scored.reduce((n,p)=>n+p.projected,0).toFixed(2)),missing};
+});
+const allMissing=teamRows.flatMap(t=>t.missing.map(p=>({...p,team:t.team})));
+console.log('WEEK4_SCORED_PROJECTIONS',JSON.stringify({scoringSettings:Object.keys(scoring).length,uniqueStarterIds:players.length,totalLineupPositions:teamRows.reduce((n,x)=>n+x.starters,0),fullyCoveredTeams:teamRows.filter(t=>t.total!==null).length,playersWithNoUsableStats:allMissing,teams:teamRows.map(({team,coverage,starters,total})=>({team,coverage,starters,total})),retrievedAsOf:new Date().toISOString()}));

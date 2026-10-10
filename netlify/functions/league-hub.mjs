@@ -344,8 +344,8 @@ export async function weeklyReport(req){
  let managerHistoryData=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
  if(!managerHistoryData?.career?.length)managerHistoryData=await managerHistory().catch(()=>({career:[],current:[],assignments:[]}));
  const [matchups,transactions,rosters,users,proj,players,nextMatchups,nextProj,weeklyStats,winnersBracket]=await Promise.all([
-  fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`),fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`),
-  fetchJson(`${API}/league/${LEAGUE}/rosters`),fetchJson(`${API}/league/${LEAGUE}/users`),projections(season,week,league?.scoring_settings||{}),
+  Promise.resolve(completion.rows),fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>null),
+  fetchJson(`${API}/league/${LEAGUE}/rosters`).catch(()=>[]),fetchJson(`${API}/league/${LEAGUE}/users`).catch(()=>[]),projections(season,week,league?.scoring_settings||{}),
   fetchJson(`${API}/players/nfl`).catch(()=>({})),week<INQUIRER_FINAL_WEEK?fetchJson(`${API}/league/${LEAGUE}/matchups/${week+1}`).catch(()=>[]):Promise.resolve([]),
   week<INQUIRER_FINAL_WEEK?projections(season,week+1,league?.scoring_settings||{}):Promise.resolve({}),
   fetchJson(`${API}/stats/nfl/regular/${season}/${week}`).catch(()=>({})),
@@ -354,6 +354,7 @@ export async function weeklyReport(req){
  if(!weeklyStats||typeof weeklyStats!=='object'||!Object.keys(weeklyStats).length)return latestPublished?{...latestPublished,waiting_for_week:week,reason:'Sleeper weekly player statistics are unavailable; publication deferred.'}:{available:false,season,week,waiting_for_week:week,reason:'Sleeper weekly player statistics are unavailable; publication deferred.'};
  const missingStatScorers=missingPublishedWeekPlayerStats(completion.rows,weeklyStats);
  if(missingStatScorers.length)return latestPublished?{...latestPublished,waiting_for_week:week,reason:'Sleeper weekly player statistics are incomplete for '+missingStatScorers.length+' matchup scorers; publication deferred.'}:{available:false,season,week,waiting_for_week:week,reason:'Sleeper weekly player statistics are incomplete for '+missingStatScorers.length+' matchup scorers; publication deferred.'};
+ if(!Array.isArray(transactions)||!Array.isArray(rosters)||rosters.length!==completion.rows.length||!Array.isArray(users)||!users.length||!players||typeof players!=='object'||!Object.keys(players).length)return latestPublished?{...latestPublished,waiting_for_week:week,reason:'Sleeper has not returned complete roster, user, transaction and player data; publication deferred.'}:{available:false,season,week,waiting_for_week:week,reason:'Sleeper has not returned complete roster, user, transaction and player data; publication deferred.'};
  const futureFantasyWeeks=Array.from({length:Math.min(3,Math.max(0,INQUIRER_FINAL_WEEK-week))},(_,i)=>week+i+1),futureFantasyMatchups=await Promise.all(futureFantasyWeeks.map(w=>w===week+1?Promise.resolve(nextMatchups):fetchJson(`${API}/league/${LEAGUE}/matchups/${w}`).catch(()=>[])));
  const nextNflWeek=week<INQUIRER_FINAL_WEEK?week+1:null,[teamValueHistory,canonicalTrades,nextSchedule,playerMarket]=await Promise.all([
   internalHistory(origin,'team_net_all=1'),

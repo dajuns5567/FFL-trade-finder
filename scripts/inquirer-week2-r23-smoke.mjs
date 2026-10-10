@@ -50,8 +50,9 @@ function canonicalScoreRows(text){
 const diagWords=x=>(String(x||'').match(/\\b[\\w’'-]+\\b/g)||[]).length;
 for(const [stage,apply] of [['r28-base',applyR28Base],['r129',applyR129],['r169x',applyR169X],['r169y',applyR169Y],['r169z',applyR169Z]]){
  const edition=apply(structuredClone(rawWeek2));
- const team=(edition.teams||[]).find(t=>String(t.team_name||'')==='New England Patriots');
- console.error('NEW_ENGLAND_STAGE',stage,diagWords((team?.inquirer_article?.sections||[]).flatMap(s=>s.paragraphs||[]).join(' ')));
+ const target=(revised.teams||[]).find(t=>String(t.team_name||'')==='New England Patriots');
+ const team=(edition.teams||[]).find(t=>String(t.roster_id)===String(target?.roster_id));
+ console.error('NEW_ENGLAND_STAGE',stage,'roster',target?.roster_id,'stageTeam',team?.team_name,'words',diagWords((team?.inquirer_article?.sections||[]).flatMap(s=>s.paragraphs||[]).join(' ')));
 }
 
 const reporterCounts=new Map();

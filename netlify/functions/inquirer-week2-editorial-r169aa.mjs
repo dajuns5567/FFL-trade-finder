@@ -248,6 +248,29 @@ function contextualizeSharedWeek2Sentences(teams){
  return teams;
 }
 
+function removeRepeatedAintsScoreMentions(team){
+ if(!/new orleans aints/i.test(String(team?.team_name||'')))return team;
+ const a=team?.inquirer_article;if(!a)return team;
+ const facts=[['Maxx Crosby','3.5'],['Jaxon Smith-Njigba','42.5']];
+ const seen=new Set();
+ for(const section of a.sections||[]){
+  section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
+   const sentences=String(paragraph).split(/(?<=[.!?])\s+/);
+   return sentences.filter(sentence=>{
+    for(const [name,score] of facts){
+     if(sentence.includes(name)&&new RegExp('(^|[^0-9.])'+score.replace('.','\\.')+'(?![0-9]|\\.[0-9])').test(sentence)){
+      if(seen.has(name))return false;
+      seen.add(name);
+     }
+    }
+    return true;
+   }).join(' ').trim();
+  }).filter(Boolean);
+ }
+ a.paragraphs=a.sections.flatMap(x=>x.paragraphs||[]).filter(Boolean);
+ return team;
+}
+
 export function applyWeek2EditorialR16(raw){
   const out=applyR169Z(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
@@ -257,7 +280,7 @@ export function applyWeek2EditorialR16(raw){
    for(const sec of a.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(p=>String(p).replace(/group chat/gi,'argument over the lineup').replace(/\breceipts?\b/gi,'results').replace('a good seat at the table','a favorable place in the standings').replace(/one may mock the furniture while still approving the occupant/gi,'one can question the spectacle while acknowledging the player who delivered').replace(/Breakout linebacker Edgerrin Cooper/g,'Linebacker Edgerrin Cooper'));
    a.paragraphs=a.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);return team;
   });
-  out.teams=contextualizeSharedWeek2Sentences(out.teams.map(restoreVerifiedPlayerHistoryComparison).map(preserveRealFootballPlayerReporting).map(preserveVerifiedWeek3ProjectionRead).map(refineWeek2RepeatedCopy));
+  out.teams=contextualizeSharedWeek2Sentences(out.teams.map(restoreVerifiedPlayerHistoryComparison).map(preserveRealFootballPlayerReporting).map(preserveVerifiedWeek3ProjectionRead).map(refineWeek2RepeatedCopy).map(removeRepeatedAintsScoreMentions));
   return out;
 }
 

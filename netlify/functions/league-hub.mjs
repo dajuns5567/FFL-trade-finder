@@ -166,6 +166,8 @@ async function regularWeekAppliedToRosterRecords(week,rows){
   prior=week>1?await Promise.all(Array.from({length:Math.min(13,week-1)},(_,i)=>fetchJson(`${API}/league/${LEAGUE}/matchups/${i+1}`).catch(()=>[]))):[],record={};
  const tally=source=>{for(const pair of matchupGroups(source).values())if(pair.length===2){const[a,b]=pair,ai=String(a.roster_id),bi=String(b.roster_id);record[ai]??={wins:0,losses:0};record[bi]??={wins:0,losses:0};if(Number(a.points)>Number(b.points)){record[ai].wins++;record[bi].losses++}else if(Number(b.points)>Number(a.points)){record[bi].wins++;record[ai].losses++}}};
  for(const p of prior)tally(p);tally(rows);
+ const rosterIds=new Set(rosters.map(r=>String(r.roster_id)));
+ if(!rosterIds.size||rows.length!==rosterIds.size||new Set(rows.map(m=>String(m.roster_id))).size!==rosterIds.size||rows.some(m=>!rosterIds.has(String(m.roster_id))))return false;
  return rows.every(m=>{const r=rosters.find(x=>String(x.roster_id)===String(m.roster_id)),x=record[String(m.roster_id)];return r&&x&&Number(r?.settings?.wins||0)>=x.wins&&Number(r?.settings?.losses||0)>=x.losses});
 }
 async function completedPublicationWeek(week){

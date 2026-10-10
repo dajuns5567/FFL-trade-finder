@@ -62,7 +62,7 @@ export default async function inquirerPublishScheduled(req){
   const weekly_awards_refreshed=refreshed?.weekly_awards_refreshed??false;
   const manager_spotlight_refreshed=refreshed?.manager_spotlight_refreshed??false;
   return json({
-    ok:true,
+    ok:!refreshed||(!refreshed.errors.length&&weekly_awards_refreshed&&manager_spotlight_refreshed),
     available:!!result?.available,
     season:result?.season??null,
     week:result?.week??null,

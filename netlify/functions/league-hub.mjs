@@ -483,12 +483,11 @@ async function archivedProjectionMap(season,week){
      leagueId=String(candidate.previous_league_id||'');
     }
     if(!league)throw Error('Historical season league and scoring settings not found');
-    const projectionResponse=await fetch(`https://api.sleeper.app/projections/nfl/${season}/${week}?season_type=regular`,{signal:control.signal});
-    if(!projectionResponse.ok)throw Error('Sleeper historical projection HTTP '+projectionResponse.status);
-    const raw=await projectionResponse.json();
+    let raw=[];
+    try{const projectionResponse=await fetch(`https://api.sleeper.app/projections/nfl/${season}/${week}?season_type=regular`,{signal:control.signal});if(projectionResponse.ok)raw=await projectionResponse.json()}catch{}
     const scoring=league?.scoring_settings||{};
     const historicalRows=projectionRows(raw);
-    if(!historicalRows.length||!Object.keys(scoring).length)return null;
+    if(!Object.keys(scoring).length)return null;
     // Captured before week scoring began; unlike a later historical feed this
     // preserves the earliest available numerical projections.
     let captured=null;
@@ -548,7 +547,9 @@ async function addRetrospectiveEstimates(edition){
  if(!missing.length)return edition;
  const historyFeed=await archivedProjectionMap(year,week);
  if(!historyFeed?.scoring)return edition;
- const history=await priorProjectionHistory(year,week,historyFeed.scoring,historyFeed.positions);
+ const starterPositions=new Map(historyFeed.positions);
+ for(const team of teams)for(const player of team.starter_details||[])if(player.id&&player.position)starterPositions.set(String(player.id),String(player.position).toUpperCase());
+ const history=await priorProjectionHistory(year,week,historyFeed.scoring,starterPositions);
  if(process.env.CI)console.log('RETROSPECTIVE_HISTORY_COVERAGE',JSON.stringify({year,week,missing:missing.length,priorRecords:history.length,positions:[...new Set(missing.map(p=>p.position))]}));
  if(!history.length)return edition; // No fake zero or after-the-fact Week 1 score.
  return {...edition,teams:teams.map(team=>{

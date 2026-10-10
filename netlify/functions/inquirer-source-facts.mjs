@@ -52,6 +52,29 @@ export function buildInquirerEditionFactRegistry(edition){
 // Reconcile independently repeated values inside an edition before its prose
 // can be published. These checks compare separate structured source fields;
 // they do not claim to independently fetch or authenticate Sleeper records.
+// Compare generated publication facts with the finalized Sleeper matchup
+// snapshot captured separately by the publisher. No network call or fallback.
+export function findInquirerRawMatchupIssues(edition,rawRows){
+ const issues=[],rows=Array.isArray(rawRows)?rawRows:[];
+ if(!Array.isArray(edition?.teams)||!rows.length)return [{id:'raw-matchup-source-unavailable'}];
+ const byId=new Map(rows.filter(r=>r?.roster_id!=null).map(r=>[String(r.roster_id),r]));
+ for(const team of edition.teams){
+  const rosterId=team?.roster_id==null?null:String(team.roster_id),raw=byId.get(rosterId);
+  if(!raw){issues.push({id:'raw-matchup-roster-missing',roster_id:rosterId});continue}
+  const actual=number(raw.points),claimed=number(team.points);
+  if(actual===null||claimed===null||Math.abs(actual-claimed)>0.055)
+   issues.push({id:'raw-matchup-team-score',roster_id:rosterId,expected:actual,reported:claimed});
+  const playerScores=raw.players_points&&typeof raw.players_points==='object'?raw.players_points:{};
+  for(const p of team.starter_details||[]){
+   if(p?.id==null||!Object.hasOwn(playerScores,String(p.id)))continue;
+   const source=number(playerScores[String(p.id)]),reported=number(p.points);
+   if(source===null||reported===null||Math.abs(source-reported)>0.055)
+    issues.push({id:'raw-matchup-player-score',roster_id:rosterId,player_id:String(p.id),expected:source,reported});
+  }
+ }
+ return issues;
+}
+
 export function findInquirerEditionConsistencyIssues(edition){
  const issues=[];
  const teams=Array.isArray(edition?.teams)?edition.teams:[];

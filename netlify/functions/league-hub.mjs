@@ -642,7 +642,9 @@ export async function capturePregameProjections(){
  const confirm=await storage.get(key,{type:'json'});
  if(confirm!==null)
   return {captured:false,existing:true,season,week};
- await storage.setJSON(key,snapshot);
+ // Atomic create-only write: concurrent scheduled invocations cannot replace the first snapshot.
+ const result=await storage.setJSON(key,snapshot,{onlyIfNew:true});
+ if(!result?.modified)return {captured:false,existing:true,season,week};
  return {captured:true,season,week,players:Object.keys(points).length};
 }
 

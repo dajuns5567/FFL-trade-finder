@@ -123,7 +123,7 @@ assert(qualityGateSource.includes('findInquirerSourceFactIssues(candidate)'), 'E
 assert(publisher.includes('const candidate={week,teams:edited.inquirer.teams,league_overview:edited.leagueOverview}'), 'Initial publication gate must include reporting week');
 assert(publisher.includes('evaluateInquirerEditionQuality({week,teams:result.teams,league_overview:result.league_overview}'), 'Final publication gate must include reporting week');
 assert(qualityGateSource.includes('&&factIssues.length===0'), 'Source-fact errors must block new publication rather than only log warnings');
-const {findInquirerSourceFactIssues,buildInquirerEditionFactRegistry,findInquirerEditionConsistencyIssues}=await import('../netlify/functions/inquirer-source-facts.mjs');
+const {findInquirerSourceFactIssues,buildInquirerEditionFactRegistry,findInquirerEditionConsistencyIssues,findInquirerRawMatchupIssues}=await import('../netlify/functions/inquirer-source-facts.mjs');
 const factFixture={week:4,teams:[{team_name:'Miami Dolphins',starter_details:[{name:'Tetairoa McMillan',points:45.2}],inquirer_article:{sections:[{paragraphs:['Tetairoa McMillan scored 45.2 points in Week 4.']}]} }],league_overview:{sections:[],hot_takes:[{take:'Tetairoa McMillan has a 45.2-point season average.'}]}};
 assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='unsupported-player-average'),'Reject unsupported season-average claim');
 factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 44.2 points this week.'}];
@@ -237,5 +237,18 @@ assert(findInquirerEditionConsistencyIssues(reconciliation).some(x=>x.id==='dupl
 reconciliation.teams.pop();
 reconciliation.teams[1].opponent_roster_id=12;
 assert.equal(findInquirerEditionConsistencyIssues(reconciliation).length,0,'Do not infer opponent reciprocity if source linkage is incomplete');
+
+
+// Independent finalized Sleeper snapshot must match candidate roster and starters.
+const rawSource=[{roster_id:1,points:109.2,players_points:{playerA:21.5,playerB:-1.2}}];
+const sourcedEdition={teams:[{roster_id:1,points:109.2,starter_details:[{id:'playerA',points:21.5},{id:'playerB',points:-1.2}]}]};
+assert.equal(findInquirerRawMatchupIssues(sourcedEdition,rawSource).length,0,'Accept fully matching completed Sleeper matchup');
+sourcedEdition.teams[0].points=111;
+assert(findInquirerRawMatchupIssues(sourcedEdition,rawSource).some(x=>x.id==='raw-matchup-team-score'),'Reject team total inconsistent with finalized Sleeper row');
+sourcedEdition.teams[0].points=109.2;
+sourcedEdition.teams[0].starter_details[1].points=-2.2;
+assert(findInquirerRawMatchupIssues(sourcedEdition,rawSource).some(x=>x.id==='raw-matchup-player-score'),'Reject mismatched negative IDP player total');
+assert(findInquirerRawMatchupIssues(sourcedEdition,[]).some(x=>x.id==='raw-matchup-source-unavailable'),'Unavailable source must fail closed');
+assert(publisher.includes('findInquirerRawMatchupIssues(result,completion.rows)'), 'Publication must reconcile against finalized Sleeper snapshot');
 
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

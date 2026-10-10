@@ -25,5 +25,6 @@ for (const week of [1,2,3,4]) {
   }
  }
  assert(withCoverage>0,'Week '+week+' should include sourced scoring projections');
+ assert(body.teams.every(t=>t.projected!=null||t.estimated_projected!=null),'All 32 Week '+week+' teams require an official complete projection or a source-labeled complete retrospective estimate');
  console.log('ARCHIVED_WEEK_PROJECTION_COVERAGE',JSON.stringify({season:2026,week,teams:32,teamsWithPlayerProjections:withCoverage,fullTeams:body.teams.filter(x=>x.projected!==null).length,estimatedTeams,estimatedPlayers}));
 }

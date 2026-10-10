@@ -40,4 +40,10 @@ assert.equal(awards.find(x=>x.type==='cool-throne')?.roster_id,'4','Cool Throne 
 const noProjected=structuredClone(fixture);noProjected.teams[0].projection_coverage=0;
 const fallbackAwards=context.managerAwardsFromWeek(noProjected);
 assert.equal(fallbackAwards.find(x=>x.type==='hot-seat')?.roster_id,'3','Uncovered projections must not artificially determine Hot Seat');
+const unverifiedMargin=structuredClone(noProjected);
+unverifiedMargin.teams[3].projection_coverage=9;
+unverifiedMargin.teams[3].projected=110;
+const unverifiedHot=context.managerAwardsFromWeek(unverifiedMargin).find(x=>x.type==='hot-seat');
+assert.equal(unverifiedHot?.roster_id,'3','Actual-loss Hot Seat fallback remains stable when its own projection is unverified');
+assert.doesNotMatch(unverifiedHot.detail,/Projected/i,'Unverified team projection must never produce a fabricated projected upset label');
 console.log('Players of the Week fallback, verified awards precedence, and latest-edition wiring passed');

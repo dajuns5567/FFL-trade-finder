@@ -153,6 +153,8 @@ assert.equal(rosters.length,32,'Expected 32 league rosters');
 const knownOwnerIds=new Set(users.map(u=>String(u.user_id)));
 const missingOwners=rosters.map(r=>String(r.owner_id||'')).filter(owner=>owner&&!knownOwnerIds.has(owner));
 console.log('WEEK4_ROSTER_OWNER_COVERAGE',JSON.stringify({rosters:rosters.length,users:users.length,missingOwners}));
+const playerDirectoryMisses=[...new Set(w4.flatMap(m=>Object.entries(m.players_points||{}).filter(([,score])=>Number.isFinite(Number(score))&&Number(score)!==0).map(([id])=>String(id))))].filter(id=>!players?.[id]?.position||!String(players[id].full_name||[players[id].first_name,players[id].last_name].filter(Boolean).join('')).trim());
+console.log('WEEK4_PLAYER_DIRECTORY_COVERAGE',JSON.stringify({missingCount:playerDirectoryMisses.length,missingIds:playerDirectoryMisses.slice(0,30)}));
 
 assert.equal(w4.length,32,'Expected 32 Week 4 matchup rows');
 assert.ok(w4.every(m=>Number.isFinite(Number(m.points))&&m?.players_points&&Object.keys(m.players_points).length),'Week 4 Sleeper scoring must be complete');

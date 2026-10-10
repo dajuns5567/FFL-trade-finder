@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {chromium} from 'playwright';
 let root=process.env.INQUIRER_PREVIEW_URL||'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
@@ -53,7 +54,9 @@ try{
  await page.waitForFunction(()=>[...document.scripts].some(s=>/league-hub-v451\.js\?v=/.test(s.src)),null,{timeout:60000});
  const clientScripts=await page.evaluate(()=>[...document.scripts].map(x=>x.src).filter(x=>/league-hub-(?:v451|lazy-v454)/.test(x)));
  console.log('LIVE_PREVIEW_CLIENT_REVISIONS',JSON.stringify({revision,clientScripts}));
- assert(clientScripts.some(x=>x.includes('league-hub-v451.js?v=546')),'Netlify preview is serving stale League Hub JavaScript; not valid for current-commit browser acceptance');
+ const expectedClientPath=readFileSync('league-hub-lazy-v454.js','utf8').match(/league-hub-v451\.js\?v=\d+/)?.[0];
+ assert(expectedClientPath,'Unable to find current League Hub asset revision');
+ assert(clientScripts.some(x=>x.includes(expectedClientPath)),'Netlify preview is serving stale League Hub JavaScript; not valid for current-commit browser acceptance');
 
  await page.locator('#leagueHubContent .lh-report').waitFor({timeout:60000});
  await page.waitForFunction(()=>/Week 4/.test(document.querySelector('#leagueHubContent .lh-report')?.textContent||''),{timeout:60000});

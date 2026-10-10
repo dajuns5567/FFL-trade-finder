@@ -122,7 +122,7 @@ function preserveRealFootballPlayerReporting(team){
  const opponent=String(team.opponent_name||'the Week 2 opponent');
  const statTerms=/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|solo|assists?|TFL|tackles? for loss|sacks?|QB hits?|pass breakups?|snaps?|interceptions?|forced fumbles?)\b/i;
  const top=starters[0];
- const stat=p=>String(p.real_stat_line||'').replace(/\s*[•|]\s*/g,', ');
+ const stat=p=>String(p.real_stat_line||'').replace(/\s*[•|]\s*/g,', ').replace(/\brec\b/gi,'receptions').replace(/\byds\b/gi,'yards').replace(/\btd\b/gi,'touchdowns');
  if(!statTerms.test(section.paragraphs.join(' '))&&top.real_stat_line){
   section.paragraphs.push('The highest-scoring starter, '+top.name+', supplied documented NFL work: '+stat(top)+'. The fantasy result rests on those actual plays, not on a reconstructed story about the professional game.');
  }

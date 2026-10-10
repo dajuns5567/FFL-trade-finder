@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import week4Preload from '../netlify/functions/inquirer-week4-2026-preload.mjs';
 import {rebuildWeek4Editorial} from '../netlify/functions/inquirer-week4-editorial-rebuild.mjs';
 import week4FastHandler from '../netlify/functions/league-hub-week4-fast.mjs';
-import leagueHubHandler from '../netlify/functions/league-hub.mjs';
+import leagueHubHandler,{isCurrentWeek4Inquirer} from '../netlify/functions/league-hub.mjs';
 import {weeklyReport} from '../netlify/functions/league-hub.mjs';
 import {applyPublishedForwardFix} from '../netlify/functions/inquirer-week3-published-r1.mjs';
 
@@ -14,6 +14,15 @@ assert.equal(rebuilt.teams.length,32,'All 32 team articles must be present');
 assert.equal(new Set(rebuilt.teams.map(t=>String(t.roster_id))).size,32,'Duplicate roster articles');
 assert.notEqual(rebuilt,original,'Rebuild must not mutate the locked source object');
 assert.equal(rebuilt.league_overview.sections.length,4);
+assert.equal(isCurrentWeek4Inquirer(rebuilt),true,'Rebuilt Week 4 must qualify as a current canonical edition');
+assert.equal(isCurrentWeek4Inquirer(original),false,'Older Week 4 preload must never override the rebuilt recap');
+const incompleteStored=structuredClone(rebuilt);
+incompleteStored.league_overview.sections[0].blocks[2].paragraphs=[];
+assert.equal(isCurrentWeek4Inquirer(incompleteStored),false,'Stored Week 4 with an empty theme must use canonical preload');
+const staleTeam=structuredClone(rebuilt);
+staleTeam.teams[0].inquirer_article.editorial_rebuilt_for_week=undefined;
+assert.equal(isCurrentWeek4Inquirer(staleTeam),false,'Stored Week 4 with a stale team article must not override canonical preload');
+
 assert.equal(rebuilt.league_overview.sections[0].blocks.length,6,'Recap must contain six league-wide editorial themes');
 const expectedRecapKinds=['lead','standings','players','decisions','league','outlook'];
 assert.deepEqual(rebuilt.league_overview.sections[0].blocks.map(b=>b.kind),expectedRecapKinds,'Weekly Recap reverted to old matchup-by-matchup structure');

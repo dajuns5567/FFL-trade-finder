@@ -113,6 +113,19 @@ function repairUnderlengthWeek2(team){
 
 
 
+
+function preserveRealFootballPlayerReporting(team){
+ const article=team?.inquirer_article,section=article?.sections?.find(sec=>sec.kind==='players');
+ if(!section||!Array.isArray(section.paragraphs))return team;
+ const top=(team.starter_details||[]).filter(p=>validNum(p?.points)).sort((a,b)=>Number(b.points)-Number(a.points))[0];
+ if(!top?.real_stat_line||!top?.name)return team;
+ const copy=section.paragraphs.join(' ');
+ if(/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|solo|assists?|TFL|tackles? for loss|sacks?|QB hits?|pass breakups?|snaps?|interceptions?|forced fumbles?)\b/i.test(copy))return team;
+ section.paragraphs.push(`The leading starter, ${top.name}, also has a concrete NFL stat line behind the fantasy scoring. Recorded workload: ${String(top.real_stat_line).replace(/\s*[•|]\s*/g,', ')}. Those documented plays and snaps help explain the result without turning the scoring total into a substitute for the player's actual on-field contribution.`);
+ article.paragraphs=article.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);
+ return team;
+}
+
 function restoreVerifiedPlayerHistoryComparison(team){
  const article=team?.inquirer_article,sections=article?.sections||[];
  const playerSection=sections.find(sec=>/player|names|people|made the|who actually/i.test(String(sec.heading||'')))||sections.find(sec=>sec.kind!=='outlook'&&sec.kind!=='lede');
@@ -191,7 +204,7 @@ export function applyWeek2EditorialR16(raw){
    for(const sec of a.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(p=>String(p).replace(/group chat/gi,'argument over the lineup').replace(/\breceipts?\b/gi,'results').replace('a good seat at the table','a favorable place in the standings').replace(/one may mock the furniture while still approving the occupant/gi,'one can question the spectacle while acknowledging the player who delivered').replace(/Breakout linebacker Edgerrin Cooper/g,'Linebacker Edgerrin Cooper'));
    a.paragraphs=a.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);return team;
   });
-  out.teams=contextualizeSharedWeek2Sentences(out.teams.map(restoreVerifiedPlayerHistoryComparison).map(preserveVerifiedWeek3ProjectionRead));
+  out.teams=contextualizeSharedWeek2Sentences(out.teams.map(restoreVerifiedPlayerHistoryComparison).map(preserveRealFootballPlayerReporting).map(preserveVerifiedWeek3ProjectionRead));
   return out;
 }
 

@@ -152,7 +152,7 @@ function sleeperConference(league,division){
  if(name.startsWith('NFC'))return'NFC';
  return'';
 }
-function matchupComplete(rows){if(!Array.isArray(rows)||!rows.length)return false;const groups=new Map();for(const m of rows){const k=String(m?.matchup_id??'');if(!k)return false;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}return [...groups.values()].every(pair=>pair.length===2&&pair.every(m=>m?.points!=null&&m.points!==''&&Number.isFinite(Number(m.points))&&m?.players_points&&Object.keys(m.players_points).length>0))}
+function matchupComplete(rows){if(!Array.isArray(rows)||!rows.length)return false;const groups=new Map(),seenRosters=new Set();for(const m of rows){const k=String(m?.matchup_id??''),rid=String(m?.roster_id??'');if(!k||!rid||rid==='0'||seenRosters.has(rid))return false;seenRosters.add(rid);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}return [...groups.values()].every(pair=>pair.length===2&&pair.every(m=>m?.points!=null&&m.points!==''&&Number.isFinite(Number(m.points))&&m?.players_points&&Object.keys(m.players_points).length>0))}
 function missingPublishedWeekPlayerStats(matchups,weeklyStats){
  const missing=new Set();
  for(const matchup of matchups||[]){

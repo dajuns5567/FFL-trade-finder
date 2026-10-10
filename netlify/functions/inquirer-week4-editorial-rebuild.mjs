@@ -109,95 +109,55 @@ function teamStory(t,week){
 function leagueStory(edition){
  const teams=edition.teams||[],week=Number(edition.week),overview=edition.league_overview;if(!overview)return;
  const by=new Map(teams.map(t=>[String(t.roster_id),t])),games=[],used=new Set();
- for(const t of teams){const o=by.get(String(t.opponent_roster_id||''));if(!o||!valid(t.points)||!valid(o.points))continue;const key=[String(t.roster_id),String(o.roster_id)].sort().join('|');if(used.has(key))continue;used.add(key);const winner=Number(t.points)>=Number(o.points)?t:o,loser=winner===t?o:t;games.push({winner,loser,gap:Math.abs(Number(t.points)-Number(o.points)),total:Number(t.points)+Number(o.points)})}
- const sort=(rows,fn)=>rows.slice().sort(fn);
- const orders=[
-  {title:'The Week’s Loudest Game',games:sort(games,(a,b)=>b.total-a.total)},
-  {title:'The Closest Finish',games:sort(games,(a,b)=>a.gap-b.gap)},
-  {title:'The Biggest Margin',games:sort(games,(a,b)=>b.gap-a.gap)},
-  {title:'Another Scoring Headline',games:sort(games,(a,b)=>b.total-a.total)},
-  {title:'The Other Game That Deserves a Look',games:sort(games,(a,b)=>a.gap-b.gap)}
- ],chosen=[],selected=new Set();
- for(const row of orders){const game=row.games.find(g=>!selected.has(g));if(game){chosen.push({...game,storyTitle:row.title});selected.add(game)}}
- const reporter=overview.sections?.[0]?.reporter||null,blocks=[];
- for(const [i,g] of chosen.entries()){
-  const w=g.winner,l=g.loser,leader=topPlayers(w)[0],runner=topPlayers(l)[0],
-   support=topPlayers(w)[1],losingSupport=topPlayers(l)[1],difference=n(g.gap);
-  let paragraphs=[];
-  if(i===0)paragraphs=clean([
-   name(w)+' survived the week’s highest combined-score game, '+n(w.points)+' to '+n(l.points)+'. Together these rosters put up '+n(g.total)+' fantasy points, enough to make ordinary depth feel unusually important.',
-   leader?short(leader)+' accounted for '+point(leader)+' on the winning side'+(runner?', while '+short(runner)+' answered with '+point(runner)+' for '+name(l):'')+'. The top names gave the matchup its pace.':null,
-   support?name(w)+' also got '+point(support)+' from '+short(support)+'. A high-scoring win is easier to understand when the second-best starter is carrying actual weight.':null,
-   'The table now has '+name(w)+' at '+record(w)+' and '+name(l)+' at '+record(l)+'. The losing score was substantial, but there are no extra standings points for keeping up in a shootout.'
-  ]);
-  else if(i===1)paragraphs=clean([
-   'Only '+difference+' points separated '+name(w)+' and '+name(l)+'. The winner posted '+n(w.points)+'; the loser reached '+n(l.points)+'. No manager in that matchup gets to call the margin comfortable.',
-   runner?name(l)+' had '+short(runner)+' contributing '+point(runner)+'. A strong individual performance could not completely cover the remaining difference.':null,
-   leader?short(leader)+' gave '+name(w)+' '+point(leader)+'. In a finish decided by '+difference+', the points behind that starter were every bit as consequential.':null,
-   'This is the kind of result that puts roster choices under scrutiny. '+name(w)+' banked the win; '+name(l)+' carries the narrower, more irritating question into the next slate.'
-  ]);
-  else if(i===2)paragraphs=clean([
-   name(w)+' put '+difference+' points between itself and '+name(l)+'. At '+n(w.points)+'–'+n(l.points)+', the widest gap of the week did not require a dramatic late twist.',
-   leader?'The largest winning-side contribution came from '+short(leader)+' with '+point(leader)+'. '+name(w)+' did not have to ask a quiet opponent to keep it close.':null,
-   runner?short(runner)+' led the defeated roster at '+point(runner)+'. The gap beyond that individual score is what '+name(l)+' has to address.':null,
-   'After the result, '+name(w)+' stands '+record(w)+' and '+rank(w)+' overall. '+name(l)+' is '+record(l)+' and '+rank(l)+'. Large margins do not count twice, but they reveal different problems from close losses.'
-  ]);
-  else if(i===3)paragraphs=clean([
-   'A separate scoring headline belongs to '+name(w)+', which beat '+name(l)+' by '+difference+'. '+n(w.points)+' points made this a good week for the winner’s total, not merely a story about an opponent falling short.',
-   support?short(support)+' provided '+point(support)+' alongside '+(leader?short(leader)+' at '+point(leader):'the rest of the starters')+'. That second source of points is what gives the winning lineup more than one route to a result.':null,
-   losingSupport?name(l)+' received '+point(losingSupport)+' from '+short(losingSupport)+'. There were usable totals on both sides, but not enough of them in the same lineup.':null,
-   name(w)+' now takes '+record(w)+' into its next appearance. Nobody gets to carry this exact box score forward; the useful achievement was producing across multiple starting spots.'
-  ]);
-  else paragraphs=clean([
-   name(w)+' took another completed Week '+week+' decision over '+name(l)+', '+n(w.points)+'–'+n(l.points)+'. Its '+difference+'-point margin helps explain the result without turning every matchup into the same story.',
-   leader?short(leader)+' was the high scorer for '+name(w)+' with '+point(leader)+'. The other starters supplied the difference between a personal highlight and a team result.':null,
-   'For '+name(l)+', the season record becomes '+record(l)+' and the overall position is '+rank(l)+'. One matchup is not a final judgment, but the standings do not wait for a better explanation.',
-   w.next_opponent_name?name(w)+' turns next to '+w.next_opponent_name+'. The latest result is useful preparation, but that opponent has its own lineup and its own reasons to disrupt the form.':null
-  ]);
-  // Alternate editorial framing by issue, not merely a different transition on a copied sentence.
-  if(week%2===1){
-   if(i===0)paragraphs=clean([
-    'No scoreboard was busier than the '+name(w)+'–'+name(l)+' contest. Their combined '+n(g.total)+' points produced a '+n(w.points)+'–'+n(l.points)+' victory for '+name(w)+'.',
-    leader?short(leader)+' added '+point(leader)+' to the winner’s cause'+(support?', while '+short(support)+' followed with '+point(support):'')+'. This was not merely an opponent failing to score.':null,
-    runner?short(runner)+' offered '+name(l)+' '+point(runner)+'. That individual effort deserves mention because the club lost despite meaningful production.':null,
-    'The headline is the win. The consequence is '+record(w)+' for '+name(w)+' and '+record(l)+' for '+name(l)+', records that will remain when the week’s highlights are forgotten.'
-   ]);
-   else if(i===1)paragraphs=clean([
-    name(l)+' came within '+n(g.gap)+' of '+name(w)+', '+n(l.points)+' to '+n(w.points)+'. That is narrow enough for a manager to remember each overlooked lineup decision.',
-    runner?'On the losing side, '+short(runner)+' delivered '+point(runner)+'. It is hard to call an entire roster lifeless with that kind of contribution.':null,
-    leader?name(w)+' leaned most on '+short(leader)+' for '+point(leader)+'. Its smaller contributions mattered precisely because the difference was so small.':null,
-    'After such a tight finish, '+name(l)+' must prepare for another opponent without pretending the points on this scoreboard can be recovered.'
-   ]);
-   else if(i===2)paragraphs=clean([
-    'The hard fall of the week belonged to '+name(l)+'. '+name(w)+' won '+n(w.points)+'–'+n(l.points)+', a '+n(g.gap)+'-point gap that no late narrative can make close.',
-    leader?short(leader)+' supplied '+point(leader)+' for '+name(w)+'. That was one of several reasons the contest escaped the losing roster’s control.':null,
-    runner?'Even '+short(runner)+' at '+point(runner)+' could not protect '+name(l)+' from its own final total. The numbers elsewhere deserve scrutiny.':null,
-    name(w)+' sits at '+record(w)+' with the result banked; '+name(l)+' has '+record(l)+'. The loser needs improvement across starting roles, not just another memorable top scorer.'
-   ]);
-   else if(i===3)paragraphs=clean([
-    'Another outcome worth preserving: '+name(w)+' beat '+name(l)+' by '+n(g.gap)+' points, recording '+n(w.points)+' against '+n(l.points)+'.',
-    support?short(support)+' earned '+point(support)+', helping '+name(w)+' avoid depending entirely on '+(leader?short(leader):'a single starting player')+'.':null,
-    losingSupport?name(l)+' found '+point(losingSupport)+' from '+short(losingSupport)+'. The trouble was that the rest of its totals did not finish the job.':null,
-    'The week rewards '+name(w)+' with a result, and the calendar immediately demands preparation for the next opponent.'
-   ]);
-   else paragraphs=clean([
-    'In a game that will matter to the middle of the table, '+name(w)+' collected '+n(w.points)+' and held '+name(l)+' to '+n(l.points)+'. The margin was '+n(g.gap)+'.',
-    runner?name(l)+' could at least point to '+short(runner)+' with '+point(runner)+'. One outstanding starter cannot erase every gap elsewhere.':null,
-    leader?short(leader)+' produced '+point(leader)+' for the victorious roster. That was part of a total sufficient for the standings, whatever comes next.':null,
-    w.next_opponent_name?'The next date on '+name(w)+'’s schedule is '+w.next_opponent_name+'. A manager cannot carry a past victory into a new matchup as if it were a projected score.':'The future schedule requires a new lineup; the completed result requires none.'
-   ]);
-  }
-  blocks.push({heading:g.storyTitle+': '+name(w)+' vs. '+name(l),paragraphs});
+ for(const t of teams){
+  const o=by.get(String(t.opponent_roster_id||''));if(!o||!valid(t.points)||!valid(o.points))continue;
+  const key=[String(t.roster_id),String(o.roster_id)].sort().join('|');if(used.has(key))continue;used.add(key);
+  const winner=Number(t.points)>=Number(o.points)?t:o,loser=winner===t?o:t;
+  games.push({winner,loser,gap:Math.abs(Number(t.points)-Number(o.points)),total:Number(t.points)+Number(o.points)});
  }
+ const sort=(rows,fn)=>rows.slice().sort(fn);
  const leaders=sort(teams,(a,b)=>(Number(a?.league_context?.standings_rank)||999)-(Number(b?.league_context?.standings_rank)||999)).slice(0,5);
- const scoring=sort(teams,(a,b)=>Number(b.points)-Number(a.points)),high=scoring[0],low=scoring.at(-1),close=sort(games,(a,b)=>a.gap-b.gap)[0],wide=sort(games,(a,b)=>b.gap-a.gap)[0];
- const sections=overview.sections||[];
- if(sections[0]){sections[0].heading='What Actually Mattered This Week';sections[0].blocks=[...blocks,{heading:'What '+week+' Weeks Have Changed',paragraphs:clean([
-  leaders.length?'The top of the current table reads '+leaders.map(t=>name(t)+' ('+record(t)+', '+rank(t)+')').join('; ')+'. Those positions are earned by the completed games, not by draft-day optimism.':null,
-  high?name(high)+' supplied the highest team score this week at '+n(high.points)+'. '+(low?name(low)+' finished at '+n(low.points)+', a reminder that the league does not experience every Sunday equally.':''):null,
-  close?'The closest verified matchup ended '+name(close.winner)+' over '+name(close.loser)+' by '+n(close.gap)+'. That one stays with the losing manager longer than the lopsided results.':null,
-  wide?'The widest margin was '+n(wide.gap)+' in '+name(wide.winner)+' over '+name(wide.loser)+'. Nobody needs to manufacture suspense where the score supplied none.':null
- ])}];sections[0].paragraphs=sections[0].blocks.flatMap(b=>b.paragraphs||[])}
+ const scoring=sort(teams,(a,b)=>Number(b.points)-Number(a.points)),high=scoring[0],low=scoring.at(-1);
+ const close=sort(games,(a,b)=>a.gap-b.gap)[0],wide=sort(games,(a,b)=>b.gap-a.gap)[0];
+ const strong=sort(games,(a,b)=>b.total-a.total)[0];
+ const performers=sort(teams.flatMap(t=>topPlayers(t).slice(0,2).map(p=>({team:t,player:p}))), (a,b)=>Number(b.player.points)-Number(a.player.points));
+ const hero=performers[0],second=performers.find(x=>String(x.team.roster_id)!==String(hero?.team?.roster_id));
+ const swing=sort(games,(a,b)=>Math.abs(Number(a.winner.league_context?.standings_rank||99)-Number(b.winner.league_context?.standings_rank||99)))[0];
+ const reporter=overview.sections?.[0]?.reporter||null,sections=overview.sections||[];
+ // The Weekly Recap is one league-wide editorial issue, not five separate game reports.
+ const blocks=[
+  {kind:'lead',heading:'The Story That Defined Week '+week,paragraphs:clean([
+   strong?'Across '+games.length+' completed matchups, '+name(strong.winner)+' and '+name(strong.loser)+' produced the busiest scoreboard: '+n(strong.winner.points)+'–'+n(strong.loser.points)+'. The '+n(strong.total)+' combined points illustrate how little protection even a productive lineup enjoys when the other side catches fire.':null,
+   high?name(high)+' led every roster this week with '+n(high.points)+' points. That performance sets the immediate standard, but its '+record(high)+' record gives the larger season context.':null,
+   close?'At the opposite end of the drama, '+name(close.winner)+' escaped '+name(close.loser)+' by '+n(close.gap)+' points. One Sunday managed to produce both overwhelming production and a finish with almost no margin for error.':null
+  ])},
+  {kind:'standings',heading:'The Standings Have Started Talking',paragraphs:clean([
+   leaders.length?'The first five places belong to '+leaders.map(t=>name(t)+' ('+record(t)+', '+rank(t)+')').join('; ')+'. These are earned standings, not forecasts.':null,
+   wide?name(wide.winner)+' beat '+name(wide.loser)+' by '+n(wide.gap)+' points. The margin will not earn an extra win, but it makes the pressure on '+name(wide.loser)+' impossible to disguise.':null,
+   swing?'Results such as '+name(swing.winner)+' over '+name(swing.loser)+' help explain the pressure building around the league table. A win changes the record immediately; the judgment of whether it is sustainable takes longer.':null
+  ])},
+  {kind:'players',heading:'The Names Behind the Noise',paragraphs:clean([
+   hero?short(hero.player)+' delivered '+point(hero.player)+' for '+name(hero.team)+', the highest starter score among the rosters in this edition. A performance that large deserves an individual headline even when the standings remain the final measure.':null,
+   second?short(second.player)+' put up '+point(second.player)+' for '+name(second.team)+'. The league had more than one player capable of deciding a matchup; their surrounding lineups determined what those efforts were worth.':null,
+   low?name(low)+' finished at '+n(low.points)+' points as a team. That contrast explains why spotlighting stars is not the same thing as declaring a roster healthy.':null
+  ])},
+  {kind:'decisions',heading:'The Decisions and the Damage',paragraphs:clean([
+   close?'The '+n(close.gap)+'-point finish between '+name(close.winner)+' and '+name(close.loser)+' demands the closest review of roster choices. In that kind of matchup a small compatible replacement could have changed the standings.':null,
+   wide?'No single hypothetical lineup tweak should be invented to explain '+name(wide.loser)+' losing to '+name(wide.winner)+' by '+n(wide.gap)+'. That deficit belongs to the actual combined production.':null,
+   'Managers can reconsider their choices, but the completed scores are fixed. The analysis must distinguish a documented lineup alternative from hindsight dressed up as certainty.'
+  ])},
+  {kind:'league',heading:'What the League Learned',paragraphs:clean([
+   high&&low?'The range ran from '+n(high.points)+' for '+name(high)+' to '+n(low.points)+' for '+name(low)+'. The same fantasy week offered entirely different realities to its managers.':null,
+   strong?'The '+name(strong.winner)+'–'+name(strong.loser)+' shootout was a reminder that scoring well is not sufficient when the opposing lineup scores even better.':null,
+   leaders[0]?'At the top, '+name(leaders[0])+' holds '+rank(leaders[0])+' at '+record(leaders[0])+'. That is where expectations and scrutiny will collect next.':null
+  ])},
+  {kind:'outlook',heading:'The Next Edition Is Not Written Yet',paragraphs:clean([
+   leaders[0]?.next_opponent_name?name(leaders[0])+' next faces '+leaders[0].next_opponent_name+'. First place carries an obvious target into that assignment.':null,
+   low?.next_opponent_name?name(low)+' turns to '+low.next_opponent_name+' after this week’s '+n(low.points)+'-point showing. Improvement must arrive in the actual lineup, not in a revised explanation of the loss.':null,
+   'Week '+(week+1)+' remains unplayed in this edition. No predicted upset or projected score counts as a result until Sleeper has finalized it.'
+  ])}
+ ];
+ if(sections[0]){sections[0].heading='Week '+week+': The League-Wide Reckoning';sections[0].blocks=blocks;sections[0].paragraphs=blocks.flatMap(x=>x.paragraphs||[])}
  if(sections[1]){sections[1].heading='The Week '+week+' Contender Line';sections[1].paragraphs=clean([
   leaders.length?'The current leaders are '+leaders.slice(0,3).map(t=>name(t)+' at '+record(t)).join(', ')+'. A place near the top matters because the wins are already banked.':null,
   'Being a contender at this stage is not a personality type. It is the combination of wins, lineup production and depth that survives different opponents.',

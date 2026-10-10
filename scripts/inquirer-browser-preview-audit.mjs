@@ -138,7 +138,13 @@ try{
    const panelText=await projectionPanel.innerText();
    assert(panelText.includes(String(t.projection_coverage)+'/'+String(t.starter_count)),'Projection coverage must be visible in the actual Week 4 article');
    assert(panelText.includes('not been verified as the original pregame forecasts'),'Retrospective projections must not be mislabeled as pregame');
-   if(t.projected==null)assert(panelText.includes('Full team projection unavailable'),'Partial Week 4 team forecasts must remain unavailable');
+   if(t.projected==null){
+     assert(panelText.includes('Full team projection unavailable'),'Partial Week 4 official team forecasts must remain unavailable');
+     await page.waitForFunction(()=>document.querySelector('#leagueHubContent .lh-week4-projection-panel')?.textContent?.includes('Retrospective estimated lineup total'),null,{timeout:90000});
+     const recovered=await page.locator('#leagueHubContent .lh-week4-projection-panel').innerText();
+     assert(/\(estimated\)/.test(recovered),'Missing official projection must display an explicitly labeled estimate');
+     console.log('LIVE_RETROSPECTIVE_TEAM_PROJECTION',JSON.stringify({team:t.team_name,excerpt:recovered.slice(0,450)}));
+   }
    else assert(panelText.includes(Number(t.projected).toFixed(2)+' pts'),'Verified complete team projection must be visible');
  }
  await selector.selectOption('__league__');

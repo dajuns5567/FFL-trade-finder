@@ -26,6 +26,9 @@ assert(endpoint.includes("'netlify-cdn-cache-control':'no-store"),'Week 4 fast r
 assert(frontend.includes("cache:y===2026&&w===4?'no-store':'force-cache'"),'Week 4 archive fetch must bypass stale browser cache');
 assert(frontend.includes("new XMLHttpRequest()")&&frontend.includes("xhr.timeout=12000"),'Week 4 archive must recover from a stalled fetch with a bounded independent request');
 assert(frontend.includes("if(valid(recovered))return recovered"),'Recovered archived content must pass structural validation before opening');
+const week4EditorialSource=readFileSync('netlify/functions/inquirer-week4-editorial-rebuild.mjs','utf8');
+assert(!/valid\\(p\\.season_avg\\)|n\\(young\\.p\\.season_avg\\)|n\\(star\\.season_avg\\)|n\\(support\\.season_avg\\)/.test(week4EditorialSource),'Unverified average fields must not enter editorial claims');
+assert(!/n\\(support\\.prior_season_avg\\)/.test(week4EditorialSource),'Unverified historical average must not enter editorial claims');
 const publisher=readFileSync('netlify/functions/league-hub.mjs','utf8');
 const scheduler=readFileSync('netlify/functions/inquirer-publish-scheduled.mjs','utf8');
 const captureScheduler=readFileSync('netlify/functions/inquirer-projection-capture-scheduled.mjs','utf8');

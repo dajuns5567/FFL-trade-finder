@@ -152,7 +152,7 @@ function sleeperConference(league,division){
  if(name.startsWith('NFC'))return'NFC';
  return'';
 }
-function matchupComplete(rows){if(!Array.isArray(rows)||!rows.length)return false;const groups=new Map();for(const m of rows){const k=String(m?.matchup_id??'');if(!k)return false;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}return [...groups.values()].every(pair=>pair.length===2&&pair.every(m=>Number.isFinite(Number(m?.points))&&m?.players_points&&Object.keys(m.players_points).length>0))}
+function matchupComplete(rows){if(!Array.isArray(rows)||!rows.length)return false;const groups=new Map();for(const m of rows){const k=String(m?.matchup_id??'');if(!k)return false;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}return [...groups.values()].every(pair=>pair.length===2&&pair.every(m=>m?.points!=null&&m.points!==''&&Number.isFinite(Number(m.points))&&m?.players_points&&Object.keys(m.players_points).length>0))}
 function matchupGroups(rows){const groups=new Map();for(const m of rows||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}return groups}
 function resolvedBracketRoster(v){if(v==null||typeof v==='object')return'';const s=String(v).trim();return s&&s!=='0'&&s!=='null'&&s!=='undefined'?s:''}
 function playoffRoundNumber(week,playoffStart=INQUIRER_PLAYOFF_START_WEEK){return Math.max(1,Number(week)-Number(playoffStart||INQUIRER_PLAYOFF_START_WEEK)+1)}

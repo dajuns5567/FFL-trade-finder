@@ -80,12 +80,12 @@ try{
  const awardsHeading=page.locator('#leagueHubContent h3').filter({hasText:'Players of the Week'}).first();
  await awardsHeading.waitFor({state:'visible',timeout:60000});
  assert(await awardsHeading.isVisible(),'Players of the Week must remain visually accessible after opening latest edition');
- await page.waitForTimeout(1300);
- console.log('LIVE_ARCHIVE_OPEN_DIAGNOSTIC',JSON.stringify({reportTitle:await page.locator('#leagueHubContent .lh-report-title').first().textContent().catch(()=>''),selectors:await page.locator('#leagueHubContent select[data-lh-broadcast-article]').count(),buttons:await page.locator('#leagueHubContent button[data-lh-archive-season]').allTextContents(),archiveRequests,archiveRequestStarts,archiveFailures,handlerState:await page.evaluate(()=>window.__fleecedInquirerArchiveOpen||null),textSample:(await page.locator('#leagueHubContent').textContent()).slice(0,850)}));
+ console.log('LIVE_ARCHIVE_OPEN_INITIAL_DIAGNOSTIC',JSON.stringify({reportTitle:await page.locator('#leagueHubContent .lh-report-title').first().textContent().catch(()=>''),selectors:await page.locator('#leagueHubContent select[data-lh-broadcast-article]').count(),buttons:await page.locator('#leagueHubContent button[data-lh-archive-season]').allTextContents(),archiveRequests,archiveRequestStarts,archiveFailures,handlerState:await page.evaluate(()=>window.__fleecedInquirerArchiveOpen||null),textSample:(await page.locator('#leagueHubContent').textContent()).slice(0,850)}));
  const selector=page.locator('#leagueHubContent select[data-lh-broadcast-article]');
  // Opening the latest published edition navigates directly to the article picker.
  // A slow serverless preview may finish after the initial held-state render.
  await selector.waitFor({state:'visible',timeout:65000});
+ console.log('LIVE_ARCHIVE_OPEN_SETTLED',JSON.stringify({selectors:await selector.count(),handlerState:await page.evaluate(()=>window.__fleecedInquirerArchiveOpen||null),archiveRequests,archiveFailures}));
  assert(directOpenClickedAt!==undefined,'Direct Open Full Inquirer click was not exercised');
  console.log('LIVE_DIRECT_OPEN_VERIFIED',JSON.stringify({from:'Open Full Inquirer button',to:'visible full-edition article selector',elapsedMs:Date.now()-directOpenClickedAt,alternativeNavigationUsed:false,archiveRequests,archiveFailures}));
  const options=await selector.locator('option').allTextContents();

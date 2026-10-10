@@ -24,4 +24,6 @@ assert.match(captureSource,/const confirm=await storage\.get\(key,\{type:'json'\
 assert.doesNotMatch(captureSource,/storage\.get\(key,\{type:'json'\}\)\.catch\(/);
 assert.match(captureSource,/if\(existing!==null\)/);
 assert.match(captureSource,/if\(confirm!==null\)/);
+assert.match(captureSource,/storage\.setJSON\(key,snapshot,\{onlyIfNew:true\}\)/,'Snapshot writes must use atomic create-only protection');
+assert.match(captureSource,/if\(!result\?\.modified\)/,'Concurrent losers must preserve existing snapshot');
 console.log('RETROSPECTIVE_PROJECTION_FALLBACK_VERIFIED');

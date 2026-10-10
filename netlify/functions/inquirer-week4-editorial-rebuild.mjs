@@ -157,6 +157,104 @@ function leagueStory(edition){
    'Week '+(week+1)+' remains unplayed in this edition. No predicted upset or projected score counts as a result until Sleeper has finalized it.'
   ])}
  ];
+ // A weekly editorial angle is chosen by the state of the league and the issue
+ // number. Unlike the old game-by-game recap, the categories remain stable while
+ // the reporting emphasis and prose change across consecutive editions.
+ const angle=week%4;
+ if(angle===1){
+  blocks[0].paragraphs=clean([
+   close?name(close.winner)+' had the least room to celebrate, beating '+name(close.loser)+' by '+n(close.gap)+'. The week’s defining pressure came from a result in which almost every usable point mattered.':null,
+   strong?'There was another kind of pressure in '+name(strong.winner)+' against '+name(strong.loser)+': '+n(strong.total)+' combined fantasy points, and still only one victory to distribute.':null,
+   high?'At '+n(high.points)+', '+name(high)+' set the weekly high-water mark. Its record of '+record(high)+' makes this a chapter in a season rather than an isolated highlight.':null
+  ]);
+  blocks[1].paragraphs=clean([
+   leaders[0]?name(leaders[0])+' leads the standings at '+record(leaders[0])+', with the next challengers '+leaders.slice(1,3).map(t=>name(t)+' ('+record(t)+')').join(' and ')+'. The order is based on completed games, not optimism.':null,
+   wide?'The '+n(wide.gap)+'-point loss suffered by '+name(wide.loser)+' against '+name(wide.winner)+' will not count twice, but the imbalance gives that manager a sharper question than a narrow defeat does.':null,
+   low?name(low)+' recorded '+n(low.points)+' points. The distance from the league’s leaders is now visible in both immediate production and the wider competitive conversation.':null
+  ]);
+  blocks[2].paragraphs=clean([
+   hero?short(hero.player)+' gave '+name(hero.team)+' '+point(hero.player)+'. That is the week’s individual reference point, independent of whether the full lineup earned the same praise.':null,
+   second?short(second.player)+' contributed '+point(second.player)+' for '+name(second.team)+'. The second-best league-wide performance shows why a spotlight cannot be confined to one victorious lineup.':null,
+   strong?'A combined '+n(strong.total)+' in the highest-scoring matchup shows how several productive players can contribute to a single result, while the losing manager still gets no standings credit.':null
+  ]);
+  blocks[3].paragraphs=clean([
+   close?'A manager on the losing side of '+name(close.winner)+' versus '+name(close.loser)+' must confront a '+n(close.gap)+'-point difference. That invites lineup review, not an invented bench replacement.':null,
+   wide?'For '+name(wide.loser)+', the '+n(wide.gap)+'-point deficit was much larger than a normal borderline starter decision. The whole lineup’s return is the right object of scrutiny.':null,
+   'The decisions to study are the ones managers actually made before kickoff. A completed box score cannot prove that an ineligible or unverified substitute would have rescued the week.'
+  ]);
+  blocks[4].paragraphs=clean([
+   high&&low?'This league ranged from '+name(high)+' at '+n(high.points)+' to '+name(low)+' at '+n(low.points)+'. Those extremes made the same week feel like two different competitions.':null,
+   leaders[0]?'For '+name(leaders[0])+', being '+rank(leaders[0])+' brings a different burden: repeated production must defend an already valuable place in the table.':null,
+   close?'The '+n(close.gap)+'-point finish remains the reminder that a tiny margin can carry the same standings weight as the largest blowout.':null
+  ]);
+  blocks[5].paragraphs=clean([
+   leaders[0]?.next_opponent_name?name(leaders[0])+' prepares for '+leaders[0].next_opponent_name+' next. The club’s '+record(leaders[0])+' record attracts attention, but it does not score next week’s lineup.':null,
+   low?.next_opponent_name?name(low)+' has '+low.next_opponent_name+' ahead after a '+n(low.points)+'-point outing. The response will have to appear in actual starters rather than explanations.':null,
+   'The next edition will treat Week '+(week+1)+' as finished only when Sleeper has the completed scores. Nothing projected has been promoted into a result.'
+  ]);
+ }else if(angle===2){
+  blocks[0].paragraphs=clean([
+   wide?name(wide.winner)+' supplied the most decisive result, a '+n(wide.gap)+'-point win over '+name(wide.loser)+'. That gap changed the tone of the week more than any postgame interpretation could.':null,
+   close?'Elsewhere, '+name(close.winner)+' and '+name(close.loser)+' finished '+n(close.gap)+' apart. The two scoreboards demand very different conversations about the same completed slate.':null,
+   high?'The scoring ceiling belonged to '+name(high)+' with '+n(high.points)+' points; a large total carries weight only when connected to a record and a real opponent.':null
+  ]);
+  blocks[1].paragraphs=clean([
+   leaders.length?'Five teams occupy the front of the current table: '+leaders.map(t=>name(t)+' at '+record(t)).join('; ')+'. Ranking is a record of what happened, not an award for what might happen.':null,
+   leaders[0]?'The next test for '+name(leaders[0])+' begins from '+rank(leaders[0])+'. Holding that position will require another completed result, not an argument about roster potential.':null,
+   low?name(low)+' is left with '+n(low.points)+' from this slate, showing why the standings discussion cannot be separated from actual lineup output.':null
+  ]);
+  blocks[2].paragraphs=clean([
+   hero?short(hero.player)+' finished with '+point(hero.player)+' for '+name(hero.team)+'. The top individual performance merits attention without becoming a substitute for team analysis.':null,
+   second?short(second.player)+' answered with '+point(second.player)+' for '+name(second.team)+'. The difference between star production and a successful roster was what happened in the other starting places.':null,
+   high?name(high)+' finished on '+n(high.points)+' points as a group. That total, unlike any single player line, determines the team’s place in the weekly scoring order.':null
+  ]);
+  blocks[3].paragraphs=clean([
+   wide?'A loss by '+n(wide.gap)+' for '+name(wide.loser)+' against '+name(wide.winner)+' is a roster-wide problem. Claiming one unverified alternative would have reversed it would misuse the box score.':null,
+   close?'The '+name(close.winner)+'–'+name(close.loser)+' decision was different: '+n(close.gap)+' separated the teams, so every legitimate choice deserves inspection.':null,
+   'The evidence stops at completed starters and documented eligible options. This recap does not award imaginary points to a manager’s hindsight.'
+  ]);
+  blocks[4].paragraphs=clean([
+   strong?'The highest combined score of '+n(strong.total)+' came in '+name(strong.winner)+' against '+name(strong.loser)+'. Production can be extraordinary and still produce a losing record entry for one side.':null,
+   high&&low?'The gap between the best and lowest team scores, '+n(Math.abs(Number(high.points)-Number(low.points)))+', captures how uneven the week felt across the league.':null,
+   leaders[0]?'At '+record(leaders[0])+', '+name(leaders[0])+' remains the standings reference point. Individual headlines come and go more quickly than accumulated wins.':null
+  ]);
+  blocks[5].paragraphs=clean([
+   leaders[0]?.next_opponent_name?name(leaders[0])+' now has '+leaders[0].next_opponent_name+' on the calendar. That is a confirmed opponent, not an automatic extension of its '+record(leaders[0])+' record.':null,
+   low?.next_opponent_name?name(low)+' turns toward '+low.next_opponent_name+' after scoring '+n(low.points)+' this week. The next result depends on a new roster performance, not a rewritten explanation.':null,
+   'Any upcoming forecast remains conditional. Week '+(week+1)+' cannot enter the published record until the league’s matchup results are finalized.'
+  ]);
+ }else if(angle===3){
+  blocks[0].paragraphs=clean([
+   strong?'The most explosive pairing was '+name(strong.winner)+' against '+name(strong.loser)+', with '+n(strong.total)+' points between them. '+name(strong.winner)+' earned the result, but '+name(strong.loser)+' contributed to the week’s defining spectacle.':null,
+   high?name(high)+' topped the league scoring list at '+n(high.points)+'. The question is whether that one-week output says more about lineup balance or a few exceptional stars.':null,
+   close?'A '+n(close.gap)+'-point escape by '+name(close.winner)+' over '+name(close.loser)+' supplied the counterpoint: not every consequential game needs a spectacular total.':null
+  ]);
+  blocks[1].paragraphs=clean([
+   leaders[0]?'The standings start with '+name(leaders[0])+' at '+record(leaders[0])+' and '+rank(leaders[0])+'. The teams immediately behind it—'+leaders.slice(1,3).map(t=>name(t)+' at '+record(t)).join('; ')+'—have their own results to defend.':null,
+   wide?name(wide.winner)+' made a '+n(wide.gap)+'-point statement against '+name(wide.loser)+'. It does not change the number of wins awarded, but it colors the race around them.':null,
+   low?'A '+n(low.points)+'-point finish from '+name(low)+' shows where one roster’s immediate pressure begins, regardless of how promising it looked beforehand.':null
+  ]);
+  blocks[2].paragraphs=clean([
+   hero?short(hero.player)+' posted '+point(hero.player)+' for '+name(hero.team)+', giving the edition its leading player line. That deserves its own account instead of getting lost in five separate game summaries.':null,
+   second?short(second.player)+' contributed '+point(second.player)+' for '+name(second.team)+'. Two standouts can define the headlines, but neither alone explains the complete standings.':null,
+   strong?'The '+n(strong.total)+'-point shootout illustrates why recognizing a player and evaluating a team are different editorial jobs.':null
+  ]);
+  blocks[3].paragraphs=clean([
+   close?'In the '+name(close.winner)+'–'+name(close.loser)+' finish, '+n(close.gap)+' points separated the outcomes. A manager can learn from that narrow result without pretending an unchecked substitute had scored.':null,
+   wide?name(wide.loser)+' was beaten by '+n(wide.gap)+' against '+name(wide.winner)+'. Calling that a single start/sit error would ignore how the rest of the roster performed.':null,
+   'The meaningful managerial conversation begins with documented choices and ends before speculation is treated as fact.'
+  ]);
+  blocks[4].paragraphs=clean([
+   high&&low?name(high)+' and '+name(low)+' occupied opposite ends of the scoring table at '+n(high.points)+' and '+n(low.points)+'. That contrast defines the uneven competitive landscape of Week '+week+'.':null,
+   leaders[0]?'The leading record belongs to '+name(leaders[0])+' ('+record(leaders[0])+'). Sustaining it requires more than one memorable Sunday from the same set of players.':null,
+   close?'A narrow '+n(close.gap)+'-point decision can move a team as surely as a blowout, which is why margins and standings consequences are not the same statistic.':null
+  ]);
+  blocks[5].paragraphs=clean([
+   leaders[0]?.next_opponent_name?name(leaders[0])+' meets '+leaders[0].next_opponent_name+' next. The present '+rank(leaders[0])+' position adds pressure, but it cannot decide a game in advance.':null,
+   low?.next_opponent_name?name(low)+' will face '+low.next_opponent_name+' after '+n(low.points)+' points this week; lineup production has to change for the next result to improve.':null,
+   'The publication boundary stays firm: upcoming Week '+(week+1)+' results remain unknown until Sleeper completes the slate.'
+  ]);
+ }
  if(sections[0]){sections[0].heading='Week '+week+': The League-Wide Reckoning';sections[0].blocks=blocks;sections[0].paragraphs=blocks.flatMap(x=>x.paragraphs||[])}
  if(sections[1]){sections[1].heading='The Week '+week+' Contender Line';sections[1].paragraphs=clean([
   leaders.length?'The current leaders are '+leaders.slice(0,3).map(t=>name(t)+' at '+record(t)).join(', ')+'. A place near the top matters because the wins are already banked.':null,

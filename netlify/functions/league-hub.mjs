@@ -572,6 +572,40 @@ async function addArchivedProjectionCoverage(edition){
  return out;
 }
 
+// Non-publishing scheduled snapshot: once captured, a week's player projections are
+// write-once. This does not authorize publication or alter a locked article.
+export async function capturePregameProjections(){
+ const [state,league]=await Promise.all([
+  fetchJson(`${API}/state/nfl`),
+  fetchJson(`${API}/league/${LEAGUE}`)
+ ]);
+ const season=Number(state?.season),week=Number(state?.week);
+ if(!Number.isInteger(season)||!Number.isInteger(week)||week<1||week>17||Number(league?.season)!==season)
+  return {captured:false,reason:'no matching regular-season week'};
+ const key=`inquirer/projections/${season}/week-${String(week).padStart(2,'0')}.json`;
+ const storage=store();
+ const existing=await storage.get(key,{type:'json'}).catch(()=>null);
+ if(existing?.points_by_player&&Object.keys(existing.points_by_player).length)
+  return {captured:false,existing:true,season,week};
+ const matchups=await fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`);
+ if(!Array.isArray(matchups)||!matchups.length)
+  return {captured:false,reason:'matchup schedule not loaded',season,week};
+ if(matchups.some(m=>Number(m?.points)>0||Object.values(m?.players_points||{}).some(v=>Number(v)>0)))
+  return {captured:false,reason:'scoring already started',season,week};
+ const points=await projections(season,week,league.scoring_settings||{});
+ if(!Object.keys(points).length)return {captured:false,reason:'no numerical projections',season,week};
+ const snapshot={season,week,league_id:LEAGUE,source:'Sleeper projection feed',
+  captured_at:new Date().toISOString(),before_scoring_recorded:true,
+  verified_before_kickoff:false,scoring_keys:Object.keys(league.scoring_settings||{}).length,
+  points_by_player:points};
+ // Avoid mutating previously published articles and avoid replacing earlier snapshots.
+ const confirm=await storage.get(key,{type:'json'}).catch(()=>null);
+ if(confirm?.points_by_player&&Object.keys(confirm.points_by_player).length)
+  return {captured:false,existing:true,season,week};
+ await storage.setJSON(key,snapshot);
+ return {captured:true,season,week,players:Object.keys(points).length};
+}
+
 async function broadcastStored(season,week){
  const y=Number(season),w=Number(week),canonicalPreload=preloadedBroadcast(y,w);
  if(y===2026&&w===2&&canonicalPreload)return addArchivedProjectionCoverage(canonicalPreload);

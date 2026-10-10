@@ -102,6 +102,13 @@ for(const [sentenceKey,teams] of crossSentenceMap){
  assert(unique.length<3,`Shared reporter template survived across ${unique.length} teams: ${sentenceKey}`);
 }
 
+const miami=revised.teams.find(t=>String(t.team_name||'').toLowerCase()==='miami dolphins');
+assert(miami,'Miami Week 2 article missing');
+const miamiCopy=fullText(miami);
+assert(!/\\b2-0\\b/.test(miamiCopy),'Miami Week 2 must not contradict its actual 1-1 record');
+assert(!/1 rush Enjoy|75 yds, 2 Take|7\\.5 points on 3\\./i.test(miamiCopy),'Miami Week 2 must not contain truncated player-stat sentences');
+assert(/1-1 fantasy record/.test(miamiCopy),'Miami Week 2 narrative must reflect recorded standings');
+
 const aints=revised.teams.find(t=>/new orleans aints/i.test(String(t.team_name||'')));
 assert(aints,'New Orleans Aints article missing');
 const aintsText=fullText(aints);

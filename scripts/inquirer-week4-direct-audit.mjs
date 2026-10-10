@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import lockedWeek4Loader from '../netlify/functions/inquirer-week4-2026-preload.mjs';
+import {rebuildWeek4Editorial} from '../netlify/functions/inquirer-week4-editorial-rebuild.mjs';
 import week3Loader from '../netlify/functions/inquirer-week3-2026-preload.mjs';
 const week3=week3Loader();
 import {
@@ -150,6 +152,18 @@ const [league,rosters,users,players,transactions,w1,w2,w3,w4,w5]=await Promise.a
 assert.equal(rosters.length,32,'Expected 32 league rosters');
 assert.equal(w4.length,32,'Expected 32 Week 4 matchup rows');
 assert.ok(w4.every(m=>Number.isFinite(Number(m.points))&&m?.players_points&&Object.keys(m.players_points).length),'Week 4 Sleeper scoring must be complete');
+const lockedWeek4=rebuildWeek4Editorial(lockedWeek4Loader());
+const realW4ByRoster=new Map(w4.map(m=>[String(m.roster_id),m]));
+assert.equal(lockedWeek4.teams.length,32,'Locked Week 4 must retain every real Sleeper roster');
+for(const team of lockedWeek4.teams){
+ const raw=realW4ByRoster.get(String(team.roster_id));
+ assert(raw,'Locked Week 4 missing Sleeper roster '+team.roster_id);
+ assert(Math.abs(Number(team.points)-Number(raw.points))<0.055,'Locked Week 4 score disagrees with Sleeper roster '+team.roster_id);
+ const opponent=w4.find(m=>String(m.matchup_id)===String(raw.matchup_id)&&String(m.roster_id)!==String(raw.roster_id));
+ assert(opponent,'Missing real Sleeper Week 4 opponent for '+team.roster_id);
+ assert(Math.abs(Number(team.opponent_points)-Number(opponent.points))<0.055,'Locked Week 4 opponent score disagrees with Sleeper roster '+team.roster_id);
+}
+
 
 const userById=new Map(users.map(u=>[String(u.user_id),u]));
 const rosterById=new Map(rosters.map(r=>[String(r.roster_id),r]));

@@ -192,6 +192,37 @@ function preserveVerifiedWeek3ProjectionRead(team){
  return team;
 }
 
+
+// Prefer individualized factual construction over recurring reporter-neutral copy.
+// Only alter clauses whose truth can be checked against the provided completed-week data.
+function refineWeek2RepeatedCopy(team){
+ const a=team?.inquirer_article;if(!a)return team;
+ const starters=(team.starter_details||[]).filter(p=>p?.name&&validNum(p.points)).sort((x,y)=>Number(y.points)-Number(x.points));
+ const lead=starters[0],last=starters.at(-1);
+ const reporter=String(a.reporter?.id||'');
+ const tone=reporter==='nora-voss'?'I want the role and the number checked separately.':reporter==='walter-mercer'?'The manager should examine the roster decision in its proper setting.':reporter==='mack-hollis'?'That result deserves its own close reading.':'There is room for praise and criticism in the same box score.';
+ const ref=p=>String(p?.name||'the player');
+ for(const sec of a.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(raw=>{
+  let p=String(raw||'');
+  p=p.replace(/The model can be wrong and the loss can still be ugly; ([^.]+?) gets the win either way\./g,(_,opp)=>`The projection did not award any standings points; the actual loss to ${opp} is the result the manager has to explain.`);
+  p=p.replace(/More importantly, they beat ([^;]+); projections do not get standings points\./g,(_,opp)=>`The win against ${opp} is recorded independently of the pregame forecast, and the next lineup decision should be judged on its own merits.`);
+  p=p.replace(/The leading starter, ([^,]+), also has a concrete NFL stat line behind the fantasy scoring\./g,(_,name)=>`${name} led this starting group in recorded fantasy production, and the underlying NFL activity helps explain that contribution.`);
+  p=p.replace(/([A-Z][A-Za-z'’.-]+(?: [A-Z][A-Za-z'’.-]+){1,3}) was at the other end of the Week 2 scoring order; the difference between the top and bottom contributions is the part of the roster construction that deserves another look\./g,(_,name)=>`${name} finished near the bottom of this team's listed starters in Week 2, which makes the specific lineup slot and available replacements more relevant than a generalized attack on roster construction.`);
+  if(lead&&last){
+   p=p.replace(/Together those two supplied ([\d.]+) percent of the points recorded by the listed starters, with ([^.]+?) accounting for ([\d.]+) percent alone\./g,(_,pair,name,share)=>`Among the recorded starters, the two highest scorers accounted for ${pair} percent of the group's output; ${name} contributed ${share} percent, while ${ref(last)} supplied ${Number(last.points).toFixed(1)} fantasy points from a different lineup spot.`);
+  }
+  p=p.replace(/The gap between expectation and production was not spread evenly across the starting lineup\./g,'The available individual projections and completed performances disagreed in more than one starting position.');
+  p=p.replace(/([A-Z][A-Za-z'’.-]+(?: [A-Z][A-Za-z'’.-]+){1,3}) outperformed the available individual projection by ([\d.]+) points, while ([A-Z][A-Za-z'’.-]+(?: [A-Z][A-Za-z'’.-]+){1,3}) finished ([\d.]+) below theirs\./g,(_,up,upDiff,down,downDiff)=>`${up}'s actual total exceeded that player's available forecast by ${upDiff} points. In contrast, ${down}'s result fell ${downDiff} short of the corresponding individual forecast.`);
+  if(reporter==='nora-voss')p=p.replace(/On that narrow forecast, ([^.]+?) has the edge\./g,(_,who)=>`The present forecast favors ${who}, but I would not treat that as a completed outcome.`);
+  if(reporter==='walter-mercer')p=p.replace(/On that narrow forecast, ([^.]+?) has the edge\./g,(_,who)=>`On paper ${who} enters as the projected favorite; the decision still belongs to the manager.`);
+  if(reporter==='mack-hollis')p=p.replace(/On that narrow forecast, ([^.]+?) has the edge\./g,(_,who)=>`The forecast casts ${who} as the favorite, not the already crowned winner.`);
+  if(reporter==='tess-delaney')p=p.replace(/On that narrow forecast, ([^.]+?) has the edge\./g,(_,who)=>`The current numbers give ${who} a projection advantage, and nobody should mistake that for a final score.`);
+  return p;
+ });
+ a.paragraphs=a.sections.flatMap(x=>x.paragraphs||[]).filter(Boolean);
+ return team;
+}
+
 function contextualizeSharedWeek2Sentences(teams){
  const normalized=p=>String(p||'').trim().toLowerCase().replace(/\s+/g,' ');
  const appearances=new Map();
@@ -226,7 +257,7 @@ export function applyWeek2EditorialR16(raw){
    for(const sec of a.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(p=>String(p).replace(/group chat/gi,'argument over the lineup').replace(/\breceipts?\b/gi,'results').replace('a good seat at the table','a favorable place in the standings').replace(/one may mock the furniture while still approving the occupant/gi,'one can question the spectacle while acknowledging the player who delivered').replace(/Breakout linebacker Edgerrin Cooper/g,'Linebacker Edgerrin Cooper'));
    a.paragraphs=a.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);return team;
   });
-  out.teams=contextualizeSharedWeek2Sentences(out.teams.map(restoreVerifiedPlayerHistoryComparison).map(preserveRealFootballPlayerReporting).map(preserveVerifiedWeek3ProjectionRead));
+  out.teams=contextualizeSharedWeek2Sentences(out.teams.map(restoreVerifiedPlayerHistoryComparison).map(preserveRealFootballPlayerReporting).map(preserveVerifiedWeek3ProjectionRead).map(refineWeek2RepeatedCopy));
   return out;
 }
 

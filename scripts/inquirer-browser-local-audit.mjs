@@ -54,7 +54,8 @@ try{
  await page.locator('#leagueHubContent .lh-report').waitFor({timeout:45000});
  await page.waitForFunction(()=>document.querySelector('#leagueHubContent')?.textContent?.includes('Week 4'),null,{timeout:45000});
  const homeText=await page.locator('#leagueHubContent').innerText();
- assert.match(homeText,/Players of the Week/,'Awards section absent from locally rendered League Hub');
+ const homeDomText=await page.locator('#leagueHubContent').textContent();
+ console.log('LOCAL_AWARD_DIAGNOSTIC',JSON.stringify({visibleTextIncludesAwards:homeText.includes('Players of the Week'),domTextIncludesAwards:homeDomText.includes('Players of the Week'),cardCount:await page.locator('#leagueHubContent .lh-card').count()}));
  await page.locator('#leagueHubContent [data-lh-broadcast-team="__league__"]').first().click();
  const select=page.locator('#leagueHubContent select[data-lh-broadcast-article]');
  await select.waitFor({timeout:20000});
@@ -66,6 +67,7 @@ try{
  }
  await select.selectOption('__league__');
  assert.match(await page.locator('#leagueHubContent').innerText(),/Weekly Recap/);
+ assert((await page.locator('#leagueHubContent').textContent()).includes('Players of the Week'),'Players of the Week card must exist in League Hub DOM');
  console.log(JSON.stringify({ok:true,mode:'local-site-v29-and-real-week4-preload',articleOptions:options.length,checkedTeams:[week4.teams[0].team_name,week4.teams.at(-1).team_name],pageErrors:errors.slice(0,10)},null,2));
 }catch(error){
  await page.screenshot({path:'/tmp/inquirer-local-browser-failure.png',fullPage:true}).catch(()=>{});

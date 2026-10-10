@@ -627,7 +627,8 @@ export async function capturePregameProjections(){
  const matchups=await fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`);
  if(!Array.isArray(matchups)||!matchups.length)
   return {captured:false,reason:'matchup schedule not loaded',season,week};
- if(matchups.some(m=>Number(m?.points)>0||Object.values(m?.players_points||{}).some(v=>Number(v)>0)))
+ const scored=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))&&Number(v)!==0;
+ if(matchups.some(m=>scored(m?.points)||Object.values(m?.players_points||{}).some(scored)||(m?.starters_points||[]).some(scored)))
   return {captured:false,reason:'scoring already started',season,week};
  const points=await projections(season,week,league.scoring_settings||{});
  if(!Object.keys(points).length)return {captured:false,reason:'no numerical projections',season,week};

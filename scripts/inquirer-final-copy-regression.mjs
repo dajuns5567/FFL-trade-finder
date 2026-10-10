@@ -265,4 +265,14 @@ assert(findInquirerRawMatchupIssues(sourcedEdition,[...matchedStarters,matchedSt
 assert(findInquirerRawMatchupIssues(sourcedEdition,[...matchedStarters,{roster_id:2,points:88,players_points:{}}]).some(x=>x.id==='raw-matchup-edition-roster-missing'),'Reject silently omitted finalized roster');
 assert.equal(findInquirerRawMatchupIssues(sourcedEdition,rawSource).length,0,'Legacy source snapshots without starter array retain score validation');
 
+
+// A published starter list must contain every actual starter, not merely avoid extras.
+sourcedEdition.teams[0].starter_details.pop();
+assert(findInquirerRawMatchupIssues(sourcedEdition,matchedStarters).some(x=>x.id==='raw-matchup-edition-starter-missing'),'Reject a missing verified starter');
+sourcedEdition.teams[0].starter_details.push({id:'playerB',points:-1.2});
+sourcedEdition.teams[0].starter_details[1].id=null;
+assert(findInquirerRawMatchupIssues(sourcedEdition,matchedStarters).some(x=>x.id==='raw-matchup-starter-id-missing'),'Reject a starter without source identity');
+sourcedEdition.teams[0].starter_details[1].id='playerB';
+assert.equal(findInquirerRawMatchupIssues(sourcedEdition,matchedStarters).length,0,'Restored complete starter coverage passes');
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

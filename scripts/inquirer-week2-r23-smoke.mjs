@@ -54,6 +54,20 @@ console.log('WEEK2_REPORTER_COMPRESSION_STAGES',JSON.stringify(allTeamInventory.
  const id=String(team?.roster_id||'');
  return{team:x.team,reporter:x.reporter,beforeZ:mapY.get(id),afterZ:mapZ.get(id),final:x.words};
 })));
+for(const name of ['New England Patriots','Cleveland Browns','Tampa Bay Buccaneers']){
+ const before=(stageY.teams||[]).find(t=>String(t.team_name)===name);
+ const after=(stageZ.teams||[]).find(t=>String(t.team_name)===name);
+ const secA=before?.inquirer_article?.sections||[],secB=after?.inquirer_article?.sections||[];
+ const examples=secA.map((sec,i)=>({
+  section:sec.heading,
+  beforeWords:words((sec.paragraphs||[]).join(' ')),
+  afterWords:words((secB[i]?.paragraphs||[]).join(' ')),
+  before:sec.paragraphs||[],
+  after:secB[i]?.paragraphs||[]
+ }));
+ console.log('WEEK2_EDIT_LOSS_SAMPLE',JSON.stringify({team:name,sections:examples}));
+}
+
 const reporterCounts=new Map();
 const reporterWordMins=new Map();
 const crossSentenceMap=new Map();

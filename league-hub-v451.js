@@ -483,7 +483,20 @@ async function fetchArchivedEdition(year,week){
     if(y===2026&&w===4)throw Error('Week 4 archive returned incomplete editorial content');
     return x?.available&&Array.isArray(x.teams)&&x.teams.length?x:null;
    }finally{clearTimeout(timer)}
-  }catch(error){if(y===2026&&w===4&&known)return known;throw error}
+  }catch(error){
+   if(y===2026&&w===4){
+    try{
+     const recovered=await new Promise((resolve,reject)=>{
+      const xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=12000;xhr.setRequestHeader('Cache-Control','no-cache');
+      xhr.onload=()=>{if(xhr.status!==200)return reject(new Error('archive fallback HTTP '+xhr.status));try{resolve(JSON.parse(xhr.responseText))}catch(e){reject(e)}};
+      xhr.onerror=()=>reject(new Error('archive fallback network failure'));xhr.ontimeout=()=>reject(new Error('archive fallback timed out'));xhr.send();
+     });
+     if(valid(recovered))return recovered;
+    }catch(fallbackError){console.warn('Week 4 archive fallback unavailable',fallbackError)}
+    if(known)return known;
+   }
+   throw error;
+  }
  })();
  archivedEditionCache.set(key,task);
  try{const x=await task;archivedEditionCache.set(key,x);return x}catch(e){archivedEditionCache.delete(key);throw e}

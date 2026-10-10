@@ -112,6 +112,31 @@ function repairUnderlengthWeek2(team){
 
 
 
+
+function restoreVerifiedPlayerHistoryComparison(team){
+ const article=team?.inquirer_article,sections=article?.sections||[];
+ const playerSection=sections.find(sec=>/player|names|people|made the|who actually/i.test(String(sec.heading||'')))||sections.find(sec=>sec.kind!=='outlook'&&sec.kind!=='lede');
+ if(!playerSection||!Array.isArray(playerSection.paragraphs))return team;
+ const reporter=String(article.reporter?.id||'');
+ for(const player of (team.starter_details||[]).slice(0,3)){
+  const pts=Number(player?.points),avg=Number(player?.prior_season_avg),games=Number(player?.prior_season_games)||0;
+  if(!player?.name||!Number.isFinite(avg)||avg<=0||!Number.isFinite(pts)||games<6||Math.abs(pts-avg)<Math.max(4,avg*.3))continue;
+  const first=String(player.name).split(/\s+/)[0],last=String(player.name).split(/\s+/).at(-1);
+  const refs=[player.name,first.length>=4?first:'',last.length>=4?last:''].filter(Boolean);
+  const existing=sections.flatMap(sec=>sec.paragraphs||[]).map(String);
+  const contextual=paragraph=>/\b(?:2025|last season|last year|prior-season)\b/i.test(paragraph);
+  const hasContext=existing.some((paragraph,i)=>contextual(paragraph)&&refs.some(ref=>paragraph.toLowerCase().includes(String(ref).toLowerCase())))||
+   existing.some((paragraph,i)=>paragraph.includes(player.name)&&contextual(existing[i+1]||''));
+  if(hasContext)continue;
+  const difference=pts-avg;
+  const descriptor=difference>0?'above':'below';
+  const voice=reporter==='nora-voss'?'A manager should ask whether the playing-time and involvement behind that change are likely to persist, rather than assuming a single strong or weak Sunday has settled the issue.':reporter==='walter-mercer'?'That season-long comparison is the useful perspective for the next selection: respect what happened this week without allowing one result to outweigh the player’s larger record.':reporter==='tess-delaney'?'A lovely performance or an ugly one can dominate the afternoon; neither erases the much longer stretch of work that came before it.':'This changes the review of the player’s role, but one game is still too small a sample to pronounce the entire season solved.';
+  playerSection.paragraphs.push(`${player.name} averaged ${avg.toFixed(1)} fantasy points per game across ${games} games in 2025. The Week 2 contribution was ${Math.abs(difference).toFixed(1)} points ${descriptor} that established output, a comparison drawn from actual completed-game statistics rather than a fresh guess about next Sunday. ${voice}`);
+ }
+ article.paragraphs=sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);
+ return team;
+}
+
 function preserveVerifiedWeek3ProjectionRead(team){
  const article=team?.inquirer_article,section=(article?.sections||[]).find(sec=>sec?.kind==='outlook');
  if(!section||!Array.isArray(section.paragraphs))return team;
@@ -160,7 +185,7 @@ export function applyWeek2EditorialR16(raw){
    for(const sec of a.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(p=>String(p).replace(/group chat/gi,'argument over the lineup').replace(/\breceipts?\b/gi,'results').replace('a good seat at the table','a favorable place in the standings').replace(/one may mock the furniture while still approving the occupant/gi,'one can question the spectacle while acknowledging the player who delivered'));
    a.paragraphs=a.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);return team;
   });
-  out.teams=contextualizeSharedWeek2Sentences(out.teams.map(preserveVerifiedWeek3ProjectionRead));
+  out.teams=contextualizeSharedWeek2Sentences(out.teams.map(restoreVerifiedPlayerHistoryComparison).map(preserveVerifiedWeek3ProjectionRead));
   return out;
 }
 

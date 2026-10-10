@@ -577,8 +577,8 @@ async function addArchivedProjectionCoverage(edition){
  const out={...edition,teams:edition.teams.map(team=>{
   if(team.projection_snapshot)return team;
   const starters=(team.starter_details||[]).map(player=>{
-   const id=String(player.id),value=feed.values.get(id);
-   return {...player,projected:value===undefined?null:value}
+   const id=String(player.id),value=feed.values.get(id),saved=player.projected==null||player.projected===''?null:Number(player.projected);
+   return {...player,projected:value===undefined?(saved!==null&&Number.isFinite(saved)?saved:null):value}
   });
   const covered=starters.filter(p=>p.projected!==null).length;
   const subtotal=Number(starters.reduce((n,p)=>n+(p.projected??0),0).toFixed(2));

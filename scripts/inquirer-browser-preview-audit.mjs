@@ -60,7 +60,16 @@ try{
   const attrs=await openEdition.first().evaluate(el=>({html:el.outerHTML.slice(0,500),year:el.dataset.lhArchiveSeason,week:el.dataset.lhArchiveWeek}));
   console.log('LIVE_OPEN_EDITION_BUTTON',JSON.stringify(attrs));
   console.log('LIVE_WIRING_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>({hubWired:document.querySelector('#leagueHub')?.dataset.lhWired,hubParent:document.querySelector('#leagueHubContent')?.closest('#leagueHub')?.id,scriptUrls:[...document.scripts].map(x=>x.src).filter(x=>/league-hub/i.test(x)),buttonConnected:!!document.querySelector('button[data-lh-archive-season]')?.isConnected}))));
+  await page.evaluate(()=>{
+   window.__inquirerClickTrace=[];
+   const seen=label=>e=>{if(e.target.closest?.('button[data-lh-archive-season]'))window.__inquirerClickTrace.push({label,target:e.target.tagName,phase:e.eventPhase,defaultPrevented:e.defaultPrevented})};
+   window.addEventListener('click',seen('window-capture'),true);
+   document.addEventListener('click',seen('document-capture'),true);
+   document.querySelector('#leagueHub')?.addEventListener('click',seen('hub-capture'),true);
+   document.querySelector('#leagueHub')?.addEventListener('click',seen('hub-bubble'));
+  });
   await openEdition.first().click();
+  console.log('LIVE_CLICK_TRACE',JSON.stringify(await page.evaluate(()=>window.__inquirerClickTrace)));
  }
  const awardsHeading=page.locator('#leagueHubContent h3').filter({hasText:'Players of the Week'}).first();
  await awardsHeading.waitFor({state:'visible',timeout:60000});

@@ -62,4 +62,15 @@ const verifiedProjection=Number(hotRoster?.projection_coverage)>0&&Number(hotOpp
 if(!verifiedProjection)assert.doesNotMatch(hotActual.detail,/Projected/i,'Actual Week 4 Hot Seat must not invent projections');
 console.log('WEEK4_MANAGER_SPOTLIGHT',JSON.stringify({hot:hotActual,cool:coolActual,projection_verified:verifiedProjection}));
 
+// Exercise the actual Manager Spotlight renderer, not merely award calculations.
+const spotlightSource=take('function spotlightBlock(md,w){','function graveyardScoringHTML(g){');
+vm.runInContext(spotlightSource,context);
+const spotlightHtml=context.spotlightBlock({career:[],current:[]},actualWeek4);
+assert.doesNotMatch(spotlightHtml,/<small>Hot Seat<\/small><b>n\/a<\/b>/,'Completed Week 4 must display a Hot Seat manager');
+assert.doesNotMatch(spotlightHtml,/<small>Cool Throne<\/small><b>n\/a<\/b>/,'Completed Week 4 must display a Cool Throne manager');
+const missingFlags=structuredClone(fixture);for(const t of missingFlags.teams)delete t.won;
+const restoredHtml=context.spotlightBlock({career:[],current:[]},missingFlags);
+assert.match(restoredHtml,/Projected Favorite/,'Hot Seat must recover from completed matchup scores when won flags are missing');
+assert.match(restoredHtml,/Big Winner/,'Cool Throne must recover from completed matchup scores when won flags are missing');
+console.log('WEEK4_SPOTLIGHT_RENDER',JSON.stringify({hot:hotActual?.team_name,cool:coolActual?.team_name,wonFlagFallback:true}));
 console.log('Players of the Week fallback, verified awards precedence, and latest-edition wiring passed');

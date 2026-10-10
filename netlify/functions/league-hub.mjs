@@ -498,7 +498,7 @@ async function addArchivedProjectionCoverage(edition){
  if(!edition?.available||!Array.isArray(edition.teams)||!edition.teams.length||!Number.isInteger(year)||!Number.isInteger(week))return edition;
  // Week 4 has an immutable audited snapshot. Do not overwrite it.
  if(year===2026&&week===4&&edition.teams.every(t=>t.projection_snapshot))return edition;
- if(edition.teams.every(t=>t.projection_snapshot||t.projection_coverage>0&&t.projected!=null))return edition;
+ if(edition.teams.every(t=>t.projection_snapshot))return edition;
  const feed=await archivedProjectionMap(year,week);
  if(!feed)return edition;
  const out={...edition,teams:edition.teams.map(team=>{

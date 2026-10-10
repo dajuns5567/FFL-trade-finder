@@ -1,0 +1,40 @@
+name: Inquirer PR preview browser audit
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/inquirer-browser-preview-audit.mjs'
+      - '.github/workflows/inquirer-browser-preview-audit.yml'
+      - 'league-hub-v451.js'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/league-hub-week4-fast.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview-browser-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright browser
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install chromium --with-deps
+      - name: Validate Inquirer preview in Chromium
+        run: node scripts/inquirer-browser-preview-audit.mjs
+      - name: Upload browser failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inquirer-preview-browser-failure
+          path: /tmp/inquirer-browser-preview-failure.png
+          if-no-files-found: ignore
+          retention-days: 7

@@ -57,21 +57,38 @@ export function buildInquirerEditionFactRegistry(edition){
 export function findInquirerRawMatchupIssues(edition,rawRows){
  const issues=[],rows=Array.isArray(rawRows)?rawRows:[];
  if(!Array.isArray(edition?.teams)||!rows.length)return [{id:'raw-matchup-source-unavailable'}];
- const byId=new Map(rows.filter(r=>r?.roster_id!=null).map(r=>[String(r.roster_id),r]));
+ const byId=new Map(),seenEdition=new Set();
+ for(const row of rows){
+  if(row?.roster_id==null){issues.push({id:'raw-matchup-roster-id-missing'});continue}
+  const id=String(row.roster_id);
+  if(byId.has(id))issues.push({id:'raw-matchup-duplicate-roster',roster_id:id});
+  else byId.set(id,row);
+ }
  for(const team of edition.teams){
   const rosterId=team?.roster_id==null?null:String(team.roster_id),raw=byId.get(rosterId);
   if(!raw){issues.push({id:'raw-matchup-roster-missing',roster_id:rosterId});continue}
+  if(seenEdition.has(rosterId)){issues.push({id:'raw-matchup-duplicate-edition-roster',roster_id:rosterId});continue}
+  seenEdition.add(rosterId);
   const actual=number(raw.points),claimed=number(team.points);
   if(actual===null||claimed===null||Math.abs(actual-claimed)>0.055)
    issues.push({id:'raw-matchup-team-score',roster_id:rosterId,expected:actual,reported:claimed});
   const playerScores=raw.players_points&&typeof raw.players_points==='object'?raw.players_points:{};
+  const rawStarters=Array.isArray(raw.starters)?new Set(raw.starters.filter(v=>v!=null).map(String)):null;
+  const seenPlayers=new Set();
   for(const p of team.starter_details||[]){
-   if(p?.id==null||!Object.hasOwn(playerScores,String(p.id)))continue;
-   const source=number(playerScores[String(p.id)]),reported=number(p.points);
+   if(p?.id==null)continue;
+   const id=String(p.id);
+   if(seenPlayers.has(id)){issues.push({id:'raw-matchup-duplicate-starter',roster_id:rosterId,player_id:id});continue}
+   seenPlayers.add(id);
+   if(rawStarters&&!rawStarters.has(id))
+    issues.push({id:'raw-matchup-starter-mismatch',roster_id:rosterId,player_id:id});
+   if(!Object.hasOwn(playerScores,id))continue;
+   const source=number(playerScores[id]),reported=number(p.points);
    if(source===null||reported===null||Math.abs(source-reported)>0.055)
-    issues.push({id:'raw-matchup-player-score',roster_id:rosterId,player_id:String(p.id),expected:source,reported});
+    issues.push({id:'raw-matchup-player-score',roster_id:rosterId,player_id:id,expected:source,reported});
   }
  }
+ for(const rosterId of byId.keys())if(!seenEdition.has(rosterId))issues.push({id:'raw-matchup-edition-roster-missing',roster_id:rosterId});
  return issues;
 }
 

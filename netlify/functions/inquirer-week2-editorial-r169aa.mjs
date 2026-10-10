@@ -120,7 +120,7 @@ function preserveVerifiedWeek3ProjectionRead(team){
  const full=section.paragraphs.join(' ');
  if(full.includes(own.toFixed(1))&&full.includes(other.toFixed(1))&&/\b(?:favorite|favored|edge|dead even|projection favorite)\b/i.test(full))return team;
  const opponent=String(team.next_opponent_name||'the next opponent');
- const who=own>other?String(team.team_name)+' is the projection favorite':other>own?opponent+' is the projection favorite':'the projection has the teams dead even';
+ const who=own>other?'the featured roster has the edge':other>own?opponent+' has the edge':'the projection has the teams dead even';
  section.paragraphs.unshift(`For Week 3, the available lineup projections currently list ${team.team_name} at ${own.toFixed(1)} fantasy points and ${opponent} at ${other.toFixed(1)}. On that narrow forecast, ${who}. The matchup has not been played, and these projected totals must not be treated as completed scoring or as a guarantee of the result.`);
  article.paragraphs=article.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);
  return team;

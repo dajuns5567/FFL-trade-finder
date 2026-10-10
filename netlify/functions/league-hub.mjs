@@ -9,7 +9,7 @@ import week4Preload2026 from './inquirer-week4-2026-preload.mjs';
 import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r28.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
-import {findInquirerRawMatchupIssues} from './inquirer-source-facts.mjs';
+import {findInquirerRawMatchupIssues,findInquirerManagerAwardIssues} from './inquirer-source-facts.mjs';
 import {applyPublishedForwardFix} from './inquirer-week3-published-r1.mjs';
 import {rebuildWeek4Editorial} from './inquirer-week4-editorial-rebuild.mjs';
 
@@ -444,6 +444,10 @@ export async function weeklyReport(req){
  const integrity=publishedArticleIntegrity(result,(rosters||[]).length||32);
  if(!integrity.ok)throw new Error('Week '+week+' publish integrity rejected: '+integrity.issues.join('; '));
  const weeklyAwardRecord=await weeklyAwardRecordForBroadcast(result,{stats:weeklyStats,players,scoring:league?.scoring_settings||{},force:true});
+ if(forward){
+  const awardFactIssues=findInquirerManagerAwardIssues(result,weeklyAwardRecord.manager_awards,completion.rows);
+  if(awardFactIssues.length)throw new Error('Sleeper manager award source reconciliation rejected Week '+week+': '+JSON.stringify(awardFactIssues).slice(0,4000));
+ }
  await s.setJSON(key,{...result,publish_integrity:{...integrity,awards_verified:true,award_week:weeklyAwardRecord.week}});
  const persisted=await s.get(key,{type:'json'}).catch(()=>null),roundTrip=publishedArticleIntegrity(persisted,(rosters||[]).length||32);
  if(!roundTrip.ok||Number(persisted?.season)!==season||Number(persisted?.week)!==week)throw new Error('Week '+week+' persisted broadcast failed integrity verification: '+roundTrip.issues.join('; '));

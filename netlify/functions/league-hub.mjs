@@ -512,7 +512,7 @@ async function addArchivedProjectionCoverage(edition){
 
 async function broadcastStored(season,week){
  const y=Number(season),w=Number(week),canonicalPreload=preloadedBroadcast(y,w);
- if(y===2026&&w===2&&canonicalPreload)return canonicalPreload;
+ if(y===2026&&w===2&&canonicalPreload)return addArchivedProjectionCoverage(canonicalPreload);
  let v=null;
  try{v=await store().get(`broadcasts/${y}/week-${String(w).padStart(2,'0')}.json`,{type:'json'})}catch(e){if(!canonicalPreload)console.warn('Inquirer archive storage unavailable',y,w,String(e?.message||e))}
  if(y===2026&&w===4&&canonicalPreload&&!isCurrentWeek4Inquirer(servedPreload(v)))return addArchivedProjectionCoverage(canonicalPreload);

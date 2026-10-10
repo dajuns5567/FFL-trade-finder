@@ -522,7 +522,7 @@ async function priorProjectionHistory(year,week,scoring,positions){
    try{
     const results=await Promise.all(previous.map(async ({season,week:w})=>{
      try{
-      const response=await fetch(`https://api.sleeper.app/stats/nfl/regular/${season}/${w}`,{signal:control.signal});
+      const response=await fetch(`https://api.sleeper.app/v1/stats/nfl/regular/${season}/${w}`,{signal:control.signal});
       if(!response.ok)return[];
       const raw=await response.json();
       return Object.entries(raw||{}).flatMap(([id,value])=>{

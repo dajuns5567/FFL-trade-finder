@@ -70,7 +70,7 @@ try{
  assert(clientScripts.some(x=>x.includes(expectedClientPath)),'Netlify preview is still serving stale League Hub JavaScript after bounded deploy synchronization; not valid for current-commit browser acceptance');
 
  await page.locator('#leagueHubContent .lh-report').waitFor({timeout:60000});
- await page.waitForFunction(()=>/Week 4/.test(document.querySelector('#leagueHubContent .lh-report')?.textContent||''),{timeout:60000});
+ await page.waitForFunction(()=>/Week 4/.test(document.querySelector('#leagueHubContent .lh-report-title')?.textContent||'')||/Latest published edition:\s*2026 Week 4/.test(document.querySelector('#leagueHubContent .lh-report')?.textContent||''),null,{timeout:65000});
  // Validate the actual landing-page Manager Spotlight, including the hydrated latest edition.
  await page.waitForFunction(()=>{
    const container=document.querySelector('#leagueHubContent .lh-spotlight');
@@ -84,6 +84,7 @@ try{
  },null,{timeout:65000});
  const spotlightNames=await page.locator('#leagueHubContent .lh-spotlight .lh-spot-card').allTextContents();
  console.log('LIVE_MANAGER_SPOTLIGHT_READY',JSON.stringify(spotlightNames.filter(s=>/Hot Seat|Cool Throne/.test(s))));
+ console.log('LIVE_LATEST_EDITION_HEADLINE',JSON.stringify({title:await page.locator('#leagueHubContent .lh-report-title').first().textContent(),week4Selected:await page.locator('#leagueHubContent .lh-report-title').first().textContent().then(x=>/Week 4/.test(x))}));
  const openEdition=page.locator('#leagueHubContent button').filter({hasText:'Open Full Inquirer'});
  if(await openEdition.count()){
   const attrs=await openEdition.first().evaluate(el=>({html:el.outerHTML.slice(0,500),year:el.dataset.lhArchiveSeason,week:el.dataset.lhArchiveWeek}));

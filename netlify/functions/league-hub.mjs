@@ -61,6 +61,13 @@ function mergeArchiveEntries(primary,extra){
 const score=(stats,scoring)=>{if(!stats)return null;let n=0,used=false;for(const [k,w] of Object.entries(scoring||{})){const raw=stats[k]??(String(k).startsWith('idp_')?stats[String(k).slice(4)]:undefined),v=Number(raw),m=Number(w);if(Number.isFinite(v)&&Number.isFinite(m)){n+=v*m;used=true}}return used?Number(n.toFixed(2)):null};
 function projectionRows(raw){if(Array.isArray(raw))return raw;if(Array.isArray(raw?.players))return raw.players;if(raw&&typeof raw==='object')return Object.entries(raw).map(([id,row])=>row&&typeof row==='object'?{...row,player_id:row.player_id??row.player?.player_id??id}:null).filter(Boolean);return[]}
 async function projections(season,week,scoring){
+  // Prefer the immutable capture from before any weekly scoring was recorded.
+  try{
+   const key=`inquirer/projections/${season}/week-${String(week).padStart(2,'0')}.json`;
+   const locked=await store().get(key,{type:'json'});
+   if(locked?.season===Number(season)&&locked?.week===Number(week)&&locked.before_scoring_recorded&&Object.keys(locked.points_by_player||{}).length)
+    return locked.points_by_player;
+  }catch{}
   const urls=[`https://api.sleeper.app/projections/nfl/${season}/${week}?season_type=regular`,`https://api.sleeper.com/projections/nfl/${season}/${week}?season_type=regular`];
   for(const u of urls)try{const raw=await fetchJson(u),map={};for(const r of projectionRows(raw)){const id=String(r?.player_id||r?.player?.player_id||'');if(!id)continue;const s=r?.stats||r?.projection||r;const custom=score(s,scoring),fallbackRaw=r?.pts_ppr??s?.pts_ppr??r?.fantasy_points,fallback=fallbackRaw==null||fallbackRaw===''?null:Number(fallbackRaw),value=Number.isFinite(custom)?custom:(fallback!==null&&Number.isFinite(fallback)?fallback:null);if(value!==null)map[id]=value}if(Object.keys(map).length)return map}catch{}
   return{};
@@ -481,6 +488,11 @@ async function archivedProjectionMap(season,week){
     const raw=await projectionResponse.json();
     const scoring=league?.scoring_settings||{};
     if(!Array.isArray(raw)||!Object.keys(scoring).length)return null;
+    // Captured before week scoring began; unlike a later historical feed this
+    // preserves the earliest available numerical projections.
+    let captured=null;
+    try{captured=await store().get(`inquirer/projections/${season}/week-${String(week).padStart(2,'0')}.json`,{type:'json'})}catch{}
+    const capturedPoints=captured?.before_scoring_recorded&&captured?.season===Number(season)&&captured?.week===Number(week)?captured.points_by_player:null;
     const values=new Map(),positions=new Map();
     for(const row of raw){
      const id=String(row?.player_id||'');if(!id)continue;
@@ -488,7 +500,11 @@ async function archivedProjectionMap(season,week){
      const projection=score(row?.stats,scoring);
      if(projection!==null)values.set(id,projection);
     }
-    return {values,positions,scoring,source:`https://api.sleeper.app/projections/nfl/${season}/${week}?season_type=regular`,retrieved_at:new Date().toISOString(),scoring_keys:Object.keys(scoring).length};
+    if(capturedPoints&&Object.keys(capturedPoints).length){
+     values.clear();
+     for(const [id,value] of Object.entries(capturedPoints))if(Number.isFinite(Number(value)))values.set(String(id),Number(value));
+    }
+    return {values,positions,scoring,captured_at:capturedPoints?captured.captured_at:null,before_scoring_recorded:!!capturedPoints,source:`https://api.sleeper.app/projections/nfl/${season}/${week}?season_type=regular`,retrieved_at:new Date().toISOString(),scoring_keys:Object.keys(scoring).length};
    }finally{clearTimeout(timer)}
   })().catch(e=>{console.warn('Historical Sleeper projections unavailable',key,String(e?.message||e));return null});
   archiveProjectionCache.set(key,work);

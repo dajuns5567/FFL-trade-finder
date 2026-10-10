@@ -541,7 +541,7 @@ async function priorProjectionHistory(year,week,scoring,positions){
 async function addRetrospectiveEstimates(edition){
  const year=Number(edition?.season),week=Number(edition?.week),teams=edition?.teams||[];
  if(process.env.CI)console.log('RETROSPECTIVE_ESTIMATE_GATE',JSON.stringify({year,week,teams:teams.length,snapshots:teams.filter(t=>t.projection_snapshot).length,alreadyEstimated:teams.filter(t=>t.projection_estimate_snapshot).length,missingNumeric:teams.flatMap(t=>(t.starter_details||[]).filter(p=>p.projected==null||!Number.isFinite(Number(p.projected)))).length}));
- if(!edition?.available||!teams.length||teams.every(t=>t.projection_estimate_snapshot))return edition;
+ if(!teams.length||teams.every(t=>t.projection_estimate_snapshot))return edition;
  // Estimate only when the original numerical projection is unavailable.
  const missing=teams.flatMap(t=>(t.starter_details||[]).filter(p=>p.projected==null&&p.estimated_projected==null));
  if(!missing.length)return edition;
@@ -568,11 +568,12 @@ async function addRetrospectiveEstimates(edition){
 
 async function addArchivedProjectionCoverage(edition){
  const year=Number(edition?.season),week=Number(edition?.week);
- if(!edition?.available||!Array.isArray(edition.teams)||!edition.teams.length||!Number.isInteger(year)||!Number.isInteger(week))return edition;
+ if(!Array.isArray(edition?.teams)||!edition.teams.length||!Number.isInteger(year)||!Number.isInteger(week))return edition;
  // Week 4 has an immutable audited snapshot. Do not overwrite it.
  if(year===2026&&week===4&&edition.teams.every(t=>t.projection_snapshot))return addRetrospectiveEstimates(edition);
  if(edition.teams.every(t=>t.projection_snapshot))return addRetrospectiveEstimates(edition);
  const feed=await archivedProjectionMap(year,week);
+ if(process.env.CI)console.log('ARCHIVE_PROJECTION_FEED',JSON.stringify({year,week,available:edition?.available,teams:edition?.teams?.length,feed:!!feed,scoringKeys:feed?.scoring_keys||0}));
  if(!feed)return edition;
  const out={...edition,teams:edition.teams.map(team=>{
   if(team.projection_snapshot)return team;

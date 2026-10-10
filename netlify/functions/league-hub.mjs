@@ -325,6 +325,8 @@ export async function weeklyReport(req){
  }
  if(latestPublished)await weeklyAwardRecordForBroadcast(latestPublished).catch(e=>console.error('weekly award self-heal',e));
  if(!week)return latestPublished||{available:false,season,week:null,reason:'No completed Fleeced! Inquirer edition is available yet.'};
+ const approvedThroughWeek=Math.min(INQUIRER_FINAL_WEEK,Math.max(0,Number(process.env.INQUIRER_APPROVED_THROUGH_WEEK??4)||0));
+ if(week>approvedThroughWeek)return latestPublished?{...latestPublished,waiting_for_week:week,reason:'Publication of Week '+week+' requires explicit release approval.'}:{available:false,season,week,waiting_for_week:week,reason:'Publication of Week '+week+' requires explicit release approval.'};
  const completion=await completedPublicationWeek(week);
  if(!completion.complete)return latestPublished?{...latestPublished,waiting_for_week:week,reason:'The Fleeced! Inquirer is waiting for Sleeper to finalize Week '+week+': '+completion.reason+'.'}:{available:false,season,week,waiting_for_week:week,reason:'The Fleeced! Inquirer is waiting for Sleeper to finalize Week '+week+': '+completion.reason+'.'};
  const key=`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;

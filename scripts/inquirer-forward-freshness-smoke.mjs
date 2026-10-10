@@ -52,6 +52,18 @@ function rawForWeek(week){
   teams[0].points=42+week;teams[0].opponent_points=132-week;teams[0].won=false;
   teams[1].points=176+week;teams[1].opponent_points=101+week/2;teams[1].won=true;
   teams[2].points=118+week;teams[2].opponent_points=117+week;teams[2].won=true;
+  // Published recaps require reciprocal, completed Sleeper matchup pairs.
+  // Earlier synthetic fixtures varied opponent scores independently and did not
+  // represent a valid published matchup set.
+  for(let i=0;i+1<teams.length;i+=2){
+    const left=teams[i],right=teams[i+1];
+    left.opponent_roster_id=right.roster_id;
+    right.opponent_roster_id=left.roster_id;
+    left.opponent_points=right.points;
+    right.opponent_points=left.points;
+    left.won=Number(left.points)>Number(right.points);
+    right.won=Number(right.points)>Number(left.points);
+  }
   const overview=clone(week2.league_overview);
   overview.week=week;overview.week_classification=inquirerWeekClassification(week,2026);
   return {rawInquirer:{reporters:clone(week2.reporters),teams},rawOverview:overview};

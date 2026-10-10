@@ -539,6 +539,7 @@ async function loadArchivedEdition(year,week,team='',scrollMode='article'){
 function scrollToInquirerTop(){requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}))}
 function scrollToInquirerArticle(){requestAnimationFrame(()=>{const target=document.querySelector('#leagueHub .lh-report .lh-article-picker')||document.querySelector('#leagueHub .lh-report');if(!target)return;const top=Math.max(0,window.scrollY+target.getBoundingClientRect().top-110);window.scrollTo({top,behavior:'auto'})})}
 const retrospectiveArticleRequests=new Map();
+let currentlyRenderedArticleKey='';
 function hydrateArticleEstimates(w){
  if(!w?.available||!w?.teams?.length)return;
  if(!w.teams.some(t=>(t.starter_details||[]).some(p=>p.projected==null)))return;
@@ -553,14 +554,14 @@ function hydrateArticleEstimates(w){
   if(!enriched.teams.some(t=>t.projection_estimate_snapshot))return;
   archivedEditionCache.set(key,enriched);
   if(Number(weeklyCache?.season)===Number(w.season)&&Number(weeklyCache?.week)===Number(w.week))weeklyCache=enriched;
-  if(openBroadcastTeam&&document.getElementById('leagueHubContent')?.querySelector('[data-lh-broadcast-article]')){
+  if(currentlyRenderedArticleKey===key&&openBroadcastTeam&&document.getElementById('leagueHubContent')?.querySelector('[data-lh-broadcast-article]')){
    const selected=document.querySelector('#leagueHubContent select[data-lh-broadcast-article]')?.value;
    if(selected&&selected===String(openBroadcastTeam))showWeeklyArticle(enriched,false);
   }
  }).catch(e=>console.warn('Retrospective Inquirer estimates unavailable',key,e?.message||e));
  retrospectiveArticleRequests.set(key,promise);
 }
-function showWeeklyArticle(w,scroll=false,scrollMode='article'){const host=document.getElementById('leagueHubContent'),all=tradeCache?.trades||[],stats=teamTradeStats(all),md=mergeVisibleWeekScoring(managerCache,w);managerCache=md;if(host)host.innerHTML=dailyHTML(all,stats,w,md,w);hydrateArticleEstimates(w);if(scroll)(scrollMode==='top'?scrollToInquirerTop():scrollToInquirerArticle());ensureCurrentWeekAwards(w).then(data=>{if(Number(weeklyCache?.season)!==Number(w?.season)||Number(weeklyCache?.week)!==Number(w?.week))return;const current=Array.from(document.querySelectorAll('#leagueHubContent .lh-card.lh-wide')).find(x=>String(x.querySelector('h3')?.textContent||'').includes('Players of the Week'));if(current)current.outerHTML=playersOfWeekHTML(w,data)}).catch(()=>{})}
+function showWeeklyArticle(w,scroll=false,scrollMode='article'){currentlyRenderedArticleKey=Number(w?.season)+'|'+Number(w?.week);const host=document.getElementById('leagueHubContent'),all=tradeCache?.trades||[],stats=teamTradeStats(all),md=mergeVisibleWeekScoring(managerCache,w);managerCache=md;if(host)host.innerHTML=dailyHTML(all,stats,w,md,w);hydrateArticleEstimates(w);if(scroll)(scrollMode==='top'?scrollToInquirerTop():scrollToInquirerArticle());ensureCurrentWeekAwards(w).then(data=>{if(Number(weeklyCache?.season)!==Number(w?.season)||Number(weeklyCache?.week)!==Number(w?.week))return;const current=Array.from(document.querySelectorAll('#leagueHubContent .lh-card.lh-wide')).find(x=>String(x.querySelector('h3')?.textContent||'').includes('Players of the Week'));if(current)current.outerHTML=playersOfWeekHTML(w,data)}).catch(()=>{})}
 function returnToLeagueHubHome(){openBroadcastTeam='';weeklyCache=null;render('daily').then(()=>scrollToInquirerTop())}
 function dailyHTML(all,stats,w,md,spotlightW=w){
  // Home must never regress to a previously published edition when slower

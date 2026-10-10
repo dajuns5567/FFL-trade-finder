@@ -606,7 +606,7 @@ async function addArchivedProjectionCoverage(edition){
  })};
  const byId=new Map(out.teams.map(t=>[String(t.roster_id),t]));
  out.teams=out.teams.map(t=>({...t,opponent_projected:byId.get(String(t.opponent_roster_id))?.projected??null}));
- return out;
+ return addRetrospectiveEstimates(out);
 }
 
 // Non-publishing scheduled snapshot: once captured, a week's player projections are

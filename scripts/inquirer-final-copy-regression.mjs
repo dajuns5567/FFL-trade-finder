@@ -34,6 +34,7 @@ assert(publisher.includes('Final published Inquirer quality gate rejected Week')
 assert(publisher.includes('fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>null)')&&publisher.includes('!Array.isArray(transactions)'),'Transaction fetch failures must defer publication rather than masquerade as zero trades');
 assert(publisher.includes('Promise.resolve(completion.rows)'),'Publication must use the previously finalized Sleeper matchup snapshot without refetching');
 assert(publisher.includes('rosters.length!==completion.rows.length'),'Partial roster responses must defer publication');
+assert(publisher.includes('rosters.some(r=>r.owner_id&&!users.some(u=>String(u.user_id)===String(r.owner_id)))'),'Partial Sleeper user records must not silently omit roster-owner attribution');
 const start=publisher.indexOf('function matchupComplete(rows){'),end=publisher.indexOf('function raceSort(',start);
 assert(start>=0&&end>start,'Missing match-completion helpers');
 const testRows=[

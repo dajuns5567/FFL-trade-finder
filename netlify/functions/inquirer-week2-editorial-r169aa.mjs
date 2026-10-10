@@ -131,7 +131,7 @@ function restoreVerifiedPlayerHistoryComparison(team){
   const difference=pts-avg;
   const descriptor=difference>0?'above':'below';
   const voice=reporter==='nora-voss'?'A manager should ask whether the playing-time and involvement behind that change are likely to persist, rather than assuming a single strong or weak Sunday has settled the issue.':reporter==='walter-mercer'?'That season-long comparison is the useful perspective for the next selection: respect what happened this week without allowing one result to outweigh the player’s larger record.':reporter==='tess-delaney'?'A lovely performance or an ugly one can dominate the afternoon; neither erases the much longer stretch of work that came before it.':'This changes the review of the player’s role, but one game is still too small a sample to pronounce the entire season solved.';
-  playerSection.paragraphs.push(`${player.name} averaged ${avg.toFixed(1)} fantasy points per game across ${games} games in 2025. The Week 2 contribution was ${Math.abs(difference).toFixed(1)} points ${descriptor} that established output, a comparison drawn from actual completed-game statistics rather than a fresh guess about next Sunday. ${voice}`);
+  playerSection.paragraphs.push(`${player.name} averaged ${avg.toFixed(1)} fantasy points per game across ${games} games in 2025. The Week 2 contribution was ${Math.abs(difference).toFixed(1)} points ${descriptor} that established output, a comparison drawn from actual completed-game statistics rather than a fresh guess about next Sunday. For ${player.name}, ${voice.slice(0,1).toLowerCase()+voice.slice(1)}`);
  }
  article.paragraphs=sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);
  return team;

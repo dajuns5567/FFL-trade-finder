@@ -248,6 +248,30 @@ function refineWeek2RepeatedCopy(team){
    `On next week's advance billing, ${own} is penciled in for ${a} and ${opp} for ${b} fantasy points; both numbers remain forecasts.`,
    `Ahead of Week 3, ${own} projects for ${a} and ${opp} for ${b}; the actual contest has yet to settle either figure.`
   ]));
+  p=p.replace(/Among the recorded starters, the two highest scorers accounted for ([\d.]+) percent of the group's output; (.+?) contributed ([\d.]+) percent, while (.+?) supplied (-?[\d.]+) fantasy points from a different lineup spot\./g,(_,pair,top,share,bottom,low)=>say([
+    `I counted ${pair} percent of this lineup's scoring in its two biggest performances, with ${top} responsible for ${share} percent; ${bottom} finished on ${low} points, a different kind of concern for the manager.`,
+    `The leading pair furnished ${pair} percent of the recorded starter points. ${top}'s share was ${share} percent, while ${bottom} delivered ${low} from another roster assignment; those are distinct questions for selection.`,
+    `It was a ${pair}-percent double act from the two leading scorers, and ${top} alone wrote ${share} percent of the total. At the other end, ${bottom} managed ${low} points from a separate spot.`,
+    `Two starters combined for ${pair} percent of the listed output. ${top} supplied ${share} percent individually, while ${bottom} registered ${low}; the contrast is about actual production, not a forecast.`
+  ]));
+  p=p.replace(/([A-Z][A-Za-z'’.-]+(?: [A-Z][A-Za-z'’.-]+){1,3}) finished near the bottom of this team's listed starters in Week 2, which makes the specific lineup slot and available replacements more relevant than a generalized attack on roster construction\./g,(_,name)=>say([
+    `${name} belonged among the lower-scoring starters here; I would examine that roster position and the eligible alternatives before blaming the whole team.`,
+    `Near the bottom of the Week 2 starting order sat ${name}. Any criticism should be measured against the options actually available at that position.`,
+    `${name} had one of the lineup's smaller point totals, and the next selection should consider whether a better-qualified performer was available.`,
+    `The recorded starter rankings put ${name} near the bottom; that is a reason to review the corresponding roster decision, not proof that every teammate failed.`
+  ]));
+  p=p.replace(/([A-Z][A-Za-z'’.-]+(?: [A-Z][A-Za-z'’.-]+){1,3})'s actual total exceeded that player's available forecast by ([\d.]+) points\./g,(_,name,diff)=>say([
+    `The forecast for ${name} underestimated the completed Week 2 score by ${diff} points.`,
+    `For ${name}, actual scoring stood ${diff} points above the individual estimate.`,
+    `${name} delivered ${diff} more points than the advance figure allowed; at least one performer exceeded the billing.`,
+    `A ${diff}-point positive difference separates ${name}'s finished total from the available player projection.`
+  ]));
+  p=p.replace(/In contrast, ([A-Z][A-Za-z'’.-]+(?: [A-Z][A-Za-z'’.-]+){1,3})'s result fell ([\d.]+) short of the corresponding individual forecast\./g,(_,name,diff)=>say([
+    `${name} went the other direction: ${diff} points beneath the pregame individual estimate.`,
+    `Meanwhile, the individual projection overestimated ${name}'s finished result by ${diff} points.`,
+    `The other side of the bill arrived with ${name}, whose score missed its personal forecast by ${diff}.`,
+    `Against that brighter performance, ${name} finished ${diff} points below the available forecast.`
+  ]));
   return p;
  });
  a.paragraphs=a.sections.flatMap(x=>x.paragraphs||[]).filter(Boolean);

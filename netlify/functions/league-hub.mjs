@@ -320,7 +320,7 @@ async function reporterDirectory(){return{schema_version:1,inquirer_version:INQU
 
 export async function weeklyReport(req){
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
- const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,origin=new URL(req.url).origin,s=store(),
+ const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,origin=new URL(req.url).origin,s={get:async(...args)=>{try{return await store().get(...args)}catch{return null}}},
   cappedWeek=Math.min(INQUIRER_FINAL_WEEK,Math.max(1,currentWeek,...Array.from(PRELOADED_BROADCASTS.values(),raw=>{const edition=servedPreload(raw);return Number(edition?.season)===season&&edition?.available&&Array.isArray(edition.teams)&&edition.teams.length?Number(edition.week)||0:0})));
  // Publish sequentially. A missing older edition is generated before a newer one so every article has the immediately
  // previous locked edition available for continuity and copy-forward checks. Preloaded Week 1/2 editions count as published.

@@ -52,6 +52,7 @@ for(const [stage,apply] of [['r28-base',applyR28Base],['r129',applyR129],['r169x
  const target=(revised.teams||[]).find(t=>String(t.team_name||'')==='New England Patriots');
  const team=(edition.teams||[]).find(t=>String(t.roster_id)===String(target?.roster_id));
  console.error('NEW_ENGLAND_STAGE',stage,'roster',target?.roster_id,'stageTeam',team?.team_name,'words',words((team?.inquirer_article?.sections||[]).flatMap(s=>s.paragraphs||[]).join(' ')));
+ if(stage==='r169y')console.error('NEW_ENGLAND_PRE_CLEANUP',JSON.stringify((team?.inquirer_article?.sections||[]).map(s=>({heading:s.heading,paragraphs:s.paragraphs}))));
 }
 
 const reporterCounts=new Map();

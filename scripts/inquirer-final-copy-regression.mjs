@@ -123,7 +123,7 @@ assert(qualityGateSource.includes('findInquirerSourceFactIssues(candidate)'), 'E
 assert(publisher.includes('const candidate={week,teams:edited.inquirer.teams,league_overview:edited.leagueOverview}'), 'Initial publication gate must include reporting week');
 assert(publisher.includes('evaluateInquirerEditionQuality({week,teams:result.teams,league_overview:result.league_overview}'), 'Final publication gate must include reporting week');
 assert(qualityGateSource.includes('&&factIssues.length===0'), 'Source-fact errors must block new publication rather than only log warnings');
-const {findInquirerSourceFactIssues,buildInquirerEditionFactRegistry,findInquirerEditionConsistencyIssues,findInquirerRawMatchupIssues}=await import('../netlify/functions/inquirer-source-facts.mjs');
+const {findInquirerSourceFactIssues,buildInquirerEditionFactRegistry,findInquirerEditionConsistencyIssues,findInquirerRawMatchupIssues,findInquirerManagerAwardIssues}=await import('../netlify/functions/inquirer-source-facts.mjs');
 const factFixture={week:4,teams:[{team_name:'Miami Dolphins',starter_details:[{name:'Tetairoa McMillan',points:45.2}],inquirer_article:{sections:[{paragraphs:['Tetairoa McMillan scored 45.2 points in Week 4.']}]} }],league_overview:{sections:[],hot_takes:[{take:'Tetairoa McMillan has a 45.2-point season average.'}]}};
 assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='unsupported-player-average'),'Reject unsupported season-average claim');
 factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 44.2 points this week.'}];
@@ -281,5 +281,29 @@ assert.equal(checkTake('In Week 3, Defender Example scored 8 points.').length,0,
 assert(checkTake('In Week 4, Defender Example scored 8 points.').some(x=>x.id==='weekly-player-score'),'Leading current-week qualifier must still be verified');
 assert.equal(checkTake('In Week 3, Defender Example finished with 8 points.').length,0,'Leading past-week qualifier works for finished-with claims');
 assert(checkTake('During Week 4, Defender Example finished with 8 points.').some(x=>x.id==='weekly-player-score'),'Leading current-week qualifier works for finished-with claims');
+
+
+const awardEdition={teams:[
+ {roster_id:'1',points:110,won:true},{roster_id:'2',points:85,won:false}
+]};
+const awardSource=[{roster_id:'1',points:110},{roster_id:'2',points:85}];
+const managerAwards=[
+ {type:'highest-scorer',roster_id:'1',points:110},
+ {type:'lowest-scorer',roster_id:'2',points:85},
+ {type:'hot-seat',roster_id:'2',points:85},
+ {type:'cool-throne',roster_id:'1',points:110}
+];
+assert.equal(findInquirerManagerAwardIssues(awardEdition,managerAwards,awardSource).length,0,'Award winners match independent Sleeper source totals');
+const invalidHigh=managerAwards.map(a=>a.type==='highest-scorer'?{...a,roster_id:'2',points:85}:a);
+assert(findInquirerManagerAwardIssues(awardEdition,invalidHigh,awardSource).some(x=>x.id==='award-highest-scorer-mismatch'),'Reject incorrect highest-scorer winner');
+const invalidLow=managerAwards.map(a=>a.type==='lowest-scorer'?{...a,roster_id:'1',points:110}:a);
+assert(findInquirerManagerAwardIssues(awardEdition,invalidLow,awardSource).some(x=>x.id==='award-lowest-scorer-mismatch'),'Reject incorrect lowest-scorer winner');
+const invalidPoints=managerAwards.map(a=>a.type==='hot-seat'?{...a,points:87}:a);
+assert(findInquirerManagerAwardIssues(awardEdition,invalidPoints,awardSource).some(x=>x.id==='award-points-mismatch'),'Reject manager award points inconsistent with Sleeper');
+const invalidOutcome=managerAwards.map(a=>a.type==='cool-throne'?{...a,roster_id:'2',points:85}:a);
+assert(findInquirerManagerAwardIssues(awardEdition,invalidOutcome,awardSource).some(x=>x.id==='award-cool-throne-outcome-mismatch'),'Reject cool-throne awarded to loss');
+assert(findInquirerManagerAwardIssues(awardEdition,managerAwards,[]).some(x=>x.id==='award-source-unavailable'),'Fail closed without source award data');
+assert(publisher.includes('finalizedMatchupRows:forward?completion.rows:null'),'Publisher passes finalized Sleeper matchup totals to awards');
+assert(publisher.includes('if(awardIssues.length)throw new Error('),'Award validation must block weekly awards persistence');
 
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

@@ -487,6 +487,8 @@ async function archivedProjectionMap(season,week){
 async function addArchivedProjectionCoverage(edition){
  const year=Number(edition?.season),week=Number(edition?.week);
  if(!edition?.available||!Array.isArray(edition.teams)||!edition.teams.length||!Number.isInteger(year)||!Number.isInteger(week))return edition;
+ // The configured Sleeper league ID belongs to 2026; never score another season with the wrong league settings.
+ if(year!==2026)return edition;
  // Week 4 has an immutable audited snapshot. Do not overwrite it.
  if(year===2026&&week===4&&edition.teams.every(t=>t.projection_snapshot))return edition;
  if(edition.teams.every(t=>t.projection_snapshot||t.projection_coverage>0&&t.projected!=null))return edition;

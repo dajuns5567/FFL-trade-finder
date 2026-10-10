@@ -25,6 +25,9 @@ const frontend=readFileSync('league-hub-v451.js','utf8');
 assert(endpoint.includes("'netlify-cdn-cache-control':'no-store"),'Week 4 fast route must bypass stale CDN cache');
 assert(frontend.includes("cache:(y===2026&&w===4)?'no-store'"),'Week 4 archive fetch must bypass stale browser cache');
 const publisher=readFileSync('netlify/functions/league-hub.mjs','utf8');
+const scheduler=readFileSync('netlify/functions/inquirer-publish-scheduled.mjs','utf8');
+assert(scheduler.includes("import {weeklyReport} from './league-hub.mjs'")&&scheduler.includes('await weeklyReport(req)'),'Scheduled publishing must use canonical weekly-report approval and completion gates');
+
 assert(publisher.includes("if(!weeklyStats||typeof weeklyStats!=='object'||!Object.keys(weeklyStats).length)return latestPublished?"),'Weekly Inquirer publication must fail closed while retaining the most recent published edition when Sleeper stats are unavailable');
 assert(publisher.includes('if(!completion.complete)return latestPublished?'),'Unfinished next week must serve the latest already-published edition');
 assert(publisher.includes('rows.length!==rosterIds.size'),'Regular-season publication must reject incomplete matchup roster coverage');

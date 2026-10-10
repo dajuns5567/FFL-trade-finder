@@ -23,7 +23,9 @@ assert(/Week 11 score matters/.test(recap)&&/second result matters/i.test(recap)
 const endpoint=readFileSync('netlify/functions/league-hub-week4-fast.mjs','utf8');
 const frontend=readFileSync('league-hub-v451.js','utf8');
 assert(endpoint.includes("'netlify-cdn-cache-control':'no-store"),'Week 4 fast route must bypass stale CDN cache');
-assert(frontend.includes("cache:(y===2026&&w===4)?'no-store'"),'Week 4 archive fetch must bypass stale browser cache');
+assert(frontend.includes("cache:y===2026&&w===4?'no-store':'force-cache'"),'Week 4 archive fetch must bypass stale browser cache');
+assert(frontend.includes("new XMLHttpRequest()")&&frontend.includes("xhr.timeout=12000"),'Week 4 archive must recover from a stalled fetch with a bounded independent request');
+assert(frontend.includes("if(valid(recovered))return recovered"),'Recovered archived content must pass structural validation before opening');
 const publisher=readFileSync('netlify/functions/league-hub.mjs','utf8');
 const scheduler=readFileSync('netlify/functions/inquirer-publish-scheduled.mjs','utf8');
 assert(scheduler.includes("import {weeklyReport} from './league-hub.mjs'")&&scheduler.includes('await weeklyReport(req)'),'Scheduled publishing must use canonical weekly-report approval and completion gates');

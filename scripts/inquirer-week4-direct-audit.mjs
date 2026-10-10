@@ -150,6 +150,10 @@ const [league,rosters,users,players,transactions,w1,w2,w3,w4,w5]=await Promise.a
 ]);
 
 assert.equal(rosters.length,32,'Expected 32 league rosters');
+const knownOwnerIds=new Set(users.map(u=>String(u.user_id)));
+const missingOwners=rosters.map(r=>String(r.owner_id||'')).filter(owner=>owner&&!knownOwnerIds.has(owner));
+console.log('WEEK4_ROSTER_OWNER_COVERAGE',JSON.stringify({rosters:rosters.length,users:users.length,missingOwners}));
+
 assert.equal(w4.length,32,'Expected 32 Week 4 matchup rows');
 assert.ok(w4.every(m=>Number.isFinite(Number(m.points))&&m?.players_points&&Object.keys(m.players_points).length),'Week 4 Sleeper scoring must be complete');
 const lockedWeek4=rebuildWeek4Editorial(lockedWeek4Loader());

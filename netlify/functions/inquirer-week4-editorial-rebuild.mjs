@@ -257,7 +257,9 @@ export function rebuildForwardInquirerEditorial(original,{previousEdition=null}=
  for(const team of out.teams)teamStory(team,week);
  leagueStory(out);
  const prior=previousEdition||(Number(original?.season)===2026&&week===4?week3Preload2026():null);
- return restoreReporterNarratives(out,original,{previousEdition:prior});
+ const restored=restoreReporterNarratives(out,original,{previousEdition:prior});
+ if(process.env.INQUIRER_DEBUG_RECAP==='1')console.log('RECAP_STAGE_COUNTS',JSON.stringify({week,afterVoice:(restored.league_overview?.sections?.[0]?.blocks||[]).map(b=>({kind:b.kind,count:b.paragraphs?.length})),sourceTeams:original.teams?.length,example:original.teams?.[0]&&{id:original.teams[0].roster_id,points:original.teams[0].points,opponent_roster_id:original.teams[0].opponent_roster_id}}));
+ return restored;
 }
 export function rebuildWeek4Editorial(original){
  if(Number(original?.season)!==2026||Number(original?.week)!==4)return original;

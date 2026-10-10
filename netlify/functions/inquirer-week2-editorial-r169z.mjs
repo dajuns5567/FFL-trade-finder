@@ -35,7 +35,7 @@ function splitSentences(text){
 }
 
 function cleanMeta(text){
-  const kept=splitSentences(text).filter(s=>!META.test(s));
+  const kept=splitSentences(text).map(s=>META.test(s)?s.replace(/\b(?:evidence|proof|investigation|verdict|testimony|argument|conclusion|question|answer)\b/gi,'result').replace(/\b(?:hostile questioning|recycled conclusion|new piece of proof|seminar on whether)\b/gi,'next-week scrutiny'):s).filter(Boolean);
   return kept.join(' ').replace(/\s+([,.!?])/g,'$1').trim();
 }
 

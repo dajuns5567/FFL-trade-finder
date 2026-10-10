@@ -453,13 +453,70 @@ export function isCurrentWeek4Inquirer(edition){
  return Array.isArray(blocks)&&blocks.length===kinds.length&&kinds.every((kind,i)=>blocks[i]?.kind===kind&&Array.isArray(blocks[i]?.paragraphs)&&blocks[i].paragraphs.length>=2)
   &&edition?.teams?.length===32&&edition.teams.every(t=>Number(t?.inquirer_article?.editorial_rebuilt_for_week)===4);
 }
+// Retrieve historical projections for every archived week without changing locked prose.
+// Sleeper sometimes returns an ADP-only player record; that is NOT a numerical
+// projection, nor evidence that the player was projected for zero points.
+const archiveProjectionCache=new Map();
+async function archivedProjectionMap(season,week){
+ const key=season+'|'+week;
+ if(!archiveProjectionCache.has(key)){
+  const work=(async()=>{
+   const control=new AbortController(),timer=setTimeout(()=>control.abort(),14000);
+   try{
+    const [leagueResponse,projectionResponse]=await Promise.all([
+     fetch(`${API}/league/${LEAGUE}`,{signal:control.signal}),
+     fetch(`https://api.sleeper.app/projections/nfl/${season}/${week}?season_type=regular`,{signal:control.signal})
+    ]);
+    if(!leagueResponse.ok||!projectionResponse.ok)throw Error('Sleeper historical projection HTTP error');
+    const [league,raw]=await Promise.all([leagueResponse.json(),projectionResponse.json()]);
+    const scoring=league?.scoring_settings||{};
+    if(!Array.isArray(raw)||!Object.keys(scoring).length)return null;
+    const values=new Map();
+    for(const row of raw){
+     const id=String(row?.player_id||'');if(!id)continue;
+     const projection=score(row?.stats,scoring);
+     if(projection!==null)values.set(id,projection);
+    }
+    return {values,source:`https://api.sleeper.app/projections/nfl/${season}/${week}?season_type=regular`,retrieved_at:new Date().toISOString(),scoring_keys:Object.keys(scoring).length};
+   }finally{clearTimeout(timer)}
+  })().catch(e=>{console.warn('Historical Sleeper projections unavailable',key,String(e?.message||e));return null});
+  archiveProjectionCache.set(key,work);
+ }
+ return archiveProjectionCache.get(key);
+}
+async function addArchivedProjectionCoverage(edition){
+ const year=Number(edition?.season),week=Number(edition?.week);
+ if(!edition?.available||!Array.isArray(edition.teams)||!edition.teams.length||!Number.isInteger(year)||!Number.isInteger(week))return edition;
+ // Week 4 has an immutable audited snapshot. Do not overwrite it.
+ if(year===2026&&week===4&&edition.teams.every(t=>t.projection_snapshot))return edition;
+ if(edition.teams.every(t=>t.projection_snapshot||t.projection_coverage>0&&t.projected!=null))return edition;
+ const feed=await archivedProjectionMap(year,week);
+ if(!feed)return edition;
+ const out={...edition,teams:edition.teams.map(team=>{
+  if(team.projection_snapshot)return team;
+  const starters=(team.starter_details||[]).map(player=>{
+   const id=String(player.id),value=feed.values.get(id);
+   return {...player,projected:value===undefined?null:value}
+  });
+  const covered=starters.filter(p=>p.projected!==null).length;
+  const subtotal=Number(starters.reduce((n,p)=>n+(p.projected??0),0).toFixed(2));
+  return {...team,starter_details:starters,starter_count:starters.length,projection_coverage:covered,
+   projected:starters.length&&covered===starters.length?subtotal:null,projection_subtotal:subtotal,
+   projection_snapshot:{source:feed.source,retrieved_at:feed.retrieved_at,verified_pregame:false,
+    scoring_keys:feed.scoring_keys,coverage:covered,starters:starters.length}};
+ })};
+ const byId=new Map(out.teams.map(t=>[String(t.roster_id),t]));
+ out.teams=out.teams.map(t=>({...t,opponent_projected:byId.get(String(t.opponent_roster_id))?.projected??null}));
+ return out;
+}
+
 async function broadcastStored(season,week){
  const y=Number(season),w=Number(week),canonicalPreload=preloadedBroadcast(y,w);
  if(y===2026&&w===2&&canonicalPreload)return canonicalPreload;
  let v=null;
  try{v=await store().get(`broadcasts/${y}/week-${String(w).padStart(2,'0')}.json`,{type:'json'})}catch(e){if(!canonicalPreload)console.warn('Inquirer archive storage unavailable',y,w,String(e?.message||e))}
- if(y===2026&&w===4&&canonicalPreload&&!isCurrentWeek4Inquirer(servedPreload(v)))return canonicalPreload;
- return servedPreload(v)||canonicalPreload||{error:'broadcast not found'};
+ if(y===2026&&w===4&&canonicalPreload&&!isCurrentWeek4Inquirer(servedPreload(v)))return addArchivedProjectionCoverage(canonicalPreload);
+ return addArchivedProjectionCoverage(servedPreload(v)||canonicalPreload||{error:'broadcast not found'});
 }
 
 function weeklyAwardStatRows(payload){

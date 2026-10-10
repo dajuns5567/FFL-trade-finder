@@ -35,3 +35,9 @@ const teamRows=week.teams.map(t=>{const starters=(t.starter_details||[]),scored=
 });
 const allMissing=teamRows.flatMap(t=>t.missing.map(p=>({...p,team:t.team})));
 console.log('WEEK4_SCORED_PROJECTIONS',JSON.stringify({scoringSettings:Object.keys(scoring).length,uniqueStarterIds:players.length,totalLineupPositions:teamRows.reduce((n,x)=>n+x.starters,0),fullyCoveredTeams:teamRows.filter(t=>t.total!==null).length,playersWithNoUsableStats:allMissing,teams:teamRows.map(({team,coverage,starters,total})=>({team,coverage,starters,total})),retrievedAsOf:new Date().toISOString()}));
+
+const {gzipSync}=await import('node:zlib');
+const {createHash}=await import('node:crypto');
+const scores=Object.fromEntries(players.map(id=>[id,score(rowsById.get(id)?.stats)]).filter(([id,v])=>v!==null));
+const snapshot={season:2026,week:4,league_id:'1316867686394769408',source:'https://api.sleeper.app/projections/nfl/2026/4?season_type=regular',retrieved_at:new Date().toISOString(),verified_pregame:false,scoring_keys:Object.keys(scoring).length,scoring_sha256:createHash('sha256').update(JSON.stringify(Object.entries(scoring).sort())).digest('hex'),starter_ids:players,points_by_player:scores};
+console.log('WEEK4_PROJECTION_SNAPSHOT_BASE64 '+gzipSync(Buffer.from(JSON.stringify(snapshot))).toString('base64'));

@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/inquirer-week4-direct-audit.mjs'
+      - 'scripts/inquirer-week4-projection-source-audit.mjs'
       - 'scripts/inquirer-week4-rebuild-audit.mjs'
       - 'scripts/inquirer-week4-awards-direct-audit.mjs'
       - 'scripts/league-hub-latest-awards-regression.mjs'

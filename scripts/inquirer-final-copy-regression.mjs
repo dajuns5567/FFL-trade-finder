@@ -121,7 +121,7 @@ assert(stale.errors.length===2,'Surface both unresolved failures for observabili
 const qualityGateSource=readFileSync('netlify/functions/inquirer-editorial-v31.mjs','utf8');
 assert(qualityGateSource.includes('findInquirerSourceFactIssues(candidate)'), 'Every future edition must run source-fact checks in its quality evaluator');
 assert(qualityGateSource.includes('&&factIssues.length===0'), 'Source-fact errors must block new publication rather than only log warnings');
-const {findInquirerSourceFactIssues,buildInquirerEditionFactRegistry}=await import('../netlify/functions/inquirer-source-facts.mjs');
+const {findInquirerSourceFactIssues,buildInquirerEditionFactRegistry,findInquirerEditionConsistencyIssues}=await import('../netlify/functions/inquirer-source-facts.mjs');
 const factFixture={week:4,teams:[{team_name:'Miami Dolphins',starter_details:[{name:'Tetairoa McMillan',points:45.2}],inquirer_article:{sections:[{paragraphs:['Tetairoa McMillan scored 45.2 points in Week 4.']}]} }],league_overview:{sections:[],hot_takes:[{take:'Tetairoa McMillan has a 45.2-point season average.'}]}};
 assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='unsupported-player-average'),'Reject unsupported season-average claim');
 factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 44.2 points this week.'}];
@@ -216,5 +216,24 @@ assert.equal(buildInquirerEditionFactRegistry(registryFixture).matchups.length,0
 registryFixture.teams[1].opponent_roster_id=1;
 registryFixture.teams[0].points=null;
 assert.equal(buildInquirerEditionFactRegistry(registryFixture).matchups.length,0,'Missing totals cannot enter matchup fact registry');
+
+
+// Independent internal reconciliation of separately encoded Sleeper matchup totals.
+const reconciliation={week:4,teams:[
+ {roster_id:10,opponent_roster_id:11,team_name:'Team North',points:105.3,opponent_points:98.1,won:true,starter_details:[],inquirer_article:{sections:[]}},
+ {roster_id:11,opponent_roster_id:10,team_name:'Team South',points:98.1,opponent_points:105.3,won:false,starter_details:[],inquirer_article:{sections:[]}}
+],league_overview:{sections:[],hot_takes:[]}};
+assert.equal(findInquirerEditionConsistencyIssues(reconciliation).length,0,'Accept consistent verified mirrored matchup totals');
+reconciliation.teams[0].opponent_points=97.1;
+assert(findInquirerSourceFactIssues(reconciliation).some(x=>x.id==='opponent-score-disagreement'),'Reject a mismatch even when article avoids a score claim');
+reconciliation.teams[0].opponent_points=98.1;
+reconciliation.teams[1].won=true;
+assert(findInquirerSourceFactIssues(reconciliation).some(x=>x.id==='matchup-outcome-disagreement'),'Reject contradictory winner flag');
+reconciliation.teams[1].won=false;
+reconciliation.teams.push({...reconciliation.teams[0]});
+assert(findInquirerEditionConsistencyIssues(reconciliation).some(x=>x.id==='duplicate-roster-fact'),'Reject duplicate roster identity');
+reconciliation.teams.pop();
+reconciliation.teams[1].opponent_roster_id=12;
+assert.equal(findInquirerEditionConsistencyIssues(reconciliation).length,0,'Do not infer opponent reciprocity if source linkage is incomplete');
 
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

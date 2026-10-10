@@ -262,9 +262,27 @@ function reviseOverview(o){
  o.editorial_revision=28;o.voice_revision='week2-r28';return o;
 }
 
+function repairMiamiWeek2Copy(t){
+ if(String(t?.team_name||'').toLowerCase()!=='miami dolphins')return t;
+ const a=t?.inquirer_article;if(!a)return t;
+ a.sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>{
+  let x=String(p||'');
+  x=x.replace('turns 2-0 into a parade route after fourteen days','turns a 1-1 record into a parade route after two weeks');
+  x=x.replace('explaining a 2-0 fantasy record','explaining a 1-1 fantasy record');
+  x=x.replace('3 carries, 30 rush yds, 1 rush Enjoy','3 carries and 30 rushing yards. Enjoy');
+  x=x.replace('7/9 rec, 75 yds, 2 Take','7 catches on 9 targets and 75 receiving yards. Take');
+  x=x.replace('Nik Bonitto gave Dolphins 7.5 points on 3.','Nik Bonitto gave Dolphins 7.5 fantasy points. That modest return left the defense with ground to make up.');
+  x=x.replace('Week 2 performance. praise is unavoidable','Week 2 performance. Praise is unavoidable');
+  x=x.replace('After 142.4 points, the crowd has decided restraint is for teams with worse records and fewer screenshots of the standings.','After 142.4 points, the crowd has decided restraint is for teams that lost. At 1-1, Miami has reclaimed some breathing room, but one victory cannot settle a season.');
+  return x;
+ })}));
+ a.paragraphs=a.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);
+ return t;
+}
+
 export function applyWeek2EditorialR16(raw){
  const out=applyWeek2EditorialR27Base(raw);if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
- out.teams=removeCrossTeamBoilerplate((out.teams||[]).map(reviseTeam)).map(normalizeScheduleRoadPosition).map(ensureCoolThroneRecognition);
+ out.teams=removeCrossTeamBoilerplate((out.teams||[]).map(reviseTeam)).map(normalizeScheduleRoadPosition).map(ensureCoolThroneRecognition).map(repairMiamiWeek2Copy);
  out.league_overview=reviseOverview(out.league_overview);
  out.editorial_revision=28;out.voice_revision='week2-r28';return out;
 }

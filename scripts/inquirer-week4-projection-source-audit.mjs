@@ -42,3 +42,25 @@ const {createHash}=await import('node:crypto');
 const scores=Object.fromEntries(players.map(id=>[id,score(rowsById.get(id)?.stats)]).filter(([id,v])=>v!==null));
 const snapshot={season:2026,week:4,league_id:'1316867686394769408',source:'https://api.sleeper.app/projections/nfl/2026/4?season_type=regular',retrieved_at:new Date().toISOString(),verified_pregame:false,scoring_keys:Object.keys(scoring).length,scoring_sha256:createHash('sha256').update(JSON.stringify(Object.entries(scoring).sort())).digest('hex'),starter_ids:players,points_by_player:scores};
 console.log('WEEK4_PROJECTION_SNAPSHOT_BASE64 '+gzipSync(Buffer.from(JSON.stringify(snapshot))).toString('base64'));
+
+const {fallbackProjection}=await import('../netlify/functions/inquirer-projection-fallback.mjs');
+const previous=[1,2,3];
+const history=[];
+const posById=new Map(projectionRaw.map(r=>[String(r.player_id),String(r.player?.position||'')]));
+for(const w of previous){
+ const response=await fetch(`https://api.sleeper.app/stats/nfl/regular/2026/${w}`);
+ if(!response.ok)throw Error('Cannot verify completed prior week '+w);
+ const rows=await response.json();
+ for(const [id,record] of Object.entries(rows||{})){
+  const value=score(record?.stats||record);
+  if(value!==null)history.push({player_id:id,position:posById.get(id)||'',points:value,week:w});
+ }
+}
+const backfilled={};
+for(const p of allMissing){
+ const estimate=fallbackProjection({playerId:p.id,position:p.position,history});
+ if(estimate)backfilled[p.id]=estimate;
+}
+const snapshotBackfill={season:2026,week:4,method:'prior completed weeks 1-3; same-position historical median otherwise',based_on_weeks:[1,2,3],source:'Sleeper completed-week stats',scoring_sha256:snapshot.scoring_sha256,estimates:backfilled};
+console.log('WEEK4_MISSING_ESTIMATE_AUDIT',JSON.stringify({missingPlayers:allMissing.length,coveredByEstimate:Object.keys(backfilled).length,estimated:backfilled}));
+console.log('WEEK4_BACKFILL_BASE64 '+gzipSync(Buffer.from(JSON.stringify(snapshotBackfill))).toString('base64'));

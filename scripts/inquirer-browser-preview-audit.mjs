@@ -53,11 +53,21 @@ try{
  await page.locator('.tabs button[data-tab="leagueHub"]').waitFor({timeout:60000});
  await page.locator('.tabs button[data-tab="leagueHub"]').click();
  await page.waitForFunction(()=>[...document.scripts].some(s=>/league-hub-v451\.js\?v=/.test(s.src)),null,{timeout:60000});
- const clientScripts=await page.evaluate(()=>[...document.scripts].map(x=>x.src).filter(x=>/league-hub-(?:v451|lazy-v454)/.test(x)));
- console.log('LIVE_PREVIEW_CLIENT_REVISIONS',JSON.stringify({revision,clientScripts}));
  const expectedClientPath=readFileSync('league-hub-lazy-v454.js','utf8').match(/league-hub-v451\.js\?v=\d+/)?.[0];
  assert(expectedClientPath,'Unable to find current League Hub asset revision');
- assert(clientScripts.some(x=>x.includes(expectedClientPath)),'Netlify preview is serving stale League Hub JavaScript; not valid for current-commit browser acceptance');
+ let clientScripts=[];
+ for(let attempt=0;attempt<11;attempt++){
+  clientScripts=await page.evaluate(()=>[...document.scripts].map(x=>x.src).filter(x=>/league-hub-(?:v451|lazy-v454)/.test(x)));
+  if(clientScripts.some(x=>x.includes(expectedClientPath)))break;
+  console.log('LIVE_PREVIEW_WAIT_FOR_DEPLOY',JSON.stringify({attempt:attempt+1,expectedClientPath,clientScripts}));
+  if(attempt===10)break;
+  await page.waitForTimeout(9000);
+  await page.goto(root+'/?inquirer_preview_revision='+encodeURIComponent(revision)+'&deploy_wait_attempt='+(attempt+1),{waitUntil:'domcontentloaded',timeout:90000});
+  await page.locator('.tabs button[data-tab="leagueHub"]').click();
+  await page.waitForFunction(()=>[...document.scripts].some(s=>/league-hub-v451\.js\?v=/.test(s.src)),null,{timeout:60000});
+ }
+ console.log('LIVE_PREVIEW_CLIENT_REVISIONS',JSON.stringify({revision,expectedClientPath,clientScripts}));
+ assert(clientScripts.some(x=>x.includes(expectedClientPath)),'Netlify preview is still serving stale League Hub JavaScript after bounded deploy synchronization; not valid for current-commit browser acceptance');
 
  await page.locator('#leagueHubContent .lh-report').waitFor({timeout:60000});
  await page.waitForFunction(()=>/Week 4/.test(document.querySelector('#leagueHubContent .lh-report')?.textContent||''),{timeout:60000});

@@ -60,6 +60,19 @@ try{
 
  await page.locator('#leagueHubContent .lh-report').waitFor({timeout:60000});
  await page.waitForFunction(()=>/Week 4/.test(document.querySelector('#leagueHubContent .lh-report')?.textContent||''),{timeout:60000});
+ // Validate the actual landing-page Manager Spotlight, including the hydrated latest edition.
+ await page.waitForFunction(()=>{
+   const container=document.querySelector('#leagueHubContent .lh-spotlight');
+   if(!container)return false;
+   const cards=[...container.querySelectorAll('.lh-spot-card')];
+   return ['Hot Seat','Cool Throne'].every(label=>{
+     const card=cards.find(node=>node.querySelector('small')?.textContent?.trim()===label);
+     const manager=card?.querySelector('b')?.textContent?.trim();
+     return !!manager&&manager!=='n/a'&&manager!=='—';
+   });
+ },null,{timeout:65000});
+ const spotlightNames=await page.locator('#leagueHubContent .lh-spotlight .lh-spot-card').allTextContents();
+ console.log('LIVE_MANAGER_SPOTLIGHT_READY',JSON.stringify(spotlightNames.filter(s=>/Hot Seat|Cool Throne/.test(s))));
  const openEdition=page.locator('#leagueHubContent button').filter({hasText:'Open Full Inquirer'});
  if(await openEdition.count()){
   const attrs=await openEdition.first().evaluate(el=>({html:el.outerHTML.slice(0,500),year:el.dataset.lhArchiveSeason,week:el.dataset.lhArchiveWeek}));

@@ -77,7 +77,7 @@ function managerAwardsFromWeek(w){
  const byId=new Map(valid.map(t=>[String(t.roster_id),t])),oppProj=t=>{const o=byId.get(String(t?.opponent_roster_id||''));return Number(o?.projection_coverage)>0?safeProjection(t?.opponent_projected??o?.projected):NaN},
  high=valid.slice().sort((a,b)=>Number(b.points)-Number(a.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
  low=valid.slice().sort((a,b)=>Number(a.points)-Number(b.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
- losses=valid.filter(g=>g.won===false),wins=valid.filter(g=>g.won===true),
+ outcome=g=>g?.points!=null&&g?.opponent_points!=null&&Number.isFinite(Number(g.points))&&Number.isFinite(Number(g.opponent_points))?(Number(g.points)>Number(g.opponent_points)?true:Number(g.points)<Number(g.opponent_points)?false:null):null,losses=valid.filter(g=>outcome(g)===false),wins=valid.filter(g=>outcome(g)===true),
  projectedUpsets=losses.filter(g=>Number(g.projection_coverage)>0&&Number.isFinite(safeProjection(g.projected))&&Number.isFinite(oppProj(g))&&Number(g.projected)>oppProj(g)).sort((a,b)=>(Number(b.projected)-oppProj(b))-(Number(a.projected)-oppProj(a))||String(a.roster_id).localeCompare(String(b.roster_id))),
  hot=projectedUpsets[0]||losses.slice().sort((a,b)=>{
    const au=Number(a.projection_coverage)>0&&Number.isFinite(safeProjection(a.projected))?Number(a.projected)-Number(a.points):Number(a.opponent_points)-Number(a.points),

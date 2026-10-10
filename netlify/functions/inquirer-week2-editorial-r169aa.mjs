@@ -1,7 +1,8 @@
 import {applyWeek2EditorialR16 as applyR169Z} from './inquirer-week2-editorial-r169z.mjs';
 import {applyInquirerStoryContextToEdition} from './inquirer-story-context.mjs';
 
-const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\function polishFinalMiamiWeek2(team){
+const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function polishFinalMiamiWeek2(team){
  if(String(team?.team_name||'').toLowerCase()!=='miami dolphins')return team;
  const article=team?.inquirer_article;if(!article)return team;
  for(const section of article.sections||[]){
@@ -21,7 +22,6 @@ const esc=s=>String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\function polishFinal
  return team;
 }
 
-export function applyWeek2EditorialR16(raw){');
 function repairTeamPossessives(team){
   const a=team?.inquirer_article;if(!a)return team;
   const full=String(team?.team_name||'').trim(),short=full.split(/\s+/).filter(Boolean).at(-1)||'',names=[full,short].filter((v,i,arr)=>v&&/s$/i.test(v)&&arr.indexOf(v)===i);

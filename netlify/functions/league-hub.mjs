@@ -157,7 +157,7 @@ function missingPublishedWeekPlayerStats(matchups,weeklyStats){
  const missing=new Set();
  for(const matchup of matchups||[]){
   for(const [id,points] of Object.entries(matchup?.players_points||{})){
-   if(Number.isFinite(Number(points))&&Number(points)!==0&&!Object.prototype.hasOwnProperty.call(weeklyStats||{},id))missing.add(String(id));
+   if(Number.isFinite(Number(points))&&Number(points)!==0){const entry=weeklyStats?.[id],stats=entry?.stats&&typeof entry.stats==='object'?entry.stats:entry;if(!stats||typeof stats!=='object'||!Object.keys(stats).length)missing.add(String(id))}
   }
  }
  return [...missing];

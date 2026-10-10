@@ -38,6 +38,7 @@ try{
  // The real function handler's unit/integration audit still requires this header.
  if(fast.headers['netlify-cdn-cache-control'])assert.match(String(fast.headers['netlify-cdn-cache-control']),/no-store/,'Visible CDN cache directive must bypass caching');
  console.log('LIVE_WEEK4_PAYLOAD_FLAGS',JSON.stringify({available:fast.body.available,week:fast.body.week,teamCount:fast.body.teams?.length,revision:fast.body.editorial_revision}));
+ console.log('LIVE_PROJECTION_COVERAGE',JSON.stringify({source:fast.body.projection_source||'not supplied',teamsWithCurrentProjection:(fast.body.teams||[]).filter(t=>t.projected!=null).length,teamsWithNextProjection:(fast.body.teams||[]).filter(t=>t.next_projected!=null).length,teamsWithNoNextCoverage:(fast.body.teams||[]).filter(t=>!Number(t.next_projection_coverage)).length,starterCounts:(fast.body.teams||[]).slice(0,3).map(t=>({team:t.team_name,starters:t.starter_count,currentCoverage:t.projection_coverage,nextCoverage:t.next_projection_coverage}))}));
  assert.equal(fast.body.week,4);
  assert.equal(fast.body.teams?.length,32,'Fast endpoint must expose 32 team articles');
  assert(fast.body.teams.every(t=>t.inquirer_article?.editorial_rebuilt_for_week===4),'Unrebuilt Week 4 article returned by fast endpoint');

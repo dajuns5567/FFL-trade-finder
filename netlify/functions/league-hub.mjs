@@ -443,11 +443,7 @@ export async function weeklyReport(req){
  }
  const integrity=publishedArticleIntegrity(result,(rosters||[]).length||32);
  if(!integrity.ok)throw new Error('Week '+week+' publish integrity rejected: '+integrity.issues.join('; '));
- const weeklyAwardRecord=await weeklyAwardRecordForBroadcast(result,{stats:weeklyStats,players,scoring:league?.scoring_settings||{},force:true});
- if(forward){
-  const awardFactIssues=findInquirerManagerAwardIssues(result,weeklyAwardRecord.manager_awards,completion.rows);
-  if(awardFactIssues.length)throw new Error('Sleeper manager award source reconciliation rejected Week '+week+': '+JSON.stringify(awardFactIssues).slice(0,4000));
- }
+ const weeklyAwardRecord=await weeklyAwardRecordForBroadcast(result,{stats:weeklyStats,players,scoring:league?.scoring_settings||{},force:true,finalizedMatchupRows:forward?completion.rows:null});
  await s.setJSON(key,{...result,publish_integrity:{...integrity,awards_verified:true,award_week:weeklyAwardRecord.week}});
  const persisted=await s.get(key,{type:'json'}).catch(()=>null),roundTrip=publishedArticleIntegrity(persisted,(rosters||[]).length||32);
  if(!roundTrip.ok||Number(persisted?.season)!==season||Number(persisted?.week)!==week)throw new Error('Week '+week+' persisted broadcast failed integrity verification: '+roundTrip.issues.join('; '));
@@ -730,7 +726,7 @@ function publishedArticleIntegrity(broadcast,expectedTeams=32){
  if(/(?:\.\.\.\s*truncated|\[truncated\])/i.test(serialized))issues.push('truncation marker detected');
  return{ok:issues.length===0,issues,bytes:Buffer.byteLength(serialized,'utf8'),teams:teams.length};
 }
-async function weeklyAwardRecordForBroadcast(broadcast,{stats=null,players=null,scoring=null,force=false}={}){
+async function weeklyAwardRecordForBroadcast(broadcast,{stats=null,players=null,scoring=null,force=false,finalizedMatchupRows=null}={}){
  const season=Number(broadcast?.season),week=Number(broadcast?.week);
  if(!season||!week)throw new Error('weekly awards require a valid published season/week');
  const s=store(),old=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null),
@@ -773,7 +769,11 @@ async function weeklyAwards(){
   if(!broadcast?.available||!Array.isArray(broadcast?.teams)||!broadcast.teams.length)continue;
   try{
    const rec=await weeklyAwardRecordForBroadcast(broadcast);
-   byKey.set(key,rec);
+   if(finalizedMatchupRows){
+   const awardIssues=findInquirerManagerAwardIssues(broadcast,rec.manager_awards,finalizedMatchupRows);
+   if(awardIssues.length)throw new Error('Sleeper manager award source reconciliation rejected Week '+week+': '+JSON.stringify(awardIssues).slice(0,4000));
+  }
+  byKey.set(key,rec);
   }catch(error){
    // A missing or unpersistable historical award must not suppress newer completed weeks.
    console.error('weekly awards refresh failed',season,week,error);

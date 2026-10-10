@@ -55,11 +55,13 @@ assert.equal(archiveResp.status,200,'League Hub archival endpoint failed for Wee
 const archived=await archiveResp.json();
 assert.equal(archived.teams?.length,32,'League Hub archived Week 4 must contain 32 teams');
 assert(archived.teams.every(t=>t?.inquirer_article?.editorial_rebuilt_for_week===4),'League Hub archival route served stale Week 4 prose');
-const week3Resp=await leagueHubHandler(new Request('https://example.invalid/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week=3'));
-assert.equal(week3Resp.status,200,'League Hub Week 3 archive request failed');
-const week3Archive=await week3Resp.json();
-assert.equal(week3Archive.week,3,'Week 3 archive resolved the wrong week');
-assert.equal(week3Archive.teams?.length,32,'Week 3 archive lost team articles');
+for(const archiveWeek of [1,2,3]){
+ const priorResp=await leagueHubHandler(new Request('https://example.invalid/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week='+archiveWeek));
+ assert.equal(priorResp.status,200,'Locked Week '+archiveWeek+' archive failed without Blob credentials');
+ const priorArchive=await priorResp.json();
+ assert.equal(priorArchive.week,archiveWeek,'Archive resolved the wrong week');
+ assert.equal(priorArchive.teams?.length,32,'Week '+archiveWeek+' archive lost team articles');
+}
 
 const wordCounts=rebuilt.teams.map(t=>t.inquirer_article.sections.flatMap(sec=>sec.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length);
 const result={ok:true,season:2026,week:4,team_articles:rebuilt.teams.length,recap_blocks:rebuilt.league_overview.sections[0].blocks.length,hot_takes:rebuilt.league_overview.hot_takes.map(x=>x.kind),article_words:{min:Math.min(...wordCounts),max:Math.max(...wordCounts),mean:Math.round(wordCounts.reduce((a,b)=>a+b,0)/wordCounts.length)},sample_headline:rebuilt.teams[0].inquirer_article.headline};

@@ -19,11 +19,15 @@ const get=async path=>{
  const r=await fetch(API+path,{headers:{accept:'application/json','user-agent':'Fleeced-Week4-Awards-Independent-Audit/1.0'},cache:'no-store'});
  assert.equal(r.status,200,'Independent Sleeper source '+path+' unavailable');return r.json();
 };
-const [league,players,stats]=await Promise.all([
+const [league,players,stats,matchups]=await Promise.all([
  get('/league/1316867686394769408'),
  get('/players/nfl'),
- get('/stats/nfl/regular/2026/4')
+ get('/stats/nfl/regular/2026/4'),
+ get('/league/1316867686394769408/matchups/4')
 ]);
+const scoredIds=new Set((matchups||[]).flatMap(m=>Object.entries(m.players_points||{}).filter(([,p])=>Number.isFinite(Number(p))&&Number(p)!==0).map(([id])=>String(id))));
+const missingStatIds=[...scoredIds].filter(id=>!(id in (stats||{})));
+console.log('WEEK4_MATCHUP_TO_RAW_STATS_COVERAGE',JSON.stringify({nonzeroMatchupScorers:scoredIds.size,missingRawStats:missingStatIds.length,missingIds:missingStatIds.slice(0,30)}));
 const settings=league.scoring_settings||{};
 function independentScore(row){
  let result=0,any=false;

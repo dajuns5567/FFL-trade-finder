@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
 import rawWeek2 from '../netlify/functions/inquirer-week2-2026-preload.mjs';
 import {applyWeek2EditorialR16,WEEK2_EDITORIAL_REVISION} from '../netlify/functions/inquirer-week2-editorial-r28.mjs';
-import {applyWeek2EditorialR16 as applyR169Y} from '../netlify/functions/inquirer-week2-editorial-r169y.mjs';
-import {applyWeek2EditorialR16 as applyR169Z} from '../netlify/functions/inquirer-week2-editorial-r169z.mjs';
 
 
 const snapshot=JSON.stringify(rawWeek2);
@@ -46,14 +44,6 @@ function canonicalScoreRows(text){
 
 const allTeamInventory=(revised.teams||[]).map(t=>({team:String(t.team_name||''),words:words(fullText(t)),reporter:String(t.inquirer_article?.reporter?.id||''),sections:(t.inquirer_article?.sections||[]).length})).sort((a,b)=>a.words-b.words);
 console.log('WEEK2_32_TEAM_QUALITY_INVENTORY',JSON.stringify({total:allTeamInventory.length,below750:allTeamInventory.filter(x=>x.words<750),all:allTeamInventory}));
-const stageY=applyR169Y(structuredClone(rawWeek2)),stageZ=applyR169Z(structuredClone(rawWeek2));
-const stageMap=stage=>new Map((stage.teams||[]).map(t=>[String(t.roster_id),words(fullText(t))]));
-const mapY=stageMap(stageY),mapZ=stageMap(stageZ);
-console.log('WEEK2_REPORTER_COMPRESSION_STAGES',JSON.stringify(allTeamInventory.map(x=>{
- const team=revised.teams.find(t=>String(t.team_name)===x.team);
- const id=String(team?.roster_id||'');
- return{team:x.team,reporter:x.reporter,beforeZ:mapY.get(id),afterZ:mapZ.get(id),final:x.words};
-})));
 const reporterCounts=new Map();
 const reporterWordMins=new Map();
 const crossSentenceMap=new Map();

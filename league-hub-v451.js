@@ -476,7 +476,7 @@ async function fetchArchivedEdition(year,week){
   try{
    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),9000);
    try{
-    const r=await fetch(url,{cache:y===2026&&w===4?'no-store':'force-cache',signal:controller.signal});
+    const r=await Promise.race([fetch(url,{cache:y===2026&&w===4?'no-store':'force-cache',signal:controller.signal}),new Promise((_,reject)=>controller.signal.addEventListener('abort',()=>reject(new Error('archive fetch timeout')),{once:true}))]);
     if(!r.ok)throw Error('archived edition unavailable: '+y+' Week '+w);
     const x=await r.json();
     if(valid(x))return x;

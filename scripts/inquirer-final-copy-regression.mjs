@@ -30,4 +30,5 @@ assert(publisher.includes('rows.length!==rosterIds.size'),'Regular-season public
 assert(publisher.includes('process.env.INQUIRER_APPROVED_THROUGH_WEEK??4'),'Unapproved Week 5 and later must remain unpublished by default');
 assert(publisher.includes('if(week>approvedThroughWeek)return latestPublished?'),'Release gate must retain latest published edition without advancing');
 assert(publisher.includes('Final published Inquirer quality gate rejected Week'),'Final postprocessor must not bypass editorial-quality gate before publication');
+assert(publisher.includes('fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`),'),'Weekly transaction fetch failures must not masquerade as weeks without trades');
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

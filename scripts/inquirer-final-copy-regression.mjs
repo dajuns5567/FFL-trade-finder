@@ -343,4 +343,19 @@ seasonEdition.teams[0].league_context.standings_rank=1;
 assert(findInquirerSeasonRecordIssues(seasonEdition,[]).some(x=>x.id==='season-matchup-source-unavailable'),'Missing historical matchups cannot certify season records');
 assert(publisher.includes('findInquirerSeasonRecordIssues(result,seasonMatchupsRows)'), 'Publisher checks standings against Sleeper source series');
 
+
+const identityEdition={season:2026,week:5,teams:[
+ {roster_id:1,current_week_trade_count:2,trade_history:[{id:'trade-A'},{id:'trade-B'}]},
+ {roster_id:2,current_week_trade_count:2,trade_history:[{id:'trade-A'},{id:'trade-B'}]}
+]};
+const identityLedger=[
+ {id:'trade-A',season:2026,week:5,roster_ids:[1,2]},
+ {id:'trade-B',season:2026,week:5,roster_ids:[1,2]}
+];
+assert.equal(findInquirerTradeCountIssues(identityEdition,identityLedger).length,0,'Canonical trade identity check accepts exact membership');
+identityEdition.teams[0].trade_history=[{id:'trade-A'},{id:'trade-A'}];
+assert(findInquirerTradeCountIssues(identityEdition,identityLedger).some(x=>x.id==='canonical-trade-identity-mismatch'),'Reject repeated trade entry that preserves count but loses another trade');
+identityEdition.teams[0].trade_history=[{id:'trade-A'},{id:'trade-B'}];
+assert.equal(findInquirerTradeCountIssues(identityEdition,identityLedger).length,0,'Restored distinct transactions validate');
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

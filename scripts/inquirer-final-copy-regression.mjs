@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
 import {finalizeReporterUniqueness} from '../netlify/functions/inquirer-forward-restore-voice.mjs';
 const edition={week:11,teams:[{
  roster_id:1,team_name:'Green Bay Packers',starter_details:[{name:'Player One',points:12}],
@@ -31,4 +32,33 @@ assert(publisher.includes('process.env.INQUIRER_APPROVED_THROUGH_WEEK??4'),'Unap
 assert(publisher.includes('if(week>approvedThroughWeek)return latestPublished?'),'Release gate must retain latest published edition without advancing');
 assert(publisher.includes('Final published Inquirer quality gate rejected Week'),'Final postprocessor must not bypass editorial-quality gate before publication');
 assert(publisher.includes('fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`),'),'Weekly transaction fetch failures must not masquerade as weeks without trades');
+const start=publisher.indexOf('function matchupComplete(rows){'),end=publisher.indexOf('function raceSort(',start);
+assert(start>=0&&end>start,'Missing match-completion helpers');
+const testRows=[
+ {roster_id:1,matchup_id:1,points:112,players_points:{a:112}},
+ {roster_id:2,matchup_id:1,points:90,players_points:{b:90}},
+ {roster_id:3,matchup_id:2,points:50,players_points:{c:50}},
+ {roster_id:4,matchup_id:2,points:65,players_points:{d:65}}
+];
+const rosterRecords=[
+ {roster_id:1,settings:{wins:1,losses:0}},
+ {roster_id:2,settings:{wins:0,losses:1}},
+ {roster_id:3,settings:{wins:0,losses:1}},
+ {roster_id:4,settings:{wins:1,losses:0}}
+];
+let activeRows=testRows;
+const sandbox={
+ API:'https://example.invalid',LEAGUE:'123',INQUIRER_PLAYOFF_START_WEEK:15,
+ fetchJson:async url=>url.endsWith('/matchups/1')?activeRows:url.endsWith('/rosters')?rosterRecords:[]
+};
+vm.createContext(sandbox);
+vm.runInContext(publisher.slice(start,end),sandbox);
+assert.equal((await sandbox.completedPublicationWeek(1)).complete,true,'Finalized complete four-roster fixture must publish');
+activeRows=testRows.slice(0,2);
+assert.equal((await sandbox.completedPublicationWeek(1)).complete,false,'Partial roster coverage must never publish');
+activeRows=testRows.map(x=>({...x}));activeRows[0].points=null;
+assert.equal((await sandbox.completedPublicationWeek(1)).complete,false,'Null matchup total must never count as finalized');
+activeRows=testRows.map(x=>({...x}));activeRows[0].points='';
+assert.equal((await sandbox.completedPublicationWeek(1)).complete,false,'Blank matchup total must never count as finalized');
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

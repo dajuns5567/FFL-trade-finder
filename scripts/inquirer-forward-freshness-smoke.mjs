@@ -5,6 +5,7 @@ import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRE
 import {inquirerWeekClassification} from '../netlify/functions/inquirer-reporters.mjs';
 import {rebuildForwardInquirerEditorial} from '../netlify/functions/inquirer-week4-editorial-rebuild.mjs';
 
+process.env.INQUIRER_DEBUG_RECAP='1';
 const clone=x=>structuredClone(x);
 const week2=applyWeek2EditorialR16(clone(week2raw));
 const sentenceSplit=v=>String(v||'').replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§')).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);

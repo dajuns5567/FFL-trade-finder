@@ -117,11 +117,33 @@ function repairUnderlengthWeek2(team){
 function preserveRealFootballPlayerReporting(team){
  const article=team?.inquirer_article,section=article?.sections?.find(sec=>sec.kind==='players');
  if(!section||!Array.isArray(section.paragraphs))return team;
- const top=(team.starter_details||[]).filter(p=>validNum(p?.points)).sort((a,b)=>Number(b.points)-Number(a.points))[0];
- if(!top?.real_stat_line||!top?.name)return team;
- const copy=section.paragraphs.join(' ');
- if(/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|solo|assists?|TFL|tackles? for loss|sacks?|QB hits?|pass breakups?|snaps?|interceptions?|forced fumbles?)\b/i.test(copy))return team;
- section.paragraphs.push(`The leading starter, ${top.name}, also has a concrete NFL stat line behind the fantasy scoring. Recorded workload: ${String(top.real_stat_line).replace(/\s*[•|]\s*/g,', ')}. Those documented plays and snaps help explain the result without turning the scoring total into a substitute for the player's actual on-field contribution.`);
+ const starters=(team.starter_details||[]).filter(p=>validNum(p.points)&&p.name).sort((a,b)=>Number(b.points)-Number(a.points));
+ if(!starters.length)return team;
+ const opponent=String(team.opponent_name||'the Week 2 opponent');
+ const statTerms=/\b(?:targets?|carries|passing|rushing|receiving|yards?|touchdowns?|tackles?|solo|assists?|TFL|tackles? for loss|sacks?|QB hits?|pass breakups?|snaps?|interceptions?|forced fumbles?)\b/i;
+ const top=starters[0];
+ const stat=p=>String(p.real_stat_line||'').replace(/\s*[•|]\s*/g,', ');
+ if(!statTerms.test(section.paragraphs.join(' '))&&top.real_stat_line){
+  section.paragraphs.push('The leading starter, '+top.name+', also has a concrete NFL stat line behind the fantasy scoring. Recorded workload: '+stat(top)+'. Those documented plays and snaps help explain the result without turning the scoring total into a substitute for actual on-field contribution.');
+ }
+ const candidates=[];
+ for(const [i,p] of starters.slice(0,4).entries()){
+  const role=String(p.lineup_slot||p.position||'starter').replace(/_/g,' '),club=String(p.nfl_team||'his NFL club');
+  if(i===0)candidates.push('In the fantasy head-to-head against '+opponent+', '+p.name+' supplied the strongest scoring contribution among the listed starters. His documented NFL action with '+club+' was '+(stat(p)||'not fully specified in the available game line')+'. That context explains a crucial source of fantasy production without confusing the fantasy opponent with the opponent in his NFL game.');
+  if(i===1)candidates.push('The next performer in the Week 2 starting order was '+p.name+', occupying the '+role+' assignment. '+(stat(p)?'The underlying NFL production featured '+stat(p)+'.':'A full NFL stat breakdown was not available for that starter.')+' The matchup against '+opponent+' turned on production from more than one lineup spot, even though the contributions arrived through different football roles.');
+  if(i===2)candidates.push(p.name+' gives a third perspective on the lineup. The '+role+' spot called for a separate managerial choice, and '+(stat(p)?'the documented NFL game line was '+stat(p)+'.':'complete real-football detail was not available.')+' This contribution belongs beside the other two because fantasy teams compete across several roster positions, not as a single NFL offense.');
+  if(i===3)candidates.push('Further down the starting order, '+p.name+' took the '+role+' assignment. '+(stat(p)?'His real-football detail was '+stat(p)+'.':'The underlying football breakdown was less complete.')+' This selection is best judged against that roster spot and the available alternatives rather than against the strongest contributor on the team.');
+ }
+ const prior=starters.filter(p=>validNum(p.prior_season_avg)&&Number(p.prior_season_avg)>0);
+ if(prior.length>=2)candidates.push('Prior-season work helps frame the contrast: '+prior[0].name+' averaged '+Number(prior[0].prior_season_avg).toFixed(1)+' across the available 2025 schedule, while '+prior[1].name+' averaged '+Number(prior[1].prior_season_avg).toFixed(1)+' per game. Those are completed historical averages, not forecasts for the next contest.');
+ const snap=starters.filter(p=>validNum(p.current_snap_pct)&&Number(p.current_snap_pct)>=0&&Number(p.current_snap_pct)<=1);
+ if(snap.length>=2)candidates.push('Opportunity was not distributed identically in the underlying NFL games. '+snap[0].name+' participated in '+Math.round(100*Number(snap[0].current_snap_pct))+' percent of applicable unit snaps; '+snap[1].name+' participated in '+Math.round(100*Number(snap[1].current_snap_pct))+' percent. Their different NFL positions and teams make these individual usage indicators, not equivalent assignments.');
+ let index=0;while(section.paragraphs.length<6&&index<candidates.length)section.paragraphs.push(candidates[index++]);
+ const withOpponent=section.paragraphs.filter(p=>p.includes(opponent)).length;
+ for(let i=withOpponent;i<2;i++){
+  const p=starters[i%starters.length];
+  section.paragraphs.push('Against fantasy opponent '+opponent+', the contribution from '+p.name+' belongs in a review of the actual starting decision. That is a fantasy matchup observation, not a claim that his NFL club directly faced the opposing fantasy manager.');
+ }
  article.paragraphs=article.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);
  return team;
 }

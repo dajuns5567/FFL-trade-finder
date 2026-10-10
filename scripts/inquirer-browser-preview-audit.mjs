@@ -1,0 +1,161 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {chromium} from 'playwright';
+let root=process.env.INQUIRER_PREVIEW_URL||'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const page=await browser.newPage({viewport:{width:1366,height:950}});
+const errors=[],archiveRequests=[],archiveRequestStarts=[],archiveFailures=[];
+page.on('request',r=>{if(r.url().includes('league-hub-week4-fast'))archiveRequestStarts.push({url:r.url(),method:r.method()})});
+page.on('requestfailed',r=>{if(r.url().includes('league-hub-week4-fast'))archiveFailures.push({url:r.url(),failure:r.failure()?.errorText})});
+page.on('response',r=>{if(r.url().includes('league-hub-week4-fast')||r.url().includes('broadcast_week=4'))archiveRequests.push({url:r.url(),status:r.status()})});
+page.on('pageerror',error=>errors.push(String(error?.message||error)));
+try{
+ if(!process.env.INQUIRER_PREVIEW_URL){
+  const candidates=[
+   'https://deploy-preview-390--fleeced.netlify.app',
+   'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app',
+   'https://deploy-preview-390--subtle-genie-6167c5.netlify.app'
+  ];
+  const checks=[];
+  for(const candidate of candidates){
+   try{
+    const probe=await page.request.get(candidate+'/.netlify/functions/league-hub-week4-fast?rev=482',{timeout:16000});
+    checks.push({url:candidate,status:probe.status()});
+    if(probe.status()===200){root=candidate;break}
+   }catch(error){checks.push({url:candidate,error:String(error?.message||error).slice(0,160)})}
+  }
+  console.log('NETLIFY_PREVIEW_ACCESS_CHECK',JSON.stringify({selected:root,candidates:checks}));
+  assert(checks.some(x=>x.url===root&&x.status===200),'No GitHub-reported Netlify PR #390 preview is publicly accessible: '+JSON.stringify(checks));
+ }
+ const api=async path=>{
+   const res=await page.request.get(root+path,{timeout:60000});
+   assert.equal(res.status(),200,'Serverless endpoint '+path+' must respond 200; got '+res.status());
+   return {body:await res.json(),headers:res.headers()};
+ };
+ const fast=await api('/.netlify/functions/league-hub-week4-fast?rev=482');
+ assert.match(String(fast.headers['cache-control']||''),/no-store/,'Week 4 browser cache should be bypassed');
+ // Netlify may consume the CDN-specific response directive before exposing browser headers.
+ // The real function handler's unit/integration audit still requires this header.
+ if(fast.headers['netlify-cdn-cache-control'])assert.match(String(fast.headers['netlify-cdn-cache-control']),/no-store/,'Visible CDN cache directive must bypass caching');
+ console.log('LIVE_WEEK4_PAYLOAD_FLAGS',JSON.stringify({available:fast.body.available,week:fast.body.week,teamCount:fast.body.teams?.length,revision:fast.body.editorial_revision}));
+ console.log('LIVE_PROJECTION_COVERAGE',JSON.stringify({source:fast.body.projection_source||'not supplied',teamsWithCurrentProjection:(fast.body.teams||[]).filter(t=>t.projected!=null).length,teamsWithNextProjection:(fast.body.teams||[]).filter(t=>t.next_projected!=null).length,teamsWithNoNextCoverage:(fast.body.teams||[]).filter(t=>!Number(t.next_projection_coverage)).length,starterCounts:(fast.body.teams||[]).slice(0,3).map(t=>({team:t.team_name,starters:t.starter_count,currentCoverage:t.projection_coverage,nextCoverage:t.next_projection_coverage}))}));
+ assert.equal(fast.body.week,4);
+ assert.equal(fast.body.teams?.length,32,'Fast endpoint must expose 32 team articles');
+ assert(fast.body.teams.every(t=>t.inquirer_article?.editorial_rebuilt_for_week===4),'Unrebuilt Week 4 article returned by fast endpoint');
+ const currentArchive=await api('/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week=4');
+ assert.equal(currentArchive.body.teams?.length,32);
+ assert(currentArchive.body.teams.every(t=>t.inquirer_article?.editorial_rebuilt_for_week===4),'Canonical Week 4 archive served stale prose');
+ const previousArchive=await api('/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week=3');
+ assert.equal(previousArchive.body.teams?.length,32,'Week 3 archive missing articles');
+ const revision=process.env.GITHUB_SHA||'PR390-current';
+ const landing=await page.goto(root+'/?inquirer_preview_revision='+encodeURIComponent(revision),{waitUntil:'domcontentloaded',timeout:90000});
+ assert(landing?.ok(),'Preview site unavailable: '+landing?.status());
+ await page.locator('.tabs button[data-tab="leagueHub"]').waitFor({timeout:60000});
+ await page.locator('.tabs button[data-tab="leagueHub"]').click();
+ await page.waitForFunction(()=>[...document.scripts].some(s=>/league-hub-v451\.js\?v=/.test(s.src)),null,{timeout:60000});
+ const expectedClientPath=readFileSync('league-hub-lazy-v454.js','utf8').match(/league-hub-v451\.js\?v=\d+/)?.[0];
+ assert(expectedClientPath,'Unable to find current League Hub asset revision');
+ let clientScripts=[];
+ for(let attempt=0;attempt<11;attempt++){
+  clientScripts=await page.evaluate(()=>[...document.scripts].map(x=>x.src).filter(x=>/league-hub-(?:v451|lazy-v454)/.test(x)));
+  if(clientScripts.some(x=>x.includes(expectedClientPath)))break;
+  console.log('LIVE_PREVIEW_WAIT_FOR_DEPLOY',JSON.stringify({attempt:attempt+1,expectedClientPath,clientScripts}));
+  if(attempt===10)break;
+  await page.waitForTimeout(9000);
+  await page.goto(root+'/?inquirer_preview_revision='+encodeURIComponent(revision)+'&deploy_wait_attempt='+(attempt+1),{waitUntil:'domcontentloaded',timeout:90000});
+  await page.locator('.tabs button[data-tab="leagueHub"]').click();
+  await page.waitForFunction(()=>[...document.scripts].some(s=>/league-hub-v451\.js\?v=/.test(s.src)),null,{timeout:60000});
+ }
+ console.log('LIVE_PREVIEW_CLIENT_REVISIONS',JSON.stringify({revision,expectedClientPath,clientScripts}));
+ assert(clientScripts.some(x=>x.includes(expectedClientPath)),'Netlify preview is still serving stale League Hub JavaScript after bounded deploy synchronization; not valid for current-commit browser acceptance');
+
+ await page.locator('#leagueHubContent .lh-report').waitFor({timeout:60000});
+ await page.waitForFunction(()=>{const title=String(document.querySelector('#leagueHubContent .lh-report-title')?.textContent||'').trim();return /Week 4/.test(title)||(!/Week\s+\d+/.test(title)&&/Latest published edition:\s*2026 Week 4/.test(document.querySelector('#leagueHubContent .lh-report')?.textContent||''));},null,{timeout:90000});
+ // Validate the actual landing-page Manager Spotlight, including the hydrated latest edition.
+ await page.waitForFunction(()=>{
+   const container=document.querySelector('#leagueHubContent .lh-spotlight');
+   if(!container)return false;
+   const cards=[...container.querySelectorAll('.lh-spot-card')];
+   return ['Hot Seat','Cool Throne'].every(label=>{
+     const card=cards.find(node=>node.querySelector('small')?.textContent?.trim()===label);
+     const manager=card?.querySelector('b')?.textContent?.trim();
+     return !!manager&&manager!=='n/a'&&manager!=='—';
+   });
+ },null,{timeout:65000});
+ await page.waitForFunction(()=>/Week 4/.test(document.querySelector('#leagueHubContent .lh-report-title')?.textContent||''),null,{timeout:90000});
+ const selectedTitle=await page.locator('#leagueHubContent .lh-report-title').first().textContent();
+ assert(/Week 4/.test(selectedTitle)||!/Week\\s+\\d+/.test(selectedTitle),'Older Week 3 edition must never be presented as latest Week 4');
+ const spotlightNames=await page.locator('#leagueHubContent .lh-spotlight .lh-spot-card').allTextContents();
+ console.log('LIVE_MANAGER_SPOTLIGHT_READY',JSON.stringify(spotlightNames.filter(s=>/Hot Seat|Cool Throne/.test(s))));
+ console.log('LIVE_EDITION_SELECTION_TRACE',JSON.stringify(await page.evaluate(()=>window.__fleecedEditionTrace||[])));
+ console.log('LIVE_LATEST_EDITION_HEADLINE',JSON.stringify({title:await page.locator('#leagueHubContent .lh-report-title').first().textContent(),week4Selected:await page.locator('#leagueHubContent .lh-report-title').first().textContent().then(x=>/Week 4/.test(x))}));
+ const openEdition=page.locator('#leagueHubContent button').filter({hasText:'Open Full Inquirer'});
+ if(await openEdition.count()){
+  const attrs=await openEdition.first().evaluate(el=>({html:el.outerHTML.slice(0,500),year:el.dataset.lhArchiveSeason,week:el.dataset.lhArchiveWeek}));
+  console.log('LIVE_OPEN_EDITION_BUTTON',JSON.stringify(attrs));
+  console.log('LIVE_WIRING_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>({hubWired:document.querySelector('#leagueHub')?.dataset.lhWired,hubParent:document.querySelector('#leagueHubContent')?.closest('#leagueHub')?.id,scriptUrls:[...document.scripts].map(x=>x.src).filter(x=>/league-hub/i.test(x)),buttonConnected:!!document.querySelector('button[data-lh-archive-season]')?.isConnected}))));
+  await page.evaluate(()=>{
+   window.__inquirerClickTrace=[];
+   const seen=label=>e=>{if(e.target.closest?.('button[data-lh-archive-season]'))window.__inquirerClickTrace.push({label,target:e.target.tagName,phase:e.eventPhase,defaultPrevented:e.defaultPrevented})};
+   window.addEventListener('click',seen('window-capture'),true);
+   document.addEventListener('click',seen('document-capture'),true);
+   document.querySelector('#leagueHub')?.addEventListener('click',seen('hub-capture'),true);
+   document.querySelector('#leagueHub')?.addEventListener('click',seen('hub-bubble'));
+  });
+  var directOpenClickedAt=Date.now();
+  await openEdition.first().click();
+  console.log('LIVE_CLICK_TRACE',JSON.stringify(await page.evaluate(()=>window.__inquirerClickTrace)));
+ }
+ const awardsHeading=page.locator('#leagueHubContent h3').filter({hasText:'Players of the Week'}).first();
+ await awardsHeading.waitFor({state:'visible',timeout:60000});
+ assert(await awardsHeading.isVisible(),'Players of the Week must remain visually accessible after opening latest edition');
+ console.log('LIVE_ARCHIVE_OPEN_INITIAL_DIAGNOSTIC',JSON.stringify({reportTitle:await page.locator('#leagueHubContent .lh-report-title').first().textContent().catch(()=>''),selectors:await page.locator('#leagueHubContent select[data-lh-broadcast-article]').count(),buttons:await page.locator('#leagueHubContent button[data-lh-archive-season]').allTextContents(),archiveRequests,archiveRequestStarts,archiveFailures,handlerState:await page.evaluate(()=>window.__fleecedInquirerArchiveOpen||null),textSample:(await page.locator('#leagueHubContent').textContent()).slice(0,850)}));
+ const selector=page.locator('#leagueHubContent select[data-lh-broadcast-article]');
+ // Opening the latest published edition navigates directly to the article picker.
+ // A slow serverless preview may finish after the initial held-state render.
+ await selector.waitFor({state:'visible',timeout:65000});
+ console.log('LIVE_ARCHIVE_OPEN_SETTLED',JSON.stringify({selectors:await selector.count(),handlerState:await page.evaluate(()=>window.__fleecedInquirerArchiveOpen||null),archiveRequests,archiveFailures}));
+ assert(directOpenClickedAt!==undefined,'Direct Open Full Inquirer click was not exercised');
+ console.log('LIVE_DIRECT_OPEN_VERIFIED',JSON.stringify({from:'Open Full Inquirer button',to:'visible full-edition article selector',elapsedMs:Date.now()-directOpenClickedAt,alternativeNavigationUsed:false,archiveRequests,archiveFailures}));
+ const options=await selector.locator('option').allTextContents();
+ assert.equal(options.length,33,'Recap navigation must include all 32 team articles');
+ assert.match(await page.locator('#leagueHubContent').innerText(),/Weekly Recap/i,'Weekly Recap failed to open');
+ const recapHeadings=fast.body.league_overview.sections[0].blocks.map(b=>b.heading);
+ assert.equal(recapHeadings.length,6,'Verified Week 4 recap must contain six thematic blocks');
+ const recapRendered=await page.locator('#leagueHubContent').textContent();
+ for(const heading of recapHeadings)assert(recapRendered.includes(heading),'Public preview Weekly Recap missing theme '+heading);
+
+ const firstId=String(fast.body.teams[0].roster_id),lastId=String(fast.body.teams[31].roster_id);
+ for(const id of [firstId,lastId]){
+   await selector.selectOption(id);
+   await page.waitForFunction(id=>document.querySelector('select[data-lh-broadcast-article]')?.value===id&&document.querySelector('#leagueHubContent .lh-week4-projection-panel')?.textContent?.includes('Week 4'),id,{timeout:45000});
+   const name=fast.body.teams.find(t=>String(t.roster_id)===id)?.team_name;
+   assert((await page.locator('#leagueHubContent').innerText()).includes(name),'Opened article does not display '+name);
+   console.log('LIVE_SELECTED_ARTICLE_PROJECTION_CONTEXT',JSON.stringify(await page.evaluate(()=>({reportTitle:document.querySelector('#leagueHubContent .lh-report-title')?.textContent,selectedArticle:document.querySelector('select[data-lh-broadcast-article]')?.value,render:window.__fleecedProjectionRenderDebug||null,projectionPanelCount:document.querySelectorAll('#leagueHubContent .lh-week4-projection-panel').length,change:window.__fleecedArticleChangeTrace||null,renderState:window.__fleecedArticleRenderState||null,hubWired:document.querySelector('#leagueHub')?.dataset.lhWired,articleNodes:document.querySelectorAll('#leagueHubContent .lh-article').length}))));
+   const projectionPanel=page.locator('#leagueHubContent .lh-week4-projection-panel');
+   await projectionPanel.waitFor({state:'visible',timeout:30000});
+   const t=fast.body.teams.find(t=>String(t.roster_id)===id);
+   const panelText=await projectionPanel.innerText();
+   assert(panelText.includes(String(t.projection_coverage)+'/'+String(t.starter_count)),'Projection coverage must be visible in the actual Week 4 article');
+   assert(panelText.includes('not been verified as the original pregame forecasts'),'Retrospective projections must not be mislabeled as pregame');
+   if(t.projected==null){
+     assert(panelText.includes('Full team projection unavailable'),'Partial Week 4 official team forecasts must remain unavailable');
+     await page.waitForFunction(()=>document.querySelector('#leagueHubContent .lh-week4-projection-panel')?.textContent?.includes('Retrospective estimated lineup total'),null,{timeout:90000});
+     const recovered=await page.locator('#leagueHubContent .lh-week4-projection-panel').innerText();
+     assert(/\(estimated\)/.test(recovered),'Missing official projection must display an explicitly labeled estimate');
+     console.log('LIVE_RETROSPECTIVE_TEAM_PROJECTION',JSON.stringify({team:t.team_name,excerpt:recovered.slice(0,450)}));
+   }
+   else assert(panelText.includes(Number(t.projected).toFixed(2)+' pts'),'Verified complete team projection must be visible');
+ }
+ await selector.selectOption('__league__');
+ assert.match(await page.locator('#leagueHubContent').innerText(),/Weekly Recap/i);
+ const summary={ok:true,preview:root,week4Teams:fast.body.teams.length,week3Teams:previousArchive.body.teams.length,articleSelectorOptions:options.length,articleNavigationChecked:[firstId,lastId],pageErrors:errors};
+ console.log(JSON.stringify(summary,null,2));
+} catch(error){
+ await page.screenshot({path:'/tmp/inquirer-browser-preview-failure.png',fullPage:true}).catch(()=>{});
+ console.error('BROWSER_PREVIEW_AUDIT_FAILED',error);
+ console.error('POST_FAILURE_EDITION_TRACE',JSON.stringify(await page.evaluate(()=>window.__fleecedEditionTrace||[]).catch(()=>[])));
+ console.error('POST_FAILURE_ARCHIVE_STATE',JSON.stringify(await page.evaluate(()=>window.__fleecedInquirerArchiveOpen||null).catch(()=>null)));
+ console.error('BROWSER_PAGE_ERRORS',JSON.stringify(errors.slice(0,20)));
+ throw error;
+} finally{await browser.close()}

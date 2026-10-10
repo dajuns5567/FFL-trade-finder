@@ -1,0 +1,154 @@
+import {applyWeek2EditorialR16 as applyR169S} from './inquirer-week2-editorial-r169s.mjs';
+
+function scheduleRoad(team,article){
+  const up=(team?.upcoming_opponents||[]).slice().sort((a,b)=>Number(a.week)-Number(b.week)),later=up.slice(1,3);
+  if(!later.length)return null;
+  const ranks=later.map(x=>Number(x?.context?.standings_rank)).filter(Number.isFinite),strong=ranks.filter(x=>x<=8).length,soft=ranks.filter(x=>x>=24).length;
+  const difficulty=strong===ranks.length&&ranks.length?'a hard stretch':soft===ranks.length&&ranks.length?'a friendlier stretch':strong&&soft?'a mixed stretch':'an uneven difficulty level';
+  const named=later.map(x=>`${x.team_name} (${Number(x?.context?.record?.wins)||0}-${Number(x?.context?.record?.losses)||0})`).join(' and '),who=String(article?.reporter?.name||'Nick Swindell'),club=String(team?.team_name||'this team');
+  if(who==='Tilly Fleecer')return `After Week 3 come ${named}, which currently reads as ${difficulty}. For ${club}, that makes the Week 3 result worth banking now; wasting the immediate chance and then asking the schedule for emotional support would be very on-brand and very stupid.`;
+  if(who==='Bartholomew Roycington III')return `Beyond Week 3 sit ${named}, a run that currently carries ${difficulty}. ${club} should bank the Week 3 win before that stretch arrives; optimism is delightful, but actual wins remain the currency with the least room for interpretation.`;
+  if(who==='Jefferson Filch')return `Past Week 3 are ${named}, and the current standings make that ${difficulty}. ${club} needs to bank the Week 3 result first, because a favorable-looking future is not an alibi for mishandling the game directly in front of you.`;
+  return `After Week 3 come ${named}, a stretch that currently looks like ${difficulty}. ${club} should bank the Week 3 win if it is there; the schedule behind it may change, but giving away the immediate result never becomes smarter in hindsight.`;
+}
+
+function projectionRead(team,article){
+  const own=Number(team?.next_projected),opp=Number(team?.next_opponent_projected);
+  if(!Number.isFinite(own)||!Number.isFinite(opp))return null;
+  const club=String(team?.team_name||'This team'),alias=club.trim().split(/\s+/).at(-1)||club,next=String(team?.next_opponent_name||team?.upcoming_opponents?.[0]?.team_name||'the next opponent'),who=String(article?.reporter?.name||'Nick Swindell');
+  const margin=Math.abs(own-opp),favored=own>opp,even=margin<0.05;
+  const verdict=even?`dead even at ${own.toFixed(1)} apiece`:favored?`${club} favored ${own.toFixed(1)} to ${opp.toFixed(1)} over ${next}`:`${next} favored ${opp.toFixed(1)} to ${own.toFixed(1)} over ${club}`;
+  if(who==='Tilly Fleecer')return `Week 3 opens with the projection ${verdict}. ${even?`${alias} gets no excuse in advance; inconvenient, I know.`:favored?`That edge gives ${alias} permission to win, not permission to become unbearable before kickoff.`:`A ${margin.toFixed(1)}-point gap is ugly for ${alias}; fortunately, fantasy projections have been publicly humiliated before and will be again.`}`;
+  if(who==='Bartholomew Roycington III')return `The Week 3 projection has ${verdict}. ${even?`${alias} receives a perfectly level forecast, which is wonderfully useless; performance will have to do the vulgar work of deciding it.`:favored?`${alias} may accept the edge graciously, then remember that projections do not award victories.`:`The ${margin.toFixed(1)}-point deficit is impolite to ${alias}, but surrendering to a decimal before Sunday would be considerably more embarrassing.`}`;
+  if(who==='Jefferson Filch')return `The Week 3 projection has ${verdict}. ${even?`${alias} has no edge and therefore no alibi; somebody has to create the separation on the field.`:favored?`That edge favors ${alias}, and now the burden is simple: make the number look intelligent.`:`That ${margin.toFixed(1)}-point deficit is evidence against ${alias}, not a conviction; the lineup can beat it, but it has to give us a reason instead of an appeal.`}`;
+  return `Week 3 has the projection ${verdict}. ${even?`${alias} has nothing to hide behind there.`:favored?`Good; now ${alias} has to play like the favorite instead of admiring the number.`:`A ${margin.toFixed(1)}-point deficit is a warning for ${alias}, not a funeral.`}`;
+}
+
+function stripRetiredRoycingtonMotifs(text){
+  return String(text||'')
+    .replace(/drawing room/gi,'public square')
+    .replace(/folding chairs/gi,'excuses')
+    .replace(/\bfurniture\b/gi,'nonsense')
+    .replace(/\bchairs\b/gi,'excuses')
+    .replace(/\bchair\b/gi,'excuse')
+    .replace(/\btablecloths?\b/gi,'ceremony')
+    .replace(/\blinens?\b/gi,'decorum')
+    .replace(/\bnapkins?\b/gi,'formalities')
+    .replace(/\bchina\b/gi,'ornament')
+    .replace(/\bsilverware\b/gi,'decoration')
+    .replace(/\bplace settings?\b/gi,'arrangements')
+    .replace(/\bseating\b/gi,'positioning')
+    .replace(/\bcenterpieces?\b/gi,'showpieces')
+    .replace(/\bdining room\b/gi,'private club')
+    .replace(/\bdinner\b/gi,'occasion')
+    .replace(/\bplates?\b/gi,'standards')
+    .replace(/\breservations?\b/gi,'expectations')
+    .replace(/\bguest list\b/gi,'pecking order')
+    .replace(/\bvelvet rope\b/gi,'gatekeeping')
+    .replace(/\bchaise\b/gi,'pedestal')
+    .replace(/\bballroom\b/gi,'grand hall')
+    .replace(/\bsalon\b/gi,'club')
+    .replace(/\bcoat check\b/gi,'front desk');
+}
+
+function removeReporterMeta(text,team){
+  const club=String(team?.team_name||'This team'),alias=club.trim().split(/\s+/).at(-1)||club;
+  return String(text||'')
+    .replace(/Nick wants the useful parts repeated, the dumb parts removed, and absolutely nobody pretending two weeks has solved fantasy football/gi,`${alias} has a simple Week 3 assignment: repeat what worked, cut the dumb mistakes, and stop pretending two weeks solved fantasy football`)
+    .replace(/Bartholomew would like the performance examined for structural integrity before anyone commissions a portrait/gi,'the performance still needs a structural inspection before anyone commissions a portrait');
+}
+
+function hasHistoricalContext(article,player){
+  const name=String(player?.name||''),prior=Number(player?.prior_season_avg),bits=name.split(/\s+/).filter(Boolean),first=bits[0]||'',last=bits.at(-1)||'',refs=[name,first.length>=4?first:'',last.length>=4?last:''].filter(Boolean),priorText=Number.isFinite(prior)?prior.toFixed(1):'';
+  return (article?.sections||[]).flatMap(s=>s?.paragraphs||[]).some(paragraph=>{
+    const text=String(paragraph||''),historical=/\b(?:2025|last season|last year|prior-season)\b/i.test(text)||(priorText&&text.includes(priorText)&&/\b(?:average|per game|prior|last)\b/i.test(text));
+    return historical&&refs.some(ref=>text.toLowerCase().includes(ref.toLowerCase()));
+  });
+}
+
+function historicalInterpretation(player,reporter){
+  const name=String(player?.name||'This player'),parts=name.split(/\s+/).filter(Boolean),short=parts.at(-1)||name,prior=Number(player?.prior_season_avg),pts=Number(player?.points),avg=prior.toFixed(1),up=pts>prior;
+  if(up){
+    if(reporter==='Tilly Fleecer')return `${name} averaged ${avg} fantasy points per game in 2025. ${short}'s Week 2 cleared that pace by enough to raise a rude possibility: last year's version may have been the opening act, not the ceiling.`;
+    if(reporter==='Bartholomew Roycington III')return `${name} averaged ${avg} fantasy points per game in 2025. ${short}'s performance rose far enough above that standard that one must entertain the indecent possibility that last year's ceiling was simply too low.`;
+    if(reporter==='Jefferson Filch')return `${name} averaged ${avg} fantasy points per game in 2025. ${short}'s jump is large enough to investigate as actual growth rather than wave away as a hot box score; Week 3 gets to test whether last year's ceiling still applies.`;
+    return `${name} averaged ${avg} fantasy points per game in 2025. ${short} rose far enough above that pace to make last year's ceiling look negotiable, which is more interesting than merely saying he beat his average.`;
+  }
+  if(reporter==='Tilly Fleecer')return `${name} averaged ${avg} fantasy points per game in 2025. ${short} falling this far below that level earns a proper booing, but one ugly Sunday does not magically prove the role disappeared.`;
+  if(reporter==='Bartholomew Roycington III')return `${name} averaged ${avg} fantasy points per game in 2025. ${short}'s Week 2 fell far enough short that dignified silence is no longer available, though one poor result is still a performance problem before it becomes a role crisis.`;
+  if(reporter==='Jefferson Filch')return `${name} averaged ${avg} fantasy points per game in 2025. ${short}'s gap is large enough to flag, but not large enough to invent a role crisis; if the opportunity stayed normal, the dud belongs to the player.`;
+  return `${name} averaged ${avg} fantasy points per game in 2025. ${short}'s Week 2 is a real miss, not a mystery; unless the role changed, the player owns the dud and the manager does not need to be invented as the culprit.`;
+}
+
+function addHistoricalInterpretation(team,article){
+  const reporter=String(article?.reporter?.name||'Nick Swindell'),top=(team?.starter_details||[]).slice(0,3);
+  for(const player of top){
+    const prior=Number(player?.prior_season_avg),pts=Number(player?.points),games=Number(player?.prior_season_games)||0;
+    if(!Number.isFinite(prior)||prior<=0||!Number.isFinite(pts)||games<6||Math.abs(pts-prior)<Math.max(4,prior*.3)||hasHistoricalContext(article,player))continue;
+    const name=String(player?.name||''),line=historicalInterpretation(player,reporter);
+    let inserted=false;
+    for(const section of article.sections||[]){
+      const paras=section?.paragraphs;if(!Array.isArray(paras))continue;
+      const i=paras.findIndex(p=>String(p||'').includes(name));
+      if(i>=0){paras.splice(i+1,0,line);inserted=true;break;}
+    }
+    if(!inserted){
+      const section=(article.sections||[]).find(s=>Array.isArray(s?.paragraphs)&&s.paragraphs[0]!=='n/a');
+      if(section)section.paragraphs.push(line);
+    }
+  }
+}
+
+function preserveTradeAcquisitionWording(team,article){
+  const tradeNames=(team?.trade_acquisitions||[]).map(x=>String(x?.player_name||'').trim()).filter(Boolean);
+  if(!tradeNames.length)return;
+  for(const section of article.sections||[]){
+    if(!Array.isArray(section?.paragraphs))continue;
+    section.paragraphs=section.paragraphs.map(paragraph=>{
+      let text=String(paragraph||'');
+      for(const name of tradeNames){
+        if(!text.toLowerCase().includes(name.toLowerCase()))continue;
+        text=text.replace(/\bwaiver wire\b/gi,'trade market').replace(/\bwaiver\b/gi,'trade').replace(/\bfree agent\b/gi,'trade acquisition').replace(/\badd alert\b/gi,'trade arrival');
+      }
+      return text;
+    });
+  }
+}
+
+export function applyWeek2EditorialR16(raw){
+  const out=applyR169S(raw);
+  if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
+  for(const team of out.teams||[]){
+    const article=team?.inquirer_article,outlook=(article?.sections||[]).find(s=>String(s?.kind||'')==='outlook');
+    if(!article)continue;
+    if(outlook&&Array.isArray(outlook.paragraphs)&&outlook.paragraphs[0]!=='n/a'){
+      const road=scheduleRoad(team,article),projection=projectionRead(team,article);
+      let existing=outlook.paragraphs.filter(p=>!/(?:After|Beyond|Past) Week 3|After Week 3 come/i.test(String(p||'')));
+      if(projection){
+        existing=existing.filter(p=>!/\bprojects?\b|\bprojection\b/i.test(String(p||'')));
+        existing.push(projection);
+      }
+      if(road){
+        const projectionIndex=projection?Math.max(0,existing.length-1):existing.length;
+        existing.splice(projectionIndex,0,road);
+      }
+      outlook.paragraphs=existing;
+    }
+    for(const section of article.sections||[]){
+      if(Array.isArray(section.paragraphs))section.paragraphs=section.paragraphs.map(p=>removeReporterMeta(p,team));
+    }
+    addHistoricalInterpretation(team,article);
+    preserveTradeAcquisitionWording(team,article);
+    if(String(article?.reporter?.name||'')==='Bartholomew Roycington III'){
+      article.headline=stripRetiredRoycingtonMotifs(article.headline);
+      for(const section of article.sections||[]){
+        section.heading=stripRetiredRoycingtonMotifs(section.heading);
+        if(Array.isArray(section.paragraphs))section.paragraphs=section.paragraphs.map(stripRetiredRoycingtonMotifs);
+      }
+    }
+    article.paragraphs=article.sections.flatMap(s=>s?.paragraphs||[]).filter(Boolean);
+  }
+  return out;
+}
+
+export const applyWeek2EditorialR169T=applyWeek2EditorialR16;

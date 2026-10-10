@@ -161,8 +161,13 @@ jobs:
           node --check value-history-ui-defaults-v386.js
           node --check netlify/functions/value-history.mjs
           node --check netlify/functions/value-history-observability.mjs
+          node --check netlify/functions/player-signal-engine.mjs
+          node --check netlify/functions/player-signals.mjs
+          node --check scripts/player-signal-engine-smoke.mjs
           node --check scripts/resolve-active-netlify-site.mjs
           node --check scripts/value-history-headless-refresh.mjs
+      - name: Fleeced player signal engine
+        run: node scripts/player-signal-engine-smoke.mjs
       - name: Fleeced Inquirer V26 recovered newsroom, archives, and writing quality
         run: |
           node --check league-hub-v451.js

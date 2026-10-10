@@ -10,6 +10,9 @@
 [functions."inquirer-publish-scheduled"]
   schedule = "0 * * * *"
 
+[functions."inquirer-projection-capture-scheduled"]
+  schedule = "5 * * * *"
+
 [build.processing.html]
   pretty_urls = false
 

@@ -1,0 +1,102 @@
+name: Inquirer Week 4 live audit
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/inquirer-week4-direct-audit.mjs'
+      - 'scripts/inquirer-week4-projection-source-audit.mjs'
+      - 'scripts/inquirer-week4-projection-regression.mjs'
+      - 'scripts/inquirer-all-week-projection-regression.mjs'
+      - 'scripts/inquirer-projection-fallback-regression.mjs'
+      - 'netlify/functions/inquirer-projection-fallback.mjs'
+      - 'netlify/functions/inquirer-week4-2026-projections.mjs'
+      - 'scripts/inquirer-week4-rebuild-audit.mjs'
+      - 'scripts/inquirer-week4-awards-direct-audit.mjs'
+      - 'scripts/league-hub-latest-awards-regression.mjs'
+      - 'scripts/inquirer-final-copy-regression.mjs'
+      - 'league-hub-v451.js'
+      - 'netlify/functions/inquirer-week4-editorial-rebuild.mjs'
+      - 'netlify/functions/league-hub-week4-fast.mjs'
+      - 'netlify/functions/inquirer-editorial-v31.mjs'
+      - 'netlify/functions/inquirer-forward-*.mjs'
+      - 'netlify/functions/history-fetch.mjs'
+      - '.github/workflows/inquirer-week4-live-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  week4-live-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check Week 4 audit and forward newsroom
+        run: |
+          node --check scripts/inquirer-week4-direct-audit.mjs
+          node --check netlify/functions/inquirer-editorial-v31.mjs
+          node --check netlify/functions/inquirer-week4-editorial-rebuild.mjs
+          node --check netlify/functions/inquirer-forward-prior-guard.mjs
+          node --check netlify/functions/inquirer-forward-final-sweep.mjs
+      - name: Install generator dependency
+        run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Verify Players of the Week and latest edition regression
+        run: node scripts/league-hub-latest-awards-regression.mjs
+      - name: Verify final copy and Week 4 cache regression
+        run: node scripts/inquirer-final-copy-regression.mjs
+      - name: Verify rebuilt Week 4 recap and all 32 articles
+        run: node scripts/inquirer-week4-rebuild-audit.mjs
+      - name: Verify retrospective projection estimation integrity
+        run: node scripts/inquirer-projection-fallback-regression.mjs
+      - name: Verify real archived Week 1–4 projection coverage for all 32 teams
+        run: node scripts/inquirer-all-week-projection-regression.mjs
+      - name: Verify frozen Week 4 projection snapshot and custom scoring coverage
+        run: node scripts/inquirer-week4-projection-regression.mjs
+      - name: Audit historical Week 4 projection source coverage
+        run: node scripts/inquirer-week4-projection-source-audit.mjs
+      - name: Verify real Week 4 Offensive and IDP Players of the Week
+        run: node scripts/inquirer-week4-awards-direct-audit.mjs
+      - name: Generate and audit real Sleeper Week 4 candidate
+        run: node scripts/inquirer-week4-direct-audit.mjs
+      - name: Upload Week 4 candidate and audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: inquirer-week4-live-audit
+          path: |
+            /tmp/inquirer-week4-direct-candidate.json
+            /tmp/inquirer-week4-direct-audit.json
+          retention-days: 7
+      - name: Verify accepted Week 4 preload exists
+        run: |
+          test -s netlify/functions/inquirer-week4-2026-preload.mjs
+          grep -q "Exact accepted Week 4 candidate" netlify/functions/inquirer-week4-2026-preload.mjs
+      - name: Verify every completed-week League Hub surface advances
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),assert=require('assert');
+          const hub=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');
+          const ui=fs.readFileSync('league-hub-v451.js','utf8');
+          const pub=fs.readFileSync('netlify/functions/inquirer-publish-scheduled.mjs','utf8');
+          assert(hub.includes("import week4Preload2026 from './inquirer-week4-2026-preload.mjs'"),'Week 4 preload must be imported');
+          assert(hub.includes("['2026|4',week4Preload2026]"),'Week 4 preload must be registered');
+          for(const type of ['hot-seat','cool-throne','highest-scorer','lowest-scorer'])assert(hub.includes("item('"+type+"'"),'Missing server weekly manager award '+type);
+          assert(hub.includes('async function latestPublishedRegularWeek(season)'),'Manager Spotlight must track latest published week');
+          assert(hub.includes('publishedWeek=await latestPublishedRegularWeek(currentSeason)'),'Manager history must advance through published weeks');
+          assert(pub.includes("league-hub?weekly_awards=1&scheduled_refresh=1"),'Scheduled publisher must refresh weekly awards/badges');
+          assert(pub.includes("league-hub?managers=1&scheduled_refresh=1"),'Scheduled publisher must refresh Manager Spotlight');
+          assert(pub.includes("weekly_awards_refreshed"),'Scheduled publisher must verify awards refresh');
+          assert(pub.includes("manager_spotlight_refreshed"),'Scheduled publisher must verify manager refresh');
+          assert(ui.includes("fetch('/.netlify/functions/league-hub?weekly_awards=1',{cache:'no-store'})"),'Client must refresh weekly awards on a new week');
+          assert(ui.includes("fetch('/.netlify/functions/league-hub?managers=1',{cache:'no-store'})"),'Client must refresh Manager Spotlight on a new week');
+          assert(ui.includes('weeklyAwardsCache=awards'),'Client must replace stale badge cache');
+          assert(ui.includes('managerCache=mergeVisibleWeekScoring(mgr,x)'),'Client must merge visible completed-week manager scoring');
+          assert(ui.includes("item('hot-seat','🔥 Hot Seat'"),'Client Hot Seat fallback missing');
+          assert(ui.includes("item('cool-throne','🧊 Cool Throne'"),'Client Cool Throne fallback missing');
+          console.log('completed-week League Hub surface wiring verified');
+          NODE

@@ -735,7 +735,9 @@ async function render(view=currentView,managerId=''){if(view!=='daily')dailyRend
     }).catch(()=>{});
   });
  // Load approved Week 4 independently of storage-backed archive and publication endpoints.
+ // It must not wait for discoverLatestWeek, which can return an older cached report.
  for(let week=1;week<=4;week++)ensureArchiveWeek(2026,week);
+ fetchArchivedEdition(2026,4).then(acceptEdition).catch(error=>console.warn('Approved Week 4 preload unavailable',error));
  drawDaily();
  // Resolve the most recently published edition first; Week 4 is only a bootstrap fallback.
  discoverLatestWeek().then(x=>{

@@ -152,4 +152,27 @@ factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 12 points
 assert.equal(findInquirerSourceFactIssues(factFixture).length,0,'Older explicitly qualified player results cannot be compared with Week 4 stats');
 factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 12 points in Week 4.'}];
 assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='weekly-player-score'),'Current-week player scores remain strictly checked');
+
+// Negative IDP scores, missing/invalid denominators and references to older weeks.
+const negativeFixture={week:4,teams:[{team_name:'Seattle Seahawks',points:92.5,
+ starter_details:[{name:'Defender Example',points:-1.5}],
+ inquirer_article:{sections:[{paragraphs:[]}]} }],league_overview:{sections:[],hot_takes:[]}};
+function checkTake(take){negativeFixture.league_overview.hot_takes=[{take}];return findInquirerSourceFactIssues(negativeFixture);}
+assert.equal(checkTake('Defender Example scored -1.5 points this week.').length,0,'Accept genuine negative IDP weekly score');
+assert(checkTake('Defender Example scored -2.5 points this week.').some(x=>x.id==='weekly-player-score'),'Reject incorrect negative IDP score');
+assert.equal(checkTake('Defender Example finished with -1.5 points.').length,0,'Accept genuine negative finished-with total');
+assert(checkTake('Defender Example finished with -0.5 points.').some(x=>x.id==='weekly-player-score'),'Reject incorrect negative finished-with total');
+assert.equal(checkTake('Defender Example scored 8 points in Week 3.').length,0,'Do not equate last week with current week');
+assert.equal(checkTake('Defender Example logged two tackles and three assists.').length,0,'Non-fantasy numerical statistics must not be mistaken for point claims');
+assert.equal(checkTake('Seattle Seahawks scored 92.5 points in Week 4.').length,0,'Accept verified team weekly points');
+assert(checkTake('Seattle Seahawks scored 93.5 points in Week 4.').some(x=>x.id==='weekly-team-score'),'Reject incorrect team weekly points');
+negativeFixture.teams[0].starter_details[0].season_total_points=10;
+negativeFixture.teams[0].starter_details[0].season_games_played=0;
+assert(checkTake('Defender Example is averaging 2.5 points per game this season.').some(x=>x.id==='unsupported-player-average'),'Reject zero-game season average denominator');
+negativeFixture.teams[0].starter_details[0].season_games_played=2.5;
+assert(checkTake('Defender Example is averaging 4 points per game this season.').some(x=>x.id==='unsupported-player-average'),'Reject fractional games denominator');
+negativeFixture.teams[0].starter_details[0].season_games_played=4;
+assert.equal(checkTake('Defender Example is averaging 2.5 points per game this season.').length,0,'Accept internally consistent season points and integer games');
+assert(checkTake('Defender Example is averaging 2 points per game this season.').some(x=>x.id==='unsupported-player-average'),'Reject incorrect average despite present numerator and denominator');
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

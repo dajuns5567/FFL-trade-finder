@@ -463,12 +463,21 @@ async function archivedProjectionMap(season,week){
   const work=(async()=>{
    const control=new AbortController(),timer=setTimeout(()=>control.abort(),14000);
    try{
-    const [leagueResponse,projectionResponse]=await Promise.all([
-     fetch(`${API}/league/${LEAGUE}`,{signal:control.signal}),
-     fetch(`https://api.sleeper.app/projections/nfl/${season}/${week}?season_type=regular`,{signal:control.signal})
-    ]);
-    if(!leagueResponse.ok||!projectionResponse.ok)throw Error('Sleeper historical projection HTTP error');
-    const [league,raw]=await Promise.all([leagueResponse.json(),projectionResponse.json()]);
+    // Sleeper league scoring can change by season. Follow the verified
+    // previous_league_id chain rather than applying current scoring retroactively.
+    let leagueId=LEAGUE,league=null;
+    for(let i=0;i<10&&leagueId;i++){
+     const response=await fetch(`${API}/league/${leagueId}`,{signal:control.signal});
+     if(!response.ok)throw Error('Historical league metadata HTTP '+response.status);
+     const candidate=await response.json();
+     if(Number(candidate.season)===Number(season)){league=candidate;break}
+     if(Number(candidate.season)<Number(season))break;
+     leagueId=String(candidate.previous_league_id||'');
+    }
+    if(!league)throw Error('Historical season league and scoring settings not found');
+    const projectionResponse=await fetch(`https://api.sleeper.app/projections/nfl/${season}/${week}?season_type=regular`,{signal:control.signal});
+    if(!projectionResponse.ok)throw Error('Sleeper historical projection HTTP '+projectionResponse.status);
+    const raw=await projectionResponse.json();
     const scoring=league?.scoring_settings||{};
     if(!Array.isArray(raw)||!Object.keys(scoring).length)return null;
     const values=new Map();
@@ -487,8 +496,6 @@ async function archivedProjectionMap(season,week){
 async function addArchivedProjectionCoverage(edition){
  const year=Number(edition?.season),week=Number(edition?.week);
  if(!edition?.available||!Array.isArray(edition.teams)||!edition.teams.length||!Number.isInteger(year)||!Number.isInteger(week))return edition;
- // The configured Sleeper league ID belongs to 2026; never score another season with the wrong league settings.
- if(year!==2026)return edition;
  // Week 4 has an immutable audited snapshot. Do not overwrite it.
  if(year===2026&&week===4&&edition.teams.every(t=>t.projection_snapshot))return edition;
  if(edition.teams.every(t=>t.projection_snapshot||t.projection_coverage>0&&t.projected!=null))return edition;

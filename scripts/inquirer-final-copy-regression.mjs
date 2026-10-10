@@ -123,7 +123,7 @@ assert(qualityGateSource.includes('findInquirerSourceFactIssues(candidate)'), 'E
 assert(publisher.includes('const candidate={week,teams:edited.inquirer.teams,league_overview:edited.leagueOverview}'), 'Initial publication gate must include reporting week');
 assert(publisher.includes('evaluateInquirerEditionQuality({week,teams:result.teams,league_overview:result.league_overview}'), 'Final publication gate must include reporting week');
 assert(qualityGateSource.includes('&&factIssues.length===0'), 'Source-fact errors must block new publication rather than only log warnings');
-const {findInquirerSourceFactIssues,buildInquirerEditionFactRegistry,findInquirerEditionConsistencyIssues,findInquirerRawMatchupIssues,findInquirerManagerAwardIssues}=await import('../netlify/functions/inquirer-source-facts.mjs');
+const {findInquirerSourceFactIssues,buildInquirerEditionFactRegistry,findInquirerEditionConsistencyIssues,findInquirerRawMatchupIssues,findInquirerManagerAwardIssues,findInquirerTradeCountIssues}=await import('../netlify/functions/inquirer-source-facts.mjs');
 const factFixture={week:4,teams:[{team_name:'Miami Dolphins',starter_details:[{name:'Tetairoa McMillan',points:45.2}],inquirer_article:{sections:[{paragraphs:['Tetairoa McMillan scored 45.2 points in Week 4.']}]} }],league_overview:{sections:[],hot_takes:[{take:'Tetairoa McMillan has a 45.2-point season average.'}]}};
 assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='unsupported-player-average'),'Reject unsupported season-average claim');
 factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 44.2 points this week.'}];
@@ -305,5 +305,23 @@ assert(findInquirerManagerAwardIssues(awardEdition,invalidOutcome,awardSource).s
 assert(findInquirerManagerAwardIssues(awardEdition,managerAwards,[]).some(x=>x.id==='award-source-unavailable'),'Fail closed without source award data');
 assert(publisher.includes('finalizedMatchupRows:forward?completion.rows:null'),'Publisher passes finalized Sleeper matchup totals to awards');
 assert(publisher.includes('if(awardIssues.length)throw new Error('),'Award validation must block weekly awards persistence');
+
+
+const tradeEdition={season:2026,week:4,teams:[
+ {roster_id:1,current_week_trade_count:1,trade_history:[{transaction_id:'trade-1'}]},
+ {roster_id:2,current_week_trade_count:1,trade_history:[{transaction_id:'trade-1'}]},
+ {roster_id:3,current_week_trade_count:0,trade_history:[]}
+]};
+const canonicalTradeRows=[{season:2026,week:4,roster_ids:[1,2],transaction_id:'trade-1'}];
+assert.equal(findInquirerTradeCountIssues(tradeEdition,canonicalTradeRows).length,0,'Match current trade counts against canonical transactions');
+tradeEdition.teams[0].current_week_trade_count=2;
+assert(findInquirerTradeCountIssues(tradeEdition,canonicalTradeRows).some(x=>x.id==='canonical-trade-count-mismatch'),'Detect fabricated current-week trade count');
+tradeEdition.teams[0].current_week_trade_count=1;
+tradeEdition.teams[1].trade_history=[];
+assert(findInquirerTradeCountIssues(tradeEdition,canonicalTradeRows).some(x=>x.id==='canonical-trade-history-count-mismatch'),'Detect lost canonical trade history entry');
+tradeEdition.teams[1].trade_history=[{transaction_id:'trade-1'}];
+assert.equal(findInquirerTradeCountIssues(tradeEdition,[...canonicalTradeRows,{season:2026,week:3,roster_ids:[1,2]}]).length,0,'Ignore past-week trades in current weekly count');
+assert(findInquirerTradeCountIssues(tradeEdition,null).some(x=>x.id==='trade-source-unavailable'),'Unavailable trade ledger cannot certify trade claims');
+assert(publisher.includes('findInquirerTradeCountIssues(result,canonicalTrades.trades)'), 'Publisher must check trade count against canonical data');
 
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

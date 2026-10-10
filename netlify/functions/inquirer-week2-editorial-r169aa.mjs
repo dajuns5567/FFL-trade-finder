@@ -124,7 +124,7 @@ function preserveRealFootballPlayerReporting(team){
  const top=starters[0];
  const stat=p=>String(p.real_stat_line||'').replace(/\s*[•|]\s*/g,', ');
  if(!statTerms.test(section.paragraphs.join(' '))&&top.real_stat_line){
-  section.paragraphs.push('The leading starter, '+top.name+', also has a concrete NFL stat line behind the fantasy scoring. Recorded workload: '+stat(top)+'. Those documented plays and snaps help explain the result without turning the scoring total into a substitute for actual on-field contribution.');
+  section.paragraphs.push('The highest-scoring starter, '+top.name+', supplied documented NFL work: '+stat(top)+'. The fantasy result rests on those actual plays, not on a reconstructed story about the professional game.');
  }
  const candidates=[];
  for(const [i,p] of starters.slice(0,4).entries()){
@@ -217,6 +217,37 @@ function refineWeek2RepeatedCopy(team){
   if(reporter==='walter-mercer')p=p.replace(/On that narrow forecast, ([^.]+?) has the edge\./g,(_,who)=>`On paper ${who} enters as the projected favorite; the decision still belongs to the manager.`);
   if(reporter==='mack-hollis')p=p.replace(/On that narrow forecast, ([^.]+?) has the edge\./g,(_,who)=>`The forecast casts ${who} as the favorite, not the already crowned winner.`);
   if(reporter==='tess-delaney')p=p.replace(/On that narrow forecast, ([^.]+?) has the edge\./g,(_,who)=>`The current numbers give ${who} a projection advantage, and nobody should mistake that for a final score.`);
+  const say=(variants)=>variants[reporter==='nora-voss'?0:reporter==='walter-mercer'?1:reporter==='mack-hollis'?2:3];
+  p=p.replace(/The projection did not award any standings points; the actual loss to ([^.]+?) is the result the manager has to explain\./g,(_,opp)=>say([
+   `I will not let the forecast obscure the loss to ${opp}; the completed score is where this decision review starts.`,
+   `Against ${opp}, the defeat is established fact; the forecast is merely the paper the manager once consulted.`,
+   `${opp} supplied the painful ending, and not a single projected point could rescue the result afterward.`,
+   `The loss against ${opp} is official; any argument over the forecast can wait until the manager answers for the actual lineup.`
+  ]));
+  p=p.replace(/The win against ([^.]+?) is recorded independently of the pregame forecast, and the next lineup decision should be judged on its own merits\./g,(_,opp)=>say([
+   `I count the victory over ${opp}, then ask whether the manager's choices can withstand a separate examination.`,
+   `Beating ${opp} earns its place in the record; the next team selection requires its own measured judgment.`,
+   `${opp} lost the fantasy matchup, projections notwithstanding; the next lineup must find its own way to deserve applause.`,
+   `The result against ${opp} is a win, but it does not grant the manager immunity from another round of questions.`
+  ]));
+  p=p.replace(/([A-Z][A-Za-z'’.-]+(?: [A-Z][A-Za-z'’.-]+){1,3}) averaged (-?\d+(?:\.\d+)?) fantasy points per game across (\d+) games in 2025\./g,(_,name,avg,games)=>say([
+   `Over ${games} recorded games in 2025, ${name}'s fantasy output worked out to ${avg} points per appearance; that history warrants attention alongside the current result.`,
+   `Consider ${name}'s 2025 record: ${games} games and ${avg} fantasy points per game, a more durable comparison than any single afternoon.`,
+   `${name} had a ${avg}-point fantasy average in ${games} appearances last season, before the current week's drama had even begun.`,
+   `The longer record for ${name} is ${avg} fantasy points a game through ${games} games in 2025; the Week 2 performance belongs in that context.`
+  ]));
+  p=p.replace(/([A-Z][A-Za-z'’.-]+(?: [A-Z][A-Za-z'’.-]+){1,3}) led this starting group in recorded fantasy production, and the underlying NFL activity helps explain that contribution\./g,(_,name)=>say([
+   `Start with ${name}, the highest-scoring listed starter; the NFL workload, not an invented narrative, helps explain the fantasy total.`,
+   `${name} provided the leading fantasy contribution among these starters, with actual professional-game activity behind that result.`,
+   `At the top of this starting cast stood ${name}, whose real NFL plays supply the substance beneath the fantasy billing.`,
+   `Among the recorded starters, ${name} finished first in fantasy scoring; the on-field work deserves to be considered separately from the applause.`
+  ]));
+  p=p.replace(/For Week 3, the available lineup projections currently list (.+?) at (-?\d+(?:\.\d+)?) fantasy points and (.+?) at (-?\d+(?:\.\d+)?)\./g,(_,own,a,opp,b)=>say([
+   `For the coming Week 3 contest, ${own} carries a ${a}-point lineup projection against ${b} for ${opp}; I regard both as estimates, not evidence of a finished game.`,
+   `The Week 3 forecast assigns ${a} to ${own} and ${b} to ${opp}; no amount of polish can turn those figures into a final score.`,
+   `On next week's advance billing, ${own} is penciled in for ${a} and ${opp} for ${b} fantasy points; both numbers remain forecasts.`,
+   `Ahead of Week 3, ${own} projects for ${a} and ${opp} for ${b}; the actual contest has yet to settle either figure.`
+  ]));
   return p;
  });
  a.paragraphs=a.sections.flatMap(x=>x.paragraphs||[]).filter(Boolean);

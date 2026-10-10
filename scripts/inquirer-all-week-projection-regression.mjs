@@ -6,7 +6,7 @@ for (const week of [1,2,3,4]) {
  const body=await response.json();
  assert.equal(body.week,week,'Archived edition week');
  assert.equal(body.teams?.length,32,'All 32 teams must remain available in Week '+week);
- let withCoverage=0;
+ let withCoverage=0,estimatedTeams=0,estimatedPlayers=0;
  for(const team of body.teams){
   const starters=team.starter_details||[],snapshot=team.projection_snapshot;
   assert(snapshot&&snapshot.verified_pregame===false,'Week '+week+' '+team.team_name+' must have honest source provenance');
@@ -14,6 +14,10 @@ for (const week of [1,2,3,4]) {
   assert.equal(team.projection_coverage,starters.filter(p=>p.projected!=null&&Number.isFinite(Number(p.projected))).length);
   assert(snapshot.source?.includes('/2026/'+week+'?'),'Projection source must match publication week');
   if(team.projection_coverage)withCoverage++;
+  const estimated=(team.starter_details||[]).filter(p=>p.projected==null&&Number.isFinite(Number(p.estimated_projected))&&p.estimated_projected!=null);
+  estimatedPlayers+=estimated.length;
+  if(team.estimated_projected!=null){estimatedTeams++;assert(team.projection_estimate_snapshot?.retrospective===true,'Estimates require retrospective provenance');assert.equal(Number(team.estimated_projected.toFixed(2)),Number(team.starter_details.reduce((n,p)=>n+Number(p.projected??p.estimated_projected),0).toFixed(2)),'Estimate must reconcile');}
+
   if(team.projection_coverage!==team.starter_count)assert.equal(team.projected,null,'Never call partial subtotal a full forecast');
   else if(starters.length){
    const sum=Number(starters.reduce((n,p)=>n+Number(p.projected),0).toFixed(2));
@@ -21,5 +25,5 @@ for (const week of [1,2,3,4]) {
   }
  }
  assert(withCoverage>0,'Week '+week+' should include sourced scoring projections');
- console.log('ARCHIVED_WEEK_PROJECTION_COVERAGE',JSON.stringify({season:2026,week,teams:32,teamsWithPlayerProjections:withCoverage,fullTeams:body.teams.filter(x=>x.projected!==null).length}));
+ console.log('ARCHIVED_WEEK_PROJECTION_COVERAGE',JSON.stringify({season:2026,week,teams:32,teamsWithPlayerProjections:withCoverage,fullTeams:body.teams.filter(x=>x.projected!==null).length,estimatedTeams,estimatedPlayers}));
 }

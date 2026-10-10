@@ -118,4 +118,11 @@ assert.equal(stale.manager_spotlight_refreshed,false,'Stale spotlight must never
 assert.equal(stale.attempts,3,'Bound retries on persistent stale data');
 assert(stale.errors.length===2,'Surface both unresolved failures for observability');
 
+const {findInquirerSourceFactIssues}=await import('../netlify/functions/inquirer-source-facts.mjs');
+const factFixture={week:4,teams:[{team_name:'Miami Dolphins',starter_details:[{name:'Tetairoa McMillan',points:45.2}],inquirer_article:{sections:[{paragraphs:['Tetairoa McMillan scored 45.2 points in Week 4.']}]} }],league_overview:{sections:[],hot_takes:[{take:'Tetairoa McMillan has a 45.2-point season average.'}]}};
+assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='unsupported-player-average'),'Reject unsupported season-average claim');
+factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 44.2 points this week.'}];
+assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='weekly-player-score'),'Reject mismatched weekly player score');
+factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 45.2 points this week.'}];
+assert.equal(findInquirerSourceFactIssues(factFixture).length,0,'Accept correct source-grounded weekly points');
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

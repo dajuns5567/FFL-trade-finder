@@ -1,11 +1,28 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
-const root=process.env.INQUIRER_PREVIEW_URL||'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app';
+let root=process.env.INQUIRER_PREVIEW_URL||'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:950}});
 const errors=[];
 page.on('pageerror',error=>errors.push(String(error?.message||error)));
 try{
+ if(!process.env.INQUIRER_PREVIEW_URL){
+  const candidates=[
+   'https://deploy-preview-390--fleeced.netlify.app',
+   'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app',
+   'https://deploy-preview-390--subtle-genie-6167c5.netlify.app'
+  ];
+  const checks=[];
+  for(const candidate of candidates){
+   try{
+    const probe=await page.request.get(candidate+'/.netlify/functions/league-hub-week4-fast?rev=482',{timeout:16000});
+    checks.push({url:candidate,status:probe.status()});
+    if(probe.status()===200){root=candidate;break}
+   }catch(error){checks.push({url:candidate,error:String(error?.message||error).slice(0,160)})}
+  }
+  console.log('NETLIFY_PREVIEW_ACCESS_CHECK',JSON.stringify({selected:root,candidates:checks}));
+  assert(checks.some(x=>x.url===root&&x.status===200),'No GitHub-reported Netlify PR #390 preview is publicly accessible: '+JSON.stringify(checks));
+ }
  const api=async path=>{
    const res=await page.request.get(root+path,{timeout:60000});
    assert.equal(res.status(),200,'Serverless endpoint '+path+' must respond 200; got '+res.status());

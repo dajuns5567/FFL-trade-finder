@@ -34,6 +34,7 @@ const teamRows=week.teams.map(t=>{const starters=(t.starter_details||[]),scored=
  return {team:t.team_name,roster:t.roster_id,starters:starters.length,coverage:scored.length-missing.length,total:missing.length?null:Number(scored.reduce((n,p)=>n+p.projected,0).toFixed(2)),missing};
 });
 const allMissing=teamRows.flatMap(t=>t.missing.map(p=>({...p,team:t.team})));
+console.log('MISSING_WEEK4_SOURCE_ROWS',JSON.stringify(allMissing.map(p=>{const row=rowsById.get(p.id);return {id:p.id,team:p.team,position:p.position,found:!!row,sourceKeys:Object.keys(row||{}),stats:row?.stats||null,projection:row?.projection||null,pts_ppr:row?.pts_ppr??null,player:row?.player||null}})));
 console.log('WEEK4_SCORED_PROJECTIONS',JSON.stringify({scoringSettings:Object.keys(scoring).length,uniqueStarterIds:players.length,totalLineupPositions:teamRows.reduce((n,x)=>n+x.starters,0),fullyCoveredTeams:teamRows.filter(t=>t.total!==null).length,playersWithNoUsableStats:allMissing,teams:teamRows.map(({team,coverage,starters,total})=>({team,coverage,starters,total})),retrievedAsOf:new Date().toISOString()}));
 
 const {gzipSync}=await import('node:zlib');

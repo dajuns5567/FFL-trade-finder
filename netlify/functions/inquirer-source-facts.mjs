@@ -30,6 +30,13 @@ export function findInquirerSourceFactIssues(edition){
 
  // Check explicit current-week head-to-head results against both roster totals.
  // Opponent identifiers are required: prose alone cannot establish a matchup.
+ // Standings only use explicit record and rank fields from the edition.
+ const standings=edition.teams.map(t=>({
+  name:normalize(t.team_name),
+  wins:number(t?.league_context?.record?.wins),
+  losses:number(t?.league_context?.record?.losses),
+  rank:number(t?.league_context?.standings_rank)
+ })).filter(t=>t.name);
  const matchups=[];
  for(const team of edition.teams){
   const opponent=edition.teams.find(t=>String(t.roster_id)===String(team.opponent_roster_id)&&t!==team);
@@ -59,6 +66,22 @@ export function findInquirerSourceFactIssues(edition){
     }
    }
 
+   // Verify explicit current-season W-L records and standings positions.
+   // Neither record values nor rank can be inferred from article wording.
+   for(const st of standings){
+    if(!paragraph.toLowerCase().includes(st.name.toLowerCase()))continue;
+    const n=esc(st.name);
+    const record=new RegExp('\\b'+n+'(?:\\s+has|\\x27s|\\s+holds)?\\s+(?:a\\s+)?(\\d+)-(\\d+)\\s+(?:record|mark)\\b','gi');
+    for(const m of paragraph.matchAll(record)){
+     if(st.wins===null||st.losses===null||!Number.isInteger(st.wins)||!Number.isInteger(st.losses)||Number(m[1])!==st.wins||Number(m[2])!==st.losses)
+      issues.push({id:'team-record',article:articleName,team:st.name,reported:[Number(m[1]),Number(m[2])],expected:[st.wins,st.losses],week});
+    }
+    const rank=new RegExp('\\b'+n+'\\s+(?:is|sits|stands|ranks)\\s+(?:at\\s+|in\\s+)?(?:rank\\s+|place\\s+|position\\s+|#)(\\d+)\\b','gi');
+    for(const m of paragraph.matchAll(rank)){
+     if(st.rank===null||!Number.isInteger(st.rank)||st.rank<1||Number(m[1])!==st.rank)
+      issues.push({id:'standings-rank',article:articleName,team:st.name,reported:Number(m[1]),expected:st.rank,week});
+    }
+   }
    // The generator uses “Team beat/lost to Opponent 123.4–99.1”.
    // Only check named pairings with a verified roster linkage, preserving
    // historic comparisons and unqualified editorial language.

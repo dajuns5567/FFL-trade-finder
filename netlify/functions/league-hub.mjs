@@ -447,18 +447,18 @@ async function broadcastArchive(){
  }
  rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
 }
+export function isCurrentWeek4Inquirer(edition){
+ const blocks=edition?.league_overview?.sections?.[0]?.blocks;
+ const kinds=['lead','standings','players','decisions','league','outlook'];
+ return Array.isArray(blocks)&&blocks.length===kinds.length&&kinds.every((kind,i)=>blocks[i]?.kind===kind&&Array.isArray(blocks[i]?.paragraphs)&&blocks[i].paragraphs.length>=2)
+  &&edition?.teams?.length===32&&edition.teams.every(t=>Number(t?.inquirer_article?.editorial_rebuilt_for_week)===4);
+}
 async function broadcastStored(season,week){
  const y=Number(season),w=Number(week),canonicalPreload=preloadedBroadcast(y,w);
  if(y===2026&&w===2&&canonicalPreload)return canonicalPreload;
  let v=null;
  try{v=await store().get(`broadcasts/${y}/week-${String(w).padStart(2,'0')}.json`,{type:'json'})}catch(e){if(!canonicalPreload)console.warn('Inquirer archive storage unavailable',y,w,String(e?.message||e))}
- if(y===2026&&w===4&&canonicalPreload){
-  const storedEdition=servedPreload(v),blocks=storedEdition?.league_overview?.sections?.[0]?.blocks;
-  const kinds=['lead','standings','players','decisions','league','outlook'];
-  const fresh=Array.isArray(blocks)&&blocks.length===kinds.length&&kinds.every((kind,i)=>blocks[i]?.kind===kind&&Array.isArray(blocks[i]?.paragraphs)&&blocks[i].paragraphs.length>=2)
-   &&storedEdition?.teams?.length===32&&storedEdition.teams.every(t=>Number(t?.inquirer_article?.editorial_rebuilt_for_week)===4);
-  if(!fresh)return canonicalPreload;
- }
+ if(y===2026&&w===4&&canonicalPreload&&!isCurrentWeek4Inquirer(servedPreload(v)))return canonicalPreload;
  return servedPreload(v)||canonicalPreload||{error:'broadcast not found'};
 }
 

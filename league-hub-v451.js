@@ -454,6 +454,7 @@ function leagueOverviewArticle(o){
  return '<div class="lh-article lh-league-overview">'+sectionNav+'<div class="lh-reporter-byline"><b>'+esc(o.byline||'By the Fleeced! Inquirer desks')+'</b><small>'+esc((o.deck||'')+(o.week_classification?.label?' • '+o.week_classification.label:''))+'</small></div><h4>'+esc(o.headline||'Fleeced! Weekly Recap')+'</h4>'+sections+hot+'<details class="lh-source-note"><summary>Sources</summary><div class="lh-sub">Sleeper league data, canonical Trade History, canonical Value History, verified NFL schedule and Sleeper player/injury metadata. Draft-position discussion is standings-based unless the league provides a verified draft-order rule.</div></details></div>'
 }
 function week4ProjectionPanel(t,teams){
+ if(typeof window!=='undefined'&&/deploy-preview-390/.test(location.hostname))window.__fleecedProjectionRenderDebug={team:t?.team_name,week:4,hasSnapshot:!!t?.projection_snapshot,total:t?.projected,coverage:t?.projection_coverage,starters:t?.starter_count};
  const snap=t?.projection_snapshot;
  if(!snap||snap.verified_pregame!==false)return '';
  const rows=t.starter_details||[],coverage=Number(snap.coverage)||0;

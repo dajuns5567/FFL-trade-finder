@@ -56,6 +56,13 @@ try{
  const homeText=await page.locator('#leagueHubContent').innerText();
  const homeDomText=await page.locator('#leagueHubContent').textContent();
  console.log('LOCAL_AWARD_DIAGNOSTIC',JSON.stringify({visibleTextIncludesAwards:homeText.includes('Players of the Week'),domTextIncludesAwards:homeDomText.includes('Players of the Week'),cardCount:await page.locator('#leagueHubContent .lh-card').count()}));
+ const visibility=await page.evaluate(()=>{
+  const header=Array.from(document.querySelectorAll('#leagueHubContent h3')).find(h=>h.textContent.includes('Players of the Week'));
+  const chain=[];for(let n=header;n&&chain.length<7;n=n.parentElement){const c=getComputedStyle(n),r=n.getBoundingClientRect();chain.push({tag:n.tagName,className:String(n.className||''),hidden:n.hidden,display:c.display,visibility:c.visibility,opacity:c.opacity,width:r.width,height:r.height})}
+  return chain;
+ });
+ console.log('LOCAL_AWARD_VISIBILITY',JSON.stringify(visibility));
+
  await page.locator('#leagueHubContent [data-lh-broadcast-team="__league__"]').first().click();
  const select=page.locator('#leagueHubContent select[data-lh-broadcast-article]');
  await select.waitFor({timeout:20000});

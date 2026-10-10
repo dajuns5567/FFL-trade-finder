@@ -1,4 +1,4 @@
-import {weeklyReport,capturePregameProjections} from './league-hub.mjs';
+import {weeklyReport} from './league-hub.mjs';
 
 const json=body=>new Response(JSON.stringify(body),{
   status:200,
@@ -17,8 +17,6 @@ async function call(origin,path){
 // and refuses to publish an incomplete Sleeper week. After a new edition appears,
 // refresh every week-bound League Hub surface in the same run.
 export default async function inquirerPublishScheduled(req){
-  // Capture numerical forecasts before any fantasy scoring is recorded; never publish a week here.
-  const projection_snapshot=await capturePregameProjections().catch(e=>({captured:false,error:String(e?.message||e)}));
   let result=null,lastKey='';
   for(let i=0;i<3;i++){
     const next=await weeklyReport(req);
@@ -40,7 +38,6 @@ export default async function inquirerPublishScheduled(req){
   }
   return json({
     ok:true,
-    projection_snapshot,
     available:!!result?.available,
     season:result?.season??null,
     week:result?.week??null,

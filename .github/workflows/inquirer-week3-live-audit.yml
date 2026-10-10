@@ -39,22 +39,5 @@ jobs:
             /tmp/inquirer-week3-direct-candidate.json
             /tmp/inquirer-week3-direct-audit.json
           retention-days: 7
-      - name: Repair Week 3 preload from accepted candidate
-        run: |
-          node <<'NODE'
-          const fs=require('fs'),zlib=require('zlib');
-          const raw=fs.readFileSync('/tmp/inquirer-week3-direct-candidate.json');
-          const encoded=zlib.gzipSync(raw,{level:9}).toString('base64');
-          const out="import {gunzipSync} from 'node:zlib';\n\n// Exact accepted Week 3 candidate from the successful real-data Inquirer audit.\n// Generated directly from the accepted CI candidate; do not hand-truncate.\nconst encoded='"+encoded+"';\nlet memo=null;\nexport default function week3Preload2026(){\n  if(memo)return memo;\n  memo=JSON.parse(gunzipSync(Buffer.from(encoded,'base64')).toString('utf8'));\n  return memo;\n}\n";
-          fs.writeFileSync('netlify/functions/inquirer-week3-2026-preload.mjs',out);
-          console.log('preload bytes',Buffer.byteLength(out),'candidate bytes',raw.length);
-          NODE
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add netlify/functions/inquirer-week3-2026-preload.mjs
-          if git diff --cached --quiet; then
-            echo "Week 3 preload already matches accepted candidate"
-          else
-            git commit -m "Repair full Week 3 Inquirer preload"
-            git push origin HEAD:${{ github.head_ref || github.ref_name }}
-          fi
+      # Candidate generation is audit-only. Never rewrite a published preload from CI.
+      # Any approved archive update must be reviewed and committed separately.

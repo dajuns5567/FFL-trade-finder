@@ -7,6 +7,7 @@ import siteV29 from '../netlify/functions/site-v29.mjs';
 import week4Loader from '../netlify/functions/inquirer-week4-2026-preload.mjs';
 import {rebuildWeek4Editorial} from '../netlify/functions/inquirer-week4-editorial-rebuild.mjs';
 import leagueHubHandler from '../netlify/functions/league-hub.mjs';
+import week3FastHandler from '../netlify/functions/league-hub-week3-fast.mjs';
 
 const root=process.cwd(),week4=rebuildWeek4Editorial(week4Loader());
 const mime={'.js':'text/javascript','.css':'text/css','.json':'application/json','.html':'text/html','.svg':'image/svg+xml','.png':'image/png'};
@@ -21,6 +22,7 @@ const server=createServer(async(req,res)=>{
   else if(u.pathname==='/api/history')out=json({trades:[]});
   else if(u.pathname==='/api/league')out=json({});
   else if(u.pathname==='/.netlify/functions/league-hub-week4-fast')out=json(week4);
+  else if(u.pathname==='/.netlify/functions/league-hub-week3-fast')out=await week3FastHandler();
   else if(u.pathname==='/.netlify/functions/league-hub'){
    if(u.searchParams.get('weekly')==='1')out=json(week4);
    else if(u.searchParams.get('weekly_awards')==='1')out=json({schema_version:2,records:[]});
@@ -67,6 +69,13 @@ try{
  await select.selectOption('__league__');
  assert.match(await page.locator('#leagueHubContent').innerText(),/Weekly Recap/);
  assert((await page.locator('#leagueHubContent').textContent()).includes('Players of the Week'),'Players of the Week card must exist in League Hub DOM');
+ const weekPicker=page.locator('#leagueHubContent select[data-lh-archive-week]').first();
+ await weekPicker.selectOption('3');
+ await page.waitForFunction(()=>String(document.querySelector('#leagueHubContent .lh-report-title')?.textContent||'').includes('Week 3'),null,{timeout:25000});
+ assert.equal(await page.locator('#leagueHubContent select[data-lh-broadcast-article] option').count(),33,'Week 3 archive must retain all team article options');
+ await page.locator('#leagueHubContent select[data-lh-archive-week]').first().selectOption('4');
+ await page.waitForFunction(()=>String(document.querySelector('#leagueHubContent .lh-report-title')?.textContent||'').includes('Week 4'),null,{timeout:25000});
+
  console.log(JSON.stringify({ok:true,mode:'local-site-v29-and-real-week4-preload',articleOptions:options.length,checkedTeams:[week4.teams[0].team_name,week4.teams.at(-1).team_name],pageErrors:errors.slice(0,10)},null,2));
 }catch(error){
  await page.screenshot({path:'/tmp/inquirer-local-browser-failure.png',fullPage:true}).catch(()=>{});

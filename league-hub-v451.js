@@ -469,9 +469,22 @@ async function fetchArchivedEdition(year,week){
  const y=Number(year),w=Number(week);if(!y||!w)return null;const key=y+'|'+w;
  // The current published Week 4 edition must not be blocked by a stale in-memory archive entry.
  if(!(y===2026&&w===4)&&archivedEditionCache.has(key))return archivedEditionCache.get(key);
- const task=(async()=>{const url=(y===2026&&w===3)?'/.netlify/functions/league-hub-week3-fast?rev=476':(y===2026&&w===4)?'/.netlify/functions/league-hub-week4-fast?rev=482':'/.netlify/functions/league-hub?broadcast_season='+y+'&broadcast_week='+w;
-  const r=await fetch(url,{cache:(y===2026&&w===4)?'no-store':'force-cache'});if(!r.ok)throw Error('archived edition unavailable: '+y+' Week '+w);const x=await r.json();
-  return x?.available&&Array.isArray(x?.teams)&&x.teams.length?x:null})();
+ const task=(async()=>{
+  const url=(y===2026&&w===3)?'/.netlify/functions/league-hub-week3-fast?rev=476':(y===2026&&w===4)?'/.netlify/functions/league-hub-week4-fast?rev=482':'/.netlify/functions/league-hub?broadcast_season='+y+'&broadcast_week='+w;
+  const valid=x=>x?.available&&Number(x.season)===y&&Number(x.week)===w&&Array.isArray(x.teams)&&x.teams.length===32&&(w!==4||Array.isArray(x.league_overview?.sections?.[0]?.blocks)&&x.league_overview.sections[0].blocks.length===6);
+  const known=[weeklyCache,spotlightWeeklyCache,...archivedEditionCache.values()].find(x=>x&&!('then'in Object(x))&&valid(x));
+  try{
+   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),9000);
+   try{
+    const r=await fetch(url,{cache:y===2026&&w===4?'no-store':'force-cache',signal:controller.signal});
+    if(!r.ok)throw Error('archived edition unavailable: '+y+' Week '+w);
+    const x=await r.json();
+    if(valid(x))return x;
+    if(y===2026&&w===4)throw Error('Week 4 archive returned incomplete editorial content');
+    return x?.available&&Array.isArray(x.teams)&&x.teams.length?x:null;
+   }finally{clearTimeout(timer)}
+  }catch(error){if(y===2026&&w===4&&known)return known;throw error}
+ })();
  archivedEditionCache.set(key,task);
  try{const x=await task;archivedEditionCache.set(key,x);return x}catch(e){archivedEditionCache.delete(key);throw e}
 }

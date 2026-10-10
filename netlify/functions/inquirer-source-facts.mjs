@@ -173,6 +173,19 @@ export function findInquirerTradeCountIssues(edition,canonicalTrades){
   const history=team?.trade_history;
   if(Array.isArray(history)&&history.length!==expected)
    issues.push({id:'canonical-trade-history-count-mismatch',roster_id:rid,reported:history.length,expected});
+  // Compare concrete transaction IDs wherever the canonical ledger exposes
+  // them. Counts alone cannot establish which trade was attached to a team.
+  if(Array.isArray(history)){
+   const canonical=valid.filter(t=>Array.isArray(t?.roster_ids)&&t.roster_ids.map(String).includes(rid));
+   const canonicalIds=canonical.map(t=>t?.id??t?.transaction_id).filter(v=>v!=null&&String(v)!=='').map(String);
+   const editionIds=history.map(t=>t?.id??t?.transaction_id).filter(v=>v!=null&&String(v)!=='').map(String);
+   if(canonicalIds.length===canonical.length&&editionIds.length===history.length){
+    const count=ids=>{const m=new Map();for(const id of ids)m.set(id,(m.get(id)||0)+1);return m};
+    const source=count(canonicalIds),claimedIds=count(editionIds);
+    if(source.size!==claimedIds.size||[...source].some(([id,n])=>claimedIds.get(id)!==n))
+     issues.push({id:'canonical-trade-identity-mismatch',roster_id:rid,expected:canonicalIds,reported:editionIds});
+   }
+  }
  }
  return issues;
 }

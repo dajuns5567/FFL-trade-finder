@@ -122,6 +122,26 @@ export function findInquirerManagerAwardIssues(edition,awards,rawRows){
  return issues;
 }
 
+// Compare current-week trade claims with the separate canonical transaction
+// feed. Do not infer trade parties or counts when transaction data is absent.
+export function findInquirerTradeCountIssues(edition,canonicalTrades){
+ const issues=[],week=Number(edition?.week),season=Number(edition?.season);
+ if(!Number.isInteger(week)||!Number.isInteger(season)||!Array.isArray(canonicalTrades))return [{id:'trade-source-unavailable'}];
+ const valid=canonicalTrades.filter(t=>Number(t?.season)===season&&Number(t?.week)===week);
+ for(const team of edition?.teams||[]){
+  if(team?.roster_id==null)continue;
+  const rid=String(team.roster_id);
+  const expected=valid.filter(t=>Array.isArray(t?.roster_ids)&&t.roster_ids.map(String).includes(rid)).length;
+  const claimed=number(team?.current_week_trade_count);
+  if(claimed===null||!Number.isInteger(claimed)||claimed!==expected)
+   issues.push({id:'canonical-trade-count-mismatch',roster_id:rid,reported:claimed,expected});
+  const history=team?.trade_history;
+  if(Array.isArray(history)&&history.length!==expected)
+   issues.push({id:'canonical-trade-history-count-mismatch',roster_id:rid,reported:history.length,expected});
+ }
+ return issues;
+}
+
 export function findInquirerEditionConsistencyIssues(edition){
  const issues=[];
  const teams=Array.isArray(edition?.teams)?edition.teams:[];

@@ -153,6 +153,15 @@ function sleeperConference(league,division){
  return'';
 }
 function matchupComplete(rows){if(!Array.isArray(rows)||!rows.length)return false;const groups=new Map();for(const m of rows){const k=String(m?.matchup_id??'');if(!k)return false;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}return [...groups.values()].every(pair=>pair.length===2&&pair.every(m=>m?.points!=null&&m.points!==''&&Number.isFinite(Number(m.points))&&m?.players_points&&Object.keys(m.players_points).length>0))}
+function missingPublishedWeekPlayerStats(matchups,weeklyStats){
+ const missing=new Set();
+ for(const matchup of matchups||[]){
+  for(const [id,points] of Object.entries(matchup?.players_points||{})){
+   if(Number.isFinite(Number(points))&&Number(points)!==0&&!Object.prototype.hasOwnProperty.call(weeklyStats||{},id))missing.add(String(id));
+  }
+ }
+ return [...missing];
+}
 function matchupGroups(rows){const groups=new Map();for(const m of rows||[]){const k=String(m?.matchup_id??'');if(!k)continue;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}return groups}
 function resolvedBracketRoster(v){if(v==null||typeof v==='object')return'';const s=String(v).trim();return s&&s!=='0'&&s!=='null'&&s!=='undefined'?s:''}
 function playoffRoundNumber(week,playoffStart=INQUIRER_PLAYOFF_START_WEEK){return Math.max(1,Number(week)-Number(playoffStart||INQUIRER_PLAYOFF_START_WEEK)+1)}
@@ -343,6 +352,8 @@ export async function weeklyReport(req){
   week>=INQUIRER_PLAYOFF_START_WEEK?fetchJson(`${API}/league/${LEAGUE}/winners_bracket`).catch(()=>[]):Promise.resolve([])
  ]);
  if(!weeklyStats||typeof weeklyStats!=='object'||!Object.keys(weeklyStats).length)return latestPublished?{...latestPublished,waiting_for_week:week,reason:'Sleeper weekly player statistics are unavailable; publication deferred.'}:{available:false,season,week,waiting_for_week:week,reason:'Sleeper weekly player statistics are unavailable; publication deferred.'};
+ const missingStatScorers=missingPublishedWeekPlayerStats(completion.rows,weeklyStats);
+ if(missingStatScorers.length)return latestPublished?{...latestPublished,waiting_for_week:week,reason:'Sleeper weekly player statistics are incomplete for '+missingStatScorers.length+' matchup scorers; publication deferred.'}:{available:false,season,week,waiting_for_week:week,reason:'Sleeper weekly player statistics are incomplete for '+missingStatScorers.length+' matchup scorers; publication deferred.'};
  const futureFantasyWeeks=Array.from({length:Math.min(3,Math.max(0,INQUIRER_FINAL_WEEK-week))},(_,i)=>week+i+1),futureFantasyMatchups=await Promise.all(futureFantasyWeeks.map(w=>w===week+1?Promise.resolve(nextMatchups):fetchJson(`${API}/league/${LEAGUE}/matchups/${w}`).catch(()=>[])));
  const nextNflWeek=week<INQUIRER_FINAL_WEEK?week+1:null,[teamValueHistory,canonicalTrades,nextSchedule,playerMarket]=await Promise.all([
   internalHistory(origin,'team_net_all=1'),

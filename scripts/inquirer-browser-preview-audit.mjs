@@ -47,7 +47,11 @@ try{
  await page.locator('.tabs button[data-tab="leagueHub"]').click();
  await page.locator('#leagueHubContent .lh-report').waitFor({timeout:60000});
  await page.waitForFunction(()=>/Week 4/.test(document.querySelector('#leagueHubContent .lh-report')?.textContent||''),{timeout:60000});
- assert.match(await page.locator('#leagueHubContent').innerText(),/Players of the Week/,'Player awards section disappeared');
+ const openEdition=page.locator('#leagueHubContent button[data-lh-archive-season="2026"][data-lh-archive-week="4"]').filter({hasText:'Open Full Inquirer'});
+ if(await openEdition.count())await openEdition.first().click();
+ const awardsHeading=page.locator('#leagueHubContent h3').filter({hasText:'Players of the Week'}).first();
+ await awardsHeading.waitFor({state:'visible',timeout:60000});
+ assert(await awardsHeading.isVisible(),'Players of the Week must remain visually accessible after opening latest edition');
  const recap=page.locator('#leagueHubContent [data-lh-broadcast-team="__league__"]').first();
  await recap.waitFor({timeout:30000});
  await recap.click();
@@ -56,6 +60,11 @@ try{
  const options=await selector.locator('option').allTextContents();
  assert.equal(options.length,33,'Recap navigation must include all 32 team articles');
  assert.match(await page.locator('#leagueHubContent').innerText(),/Weekly Recap/i,'Weekly Recap failed to open');
+ const recapHeadings=fast.body.league_overview.sections[0].blocks.map(b=>b.heading);
+ assert.equal(recapHeadings.length,6,'Verified Week 4 recap must contain six thematic blocks');
+ const recapRendered=await page.locator('#leagueHubContent').textContent();
+ for(const heading of recapHeadings)assert(recapRendered.includes(heading),'Public preview Weekly Recap missing theme '+heading);
+
  const firstId=String(fast.body.teams[0].roster_id),lastId=String(fast.body.teams[31].roster_id);
  for(const id of [firstId,lastId]){
    await selector.selectOption(id);

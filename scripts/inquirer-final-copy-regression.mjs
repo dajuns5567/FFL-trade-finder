@@ -31,7 +31,9 @@ assert(publisher.includes('rows.length!==rosterIds.size'),'Regular-season public
 assert(publisher.includes('process.env.INQUIRER_APPROVED_THROUGH_WEEK??4'),'Unapproved Week 5 and later must remain unpublished by default');
 assert(publisher.includes('if(week>approvedThroughWeek)return latestPublished?'),'Release gate must retain latest published edition without advancing');
 assert(publisher.includes('Final published Inquirer quality gate rejected Week'),'Final postprocessor must not bypass editorial-quality gate before publication');
-assert(publisher.includes('fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`),'),'Weekly transaction fetch failures must not masquerade as weeks without trades');
+assert(publisher.includes('fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>null)')&&publisher.includes('!Array.isArray(transactions)'),'Transaction fetch failures must defer publication rather than masquerade as zero trades');
+assert(publisher.includes('Promise.resolve(completion.rows)'),'Publication must use the previously finalized Sleeper matchup snapshot without refetching');
+assert(publisher.includes('rosters.length!==completion.rows.length'),'Partial roster responses must defer publication');
 const start=publisher.indexOf('function matchupComplete(rows){'),end=publisher.indexOf('function raceSort(',start);
 assert(start>=0&&end>start,'Missing match-completion helpers');
 const testRows=[

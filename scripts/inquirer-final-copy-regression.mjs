@@ -54,6 +54,13 @@ const sandbox={
 vm.createContext(sandbox);
 vm.runInContext(publisher.slice(start,end),sandbox);
 assert.equal((await sandbox.completedPublicationWeek(1)).complete,true,'Finalized complete four-roster fixture must publish');
+const completeStats={a:{pts:112},b:{pts:90},c:{pts:50},d:{pts:65}};
+assert.equal(sandbox.missingPublishedWeekPlayerStats(testRows,completeStats).length,0,'Full scorer coverage must pass');
+const partialStats={a:{pts:112},b:{pts:90},d:{pts:65}};
+assert.deepEqual(Array.from(sandbox.missingPublishedWeekPlayerStats(testRows,partialStats)),['c'],'Partial raw stats must identify missing nonzero matchup scorers');
+const zeroScorerRows=[...testRows,{roster_id:5,matchup_id:3,points:0,players_points:{zero:0}}];
+assert.equal(sandbox.missingPublishedWeekPlayerStats(zeroScorerRows,completeStats).length,0,'Players with zero matchup points need not have a raw stats entry');
+
 activeRows=testRows.slice(0,2);
 assert.equal((await sandbox.completedPublicationWeek(1)).complete,false,'Partial roster coverage must never publish');
 activeRows=testRows.map(x=>({...x}));activeRows[0].points=null;

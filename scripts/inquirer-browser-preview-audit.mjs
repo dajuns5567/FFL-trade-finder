@@ -79,12 +79,9 @@ try{
  await page.waitForTimeout(1300);
  console.log('LIVE_ARCHIVE_OPEN_DIAGNOSTIC',JSON.stringify({reportTitle:await page.locator('#leagueHubContent .lh-report-title').first().textContent().catch(()=>''),selectors:await page.locator('#leagueHubContent select[data-lh-broadcast-article]').count(),buttons:await page.locator('#leagueHubContent button[data-lh-archive-season]').allTextContents(),archiveRequests,archiveRequestStarts,archiveFailures,handlerState:await page.evaluate(()=>window.__fleecedInquirerArchiveOpen||null),textSample:(await page.locator('#leagueHubContent').textContent()).slice(0,850)}));
  const selector=page.locator('#leagueHubContent select[data-lh-broadcast-article]');
- if(!(await selector.count())){
-  const recap=page.locator('#leagueHubContent [data-lh-broadcast-team="__league__"]').first();
-  await recap.waitFor({timeout:30000});
-  await recap.click();
- }
- await selector.waitFor({timeout:30000});
+ // Opening the latest published edition navigates directly to the article picker.
+ // A slow serverless preview may finish after the initial held-state render.
+ await selector.waitFor({state:'visible',timeout:65000});
  const options=await selector.locator('option').allTextContents();
  assert.equal(options.length,33,'Recap navigation must include all 32 team articles');
  assert.match(await page.locator('#leagueHubContent').innerText(),/Weekly Recap/i,'Weekly Recap failed to open');

@@ -62,7 +62,7 @@ try{
  await select.waitFor({timeout:20000});
  const options=await select.locator('option').allTextContents();
  assert.equal(options.length,33,'Article picker must contain recap plus 32 teams');
- for(const team of [week4.teams[0],week4.teams.at(-1)]){
+ for(const team of week4.teams){
   await select.selectOption(String(team.roster_id));
   assert((await page.locator('#leagueHubContent').innerText()).includes(team.team_name),'Team article failed to open: '+team.team_name);
  }
@@ -76,7 +76,7 @@ try{
  await page.locator('#leagueHubContent select[data-lh-archive-week]').first().selectOption('4');
  await page.waitForFunction(()=>String(document.querySelector('#leagueHubContent .lh-report-title')?.textContent||'').includes('Week 4'),null,{timeout:25000});
 
- console.log(JSON.stringify({ok:true,mode:'local-site-v29-and-real-week4-preload',articleOptions:options.length,checkedTeams:[week4.teams[0].team_name,week4.teams.at(-1).team_name],pageErrors:errors.slice(0,10)},null,2));
+ console.log(JSON.stringify({ok:true,mode:'local-site-v29-and-real-week4-preload',articleOptions:options.length,checkedAllWeek4Teams:week4.teams.length,pageErrors:errors.slice(0,10)},null,2));
 }catch(error){
  await page.screenshot({path:'/tmp/inquirer-local-browser-failure.png',fullPage:true}).catch(()=>{});
  console.error('LOCAL_BROWSER_AUDIT_FAILED',error,'PAGE_ERRORS',errors.slice(0,25));

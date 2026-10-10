@@ -125,4 +125,15 @@ factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 44.2 poin
 assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='weekly-player-score'),'Reject mismatched weekly player score');
 factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 45.2 points this week.'}];
 assert.equal(findInquirerSourceFactIssues(factFixture).length,0,'Accept correct source-grounded weekly points');
+
+factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan is averaging 45.2 points per game this season.'}];
+assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='unsupported-player-average'),'Reject unsupported per-game season average');
+factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan finished with 44.2 points.'}];
+assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='weekly-player-score'),'Reject a mismatched finished-with claim');
+factFixture.teams[0].starter_details[0].season_games_played=4;
+factFixture.teams[0].starter_details[0].season_total_points=80;
+factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan is averaging 20 points per game this season.'}];
+assert.equal(findInquirerSourceFactIssues(factFixture).length,0,'Accept an average with a verified numerator and denominator');
+factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan is averaging 25 points per game this season.'}];
+assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='unsupported-player-average'),'Reject an average inconsistent with season scoring');
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

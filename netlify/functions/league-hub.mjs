@@ -546,10 +546,25 @@ async function addRetrospectiveEstimates(edition){
  const missing=teams.flatMap(t=>(t.starter_details||[]).filter(p=>p.projected==null&&p.estimated_projected==null));
  if(!missing.length)return edition;
  const historyFeed=await archivedProjectionMap(year,week);
- if(!historyFeed?.scoring)return edition;
- const starterPositions=new Map(historyFeed.positions);
+ let scoring=historyFeed?.scoring||null;
+ if(!scoring){
+  // The archived edition may retain official player values even if Sleeper's
+  // older projection endpoint is currently empty. Historical completed games
+  // can still supply a separate retrospective estimate.
+  try{
+   let id=LEAGUE;
+   for(let i=0;i<10&&id;i++){
+    const lg=await fetchJson(`${API}/league/${id}`);
+    if(Number(lg?.season)===year){scoring=lg.scoring_settings||null;break}
+    if(Number(lg?.season)<year)break;
+    id=String(lg?.previous_league_id||'');
+   }
+  }catch{}
+ }
+ if(!scoring||!Object.keys(scoring).length)return edition;
+ const starterPositions=new Map(historyFeed?.positions||[]);
  for(const team of teams)for(const player of team.starter_details||[])if(player.id&&player.position)starterPositions.set(String(player.id),String(player.position).toUpperCase());
- const history=await priorProjectionHistory(year,week,historyFeed.scoring,starterPositions);
+ const history=await priorProjectionHistory(year,week,scoring,starterPositions);
  if(process.env.CI)console.log('RETROSPECTIVE_HISTORY_COVERAGE',JSON.stringify({year,week,missing:missing.length,priorRecords:history.length,positions:[...new Set(missing.map(p=>p.position))]}));
  if(!history.length)return edition; // No fake zero or after-the-fact Week 1 score.
  return {...edition,teams:teams.map(team=>{
@@ -574,7 +589,7 @@ async function addArchivedProjectionCoverage(edition){
  if(edition.teams.every(t=>t.projection_snapshot))return addRetrospectiveEstimates(edition);
  const feed=await archivedProjectionMap(year,week);
  if(process.env.CI)console.log('ARCHIVE_PROJECTION_FEED',JSON.stringify({year,week,available:edition?.available,teams:edition?.teams?.length,feed:!!feed,scoringKeys:feed?.scoring_keys||0}));
- if(!feed)return edition;
+ if(!feed)return addRetrospectiveEstimates(edition);
  const out={...edition,teams:edition.teams.map(team=>{
   if(team.projection_snapshot)return team;
   const starters=(team.starter_details||[]).map(player=>{

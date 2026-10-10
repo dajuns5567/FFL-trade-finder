@@ -46,6 +46,8 @@ jobs:
         run: node scripts/inquirer-final-copy-regression.mjs
       - name: Verify rebuilt Week 4 recap and all 32 articles
         run: node scripts/inquirer-week4-rebuild-audit.mjs
+      - name: Audit historical Week 4 projection source coverage
+        run: node scripts/inquirer-week4-projection-source-audit.mjs
       - name: Verify real Week 4 Offensive and IDP Players of the Week
         run: node scripts/inquirer-week4-awards-direct-audit.mjs
       - name: Generate and audit real Sleeper Week 4 candidate

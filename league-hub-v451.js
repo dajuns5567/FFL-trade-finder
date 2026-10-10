@@ -670,14 +670,17 @@ async function render(view=currentView,managerId=''){if(view!=='daily')dailyRend
    }).catch(()=>{scoringHydrationKey=''});
  };
 
+ const traceEdition=(event,payload)=>{if(!/deploy-preview-390/.test(location.hostname))return;const rows=window.__fleecedEditionTrace||(window.__fleecedEditionTrace=[]);rows.push({event,...payload});if(rows.length>80)rows.shift()};
  const drawDaily=()=>{
   if(dailyToken!==dailyRenderToken||currentView!=='daily'||openBroadcastTeam||!document.getElementById('leagueHubContent'))return;
   const dataStats=teamTradeStats(dailyTrades),visibleMgr=mergeVisibleWeekScoring(dailyMgr,publishedW);
   if(visibleMgr)managerCache=visibleMgr;
+  traceEdition('draw',{localWeek:publishedW?.week,cacheWeek:weeklyCache?.week,spotlightWeek:spotlightWeeklyCache?.week,archiveWeek4:!!archivedEditionCache.get('2026|4')?.available});
   const nextHTML=dailyHTML(dailyTrades,dataStats,publishedW,visibleMgr,publishedW);
   if(!drawnDailyOnce||host.innerHTML!==nextHTML){host.innerHTML=nextHTML;drawnDailyOnce=true;}
  };
  const acceptEdition=x=>{
+  traceEdition('candidate',{week:x?.week,localWeek:publishedW?.week,cacheWeek:weeklyCache?.week,available:x?.available});
   if(dailyToken!==dailyRenderToken||!x?.available||!Array.isArray(x.teams)||!x.teams.length)return;
   if(!publishedW||Number(x.season)>Number(publishedW.season)||(Number(x.season)===Number(publishedW.season)&&Number(x.week)>Number(publishedW.week))){
    publishedW=x;weeklyCache=x;spotlightWeeklyCache=x;drawDaily();hydratePublishedSeasonScoring();

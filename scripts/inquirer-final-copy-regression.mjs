@@ -121,7 +121,7 @@ assert(stale.errors.length===2,'Surface both unresolved failures for observabili
 const qualityGateSource=readFileSync('netlify/functions/inquirer-editorial-v31.mjs','utf8');
 assert(qualityGateSource.includes('findInquirerSourceFactIssues(candidate)'), 'Every future edition must run source-fact checks in its quality evaluator');
 assert(qualityGateSource.includes('&&factIssues.length===0'), 'Source-fact errors must block new publication rather than only log warnings');
-const {findInquirerSourceFactIssues}=await import('../netlify/functions/inquirer-source-facts.mjs');
+const {findInquirerSourceFactIssues,buildInquirerEditionFactRegistry}=await import('../netlify/functions/inquirer-source-facts.mjs');
 const factFixture={week:4,teams:[{team_name:'Miami Dolphins',starter_details:[{name:'Tetairoa McMillan',points:45.2}],inquirer_article:{sections:[{paragraphs:['Tetairoa McMillan scored 45.2 points in Week 4.']}]} }],league_overview:{sections:[],hot_takes:[{take:'Tetairoa McMillan has a 45.2-point season average.'}]}};
 assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='unsupported-player-average'),'Reject unsupported season-average claim');
 factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 44.2 points this week.'}];
@@ -198,5 +198,23 @@ assert(matchupCheck('Miami Dolphins has a 4-1 record.').some(x=>x.id==='team-rec
 assert.equal(matchupCheck('Miami Dolphins ranks in position 2.').length,0,'Accept verified standings rank');
 assert(matchupCheck('Miami Dolphins ranks in position 1.').some(x=>x.id==='standings-rank'),'Reject incorrect current standings position');
 assert.equal(matchupCheck('Miami Dolphins had a strong Week 3 despite its late loss.').length,0,'Avoid inferring records from ordinary prose');
+
+
+// Registry is rebuilt from structured edition fields and exposes provenance.
+const registryFixture={week:4,teams:[
+ {roster_id:1,opponent_roster_id:2,team_name:'Alpha',points:105,league_context:{record:{wins:3,losses:1},standings_rank:2},starter_details:[{name:'IDP Star',points:-2}]},
+ {roster_id:2,opponent_roster_id:1,team_name:'Beta',points:90,starter_details:[]}
+]};
+const registry=buildInquirerEditionFactRegistry(registryFixture);
+assert.equal(registry.week,4,'Registry must be scoped to reporting week');
+assert.equal(registry.players.get('idp star')[0].source,'edition.team.starter_details','Player scoring records must carry explicit source');
+assert.equal(registry.teamScoreRules[0].source,'edition.team.points','Team scores must carry source');
+assert.equal(registry.matchups.length,2,'Reciprocal roster links establish two readable matchup perspectives');
+assert.equal(registry.matchups[0].source,'edition.teams.reciprocal_opponent_roster_id+points','Matchup scores must expose source fields');
+registryFixture.teams[1].opponent_roster_id=8;
+assert.equal(buildInquirerEditionFactRegistry(registryFixture).matchups.length,0,'Reject non-reciprocal roster links');
+registryFixture.teams[1].opponent_roster_id=1;
+registryFixture.teams[0].points=null;
+assert.equal(buildInquirerEditionFactRegistry(registryFixture).matchups.length,0,'Missing totals cannot enter matchup fact registry');
 
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

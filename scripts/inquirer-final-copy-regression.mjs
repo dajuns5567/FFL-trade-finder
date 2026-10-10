@@ -28,7 +28,7 @@ assert(frontend.includes("new XMLHttpRequest()")&&frontend.includes("xhr.timeout
 assert(frontend.includes("if(valid(recovered))return recovered"),'Recovered archived content must pass structural validation before opening');
 const publisher=readFileSync('netlify/functions/league-hub.mjs','utf8');
 const scheduler=readFileSync('netlify/functions/inquirer-publish-scheduled.mjs','utf8');
-assert(scheduler.includes("import {weeklyReport} from './league-hub.mjs'")&&scheduler.includes('await weeklyReport(req)'),'Scheduled publishing must use canonical weekly-report approval and completion gates');
+assert(scheduler.includes("import {weeklyReport,capturePregameProjections} from './league-hub.mjs'")&&scheduler.includes('await weeklyReport(req)')&&scheduler.includes('await capturePregameProjections()'),'Scheduled publishing must capture forecasts separately while preserving canonical weekly-report approval and completion gates');
 
 assert(publisher.includes("if(!weeklyStats||typeof weeklyStats!=='object'||!Object.keys(weeklyStats).length)return latestPublished?"),'Weekly Inquirer publication must fail closed while retaining the most recent published edition when Sleeper stats are unavailable');
 assert(publisher.includes('if(!completion.complete)return latestPublished?'),'Unfinished next week must serve the latest already-published edition');

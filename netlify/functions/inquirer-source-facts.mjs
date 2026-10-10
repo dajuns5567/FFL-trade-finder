@@ -27,6 +27,17 @@ export function findInquirerSourceFactIssues(edition){
   arr.push({team:team.team_name,points:pts,player:p});players.set(key,arr);
  }
  const teamScoreRules=edition.teams.map(team=>({name:normalize(team.team_name),score:number(team.points)})).filter(t=>t.name&&t.score!==null);
+
+ // Check explicit current-week head-to-head results against both roster totals.
+ // Opponent identifiers are required: prose alone cannot establish a matchup.
+ const matchups=[];
+ for(const team of edition.teams){
+  const opponent=edition.teams.find(t=>String(t.roster_id)===String(team.opponent_roster_id)&&t!==team);
+  if(!opponent||number(team.points)===null||number(opponent.points)===null)continue;
+  const a=normalize(team.team_name),b=normalize(opponent.team_name);
+  if(!a||!b||a.toLowerCase()===b.toLowerCase())continue;
+  matchups.push({a,b,points:number(team.points),opponentPoints:number(opponent.points)});
+ }
  const all=[['Weekly Recap',edition.league_overview],...edition.teams.map(t=>[t.team_name||String(t.roster_id),t.inquirer_article])];
  for(const [articleName,article] of all){
   for(const paragraph of articleText(article)){
@@ -45,6 +56,21 @@ export function findInquirerSourceFactIssues(edition){
       if(mentioned===week&&Math.abs(reported-team.score)>0.055)
        issues.push({id:'weekly-team-score',article:articleName,team:team.name,reported,expected:team.score,week});
      }
+    }
+   }
+
+   // The generator uses “Team beat/lost to Opponent 123.4–99.1”.
+   // Only check named pairings with a verified roster linkage, preserving
+   // historic comparisons and unqualified editorial language.
+   for(const fixture of matchups){
+    const numeric='(-?\\\\d+(?:\\\\.\\\\d+)?)';
+    const pattern=new RegExp('\\\\b'+esc(fixture.a)+'\\\\s+(beat|lost to|defeated)\\\\s+'+esc(fixture.b)+'\\\\s+'+numeric+'\\\\s*[–—-]\\\\s*'+numeric+'\\\\b','gi');
+    for(const m of paragraph.matchAll(pattern)){
+     const left=Number(m[2]),right=Number(m[3]),verb=m[1].toLowerCase();
+     if(Math.abs(left-fixture.points)>0.055||Math.abs(right-fixture.opponentPoints)>0.055)
+      issues.push({id:'matchup-score',article:articleName,team:fixture.a,opponent:fixture.b,reported:[left,right],expected:[fixture.points,fixture.opponentPoints],week});
+     if((verb==='lost to'&&fixture.points>fixture.opponentPoints)||(verb!=='lost to'&&fixture.points<fixture.opponentPoints))
+      issues.push({id:'matchup-result',article:articleName,team:fixture.a,opponent:fixture.b,week});
     }
    }
    // Fast reject for ordinary prose; only explicit scoring statements need source checks.

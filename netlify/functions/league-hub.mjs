@@ -487,14 +487,15 @@ async function archivedProjectionMap(season,week){
     if(!projectionResponse.ok)throw Error('Sleeper historical projection HTTP '+projectionResponse.status);
     const raw=await projectionResponse.json();
     const scoring=league?.scoring_settings||{};
-    if(!Array.isArray(raw)||!Object.keys(scoring).length)return null;
+    const historicalRows=projectionRows(raw);
+    if(!historicalRows.length||!Object.keys(scoring).length)return null;
     // Captured before week scoring began; unlike a later historical feed this
     // preserves the earliest available numerical projections.
     let captured=null;
     try{captured=await store().get(`inquirer/projections/${season}/week-${String(week).padStart(2,'0')}.json`,{type:'json'})}catch{}
     const capturedPoints=captured?.before_scoring_recorded&&captured?.season===Number(season)&&captured?.week===Number(week)?captured.points_by_player:null;
     const values=new Map(),positions=new Map();
-    for(const row of raw){
+    for(const row of historicalRows){
      const id=String(row?.player_id||'');if(!id)continue;
      if(row?.player?.position)positions.set(id,String(row.player.position).toUpperCase());
      const projection=score(row?.stats,scoring);
@@ -540,6 +541,7 @@ async function priorProjectionHistory(year,week,scoring,positions){
 }
 async function addRetrospectiveEstimates(edition){
  const year=Number(edition?.season),week=Number(edition?.week),teams=edition?.teams||[];
+ if(process.env.CI)console.log('RETROSPECTIVE_ESTIMATE_GATE',JSON.stringify({year,week,teams:teams.length,snapshots:teams.filter(t=>t.projection_snapshot).length,alreadyEstimated:teams.filter(t=>t.projection_estimate_snapshot).length,missingNumeric:teams.flatMap(t=>(t.starter_details||[]).filter(p=>p.projected==null||!Number.isFinite(Number(p.projected)))).length}));
  if(!edition?.available||!teams.length||teams.every(t=>t.projection_estimate_snapshot))return edition;
  // Estimate only when the original numerical projection is unavailable.
  const missing=teams.flatMap(t=>(t.starter_details||[]).filter(p=>p.projected==null&&p.estimated_projected==null));

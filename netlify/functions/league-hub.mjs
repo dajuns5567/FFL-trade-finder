@@ -1,3 +1,4 @@
+import {fallbackProjection} from './inquirer-projection-fallback.mjs';
 import { getStore } from '@netlify/blobs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
@@ -480,25 +481,78 @@ async function archivedProjectionMap(season,week){
     const raw=await projectionResponse.json();
     const scoring=league?.scoring_settings||{};
     if(!Array.isArray(raw)||!Object.keys(scoring).length)return null;
-    const values=new Map();
+    const values=new Map(),positions=new Map();
     for(const row of raw){
      const id=String(row?.player_id||'');if(!id)continue;
+     if(row?.player?.position)positions.set(id,String(row.player.position).toUpperCase());
      const projection=score(row?.stats,scoring);
      if(projection!==null)values.set(id,projection);
     }
-    return {values,source:`https://api.sleeper.app/projections/nfl/${season}/${week}?season_type=regular`,retrieved_at:new Date().toISOString(),scoring_keys:Object.keys(scoring).length};
+    return {values,positions,scoring,source:`https://api.sleeper.app/projections/nfl/${season}/${week}?season_type=regular`,retrieved_at:new Date().toISOString(),scoring_keys:Object.keys(scoring).length};
    }finally{clearTimeout(timer)}
   })().catch(e=>{console.warn('Historical Sleeper projections unavailable',key,String(e?.message||e));return null});
   archiveProjectionCache.set(key,work);
  }
  return archiveProjectionCache.get(key);
 }
+const estimateHistoryCache=new Map();
+async function priorProjectionHistory(year,week,scoring,positions){
+ const key=year+'|'+week;
+ if(!estimateHistoryCache.has(key)){
+  const promise=(async()=>{
+   // Never sample the report week or any later NFL performances.
+   const previous=Array.from({length:4},(_,i)=>week-1-i).filter(n=>n>=1);
+   if(!previous.length)return[];
+   const control=new AbortController(),timeout=setTimeout(()=>control.abort(),12000);
+   try{
+    const results=await Promise.all(previous.map(async w=>{
+     try{
+      const response=await fetch(`https://api.sleeper.app/stats/nfl/regular/${year}/${w}`,{signal:control.signal});
+      if(!response.ok)return[];
+      const raw=await response.json();
+      return Object.entries(raw||{}).flatMap(([id,value])=>{
+       const stats=value?.stats||value,points=score(stats,scoring);
+       return points===null?[]:[{player_id:id,position:positions.get(String(id))||'',points,week:w}];
+      });
+     }catch{return[]}
+    }));
+    return results.flat();
+   }finally{clearTimeout(timeout)}
+  })().catch(()=>[]);
+  estimateHistoryCache.set(key,promise);
+ }
+ return estimateHistoryCache.get(key);
+}
+async function addRetrospectiveEstimates(edition){
+ const year=Number(edition?.season),week=Number(edition?.week),teams=edition?.teams||[];
+ if(!edition?.available||!teams.length||teams.every(t=>t.projection_estimate_snapshot))return edition;
+ // Estimate only when the original numerical projection is unavailable.
+ const missing=teams.flatMap(t=>(t.starter_details||[]).filter(p=>p.projected==null));
+ if(!missing.length)return edition;
+ const historyFeed=await archivedProjectionMap(year,week);
+ if(!historyFeed?.scoring)return edition;
+ const history=await priorProjectionHistory(year,week,historyFeed.scoring,historyFeed.positions);
+ if(!history.length)return edition; // No fake zero or after-the-fact Week 1 score.
+ return {...edition,teams:teams.map(team=>{
+  const players=(team.starter_details||[]).map(player=>{
+   if(player.projected!=null)return player;
+   const estimate=fallbackProjection({playerId:player.id,position:player.position,history});
+   return estimate?{...player,estimated_projected:estimate.points,estimate_basis:estimate.basis,estimate_sample_size:estimate.sample_size,estimate_confidence:estimate.confidence}:player;
+  });
+  const resolved=players.every(p=>p.projected!=null||p.estimated_projected!=null);
+  const estimated=players.filter(p=>p.projected==null&&p.estimated_projected!=null).length;
+  const total=resolved?Number(players.reduce((n,p)=>n+Number(p.projected??p.estimated_projected),0).toFixed(2)):null;
+  return {...team,starter_details:players,estimated_projected:total,estimated_starter_count:estimated,
+   projection_estimate_snapshot:{method:'prior-week actuals; otherwise prior-week same-position median',source:'Sleeper completed prior games',through_week:week-1,confidence:estimated?'low':'not-applicable',retrospective:true,verified_pregame:false}};
+ })};
+}
+
 async function addArchivedProjectionCoverage(edition){
  const year=Number(edition?.season),week=Number(edition?.week);
  if(!edition?.available||!Array.isArray(edition.teams)||!edition.teams.length||!Number.isInteger(year)||!Number.isInteger(week))return edition;
  // Week 4 has an immutable audited snapshot. Do not overwrite it.
- if(year===2026&&week===4&&edition.teams.every(t=>t.projection_snapshot))return edition;
- if(edition.teams.every(t=>t.projection_snapshot))return edition;
+ if(year===2026&&week===4&&edition.teams.every(t=>t.projection_snapshot))return addRetrospectiveEstimates(edition);
+ if(edition.teams.every(t=>t.projection_snapshot))return addRetrospectiveEstimates(edition);
  const feed=await archivedProjectionMap(year,week);
  if(!feed)return edition;
  const out={...edition,teams:edition.teams.map(team=>{

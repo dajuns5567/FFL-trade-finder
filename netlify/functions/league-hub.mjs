@@ -440,10 +440,8 @@ export async function weeklyReport(req){
  if(forward){
   const rawFactIssues=findInquirerRawMatchupIssues(result,completion.rows);
   if(rawFactIssues.length)throw new Error('Sleeper matchup source reconciliation rejected Week '+week+': '+JSON.stringify(rawFactIssues).slice(0,4000));
-  if(Array.isArray(canonicalTrades?.trades)){
-   const tradeFactIssues=findInquirerTradeCountIssues(result,canonicalTrades.trades);
-   if(tradeFactIssues.length)throw new Error('Canonical weekly trades reconciliation rejected Week '+week+': '+JSON.stringify(tradeFactIssues).slice(0,4000));
-  }
+  const tradeFactIssues=findInquirerTradeCountIssues(result,canonicalTrades?.trades);
+  if(tradeFactIssues.length)throw new Error('Canonical weekly trades reconciliation rejected Week '+week+': '+JSON.stringify(tradeFactIssues).slice(0,4000));
   const seasonFactIssues=findInquirerSeasonRecordIssues(result,seasonMatchupsRows);
   if(seasonFactIssues.length)throw new Error('Sleeper season record reconciliation rejected Week '+week+': '+JSON.stringify(seasonFactIssues).slice(0,4000));
  }

@@ -3,7 +3,9 @@ import {chromium} from 'playwright';
 let root=process.env.INQUIRER_PREVIEW_URL||'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:950}});
-const errors=[],archiveRequests=[];
+const errors=[],archiveRequests=[],archiveRequestStarts=[],archiveFailures=[];
+page.on('request',r=>{if(r.url().includes('league-hub-week4-fast'))archiveRequestStarts.push({url:r.url(),method:r.method()})});
+page.on('requestfailed',r=>{if(r.url().includes('league-hub-week4-fast'))archiveFailures.push({url:r.url(),failure:r.failure()?.errorText})});
 page.on('response',r=>{if(r.url().includes('league-hub-week4-fast')||r.url().includes('broadcast_week=4'))archiveRequests.push({url:r.url(),status:r.status()})});
 page.on('pageerror',error=>errors.push(String(error?.message||error)));
 try{
@@ -75,7 +77,7 @@ try{
  await awardsHeading.waitFor({state:'visible',timeout:60000});
  assert(await awardsHeading.isVisible(),'Players of the Week must remain visually accessible after opening latest edition');
  await page.waitForTimeout(1300);
- console.log('LIVE_ARCHIVE_OPEN_DIAGNOSTIC',JSON.stringify({reportTitle:await page.locator('#leagueHubContent .lh-report-title').first().textContent().catch(()=>''),selectors:await page.locator('#leagueHubContent select[data-lh-broadcast-article]').count(),buttons:await page.locator('#leagueHubContent button[data-lh-archive-season]').allTextContents(),archiveRequests,handlerState:await page.evaluate(()=>window.__fleecedInquirerArchiveOpen||null),textSample:(await page.locator('#leagueHubContent').textContent()).slice(0,850)}));
+ console.log('LIVE_ARCHIVE_OPEN_DIAGNOSTIC',JSON.stringify({reportTitle:await page.locator('#leagueHubContent .lh-report-title').first().textContent().catch(()=>''),selectors:await page.locator('#leagueHubContent select[data-lh-broadcast-article]').count(),buttons:await page.locator('#leagueHubContent button[data-lh-archive-season]').allTextContents(),archiveRequests,archiveRequestStarts,archiveFailures,handlerState:await page.evaluate(()=>window.__fleecedInquirerArchiveOpen||null),textSample:(await page.locator('#leagueHubContent').textContent()).slice(0,850)}));
  const selector=page.locator('#leagueHubContent select[data-lh-broadcast-article]');
  if(!(await selector.count())){
   const recap=page.locator('#leagueHubContent [data-lh-broadcast-team="__league__"]').first();

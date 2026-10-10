@@ -14,7 +14,10 @@ function articleText(article){
 function isOtherWeek(text,match,current){
  const suffix=String(text).slice(match.index+match[0].length,match.index+match[0].length+24);
  const explicit=suffix.match(/^\s*(?:in|during|for)\s+Week\s+(\d+)\b/i);
- return !!explicit&&Number(explicit[1])!==Number(current);
+ if(explicit)return Number(explicit[1])!==Number(current);
+ const prefix=String(text).slice(Math.max(0,match.index-42),match.index);
+ const before=prefix.match(/\b(?:in|during|for)\s+Week\s+(\d+)\s*[,–—:-]?\s*$/i);
+ return !!before&&Number(before[1])!==Number(current);
 }
 
 // Source-attributed, read-only per-edition registry. Values come from the

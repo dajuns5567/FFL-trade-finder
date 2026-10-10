@@ -107,6 +107,7 @@ try{
 } catch(error){
  await page.screenshot({path:'/tmp/inquirer-browser-preview-failure.png',fullPage:true}).catch(()=>{});
  console.error('BROWSER_PREVIEW_AUDIT_FAILED',error);
+ console.error('POST_FAILURE_ARCHIVE_STATE',JSON.stringify(await page.evaluate(()=>window.__fleecedInquirerArchiveOpen||null).catch(()=>null)));
  console.error('BROWSER_PAGE_ERRORS',JSON.stringify(errors.slice(0,20)));
  throw error;
 } finally{await browser.close()}

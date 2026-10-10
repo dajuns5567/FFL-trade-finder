@@ -5,6 +5,8 @@ on:
     paths:
       - 'scripts/inquirer-week4-direct-audit.mjs'
       - 'scripts/inquirer-week4-projection-source-audit.mjs'
+      - 'scripts/inquirer-week4-projection-regression.mjs'
+      - 'netlify/functions/inquirer-week4-2026-projections.mjs'
       - 'scripts/inquirer-week4-rebuild-audit.mjs'
       - 'scripts/inquirer-week4-awards-direct-audit.mjs'
       - 'scripts/league-hub-latest-awards-regression.mjs'
@@ -47,6 +49,8 @@ jobs:
         run: node scripts/inquirer-final-copy-regression.mjs
       - name: Verify rebuilt Week 4 recap and all 32 articles
         run: node scripts/inquirer-week4-rebuild-audit.mjs
+      - name: Verify frozen Week 4 projection snapshot and custom scoring coverage
+        run: node scripts/inquirer-week4-projection-regression.mjs
       - name: Audit historical Week 4 projection source coverage
         run: node scripts/inquirer-week4-projection-source-audit.mjs
       - name: Verify real Week 4 Offensive and IDP Players of the Week

@@ -510,7 +510,7 @@ async function addArchivedProjectionCoverage(edition){
   const covered=starters.filter(p=>p.projected!==null).length;
   const subtotal=Number(starters.reduce((n,p)=>n+(p.projected??0),0).toFixed(2));
   return {...team,starter_details:starters,starter_count:starters.length,projection_coverage:covered,
-   projected:starters.length&&covered===starters.length?subtotal:null,projection_subtotal:subtotal,
+   projected:starters.length&&covered===starters.length?subtotal:null,projection_subtotal:covered?subtotal:null,
    projection_snapshot:{source:feed.source,retrieved_at:feed.retrieved_at,verified_pregame:false,
     scoring_keys:feed.scoring_keys,coverage:covered,starters:starters.length}};
  })};

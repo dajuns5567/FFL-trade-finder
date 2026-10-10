@@ -56,6 +56,10 @@ const sandbox={
 vm.createContext(sandbox);
 vm.runInContext(publisher.slice(start,end),sandbox);
 assert.equal((await sandbox.completedPublicationWeek(1)).complete,true,'Finalized complete four-roster fixture must publish');
+assert.equal(sandbox.matchupComplete([testRows[0],{...testRows[1],roster_id:1},...testRows.slice(2)]),false,'Duplicate roster within the same matchup must be rejected');
+assert.equal(sandbox.matchupComplete([testRows[0],testRows[1],{...testRows[2],roster_id:2},testRows[3]]),false,'Roster duplicated between matchup groups must be rejected');
+assert.equal(sandbox.matchupComplete(testRows.map((row,i)=>i===0?{...row,roster_id:null}:row)),false,'Unidentified matchup roster must be rejected');
+
 const completeStats={a:{pts:112},b:{pts:90},c:{pts:50},d:{pts:65}};
 assert.equal(sandbox.missingPublishedWeekPlayerStats(testRows,completeStats).length,0,'Full scorer coverage must pass');
 const partialStats={a:{pts:112},b:{pts:90},d:{pts:65}};

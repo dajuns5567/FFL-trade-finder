@@ -681,6 +681,8 @@ async function render(view=currentView,managerId=''){if(view!=='daily')dailyRend
    if(dailyToken!==dailyRenderToken)return;
    broadcastArchive=Array.isArray(x?.reports)?x.reports:[];for(let week=1;week<=4;week++)ensureArchiveWeek(2026,week);
    acceptEdition(x?.latest);
+   const newestPublished=(broadcastArchive||[]).filter(row=>Number(row?.season)>0&&Number(row?.week)>0).slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0];
+   if(newestPublished)fetchArchivedEdition(Number(newestPublished.season),Number(newestPublished.week)).then(acceptEdition).catch(()=>{});
    drawDaily();
   })
   .catch(()=>{

@@ -547,6 +547,7 @@ async function addRetrospectiveEstimates(edition){
  const historyFeed=await archivedProjectionMap(year,week);
  if(!historyFeed?.scoring)return edition;
  const history=await priorProjectionHistory(year,week,historyFeed.scoring,historyFeed.positions);
+ if(process.env.CI)console.log('RETROSPECTIVE_HISTORY_COVERAGE',JSON.stringify({year,week,missing:missing.length,priorRecords:history.length,positions:[...new Set(missing.map(p=>p.position))]}));
  if(!history.length)return edition; // No fake zero or after-the-fact Week 1 score.
  return {...edition,teams:teams.map(team=>{
   const players=(team.starter_details||[]).map(player=>{
@@ -557,8 +558,8 @@ async function addRetrospectiveEstimates(edition){
   const resolved=players.every(p=>p.projected!=null||p.estimated_projected!=null);
   const estimated=players.filter(p=>p.projected==null&&p.estimated_projected!=null).length;
   const total=resolved?Number(players.reduce((n,p)=>n+Number(p.projected??p.estimated_projected),0).toFixed(2)):null;
-  return {...team,starter_details:players,estimated_projected:total,estimated_starter_count:estimated,
-   projection_estimate_snapshot:{method:'prior-week actuals; otherwise prior-week same-position median',source:'Sleeper completed prior games',through_week:week-1,confidence:estimated?'low':'not-applicable',retrospective:true,verified_pregame:false}};
+  return {...team,starter_details:players,estimated_projected:estimated?total:null,estimated_starter_count:estimated,
+   projection_estimate_snapshot:estimated?{method:'prior-week actuals; otherwise prior-week same-position median',source:'Sleeper completed prior games',through_week:week-1,confidence:'low',retrospective:true,verified_pregame:false}:null};
  })};
 }
 

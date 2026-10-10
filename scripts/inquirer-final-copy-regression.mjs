@@ -64,6 +64,8 @@ const completeStats={a:{pts:112},b:{pts:90},c:{pts:50},d:{pts:65}};
 assert.equal(sandbox.missingPublishedWeekPlayerStats(testRows,completeStats).length,0,'Full scorer coverage must pass');
 const partialStats={a:{pts:112},b:{pts:90},d:{pts:65}};
 assert.deepEqual(Array.from(sandbox.missingPublishedWeekPlayerStats(testRows,partialStats)),['c'],'Partial raw stats must identify missing nonzero matchup scorers');
+assert.deepEqual(Array.from(sandbox.missingPublishedWeekPlayerStats(testRows,{...completeStats,c:null})),['c'],'Null raw player stat entry must not be counted as complete');
+assert.deepEqual(Array.from(sandbox.missingPublishedWeekPlayerStats(testRows,{...completeStats,c:{}})),['c'],'Empty player stat record must not be counted as complete');
 const zeroScorerRows=[...testRows,{roster_id:5,matchup_id:3,points:0,players_points:{zero:0}}];
 assert.equal(sandbox.missingPublishedWeekPlayerStats(zeroScorerRows,completeStats).length,0,'Players with zero matchup points need not have a raw stats entry');
 

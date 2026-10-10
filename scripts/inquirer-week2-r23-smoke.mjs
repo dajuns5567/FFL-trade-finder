@@ -44,9 +44,6 @@ function canonicalScoreRows(text){
 
 const allTeamInventory=(revised.teams||[]).map(t=>({team:String(t.team_name||''),words:words(fullText(t)),reporter:String(t.inquirer_article?.reporter?.id||''),sections:(t.inquirer_article?.sections||[]).length})).sort((a,b)=>a.words-b.words);
 console.log('WEEK2_32_TEAM_QUALITY_INVENTORY',JSON.stringify({total:allTeamInventory.length,below750:allTeamInventory.filter(x=>x.words<750),all:allTeamInventory}));
-console.log('WEEK2_EDITORIAL_CONTEXT_SAMPLES',JSON.stringify(revised.teams.filter(t=>['Cleveland Browns','New England Patriots','Tampa Bay Buccaneers','Los Angeles Rams'].includes(t.team_name)).map(t=>({team:t.team_name,record:t.league_context?.record,starter_details:t.starter_details,bench_details:t.bench_details,upcoming_opponents:t.upcoming_opponents,matchup:t.matchup,keys:Object.keys(t),sections:t.inquirer_article.sections.map(s=>({heading:s.heading,kind:s.kind,paragraphs:s.paragraphs}))}))));
-const forbiddenMetaphors=/\b(?:furniture|chair|chairs|table|tables|tablecloth|linen|napkin|napkins|china|silverware|place setting|place settings|seating|centerpiece|dining room|dinner|plate|plates|reservation|reservations|guest list|velvet rope|chaise|ballroom|salon|coat check)\b/i;
-console.log('WEEK2_ROYCINGTON_METAPHOR_EXCERPTS',JSON.stringify(revised.teams.filter(t=>t.inquirer_article?.reporter?.id==='tess-delaney').map(t=>({team:t.team_name,hits:[t.inquirer_article.headline,...t.inquirer_article.sections.flatMap(s=>[s.heading,...s.paragraphs])].filter(x=>forbiddenMetaphors.test(String(x)))})).filter(x=>x.hits.length)));
 const reporterCounts=new Map();
 const reporterWordMins=new Map();
 const crossSentenceMap=new Map();

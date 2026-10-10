@@ -111,6 +111,21 @@ function repairUnderlengthWeek2(team){
 }
 
 
+
+function preserveVerifiedWeek3ProjectionRead(team){
+ const article=team?.inquirer_article,section=(article?.sections||[]).find(sec=>sec?.kind==='outlook');
+ if(!section||!Array.isArray(section.paragraphs))return team;
+ if(!validNum(team.next_projected)||!validNum(team.next_opponent_projected))return team;
+ const own=Number(team.next_projected),other=Number(team.next_opponent_projected);
+ const full=section.paragraphs.join(' ');
+ if(full.includes(own.toFixed(1))&&full.includes(other.toFixed(1))&&/\b(?:favorite|favored|edge|dead even|projection favorite)\b/i.test(full))return team;
+ const opponent=String(team.next_opponent_name||'the next opponent');
+ const who=own>other?String(team.team_name)+' is the projection favorite':other>own?opponent+' is the projection favorite':'the projection has the teams dead even';
+ section.paragraphs.unshift(`For Week 3, the available lineup projections currently list ${team.team_name} at ${own.toFixed(1)} fantasy points and ${opponent} at ${other.toFixed(1)}. On that narrow forecast, ${who}. The matchup has not been played, and these projected totals must not be treated as completed scoring or as a guarantee of the result.`);
+ article.paragraphs=article.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);
+ return team;
+}
+
 function contextualizeSharedWeek2Sentences(teams){
  const normalized=p=>String(p||'').trim().toLowerCase().replace(/\s+/g,' ');
  const appearances=new Map();
@@ -145,7 +160,7 @@ export function applyWeek2EditorialR16(raw){
    for(const sec of a.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(p=>String(p).replace(/group chat/gi,'argument over the lineup').replace(/\breceipts?\b/gi,'results').replace('a good seat at the table','a favorable place in the standings').replace(/one may mock the furniture while still approving the occupant/gi,'one can question the spectacle while acknowledging the player who delivered'));
    a.paragraphs=a.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);return team;
   });
-  out.teams=contextualizeSharedWeek2Sentences(out.teams);
+  out.teams=contextualizeSharedWeek2Sentences(out.teams.map(preserveVerifiedWeek3ProjectionRead));
   return out;
 }
 

@@ -275,4 +275,11 @@ assert(findInquirerRawMatchupIssues(sourcedEdition,matchedStarters).some(x=>x.id
 sourcedEdition.teams[0].starter_details[1].id='playerB';
 assert.equal(findInquirerRawMatchupIssues(sourcedEdition,matchedStarters).length,0,'Restored complete starter coverage passes');
 
+
+// Historical week qualifiers can precede player claims as well as follow them.
+assert.equal(checkTake('In Week 3, Defender Example scored 8 points.').length,0,'Leading past-week qualifier must not be treated as current score');
+assert(checkTake('In Week 4, Defender Example scored 8 points.').some(x=>x.id==='weekly-player-score'),'Leading current-week qualifier must still be verified');
+assert.equal(checkTake('In Week 3, Defender Example finished with 8 points.').length,0,'Leading past-week qualifier works for finished-with claims');
+assert(checkTake('During Week 4, Defender Example finished with 8 points.').some(x=>x.id==='weekly-player-score'),'Leading current-week qualifier works for finished-with claims');
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

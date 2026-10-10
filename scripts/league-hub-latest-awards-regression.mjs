@@ -23,6 +23,7 @@ assert.match(officialHtml,/Official Offense/);
 assert.match(officialHtml,/Official Defense/);
 assert.doesNotMatch(officialHtml,/Receiver Two/);
 assert.match(context.playersOfWeekHTML({season:2026,week:5,teams:[]},{records:[]}),/Players of the Week/);
+assert(source.includes('current.outerHTML=playersOfWeekHTML(w,data)'),'Open article must refresh the Players of the Week section after verified awards arrive');
 assert(source.includes('discoverLatestWeek().then(x=>'),'Daily view must discover latest published week');
 assert(source.includes('if(x?.available&&Array.isArray(x.teams)&&x.teams.length)acceptEdition(x)'),'Latest edition must become selected');
 const awardFns=take('const safeProjection=x=>','async function ensureCurrentWeekAwards(w){');

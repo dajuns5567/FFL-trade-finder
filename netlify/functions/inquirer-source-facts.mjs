@@ -76,7 +76,7 @@ export function findInquirerRawMatchupIssues(edition,rawRows){
   const rawStarters=Array.isArray(raw.starters)?new Set(raw.starters.filter(v=>v!=null).map(String)):null;
   const seenPlayers=new Set();
   for(const p of team.starter_details||[]){
-   if(p?.id==null)continue;
+   if(p?.id==null){issues.push({id:'raw-matchup-starter-id-missing',roster_id:rosterId});continue}
    const id=String(p.id);
    if(seenPlayers.has(id)){issues.push({id:'raw-matchup-duplicate-starter',roster_id:rosterId,player_id:id});continue}
    seenPlayers.add(id);
@@ -87,6 +87,8 @@ export function findInquirerRawMatchupIssues(edition,rawRows){
    if(source===null||reported===null||Math.abs(source-reported)>0.055)
     issues.push({id:'raw-matchup-player-score',roster_id:rosterId,player_id:id,expected:source,reported});
   }
+  if(rawStarters)for(const id of rawStarters)if(id&&id!=='0'&&!seenPlayers.has(id))
+   issues.push({id:'raw-matchup-edition-starter-missing',roster_id:rosterId,player_id:id});
  }
  for(const rosterId of byId.keys())if(!seenEdition.has(rosterId))issues.push({id:'raw-matchup-edition-roster-missing',roster_id:rosterId});
  return issues;

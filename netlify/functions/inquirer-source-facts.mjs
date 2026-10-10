@@ -22,7 +22,11 @@ export function findInquirerSourceFactIssues(edition){
  const all=[['Weekly Recap',edition.league_overview],...edition.teams.map(t=>[t.team_name||String(t.roster_id),t.inquirer_article])];
  for(const [articleName,article] of all){
   for(const paragraph of articleText(article)){
+   // Fast reject for ordinary prose; only explicit scoring statements need source checks.
+   if(!/\b(?:scored|posted|recorded|put up|supplied|produced|season average)\b/i.test(paragraph))continue;
+   const lowercase=paragraph.toLowerCase();
    for(const [key,entries] of players){
+    if(!lowercase.includes(key))continue;
     // Only validate unambiguous matches; names reused by different players are skipped.
     if(entries.length!==1)continue;
     const p=entries[0],actual=p.points,name=normalize(p.player.name),escaped=esc(name);

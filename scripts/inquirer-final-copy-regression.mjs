@@ -322,7 +322,7 @@ assert(findInquirerTradeCountIssues(tradeEdition,canonicalTradeRows).some(x=>x.i
 tradeEdition.teams[1].trade_history=[{transaction_id:'trade-1'}];
 assert.equal(findInquirerTradeCountIssues(tradeEdition,[...canonicalTradeRows,{season:2026,week:3,roster_ids:[1,2]}]).length,0,'Ignore past-week trades in current weekly count');
 assert(findInquirerTradeCountIssues(tradeEdition,null).some(x=>x.id==='trade-source-unavailable'),'Unavailable trade ledger cannot certify trade claims');
-assert(publisher.includes('findInquirerTradeCountIssues(result,canonicalTrades.trades)'), 'Publisher must check trade count against canonical data');
+assert(publisher.includes('findInquirerTradeCountIssues(result,canonicalTrades?.trades)'), 'Publisher must fail closed against unavailable canonical trade ledger');
 
 
 const seasonEdition={season:2026,week:2,teams:[

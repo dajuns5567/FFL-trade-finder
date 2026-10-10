@@ -9,6 +9,7 @@ import week4Preload2026 from './inquirer-week4-2026-preload.mjs';
 import {applyWeek2EditorialR16} from './inquirer-week2-editorial-r28.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
+import {findInquirerRawMatchupIssues} from './inquirer-source-facts.mjs';
 import {applyPublishedForwardFix} from './inquirer-week3-published-r1.mjs';
 import {rebuildWeek4Editorial} from './inquirer-week4-editorial-rebuild.mjs';
 
@@ -435,6 +436,10 @@ export async function weeklyReport(req){
  if(forward){
   const finalQuality=evaluateInquirerEditionQuality({week,teams:result.teams,league_overview:result.league_overview},previousBroadcast);
   if(!finalQuality.ok)throw new Error('Final published Inquirer quality gate rejected Week '+week+': '+JSON.stringify(finalQuality.issues||[]).slice(0,4000));
+ }
+ if(forward){
+  const rawFactIssues=findInquirerRawMatchupIssues(result,completion.rows);
+  if(rawFactIssues.length)throw new Error('Sleeper matchup source reconciliation rejected Week '+week+': '+JSON.stringify(rawFactIssues).slice(0,4000));
  }
  const integrity=publishedArticleIntegrity(result,(rosters||[]).length||32);
  if(!integrity.ok)throw new Error('Week '+week+' publish integrity rejected: '+integrity.issues.join('; '));

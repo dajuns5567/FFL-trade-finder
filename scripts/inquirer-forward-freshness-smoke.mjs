@@ -3,6 +3,7 @@ import week2raw from '../netlify/functions/inquirer-week2-2026-preload.mjs';
 import {applyWeek2EditorialR16} from '../netlify/functions/inquirer-week2-editorial-r28.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
 import {inquirerWeekClassification} from '../netlify/functions/inquirer-reporters.mjs';
+import {rebuildForwardInquirerEditorial} from '../netlify/functions/inquirer-week4-editorial-rebuild.mjs';
 
 const clone=x=>structuredClone(x);
 const week2=applyWeek2EditorialR16(clone(week2raw));
@@ -78,6 +79,16 @@ for(let week=3;week<=17;week++){
   assert.equal(candidate.editorial_revision,14);
   assert.match(String(candidate.league_overview?.headline||''),new RegExp(`Week ${week}`,'i'),`Week ${week} recap headline must be current`);
   assert.ok(candidate.teams.every(t=>Number(t?.inquirer_article?.week)===week),`Week ${week} article metadata must be current`);
+
+  if(week>=4){
+    const published=rebuildForwardInquirerEditorial(candidate,{previousEdition:previous});
+    const recap=published.league_overview?.sections?.[0];
+    assert.equal(recap?.blocks?.length,6,`Week ${week} published recap must have six editorial themes`);
+    assert.deepEqual(recap.blocks.map(b=>b.kind),['lead','standings','players','decisions','league','outlook'],`Week ${week} published recap reverted to old game-by-game format`);
+    assert(recap.blocks.every(b=>Array.isArray(b.paragraphs)&&b.paragraphs.length>=2),`Week ${week} published recap contains an empty theme`);
+    assert(recap.blocks.every(b=>!/(?:The Week’s Loudest Game|The Closest Finish|The Biggest Margin|Another Scoring Headline|The Other Game That Deserves a Look)/i.test(b.heading||'')),`Week ${week} published recap reused an outdated format heading`);
+    assert.equal(published.teams.length,32,`Week ${week} rebuild must retain all teams`);
+  }
 
   const copy=[...candidate.teams.flatMap(t=>articleSentences(t?.inquirer_article)),...articleSentences(candidate.league_overview)].join(' ');
   assert.doesNotMatch(copy,/\b(?:the Fleeced signal says|Fleeced signal indicates|according to the Fleeced signal)\b/i,'Signals must read naturally, never as database citations');

@@ -52,10 +52,12 @@ try{
  const awardsHeading=page.locator('#leagueHubContent h3').filter({hasText:'Players of the Week'}).first();
  await awardsHeading.waitFor({state:'visible',timeout:60000});
  assert(await awardsHeading.isVisible(),'Players of the Week must remain visually accessible after opening latest edition');
- const recap=page.locator('#leagueHubContent [data-lh-broadcast-team="__league__"]').first();
- await recap.waitFor({timeout:30000});
- await recap.click();
  const selector=page.locator('#leagueHubContent select[data-lh-broadcast-article]');
+ if(!(await selector.count())){
+  const recap=page.locator('#leagueHubContent [data-lh-broadcast-team="__league__"]').first();
+  await recap.waitFor({timeout:30000});
+  await recap.click();
+ }
  await selector.waitFor({timeout:30000});
  const options=await selector.locator('option').allTextContents();
  assert.equal(options.length,33,'Recap navigation must include all 32 team articles');

@@ -119,6 +119,12 @@ function restoreVerifiedPlayerHistoryComparison(team){
  if(!playerSection||!Array.isArray(playerSection.paragraphs))return team;
  const reporter=String(article.reporter?.id||'');
  for(const player of (team.starter_details||[]).slice(0,3)){
+  if(!player?.name)continue;
+  if(sections.flatMap(sec=>sec.paragraphs||[]).join(' ').includes(String(player.name)))continue;
+  const position=String(player.position||'starter'),slot=String(player.lineup_slot||'starting lineup').replace(/_/g,' '),club=String(player.nfl_team||'');
+  playerSection.paragraphs.unshift(`${player.name}, a ${position} ${club?'with '+club+' ':''}, occupied the ${slot} spot in this Week 2 lineup. That assignment matters when reviewing which parts of the roster actually had an opportunity to affect the final result.`);
+ }
+ for(const player of (team.starter_details||[]).slice(0,3)){
   const pts=Number(player?.points),avg=Number(player?.prior_season_avg),games=Number(player?.prior_season_games)||0;
   if(!player?.name||!Number.isFinite(avg)||avg<=0||!Number.isFinite(pts)||games<6||Math.abs(pts-avg)<Math.max(4,avg*.3))continue;
   const first=String(player.name).split(/\s+/)[0],last=String(player.name).split(/\s+/).at(-1);

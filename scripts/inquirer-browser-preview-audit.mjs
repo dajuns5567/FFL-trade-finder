@@ -82,6 +82,7 @@ try{
      return !!manager&&manager!=='n/a'&&manager!=='—';
    });
  },null,{timeout:65000});
+ await page.waitForFunction(()=>/Week 4/.test(document.querySelector('#leagueHubContent .lh-report-title')?.textContent||''),null,{timeout:90000});
  const selectedTitle=await page.locator('#leagueHubContent .lh-report-title').first().textContent();
  assert(/Week 4/.test(selectedTitle)||!/Week\\s+\\d+/.test(selectedTitle),'Older Week 3 edition must never be presented as latest Week 4');
  const spotlightNames=await page.locator('#leagueHubContent .lh-spotlight .lh-spot-card').allTextContents();

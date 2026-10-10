@@ -251,4 +251,18 @@ assert(findInquirerRawMatchupIssues(sourcedEdition,rawSource).some(x=>x.id==='ra
 assert(findInquirerRawMatchupIssues(sourcedEdition,[]).some(x=>x.id==='raw-matchup-source-unavailable'),'Unavailable source must fail closed');
 assert(publisher.includes('findInquirerRawMatchupIssues(result,completion.rows)'), 'Publication must reconcile against finalized Sleeper snapshot');
 
+
+const matchedStarters=[{roster_id:1,points:109.2,starters:['playerA','playerB'],players_points:{playerA:21.5,playerB:-1.2}}];
+sourcedEdition.teams[0].starter_details[1].points=-1.2;
+assert.equal(findInquirerRawMatchupIssues(sourcedEdition,matchedStarters).length,0,'Accept matching roster, starter identities and scores');
+sourcedEdition.teams[0].starter_details[1].id='outsider';
+assert(findInquirerRawMatchupIssues(sourcedEdition,matchedStarters).some(x=>x.id==='raw-matchup-starter-mismatch'),'Reject starter not on finalized roster');
+sourcedEdition.teams[0].starter_details[1].id='playerB';
+sourcedEdition.teams[0].starter_details.push({id:'playerA',points:21.5});
+assert(findInquirerRawMatchupIssues(sourcedEdition,matchedStarters).some(x=>x.id==='raw-matchup-duplicate-starter'),'Reject duplicated starter identity');
+sourcedEdition.teams[0].starter_details.pop();
+assert(findInquirerRawMatchupIssues(sourcedEdition,[...matchedStarters,matchedStarters[0]]).some(x=>x.id==='raw-matchup-duplicate-roster'),'Reject duplicated raw roster');
+assert(findInquirerRawMatchupIssues(sourcedEdition,[...matchedStarters,{roster_id:2,points:88,players_points:{}}]).some(x=>x.id==='raw-matchup-edition-roster-missing'),'Reject silently omitted finalized roster');
+assert.equal(findInquirerRawMatchupIssues(sourcedEdition,rawSource).length,0,'Legacy source snapshots without starter array retain score validation');
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

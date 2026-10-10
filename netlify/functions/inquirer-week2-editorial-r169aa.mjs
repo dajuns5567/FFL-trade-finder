@@ -103,7 +103,7 @@ function repairUnderlengthWeek2(team){
  }
  const target=755;
  for(let i=0;i<passages.length&&sourceWords()<target;i++){
-  const sec=a.sections.find(x=>i===0?/player|names|people|made the|who actually/i.test(String(x.heading||'')):/outlook|week 3|next/i.test(String(x.heading||'')))||a.sections[Math.min(i+1,a.sections.length-1)];
+  const sec=a.sections.find(x=>x.kind!=='outlook'&&(i===0?/player|names|people|made the|who actually/i.test(String(x.heading||'')):/management|decisions|problem|market|price|value/i.test(String(x.heading||''))))||a.sections.find(x=>x.kind!=='outlook'&&x.kind!=='lede');
   if(sec&&Array.isArray(sec.paragraphs))sec.paragraphs.push(passages[i]);
  }
  a.paragraphs=a.sections.flatMap(x=>x.paragraphs||[]).filter(Boolean);

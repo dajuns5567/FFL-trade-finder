@@ -42,6 +42,8 @@ function canonicalScoreRows(text){
  return rows;
 }
 
+const allTeamInventory=(revised.teams||[]).map(t=>({team:String(t.team_name||''),words:words(fullText(t)),reporter:String(t.inquirer_article?.reporter?.id||''),sections:(t.inquirer_article?.sections||[]).length})).sort((a,b)=>a.words-b.words);
+console.log('WEEK2_32_TEAM_QUALITY_INVENTORY',JSON.stringify({total:allTeamInventory.length,below750:allTeamInventory.filter(x=>x.words<750),all:allTeamInventory}));
 const reporterCounts=new Map();
 const reporterWordMins=new Map();
 const crossSentenceMap=new Map();

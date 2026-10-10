@@ -4,6 +4,7 @@ import {rebuildWeek4Editorial} from '../netlify/functions/inquirer-week4-editori
 import week4FastHandler from '../netlify/functions/league-hub-week4-fast.mjs';
 import leagueHubHandler from '../netlify/functions/league-hub.mjs';
 import {weeklyReport} from '../netlify/functions/league-hub.mjs';
+import {applyPublishedForwardFix} from '../netlify/functions/inquirer-week3-published-r1.mjs';
 
 const original=week4Preload();
 const rebuilt=rebuildWeek4Editorial(original);
@@ -71,6 +72,10 @@ for(const archiveWeek of [1,2,3]){
 const latestWithoutBlobs=await weeklyReport(new Request('https://example.invalid/.netlify/functions/league-hub?weekly=1'));
 assert.equal(latestWithoutBlobs.week,4,'Latest Inquirer must serve locked Week 4 when Week 5 is unapproved and Blob credentials are absent');
 assert.equal(latestWithoutBlobs.teams?.length,32,'Latest Inquirer lost its 32 bundled Week 4 team stories without Blob access');
+const publishedFixed=applyPublishedForwardFix(rebuilt);
+assert.deepEqual(publishedFixed.league_overview.sections[0].blocks.map(b=>b.kind),['lead','standings','players','decisions','league','outlook'],'Final publication reverted to old matchup recap');
+assert.deepEqual(publishedFixed.league_overview.sections[0].blocks.map(b=>b.heading),rebuilt.league_overview.sections[0].blocks.map(b=>b.heading),'Final publication replaced thematic recap headings');
+assert.throws(()=>applyPublishedForwardFix({...rebuilt,league_overview:{...rebuilt.league_overview,sections:[{...rebuilt.league_overview.sections[0],blocks:[]},...rebuilt.league_overview.sections.slice(1)]}}),/complete six-theme/,'Incomplete thematic recap must never publish');
 const wordCounts=rebuilt.teams.map(t=>t.inquirer_article.sections.flatMap(sec=>sec.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length);
 const result={ok:true,season:2026,week:4,team_articles:rebuilt.teams.length,recap_blocks:rebuilt.league_overview.sections[0].blocks.length,hot_takes:rebuilt.league_overview.hot_takes.map(x=>x.kind),article_words:{min:Math.min(...wordCounts),max:Math.max(...wordCounts),mean:Math.round(wordCounts.reduce((a,b)=>a+b,0)/wordCounts.length)},sample_headline:rebuilt.teams[0].inquirer_article.headline};
 console.log(JSON.stringify(result,null,2));

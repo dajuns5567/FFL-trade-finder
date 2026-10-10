@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import week4Loader from '../netlify/functions/inquirer-week4-2026-preload.mjs';
+import {rebuildWeek4Editorial} from '../netlify/functions/inquirer-week4-editorial-rebuild.mjs';
 const source=fs.readFileSync('league-hub-v451.js','utf8');
 function take(start,end){const a=source.indexOf(start),b=source.indexOf(end,a+start.length);assert(a>=0&&b>a,'Missing '+start);return source.slice(a,b)}
 const functions=take('function publishedStarterLeaders(w){','function awardsHTML(rows){');
@@ -46,4 +48,18 @@ unverifiedMargin.teams[3].projected=110;
 const unverifiedHot=context.managerAwardsFromWeek(unverifiedMargin).find(x=>x.type==='hot-seat');
 assert.equal(unverifiedHot?.roster_id,'3','Actual-loss Hot Seat fallback remains stable when its own projection is unverified');
 assert.doesNotMatch(unverifiedHot.detail,/Projected/i,'Unverified team projection must never produce a fabricated projected upset label');
+
+const actualWeek4=rebuildWeek4Editorial(week4Loader());
+const actualAwards=context.managerAwardsFromWeek(actualWeek4);
+const hotActual=actualAwards.find(x=>x.type==='hot-seat'),coolActual=actualAwards.find(x=>x.type==='cool-throne');
+assert(hotActual&&coolActual,'Week 4 must produce both Hot Seat and Cool Throne');
+const rosterById=new Map(actualWeek4.teams.map(t=>[String(t.roster_id),t]));
+assert.equal(rosterById.get(hotActual.roster_id)?.won,false,'Week 4 Hot Seat must have lost');
+assert.equal(rosterById.get(coolActual.roster_id)?.won,true,'Week 4 Cool Throne must have won');
+const hotRoster=rosterById.get(hotActual.roster_id);
+const hotOpponent=rosterById.get(String(hotRoster?.opponent_roster_id));
+const verifiedProjection=Number(hotRoster?.projection_coverage)>0&&Number(hotOpponent?.projection_coverage)>0&&hotRoster?.projected!=null&&hotOpponent?.projected!=null;
+if(!verifiedProjection)assert.doesNotMatch(hotActual.detail,/Projected/i,'Actual Week 4 Hot Seat must not invent projections');
+console.log('WEEK4_MANAGER_SPOTLIGHT',JSON.stringify({hot:hotActual,cool:coolActual,projection_verified:verifiedProjection}));
+
 console.log('Players of the Week fallback, verified awards precedence, and latest-edition wiring passed');

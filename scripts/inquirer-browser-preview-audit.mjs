@@ -130,6 +130,14 @@ try{
    await page.waitForFunction(id=>document.querySelector('select[data-lh-broadcast-article]')?.value===id,id);
    const name=fast.body.teams.find(t=>String(t.roster_id)===id)?.team_name;
    assert((await page.locator('#leagueHubContent').innerText()).includes(name),'Opened article does not display '+name);
+   const projectionPanel=page.locator('#leagueHubContent .lh-week4-projection-panel');
+   await projectionPanel.waitFor({state:'visible',timeout:30000});
+   const t=fast.body.teams.find(t=>String(t.roster_id)===id);
+   const panelText=await projectionPanel.innerText();
+   assert(panelText.includes(String(t.projection_coverage)+'/'+String(t.starter_count)),'Projection coverage must be visible in the actual Week 4 article');
+   assert(panelText.includes('not been verified as the original pregame forecasts'),'Retrospective projections must not be mislabeled as pregame');
+   if(t.projected==null)assert(panelText.includes('Full team projection unavailable'),'Partial Week 4 team forecasts must remain unavailable');
+   else assert(panelText.includes(Number(t.projected).toFixed(2)+' pts'),'Verified complete team projection must be visible');
  }
  await selector.selectOption('__league__');
  assert.match(await page.locator('#leagueHubContent').innerText(),/Weekly Recap/i);

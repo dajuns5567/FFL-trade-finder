@@ -131,7 +131,7 @@ try{
    await page.waitForFunction(id=>document.querySelector('select[data-lh-broadcast-article]')?.value===id,id);
    const name=fast.body.teams.find(t=>String(t.roster_id)===id)?.team_name;
    assert((await page.locator('#leagueHubContent').innerText()).includes(name),'Opened article does not display '+name);
-   console.log('LIVE_SELECTED_ARTICLE_PROJECTION_CONTEXT',JSON.stringify(await page.evaluate(()=>({reportTitle:document.querySelector('#leagueHubContent .lh-report-title')?.textContent,selectedArticle:document.querySelector('select[data-lh-broadcast-article]')?.value,render:window.__fleecedProjectionRenderDebug||null,projectionPanelCount:document.querySelectorAll('#leagueHubContent .lh-week4-projection-panel').length}))));
+   console.log('LIVE_SELECTED_ARTICLE_PROJECTION_CONTEXT',JSON.stringify(await page.evaluate(()=>({reportTitle:document.querySelector('#leagueHubContent .lh-report-title')?.textContent,selectedArticle:document.querySelector('select[data-lh-broadcast-article]')?.value,render:window.__fleecedProjectionRenderDebug||null,projectionPanelCount:document.querySelectorAll('#leagueHubContent .lh-week4-projection-panel').length,change:window.__fleecedArticleChangeTrace||null,renderState:window.__fleecedArticleRenderState||null,hubWired:document.querySelector('#leagueHub')?.dataset.lhWired,articleNodes:document.querySelectorAll('#leagueHubContent .lh-article').length}))));
    const projectionPanel=page.locator('#leagueHubContent .lh-week4-projection-panel');
    await projectionPanel.waitFor({state:'visible',timeout:30000});
    const t=fast.body.teams.find(t=>String(t.roster_id)===id);

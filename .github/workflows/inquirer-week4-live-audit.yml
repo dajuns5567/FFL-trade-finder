@@ -7,6 +7,8 @@ on:
       - 'scripts/inquirer-week4-projection-source-audit.mjs'
       - 'scripts/inquirer-week4-projection-regression.mjs'
       - 'scripts/inquirer-all-week-projection-regression.mjs'
+      - 'scripts/inquirer-projection-fallback-regression.mjs'
+      - 'netlify/functions/inquirer-projection-fallback.mjs'
       - 'netlify/functions/inquirer-week4-2026-projections.mjs'
       - 'scripts/inquirer-week4-rebuild-audit.mjs'
       - 'scripts/inquirer-week4-awards-direct-audit.mjs'
@@ -50,6 +52,8 @@ jobs:
         run: node scripts/inquirer-final-copy-regression.mjs
       - name: Verify rebuilt Week 4 recap and all 32 articles
         run: node scripts/inquirer-week4-rebuild-audit.mjs
+      - name: Verify retrospective projection estimation integrity
+        run: node scripts/inquirer-projection-fallback-regression.mjs
       - name: Verify real archived Week 1–4 projection coverage for all 32 teams
         run: node scripts/inquirer-all-week-projection-regression.mjs
       - name: Verify frozen Week 4 projection snapshot and custom scoring coverage

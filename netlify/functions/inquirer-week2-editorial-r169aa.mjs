@@ -116,7 +116,7 @@ export function applyWeek2EditorialR16(raw){
   applyInquirerStoryContextToEdition(out,{season:2026,week:2,previousEdition:null});
   out.teams=(out.teams||[]).map(repairTeamPossessives).map(polishFinalMiamiWeek2).map(repairUnderlengthWeek2).map(team=>{
    const a=team?.inquirer_article;if(!a)return team;
-   for(const sec of a.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(p=>String(p).replace(/group chat/gi,'argument over the lineup'));
+   for(const sec of a.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(p=>String(p).replace(/group chat/gi,'argument over the lineup').replace(/\breceipts?\b/gi,'results'));
    a.paragraphs=a.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);return team;
   });
   return out;

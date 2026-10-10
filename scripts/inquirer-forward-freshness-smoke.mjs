@@ -3,9 +3,8 @@ import week2raw from '../netlify/functions/inquirer-week2-2026-preload.mjs';
 import {applyWeek2EditorialR16} from '../netlify/functions/inquirer-week2-editorial-r28.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
 import {inquirerWeekClassification} from '../netlify/functions/inquirer-reporters.mjs';
-import {rebuildForwardInquirerEditorial} from '../netlify/functions/inquirer-week4-editorial-rebuild.mjs';
+import {applyPublishedForwardFix} from '../netlify/functions/inquirer-week3-published-r1.mjs';
 
-process.env.INQUIRER_DEBUG_RECAP='1';
 const clone=x=>structuredClone(x);
 const week2=applyWeek2EditorialR16(clone(week2raw));
 const sentenceSplit=v=>String(v||'').replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§')).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean);
@@ -93,9 +92,8 @@ for(let week=3;week<=17;week++){
   assert.match(String(candidate.league_overview?.headline||''),new RegExp(`Week ${week}`,'i'),`Week ${week} recap headline must be current`);
   assert.ok(candidate.teams.every(t=>Number(t?.inquirer_article?.week)===week),`Week ${week} article metadata must be current`);
 
-  if(week===4)console.log('RAW_V31_RECAP_SAMPLE',JSON.stringify((candidate.league_overview?.sections||[]).map(s=>({heading:s.heading,paragraphs:(s.paragraphs||[]).slice(0,5),blocks:(s.blocks||[]).slice(0,2).map(b=>({heading:b.heading,paragraphs:(b.paragraphs||[]).slice(0,2)}))}))));
   if(week>=4){
-    const published=rebuildForwardInquirerEditorial(candidate,{previousEdition:previous});
+    const published=applyPublishedForwardFix(candidate,previous);
     const recap=published.league_overview?.sections?.[0];
     assert.equal(recap?.blocks?.length,6,`Week ${week} published recap must have six editorial themes`);
     assert.deepEqual(recap.blocks.map(b=>b.kind),['lead','standings','players','decisions','league','outlook'],`Week ${week} published recap reverted to old game-by-game format`);

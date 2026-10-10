@@ -533,7 +533,7 @@ function dailyHTML(all,stats,w,md,spotlightW=w){
   else if(opened)body=teamArticle(opened,w.week,teams);
   else if(first&&!w.league_overview)body='<div class="lh-story"><b>'+esc(first.team_name)+'</b><small>'+esc(weeklyCopy(first))+'</small><span class="lh-badge">'+(first.won?'W':'L')+' • '+first.points.toFixed(1)+' pts</span></div>';
 
-  const recapLink=w.league_overview?'<div class="lh-story"><button type="button" class="lh-brand-button lh-brand-button-compact" data-lh-current-edition-season="'+w.season+'" data-lh-current-edition-week="'+w.week+'">'+esc(w.league_overview.headline||'Fleeced! Weekly Recap')+' →</button><small>'+esc(w.league_overview.byline||'All four Fleeced! Inquirer desks')+'</small></div>':'';
+  const recapLink=w.league_overview?'<div class="lh-story"><button type="button" class="lh-brand-button lh-brand-button-compact" data-lh-broadcast-team="__league__" data-lh-current-edition-season="'+w.season+'" data-lh-current-edition-week="'+w.week+'">'+esc(w.league_overview.headline||'Fleeced! Weekly Recap')+' →</button><small>'+esc(w.league_overview.byline||'All four Fleeced! Inquirer desks')+'</small></div>':'';
   const nav=articleOpen?'<label class="lh-article-picker"><span>Choose an article</span><select data-lh-broadcast-article><option value="__league__"'+(overviewOpen?' selected':'')+'>Weekly Recap • All 4 Reporters</option>'+teams.map(t=>'<option value="'+esc(t.roster_id)+'"'+(opened&&String(opened.roster_id)===String(t.roster_id)?' selected':'')+'>'+esc(t.team_name)+' • GM '+esc(t.manager_name)+' • '+esc(t.inquirer_article?.reporter?.name||'Reporter')+'</option>').join('')+'</select></label>':'';
 
   report='<div class="lh-card lh-wide lh-report">'+

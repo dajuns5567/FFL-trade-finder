@@ -63,8 +63,8 @@ export function findInquirerSourceFactIssues(edition){
    // Only check named pairings with a verified roster linkage, preserving
    // historic comparisons and unqualified editorial language.
    for(const fixture of matchups){
-    const numeric='(-?\\\\d+(?:\\\\.\\\\d+)?)';
-    const pattern=new RegExp('\\\\b'+esc(fixture.a)+'\\\\s+(beat|lost to|defeated)\\\\s+'+esc(fixture.b)+'\\\\s+'+numeric+'\\\\s*[–—-]\\\\s*'+numeric+'\\\\b','gi');
+    const numeric='(-?\\d+(?:\\.\\d+)?)';
+    const pattern=new RegExp('\\b'+esc(fixture.a)+'\\s+(beat|lost to|defeated)\\s+'+esc(fixture.b)+'\\s+'+numeric+'\\s*[–—-]\\s*'+numeric+'\\b','gi');
     for(const m of paragraph.matchAll(pattern)){
      const left=Number(m[2]),right=Number(m[3]),verb=m[1].toLowerCase();
      if(Math.abs(left-fixture.points)>0.055||Math.abs(right-fixture.opponentPoints)>0.055)

@@ -1,3 +1,4 @@
+import week4ScoredProjections from './inquirer-week4-2026-projections.mjs';
 import week3Preload2026 from './inquirer-week3-2026-preload.mjs';
 import {restoreReporterNarratives} from './inquirer-forward-restore-voice.mjs';
 // Week 4 editorial replacement. Facts are taken only from the frozen, verified edition.
@@ -359,5 +360,27 @@ export function rebuildForwardInquirerEditorial(original,{previousEdition=null}=
 }
 export function rebuildWeek4Editorial(original){
  if(Number(original?.season)!==2026||Number(original?.week)!==4)return original;
- return rebuildForwardInquirerEditorial(original);
+ const out=rebuildForwardInquirerEditorial(original);
+ const snapshot=week4ScoredProjections();
+ // Reconcile only actual Week 4 starters; never replace completed scores or frozen prose.
+ // The feed was retrieved retrospectively, so it must never be called a verified
+ // *pregame* projection or used to assert that a projected upset occurred.
+ if(snapshot?.season!==2026||snapshot?.week!==4||snapshot?.league_id!=='1316867686394769408'||snapshot?.scoring_keys!==143)return out;
+ const scores=snapshot.points_by_player||{};
+ for(const team of out.teams||[]){
+  const starters=team.starter_details||[];
+  let covered=0,total=0;
+  for(const player of starters){
+   const id=String(player.id),value=Object.hasOwn(scores,id)?Number(scores[id]):NaN;
+   player.projected=Number.isFinite(value)?value:null;
+   if(Number.isFinite(value)){covered++;total+=value}
+  }
+  team.starter_count=starters.length;
+  team.projection_coverage=covered;
+  team.projected=starters.length>0&&covered===starters.length?Number(total.toFixed(2)):null;
+  team.projection_snapshot={source:snapshot.source,retrieved_at:snapshot.retrieved_at,verified_pregame:false,scoring_keys:snapshot.scoring_keys,coverage:covered,starters:starters.length};
+ }
+ const byId=new Map((out.teams||[]).map(t=>[String(t.roster_id),t]));
+ for(const team of out.teams||[])team.opponent_projected=byId.get(String(team.opponent_roster_id))?.projected??null;
+ return out;
 }

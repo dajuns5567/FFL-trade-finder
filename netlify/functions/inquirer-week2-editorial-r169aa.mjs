@@ -14,6 +14,7 @@ function polishFinalMiamiWeek2(team){
    x=x.replace('7/9 rec, 75 yds, 2 Take','7 catches on 9 targets and 75 receiving yards. Take');
    x=x.replace('Nik Bonitto gave Dolphins 7.5 points on 3.','Nik Bonitto gave Dolphins 7.5 fantasy points. That modest return left the defense with ground to make up.');
    x=x.replace('Week 2 performance. praise is unavoidable','Week 2 performance. Praise is unavoidable');
+   x=x.replace('save the victory lap for somebody with two receipts','save the victory lap until Miami puts another win beside this one');
    x=x.replace('After 142.4 points, the crowd has decided restraint is for teams with worse records and fewer screenshots of the standings.','After 142.4 points, the crowd has decided restraint is for teams that lost. At 1-1, Miami reclaimed some breathing room, but one victory cannot settle a season.');
    return x;
   });

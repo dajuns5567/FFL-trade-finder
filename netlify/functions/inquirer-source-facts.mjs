@@ -97,6 +97,31 @@ export function findInquirerRawMatchupIssues(edition,rawRows){
  return issues;
 }
 
+// Validate persisted award candidates against the independently retained
+// finalized matchup totals, not reporter prose. Other award types are checked
+// for roster identity, outcome and per-manager score consistency.
+export function findInquirerManagerAwardIssues(edition,awards,rawRows){
+ const issues=[],rows=Array.isArray(rawRows)?rawRows:[],items=Array.isArray(awards)?awards:[];
+ if(!rows.length||!items.length)return [{id:'award-source-unavailable'}];
+ const byId=new Map(rows.filter(r=>r?.roster_id!=null).map(r=>[String(r.roster_id),number(r.points)]));
+ const ranked=[...byId].filter(x=>x[1]!==null);
+ if(!ranked.length)return [{id:'award-source-unavailable'}];
+ ranked.sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+ const high=ranked[0],low=ranked.slice().sort((a,b)=>a[1]-b[1]||a[0].localeCompare(b[0]))[0];
+ const teams=new Map((edition?.teams||[]).filter(t=>t?.roster_id!=null).map(t=>[String(t.roster_id),t]));
+ for(const award of items){
+  const id=String(award?.roster_id||''),type=String(award?.type||'');
+  if(!id||!teams.has(id)||!byId.has(id)||byId.get(id)===null){issues.push({id:'award-roster-unsupported',type,roster_id:id});continue}
+  const actual=byId.get(id),claimed=number(award?.points);
+  if(claimed===null||Math.abs(claimed-actual)>0.055)issues.push({id:'award-points-mismatch',type,roster_id:id,expected:actual,reported:claimed});
+  if(type==='highest-scorer'&&id!==high[0])issues.push({id:'award-highest-scorer-mismatch',roster_id:id,expected:high[0]});
+  if(type==='lowest-scorer'&&id!==low[0])issues.push({id:'award-lowest-scorer-mismatch',roster_id:id,expected:low[0]});
+  if(type==='hot-seat'&&teams.get(id)?.won!==false)issues.push({id:'award-hot-seat-outcome-mismatch',roster_id:id});
+  if(type==='cool-throne'&&teams.get(id)?.won!==true)issues.push({id:'award-cool-throne-outcome-mismatch',roster_id:id});
+ }
+ return issues;
+}
+
 export function findInquirerEditionConsistencyIssues(edition){
  const issues=[];
  const teams=Array.isArray(edition?.teams)?edition.teams:[];

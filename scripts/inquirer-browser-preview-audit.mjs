@@ -73,6 +73,7 @@ try{
    document.querySelector('#leagueHub')?.addEventListener('click',seen('hub-capture'),true);
    document.querySelector('#leagueHub')?.addEventListener('click',seen('hub-bubble'));
   });
+  var directOpenClickedAt=Date.now();
   await openEdition.first().click();
   console.log('LIVE_CLICK_TRACE',JSON.stringify(await page.evaluate(()=>window.__inquirerClickTrace)));
  }
@@ -85,6 +86,8 @@ try{
  // Opening the latest published edition navigates directly to the article picker.
  // A slow serverless preview may finish after the initial held-state render.
  await selector.waitFor({state:'visible',timeout:65000});
+ assert(directOpenClickedAt!==undefined,'Direct Open Full Inquirer click was not exercised');
+ console.log('LIVE_DIRECT_OPEN_VERIFIED',JSON.stringify({from:'Open Full Inquirer button',to:'visible full-edition article selector',elapsedMs:Date.now()-directOpenClickedAt,alternativeNavigationUsed:false,archiveRequests,archiveFailures}));
  const options=await selector.locator('option').allTextContents();
  assert.equal(options.length,33,'Recap navigation must include all 32 team articles');
  assert.match(await page.locator('#leagueHubContent').innerText(),/Weekly Recap/i,'Weekly Recap failed to open');

@@ -55,7 +55,7 @@ export function findInquirerSourceFactIssues(edition){
     // Only validate unambiguous matches; names reused by different players are skipped.
     if(entries.length!==1)continue;
     const p=entries[0],actual=p.points,name=normalize(p.player.name),escaped=esc(name);
-    const weekly=new RegExp('\\b'+escaped+'\\s+(?:scored|posted|recorded|put up|supplied|produced)\\s+(\\d+(?:\\.\\d+)?)\\s*(?:fantasy\\s+)?points?\\b','gi');
+    const weekly=new RegExp('\\b'+escaped+'\\s+(?:scored|posted|recorded|put up|supplied|produced)\\s+(-?\\d+(?:\\.\\d+)?)\\s*(?:fantasy\\s+)?points?\\b','gi');
     for(const match of paragraph.matchAll(weekly)){
      if(!isOtherWeek(paragraph,match,week)&&Math.abs(Number(match[1])-actual)>0.055)issues.push({id:'weekly-player-score',article:articleName,player:name,reported:Number(match[1]),expected:actual,week});
     }

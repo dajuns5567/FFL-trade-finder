@@ -39,7 +39,8 @@ export function findInquirerSourceFactIssues(edition){
  })).filter(t=>t.name);
  const matchups=[];
  for(const team of edition.teams){
-  const opponent=edition.teams.find(t=>String(t.roster_id)===String(team.opponent_roster_id)&&t!==team);
+  if(team?.roster_id===null||team?.roster_id===undefined||team?.opponent_roster_id===null||team?.opponent_roster_id===undefined)continue;
+  const opponent=edition.teams.find(t=>t?.roster_id!==null&&t?.roster_id!==undefined&&String(t.roster_id)===String(team.opponent_roster_id)&&t!==team);
   if(!opponent||number(team.points)===null||number(opponent.points)===null)continue;
   const a=normalize(team.team_name),b=normalize(opponent.team_name);
   if(!a||!b||a.toLowerCase()===b.toLowerCase())continue;

@@ -23,4 +23,6 @@ const endpoint=readFileSync('netlify/functions/league-hub-week4-fast.mjs','utf8'
 const frontend=readFileSync('league-hub-v451.js','utf8');
 assert(endpoint.includes("'netlify-cdn-cache-control':'no-store"),'Week 4 fast route must bypass stale CDN cache');
 assert(frontend.includes("cache:(y===2026&&w===4)?'no-store'"),'Week 4 archive fetch must bypass stale browser cache');
+const publisher=readFileSync('netlify/functions/league-hub.mjs','utf8');
+assert(publisher.includes("if(!weeklyStats||typeof weeklyStats!=='object'||!Object.keys(weeklyStats).length)return{available:false"),'Weekly Inquirer publication must fail closed when Sleeper player stats are unavailable');
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

@@ -1,4 +1,4 @@
-name: Inquirer PR preview browser audit
+name: Inquirer browser acceptance
 
 on:
   pull_request:
@@ -9,15 +9,21 @@ on:
       - 'league-hub-v451.js'
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/league-hub-week4-fast.mjs'
+      - 'netlify/functions/league-hub-week3-fast.mjs'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  preview-browser-audit:
+  browser-audit:
+    name: Chromium - ${{ matrix.target }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [local, preview]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,15 +35,17 @@ jobs:
         run: |
           npm install --no-save --package-lock=false playwright
           npx playwright install chromium --with-deps
-      - name: Verify actual site UI with locked Week 4 data locally
+      - name: Exercise local site with locked Week 4 and Week 3 editions
+        if: matrix.target == 'local'
         run: node scripts/inquirer-browser-local-audit.mjs
-      - name: Validate Inquirer preview in Chromium
+      - name: Exercise protected Netlify deploy preview
+        if: matrix.target == 'preview'
         run: node scripts/inquirer-browser-preview-audit.mjs
       - name: Upload browser failure screenshot
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: inquirer-preview-browser-failure
+          name: inquirer-${{ matrix.target }}-browser-failure
           path: |
             /tmp/inquirer-browser-preview-failure.png
             /tmp/inquirer-local-browser-failure.png

@@ -426,9 +426,10 @@ async function broadcastArchive(){
 }
 async function broadcastStored(season,week){
  const y=Number(season),w=Number(week),canonicalPreload=preloadedBroadcast(y,w);
- if(y===2026&&[1,2,3,4].includes(w)&&canonicalPreload)return canonicalPreload;
- const s=store(),v=await s.get(`broadcasts/${y}/week-${String(w).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null);
- return servedPreload(v)||canonicalPreload||{error:'broadcast not found'};
+ if(y===2026&&w===2&&canonicalPreload)return canonicalPreload;
+ let stored=null;
+ try{stored=await store().get(`broadcasts/${y}/week-${String(w).padStart(2,'0')}.json`,{type:'json'})}catch(e){if(!canonicalPreload)console.warn('Inquirer archive storage unavailable',y,w,String(e?.message||e))}
+ return servedPreload(stored)||canonicalPreload||{error:'broadcast not found'};
 }
 
 function weeklyAwardStatRows(payload){

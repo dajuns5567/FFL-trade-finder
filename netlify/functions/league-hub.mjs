@@ -542,7 +542,7 @@ async function addRetrospectiveEstimates(edition){
  const year=Number(edition?.season),week=Number(edition?.week),teams=edition?.teams||[];
  if(!edition?.available||!teams.length||teams.every(t=>t.projection_estimate_snapshot))return edition;
  // Estimate only when the original numerical projection is unavailable.
- const missing=teams.flatMap(t=>(t.starter_details||[]).filter(p=>p.projected==null));
+ const missing=teams.flatMap(t=>(t.starter_details||[]).filter(p=>p.projected==null&&p.estimated_projected==null));
  if(!missing.length)return edition;
  const historyFeed=await archivedProjectionMap(year,week);
  if(!historyFeed?.scoring)return edition;

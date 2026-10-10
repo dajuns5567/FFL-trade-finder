@@ -621,8 +621,10 @@ export async function capturePregameProjections(){
   return {captured:false,reason:'no matching regular-season week'};
  const key=`inquirer/projections/${season}/week-${String(week).padStart(2,'0')}.json`;
  const storage=store();
- const existing=await storage.get(key,{type:'json'}).catch(()=>null);
- if(existing?.points_by_player&&Object.keys(existing.points_by_player).length)
+ const existing=await storage.get(key,{type:'json'});
+ // A stored snapshot is immutable even if its payload is incomplete.
+ // Never treat a Blob read failure as evidence that the key is absent.
+ if(existing!==null)
   return {captured:false,existing:true,season,week};
  const matchups=await fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`);
  if(!Array.isArray(matchups)||!matchups.length)
@@ -637,8 +639,8 @@ export async function capturePregameProjections(){
   verified_before_kickoff:false,scoring_keys:Object.keys(league.scoring_settings||{}).length,
   points_by_player:points};
  // Avoid mutating previously published articles and avoid replacing earlier snapshots.
- const confirm=await storage.get(key,{type:'json'}).catch(()=>null);
- if(confirm?.points_by_player&&Object.keys(confirm.points_by_player).length)
+ const confirm=await storage.get(key,{type:'json'});
+ if(confirm!==null)
   return {captured:false,existing:true,season,week};
  await storage.setJSON(key,snapshot);
  return {captured:true,season,week,players:Object.keys(points).length};

@@ -73,4 +73,25 @@ const restoredHtml=context.spotlightBlock({career:[],current:[]},missingFlags);
 assert.match(restoredHtml,/Projected Favorite/,'Hot Seat must recover from completed matchup scores when won flags are missing');
 assert.match(restoredHtml,/Big Winner/,'Cool Throne must recover from completed matchup scores when won flags are missing');
 console.log('WEEK4_SPOTLIGHT_RENDER',JSON.stringify({hot:hotActual?.team_name,cool:coolActual?.team_name,wonFlagFallback:true}));
+
+// Guard the real Sleeper projection ingestion shape: historical feeds may be
+// keyed by player ID rather than returning player_id inside every record.
+const backendSource=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');
+const pStart=backendSource.indexOf('const score=(stats,scoring)=>');
+const pEnd=backendSource.indexOf('function txByRoster(rows)',pStart);
+assert(pStart>=0&&pEnd>pStart,'Projection ingestion code must remain auditable');
+const projectedContext={fetchJson:async()=>({
+  'p-one':{stats:{rec:4,idp_sack:2}},
+  'p-two':{stats:{rec:0}},
+  'p-unknown':{stats:{}}
+})};
+vm.createContext(projectedContext);
+vm.runInContext(backendSource.slice(pStart,pEnd),projectedContext);
+const parsed=await projectedContext.projections(2026,4,{rec:1,idp_sack:3});
+assert.equal(parsed['p-one'],10,'Keyed projections must be scored with the custom IDP settings');
+assert.equal(parsed['p-two'],0,'Real zero-point projections must remain valid');
+assert.equal(Object.hasOwn(parsed,'p-unknown'),false,'Absent stats must not become fabricated zero projections');
+assert(backendSource.includes('projectedKnown===starters.length'),'A team forecast must require complete starter coverage');
+assert(backendSource.includes('nextProjectedKnown===nextStarters.length'),'A next-week forecast must require complete starter coverage');
+console.log('KEYED_PROJECTION_INGESTION_VERIFIED',JSON.stringify({scored:parsed['p-one'],trueZero:parsed['p-two'],missingStatsExcluded:true}));
 console.log('Players of the Week fallback, verified awards precedence, and latest-edition wiring passed');

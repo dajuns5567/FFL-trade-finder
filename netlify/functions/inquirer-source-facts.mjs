@@ -49,9 +49,45 @@ export function buildInquirerEditionFactRegistry(edition){
  return {week,players,teamScoreRules,standings,matchups};
 }
 
+// Reconcile independently repeated values inside an edition before its prose
+// can be published. These checks compare separate structured source fields;
+// they do not claim to independently fetch or authenticate Sleeper records.
+export function findInquirerEditionConsistencyIssues(edition){
+ const issues=[];
+ const teams=Array.isArray(edition?.teams)?edition.teams:[];
+ const byId=new Map();
+ for(const team of teams){
+  if(team?.roster_id==null)continue;
+  const id=String(team.roster_id);
+  if(byId.has(id))issues.push({id:'duplicate-roster-fact',roster_id:id});
+  else byId.set(id,team);
+ }
+ const seen=new Set();
+ for(const team of teams){
+  if(team?.roster_id==null||team?.opponent_roster_id==null)continue;
+  const roster=String(team.roster_id),opponentId=String(team.opponent_roster_id);
+  const other=byId.get(opponentId);
+  if(!other||other===team||String(other.opponent_roster_id)!==roster)continue;
+  const pair=[roster,opponentId].sort().join(':');
+  if(seen.has(pair))continue;
+  seen.add(pair);
+  const a=number(team.points),b=number(other.points);
+  if(a===null||b===null)continue;
+  for(const [t,opposite,score,opponentScore] of [[team,other,a,b],[other,team,b,a]]){
+   const mirrored=number(t.opponent_points);
+   if(mirrored!==null&&Math.abs(mirrored-opponentScore)>0.055)
+    issues.push({id:'opponent-score-disagreement',roster_id:String(t.roster_id),opponent_roster_id:String(opposite.roster_id),reported:mirrored,expected:opponentScore,week:edition.week});
+   if(typeof t.won==='boolean'&&a!==b&&t.won!==(score>opponentScore))
+    issues.push({id:'matchup-outcome-disagreement',roster_id:String(t.roster_id),reported:t.won,expected:score>opponentScore,week:edition.week});
+  }
+ }
+ return issues;
+}
+
 export function findInquirerSourceFactIssues(edition){
  const issues=[],week=Number(edition?.week);
  if(!Number.isInteger(week)||!Array.isArray(edition?.teams))return issues;
+ issues.push(...findInquirerEditionConsistencyIssues(edition));
  const facts=buildInquirerEditionFactRegistry(edition);
  const {players,teamScoreRules,standings,matchups}=facts;
  const all=[['Weekly Recap',edition.league_overview],...edition.teams.map(t=>[t.team_name||String(t.roster_id),t.inquirer_article])];

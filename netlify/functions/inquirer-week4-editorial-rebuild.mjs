@@ -377,6 +377,7 @@ export function rebuildWeek4Editorial(original){
   }
   team.starter_count=starters.length;
   team.projection_coverage=covered;
+  team.projection_subtotal=Number(total.toFixed(2));
   team.projected=starters.length>0&&covered===starters.length?Number(total.toFixed(2)):null;
   team.projection_snapshot={source:snapshot.source,retrieved_at:snapshot.retrieved_at,verified_pregame:false,scoring_keys:snapshot.scoring_keys,coverage:covered,starters:starters.length};
  }

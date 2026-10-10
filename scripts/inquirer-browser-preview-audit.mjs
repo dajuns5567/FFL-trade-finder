@@ -86,6 +86,7 @@ try{
  assert(/Week 4/.test(selectedTitle)||!/Week\\s+\\d+/.test(selectedTitle),'Older Week 3 edition must never be presented as latest Week 4');
  const spotlightNames=await page.locator('#leagueHubContent .lh-spotlight .lh-spot-card').allTextContents();
  console.log('LIVE_MANAGER_SPOTLIGHT_READY',JSON.stringify(spotlightNames.filter(s=>/Hot Seat|Cool Throne/.test(s))));
+ console.log('LIVE_EDITION_SELECTION_TRACE',JSON.stringify(await page.evaluate(()=>window.__fleecedEditionTrace||[])));
  console.log('LIVE_LATEST_EDITION_HEADLINE',JSON.stringify({title:await page.locator('#leagueHubContent .lh-report-title').first().textContent(),week4Selected:await page.locator('#leagueHubContent .lh-report-title').first().textContent().then(x=>/Week 4/.test(x))}));
  const openEdition=page.locator('#leagueHubContent button').filter({hasText:'Open Full Inquirer'});
  if(await openEdition.count()){
@@ -137,6 +138,7 @@ try{
 } catch(error){
  await page.screenshot({path:'/tmp/inquirer-browser-preview-failure.png',fullPage:true}).catch(()=>{});
  console.error('BROWSER_PREVIEW_AUDIT_FAILED',error);
+ console.error('POST_FAILURE_EDITION_TRACE',JSON.stringify(await page.evaluate(()=>window.__fleecedEditionTrace||[]).catch(()=>[])));
  console.error('POST_FAILURE_ARCHIVE_STATE',JSON.stringify(await page.evaluate(()=>window.__fleecedInquirerArchiveOpen||null).catch(()=>null)));
  console.error('BROWSER_PAGE_ERRORS',JSON.stringify(errors.slice(0,20)));
  throw error;

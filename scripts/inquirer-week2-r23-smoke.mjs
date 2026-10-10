@@ -44,6 +44,7 @@ function canonicalScoreRows(text){
 
 const allTeamInventory=(revised.teams||[]).map(t=>({team:String(t.team_name||''),words:words(fullText(t)),reporter:String(t.inquirer_article?.reporter?.id||''),sections:(t.inquirer_article?.sections||[]).length})).sort((a,b)=>a.words-b.words);
 console.log('WEEK2_32_TEAM_QUALITY_INVENTORY',JSON.stringify({total:allTeamInventory.length,below750:allTeamInventory.filter(x=>x.words<750),all:allTeamInventory}));
+console.log('WEEK2_EDITORIAL_CONTEXT_SAMPLES',JSON.stringify(revised.teams.filter(t=>['Cleveland Browns','New England Patriots','Tampa Bay Buccaneers','Los Angeles Rams'].includes(t.team_name)).map(t=>({team:t.team_name,record:t.league_context?.record,starter_details:t.starter_details,bench_details:t.bench_details,upcoming_opponents:t.upcoming_opponents,matchup:t.matchup,keys:Object.keys(t),sections:t.inquirer_article.sections.map(s=>({heading:s.heading,kind:s.kind,paragraphs:s.paragraphs}))}))));
 const reporterCounts=new Map();
 const reporterWordMins=new Map();
 const crossSentenceMap=new Map();

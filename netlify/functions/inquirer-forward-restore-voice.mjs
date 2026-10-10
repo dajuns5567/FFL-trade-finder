@@ -373,5 +373,9 @@ export function restoreReporterNarratives(rebuilt,original,{previousEdition=null
   a.editorial_rebuilt_for_week=Number(rebuilt.week);
   t.inquirer_article=a;
  }
- return finalCopyQuality(polishEdition(rebuilt,generated),previousEdition);
+ const polished=polishEdition(rebuilt,generated);
+ if(process.env.INQUIRER_DEBUG_RECAP==='1')console.log('RECAP_POLISHED_COUNTS',rebuilt.week,JSON.stringify((polished.league_overview?.sections?.[0]?.blocks||[]).map(b=>b.paragraphs?.length)));
+ const finalized=finalCopyQuality(polished,previousEdition);
+ if(process.env.INQUIRER_DEBUG_RECAP==='1')console.log('RECAP_FINAL_COUNTS',rebuilt.week,JSON.stringify((finalized.league_overview?.sections?.[0]?.blocks||[]).map(b=>b.paragraphs?.length)));
+ return finalized;
 }

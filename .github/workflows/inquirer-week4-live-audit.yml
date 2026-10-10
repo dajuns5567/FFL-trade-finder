@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/inquirer-week4-direct-audit.mjs'
       - 'scripts/inquirer-week4-rebuild-audit.mjs'
+      - 'scripts/inquirer-week4-awards-direct-audit.mjs'
       - 'scripts/league-hub-latest-awards-regression.mjs'
       - 'scripts/inquirer-final-copy-regression.mjs'
       - 'league-hub-v451.js'
@@ -45,6 +46,8 @@ jobs:
         run: node scripts/inquirer-final-copy-regression.mjs
       - name: Verify rebuilt Week 4 recap and all 32 articles
         run: node scripts/inquirer-week4-rebuild-audit.mjs
+      - name: Verify real Week 4 Offensive and IDP Players of the Week
+        run: node scripts/inquirer-week4-awards-direct-audit.mjs
       - name: Generate and audit real Sleeper Week 4 candidate
         run: node scripts/inquirer-week4-direct-audit.mjs
       - name: Upload Week 4 candidate and audit

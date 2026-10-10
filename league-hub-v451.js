@@ -457,7 +457,7 @@ function week4ProjectionPanel(t,teams){
  if(typeof window!=='undefined'&&/deploy-preview-390/.test(location.hostname))window.__fleecedProjectionRenderDebug={team:t?.team_name,week:4,hasSnapshot:!!t?.projection_snapshot,total:t?.projected,coverage:t?.projection_coverage,starters:t?.starter_count};
  const snap=t?.projection_snapshot;
  if(!snap||snap.verified_pregame!==false)return '';
- const rows=t.starter_details||[],coverage=Number(snap.coverage)||0;
+ const rows=t.starter_details||[],coverage=Number(snap.coverage)||0,projectionWeek=Number(String(snap.source||'').match(/\/nfl\/\d+\/(\d+)/)?.[1])||4;
  const full=t.projected!=null&&coverage===rows.length;
  const opponent=(teams||[]).find(x=>String(x.roster_id)===String(t.opponent_roster_id));
  const opponentFull=opponent?.projected!=null&&Number(opponent?.projection_coverage)===Number(opponent?.starter_count);
@@ -465,12 +465,12 @@ function week4ProjectionPanel(t,teams){
  const date=String(snap.retrieved_at||'').slice(0,10);
  const details=rows.map(p=>'<tr><td>'+esc(p.name||p.id)+' <small>'+esc(p.position||'')+'</small></td><td style="text-align:right">'+esc(fmtProjection(p.projected))+'</td></tr>').join('');
  return '<section class="lh-week4-projection-panel" style="margin:15px 0;padding:13px;border:1px solid rgba(216,170,53,.35);border-radius:9px">'+
-  '<h4 style="margin:0 0 8px">Week 4 • Sleeper projections</h4>'+
+  '<h4 style="margin:0 0 8px">Week '+projectionWeek+' • Sleeper projections</h4>'+
   '<p class="lh-sub">Source: Sleeper archived projection feed, retrieved '+esc(date)+'. These projections were recovered after the games and have <b>not</b> been verified as the original pregame forecasts.</p>'+
-  '<p><b>'+esc(t.team_name)+':</b> '+esc(full?fmtProjection(t.projected):'Full team projection unavailable')+' • '+coverage+'/'+rows.length+' starters with usable projected stats'+
+  '<p><b>'+esc(t.team_name)+':</b> '+esc(full?fmtProjection(t.projected):'Full team projection unavailable')+' • '+coverage+'/'+rows.length+' starters with usable projected stats'+(!full?' • Known-player subtotal: '+esc(fmtProjection(t.projection_subtotal??rows.reduce((n,p)=>n+(p.projected??0),0)))+' (not a full forecast)':'')+
   (opponent?'<br><b>'+esc(opponent.team_name)+':</b> '+esc(opponentFull?fmtProjection(opponent.projected):'Full team projection unavailable'):'')+'</p>'+
   '<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Week 4 starter</th><th style="text-align:right">Projected</th></tr></thead><tbody>'+details+'</tbody></table>'+
-  (full?'':'<p class="lh-sub">An incomplete projection is never totaled with missing starters treated as zero.</p>')+
+  (full?'':'<p class="lh-sub">Players with no numerical Sleeper projection remain marked Unavailable. The known-player subtotal excludes those players; it is not a full team forecast.</p>')+
   '</section>';
 }
 

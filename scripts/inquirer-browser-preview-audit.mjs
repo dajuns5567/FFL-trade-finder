@@ -43,10 +43,16 @@ try{
  assert(currentArchive.body.teams.every(t=>t.inquirer_article?.editorial_rebuilt_for_week===4),'Canonical Week 4 archive served stale prose');
  const previousArchive=await api('/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week=3');
  assert.equal(previousArchive.body.teams?.length,32,'Week 3 archive missing articles');
- const landing=await page.goto(root,{waitUntil:'domcontentloaded',timeout:90000});
+ const revision=process.env.GITHUB_SHA||'PR390-current';
+ const landing=await page.goto(root+'/?inquirer_preview_revision='+encodeURIComponent(revision),{waitUntil:'domcontentloaded',timeout:90000});
  assert(landing?.ok(),'Preview site unavailable: '+landing?.status());
  await page.locator('.tabs button[data-tab="leagueHub"]').waitFor({timeout:60000});
  await page.locator('.tabs button[data-tab="leagueHub"]').click();
+ await page.waitForFunction(()=>[...document.scripts].some(s=>/league-hub-v451\.js\?v=/.test(s.src)),null,{timeout:60000});
+ const clientScripts=await page.evaluate(()=>[...document.scripts].map(x=>x.src).filter(x=>/league-hub-(?:v451|lazy-v454)/.test(x)));
+ console.log('LIVE_PREVIEW_CLIENT_REVISIONS',JSON.stringify({revision,clientScripts}));
+ assert(clientScripts.some(x=>x.includes('league-hub-v451.js?v=543')),'Netlify preview is serving stale League Hub JavaScript; not valid for current-commit browser acceptance');
+
  await page.locator('#leagueHubContent .lh-report').waitFor({timeout:60000});
  await page.waitForFunction(()=>/Week 4/.test(document.querySelector('#leagueHubContent .lh-report')?.textContent||''),{timeout:60000});
  const openEdition=page.locator('#leagueHubContent button').filter({hasText:'Open Full Inquirer'});

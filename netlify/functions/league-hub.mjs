@@ -501,13 +501,12 @@ async function priorProjectionHistory(year,week,scoring,positions){
  if(!estimateHistoryCache.has(key)){
   const promise=(async()=>{
    // Never sample the report week or any later NFL performances.
-   const previous=Array.from({length:4},(_,i)=>week-1-i).filter(n=>n>=1);
-   if(!previous.length)return[];
+   const previous=Array.from({length:4},(_,i)=>week-1-i).map(n=>n>=1?{season:year,week:n}:{season:year-1,week:18+n});
    const control=new AbortController(),timeout=setTimeout(()=>control.abort(),12000);
    try{
-    const results=await Promise.all(previous.map(async w=>{
+    const results=await Promise.all(previous.map(async ({season,week:w})=>{
      try{
-      const response=await fetch(`https://api.sleeper.app/stats/nfl/regular/${year}/${w}`,{signal:control.signal});
+      const response=await fetch(`https://api.sleeper.app/stats/nfl/regular/${season}/${w}`,{signal:control.signal});
       if(!response.ok)return[];
       const raw=await response.json();
       return Object.entries(raw||{}).flatMap(([id,value])=>{

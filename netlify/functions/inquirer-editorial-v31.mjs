@@ -4,6 +4,7 @@
 // implementation delegates to the fully regression-tested V37 reporter engine.
 
 import {reporterPlayerStatusProfile} from './player-signal-engine.mjs';
+import {findInquirerSourceFactIssues} from './inquirer-source-facts.mjs';
 import {applyInquirerStoryContextToEdition} from './inquirer-story-context.mjs';
 import {applyInquirerForwardStructural} from './inquirer-forward-structural.mjs';
 import {applyInquirerForwardFreshness,evaluateInquirerForwardFreshness} from './inquirer-forward-freshness.mjs';
@@ -54,10 +55,11 @@ export function evaluateInquirerEditionQuality(candidate,previousEdition=null){
   const surfaceIssues=findInquirerForwardSurfaceIssues(candidate,{week:Number(candidate?.week)});
   const headlineIssues=findInquirerForwardHeadlineGrammarIssues(candidate,{week:Number(candidate?.week)});
   const contractIssues=editorialContractIssues(candidate);
+  const factIssues=findInquirerSourceFactIssues(candidate);
   return{
-    ok:!!base.ok&&!!fresh.ok&&contextIssues.length===0&&surfaceIssues.length===0&&headlineIssues.length===0&&contractIssues.length===0,
-    issues:[...(base.issues||[]),...(fresh.issues||[]),...contextIssues.map(x=>({id:'context-truth',...x})),...surfaceIssues.map(x=>({id:'surface-prose',...x})),...headlineIssues.map(x=>({id:'headline-grammar',...x})),...contractIssues.map(message=>({id:'editorial-contract',message}))],
-    metrics:{...(base.metrics||{}),freshness:fresh.metrics||{},context_truth_issues:contextIssues.length,surface_prose_issues:surfaceIssues.length,headline_grammar_issues:headlineIssues.length}
+    ok:!!base.ok&&!!fresh.ok&&contextIssues.length===0&&surfaceIssues.length===0&&headlineIssues.length===0&&contractIssues.length===0&&factIssues.length===0,
+    issues:[...(base.issues||[]),...(fresh.issues||[]),...contextIssues.map(x=>({id:'context-truth',...x})),...surfaceIssues.map(x=>({id:'surface-prose',...x})),...headlineIssues.map(x=>({id:'headline-grammar',...x})),...contractIssues.map(message=>({id:'editorial-contract',message})),...factIssues],
+    metrics:{...(base.metrics||{}),freshness:fresh.metrics||{},context_truth_issues:contextIssues.length,surface_prose_issues:surfaceIssues.length,headline_grammar_issues:headlineIssues.length,source_fact_issues:factIssues.length}
   };
 }
 

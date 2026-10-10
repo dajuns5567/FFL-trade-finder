@@ -226,7 +226,11 @@ function applySentiment(edition,previousEdition){
 export function applyPublishedForwardFix(raw,previousEdition=null){
   const out=structuredClone(raw);
   if(Number(out?.week)<3)return out;
-  out.league_overview=buildOverview(out);
+  if(Number(out.week)>=4){
+    const expected=['lead','standings','players','decisions','league','outlook'];
+    const recap=out.league_overview?.sections?.[0]?.blocks;
+    if(!Array.isArray(recap)||recap.length!==expected.length||!expected.every((kind,i)=>recap[i]?.kind===kind&&Array.isArray(recap[i].paragraphs)&&recap[i].paragraphs.length>=2))throw new Error('Refusing to publish Week '+out.week+' without a complete six-theme league-wide Weekly Recap');
+  }else out.league_overview=buildOverview(out);
   applySentiment(out,previousEdition);
   out.published_fix='forward-recap-sentiment-r2';
   return out;

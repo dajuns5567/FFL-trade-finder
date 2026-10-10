@@ -93,6 +93,7 @@ for(let week=3;week<=17;week++){
   assert.match(String(candidate.league_overview?.headline||''),new RegExp(`Week ${week}`,'i'),`Week ${week} recap headline must be current`);
   assert.ok(candidate.teams.every(t=>Number(t?.inquirer_article?.week)===week),`Week ${week} article metadata must be current`);
 
+  if(week===4)console.log('RAW_V31_RECAP_SAMPLE',JSON.stringify((candidate.league_overview?.sections||[]).map(s=>({heading:s.heading,paragraphs:(s.paragraphs||[]).slice(0,5),blocks:(s.blocks||[]).slice(0,2).map(b=>({heading:b.heading,paragraphs:(b.paragraphs||[]).slice(0,2)}))}))));
   if(week>=4){
     const published=rebuildForwardInquirerEditorial(candidate,{previousEdition:previous});
     const recap=published.league_overview?.sections?.[0];

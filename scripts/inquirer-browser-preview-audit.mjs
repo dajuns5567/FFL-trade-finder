@@ -53,6 +53,7 @@ try{
  if(await openEdition.count()){
   const attrs=await openEdition.first().evaluate(el=>({html:el.outerHTML.slice(0,500),year:el.dataset.lhArchiveSeason,week:el.dataset.lhArchiveWeek}));
   console.log('LIVE_OPEN_EDITION_BUTTON',JSON.stringify(attrs));
+  console.log('LIVE_WIRING_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>({hubWired:document.querySelector('#leagueHub')?.dataset.lhWired,hubParent:document.querySelector('#leagueHubContent')?.closest('#leagueHub')?.id,scriptUrls:[...document.scripts].map(x=>x.src).filter(x=>/league-hub/i.test(x)),buttonConnected:!!document.querySelector('button[data-lh-archive-season]')?.isConnected}))));
   await openEdition.first().click();
  }
  const awardsHeading=page.locator('#leagueHubContent h3').filter({hasText:'Players of the Week'}).first();

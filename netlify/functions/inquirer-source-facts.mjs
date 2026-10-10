@@ -19,9 +19,27 @@ export function findInquirerSourceFactIssues(edition){
   const key=name.toLowerCase(),arr=players.get(key)||[];
   arr.push({team:team.team_name,points:pts,player:p});players.set(key,arr);
  }
+ const teamScoreRules=edition.teams.map(team=>({name:normalize(team.team_name),score:number(team.points)})).filter(t=>t.name&&t.score!==null);
  const all=[['Weekly Recap',edition.league_overview],...edition.teams.map(t=>[t.team_name||String(t.roster_id),t.inquirer_article])];
  for(const [articleName,article] of all){
   for(const paragraph of articleText(article)){
+   // Check explicitly week-qualified team totals. Other historical references
+   // are left to their own archived-week source, never compared with this week.
+   if(/\bWeek\s+\d+\b/i.test(paragraph)){
+    for(const team of teamScoreRules){
+     if(!paragraph.toLowerCase().includes(team.name.toLowerCase()))continue;
+     const name=esc(team.name),score='(-?\\d+(?:\\.\\d+)?)';
+     const expressions=[
+      new RegExp('\\b'+name+'\\s+scored\\s+'+score+'\\s+(?:fantasy\\s+)?points?\\s+in\\s+Week\\s+(\\d+)\\b','gi'),
+      new RegExp('\\bIn\\s+Week\\s+(\\d+),?\\s+'+name+'\\s+scored\\s+'+score+'\\s+(?:fantasy\\s+)?points?\\b','gi')
+     ];
+     for(let i=0;i<expressions.length;i++)for(const m of paragraph.matchAll(expressions[i])){
+      const reported=Number(m[i===0?1:2]),mentioned=Number(m[i===0?2:1]);
+      if(mentioned===week&&Math.abs(reported-team.score)>0.055)
+       issues.push({id:'weekly-team-score',article:articleName,team:team.name,reported,expected:team.score,week});
+     }
+    }
+   }
    // Fast reject for ordinary prose; only explicit scoring statements need source checks.
    if(!/\b(?:scored|posted|recorded|put up|supplied|produced|finished with|averages|averaging|season average)\b/i.test(paragraph))continue;
    const lowercase=paragraph.toLowerCase();

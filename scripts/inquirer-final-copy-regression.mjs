@@ -90,4 +90,29 @@ assert.equal((await sandbox.completedPublicationWeek(1)).complete,false,'Null ma
 activeRows=testRows.map(x=>({...x}));activeRows[0].points='';
 assert.equal((await sandbox.completedPublicationWeek(1)).complete,false,'Blank matchup total must never count as finalized');
 
+
+const {refreshPublishedSurfaces}=await import('../netlify/functions/inquirer-publish-scheduled.mjs');
+const calls=[];
+let awardsAttempts=0;
+const fakeRequest=async (_origin,path)=>{
+ calls.push(path);
+ if(path.includes('weekly_awards')){
+  awardsAttempts++;
+  if(awardsAttempts===1)throw Error('Temporary source outage');
+  return {records:[{season:2026,week:4}]};
+ }
+ return {scoring_history:{through_season:2026,through_week:4}};
+};
+const recovery=await refreshPublishedSurfaces('https://example.invalid',{season:2026,week:4},fakeRequest);
+assert.equal(recovery.weekly_awards_refreshed,true,'Retry a temporarily failing award refresh');
+assert.equal(recovery.manager_spotlight_refreshed,true,'Spotlight must reconcile to published week');
+assert.equal(awardsAttempts,2,'Retry failing surface but do not rerun successful ones');
+assert.equal(calls.filter(x=>x.includes('managers')).length,1,'Do not repeat successful manager update');
+assert.equal(recovery.errors.length,0,'Recovered failures must not remain active alerts');
+const stale=await refreshPublishedSurfaces('https://example.invalid',{season:2026,week:4},async (_origin,path)=>path.includes('weekly_awards')?{records:[{season:2026,week:3}]}:{scoring_history:{through_season:2026,through_week:3}});
+assert.equal(stale.weekly_awards_refreshed,false,'Stale awards must never be marked healthy');
+assert.equal(stale.manager_spotlight_refreshed,false,'Stale spotlight must never be marked healthy');
+assert.equal(stale.attempts,3,'Bound retries on persistent stale data');
+assert(stale.errors.length===2,'Surface both unresolved failures for observability');
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

@@ -147,4 +147,9 @@ factFixture.league_overview.hot_takes=[{take:'In Week 4, Miami Dolphins scored 1
 assert.equal(findInquirerSourceFactIssues(factFixture).length,0,'Accept week-qualified source-backed team total');
 factFixture.league_overview.hot_takes=[{take:'Miami Dolphins scored 12 points in Week 3.'}];
 assert.equal(findInquirerSourceFactIssues(factFixture).length,0,'Do not compare earlier-week facts to the current week score');
+
+factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 12 points in Week 3.'}];
+assert.equal(findInquirerSourceFactIssues(factFixture).length,0,'Older explicitly qualified player results cannot be compared with Week 4 stats');
+factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan scored 12 points in Week 4.'}];
+assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='weekly-player-score'),'Current-week player scores remain strictly checked');
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

@@ -48,7 +48,7 @@ const previous=[1,2,3];
 const history=[];
 const posById=new Map(projectionRaw.map(r=>[String(r.player_id),String(r.player?.position||'')]));
 for(const w of previous){
- const response=await fetch(`https://api.sleeper.app/stats/nfl/regular/2026/${w}`);
+ const response=await fetch(`https://api.sleeper.app/v1/stats/nfl/regular/2026/${w}`);
  if(!response.ok)throw Error('Cannot verify completed prior week '+w);
  const rows=await response.json();
  for(const [id,record] of Object.entries(rows||{})){

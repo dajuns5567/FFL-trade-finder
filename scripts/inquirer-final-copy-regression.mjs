@@ -191,4 +191,12 @@ assert.equal(matchupCheck('Miami Dolphins face Seattle Seahawks next week.').len
 matchupFixture.teams[0].opponent_roster_id=3;
 assert.equal(matchupCheck('Miami Dolphins beat Seattle Seahawks 121.2–98.4.').length,0,'Do not guess opponents without matching roster IDs');
 
+
+matchupFixture.teams[0].league_context={record:{wins:3,losses:1},standings_rank:2};
+assert.equal(matchupCheck('Miami Dolphins has a 3-1 record.').length,0,'Accept sourced current team record');
+assert(matchupCheck('Miami Dolphins has a 4-1 record.').some(x=>x.id==='team-record'),'Reject wrong W-L record');
+assert.equal(matchupCheck('Miami Dolphins ranks in position 2.').length,0,'Accept verified standings rank');
+assert(matchupCheck('Miami Dolphins ranks in position 1.').some(x=>x.id==='standings-rank'),'Reject incorrect current standings position');
+assert.equal(matchupCheck('Miami Dolphins had a strong Week 3 despite its late loss.').length,0,'Avoid inferring records from ordinary prose');
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

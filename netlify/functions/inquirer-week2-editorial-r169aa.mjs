@@ -110,6 +110,32 @@ function repairUnderlengthWeek2(team){
  return team;
 }
 
+
+function contextualizeSharedWeek2Sentences(teams){
+ const normalized=p=>String(p||'').trim().toLowerCase().replace(/\s+/g,' ');
+ const appearances=new Map();
+ for(const team of teams)for(const sec of team.inquirer_article?.sections||[])for(const p of sec.paragraphs||[]){
+  for(const sentence of String(p).split(/(?<=[.!?])\s+/)){
+   if(editorialWords(sentence)<8)continue;
+   const key=normalized(sentence),set=appearances.get(key)||new Set();
+   set.add(String(team.team_name));appearances.set(key,set);
+  }
+ }
+ const repeated=new Set([...appearances].filter(([,ts])=>ts.size>=3).map(([k])=>k));
+ if(!repeated.size)return teams;
+ for(const team of teams){
+  const article=team.inquirer_article;if(!article)continue;
+  const short=String(team.team_name||'this team').trim().split(/\s+/).at(-1);
+  for(const sec of article.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(paragraph=>String(paragraph).split(/(?<=[.!?])\s+/).map(sentence=>{
+   if(!repeated.has(normalized(sentence)))return sentence;
+   const lower=sentence.slice(0,1).toLowerCase()+sentence.slice(1);
+   return `For ${short}, ${lower}`;
+  }).join(' '));
+  article.paragraphs=article.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);
+ }
+ return teams;
+}
+
 export function applyWeek2EditorialR16(raw){
   const out=applyR169Z(raw);
   if(!out||Number(out.season)!==2026||Number(out.week)!==2)return out;
@@ -119,6 +145,7 @@ export function applyWeek2EditorialR16(raw){
    for(const sec of a.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(p=>String(p).replace(/group chat/gi,'argument over the lineup').replace(/\breceipts?\b/gi,'results'));
    a.paragraphs=a.sections.flatMap(sec=>sec.paragraphs||[]).filter(Boolean);return team;
   });
+  out.teams=contextualizeSharedWeek2Sentences(out.teams);
   return out;
 }
 

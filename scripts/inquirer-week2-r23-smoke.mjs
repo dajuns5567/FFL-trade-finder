@@ -2,11 +2,6 @@ import assert from 'node:assert/strict';
 import rawWeek2 from '../netlify/functions/inquirer-week2-2026-preload.mjs';
 import {applyWeek2EditorialR16,WEEK2_EDITORIAL_REVISION} from '../netlify/functions/inquirer-week2-editorial-r28.mjs';
 
-import {applyWeek2EditorialR16 as applyR28Base} from '../netlify/functions/inquirer-week2-editorial-r28-base.mjs';
-import {applyWeek2EditorialR16 as applyR129} from '../netlify/functions/inquirer-week2-editorial-r129.mjs';
-import {applyWeek2EditorialR16 as applyR169X} from '../netlify/functions/inquirer-week2-editorial-r169x.mjs';
-import {applyWeek2EditorialR16 as applyR169Y} from '../netlify/functions/inquirer-week2-editorial-r169y.mjs';
-import {applyWeek2EditorialR16 as applyR169Z} from '../netlify/functions/inquirer-week2-editorial-r169z.mjs';
 
 const snapshot=JSON.stringify(rawWeek2);
 const revised=applyWeek2EditorialR16(rawWeek2);
@@ -47,14 +42,6 @@ function canonicalScoreRows(text){
  return rows;
 }
 
-for(const [stage,apply] of [['r28-base',applyR28Base],['r129',applyR129],['r169x',applyR169X],['r169y',applyR169Y],['r169z',applyR169Z]]){
- const edition=apply(structuredClone(rawWeek2));
- const target=(revised.teams||[]).find(t=>String(t.team_name||'')==='New England Patriots');
- const team=(edition.teams||[]).find(t=>String(t.roster_id)===String(target?.roster_id));
- console.error('NEW_ENGLAND_STAGE',stage,'roster',target?.roster_id,'stageTeam',team?.team_name,'words',words((team?.inquirer_article?.sections||[]).flatMap(s=>s.paragraphs||[]).join(' ')));
- if(stage==='r169y')console.error('NEW_ENGLAND_PRE_CLEANUP',JSON.stringify((team?.inquirer_article?.sections||[]).map(s=>({heading:s.heading,paragraphs:s.paragraphs}))));
-}
-
 const reporterCounts=new Map();
 const reporterWordMins=new Map();
 const crossSentenceMap=new Map();
@@ -62,7 +49,6 @@ for(const t of revised.teams){
  const a=t?.inquirer_article||{},sections=a.sections||[],text=fullText(t),full=String(t.team_name||''),short=shortTeam(full);
  assert.equal(Number(a.editorial_revision),28,`R28 article revision missing: ${full}`);
  assert.equal(a.voice_revision,'week2-r28',`R28 voice revision missing: ${full}`);
- if(words(text)<750)console.error('R28 underlength article diagnostic:',JSON.stringify({team:full,words:words(text),sections:sections.map(s=>({kind:s.kind,heading:s.heading,paragraphs:s.paragraphs}))}));
  assert(words(text)>=750,`R28 over-compressed ${full}: ${words(text)} words`);
  assert(!BAD_META.test(text),`Meta/method language survived in ${full}: ${sentences(text).find(s=>BAD_META.test(s))||''}`);
  assert(!BAD_CARRY.test(text),`Carry/support motif survived in ${full}: ${sentences(text).find(s=>BAD_CARRY.test(s))||''}`);

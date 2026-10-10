@@ -35,7 +35,15 @@ function splitSentences(text){
 }
 
 function cleanMeta(text){
-  const kept=splitSentences(text).map(s=>META.test(s)?s.replace(/\b(?:evidence|proof|investigation|verdict|testimony|argument|conclusion|question|answer)\b/gi,'result').replace(/\b(?:hostile questioning|recycled conclusion|new piece of proof|seminar on whether)\b/gi,'next-week scrutiny'):s).filter(Boolean);
+  const kept=splitSentences(text).map(sentence=>{
+    let x=sentence;
+    x=x.replace(/group chat trial/gi,'lineup review');
+    x=x.replace(/\b(?:receipts|group chat|screenshot|notification|newsroom|copy desk|case file|scoring app)\b/gi,'');
+    x=x.replace(/\b(?:hostile questioning|recycled conclusion|new piece of proof|seminar on whether)\b/gi,'a tougher opponent');
+    x=x.replace(/\b(?:evidence|proof|investigation|verdict|testimony|argument|conclusion)\b/gi,'performance');
+    x=x.replace(/\bquestion\b/gi,'decision').replace(/\banswer\b/gi,'response');
+    return norm(x).replace(/\s+([,.;!?])/g,'$1');
+  }).filter(Boolean);
   return kept.join(' ').replace(/\s+([,.!?])/g,'$1').trim();
 }
 

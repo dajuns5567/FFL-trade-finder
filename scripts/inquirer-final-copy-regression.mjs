@@ -175,4 +175,20 @@ negativeFixture.teams[0].starter_details[0].season_games_played=4;
 assert.equal(checkTake('Defender Example is averaging 2.5 points per game this season.').length,0,'Accept internally consistent season points and integer games');
 assert(checkTake('Defender Example is averaging 2 points per game this season.').some(x=>x.id==='unsupported-player-average'),'Reject incorrect average despite present numerator and denominator');
 
+
+// Head-to-head facts are checked only when roster IDs corroborate the opponent.
+const matchupFixture={week:4,teams:[
+ {roster_id:1,opponent_roster_id:2,team_name:'Miami Dolphins',points:120.2,starter_details:[],inquirer_article:{sections:[]}},
+ {roster_id:2,opponent_roster_id:1,team_name:'Seattle Seahawks',points:98.4,starter_details:[],inquirer_article:{sections:[]}}
+],league_overview:{sections:[],hot_takes:[]}};
+const matchupCheck=t=>{matchupFixture.league_overview.hot_takes=[{take:t}];return findInquirerSourceFactIssues(matchupFixture);};
+assert.equal(matchupCheck('Miami Dolphins beat Seattle Seahawks 120.2–98.4.').length,0,'Accept exact matchup score');
+assert(matchupCheck('Miami Dolphins beat Seattle Seahawks 121.2–98.4.').some(x=>x.id==='matchup-score'),'Reject incorrect matchup winner total');
+assert(matchupCheck('Miami Dolphins beat Seattle Seahawks 120.2–99.4.').some(x=>x.id==='matchup-score'),'Reject incorrect opponent total');
+assert(matchupCheck('Miami Dolphins lost to Seattle Seahawks 120.2–98.4.').some(x=>x.id==='matchup-result'),'Reject reversed win/loss verb');
+assert.equal(matchupCheck('Seattle Seahawks lost to Miami Dolphins 98.4–120.2.').length,0,'Accept reverse-perspective matchup report');
+assert.equal(matchupCheck('Miami Dolphins face Seattle Seahawks next week.').length,0,'Future matchup preview has no historical score assertion');
+matchupFixture.teams[0].opponent_roster_id=3;
+assert.equal(matchupCheck('Miami Dolphins beat Seattle Seahawks 121.2–98.4.').length,0,'Do not guess opponents without matching roster IDs');
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

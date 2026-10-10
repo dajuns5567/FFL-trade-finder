@@ -463,13 +463,14 @@ function week4ProjectionPanel(t,teams){
  const opponentFull=opponent?.projected!=null&&Number(opponent?.projection_coverage)===Number(opponent?.starter_count);
  const fmtProjection=x=>x==null||!Number.isFinite(Number(x))?'Unavailable':Number(x).toFixed(2)+' pts';
  const date=String(snap.retrieved_at||'').slice(0,10);
- const details=rows.map(p=>'<tr><td>'+esc(p.name||p.id)+' <small>'+esc(p.position||'')+'</small></td><td style="text-align:right">'+esc(fmtProjection(p.projected))+'</td></tr>').join('');
+ const details=rows.map(p=>'<tr><td>'+esc(p.name||p.id)+' <small>'+esc(p.position||'')+'</small></td><td style="text-align:right">'+(p.projected!=null?esc(fmtProjection(p.projected)):p.estimated_projected!=null?'<span title="Retrospective estimate based on prior completed games; not an official pregame projection">~'+esc(fmtProjection(p.estimated_projected))+' (estimated)</span>':esc('Unavailable'))+'</td></tr>').join('');
  return '<section class="lh-week4-projection-panel" style="margin:15px 0;padding:13px;border:1px solid rgba(216,170,53,.35);border-radius:9px">'+
   '<h4 style="margin:0 0 8px">Week '+projectionWeek+' • Sleeper projections</h4>'+
   '<p class="lh-sub">Source: Sleeper archived projection feed, retrieved '+esc(date)+'. These projections were recovered after the games and have <b>not</b> been verified as the original pregame forecasts.</p>'+
   '<p><b>'+esc(t.team_name)+':</b> '+esc(full?fmtProjection(t.projected):'Full team projection unavailable')+' • '+coverage+'/'+rows.length+' starters with usable projected stats'+(!full?' • Known-player subtotal: '+esc(coverage?fmtProjection(t.projection_subtotal??rows.reduce((n,p)=>n+(p.projected??0),0)):'No scored projections available')+' (not a full forecast)':'')+
   (opponent?'<br><b>'+esc(opponent.team_name)+':</b> '+esc(opponentFull?fmtProjection(opponent.projected):'Full team projection unavailable'):'')+'</p>'+
   '<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Week 4 starter</th><th style="text-align:right">Projected</th></tr></thead><tbody>'+details+'</tbody></table>'+
+  (t.estimated_projected!=null&&t.estimated_starter_count?'<p><b>Retrospective estimated lineup total: '+esc(fmtProjection(t.estimated_projected))+'</b> ('+t.estimated_starter_count+' estimated starters). This is not the original pregame forecast.</p>':'')+
   (full?'':'<p class="lh-sub">Players with no numerical Sleeper projection remain marked Unavailable. The known-player subtotal excludes those players; it is not a full team forecast.</p>')+
   '</section>';
 }

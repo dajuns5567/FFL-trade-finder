@@ -85,7 +85,7 @@ for(let week=3;week<=17;week++){
     const recap=published.league_overview?.sections?.[0];
     assert.equal(recap?.blocks?.length,6,`Week ${week} published recap must have six editorial themes`);
     assert.deepEqual(recap.blocks.map(b=>b.kind),['lead','standings','players','decisions','league','outlook'],`Week ${week} published recap reverted to old game-by-game format`);
-    assert(recap.blocks.every(b=>Array.isArray(b.paragraphs)&&b.paragraphs.length>=2),`Week ${week} published recap contains an empty theme`);
+    assert(recap.blocks.every(b=>Array.isArray(b.paragraphs)&&b.paragraphs.length>=2),`Week ${week} published recap contains an empty theme: ${JSON.stringify(recap.blocks.map(b=>({kind:b.kind,heading:b.heading,count:b.paragraphs?.length,paragraphs:b.paragraphs})))}`);
     assert(recap.blocks.every(b=>!/(?:The Week’s Loudest Game|The Closest Finish|The Biggest Margin|Another Scoring Headline|The Other Game That Deserves a Look)/i.test(b.heading||'')),`Week ${week} published recap reused an outdated format heading`);
     assert.equal(published.teams.length,32,`Week ${week} rebuild must retain all teams`);
   }

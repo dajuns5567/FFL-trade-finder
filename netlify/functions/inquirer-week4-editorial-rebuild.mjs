@@ -237,7 +237,7 @@ function leagueStory(edition){
   blocks[2].paragraphs=clean([
    hero?short(hero.player)+' posted '+point(hero.player)+' for '+name(hero.team)+', giving the edition its leading player line. That deserves its own account instead of getting lost in five separate game summaries.':null,
    second?short(second.player)+' contributed '+point(second.player)+' for '+name(second.team)+'. Two standouts can define the headlines, but neither alone explains the complete standings.':null,
-   strong?'The '+n(strong.total)+'-point shootout illustrates why recognizing a player and evaluating a team are different editorial jobs.':null
+   strong?'The '+n(strong.total)+'-point shootout shows that even a stellar starter can end up on the losing side when the opposing lineup produces more points.':null
   ]);
   blocks[3].paragraphs=clean([
    close?'In the '+name(close.winner)+'–'+name(close.loser)+' finish, '+n(close.gap)+' points separated the outcomes. A manager can learn from that narrow result without pretending an unchecked substitute had scored.':null,

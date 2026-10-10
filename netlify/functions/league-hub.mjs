@@ -581,6 +581,7 @@ async function addArchivedProjectionCoverage(edition){
   return {...team,starter_details:starters,starter_count:starters.length,projection_coverage:covered,
    projected:starters.length&&covered===starters.length?subtotal:null,projection_subtotal:covered?subtotal:null,
    projection_snapshot:{source:feed.source,retrieved_at:feed.retrieved_at,verified_pregame:false,
+    captured_before_scoring:feed.before_scoring_recorded===true,captured_at:feed.captured_at||null,
     scoring_keys:feed.scoring_keys,coverage:covered,starters:starters.length}};
  })};
  const byId=new Map(out.teams.map(t=>[String(t.roster_id),t]));

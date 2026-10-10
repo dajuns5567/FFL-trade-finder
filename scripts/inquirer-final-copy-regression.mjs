@@ -72,6 +72,11 @@ assert.deepEqual(Array.from(sandbox.missingPublishedWeekPlayerStats(testRows,{..
 assert.deepEqual(Array.from(sandbox.missingPublishedWeekPlayerStats(testRows,{...completeStats,c:{}})),['c'],'Empty player stat record must not be counted as complete');
 const zeroScorerRows=[...testRows,{roster_id:5,matchup_id:3,points:0,players_points:{zero:0}}];
 assert.equal(sandbox.missingPublishedWeekPlayerStats(zeroScorerRows,completeStats).length,0,'Players with zero matchup points need not have a raw stats entry');
+const fullMetadata={a:{full_name:'Player A',position:'QB'},b:{full_name:'Player B',position:'RB'},c:{full_name:'Player C',position:'LB'},d:{full_name:'Player D',position:'DB'}};
+assert.equal(sandbox.missingPublishedWeekPlayerMetadata(testRows,fullMetadata).length,0,'Complete player directory must support publishing');
+assert.deepEqual(Array.from(sandbox.missingPublishedWeekPlayerMetadata(testRows,{...fullMetadata,c:{full_name:'Player C'}})),['c'],'Missing scorer position must defer publication');
+assert.deepEqual(Array.from(sandbox.missingPublishedWeekPlayerMetadata(testRows,{...fullMetadata,d:{position:'DB'}})),['d'],'Missing scorer name must defer publication');
+
 
 activeRows=testRows.slice(0,2);
 assert.equal((await sandbox.completedPublicationWeek(1)).complete,false,'Partial roster coverage must never publish');

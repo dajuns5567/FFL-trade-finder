@@ -468,13 +468,14 @@ function archiveFiltersHTML(w){
 async function fetchArchivedEdition(year,week){
  const y=Number(year),w=Number(week);if(!y||!w)return null;const key=y+'|'+w;
  // The current published Week 4 edition must not be blocked by a stale in-memory archive entry.
- if(!(y===2026&&w===4)&&archivedEditionCache.has(key))return archivedEditionCache.get(key);
+ const cached=archivedEditionCache.get(key);
+ if(y===2026&&w===4){if(cached&&typeof cached.then==='function')return cached;}else if(cached)return cached;
  const task=(async()=>{
   const url=(y===2026&&w===3)?'/.netlify/functions/league-hub-week3-fast?rev=476':(y===2026&&w===4)?'/.netlify/functions/league-hub-week4-fast?rev=482':'/.netlify/functions/league-hub?broadcast_season='+y+'&broadcast_week='+w;
   const valid=x=>x?.available&&Number(x.season)===y&&Number(x.week)===w&&Array.isArray(x.teams)&&x.teams.length===32&&(w!==4||Array.isArray(x.league_overview?.sections?.[0]?.blocks)&&x.league_overview.sections[0].blocks.length===6);
   const known=[weeklyCache,spotlightWeeklyCache,...archivedEditionCache.values()].find(x=>x&&!('then'in Object(x))&&valid(x));
   try{
-   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),9000);
+   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),18000);
    try{
     const r=await Promise.race([fetch(url,{cache:y===2026&&w===4?'no-store':'force-cache',signal:controller.signal}),new Promise((_,reject)=>controller.signal.addEventListener('abort',()=>reject(new Error('archive fetch timeout')),{once:true}))]);
     if(!r.ok)throw Error('archived edition unavailable: '+y+' Week '+w);
@@ -487,7 +488,7 @@ async function fetchArchivedEdition(year,week){
    if(y===2026&&w===4){
     try{
      const recovered=await new Promise((resolve,reject)=>{
-      const xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=12000;xhr.setRequestHeader('Cache-Control','no-cache');
+      const xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.timeout=18000;xhr.setRequestHeader('Cache-Control','no-cache');
       xhr.onload=()=>{if(xhr.status!==200)return reject(new Error('archive fallback HTTP '+xhr.status));try{resolve(JSON.parse(xhr.responseText))}catch(e){reject(e)}};
       xhr.onerror=()=>reject(new Error('archive fallback network failure'));xhr.ontimeout=()=>reject(new Error('archive fallback timed out'));xhr.send();
      });

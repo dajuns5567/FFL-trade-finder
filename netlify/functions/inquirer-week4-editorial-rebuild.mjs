@@ -82,8 +82,8 @@ function teamStory(t,week){
   support?short(support)+' finished at '+point(support)+'. '+choose(['That second score gave the roster another place to lean when the matchup tightened.','It is the supporting production that separates a functional roster from a weekly rescue mission.','That performance made the headline less dependent on one player having a perfect afternoon.'],seed+'second'):null,
   third?short(third)+' contributed '+point(third)+'. '+choose(['A third useful score changes the shape of a lineup, even if the top two get the applause.','Those points are not decorative; they count exactly as much as the star points in the final result.','That is the type of middle-of-the-lineup production managers need to find every Sunday.'],seed+'third'):null,
   weak&&star&&weak!==star?short(weak)+' closed the starter list at '+point(weak)+'. '+(won?'The win covered that weakness this week; a closer opponent might not.':'A loss invites scrutiny of the quiet spots, but it does not turn every low score into a coaching mistake.'):null,
-  star&&valid(star.season_avg)?short(star)+' entered this report with a '+n(star.season_avg)+' current-season fantasy average. Week '+week+' produced '+n(star.points)+', so the single-game headline has a season baseline.':null,
-  support&&valid(support.prior_season_avg)&&valid(support.season_avg)?short(support)+' averaged '+n(support.prior_season_avg)+' last season and is at '+n(support.season_avg)+' this season. That is a more useful comparison than treating one week as a career verdict.':null,
+  star?short(star)+' scored '+n(star.points)+' in Week '+week+'. That is this week’s verified performance, not a claim about his season average.':null,
+  support?short(support)+' contributed '+point(support)+' in Week '+week+'. Season-to-season averages are omitted without a verified games-played denominator.':null,
   players.length>3?'Beyond the leaders, '+short(players[3])+' supplied '+point(players[3])+'. The points after the headline names still determine whether a good top end becomes a winning total.':null
  ]);
  const management=clean([
@@ -289,11 +289,11 @@ function leagueStory(edition){
    'Week '+(week+1)+' has not been scored. These are upcoming appointments, not completed outcomes.'
   ]);
  }
- const star=topPlayers(high)[0],young=teams.flatMap(t=>topPlayers(t).filter(p=>valid(p.age)&&Number(p.age)<=26&&valid(p.season_avg)).map(p=>({t,p}))).sort((a,b)=>Number(b.p.season_avg)-Number(a.p.season_avg))[0],flags=new Map();
+ const star=topPlayers(high)[0],young=teams.flatMap(t=>topPlayers(t).filter(p=>valid(p.age)&&Number(p.age)<=26).map(p=>({t,p}))).sort((a,b)=>Number(b.p.points)-Number(a.p.points))[0],flags=new Map();
  for(const t of teams){const key=String(t.division_name||'').trim();if(!key)continue;const previous=flags.get(key),rk=Number(t?.league_context?.standings_rank)||999;if(!previous||rk<(Number(previous?.league_context?.standings_rank)||999))flags.set(key,t)}
  const hot=[
   high?{kind:'championship',title:'Title Favorite: '+name(leaders[0]||high),take:name(leaders[0]||high)+' has the strongest present standings position at '+record(leaders[0]||high)+' and '+rank(leaders[0]||high)+'. That is a current-week call, not an award given in advance.'}:null,
-  young?{kind:'breakout',title:'Breakout Player: '+short(young.p),take:short(young.p)+' is averaging '+n(young.p.season_avg)+' this season at age '+young.p.age+'. '+name(young.t)+' has a young player whose production is worth tracking beyond Week '+week+'.'}:{kind:'breakout',title:'Breakout Watch: No Verified Qualifier',take:'The available age and current-season production data do not support a specific breakout selection for Week '+week+'. No player will be invented to fill the category.'},
+  young?{kind:'breakout',title:'Breakout Player: '+short(young.p),take:short(young.p)+' posted '+point(young.p)+' in Week '+week+' at age '+young.p.age+'. '+name(young.t)+' has a young player whose production is worth tracking beyond Week '+week+'.'}:{kind:'breakout',title:'Breakout Watch: No Verified Qualifier',take:'The available age and current-season production data do not support a specific breakout selection for Week '+week+'. No player will be invented to fill the category.'},
   star?{kind:'player',title:'Player of the Year Watch: '+short(star),take:short(star)+' just produced '+point(star)+' for '+name(high)+'. The season-long discussion stays open, but that performance belongs in it.'}:null,
   low?{kind:'fraud',title:'Fraud Alert: '+name(low),take:name(low)+' scored '+n(low.points)+' in Week '+week+' and sits '+record(low)+'. One low total is not a lifetime label; repeating it would make the warning louder.'}:null,
   flags.size?{kind:'division',title:'Division Flags',take:[...flags.entries()].map(([d,t])=>d+': '+name(t)+' ('+record(t)+')').join('; ')+'. These are present standings leaders, not projected champions.'}:null
@@ -309,7 +309,7 @@ function leagueStory(edition){
    h.take=name(leaders[0]||high)+' currently owns '+record(leaders[0]||high)+' and a '+rank(leaders[0]||high)+' position. That places the club near the front of the argument; it does not settle any playoff game.';
   }else if(h.kind==='breakout'){
    h.title=young?'Emerging Name: '+short(young.p):'Emerging Names: No Confirmed Candidate';
-   h.take=young?short(young.p)+' has established a '+n(young.p.season_avg)+' current-season average at '+young.p.age+' years old. The growing record is more persuasive than a single weekly spike.':'Without a verified age and current-season average, the report will not nominate an invented breakout player.';
+   h.take=young?short(young.p)+' posted '+point(young.p)+' in Week '+week+' at '+young.p.age+' years old. A single strong performance merits attention, not an invented season average.':'Without a verified age and weekly performance, the report will not nominate an invented breakout player.';
   }else if(h.kind==='player'){
    h.title=star?'Individual Award Watch: '+short(star):'Individual Award Watch';
    h.take=star?name(high)+' benefited from '+point(star)+' by '+short(star)+'. One productive Sunday is a reason to watch that player, not a completed season award.':'The published statistics do not support a named individual selection.';
@@ -331,7 +331,7 @@ function leagueStory(edition){
    h.take='In Week '+week+', '+name(leaders[0]||high)+' holds '+record(leaders[0]||high)+' and '+rank(leaders[0]||high)+' overall. The position is real; any championship conclusion would still be premature.';
   }else if(h.kind==='breakout'){
    h.title=young?'A Young Name to Follow: '+short(young.p):'Breakout Player: Undetermined';
-   h.take=young?'For '+name(young.t)+', '+short(young.p)+' has a '+n(young.p.season_avg)+'-point season average while still '+young.p.age+'. That development is worth watching across future starts.':'The published player history cannot substantiate a candidate for this category yet.';
+   h.take=young?'For '+name(young.t)+', '+short(young.p)+' scored '+point(young.p)+' in Week '+week+' at age '+young.p.age+'. That individual performance is worth watching across future starts.':'The published weekly player data cannot substantiate a candidate for this category yet.';
   }else if(h.kind==='player'){
    h.title=star?'Player Honor Discussion: '+short(star):'Player Honor Discussion';
    h.take=star?short(star)+' recorded '+point(star)+' for '+name(high)+' this week. A meaningful performance enters the conversation without deciding the year-end honor.':'The current snapshot cannot justify naming a player here.';

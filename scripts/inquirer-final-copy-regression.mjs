@@ -136,4 +136,12 @@ factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan is averaging 20 
 assert.equal(findInquirerSourceFactIssues(factFixture).length,0,'Accept an average with a verified numerator and denominator');
 factFixture.league_overview.hot_takes=[{take:'Tetairoa McMillan is averaging 25 points per game this season.'}];
 assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='unsupported-player-average'),'Reject an average inconsistent with season scoring');
+
+factFixture.teams[0].points=123.4;
+factFixture.league_overview.hot_takes=[{take:'Miami Dolphins scored 122.4 points in Week 4.'}];
+assert(findInquirerSourceFactIssues(factFixture).some(x=>x.id==='weekly-team-score'),'Reject a misreported current-week team total');
+factFixture.league_overview.hot_takes=[{take:'In Week 4, Miami Dolphins scored 123.4 points.'}];
+assert.equal(findInquirerSourceFactIssues(factFixture).length,0,'Accept week-qualified source-backed team total');
+factFixture.league_overview.hot_takes=[{take:'Miami Dolphins scored 12 points in Week 3.'}];
+assert.equal(findInquirerSourceFactIssues(factFixture).length,0,'Do not compare earlier-week facts to the current week score');
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

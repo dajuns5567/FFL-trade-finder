@@ -9,6 +9,13 @@ function articleText(article){
  const takes=(article?.hot_takes||[]).map(x=>x.take||'');
  return [...sections,...takes].map(normalize);
 }
+// Historical claims explicitly qualified by another Week are not checked
+// against the reporting week's points; they require archived-week sources.
+function isOtherWeek(text,match,current){
+ const suffix=String(text).slice(match.index+match[0].length,match.index+match[0].length+24);
+ const explicit=suffix.match(/^\s*(?:in|during|for)\s+Week\s+(\d+)\b/i);
+ return !!explicit&&Number(explicit[1])!==Number(current);
+}
 export function findInquirerSourceFactIssues(edition){
  const issues=[],week=Number(edition?.week);
  if(!Number.isInteger(week)||!Array.isArray(edition?.teams))return issues;
@@ -50,7 +57,7 @@ export function findInquirerSourceFactIssues(edition){
     const p=entries[0],actual=p.points,name=normalize(p.player.name),escaped=esc(name);
     const weekly=new RegExp('\\b'+escaped+'\\s+(?:scored|posted|recorded|put up|supplied|produced)\\s+(\\d+(?:\\.\\d+)?)\\s*(?:fantasy\\s+)?points?\\b','gi');
     for(const match of paragraph.matchAll(weekly)){
-     if(Math.abs(Number(match[1])-actual)>0.055)issues.push({id:'weekly-player-score',article:articleName,player:name,reported:Number(match[1]),expected:actual,week});
+     if(!isOtherWeek(paragraph,match,week)&&Math.abs(Number(match[1])-actual)>0.055)issues.push({id:'weekly-player-score',article:articleName,player:name,reported:Number(match[1]),expected:actual,week});
     }
     // Verify season per-game claims only when a valid season total and denominator exist.
     const perGame=new RegExp('\\b'+escaped+'\\s+(?:is\\s+)?(?:averages|averaging)\\s+(\\d+(?:\\.\\d+)?)\\s*(?:fantasy\\s+)?points?\\s*(?:per\\s+game|this\\s+season|on\\s+the\\s+season)\\b','gi');
@@ -61,7 +68,7 @@ export function findInquirerSourceFactIssues(edition){
     }
     const finished=new RegExp('\\b'+escaped+'\\s+finished\\s+with\\s+(-?\\d+(?:\\.\\d+)?)\\s*(?:fantasy\\s+)?points?\\b','gi');
     for(const match of paragraph.matchAll(finished)){
-     if(Math.abs(Number(match[1])-actual)>0.055)
+     if(!isOtherWeek(paragraph,match,week)&&Math.abs(Number(match[1])-actual)>0.055)
       issues.push({id:'weekly-player-score',article:articleName,player:name,reported:Number(match[1]),expected:actual,week});
     }
     // A single week's points must never be labeled a season average without

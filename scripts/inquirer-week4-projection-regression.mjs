@@ -4,6 +4,11 @@ import snapshotLoader from '../netlify/functions/inquirer-week4-2026-projections
 import {rebuildWeek4Editorial} from '../netlify/functions/inquirer-week4-editorial-rebuild.mjs';
 const source=preload(),snap=snapshotLoader(),w=rebuildWeek4Editorial(source);
 assert.equal(w.teams.length,32);
+const hotTakes=w.league_overview?.hot_takes||[];
+const printed=JSON.stringify(w.league_overview);
+assert(!/45\\.2(?:0)?-point season average|45\\.2(?:0)? current-season average/i.test(printed),'Week 4 single-game points must never masquerade as a season average');
+assert(!/Tetairoa McMillan.{0,100}45\\.2(?:0)?.{0,40}season average/i.test(printed),'Guard against week-score-to-average regression in Hot Takes');
+
 assert.equal(snap.scoring_keys,143);
 assert.equal(snap.verified_pregame,false);
 assert.equal(w.league_overview.sections[0].blocks.length,6,'Preserve six-theme recap');

@@ -477,7 +477,9 @@ async function fetchArchivedEdition(year,week){
   try{
    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),18000);
    try{
-    const r=await Promise.race([fetch(url,{cache:y===2026&&w===4?'no-store':'force-cache',signal:controller.signal}),new Promise((_,reject)=>controller.signal.addEventListener('abort',()=>reject(new Error('archive fetch timeout')),{once:true}))]);
+    const getResponse=u=>fetch(u,{cache:y===2026&&w===4?'no-store':'force-cache',signal:controller.signal}).then(r=>{if(!r.ok)throw Error('archive HTTP '+r.status);return r});
+    const requests=y===2026&&w===4?[getResponse(url),getResponse('/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week=4')]:[getResponse(url)];
+    const r=await Promise.race([Promise.any(requests),new Promise((_,reject)=>controller.signal.addEventListener('abort',()=>reject(new Error('archive fetch timeout')),{once:true}))]);
     if(!r.ok)throw Error('archived edition unavailable: '+y+' Week '+w);
     const x=await r.json();
     if(valid(x))return x;

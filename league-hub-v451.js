@@ -518,6 +518,17 @@ function scrollToInquirerArticle(){requestAnimationFrame(()=>{const target=docum
 function showWeeklyArticle(w,scroll=false,scrollMode='article'){const host=document.getElementById('leagueHubContent'),all=tradeCache?.trades||[],stats=teamTradeStats(all),md=mergeVisibleWeekScoring(managerCache,w);managerCache=md;if(host)host.innerHTML=dailyHTML(all,stats,w,md,w);if(scroll)(scrollMode==='top'?scrollToInquirerTop():scrollToInquirerArticle());ensureCurrentWeekAwards(w).then(data=>{if(Number(weeklyCache?.season)!==Number(w?.season)||Number(weeklyCache?.week)!==Number(w?.week))return;const current=Array.from(document.querySelectorAll('#leagueHubContent .lh-card.lh-wide')).find(x=>String(x.querySelector('h3')?.textContent||'').includes('Players of the Week'));if(current)current.outerHTML=playersOfWeekHTML(w,data)}).catch(()=>{})}
 function returnToLeagueHubHome(){openBroadcastTeam='';weeklyCache=null;render('daily').then(()=>scrollToInquirerTop())}
 function dailyHTML(all,stats,w,md,spotlightW=w){
+ // Home must never regress to a previously published edition when slower
+ // bootstrap/manager requests finish after a newer archive has loaded.
+ // Explicit archive reading is not affected because it sets openBroadcastTeam.
+ if(!openBroadcastTeam){
+  const choices=[w,weeklyCache,spotlightWeeklyCache,...archivedEditionCache.values()]
+   .filter(x=>x?.available&&Array.isArray(x.teams)&&x.teams.length===32)
+   .sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
+  if(choices[0]&&(w==null||Number(choices[0].season)>Number(w.season)||(Number(choices[0].season)===Number(w.season)&&Number(choices[0].week)>Number(w.week)))){
+   w=choices[0];spotlightW=w;
+  }
+ }
  const latest=all.slice().sort((a,b)=>new Date(b.created||0)-new Date(a.created||0)).slice(0,3);
  const active=stats.slice().sort((a,b)=>b.trades-a.trades)[0];
  const best=all.map(t=>({t,h:hindsightDelta(t)})).filter(x=>x.h).sort((a,b)=>b.h.edge-a.h.edge)[0];

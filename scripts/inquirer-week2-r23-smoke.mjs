@@ -48,6 +48,7 @@ for(const t of revised.teams){
  const a=t?.inquirer_article||{},sections=a.sections||[],text=fullText(t),full=String(t.team_name||''),short=shortTeam(full);
  assert.equal(Number(a.editorial_revision),28,`R28 article revision missing: ${full}`);
  assert.equal(a.voice_revision,'week2-r28',`R28 voice revision missing: ${full}`);
+ if(words(text)<750)console.error('R28 underlength article diagnostic:',JSON.stringify({team:full,words:words(text),sections:sections.map(s=>({kind:s.kind,heading:s.heading,paragraphs:s.paragraphs}))}));
  assert(words(text)>=750,`R28 over-compressed ${full}: ${words(text)} words`);
  assert(!BAD_META.test(text),`Meta/method language survived in ${full}: ${sentences(text).find(s=>BAD_META.test(s))||''}`);
  assert(!BAD_CARRY.test(text),`Carry/support motif survived in ${full}: ${sentences(text).find(s=>BAD_CARRY.test(s))||''}`);

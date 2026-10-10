@@ -16,36 +16,44 @@ function isOtherWeek(text,match,current){
  const explicit=suffix.match(/^\s*(?:in|during|for)\s+Week\s+(\d+)\b/i);
  return !!explicit&&Number(explicit[1])!==Number(current);
 }
+
+// Source-attributed, read-only per-edition registry. Values come from the
+// candidate's structured data, not from generated prose or model guesses.
+// A candidate registry is not itself an independent Sleeper verification.
+export function buildInquirerEditionFactRegistry(edition){
+ const week=Number(edition?.week),teams=Array.isArray(edition?.teams)?edition.teams:[];
+ const players=new Map(),byRoster=new Map(),standings=[],teamScoreRules=[],matchups=[];
+ for(const team of teams){
+  const rosterId=team?.roster_id===null||team?.roster_id===undefined?null:String(team.roster_id);
+  if(rosterId!==null&&!byRoster.has(rosterId))byRoster.set(rosterId,team);
+  const name=normalize(team?.team_name),score=number(team?.points);
+  if(name&&score!==null)teamScoreRules.push({name,score,source:'edition.team.points',week});
+  if(name)standings.push({name,wins:number(team?.league_context?.record?.wins),losses:number(team?.league_context?.record?.losses),rank:number(team?.league_context?.standings_rank),source:'edition.team.league_context',week});
+  for(const p of team?.starter_details||[]){
+   const playerName=normalize(p?.name),pts=number(p?.points);
+   if(!playerName||pts===null)continue;
+   const key=playerName.toLowerCase(),arr=players.get(key)||[];
+   arr.push({team:team.team_name,points:pts,player:p,source:'edition.team.starter_details',week});
+   players.set(key,arr);
+  }
+ }
+ for(const team of teams){
+  const opponentId=team?.opponent_roster_id===null||team?.opponent_roster_id===undefined?null:String(team.opponent_roster_id);
+  if(opponentId===null)continue;
+  const opponent=byRoster.get(opponentId);
+  if(!opponent||opponent===team||String(opponent?.opponent_roster_id)!==String(team.roster_id))continue;
+  const a=normalize(team.team_name),b=normalize(opponent.team_name),points=number(team.points),opponentPoints=number(opponent.points);
+  if(!a||!b||a.toLowerCase()===b.toLowerCase()||points===null||opponentPoints===null)continue;
+  matchups.push({a,b,points,opponentPoints,source:'edition.teams.reciprocal_opponent_roster_id+points',week});
+ }
+ return {week,players,teamScoreRules,standings,matchups};
+}
+
 export function findInquirerSourceFactIssues(edition){
  const issues=[],week=Number(edition?.week);
  if(!Number.isInteger(week)||!Array.isArray(edition?.teams))return issues;
- const players=new Map();
- for(const team of edition.teams)for(const p of team?.starter_details||[]){
-  const name=normalize(p?.name),pts=number(p?.points);
-  if(!name||pts===null)continue;
-  const key=name.toLowerCase(),arr=players.get(key)||[];
-  arr.push({team:team.team_name,points:pts,player:p});players.set(key,arr);
- }
- const teamScoreRules=edition.teams.map(team=>({name:normalize(team.team_name),score:number(team.points)})).filter(t=>t.name&&t.score!==null);
-
- // Check explicit current-week head-to-head results against both roster totals.
- // Opponent identifiers are required: prose alone cannot establish a matchup.
- // Standings only use explicit record and rank fields from the edition.
- const standings=edition.teams.map(t=>({
-  name:normalize(t.team_name),
-  wins:number(t?.league_context?.record?.wins),
-  losses:number(t?.league_context?.record?.losses),
-  rank:number(t?.league_context?.standings_rank)
- })).filter(t=>t.name);
- const matchups=[];
- for(const team of edition.teams){
-  if(team?.roster_id===null||team?.roster_id===undefined||team?.opponent_roster_id===null||team?.opponent_roster_id===undefined)continue;
-  const opponent=edition.teams.find(t=>t?.roster_id!==null&&t?.roster_id!==undefined&&String(t.roster_id)===String(team.opponent_roster_id)&&t!==team);
-  if(!opponent||number(team.points)===null||number(opponent.points)===null)continue;
-  const a=normalize(team.team_name),b=normalize(opponent.team_name);
-  if(!a||!b||a.toLowerCase()===b.toLowerCase())continue;
-  matchups.push({a,b,points:number(team.points),opponentPoints:number(opponent.points)});
- }
+ const facts=buildInquirerEditionFactRegistry(edition);
+ const {players,teamScoreRules,standings,matchups}=facts;
  const all=[['Weekly Recap',edition.league_overview],...edition.teams.map(t=>[t.team_name||String(t.roster_id),t.inquirer_article])];
  for(const [articleName,article] of all){
   for(const paragraph of articleText(article)){

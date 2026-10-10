@@ -1,3 +1,4 @@
+import week4RetrospectiveEstimates from './inquirer-week4-2026-retrospective-estimates.mjs';
 import week4ScoredProjections from './inquirer-week4-2026-projections.mjs';
 import week3Preload2026 from './inquirer-week3-2026-preload.mjs';
 import {restoreReporterNarratives} from './inquirer-forward-restore-voice.mjs';
@@ -367,6 +368,9 @@ export function rebuildWeek4Editorial(original){
  // *pregame* projection or used to assert that a projected upset occurred.
  if(snapshot?.season!==2026||snapshot?.week!==4||snapshot?.league_id!=='1316867686394769408'||snapshot?.scoring_keys!==143)return out;
  const scores=snapshot.points_by_player||{};
+ const backfill=week4RetrospectiveEstimates();
+ const estimates=backfill?.season===2026&&backfill?.week===4&&backfill?.scoring_sha256===snapshot?.scoring_sha256?backfill.estimates||{}:{};
+
  for(const team of out.teams||[]){
   const starters=team.starter_details||[];
   let covered=0,total=0;
@@ -374,7 +378,21 @@ export function rebuildWeek4Editorial(original){
    const id=String(player.id),value=Object.hasOwn(scores,id)?Number(scores[id]):NaN;
    player.projected=Number.isFinite(value)?value:null;
    if(Number.isFinite(value)){covered++;total+=value}
+   else if(Object.hasOwn(estimates,id)){
+    const e=estimates[id];
+    if(Number.isFinite(Number(e?.points))){
+     player.estimated_projected=Number(e.points);
+     player.estimate_basis=e.basis;
+     player.estimate_sample_size=e.sample_size;
+     player.estimate_confidence=e.confidence;
+    }
+   }
   }
+  const estimated=starters.filter(p=>p.projected==null&&p.estimated_projected!=null);
+  team.estimated_starter_count=estimated.length;
+  team.estimated_projected=estimated.length&&starters.every(p=>p.projected!=null||p.estimated_projected!=null)
+   ?Number(starters.reduce((n,p)=>n+Number(p.projected??p.estimated_projected),0).toFixed(2)):null;
+  if(estimated.length)team.projection_estimate_snapshot={method:backfill.method,source:backfill.source,through_week:3,retrospective:true,verified_pregame:false};
   team.starter_count=starters.length;
   team.projection_coverage=covered;
   team.projection_subtotal=Number(total.toFixed(2));

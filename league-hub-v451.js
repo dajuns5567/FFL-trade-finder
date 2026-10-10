@@ -87,7 +87,7 @@ function managerAwardsFromWeek(w){
  cool=wins.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points))||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
  item=(type,title,t,detail)=>t?{type,title,roster_id:String(t.roster_id||''),manager_user_id:String(t.manager_user_id||''),manager_name:String(t.manager_name||''),team_name:String(t.team_name||''),points:Number(t.points)||0,detail}:null;
  return[
-  item('hot-seat','🔥 Hot Seat',hot,hot?(Number.isFinite(safeProjection(hot.projected))&&Number.isFinite(oppProj(hot))?'Projected '+((Number(hot.projected)-oppProj(hot))>=0?'+':'')+(Number(hot.projected)-oppProj(hot)).toFixed(1)+' • ':'')+'lost by '+Math.abs(Number(hot.points)-Number(hot.opponent_points)).toFixed(1):''),
+  item('hot-seat','🔥 Hot Seat',hot,hot?(Number(hot.projection_coverage)>0&&Number.isFinite(safeProjection(hot.projected))&&Number.isFinite(oppProj(hot))?'Projected '+((Number(hot.projected)-oppProj(hot))>=0?'+':'')+(Number(hot.projected)-oppProj(hot)).toFixed(1)+' • ':'')+'lost by '+Math.abs(Number(hot.points)-Number(hot.opponent_points)).toFixed(1):''),
   item('cool-throne','🧊 Cool Throne',cool,cool?'Won by '+Math.abs(Number(cool.points)-Number(cool.opponent_points)).toFixed(1):''),
   item('highest-scorer','🔥 Highest Scorer',high,high?Number(high.points).toFixed(1)+' fantasy points':''),
   item('lowest-scorer','🥶 Lowest Scorer',low,low?Number(low.points).toFixed(1)+' fantasy points':'')

@@ -124,6 +124,41 @@ export function findInquirerManagerAwardIssues(edition,awards,rawRows){
 
 // Compare current-week trade claims with the separate canonical transaction
 // feed. Do not infer trade parties or counts when transaction data is absent.
+// Reconstruct season W-L-T from the separately fetched Sleeper matchups,
+// guarding against editorial mutations of derived season standings.
+export function findInquirerSeasonRecordIssues(edition,seasonMatchupsRows){
+ const issues=[],teams=Array.isArray(edition?.teams)?edition.teams:[];
+ if(!Array.isArray(seasonMatchupsRows)||!seasonMatchupsRows.length)return [{id:'season-matchup-source-unavailable'}];
+ const records=new Map(teams.filter(t=>t?.roster_id!=null).map(t=>[String(t.roster_id),{wins:0,losses:0,ties:0,points:0}]));
+ for(const rows of seasonMatchupsRows){
+  const groups=new Map();
+  for(const m of rows||[]){const id=String(m?.matchup_id??'');if(!id)continue;const pair=groups.get(id)||[];pair.push(m);groups.set(id,pair)}
+  for(const pair of groups.values()){
+   if(pair.length!==2)continue;
+   const [a,b]=pair,ap=number(a?.points),bp=number(b?.points);
+   if(ap===null||bp===null)continue;
+   for(const [m,score,other] of [[a,ap,bp],[b,bp,ap]]){
+    const row=records.get(String(m?.roster_id));if(!row)continue;
+    row.points+=score;
+    if(score>other)row.wins++;else if(score<other)row.losses++;else row.ties++;
+   }
+  }
+ }
+ const ordered=[...records].sort((a,b)=>b[1].wins-a[1].wins||a[1].losses-b[1].losses||b[1].ties-a[1].ties||b[1].points-a[1].points||Number(a[0])-Number(b[0]));
+ const ranks=new Map(ordered.map(([id],index)=>[id,index+1]));
+ for(const team of teams){
+  const id=String(team?.roster_id),expected=records.get(id),context=team?.league_context;
+  if(!expected||!context?.record)continue;
+  for(const key of ['wins','losses','ties']){
+   const reported=number(context.record[key]);
+   if(reported!==null&&reported!==expected[key])issues.push({id:'season-record-source-mismatch',roster_id:id,field:key,reported,expected:expected[key]});
+  }
+  const rank=number(context.standings_rank);
+  if(rank!==null&&rank!==ranks.get(id))issues.push({id:'season-rank-source-mismatch',roster_id:id,reported:rank,expected:ranks.get(id)});
+ }
+ return issues;
+}
+
 export function findInquirerTradeCountIssues(edition,canonicalTrades){
  const issues=[],week=Number(edition?.week),season=Number(edition?.season);
  if(!Number.isInteger(week)||!Number.isInteger(season)||!Array.isArray(canonicalTrades))return [{id:'trade-source-unavailable'}];

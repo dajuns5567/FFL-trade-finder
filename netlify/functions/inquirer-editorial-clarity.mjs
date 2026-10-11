@@ -131,24 +131,31 @@ function finalClarityQuality(edition){
  const seen=new Set();
  for(const team of edition.teams||[]){
   const a=team.inquirer_article;if(!a)continue;
-  // Resolve first-name mentions from this roster's actual data; never guess
-  // when multiple athletes share a first name.
-  const names=[...(team.starter_details||[]),...(team.bench_details||[]),...(a.facts?.opponent_roster?.players||[])].map(x=>String(x?.name||'').trim()).filter(x=>x.includes(' '));
+  // Resolve an athlete only if the roster identifies exactly one such first name.
+  // Otherwise retain full names already in the text rather than guessing.
+  const names=[...(team.starter_details||[]),...(team.bench_details||[]),...(a.facts?.opponent_roster?.players||[])].map(p=>String(p?.name||'').trim()).filter(n=>n.includes(' '));
   const firstNames=new Map();
   for(const full of new Set(names)){
-    const first=full.split(' ')[0].replace(/[^A-Za-z'-]/g,'');
+    const first=full.split(' ')[0];
+    if(!/^[A-Za-z'-]{3,}$/.test(first))continue;
     if(!firstNames.has(first))firstNames.set(first,new Set());
     firstNames.get(first).add(full);
   }
-  const ambiguous=/^(?:The (?:high-end|star|veteran|struggling|emerging|rookie|headline|lead|quiet|productive|talented) (?:back|receiver|quarterback|wideout|starter|player)|That (?:was useful production|is enough decline|is the football problem)|The (?:star|struggling) (?:back|receiver))/i;
-  function restoreNames(p){
-    let lines=String(p||'').split(/(?<=[.!?])\\s+/);
-    lines=lines.filter(line=>!ambiguous.test(line.trim()));
+  const anonymous=/^(?:The (?:high-end|star|veteran|struggling|emerging|rookie|headline|lead|quiet|productive|talented) (?:back|receiver|quarterback|wideout|starter|player)|That (?:was useful production|is enough decline|is the football problem))/i;
+  function restoreNames(value){
+    const lines=String(value||'').split(/(?<=[.!?])\s+/).filter(line=>!anonymous.test(line.trim()));
     return lines.map(line=>{
-      for(const [first,possible] of firstNames){
-        if(first.length<3||possible.size!==1)continue;
-        const full=[...possible][0];
-        const regex=new RegExp('\\\\b'+first.replace(/[.*+?^${}()|[\\]\\]/g,'\\\\  let previousLead='';')+'\\\\b(?!\\\\s+'+full.slice(first.length).trim().replace(/[.*+?^${}()|[\\]\\]/g,'\\\\  let previousLead='';')+')','g');
+      for(const [first,matches] of firstNames){
+        if(matches.size!==1)continue;
+        const full=[...matches][0];
+        const last=full.slice(first.length).trim().split(' ')[0];
+        const pattern=new RegExp('\\b'+first+'\\b(?!\\s+'+last+')','g');
+        line=line.replace(pattern,full);
+      }
+      return line;
+    }).join(' ').trim();
+  }
+  let previousLead='';')+'\\\\b(?!\\\\s+'+full.slice(first.length).trim().replace(/[.*+?^${}()|[\\]\\]/g,'\\\\  let previousLead='';')+')','g');
         line=line.replace(regex,full);
       }
       return line;

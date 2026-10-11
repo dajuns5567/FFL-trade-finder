@@ -68,13 +68,42 @@ function rewriteArticle(team){
   };
   const quips=desk[reporter]||desk['walter-mercer'];
   const openings=[
-    'After reviewing the lineup: ',
-    'Before the next kickoff: ',
-    'With the previous score recorded: ',
-    'As both managers prepare, '
-  ];
-  const group=Math.floor((rid-1)/forms.length)%openings.length;
-  const prefix=openings[group]+forms[(rid-1)%forms.length].replace(/\.$/,';');
+  'The manager has another homework assignment: ',
+  'Nobody can start last week again: ',
+  'This calendar offers no victory parade: ',
+  'A new opponent has arrived hungry: ',
+  'The lineup meeting cannot be postponed: ',
+  'The next scoreboard has no sympathy: ',
+  'That winning feeling has an expiration: ',
+  'A rough Sunday leaves specific homework: ',
+  'The season does not award extensions: ',
+  'The opponent brings its own calculator: ',
+  'There is no rollover for points: ',
+  'The next kickoff resets every excuse: ',
+  'Somebody should review the starting card: ',
+  'The rematch with reality comes quickly: ',
+  'The latest score was not immunity: ',
+  'This roster still owes a performance: ',
+  'It is time to check the bench: ',
+  'The next opponent did not volunteer: ',
+  'Sunday points cannot be carried forward: ',
+  'The manager has a fresh decision: ',
+  'Another week means another uncomfortable question: ',
+  'The latest standings are not protection: ',
+  'The schedule has no mercy clause: ',
+  'Yesterday’s box score cannot play again: ',
+  'The film room has some work: ',
+  'The rival team will be watching: ',
+  'The next result is not preordered: ',
+  'The familiar weak spots remain on notice: ',
+  'A previous win buys no insurance: ',
+  'A previous loss buys no sympathy: ',
+  'The league does not issue refunds: ',
+  'The next lineup lock comes regardless: '
+];
+  const group=Math.floor((rid-1)/forms.length)%4;
+  const lead=openings[(rid+Number(a.week)*7)%openings.length];
+  const prefix=lead+forms[(rid-1)%forms.length].replace(/\.$/,';');
   const tail=quips[group].replace(/\.\s+(?=[A-Z])/g,'; ').replace(/^./,c=>c.toLowerCase());
   section.paragraphs=[prefix+' but '+tail];
  }

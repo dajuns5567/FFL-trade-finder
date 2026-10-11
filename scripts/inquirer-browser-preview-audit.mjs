@@ -36,7 +36,9 @@ try{
     if(attempt<6)await new Promise(resolve=>setTimeout(resolve,10000));
    }
   }
-  const candidates=[...new Set([...discovered,
+  const candidates=[...new Set([
+   'https://fleeced-inquirer-browser-ci.netlify.app',
+   ...discovered,
    'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app',
    'https://deploy-preview-390--subtle-genie-6167c5.netlify.app',
    'https://deploy-preview-390--fleeced.netlify.app'

@@ -42,4 +42,29 @@ duplicate.teams[0].inquirer_article.sections.unshift({kind:'management',paragrap
 applyInquirerEditorialClarity(duplicate,{week:4});
 const managed=duplicate.teams[0].inquirer_article.sections.find(x=>x.kind==='management').paragraphs;
 assert.equal(managed.filter(x=>x.includes('Nick Emmanwori')&&x.includes('Nik Bonitto')).length,1,'one bench mistake should not be restated repeatedly within management');
+const jets=mk(4);
+jets.teams[0].team_name='New York Jets';
+jets.teams[0].starter_details=[{name:'Cooper DeJean',points:27.5},{name:'Ty Johnson',points:3.2}];
+jets.teams[0].inquirer_article.sections[0].paragraphs=[
+ 'Ty Johnson set the pace for the Jets.',
+ 'Ty brought the fireworks and carried the team.',
+ 'Cooper DeJean supplied 27.5 to lead the team.'
+];
+applyInquirerEditorialClarity(jets,{week:4});
+const jetsText=jets.teams[0].inquirer_article.paragraphs.join(' ');
+assert(!jetsText.includes('Ty Johnson set the pace'),'low scorer cannot be presented as leader');
+assert(!jetsText.includes('Ty brought the fireworks'),'weak performance cannot be described as fireworks');
+assert(jetsText.includes('Cooper DeJean'),'top scorer must retain credit');
+const recapCase=mk(4);
+recapCase.teams[0].team_name='Miami Dolphins';
+recapCase.teams[0].opponent_name='Tampa Bay Buccaneers';
+recapCase.teams[0].points=134.82;
+recapCase.teams[0].opponent_points=115.76;
+recapCase.league_overview.sections[0].blocks[0].paragraphs=[
+ 'The Miami Dolphins–Tampa Bay Buccaneers shootout was a reminder that scoring well is not sufficient when the opposing lineup scores even better.',
+ 'Miami Dolphins beat Tampa Bay Buccaneers 134.8–115.8.'
+];
+applyInquirerEditorialClarity(recapCase,{week:4});
+assert(!recapCase.league_overview.sections[0].blocks[0].paragraphs.some(p=>p.includes('opposing lineup scores even better')),'recap cannot describe a winning team as outscored');
+assert(!recapCase.teams[0].inquirer_article.sections.some(sec=>Array.isArray(sec.paragraphs)&&sec.paragraphs.length===0),'empty article sections are removed after outlook generation');
 console.log('Week 4+ editorial clarity contract passed');

@@ -15,4 +15,14 @@ assert(!references.includes('The high-end back'),'anonymous opening must be remo
 assert(references.includes('Alvin Kamara spent'),'unique first-name alias must become full name');
 assert(!references.includes('That is enough decline'),'contextless filler must be removed');
 assert(references.includes('Josh Downs did not need'),'unambiguous Josh alias must be expanded');
+const claims=mk(4);
+claims.teams[0].inquirer_article.sections.unshift({kind:'management',paragraphs:[
+ 'The manager added Joe Mixon and dropped Zaire Franklin. The new names reached no Week 4 lineup.',
+ 'The bench choice deserves a serious look.'
+]});
+claims.teams[0].inquirer_article.facts={best_lineup_miss:{gap:17.5,starter:{name:'Nik Bonitto'},reserve:{name:'Nick Emmanwori'}}};
+applyInquirerEditorialClarity(claims,{week:4});
+const management=claims.teams[0].inquirer_article.sections.find(sec=>sec.kind==='management').paragraphs.join(' ');
+assert(!management.includes('Joe Mixon')&&!management.includes('Zaire Franklin'),'unverified claims cannot appear as completed transactions');
+assert(management.includes('Nick Emmanwori')&&management.includes('Nik Bonitto')&&management.includes('17.5'),'replace with a verified lineup miss');
 console.log('Week 4+ editorial clarity contract passed');

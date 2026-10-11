@@ -62,6 +62,8 @@ jobs:
           node --check scripts/inquirer-week2-r22-smoke.mjs
           node --check scripts/inquirer-week2-r23-smoke.mjs
 
+      - name: Verify Week 4+ editorial clarity and immutable history
+        run: node scripts/inquirer-editorial-clarity-smoke.mjs
       - name: Run source contract
         run: node scripts/inquirer-v25-audit.mjs
       - name: Fleeced player signal classifier contract

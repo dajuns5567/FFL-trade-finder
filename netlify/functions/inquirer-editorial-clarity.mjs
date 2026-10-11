@@ -34,8 +34,8 @@ function rewriteArticle(team,teamByName){
    let t=String(p);
    for(const [last,names] of bySurname){if(names.size!==1||last.length<4)continue;
     const full=[...names][0];
-    const safe=last.replace(/[-/\\^$*+?.()|[\]{}]/g,'\\ // Discard unverified Week 4+ transaction prose, which may include failed claims.');
-    const rx=new RegExp('(?<![A-Za-z])'+safe+'(?![A-Za-z])','g');
+    if(!/^[A-Za-z'-]+$/.test(last))continue;
+    const rx=new RegExp('(?<![A-Za-z])'+last+'(?![A-Za-z])','g');
     if(!t.includes(full))t=t.replace(rx,full);
    }
    if(topScorer?.name&& /(?:set the pace|brought the fireworks|the headliner reached|was the loudest .* reason)/i.test(t)){

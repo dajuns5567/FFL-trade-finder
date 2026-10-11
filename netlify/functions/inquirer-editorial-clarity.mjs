@@ -18,7 +18,7 @@ function candidateParagraph(p){
  if(/\b(?:the star back|the star receiver|the emerging back|the struggling star|the veteran receiver|the struggling veteran receiver)\b/i.test(x))return null;
  return x;
 }
-function rewriteArticle(team,teamByName){
+function rewriteArticle(team,teamByName,reporterOrdinal=0){
  const a=team?.inquirer_article;if(!a)return;
  for(const sec of a.sections||[]){
   if(!Array.isArray(sec.paragraphs))continue;
@@ -183,46 +183,64 @@ function rewriteArticle(team,teamByName){
   const secondStarter=top.slice(1)[0],weak=top.slice(1).find(p=>Number(p.points)<8);
   const gap=Number(firstPoints)-Number(secondPoints),margin=Number(team.points)-Number(team.opponent_points);
   const result=margin>=0?'a victory':'a loss';
-  const comparisons=[
-   own+' meets '+next+' in Week '+wi+'. '+first+' delivered '+firstPoints+' last week; '+second+' supplied '+secondPoints+' for the opponent. '+(gap>=0?'The recent leading-scorer edge favors '+own:'The recent leading-scorer edge favors '+next)+', but it is not a forecast.',
-   'After '+result+' in Week '+a.week+', '+own+' draws '+next+'. '+first+' scored '+firstPoints+' in that game, while '+second+' arrives with a '+secondPoints+'-point return. That leaves the managers comparing actual games rather than reputations.',
-   'Week '+wi+' has '+own+' opposite '+next+'. The last completed scorecard puts '+first+' at '+firstPoints+' and '+second+' at '+secondPoints+'. That '+score(Math.abs(gap))+'-point difference is context, not a projected Week '+wi+' result.',
-   'Against '+next+' in Week '+wi+', '+own+' needs to support '+first+' after a '+firstPoints+'-point Week '+a.week+'. The opponent has '+second+' coming off '+secondPoints+' and will not accept last Sunday as an advance payment.'
+  const comparison=[
+   own+' meets '+next+' in Week '+wi+' after '+first+' gave it '+firstPoints+' points in Week '+a.week+' while '+second+' supplied '+secondPoints+' for the next opponent; that comparison measures the recent top scorers, not a forecast.',
+   'Following '+result+' over the last opponent, '+own+' now draws '+next+' with '+first+' on '+firstPoints+' from Week '+a.week+' and '+second+' coming off '+secondPoints+'; one strong individual game still leaves a full lineup to set.',
+   'The Week '+wi+' fixture sends '+own+' against '+next+' with '+first+' at '+firstPoints+' and '+second+' at '+secondPoints+' in their most recent completed games; the difference of '+score(Math.abs(gap))+' points is a starting point for the managers, not an outcome.',
+   'Against '+next+', '+own+' needs something beyond another '+firstPoints+' from '+first+' because '+second+' registered '+secondPoints+' for the next opponent in Week '+a.week+'; that makes depth more useful than last Sunday\'s applause.',
+   'A Week '+wi+' meeting with '+next+' puts '+own+' back to work after '+first+' scored '+firstPoints+'; on the other side '+second+' brought '+secondPoints+', meaning neither manager can substitute a past box score for the next starting card.',
+   'At the approach to Week '+wi+', '+own+' has '+first+'\'s '+firstPoints+' to build around while '+next+' brings '+second+'\'s '+secondPoints+' as recent evidence; the problem is deciding who else can actually contribute.',
+   'The last score from '+first+' was '+firstPoints+' for '+own+', whereas '+second+' scored '+secondPoints+' for the upcoming '+next+' matchup; Week '+wi+' will reward fresh production instead of loyalty to those old totals.',
+   'Now '+own+' turns toward '+next+' in Week '+wi+' after '+first+' registered '+firstPoints+' and '+second+' posted '+secondPoints+' on opposing recent scorecards; those individual numbers matter only if the rest of each team follows.'
   ];
   const evidence=weak
    ?weak.name+' scored '+score(weak.points)+' in Week '+a.week
    :secondStarter?secondStarter.name+' scored '+score(secondStarter.points)+' behind '+first
-   :first+' led the lineup with '+firstPoints;
+   :first+' paced the lineup at '+firstPoints;
   const deskNotes={
    'walter-mercer':[
-    'The old desk has '+evidence+'. A manager ought to read the second line of a box score before taking a victory lap.',
-    'As a longtime observer, I recognize '+evidence+'. It is the part of the clipping that will survive after the celebrations stop.',
-    'My notebook circles '+evidence+'. That is where the next lineup discussion should begin.',
-    'The score gets filed. So does the fact that '+evidence+'. The correction belongs on the starting card.'
+    'My notebook says '+evidence+'; the manager should check the scorecard before saving a seat on the parade float.',
+    'Years of covering this league have taught me what '+evidence+' means: a result can flatter the person filling out the lineup.',
+    'I will keep the win or loss in the clipping, alongside the inconvenient fact that '+evidence+'; neither deserves a rewrite.',
+    'The handwriting on the old score sheet reads '+evidence+', which is more useful than any solemn promise to do better.',
+    'The standings get their figure and the lineup gets its warning because '+evidence+'; one of those is much easier to ignore.',
+    'I have attended enough postgame excuses to know that '+evidence+' should earn attention before the next opponent does.',
+    'There is something almost comforting about an old mistake: '+evidence+', and the manager has an entirely new week to avoid it.',
+    'Put this in the club history, too: '+evidence+'; the headline can celebrate while the manager repairs the footnotes.'
    ],
    'tess-delaney':[
-    'The glamorous part is settled, but '+evidence+'. One cannot accessorize a lineup hole with confidence.',
-    'The reception was lovely. Unfortunately, '+evidence+'. '+next+' will arrive without a gift.',
-    'The leading man gets his applause; meanwhile, '+evidence+'. The supporting cast could use a rehearsal.',
-    'A fine headline disguises an inconvenient detail: '+evidence+'. The reviews will notice.'
+    'The champagne might be acceptable, but '+evidence+' leaves the supporting cast looking decidedly underdressed.',
+    'I enjoyed the starring performance; the detail that '+evidence+' was considerably less ready for its close-up.',
+    'A successful production requires more than an elegant lead, especially when '+evidence+' has already been printed in the reviews.',
+    'The look is almost perfect until one notices '+evidence+'; I would hesitate to call that intentional styling.',
+    'An exquisite box-score headline comes with one dreadful accessory: '+evidence+', and '+next+' will notice the mismatch.',
+    'I would send flowers to the leading scorer, not to the lineup planner, considering '+evidence+' remains on the card.',
+    'There is a thin line between effortless and unprepared, and '+evidence+' has made the wardrobe consultation rather urgent.',
+    'The cameras found the hero, naturally; the rest of the cast must explain why '+evidence+' before the next curtain.'
    ],
    'mack-hollis':[
-    'My lineup note is simple: '+evidence+'. The next decision requires fewer speeches and better selections.',
-    'The fix begins with the numbers: '+evidence+'. Pretending the bench cannot help is not coaching.',
-    'Watch the weak position before kickoff: '+evidence+'. Every opponent can read the same scores.',
-    'The managers have a choice: respond to the fact that '+evidence+', or provide another postgame explanation.'
+    'Forget the press conference: '+evidence+' is a lineup problem the manager can actually work on.',
+    'Here is the actionable note, not the pep talk: '+evidence+', so check that position before the lock.',
+    'Scouting starts with an uncomfortable number, and '+evidence+' provides one without a single invented narrative.',
+    'The starting card should not be decided by nostalgia after '+evidence+' appeared on the last score sheet.',
+    'I want to see the manager use the next practice window because '+evidence+' is more than a cosmetic problem.',
+    'The bench and starting positions need another look if '+evidence+' is how that slot last finished.',
+    'This is where a lineup audit earns its keep: '+evidence+', and the next opponent can see the same flaw.',
+    'The fix is not a motivational poster when '+evidence+'; it is an evidence-based decision before kickoff.'
    ],
    'nora-voss':[
-    'In the rival film room, somebody underlined this: '+evidence+'. The joke writes itself only if the manager ignores it.',
-    'The division has already spotted that '+evidence+'. This is not confidential intelligence.',
-    'The opponents have the receipts: '+evidence+'. Their group chat is not expected to keep quiet.',
-    'Here is the scouting note rivals will circulate: '+evidence+'. The manager can still make them delete the draft.'
+    'The rivals have already circulated that '+evidence+'; nobody needed to break into the film room.',
+    'The opposing bench knows '+evidence+' and is hoping the manager files it under confidential information.',
+    'A friendly divisional reminder has arrived: '+evidence+', which is apparently public enough for every rival to discuss.',
+    'The scouting chatter begins with '+evidence+'; the group chat would like to thank the manager for the material.',
+    'The league has seen that '+evidence+' and would be delighted to see the same starting-card decision repeated.',
+    'Competitors will not be offended by '+evidence+'; they may even volunteer to help the manager forget it.',
+    'There is no mystery to decode when '+evidence+' is right there in the score sheet for the next opponent.',
+    'Rival managers have noticed '+evidence+', a detail more entertaining to them than any postgame interview.'
    ]
   };
-  const variant=(rid+Number(a.week))%4;
-  // The 32 distinct editorial leads avoid repeating a normalized comparison across clubs.
-  const matchup=lead+comparisons[variant];
-  const opinion=(deskNotes[reporter]||deskNotes['walter-mercer'])[(Math.floor((rid-1)/4)+Number(a.week))%4];
+  const matchup=lead+comparison[(rid+Number(a.week))%comparison.length];
+  const opinion=(deskNotes[reporter]||deskNotes['walter-mercer'])[reporterOrdinal%8];
   section.paragraphs=[matchup,opinion];
   }
  }
@@ -333,7 +351,13 @@ function finalClarityQuality(edition){
 export function applyInquirerEditorialClarity(edition,{week}={}){
  if(!edition||Number(week)<4)return edition;
  const teamByName=new Map((edition.teams||[]).map(team=>[String(team.team_name||''),team]));
- for(const team of edition.teams||[])rewriteArticle(team,teamByName);
+ const deskCount=new Map();
+ for(const team of edition.teams||[]){
+  const id=String(team.inquirer_article?.reporter?.id||'walter-mercer');
+  const ordinal=deskCount.get(id)||0;
+  deskCount.set(id,ordinal+1);
+  rewriteArticle(team,teamByName,ordinal);
+ }
  rewriteRecap(edition.league_overview,edition.teams||[]);
  finalClarityQuality(edition);
  return edition;

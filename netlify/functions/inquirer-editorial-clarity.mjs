@@ -380,6 +380,7 @@ function dedupeEditorialStory(edition,previousEdition){
   for(const sentence of sentenceParts(p))prior.add(sentenceKey(sentence));
  const acrossTeams=new Map();
  const staleStock=/\bbrought the noise and\b.*\bempty stadium\b/i;
+ const staleMeta=/\b(?:newsroom|this article|same paragraph|same sentence|editorial|the evidence|investigate|case file|proof|verdict|exhibit|sample size|another data point|test whether)\b/i;
  const process=(article,teamKey)=>{
   if(!article)return;
   for(const section of article.sections||[]){
@@ -390,7 +391,7 @@ function dedupeEditorialStory(edition,previousEdition){
      const kept=[];
      for(const sentence of sentenceParts(paragraph)){
       const key=sentenceKey(sentence);
-      if(!key||prior.has(key)||staleStock.test(sentence)||/crowd is running simultaneous parade and panic channels|Which gives management one clean chance to change the lineup before the same complaint reaches the megaphone again/i.test(sentence))continue;
+      if(!key||prior.has(key)||staleStock.test(sentence)||staleMeta.test(sentence)||/crowd is running simultaneous parade and panic channels|Which gives management one clean chance to change the lineup before the same complaint reaches the megaphone again/i.test(sentence))continue;
       const previousTeam=acrossTeams.get(key);
       if(previousTeam&&previousTeam!==teamKey)continue;
       acrossTeams.set(key,teamKey);

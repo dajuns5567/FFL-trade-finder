@@ -752,6 +752,10 @@ async function weeklyAwardRecordForBroadcast(broadcast,{stats=null,players=null,
  const needed=['hot-seat','cool-throne','highest-scorer','lowest-scorer'],types=new Set((rec.manager_awards||[]).map(a=>a?.type));
  if(!rec.players_of_week?.offense||!rec.players_of_week?.defense)throw new Error('Week '+week+' Players of the Week incomplete');
  for(const type of needed)if(!types.has(type))throw new Error('Week '+week+' weekly manager award missing: '+type);
+ if(finalizedMatchupRows){
+  const awardIssues=findInquirerManagerAwardIssues(broadcast,rec.manager_awards,finalizedMatchupRows);
+  if(awardIssues.length)throw new Error('Sleeper manager award source reconciliation rejected Week '+week+': '+JSON.stringify(awardIssues).slice(0,4000));
+ }
  byKey.set(key,rec);
  const next=[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
  await s.setJSON('awards/weekly.json',{schema_version:2,records:next});

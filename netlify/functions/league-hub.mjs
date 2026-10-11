@@ -13,6 +13,7 @@ import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRE
 import {findInquirerRawMatchupIssues,findInquirerManagerAwardIssues,findInquirerTradeCountIssues,findInquirerSeasonRecordIssues} from './inquirer-source-facts.mjs';
 import {applyPublishedForwardFix} from './inquirer-week3-published-r1.mjs';
 import {rebuildWeek4Editorial} from './inquirer-week4-editorial-rebuild.mjs';
+import {applyInquirerEditorialClarity} from './inquirer-editorial-clarity.mjs';
 
 const LEAGUE='1316867686394769408';
 const API='https://api.sleeper.app/v1';
@@ -37,7 +38,7 @@ const servedPreload=raw=>{
  const season=Number(p.season),week=Number(p.week);
  if(season===2026&&week===2)return applyWeek2EditorialR16(p);
  if(season===2026&&week===3)return applyPublishedForwardFix(p,applyWeek2EditorialR16(week2Preload2026));
- if(season===2026&&week===4)return rebuildWeek4Editorial(p);
+ if(season===2026&&week===4)return applyInquirerEditorialClarity(rebuildWeek4Editorial(p),{week:4});
  return p;
 };
 const preloadedBroadcast=(season,week)=>servedPreload(PRELOADED_BROADCASTS.get(String(Number(season))+'|'+String(Number(week)))||null);

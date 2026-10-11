@@ -177,45 +177,50 @@ function rewriteArticle(team,teamByName){
   const lead=openings[(rid+Number(a.week)*7)%openings.length];
   // A 32-way, team-specific lead makes the opponent comparison a story rather
   // than an interchangeable factual caption repeated four times per week.
-  const secondary=top[1],base=forms[(rid-1)%forms.length].replace(/\.$/,'');
-  const extra=secondary?.name&&valid(secondary.points)
-    ?'; '+secondary.name+' supplied '+score(secondary.points)+' behind '+first+', which is the supporting production '+own+' must evaluate before kickoff.'
-    :'; the lineup must actually produce again before the result can be compared.';
-  const matchup=lead+base+extra;
-  const risk=top.slice(1).find(p=>Number(p.points)<8),manager=String(team.manager_name||'the manager');
-  const concern=risk?.name?risk.name+' scored only '+score(risk.points):top[1]?.name?top[1].name+' added '+score(top[1].points):first+' scored '+firstPoints;
-  const remarks={
+  // Use a named opponent, score differential and concrete supporting-starter
+  // decision. Do not emit the old 8x4 generic matchup templates or taglines.
+  const secondStarter=top.slice(1)[0],weak=top.slice(1).find(p=>Number(p.points)<8);
+  const gap=Number(firstPoints)-Number(secondPoints),margin=Number(team.points)-Number(team.opponent_points);
+  const result=margin>=0?'a victory':'a loss';
+  const comparisons=[
+   own+' meets '+next+' in Week '+wi+'. '+first+' delivered '+firstPoints+' last week; '+second+' supplied '+secondPoints+' for the opponent. '+(gap>=0?'The recent leading-scorer edge favors '+own:'The recent leading-scorer edge favors '+next)+', but it is not a forecast.',
+   'After '+result+' in Week '+a.week+', '+own+' draws '+next+'. '+first+' scored '+firstPoints+' in that game, while '+second+' arrives with a '+secondPoints+'-point return. That leaves the managers comparing actual games rather than reputations.',
+   'Week '+wi+' has '+own+' opposite '+next+'. The last completed scorecard puts '+first+' at '+firstPoints+' and '+second+' at '+secondPoints+'. That '+score(Math.abs(gap))+'-point difference is context, not a projected Week '+wi+' result.',
+   'Against '+next+' in Week '+wi+', '+own+' needs to support '+first+' after a '+firstPoints+'-point Week '+a.week+'. The opponent has '+second+' coming off '+secondPoints+' and will not accept last Sunday as an advance payment.'
+  ];
+  const evidence=weak
+   ?weak.name+' scored '+score(weak.points)+' in Week '+a.week
+   :secondStarter?secondStarter.name+' scored '+score(secondStarter.points)+' behind '+first
+   :first+' led the lineup with '+firstPoints;
+  const deskNotes={
    'walter-mercer':[
-    concern+'. I have seen better weeks undone by managers mistaking applause for a roster adjustment.',
-    'The win counts. Against '+next+', '+manager+' still needs an answer if '+first+' cannot repeat '+firstPoints+'.',
-    first+' was excellent. That does not mean '+next+' has signed up to cooperate.'
+    'The old desk has '+evidence+'. A manager ought to read the second line of a box score before taking a victory lap.',
+    'As a longtime observer, I recognize '+evidence+'. It is the part of the clipping that will survive after the celebrations stop.',
+    'My notebook circles '+evidence+'. That is where the next lineup discussion should begin.',
+    'The score gets filed. So does the fact that '+evidence+'. The correction belongs on the starting card.'
    ],
    'tess-delaney':[
-    first+' supplied the glamour; '+concern+'. The supporting cast could use a wardrobe change before '+next+'.',
-    'A '+firstPoints+'-point starring role makes a lovely poster. '+next+' will want to see the rest of the production.',
-    concern+'. An interesting choice for an ensemble that expects '+next+' to take it seriously.'
+    'The glamorous part is settled, but '+evidence+'. One cannot accessorize a lineup hole with confidence.',
+    'The reception was lovely. Unfortunately, '+evidence+'. '+next+' will arrive without a gift.',
+    'The leading man gets his applause; meanwhile, '+evidence+'. The supporting cast could use a rehearsal.',
+    'A fine headline disguises an inconvenient detail: '+evidence+'. The reviews will notice.'
    ],
    'mack-hollis':[
-    'The assignment against '+next+' starts here: '+concern+'. Fix that before writing another victory speech.',
-    first+' did his part. '+manager+' still has a lineup to set against '+next+', not a replay button.',
-    'Last week '+first+' scored '+firstPoints+'; '+second+' answered with '+secondPoints+'. Those are the numbers. Confidence is not a starter.'
+    'My lineup note is simple: '+evidence+'. The next decision requires fewer speeches and better selections.',
+    'The fix begins with the numbers: '+evidence+'. Pretending the bench cannot help is not coaching.',
+    'Watch the weak position before kickoff: '+evidence+'. Every opponent can read the same scores.',
+    'The managers have a choice: respond to the fact that '+evidence+', or provide another postgame explanation.'
    ],
    'nora-voss':[
-    'The '+next+' scouting report has '+concern+'. Somebody tell '+manager+' the other side can read.',
-    'Credit '+first+' for '+firstPoints+'. Circle '+concern+' for the rivals studying the starting card.',
-    'The next opponent is '+next+', with '+second+' coming off '+secondPoints+'. The division group chat will save its condolences.'
+    'In the rival film room, somebody underlined this: '+evidence+'. The joke writes itself only if the manager ignores it.',
+    'The division has already spotted that '+evidence+'. This is not confidential intelligence.',
+    'The opponents have the receipts: '+evidence+'. Their group chat is not expected to keep quiet.',
+    'Here is the scouting note rivals will circulate: '+evidence+'. The manager can still make them delete the draft.'
    ]
   };
-  let opinion=(remarks[reporter]||remarks['walter-mercer'])[(rid+Number(a.week))%3];
-  if(risk?.name&&!opinion.includes(risk.name)){
-    const c={
-      'walter-mercer':' The paper also records '+risk.name+' at '+score(risk.points)+'; history will not grade on effort.',
-      'tess-delaney':' Meanwhile, '+risk.name+' managed '+score(risk.points)+'; an accessory the ensemble could do without.',
-      'mack-hollis':' '+risk.name+' produced '+score(risk.points)+'. Start there when fixing the lineup.',
-      'nora-voss':' Rivals noted '+risk.name+' at '+score(risk.points)+'; nobody had to leak the box score.'
-    };
-    opinion+=(c[reporter]||c['walter-mercer']);
-  }
+  const variant=(rid+Number(a.week))%4;
+  const matchup=comparisons[variant];
+  const opinion=(deskNotes[reporter]||deskNotes['walter-mercer'])[(Math.floor((rid-1)/4)+Number(a.week))%4];
   section.paragraphs=[matchup,opinion];
   }
  }

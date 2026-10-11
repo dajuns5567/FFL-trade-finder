@@ -10,6 +10,7 @@ const json=(body,status=200)=>new Response(JSON.stringify(body),{
 // which publishes at most the next missing completed week and keeps future weeks locked.
 export default async function inquirerPublishOnLoad(req){
   try{
+    if(['deploy-preview','branch-deploy'].includes(String(process.env.CONTEXT||'')))return json({ok:false,error:'preview publication disabled'},403);
     const result=await weeklyReport(req);
     return json({
       ok:true,

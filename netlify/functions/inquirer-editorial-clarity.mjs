@@ -219,6 +219,13 @@ function rewriteArticle(team,teamByName){
 }
 function rewriteRecap(o,teams=[]){
  if(!o)return;
+ const sorted=(teams||[]).filter(t=>valid(t?.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points));
+ const best=sorted[0],bottom=sorted[sorted.length-1];
+ const bestStar=(best?.starter_details||[]).filter(p=>p?.name&&valid(p?.points)).sort((a,b)=>Number(b.points)-Number(a.points))[0];
+ const contrast=best&&bottom&&best!==bottom&&bestStar&&Number(bestStar.points)>Number(bottom.points)
+  ?bestStar.name+' put up '+score(bestStar.points)+' for '+best.team_name+' while '+bottom.team_name+' managed '+score(bottom.points)+' as an entire roster. That is '+score(Number(bestStar.points)-Number(bottom.points))+' points of difference before the rest of '+best.team_name+' even enters the conversation.':
+  '';
+
  for(const sec of o.sections||[]){
   for(const block of sec.blocks||[]){
    if(headingMeta.test(block.heading||''))block.heading='The Week Ahead';
@@ -231,6 +238,10 @@ function rewriteRecap(o,teams=[]){
     const a=teams.find(t=>t.team_name===m[1]&&t.opponent_name===m[2]);
     return !a||Number(a.points)<Number(a.opponent_points);
    });
+   if(contrast&&/The Names Behind the Noise/i.test(block.heading||'')&&block.paragraphs.length){
+    const i=block.paragraphs.findIndex(p=>/spotlighting stars|declaring a roster healthy/i.test(p));
+    if(i>=0)block.paragraphs[i]=contrast;
+   }
   }
  }
 }

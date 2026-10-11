@@ -67,8 +67,16 @@ function rewriteArticle(team){
     ]
   };
   const quips=desk[reporter]||desk['walter-mercer'];
-  const prefix=forms[(rid-1)%forms.length].replace(/\.$/,';'),tail=quips[Math.floor((rid-1)/forms.length)%quips.length].replace(/^./,c=>c.toLowerCase());
-  section.paragraphs=[prefix+' '+tail];
+  const openings=[
+    'After reviewing the lineup, ',
+    'Before the next kickoff, ',
+    'With the previous score recorded, ',
+    'As both managers prepare, '
+  ];
+  const group=Math.floor((rid-1)/forms.length)%openings.length;
+  const prefix=openings[group]+forms[(rid-1)%forms.length].replace(/^./,c=>c.toLowerCase()).replace(/\.$/,';');
+  const tail=quips[group].replace(/^./,c=>c.toLowerCase());
+  section.paragraphs=[prefix+' but '+tail];
  }
  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
 }

@@ -2,6 +2,7 @@ import {capturePregameProjections} from './league-hub.mjs';
 
 // Dedicated hourly write-once capture; no edition publishing happens here.
 export default async function inquirerProjectionCaptureScheduled(){
+ if(['deploy-preview','branch-deploy'].includes(String(process.env.CONTEXT||'')))return new Response(JSON.stringify({ok:false,error:'preview capture disabled'}),{status:403,headers:{'content-type':'application/json','cache-control':'no-store'}});
  try{
   const result=await capturePregameProjections();
   return new Response(JSON.stringify({ok:true,...result}),{status:200,headers:{'content-type':'application/json','cache-control':'no-store'}});

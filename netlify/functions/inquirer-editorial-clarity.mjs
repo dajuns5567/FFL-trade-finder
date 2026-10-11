@@ -176,10 +176,31 @@ function rewriteArticle(team,teamByName){
   const group=Math.floor((rid-1)/forms.length)%4;
   const lead=openings[(rid+Number(a.week)*7)%openings.length];
   const matchup=forms[(rid-1)%forms.length];
-  const critique=quips[group].replace('lose Tuesday lineup meeting','lose a Tuesday lineup meeting');
-  // Keep completed evidence and the reporter's observation as distinct sentences.
-  // The prior colon/semicolon join generated fragments such as '; but counting ...'.
-  section.paragraphs=[matchup,lead+critique];
+  const risk=top.slice(1).find(p=>Number(p.points)<8),manager=String(team.manager_name||'the manager');
+  const concern=risk?.name?risk.name+' scored only '+score(risk.points):top[1]?.name?top[1].name+' added '+score(top[1].points):first+' scored '+firstPoints;
+  const remarks={
+   'walter-mercer':[
+    concern+'. I have seen better weeks undone by managers mistaking applause for a roster adjustment.',
+    'The win counts. Against '+next+', '+manager+' still needs an answer if '+first+' cannot repeat '+firstPoints+'.',
+    first+' was excellent. That does not mean '+next+' has signed up to cooperate.'
+   ],
+   'tess-delaney':[
+    first+' supplied the glamour; '+concern+'. The supporting cast could use a wardrobe change before '+next+'.',
+    'A '+firstPoints+'-point starring role makes a lovely poster. '+next+' will want to see the rest of the production.',
+    concern+'. An interesting choice for an ensemble that expects '+next+' to take it seriously.'
+   ],
+   'mack-hollis':[
+    'The assignment against '+next+' starts here: '+concern+'. Fix that before writing another victory speech.',
+    first+' did his part. '+manager+' still has a lineup to set against '+next+', not a replay button.',
+    'Last week '+first+' scored '+firstPoints+'; '+second+' answered with '+secondPoints+'. Those are the numbers. Confidence is not a starter.'
+   ],
+   'nora-voss':[
+    'The '+next+' scouting report has '+concern+'. Somebody tell '+manager+' the other side can read.',
+    'Credit '+first+' for '+firstPoints+'. Circle '+concern+' for the rivals studying the starting card.',
+    'The next opponent is '+next+', with '+second+' coming off '+secondPoints+'. The division group chat will save its condolences.'
+   ]
+  };
+  section.paragraphs=[matchup,(remarks[reporter]||remarks['walter-mercer'])[(rid+Number(a.week))%3]];
   }
  }
  // Preserve all eight canonical section records for archival/CI compatibility;

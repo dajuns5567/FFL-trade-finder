@@ -1071,7 +1071,12 @@ export { monthKey, marketFromSnapshots, baselineFor };
 
 export default async (req)=>{
   try{
-    const url=new URL(req.url),s=safeStore();
+    const url=new URL(req.url);
+    // Keep the CI site's public preview from exposing bulk live history buffers.
+    // The production GitHub archival endpoint retains its established behavior.
+    if(url.searchParams.get('archive_export')==='1'&&isReadOnlyPreview(req))
+      return json({error:'preview history export disabled'},403);
+    const s=safeStore();
     if(s&&!isReadOnlyPreview(req)){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}

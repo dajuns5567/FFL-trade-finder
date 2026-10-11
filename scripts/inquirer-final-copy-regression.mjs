@@ -385,4 +385,22 @@ for(const file of ['netlify/functions/inquirer-publish-scheduled.mjs','netlify/f
 
 const awardRefreshSource=publisher.slice(publisher.indexOf('async function weeklyAwards()'),publisher.indexOf('async function managerHistory()'));
 assert(!awardRefreshSource.includes('if(finalizedMatchupRows)'),'Historical awards refresh must not reference out-of-scope raw matchup rows');
+
+const savedContext=process.env.CONTEXT;
+try{
+ process.env.CONTEXT='deploy-preview';
+ const blockedRequest=new Request('https://preview.example/.netlify/functions/update',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({players:[{id:'1'}]})});
+ const {default:previewUpdate}=await import('../netlify/functions/update.mjs');
+ assert.equal((await previewUpdate(blockedRequest)).status,403,'Actual preview consensus POST must be rejected before refreshing sources');
+ const {default:previewPublisher}=await import('../netlify/functions/inquirer-publish-on-load.mjs');
+ assert.equal((await previewPublisher(new Request('https://preview.example/.netlify/functions/inquirer-publish-on-load'))).status,403,'Preview publication must not run');
+ const {default:previewCapture}=await import('../netlify/functions/inquirer-projection-capture-scheduled.mjs');
+ assert.equal((await previewCapture(new Request('https://preview.example/.netlify/functions/inquirer-projection-capture-scheduled'))).status,403,'Preview scheduled projection capture must not run');
+ const {default:previewScheduled}=await import('../netlify/functions/inquirer-publish-scheduled.mjs');
+ assert.equal((await previewScheduled(new Request('https://preview.example/.netlify/functions/inquirer-publish-scheduled'))).status,403,'Preview scheduled edition publisher must not run');
+}finally{
+ if(savedContext===undefined)delete process.env.CONTEXT;
+ else process.env.CONTEXT=savedContext;
+}
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

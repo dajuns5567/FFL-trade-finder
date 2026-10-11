@@ -70,15 +70,6 @@ function rewriteArticle(team){
   const prefix=forms[(rid-1)%forms.length],tail=quips[Math.floor((rid-1)/forms.length)%quips.length];
   section.paragraphs=[prefix+' '+tail];
  }
- // A section must never open with an anonymous positional label. Restoring
- // named score context is safer than inferring which athlete an adjective means.
- const players=(a.sections||[]).find(s=>s.kind==='players');
- if(players){
-  const present=(players.paragraphs||[]).join(' ');
-  for(const p of top.slice(0,2)){
-   if(!present.includes(p.name))/* Named supporting context already appears in the score and Cool Throne sections; avoid repetitive synthetic stat lines. */
-  }
- }
  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
 }
 function rewriteRecap(o){

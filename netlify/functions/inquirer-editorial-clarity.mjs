@@ -57,7 +57,10 @@ function rewriteArticle(team,teamByName){
       ?weak.name+' scored '+score(weak.points)+' in Week '+a.week+'. The manager can inspect that starting spot before the next kickoff; motivational speeches do not count in fantasy scoring.'
       :teamName+' must judge the next lineup on confirmed performances, not speculative roster activity.';
    }
-   management.paragraphs=[...keep,add];
+   // Avoid retelling the exact same bench mistake three times in one section.
+   const benchNames=[reserve?.name,starter?.name].filter(Boolean);
+   const distinct=benchNames.length===2?keep.filter(par=>!benchNames.every(n=>String(par).includes(n))):keep;
+   management.paragraphs=[...distinct,add];
   }
  }
  const next=String(team.next_opponent_name||a.facts?.next_opponent_roster?.team_name||'').trim();

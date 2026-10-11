@@ -1,3 +1,4 @@
+import {isReadOnlyPreview} from './preview-read-only.mjs';
 import { getStore } from '@netlify/blobs';
 
 const LEAGUE='1316867686394769408';
@@ -1071,7 +1072,7 @@ export { monthKey, marketFromSnapshots, baselineFor };
 export default async (req)=>{
   try{
     const url=new URL(req.url),s=safeStore();
-    if(s&&!['deploy-preview','branch-deploy'].includes(String(process.env.CONTEXT||''))){
+    if(s&&!isReadOnlyPreview(req)){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
       try{await scrubV380PartialWeekSnapshot(s)}catch(e){console.warn('v380-history-scrub',e)}
@@ -1139,7 +1140,7 @@ export default async (req)=>{
       return json({player_id:playerId,points:result.points||[],scoring_milestones:null,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
-    if(['deploy-preview','branch-deploy'].includes(String(process.env.CONTEXT||'')))return json({error:'preview writes disabled'},403);
+    if(isReadOnlyPreview(req))return json({error:'preview writes disabled'},403);
     if(!s)return json({error:'live history store unavailable'},503);
     const body=await req.json().catch(()=>null);
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);

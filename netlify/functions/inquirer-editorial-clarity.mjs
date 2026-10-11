@@ -27,32 +27,48 @@ function rewriteArticle(team){
  const section=(a.sections||[]).find(s=>s.kind==='outlook');
  if(section&&next){
   const reporter=a.reporter?.id,main=top[0],opponent=nextPlayers[0];
-  const index=((Number(team.roster_id)||0)*7+Number(a.week||0))%12;
-  const start=`${own} faces ${next} in Week ${Number(a.week)+1}.`;
-  const numbers=main&&opponent
-    ?`${main.name} supplied ${score(main.points)} for ${own} last week; ${opponent.name} scored ${score(opponent.points)} for ${next}.`
-    :`${next} is the confirmed opponent; a complete comparable starting lineup is not in the available evidence.`;
-  const personal=main?.name||'the leading starter';
-  const observations=[
-    `${own} needs more than another solo performance from ${personal}; a manager cannot start a postgame explanation at FLEX.`,
-    `${next} will have seen the same weak slots. That scouting report, regrettably, is free.`,
-    `${own} can celebrate last week's scoreboard, but the lineup card has no memory and even less sympathy.`,
-    `${personal} did a share of the work; the rest of ${own} has a Week ${Number(a.week)+1} appointment with accountability.`,
-    `${next} is under no obligation to repeat the generosity of a previous opponent. Inconvenient scheduling policy.`,
-    `${own} has a perfectly good excuse to be confident and absolutely none to forget its weakest starter.`,
-    `${next} does not care whether ${own} found last Sunday emotionally reassuring. Points will be requested again.`,
-    `${own} should inspect the lineup before kickoff. Postgame hindsight is a very expensive subscription.`,
-    `${personal} cannot play every position for ${own}; even the most optimistic manager should have discovered that by now.`,
-    `${next} is the next measurement of ${own}'s depth, not a ceremonial stop on the schedule.`,
-    `${own} has one week to fix its quiet starter spots before ${next} gets an opinion that counts in the standings.`,
-    `${own} should keep what worked around ${personal}; anyone promising the same score on demand is selling souvenirs.`
+  const rid=Math.max(1,Number(team.roster_id)||1),wi=Number(a.week)+1;
+  const first=main?main.name:'a verified starter',second=opponent?opponent.name:'the next opponent\'s starters';
+  const firstPoints=main?score(main.points):'unavailable',secondPoints=opponent?score(opponent.points):'unavailable';
+  const forms=[
+    `${own} meets ${next} in Week ${wi}; ${first} had ${firstPoints} last week, against ${second}'s ${secondPoints}.`,
+    `Across the Week ${wi} matchup with ${next}, ${own} brings ${first}'s ${firstPoints} and must account for ${second}'s ${secondPoints}.`,
+    `The ${next} fixture in Week ${wi} follows ${first}'s ${firstPoints} for ${own} and ${second}'s ${secondPoints} for the opposition.`,
+    `${next} is next for ${own}; Week ${wi} tests whether ${first} (${firstPoints} last game) gets support while ${second} (${secondPoints}) waits.`,
+    `As ${own} prepares for ${next}, the Week ${wi} lineup follows ${first}'s ${firstPoints} and ${second}'s ${secondPoints} in their most recent games.`,
+    `${own}'s Week ${wi} date with ${next} carries two recent numbers: ${first} on ${firstPoints}, ${second} on ${secondPoints}.`,
+    `Before Week ${wi} against ${next}, ${own} has ${first}'s ${firstPoints}-point return to build around and ${second}'s ${secondPoints} to consider.`,
+    `The ${own}-${next} meeting arrives in Week ${wi} after ${first} scored ${firstPoints} and ${second} recorded ${secondPoints} in Week ${a.week}.`
   ];
-  let concern=observations[index];
-  if(reporter==='walter-mercer')concern=concern.replace(/ceremonial stop/,'victory parade');
-  if(reporter==='tess-delaney')concern=concern.replace(/expensive subscription/,'rather expensive fashion accessory');
-  if(reporter==='mack-hollis')concern=concern.replace(/selling souvenirs/,'running a souvenir stand');
-  if(reporter==='nora-voss')concern=concern.replace(/scouting report/,'rival dossier');
-  section.paragraphs=[start,numbers,concern];
+  const desk={
+    'walter-mercer':[
+      'Counting on one man to repeat a Sunday is a wonderful way to lose Tuesday's lineup meeting.',
+      'Somebody has to do the less glamorous work, and the standings will not accept excuses.',
+      'The opponent will not offer a discount for last week\'s highlight reel.',
+      'I would prefer a second reliable starter to a second victory speech.'
+    ],
+    'tess-delaney':[
+      'The arrangement needs more substance than a handsome box score and a manager\'s confidence.',
+      'Apparently the opposing manager also intends to submit a lineup; how tasteless.',
+      'The invitation to win again does not include complimentary points from the bench.',
+      'Elegant roster theory has a habit of becoming rather shabby against actual opponents.'
+    ],
+    'mack-hollis':[
+      'That weak spot deserves a lineup change, not a press conference.',
+      'It is time for the rest of the roster to stop treating scoring as somebody else\'s assignment.',
+      'The opponent has watched the film; the managers should try it too.',
+      'Big talk is free. The starting card is where the bill comes due.'
+    ],
+    'nora-voss':[
+      'Rivals have already circled the quiet position on the lineup card.',
+      'The opposition knows exactly which soft spot is worth targeting.',
+      'Another quiet starter will hand the rival bench a full afternoon of material.',
+      'The manager can fix the obvious weakness or sponsor the next round of jokes.'
+    ]
+  };
+  const quips=desk[reporter]||desk['walter-mercer'];
+  const prefix=forms[(rid-1)%forms.length],tail=quips[Math.floor((rid-1)/forms.length)%quips.length];
+  section.paragraphs=[prefix+' '+tail];
  }
  // A section must never open with an anonymous positional label. Restoring
  // named score context is safer than inferring which athlete an adjective means.
@@ -60,7 +76,7 @@ function rewriteArticle(team){
  if(players){
   const present=(players.paragraphs||[]).join(' ');
   for(const p of top.slice(0,2)){
-   if(!present.includes(p.name))players.paragraphs.unshift(`${p.name} provided ${score(p.points)} points for ${own}; ${Number(p.points)>=15?'a contribution the rest of the lineup was obliged to respect':'that return still leaves the manager hunting for stronger production elsewhere'}.`);
+   if(!present.includes(p.name))/* Named supporting context already appears in the score and Cool Throne sections; avoid repetitive synthetic stat lines. */
   }
  }
  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);

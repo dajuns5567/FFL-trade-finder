@@ -2,7 +2,7 @@ import {isReadOnlyPreview} from './preview-read-only.mjs';
 import {capturePregameProjections} from './league-hub.mjs';
 
 // Dedicated hourly write-once capture; no edition publishing happens here.
-export default async function inquirerProjectionCaptureScheduled(){
+export default async function inquirerProjectionCaptureScheduled(req){
  if(isReadOnlyPreview(req))return new Response(JSON.stringify({ok:false,error:'preview capture disabled'}),{status:403,headers:{'content-type':'application/json','cache-control':'no-store'}});
  try{
   const result=await capturePregameProjections();

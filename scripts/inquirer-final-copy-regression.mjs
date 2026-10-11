@@ -373,4 +373,14 @@ for(const [file,guard] of previewGuardFiles){
 }
 assert(readFileSync('netlify/functions/value-history.mjs','utf8').includes("if(s&&!['deploy-preview','branch-deploy'].includes"),'Preview value-history reads must not run maintenance cleanup writes');
 
+
+// Preview publication and read-side persistence guardrails.
+const hubPreview=readFileSync('netlify/functions/league-hub.mjs','utf8');
+for(const key of ['weekly','reporters','reporter_archive','weekly_awards','managers','drafts','draft_records','award_highs','awards'])
+ assert(hubPreview.includes("'"+key+"'"),'Preview routing must explicitly account for '+key);
+for(const file of ['netlify/functions/inquirer-publish-scheduled.mjs','netlify/functions/inquirer-projection-capture-scheduled.mjs']){
+ const source=readFileSync(file,'utf8');
+ assert(source.includes("['deploy-preview','branch-deploy']")&&source.includes('status:403'),'Scheduled writer must deny preview requests: '+file);
+}
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

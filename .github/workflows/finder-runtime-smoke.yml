@@ -40,6 +40,7 @@ on:
       - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/site-v29.mjs'
       - 'netlify/functions/value-history.mjs'
+      - 'scripts/preview-history-export-security-smoke.mjs'
       - 'netlify/functions/value-history-observability.mjs'
       - 'netlify/functions/ppr-scoring.mjs'
       - 'scripts/import-sleeper-history.mjs'
@@ -89,6 +90,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Public preview history export guard
+        run: node scripts/preview-history-export-security-smoke.mjs
       - name: Install declared function dependencies
         run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
       - name: V328 compiled Finder reproducibility

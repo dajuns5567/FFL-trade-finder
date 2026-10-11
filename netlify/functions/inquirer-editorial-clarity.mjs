@@ -14,7 +14,7 @@ function candidateParagraph(p){
  if(/\b(?:the star back|the star receiver|the emerging back|the struggling star|the veteran receiver|the struggling veteran receiver)\b/i.test(x))return null;
  return x;
 }
-function rewriteArticle(team){
+function rewriteArticle(team,teamByName){
  const a=team?.inquirer_article;if(!a)return;
  for(const sec of a.sections||[]){
   if(!Array.isArray(sec.paragraphs))continue;
@@ -22,14 +22,18 @@ function rewriteArticle(team){
  }
  const next=String(team.next_opponent_name||a.facts?.next_opponent_roster?.team_name||'').trim();
  const own=String(team.team_name||'This team').trim(),op=a.facts?.next_opponent_roster;
- const nextPlayers=(op?.starters||[]).filter(p=>p?.name&&valid(p?.points)).sort((x,y)=>Number(y.points)-Number(x.points));
+ const nextTeam=teamByName.get(next);const nextPlayers=(nextTeam?.starter_details?.length?nextTeam.starter_details:op?.starters||[]).filter(p=>p?.name&&valid(p?.points)).sort((x,y)=>Number(y.points)-Number(x.points));
  const top=(team.starter_details||[]).filter(p=>p?.name&&valid(p?.points)).sort((x,y)=>Number(y.points)-Number(x.points));
  const section=(a.sections||[]).find(s=>s.kind==='outlook');
  if(section&&next){
   const reporter=a.reporter?.id,main=top[0],opponent=nextPlayers[0];
   const rid=Math.max(1,Number(team.roster_id)||1),wi=Number(a.week)+1;
-  const first=main?main.name:'a verified starter',second=opponent?opponent.name:'the next opponent\'s starters';
-  const firstPoints=main?score(main.points):'unavailable',secondPoints=opponent?score(opponent.points):'unavailable';
+  const first=main?main.name:'the leading starter',second=opponent?opponent.name:null;
+  const firstPoints=main?score(main.points):null,secondPoints=opponent?score(opponent.points):null;
+  if(!main||!opponent){
+   const detail=main?`${main.name} scored ${score(main.points)} for ${own} in Week ${a.week}.`:`${own} has no verified player-level comparison for Week ${a.week}.`;
+   section.paragraphs=[`${own} faces ${next} in Week ${wi}. ${detail} The manager will need production across the lineup, not just one familiar name on the highlight reel.`];
+  }else{
   const forms=[
     `${own} meets ${next} in Week ${wi}; ${first} had ${firstPoints} last week, against ${second}'s ${secondPoints}.`,
     `Across the Week ${wi} matchup with ${next}, ${own} brings ${first}'s ${firstPoints} and must account for ${second}'s ${secondPoints}.`,
@@ -106,6 +110,7 @@ function rewriteArticle(team){
   const prefix=lead+forms[(rid-1)%forms.length].replace(/\.$/,';');
   const tail=quips[group].replace(/\.\s+(?=[A-Z])/g,'; ').replace(/^./,c=>c.toLowerCase());
   section.paragraphs=[prefix+' but '+tail];
+  }
  }
  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
 }
@@ -183,7 +188,8 @@ function finalClarityQuality(edition){
 }
 export function applyInquirerEditorialClarity(edition,{week}={}){
  if(!edition||Number(week)<4)return edition;
- for(const team of edition.teams||[])rewriteArticle(team);
+ const teamByName=new Map((edition.teams||[]).map(team=>[String(team.team_name||''),team]));
+ for(const team of edition.teams||[])rewriteArticle(team,teamByName);
  rewriteRecap(edition.league_overview);
  finalClarityQuality(edition);
  return edition;

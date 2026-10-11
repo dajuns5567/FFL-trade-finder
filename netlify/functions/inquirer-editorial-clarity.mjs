@@ -26,20 +26,33 @@ function rewriteArticle(team){
  const top=(team.starter_details||[]).filter(p=>p?.name&&valid(p?.points)).sort((x,y)=>Number(y.points)-Number(x.points));
  const section=(a.sections||[]).find(s=>s.kind==='outlook');
  if(section&&next){
-  const reporter=a.reporter?.id;
-  const main=top[0],opponent=nextPlayers[0];
-  const start=`Week ${Number(a.week)+1} sends ${own} against ${next}.`;
-  const matchup=main&&opponent
-    ?`Last week, ${main.name} scored ${score(main.points)} for ${own}, while ${opponent.name} put up ${score(opponent.points)} for ${next}. That is the actual scoring form both managers bring into the lineup conversation—not a promise either player repeats it.`
-    :`The upcoming opponent is confirmed; a reliable starter-to-starter scoring comparison is not available.`;
-  const concern=reporter==='walter-mercer'
-    ?`The old lesson applies: ${own} will need the players behind its leading scorer to show up. Sunday does not offer refunds for excellent intentions.`
-    :reporter==='tess-delaney'
-    ?`A glamorous box score buys one week of applause, not immunity. ${next} is perfectly entitled to spoil the reception.`
-    :reporter==='mack-hollis'
-    ?`Circle the weak lineup spot before kickoff. Waiting until the postgame interview to discover it is a bold management strategy.`
-    :`The rivals can read last week's scores, too. Making the same obvious lineup mistake twice would be generous scouting assistance.`;
-  section.paragraphs=[start,matchup,concern];
+  const reporter=a.reporter?.id,main=top[0],opponent=nextPlayers[0];
+  const index=((Number(team.roster_id)||0)*7+Number(a.week||0))%12;
+  const start=`${own} faces ${next} in Week ${Number(a.week)+1}.`;
+  const numbers=main&&opponent
+    ?`${main.name} supplied ${score(main.points)} for ${own} last week; ${opponent.name} scored ${score(opponent.points)} for ${next}.`
+    :`${next} is the confirmed opponent; a complete comparable starting lineup is not in the available evidence.`;
+  const personal=main?.name||'the leading starter';
+  const observations=[
+    `${own} needs more than another solo performance from ${personal}; a manager cannot start a postgame explanation at FLEX.`,
+    `${next} will have seen the same weak slots. That scouting report, regrettably, is free.`,
+    `${own} can celebrate last week's scoreboard, but the lineup card has no memory and even less sympathy.`,
+    `${personal} did a share of the work; the rest of ${own} has a Week ${Number(a.week)+1} appointment with accountability.`,
+    `${next} is under no obligation to repeat the generosity of a previous opponent. Inconvenient scheduling policy.`,
+    `${own} has a perfectly good excuse to be confident and absolutely none to forget its weakest starter.`,
+    `${next} does not care whether ${own} found last Sunday emotionally reassuring. Points will be requested again.`,
+    `${own} should inspect the lineup before kickoff. Postgame hindsight is a very expensive subscription.`,
+    `${personal} cannot play every position for ${own}; even the most optimistic manager should have discovered that by now.`,
+    `${next} is the next measurement of ${own}'s depth, not a ceremonial stop on the schedule.`,
+    `${own} has one week to fix its quiet starter spots before ${next} gets an opinion that counts in the standings.`,
+    `${own} should keep what worked around ${personal}; anyone promising the same score on demand is selling souvenirs.`
+  ];
+  let concern=observations[index];
+  if(reporter==='walter-mercer')concern=concern.replace(/ceremonial stop/,'victory parade');
+  if(reporter==='tess-delaney')concern=concern.replace(/expensive subscription/,'rather expensive fashion accessory');
+  if(reporter==='mack-hollis')concern=concern.replace(/selling souvenirs/,'running a souvenir stand');
+  if(reporter==='nora-voss')concern=concern.replace(/scouting report/,'rival dossier');
+  section.paragraphs=[start,numbers,concern];
  }
  // A section must never open with an anonymous positional label. Restoring
  // named score context is safer than inferring which athlete an adjective means.
@@ -47,7 +60,7 @@ function rewriteArticle(team){
  if(players){
   const present=(players.paragraphs||[]).join(' ');
   for(const p of top.slice(0,2)){
-   if(!present.includes(p.name))players.paragraphs.unshift(`${p.name} scored ${score(p.points)} fantasy points for ${own} in Week ${a.week}.`);
+   if(!present.includes(p.name))players.paragraphs.unshift(`${p.name} provided ${score(p.points)} points for ${own}; ${Number(p.points)>=15?'a contribution the rest of the lineup was obliged to respect':'that return still leaves the manager hunting for stronger production elsewhere'}.`);
   }
  }
  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);

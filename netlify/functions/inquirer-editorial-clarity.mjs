@@ -139,13 +139,13 @@ function finalClarityQuality(edition){
      let text=String(p||'');
      for(const boilerplate of duplicateFiller){
       if(text.includes(boilerplate)){
-       if(seen.has(boilerplate))text=text.replace(boilerplate,'').replace(/\\s{2,}/g,' ').trim();
+       if(seen.has(boilerplate))text=text.replace(boilerplate,'').replace(/\s{2,}/g,' ').trim();
        else seen.add(boilerplate);
       }
      }
-     const sentences=text.split(/(?<=[.!?])\\s+/).filter(Boolean);
+     const sentences=text.split(/(?<=[.!?])\s+/).filter(Boolean);
      for(let i=0;i<sentences.length;i++){
-      const match=sentences[i].match(/^([A-Z][A-Za-z'-]+\\s+[A-Z][A-Za-z'-]+)/);
+      const match=sentences[i].match(/^([A-Z][A-Za-z'-]+\s+[A-Z][A-Za-z'-]+)/);
       const lead=match?.[1]||'';
       if(lead&&lead===previousLead)sentences[i]='For this week, '+sentences[i].replace(/^./,c=>c.toLowerCase());
       previousLead=lead;

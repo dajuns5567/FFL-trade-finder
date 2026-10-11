@@ -44,7 +44,10 @@ function rewriteArticle(team,teamByName){
      reserve.name+' had '+gap+' points more than '+starter.name+' in an eligible bench swap. '+teamName+' has discovered a new place to hide fantasy production: the bench.',
      'Here is the '+teamName+' coaching review: '+reserve.name+' over '+starter.name+' was worth '+gap+' more points. The Monday explanation promises to be longer than the math.'
     ];
-    add=jokes[(Math.max(1,Number(team.roster_id)||1)-1)%jokes.length];
+    const captions=["The lineup receipt is painfully specific","A Sunday spreadsheet has a cruel footnote","The scoreboard left one unopened envelope","There is a coaching decision worth framing","The postgame excuse budget is already spent","This week came with a free bench audit","The points were available without a coupon","One manager forgot which column mattered","It takes confidence to ignore that evidence","A roster can hide points in plain sight","The backup's box score filed a complaint","Here is the lineup's least flattering arithmetic","The film room needs no dramatic soundtrack","The starting card volunteered a punchline","A bench seat won the argument anyway","Management discovered an avoidable subplot","Nothing reveals the lineup better than arithmetic","The reserve scorer has grounds for appeal","This was a lineup lesson with decimal places","The winning option remained under glass","A replacement score sat in the waiting room","The coaching review requires no witness","The managers' group chat received evidence","The lineup card neglected one small detail","Somebody should check the bench receipt","A misfire arrived with exact measurements","The bench delivered the sharpest criticism","That missed swap deserves its own exhibit","There was an easier route to the points","One starter got a generous benefit of doubt","The bench came equipped with evidence","It is a bad week for the lineup attorney"];
+    const rosterIndex=(Math.max(1,Number(team.roster_id)||1)-1)%captions.length;
+    const text=jokes[rosterIndex%jokes.length].replace(/\. (?=[A-Z])/g,'; ');
+    add=captions[rosterIndex]+': '+text.charAt(0).toLowerCase()+text.slice(1);
    }else{
     const weak=team.worst_starter||a.facts?.worst_starter;
     add=weak?.name&&valid(weak.points)
@@ -194,7 +197,7 @@ function finalClarityQuality(edition){
       return line;
     }).join(' ').trim();
   }
-  let previousLead='';
+  let previousLead=''; const seenLeads=new Set();
   for(const sec of a.sections||[]){
    for(const group of [sec,...(sec.blocks||[])]){
     if(!Array.isArray(group.paragraphs))continue;
@@ -210,7 +213,8 @@ function finalClarityQuality(edition){
      for(let i=0;i<sentences.length;i++){
       const match=sentences[i].match(/^([A-Z][A-Za-z'-]+\s+[A-Z][A-Za-z'-]+)/);
       const lead=match?.[1]||'';
-      if(lead&&lead===previousLead)sentences[i]='For this week, '+sentences[i].replace(/^./,c=>c.toLowerCase());
+      if(lead&&(lead===previousLead||seenLeads.has(lead)))sentences[i]='On the same lineup, '+sentences[i];
+      if(lead)seenLeads.add(lead);
       previousLead=lead;
      }
      return sentences.join(' ').trim();

@@ -481,7 +481,7 @@ function archiveFiltersHTML(w){
  const years=[...new Set(rows.map(x=>Number(x.season)).filter(Boolean))].sort((a,b)=>b-a);
  const fallbackYear=years[0]||Number(w?.season)||new Date().getFullYear(),selectedYear=Number(w?.season)||fallbackYear;
  const weeks=rows.filter(x=>Number(x.season)===selectedYear).map(x=>Number(x.week)).filter(Boolean).sort((a,b)=>b-a);
- const requestedWeek=Number(w?.week),selectedWeek=weeks.includes(requestedWeek)?requestedWeek:(weeks[0]||requestedWeek||1),editionForTeams=(Array.isArray(w?.teams)&&w.teams.length&&Number(w?.season)===selectedYear&&Number(w?.week)===selectedWeek)?w:((spotlightWeeklyCache?.available&&Number(spotlightWeeklyCache?.season)===selectedYear&&Number(spotlightWeeklyCache?.week)===selectedWeek)?spotlightWeeklyCache:null),teams=(editionForTeams?.teams||[]).slice().sort((a,b)=>String(a.team_name||'').localeCompare(String(b.team_name||'')));
+ const requestedWeek=Number(w?.week),selectedWeek=!openBroadcastTeam&&weeks.length?weeks[0]:(weeks.includes(requestedWeek)?requestedWeek:(weeks[0]||requestedWeek||1)),editionForTeams=(Array.isArray(w?.teams)&&w.teams.length&&Number(w?.season)===selectedYear&&Number(w?.week)===selectedWeek)?w:((spotlightWeeklyCache?.available&&Number(spotlightWeeklyCache?.season)===selectedYear&&Number(spotlightWeeklyCache?.week)===selectedWeek)?spotlightWeeklyCache:null),teams=(editionForTeams?.teams||[]).slice().sort((a,b)=>String(a.team_name||'').localeCompare(String(b.team_name||'')));
  const selectedTeam=openBroadcastTeam||'__league__';
  const yearOptions=years.map(y=>'<option value="'+y+'"'+(y===selectedYear?' selected':'')+'>'+y+'</option>').join('');
  const weekOptions=weeks.map(x=>'<option value="'+x+'"'+(x===selectedWeek?' selected':'')+'>Week '+x+'</option>').join('');
@@ -562,7 +562,7 @@ function hydrateArticleEstimates(w){
  retrospectiveArticleRequests.set(key,promise);
 }
 function showWeeklyArticle(w,scroll=false,scrollMode='article'){currentlyRenderedArticleKey=Number(w?.season)+'|'+Number(w?.week);const host=document.getElementById('leagueHubContent'),all=tradeCache?.trades||[],stats=teamTradeStats(all),md=mergeVisibleWeekScoring(managerCache,w);managerCache=md;if(host)host.innerHTML=dailyHTML(all,stats,w,md,w);hydrateArticleEstimates(w);if(scroll)(scrollMode==='top'?scrollToInquirerTop():scrollToInquirerArticle());ensureCurrentWeekAwards(w).then(data=>{if(Number(weeklyCache?.season)!==Number(w?.season)||Number(weeklyCache?.week)!==Number(w?.week))return;const current=Array.from(document.querySelectorAll('#leagueHubContent .lh-card.lh-wide')).find(x=>String(x.querySelector('h3')?.textContent||'').includes('Players of the Week'));if(current)current.outerHTML=playersOfWeekHTML(w,data)}).catch(()=>{})}
-function returnToLeagueHubHome(){openBroadcastTeam='';weeklyCache=null;render('daily').then(()=>scrollToInquirerTop())}
+function returnToLeagueHubHome(){openBroadcastTeam='';render('daily').then(()=>scrollToInquirerTop())}
 function dailyHTML(all,stats,w,md,spotlightW=w){
  // Home must never regress to a previously published edition when slower
  // bootstrap/manager requests finish after a newer archive has loaded.

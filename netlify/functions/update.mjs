@@ -45,6 +45,7 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
 export default async (req)=>{
   if(req.method==="OPTIONS")return json({ok:true});
   if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
+  if(["deploy-preview","branch-deploy"].includes(String(process.env.CONTEXT||"")))return json({ok:false,error:"preview writes disabled"},403);
   let body={};try{body=await req.json()}catch{return json({ok:false,error:"Invalid JSON"},400)}
   const players=Array.isArray(body.players)?body.players:[];
   if(!players.length)return json({ok:false,error:"No player list supplied"},400);

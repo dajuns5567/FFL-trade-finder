@@ -33,7 +33,18 @@ function rewriteArticle(team,teamByName){
    const teamName=String(team.team_name||'The team');
    let add;
    if(reserve?.name&&starter?.name&&valid(miss?.gap)&&Number(miss.gap)>0){
-    add=reserve.name+' outscored '+starter.name+' by '+score(miss.gap)+' from the bench. '+teamName+' can call that lineup management; the rival group chat has a shorter word for it.';
+    const gap=score(miss.gap),manager=String(team.manager_name||'the manager');
+    const jokes=[
+     reserve.name+' beat '+starter.name+' by '+gap+' from the bench. '+manager+' apparently tried a new strategy: letting the better score watch the game.',
+     'A '+gap+'-point upgrade sat on the '+teamName+' bench: '+reserve.name+' over '+starter.name+'. Somebody should tell '+manager+' the lineup locks before the apology tour.',
+     manager+' started '+starter.name+' while '+reserve.name+' sat with '+gap+' more points available. The bench was not injured; the decision-making might need a trainer.',
+     'For '+teamName+', '+reserve.name+' topped '+starter.name+' by '+gap+' in a compatible spot. That is a very expensive way to demonstrate faith in the wrong starter.',
+     starter.name+' got the start and '+reserve.name+' earned '+gap+' extra points on the bench. '+manager+' made sure the best lineup remained a fascinating hypothetical.',
+     'The '+teamName+' lineup left '+gap+' points between '+reserve.name+' and '+starter.name+' on the table. The manager did not need a crystal ball; a lineup screen would have helped.',
+     reserve.name+' had '+gap+' points more than '+starter.name+' in an eligible bench swap. '+teamName+' has discovered a new place to hide fantasy production: the bench.',
+     'Here is the '+teamName+' coaching review: '+reserve.name+' over '+starter.name+' was worth '+gap+' more points. The Monday explanation promises to be longer than the math.'
+    ];
+    add=jokes[(Math.max(1,Number(team.roster_id)||1)-1)%jokes.length];
    }else{
     const weak=team.worst_starter||a.facts?.worst_starter;
     add=weak?.name&&valid(weak.points)

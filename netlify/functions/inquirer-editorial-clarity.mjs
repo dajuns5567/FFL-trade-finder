@@ -42,7 +42,7 @@ function rewriteArticle(team){
   ];
   const desk={
     'walter-mercer':[
-      'Counting on one man to repeat a Sunday is a wonderful way to lose Tuesday's lineup meeting.',
+      'Counting on one man to repeat a Sunday is a wonderful way to lose Tuesday lineup meeting.',
       'Somebody has to do the less glamorous work, and the standings will not accept excuses.',
       'The opponent will not offer a discount for last week\'s highlight reel.',
       'I would prefer a second reliable starter to a second victory speech.'

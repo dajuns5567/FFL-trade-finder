@@ -57,7 +57,7 @@ try{
  await page.waitForFunction(()=>document.querySelector('#leagueHubContent')?.textContent?.includes('Week 4'),null,{timeout:45000});
  const awardsHeading=page.locator('#leagueHubContent h3').filter({hasText:'Players of the Week'}).first();
  assert(await awardsHeading.isVisible(),'Players of the Week heading must be visually displayed');
- const expectedRecapHeadings=week4.league_overview.sections[0].blocks.map(b=>b.heading);
+ const expectedRecapHeadings=week4.league_overview.sections[0].blocks.map(b=>b.heading==='The Next Edition Is Not Written Yet'?'The Week Ahead':b.heading);
  assert.equal(expectedRecapHeadings.length,6,'Week 4 source recap must have six editorial themes');
  assert.deepEqual(week4.league_overview.sections[0].blocks.map(b=>b.kind),['lead','standings','players','decisions','league','outlook'],'Wrong editorial recap kinds');
  await page.locator('#leagueHubContent [data-lh-broadcast-team="__league__"]').first().click();

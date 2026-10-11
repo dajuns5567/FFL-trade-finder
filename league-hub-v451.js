@@ -729,6 +729,8 @@ async function render(view=currentView,managerId=''){if(view!=='daily')dailyRend
  const acceptEdition=x=>{
   traceEdition('candidate',{week:x?.week,localWeek:publishedW?.week,cacheWeek:weeklyCache?.week,available:x?.available});
   if(dailyToken!==dailyRenderToken||!x?.available||!Array.isArray(x.teams)||!x.teams.length)return;
+  // Make newly published weeks selectable without hardcoded season/week limits.
+  ensureArchiveWeek(Number(x.season),Number(x.week));
   if(!publishedW||Number(x.season)>Number(publishedW.season)||(Number(x.season)===Number(publishedW.season)&&Number(x.week)>Number(publishedW.week))){
    publishedW=x;weeklyCache=x;spotlightWeeklyCache=x;drawDaily();hydratePublishedSeasonScoring();
    ensureCurrentWeekAwards(x).then(()=>drawDaily()).catch(()=>{});

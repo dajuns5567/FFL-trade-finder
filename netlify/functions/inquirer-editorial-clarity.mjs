@@ -175,7 +175,13 @@ function rewriteArticle(team,teamByName){
 ];
   const group=Math.floor((rid-1)/forms.length)%4;
   const lead=openings[(rid+Number(a.week)*7)%openings.length];
-  const matchup=forms[(rid-1)%forms.length];
+  // A 32-way, team-specific lead makes the opponent comparison a story rather
+  // than an interchangeable factual caption repeated four times per week.
+  const secondary=top[1],base=forms[(rid-1)%forms.length].replace(/\\.$/,'');
+  const extra=secondary?.name&&valid(secondary.points)
+    ?'; '+secondary.name+' supplied '+score(secondary.points)+' behind '+first+', which is the supporting production '+own+' must evaluate before kickoff.'
+    :'; the lineup must actually produce again before the result can be compared.';
+  const matchup=lead+base+extra;
   const risk=top.slice(1).find(p=>Number(p.points)<8),manager=String(team.manager_name||'the manager');
   const concern=risk?.name?risk.name+' scored only '+score(risk.points):top[1]?.name?top[1].name+' added '+score(top[1].points):first+' scored '+firstPoints;
   const remarks={

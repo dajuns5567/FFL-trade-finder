@@ -361,7 +361,51 @@ function finalClarityQuality(edition){
   a.paragraphs=(a.sections||[]).flatMap(sec=>[...(sec.paragraphs||[]),...(sec.blocks||[]).flatMap(b=>b.paragraphs||[])]);
  }
 }
-export function applyInquirerEditorialClarity(edition,{week}={}){
+// Final forward-only newspaper pass: compare actual complete sentences against
+// the prior published edition and against other teams in this same edition.
+// Do not manufacture substitute facts or alter historical preloads.
+const sentenceKey=value=>norm(value).toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#').replace(/[^a-z#' ]+/g,' ').replace(/\s+/g,' ').trim();
+const sentenceParts=value=>norm(value).split(/(?<=[.!?])\s+/).filter(Boolean);
+function articleStoryParagraphs(a){
+ return (a?.sections||[]).flatMap(s=>(s?.blocks||[]).length
+   ?(s.blocks||[]).flatMap(b=>b.paragraphs||[]):s.paragraphs||[]);
+}
+function dedupeEditorialStory(edition,previousEdition){
+ const prior=new Set();
+ for(const team of previousEdition?.teams||[]){
+  for(const p of articleStoryParagraphs(team.inquirer_article))
+   for(const sentence of sentenceParts(p))prior.add(sentenceKey(sentence));
+ }
+ for(const p of articleStoryParagraphs(previousEdition?.league_overview))
+  for(const sentence of sentenceParts(p))prior.add(sentenceKey(sentence));
+ const acrossTeams=new Map();
+ const staleStock=/\bbrought the noise and\b.*\bempty stadium\b/i;
+ const process=(article,teamKey)=>{
+  if(!article)return;
+  for(const section of article.sections||[]){
+   const groups=(section.blocks||[]).length?section.blocks:[section];
+   for(const group of groups){
+    if(!Array.isArray(group.paragraphs))continue;
+    group.paragraphs=group.paragraphs.map(paragraph=>{
+     const kept=[];
+     for(const sentence of sentenceParts(paragraph)){
+      const key=sentenceKey(sentence);
+      if(!key||prior.has(key)||staleStock.test(sentence))continue;
+      const previousTeam=acrossTeams.get(key);
+      if(previousTeam&&previousTeam!==teamKey)continue;
+      acrossTeams.set(key,teamKey);
+      kept.push(sentence);
+     }
+     return kept.join(' ').trim();
+    }).filter(Boolean);
+   }
+  }
+  article.paragraphs=articleStoryParagraphs(article);
+ };
+ for(const team of edition.teams||[])process(team.inquirer_article,String(team.roster_id||team.team_name));
+ process(edition.league_overview,'__recap__');
+}
+export function applyInquirerEditorialClarity(edition,{week,previousEdition=null}={}){
  if(!edition||Number(week)<4)return edition;
  const teamByName=new Map((edition.teams||[]).map(team=>[String(team.team_name||''),team]));
  const deskCount=new Map();
@@ -373,5 +417,6 @@ export function applyInquirerEditorialClarity(edition,{week}={}){
  }
  rewriteRecap(edition.league_overview,edition.teams||[]);
  finalClarityQuality(edition);
+ dedupeEditorialStory(edition,previousEdition);
  return edition;
 }

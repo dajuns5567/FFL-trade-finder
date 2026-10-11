@@ -27,7 +27,7 @@ try{
       /^netlify\/[^/]+\/deploy-preview$/.test(String(item?.context||'')))
       .map(item=>String(item?.target_url||''))
       .filter(url=>{try{const parsed=new URL(url);return parsed.protocol==='https:'&&
-       /^deploy-preview-\\d+--[a-z0-9-]+\\.netlify\\.app$/.test(parsed.hostname)}catch{return false}});
+       /^deploy-preview-\d+--[a-z0-9-]+\.netlify\.app$/.test(parsed.hostname)}catch{return false}});
     }else console.warn('NETLIFY_PREVIEW_STATUS_DISCOVERY_UNAVAILABLE',gh.status);
    }catch(error){console.warn('NETLIFY_PREVIEW_STATUS_DISCOVERY_ERROR',String(error?.message||error).slice(0,200))}
   }
@@ -105,7 +105,7 @@ try{
  },null,{timeout:65000});
  await page.waitForFunction(()=>/Week 4/.test(document.querySelector('#leagueHubContent .lh-report-title')?.textContent||''),null,{timeout:90000});
  const selectedTitle=await page.locator('#leagueHubContent .lh-report-title').first().textContent();
- assert(/Week 4/.test(selectedTitle)||!/Week\\s+\\d+/.test(selectedTitle),'Older Week 3 edition must never be presented as latest Week 4');
+ assert(/Week 4/.test(selectedTitle)||!/Week\\s+\d+/.test(selectedTitle),'Older Week 3 edition must never be presented as latest Week 4');
  const spotlightNames=await page.locator('#leagueHubContent .lh-spotlight .lh-spot-card').allTextContents();
  console.log('LIVE_MANAGER_SPOTLIGHT_READY',JSON.stringify(spotlightNames.filter(s=>/Hot Seat|Cool Throne/.test(s))));
  console.log('LIVE_EDITION_SELECTION_TRACE',JSON.stringify(await page.evaluate(()=>window.__fleecedEditionTrace||[])));

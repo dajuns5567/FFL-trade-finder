@@ -365,13 +365,13 @@ const previewGuardFiles=[
  ['netlify/functions/update.mjs','preview writes disabled'],
  ['netlify/functions/league-hub.mjs','preview mutations disabled'],
  ['netlify/functions/inquirer-publish-on-load.mjs','preview publication disabled'],
- ['netlify/functions/inquirer-publish-on-load-background.mjs',"['deploy-preview','branch-deploy']"]
+ ['netlify/functions/inquirer-publish-on-load-background.mjs','isReadOnlyPreview(req)']
 ];
 for(const [file,guard] of previewGuardFiles){
  const source=readFileSync(file,'utf8');
- assert(source.includes(guard)&&source.includes('process.env.CONTEXT'),'Preview backend mutation blocked: '+file);
+ assert(source.includes(guard)&&source.includes('isReadOnlyPreview(req)'),'Preview backend mutation blocked: '+file);
 }
-assert(readFileSync('netlify/functions/value-history.mjs','utf8').includes("if(s&&!['deploy-preview','branch-deploy'].includes"),'Preview value-history reads must not run maintenance cleanup writes');
+assert(readFileSync('netlify/functions/value-history.mjs','utf8').includes('if(s&&!isReadOnlyPreview(req))'),'Preview value-history reads must not run maintenance cleanup writes');
 
 
 // Preview publication and read-side persistence guardrails.
@@ -380,11 +380,26 @@ for(const key of ['weekly','reporters','reporter_archive','weekly_awards','manag
  assert(hubPreview.includes("'"+key+"'"),'Preview routing must explicitly account for '+key);
 for(const file of ['netlify/functions/inquirer-publish-scheduled.mjs','netlify/functions/inquirer-projection-capture-scheduled.mjs']){
  const source=readFileSync(file,'utf8');
- assert(source.includes("['deploy-preview','branch-deploy']")&&source.includes('status:403'),'Scheduled writer must deny preview requests: '+file);
+ assert(source.includes('isReadOnlyPreview(req)')&&source.includes('status:403'),'Scheduled writer must deny preview requests: '+file);
 }
 
 const awardRefreshSource=publisher.slice(publisher.indexOf('async function weeklyAwards()'),publisher.indexOf('async function managerHistory()'));
 assert(!awardRefreshSource.includes('if(finalizedMatchupRows)'),'Historical awards refresh must not reference out-of-scope raw matchup rows');
+
+const {isReadOnlyPreview}=await import('../netlify/functions/preview-read-only.mjs');
+const originalDeployUrl=process.env.DEPLOY_URL;
+const originalNetlifyContext=process.env.NETLIFY_CONTEXT;
+try{
+ delete process.env.CONTEXT;
+ delete process.env.NETLIFY_CONTEXT;
+ delete process.env.DEPLOY_URL;
+ assert(isReadOnlyPreview({url:'https://deploy-preview-390--fleeced.netlify.app/.netlify/functions/value-history'}),'Preview hostname must enforce read-only even without CONTEXT');
+ assert(isReadOnlyPreview({url:'https://feature-branch--fleeced.netlify.app/.netlify/functions/value-history'}),'Branch preview hostname must enforce read-only');
+ assert(!isReadOnlyPreview({url:'https://fleeced.netlify.app/.netlify/functions/value-history'}),'Production hostname must keep normal runtime behavior');
+}finally{
+ if(originalDeployUrl===undefined)delete process.env.DEPLOY_URL;else process.env.DEPLOY_URL=originalDeployUrl;
+ if(originalNetlifyContext===undefined)delete process.env.NETLIFY_CONTEXT;else process.env.NETLIFY_CONTEXT=originalNetlifyContext;
+}
 
 const savedContext=process.env.CONTEXT;
 try{

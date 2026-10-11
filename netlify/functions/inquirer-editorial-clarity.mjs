@@ -11,6 +11,8 @@ const aliases=s=>norm(s).replace(/\bTetairoa\b(?! McMillan)/g,'Tetairoa McMillan
 function candidateParagraph(p){
  const x=grammatical(p);
  if(meta.test(x)||vague.test(x))return null;
+ // Do not leave orphaned single-sentence scoreboard captions in a narrative.
+ if(/^Against .+, .+\b(?:added|scored) \d+(?:\.\d+)?\b[^.!?]*\.$/i.test(x))return null;
  if(/\b(?:the star back|the star receiver|the emerging back|the struggling star|the veteran receiver|the struggling veteran receiver)\b/i.test(x))return null;
  return x;
 }
@@ -37,7 +39,7 @@ function rewriteArticle(team,teamByName){
     const jokes=[
      reserve.name+' beat '+starter.name+' by '+gap+' from the bench. '+manager+' apparently tried a new strategy: letting the better score watch the game.',
      'A '+gap+'-point upgrade sat on the '+teamName+' bench: '+reserve.name+' over '+starter.name+'. Somebody should tell '+manager+' the lineup locks before the apology tour.',
-     manager+' started '+starter.name+' while '+reserve.name+' sat with '+gap+' more points available. The bench was not injured; the decision-making might need a trainer.',
+     manager+' started '+starter.name+' while '+reserve.name+' sat with '+gap+' more points available. The bench had the better score; the decision-making might need a trainer.',
      'For '+teamName+', '+reserve.name+' topped '+starter.name+' by '+gap+' in a compatible spot. That is a very expensive way to demonstrate faith in the wrong starter.',
      starter.name+' got the start and '+reserve.name+' earned '+gap+' extra points on the bench. '+manager+' made sure the best lineup remained a fascinating hypothetical.',
      'The '+teamName+' lineup left '+gap+' points between '+reserve.name+' and '+starter.name+' on the table. The manager did not need a crystal ball; a lineup screen would have helped.',

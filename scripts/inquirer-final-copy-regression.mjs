@@ -389,16 +389,28 @@ assert(!awardRefreshSource.includes('if(finalizedMatchupRows)'),'Historical awar
 const {isReadOnlyPreview}=await import('../netlify/functions/preview-read-only.mjs');
 const originalDeployUrl=process.env.DEPLOY_URL;
 const originalNetlifyContext=process.env.NETLIFY_CONTEXT;
+const originalSiteId=process.env.SITE_ID;
+const originalSiteName=process.env.SITE_NAME;
 try{
  delete process.env.CONTEXT;
  delete process.env.NETLIFY_CONTEXT;
  delete process.env.DEPLOY_URL;
+ delete process.env.SITE_ID;
+ delete process.env.SITE_NAME;
  assert(isReadOnlyPreview({url:'https://deploy-preview-390--fleeced.netlify.app/.netlify/functions/value-history'}),'Preview hostname must enforce read-only even without CONTEXT');
  assert(isReadOnlyPreview({url:'https://feature-branch--fleeced.netlify.app/.netlify/functions/value-history'}),'Branch preview hostname must enforce read-only');
  assert(!isReadOnlyPreview({url:'https://fleeced.netlify.app/.netlify/functions/value-history'}),'Production hostname must keep normal runtime behavior');
+ assert(isReadOnlyPreview({url:'https://fleeced-inquirer-browser-ci.netlify.app/.netlify/functions/value-history'}),'CI primary hostname must be read-only');
+ process.env.SITE_ID='3db3f8f7-4997-48db-b8a3-1325d18c75ec';
+ assert(isReadOnlyPreview({url:'https://internal.netlify/.netlify/functions/inquirer-publish-scheduled'}),'CI scheduled invoke must be read-only without public hostname');
+ delete process.env.SITE_ID;
+ process.env.SITE_NAME='fleeced-inquirer-browser-ci';
+ assert(isReadOnlyPreview({url:'https://internal.netlify/.netlify/functions/inquirer-projection-capture-scheduled'}),'CI site name must block scheduled writes');
 }finally{
  if(originalDeployUrl===undefined)delete process.env.DEPLOY_URL;else process.env.DEPLOY_URL=originalDeployUrl;
  if(originalNetlifyContext===undefined)delete process.env.NETLIFY_CONTEXT;else process.env.NETLIFY_CONTEXT=originalNetlifyContext;
+ if(originalSiteId===undefined)delete process.env.SITE_ID;else process.env.SITE_ID=originalSiteId;
+ if(originalSiteName===undefined)delete process.env.SITE_NAME;else process.env.SITE_NAME=originalSiteName;
 }
 
 const savedContext=process.env.CONTEXT;

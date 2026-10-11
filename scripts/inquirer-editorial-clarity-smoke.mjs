@@ -25,4 +25,21 @@ applyInquirerEditorialClarity(claims,{week:4});
 const management=claims.teams[0].inquirer_article.sections.find(sec=>sec.kind==='management').paragraphs.join(' ');
 assert(!management.includes('Joe Mixon')&&!management.includes('Zaire Franklin'),'unverified claims cannot appear as completed transactions');
 assert(management.includes('Nick Emmanwori')&&management.includes('Nik Bonitto')&&management.includes('17.5'),'replace with a verified lineup miss');
+const prose=mk(4);
+prose.teams[0].inquirer_article.sections[0].paragraphs=[
+ 'On the same lineup, Miami Dolphins won the matchup.',
+ 'Miami Dolphins should have played its stronger lineup.'
+];
+applyInquirerEditorialClarity(prose,{week:4});
+assert(!prose.teams[0].inquirer_article.paragraphs.join(' ').includes('On the same lineup'),'repeated artificial sentence lead must not survive');
+const duplicate=mk(4);
+duplicate.teams[0].inquirer_article.facts={best_lineup_miss:{gap:12.1,reserve:{name:'Nick Emmanwori'},starter:{name:'Nik Bonitto'}}};
+duplicate.teams[0].inquirer_article.sections.unshift({kind:'management',paragraphs:[
+ 'Nick Emmanwori beat Nik Bonitto by 12.1, and the manager should have changed the lineup.',
+ 'The rest of the lineup also mattered.',
+ 'The manager added an unverified player.'
+]});
+applyInquirerEditorialClarity(duplicate,{week:4});
+const managed=duplicate.teams[0].inquirer_article.sections.find(x=>x.kind==='management').paragraphs;
+assert.equal(managed.filter(x=>x.includes('Nick Emmanwori')&&x.includes('Nik Bonitto')).length,1,'one bench mistake should not be restated repeatedly within management');
 console.log('Week 4+ editorial clarity contract passed');

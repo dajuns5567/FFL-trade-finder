@@ -418,6 +418,10 @@ try{
  assert.equal((await previewCapture(new Request('https://preview.example/.netlify/functions/inquirer-projection-capture-scheduled'))).status,403,'Preview scheduled projection capture must not run');
  const {default:previewScheduled}=await import('../netlify/functions/inquirer-publish-scheduled.mjs');
  assert.equal((await previewScheduled(new Request('https://preview.example/.netlify/functions/inquirer-publish-scheduled'))).status,403,'Preview scheduled edition publisher must not run');
+ delete process.env.CONTEXT;
+ assert.equal((await previewCapture(new Request('https://deploy-preview-390--fleeced.netlify.app/.netlify/functions/inquirer-projection-capture-scheduled'))).status,403,'Capture must deny Netlify preview even if CONTEXT is missing');
+ assert.equal((await previewUpdate(new Request('https://deploy-preview-390--fleeced.netlify.app/.netlify/functions/update',{method:'POST',body:'{}'}))).status,403,'Consensus writer must deny preview hostname without context');
+ assert.equal((await previewHistory(new Request('https://deploy-preview-390--fleeced.netlify.app/.netlify/functions/value-history',{method:'POST',body:'{}'}))).status,403,'Value History writer must deny preview hostname without context');
 }finally{
  if(savedContext===undefined)delete process.env.CONTEXT;
  else process.env.CONTEXT=savedContext;

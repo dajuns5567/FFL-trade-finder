@@ -182,8 +182,8 @@ function rewriteArticle(team,teamByName){
   section.paragraphs=[matchup,lead+critique];
   }
  }
- // Only discard empty headings after generated outlooks have been reconstructed.
- a.sections=(a.sections||[]).filter(sec=>!Array.isArray(sec.paragraphs)||sec.paragraphs.length>0);
+ // Preserve all eight canonical section records for archival/CI compatibility;
+ // empty sections should be suppressed by the UI rendering layer.
  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
 }
 function rewriteRecap(o,teams=[]){

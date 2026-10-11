@@ -383,4 +383,6 @@ for(const file of ['netlify/functions/inquirer-publish-scheduled.mjs','netlify/f
  assert(source.includes("['deploy-preview','branch-deploy']")&&source.includes('status:403'),'Scheduled writer must deny preview requests: '+file);
 }
 
+const awardRefreshSource=publisher.slice(publisher.indexOf('async function weeklyAwards()'),publisher.indexOf('async function managerHistory()'));
+assert(!awardRefreshSource.includes('if(finalizedMatchupRows)'),'Historical awards refresh must not reference out-of-scope raw matchup rows');
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

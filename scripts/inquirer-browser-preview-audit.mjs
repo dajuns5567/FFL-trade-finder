@@ -16,20 +16,25 @@ try{
   const sha=process.env.INQUIRER_PR_HEAD_SHA||process.env.GITHUB_SHA;
   let discovered=[];
   if(sha&&/^[a-f0-9]{40}$/i.test(sha)){
-   try{
-    const gh=await fetch('https://api.github.com/repos/dajuns5567/FFL-trade-finder/commits/'+sha+'/status',{
-     headers:{accept:'application/vnd.github+json','user-agent':'Fleeced-Preview-CI/1.0',
-      ...(process.env.GITHUB_TOKEN?{authorization:'Bearer '+process.env.GITHUB_TOKEN}:{})}
-    });
-    if(gh.ok){
+   // Netlify build statuses may arrive after GitHub starts the PR workflow.
+   for(let attempt=0;attempt<7;attempt++){
+    try{
+     const gh=await fetch('https://api.github.com/repos/dajuns5567/FFL-trade-finder/commits/'+sha+'/status',{
+      headers:{accept:'application/vnd.github+json','user-agent':'Fleeced-Preview-CI/1.0',
+       ...(process.env.GITHUB_TOKEN?{authorization:'Bearer '+process.env.GITHUB_TOKEN}:{})}
+     });
+     if(!gh.ok){console.warn('NETLIFY_PREVIEW_STATUS_DISCOVERY_UNAVAILABLE',gh.status);break}
      const payload=await gh.json();
      discovered=(payload.statuses||[]).filter(item=>item?.state==='success'&&
       /^netlify\/[^/]+\/deploy-preview$/.test(String(item?.context||'')))
       .map(item=>String(item?.target_url||''))
       .filter(url=>{try{const parsed=new URL(url);return parsed.protocol==='https:'&&
        /^deploy-preview-\d+--[a-z0-9-]+\.netlify\.app$/.test(parsed.hostname)}catch{return false}});
-    }else console.warn('NETLIFY_PREVIEW_STATUS_DISCOVERY_UNAVAILABLE',gh.status);
-   }catch(error){console.warn('NETLIFY_PREVIEW_STATUS_DISCOVERY_ERROR',String(error?.message||error).slice(0,200))}
+     if(discovered.length)break;
+     console.log('NETLIFY_PREVIEW_WAIT_FOR_STATUSES',attempt+1);
+    }catch(error){console.warn('NETLIFY_PREVIEW_STATUS_DISCOVERY_ERROR',String(error?.message||error).slice(0,200))}
+    if(attempt<6)await new Promise(resolve=>setTimeout(resolve,10000));
+   }
   }
   const candidates=[...new Set([...discovered,
    'https://deploy-preview-390--mellow-salmiakki-f4268c.netlify.app',

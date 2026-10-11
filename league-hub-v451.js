@@ -700,6 +700,9 @@ async function render(view=currentView,managerId=''){if(view!=='daily')dailyRend
  const dailyToken=++dailyRenderToken;
  const ensureArchiveWeek=(year,week)=>{if(!broadcastArchive.some(x=>Number(x.season)===year&&Number(x.week)===week))broadcastArchive.push({type:'week',season:year,week,key:'preloaded:'+year+':'+week,preloaded:true});broadcastArchive.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));};
  let drawnDailyOnce=false;
+ // Hold the first render until the canonical latest approved edition is checked.
+ // This prevents the page flashing Week 2/3 while Week 4 is still loading.
+ let initialEditionResolved=false;
  let dailyTrades=tradeCache?.trades||globalThis.fleecedTradeHistorySharedCacheV515?.trades||[],dailyMgr=managerCache||null;
  let publishedW=(weeklyCache?.available&&Array.isArray(weeklyCache?.teams)&&weeklyCache.teams.length)?weeklyCache:null;
  let scoringHydrationKey='';
@@ -719,7 +722,7 @@ async function render(view=currentView,managerId=''){if(view!=='daily')dailyRend
 
  const traceEdition=(event,payload)=>{if(!/deploy-preview-390/.test(location.hostname))return;const rows=window.__fleecedEditionTrace||(window.__fleecedEditionTrace=[]);rows.push({event,...payload});if(rows.length>80)rows.shift()};
  const drawDaily=()=>{
-  if(dailyToken!==dailyRenderToken||currentView!=='daily'||openBroadcastTeam||!document.getElementById('leagueHubContent'))return;
+  if(!initialEditionResolved||dailyToken!==dailyRenderToken||currentView!=='daily'||openBroadcastTeam||!document.getElementById('leagueHubContent'))return;
   const dataStats=teamTradeStats(dailyTrades),visibleMgr=mergeVisibleWeekScoring(dailyMgr,publishedW);
   if(visibleMgr)managerCache=visibleMgr;
   traceEdition('draw',{localWeek:publishedW?.week,cacheWeek:weeklyCache?.week,spotlightWeek:spotlightWeeklyCache?.week,archiveWeek4:!!archivedEditionCache.get('2026|4')?.available});
@@ -765,7 +768,7 @@ async function render(view=currentView,managerId=''){if(view!=='daily')dailyRend
  // Load approved Week 4 independently of storage-backed archive and publication endpoints.
  // It must not wait for discoverLatestWeek, which can return an older cached report.
  for(let week=1;week<=4;week++)ensureArchiveWeek(2026,week);
- fetchArchivedEdition(2026,4).then(acceptEdition).catch(error=>console.warn('Approved Week 4 preload unavailable',error));
+ fetchArchivedEdition(2026,4).then(acceptEdition).catch(error=>console.warn('Approved Week 4 preload unavailable',error)).finally(()=>{if(dailyToken!==dailyRenderToken)return;initialEditionResolved=true;drawDaily()});
  drawDaily();
  // Resolve the most recently published edition first; Week 4 is only a bootstrap fallback.
  discoverLatestWeek().then(x=>{

@@ -46,12 +46,15 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
 export default async (req)=>{
   if(req.method==="OPTIONS")return json({ok:true});
   if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
-  if(isReadOnlyPreview(req))return json({ok:false,error:"preview writes disabled"},403);
+  const previewReadOnly=isReadOnlyPreview(req);
   let body={};try{body=await req.json()}catch{return json({ok:false,error:"Invalid JSON"},400)}
   const players=Array.isArray(body.players)?body.players:[];
   if(!players.length)return json({ok:false,error:"No player list supplied"},400);
   const refresh=await refreshAllSources();
   const candidate=buildConsensusPayload(refresh,players);
+  // Preview refresh is calculation-only: no Netlify Blobs reads or writes.
+  // Allow the app to validate all seven live sources on deploy previews.
+  if(previewReadOnly)return json({...candidate,promotion:{promoted:false,using_last_known_good:false,preview_read_only:true},sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:x.ok?"fresh":"unavailable",snapshot_timestamp:x.ok?x.timestamp:null,attempt_timestamp:x.timestamp,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,error:x.error||null}))});
   const previous=await readLastGood();
 
   if(!candidate.withheld){

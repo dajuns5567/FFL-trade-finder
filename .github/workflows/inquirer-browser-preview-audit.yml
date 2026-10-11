@@ -38,8 +38,11 @@ jobs:
       - name: Exercise local site with locked Week 4 and Week 3 editions
         if: matrix.target == 'local'
         run: node scripts/inquirer-browser-local-audit.mjs
-      - name: Exercise protected Netlify deploy preview
+      - name: Exercise GitHub-reported Netlify deploy preview
         if: matrix.target == 'preview'
+        env:
+          INQUIRER_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/inquirer-browser-preview-audit.mjs
       - name: Upload browser failure screenshot
         if: failure()

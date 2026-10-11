@@ -84,4 +84,24 @@ const voiceBodies=voices.map((id,i)=>{
  return o.paragraphs[1];
 });
 assert.equal(new Set(voiceBodies).size,4,'each reporter needs a distinguishable outlook voice');
+
+const previous=mk(4);
+previous.teams[0].inquirer_article.sections[0].paragraphs=['This exact sentence should never be recycled.'];
+const previousSnapshot=JSON.stringify(previous);
+const future=mk(5);
+future.teams[0].inquirer_article.sections[0].paragraphs=[
+ 'This exact sentence should never be recycled.',
+ 'Tetairoa McMillan earned this new factual sentence.'
+];
+applyInquirerEditorialClarity(future,{week:5,previousEdition:previous});
+assert.equal(JSON.stringify(previous),previousSnapshot,'prior published articles cannot be mutated');
+assert(!future.teams[0].inquirer_article.paragraphs.join(' ').includes('This exact sentence should never be recycled'),'prior-week sentences must not be copied');
+const copied=mk(4);
+copied.teams.push(JSON.parse(JSON.stringify(copied.teams[0])));
+copied.teams[1].roster_id='9';
+copied.teams[1].team_name='Some Other Team';
+copied.teams[0].inquirer_article.sections[0].paragraphs=['This identical piece of generic prose is reused.'];
+copied.teams[1].inquirer_article.sections[0].paragraphs=['This identical piece of generic prose is reused.'];
+applyInquirerEditorialClarity(copied,{week:4});
+assert.equal(copied.teams.filter(t=>t.inquirer_article.paragraphs.some(p=>p.includes('This identical piece of generic prose is reused'))).length,1,'cross-team repeated copy must be suppressed');
 console.log('Week 4+ editorial clarity contract passed');

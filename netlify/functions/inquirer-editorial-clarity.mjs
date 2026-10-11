@@ -131,12 +131,35 @@ function finalClarityQuality(edition){
  const seen=new Set();
  for(const team of edition.teams||[]){
   const a=team.inquirer_article;if(!a)continue;
+  // Resolve first-name mentions from this roster's actual data; never guess
+  // when multiple athletes share a first name.
+  const names=[...(team.starter_details||[]),...(team.bench_details||[]),...(a.facts?.opponent_roster?.players||[])].map(x=>String(x?.name||'').trim()).filter(x=>x.includes(' '));
+  const firstNames=new Map();
+  for(const full of new Set(names)){
+    const first=full.split(' ')[0].replace(/[^A-Za-z'-]/g,'');
+    if(!firstNames.has(first))firstNames.set(first,new Set());
+    firstNames.get(first).add(full);
+  }
+  const ambiguous=/^(?:The (?:high-end|star|veteran|struggling|emerging|rookie|headline|lead|quiet|productive|talented) (?:back|receiver|quarterback|wideout|starter|player)|That (?:was useful production|is enough decline|is the football problem)|The (?:star|struggling) (?:back|receiver))/i;
+  function restoreNames(p){
+    let lines=String(p||'').split(/(?<=[.!?])\\s+/);
+    lines=lines.filter(line=>!ambiguous.test(line.trim()));
+    return lines.map(line=>{
+      for(const [first,possible] of firstNames){
+        if(first.length<3||possible.size!==1)continue;
+        const full=[...possible][0];
+        const regex=new RegExp('\\\\b'+first.replace(/[.*+?^${}()|[\\]\\]/g,'\\\\  let previousLead='';')+'\\\\b(?!\\\\s+'+full.slice(first.length).trim().replace(/[.*+?^${}()|[\\]\\]/g,'\\\\  let previousLead='';')+')','g');
+        line=line.replace(regex,full);
+      }
+      return line;
+    }).join(' ').trim();
+  }
   let previousLead='';
   for(const sec of a.sections||[]){
    for(const group of [sec,...(sec.blocks||[])]){
     if(!Array.isArray(group.paragraphs))continue;
     group.paragraphs=group.paragraphs.map(p=>{
-     let text=String(p||'');
+     let text=restoreNames(p);
      for(const boilerplate of duplicateFiller){
       if(text.includes(boilerplate)){
        if(seen.has(boilerplate))text=text.replace(boilerplate,'').replace(/\s{2,}/g,' ').trim();

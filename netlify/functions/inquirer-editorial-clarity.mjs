@@ -48,8 +48,6 @@ function rewriteArticle(team,teamByName){
    return t;
   }).filter(Boolean);
  }
- // Empty sections are not story sections and must not display unsupported headings.
- a.sections=(a.sections||[]).filter(sec=>!Array.isArray(sec.paragraphs)||sec.paragraphs.length>0);
  // Discard unverified Week 4+ transaction prose, which may include failed claims.
  // Use verified lineup decisions instead of inventing completed acquisitions.
  const management=(a.sections||[]).find(sec=>sec.kind==='management');
@@ -184,6 +182,8 @@ function rewriteArticle(team,teamByName){
   section.paragraphs=[matchup,lead+critique];
   }
  }
+ // Only discard empty headings after generated outlooks have been reconstructed.
+ a.sections=(a.sections||[]).filter(sec=>!Array.isArray(sec.paragraphs)||sec.paragraphs.length>0);
  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
 }
 function rewriteRecap(o,teams=[]){

@@ -190,7 +190,7 @@ function rewriteArticle(team,teamByName,reporterOrdinal=0){
   const result=margin>=0?'a victory':'a loss';
   const comparison=[
    own+' meets '+next+' in Week '+wi+' after '+first+' gave it '+firstPoints+' points in Week '+a.week+' while '+second+' supplied '+secondPoints+' for the next opponent; that comparison measures the recent top scorers, not a forecast.',
-   'After '+result+' in Week '+a.week+', +own+' now draws '+next+' with '+first+' on '+firstPoints+' from Week '+a.week+' and '+second+' coming off '+secondPoints+'; one strong individual game still leaves a full lineup to set.',
+   'After '+result+' in Week '+a.week+', '+own+' now draws '+next+' with '+first+' on '+firstPoints+' from Week '+a.week+' and '+second+' coming off '+secondPoints+'; one strong individual game still leaves a full lineup to set.',
    'The Week '+wi+' fixture sends '+own+' against '+next+' with '+first+' at '+firstPoints+' and '+second+' at '+secondPoints+' in their most recent completed games; the difference of '+score(Math.abs(gap))+' points is a starting point for the managers, not an outcome.',
    'Against '+next+', '+own+' needs something beyond another '+firstPoints+' from '+first+' because '+second+' registered '+secondPoints+' for the next opponent in Week '+a.week+'; that makes depth more useful than last Sunday\'s applause.',
    'A Week '+wi+' meeting with '+next+' puts '+own+' back to work after '+first+' scored '+firstPoints+'; on the other side '+second+' brought '+secondPoints+', meaning neither manager can substitute a past box score for the next starting card.',

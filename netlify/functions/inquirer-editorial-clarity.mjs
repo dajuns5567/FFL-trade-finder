@@ -200,7 +200,17 @@ function rewriteArticle(team,teamByName){
     'The next opponent is '+next+', with '+second+' coming off '+secondPoints+'. The division group chat will save its condolences.'
    ]
   };
-  section.paragraphs=[matchup,(remarks[reporter]||remarks['walter-mercer'])[(rid+Number(a.week))%3]];
+  let opinion=(remarks[reporter]||remarks['walter-mercer'])[(rid+Number(a.week))%3];
+  if(risk?.name&&!opinion.includes(risk.name)){
+    const c={
+      'walter-mercer':' The paper also records '+risk.name+' at '+score(risk.points)+'; history will not grade on effort.',
+      'tess-delaney':' Meanwhile, '+risk.name+' managed '+score(risk.points)+'; an accessory the ensemble could do without.',
+      'mack-hollis':' '+risk.name+' produced '+score(risk.points)+'. Start there when fixing the lineup.',
+      'nora-voss':' Rivals noted '+risk.name+' at '+score(risk.points)+'; nobody had to leak the box score.'
+    };
+    opinion+=(c[reporter]||c['walter-mercer']);
+  }
+  section.paragraphs=[matchup,opinion];
   }
  }
  // Preserve all eight canonical section records for archival/CI compatibility;

@@ -243,6 +243,8 @@ function rewriteRecap(o,teams=[]){
     if(i>=0)block.paragraphs[i]=contrast;
    }
   }
+  // Keep the public recap paragraph list synchronized with the rendered blocks.
+  if((sec.blocks||[]).length&&Array.isArray(sec.paragraphs))sec.paragraphs=sec.blocks.flatMap(block=>block.paragraphs||[]);
  }
 }
 // Remove duplicated, non-factual stock commentary across team stories without

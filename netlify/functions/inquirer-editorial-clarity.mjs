@@ -119,9 +119,48 @@ function rewriteRecap(o){
   }
  }
 }
+// Remove duplicated, non-factual stock commentary across team stories without
+// touching scores, identities, rankings or other evidence. Also prevent a
+// repeated two-word proper-name lead inside an individual article.
+const duplicateFiller=[
+  'They have lost twice, so rivals no longer need to manufacture the material.',
+  'That performance gave the opponent an actual problem, not a trivia problem; keep the part that worked and stop volunteering the part that needs work.',
+  'The team has supplied enough of its own and now owes supporters a rebuttal.'
+];
+function finalClarityQuality(edition){
+ const seen=new Set();
+ for(const team of edition.teams||[]){
+  const a=team.inquirer_article;if(!a)continue;
+  let previousLead='';
+  for(const sec of a.sections||[]){
+   for(const group of [sec,...(sec.blocks||[])]){
+    if(!Array.isArray(group.paragraphs))continue;
+    group.paragraphs=group.paragraphs.map(p=>{
+     let text=String(p||'');
+     for(const boilerplate of duplicateFiller){
+      if(text.includes(boilerplate)){
+       if(seen.has(boilerplate))text=text.replace(boilerplate,'').replace(/\\s{2,}/g,' ').trim();
+       else seen.add(boilerplate);
+      }
+     }
+     const sentences=text.split(/(?<=[.!?])\\s+/).filter(Boolean);
+     for(let i=0;i<sentences.length;i++){
+      const match=sentences[i].match(/^([A-Z][A-Za-z'-]+\\s+[A-Z][A-Za-z'-]+)/);
+      const lead=match?.[1]||'';
+      if(lead&&lead===previousLead)sentences[i]='For this week, '+sentences[i].replace(/^./,c=>c.toLowerCase());
+      previousLead=lead;
+     }
+     return sentences.join(' ').trim();
+    }).filter(Boolean);
+   }
+  }
+  a.paragraphs=(a.sections||[]).flatMap(sec=>[...(sec.paragraphs||[]),...(sec.blocks||[]).flatMap(b=>b.paragraphs||[])]);
+ }
+}
 export function applyInquirerEditorialClarity(edition,{week}={}){
  if(!edition||Number(week)<4)return edition;
  for(const team of edition.teams||[])rewriteArticle(team);
  rewriteRecap(edition.league_overview);
+ finalClarityQuality(edition);
  return edition;
 }

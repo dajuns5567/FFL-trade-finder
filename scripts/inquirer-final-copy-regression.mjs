@@ -419,9 +419,9 @@ try{
 const savedContext=process.env.CONTEXT;
 try{
  process.env.CONTEXT='deploy-preview';
- const blockedRequest=new Request('https://preview.example/.netlify/functions/update',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({players:[{id:'1'}]})});
+ const blockedRequest=new Request('https://preview.example/.netlify/functions/update',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({players:[]})});
  const {default:previewUpdate}=await import('../netlify/functions/update.mjs');
- assert.equal((await previewUpdate(blockedRequest)).status,403,'Actual preview consensus POST must be rejected before refreshing sources');
+ assert.equal((await previewUpdate(blockedRequest)).status,400,'Preview consensus must reject empty requests before source refresh');
  const {default:previewPublisher}=await import('../netlify/functions/inquirer-publish-on-load.mjs');
  assert.equal((await previewPublisher(new Request('https://preview.example/.netlify/functions/inquirer-publish-on-load'))).status,403,'Preview publication must not run');
  const {default:previewHistory}=await import('../netlify/functions/value-history.mjs');
@@ -435,7 +435,7 @@ try{
  assert.equal((await previewScheduled(new Request('https://preview.example/.netlify/functions/inquirer-publish-scheduled'))).status,403,'Preview scheduled edition publisher must not run');
  delete process.env.CONTEXT;
  assert.equal((await previewCapture(new Request('https://deploy-preview-390--fleeced.netlify.app/.netlify/functions/inquirer-projection-capture-scheduled'))).status,403,'Capture must deny Netlify preview even if CONTEXT is missing');
- assert.equal((await previewUpdate(new Request('https://deploy-preview-390--fleeced.netlify.app/.netlify/functions/update',{method:'POST',body:'{}'}))).status,403,'Consensus writer must deny preview hostname without context');
+ assert.equal((await previewUpdate(new Request('https://deploy-preview-390--fleeced.netlify.app/.netlify/functions/update',{method:'POST',body:'{}'}))).status,400,'Preview consensus must validate inputs without accessing persistent storage');
  assert.equal((await previewHistory(new Request('https://deploy-preview-390--fleeced.netlify.app/.netlify/functions/value-history',{method:'POST',body:'{}'}))).status,403,'Value History writer must deny preview hostname without context');
 }finally{
  if(savedContext===undefined)delete process.env.CONTEXT;

@@ -390,7 +390,7 @@ function dedupeEditorialStory(edition,previousEdition){
      const kept=[];
      for(const sentence of sentenceParts(paragraph)){
       const key=sentenceKey(sentence);
-      if(!key||prior.has(key)||staleStock.test(sentence))continue;
+      if(!key||prior.has(key)||staleStock.test(sentence)||/crowd is running simultaneous parade and panic channels|Which gives management one clean chance to change the lineup before the same complaint reaches the megaphone again/i.test(sentence))continue;
       const previousTeam=acrossTeams.get(key);
       if(previousTeam&&previousTeam!==teamKey)continue;
       acrossTeams.set(key,teamKey);

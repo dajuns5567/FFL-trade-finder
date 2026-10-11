@@ -7,5 +7,5 @@ export function isReadOnlyPreview(req){
  const hosts=[];
  try{hosts.push(new URL(req.url).hostname.toLowerCase())}catch{}
  try{if(process.env.DEPLOY_URL)hosts.push(new URL(process.env.DEPLOY_URL).hostname.toLowerCase())}catch{}
- return hosts.some(host=>/^[a-z0-9-]+--[a-z0-9-]+\\.netlify\\.app$/.test(host));
+ return hosts.some(host=>/^[a-z0-9-]+--[a-z0-9-]+\.netlify\.app$/.test(host));
 }

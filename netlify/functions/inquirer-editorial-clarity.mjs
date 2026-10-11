@@ -67,7 +67,7 @@ function rewriteArticle(team){
     ]
   };
   const quips=desk[reporter]||desk['walter-mercer'];
-  const prefix=forms[(rid-1)%forms.length],tail=quips[Math.floor((rid-1)/forms.length)%quips.length];
+  const prefix=forms[(rid-1)%forms.length].replace(/\\.$/,';'),tail=quips[Math.floor((rid-1)/forms.length)%quips.length].replace(/^./,c=>c.toLowerCase());
   section.paragraphs=[prefix+' '+tail];
  }
  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);

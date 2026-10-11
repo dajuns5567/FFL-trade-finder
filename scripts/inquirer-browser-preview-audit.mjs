@@ -60,6 +60,24 @@ try{
    assert.equal(res.status(),200,'Serverless endpoint '+path+' must respond 200; got '+res.status());
    return {body:await res.json(),headers:res.headers()};
  };
+ // Non-mutating endpoint-level checks on the dedicated public CI site.
+ // Never probe a production project's endpoints or send a write request.
+ const isolatedHosts=[
+  'https://fleeced-inquirer-browser-ci.netlify.app',
+  'https://player-signal-layer-r1--fleeced-inquirer-browser-ci.netlify.app'
+ ];
+ for(const host of isolatedHosts){
+  const exportProbe=await page.request.get(host+'/.netlify/functions/value-history?archive_export=1',{timeout:30000});
+  assert.equal(exportProbe.status(),403,'Public CI bulk history export must be denied on '+host);
+  const exportBody=await exportProbe.json().catch(()=>({}));
+  assert.match(String(exportBody.error||''),/preview history export disabled/,'Bulk export must use the CI-specific guard');
+  const publishProbe=await page.request.get(host+'/.netlify/functions/inquirer-publish-on-load',{timeout:30000});
+  assert.equal(publishProbe.status(),403,'Public CI on-load publishing must be disabled on '+host);
+  const week5Probe=await page.request.get(host+'/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week=5',{timeout:30000});
+  const week5Body=await week5Probe.json().catch(()=>({}));
+  assert(!week5Body?.available,'Week 5 must not be published on public browser CI '+host);
+  console.log('LIVE_CI_READONLY_GET_VERIFIED',JSON.stringify({host,exportStatus:exportProbe.status(),publishStatus:publishProbe.status(),week5Available:!!week5Body.available}));
+ }
  const fast=await api('/.netlify/functions/league-hub-week4-fast?rev=482');
  assert.match(String(fast.headers['cache-control']||''),/no-store/,'Week 4 browser cache should be bypassed');
  // Netlify may consume the CDN-specific response directive before exposing browser headers.

@@ -394,6 +394,11 @@ try{
  assert.equal((await previewUpdate(blockedRequest)).status,403,'Actual preview consensus POST must be rejected before refreshing sources');
  const {default:previewPublisher}=await import('../netlify/functions/inquirer-publish-on-load.mjs');
  assert.equal((await previewPublisher(new Request('https://preview.example/.netlify/functions/inquirer-publish-on-load'))).status,403,'Preview publication must not run');
+ const {default:previewHistory}=await import('../netlify/functions/value-history.mjs');
+ assert.equal((await previewHistory(new Request('https://preview.example/.netlify/functions/value-history',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}))).status,403,'Preview value-history POST must be forbidden');
+ const {default:previewLeagueHub}=await import('../netlify/functions/league-hub.mjs');
+ assert.equal((await previewLeagueHub(new Request('https://preview.example/.netlify/functions/league-hub?weekly=1'))).status,403,'Preview weekly publishing GET must be forbidden');
+ assert.equal((await previewLeagueHub(new Request('https://preview.example/.netlify/functions/league-hub?awards=1',{method:'POST',body:'{}'}))).status,403,'Preview persisted awards POST must be forbidden');
  const {default:previewCapture}=await import('../netlify/functions/inquirer-projection-capture-scheduled.mjs');
  assert.equal((await previewCapture(new Request('https://preview.example/.netlify/functions/inquirer-projection-capture-scheduled'))).status,403,'Preview scheduled projection capture must not run');
  const {default:previewScheduled}=await import('../netlify/functions/inquirer-publish-scheduled.mjs');

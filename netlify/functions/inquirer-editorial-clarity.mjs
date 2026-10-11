@@ -41,6 +41,9 @@ function rewriteArticle(team,teamByName){
    if(topScorer?.name&& /(?:set the pace|brought the fireworks|the headliner reached|was the loudest .* reason)/i.test(t)){
     const mentioned=[...(team.starter_details||[])].filter(p=>p?.name&&t.includes(p.name));
     if(mentioned.some(p=>p.name!==topScorer.name&&Number(p.points)<Number(topScorer.points)))return null;
+    const leadFirst=t.split(/\s+/)[0].replace(/[^A-Za-z'-]/g,'');
+    const firstMatch=(team.starter_details||[]).filter(p=>p?.name?.split(' ')[0]===leadFirst);
+    if(firstMatch.length===1&&firstMatch[0].name!==topScorer.name)return null;
    }
    return t;
   }).filter(Boolean);

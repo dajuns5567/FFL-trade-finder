@@ -155,7 +155,7 @@ function finalClarityQuality(edition){
       return line;
     }).join(' ').trim();
   }
-  let previousLead='';')+'\\\\b(?!\\\\s+'+full.slice(first.length).trim().replace(/[.*+?^${}()|[\\]\\]/g,'\\\\  let previousLead='';')+')','g');
+  let previousLead='';')+')','g');
         line=line.replace(regex,full);
       }
       return line;

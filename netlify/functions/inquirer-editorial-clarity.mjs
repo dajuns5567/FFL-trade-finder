@@ -177,7 +177,7 @@ function rewriteArticle(team,teamByName){
   const lead=openings[(rid+Number(a.week)*7)%openings.length];
   // A 32-way, team-specific lead makes the opponent comparison a story rather
   // than an interchangeable factual caption repeated four times per week.
-  const secondary=top[1],base=forms[(rid-1)%forms.length].replace(/\\.$/,'');
+  const secondary=top[1],base=forms[(rid-1)%forms.length].replace(/\.$/,'');
   const extra=secondary?.name&&valid(secondary.points)
     ?'; '+secondary.name+' supplied '+score(secondary.points)+' behind '+first+', which is the supporting production '+own+' must evaluate before kickoff.'
     :'; the lineup must actually produce again before the result can be compared.';

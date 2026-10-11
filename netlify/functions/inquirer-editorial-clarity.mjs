@@ -244,7 +244,10 @@ function rewriteArticle(team,teamByName,reporterOrdinal=0){
     'Rival managers have noticed '+evidence+', a detail more entertaining to them than any postgame interview.'
    ]
   };
-  const matchup=lead+comparison[(rid+Number(a.week))%comparison.length];
+  const selected=(rid+Number(a.week))%comparison.length;
+  const matchup=lead+comparison[selected]+(
+   selected===4?' The manager must check whether '+(weak?.name||secondStarter?.name||first)+' can improve on the previous score; loyalty alone will not fill that gap.':''
+  );
   const opinion=(deskNotes[reporter]||deskNotes['walter-mercer'])[reporterOrdinal%8];
   section.paragraphs=[matchup,opinion];
   }

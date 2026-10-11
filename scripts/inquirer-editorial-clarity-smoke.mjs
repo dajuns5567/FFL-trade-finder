@@ -67,4 +67,21 @@ recapCase.league_overview.sections[0].blocks[0].paragraphs=[
 applyInquirerEditorialClarity(recapCase,{week:4});
 assert(!recapCase.league_overview.sections[0].blocks[0].paragraphs.some(p=>p.includes('opposing lineup scores even better')),'recap cannot describe a winning team as outscored');
 assert(recapCase.teams[0].inquirer_article.sections.length===2,'canonical article sections remain available for rendering');
+const voices=['walter-mercer','tess-delaney','mack-hollis','nora-voss'];
+const voiceBodies=voices.map((id,i)=>{
+ const e=mk(4);
+ const t=e.teams[0];
+ t.roster_id=String(i+1);
+ t.next_opponent_name='New York Jets';
+ t.starter_details=[{name:'Tetairoa McMillan',points:45.2},{name:'Josh Downs',points:3.2}];
+ t.inquirer_article.reporter={id};
+ e.teams.push({team_name:'New York Jets',starter_details:[{name:'Cooper DeJean',points:27.5}]});
+ applyInquirerEditorialClarity(e,{week:4});
+ const o=t.inquirer_article.sections.find(x=>x.kind==='outlook');
+ assert(o&&o.paragraphs.length===2,'reporters retain factual matchup and commentary');
+ assert(o.paragraphs.join(' ').includes('Josh Downs'),'critique must reference the actual weak starter');
+ assert(o.paragraphs.join(' ').includes('New York Jets'),'opponent must be named');
+ return o.paragraphs[1];
+});
+assert.equal(new Set(voiceBodies).size,4,'each reporter needs a distinguishable outlook voice');
 console.log('Week 4+ editorial clarity contract passed');

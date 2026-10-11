@@ -245,9 +245,14 @@ function rewriteArticle(team,teamByName,reporterOrdinal=0){
    ]
   };
   const selected=(rid+Number(a.week))%comparison.length;
-  const matchup=lead+comparison[selected]+(
-   selected===4?' The manager must check whether '+(weak?.name||secondStarter?.name||first)+' can improve on the previous score; loyalty alone will not fill that gap.':''
-  );
+  const lastWeekStarter=(weak||secondStarter);
+  const practicalFollowup=lastWeekStarter
+    ?' the manager should review '+lastWeekStarter.name+' after '+score(lastWeekStarter.points)+' points instead of assuming the same starting card will work again.'
+    :' the manager should identify another verified scoring option rather than rely entirely on '+first+'.';
+  // A single contextual sentence prevents an interchangeable extra tagline.
+  const matchup=lead+(selected===4
+    ?comparison[selected].replace(/\.$/,';')+practicalFollowup
+    :comparison[selected]);
   const opinion=(deskNotes[reporter]||deskNotes['walter-mercer'])[reporterOrdinal%8];
   section.paragraphs=[matchup,opinion];
   }

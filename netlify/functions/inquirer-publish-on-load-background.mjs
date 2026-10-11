@@ -5,6 +5,7 @@ import {weeklyReport} from './league-hub.mjs';
 // without forcing the browser to hold open a long synchronous request.
 export default async function inquirerPublishOnLoadBackground(req){
   try{
+    if(['deploy-preview','branch-deploy'].includes(String(process.env.CONTEXT||'')))return;
     const result=await weeklyReport(req);
     console.log('inquirer-publish-on-load-background',JSON.stringify({
       available:!!result?.available,

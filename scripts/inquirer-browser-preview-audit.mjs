@@ -129,6 +129,9 @@ try{
    });
  },null,{timeout:65000});
  await page.waitForFunction(()=>/Week 4/.test(document.querySelector('#leagueHubContent .lh-report-title')?.textContent||''),null,{timeout:90000});
+ const defaultWeek=await page.locator('#leagueHubContent select[data-lh-archive-week]').first().inputValue();
+ assert.equal(defaultWeek,'4','Inquirer home archive selector must default to latest approved published week (Week 4), not stale Week 3');
+ console.log('LIVE_DEFAULT_INQUIRER_WEEK',JSON.stringify({defaultWeek}));
  const selectedTitle=await page.locator('#leagueHubContent .lh-report-title').first().textContent();
  assert(/Week 4/.test(selectedTitle)||!/Week\\s+\d+/.test(selectedTitle),'Older Week 3 edition must never be presented as latest Week 4');
  const spotlightNames=await page.locator('#leagueHubContent .lh-spotlight .lh-spot-card').allTextContents();

@@ -23,6 +23,30 @@ function rewriteArticle(team,teamByName){
   if(!Array.isArray(sec.paragraphs))continue;
   sec.paragraphs=sec.paragraphs.map(candidateParagraph).filter(Boolean);
  }
+ // Remove invented MVP framing: only the verified top starter may be called the leader.
+ const topScorer=(team.starter_details||[]).filter(p=>p?.name&&valid(p?.points)).sort((x,y)=>Number(y.points)-Number(x.points))[0];
+ const allNames=[...(team.starter_details||[]),...(a.facts?.opponent_roster?.players||[])].map(p=>p?.name).filter(Boolean);
+ const bySurname=new Map();
+ for(const full of allNames){const last=String(full).split(' ').at(-1);if(!bySurname.has(last))bySurname.set(last,new Set());bySurname.get(last).add(full);}
+ for(const sec of a.sections||[]){
+  if(!Array.isArray(sec.paragraphs))continue;
+  sec.paragraphs=sec.paragraphs.map(p=>{
+   let t=String(p);
+   for(const [last,names] of bySurname){if(names.size!==1||last.length<4)continue;
+    const full=[...names][0];
+    const safe=last.replace(/[-/\\^$*+?.()|[\]{}]/g,'\\ // Discard unverified Week 4+ transaction prose, which may include failed claims.');
+    const rx=new RegExp('(?<![A-Za-z])'+safe+'(?![A-Za-z])','g');
+    if(!t.includes(full))t=t.replace(rx,full);
+   }
+   if(topScorer?.name&& /(?:set the pace|brought the fireworks|the headliner reached|was the loudest .* reason)/i.test(t)){
+    const mentioned=[...(team.starter_details||[])].filter(p=>p?.name&&t.includes(p.name));
+    if(mentioned.some(p=>p.name!==topScorer.name&&Number(p.points)<Number(topScorer.points)))return null;
+   }
+   return t;
+  }).filter(Boolean);
+ }
+ // Empty sections are not story sections and must not display unsupported headings.
+ a.sections=(a.sections||[]).filter(sec=>!Array.isArray(sec.paragraphs)||sec.paragraphs.length>0);
  // Discard unverified Week 4+ transaction prose, which may include failed claims.
  // Use verified lineup decisions instead of inventing completed acquisitions.
  const management=(a.sections||[]).find(sec=>sec.kind==='management');
@@ -159,13 +183,20 @@ function rewriteArticle(team,teamByName){
  }
  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
 }
-function rewriteRecap(o){
+function rewriteRecap(o,teams=[]){
  if(!o)return;
  for(const sec of o.sections||[]){
   for(const block of sec.blocks||[]){
    if(headingMeta.test(block.heading||''))block.heading='The Week Ahead';
    if(!Array.isArray(block.paragraphs))continue;
-   block.paragraphs=block.paragraphs.map(candidateParagraph).filter(Boolean);
+   block.paragraphs=block.paragraphs.map(candidateParagraph).filter(Boolean).filter(p=>{
+    // A matchup won by the named high-scoring club cannot simultaneously be
+    // described as that club being outscored.
+    const m=p.match(/The (.+?)–(.+?) shootout was a reminder that scoring well is not sufficient when the opposing lineup scores even better\./);
+    if(!m)return true;
+    const a=teams.find(t=>t.team_name===m[1]&&t.opponent_name===m[2]);
+    return !a||Number(a.points)<Number(a.opponent_points);
+   });
   }
  }
 }
@@ -237,7 +268,7 @@ export function applyInquirerEditorialClarity(edition,{week}={}){
  if(!edition||Number(week)<4)return edition;
  const teamByName=new Map((edition.teams||[]).map(team=>[String(team.team_name||''),team]));
  for(const team of edition.teams||[])rewriteArticle(team,teamByName);
- rewriteRecap(edition.league_overview);
+ rewriteRecap(edition.league_overview,edition.teams||[]);
  finalClarityQuality(edition);
  return edition;
 }

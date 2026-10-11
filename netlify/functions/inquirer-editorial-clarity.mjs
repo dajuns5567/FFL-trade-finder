@@ -10,6 +10,7 @@ const grammatical=s=>norm(s).replace(/^(?:Ultimately|Practically|Curiously|Even 
 const aliases=s=>norm(s).replace(/\bTetairoa\b(?! McMillan)/g,'Tetairoa McMillan').replace(/\bJonathan\b(?! Taylor)/g,'Jonathan Taylor').replace(/\bChase\b(?![^.]*\bJa\x27Marr Chase\b)/g,'Chase');
 function candidateParagraph(p){
  const x=grammatical(p);
+ if(/^\s*(?:On the same lineup,|For this week,)\s*/i.test(x))return x.replace(/^\s*(?:On the same lineup,|For this week,)\s*/i,'').replace(/^./,c=>c.toUpperCase());
  if(meta.test(x)||vague.test(x))return null;
  // Do not leave orphaned single-sentence scoreboard captions in a narrative.
  if(/^Against .+, .+\b(?:added|scored) \d+(?:\.\d+)?\b[^.!?]*\.$/i.test(x))return null;
@@ -215,7 +216,8 @@ function finalClarityQuality(edition){
      for(let i=0;i<sentences.length;i++){
       const match=sentences[i].match(/^([A-Z][A-Za-z'-]+\s+[A-Z][A-Za-z'-]+)/);
       const lead=match?.[1]||'';
-      if(lead&&(lead===previousLead||seenLeads.has(lead)))sentences[i]='On the same lineup, '+sentences[i];
+      // Repeated proper names remain grammatical; never prefix an artificial sentence fragment.
+      // Duplicate thematic ideas are handled by paragraph selection, not by corrupting prose.
       if(lead)seenLeads.add(lead);
       previousLead=lead;
      }

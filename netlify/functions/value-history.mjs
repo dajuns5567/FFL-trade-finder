@@ -1071,7 +1071,7 @@ export { monthKey, marketFromSnapshots, baselineFor };
 export default async (req)=>{
   try{
     const url=new URL(req.url),s=safeStore();
-    if(s){
+    if(s&&!['deploy-preview','branch-deploy'].includes(String(process.env.CONTEXT||''))){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
       try{await scrubV380PartialWeekSnapshot(s)}catch(e){console.warn('v380-history-scrub',e)}

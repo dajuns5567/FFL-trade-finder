@@ -75,7 +75,7 @@ function rewriteArticle(team){
   ];
   const group=Math.floor((rid-1)/forms.length)%openings.length;
   const prefix=openings[group]+forms[(rid-1)%forms.length].replace(/\.$/,';');
-  const tail=quips[group].replace(/^./,c=>c.toLowerCase());
+  const tail=quips[group].replace(/\.\s+(?=[A-Z])/g,'; ').replace(/^./,c=>c.toLowerCase());
   section.paragraphs=[prefix+' but '+tail];
  }
  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);

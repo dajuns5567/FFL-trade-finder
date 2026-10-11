@@ -78,15 +78,15 @@ function rewriteArticle(team,teamByName,reporterOrdinal=0){
     const text=jokes[rosterIndex%jokes.length].replace(/\. (?=[A-Z])/g,'; ');
     add=captions[rosterIndex]+': '+text;
    }else{
-    const weak=team.worst_starter||a.facts?.worst_starter;
-    add=weak?.name&&valid(weak.points)
-      ?weak.name+' scored '+score(weak.points)+' in Week '+a.week+'. The manager can inspect that starting spot before the next kickoff; motivational speeches do not count in fantasy scoring.'
-      :teamName+' must judge the next lineup on confirmed performances, not speculative roster activity.';
+    // A failed or pending transaction claim is not a completed move.
+    // Without a verified eligible bench replacement, omit the transaction
+    // assertion instead of inventing a substitute management verdict.
+    add='';
    }
    // Avoid retelling the exact same bench mistake three times in one section.
    const benchNames=[reserve?.name,starter?.name].filter(Boolean);
    const distinct=benchNames.length===2?keep.filter(par=>!benchNames.every(n=>String(par).includes(n))):keep;
-   management.paragraphs=[...distinct,add];
+   management.paragraphs=add?[...distinct,add]:distinct;
   }
  }
  const next=String(team.next_opponent_name||a.facts?.next_opponent_roster?.team_name||'').trim();

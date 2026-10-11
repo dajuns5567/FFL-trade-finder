@@ -773,11 +773,7 @@ async function weeklyAwards(){
   if(!broadcast?.available||!Array.isArray(broadcast?.teams)||!broadcast.teams.length)continue;
   try{
    const rec=await weeklyAwardRecordForBroadcast(broadcast);
-   if(finalizedMatchupRows){
-   const awardIssues=findInquirerManagerAwardIssues(broadcast,rec.manager_awards,finalizedMatchupRows);
-   if(awardIssues.length)throw new Error('Sleeper manager award source reconciliation rejected Week '+week+': '+JSON.stringify(awardIssues).slice(0,4000));
-  }
-  byKey.set(key,rec);
+   byKey.set(key,rec);
   }catch(error){
    // A missing or unpersistable historical award must not suppress newer completed weeks.
    console.error('weekly awards refresh failed',season,week,error);

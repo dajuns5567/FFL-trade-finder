@@ -358,4 +358,19 @@ assert(findInquirerTradeCountIssues(identityEdition,identityLedger).some(x=>x.id
 identityEdition.teams[0].trade_history=[{id:'trade-A'},{id:'trade-B'}];
 assert.equal(findInquirerTradeCountIssues(identityEdition,identityLedger).length,0,'Restored distinct transactions validate');
 
+
+// Public deploy previews must not be able to persist value, ranking or edition mutations.
+const previewGuardFiles=[
+ ['netlify/functions/value-history.mjs','preview writes disabled'],
+ ['netlify/functions/update.mjs','preview writes disabled'],
+ ['netlify/functions/league-hub.mjs','preview mutations disabled'],
+ ['netlify/functions/inquirer-publish-on-load.mjs','preview publication disabled'],
+ ['netlify/functions/inquirer-publish-on-load-background.mjs',"['deploy-preview','branch-deploy']"]
+];
+for(const [file,guard] of previewGuardFiles){
+ const source=readFileSync(file,'utf8');
+ assert(source.includes(guard)&&source.includes('process.env.CONTEXT'),'Preview backend mutation blocked: '+file);
+}
+assert(readFileSync('netlify/functions/value-history.mjs','utf8').includes("if(s&&!['deploy-preview','branch-deploy'].includes"),'Preview value-history reads must not run maintenance cleanup writes');
+
 console.log('Final Week 11 copy, recap transitions and Week 4 cache protections pass');

@@ -150,9 +150,11 @@ function rewriteArticle(team,teamByName){
 ];
   const group=Math.floor((rid-1)/forms.length)%4;
   const lead=openings[(rid+Number(a.week)*7)%openings.length];
-  const prefix=lead+forms[(rid-1)%forms.length].replace(/\.$/,';');
-  const tail=quips[group].replace(/\.\s+(?=[A-Z])/g,'; ').replace(/^./,c=>c.toLowerCase());
-  section.paragraphs=[prefix+' but '+tail];
+  const matchup=forms[(rid-1)%forms.length];
+  const critique=quips[group].replace('lose Tuesday lineup meeting','lose a Tuesday lineup meeting');
+  // Keep completed evidence and the reporter's observation as distinct sentences.
+  // The prior colon/semicolon join generated fragments such as '; but counting ...'.
+  section.paragraphs=[matchup,lead+critique];
   }
  }
  a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);

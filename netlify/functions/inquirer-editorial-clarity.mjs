@@ -296,7 +296,7 @@ function finalClarityQuality(edition){
       return line;
     }).join(' ').trim();
   }
-  let previousLead=''; const seenLeads=new Set();
+  let previousLead=''; const leadCounts=new Map();
   for(const sec of a.sections||[]){
    for(const group of [sec,...(sec.blocks||[])]){
     if(!Array.isArray(group.paragraphs))continue;
@@ -311,16 +311,19 @@ function finalClarityQuality(edition){
        else seen.add(boilerplate);
       }
      }
-     const sentences=text.split(/(?<=[.!?])\s+/).filter(Boolean);
-     for(let i=0;i<sentences.length;i++){
-      const match=sentences[i].match(/^([A-Z][A-Za-z'-]+\s+[A-Z][A-Za-z'-]+)/);
+     const sentences=text.split(/(?<=[.!?])\s+/).filter(Boolean),kept=[];
+     for(const sentence of sentences){
+      const match=sentence.match(/^([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+)/);
       const lead=match?.[1]||'';
-      // Repeated proper names remain grammatical; never prefix an artificial sentence fragment.
-      // Duplicate thematic ideas are handled by paragraph selection, not by corrupting prose.
-      if(lead)seenLeads.add(lead);
+      const prior=lead?leadCounts.get(lead)||0:0;
+      // Keep up to three meaningful appearances. Suppress repeated leads
+      // instead of adding artificial prefix fragments to otherwise good prose.
+      if(lead&&(prior>=3||lead===previousLead))continue;
+      if(lead)leadCounts.set(lead,prior+1);
       previousLead=lead;
+      kept.push(sentence);
      }
-     return sentences.join(' ').trim();
+     return kept.join(' ').trim();
     }).filter(Boolean);
    }
   }

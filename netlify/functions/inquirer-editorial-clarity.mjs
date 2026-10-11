@@ -155,12 +155,6 @@ function finalClarityQuality(edition){
       return line;
     }).join(' ').trim();
   }
-  let previousLead='';')+')','g');
-        line=line.replace(regex,full);
-      }
-      return line;
-    }).join(' ').trim();
-  }
   let previousLead='';
   for(const sec of a.sections||[]){
    for(const group of [sec,...(sec.blocks||[])]){

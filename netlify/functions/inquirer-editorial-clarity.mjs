@@ -13,7 +13,8 @@ function candidateParagraph(p){
  if(/^\s*(?:On the same lineup,|For this week,)\s*/i.test(x))return x.replace(/^\s*(?:On the same lineup,|For this week,)\s*/i,'').replace(/^./,c=>c.toUpperCase());
  if(meta.test(x)||vague.test(x))return null;
  // Do not leave orphaned single-sentence scoreboard captions in a narrative.
- if(/^Against .+, .+\b(?:added|scored) \d+(?:\.\d+)?\b[^.!?]*\.$/i.test(x))return null;
+ if(/^Against .+, .+\b(?:added|scored)\s+\d+(?:\.\d+)?\s+for\s+.+\.$/i.test(x))return null;
+ if(/^Anyway, Week \d+ gave .+ more than Week \d+ did\.$/i.test(x))return null;
  if(/\b(?:the star back|the star receiver|the emerging back|the struggling star|the veteran receiver|the struggling veteran receiver)\b/i.test(x))return null;
  return x;
 }
@@ -301,6 +302,9 @@ function finalClarityQuality(edition){
     if(!Array.isArray(group.paragraphs))continue;
     group.paragraphs=group.paragraphs.map(p=>{
      let text=restoreNames(p);
+     // Generic joke signposts are not findings. Retain the score-specific
+     // decision after the label; omit the stock teaser.
+     text=text.replace(/^That missed swap deserves its own exhibit:\s*/i,'');
      for(const boilerplate of duplicateFiller){
       if(text.includes(boilerplate)){
        if(seen.has(boilerplate))text=text.replace(boilerplate,'').replace(/\s{2,}/g,' ').trim();

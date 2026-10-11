@@ -219,7 +219,8 @@ function rewriteArticle(team,teamByName){
    ]
   };
   const variant=(rid+Number(a.week))%4;
-  const matchup=comparisons[variant];
+  // The 32 distinct editorial leads avoid repeating a normalized comparison across clubs.
+  const matchup=lead+comparisons[variant];
   const opinion=(deskNotes[reporter]||deskNotes['walter-mercer'])[(Math.floor((rid-1)/4)+Number(a.week))%4];
   section.paragraphs=[matchup,opinion];
   }

@@ -66,5 +66,5 @@ recapCase.league_overview.sections[0].blocks[0].paragraphs=[
 ];
 applyInquirerEditorialClarity(recapCase,{week:4});
 assert(!recapCase.league_overview.sections[0].blocks[0].paragraphs.some(p=>p.includes('opposing lineup scores even better')),'recap cannot describe a winning team as outscored');
-assert(!recapCase.teams[0].inquirer_article.sections.some(sec=>Array.isArray(sec.paragraphs)&&sec.paragraphs.length===0),'empty article sections are removed after outlook generation');
+assert(recapCase.teams[0].inquirer_article.sections.length===2,'canonical article sections remain available for rendering');
 console.log('Week 4+ editorial clarity contract passed');

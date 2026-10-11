@@ -47,6 +47,7 @@ export async function refreshPublishedSurfaces(origin,edition,request=call,{atte
 // and refuses to publish an incomplete Sleeper week. After a new edition appears,
 // refresh every week-bound League Hub surface in the same run.
 export default async function inquirerPublishScheduled(req){
+  if(['deploy-preview','branch-deploy'].includes(String(process.env.CONTEXT||'')))return new Response(JSON.stringify({ok:false,error:'preview scheduling disabled'}),{status:403,headers:{'content-type':'application/json','cache-control':'no-store'}});
   let result=null,lastKey='';
   for(let i=0;i<3;i++){
     const next=await weeklyReport(req);

@@ -20,6 +20,29 @@ function rewriteArticle(team,teamByName){
   if(!Array.isArray(sec.paragraphs))continue;
   sec.paragraphs=sec.paragraphs.map(candidateParagraph).filter(Boolean);
  }
+ // Discard unverified Week 4+ transaction prose, which may include failed claims.
+ // Use verified lineup decisions instead of inventing completed acquisitions.
+ const management=(a.sections||[]).find(sec=>sec.kind==='management');
+ if(management&&Array.isArray(management.paragraphs)){
+  const transactionClaim=/\b(?:added|dropped|claimed|acquired|waiver|transaction|roster work|roster headline|roster log|transaction wire|roster move|fresh additions|incoming players|new names)\b/i;
+  const original=management.paragraphs;
+  const keep=original.filter(p=>!transactionClaim.test(String(p||'')));
+  if(keep.length<original.length){
+   const miss=team.best_lineup_miss||a.facts?.best_lineup_miss;
+   const reserve=miss?.reserve||miss?.bench,starter=miss?.starter;
+   const teamName=String(team.team_name||'The team');
+   let add;
+   if(reserve?.name&&starter?.name&&valid(miss?.gap)&&Number(miss.gap)>0){
+    add=reserve.name+' outscored '+starter.name+' by '+score(miss.gap)+' from the bench. '+teamName+' can call that lineup management; the rival group chat has a shorter word for it.';
+   }else{
+    const weak=team.worst_starter||a.facts?.worst_starter;
+    add=weak?.name&&valid(weak.points)
+      ?weak.name+' scored '+score(weak.points)+' in Week '+a.week+'. The manager can inspect that starting spot before the next kickoff; motivational speeches do not count in fantasy scoring.'
+      :teamName+' must judge the next lineup on confirmed performances, not speculative roster activity.';
+   }
+   management.paragraphs=[...keep,add];
+  }
+ }
  const next=String(team.next_opponent_name||a.facts?.next_opponent_roster?.team_name||'').trim();
  const own=String(team.team_name||'This team').trim(),op=a.facts?.next_opponent_roster;
  const nextTeam=teamByName.get(next);const nextPlayers=(nextTeam?.starter_details?.length?nextTeam.starter_details:op?.starters||[]).filter(p=>p?.name&&valid(p?.points)).sort((x,y)=>Number(y.points)-Number(x.points));

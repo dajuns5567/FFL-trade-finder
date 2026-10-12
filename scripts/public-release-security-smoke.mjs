@@ -50,6 +50,12 @@ try{
  assert.equal(lockedWeek5.status,200,'Unapproved Week 5 must return a safe read-only response');
  const lockedWeek5Body=await lockedWeek5.json();
  assert.equal(lockedWeek5Body.available,false,'Unapproved Inquirer Week 5 must not be exposed');
+ process.env.CONTEXT='deploy-preview';
+ const previewPublicRead=await leagueHub(new Request('https://fleeced-security-test.example/.netlify/functions/league-hub?preload_bootstrap=1'));
+ assert.equal(previewPublicRead.status,200,'Preview bootstrap GET must remain available while mutating routes are blocked');
+ const previewWrite=await leagueHub(post('league-hub'));
+ assert.equal(previewWrite.status,403,'Preview POST must remain forbidden');
+ process.env.CONTEXT='production';
  const probeNames=['consensus-composite','draftsharks-idp-cell','draftsharks-idp-loadrows-endpoint','draftsharks-idp-loadrows','draftsharks-idp-pagination','draftsharks-idp','draftsharks-offense-config','draftsharks-offense-loadrows','draftsharks-offense','fanranked','fantasypros-superflex-audit','idpshow','pfn','rotowire-idp','valuation-calibration'];
  for(const name of probeNames){
   const probe=readFileSync('netlify/functions/'+name+'-probe.mjs','utf8');

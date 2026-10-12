@@ -90,7 +90,9 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
   const high=sorted[0],low=sorted.at(-1);
   if(high&&low){
    const highTop=scorers(high)[0];
-   lead.paragraphs[2]=tn(high)+' led the league at '+f(high.points)+' behind '+nm(highTop)+' ('+f(highTop?.points||0)+'). '+tn(low)+' finished at '+f(low.points)+'. That is a '+f(Number(high.points)-Number(low.points))+'-point gulf between first and last on the weekly scoring sheet. If anyone wants to call that parity, they will need a more inventive definition.';
+   const context=high?.inquirer_article?.facts?.league_context||{};
+   const place=good(context.standings_rank)?'#'+context.standings_rank:'somewhere below first';
+   lead.paragraphs[2]=tn(high)+' topped the Week '+week+' scoring chart behind '+nm(highTop)+' ('+f(highTop?.points||0)+'), but its '+f(high.points)+' points buy exactly one win. At '+place+' in the standings with '+(context.record?context.record.wins+'-'+context.record.losses:'a record not independently confirmed')+', there is rather more to the season than a weekly fireworks display.';
   }
  }
  if(recap?.sections?.[0]?.blocks?.length){

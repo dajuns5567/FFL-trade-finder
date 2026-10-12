@@ -1162,6 +1162,11 @@ export default async (req)=>{
       const canonical=last?await archiveSnapshot(last):null;
       if(!canonical||cleanRows(canonical.rows).length<100)
         return json({error:'trusted history baseline unavailable'},503);
+      // Never relabel stale archived valuations as a current market observation.
+      // Scheduled archive refresh normally runs within this bounded interval.
+      const canonicalAge=Date.now()-Date.parse(String(canonical.t||''));
+      if(!Number.isFinite(canonicalAge)||canonicalAge<0||canonicalAge>4*60*60*1000)
+        return json({error:'trusted valuation baseline is stale; awaiting scheduled refresh'},503);
       const now=Date.now(),slot=Math.floor(now/60000);
       const t=new Date(slot*60000).toISOString();
       const key=`snapshots/observed-${slot}.json`;

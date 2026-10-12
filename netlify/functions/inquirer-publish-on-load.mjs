@@ -1,4 +1,5 @@
 import {isReadOnlyPreview} from './preview-read-only.mjs';
+import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
 import {weeklyReport} from './league-hub.mjs';
 
 const json=(body,status=200)=>new Response(JSON.stringify(body),{
@@ -12,6 +13,7 @@ const json=(body,status=200)=>new Response(JSON.stringify(body),{
 export default async function inquirerPublishOnLoad(req){
   try{
     if(isReadOnlyPreview(req))return json({ok:false,error:'preview publication disabled'},403);
+    if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();
     const result=await weeklyReport(req);
     return json({
       ok:true,

@@ -30,7 +30,7 @@ for(const team of edition.teams){
   assert(starters.slice().sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,kind==='management'?starters.length:3).some(p=>copy.includes(p.name)),'Article must reference its verified leading starters in '+kind+' for '+team.team_name);
  }
  const lead=article.sections.find(x=>x.kind==='lede').paragraphs.join(' ');
- assert(/highest three starters|three highest scorers|top three|three biggest starter scores/i.test(lead),'Need concrete top-three diagnosis');
+ assert(Number(team.points)===0? /zero|no positive|finished with zero/i.test(lead):/highest three starters|three highest scorers|top three|three biggest starter scores/i.test(lead),'Need concrete top-three diagnosis or truthful zero-point breakdown');
  meaningful.add(String(team.roster_id));
 }
 assert(meaningful.size>=25,'Insufficient fact-driven team articles');

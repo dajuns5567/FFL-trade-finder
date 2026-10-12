@@ -39,3 +39,13 @@
   to = "/.netlify/functions/picks"
   status = 200
   force = true
+
+# Safe baseline response hardening. Strict CSP requires a separate compatibility
+# audit because the app currently uses legitimate inline scripts.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

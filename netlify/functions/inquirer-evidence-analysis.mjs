@@ -57,28 +57,28 @@ function teamAnalysis(t,by,week){
   rivalStar?player(rivalStar)+' led '+rival+' with '+fmt(rivalStar.points)+'. '+rival+' drew '+fmt(rivalThree)+' from its three highest-scoring starters, '+fmt(Math.abs(topThree-rivalThree))+' '+(topThree>=rivalThree?'fewer than ':'more than ')+name(t)+' got from the same three-slot comparison.':null
  ]);
  const players=list([
-  who+' finished at '+fmt(top.points)+'; '+support+' delivered '+fmt(two.points)+'; '+third+' posted '+fmt(three.points)+'. For '+name(t)+', their combined '+fmt(topThree)+' points +(share>=.65?'left a heavy burden on the remaining starting spots.':'made this a multi-starter effort rather than a one-player rescue.'),
-  low+' was the lowest individually scored starter at '+fmt(last.points)+' in '+word(last.position||'the lineup')+'. For '+name(t)+', '+countUnder+' of '+own.length+' verified starters scored fewer than five points; '+(win?'the win survived those shortfalls, which still warrant attention.':'those shortfalls explain some of the deficit without erasing the contributions above them.')
+  who+' finished at '+fmt(top.points)+'; '+support+' delivered '+fmt(two.points)+'; '+third+' posted '+fmt(three.points)+'. Within '+name(t)+'’s lineup, those three added '+fmt(topThree)+' points '+(share>=.65?'left a heavy burden on the remaining starting spots.':'made this a multi-starter effort rather than a one-player rescue.'),
+  low+' was the lowest individually scored starter at '+fmt(last.points)+' in '+word(last.position||'the lineup')+'. Across '+name(t)+'’s starters, '+countUnder+' of '+own.length+' verified starters scored fewer than five points; '+(win?'the win survived those shortfalls, which still warrant attention.':'those shortfalls explain some of the deficit without erasing the contributions above them.')
  ]);
  const miss=t.best_lineup_miss||a.facts?.best_lineup_miss,reserve=miss?.reserve||miss?.bench,started=miss?.starter;
  const legal=reserve?.name&&started?.name&&has(miss?.gap)&&num(miss.gap)>0;
  const decision=legal
-  ?player(reserve)+' outscored the selected '+player(started)+' by '+fmt(miss.gap)+' in a documented eligible alternative. '+(win?'For '+name(t)+', that was an opportunity to extend an existing lead.':gap<num(miss.gap)?'For '+name(t)+', the '+fmt(miss.gap)+'-point improvement exceeded the '+fmt(gap)+'-point deficit and could have reversed the result if all other scores held.':'For '+name(t)+', the available '+fmt(miss.gap)+' points were insufficient by themselves to overcome a '+fmt(gap)+'-point defeat.')
+  ?player(reserve)+' outscored the selected '+player(started)+' by '+fmt(miss.gap)+' in a documented eligible alternative. '+(win?'On '+name(t)+'’s bench, that was an opportunity to extend an existing lead.':gap<num(miss.gap)?'On '+name(t)+'’s bench, the '+fmt(miss.gap)+'-point improvement exceeded the '+fmt(gap)+'-point deficit and could have reversed the result if all other scores held.':'On '+name(t)+'’s bench, the available '+fmt(miss.gap)+' points were insufficient by themselves to overcome a '+fmt(gap)+'-point defeat.')
   :'Against '+rival+', the '+fmt(gap)+'-point '+(win?'victory':'defeat')+' does not establish a bench mistake by itself. '+who+' produced '+fmt(top.points)+', but the edition does not document an eligible replacement that can responsibly be blamed or credited.';
  const angle=reporter==='mack-hollis'
-  ?low+' finished on '+fmt(last.points)+'. THAT is the starting spot the manager needs to review before promising a different Week '+(week+1)+' outcome.'
+  ?low+' finished on '+fmt(last.points)+'. For '+name(t)+', THAT is the starting spot to review before promising a different Week '+(week+1)+' outcome.'
   :reporter==='tess-delaney'
-   ?support+' brought '+fmt(two.points)+' as the supporting act, while '+low+' managed '+fmt(last.points)+'. A stylish headline scorer cannot conceal that imbalance.'
+   ?support+' brought '+fmt(two.points)+' as the supporting act, while '+low+' managed '+fmt(last.points)+'. For '+name(t)+', the headline scorer cannot conceal that imbalance.'
    :reporter==='nora-voss'
-    ?rival+' saw '+low+' finish with '+fmt(last.points)+'. Another opponent can study that weak position without needing to guess what happened elsewhere.'
-    :low+' recorded '+fmt(last.points)+'; '+who+' delivered '+fmt(top.points)+'. A manager looking for a repeatable fix should begin with that '+fmt(Math.abs(num(top.points)-num(last.points)))+'-point difference between its strongest and quietest starters.';
+    ?rival+' saw '+low+' finish with '+fmt(last.points)+'. For '+name(t)+', that quiet position is the obvious item for next week’s opponents to examine.'
+    :low+' recorded '+fmt(last.points)+'; '+who+' delivered '+fmt(top.points)+'. For '+name(t)+', a repeatable fix begins with the '+fmt(Math.abs(num(top.points)-num(last.points)))+'-point difference between its strongest and quietest starters.';
  const management=[
   decision,
   'Beyond '+who+' and '+support+', the rest of '+name(t)+' earned '+fmt(total-num(top.points)-num(two.points))+' points. '+angle
  ];
  const outlook=list([
   name(t)+' next prepares for '+next+' after a '+fmt(total)+'-point Week '+week+'. After '+who+' put up '+fmt(top.points)+', the issue is whether '+support+' and '+third+' can remain useful when the next opposing lineup arrives.',
-  low+' carries a '+fmt(last.points)+'-point result into the next selection decision. '+(legal?'With '+player(reserve)+' available, this manager can compare actual eligible alternatives instead of inventing a transaction.':'For '+name(t)+', the '+fmt(gap)+'-point margin does not reveal a legal replacement; the next starting decision still needs an actual role comparison.')
+  low+' carries a '+fmt(last.points)+'-point result into the next selection decision. '+(legal?'With '+player(reserve)+' available, this manager can compare actual eligible alternatives instead of inventing a transaction.':'Inside '+name(t)+'’s roster, the '+fmt(gap)+'-point margin does not reveal a legal replacement; the next starting decision still needs an actual role comparison.')
  ]);
  a.headline=share>=.65
   ?name(t)+': Three Starters Supplied '+fmt(topThree)+' of '+fmt(total)+' Points Against '+rival

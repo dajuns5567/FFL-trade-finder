@@ -440,7 +440,7 @@ assert(ui.includes('function snapshotPreconditions()')&&ui.includes('Object.keys
 assert(!ui.includes("Object.keys(state.players).length<100||!hasValidatedKtcSnapshot()"),'Value History player snapshots must not be blocked by the KTC-specific validation gate');
 assert(ui.includes("const rows=currentRows();"),'Value History must copy the site already-calculated player values into each snapshot');
 assert(!ui.includes("keepalive:true"),'Value History POST must not use browser keepalive because the expanded snapshot payload can exceed keepalive body limits');
-assert(ui.includes("{league:'1316867686394769408',rows,picks,teams,source}")&&ui.includes("source!=='scheduled'"),'Scheduled local collector must retain the complete canonical snapshot payload even though browser page observations are values-free');
+assert(ui.includes("{league:'1316867686394769408',rows,picks,teams,source}")&&ui.includes("scheduled=source==='scheduled'")&&ui.includes("{event_id:eventId,source}"),'Scheduled local collector must retain the complete canonical snapshot payload even though browser page observations are values-free');
 assert(ui.includes("else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId);"),'successful Value History writes must refresh the currently viewed player chart immediately');
 assert(ui.includes("try{picks=currentPickRows()}catch"),'draft-pick snapshot enrichment must never block the core player snapshot');
 assert(ui.includes("try{teams=currentTeamRows(rows)}catch"),'team snapshot enrichment must never block the core player snapshot');

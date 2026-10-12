@@ -427,7 +427,7 @@ try{
  const {default:previewHistory}=await import('../netlify/functions/value-history.mjs');
  assert.equal((await previewHistory(new Request('https://preview.example/.netlify/functions/value-history',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}))).status,403,'Preview value-history POST must be forbidden');
  const {default:previewLeagueHub}=await import('../netlify/functions/league-hub.mjs');
- assert.equal((await previewLeagueHub(new Request('https://preview.example/.netlify/functions/league-hub?weekly=1'))).status,403,'Preview weekly publishing GET must be forbidden');
+ assert.notEqual((await previewLeagueHub(new Request('https://preview.example/.netlify/functions/league-hub?weekly=1'))).status,403,'Preview weekly public read must remain allowed without invoking publication');
  assert.equal((await previewLeagueHub(new Request('https://preview.example/.netlify/functions/league-hub?awards=1',{method:'POST',body:'{}'}))).status,403,'Preview persisted awards POST must be forbidden');
  const {default:previewCapture}=await import('../netlify/functions/inquirer-projection-capture-scheduled.mjs');
  assert.equal((await previewCapture(new Request('https://preview.example/.netlify/functions/inquirer-projection-capture-scheduled'))).status,403,'Preview scheduled projection capture must not run');

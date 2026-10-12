@@ -45,6 +45,18 @@ try{
  const updateSource=readFileSync('netlify/functions/update.mjs','utf8');
  assert(updateSource.includes('const calculationOnly=previewReadOnly||!isAuthorizedWrite(req);'),'Public consensus must be calculation-only');
  assert(updateSource.indexOf('if(calculationOnly)return json(')>0&&updateSource.indexOf('if(calculationOnly)return json(')<updateSource.indexOf('const previous=await readLastGood();'),'Public consensus return must precede persisted storage read/promotion');
+ process.env.INQUIRER_APPROVED_THROUGH_WEEK='4';
+ const lockedWeek5=await leagueHub(new Request('https://fleeced-security-test.example/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week=5'));
+ assert.equal(lockedWeek5.status,200,'Unapproved Week 5 must return a safe read-only response');
+ const lockedWeek5Body=await lockedWeek5.json();
+ assert.equal(lockedWeek5Body.available,false,'Unapproved Inquirer Week 5 must not be exposed');
+ const probeNames=['consensus-composite','draftsharks-idp-cell','draftsharks-idp-loadrows-endpoint','draftsharks-idp-loadrows','draftsharks-idp-pagination','draftsharks-idp','draftsharks-offense-config','draftsharks-offense-loadrows','draftsharks-offense','fanranked','fantasypros-superflex-audit','idpshow','pfn','rotowire-idp','valuation-calibration'];
+ for(const name of probeNames){
+  const probe=readFileSync('netlify/functions/'+name+'-probe.mjs','utf8');
+  assert(probe.includes('if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();'),'Diagnostic endpoint must reject anonymous visitors: '+name);
+ }
+ const captureUi=readFileSync('value-history-v276.js','utf8');
+ assert(captureUi.includes('historyWritesDenied=true;')&&captureUi.includes('if(historyWritesDenied)return;'),'Public write denials must not cause repeated client mutation requests');
  const rawExport=await valueHistory(new Request('https://fleeced-security-test.example/.netlify/functions/value-history?archive_export=1'));
  assert.equal(rawExport.status,403,'Anonymous GET bulk export must fail closed');
 }finally{

@@ -23,6 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install Netlify function dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
       - name: Check server write authorization
         run: node scripts/public-release-security-smoke.mjs
       - name: Syntax check protected functions

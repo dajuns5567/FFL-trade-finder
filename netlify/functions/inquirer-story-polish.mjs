@@ -51,7 +51,7 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
     const others=own-trio;
     lede.paragraphs[1]=(trio>=own*.7
       ?tn(t)+' depended on its leading trio for '+f(trio)+' of '+f(own)+' points. Everyone outside that group supplied '+f(others)+'. One rather hopes the remaining starters were not charging appearance fees.'
-      :nm(star)+' did the loud work with '+f(star.points)+', but the other starters supplied '+f(own-Number(star.points))+'. That is why this '+f(gap)+'-point '+(own>=other?'win':'loss')+' belongs to a lineup, not a highlight clip.');
+      :nm(star)+' did the loud work with '+f(star.points)+', while the top three combined for '+f(trio)+'. The other starting roles supplied '+f(others)+'. That '+f(gap)+'-point '+(own>=other?'win':'loss')+' belongs to a lineup, not a highlight clip.');
    }
    if(features?.paragraphs?.length>=2){
     const count=short.length,low=Number(weak.points);

@@ -1,10 +1,11 @@
+import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
 import { refreshAllSources } from './consensus-source-overrides.mjs';
 import { buildConsensusComposite } from './consensus-composite-v3.mjs';
 
 const NAMES=['Josh Allen','Justin Jefferson','Ja\'Marr Chase','Bijan Robinson','Jack Campbell','Kyle Hamilton','Travis Hunter','Maxx Crosby','Aidan Hutchinson','Myles Garrett'];
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,'').replace(/[^a-z0-9]+/gi,' ').trim().toLowerCase();
 
-export default async()=>{
+export default async(req)=>{if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();
   try{
     const started=Date.now();
     const refresh=await refreshAllSources();

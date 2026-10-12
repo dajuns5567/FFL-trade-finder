@@ -227,6 +227,29 @@ try{
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
 
+  // Rehydrate an authenticated refresh manifest from canonical modeled rows.
+  // The server independently fetches and validates provider rankings; these
+  // player names/IDs are only matching hints and never client-supplied values.
+  try{
+    const ids=captured.rows.slice().sort((a,b)=>Number(b.value)-Number(a.value))
+      .slice(0,4000).map(r=>String(r.id));
+    const players=await page.evaluate(ids=>{
+      const registry=window.state?.players||{};
+      return ids.map(id=>{
+        const p=registry[id]||{};
+        const name=String(p.full_name||[p.first_name,p.last_name].filter(Boolean).join(' ')).trim();
+        const positions=Array.isArray(p.positions)?p.positions:[p.position];
+        return{id,name,position:String(p.position||''),positions:positions.filter(Boolean)};
+      }).filter(p=>p.name&&p.position);
+    },ids);
+    if(players.length>=700){
+      const target=process.env.CONSENSUS_TRUSTED_PLAYERS_FILE||'.tmp/consensus-trusted-players.json';
+      writeFileSync(target,JSON.stringify({version:1,league,source:'trusted-headless-consensus',
+        captured_at:t,canonical_fingerprint:fp,players})+'\n');
+      console.log('TRUSTED_CONSENSUS_MANIFEST_READY',JSON.stringify({players:players.length}));
+    }else console.warn('TRUSTED_CONSENSUS_MANIFEST_UNAVAILABLE',JSON.stringify({players:players.length}));
+  }catch(error){console.warn('TRUSTED_CONSENSUS_MANIFEST_UNAVAILABLE',String(error?.message||error).slice(0,250))}
+
   // The League Hub currently computes 20 live awards in the valuation browser.
   // The local collector is trusted because it runs from the checked-out main
   // commit after the same parity/readiness gates as historical valuations.

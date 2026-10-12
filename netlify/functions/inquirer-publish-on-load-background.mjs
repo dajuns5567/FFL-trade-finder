@@ -1,4 +1,5 @@
 import {isReadOnlyPreview} from './preview-read-only.mjs';
+import {isAuthorizedWrite} from './privileged-write.mjs';
 import {weeklyReport} from './league-hub.mjs';
 
 // Deploy Previews do not run Netlify scheduled functions. This background
@@ -6,7 +7,7 @@ import {weeklyReport} from './league-hub.mjs';
 // without forcing the browser to hold open a long synchronous request.
 export default async function inquirerPublishOnLoadBackground(req){
   try{
-    if(isReadOnlyPreview(req))return;
+    if(isReadOnlyPreview(req)||!isAuthorizedWrite(req))return;
     const result=await weeklyReport(req);
     console.log('inquirer-publish-on-load-background',JSON.stringify({
       available:!!result?.available,

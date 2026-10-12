@@ -44,19 +44,28 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
   return {ok:true,sources:integrityReady?sources:{},composite,withheld:!integrityReady,integrity:{all_sources_valid:integrityReady,failed_sources:failedSources,reason:integrityReady?null:`Consensus replacement withheld because ${failedSources.length?failedSources.join(', '):'one or more required sources'} did not validate; prior validated source set remains in use`},summary:{total:results.length,successful,failed:results.length-successful,results:diagnostics},updatedAt};
 }
 
+let sharedRefresh=null,sharedRefreshAt=0;
+async function refreshSourcesShared(){
+ if(sharedRefresh&&Date.now()-sharedRefreshAt<30000)return sharedRefresh;
+ sharedRefreshAt=Date.now();
+ sharedRefresh=refreshAllSources().catch(error=>{sharedRefresh=null;throw error});
+ return sharedRefresh;
+}
 export default async (req)=>{
   if(req.method==="OPTIONS")return json({ok:true});
   if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
   const previewReadOnly=isReadOnlyPreview(req);
-  if(!previewReadOnly&&!isAuthorizedWrite(req))return denyUnauthorizedWrite();
+  // Public users may calculate live values but may not replace persisted sources.
+  const calculationOnly=previewReadOnly||!isAuthorizedWrite(req);
   let body={};try{body=await req.json()}catch{return json({ok:false,error:"Invalid JSON"},400)}
   const players=Array.isArray(body.players)?body.players:[];
   if(!players.length)return json({ok:false,error:"No player list supplied"},400);
-  const refresh=await refreshAllSources();
+  if(players.length>4000)return json({ok:false,error:"Player list exceeds public calculation limit"},413);
+  const refresh=await refreshSourcesShared();
   const candidate=buildConsensusPayload(refresh,players);
   // Preview refresh is calculation-only: no Netlify Blobs reads or writes.
   // Allow the app to validate all seven live sources on deploy previews.
-  if(previewReadOnly)return json({...candidate,promotion:{promoted:false,using_last_known_good:false,preview_read_only:true},sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:x.ok?"fresh":"unavailable",snapshot_timestamp:x.ok?x.timestamp:null,attempt_timestamp:x.timestamp,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,error:x.error||null}))});
+  if(calculationOnly)return json({...candidate,promotion:{promoted:false,using_last_known_good:false,preview_read_only:previewReadOnly,public_read_only:!previewReadOnly},sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:x.ok?"fresh":"unavailable",snapshot_timestamp:x.ok?x.timestamp:null,attempt_timestamp:x.timestamp,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,error:x.error||null}))});
   const previous=await readLastGood();
 
   if(!candidate.withheld){

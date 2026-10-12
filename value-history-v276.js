@@ -553,6 +553,12 @@ async function recordSnapshot(source=pendingSnapshotSource){
       }
       return true
     }
+    if(r.status===503||r.status===429){
+      window.__vhLastSnapshot={ok:false,source,read_only:false,reason:'trusted valuation archive temporarily unavailable'};
+      // Respect transient archive outages and capacity limits; never spin at 3s.
+      scheduleSnapshot(300000,source);
+      return false;
+    }
     // A public visitor must not hammer a protected write endpoint every 3s.
     // Scheduled authenticated server snapshots remain independent of this UI.
     if(r.status===401||r.status===403){

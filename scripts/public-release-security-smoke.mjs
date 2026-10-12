@@ -87,6 +87,33 @@ try{
 }
 console.log('Public release HTTP handler refusal smoke passed');
 
+// Native scheduled endpoints must not accept spoofed public requests. GitHub Actions
+// authenticates these endpoints with the server-only shared token on release.
+const {default: scheduledPublisher}=await import('../netlify/functions/inquirer-publish-scheduled.mjs');
+const {default: scheduledCapture}=await import('../netlify/functions/inquirer-projection-capture-scheduled.mjs');
+const oldScheduledSecret=process.env.FLEECED_SERVER_WRITE_TOKEN;
+const oldScheduledContext=process.env.CONTEXT;
+try{
+ delete process.env.FLEECED_SERVER_WRITE_TOKEN;
+ process.env.CONTEXT='production';
+ for(const [name,handler] of [['publish',scheduledPublisher],['capture',scheduledCapture]]){
+  for(const method of ['GET','POST']){
+   const req=new Request('https://fleeced-security-test.example/.netlify/functions/inquirer-'+name+'-scheduled',{method,headers:{'x-nf-scheduled':'true','user-agent':'Netlify-Scheduler/1.0'}});
+   const response=await handler(req);
+   assert.equal(response.status,403,'Forged scheduled invoke must not write: '+name+' '+method);
+  }
+ }
+ const netlify=readFileSync('netlify.toml','utf8');
+ assert(!netlify.includes('[functions."inquirer-publish-scheduled"]')&&!netlify.includes('[functions."inquirer-projection-capture-scheduled"]'),'Unauthenticated native schedules must remain disabled');
+ const action=readFileSync('.github/workflows/inquirer-trusted-scheduled.yml','utf8');
+ assert(action.includes('secrets.FLEECED_SERVER_WRITE_TOKEN')&&action.includes('Authorization: Bearer'),'GitHub scheduled maintenance must send server-side authorization');
+}finally{
+ if(oldScheduledSecret===undefined)delete process.env.FLEECED_SERVER_WRITE_TOKEN;else process.env.FLEECED_SERVER_WRITE_TOKEN=oldScheduledSecret;
+ if(oldScheduledContext===undefined)delete process.env.CONTEXT;else process.env.CONTEXT=oldScheduledContext;
+}
+console.log('Scheduled endpoint unauthorized-invocation regression passed');
+
+
 const {call:scheduledInternalCall}=await import('../netlify/functions/inquirer-publish-scheduled.mjs');
 const priorToken=process.env.FLEECED_SERVER_WRITE_TOKEN;
 const priorFetch=globalThis.fetch;

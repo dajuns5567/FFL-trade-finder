@@ -42,8 +42,8 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
   if(own>0){
    const hot=section(a,'hot-seat'),cool=section(a,'cool-throne');
    const won=own>=other;
-   if(hot)hot.paragraphs=[nm(weak)+' finished on '+f(weak.points)+' at '+String(weak.position||'a starting position')+'. '+(won?'The win got away with it; the next opponent might not.':'The loss made that quiet role rather more visible than management would prefer.')];
-   if(cool)cool.paragraphs=[nm(star)+' recorded '+f(star.points)+' and led the verified starters. '+(won?'A useful performance, although even the best score needs help to produce a win.':'A good box score in a loss is still good work. It is not a win, however convenient that would be.')];
+   if(hot)hot.paragraphs=[nm(weak)+' finished on '+f(weak.points)+' at '+String(weak.position||'a starting position')+'. '+(won?'The team still won by '+f(own-other)+', which is an escape rather than a defense of that individual score.':'The loss came by '+f(other-own)+'. The lack of production at that starting spot deserves an actual roster conversation.')];
+   if(cool)cool.paragraphs=[nm(star)+' scored '+f(star.points)+' and led '+tn(t)+'. '+(won?'The '+f(own-other)+'-point win gave that production a result to show for it.':'The '+f(other-own)+'-point defeat gives that effort a particularly ungrateful final line.')];
   }
   if(own>0){
    if(lede?.paragraphs?.length>=3){

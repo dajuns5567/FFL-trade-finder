@@ -20,10 +20,10 @@ try{
   assert(source.includes("preview history export disabled"),'preview rejection must be explicit');
   const update=readFileSync(new URL('../netlify/functions/update.mjs',import.meta.url),'utf8');
   assert(update.includes('const previewReadOnly=isReadOnlyPreview(req);'),'preview consensus must be identified, not blanket POST-blocked');
-  const previewIndex=update.indexOf('if(previewReadOnly)return json(');
+  const previewIndex=update.indexOf('if(calculationOnly)return json(');
   const storedReadIndex=update.indexOf('const previous=await readLastGood();');
-  assert(previewIndex>0&&storedReadIndex>previewIndex,'preview must return live consensus results before any store read');
-  assert(update.includes('preview_read_only:true'),'preview must mark non-persistent consensus refresh');
+  assert(update.includes('const calculationOnly=previewReadOnly||!isAuthorizedWrite(req);')&&previewIndex>0&&storedReadIndex>previewIndex,'preview and public calculations must return before any store read');
+  assert(update.includes('preview_read_only:previewReadOnly')&&update.includes('public_read_only:!previewReadOnly'),'preview and public calculations must explicitly remain non-persistent');
   assert(update.indexOf('await writeLastGood(promoted);')>storedReadIndex,'preview cannot write the consensus LKG store');
   console.log('Public preview history export guard passed');
 }finally{

@@ -12,7 +12,7 @@ if(data?.version!==1||data.league!=='1316867686394769408'||data.source!=='truste
    !/^[a-z0-9]+$/i.test(String(data.canonical_fingerprint||''))||
    !Array.isArray(data.award_highs?.records)||data.award_highs.records.length<200||
    !Array.isArray(data.awards?.awards)||data.awards.awards.length<18||
-   !/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([1-9]|[12][0-9]|3[01]) 20[0-9]{2}$/.test(String(data.awards.period||''))){
+   !/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([1-9]|[12][0-9]|3[01]),? 20[0-9]{2}$/.test(String(data.awards.period||''))){
   throw new Error('Trusted award snapshot failed canonical completeness validation');
 }
 const age=Date.now()-Date.parse(String(data.captured_at||''));

@@ -1,3 +1,4 @@
+import {publiclyApprovedEdition} from './inquirer-public-approval.mjs';
 const LEAGUE='1316867686394769408',API='https://api.sleeper.app/v1';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, max-age=30, stale-while-revalidate=120','netlify-cdn-cache-control':'public, max-age=45, stale-while-revalidate=180','x-fleeced-weekly-live':'3'}});
 const fetchJson=async url=>{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-League-Hub/weekly-players'},cache:'no-store'});if(!r.ok)throw new Error('fetch '+r.status+' '+url);return r.json()};
@@ -8,6 +9,7 @@ export default async req=>{
  try{
   const u=new URL(req.url),season=Number(u.searchParams.get('season')),week=Number(u.searchParams.get('week'));
   if(!Number.isInteger(season)||season<2024||!Number.isInteger(week)||week<1||week>18)return json({error:'valid season/week required'},400);
+  if(!publiclyApprovedEdition(season,week))return json({available:false,season,week,reason:'Inquirer edition awaits publication approval'});
   const [league,players,stats]=await Promise.all([
    fetchJson(`${API}/league/${LEAGUE}`),
    fetchJson(`${API}/players/nfl`),

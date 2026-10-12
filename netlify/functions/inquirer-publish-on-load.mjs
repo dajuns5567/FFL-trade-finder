@@ -1,5 +1,5 @@
 import {isReadOnlyPreview} from './preview-read-only.mjs';
-import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
+import {isAuthorizedWrite,denyUnauthorizedWrite,rememberDeploymentContext} from './privileged-write.mjs';
 import {weeklyReport} from './league-hub.mjs';
 
 const json=(body,status=200)=>new Response(JSON.stringify(body),{
@@ -10,7 +10,8 @@ const json=(body,status=200)=>new Response(JSON.stringify(body),{
 // Preview/browser publication bridge.
 // Uses the exact same weeklyReport path as the production scheduled publisher,
 // which publishes at most the next missing completed week and keeps future weeks locked.
-export default async function inquirerPublishOnLoad(req){
+export default async function inquirerPublishOnLoad(req,platformContext){
+ rememberDeploymentContext(req,platformContext);
   try{
     if(isReadOnlyPreview(req))return json({ok:false,error:'preview publication disabled'},403);
     if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();

@@ -374,7 +374,7 @@ const consensusPreviewSource=readFileSync('netlify/functions/update.mjs','utf8')
 assert(consensusPreviewSource.includes('const previewReadOnly=isReadOnlyPreview(req);'),'Preview consensus refresh must identify read-only context');
 assert(consensusPreviewSource.includes('const calculationOnly=previewReadOnly||!isAuthorizedWrite(req);')&&consensusPreviewSource.indexOf('if(calculationOnly){')>0&&consensusPreviewSource.indexOf('if(calculationOnly){')<consensusPreviewSource.indexOf('const previous=await readLastGood();'),'Preview and public consensus calculations must avoid authenticated promotion while allowing read-only LKG fallback');
 assert(consensusPreviewSource.indexOf('await writeLastGood(promoted)')>consensusPreviewSource.indexOf('const previous=await readLastGood();'),'Consensus promotion must remain production-only');
-assert(readFileSync('netlify/functions/value-history.mjs','utf8').includes('if(s&&!isReadOnlyPreview(req)&&isAuthorizedWrite(req))'),'Preview value-history reads must not run maintenance cleanup writes');
+assert(readFileSync('netlify/functions/value-history.mjs','utf8').includes("if(s&&!isReadOnlyPreview(req)&&isAuthorizedWrite(req)&&url.searchParams.get('maintenance')==='1')"),'Preview value-history reads must not run maintenance cleanup writes');
 
 
 // Preview publication and read-side persistence guardrails.

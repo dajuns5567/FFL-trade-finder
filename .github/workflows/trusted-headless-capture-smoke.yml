@@ -26,7 +26,7 @@ jobs:
       - name: Install local headless dependencies
         run: |
           npm install --ignore-scripts --no-audit --no-fund
-          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.64.0
           npx playwright install --with-deps chromium
       - name: Verify canonical values and trusted League Hub capture on local browser
         env:

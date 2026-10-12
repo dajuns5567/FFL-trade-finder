@@ -1,5 +1,5 @@
 import {isReadOnlyPreview} from './preview-read-only.mjs';
-import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
+import {isAuthorizedWrite,denyUnauthorizedWrite,rememberDeploymentContext} from './privileged-write.mjs';
 import {weeklyReport} from './league-hub.mjs';
 import {weeklyAwards,managerHistory} from './league-hub.mjs';
 
@@ -63,7 +63,8 @@ export async function refreshPublishedSurfaces(origin,edition,request=refreshTru
 // The canonical weeklyReport owns the approved Week-2-plus-forward V31 newsroom logic
 // and refuses to publish an incomplete Sleeper week. After a new edition appears,
 // refresh every week-bound League Hub surface in the same run.
-export default async function inquirerPublishScheduled(req){
+export default async function inquirerPublishScheduled(req,platformContext){
+ rememberDeploymentContext(req,platformContext);
   if(isReadOnlyPreview(req))return new Response(JSON.stringify({ok:false,error:'preview scheduling disabled'}),{status:403,headers:{'content-type':'application/json','cache-control':'no-store'}});
   if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();
   let result=null,lastKey='';

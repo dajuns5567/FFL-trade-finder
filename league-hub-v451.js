@@ -326,7 +326,7 @@ function awardStandings(stats,draftData){
  const teams=globalThis.state?.teams||[],assets=globalThis.state?.allAssets||[],teamIds=teams.map(t=>String(t.id)),byId=new Map(stats.map(x=>[String(x.id),x])),players=globalThis.state?.players||{},draftPicks=draftData?.draft_picks||[];
  const assetPlayers=id=>assets.filter(a=>a?.type==='player'&&String(a.owner)===id&&String(a.id||'').length<12),pickCount=id=>assets.filter(a=>a?.type==='pick'&&String(a.owner)===id).length;
  const age=id=>{const p=players[id]||{},n=Number(p.age);if(Number.isFinite(n))return n;const d=new Date(p.birth_date||p.birthdate||p.dob||'');return Number.isFinite(d.getTime())?(Date.now()-d.getTime())/31557600000:null};
- const value=id=>Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(id),owner:0}))||0,expected=p=>Math.max(250,9200-Math.max(0,Number(p)-1)*310),retroPick=(season,pickNo)=>{const round=Math.max(1,Math.ceil(Number(pickNo)/32)),slot=((Number(pickNo)-1)%32)+1,norm=globalThis.tradeValueNormalizationV130,nearest=Number(norm?.nearestSeason?.())||Math.min(...assets.filter(a=>a?.type==='pick').map(a=>Number(a.season)).filter(Number.isFinite)),proxy={type:'pick',season:nearest,round,original_roster_id:slot,owner:0},v=Number(norm?.canonicalValue?.(proxy));if(Number.isFinite(v)&&v>0)return Math.round(v/5)*5;const asset={...proxy,season:Number(season)},fn=globalThis.retroactiveTradeHistoryPickValueV461,fallback=typeof fn==='function'?Number(fn(asset,{season:Number(season)-1,created:`${Number(season)-1}-09-01T00:00:00Z`})):NaN;return Number.isFinite(fallback)&&fallback>0?fallback:expected(pickNo)};
+ const value=id=>Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(id),owner:0}))||0,expected=p=>Math.max(250,9200-Math.max(0,Number(p)-1)*310),retroPick=awardRetroPickValue;
  const ranks=(key,title,rows,detail,desc,extra={})=>({key,title,desc,...extra,standings:rows.map((x,i)=>({rank:i+1,roster_id:String(x.id),score:Number(x.score)||0,detail:detail(x),trade_id:x.trade_id||''}))});
  const statRows=fn=>teamIds.map(id=>({id,...fn(byId.get(id)||{id,trades:0,wins:0,losses:0,net:0,biggestWin:0,biggestLoss:0,biggestWinTrade:'',biggestLossTrade:''})}));
  const years=[...new Set(draftPicks.map(p=>Number(p.season)).filter(y=>y>=2024))].sort((a,b)=>a-b),bestPickYear=String(awardYearFilters['best-draft-pick']||'all'),draftYear=String(awardYearFilters['best-draft']||'all'),currentPickAssets=assets.filter(a=>a?.type==='pick'&&Number(a.season)>=2027),stackYears=Array.from({length:Math.max(1,Math.max(2027,...currentPickAssets.map(a=>Number(a.season)||2027))-2027+1)},(_,i)=>2027+i),stackYear=String(awardYearFilters['pick-stacker']||'all');
@@ -358,49 +358,27 @@ function awardStandings(stats,draftData){
  ];}
 function currentAwards(stats,draftData){return awardStandings(stats,draftData).map(a=>{const w=a.standings[0];return{...a,roster_id:w?.roster_id||'',detail:w?.detail||'Not enough data yet.'}})}
 const tradeAdjustedAwardKeys=new Set(['fleecer','fleeced','deal-maker','efficiency','big-swing','trade-average','volume-wins','big-regret','balanced']);
+function awardRetroPickValue(season,pickNo){const assets=globalThis.state?.allAssets||[],expected=p=>Math.max(250,9200-Math.max(0,Number(p)-1)*310);const round=Math.max(1,Math.ceil(Number(pickNo)/32)),slot=((Number(pickNo)-1)%32)+1,norm=globalThis.tradeValueNormalizationV130,nearest=Number(norm?.nearestSeason?.())||Math.min(...assets.filter(a=>a?.type==='pick').map(a=>Number(a.season)).filter(Number.isFinite)),proxy={type:'pick',season:nearest,round,original_roster_id:slot,owner:0},v=Number(norm?.canonicalValue?.(proxy));if(Number.isFinite(v)&&v>0)return Math.round(v/5)*5;const asset={...proxy,season:Number(season)},fn=globalThis.retroactiveTradeHistoryPickValueV461,fallback=typeof fn==='function'?Number(fn(asset,{season:Number(season)-1,created:`${Number(season)-1}-09-01T00:00:00Z`})):NaN;return Number.isFinite(fallback)&&fallback>0?fallback:expected(pickNo)}
 function awardRecordKey(key){const k=String(key||'');return tradeAdjustedAwardKeys.has(k)?k+':trade-adjusted-v1':k}
 function awardPeriod(){const d=new Date(),anchor=new Date('2026-09-14T00:00:00');if(d<anchor)return'Sep 14 2026';const months=(d.getFullYear()-anchor.getFullYear())*12+d.getMonth()-anchor.getMonth(),step=Math.floor(months/6)*6,x=new Date(anchor);x.setMonth(x.getMonth()+step);return x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
 async function syncAwards(rows){
- // Public visitors may read published historical awards, but must never submit
- // valuations, rankings or achievements to durable storage. The only writer is
- // the repository's trusted canonical headless job.
- const trustedCapture=globalThis.__FLEECED_TRUSTED_HEADLESS_AWARDS===true;
+ const read=async key=>{const response=await fetch('/.netlify/functions/league-hub?'+key+'=1',{cache:'no-store'});if(!response.ok)throw new Error('Award read failed');return response.json()};
+ const trustedCapture=window.__fllTrustedCollector===true||globalThis.__FLEECED_TRUSTED_HEADLESS_AWARDS===true;
+ if(!trustedCapture){try{const [highs,history]=await Promise.all([read('award_highs'),read('awards')]);awardHighHistory=highs.records||[];awardHistory=history.history||[]}catch{}return}
+ window.__fllAwardMaintenance={complete:false,ok:false};
+ const write=async(key,body)=>{const response=await fetch('/.netlify/functions/league-hub?'+key+'=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!response.ok)throw new Error('Trusted award persistence failed');return response.json()};
  try{
-  const res=await fetch('/.netlify/functions/league-hub?award_highs=1',{cache:'no-store'});
-  if(res.ok){const data=await res.json();awardHighHistory=Array.isArray(data.records)?data.records:[]}
-  if(trustedCapture){
-   const records=rows.flatMap(a=>(a.standings||[]).map(x=>({award_key:awardRecordKey(a.key),roster_id:x.roster_id,score:x.score,detail:x.detail})));
-   const posted=await fetch('/.netlify/functions/league-hub?award_highs=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({records})});
-   if(posted.ok){const data=await posted.json();if(Array.isArray(data.records))awardHighHistory=data.records}
+  const records=rows.flatMap(a=>(a.standings||[]).map(x=>({award_key:awardRecordKey(a.key),roster_id:x.roster_id,score:x.score,detail:x.detail})));
+  awardHighHistory=(await write('award_highs',{records})).records||[];
+  if(rows.some(x=>x.key==='best-draft-pick')){
+   const records=(draftCache?.draft_picks||[]).map(p=>{const id=String(p.player_id),primary=globalThis.tradeValueNormalizationV139?.playerValue?.({type:'player',id}),fallback=globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id,owner:0}),v=Number(primary??fallback)||0;return v&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:p.player_id,pick_no:p.pick_no,captured_value:v,delta:Math.round(v-awardRetroPickValue(p.season,p.pick_no))}:null}).filter(Boolean);
+   if(records.length)await write('draft_records',{records});
   }
- }catch{}
- if(trustedCapture){
-  const draftAward=rows.find(x=>x.key==='best-draft-pick');
-  if(draftAward){
-   // Mirror awardStandings' retroactive pick baseline, which is locally scoped there.
-   const retroPick=(season,pickNo)=>{const assets=globalThis.state?.allAssets||[],round=Math.max(1,Math.ceil(Number(pickNo)/32)),slot=((Number(pickNo)-1)%32)+1,norm=globalThis.tradeValueNormalizationV130,nearest=Number(norm?.nearestSeason?.())||Math.min(...assets.filter(a=>a?.type==='pick').map(a=>Number(a.season)).filter(Number.isFinite)),proxy={type:'pick',season:nearest,round,original_roster_id:slot,owner:0},v=Number(norm?.canonicalValue?.(proxy));if(Number.isFinite(v)&&v>0)return Math.round(v/5)*5;const asset={...proxy,season:Number(season)},fn=globalThis.retroactiveTradeHistoryPickValueV461,fallback=typeof fn==='function'?Number(fn(asset,{season:Number(season)-1,created:`${Number(season)-1}-09-01T00:00:00Z`})):NaN;return Number.isFinite(fallback)&&fallback>0?fallback:Math.max(250,9200-Math.max(0,Number(pickNo)-1)*310)};
-   const records=(draftCache?.draft_picks||[]).map(p=>{
-    const id=String(p.player_id);
-    const primary=globalThis.tradeValueNormalizationV139?.playerValue?.({type:'player',id});
-    const fallback=globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id,owner:0});
-    const value=Number(primary??fallback)||0;
-    return value&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:id,pick_no:p.pick_no,
-      captured_value:Math.round(value),delta:Math.round(value-retroPick(p.season,p.pick_no))}:null;
-   }).filter(Boolean);
-   await fetch('/.netlify/functions/league-hub?draft_records=1',{method:'POST',
-    headers:{'content-type':'application/json'},body:JSON.stringify({records})}).catch(()=>{});
-  }
- }
- try{
-  const response=await fetch('/.netlify/functions/league-hub?awards=1',{cache:'no-store'});
-  if(response.ok){const data=await response.json();awardHistory=Array.isArray(data.history)?data.history:[]}
+  awardHistory=(await read('awards')).history||[];
   const period=awardPeriod();
-  if(trustedCapture){
-   const posted=await fetch('/.netlify/functions/league-hub?awards=1',{method:'POST',
-    headers:{'content-type':'application/json'},body:JSON.stringify({period,awards:rows})});
-   if(posted.ok){const data=await posted.json();if(Array.isArray(data.history))awardHistory=data.history}
-  }
- }catch{}
+  if(globalThis.__FLEECED_TRUSTED_HEADLESS_AWARDS===true||!awardHistory.some(x=>x.period===period))awardHistory=(await write('awards',{period,awards:rows})).history||awardHistory;
+  window.__fllAwardMaintenance={complete:true,ok:true};
+ }catch{window.__fllAwardMaintenance={complete:true,ok:false}}
 }
 
 function awardCard(a){const yf=a.yearFilter?`<label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:'';const win=a.standings?.[0],link=a.leagueNetModal?`<button class="secondary small" data-lh-loaded-roster>Open Value History chart</button>`:a.teamTradeLink&&win?`<button class="secondary small" data-lh-manager-trades="${esc(win.roster_id)}">Winner Trade History</button>`:a.specificTradeLink&&win?.trade_id?`<button class="secondary small" data-lh-trade="${esc(win.trade_id)}">View Winning Trade</button>`:'';return`<div class="lh-card"><h3>${esc(a.title)}</h3><div class="lh-sub">${esc(a.desc||'')}</div>${yf}<div class="lh-story"><b>${a.roster_id?esc(teamName(a.roster_id)):'—'}</b><small>${esc(a.detail)}</small></div><div class="lh-action"><button class="secondary small" data-lh-rankings="${esc(a.key)}">View all rankings</button> ${link}</div></div>`}

@@ -1,5 +1,5 @@
 import {isReadOnlyPreview} from './preview-read-only.mjs';
-import {isAuthorizedWrite} from './privileged-write.mjs';
+import {isAuthorizedWrite,rememberDeploymentContext} from './privileged-write.mjs';
 import { refreshAllSources } from "./consensus-source-overrides.mjs";
 import { buildConsensusComposite } from "./consensus-composite-v3.mjs";
 import { getStore } from "@netlify/blobs";
@@ -7,8 +7,8 @@ import { getStore } from "@netlify/blobs";
 const SNAPSHOT_STORE="fleeced-consensus-lkg";
 const SNAPSHOT_KEY="validated-sources-v1";
 const sourceStore=()=>getStore(SNAPSHOT_STORE,{consistency:"strong"});
-async function readLastGood(){try{return await sourceStore().get(SNAPSHOT_KEY,{type:"json"})||null}catch{return null}}
-async function writeLastGood(value){await sourceStore().setJSON(SNAPSHOT_KEY,value)}
+async function readStoredLastGood(){try{return await sourceStore().get(SNAPSHOT_KEY,{type:"json"})||null}catch{return null}}
+async function writeStoredLastGood(value){await sourceStore().setJSON(SNAPSHOT_KEY,value)}
 
 function addSnapshot(sources,name,result,rows,kind,updatedAt){
   const data={};
@@ -45,22 +45,27 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
 }
 
 let sharedRefresh=null,sharedRefreshAt=0;
-async function refreshSourcesShared(){
+async function liveRefreshSources(){
  if(sharedRefresh&&Date.now()-sharedRefreshAt<30000)return sharedRefresh;
  sharedRefreshAt=Date.now();
  sharedRefresh=refreshAllSources().catch(error=>{sharedRefresh=null;throw error});
  return sharedRefresh;
 }
-export default async (req)=>{
+export function createUpdateHandler(dependencies={}){
+ const refreshSourcesShared=dependencies.refresh||liveRefreshSources,readLastGood=dependencies.read||readStoredLastGood,writeLastGood=dependencies.write||writeStoredLastGood;
+ return async (req,platformContext)=>{
+  rememberDeploymentContext(req,platformContext);
   if(req.method==="OPTIONS")return json({ok:true});
   if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
   const previewReadOnly=isReadOnlyPreview(req);
   // Public users may calculate live values but may not replace persisted sources.
   const calculationOnly=previewReadOnly||!isAuthorizedWrite(req);
   let body={};try{body=await req.json()}catch{return json({ok:false,error:"Invalid JSON"},400)}
-  const players=Array.isArray(body.players)?body.players:[];
+  if(!body||typeof body!=='object'||Array.isArray(body))return json({ok:false,error:'Invalid player request'},400);
+  const suppliedPlayers=Array.isArray(body.players)?body.players:[];
+  if(suppliedPlayers.length>20000)return json({ok:false,error:"Player list exceeds bounded calculation limit"},413);
+  const players=suppliedPlayers.map(p=>({id:String(p?.id||'').slice(0,40),name:String(p?.name||'').slice(0,150),position:String(p?.position||'').slice(0,12),positions:Array.isArray(p?.positions)?p.positions.slice(0,8).map(x=>String(x).slice(0,12)):undefined}));
   if(!players.length)return json({ok:false,error:"No player list supplied"},400);
-  if(players.length>20000)return json({ok:false,error:"Player list exceeds bounded calculation limit"},413);
   const refresh=await refreshSourcesShared();
   const candidate=buildConsensusPayload(refresh,players);
   // Preview refresh is calculation-only: no Netlify Blobs reads or writes.
@@ -69,7 +74,7 @@ export default async (req)=>{
     const manifest=candidate.summary.results.map(x=>({source:x.source,status:x.ok?"fresh":"unavailable",
       snapshot_timestamp:x.ok?x.timestamp:null,attempt_timestamp:x.timestamp,
       players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,error:x.error||null}));
-    if(candidate.withheld){
+    if(candidate.withheld&&!previewReadOnly){
       // A public calculation cannot mutate Blobs, but may use the last
       // authenticated, fully validated provider set when a scraper fails.
       const saved=await readLastGood();
@@ -107,4 +112,7 @@ export default async (req)=>{
   const summary={...candidate.summary,successful:candidate.summary.results.filter(x=>x.ok).length,results:manifest.map(x=>({source:x.source,ok:x.status==="fresh-not-promoted",status:x.status,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,timestamp:x.attempt_timestamp,snapshot_timestamp:x.snapshot_timestamp,error:x.error||null}))};
   return json({...candidate,sources:priorSources||{},composite:priorComposite||candidate.composite,summary,sourceManifest:manifest,promotion:{promoted:false,using_last_known_good:!!priorSources,last_good_updated_at:previous?.updatedAt||null},integrity:{...candidate.integrity,reason:priorSources?`${candidate.integrity.reason}; complete last-known-good consensus from ${previous.updatedAt} remains active`:`${candidate.integrity.reason}; no persisted last-known-good consensus is available yet`}});
 };
+}
+export default createUpdateHandler();
+export const config={rateLimit:{action:'rate_limit',aggregateBy:['domain','ip'],windowSize:60,windowLimit:12}};
 function json(body,status=200){return new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}})}

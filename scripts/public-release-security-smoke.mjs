@@ -52,7 +52,7 @@ try{
  assert.equal(readOnlyUpdate.status,400,'Public consensus refresh must still validate its inputs without promoting storage');
  const {readFileSync}=await import('node:fs');
  const updateSource=readFileSync('netlify/functions/update.mjs','utf8');
- assert(updateSource.includes('players.length>20000')&&!updateSource.includes('players.length>4000'),'Canonical Sleeper 12k+ player registry must not be rejected by a 4k request bound');
+ assert(updateSource.includes('suppliedPlayers.length>20000')&&!updateSource.includes('players.length>4000'),'Canonical Sleeper 12k+ player registry must not be rejected by a 4k request bound');
  assert(updateSource.includes('const calculationOnly=previewReadOnly||!isAuthorizedWrite(req);'),'Public consensus must be calculation-only');
  assert(updateSource.indexOf('if(calculationOnly){')>0&&updateSource.indexOf('if(calculationOnly){')<updateSource.indexOf('const previous=await readLastGood();'),'Public consensus read-only branch must precede authenticated persisted promotion');
  assert(updateSource.includes('using_last_known_good:true')&&updateSource.includes('const saved=await readLastGood();'),'Public provider failures must return trusted persisted LKG without write access');
@@ -74,7 +74,7 @@ try{
  }
  const captureUi=readFileSync('value-history-v276.js','utf8');
  assert(captureUi.includes('historyWritesDenied=true;')&&captureUi.includes('if(historyWritesDenied)return;'),'Public write denials must not cause repeated client mutation requests');
- assert(captureUi.includes("API+'?observe=1'")&&captureUi.includes("event:'page-load'"),'Public page load must send event, not client-submitted values');
+ assert(captureUi.includes('value-history-capture-background')&&captureUi.includes('{event_id:eventId,source}'),'Public page load must send event, not client-submitted values');
  const historySource=readFileSync('netlify/functions/value-history.mjs','utf8');
  const observationBranch=historySource.split("if(!isAuthorizedWrite(req)&&url.searchParams.get('observe')==='1'){")[1]?.split("if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();")[0]||'';
  assert(observationBranch.indexOf('const key=`snapshots/observed-${slot}.json`')>=0&&observationBranch.indexOf('const key=`snapshots/observed-${slot}.json`')<observationBranch.indexOf('safeGet(s,key)'), 'Page observation must define its storage key before the coalescing read');
@@ -119,8 +119,8 @@ console.log('Scheduled endpoint unauthorized-invocation regression passed');
 const hubUI=readSecuritySource('league-hub-v451.js','utf8');
 const awardSync=hubUI.split('async function syncAwards(rows){')[1]?.split('\nfunction awardCard(')[0]||'';
 assert(awardSync.includes('globalThis.__FLEECED_TRUSTED_HEADLESS_AWARDS===true')&&
-  awardSync.includes('if(trustedCapture){')&&
-  awardSync.includes("fetch('/.netlify/functions/league-hub?award_highs=1',{cache:'no-store'})"),
+  awardSync.includes('if(!trustedCapture){')&&
+  awardSync.includes("read('award_highs')"),
   'Live award history is read-only for visitors; writes are emitted only in trusted headless runtime');
 const awardCollector=readSecuritySource('scripts/value-history-headless-refresh.mjs','utf8');
 assert(awardCollector.includes('window.__FLEECED_TRUSTED_HEADLESS_AWARDS=true')&&

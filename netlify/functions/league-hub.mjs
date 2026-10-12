@@ -1,5 +1,6 @@
+import {publiclyApprovedEdition} from './inquirer-public-approval.mjs';
 import {isReadOnlyPreview} from './preview-read-only.mjs';
-import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
+import {isAuthorizedWrite,denyUnauthorizedWrite,rememberDeploymentContext} from './privileged-write.mjs';
 import {fallbackProjection} from './inquirer-projection-fallback.mjs';
 import { getStore } from '@netlify/blobs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
@@ -335,11 +336,6 @@ async function syncReporterArchives(s,result,broadcastKey){
 // Publication approval is checked on reads as well as on writers. A stored
 // draft is not automatically a public edition. The approval season advances
 // explicitly when a new season's newsroom is released.
-function publiclyApprovedEdition(season,week){
- const approvalSeason=Number(process.env.INQUIRER_APPROVAL_SEASON??2026)||2026;
- const through=Math.max(0,Math.min(INQUIRER_FINAL_WEEK,Number(process.env.INQUIRER_APPROVED_THROUGH_WEEK??4)||0));
- return Number(season)<approvalSeason||Number(week)<=through;
-}
 async function reporterArchive(id){
  const reporter=publicReporters().find(x=>x.id===String(id||''));if(!reporter)return{error:'reporter not found'};
  const s=store(),j=await s.get('inquirer/reporters/'+reporter.id+'/index.json',{type:'json'}).catch(()=>null),articles=mergeArchiveEntries(Array.isArray(j?.articles)?j.articles:[],preloadedReporterEntries(reporter.id));
@@ -358,7 +354,7 @@ export async function weeklyReport(req){
   const preload=preloadedBroadcast(season,w);
   if(preload){latestPublished=preload;continue}
   const key=`broadcasts/${season}/week-${String(w).padStart(2,'0')}.json`,stored=await s.get(key,{type:'json'}).catch(()=>null);
-  if(stored?.available&&Array.isArray(stored?.teams)&&stored.teams.length){latestPublished=stored;continue}
+  if(stored?.available&&Array.isArray(stored?.teams)&&stored.teams.length&&publiclyApprovedEdition(season,w)){latestPublished=stored;continue}
   week=w;break;
  }
  if(latestPublished)await weeklyAwardRecordForBroadcast(latestPublished).catch(e=>console.error('weekly award self-heal',e));
@@ -842,7 +838,7 @@ async function latestPublishedRegularWeek(season){
   const p=servedPreload(raw);if(Number(p?.season)===target&&p?.available&&Array.isArray(p?.teams)&&p.teams.length)max=Math.max(max,Number(p.week)||0);
  }
  const idx=await store().get('broadcasts/index.json',{type:'json'}).catch(()=>[]);
- for(const row of Array.isArray(idx)?idx:[])if(Number(row?.season)===target)max=Math.max(max,Number(row?.week)||0);
+ for(const row of Array.isArray(idx)?idx:[])if(Number(row?.season)===target&&publiclyApprovedEdition(row.season,row.week))max=Math.max(max,Number(row?.week)||0);
  return Math.max(0,Math.min(INQUIRER_FINAL_WEEK,max));
 }
 function managerScoringSummary(scoringGames,career,currentSeason,currentWeek){
@@ -919,7 +915,7 @@ async function awards(req){
  const s=store();
  if(req.method==='GET'){const list=await s.get('awards/history.json',{type:'json'}).catch(()=>null);return json({history:Array.isArray(list)?list:[]})}
  const body=await req.json().catch(()=>null),period=String(body?.period||''),rows=Array.isArray(body?.awards)?body.awards:[];
- if(!/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([1-9]|[12][0-9]|3[01]),? 20[0-9]{2}$/.test(period)||!rows.length)return json({error:'invalid award snapshot'},400);
+ if(!/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?: ([1-9]|[12][0-9]|3[01]),?)? 20[0-9]{2}$/.test(period)||!Number.isFinite(Date.parse(period))||!rows.length)return json({error:'invalid award snapshot'},400);
  const old=await s.get('awards/history.json',{type:'json'}).catch(()=>null),history=Array.isArray(old)?old:[];
  if(!history.some(x=>x.period===period)){history.push({period,captured_at:new Date().toISOString(),awards:rows.slice(0,20).map(x=>({key:String(x.key||''),title:String(x.title||''),roster_id:String(x.roster_id||''),detail:String(x.detail||'')}))});history.sort((a,b)=>String(a.period).localeCompare(String(b.period)));await s.setJSON('awards/history.json',history)}
  return json({ok:true,history});
@@ -936,4 +932,4 @@ function preloadBootstrap(){
  reports.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
  return{latest:editions[0]||null,reports};
 }
-export default async req=>{try{const u=new URL(req.url);if(req.method!=='GET'&&!isAuthorizedWrite(req))return denyUnauthorizedWrite();if(isReadOnlyPreview(req)&&req.method!=='GET')return json({error:'preview mutations disabled'},403);if(u.searchParams.get('preload_bootstrap')==='1')return json(preloadBootstrap());if(u.searchParams.get('weekly')==='1')return json(!isReadOnlyPreview(req)&&isAuthorizedWrite(req)?await weeklyReport(req):await latestPublishedReadOnly());if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week'))return json(await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week')));if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards({allowRefresh:!isReadOnlyPreview(req)&&isAuthorizedWrite(req)}));if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,published=await latestPublishedRegularWeek(season),through=Math.max(published,Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1))),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory({allowCacheWrite:!isReadOnlyPreview(req)&&isAuthorizedWrite(req)}))}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
+export default async (req,platformContext)=>{rememberDeploymentContext(req,platformContext);try{const u=new URL(req.url);if(req.method!=='GET'&&!isAuthorizedWrite(req))return denyUnauthorizedWrite();if(isReadOnlyPreview(req)&&req.method!=='GET')return json({error:'preview mutations disabled'},403);if(u.searchParams.get('preload_bootstrap')==='1')return json(preloadBootstrap());if(u.searchParams.get('weekly')==='1')return json(!isReadOnlyPreview(req)&&isAuthorizedWrite(req)?await weeklyReport(req):await latestPublishedReadOnly());if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week'))return json(await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week')));if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards({allowRefresh:!isReadOnlyPreview(req)&&isAuthorizedWrite(req)}));if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,published=await latestPublishedRegularWeek(season),through=Math.max(published,Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1))),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory({allowCacheWrite:!isReadOnlyPreview(req)&&isAuthorizedWrite(req)}))}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};

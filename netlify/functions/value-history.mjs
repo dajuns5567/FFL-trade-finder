@@ -1,10 +1,10 @@
 import {isReadOnlyPreview} from './preview-read-only.mjs';
-import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
+import {isAuthorizedWrite,denyUnauthorizedWrite,rememberDeploymentContext} from './privileged-write.mjs';
 import { getStore } from '@netlify/blobs';
 
 const LEAGUE='1316867686394769408';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
-const store=()=>getStore('fll-value-history-v2');
+const store=()=>getStore('fll-value-history-v2',{consistency:'strong'});
 function safeStore(){try{return store()}catch(e){console.warn('value-history-store-init',e);return null}}
 const ARCHIVE_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history';
 const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
@@ -787,22 +787,32 @@ async function getMarketInsights(s){
     result=marketInsightsFromSnapshots(snaps);
   marketInsightsCache=result;marketInsightsCacheAt=now;return result;
 }
+async function mutateIndex(s,key,update){
+ for(let attempt=0;attempt<12;attempt++){
+  const previous=await s.getWithMetadata(key,{type:'json'}),value=update(previous?.data);
+  if(value===null)return;
+  const result=await s.setJSON(key,value,previous?.etag?{onlyIfMatch:previous.etag}:{onlyIfNew:true});
+  if(result?.modified!==false)return;
+  await new Promise(resolve=>setTimeout(resolve,10+Math.random()*40));
+ }
+ throw new Error('History index contention; snapshot retained for retry/archive');
+}
 async function appendIndex(s,key,t){
-  const legacy=normalizeItems(await safeGet(s,LEGACY_INDEX_KEY),LEGACY_MAX).filter(x=>x.key!==key);
-  legacy.push({key,t});legacy.sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key)));
-  await retry(()=>s.setJSON(LEGACY_INDEX_KEY,{version:2,items:legacy.slice(-LEGACY_MAX)}),120);
-
-  const month=monthKey(t);
-  if(!month)return;
-  const monthKeyName=monthIndexKey(month),monthly=normalizeItems(await safeGet(s,monthKeyName)).filter(x=>x.key!==key);
-  monthly.push({key,t});monthly.sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key)));
-  await retry(()=>s.setJSON(monthKeyName,{version:2,month,items:monthly}),120);
-
-  const months=normalizeMonths(await safeGet(s,MONTHS_KEY));
-  if(!months.includes(month)){
-    months.push(month);months.sort();
-    await retry(()=>s.setJSON(MONTHS_KEY,{version:2,months}),120);
-  }
+ await mutateIndex(s,LEGACY_INDEX_KEY,previous=>{
+  const items=normalizeItems(previous,LEGACY_MAX).filter(x=>x.key!==key);
+  items.push({key,t});items.sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key)));
+  return{version:2,items:items.slice(-LEGACY_MAX)};
+ });
+ const month=monthKey(t);if(!month)return;
+ await mutateIndex(s,monthIndexKey(month),previous=>{
+  const items=normalizeItems(previous).filter(x=>x.key!==key);
+  items.push({key,t});items.sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key)));
+  return{version:2,month,items};
+ });
+ await mutateIndex(s,MONTHS_KEY,previous=>{
+  const months=normalizeMonths(previous);if(months.includes(month))return null;
+  months.push(month);months.sort();return{version:2,months};
+ });
 }
 const SCORING_API='https://api.sleeper.app/v1';
 const SCORING_RAW='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper';
@@ -1075,7 +1085,36 @@ async function health(s){
 
 export { monthKey, marketFromSnapshots, baselineFor };
 
-export default async (req)=>{
+async function reserveCaptureTime(storage,measuredAt){
+ const measured=Date.parse(measuredAt),origin=Number.isFinite(measured)?measured:Date.now();
+ for(let attempt=0;attempt<32;attempt++){
+  const t=new Date(origin+attempt).toISOString(),key='capture-times/'+t.replace(/[:.]/g,'-')+'.json';
+  const result=await storage.setJSON(key,{t},{onlyIfNew:true});
+  if(result?.modified!==false)return t;
+ }
+ throw new Error('Capture timestamp contention');
+}
+export async function persistCanonicalCapture(canonical,eventId,source='page-load',storage=store()){
+ if(!/^[a-f0-9-]{36}$/.test(eventId))throw new Error('Invalid capture event');
+ const rows=cleanRows(canonical.rows),picks=cleanPicks(canonical.picks),teams=cleanTeams(canonical.teams);
+ if(rows.length<700||rows.length!==canonical.rows?.length||teams.length!==32||teams.length!==canonical.teams?.length||picks.length!==canonical.picks?.length||!picks.length)throw new Error('Incomplete canonical capture');
+ if(new Set(rows.map(r=>r.id)).size!==rows.length||new Set(teams.map(r=>r.id)).size!==32)throw new Error('Duplicate canonical assets');
+ rows.sort((a,b)=>a.id.localeCompare(b.id));picks.sort((a,b)=>a.id.localeCompare(b.id));
+ const key='snapshots/capture-'+eventId+'.json';
+ let snapshot=await storage.get(key,{type:'json'});
+ if(!snapshot){
+  snapshot={version:5,league:LEAGUE,t:await reserveCaptureTime(storage,canonical.t),measured_at:canonical.t||null,source,valuation_contract:SCHEDULED_VALUATION_CONTRACT,capture_id:eventId,fingerprint:fingerprint(rows,picks,teams),rows,picks,teams};
+  const result=await storage.setJSON(key,snapshot,{onlyIfNew:true});
+  if(result?.modified===false)snapshot=await storage.get(key,{type:'json'});
+ }
+ if(!snapshot?.t)throw new Error('Canonical snapshot failed persistence');
+ await appendIndex(storage,key,snapshot.t);
+ await mutateIndex(storage,LATEST_KEY,latest=>latest?.t&&snapshot.t<latest.t?null:{version:3,t:snapshot.t,key,fingerprint:snapshot.fingerprint,count:snapshot.rows.length,source:snapshot.source});
+ marketInsightsCache=null;marketInsightsCacheAt=0;
+ return {ok:true,stored:true,t:snapshot.t,source:snapshot.source,count:snapshot.rows.length};
+}
+export default async (req,platformContext)=>{
+ rememberDeploymentContext(req,platformContext);
   try{
     const url=new URL(req.url);
     // Keep the CI site's public preview from exposing bulk live history buffers.
@@ -1083,7 +1122,7 @@ export default async (req)=>{
     if(url.searchParams.get('archive_export')==='1'&&isReadOnlyPreview(req))
       return json({error:'preview history export disabled'},403);
     const s=safeStore();
-    if(s&&!isReadOnlyPreview(req)&&isAuthorizedWrite(req)){
+    if(s&&!isReadOnlyPreview(req)&&isAuthorizedWrite(req)&&url.searchParams.get('maintenance')==='1'){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
       try{await scrubV380PartialWeekSnapshot(s)}catch(e){console.warn('v380-history-scrub',e)}
@@ -1157,6 +1196,8 @@ export default async (req)=>{
     // bounded observation of the latest immutable GitHub archival snapshot only.
     // One shared slot per minute bounds anonymous write volume regardless of traffic.
     if(!isAuthorizedWrite(req)&&url.searchParams.get('observe')==='1'){
+      // Archival copying/coalescing requires an explicitly approved fallback.
+      if(process.env.FLEECED_ARCHIVE_OBSERVATION_FALLBACK!=='1')return denyUnauthorizedWrite();
       if(!s)return json({error:'live history store unavailable'},503);
       const body=await req.json().catch(()=>null);
       if(!validAnonymousObservation(body))

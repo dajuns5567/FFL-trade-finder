@@ -2,6 +2,7 @@ const tokens=[process.env.NETLIFY_BLOBS_TOKEN,process.env.NETLIFY_AUTH_TOKEN].ma
 const repository=String(process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder').toLowerCase();
 const targetSha=String(process.env.GITHUB_SHA||'').trim();
 const branch=String(process.env.VALUE_HISTORY_DEPLOY_BRANCH||'main').trim()||'main';
+const expectedSiteId=String(process.env.VALUE_HISTORY_EXPECTED_SITE_ID||'').trim();
 const api='https://api.netlify.com/api/v1';
 
 if(!tokens.length)throw new Error('NETLIFY_AUTH_TOKEN or NETLIFY_BLOBS_TOKEN is required to resolve the active Netlify site');
@@ -41,7 +42,7 @@ for(let page=1;page<=20;page++){
   sites.push(...batch);
   if(batch.length<100)break;
 }
-const candidates=sites.filter(siteMatchesRepo);
+const candidates=sites.filter(site=>siteMatchesRepo(site)&&(!expectedSiteId||String(site.id)===expectedSiteId));
 if(!candidates.length)throw new Error(`No Netlify sites accessible to this token are linked to ${repository}`);
 
 const deployRows=[];

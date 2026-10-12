@@ -1,3 +1,4 @@
+import {publiclyApprovedEdition} from './inquirer-public-approval.mjs';
 import {getStore} from '@netlify/blobs';
 import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
 import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
@@ -29,7 +30,7 @@ async function archiveRows(){
     if(!rows.some(x=>`${Number(x.season)}|${Number(x.week)}`===key))rows.push({type:'week',season,week,key:`preloaded:${season}:${week}`,captured_at:String(p.generated_at||''),preloaded:true});
   }
   rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
-  return rows;
+  return rows.filter(row=>publiclyApprovedEdition(row.season,row.week));
 }
 
 async function latest(){
@@ -43,7 +44,7 @@ async function latest(){
     const s=store(),stored=await s.get(`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null);
     if(stored?.available&&Array.isArray(stored.teams)&&stored.teams.length)return stored;
   }
-  return week3();
+  return publiclyApprovedEdition(2026,3)?week3():{available:false,reason:'No approved edition available'};
 }
 
 async function managerSnapshot(){
@@ -52,8 +53,8 @@ async function managerSnapshot(){
 }
 async function weeklyAwardsSnapshot(){
   const cached=await store().get('awards/weekly.json',{type:'json'}).catch(()=>null);
-  if(Array.isArray(cached?.records))return{schema_version:Number(cached.schema_version)||1,records:cached.records,snapshot_only:true};
-  if(Array.isArray(cached))return{schema_version:1,records:cached,snapshot_only:true};
+  if(Array.isArray(cached?.records))return{schema_version:Number(cached.schema_version)||1,records:cached.records.filter(row=>publiclyApprovedEdition(row.season,row.week)),snapshot_only:true};
+  if(Array.isArray(cached))return{schema_version:1,records:cached.filter(row=>publiclyApprovedEdition(row.season,row.week)),snapshot_only:true};
   return{schema_version:1,records:[],snapshot_only:true};
 }
 

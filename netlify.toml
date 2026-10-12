@@ -7,6 +7,16 @@
   node_bundler = "esbuild"
   included_files = ["index.html", "trade-section1-core-v100.js", "trade-section1-v100.css", "trade-section1-v106.css"]
 
+[functions."inquirer-publish-native-scheduled"]
+  schedule = "0 * * * *"
+
+[functions."inquirer-projection-capture-native-scheduled"]
+  schedule = "5 * * * *"
+
+[functions."value-history-capture-background"]
+  included_files = ["*.js", "*.css", "data/*.js", "index.html", "netlify/functions/*.mjs", "scripts/value-history-headless-refresh.mjs", "!.tmp/**", "!.git/**"]
+  external_node_modules = ["@sparticuz/chromium", "playwright-core"]
+
 [build.processing.html]
   pretty_urls = false
 

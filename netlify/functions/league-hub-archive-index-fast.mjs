@@ -1,3 +1,4 @@
+import {publiclyApprovedEdition} from './inquirer-public-approval.mjs';
 import {getStore} from '@netlify/blobs';
 
 const staticRows=[
@@ -19,7 +20,7 @@ export default async()=>{
     }
   }catch{}
   rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
-  return new Response(JSON.stringify({reports:rows}),{status:200,headers:{
+  return new Response(JSON.stringify({reports:rows.filter(row=>publiclyApprovedEdition(row.season,row.week))}),{status:200,headers:{
     'content-type':'application/json; charset=utf-8',
     'cache-control':'public, max-age=30, stale-while-revalidate=300',
     'netlify-cdn-cache-control':'public, max-age=60, stale-while-revalidate=600',

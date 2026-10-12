@@ -2,7 +2,15 @@
 // Configure FLEECED_SERVER_WRITE_TOKEN as a Netlify server-side secret only.
 // Calling this from a browser with a token is prohibited; use a trusted backend.
 import {timingSafeEqual} from 'node:crypto';
+const internalRequests=new WeakSet(),deploymentContexts=new WeakMap();
+export function rememberDeploymentContext(request,context){if(context)deploymentContexts.set(request,context)}
+export function trustedServerRequest(url,init={},deploymentContext=null){
+ const request=new Request(url,init);internalRequests.add(request);
+ rememberDeploymentContext(request,deploymentContext);return request;
+}
+export const trustedDeploymentContext=request=>deploymentContexts.get(request)||null;
 export function isAuthorizedWrite(req){
+ if(internalRequests.has(req))return true;
  const expected=String(process.env.FLEECED_SERVER_WRITE_TOKEN||'');
  if(expected.length<32)return false;
  const auth=String(req.headers?.get?.('authorization')||'');

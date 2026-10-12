@@ -523,7 +523,22 @@ function scheduledRefreshReady(){
   const gate=window.__vhScheduledRefreshGate;
   return !!(gate?.ready&&gate?.sleeperReady&&gate?.consensusReady);
 }
-let pendingSnapshotSource='page-load',historyWritesDenied=false;
+let pendingSnapshotSource='page-load',historyWritesDenied=false,snapshotEventId=crypto.randomUUID();
+async function awaitTrustedCapture(id){
+ for(let attempt=0;attempt<120;attempt++){
+  await new Promise(resolve=>setTimeout(resolve,5000));
+  try{
+   const r=await fetch('/.netlify/functions/value-history-capture-status?event_id='+encodeURIComponent(id),{cache:'no-store'});
+   if(r.status===403){historyWritesDenied=true;clearTimeout(snapshotTimer);throw new Error('Preview history is read-only')}
+   if(!r.ok)continue;
+   const job=await r.json();
+   if(job.state==='complete'&&job.snapshot?.stored)return job.snapshot;
+   if(job.state==='failed'&&Number(job.attempts)>=3){const error=new Error('Trusted snapshot calculation failed');error.retryable=false;throw error}
+  }catch(e){if(historyWritesDenied||e.message==='Trusted snapshot calculation failed')throw e}
+ }
+ const error=new Error('Trusted snapshot capture timed out');error.retryable=false;throw error;
+}
+
 function snapshotSourceFromUrl(){
   try{return new URLSearchParams(location.search).get('vh_source')==='scheduled'?'scheduled':'page-load'}catch{return'page-load'}
 }
@@ -539,10 +554,11 @@ async function recordSnapshot(source=pendingSnapshotSource){
     let picks=[],teams=[];
     try{picks=currentPickRows()}catch(e){console.warn('value-history-pick-enrichment',e)}
     try{teams=currentTeamRows(rows)}catch(e){console.warn('value-history-team-enrichment',e)}
-    const publicObservation=source!=='scheduled';
-    const r=await fetch(publicObservation?API+'?observe=1':API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(publicObservation?{league:'1316867686394769408',event:'page-load'}:{league:'1316867686394769408',rows,picks,teams,source})});
+    const scheduled=source==='scheduled',eventId=snapshotEventId;
+    const r=await fetch(scheduled?API:'/.netlify/functions/value-history-capture-background',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(scheduled?{league:'1316867686394769408',rows,picks,teams,source}:{event_id:eventId,source})});
     if(r.ok){
-      const stored=await r.json().catch(()=>({ok:true}));
+      if(r.status===202)window.__vhLastSnapshot={ok:false,pending:true,source,event_id:eventId};
+      const stored=r.status===202?await awaitTrustedCapture(eventId):await r.json().catch(()=>({ok:true}));
       window.__vhLastSnapshot={ok:true,source,t:stored?.t||null};
       marketCache=null;teamNetCache.clear();
       if(uiReady){
@@ -571,6 +587,8 @@ async function recordSnapshot(source=pendingSnapshotSource){
     scheduleSnapshot(3000,source);return false
   }catch(e){
     console.warn('value-history-player-snapshot',e);
+    if(historyWritesDenied){window.__vhLastSnapshot={ok:false,source,read_only:true,reason:e.message};return false}
+    if(e.retryable===false){window.__vhLastSnapshot={ok:false,source,reason:e.message};return false}
     scheduleSnapshot(3000,source);return false
   }
 }
@@ -1783,7 +1801,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   ${similarPlayersSection(id)}`;
   setTimeout(()=>fitValueHistoryCellText(box),0);
 }
-function boot(){addShell();scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+function boot(){addShell();scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();snapshotEventId=crypto.randomUUID();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={currentRows,currentPickRows,currentTeamRows,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

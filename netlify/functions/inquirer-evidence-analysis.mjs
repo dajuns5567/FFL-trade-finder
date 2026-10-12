@@ -57,7 +57,7 @@ function teamAnalysis(t,by,week){
   rivalStar?player(rivalStar)+' led '+rival+' with '+fmt(rivalStar.points)+'. '+rival+' drew '+fmt(rivalThree)+' from its three highest-scoring starters, '+fmt(Math.abs(topThree-rivalThree))+' '+(topThree>=rivalThree?'fewer than ':'more than ')+name(t)+' got from the same three-slot comparison.':null
  ]);
  const players=list([
-  who+' finished at '+fmt(top.points)+'; '+support+' delivered '+fmt(two.points)+'; '+third+' posted '+fmt(three.points)+'. Their combined '+fmt(topThree)+' points '+(share>=.65?'left a heavy burden on the remaining starting spots.':'made this a multi-starter effort rather than a one-player rescue.'),
+  who+' finished at '+fmt(top.points)+'; '+support+' delivered '+fmt(two.points)+'; '+third+' posted '+fmt(three.points)+'. For '+name(t)+', their combined '+fmt(topThree)+' points +(share>=.65?'left a heavy burden on the remaining starting spots.':'made this a multi-starter effort rather than a one-player rescue.'),
   low+' was the lowest individually scored starter at '+fmt(last.points)+' in '+word(last.position||'the lineup')+'. For '+name(t)+', '+countUnder+' of '+own.length+' verified starters scored fewer than five points; '+(win?'the win survived those shortfalls, which still warrant attention.':'those shortfalls explain some of the deficit without erasing the contributions above them.')
  ]);
  const miss=t.best_lineup_miss||a.facts?.best_lineup_miss,reserve=miss?.reserve||miss?.bench,started=miss?.starter;
@@ -78,7 +78,7 @@ function teamAnalysis(t,by,week){
  ];
  const outlook=list([
   name(t)+' next prepares for '+next+' after a '+fmt(total)+'-point Week '+week+'. After '+who+' put up '+fmt(top.points)+', the issue is whether '+support+' and '+third+' can remain useful when the next opposing lineup arrives.',
-  low+' carries a '+fmt(last.points)+'-point result into the next selection decision. '+(legal?'Comparing that role with '+player(reserve)+' and other genuinely eligible alternatives is more actionable than arguing about an invented move.':'Without a verified eligible bench upgrade, the manager must weigh the role and its real alternatives rather than pretending the '+fmt(gap)+'-point margin supplies its own explanation.')
+  low+' carries a '+fmt(last.points)+'-point result into the next selection decision. '+(legal?'With '+player(reserve)+' available, this manager can compare actual eligible alternatives instead of inventing a transaction.':'For '+name(t)+', the '+fmt(gap)+'-point margin does not reveal a legal replacement; the next starting decision still needs an actual role comparison.')
  ]);
  a.headline=share>=.65
   ?name(t)+': Three Starters Supplied '+fmt(topThree)+' of '+fmt(total)+' Points Against '+rival

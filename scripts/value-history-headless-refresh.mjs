@@ -110,6 +110,18 @@ try{
   const page=await browser.newPage();
   const pageErrors=[];
   const failedRequests=[];
+  // Capture canonical award calculations from the trusted, fully refreshed
+  // local browser. Public visitors must not be granted storage write access.
+  const awardPosts=new Map();
+  page.on('request',request=>{
+    if(request.method()!=='POST'||!request.url().includes('/.netlify/functions/league-hub?'))return;
+    try{
+      const u=new URL(request.url()),key=['award_highs','draft_records','awards'].find(x=>u.searchParams.get(x)==='1');
+      if(!key)return;
+      const body=request.postDataJSON();
+      if(body&&typeof body==='object')awardPosts.set(key,body);
+    }catch{}
+  });
   page.setDefaultTimeout(240000);
   page.on('console',msg=>{if(['error','warning'].includes(msg.type()))console.log(`browser-${msg.type()}:`,msg.text())});
   page.on('pageerror',err=>{pageErrors.push(String(err?.stack||err?.message||err));console.log('browser-pageerror:',String(err?.stack||err?.message||err))});
@@ -213,6 +225,33 @@ try{
   const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
+
+  // The League Hub currently computes 20 live awards in the valuation browser.
+  // The local collector is trusted because it runs from the checked-out main
+  // commit after the same parity/readiness gates as historical valuations.
+  // Never promote anonymous visitor-submitted awards to storage.
+  try{
+    await page.locator('.tabs button[data-tab="leagueHub"]').click({timeout:15000});
+    await page.locator('#leagueHub .lh-nav button[data-lh-view="awards"]').click({timeout:15000});
+    await page.waitForFunction(()=>document.querySelectorAll('#leagueHubContent .lh-awards-main .lh-card').length>=18,null,{timeout:90000});
+    await page.waitForTimeout(3500);
+    const highs=awardPosts.get('award_highs'),periods=awardPosts.get('awards'),drafts=awardPosts.get('draft_records');
+    const complete=Array.isArray(highs?.records)&&highs.records.length>=200&&
+      Array.isArray(periods?.awards)&&periods.awards.length>=18&&
+      /^[A-Za-z]{3} \d{1,2} \d{4}$/.test(String(periods.period||''));
+    if(complete){
+      const result={version:1,league,source:'trusted-headless-awards',captured_at:t,
+        valuation_contract:SCHEDULED_VALUATION_CONTRACT,canonical_fingerprint:fp,
+        award_highs:highs,draft_records:Array.isArray(drafts?.records)&&drafts.records.length?drafts:null,awards:periods};
+      const awardsPath=process.env.LEAGUE_AWARDS_SNAPSHOT_FILE||'.tmp/league-hub-trusted-awards.json';
+      writeFileSync(awardsPath,JSON.stringify(result)+'\n');
+      console.log('TRUSTED_AWARDS_CAPTURE',JSON.stringify({ok:true,highs:highs.records.length,
+        drafts:result.draft_records?.records?.length||0,awards:periods.awards.length,period:periods.period}));
+    }else console.warn('TRUSTED_AWARDS_CAPTURE_UNAVAILABLE',JSON.stringify({highs:highs?.records?.length||0,awards:periods?.awards?.length||0,period:periods?.period||null}));
+  }catch(error){
+    // An awards-source outage must not prevent durable canonical Value History.
+    console.warn('TRUSTED_AWARDS_CAPTURE_UNAVAILABLE',String(error?.message||error).slice(0,300));
+  }
 
   console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,canonicalParity:'exact',modeledVersion:captured.modeledVersion,pageErrors:pageErrors.length,failedRequests:failedRequests.length,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
 }finally{

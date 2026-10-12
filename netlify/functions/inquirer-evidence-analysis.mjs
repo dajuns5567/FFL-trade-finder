@@ -106,7 +106,7 @@ function teamAnalysis(t,by,week){
   support:who+' scored '+fmt(top.points)+' for '+name(t)+' and still watched '+rival+' win by '+fmt(gap)+'. One reliable starter cannot cover every other lineup slot.'
  };
  if(zero){
-  for(const section of a.sections||[])if(section.kind==='lede')section.paragraphs=[observations.shutout,'All '+own.length+' individually verified starting scores were zero. That is a roster-wide absence of production, not a star performance.'];
+  lede.splice(0,lede.length,observations.shutout,'All '+own.length+' verified starting scores were zero. A full-lineup scoring failure is the story.');
  }else{
   lede[0]=observations[angle];
   lede[1]=who+' provided '+fmt(top.points)+', '+support+' added '+fmt(two.points)+' and '+third+' had '+fmt(three.points)+'. The three accounted for '+fmt(share*100)+'% of '+name(t)+'’s total; the rest accounted for '+fmt(remaining)+'.';

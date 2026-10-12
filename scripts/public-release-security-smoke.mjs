@@ -52,6 +52,7 @@ try{
  assert.equal(readOnlyUpdate.status,400,'Public consensus refresh must still validate its inputs without promoting storage');
  const {readFileSync}=await import('node:fs');
  const updateSource=readFileSync('netlify/functions/update.mjs','utf8');
+ assert(updateSource.includes('players.length>20000')&&!updateSource.includes('players.length>4000'),'Canonical Sleeper 12k+ player registry must not be rejected by a 4k request bound');
  assert(updateSource.includes('const calculationOnly=previewReadOnly||!isAuthorizedWrite(req);'),'Public consensus must be calculation-only');
  assert(updateSource.indexOf('if(calculationOnly){')>0&&updateSource.indexOf('if(calculationOnly){')<updateSource.indexOf('const previous=await readLastGood();'),'Public consensus read-only branch must precede authenticated persisted promotion');
  assert(updateSource.includes('using_last_known_good:true')&&updateSource.includes('const saved=await readLastGood();'),'Public provider failures must return trusted persisted LKG without write access');

@@ -44,8 +44,15 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
    if(cool)cool.paragraphs=[nm(star)+' recorded '+f(star.points)+' and led the verified starters. '+(won?'A useful performance, although even the best score needs help to produce a win.':'A good box score in a loss is still good work. It is not a win, however convenient that would be.')];
   }
   const management=section(a,'management');
-  if(management?.paragraphs?.length>=2&&short.length>=3){
-   management.paragraphs[1]+=' '+short.length+' of '+players.length+' verified starter scores finished below five. That is a lineup concern worth taking to next week, not a mysterious statistical trend.';
+  if(management?.paragraphs?.length>=2){
+   const voice=String(a.reporter?.id||'walter-mercer'),count=short.length;
+   const remarks={
+    'walter-mercer':nm(star)+' scored '+f(star.points)+'; '+nm(weak)+' scored '+f(weak.points)+'. The scorebook records both figures, however long the manager would prefer to discuss the first.',
+    'tess-delaney':nm(star)+' provided '+f(star.points)+' and '+nm(weak)+' brought '+f(weak.points)+'. One can applaud the first performance without pretending the second was an elegant accessory.',
+    'mack-hollis':nm(star)+' posted '+f(star.points)+'. '+nm(weak)+' managed '+f(weak.points)+'. THAT is the discrepancy to address, not a motivational speech.',
+    'nora-voss':nm(weak)+' supplied '+f(weak.points)+' opposite '+f(star.points)+' from '+nm(star)+'. A rival has little reason to fear the quieter spot until the manager fixes it.'
+   };
+   management.paragraphs[1]=(remarks[voice]||remarks['walter-mercer'])+' '+(count>=3?count+' of '+players.length+' verified starters scored below five; the weakness extends beyond one player.':'The next decision has to concern real starting roles, not a convenient retelling of the final score.');
   }
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.insight_copy_edit=1;

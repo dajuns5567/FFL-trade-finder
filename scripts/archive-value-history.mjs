@@ -87,7 +87,8 @@ async function snapshotsFromBlobStore(){
 }
 async function snapshotsFromHttpExport(){
   const source=new URL(sourceBase);source.searchParams.set('archive_export','1');if(since)source.searchParams.set('since',since);
-  const response=await fetch(source,{headers:{accept:'application/json','user-agent':'Fleeced-Value-History-Archive/1.0'},cache:'no-store'});
+  const token=String(process.env.FLEECED_SERVER_WRITE_TOKEN||'');
+  const response=await fetch(source,{headers:{accept:'application/json','user-agent':'Fleeced-Value-History-Archive/1.0',...(token?{authorization:'Bearer '+token}:{})},cache:'no-store'});
   if(!response.ok){
     const body=await response.text();
     throw new Error(`Value History export ${response.status}: ${body.includes('Login Redirect')?'production site requires Netlify authentication; configure NETLIFY_BLOBS_TOKEN repository secret for direct Blob archival':body.slice(0,500)}`);

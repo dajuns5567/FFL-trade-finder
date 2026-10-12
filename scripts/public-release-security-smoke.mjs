@@ -114,6 +114,33 @@ try{
 }
 console.log('Scheduled endpoint unauthorized-invocation regression passed');
 
+const hubUI=readSecuritySource('league-hub-v451.js','utf8');
+const awardSync=hubUI.split('async function syncAwards(rows){')[1]?.split('\nfunction awardCard(')[0]||'';
+assert(awardSync.includes('globalThis.__FLEECED_TRUSTED_HEADLESS_AWARDS===true')&&
+  awardSync.includes('if(trustedCapture){')&&
+  awardSync.includes("fetch('/.netlify/functions/league-hub?award_highs=1',{cache:'no-store'})"),
+  'Live award history is read-only for visitors; writes are emitted only in trusted headless runtime');
+const awardCollector=readSecuritySource('scripts/value-history-headless-refresh.mjs','utf8');
+assert(awardCollector.includes('window.__FLEECED_TRUSTED_HEADLESS_AWARDS=true')&&
+  awardCollector.includes('TRUSTED_AWARDS_CAPTURE')&&
+  awardCollector.includes('canonical_fingerprint:fp'),
+  'Headless award calculations must be captured after canonical valuation parity gates');
+const awardPublisher=readSecuritySource('scripts/publish-league-awards-trusted.mjs','utf8');
+assert(awardPublisher.includes("redirect:'manual'")&&
+  awardPublisher.includes("authorization:'Bearer '+token")&&
+  awardPublisher.includes("data.source!=='trusted-headless-awards'"),
+  'Promotion must use trusted browser provenance and never redirect the private server token');
+const awardWorkflow=readSecuritySource('.github/workflows/value-history-headless-refresh.yml','utf8');
+assert(awardWorkflow.includes('secrets.FLEECED_SERVER_WRITE_TOKEN')&&
+  awardWorkflow.includes('scripts/publish-league-awards-trusted.mjs'),
+  'Trusted award promotion must happen on the scheduled GitHub Actions runner');
+const hubSource=readSecuritySource('netlify/functions/league-hub.mjs','utf8');
+assert(hubSource.includes('const period=String(body?.period||\'\')')&&
+  hubSource.includes('(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'),
+  'Six-month award persistence must accept the actual generated month/day/year key');
+console.log('League Hub trusted awards capture and visitor read-only contract passed');
+
+
 
 const {call:scheduledInternalCall}=await import('../netlify/functions/inquirer-publish-scheduled.mjs');
 const priorToken=process.env.FLEECED_SERVER_WRITE_TOKEN;

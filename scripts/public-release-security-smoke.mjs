@@ -65,3 +65,27 @@ try{
  }
 }
 console.log('Public release HTTP handler refusal smoke passed');
+
+const {call:scheduledInternalCall}=await import('../netlify/functions/inquirer-publish-scheduled.mjs');
+const priorToken=process.env.FLEECED_SERVER_WRITE_TOKEN;
+const priorFetch=globalThis.fetch;
+try{
+ let requests=0;
+ delete process.env.FLEECED_SERVER_WRITE_TOKEN;
+ await assert.rejects(()=>scheduledInternalCall('https://fleeced-security-test.example','/.netlify/functions/league-hub?weekly_awards=1'),/server write token/);
+ assert.equal(requests,0,'Scheduled downstream writes must not proceed without server credentials');
+ process.env.FLEECED_SERVER_WRITE_TOKEN='z'.repeat(64);
+ globalThis.fetch=async (_url,options)=>{
+   requests++;
+   assert.equal(options.headers.authorization,'Bearer '+'z'.repeat(64),'Scheduled cache refresh must authenticate without browser involvement');
+   return {ok:true,json:async()=>({records:[{season:2026,week:4}]})};
+ };
+ const refreshed=await scheduledInternalCall('https://fleeced-security-test.example','/.netlify/functions/league-hub?weekly_awards=1');
+ assert.equal(refreshed.records[0].week,4);
+ assert.equal(requests,1);
+}finally{
+ globalThis.fetch=priorFetch;
+ if(priorToken===undefined)delete process.env.FLEECED_SERVER_WRITE_TOKEN;
+ else process.env.FLEECED_SERVER_WRITE_TOKEN=priorToken;
+}
+console.log('Scheduled downstream credential propagation smoke passed');

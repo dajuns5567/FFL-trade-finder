@@ -43,6 +43,7 @@ jobs:
         env:
           INQUIRER_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NETLIFY_CI_BROWSER_STORAGE_STATE: ${{ secrets.NETLIFY_CI_BROWSER_STORAGE_STATE }}
         run: node scripts/inquirer-browser-preview-audit.mjs
       - name: Upload browser failure screenshot
         if: failure()

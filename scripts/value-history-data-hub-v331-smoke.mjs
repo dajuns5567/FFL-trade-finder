@@ -262,7 +262,7 @@ assert(ui.includes("What's Happening With My Team"),'approved Track My Team attr
 assert(!ui.includes('What Moved My Team'),'legacy team attribution heading must be removed');
 assert(!ui.includes('${teamTradeImpactCard(trackedTeamId)}'),'standalone Recent Trade Impact card must not duplicate trade events');
 assert(ui.includes('The snapshot change is observed team net-value movement, not an assumption that the trade alone caused the move.'),'trade-linked net movement must include non-causal attribution language');
-assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})"),'Value History snapshot POST must include separate player, pick, and team ownership totals');
+assert(ui.includes("{league:'1316867686394769408',rows,picks,teams,source}")&&ui.includes("{league:'1316867686394769408',event:'page-load'}"),'Trusted scheduled capture must retain separate player, pick, and team totals while anonymous observations omit client valuation inputs');
 assert(ui.includes('const recorded=Number(asset.historyRecordedValue)'),'Trade History must prefer recorded historical pick values before retroactive fallback');
 assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
 assert(ui.includes('tradeOriginalAssets(side)'), 'Trade Evaluator analysis must evaluate the original traded package rather than mutate it into current outcomes');

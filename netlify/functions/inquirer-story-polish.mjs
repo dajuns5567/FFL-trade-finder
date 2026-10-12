@@ -91,6 +91,7 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
    };
    management.paragraphs[1]=(remarks[voice]||remarks['walter-mercer'])+' '+(count>=3?count+' of '+players.length+' verified starters scored below five; the weakness extends beyond one player.':'The '+String(weak.position||'starter')+' role of '+nm(weak)+' needs an evidence-based choice after '+f(weak.points)+' points.');
   }
+  if(own===0&&players.every(p=>Number(p.points)===0)&&management?.paragraphs?.length>=2)management.paragraphs[1]='All '+players.length+' recorded starters finished on zero. Nobody in that lineup earned an individual commendation, and management has an entire starting card to explain.';
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.insight_copy_edit=1;
  }

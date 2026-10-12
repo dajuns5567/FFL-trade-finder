@@ -60,7 +60,7 @@ export default async (req)=>{
   let body={};try{body=await req.json()}catch{return json({ok:false,error:"Invalid JSON"},400)}
   const players=Array.isArray(body.players)?body.players:[];
   if(!players.length)return json({ok:false,error:"No player list supplied"},400);
-  if(players.length>4000)return json({ok:false,error:"Player list exceeds public calculation limit"},413);
+  if(players.length>20000)return json({ok:false,error:"Player list exceeds bounded calculation limit"},413);
   const refresh=await refreshSourcesShared();
   const candidate=buildConsensusPayload(refresh,players);
   // Preview refresh is calculation-only: no Netlify Blobs reads or writes.

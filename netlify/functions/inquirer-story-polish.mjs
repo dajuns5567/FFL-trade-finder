@@ -45,6 +45,29 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
    if(hot)hot.paragraphs=[nm(weak)+' finished on '+f(weak.points)+' at '+String(weak.position||'a starting position')+'. '+(won?'The win got away with it; the next opponent might not.':'The loss made that quiet role rather more visible than management would prefer.')];
    if(cool)cool.paragraphs=[nm(star)+' recorded '+f(star.points)+' and led the verified starters. '+(won?'A useful performance, although even the best score needs help to produce a win.':'A good box score in a loss is still good work. It is not a win, however convenient that would be.')];
   }
+  if(own>0){
+   if(lede?.paragraphs?.length>=3){
+    const trio=scorers(t).slice(0,3).reduce((sum,p)=>sum+Number(p.points),0);
+    const others=own-trio;
+    lede.paragraphs[1]=(trio>=own*.7
+      ?tn(t)+' depended on its leading trio for '+f(trio)+' of '+f(own)+' points. Everyone outside that group supplied '+f(others)+'. One rather hopes the remaining starters were not charging appearance fees.'
+      :nm(star)+' did the loud work with '+f(star.points)+', but the other starters supplied '+f(own-Number(star.points))+'. That is why this '+f(gap)+'-point '+(own>=other?'win':'loss')+' belongs to a lineup, not a highlight clip.');
+   }
+   if(features?.paragraphs?.length>=2){
+    const count=short.length,low=Number(weak.points);
+    features.paragraphs[1]=count>=3
+      ?nm(weak)+' managed '+f(low)+' in '+String(weak.position||'a starter role')+'. '+tn(t)+' also had '+(count-1)+' other starters below five points. That is a collection of holes, not an isolated bad bounce.'
+      :low<=0
+       ?nm(weak)+' contributed zero in '+String(weak.position||'a starter role')+'. '+(own>=other?'The team won anyway; the next opponent need not be so accommodating.':'That empty return narrowed the margin for everyone who did contribute.')
+       :nm(weak)+' managed '+f(low)+' in '+String(weak.position||'a starter role')+'. '+(own>=other?'Enough for the result, perhaps; hardly the reason the team won.':'That return matters when the final deficit was '+f(gap)+'.');
+   }
+  }
+  const outlook=section(a,'outlook');
+  if(outlook?.paragraphs?.length>=2){
+   const opponent=String(t.next_opponent_name||'an opponent not yet established');
+   const role=String(weak.position||'starter');
+   outlook.paragraphs[1]=nm(weak)+' leaves Week '+week+' with '+f(weak.points)+' at '+role+'. '+tn(t)+' will face '+opponent+' next; the lineup decision in that role needs a genuine alternative, not a promise that Sunday will simply be kinder.';
+  }
   const management=section(a,'management');
   if(management?.paragraphs?.length>=2){
    const voice=String(a.reporter?.id||'walter-mercer'),count=short.length;

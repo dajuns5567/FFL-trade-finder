@@ -34,7 +34,7 @@ const scheduler=readFileSync('netlify/functions/inquirer-publish-scheduled.mjs',
 const captureScheduler=readFileSync('netlify/functions/inquirer-projection-capture-scheduled.mjs','utf8');
 const netlifyConfig=readFileSync('netlify.toml','utf8');
 assert(scheduler.includes("import {weeklyReport} from './league-hub.mjs'")&&scheduler.includes('await weeklyReport(req)')&&!scheduler.includes('capturePregameProjections'),'Scheduled publishing must retain canonical approval and completion gates without optional capture delays');
-assert(captureScheduler.includes('await capturePregameProjections()')&&!captureScheduler.includes('weeklyReport(req)')&&netlifyConfig.includes('[functions."inquirer-projection-capture-scheduled"]'),'Independent scheduled projection capture must not publish weekly editions');
+assert(captureScheduler.includes('await capturePregameProjections()')&&!captureScheduler.includes('weeklyReport(req)')&&captureScheduler.includes('isAuthorizedWrite(req)')&&!netlifyConfig.includes('[functions."inquirer-projection-capture-scheduled"]'),'Independent scheduled projection capture must not publish weekly editions');
 
 assert(publisher.includes("if(!weeklyStats||typeof weeklyStats!=='object'||!Object.keys(weeklyStats).length)return latestPublished?"),'Weekly Inquirer publication must fail closed while retaining the most recent published edition when Sleeper stats are unavailable');
 assert(publisher.includes('if(!completion.complete)return latestPublished?'),'Unfinished next week must serve the latest already-published edition');

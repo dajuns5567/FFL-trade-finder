@@ -30,6 +30,16 @@ export function addInquirerCharacter(edition,{week=Number(edition?.week)}={}){
    depth:team(t)+': '+secondName+' and '+thirdName+' Make the Win More Than a One-Man Show',
    support:team(t)+': '+first+' Delivers '+fmt(star.points)+', '+opponent+' Still Wins'
   };
+  if(angle==='thin'){
+   headlines.thin=[
+    team(t)+': '+first+' Leads, the Supporting Cast Owes an Explanation',
+    first+' Scores '+fmt(star.points)+' but '+team(t)+' Needs More Than Three Starters',
+    team(t)+': Three Players Get '+fmt(three)+' of '+fmt(own)+' Points',
+    team(t)+': '+pname(weak)+' Posts '+fmt(weak.points)+' Behind '+first,
+    first+', '+secondName+' and '+thirdName+' Carry '+team(t),
+    team(t)+': Just '+fmt(rest)+' Points From Everyone Outside the Leading Trio'
+   ][Math.abs(Number(t.roster_id)||0)%6];
+  }
   const verdicts={
    zero:team(t)+' managed '+fmt(own)+' against '+opponent+'\'s '+fmt(other)+'. No verified starter delivered a positive score. One cannot reasonably declare a zero-point hero.',
    swing:team(t)+' lost '+fmt(own)+'–'+fmt(other)+'. '+pname(bench)+' scored '+fmt(upgrade)+' more than '+pname(starter)+' in a documented eligible alternative. The deficit was '+fmt(margin)+'. This is an actual lineup decision worth examining.',

@@ -231,6 +231,7 @@ try{
   // commit after the same parity/readiness gates as historical valuations.
   // Never promote anonymous visitor-submitted awards to storage.
   try{
+    await page.evaluate(()=>{window.__FLEECED_TRUSTED_HEADLESS_AWARDS=true});
     await page.locator('.tabs button[data-tab="leagueHub"]').click({timeout:15000});
     await page.locator('#leagueHub .lh-nav button[data-lh-view="awards"]').click({timeout:15000});
     await page.waitForFunction(()=>document.querySelectorAll('#leagueHubContent .lh-awards-main .lh-card').length>=18,null,{timeout:90000});

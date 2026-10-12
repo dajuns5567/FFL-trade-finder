@@ -76,14 +76,26 @@ function teamAnalysis(t,by,week){
    name(t)+' received '+fmt(topThree)+' of its '+fmt(total)+' points from three starters, versus '+fmt(remaining)+' from the rest. '+(share>=.65?'The next lineup needs another usable scorer behind '+who+' and '+support+'.':'Keeping '+who+', '+support+' and '+third+' productive gives the manager several ways to counter an opponent.'),
    name(t)+': '+(legal?v.narrow:(share>=.65?v.gap:v.spread))
  ]);
+ const next=word(t.next_opponent_name),upcoming=next?'Week '+(week+1)+' against '+next:'the next verified matchup';
+ const outlook=list([
+   name(t)+' goes into '+upcoming+' after '+who+' delivered '+fmt(top.points)+' and '+support+' followed with '+fmt(two.points)+'. '+(share>=.65?'The first improvement to look for is a third or fourth meaningful contribution beyond those leaders.':'The manager already has more than one productive starter to build around.'),
+   last&&num(last.points)<5?player(last)+' produced just '+fmt(last.points)+' at '+word(last.position||'his starting spot')+'. Before the next lineup lock, the choice is whether that role and its eligible alternatives justify another start; the previous result alone does not establish a replacement.':name(t)+' had its weakest individually recorded starter at '+fmt(last.points)+' points from '+player(last)+'. Matching the top of this lineup is not the only task; retaining enough useful scoring at the bottom is what turns one good week into another.'
+ ]);
+ a.headline=share>=.65
+  ?name(t)+': '+fmt(topThree)+' of '+fmt(total)+' Points Came From Three Starters Against '+opponent
+  :countUnder>=3
+    ?name(t)+': '+countUnder+' Quiet Starters Define the '+fmt(total)+'-Point '+(win?'Win':'Loss')
+    :name(t)+' '+(win?'Edges ':'Falls to ')+opponent+' by '+fmt(gap)+' as '+who+' Leads the Scoring';
  const lede=(a.sections||[]).find(s=>s.kind==='lede');
  const people=(a.sections||[]).find(s=>s.kind==='players');
  const manager=(a.sections||[]).find(s=>s.kind==='management');
+ const nextSection=(a.sections||[]).find(s=>s.kind==='outlook');
  // Replace only these sections: other independently reported story sections,
  // rankings, awards and all underlying football facts remain untouched.
  if(lede)lede.paragraphs=lead;
  if(people)people.paragraphs=players;
  if(manager)manager.paragraphs=management;
+ if(nextSection)nextSection.paragraphs=outlook;
  a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
  a.fact_driven_analysis=true;
 }

@@ -10,6 +10,7 @@ on:
       - 'netlify/functions/inquirer-publish-scheduled.mjs'
       - 'netlify/functions/inquirer-projection-capture-scheduled.mjs'
       - 'scripts/public-release-security-smoke.mjs'
+      - 'scripts/public-release-secret-scan.mjs'
       - '.github/workflows/public-release-security.yml'
   workflow_dispatch:
 permissions:
@@ -23,6 +24,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Scan tracked source for credential patterns
+        run: node scripts/public-release-secret-scan.mjs
       - name: Install Netlify function dependencies
         run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
       - name: Check server write authorization

@@ -240,7 +240,7 @@ try{
     const highs=awardPosts.get('award_highs'),periods=awardPosts.get('awards'),drafts=awardPosts.get('draft_records');
     const complete=Array.isArray(highs?.records)&&highs.records.length>=200&&
       Array.isArray(periods?.awards)&&periods.awards.length>=18&&
-      /^[A-Za-z]{3} \d{1,2} \d{4}$/.test(String(periods.period||''));
+      /^[A-Za-z]{3} \d{1,2},? \d{4}$/.test(String(periods.period||''));
     if(complete){
       const result={version:1,league,source:'trusted-headless-awards',captured_at:t,
         valuation_contract:SCHEDULED_VALUATION_CONTRACT,canonical_fingerprint:fp,

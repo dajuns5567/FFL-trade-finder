@@ -33,13 +33,18 @@ try{
  });
  for(const [path,handler] of [
   ['value-history',valueHistory],
-  ['update',updateSources],
   ['league-hub',leagueHub],
   ['inquirer-publish-on-load',publishOnLoad]
  ]){
   const response=await handler(post(path));
   assert.equal(response.status,403,'Anonymous production POST must fail closed: '+path);
  }
+ const readOnlyUpdate=await updateSources(post('update'));
+ assert.equal(readOnlyUpdate.status,400,'Public consensus refresh must still validate its inputs without promoting storage');
+ const {readFileSync}=await import('node:fs');
+ const updateSource=readFileSync('netlify/functions/update.mjs','utf8');
+ assert(updateSource.includes('const calculationOnly=previewReadOnly||!isAuthorizedWrite(req);'),'Public consensus must be calculation-only');
+ assert(updateSource.indexOf('if(calculationOnly)return json(')>0&&updateSource.indexOf('if(calculationOnly)return json(')<updateSource.indexOf('const previous=await readLastGood();'),'Public consensus return must precede persisted storage read/promotion');
  const rawExport=await valueHistory(new Request('https://fleeced-security-test.example/.netlify/functions/value-history?archive_export=1'));
  assert.equal(rawExport.status,403,'Anonymous GET bulk export must fail closed');
 }finally{

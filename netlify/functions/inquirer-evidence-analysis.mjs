@@ -80,11 +80,48 @@ function teamAnalysis(t,by,week){
   name(t)+' next prepares for '+next+' after a '+fmt(total)+'-point Week '+week+'. After '+who+' put up '+fmt(top.points)+', the issue is whether '+support+' and '+third+' can remain useful when the next opposing lineup arrives.',
   low+' carries a '+fmt(last.points)+'-point result into the next selection decision. '+(legal?'With '+player(reserve)+' available, this manager can compare actual eligible alternatives instead of inventing a transaction.':'Inside '+name(t)+'’s roster, the '+fmt(gap)+'-point margin does not reveal a legal replacement; the next starting decision still needs an actual role comparison.')
  ]);
- a.headline=share>=.65
-  ?name(t)+': Three Starters Supplied '+fmt(topThree)+' of '+fmt(total)+' Points Against '+rival
-  :countUnder>=3
-    ?name(t)+': '+countUnder+' Quiet Starters Define the '+fmt(total)+'-Point '+(win?'Win':'Loss')
-    :name(t)+' '+(win?'Defeats ':'Falls to ')+rival+' by '+fmt(gap)+' as '+who+' Sets the Pace';
+ const rank=Number(t.roster_id)||0;
+ const zero=total===0;
+ const close=gap<=8,wide=gap>=30,thin=share>=.7;
+ const angle=zero?'shutout':close?'narrow':legal&&!win&&num(miss.gap)>gap?'bench':wide?'blowout':thin?'topheavy':countUnder>=3?'quiet':win?'depth':'support';
+ const titles={
+  shutout:name(t)+' Scores Zero Against '+rival+'. There Is No Positive Spin',
+  narrow:name(t)+(win?' Escapes ':' Falls Short Against ')+rival+' by '+fmt(gap),
+  bench:name(t)+' Loses by '+fmt(gap)+' With a '+fmt(miss.gap)+'-Point Eligible Bench Upgrade',
+  blowout:name(t)+(win?' Cruises Past ':' Gets Run Over by ')+rival+' by '+fmt(gap),
+  topheavy:name(t)+' Leans on '+who+' While the Supporting Cast Goes Quiet',
+  quiet:name(t)+' Has '+countUnder+' Starters Below Five Points. That Explains Plenty',
+  depth:name(t)+' Beats '+rival+' With Help From '+support+' and '+third,
+  support:who+' Delivers '+fmt(top.points)+' but '+name(t)+' Still Loses to '+rival
+ };
+ a.headline=titles[angle];
+ const observations={
+  shutout:'No starter delivered a positive point for '+name(t)+'. Describing '+who+' at '+fmt(top.points)+' as a hero would be generous to the point of fiction. '+rival+' won '+fmt(against)+'–'+fmt(total)+'.',
+  narrow:'Only '+fmt(gap)+' points separated '+name(t)+' and '+rival+'. At that margin a verified eligible replacement could matter. An imaginary one remains surprisingly useless.',
+  bench:player(reserve)+' outscored '+player(started)+' by '+fmt(miss.gap)+' in a documented eligible switch. That exceeds the '+fmt(gap)+'-point loss; the manager has an actual decision to explain.',
+  blowout:name(t)+' '+(win?'won':'lost')+' by '+fmt(gap)+'. The margin was too large to dress up as a single unfortunate bounce. A whole collection of starting scores created it.',
+  topheavy:who+', '+support+' and '+third+' produced '+fmt(topThree)+' of '+fmt(total)+' points for '+name(t)+'. That leaves just '+fmt(remaining)+' from everybody else. A three-person roster is not usually the plan.',
+  quiet:name(t)+' started '+countUnder+' players who scored fewer than five points. '+low+' managed '+fmt(last.points)+'. Rivals did not have to work especially hard to find the soft spots.',
+  depth:name(t)+' beat '+rival+' by '+fmt(gap)+', with '+who+' contributing '+fmt(top.points)+' and '+support+' adding '+fmt(two.points)+'. This week the supporting cast remembered it was employed.',
+  support:who+' scored '+fmt(top.points)+' for '+name(t)+' and still watched '+rival+' win by '+fmt(gap)+'. One reliable starter cannot cover every other lineup slot.'
+ };
+ if(zero){
+  for(const section of a.sections||[])if(section.kind==='lede')section.paragraphs=[observations.shutout,'All '+own.length+' individually verified starting scores were zero. That is a roster-wide absence of production, not a star performance.'];
+ }else{
+  lede[0]=observations[angle];
+  lede[1]=who+' provided '+fmt(top.points)+', '+support+' added '+fmt(two.points)+' and '+third+' had '+fmt(three.points)+'. The three accounted for '+fmt(share*100)+'% of '+name(t)+'’s total; the rest accounted for '+fmt(remaining)+'.';
+ }
+ if(zero)playerRows[0]=who+', '+support+' and '+third+' each scored zero. There is no useful scoring leader to celebrate.';
+ if(zero)playerRows[1]=name(t)+' got zero from its entire verified starting lineup. A sarcastic quote cannot make that box score respectable.';
+ if(!zero)playerRows[1]=low+' finished with '+fmt(last.points)+' for '+name(t)+'. '+countUnder+' of '+own.length+' documented starters scored fewer than five points. That is a specific weakness, not a vague complaint about effort.';
+ const jokes=[
+  'The scoreboard remains stubbornly uninterested in excuses.',
+  'Apparently the opposing manager also remembered to set a lineup. Inconvenient.',
+  'THE NUMBERS ARE NOT A PRESS CONFERENCE. FIX THE STARTING CARD.',
+  'Rivals have seen the weak spot. They did not need a scouting department.'
+ ];
+ management[1]=name(t)+' got '+fmt(total-num(top.points)-num(two.points))+' points beyond '+who+' and '+support+'. '+jokes[rank%jokes.length]+' '+(thin?'Finding a third dependable scorer is the immediate job.':'The role-by-role comparison is more useful than another promise about next Sunday.');
+ outlook[0]='Week '+(week+1)+(word(t.next_opponent_name)?' brings '+next+'. ':' has no verified opposing team in this edition. ')+(zero?'First objective: one positive starter score. The bar has been lowered for obvious reasons.':thin?'The challenge is scoring beyond '+who+' and '+support+', not just hoping they repeat this week.':'The manager needs '+low+'’s '+fmt(last.points)+'-point starting slot to be less of a gift to opponents.');
  const replace=(kind,rows)=>{const section=(a.sections||[]).find(x=>x.kind===kind);if(section)section.paragraphs=rows};
  replace('lede',lede);replace('players',players);replace('management',management);replace('outlook',outlook);
  a.paragraphs=(a.sections||[]).flatMap(section=>[...(section.paragraphs||[]),...(section.blocks||[]).flatMap(b=>b.paragraphs||[])]);

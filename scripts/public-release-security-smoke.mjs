@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {isAuthorizedWrite} from '../netlify/functions/privileged-write.mjs';
+const request=(token)=>new Request('https://fleeced.example/.netlify/functions/value-history',{method:'POST',headers:token?{authorization:'Bearer '+token}:{}});
+delete process.env.FLEECED_SERVER_WRITE_TOKEN;
+assert.equal(isAuthorizedWrite(request()),false,'Missing server secret must fail closed');
+assert.equal(isAuthorizedWrite(request('sample')),false,'Missing secret cannot be bypassed');
+process.env.FLEECED_SERVER_WRITE_TOKEN='a'.repeat(64);
+assert.equal(isAuthorizedWrite(request()),false,'Anonymous writes must be rejected');
+assert.equal(isAuthorizedWrite(request('a'.repeat(63))),false,'Wrong token must be rejected');
+assert.equal(isAuthorizedWrite(request('a'.repeat(64))),true,'Authorized server request succeeds');
+process.env.FLEECED_SERVER_WRITE_TOKEN='short';
+assert.equal(isAuthorizedWrite(request('short')),false,'Short secrets are rejected');
+console.log('Public-release server write authorization smoke passed');

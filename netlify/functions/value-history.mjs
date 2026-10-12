@@ -1162,6 +1162,9 @@ export default async (req)=>{
       if(!validAnonymousObservation(body))
         return json({error:'invalid page observation'},400);
 
+      const now=Date.now(),slot=Math.floor(now/60000);
+      const t=new Date(slot*60000).toISOString();
+      const key=`snapshots/observed-${slot}.json`;
       // A coalesced visit does not need to re-download the full archive payload.
       const existing=await safeGet(s,key);
       if(existing?.t===t&&existing?.source==='page-load'&&existing?.observed_from)
@@ -1177,9 +1180,6 @@ export default async (req)=>{
       const canonicalAge=Date.now()-Date.parse(String(canonical.t||''));
       if(!Number.isFinite(canonicalAge)||canonicalAge<0||canonicalAge>4*60*60*1000)
         return json({error:'trusted valuation baseline is stale; awaiting scheduled refresh'},503);
-      const now=Date.now(),slot=Math.floor(now/60000);
-      const t=new Date(slot*60000).toISOString();
-      const key=`snapshots/observed-${slot}.json`;
       const rows=cleanRows(canonical.rows),picks=cleanPicks(canonical.picks),teams=cleanTeams(canonical.teams);
       const fp=fingerprint(rows,picks,teams);
       const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source:'page-load',

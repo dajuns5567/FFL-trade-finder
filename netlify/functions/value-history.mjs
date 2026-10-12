@@ -1148,6 +1148,38 @@ export default async (req)=>{
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
     if(isReadOnlyPreview(req))return json({error:'preview writes disabled'},403);
+    // Public page-load observations never accept submitted valuations. Record a
+    // bounded observation of the latest immutable GitHub archival snapshot only.
+    // One shared slot per minute bounds anonymous write volume regardless of traffic.
+    if(!isAuthorizedWrite(req)&&url.searchParams.get('observe')==='1'){
+      if(!s)return json({error:'live history store unavailable'},503);
+      const body=await req.json().catch(()=>null);
+      if(!body||body.event!=='page-load'||String(body.league||'')!==LEAGUE||
+         Object.keys(body).some(key=>!['event','league'].includes(key)))
+        return json({error:'invalid page observation'},400);
+      const idx=await archiveIndex();
+      const last=idx.items?.at(-1);
+      const canonical=last?await archiveSnapshot(last):null;
+      if(!canonical||cleanRows(canonical.rows).length<100)
+        return json({error:'trusted history baseline unavailable'},503);
+      const now=Date.now(),slot=Math.floor(now/60000);
+      const t=new Date(slot*60000).toISOString();
+      const key=`snapshots/observed-${slot}.json`;
+      const rows=cleanRows(canonical.rows),picks=cleanPicks(canonical.picks),teams=cleanTeams(canonical.teams);
+      const fp=fingerprint(rows,picks,teams);
+      const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source:'page-load',
+        valuation_contract:'archived-observation',observed_from:canonical.t,
+        rows,picks,teams};
+      // The storage provider arbitrates simultaneous requests across instances.
+      const saved=await retry(()=>s.setJSON(key,snapshot,{onlyIfNew:true}),120);
+      if(saved?.modified){
+        await appendIndex(s,key,t);
+        await retry(()=>s.setJSON(LATEST_KEY,{version:3,t,fingerprint:fp,key,count:rows.length,source:'page-load'}),120);
+        marketInsightsCache=null;marketInsightsCacheAt=0;
+      }
+      return json({ok:true,stored:!!saved?.modified,coalesced:!saved?.modified,
+        t,source:'page-load',observed_from:canonical.t,count:rows.length});
+    }
     if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();
     if(!s)return json({error:'live history store unavailable'},503);
     const body=await req.json().catch(()=>null);

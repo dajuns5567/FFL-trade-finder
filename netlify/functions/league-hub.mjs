@@ -332,10 +332,18 @@ async function syncReporterArchives(s,result,broadcastKey){
  }));
  await s.setJSON('inquirer/reporters/index.json',{schema_version:1,inquirer_version:INQUIRER_VERSION,reporters});
 }
+// Publication approval is checked on reads as well as on writers. A stored
+// draft is not automatically a public edition. The approval season advances
+// explicitly when a new season's newsroom is released.
+function publiclyApprovedEdition(season,week){
+ const approvalSeason=Number(process.env.INQUIRER_APPROVAL_SEASON??2026)||2026;
+ const through=Math.max(0,Math.min(INQUIRER_FINAL_WEEK,Number(process.env.INQUIRER_APPROVED_THROUGH_WEEK??4)||0));
+ return Number(season)<approvalSeason||Number(week)<=through;
+}
 async function reporterArchive(id){
  const reporter=publicReporters().find(x=>x.id===String(id||''));if(!reporter)return{error:'reporter not found'};
  const s=store(),j=await s.get('inquirer/reporters/'+reporter.id+'/index.json',{type:'json'}).catch(()=>null),articles=mergeArchiveEntries(Array.isArray(j?.articles)?j.articles:[],preloadedReporterEntries(reporter.id));
- return{schema_version:1,reporter,articles};
+ return{schema_version:1,reporter,articles:articles.filter(a=>publiclyApprovedEdition(a.season,a.week))};
 }
 async function reporterDirectory(){return{schema_version:1,inquirer_version:INQUIRER_VERSION,reporters:publicReporters()}}
 
@@ -465,7 +473,7 @@ async function broadcastArchive(){
   const season=Number(p.season),week=Number(p.week),key=String(season)+'|'+String(week);
   if(!rows.some(x=>String(Number(x.season))+'|'+String(Number(x.week))===key))rows.push({type:'week',season,week,key:'preloaded:'+season+':'+week,captured_at:String(p.generated_at||''),preloaded:true});
  }
- rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
+ rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows.filter(a=>publiclyApprovedEdition(a.season,a.week))};
 }
 export function isCurrentWeek4Inquirer(edition){
  const blocks=edition?.league_overview?.sections?.[0]?.blocks;
@@ -673,7 +681,9 @@ async function latestPublishedReadOnly(){
  return {available:false,reason:'No published Fleeced! Inquirer edition is available yet.'};
 }
 async function broadcastStored(season,week){
- const y=Number(season),w=Number(week),canonicalPreload=preloadedBroadcast(y,w);
+ const y=Number(season),w=Number(week);
+ if(!publiclyApprovedEdition(y,w))return{available:false,season:y,week:w,reason:'Inquirer edition awaits publication approval'};
+ const canonicalPreload=preloadedBroadcast(y,w);
  if(y===2026&&w===2&&canonicalPreload)return addArchivedProjectionCoverage(canonicalPreload);
  let v=null;
  try{v=await store().get(`broadcasts/${y}/week-${String(w).padStart(2,'0')}.json`,{type:'json'})}catch(e){if(!canonicalPreload)console.warn('Inquirer archive storage unavailable',y,w,String(e?.message||e))}
@@ -799,7 +809,7 @@ async function weeklyAwards({allowRefresh=false}={}){
   }
  }
  const fresh=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null);
- return{schema_version:Number(fresh?.schema_version)||2,records:Array.isArray(fresh?.records)?fresh.records:[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week))};
+ return{schema_version:Number(fresh?.schema_version)||2,records:(Array.isArray(fresh?.records)?fresh.records:[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week))).filter(a=>publiclyApprovedEdition(a.season,a.week))};
 }
 
 async function draftAwards(){

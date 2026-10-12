@@ -393,7 +393,7 @@ async function syncAwards(rows){
   const response=await fetch('/.netlify/functions/league-hub?awards=1',{cache:'no-store'});
   if(response.ok){const data=await response.json();awardHistory=Array.isArray(data.history)?data.history:[]}
   const period=awardPeriod();
-  if(trustedCapture&&!awardHistory.some(x=>x.period===period)){
+  if(trustedCapture){
    const posted=await fetch('/.netlify/functions/league-hub?awards=1',{method:'POST',
     headers:{'content-type':'application/json'},body:JSON.stringify({period,awards:rows})});
    if(posted.ok){const data=await posted.json();if(Array.isArray(data.history))awardHistory=data.history}

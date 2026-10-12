@@ -1098,6 +1098,7 @@ export default async (req)=>{
     }
     if(req.method==='GET'){
       if(url.searchParams.get('archive_export')==='1'){
+        if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();
         if(!s)return json({error:'netlify live buffer unavailable'},503);
         const indexed=await allItems(s),sinceMs=new Date(String(url.searchParams.get('since')||'')).getTime();
         const items=(indexed.items||[]).filter(item=>{const ms=new Date(item?.t||'').getTime();return !Number.isFinite(sinceMs)||!Number.isFinite(ms)||ms>sinceMs});

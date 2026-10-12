@@ -47,7 +47,7 @@ export function addInquirerCharacter(edition,{week=Number(edition?.week)}={}){
    'nora-voss':'Rivals have already noticed that weak starting role. They can read numbers too.'
   };
   const voice=voices[String(a.reporter?.id)]||voices['walter-mercer'];
-  const line=zero?'Every verified starter finished on zero. Finding a hero here would require rewriting the scorebook.':
+  const line=zero?'Even '+first+', '+secondName+' and '+thirdName+' finished with zero points. There was no positive starter score to build the lineup around.':
    first+' ('+String(star.position||'starter')+') scored '+fmt(star.points)+', '+secondName+' added '+fmt(second.points)+', and '+thirdName+' contributed '+fmt(third.points)+'. The top three accounted for '+fmt(three)+' points, '+fmt(share*100)+'% of the team total; the rest supplied '+fmt(rest)+'.';
   const weakline=pname(weak)+' returned '+fmt(weak.points)+' at '+String(weak.position||'a starter slot')+'. '+tiny+' of '+p.length+' individually scored starters finished under five points. '+(won?'The victory conceals that number in the standings, not the box score.':'The loss makes it harder to ignore.');
   const decision=legal?pname(bench)+' beat selected starter '+pname(starter)+' by '+fmt(upgrade)+' in a verified eligible replacement. '+(won?'That would have widened a win.':upgrade>margin?'The potential gain exceeded the loss by '+fmt(upgrade-margin)+' points if other scores remained unchanged.':'The swap still would have left '+fmt(margin-upgrade)+' points to recover.'):

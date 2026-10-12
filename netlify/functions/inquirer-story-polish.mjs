@@ -37,6 +37,12 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
    if(hot)hot.paragraphs=[tn(t)+' recorded zero across the verified starting lineup. That is a collective scoring problem rather than one convenient player to blame.'];
    if(cool)cool.paragraphs=['No starter scored a positive point for '+tn(t)+'. There is no individually earned Cool Throne this week.'];
   }
+  if(own>0){
+   const hot=section(a,'hot-seat'),cool=section(a,'cool-throne');
+   const won=own>=other;
+   if(hot)hot.paragraphs=[nm(weak)+' finished on '+f(weak.points)+' at '+String(weak.position||'a starting position')+'. '+(won?'The win got away with it; the next opponent might not.':'The loss made that quiet role rather more visible than management would prefer.')];
+   if(cool)cool.paragraphs=[nm(star)+' recorded '+f(star.points)+' and led the verified starters. '+(won?'A useful performance, although even the best score needs help to produce a win.':'A good box score in a loss is still good work. It is not a win, however convenient that would be.')];
+  }
   const management=section(a,'management');
   if(management?.paragraphs?.length>=2&&short.length>=3){
    management.paragraphs[1]+=' '+short.length+' of '+players.length+' verified starter scores finished below five. That is a lineup concern worth taking to next week, not a mysterious statistical trend.';

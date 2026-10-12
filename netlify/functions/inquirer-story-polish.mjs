@@ -25,14 +25,14 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
    }
   }
   if(features&&features.paragraphs?.length>=2){
-   if(own===0){
+   if(own===0&&players.every(x=>Number(x.points)===0)){
     features.paragraphs[0]=nm(star)+', '+nm(second)+' and '+nm(third)+' all recorded zero. Treating any one of them as a standout would be an exercise in creative accounting.';
    }else{
     const starToLow=Number(star.points)-Number(weak.points),secondary=Number(second.points)+Number(third.points);
     features.paragraphs[0]=nm(star)+' led '+tn(t)+' with '+f(star.points)+' from '+String(star.position||'a starter role')+'. '+nm(second)+' and '+nm(third)+' combined for '+f(secondary)+'. Against '+f(weak.points)+' from '+nm(weak)+', the gap between the strongest and quietest starters was '+f(starToLow)+' points. That imbalance is a better clue than a vague complaint about effort.';
    }
   }
-  if(own===0){
+  if(own===0&&players.every(x=>Number(x.points)===0)){
    const hot=section(a,'hot-seat'),cool=section(a,'cool-throne');
    if(hot)hot.paragraphs=[tn(t)+' recorded zero across the verified starting lineup. That is a collective scoring problem rather than one convenient player to blame.'];
    if(cool)cool.paragraphs=['No starter scored a positive point for '+tn(t)+'. No player warrants a performance honor in this game.'];

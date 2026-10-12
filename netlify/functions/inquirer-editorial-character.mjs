@@ -30,6 +30,16 @@ export function addInquirerCharacter(edition,{week=Number(edition?.week)}={}){
    depth:team(t)+': '+secondName+' and '+thirdName+' Make the Win More Than a One-Man Show',
    support:team(t)+': '+first+' Delivers '+fmt(star.points)+', but the Win Goes to '+opponent
   };
+  if(angle==='wide'){
+   headlines.wide=[
+    team(t)+': '+fmt(margin)+' Points Separate It From '+opponent,
+    team(t)+': '+(won?'A Comfortable Win Over ':'A Rough Sunday Against ')+opponent,
+    team(t)+': '+opponent+(won?' Never Got Within '+fmt(margin):' Put '+fmt(margin)+' Points Between Them'),
+    team(t)+': '+(won?'A Win That Never Needed a Last-Minute Miracle':'A Defeat Too Big for One Bench Swap to Explain'),
+    team(t)+': '+fmt(margin)+' Points of Difference. The Scoreboard Is Not Negotiating',
+    team(t)+': '+(won?'The Lineup Made the Case Against ':'The Starting Scores Could Not Match ')+opponent
+   ][Math.abs(Number(t.roster_id)||0)%6];
+  }
   if(angle==='thin'){
    headlines.thin=[
     team(t)+': '+first+' Leads, the Supporting Cast Owes an Explanation',

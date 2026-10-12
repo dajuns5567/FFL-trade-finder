@@ -790,7 +790,7 @@ async function weeklyAwardRecordForBroadcast(broadcast,{stats=null,players=null,
 }
 export async function refreshWeeklyAwardsForBroadcast(broadcast,inputs={}){return weeklyAwardRecordForBroadcast(broadcast,inputs)}
 
-async function weeklyAwards({allowRefresh=false}={}){
+export async function weeklyAwards({allowRefresh=false}={}){
  const archive=await broadcastArchive(),s=store(),old=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null),
   records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[],
   byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r]));
@@ -874,7 +874,7 @@ function managerScoringSummary(scoringGames,career,currentSeason,currentWeek){
  const currentRows=rows.filter(g=>Number(g.season)===Number(currentSeason));
  return{since_season:2024,through_season:Number(currentSeason)||null,through_week:Math.max(0,Math.min(17,(Number(currentWeek)||1)-1)),games:rows.map(decorate),season_extremes,record_history,all_time:{highest:highest||null,lowest:lowest||null},leaderboards:{all_time_highest:ranked(rows,true).slice(0,50),all_time_lowest:ranked(rows,false).slice(0,50),year_highest:ranked(currentRows,true).slice(0,50),year_lowest:ranked(currentRows,false).slice(0,50)}};
 }
-async function managerHistory({allowCacheWrite=true}={}){
+export async function managerHistory({allowCacheWrite=true}={}){
  const s=store(),nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),currentSeason=Number(nfl?.season)||new Date().getFullYear(),stateWeek=Number(nfl?.week)||1,publishedWeek=await latestPublishedRegularWeek(currentSeason),currentWeek=Math.max(stateWeek,publishedWeek+1);
  let league=await fetchJson(`${API}/league/${LEAGUE}`),chain=[];for(let guard=0;league&&guard<12;guard++){chain.push(league);if(!league.previous_league_id)break;league=await fetchJson(`${API}/league/${league.previous_league_id}`).catch(()=>null)}chain.sort((a,b)=>Number(a.season)-Number(b.season));
  const career={},assignments=[],current=[],games=[],scoringGames=[],assignmentKeys=new Set();

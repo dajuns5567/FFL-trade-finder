@@ -80,9 +80,12 @@ try{
  };
  // Non-mutating endpoint-level checks on the dedicated public CI site.
  // Never probe a production project's endpoints or send a write request.
- // Isolated CI hosts are checked only when they are reachable. This avoids
- // binding the acceptance test to a disconnected legacy Netlify account.
- const isolatedHosts=[];
+ // Preserve mandatory CI read-only and unpublished-Week-5 assertions.
+ // A replacement isolated CI site must pass these before acceptance is green.
+ const isolatedHosts=[
+  'https://fleeced-inquirer-browser-ci.netlify.app',
+  'https://player-signal-layer-r1--fleeced-inquirer-browser-ci.netlify.app'
+ ];
  for(const host of isolatedHosts){
   const exportProbe=await page.request.get(host+'/.netlify/functions/value-history?archive_export=1',{timeout:30000});
   assert.equal(exportProbe.status(),403,'Public CI bulk history export must be denied on '+host);

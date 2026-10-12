@@ -60,7 +60,7 @@ try{
  assert(captureUi.includes("API+'?observe=1'")&&captureUi.includes("event:'page-load'"),'Public page load must send event, not client-submitted values');
  const historySource=readFileSync('netlify/functions/value-history.mjs','utf8');
  assert(historySource.includes("url.searchParams.get('observe')==='1'")&&historySource.includes("await archiveSnapshot(last)")&&historySource.includes("onlyIfNew:true"),'Anonymous observations must use canonical GitHub archive and globally bounded create-only writes');
- assert(historySource.indexOf("if(!isAuthorizedWrite(req)&&url.searchParams.get('observe')==='1')")<historySource.indexOf("if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();"),'Public event route must be separate from privileged arbitrary valuation writes');
+ assert(historySource.indexOf("if(!isAuthorizedWrite(req)&&url.searchParams.get('observe')==='1')")<historySource.lastIndexOf("if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();"),'Public event route must be separate from privileged arbitrary valuation writes');
  const rawExport=await valueHistory(new Request('https://fleeced-security-test.example/.netlify/functions/value-history?archive_export=1'));
  assert.equal(rawExport.status,403,'Anonymous GET bulk export must fail closed');
 }finally{

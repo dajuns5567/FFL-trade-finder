@@ -27,6 +27,7 @@ jobs:
         id: active_site
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          FLEECED_SERVER_WRITE_TOKEN: ${{ secrets.FLEECED_SERVER_WRITE_TOKEN }}
           NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SHA: ${{ github.sha }}

@@ -7,7 +7,12 @@ const json=body=>new Response(JSON.stringify(body),{
 });
 
 async function call(origin,path){
-  const r=await fetch(origin+path,{headers:{accept:'application/json','user-agent':'Fleeced-Completed-Week-Publisher/2.0'},cache:'no-store'});
+  // Scheduled maintenance must carry server-only authorization so that its
+  // downstream cache refreshes can persist after public GETs became read-only.
+  // Never put this credential in client JS, responses, or diagnostic logs.
+  const token=String(process.env.FLEECED_SERVER_WRITE_TOKEN||'');
+  if(token.length<32)throw new Error('Scheduled downstream refresh requires a configured server write token');
+  const r=await fetch(origin+path,{headers:{accept:'application/json','user-agent':'Fleeced-Completed-Week-Publisher/2.0',authorization:`Bearer ${token}`},cache:'no-store'});
   const body=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(r.status+' '+path+' '+String(body?.error||body?.reason||''));
   return body;

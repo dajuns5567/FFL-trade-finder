@@ -9,6 +9,7 @@ on:
       - 'scripts/value-history-headless-refresh.mjs'
       - 'league-hub-v451.js'
       - 'netlify/functions/update.mjs'
+      - 'scripts/inquirer-final-copy-regression.mjs'
 
 permissions:
   contents: read

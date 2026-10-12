@@ -64,6 +64,13 @@ jobs:
           VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
         run: node scripts/value-history-headless-refresh.mjs
 
+      - name: Promote canonical League Hub awards from trusted browser
+        if: steps.due.outputs.due == 'true'
+        env:
+          FLEECED_SERVER_WRITE_TOKEN: ${{ secrets.FLEECED_SERVER_WRITE_TOKEN }}
+          LEAGUE_AWARDS_SNAPSHOT_FILE: .tmp/league-hub-trusted-awards.json
+        run: node scripts/publish-league-awards-trusted.mjs
+
       - name: Persist scheduled observation directly to durable Value History archive
         if: steps.due.outputs.due == 'true'
         env:

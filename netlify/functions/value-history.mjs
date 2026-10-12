@@ -123,6 +123,11 @@ const isV498BadTime=t=>V498_BAD_TIMES.has(String(t||''));
 const isV499BadTime=t=>V499_BAD_TIMES.has(String(t||''));
 const isKnownBadHistoryTime=t=>isV380BadTime(t)||isV381BadTime(t)||isV391BadTime(t)||isV486BadTime(t)||isV487BadTime(t)||isV490BadTime(t)||isV492BadTime(t)||isV494BadTime(t)||isV495BadTime(t)||isV498BadTime(t)||isV499BadTime(t);
 
+export function validAnonymousObservation(body){
+ return !!body&&typeof body==='object'&&!Array.isArray(body)&&body.event==='page-load'&&
+   String(body.league||'')===LEAGUE&&Object.keys(body).length===2&&
+   Object.keys(body).every(key=>['event','league'].includes(key));
+}
 function cleanRows(rows){
   if(!Array.isArray(rows))return[];
   const out=[];
@@ -1154,8 +1159,7 @@ export default async (req)=>{
     if(!isAuthorizedWrite(req)&&url.searchParams.get('observe')==='1'){
       if(!s)return json({error:'live history store unavailable'},503);
       const body=await req.json().catch(()=>null);
-      if(!body||body.event!=='page-load'||String(body.league||'')!==LEAGUE||
-         Object.keys(body).some(key=>!['event','league'].includes(key)))
+      if(!validAnonymousObservation(body))
         return json({error:'invalid page observation'},400);
 
       // A coalesced visit does not need to re-download the full archive payload.

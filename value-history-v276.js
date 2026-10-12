@@ -552,6 +552,14 @@ async function recordSnapshot(source=pendingSnapshotSource){
       }
       return true
     }
+    // A public visitor must not hammer a protected write endpoint every 3s.
+    // Scheduled authenticated server snapshots remain independent of this UI.
+    if(r.status===401||r.status===403){
+      window.__vhLastSnapshot={ok:false,source,read_only:true,reason:'server write authorization required'};
+      clearTimeout(snapshotTimer);
+      console.info('Value History is read-only for public visitors; saved historical charts remain available');
+      return false;
+    }
     scheduleSnapshot(3000,source);return false
   }catch(e){
     console.warn('value-history-player-snapshot',e);

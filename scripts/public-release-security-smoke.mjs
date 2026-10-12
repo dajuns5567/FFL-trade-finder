@@ -53,7 +53,8 @@ try{
  const {readFileSync}=await import('node:fs');
  const updateSource=readFileSync('netlify/functions/update.mjs','utf8');
  assert(updateSource.includes('const calculationOnly=previewReadOnly||!isAuthorizedWrite(req);'),'Public consensus must be calculation-only');
- assert(updateSource.indexOf('if(calculationOnly)return json(')>0&&updateSource.indexOf('if(calculationOnly)return json(')<updateSource.indexOf('const previous=await readLastGood();'),'Public consensus return must precede persisted storage read/promotion');
+ assert(updateSource.indexOf('if(calculationOnly){')>0&&updateSource.indexOf('if(calculationOnly){')<updateSource.indexOf('const previous=await readLastGood();'),'Public consensus read-only branch must precede authenticated persisted promotion');
+ assert(updateSource.includes('using_last_known_good:true')&&updateSource.includes('const saved=await readLastGood();'),'Public provider failures must return trusted persisted LKG without write access');
  process.env.INQUIRER_APPROVED_THROUGH_WEEK='4';
  const lockedWeek5=await leagueHub(new Request('https://fleeced-security-test.example/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week=5'));
  assert.equal(lockedWeek5.status,200,'Unapproved Week 5 must return a safe read-only response');
@@ -130,6 +131,13 @@ assert(awardPublisher.includes("redirect:'manual'")&&
   awardPublisher.includes("authorization:'Bearer '+token")&&
   awardPublisher.includes("data.source!=='trusted-headless-awards'"),
   'Promotion must use trusted browser provenance and never redirect the private server token');
+const consensusPublisher=readSecuritySource('scripts/promote-consensus-trusted.mjs','utf8');
+assert(consensusPublisher.includes("manifest.source!=='trusted-headless-consensus'")&&
+  consensusPublisher.includes("authorization:'Bearer '+token")&&consensusPublisher.includes("redirect:'manual'"),
+  'Canonical consensus promotion must authenticate with server secret and prohibit redirects');
+const consensusSource=readSecuritySource('netlify/functions/update.mjs','utf8');
+assert(consensusSource.includes('await writeLastGood(promoted)')&&consensusSource.includes('persistence_error:true'),
+  'Consensus must not report successful LKG promotion if Netlify Blobs writes fail');
 const awardWorkflow=readSecuritySource('.github/workflows/value-history-headless-refresh.yml','utf8');
 assert(awardWorkflow.includes('secrets.FLEECED_SERVER_WRITE_TOKEN')&&
   awardWorkflow.includes('scripts/publish-league-awards-trusted.mjs'),

@@ -52,17 +52,17 @@ function teamAnalysis(t,by,week){
  const lead=list([
    name(t)+' '+(win?'beat ':'lost to ')+opponent+' '+fmt(total)+'–'+fmt(against)+' in Week '+week+'. '+who+' led its starters with '+fmt(top.points)+', but the more revealing number is the '+fmt(topThree)+' points supplied by its three highest scorers.',
    share>=.65
-     ?'Those three accounted for '+fmt(share*100)+'% of the team total. The other starters combined for just '+fmt(remaining)+'. '+v.gap
-     :'The top three supplied '+fmt(share*100)+'% of the total, leaving '+fmt(remaining)+' points from the other starting positions. '+v.spread,
+     ?name(t)+' relied on those three for '+fmt(share*100)+'% of the team total. The other starters combined for just '+fmt(remaining)+'. '+v.gap
+     :name(t)+' got '+fmt(share*100)+'% of the total from its three leaders, leaving '+fmt(remaining)+' points from the other starting positions. '+v.spread,
    opponentTop
-     ?'Across the matchup, '+player(opponentTop)+' paced '+opponent+' with '+fmt(opponentTop.points)+'. '+(theirs.length>=3?'Its three biggest starter scores totaled '+fmt(opponentThree)+', '+fmt(Math.abs(topThree-opponentThree))+' '+(topThree>=opponentThree?'fewer than '+name(t)+' received from its top three.':'more than '+name(t)+' received from its top three.'):'The remaining opposing starter detail is incomplete.')
+     ?player(opponentTop)+' paced '+opponent+' with '+fmt(opponentTop.points)+'. '+(theirs.length>=3?'Its three biggest starter scores totaled '+fmt(opponentThree)+', '+fmt(Math.abs(topThree-opponentThree))+' '+(topThree>=opponentThree?'fewer than '+name(t)+' received from its top three.':'more than '+name(t)+' received from its top three.'):'The remaining opposing starter detail is incomplete.')
      :null
  ]);
  const players=list([
    who+' ('+word(top.position||'starter')+') scored '+fmt(top.points)+'; '+support+' ('+word(two.position||'starter')+') delivered '+fmt(two.points)+'; '+third+' ('+word(three.position||'starter')+') added '+fmt(three.points)+'. Their combined '+fmt(topThree)+' explains how much of the game was carried by identifiable starters, not a vague claim about effort.',
    countUnder
-     ?countUnder+' of the '+own.length+' starters with recorded individual scores finished below five points. '+player(last)+' had '+fmt(last.points)+' in '+word(last.position||'a starting position')+'. '+(win?'The win concealed that weak point on the standings page; it did not erase the lack of production.':'That lack of production is a specific part of the loss, rather than a reason to blame every starter.')
-     :'Every individually verified starter reached at least five points. '+(win?'The breadth of those contributions is part of why the roster won.':'The loss therefore deserves more attention to the opponent’s production than to a fabricated collapse by one player.')
+     ?name(t)+' had '+countUnder+' of '+own.length+' verified starters finish below five points. '+player(last)+' had '+fmt(last.points)+' in '+word(last.position||'a starting position')+'. '+(win?'The win concealed that weak point on the standings page; it did not erase the lack of production.':'That lack of production is a specific part of the loss, rather than a reason to blame every starter.')
+     :name(t)+' had every individually verified starter reach at least five points. '+(win?'The breadth of those contributions is part of why the roster won.':'The loss therefore deserves more attention to the opponent’s production than to a fabricated collapse by one player.')
  ]);
  const miss=t.best_lineup_miss||a.facts?.best_lineup_miss;
  const reserve=miss?.reserve||miss?.bench,started=miss?.starter;
@@ -72,9 +72,9 @@ function teamAnalysis(t,by,week){
      ?player(reserve)+' outscored starter '+player(started)+' by '+fmt(miss.gap)+' points in a documented eligible lineup alternative. '+(gap<num(miss.gap)?'That available improvement exceeded the '+fmt(gap)+'-point final margin; it could have changed the result, assuming the other scores remained fixed.':'It would not by itself erase a '+fmt(gap)+'-point gap; the rest of the roster also needed to produce.')
      :gap<=8
        ?name(t)+' finished '+fmt(gap)+' points '+(win?'ahead':'behind')+'. That is close enough for a small eligible lineup change to matter, but this edition does not verify a specific legal alternative; a blame assignment would be invented.'
-       :'The final margin was '+fmt(gap)+' points. '+v.blowout,
-   'With '+fmt(topThree)+' of '+fmt(total)+' points coming from the top three starters and '+fmt(remaining)+' from everyone else, the next roster decision is where to seek a more dependable second wave of scoring—not whether the box score can be rewritten.',
-   legal?v.narrow:(share>=.65?v.gap:v.spread)
+       :name(t)+' faced a '+fmt(gap)+'-point final margin. '+v.blowout,
+   name(t)+' received '+fmt(topThree)+' of its '+fmt(total)+' points from three starters, versus '+fmt(remaining)+' from the rest. '+(share>=.65?'The next lineup needs another usable scorer behind '+who+' and '+support+'.':'Keeping '+who+', '+support+' and '+third+' productive gives the manager several ways to counter an opponent.'),
+   name(t)+': '+(legal?v.narrow:(share>=.65?v.gap:v.spread))
  ]);
  const lede=(a.sections||[]).find(s=>s.kind==='lede');
  const people=(a.sections||[]).find(s=>s.kind==='players');

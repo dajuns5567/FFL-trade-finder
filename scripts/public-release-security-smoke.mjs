@@ -87,6 +87,7 @@ try{
 }
 console.log('Public release HTTP handler refusal smoke passed');
 
+import {readFileSync as readSecuritySource} from 'node:fs';
 // Native scheduled endpoints must not accept spoofed public requests. GitHub Actions
 // authenticates these endpoints with the server-only shared token on release.
 const {default: scheduledPublisher}=await import('../netlify/functions/inquirer-publish-scheduled.mjs');
@@ -103,9 +104,9 @@ try{
    assert.equal(response.status,403,'Forged scheduled invoke must not write: '+name+' '+method);
   }
  }
- const netlify=readFileSync('netlify.toml','utf8');
+ const netlify=readSecuritySource('netlify.toml','utf8');
  assert(!netlify.includes('[functions."inquirer-publish-scheduled"]')&&!netlify.includes('[functions."inquirer-projection-capture-scheduled"]'),'Unauthenticated native schedules must remain disabled');
- const action=readFileSync('.github/workflows/inquirer-trusted-scheduled.yml','utf8');
+ const action=readSecuritySource('.github/workflows/inquirer-trusted-scheduled.yml','utf8');
  assert(action.includes('secrets.FLEECED_SERVER_WRITE_TOKEN')&&action.includes('Authorization: Bearer'),'GitHub scheduled maintenance must send server-side authorization');
 }finally{
  if(oldScheduledSecret===undefined)delete process.env.FLEECED_SERVER_WRITE_TOKEN;else process.env.FLEECED_SERVER_WRITE_TOKEN=oldScheduledSecret;

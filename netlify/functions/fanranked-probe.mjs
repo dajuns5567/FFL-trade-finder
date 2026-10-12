@@ -1,3 +1,4 @@
+import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
 const ORIGIN="https://www.fanranked.com";
 const PAGE=`${ORIGIN}/football/dynasty-rankings`;
 const TIMEOUT_MS=7000;
@@ -30,7 +31,7 @@ function apiUrls(text){
   return [...new Set(out)].slice(0,120);
 }
 
-export default async ()=>{
+export default async(req)=>{if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();
   const page=await fetchAny(PAGE);
   const scripts=[...page.text.matchAll(/<script\b[^>]*src=["']([^"']+)["']/gi)].map(m=>new URL(m[1],ORIGIN).href);
   let main=null;

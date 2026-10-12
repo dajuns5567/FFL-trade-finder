@@ -45,3 +45,6 @@ jobs:
           node --check netlify/functions/inquirer-publish-on-load.mjs
           node --check netlify/functions/inquirer-publish-scheduled.mjs
           node --check netlify/functions/inquirer-projection-capture-scheduled.mjs
+          node --check netlify/functions/inquirer-publish-on-load-background.mjs
+          node --check netlify/functions/site-v29.mjs
+          for file in netlify/functions/*-probe.mjs; do node --check "$file"; done

@@ -111,9 +111,9 @@ function teamAnalysis(t,by,week){
   lede[0]=observations[angle];
   lede[1]=who+' provided '+fmt(top.points)+', '+support+' added '+fmt(two.points)+' and '+third+' had '+fmt(three.points)+'. The three accounted for '+fmt(share*100)+'% of '+name(t)+'’s total; the rest accounted for '+fmt(remaining)+'.';
  }
- if(zero)playerRows[0]=who+', '+support+' and '+third+' each scored zero. There is no useful scoring leader to celebrate.';
- if(zero)playerRows[1]=name(t)+' got zero from its entire verified starting lineup. A sarcastic quote cannot make that box score respectable.';
- if(!zero)playerRows[1]=low+' finished with '+fmt(last.points)+' for '+name(t)+'. '+countUnder+' of '+own.length+' documented starters scored fewer than five points. That is a specific weakness, not a vague complaint about effort.';
+ if(zero)players[0]=who+', '+support+' and '+third+' each scored zero. There is no useful scoring leader to celebrate.';
+ if(zero)players[1]=name(t)+' got zero from its entire verified starting lineup. A sarcastic quote cannot make that box score respectable.';
+ if(!zero)players[1]=low+' finished with '+fmt(last.points)+' for '+name(t)+'. '+countUnder+' of '+own.length+' documented starters scored fewer than five points. That is a specific weakness, not a vague complaint about effort.';
  const jokes=[
   'The scoreboard remains stubbornly uninterested in excuses.',
   'Apparently the opposing manager also remembered to set a lineup. Inconvenient.',

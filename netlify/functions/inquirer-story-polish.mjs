@@ -59,5 +59,20 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.insight_copy_edit=1;
  }
+ const recap=edition.league_overview;
+ const blocks=recap?.sections?.[0]?.blocks||[];
+ const lead=blocks.find(b=>b.kind==='lead');
+ if(lead&&lead.paragraphs?.length>=3){
+  const sorted=(edition.teams||[]).filter(t=>good(t.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points));
+  const high=sorted[0],low=sorted.at(-1);
+  if(high&&low){
+   const highTop=scorers(high)[0];
+   lead.paragraphs[2]=tn(high)+' led the league at '+f(high.points)+' behind '+nm(highTop)+' ('+f(highTop?.points||0)+'). '+tn(low)+' finished at '+f(low.points)+'. That is a '+f(Number(high.points)-Number(low.points))+'-point gulf between first and last on the weekly scoring sheet. If anyone wants to call that parity, they will need a more inventive definition.';
+  }
+ }
+ if(recap?.sections?.[0]?.blocks?.length){
+  recap.sections[0].paragraphs=blocks.flatMap(b=>b.paragraphs||[]);
+  recap.paragraphs=(recap.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
+ }
  return edition;
 }

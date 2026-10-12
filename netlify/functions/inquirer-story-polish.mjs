@@ -68,6 +68,18 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
    const role=String(weak.position||'starter');
    outlook.paragraphs[1]=nm(weak)+' enters the next selection discussion with '+f(weak.points)+' points at '+role+'. '+(own>=other?'The win over '+String(t.opponent_name||'the opposition')+' can hide that issue for a week, but '+opponent+' gets a fresh look at it.':'After losing by '+f(gap)+', '+tn(t)+' cannot call that position settled before facing '+opponent+'.');
   }
+  const positive=players.filter(p=>Number(p.points)>0);
+  if(own>0&&positive.length===1){
+   a.headline=tn(t)+': '+nm(positive[0])+' Scores All '+f(own)+' Points. Everybody Else Was Present';
+   if(lede?.paragraphs?.length>=2){
+    lede.paragraphs[0]=nm(positive[0])+' scored '+f(positive[0].points)+' for '+tn(t)+' against '+tn(foe||{team_name:t.opponent_name})+'. All '+(players.length-1)+' other verified starters scored zero. It is not a three-player effort just because three names fit in the headline.';
+    lede.paragraphs[1]='One scorer carried the entire '+f(own)+'-point total. That is a team-wide failure of support, not evidence that two zero-point starters helped produce it.';
+   }
+  }
+  if(own===0&&players.every(p=>Number(p.points)===0)){
+   const managementZero=section(a,'management');
+   if(managementZero?.paragraphs?.length>=2)managementZero.paragraphs[1]='Every one of the '+players.length+' verified starting scores was zero. If management wants a specific culprit, it has '+players.length+' positions to review. Nobody earned a pass.';
+  }
   const management=section(a,'management');
   if(management?.paragraphs?.length>=2){
    const voice=String(a.reporter?.id||'walter-mercer'),count=short.length;

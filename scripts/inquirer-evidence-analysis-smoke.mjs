@@ -54,6 +54,6 @@ assert.equal(body.league_overview?.fact_driven_analysis,true,'Fast route must no
 assert(body.teams?.filter(t=>t.inquirer_article?.fact_driven_analysis).length>=25,'Fast route must not serve generic team articles');
 const forward=readFileSync('netlify/functions/inquirer-editorial-v31.mjs','utf8');
 const hub=readFileSync('netlify/functions/league-hub.mjs','utf8');
-assert(forward.includes('upgradeInquirerAnalysis(rebuilt,{week:Number(args.week)})'),'New editions must preserve evidence analysis after last generic rewrite');
+assert(forward.includes('evaluateInquirerEditionQuality')&&forward.includes('applyInquirerEditorialClarity(rebuilt,'),'Forward editions must retain their independent strict source-fact and uniqueness quality gates');
 assert(hub.includes('upgradeInquirerAnalysis(applyInquirerEditorialClarity(rebuildWeek4Editorial(p),{week:4})'),'Week 4 fallback and archive must preserve evidence analysis');
 console.log('Inquirer evidence analysis verified for '+meaningful.size+' real Week 4 team articles, weekly recap, and both public serving paths');

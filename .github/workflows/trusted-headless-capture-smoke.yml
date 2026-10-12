@@ -1,0 +1,50 @@
+name: Trusted headless capture smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [player-signal-layer-r1]
+    paths:
+      - '.github/workflows/trusted-headless-capture-smoke.yml'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'league-hub-v451.js'
+
+permissions:
+  contents: read
+
+jobs:
+  local-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install local headless dependencies
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify canonical values and trusted League Hub capture on local browser
+        env:
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/headless-smoke-history.json
+          LEAGUE_AWARDS_SNAPSHOT_FILE: .tmp/league-hub-trusted-awards.json
+          CONSENSUS_TRUSTED_PLAYERS_FILE: .tmp/consensus-trusted-players.json
+        run: node scripts/value-history-headless-refresh.mjs
+      - name: Assert trusted collector outputs are complete
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const history=JSON.parse(readFileSync('.tmp/headless-smoke-history.json','utf8'));
+          const awards=JSON.parse(readFileSync('.tmp/league-hub-trusted-awards.json','utf8'));
+          const consensus=JSON.parse(readFileSync('.tmp/consensus-trusted-players.json','utf8'));
+          assert(history.rows.length>=700,'Missing canonical scheduled history');
+          assert(awards.award_highs.records.length>=200,'Missing League Hub all-time-high candidates');
+          assert(awards.awards.awards.length>=18,'Missing six-month award snapshot');
+          assert(consensus.players.length>=700,'Missing trusted consensus player manifest');
+          assert.equal(awards.canonical_fingerprint,history.fingerprint);
+          assert.equal(consensus.canonical_fingerprint,history.fingerprint);
+          console.log('Trusted canonical scheduled captures passed');
+          NODE

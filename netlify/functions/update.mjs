@@ -8,7 +8,7 @@ const SNAPSHOT_STORE="fleeced-consensus-lkg";
 const SNAPSHOT_KEY="validated-sources-v1";
 const sourceStore=()=>getStore(SNAPSHOT_STORE,{consistency:"strong"});
 async function readLastGood(){try{return await sourceStore().get(SNAPSHOT_KEY,{type:"json"})||null}catch{return null}}
-async function writeLastGood(value){try{await sourceStore().setJSON(SNAPSHOT_KEY,value)}catch(e){console.warn("Consensus LKG persistence failed",e)}}
+async function writeLastGood(value){await sourceStore().setJSON(SNAPSHOT_KEY,value)}
 
 function addSnapshot(sources,name,result,rows,kind,updatedAt){
   const data={};
@@ -70,7 +70,7 @@ export default async (req)=>{
 
   if(!candidate.withheld){
     const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows}))};
-    await writeLastGood(promoted);
+    try{await writeLastGood(promoted)}catch(error){console.error("Consensus LKG persistence unavailable",String(error?.message||error));return json({...candidate,promotion:{promoted:false,using_last_known_good:!!previous?.sources,persistence_error:true},sourceManifest:promoted.sourceManifest},503)}
     return json({...candidate,promotion:{promoted:true,using_last_known_good:false},sourceManifest:promoted.sourceManifest});
   }
 

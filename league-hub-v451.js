@@ -377,6 +377,8 @@ async function syncAwards(rows){
  if(trustedCapture){
   const draftAward=rows.find(x=>x.key==='best-draft-pick');
   if(draftAward){
+   // Mirror awardStandings' retroactive pick baseline, which is locally scoped there.
+   const retroPick=(season,pickNo)=>{const assets=globalThis.state?.allAssets||[],round=Math.max(1,Math.ceil(Number(pickNo)/32)),slot=((Number(pickNo)-1)%32)+1,norm=globalThis.tradeValueNormalizationV130,nearest=Number(norm?.nearestSeason?.())||Math.min(...assets.filter(a=>a?.type==='pick').map(a=>Number(a.season)).filter(Number.isFinite)),proxy={type:'pick',season:nearest,round,original_roster_id:slot,owner:0},v=Number(norm?.canonicalValue?.(proxy));if(Number.isFinite(v)&&v>0)return Math.round(v/5)*5;const asset={...proxy,season:Number(season)},fn=globalThis.retroactiveTradeHistoryPickValueV461,fallback=typeof fn==='function'?Number(fn(asset,{season:Number(season)-1,created:`${Number(season)-1}-09-01T00:00:00Z`})):NaN;return Number.isFinite(fallback)&&fallback>0?fallback:Math.max(250,9200-Math.max(0,Number(pickNo)-1)*310)};
    const records=(draftCache?.draft_picks||[]).map(p=>{
     const id=String(p.player_id);
     const primary=globalThis.tradeValueNormalizationV139?.playerValue?.({type:'player',id});

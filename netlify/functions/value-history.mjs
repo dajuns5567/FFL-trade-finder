@@ -1,4 +1,5 @@
 import {isReadOnlyPreview} from './preview-read-only.mjs';
+import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
 import { getStore } from '@netlify/blobs';
 
 const LEAGUE='1316867686394769408';
@@ -1146,6 +1147,7 @@ export default async (req)=>{
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
     if(isReadOnlyPreview(req))return json({error:'preview writes disabled'},403);
+    if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();
     if(!s)return json({error:'live history store unavailable'},503);
     const body=await req.json().catch(()=>null);
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);

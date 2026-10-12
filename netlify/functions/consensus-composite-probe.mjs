@@ -1,3 +1,4 @@
+import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
 import { refreshAllSources } from "./consensus-source-overrides.mjs";
 import { buildConsensusComposite } from "./consensus-composite.mjs";
 
@@ -9,7 +10,7 @@ const SAMPLE=[
   {id:"sample-hamilton",name:"Kyle Hamilton",position:"DB"}
 ];
 
-export default async()=>{
+export default async(req)=>{if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();
   try{
     const refresh=await refreshAllSources();
     const composite=buildConsensusComposite(refresh.results,SAMPLE);

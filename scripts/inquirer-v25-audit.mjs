@@ -98,7 +98,9 @@ assert.ok(forwardSource.includes('The Playoff Race Is No Longer Background Noise
 const scheduledSource=fs.readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
 const netlifyConfig=fs.readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
 assert.ok(scheduledSource.includes("weeklyReport")&&scheduledSource.includes("waiting_for_week"),'Scheduled publisher must invoke the same sequential weeklyReport publication path and surface wait state');
-assert.ok(netlifyConfig.includes('[functions."inquirer-publish-scheduled"]')&&netlifyConfig.includes('schedule = "0 * * * *"'),'Netlify must check for newly completed Inquirer weeks hourly');
+const trustedWorkflow=fs.readFileSync(new URL('../.github/workflows/inquirer-trusted-scheduled.yml',import.meta.url),'utf8');
+assert.ok(trustedWorkflow.includes("cron: '0 * * * *'")&&trustedWorkflow.includes('inquirer-publish-scheduled')&&trustedWorkflow.includes('secrets.FLEECED_SERVER_WRITE_TOKEN'),'Authenticated GitHub Actions must check newly completed Inquirer weeks hourly');
+assert.ok(!netlifyConfig.includes('[functions."inquirer-publish-scheduled"]')&&scheduledSource.includes('isAuthorizedWrite(req)'),'Native unauthenticated schedule must be disabled while publisher requires a server token');
 assert.ok(leagueHub.includes("games.filter(g=>g.result==='W').length"),'League Hub records must be reconstructed from archived matchups rather than current Sleeper roster totals');
 assert.ok(leagueHub.includes("import week2Preload2026 from './inquirer-week2-2026-preload.mjs'"),'League Hub must load the locked Week 2 preload');
 assert.ok(leagueHub.includes("['2026|1',week1Preload2026],['2026|2',week2Preload2026]"),'League Hub preload registry must preserve Week 1 and publish Week 2 together');

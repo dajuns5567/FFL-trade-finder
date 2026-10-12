@@ -1078,7 +1078,7 @@ export default async (req)=>{
     if(url.searchParams.get('archive_export')==='1'&&isReadOnlyPreview(req))
       return json({error:'preview history export disabled'},403);
     const s=safeStore();
-    if(s&&!isReadOnlyPreview(req)){
+    if(s&&!isReadOnlyPreview(req)&&isAuthorizedWrite(req)){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
       try{await scrubV380PartialWeekSnapshot(s)}catch(e){console.warn('v380-history-scrub',e)}

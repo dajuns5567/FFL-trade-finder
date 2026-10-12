@@ -64,6 +64,13 @@ jobs:
           VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
         run: node scripts/value-history-headless-refresh.mjs
 
+      - name: Persist scheduled observation directly to durable Value History archive
+        if: steps.due.outputs.due == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
+        run: node scripts/archive-value-history.mjs
+
       - name: Promote validated consensus into last-known-good storage
         if: steps.due.outputs.due == 'true'
         env:
@@ -78,9 +85,3 @@ jobs:
           LEAGUE_AWARDS_SNAPSHOT_FILE: .tmp/league-hub-trusted-awards.json
         run: node scripts/publish-league-awards-trusted.mjs
 
-      - name: Persist scheduled observation directly to durable Value History archive
-        if: steps.due.outputs.due == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
-        run: node scripts/archive-value-history.mjs

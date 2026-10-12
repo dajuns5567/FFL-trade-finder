@@ -1,5 +1,5 @@
 import {isReadOnlyPreview} from './preview-read-only.mjs';
-import {weeklyReport} from './league-hub.mjs';
+import {weeklyReport,weeklyAwards,managerHistory} from './league-hub.mjs';
 
 const json=body=>new Response(JSON.stringify(body),{
   status:200,
@@ -19,10 +19,19 @@ export async function call(origin,path){
 }
 
 
+// Native scheduled work calls canonical internal services rather than going through
+// anonymous public GET routes. This keeps legitimate persistence working without
+// requiring an admin token to be configured or sent over HTTP.
+async function refreshTrusted(_origin,path){
+ if(path.includes('weekly_awards=1'))return weeklyAwards({allowRefresh:true});
+ if(path.includes('managers=1'))return managerHistory({allowCacheWrite:true});
+ throw new Error('Unsupported scheduled refresh path');
+}
+
 // Returns explicit success only after both refreshed surfaces actually contain the
 // expected published week. Failure never alters a previously approved edition.
 // Retrying the same scheduled refresh endpoints is intentionally idempotent.
-export async function refreshPublishedSurfaces(origin,edition,request=call,{attempts=3}={}){
+export async function refreshPublishedSurfaces(origin,edition,request=refreshTrusted,{attempts=3}={}){
  const season=Number(edition?.season),week=Number(edition?.week);
  if(!Number.isInteger(season)||!Number.isInteger(week)||week<1)
   return {weekly_awards_refreshed:false,manager_spotlight_refreshed:false,attempts:0,errors:['Invalid published edition']};

@@ -68,4 +68,5 @@ const forward=readFileSync('netlify/functions/inquirer-editorial-v31.mjs','utf8'
 const hub=readFileSync('netlify/functions/league-hub.mjs','utf8');
 assert(forward.includes('evaluateInquirerEditionQuality')&&forward.includes('applyInquirerEditorialClarity(rebuilt,'),'Forward editions must retain their independent strict source-fact and uniqueness quality gates');
 assert(hub.includes('upgradeInquirerAnalysis(applyInquirerEditorialClarity(rebuildWeek4Editorial(p),{week:4})'),'Week 4 fallback and archive must preserve evidence analysis');
+assert(hub.includes('week>4&&week<18&&Array.isArray(p.teams)')&&hub.includes('upgradeInquirerAnalysis(structuredClone(p),{week})'),'Approved future editions must also receive durable editorial improvements on read');
 console.log('Inquirer evidence analysis verified for '+meaningful.size+' real Week 4 team articles, weekly recap, and both public serving paths');

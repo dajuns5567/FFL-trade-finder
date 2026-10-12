@@ -13,11 +13,22 @@ assert.equal(JSON.stringify(frozen),original,'Published Week 4 preload must neve
 assert.equal(edition.week,4);
 assert(edition.teams?.length>=30,'Expected real league roster coverage');
 const meaningful=new Set();
+const headlineForms=new Set();
 for(const team of edition.teams){
  const article=team.inquirer_article;
  const starters=(team.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)));
  if(starters.length<3)continue;
  assert.equal(article.fact_driven_analysis,true,'Every scored team needs fact-driven reporting: '+team.team_name);
+ assert.equal(article.editorial_character_version,1,'Opinionated verified reporter pass missing for '+team.team_name);
+ assert.equal(article.insight_copy_edit,1,'Final non-repetitive copy edit missing for '+team.team_name);
+ assert(!/Three Starters Supplied|Sets the Pace|(?:Patriots|Giants|Jets|Chiefs|Eagles|Raiders) Falls/i.test(article.headline),'Generic or ungrammatical team headline: '+article.headline);
+ headlineForms.add(article.headline.replace(team.team_name,'{team}').replace(/\d+(?:\.\d+)?/g,'#').replace(/(?:[A-Z][a-z]+\s){1,3}[A-Z][a-z]+/g,'{player}'));
+ if(Number(team.points)===0){
+  const cool=article.sections.find(x=>x.kind==='cool-throne');
+  assert(/Zero Points/i.test(article.headline),'Zero-score game must receive its own meaningful headline');
+  assert(!/earned.*cool throne|helped.*turn.*win/i.test((cool?.paragraphs||[]).join(' ')),'A zero-point player must not be praised as a weekly hero');
+ }
+
  assert(article.headline.includes(team.team_name)&&!/(Turn this Sunday Into a Longer Week|A New Week Awaits|What Comes Next)/i.test(article.headline),'Team headline must state verified football consequence');
  const outlook=article.sections.find(x=>x.kind==='outlook');
  assert(outlook?.paragraphs?.length>=2&&outlook.paragraphs.join(' ').includes(starters.slice().sort((a,b)=>Number(b.points)-Number(a.points))[0].name),'Team outlook needs a named, verified scoring/lineup consequence');
@@ -34,6 +45,7 @@ for(const team of edition.teams){
  meaningful.add(String(team.roster_id));
 }
 assert(meaningful.size>=25,'Insufficient fact-driven team articles');
+assert(headlineForms.size>=4,'Reporter headline formats remain too repetitive: '+headlineForms.size);
 const overview=edition.league_overview;
 const blocks=overview.sections[0]?.blocks||[];
 for(const kind of ['lead','players','decisions']){

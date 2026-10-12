@@ -31,7 +31,7 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
     features.paragraphs[0]=nm(star)+', '+nm(second)+' and '+nm(third)+' all recorded zero. Treating any one of them as a standout would be an exercise in creative accounting.';
    }else{
     const starToLow=Number(star.points)-Number(weak.points),secondary=Number(second.points)+Number(third.points);
-    features.paragraphs[0]=nm(star)+' led '+tn(t)+' with '+f(star.points)+' from '+String(star.position||'a starter role')+'. '+nm(second)+' and '+nm(third)+' combined for '+f(secondary)+'. Against '+f(weak.points)+' from '+nm(weak)+', the gap between the strongest and quietest starters was '+f(starToLow)+' points. A '+f(starToLow)+'-point gap between '+nm(star)+' and '+nm(weak)+' '+(own>=other?'did not prevent '+tn(t)+' from winning, but it left a question about the quiet role.':'did nothing to help '+tn(t)+' close a '+f(gap)+'-point deficit.')';
+    features.paragraphs[0]=nm(star)+' led '+tn(t)+' with '+f(star.points)+' from '+String(star.position||'a starter role')+'. '+nm(second)+' and '+nm(third)+' combined for '+f(secondary)+'. Against '+f(weak.points)+' from '+nm(weak)+', the gap between the strongest and quietest starters was '+f(starToLow)+' points. A '+f(starToLow)+'-point gap between '+nm(star)+' and '+nm(weak)+' '+(own>=other?'did not prevent '+tn(t)+' from winning, but it left a question about the quiet role.':'did nothing to help '+tn(t)+' close a '+f(gap)+'-point deficit.');
    }
   }
   if(own===0&&players.every(x=>Number(x.points)===0)){

@@ -119,7 +119,34 @@ const server=createServer(async(req,res)=>{
 await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});
 const port=server.address().port,siteUrl=`http://127.0.0.1:${port}/`;
 let browser;
+const upstreamFetch=globalThis.fetch,coreCache=new Map();
+const corePaths=['/v1/players/nfl','/v1/state/nfl','/v1/league/'+league,'/v1/league/'+league+'/users','/v1/league/'+league+'/rosters','/v1/league/'+league+'/traded_picks'];
+const cachedResponse=entry=>new Response(entry.body,{status:entry.status,headers:entry.headers});
 try{
+ // Obtain real, validated core inputs before the UI's short startup deadline.
+ // This cache exists only for this collector invocation; no visitor inputs enter it.
+ await Promise.all(corePaths.map(async path=>{
+  let last;
+  for(let attempt=0;attempt<3;attempt++)try{
+   const response=await upstreamFetch('https://api.sleeper.app'+path,{signal:AbortSignal.timeout(60000),cache:'no-store'});
+   if(!response.ok)throw new Error('Sleeper core preflight '+response.status);
+   const body=Buffer.from(await response.arrayBuffer());
+   const data=JSON.parse(body.toString('utf8'));
+   if(!data||typeof data!=='object')throw new Error('Invalid Sleeper core JSON');
+   if(path.endsWith('/rosters')&&(!Array.isArray(data)||data.length!==32))throw new Error('Incomplete Sleeper roster data');
+   if(path.endsWith('/players/nfl')&&Object.keys(data).length<700)throw new Error('Incomplete Sleeper player data');
+   const headers=Object.fromEntries(response.headers);
+   delete headers['content-encoding'];delete headers['content-length'];delete headers['transfer-encoding'];
+   coreCache.set(path,{status:response.status,headers,body});return;
+  }catch(error){last=error}
+  throw last;
+ }));
+ globalThis.fetch=async(input,init={})=>{
+  const url=new URL(typeof input==='string'?input:input.url||String(input));
+  const method=String(init.method||(typeof input==='object'?input.method:'')||'GET').toUpperCase();
+  if(method==='GET'&&['api.sleeper.app','api.sleeper.com'].includes(url.hostname)&&coreCache.has(url.pathname))return cachedResponse(coreCache.get(url.pathname));
+  return upstreamFetch(input,init);
+ };
 for(const required of ['offense-history.json']){
   const r=await fetch(`${siteUrl}sleeper-data/${required}?preflight=${Date.now()}`,{cache:'no-store'});
   if(!r.ok)throw new Error(`Required Sleeper artifact ${required} failed local proxy preflight: ${r.status}`);
@@ -132,7 +159,7 @@ console.log(JSON.stringify({event:'scheduled-refresh-target',runtime:promoteCons
 browser=await launch();
   const page=await browser.newPage();
   for(const hostname of ['api.sleeper.app','api.sleeper.com'])await page.route('https://'+hostname+'/**',async route=>{
-   try{const response=await fetch(route.request().url(),{signal:AbortSignal.timeout(60000)});await route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:Buffer.from(await response.arrayBuffer())})}catch{await route.abort('failed')}
+   try{const response=await fetch(route.request().url(),{signal:AbortSignal.timeout(60000)});await route.fulfill({status:response.status,headers:Object.fromEntries([...response.headers].filter(([key])=>!['content-encoding','content-length','transfer-encoding'].includes(key.toLowerCase()))),body:Buffer.from(await response.arrayBuffer())})}catch{await route.abort('failed')}
   });
   if(maintainAwards)await page.addInitScript(()=>{window.__fllTrustedCollector=true});
   const awardPosts=new Map();
@@ -314,6 +341,7 @@ browser=await launch();
   }catch{snap.maintenance={ok:false};console.error('Trusted award maintenance unavailable; canonical capture remains valid')}
   return snap;
 }finally{
+  globalThis.fetch=upstreamFetch;
   await browser?.close();
   await new Promise(resolve=>server.close(resolve));
 }

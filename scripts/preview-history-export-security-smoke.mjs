@@ -20,11 +20,11 @@ try{
   assert(source.includes("preview history export disabled"),'preview rejection must be explicit');
   const update=readFileSync(new URL('../netlify/functions/update.mjs',import.meta.url),'utf8');
   assert(update.includes('const previewReadOnly=isReadOnlyPreview(req);'),'preview consensus must be identified, not blanket POST-blocked');
-  const previewIndex=update.indexOf('if(calculationOnly)return json(');
+  const previewIndex=update.indexOf('if(calculationOnly){');
   const storedReadIndex=update.indexOf('const previous=await readLastGood();');
-  assert(update.includes('const calculationOnly=previewReadOnly||!isAuthorizedWrite(req);')&&previewIndex>0&&storedReadIndex>previewIndex,'preview and public calculations must return before any store read');
+  assert(update.includes('const calculationOnly=previewReadOnly||!isAuthorizedWrite(req);')&&previewIndex>0&&storedReadIndex>previewIndex,'preview and public calculations must remain in a read-only branch before authenticated promotion');
   assert(update.includes('preview_read_only:previewReadOnly')&&update.includes('public_read_only:!previewReadOnly'),'preview and public calculations must explicitly remain non-persistent');
-  assert(update.indexOf('await writeLastGood(promoted);')>storedReadIndex,'preview cannot write the consensus LKG store');
+  assert(update.indexOf('await writeLastGood(promoted)')>storedReadIndex&&update.includes('const saved=await readLastGood();'),'preview may read authenticated LKG but cannot write the consensus store');
   console.log('Public preview history export guard passed');
 }finally{
   for(const [k,v] of Object.entries(prior))if(v===undefined)delete process.env[k];else process.env[k]=v;

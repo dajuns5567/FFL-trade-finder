@@ -21,7 +21,7 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
    const rival=foe?tn(foe):String(t.opponent_name||'the opponent');
    if(theirs[0]){
     const theirsTop=theirs[0],delta=Math.abs(Number(star.points)-Number(theirsTop.points));
-    lede.paragraphs[2]=nm(theirsTop)+' paced '+rival+' with '+f(theirsTop.points)+', while '+nm(star)+' led '+tn(t)+' at '+f(star.points)+'. The best starters were '+f(delta)+' points apart. '+(gap<=8?'At a '+f(gap)+'-point final margin, scoring elsewhere in the lineup was decisive.':'It took more than either star to create the '+f(gap)+'-point final gap.');
+    lede.paragraphs[2]=nm(theirsTop)+' paced '+rival+' with '+f(theirsTop.points)+', while '+nm(star)+' led '+tn(t)+' at '+f(star.points)+'. The best starters were '+f(delta)+' points apart. '+(gap<=8?'At a '+f(gap)+'-point final margin, scoring elsewhere in the lineup was decisive.':(own>=other?'The other starters kept '+tn(t)+' ahead by '+f(gap)+'.':'It was the other starters who left '+tn(t)+' '+f(gap)+' behind.'));
    }
   }
   if(features&&features.paragraphs?.length>=2){
@@ -77,7 +77,7 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
     'mack-hollis':nm(star)+' posted '+f(star.points)+'. '+nm(weak)+' managed '+f(weak.points)+'. THAT is the discrepancy to address, not a motivational speech.',
     'nora-voss':nm(weak)+' supplied '+f(weak.points)+' opposite '+f(star.points)+' from '+nm(star)+'. A rival has little reason to fear the quieter spot until the manager fixes it.'
    };
-   management.paragraphs[1]=(remarks[voice]||remarks['walter-mercer'])+' '+(count>=3?count+' of '+players.length+' verified starters scored below five; the weakness extends beyond one player.':'The next decision has to concern real starting roles, not a convenient retelling of the final score.');
+   management.paragraphs[1]=(remarks[voice]||remarks['walter-mercer'])+' '+(count>=3?count+' of '+players.length+' verified starters scored below five; the weakness extends beyond one player.':'The '+String(weak.position||'starter')+' role of '+nm(weak)+' needs an evidence-based choice after '+f(weak.points)+' points.');
   }
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.insight_copy_edit=1;

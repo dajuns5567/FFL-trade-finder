@@ -1,4 +1,5 @@
 import {isReadOnlyPreview} from './preview-read-only.mjs';
+import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
 import { refreshAllSources } from "./consensus-source-overrides.mjs";
 import { buildConsensusComposite } from "./consensus-composite-v3.mjs";
 import { getStore } from "@netlify/blobs";
@@ -47,6 +48,7 @@ export default async (req)=>{
   if(req.method==="OPTIONS")return json({ok:true});
   if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
   const previewReadOnly=isReadOnlyPreview(req);
+  if(!previewReadOnly&&!isAuthorizedWrite(req))return denyUnauthorizedWrite();
   let body={};try{body=await req.json()}catch{return json({ok:false,error:"Invalid JSON"},400)}
   const players=Array.isArray(body.players)?body.players:[];
   if(!players.length)return json({ok:false,error:"No player list supplied"},400);

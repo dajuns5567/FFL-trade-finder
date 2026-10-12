@@ -135,7 +135,7 @@ assert(awardWorkflow.includes('secrets.FLEECED_SERVER_WRITE_TOKEN')&&
   awardWorkflow.includes('scripts/publish-league-awards-trusted.mjs'),
   'Trusted award promotion must happen on the scheduled GitHub Actions runner');
 const hubSource=readSecuritySource('netlify/functions/league-hub.mjs','utf8');
-assert(hubSource.includes('const period=String(body?.period||\'\')')&&
+assert(hubSource.includes('period=String(body?.period||\'\')')&&
   hubSource.includes('(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'),
   'Six-month award persistence must accept the actual generated month/day/year key');
 console.log('League Hub trusted awards capture and visitor read-only contract passed');

@@ -5,6 +5,7 @@ import { extname, join, normalize } from 'node:path';
 import siteV29 from '../netlify/functions/site-v29.mjs';
 import updateHandler from '../netlify/functions/update.mjs';
 import picksHandler from '../netlify/functions/picks.mjs';
+import canonicalHistoryHandler from '../netlify/functions/value-history.mjs';
 
 const snapshotFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE||'.tmp/value-history-scheduled.json';
 const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
@@ -35,7 +36,7 @@ function historyReadStub(url){
   if(url.searchParams.get('market')==='1')return json({tracking_since:null,latest:null,snapshot_count:0,periods:{'1D':{},'7D':{},'30D':{},'90D':{},'1Y':{},'ALL':{}},marketRows:[]});
   if(url.searchParams.get('health')==='1')return json({ok:true,source:'scheduled-local-runtime',components:{githubArchive:{reachable:true},netlifyLive:{reachable:false}}});
   if(url.searchParams.get('team_net')==='1')return json({points:[],source:'scheduled-local-runtime'});
-  if(url.searchParams.get('trades')==='1')return json({trades:[],source:'scheduled-local-runtime'});
+  if(url.searchParams.get('trades')==='1')return canonicalHistoryHandler(new Request(url.toString()));
   return json({points:[],source:'scheduled-local-runtime'});
 }
 async function valueHistory(req){

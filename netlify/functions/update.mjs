@@ -1,5 +1,5 @@
 import {isReadOnlyPreview} from './preview-read-only.mjs';
-import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
+import {isAuthorizedWrite} from './privileged-write.mjs';
 import { refreshAllSources } from "./consensus-source-overrides.mjs";
 import { buildConsensusComposite } from "./consensus-composite-v3.mjs";
 import { getStore } from "@netlify/blobs";

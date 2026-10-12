@@ -14,7 +14,7 @@ export function addInquirerCharacter(edition,{week=Number(edition?.week)}={}){
   const [star,second,third]=p,weak=p.at(-1),rival=by.get(String(t.opponent_roster_id));
   const own=Number(t.points),other=Number(t.opponent_points),margin=Math.abs(own-other),won=own>=other;
   const three=p.slice(0,3).reduce((n,v)=>n+Number(v.points),0),rest=own-three,share=own>0?three/own:0;
-  const tiny=p.filter(v=>Number(v.points)<5).length,zero=own===0,near=margin<=8,wide=margin>=30;
+  const tiny=p.filter(v=>Number(v.points)<5).length,zero=own===0&&p.every(x=>Number(x.points)===0),near=margin<=8,wide=margin>=30;
   const miss=t.best_lineup_miss||a.facts?.best_lineup_miss;
   const bench=miss?.reserve||miss?.bench,starter=miss?.starter,upgrade=Number(miss?.gap)||0;
   const legal=!!(bench?.name&&starter?.name&&upgrade>0),opponent=team(rival||{team_name:t.opponent_name});

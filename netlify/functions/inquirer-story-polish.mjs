@@ -29,7 +29,7 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
     features.paragraphs[0]=nm(star)+', '+nm(second)+' and '+nm(third)+' all recorded zero. Treating any one of them as a standout would be an exercise in creative accounting.';
    }else{
     const starToLow=Number(star.points)-Number(weak.points),secondary=Number(second.points)+Number(third.points);
-    features.paragraphs[0]=nm(star)+' led '+tn(t)+' with '+f(star.points)+' from '+String(star.position||'a starter role')+'. '+nm(second)+' and '+nm(third)+' combined for '+f(secondary)+'. Against '+f(weak.points)+' from '+nm(weak)+', the gap between the strongest and quietest starters was '+f(starToLow)+' points. That imbalance is a better clue than a vague complaint about effort.';
+    features.paragraphs[0]=nm(star)+' led '+tn(t)+' with '+f(star.points)+' from '+String(star.position||'a starter role')+'. '+nm(second)+' and '+nm(third)+' combined for '+f(secondary)+'. Against '+f(weak.points)+' from '+nm(weak)+', the gap between the strongest and quietest starters was '+f(starToLow)+' points. For '+tn(t)+', the '+f(starToLow)+'-point difference reveals exactly where the starting lineup stopped pulling its weight.';
    }
   }
   if(own===0&&players.every(x=>Number(x.points)===0)){
@@ -50,7 +50,7 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
     const trio=scorers(t).slice(0,3).reduce((sum,p)=>sum+Number(p.points),0);
     const others=own-trio;
     lede.paragraphs[1]=(trio>=own*.7
-      ?tn(t)+' depended on its top three starters for '+f(trio)+' of '+f(own)+' points. Everyone outside that group supplied '+f(others)+'. One rather hopes the remaining starters were not charging appearance fees.'
+      ?tn(t)+' depended on its top three starters for '+f(trio)+' of '+f(own)+' points. Everyone outside that group supplied '+f(others)+'. Those other starters did not earn much space in this week’s highlight package.'
       :nm(star)+' did the loud work with '+f(star.points)+', while the top three combined for '+f(trio)+'. The other starting roles supplied '+f(others)+'. That '+f(gap)+'-point '+(own>=other?'win':'loss')+' belongs to a lineup, not a highlight clip.');
    }
    if(features?.paragraphs?.length>=2){
@@ -66,7 +66,7 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
   if(outlook?.paragraphs?.length>=2){
    const opponent=String(t.next_opponent_name||'an opponent not yet established');
    const role=String(weak.position||'starter');
-   outlook.paragraphs[1]=nm(weak)+' leaves Week '+week+' with '+f(weak.points)+' at '+role+'. '+tn(t)+' will face '+opponent+' next; the lineup decision in that role needs a genuine alternative, not a promise that Sunday will simply be kinder.';
+   outlook.paragraphs[1]=nm(weak)+' enters the next selection discussion with '+f(weak.points)+' points at '+role+'. '+(own>=other?'The win over '+String(t.opponent_name||'the opposition')+' can hide that issue for a week, but '+opponent+' gets a fresh look at it.':'After losing by '+f(gap)+', '+tn(t)+' cannot call that position settled before facing '+opponent+'.');
   }
   const management=section(a,'management');
   if(management?.paragraphs?.length>=2){

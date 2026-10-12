@@ -523,7 +523,7 @@ function scheduledRefreshReady(){
   const gate=window.__vhScheduledRefreshGate;
   return !!(gate?.ready&&gate?.sleeperReady&&gate?.consensusReady);
 }
-let pendingSnapshotSource='page-load';
+let pendingSnapshotSource='page-load',historyWritesDenied=false;
 function snapshotSourceFromUrl(){
   try{return new URLSearchParams(location.search).get('vh_source')==='scheduled'?'scheduled':'page-load'}catch{return'page-load'}
 }
@@ -555,6 +555,7 @@ async function recordSnapshot(source=pendingSnapshotSource){
     // A public visitor must not hammer a protected write endpoint every 3s.
     // Scheduled authenticated server snapshots remain independent of this UI.
     if(r.status===401||r.status===403){
+      historyWritesDenied=true;
       window.__vhLastSnapshot={ok:false,source,read_only:true,reason:'server write authorization required'};
       clearTimeout(snapshotTimer);
       console.info('Value History is read-only for public visitors; saved historical charts remain available');
@@ -566,7 +567,7 @@ async function recordSnapshot(source=pendingSnapshotSource){
     scheduleSnapshot(3000,source);return false
   }
 }
-function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){pendingSnapshotSource=source;clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(()=>recordSnapshot(source),{timeout:5000});else recordSnapshot(source)},delay)}
+function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){if(historyWritesDenied)return;pendingSnapshotSource=source;clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(()=>recordSnapshot(source),{timeout:5000});else recordSnapshot(source)},delay)}
 
 function initUI(){
   if(uiReady)return;uiReady=true;

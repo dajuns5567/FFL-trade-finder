@@ -2,6 +2,12 @@ name: Public release security smoke
 on:
   pull_request:
     paths:
+      - 'netlify/functions/*-probe.mjs'
+      - 'netlify/functions/site-v29.mjs'
+      - 'netlify/functions/inquirer-publish-on-load-background.mjs'
+      - 'value-history-v276.js'
+      - 'netlify.toml'
+      - 'scripts/archive-value-history.mjs'
       - 'netlify/functions/privileged-write.mjs'
       - 'netlify/functions/value-history.mjs'
       - 'netlify/functions/update.mjs'

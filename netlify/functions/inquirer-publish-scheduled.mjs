@@ -6,7 +6,7 @@ const json=body=>new Response(JSON.stringify(body),{
   headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
 });
 
-async function call(origin,path){
+export async function call(origin,path){
   // Scheduled maintenance must carry server-only authorization so that its
   // downstream cache refreshes can persist after public GETs became read-only.
   // Never put this credential in client JS, responses, or diagnostic logs.

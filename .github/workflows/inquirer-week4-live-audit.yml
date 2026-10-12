@@ -12,6 +12,9 @@ on:
       - 'netlify/functions/inquirer-week4-2026-projections.mjs'
       - 'scripts/inquirer-week4-rebuild-audit.mjs'
       - 'scripts/inquirer-evidence-analysis-smoke.mjs'
+      - 'scripts/inquirer-rendered-editorial-export.mjs'
+      - 'netlify/functions/inquirer-editorial-character.mjs'
+      - 'netlify/functions/inquirer-story-polish.mjs'
       - 'netlify/functions/inquirer-evidence-analysis.mjs'
       - 'scripts/inquirer-week4-awards-direct-audit.mjs'
       - 'scripts/league-hub-latest-awards-regression.mjs'
@@ -68,6 +71,8 @@ jobs:
         run: node scripts/inquirer-week4-awards-direct-audit.mjs
       - name: Generate and audit real Sleeper Week 4 candidate
         run: node scripts/inquirer-week4-direct-audit.mjs
+      - name: Export rendered Week 4 editorial for manual QA
+        run: node scripts/inquirer-rendered-editorial-export.mjs
       - name: Upload Week 4 candidate and audit
         uses: actions/upload-artifact@v4
         with:
@@ -75,6 +80,7 @@ jobs:
           path: |
             /tmp/inquirer-week4-direct-candidate.json
             /tmp/inquirer-week4-direct-audit.json
+            /tmp/inquirer-week4-rendered-editorial.json
           retention-days: 7
       - name: Verify accepted Week 4 preload exists
         run: |

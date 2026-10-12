@@ -69,7 +69,7 @@ function teamAnalysis(t,by,week){
  const legal=reserve?.name&&started?.name&&has(miss?.gap)&&num(miss.gap)>0;
  const management=list([
    legal
-     ?player(reserve)+' outscored starter '+player(started)+' by '+fmt(miss.gap)+' points in a documented eligible lineup alternative. '+(gap<num(miss.gap)?'That available improvement exceeded the '+fmt(gap)+'-point final margin; it could have changed the result, assuming the other scores remained fixed.':'It would not by itself erase a '+fmt(gap)+'-point gap; the rest of the roster also needed to produce.')
+     ?player(reserve)+' outscored starter '+player(started)+' by '+fmt(miss.gap)+' points in a documented eligible lineup alternative. '+(win?'Even in victory, those '+fmt(miss.gap)+' bench points could have made the lead safer.':gap<num(miss.gap)?'That available improvement exceeded the '+fmt(gap)+'-point losing margin and could have reversed the result if all other scores stayed fixed.':'It would not by itself erase the '+fmt(gap)+'-point deficit; the rest of the roster also needed to produce.')
      :gap<=8
        ?name(t)+' finished '+fmt(gap)+' points '+(win?'ahead':'behind')+'. That is close enough for a small eligible lineup change to matter, but this edition does not verify a specific legal alternative; a blame assignment would be invented.'
        :name(t)+' faced a '+fmt(gap)+'-point final margin. '+v.blowout,
@@ -125,7 +125,7 @@ function recapAnalysis(edition){
    name(best)+' led all '+teams.length+' teams with '+fmt(best.points)+' points. Its three leading starters produced '+fmt(topThree(best))+'. '+name(lowest)+' finished at '+fmt(lowest.points)+'; that is a '+fmt(num(best.points)-num(lowest.points))+'-point difference in total team scoring, not just a contrast in star power.'
  ]);
  const players=list([
-   hero?player(hero.p)+' scored '+fmt(hero.p.points)+' for '+name(hero.t)+', the highest individually recorded starter total in these completed games. That was '+fmt(num(hero.p.points)/num(hero.t.points)*100)+'% of '+name(hero.t)+'’s full score.':null,
+   hero?player(hero.p)+' scored '+fmt(hero.p.points)+' for '+name(hero.t)+', the highest individually recorded starter total in these completed games. That was '+(num(hero.t.points)>0?fmt(num(hero.p.points)/num(hero.t.points)*100)+'% of ':'part of ')+name(hero.t)+'’s full score.':null,
    second?player(second.p)+' supplied '+fmt(second.p.points)+' for '+name(second.t)+'. The comparison matters because individual explosions and team wins are not interchangeable; the supporting starters determine how far that performance goes.':null,
    'For the weekly scoring leader '+name(best)+', the three highest individual scores totaled '+fmt(topThree(best))+' and the rest of the team contributed '+fmt(num(best.points)-topThree(best))+'. That split is a better measure of depth than counting marquee names on a roster.'
  ]);

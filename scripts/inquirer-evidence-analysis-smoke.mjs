@@ -27,7 +27,7 @@ for(const team of edition.teams){
   const copy=section.paragraphs.join(' ');
   assert(!/\b(?:That is this week’s verified performance|not an imagined projection|the next opponent will care less|the useful story sits|this one the roster actually earned)\b/i.test(copy),'Generic article filler was not replaced');
   assert(!/\b\d+(?:\.\d+)?\s+Put\b/.test(copy),'Broken sentence splice appeared in copy');
-  assert(copy.includes(team.starter_details[0]?.name)||copy.includes(starters[0].name),'Article must reference identifiable players');
+  assert(starters.slice().sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,3).some(p=>copy.includes(p.name)),'Article must reference its verified leading starters in '+kind+' for '+team.team_name);
  }
  const lead=article.sections.find(x=>x.kind==='lede').paragraphs.join(' ');
  assert(/three highest scorers|top three|three biggest starter scores/i.test(lead),'Need concrete top-three diagnosis');

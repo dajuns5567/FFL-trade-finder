@@ -1,3 +1,4 @@
+import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
 const PFN_URL = "https://www.profootballnetwork.com/fantasy-football-dynasty-rankings/";
 const TIMEOUT_MS = 7000;
 
@@ -76,7 +77,7 @@ function inspect(text, method, contentType, status) {
   };
 }
 
-export default async () => {
+export default async(req)=>{if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();
   const attempts = [];
 
   try {

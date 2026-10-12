@@ -539,7 +539,8 @@ async function recordSnapshot(source=pendingSnapshotSource){
     let picks=[],teams=[];
     try{picks=currentPickRows()}catch(e){console.warn('value-history-pick-enrichment',e)}
     try{teams=currentTeamRows(rows)}catch(e){console.warn('value-history-team-enrichment',e)}
-    const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})});
+    const publicObservation=source!=='scheduled';
+    const r=await fetch(publicObservation?API+'?observe=1':API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(publicObservation?{league:'1316867686394769408',event:'page-load'}:{league:'1316867686394769408',rows,picks,teams,source})});
     if(r.ok){
       const stored=await r.json().catch(()=>({ok:true}));
       window.__vhLastSnapshot={ok:true,source,t:stored?.t||null};

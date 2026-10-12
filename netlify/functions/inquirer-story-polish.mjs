@@ -35,7 +35,7 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
   if(own===0){
    const hot=section(a,'hot-seat'),cool=section(a,'cool-throne');
    if(hot)hot.paragraphs=[tn(t)+' recorded zero across the verified starting lineup. That is a collective scoring problem rather than one convenient player to blame.'];
-   if(cool)cool.paragraphs=['No starter scored a positive point for '+tn(t)+'. There is no individually earned Cool Throne this week.'];
+   if(cool)cool.paragraphs=['No starter scored a positive point for '+tn(t)+'. No player warrants a performance honor in this game.'];
   }
   if(own>0){
    const hot=section(a,'hot-seat'),cool=section(a,'cool-throne');

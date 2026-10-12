@@ -8,6 +8,7 @@ on:
       - '.github/workflows/trusted-headless-capture-smoke.yml'
       - 'scripts/value-history-headless-refresh.mjs'
       - 'league-hub-v451.js'
+      - 'netlify/functions/update.mjs'
 
 permissions:
   contents: read

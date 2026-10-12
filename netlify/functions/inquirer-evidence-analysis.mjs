@@ -59,7 +59,7 @@ function teamAnalysis(t,by,week){
      :null
  ]);
  const players=list([
-   who+' ('+word(top.position||'starter')+') scored '+fmt(top.points)+'; '+support+' ('+word(two.position||'starter')+') delivered '+fmt(two.points)+'; '+third+' ('+word(three.position||'starter')+') added '+fmt(three.points)+'. For '+name(t)+', those three scorers were responsible for '+fmt(topThree)+' points, a specific source of the team's final total.',
+   who+' ('+word(top.position||'starter')+') scored '+fmt(top.points)+'; '+support+' ('+word(two.position||'starter')+') delivered '+fmt(two.points)+'; '+third+' ('+word(three.position||'starter')+') added '+fmt(three.points)+'. For '+name(t)+', those three scorers were responsible for '+fmt(topThree)+' points, a precise share of the final team total.',
    countUnder
      ?name(t)+' had '+countUnder+' of '+own.length+' verified starters finish below five points. '+player(last)+' had '+fmt(last.points)+' in '+word(last.position||'a starting position')+'. '+(win?'For '+name(t)+', the win covered a soft starter slot in the standings without fixing its production.':'For '+name(t)+', that low return belongs in the explanation without pretending every starter was poor.')
      :name(t)+' had every individually verified starter reach at least five points. '+(win?'For '+name(t)+', those contributions across the lineup helped make the win possible.':'For '+name(t)+', the loss demands a comparison with the opposing lineup instead of a fabricated collapse by one player.')

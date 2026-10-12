@@ -1,5 +1,6 @@
 import {isReadOnlyPreview} from './preview-read-only.mjs';
-import {weeklyReport,weeklyAwards,managerHistory} from './league-hub.mjs';
+import {weeklyReport} from './league-hub.mjs';
+import {weeklyAwards,managerHistory} from './league-hub.mjs';
 
 const json=body=>new Response(JSON.stringify(body),{
   status:200,

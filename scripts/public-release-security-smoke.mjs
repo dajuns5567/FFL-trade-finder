@@ -74,6 +74,8 @@ try{
  assert(captureUi.includes('historyWritesDenied=true;')&&captureUi.includes('if(historyWritesDenied)return;'),'Public write denials must not cause repeated client mutation requests');
  assert(captureUi.includes("API+'?observe=1'")&&captureUi.includes("event:'page-load'"),'Public page load must send event, not client-submitted values');
  const historySource=readFileSync('netlify/functions/value-history.mjs','utf8');
+ const observationBranch=historySource.split("if(!isAuthorizedWrite(req)&&url.searchParams.get('observe')==='1'){")[1]?.split("if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();")[0]||'';
+ assert(observationBranch.indexOf('const key=`snapshots/observed-${slot}.json`')>=0&&observationBranch.indexOf('const key=`snapshots/observed-${slot}.json`')<observationBranch.indexOf('safeGet(s,key)'), 'Page observation must define its storage key before the coalescing read');
  assert(historySource.includes("url.searchParams.get('observe')==='1'")&&historySource.includes("await archiveSnapshot(last)")&&historySource.includes("onlyIfNew:true"),'Anonymous observations must use canonical GitHub archive and globally bounded create-only writes');
  assert(historySource.indexOf("if(!isAuthorizedWrite(req)&&url.searchParams.get('observe')==='1')")<historySource.lastIndexOf("if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();"),'Public event route must be separate from privileged arbitrary valuation writes');
  const rawExport=await valueHistory(new Request('https://fleeced-security-test.example/.netlify/functions/value-history?archive_export=1'));

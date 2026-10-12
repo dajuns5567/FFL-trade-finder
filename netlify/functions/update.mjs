@@ -65,7 +65,28 @@ export default async (req)=>{
   const candidate=buildConsensusPayload(refresh,players);
   // Preview refresh is calculation-only: no Netlify Blobs reads or writes.
   // Allow the app to validate all seven live sources on deploy previews.
-  if(calculationOnly)return json({...candidate,promotion:{promoted:false,using_last_known_good:false,preview_read_only:previewReadOnly,public_read_only:!previewReadOnly},sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:x.ok?"fresh":"unavailable",snapshot_timestamp:x.ok?x.timestamp:null,attempt_timestamp:x.timestamp,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,error:x.error||null}))});
+  if(calculationOnly){
+    const manifest=candidate.summary.results.map(x=>({source:x.source,status:x.ok?"fresh":"unavailable",
+      snapshot_timestamp:x.ok?x.timestamp:null,attempt_timestamp:x.timestamp,
+      players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,error:x.error||null}));
+    if(candidate.withheld){
+      // A public calculation cannot mutate Blobs, but may use the last
+      // authenticated, fully validated provider set when a scraper fails.
+      const saved=await readLastGood();
+      if(saved?.sources&&Object.keys(saved.sources).length&&saved?.composite){
+        const prior=Array.isArray(saved.sourceManifest)?saved.sourceManifest:[];
+        const sourceManifest=manifest.map(x=>{
+          const old=prior.find(p=>p.source===x.source);
+          return old?{...x,status:"last-known-good",snapshot_timestamp:old.snapshot_timestamp||saved.updatedAt}:x;
+        });
+        return json({...candidate,sources:saved.sources,composite:saved.composite,sourceManifest,
+          integrity:{...candidate.integrity,reason:candidate.integrity.reason+'; displaying authenticated last-known-good consensus'},
+          promotion:{promoted:false,using_last_known_good:true,last_good_updated_at:saved.updatedAt||null,
+            preview_read_only:previewReadOnly,public_read_only:!previewReadOnly}});
+      }
+    }
+    return json({...candidate,promotion:{promoted:false,using_last_known_good:false,preview_read_only:previewReadOnly,public_read_only:!previewReadOnly},sourceManifest:manifest});
+  }
   const previous=await readLastGood();
 
   if(!candidate.withheld){

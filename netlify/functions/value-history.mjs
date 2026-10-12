@@ -1157,6 +1157,12 @@ export default async (req)=>{
       if(!body||body.event!=='page-load'||String(body.league||'')!==LEAGUE||
          Object.keys(body).some(key=>!['event','league'].includes(key)))
         return json({error:'invalid page observation'},400);
+
+      // A coalesced visit does not need to re-download the full archive payload.
+      const existing=await safeGet(s,key);
+      if(existing?.t===t&&existing?.source==='page-load'&&existing?.observed_from)
+        return json({ok:true,stored:false,coalesced:true,t,source:'page-load',
+          observed_from:existing.observed_from,count:Array.isArray(existing.rows)?existing.rows.length:0});
       const idx=await archiveIndex();
       const last=idx.items?.at(-1);
       const canonical=last?await archiveSnapshot(last):null;

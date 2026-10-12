@@ -52,34 +52,34 @@ function teamAnalysis(t,by,week){
  const lead=list([
    name(t)+' '+(win?'beat ':'lost to ')+opponent+' '+fmt(total)+'–'+fmt(against)+' in Week '+week+'. '+who+' led its starters with '+fmt(top.points)+', but the more revealing number is the '+fmt(topThree)+' points supplied by its three highest scorers.',
    share>=.65
-     ?name(t)+' relied on those three for '+fmt(share*100)+'% of the team total. The other starters combined for just '+fmt(remaining)+'. '+v.gap
-     :name(t)+' got '+fmt(share*100)+'% of the total from its three leaders, leaving '+fmt(remaining)+' points from the other starting positions. '+v.spread,
+     ?name(t)+' relied on those three for '+fmt(share*100)+'% of the team total. The remaining '+name(t)+' starter positions combined for '+fmt(remaining)+'. '+name(t)+' — '+v.gap
+     :name(t)+' got '+fmt(share*100)+'% of the total from its three leaders, leaving '+fmt(remaining)+' points from the other starting positions. '+name(t)+' — '+v.spread,
    opponentTop
-     ?player(opponentTop)+' paced '+opponent+' with '+fmt(opponentTop.points)+'. '+(theirs.length>=3?'Its three biggest starter scores totaled '+fmt(opponentThree)+', '+fmt(Math.abs(topThree-opponentThree))+' '+(topThree>=opponentThree?'fewer than '+name(t)+' received from its top three.':'more than '+name(t)+' received from its top three.'):'The remaining opposing starter detail is incomplete.')
+     ?player(opponentTop)+' paced '+opponent+' with '+fmt(opponentTop.points)+'. '+(theirs.length>=3?opponent+' had its three biggest starter scores total '+fmt(opponentThree)+', '+fmt(Math.abs(topThree-opponentThree))+' '+(topThree>=opponentThree?'fewer than '+name(t)+' received from its top three.':'more than '+name(t)+' received from its top three.'):'The remaining opposing starter detail is incomplete.')
      :null
  ]);
  const players=list([
-   who+' ('+word(top.position||'starter')+') scored '+fmt(top.points)+'; '+support+' ('+word(two.position||'starter')+') delivered '+fmt(two.points)+'; '+third+' ('+word(three.position||'starter')+') added '+fmt(three.points)+'. Their combined '+fmt(topThree)+' explains how much of the game was carried by identifiable starters, not a vague claim about effort.',
+   who+' ('+word(top.position||'starter')+') scored '+fmt(top.points)+'; '+support+' ('+word(two.position||'starter')+') delivered '+fmt(two.points)+'; '+third+' ('+word(three.position||'starter')+') added '+fmt(three.points)+'. For '+name(t)+', those three scorers were responsible for '+fmt(topThree)+' points, a specific source of the team's final total.',
    countUnder
-     ?name(t)+' had '+countUnder+' of '+own.length+' verified starters finish below five points. '+player(last)+' had '+fmt(last.points)+' in '+word(last.position||'a starting position')+'. '+(win?'The win concealed that weak point on the standings page; it did not erase the lack of production.':'That lack of production is a specific part of the loss, rather than a reason to blame every starter.')
-     :name(t)+' had every individually verified starter reach at least five points. '+(win?'The breadth of those contributions is part of why the roster won.':'The loss therefore deserves more attention to the opponent’s production than to a fabricated collapse by one player.')
+     ?name(t)+' had '+countUnder+' of '+own.length+' verified starters finish below five points. '+player(last)+' had '+fmt(last.points)+' in '+word(last.position||'a starting position')+'. '+(win?'For '+name(t)+', the win covered a soft starter slot in the standings without fixing its production.':'For '+name(t)+', that low return belongs in the explanation without pretending every starter was poor.')
+     :name(t)+' had every individually verified starter reach at least five points. '+(win?'For '+name(t)+', those contributions across the lineup helped make the win possible.':'For '+name(t)+', the loss demands a comparison with the opposing lineup instead of a fabricated collapse by one player.')
  ]);
  const miss=t.best_lineup_miss||a.facts?.best_lineup_miss;
  const reserve=miss?.reserve||miss?.bench,started=miss?.starter;
  const legal=reserve?.name&&started?.name&&has(miss?.gap)&&num(miss.gap)>0;
  const management=list([
    legal
-     ?player(reserve)+' outscored starter '+player(started)+' by '+fmt(miss.gap)+' points in a documented eligible lineup alternative. '+(win?'Even in victory, those '+fmt(miss.gap)+' bench points could have made the lead safer.':gap<num(miss.gap)?'That available improvement exceeded the '+fmt(gap)+'-point losing margin and could have reversed the result if all other scores stayed fixed.':'It would not by itself erase the '+fmt(gap)+'-point deficit; the rest of the roster also needed to produce.')
+     ?player(reserve)+' outscored starter '+player(started)+' by '+fmt(miss.gap)+' points in a documented eligible lineup alternative. '+(win?'For '+name(t)+', that '+fmt(miss.gap)+'-point upgrade could have made the winning margin safer.':gap<num(miss.gap)?'For '+name(t)+', the upgrade exceeded the '+fmt(gap)+'-point deficit and could have reversed the result if other scores held.':'For '+name(t)+', the deficit was '+fmt(gap)+' points; this improvement alone could not erase it.')
      :gap<=8
        ?name(t)+' finished '+fmt(gap)+' points '+(win?'ahead':'behind')+'. That is close enough for a small eligible lineup change to matter, but this edition does not verify a specific legal alternative; a blame assignment would be invented.'
        :name(t)+' faced a '+fmt(gap)+'-point final margin. '+v.blowout,
-   name(t)+' received '+fmt(topThree)+' of its '+fmt(total)+' points from three starters, versus '+fmt(remaining)+' from the rest. '+(share>=.65?'The next lineup needs another usable scorer behind '+who+' and '+support+'.':'Keeping '+who+', '+support+' and '+third+' productive gives the manager several ways to counter an opponent.'),
+   name(t)+' received '+fmt(topThree)+' of its '+fmt(total)+' points from three starters, versus '+fmt(remaining)+' from the rest. '+(share>=.65?'Behind '+who+' and '+support+', '+name(t)+' needs another usable scorer in its next lineup.':'Keeping '+who+', '+support+' and '+third+' productive gives '+name(t)+' multiple scoring options against the next opponent.'),
    name(t)+': '+(legal?v.narrow:(share>=.65?v.gap:v.spread))
  ]);
  const next=word(t.next_opponent_name),upcoming=next?'Week '+(week+1)+' against '+next:'the next verified matchup';
  const outlook=list([
-   name(t)+' goes into '+upcoming+' after '+who+' delivered '+fmt(top.points)+' and '+support+' followed with '+fmt(two.points)+'. '+(share>=.65?'The first improvement to look for is a third or fourth meaningful contribution beyond those leaders.':'The manager already has more than one productive starter to build around.'),
-   last&&num(last.points)<5?player(last)+' produced just '+fmt(last.points)+' at '+word(last.position||'his starting spot')+'. Before the next lineup lock, the choice is whether that role and its eligible alternatives justify another start; the previous result alone does not establish a replacement.':name(t)+' had its weakest individually recorded starter at '+fmt(last.points)+' points from '+player(last)+'. Matching the top of this lineup is not the only task; retaining enough useful scoring at the bottom is what turns one good week into another.'
+   name(t)+' goes into '+upcoming+' after '+who+' delivered '+fmt(top.points)+' and '+support+' followed with '+fmt(two.points)+'. '+(share>=.65?'For '+name(t)+', the missing ingredient is another meaningful contribution behind that pair.':'For '+name(t)+', those two productive players give the next lineup a workable foundation.'),
+   last&&num(last.points)<5?player(last)+' produced just '+fmt(last.points)+' at '+word(last.position||'his starting spot')+'. Before '+name(t)+' locks its next lineup, management must compare that role with verified eligible alternatives rather than inventing a replacement.':name(t)+' had its weakest individually recorded starter at '+fmt(last.points)+' points from '+player(last)+'. Matching the top of this lineup is not the only task; retaining enough useful scoring at the bottom is what turns one good week into another.'
  ]);
  a.headline=share>=.65
   ?name(t)+': '+fmt(topThree)+' of '+fmt(total)+' Points Came From Three Starters Against '+opponent

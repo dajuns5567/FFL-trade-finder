@@ -21,6 +21,16 @@ for(const team of edition.teams){
  assert.equal(article.fact_driven_analysis,true,'Every scored team needs fact-driven reporting: '+team.team_name);
  assert.equal(article.editorial_character_version,1,'Opinionated verified reporter pass missing for '+team.team_name);
  assert.equal(article.insight_copy_edit,1,'Final non-repetitive copy edit missing for '+team.team_name);
+ const scoringStarters=starters.filter(p=>Number(p.points)>0);
+ if(scoringStarters.length===1&&Number(team.points)>0){
+  assert(article.headline.includes(scoringStarters[0].name),'Sole scorer must headline: '+team.team_name);
+  assert(/all|one scorer/i.test(article.sections.find(s=>s.kind==='lede')?.paragraphs?.join(' ')||''),'Sole scorer must be distinguished from a three-player performance');
+ }
+ if(scoringStarters.length===0&&Number(team.points)===0){
+  const management=article.sections.find(s=>s.kind==='management')?.paragraphs?.join(' ')||'';
+  assert(/all|every|entire/i.test(management)&&!/one can applaud|the star saved|strong individual performance/i.test(management),'Zero-point managerial critique must blame lineup-wide nonproduction');
+ }
+
  assert(!/Three Starters Supplied|Sets the Pace|(?:Patriots|Giants|Jets|Chiefs|Eagles|Raiders) Falls/i.test(article.headline),'Generic or ungrammatical team headline: '+article.headline);
  headlineForms.add(article.headline.replace(team.team_name,'{team}').replace(/\d+(?:\.\d+)?/g,'#').replace(/(?:[A-Z][a-z]+\s){1,3}[A-Z][a-z]+/g,'{player}'));
  if(Number(team.points)===0){

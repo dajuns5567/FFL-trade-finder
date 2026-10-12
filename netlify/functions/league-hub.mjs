@@ -42,6 +42,7 @@ const servedPreload=raw=>{
  if(season===2026&&week===2)return applyWeek2EditorialR16(p);
  if(season===2026&&week===3)return applyPublishedForwardFix(p,applyWeek2EditorialR16(week2Preload2026));
  if(season===2026&&week===4)return upgradeInquirerAnalysis(applyInquirerEditorialClarity(rebuildWeek4Editorial(p),{week:4}),{week:4});
+ if(season===2026&&week>4&&week<18&&Array.isArray(p.teams))return upgradeInquirerAnalysis(structuredClone(p),{week});
  return p;
 };
 const preloadedBroadcast=(season,week)=>servedPreload(PRELOADED_BROADCASTS.get(String(Number(season))+'|'+String(Number(week)))||null);

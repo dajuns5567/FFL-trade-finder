@@ -48,7 +48,7 @@ export function addInquirerCharacter(edition,{week=Number(edition?.week)}={}){
   };
   const voice=voices[String(a.reporter?.id)]||voices['walter-mercer'];
   const line=zero?'Every verified starter finished on zero. Finding a hero here would require rewriting the scorebook.':
-   first+' ('+String(star.position||'starter')+') scored '+fmt(star.points)+', '+secondName+' added '+fmt(second.points)+', and '+thirdName+' contributed '+fmt(third.points)+'. Their '+fmt(three)+' points were '+fmt(share*100)+'% of the team total; the rest supplied '+fmt(rest)+'.';
+   first+' ('+String(star.position||'starter')+') scored '+fmt(star.points)+', '+secondName+' added '+fmt(second.points)+', and '+thirdName+' contributed '+fmt(third.points)+'. The top three accounted for '+fmt(three)+' points, '+fmt(share*100)+'% of the team total; the rest supplied '+fmt(rest)+'.';
   const weakline=pname(weak)+' returned '+fmt(weak.points)+' at '+String(weak.position||'a starter slot')+'. '+tiny+' of '+p.length+' individually scored starters finished under five points. '+(won?'The victory conceals that number in the standings, not the box score.':'The loss makes it harder to ignore.');
   const decision=legal?pname(bench)+' beat selected starter '+pname(starter)+' by '+fmt(upgrade)+' in a verified eligible replacement. '+(won?'That would have widened a win.':upgrade>margin?'The potential gain exceeded the loss by '+fmt(upgrade-margin)+' points if other scores remained unchanged.':'The swap still would have left '+fmt(margin-upgrade)+' points to recover.'):
    'No eligible bench replacement is documented for '+team(t)+'. Announcing a specific bad start/sit choice anyway would be speculation dressed as analysis.';
@@ -57,7 +57,7 @@ export function addInquirerCharacter(edition,{week=Number(edition?.week)}={}){
   set(a,'players',[line,weakline]);
   set(a,'management',[decision,voice+' '+pname(weak)+' at '+fmt(weak.points)+' gives the manager a specific starting spot to review.']);
   const next=t.next_opponent_name?String(t.next_opponent_name):'an opponent not yet verified';
-  set(a,'outlook',[team(t)+' next faces '+next+'. '+(zero?'First task: get a positive starter score. Ambitious, apparently.':share>=.70?'Another useful contributor beyond '+first+' and '+secondName+' is needed.':'Whether '+first+' repeats '+fmt(star.points)+' is not a management strategy.'),pname(weak)+' finished on '+fmt(weak.points)+'. That role requires a real decision, not a guarantee about what Week '+(week+1)+' will produce.']);
+  set(a,'outlook',[team(t)+' next faces '+next+'. '+(zero?'First task: get a positive score from '+first+'. Ambitious, apparently.':share>=.70?'Another useful contributor beyond '+first+' and '+secondName+' is needed.':'Whether '+first+' repeats '+fmt(star.points)+' is not a management strategy.'),pname(weak)+' finished on '+fmt(weak.points)+'. That role requires a real decision, not a guarantee about what Week '+(week+1)+' will produce.']);
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.editorial_character_version=1;
  }

@@ -21,14 +21,14 @@ export function addInquirerCharacter(edition,{week=Number(edition?.week)}={}){
   const angle=zero?'zero':!won&&legal&&upgrade>margin?'swing':near?'close':wide?'wide':share>=.70?'thin':tiny>=3?'quiet':won?'depth':'support';
   const first=pname(star),secondName=pname(second),thirdName=pname(third);
   const headlines={
-   zero:team(t)+': Zero Points, '+opponent+' Wins. Hard to Spin That',
+   zero:team(t)+': Zero Points Against '+opponent+'. No Sensible Spin',
    swing:team(t)+': A '+fmt(upgrade)+'-Point Bench Choice in a '+fmt(margin)+'-Point Loss',
    close:team(t)+': '+fmt(margin)+' Points Decide the '+(won?'Escape From ':'Loss to ')+opponent,
    wide:team(t)+': '+(won?'A '+fmt(margin)+'-Point Rout of ':'A '+fmt(margin)+'-Point Defeat to ')+opponent,
    thin:team(t)+': '+first+' Produces, the Supporting Cast Has Questions',
    quiet:team(t)+': '+tiny+' Starters Under Five Points. There Is the Problem',
    depth:team(t)+': '+secondName+' and '+thirdName+' Make the Win More Than a One-Man Show',
-   support:team(t)+': '+first+' Delivers '+fmt(star.points)+', '+opponent+' Still Wins'
+   support:team(t)+': '+first+' Delivers '+fmt(star.points)+', but the Win Goes to '+opponent
   };
   if(angle==='thin'){
    headlines.thin=[

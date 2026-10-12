@@ -13,6 +13,15 @@ assert.equal(isAuthorizedWrite(request('short')),false,'Short secrets are reject
 console.log('Public-release server write authorization smoke passed');
 
 import valueHistory from '../netlify/functions/value-history.mjs';
+import {validAnonymousObservation} from '../netlify/functions/value-history.mjs';
+assert.equal(validAnonymousObservation({event:'page-load',league:'1316867686394769408'}),true,'Canonical page observation event is accepted');
+for(const payload of [
+ {event:'page-load',league:'1316867686394769408',rows:[{id:'attacker',value:9999}]},
+ {event:'page-load',league:'1316867686394769408',teams:[{id:'1',value:9999}]},
+ {event:'page-load',league:'1316867686394769408',source:'scheduled'},
+ {event:'page-load',league:'incorrect'},
+ {event:'other',league:'1316867686394769408'},null,[],{}
+])assert.equal(validAnonymousObservation(payload),false,'Anonymous observation cannot accept forged data or extra fields');
 import updateSources from '../netlify/functions/update.mjs';
 import leagueHub from '../netlify/functions/league-hub.mjs';
 import publishOnLoad from '../netlify/functions/inquirer-publish-on-load.mjs';

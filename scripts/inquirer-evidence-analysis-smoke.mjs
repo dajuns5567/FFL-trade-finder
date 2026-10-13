@@ -15,6 +15,7 @@ assert.equal(edition.week,4);
 assert(edition.teams?.length>=30,'Expected real league roster coverage');
 const meaningful=new Set();
 const headlineForms=new Set();
+const sentenceOccurrences=new Map();
 for(const team of edition.teams){
  const article=team.inquirer_article;
  const starters=(team.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)));
@@ -49,6 +50,14 @@ for(const team of edition.teams){
   /the manager can offer explanations. the standings will record/i
  ])assert(!banned.test(copy),'Previously flagged canned commentary returned for '+team.team_name+': '+banned);
 
+ for(const paragraph of authored){
+  for(const sentence of paragraph.split(/(?<=[.!?])\\s+/)){
+   const cleaned=sentence.trim().toLowerCase().replace(/\\b\\d+(?:\\.\\d+)?\\b/g,'#');
+   if(cleaned.length<65)continue;
+   if(!sentenceOccurrences.has(cleaned))sentenceOccurrences.set(cleaned,new Set());
+   sentenceOccurrences.get(cleaned).add(team.team_name);
+  }
+ }
  const totalWords=authored.join(' ').split(/\s+/).filter(Boolean).length;
  assert(totalWords>=140&&totalWords<=540,'Article is thin or inflated with redundant prose: '+team.team_name+' ('+totalWords+' words)');
  assert(/(?:sarcas|scoreboard|manager|lineup|rivals|opponent|benched|bench|starters)/i.test(authored.join(' ')),'Editorial needs football-specific point of view');
@@ -102,6 +111,8 @@ for(const team of edition.teams){
  meaningful.add(String(team.roster_id));
 }
 assert(meaningful.size>=25,'Insufficient fact-driven team articles');
+const widespreadStockSentences=[...sentenceOccurrences].filter(([_,teams])=>teams.size>=3);
+assert(widespreadStockSentences.length<=15,'Too many recycled newspaper sentences: '+widespreadStockSentences.length+' (max 15). '+widespreadStockSentences.slice(0,6).map(([sentence,teams])=>teams.size+'x '+sentence).join(' | '));
 assert(headlineForms.size>=4,'Reporter headline formats remain too repetitive: '+headlineForms.size);
 assert.equal(new Set(Object.values(week4Headlines)).size,32,'Headlines must be independently authored, not recycled');
 const takes=(edition.league_overview?.hot_takes||[]);

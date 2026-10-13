@@ -652,7 +652,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     ?String(t.next_opponent_name||'The next opponent')+' has no reason to admire '+tn(t)+' for winning last week. '+(low5.length?(low5.length===1?'The next opponent will notice '+nm(low)+' scored '+f(low.points)+'. '+String(t.next_opponent_name||'The next opponent')+' will notice that '+nm(low)+' only produced '+f(low.points)+'.':'The next opponent can count '+low5.length+' quiet starting spots. '+String(t.next_opponent_name||'The next opponent')+' gets that information without sending a single scout.'):'For now, '+tn(t)+' has at least earned another week without a crisis meeting.')
     :'Nobody owes '+tn(t)+' a sympathy win next week. '+(margin<=8?'At this margin every actual selection matters.':'A '+f(margin)+'-point deficit for '+tn(t)+' demands more than another inspirational slogan.');
   const bespokeCrowd=week===4&&Number(e.season)===2026?week4CrowdColumns[tn(t)]:null;
-  const calibratedMood=moodScore===null?'Crowd reading unavailable.':'Crowd mood: '+f(moodScore)+' ('+moodLabel+').';
+  const calibratedMood=moodScore===null?'Crowd reading unavailable.':'Crowd mood: '+f(moodScore)+' ('+String(mood.title||mood.tier||moodLabel)+').';
   const moodOpinion=week===4&&Number(e.season)===2026?week4FanMoodColumns[tn(t)]:null;
   put(a,'sentiment',moodOpinion?[calibratedMood,...moodOpinion]:[moodIntro,crowdEditorial,reaction[reporter]||reaction['walter-mercer'],future].filter(Boolean));
   const next=String(t.next_opponent_name||'an opponent not yet confirmed');

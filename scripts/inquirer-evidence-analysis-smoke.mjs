@@ -36,7 +36,9 @@ for(const team of edition.teams){
  assert(!/and the others combined for|the others managed .*of|three starters.*supplied/i.test((article.sections.find(x=>x.kind==='lede')?.paragraphs||[]).join(' ')),'Top-three box-score worksheet returned to lede: '+team.team_name);
 
  assert(moodLines.length>=3,'Fan sentiment must include measured mood, a reporter argument, and next-week stakes: '+team.team_name);
- assert(moodLines.length===3,'Week 4 sentiment must contain exactly the verified mood and two distinct editorial paragraphs: '+team.team_name);
+ assert(moodLines.length===4,'Week 4 sentiment must have the verified mood, an imaginative satirical crowd scene, and two distinct grounded opinion paragraphs: '+team.team_name);
+ assert(/(imaginary|fictional|satirical|cartoon|pretend|fiction|our fictional)/i.test(moodLines[1]),'Crowd behavior must be overtly fictional satire, not fabricated real fan reporting: '+team.team_name);
+ assert(/(champagne|firework|pitchfork|parade|protest|toast|supporter|fan|crowd)/i.test(moodLines[1]),'Crowd scene lacks creative emotional imagery: '+team.team_name);
  assert(moodLines.join(' ').split(/\s+/).filter(Boolean).length>=65,'Fan sentiment is too shallow to support an editorial argument: '+team.team_name);
  assert(!/the lowest verified score belonged|rivals can see \\d+ starter|the next opponent can count|the manager can offer explanations/i.test(moodLines.join(' ')),'Template-style fan copy returned: '+team.team_name);
  assert(moodLines.slice(-2).every(p=>p.length>=120),'Both independently written crowd paragraphs must contain actual commentary: '+team.team_name);

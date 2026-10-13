@@ -678,6 +678,18 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   if(top&&bottom)add('lead','There are no sympathy wins on this schedule. A spectacular solo performance in a loss still gets nothing, and an ugly victory still earns the same mark in the standings. A cruel little system, but at least its arithmetic is consistent.');
   if(under40.length)add('decisions',under40.length+' teams failed to crack 40. That is not a philosophical debate about roster construction; it is a plea for somebody to put useful players in actual starting positions. The box score has been rude enough.');
   add('league','A division lead in Week '+week+' is a real advantage. Ordering championship banners already would be an ambitious interpretation of how calendars work.');
+  // Week 4 hot takes deserve a position, not a stats-to-English translation.
+  // Preserve award subjects, division source details and projection provenance.
+  if(week===4&&Number(e.season)===2026){
+   for(const item of overview.hot_takes||[]){
+    if(item.kind==='championship'&&/New Orleans Aints/.test(item.title||''))item.take='New Orleans is 4-0 and sits first overall. That is a genuine head start, not a deed to the trophy. Hang the standings in the locker room if you like; hanging a championship banner in October is how you end up decorating for a party nobody invited you to.';
+    if(item.kind==='breakout'&&/Kyren Williams/.test(item.title||''))item.take='Kyren Williams gave Detroit 37.7 this week. The Raiders gave the entire opposing scoreboard zero. Williams deserves the spotlight; the manager would be wise to wait for an opponent with a pulse before calling this the start of an unstoppable era.';
+    if(item.kind==='player'&&/Tetairoa McMillan/.test(item.title||''))item.take='Tetairoa McMillan scored 45.2 for Miami, an outrageously good individual afternoon. It belongs in this week’s honors conversation. Handing him a season-long crown after one October eruption, however, would be a particularly enthusiastic misunderstanding of how a season works.';
+    if(item.kind==='fraud'&&/Las Vegas Raiders/.test(item.title||''))item.take='Las Vegas started a complete lineup and finished with precisely zero points. Calling that a warning sign is like calling a building without walls “a little drafty.” The manager’s first assignment is to demonstrate that fantasy points remain legal in Nevada.';
+    if(item.kind==='division'&&/AFC EAST/.test(item.take||''))item.take+=' The division leaders have positions worth defending. They do not yet have permission to mail out playoff invitations; somebody should explain the difference before the commemorative merchandise arrives.';
+    if(item.kind==='upset'&&/Buffalo Billiards/.test(item.title||''))item.take='Buffalo meets New England in Week 5. Buffalo is coming off a forty-two-point defeat; New England lost a much closer game despite a functioning lineup. That makes this worth watching, not an excuse to manufacture a projected upset from numbers this archived Week 4 report cannot verify. Consult live Week 5 projections before naming a favorite.';
+   }
+  }
   first.paragraphs=blocks.flatMap(x=>x.paragraphs||[]);
   overview.paragraphs=(overview.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(x=>x.paragraphs||[])]);
   overview.cohesive_editorial_version=1;

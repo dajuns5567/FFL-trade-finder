@@ -789,7 +789,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const bespokeNext=week===4&&Number(e.season)===2026?week4NextAngles[tn(t)]:null;
   put(a,'outlook',bespokeNext?['Week '+(week+1)+' brings '+next+'. '+nm(top)+' gave the team '+f(top.points)+' last week; the next opponent will have its own answer to that threat.',bespokeNext]:[forwardFirst,forwardSecond]);
   if(week===4&&Number(e.season)===2026){
-   a.headline=String(a.headline||'').replace(/eligible points/gi,'bench points');
+   a.headline=String(a.headline||'').replace(/eligible points/gi,'Bench Points');
    for(const sec of a.sections||[]){
     sec.paragraphs=(sec.paragraphs||[]).map(text=>String(text)
      .replace(/documented eligible swap/gi,'lineup decision')

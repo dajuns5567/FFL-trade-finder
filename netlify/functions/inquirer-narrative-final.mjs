@@ -807,7 +807,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
  if(blocks.length){
   const add=(kind,comment)=>{
    const block=blocks.find(x=>x.kind===kind);
-   if(block){block.paragraphs ||= [];if(!block.paragraphs.includes(comment))block.paragraphs.push(comment);}
+   if(block){block.paragraphs ||= [];const rewrittenLead=kind==='lead'&&week===4&&Number(e.season)===2026&&comment.startsWith('There are no sympathy wins')&&block.paragraphs.some(p=>String(p).startsWith('Tampa scored 115.8 and still lost to Miami'));if(!rewrittenLead&&!block.paragraphs.includes(comment))block.paragraphs.push(comment);}
   };
   const scored=e.teams.filter(t=>Number.isFinite(Number(t.points))).slice().sort((a,b)=>Number(b.points)-Number(a.points));
   const bottom=scored.at(-1),top=scored[0],under40=scored.filter(t=>Number(t.points)<40);

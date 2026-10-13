@@ -259,6 +259,40 @@ const week4FanMoodColumns={
   "Seattle deserves congratulations for doing its part, not a statue for standing in the correct place when the Browns collapsed. The crowd has kept its expectations alive, which is more useful than any overexcited victory speech management could deliver."
  ]
 };
+const week4NextAngles={
+ "Buffalo Billiards": "The Patriots will inherit a Buffalo manager who has already been handed a very expensive lesson about FLEX choices. The question is whether he reads it or uses it as a coaster.",
+ "Miami Dolphins": "The Jets get the glamorous offense next. Miami's challenge is to win without needing its best player to turn every managerial error into a harmless footnote.",
+ "New England Patriots": "Buffalo comes next, and New England shouldn't let a close loss tempt it into wrecking a lineup that broadly did its job. Losing narrowly is miserable; panic is optional.",
+ "New York Jets": "Miami is unlikely to be nearly as generous as Atlanta. The Jets need a starting group that doesn't require Cooper DeJean to serve as quarterback, running back and fire marshal all at once.",
+ "Baltimore Ravens": "Cleveland is next. Baltimore cannot keep presenting Bowers and Rodgers as an alibi for everybody else; the weak starting slots must become actual contributors.",
+ "Cincinnati Bungals": "Pittsburgh offers another chance to prove that the Bungals' coach knows the difference between having a good player and choosing a good lineup.",
+ "Cleveland Browns": "Baltimore is coming off its own shambles. That might sound comforting, until Cleveland remembers it was beaten by fifty-one. One of these managers will have to find a functioning supporting cast.",
+ "Pittsburgh Steelers": "Cincinnati awaits. Pittsburgh needs its backfield to do something radical: register points. A coaching staff preparing an elaborate speech should first check whether its running backs have actually scored.",
+ "Houston Texans": "Jacksonville is next, and Houston needs a plan extending beyond hoping Michael Wilson can make sixty-two look respectable. Management already has evidence of an avoidable selection problem.",
+ "Indianapolis Colts": "Tennessee won't be required to make the Colts sweat quite so much as the Giants did, but Indianapolis should not confuse a narrow escape with a requirement to dismantle a functioning card.",
+ "Jacksonville Jags": "Houston is next. Jacksonville should revisit its defensive selection without pretending a ten-point repair fixes the rest of its issues. The team lost by more than the spare points could recover.",
+ "Tennessee Titans": "Indianapolis arrives after a game the Titans won largely because Philadelphia couldn't summon sixty points. A sturdier opponent may demand a genuinely respectable offensive score.",
+ "Denver Doncos": "The next lineup has to survive something more difficult than optimism: an opponent paying attention to Javonte Williams. Denver's depth needs to make the case.",
+ "Kansas City Chiefs": "Las Vegas somehow offers an opponent with an even emptier scorecard. This is a rare chance for Kansas City to establish whether its seven starting spots are merely ornamental.",
+ "Las Vegas Raiders": "Kansas City is next, and its own disastrous score is about the only reason this matchup qualifies as a contest. Las Vegas's first reasonable ambition is to field players who register points.",
+ "Los Angeles Chargers": "Chicago was manageable. The next opponent deserves the same effort without the assumption that Edgerrin Cooper will personally answer every question on the roster.",
+ "Dallas Cowboys": "The next opponent will have seen what Tuli Tuipulotu can do. Dallas needs to demonstrate that another starter is prepared to be the difference-maker if he isn't allowed another 37.3-point afternoon.",
+ "New York Giants": "Indianapolis needed everything to edge a solid Giants card. Management should preserve what worked and look for genuine edges, not throw the roster into a blender to appease Monday's complaints.",
+ "Philadelphia Eagles": "The next matchup is less an opportunity to announce a comeback than a test of whether Philadelphia can field more than one meaningful scorer. The bar is low enough to trip over.",
+ "Washington Commanders": "Houston is next. Washington won its last outing, but a manager who treats every low-scoring starter as an acceptable accessory is eventually going to discover an opponent less forgiving than Jacksonville.",
+ "Chicago Bears": "The next matchup should begin with an uncomfortable question: what happens if Chris Olave doesn't have another useful afternoon? Chicago needs a second answer that isn't silence.",
+ "Detroit Lions": "A real test would involve an opponent that actually scores. The Lions should prepare for that strange innovation instead of scheduling a parade because Las Vegas went missing.",
+ "Green Bay Packers": "Kansas City's nine-point catastrophe is unlikely to be a sustainable business model for Green Bay's future opponents. The Packers need to build a win that doesn't depend on the other team being worse at everything.",
+ "Minnesota Vikings": "Denver's victory doesn't erase Minnesota's respectable output. The right preparation means improving the thin spots rather than asking Puka Nacua to personally erase the other team's advantage.",
+ "Atlanta Falcons": "The Jets managed to win without breaking ninety. Atlanta's next lineup needs to give supporters an actual reason to anticipate a game, not merely a date on the schedule.",
+ "Carolina Panthers": "The next opponent will not care that Carolina survived by four. Maintaining a productive floor across the lineup is the unglamorous task that turns close wins into an actual identity.",
+ "New Orleans Aints": "Tampa Bay has just demonstrated it can score heavily even in defeat. New Orleans should enjoy Buffalo's collapse, then prepare for an opponent who might actually challenge its total.",
+ "Tampa Bay Buccaneers": "New Orleans is undefeated, so Tampa's next assignment is not another CeeDee Lamb appreciation ceremony. The roster has to give its star enough help to turn fireworks into a result.",
+ "Arizona Cardinals": "The next team gets a Cardinals lineup that has learned the value of everybody participating. Arizona should resist the urge to change that formula just because it doesn't make for flashy individual headlines.",
+ "Los Angeles Rams": "Cincinnati had no answer for T.J. Watt. The next opponent will have seen that film; the Rams ought to have a plan for the possibility that one player isn't allowed to be the whole show.",
+ "San Francisco 49ers": "Pittsburgh brought two empty running-back slots to the party. San Francisco shouldn't plan on receiving that kind of hospitality again; winning with less help from the opposition is the next real objective.",
+ "Seattle Seahawks": "Cleveland offered minimal resistance. Seattle's next job is to preserve the parts that worked against a team that doesn't fold the second it sees Zay Flowers."
+};
 // Final single-pass column: rewrite repetitive sections, preserve underlying game and award data.
 const ok=x=>x!=null&&x!==''&&Number.isFinite(Number(x));
 const f=x=>Number(x).toFixed(1);
@@ -433,7 +467,8 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   ];
   const forwardFirst='Week '+(week+1)+' brings '+next+' for '+tn(t)+'. '+nm(low)+' finished at '+f(low.points)+'.';
   const forwardSecond=legal?'Review the verified '+nm(starter)+' versus '+nm(bench)+' choice.':'Compare actual eligible replacements rather than inventing one.';
-  put(a,'outlook',week===4&&Number(e.season)===2026?week4Outlook:[forwardFirst,forwardSecond]);
+  const bespokeNext=week===4&&Number(e.season)===2026?week4NextAngles[tn(t)]:null;
+  put(a,'outlook',bespokeNext?['Week '+(week+1)+' brings '+next+'. '+(legal?'The '+String(swap?.slot||'starting')+' selection remains worth reviewing.':low5.length?'The starting card needs a credible response to its weak spots.':'A competitive starting group has earned the benefit of careful rather than panicked management.'),bespokeNext]:[forwardFirst,forwardSecond]);
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.cohesive_editorial_version=1;
  }

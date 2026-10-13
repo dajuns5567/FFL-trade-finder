@@ -129,6 +129,136 @@ const week4CrowdColumns={
   "Seahawks supporters can be delighted without pretending the Browns were a worthy obstacle. Winning by fifty-one is still a statement. The fair challenge for the manager is to carry that production into a game where the other side does more than provide background scenery."
  ]
 };
+const week4FanMoodColumns={
+ "Buffalo Billiards": [
+  "A restless -22 rating is a remarkably restrained verdict on this wreck. It says the public is grumbling, not preparing a parade of pitchforks; management should thank its lucky stars that the mood meter hasn't seen fit to use stronger language.",
+  "The trust problem is bigger than a single lineup mistake. With a defeat this heavy, supporters need evidence that the manager can distinguish a bad selection from a roster that simply isn't good enough. The next game is an audition for credibility, not merely a chance to improve a decimal."
+ ],
+ "Miami Dolphins": [
+  "A cautiously positive 13 after a 134.8-point victory is not ingratitude. It means supporters like what happened without being ready to hand the manager a lifetime contract and the keys to the stadium.",
+  "The gap between thrilling talent and full confidence is management's own doing. Fans have every reason to enjoy the fireworks while wondering why a winning team still needed luck to cover a glaring lineup decision. Trust is harder to score than fantasy points."
+ ],
+ "New England Patriots": [
+  "The near-neutral 11 feels exactly like a fan base trying to decide whether a narrow defeat deserves anger or reluctant applause. Nobody needs a fabricated scapegoat just to make disappointment more satisfying.",
+  "Supporters have a functioning team and an infuriating loss. That is a more complicated feeling than fury, even if fury would make for better radio. A sensible fan can keep confidence in the lineup and still spend Monday profoundly irritated."
+ ],
+ "New York Jets": [
+  "A negative five after a comfortable win is a wonderful indictment of the manager's public relations department. The scoreboard says celebrate; the mood meter responds with a suspicious glance at the lineup card.",
+  "Jets supporters apparently haven't mistaken rescue for competence. The interesting question is whether management treats this win as vindication or as a warning it got away with something. An ugly victory can buy points in the standings without purchasing a single ounce of trust."
+ ],
+ "Baltimore Ravens": [
+  "A mood of plus one after that showing is almost comically patient. It is the emotional equivalent of reading the damage report, sighing, and deciding to see whether anybody learned anything.",
+  "The concern isn't that Baltimore had a bad day; supporters can survive a bad day. It's whether the same unsupported starters will be marched out again while management points admiringly at the few people who did their jobs. Patience is not the same thing as confidence."
+ ],
+ "Cincinnati Bungals": [
+  "Minus five is not outright rebellion. It's the uneasy silence after a loss when supporters know exactly which decision deserves questions and are waiting to hear whether the manager does too.",
+  "There is a difference between accepting a superior opponent and accepting an avoidable coaching error. Cincinnati's audience can do the first without offering the second a free pass. The manager would be wise not to confuse restrained frustration with approval."
+ ],
+ "Cleveland Browns": [
+  "Plus nine after a demolition is a strange kind of mercy, and the mood meter suggests supporters haven't yet turned one embarrassing Sunday into a referendum on everybody's employment.",
+  "That restraint shouldn't be mistaken for blindness. A fifty-point beating asks questions about the whole team, not just one lineup slot. If the next response is another motivational speech rather than actual improvement, that thin reserve of goodwill is going to look very expensive."
+ ],
+ "Pittsburgh Steelers": [
+  "The nearly neutral minus one is a statistical miracle of public patience. Two starting running backs contributed nothing, yet the crowd reading has somehow not fallen through the floorboards.",
+  "Supporters can forgive a dreadful afternoon more readily than management pretending it wasn't dreadful. The public mood is hovering near indifference, which should worry a manager almost as much as outrage: at least furious people still expect something."
+ ],
+ "Houston Texans": [
+  "At minus twelve, Houston's audience is restless without being beyond repair. That's a reasonable temperature for a team whose biggest selling point this week was that a few players managed to participate.",
+  "The manager should worry less about defending an individual choice and more about whether supporters believe the project has a direction. One corrective substitution won't inspire faith if the entire roster keeps looking like somebody's unfinished draft."
+ ],
+ "Indianapolis Colts": [
+  "Plus five after surviving by fewer than five points is not a victory parade. It's a cautious nod from supporters who watched the finish and would prefer not to require a medical examination afterward.",
+  "There is no need to manufacture a managerial crime out of a win. Fans can demand calmer Sundays while admitting the lineup earned this result. Trust built on narrow escapes is fragile, but at least Indianapolis has an actual victory to put underneath it."
+ ],
+ "Jacksonville Jags": [
+  "Plus four for a loss with a real lineup error is a surprisingly generous crowd assessment. The rating says skepticism, not an organized mutiny, and the manager shouldn't mistake that distinction for a compliment.",
+  "Supporters have reason to be irritated because the available correction was substantial without being enough to reverse the result. That is the worst kind of accountability conversation: nobody can promise one neat fix, and nobody gets to pretend the obvious mistake was harmless."
+ ],
+ "Tennessee Titans": [
+  "Plus eight after winning with 67.6 is a suitably modest reading. The fans are accepting the win, not requesting a bronze statue of everybody involved.",
+  "There's a difference between being pleased your opponent was even worse and believing your own team has found the formula. Supporters would like a victory they can brag about without having to explain the score first. Management has a week to consider that unreasonable luxury."
+ ],
+ "Denver Doncos": [
+  "Plus seventeen reflects justified optimism without quite becoming an engraved championship invitation. Denver earned its points against serious opposition, so the approval has more substance than the usual victory-induced hysteria.",
+  "Supporters should feel encouraged by a team that genuinely had to perform. They should also expect the manager to protect that standard. Confidence isn't an entitlement; it's what happens when the lineup gives people something real to believe in."
+ ],
+ "Kansas City Chiefs": [
+  "Minus eighteen is somehow only grumbling after six zero-point starters. The emotional meter appears to have granted the organization the benefit of an appeals process it did not earn.",
+  "At this point supporters aren't demanding sophisticated strategy. They would probably settle for more than one person showing up on the scoresheet. The manager's challenge is not winning an argument about bad luck; it is convincing anyone the team has a functioning plan."
+ ],
+ "Las Vegas Raiders": [
+  "Minus twenty-four for an entire lineup that scored nothing is almost admirably civil. A harsher rating would be justified, but the measured mood is restlessness rather than an invented riot.",
+  "Raiders supporters have no individual villain to blame. They have an institution that submitted seven empty slots and called it a game. The next credible step is basic competence, which is a devastatingly low ambition for anybody attempting to sell a competitive franchise."
+ ],
+ "Los Angeles Chargers": [
+  "Plus eight is restrained optimism after a comfortable win. It suggests supporters want the success to be repeatable rather than declaring the season conquered because Chicago was accommodating.",
+  "The manager has earned approval, not immunity. The healthy kind of fan confidence asks for another complete performance, with the strong contributors returning and the weak positions getting attention before a tougher opponent decides to exploit them."
+ ],
+ "Dallas Cowboys": [
+  "Plus twenty-five is genuine approval, and this time there is no need to apologize for it. Dallas won convincingly; supporters have earned the right to be a little unbearable at work tomorrow.",
+  "The useful question isn't whether the victory was impressive. It was. It's whether the manager can turn one dominant week into something dependable. A cheerful crowd is wonderful until a coach starts using applause as a substitute for setting a lineup."
+ ],
+ "New York Giants": [
+  "Plus five after losing a narrow, competent game speaks to a fan base that can recognize effort even while hating the outcome. That's a more grown-up mood than the usual hunt for a victim.",
+  "The manager can't promise supporters a perfect result every week. What the crowd can fairly demand is that the complete lineup survives this disappointment without a panicked overhaul. If everyone did the work and still lost, the lesson is to build, not burn."
+ ],
+ "Philadelphia Eagles": [
+  "Plus five after failing to clear 54 points is a remarkable amount of goodwill. The crowd rating has apparently not yet finished reviewing the tape, or it simply has impressive reserves of patience.",
+  "That patience doesn't absolve management of anything. A decent fan base can understand a bad week; being asked to treat such a dismal total as ordinary misfortune is something else. The next showing needs to restore basic dignity before anyone starts discussing momentum."
+ ],
+ "Washington Commanders": [
+  "Minus nine after a win is the kind of public verdict that keeps coaches awake. Supporters saw the result and apparently still had concerns about how the sausage got made.",
+  "The Commanders don't need to apologize for winning. They do need to understand why the mood remains below neutral. A competent manager should hear that as a request for consistency, not dismiss the fans as incapable of appreciating a victory."
+ ],
+ "Chicago Bears": [
+  "Minus five is only mild disapproval after a fairly decisive loss. That gives Chicago some breathing room, not permission to keep producing supporting casts that belong in a missing-person report.",
+  "Supporters can acknowledge that Chris Olave delivered and still demand an actual team around him. The emotional issue is whether the manager has a credible path forward. Nobody becomes a believer just because the postgame explanation contains enough adjectives."
+ ],
+ "Detroit Lions": [
+  "Plus one after an 84–0 win is hilarious in the most revealing way. Supporters apparently understand that beating an opponent who contributed nothing proves rather less than the margin suggests.",
+  "The Lions earned the victory, of course. What they haven't earned is blind confidence against actual resistance. The measured mood looks like a fan base refusing to confuse a walkover with a coronation. Good for them; somebody needs to stay awake."
+ ],
+ "Green Bay Packers": [
+  "Plus five after winning 27.9–9.5 is exactly the kind of reluctant approval a performance like that deserves. It says thanks for the win, now please stop making football look like a clerical error.",
+  "Supporters know the standings don't deduct points for ugliness. They also know another opponent might reach double figures without assistance. The manager should enjoy this bizarre gift while recognizing that optimism built on other teams failing is a very flimsy business model."
+ ],
+ "Minnesota Vikings": [
+  "Plus five after scoring respectably and losing feels like disappointment with a little patience left in the tank. Supporters aren't required to turn every close, competitive setback into a constitutional crisis.",
+  "The maddening part is that this team did enough to make victory seem plausible. Fans can respect the productive pieces while asking whether management can improve the weak spots. What they shouldn't be sold is the idea that one star was somehow supposed to win the game alone."
+ ],
+ "Atlanta Falcons": [
+  "Minus nineteen is justifiably sour after another afternoon in which excitement never really found the building. Supporters aren't angry because one spectacular play went wrong; they're angry because there was so little to get excited about.",
+  "This is where the manager has to supply a reason for hope that isn't a speech about trying harder. A fan base will tolerate a loss. It will eventually stop tolerating a team that makes ordinary competence feel like a distant rumor."
+ ],
+ "Carolina Panthers": [
+  "Plus five after a narrow win is more restrained than champagne and entirely reasonable. Carolina's supporters seem pleased without being intoxicated by the idea that a four-point edge settles every argument.",
+  "The important reassurance is the complete starting lineup. A victory built without multiple dead spots gives supporters a reason to believe the next close game is manageable. The manager's responsibility now is not to ruin that by getting cute."
+ ],
+ "New Orleans Aints": [
+  "Plus twenty-five is healthy approval after a comprehensive win. Aints supporters may enjoy the scoreboard without being asked to issue a formal statement of humility afterward.",
+  "Confidence becomes foolish only when it forgets the opponent helped create the spectacle. New Orleans has earned its enthusiasm; the next question is whether the manager can make that performance travel to a matchup where the other side actually offers resistance."
+ ],
+ "Tampa Bay Buccaneers": [
+  "Minus one after scoring 115.8 and losing is a nearly perfect expression of conflicted support. Fans have a genuine reason to admire the talent and an equally genuine reason to be annoyed by the result.",
+  "There isn't a sensible fan case for blaming CeeDee Lamb, and the manager shouldn't encourage one. This mood should be about demanding more complete help for an exceptional performance. Otherwise the franchise is asking supporters to admire the fireworks while ignoring the fire."
+ ],
+ "Arizona Cardinals": [
+  "Plus fifteen suggests belief that has not yet become a public nuisance. Arizona won with balance rather than a single player performing an elaborate rescue mission, and supporters have reason to appreciate that.",
+  "The manager deserves credit for a starting card that functioned from top to bottom. Just don't mistake one orderly week for a lifetime guarantee. Fans want more performances that look organized, not a souvenir speech about this one."
+ ],
+ "Los Angeles Rams": [
+  "Plus eight after a comfortable win reads like a nod of approval from fans who enjoyed the result but aren't surrendering their right to complain next week.",
+  "T.J. Watt supplied a fantastic reason to cheer. Supporters can celebrate him while expecting a roster that won't require a nearly forty-point outburst as its entire personality. That's not ingratitude; it's the difference between liking a show and trusting a team."
+ ],
+ "San Francisco 49ers": [
+  "Plus thirteen indicates measured optimism after a convincing win. Given the opponents' two zero-point running backs, supporters are right to enjoy the result without demanding a championship ring from the league office.",
+  "The manager can take credit for taking advantage of a bad opponent. The fans' longer-term question is whether this lineup can impose itself when the other team doesn't arrive already gift-wrapped. Approval today is not a lifetime exemption from scrutiny."
+ ],
+ "Seattle Seahawks": [
+  "Plus one after winning by more than fifty is an extraordinary endorsement of healthy skepticism. Fans have apparently noticed that Cleveland's performance supplied much of the comedy.",
+  "Seattle deserves congratulations for doing its part, not a statue for standing in the correct place when the Browns collapsed. The crowd has kept its expectations alive, which is more useful than any overexcited victory speech management could deliver."
+ ]
+};
 // Final single-pass column: rewrite repetitive sections, preserve underlying game and award data.
 const ok=x=>x!=null&&x!==''&&Number.isFinite(Number(x));
 const f=x=>Number(x).toFixed(1);
@@ -287,7 +417,8 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     :'Nobody owes '+tn(t)+' a sympathy win next week. '+(margin<=8?'At this margin every actual selection matters.':'A '+f(margin)+'-point deficit for '+tn(t)+' demands more than another inspirational slogan.');
   const bespokeCrowd=week===4&&Number(e.season)===2026?week4CrowdColumns[tn(t)]:null;
   const calibratedMood=moodScore===null?'Crowd reading unavailable.':'Crowd mood: '+f(moodScore)+' ('+moodLabel+').';
-  put(a,'sentiment',bespokeCrowd?[calibratedMood,...bespokeCrowd].filter(Boolean):[moodIntro,crowdEditorial,reaction[reporter]||reaction['walter-mercer'],future].filter(Boolean));
+  const moodOpinion=week===4&&Number(e.season)===2026?week4FanMoodColumns[tn(t)]:null;
+  put(a,'sentiment',moodOpinion?[calibratedMood,...moodOpinion]:[moodIntro,crowdEditorial,reaction[reporter]||reaction['walter-mercer'],future].filter(Boolean));
   const next=String(t.next_opponent_name||'an opponent not yet confirmed');
   const week4Outlook=[
    'Week '+(week+1)+' brings '+next+'. '+(allZero?'After '+p.length+' empty starting slots, scoring any positive points would constitute measurable progress.':solo?'The opponent now knows one productive starter cannot sustain an entire franchise. '+nm(top)+' deserves some actual company.':low5.length>=3?'The next team on the schedule can see '+low5.length+' starting slots that failed to reach five. There is no need to gift-wrap the scouting report again.':low5.length===0?'Every starter contributed this week. That is worth keeping; tearing apart a functioning lineup after one result would be an especially creative kind of panic.':nm(low)+' scored '+f(low.points)+'. The response should be a real position-by-position decision, not a dramatic speech.'),

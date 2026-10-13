@@ -204,7 +204,25 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
    :low5.length===0
    ?nm(low)+' had the lowest total at '+f(low.points)+', which still means every starter contributed. '+(won?'There is little reason to manufacture outrage about that.':'The loss is not evidence that this player alone should be blamed.')
    :nm(low)+' scored '+f(low.points)+' at '+String(low.position||'a starting role')+'. '+(won?''+tn(t)+' survived that production; '+rival+' did not make it costly this time.':''+nm(low)+' disappointed, but a genuinely better legal choice—not hindsight theater—would be needed to indict the manager.');
-  put(a,'players',[playerFeature,weakestFeature]);
+  // Week 4: make a judgment about players rather than a mechanical top-three sum.
+  // A team's roster facts remain unchanged; this is the sole presentation stage.
+  const playerStory=allZero
+   ?p.length+' starting slots, not one positive score. Naming a best player here would be an act of fiction; nobody earned the headline.'
+   :solo
+   ?nm(top)+' accounted for all '+f(own)+' points. A football team consisting of one participant and six bystanders is a novelty, not a strategy.'
+   :topHeavy
+   ?nm(top)+' was excellent at '+f(top.points)+', with '+nm(second)+' and '+nm(third)+' doing enough to keep the story from becoming a solo act. Outside that trio the lineup was almost entirely unpaid extras.'
+   :low5.length>=3
+   ?nm(top)+' gave '+tn(t)+' '+f(top.points)+'. '+nm(second)+' helped with '+f(second.points)+', but '+low5.length+' starters failed even to reach five. One decent performance cannot make a committee of passengers look respectable.'
+   :nm(top)+' led with '+f(top.points)+' and '+nm(second)+' added '+f(second.points)+'. '+(won?'This win had actual contributors, not just a name the manager can use to decorate a press conference.':'Those performances deserved a better result; neither player can fill every starting slot.');
+  const playerCounterpoint=allZero
+   ?'There is no individual scapegoat when everybody missed the basic requirement of scoring. Put the whole starting sheet under review.'
+   :low5.length>=3
+   ?nm(low)+' ended on '+f(low.points)+', but pointing at the last name on the scoring list is too easy. The damage was spread across '+low5.length+' quiet starters, which is far more damning.'
+   :low5.length===0
+   ?'Even the lowest contributor, '+nm(low)+', managed '+f(low.points)+'. '+(won?'The manager got a complete starting effort. Feel free to criticize something that actually went wrong.':'A complete scoring card still lost. Sometimes the other side was simply better; inventing a guilty party would be lazy.')
+   :nm(low)+' produced '+f(low.points)+'. '+(won?'The win covered for that disappointment, but it did not erase it.':'The disappointment is real. Calling it a bad start/sit decision without proving an eligible better option would be cheap hindsight.');
+  put(a,'players',week===4&&Number(e.season)===2026?[playerStory,playerCounterpoint]:[playerFeature,weakestFeature]);
   const management=legal?nm(bench)+' beat '+nm(starter)+' by '+f(upgrade)+' in a documented eligible swap. '+(won?'The win would have grown by '+f(upgrade)+'. The manager can enjoy the result and still explain why '+nm(starter)+' started ahead of '+nm(bench)+'.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'Even with '+nm(bench)+'\'s extra '+f(upgrade)+', '+tn(t)+' would still lose by '+f(margin-upgrade)+'. That does not make starting '+nm(starter)+' a stroke of managerial genius.'):'No verified eligible bench upgrade is documented. Inventing an imaginary alternative would be lazy. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without a legal alternative would be impressively lazy.');
   const managerVerdict=allZero
    ?'There were '+p.length+' starting positions and not a single positive point. One scapegoat would be exceptionally convenient for everybody else.'
@@ -257,7 +275,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   put(a,'sentiment',bespokeCrowd?[calibratedMood,...bespokeCrowd].filter(Boolean):[moodIntro,crowdEditorial,reaction[reporter]||reaction['walter-mercer'],future].filter(Boolean));
   const next=String(t.next_opponent_name||'an opponent not yet confirmed');
   const week4Outlook=[
-   'Week '+(week+1)+' brings '+next+'. '+(allZero?'After seven empty starting slots, scoring any positive points would constitute measurable progress.':solo?'The opponent now knows one productive starter cannot sustain an entire franchise. '+nm(top)+' deserves some actual company.':low5.length>=3?'The next team on the schedule can see '+low5.length+' starting slots that failed to reach five. There is no need to gift-wrap the scouting report again.':low5.length===0?'Every starter contributed this week. That is worth keeping; tearing apart a functioning lineup after one result would be an especially creative kind of panic.':nm(low)+' scored '+f(low.points)+'. The response should be a real position-by-position decision, not a dramatic speech.'),
+   'Week '+(week+1)+' brings '+next+'. '+(allZero?'After '+p.length+' empty starting slots, scoring any positive points would constitute measurable progress.':solo?'The opponent now knows one productive starter cannot sustain an entire franchise. '+nm(top)+' deserves some actual company.':low5.length>=3?'The next team on the schedule can see '+low5.length+' starting slots that failed to reach five. There is no need to gift-wrap the scouting report again.':low5.length===0?'Every starter contributed this week. That is worth keeping; tearing apart a functioning lineup after one result would be an especially creative kind of panic.':nm(low)+' scored '+f(low.points)+'. The response should be a real position-by-position decision, not a dramatic speech.'),
    legal?'The documented '+String(swap?.slot||'starting')+' decision between '+nm(starter)+' and '+nm(bench)+' needs review before '+next+'. Their next performances are unknown; the lesson is to make a defensible selection, not to pretend last week will replay.':won?'A victory gives this manager room to plan instead of scramble. That is a privilege, not an invitation to sleep through lineup setting.':'There is no verified eligible bench fix to copy. Improving the actual starting options is a better plan than manufacturing a Monday morning genius.'
   ];
   const forwardFirst='Week '+(week+1)+' brings '+next+' for '+tn(t)+'. '+nm(low)+' finished at '+f(low.points)+'.';

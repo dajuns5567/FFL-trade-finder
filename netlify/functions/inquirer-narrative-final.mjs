@@ -1,3 +1,4 @@
+import {week4Notes} from './inquirer-week4-specific-notes.mjs';
 // Final single-pass column: rewrite repetitive sections, preserve underlying game and award data.
 const ok=x=>x!=null&&x!==''&&Number.isFinite(Number(x));
 const f=x=>Number(x).toFixed(1);
@@ -88,7 +89,8 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const future=won
     ?'The next opponent gets no points for the previous win. '+(low5.length?'Those '+low5.length+' quiet positions will not be overlooked.':'For now, management has earned some room to breathe.')
     :'Nobody owes '+tn(t)+' a sympathy win next week. '+(margin<=8?'At this margin every actual selection matters.':'The gap demands more than an inspirational slogan.');
-  put(a,'sentiment',[moodIntro,reaction[reporter]||reaction['walter-mercer'],future]);
+  const individuallyReported=(week===4&&Number(e.season)===2026)?week4Notes[tn(t)]:null;
+  put(a,'sentiment',[moodIntro,individuallyReported,reaction[reporter]||reaction['walter-mercer'],future].filter(Boolean));
   put(a,'outlook',['Week '+(week+1)+': '+tn(t)+' will face '+String(t.next_opponent_name||'an unverified opponent')+'. '+nm(low)+' delivered '+f(low.points)+' from '+String(low.position||'a starting role')+' this week. '+(allZero?'A positive score would be a remarkably ambitious improvement.':low5.length>=3?'The manager should examine the '+low5.length+' quiet starting slots before filing another optimistic preview.':'Repeating the top scorer’s output is a hope, not a lineup strategy.'),legal?'This week supplies an actual '+f(upgrade)+'-point roster decision to review. Not a projection, not a fairy tale.':'The '+String(low.position||'starter')+' slot produced '+f(low.points)+'. Next time the manager must compare real choices instead of hoping for better luck.']);
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.cohesive_editorial_version=1;

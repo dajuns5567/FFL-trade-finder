@@ -663,7 +663,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const forwardFirst='Week '+(week+1)+' brings '+next+' for '+tn(t)+'. '+nm(low)+' finished at '+f(low.points)+'.';
   const forwardSecond=legal?'Review the verified '+nm(starter)+' versus '+nm(bench)+' choice.':'Compare actual eligible replacements rather than inventing one.';
   const bespokeNext=week===4&&Number(e.season)===2026?week4NextAngles[tn(t)]:null;
-  put(a,'outlook',bespokeNext?['Week '+(week+1)+' brings '+next+'. '+(legal?'The '+String(swap?.slot||'starting')+' selection remains worth reviewing.':low5.length?'The starting card needs a credible response to its weak spots.':'A competitive starting group has earned the benefit of careful rather than panicked management.'),bespokeNext]:[forwardFirst,forwardSecond]);
+  put(a,'outlook',bespokeNext?['Week '+(week+1)+' brings '+next+'. '+(legal?'Management must evaluate '+nm(starter)+' against the eligible option '+nm(bench)+' without assuming last week repeats.':nm(top)+' remains central to the next lineup, but the manager cannot assume another '+f(top.points)+'-point outing.'),bespokeNext]:[forwardFirst,forwardSecond]);
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.cohesive_editorial_version=1;
  }

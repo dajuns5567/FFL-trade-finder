@@ -32,7 +32,8 @@ for(const team of edition.teams){
  const split=[...note.matchAll(/[.!?](?=\s+[A-Z])/g)].map(x=>x.index).find(i=>i>=55);
  const leadPart=split===undefined?note:note.slice(0,split+1);
  const crowdPart=split===undefined?null:note.slice(split+1).trim();
- assert(article.sections.find(x=>x.kind==='lede')?.paragraphs?.includes(leadPart),'Independent team-specific headline argument was dropped for '+team.team_name);
+ const publicLead=leadPart.replace(/documented eligible swap/gi,'lineup decision').replace(/no verified eligible bench upgrade is documented/gi,'no better bench choice is supported by the numbers').replace(/eligible points/gi,'points the manager could have gained').replace(/eligible option/gi,'available backup').replace(/eligible replacement/gi,'available replacement').replace(/legal alternative/gi,'real alternative').replace(/verified eligible/gi,'actually available');
+ assert(article.sections.find(x=>x.kind==='lede')?.paragraphs?.includes(publicLead),'Independent team-specific headline argument was dropped for '+team.team_name);
  assert(moodLines.length>=3,'Independently written Week 4 crowd commentary missing for '+team.team_name);
  assert(moodLines[0]?.includes(Number(article.fan_sentiment?.score).toFixed(1)),'Crowd mood must use actual measured score, not an authored number: '+team.team_name);
  assert(/(supporters|fans|crowd|public|trust|confidence|approval|patience|goodwill|audience)/i.test(moodLines.slice(1).join(' ')),'Fan sentiment must actually interpret fan feeling, not just recap the score: '+team.team_name);

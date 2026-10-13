@@ -289,7 +289,7 @@ function leagueStory(edition){
    'Week '+(week+1)+' has not been scored. These are upcoming appointments, not completed outcomes.'
   ]);
  }
- const star=topPlayers(high)[0],young=teams.flatMap(t=>topPlayers(t).filter(p=>valid(p.age)&&Number(p.age)<=26).map(p=>({t,p}))).sort((a,b)=>Number(b.p.points)-Number(a.p.points))[0],flags=new Map();
+ const star=topPlayers(high)[0],youngCandidates=teams.flatMap(t=>topPlayers(t).filter(p=>valid(p.age)&&Number(p.age)<=26).map(p=>({t,p}))).sort((a,b)=>Number(b.p.points)-Number(a.p.points)),young=youngCandidates.find(({p})=>String(p.name||p.player_name||p.player_id)!==String(star?.name||star?.player_name||star?.player_id))||youngCandidates[0],flags=new Map();
  for(const t of teams){const key=String(t.division_name||'').trim();if(!key)continue;const previous=flags.get(key),rk=Number(t?.league_context?.standings_rank)||999;if(!previous||rk<(Number(previous?.league_context?.standings_rank)||999))flags.set(key,t)}
  const hot=[
   high?{kind:'championship',title:'Title Favorite: '+name(leaders[0]||high),take:name(leaders[0]||high)+' has the strongest present standings position at '+record(leaders[0]||high)+' and '+rank(leaders[0]||high)+'. That is a current-week call, not an award given in advance.'}:null,

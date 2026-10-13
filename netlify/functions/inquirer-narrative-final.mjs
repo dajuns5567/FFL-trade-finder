@@ -37,11 +37,11 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     zero:'Every verified starter scored zero. This was not one unlucky snap; it was an entire roster choosing a Sunday off.',
     solo:nm(top)+' scored '+f(top.points)+'. Every other starter ('+(p.length-1)+') combined for nothing. Fantasy football is a team game, which must have come as news to them.',
     mismanaged:nm(bench)+' outscored selected '+nm(starter)+' by '+f(upgrade)+' in a verified eligible swap. That is bigger than the '+f(margin)+'-point loss. A manager can call it unfortunate, but the arithmetic is more specific.',
-    close:'A '+f(margin)+'-point finish deserves scrutiny. It does not grant anyone permission to invent an eligible replacement, but it makes real lineup decisions particularly expensive.',
-    rout:'The '+f(margin)+'-point margin was not one bad bounce. '+(won?'The other manager provided little resistance.':'There are easier ways to spend Sunday than getting outscored in nearly every useful conversation.'),
+    close:'Just '+f(margin)+' separated '+tn(t)+' and '+rival+'. '+(legal?'That narrow margin makes the documented eligible bench decision a particularly uncomfortable conversation.':'There is no verified bench rescue to invent, which rather spoils the lazy manager-blame narrative.'),
+    rout:'The '+f(margin)+'-point gap between '+tn(t)+' and '+rival+' is not one bad bounce. '+(won?'The opponent made winning this one look considerably easier than it ought to be.':'The defeated manager can blame the weather, the schedule or the moon; the starting total will remain the same.'),
     thin:nm(top)+', '+nm(second)+' and '+nm(third)+' supplied '+f(three)+' of '+f(own)+'. The others managed '+f(own-three)+'. Seven starters were invited; only three brought anything resembling a gift.',
     holes:low5.length+' of '+p.length+' verified starters scored fewer than five points. '+nm(low)+' finished at '+f(low.points)+'. That many empty contributions is less a lineup than a list of witnesses.',
-    win:'A win is a win. '+nm(top)+' scored '+f(top.points)+' and the rest combined for '+f(own-Number(top.points))+'. Credit the supporting cast that turned one performance into a result.',
+    win:'Unlike '+rival+', '+tn(t)+' found a way to finish ahead. '+nm(top)+' supplied '+f(top.points)+' and the others combined for '+f(own-Number(top.points))+'. That is a roster actually sharing the work instead of just sharing the blame.',
     loss:nm(top)+' scored '+f(top.points)+' and '+tn(t)+' still lost. Individual highlights are lovely; opposing managers generally prefer the victory.'
   };
   const scandal=legal&&upgrade>margin&&!won?'A verified '+f(upgrade)+'-point bench upgrade in a '+f(margin)+'-point loss is not a philosophical disagreement. That is an actual missed opportunity.':
@@ -79,9 +79,9 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const managerVerdict=allZero
    ?'There were '+p.length+' starting positions and not a single positive point. One scapegoat would be exceptionally convenient for everybody else.'
    :legal&&won
-   ?'The win provides cover, not vindication. '+nm(low)+' supplied '+f(low.points)+' while management left real upside unused. These are separate facts and both deserve a question.'
+   ?'The win provides cover, not vindication. '+nm(low)+' supplied '+f(low.points)+' while '+nm(bench)+' was an eligible source of more production. The manager should be able to defend the actual choice, not hide behind the final score.'
    :legal
-   ?'The losing margin was '+f(margin)+'. '+(upgrade>margin?'The unused eligible improvement was larger than that margin; this choice deserves the manager’s full attention.':'Even fixing this eligible mistake would still leave the team behind. Management has more than one job to do.')
+   ?'The losing margin was '+f(margin)+'. '+(upgrade>margin?'The unused eligible improvement was larger than that margin; this choice deserves the manager’s full attention.':'Even after recovering '+f(upgrade)+' points, '+tn(t)+' would still trail '+rival+' by '+f(margin-upgrade)+'. The manager has more than one failing position to address.')
    :low5.length>=3
    ?'With '+low5.length+' starters below five, the problem did not begin and end with '+nm(low)+'. This lineup needs a broader interrogation.'
    :margin<=8
@@ -120,8 +120,8 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     :'Rivals will not feel sorry for a manager who hands them an obvious target. '+(legal?'The documented bench difference is '+f(upgrade)+' points; the next opponent will be delighted if the selection habits survive.':'There is no proven bench rescue, which means the starters themselves are the scouting report.')
   };
   const future=won
-    ?'The next opponent gets no points for the previous win. '+(low5.length?(low5.length===1?'The next opponent will notice '+nm(low)+' scored '+f(low.points)+'. One soft starting slot is more than enough to keep a rival interested.':'The next opponent can count '+low5.length+' quiet starting spots. None of them requires an advanced scouting department to discover.'):'For now, management has earned some room to breathe.')
-    :'Nobody owes '+tn(t)+' a sympathy win next week. '+(margin<=8?'At this margin every actual selection matters.':'The gap demands more than an inspirational slogan.');
+    ?'The next opponent gets no points for the previous win. '+(low5.length?(low5.length===1?'The next opponent will notice '+nm(low)+' scored '+f(low.points)+'. One soft starting slot is more than enough to keep a rival interested.':'The next opponent can count '+low5.length+' quiet starting spots. None of them requires an advanced scouting department to discover.'):'For now, '+tn(t)+' has at least earned another week without a crisis meeting.')
+    :'Nobody owes '+tn(t)+' a sympathy win next week. '+(margin<=8?'At this margin every actual selection matters.':'A '+f(margin)+'-point deficit for '+tn(t)+' demands more than another inspirational slogan.');
   put(a,'sentiment',[moodIntro,crowdEditorial,reaction[reporter]||reaction['walter-mercer'],future].filter(Boolean));
   const forwardFirst='Week '+(week+1)+' brings '+String(t.next_opponent_name||'an opponent not yet confirmed')+' for '+tn(t)+'. '+(allZero?'After '+p.length+' zeroes, including '+nm(top)+' at '+f(top.points)+', the first ambitious target is one functioning starter.':low5.length>=3?low5.length+' starting spots were below five this week, including '+nm(low)+' at '+f(low.points)+'. The manager should be looking for genuine opportunity, not composing another hopeful speech.':low5.length===0?'Every verified starter was productive, with '+nm(top)+' contributing '+f(top.points)+'. The next matchup demands the same breadth, not a forced search for somebody to blame.':nm(low)+' finished at '+f(low.points)+'. That role warrants a genuine look before the next lineup locks.');
   const forwardSecond=legal?'Management must revisit why '+nm(starter)+' made the Week '+week+' starting card over '+nm(bench)+'. Last week’s numbers are evidence for review, not an invented forecast of the next game.':low5.length===0?'There is no verified better eligible replacement to conjure up. Sometimes the correct adjustment is to keep a productive lineup and demand another week of execution.':'Before the next opponent, '+tn(t)+' should test the actual options at '+String(low.position||'that role')+'. Blaming a missed swap without an eligible alternative would be a very convenient fairy tale.';

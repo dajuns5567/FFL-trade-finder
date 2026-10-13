@@ -31,6 +31,10 @@ on:
       - '.github/workflows/inquirer-week4-live-audit.yml'
   workflow_dispatch:
 
+concurrency:
+  group: inquirer-week4-qa-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

@@ -1,3 +1,4 @@
+import {finalizeInquirerNarrative} from './inquirer-narrative-final.mjs';
 import {addInquirerCharacter} from './inquirer-editorial-character.mjs';
 import {polishInquirerStories} from './inquirer-story-polish.mjs';
 import {addInquirerColumns} from './inquirer-editorial-column.mjs';
@@ -141,5 +142,6 @@ export function upgradeInquirerAnalysis(edition,{week=Number(edition?.week)}={})
  addInquirerCharacter(edition,{week});
  polishInquirerStories(edition,{week});
  addInquirerColumns(edition,{week});
+ finalizeInquirerNarrative(edition,{week});
  return edition;
 }

@@ -3,6 +3,7 @@
 const sane=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
 const f=v=>Number(v).toFixed(1);
 const team=t=>String(t?.team_name||'the team');
+const possessive=t=>t.endsWith('s')?t+'’':t+'’s';
 const nm=p=>String(p?.name||'an unnamed starter');
 const scored=t=>(t?.starter_details||[]).filter(p=>p?.name&&sane(p.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points));
 const slot=(a,k)=>(a?.sections||[]).find(s=>s.kind===k);
@@ -14,7 +15,7 @@ const perspectives={
   week:(t,weak,next)=>'The sensible question before '+next+' is whether '+t+' can find a better answer than '+nm(weak)+' at '+f(weak.points)+'. “Surely next week will be different” is not a lineup setting.'
  },
  'tess-delaney':{
-  opener:(t,w,o,m)=>t+' '+(w?'won':'lost')+' against '+o+' by '+f(m)+'. The scoreboard is wearing absolutely nothing that softens that number.',
+  opener:(t,w,o,m)=>t+' finished '+f(m)+' points '+(w?'ahead of ':'behind ')+o+'. A respectable scoreline can wear a very convincing outfit. The box score is less easily impressed.',
   bench:(b,s,up,w,m)=>'Leaving '+nm(b)+' behind '+nm(s)+' cost '+f(up)+' available points. '+(w?'A fashionable win, but the accessories remain questionable.':up>m?'That is larger than the losing margin. One hates when the receipts arrive itemized.':'The selection was unfortunate even if correcting it would not have won the game.'),
   week:(t,weak,next)=>'Before '+next+', '+t+' might consider whether '+nm(weak)+' at '+f(weak.points)+' is a starter or merely an expensive decoration. The distinction matters on the scoreboard.'
  },

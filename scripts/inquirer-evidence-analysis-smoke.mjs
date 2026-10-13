@@ -73,7 +73,15 @@ for(const team of edition.teams){
 
  for(const kind of ['lede','players','management','outlook']){
   const sec=article.sections.find(x=>x.kind===kind);
-  assert(sec?.paragraphs?.length>=2,'Preserve existing '+kind+' and ADD meaningful commentary for '+team.team_name);
+  assert(sec?.paragraphs?.length>=(kind==='players'?1:2),'Preserve substantive '+kind+' reporting for '+team.team_name);
+ }
+ const playerLines=article.sections.find(x=>x.kind==='players')?.paragraphs||[];
+ const playerCopy=playerLines.join(' ');
+ assert(playerLines.length>=1,'Player section needs a cohesive evidence-backed opinion: '+team.team_name);
+ assert(!playerLines.some(p=>/^[\\w .'-]+ scored \\d+(?:\\.\\d+)?\\.$/i.test(p.trim())),'Isolated player-stat blurb is not commentary: '+team.team_name);
+ if(Number(team.points)>0){
+  const verifiedScorePattern=/\\b\\d+(?:\\.\\d+)?\\s*(?:pts|points)\\b/i;
+  assert(verifiedScorePattern.test(playerCopy),'Player analysis must embed an actual player score inside its argument: '+team.team_name);
  }
  const voiceLine=article.sections.find(x=>x.kind==='lede')?.paragraphs?.[0]||'';
  assert(voiceLine.includes(team.team_name)||voiceLine.includes(team.opponent_name),'Columnist must discuss actual matchup, not generic filler');

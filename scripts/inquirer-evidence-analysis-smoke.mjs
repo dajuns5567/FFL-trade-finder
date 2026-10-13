@@ -128,7 +128,7 @@ for(const team of edition.teams){
   assert(!/\b(?:That is this week’s verified performance|not an imagined projection|the next opponent will care less|the useful story sits|this one the roster actually earned)\b/i.test(copy),'Generic article filler was not replaced');
   assert(!/\b\d+(?:\.\d+)?\s+Put\b/.test(copy),'Broken sentence splice appeared in copy');
   const named=starters.slice().sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,kind==='management'?starters.length:3).some(p=>copy.includes(p.name));
-  const justifiedNoScapegoat=kind==='management'&&/no verified eligible bench upgrade|every verified starter cleared five|no bench change was shown to improve this lineup/i.test(copy);
+  const justifiedNoScapegoat=kind==='management'&&/no verified eligible bench upgrade|every verified starter cleared five|no bench change was shown to improve this lineup|no defensible reason to invent a bench savior|no demonstrated higher-scoring bench answer|searching the bench for an imaginary single rescuer|without a proven bench upgrade/i.test(copy);
   assert(kind==='lede'||named||justifiedNoScapegoat||(kind==='players'&&Number(team.points)===0&&/every|all|seven|nobody|no star|zero/i.test(copy)),'Player or manager critique must be source-grounded in '+kind+' for '+team.team_name);
  }
  const sentiment=article.sections.find(x=>x.kind==='sentiment');

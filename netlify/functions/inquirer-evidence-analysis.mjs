@@ -1,5 +1,6 @@
 import {addInquirerCharacter} from './inquirer-editorial-character.mjs';
 import {polishInquirerStories} from './inquirer-story-polish.mjs';
+import {addInquirerColumns} from './inquirer-editorial-column.mjs';
 // Fact-first edition analysis: replaces replaceable motivational copy with a
 // concrete diagnosis of how completed fantasy matchups were actually decided.
 // Applies ONLY to editable Week 4+ material; Weeks 1-3 stay frozen.
@@ -139,5 +140,6 @@ export function upgradeInquirerAnalysis(edition,{week=Number(edition?.week)}={})
  recapAnalysis(edition);
  addInquirerCharacter(edition,{week});
  polishInquirerStories(edition,{week});
+ addInquirerColumns(edition,{week});
  return edition;
 }

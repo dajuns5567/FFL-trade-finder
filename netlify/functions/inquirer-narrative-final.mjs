@@ -187,7 +187,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const leadingEditorial=editorialCut>=0?teamEditorial.slice(0,editorialCut+1):teamEditorial;
   const crowdEditorial=editorialCut>=0?teamEditorial.slice(editorialCut+1).trim():null;
   const headComparison=other?'Against '+rival+', '+nm(other)+' scored '+f(other.points)+' while '+nm(top)+' managed '+f(top.points)+'. Beyond those two, '+tn(t)+' '+(own-Number(top.points)>=against-Number(other.points)?'outscored ':'trailed ')+rival+' by '+f(Math.abs(own-Number(top.points)-against+Number(other.points)))+'. That is where the game really swung.':'No verified opposing starter comparison is available; the final team margin is.';
-  put(a,'lede',[tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'. '+judgment[angle],headComparison,leadingEditorial||scandal]);
+  put(a,'lede',teamEditorial?[tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'. '+judgment[angle],leadingEditorial]:[tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'. '+judgment[angle],headComparison,leadingEditorial||scandal]);
   const playerFeature=allZero
    ?'Nobody on this verified starting card scored positively. '+nm(top)+', '+nm(second)+' and '+nm(third)+' all finished on zero. We are not manufacturing a hero out of an empty scorebook.'
    :reporter==='mack-hollis'

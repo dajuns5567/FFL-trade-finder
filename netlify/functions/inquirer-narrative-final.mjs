@@ -588,6 +588,14 @@ const week4CrowdScenes={
  "San Francisco 49ers": "San Francisco's imaginary fans have a champagne parade behind a float labeled 'THANK YOU, PITTSBURGH BACKFIELD.' Plus thirteen reflects a real win without pretending the opponent made it especially difficult.",
  "Seattle Seahawks": "Seattle's fictional victory party has fireworks, champagne and a fifty-one-point banner so large it blocks the view of Cleveland's score. Plus one says even delighted supporters can recognize an opponent that barely resisted."
 };
+const week4DistinctHotSeats={
+ "Buffalo Billiards": "A forty-two-point loss is not a paperwork error. This manager needs to explain why an entire offense vanished while the defensive contributors were left to carry the embarrassment.",
+ "Miami Dolphins": "The coach gets to celebrate a huge offensive afternoon, but needs to remember the defense has a job too. There will be less room for freelancing when the stars have an ordinary week.",
+ "New York Jets": "Three starting slots failed to reach five and Atlanta was generous enough not to care. The manager cannot count on the next opponent sharing that charitable disposition.",
+ "Cincinnati Bungals": "Cincinnati's stars don't owe the rest of the roster a weekly rescue operation. If the coach thinks one standout makes the other weak spots invisible, the final score respectfully disagrees.",
+ "Houston Texans": "One correction to the lineup does not explain a team beaten by nearly thirty. Houston's bigger problem is how little support its useful scorers received.",
+ "Jacksonville Jags": "The manager had more than one issue in a loss this narrow. Spending the whole postgame briefing on one defensive slot would be a convenient way to ignore the surrounding failures."
+};
 // Final single-pass column: rewrite repetitive sections, preserve underlying game and award data.
 const ok=x=>x!=null&&x!==''&&Number.isFinite(Number(x));
 const f=x=>Number(x).toFixed(1);
@@ -729,7 +737,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
    const cool=allZero
     ?'No award. All zero. A participation certificate would be an insult to participation.'
     :nm(top)+' supplied '+f(top.points)+'. '+(won?'That is production worth celebrating; the manager should resist taking personal credit for every point.':'At least one player made the defeat harder to swallow instead of easier to explain.');
-   put(a,'hot-seat',[editedVerdicts?editedVerdicts[2]:hot]);put(a,'cool-throne',[editedVerdicts?editedVerdicts[3]:cool]);
+   put(a,'hot-seat',[week4DistinctHotSeats[tn(t)]||editedVerdicts?.[2]||hot]);put(a,'cool-throne',[editedVerdicts?editedVerdicts[3]:cool]);
   }
   // The crowd section is a columnist's reaction to the measured fan mood,
   // not another recap or an invented quote attributed to real supporters.

@@ -163,7 +163,7 @@ const week4FanMoodColumns={
   "Supporters can forgive a dreadful afternoon more readily than management pretending it wasn't dreadful. The public mood is hovering near indifference, which should worry a manager almost as much as outrage: at least furious people still expect something."
  ],
  "Houston Texans": [
-  "At minus twelve, Houston's audience is restless without being beyond repair. That's a reasonable temperature for a team whose biggest selling point this week was that a few players managed to participate.",
+  "Houston's fans sit at minus twelve: annoyed, but not yet hopeless. Their team just offered up an afternoon whose main selling point was that a few players remembered football requires scoring. Management should appreciate that the crowd hasn't requested an itemized refund.",
   "The manager should worry less about defending an individual choice and more about whether supporters believe the project has a direction. One corrective substitution won't inspire faith if the entire roster keeps looking like somebody's unfinished draft."
  ],
  "Indianapolis Colts": [
@@ -183,7 +183,7 @@ const week4FanMoodColumns={
   "Supporters should feel encouraged by a team that genuinely had to perform. They should also expect the manager to protect that standard. Confidence isn't an entitlement; it's what happens when the lineup gives people something real to believe in."
  ],
  "Kansas City Chiefs": [
-  "Minus eighteen is somehow only grumbling after six zero-point starters. The emotional meter appears to have granted the organization the benefit of an appeals process it did not earn.",
+  "Kansas City fans registering only minus eighteen after six starters scored zero may be the week's greatest act of charity. The crowd is granting management a grievance period instead of immediately declaring the entire Sunday operation unfit for purpose.",
   "At this point supporters aren't demanding sophisticated strategy. They would probably settle for more than one person showing up on the scoresheet. The manager's challenge is not winning an argument about bad luck; it is convincing anyone the team has a functioning plan."
  ],
  "Las Vegas Raiders": [
@@ -211,7 +211,7 @@ const week4FanMoodColumns={
   "The Commanders don't need to apologize for winning. They do need to understand why the mood remains below neutral. A competent manager should hear that as a request for consistency, not dismiss the fans as incapable of appreciating a victory."
  ],
  "Chicago Bears": [
-  "Minus five is only mild disapproval after a fairly decisive loss. That gives Chicago some breathing room, not permission to keep producing supporting casts that belong in a missing-person report.",
+  "Chicago fans are at minus five after a decisive defeat, which reads less like forgiveness than a crowd too tired to start shouting. Olave can play; the frustration is that too much of the roster around him keeps treating that as permission to disappear.",
   "Supporters can acknowledge that Chris Olave delivered and still demand an actual team around him. The emotional issue is whether the manager has a credible path forward. Nobody becomes a believer just because the postgame explanation contains enough adjectives."
  ],
  "Detroit Lions": [

@@ -30,9 +30,9 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     zero:tn(t)+': Zero Points. Attendance Was Apparently Optional',
     solo:tn(t)+': '+nm(top)+' Scored. The Rest Came to Watch',
     mismanaged:tn(t)+' Lost by '+f(margin)+' With a '+f(upgrade)+'-Point Bench Mistake',
-    close:tn(t)+(won?' Survived ':' Lost to ')+rival+' by '+f(margin)+'. Somebody Check the Lineup',
-    rout:tn(t)+(won?' Demolished ':' Was Demolished by ')+rival+' by '+f(margin),
-    thin:tn(t)+': '+nm(top)+' and Two Others Carried the Entire Operation',
+    close:tn(t)+(won?' Escaped Against ':' Fell Short Against ')+rival+' by '+f(margin)+'. Nobody Is Laughing',
+    rout:won?tn(t)+' Thrashed '+rival+' by '+f(margin):rival+' Thrashed '+tn(t)+' by '+f(margin),
+    thin:tn(t)+': '+nm(top)+' Did the Work. The Other Starters Owe an Explanation',
     holes:tn(t)+': '+low5.length+' Starters Under Five. An Inspired Strategy, Apparently',
     win:tn(t)+' Beat '+rival+'. '+nm(second)+' Actually Helped',
     loss:nm(top)+' Delivered. '+tn(t)+' Lost to '+rival+' Anyway'
@@ -49,11 +49,18 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     win:'A win is a win. '+nm(top)+' scored '+f(top.points)+' and the rest combined for '+f(own-Number(top.points))+'. Credit the supporting cast that turned one performance into a result.',
     loss:nm(top)+' scored '+f(top.points)+' and '+tn(t)+' still lost. Individual highlights are lovely; opposing managers generally prefer the victory.'
   };
+  const scandal=legal&&upgrade>margin&&!won?'A verified '+f(upgrade)+'-point bench upgrade in a '+f(margin)+'-point loss is not a philosophical disagreement. That is an actual missed opportunity.':
+   low5.length>=4?low5.length+' players below five points. At some stage the manager has to stop calling that bad luck and start calling it the lineup.':
+   allZero?'The entire starting lineup supplied nothing. The manager has achieved unanimity in the worst possible category.':
+   won&&own<70?'Winning with '+f(own)+' points is legal. It is also a wonderful advertisement for the opponent’s generosity.':
+   own>=100&&won?'This is what an offense with several working starters looks like. Everyone may now stop treating one star as a rescue helicopter.':
+   !won&&margin<8?'A close loss makes every choice sting, but nobody gets to invent an eligible bench swap to sound clever on Monday.':
+   'The problem is not that a score exists. The problem is what '+tn(t)+' plans to do about the starters who failed to deliver.';
   const headComparison=other?'Against '+rival+', '+nm(other)+' scored '+f(other.points)+' while '+nm(top)+' managed '+f(top.points)+'. Beyond those two, '+tn(t)+' '+(own-Number(top.points)>=against-Number(other.points)?'outscored ':'trailed ')+rival+' by '+f(Math.abs(own-Number(top.points)-against+Number(other.points)))+'. That is where the game really swung.':'No verified opposing starter comparison is available; the final team margin is.';
-  put(a,'lede',[tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'. '+judgment[angle],headComparison,tone[margin<10?0:1]]);
+  put(a,'lede',[tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'. '+judgment[angle],headComparison,scandal]);
   put(a,'players',[allZero?'There is no top scorer to celebrate. '+nm(top)+', '+nm(second)+' and '+nm(third)+' all finished with zero.':nm(top)+' led at '+f(top.points)+'; '+nm(second)+' and '+nm(third)+' contributed '+f(Number(second.points)+Number(third.points))+' together. '+(topHeavy?'The rest of the lineup scored only '+f(own-three)+'. Even the bench must have felt overworked watching that.':'The rest of the lineup supplied '+f(own-three)+'. That supporting figure explains how much work remained outside the top trio.'),nm(low)+' finished at '+f(low.points)+' in '+String(low.position||'a starting position')+'. '+(low5.length>2?'With '+(low5.length-1)+' other starters under five, this was not an isolated disappointment.':won?'The team won regardless; blaming the weakest player for a win would be an interesting choice.':(low5.length?'The lack of production deserves scrutiny, but is not proof of a wrong selection.':'Every starter scored at least five points. Finding a scapegoat among them would be a particularly lazy postgame ritual.'))]);
   const management=legal?nm(bench)+' beat '+nm(starter)+' by '+f(upgrade)+' in a documented eligible swap. '+(won?'That would have made the lead safer. It also makes the manager’s choice rather difficult to applaud.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'It would not erase the loss, but leaving those points out hardly deserves congratulations.'):'No verified eligible bench upgrade is documented. Inventing an imaginary alternative would be lazy. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without a legal alternative would be impressively lazy.');
-  put(a,'management',[management,'The least productive starter was '+nm(low)+' ('+f(low.points)+' at '+String(low.position||'a starting spot')+'). '+(allZero?'All '+p.length+' starter positions scored zero. One scapegoat would be wonderfully convenient for everyone else.':margin<=8&&!legal?'Close game, no proven winning swap. That is frustrating, but treating the lowest scorer as an automatic coaching error is nonsense.':tone[margin<10?1:0])]);
+  put(a,'management',[management,'The least productive starter was '+nm(low)+' ('+f(low.points)+' at '+String(low.position||'a starting spot')+'). '+(allZero?'All '+p.length+' starter positions scored zero. One scapegoat would be wonderfully convenient for everyone else.':margin<=8&&!legal?'Close game, no proven winning swap. That is frustrating, but treating the lowest scorer as an automatic coaching error is nonsense.':scandal)]);
   put(a,'hot-seat',[allZero?'The entire starting lineup. Nobody scored. Nobody gets an exemption.':legal?'The manager selected '+nm(starter)+' over '+nm(bench)+'. The verified gap was '+f(upgrade)+'. Explain that one.':nm(low)+' posted '+f(low.points)+'. '+(won?'The win survives; the job performance still deserves a look.':'Do better next time, but do not pretend we have proved an eligible replacement.')]);
   put(a,'cool-throne',[allZero?'Nobody earned a positive starter score, so nobody earns a made-up honor.':nm(top)+' scored '+f(top.points)+'. '+(won?'At least someone gave the win a foundation.':'A real performance in a loss. The rest should consider sending an apology.')]);
   // The crowd section is a columnist's reaction to the measured fan mood,

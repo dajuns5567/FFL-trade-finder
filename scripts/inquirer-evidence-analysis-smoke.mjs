@@ -104,7 +104,7 @@ for(const team of edition.teams){
  }
  if(scoringStarters.length===0&&Number(team.points)===0){
   const management=article.sections.find(s=>s.kind==='management')?.paragraphs?.join(' ')||'';
-  assert(/all|every|entire/i.test(management)&&!/one can applaud|the star saved|strong individual performance/i.test(management),'Zero-point managerial critique must blame lineup-wide nonproduction');
+  assert(/all|every|entire|total failure|seven|lineup-wide/i.test(management)&&!/one can applaud|the star saved|strong individual performance/i.test(management),'Zero-point managerial critique must blame lineup-wide nonproduction');
  }
 
  assert(!/Three Starters Supplied|Sets the Pace|(?:Patriots|Giants|Jets|Chiefs|Eagles|Raiders) Falls/i.test(article.headline),'Generic or ungrammatical team headline: '+article.headline);

@@ -39,6 +39,15 @@ for(const team of edition.teams){
  const editorialSections=(article.sections||[]).filter(s=>['lede','players','management','hot-seat','cool-throne','sentiment','outlook'].includes(s.kind));
  const authored=editorialSections.flatMap(s=>s.paragraphs||[]).filter(Boolean);
  assert.equal(new Set(authored.map(s=>s.trim().toLowerCase())).size,authored.length,'Duplicate paragraphs remain in '+team.team_name);
+ const copy=authored.join(' ');
+ for(const banned of [
+  /repeating the top scorer.s output is a hope/i,
+  /that supporting figure explains how much work remained/i,
+  /leaving those points out hardly deserves congratulations/i,
+  /the manager.s choice rather difficult to applaud/i,
+  /the manager can offer explanations. the standings will record/i
+ ])assert(!banned.test(copy),'Previously flagged canned commentary returned for '+team.team_name+': '+banned);
+
  const totalWords=authored.join(' ').split(/\s+/).filter(Boolean).length;
  assert(totalWords>=140&&totalWords<=540,'Article is thin or inflated with redundant prose: '+team.team_name+' ('+totalWords+' words)');
  assert(/(?:sarcas|scoreboard|manager|lineup|rivals|opponent|benched|bench|starters)/i.test(authored.join(' ')),'Editorial needs football-specific point of view');

@@ -166,7 +166,7 @@ assert(!/Dolphins’s|a 84\.0-point|Raiders turns to|Aints takes its/.test(JSON.
 assert(/Carolina beat New England by 3\.9/.test(overview.sections[0].blocks.find(x=>x.kind==='decisions').paragraphs.join(' ')),'Recap must keep a fact-checked narrow-game lineup decision without unsupported hindsight');
 const before=JSON.stringify(edition);
 upgradeInquirerAnalysis(edition,{week:4});
-assert.equal(JSON.stringify(edition),before,'Upgrader must be idempotent');
+const afterUpgrade=JSON.stringify(edition);if(afterUpgrade!==before){let at=0;while(at<Math.min(afterUpgrade.length,before.length)&&afterUpgrade[at]===before[at])at++;console.error('IDEMPOTENCY_DIFF',at,'PREV',before.slice(Math.max(0,at-120),at+280),'NEW',afterUpgrade.slice(Math.max(0,at-120),at+280));}assert.equal(afterUpgrade,before,'Upgrader must be idempotent');
 const older=structuredClone(edition);older.week=3;
 assert.equal(upgradeInquirerAnalysis(older,{week:3}),older,'Locked Weeks 1-3 never change');
 const served=await week4FastHandler();

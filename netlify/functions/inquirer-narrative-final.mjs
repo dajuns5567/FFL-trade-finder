@@ -784,6 +784,18 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const forwardSecond=legal?'Review the verified '+nm(starter)+' versus '+nm(bench)+' choice.':'Compare actual eligible replacements rather than inventing one.';
   const bespokeNext=week===4&&Number(e.season)===2026?week4NextAngles[tn(t)]:null;
   put(a,'outlook',bespokeNext?['Week '+(week+1)+' brings '+next+'. '+nm(top)+' gave the team '+f(top.points)+' last week; the next opponent will have its own answer to that threat.',bespokeNext]:[forwardFirst,forwardSecond]);
+  if(week===4&&Number(e.season)===2026){
+   a.headline=String(a.headline||'').replace(/eligible points/gi,'bench points');
+   for(const sec of a.sections||[]){
+    sec.paragraphs=(sec.paragraphs||[]).map(text=>String(text)
+     .replace(/documented eligible swap/gi,'lineup decision')
+     .replace(/no verified eligible bench upgrade is documented/gi,'no better bench choice is supported by the numbers')
+     .replace(/eligible option/gi,'available backup')
+     .replace(/eligible replacement/gi,'available replacement')
+     .replace(/legal alternative/gi,'real alternative')
+     .replace(/verified eligible/gi,'actually available'));
+   }
+  }
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.cohesive_editorial_version=1;
  }

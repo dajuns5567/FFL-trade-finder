@@ -49,11 +49,17 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
   }
   if(own>0){
    if(lede?.paragraphs?.length>=3){
-    const trio=scorers(t).slice(0,3).reduce((sum,p)=>sum+Number(p.points),0);
-    const others=own-trio;
-    lede.paragraphs[1]=(trio>=own*.7
-      ?tn(t)+' depended on its top three starters for '+f(trio)+' of '+f(own)+' points. Everyone outside that group supplied '+f(others)+'. Those other starters did not earn much space in this week’s highlight package.'
-      :nm(star)+' did the loud work with '+f(star.points)+', while the top three combined for '+f(trio)+'. The other starting roles supplied '+f(others)+'. That '+f(gap)+'-point '+(own>=other?'win':'loss')+' belongs to a lineup, not a highlight clip.');
+    const trio=players.slice(0,3).reduce((sum,p)=>sum+Number(p.points),0);
+    const opponentStar=theirs[0];
+    const leadDelta=opponentStar?Number(star.points)-Number(opponentStar.points):null;
+    const otherDelta=opponentStar?(own-Number(star.points))-(other-Number(opponentStar.points)):null;
+    const comparisons=opponentStar&&Number(opponentStar.points)>0
+      ?nm(star)+' '+(leadDelta>=0?'outscored ':'trailed ')+nm(opponentStar)+' by '+f(Math.abs(leadDelta))+' among the top individual starters. Beyond those two names, '+tn(t)+' '+(otherDelta>=0?'outscored ':'was outscored by ')+tn(foe)+' by '+f(Math.abs(otherDelta))+'. '
+      :'The top opposing starter comparison is not verified here. ';
+    lede.paragraphs[1]='The top three '+tn(t)+' starters earned '+f(trio)+' of '+f(own)+' points. '+comparisons+
+      (own>=other&&own<40
+        ?'A '+f(own)+'–'+f(other)+' victory with '+short.length+' low-scoring starters is a win, not a convincing demonstration of roster health.'
+        :own>=other?'The other roster did not lose to one star alone.':'The losing margin belongs to the full starting lineup, not the leading scorer.');
    }
    if(features?.paragraphs?.length>=2){
     const count=short.length,low=Number(weak.points);

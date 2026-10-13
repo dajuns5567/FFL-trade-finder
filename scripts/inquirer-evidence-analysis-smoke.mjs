@@ -31,6 +31,10 @@ for(const team of edition.teams){
  const crowdPart=split===undefined?null:note.slice(split+1).trim();
  assert(article.sections.find(x=>x.kind==='lede')?.paragraphs?.includes(leadPart),'Independent team-specific headline argument was dropped for '+team.team_name);
  assert(moodLines.length>=3,'Independently written Week 4 crowd commentary missing for '+team.team_name);
+ assert(moodLines[0]?.includes(Number(article.fan_sentiment?.score).toFixed(1)),'Crowd mood must use actual measured score, not an authored number: '+team.team_name);
+ assert(/(supporters|fans|crowd|public|trust|confidence|approval|patience|goodwill|audience)/i.test(moodLines.slice(1).join(' ')),'Fan sentiment must actually interpret fan feeling, not just recap the score: '+team.team_name);
+ assert(!/and the others combined for|the others managed .*of|three starters.*supplied/i.test((article.sections.find(x=>x.kind==='lede')?.paragraphs||[]).join(' ')),'Top-three box-score worksheet returned to lede: '+team.team_name);
+
  assert(moodLines.length>=3,'Fan sentiment must include measured mood, a reporter argument, and next-week stakes: '+team.team_name);
  assert(moodLines.length===3,'Week 4 sentiment must contain exactly the verified mood and two distinct editorial paragraphs: '+team.team_name);
  assert(moodLines.join(' ').split(/\s+/).filter(Boolean).length>=70,'Fan sentiment is too shallow to support an editorial argument: '+team.team_name);

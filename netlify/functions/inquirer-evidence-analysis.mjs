@@ -139,9 +139,20 @@ export function upgradeInquirerAnalysis(edition,{week=Number(edition?.week)}={})
  const by=new Map(edition.teams.map(t=>[String(t.roster_id),t]));
  for(const t of edition.teams)teamAnalysis(t,by,Number(week));
  recapAnalysis(edition);
- addInquirerCharacter(edition,{week});
- polishInquirerStories(edition,{week});
- addInquirerColumns(edition,{week});
+ // Older editorial modules still supply valued league-recap features, but
+ // their competing team-article writers must never rewrite published copy.
+ // Run legacy recap transforms on a separate edition and merge ONLY the recap.
+ const recapWorkspace={
+  ...edition,
+  teams:edition.teams.map(t=>({...t,inquirer_article:t.inquirer_article?structuredClone(t.inquirer_article):null})),
+  league_overview:edition.league_overview?structuredClone(edition.league_overview):null
+ };
+ addInquirerCharacter(recapWorkspace,{week});
+ polishInquirerStories(recapWorkspace,{week});
+ addInquirerColumns(recapWorkspace,{week});
+ edition.league_overview=recapWorkspace.league_overview;
+ // Single authoritative team writer: no downstream stage may delete/rewrite
+ // its verdicts, sentiment or individual reporter point of view.
  finalizeInquirerNarrative(edition,{week});
  return edition;
 }

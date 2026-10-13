@@ -17,6 +17,7 @@ on:
       - 'netlify/functions/inquirer-story-polish.mjs'
       - 'netlify/functions/inquirer-editorial-column.mjs'
       - 'netlify/functions/inquirer-narrative-final.mjs'
+      - 'netlify/functions/inquirer-week4-specific-notes.mjs'
       - 'netlify/functions/inquirer-evidence-analysis.mjs'
       - 'scripts/inquirer-week4-awards-direct-audit.mjs'
       - 'scripts/league-hub-latest-awards-regression.mjs'
@@ -53,6 +54,7 @@ jobs:
           node --check netlify/functions/inquirer-story-polish.mjs
           node --check netlify/functions/inquirer-editorial-column.mjs
           node --check netlify/functions/inquirer-narrative-final.mjs
+          node --check netlify/functions/inquirer-week4-specific-notes.mjs
           node --check netlify/functions/inquirer-evidence-analysis.mjs
           node --check netlify/functions/inquirer-forward-prior-guard.mjs
           node --check netlify/functions/inquirer-forward-final-sweep.mjs

@@ -22,6 +22,13 @@ for(const team of edition.teams){
  assert.equal(article.editorial_character_version,1,'Opinionated verified reporter pass missing for '+team.team_name);
  assert.equal(article.insight_copy_edit,1,'Final non-repetitive copy edit missing for '+team.team_name);
  assert.equal(article.cohesive_editorial_version,1,'Single-pass non-repetitive editorial required for '+team.team_name);
+ const editorialSections=(article.sections||[]).filter(s=>['lede','players','management','hot-seat','cool-throne','sentiment','outlook'].includes(s.kind));
+ const authored=editorialSections.flatMap(s=>s.paragraphs||[]).filter(Boolean);
+ assert.equal(new Set(authored.map(s=>s.trim().toLowerCase())).size,authored.length,'Duplicate paragraphs remain in '+team.team_name);
+ const totalWords=authored.join(' ').split(/\s+/).filter(Boolean).length;
+ assert(totalWords>=140&&totalWords<=540,'Article is thin or inflated with redundant prose: '+team.team_name+' ('+totalWords+' words)');
+ assert(/(?:sarcas|scoreboard|manager|lineup|rivals|opponent|benched|bench|starters)/i.test(authored.join(' ')),'Editorial needs football-specific point of view');
+
  assert.equal(article.column_commentary_version,1,'Final columnist commentary must survive all editing stages for '+team.team_name);
  for(const kind of ['lede','players','management','outlook']){
   const sec=article.sections.find(x=>x.kind===kind);

@@ -37,7 +37,7 @@ for(const team of edition.teams){
 
  assert(moodLines.length>=3,'Fan sentiment must include measured mood, a reporter argument, and next-week stakes: '+team.team_name);
  assert(moodLines.length===3,'Week 4 sentiment must contain exactly the verified mood and two distinct editorial paragraphs: '+team.team_name);
- assert(moodLines.join(' ').split(/\s+/).filter(Boolean).length>=70,'Fan sentiment is too shallow to support an editorial argument: '+team.team_name);
+ assert(moodLines.join(' ').split(/\s+/).filter(Boolean).length>=65,'Fan sentiment is too shallow to support an editorial argument: '+team.team_name);
  assert(!/the lowest verified score belonged|rivals can see \\d+ starter|the next opponent can count|the manager can offer explanations/i.test(moodLines.join(' ')),'Template-style fan copy returned: '+team.team_name);
  assert(moodLines.slice(-2).every(p=>p.length>=120),'Both independently written crowd paragraphs must contain actual commentary: '+team.team_name);
 

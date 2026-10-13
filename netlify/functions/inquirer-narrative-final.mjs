@@ -61,5 +61,20 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.cohesive_editorial_version=1;
  }
+ const overview=e.league_overview,first=overview?.sections?.[0],blocks=first?.blocks||[];
+ if(blocks.length){
+  const add=(kind,comment)=>{
+   const block=blocks.find(x=>x.kind===kind);
+   if(block){block.paragraphs ||= [];if(!block.paragraphs.includes(comment))block.paragraphs.push(comment);}
+  };
+  const scored=e.teams.filter(t=>Number.isFinite(Number(t.points))).slice().sort((a,b)=>Number(b.points)-Number(a.points));
+  const bottom=scored.at(-1),top=scored[0],under40=scored.filter(t=>Number(t.points)<40);
+  if(top&&bottom)add('lead',tn(top)+' led the weekly scoring chart while '+tn(bottom)+' brought up the rear. Both results go down as one game apiece. The league is admirably unwilling to award bonus victories for a fancy box score or refund the admission price for a dreadful one.');
+  if(under40.length)add('decisions',under40.length+' teams failed to crack 40. That is not a philosophical debate about roster construction; it is a plea for somebody to put useful players in actual starting positions. The box score has been rude enough.');
+  add('league','A division lead in Week '+week+' is a real advantage. Ordering championship banners already would be an ambitious interpretation of how calendars work.');
+  first.paragraphs=blocks.flatMap(x=>x.paragraphs||[]);
+  overview.paragraphs=(overview.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(x=>x.paragraphs||[])]);
+  overview.cohesive_editorial_version=1;
+ }
  return e;
 }

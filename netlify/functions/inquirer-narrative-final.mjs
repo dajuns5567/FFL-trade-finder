@@ -573,7 +573,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   // A Week 4 lede is a result plus an independently authored story argument;
   // never recycle the top-three points worksheet.
   put(a,'lede',teamEditorial?[
-   tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'.',
+   tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'.'+(solo?' Only '+nm(top)+' scored for the entire starting lineup.':allZero?' Every verified starter finished on zero.':''),
    leadingEditorial,
    crowdEditorial||scandal
   ]:[tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'. '+judgment[angle],headComparison,leadingEditorial||scandal]);

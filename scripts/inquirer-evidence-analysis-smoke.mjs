@@ -78,9 +78,9 @@ for(const team of edition.teams){
  const playerLines=article.sections.find(x=>x.kind==='players')?.paragraphs||[];
  const playerCopy=playerLines.join(' ');
  assert(playerLines.length>=1,'Player section needs a cohesive evidence-backed opinion: '+team.team_name);
- assert(!playerLines.some(p=>/^[\\w .'-]+ scored \\d+(?:\\.\\d+)?\\.$/i.test(p.trim())),'Isolated player-stat blurb is not commentary: '+team.team_name);
+ assert(!playerLines.some(p=>/^[\w .'-]+ scored \d+(?:\.\d+)?\.$/i.test(p.trim())),'Isolated player-stat blurb is not commentary: '+team.team_name);
  if(Number(team.points)>0){
-  const verifiedScorePattern=/\\b\\d+(?:\\.\\d+)?\\s*(?:pts|points)\\b/i;
+  const verifiedScorePattern=/\b\d+(?:\.\d+)?\s*(?:pts|points)\b/i;
   assert(verifiedScorePattern.test(playerCopy),'Player analysis must embed an actual player score inside its argument: '+team.team_name);
   assert(starters.some(p=>playerCopy.includes(Number(p.points).toFixed(1)+' pts')),'Player analysis score must match a verified starter, not just contain any number: '+team.team_name);
  }

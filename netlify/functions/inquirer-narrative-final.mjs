@@ -701,19 +701,19 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   put(a,'players',playerColumn?[embedVerifiedPlayerEvidence(playerColumn,t.starter_details||[])]:[playerFeature,weakestFeature]);
   // These are editorial observations, not fabricated numeric Fleeced! grades.
   const signalObservations={
-   'Miami Dolphins':'The Fleeced! breakout conversation should start with McMillan’s 45.2, not another lecture on top-three scoring shares. That is a genuine eruption; the bad defensive selection is a different story.',
-   'New York Jets':'The Fleeced! warning here is about dependence: DeJean delivered 27.5 while three teammates stayed under five. The win is impressive; the lineup underneath it is still frightening.',
-   'Kansas City Chiefs':'A Fleeced! red flag does not require a secret formula when Bassa owns every one of the Chiefs’ 9.5 points. That is a one-man roster with six unpaid spectators.',
-   'Las Vegas Raiders':'Fleeced! cannot hand out a meaningful breakout signal to seven zero-point starters. The absence of production is the story, and the manager should get the first question.',
-   'Green Bay Packers':'McKinney’s 13.8 is the only Fleeced! bright spot worth celebrating in a 27.9-point team win. Kansas City supplied the escape route; Green Bay still needs an actual offense.',
-   'Tampa Bay Buccaneers':'Lamb’s 41.3 should be a blaring Fleeced! star signal, not a consolation prize for the manager. A team that scored 115.8 and still lost needs support around its superstar.',
-   'Jacksonville Jags':'Ward’s 21.0 and Harvey’s 19.3 are real Fleeced! bright spots. The coach can celebrate those performances after answering for the points left behind on defense.',
-   'Los Angeles Rams':'Watt’s 39.9 deserves the strongest sort of Fleeced! spotlight. The catch is that a one-week eruption is evidence of a brilliant Sunday, not proof the same rescue is available forever.'
+   'Miami Dolphins':'McMillan’s 45.2-point explosion is exactly the sort of breakout that sends his Fleeced! stock soaring in the conversation. Miami had a match-winner on offense and still found a way to create unnecessary suspense on defense.',
+   'New York Jets':'DeJean's 27.5 is the kind of Fleeced! standout that makes a manager look clever. Three teammates under five are the warning that this act needs more than one headliner.',
+   'Kansas City Chiefs':'Bassa accounted for all 9.5 Kansas City points. That's an unmistakable Fleeced! red flag for the supporting cast: six starters and not a single useful contribution among them.',
+   'Las Vegas Raiders':'Seven starters and seven zeros. The Raiders' Fleeced! alarm is about an entire roster, not a player whose breakout is supposedly just around the corner.',
+   'Green Bay Packers':'McKinney's 13.8 provided Green Bay's clearest Fleeced! bright spot in a 27.9-point win. Kansas City supplied the escape route; the Packers still need an offense capable of surviving a team that scores double digits.',
+   'Tampa Bay Buccaneers':'Lamb's 41.3 is a Fleeced! star performance with the cruelest possible footnote: Tampa scored 115.8 and lost anyway. The next argument is about the help around him, not his credentials.',
+   'Jacksonville Jags':'Ward's 21.0 and Harvey's 19.3 were Jacksonville's Fleeced! bright spots, but neither could erase the missing production elsewhere. Their manager has explanations to make that have nothing to do with their effort.',
+   'Los Angeles Rams':'Watt's 39.9 deserves the Fleeced! spotlight after dismantling Cincinnati. The Rams should enjoy the demolition without turning one outrageous performance into next week's assumed baseline.'
   };
   if(week===4&&Number(e.season)===2026&&signalObservations[tn(t)]){
    a.sections.find(x=>x.kind==='players')?.paragraphs?.push(signalObservations[tn(t)]);
   }
-  const management=legal?nm(bench)+' scored '+f(bench.points)+' while '+nm(starter)+' managed '+f(starter.points)+' in the same starting spot — a '+f(upgrade)+'-point miss. '+(won?'The win would have grown by '+f(upgrade)+'. The manager can enjoy the result and still explain why '+nm(starter)+' started ahead of '+nm(bench)+'.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'Even with '+nm(bench)+'\'s extra '+f(upgrade)+', '+tn(t)+' would still lose by '+f(margin-upgrade)+'. That does not make starting '+nm(starter)+' a stroke of managerial genius.'):'There was no bench player demonstrably capable of replacing this starter for more points. Blaming a nonexistent savior would be lazy. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without an actual better choice would be impressively lazy.');
+  const management=legal?nm(bench)+' scored '+f(bench.points)+' while '+nm(starter)+' managed '+f(starter.points)+' in the same starting spot — a '+f(upgrade)+'-point miss. '+(won?'The win would have grown by '+f(upgrade)+'. The manager can enjoy the result and still explain why '+nm(starter)+' started ahead of '+nm(bench)+'.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'Even with '+nm(bench)+'\'s extra '+f(upgrade)+', '+tn(t)+' would still lose by '+f(margin-upgrade)+'. That does not make starting '+nm(starter)+' a stroke of managerial genius.'):'No bench change was shown to improve this lineup. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without an actual better choice would be impressively lazy.');
   const managerVerdict=allZero
    ?'There were '+p.length+' starting positions and not a single positive point. One scapegoat would be exceptionally convenient for everybody else.'
    :legal&&won
@@ -787,7 +787,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const forwardFirst='Week '+(week+1)+' brings '+next+' for '+tn(t)+'. '+nm(low)+' finished at '+f(low.points)+'.';
   const forwardSecond=legal?'Review the verified '+nm(starter)+' versus '+nm(bench)+' choice.':'Compare actual eligible replacements rather than inventing one.';
   const bespokeNext=week===4&&Number(e.season)===2026?week4NextAngles[tn(t)]:null;
-  put(a,'outlook',bespokeNext?['Week '+(week+1)+' brings '+next+'. '+nm(top)+' gave the team '+f(top.points)+' last week; the next opponent will have its own answer to that threat.',bespokeNext]:[forwardFirst,forwardSecond]);
+  put(a,'outlook',bespokeNext?['Week '+(week+1)+' brings '+next+'. '+(allZero?'After seven zero-point starters, merely finding someone who scores would qualify as progress.':solo?nm(top)+' carried every point last week; the supporting cast must finally help.':nm(top)+' delivered '+f(top.points)+' last week, but counting on a repeat would be reckless.')',bespokeNext]:[forwardFirst,forwardSecond]);
   if(week===4&&Number(e.season)===2026){
    a.headline=String(a.headline||'').replace(/eligible points/gi,'Bench Points');
    for(const sec of a.sections||[]){

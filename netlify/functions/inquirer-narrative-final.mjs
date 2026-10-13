@@ -701,14 +701,14 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   put(a,'players',playerColumn?[embedVerifiedPlayerEvidence(playerColumn,t.starter_details||[])]:[playerFeature,weakestFeature]);
   // These are editorial observations, not fabricated numeric Fleeced! grades.
   const signalObservations={
-   'Miami Dolphins':'McMillan’s 45.2-point explosion is a Fleeced! breakout worth taking seriously. Miami had a match-winner on offense and still found a way to create unnecessary suspense on defense.',
-   'New York Jets':'DeJean's 27.5 is the kind of Fleeced! standout that makes a manager look clever. Three teammates under five are the warning that this act needs more than one headliner.',
-   'Kansas City Chiefs':'Bassa accounted for all 9.5 Kansas City points. That's an unmistakable Fleeced! red flag for the supporting cast: six starters and not a single useful contribution among them.',
-   'Las Vegas Raiders':'Seven starters and seven zeros. The Fleeced! alarm belongs to the entire Raiders roster, not a player whose breakout is supposedly just around the corner.',
-   'Green Bay Packers':'McKinney's 13.8 provided Green Bay's clearest Fleeced! bright spot in a 27.9-point win. Kansas City supplied the escape route; the Packers still need an offense capable of surviving a team that scores double digits.',
-   'Tampa Bay Buccaneers':'Lamb's 41.3 is a Fleeced! star performance with the cruelest possible footnote: Tampa scored 115.8 and lost anyway. The next argument is about the help around him, not his credentials.',
-   'Jacksonville Jags':'Ward's 21.0 and Harvey's 19.3 were Jacksonville's Fleeced! bright spots, but neither could erase the missing production elsewhere. Their manager has explanations to make that have nothing to do with their effort.',
-   'Los Angeles Rams':'Watt's 39.9 deserves the Fleeced! spotlight after dismantling Cincinnati. The Rams should enjoy the demolition without turning one outrageous performance into next week's assumed baseline.'
+   "Miami Dolphins":"McMillan’s 45.2-point explosion is a Fleeced! breakout worth taking seriously. Miami had a match-winner on offense and still found a way to create unnecessary suspense on defense.",
+   "New York Jets":"DeJean's 27.5 is the kind of Fleeced! standout that makes a manager look clever. Three teammates under five are the warning that this act needs more than one headliner.",
+   "Kansas City Chiefs":"Bassa accounted for all 9.5 Kansas City points. That's an unmistakable Fleeced! red flag for the supporting cast: six starters and not a single useful contribution among them.",
+   "Las Vegas Raiders":"Seven starters and seven zeros. The Fleeced! alarm belongs to the entire Raiders roster, not a player whose breakout is supposedly just around the corner.",
+   "Green Bay Packers":"McKinney's 13.8 provided Green Bay's clearest Fleeced! bright spot in a 27.9-point win. Kansas City supplied the escape route; the Packers still need an offense capable of surviving a team that scores double digits.",
+   "Tampa Bay Buccaneers":"Lamb's 41.3 is a Fleeced! star performance with the cruelest possible footnote: Tampa scored 115.8 and lost anyway. The next argument is about the help around him, not his credentials.",
+   "Jacksonville Jags":"Ward's 21.0 and Harvey's 19.3 were Jacksonville's Fleeced! bright spots, but neither could erase the missing production elsewhere. Their manager has explanations to make that have nothing to do with their effort.",
+   "Los Angeles Rams":"Watt's 39.9 deserves the Fleeced! spotlight after dismantling Cincinnati. The Rams should enjoy the demolition without turning one outrageous performance into next week's assumed baseline."
   };
   if(week===4&&Number(e.season)===2026&&signalObservations[tn(t)]){
    a.sections.find(x=>x.kind==='players')?.paragraphs?.push(signalObservations[tn(t)]);

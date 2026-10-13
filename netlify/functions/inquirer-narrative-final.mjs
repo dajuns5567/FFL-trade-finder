@@ -512,7 +512,10 @@ const embedVerifiedPlayerEvidence=(text,starting,alreadyUsed=[])=>{
    at=hay.indexOf(needle,at+1);
   }
   if(matched<0)continue;
-  result=result.slice(0,matched+c.word.length)+' ('+Number(c.p.points).toFixed(1)+' pts)'+result.slice(matched+c.word.length);
+  const nextPart=result.slice(matched+c.word.length);
+  const possessive=/^(['’]s)\b/i.exec(nextPart)?.[0]||'';
+  const end=matched+c.word.length+possessive.length;
+  result=result.slice(0,end)+' ('+Number(c.p.points).toFixed(1)+' pts)'+result.slice(end);
   touched.add(String(c.p.id||c.p.name));
  }
  return result;
@@ -528,7 +531,7 @@ const week4IntegratedPlayerColumns={
  "Pittsburgh Steelers": "Robert Spillane and Khalil Shakir at least gave Pittsburgh a pulse. Meanwhile Rachaad White and the other starting running back combined for nothing. A football team without a functioning backfield is not a bold innovation; it is the sort of experiment best performed when nobody is keeping score.",
  "Houston Texans": "Michael Wilson and Rome Odunze made the game briefly interesting, but DJ Moore's tiny contribution helped turn the rest of the roster into a cautionary tale. Houston didn't lose because it lacked any talent. It lost because two useful afternoons were stranded inside a lineup that couldn't offer them meaningful company.",
  "Indianapolis Colts": "Foyesade Oluokun was the difference-maker Indianapolis needed, and Alvin Kamara made sure this wasn't a one-man rescue mission. Josh Downs had the quietest afternoon, yet the Colts survived a genuine fight. Criticizing a productive winning lineup as if the manager had committed sabotage would be lazy; winning a game this close is difficult enough without inventing new crimes.",
- "Jacksonville Jags": "Denzel Ward and RJ Harvey gave Jacksonville a credible chance to win; they were doing the heavy lifting while the supporting cast struggled to finish the job. Jalen Carter's three-point day mattered, but the real scandal is that the manager had a documented, eligible defensive upgrade available. Two good performances cannot outvote one bad lineup choice and an opponent that still scored more.",
+ "Jacksonville Jags": "Denzel Ward and RJ Harvey gave Jacksonville a credible chance to win; they were doing the heavy lifting while the supporting cast struggled to finish the job. Jalen Carter contributed almost nothing, but the real scandal is that the manager had a documented, eligible defensive upgrade available. Two good performances cannot outvote one bad lineup choice and an opponent that still scored more.",
  "Tennessee Titans": "Deebo Samuel and Juwan Johnson were Tennessee's few reliable contributors, and that was somehow enough to win. Philadelphia made the bar so low it could be stepped over without stretching. The Titans are entitled to the victory; declaring this a masterpiece of roster construction would require a very forgiving art critic.",
  "Denver Doncos": "Javonte Williams and Nico Collins were both devastating, which is why Denver had enough firepower to survive a real Minnesota challenge. Andrew Van Ginkel contributed almost nothing, but this wasn't a victory borrowed entirely from the opponent's incompetence. Denver's stars earned it; management's next job is to make sure those stars don't need to file overtime claims every Sunday.",
  "Kansas City Chiefs": "Jeffrey Bassa scored literally every point Kansas City managed. Michael Burton, Kalen King, and everyone else supplied zero. There is no meaningful supporting-cast ranking here: first place belongs to Bassa, second place belongs to the concept of participating, and the remaining roster apparently declined its invitation.",

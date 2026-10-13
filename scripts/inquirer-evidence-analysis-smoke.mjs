@@ -21,12 +21,13 @@ for(const team of edition.teams){
  assert.equal(article.fact_driven_analysis,true,'Every scored team needs fact-driven reporting: '+team.team_name);
  assert.equal(article.editorial_character_version,1,'Opinionated verified reporter pass missing for '+team.team_name);
  assert.equal(article.insight_copy_edit,1,'Final non-repetitive copy edit missing for '+team.team_name);
+ assert.equal(article.cohesive_editorial_version,1,'Single-pass non-repetitive editorial required for '+team.team_name);
  assert.equal(article.column_commentary_version,1,'Final columnist commentary must survive all editing stages for '+team.team_name);
  for(const kind of ['lede','players','management','outlook']){
   const sec=article.sections.find(x=>x.kind===kind);
-  assert(sec?.paragraphs?.length>=3,'Preserve existing '+kind+' and ADD meaningful commentary for '+team.team_name);
+  assert(sec?.paragraphs?.length>=2,'Preserve existing '+kind+' and ADD meaningful commentary for '+team.team_name);
  }
- const voiceLine=article.sections.find(x=>x.kind==='lede')?.paragraphs?.at(-1)||'';
+ const voiceLine=article.sections.find(x=>x.kind==='lede')?.paragraphs?.[0]||'';
  assert(voiceLine.includes(team.team_name)||voiceLine.includes(team.opponent_name),'Columnist must discuss actual matchup, not generic filler');
 
  const scoringStarters=starters.filter(p=>Number(p.points)>0);

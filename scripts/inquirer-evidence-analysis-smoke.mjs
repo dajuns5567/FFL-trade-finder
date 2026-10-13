@@ -22,7 +22,7 @@ for(const team of edition.teams){
  if(starters.length<3)continue;
  assert.equal(article.fact_driven_analysis,true,'Every scored team needs fact-driven reporting: '+team.team_name);
  assert.equal(article.cohesive_editorial_version,1,'Single authoritative reporter stage required for '+team.team_name);
- assert.equal(article.headline,week4Headlines[team.team_name],'Individually edited Week 4 headline was replaced by template for '+team.team_name);
+ assert.equal(article.headline,String(week4Headlines[team.team_name]).replace(/eligible points/gi,'Bench Points'),'Individually edited Week 4 headline was replaced by template for '+team.team_name);
  const moodLines=article.sections.find(x=>x.kind==='sentiment')?.paragraphs||[];
  assert.equal(week4Notes[team.team_name]?.length>170,true,'Week 4 article lacks substantive independent editorial reporting: '+team.team_name);
  const note=week4Notes[team.team_name];

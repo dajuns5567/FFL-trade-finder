@@ -699,15 +699,19 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const editedVerdicts=week===4&&Number(e.season)===2026?week4SectionVerdicts[tn(t)]:null;
   const playerColumn=week===4&&Number(e.season)===2026?week4IntegratedPlayerColumns[tn(t)]:null;
   put(a,'players',playerColumn?[embedVerifiedPlayerEvidence(playerColumn,t.starter_details||[])]:[playerFeature,weakestFeature]);
-  // The Fleeced! signal language is editorial interpretation of verified scores,
-  // not an invented proprietary rating. Numeric player grades must come from a
-  // verified player-signal payload before being quoted.
-  if(playerColumn&&week===4&&Number(e.season)===2026){
-    const spot=a.sections.find(x=>x.kind==='players');
-    if(spot?.paragraphs?.length&&['Miami Dolphins','New York Jets','Kansas City Chiefs','Las Vegas Raiders','Green Bay Packers','Tampa Bay Buccaneers','Jacksonville Jags','Los Angeles Rams'].includes(tn(t))){
-      const note=allZero?'Fleeced! needs no elaborate player signal to flag seven empty contributions; the alarm is the entire box score.':solo?'That is a Fleeced! warning signal in plain English: one player did all the scoring and the roster vanished.':won?'The Fleeced! performance signal is impossible to ignore here: '+nm(top)+' delivered '+f(top.points)+' points. The question is whether the lineup can keep pace without another eruption.':'Fleeced! has the evidence for the praise and the alarm at once: '+nm(top)+' produced '+f(top.points)+' while the team still came up short.';
-      spot.paragraphs.push(note);
-    }
+  // These are editorial observations, not fabricated numeric Fleeced! grades.
+  const signalObservations={
+   'Miami Dolphins':'The Fleeced! breakout conversation should start with McMillan’s 45.2, not another lecture on top-three scoring shares. That is a genuine eruption; the bad defensive selection is a different story.',
+   'New York Jets':'The Fleeced! warning here is about dependence: DeJean delivered 27.5 while three teammates stayed under five. The win is impressive; the lineup underneath it is still frightening.',
+   'Kansas City Chiefs':'A Fleeced! red flag does not require a secret formula when Bassa owns every one of the Chiefs’ 9.5 points. That is a one-man roster with six unpaid spectators.',
+   'Las Vegas Raiders':'Fleeced! cannot hand out a meaningful breakout signal to seven zero-point starters. The absence of production is the story, and the manager should get the first question.',
+   'Green Bay Packers':'McKinney’s 13.8 is the only Fleeced! bright spot worth celebrating in a 27.9-point team win. Kansas City supplied the escape route; Green Bay still needs an actual offense.',
+   'Tampa Bay Buccaneers':'Lamb’s 41.3 should be a blaring Fleeced! star signal, not a consolation prize for the manager. A team that scored 115.8 and still lost needs support around its superstar.',
+   'Jacksonville Jags':'Ward’s 21.0 and Harvey’s 19.3 are real Fleeced! bright spots. The coach can celebrate those performances after answering for the points left behind on defense.',
+   'Los Angeles Rams':'Watt’s 39.9 deserves the strongest sort of Fleeced! spotlight. The catch is that a one-week eruption is evidence of a brilliant Sunday, not proof the same rescue is available forever.'
+  };
+  if(week===4&&Number(e.season)===2026&&signalObservations[tn(t)]){
+   a.sections.find(x=>x.kind==='players')?.paragraphs?.push(signalObservations[tn(t)]);
   }
   const management=legal?nm(bench)+' scored '+f(bench.points)+' while '+nm(starter)+' managed '+f(starter.points)+' in the same starting spot — a '+f(upgrade)+'-point miss. '+(won?'The win would have grown by '+f(upgrade)+'. The manager can enjoy the result and still explain why '+nm(starter)+' started ahead of '+nm(bench)+'.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'Even with '+nm(bench)+'\'s extra '+f(upgrade)+', '+tn(t)+' would still lose by '+f(margin-upgrade)+'. That does not make starting '+nm(starter)+' a stroke of managerial genius.'):'There was no bench player demonstrably capable of replacing this starter for more points. Blaming a nonexistent savior would be lazy. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without an actual better choice would be impressively lazy.');
   const managerVerdict=allZero

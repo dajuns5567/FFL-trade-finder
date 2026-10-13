@@ -78,6 +78,13 @@ for(const team of edition.teams){
 }
 assert(meaningful.size>=25,'Insufficient fact-driven team articles');
 assert(headlineForms.size>=4,'Reporter headline formats remain too repetitive: '+headlineForms.size);
+const takes=(edition.league_overview?.hot_takes||[]);
+const honor=takes.find(t=>t.kind==='player'),breakout=takes.find(t=>t.kind==='breakout');
+if(honor&&breakout){
+ const featured=x=>String(x.title||'').split(':').slice(1).join(':').trim().toLowerCase();
+ if(featured(honor)&&featured(breakout)&&!featured(breakout).includes('no verified'))
+  assert.notEqual(featured(honor),featured(breakout),'Do not recycle the same featured player in two separate hot takes');
+}
 const overview=edition.league_overview;
 const blocks=overview.sections[0]?.blocks||[];
 for(const kind of ['lead','players','decisions']){

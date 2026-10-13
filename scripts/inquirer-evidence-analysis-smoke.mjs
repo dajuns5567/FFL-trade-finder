@@ -50,6 +50,12 @@ for(const team of edition.teams){
   assert(!/\b\d+(?:\.\d+)?\s+Put\b/.test(copy),'Broken sentence splice appeared in copy');
   assert(starters.slice().sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,kind==='management'?starters.length:3).some(p=>copy.includes(p.name)),'Article must reference its verified leading starters in '+kind+' for '+team.team_name);
  }
+ const sentiment=article.sections.find(x=>x.kind==='sentiment');
+ if(sentiment){
+  const copy=sentiment.paragraphs.join(' ');
+  assert(!/fans have started|supporters have moved|call-in crowd|caps-lock key|receipts become|memes are multiplying/i.test(copy),'Unverified crowd behavior or recycled fan-fiction slipped into '+team.team_name);
+  assert(sentiment.paragraphs.length>=2,'Opinion and verified roster consequence both required for '+team.team_name);
+ }
  const lead=article.sections.find(x=>x.kind==='lede').paragraphs.join(' ');
  assert(Number(team.points)===0? /zero|no positive|finished with zero/i.test(lead):scoringStarters.length===1? /one scorer|all|every other|other verified/i.test(lead):/highest three starters|three highest scorers|top three|three biggest starter scores/i.test(lead),'Require actual top-three diagnosis, sole-scorer breakdown, or truthful zero-point reporting');
  meaningful.add(String(team.roster_id));
@@ -63,6 +69,10 @@ for(const kind of ['lead','players','decisions']){
  assert(block?.paragraphs?.length>=2,'Recap lacks actionable '+kind+' reporting');
 }
 assert.equal(overview.fact_driven_analysis,true,'Recap must run the actual league-wide analysis');
+const leadCopy=blocks.find(b=>b.kind==='lead')?.paragraphs?.join(' ')||'';
+assert(/median/i.test(leadCopy)&&/cleared 100|below 40/i.test(leadCopy),'Weekly recap must analyze full league scoring distribution rather than repeat the same two games');
+assert(!/Dolphins’s|a 84\.0-point|Raiders turns to|Aints takes its/.test(JSON.stringify(overview.sections)),'Recap grammar regression in team possessives, plural verbs, or article usage');
+
 assert(overview.sections[0].blocks.find(x=>x.kind==='decisions').paragraphs.join(' ').includes('eligible bench alternatives'),'Recap must distinguish legal lineup swaps from hindsight');
 const before=JSON.stringify(edition);
 upgradeInquirerAnalysis(edition,{week:4});

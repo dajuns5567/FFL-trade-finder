@@ -22,6 +22,14 @@ for(const team of edition.teams){
  assert.equal(article.editorial_character_version,1,'Opinionated verified reporter pass missing for '+team.team_name);
  assert.equal(article.insight_copy_edit,1,'Final non-repetitive copy edit missing for '+team.team_name);
  assert.equal(article.cohesive_editorial_version,1,'Single-pass non-repetitive editorial required for '+team.team_name);
+ const moodLines=article.sections.find(x=>x.kind==='sentiment')?.paragraphs||[];
+ assert(moodLines.length>=3,'Fan sentiment must include measured mood, a reporter argument, and next-week stakes: '+team.team_name);
+ assert(moodLines.join(' ').length>=200,'Fan sentiment must contain substantial commentary, not a bare summary: '+team.team_name);
+ assert(!/the manager can offer explanations|the standings will record the (win|loss) and move on/i.test(moodLines.join(' ')),'Old boilerplate fan-sentiment writing returned');
+ if(article.fan_sentiment&&Number.isFinite(Number(article.fan_sentiment.score))){
+  assert(moodLines.join(' ').includes(Number(article.fan_sentiment.score).toFixed(1)),'Crowd column must explain the actual sentiment score for '+team.team_name);
+ }
+
  const editorialSections=(article.sections||[]).filter(s=>['lede','players','management','hot-seat','cool-throne','sentiment','outlook'].includes(s.kind));
  const authored=editorialSections.flatMap(s=>s.paragraphs||[]).filter(Boolean);
  assert.equal(new Set(authored.map(s=>s.trim().toLowerCase())).size,authored.length,'Duplicate paragraphs remain in '+team.team_name);

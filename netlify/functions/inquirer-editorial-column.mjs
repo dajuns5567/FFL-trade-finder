@@ -34,7 +34,6 @@ export function addInquirerColumns(edition,{week=Number(edition?.week)}={}){
  const lookup=new Map(edition.teams.map(t=>[String(t.roster_id),t]));
  for(const t of edition.teams){
   const a=t.inquirer_article,p=scored(t);if(!a||p.length<3||!sane(t.points)||!sane(t.opponent_points))continue;
-  if(a.column_commentary_version===1)continue;
   const own=Number(t.points),against=Number(t.opponent_points),margin=Math.abs(own-against),won=own>=against;
   const opponent=lookup.get(String(t.opponent_roster_id)),foe=opponent?team(opponent):String(t.opponent_name||'the opposing team');
   const [best,second,third]=p,weak=p.at(-1),zeros=p.filter(x=>Number(x.points)===0),under5=p.filter(x=>Number(x.points)<5);
@@ -71,14 +70,14 @@ export function addInquirerColumns(edition,{week=Number(edition?.week)}={}){
   a.column_commentary_version=1;
  }
  const overview=edition.league_overview;
- if(overview&&!overview.column_commentary_version){
+ if(overview){
   const completed=edition.teams.filter(t=>sane(t.points)&&sane(t.opponent_points));
   const sorted=completed.slice().sort((a,b)=>Number(b.points)-Number(a.points));
   const high=sorted[0],low=sorted.at(-1),median=sorted.map(t=>Number(t.points)).sort((a,b)=>a-b);
   const m=median.length?median.length%2?median[(median.length-1)/2]:(median[median.length/2-1]+median[median.length/2])/2:0;
   const zeros=completed.filter(t=>Number(t.points)===0);
   const first=overview.sections?.[0],blocks=first?.blocks||[];
-  const add=(kind,copy)=>{const block=blocks.find(b=>b.kind===kind);if(block){block.paragraphs ||= [];block.paragraphs.push(copy);}};
+  const add=(kind,copy)=>{const block=blocks.find(b=>b.kind===kind);if(block){block.paragraphs ||= [];if(!block.paragraphs.includes(copy))block.paragraphs.push(copy);}};
   if(high&&low){
    add('lead',team(high)+' scored '+f(high.points)+' and '+team(low)+' scored '+f(low.points)+'. They will each appear in the standings as one result. Fantasy football remains admirably indifferent to the amount of suffering required to get there.');
    add('players','The spectacular individual totals are excellent material for highlight reels. Unfortunately for managers who prefer highlights to wins, the other starting positions still count every single week.');

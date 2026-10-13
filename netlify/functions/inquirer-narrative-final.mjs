@@ -293,6 +293,200 @@ const week4NextAngles={
  "San Francisco 49ers": "Pittsburgh brought two empty running-back slots to the party. San Francisco shouldn't plan on receiving that kind of hospitality again; winning with less help from the opposition is the next real objective.",
  "Seattle Seahawks": "Cleveland offered minimal resistance. Seattle's next job is to preserve the parts that worked against a team that doesn't fold the second it sees Zay Flowers."
 };
+const week4SectionVerdicts={
+ "Buffalo Billiards": [
+  "Latu and Gary gave the team something real; that's why treating the entire loss as an unavoidable catastrophe is too convenient.",
+  "The FLEX call deserves explaining. The rest of the defeat deserves a broader investigation, because one correct choice still leaves a brutal margin.",
+  "A manager who leaves twenty points unused during a forty-point defeat doesn't get to call the unused points irrelevant.",
+  "Latu earned his praise by making the scoreboard move while too many teammates treated that as optional."
+ ],
+ "Miami Dolphins": [
+  "McMillan produced the afternoon's showstopper. This is where a reporter might usually call the coach a genius, if the coach hadn't wasted a perfectly good alternative.",
+  "The bench decision is indefensible even in victory. Winning with this much firepower shouldn't require the manager to audition for Most Fortunate Employee.",
+  "Bonitto over Emmanwori wasn't strategy; it was an expensive scenic route to a victory Miami was talented enough to achieve anyway.",
+  "McMillan earned the applause. The manager can clap along instead of accepting an award for selecting him."
+ ],
+ "New England Patriots": [
+  "Rousseau and Maye made the Patriots credible; the rest did enough work that the loss cannot be stuffed into one convenient pair of shoes.",
+  "No verified legal rescue surfaced. Sometimes the other team wins a fair fight; the urge to invent a coaching scandal makes a poor substitute for reporting.",
+  "Nobody deserves to be publicly fired for losing a game by four when all the starters contributed.",
+  "Rousseau's production kept this competitive. That effort deserves credit even if the result won't cooperate."
+ ],
+ "New York Jets": [
+  "DeJean did the rescuing. The other prominent contributions helped, but several starters could reasonably be mistaken for empty seats.",
+  "The unused eligible production was an avoidable mistake covered by Atlanta's spectacular generosity. That is not the kind of business model that survives December.",
+  "Chig Okonkwo over Ollie Gordon made this winning lineup worse for reasons the manager ought to explain without smiling at the standings.",
+  "DeJean should receive the flowers, and perhaps the keys to the building; he carried enough of Sunday's operation already."
+ ],
+ "Baltimore Ravens": [
+  "Bowers and Rodgers offered a foundation. Four starters apparently mistook the foundation for a complete house.",
+  "One bench correction would have helped, not repaired Baltimore's systemic failure. Management needs to stop presenting a bandage as a structural renovation.",
+  "The manager cannot solve four quiet starting positions by talking louder about Brock Bowers.",
+  "Bowers gave Baltimore a credible scorer. Shame the rest of the lineup couldn't agree on the concept."
+ ],
+ "Cincinnati Bungals": [
+  "Bijan Robinson carried the interesting part of Cincinnati's performance. The rest supplied the material for a distinctly less flattering documentary.",
+  "Boye Mafe's verified advantage is the proper coaching complaint. Courtland Sutton being the lowest scorer doesn't make him automatically the wrong selection.",
+  "Quentin Lake over Boye Mafe is the decision worth questioning. Scapegoating the lowest name on the sheet is a cheap diversion.",
+  "Bijan did his job. A player shouldn't need to score an entire lineup's worth of points to earn a decent result."
+ ],
+ "Cleveland Browns": [
+  "Burrow and Roman Wilson were at least recognizably playing fantasy football. The rest turned the Sunday lineup into a public service announcement.",
+  "The Gesicki alternative was real but not even close to enough. A manager who sells that repair as salvation ought to be handed the final score.",
+  "A ten-point bench fix is not an alibi for getting beaten by more than fifty.",
+  "Burrow kept the score from looking even more extraordinary. The supporting cast might send a thank-you note."
+ ],
+ "Pittsburgh Steelers": [
+  "Spillane and Shakir put points on the board; two starting running backs preferred the dramatic tension of contributing absolutely nothing.",
+  "There was a modest eligible replacement, but the central failure is a backfield incapable of scoring. The coaching discussion shouldn't end with one minor upgrade.",
+  "Two zero-point running backs is the roster equivalent of leaving the engine at home and blaming the tires.",
+  "Spillane made an honest contribution to a lineup determined to turn his afternoon into a footnote."
+ ],
+ "Houston Texans": [
+  "Michael Wilson and Rome Odunze supplied reasons to watch. They couldn't supply all the points Houston needed, regardless of how energetically management wished it.",
+  "Walter Nolen was the actual alternative the manager missed. Fixing the slot would make Houston less embarrassing, not turn a twenty-nine-point loss into a moral victory.",
+  "The Bernard selection deserves an answer, and 'we lost anyway' is a confession of low standards rather than a defense.",
+  "Michael Wilson did what he could. His reward was watching the rest of the team fail to create a competitive total."
+ ],
+ "Indianapolis Colts": [
+  "Oluokun provided the headline performance, and the rest made a narrow victory possible rather than leaving him to play all seven positions.",
+  "The absence of a proven better lineup is a fact, not permission to invent one. Indianapolis won; treat that as evidence of competent work instead of demanding a villain.",
+  "There is no documented managerial scandal. Calling one into existence after a victory would be the dumbest decision of the weekend.",
+  "Oluokun was the engine of this win. The rest of the team owes him dinner, not a long explanation of percentages."
+ ],
+ "Jacksonville Jags": [
+  "Denzel Ward and RJ Harvey gave Jacksonville a fighting chance; their supporting cast wasn't prepared to finish the argument.",
+  "Winfield's advantage was genuine and insufficient. The manager should fix the obvious error without selling it as a machine capable of reversing a thirteen-point-six defeat.",
+  "Jalen Carter over Antoine Winfield is the decision under interrogation. The box score is not accepting 'close enough' as an answer.",
+  "Denzel Ward played well enough to merit a better ending. Sadly, football doesn't award partial credit for deserving."
+ ],
+ "Tennessee Titans": [
+  "Deebo Samuel made the most of a very modest winning afternoon. The rest needn't apply for a parade permit just yet.",
+  "Winning with fewer than seventy points should inspire gratitude toward Philadelphia, not an ambitious thesis about coaching brilliance.",
+  "The manager escaped this one. Please don't confuse escaping with conquering; the offense still has work to do.",
+  "Deebo did something useful in a game where usefulness was apparently a scarce commodity."
+ ],
+ "Denver Doncos": [
+  "Javonte Williams drove the win; the rest needed to contribute because Minnesota's lineup didn't roll over and surrender.",
+  "There is no excuse to turn every quiet starter into a firing offense after a real competitive win. The manager's task is to preserve what worked.",
+  "The coach deserves an assessment of the full result, not a ceremonial reprimand for whichever player finished last.",
+  "Javonte earned an actual winning performance, not just the honor of standing out in a loss."
+ ],
+ "Kansas City Chiefs": [
+  "Jeffrey Bassa and six empty chairs. Kansas City's 'supporting cast' was apparently cast from the league's emergency exit signs.",
+  "Management has to address a lineup-wide shutdown. There is no single benched hero in evidence who turns 9.5 into competitiveness.",
+  "The entire lineup after Bassa belongs on the hot seat. An inquiry into just one spot would be suspiciously merciful.",
+  "Bassa scored literally everything Kansas City had. Giving the cool throne to anybody else would require a very creative calculator."
+ ],
+ "Las Vegas Raiders": [
+  "Nobody scored. There are no heroes, supporting players or clever alternative narratives lurking inside a zero.",
+  "This is a total failure, not a collection of individual near misses. The coach needs more than a different sentence on the team newsletter.",
+  "Everybody gets the hot seat; nobody gets the excuse that the guy next to him was worse.",
+  "Nobody. Awarding a scorer of the week here would be an exercise in fiction."
+ ],
+ "Los Angeles Chargers": [
+  "Edgerrin Cooper's performance gave the Chargers an anchor while the team as a whole did enough work to beat Chicago.",
+  "The manager can investigate quiet starters without pretending one imperfect slot turned victory into a disaster. Winning is still the actual objective.",
+  "The manager should be accountable for the weak spots, but there's no reason to manufacture a crime from a comfortable win.",
+  "Cooper made the game look easier than it was. That's what a genuinely valuable contributor does."
+ ],
+ "Dallas Cowboys": [
+  "Tuli Tuipulotu didn't merely contribute. He produced the sort of one-man performance that leaves rival managers wishing they had checked the matchup twice.",
+  "Thibodeaux's weak day is worth reviewing without allowing it to hijack a dominant win. The manager has an actual victory to celebrate.",
+  "One quiet starter is no reason to interrupt the celebration with a ceremonial disciplinary hearing.",
+  "Tuli supplied the sort of game you clip and save. The rest of Dallas is permitted to admire it."
+ ],
+ "New York Giants": [
+  "Kenneth Walker led an unusually complete starting group. The lack of a catastrophic scorer is why this loss is frustrating rather than shameful.",
+  "There is no verified bench miracle waiting behind the curtain. The Giants were competitive and still lost; a coach who promises otherwise is selling fiction.",
+  "The hot seat is vacant unless someone can produce a real better lineup. Being disappointed is not evidence of incompetence.",
+  "Walker delivered the kind of game that usually earns a win. Unfortunately, 'usually' doesn't get you into the standings."
+ ],
+ "Philadelphia Eagles": [
+  "LaPorta offered a legitimate contribution while the rest of the Eagles struggled to cross a bar Tennessee had generously set near the floor.",
+  "An opponent winning with 67.6 shouldn't be a terrifying obstacle. The team has a production problem before it has a public-relations problem.",
+  "The manager owns a lineup that couldn't reach 54. There is no need to polish that fact into a philosophical dispute.",
+  "LaPorta gave Philadelphia something worth watching. The rest turned his effort into an unfortunate solo exhibition."
+ ],
+ "Washington Commanders": [
+  "Monangai did the damage that mattered. The rest supplied enough support to turn one strong performance into a win.",
+  "Winning doesn't certify each selection as inspired. McDuffie's two points deserve review, but the result was a collective success.",
+  "The quieter positions belong in the weekly review. Winning isn't a magic eraser for a weak starter.",
+  "Monangai earned the applause by giving Washington a practical reason to believe it could finish the job."
+ ],
+ "Chicago Bears": [
+  "Olave showed up for Chicago. Too much of the rest of the team treated his production as an excellent opportunity to stop trying.",
+  "Management needs a stronger supporting cast rather than another attempt to relabel a clear loss as a learning experience.",
+  "The Bears' quiet supporting spots need attention. Pointing at the only productive star would be an inspired way to miss the problem.",
+  "Olave supplied real offense in an afternoon that offered precious little of it."
+ ],
+ "Detroit Lions": [
+  "Kyren Williams supplied more than enough to defeat an opponent that couldn't manage a single point. Context is doing quite a lot of work in that sentence.",
+  "The win is real. The level of resistance was not. Management should prepare for a game where the other team has a pulse.",
+  "Nobody gets disciplined for winning 84–0, but treating it as a title-game rehearsal would deserve a formal intervention.",
+  "Kyren earned his 37.7. Las Vegas contributed a helpful amount of silence."
+ ],
+ "Green Bay Packers": [
+  "McKinney made the biggest useful difference in a game where almost everybody else struggled to register a pulse.",
+  "The manager escaped by beating an opponent with nine and a half points. That isn't vindication; it's an invitation to inspect the offense before anybody sober shows up.",
+  "Six quiet starters deserve far more attention than the narrow technicality that Green Bay finished ahead.",
+  "McKinney did enough to win. The supporting cast should appreciate how low Kansas City set the bar."
+ ],
+ "Minnesota Vikings": [
+  "Puka Nacua gave Minnesota a star performance in an actual competitive matchup. The lineup simply couldn't match Denver's full total.",
+  "The manager should consider the weak positions without claiming one player personally lost a contest involving seven starters.",
+  "Willis's 1.3 is a concern; it is not a license to pretend the other six roster choices have no responsibility.",
+  "Puka did the work of a headline player. The final score, unfortunately, does not read headlines."
+ ],
+ "Atlanta Falcons": [
+  "Austin Booker led with a score that would have been a supporting contribution on a competitive roster. That is a grim standard for applause.",
+  "A manager staring at a 51-point team total needs more than a pep talk about the leading player. Nearly every position demands a credible plan.",
+  "The offense belongs on the hot seat. Finding a single villain amid this many underperformers would be a suspiciously cheap investigation.",
+  "Booker at least contributed; his teammates should consider joining him in this revolutionary activity."
+ ],
+ "Carolina Panthers": [
+  "Tee Higgins drove the headline, and a complete supporting cast took care of a close result against New England.",
+  "There is no documented egregious bench choice to explain away. Carolina won by being solid where others offered holes.",
+  "Nobody earns the hot seat for inventing a problem. The management assignment is to preserve a productive lineup.",
+  "Higgins was excellent, but the win had actual support behind its star."
+ ],
+ "New Orleans Aints": [
+  "Dallas Turner paced an across-the-board performance. This was a genuine win, even if Buffalo supplied rather charitable opposition.",
+  "Management earned credit for fielding a functional lineup. The danger is allowing a collapse by Buffalo to inflate every roster expectation.",
+  "There is no urgent lineup indictment here. Save the outrage for a week that actually warrants it.",
+  "Turner's performance supplied the energy to a scoreline Buffalo never remotely threatened."
+ ],
+ "Tampa Bay Buccaneers": [
+  "CeeDee Lamb produced an enormous game that deserved more help against Miami. One brilliant scorer cannot occupy the other six slots.",
+  "Tampa can be disappointed without pretending Lamb was the problem. The manager needs to find a way to support spectacular talent.",
+  "The whole supporting cast faces the question of how a 41.3-point performance still went into the loss column.",
+  "Lamb gave Tampa a reason to cheer. Miami supplied the reason the cheering ended."
+ ],
+ "Arizona Cardinals": [
+  "Tucker Kraft led a full seven-player effort. Arizona won because it didn't ask one hero to cover four ghosts.",
+  "A manager who used a fully functioning starting card should not be badgered into imaginary changes. Keep what worked.",
+  "No fake managerial scandal. It turns out seven contributing starters is a fairly sensible strategy.",
+  "Kraft was the standout in a victory built on everyone having the decency to contribute."
+ ],
+ "Los Angeles Rams": [
+  "T.J. Watt produced the kind of performance that can bury an opponent before a roster review becomes necessary.",
+  "The win is persuasive even with Chinn's weak spot. Management should investigate it without pretending one quiet starter invalidated a decisive result.",
+  "Jeremy Chinn's four deserves attention, not a claim that the whole Rams operation failed.",
+  "Watt provided enough drama for the entire afternoon. Cincinnati would likely prefer less theater."
+ ],
+ "San Francisco 49ers": [
+  "Chase Brown gave San Francisco a steady lead while Pittsburgh's starting running backs provided extraordinary assistance by contributing nothing.",
+  "The 49ers did their job. The manager should not mistake the opponent's absent production for evidence that every choice was inspired.",
+  "A convincing win deserves praise. The hot seat is for real problems, not a reporter desperate to fill space.",
+  "Brown led a win that was never seriously threatened once Pittsburgh's backfield disappeared."
+ ],
+ "Seattle Seahawks": [
+  "Zay Flowers led a rout, and Cleveland never found enough answers to turn the afternoon competitive.",
+  "Seattle's management can take credit for getting points on the board. The Browns supplied enough incompetence that excessive swagger would look silly.",
+  "There is no reason to invent a Seattle scandal in a fifty-one-point victory. The next opponent might provide legitimate questions.",
+  "Flowers did his job in a performance the scoreboard made impossible to ignore."
+ ]
+};
 // Final single-pass column: rewrite repetitive sections, preserve underlying game and award data.
 const ok=x=>x!=null&&x!==''&&Number.isFinite(Number(x));
 const f=x=>Number(x).toFixed(1);
@@ -393,7 +587,8 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
    :low5.length===0
    ?'Even the lowest contributor, '+nm(low)+', managed '+f(low.points)+'. '+(won?'The manager got a complete starting effort. Feel free to criticize something that actually went wrong.':'A complete scoring card still lost. Sometimes the other side was simply better; inventing a guilty party would be lazy.')
    :nm(low)+' produced '+f(low.points)+'. '+(won?'The win covered for that disappointment, but it did not erase it.':'The disappointment is real. Calling it a bad start/sit decision without proving an eligible better option would be cheap hindsight.');
-  put(a,'players',week===4&&Number(e.season)===2026?[playerStory,playerCounterpoint]:[playerFeature,weakestFeature]);
+  const editedVerdicts=week===4&&Number(e.season)===2026?week4SectionVerdicts[tn(t)]:null;
+  put(a,'players',editedVerdicts?[nm(top)+' produced '+f(top.points)+'. '+editedVerdicts[0],nm(low)+' finished at '+f(low.points)+'. '+(low5.length>=3?low5.length+' starters were below five; the disappointment was collective, not isolated.':low5.length===0?'Every starter contributed; there is no factual case for a one-player scapegoat.':'The lowest scorer is not automatically proof of a wrong legal selection.')]:[playerFeature,weakestFeature]);
   const management=legal?nm(bench)+' beat '+nm(starter)+' by '+f(upgrade)+' in a documented eligible swap. '+(won?'The win would have grown by '+f(upgrade)+'. The manager can enjoy the result and still explain why '+nm(starter)+' started ahead of '+nm(bench)+'.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'Even with '+nm(bench)+'\'s extra '+f(upgrade)+', '+tn(t)+' would still lose by '+f(margin-upgrade)+'. That does not make starting '+nm(starter)+' a stroke of managerial genius.'):'No verified eligible bench upgrade is documented. Inventing an imaginary alternative would be lazy. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without a legal alternative would be impressively lazy.');
   const managerVerdict=allZero
    ?'There were '+p.length+' starting positions and not a single positive point. One scapegoat would be exceptionally convenient for everybody else.'
@@ -406,7 +601,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
    :margin<=8
    ?'No verified replacement would have made this a guaranteed win. Calling the result a coaching scandal without such evidence is not insight; it is theater.'
    :'The team needs to review its actual starting opportunities. There is no documented bench upgrade to blame, and an invented one would be embarrassingly convenient.';
-  put(a,'management',week===4&&Number(e.season)===2026?[management,legal?(upgrade>margin&&!won?'This is the one case where the bench mistake was actually big enough to change the verdict. No amount of postgame theater makes that less embarrassing.':won?'The manager got the win, not an alibi. A better eligible lineup was available and that selection still deserves a second look.':'The missed upgrade matters, but the bigger loss demands questions about the entire roster. One correction is not a resurrection.'):low5.length>=3?'With '+low5.length+' starters under five, there is no single convenient villain. The whole supporting cast has a meeting to attend.':won?'There is no proven better eligible lineup. Enjoy the win without inventing somebody to prosecute.':'No legal bench rescue is documented. The manager cannot solve this by pointing at a hypothetical player who was never an actual option.']: [management,managerVerdict]);
+  put(a,'management',editedVerdicts?[management,editedVerdicts[1]]:[management,managerVerdict]);
   put(a,'hot-seat',[allZero?'The entire starting lineup. Nobody scored. Nobody gets an exemption.':legal?'The manager, not '+nm(starter)+', owns the selection. '+nm(bench)+' was an eligible alternative and the box score made that decision look indefensible. The next '+tn(t)+' lineup ought to reflect some evidence that the manager noticed what happened.':low5.length?nm(low)+' managed '+f(low.points)+'. '+(won?'The victory survived that contribution; the position does not deserve a medal for it.':'A disappointing contribution, but no proven bench miracle allows the manager to put the entire loss on this one player.'):'There is no documented lineup scandal here. If management must be criticized, criticize what is real rather than drafting a convenient scapegoat.']);
   put(a,'cool-throne',[allZero?'Nobody earned a positive starter score, so nobody earns a made-up honor.':nm(top)+' scored '+f(top.points)+'. '+(won?'At least someone gave the win a foundation.':'A real performance in a loss. The rest should consider sending an apology.')]);
   if(week===4&&Number(e.season)===2026){
@@ -422,7 +617,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
    const cool=allZero
     ?'No award. All zero. A participation certificate would be an insult to participation.'
     :nm(top)+' supplied '+f(top.points)+'. '+(won?'That is production worth celebrating; the manager should resist taking personal credit for every point.':'At least one player made the defeat harder to swallow instead of easier to explain.');
-   put(a,'hot-seat',[hot]);put(a,'cool-throne',[cool]);
+   put(a,'hot-seat',[editedVerdicts?editedVerdicts[2]:hot]);put(a,'cool-throne',[editedVerdicts?editedVerdicts[3]:cool]);
   }
   // The crowd section is a columnist's reaction to the measured fan mood,
   // not another recap or an invented quote attributed to real supporters.

@@ -139,8 +139,8 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
   }
  }
  for(const sec of recap?.sections||[]){
-   if(Array.isArray(sec.paragraphs))sec.paragraphs=sec.paragraphs.map(p=>String(p).replace(/Dolphins’s/g,'Dolphins team’s').replace(/Raiders turns to/g,'Raiders face').replace(/Aints takes its/g,'Aints carry their').replace(/a 84\\.0-point/g,'an 84.0-point'));
-   for(const block of sec.blocks||[])if(Array.isArray(block.paragraphs))block.paragraphs=block.paragraphs.map(p=>String(p).replace(/Dolphins’s/g,'Dolphins team’s').replace(/Raiders turns to/g,'Raiders face').replace(/a 84\\.0-point/g,'an 84.0-point'));
+   if(Array.isArray(sec.paragraphs))sec.paragraphs=sec.paragraphs.map(p=>String(p).replace(/Dolphins’s/g,'Dolphins’').replace(/Raiders turns to/g,'Raiders face').replace(/Aints takes its/g,'Aints carry their').replace(/a 84\.0-point/g,'an 84.0-point'));
+   for(const block of sec.blocks||[])if(Array.isArray(block.paragraphs))block.paragraphs=block.paragraphs.map(p=>String(p).replace(/Dolphins’s/g,'Dolphins’').replace(/Raiders turns to/g,'Raiders face').replace(/a 84\.0-point/g,'an 84.0-point'));
  }
  if(recap?.sections?.[0]?.blocks?.length){
   recap.sections[0].paragraphs=blocks.flatMap(b=>b.paragraphs||[]);

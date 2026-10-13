@@ -23,6 +23,9 @@ for(const team of edition.teams){
  assert.equal(article.fact_driven_analysis,true,'Every scored team needs fact-driven reporting: '+team.team_name);
  assert.equal(article.cohesive_editorial_version,1,'Single authoritative reporter stage required for '+team.team_name);
  assert.equal(article.headline,String(week4Headlines[team.team_name]).replace(/eligible points/gi,'Bench Points'),'Individually edited Week 4 headline was replaced by template for '+team.team_name);
+ const newsroomCopy=(article.sections||[]).filter(x=>['lede','players','management','hot-seat','cool-throne','sentiment','outlook'].includes(x.kind)).flatMap(x=>x.paragraphs||[]).join(' ');
+ assert(!/the Fleeced! breakout conversation should start|not another lecture on top-three scoring shares|eligible option|documented eligible swap|their next performances are unknown/i.test(newsroomCopy),'Meta editorial or audit wording returned: '+team.team_name);
+ if(team.team_name==='Las Vegas Raiders')assert(!/next opponent will have its own answer to that threat/i.test(newsroomCopy),'Zero-point starter misrepresented as a scoring threat');
  const moodLines=article.sections.find(x=>x.kind==='sentiment')?.paragraphs||[];
  assert.equal(week4Notes[team.team_name]?.length>170,true,'Week 4 article lacks substantive independent editorial reporting: '+team.team_name);
  const note=week4Notes[team.team_name];

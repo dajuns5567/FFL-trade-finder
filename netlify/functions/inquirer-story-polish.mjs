@@ -64,6 +64,23 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
        :nm(weak)+' managed '+f(low)+' in '+String(weak.position||'a starter role')+'. '+(own>=other?'Enough for the result, perhaps; hardly the reason the team won.':'That return matters when the final deficit was '+f(gap)+'.');
    }
   }
+  const crowd=section(a,'sentiment');
+  if(crowd){
+   const miss=t.best_lineup_miss||a.facts?.best_lineup_miss;
+   const bench=miss?.reserve||miss?.bench,selected=miss?.starter,delta=Number(miss?.gap);
+   const validSwap=Boolean(bench?.name&&selected?.name&&Number.isFinite(delta)&&delta>0);
+   const refrain=validSwap
+    ?nm(bench)+' outscored the selected '+nm(selected)+' by '+f(delta)+' in an eligible replacement. '+(own>=other?'The points stayed on the bench in a win; that does not make the decision good.':delta>gap?'The unused improvement was bigger than the losing margin. The explanation will need to be better than “unlucky.”':'It would not have reversed this result, but it was an actual opportunity left unused.')
+    :nm(weak)+' produced '+f(weak.points)+' at '+String(weak.position||'a starting role')+'. With no verified eligible upgrade, nobody gets to manufacture a bench miracle afterward.';
+   const reporter=String(a.reporter?.id||'walter-mercer');
+   const reaction={
+    'nora-voss':'The other managers can see '+tn(t)+'\'s '+f(weak.points)+'-point weak spot. Expect them to notice it before the next lineup locks.',
+    'walter-mercer':tn(t)+' earned a '+(own>=other?'win':'loss')+', which will be remembered in the standings longer than any explanation offered about the roster.',
+    'tess-delaney':'The scoreline is '+f(own)+'–'+f(other)+'. A respectable outfit, perhaps; whether it was a respectable performance is another question entirely.',
+    'mack-hollis':'THE POINTS ARE FINAL. '+tn(t)+' '+(own>=other?'WON':'LOST')+' BY '+f(gap)+'. The manager can discuss what went wrong without making up an opponent or a bench score.'
+   };
+   crowd.paragraphs=[reaction[reporter]||reaction['walter-mercer'],refrain];
+  }
   const outlook=section(a,'outlook');
   if(outlook?.paragraphs?.length>=2){
    const opponent=String(t.next_opponent_name||'an opponent not yet established');

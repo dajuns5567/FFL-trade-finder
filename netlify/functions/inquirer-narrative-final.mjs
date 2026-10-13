@@ -713,6 +713,28 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   if(week===4&&Number(e.season)===2026&&signalObservations[tn(t)]){
    a.sections.find(x=>x.kind==='players')?.paragraphs?.push(signalObservations[tn(t)]);
   }
+  const week4ManagementAngles={
+   "Buffalo Billiards":"That FLEX mistake cost real points, but the Aints still had the stronger team. Buffalo needs both a better lineup card and a functioning offense.",
+   "Baltimore Ravens":"The spare points mattered, although they would not have bought a victory. The manager cannot sell one substitution as the cure for a roster-wide problem.",
+   "Cincinnati Bungals":"The unused bench production should bother Cincinnati, but the final deficit demands more than a Monday-morning lineup correction.",
+   "Cleveland Browns":"One better selection would only have changed the size of the bruise. Cleveland needs a larger answer than rearranging the chairs.",
+   "Pittsburgh Steelers":"The bench offered a way to make the result respectable, not a route to victory. Pittsburgh has an entire backfield to explain.",
+   "Houston Texans":"The reserve outscored the starter, and Houston still had other problems to solve. Two truths can fit in one embarrassing box score.",
+   "Jacksonville Jags":"The manager missed available points, but the Jaguars' defeat was bigger than that one choice. Treating it as a single bad button press would be convenient fiction.",
+   "Las Vegas Raiders":"The substitution would not have rescued a team whose starters totaled zero. That is not a narrowly botched call; it is a full-roster emergency.",
+   "New York Giants":"The sideline held a better score, but not enough to flip this game. The Giants cannot make one wrong starter answer for every missing point.",
+   "Philadelphia Eagles":"There were points to recover on the bench, but Tennessee still would have finished ahead. Philadelphia should inspect the whole roster, not frame one substitution as the lone culprit.",
+   "Chicago Bears":"Chicago left an opportunity unused and still needed more than it could recover. The manager has two separate jobs: fix the choice and fix the output.",
+   "Minnesota Vikings":"The Vikings could have trimmed the margin, not stolen the result. That may be cold comfort, but it is considerably warmer than pretending the rest of the lineup was fine.",
+   "Atlanta Falcons":"Atlanta had a more productive reserve available and a defeat too wide for that reserve to reverse. The manager should answer for both failures.",
+   "Tampa Bay Buccaneers":"Tampa's starting choice deserves scrutiny, but this loss was not a one-swap fairy tale. The Buccaneers needed a second act beyond their star's spectacular scoring."
+  };
+  const week4NoBenchAngles={
+   "New England Patriots":"New England fielded seven contributors and still lost a close one. There is no defensible reason to invent a bench savior just to put somebody on trial.",
+   "Indianapolis Colts":"Indianapolis has no demonstrated higher-scoring bench answer here. The critique belongs to the production on the field, not to a substitute nobody can prove would help.",
+   "Kansas City Chiefs":"Kansas City's starters supplied almost nothing. Searching the bench for an imaginary single rescuer misses the much uglier story on the field.",
+   "New Orleans Aints":"The Aints won without a proven bench upgrade waiting in reserve. Nobody needs to fabricate a coaching blunder to make a good result sound dramatic."
+  };
   const management=legal?nm(bench)+' scored '+f(bench.points)+' while '+nm(starter)+' managed '+f(starter.points)+' in the same starting spot — a '+f(upgrade)+'-point miss. '+(won?'The win would have grown by '+f(upgrade)+'. The manager can enjoy the result and still explain why '+nm(starter)+' started ahead of '+nm(bench)+'.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'Even with '+nm(bench)+'\'s extra '+f(upgrade)+', '+tn(t)+' would still lose by '+f(margin-upgrade)+'. The missed start deserves criticism; it still would not have erased the defeat. '+(upgrade>=20?'Leaving '+f(upgrade)+' extra points unused is a spectacular way to lose twice in one afternoon.':margin-upgrade>=20?'This roster needed far more than one smart substitution.':'The better lineup would have made the score less ugly, which is not quite the same thing as winning.')):'No bench change was shown to improve this lineup. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without an actual better choice would be impressively lazy.');
   const managerVerdict=allZero
    ?'There were '+p.length+' starting positions and not a single positive point. One scapegoat would be exceptionally convenient for everybody else.'
@@ -725,7 +747,8 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
    :margin<=8
    ?'No verified replacement would have made this a guaranteed win. Calling the result a coaching scandal without such evidence is not insight; it is theater.'
    :'The team needs to review its actual starting opportunities. There is no documented bench upgrade to blame, and an invented one would be embarrassingly convenient.';
-  put(a,'management',editedVerdicts?[management,editedVerdicts[1]]:[management,managerVerdict]);
+  const tailoredManagement=week===4&&Number(e.season)===2026?(legal&&!won?week4ManagementAngles[tn(t)]:!legal?week4NoBenchAngles[tn(t)]:null):null;
+  put(a,'management',editedVerdicts?[tailoredManagement?management.replace(/The missed start deserves criticism; it still would not have erased the defeat\..*$/,tailoredManagement).replace(/No bench change was shown to improve this lineup\..*$/,tailoredManagement):management,editedVerdicts[1]]:[tailoredManagement?management.replace(/The missed start deserves criticism; it still would not have erased the defeat\..*$/,tailoredManagement).replace(/No bench change was shown to improve this lineup\..*$/,tailoredManagement):management,managerVerdict]);
   put(a,'hot-seat',[allZero?'The entire starting lineup. Nobody scored. Nobody gets an exemption.':legal?'The manager, not '+nm(starter)+', owns the selection. '+nm(bench)+' was an eligible alternative and the box score made that decision look indefensible. The next '+tn(t)+' lineup ought to reflect some evidence that the manager noticed what happened.':low5.length?nm(low)+' managed '+f(low.points)+'. '+(won?'The victory survived that contribution; the position does not deserve a medal for it.':'A disappointing contribution, but no proven bench miracle allows the manager to put the entire loss on this one player.'):'There is no documented lineup scandal here. If management must be criticized, criticize what is real rather than drafting a convenient scapegoat.']);
   put(a,'cool-throne',[allZero?'Nobody earned a positive starter score, so nobody earns a made-up honor.':nm(top)+' scored '+f(top.points)+'. '+(won?'At least someone gave the win a foundation.':'A real performance in a loss. The rest should consider sending an apology.')]);
   if(week===4&&Number(e.season)===2026){

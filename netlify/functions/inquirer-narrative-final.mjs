@@ -489,7 +489,7 @@ const week4SectionVerdicts={
 };
 // Evidence-aware editorial composer. Match full names or unique surnames only;
  // source every inserted statistic from the verified starter card.
-const regexEscape=x=>String(x).replace(/[.*+?^$\{\}()|[\]\\]/g,'\\// Final single-pass column: rewrite repetitive sections, preserve underlying game and award data.');
+const regexEscape=x=>String(x).replace(/[-/\\^$*+?.()|[\]{}]/g,'\\$&');
 const embedVerifiedPlayerEvidence=(text,starting,alreadyUsed=[])=>{
  let result=String(text||'');
  const options=starting.filter(p=>p?.name&&Number.isFinite(Number(p.points)));

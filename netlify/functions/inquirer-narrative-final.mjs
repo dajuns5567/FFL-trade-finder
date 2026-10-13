@@ -308,7 +308,7 @@ const week4SectionVerdicts={
  ],
  "New England Patriots": [
   "Rousseau and Maye made the Patriots credible; the rest did enough work that the loss cannot be stuffed into one convenient pair of shoes.",
-  "No verified legal rescue surfaced. Sometimes the other team wins a fair fight; the urge to invent a coaching scandal makes a poor substitute for reporting.",
+  "New England didn't have a bench player who could clearly win this game instead. Sometimes the other side simply plays a little better; inventing a coaching scandal is a poor substitute for looking at a good lineup that lost.",
   "Nobody deserves to be publicly fired for losing a game by four when all the starters contributed.",
   "Rousseau's production kept this competitive. That effort deserves credit even if the result won't cooperate."
  ],
@@ -560,7 +560,7 @@ const week4CrowdScenes={
  "New England Patriots": "At the fictional Patriots supporters' club, the bartender has poured two drinks: one for the effort and one for the four-point wound. Nobody knows whether to toast or throw the television remote; the team played well enough to make losing particularly offensive.",
  "New York Jets": "The Jets' pretend victory march has a brass band playing while half the spectators inspect the wheels for missing bolts. Even after a comfortable win, a crowd at minus five isn't rushing to bronze the manager.",
  "Baltimore Ravens": "Baltimore's imaginary fan meeting has one man demanding pitchforks and six others asking him to wait until the team remembers how to fill its starting spots. The patience is almost more insulting than fury.",
- "Cincinnati Bungals": "In the Bengals' fictional town square, the crowd hasn't stormed the office; it has politely left a chair under a spotlight and a sign reading 'EXPLAIN YOUR DEFENSE.' That minus-five reading is the sound of accountability clearing its throat.",
+ "Cincinnati Bungals": "In the Bengals' fictional town square, frustrated fans arrive with a cart of unused pitchforks, then leave one chair under a spotlight and a sign reading 'EXPLAIN YOUR DEFENSE.' That minus-five reading is the sound of accountability clearing its throat.",
  "Cleveland Browns": "Cleveland's satirical fan club has ordered a marching band for the protest, then postponed it because even the band couldn't agree who should be blamed first. The plus-nine mood is an astonishing courtesy after this beating.",
  "Pittsburgh Steelers": "Pittsburgh's imaginary supporters brought pitchforks, then exchanged them for magnifying glasses to locate the missing running-back production. At minus one, fury hasn't arrived; bewilderment already owns the building.",
  "Houston Texans": "At the fictional Texans fan rally, the protest signs are still blank because management keeps providing too many candidates for the headline. Restless minus twelve isn't anarchy; it's a demand that somebody demonstrate a plan.",
@@ -578,7 +578,7 @@ const week4CrowdScenes={
  "Chicago Bears": "Chicago's cartoon crowd has lit one firework that refuses to launch, an appropriate tribute to the supporting cast. The minus-five reading isn't a riot, but it isn't applause either.",
  "Detroit Lions": "Detroit's fictional parade features a giant inflatable zero bearing the Raiders' logo, which unfortunately upstages the winning team. At plus one, supporters seem to realize the opponent's absence doesn't automatically make this a coronation.",
  "Green Bay Packers": "Green Bay's imaginary fans open champagne, sniff it, put the cork back in and ask whether winning with 27.9 points should even qualify for a celebration. Plus five is delight with a deeply suspicious aftertaste.",
- "Minnesota Vikings": "Minnesota's fictional crowd has brought both flowers for Puka Nacua and a bill for the rest of the lineup. Plus five suggests the fans haven't abandoned hope, but they would appreciate a game where star performances actually buy a win.",
+ "Minnesota Vikings": "Minnesota's fictional crowd stages a reluctant toast to Puka Nacua, then delivers the rest of the lineup a bill for wasting the occasion. Plus five suggests the fans haven't abandoned hope, but they would appreciate a game where star performances actually buy a win.",
  "Atlanta Falcons": "Atlanta's imaginary fan march carries pitchforks fashioned from the league standings and a giant question mark where a playbook should be. Minus nineteen is justified irritation, not a claim that supporters really surrounded the building.",
  "Carolina Panthers": "Carolina's satirical victory scene includes champagne being sprayed and a nurse checking everyone's blood pressure. Plus five says the fans appreciate a complete lineup; surviving by four points is not exactly relaxation therapy.",
  "New Orleans Aints": "The Aints' fictional streets are full of champagne, confetti cannons and a man attempting to schedule the championship parade before Halloween. Plus twenty-five means supporters may get loud; it doesn't mean the next opponent has agreed to lose.",
@@ -824,6 +824,32 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     if(item.kind==='fraud'&&/Las Vegas Raiders/.test(item.title||''))item.take='Las Vegas started a complete lineup and finished with precisely zero points. Calling that a warning sign is like calling a building without walls “a little drafty.” The manager’s first assignment is to demonstrate that fantasy points remain legal in Nevada.';
     if(item.kind==='division'&&/AFC EAST/.test(item.take||'')&&!String(item.take||'').includes('The division leaders have positions worth defending.'))item.take+=' The division leaders have positions worth defending. They do not yet have permission to mail out playoff invitations; somebody should explain the difference before the commemorative merchandise arrives.';
     if(item.kind==='upset'&&/Buffalo Billiards/.test(item.title||''))item.take='Buffalo meets New England in Week 5. Buffalo is coming off a forty-two-point defeat; New England lost a much closer game despite a functioning lineup. That makes this worth watching, not an excuse to manufacture a projected upset from numbers this archived Week 4 report cannot verify. Consult live Week 5 projections before naming a favorite.';
+   }
+  }
+  // Week 4: keep the reporting evidence intact, but give each recap desk a
+  // distinct opinion instead of explaining the same standings arithmetic.
+  if(week===4&&Number(e.season)===2026){
+   const revise=(kind,needle,replacement)=>{
+    const block=blocks.find(x=>x.kind===kind);
+    if(!block)return;
+    const at=(block.paragraphs||[]).findIndex(p=>String(p).includes(needle));
+    if(at>=0)block.paragraphs[at]=replacement;
+   };
+   revise('lead','Miami Dolphins scored 134.8 and Las Vegas Raiders scored 0.0.','Miami put up 134.8 and the Raiders delivered a perfect zero. Both are single games, but one should have Dolphins supporters spraying champagne while the other should have the Las Vegas front office considering a witness-protection program for its lineup card.');
+   revise('lead','There are no sympathy wins on this schedule.','Tampa scored 115.8 and still lost to Miami; Tennessee scraped past Philadelphia with 67.6. The league rewarded the Titans and sent Tampa home empty-handed. Anyone still advertising fantasy football as a fair-minded profession has clearly never checked the standings on a Monday.');
+   revise('standings','Detroit Lions beat Las Vegas Raiders by 84.0 points.','New Orleans, Denver and Dallas remain unbeaten at 4-0, but none gets to print playoff tickets in October. Detroit just beat a Raiders team that scored zero; the Lions will eventually have to face an opponent that bothers to participate.');
+   revise('players','For the weekly scoring leader Miami Dolphins, the three highest individual scores totaled','McMillan put up 45.2 for Miami, and Lamb answered with 41.3 for Tampa in a losing cause. That is the cruel side of a star turn: one player can fill a highlight reel and still be left watching the other team collect the win.');
+   revise('players','The spectacular individual totals are excellent material for highlight reels.','The week's best players did their part. Managers planning to survive on highlight clips rather than seven starting slots might as well submit their rosters to the film festival.');
+   revise('decisions','A 3.9-point margin invites an audit of genuine eligible bench alternatives','Carolina beat New England by 3.9 even though every Patriots starter contributed. It is tempting to stage a public trial over four points, but nobody has identified a better bench decision that actually reverses the outcome.');
+   revise('decisions','Even a well-chosen replacement would have to be measured against 84.0 points','Detroit beat Las Vegas 84.0–0.0. No clever bench adjustment turns that into an unlucky near miss. The Raiders were not narrowly outcoached; they were practically absent.');
+   revise('league','The median team scored 86.6 points.','The league median was 86.6. Miami cleared that by nearly fifty, while Las Vegas couldn't locate the scoreboard at all. The standings contain contenders and contenders for an emergency intervention, and Week 4 was generous enough to show both.');
+   const extra=overview.sections||[];
+   for(const section of extra.slice(1)){
+    section.paragraphs=(section.paragraphs||[]).map(p=>String(p)
+     .replace('A place near the top matters because the wins are already banked.','The wins are real; the coronation committee may remain seated.')
+     .replace('One usable replacement could have changed the standings.','A tight finish calls for a serious lineup review, not an invented bench hero.')
+     .replace('The scoreboard was unusually clear about which roster had a better afternoon.','The scoreboard was less a verdict than a formal notice that one roster failed to attend.')
+     .replace('Nothing from the upcoming slate is counted as complete. Week 5 will get its own results before the newspaper moves forward.','Week 5 has not been played. Anyone claiming next week’s scores already knows the future—or needs to return their press credentials.'));
    }
   }
   first.paragraphs=blocks.flatMap(x=>x.paragraphs||[]);

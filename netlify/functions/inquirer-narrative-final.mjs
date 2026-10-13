@@ -1,4 +1,134 @@
 import {week4Notes,week4Headlines} from './inquirer-week4-specific-notes.mjs';
+const week4CrowdColumns={
+ "Buffalo Billiards": [
+  "A -18 mood is almost polite for an outfit that got flattened by forty-two. What hurts is not merely losing; it's having twenty recoverable points sitting there while the manager submitted Ryan Flournoy. There are bad Sundays, and then there are Sundays that arrive with a receipt.",
+  "Nobody serious should pretend Emanuel Wilson would have won this. That is what makes the anger sharper: fixing the obvious error still leaves Buffalo nowhere near the Aints. The manager has two problems, and only one can be solved by opening the lineup screen."
+ ],
+ "Miami Dolphins": [
+  "Miami hung 134.8 on Tampa and still gave its own supporters something to complain about. Tetairoa McMillan produced the sort of performance that gets framed, while Nick Emmanwori watched a 27.6-point advantage over the selected Nik Bonitto go unused. Winning did not make that selection smart.",
+  "The uncomfortable part is how easily a spectacular victory can conceal a habit. A lesser performance from McMillan and the same manager is explaining why an eligible upgrade was warming the bench. Miami's fans can celebrate the firepower and demand a less adventurous definition of lineup management."
+ ],
+ "New England Patriots": [
+  "There is a particular cruelty in doing the basic job correctly and losing anyway. Every Patriots starter scored at least 7.4. New England did not find a glamorous catastrophe to blame; Carolina just got across the line first.",
+  "The temptation now is to find one convenient villain so the defeat feels preventable. It isn't supported by this lineup evidence. Patriots supporters are entitled to be miserable about four points, but fabricating an imaginary bench savior will not make the box score less annoying."
+ ],
+ "New York Jets": [
+  "The Jets won by almost thirty with three starters supplying less than five apiece. That is the sort of victory that allows a manager to smile through a postgame interrogation and hope everyone forgets the lineup card.",
+  "Cooper DeJean did the rescuing while Ollie Gordon offered 15.5 more eligible points than the selected Chig Okonkwo. Jets supporters can enjoy watching Atlanta be worse; the more interesting question is whether this manager knows the difference between being right and being rescued."
+ ],
+ "Baltimore Ravens": [
+  "Four starters under five points is not a slump; it's an organized abandonment of Brock Bowers and Aaron Rodgers. Baltimore's few working players did their part, and the rest apparently considered watching a respectable contribution.",
+  "The Dohnte Meyers alternative would have helped, but not erased a 29-point beating. That distinction matters. Ravens fans should demand smarter decisions without letting the manager sell one corrected bench spot as a cure for a starting lineup with four separate holes."
+ ],
+ "Cincinnati Bungals": [
+  "Bijan Robinson provided 27.7, which apparently qualified him to carry everyone else's luggage. Cincinnati still lost comfortably, and fans looking only at Courtland Sutton's 1.4 are missing the actual coaching indictment.",
+  "The documented miss was Quentin Lake over Boye Mafe, a 15.5-point gap. It wouldn't rescue the result, but it would at least suggest the manager had tried. A fan base can accept that the Rams were better and still refuse to applaud a preventable lineup mistake."
+ ],
+ "Cleveland Browns": [
+  "Losing by fifty-one is an effective way to end arguments about whether one extra starter could have fixed Sunday. The Browns found good work from Burrow and Roman Wilson and virtually nothing resembling a full supporting cast.",
+  "Mike Gesicki's eligible edge over AJ Barner was real, and the manager owns it. But Cleveland supporters are looking at a house missing entire walls, not a crooked picture frame. Treating the 10.8-point correction as a solution would be an insult to anyone who actually watched the collapse."
+ ],
+ "Pittsburgh Steelers": [
+  "Two starting running backs. Zero points between them. There is no way to make that sound respectable without changing the sport. Pittsburgh's manager managed to field a backfield that might as well have been marked 'out of office.'",
+  "Yes, the verified alternative to Rachaad White supplied another 4.5 points. No, it would not repair a 33-point defeat. Steelers fans have a right to be furious about both truths: the particular choice was bad, and the larger performance was much worse."
+ ],
+ "Houston Texans": [
+  "Houston's brightest headline was Michael Wilson scoring 16.5 in a 29-point loss. That is an exceptionally low ceiling for optimism, unless the goal is to frame a modest highlight and quietly misplace the final score.",
+  "Walter Nolen offered 9.8 more eligible points than Terrel Bernard. That miss belongs on the manager's desk, but it isn't the entire indictment. Texans supporters aren't asking for a clever explanation of why the loss happened. They are asking why so little of the roster showed up."
+ ],
+ "Indianapolis Colts": [
+  "Indianapolis won by 4.6 and somehow invited the kind of criticism usually reserved for a loss. Foyesade Oluokun put up 32, and the margin was narrow enough to make every possession feel expensive.",
+  "But there is no verified winning bench alternative hiding in the evidence. Colts fans can complain about the stress without pretending Josh Downs personally committed a coaching offense. Sometimes a nervous victory is simply a nervous victory, and the manager is permitted to enjoy it."
+ ],
+ "Jacksonville Jags": [
+  "Jacksonville lost by 13.6 and left a verified ten-point upgrade unused. That is painful precisely because it gets so close to being an actionable explanation and then stops three-point-six short.",
+  "Jalen Carter over Antoine Winfield deserves criticism; the rest of the lineup deserves its own investigation. Jags supporters should not have to choose between calling out the mistake and admitting Washington still had the better day. Both can be true, even if neither looks good in a press conference."
+ ],
+ "Tennessee Titans": [
+  "Tennessee scored 67.6 and won. That is less a declaration of strength than an extremely generous gift from Philadelphia, which somehow managed only 53. The Titans' supporters can take the victory; nobody is required to pretend it was beautiful.",
+  "Deebo Samuel's 18 mattered, but the overall performance is not a blueprint anyone should laminate. The manager gets credit for surviving Sunday and precisely zero evidence that this level of scoring will intimidate a competent opponent."
+ ],
+ "Denver Doncos": [
+  "Denver needed its 116.3 because Minnesota did not come to participate in an easy win. Javonte Williams supplied 31.3, and the result deserved more than the customary shrug about a quiet starter.",
+  "Doncos fans have reason to be pleased: the stars actually supported a competitive total. The useful criticism is how to survive when the next opponent makes one of those productive pieces disappear, not whether the manager should be publicly tried because one starter had a small week."
+ ],
+ "Kansas City Chiefs": [
+  "Jeffrey Bassa scored every one of Kansas City's 9.5 points. Six colleagues contributed zero. Calling that a supporting cast would be unfair to casts, support, and anyone who purchased a ticket.",
+  "Chiefs supporters don't need an elaborate theory of the defeat. Their starting lineup generated one functioning contribution. The only serious argument is how an organization with seven spots submitted a performance that could have been reproduced with one player and six empty chairs."
+ ],
+ "Las Vegas Raiders": [
+  "There are embarrassing losses and then there is Las Vegas submitting seven starters for a combined zero. Detroit had an 84-point opposition total and might as well have been playing an abandoned spreadsheet.",
+  "Raiders fans cannot even enjoy the familiar ritual of blaming one underperformer. Nobody scored. Nobody gets to hide behind the person next to him. Whatever the manager thought the lineup would accomplish, the scorecard has returned a fairly definitive rebuttal."
+ ],
+ "Los Angeles Chargers": [
+  "The Chargers beat Chicago by more than twenty with Edgerrin Cooper doing serious work. That is an actual result, not merely a pretty line from a losing player who deserves sympathy.",
+  "Supporters can demand consistency without turning Jared Verse's quiet afternoon into a fabricated scandal. The larger question is whether the Chargers can keep building victories around contributors who show up, rather than relying on the opponent to supply the punchline."
+ ],
+ "Dallas Cowboys": [
+  "Tuli Tuipulotu gave Dallas 37.3 and Houston had very little to say in response. The Cowboys earned the right to be obnoxious about this one; the scoreboard offers ample supporting material.",
+  "Kayvon Thibodeaux's one point was ugly, but nobody should pretend it cost Dallas the matchup. Cowboys fans can save the disciplinary hearing for a day when the rest of the roster doesn't win by twenty-nine. Celebrating a win and recognizing a weak slot are perfectly compatible hobbies."
+ ],
+ "New York Giants": [
+  "New York got at least six points from every starter and still lost to Indianapolis by 4.6. There is something especially aggravating about a lineup that works and a final result that refuses to cooperate.",
+  "Giants fans can stare at each starter looking for a convenient culprit, but the verified evidence offers no magical swap. The fair complaint is that a competitive roster fell just short. It isn't nearly as satisfying as blaming an idiot, but it has the small benefit of being true."
+ ],
+ "Philadelphia Eagles": [
+  "Philadelphia lost to a Tennessee team that scored just 67.6. That should be the entire argument for an emergency meeting. The opposition didn't build a fortress; it set a modest bar and waited for the Eagles to trip over it.",
+  "Sam LaPorta contributed 22.4 while Rashee Rice added nothing. Eagles supporters can appreciate one player without forgiving a lineup that couldn't crack 54. There are losses against great teams and losses that make the opponent look great by comparison. This was the second kind."
+ ],
+ "Washington Commanders": [
+  "Washington beat Jacksonville by 13.6, with Kyle Monangai doing the kind of work that lets the manager avoid sweating every quiet defensive slot. The win is real and deserves credit.",
+  "But a fan base should distinguish between winning comfortably and pretending every selection was inspired. Trent McDuffie's two points are still there. Washington supporters can be pleased with the result while expecting enough depth that one big performance isn't always asked to carry the argument."
+ ],
+ "Chicago Bears": [
+  "Chicago's 23.5-point defeat wasn't caused by the universe conspiring against Chris Olave. He delivered 19.6. Much of the surrounding cast supplied the sort of production that makes even decent football look like a losing investment.",
+  "Nick Herbig's 1.5 is the obvious eye-catcher, but Bears fans need a wider conversation about where the rest of the points are coming from. An opponent shouldn't be able to identify the entire threat assessment by reading one name."
+ ],
+ "Detroit Lions": [
+  "Detroit won 84–0. Kyren Williams alone scored 37.7, which was 37.7 more than the entire opposing lineup. That is an achievement and an astonishingly low level of resistance.",
+  "Lions fans should celebrate the demolition without treating it as a championship examination. Beating an opponent that literally produces zero is more administrative procedure than a stress test. The interesting question starts when somebody on the other side remembers to score."
+ ],
+ "Green Bay Packers": [
+  "Green Bay won 27.9 to 9.5. Six Packers starters couldn't reach five points, and the win still arrived. There is no dignified way to advertise that as dominance, though nobody will ask the standings for an aesthetic review.",
+  "Xavier McKinney's 13.8 was enough because Kansas City supplied almost nothing. Packers supporters can enjoy the result and remain deeply suspicious of the process. Getting away with an awful scoring day is not evidence the roster has mastered the art of football."
+ ],
+ "Minnesota Vikings": [
+  "Minnesota scored 106.2 and still couldn't catch Denver. Puka Nacua supplied 27.7, and that quality deserves recognition even when the standings offer none.",
+  "Malik Willis produced 1.3 in a ten-point defeat; Vikings fans have a specific reason to groan, but blaming one player for the whole afternoon is a shortcut. The legitimate frustration is that a respectable total and a star performance still weren't enough to survive."
+ ],
+ "Atlanta Falcons": [
+  "Atlanta's leading starter scored 14.4. When the best individual performance is that modest, there isn't a hidden offensive masterpiece waiting to be uncovered elsewhere on the roster.",
+  "The Jets only needed 80.9 to win by nearly thirty. Falcons fans have been offered a defeat with no heroic last stand and not even a respectable total. Nobody needs the manager to explain that the arithmetic worked against them; they need an explanation of why the roster wasn't competitive."
+ ],
+ "Carolina Panthers": [
+  "Carolina survived the Patriots by 3.9 and every starter produced at least 7.6. For once, the boring answer is the good one: the Panthers had a complete lineup in a game where complete mattered.",
+  "Tee Higgins supplied 26.7, but supporters should appreciate the ordinary contributions around him. There is no need to invent a villain for a narrow victory. The manager's job is to keep that floor intact when the next opponent makes the margin less forgiving."
+ ],
+ "New Orleans Aints": [
+  "New Orleans beat Buffalo by more than forty. Dallas Turner helped lead a genuinely functioning lineup while the opponent provided a memorable demonstration of how not to distribute points.",
+  "Aints supporters are entitled to enjoy the swagger. The only warning is that Buffalo's collapse made everyone look a little more imposing. Winning decisively is a good habit; assuming the next opponent will cooperate quite so enthusiastically is not."
+ ],
+ "Tampa Bay Buccaneers": [
+  "CeeDee Lamb scored 41.3 and Tampa still lost. Some days your star writes a masterpiece and the other team sets the entire theater on fire. Miami reached 134.8; Lamb couldn't play every position.",
+  "Buccaneers fans have an entirely legitimate grievance with the result, but the target isn't Lamb. The discomfort comes from watching one spectacular contribution get swallowed by the other side's depth. Somebody else needs to help if this roster expects a different ending."
+ ],
+ "Arizona Cardinals": [
+  "Arizona beat Baltimore with every starter supplying at least 7.2. That isn't a cinematic solo rescue. It's seven people doing enough work that a few individual Baltimore stars couldn't compensate.",
+  "Cardinals supporters should enjoy the rare luxury of a victory that doesn't require inventing excuses for four missing teammates. Tucker Kraft led with 17.5, but the more impressive story is how few empty chairs Arizona brought to the contest."
+ ],
+ "Los Angeles Rams": [
+  "T.J. Watt detonated for 39.9, and Cincinnati never recovered. Sometimes the headline really can be that simple: one monstrous individual performance turned an ordinary contest into a very uncomfortable afternoon.",
+  "Rams fans can forgive Jeremy Chinn's quiet four points without calling the day flawless. The larger roster did its job, and the result is the sort of win that earns genuine confidence rather than the empty swagger of beating someone who couldn't score at all."
+ ],
+ "San Francisco 49ers": [
+  "San Francisco beat Pittsburgh by 33.1, and the Steelers supplied two zero-point running backs as a courtesy. The 49ers are permitted to accept gifts; declining them would be bad manners.",
+  "Chase Brown led with 20.1 in a victory that didn't require a complicated tactical breakthrough. Fans can celebrate the result while recognizing this wasn't a proof-of-concept against a formidable opponent. The next real test may involve somebody across the field participating."
+ ],
+ "Seattle Seahawks": [
+  "Seattle scored 105 and doubled Cleveland's miserable afternoon. Zay Flowers supplied 25.8, but this wasn't a narrow escape built on one dramatic rescue. The opponent simply couldn't keep up.",
+  "Seahawks supporters can be delighted without pretending the Browns were a worthy obstacle. Winning by fifty-one is still a statement. The fair challenge for the manager is to carry that production into a game where the other side does more than provide background scenery."
+ ]
+};
 // Final single-pass column: rewrite repetitive sections, preserve underlying game and award data.
 const ok=x=>x!=null&&x!==''&&Number.isFinite(Number(x));
 const f=x=>Number(x).toFixed(1);
@@ -122,7 +252,9 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const future=won
     ?String(t.next_opponent_name||'The next opponent')+' has no reason to admire '+tn(t)+' for winning last week. '+(low5.length?(low5.length===1?'The next opponent will notice '+nm(low)+' scored '+f(low.points)+'. '+String(t.next_opponent_name||'The next opponent')+' will notice that '+nm(low)+' only produced '+f(low.points)+'.':'The next opponent can count '+low5.length+' quiet starting spots. '+String(t.next_opponent_name||'The next opponent')+' gets that information without sending a single scout.'):'For now, '+tn(t)+' has at least earned another week without a crisis meeting.')
     :'Nobody owes '+tn(t)+' a sympathy win next week. '+(margin<=8?'At this margin every actual selection matters.':'A '+f(margin)+'-point deficit for '+tn(t)+' demands more than another inspirational slogan.');
-  put(a,'sentiment',[moodIntro,crowdEditorial,reaction[reporter]||reaction['walter-mercer'],future].filter(Boolean));
+  const bespokeCrowd=week===4&&Number(e.season)===2026?week4CrowdColumns[tn(t)]:null;
+  const calibratedMood=moodScore===null?'The crowd-rating data is unverified; this column cannot claim to measure it.':'The measured mood sits at '+f(moodScore)+' ('+moodLabel+'). '+(won&&moodScore<0?'Even a win has not earned this manager the benefit of the doubt.':!won&&moodScore>0?'The supporters are showing more patience than the result deserved.':won?'The scoreline offers a reason for confidence, although not a blank check.':'The defeat gives that discontent a concrete target.');
+  put(a,'sentiment',bespokeCrowd?[calibratedMood,...bespokeCrowd]:[moodIntro,crowdEditorial,reaction[reporter]||reaction['walter-mercer'],future].filter(Boolean));
   const forwardFirst='Week '+(week+1)+' brings '+String(t.next_opponent_name||'an opponent not yet confirmed')+' for '+tn(t)+'. '+(allZero?'After '+p.length+' zeroes, including '+nm(top)+' at '+f(top.points)+', the first ambitious target is one functioning starter.':low5.length>=3?low5.length+' starting spots were below five this week, including '+nm(low)+' at '+f(low.points)+'. Before '+String(t.next_opponent_name||'next week')+', '+tn(t)+' needs actual lineup options, not a prewritten victory speech.':low5.length===0?'Every verified starter was productive, with '+nm(top)+' contributing '+f(top.points)+'. '+String(t.next_opponent_name||'The next opponent')+' will require another full-team effort, including '+nm(top)+'.':nm(low)+' finished at '+f(low.points)+'. '+nm(low)+' cannot be treated as the automatic answer at '+String(low.position||'that position')+' against '+String(t.next_opponent_name||'the next opponent')+'.');
   const forwardSecond=legal?'Management must revisit why '+nm(starter)+' made the Week '+week+' starting card over '+nm(bench)+'. That was Week '+week+'. The decision about '+nm(starter)+' versus '+nm(bench)+' deserves a harder look before facing '+String(t.next_opponent_name||'the next opponent')+'.':low5.length===0?'There is no verified better eligible replacement to conjure up. Sometimes the correct adjustment is to keep a productive lineup and demand another week of execution.':'Before the next opponent, '+tn(t)+' should test the actual options at '+String(low.position||'that role')+'. Blaming a missed swap without an eligible alternative would be a very convenient fairy tale.';
   put(a,'outlook',[forwardFirst,forwardSecond]);

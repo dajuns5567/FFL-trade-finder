@@ -56,8 +56,8 @@ for(const team of edition.teams){
  ])assert(!banned.test(copy),'Previously flagged canned commentary returned for '+team.team_name+': '+banned);
 
  for(const paragraph of authored){
-  for(const sentence of paragraph.split(/(?<=[.!?])\\s+/)){
-   const cleaned=sentence.trim().toLowerCase().replace(/\\b\\d+(?:\\.\\d+)?\\b/g,'#');
+  for(const sentence of paragraph.split(/(?<=[.!?])\s+/)){
+   const cleaned=sentence.trim().toLowerCase().replace(/\b\d+(?:\.\d+)?\b/g,'#');
    if(cleaned.length<65)continue;
    if(!sentenceOccurrences.has(cleaned))sentenceOccurrences.set(cleaned,new Set());
    sentenceOccurrences.get(cleaned).add(team.team_name);

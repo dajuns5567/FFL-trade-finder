@@ -1,4 +1,4 @@
-import {week4Notes} from './inquirer-week4-specific-notes.mjs';
+import {week4Notes,week4Headlines} from './inquirer-week4-specific-notes.mjs';
 // Final single-pass column: rewrite repetitive sections, preserve underlying game and award data.
 const ok=x=>x!=null&&x!==''&&Number.isFinite(Number(x));
 const f=x=>Number(x).toFixed(1);
@@ -32,7 +32,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     win:tn(t)+' Beat '+rival+'. '+nm(second)+' Actually Helped',
     loss:nm(top)+' Delivered. '+tn(t)+' Lost to '+rival+' Anyway'
   };
-  a.headline=headlines[angle];
+  a.headline=week===4&&Number(e.season)===2026&&week4Headlines[tn(t)]?week4Headlines[tn(t)]:headlines[angle];
   const judgment={
     zero:'Every verified starter scored zero. This was not one unlucky snap; it was an entire roster choosing a Sunday off.',
     solo:nm(top)+' scored '+f(top.points)+'. Every other starter ('+(p.length-1)+') combined for nothing. Fantasy football is a team game, which must have come as news to them.',

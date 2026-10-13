@@ -21,6 +21,14 @@ for(const team of edition.teams){
  assert.equal(article.fact_driven_analysis,true,'Every scored team needs fact-driven reporting: '+team.team_name);
  assert.equal(article.editorial_character_version,1,'Opinionated verified reporter pass missing for '+team.team_name);
  assert.equal(article.insight_copy_edit,1,'Final non-repetitive copy edit missing for '+team.team_name);
+ assert.equal(article.column_commentary_version,1,'Final columnist commentary must survive all editing stages for '+team.team_name);
+ for(const kind of ['lede','players','management','outlook']){
+  const sec=article.sections.find(x=>x.kind===kind);
+  assert(sec?.paragraphs?.length>=3,'Preserve existing '+kind+' and ADD meaningful commentary for '+team.team_name);
+ }
+ const voiceLine=article.sections.find(x=>x.kind==='lede')?.paragraphs?.at(-1)||'';
+ assert(voiceLine.includes(team.team_name)||voiceLine.includes(team.opponent_name),'Columnist must discuss actual matchup, not generic filler');
+
  const scoringStarters=starters.filter(p=>Number(p.points)>0);
  if(scoringStarters.length===1&&Number(team.points)>0){
   assert(article.headline.includes(scoringStarters[0].name),'Sole scorer must headline: '+team.team_name);
@@ -69,6 +77,8 @@ for(const kind of ['lead','players','decisions']){
  assert(block?.paragraphs?.length>=2,'Recap lacks actionable '+kind+' reporting');
 }
 assert.equal(overview.fact_driven_analysis,true,'Recap must run the actual league-wide analysis');
+assert.equal(overview.column_commentary_version,1,'Recap must retain new dry editorial commentary');
+for(const kind of ['lead','players','decisions','league']){const b=blocks.find(x=>x.kind===kind);assert(b?.paragraphs?.length>=3,'Existing weekly recap section '+kind+' must be preserved and extended');}
 const leadCopy=blocks.find(b=>b.kind==='lead')?.paragraphs?.join(' ')||'';
 assert(/median/i.test(leadCopy)&&/cleared 100|below 40/i.test(leadCopy),'Weekly recap must analyze full league scoring distribution rather than repeat the same two games');
 assert(!/Dolphins’s|a 84\.0-point|Raiders turns to|Aints takes its/.test(JSON.stringify(overview.sections)),'Recap grammar regression in team possessives, plural verbs, or article usage');

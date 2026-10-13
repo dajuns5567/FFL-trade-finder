@@ -5,12 +5,6 @@ const f=x=>Number(x).toFixed(1);
 const nm=p=>String(p?.name||'a starter'),tn=t=>String(t?.team_name||'the team');
 const players=t=>(t?.starter_details||[]).filter(x=>x?.name&&ok(x.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points));
 const put=(a,k,paragraphs)=>{const s=(a.sections||[]).find(x=>x.kind===k);if(s)s.paragraphs=paragraphs};
-const styles={
-'walter-mercer':['The score is final. Unfortunately, so is the evidence against the supporting cast.','The manager is welcome to disagree with the box score. It has never been particularly receptive to appeals.'],
-'tess-delaney':['A dazzling costume cannot conceal an empty scoring column. One learns these things at the least flattering moments.','The performance has all the elegance of a dinner bill nobody wishes to pay.'],
-'mack-hollis':['THE NUMBERS HAVE SPOKEN. STOP TRYING TO HOLD A PRESS CONFERENCE WITH THEM.','THAT IS NOT A STARTING LINEUP TO BE PROUD OF. IT IS AN EXPENSIVE WAY TO WATCH THE GAME.'],
-'nora-voss':['The next opponent can read these figures too. An exceptionally generous scouting report.','Rivals need not invent a weakness when one has been so thoughtfully supplied.']
-};
 export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
  if(!e||week<4||!Array.isArray(e.teams))return e;
  const index=new Map(e.teams.map(t=>[String(t.roster_id),t]));
@@ -23,7 +17,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const other=players(foe)[0],swap=t.best_lineup_miss||a.facts?.best_lineup_miss;
   const bench=swap?.reserve||swap?.bench,starter=swap?.starter,upgrade=Number(swap?.gap);
   const legal=!!(bench?.name&&starter?.name&&Number.isFinite(upgrade)&&upgrade>0);
-  const reporter=String(a.reporter?.id||'walter-mercer'),tone=styles[reporter]||styles['walter-mercer'];
+  const reporter=String(a.reporter?.id||'walter-mercer');
   const allZero=p.every(x=>Number(x.points)===0),solo=p.filter(x=>Number(x.points)>0).length===1;
   const topHeavy=own>0&&three/own>=.72;
   const angle=allZero?'zero':solo?'solo':legal&&!won&&upgrade>margin?'mismanaged':margin<=8?'close':margin>=30?'rout':topHeavy?'thin':low5.length>=3?'holes':won?'win':'loss';

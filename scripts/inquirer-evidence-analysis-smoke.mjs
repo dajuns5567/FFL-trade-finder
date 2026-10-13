@@ -147,6 +147,7 @@ assert(headlineForms.size>=4,'Reporter headline formats remain too repetitive: '
 assert.equal(new Set(Object.values(week4Headlines)).size,32,'Headlines must be independently authored, not recycled');
 const takes=(edition.league_overview?.hot_takes||[]);
 const honor=takes.find(t=>t.kind==='player'),breakout=takes.find(t=>t.kind==='breakout');
+assert(!(breakout&&/Kyren Williams/i.test(breakout.title||'')&&/young|prospect|rookie/i.test(breakout.title||'')),'Established veteran Kyren Williams must not be described as a young prospect');
 if(honor&&breakout){
  const featured=x=>String(x.title||'').split(':').slice(1).join(':').trim().toLowerCase();
  if(featured(honor)&&featured(breakout)&&!featured(breakout).includes('no verified'))

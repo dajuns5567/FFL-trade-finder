@@ -86,7 +86,9 @@ for(const team of edition.teams){
   const copy=section.paragraphs.join(' ');
   assert(!/\b(?:That is this week’s verified performance|not an imagined projection|the next opponent will care less|the useful story sits|this one the roster actually earned)\b/i.test(copy),'Generic article filler was not replaced');
   assert(!/\b\d+(?:\.\d+)?\s+Put\b/.test(copy),'Broken sentence splice appeared in copy');
-  assert(starters.slice().sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,kind==='management'?starters.length:3).some(p=>copy.includes(p.name)),'Article must reference its verified leading starters in '+kind+' for '+team.team_name);
+  const named=starters.slice().sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,kind==='management'?starters.length:3).some(p=>copy.includes(p.name));
+  const justifiedNoScapegoat=kind==='management'&&/no verified eligible bench upgrade|every verified starter cleared five/i.test(copy);
+  assert(named||justifiedNoScapegoat,'Article must name verified players or explicitly rule out an invented coaching scandal in '+kind+' for '+team.team_name);
  }
  const sentiment=article.sections.find(x=>x.kind==='sentiment');
  if(sentiment){

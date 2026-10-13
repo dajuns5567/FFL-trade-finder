@@ -66,7 +66,7 @@ for(const team of edition.teams){
   assert(sentiment.paragraphs.length>=2,'Opinion and verified roster consequence both required for '+team.team_name);
  }
  const lead=article.sections.find(x=>x.kind==='lede').paragraphs.join(' ');
- assert(Number(team.points)===0? /zero|no positive|finished with zero/i.test(lead):scoringStarters.length===1? /one scorer|all|every other|other verified/i.test(lead):/highest three starters|three highest scorers|top three|three biggest starter scores/i.test(lead),'Require actual top-three diagnosis, sole-scorer breakdown, or truthful zero-point reporting');
+ assert(Number(team.points)===0? /zero|no positive|finished with zero/i.test(lead):scoringStarters.length===1? /one scorer|all|every other|other verified/i.test(lead):lead.includes(team.team_name)&&/\d+(?:\.\d+)?/.test(lead)&&starters.slice().sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,3).some(p=>lead.includes(p.name)),'Require meaningful matchup context, actual leading scorer, or truthful zero-point reporting');
  meaningful.add(String(team.roster_id));
 }
 assert(meaningful.size>=25,'Insufficient fact-driven team articles');

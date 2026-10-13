@@ -852,6 +852,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
      .replace('Nothing from the upcoming slate is counted as complete. Week 5 will get its own results before the newspaper moves forward.','Week 5 has not been played. Anyone claiming next week’s scores already knows the future—or needs to return their press credentials.'));
    }
   }
+  if(week===4&&Number(e.season)===2026)for(const block of blocks){block.paragraphs=[...new Set(block.paragraphs||[])];}
   first.paragraphs=blocks.flatMap(x=>x.paragraphs||[]);
   overview.paragraphs=(overview.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(x=>x.paragraphs||[])]);
   overview.cohesive_editorial_version=1;

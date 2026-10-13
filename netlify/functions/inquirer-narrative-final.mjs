@@ -58,7 +58,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
    !won&&margin<8?'A close loss makes every choice sting, but nobody gets to invent an eligible bench swap to sound clever on Monday.':
    'The problem is not that a score exists. The problem is what '+tn(t)+' plans to do about the starters who failed to deliver.';
   const teamEditorial=week===4&&Number(e.season)===2026?week4Notes[tn(t)]:null;
-  const cutPoints=teamEditorial?[...teamEditorial.matchAll(/[.!?](?=\\s+[A-Z])/g)].map(x=>x.index).filter(i=>i>=55):[];
+  const cutPoints=teamEditorial?[...teamEditorial.matchAll(/[.!?](?=\s+[A-Z])/g)].map(x=>x.index).filter(i=>i>=55):[];
   const editorialCut=cutPoints[0]??-1;
   const leadingEditorial=editorialCut>=0?teamEditorial.slice(0,editorialCut+1):teamEditorial;
   const crowdEditorial=editorialCut>=0?teamEditorial.slice(editorialCut+1).trim():null;

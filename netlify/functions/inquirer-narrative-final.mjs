@@ -238,6 +238,21 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   put(a,'management',week===4&&Number(e.season)===2026?[management,legal?(upgrade>margin&&!won?'This is the one case where the bench mistake was actually big enough to change the verdict. No amount of postgame theater makes that less embarrassing.':won?'The manager got the win, not an alibi. A better eligible lineup was available and that selection still deserves a second look.':'The missed upgrade matters, but the bigger loss demands questions about the entire roster. One correction is not a resurrection.'):low5.length>=3?'With '+low5.length+' starters under five, there is no single convenient villain. The whole supporting cast has a meeting to attend.':won?'There is no proven better eligible lineup. Enjoy the win without inventing somebody to prosecute.':'No legal bench rescue is documented. The manager cannot solve this by pointing at a hypothetical player who was never an actual option.']: [management,managerVerdict]);
   put(a,'hot-seat',[allZero?'The entire starting lineup. Nobody scored. Nobody gets an exemption.':legal?'The manager, not '+nm(starter)+', owns the selection. '+nm(bench)+' was an eligible alternative and the box score made that decision look indefensible. The next '+tn(t)+' lineup ought to reflect some evidence that the manager noticed what happened.':low5.length?nm(low)+' managed '+f(low.points)+'. '+(won?'The victory survived that contribution; the position does not deserve a medal for it.':'A disappointing contribution, but no proven bench miracle allows the manager to put the entire loss on this one player.'):'There is no documented lineup scandal here. If management must be criticized, criticize what is real rather than drafting a convenient scapegoat.']);
   put(a,'cool-throne',[allZero?'Nobody earned a positive starter score, so nobody earns a made-up honor.':nm(top)+' scored '+f(top.points)+'. '+(won?'At least someone gave the win a foundation.':'A real performance in a loss. The rest should consider sending an apology.')]);
+  if(week===4&&Number(e.season)===2026){
+   const hot=allZero
+    ?'The manager. Every starting spot came back empty. That is not a player having an off week; that is the entire operation failing inspection.'
+    :legal
+    ?'The manager owns the '+nm(starter)+' selection. '+nm(bench)+' was eligible and proved the choice costly. Spare us the excuse that the final result somehow validates the process.'
+    :low5.length>=3
+    ?'The supporting cast. '+low5.length+' starters under five means this cannot be settled by publicly scolding whichever player happened to finish last.'
+    :low5.length===0
+    ?'Nobody gets the ceremonial blame award. Every starter contributed; a reporter inventing a coaching scandal here would be the week’s worst decision.'
+    :'The '+String(low.position||'starting')+' spot deserves scrutiny after '+nm(low)+' scored '+f(low.points)+'. Scrutiny, not a fabricated claim that a legal replacement would have saved the game.';
+   const cool=allZero
+    ?'No award. All zero. A participation certificate would be an insult to participation.'
+    :nm(top)+' supplied '+f(top.points)+'. '+(won?'That is production worth celebrating; the manager should resist taking personal credit for every point.':'At least one player made the defeat harder to swallow instead of easier to explain.');
+   put(a,'hot-seat',[hot]);put(a,'cool-throne',[cool]);
+  }
   // The crowd section is a columnist's reaction to the measured fan mood,
   // not another recap or an invented quote attributed to real supporters.
   const mood=a.fan_sentiment||a.facts?.fan_sentiment||{};

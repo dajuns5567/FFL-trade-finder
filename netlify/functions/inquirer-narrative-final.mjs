@@ -487,6 +487,31 @@ const week4SectionVerdicts={
   "Flowers did his job in a performance the scoreboard made impossible to ignore."
  ]
 };
+// Evidence-aware editorial composer. Match full names or unique surnames only;
+ // source every inserted statistic from the verified starter card.
+const regexEscape=x=>String(x).replace(/[.*+?^$\{\}()|[\]\\]/g,'\\// Final single-pass column: rewrite repetitive sections, preserve underlying game and award data.');
+const embedVerifiedPlayerEvidence=(text,starting,alreadyUsed=[])=>{
+ let result=String(text||'');
+ const options=starting.filter(p=>p?.name&&Number.isFinite(Number(p.points)));
+ const surnames=new Map();
+ for(const p of options){
+  const surname=String(p.name).trim().split(/\s+/).at(-1);
+  if(surname)surnames.set(surname,(surnames.get(surname)||0)+1);
+ }
+ const candidates=options.flatMap(p=>{
+  const name=String(p.name).trim(),surname=name.split(/\s+/).at(-1);
+  return [{word:name,p},...(surname!==name&&surnames.get(surname)===1?[{word:surname,p}]:[])];
+ }).sort((a,b)=>b.word.length-a.word.length);
+ const touched=new Set(alreadyUsed);
+ for(const c of candidates){
+  if(touched.has(String(c.p.id||c.p.name)))continue;
+  const pattern=new RegExp('(^|[^A-Za-z])('+regexEscape(c.word)+')(?=\\b)','i');
+  if(!pattern.test(result))continue;
+  result=result.replace(pattern,(_,prefix,name)=>prefix+name+' ('+Number(c.p.points).toFixed(1)+' pts)');
+  touched.add(String(c.p.id||c.p.name));
+ }
+ return result;
+};
 // Final single-pass column: rewrite repetitive sections, preserve underlying game and award data.
 const ok=x=>x!=null&&x!==''&&Number.isFinite(Number(x));
 const f=x=>Number(x).toFixed(1);
@@ -548,7 +573,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   // A Week 4 lede is a result plus an independently authored story argument;
   // never recycle the top-three points worksheet.
   put(a,'lede',teamEditorial?[
-   tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'. '+(allZero?'Every verified starter finished on zero, including '+nm(top)+'.':nm(top)+' posted '+f(top.points)+'. '+(solo?'One scorer accounted for every positive point on this card.':'')),
+   tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'.',
    leadingEditorial,
    crowdEditorial||scandal
   ]:[tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'. '+judgment[angle],headComparison,leadingEditorial||scandal]);
@@ -588,7 +613,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
    ?'Even the lowest contributor, '+nm(low)+', managed '+f(low.points)+'. '+(won?'The manager got a complete starting effort. Feel free to criticize something that actually went wrong.':'A complete scoring card still lost. Sometimes the other side was simply better; inventing a guilty party would be lazy.')
    :nm(low)+' produced '+f(low.points)+'. '+(won?'The win covered for that disappointment, but it did not erase it.':'The disappointment is real. Calling it a bad start/sit decision without proving an eligible better option would be cheap hindsight.');
   const editedVerdicts=week===4&&Number(e.season)===2026?week4SectionVerdicts[tn(t)]:null;
-  put(a,'players',editedVerdicts?[nm(top)+' scored '+f(top.points)+'.',editedVerdicts[0]]:[playerFeature,weakestFeature]);
+  put(a,'players',editedVerdicts?[embedVerifiedPlayerEvidence(editedVerdicts[0],t.starter_details||[])]:[playerFeature,weakestFeature]);
   const management=legal?nm(bench)+' beat '+nm(starter)+' by '+f(upgrade)+' in a documented eligible swap. '+(won?'The win would have grown by '+f(upgrade)+'. The manager can enjoy the result and still explain why '+nm(starter)+' started ahead of '+nm(bench)+'.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'Even with '+nm(bench)+'\'s extra '+f(upgrade)+', '+tn(t)+' would still lose by '+f(margin-upgrade)+'. That does not make starting '+nm(starter)+' a stroke of managerial genius.'):'No verified eligible bench upgrade is documented. Inventing an imaginary alternative would be lazy. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without a legal alternative would be impressively lazy.');
   const managerVerdict=allZero
    ?'There were '+p.length+' starting positions and not a single positive point. One scapegoat would be exceptionally convenient for everybody else.'

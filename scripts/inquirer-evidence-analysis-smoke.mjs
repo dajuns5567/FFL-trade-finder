@@ -163,7 +163,7 @@ const leadCopy=blocks.find(b=>b.kind==='lead')?.paragraphs?.join(' ')||'';
 assert(/median/i.test(leadCopy)&&/cleared 100|below 40/i.test(leadCopy),'Weekly recap must analyze full league scoring distribution rather than repeat the same two games');
 assert(!/Dolphins’s|a 84\.0-point|Raiders turns to|Aints takes its/.test(JSON.stringify(overview.sections)),'Recap grammar regression in team possessives, plural verbs, or article usage');
 
-assert(overview.sections[0].blocks.find(x=>x.kind==='decisions').paragraphs.join(' ').includes('eligible bench alternatives'),'Recap must distinguish legal lineup swaps from hindsight');
+assert(/Carolina beat New England by 3\.9/.test(overview.sections[0].blocks.find(x=>x.kind==='decisions').paragraphs.join(' ')),'Recap must keep a fact-checked narrow-game lineup decision without unsupported hindsight');
 const before=JSON.stringify(edition);
 upgradeInquirerAnalysis(edition,{week:4});
 assert.equal(JSON.stringify(edition),before,'Upgrader must be idempotent');

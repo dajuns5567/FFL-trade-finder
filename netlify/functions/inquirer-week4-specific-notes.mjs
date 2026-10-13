@@ -34,3 +34,38 @@ export const week4Notes={
  "San Francisco 49ers":"San Francisco beat Pittsburgh by 33.1. Chase Brown led at 20.1 while the Steelers produced two zeroes at running back. The 49ers did not need an elaborate tactical masterpiece; they needed the opposing manager to submit approximately the lineup that appeared.",
  "Seattle Seahawks":"Seattle put up 105.0 while Cleveland crawled to 53.7. Zay Flowers supplied 25.8 and the margin ballooned to 51.3. This is not a close game ruined by bad luck. It is the sort of result that causes a manager to discover the mute button on a group chat."
 };
+
+export const week4Headlines={
+ "Buffalo Billiards":"Buffalo Wasn't Close. The Manager Still Left 20.3 Points Unused",
+ "Miami Dolphins":"Miami Won With 134.8. The Manager Still Found 27.6 Points to Waste",
+ "New England Patriots":"Seven Patriots Showed Up. Four Points Still Went Missing",
+ "New York Jets":"Cooper DeJean Did the Work. Three Jets Starters Took a Vacation",
+ "Baltimore Ravens":"Brock Bowers Couldn't Play Four Missing Positions for Baltimore",
+ "Cincinnati Bungals":"Bijan Put Up 27.7. Cincinnati Still Lost by 20.6",
+ "Cleveland Browns":"Browns Lost by 51.3. Surely a Postgame Speech Will Fix That",
+ "Pittsburgh Steelers":"Steelers Started Two Zero-Point Running Backs. Inspired",
+ "Houston Texans":"Houston Offered Dallas a 29-Point Victory. How Generous",
+ "Indianapolis Colts":"Oluokun Saved Indianapolis From a Very Uncomfortable Conversation",
+ "Jacksonville Jags":"Jacksonville Lost by 13.6 With Ten Eligible Points Left Unused",
+ "Tennessee Titans":"Titans Won With 67.6. Philadelphia Was Kind Enough to Be Worse",
+ "Denver Doncos":"Javonte Williams Delivered 31.3. Denver Needed That",
+ "Kansas City Chiefs":"Jeffrey Bassa: 9.5. The Other Six Chiefs: Absolutely Nothing",
+ "Las Vegas Raiders":"Seven Starters, Zero Points. Las Vegas Has Invented a New Low",
+ "Los Angeles Chargers":"Edgerrin Cooper Led a 98.4-Point Charge. Chicago Could Only Watch",
+ "Dallas Cowboys":"Tuli Tuipulotu Dropped 37.3. Houston Had No Plausible Reply",
+ "New York Giants":"Seven Giants Scored. Indianapolis Still Took the Win",
+ "Philadelphia Eagles":"Eagles Couldn't Reach 54. Tennessee Almost Made That Look Competitive",
+ "Washington Commanders":"Kyle Monangai Set the Pace. Washington Finished the Job",
+ "Chicago Bears":"Olave Gave Chicago 19.6. The Chargers Wanted the Whole Game",
+ "Detroit Lions":"Detroit Won 84–0. Congratulations on Defeating a Pulse-Free Roster",
+ "Green Bay Packers":"Packers Won 27.9–9.5. Somebody Had To, Apparently",
+ "Minnesota Vikings":"Puka Nacua Scored 27.7. Denver Took the Actual Win",
+ "Atlanta Falcons":"Atlanta's Leading Scorer Had 14.4. The Jets Appreciated the Hospitality",
+ "Carolina Panthers":"Panthers Won by 3.9. There Is No Convenient Scapegoat",
+ "New Orleans Aints":"Dallas Turner Made a Statement. Buffalo Forgot Its Rebuttal",
+ "Tampa Bay Buccaneers":"CeeDee Lamb Scored 41.3. Miami Still Took the Entire Win",
+ "Arizona Cardinals":"Arizona Started Seven Useful Players. Baltimore Tried Three",
+ "Los Angeles Rams":"T.J. Watt Put Up 39.9. Cincinnati Was in No Position to Argue",
+ "San Francisco 49ers":"49ers Won by 33.1. Pittsburgh's Two Zeroes Were Very Helpful",
+ "Seattle Seahawks":"Seattle Won by 51.3. Cleveland Had All Afternoon to Find an Excuse"
+};

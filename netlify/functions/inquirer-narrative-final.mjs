@@ -81,8 +81,15 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const moodScore=ok(mood.score)?Number(mood.score):null;
   const moodLabel=moodScore===null?'unverified':moodScore<=-55?'furious':moodScore<=-15?'grumbling':moodScore<15?'uneasy':moodScore<55?'hopeful':'insufferably confident';
   const moodIntro=moodScore===null
-    ?'There is no independently verified sentiment reading this week, so we are not going to invent one.'
-    :'The sentiment meter reads '+f(moodScore)+' ('+moodLabel+'). '+(won?'That is the mood AFTER a win; the jury evidently watched more than the final score.':'That is the mood after a loss. The crowd is not required to applaud simply because somebody filled out a starting lineup.');
+    ?'There is no verified crowd reading in this edition. Pretending there is one would make for a wonderfully confident, wholly imaginary press conference.'
+    :'Crowd meter: '+f(moodScore)+' — '+moodLabel+'. '+(
+      won&&moodScore<0?'The team WON and the meter is still negative. Apparently even a victory could not persuade the audience to stop throwing metaphorical rotten tomatoes.':
+      won&&moodScore<20?'A win and the crowd is barely above neutral. That is not a honeymoon; that is a manager getting one more week to explain the product.':
+      won?'The crowd is happy after a win. Charming. It will be considerably less forgiving when those quiet starters matter.':
+      moodScore<=-55?'The crowd is furious after the defeat. At this level, “we learned a lot” sounds less like accountability than a resignation speech.':
+      moodScore<0?'The crowd is grumbling after the defeat. Not quite a revolt, but the manager should probably avoid describing this as “encouraging.”':
+      'A loss and a surprisingly patient crowd. The manager should appreciate the gift before confusing it with an endorsement.'
+    );
   const reaction={
    'walter-mercer':won
     ?'A victory buys patience, not a lifetime appointment. '+(low5.length?low5.length+' starter'+(low5.length===1?'':'s')+' still scored below five; that will be remembered the next time the result turns.':'The manager earned the result. For once, the box score can speak without being interrupted by an excuse.')

@@ -4,6 +4,7 @@ import {rebuildWeek4Editorial} from '../netlify/functions/inquirer-week4-editori
 import {applyInquirerEditorialClarity} from '../netlify/functions/inquirer-editorial-clarity.mjs';
 import {upgradeInquirerAnalysis} from '../netlify/functions/inquirer-evidence-analysis.mjs';
 import week4FastHandler from '../netlify/functions/league-hub-week4-fast.mjs';
+import {week4Notes} from '../netlify/functions/inquirer-week4-specific-notes.mjs';
 import {readFileSync} from 'node:fs';
 
 const frozen=typeof week4Preload==='function'?week4Preload():week4Preload;
@@ -21,6 +22,8 @@ for(const team of edition.teams){
  assert.equal(article.fact_driven_analysis,true,'Every scored team needs fact-driven reporting: '+team.team_name);
  assert.equal(article.cohesive_editorial_version,1,'Single authoritative reporter stage required for '+team.team_name);
  const moodLines=article.sections.find(x=>x.kind==='sentiment')?.paragraphs||[];
+ assert.equal(week4Notes[team.team_name]?.length>170,true,'Week 4 article lacks substantive independent editorial reporting: '+team.team_name);
+ assert(moodLines.includes(week4Notes[team.team_name]),'Team-specific editorial reporting was dropped from fan sentiment for '+team.team_name);
  assert(moodLines.length>=3,'Fan sentiment must include measured mood, a reporter argument, and next-week stakes: '+team.team_name);
  assert(moodLines.join(' ').length>=200,'Fan sentiment must contain substantial commentary, not a bare summary: '+team.team_name);
  assert(!/the manager can offer explanations|the standings will record the (win|loss) and move on/i.test(moodLines.join(' ')),'Old boilerplate fan-sentiment writing returned');

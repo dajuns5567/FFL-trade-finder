@@ -91,7 +91,8 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
   if(outlook?.paragraphs?.length>=2){
    const opponent=String(t.next_opponent_name||'an opponent not yet established');
    const role=String(weak.position||'starter');
-   outlook.paragraphs[1]=nm(weak)+' enters the next selection discussion with '+f(weak.points)+' points at '+role+'. '+(own>=other?'The win over '+String(t.opponent_name||'the opposition')+' can hide that issue for a week, but '+opponent+' gets a fresh look at it.':'After losing by '+f(gap)+', '+tn(t)+' cannot call that position settled before facing '+opponent+'.');
+   outlook.paragraphs[0]='Week '+(week+1)+' sends '+tn(t)+' against '+opponent+'. '+(own>=other&&own<40?'That last win came with just '+f(own)+' points; the opponent will not be obliged to repeat the courtesy.':own>=other?'The '+f(gap)+'-point win is banked. It does not guarantee the same lineup will produce again.':'The '+f(gap)+'-point defeat leaves a specific starting-role review, not a reason to predict another result.');
+   outlook.paragraphs[1]=nm(weak)+' scored '+f(weak.points)+' at '+role+'. '+(own>=other?'A win can conceal that weak spot temporarily; '+tn(t)+' still has to address it before '+opponent+'.':'After the '+f(gap)+'-point loss, '+tn(t)+' cannot treat that position as settled before facing '+opponent+'.');
   }
   const positive=players.filter(p=>Number(p.points)>0);
   if(own>0&&positive.length===1){
@@ -122,7 +123,11 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
  }
  const recap=edition.league_overview;
  const blocks=recap?.sections?.[0]?.blocks||[];
+ const numbers=(edition.teams||[]).filter(t=>good(t.points)).map(t=>Number(t.points)).sort((a,b)=>a-b);
+ const median=numbers.length?numbers.length%2?numbers[(numbers.length-1)/2]:(numbers[numbers.length/2-1]+numbers[numbers.length/2])/2:0;
+ const century=numbers.filter(x=>x>=100).length,under40=numbers.filter(x=>x<40).length;
  const lead=blocks.find(b=>b.kind==='lead');
+ if(lead?.paragraphs?.length>=2&&numbers.length)lead.paragraphs[1]='Across '+numbers.length+' teams, '+century+' cleared 100 points while '+under40+' failed to reach 40. The median was '+f(median)+'. This was not a league-wide offensive trend; it was several very different Sundays sharing the same schedule.';
  if(lead&&lead.paragraphs?.length>=3){
   const sorted=(edition.teams||[]).filter(t=>good(t.points)).slice().sort((a,b)=>Number(b.points)-Number(a.points));
   const high=sorted[0],low=sorted.at(-1);
@@ -132,6 +137,10 @@ export function polishInquirerStories(edition,{week=Number(edition?.week)}={}){
    const place=good(context.standings_rank)?'#'+context.standings_rank:'somewhere below first';
    lead.paragraphs[2]=tn(high)+' topped the Week '+week+' scoring chart behind '+nm(highTop)+' ('+f(highTop?.points||0)+'), but its '+f(high.points)+' points buy exactly one win. At '+place+' in the standings with '+(context.record?context.record.wins+'-'+context.record.losses:'a record not independently confirmed')+', there is rather more to the season than a weekly fireworks display.';
   }
+ }
+ for(const sec of recap?.sections||[]){
+   if(Array.isArray(sec.paragraphs))sec.paragraphs=sec.paragraphs.map(p=>String(p).replace(/Dolphins’s/g,'Dolphins team’s').replace(/Raiders turns to/g,'Raiders face').replace(/Aints takes its/g,'Aints carry their').replace(/a 84\\.0-point/g,'an 84.0-point'));
+   for(const block of sec.blocks||[])if(Array.isArray(block.paragraphs))block.paragraphs=block.paragraphs.map(p=>String(p).replace(/Dolphins’s/g,'Dolphins team’s').replace(/Raiders turns to/g,'Raiders face').replace(/a 84\\.0-point/g,'an 84.0-point'));
  }
  if(recap?.sections?.[0]?.blocks?.length){
   recap.sections[0].paragraphs=blocks.flatMap(b=>b.paragraphs||[]);

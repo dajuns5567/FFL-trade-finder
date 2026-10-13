@@ -69,6 +69,11 @@ for(const team of edition.teams){
    sentenceOccurrences.get(cleaned).add(team.team_name);
   }
  }
+ if(team.best_lineup_miss?.starter?.name&&team.best_lineup_miss?.reserve?.name){
+  const pair=[team.best_lineup_miss.starter.name.toLowerCase(),team.best_lineup_miss.reserve.name.toLowerCase()];
+  const repeated=(article.sections||[]).filter(section=>['lede','players','management','hot-seat','cool-throne','sentiment','outlook'].includes(section.kind)).filter(section=>pair.every(name=>(section.paragraphs||[]).join(' ').toLowerCase().includes(name))).map(section=>section.kind);
+  assert(repeated.length<=2,'The same bench decision is retold in '+repeated.join(', ')+' for '+team.team_name);
+ }
  const totalWords=authored.join(' ').split(/\s+/).filter(Boolean).length;
  assert(totalWords>=140&&totalWords<=540,'Article is thin or inflated with redundant prose: '+team.team_name+' ('+totalWords+' words)');
  assert(/(?:sarcas|scoreboard|manager|lineup|rivals|opponent|benched|bench|starters)/i.test(authored.join(' ')),'Editorial needs football-specific point of view');

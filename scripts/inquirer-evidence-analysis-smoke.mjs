@@ -4,7 +4,7 @@ import {rebuildWeek4Editorial} from '../netlify/functions/inquirer-week4-editori
 import {applyInquirerEditorialClarity} from '../netlify/functions/inquirer-editorial-clarity.mjs';
 import {upgradeInquirerAnalysis} from '../netlify/functions/inquirer-evidence-analysis.mjs';
 import week4FastHandler from '../netlify/functions/league-hub-week4-fast.mjs';
-import {week4Notes} from '../netlify/functions/inquirer-week4-specific-notes.mjs';
+import {week4Notes,week4Headlines} from '../netlify/functions/inquirer-week4-specific-notes.mjs';
 import {readFileSync} from 'node:fs';
 
 const frozen=typeof week4Preload==='function'?week4Preload():week4Preload;
@@ -21,6 +21,7 @@ for(const team of edition.teams){
  if(starters.length<3)continue;
  assert.equal(article.fact_driven_analysis,true,'Every scored team needs fact-driven reporting: '+team.team_name);
  assert.equal(article.cohesive_editorial_version,1,'Single authoritative reporter stage required for '+team.team_name);
+ assert.equal(article.headline,week4Headlines[team.team_name],'Individually edited Week 4 headline was replaced by template for '+team.team_name);
  const moodLines=article.sections.find(x=>x.kind==='sentiment')?.paragraphs||[];
  assert.equal(week4Notes[team.team_name]?.length>170,true,'Week 4 article lacks substantive independent editorial reporting: '+team.team_name);
  const note=week4Notes[team.team_name];
@@ -102,6 +103,7 @@ for(const team of edition.teams){
 }
 assert(meaningful.size>=25,'Insufficient fact-driven team articles');
 assert(headlineForms.size>=4,'Reporter headline formats remain too repetitive: '+headlineForms.size);
+assert.equal(new Set(Object.values(week4Headlines)).size,32,'Headlines must be independently authored, not recycled');
 const takes=(edition.league_overview?.hot_takes||[]);
 const honor=takes.find(t=>t.kind==='player'),breakout=takes.find(t=>t.kind==='breakout');
 if(honor&&breakout){

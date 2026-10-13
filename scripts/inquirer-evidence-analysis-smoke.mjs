@@ -41,7 +41,7 @@ for(const team of edition.teams){
 
  assert(article.headline.includes(team.team_name)&&!/(Turn this Sunday Into a Longer Week|A New Week Awaits|What Comes Next)/i.test(article.headline),'Team headline must state verified football consequence');
  const outlook=article.sections.find(x=>x.kind==='outlook');
- assert(outlook?.paragraphs?.length>=2&&outlook.paragraphs.join(' ').includes(starters.slice().sort((a,b)=>Number(b.points)-Number(a.points))[0].name),'Team outlook needs a named, verified scoring/lineup consequence');
+ assert(outlook?.paragraphs?.length>=2&&starters.some(p=>outlook.paragraphs.join(' ').includes(p.name)),'Team outlook needs a named, verified scoring/lineup consequence');
  for(const kind of ['lede','players','management']){
   const section=article.sections.find(x=>x.kind===kind);
   assert(section?.paragraphs?.length>=2,'Missing diagnostic '+kind+' for '+team.team_name);

@@ -23,7 +23,12 @@ for(const team of edition.teams){
  assert.equal(article.cohesive_editorial_version,1,'Single authoritative reporter stage required for '+team.team_name);
  const moodLines=article.sections.find(x=>x.kind==='sentiment')?.paragraphs||[];
  assert.equal(week4Notes[team.team_name]?.length>170,true,'Week 4 article lacks substantive independent editorial reporting: '+team.team_name);
- assert(moodLines.includes(week4Notes[team.team_name]),'Team-specific editorial reporting was dropped from fan sentiment for '+team.team_name);
+ const note=week4Notes[team.team_name];
+ const split=[...note.matchAll(/[.!?](?=\s+[A-Z])/g)].map(x=>x.index).find(i=>i>=55);
+ const leadPart=split===undefined?note:note.slice(0,split+1);
+ const crowdPart=split===undefined?null:note.slice(split+1).trim();
+ assert(article.sections.find(x=>x.kind==='lede')?.paragraphs?.includes(leadPart),'Independent team-specific headline argument was dropped for '+team.team_name);
+ if(crowdPart)assert(moodLines.includes(crowdPart),'Team-specific rude commentary was dropped from fan sentiment for '+team.team_name);
  assert(moodLines.length>=3,'Fan sentiment must include measured mood, a reporter argument, and next-week stakes: '+team.team_name);
  assert(moodLines.join(' ').length>=200,'Fan sentiment must contain substantial commentary, not a bare summary: '+team.team_name);
  assert(!/the manager can offer explanations|the standings will record the (win|loss) and move on/i.test(moodLines.join(' ')),'Old boilerplate fan-sentiment writing returned');

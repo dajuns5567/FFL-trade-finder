@@ -691,7 +691,17 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const editedVerdicts=week===4&&Number(e.season)===2026?week4SectionVerdicts[tn(t)]:null;
   const playerColumn=week===4&&Number(e.season)===2026?week4IntegratedPlayerColumns[tn(t)]:null;
   put(a,'players',playerColumn?[embedVerifiedPlayerEvidence(playerColumn,t.starter_details||[])]:[playerFeature,weakestFeature]);
-  const management=legal?nm(bench)+' beat '+nm(starter)+' by '+f(upgrade)+' in a documented eligible swap. '+(won?'The win would have grown by '+f(upgrade)+'. The manager can enjoy the result and still explain why '+nm(starter)+' started ahead of '+nm(bench)+'.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'Even with '+nm(bench)+'\'s extra '+f(upgrade)+', '+tn(t)+' would still lose by '+f(margin-upgrade)+'. That does not make starting '+nm(starter)+' a stroke of managerial genius.'):'No verified eligible bench upgrade is documented. Inventing an imaginary alternative would be lazy. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without a legal alternative would be impressively lazy.');
+  // The Fleeced! signal language is editorial interpretation of verified scores,
+  // not an invented proprietary rating. Numeric player grades must come from a
+  // verified player-signal payload before being quoted.
+  if(playerColumn&&week===4&&Number(e.season)===2026){
+    const spot=a.sections.find(x=>x.kind==='players');
+    if(spot?.paragraphs?.length&&['Miami Dolphins','New York Jets','Kansas City Chiefs','Las Vegas Raiders','Green Bay Packers','Tampa Bay Buccaneers','Jacksonville Jags','Los Angeles Rams'].includes(tn(t))){
+      const note=allZero?'Fleeced! needs no elaborate player signal to flag seven empty contributions; the alarm is the entire box score.':solo?'That is a Fleeced! warning signal in plain English: one player did all the scoring and the roster vanished.':won?'The Fleeced! performance signal is impossible to ignore here: '+nm(top)+' delivered '+f(top.points)+' points. The question is whether the lineup can keep pace without another eruption.':'Fleeced! has the evidence for the praise and the alarm at once: '+nm(top)+' produced '+f(top.points)+' while the team still came up short.';
+      spot.paragraphs.push(note);
+    }
+  }
+  const management=legal?nm(bench)+' scored '+f(bench.points)+' while '+nm(starter)+' managed '+f(starter.points)+' in the same starting spot — a '+f(upgrade)+'-point miss. '+(won?'The win would have grown by '+f(upgrade)+'. The manager can enjoy the result and still explain why '+nm(starter)+' started ahead of '+nm(bench)+'.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'Even with '+nm(bench)+'\'s extra '+f(upgrade)+', '+tn(t)+' would still lose by '+f(margin-upgrade)+'. That does not make starting '+nm(starter)+' a stroke of managerial genius.'):'There was no bench player demonstrably capable of replacing this starter for more points. Blaming a nonexistent savior would be lazy. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without an actual better choice would be impressively lazy.');
   const managerVerdict=allZero
    ?'There were '+p.length+' starting positions and not a single positive point. One scapegoat would be exceptionally convenient for everybody else.'
    :legal&&won
@@ -765,7 +775,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const forwardFirst='Week '+(week+1)+' brings '+next+' for '+tn(t)+'. '+nm(low)+' finished at '+f(low.points)+'.';
   const forwardSecond=legal?'Review the verified '+nm(starter)+' versus '+nm(bench)+' choice.':'Compare actual eligible replacements rather than inventing one.';
   const bespokeNext=week===4&&Number(e.season)===2026?week4NextAngles[tn(t)]:null;
-  put(a,'outlook',bespokeNext?['Week '+(week+1)+' brings '+next+'. '+(legal?'Management must evaluate '+nm(starter)+' against the eligible option '+nm(bench)+' without assuming last week repeats.':nm(top)+' remains central to the next lineup, but the manager cannot assume another '+f(top.points)+'-point outing.'),bespokeNext]:[forwardFirst,forwardSecond]);
+  put(a,'outlook',bespokeNext?['Week '+(week+1)+' brings '+next+'. '+nm(top)+' gave the team '+f(top.points)+' last week; the next opponent will have its own answer to that threat.',bespokeNext]:[forwardFirst,forwardSecond]);
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.cohesive_editorial_version=1;
  }

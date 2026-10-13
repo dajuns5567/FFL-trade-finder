@@ -61,7 +61,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const playerFeature=allZero
    ?'Nobody on this verified starting card scored positively. '+nm(top)+', '+nm(second)+' and '+nm(third)+' all finished on zero. We are not manufacturing a hero out of an empty scorebook.'
    :reporter==='mack-hollis'
-   ?nm(top).toUpperCase()+' SCORED '+f(top.points)+'. '+nm(second).toUpperCase()+' AND '+nm(third).toUpperCase()+' ADDED '+f(Number(second.points)+Number(third.points))+' TOGETHER. '+(topHeavy?'AND THE OTHERS? THEY MIGHT AS WELL HAVE ASKED FOR TICKETS.':'THAT IS REAL SUPPORT. START CALLING IT THAT.')
+   ?nm(top)+' SCORED '+f(top.points)+'. '+nm(second)+' AND '+nm(third)+' ADDED '+f(Number(second.points)+Number(third.points))+' TOGETHER. '+(topHeavy?'AND THE OTHERS? THEY MIGHT AS WELL HAVE ASKED FOR TICKETS.':'THAT IS REAL SUPPORT. START CALLING IT THAT.')
    :reporter==='tess-delaney'
    ?nm(top)+' delivered '+f(top.points)+', with '+nm(second)+' and '+nm(third)+' contributing '+f(Number(second.points)+Number(third.points))+' together. '+(topHeavy?'The rest of the cast apparently mistook their place in the program for a speaking role.':'Not the most flamboyant combination, but unlike a press release, those points actually count.')
    :reporter==='nora-voss'

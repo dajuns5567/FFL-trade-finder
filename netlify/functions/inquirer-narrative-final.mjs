@@ -61,7 +61,18 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   put(a,'lede',[tn(t)+' '+(won?'beat ':'lost to ')+rival+' '+f(own)+'–'+f(against)+'. '+judgment[angle],headComparison,scandal]);
   put(a,'players',[allZero?'There is no top scorer to celebrate. '+nm(top)+', '+nm(second)+' and '+nm(third)+' all finished with zero.':nm(top)+' led at '+f(top.points)+'; '+nm(second)+' and '+nm(third)+' contributed '+f(Number(second.points)+Number(third.points))+' together. '+(topHeavy?'The rest of the lineup scored only '+f(own-three)+'. Even the bench must have felt overworked watching that.':'The rest of the lineup supplied '+f(own-three)+'. That supporting figure explains how much work remained outside the top trio.'),nm(low)+' finished at '+f(low.points)+' in '+String(low.position||'a starting position')+'. '+(low5.length>2?'With '+(low5.length-1)+' other starters under five, this was not an isolated disappointment.':won?'The team won regardless; blaming the weakest player for a win would be an interesting choice.':(low5.length?'The lack of production deserves scrutiny, but is not proof of a wrong selection.':'Every starter scored at least five points. Finding a scapegoat among them would be a particularly lazy postgame ritual.'))]);
   const management=legal?nm(bench)+' beat '+nm(starter)+' by '+f(upgrade)+' in a documented eligible swap. '+(won?'That would have made the lead safer. It also makes the manager’s choice rather difficult to applaud.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'It would not erase the loss, but leaving those points out hardly deserves congratulations.'):'No verified eligible bench upgrade is documented. Inventing an imaginary alternative would be lazy. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without a legal alternative would be impressively lazy.');
-  put(a,'management',[management,'The least productive starter was '+nm(low)+' ('+f(low.points)+' at '+String(low.position||'a starting spot')+'). '+(allZero?'All '+p.length+' starter positions scored zero. One scapegoat would be wonderfully convenient for everyone else.':margin<=8&&!legal?'Close game, no proven winning swap. That is frustrating, but treating the lowest scorer as an automatic coaching error is nonsense.':scandal)]);
+  const managerVerdict=allZero
+   ?'There were '+p.length+' starting positions and not a single positive point. One scapegoat would be exceptionally convenient for everybody else.'
+   :legal&&won
+   ?'The win provides cover, not vindication. '+nm(low)+' supplied '+f(low.points)+' while management left real upside unused. These are separate facts and both deserve a question.'
+   :legal
+   ?'The losing margin was '+f(margin)+'. '+(upgrade>margin?'The unused eligible improvement was larger than that margin; this choice deserves the manager’s full attention.':'Even fixing this eligible mistake would still leave the team behind. Management has more than one job to do.')
+   :low5.length>=3
+   ?'With '+low5.length+' starters below five, the problem did not begin and end with '+nm(low)+'. This lineup needs a broader interrogation.'
+   :margin<=8
+   ?'No verified replacement would have made this a guaranteed win. Calling the result a coaching scandal without such evidence is not insight; it is theater.'
+   :'The team needs to review its actual starting opportunities. There is no documented bench upgrade to blame, and an invented one would be embarrassingly convenient.';
+  put(a,'management',[management,managerVerdict]);
   put(a,'hot-seat',[allZero?'The entire starting lineup. Nobody scored. Nobody gets an exemption.':legal?'The manager selected '+nm(starter)+' over '+nm(bench)+'. The verified gap was '+f(upgrade)+'. Explain that one.':nm(low)+' posted '+f(low.points)+'. '+(won?'The win survives; the job performance still deserves a look.':'Do better next time, but do not pretend we have proved an eligible replacement.')]);
   put(a,'cool-throne',[allZero?'Nobody earned a positive starter score, so nobody earns a made-up honor.':nm(top)+' scored '+f(top.points)+'. '+(won?'At least someone gave the win a foundation.':'A real performance in a loss. The rest should consider sending an apology.')]);
   // The crowd section is a columnist's reaction to the measured fan mood,
@@ -74,7 +85,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     :'The sentiment meter reads '+f(moodScore)+' ('+moodLabel+'). '+(won?'That is the mood AFTER a win; the jury evidently watched more than the final score.':'That is the mood after a loss. The crowd is not required to applaud simply because somebody filled out a starting lineup.');
   const reaction={
    'walter-mercer':won
-    ?'A victory buys patience, not a lifetime appointment. '+(low5.length?low5.length+' starters still scored below five; that will be remembered the next time the result turns.':'The manager earned the result. For once, the box score can speak without being interrupted by an excuse.')
+    ?'A victory buys patience, not a lifetime appointment. '+(low5.length?low5.length+' starter'+(low5.length===1?'':'s')+' still scored below five; that will be remembered the next time the result turns.':'The manager earned the result. For once, the box score can speak without being interrupted by an excuse.')
     :'If this were my column, I would ask one question: why should anyone expect the next opponent to be more accommodating? '+(legal?'The '+f(upgrade)+'-point eligible bench miss makes that question uncomfortable for the manager.':'There is no verified lineup miracle to blame. The roster must simply produce more.'),
    'tess-delaney':won
     ?'Do enjoy the victory. Champagne is entirely appropriate. '+(low5.length?'Just do not confuse '+low5.length+' nearly empty starting slots with fine tailoring.':'At least the outfit was backed by actual production this time.')
@@ -87,7 +98,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     :'Rivals will not feel sorry for a manager who hands them an obvious target. '+(legal?'The documented bench difference is '+f(upgrade)+' points; the next opponent will be delighted if the selection habits survive.':'There is no proven bench rescue, which means the starters themselves are the scouting report.')
   };
   const future=won
-    ?'The next opponent gets no points for the previous win. '+(low5.length?'Those '+low5.length+' quiet positions will not be overlooked.':'For now, management has earned some room to breathe.')
+    ?'The next opponent gets no points for the previous win. '+(low5.length?'Those '+low5.length+' quiet starting spot'+(low5.length===1?'':'s')+' will not be overlooked.':'For now, management has earned some room to breathe.')
     :'Nobody owes '+tn(t)+' a sympathy win next week. '+(margin<=8?'At this margin every actual selection matters.':'The gap demands more than an inspirational slogan.');
   const individuallyReported=(week===4&&Number(e.season)===2026)?week4Notes[tn(t)]:null;
   put(a,'sentiment',[moodIntro,individuallyReported,reaction[reporter]||reaction['walter-mercer'],future].filter(Boolean));

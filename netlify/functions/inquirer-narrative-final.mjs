@@ -39,10 +39,10 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     mismanaged:nm(bench)+' outscored selected '+nm(starter)+' by '+f(upgrade)+' in a verified eligible swap. That is bigger than the '+f(margin)+'-point loss. A manager can call it unfortunate, but the arithmetic is more specific.',
     close:'Just '+f(margin)+' separated '+tn(t)+' and '+rival+'. '+(legal?'That narrow margin makes the documented eligible bench decision a particularly uncomfortable conversation.':'There is no verified bench rescue to invent, which rather spoils the lazy manager-blame narrative.'),
     rout:'The '+f(margin)+'-point gap between '+tn(t)+' and '+rival+' is not one bad bounce. '+(won?'The opponent made winning this one look considerably easier than it ought to be.':'The defeated manager can blame the weather, the schedule or the moon; the starting total will remain the same.'),
-    thin:nm(top)+', '+nm(second)+' and '+nm(third)+' supplied '+f(three)+' of '+f(own)+'. The others managed '+f(own-three)+'. Seven starters were invited; only three brought anything resembling a gift.',
+    thin:nm(top)+', '+nm(second)+' and '+nm(third)+' supplied '+f(three)+' of '+f(own)+'. The others managed '+f(own-three)+'. '+nm(low)+' on '+f(low.points)+' was a guest who brought almost nothing to the party.',
     holes:low5.length+' of '+p.length+' verified starters scored fewer than five points. '+nm(low)+' finished at '+f(low.points)+'. That many empty contributions is less a lineup than a list of witnesses.',
     win:'Unlike '+rival+', '+tn(t)+' found a way to finish ahead. '+nm(top)+' supplied '+f(top.points)+' and the others combined for '+f(own-Number(top.points))+'. That is a roster actually sharing the work instead of just sharing the blame.',
-    loss:nm(top)+' scored '+f(top.points)+' and '+tn(t)+' still lost. Individual highlights are lovely; opposing managers generally prefer the victory.'
+    loss:nm(top)+' scored '+f(top.points)+' and '+tn(t)+' still lost. '+tn(t)+' can frame the highlights; '+rival+' will frame the victory.'
   };
   const scandal=legal&&upgrade>margin&&!won?'A verified '+f(upgrade)+'-point bench upgrade in a '+f(margin)+'-point loss is not a philosophical disagreement. That is an actual missed opportunity.':
    low5.length>=4?low5.length+' players below five points. At some stage the manager has to stop calling that bad luck and start calling it the lineup.':
@@ -99,25 +99,25 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     ?'There is no verified crowd reading in this edition. Pretending there is one would make for a wonderfully confident, wholly imaginary press conference.'
     :'Crowd meter: '+f(moodScore)+' — '+moodLabel+'. '+(
       won&&moodScore<0?'The team WON and the meter is still negative. Apparently even a victory could not persuade the audience to stop throwing metaphorical rotten tomatoes.':
-      won&&moodScore<20?'A win and the crowd is barely above neutral. That is not a honeymoon; that is a manager getting one more week to explain the product.':
+      won&&moodScore<20?'A win and the crowd is barely above neutral. The '+tn(t)+' manager has earned some patience, not a standing ovation.':
       won?'The crowd is happy after a win. Charming. It will be considerably less forgiving when those quiet starters matter.':
       moodScore<=-55?'The crowd is furious after the defeat. At this level, “we learned a lot” sounds less like accountability than a resignation speech.':
-      moodScore<0?'The crowd is grumbling after the defeat. Not quite a revolt, but the manager should probably avoid describing this as “encouraging.”':
-      'A loss and a surprisingly patient crowd. The manager should appreciate the gift before confusing it with an endorsement.'
+      moodScore<0?'The crowd is grumbling after the defeat. Calling that an “encouraging” reaction to '+tn(t)+' would take considerable nerve.':
+      'A loss and a surprisingly patient crowd. The '+tn(t)+' manager should appreciate the gift before confusing it with an endorsement.'
     );
   const reaction={
    'walter-mercer':won
-    ?'A victory buys patience, not a lifetime appointment. '+(low5.length?low5.length+' starter'+(low5.length===1?'':'s')+' still scored below five; that will be remembered the next time the result turns.':'The manager earned the result. For once, the box score can speak without being interrupted by an excuse.')
-    :'If this were my column, I would ask one question: why should anyone expect the next opponent to be more accommodating? '+(legal?'The '+f(upgrade)+'-point eligible bench miss makes that question uncomfortable for the manager.':'There is no verified lineup miracle to blame. The roster must simply produce more.'),
+    ?'A victory buys '+tn(t)+' patience, not a lifetime appointment. '+(low5.length?low5.length+' starter'+(low5.length===1?'':'s')+' still scored below five; that will be remembered the next time the result turns.':'The manager earned the result. For once, the box score can speak without being interrupted by an excuse.')
+    :'The question for '+tn(t)+' is why its next opponent should be more accommodating. '+(legal?'The '+f(upgrade)+'-point eligible bench miss makes that question uncomfortable for the manager.':'There is no verified lineup miracle to blame. The roster must simply produce more.'),
    'tess-delaney':won
     ?'Do enjoy the victory. Champagne is entirely appropriate. '+(low5.length?'Just do not confuse '+low5.length+' nearly empty starting slots with fine tailoring.':'At least the outfit was backed by actual production this time.')
-    :'The manager may present as many tasteful explanations as desired. '+(low5.length?low5.length+' starters failed to reach five points. The ensemble was missing rather more than a pocket square.':'The opponent had the better total. No accessory will disguise the final bill.'),
+    :'The '+tn(t)+' manager may present as many tasteful explanations as desired. '+(low5.length?low5.length+' starters failed to reach five points. The ensemble was missing rather more than a pocket square.':'The opponent had the better total. No accessory will disguise the final bill.'),
    'mack-hollis':won
     ?'YOU WON. GOOD. '+(low5.length?'BUT '+low5.length+' STARTERS UNDER FIVE IS NOT A VICTORY PARADE. IT IS HOMEWORK.':'NOW WIN AGAIN. NOBODY CARES ABOUT AN OCTOBER VICTORY SPEECH IN DECEMBER.')
-    :'THE MANAGER DOES NOT NEED ANOTHER MICROPHONE. '+(legal?'AN ELIGIBLE SWAP LEFT '+f(upgrade)+' POINTS ON THE BENCH. EXPLAIN THAT, THEN FIX IT.':'THE LINEUP LOST. FIX THE PRODUCTION BEFORE SELLING ANOTHER EXCUSE.'),
+    :'THE '+tn(t).toUpperCase()+' MANAGER DOES NOT NEED ANOTHER MICROPHONE. '+(legal?'AN ELIGIBLE SWAP LEFT '+f(upgrade)+' POINTS ON THE BENCH. EXPLAIN THAT, THEN FIX IT.':'THE LINEUP LOST. FIX THE PRODUCTION BEFORE SELLING ANOTHER EXCUSE.'),
    'nora-voss':won
-    ?'Opponents can respect the win and still spot the vulnerability. '+(low5.length?'There are '+low5.length+' starting roles below five points to probe.':'This time they will have to find a different weak spot.')
-    :'Rivals will not feel sorry for a manager who hands them an obvious target. '+(legal?'The documented bench difference is '+f(upgrade)+' points; the next opponent will be delighted if the selection habits survive.':'There is no proven bench rescue, which means the starters themselves are the scouting report.')
+    ?'Opponents can respect '+tn(t)+' winning and still spot the vulnerability. '+(low5.length?'There are '+low5.length+' starting roles below five points to probe.':'This time they will have to find a different weak spot.')
+    :'Rivals will not feel sorry for '+tn(t)+' handing them an obvious target. '+(legal?'The documented bench difference is '+f(upgrade)+' points; the next opponent will be delighted if the selection habits survive.':'There is no proven bench rescue, which means the starters themselves are the scouting report.')
   };
   const future=won
     ?'The next opponent gets no points for the previous win. '+(low5.length?(low5.length===1?'The next opponent will notice '+nm(low)+' scored '+f(low.points)+'. One soft starting slot is more than enough to keep a rival interested.':'The next opponent can count '+low5.length+' quiet starting spots. None of them requires an advanced scouting department to discover.'):'For now, '+tn(t)+' has at least earned another week without a crisis meeting.')

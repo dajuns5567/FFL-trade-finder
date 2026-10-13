@@ -117,7 +117,7 @@ for(const team of edition.teams){
 
  assert(article.headline.includes(team.team_name)&&!/(Turn this Sunday Into a Longer Week|A New Week Awaits|What Comes Next)/i.test(article.headline),'Team headline must state verified football consequence');
  const outlook=article.sections.find(x=>x.kind==='outlook');
- assert(outlook?.paragraphs?.length>=2&&starters.some(p=>outlook.paragraphs.join(' ').includes(p.name)),'Team outlook needs a named, verified scoring/lineup consequence');
+ assert(outlook?.paragraphs?.length>=2&&(starters.some(p=>outlook.paragraphs.join(' ').includes(p.name))||(Number(team.points)===0&&/zero|seven|everyone|entire|nobody/i.test(outlook.paragraphs.join(' ')))),'Team outlook needs a named, verified scoring/lineup consequence or an explicitly scoreless-team explanation');
  for(const kind of ['lede','players','management']){
   const section=article.sections.find(x=>x.kind===kind);
   assert(section?.paragraphs?.length>=(kind==='players'?1:2),'Missing evidence-based '+kind+' section for '+team.team_name);

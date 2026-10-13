@@ -78,7 +78,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
    ?'No verified replacement would have made this a guaranteed win. Calling the result a coaching scandal without such evidence is not insight; it is theater.'
    :'The team needs to review its actual starting opportunities. There is no documented bench upgrade to blame, and an invented one would be embarrassingly convenient.';
   put(a,'management',[management,managerVerdict]);
-  put(a,'hot-seat',[allZero?'The entire starting lineup. Nobody scored. Nobody gets an exemption.':legal?'The manager selected '+nm(starter)+' over '+nm(bench)+'. The verified gap was '+f(upgrade)+'. Explain that one.':nm(low)+' posted '+f(low.points)+'. '+(won?'The win survives; the job performance still deserves a look.':'Do better next time, but do not pretend we have proved an eligible replacement.')]);
+  put(a,'hot-seat',[allZero?'The entire starting lineup. Nobody scored. Nobody gets an exemption.':legal?'The manager selected '+nm(starter)+' over '+nm(bench)+'. The verified gap was '+f(upgrade)+', and the manager must own why those points never reached the actual starting lineup.':nm(low)+' posted '+f(low.points)+'. '+(won?'The win survives; the job performance still deserves a look.':'Do better next time, but do not pretend we have proved an eligible replacement.')]);
   put(a,'cool-throne',[allZero?'Nobody earned a positive starter score, so nobody earns a made-up honor.':nm(top)+' scored '+f(top.points)+'. '+(won?'At least someone gave the win a foundation.':'A real performance in a loss. The rest should consider sending an apology.')]);
   // The crowd section is a columnist's reaction to the measured fan mood,
   // not another recap or an invented quote attributed to real supporters.

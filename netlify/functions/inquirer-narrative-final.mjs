@@ -787,7 +787,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const forwardFirst='Week '+(week+1)+' brings '+next+' for '+tn(t)+'. '+nm(low)+' finished at '+f(low.points)+'.';
   const forwardSecond=legal?'Review the verified '+nm(starter)+' versus '+nm(bench)+' choice.':'Compare actual eligible replacements rather than inventing one.';
   const bespokeNext=week===4&&Number(e.season)===2026?week4NextAngles[tn(t)]:null;
-  put(a,'outlook',bespokeNext?['Week '+(week+1)+' brings '+next+'. '+(allZero?'After seven zero-point starters, merely finding someone who scores would qualify as progress.':solo?nm(top)+' carried every point last week; the supporting cast must finally help.':nm(top)+' delivered '+f(top.points)+' last week, but counting on a repeat would be reckless.')',bespokeNext]:[forwardFirst,forwardSecond]);
+  put(a,'outlook',bespokeNext?['Week '+(week+1)+' brings '+next+'. '+(allZero?'After seven zero-point starters, merely finding someone who scores would qualify as progress.':solo?nm(top)+' carried every point last week; the supporting cast must finally help.':nm(top)+' delivered '+f(top.points)+' last week, but counting on a repeat would be reckless.'),bespokeNext]:[forwardFirst,forwardSecond]);
   if(week===4&&Number(e.season)===2026){
    a.headline=String(a.headline||'').replace(/eligible points/gi,'Bench Points');
    for(const sec of a.sections||[]){

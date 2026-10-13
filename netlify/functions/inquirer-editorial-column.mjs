@@ -27,7 +27,7 @@ const perspectives={
  'nora-voss':{
   opener:(t,w,o,m)=>o+' saw '+t+' finish '+f(m)+' points '+(w?'ahead':'behind')+'. The result is public, and every future opponent gets to read the same starting scores.',
   bench:(b,s,up,w,m)=>'Opposing managers can see '+nm(b)+' sitting behind '+nm(s)+' despite a '+f(up)+'-point advantage. '+(w?'If this is the standard for winning decisions, rivals would like it to continue.':up>m?'The overlooked points exceeded the defeat. Rival managers are not likely to send a sympathy card.':'It would not erase the loss, but it exposes a vulnerable selection process.'),
-  week:(t,weak,next)=>next+' will see '+nm(weak)+' at '+f(weak.points)+' in '+t+'\'s previous lineup. That is a scouting note freely available to the opposition.'
+  week:(t,weak,next)=>next+' will see '+nm(weak)+' at '+f(weak.points)+' in '+possessive(t)+' previous lineup. That is a scouting note freely available to the opposition.'
  }
 };
 export function addInquirerColumns(edition,{week=Number(edition?.week)}={}){

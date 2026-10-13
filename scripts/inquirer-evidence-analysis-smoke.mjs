@@ -32,6 +32,11 @@ for(const team of edition.teams){
  assert(article.sections.find(x=>x.kind==='lede')?.paragraphs?.includes(leadPart),'Independent team-specific headline argument was dropped for '+team.team_name);
  if(crowdPart)assert(moodLines.includes(crowdPart),'Team-specific rude commentary was dropped from fan sentiment for '+team.team_name);
  assert(moodLines.length>=3,'Fan sentiment must include measured mood, a reporter argument, and next-week stakes: '+team.team_name);
+ assert(moodLines.length>=4,'Week 4 sentiment must contain a distinct matchup column, not a pair of canned statistics: '+team.team_name);
+ assert(moodLines.join(' ').split(/\\s+/).filter(Boolean).length>=90,'Fan sentiment is too shallow to support an editorial argument: '+team.team_name);
+ assert(!/the lowest verified score belonged|rivals can see \\d+ starter|the next opponent can count|the manager can offer explanations/i.test(moodLines.join(' ')),'Template-style fan copy returned: '+team.team_name);
+ assert(moodLines.slice(-2).every(p=>p.length>=160),'Both independently written crowd paragraphs must contain actual commentary: '+team.team_name);
+
  assert(moodLines.join(' ').length>=200,'Fan sentiment must contain substantial commentary, not a bare summary: '+team.team_name);
  assert(!/the manager can offer explanations|the standings will record the (win|loss) and move on/i.test(moodLines.join(' ')),'Old boilerplate fan-sentiment writing returned');
  if(article.fan_sentiment&&Number.isFinite(Number(article.fan_sentiment.score))){

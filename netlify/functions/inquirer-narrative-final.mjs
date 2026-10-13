@@ -279,7 +279,7 @@ const week4NextAngles={
  "Dallas Cowboys": "The next opponent will have seen what Tuli Tuipulotu can do. Dallas needs to demonstrate that another starter is prepared to be the difference-maker if he isn't allowed another 37.3-point afternoon.",
  "New York Giants": "Indianapolis needed everything to edge a solid Giants card. Management should preserve what worked and look for genuine edges, not throw the roster into a blender to appease Monday's complaints.",
  "Philadelphia Eagles": "The next matchup is less an opportunity to announce a comeback than a test of whether Philadelphia can field more than one meaningful scorer. The bar is low enough to trip over.",
- "Washington Commanders": "Houston is next. Washington won its last outing, but a manager who treats every low-scoring starter as an acceptable accessory is eventually going to discover an opponent less forgiving than Jacksonville.",
+ "Washington Commanders": "Philadelphia is next. Washington won its last outing, but a manager who treats every low-scoring starter as an acceptable accessory is eventually going to discover an opponent less forgiving than Jacksonville.",
  "Chicago Bears": "The next matchup should begin with an uncomfortable question: what happens if Chris Olave doesn't have another useful afternoon? Chicago needs a second answer that isn't silence.",
  "Detroit Lions": "A real test would involve an opponent that actually scores. The Lions should prepare for that strange innovation instead of scheduling a parade because Las Vegas went missing.",
  "Green Bay Packers": "Kansas City's nine-point catastrophe is unlikely to be a sustainable business model for Green Bay's future opponents. The Packers need to build a win that doesn't depend on the other team being worse at everything.",
@@ -713,7 +713,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   if(week===4&&Number(e.season)===2026&&signalObservations[tn(t)]){
    a.sections.find(x=>x.kind==='players')?.paragraphs?.push(signalObservations[tn(t)]);
   }
-  const management=legal?nm(bench)+' scored '+f(bench.points)+' while '+nm(starter)+' managed '+f(starter.points)+' in the same starting spot — a '+f(upgrade)+'-point miss. '+(won?'The win would have grown by '+f(upgrade)+'. The manager can enjoy the result and still explain why '+nm(starter)+' started ahead of '+nm(bench)+'.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'Even with '+nm(bench)+'\'s extra '+f(upgrade)+', '+tn(t)+' would still lose by '+f(margin-upgrade)+'. That leaves two problems for the manager: the points stranded on the bench and the larger deficit that choice alone could not erase.'):'No bench change was shown to improve this lineup. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without an actual better choice would be impressively lazy.');
+  const management=legal?nm(bench)+' scored '+f(bench.points)+' while '+nm(starter)+' managed '+f(starter.points)+' in the same starting spot — a '+f(upgrade)+'-point miss. '+(won?'The win would have grown by '+f(upgrade)+'. The manager can enjoy the result and still explain why '+nm(starter)+' started ahead of '+nm(bench)+'.':upgrade>margin?'It could have flipped the result if the other scores held. This is a real and avoidable mistake.':'Even with '+nm(bench)+'\'s extra '+f(upgrade)+', '+tn(t)+' would still lose by '+f(margin-upgrade)+'. The missed start deserves criticism; it still would not have erased the defeat. '+(upgrade>=20?'Leaving '+f(upgrade)+' extra points unused is a spectacular way to lose twice in one afternoon.':margin-upgrade>=20?'This roster needed far more than one smart substitution.':'The better lineup would have made the score less ugly, which is not quite the same thing as winning.')'):'No bench change was shown to improve this lineup. '+(low5.length?'The manager can still answer for '+low5.length+' starter'+(low5.length===1?'':'s')+' under five points.':'Every verified starter cleared five points. Blaming the lowest scorer without an actual better choice would be impressively lazy.');
   const managerVerdict=allZero
    ?'There were '+p.length+' starting positions and not a single positive point. One scapegoat would be exceptionally convenient for everybody else.'
    :legal&&won
@@ -794,6 +794,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     sec.paragraphs=(sec.paragraphs||[]).map(text=>String(text)
      .replace(/documented eligible swap/gi,'lineup decision')
      .replace(/no verified eligible bench upgrade is documented/gi,'no better bench choice is supported by the numbers')
+     .replace(/eligible points/gi,'points the manager could have gained')
      .replace(/eligible option/gi,'available backup')
      .replace(/eligible replacement/gi,'available replacement')
      .replace(/legal alternative/gi,'real alternative')
@@ -807,7 +808,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
  if(blocks.length){
   const add=(kind,comment)=>{
    const block=blocks.find(x=>x.kind===kind);
-   if(block){block.paragraphs ||= [];const rewrittenLead=kind==='lead'&&week===4&&Number(e.season)===2026&&comment.startsWith('There are no sympathy wins')&&block.paragraphs.some(p=>String(p).startsWith('Tampa scored 115.8 and still lost to Miami'));if(!rewrittenLead&&!block.paragraphs.includes(comment))block.paragraphs.push(comment);}
+   if(block){block.paragraphs ||= [];const rewrittenLead=kind==='lead'&&week===4&&Number(e.season)===2026&&comment.startsWith('There are no sympathy wins')&&block.paragraphs.some(p=>String(p).startsWith('Seattle put 105.0 on Cleveland'));if(!rewrittenLead&&!block.paragraphs.includes(comment))block.paragraphs.push(comment);}
   };
   const scored=e.teams.filter(t=>Number.isFinite(Number(t.points))).slice().sort((a,b)=>Number(b.points)-Number(a.points));
   const bottom=scored.at(-1),top=scored[0],under40=scored.filter(t=>Number(t.points)<40);
@@ -836,7 +837,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     if(at>=0)block.paragraphs[at]=replacement;
    };
    revise('lead','Miami Dolphins scored 134.8 and Las Vegas Raiders scored 0.0.','Miami put up 134.8 and Tampa answered with 115.8 — a genuine heavyweight fight that still left somebody furious. Elsewhere, Tennessee won with 67.6. Week 4 made one thing perfectly clear: the schedule does not award style points, and the losers do not get a refund.');
-   revise('lead','There are no sympathy wins on this schedule.','Tampa scored 115.8 and still lost to Miami; Tennessee scraped past Philadelphia with 67.6. The league rewarded the Titans and sent Tampa home empty-handed. Anyone still advertising fantasy football as a fair-minded profession has clearly never checked the standings on a Monday.');
+   revise('lead','There are no sympathy wins on this schedule.','Seattle put 105.0 on Cleveland and won by 51.3. Some managers survived on margins thinner than a phone screen, while others delivered their opponents an entire afternoon to reconsider their hobbies.');
    revise('standings','Detroit Lions beat Las Vegas Raiders by 84.0 points.','New Orleans, Denver and Dallas are each 4-0. The race at the top has three undefeated managers with every reason to swagger and absolutely no reason to start selling February parade tickets. The first loss will tell us more about their nerve than another easy victory.');
    revise('players','For the weekly scoring leader Miami Dolphins, the three highest individual scores totaled','McMillan put up 45.2 for Miami, and Lamb answered with 41.3 for Tampa in a losing cause. That is the cruel side of a star turn: one player can fill a highlight reel and still be left watching the other team collect the win.');
    revise('players','The spectacular individual totals are excellent material for highlight reels.','The week’s best players did their part. Managers planning to survive on highlight clips rather than seven starting slots might as well submit their rosters to the film festival.');

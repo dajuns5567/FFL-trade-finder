@@ -489,7 +489,6 @@ const week4SectionVerdicts={
 };
 // Evidence-aware editorial composer. Match full names or unique surnames only;
  // source every inserted statistic from the verified starter card.
-const regexEscape=x=>String(x).replace(/[-/\\^$*+?.()|[\]{}]/g,'\\$&');
 const embedVerifiedPlayerEvidence=(text,starting,alreadyUsed=[])=>{
  let result=String(text||'');
  const options=starting.filter(p=>p?.name&&Number.isFinite(Number(p.points)));
@@ -505,9 +504,15 @@ const embedVerifiedPlayerEvidence=(text,starting,alreadyUsed=[])=>{
  const touched=new Set(alreadyUsed);
  for(const c of candidates){
   if(touched.has(String(c.p.id||c.p.name)))continue;
-  const pattern=new RegExp('(^|[^A-Za-z])('+regexEscape(c.word)+')(?=\\b)','i');
-  if(!pattern.test(result))continue;
-  result=result.replace(pattern,(_,prefix,name)=>prefix+name+' ('+Number(c.p.points).toFixed(1)+' pts)');
+  const hay=result.toLowerCase(),needle=c.word.toLowerCase();
+  let at=hay.indexOf(needle),matched=-1;
+  while(at>=0){
+   const before=at===0?' ':result[at-1],after=result[at+c.word.length]||' ';
+   if(!/[a-z]/i.test(before)&&!/[a-z]/i.test(after)){matched=at;break;}
+   at=hay.indexOf(needle,at+1);
+  }
+  if(matched<0)continue;
+  result=result.slice(0,matched+c.word.length)+' ('+Number(c.p.points).toFixed(1)+' pts)'+result.slice(matched+c.word.length);
   touched.add(String(c.p.id||c.p.name));
  }
  return result;

@@ -50,6 +50,8 @@ const noBrief=mk();noBrief.teams[0].inquirer_article.future_brief_status='MISSIN
 assert.match(evaluate(noBrief).issues.join('|'),/fresh section brief/);
 const noJokes=mk();for(const t of noJokes.teams)t.inquirer_article.sections.find(s=>s.kind==='sentiment').paragraphs=['Crowd mood: 15.0. Fans should remain calm.'];
 assert.match(evaluate(noJokes).issues.join('|'),/hypothetical sports-fan scene/);
+const playerMislabel=mk();playerMislabel.teams[0].inquirer_article.sections.find(x=>x.kind==='players').paragraphs[0]=playerMislabel.teams[0].inquirer_article.sections.find(x=>x.kind==='players').paragraphs[0].replace('(32.0 pts)','(99.0 pts)')+' Starter 0 (32.0 pts) helped.';
+assert.match(evaluate(playerMislabel).issues.join('|'),/annotated starter score conflicts with source/);
 const altered=mk();altered.teams[0].points=201;
 assert.match(evaluate(altered).issues.join('|'),/lede does not identify/);
 const recap=mk();recap.league_overview.future_recap_brief_status='MISSING_OR_INCOMPLETE';

@@ -34,6 +34,15 @@ const week=Number(edition.week);
 const prev=previous?shape(previous):[];
 if(previous && Number(previous.week)===week)warn('edition','SAME_WEEK_REFERENCE','Reference is the same week; cross-week novelty cannot be verified');
 const previousByTeam=new Map(prev.map(a=>[a.team,a]));
+const previousSentenceKeys=new Map();
+if(previous && Number(previous.week)!==week){
+ for(const prior of prev)for(const section of prior.sections||[])
+  for(const paragraph of section.paragraphs||[])for(const line of sentence(paragraph)){
+   const key=line.toLowerCase().replace(/\d+(?:\.\d+)?/g,'#').replace(/\s+/g,' ').trim();
+   if(key.length>75)previousSentenceKeys.set(key,prior.team);
+  }
+}
+
 const shared=new Map();
 let totalContrast=0;
 const theater=/imaginary|fictional|satirical|cartoon|pretend/i;
@@ -58,6 +67,7 @@ for(const a of articles){
  for(const s of sections)for(const p of s.paragraphs||[])for(const t of sentence(p)){
   const key=t.toLowerCase().replace(/\d+(?:\.\d+)?/g,'#').replace(/\s+/g,' ').trim();
   if(key.length>60){if(sentenceKeys.has(key))warn(id,'WITHIN_ARTICLE_REPEAT',t);sentenceKeys.add(key)}
+  if(previousSentenceKeys.has(key))bad(id,'RECYCLED_CROSS_WEEK_SENTENCE','Previously used by '+previousSentenceKeys.get(key)+': '+t);
   if(contrast.test(t))totalContrast++;
   if(key.length>65){const arr=shared.get(key)||[];arr.push(id);shared.set(key,arr)}
  }

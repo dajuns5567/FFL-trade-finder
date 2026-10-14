@@ -25,7 +25,7 @@ const mk=()=>{
  return {
   season:2026,week:5,teams,
   editorial_quality:{status:'HOLD_EDITORIAL_APPROVAL',fresh_briefs_complete:true,review_required:true},
-  league_overview:{future_recap_brief_status:'COMPLETE_UNAPPROVED',sections:[{blocks}]}
+  league_overview:{future_recap_brief_status:'COMPLETE_UNAPPROVED',editorial_review_required:true,sections:[{blocks}]}
  };
 };
 const manifest={season:2026,week:5,teams:{fictional:true},recap:{lead:[]}};

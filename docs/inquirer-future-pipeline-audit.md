@@ -62,3 +62,7 @@ The **existing `INQUIRER_APPROVED_THROUGH_WEEK` permission gate is not changed**
 **Trust limit:** The manifest is loaded from server-side storage, not from a browser; however, the guard establishes only structural/source and anti-repetition checks, not perfect fact checking or objective humor quality. The existing publication approval must still represent a genuine, human-reviewed release decision.
 
 The architecture CI now checks the actual `weeklyReport` publisher path (not only the standalone Week 4 fast preview). Synthetic release-guard tests are read-only. A live authorized full future-week dry run and Netlify-authenticated browser check remain outstanding, and must be completed before extending public approval.
+
+### Explicit editorial sign-off in trusted brief manifest
+
+In addition to the existing `INQUIRER_APPROVED_THROUGH_WEEK` environment control, a future-week Blob manifest must contain `editorial_approval: {approved:true, season:2026, week:5, reviewed_by:'<named reviewer>', reviewed_at:'<valid ISO timestamp>'}` with the actual corresponding season/week. The production publication guard refuses unsigned or incorrectly scoped manifests; it does not expose the reviewer identity in the persisted public broadcast. Sign-off is documentary evidence of a human editorial review, not an automated guarantee that the joke quality is good. A manifest cannot override source facts, publication approval or security permissions.

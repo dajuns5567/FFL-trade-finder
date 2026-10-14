@@ -347,7 +347,7 @@ async function reporterArchive(id){
 }
 async function reporterDirectory(){return{schema_version:1,inquirer_version:INQUIRER_VERSION,reporters:publicReporters()}}
 
-export async function weeklyReport(req){
+export async function weeklyReport(req,{draftOnly=false}={}){
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
  const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,origin=new URL(req.url).origin,s={get:async(...args)=>{try{return await store().get(...args)}catch{return null}}},
   cappedWeek=Math.min(INQUIRER_FINAL_WEEK,Math.max(1,currentWeek,...Array.from(PRELOADED_BROADCASTS.values(),raw=>{const edition=servedPreload(raw);return Number(edition?.season)===season&&edition?.available&&Array.isArray(edition.teams)&&edition.teams.length?Number(edition.week)||0:0})));
@@ -361,17 +361,17 @@ export async function weeklyReport(req){
   if(stored?.available&&Array.isArray(stored?.teams)&&stored.teams.length&&publiclyApprovedEdition(season,w)){latestPublished=stored;continue}
   week=w;break;
  }
- if(latestPublished)await weeklyAwardRecordForBroadcast(latestPublished).catch(e=>console.error('weekly award self-heal',e));
+ if(latestPublished&&!draftOnly)await weeklyAwardRecordForBroadcast(latestPublished).catch(e=>console.error('weekly award self-heal',e));
  if(!week)return latestPublished||{available:false,season,week:null,reason:'No completed Fleeced! Inquirer edition is available yet.'};
  const approvedThroughWeek=Math.min(INQUIRER_FINAL_WEEK,Math.max(0,Number(process.env.INQUIRER_APPROVED_THROUGH_WEEK??4)||0));
- if(week>approvedThroughWeek)return latestPublished?{...latestPublished,waiting_for_week:week,reason:'Publication of Week '+week+' requires explicit release approval.'}:{available:false,season,week,waiting_for_week:week,reason:'Publication of Week '+week+' requires explicit release approval.'};
+ if(!draftOnly&&week>approvedThroughWeek)return latestPublished?{...latestPublished,waiting_for_week:week,reason:'Publication of Week '+week+' requires explicit release approval.'}:{available:false,season,week,waiting_for_week:week,reason:'Publication of Week '+week+' requires explicit release approval.'};
  const completion=await completedPublicationWeek(week);
  if(!completion.complete)return latestPublished?{...latestPublished,waiting_for_week:week,reason:'The Fleeced! Inquirer is waiting for Sleeper to finalize Week '+week+': '+completion.reason+'.'}:{available:false,season,week,waiting_for_week:week,reason:'The Fleeced! Inquirer is waiting for Sleeper to finalize Week '+week+': '+completion.reason+'.'};
  const key=`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
  const historicalSeasonYear=season-1,historicalSeason=await fetchBestSeason(historicalSeasonYear).catch(()=>({stats:null,source:null,errors:['unavailable']}));
  const previousStored=week>1?await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null):null,previousBroadcast=previousStored||preloadedBroadcast(season,week-1);
  let managerHistoryData=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
- if(!managerHistoryData?.career?.length)managerHistoryData=await managerHistory().catch(()=>({career:[],current:[],assignments:[]}));
+ if(!managerHistoryData?.career?.length)managerHistoryData=await managerHistory({allowCacheWrite:!draftOnly}).catch(()=>({career:[],current:[],assignments:[]}));
  const [matchups,transactions,rosters,users,proj,players,nextMatchups,nextProj,weeklyStats,winnersBracket]=await Promise.all([
   Promise.resolve(completion.rows),fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>null),
   fetchJson(`${API}/league/${LEAGUE}/rosters`).catch(()=>[]),fetchJson(`${API}/league/${LEAGUE}/users`).catch(()=>[]),projections(season,week,league?.scoring_settings||{}),
@@ -444,6 +444,16 @@ export async function weeklyReport(req){
   inquirer=accepted.inquirer;leagueOverview=accepted.leagueOverview;
  }
  const forward=week>=3,rawResult={available:true,season,week,week_classification:weekClassification,generated_at:new Date().toISOString(),published_locked:true,context_snapshot_through_week:week,broadcast_version:BROADCAST_VERSION,inquirer_version:forward?FORWARD_INQUIRER_VERSION:INQUIRER_VERSION,editorial_revision:forward?FORWARD_EDITORIAL_REVISION:INQUIRER_EDITORIAL_REVISION,editorial_generation:forward?{engine:'v31-forward',logic_floor:'week2-approved-plus-forward-v31',variation_salt:variationSalt,previous_week:week>1?week-1:null,quality_metrics:quality.metrics}:null,projection_source:Object.keys(proj).length?'Sleeper weekly projections scored with league scoring settings':'projection data unavailable',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:canonicalTrades?.source||'unavailable',reporters:inquirer.reporters,league_overview:leagueOverview,teams:inquirer.teams},result=forward?applyPublishedForwardFix(rawResult,previousBroadcast):rawResult;
+ // Authenticated draft mode returns the fully assembled fact-first forward
+ // candidate BEFORE editorial approval, archive writes or awards publication.
+ // The caller must be a privileged server-only endpoint; never public.
+ if(draftOnly){
+  return {...result,published_locked:false,editorial_quality:{
+   status:'UNREVIEWED_DRAFT',review_required:true,
+   reason:'Fact-first draft only; does not authorize publication'
+  }};
+ }
+
  // Fail-closed authoring and editorial release guard for future issues.
  // Existing Week 1-4 published/preloaded copy remains unchanged.
  // The approved-through-week control above still applies independently.

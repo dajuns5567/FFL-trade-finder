@@ -65,6 +65,7 @@ export function evaluateFutureEditorialRelease(edition,prior=null,{approval=null
    else within.set(key,id);
   }
  }
+ if(reporterStats.size!==4)fail('edition','require all four distinct reporter voices');
  for(const [name,r] of reporterStats){
   if(r.articles>=2&&r.opinion/r.sections<0.15)fail('reporter '+name,'opinionated voice collapsed');
  }
@@ -74,6 +75,8 @@ export function evaluateFutureEditorialRelease(edition,prior=null,{approval=null
  if(blocks.length!==6||!['lead','standings','players','decisions','league','outlook'].every((key,i)=>blocks[i]?.kind===key&&words((blocks[i].paragraphs||[]).join(' '))>=35))fail('recap','six complete league-wide editorial desks required');
  const full=(overview?.sections||[]).flatMap(s=>s.blocks?.length?s.blocks.flatMap(b=>b.paragraphs||[]):s.paragraphs||[]).join(' ');
  if(words(full)<400)fail('recap','league-wide recap too thin');
+ const recapParagraphOwners=new Map();
+ for(const block of blocks)for(const paragraph of block.paragraphs||[]){const key=normalized(paragraph);if(key.length<90)continue;const owner=recapParagraphOwners.get(key);if(owner&&owner!==block.kind)fail('recap','identical reporting reused across '+owner+' and '+block.kind);recapParagraphOwners.set(key,block.kind);}
  const oldRecap=(prior?.league_overview?.sections||[]).flatMap(s=>s.blocks?.length?s.blocks.flatMap(b=>b.paragraphs||[]):s.paragraphs||[]).flatMap(sentence).map(normalized);
  const recapPrevious=new Set(oldRecap.filter(s=>s.length>75));
  for(const line of sentence(full))if(recapPrevious.has(normalized(line)))fail('recap','previous-week sentence reused: '+line.slice(0,90));

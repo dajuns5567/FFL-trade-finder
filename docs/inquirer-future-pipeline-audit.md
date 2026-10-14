@@ -123,3 +123,7 @@ The SHA-256 is computed from `JSON.stringify({season,week,teams,recap})` of the 
 6. Only after all green and explicit authorization, consider advancing the approved week and merge/deploy.
 
 No editor, script or assistant may claim these OPEN items complete because structural CI passed.
+
+### Reviewed-manuscript checksum procedure
+
+After finishing and independently reviewing all 32 articles and six Weekly Recap desks, invoke `node scripts/inquirer-manifest-digest.mjs reviewed-manifest.json`. It reports the exact content SHA-256 required in `editorial_approval.content_sha256`, without editing the manuscript or granting approval. A person authorized to stage the reviewed manifest must explicitly set and verify the approval fields and securely deliver the exact reviewed content to the server-side Blob key. Re-run the digest and editorial review if the manuscript changes. Do not confuse a checksum with a cryptographic signature, authorization, or proof of humor quality.

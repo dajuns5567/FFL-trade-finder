@@ -15,7 +15,9 @@ const similarity=(a,b)=>{const x=tok(a),y=tok(b);return x.size&&y.size?[...x].fi
 const shape=d=>(d.articles?d.articles:(d.teams||[]).map(t=>({
  team:t.team_name, opponent:t.opponent_name, reporter:t.inquirer_article?.reporter?.name,
  sections:t.inquirer_article?.sections||[],starters:t.starter_details||[],
- benchDecision:t.best_lineup_miss,score:t.points,opponentScore:t.opponent_points
+ benchDecision:t.best_lineup_miss,score:t.points,opponentScore:t.opponent_points,
+ future_brief_status:t.inquirer_article?.future_brief_status,
+ editorial_review_required:t.inquirer_article?.editorial_review_required
 })));
 const get=(a,k)=>(a.sections||[]).find(s=>s.kind===k)?.paragraphs?.join(' ')||'';
 const errors=[],warnings=[];
@@ -40,6 +42,7 @@ const contrast=/\bnot\b.{3,90}\bbut\b|\b(?:isn't|wasn't|weren't|is not|was not)\
 const required=['lede','players','management','hot-seat','cool-throne','sentiment','outlook'];
 for(const a of articles){
  const id=a.team||'unknown';
+ if(week>4&&a.future_brief_status!=='COMPLETE_UNAPPROVED')bad(id,'MISSING_FRESH_EDITORIAL_BRIEF','A verified week-specific brief is required for publication quality; never reuse last week');
  const sections=a.sections||[];
  for(const k of required)if(!get(a,k))bad(id,'EMPTY_REQUIRED_SECTION',k);
  const fan=get(a,'sentiment');

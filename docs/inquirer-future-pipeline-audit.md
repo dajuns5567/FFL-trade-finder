@@ -76,3 +76,50 @@ When a completed future-week *candidate* JSON and the last accepted edition JSON
 The packet contains reporter identities and voice guidance, verified completed scores, relevant starter scores, legal bench-decision evidence, mood, next matchup, and last issue's prose for comparison. It also contains a draft `draft_manifest` with all 32 team entries, every recap desk, and **intentionally blank prose arrays and `editorial_approval.approved=false`**. Do not deposit that placeholder as an approved manuscript. A source-grounded author/editor must write original copy and review the whole edition before depositing the completed manifest securely at `editorial-briefs/{season}/week-{WW}.json` in the existing strong-consistency Netlify Blob store.
 
 **Operational gap:** The current production publisher builds the candidate *inside* `weeklyReport`, and no dedicated authenticated **non-publishing** candidate extraction/staging service has yet been added. Obtain the candidate through a controlled offline or trusted admin workflow. Do not bypass `INQUIRER_APPROVED_THROUGH_WEEK`, open preview authentication, or run `weeklyReport` with live publishing authorization merely to produce a draft. A secure draft-only path needs separate threat-modeling, testing and approval before use.
+
+## Second full-path audit — systematic concern register (2026-10-14)
+
+This register follows the actual source→editorial→storage→reading path, not only the Week 4 preview. **A code change being committed is not proof of deployment or passing end-to-end verification.**
+
+| Priority | Component / threat | Finding | State / action |
+| --- | --- | --- | --- |
+| Critical | Actual publish path | Scheduled and authorized on-load functions share `weeklyReport`, previously bypassing future single-writer / new QA | **PR fixed:** enforced before `s.setJSON`; confirm CI and live authorized dry run |
+| Critical | Unreviewed generic stories | v31 can produce generic prose if no fresh editorial input exists | **PR fixed:** missing trusted fresh manifest blocks future persistence, rather than approving the fallback |
+| Critical | Manuscript source | No secure system yet produces 32 original authored briefs and league recap | **OPEN:** controlled draft-only data/manifest staging + human editing process required |
+| Critical | Publication approval | Existing `INQUIRER_APPROVED_THROUGH_WEEK` is separate from manuscript approval | **PR fixed:** additional trusted human review attestation; both conditions required; do not advance approval prematurely |
+| High | Approval drift | A reviewer timestamp/name could survive edits to reviewed manuscripts | **PR fixed:** `content_sha256` must match exact stored prose manifest; recalculate and reapprove after changes |
+| High | Missing prior edition | No previous complete edition meant originality checks could silently do nothing | **PR fixed:** require immediately prior accepted full 32-team edition, same season and week-1 |
+| High | Malformed manifest | Broad object check accepted non-object team dictionaries | **PR fixed:** strictly reject absent/array/malformed manifests before final writer |
+| High | Missing team articles | Final writer skips teams with incomplete structured facts or missing article | **Mitigated:** all 32 verified briefs and editor statuses mandatory; any skipped team triggers HOLD; underlying data feed still needs a targeted full-coverage test |
+| High | Reporter personality | A high word count could hide all teams using one reporter or purely statistical narration | **PR fixed in QA:** require four distinct reporter voices and block extreme opinion collapse; **OPEN:** natural variety and humor still need human assessment |
+| High | Weekly Recap | Correct six-section structure could still hold recycled commentary | **PR fixed:** all recap desks present, distinct repeated commentary fails, prior-week recap reuse fails; manual league-wide editorial pass remains |
+| High | Factual direction | Bench decision direction and score label can be reversed even with plausible numbers | **Partially mitigated:** arithmetical source checks + score anchors; **OPEN:** contextual direction and eligibility require stronger source-driven semantic review |
+| High | Prior edition preservation | Week 4 prose is frozen as served v19 evidence, not reusable prose source | **Existing baseline saved:** protect archived release from prose mutations, capture next accepted served edition |
+| High | Authenticated preview tests | Netlify SSO 401 can block anonymous browser acceptance | **OPEN:** do not weaken authentication; configure authorized CI session or report limitation |
+| High | Actual release simulation | Synthetic QA tests are not complete scheduled-reader-storage integration | **OPEN:** perform authenticated dry-run of a complete future edition without persisted publication |
+| Medium | Outlook quality | Merely naming next opponent does not make a compelling forward story | **Partial:** minimum detail and opponent checks; human read-through mandatory |
+| Medium | Fan scenes | Fiction indicator and prop presence do not prove funny/specific/confidence-calibrated scene | **Partial:** mood number / scene / opinion checks; editorial human sign-off mandatory |
+| Medium | Cross-week joke semantics | Lexical similarity catches exact/near-copy but not paraphrased generic arguments | **OPEN:** human comparison against Week 4 and several previous editions; optional future semantic reviewer with conservative flags |
+| Medium | Manifest staging integrity | Data and reviewed text must stay provenance-bound throughout edit and release | **Partial:** trusted Blob manifest and digest; **OPEN:** secure submission permissions and audit trail for reviewer are not implemented |
+| Medium | Future-year continuity | A hardcoded 2026 Week 4 baseline must not be used as immediate prior for 2027 | **Gate requires immediate previous week:** create year-specific accepted baselines with properly-scoped seasons |
+| Medium | Performance and retries | Failure after editorial manifest loading must never produce a partial broadcast; races / retries may re-enter | **Current guard pre-persistence;** existing persistence uses lock/key and fact reconciliation; **OPEN:** concurrent publisher idempotence audit with real Blob locks |
+| Medium | Awards/ancillaries | Weekly awards generated after editorial acceptance; may fail independently | **Existing integrity checks:** verify awards and reporter archives in staging; do not collapse their errors into editorial passes |
+
+### Sign-off digest contract
+
+Approved manuscripts at `editorial-briefs/{season}/week-{WW}.json` require:
+
+`editorial_approval: {approved:true, season, week, reviewed_by, reviewed_at, content_sha256}`
+
+The SHA-256 is computed from `JSON.stringify({season,week,teams,recap})` of the **same actual manifest object**. Use exactly the same object key order defined by the staging producer; the hash is sensitive to serialized key order. Prefer invoking `editorialManifestDigest` from `inquirer-future-release-guard.mjs` in the trusted editor workflow, not reimplementing serialization or copying another week's digest. This checksum protects against accidental drift, not a cryptographic signature or guarantee of independent editorial judgment.
+
+### Priority order before declaring future production ready
+
+1. Pass newest newsroom, live Week 4, forward freshness, player score, facts, and security CI checks. Resolve preview-auth browser coverage.
+2. Build and security-review a **draft-only** server-side fact packet and manuscript staging path (no publishing side effects); test how it obtains actual completed matchup data.
+3. Draft one full *unpublished* candidate edition from verified facts, review all 32 team stories and six recap desks for grounded sarcasm, distinct columnist voices, unique arguments and new jokes, and compare to the accepted prior issue.
+4. Submit a trusted source-bound manuscript and human review attestation, confirm digest, run end-to-end release guard **without persisting a broadcast**.
+5. Audit concurrent publish attempts, retry behavior and post-acceptance archived text consistency.
+6. Only after all green and explicit authorization, consider advancing the approved week and merge/deploy.
+
+No editor, script or assistant may claim these OPEN items complete because structural CI passed.

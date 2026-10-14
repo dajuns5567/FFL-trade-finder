@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
+import {editorialManifestDigest} from '../netlify/functions/inquirer-future-release-guard.mjs';
 
 export function verifyMigrationBundle(root) {
  const manifest=JSON.parse(fs.readFileSync(path.join(root,'migration-manifest.json'),'utf8'));
@@ -35,8 +36,10 @@ export function verifyMigrationBundle(root) {
     assert.equal(Number(json.week),Number(match[2]));
     report.archive_weeks.push(entry.key);
    }
-   if(/^editorial-briefs\/\d{4}\/week-\d{2}\.json$/.test(entry.key))
+   if(/^editorial-briefs\/\d{4}\/week-\d{2}\.json$/.test(entry.key)){
     assert(json.editorial_approval?.approved===true,'Staged editorial manuscript lacks approval');
+    assert.equal(json.editorial_approval.content_sha256,editorialManifestDigest(json),'Editorial manuscript digest mismatch');
+   }
    report.object_count++;
   }catch(err){report.errors.push({key:entry.key||null,message:String(err.message)})}
  }

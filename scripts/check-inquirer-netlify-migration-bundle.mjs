@@ -37,8 +37,14 @@ export function verifyMigrationBundle(root) {
     report.archive_weeks.push(entry.key);
    }
    if(/^editorial-briefs\/\d{4}\/week-\d{2}\.json$/.test(entry.key)){
-    assert(json.editorial_approval?.approved===true,'Staged editorial manuscript lacks approval');
-    assert.equal(json.editorial_approval.content_sha256,editorialManifestDigest(json),'Editorial manuscript digest mismatch');
+    assert(Number.isInteger(Number(json.season))&&Number.isInteger(Number(json.week)),'Editorial manuscript scope missing');
+    const match=entry.key.match(/editorial-briefs\/(\d{4})\/week-(\d{2})\.json$/);
+    assert.equal(Number(json.season),Number(match[1]),'Editorial manuscript season mismatch');
+    assert.equal(Number(json.week),Number(match[2]),'Editorial manuscript week mismatch');
+    // Backups must preserve drafts as well as approved manuscripts. An unsigned
+    // draft is not publication-ready; it must never be silently discarded.
+    if(json.editorial_approval?.approved===true)
+     assert.equal(json.editorial_approval.content_sha256,editorialManifestDigest(json),'Approved editorial manuscript digest mismatch');
    }
    report.object_count++;
   }catch(err){report.errors.push({key:entry.key||null,message:String(err.message)})}

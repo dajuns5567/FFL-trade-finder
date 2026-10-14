@@ -836,6 +836,24 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
      .replace(/verified eligible/gi,'actually available'));
    }
   }
+  // Future editions must bring NEW, fixture-grounded editorial briefs.
+  // This is within the single authoritative team writer, never a later pass.
+  // Missing briefs are explicitly marked as requiring editorial approval.
+  if(week>4){
+   const briefs=e.future_editorial_briefs;
+   const brief=briefs&&Number(briefs.season)===Number(e.season)&&Number(briefs.week)===week
+    ?briefs.teams?.[tn(t)]:null;
+   const kinds=['lede','players','management','hot-seat','cool-throne','sentiment','outlook'];
+   const complete=!!brief&&kinds.every(k=>Array.isArray(brief[k])&&brief[k].some(p=>String(p||'').trim().length>35));
+   const verified=complete&&brief.opponent===next&&brief.reporter_id===reporter
+    &&Number(brief.team_points)===own&&Number(brief.opponent_points)===against;
+   a.editorial_review_required=true;
+   a.future_brief_status=verified?'COMPLETE_UNAPPROVED':'MISSING_OR_FACT_MISMATCH';
+   if(verified){
+    for(const k of kinds)put(a,k,brief[k].map(String));
+    a.future_brief_source_week=week;
+   }
+  }
   a.paragraphs=(a.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])]);
   a.cohesive_editorial_version=1;
  }

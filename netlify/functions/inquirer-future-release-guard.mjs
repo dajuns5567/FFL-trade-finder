@@ -20,7 +20,7 @@ export function evaluateFutureEditorialRelease(edition,prior=null,{approval=null
  if(Number(edition?.week)<=4)return {ok:true,issues:[],not_applicable:true};
  if(teams.length!==32||new Set(teams.map(t=>t.team_name)).size!==32)fail('edition','exactly 32 distinct teams required');
  const att=approval;
- if(att?.approved!==true||Number(att.season)!==Number(edition.season)||Number(att.week)!==Number(edition.week)||!String(att.reviewed_by||'').trim()||!/^\\d{4}-\\d{2}-\\d{2}T/.test(String(att.reviewed_at||''))||!Number.isFinite(Date.parse(String(att.reviewed_at||''))))fail('edition','trusted week-specific human editorial approval attestation required');
+ if(att?.approved!==true||Number(att.season)!==Number(edition.season)||Number(att.week)!==Number(edition.week)||!String(att.reviewed_by||'').trim()||!/^\d{4}-\d{2}-\d{2}T/.test(String(att.reviewed_at||''))||!Number.isFinite(Date.parse(String(att.reviewed_at||''))))fail('edition','trusted week-specific human editorial approval attestation required');
  const quality=edition?.editorial_quality;
  if(quality?.status!=='HOLD_EDITORIAL_APPROVAL'||quality?.fresh_briefs_complete!==true||quality?.review_required!==true)fail('edition','all fresh briefs and explicit review-required status mandatory');
  const previous=new Set((prior?.teams||[]).flatMap(t=>flat(t.inquirer_article)).flatMap(sentence).map(normalized).filter(s=>s.length>75));

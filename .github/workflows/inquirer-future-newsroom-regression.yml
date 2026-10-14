@@ -9,6 +9,8 @@ on:
       - 'scripts/check-inquirer-future-release-guard.mjs'
       - 'scripts/inquirer-prep-future-editorial.mjs'
       - 'scripts/check-inquirer-brief-packet.mjs'
+      - 'scripts/check-inquirer-netlify-migration-bundle.mjs'
+      - 'scripts/check-inquirer-netlify-migration-bundle-test.mjs'
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/inquirer-future-release-guard.mjs'
       - 'docs/inquirer-editorial-contract.md'
@@ -27,6 +29,8 @@ jobs:
       - run: node --check scripts/inquirer-future-quality-gate.mjs
       - run: node --check scripts/check-inquirer-future-quality-gate.mjs
       - run: node scripts/check-inquirer-pipeline-architecture.mjs
+      - name: Verify future Netlify account migration backups
+        run: node scripts/check-inquirer-netlify-migration-bundle-test.mjs
       - name: Check fact-only editorial authoring packet
         run: node scripts/check-inquirer-brief-packet.mjs
       - name: Check production publisher newsroom gate

@@ -1,0 +1,21 @@
+name: Inquirer player-score composition guard
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/inquirer-narrative-final.mjs'
+      - 'scripts/check-inquirer-player-score-injection.mjs'
+      - '.github/workflows/inquirer-player-score-composition.yml'
+  workflow_dispatch:
+
+jobs:
+  player-score-composition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check final narrative module syntax
+        run: node --check netlify/functions/inquirer-narrative-final.mjs
+      - name: Prevent duplicate or missing player-score annotations
+        run: node scripts/check-inquirer-player-score-injection.mjs

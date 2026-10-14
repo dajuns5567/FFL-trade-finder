@@ -131,7 +131,7 @@ for(const x of quality.hotSeatWeak)warn(x.team,'THIN_HOT_TAKE_REVIEW',x.excerpt)
 for(const x of quality.coolThroneWeak)warn(x.team,'THIN_PRAISE_REVIEW',x.excerpt);
 for(const x of quality.fanWeak)warn(x.team,'SHALLOW_FAN_COMMENTARY_REVIEW',x.excerpt);
 for(const x of quality.outlookWeak)warn(x.team,'THIN_FUTURE_STORY_REVIEW',x.excerpt);
-for(const [name,v] of quality.reporters){if(v.featureSections>=7&&v.opinionSections/v.featureSections<0.40)warn('reporter:'+name,'LOW_OPINION_DENSITY',v);if(v.articles>=3&&v.contrasts/v.articles>1.5)warn('reporter:'+name,'MECHANICAL_CONTRAST_RHYTHM',v)}
+for(const [name,v] of quality.reporters){if(v.featureSections>=7&&v.opinionSections/v.featureSections<0.15)bad('reporter:'+name,'EDITORIAL_VOICE_COLLAPSE','Almost none of the reporter sections contain explicit judgment; mandatory human review');else if(v.featureSections>=7&&v.opinionSections/v.featureSections<0.40)warn('reporter:'+name,'LOW_OPINION_DENSITY',v);if(v.articles>=3&&v.contrasts/v.articles>1.5)warn('reporter:'+name,'MECHANICAL_CONTRAST_RHYTHM',v)}
 const result={week,articles:articles.length,errors,warnings,contrastSentences:totalContrast,reporterProfiles:Object.fromEntries(quality.reporters),
  status:errors.length?'HOLD':'STRUCTURAL_PASS_EDITORIAL_REVIEW_REQUIRED',
  note:'Passing is not permission to publish. The distinct story angles, reporter voices, factual claims, humor, and recap must be manually assessed against last week.'};

@@ -34,7 +34,8 @@ const expected=[
  ['draft suppresses prior award self-heal',weekly.includes('latestPublished&&!draftOnly')],
  ['draft suppresses manager history cache writes',weekly.includes('managerHistory({allowCacheWrite:!draftOnly})')],
  ['draft endpoint POST only and server authorized',draft.includes("req.method!=='POST'")&&draft.includes('isAuthorizedWrite(req)')&&draft.includes('isReadOnlyPreview(req,platformContext)')],
- ['draft endpoint calls no-writing edition mode',draft.includes('weeklyReport(req,{draftOnly:true})')]
+ ['draft endpoint calls no-writing edition mode',draft.includes('weeklyReport(req,{draftOnly:true})')],
+ ['draft path has no direct storage mutations before return', !/await\s+s\.(?:set|setJSON|delete|put)\w*\s*\(/.test(weekly.slice(0,weekly.indexOf('if(draftOnly){')))]
 ];
 for(const [name,ok] of expected)assert.ok(ok,'PIPELINE_REGRESSION: '+name);
 console.log('PASS: '+expected.length+' pipeline architecture invariants checked');

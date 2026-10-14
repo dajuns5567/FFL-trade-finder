@@ -6,6 +6,7 @@ const writer=read('netlify/functions/inquirer-narrative-final.mjs');
 const rebuild=read('netlify/functions/inquirer-week4-editorial-rebuild.mjs');
 const gate=read('scripts/inquirer-future-quality-gate.mjs');
 const ci=read('.github/workflows/inquirer-future-newsroom-regression.yml');
+const production=read('netlify/functions/league-hub.mjs');
 const expected=[
  ['legacy authors isolated',analysis.includes('const recapWorkspace=')&&analysis.includes('edition.league_overview=recapWorkspace.league_overview')],
  ['only final team writer in evidence pipeline',(analysis.match(/finalizeInquirerNarrative\(edition/g)||[]).length===1],
@@ -20,7 +21,12 @@ const expected=[
  ['future issue requires original recap',gate.includes('MISSING_FRESH_RECAP_BRIEF')],
  ['future generator rebuild keeps prior edition',rebuild.includes('restoreReporterNarratives(out,original,{previousEdition:prior})')],
  ['quality check exercised for generator changes',ci.includes("'netlify/functions/inquirer-*.mjs'")],
- ['quality check tests actual future assembly',ci.includes('check-inquirer-future-brief-assembly.mjs')]
+ ['quality check tests actual future assembly',ci.includes('check-inquirer-future-brief-assembly.mjs')],
+ ['real publisher loads fresh trusted briefs',production.includes("editorial-briefs/'+season+")],
+ ['real publisher uses authoritative final writer',production.includes('finalizeInquirerNarrative(result,{week})')],
+ ['real publisher invokes final newsroom gate',production.includes('evaluateFutureEditorialRelease(result,previousBroadcast)')],
+ ['real publisher audits before saving',production.indexOf('evaluateFutureEditorialRelease(result,previousBroadcast)')<production.indexOf('await s.setJSON(key,')],
+ ['real publisher retains independent release approval',production.includes('INQUIRER_APPROVED_THROUGH_WEEK')]
 ];
 for(const [name,ok] of expected)assert.ok(ok,'PIPELINE_REGRESSION: '+name);
 console.log('PASS: '+expected.length+' pipeline architecture invariants checked');

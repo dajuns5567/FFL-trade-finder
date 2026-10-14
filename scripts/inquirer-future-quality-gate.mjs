@@ -26,13 +26,21 @@ const warn=(team,code,detail)=>warnings.push({team,code,detail});
 const edition=load(process.argv[2]||'');
 const previous=process.argv[3]?load(process.argv[3]):null;
 const articles=shape(edition);
+if(Number(edition.week)>4 && !edition.articles){
+ const status=edition.editorial_quality;
+ if(!status||status.status!=='HOLD_EDITORIAL_APPROVAL'||status.review_required!==true)
+  bad('edition','MISSING_RELEASE_HOLD_METADATA','Final assembled edition must explicitly remain unapproved');
+ if(status?.fresh_briefs_complete!==true)
+  bad('edition','INCOMPLETE_FUTURE_EDITORIAL_BRIEFS','Article and recap briefs must be complete before editorial review');
+}
+
 if(Number(edition.week)>4&&!previous)bad('edition','PREVIOUS_ACCEPTED_EDITION_REQUIRED','Cross-week originality cannot be certified without a prior accepted snapshot');
 assert.equal(articles.length,32,'Must inspect all 32 teams; HOLD on incomplete editions');
 const names=new Set(articles.map(a=>a.team));
 assert.equal(names.size,32,'Duplicate teams in edition');
 const week=Number(edition.week);
 const prev=previous?shape(previous):[];
-if(previous && Number(previous.week)===week)warn('edition','SAME_WEEK_REFERENCE','Reference is the same week; cross-week novelty cannot be verified');
+if(previous && Number(previous.week)===week&&week>4)bad('edition','SAME_WEEK_REFERENCE','A different accepted issue is required to prove cross-week novelty');
 const previousByTeam=new Map(prev.map(a=>[a.team,a]));
 const quality={reporters:new Map(),hotSeatWeak:[],coolThroneWeak:[],fanWeak:[],outlookWeak:[],recapWeak:[]};
 const opinion=/\b(?:deserve|earned|should|must|needs?|embarrass|shame|absurd|ridiculous|indefensible|pathetic|disgrace|pardon|applaud|accountab|credit|blame|excuse|reckless|fraud|spectacular|brutal|miserable|unacceptable|outrage|trust|panic|suspicious|unfit|inexcusable|laughable|furious|humiliat|ludicrous|disaster|mercy|believe|angry|angrier|worry|demand|question|enough|better|worse|funny|joke|comedy|disappoint|stupid|terrible)\w*\b/i;

@@ -26,6 +26,7 @@ const warn=(team,code,detail)=>warnings.push({team,code,detail});
 const edition=load(process.argv[2]||'');
 const previous=process.argv[3]?load(process.argv[3]):null;
 const articles=shape(edition);
+if(Number(edition.week)>4&&!previous)bad('edition','PREVIOUS_ACCEPTED_EDITION_REQUIRED','Cross-week originality cannot be certified without a prior accepted snapshot');
 assert.equal(articles.length,32,'Must inspect all 32 teams; HOLD on incomplete editions');
 const names=new Set(articles.map(a=>a.team));
 assert.equal(names.size,32,'Duplicate teams in edition');

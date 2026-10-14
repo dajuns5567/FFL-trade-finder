@@ -183,8 +183,8 @@ const week4FanMoodColumns={
   "Supporters should feel encouraged by a team that genuinely had to perform. They should also expect the manager to protect that standard. Confidence isn't an entitlement; it's what happens when the lineup gives people something real to believe in."
  ],
  "Kansas City Chiefs": [
-  "Kansas City fans registering only minus eighteen after six starters scored zero may be the week's greatest act of charity. The crowd is granting management a grievance period instead of immediately declaring the entire Sunday operation unfit for purpose.",
-  "At this point supporters aren't demanding sophisticated strategy. They would probably settle for more than one person showing up on the scoresheet. The manager's challenge is not winning an argument about bad luck; it is convincing anyone the team has a functioning plan."
+  "Kansas City fans registering only minus eighteen after six starters scored zero may be the week's greatest act of charity. The crowd has granted management one more hearing. Six zeroes from the starting lineup will make the defense's opening statement particularly awkward.",
+  "At this point supporters aren't demanding sophisticated strategy. They would probably settle for more than one person showing up on the scoresheet. Management has until the next kickoff to offer evidence of a functioning plan. The supporters have already seen enough zeros for one season."
  ],
  "Las Vegas Raiders": [
   "Minus twenty-four for an entire lineup that scored nothing is almost admirably civil. A harsher rating would be justified, but the measured mood is restlessness rather than an invented riot.",
@@ -568,7 +568,7 @@ const week4CrowdScenes={
  "Jacksonville Jags": "Jacksonville's fictional supporters have rolled a ten-point receipt under the manager's door rather than bringing out the pitchforks. They can see the missed defensive call, but they can also see ten points wouldn't cover a 13.6-point defeat.",
  "Tennessee Titans": "Tennessee's imaginary celebration features one party popper, a discount champagne bottle and an announcer urgently asking everyone not to read the final score aloud. Plus eight is approval with its coat already on.",
  "Denver Doncos": "In Denver's satirical streets, champagne is spraying, a few fireworks are going off and somebody is already sketching an unnecessarily large statue of Javonte Williams. Plus seventeen is real optimism; management's job is to keep the statue from becoming a one-week monument.",
- "Kansas City Chiefs": "Kansas City's imaginary fan procession moves toward the front office carrying six cardboard zeros instead of pitchforks. The crowd is only at minus eighteen, which is merciful considering almost the whole team forgot how to score.",
+ "Kansas City Chiefs": "Kansas City's imaginary fan procession moves toward the front office carrying six cardboard zeros and a handwritten demand for signs of life. The crowd is only at minus eighteen, which is merciful considering almost the whole team forgot how to score.",
  "Las Vegas Raiders": "Vegas supporters in this fictional edition have brought pitchforks, torches and an invoice for the electricity it took to display a zero. Even that theatrical uprising is a joke about the scoreboard, not a claim that an actual riot occurred.",
  "Los Angeles Chargers": "Chargers supporters in our cartoon version are spraying a little champagne and carefully keeping the receipt. They like the win; at plus eight they are not yet ready to mortgage their houses for commemorative rings.",
  "Dallas Cowboys": "Dallas's imaginary downtown is ankle-deep in champagne, the fireworks budget has mysteriously tripled and a man is trying to reserve the parade route through February. Plus twenty-five is permission to be obnoxious, not permission for the coach to ignore the quiet slots.",
@@ -836,7 +836,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const scored=e.teams.filter(t=>Number.isFinite(Number(t.points))).slice().sort((a,b)=>Number(b.points)-Number(a.points));
   const bottom=scored.at(-1),top=scored[0],under40=scored.filter(t=>Number(t.points)<40);
   if(top&&bottom)add('lead','There are no sympathy wins on this schedule. A spectacular solo performance in a loss still gets nothing, and an ugly victory still earns the same mark in the standings. A cruel little system, but at least its arithmetic is consistent.');
-  if(under40.length)add('decisions',under40.length+' teams failed to crack 40. Three teams brought fewer than forty points to work. Their managers should consider checking whether the starters are still employed. The box score has been rude enough.');
+  if(under40.length)add('decisions',under40.length+' teams failed to crack 40. Their managers should consider checking whether the starters are still employed. The box score has been rude enough.');
   add('league','A division lead in Week '+week+' is a real advantage. Ordering championship banners already would be an ambitious interpretation of how calendars work.');
   // Week 4 hot takes deserve a position, not a stats-to-English translation.
   // Preserve award subjects, division source details and projection provenance.

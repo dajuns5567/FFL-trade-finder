@@ -524,7 +524,7 @@ const embedVerifiedPlayerEvidence=(text,starting,alreadyUsed=[])=>{
   }
   // A column may already say "Player's 27.7". Keep the one authoritative
   // injected annotation and discard only an identical adjacent bare score.
-  const bare=/^(\\s+)(\\d+(?:\\.\\d+)?)(?=\\b)/.exec(trailing);
+  const bare=/^(\s+)(\d+(?:\.\d+)?)(?=\b)/.exec(trailing);
   const duplicate=bare&&Math.abs(Number(bare[2])-Number(c.p.points))<0.051;
   const suffix=duplicate?trailing.slice(bare[0].length):trailing;
   result=result.slice(0,end)+' ('+score+' pts)'+suffix;

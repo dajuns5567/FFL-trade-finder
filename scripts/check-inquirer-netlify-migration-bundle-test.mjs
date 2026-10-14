@@ -4,12 +4,15 @@ import os from 'node:os';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {verifyMigrationBundle} from './check-inquirer-netlify-migration-bundle.mjs';
+import {editorialManifestDigest} from '../netlify/functions/inquirer-future-release-guard.mjs';
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'netlify-migrate-'));
 const entries=[];
+const manuscript={season:2026,week:5,teams:{fixture:true},recap:{lead:['Fixture']}};
+manuscript.editorial_approval={approved:true,season:2026,week:5,content_sha256:editorialManifestDigest(manuscript)};
 for(const [key,data] of [
  ['broadcasts/index.json',[{season:2026,week:5,key:'broadcasts/2026/week-05.json'}]],
  ['broadcasts/2026/week-05.json',{available:true,season:2026,week:5,teams:Array.from({length:32},(_,i)=>({team_name:'Team '+i}))}],
- ['editorial-briefs/2026/week-05.json',{editorial_approval:{approved:true,season:2026,week:5}}]
+ ['editorial-briefs/2026/week-05.json',manuscript]
 ]){
  const file='object-'+entries.length+'.json',buf=Buffer.from(JSON.stringify(data));
  fs.writeFileSync(path.join(root,file),buf);

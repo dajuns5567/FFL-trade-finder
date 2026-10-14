@@ -29,12 +29,14 @@ const mk=()=>{
  };
 };
 const approval={approved:true,season:2026,week:5,reviewed_by:'Fixture Desk',reviewed_at:'2026-10-14T00:00:00Z'};
-const evaluate=(candidate,prior=null)=>evaluateFutureEditorialRelease(candidate,prior,{approval});
+const reference={season:2026,week:4,teams:Array.from({length:32},(_,i)=>({team_name:'Team '+i,inquirer_article:{sections:[]}})),league_overview:{sections:[]}};
+const evaluate=(candidate,prior=reference)=>evaluateFutureEditorialRelease(candidate,prior,{approval});
 const e=mk();
 const accepted=evaluate(e);
 assert.equal(accepted.ok,true,JSON.stringify(accepted.issues.slice(0,10)));
-const prior=mk();
+const prior=mk();prior.week=4;
 assert.match(evaluate(mk(),prior).issues.join('|'),/recycled last-week sentence/);
+assert.match(evaluateFutureEditorialRelease(mk(),null,{approval}).issues.join('|'),/immediately previous accepted full edition/);
 const unsigned=evaluateFutureEditorialRelease(mk());
 assert.match(unsigned.issues.join('|'),/approval attestation required/);
 const noBrief=mk();noBrief.teams[0].inquirer_article.future_brief_status='MISSING_OR_FACT_MISMATCH';

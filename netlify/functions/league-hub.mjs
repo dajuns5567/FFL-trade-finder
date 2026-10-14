@@ -450,7 +450,7 @@ export async function weeklyReport(req){
  if(week>4){
   const editorialKey='editorial-briefs/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
   const editorialBriefs=await s.get(editorialKey,{type:'json'}).catch(()=>null);
-  if(!editorialBriefs||!Array.isArray(editorialBriefs.teams)&&!editorialBriefs.teams){
+  if(!editorialBriefs||typeof editorialBriefs!=='object'||Array.isArray(editorialBriefs)||!editorialBriefs.teams||typeof editorialBriefs.teams!=='object'||Array.isArray(editorialBriefs.teams)){
    throw new Error('Editorial HOLD: missing trusted authored briefs for Week '+week+'; nothing published');
   }
   result.future_editorial_briefs=editorialBriefs;

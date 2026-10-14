@@ -455,7 +455,7 @@ export async function weeklyReport(req){
   }
   result.future_editorial_briefs=editorialBriefs;
   finalizeInquirerNarrative(result,{week});
-  const release=evaluateFutureEditorialRelease(result,previousBroadcast,{approval:editorialBriefs.editorial_approval});
+  const release=evaluateFutureEditorialRelease(result,previousBroadcast,{approval:editorialBriefs.editorial_approval,manifest:editorialBriefs});
   delete result.future_editorial_briefs;
   result.editorial_release_audit=release;
   if(!release.ok){

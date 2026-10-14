@@ -23,6 +23,7 @@ export function evaluateFutureEditorialRelease(edition,prior=null,{approval=null
  if(att?.approved!==true||Number(att.season)!==Number(edition.season)||Number(att.week)!==Number(edition.week)||!String(att.reviewed_by||'').trim()||!/^\d{4}-\d{2}-\d{2}T/.test(String(att.reviewed_at||''))||!Number.isFinite(Date.parse(String(att.reviewed_at||''))))fail('edition','trusted week-specific human editorial approval attestation required');
  const quality=edition?.editorial_quality;
  if(quality?.status!=='HOLD_EDITORIAL_APPROVAL'||quality?.fresh_briefs_complete!==true||quality?.review_required!==true)fail('edition','all fresh briefs and explicit review-required status mandatory');
+ if(!prior||Number(prior.season)!==Number(edition.season)||Number(prior.week)!==Number(edition.week)-1||!Array.isArray(prior.teams)||prior.teams.length!==32)fail('edition','immediately previous accepted full edition required for continuity and novelty checks');
  const previous=new Set((prior?.teams||[]).flatMap(t=>flat(t.inquirer_article)).flatMap(sentence).map(normalized).filter(s=>s.length>75));
  const within=new Map();
  for(const t of teams){
@@ -65,6 +66,7 @@ export function evaluateFutureEditorialRelease(edition,prior=null,{approval=null
   if(r.articles>=2&&r.opinion/r.sections<0.15)fail('reporter '+name,'opinionated voice collapsed');
  }
  const overview=edition?.league_overview,blocks=overview?.sections?.[0]?.blocks||[];
+ if(!overview?.editorial_review_required)fail('recap','recap review-required status missing');
  if(overview?.future_recap_brief_status!=='COMPLETE_UNAPPROVED')fail('recap','fresh complete recap brief missing');
  if(blocks.length!==6||!['lead','standings','players','decisions','league','outlook'].every((key,i)=>blocks[i]?.kind===key&&words((blocks[i].paragraphs||[]).join(' '))>=35))fail('recap','six complete league-wide editorial desks required');
  const full=(overview?.sections||[]).flatMap(s=>s.blocks?.length?s.blocks.flatMap(b=>b.paragraphs||[]):s.paragraphs||[]).join(' ');

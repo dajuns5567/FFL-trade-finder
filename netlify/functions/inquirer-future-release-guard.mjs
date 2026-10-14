@@ -22,6 +22,7 @@ export function evaluateFutureEditorialRelease(edition,prior=null,{approval=null
  if(Number(edition?.week)<=4)return {ok:true,issues:[],not_applicable:true};
  if(teams.length!==32||new Set(teams.map(t=>t.team_name)).size!==32)fail('edition','exactly 32 distinct teams required');
  const att=approval;
+ if(!manifest||Number(manifest.season)!==Number(edition.season)||Number(manifest.week)!==Number(edition.week)||!manifest.teams||typeof manifest.teams!=='object'||Array.isArray(manifest.teams)||!manifest.recap||typeof manifest.recap!=='object'||Array.isArray(manifest.recap))fail('edition','manifest scope or structure invalid');
  if(att?.approved!==true||Number(att.season)!==Number(edition.season)||Number(att.week)!==Number(edition.week)||!String(att.reviewed_by||'').trim()||!/^\d{4}-\d{2}-\d{2}T/.test(String(att.reviewed_at||''))||!Number.isFinite(Date.parse(String(att.reviewed_at||''))))fail('edition','trusted week-specific human editorial approval attestation required');
  if(!manifest||String(att?.content_sha256||'')!==editorialManifestDigest(manifest))fail('edition','editorial attestation digest does not match the exact reviewed manuscript');
  const quality=edition?.editorial_quality;

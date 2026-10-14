@@ -7,21 +7,22 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'fleeced-newsroom-'));
 const required=['lede','players','management','hot-seat','cool-throne','sentiment','outlook'];
-const filler='The very real decision mattered to this particular team because the other roster played hard and the manager must live with the outcome. ';
+const base='The very real decision mattered because the roster played hard and the manager must live with the outcome';
+const phrase=i=>base+' on club '+String.fromCharCode(65+i%26)+String.fromCharCode(65+Math.floor(i/26))+'. ';
 const make=(week,variant='')=>({
  season:2026,week,
  articles:Array.from({length:32},(_,i)=>({
   team:'Team '+i,
   reporter:['Nick Swindell','Tilly Fleecer','Jefferson Filch','Bartholomew Roycington III'][i%4],
   sections:required.map(kind=>({kind,paragraphs:[kind==='sentiment'
-   ?'In this fictional city, the imaginary crowd holds a champagne parade and debates why the fans should trust their manager. '+filler+variant+i
-   :kind==='outlook'?'Week '+(week+1)+' brings Team '+((i+1)%32)+'. '+filler+variant+i
-   :kind==='players'?'Player '+i+' (12.0 pts) supplied a memorable performance. '+filler+variant+i
-   :filler+variant+i]})),
+   ?'In this fictional city, the imaginary crowd holds a champagne parade and debates why the fans should trust their manager. '+phrase(i)+variant+i
+   :kind==='outlook'?'Week '+(week+1)+' brings Team '+((i+1)%32)+'. '+phrase(i)+variant+i
+   :kind==='players'?'Player '+i+' (12.0 pts) supplied a memorable performance. '+phrase(i)+variant+i
+   :phrase(i)+variant+i]})),
   starters:[{name:'Player '+i,points:12}],
   benchDecision:null
  })),
- weeklyRecap:{fullText:(filler+variant).repeat(12)}
+ weeklyRecap:{fullText:(base+' league-wide '+variant+'. ').repeat(12)}
 });
 const file=(name,obj)=>{const p=path.join(dir,name);fs.writeFileSync(p,JSON.stringify(obj));return p};
 const run=(a,b)=>spawnSync(process.execPath,['scripts/inquirer-future-quality-gate.mjs',a,...(b?[b]:[])],{encoding:'utf8'});
@@ -34,7 +35,7 @@ const fail=run(reused,prev);
 assert.notEqual(fail.status,0,'Identical prior-week content must fail');
 assert.match(fail.stdout,/VERBATIM_CROSS_WEEK/);
 const noScene=make(6,'fresh distinct angle');
-noScene.articles[0].sections.find(s=>s.kind==='sentiment').paragraphs=['Fans had a decent weekend, perhaps. '+filler.repeat(2)];
+noScene.articles[0].sections.find(s=>s.kind==='sentiment').paragraphs=['Fans had a decent weekend, perhaps. '+phrase(0).repeat(2)];
 const sceneFail=run(file('noscene.json',noScene),prev);
 assert.notEqual(sceneFail.status,0);
 assert.match(sceneFail.stdout,/FAN_SCENE_MISSING/);

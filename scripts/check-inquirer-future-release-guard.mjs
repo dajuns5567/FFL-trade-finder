@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {evaluateFutureEditorialRelease} from '../netlify/functions/inquirer-future-release-guard.mjs';
 
-const filler=(i,k)=>'The manager must answer for the actual outcome on this roster, and the supporters deserve a specific explanation about the performance of club '+i+' in the '+k+' column. ';
+const alias=i=>String.fromCharCode(65+i%26)+String.fromCharCode(65+Math.floor(i/26));
+const filler=(i,k)=>'The manager must answer for the actual outcome on this roster, and the supporters deserve a specific explanation about the performance of club '+alias(i)+' in the '+k+' column. ';
 const mkArticle=i=>({
  reporter:{id:['walter-mercer','mack-hollis','nora-voss','tess-delaney'][i%4]},
  future_brief_status:'COMPLETE_UNAPPROVED',
@@ -9,7 +10,7 @@ const mkArticle=i=>({
  sections:['lede','players','management','hot-seat','cool-throne','sentiment','outlook'].map(kind=>({
   kind,paragraphs:[kind==='lede'?'Team '+i+' beat Opponent '+i+' 102.0–88.0. '+filler(i,kind).repeat(2):
    kind==='players'?'Starter '+i+' (32.0 pts) earned the applause. '+filler(i,kind).repeat(2):
-   kind==='sentiment'?'Crowd mood: 15.0. At the imaginary parade in club '+i+', supporters ask whether the manager deserves trust. '+filler(i,kind).repeat(3):
+   kind==='sentiment'?'Crowd mood: 15.0. At the imaginary parade in club '+alias(i)+', supporters ask whether the manager deserves trust. '+filler(i,kind).repeat(3):
    kind==='outlook'?'Next opponent: Next '+i+'. '+filler(i,kind).repeat(2):filler(i,kind).repeat(3)]
  }))
 });

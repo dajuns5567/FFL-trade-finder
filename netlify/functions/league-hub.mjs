@@ -17,6 +17,8 @@ import {applyPublishedForwardFix} from './inquirer-week3-published-r1.mjs';
 import {rebuildWeek4Editorial} from './inquirer-week4-editorial-rebuild.mjs';
 import {applyInquirerEditorialClarity} from './inquirer-editorial-clarity.mjs';
 import {upgradeInquirerAnalysis} from './inquirer-evidence-analysis.mjs';
+import {finalizeInquirerNarrative} from './inquirer-narrative-final.mjs';
+import {evaluateFutureEditorialRelease} from './inquirer-future-release-guard.mjs';
 
 const LEAGUE='1316867686394769408';
 const API='https://api.sleeper.app/v1';
@@ -442,6 +444,24 @@ export async function weeklyReport(req){
   inquirer=accepted.inquirer;leagueOverview=accepted.leagueOverview;
  }
  const forward=week>=3,rawResult={available:true,season,week,week_classification:weekClassification,generated_at:new Date().toISOString(),published_locked:true,context_snapshot_through_week:week,broadcast_version:BROADCAST_VERSION,inquirer_version:forward?FORWARD_INQUIRER_VERSION:INQUIRER_VERSION,editorial_revision:forward?FORWARD_EDITORIAL_REVISION:INQUIRER_EDITORIAL_REVISION,editorial_generation:forward?{engine:'v31-forward',logic_floor:'week2-approved-plus-forward-v31',variation_salt:variationSalt,previous_week:week>1?week-1:null,quality_metrics:quality.metrics}:null,projection_source:Object.keys(proj).length?'Sleeper weekly projections scored with league scoring settings':'projection data unavailable',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:canonicalTrades?.source||'unavailable',reporters:inquirer.reporters,league_overview:leagueOverview,teams:inquirer.teams},result=forward?applyPublishedForwardFix(rawResult,previousBroadcast):rawResult;
+ // Fail-closed authoring and editorial release guard for future issues.
+ // Existing Week 1-4 published/preloaded copy remains unchanged.
+ // The approved-through-week control above still applies independently.
+ if(week>4){
+  const editorialKey='editorial-briefs/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
+  const editorialBriefs=await s.get(editorialKey,{type:'json'}).catch(()=>null);
+  if(!editorialBriefs||!Array.isArray(editorialBriefs.teams)&&!editorialBriefs.teams){
+   throw new Error('Editorial HOLD: missing trusted authored briefs for Week '+week+'; nothing published');
+  }
+  result.future_editorial_briefs=editorialBriefs;
+  finalizeInquirerNarrative(result,{week});
+  const release=evaluateFutureEditorialRelease(result,previousBroadcast);
+  delete result.future_editorial_briefs;
+  result.editorial_release_audit=release;
+  if(!release.ok){
+   throw new Error('Editorial HOLD Week '+week+': '+release.issues.slice(0,12).join('; '));
+  }
+ }
  if(forward){
   const finalQuality=evaluateInquirerEditionQuality({week,teams:result.teams,league_overview:result.league_overview},previousBroadcast);
   if(!finalQuality.ok)throw new Error('Final published Inquirer quality gate rejected Week '+week+': '+JSON.stringify(finalQuality.issues||[]).slice(0,4000));

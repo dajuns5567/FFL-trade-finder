@@ -1,0 +1,20 @@
+name: Inquirer future newsroom regression
+on:
+  pull_request:
+    paths:
+      - 'scripts/inquirer-future-quality-gate.mjs'
+      - 'scripts/check-inquirer-future-quality-gate.mjs'
+      - 'docs/inquirer-editorial-contract.md'
+      - '.github/workflows/inquirer-future-newsroom-regression.yml'
+  workflow_dispatch:
+jobs:
+  future-newsroom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check scripts/inquirer-future-quality-gate.mjs
+      - run: node --check scripts/check-inquirer-future-quality-gate.mjs
+      - run: node scripts/check-inquirer-future-quality-gate.mjs

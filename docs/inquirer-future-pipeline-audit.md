@@ -66,3 +66,13 @@ The architecture CI now checks the actual `weeklyReport` publisher path (not onl
 ### Explicit editorial sign-off in trusted brief manifest
 
 In addition to the existing `INQUIRER_APPROVED_THROUGH_WEEK` environment control, a future-week Blob manifest must contain `editorial_approval: {approved:true, season:2026, week:5, reviewed_by:'<named reviewer>', reviewed_at:'<valid ISO timestamp>'}` with the actual corresponding season/week. The production publication guard refuses unsigned or incorrectly scoped manifests; it does not expose the reviewer identity in the persisted public broadcast. Sign-off is documentary evidence of a human editorial review, not an automated guarantee that the joke quality is good. A manifest cannot override source facts, publication approval or security permissions.
+
+## Fact packet generator for future newsroom assignments
+
+When a completed future-week *candidate* JSON and the last accepted edition JSON are securely available, run:
+
+`node scripts/inquirer-prep-future-editorial.mjs candidate.json editorial-baselines/2026-week4-v19-served-copy.json > briefing-packet.json`
+
+The packet contains reporter identities and voice guidance, verified completed scores, relevant starter scores, legal bench-decision evidence, mood, next matchup, and last issue's prose for comparison. It also contains a draft `draft_manifest` with all 32 team entries, every recap desk, and **intentionally blank prose arrays and `editorial_approval.approved=false`**. Do not deposit that placeholder as an approved manuscript. A source-grounded author/editor must write original copy and review the whole edition before depositing the completed manifest securely at `editorial-briefs/{season}/week-{WW}.json` in the existing strong-consistency Netlify Blob store.
+
+**Operational gap:** The current production publisher builds the candidate *inside* `weeklyReport`, and no dedicated authenticated **non-publishing** candidate extraction/staging service has yet been added. Obtain the candidate through a controlled offline or trusted admin workflow. Do not bypass `INQUIRER_APPROVED_THROUGH_WEEK`, open preview authentication, or run `weeklyReport` with live publishing authorization merely to produce a draft. A secure draft-only path needs separate threat-modeling, testing and approval before use.

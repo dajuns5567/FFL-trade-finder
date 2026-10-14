@@ -64,4 +64,13 @@ assert.match(evaluate(voices).issues.join('|'),/four distinct reporter voices/);
 const repetitiveRecap=mk();
 repetitiveRecap.league_overview.sections[0].blocks[1].paragraphs=[...repetitiveRecap.league_overview.sections[0].blocks[0].paragraphs];
 assert.match(evaluate(repetitiveRecap).issues.join('|'),/identical reporting reused across/);
+const finale=mk();finale.week=17;
+for(const t of finale.teams){
+ t.next_opponent_name='';
+ t.inquirer_article.sections.find(x=>x.kind==='outlook').paragraphs=['The season final verdict for club '+alias(Number(t.team_name.split(' ').at(-1)))+' is merciless: the manager must answer for this finish. '+filler(Number(t.team_name.split(' ').at(-1)),'outlook').repeat(2)];
+}
+const finalReference={...reference,week:16};
+const finalManifest={...manifest,week:17};
+const finalApproval={...approval,week:17,content_sha256:editorialManifestDigest(finalManifest)};
+assert.equal(evaluateFutureEditorialRelease(finale,finalReference,{approval:finalApproval,manifest:finalManifest}).ok,true,'Final-week outlook should discuss the season, not invent an upcoming fixture');
 console.log('PASS: editorial release guard accepts complete fixture, blocks stale, weak, fact-mismatched and missing recap editions');

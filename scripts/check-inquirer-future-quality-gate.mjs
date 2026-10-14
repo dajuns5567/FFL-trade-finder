@@ -13,6 +13,7 @@ const make=(week,variant='')=>({
  season:2026,week,
  articles:Array.from({length:32},(_,i)=>({
   team:'Team '+i,
+  future_brief_status:'COMPLETE_UNAPPROVED',
   reporter:['Nick Swindell','Tilly Fleecer','Jefferson Filch','Bartholomew Roycington III'][i%4],
   sections:required.map(kind=>({kind,paragraphs:[kind==='sentiment'
    ?'In this fictional city for '+String.fromCharCode(65+i%26)+String.fromCharCode(65+Math.floor(i/26))+', the imaginary crowd holds a champagne parade and debates why the fans should trust their manager. '+phrase(i).repeat(3)+variant+i

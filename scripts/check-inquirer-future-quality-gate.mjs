@@ -16,7 +16,7 @@ const make=(week,variant='')=>({
   future_brief_status:'COMPLETE_UNAPPROVED',
   reporter:['Nick Swindell','Tilly Fleecer','Jefferson Filch','Bartholomew Roycington III'][i%4],
   sections:required.map(kind=>({kind,paragraphs:[kind==='sentiment'
-   ?'In this fictional city for '+String.fromCharCode(65+i%26)+String.fromCharCode(65+Math.floor(i/26))+', the imaginary crowd holds a champagne parade and debates why the fans should trust their manager. '+phrase(i).replace('The very real decision','The '+variant+' decision').repeat(3)+i
+   ?'In this fictional city for '+String.fromCharCode(65+i%26)+String.fromCharCode(65+Math.floor(i/26))+', the imaginary crowd holds a '+variant+' champagne parade and debates why the fans should trust their manager. '+phrase(i).replace('The very real decision','The '+variant+' decision').repeat(3)+i
    :kind==='outlook'?'Week '+(week+1)+' brings Team '+((i+1)%32)+'. '+phrase(i).replace('The very real decision','The '+variant+' decision').repeat(3)+i
    :kind==='players'?'Player '+i+' (12.0 pts) supplied a memorable performance. '+phrase(i).replace('The very real decision','The '+variant+' decision').repeat(3)+i
    :phrase(i).replace('The very real decision','The '+variant+' decision').repeat(3)+i]})),

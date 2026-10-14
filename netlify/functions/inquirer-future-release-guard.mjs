@@ -7,8 +7,8 @@ const sec=(article,kind)=>(article?.sections||[]).find(s=>s.kind===kind)?.paragr
 const normalized=s=>String(s||'').toLowerCase().replace(/\d+(?:\.\d+)?/g,'#').replace(/\s+/g,' ').trim();
 const sentence=s=>String(s||'').replace(/\s+/g,' ').split(/(?<=[.!?])\s+(?=[A-Z"'“‘])/).filter(Boolean);
 const words=s=>(String(s||'').match(/\b[\w'-]+\b/g)||[]).length;
-const fictional=/imaginary|fictional|satirical|cartoon|pretend|make-believe/i;
-const scene=/pitchfork|parade|champagne|protest|bartender|firework|statue|fountain|crowd|street|march|party|sign|toast|convertible|stadium|confetti|radio|supporters|placard/i;
+const fictional=/imaginar|imagine|fictional|satirical|cartoon|pretend|make-believe|suppose|picture (?:a|the)|one can almost see|alternate universe|as if/i;
+const scene=/pitchfork|parade|champagne|protest|bartender|firework|statue|fountain|crowd|street|march|party|sign|toast|convertible|stadium|confetti|radio|supporters|placard|jury|courtroom|picket|choir|tuba|balloon|bonfire|trophy|funeral|museum|billboard|eulogy|clown|mascot|clipboard|receipts|coaster|supporter|fan club/i;
 const opinion=/\b(?:deserve|earned|should|must|needs?|embarrass|shame|absurd|ridiculous|indefensible|pathetic|disgrace|pardon|applaud|accountab|credit|blame|excuse|reckless|fraud|spectacular|brutal|miserable|unacceptable|outrage|trust|panic|suspicious|unfit|inexcusable|laughable|furious|humiliat|ludicrous|disaster|mercy|believe|angry|worry|demand|question|enough|better|worse|funny|joke|comedy|disappoint|stupid|terrible)\w*\b/i;
 const generic=/eligible points|projection provenance|verified legal rescue|the reporter should|this article should|consult live week \d+ projections/i;
 const keys=['lede','players','management','hot-seat','cool-throne','sentiment','outlook'];

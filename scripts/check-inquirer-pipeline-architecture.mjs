@@ -6,8 +6,9 @@ const writer=read('netlify/functions/inquirer-narrative-final.mjs');
 const rebuild=read('netlify/functions/inquirer-week4-editorial-rebuild.mjs');
 const gate=read('scripts/inquirer-future-quality-gate.mjs');
 const ci=read('.github/workflows/inquirer-future-newsroom-regression.yml');
+const draft=read('netlify/functions/inquirer-draft-candidate.mjs');
 const production=read('netlify/functions/league-hub.mjs');
-const weekly=production.slice(production.indexOf('export async function weeklyReport(req)'));
+const weekly=production.slice(production.indexOf('export async function weeklyReport(req'));
 const expected=[
  ['legacy authors isolated',analysis.includes('const recapWorkspace=')&&analysis.includes('edition.league_overview=recapWorkspace.league_overview')],
  ['only final team writer in evidence pipeline',(analysis.match(/finalizeInquirerNarrative\(edition/g)||[]).length===1],
@@ -27,7 +28,13 @@ const expected=[
  ['real publisher uses authoritative final writer',production.includes('finalizeInquirerNarrative(result,{week})')],
  ['real publisher invokes final newsroom gate',weekly.includes('evaluateFutureEditorialRelease(result,previousBroadcast,')],
  ['real publisher audits before saving',weekly.indexOf('evaluateFutureEditorialRelease(result,previousBroadcast,')>=0&&weekly.indexOf('evaluateFutureEditorialRelease(result,previousBroadcast,')<weekly.indexOf('await s.setJSON(key,')],
- ['real publisher retains independent release approval',production.includes('INQUIRER_APPROVED_THROUGH_WEEK')]
+ ['real publisher retains independent release approval',production.includes('INQUIRER_APPROVED_THROUGH_WEEK')],
+ ['read-only draft skips publication approval while retaining completion',weekly.includes('!draftOnly&&week>approvedThroughWeek')&&weekly.includes('await completedPublicationWeek(week)')],
+ ['draft returns before publication write',weekly.indexOf('if(draftOnly){')>=0&&weekly.indexOf('if(draftOnly){')<weekly.indexOf('await s.setJSON(key,')],
+ ['draft suppresses prior award self-heal',weekly.includes('latestPublished&&!draftOnly')],
+ ['draft suppresses manager history cache writes',weekly.includes('managerHistory({allowCacheWrite:!draftOnly})')],
+ ['draft endpoint POST only and server authorized',draft.includes("req.method!=='POST'")&&draft.includes('isAuthorizedWrite(req)')&&draft.includes('isReadOnlyPreview(req,platformContext)')],
+ ['draft endpoint calls no-writing edition mode',draft.includes('weeklyReport(req,{draftOnly:true})')]
 ];
 for(const [name,ok] of expected)assert.ok(ok,'PIPELINE_REGRESSION: '+name);
 console.log('PASS: '+expected.length+' pipeline architecture invariants checked');

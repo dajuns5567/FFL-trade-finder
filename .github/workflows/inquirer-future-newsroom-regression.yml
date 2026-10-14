@@ -6,6 +6,9 @@ on:
       - 'scripts/check-inquirer-future-quality-gate.mjs'
       - 'scripts/check-inquirer-future-brief-assembly.mjs'
       - 'scripts/check-inquirer-pipeline-architecture.mjs'
+      - 'scripts/check-inquirer-future-release-guard.mjs'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/inquirer-future-release-guard.mjs'
       - 'docs/inquirer-editorial-contract.md'
       - 'netlify/functions/inquirer-*.mjs'
       - 'editorial-baselines/**'
@@ -22,6 +25,8 @@ jobs:
       - run: node --check scripts/inquirer-future-quality-gate.mjs
       - run: node --check scripts/check-inquirer-future-quality-gate.mjs
       - run: node scripts/check-inquirer-pipeline-architecture.mjs
+      - name: Check production publisher newsroom gate
+        run: node scripts/check-inquirer-future-release-guard.mjs
       - run: node scripts/check-inquirer-future-quality-gate.mjs
       - name: Assert future authoring contract and editorial HOLD
         run: node scripts/check-inquirer-future-brief-assembly.mjs

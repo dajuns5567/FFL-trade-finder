@@ -52,6 +52,17 @@ export function evaluateFutureEditorialRelease(edition,prior=null,{approval=null
   const starters=(t.starter_details||[]).filter(p=>p?.name&&number(p.points));
   if(!starters.some(p=>playerText.toLowerCase().includes(String(p.name).toLowerCase())&&playerText.includes(Number(p.points).toFixed(1))))fail(id,'player commentary lacks named starter with verified score');
   if(/\(\d+(?:\.\d+)?\s+pts\)\s+\d+(?:\.\d+)?\b/i.test(playerText))fail(id,'duplicate injected player score');
+  // Verify *every* explicitly annotated real starter, not only the first
+  // correctly labeled player. A single correct starter must not conceal a
+  // wrong score elsewhere in an article.
+  for(const player of starters){
+   const escaped=String(player.name).replace(/[.*+?^${}()|[\]\\]/g,'\\  if(/\(\d+(?:\.\d+)?\s+pts\)\s+\d+(?:\.\d+)?\b/i.test(playerText))fail(id,'duplicate injected player score');');
+   const rx=new RegExp('(?:^|[^A-Za-z])'+escaped+"(?:['’]s)?\\s*\\((\\d+(?:\\.\\d+)?)\\s+pts\\)",'gi');
+   for(const match of article.matchAll(rx)){
+    if(!near(Number(match[1]),player.points))fail(id,'annotated starter score conflicts with source for '+player.name);
+   }
+  }
+
   const bench=t.best_lineup_miss||a.facts?.best_lineup_miss;
   if(bench?.starter&&bench?.reserve&&number(bench.gap)&&!near(Number(bench.reserve.points)-Number(bench.starter.points),bench.gap))fail(id,'bench swap arithmetic contradicts source');
   const reporter=a.reporter?.id||a.reporter?.name||'unknown',stats=reporterStats.get(reporter)||{sections:0,opinion:0,articles:0};

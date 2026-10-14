@@ -701,7 +701,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   put(a,'players',playerColumn?[embedVerifiedPlayerEvidence(playerColumn,t.starter_details||[])]:[playerFeature,weakestFeature]);
   // These are editorial observations, not fabricated numeric Fleeced! grades.
   const signalObservations={
-   "Miami Dolphins":"McMillan’s 45.2-point explosion is a Fleeced! breakout worth taking seriously. Miami had a match-winner on offense and still found a way to create unnecessary suspense on defense.",
+   "Miami Dolphins":"McMillan’s 45.2-point explosion is a Fleeced! breakout worth taking seriously. His score made even a 22.7-point afternoon from Jonathan Taylor feel like the opening act.",
    "New York Jets":"DeJean's 27.5 is the kind of Fleeced! standout that makes a manager look clever. Three teammates under five are the warning that this act needs more than one headliner.",
    "Kansas City Chiefs":"Bassa accounted for all 9.5 Kansas City points. That's an unmistakable Fleeced! red flag for the supporting cast: six starters and not a single useful contribution among them.",
    "Las Vegas Raiders":"Seven starters and seven zeros. The Fleeced! alarm belongs to the entire Raiders roster, not a player whose breakout is supposedly just around the corner.",

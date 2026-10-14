@@ -28,17 +28,21 @@ const mk=()=>{
   league_overview:{future_recap_brief_status:'COMPLETE_UNAPPROVED',sections:[{blocks}]}
  };
 };
+const approval={approved:true,season:2026,week:5,reviewed_by:'Fixture Desk',reviewed_at:'2026-10-14T00:00:00Z'};
+const evaluate=(candidate,prior=null)=>evaluateFutureEditorialRelease(candidate,prior,{approval});
 const e=mk();
-const accepted=evaluateFutureEditorialRelease(e);
+const accepted=evaluate(e);
 assert.equal(accepted.ok,true,JSON.stringify(accepted.issues.slice(0,10)));
 const prior=mk();
-assert.match(evaluateFutureEditorialRelease(mk(),prior).issues.join('|'),/recycled last-week sentence/);
+assert.match(evaluate(mk(),prior).issues.join('|'),/recycled last-week sentence/);
+const unsigned=evaluateFutureEditorialRelease(mk());
+assert.match(unsigned.issues.join('|'),/approval attestation required/);
 const noBrief=mk();noBrief.teams[0].inquirer_article.future_brief_status='MISSING_OR_FACT_MISMATCH';
-assert.match(evaluateFutureEditorialRelease(noBrief).issues.join('|'),/fresh section brief/);
+assert.match(evaluate(noBrief).issues.join('|'),/fresh section brief/);
 const noJokes=mk();for(const t of noJokes.teams)t.inquirer_article.sections.find(s=>s.kind==='sentiment').paragraphs=['Crowd mood: 15.0. Fans should remain calm.'];
-assert.match(evaluateFutureEditorialRelease(noJokes).issues.join('|'),/hypothetical sports-fan scene/);
+assert.match(evaluate(noJokes).issues.join('|'),/hypothetical sports-fan scene/);
 const altered=mk();altered.teams[0].points=201;
-assert.match(evaluateFutureEditorialRelease(altered).issues.join('|'),/lede does not identify/);
+assert.match(evaluate(altered).issues.join('|'),/lede does not identify/);
 const recap=mk();recap.league_overview.future_recap_brief_status='MISSING_OR_INCOMPLETE';
-assert.match(evaluateFutureEditorialRelease(recap).issues.join('|'),/fresh complete recap brief missing/);
+assert.match(evaluate(recap).issues.join('|'),/fresh complete recap brief missing/);
 console.log('PASS: editorial release guard accepts complete fixture, blocks stale, weak, fact-mismatched and missing recap editions');

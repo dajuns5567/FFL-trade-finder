@@ -5,6 +5,8 @@ on:
       - 'scripts/inquirer-future-quality-gate.mjs'
       - 'scripts/check-inquirer-future-quality-gate.mjs'
       - 'docs/inquirer-editorial-contract.md'
+      - 'netlify/functions/inquirer-*.mjs'
+      - 'editorial-baselines/**'
       - '.github/workflows/inquirer-future-newsroom-regression.yml'
   workflow_dispatch:
 jobs:

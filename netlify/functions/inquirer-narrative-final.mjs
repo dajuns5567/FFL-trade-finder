@@ -515,7 +515,19 @@ const embedVerifiedPlayerEvidence=(text,starting,alreadyUsed=[])=>{
   const nextPart=result.slice(matched+c.word.length);
   const possessive=/^(['’]s)\b/i.exec(nextPart)?.[0]||'';
   const end=matched+c.word.length+possessive.length;
-  result=result.slice(0,end)+' ('+Number(c.p.points).toFixed(1)+' pts)'+result.slice(end);
+  const score=Number(c.p.points).toFixed(1);
+  const trailing=result.slice(end);
+  // A previously annotated name needs no second label.
+  if(new RegExp('^\\s*\\('+score.replace('.', '\\.')+'\\s+pts\\)','i').test(trailing)){
+   touched.add(String(c.p.id||c.p.name));
+   continue;
+  }
+  // A column may already say "Player's 27.7". Keep the one authoritative
+  // injected annotation and discard only an identical adjacent bare score.
+  const bare=/^(\\s+)(\\d+(?:\\.\\d+)?)(?=\\b)/.exec(trailing);
+  const duplicate=bare&&Math.abs(Number(bare[2])-Number(c.p.points))<0.051;
+  const suffix=duplicate?trailing.slice(bare[0].length):trailing;
+  result=result.slice(0,end)+' ('+score+' pts)'+suffix;
   touched.add(String(c.p.id||c.p.name));
  }
  return result;

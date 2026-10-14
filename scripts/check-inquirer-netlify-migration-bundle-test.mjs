@@ -4,6 +4,7 @@ import os from 'node:os';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {verifyMigrationBundle} from './check-inquirer-netlify-migration-bundle.mjs';
+import {compareMigrationBundles} from './compare-inquirer-netlify-migrations.mjs';
 import {editorialManifestDigest} from '../netlify/functions/inquirer-future-release-guard.mjs';
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'netlify-migrate-'));
 const entries=[];
@@ -25,4 +26,16 @@ manifest.source_frozen=false;write();assert.throws(()=>verifyMigrationBundle(roo
 manifest.source_frozen=true;write();
 fs.appendFileSync(path.join(root,entries[1].file),' ');
 assert.equal(verifyMigrationBundle(root).ok,false,'Tampered data must fail');
+// Re-export the original source bytes to a separate destination inventory.
+const dst=fs.mkdtempSync(path.join(os.tmpdir(),'netlify-destination-'));
+const sourceEntries=entries.map((e,i)=>({...e,file:'restored-'+i+'.json'}));
+for(let i=0;i<entries.length;i++){
+ const data=i===1?Buffer.from(JSON.stringify({available:true,season:2026,week:5,teams:Array.from({length:32},(_,i)=>({team_name:'Team '+i}))})):fs.readFileSync(path.join(root,entries[i].file));
+ fs.writeFileSync(path.join(dst,sourceEntries[i].file),data);
+}
+fs.writeFileSync(path.join(dst,'migration-manifest.json'),JSON.stringify({...manifest,source_frozen:true,objects:sourceEntries}));
+fs.writeFileSync(path.join(root,entries[1].file),fs.readFileSync(path.join(dst,sourceEntries[1].file)));
+assert.equal(compareMigrationBundles(root,dst).ok,true,'Identical migration export should pass');
+fs.writeFileSync(path.join(dst,sourceEntries[1].file),JSON.stringify({available:true,season:2026,week:5,teams:[]}));
+assert.equal(compareMigrationBundles(root,dst).ok,false,'Corrupted destination export must block cutover');
 console.log('PASS: migration bundle hashes, archives, account scope, source freeze and tamper rejection');

@@ -42,3 +42,23 @@ Audit scope: `player-signal-layer-r1`, PR #390. Baseline: served 2026 Week 4 v19
 - verification of all future weeks in advance.
 
 This file documents remaining engineering work; adding it does not authorize new production access, merges, scheduled changes or standalone Week 5 publication.
+
+## Production publishing path — critical discovery and feature-branch fix
+
+**Audited routes:** `inquirer-publish-native-scheduled.mjs` (hourly production schedule), `inquirer-publish-scheduled.mjs`, `inquirer-publish-on-load.mjs`, and `inquirer-publish-on-load-background.mjs` all ultimately use `weeklyReport` in `league-hub.mjs`. Previously that function ran the v31 forward editorial composer and its own quality gate, **but bypassed the new `future_editorial_briefs`, `finalizeInquirerNarrative`, and `editorial_quality` release status**. Thus the earlier standalone quality tests were not sufficient to prevent future regression in actual publication.
+
+The PR now adds a `week>4` gate **inside `weeklyReport`, after the existing v31 generation and sentiment fix but before final quality checks and `s.setJSON(key,...)`**:
+
+1. Load a week-scoped, server-side authored manifest from Netlify Blobs, key `editorial-briefs/{season}/week-{WW}.json`.
+2. Feed the manifest into the single authoritative `finalizeInquirerNarrative` writer. The writer checks score, next opponent, reporter and all prose sections; the recap requires every desk.
+3. Run `evaluateFutureEditorialRelease` against the assembled 32 articles, recap and previously locked edition, including source-score anchoring, fan mood/theater, substantive hot-take sections, opinionated reporter profile, duplicate-stat checks and cross-week recycled sentences. A failure throws an explicit editorial HOLD and **does not write the new broadcast**.
+4. Remove the private authored manifest from the public broadcast payload, retaining only diagnostic `editorial_release_audit`.
+5. Continue the existing v31 structural QA, Sleeper fact reconciliation, published integrity and awards/persistence checks.
+
+The **existing `INQUIRER_APPROVED_THROUGH_WEEK` permission gate is not changed**, and the new guard only applies to weeks greater than 4. Weeks 1–3 remain untouched; Week 4 uses the accepted, frozen source. Production cannot receive the PR changes until an authorized merge/deploy.
+
+**Important operational dependency:** There is not yet a complete trusted authoring/staging service that produces and deposits 32 individually researched prose briefs plus league recap at this Blob key. The new production guard intentionally **holds** future publication if they are absent. Before advancing the approved-through week, arrange a secure editorial staging process that captures completed-week facts, drafts and checks original journalism, stores the reviewed manifest, and runs the real candidate acceptance job. Never bypass the gate by populating boilerplate arrays or weaken it to a warning.
+
+**Trust limit:** The manifest is loaded from server-side storage, not from a browser; however, the guard establishes only structural/source and anti-repetition checks, not perfect fact checking or objective humor quality. The existing publication approval must still represent a genuine, human-reviewed release decision.
+
+The architecture CI now checks the actual `weeklyReport` publisher path (not only the standalone Week 4 fast preview). Synthetic release-guard tests are read-only. A live authorized full future-week dry run and Netlify-authenticated browser check remain outstanding, and must be completed before extending public approval.

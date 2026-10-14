@@ -23,7 +23,7 @@ const make=(week,variant='')=>({
   starters:[{name:'Player '+i,points:12}],
   benchDecision:null
  })),
- weeklyRecap:{fullText:(base+' league-wide '+variant+'. ').repeat(12)}
+ weeklyRecap:{future_recap_brief_status:'COMPLETE_UNAPPROVED',fullText:(base+' league-wide '+variant+'. ').repeat(12)}
 });
 const file=(name,obj)=>{const p=path.join(dir,name);fs.writeFileSync(p,JSON.stringify(obj));return p};
 const run=(a,b)=>spawnSync(process.execPath,['scripts/inquirer-future-quality-gate.mjs',a,...(b?[b]:[])],{encoding:'utf8'});

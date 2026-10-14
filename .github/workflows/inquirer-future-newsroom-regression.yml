@@ -18,3 +18,5 @@ jobs:
       - run: node --check scripts/inquirer-future-quality-gate.mjs
       - run: node --check scripts/check-inquirer-future-quality-gate.mjs
       - run: node scripts/check-inquirer-future-quality-gate.mjs
+      - name: Protect accepted Week 4 editorial baseline
+        run: node scripts/inquirer-future-quality-gate.mjs editorial-baselines/2026-week4-v19-served-copy.json

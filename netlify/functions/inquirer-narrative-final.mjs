@@ -912,5 +912,26 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   overview.paragraphs=(overview.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(x=>x.paragraphs||[])]);
   overview.cohesive_editorial_version=1;
  }
+ // Future recap must also be fresh. Preserve all existing recap block identities
+ // and only replace the prose within the authoritative final writer.
+ if(week>4&&e.league_overview){
+  const overview=e.league_overview,brief=e.future_editorial_briefs;
+  const recap=brief&&Number(brief.week)===week&&Number(brief.season)===Number(e.season)?brief.recap:null;
+  const entries=(overview.sections||[]).flatMap(section=>
+   (section.blocks||[]).length
+    ?section.blocks.map(block=>({key:block.kind,target:block}))
+    :[{key:section.heading,target:section}]);
+  const complete=!!recap&&entries.length>0&&entries.every(({key})=>
+   Array.isArray(recap[key])&&recap[key].some(p=>String(p||'').trim().length>45));
+  overview.editorial_review_required=true;
+  overview.future_recap_brief_status=complete?'COMPLETE_UNAPPROVED':'MISSING_OR_INCOMPLETE';
+  if(complete){
+   for(const {key,target} of entries)target.paragraphs=recap[key].map(String);
+   const first=overview.sections?.[0];
+   if(first?.blocks?.length)first.paragraphs=first.blocks.flatMap(b=>b.paragraphs||[]);
+   overview.paragraphs=(overview.sections||[]).flatMap(sec=>(sec.blocks||[]).length
+    ?sec.blocks.flatMap(b=>b.paragraphs||[]):sec.paragraphs||[]);
+  }
+ }
  return e;
 }

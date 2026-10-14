@@ -34,6 +34,10 @@ const week=Number(edition.week);
 const prev=previous?shape(previous):[];
 if(previous && Number(previous.week)===week)warn('edition','SAME_WEEK_REFERENCE','Reference is the same week; cross-week novelty cannot be verified');
 const previousByTeam=new Map(prev.map(a=>[a.team,a]));
+const quality={reporters:new Map(),hotSeatWeak:[],coolThroneWeak:[],fanWeak:[],outlookWeak:[],recapWeak:[]};
+const opinion=/\b(?:deserve|earned|should|must|needs?|embarrass|shame|absurd|ridiculous|indefensible|pathetic|disgrace|pardon|applaud|accountab|credit|blame|excuse|reckless|fraud|spectacular|brutal|miserable|unacceptable|outrage|trust|panic|suspicious|unfit|inexcusable|laughable|furious|humiliat|ludicrous|disaster|mercy|believe|angry|angrier|worry|demand|question|enough|better|worse|funny|joke|comedy|disappoint|stupid|terrible)\w*\b/i;
+const stock=/\b(?:the numbers speak for themselves|at the end of the day|it is what it is|only time will tell|on to the next one|played a good game|did their job|there is room for improvement|a win is a win|the rest is history)\b/i;
+const argumentStrength=x=>({words:(text(x).match(/[\w'-]+/g)||[]).length,opinion:opinion.test(x),stock:stock.test(x),questions:(text(x).match(/\?/g)||[]).length});
 const previousSentenceKeys=new Map();
 if(previous && Number(previous.week)!==week){
  for(const prior of prev)for(const section of prior.sections||[])
@@ -56,6 +60,20 @@ for(const a of articles){
  const sections=a.sections||[];
  for(const k of required)if(!get(a,k))bad(id,'EMPTY_REQUIRED_SECTION',k);
  const fan=get(a,'sentiment');
+ const reporter=a.reporter||'unknown';
+ const previousReporter=quality.reporters.get(reporter)||{articles:0,contrasts:0,opinionSections:0,featureSections:0};
+ previousReporter.articles++;
+ for(const kind of ['lede','players','management','hot-seat','cool-throne','sentiment','outlook']){
+  const sectionText=get(a,kind),strength=argumentStrength(sectionText);
+  if(strength.opinion)previousReporter.opinionSections++;
+  previousReporter.featureSections++;
+  if(kind==='hot-seat'&&strength.words<12)quality.hotSeatWeak.push({team:id,excerpt:sectionText});
+  if(kind==='cool-throne'&&strength.words<10)quality.coolThroneWeak.push({team:id,excerpt:sectionText});
+  if(kind==='sentiment'&&strength.words<70)quality.fanWeak.push({team:id,excerpt:sectionText});
+  if(kind==='outlook'&&strength.words<25)quality.outlookWeak.push({team:id,excerpt:sectionText});
+  if(strength.stock)warn(id,'STOCK_COMMENTARY_'+kind,sectionText.slice(0,180));
+ }
+ quality.reporters.set(reporter,previousReporter);
  const prose=sections.flatMap(s=>s.paragraphs||[]).join(' ');
  if(!theater.test(fan)||!scene.test(fan))bad(id,'FAN_SCENE_MISSING','Distinct fictional sports-fan scene not detected');
  if(technical.test(prose))bad(id,'EDITORIAL_TECHNICAL_LANGUAGE','Metadata terminology entered reporter copy');
@@ -68,7 +86,7 @@ for(const a of articles){
   const key=t.toLowerCase().replace(/\d+(?:\.\d+)?/g,'#').replace(/\s+/g,' ').trim();
   if(key.length>60){if(sentenceKeys.has(key))warn(id,'WITHIN_ARTICLE_REPEAT',t);sentenceKeys.add(key)}
   if(previousSentenceKeys.has(key))bad(id,'RECYCLED_CROSS_WEEK_SENTENCE','Previously used by '+previousSentenceKeys.get(key)+': '+t);
-  if(contrast.test(t))totalContrast++;
+  if(contrast.test(t)){totalContrast++;previousReporter.contrasts++;}
   if(key.length>65){const arr=shared.get(key)||[];arr.push(id);shared.set(key,arr)}
  }
  const playerText=get(a,'players');
@@ -109,7 +127,12 @@ else {
   else if(earlier&&similarity(body,earlier)>=0.75&&Number(previous.week)!==week)warn('edition','HIGH_RECAP_CROSS_WEEK_SIMILARITY',similarity(body,earlier).toFixed(3));
  }
 }
-const result={week,articles:articles.length,errors,warnings,contrastSentences:totalContrast,
+for(const x of quality.hotSeatWeak)warn(x.team,'THIN_HOT_TAKE_REVIEW',x.excerpt);
+for(const x of quality.coolThroneWeak)warn(x.team,'THIN_PRAISE_REVIEW',x.excerpt);
+for(const x of quality.fanWeak)warn(x.team,'SHALLOW_FAN_COMMENTARY_REVIEW',x.excerpt);
+for(const x of quality.outlookWeak)warn(x.team,'THIN_FUTURE_STORY_REVIEW',x.excerpt);
+for(const [name,v] of quality.reporters){if(v.featureSections>=7&&v.opinionSections/v.featureSections<0.40)warn('reporter:'+name,'LOW_OPINION_DENSITY',v);if(v.articles>=3&&v.contrasts/v.articles>1.5)warn('reporter:'+name,'MECHANICAL_CONTRAST_RHYTHM',v)}
+const result={week,articles:articles.length,errors,warnings,contrastSentences:totalContrast,reporterProfiles:Object.fromEntries(quality.reporters),
  status:errors.length?'HOLD':'STRUCTURAL_PASS_EDITORIAL_REVIEW_REQUIRED',
  note:'Passing is not permission to publish. The distinct story angles, reporter voices, factual claims, humor, and recap must be manually assessed against last week.'};
 console.log(JSON.stringify(result,null,2));

@@ -87,6 +87,7 @@ for(const [key,teams] of shared){if(new Set(teams).size>1)bad(teams.join(', '),'
 if(totalContrast>=30)warn('edition','CONTRAST_RHYTHM','Many repeated not-X-but-Y constructions: '+totalContrast);
 const recap=edition.weeklyRecap||edition.league_overview;
 if(!recap)bad('edition','RECAP_MISSING','No Weekly Recap found');
+else if(week>4&&recap.future_recap_brief_status!=='COMPLETE_UNAPPROVED')bad('edition','MISSING_FRESH_RECAP_BRIEF','Require a fully authored current-week recap before editorial certification');
 else {
  const body=recap.fullText||JSON.stringify(recap.sections||[]);
  if(text(body).length<600)bad('edition','RECAP_TOO_SHORT','No substantial recap found');

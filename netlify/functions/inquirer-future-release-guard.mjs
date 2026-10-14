@@ -42,7 +42,8 @@ export function evaluateFutureEditorialRelease(edition,prior=null,{approval=null
   const mood=a.fan_sentiment?.score;
   if(!number(mood)||!fan.includes(Number(mood).toFixed(1)))fail(id,'fan prose does not include measured mood');
   const next=String(t.next_opponent_name||'');
-  if(!next||!sec(a,'outlook').toLowerCase().includes(next.toLowerCase()))fail(id,'next-opponent commentary absent');
+  if(Number(edition.week)<17&&(!next||!sec(a,'outlook').toLowerCase().includes(next.toLowerCase())))fail(id,'next-opponent commentary absent');
+  if(Number(edition.week)>=17&&!/season|final|playoff|finish|champion|offseason/i.test(sec(a,'outlook')))fail(id,'final-week outlook requires season conclusion rather than invented next matchup');
   if(number(t.points)&&number(t.opponent_points)){
    const lede=sec(a,'lede');
    if(!lede.includes(Number(t.points).toFixed(1))||!lede.includes(Number(t.opponent_points).toFixed(1)))fail(id,'lede does not identify both verified scores');

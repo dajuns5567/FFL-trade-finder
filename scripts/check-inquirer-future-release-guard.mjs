@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {evaluateFutureEditorialRelease} from '../netlify/functions/inquirer-future-release-guard.mjs';
+import {evaluateFutureEditorialRelease,editorialManifestDigest} from '../netlify/functions/inquirer-future-release-guard.mjs';
 
 const alias=i=>String.fromCharCode(65+i%26)+String.fromCharCode(65+Math.floor(i/26));
 const filler=(i,k)=>'The manager must answer for the actual outcome on this roster, and the supporters deserve a specific explanation about the performance of club '+alias(i)+' in the '+k+' column. ';
@@ -28,9 +28,10 @@ const mk=()=>{
   league_overview:{future_recap_brief_status:'COMPLETE_UNAPPROVED',sections:[{blocks}]}
  };
 };
-const approval={approved:true,season:2026,week:5,reviewed_by:'Fixture Desk',reviewed_at:'2026-10-14T00:00:00Z'};
+const manifest={season:2026,week:5,teams:{fictional:true},recap:{lead:[]}};
+const approval={approved:true,season:2026,week:5,reviewed_by:'Fixture Desk',reviewed_at:'2026-10-14T00:00:00Z',content_sha256:editorialManifestDigest(manifest)};
 const reference={season:2026,week:4,teams:Array.from({length:32},(_,i)=>({team_name:'Team '+i,inquirer_article:{sections:[]}})),league_overview:{sections:[]}};
-const evaluate=(candidate,prior=reference)=>evaluateFutureEditorialRelease(candidate,prior,{approval});
+const evaluate=(candidate,prior=reference)=>evaluateFutureEditorialRelease(candidate,prior,{approval,manifest});
 const e=mk();
 const accepted=evaluate(e);
 assert.equal(accepted.ok,true,JSON.stringify(accepted.issues.slice(0,10)));
@@ -39,6 +40,8 @@ assert.match(evaluate(mk(),prior).issues.join('|'),/recycled last-week sentence/
 assert.match(evaluateFutureEditorialRelease(mk(),null,{approval}).issues.join('|'),/immediately previous accepted full edition/);
 const unsigned=evaluateFutureEditorialRelease(mk());
 assert.match(unsigned.issues.join('|'),/approval attestation required/);
+const changedManifest={...manifest,recap:{lead:['changed after signoff']}};
+assert.match(evaluateFutureEditorialRelease(mk(),reference,{approval,manifest:changedManifest}).issues.join('|'),/digest does not match/);
 const noBrief=mk();noBrief.teams[0].inquirer_article.future_brief_status='MISSING_OR_FACT_MISMATCH';
 assert.match(evaluate(noBrief).issues.join('|'),/fresh section brief/);
 const noJokes=mk();for(const t of noJokes.teams)t.inquirer_article.sections.find(s=>s.kind==='sentiment').paragraphs=['Crowd mood: 15.0. Fans should remain calm.'];

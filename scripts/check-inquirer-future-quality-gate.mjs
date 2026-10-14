@@ -44,4 +44,10 @@ const noRecap=make(6,'fresh distinct angle');delete noRecap.weeklyRecap;
 const recapFail=run(file('norecap.json',noRecap),prev);
 assert.notEqual(recapFail.status,0);
 assert.match(recapFail.stdout,/RECAP_MISSING/);
-console.log('PASS: positive fixture, cross-week copying, missing fan scene and missing recap');
+const sterile=make(6,'fresh distinct angle');
+for(const a of sterile.articles)for(const sec of a.sections)
+ sec.paragraphs=sec.paragraphs.map(p=>p.replace(/manager must live/gi,'manager can live').replace(/fans should trust/gi,'fans may notice'));
+const voiceFail=run(file('sterile.json',sterile),prev);
+assert.notEqual(voiceFail.status,0,'Reporter voice collapse must fail editorial certification');
+assert.match(voiceFail.stdout,/EDITORIAL_VOICE_COLLAPSE/);
+console.log('PASS: positive fixture, cross-week copying, missing fan scene and missing recap, reporter voice collapse');

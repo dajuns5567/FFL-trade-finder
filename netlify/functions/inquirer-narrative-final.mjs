@@ -836,7 +836,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
   const scored=e.teams.filter(t=>Number.isFinite(Number(t.points))).slice().sort((a,b)=>Number(b.points)-Number(a.points));
   const bottom=scored.at(-1),top=scored[0],under40=scored.filter(t=>Number(t.points)<40);
   if(top&&bottom)add('lead','There are no sympathy wins on this schedule. A spectacular solo performance in a loss still gets nothing, and an ugly victory still earns the same mark in the standings. A cruel little system, but at least its arithmetic is consistent.');
-  if(under40.length)add('decisions',under40.length+' teams failed to crack 40. That is not a philosophical debate about roster construction; it is a plea for somebody to put useful players in actual starting positions. The box score has been rude enough.');
+  if(under40.length)add('decisions',under40.length+' teams failed to crack 40. Three teams brought fewer than forty points to work. Their managers should consider checking whether the starters are still employed. The box score has been rude enough.');
   add('league','A division lead in Week '+week+' is a real advantage. Ordering championship banners already would be an ambitious interpretation of how calendars work.');
   // Week 4 hot takes deserve a position, not a stats-to-English translation.
   // Preserve award subjects, division source details and projection provenance.
@@ -847,7 +847,7 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     if(item.kind==='player'&&/Tetairoa McMillan/.test(item.title||''))item.take='Tetairoa McMillan scored 45.2 for Miami, an outrageously good individual afternoon. It belongs in this week’s honors conversation. Handing him a season-long crown after one October eruption, however, would be a particularly enthusiastic misunderstanding of how a season works.';
     if(item.kind==='fraud'&&/Las Vegas Raiders/.test(item.title||''))item.take='Las Vegas started a complete lineup and finished with precisely zero points. Calling that a warning sign is like calling a building without walls “a little drafty.” The manager’s first assignment is to demonstrate that fantasy points remain legal in Nevada.';
     if(item.kind==='division'&&/AFC EAST/.test(item.take||'')&&!String(item.take||'').includes('The division leaders have positions worth defending.'))item.take+=' The division leaders have positions worth defending. They do not yet have permission to mail out playoff invitations; somebody should explain the difference before the commemorative merchandise arrives.';
-    if(item.kind==='upset'&&/Buffalo Billiards/.test(item.title||''))item.take='Buffalo meets New England in Week 5. Buffalo is coming off a forty-two-point defeat; New England lost a much closer game despite a functioning lineup. That makes this worth watching, not an excuse to manufacture a projected upset from numbers this archived Week 4 report cannot verify. Consult live Week 5 projections before naming a favorite.';
+    if(item.kind==='upset'&&/Buffalo Billiards/.test(item.title||''))item.take='Buffalo meets New England in Week 5. Buffalo is coming off a forty-two-point defeat; New England lost a much closer game despite a functioning lineup. Buffalo needs an answer for a forty-two-point collapse, and New England arrives with a much healthier lineup and a four-point grudge. Buffalo's manager could use a win; another afternoon like the last one may require a witness-protection program for the lineup card.';
    }
   }
   // Week 4: keep the reporting evidence intact, but give each recap desk a
@@ -873,7 +873,8 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
      .replace('A place near the top matters because the wins are already banked.','The wins are real; the coronation committee may remain seated.')
      .replace('One usable replacement could have changed the standings.','A tight finish calls for a serious lineup review, not an invented bench hero.')
      .replace('The scoreboard was unusually clear about which roster had a better afternoon.','The scoreboard was less a verdict than a formal notice that one roster failed to attend.')
-     .replace('Nothing from the upcoming slate is counted as complete. Week 5 will get its own results before the newspaper moves forward.','Week 5 has not been played. Anyone claiming next week’s scores already knows the future—or needs to return their press credentials.'));
+     .replace('Nothing from the upcoming slate is counted as complete. Week 5 will get its own results before the newspaper moves forward.','Week 5 has not been played. Anyone claiming next week’s scores already knows the future—or needs to return their press credentials.')
+     .replace('Las Vegas Raiders faces Kansas City Chiefs','Las Vegas Raiders face Kansas City Chiefs'));
    }
   }
   if(week===4&&Number(e.season)===2026)for(const block of blocks){block.paragraphs=[...new Set(block.paragraphs||[])];}

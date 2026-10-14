@@ -143,3 +143,11 @@ A Netlify account switch is a **data migration**, not just a redeployment. Netli
 7. Only after approval and complete data verification, switch the production domain/schedules; keep the source site read-only for a rollback interval and verify again after cutover. Document a rollback path before enabling writes.
 
 Migration MUST fail closed on missing data, hash mismatch, or lost approvals. No account switching, live export/import, credential access or production deployment is authorized by this runbook. The current Netlify connector is unavailable, so this is a procedural control until actual migration testing can be performed.
+
+### Account-switch audit: separate fantasy Value History data
+
+Fleeced! uses a second Netlify Blob store, fll-value-history-v2, distinct from the Inquirer store fleeced-league-hub. The GitHub value-history-data branch archives historical snapshots, but the live unarchived Netlify data must also be exported and validated. Do not assume a complete Inquirer migration preserves team/player Value History.
+
+The value-history archival GitHub workflow now supports an optional repository variable NETLIFY_PRODUCTION_SITE_ID to override its pinned source-site identity after an authorized migration. Its existing fallback remains unchanged until an operator deliberately configures the new destination. Rotate secrets, validate the destination site and branch and confirm snapshots continue updating on the GitHub archival branch. Other value-history scripts can also contain old Netlify site ID or URL defaults; audit all before decommissioning the old account.
+
+The offline compare-inquirer-netlify-migrations.mjs tool verifies exported source and restored destination Blob inventories match by key, byte length and SHA-256. It does not perform online exports/imports or switch accounts. Preserve drafts and their approval state; do not automatically approve them during migration.

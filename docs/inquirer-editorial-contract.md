@@ -65,3 +65,29 @@ Management analysis should describe the actual player score difference and wheth
 ## Joke-rhythm diversity (2026-10-13)
 
 Editorial review must check **rhetorical setup patterns**, not just duplicate strings. Overusing 'not X, but Y', 'it wasn't X; it was Y', 'this isn't X; it's Y', or the same score-to-metaphor turn across different teams makes individually accurate columns monotonous. Use that contrast construction occasionally, never as a default punchline. Vary with direct accusations, distinctive imagery, specific character/manager behavior, concise verdicts, earned admiration, and genuinely different transitions. Judge the entire 32-team edition plus recap aloud for cadence and sentence-level rhythm. Preserve factual scoring, legal-lineup evidence, sarcasm and theatrical mood. Do not eliminate all contrast or enforce a hard keyword quota that damages natural writing. Future weeks should use this as a newsroom acceptance check before publication.
+
+## Future newsroom release architecture — established 2026-10-14
+
+**Important boundary:** The accepted Week 4 edition is a benchmark, not a reusable text source. Existing `week4...` dictionaries and `inquirer-week4-specific-notes.mjs` are strictly 2026 Week 4 only. Copying their sentences into another edition is prohibited. The final writer's generic future-week path does **not** yet automatically deliver Week 4-caliber characterful authored prose. No engineer or assistant may describe a clean schema/keyword test as proof it does.
+
+### Week-by-week editorial inputs
+
+Produce one **fresh, fact-anchored story brief for each of 32 teams** before generating an edition. An editorial brief must contain (a) this week's unique central conflict or triumph, (b) verified winner/loser/player score evidence, (c) the actual legal bench-decision consequence or an explicit no-legal-rescue finding, (d) the reporter's distinct critical position and a one-sentence reason for it, (e) a measured-mood-compatible, clearly imaginary new fan tableau, (f) a different accountable Hot Seat/Cool Throne conclusion, and (g) the verified next opponent with a forward-looking question. Each item is factual when factual, opinionated when commentary, and must never imply invented injuries, quotes, trades, past championships or projections. Require an original league-wide recap plan with separate desks/storylines. Preserve precise scoring and eligibility in data fields; the copy layer may only select and express them.
+
+The four reporters' enduring **character rules** are stable; their imagery, jokes, sentence structures, rhetorical openings, scene props, grievances and closing verdicts must be refreshed every week. A reporter's bank supplies options and dislikes, **not** prewritten paragraphs or a round-robin phrase picker. Sample the football event and its meaningful contradiction *first*, then choose a fitting character delivery; never reverse that ordering. Comparison against recent editions must expose recycled gags and similar argument arcs even when names and numbers change. Maintain diversity **within a reporter**, across 32 teams, and between successive weeks.
+
+### Mandatory pre-release comparison
+
+Save the actual served API JSON or full independent audit JSON for every accepted edition as the reference for the next release. Run:
+
+`node scripts/inquirer-future-quality-gate.mjs next-edition.json previous-accepted-edition.json`
+
+The gate refuses missing sections, ungrounded score composition, empty fan tableaux, replicated cross-team sentences, unchanged prior-week sections/recap, and factual bench-gap inconsistency. High lexical overlap and repetitious contrast are **editorial review warnings**, not automatically rewritten by a script. Investigate all errors and read warnings in context. Compare the current draft against more than one earlier week when available. Generated prose should never be deployed by using the previous edition's authored notes with a new week number.
+
+**Human release criterion:** Someone must read every team's finished lede, player commentary, management, hot/cool verdict, sentiment and outlook, plus all recap blocks, against previous accepted articles from the same reporter. Judge whether *new insights, fresh jokes, reporter-specific cadence and emotionally coherent fan scenes* survive the final assembly. Mark missing sections/meaningless stat explanations as failures even when numbers are right. A numeric pass cannot substitute for this process. Save a signed editorial decision, acceptance timestamp, source-week and revision SHA with the edition.
+
+### Non-regression and safety
+
+`inquirer-evidence-analysis.mjs` must keep the **single authoritative team writer**; recap-only legacy passes stay isolated. Do not add a polishing step after `finalizeInquirerNarrative`. Keep starter scores, bench eligibility, results, projections, standings, recap and mood immutable. Test final served copy, not just raw manifest or intermediate strings. Keep a frozen accepted Week 4 output for visual/editorial comparison but **never** use it as content for future weeks. The future-week QA CI workflow validates the auditor itself; it does not assert that ungenerated future articles are excellent or that a future release passed. Wire the gate to the actual future-edition release payload before authorizing automated publication, and retain the earlier-week snapshot for the comparison.
+
+Do not silently disable or change the existing publication schedule, make previews public, weaken authentication, merge PR #390, deploy production, or publish Week 5. Those actions require a separate explicit user instruction.

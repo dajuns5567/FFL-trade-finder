@@ -933,5 +933,25 @@ export function finalizeInquirerNarrative(e,{week=Number(e?.week)}={}){
     ?sec.blocks.flatMap(b=>b.paragraphs||[]):sec.paragraphs||[]);
   }
  }
+ // Machine-readable release-readiness signal, separate from the publication
+ // mechanism. A complete brief still requires explicit editorial sign-off.
+ if(week>4){
+  const articleStatuses=(e.teams||[]).map(t=>({
+   team:t.team_name,
+   status:t.inquirer_article?.future_brief_status||'NOT_ASSEMBLED'
+  }));
+  const missing=articleStatuses.filter(x=>x.status!=='COMPLETE_UNAPPROVED');
+  const recapStatus=e.league_overview?.future_recap_brief_status||'NOT_ASSEMBLED';
+  e.editorial_quality={
+   status:'HOLD_EDITORIAL_APPROVAL',
+   fresh_briefs_complete:missing.length===0&&articleStatuses.length===32&&recapStatus==='COMPLETE_UNAPPROVED',
+   article_count:articleStatuses.length,
+   missing_or_mismatched_articles:missing,
+   recap_status:recapStatus,
+   review_required:true,
+   requires_cross_week_comparison:true,
+   reason:'Automated assembly is not an editorial acceptance or publication authorization'
+  };
+ }
  return e;
 }

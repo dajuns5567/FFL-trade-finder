@@ -1,0 +1,36 @@
+name: Inquirer future issue acceptance (read-only)
+on:
+  workflow_dispatch:
+    inputs:
+      candidate:
+        description: 'Committed path to a real completed-week candidate edition JSON'
+        required: true
+        type: string
+      previous:
+        description: 'Committed path to the previous accepted full-edition JSON'
+        required: true
+        default: 'editorial-baselines/2026-week4-v19-served-copy.json'
+        type: string
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify candidate and baseline are checked-in JSON
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PREVIOUS: ${{ inputs.previous }}
+        run: |
+          node -e 'const fs=require("node:fs"),p=require("node:path");for(const x of [process.env.CANDIDATE,process.env.PREVIOUS]) { const n=p.normalize(x);if(p.isAbsolute(n)||n===".."||n.startsWith("../")||!n.endsWith(".json")||!fs.existsSync(n)) throw Error("Not a committed relative JSON path: "+x);JSON.parse(fs.readFileSync(n,"utf8"));}'
+      - name: Compare complete new issue with previous accepted issue
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PREVIOUS: ${{ inputs.previous }}
+        run: node scripts/inquirer-future-quality-gate.mjs "$CANDIDATE" "$PREVIOUS"
+      - name: Remind reviewers this is not publication authorization
+        run: echo 'STRUCTURAL PASS is not editorial approval; human review of all 32 stories and recap remains required.'

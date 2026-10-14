@@ -56,7 +56,7 @@ export function evaluateFutureEditorialRelease(edition,prior=null,{approval=null
   // correctly labeled player. A single correct starter must not conceal a
   // wrong score elsewhere in an article.
   for(const player of starters){
-   const escaped=String(player.name).replace(/[.*+?^${}()|[\]\\]/g,'\\  if(/\(\d+(?:\.\d+)?\s+pts\)\s+\d+(?:\.\d+)?\b/i.test(playerText))fail(id,'duplicate injected player score');');
+   const escaped=[...String(player.name)].map(ch=>/[A-Za-z0-9 ]/.test(ch)?ch:'\\'+ch).join('');
    const rx=new RegExp('(?:^|[^A-Za-z])'+escaped+"(?:['’]s)?\\s*\\((\\d+(?:\\.\\d+)?)\\s+pts\\)",'gi');
    for(const match of article.matchAll(rx)){
     if(!near(Number(match[1]),player.points))fail(id,'annotated starter score conflicts with source for '+player.name);

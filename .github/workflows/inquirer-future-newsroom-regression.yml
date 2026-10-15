@@ -12,6 +12,8 @@ on:
       - 'scripts/check-inquirer-netlify-migration-bundle.mjs'
       - 'scripts/compare-inquirer-netlify-migrations.mjs'
       - 'scripts/build-inquirer-netlify-migration-manifest.mjs'
+      - 'scripts/export-netlify-blobs-readonly.mjs'
+      - '.github/workflows/netlify-private-blob-backup.yml'
       - 'scripts/check-inquirer-netlify-migration-bundle-test.mjs'
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/inquirer-future-release-guard.mjs'

@@ -11,6 +11,7 @@ on:
       - 'scripts/check-inquirer-brief-packet.mjs'
       - 'scripts/check-inquirer-netlify-migration-bundle.mjs'
       - 'scripts/compare-inquirer-netlify-migrations.mjs'
+      - 'scripts/build-inquirer-netlify-migration-manifest.mjs'
       - 'scripts/check-inquirer-netlify-migration-bundle-test.mjs'
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/inquirer-future-release-guard.mjs'

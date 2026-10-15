@@ -260,7 +260,8 @@ function wireMenus(){
   button.addEventListener('pointerenter',()=>{if((MENUS[button.dataset.tab]||[]).length)showMenu(button);else closeMenu()});
   button.addEventListener('pointerleave',()=>{if((MENUS[button.dataset.tab]||[]).length)scheduleCloseMenu()});
   button.addEventListener('focus',()=>{if((MENUS[button.dataset.tab]||[]).length)showMenu(button)});
-  button.addEventListener('blur',scheduleCloseMenu)
+  button.addEventListener('blur',scheduleCloseMenu);
+  button.addEventListener('click',closeMenu)
  })
 }
 function install(){
@@ -277,7 +278,7 @@ function install(){
  document.addEventListener('click',markSameTabNavigation,true);
  wireMenus();menuEl();
  new MutationObserver(()=>queueMicrotask(()=>{syncTab();wireMenus()})).observe(tabs,{subtree:true,attributes:true,attributeFilter:['class'],childList:true});
- window.addEventListener('resize',positionMenu,{passive:true});window.addEventListener('scroll',positionMenu,{passive:true})
+ window.addEventListener('resize',positionMenu,{passive:true});window.addEventListener('scroll',()=>{if(document.getElementById('fleecedHeaderDropdown')?.classList.contains('open'))closeMenu()},{passive:true})
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 window.fleecedHeaderV512={goBack,activeTab,runMenuAction};

@@ -1,0 +1,38 @@
+name: Inquirer projection integrity
+
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/inquirer-projection-fallback.mjs'
+      - 'netlify/functions/inquirer-week4-2026-projections.mjs'
+      - 'netlify/functions/inquirer-week4-2026-retrospective-estimates.mjs'
+      - 'netlify/functions/inquirer-week4-editorial-rebuild.mjs'
+      - 'scripts/inquirer-projection-fallback-regression.mjs'
+      - 'scripts/inquirer-week4-projection-regression.mjs'
+      - 'scripts/inquirer-all-week-projection-regression.mjs'
+      - '.github/workflows/inquirer-projection-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  projection-integrity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Netlify Blob reader
+        run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Verify separated official and retrospective Week 4 projections
+        run: node scripts/inquirer-week4-projection-regression.mjs
+      - name: Verify deterministic fallback calculations
+        run: node scripts/inquirer-projection-fallback-regression.mjs
+      - name: Verify historical Weeks 1-4 all-team totals
+        run: node scripts/inquirer-all-week-projection-regression.mjs

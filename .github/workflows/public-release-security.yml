@@ -1,0 +1,80 @@
+name: Public release security smoke
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/*-probe.mjs'
+      - 'netlify/functions/site-v29.mjs'
+      - 'netlify/functions/inquirer-publish-on-load-background.mjs'
+      - 'value-history-v276.js'
+      - 'netlify.toml'
+      - 'scripts/archive-value-history.mjs'
+      - 'scripts/resolve-active-netlify-site.mjs'
+      - '.github/workflows/value-history-archive.yml'
+      - 'netlify/functions/privileged-write.mjs'
+      - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/value-history-capture-*.mjs'
+      - 'netlify/functions/inquirer-public-approval.mjs'
+      - 'netlify/functions/inquirer-*-native-scheduled.mjs'
+      - 'netlify/functions/preview-read-only.mjs'
+      - 'netlify/functions/league-hub-*-fast.mjs'
+      - 'league-hub-v451.js'
+      - 'league-hub-lazy-v454.js'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'scripts/trusted-capture-security-smoke.mjs'
+      - 'scripts/trusted-capture-runtime-smoke.mjs'
+      - 'package.json'
+      - 'netlify/functions/update.mjs'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/inquirer-publish-on-load.mjs'
+      - 'netlify/functions/inquirer-publish-scheduled.mjs'
+      - 'netlify/functions/inquirer-projection-capture-scheduled.mjs'
+      - 'scripts/public-release-security-smoke.mjs'
+      - 'scripts/public-release-secret-scan.mjs'
+      - '.github/workflows/public-release-security.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  auth-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Scan tracked source for credential patterns
+        run: node scripts/public-release-secret-scan.mjs
+      - name: Install Netlify function dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+      - name: Check server write authorization
+        run: node scripts/public-release-security-smoke.mjs
+      - name: Verify trusted capture and public feature preservation
+        run: node scripts/trusted-capture-security-smoke.mjs
+      - name: Syntax check protected functions
+        run: |
+          node --check netlify/functions/privileged-write.mjs
+          node --check netlify/functions/value-history.mjs
+          node --check netlify/functions/update.mjs
+          node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/inquirer-publish-on-load.mjs
+          node --check netlify/functions/inquirer-publish-scheduled.mjs
+          node --check netlify/functions/inquirer-projection-capture-scheduled.mjs
+          node --check netlify/functions/inquirer-publish-on-load-background.mjs
+          node --check netlify/functions/site-v29.mjs
+          for file in netlify/functions/*-probe.mjs; do node --check "$file"; done
+
+  canonical-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install collector dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+      - name: Install Chromium system libraries
+        run: npx playwright-core install-deps chromium
+      - name: Verify real app, isolated execution and trusted persistence
+        run: node scripts/trusted-capture-runtime-smoke.mjs

@@ -1,0 +1,43 @@
+name: Private Netlify Blob backup (manual, no publish)
+on:
+  workflow_dispatch:
+    inputs:
+      site_id:
+        description: "Netlify source site ID (verify in Netlify first)"
+        required: true
+        default: "b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323"
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: private-netlify-backup
+  cancel-in-progress: false
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing Netlify Blob SDK
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Export all JSON objects from both Netlify Blob stores
+        env:
+          NETLIFY_SITE_ID: ${{ inputs.site_id }}
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_BACKUP_DIR: netlify-backup-private
+        run: node scripts/export-netlify-blobs-readonly.mjs
+      - name: Confirm both store inventories exist
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; for (const s of ["fleeced-league-hub","fll-value-history-v2"]){let x=JSON.parse(fs.readFileSync("netlify-backup-private/"+s+"/export-inventory.json"));if(!x.objects.length)throw Error("Empty "+s);console.log(s,x.objects.length)}'
+      - name: Store short-lived restricted backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-netlify-both-blob-stores
+          path: netlify-backup-private/
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 6

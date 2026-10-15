@@ -4,7 +4,7 @@ import { extractKtcSuperflexRankings } from '../netlify/functions/ktc-adapter.mj
 import { emptyMonthBundle, parseMonthBundleText } from './value-history-archive-utils.mjs';
 
 const backendSource=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
-const pureSource=backendSource.replace(/^import .*$/m,'').replace(/export \{[^}]+\};/,'').split('export default async')[0];
+const pureSource=backendSource.replace(/^import .*$/gm,'').replace(/export \{[^}]+\};/,'').replace(/^export (?=(?:async )?function\b)/gm,'').split('export default async')[0];
 const context={console,Response,URL,setTimeout,clearTimeout};context.globalThis=context;vm.createContext(context);
 vm.runInContext(pureSource+`;globalThis.__vh={marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow,normalizeCompletedTrade};`,context,{filename:'value-history-pure.mjs'});
 const {marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow,normalizeCompletedTrade}=context.__vh;
@@ -109,7 +109,7 @@ for(const needle of [
   'slice(pi+1,pi+6)',
   'vh-rank-hit',
   'data-vh-rank-label',
-  "marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update')",
+  "marketCache=null;teamNetCache.clear();snapshotEventId=crypto.randomUUID();scheduleSnapshot(1000,'manual-update')",
   'Tracked since',
   "'1D','7D','30D','90D','1Y','ALL'",
   "period==='1D'",
@@ -262,7 +262,7 @@ assert(ui.includes("What's Happening With My Team"),'approved Track My Team attr
 assert(!ui.includes('What Moved My Team'),'legacy team attribution heading must be removed');
 assert(!ui.includes('${teamTradeImpactCard(trackedTeamId)}'),'standalone Recent Trade Impact card must not duplicate trade events');
 assert(ui.includes('The snapshot change is observed team net-value movement, not an assumption that the trade alone caused the move.'),'trade-linked net movement must include non-causal attribution language');
-assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})"),'Value History snapshot POST must include separate player, pick, and team ownership totals');
+assert(ui.includes("{league:'1316867686394769408',rows,picks,teams,source}")&&ui.includes("{event_id:eventId,source}"),'Trusted scheduled capture must retain separate player, pick, and team totals while anonymous observations omit client valuation inputs');
 assert(ui.includes('const recorded=Number(asset.historyRecordedValue)'),'Trade History must prefer recorded historical pick values before retroactive fallback');
 assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
 assert(ui.includes('tradeOriginalAssets(side)'), 'Trade Evaluator analysis must evaluate the original traded package rather than mutate it into current outcomes');
@@ -440,7 +440,7 @@ assert(ui.includes('function snapshotPreconditions()')&&ui.includes('Object.keys
 assert(!ui.includes("Object.keys(state.players).length<100||!hasValidatedKtcSnapshot()"),'Value History player snapshots must not be blocked by the KTC-specific validation gate');
 assert(ui.includes("const rows=currentRows();"),'Value History must copy the site already-calculated player values into each snapshot');
 assert(!ui.includes("keepalive:true"),'Value History POST must not use browser keepalive because the expanded snapshot payload can exceed keepalive body limits');
-assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})"),'Value History POST must send the completed player snapshot payload');
+assert(ui.includes("{league:'1316867686394769408',rows,picks,teams,source}")&&ui.includes("scheduled=source==='scheduled'")&&ui.includes("{event_id:eventId,source}"),'Scheduled local collector must retain the complete canonical snapshot payload even though browser page observations are values-free');
 assert(ui.includes("else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId);"),'successful Value History writes must refresh the currently viewed player chart immediately');
 assert(ui.includes("try{picks=currentPickRows()}catch"),'draft-pick snapshot enrichment must never block the core player snapshot');
 assert(ui.includes("try{teams=currentTeamRows(rows)}catch"),'team snapshot enrichment must never block the core player snapshot');
@@ -575,7 +575,7 @@ assert(!headlessWorkflow.includes('NETLIFY_SITE_ID'),'scheduled Value History mu
 assert(headlessWorkflow.includes('VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json'),'scheduled workflow must hand the local browser snapshot directly to the durable archive writer');
 const headlessScript=fs.readFileSync('scripts/value-history-headless-refresh.mjs','utf8');
 assert(headlessScript.includes("vh_source','scheduled"),'scheduled browser load must identify itself without pressing Update');
-assert(headlessScript.includes("runtime:'github-main-local'"),'scheduled browser must execute the current GitHub main application locally');
+assert(headlessScript.includes("runtime:promoteConsensus?'netlify-isolated-server':'github-main-local'"),'scheduled browser must execute the current GitHub main application locally');
 assert(headlessScript.includes('writeFileSync(snapshotFile'),'scheduled browser must capture the completed site snapshot without Netlify storage');
 assert(!headlessScript.includes("@netlify/blobs"),'scheduled browser must remain independent of Netlify Blob credentials');
 assert(archiveWriter.includes("source:'scheduled-local-browser'"),'durable archive writer must accept the locally captured scheduled snapshot directly');

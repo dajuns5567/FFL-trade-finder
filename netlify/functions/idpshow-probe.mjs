@@ -1,3 +1,4 @@
+import {isAuthorizedWrite,denyUnauthorizedWrite} from './privileged-write.mjs';
 const SOURCE_URL="https://www.theidpshow.com/p/combined-idp-offense-dynasty-rankings-fantasy-football";
 const TIMEOUT_MS=7000;
 
@@ -43,7 +44,7 @@ function inspect(text,method,status,contentType){
   };
 }
 
-export default async()=>{
+export default async(req)=>{if(!isAuthorizedWrite(req))return denyUnauthorizedWrite();
   const attempts=[];
   try{
     const direct=await fetchText(SOURCE_URL);

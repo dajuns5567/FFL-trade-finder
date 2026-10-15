@@ -1,0 +1,43 @@
+name: Inquirer Week 3 live audit
+
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/inquirer-editorial-v31.mjs'
+      - 'netlify/functions/inquirer-forward-*.mjs'
+      - 'scripts/inquirer-week3-direct-audit.mjs'
+      - '.github/workflows/inquirer-week3-live-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  week3-live-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check live audit
+        run: |
+          node --check scripts/inquirer-week3-direct-audit.mjs
+          node --check netlify/functions/inquirer-editorial-v31.mjs
+      - name: Install generator dependency
+        run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Generate and audit direct Sleeper Week 3 candidate
+        run: node scripts/inquirer-week3-direct-audit.mjs
+      - name: Upload Week 3 candidate and audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: inquirer-week3-live-audit
+          path: |
+            /tmp/inquirer-week3-direct-candidate.json
+            /tmp/inquirer-week3-direct-audit.json
+          retention-days: 7
+      # Candidate generation is audit-only. Never rewrite a published preload from CI.
+      # Any approved archive update must be reviewed and committed separately.

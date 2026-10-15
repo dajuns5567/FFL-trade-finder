@@ -1,0 +1,53 @@
+name: Inquirer trusted scheduled maintenance
+on:
+  schedule:
+    - cron: '0 * * * *'
+    - cron: '5 * * * *'
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Select safe maintenance operation'
+        required: true
+        default: publish
+        type: choice
+        options:
+          - publish
+          - capture
+permissions:
+  contents: read
+concurrency:
+  group: inquirer-trusted-scheduled
+  cancel-in-progress: false
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      WRITE_TOKEN: ${{ secrets.FLEECED_SERVER_WRITE_TOKEN }}
+      SITE_URL: https://extraordinary-toffee-98c3b7.netlify.app
+    steps:
+      - name: Invoke authenticated scheduled endpoint
+        shell: bash
+        env:
+          SCHEDULE_EVENT: ${{ github.event.schedule }}
+          MANUAL_OPERATION: ${{ inputs.operation }}
+        run: |
+          set -euo pipefail
+          if [ -z "${WRITE_TOKEN}" ] || [ "${#WRITE_TOKEN}" -lt 32 ]; then
+            echo 'FLEECED_SERVER_WRITE_TOKEN repository secret is missing or too short' >&2
+            exit 1
+          fi
+          if [ "${SCHEDULE_EVENT}" = '5 * * * *' ] || [ "${MANUAL_OPERATION}" = 'capture' ]; then
+            endpoint='inquirer-projection-capture-scheduled'
+          else
+            endpoint='inquirer-publish-scheduled'
+          fi
+          http_code="$(curl -sS -L --retry 2 --retry-delay 8 --max-time 300 -o response.json -w '%{http_code}' \
+            --header "Authorization: Bearer ${WRITE_TOKEN}" \
+            --header 'Accept: application/json' \
+            "${SITE_URL}/.netlify/functions/${endpoint}")"
+          if [ "${http_code}" != '200' ]; then
+            echo "Maintenance endpoint returned HTTP ${http_code}; check private-site SSO and production deployment" >&2
+            exit 1
+          fi
+          node --input-type=module -e "import fs from 'node:fs';const x=JSON.parse(fs.readFileSync('response.json','utf8'));if(x.ok!==true){console.error('Maintenance returned a non-success result');process.exit(1)}console.log('Authenticated maintenance succeeded')"

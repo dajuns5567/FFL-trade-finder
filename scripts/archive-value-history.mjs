@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import { emptyMonthBundle, parseMonthBundleText } from './value-history-archive-utils.mjs';
 const token=process.env.GITHUB_TOKEN;
 const repository=process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder';
-const sourceBase=process.env.VALUE_HISTORY_SOURCE_URL||'https://subtle-genie-6167c5.netlify.app/.netlify/functions/value-history';
-const netlifySiteId=process.env.NETLIFY_SITE_ID||'0cc03543-09f9-4de9-9b52-6cbc4fbc4357';
+const sourceBase=process.env.VALUE_HISTORY_SOURCE_URL||'https://extraordinary-toffee-98c3b7.netlify.app/.netlify/functions/value-history';
+const netlifySiteId=process.env.NETLIFY_SITE_ID||'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323';
 const netlifyTokens=[process.env.NETLIFY_BLOBS_TOKEN,process.env.NETLIFY_AUTH_TOKEN].map(x=>String(x||'').trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i);
 const dataBranch='value-history-data';
 const root='value-history';
@@ -87,7 +87,8 @@ async function snapshotsFromBlobStore(){
 }
 async function snapshotsFromHttpExport(){
   const source=new URL(sourceBase);source.searchParams.set('archive_export','1');if(since)source.searchParams.set('since',since);
-  const response=await fetch(source,{headers:{accept:'application/json','user-agent':'Fleeced-Value-History-Archive/1.0'},cache:'no-store'});
+  const token=String(process.env.FLEECED_SERVER_WRITE_TOKEN||'');
+  const response=await fetch(source,{headers:{accept:'application/json','user-agent':'Fleeced-Value-History-Archive/1.0',...(token?{authorization:'Bearer '+token}:{})},cache:'no-store'});
   if(!response.ok){
     const body=await response.text();
     throw new Error(`Value History export ${response.status}: ${body.includes('Login Redirect')?'production site requires Netlify authentication; configure NETLIFY_BLOBS_TOKEN repository secret for direct Blob archival':body.slice(0,500)}`);

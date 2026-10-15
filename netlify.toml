@@ -7,8 +7,15 @@
   node_bundler = "esbuild"
   included_files = ["index.html", "trade-section1-core-v100.js", "trade-section1-v100.css", "trade-section1-v106.css"]
 
-[functions."inquirer-publish-scheduled"]
+[functions."inquirer-publish-native-scheduled"]
   schedule = "0 * * * *"
+
+[functions."inquirer-projection-capture-native-scheduled"]
+  schedule = "5 * * * *"
+
+[functions."value-history-capture-background"]
+  included_files = ["*.js", "*.css", "data/*.js", "index.html", "netlify/functions/*.mjs", "scripts/value-history-headless-refresh.mjs", "!.tmp/**", "!.git/**"]
+  external_node_modules = ["@sparticuz/chromium", "playwright-core"]
 
 [build.processing.html]
   pretty_urls = false
@@ -36,3 +43,13 @@
   to = "/.netlify/functions/picks"
   status = 200
   force = true
+
+# Safe baseline response hardening. Strict CSP requires a separate compatibility
+# audit because the app currently uses legitimate inline scripts.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

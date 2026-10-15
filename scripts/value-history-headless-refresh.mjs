@@ -1,10 +1,15 @@
-import { chromium } from 'playwright';
+import { chromium } from 'playwright-core';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {createHash} from 'node:crypto';
+import {trustedServerRequest} from '../netlify/functions/privileged-write.mjs';
 import { createServer } from 'node:http';
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import siteV29 from '../netlify/functions/site-v29.mjs';
 import updateHandler from '../netlify/functions/update.mjs';
 import picksHandler from '../netlify/functions/picks.mjs';
+import leagueHub from '../netlify/functions/league-hub.mjs';
+import valueHistoryHandler from '../netlify/functions/value-history.mjs';
 
 const snapshotFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE||'.tmp/value-history-scheduled.json';
 const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
@@ -35,29 +40,36 @@ function historyReadStub(url){
   if(url.searchParams.get('market')==='1')return json({tracking_since:null,latest:null,snapshot_count:0,periods:{'1D':{},'7D':{},'30D':{},'90D':{},'1Y':{},'ALL':{}},marketRows:[]});
   if(url.searchParams.get('health')==='1')return json({ok:true,source:'scheduled-local-runtime',components:{githubArchive:{reachable:true},netlifyLive:{reachable:false}}});
   if(url.searchParams.get('team_net')==='1')return json({points:[],source:'scheduled-local-runtime'});
-  if(url.searchParams.get('trades')==='1')return json({trades:[],source:'scheduled-local-runtime'});
+  if(url.searchParams.get('trades')==='1')return valueHistoryHandler(new Request(url.toString()));
   return json({points:[],source:'scheduled-local-runtime'});
 }
-async function valueHistory(req){
+async function valueHistory(req,{maintainAwards=false}={}){
   const url=new URL(req.url);
-  if(req.method!=='POST')return historyReadStub(url);
+  if(req.method!=='POST')return maintainAwards&&url.searchParams.get('trades')==='1'?valueHistoryHandler(req):historyReadStub(url);
   let payload={};try{payload=await req.json()}catch{return json({ok:false,error:'Invalid JSON'},400)}
   const rows=Array.isArray(payload.rows)?payload.rows:[],picks=Array.isArray(payload.picks)?payload.picks:[],teams=Array.isArray(payload.teams)?payload.teams:[];
   if(String(payload.league)!==league||rows.length<100)return json({ok:false,error:'Scheduled snapshot payload incomplete'},400);
   if(payload.source!=='scheduled')return json({ok:false,error:'Scheduled local collector only accepts source=scheduled'},400);
   const t=new Date().toISOString(),fp=fingerprint(rows,picks,teams);
   const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,rows,picks,teams};
-  mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
-  writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
+  // The local sink never writes to persistent storage.
   return json({ok:true,t,fingerprint:fp,source:'scheduled',count:rows.length});
 }
-async function genericFunction(name,req){
-  if(name==='update')return updateHandler(req);
-  if(name==='picks')return picksHandler(req);
-  const safe=String(name||'').replace(/[^a-zA-Z0-9_-]/g,'');
-  if(!safe)return json({ok:false,error:'Unknown function'},404);
-  try{const mod=await import(`../netlify/functions/${safe}.mjs`);return mod.default(req)}
-  catch(e){console.warn('local-function-fallback',safe,String(e?.message||e));return json({ok:false,error:`Local function unavailable: ${safe}`},404)}
+async function genericFunction(name,req,{promoteConsensus=false,maintainAwards=false,update=updateHandler,deploymentContext=null}={}){
+ if(name==='update')return update(promoteConsensus?trustedServerRequest(req.url,{method:req.method,headers:req.headers,body:await req.text()},deploymentContext):req);
+ if(name==='picks')return picksHandler(req);
+ const params=new URL(req.url).searchParams;
+ if(name==='league-hub'&&req.method==='GET'&&params.get('managers')==='1')return json({current:[],graveyard:[],career:[],snapshot_only:true});
+ if(name==='league-hub'&&req.method==='GET'&&!maintainAwards&&['awards','award_highs','draft_records'].some(k=>params.get(k)==='1'))return json({records:[],history:[]});
+ if(name==='league-hub'){
+  const keys=[...params.keys()],allowed=keys.length===1&&['awards','award_highs','draft_records'].includes(keys[0])&&params.get(keys[0])==='1';
+  if(!maintainAwards&&req.method==='POST'&&allowed){const body=await req.json().catch(()=>({}));return json({ok:true,records:body.records||[],history:[]})}
+  return leagueHub(maintainAwards&&req.method==='POST'&&allowed?trustedServerRequest(req.url,{method:req.method,headers:req.headers,body:await req.text()},deploymentContext):req);
+ }
+ const safe=String(name||'').replace(/[^a-zA-Z0-9_-]/g,'');
+ if(!safe)return json({ok:false,error:'Unknown function'},404);
+ try{const mod=await import(pathToFileURL(join(process.cwd(),'netlify/functions',safe+'.mjs')).href);return mod.default(req)}
+ catch(e){console.warn('local-function-fallback',safe,String(e?.message||e));return json({ok:false,error:`Local function unavailable: ${safe}`},404)}
 }
 async function proxySleeperData(url){
   const suffix=url.pathname.replace(/^\/sleeper-data\//,'');
@@ -71,21 +83,31 @@ async function proxySleeperData(url){
 }
 function staticResponse(pathname){
   let rel=decodeURIComponent(pathname).replace(/^\/+/, '');
-  if(!rel||rel.includes('..'))return null;
+  if(!rel||rel.includes('..')||(rel.includes('/')&&!rel.startsWith('data/'))||!['.js','.css','.svg','.png','.jpg','.jpeg','.webp','.ico'].includes(extname(rel).toLowerCase()))return null;
   const path=normalize(join(process.cwd(),rel));
   if(!path.startsWith(process.cwd()))return null;
   try{if(!statSync(path).isFile())return null;return new Response(readFileSync(path),{headers:{'content-type':mime(path),'cache-control':'no-store'}})}catch{return null}
 }
 
+async function isolatedCollectorPage(){
+ const response=await siteV29(),html=await response.text(),hashes=[];
+ for(const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi))if(!/\bsrc\s*=/i.test(match[1]))hashes.push("'sha256-"+createHash('sha256').update(match[2]).digest('base64')+"'");
+ const headers=new Headers(response.headers);
+ headers.set('content-security-policy',"default-src 'none'; script-src 'self' "+hashes.join(' ')+"; connect-src 'self' https://api.sleeper.app https://api.sleeper.com https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
+ return new Response(html,{status:response.status,headers});
+}
+
+export async function collectCanonicalSnapshot({launch=()=>chromium.launch({headless:true}),persistLocal=true,promoteConsensus=false,maintainAwards=false,update=updateHandler,deploymentContext=null,isolationProbe=false}={}){
 const server=createServer(async(req,res)=>{
   try{
     const origin=`http://127.0.0.1:${server.address()?.port||0}`,url=new URL(req.url||'/',origin);
     let response;
-    if(url.pathname==='/'||url.pathname==='/.netlify/functions/site-v29')response=await siteV29();
-    else if(url.pathname==='/api/update')response=await updateHandler(await requestFromNode(req,origin));
+    if(url.pathname==='/'||url.pathname==='/.netlify/functions/site-v29')response=await isolatedCollectorPage();
+    else if(url.pathname==='/api/update')response=await genericFunction('update',await requestFromNode(req,origin),{promoteConsensus,maintainAwards,update,deploymentContext});
     else if(url.pathname==='/api/picks')response=await picksHandler(await requestFromNode(req,origin));
-    else if(url.pathname==='/.netlify/functions/value-history')response=await valueHistory(await requestFromNode(req,origin));
-    else if(url.pathname.startsWith('/.netlify/functions/'))response=await genericFunction(url.pathname.split('/').pop(),await requestFromNode(req,origin));
+    else if(url.pathname==='/.netlify/functions/value-history')response=await valueHistory(await requestFromNode(req,origin),{maintainAwards});
+    else if(url.pathname==='/.netlify/functions/value-history-capture-background')response=json({ok:true,collector:true},202);
+    else if(url.pathname.startsWith('/.netlify/functions/'))response=await genericFunction(url.pathname.split('/').pop(),await requestFromNode(req,origin),{promoteConsensus,maintainAwards,update,deploymentContext});
     else if(url.pathname.startsWith('/sleeper-data/'))response=await proxySleeperData(url);
     else response=staticResponse(url.pathname)||new Response('Not found',{status:404});
     await send(res,response);
@@ -96,6 +118,35 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});
 const port=server.address().port,siteUrl=`http://127.0.0.1:${port}/`;
+let browser;
+const upstreamFetch=globalThis.fetch,coreCache=new Map();
+const corePaths=['/v1/players/nfl','/v1/state/nfl','/v1/league/'+league,'/v1/league/'+league+'/users','/v1/league/'+league+'/rosters','/v1/league/'+league+'/traded_picks'];
+const cachedResponse=entry=>new Response(entry.body,{status:entry.status,headers:entry.headers});
+try{
+ // Obtain real, validated core inputs before the UI's short startup deadline.
+ // This cache exists only for this collector invocation; no visitor inputs enter it.
+ await Promise.all(corePaths.map(async path=>{
+  let last;
+  for(let attempt=0;attempt<3;attempt++)try{
+   const response=await upstreamFetch('https://api.sleeper.app'+path,{signal:AbortSignal.timeout(60000),cache:'no-store'});
+   if(!response.ok)throw new Error('Sleeper core preflight '+response.status);
+   const body=Buffer.from(await response.arrayBuffer());
+   const data=JSON.parse(body.toString('utf8'));
+   if(!data||typeof data!=='object')throw new Error('Invalid Sleeper core JSON');
+   if(path.endsWith('/rosters')&&(!Array.isArray(data)||data.length!==32))throw new Error('Incomplete Sleeper roster data');
+   if(path.endsWith('/players/nfl')&&Object.keys(data).length<700)throw new Error('Incomplete Sleeper player data');
+   const headers=Object.fromEntries(response.headers);
+   delete headers['content-encoding'];delete headers['content-length'];delete headers['transfer-encoding'];
+   coreCache.set(path,{status:response.status,headers,body});return;
+  }catch(error){last=error}
+  throw last;
+ }));
+ globalThis.fetch=async(input,init={})=>{
+  const url=new URL(typeof input==='string'?input:input.url||String(input));
+  const method=String(init.method||(typeof input==='object'?input.method:'')||'GET').toUpperCase();
+  if(method==='GET'&&['api.sleeper.app','api.sleeper.com'].includes(url.hostname)&&coreCache.has(url.pathname))return cachedResponse(coreCache.get(url.pathname));
+  return upstreamFetch(input,init);
+ };
 for(const required of ['offense-history.json']){
   const r=await fetch(`${siteUrl}sleeper-data/${required}?preflight=${Date.now()}`,{cache:'no-store'});
   if(!r.ok)throw new Error(`Required Sleeper artifact ${required} failed local proxy preflight: ${r.status}`);
@@ -103,11 +154,19 @@ for(const required of ['offense-history.json']){
   if(!j||typeof j!=='object'||j.ok!==true)throw new Error(`Required Sleeper artifact ${required} failed JSON validation`);
 }
 const url=new URL(siteUrl);url.searchParams.set('vh_source','scheduled');url.searchParams.set('vh_ts',String(Date.now()));
-console.log(JSON.stringify({event:'scheduled-refresh-target',runtime:'github-main-local',site:url.origin,commit:process.env.GITHUB_SHA||null},null,2));
+console.log(JSON.stringify({event:'scheduled-refresh-target',runtime:promoteConsensus?'netlify-isolated-server':'github-main-local',site:url.origin,commit:process.env.GITHUB_SHA||null},null,2));
 
-const browser=await chromium.launch({headless:true});
-try{
+browser=await launch();
   const page=await browser.newPage();
+  for(const hostname of ['api.sleeper.app','api.sleeper.com'])await page.route('https://'+hostname+'/**',async route=>{
+   try{const response=await fetch(route.request().url(),{signal:AbortSignal.timeout(60000)});await route.fulfill({status:response.status,headers:Object.fromEntries([...response.headers].filter(([key])=>!['content-encoding','content-length','transfer-encoding'].includes(key.toLowerCase()))),body:Buffer.from(await response.arrayBuffer())})}catch{await route.abort('failed')}
+  });
+  if(maintainAwards)await page.addInitScript(()=>{window.__fllTrustedCollector=true});
+  const awardPosts=new Map();
+  page.on('request',request=>{
+   if(request.method()!=='POST'||!request.url().includes('/.netlify/functions/league-hub?'))return;
+   try{const u=new URL(request.url()),key=['award_highs','draft_records','awards'].find(x=>u.searchParams.get(x)==='1');if(key){const body=request.postDataJSON();if(body&&typeof body==='object')awardPosts.set(key,body)}}catch{}
+  });
   const pageErrors=[];
   const failedRequests=[];
   page.setDefaultTimeout(240000);
@@ -118,6 +177,11 @@ try{
 
   const response=await page.goto(url.toString(),{waitUntil:'domcontentloaded',timeout:120000});
   if(!response||!response.ok())throw new Error(`Local Fleeced load failed: ${response?.status()||'no response'}`);
+  if(isolationProbe){
+   await page.evaluate(()=>{const image=document.createElement('img');image.setAttribute('onerror','window.__collectorInjectedCodeRan=true');image.src='/__collector-isolation-missing__.png';image.hidden=true;document.body.appendChild(image)});
+   await page.waitForTimeout(500);
+   if(await page.evaluate(()=>window.__collectorInjectedCodeRan===true))throw new Error('Untrusted inline event handler executed inside trusted collector');
+  }
 
   try{
     await page.waitForFunction(()=>{
@@ -211,11 +275,76 @@ try{
 
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
   const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,rows:captured.rows,picks:captured.picks,teams:captured.teams};
-  mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
-  writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
+  if(persistLocal){mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');}
 
-  console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,canonicalParity:'exact',modeledVersion:captured.modeledVersion,pageErrors:pageErrors.length,failedRequests:failedRequests.length,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
+  console.log(JSON.stringify({ok:true,runtime:promoteConsensus?'netlify-isolated-server':'github-main-local',readiness,canonicalParity:'exact',modeledVersion:captured.modeledVersion,pageErrors:pageErrors.length,failedRequests:failedRequests.length,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
+  if(persistLocal){
+  // Rehydrate an authenticated refresh manifest from canonical modeled rows.
+  // The server independently fetches and validates provider rankings; these
+  // player names/IDs are only matching hints and never client-supplied values.
+  try{
+    const ids=captured.rows.slice().sort((a,b)=>Number(b.value)-Number(a.value))
+      .slice(0,4000).map(r=>String(r.id));
+    const players=await page.evaluate(ids=>{
+      const registry=window.state?.players||{};
+      return ids.map(id=>{
+        const p=registry[id]||{};
+        const name=String(p.full_name||[p.first_name,p.last_name].filter(Boolean).join(' ')).trim();
+        const positions=Array.isArray(p.positions)?p.positions:[p.position];
+        return{id,name,position:String(p.position||''),positions:positions.filter(Boolean)};
+      }).filter(p=>p.name&&p.position);
+    },ids);
+    if(players.length>=700){
+      const target=process.env.CONSENSUS_TRUSTED_PLAYERS_FILE||'.tmp/consensus-trusted-players.json';
+      writeFileSync(target,JSON.stringify({version:1,league,source:'trusted-headless-consensus',
+        captured_at:t,canonical_fingerprint:fp,players})+'\n');
+      console.log('TRUSTED_CONSENSUS_MANIFEST_READY',JSON.stringify({players:players.length}));
+    }else console.warn('TRUSTED_CONSENSUS_MANIFEST_UNAVAILABLE',JSON.stringify({players:players.length}));
+  }catch(error){console.warn('TRUSTED_CONSENSUS_MANIFEST_UNAVAILABLE',String(error?.message||error).slice(0,250))}
+
+  // The League Hub currently computes 20 live awards in the valuation browser.
+  // The local collector is trusted because it runs from the checked-out main
+  // commit after the same parity/readiness gates as historical valuations.
+  // Never promote anonymous visitor-submitted awards to storage.
+  try{
+    await page.evaluate(()=>{window.__FLEECED_TRUSTED_HEADLESS_AWARDS=true});
+    await page.locator('.tabs button[data-tab="leagueHub"]').click({timeout:15000});
+    await page.locator('#leagueHub .lh-nav button[data-lh-view="awards"]').click({timeout:15000});
+    await page.waitForFunction(()=>document.querySelectorAll('#leagueHubContent .lh-awards-main .lh-card').length>=18,null,{timeout:90000});
+    await page.waitForTimeout(3500);
+    const highs=awardPosts.get('award_highs'),periods=awardPosts.get('awards'),drafts=awardPosts.get('draft_records');
+    const complete=Array.isArray(highs?.records)&&highs.records.length>=200&&
+      Array.isArray(periods?.awards)&&periods.awards.length>=18&&
+      /^[A-Za-z]{3} \d{1,2},? \d{4}$/.test(String(periods.period||''));
+    if(complete){
+      const result={version:1,league,source:'trusted-headless-awards',captured_at:t,
+        valuation_contract:SCHEDULED_VALUATION_CONTRACT,canonical_fingerprint:fp,
+        award_highs:highs,draft_records:Array.isArray(drafts?.records)&&drafts.records.length?drafts:null,awards:periods};
+      const awardsPath=process.env.LEAGUE_AWARDS_SNAPSHOT_FILE||'.tmp/league-hub-trusted-awards.json';
+      writeFileSync(awardsPath,JSON.stringify(result)+'\n');
+      console.log('TRUSTED_AWARDS_CAPTURE',JSON.stringify({ok:true,highs:highs.records.length,
+        drafts:result.draft_records?.records?.length||0,awards:periods.awards.length,period:periods.period}));
+    }else console.warn('TRUSTED_AWARDS_CAPTURE_UNAVAILABLE',JSON.stringify({highs:highs?.records?.length||0,awards:periods?.awards?.length||0,period:periods?.period||null}));
+  }catch(error){
+    // An awards-source outage must not prevent durable canonical Value History.
+    console.warn('TRUSTED_AWARDS_CAPTURE_UNAVAILABLE',String(error?.message||error).slice(0,300));
+  }
+
+
+  }
+  if(maintainAwards)try{
+    await page.locator('.tabs button[data-tab="leagueHub"]').click();
+    await page.locator('#leagueHub [data-lh-view="awards"]').first().click();
+    await page.waitForFunction(()=>window.__fllAwardMaintenance?.complete,{timeout:120000});
+    if(!await page.evaluate(()=>window.__fllAwardMaintenance?.ok))throw new Error('Trusted award maintenance failed');
+    snap.maintenance={ok:true};
+  }catch{snap.maintenance={ok:false};console.error('Trusted award maintenance unavailable; canonical capture remains valid')}
+  return snap;
 }finally{
-  await browser.close();
+  globalThis.fetch=upstreamFetch;
+  await browser?.close();
   await new Promise(resolve=>server.close(resolve));
 }
+
+}
+if(process.argv[1]&&process.argv[1]===fileURLToPath(import.meta.url))await collectCanonicalSnapshot();

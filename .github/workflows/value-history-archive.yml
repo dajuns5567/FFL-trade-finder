@@ -27,10 +27,12 @@ jobs:
         id: active_site
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          FLEECED_SERVER_WRITE_TOKEN: ${{ secrets.FLEECED_SERVER_WRITE_TOKEN }}
           NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SHA: ${{ github.sha }}
           VALUE_HISTORY_DEPLOY_BRANCH: main
+          VALUE_HISTORY_EXPECTED_SITE_ID: ${{ vars.NETLIFY_PRODUCTION_SITE_ID || 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323' }}
         run: node scripts/resolve-active-netlify-site.mjs
 
       - name: Report unavailable current Netlify live buffer
@@ -43,6 +45,7 @@ jobs:
         if: steps.active_site.outputs.matched_target_sha == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FLEECED_SERVER_WRITE_TOKEN: ${{ secrets.FLEECED_SERVER_WRITE_TOKEN }}
           NETLIFY_SITE_ID: ${{ steps.active_site.outputs.site_id }}
           NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}

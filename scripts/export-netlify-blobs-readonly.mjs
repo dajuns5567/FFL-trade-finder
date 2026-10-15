@@ -8,19 +8,31 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 const siteID=String(process.env.NETLIFY_SITE_ID||'').trim();
-const token=String(process.env.NETLIFY_BLOBS_TOKEN||process.env.NETLIFY_AUTH_TOKEN||'').trim();
+const tokens=[process.env.NETLIFY_BLOBS_TOKEN,process.env.NETLIFY_AUTH_TOKEN].map(v=>String(v||'').trim()).filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
 const root=path.resolve(process.env.NETLIFY_BACKUP_DIR||'netlify-backup-private');
-assert(siteID&&token,'NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN/NETLIFY_AUTH_TOKEN are required');
+assert(siteID&&tokens.length,'NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN/NETLIFY_AUTH_TOKEN are required');
 assert(!fs.existsSync(root),'Refusing to overwrite prior export directory');
 fs.mkdirSync(root,{recursive:true,mode:0o700});
 const inventory={schema_version:1,site_id:siteID,exported_at:new Date().toISOString(),stores:{}};
 for(const storeName of ['fleeced-league-hub','fll-value-history-v2']){
- const store=getStore({name:storeName,siteID,token,consistency:'strong'});
+ let store,listed;
+ let errors=[];
+ // Each stored credential may refer to a different historical Netlify account.
+ // Try both without logging secret values or any response body.
+ for(let i=0;i<tokens.length;i++){
+  try{
+   const candidate=getStore({name:storeName,siteID,token:tokens[i],consistency:'strong'});
+   const first=await candidate.list({});
+   store=candidate;listed=first;break;
+  }catch(error){errors.push(String(error?.message||error).replace(/[^A-Za-z0-9 ()_-]/g,'' ).slice(0,90))}
+ }
+ if(!store)throw new Error('Netlify Blob authentication/listing failed for '+storeName+' with all '+tokens.length+' configured credential candidates. Verify the GitHub Actions secrets belong to source site '+siteID+'; errors: '+errors.join('; '));
+
  const folder=path.join(root,storeName),objects=path.join(folder,'objects');
  fs.mkdirSync(objects,{recursive:true,mode:0o700});
  const found=new Map();let cursor;
  for(let page=0;page<10000;page++){
-  const result=await store.list(cursor?{cursor}:{});
+  const result=cursor?await store.list({cursor}):listed;
   for(const item of result.blobs||[]){
    assert(typeof item.key==='string'&&item.key,'Invalid Blob key');
    found.set(item.key,item);

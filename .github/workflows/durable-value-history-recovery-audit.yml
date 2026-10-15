@@ -1,0 +1,27 @@
+name: Durable Value History recovery audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [player-signal-layer-r1]
+    paths:
+      - 'scripts/check-durable-github-value-history.mjs'
+      - '.github/workflows/durable-value-history-recovery-audit.yml'
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+      - uses: actions/checkout@v4
+        with:
+          ref: value-history-data
+          path: history
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify every GitHub-archived snapshot
+        run: node source/scripts/check-durable-github-value-history.mjs history

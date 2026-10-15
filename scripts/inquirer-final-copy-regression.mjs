@@ -40,7 +40,7 @@ assert(publisher.includes("if(!weeklyStats||typeof weeklyStats!=='object'||!Obje
 assert(publisher.includes('if(!completion.complete)return latestPublished?'),'Unfinished next week must serve the latest already-published edition');
 assert(publisher.includes('rows.length!==rosterIds.size'),'Regular-season publication must reject incomplete matchup roster coverage');
 assert(publisher.includes('process.env.INQUIRER_APPROVED_THROUGH_WEEK??4'),'Unapproved Week 5 and later must remain unpublished by default');
-assert(publisher.includes('if(week>approvedThroughWeek)return latestPublished?'),'Release gate must retain latest published edition without advancing');
+assert(publisher.includes('if(!draftOnly&&week>approvedThroughWeek)return latestPublished?')&&publisher.includes('if(draftOnly){'),'Release gate must retain latest published edition without advancing');
 assert(publisher.includes('Final published Inquirer quality gate rejected Week'),'Final postprocessor must not bypass editorial-quality gate before publication');
 assert(publisher.includes('fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>null)')&&publisher.includes('!Array.isArray(transactions)'),'Transaction fetch failures must defer publication rather than masquerade as zero trades');
 assert(publisher.includes('Promise.resolve(completion.rows)'),'Publication must use the previously finalized Sleeper matchup snapshot without refetching');

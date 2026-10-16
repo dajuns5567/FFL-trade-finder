@@ -88,7 +88,11 @@ async function snapshotsFromBlobStore(){
       const uniqueKeys=[...new Set(keys)].sort(),snapshots=[];
       for(let i=0;i<uniqueKeys.length;i+=25){
         const batch=uniqueKeys.slice(i,i+25);
-        const rows=await Promise.all(batch.map(key=>live.get(key,{type:'json'}).catch(()=>null)));
+        const rows=await Promise.all(batch.map(async key=>{
+          const snap=await live.get(key,{type:'json'});
+          if(snap===null)throw new Error('Listed Netlify snapshot is unreadable: '+key);
+          return snap;
+        }));
         for(const snap of rows)if(validSnapshot(snap))snapshots.push(snap);
       }
       snapshots.sort((a,b)=>String(a.t).localeCompare(String(b.t)));

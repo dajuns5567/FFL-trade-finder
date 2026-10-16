@@ -34,34 +34,14 @@ function siteUrl(site,deploy){
   return raw.replace(/\/$/,'')+'/';
 }
 
-const sites=[];
-for(let page=1;page<=20;page++){
-  const batch=await netlify(`/sites?per_page=100&page=${page}`);
-  if(!Array.isArray(batch)||!batch.length)break;
-  sites.push(...batch);
-  if(batch.length<100)break;
-}
-const candidates=sites.filter(siteMatchesRepo);
-if(!candidates.length)throw new Error(`No Netlify sites accessible to this token are linked to ${repository}`);
-
-const deployRows=[];
-for(const site of candidates){
-  let deploys=[];
-  try{deploys=await netlify(`/sites/${encodeURIComponent(site.id)}/deploys?per_page=100`)}catch(e){console.warn(`Could not inspect deploys for ${site.id}:`,String(e?.message||e));continue}
-  for(const d of Array.isArray(deploys)?deploys:[]){
-    if(String(d?.state||'').toLowerCase()!=='ready')continue;
-    if(String(d?.context||'').toLowerCase()!=='production')continue;
-    if(String(d?.branch||'')!==branch)continue;
-    deployRows.push({site,deploy:d,exact:!!targetSha&&String(d?.commit_ref||d?.commit_ref_full||'')===targetSha,time:deployTime(d)});
-  }
-}
-if(!deployRows.length)throw new Error(`No ready production Netlify deploys for ${repository} on branch ${branch}`);
-
-deployRows.sort((a,b)=>(Number(b.exact)-Number(a.exact))||(b.time-a.time));
-const chosen=deployRows[0],url=siteUrl(chosen.site,chosen.deploy),siteId=String(chosen.site.id);
-const result={ok:true,repository,branch,target_sha:targetSha||null,matched_target_sha:chosen.exact,site_id:siteId,site_name:chosen.site.name||null,site_url:url,deploy_id:chosen.deploy.id||null,deploy_commit_ref:chosen.deploy.commit_ref||null,deploy_published_at:chosen.deploy.published_at||chosen.deploy.updated_at||chosen.deploy.created_at||null};
+const expectedSiteId=String(process.env.VALUE_HISTORY_PRODUCTION_SITE_ID||'').trim();
+if(!expectedSiteId)throw new Error('ARCHIVE_SITE_GUARD: VALUE_HISTORY_PRODUCTION_SITE_ID is required');
+const site=await netlify('/sites/'+encodeURIComponent(expectedSiteId));
+const deploys=await netlify('/sites/'+encodeURIComponent(expectedSiteId)+'/deploys?per_page=100');
+const {selectArchiveProductionSite}=await import('./select-archive-production-site.mjs');
+const result=selectArchiveProductionSite([site],{[expectedSiteId]:deploys},{repository,branch,expectedSiteId,targetSha});
 console.log(JSON.stringify(result,null,2));
 if(process.env.GITHUB_OUTPUT){
-  const fs=await import('node:fs');
-  fs.appendFileSync(process.env.GITHUB_OUTPUT,`site_id=${siteId}\nsite_url=${url}\ndeploy_id=${String(chosen.deploy.id||'')}\nmatched_target_sha=${chosen.exact?'true':'false'}\n`);
+ const fs=await import('node:fs');
+ fs.appendFileSync(process.env.GITHUB_OUTPUT,`site_id=${result.site_id}\nsite_url=${result.site_url}\ndeploy_id=${result.deploy_id}\nmatched_target_sha=${result.matched_target_sha?'true':'false'}\n`);
 }

@@ -76,28 +76,31 @@ async function snapshotsFromBlobStore(){
       const seenCursors=new Set();
       for(let page=0;page<10000;page++){
         const listing=await live.list({prefix:'snapshots/',...(cursor?{cursor}:{})});
-        if(!listing||!Array.isArray(listing.blobs))throw new Error('Netlify snapshot listing returned an invalid page');
+        if(!listing||!Array.isArray(listing.blobs))throw new Error('ARCHIVE_INTEGRITY: Netlify snapshot listing returned an invalid page');
         keys.push(...listing.blobs.map(x=>String(x?.key||'')).filter(Boolean));
         const next=String(listing.cursor||'');
         if(!next){cursor=null;break}
-        if(seenCursors.has(next))throw new Error('Netlify snapshot listing returned a repeated cursor');
+        if(seenCursors.has(next))throw new Error('ARCHIVE_INTEGRITY: Netlify snapshot listing returned a repeated cursor');
         seenCursors.add(next);
         cursor=next;
       }
-      if(cursor)throw new Error('Netlify snapshot listing exceeded the maximum number of pages; refusing partial archive');
+      if(cursor)throw new Error('ARCHIVE_INTEGRITY: Netlify snapshot listing exceeded the maximum number of pages; refusing partial archive');
       const uniqueKeys=[...new Set(keys)].sort(),snapshots=[];
       for(let i=0;i<uniqueKeys.length;i+=25){
         const batch=uniqueKeys.slice(i,i+25);
         const rows=await Promise.all(batch.map(async key=>{
           const snap=await live.get(key,{type:'json'});
-          if(snap===null)throw new Error('Listed Netlify snapshot is unreadable: '+key);
+          if(snap===null)throw new Error('ARCHIVE_INTEGRITY: Listed Netlify snapshot is unreadable: '+key);
           return snap;
         }));
         for(const snap of rows)if(validSnapshot(snap))snapshots.push(snap);
       }
       snapshots.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
       return{schema_version:1,league_id:'1316867686394769408',source:'netlify-blobs-direct',snapshot_count:snapshots.length,snapshots};
-    }catch(e){last=e}
+    }catch(e){
+      if(String(e?.message||e).startsWith('ARCHIVE_INTEGRITY:'))throw e;
+      last=e;
+    }
   }
   if(last)console.warn('Netlify Blob archive credentials unavailable; trying HTTP export:',String(last?.message||last));
   return null;

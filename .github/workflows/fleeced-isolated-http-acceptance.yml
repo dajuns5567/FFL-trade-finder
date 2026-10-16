@@ -1,0 +1,32 @@
+name: Isolated recovery HTTP acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-isolated-http-acceptance.yml'
+permissions:
+  contents: read
+concurrency:
+  group: isolated-recovery-http-acceptance
+  cancel-in-progress: false
+jobs:
+  http-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe deployed recovery API without changing stored data
+        shell: bash
+        run: |
+          set -euo pipefail
+          host='https://fleeced-recovery-isolated-20261016.netlify.app'
+          for endpoint in '/api/recovery' '/api/recovery?kind=history' '/api/recovery?kind=week&week=4'; do
+            code=$(curl -sSL --max-time 25 -o response.json -w '%{http_code}' "$host$endpoint")
+            echo "Endpoint $endpoint HTTP $code"
+            if [[ "$code" == '401' || "$code" == '403' ]]; then
+              echo '::warning::Netlify SSO blocks anonymous API acceptance; visitor protection remains enabled. Application-level HTTP verification is NOT complete.'
+              exit 2
+            fi
+            [[ "$code" == '200' ]] || { echo "::error::Recovery HTTP endpoint returned $code"; exit 1; }
+            node -e 'const fs=require("fs");const d=JSON.parse(fs.readFileSync("response.json","utf8"));if(d.error)throw Error("API error returned");if(!d.snapshot_count&&!d.count&&!d.teams)throw Error("Missing expected recovery fields");'
+          done
+          echo 'ISOLATED RECOVERY HTTP ACCEPTANCE PASS'

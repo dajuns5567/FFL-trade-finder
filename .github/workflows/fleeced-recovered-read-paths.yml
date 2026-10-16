@@ -20,11 +20,11 @@ jobs:
           path: app
       - uses: actions/checkout@v4
         with:
-          ref: value-history-data
+          ref: 1a06b919669ee5ff5011d991044c1a394517731f
           path: historical
       - uses: actions/checkout@v4
         with:
-          ref: player-signal-layer-r1
+          ref: af9067c751118cf33f688648cb78619d229f2214
           path: editorial
       - uses: actions/setup-node@v4
         with:

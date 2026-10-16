@@ -1,0 +1,44 @@
+name: Recovered isolated data read-path acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-recovered-read-paths.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: fleeced-read-only-recovery-acceptance
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: app
+      - uses: actions/checkout@v4
+        with:
+          ref: value-history-data
+          path: historical
+      - uses: actions/checkout@v4
+        with:
+          ref: player-signal-layer-r1
+          path: editorial
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing SDK
+        working-directory: app
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Retrieve private original backup for independent comparison
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 38679717051 --repo "$GITHUB_REPOSITORY" --name private-netlify-both-blob-stores --dir "$RUNNER_TEMP/fleeced-original"
+      - name: Independently read back every restored Blob against preserved originals
+        working-directory: app
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/check-isolated-recovered-read-paths.mjs ../historical ../editorial "$RUNNER_TEMP/fleeced-original"

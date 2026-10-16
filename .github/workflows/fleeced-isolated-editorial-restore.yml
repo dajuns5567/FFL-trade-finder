@@ -1,0 +1,38 @@
+name: Isolated Inquirer editorial recovery rehearsal
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_site_id:
+        description: "Enter isolated Netlify site ID"
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: isolated-inquirer-editorial-restore
+  cancel-in-progress: false
+jobs:
+  restore:
+    if: ${{ inputs.confirm_site_id == '05a8ec65-a0a3-46f1-9f73-3da47dac662e' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: player-signal-layer-r1
+          path: editorial
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing SDK
+        working-directory: recovery
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Reconstruct and independently verify original preserved editions
+        working-directory: recovery
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/rehearse-isolated-editorial-restore.mjs ../editorial

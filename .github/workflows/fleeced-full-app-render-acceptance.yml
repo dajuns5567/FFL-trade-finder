@@ -1,0 +1,25 @@
+name: Full original FLEECED app read-only rendering acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-full-app-render-acceptance.yml'
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: player-signal-layer-r1
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Render actual original app without executing publishers or deploying
+        run: node recovery/scripts/check-isolated-full-app-render.mjs application

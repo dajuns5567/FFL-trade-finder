@@ -71,10 +71,23 @@ async function snapshotsFromBlobStore(){
   for(const token of netlifyTokens){
     try{
       const live=getStore({name:'fll-value-history-v2',siteID:netlifySiteId,token,consistency:'strong'});
-      const listing=await live.list({prefix:'snapshots/'});
-      const keys=(listing?.blobs||[]).map(x=>String(x?.key||'')).filter(Boolean).sort(),snapshots=[];
-      for(let i=0;i<keys.length;i+=25){
-        const batch=keys.slice(i,i+25);
+      const keys=[];
+      let cursor;
+      const seenCursors=new Set();
+      for(let page=0;page<10000;page++){
+        const listing=await live.list({prefix:'snapshots/',...(cursor?{cursor}:{})});
+        if(!listing||!Array.isArray(listing.blobs))throw new Error('Netlify snapshot listing returned an invalid page');
+        keys.push(...listing.blobs.map(x=>String(x?.key||'')).filter(Boolean));
+        const next=String(listing.cursor||'');
+        if(!next){cursor=null;break}
+        if(seenCursors.has(next))throw new Error('Netlify snapshot listing returned a repeated cursor');
+        seenCursors.add(next);
+        cursor=next;
+      }
+      if(cursor)throw new Error('Netlify snapshot listing exceeded the maximum number of pages; refusing partial archive');
+      const uniqueKeys=[...new Set(keys)].sort(),snapshots=[];
+      for(let i=0;i<uniqueKeys.length;i+=25){
+        const batch=uniqueKeys.slice(i,i+25);
         const rows=await Promise.all(batch.map(key=>live.get(key,{type:'json'}).catch(()=>null)));
         for(const snap of rows)if(validSnapshot(snap))snapshots.push(snap);
       }

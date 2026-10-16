@@ -1,0 +1,25 @@
+name: Durable Value History freshness monitor
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 */4 * * *'
+  push:
+    paths:
+      - '.github/workflows/fleeced-durable-history-freshness.yml'
+      - 'scripts/verify-durable-history-freshness.mjs'
+permissions:
+  contents: read
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify newest durable archive snapshot is recent
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ARCHIVE_MAX_AGE_HOURS: '8'
+        run: node scripts/verify-durable-history-freshness.mjs

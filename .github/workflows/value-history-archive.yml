@@ -31,18 +31,15 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SHA: ${{ github.sha }}
           VALUE_HISTORY_DEPLOY_BRANCH: main
+          VALUE_HISTORY_PRODUCTION_SITE_ID: 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
         run: node scripts/resolve-active-netlify-site.mjs
 
-      - name: Report unavailable current Netlify live buffer
+      - name: Report production commit drift without blocking authenticated archival
         if: steps.active_site.outputs.matched_target_sha != 'true'
-        run: |
-          echo "Current main is not deployed to a Netlify site accessible to this token."
-          echo "::warning::Archive ingestion SKIPPED: current main commit does not match the production Netlify deployment. No snapshot ingestion occurred in this run."
-          echo "## Value History archive: SKIPPED" >> "$GITHUB_STEP_SUMMARY"
-          echo "No live Netlify Blob ingestion occurred because the deployed production commit did not match this workflow run." >> "$GITHUB_STEP_SUMMARY"
+        run: echo '::notice::GitHub main is ahead of the verified deployed production commit; ingesting the pinned production site read-only anyway.'
 
       - name: Archive new Value History snapshots
-        if: steps.active_site.outputs.matched_target_sha == 'true'
+        if: steps.active_site.outputs.site_id == 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NETLIFY_SITE_ID: ${{ steps.active_site.outputs.site_id }}

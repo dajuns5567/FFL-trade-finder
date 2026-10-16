@@ -1,0 +1,27 @@
+name: Live Netlify Blob inventory read-only acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-live-blob-inventory-readonly.yml'
+      - 'scripts/verify-live-blob-inventory-readonly.mjs'
+permissions:
+  contents: read
+jobs:
+  live-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm eight archive inventory regression cases
+        run: node --test tests/archive-blob-inventory.test.mjs
+      - name: Install existing Netlify Blob SDK
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Read and validate real original-site snapshot inventory
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_SOURCE_SITE_ID: 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
+        run: node scripts/verify-live-blob-inventory-readonly.mjs

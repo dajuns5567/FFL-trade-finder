@@ -1,0 +1,18 @@
+name: Full FLEECED recovery cutover preflight
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-full-recovery-cutover-preflight.yml'
+permissions:
+  contents: read
+jobs:
+  source-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Inspect full application source, publish schedules and migration blockers
+        run: node scripts/audit-full-recovery-cutover.mjs

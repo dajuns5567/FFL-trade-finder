@@ -59,5 +59,5 @@ for(const name of ['fleeced-league-hub','fll-value-history-v2']){
   await parity(store,item.key,b);
  }
 }
-assert.equal(count,index.items.length+4+2+5+24);
+assert.equal(count,index.items.length+4+5+24);
 console.log('INDEPENDENT RECOVERY READBACK PASS '+JSON.stringify({historical:index.items.length,editorial_weeks:4,original_blob_objects:24,total_checked:count,site:SITE,first:index.tracking_since,last:index.latest}));

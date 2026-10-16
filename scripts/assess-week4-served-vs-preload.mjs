@@ -15,14 +15,19 @@ const candidate=new Map(edition.teams.map(t=>[String(t.team_name),t]));
 assert.equal(accepted.size,32);assert.equal(candidate.size,32);
 let expectedParagraphs=0,matchingParagraphs=0;
 const missingTeams=[];
+const diagnostics=[];
 for(const [name,article] of accepted){
  const recovered=candidate.get(name);if(!recovered){missingTeams.push(name);continue}
- const candidateArticle=JSON.stringify(recovered.inquirer_article||{});
+ const candidateArticle=recovered.inquirer_article||{};
+ const recoveredParagraphs=new Set();
+ const collect=(value)=>{if(Array.isArray(value)){for(const v of value)collect(v)}else if(value&&typeof value==='object'){for(const [key,v] of Object.entries(value)){if(key==='paragraphs'&&Array.isArray(v)){for(const p of v)if(typeof p==='string')recoveredParagraphs.add(p)}collect(v)}}};
+ collect(candidateArticle);
  for(const section of article.sections||[]){
   for(const text of section.paragraphs||[]){
    if(typeof text!=='string')continue;
    expectedParagraphs++;
-   if(candidateArticle.includes(JSON.stringify(text).slice(1,-1)))matchingParagraphs++;
+   if(recoveredParagraphs.has(text))matchingParagraphs++;
+   else diagnostics.push({team:name,section:String(section.kind||'unknown')});
   }
  }
 }
@@ -33,6 +38,7 @@ console.log('EDITORIAL SOURCE-VS-SERVED PARITY ASSESSMENT '+JSON.stringify({
  exact_paragraph_coverage:expectedParagraphs?Number((matchingParagraphs/expectedParagraphs*100).toFixed(2)):null,
  all_accepted_paragraphs_present_in_preload:matchingParagraphs===expectedParagraphs,
  served_copy_byte_parity_proven:false, // A substring test cannot establish full rendered-document equality.
+ unmatched_paragraphs:diagnostics.length,
  acceptance_reference:baseline.revision
 }));
 if(matchingParagraphs!==expectedParagraphs)console.log('NOTE: The preload and separately accepted served benchmark diverge; source recovery alone does not prove identical served prose.');

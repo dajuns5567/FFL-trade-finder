@@ -1,0 +1,40 @@
+name: Verify pinned Netlify archival source (read-only)
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-archive-live-source-acceptance.yml'
+      - 'scripts/select-archive-production-site.mjs'
+      - 'scripts/resolve-active-netlify-site.mjs'
+      - 'tests/select-archive-production-site.test.mjs'
+permissions:
+  contents: read
+jobs:
+  verify-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate resolver cases before contacting Netlify
+        run: node --test tests/select-archive-production-site.test.mjs
+      - name: Validate live site identity, deployment, and commit drift without archival writes
+        id: resolver
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          VALUE_HISTORY_DEPLOY_BRANCH: main
+          VALUE_HISTORY_PRODUCTION_SITE_ID: 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
+        run: node scripts/resolve-active-netlify-site.mjs
+      - name: Reject unverified production identity
+        env:
+          RESOLVED_SITE: ${{ steps.resolver.outputs.site_id }}
+          RESOLVED_URL: ${{ steps.resolver.outputs.site_url }}
+        run: |
+          test "$RESOLVED_SITE" = 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
+          test "$RESOLVED_URL" = 'https://extraordinary-toffee-98c3b7.netlify.app/'
+          echo 'LIVE PINNED PRODUCTION RESOLVER ACCEPTANCE PASS'

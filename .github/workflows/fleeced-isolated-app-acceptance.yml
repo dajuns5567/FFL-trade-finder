@@ -1,0 +1,40 @@
+name: Deploy isolated read-only FLEECED recovery viewer
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-isolated-app-acceptance.yml'
+permissions:
+  contents: read
+concurrency:
+  group: fleeced-isolated-app-deploy
+  cancel-in-progress: false
+jobs:
+  isolated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check isolated target and secrets without revealing values
+        env:
+          NETLIFY_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+        run: |
+          test -n "$NETLIFY_TOKEN" || (echo 'NETLIFY_BLOBS_TOKEN missing' && exit 1)
+          test -f recovery-isolated/netlify.toml
+          test -f recovery-isolated/public/index.html
+          test -f recovery-isolated/netlify/functions/recovery-status.mjs
+          if grep -R -n -E 'schedule[[:space:]]*=|scheduled[[:space:]]*:' recovery-isolated/; then echo 'Scheduled publishers forbidden' && exit 1; fi
+      - name: Install recovery-only runtime
+        working-directory: recovery-isolated
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Deploy ONLY the isolated site
+        working-directory: recovery-isolated
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          NETLIFY_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: |
+          npx --yes netlify-cli@23 deploy --prod --no-build --dir public --functions netlify/functions --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN" --json > "$RUNNER_TEMP/deployment-result.json"
+          node --input-type=module -e 'import fs from "node:fs";const d=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/deployment-result.json","utf8"));if(!d.deploy_id&&!d.deploy_url&&!d.url)throw Error("Netlify deploy response missing deployment identifier");console.log("Isolated deploy accepted by Netlify; site:"+process.env.NETLIFY_SITE_ID);'

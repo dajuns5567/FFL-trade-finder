@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/fleeced-full-app-render-acceptance.yml'
+      - 'scripts/check-isolated-full-app-render.mjs'
 permissions:
   contents: read
 jobs:

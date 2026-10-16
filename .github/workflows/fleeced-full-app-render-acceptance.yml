@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/fleeced-full-app-render-acceptance.yml'
       - 'scripts/check-isolated-full-app-render.mjs'
+      - 'scripts/assess-week4-served-vs-preload.mjs'
 permissions:
   contents: read
 jobs:
@@ -24,3 +25,5 @@ jobs:
           node-version: '22'
       - name: Render actual original app without executing publishers or deploying
         run: node recovery/scripts/check-isolated-full-app-render.mjs application
+      - name: Assess exact accepted Week 4 served prose against recovered preload
+        run: node recovery/scripts/assess-week4-served-vs-preload.mjs application

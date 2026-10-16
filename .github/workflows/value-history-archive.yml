@@ -37,7 +37,9 @@ jobs:
         if: steps.active_site.outputs.matched_target_sha != 'true'
         run: |
           echo "Current main is not deployed to a Netlify site accessible to this token."
-          echo "Skipping live Netlify Blob ingestion; scheduled GitHub-native history remains unaffected."
+          echo "::warning::Archive ingestion SKIPPED: current main commit does not match the production Netlify deployment. No snapshot ingestion occurred in this run."
+          echo "## Value History archive: SKIPPED" >> "$GITHUB_STEP_SUMMARY"
+          echo "No live Netlify Blob ingestion occurred because the deployed production commit did not match this workflow run." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Archive new Value History snapshots
         if: steps.active_site.outputs.matched_target_sha == 'true'

@@ -1,0 +1,24 @@
+name: Pinned production archive source regression
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/select-archive-production-site.mjs'
+      - 'scripts/resolve-active-netlify-site.mjs'
+      - 'tests/select-archive-production-site.test.mjs'
+      - '.github/workflows/value-history-archive.yml'
+      - '.github/workflows/fleeced-archive-source-guard-tests.yml'
+permissions:
+  contents: read
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/select-archive-production-site.test.mjs
+      - run: node --check scripts/resolve-active-netlify-site.mjs
+      - run: node --check scripts/archive-value-history.mjs

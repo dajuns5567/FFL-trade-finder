@@ -1,0 +1,24 @@
+name: Production snapshot continuity diagnostic
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-production-snapshot-continuity.yml'
+      - 'scripts/diagnose-production-archive-continuity.mjs'
+permissions:
+  contents: read
+jobs:
+  diagnosis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Compare real upstream production Blobs and durable archive without writes
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/diagnose-production-archive-continuity.mjs

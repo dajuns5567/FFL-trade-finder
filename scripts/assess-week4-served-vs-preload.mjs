@@ -41,4 +41,9 @@ console.log('EDITORIAL SOURCE-VS-SERVED PARITY ASSESSMENT '+JSON.stringify({
  unmatched_paragraphs:diagnostics.length,
  acceptance_reference:baseline.revision
 }));
-if(matchingParagraphs!==expectedParagraphs)console.log('NOTE: The preload and separately accepted served benchmark diverge; source recovery alone does not prove identical served prose.');
+if(matchingParagraphs!==expectedParagraphs){
+ console.error('EDITORIAL FIDELITY HOLD: accepted Week 4 paragraphs are absent from recovered preload. This is NOT an authorization to change accepted text.');
+ process.exitCode=1;
+}else{
+ console.log('ACCEPTED PARAGRAPH PRESENCE PASS; full rendered-document byte parity remains unproved.');
+}

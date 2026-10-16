@@ -31,7 +31,8 @@ console.log('EDITORIAL SOURCE-VS-SERVED PARITY ASSESSMENT '+JSON.stringify({
  accepted_articles:accepted.size,recovered_teams:candidate.size,
  accepted_paragraphs:expectedParagraphs,exact_paragraphs_in_preload:matchingParagraphs,
  exact_paragraph_coverage:expectedParagraphs?Number((matchingParagraphs/expectedParagraphs*100).toFixed(2)):null,
- served_copy_byte_parity_proven:matchingParagraphs===expectedParagraphs,
+ all_accepted_paragraphs_present_in_preload:matchingParagraphs===expectedParagraphs,
+ served_copy_byte_parity_proven:false, // A substring test cannot establish full rendered-document equality.
  acceptance_reference:baseline.revision
 }));
 if(matchingParagraphs!==expectedParagraphs)console.log('NOTE: The preload and separately accepted served benchmark diverge; source recovery alone does not prove identical served prose.');

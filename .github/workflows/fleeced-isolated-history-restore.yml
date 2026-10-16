@@ -1,0 +1,41 @@
+name: Isolated historical Value History recovery rehearsal
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_site_id:
+        description: "Confirm the isolated recovery Netlify site ID"
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: fleeced-isolated-history-rehearsal
+  cancel-in-progress: false
+jobs:
+  rehearse:
+    if: ${{ inputs.confirm_site_id == '05a8ec65-a0a3-46f1-9f73-3da47dac662e' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout current recovery script
+        uses: actions/checkout@v4
+        with:
+          path: app
+      - name: Checkout GitHub historical archive
+        uses: actions/checkout@v4
+        with:
+          ref: value-history-data
+          path: historical
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing Netlify Blob SDK
+        working-directory: app
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Verify real monthly archives, restore historical records, read back exact bytes
+        working-directory: app
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/rehearse-isolated-history-restore.mjs ../historical

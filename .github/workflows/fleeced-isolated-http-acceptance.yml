@@ -22,7 +22,7 @@ jobs:
           for endpoint in '/api/recovery' '/api/recovery?kind=history' '/api/recovery?kind=week&week=4'; do
             code=$(curl -sSL --max-time 25 -o response.json -w '%{http_code}' "$host$endpoint")
             echo "Endpoint $endpoint HTTP $code"
-            if [[ "$code" == '401' || "$code" == '403' ]]; then
+            if [[ "$code" == '401' || "$code" == '403' || "$code" == '302' ]]; then
               echo '::warning::Netlify SSO blocks anonymous API acceptance; visitor protection remains enabled. Application-level HTTP verification is NOT complete.'
               exit 2
             fi

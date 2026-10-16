@@ -1,0 +1,36 @@
+name: Isolated Fleeced Blob recovery rehearsal
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_site_id:
+        description: "Enter ONLY the isolated recovery Netlify site ID"
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: fleeced-isolated-recovery
+  cancel-in-progress: false
+jobs:
+  restore:
+    if: ${{ inputs.confirm_site_id == '05a8ec65-a0a3-46f1-9f73-3da47dac662e' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing Blob SDK
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Retrieve previous private source backup artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 38679717051 --repo "$GITHUB_REPOSITORY" --name private-netlify-both-blob-stores --dir "$RUNNER_TEMP/fleeced-source"
+      - name: Restore only to isolated recovery site; independently read back
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_ROOT: ${{ runner.temp }}/fleeced-source
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/rehearse-isolated-netlify-restore.mjs

@@ -1,0 +1,31 @@
+#!/usr/bin/env node
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+const root=path.resolve(process.argv[2]||'.tmp/fullapp');
+const report=JSON.parse(await fs.readFile(path.join(root,'candidate-report.json'),'utf8'));
+assert.equal(report.destination_site,'d3ac147d-5e0e-4c1e-9163-237da3ee4341');
+assert.equal(report.netlify_functions,1);
+assert.equal(report.write_capable_endpoints,0);
+assert.equal(report.gateway_metadata_only,true);
+assert.equal(report.deploy_performed,false);
+const cfg=await fs.readFile(path.join(root,'netlify.toml'),'utf8');
+assert(cfg.includes("connect-src 'self'"),'Unexpected CSP');
+assert(cfg.includes("form-action 'none'"),'Form actions enabled');
+assert(!/schedule\s*=|\[functions\.[^\]]*(publish|scheduled|capture|background)/i.test(cfg),'Publisher configuration found');
+const names=await fs.readdir(path.join(root,'netlify/functions'));
+assert.deepEqual(names,['recovery-status.mjs'],'Unexpected server function copied');
+const code=await fs.readFile(path.join(root,'netlify/functions/recovery-status.mjs'),'utf8');
+assert(code.includes("RECOVERY_BLOBS_READ_TOKEN")&&code.includes('05a8ec65-a0a3-46f1-9f73-3da47dac662e'),'Source credentials not pinned');
+assert(code.includes("request.method!=='GET'&&request.method!=='HEAD'"),'Method denial missing');
+assert(!/\.\s*(?:setJSON|set|delete|deleteAll)\s*\(/.test(code),'Mutation API in bundle');
+const dir=path.join(root,'public');
+async function files(folder){const entries=await fs.readdir(folder,{withFileTypes:true}),out=[];for(const e of entries){const full=path.join(folder,e.name);if(e.isDirectory())out.push(...await files(full));else out.push(path.relative(dir,full))}return out}
+const included=await files(dir);
+assert(included.includes('index.html'));
+assert.equal(included.length,report.assets+1,'Unexpected static assets');
+const html=await fs.readFile(path.join(dir,'index.html'),'utf8');
+const refs=[...new Set([...html.matchAll(/(?:src|href)\s*=\s*["']\/([^"'?#]+\.(?:js|css))(?=[?"'])/g)].map(m=>m[1]))];
+assert.equal(refs.length,report.assets);
+assert(included.every(f=>f==='index.html'||refs.includes(f)),'Unexpected static content');
+console.log('FULLAPP + METADATA GATEWAY BUNDLE PREFLIGHT PASS '+JSON.stringify({assets:report.assets,functions:names,strict_read_only:true,credentialed_live_runtime_verified:false,deployed:false}));

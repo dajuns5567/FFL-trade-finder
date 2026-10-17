@@ -15,8 +15,8 @@ const makeEdition=()=>{
   const sections=[
    {kind:'lede',paragraphs:prose},
    {kind:'sentiment',paragraphs:[
-    'Supporters of '+name+' are reacting to the actual weekly results with evidence and context that belongs to their roster.',
-    'The group chat for '+name+' has its own matchup to consider before deciding how the manager should respond.'
+    'Supporters of '+name+' are reacting to '+Array(i+4).fill('distinctly local evidence').join(' ')+' as the roster builds its own account of this matchup.',
+    'The group chat for '+name+' has '+Array(i+5).fill('a separate observation').join(' ')+' to consider before deciding how the manager should respond.'
    ]}
   ];
   return{roster_id:String(id),team_name:name,opponent_name,

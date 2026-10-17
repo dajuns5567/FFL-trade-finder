@@ -1,0 +1,24 @@
+name: Full-app recovery gateway isolated privacy acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-fullapp-gateway-acceptance.yml'
+      - 'scripts/fullapp-sandbox-recovery-gateway.mjs'
+      - 'tests/fullapp-sandbox-recovery-gateway.test.mjs'
+permissions:
+  contents: read
+jobs:
+  read-only-gateway:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Verify eight privacy, write-denial and 156-snapshot metadata tests
+        run: node --test tests/fullapp-sandbox-recovery-gateway.test.mjs
+      - name: Confirm source handler syntax without deploying
+        run: node --check scripts/fullapp-sandbox-recovery-gateway.mjs

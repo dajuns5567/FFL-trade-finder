@@ -1,4 +1,4 @@
-name: FLEECED final Week5 live archive and scheduled publisher acceptance
+name: FLEECED live Week5 and corrected forward editorial unit acceptance
 on:
   workflow_dispatch:
   push:

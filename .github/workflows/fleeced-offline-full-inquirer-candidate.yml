@@ -12,6 +12,7 @@ on:
       - 'scripts/accept-fleeced-offline-complete-candidate.mjs'
       - 'scripts/finalize-fleeced-offline-fullapp-candidate.mjs'
       - 'scripts/check-future-inquirer-quality.mjs'
+      - 'tests/future-inquirer-quality-gate.test.mjs'
 permissions:
   contents: read
 jobs:
@@ -29,6 +30,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Ensure future draft enforcement remains strict while Week4 calibration is nonblocking
+        working-directory: recovery
+        run: node --test tests/future-inquirer-quality-gate.test.mjs
       - name: Install frozen original application dependencies without scripts
         working-directory: application
         run: npm install --ignore-scripts --no-audit --no-fund

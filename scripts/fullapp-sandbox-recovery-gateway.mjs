@@ -14,10 +14,13 @@ export function makeReadOnlyGateway(resolve=()=>{
  return async function handler(request){
   if(request.method!=='GET'&&request.method!=='HEAD')return reply({error:'read only'},405);
   const url=new URL(request.url);
-  if(!['/api/recovery-status','/api/recovery-status/'].includes(url.pathname))return reply({error:'not found'},404);
+  const isHistory=['/api/value-history','/api/value-history/'].includes(url.pathname);
+  if(!isHistory&&!['/api/recovery-status','/api/recovery-status/'].includes(url.pathname))return reply({error:'not found'},404);
   const playerId=url.searchParams.get('player_id');
   const keys=[...url.searchParams.keys()];
   if(keys.length&&!(keys.length===1&&keys[0]==='player_id'&&/^[a-zA-Z0-9_-]{1,48}$/.test(playerId||'')))return reply({error:'unsupported query'},400);
+  if(isHistory&&!playerId)return reply({error:'player_id required'},400);
+  if(isHistory&&request.method==='HEAD')return reply({error:'HEAD restricted to status'},405);
   if(playerId&&request.method==='HEAD')return reply({error:'HEAD restricted to status'},405);
   try{
    const {history,editorial}=resolve();
@@ -52,4 +55,4 @@ export function makeReadOnlyGateway(resolve=()=>{
  }
 }
 export default makeReadOnlyGateway();
-export const config={path:'/api/recovery-status'};
+export const config={path:['/api/recovery-status','/api/value-history']};

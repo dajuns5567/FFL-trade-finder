@@ -80,14 +80,14 @@ jobs:
       - name: Deploy certified read-only candidate to dedicated SSO sandbox only
         working-directory: recovery
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
         run: |
           test -n "$NETLIFY_AUTH_TOKEN"
           test ! -e .tmp/fullapp/private-verified-editions.json
           test ! -e .tmp/fullapp/private-history.json
           test "$(find .tmp/fullapp/netlify/functions -type f | wc -l)" -eq 2
           npm install --no-save --ignore-scripts --no-audit --no-fund netlify-cli@23.11.0
-          npx netlify deploy --prod --site d3ac147d-5e0e-4c1e-9163-237da3ee4341 --dir .tmp/fullapp/public --functions .tmp/fullapp/netlify/functions --message 'FLEECED isolated read-only approved rehearsal; no live writers' --auth "$NETLIFY_AUTH_TOKEN"
+          npx netlify deploy --prod --site ed31214d-7c55-4ba8-86ee-099c095c22ce --dir .tmp/fullapp/public --functions .tmp/fullapp/netlify/functions --message 'FLEECED isolated read-only approved rehearsal; no live writers' --auth "$NETLIFY_AUTH_TOKEN"
       - name: Delete temporary full-content bundle even after failure
         if: always()
         run: rm -rf recovery/.tmp/fullapp

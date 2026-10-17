@@ -1,8 +1,5 @@
 name: FLEECED final Week5 live archive and scheduled publisher acceptance
 on:
-  push:
-    paths:
-      - .github/workflows/fleeced-week5-final-readback-once.yml
   workflow_dispatch:
 permissions:
   contents: read

@@ -71,7 +71,9 @@ try{
  assert(functional.tradeIntent,'Trade construction intent selector missing from DOM');
  assert(functional.visibleInputs>=10,'Trade Finder has insufficient interactive controls');
  assert(functional.deferredBoot,'FLEECED deferred application boot was not installed');
- const result={browser:'chromium',functional,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
+ await page.locator('#tradeTier94').selectOption('up');
+ assert.equal(await page.locator('#tradeTier94').inputValue(),'up','Trade intent selector failed basic user interaction');
+ const result={browser:'chromium',functional,trade_intent_interaction:'up',root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
  console.log('FULL FLEECED BROWSER REHEARSAL PASS '+JSON.stringify(result));
  await context.close();
 }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

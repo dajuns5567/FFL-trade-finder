@@ -45,3 +45,24 @@ test('substantive future draft may include legitimately renamed teams',()=>{
   assert.match(x.stdout,/meaningful_paragraphs/);
  }finally{fs.rmSync(v.dir,{recursive:true,force:true})}
 });
+
+test('mirrored article and section paragraphs are not false duplicate failures',()=>{
+ const v=fixture();
+ try{
+  const candidate=JSON.parse(fs.readFileSync(v.direct,'utf8'));
+  for(const team of candidate.teams){
+   const seed=team.inquirer_article.sections[0].paragraphs[0];
+   const paragraphs=Array.from({length:6},(_,i)=>seed+' A distinct weekly matchup analysis number '+(i+1)+' anchored to this team.');
+   team.inquirer_article.paragraphs=paragraphs.slice();
+   team.inquirer_article.sections[0].paragraphs=paragraphs.slice();
+  }
+  fs.writeFileSync(v.direct,JSON.stringify(candidate));
+  const pass=spawnSync(process.execPath,[runner,v.direct,v.base],{encoding:'utf8'});
+  assert.equal(pass.status,0,pass.stderr);
+  candidate.teams[0].inquirer_article.paragraphs[1]=candidate.teams[0].inquirer_article.paragraphs[0];
+  fs.writeFileSync(v.direct,JSON.stringify(candidate));
+  const fail=spawnSync(process.execPath,[runner,v.direct,v.base],{encoding:'utf8'});
+  assert.equal(fail.status,1);
+  assert.match(fail.stderr,/duplicate paragraphs/);
+ }finally{fs.rmSync(v.dir,{recursive:true,force:true})}
+});

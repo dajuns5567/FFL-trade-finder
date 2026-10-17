@@ -37,6 +37,9 @@ jobs:
       - name: Run complete 32-team future editorial structure and copy-paste gate
         working-directory: recovery
         run: node scripts/check-future-inquirer-quality.mjs .tmp/week5/private-candidate.json ../accepted/editorial-baselines/2026-week4-v19-served-copy.json
+      - name: Syntax-check gated create-only Week5 publisher without invoking it
+        working-directory: recovery
+        run: node --check scripts/publish-fleeced-week5-newteam.mjs
       - name: Remove private draft after success or failure
         if: always()
         working-directory: recovery

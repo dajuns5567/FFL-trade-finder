@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+// Full original FLEECED browser rehearsal. No deployment, production credentials or live requests.
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {readFile,stat} from 'node:fs/promises';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {chromium} from 'playwright';
+const root=path.resolve(process.argv[2]||'');
+assert(root&&root!=='/','Checkout directory required');
+const {default:render}=await import(pathToFileURL(path.join(root,'netlify/functions/site-v29.mjs')).href);
+const originalFetch=globalThis.fetch;
+globalThis.fetch=()=>{throw Error('BLOCKED: server renderer attempted outbound fetch')};
+let html;
+try{const response=await render();assert.equal(response.status,200);html=await response.text();}
+finally{globalThis.fetch=originalFetch}
+assert(html.length>20000);
+let denied=0,served=0;
+const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.svg')?'image/svg+xml':'application/octet-stream';
+const server=createServer(async(req,res)=>{
+  try{
+    const u=new URL(req.url,'http://127.0.0.1');
+    if(req.method!=='GET'){denied++;res.writeHead(405);res.end('READ ONLY');return}
+    if(u.pathname==='/'){res.writeHead(200,{'content-type':'text/html; charset=utf-8'});res.end(html);return}
+    if(u.pathname.startsWith('/api/')||u.pathname.startsWith('/.netlify/')){denied++;res.writeHead(403);res.end('NO LIVE API');return}
+    const target=path.resolve(root,'.'+decodeURIComponent(u.pathname));
+    if(!target.startsWith(root+path.sep)){denied++;res.writeHead(403);res.end();return}
+    if(!(await stat(target)).isFile()){res.writeHead(404);res.end();return}
+    const bytes=await readFile(target);served++;
+    res.writeHead(200,{'content-type':mime(target),'cache-control':'no-store'});res.end(bytes);
+  }catch{res.writeHead(404);res.end()}
+});
+await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+const port=server.address().port;
+let browser;
+try{
+ browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ const context=await browser.newContext({serviceWorkers:'block'});
+ await context.route('**/*',route=>{
+  const url=new URL(route.request().url());
+  if(url.origin!=='http://127.0.0.1:'+port){denied++;return route.abort('blockedbyclient')}
+  if(route.request().method()!=='GET'){denied++;return route.abort('blockedbyclient')}
+  return route.continue();
+ });
+ const page=await context.newPage();
+ await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded',timeout:30000});
+ await page.waitForTimeout(2500);
+ const title=await page.title();
+ const body=await page.locator('body').innerText();
+ assert(body.includes('Fleeced!')||body.includes('FLEECED'),'Rendered application branding missing from browser DOM');
+ assert(body.toLowerCase().includes('trade'),'Trade Finder not present in browser');
+ const scripts=await page.locator('script[src]').count();
+ assert(scripts>=10,'Original application script graph did not load');
+ const result={browser:'chromium',root_rendered:true,body_length:body.length,script_tags:scripts,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
+ console.log('FULL FLEECED BROWSER REHEARSAL PASS '+JSON.stringify(result));
+ await context.close();
+}finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

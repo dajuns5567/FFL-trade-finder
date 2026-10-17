@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const source=fs.readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
 test('completed-week enrichment has a defined roster-to-team-name resolver',()=>{
- const match=source.match(/\\bteamName=id=>(byId\\.get\\(String\\(id\\)\\)\\?\\.team_name\\|\\|null)/);
+ const match=source.match(/\bteamName=id=>(byId\.get\(String\(id\)\)\?\.team_name\|\|null)/);
  assert.ok(match,'Missing teamName resolver that blocks Week 3+ publication');
  const byId=new Map([['7',{team_name:'The Underdogs'}],['9',{team_name:'The Sharks'}]]);
  const teamName=Function('byId','return id=>'+match[1])(byId);

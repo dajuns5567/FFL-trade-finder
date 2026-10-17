@@ -7,12 +7,19 @@ import {readFile,stat} from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {chromium} from 'playwright';
+import {gunzipSync} from 'node:zlib';
 
 const root=path.resolve(process.argv[2]||'');
 assert(root.includes('/.tmp/'),'Only an ephemeral assembled candidate may be tested');
 const publicDir=path.join(root,'public');
 const {default:inquirer}=await import(pathToFileURL(path.join(root,'netlify/functions/approved-inquirer.mjs')).href);
 const {default:history}=await import(pathToFileURL(path.join(root,'netlify/functions/approved-history.mjs')).href);
+const historyCode=await readFile(path.join(root,'netlify/functions/approved-history.mjs'),'utf8');
+const encoded=historyCode.match(/Buffer\.from\("([A-Za-z0-9+/=]+)",'base64'\)/)?.[1];
+assert(encoded,'Packaged history data unavailable');
+const restored=JSON.parse(gunzipSync(Buffer.from(encoded,'base64')).toString('utf8'));
+const sampleId=Object.keys(restored.players).find(id=>restored.players[id]?.length===156);
+assert(sampleId,'No player with a complete 156-point recovered history');
 const html=await readFile(path.join(publicDir,'index.html'),'utf8');
 assert(html.length>20000);
 const netlifyConfig=await readFile(path.join(root,'netlify.toml'),'utf8');
@@ -57,22 +64,23 @@ try{
  assert((await page.locator('script[src]').count())>=10,'Original application script graph missing');
  assert(servedAssets>=90,'Original application assets not served from exact candidate');
  assert.deepEqual(failures,[],'Broken candidate JavaScript or CSS');
- const results=await page.evaluate(async()=>{
+ const results=await page.evaluate(async(sampleId)=>{
   const get=async(route,options)=>{const r=await fetch(route,options);return {status:r.status,body:await r.json()}};
   const archive=await get('/api/league-hub?broadcast_archive=1');
   const weeks=[];
   for(let w=1;w<=4;w++)weeks.push(await get('/api/league-hub?broadcast_season=2026&broadcast_week='+w));
-  const history=await get('/api/value-history?player_id=unknown');
+  const history=await get('/api/value-history?player_id='+encodeURIComponent(sampleId));
   const denied=await get('/api/league-hub?weekly=1');
   const unpublished=await get('/api/league-hub?broadcast_season=2026&broadcast_week=5');
   const other=await fetch('/api/trade-finder');
   return {archive,weeks,history,denied,unpublished,other:other.status,tradeMode:!!document.querySelector('#findMode')};
- });
+ },sampleId);
  assert(results.tradeMode,'Trade Finder controls missing');
  assert.equal(results.archive.status,200);
  assert.deepEqual(results.archive.body.reports.map(r=>r.week),[1,2,3,4]);
  for(const edition of results.weeks){assert.equal(edition.status,200);assert.equal(edition.body.teams.length,32);assert(edition.body.teams.every(t=>t.inquirer_article))}
  assert.equal(results.history.status,200);assert.equal(results.history.body.snapshot_count,156);
+ assert.equal(results.history.body.points.length,156,'Real restored player history incomplete');
  assert.equal(results.denied.status,400);
  assert.equal(results.unpublished.status,403);
  assert.equal(results.other,404,'Unsupported live API must fail closed');

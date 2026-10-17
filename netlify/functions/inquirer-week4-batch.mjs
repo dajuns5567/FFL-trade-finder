@@ -5,7 +5,9 @@ import {inspectEditionBeforePublication} from './inquirer-publication-guard.mjs'
 import {evaluateInquirerEditionQuality} from './inquirer-editorial-v31.mjs';
 
 const one=n=>Number(n||0).toFixed(2);
-const summaryOf=team=>({team:team.team_name,opponent:team.opponent_name,score:one(team.points),opponent_score:one(team.opponent_points),won:!!team.won,record:team.league_context?.record||null,top_players:(team.starter_details||[]).slice(0,3).map(p=>({name:p.name,points:p.points,real_stat_line:p.real_stat_line||''}))});
+const summaryOf=team=>({team:team.team_name,opponent:team.opponent_name,score:one(team.points),opponent_score:one(team.opponent_points),won:!!team.won,record:team.league_context?.record||null,top_players:[...(team.starter_details||[])]
+  .filter(p=>Number.isFinite(Number(p.points))).sort((a,b)=>Number(b.points)-Number(a.points))
+  .slice(0,3).map(p=>({name:p.name,points:p.points,real_stat_line:p.real_stat_line||''}))});
 
 // Validate the official snapshot BEFORE spending on 33 model requests. A
 // plausible-looking article cannot compensate for missing or contradictory

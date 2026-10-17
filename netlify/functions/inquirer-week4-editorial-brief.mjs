@@ -16,12 +16,16 @@ export function week4EditorialBrief({team,acceptedWeek4,week}){
       .map(s=>({kind:s.kind,paragraphs:(s.paragraphs||[]).slice(0,1)}))}));
   if(!samples.length)throw new Error('Week 4 does not contain the assigned reporter');
   const lineup=(team.starter_details||[]).map(p=>({name:p.name,position:p.position,points:p.points,real_stat_line:p.real_stat_line||''}));
+  const ranked=lineup.filter(p=>Number.isFinite(Number(p.points)))
+    .sort((a,b)=>Number(b.points)-Number(a.points));
+  const completedTransactions=(team.transactions||[]).filter(tx=>
+    !tx.status||['complete','completed'].includes(String(tx.status).toLowerCase()));
   const facts={week:Number(week),team:team.team_name,manager:team.manager_name,opponent:team.opponent_name,
     score:exact(team.points),opponent_score:exact(team.opponent_points),won:!!team.won,
     record:team.league_context?.record||null,division:team.division_name||null,
-    next_opponent:team.next_opponent_name||null,top_players:lineup.slice(0,5),
-    weakest_starters:lineup.slice(-3),best_lineup_miss:team.best_lineup_miss||null,
-    completed_transactions:team.transactions||[],trade_acquisitions:team.trade_acquisitions||[],
+    next_opponent:team.next_opponent_name||null,top_players:ranked.slice(0,5),
+    weakest_starters:ranked.slice(-3).reverse(),best_lineup_miss:team.best_lineup_miss||null,
+    completed_transactions:completedTransactions,trade_acquisitions:team.trade_acquisitions||[],
     value_movement:team.value_history_week||null,prior_fan_sentiment:team.previous_fan_sentiment||null,
     injury_and_bye_context:team.next_week_availability||null};
   return {system:`You are a passionate fantasy-football newspaper columnist. Write a new Week ${week} story in the sarcastic, blunt, funny, opinionated style demonstrated by the APPROVED WEEK 4 samples. They are examples of rhythm and attitude ONLY. Never lift or paraphrase their sentences, gags, transitions, or section arguments. Do not borrow Weeks 1–3. Write fresh jokes, consequential football judgments, visible fan emotion, and a management spotlight. Embed verified point totals and real-life statistics naturally. Do not invent players, scores, injuries, trades, standings, or quotations. If evidence is missing, omit the allegation. Avoid formulaic top-three lists, numeric lectures, meta-writing, 'eligible option', and repeating 'it was not X; it was Y'. Fans can spray champagne or threaten pitchfork protests when earned by the result. Output ONLY a JSON object with headline, deck, and sections; sections must have kinds lede, players, management, value, sentiment, outlook, each with two or more substantial paragraphs.`,
@@ -43,7 +47,8 @@ export function validateWeek4EditorialDraft(draft,team){
   if(!copy.includes(String(team?.opponent_name||'')))errors.push('opponent-identity');
   if(!copy.includes(Number(team?.points||0).toFixed(1))&&!copy.includes(exact(team?.points)))errors.push('score-identity');
   if(!copy.includes(Number(team?.opponent_points||0).toFixed(1))&&!copy.includes(exact(team?.opponent_points)))errors.push('opponent-score-identity');
-  const leadingPlayer=(team?.starter_details||[])[0]?.name;
+  const leadingPlayer=(team?.starter_details||[]).filter(p=>Number.isFinite(Number(p.points)))
+    .sort((a,b)=>Number(b.points)-Number(a.points))[0]?.name;
   if(leadingPlayer&&!copy.includes(String(leadingPlayer)))errors.push('featured-player-identity');
   if(/\b(?:TBD|TODO|lorem ipsum|eligible option|the useful weakness-or-strength note)\b/i.test(copy))errors.push('placeholder-or-meta-prose');
   return{ok:errors.length===0,errors};

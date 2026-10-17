@@ -19,6 +19,18 @@ test('only a complete approved Week 4 edition may provide style samples',()=>{
   assert.doesNotMatch(brief.user,/previous_week_prose_source/);
 });
 
+test('football facts rank actual scorer output rather than assuming starter order, and exclude pending moves',()=>{
+  const shuffled={...team,starter_details:[...team.starter_details].reverse(),transactions:[
+    {status:'pending',type:'waiver',id:'not-complete'},
+    {status:'complete',type:'trade',id:'verified-move'}
+  ]};
+  const facts=JSON.parse(week4EditorialBrief({team:shuffled,acceptedWeek4:baseline,week:5}).user).current_week_verified_facts;
+  const expected=[...team.starter_details].sort((a,b)=>Number(b.points)-Number(a.points));
+  assert.equal(facts.top_players[0].name,expected[0].name);
+  assert.equal(facts.weakest_starters[0].name,expected.at(-1).name);
+  assert.deepEqual(facts.completed_transactions.map(tx=>tx.id),['verified-move']);
+});
+
 test('the draft validator rejects incomplete articles and fabricated approval metadata',()=>{
   const empty=validateWeek4EditorialDraft({},team);
   assert.equal(empty.ok,false);

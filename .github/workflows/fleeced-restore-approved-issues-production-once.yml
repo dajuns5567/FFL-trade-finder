@@ -1,0 +1,59 @@
+name: FLEECED restore locked Week 3-4 to original production once
+on:
+  push:
+    paths:
+      - .github/workflows/fleeced-restore-approved-issues-production-once.yml
+permissions:
+  contents: read
+concurrency:
+  group: fleeced-original-production-inquirer-restoration
+  cancel-in-progress: false
+jobs:
+  restore-approved:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frozen original dependencies without lifecycle scripts
+        working-directory: application
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Install Actions-only Blob SDK dependencies
+        working-directory: recovery
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Stage all four frozen approved served editions and prove all 457 protected Week4 paragraphs
+        working-directory: recovery
+        run: node scripts/stage-fleeced-frozen-inquirer-dataset.mjs ../application .tmp/publish/private-editions.json
+      - name: Check exact restoration script syntax
+        working-directory: recovery
+        run: node --check scripts/restore-fleeced-approved-inquirer-production-once.mjs
+      - name: Read-only dry run against exact original production store
+        working-directory: recovery
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          FLEECED_PRODUCTION_SITE_ID: 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
+        run: node scripts/restore-fleeced-approved-inquirer-production-once.mjs .tmp/publish/private-editions.json --dry-run
+      - name: Create approved Week3-4 protected content without overwrites and verify every write
+        working-directory: recovery
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          FLEECED_PRODUCTION_SITE_ID: 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
+        run: node scripts/restore-fleeced-approved-inquirer-production-once.mjs .tmp/publish/private-editions.json
+      - name: Independent read-only production listing after archive index commit
+        working-directory: recovery
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          FLEECED_PRODUCTION_SITE_ID: 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
+        run: node scripts/audit-fleeced-production-edition-availability.mjs
+      - name: Remove private temporary payload after success or failure
+        if: always()
+        working-directory: recovery
+        run: rm -rf .tmp/publish

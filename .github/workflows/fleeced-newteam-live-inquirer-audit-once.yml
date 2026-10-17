@@ -1,0 +1,23 @@
+name: FLEECED new-team live-site Inquirer read-only audit
+on:
+  push:
+    paths:
+      - .github/workflows/fleeced-newteam-live-inquirer-audit-once.yml
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated Blob SDK without scripts
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Check exact screenshot site with new-team credential and no writes
+        env:
+          NETLIFY_SANDBOX_DEPLOY_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
+          FLEECED_NEW_TEAM_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+        run: node scripts/audit-fleeced-newteam-live-editions.mjs

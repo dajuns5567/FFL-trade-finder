@@ -1,0 +1,26 @@
+name: Live isolated original-app gateway read-path acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-fullapp-gateway-live-acceptance.yml'
+      - 'scripts/accept-fullapp-gateway-isolated-live.mjs'
+      - 'scripts/fullapp-sandbox-recovery-gateway.mjs'
+permissions:
+  contents: read
+jobs:
+  restored-read-paths:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install only test-time SDK without execution scripts
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Exercise actual gateway against original 156 isolated Blob snapshots and four Inquirer editions
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/accept-fullapp-gateway-isolated-live.mjs

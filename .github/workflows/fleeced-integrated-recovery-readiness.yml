@@ -4,6 +4,16 @@ on:
   push:
     paths:
       - '.github/workflows/fleeced-integrated-recovery-readiness.yml'
+      - 'scripts/audit-full-recovery-cutover.mjs'
+      - 'scripts/verify-durable-history-freshness.mjs'
+      - 'scripts/assess-archive-continuity.mjs'
+      - 'scripts/select-archive-production-site.mjs'
+      - 'scripts/resolve-active-netlify-site.mjs'
+      - 'scripts/check-isolated-full-app-render.mjs'
+      - 'scripts/assess-week4-served-vs-preload.mjs'
+      - 'tests/archive-blob-inventory.test.mjs'
+      - 'tests/select-archive-production-site.test.mjs'
+      - 'tests/assess-archive-continuity.test.mjs'
 permissions:
   contents: read
 jobs:

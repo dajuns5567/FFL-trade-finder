@@ -1,0 +1,45 @@
+name: Approve Reviewed Fleeced Inquirer Edition
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: Season (e.g. 2026)
+        required: true
+        type: string
+      week:
+        description: Completed week number
+        required: true
+        type: string
+      sha256:
+        description: Exact 64-character digest shown by the private staging report
+        required: true
+        type: string
+      review_note:
+        description: Explain editorial checks performed and cite internal review notes (minimum 30 characters)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  approve-exact-draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci --ignore-scripts
+      - name: Verify manuscript and approve only exact reviewed digest
+        env:
+          FLEECED_NEW_TEAM_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+          NETLIFY_SANDBOX_DEPLOY_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
+          REVIEW_SEASON: ${{ inputs.season }}
+          REVIEW_WEEK: ${{ inputs.week }}
+          REVIEW_SHA: ${{ inputs.sha256 }}
+          REVIEW_NOTE: ${{ inputs.review_note }}
+          REVIEW_ACTOR: ${{ github.actor }}
+        run: node scripts/approve-staged-inquirer.mjs "$REVIEW_SEASON" "$REVIEW_WEEK" "$REVIEW_SHA" "$REVIEW_ACTOR" "$REVIEW_NOTE"

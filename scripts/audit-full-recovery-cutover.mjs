@@ -15,8 +15,8 @@ const checks={
  'production has scheduled inquirer publisher': /\[functions\."inquirer-publish-scheduled"\][\s\S]*?schedule\s*=/.test(prod),
  'isolated viewer omits scheduled publisher': !/schedule\s*=/.test(isolated),
  'isolated viewer not production configuration': !isolated.includes('functions = "netlify/functions"')||isolated.includes('publish = "public"'),
- 'archival workflow pins production site identity': archive.includes("VALUE_HISTORY_PRODUCTION_SITE_ID: 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'"),
- 'archival workflow permits safe commit drift': archive.includes("steps.active_site.outputs.site_id == 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'"),
+ 'archival workflow pins production site identity': archive.includes("VALUE_HISTORY_PRODUCTION_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'"),
+ 'archival workflow blocks ingestion on commit drift': archive.includes("steps.active_site.outputs.matched_target_sha == 'true'"),
  'resolver requires a pinned production identity': resolver.includes('VALUE_HISTORY_PRODUCTION_SITE_ID')&&resolver.includes('selectArchiveProductionSite'),
  'production app contains write-capable store': /getStore\(['"]fleeced-league-hub/.test(mainHub),
  'production app does not automatically have four preserved week preloads': !mainHub.includes("inquirer-week4-2026-preload"),
@@ -24,7 +24,7 @@ const checks={
 assert(checks['production has scheduled inquirer publisher'],'Publication schedule not located; review architecture before migration');
 assert(checks['isolated viewer omits scheduled publisher'],'Unsafe isolated scheduled publisher');
 assert(checks['archival workflow pins production site identity'],'Archive production site is not pinned');
-assert(checks['archival workflow permits safe commit drift'],'Safe pinned-site archival ingest guard missing');
+assert(checks['archival workflow blocks ingestion on commit drift'],'Safe pinned-site archival ingest guard missing');
 assert(checks['resolver requires a pinned production identity'],'Resolver no longer enforces pinned site checks');
 const result={
  status:'HOLD_FULL_APPLICATION_CUTOVER',

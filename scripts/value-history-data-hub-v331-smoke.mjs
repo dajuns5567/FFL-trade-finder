@@ -551,6 +551,8 @@ const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.y
 assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');
 assert(archiveWorkflow.includes('contents: write'),'archive workflow needs contents write permission');
 assert(archiveWorkflow.includes('NETLIFY_BLOBS_TOKEN:'),'archive workflow must inject an authenticated Blob token instead of relying on public site access');
+assert(archiveWorkflow.includes("VALUE_HISTORY_PRODUCTION_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'"),'hourly archive must pin the current verified Netlify production site');
+assert(archiveWorkflow.includes('NETLIFY_SANDBOX_DEPLOY_TOKEN'),'hourly archive must use the current-team Blob credential');
 assert(archiveWorkflow.includes('Resolve latest production Netlify site for main'),'interactive archive workflow may resolve the currently accessible Netlify live buffer without being required by scheduled history');
 assert(archiveWorkflow.includes("if: steps.active_site.outputs.matched_target_sha == 'true'"),'interactive archive must not ingest live Blob history from a retired Netlify production site');
 assert(archiveWorkflow.includes('Skipping live Netlify Blob ingestion; scheduled GitHub-native history remains unaffected.'),'interactive archive must report unavailable current-site access instead of silently archiving a retired site');

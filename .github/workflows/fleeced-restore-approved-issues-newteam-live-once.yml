@@ -1,0 +1,59 @@
+name: FLEECED restore locked Week 3-4 to user-visible new-team live site once
+on:
+  push:
+    paths:
+      - .github/workflows/fleeced-restore-approved-issues-newteam-live-once.yml
+permissions:
+  contents: read
+concurrency:
+  group: fleeced-newteam-live-inquirer-restoration
+  cancel-in-progress: false
+jobs:
+  restore-approved:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frozen original dependencies without lifecycle scripts
+        working-directory: application
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Install Actions-only Blob SDK dependencies
+        working-directory: recovery
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Stage all four frozen approved served editions and prove all 457 protected Week4 paragraphs
+        working-directory: recovery
+        run: node scripts/stage-fleeced-frozen-inquirer-dataset.mjs ../application .tmp/publish/private-editions.json
+      - name: Check exact restoration script syntax
+        working-directory: recovery
+        run: node --check scripts/restore-fleeced-approved-inquirer-newteam-live-once.mjs
+      - name: Read-only dry run against exact user-visible new-team live site store
+        working-directory: recovery
+        env:
+          NETLIFY_SANDBOX_DEPLOY_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
+          FLEECED_NEW_TEAM_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+        run: node scripts/restore-fleeced-approved-inquirer-newteam-live-once.mjs .tmp/publish/private-editions.json --dry-run
+      - name: Create approved Week3-4 protected content without overwrites and verify every write
+        working-directory: recovery
+        env:
+          NETLIFY_SANDBOX_DEPLOY_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
+          FLEECED_NEW_TEAM_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+        run: node scripts/restore-fleeced-approved-inquirer-newteam-live-once.mjs .tmp/publish/private-editions.json
+      - name: Independent read-only production listing after archive index commit
+        working-directory: recovery
+        env:
+          NETLIFY_SANDBOX_DEPLOY_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
+          FLEECED_NEW_TEAM_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+        run: node scripts/audit-fleeced-newteam-live-editions.mjs
+      - name: Remove private temporary payload after success or failure
+        if: always()
+        working-directory: recovery
+        run: rm -rf .tmp/publish

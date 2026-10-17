@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const [file,baselineFile]=process.argv.slice(2);
 assert(file&&baselineFile,'Usage: node scripts/check-future-inquirer-quality.mjs <candidate.json> <week4-baseline.json>');
-const candidate=JSON.parse(fs.readFileSync(file,'utf8'));
+const input=JSON.parse(fs.readFileSync(file,'utf8'));
+const calibration=process.argv.includes('--edition-map');
+const candidate=calibration?input['4']:input;
+assert(candidate?.teams?.length===32,'A complete 32-team editorial candidate is required');
 const baseline=JSON.parse(fs.readFileSync(baselineFile,'utf8'));
 assert.equal(baseline.articles?.length,32,'Accepted baseline corrupted');
 assert.equal(candidate.teams?.length,32,'Candidate must cover all 32 teams');
@@ -27,4 +30,5 @@ for(const team of articles){
 }
 const summary={teams:articles.length,meaningful_paragraphs:paragraphCount,problems:problems.length,reference:'Week 4 v19 coverage and minimum completeness; not a prose quality score'};
 console.log('FUTURE INQUIRER EDITORIAL GATE '+JSON.stringify(summary));
-if(problems.length){console.error('FUTURE INQUIRER EDITORIAL HOLD '+JSON.stringify(problems));process.exitCode=1}
+if(problems.length){console.error('FUTURE INQUIRER EDITORIAL '+(calibration?'CALIBRATION FINDINGS ':'HOLD ')+JSON.stringify(problems));if(!calibration)process.exitCode=1}
+if(calibration)console.log('FUTURE INQUIRER THRESHOLD CALIBRATION COMPLETE; not a publisher approval');

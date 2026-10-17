@@ -1,0 +1,93 @@
+name: FLEECED one-time isolated SSO sandbox rehearsal deploy
+on:
+  push:
+    paths:
+      - '.github/workflows/fleeced-sandbox-deploy-once.yml'
+permissions:
+  contents: read
+jobs:
+  full-inquirer-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Ensure future draft enforcement remains strict while Week4 calibration is nonblocking
+        working-directory: recovery
+        run: node --test tests/future-inquirer-quality-gate.test.mjs
+      - name: Install frozen original application dependencies without scripts
+        working-directory: application
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Build the frozen full-app interface offline
+        working-directory: recovery
+        run: node scripts/build-fleeced-fullapp-static-recovery.mjs ../application .tmp/fullapp/public
+      - name: Stage all four approved Inquirer editions with exact locked paragraph validation
+        working-directory: recovery
+        run: node scripts/stage-fleeced-frozen-inquirer-dataset.mjs ../application .tmp/fullapp/private-verified-editions.json
+      - name: Calibration-only editorial structural gate against actual frozen served Week 4
+        working-directory: recovery
+        run: node scripts/check-future-inquirer-quality.mjs .tmp/fullapp/private-verified-editions.json ../application/editorial-baselines/2026-week4-v19-served-copy.json --edition-map
+      - name: Compile credential-free function and remove intermediate manuscript
+        working-directory: recovery
+        run: node scripts/package-fleeced-inquirer-read-only.mjs .tmp/fullapp
+      - name: Exercise real bundled archived-edition GET routes and denial cases
+        working-directory: recovery
+        run: node scripts/accept-packaged-fleeced-inquirer.mjs .tmp/fullapp
+      - name: Install Netlify SDK for Actions-only isolated history read
+        working-directory: recovery
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Stage all restored historical player time series without production writes
+        working-directory: recovery
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/stage-fleeced-full-history-offline.mjs .tmp/fullapp/private-history.json
+      - name: Package credential-free history read handler and remove intermediate private JSON
+        working-directory: recovery
+        run: node scripts/package-fleeced-history-read-only.mjs .tmp/fullapp
+      - name: Enforce exactly two credential-free functions and same-origin CSP
+        working-directory: recovery
+        run: node scripts/finalize-fleeced-offline-fullapp-candidate.mjs .tmp/fullapp
+      - name: Verify whole offline original app with complete Inquirer and restored player history handlers
+        working-directory: recovery
+        run: node scripts/accept-fleeced-offline-complete-candidate.mjs .tmp/fullapp
+      - name: Install Chromium for exact assembled candidate browser acceptance
+        working-directory: recovery
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercise packaged candidate in Chromium with restored Inquirer and Value History GETs
+        working-directory: recovery
+        run: node scripts/accept-fleeced-offline-candidate-browser.mjs .tmp/fullapp
+      - name: Exercise original frozen Trade Finder generation with deterministic offline roster fixtures
+        working-directory: recovery
+        run: node scripts/rehearse-full-original-app-browser.mjs ../application
+      - name: Assert no intermediate manuscript or publisher in runtime bundle
+        working-directory: recovery
+        run: |
+          test ! -e .tmp/fullapp/private-verified-editions.json
+          test ! -e .tmp/fullapp/private-history.json
+          test "$(find .tmp/fullapp/netlify/functions -type f | wc -l)" -eq 2
+          ! grep -Eiq 'schedule[[:space:]]*=' .tmp/fullapp/netlify.toml
+      - name: Deploy certified read-only candidate to dedicated SSO sandbox only
+        working-directory: recovery
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+        run: |
+          test -n "$NETLIFY_AUTH_TOKEN"
+          test ! -e .tmp/fullapp/private-verified-editions.json
+          test ! -e .tmp/fullapp/private-history.json
+          test "$(find .tmp/fullapp/netlify/functions -type f | wc -l)" -eq 2
+          npm install --no-save --ignore-scripts --no-audit --no-fund netlify-cli@23.11.0
+          npx netlify deploy --prod --site d3ac147d-5e0e-4c1e-9163-237da3ee4341 --dir .tmp/fullapp/public --functions .tmp/fullapp/netlify/functions --message 'FLEECED isolated read-only approved rehearsal; no live writers' --auth "$NETLIFY_AUTH_TOKEN"
+      - name: Delete temporary full-content bundle even after failure
+        if: always()
+        run: rm -rf recovery/.tmp/fullapp

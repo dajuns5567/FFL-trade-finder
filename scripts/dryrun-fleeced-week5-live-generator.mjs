@@ -16,7 +16,8 @@ if(source.includes(nameOld))source=source.replace(nameOld,'const byId=new Map(te
 else assert(source.includes('teamName=id=>byId.get(String(id))?.team_name||null'),'Missing team name resolver');
 const storeOld="const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});";
 assert(source.includes(storeOld),'Expected default production Blob store initialization not found');
-const storeNew="const store=()=>{const s=getStore({name:'fleeced-league-hub',siteID:'"+SITE+"',token:process.env.NETLIFY_SANDBOX_DEPLOY_TOKEN,consistency:'strong'});return{get:(...args)=>s.get(...args),setJSON:async()=>({modified:false,dry_run:true})}};";
+const capturedOps=[];globalThis.__fleecedWeek5DryRunWrites=capturedOps;
+const storeNew="const store=()=>{const s=getStore({name:'fleeced-league-hub',siteID:'"+SITE+"',token:process.env.NETLIFY_SANDBOX_DEPLOY_TOKEN,consistency:'strong'});return{get:(...args)=>s.get(...args),setJSON:async(key,value)=>{globalThis.__fleecedWeek5DryRunWrites.push({key,value});return{modified:false,dry_run:true}}}};";
 source=source.replace(storeOld,storeNew);
 const historyFile=path.join(root,'netlify/functions/value-history.mjs');
 let historySource=await fs.readFile(historyFile,'utf8');
@@ -34,14 +35,23 @@ if(source.includes(gateLine))source=source.replace(gateLine,'const q=evaluateInq
 else{assert(source.includes('lastQuality=q;'));source=source.replace('lastQuality=q;',logGate)}
 
 assert(!source.includes(storeOld));
+source+='\nexport {weeklyManagerAwards,weeklyPlayersOfWeek};\n';
 await fs.writeFile(file,source);
-const {weeklyReport}=await import(pathToFileURL(file).href+'?rehearsal='+Date.now());
+const {weeklyReport,weeklyManagerAwards,weeklyPlayersOfWeek}=await import(pathToFileURL(file).href+'?rehearsal='+Date.now());
 const result=await weeklyReport(new Request('https://phenomenal-mousse-f0a00c.netlify.app/.netlify/functions/league-hub?weekly=1'));
 assert(result?.available&&Number(result.week)===5,'Week5 not generated: '+JSON.stringify({available:result?.available,week:result?.week,reason:result?.reason}));
 assert.equal(result.teams?.length,32,'Incomplete Week5 article population');
 assert(result.teams.every(t=>t.inquirer_article?.headline),'Missing Week5 content');
 await fs.mkdir(path.dirname(dest),{recursive:true});
 await fs.writeFile(dest,JSON.stringify(result));
+assert(capturedOps.length>=35,'Did not capture a complete publish plan');
+await fs.writeFile(dest.replace(/\\.json$/,'-writes.json'),JSON.stringify(capturedOps));
+const sleeper='https://api.sleeper.app/v1';
+const [league,players,stats]=await Promise.all([fetch(sleeper+'/league/1316867686394769408').then(r=>r.json()),fetch(sleeper+'/players/nfl').then(r=>r.json()),fetch(sleeper+'/stats/nfl/regular/2026/5').then(r=>r.json())]);
+const awards={season:2026,week:5,captured_at:result.generated_at,manager_awards:weeklyManagerAwards(result),players_of_week:weeklyPlayersOfWeek(stats,players,league.scoring_settings||{})};
+assert.equal(awards.manager_awards.length,4,'Manager award coverage incomplete');
+assert(awards.players_of_week.offense&&awards.players_of_week.defense,'Missing offense or defense Player of the Week');
+await fs.writeFile(dest.replace(/\\.json$/,'-awards.json'),JSON.stringify(awards));
 const sentiments=result.teams.filter(t=>(t.inquirer_article?.sections||[]).some(s=>s.kind==='sentiment'&&Array.isArray(s.paragraphs)&&s.paragraphs.length>=2)).length;
 const counts=result.teams.map(t=>(t.inquirer_article?.paragraphs||[]).length);
-console.log('WEEK5 NO-WRITE LIVE GENERATION '+JSON.stringify({week:result.week,teams:result.teams.length,recap:!!result.league_overview?.headline,sentiment_sections:sentiments,paragraph_min:Math.min(...counts),paragraph_max:Math.max(...counts),reporters:new Set(result.teams.map(t=>t.inquirer_article.reporter?.id)).size,editorial_revision:result.editorial_revision,no_blob_mutations:true}));
+console.log('WEEK5 NO-WRITE LIVE GENERATION '+JSON.stringify({week:result.week,teams:result.teams.length,recap:!!result.league_overview?.headline,sentiment_sections:sentiments,paragraph_min:Math.min(...counts),paragraph_max:Math.max(...counts),reporters:new Set(result.teams.map(t=>t.inquirer_article.reporter?.id)).size,editorial_revision:result.editorial_revision,no_blob_mutations:true,captured_publication_writes:capturedOps.length,manager_awards:awards.manager_awards.length,players_of_week:Object.keys(awards.players_of_week).filter(k=>awards.players_of_week[k]).length,unresolved_na_paragraphs:result.teams.reduce((n,t)=>n+(t.inquirer_article?.paragraphs||[]).filter(p=>/\\bn\\/a\\b/i.test(p)).length,0)}));

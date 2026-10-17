@@ -65,9 +65,8 @@ try{
   const history=await get('/api/value-history?player_id=unknown');
   const denied=await get('/api/league-hub?weekly=1');
   const unpublished=await get('/api/league-hub?broadcast_season=2026&broadcast_week=5');
-  const write=await get('/api/value-history?player_id=unknown',{method:'POST'});
   const other=await fetch('/api/trade-finder');
-  return {archive,weeks,history,denied,unpublished,write,other:other.status,tradeMode:!!document.querySelector('#findMode')};
+  return {archive,weeks,history,denied,unpublished,other:other.status,tradeMode:!!document.querySelector('#findMode')};
  });
  assert(results.tradeMode,'Trade Finder controls missing');
  assert.equal(results.archive.status,200);
@@ -76,8 +75,6 @@ try{
  assert.equal(results.history.status,200);assert.equal(results.history.body.snapshot_count,156);
  assert.equal(results.denied.status,400);
  assert.equal(results.unpublished.status,403);
- // Browser CSP may block POST before HTTP routing; a direct Node handler test covers the 405 contract.
- assert([0,405].includes(results.write.status));
  assert.equal(results.other,404,'Unsupported live API must fail closed');
  console.log('EXACT OFFLINE CANDIDATE CHROMIUM PASS '+JSON.stringify({static_assets_served:servedAssets,weeks:4,articles:128,snapshots:156,unknown_live_api:404,blocked_requests:blocked,broken_assets:failures.length,deploys:0}));
  await context.close();

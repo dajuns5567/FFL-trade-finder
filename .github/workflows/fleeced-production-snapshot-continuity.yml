@@ -1,10 +1,14 @@
 name: Production snapshot continuity diagnostic
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '53 */4 * * *'
   push:
     paths:
       - '.github/workflows/fleeced-production-snapshot-continuity.yml'
       - 'scripts/diagnose-production-archive-continuity.mjs'
+      - 'scripts/assess-archive-continuity.mjs'
+      - 'tests/assess-archive-continuity.test.mjs'
 permissions:
   contents: read
 jobs:
@@ -16,6 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: node --test tests/assess-archive-continuity.test.mjs
       - run: npm install --ignore-scripts --no-audit --no-fund
       - name: Compare real upstream production Blobs and durable archive without writes
         env:

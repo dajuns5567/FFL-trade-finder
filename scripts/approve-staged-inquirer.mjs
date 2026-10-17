@@ -35,6 +35,7 @@ assert.equal(stage.digest,actualDigest,'Staged content digest mismatch');
 assert.equal(expectedDigest,actualDigest,'Reviewed digest differs from current staged manuscript');
 const audit=inspectEditionBeforePublication(stage.edition);
 assert(audit.ok,'Cannot approve a manuscript with editorial findings: '+JSON.stringify(audit.issues.slice(0,8)));
+assert(stage.generation_quality?.ok===true,'Cannot approve a forward edition that failed the full cross-week quality evaluator');
 const approvedAt=new Date().toISOString();
 const record={schema_version:1,season,week,sha256:actualDigest,approved:true,
  reviewed_by:reviewer,reviewed_at:approvedAt,review_note:reviewNote};

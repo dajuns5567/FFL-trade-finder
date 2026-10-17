@@ -401,16 +401,22 @@ export async function weeklyReport(req){
  const approvalKey='inquirer/editorial-approvals/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
  const approval=await s.get(approvalKey,{type:'json'}).catch(()=>null);
  const admission=editorialApprovalMatches(result,approval);
- if(!audit.ok||!admission.approved){
+ // A clean basic manuscript audit is not enough: the full cross-week
+ // evaluator also rejects recycled paragraphs and cross-reporter scaffolds.
+ // Never allow a reviewed digest to override an unresolved generation failure.
+ const deepQualityOk=week<3||quality.ok===true;
+ if(!audit.ok||!deepQualityOk||!admission.approved){
   const pending=await s.get(stageKey,{type:'json'}).catch(()=>null);
-  if(pending?.digest!==admission.digest){
+  if(pending?.digest!==admission.digest||pending?.generation_quality?.ok!==quality.ok){
    await s.setJSON(stageKey,{schema_version:1,season,week,digest:admission.digest,
-    generated_at:result.generated_at,review_status:'pending',audit,edition:{...result,published_locked:false}});
+    generated_at:result.generated_at,review_status:'pending',audit,
+    generation_quality:quality,edition:{...result,published_locked:false}});
   }
   return{available:false,published_locked:false,season,week,waiting_for_week:week,
    review_required:true,stage_key:stageKey,digest:admission.digest,
-   editorial_findings:audit.issues.length,
-   reason:audit.ok?'Awaiting exact-copy editorial approval.':
+   editorial_findings:audit.issues.length+(deepQualityOk?0:quality.issues.length),
+   reason:!deepQualityOk?'Deep editorial quality hold: '+quality.issues.length+' repeat/copy-forward findings. No edition was published.':
+    audit.ok?'Awaiting exact-copy editorial approval.':
     'Editorial quality hold: '+audit.issues.length+' findings. No edition was published.'};
  }
  await s.setJSON(key,result);await syncReporterArchives(s,result,key);if(result.league_overview){const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json',storedOverview=await s.get(overviewKey,{type:'json'}).catch(()=>null);if(!storedOverview?.headline)await s.setJSON(overviewKey,{...result.league_overview,editorial_revision:result.editorial_revision,captured_at:result.generated_at,published_locked:true})}

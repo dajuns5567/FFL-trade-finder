@@ -1,0 +1,47 @@
+name: FLEECED combined fullapp and recovery metadata gateway candidate
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-fullapp-combined-candidate.yml'
+      - 'scripts/build-fleeced-fullapp-static-recovery.mjs'
+      - 'scripts/build-fleeced-fullapp-gateway-candidate.mjs'
+      - 'scripts/verify-fleeced-fullapp-gateway-candidate.mjs'
+      - 'scripts/fullapp-sandbox-recovery-gateway.mjs'
+permissions:
+  contents: read
+jobs:
+  combined-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check metadata gateway privacy contracts
+        working-directory: recovery
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          node --test tests/fullapp-sandbox-recovery-gateway.test.mjs
+      - name: Render exact frozen original app into restricted static bundle
+        working-directory: recovery
+        run: node scripts/build-fleeced-fullapp-static-recovery.mjs ../application .tmp/fullapp/public
+      - name: Combine only read-only metadata recovery gateway
+        working-directory: recovery
+        run: node scripts/build-fleeced-fullapp-gateway-candidate.mjs .tmp/fullapp scripts/fullapp-sandbox-recovery-gateway.mjs
+      - name: Fail closed on unexpected write endpoints schedules credentials or static assets
+        working-directory: recovery
+        run: node scripts/verify-fleeced-fullapp-gateway-candidate.mjs .tmp/fullapp
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fleeced-fullapp-with-metadata-only-gateway-NOT-DEPLOYED
+          path: recovery/.tmp/fullapp/
+          retention-days: 7
+          if-no-files-found: error

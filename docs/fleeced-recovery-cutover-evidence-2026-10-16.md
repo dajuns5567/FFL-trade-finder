@@ -83,3 +83,13 @@
 - Integrated Actions [run #38997515940](https://github.com/dajuns5567/FFL-trade-finder/actions/runs/38997515940) passed both `archive-and-safety` and `actual-app-isolated-data`. The final rendering job successfully rendered 54,585 HTML bytes and verified 98 assets, but the Week 4 comparator reported **0 of 457** exact accepted paragraphs in the **raw** compressed preload. This did not establish that the accepted served copy was absent: the test compared the wrong stage.
 - Inspection of frozen `netlify/functions/league-hub.mjs` shows Week 4 is transformed by `rebuildWeek4Editorial`, `applyInquirerEditorialClarity`, and `upgradeInquirerAnalysis` in `servedPreload` before serving. The original comparator skipped those transforms.
 - Commit `f01f3c8f5736693275c095a7b5146d90cbd45f6f` now invokes the **actual** original `league-hub?preload_bootstrap=1` GET handler and compares accepted paragraphs against its transformed Week 4 response. It blocks external fetches and does not write data. **Until the new integrated run passes, do not claim Week 4 fidelity parity or full recovery certified.**
+
+## Verified consolidated acceptance — 2026-10-17 UTC
+
+[GitHub Actions run #38998591688](https://github.com/dajuns5567/FFL-trade-finder/actions/runs/38998591688) **passed all three independent jobs**. Job logs, not merely the overall status, establish:
+
+- `archive-and-safety`: safety audit and durable archive freshness passed. Full application cutover remains deliberately `HOLD_FULL_APPLICATION_CUTOVER`.
+- `actual-app-prose-and-render`: original frozen app rendered 54,585 HTML bytes with 98 linked assets (91 JavaScript files), zero missing assets and zero external requests. The original `league-hub` *served* Week 4 copy included **457/457 exact accepted paragraphs** across 32 teams. Paragraph coverage **100%**; full rendered document **byte parity not proven**.
+- `actual-app-isolated-data`: all **156** restored baseline snapshots were read (121,990 total player rows); all 4 editions comprised 32 team articles each (128 total). Original frozen Inquirer handler produced the 4 editions with no network calls; original frozen Value History handler returned 156 observations for the sample player through isolated-data request interception. Production writes **zero**.
+
+**What this certifies:** integrated *read-only source, application-handler and restored-data* acceptance for the preserved Week 4 baseline. **What this does NOT certify:** authenticated deployment of the full FLEECED app against normal live Netlify recovered keyspaces; end-to-end real-world fairness or future-week publishing output; complete byte parity of the published Week 4 HTML; relocation to a different Netlify account. The production/publisher/PR #390 holds remain in force.

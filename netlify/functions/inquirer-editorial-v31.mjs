@@ -2724,7 +2724,7 @@ function w2BuildSections(t,prev){
   const byKind={lede,players,management,value,"hot-seat":hot,"cool-throne":cool,sentiment,outlook};if(trade)byKind["trade-commentary"]=trade;
   const orders=[["lede","players","management","hot-seat","cool-throne","value","sentiment","outlook"],["lede","players","cool-throne","management","value","hot-seat","sentiment","outlook"],["lede","hot-seat","players","management","cool-throne","sentiment","value","outlook"],["lede","players","sentiment","management","hot-seat","value","cool-throne","outlook"]],order=orders[Math.floor(Math.max(0,(Number(t.roster_id)||1)-1)/4)%4].slice();
   if(trade){const i=order.indexOf("management");order.splice(i+1,0,"trade-commentary")}
-  return order.map(kind=>({kind,heading:kind==="trade-commentary"?"Trade Receipt: What Week 2 Added":w2SectionHead(r,kind),paragraphs:byKind[kind]})).filter(x=>Array.isArray(x.paragraphs)&&x.paragraphs.length)
+  return order.map(kind=>({kind,heading:kind==="trade-commentary"?"Trade Receipt: What Week 2 Added":w2SectionHead(r,kind),paragraphs:(byKind[kind]||[]).filter(p=>String(p||'').trim().toLowerCase()!=='n/a')})).filter(x=>Array.isArray(x.paragraphs)&&x.paragraphs.length)
 }
 function w2RoycingtonFootballPolish(t,body){
   let s=String(body||""),v=Math.floor(Math.max(0,(Number(t?.roster_id)||1)-1)/4)%8,

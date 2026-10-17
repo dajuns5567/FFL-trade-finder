@@ -1,0 +1,25 @@
+name: Recovered history and editorial full-content read acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-recovered-content-acceptance.yml'
+      - 'scripts/accept-restored-history-editorial-content.mjs'
+permissions:
+  contents: read
+jobs:
+  recovered-content:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Netlify Blob SDK
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Verify every historical snapshot and all four recovered editorial editions, read-only
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/accept-restored-history-editorial-content.mjs

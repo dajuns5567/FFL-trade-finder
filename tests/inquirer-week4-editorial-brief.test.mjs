@@ -24,7 +24,7 @@ test('the draft validator rejects incomplete articles and fabricated approval me
   assert.equal(empty.ok,false);
   assert.ok(empty.errors.length>=7);
   const good={headline:'A brutal Week 5 lesson in roster management',sections:REQUIRED_SECTION_KINDS.map(kind=>({kind,paragraphs:[
-    `${team.team_name} went into its matchup with ${team.opponent_name} and finished with ${Number(team.points).toFixed(1)}. Management is going to have a very long morning explaining what everybody just saw.`,
+    `${team.team_name} went into its matchup with ${team.opponent_name} and finished with ${Number(team.points).toFixed(1)} to ${Number(team.opponent_points).toFixed(1)}. ${team.starter_details[0].name} is going to have a very long morning explaining what everybody just saw.`,
     `The city is already arguing about the ${kind} story, and an embarrassing number of residents believe a fantasy-football argument counts as civic participation.`
   ]}))};
   assert.equal(validateWeek4EditorialDraft(good,team).ok,true);
@@ -34,7 +34,7 @@ test('the draft validator rejects incomplete articles and fabricated approval me
 
 test('server-side composer validates JSON and can only return an unapproved draft',async()=>{
   const draft={headline:'Week 5 brought hard questions for the front office',sections:REQUIRED_SECTION_KINDS.map(kind=>({kind,paragraphs:[
-    `${team.team_name} put ${Number(team.points).toFixed(1)} on the board opposite ${team.opponent_name}, then spent the evening learning how quickly its own supporters can become amateur general managers.`,
+    `${team.team_name} put ${Number(team.points).toFixed(1)} on the board opposite ${team.opponent_name}'s ${Number(team.opponent_points).toFixed(1)}, then watched ${team.starter_details[0].name} learn how quickly supporters can become amateur general managers.`,
     `The ${kind} conversation is going to be savage because the football was nowhere near as polite as the manager would have preferred this afternoon.`
   ]}))};
   const client={chat:{completions:{create:async args=>{

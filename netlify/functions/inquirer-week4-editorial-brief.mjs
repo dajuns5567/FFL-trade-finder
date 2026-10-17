@@ -42,6 +42,9 @@ export function validateWeek4EditorialDraft(draft,team){
   if(!copy.includes(String(team?.team_name||'')))errors.push('team-identity');
   if(!copy.includes(String(team?.opponent_name||'')))errors.push('opponent-identity');
   if(!copy.includes(Number(team?.points||0).toFixed(1))&&!copy.includes(exact(team?.points)))errors.push('score-identity');
+  if(!copy.includes(Number(team?.opponent_points||0).toFixed(1))&&!copy.includes(exact(team?.opponent_points)))errors.push('opponent-score-identity');
+  const leadingPlayer=(team?.starter_details||[])[0]?.name;
+  if(leadingPlayer&&!copy.includes(String(leadingPlayer)))errors.push('featured-player-identity');
   if(/\b(?:TBD|TODO|lorem ipsum|eligible option|the useful weakness-or-strength note)\b/i.test(copy))errors.push('placeholder-or-meta-prose');
   return{ok:errors.length===0,errors};
 }

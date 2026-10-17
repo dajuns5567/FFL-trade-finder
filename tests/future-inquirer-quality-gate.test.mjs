@@ -30,3 +30,18 @@ test('future draft quality gate stays fail-closed on the same differences',()=>{
   assert.match(x.stderr,/HOLD/);
  }finally{fs.rmSync(v.dir,{recursive:true,force:true})}
 });
+
+test('substantive future draft may include legitimately renamed teams',()=>{
+ const v=fixture();
+ try{
+  const candidate=JSON.parse(fs.readFileSync(v.direct,'utf8'));
+  for(const team of candidate.teams){
+   const original=team.inquirer_article.sections[0].paragraphs[0];
+   team.inquirer_article.sections[0].paragraphs=Array.from({length:6},(_,i)=>original+' Distinct football analysis point '+(i+1)+' with documented matchup context.');
+  }
+  fs.writeFileSync(v.direct,JSON.stringify(candidate));
+  const x=spawnSync(process.execPath,[runner,v.direct,v.base],{encoding:'utf8'});
+  assert.equal(x.status,0,x.stderr);
+  assert.match(x.stdout,/meaningful_paragraphs/);
+ }finally{fs.rmSync(v.dir,{recursive:true,force:true})}
+});

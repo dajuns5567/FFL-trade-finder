@@ -112,3 +112,12 @@
 - **NO app deployed, no credentials copied, no publishers enabled, no Blob data written, and no original Netlify site changed** as part of site provisioning.
 - Next gate: assemble a strict allowlist of application static assets and read-only handlers and explicitly deny all write-capable endpoints, scheduled/background functions, remote production-data requests, and editor/publisher credentials. Run offline browser and restored-data handlers against that *exact* candidate package before deploying to this site.
 - Site creation does not certify full-app runtime or cross-account migration. Any change to this site's authentication requirements must be reverified before deploy.
+
+
+## Credential-free static full-app package, pre-deployment stage
+
+- Frozen source: `af9067c751118cf33f688648cb78619d229f2214`. Dedicated empty destination site: `d3ac147d-5e0e-4c1e-9163-237da3ee4341`. Existing recovery viewer and production destinations are untouched.
+- Builder `scripts/build-fleeced-fullapp-static-recovery.mjs` renders the real original entry point offline and copies **only referenced JavaScript/CSS assets** and the generated index page. It deliberately includes **zero Netlify functions, publisher schedules, credentials, or write endpoints**.
+- Netlify static headers include a restrictive CSP with `connect-src 'none'` and `form-action 'none'`; browser outbound requests are intentionally blocked. This is **NOT** a full functional application service; any API-mediated behavior and recovered-data loading remain unavailable by design until explicitly allowlisted in a later package.
+- Verifier `scripts/verify-fleeced-fullapp-static-recovery.mjs` rejects unexpected files, missing referenced assets, missing network restrictions, unrecognized target identifiers, and any Netlify function/schedule configuration. The [candidate workflow](https://github.com/dajuns5567/FFL-trade-finder/actions/workflows/fleeced-fullapp-static-candidate.yml) builds, verifies, and uploads the candidate as a short-lived CI artifact; it **never deploys to Netlify**.
+- **Unverified until CI run logs are examined:** actual package generation and verifier success. **HOLD** on deploying the candidate until its contents pass, its use is approved, and its lack of recovered-data functionality is acknowledged. Full authenticated restored-data recovery remains uncertified.

@@ -1,0 +1,24 @@
+name: FLEECED production Inquirer read-only availability audit
+on:
+  push:
+    paths:
+      - .github/workflows/fleeced-production-edition-audit-once.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install read-only Blob SDK without lifecycle scripts
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Inspect Week 1-4 production keys without writing or displaying private articles
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          FLEECED_PRODUCTION_SITE_ID: 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
+        run: node scripts/audit-fleeced-production-edition-availability.mjs

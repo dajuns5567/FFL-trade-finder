@@ -45,7 +45,13 @@ test('batch builds 32 review-only drafts and never publishes a failing audit',as
   assert.ok(result.edition.league_overview.sections.every(s=>s.reporter?.id));
   assert.ok(result.edition.league_overview.hot_takes.every(t=>t.reporter?.id));
   assert.equal(result.quality.ok,false,'repetitive fake model content must not pass editorial admission');
-  assert.equal(result.edition.teams[0].points,input.teams[0].points,'real matchup facts remain unchanged');
+  for(let i=0;i<32;i++){
+    const {inquirer_article:beforeArticle,...before}=input.teams[i];
+    const {inquirer_article:afterArticle,...after}=result.edition.teams[i];
+    assert.deepEqual(after,before,'all factual, matchup, awards-context and manager fields remain untouched');
+    assert.equal(afterArticle.reporter.id,beforeArticle.reporter.id);
+  }
+  assert.deepEqual(accepted,{...fixture,week:4},'the Week 4 baseline is read-only');
 });
 
 test('invalid articles abort the whole batch before any recap call',async()=>{

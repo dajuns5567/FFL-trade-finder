@@ -16,6 +16,8 @@ try{const response=await render();assert.equal(response.status,200);html=await r
 finally{globalThis.fetch=originalFetch}
 assert(html.length>20000);
 let denied=0,served=0;
+const failedLocalAssets=[];
+const servedScripts=new Set();
 const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.svg')?'image/svg+xml':'application/octet-stream';
 const server=createServer(async(req,res)=>{
   try{
@@ -27,8 +29,9 @@ const server=createServer(async(req,res)=>{
     if(!target.startsWith(root+path.sep)){denied++;res.writeHead(403);res.end();return}
     if(!(await stat(target)).isFile()){res.writeHead(404);res.end();return}
     const bytes=await readFile(target);served++;
+    if(target.endsWith('.js'))servedScripts.add(u.pathname);
     res.writeHead(200,{'content-type':mime(target),'cache-control':'no-store'});res.end(bytes);
-  }catch{res.writeHead(404);res.end()}
+  }catch{if(/\.(js|css)(\?|$)/.test(req.url||''))failedLocalAssets.push(req.url);res.writeHead(404);res.end()}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const port=server.address().port;
@@ -43,6 +46,8 @@ try{
   return route.continue();
  });
  const page=await context.newPage();
+ const failedResponses=[];
+ page.on('response',response=>{if(response.status()>=400&&/\.(js|css)(\?|$)/.test(response.url()))failedResponses.push({status:response.status(),url:new URL(response.url()).pathname})});
  await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded',timeout:30000});
  await page.waitForTimeout(2500);
  const title=await page.title();
@@ -50,8 +55,11 @@ try{
  assert(body.includes('Fleeced!')||body.includes('FLEECED'),'Rendered application branding missing from browser DOM');
  assert(body.toLowerCase().includes('trade'),'Trade Finder not present in browser');
  const scripts=await page.locator('script[src]').count();
- assert(scripts>=10,'Original application script graph did not load');
- const result={browser:'chromium',root_rendered:true,body_length:body.length,script_tags:scripts,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
+ assert(scripts>=10,'Original application script graph missing from HTML');
+ assert(servedScripts.size>=10,'Original application JavaScript files were not actually served');
+ assert.deepEqual(failedLocalAssets,[],'Missing local asset requests');
+ assert.deepEqual(failedResponses,[],'Browser received broken JS/CSS assets');
+ const result={browser:'chromium',root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
  console.log('FULL FLEECED BROWSER REHEARSAL PASS '+JSON.stringify(result));
  await context.close();
 }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

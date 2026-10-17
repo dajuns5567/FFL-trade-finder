@@ -20,6 +20,7 @@ const approvedNames=new Set(accepted.map(a=>a.name));
 const nameCoverage=articles.every(a=>approvedNames.has(a.name));
 // Team labels may legitimately change between NFL weeks; Week 4 names are calibration context, not a future-week identity lock.
 let paragraphCount=0;const problems=[];
+const paragraphOwners=new Map();
 if(!uniqueTeams)problems.push({reason:'duplicate or unnamed teams'});
 if(!nameCoverage&&calibration)problems.push({reason:'team names differ from accepted Week 4'});
 const collect=(value,out)=>{if(Array.isArray(value))value.forEach(v=>collect(v,out));else if(value&&typeof value==='object')for(const [k,v] of Object.entries(value)){if(k==='paragraphs'&&Array.isArray(v))v.forEach(p=>{if(typeof p==='string')out.push(norm(p))});collect(v,out)}};
@@ -32,6 +33,14 @@ for(const team of articles){
  if(!top.length)collect(team.article,paras);
  const meaningful=paras.filter(p=>p.length>=50);
  paragraphCount+=meaningful.length;
+ for(const paragraph of new Set(meaningful)){
+  // Complete commentary copied between teams is a stronger signal than shared labels or short football phrases.
+  if(paragraph.length<100)continue;
+  const key=paragraph.toLowerCase().replace(/\s+/g,' ');
+  if(paragraphOwners.has(key)&&paragraphOwners.get(key)!==team.name)
+   problems.push({team:team.name,reason:'substantive paragraph reused across teams',also_seen_for:paragraphOwners.get(key)});
+  else paragraphOwners.set(key,team.name);
+ }
  if(meaningful.length<6)problems.push({team:team.name,reason:'fewer than six substantive paragraphs'});
  if(meaningful.some(p=>/\b(?:TBD|TODO|lorem ipsum|insert analysis here)\b/i.test(p)))problems.push({team:team.name,reason:'placeholder editorial text'});
  if(new Set(meaningful).size!==meaningful.length)problems.push({team:team.name,reason:'duplicate paragraphs'});

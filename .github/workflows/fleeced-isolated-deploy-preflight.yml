@@ -1,0 +1,26 @@
+name: Isolated recovery deploy-package safety acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-isolated-deploy-preflight.yml'
+      - 'scripts/inspect-recovery-deploy-candidate.mjs'
+      - 'tests/inspect-recovery-deploy-candidate.test.mjs'
+      - 'recovery-isolated/**'
+permissions:
+  contents: read
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify denied production target, publish functions, schedules and mutation methods
+        run: node --test tests/inspect-recovery-deploy-candidate.test.mjs
+      - name: Inspect original isolated site deployment source package
+        env:
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/inspect-recovery-deploy-candidate.mjs recovery-isolated

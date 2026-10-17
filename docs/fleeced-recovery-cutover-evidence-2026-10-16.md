@@ -102,3 +102,13 @@
 - New `scripts/inspect-recovery-deploy-candidate.mjs`, `tests/inspect-recovery-deploy-candidate.test.mjs`, and `.github/workflows/fleeced-isolated-deploy-preflight.yml` reject unexpected destination ID, production-site collision, scheduled/publisher/write functions, unrecognized function bundles, Blob mutation calls, and accidental production static assets. The preflight is **not** a full-app deployment or certification; its own CI result must be checked before relying on it.
 - **Required before a true full-app deployment:** independently provision a *new* authenticated isolated site or obtain specific permission to replace the SSO-protected recovery viewer; construct an allowlisted full-app function bundle with all writes and scheduled functions absent; verify read-only environment credential boundaries; complete authenticated browser/API smoke testing against the recovered data, then rollback. Never repoint production or start publishers as part of rehearsal.
 - **Cross-account HOLD:** the existing recovery site remains on the same Netlify team as production. A genuinely separate authorized Netlify account is still required before cross-account migration can be certified.
+
+
+## Dedicated full-application recovery destination — provisioned 2026-10-17 (NOT deployed)
+
+- **New empty Netlify project:** `fleeced-fullapp-recovery-sandbox-20261017`, immutable site ID `d3ac147d-5e0e-4c1e-9163-237da3ee4341`. [View project](https://app.netlify.com/projects/fleeced-fullapp-recovery-sandbox-20261017).
+- Independently queried Netlify project metadata after creation: team ID `6acbaea6213767a9b6baca3a`, **SSO team login required**, no current deploy. Independently queried site-level environment variables: **empty list**.
+- This dedicated site is **separate from** the verified recovery viewer site `05a8ec65-a0a3-46f1-9f73-3da47dac662e` and original production site `b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323`. It is nevertheless in the **same team**; not a cross-account rehearsal.
+- **NO app deployed, no credentials copied, no publishers enabled, no Blob data written, and no original Netlify site changed** as part of site provisioning.
+- Next gate: assemble a strict allowlist of application static assets and read-only handlers and explicitly deny all write-capable endpoints, scheduled/background functions, remote production-data requests, and editor/publisher credentials. Run offline browser and restored-data handlers against that *exact* candidate package before deploying to this site.
+- Site creation does not certify full-app runtime or cross-account migration. Any change to this site's authentication requirements must be reverified before deploy.

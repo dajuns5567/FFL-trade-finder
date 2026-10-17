@@ -22,7 +22,7 @@ const nameCoverage=articles.every(a=>approvedNames.has(a.name));
 let paragraphCount=0;const problems=[];
 if(!uniqueTeams)problems.push({reason:'duplicate or unnamed teams'});
 if(!nameCoverage&&calibration)problems.push({reason:'team names differ from accepted Week 4'});
-const collect=(value,out)=>{if(Array.isArray(value))value.forEach(v=>collect(v,out));else if(value&&typeof value==='object')for(const [k,v] of Object.entries(value)){if(k==='paragraphs'&&Array.isArray(v))v.forEach(p=>{if(typeof p==='string')out.push(norm(p))});collect(v)}};
+const collect=(value,out)=>{if(Array.isArray(value))value.forEach(v=>collect(v,out));else if(value&&typeof value==='object')for(const [k,v] of Object.entries(value)){if(k==='paragraphs'&&Array.isArray(v))v.forEach(p=>{if(typeof p==='string')out.push(norm(p))});collect(v,out)}};
 for(const team of articles){
  if(!team.article||typeof team.article!=='object'){problems.push({team:team.name,reason:'article missing'});continue}
  const paras=[];collect(team.article,paras);

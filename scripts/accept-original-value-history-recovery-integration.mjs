@@ -14,6 +14,10 @@ assert.equal(index?.items?.length,156);
 const first=await hist.get(index.items[0].path,{type:'json'});
 const example=first?.rows?.find(r=>r.id&&Number.isFinite(Number(r.value)));
 assert(example,'No valid sample player in restored archive');
+const archiveCache=new Map([['value-history/index.json',index]]);
+for(const month of index.months||[]){const key='value-history/months/'+month+'.json';archiveCache.set(key,await hist.get(key,{type:'json'}));}
+for(let i=0;i<index.items.length;i+=20){const batch=index.items.slice(i,i+20);const values=await Promise.all(batch.map(item=>hist.get(item.path,{type:'json'})));for(let j=0;j<batch.length;j++)archiveCache.set(batch[j].path,values[j]);}
+assert(archiveCache.size>=index.items.length+2,'Recovered archive fixtures incomplete');
 const originalFetch=globalThis.fetch;
 let intercepted=0;
 globalThis.fetch=async resource=>{
@@ -22,7 +26,7 @@ globalThis.fetch=async resource=>{
  if(url.hostname!=='raw.githubusercontent.com'||!url.pathname.includes(prefix))throw Error('FORBIDDEN_EXTERNAL_REQUEST: '+url.hostname);
  const key='value-history/'+url.pathname.split(prefix).slice(1).join(prefix);
  if(!/^value-history\/(index\.json|months\/\d{4}-\d{2}\.json|snapshots\/\d{4}\/\d{2}\/[\w.-]+\.json)$/.test(key))throw Error('FORBIDDEN_ARCHIVE_KEY');
- const obj=await hist.get(key,{type:'json'});intercepted++;
+ const obj=archiveCache.get(key)||null;intercepted++;
  return new Response(obj===null?'not found':JSON.stringify(obj),{status:obj===null?404:200,headers:{'content-type':'application/json'}});
 };
 try{

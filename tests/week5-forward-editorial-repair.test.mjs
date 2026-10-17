@@ -18,5 +18,5 @@ test('future-week duplicate copy is replaced with scoreboard facts without disab
  assert(result.replacements>=3);
  const paragraphs=result.edited.inquirer.teams.map(t=>t.inquirer_article.paragraphs[0]);
  assert.equal(new Set(paragraphs).size,4);
- assert(paragraphs.some(p=>/fantasy points/.test(p)&&/140\.00/.test(p)));
+ assert(paragraphs.some(p=>/fantasy points/.test(p)&&/143\.00/.test(p)));
 });

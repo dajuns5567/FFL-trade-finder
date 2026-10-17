@@ -20,6 +20,8 @@ assert(code.includes("RECOVERY_BLOBS_READ_TOKEN")&&code.includes('05a8ec65-a0a3-
 assert(code.includes("request.method!=='GET'&&request.method!=='HEAD'"),'Method denial missing');
 assert(code.includes("'/api/value-history'")&&code.includes("'/api/recovery-status'"),'Original player-history route not included in gateway');
 assert(code.includes('if(isHistory&&!playerId)'),'History endpoint must require player ID');
+assert(code.includes("'/api/league-hub'")&&code.includes('content_redacted:true'),'Inquirer sandbox route must redact editorial articles');
+assert(code.includes('edition not approved for sandbox'),'Inquirer unpublished week guard absent');
 assert(!/\.\s*(?:setJSON|set|delete|deleteAll)\s*\(/.test(code),'Mutation API in bundle');
 const dir=path.join(root,'public');
 async function files(folder){const entries=await fs.readdir(folder,{withFileTypes:true}),out=[];for(const e of entries){const full=path.join(folder,e.name);if(e.isDirectory())out.push(...await files(full));else out.push(path.relative(dir,full))}return out}

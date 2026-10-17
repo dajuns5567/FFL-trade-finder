@@ -1,5 +1,6 @@
 import valueHistoryHandler from './value-history.mjs';
 import {repairNewEditionCopy} from './inquirer-editorial-collision-repair.mjs';
+import {inspectEditionBeforePublication,editorialApprovalMatches} from './inquirer-publication-guard.mjs';
 import { getStore } from '@netlify/blobs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
@@ -389,6 +390,26 @@ export async function weeklyReport(req){
   inquirer=accepted.inquirer;leagueOverview=accepted.leagueOverview;
  }
  const forward=week>=3,result={available:true,season,week,week_classification:weekClassification,generated_at:new Date().toISOString(),published_locked:true,context_snapshot_through_week:week,broadcast_version:BROADCAST_VERSION,inquirer_version:forward?FORWARD_INQUIRER_VERSION:INQUIRER_VERSION,editorial_revision:forward?FORWARD_EDITORIAL_REVISION:INQUIRER_EDITORIAL_REVISION,editorial_generation:forward?{engine:'v31-forward',variation_salt:variationSalt,previous_week:week>1?week-1:null,quality_metrics:quality.metrics}:null,projection_source:Object.keys(proj).length?'Sleeper weekly projections scored with league scoring settings':'projection data unavailable',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:canonicalTrades?.source||'unavailable',reporters:inquirer.reporters,league_overview:leagueOverview,teams:inquirer.teams};
+ // Every publication entry point (including ?weekly=1) must pass this
+ // admission boundary. A passing structural draft is only a staged candidate,
+ // never publication authority. No future draft can mutate locked editions.
+ const audit=inspectEditionBeforePublication(result);
+ const stageKey='inquirer/editorial-staging/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
+ const approvalKey='inquirer/editorial-approvals/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
+ const approval=await s.get(approvalKey,{type:'json'}).catch(()=>null);
+ const admission=editorialApprovalMatches(result,approval);
+ if(!audit.ok||!admission.approved){
+  const pending=await s.get(stageKey,{type:'json'}).catch(()=>null);
+  if(pending?.digest!==admission.digest){
+   await s.setJSON(stageKey,{schema_version:1,season,week,digest:admission.digest,
+    generated_at:result.generated_at,review_status:'pending',audit,edition:result});
+  }
+  return{available:false,published_locked:false,season,week,waiting_for_week:week,
+   review_required:true,stage_key:stageKey,digest:admission.digest,
+   editorial_findings:audit.issues.length,
+   reason:audit.ok?'Awaiting exact-copy editorial approval.':
+    'Editorial quality hold: '+audit.issues.length+' findings. No edition was published.'};
+ }
  await s.setJSON(key,result);await syncReporterArchives(s,result,key);if(result.league_overview){const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json',storedOverview=await s.get(overviewKey,{type:'json'}).catch(()=>null);if(!storedOverview?.headline)await s.setJSON(overviewKey,{...result.league_overview,editorial_revision:result.editorial_revision,captured_at:result.generated_at,published_locked:true})}
  const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),list=Array.isArray(idx)?idx:[];if(!list.some(x=>x.season===season&&x.week===week)){list.push({type:'week',season,week,key,captured_at:result.generated_at});list.sort((a,b)=>a.season-b.season||a.week-b.week);await s.setJSON('broadcasts/index.json',list)}return result;
 }

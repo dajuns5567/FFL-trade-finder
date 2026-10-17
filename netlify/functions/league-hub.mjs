@@ -278,21 +278,21 @@ async function syncReporterArchives(s,result,broadcastKey){
   const teamEntries=await Promise.all(teams.filter(t=>t?.inquirer_article?.reporter?.id===reporter.id).map(async team=>{
    const article=team.inquirer_article,k=[result.season,result.week,team.roster_id].join('|'),articleKey='inquirer/reporters/'+reporter.id+'/articles/'+result.season+'/week-'+String(result.week).padStart(2,'0')+'-roster-'+String(team.roster_id).padStart(2,'0')+'.json';
    const stored=await s.get(articleKey,{type:'json'}).catch(()=>null);
-   if(!stored?.headline)await s.setJSON(articleKey,{...article,editorial_revision:INQUIRER_EDITORIAL_REVISION,team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),captured_at:String(result.generated_at||new Date().toISOString()),published_locked:true});
+   if(!stored?.headline)await s.setJSON(articleKey,{...article,editorial_revision:result.editorial_revision,team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),captured_at:String(result.generated_at||new Date().toISOString()),published_locked:true});
    const locked=stored?.headline?stored:article;
-   return{k,entry:{season:Number(result.season),week:Number(result.week),roster_id:String(team.roster_id),team_name:String(stored?.team_name||team.team_name||''),manager_name:String(stored?.manager_name||team.manager_name||''),headline:String(locked?.headline||''),byline:String(locked?.byline||''),captured_at:String(stored?.captured_at||result.generated_at||new Date().toISOString()),broadcast_key:broadcastKey,article_key:articleKey,inquirer_version:Number(stored?.inquirer_version||INQUIRER_VERSION),editorial_revision:Number(stored?.editorial_revision||INQUIRER_EDITORIAL_REVISION),published_locked:true}};
+   return{k,entry:{season:Number(result.season),week:Number(result.week),roster_id:String(team.roster_id),team_name:String(stored?.team_name||team.team_name||''),manager_name:String(stored?.manager_name||team.manager_name||''),headline:String(locked?.headline||''),byline:String(locked?.byline||''),captured_at:String(stored?.captured_at||result.generated_at||new Date().toISOString()),broadcast_key:broadcastKey,article_key:articleKey,inquirer_version:Number(stored?.inquirer_version||result.inquirer_version),editorial_revision:Number(stored?.editorial_revision||result.editorial_revision),published_locked:true}};
   }));
   for(const {k,entry} of teamEntries){
    if(!seen.has(k)){rows.push(entry);seen.set(k,rows.length-1)}
   }
   if(result?.league_overview){
-   const k=[result.season,result.week,'__league__'].join('|'),articleKey='inquirer/league-overview/'+result.season+'/week-'+String(result.week).padStart(2,'0')+'.json',entry={season:Number(result.season),week:Number(result.week),roster_id:'__league__',team_name:'Weekly Recap',manager_name:'Co-authored by all four desks',headline:String(result.league_overview.headline||'Fleeced! Weekly Recap'),byline:String(result.league_overview.byline||''),captured_at:String(result.generated_at||new Date().toISOString()),broadcast_key:broadcastKey,article_key:articleKey,inquirer_version:INQUIRER_VERSION,editorial_revision:INQUIRER_EDITORIAL_REVISION};
+   const k=[result.season,result.week,'__league__'].join('|'),articleKey='inquirer/league-overview/'+result.season+'/week-'+String(result.week).padStart(2,'0')+'.json',entry={season:Number(result.season),week:Number(result.week),roster_id:'__league__',team_name:'Weekly Recap',manager_name:'Co-authored by all four desks',headline:String(result.league_overview.headline||'Fleeced! Weekly Recap'),byline:String(result.league_overview.byline||''),captured_at:String(result.generated_at||new Date().toISOString()),broadcast_key:broadcastKey,article_key:articleKey,inquirer_version:result.inquirer_version,editorial_revision:result.editorial_revision};
    if(!seen.has(k)){rows.push({...entry,published_locked:true});seen.set(k,rows.length-1)}
   }
   rows.sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week)||String(a.team_name).localeCompare(String(b.team_name)));
   await s.setJSON(key,{schema_version:1,reporter,articles:rows});
  }));
- await s.setJSON('inquirer/reporters/index.json',{schema_version:1,inquirer_version:INQUIRER_VERSION,reporters});
+ await s.setJSON('inquirer/reporters/index.json',{schema_version:1,inquirer_version:result.inquirer_version,reporters});
 }
 async function reporterArchive(id){
  const reporter=publicReporters().find(x=>x.id===String(id||''));if(!reporter)return{error:'reporter not found'};

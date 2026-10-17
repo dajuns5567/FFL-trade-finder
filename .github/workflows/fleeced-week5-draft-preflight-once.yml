@@ -40,6 +40,16 @@ jobs:
       - name: Syntax-check gated create-only Week5 publisher without invoking it
         working-directory: recovery
         run: node --check scripts/publish-fleeced-week5-newteam.mjs
+      - name: Publish validated Week5 edition, reporter archive, recap and weekly awards to the exact new-team site
+        working-directory: application
+        env:
+          NETLIFY_SANDBOX_DEPLOY_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
+          FLEECED_NEW_TEAM_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+          FLEECED_CONFIRM_WEEK5_PUBLISH: '2026-week-05-2e556797-6f35-4037-aa5a-1338724eb71d'
+        run: |
+          mkdir -p .tmp
+          cp ../recovery/scripts/publish-fleeced-week5-newteam.mjs .tmp/publish-fleeced-week5-newteam.mjs
+          node .tmp/publish-fleeced-week5-newteam.mjs ../recovery/.tmp/week5/private-candidate.json
       - name: Remove private draft after success or failure
         if: always()
         working-directory: recovery

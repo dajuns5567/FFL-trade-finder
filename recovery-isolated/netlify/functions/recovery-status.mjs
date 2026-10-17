@@ -3,12 +3,12 @@
 import {getStore} from '@netlify/blobs';
 const NAMES={history:'fleeced-recovery-history-rehearsal',editorial:'fleeced-recovery-editorial-rehearsal'};
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'}});
-export default async function handler(request){
+export function createRecoveryHandler(resolveStores=()=>({hist:getStore({name:NAMES.history,consistency:'strong'}),editorial:getStore({name:NAMES.editorial,consistency:'strong'})})){
+return async function handler(request){
  if(request.method!=='GET')return json({error:'read only'},405);
  const u=new URL(request.url),kind=u.searchParams.get('kind')||'overview';
  try{
-  const hist=getStore({name:NAMES.history,consistency:'strong'});
-  const editorial=getStore({name:NAMES.editorial,consistency:'strong'});
+  const {hist,editorial}=resolveStores();
   if(kind==='overview'){
    const index=await hist.get('value-history/index.json',{type:'json'});
    const last=await hist.get('value-history/latest.json',{type:'json'});
@@ -38,5 +38,7 @@ export default async function handler(request){
   }
   return json({error:'unknown kind'},400);
  }catch(e){return json({error:'recovery read failed'},500)}
+};
 }
+export default createRecoveryHandler();
 export const config={path:'/api/recovery'};

@@ -87,7 +87,11 @@ jobs:
           test ! -e .tmp/fullapp/private-history.json
           test "$(find .tmp/fullapp/netlify/functions -type f | wc -l)" -eq 2
           npm install --no-save --ignore-scripts --no-audit --no-fund netlify-cli@23.11.0
-          npx netlify deploy --prod --site ed31214d-7c55-4ba8-86ee-099c095c22ce --dir .tmp/fullapp/public --functions .tmp/fullapp/netlify/functions --message 'FLEECED isolated read-only approved rehearsal; no live writers' --auth "$NETLIFY_AUTH_TOKEN"
+          cd .tmp/fullapp
+          test "$(find netlify/functions -maxdepth 1 -type f | wc -l)" -eq 2
+          test -f netlify/functions/approved-history.mjs
+          test -f netlify/functions/approved-inquirer.mjs
+          ../../node_modules/.bin/netlify deploy --prod --site ed31214d-7c55-4ba8-86ee-099c095c22ce --dir public --functions netlify/functions --message 'FLEECED corrected two-function read-only sandbox deployment' --auth "$NETLIFY_AUTH_TOKEN"
       - name: Delete temporary full-content bundle even after failure
         if: always()
         run: rm -rf recovery/.tmp/fullapp

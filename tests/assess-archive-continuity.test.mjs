@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {assessArchiveContinuity as assess} from '../scripts/assess-archive-continuity.mjs';
+const now=Date.parse('2026-10-17T00:00:00Z');
+const t=hours=>new Date(now-hours*3600000).toISOString();
+test('fresh durable archive and stale Blob buffer is not a continuity failure',()=>{const x=assess({archiveLatest:t(1),productionLatest:t(120),now});assert.equal(x.productionBufferFresh,false)});
+test('fresh durable archive with no Blob records is not a continuity failure',()=>assert.equal(assess({archiveLatest:t(1),productionLatest:null,now}).productionBufferFresh,false));
+test('fresh durable and fresh source both pass',()=>assert.equal(assess({archiveLatest:t(1),productionLatest:t(2),now}).productionBufferFresh,true));
+test('stale durable archive fails even if source also stale',()=>assert.throws(()=>assess({archiveLatest:t(9),productionLatest:t(120),now}),/DURABLE ARCHIVE STALE/));
+test('upstream new snapshot not yet durable fails',()=>assert.throws(()=>assess({archiveLatest:t(2),productionLatest:t(1),now}),/CONTINUITY PENDING/));
+test('future durable timestamp fails',()=>assert.throws(()=>assess({archiveLatest:t(-1),productionLatest:null,now}),/CONTINUITY_INTEGRITY/));
+test('future upstream timestamp fails',()=>assert.throws(()=>assess({archiveLatest:t(1),productionLatest:t(-1),now}),/CONTINUITY_INTEGRITY/));
+test('invalid upstream timestamp fails',()=>assert.throws(()=>assess({archiveLatest:t(1),productionLatest:'bad',now}),/CONTINUITY_INTEGRITY/));
+test('invalid durable timestamp fails',()=>assert.throws(()=>assess({archiveLatest:'bad',productionLatest:null,now}),/CONTINUITY_INTEGRITY/));
+test('eight hour durability boundary is permitted',()=>assert.equal(assess({archiveLatest:t(8),productionLatest:null,now}).durableAgeHours,8));

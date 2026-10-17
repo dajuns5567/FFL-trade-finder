@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createRecoveryHandler} from '../recovery-isolated/netlify/functions/recovery-status.mjs';
+const key='value-history/index.json';
+const index={snapshot_count:2,tracking_since:'2026-09-19T00:00:00Z',latest:'2026-09-20T00:00:00Z',items:[{path:'a',t:'2026-09-19T00:00:00Z'},{path:'b',t:'2026-09-20T00:00:00Z'}],months:['2026-09']};
+const hist={get:async k=>k===key?index:k==='value-history/latest.json'?{latest:index.items[1]}:null};
+const editorial={get:async k=>k.startsWith('preloads/')?{season:2026,teams:Array.from({length:32},(_,i)=>({team_name:'team-'+i,inquirer_article:{}})),league_overview:{}}:k==='accepted/week4-v19-served-copy.json'?{week:4,articles:Array.from({length:32},()=>({})),revision:'v19'}:null};
+const request=async(handler,q='',method='GET')=>{const response=await handler(new Request('https://recovery.invalid/api/recovery'+q,{method}));return{status:response.status,body:await response.json()}};
+test('real handler validates overview and latest pointer',async()=>{const r=await request(createRecoveryHandler(()=>({hist,editorial})));assert.equal(r.status,200);assert.equal(r.body.last_pointer_matches,true);assert.equal(r.body.baseline.articles,32)});
+test('real handler verifies all weekly team totals',async()=>{const h=createRecoveryHandler(()=>({hist,editorial}));for(let week=1;week<=4;week++){const r=await request(h,'?kind=week&week='+week);assert.equal(r.status,200);assert.equal(r.body.teams,32);assert.equal(r.body.distinct_teams,32)}});
+test('real handler history metadata',async()=>{const r=await request(createRecoveryHandler(()=>({hist,editorial})),'?kind=history');assert.equal(r.status,200);assert.equal(r.body.unique_paths,2)});
+test('real handler blocks non-GET before touching any store',async()=>{let touched=0;const h=createRecoveryHandler(()=>{touched++;throw Error('must not touch stores')});assert.equal((await request(h,'','POST')).status,405);assert.equal(touched,0)});
+test('real handler rejects invalid route and weeks',async()=>{const h=createRecoveryHandler(()=>({hist,editorial}));for(const q of ['?kind=week&week=0','?kind=week&week=5','?kind=bad'])assert.equal((await request(h,q)).status,400)});
+test('real handler returns 503 for missing archive',async()=>{const h=createRecoveryHandler(()=>({hist:{get:async()=>null},editorial}));assert.equal((await request(h)).status,503)});
+test('real handler never surfaces private store error details',async()=>{const h=createRecoveryHandler(()=>({hist:{get:async()=>{throw Error('SECRET PRIVATE CONTENT')}},editorial}));const r=await request(h);assert.equal(r.status,500);assert.equal(JSON.stringify(r.body).includes('SECRET'),false)});

@@ -1,0 +1,30 @@
+name: FLEECED new-team Week5 live postpublish integrity and publisher static preflight
+on:
+  push:
+    paths:
+      - .github/workflows/fleeced-week5-final-readback-once.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned app dependency without lifecycle scripts
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Check repaired production modules and scheduled awards publisher
+        run: |
+          node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/inquirer-editorial-v31.mjs
+          node --check netlify/functions/inquirer-editorial-collision-repair.mjs
+          node --check netlify/functions/inquirer-publish-scheduled.mjs
+      - name: Verify actual Week5 published objects and all downstream page data
+        env:
+          FLEECED_NEW_TEAM_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+          NETLIFY_SANDBOX_DEPLOY_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
+        run: node scripts/audit-fleeced-week5-live-published.mjs

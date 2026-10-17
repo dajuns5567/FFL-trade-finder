@@ -18,6 +18,8 @@ on:
       - 'tests/inquirer-week4-model-client.test.mjs'
       - 'scripts/generate-week4-style-review.mjs'
       - 'tests/generate-week4-style-review.test.mjs'
+      - 'scripts/audit-fleeced-week5-live-published.mjs'
+      - 'tests/week5-live-audit-depth.test.mjs'
       - 'scripts/approve-staged-inquirer.mjs'
       - '.github/workflows/fleeced-editorial-approve-reviewed-week.yml'
       - '.github/workflows/fleeced-editorial-publication-guard.yml'
@@ -39,6 +41,8 @@ on:
       - 'tests/inquirer-week4-model-client.test.mjs'
       - 'scripts/generate-week4-style-review.mjs'
       - 'tests/generate-week4-style-review.test.mjs'
+      - 'scripts/audit-fleeced-week5-live-published.mjs'
+      - 'tests/week5-live-audit-depth.test.mjs'
       - 'scripts/approve-staged-inquirer.mjs'
       - '.github/workflows/fleeced-editorial-approve-reviewed-week.yml'
       - '.github/workflows/fleeced-editorial-publication-guard.yml'
@@ -57,7 +61,7 @@ jobs:
         with:
           node-version: '22'
       - name: Fail-closed editorial regression and approval tests
-        run: node --test tests/inquirer-publication-guard.test.mjs tests/forward-week-prose-source.test.mjs tests/inquirer-week4-editorial-brief.test.mjs tests/inquirer-week4-batch.test.mjs tests/inquirer-week4-staging.test.mjs tests/inquirer-week4-model-client.test.mjs tests/generate-week4-style-review.test.mjs
+        run: node --test tests/inquirer-publication-guard.test.mjs tests/forward-week-prose-source.test.mjs tests/inquirer-week4-editorial-brief.test.mjs tests/inquirer-week4-batch.test.mjs tests/inquirer-week4-staging.test.mjs tests/inquirer-week4-model-client.test.mjs tests/generate-week4-style-review.test.mjs tests/week5-live-audit-depth.test.mjs
       - name: Parse production entrypoints
         run: |
           node --check netlify/functions/inquirer-publication-guard.mjs
@@ -70,6 +74,7 @@ jobs:
           node --check netlify/functions/inquirer-week4-staging.mjs
           node --check netlify/functions/inquirer-week4-model-client.mjs
           node --check scripts/generate-week4-style-review.mjs
+          node --check scripts/audit-fleeced-week5-live-published.mjs
       - name: Verify gate cannot be bypassed by direct weekly entrypoint
         run: |
           node --input-type=module -e "import fs from 'node:fs';const s=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');const guard=s.indexOf('inspectEditionBeforePublication(result)'),publish=s.indexOf('await s.setJSON(key,result);await syncReporterArchives');if(guard<0||publish<0||guard>publish)process.exit(1);"

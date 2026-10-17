@@ -10,6 +10,7 @@ on:
       - 'scripts/stage-fleeced-full-history-offline.mjs'
       - 'scripts/package-fleeced-history-read-only.mjs'
       - 'scripts/accept-fleeced-offline-complete-candidate.mjs'
+      - 'scripts/finalize-fleeced-offline-fullapp-candidate.mjs'
 permissions:
   contents: read
 jobs:
@@ -54,6 +55,9 @@ jobs:
       - name: Package credential-free history read handler and remove intermediate private JSON
         working-directory: recovery
         run: node scripts/package-fleeced-history-read-only.mjs .tmp/fullapp
+      - name: Enforce exactly two credential-free functions and same-origin CSP
+        working-directory: recovery
+        run: node scripts/finalize-fleeced-offline-fullapp-candidate.mjs .tmp/fullapp
       - name: Verify whole offline original app with complete Inquirer and restored player history handlers
         working-directory: recovery
         run: node scripts/accept-fleeced-offline-complete-candidate.mjs .tmp/fullapp

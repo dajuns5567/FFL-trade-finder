@@ -151,7 +151,39 @@ try{
  assert.equal(recommendationFixture.distinct_packages,recommendationFixture.count,'Trade Finder generated duplicate asset packages');
  assert(recommendationFixture.nonempty&&recommendationFixture.contains_single&&recommendationFixture.contains_multi,'Trade Finder package shape diversity or size invalid');
  assert(recommendationFixture.finite_values,'Trade Finder candidate package valuation not finite');
- const result={browser:'chromium',functional,trade_intent_dom_event:intentCheck,valuation,packageCheck,recommendationFixture,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
+ const fullRecommendation=await page.evaluate(async()=>{
+  const finder=window.tradeFinderV168,api=window.tradeValueNormalizationV139;
+  const oldState=window.state,oldRank=window.playerRankValue,oldFair=window.section1V130?.fair;
+  const teamSelect=document.querySelector('#findTeam'),mode=document.querySelector('#tradeTier94'),style=document.querySelector('#findMode');
+  if(!finder?.generateAsync||!teamSelect||!mode)return {unsupported:true};
+  const oldTeam=teamSelect.value,oldMode=mode.value,oldStyle=style?.value;
+  const players=Array.from({length:8},(_,i)=>({id:'recommend-player-'+i,type:'player',owner:i<4?1:2,name:'Rehearsal Player '+i}));
+  try{
+   window.state={...(oldState||{}),allAssets:players,teams:[{id:1},{id:2}]};
+   window.playerRankValue=a=>({rank:players.findIndex(p=>p.id===a.id)+1});
+   window.section1V130=window.section1V130||{};
+   window.section1V130.fair=(give,recv)=>{
+     const av=xs=>api.canonicalPackageValue(xs);
+     const a=av(give),b=av(recv);
+     return {rejected:false,score:85,edgeEffective:b-a,edgeRaw:b-a,aRaw:a,bRaw:b,aAdj:0,bAdj:0,aEffective:a,bEffective:b};
+   };
+   if(![...teamSelect.options].some(o=>o.value==='1'))teamSelect.add(new Option('Rehearsal Team 1','1'));
+   teamSelect.value='1';
+   mode.value='neutral';
+   if(style)style.value='balanced';
+   const rows=await finder.generateAsync(0);
+   return {unsupported:false,count:rows.length,validOwners:rows.every(row=>row.me===1&&row.other===2&&row.give.every(a=>a.owner===1)&&row.recv.every(a=>a.owner===2)),nonempty:rows.every(row=>row.give.length>0&&row.recv.length>0),finite:rows.every(row=>Number.isFinite(row.f?.score)&&Number.isFinite(row.recommend)&&Number.isFinite(row.f?.aRaw)&&Number.isFinite(row.f?.bRaw)),sample:rows.slice(0,2).map(row=>({give:row.give.map(a=>a.id),receive:row.recv.map(a=>a.id),score:row.f.score}))};
+  }finally{
+   window.state=oldState;window.playerRankValue=oldRank;
+   if(window.section1V130){if(oldFair===undefined)delete window.section1V130.fair;else window.section1V130.fair=oldFair}
+   teamSelect.value=oldTeam;mode.value=oldMode;if(style)style.value=oldStyle;
+  }
+ });
+ assert.equal(fullRecommendation.unsupported,false,'Trade Finder full recommendation entrypoint missing');
+ assert(fullRecommendation.count>0,'No complete recommendations generated from controlled rosters and fairness contract');
+ assert(fullRecommendation.validOwners,'Recommendation crossed asset or partner ownership boundaries');
+ assert(fullRecommendation.nonempty&&fullRecommendation.finite,'Recommendation missing packages or finite fairness metrics');
+ const result={browser:'chromium',functional,trade_intent_dom_event:intentCheck,valuation,packageCheck,recommendationFixture,fullRecommendation,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
  console.log('FULL FLEECED BROWSER REHEARSAL PASS '+JSON.stringify(result));
  await context.close();
 }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

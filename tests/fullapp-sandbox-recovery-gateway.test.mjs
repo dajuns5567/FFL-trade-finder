@@ -13,3 +13,25 @@ test('fails closed for missing snapshots',async()=>{const handler=makeReadOnlyGa
 test('fails closed for missing editorial issue',async()=>{const handler=makeReadOnlyGateway(()=>({...good,editorial:{get:async()=>null}}));assert.equal((await handler(req())).status,503)});
 test('does not leak backend errors',async()=>{const handler=makeReadOnlyGateway(()=>{throw Error('SECRET_NETLIFY_TOKEN')});const r=await handler(req());assert.equal(r.status,503);assert(!JSON.stringify(await r.json()).includes('SECRET'))});
 test('requires exact endpoint',async()=>assert.equal((await h(new Request('https://sandbox.invalid/api/other'))).status,404));
+
+test('returns original-compatible bounded historical player points',async()=>{
+ const records=Array.from({length:156},(_,i)=>({path:'snap-'+i,t:new Date(Date.UTC(2026,8,20,0,i)).toISOString()}));
+ const fixture={history:{get:async key=>key==='value-history/index.json'?{items:records}:({t:records[Number(key.slice(5))].t,rows:[{id:'player123',value:500,overall:10,pos:'RB',posRank:2},{id:'private',value:300}]})},editorial:good.editorial};
+ const gateway=makeReadOnlyGateway(()=>fixture);
+ const res=await gateway(req('GET','?player_id=player123'));
+ assert.equal(res.status,200);
+ const body=await res.json();
+ assert.equal(body.player_id,'player123');assert.equal(body.points.length,156);
+ assert.equal(body.snapshot_count,156);assert.equal(body.history_state,'isolated-recovery');
+ assert(!JSON.stringify(body).includes('private'));
+});
+test('rejects malformed player ids without store access',async()=>{
+ let reads=0;const gateway=makeReadOnlyGateway(()=>{reads++;return good});
+ for(const q of ['?player_id=','?player_id=bad%20id','?player_id=x&week=4'])assert.equal((await gateway(req('GET',q))).status,400);
+ assert.equal(reads,0);
+});
+test('fails closed when a recovered snapshot is absent',async()=>{
+ const records=Array.from({length:156},(_,i)=>({path:'s'+i,t:'2026-09-20T00:00:00Z'}));
+ const gateway=makeReadOnlyGateway(()=>({history:{get:async key=>key==='value-history/index.json'?{items:records}:null},editorial:good.editorial}));
+ assert.equal((await gateway(req('GET','?player_id=player123'))).status,503);
+});

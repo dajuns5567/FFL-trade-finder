@@ -16,7 +16,7 @@ jobs:
           path: recovery
       - uses: actions/checkout@v4
         with:
-          ref: b0041645ce2860b0e7a319b6623f92eae7db89bc
+          ref: fix/week5-publication-chain-20261017
           path: application
       - uses: actions/checkout@v4
         with:

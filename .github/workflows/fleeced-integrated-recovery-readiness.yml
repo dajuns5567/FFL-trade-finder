@@ -61,6 +61,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install frozen application handler dependencies without executing scripts
+        working-directory: application
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Render real application without any live request or publication
         run: node recovery/scripts/check-isolated-full-app-render.mjs application
       - name: Check actual app entry point and linked script/style assets

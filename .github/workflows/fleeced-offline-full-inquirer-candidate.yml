@@ -13,12 +13,13 @@ on:
       - 'scripts/finalize-fleeced-offline-fullapp-candidate.mjs'
       - 'scripts/check-future-inquirer-quality.mjs'
       - 'tests/future-inquirer-quality-gate.test.mjs'
+      - 'scripts/accept-fleeced-offline-candidate-browser.mjs'
 permissions:
   contents: read
 jobs:
   full-inquirer-offline:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,6 +70,17 @@ jobs:
       - name: Verify whole offline original app with complete Inquirer and restored player history handlers
         working-directory: recovery
         run: node scripts/accept-fleeced-offline-complete-candidate.mjs .tmp/fullapp
+      - name: Install Chromium for exact assembled candidate browser acceptance
+        working-directory: recovery
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercise packaged candidate in Chromium with restored Inquirer and Value History GETs
+        working-directory: recovery
+        run: node scripts/accept-fleeced-offline-candidate-browser.mjs .tmp/fullapp
+      - name: Exercise original frozen Trade Finder generation with deterministic offline roster fixtures
+        working-directory: recovery
+        run: node scripts/rehearse-full-original-app-browser.mjs ../application
       - name: Assert no intermediate manuscript or publisher in runtime bundle
         working-directory: recovery
         run: |

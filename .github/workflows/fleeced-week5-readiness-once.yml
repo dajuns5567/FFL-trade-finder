@@ -1,0 +1,23 @@
+name: FLEECED Week 5 live Sleeper publication readiness audit
+on:
+  push:
+    paths:
+      - .github/workflows/fleeced-week5-readiness-once.yml
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install read-only SDK dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Compare real Week5 Sleeper finalization with production rule and check actual site's Blob archive
+        env:
+          NETLIFY_SANDBOX_DEPLOY_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
+          FLEECED_NEW_TEAM_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+        run: node scripts/audit-fleeced-week5-live-readiness.mjs

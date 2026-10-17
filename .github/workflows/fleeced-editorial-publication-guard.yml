@@ -6,6 +6,8 @@ on:
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/inquirer-publish-scheduled.mjs'
       - 'tests/inquirer-publication-guard.test.mjs'
+      - 'scripts/approve-staged-inquirer.mjs'
+      - '.github/workflows/fleeced-editorial-approve-reviewed-week.yml'
       - '.github/workflows/fleeced-editorial-publication-guard.yml'
   pull_request:
     paths:
@@ -13,6 +15,8 @@ on:
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/inquirer-publish-scheduled.mjs'
       - 'tests/inquirer-publication-guard.test.mjs'
+      - 'scripts/approve-staged-inquirer.mjs'
+      - '.github/workflows/fleeced-editorial-approve-reviewed-week.yml'
       - '.github/workflows/fleeced-editorial-publication-guard.yml'
   workflow_dispatch:
 
@@ -35,6 +39,7 @@ jobs:
           node --check netlify/functions/inquirer-publication-guard.mjs
           node --check netlify/functions/inquirer-publish-scheduled.mjs
           node --check netlify/functions/league-hub.mjs
+          node --check scripts/approve-staged-inquirer.mjs
       - name: Verify gate cannot be bypassed by direct weekly entrypoint
         run: |
           node --input-type=module -e "import fs from 'node:fs';const s=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');const guard=s.indexOf('inspectEditionBeforePublication(result)'),publish=s.indexOf('await s.setJSON(key,result);await syncReporterArchives');if(guard<0||publish<0||guard>publish)process.exit(1);"

@@ -1,4 +1,4 @@
-name: FLEECED real Week5 read-only generation and editorial preflight (diagnostic)
+name: FLEECED Week5 complete awards and editorial publication readiness
 on:
   workflow_dispatch:
   push:

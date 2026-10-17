@@ -53,7 +53,7 @@ for(const key of reporterIndexes){
  assert((next?.articles||[]).some(x=>Number(x.season)===2026&&Number(x.week)===5));
 }
 console.log('WEEK5 PUBLICATION PREFLIGHT '+JSON.stringify({site:SITE,season:2026,week:5,team_articles:articles.length,reporter_indexes:reporterIndexes.length,previous_award_records:historicalAwards.length,manager_awards:award.manager_awards.length,players_of_week:2,locked_prior_weeks:[3,4],mode:'create-only content; append-only indexes; archive index last'}));
-const createKeys=[weekKey,...articles,'inquirer/league-overview/2026/week-05.json'];
+const createKeys=[...articles,'inquirer/league-overview/2026/week-05.json',weekKey];
 for(const key of createKeys){
  assert.equal(await read(key),null,'Refusing to replace existing content: '+key);
  await store.setJSON(key,byKey.get(key),{onlyIfNew:true});

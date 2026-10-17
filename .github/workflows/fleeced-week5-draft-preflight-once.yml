@@ -1,0 +1,42 @@
+name: FLEECED real Week5 read-only generation and editorial preflight
+on:
+  push:
+    paths:
+      - .github/workflows/fleeced-week5-draft-preflight-once.yml
+permissions:
+  contents: read
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: b0041645ce2860b0e7a319b6623f92eae7db89bc
+          path: application
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: accepted
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install original app dependencies without lifecycle scripts
+        working-directory: application
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Compile and execute true Week5 generator with site-wide storage writes disabled
+        working-directory: recovery
+        env:
+          NETLIFY_SANDBOX_DEPLOY_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
+          FLEECED_NEW_TEAM_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+        run: node scripts/dryrun-fleeced-week5-live-generator.mjs ../application .tmp/week5/private-candidate.json
+      - name: Run complete 32-team future editorial structure and copy-paste gate
+        working-directory: recovery
+        run: node scripts/check-future-inquirer-quality.mjs .tmp/week5/private-candidate.json ../accepted/editorial-baselines/2026-week4-v19-served-copy.json
+      - name: Remove private draft after success or failure
+        if: always()
+        working-directory: recovery
+        run: rm -rf .tmp/week5

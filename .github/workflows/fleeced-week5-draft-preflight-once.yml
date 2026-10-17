@@ -1,6 +1,9 @@
 name: FLEECED real Week5 read-only generation and editorial preflight (diagnostic)
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/fleeced-week5-draft-preflight-once.yml
 permissions:
   contents: read
 jobs:

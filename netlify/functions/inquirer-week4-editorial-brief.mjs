@@ -11,6 +11,7 @@ export function week4EditorialBrief({team,acceptedWeek4,week}){
     throw new Error('A complete approved Week 4 edition is required as the sole editorial style reference');
   if(Number(week)<=4)throw new Error('Forward writer cannot mutate Week 1–4');
   const reporter=team?.inquirer_article?.reporter;
+  if(!reporter?.id)throw new Error('Assigned Week 4 editorial reporter identity required');
   const samples=acceptedWeek4.teams.filter(t=>t?.inquirer_article?.reporter?.id===reporter?.id).slice(0,2)
     .map(t=>({section_samples:(t.inquirer_article.sections||[]).filter(s=>['lede','players','sentiment'].includes(s.kind))
       .map(s=>({kind:s.kind,paragraphs:(s.paragraphs||[]).slice(0,1)}))}));
@@ -29,7 +30,7 @@ export function week4EditorialBrief({team,acceptedWeek4,week}){
     value_movement:team.value_history_week||null,prior_fan_sentiment:team.previous_fan_sentiment||null,
     injury_and_bye_context:team.next_week_availability||null};
   return {system:`You are a passionate fantasy-football newspaper columnist. Write a new Week ${week} story in the sarcastic, blunt, funny, opinionated style demonstrated by the APPROVED WEEK 4 samples. They are examples of rhythm and attitude ONLY. Never lift or paraphrase their sentences, gags, transitions, or section arguments. Do not borrow Weeks 1–3. Write fresh jokes, consequential football judgments, visible fan emotion, and a management spotlight. Embed verified point totals and real-life statistics naturally. Do not invent players, scores, injuries, trades, standings, or quotations. If evidence is missing, omit the allegation. Avoid formulaic top-three lists, numeric lectures, meta-writing, 'eligible option', and repeating 'it was not X; it was Y'. Fans can spray champagne or threaten pitchfork protests when earned by the result. Output ONLY a JSON object with headline, deck, and sections; sections must have kinds lede, players, management, hot-seat, cool-throne, value, sentiment, outlook. Every section needs its own original heading and two or more substantial paragraphs. Hot-seat and cool-throne are editorial judgments, never falsely claim an official award or badge.`,
-    user:JSON.stringify({approved_week4_style_samples:samples,current_week_verified_facts:facts})};
+    user:JSON.stringify({assigned_reporter_voice:{name:reporter.name,desk:reporter.desk,voice:reporter.voice,signature:reporter.signature},approved_week4_style_samples:samples,current_week_verified_facts:facts})};
 }
 
 export function validateWeek4EditorialDraft(draft,team){

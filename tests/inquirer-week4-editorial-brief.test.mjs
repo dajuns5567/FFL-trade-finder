@@ -13,6 +13,8 @@ test('only a complete approved Week 4 edition may provide style samples',()=>{
   const brief=week4EditorialBrief({team,acceptedWeek4:baseline,week:5});
   const payload=JSON.parse(brief.user);
   assert.ok(payload.approved_week4_style_samples.length);
+  assert.equal(payload.assigned_reporter_voice.name,team.inquirer_article.reporter.name);
+  assert.equal(payload.assigned_reporter_voice.voice,team.inquirer_article.reporter.voice);
   assert.equal(payload.current_week_verified_facts.team,team.team_name);
   assert.match(brief.system,/Never lift or paraphrase/);
   assert.match(brief.system,/Do not borrow Weeks 1–3/);

@@ -77,3 +77,9 @@
 - Preserve the immutable editorial application source `af9067c751118cf33f688648cb78619d229f2214` and accepted Week 4 revision `438da0c9354c79e320a9cd5a163a5c5786acdb63`.
 - Use `scripts/audit-full-recovery-cutover.mjs` for current blockers. Its expected output is `HOLD_FULL_APPLICATION_CUTOVER` even when safety checks pass; HOLD is not an error unless required guards fail.
 - For a different Netlify account, obtain user authorization and perform read-only identity/access preflight before any data migration. Never promote rehearsal data or enable scheduled writes automatically.
+
+### Week 4 served-copy comparator investigation (2026-10-16)
+
+- Integrated Actions [run #38997515940](https://github.com/dajuns5567/FFL-trade-finder/actions/runs/38997515940) passed both `archive-and-safety` and `actual-app-isolated-data`. The final rendering job successfully rendered 54,585 HTML bytes and verified 98 assets, but the Week 4 comparator reported **0 of 457** exact accepted paragraphs in the **raw** compressed preload. This did not establish that the accepted served copy was absent: the test compared the wrong stage.
+- Inspection of frozen `netlify/functions/league-hub.mjs` shows Week 4 is transformed by `rebuildWeek4Editorial`, `applyInquirerEditorialClarity`, and `upgradeInquirerAnalysis` in `servedPreload` before serving. The original comparator skipped those transforms.
+- Commit `f01f3c8f5736693275c095a7b5146d90cbd45f6f` now invokes the **actual** original `league-hub?preload_bootstrap=1` GET handler and compares accepted paragraphs against its transformed Week 4 response. It blocks external fetches and does not write data. **Until the new integrated run passes, do not claim Week 4 fidelity parity or full recovery certified.**

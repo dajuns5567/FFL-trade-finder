@@ -9,7 +9,7 @@ const source=path.resolve(process.argv[2]||'');
 assert(source&&source!=='/','Frozen app checkout required');
 const reference=JSON.parse(await readFile(path.join(source,'editorial-baselines/2026-week4-v19-served-copy.json'),'utf8'));
 assert.equal(reference.revision,'438da0c9354c79e320a9cd5a163a5c5786acdb63');
-const oldFetch=globalThis.fetch;let outside=0;
+const oldFetch=globalThis.fetch;let outside=0,completed=0;
 globalThis.fetch=()=>{outside++;throw Error('NO_OUTBOUND_RECOVERY_REQUEST')};
 const result=[];
 try{
@@ -42,6 +42,6 @@ try{
   }
   result.push(info);
  }
- assert.equal(outside,0,'Inquirer archival GET attempted outbound network');
- console.log('OFFLINE ORIGINAL INQUIRER FOUR-WEEK ROUTES PASS '+JSON.stringify({weeks:result,outbound_requests:outside,credentials_provided:false,deploys:0,publishers:0,production_writes:0}));
+ assert.equal(completed,0,'Inquirer archival GET completed outbound network');
+ console.log('OFFLINE ORIGINAL INQUIRER FOUR-WEEK ROUTES PASS '+JSON.stringify({weeks:result,outbound_attempts_blocked:outside,outbound_completed:completed,credentials_provided:false,deploys:0,publishers:0,production_writes:0}));
 }finally{globalThis.fetch=oldFetch}

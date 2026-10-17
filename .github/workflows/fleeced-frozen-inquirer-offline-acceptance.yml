@@ -1,0 +1,29 @@
+name: Frozen full Inquirer credential-free serving acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-frozen-inquirer-offline-acceptance.yml'
+      - 'scripts/verify-frozen-inquirer-offline-serving.mjs'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frozen original read handler dependencies without scripts
+        working-directory: application
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Confirm all four original editions and exactly 457 locked Week 4 paragraphs without credentials
+        run: node recovery/scripts/verify-frozen-inquirer-offline-serving.mjs application

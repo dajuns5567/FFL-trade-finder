@@ -1,0 +1,30 @@
+#!/usr/bin/env node
+// Prepare a combined, *undeployed* read-only full-app candidate.
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+const root=path.resolve(process.argv[2]||'.tmp/fullapp');
+const source=path.resolve(process.argv[3]||'scripts/fullapp-sandbox-recovery-gateway.mjs');
+const site='d3ac147d-5e0e-4c1e-9163-237da3ee4341';
+const report=JSON.parse(await fs.readFile(path.join(root,'candidate-report.json'),'utf8'));
+assert.equal(report.destination_site,site);
+assert.equal(report.netlify_functions,0);
+assert.equal(report.recovered_data_integrated,false);
+const toml=await fs.readFile(path.join(root,'netlify.toml'),'utf8');
+assert(toml.includes("connect-src 'none'"),'Expected deny-all static base');
+const api=await fs.readFile(source,'utf8');
+assert(api.includes("process.env.RECOVERY_BLOBS_READ_TOKEN")&&api.includes("RECOVERY_SOURCE_SITE_ID"),'Gateway credential/source guards missing');
+assert(api.includes("request.method!=='GET'&&request.method!=='HEAD'"),'Gateway method guard missing');
+assert(!/\.\s*(?:setJSON|set|delete|deleteAll)\s*\(/.test(api),'Gateway has Blob mutation operation');
+const functionDir=path.join(root,'netlify/functions');
+await fs.mkdir(functionDir,{recursive:true});
+const existing=await fs.readdir(functionDir);
+assert.equal(existing.length,0,'Unexpected functions already exist');
+await fs.copyFile(source,path.join(functionDir,'recovery-status.mjs'));
+const updated=toml.replace("connect-src 'none'","connect-src 'self'");
+assert.notEqual(updated,toml);
+assert(!/schedule\s*=/.test(updated),'Schedule forbidden');
+await fs.writeFile(path.join(root,'netlify.toml'),updated);
+const combined={...report,netlify_functions:1,write_capable_endpoints:0,recovered_data_integrated:false,gateway_metadata_only:true,gateway_path:'/api/recovery-status',credential_required:true,deploy_performed:false};
+await fs.writeFile(path.join(root,'candidate-report.json'),JSON.stringify(combined,null,2)+'\n');
+console.log('COMBINED RECOVERY CANDIDATE BUILT '+JSON.stringify(combined));

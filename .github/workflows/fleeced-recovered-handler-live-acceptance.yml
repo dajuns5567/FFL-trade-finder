@@ -1,0 +1,25 @@
+name: Actual recovered API handler read-only live acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-recovered-handler-live-acceptance.yml'
+      - 'recovery-isolated/netlify/functions/recovery-status.mjs'
+      - 'scripts/accept-isolated-recovery-handler-live.mjs'
+permissions:
+  contents: read
+jobs:
+  actual-recovery-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Execute actual API code against original verified isolated site data (never deploy or publish)
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/accept-isolated-recovery-handler-live.mjs

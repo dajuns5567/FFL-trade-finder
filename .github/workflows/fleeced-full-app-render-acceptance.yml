@@ -6,6 +6,7 @@ on:
       - '.github/workflows/fleeced-full-app-render-acceptance.yml'
       - 'scripts/check-isolated-full-app-render.mjs'
       - 'scripts/assess-week4-served-vs-preload.mjs'
+      - 'scripts/verify-original-application-asset-graph.mjs'
 permissions:
   contents: read
 jobs:
@@ -27,5 +28,7 @@ jobs:
         run: echo 'Comparing against the exact feature-branch revision used by successful editorial restoration, af9067c751118cf33f688648cb78619d229f2214.'
       - name: Render actual original app without executing publishers or deploying
         run: node recovery/scripts/check-isolated-full-app-render.mjs application
+      - name: Verify original app route and full rendered asset graph without requests or writes
+        run: node recovery/scripts/verify-original-application-asset-graph.mjs application
       - name: Assess exact accepted Week 4 served prose against recovered preload
         run: node recovery/scripts/assess-week4-served-vs-preload.mjs application

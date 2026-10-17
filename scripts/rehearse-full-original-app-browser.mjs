@@ -86,7 +86,29 @@ try{
  assert.equal(valuation.values.at(-1),120,'Rank-907 canonical floor changed');
  assert(valuation.values.every((v,i,a)=>Number.isFinite(v)&&v>=120&&v<=9999&&(i===0||v<=a[i-1])),'Canonical valuation must be finite and monotone');
  assert.equal(valuation.package_empty,0,'Empty canonical package must value at zero');
- const result={browser:'chromium',functional,trade_intent_interaction:'up',valuation,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
+
+ const packageCheck=await page.evaluate(()=>{
+  const api=window.tradeValueNormalizationV139;
+  const original=window.playerRankValue;
+  try{
+   const ranks=new Map([['rank1',1],['rank25',25],['rank325',325]]);
+   window.playerRankValue=a=>({rank:ranks.get(a?.id)||907});
+   const assets=['rank1','rank25','rank325'].map(id=>({id,type:'player'}));
+   const individual=assets.map(a=>api.canonicalValue(a));
+   const together=api.canonicalPackageValue(assets);
+   const reversed=api.canonicalPackageValue([...assets].reverse());
+   const duplicate=api.canonicalPackageValue([assets[1],assets[1]]);
+   return {individual,together,reversed,duplicate};
+  }finally{window.playerRankValue=original}
+ });
+ assert.deepEqual(packageCheck.individual.length,3);
+ assert.equal(packageCheck.individual[0],9999,'Synthetic rank-one player value changed');
+ assert.equal(packageCheck.individual[2],1825,'Synthetic rank-325 player value changed');
+ assert.equal(packageCheck.together,packageCheck.individual.reduce((a,b)=>a+b,0),'Canonical trade package is not sum of player values');
+ assert.equal(packageCheck.reversed,packageCheck.together,'Reversing trade assets changed package value');
+ assert.equal(packageCheck.duplicate,packageCheck.individual[1]*2,'Repeated asset calculation not additive');
+
+ const result={browser:'chromium',functional,trade_intent_interaction:'up',valuation,packageCheck,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
  console.log('FULL FLEECED BROWSER REHEARSAL PASS '+JSON.stringify(result));
  await context.close();
 }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

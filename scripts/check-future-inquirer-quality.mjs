@@ -25,7 +25,11 @@ if(!nameCoverage&&calibration)problems.push({reason:'team names differ from acce
 const collect=(value,out)=>{if(Array.isArray(value))value.forEach(v=>collect(v,out));else if(value&&typeof value==='object')for(const [k,v] of Object.entries(value)){if(k==='paragraphs'&&Array.isArray(v))v.forEach(p=>{if(typeof p==='string')out.push(norm(p))});collect(v,out)}};
 for(const team of articles){
  if(!team.article||typeof team.article!=='object'){problems.push({team:team.name,reason:'article missing'});continue}
- const paras=[];collect(team.article,paras);
+ // Many approved editions mirror article.paragraphs within section paragraphs for display.
+ // Count one canonical representation so expected mirrors are not mistaken for repetition.
+ const top=Array.isArray(team.article.paragraphs)?team.article.paragraphs.filter(p=>typeof p==='string').map(norm):[];
+ const paras=top.length?top:[];
+ if(!top.length)collect(team.article,paras);
  const meaningful=paras.filter(p=>p.length>=50);
  paragraphCount+=meaningful.length;
  if(meaningful.length<6)problems.push({team:team.name,reason:'fewer than six substantive paragraphs'});

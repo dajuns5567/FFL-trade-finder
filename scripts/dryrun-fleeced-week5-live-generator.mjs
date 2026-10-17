@@ -1,0 +1,32 @@
+// Credential-scoped, write-denied Week 5 generation rehearsal against live Sleeper and the actual new-team archived Weeks 3-4.
+// It changes only the ephemeral GitHub Actions checkout; no function invocation or Blob writes.
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+const SITE='2e556797-6f35-4037-aa5a-1338724eb71d';
+assert.equal(process.env.FLEECED_NEW_TEAM_SITE_ID,SITE);
+assert(process.env.NETLIFY_SANDBOX_DEPLOY_TOKEN);
+const root=path.resolve(process.argv[2]||''),dest=path.resolve(process.argv[3]||'');
+assert(root.includes('/application')&&dest.includes('/.tmp/')&&dest.endsWith('.json'));
+const file=path.join(root,'netlify/functions/league-hub.mjs');
+let source=await fs.readFile(file,'utf8');
+const nameOld='const byId=new Map(teams.map(t=>[String(t.roster_id),t])),contextFor=id=>';
+assert(source.includes(nameOld),'Expected missing resolver not found');
+source=source.replace(nameOld,'const byId=new Map(teams.map(t=>[String(t.roster_id),t])),teamName=id=>byId.get(String(id))?.team_name||null,contextFor=id=>');
+const storeOld="const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});";
+assert(source.includes(storeOld),'Expected default production Blob store initialization not found');
+const storeNew="const store=()=>{const s=getStore({name:'fleeced-league-hub',siteID:'"+SITE+"',token:process.env.NETLIFY_SANDBOX_DEPLOY_TOKEN,consistency:'strong'});return{get:(...args)=>s.get(...args),setJSON:async()=>({modified:false,dry_run:true})}};";
+source=source.replace(storeOld,storeNew);
+assert(!source.includes(storeOld));
+await fs.writeFile(file,source);
+const {weeklyReport}=await import(pathToFileURL(file).href+'?rehearsal='+Date.now());
+const result=await weeklyReport(new Request('https://phenomenal-mousse-f0a00c.netlify.app/.netlify/functions/league-hub?weekly=1'));
+assert(result?.available&&Number(result.week)===5,'Week5 not generated: '+JSON.stringify({available:result?.available,week:result?.week,reason:result?.reason}));
+assert.equal(result.teams?.length,32,'Incomplete Week5 article population');
+assert(result.teams.every(t=>t.inquirer_article?.headline),'Missing Week5 content');
+await fs.mkdir(path.dirname(dest),{recursive:true});
+await fs.writeFile(dest,JSON.stringify(result));
+const sentiments=result.teams.filter(t=>(t.inquirer_article?.sections||[]).some(s=>s.kind==='sentiment'&&Array.isArray(s.paragraphs)&&s.paragraphs.length>=2)).length;
+const counts=result.teams.map(t=>(t.inquirer_article?.paragraphs||[]).length);
+console.log('WEEK5 NO-WRITE LIVE GENERATION '+JSON.stringify({week:result.week,teams:result.teams.length,recap:!!result.league_overview?.headline,sentiment_sections:sentiments,paragraph_min:Math.min(...counts),paragraph_max:Math.max(...counts),reporters:new Set(result.teams.map(t=>t.inquirer_article.reporter?.id)).size,editorial_revision:result.editorial_revision,no_blob_mutations:true}));

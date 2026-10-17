@@ -7,7 +7,7 @@ const paragraphs=article=>(article?.sections||[]).flatMap(s=>s.paragraphs||[]).f
 const exact=number=>Number(number||0).toFixed(2);
 
 export function week4EditorialBrief({team,acceptedWeek4,week}){
-  if(Number(acceptedWeek4?.week)!==4||!Array.isArray(acceptedWeek4.teams)||acceptedWeek4.teams.length!==32)
+  if(Number(acceptedWeek4?.week)!==4||acceptedWeek4?.published_locked!==true||!Array.isArray(acceptedWeek4.teams)||acceptedWeek4.teams.length!==32)
     throw new Error('A complete approved Week 4 edition is required as the sole editorial style reference');
   if(Number(week)<=4)throw new Error('Forward writer cannot mutate Week 1–4');
   const reporter=team?.inquirer_article?.reporter;
@@ -44,4 +44,27 @@ export function validateWeek4EditorialDraft(draft,team){
   if(!copy.includes(Number(team?.points||0).toFixed(1))&&!copy.includes(exact(team?.points)))errors.push('score-identity');
   if(/\b(?:TBD|TODO|lorem ipsum|eligible option|the useful weakness-or-strength note)\b/i.test(copy))errors.push('placeholder-or-meta-prose');
   return{ok:errors.length===0,errors};
+}
+
+// Invoked only by a controlled staging worker, never from the public GET
+// routes. The caller supplies an authenticated provider SDK client and an
+// operator-selected model; no arbitrary user-triggered paid generation.
+export async function composeWeek4ArticleDraft({client,model,team,acceptedWeek4,week}){
+  if(!client?.chat?.completions?.create||!String(model||'').trim())
+    throw new Error('An authenticated server-side model client and configured model are required');
+  const brief=week4EditorialBrief({team,acceptedWeek4,week});
+  const response=await client.chat.completions.create({
+    model,messages:[{role:'system',content:brief.system},{role:'user',content:brief.user}],
+    response_format:{type:'json_object'},temperature:0.85
+  });
+  const source=response?.choices?.[0]?.message?.content;
+  let draft;
+  try{draft=JSON.parse(String(source||''))}catch{throw new Error('Week 4 editorial model did not return a JSON article')}
+  const check=validateWeek4EditorialDraft(draft,team);
+  if(!check.ok)throw new Error('Week 4 editorial draft held: '+check.errors.join(', '));
+  const article={...team.inquirer_article,...draft,week:Number(week),
+    reporter:team.inquirer_article.reporter,
+    paragraphs:paragraphs(draft),editorial_source:'week4-v19-style-ai-draft',
+    review_status:'unapproved'};
+  return{article,review_status:'unapproved',model:response.model||model,quality:check};
 }

@@ -1,0 +1,29 @@
+name: Frozen original Inquirer four-week GET route integration
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-inquirer-four-week-offline-routes.yml'
+      - 'scripts/accept-original-inquirer-four-week-offline-routes.mjs'
+permissions:
+  contents: read
+jobs:
+  original-routes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frozen original app dependencies without install scripts
+        working-directory: application
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Validate four authentic read-only Inquirer GET routes and 457 approved paragraphs
+        run: node recovery/scripts/accept-original-inquirer-four-week-offline-routes.mjs application

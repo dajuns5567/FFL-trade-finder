@@ -7,6 +7,9 @@ on:
       - 'scripts/stage-fleeced-frozen-inquirer-dataset.mjs'
       - 'scripts/package-fleeced-inquirer-read-only.mjs'
       - 'scripts/accept-packaged-fleeced-inquirer.mjs'
+      - 'scripts/stage-fleeced-full-history-offline.mjs'
+      - 'scripts/package-fleeced-history-read-only.mjs'
+      - 'scripts/accept-fleeced-offline-complete-candidate.mjs'
 permissions:
   contents: read
 jobs:
@@ -39,11 +42,27 @@ jobs:
       - name: Exercise real bundled archived-edition GET routes and denial cases
         working-directory: recovery
         run: node scripts/accept-packaged-fleeced-inquirer.mjs .tmp/fullapp
+      - name: Install Netlify SDK for Actions-only isolated history read
+        working-directory: recovery
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Stage all restored historical player time series without production writes
+        working-directory: recovery
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/stage-fleeced-full-history-offline.mjs .tmp/fullapp/private-history.json
+      - name: Package credential-free history read handler and remove intermediate private JSON
+        working-directory: recovery
+        run: node scripts/package-fleeced-history-read-only.mjs .tmp/fullapp
+      - name: Verify whole offline original app with complete Inquirer and restored player history handlers
+        working-directory: recovery
+        run: node scripts/accept-fleeced-offline-complete-candidate.mjs .tmp/fullapp
       - name: Assert no intermediate manuscript or publisher in runtime bundle
         working-directory: recovery
         run: |
           test ! -e .tmp/fullapp/private-verified-editions.json
-          test "$(find .tmp/fullapp/netlify/functions -type f | wc -l)" -eq 1
+          test ! -e .tmp/fullapp/private-history.json
+          test "$(find .tmp/fullapp/netlify/functions -type f | wc -l)" -eq 2
           ! grep -Eiq 'schedule[[:space:]]*=' .tmp/fullapp/netlify.toml
       - name: Delete temporary full-content bundle even after failure
         if: always()

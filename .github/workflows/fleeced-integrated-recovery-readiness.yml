@@ -1,0 +1,53 @@
+name: FLEECED integrated read-only recovery readiness
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-integrated-recovery-readiness.yml'
+permissions:
+  contents: read
+jobs:
+  archive-and-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run archive pagination, source identity, and continuity regressions
+        run: node --test tests/archive-blob-inventory.test.mjs tests/select-archive-production-site.test.mjs tests/assess-archive-continuity.test.mjs
+      - name: Audit full cutover without deploying or publishing
+        run: node scripts/audit-full-recovery-cutover.mjs
+      - name: Verify authoritative durable archive freshness
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ARCHIVE_MAX_AGE_HOURS: '8'
+        run: node scripts/verify-durable-history-freshness.mjs
+      - name: Verify actual authorized Netlify site source without mutation
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          VALUE_HISTORY_DEPLOY_BRANCH: main
+          VALUE_HISTORY_PRODUCTION_SITE_ID: 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
+        run: node scripts/resolve-active-netlify-site.mjs
+  actual-app-prose-and-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Render real application without any live request or publication
+        run: node recovery/scripts/check-isolated-full-app-render.mjs application
+      - name: Verify accepted Week 4 paragraphs remain present without reauthoring
+        run: node recovery/scripts/assess-week4-served-vs-preload.mjs application

@@ -1,0 +1,41 @@
+name: Dedicated FLEECED static full-app sandbox package acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-fullapp-static-candidate.yml'
+      - 'scripts/build-fleeced-fullapp-static-recovery.mjs'
+      - 'scripts/verify-fleeced-fullapp-static-recovery.mjs'
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile static sandbox candidate from frozen application source
+        working-directory: recovery
+        run: node scripts/build-fleeced-fullapp-static-recovery.mjs ../application .tmp/fullapp/public
+      - name: Verify complete static asset graph and deny all endpoints and schedules
+        working-directory: recovery
+        run: node scripts/verify-fleeced-fullapp-static-recovery.mjs .tmp/fullapp
+      - name: Upload sanitized candidate for inspection without deploying
+        uses: actions/upload-artifact@v4
+        with:
+          name: fleeced-fullapp-static-recovery-candidate
+          path: |
+            recovery/.tmp/fullapp/public/
+            recovery/.tmp/fullapp/netlify.toml
+            recovery/.tmp/fullapp/candidate-report.json
+          if-no-files-found: error
+          retention-days: 7

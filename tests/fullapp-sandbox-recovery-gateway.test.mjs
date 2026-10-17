@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {makeReadOnlyGateway} from '../scripts/fullapp-sandbox-recovery-gateway.mjs';
 const index={items:Array.from({length:156},(_,i)=>({path:'snapshot-'+i}))};
-const good={history:{get:async()=>index},editorial:{get:async k=>({week:Number(k.match(/week-(\d+)/)?.[1]),teams:Array.from({length:32})})}};
+const good={history:{get:async()=>index},editorial:{get:async k=>({season:2026,week:Number(k.match(/week-(\d+)/)?.[1]),teams:Array.from({length:32})})}};
 const h=makeReadOnlyGateway(()=>good);
 const req=(method='GET',suffix='')=>new Request('https://sandbox.invalid/api/recovery-status'+suffix,{method});
 test('exposes only aggregate recovered metadata',async()=>{const r=await h(req());assert.equal(r.status,200);const v=await r.json();assert.equal(v.history_snapshots,156);assert.equal(v.week_coverage.length,4);assert.equal(v.articles_exposed,0);assert.equal(JSON.stringify(v).includes('paragraph'),false)});

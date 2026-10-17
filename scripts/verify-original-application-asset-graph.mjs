@@ -9,8 +9,15 @@ const root=path.resolve(process.argv[2]||'.');
 const entry=path.join(root,'netlify/functions/site-v29.mjs');
 const config=fs.readFileSync(path.join(root,'netlify.toml'),'utf8');
 assert.match(config,/from\s*=\s*"\/"[\s\S]*?to\s*=\s*"\/\.netlify\/functions\/site-v29"/,'Homepage must map to original application entry point');
-const {default:render}=await import(pathToFileURL(entry).href);
-const response=await render();
+const originalFetch=globalThis.fetch;
+let outboundRequests=0;
+globalThis.fetch=async()=>{outboundRequests++;throw Error('ASSET_GRAPH_EXTERNAL_REQUEST_FORBIDDEN')};
+let response;
+try{
+ const {default:render}=await import(pathToFileURL(entry).href);
+ response=await render();
+}finally{globalThis.fetch=originalFetch}
+assert.equal(outboundRequests,0,'Full-app asset audit attempted network access');
 assert.equal(response.status,200);
 const html=await response.text();
 assert(html.length>20000);
@@ -28,5 +35,5 @@ for(const file of scriptFiles){
 }
 assert.deepEqual(malformed,[]);
 const repoFiles=fs.readdirSync(root).filter(p=>p.endsWith('.js')||p.endsWith('.css'));
-const result={original_app:true,entry:'netlify/functions/site-v29.mjs',html_bytes:Buffer.byteLength(html),referenced_assets:referenced.length,referenced_scripts:scriptFiles.length,available_root_assets:repoFiles.length,missing_assets:missing.length,deploys:0,publishers_invoked:0,external_http_requests:0};
+const result={original_app:true,entry:'netlify/functions/site-v29.mjs',html_bytes:Buffer.byteLength(html),referenced_assets:referenced.length,referenced_scripts:scriptFiles.length,available_root_assets:repoFiles.length,missing_assets:missing.length,deploys:0,publishers_invoked:0,external_http_requests:outboundRequests};
 console.log('FULL APPLICATION ASSET INTEGRITY PASS '+JSON.stringify(result));

@@ -1,9 +1,6 @@
 name: FLEECED live Week5 and corrected forward editorial unit acceptance
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - .github/workflows/fleeced-week5-final-readback-once.yml
 permissions:
   contents: read
 jobs:

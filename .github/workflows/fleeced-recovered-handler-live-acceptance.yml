@@ -6,6 +6,7 @@ on:
       - '.github/workflows/fleeced-recovered-handler-live-acceptance.yml'
       - 'recovery-isolated/netlify/functions/recovery-status.mjs'
       - 'scripts/accept-isolated-recovery-handler-live.mjs'
+      - 'tests/recovered-api-handler.test.mjs'
 permissions:
   contents: read
 jobs:
@@ -18,6 +19,8 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Verify handler read safety, errors and all API routes with offline fixtures
+        run: node --test tests/recovered-api-handler.test.mjs
       - name: Execute actual API code against original verified isolated site data (never deploy or publish)
         env:
           NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}

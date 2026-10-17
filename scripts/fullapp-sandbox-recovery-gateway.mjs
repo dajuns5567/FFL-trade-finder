@@ -15,7 +15,30 @@ export function makeReadOnlyGateway(resolve=()=>{
   if(request.method!=='GET'&&request.method!=='HEAD')return reply({error:'read only'},405);
   const url=new URL(request.url);
   const isHistory=['/api/value-history','/api/value-history/'].includes(url.pathname);
-  if(!isHistory&&!['/api/recovery-status','/api/recovery-status/'].includes(url.pathname))return reply({error:'not found'},404);
+  const isHub=['/api/league-hub','/api/league-hub/'].includes(url.pathname);
+  if(!isHub&&!isHistory&&!['/api/recovery-status','/api/recovery-status/'].includes(url.pathname))return reply({error:'not found'},404);
+  if(isHub){
+   if(request.method!=='GET')return reply({error:'read only'},405);
+   const fields=[...url.searchParams.entries()];
+   const archive=fields.length===1&&fields[0][0]==='broadcast_archive'&&fields[0][1]==='1';
+   const edition=fields.length===2&&url.searchParams.has('broadcast_season')&&url.searchParams.has('broadcast_week');
+   if(!archive&&!edition)return reply({error:'unsupported Inquirer query'},400);
+   if(edition&&(url.searchParams.get('broadcast_season')!=='2026'||!/^[1-4]$/.test(url.searchParams.get('broadcast_week')||'')))return reply({error:'edition not approved for sandbox'},403);
+   try{
+    const {editorial}=resolve();
+    const reports=[];
+    const items=[];
+    const weeks=archive?[1,2,3,4]:[Number(url.searchParams.get('broadcast_week'))];
+    for(const w of weeks){
+     const e=await editorial.get('preloads/2026/week-'+String(w).padStart(2,'0')+'.json',{type:'json'});
+     if(Number(e?.season)!==2026||Number(e?.week)!==w||!Array.isArray(e.teams)||e.teams.length!==32)return reply({error:'recovered edition unavailable'},503);
+     reports.push({type:'week',season:2026,week:w,key:'preloaded:2026:'+w,preloaded:true,captured_at:String(e.generated_at||'')});
+     items.push({season:2026,week:w,teams:32,article_count:e.teams.filter(t=>!!t.inquirer_article).length,available:true});
+    }
+    if(archive)return reply({reports});
+    return reply({available:true,...items[0],preloaded:true,content_redacted:true});
+   }catch{return reply({error:'isolated editorial unavailable'},503)}
+  }
   const playerId=url.searchParams.get('player_id');
   const keys=[...url.searchParams.keys()];
   if(keys.length&&!(keys.length===1&&keys[0]==='player_id'&&/^[a-zA-Z0-9_-]{1,48}$/.test(playerId||'')))return reply({error:'unsupported query'},400);
@@ -55,4 +78,4 @@ export function makeReadOnlyGateway(resolve=()=>{
  }
 }
 export default makeReadOnlyGateway();
-export const config={path:['/api/recovery-status','/api/value-history']};
+export const config={path:['/api/recovery-status','/api/value-history','/api/league-hub']};

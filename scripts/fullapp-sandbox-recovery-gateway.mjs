@@ -31,7 +31,7 @@ export function makeReadOnlyGateway(resolve=()=>{
     const weeks=archive?[1,2,3,4]:[Number(url.searchParams.get('broadcast_week'))];
     for(const w of weeks){
      const e=await editorial.get('preloads/2026/week-'+String(w).padStart(2,'0')+'.json',{type:'json'});
-     if(Number(e?.season)!==2026||Number(e?.week)!==w||!Array.isArray(e.teams)||e.teams.length!==32)return reply({error:'recovered edition unavailable'},503);
+     if(Number(e?.season)!==2026||Number(e?.week)!==w||!Array.isArray(e.teams)||e.teams.length!==32||e.teams.some(team=>!team||typeof team!=='object'))return reply({error:'recovered edition unavailable'},503);
      reports.push({type:'week',season:2026,week:w,key:'preloaded:2026:'+w,preloaded:true,captured_at:String(e.generated_at||'')});
      items.push({season:2026,week:w,teams:32,article_count:e.teams.filter(t=>!!t.inquirer_article).length,available:true});
     }

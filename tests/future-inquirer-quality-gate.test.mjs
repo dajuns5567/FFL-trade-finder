@@ -66,3 +66,20 @@ test('mirrored article and section paragraphs are not false duplicate failures',
   assert.match(fail.stderr,/duplicate paragraphs/);
  }finally{fs.rmSync(v.dir,{recursive:true,force:true})}
 });
+
+test('future draft rejects identical substantive commentary reused for another team',()=>{
+ const v=fixture();
+ try{
+  const candidate=JSON.parse(fs.readFileSync(v.direct,'utf8'));
+  for(const team of candidate.teams){
+   const seed=team.inquirer_article.sections[0].paragraphs[0];
+   team.inquirer_article.sections[0].paragraphs=Array.from({length:6},(_,i)=>seed+' Distinct football and fantasy matchup evidence number '+(i+1)+' anchored to this weekly report.');
+  }
+  const copied=candidate.teams[0].inquirer_article.sections[0].paragraphs[0];
+  candidate.teams[1].inquirer_article.sections[0].paragraphs[0]=copied;
+  fs.writeFileSync(v.direct,JSON.stringify(candidate));
+  const fail=spawnSync(process.execPath,[runner,v.direct,v.base],{encoding:'utf8'});
+  assert.equal(fail.status,1);
+  assert.match(fail.stderr,/substantive paragraph reused across teams/);
+ }finally{fs.rmSync(v.dir,{recursive:true,force:true})}
+});

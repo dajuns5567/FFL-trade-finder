@@ -13,11 +13,15 @@ assert.equal(baseline.articles?.length,32,'Accepted baseline corrupted');
 assert.equal(candidate.teams?.length,32,'Candidate must cover all 32 teams');
 const norm=s=>String(s||'').trim();
 const articles=candidate.teams.map(t=>({name:norm(t.team_name),article:t.inquirer_article}));
-assert.equal(new Set(articles.map(t=>t.name)).size,32,'Duplicate or unnamed team');
+const uniqueTeams=new Set(articles.map(t=>t.name)).size===32;
+if(!calibration)assert(uniqueTeams,'Duplicate or unnamed team');
 const accepted=baseline.articles.map(a=>({name:norm(a.team),paragraphs:(a.sections||[]).flatMap(s=>s.paragraphs||[])}));
 const approvedNames=new Set(accepted.map(a=>a.name));
-assert(articles.every(a=>approvedNames.has(a.name)),'Team coverage differs from Week 4 reference');
+const nameCoverage=articles.every(a=>approvedNames.has(a.name));
+if(!calibration)assert(nameCoverage,'Team coverage differs from Week 4 reference');
 let paragraphCount=0;const problems=[];
+if(!uniqueTeams)problems.push({reason:'duplicate or unnamed teams'});
+if(!nameCoverage)problems.push({reason:'team names differ from accepted Week 4'});
 const collect=(value,out)=>{if(Array.isArray(value))value.forEach(v=>collect(v,out));else if(value&&typeof value==='object')for(const [k,v] of Object.entries(value)){if(k==='paragraphs'&&Array.isArray(v))v.forEach(p=>{if(typeof p==='string')out.push(norm(p))});collect(v)}};
 for(const team of articles){
  if(!team.article||typeof team.article!=='object'){problems.push({team:team.name,reason:'article missing'});continue}

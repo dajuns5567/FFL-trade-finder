@@ -48,9 +48,25 @@ function groundedSentence(t,week,iteration,position){
  const margin=Math.abs(p-op).toFixed(2),score=p.toFixed(2),against=op.toFixed(2);
  return openings[idx]+': '+team+' '+verb+' '+opp+' '+score+' to '+against+' fantasy points, a '+margin+'-point margin in Week '+week+'.';
 }
+function replaceDuplicatedDevelopedParagraphs(edited,week){
+ const seen=new Set();let modified=0;
+ edited.inquirer.teams=edited.inquirer.teams.map(t=>{
+  const a=t.inquirer_article;if(!a)return t;
+  let n=0;
+  const sections=(a.sections||[]).map(section=>({...section,paragraphs:(section.paragraphs||[]).map(p=>{
+   const key=String(p||'').toLowerCase().replace(/\\s+/g,' ').trim();
+   if(key.length<100||!seen.has(key)){if(key.length>=100)seen.add(key);return p}
+   const repl=groundedSentence(t,week,15,n++);
+   if(!repl)return p;
+   modified++;return repl;
+  })}));
+  return{...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
+ });
+ return modified;
+}
 export function repairNewEditionCopy(edited,previous,week,evaluate,maxPasses=8){
  const entities=[...entitiesOf({teams:edited.inquirer.teams}),...entitiesOf(previous)];
- let passes=0,replacements=0;
+ let passes=0,replacements=replaceDuplicatedDevelopedParagraphs(edited,week);
  for(;passes<maxPasses;passes++){
   const verdict=evaluate({teams:edited.inquirer.teams,league_overview:edited.leagueOverview},previous);
   if(verdict.ok)return{edited,verdict,replacements,passes};

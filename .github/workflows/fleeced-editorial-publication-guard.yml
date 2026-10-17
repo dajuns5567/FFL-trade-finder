@@ -1,0 +1,40 @@
+name: Fleeced Editorial Publication Guard
+on:
+  push:
+    paths:
+      - 'netlify/functions/inquirer-publication-guard.mjs'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/inquirer-publish-scheduled.mjs'
+      - 'tests/inquirer-publication-guard.test.mjs'
+      - '.github/workflows/fleeced-editorial-publication-guard.yml'
+  pull_request:
+    paths:
+      - 'netlify/functions/inquirer-publication-guard.mjs'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/inquirer-publish-scheduled.mjs'
+      - 'tests/inquirer-publication-guard.test.mjs'
+      - '.github/workflows/fleeced-editorial-publication-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  editorial-admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail-closed editorial regression and approval tests
+        run: node --test tests/inquirer-publication-guard.test.mjs
+      - name: Parse production entrypoints
+        run: |
+          node --check netlify/functions/inquirer-publication-guard.mjs
+          node --check netlify/functions/inquirer-publish-scheduled.mjs
+          node --check netlify/functions/league-hub.mjs
+      - name: Verify gate cannot be bypassed by direct weekly entrypoint
+        run: |
+          node --input-type=module -e "import fs from 'node:fs';const s=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');const guard=s.indexOf('inspectEditionBeforePublication(result)'),publish=s.indexOf('await s.setJSON(key,result);await syncReporterArchives');if(guard<0||publish<0||guard>publish)process.exit(1);"

@@ -15,11 +15,29 @@ export function makeReadOnlyGateway(resolve=()=>{
   if(request.method!=='GET'&&request.method!=='HEAD')return reply({error:'read only'},405);
   const url=new URL(request.url);
   if(!['/api/recovery-status','/api/recovery-status/'].includes(url.pathname))return reply({error:'not found'},404);
-  if(url.search)return reply({error:'query not supported'},400);
+  const playerId=url.searchParams.get('player_id');
+  const keys=[...url.searchParams.keys()];
+  if(keys.length&&!(keys.length===1&&keys[0]==='player_id'&&/^[a-zA-Z0-9_-]{1,48}$/.test(playerId||'')))return reply({error:'unsupported query'},400);
+  if(playerId&&request.method==='HEAD')return reply({error:'HEAD restricted to status'},405);
   try{
    const {history,editorial}=resolve();
    const index=await history.get('value-history/index.json',{type:'json'});
    if(!Array.isArray(index?.items)||index.items.length!==156)return reply({error:'baseline unavailable'},503);
+   if(playerId){
+    const points=[];
+    // Restore baseline only; no production store access or archive HTTP fetches.
+    for(let i=0;i<index.items.length;i+=16){
+     const batch=index.items.slice(i,i+16);
+     const snaps=await Promise.all(batch.map(item=>history.get(item.path,{type:'json'})));
+     for(let k=0;k<batch.length;k++){
+      const snap=snaps[k];
+      if(!snap||snap.t!==batch[k].t||!Array.isArray(snap.rows))return reply({error:'incomplete recovered history'},503);
+      const row=snap.rows.find(r=>String(r.id)===playerId);
+      if(row&&Number.isFinite(Number(row.value)))points.push({t:snap.t,value:Number(row.value),overall:row.overall??null,pos:row.pos??null,posRank:row.posRank??null});
+     }
+    }
+    return reply({player_id:playerId,points,snapshot_count:index.items.length,history_state:'isolated-recovery',partial:false,read_only:true});
+   }
    const editions=[];
    for(let w=1;w<=4;w++){
     const e=await editorial.get('preloads/2026/week-'+String(w).padStart(2,'0')+'.json',{type:'json'});

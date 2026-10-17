@@ -35,3 +35,19 @@ test('fails closed when a recovered snapshot is absent',async()=>{
  const gateway=makeReadOnlyGateway(()=>({history:{get:async key=>key==='value-history/index.json'?{items:records}:null},editorial:good.editorial}));
  assert.equal((await gateway(req('GET','?player_id=player123'))).status,503);
 });
+
+test('original /api/value-history route returns the same recovered player history',async()=>{
+ const rows=Array.from({length:156},(_,i)=>({path:'value-history/snapshots/s'+i+'.json',t:new Date(Date.UTC(2026,8,20,0,i)).toISOString()}));
+ const gateway=makeReadOnlyGateway(()=>({history:{get:async key=>key==='value-history/index.json'?{items:rows}:{t:rows[Number(key.match(/s([0-9]+)[.]json$/)?.[1])].t,rows:[{id:'12345',value:200}]}},editorial:good.editorial}));
+ const r=await gateway(new Request('https://sandbox.invalid/api/value-history?player_id=12345'));
+ assert.equal(r.status,200);const v=await r.json();assert.equal(v.player_id,'12345');assert.equal(v.points.length,156);assert.equal(v.snapshot_count,156);assert.equal(v.history_state,'isolated-recovery');
+});
+test('original history route does not expose metadata, articles or unsupported modes',async()=>{
+ let touched=0;const gateway=makeReadOnlyGateway(()=>{touched++;return good});
+ for(const q of ['', '?market=1','?team_net=1','?archive_export=1','?player_id=bad%20id']){
+  const response=await gateway(new Request('https://sandbox.invalid/api/value-history'+q));
+  assert.equal(response.status,400);
+ }
+ assert.equal((await gateway(new Request('https://sandbox.invalid/api/value-history',{method:'POST'}))).status,405);
+ assert.equal(touched,0);
+});

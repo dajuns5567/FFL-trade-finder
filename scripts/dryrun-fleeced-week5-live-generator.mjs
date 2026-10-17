@@ -18,6 +18,12 @@ const storeOld="const store=()=>getStore('fleeced-league-hub',{consistency:'stro
 assert(source.includes(storeOld),'Expected default production Blob store initialization not found');
 const storeNew="const store=()=>{const s=getStore({name:'fleeced-league-hub',siteID:'"+SITE+"',token:process.env.NETLIFY_SANDBOX_DEPLOY_TOKEN,consistency:'strong'});return{get:(...args)=>s.get(...args),setJSON:async()=>({modified:false,dry_run:true})}};";
 source=source.replace(storeOld,storeNew);
+const gateLine='const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);lastQuality=q;';
+assert(source.includes(gateLine));
+source=source.replace(gateLine,"const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);console.log('WEEK5_QA_SALT '+JSON.stringify({salt,issues:q.issues.map(x=>({id:x.id,team:x.team,teams:Array.isArray(x.teams)?x.teams.length:x.teams,phrase:x.phrase,sentence:x.sentence,overlap:x.overlap})).slice(0,60)}));lastQuality=q;");
+const historyError='catch(e){return{error:String(e?.message||e)}}';
+assert(source.includes(historyError));
+source=source.replace(historyError,"catch(e){console.log('WEEK5_HISTORY_ERROR '+String(e?.message||e));return{error:String(e?.message||e)}}");
 assert(!source.includes(storeOld));
 await fs.writeFile(file,source);
 const {weeklyReport}=await import(pathToFileURL(file).href+'?rehearsal='+Date.now());

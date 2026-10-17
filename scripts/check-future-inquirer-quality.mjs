@@ -32,6 +32,11 @@ for(const team of articles){
  const paras=top.length?top:[];
  if(!top.length)collect(team.article,paras);
  const meaningful=paras.filter(p=>p.length>=50);
+ // Fan Sentiment is a required editorial section, not an optional joke appended to the recap.
+ const sections=Array.isArray(team.article.sections)?team.article.sections:[];
+ const sentiment=sections.find(section=>String(section.kind||'').toLowerCase()==='sentiment');
+ const sentimentParagraphs=Array.isArray(sentiment?.paragraphs)?sentiment.paragraphs.filter(p=>typeof p==='string'&&p.trim().length>=50):[];
+ if(sentimentParagraphs.length<2)problems.push({team:team.name,reason:'fan sentiment section missing or underdeveloped'});
  paragraphCount+=meaningful.length;
  for(const paragraph of new Set(meaningful)){
   // Complete commentary copied between teams is a stronger signal than shared labels or short football phrases.

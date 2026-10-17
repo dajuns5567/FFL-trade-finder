@@ -24,6 +24,7 @@ export function makeReadOnlyGateway(resolve=()=>{
    const index=await history.get('value-history/index.json',{type:'json'});
    if(!Array.isArray(index?.items)||index.items.length!==156)return reply({error:'baseline unavailable'},503);
    if(playerId){
+    if(index.items.some(item=>!/^value-history\/snapshots\/[a-zA-Z0-9_./-]+\.json$/.test(String(item?.path||''))||!Number.isFinite(Date.parse(String(item?.t||'')))))return reply({error:'invalid recovered history index'},503);
     const points=[];
     // Restore baseline only; no production store access or archive HTTP fetches.
     for(let i=0;i<index.items.length;i+=16){

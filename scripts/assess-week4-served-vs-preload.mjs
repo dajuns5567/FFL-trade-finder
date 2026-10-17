@@ -7,8 +7,19 @@ import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 const root=path.resolve(process.argv[2]||'.');
 const baseline=JSON.parse(fs.readFileSync(path.join(root,'editorial-baselines/2026-week4-v19-served-copy.json'),'utf8'));
-const {default:preload}=await import(pathToFileURL(path.join(root,'netlify/functions/inquirer-week4-2026-preload.mjs')).href);
-const edition=typeof preload==='function'?preload():preload;
+// Week 4 is transformed by the ORIGINAL league-hub serving pipeline.
+// Comparing baseline to raw compressed preload is invalid.
+const {default:hub}=await import(pathToFileURL(path.join(root,'netlify/functions/league-hub.mjs')).href);
+const originalFetch=globalThis.fetch;
+let attemptedNetwork=0,response;
+globalThis.fetch=async()=>{attemptedNetwork++;throw Error('OFFLINE_EDITORIAL_NO_NETWORK')};
+try{response=await hub(new Request('https://recovery.invalid/.netlify/functions/league-hub?preload_bootstrap=1',{method:'GET'}),{});}
+finally{globalThis.fetch=originalFetch}
+assert.equal(attemptedNetwork,0,'Editorial serving attempted external requests');
+assert.equal(response.status,200,'Original serving handler failed');
+const boot=await response.json();
+const edition=boot.latest;
+assert.equal(Number(edition?.week),4,'Latest served edition not Week 4');
 assert.equal(baseline.articles?.length,32);assert.equal(edition.teams?.length,32);
 const accepted=new Map(baseline.articles.map(a=>[String(a.team),a]));
 const candidate=new Map(edition.teams.map(t=>[String(t.team_name),t]));

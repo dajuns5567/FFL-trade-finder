@@ -17,11 +17,12 @@ test('operator draft writes to isolated review storage, never approves or publis
   const store={setJSON:async(key,value)=>{writes.push({key,value})}};
   const client={chat:{completions:{create:async request=>{
     const facts=JSON.parse(request.messages[1].content);
-    if(facts.verified_games)return{choices:[{message:{content:JSON.stringify({headline:'Week five league dispatch',
+    if(facts.verified_games){const grounded=facts.verified_games.slice(0,4).map(g=>`${g.team.team} scored ${g.team.score} against ${g.opponent.team}'s ${g.opponent.score}.`).join(' ');
+      return{choices:[{message:{content:JSON.stringify({headline:'Week five league dispatch',
       sections:Array.from({length:4},(_,i)=>({heading:'Roundup '+i,paragraphs:[
-        'An uproar swept through the standings as the latest slate created a lot of difficult questions for some very confident front offices.',
+        grounded+' An uproar swept through the standings as the latest slate created a lot of difficult questions for some very confident front offices.',
         'The next round will offer an unusually direct verdict on which clubs are solving their problems and which are still inventing excuses.'
-      ]})),hot_takes:Array.from({length:4},(_,i)=>({title:'Take '+i,take:'A reckoning awaits.'}))})}}]};
+      ]})),hot_takes:Array.from({length:4},(_,i)=>({title:'Take '+i,take:'A reckoning awaits.'}))})}}]};}
     const f=facts.current_week_verified_facts;
     return{choices:[{message:{content:JSON.stringify({headline:'Another bruise on the record for '+f.team,
       sections:REQUIRED_SECTION_KINDS.map(kind=>({kind,heading:'The '+kind+' report',paragraphs:[

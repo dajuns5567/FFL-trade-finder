@@ -55,7 +55,7 @@ export function week4RecapBrief({edition,acceptedWeek4}){
     games.push({team:summaryOf(team),opponent:summaryOf(foe)});
   }
   if(games.length!==16)throw new Error('Complete recap requires 16 verified games');
-  return{system:`Write a fresh, sarcastic, passionate, fact-based Fleeced! Inquirer weekly recap. Follow the APPROVED WEEK 4 newspaper writing STYLE only; never copy or paraphrase its sentences, jokes, or claims. Do not draw prose from Weeks 1–3. Cover consequential wins/losses, rivalries, players, bad managerial decisions, division consequences and meaningful hot takes. Weave verified stats into judgments, not explanatory stat lectures. Make jokes original and varied. No invented facts. Output valid JSON: headline, deck, sections (at least 4, each with heading and two substantive paragraphs), and hot_takes (at least 4, each with title and take).`,
+  return{system:`Write a fresh, sarcastic, passionate, fact-based Fleeced! Inquirer weekly recap. Follow the APPROVED WEEK 4 newspaper writing STYLE only; never copy or paraphrase its sentences, jokes, or claims. Do not draw prose from Weeks 1–3. Cover consequential wins/losses, rivalries, players, bad managerial decisions, division consequences and meaningful hot takes. Weave verified stats into judgments, not explanatory stat lectures. Make jokes original and varied. No invented facts. Name at least eight distinct clubs from at least four different matchups and include at least four verified fantasy point totals; do not deliver an interchangeable generic recap. Output valid JSON: headline, deck, sections (at least 4, each with heading and two substantive paragraphs), and hot_takes (at least 4, each with title and take).`,
     user:JSON.stringify({approved_week4_recap_style_samples:examples,week:edition.week,season:edition.season,verified_games:games})};
 }
 
@@ -70,6 +70,14 @@ export async function composeWeek4RecapDraft({client,model,edition,acceptedWeek4
      ||recap.sections.some(s=>!s.heading||!Array.isArray(s.paragraphs)||s.paragraphs.filter(p=>typeof p==='string'&&p.length>=65).length<2)
      ||!Array.isArray(recap.hot_takes)||recap.hot_takes.length<4)
     throw new Error('Incomplete Week 4-style recap draft');
+  const prose=[recap.headline,recap.deck,...recap.sections.flatMap(s=>s.paragraphs),...recap.hot_takes.map(t=>t.take)].join(' ');
+  const games=JSON.parse(brief.user).verified_games;
+  const referencedGames=games.filter(g=>prose.includes(g.team.team)&&prose.includes(g.opponent.team));
+  const verifiedScoreMentions=games.flatMap(g=>[g.team.score,g.opponent.score])
+    .filter((score,i,arr)=>arr.indexOf(score)===i)
+    .filter(score=>prose.includes(score)||prose.includes(Number(score).toFixed(1))).length;
+  if(referencedGames.length<4||verifiedScoreMentions<4)
+    throw new Error('Recap held: insufficient specific verified matchup and score coverage');
   const reporters=edition.reporters||acceptedWeek4.reporters||[];
   if(reporters.length<4)throw new Error('Four established Inquirer desks required');
   const sections=recap.sections.map((s,i)=>({heading:s.heading,paragraphs:s.paragraphs,reporter:reporters[i%4]}));

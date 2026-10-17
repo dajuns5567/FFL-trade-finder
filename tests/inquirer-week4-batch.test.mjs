@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fixture from '../netlify/functions/inquirer-week2-2026-preload.mjs';
-import {buildWeek4EditorialBatch,week4RecapBrief,verifyWeeklyEditorialSource} from '../netlify/functions/inquirer-week4-batch.mjs';
+import {buildWeek4EditorialBatch,week4RecapBrief,verifyWeeklyEditorialSource,composeWeek4RecapDraft} from '../netlify/functions/inquirer-week4-batch.mjs';
 import {REQUIRED_SECTION_KINDS} from '../netlify/functions/inquirer-week4-editorial-brief.mjs';
 
 const accepted={...fixture,week:4};
@@ -30,15 +30,25 @@ test('contradictory source scores and roster IDs fail before spending any model 
   assert.equal(calls,0);
 });
 
+test('generic recap with no real matchups fails even with long paragraphs and hot takes',async()=>{
+  const generic={headline:'The day that shook the league',sections:Array.from({length:4},(_,i)=>({heading:'League beat '+i,paragraphs:[
+    'Managers spent the entire afternoon fighting about difficult decisions and inexplicable roster choices in a week full of fantasy football drama.',
+    'The loudest supporters began demanding answers from the coaching staff while rivals celebrated as though victory had ended a generation of misery.'
+  ]})),hot_takes:Array.from({length:4},(_,i)=>({title:'Take '+i,take:'Managers have questions.'}))};
+  const client={chat:{completions:{create:async()=>({choices:[{message:{content:JSON.stringify(generic)}}]})}}};
+  await assert.rejects(composeWeek4RecapDraft({client,model:'mock',edition:input,acceptedWeek4:accepted}),/insufficient specific verified matchup/);
+});
+
 test('batch builds 32 review-only drafts and never publishes a failing audit',async()=>{
   let calls=0;
   const client={chat:{completions:{create:async request=>{
     calls++;
     const prompt=JSON.parse(request.messages[1].content);
     if(prompt.verified_games){
+      const grounded=prompt.verified_games.slice(0,4).map(g=>`${g.team.team} scored ${g.team.score} against ${g.opponent.team}'s ${g.opponent.score}.`).join(' ');
       const recap={headline:'Week 5: An assortment of regrettable Sundays',deck:'The league has opinions',
         sections:Array.from({length:4},(_,i)=>({heading:'Recap section '+i,paragraphs:[
-          `Everyone around the league is rehearsing a very specific complaint about this week's results while their rivals rehearse an even more aggravating victory speech.`,
+          `${grounded} Everyone around the league is rehearsing a complaint about this week's results while rivals rehearse an even more aggravating victory speech.`,
           `Some managers earned their celebration and others earned a compulsory review of the lineup card before the next Sunday makes today's mistake look historic.`
         ]})),hot_takes:Array.from({length:4},(_,i)=>({title:'Take '+i,take:'Somebody must answer for Sunday.'}))};
       return{choices:[{message:{content:JSON.stringify(recap)}}]};

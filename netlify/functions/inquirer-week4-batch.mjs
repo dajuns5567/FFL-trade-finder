@@ -7,12 +7,43 @@ import {evaluateInquirerEditionQuality} from './inquirer-editorial-v31.mjs';
 const one=n=>Number(n||0).toFixed(2);
 const summaryOf=team=>({team:team.team_name,opponent:team.opponent_name,score:one(team.points),opponent_score:one(team.opponent_points),won:!!team.won,record:team.league_context?.record||null,top_players:(team.starter_details||[]).slice(0,3).map(p=>({name:p.name,points:p.points,real_stat_line:p.real_stat_line||''}))});
 
+// Validate the official snapshot BEFORE spending on 33 model requests. A
+// plausible-looking article cannot compensate for missing or contradictory
+// scores, roster identities, or matchups in the underlying weekly data.
+export function verifyWeeklyEditorialSource(edition){
+  const issues=[],teams=edition?.teams||[];
+  if(teams.length!==32)issues.push('expected exactly 32 rosters');
+  const ids=teams.map(t=>String(t.roster_id));
+  if(new Set(ids).size!==32||ids.some(id=>!id||id==='undefined'))issues.push('duplicate or missing roster identifiers');
+  const byId=new Map(teams.map(t=>[String(t.roster_id),t]));
+  for(const t of teams){
+    const id=String(t.roster_id),foe=byId.get(String(t.opponent_roster_id));
+    if(!t.team_name||!t.opponent_name||!t.inquirer_article?.reporter?.id)issues.push(id+': team/reporter identity absent');
+    if(!Number.isFinite(Number(t.points))||!Number.isFinite(Number(t.opponent_points))||t.points==null||t.opponent_points==null)
+      issues.push(id+': invalid official score');
+    if(!Array.isArray(t.starter_details)||!t.starter_details.length)issues.push(id+': verified lineup missing');
+    if(!foe||String(foe.opponent_roster_id)!==id||foe===t)
+      issues.push(id+': matchup is not reciprocal');
+    else{
+      if(Math.abs(Number(t.points)-Number(foe.opponent_points))>.02||Math.abs(Number(t.opponent_points)-Number(foe.points))>.02)
+        issues.push(id+': reciprocal scores disagree');
+      if(t.opponent_name!==foe.team_name||foe.opponent_name!==t.team_name)
+        issues.push(id+': opponent labels disagree');
+      if(Number(t.points)!==Number(foe.points)&&Boolean(t.won)===Boolean(foe.won))
+        issues.push(id+': reciprocal winning result disagrees');
+    }
+  }
+  return{ok:issues.length===0,issues};
+}
+
 export function week4RecapBrief({edition,acceptedWeek4}){
   if(Number(acceptedWeek4?.week)!==4||acceptedWeek4?.published_locked!==true)
     throw new Error('Locked Week 4 edition required for recap style');
   const examples=(acceptedWeek4.league_overview?.sections||[]).slice(0,3)
     .map(s=>({heading:s.heading,paragraphs:(s.paragraphs||[]).slice(0,1)}));
   if(examples.length<2)throw new Error('Approved Week 4 recap examples missing');
+  const preflight=verifyWeeklyEditorialSource(edition);
+  if(!preflight.ok)throw new Error('Unverified weekly source: '+preflight.issues.join('; '));
   const byId=new Map((edition.teams||[]).map(t=>[String(t.roster_id),t])),seen=new Set(),games=[];
   for(const team of edition.teams||[]){
     const foe=byId.get(String(team.opponent_roster_id));
@@ -39,9 +70,9 @@ export async function composeWeek4RecapDraft({client,model,edition,acceptedWeek4
     throw new Error('Incomplete Week 4-style recap draft');
   const reporters=edition.reporters||acceptedWeek4.reporters||[];
   if(reporters.length<4)throw new Error('Four established Inquirer desks required');
-  const sections=recap.sections.map((s,i)=>({...s,reporter:reporters[i%4]}));
-  const hot_takes=recap.hot_takes.map((take,i)=>({...take,reporter:reporters[i%4]}));
-  return{...edition.league_overview,...recap,sections,hot_takes,week:edition.week,season:edition.season,
+  const sections=recap.sections.map((s,i)=>({heading:s.heading,paragraphs:s.paragraphs,reporter:reporters[i%4]}));
+  const hot_takes=recap.hot_takes.map((take,i)=>({title:take.title,take:take.take,reporter:reporters[i%4]}));
+  return{...edition.league_overview,headline:recap.headline,deck:typeof recap.deck==='string'?recap.deck:'',sections,hot_takes,week:edition.week,season:edition.season,
     editorial_source:'week4-v19-style-ai-draft',review_status:'unapproved'};
 }
 
@@ -50,6 +81,10 @@ export async function buildWeek4EditorialBatch({edition,acceptedWeek4,previousEd
     throw new Error('A complete future-week edition with 32 teams is required');
   if(!Number.isInteger(concurrency)||concurrency<1||concurrency>4)
     throw new Error('Staging concurrency must be 1–4');
+  const preflight=verifyWeeklyEditorialSource(edition);
+  if(!preflight.ok)throw new Error('Unverified weekly source: '+preflight.issues.join('; '));
+  // Validate the accepted style edition before making the first paid request.
+  week4RecapBrief({edition,acceptedWeek4});
   const articles=new Array(32);let cursor=0;
   await Promise.all(Array.from({length:Math.min(concurrency,32)},async()=>{
     while(cursor<32){

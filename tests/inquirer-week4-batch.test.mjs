@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fixture from '../netlify/functions/inquirer-week2-2026-preload.mjs';
-import {buildWeek4EditorialBatch,week4RecapBrief} from '../netlify/functions/inquirer-week4-batch.mjs';
+import {buildWeek4EditorialBatch,week4RecapBrief,verifyWeeklyEditorialSource} from '../netlify/functions/inquirer-week4-batch.mjs';
 import {REQUIRED_SECTION_KINDS} from '../netlify/functions/inquirer-week4-editorial-brief.mjs';
 
 const accepted={...fixture,week:4};
@@ -13,7 +13,21 @@ test('recap uses sixteen reciprocal games and approved Week 4 style only',()=>{
   assert.equal(data.verified_games.length,16);
   assert.ok(data.approved_week4_recap_style_samples.length>=2);
   assert.match(brief.system,/Never copy or paraphrase/i);
-  assert.throws(()=>week4RecapBrief({edition:{...input,teams:input.teams.slice(1)},acceptedWeek4:accepted}),/Missing reciprocal opponent|16 verified games/);
+  assert.throws(()=>week4RecapBrief({edition:{...input,teams:input.teams.slice(1)},acceptedWeek4:accepted}),/Unverified weekly source/);
+});
+
+test('contradictory source scores and roster IDs fail before spending any model calls',async()=>{
+  let calls=0;
+  const client={chat:{completions:{create:async()=>{calls++;throw Error('should not call model')}}}};
+  const run=async teams=>buildWeek4EditorialBatch({edition:{...input,teams},acceptedWeek4:accepted,client,model:'mock'});
+  const mismatched=input.teams.map((t,i)=>i===0?{...t,opponent_points:Number(t.opponent_points)+20}:t);
+  assert.match(verifyWeeklyEditorialSource({...input,teams:mismatched}).issues.join(' '),/reciprocal scores disagree/);
+  await assert.rejects(run(mismatched),/reciprocal scores disagree/);
+  const duplicated=input.teams.map((t,i)=>i===0?{...t,roster_id:input.teams[1].roster_id}:t);
+  await assert.rejects(run(duplicated),/duplicate or missing roster identifiers/);
+  const noLineup=input.teams.map((t,i)=>i===0?{...t,starter_details:[]}:t);
+  await assert.rejects(run(noLineup),/verified lineup missing/);
+  assert.equal(calls,0);
 });
 
 test('batch builds 32 review-only drafts and never publishes a failing audit',async()=>{

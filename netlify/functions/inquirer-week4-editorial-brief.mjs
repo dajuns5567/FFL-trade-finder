@@ -65,7 +65,9 @@ export async function composeWeek4ArticleDraft({client,model,team,acceptedWeek4,
   try{draft=JSON.parse(String(source||''))}catch{throw new Error('Week 4 editorial model did not return a JSON article')}
   const check=validateWeek4EditorialDraft(draft,team);
   if(!check.ok)throw new Error('Week 4 editorial draft held: '+check.errors.join(', '));
-  const article={...team.inquirer_article,...draft,week:Number(week),
+  // Never accept arbitrary model-supplied metadata, badge data, approvals,
+  // reporter identities, or other edition fields as authoritative.
+  const article={...team.inquirer_article,headline:draft.headline,deck:typeof draft.deck==='string'?draft.deck:'',sections:draft.sections,week:Number(week),
     reporter:team.inquirer_article.reporter,
     paragraphs:paragraphs(draft),editorial_source:'week4-v19-style-ai-draft',
     review_status:'unapproved'};

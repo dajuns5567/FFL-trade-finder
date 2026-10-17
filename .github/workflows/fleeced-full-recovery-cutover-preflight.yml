@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - '.github/workflows/fleeced-full-recovery-cutover-preflight.yml'
+      - 'scripts/audit-full-recovery-cutover.mjs'
+      - 'scripts/select-archive-production-site.mjs'
+      - '.github/workflows/value-history-archive.yml'
 permissions:
   contents: read
 jobs:

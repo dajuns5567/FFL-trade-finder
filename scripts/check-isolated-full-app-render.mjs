@@ -30,6 +30,6 @@ const missing=files.filter(f=>!fs.existsSync(path.join(root,f)));
 assert.equal(missing.length,0,'Rendered application references missing assets: '+missing.slice(0,20).join(', '));
 const sourceToml=fs.readFileSync(path.join(root,'netlify.toml'),'utf8');
 assert(/\\[functions\\.\"inquirer-publish-(?:native-)?scheduled\"\\][\\s\\S]*?schedule\\s*=/.test(sourceToml),'Frozen production configuration must retain its known scheduled Inquirer publisher');
-const isolatedToml=fs.readFileSync(path.join(process.cwd(),'recovery-isolated/netlify.toml'),'utf8');
+const isolatedToml=fs.readFileSync(new URL('../recovery-isolated/netlify.toml',import.meta.url),'utf8');
 assert(!/^\\s*schedule\\s*=/m.test(isolatedToml),'Isolated recovery configuration unexpectedly enables a scheduled function');
 console.log('SOURCE FULL-APP HTML READ-ONLY RENDER PASS '+JSON.stringify({bytes:Buffer.byteLength(html),asset_files:files.length,missing_assets:missing.length,real_application:true,schedules_executed:false,deploy_performed:false,outbound_requests:outboundRequests}));

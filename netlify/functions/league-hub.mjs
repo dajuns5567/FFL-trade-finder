@@ -1,5 +1,5 @@
 import valueHistoryHandler from './value-history.mjs';
-import {repairNewEditionCopy} from './inquirer-editorial-collision-repair.mjs';
+// Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
 import {inspectEditionBeforePublication,editorialApprovalMatches} from './inquirer-publication-guard.mjs';
 import { getStore } from '@netlify/blobs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
@@ -379,14 +379,17 @@ export async function weeklyReport(req){
  const rawOverview=buildLeagueOverview({season,week,teams:rawInquirer.teams,players,transactions,canonicalTrades:currentWeekTrades,weekClassification,valueHistoryMeta:{period:teamValueHistory?.period||null,baseline:teamValueHistory?.baseline||null,latest:teamValueHistory?.latest||null,source:teamValueHistory?.source||null}});
  let inquirer=rawInquirer,leagueOverview=rawOverview,quality={ok:true,issues:[],metrics:{}},variationSalt=0;
  if(week>=3){
-  let accepted=null,lastQuality=null;
+  let accepted=null,best=null,bestSalt=0,bestQuality=null;
   for(const salt of [5,0,1,2,3,4,6,7]){
    const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,weekClassification,variationSalt:salt});
-   const {edited,verdict:q}=repairNewEditionCopy(drafted,previousBroadcast,week,evaluateInquirerEditionQuality);
-   lastQuality=q;
-   if(q.ok){accepted=edited;quality=q;variationSalt=salt;break}
+   const q=evaluateInquirerEditionQuality({teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview},previousBroadcast);
+   if(!best||q.issues.length<bestQuality.issues.length){best=drafted;bestQuality=q;bestSalt=salt}
+   if(q.ok){accepted=drafted;quality=q;variationSalt=salt;break}
   }
-  if(!accepted)throw new Error('Forward Inquirer quality gate rejected Week '+week+': '+JSON.stringify(lastQuality?.issues||[]).slice(0,4000));
+  // A candidate with unresolved editorial issues is still valuable to review.
+  // The publication guard below stages it with findings and never publishes it.
+  // Never manufacture generic scoreboard sentences simply to make a test green.
+  if(!accepted){accepted=best;quality=bestQuality;variationSalt=bestSalt}
   inquirer=accepted.inquirer;leagueOverview=accepted.leagueOverview;
  }
  const forward=week>=3,result={available:true,season,week,week_classification:weekClassification,generated_at:new Date().toISOString(),published_locked:true,context_snapshot_through_week:week,broadcast_version:BROADCAST_VERSION,inquirer_version:forward?FORWARD_INQUIRER_VERSION:INQUIRER_VERSION,editorial_revision:forward?FORWARD_EDITORIAL_REVISION:INQUIRER_EDITORIAL_REVISION,editorial_generation:forward?{engine:'v31-forward',variation_salt:variationSalt,previous_week:week>1?week-1:null,quality_metrics:quality.metrics}:null,projection_source:Object.keys(proj).length?'Sleeper weekly projections scored with league scoring settings':'projection data unavailable',real_stats_source:Object.keys(weeklyStats||{}).length?'Sleeper weekly stats':'real-life stat data unavailable',historical_player_stats_source:historicalSeason?.stats?('Sleeper '+historicalSeasonYear+' '+String(historicalSeason.source||'season history')):'historical player stats unavailable',value_history_source:teamValueHistory?.source||'unavailable',trade_history_source:canonicalTrades?.source||'unavailable',reporters:inquirer.reporters,league_overview:leagueOverview,teams:inquirer.teams};

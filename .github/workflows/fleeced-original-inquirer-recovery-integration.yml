@@ -1,0 +1,34 @@
+name: Original Inquirer application read path against isolated recovered data
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-original-inquirer-recovery-integration.yml'
+      - 'scripts/accept-original-inquirer-recovery-integration.mjs'
+permissions:
+  contents: read
+jobs:
+  verify-original-read-path:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install original application and recovery runtime dependencies without executing scripts
+        run: |
+          cd application && npm install --ignore-scripts --no-audit --no-fund
+          cd ../recovery && npm install --ignore-scripts --no-audit --no-fund
+      - name: Invoke real frozen Inquirer GET handler and compare Weeks 1–4 to restored records
+        working-directory: recovery
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/accept-original-inquirer-recovery-integration.mjs ../application

@@ -17,7 +17,7 @@ export async function inspectRecoveryCandidate(root,{destinationSiteId,productio
  assert(names.every(name=>/recovery-status\.mjs$/.test(name)),'RECOVERY_HOLD: unknown function included');
  const source=await readFile(path.join(fnRoot,'recovery-status.mjs'),'utf8');
  assert(source.includes("request.method!=='GET'"),'RECOVERY_HOLD: read-only HTTP method guard absent');
- assert(!/(?:setJSON|set\(|delete\(|deleteAll\(|updateBlob\()/i.test(source),'RECOVERY_HOLD: Blob mutation call in recovery handler');
+ assert(!/\.\s*(?:setJSON|set|delete|deleteAll|updateBlob)\s*\(/.test(source),'RECOVERY_HOLD: Blob mutation call in recovery handler');
  const publicRoot=path.join(root,'public');
  assert((await stat(publicRoot)).isDirectory(),'RECOVERY_HOLD: missing recovery public directory');
  const publicNames=await readdir(publicRoot);

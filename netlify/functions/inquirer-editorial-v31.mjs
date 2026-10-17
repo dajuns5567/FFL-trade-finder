@@ -22,8 +22,9 @@ function adaptWeekLanguage(value,week,classification){
   s=s.replaceAll(P0,'Week '+prev).replaceAll(P1,'Week '+Number(week)).replaceAll(P2,'Week '+next);
   s=s.replace(/\bthe opener\b/gi,'Week '+prev)
      .replace(/\bopening week\b/gi,'Week '+prev)
-     .replace(/\bopening (win|loss)\b/gi,'previous-week $1')
-     .replace(/\bthe opening (win|loss)\b/gi,'the previous-week $1')
+     .replace(/\ban opening (win|loss)\b/gi,(_,kind)=>'a '+kind+' the previous week')
+     .replace(/\bopening (win|loss)\b/gi,'$1 the previous week')
+     .replace(/\bthe opening (win|loss)\b/gi,'the $1 from the previous week')
      .replace(/\bthe second Sunday\b/gi,'this Sunday')
      .replace(/\bsecond Sunday\b/gi,'this Sunday')
      .replace(/\bSecond Sunday\b/g,'This Sunday')
@@ -34,7 +35,8 @@ function adaptWeekLanguage(value,week,classification){
      .replace(/\bTwo Sundays\b/g,'The last two Sundays')
      .replace(/\btwo Sundays\b/g,'the last two Sundays')
      .replace(/\bthe two-week sample\b/gi,'the recent two-week sample')
-     .replace(/What Two Weeks Are Starting to Say/g,'What the Last Two Weeks Are Starting to Say');
+     .replace(/What Two Weeks Are Starting to Say/g,'What the Last Two Weeks Are Starting to Say')
+     .replace(/\bAt (2-0|0-2|1-1),/g,'Across the last two games ($1),');
   if(classification?.playoffs)s=s.replace(/Week \d+ • Regular Season/g,String(classification.label||('Week '+week+' • Playoffs')));
   return s;
 }
@@ -390,7 +392,7 @@ function w2TeamGrammar(t,body){
     out=out.replace(new RegExp(e+" is\\b","g"),name+" are")
       .replace(new RegExp(e+" has\\b","g"),name+" have")
       .replace(new RegExp(e+" shares\\b","g"),name+" share")
-      .replace(new RegExp(e+" was\\b","g"),name+" were")
+      .replace(new RegExp(e+" was\\b","g"),(match,offset,input)=>/\b(?:on|of|for|with|against|from|after|before)\s$/i.test(input.slice(0,offset))?match:name+" were")
       .replace(new RegExp(e+" gets\\b","g"),name+" get")
       .replace(new RegExp(e+" leaves\\b","g"),name+" leave")
       .replace(new RegExp(e+" goes\\b","g"),name+" go")
@@ -1786,7 +1788,8 @@ function w2SentimentRead(t,prev,r,fs,prevSent,won){
       :weak?weak.name+" giving the lineup only "+w2One(weak.points)
       :star?star.name+" carrying the loudest Week 2 score"
       :"the Week 2 lineup";
-  const state=wins===2?"rolling":losses===2?"sinking":won?"rebounding":"split";
+  const lastTwo=(t?.league_context?.recent_games||[]).slice(-2),lastWins=lastTwo.filter(g=>g.result==='W').length,lastLosses=lastTwo.filter(g=>g.result==='L').length;
+  const state=lastTwo.length===2&&lastWins===2?"rolling":lastTwo.length===2&&lastLosses===2?"sinking":won?"rebounding":"split";
   const rows={
     "walter-mercer":{
       rolling:[
@@ -3082,7 +3085,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     else turn=(wStar?wStar.name+" supplied "+w2One(wStar.points)+" for "+wName+". ":"")+(lStar?lStar.name+" gave "+lName+" "+w2One(lStar.points)+", but ":"")+"the middle of the winning lineup kept answering often enough that the loser never found a clean comeback lane.";
     const commentaryCandidates=[{t:w,p:wStar,slot:0},{t:l,p:lStar,slot:0},{t:w,p:ws[1],slot:1},{t:l,p:ls[1],slot:1}].filter(x=>x.p);
     for(const x of commentaryCandidates){const read=w2RecapPlayerRead(x.t,x.p,previous.get(String(x.t.roster_id))||null,r,x.slot,i);if(read){turn+=" "+read;break}}
-    if(i===0)turn=(wStar?.name||wName)+" lit the first match, but this game kept finding new ways to catch fire. "+turn;
+    if(i===0)turn=(wStar?.name||wName)+" set the tone in the league's loudest matchup. "+turn;
     paras.push(w2S(w,r,"recap-turn-"+i,turn));
     let column;
     if(shootout)column=lName+" can be furious without being ashamed. "+w2One(l.points)+" is a winning-level fantasy score on most Sundays; this Sunday, "+wName+" answered with "+w2One(w.points)+" and made a great losing total feel like a parking ticket.";

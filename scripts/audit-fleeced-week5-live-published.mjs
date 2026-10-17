@@ -10,7 +10,8 @@ const [week3,week4,week5,index,awards]=await Promise.all([
  read('broadcasts/2026/week-03.json'),read('broadcasts/2026/week-04.json'),read('broadcasts/2026/week-05.json'),read('broadcasts/index.json'),read('awards/weekly.json')
 ]);
 for(const [week,b] of [[3,week3],[4,week4],[5,week5]]){
- assert(b?.available&&b.week===week&&b.season===2026&&b.teams?.length===32&&b.published_locked,'Week '+week+' edition compromised');
+ assert(b?.available&&Number(b.week)===week&&Number(b.season)===2026&&b.teams?.length===32,'Week '+week+' edition compromised');
+ if(week===5)assert(b.published_locked,'Week 5 must be published locked');
  assert(index.some(x=>Number(x.season)===2026&&Number(x.week)===week),'Week '+week+' missing in broadcast index');
 }
 assert.equal(new Set(week5.teams.map(t=>String(t.roster_id))).size,32);

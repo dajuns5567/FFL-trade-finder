@@ -118,7 +118,40 @@ try{
  assert.equal(packageCheck.reversed,packageCheck.together,'Reversing trade assets changed package value');
  assert.equal(packageCheck.duplicate,packageCheck.individual[1]*2,'Repeated asset calculation not additive');
 
- const result={browser:'chromium',functional,trade_intent_dom_event:intentCheck,valuation,packageCheck,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
+ const recommendationFixture=await page.evaluate(()=>{
+  const finder=window.tradeFinderV168;
+  const normalizer=window.tradeValueNormalizationV139;
+  if(!finder||typeof finder.blankGivePackages!=='function'||typeof finder.packageShape!=='function')return null;
+  const oldState=window.state;
+  const oldRank=window.playerRankValue;
+  const players=Array.from({length:10},(_,i)=>({id:'fixture-player-'+i,type:'player',owner:i<6?1:2,name:'Fixture '+i}));
+  const picks=Array.from({length:4},(_,i)=>({id:'fixture-pick-'+i,type:'pick',owner:i<2?1:2,season:2027,round:1,original_owner:i+1}));
+  try{
+   window.state={...(oldState||{}),allAssets:[...players,...picks],teams:[{id:1},{id:2}]};
+   window.playerRankValue=a=>({rank:players.findIndex(p=>p.id===a.id)+1||1});
+   const packages=finder.blankGivePackages(1);
+   const shapes=packages.map(pkg=>finder.packageShape(pkg));
+   return {
+    count:packages.length,
+    max:finder.MAX_RESULTS,
+    all_owned:packages.every(pkg=>pkg.every(a=>Number(a.owner)===1)),
+    distinct_packages:new Set(packages.map(pkg=>pkg.map(a=>a.id).sort().join('|'))).size,
+    nonempty:packages.every(pkg=>pkg.length>=1&&pkg.length<=3),
+    contains_single:packages.some(pkg=>pkg.length===1),
+    contains_multi:packages.some(pkg=>pkg.length>1),
+    shapes:[...new Set(shapes)].sort(),
+    finite_values:packages.every(pkg=>Number.isFinite(normalizer.canonicalPackageValue(pkg)))
+   };
+  }finally{window.state=oldState;window.playerRankValue=oldRank}
+ });
+ assert(recommendationFixture,'Production Trade Finder package-generator API missing');
+ assert(recommendationFixture.count>0,'Trade Finder failed to generate candidate outgoing packages');
+ assert(recommendationFixture.count<=80,'Trade Finder outgoing candidate cap exceeded');
+ assert(recommendationFixture.all_owned,'Trade Finder offered an asset not owned by the selected team');
+ assert.equal(recommendationFixture.distinct_packages,recommendationFixture.count,'Trade Finder generated duplicate asset packages');
+ assert(recommendationFixture.nonempty&&recommendationFixture.contains_single&&recommendationFixture.contains_multi,'Trade Finder package shape diversity or size invalid');
+ assert(recommendationFixture.finite_values,'Trade Finder candidate package valuation not finite');
+ const result={browser:'chromium',functional,trade_intent_dom_event:intentCheck,valuation,packageCheck,recommendationFixture,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
  console.log('FULL FLEECED BROWSER REHEARSAL PASS '+JSON.stringify(result));
  await context.close();
 }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

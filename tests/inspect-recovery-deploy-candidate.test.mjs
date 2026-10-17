@@ -23,6 +23,8 @@ test('refuses production site collision',async()=>assert.rejects(check(()=>{},{p
 test('refuses schedules',async()=>assert.rejects(check(f=>f['netlify.toml']+='[functions."publisher"]\n schedule = "0 * * * *"'),/schedules enabled/));
 test('refuses original write capable function',async()=>assert.rejects(check(f=>f['netlify/functions/inquirer-publish-scheduled.mjs']='export default ()=>{}'),/dangerous original function/));
 test('refuses unknown function',async()=>assert.rejects(check(f=>f['netlify/functions/custom.mjs']='export default ()=>{}'),/unknown function/));
-test('refuses Blob mutations',async()=>assert.rejects(check(f=>f['netlify/functions/recovery-status.mjs']+='\n// setJSON('),/Blob mutation/));
+test('refuses Blob mutations',async()=>assert.rejects(check(f=>f['netlify/functions/recovery-status.mjs']+='\nstore.setJSON('),/Blob mutation/));
 test('refuses missing HTTP method gate',async()=>assert.rejects(check(f=>f['netlify/functions/recovery-status.mjs']='export default ()=>new Response(1)'),/method guard/));
 test('refuses production static assets',async()=>assert.rejects(check(f=>f['public/index.html']='original homepage'),/identity missing/));
+
+test('permits ordinary JavaScript Set collections',async()=>assert.equal((await check(f=>f['netlify/functions/recovery-status.mjs']+='\nconst ids=new Set([]);')).writeFunctions,0));

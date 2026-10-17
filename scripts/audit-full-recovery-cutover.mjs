@@ -15,14 +15,17 @@ const checks={
  'production has scheduled inquirer publisher': /\[functions\."inquirer-publish-scheduled"\][\s\S]*?schedule\s*=/.test(prod),
  'isolated viewer omits scheduled publisher': !/schedule\s*=/.test(isolated),
  'isolated viewer not production configuration': !isolated.includes('functions = "netlify/functions"')||isolated.includes('publish = "public"'),
- 'archival workflow tied to exact deployed Git commit': archive.includes("matched_target_sha == 'true'"),
- 'resolver searches sites using repository linkage': resolver.includes('siteMatchesRepo'),
+ 'archival workflow pins production site identity': archive.includes("VALUE_HISTORY_PRODUCTION_SITE_ID: 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'"),
+ 'archival workflow permits safe commit drift': archive.includes("steps.active_site.outputs.site_id == 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'"),
+ 'resolver requires a pinned production identity': resolver.includes('VALUE_HISTORY_PRODUCTION_SITE_ID')&&resolver.includes('selectArchiveProductionSite'),
  'production app contains write-capable store': /getStore\(['"]fleeced-league-hub/.test(mainHub),
  'production app does not automatically have four preserved week preloads': !mainHub.includes("inquirer-week4-2026-preload"),
 };
 assert(checks['production has scheduled inquirer publisher'],'Publication schedule not located; review architecture before migration');
 assert(checks['isolated viewer omits scheduled publisher'],'Unsafe isolated scheduled publisher');
-assert(checks['archival workflow tied to exact deployed Git commit'],'Archive dependency changed, audit again');
+assert(checks['archival workflow pins production site identity'],'Archive production site is not pinned');
+assert(checks['archival workflow permits safe commit drift'],'Safe pinned-site archival ingest guard missing');
+assert(checks['resolver requires a pinned production identity'],'Resolver no longer enforces pinned site checks');
 const result={
  status:'HOLD_FULL_APPLICATION_CUTOVER',
  checks,
@@ -33,7 +36,7 @@ const result={
  'The main branch currently lacks the Week 3 and Week 4 approved preload imports present on the development branch.',
  'The normal app includes scheduled/authorized publishing and write paths; deploying it without isolation could publish or alter recovered data.',
  'A different Netlify account has not been connected or provisioned; both sites belong to the same team.',
- 'The historical archiver requires the expected Git commit to be deployed and exact repo linkage after an account cutover.',
+ 'The historical archiver requires the explicitly pinned production Netlify site ID to be updated only after an independently approved account cutover; repository linkage, production branch, and ready deployment must be verified.',
  'Private HTTP SSO prevents claiming an anonymous served-API acceptance pass.'
  ]};
 console.log(JSON.stringify(result,null,2));

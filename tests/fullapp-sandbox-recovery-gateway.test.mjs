@@ -80,3 +80,8 @@ test('Inquirer fails closed when restored week is absent',async()=>{
  const gateway=makeReadOnlyGateway(()=>({...good,editorial:{get:async()=>null}}));
  assert.equal((await gateway(new Request('https://sandbox.invalid/api/league-hub?broadcast_archive=1'))).status,503);
 });
+
+test('Inquirer rejects malformed 32-team records rather than misreporting recovered content',async()=>{
+ const gateway=makeReadOnlyGateway(()=>({...good,editorial:{get:async()=>({season:2026,week:1,teams:Array.from({length:32})})}}));
+ assert.equal((await gateway(new Request('https://sandbox.invalid/api/league-hub?broadcast_archive=1'))).status,503);
+});

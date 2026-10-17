@@ -229,3 +229,18 @@ Recovery and frozen-issue acceptances validate the existing Week 1–4 archives;
 - The optional read-only future-draft structural checker no longer treats **unchanged Week 4 team display names** as a publication requirement. Team names can legitimately change; it still requires 32 distinct nonblank names and complete, substantive article content. Baseline name differences remain informational in Week 4 calibration. Regression coverage now includes a well-formed renamed 32-team future draft that must pass, as well as incomplete drafts that must fail.
 - Exact full-app package finalization now emits both bundled function source byte counts and rejects oversized individual/combined handlers before any Netlify deploy. The build still has only the two GET-only handlers, no runtime credentials, and no schedules.
 - Both changed JavaScript files and the new browser acceptance script passed local **syntax-only** checks. No claim of successful package execution, full CI pass, real draft quality, or authenticated sandbox deployment is implied.
+
+## Verified consolidated browser + full data acceptance — 2026-10-17 16:43 UTC
+
+**PASS:** [combined credential-free run #39050565717](https://github.com/dajuns5567/FFL-trade-finder/actions/runs/39050565717), code SHA `344e86d9edde39aef89e78f2140c93a5e890142f` (latest workflow-triggering commit). All job steps, including new Chromium integrations, concluded success. The failure of preceding runs was definitively traced in the job log to `TypeError: Cannot read properties of undefined (reading 'push')` in `check-future-inquirer-quality.mjs`'s recursive paragraph collector. Commit `344e86d9` correctly forwards the accumulator through recursive object traversal; the 3 editorial regressions then passed.
+
+Observed from PASS job logs:
+- Frozen Week 1–4: 128 articles, **457/457** locked Week 4 paragraphs, 6 **blocked enrichment attempts**, zero completed external fetches.
+- Structural Week 4 calibration: 32 teams, 774 collected meaningful paragraph occurrences, **32 reported duplicate-paragraph findings**, deliberately nonblocking. These findings are **not** a future-draft approval or prose-quality certification; investigate repeated accepted structures before adapting quality thresholds. Protected Week 4 was not edited.
+- Historical staging: 156 snapshots, 121,990 original source rows, 984 player IDs, no runtime credential embedded.
+- Exactly two allowlisted read-only handlers; sizes **1,160,464** and **19,235,191** source bytes (combined **20,395,655**); no publisher/schedule, no runtime credentials, no production writes.
+- **Exact assembled package Chromium PASS:** 98 assets actually served, all four 32-team editions, a real complete 156-point player timeline, no broken JS/CSS, unknown live API 404.
+- **Original frozen Trade Finder Chromium PASS:** controlled full `generateAsync` fixture, valuation invariants and roster/ownership checks. This does **not** establish live Sleeper connectivity or an authenticated Netlify deployment.
+- Cleanup ran; no private full-content artifact was published by Actions.
+
+**Remaining HOLD:** the sandbox is not deployed; recovered content exists inside executable read-only handler source and requires SSO/permissions/content-rights review before any upload. Two-handler offline snapshot lacks live Trade Finder and Sleeper data APIs. Future-week Inquirer substantive semantics and actual fresh-draft quality still need a distinct dry-run and review before publisher enforcement. No cross-account portability or production cutover certification. Do not overwrite production, recovery viewer, PR #390, or accepted Week 4 text.

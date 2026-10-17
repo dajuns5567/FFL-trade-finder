@@ -14,9 +14,10 @@ const misleading = [
 
 export function editorialCopyDigest(edition) {
   const teams=(edition?.teams||[]).slice().sort((a,b)=>Number(a.roster_id)-Number(b.roster_id))
-    .map(t=>({roster_id:String(t.roster_id),headline:t.inquirer_article?.headline,
-      sections:t.inquirer_article?.sections,reporter:t.inquirer_article?.reporter?.id}));
-  const recap={headline:edition?.league_overview?.headline,sections:edition?.league_overview?.sections};
+    .map(t=>({roster_id:String(t.roster_id),article:t.inquirer_article}));
+  // Reviewers approve all article/recap fields, including top-level copy and
+  // sidebars. Hashing only sections would permit visible edits after approval.
+  const recap=edition?.league_overview;
   return createHash('sha256').update(JSON.stringify({season:Number(edition?.season),week:Number(edition?.week),teams,recap})).digest('hex');
 }
 

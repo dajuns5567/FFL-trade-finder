@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {makeReadOnlyGateway} from '../scripts/fullapp-sandbox-recovery-gateway.mjs';
+const index={items:Array.from({length:156},(_,i)=>({path:'snapshot-'+i}))};
+const good={history:{get:async()=>index},editorial:{get:async k=>({week:Number(k.match(/week-(\d+)/)?.[1]),teams:Array.from({length:32})})}};
+const h=makeReadOnlyGateway(()=>good);
+const req=(method='GET',suffix='')=>new Request('https://sandbox.invalid/api/recovery-status'+suffix,{method});
+test('exposes only aggregate recovered metadata',async()=>{const r=await h(req());assert.equal(r.status,200);const v=await r.json();assert.equal(v.history_snapshots,156);assert.equal(v.week_coverage.length,4);assert.equal(v.articles_exposed,0);assert.equal(JSON.stringify(v).includes('paragraph'),false)});
+test('rejects write methods without opening stores',async()=>{let touched=0;const guarded=makeReadOnlyGateway(()=>{touched++;return good});for(const method of ['POST','PUT','PATCH','DELETE'])assert.equal((await guarded(req(method))).status,405);assert.equal(touched,0)});
+test('rejects query before reading any store',async()=>{let touched=0;const guarded=makeReadOnlyGateway(()=>{touched++;return good});assert.equal((await guarded(req('GET','?article=1'))).status,400);assert.equal(touched,0)});
+test('HEAD permits readiness without exposing data',async()=>{const r=await h(req('HEAD'));assert.equal(r.status,200);assert.equal(await r.text(),'')});
+test('fails closed for missing snapshots',async()=>{const handler=makeReadOnlyGateway(()=>({...good,history:{get:async()=>({items:[]})}}));assert.equal((await handler(req())).status,503)});
+test('fails closed for missing editorial issue',async()=>{const handler=makeReadOnlyGateway(()=>({...good,editorial:{get:async()=>null}}));assert.equal((await handler(req())).status,503)});
+test('does not leak backend errors',async()=>{const handler=makeReadOnlyGateway(()=>{throw Error('SECRET_NETLIFY_TOKEN')});const r=await handler(req());assert.equal(r.status,503);assert(!JSON.stringify(await r.json()).includes('SECRET'))});
+test('requires exact endpoint',async()=>assert.equal((await h(new Request('https://sandbox.invalid/api/other'))).status,404));

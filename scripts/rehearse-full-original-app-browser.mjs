@@ -73,7 +73,20 @@ try{
  assert(functional.deferredBoot,'FLEECED deferred application boot was not installed');
  await page.locator('#tradeTier94').selectOption('up');
  assert.equal(await page.locator('#tradeTier94').inputValue(),'up','Trade intent selector failed basic user interaction');
- const result={browser:'chromium',functional,trade_intent_interaction:'up',root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
+ const valuation=await page.evaluate(()=>{
+  const normalize=window.tradeValueNormalizationV139;
+  if(!normalize||typeof normalize.playerValueForRank!=='function'||typeof normalize.canonicalPackageValue!=='function')return null;
+  const ranks=[1,2,25,100,325,326,500,907];
+  const values=ranks.map(r=>normalize.playerValueForRank(r,907));
+  return {ranks,values,package_empty:normalize.canonicalPackageValue([]),release:window.__tradeValueNormalization||null};
+ });
+ assert(valuation,'Canonical V139 valuation module not initialized');
+ assert.equal(valuation.values[0],9999,'Rank-one canonical value changed');
+ assert.equal(valuation.values[4],1825,'Rank-325 canonical value changed');
+ assert.equal(valuation.values.at(-1),120,'Rank-907 canonical floor changed');
+ assert(valuation.values.every((v,i,a)=>Number.isFinite(v)&&v>=120&&v<=9999&&(i===0||v<=a[i-1])),'Canonical valuation must be finite and monotone');
+ assert.equal(valuation.package_empty,0,'Empty canonical package must value at zero');
+ const result={browser:'chromium',functional,trade_intent_interaction:'up',valuation,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
  console.log('FULL FLEECED BROWSER REHEARSAL PASS '+JSON.stringify(result));
  await context.close();
 }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

@@ -1,8 +1,6 @@
 name: FLEECED restore locked Week 3-4 to original production once
 on:
-  push:
-    paths:
-      - .github/workflows/fleeced-restore-approved-issues-production-once.yml
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:

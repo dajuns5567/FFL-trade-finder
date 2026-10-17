@@ -402,7 +402,7 @@ export async function weeklyReport(req){
   const pending=await s.get(stageKey,{type:'json'}).catch(()=>null);
   if(pending?.digest!==admission.digest){
    await s.setJSON(stageKey,{schema_version:1,season,week,digest:admission.digest,
-    generated_at:result.generated_at,review_status:'pending',audit,edition:result});
+    generated_at:result.generated_at,review_status:'pending',audit,edition:{...result,published_locked:false}});
   }
   return{available:false,published_locked:false,season,week,waiting_for_week:week,
    review_required:true,stage_key:stageKey,digest:admission.digest,

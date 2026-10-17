@@ -21,7 +21,7 @@ assert.equal((award.manager_awards||[]).length,4);
 assert(award.players_of_week?.offense?.player_id&&award.players_of_week?.defense?.player_id);
 const byKey=new Map();
 for(const op of ops){assert(!byKey.has(op.key),'Duplicate planned key: '+op.key);byKey.set(op.key,op.value)}
-assert.equal(byKey.size,39,'Unexpected Week 5 planned object count');
+assert.equal(byKey.size,40,'Unexpected Week 5 planned object count');
 const weekKey='broadcasts/2026/week-05.json',archiveKey='broadcasts/index.json',awardsKey='awards/weekly.json';
 assert.deepEqual(byKey.get(weekKey),broadcast);
 const reporterIndexes=[...byKey.keys()].filter(k=>/^inquirer\/reporters\/[^/]+\/index\.json$/.test(k));

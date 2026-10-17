@@ -10,6 +10,7 @@ on:
       - 'scripts/select-archive-production-site.mjs'
       - 'scripts/resolve-active-netlify-site.mjs'
       - 'scripts/check-isolated-full-app-render.mjs'
+      - 'scripts/verify-original-application-asset-graph.mjs'
       - 'scripts/assess-week4-served-vs-preload.mjs'
       - 'tests/archive-blob-inventory.test.mjs'
       - 'tests/select-archive-production-site.test.mjs'
@@ -59,5 +60,7 @@ jobs:
           node-version: '22'
       - name: Render real application without any live request or publication
         run: node recovery/scripts/check-isolated-full-app-render.mjs application
+      - name: Check actual app entry point and linked script/style assets
+        run: node recovery/scripts/verify-original-application-asset-graph.mjs application
       - name: Verify accepted Week 4 paragraphs remain present without reauthoring
         run: node recovery/scripts/assess-week4-served-vs-preload.mjs application

@@ -11,6 +11,7 @@ on:
       - 'scripts/package-fleeced-history-read-only.mjs'
       - 'scripts/accept-fleeced-offline-complete-candidate.mjs'
       - 'scripts/finalize-fleeced-offline-fullapp-candidate.mjs'
+      - 'scripts/check-future-inquirer-quality.mjs'
 permissions:
   contents: read
 jobs:
@@ -37,6 +38,9 @@ jobs:
       - name: Stage all four approved Inquirer editions with exact locked paragraph validation
         working-directory: recovery
         run: node scripts/stage-fleeced-frozen-inquirer-dataset.mjs ../application .tmp/fullapp/private-verified-editions.json
+      - name: Calibration-only editorial structural gate against actual frozen served Week 4
+        working-directory: recovery
+        run: node scripts/check-future-inquirer-quality.mjs .tmp/fullapp/private-verified-editions.json ../application/editorial-baselines/2026-week4-v19-served-copy.json --edition-map
       - name: Compile credential-free function and remove intermediate manuscript
         working-directory: recovery
         run: node scripts/package-fleeced-inquirer-read-only.mjs .tmp/fullapp

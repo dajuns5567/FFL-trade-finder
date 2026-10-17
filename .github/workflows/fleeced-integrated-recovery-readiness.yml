@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - '.github/workflows/fleeced-integrated-recovery-readiness.yml'
+      - 'scripts/accept-original-value-history-recovery-integration.mjs'
+      - 'scripts/accept-original-inquirer-recovery-integration.mjs'
+      - 'scripts/accept-restored-history-editorial-content.mjs'
       - 'scripts/audit-full-recovery-cutover.mjs'
       - 'scripts/verify-durable-history-freshness.mjs'
       - 'scripts/assess-archive-continuity.mjs'
@@ -64,3 +67,39 @@ jobs:
         run: node recovery/scripts/verify-original-application-asset-graph.mjs application
       - name: Verify accepted Week 4 paragraphs remain present without reauthoring
         run: node recovery/scripts/assess-week4-served-vs-preload.mjs application
+  actual-app-isolated-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frozen application and recovery test dependencies
+        run: |
+          cd application && npm install --ignore-scripts --no-audit --no-fund
+          cd ../recovery && npm install --ignore-scripts --no-audit --no-fund
+      - name: Validate every recovered snapshot and all four Inquirer issues
+        working-directory: recovery
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/accept-restored-history-editorial-content.mjs
+      - name: Test frozen original Inquirer read handler against recovered issues
+        working-directory: recovery
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/accept-original-inquirer-recovery-integration.mjs ../application
+      - name: Test frozen original Value History read handler against recovered archived data
+        working-directory: recovery
+        env:
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          RECOVERY_DESTINATION_SITE_ID: '05a8ec65-a0a3-46f1-9f73-3da47dac662e'
+        run: node scripts/accept-original-value-history-recovery-integration.mjs ../application

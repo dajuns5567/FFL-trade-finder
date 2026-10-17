@@ -59,6 +59,20 @@ test('approval requires a named reviewer and exact copy hash',()=>{
  assert.equal(editorialApprovalMatches(e,valid).approved,false);
 });
 
+test('approval digest covers every user-visible editorial surface',()=>{
+ const base=makeEdition(),digest=editorialCopyDigest(base);
+ for(const field of ['deck','aside','fan_sentiment','paragraphs','facts']){
+  const e=makeEdition();
+  e.teams[0].inquirer_article[field]=field==='paragraphs'?['A separate article paragraph.']:
+   field==='facts'?{editorial_note:'A different award claim.'}:'A new editorial claim.';
+  assert.notEqual(editorialCopyDigest(e),digest,'unprotected article field: '+field);
+ }
+ for(const field of ['content','deck','byline']){
+  const e=makeEdition();e.league_overview[field]='Different published recap copy.';
+  assert.notEqual(editorialCopyDigest(e),digest,'unprotected recap field: '+field);
+ }
+});
+
 test('matches use reciprocating roster IDs and scores, not absent matchup_id',()=>{
  const e=makeEdition();
  assert.equal(inspectEditionBeforePublication(e).issues.filter(i=>i.id==='matchup-consistency').length,0);

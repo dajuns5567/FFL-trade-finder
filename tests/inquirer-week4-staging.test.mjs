@@ -24,7 +24,7 @@ test('operator draft writes to isolated review storage, never approves or publis
       ]})),hot_takes:Array.from({length:4},(_,i)=>({title:'Take '+i,take:'A reckoning awaits.'}))})}}]};
     const f=facts.current_week_verified_facts;
     return{choices:[{message:{content:JSON.stringify({headline:'Another bruise on the record for '+f.team,
-      sections:REQUIRED_SECTION_KINDS.map(kind=>({kind,paragraphs:[
+      sections:REQUIRED_SECTION_KINDS.map(kind=>({kind,heading:'The '+kind+' report',paragraphs:[
         `${f.team} faced ${f.opponent} with a score of ${f.score} against ${f.opponent_score}. ${f.top_players[0].name} was the name on everyone's lips when the clock finally stopped.`,
         `The ${kind} report had everyone talking about the dangers of a fantasy football front office that believes good intentions count in the standings.`
       ]}))})}}]};

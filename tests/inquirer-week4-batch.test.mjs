@@ -44,7 +44,7 @@ test('batch builds 32 review-only drafts and never publishes a failing audit',as
       return{choices:[{message:{content:JSON.stringify(recap)}}]};
     }
     const f=prompt.current_week_verified_facts;
-    const article={headline:'This Week Was a Football Crime Scene for '+f.team,sections:REQUIRED_SECTION_KINDS.map(kind=>({kind,paragraphs:[
+    const article={headline:'This Week Was a Football Crime Scene for '+f.team,sections:REQUIRED_SECTION_KINDS.map(kind=>({kind,heading:'The '+kind+' report',paragraphs:[
       `${f.team} faced ${f.opponent} and scored ${Number(f.score).toFixed(1)} fantasy points to the opponent's ${Number(f.opponent_score).toFixed(1)}. ${f.top_players[0].name} gave the whole city a reason to hold an unnecessarily theatrical town meeting.`,
       `The ${kind} discussion is going to be noisy because management did enough this weekend to inspire several weeks of arguments from its least patient supporters.`
     ]}))};

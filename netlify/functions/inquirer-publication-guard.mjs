@@ -25,7 +25,9 @@ export function inspectEditionBeforePublication(edition) {
   const issues=[],teams=edition?.teams||[],unique=new Set(teams.map(t=>String(t.roster_id)));
   if(teams.length!==32||unique.size!==32)issues.push({id:'coverage',detail:'32 unique team articles required'});
   const rosterById=new Map(teams.map(t=>[String(t.roster_id),t]));
-  const scaffoldOwners=new Map();
+  const scaffoldOwners=new Map(),phraseOwners=new Map();
+  const names=[...new Set(teams.flatMap(t=>[t.team_name,t.opponent_name]).map(normalized).filter(Boolean))]
+    .sort((a,b)=>b.length-a.length);
   for(const t of teams) {
     const team=t.team_name||('Roster '+t.roster_id),article=t.inquirer_article;
     if(!article?.headline||!article?.byline||!article?.reporter?.id)issues.push({id:'article-metadata',team});
@@ -50,10 +52,33 @@ export function inspectEditionBeforePublication(edition) {
         .replaceAll(normalized(t.opponent_name),'[opponent]')
         .replace(/\b\d+(?:\.\d+)?\b/g,'#');
       if(key.length>=110){if(!scaffoldOwners.has(key))scaffoldOwners.set(key,new Set());scaffoldOwners.get(key).add(team);}
+      // Detect long repeated editorial phrasing even when its surrounding
+      // paragraph contains different team names or fantasy point totals.
+      // Numeric-heavy stat lines are not rhetoric and must be exempt.
+      if(/\bin the same starting spot\b/i.test(p)&&/\d+(?:\.\d+)?/.test(p))continue;
+      let language=normalized(p);
+      for(const name of names)language=language.replaceAll(name,' entity ');
+      const words=language.replace(/\d+(?:\.\d+)?/g,' # ').replace(/[^a-z# ]/g,' ')
+        .split(/\s+/).filter(Boolean);
+      for(let i=0;i+8<=words.length;i++){
+        const window=words.slice(i,i+8);
+        if(window.filter(x=>x==='#').length>1)continue;
+        const phrase=window.join(' ');
+        if(!phraseOwners.has(phrase))phraseOwners.set(phrase,new Set());
+        phraseOwners.get(phrase).add(team);
+      }
     }
   }
   for(const [sentence,owners] of scaffoldOwners)if(owners.size>=3)
     issues.push({id:'reused-prose-scaffold',teams:[...owners],excerpt:sentence.slice(0,150)});
+  const repeated=new Map();
+  for(const [phrase,owners] of phraseOwners)if(owners.size>=5){
+    const signature=[...owners].sort().join('|');
+    const existing=repeated.get(signature);
+    if(!existing||phrase.length>existing.phrase.length)repeated.set(signature,{phrase,teams:[...owners]});
+  }
+  for(const row of [...repeated.values()].sort((a,b)=>b.teams.length-a.teams.length).slice(0,20))
+    issues.push({id:'shared-editorial-phrase',teams:row.teams,excerpt:row.phrase});
   const recap=edition?.league_overview;
   if(!recap?.headline||!(recap.sections||[]).length)issues.push({id:'recap-missing'});
   for(const p of (recap?.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])])){

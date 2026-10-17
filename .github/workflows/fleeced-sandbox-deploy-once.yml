@@ -1,8 +1,6 @@
 name: FLEECED one-time isolated SSO sandbox rehearsal deploy
 on:
-  push:
-    paths:
-      - '.github/workflows/fleeced-sandbox-deploy-once.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

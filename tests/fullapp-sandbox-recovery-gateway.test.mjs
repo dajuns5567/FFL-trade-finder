@@ -16,7 +16,7 @@ test('requires exact endpoint',async()=>assert.equal((await h(new Request('https
 
 test('returns original-compatible bounded historical player points',async()=>{
  const records=Array.from({length:156},(_,i)=>({path:'value-history/snapshots/snap-'+i+'.json',t:new Date(Date.UTC(2026,8,20,0,i)).toISOString()}));
- const fixture={history:{get:async key=>key==='value-history/index.json'?{items:records}:({t:records[Number(key.match(/snap-(\\d+)\\.json$/)?.[1])].t,rows:[{id:'player123',value:500,overall:10,pos:'RB',posRank:2},{id:'private',value:300}]})},editorial:good.editorial};
+ const fixture={history:{get:async key=>key==='value-history/index.json'?{items:records}:({t:records[Number(key.match(/snap-([0-9]+)[.]json$/)?.[1])].t,rows:[{id:'player123',value:500,overall:10,pos:'RB',posRank:2},{id:'private',value:300}]})},editorial:good.editorial};
  const gateway=makeReadOnlyGateway(()=>fixture);
  const res=await gateway(req('GET','?player_id=player123'));
  assert.equal(res.status,200);

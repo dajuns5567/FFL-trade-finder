@@ -1,0 +1,32 @@
+name: Full FLEECED original-app isolated headless browser acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fleeced-original-app-browser-acceptance.yml'
+      - 'scripts/rehearse-full-original-app-browser.mjs'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recovery
+      - uses: actions/checkout@v4
+        with:
+          ref: af9067c751118cf33f688648cb78619d229f2214
+          path: application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install headless runtime separately from frozen application
+        working-directory: recovery
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Browser exercise exact frozen editorial app with all outbound network and writes denied
+        working-directory: recovery
+        run: node scripts/rehearse-full-original-app-browser.mjs ../application

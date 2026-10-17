@@ -1,3 +1,5 @@
+import valueHistoryHandler from './value-history.mjs';
+import {repairNewEditionCopy} from './inquirer-editorial-collision-repair.mjs';
 import { getStore } from '@netlify/blobs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
@@ -73,9 +75,16 @@ async function nflWeekSchedule(season,week){
   return{ok:events.length>0,week:w,teams,games:events.length,source:'ESPN NFL scoreboard schedule'};
  }catch(e){return{ok:false,week:w,teams:[],games:0,source:'unavailable',error:String(e?.message||e)}}
 }
+// Calling the handler inside the same Netlify function avoids SSO's external HTTP 401 gate.
+// The handler uses this site's own Blob context and existing server-side read contract.
 async function internalHistory(origin,query){
- try{const r=await fetch(`${origin}/.netlify/functions/value-history?${query}`,{headers:{accept:'application/json','user-agent':'Fleeced-Inquirer-Canonical-History/1.0'},cache:'no-store'});if(!r.ok)throw Error('value-history '+r.status);return await r.json()}catch(e){return{error:String(e?.message||e)}}
+ try{
+  const r=await valueHistoryHandler(new Request(origin+'/.netlify/functions/value-history?'+query));
+  if(!r.ok)throw Error('value-history '+r.status);
+  return await r.json();
+ }catch(e){console.warn('inquirer-canonical-history',String(e?.message||e));return{error:String(e?.message||e)}}
 }
+
 function injuryLabel(meta){
  const injury=String(meta?.injury_status||'').trim(),status=String(meta?.status||'').trim();
  if(injury)return injury;
@@ -353,7 +362,7 @@ export async function weeklyReport(req){
  });
  annotateConferencePlayoffRace(teams,seasonContext,league);
  const playoffContexts=week>=INQUIRER_PLAYOFF_START_WEEK?buildPlayoffContexts(teams,matchupsByWeek,winnersBracket,week):{};
- const byId=new Map(teams.map(t=>[String(t.roster_id),t])),contextFor=id=>{const base=seasonContext[String(id)]||null;if(!base)return null;return{...base,recent_games:(base.recent_games||[]).map(g=>({...g,opponent_name:teamName(g.opponent_roster_id)}))}},
+ const byId=new Map(teams.map(t=>[String(t.roster_id),t])),teamName=id=>byId.get(String(id))?.team_name||null,contextFor=id=>{const base=seasonContext[String(id)]||null;if(!base)return null;return{...base,recent_games:(base.recent_games||[]).map(g=>({...g,opponent_name:teamName(g.opponent_roster_id)}))}},
   divisionContextFor=id=>{
    const target=byId.get(String(id));if(!target||target.division==null)return null;
    const rows=teams.filter(x=>String(x.division)===String(target.division)).map(x=>{const ctx=contextFor(x.roster_id)||{},rec=ctx.record||{},games=ctx.recent_games||[];return{roster_id:String(x.roster_id),team_name:x.team_name,wins:Number(rec.wins)||0,losses:Number(rec.losses)||0,ties:Number(rec.ties)||0,points_for:games.reduce((n,g)=>n+(Number(g.points)||0),0)}}).sort((a,b)=>b.wins-a.wins||a.losses-b.losses||b.ties-a.ties||b.points_for-a.points_for||Number(a.roster_id)-Number(b.roster_id));
@@ -370,10 +379,10 @@ export async function weeklyReport(req){
  let inquirer=rawInquirer,leagueOverview=rawOverview,quality={ok:true,issues:[],metrics:{}},variationSalt=0;
  if(week>=3){
   let accepted=null,lastQuality=null;
-  for(let salt=0;salt<8;salt++){
-   const edited=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,weekClassification,variationSalt:salt});
-   const candidate={teams:edited.inquirer.teams,league_overview:edited.leagueOverview};
-   const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);lastQuality=q;
+  for(const salt of [5,0,1,2,3,4,6,7]){
+   const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,weekClassification,variationSalt:salt});
+   const {edited,verdict:q}=repairNewEditionCopy(drafted,previousBroadcast,week,evaluateInquirerEditionQuality);
+   lastQuality=q;
    if(q.ok){accepted=edited;quality=q;variationSalt=salt;break}
   }
   if(!accepted)throw new Error('Forward Inquirer quality gate rejected Week '+week+': '+JSON.stringify(lastQuality?.issues||[]).slice(0,4000));

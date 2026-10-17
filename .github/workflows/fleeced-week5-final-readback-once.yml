@@ -1,6 +1,9 @@
 name: FLEECED final Week5 live archive and scheduled publisher acceptance
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/fleeced-week5-final-readback-once.yml
 permissions:
   contents: read
 jobs:
@@ -20,6 +23,8 @@ jobs:
           node --check netlify/functions/inquirer-editorial-v31.mjs
           node --check netlify/functions/inquirer-editorial-collision-repair.mjs
           node --check netlify/functions/inquirer-publish-scheduled.mjs
+      - name: Run forward editorial collision repair regression test
+        run: node --test tests/week5-forward-editorial-repair.test.mjs
       - name: Verify actual Week5 published objects and all downstream page data
         env:
           FLEECED_NEW_TEAM_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'

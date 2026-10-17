@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {getStore} from '@netlify/blobs';
 import {readSnapshotInventory} from './archive-blob-inventory.mjs';
+import {assessArchiveContinuity} from './assess-archive-continuity.mjs';
 const siteID='b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323';
 const token=process.env.NETLIFY_BLOBS_TOKEN;
 assert(token,'NETLIFY_BLOBS_TOKEN required');
@@ -15,11 +16,8 @@ const archive=JSON.parse(Buffer.from(file.content.replace(/\s+/g,''),'base64').t
 const result={production_snapshot_count:snapshots.length,production_latest:last,production_age_hours:age===null?null:Number(age.toFixed(2)),durable_archive_count:archive.snapshot_count,durable_archive_latest:archive.latest,production_ahead_of_archive:last?Date.parse(last)>Date.parse(archive.latest):false};
 console.log('CONTINUITY SOURCE DIAGNOSTIC '+JSON.stringify(result));
 if(process.env.GITHUB_STEP_SUMMARY){const fs=await import('node:fs');fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'## Production Blob to durable GitHub archive comparison\n\n```json\n'+JSON.stringify(result,null,2)+'\n```\n');}
-const durableAgeHours=(Date.now()-Date.parse(archive.latest))/3600000;
-if(!Number.isFinite(durableAgeHours)||durableAgeHours<0)throw Error('Invalid durable archive latest timestamp');
-if(result.production_ahead_of_archive)throw Error('CONTINUITY PENDING: production Blob source is ahead of durable GitHub history');
-if(durableAgeHours>8)throw Error('DURABLE ARCHIVE STALE: latest durable snapshot '+durableAgeHours.toFixed(2)+' hours old; check independent scheduled snapshot generator');
-if(!last||!Number.isFinite(age)||age>8){
+const assessment=assessArchiveContinuity({archiveLatest:archive.latest,productionLatest:last});
+if(!assessment.productionBufferFresh){
  console.log('SOURCE DIAGNOSTIC: production Blob buffer is stale or missing; independently scheduled durable GitHub archive is fresh. This is not an archival continuity failure.');
 }else console.log('PRODUCTION BLOB AND DURABLE HISTORY FRESH');
 console.log('DURABLE ARCHIVE CONTINUITY PASS');

@@ -13,7 +13,7 @@ const deepStrings=(value,fn)=>{
   return value;
 };
 
-function adaptWeekLanguage(value,week,classification){
+export function adaptWeekLanguage(value,week,classification){
   let s=String(value||'');
   if(Number(week)<=2)return s;
   const prev=Math.max(1,Number(week)-1),next=Number(week)+1;
@@ -383,7 +383,7 @@ function w2DisplayTeam(name){const raw=String(name||"").trim(),s=raw.replace(/\s
 function w2PluralTeamName(name){const mascot=w2Alias({team_name:w2DisplayTeam(name)}).mascot;return /s$/i.test(String(mascot||""))}
 function w2TeamVerb(name,singular,plural){return w2PluralTeamName(name)?plural:singular}
 function w2EscRe(s){return [...String(s||"")].map(ch=>".*+?^$(){}|[]".includes(ch)||ch.charCodeAt(0)===92?"\\"+ch:ch).join("")}
-function w2TeamGrammar(t,body){
+export function w2TeamGrammar(t,body){
   let out=String(body||"");
   const names=[t?.team_name,t?.opponent_name,t?.next_opponent_name].filter(Boolean).map(w2DisplayTeam);
   for(const name of names){
@@ -1777,7 +1777,7 @@ function w2OpeningHook(t,r,won,margin,opp,top){
   const bank=rows[rid]||rows["walter-mercer"],v=w2OpeningVariant(t,r,bank.length);
   return bank[v]
 }
-function w2SentimentRead(t,prev,r,fs,prevSent,won){
+export function w2SentimentRead(t,prev,r,fs,prevSent,won){
   const rid=String(r?.id||""),team=w2DisplayTeam(t.team_name),a=w2Alias(t),record=w2Record(t),
     star=(t.starter_details||[])[0],weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],
     miss=t.best_lineup_miss,gap=Number(miss?.gap)||0,margin=Math.abs(Number(t.points)-Number(t.opponent_points)),

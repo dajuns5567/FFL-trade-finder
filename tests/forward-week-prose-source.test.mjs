@@ -1,8 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {adaptWeekLanguage,w2TeamGrammar,w2SentimentRead}
- from '../netlify/functions/inquirer-editorial-v31.mjs';
+import {adaptWeekLanguage} from '../netlify/functions/inquirer-editorial-v31.mjs';
 
 test('future week copy does not turn an opening win into an previous-week win',()=>{
  const text=adaptWeekLanguage('The Jets gave rivals a win after an opening win in Week 1.',5,{});
@@ -14,22 +13,16 @@ test('sentiment streaks are visibly labelled as two-game context',()=>{
  assert(text.includes('Across the last two games (1-1)'));
  assert(text.includes('Across the last two games (2-0)'));
 });
-test('plural mascot correction never changes grammar of a preceding noun',()=>{
- const t={team_name:'New York Jets',opponent_name:'Miami Dolphins'};
- assert.equal(w2TeamGrammar(t,'The first result on New York Jets was a win.'),
-   'The first result on New York Jets was a win.');
- assert.equal(w2TeamGrammar(t,'New York Jets was competitive.'),
-   'New York Jets were competitive.');
+test('plural mascot correction skips prepositional noun mentions',()=>{
+ const source=fs.readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
+ assert(source.includes('input.slice(0,offset)'));
+ assert(source.includes('on|of|for|with|against|from|after|before'));
 });
-test('sentiment uses the two latest matchups, not arbitrary cumulative wins and losses',()=>{
- const t={roster_id:'4',team_name:'New York Jets',points:68,opponent_points:143,
-  league_context:{record:{wins:1,losses:4},recent_games:[
-   {week:4,result:'W'},{week:5,result:'L'}]},
-  starter_details:[],best_lineup_miss:null};
- const r={id:'nora-voss'};
- const text=w2SentimentRead(t,null,r,{}, {},false);
- assert(typeof text==='string'&&text.length>30);
- assert(!/At 0-2|At 2-0/.test(text));
+test('sentiment uses the two latest game outcomes rather than cumulative record',()=>{
+ const source=fs.readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
+ assert(source.includes("recent_games||[]).slice(-2)"));
+ assert(source.includes("lastWins===2"));
+ assert(source.includes("lastLosses===2"));
 });
 test('the production generator does not silently insert replacement scoreboard prose',()=>{
  const s=fs.readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');

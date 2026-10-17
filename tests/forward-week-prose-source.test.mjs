@@ -1,7 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {adaptWeekLanguage} from '../netlify/functions/inquirer-editorial-v31.mjs';
+import {adaptWeekLanguage,evolveSentence,evolveCrossReporterSentence} from '../netlify/functions/inquirer-editorial-v31.mjs';
+
+test('variation does not prepend a mechanical editorial introduction',()=>{
+ for(const reporter of ['walter-mercer','tess-delaney','mack-hollis','nora-voss']){
+  const result=evolveSentence('Jared caught seven passes for 82 yards.',reporter,'week-6-seed');
+  assert.match(result,/^Jared caught seven passes for 82 yards\.$/);
+  assert(!/the football read is straightforward|the rival-chat version is uncomfortable/i.test(result));
+ }
+});
+test('cross-reporter variation never appends a canned closing sentence',()=>{
+ for(const reporter of ['walter-mercer','tess-delaney','mack-hollis','nora-voss']){
+  assert.equal(evolveCrossReporterSentence('Seven catches kept the drive alive.',reporter,'week-6-seed'),
+   'Seven catches kept the drive alive.');
+ }
+});
 
 test('future week copy does not turn an opening win into an previous-week win',()=>{
  const text=adaptWeekLanguage('The Jets gave rivals a win after an opening win in Week 1.',5,{});

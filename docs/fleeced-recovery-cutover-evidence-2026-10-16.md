@@ -164,3 +164,10 @@
 - GitHub Actions uses its existing secret only for the test job, not as a Netlify sandbox runtime variable. The new workflow has **no deploy commands, no publisher commands, and no Blob writes**.
 - The new workflow's execution result is not independently verified yet. If it fails, inspect the job ID and resolve an actual source-object shape or contract mismatch before proceeding.
 - Even a passing live read path does **not** mean the full original UI renders Inquirer articles: the protected sandbox gateway intentionally returns *metadata only*. No secure minimum-privilege site runtime token has been provisioned and the dedicated full-app Netlify site remains undeployed. Full cutover/cross-account HOLD remains in force.
+
+## Verified live sandbox gateway read-contract pass — 2026-10-17 UTC
+
+- [Actions run #39006012277](https://github.com/dajuns5567/FFL-trade-finder/actions/runs/39006012277) was independently verified from the job log. The `restored-read-paths` job concluded **success**.
+- Exact CI evidence: `LIVE ISOLATED FULLAPP GATEWAY READ CONTRACT PASS`, source site `05a8ec65-a0a3-46f1-9f73-3da47dac662e`, **156 snapshots**, **156 history points** for a sampled recovered player, **4 Inquirer editions**, **32 articles per week**, article text exposed **false**, production writes **0**, deployments **0**.
+- This proves the read-only gateway's original-app URL contracts can consume the isolated restored Blob stores within GitHub Actions using an injected credential. It does not test deployed Netlify routing or authorize copying the GitHub Actions restoration token into the destination Netlify runtime.
+- The Inquirer route intentionally returns *only coverage metadata*; original full-article UI still cannot be certified. Dedicated full-app site `d3ac147d-5e0e-4c1e-9163-237da3ee4341` remains undeployed, and the separate-account/production cutover hold remains in force.

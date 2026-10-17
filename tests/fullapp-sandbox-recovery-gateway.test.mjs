@@ -51,3 +51,32 @@ test('original history route does not expose metadata, articles or unsupported m
  assert.equal((await gateway(new Request('https://sandbox.invalid/api/value-history',{method:'POST'}))).status,405);
  assert.equal(touched,0);
 });
+
+test('original Inquirer archive lists exactly four restored editions with no article text',async()=>{
+ const response=await h(new Request('https://sandbox.invalid/api/league-hub?broadcast_archive=1'));
+ assert.equal(response.status,200);
+ const body=await response.json();
+ assert.deepEqual(body.reports.map(x=>x.week),[1,2,3,4]);
+ assert(!JSON.stringify(body).includes('paragraphs'));
+});
+test('original Inquirer edition route returns only aggregate metadata',async()=>{
+ const response=await h(new Request('https://sandbox.invalid/api/league-hub?broadcast_season=2026&broadcast_week=4'));
+ assert.equal(response.status,200);
+ const body=await response.json();
+ assert.equal(body.week,4);
+ assert.equal(body.teams,32);
+ assert.equal(body.article_count,0);
+ assert.equal(body.content_redacted,true);
+ assert(!JSON.stringify(body).includes('inquirer_article'));
+});
+test('Inquirer refuses unpublished weeks and arbitrary read modes before store access',async()=>{
+ let used=0;const gateway=makeReadOnlyGateway(()=>{used++;return good});
+ for(const suffix of ['?broadcast_season=2026&broadcast_week=5','?broadcast_season=2027&broadcast_week=1'])assert.equal((await gateway(new Request('https://sandbox.invalid/api/league-hub'+suffix))).status,403);
+ for(const suffix of ['?weekly=1','?preload_bootstrap=1','?broadcast_season=2026&broadcast_week=4&debug=1',''])assert.equal((await gateway(new Request('https://sandbox.invalid/api/league-hub'+suffix))).status,400);
+ assert.equal((await gateway(new Request('https://sandbox.invalid/api/league-hub?broadcast_archive=1',{method:'POST'}))).status,405);
+ assert.equal(used,0);
+});
+test('Inquirer fails closed when restored week is absent',async()=>{
+ const gateway=makeReadOnlyGateway(()=>({...good,editorial:{get:async()=>null}}));
+ assert.equal((await gateway(new Request('https://sandbox.invalid/api/league-hub?broadcast_archive=1'))).status,503);
+});

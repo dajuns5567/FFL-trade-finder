@@ -18,6 +18,7 @@ on:
       - 'netlify/functions/inquirer-week4-review-status.mjs'
       - 'netlify/functions/inquirer-week4-preflight.mjs'
       - 'netlify/functions/inquirer-recover-week-archive.mjs'
+      - 'netlify/functions/inquirer-recovery-upload-ui.mjs'
       - 'tests/inquirer-week4-run-auth.test.mjs'
       - 'tests/inquirer-week4-preflight.test.mjs'
       - 'tests/inquirer-recover-week-archive.test.mjs'
@@ -51,6 +52,7 @@ on:
       - 'netlify/functions/inquirer-week4-review-status.mjs'
       - 'netlify/functions/inquirer-week4-preflight.mjs'
       - 'netlify/functions/inquirer-recover-week-archive.mjs'
+      - 'netlify/functions/inquirer-recovery-upload-ui.mjs'
       - 'tests/inquirer-week4-run-auth.test.mjs'
       - 'tests/inquirer-week4-preflight.test.mjs'
       - 'tests/inquirer-recover-week-archive.test.mjs'
@@ -99,6 +101,7 @@ jobs:
           node --check netlify/functions/inquirer-week4-review-status.mjs
           node --check netlify/functions/inquirer-week4-preflight.mjs
           node --check netlify/functions/inquirer-recover-week-archive.mjs
+          node --check netlify/functions/inquirer-recovery-upload-ui.mjs
           node --check scripts/generate-week4-style-review.mjs
           node --check scripts/audit-fleeced-week5-live-published.mjs
       - name: Verify gate cannot be bypassed by direct weekly entrypoint

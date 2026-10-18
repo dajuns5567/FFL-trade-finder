@@ -9,8 +9,9 @@ const html=`<!doctype html>
 <p>Stores original files in an isolated recovery folder only. No live broadcast is overwritten, no articles are published, and no AI credits are used.</p>
 <form id="form"><label for="token">Week 5 authorization token</label><input id="token" type="password" autocomplete="off" required>
 <label for="files">Original week-03.json and week-04.json</label><input id="files" type="file" accept=".json,application/json" multiple required>
-<button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><pre id="result" aria-live="polite">Waiting for files.</pre>
+<button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><button id="generate" type="button" disabled>Start one-time Week 5 editorial DRAFT (no publishing)</button><pre id="result" aria-live="polite">Waiting for files.</pre>
 <script>
+let generationReady=false;
 const recoveryStatus=async token=>{
  const r=await fetch('/.netlify/functions/inquirer-recovery-status',{headers:{authorization:'Bearer '+token}});
  if(!r.ok)throw Error('Status check unavailable: HTTP '+r.status);
@@ -20,9 +21,26 @@ const recoveryStatus=async token=>{
 };
 document.querySelector('#check').addEventListener('click',async()=>{
  const out=document.querySelector('#result'),token=document.querySelector('#token').value.trim();
+ generationReady=false;document.querySelector('#generate').disabled=true;
  if(!token){out.textContent='Enter the token to inspect recovery status.';return;}
- try{\n  const recovery=await recoveryStatus(token);\n  out.textContent='READ-ONLY STATUS: '+JSON.stringify(recovery);\n  if(recovery.weeks[3]?.verified&&recovery.weeks[4]?.verified){\n   const preflight=await fetch('/.netlify/functions/inquirer-week4-preflight',{headers:{authorization:'Bearer '+token}});\n   out.textContent+='\\\\nWEEK 5 READINESS: '+JSON.stringify(await preflight.json());\n  }\n }
+ try{\n  const recovery=await recoveryStatus(token);\n  out.textContent='READ-ONLY STATUS: '+JSON.stringify(recovery);\n  if(recovery.weeks[3]?.verified&&recovery.weeks[4]?.verified){\n   const preflight=await fetch('/.netlify/functions/inquirer-week4-preflight',{headers:{authorization:'Bearer '+token}});\n   const readiness=await preflight.json();
+   out.textContent+='\\\\nWEEK 5 READINESS: '+JSON.stringify(readiness);
+   generationReady=preflight.ok&&readiness.ready===true;
+   document.querySelector('#generate').disabled=!generationReady;\n  }\n }
  catch(error){out.textContent=String(error);}
+});
+document.querySelector('#generate').addEventListener('click',async()=>{
+ const out=document.querySelector('#result'),button=document.querySelector('#generate');
+ if(!generationReady)return;
+ const token=document.querySelector('#token').value.trim();
+ if(!confirm('Start the ONE-TIME Week 5 AI draft now? This uses model credits but does NOT publish anything.'))return;
+ button.disabled=true;generationReady=false;
+ try{
+  const response=await fetch('/.netlify/functions/inquirer-week4-generate-review',{
+   method:'POST',headers:{authorization:'Bearer '+token}});
+  out.textContent+='\\\\nDRAFT GENERATION: HTTP '+response.status+' — '+await response.text();
+  out.textContent+='\\\\nGeneration is unapproved and not published. Check review status after completion.';
+ }catch(error){out.textContent+='\\\\nGeneration request uncertain: '+String(error)+'. Do not retry; inspect status.';}
 });
 document.querySelector('#form').addEventListener('submit',async e=>{
  e.preventDefault();

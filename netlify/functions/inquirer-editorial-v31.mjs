@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=18;
+export const FORWARD_EDITORIAL_REVISION=19;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -1382,7 +1382,7 @@ function w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders){
     (lead?"At the top of "+div+", "+leadNames+" are tied. ":"The "+a.mascot+" enter Week 3 with division leverage still available. ")+(peers?"Behind and around them are "+peers+", so every clean result carries immediate value.":"Every clean result carries immediate value."),
     (lead?leadNames+" are tied for first in "+div+". ":"Nobody around "+t.team_name+" has made "+div+" comfortable yet. ")+(peers?"For "+a.mascot+", the division board also includes "+peers+", and Week 3 gets first crack at breaking that cluster.":"Week 3 gets first crack at breaking the cluster."),
     (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For the "+a.mascot+", the other division names are "+peers+"; their next result belongs to the race, not an isolated September box score.":"The next result is part of the race."),
-    (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"The relevant division opponents are "+peers+"; "+t.team_name+" cannot afford to treat this matchup as an isolated result.":"That is enough context to make Week 3 matter immediately.")
+    (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"With "+peers+" also in the divisional conversation, "+t.team_name+" needs the win for more than the weekly bragging rights.":"That is enough context to make Week 3 matter immediately.")
   ];
   return rows[k];
 }
@@ -2160,7 +2160,7 @@ function w2ValueMoverReads(t,r){
     },bank=voice[rid]||voice["walter-mercer"],out=[];
   if(risers.length)out.push(w2S(t,r,"value-risers",bank.riseLead[q]+w2ValueMoverSentence(t,r,risers,true)+" "+bank.riseTail[q]));
   if(fallers.length)out.push(w2S(t,r,"value-fallers",bank.fallLead[(q+1)%4]+w2ValueMoverSentence(t,r,fallers,false)+" "+bank.fallTail[(q+1)%4]));
-  if(!out.length)out.push(w2S(t,r,"value-movers-missing","No verified player-level value mover can be attributed to this week's market shift."));
+  // No player-level attribution means there is no player mover story to invent.
   return out;
 }
 

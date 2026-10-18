@@ -22,7 +22,8 @@ export default async function handler(request,{site,
     sha256:job.sha256||null,
     failure_http_status:Number(job.failure_http_status)||null,
     failure_code:job.failure_code||null,
-    failure_type:job.failure_type||null});
+    failure_type:job.failure_type||null,
+    editorial_issue:job.editorial_issue||null});
 }
 
 export const config={rateLimit:{action:'rate_limit',windowLimit:12,windowSize:60,aggregateBy:'ip'}};

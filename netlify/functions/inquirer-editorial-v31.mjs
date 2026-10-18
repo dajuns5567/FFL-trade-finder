@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=23;
+export const FORWARD_EDITORIAL_REVISION=24;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -3421,14 +3421,6 @@ function assertWeek2Originality(result,previousEdition){
   if(week>=3&&forwardCrossReporterPhraseOffenders(teams,[...forwardEntities({teams}),...forwardEntities(previousEdition)]).size)
     teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+101);
 
-  // The optional collision-repair pass can reintroduce headline casing after
-  // the earlier prose polish. Normalize the final visible headline once more.
-  if(week>=3)teams=teams.map(t=>{
-    const article=t.inquirer_article;
-    return article?{...t,inquirer_article:{...article,headline:String(article.headline||'')
-      .replace(/\bMake this Sunday\b/g,'Make This Sunday')}}:t;
-  });
-
   const trajectory=(overview.sections||[]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
   if(trajectory)trajectory.paragraphs=forwardTrajectoryParagraphs(teams,week);
 
@@ -3465,6 +3457,7 @@ function assertWeek2Originality(result,previousEdition){
     const titleVerbs={Makes:'Make',Wins:'Win',Has:'Have',Keeps:'Keep',Falls:'Fall',Loses:'Lose',Takes:'Take',Gives:'Give',Puts:'Put',Gets:'Get',Leaves:'Leave',Turns:'Turn',Banks:'Bank',Raises:'Raise',Is:'Are',Looks:'Look',Exposes:'Expose',Needs:'Need',Owns:'Own',Starts:'Start',Earns:'Earn',Lands:'Land'};
     title=title.replace(new RegExp(w2EscRe(w2DisplayTeam(t.team_name))+' ('+Object.keys(titleVerbs).join('|')+')\\b','g'),(_,verb)=>w2DisplayTeam(t.team_name)+' '+titleVerbs[verb]);
    }
+   if(week>=3)title=title.replace(/\b(Make|Makes) this Sunday\b/g,'$1 This Sunday');
    t.inquirer_article.headline=title;
   }t.inquirer_article.week=week;t.inquirer_article.week_classification=t.week_classification||weekClassification;t.inquirer_article.editorial_revision=FORWARD_EDITORIAL_REVISION}}
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};

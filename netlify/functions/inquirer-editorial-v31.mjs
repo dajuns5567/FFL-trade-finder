@@ -339,6 +339,84 @@ function evolveForwardOverview(overview,previousOverview,week,salt,entities=[]){
   });
   return{...overview,sections,hot_takes};
 }
+// Refresh recurrent Week 2-derived idioms against live forward-week facts.
+// This is deliberately confined to Week 3+; preloaded editions remain untouched.
+function polishForwardTeamCopy(teams,week,salt){
+ const pick=(team,key,options)=>options[evolutionHash([week,salt,team.roster_id,key].join('|'))%options.length];
+ return (teams||[]).map(t=>{
+  const article=t?.inquirer_article;if(!article)return t;
+  const team=String(t.team_name||'the team'),record=forwardRecordText(t),
+    top=(t.starter_details||[])[0],weak=(t.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0],
+    next=String(t.next_opponent_name||'the next opponent');
+  const rewrite=value=>{
+   let s=String(value||'');
+   s=s.replace(/followed its opening victory with a loss to /gi,pick(t,'reversal',[
+    'could not follow last week’s win with another against ',
+    'carried a victory into this matchup but fell to ',
+    'won the previous week, then came up short against ',
+    'saw its winning momentum end against '
+   ]));
+   s=s.replace(/Rivals can enjoy the reversal; management has to explain the missing points\./g,pick(t,'reversal-read',[
+    'The drop in production is the manager’s immediate problem, regardless of how loudly the rivals celebrate.',
+    'That swing demands a closer look at the starters, especially '+String(weak?.name||'the lowest scorer')+' at '+forwardOne(weak?.points)+' points.',
+    'A week ago the result offered cover; now the '+forwardOne(t.points)+'-point total needs explaining.',
+    'The previous victory does not erase Sunday’s weaker output, and '+next+' is already on the schedule.'
+   ]));
+   s=s.replace(/The ([A-Z][A-Z ]+) picture has ([^.]+?) in the middle of a live race\./g,(_,division)=>pick(t,'division-open',[
+    team+' sits in a competitive '+division+' picture at '+record+'.',
+    'The '+division+' standings leave '+team+' with a '+record+' record and plenty to settle.',
+    'At '+record+', '+team+' has immediate work in '+division+'.',
+    division+' remains tightly contested around '+team+' ('+record+').',
+    'A '+record+' mark puts '+team+' in the thick of the '+division+' argument.',
+    'There is no comfortable lane for '+team+' in '+division+' at '+record+'.'
+   ]));
+   s=s.replace(/The division includes /g,pick(t,'division-list',[
+    'The other clubs in that division are ','The teams across the table are ',
+    'That race also features ','The direct competition includes ',
+    'Sharing the same division are ','Its nearby rivals on the standings page are '
+   ]));
+   s=s.replace(/The rivals are /g,pick(t,'division-rivals',[
+    'The immediate challengers are ','The teams to track are ','That group consists of ',
+    'Across the division sit ','The standings also involve ','The opposition in the group includes '
+   ]));
+   s=s.replace(/one Sunday can reorder the whole group\./gi,pick(t,'division-close',[
+    'a head-to-head result could change the order quickly.',
+    'the next standings update may have a very different shape.',
+    'no club has earned a permanent place in that order.',
+    'each divisional contest now changes two teams’ arguments at once.',
+    'the schedule still offers plenty of ways to move.',
+    'that makes the next matchup a meaningful standings test.'
+   ]));
+   s=s.replace(/A silent box score from the new arrivals makes the actual starters responsible for Sunday’s result\./g,pick(t,'inactive-adds',[
+    'The additions were not in the scoring lineup; the '+forwardOne(t.points)+' points belong to the players who started.',
+    'None of those newcomers supplied Sunday’s points. The starters, led by '+String(top?.name||'the top scorer')+', own this result.',
+    'Those transactions changed the roster, but not the lineup responsible for the final score.',
+    'A new name on the wire is not a point on the board; Sunday’s starters still have to answer for '+forwardOne(t.points)+'.',
+    'The acquisitions stayed outside the starting group, leaving the actual lineup to explain the margin.',
+    'Until an addition enters the lineup, the scoring responsibility remains with the players already starting.'
+   ]));
+   s=s.replace(/Rivals can skip the transaction joke and look at /g,pick(t,'quiet-wire',[
+    'Without a completed move to blame, the scrutiny falls on ',
+    'The roster wire offers no diversion from ',
+    'The more useful criticism starts with ',
+    'A quiet transaction log puts the focus directly on ',
+    'Instead of inventing a trade controversy, study ',
+    'The rival chat has an easier target in '
+   ]));
+   s=s.replace(/Fix the part everybody saw and rivals have to find new material\./g,pick(t,'repair-close',[
+    'The next lineup against '+next+' will show whether management addressed that weakness.',
+    'A response begins with better scoring from the quietest starter, not another explanation.',
+    'Sunday identified the problem; the next opponent will test the correction.',
+    'Improvement needs to appear in the box score before the rival jokes lose their force.',
+    'The only persuasive answer is a lineup that makes the same complaint obsolete.',
+    'The next result has to offer stronger evidence than this scoring line.'
+   ]));
+   return s;
+  };
+  const sections=(article.sections||[]).map(section=>({...section,paragraphs:(section.paragraphs||[]).map(rewrite)}));
+  return {...t,inquirer_article:{...article,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
+ });
+}
 export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,weekClassification=null,variationSalt=0}={}){
   season=Number(season);week=Number(week);variationSalt=Number(variationSalt)||0;
   if(!rawInquirer||!Array.isArray(rawInquirer.teams))throw new Error('V31 forward editorial layer requires raw team articles');
@@ -3298,6 +3376,7 @@ function assertWeek2Originality(result,previousEdition){
   let teams=deepStrings(rewritten,s=>adaptWeekLanguage(s,week,weekClassification));
   overview=deepStrings(overview,s=>adaptWeekLanguage(s,week,weekClassification));
   if(week>=3)teams=evolveForwardTeams(teams,previousEdition,week,variationSalt);
+  if(week>=3)teams=polishForwardTeamCopy(teams,week,variationSalt);
 
   const trajectory=(overview.sections||[]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
   if(trajectory)trajectory.paragraphs=forwardTrajectoryParagraphs(teams,week);
@@ -3329,7 +3408,7 @@ function assertWeek2Originality(result,previousEdition){
     :'Week '+week+' gets its own newspaper: new games, new arguments, and enough season memory to know which developments are starting to repeat.';
   overview.week=week;overview.season=season;overview.week_classification=weekClassification||overview.week_classification;
   overview.inquirer_version=FORWARD_INQUIRER_VERSION;overview.editorial_revision=FORWARD_EDITORIAL_REVISION;
-  for(const t of teams){if(t?.inquirer_article){t.inquirer_article.week=week;t.inquirer_article.week_classification=t.week_classification||weekClassification;t.inquirer_article.editorial_revision=FORWARD_EDITORIAL_REVISION}}
+  for(const t of teams){if(t?.inquirer_article){t.inquirer_article.headline=w2TeamGrammar(t,String(t.inquirer_article.headline||'')).replace(/^this Sunday/i,'This Sunday').replace(/the Week (\\d+) Look Less Accidental/gi,'Week $1 Look Less Accidental');t.inquirer_article.week=week;t.inquirer_article.week_classification=t.week_classification||weekClassification;t.inquirer_article.editorial_revision=FORWARD_EDITORIAL_REVISION}}
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

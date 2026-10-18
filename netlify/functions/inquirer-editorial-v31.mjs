@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=22;
+export const FORWARD_EDITORIAL_REVISION=23;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -3420,6 +3420,14 @@ function assertWeek2Originality(result,previousEdition){
   // earlier pass could not see, especially across distinct reporter desks.
   if(week>=3&&forwardCrossReporterPhraseOffenders(teams,[...forwardEntities({teams}),...forwardEntities(previousEdition)]).size)
     teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+101);
+
+  // The optional collision-repair pass can reintroduce headline casing after
+  // the earlier prose polish. Normalize the final visible headline once more.
+  if(week>=3)teams=teams.map(t=>{
+    const article=t.inquirer_article;
+    return article?{...t,inquirer_article:{...article,headline:String(article.headline||'')
+      .replace(/\bMake this Sunday\b/g,'Make This Sunday')}}:t;
+  });
 
   const trajectory=(overview.sections||[]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
   if(trajectory)trajectory.paragraphs=forwardTrajectoryParagraphs(teams,week);

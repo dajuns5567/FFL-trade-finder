@@ -64,6 +64,7 @@ for(const week of [5,6,9,14]){
   for(const salt of (week===5?[0,1,5]:[5])){
     const drafted=applyInquirerEditorialV31({season:2026,week,...raw,previousEdition:week2,weekClassification:classification,variationSalt:salt});
     const edition={season:2026,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
+    assert.ok(edition.teams.every(t=>!/\bMake this Sunday\b/.test(String(t.inquirer_article?.headline||''))),'Forward headlines must use title-case This');
     const audit=inspectEditionBeforePublication(edition);
     assert.ok(audit.ok,'Week '+week+' salt '+salt+' failed publication copy audit: '+JSON.stringify(audit.issues.slice(0,8)));
     const q=evaluateInquirerEditionQuality(edition,week2);

@@ -10,13 +10,18 @@ const req=authorized=>new Request('https://preview.netlify.app/.netlify/function
 test('read-only digest-verified audit reports 32 teams without publication',async()=>{
  const edition={...fixture,week:5},sha=editorialCopyDigest(edition);
  const obj={schema:'fleeced-editorial-review-draft-v1',season:2026,week:5,sha256:sha,
-  review_status:'unapproved',publishable:false,quality:{ok:false,article_review_issues:[],structural:{issues:[]},deep:{ok:false}},edition};
+  review_status:'unapproved',publishable:false,quality:{ok:false,article_review_issues:[{team_index:0,issues:['team-identity','missing-or-shallow-lede']}],structural:{issues:[{id:'fan-sentiment',team:'Buffalo Billiards'}]},deep:{ok:false,issues:[{id:'cross-team-copy-scaffold'}]}},edition};
  const store={get:async key=>key===reviewSalvageJobKey?{status:'draft_staged',key:'private-draft',sha256:sha}:key==='private-draft'?obj:null,
   set:()=>{throw Error('audit may not write')},setJSON:()=>{throw Error('audit may not write')}};
  const r=await handler(req(true),{site,readEnv,openStore:async()=>store}),body=await r.json();
  assert.equal(r.status,200);assert.equal(body.ready,true);assert.equal(body.team_count,32);
  assert.equal(body.approved,false);assert.equal(body.publishable,false);assert.equal(body.quality_ok,false);
  assert.equal(body.teams.length,32);
+ assert.equal(body.article_review_issues.length,1);
+ assert.equal(body.article_review_issues[0].roster_id,String(edition.teams[0].roster_id));
+ assert.deepEqual(body.article_review_issues[0].issues,['team-identity','missing-or-shallow-lede']);
+ assert.equal(body.structural_issues[0].id,'fan-sentiment');
+ assert.equal(body.deep_issue_categories['cross-team-copy-scaffold'],1);
 });
 test('audit rejects wrong digest and unauthorized requests',async()=>{
  let opened=0;const ctx={site,readEnv,openStore:async()=>{opened++;return{get:async()=>null}}};

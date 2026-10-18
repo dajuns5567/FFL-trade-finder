@@ -9,7 +9,7 @@ const html=`<!doctype html>
 <p>Stores original files in an isolated recovery folder only. The recovery check never changes live broadcasts. Optional draft generation uses AI credits, but never publishes articles.</p>
 <form id="form"><label for="token">Week 5 authorization token</label><input id="token" type="password" autocomplete="off" required>
 <label for="files">Original week-03.json and week-04.json</label><input id="files" type="file" accept=".json,application/json" multiple required>
-<button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><button id="generate" type="button" disabled>Start one-time Week 5 editorial DRAFT (no publishing)</button><button id="review" type="button">Check draft generation status (read-only)</button><pre id="result" aria-live="polite">Waiting for files.</pre>
+<button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><button id="generate" type="button" disabled>Start one-time Week 5 editorial DRAFT (no publishing)</button><button id="review" type="button">Check draft generation status (read-only)</button><button id="diagnose" type="button">Diagnose model HTTP 400 (one minimal AI call)</button><pre id="result" aria-live="polite">Waiting for files.</pre>
 <script>
 let generationReady=false;
 const recoveryStatus=async token=>{
@@ -28,6 +28,17 @@ document.querySelector('#check').addEventListener('click',async()=>{
    generationReady=preflight.ok&&readiness.ready===true;
    document.querySelector('#generate').disabled=!generationReady;\n  }\n }
  catch(error){out.textContent=String(error);}
+});
+document.querySelector('#diagnose').addEventListener('click',async()=>{
+ const out=document.querySelector('#result'),button=document.querySelector('#diagnose');
+ const token=document.querySelector('#token').value.trim();
+ if(!token){out.textContent='Enter your token first.';return;}
+ if(!confirm('Run ONE minimal AI Gateway diagnostic call? It may use a small number of Netlify credits; it cannot publish.'))return;
+ button.disabled=true;
+ try{
+  const r=await fetch('/.netlify/functions/inquirer-week4-gateway-diagnostic',{method:'POST',headers:{authorization:'Bearer '+token}});
+  out.textContent='AI GATEWAY DIAGNOSTIC: HTTP '+r.status+' — '+JSON.stringify(await r.json());
+ }catch(error){out.textContent='Diagnostic uncertain; do not retry. '+String(error);}
 });
 document.querySelector('#review').addEventListener('click',async()=>{
  const out=document.querySelector('#result'),token=document.querySelector('#token').value.trim();

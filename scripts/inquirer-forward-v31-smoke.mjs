@@ -108,7 +108,7 @@ for(const [scenario,scorerPoints] of [['shutout',[0,0,0,0,0,0,0]],['one-scorer',
     const copy=(players?.paragraphs||[]).join(' ');
     assert.doesNotMatch(copy,/enough real scoring|a real scoring spine|usable top end|sustainable instead of solitary|supporting scorer|enough real food|actual voltage|proper center of gravity/i,
       scenario+' must not invent multiple producers for '+t.team_name);
-    assert.match(copy,scenario==='shutout'?/0\\.0|zeroes|zero/i:/1\\.4|one contribution|one meaningful/i,
+    assert.match(copy,scenario==='shutout'?/0[.]0|zeroes|zero/i:/1[.]4|one contribution|one meaningful/i,
       scenario+' must explain the thin production for '+t.team_name);
   }
 }

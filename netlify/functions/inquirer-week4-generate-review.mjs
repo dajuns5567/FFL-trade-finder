@@ -1,6 +1,5 @@
 // Operator-only, opt-in background generation of an UNAPPROVED editorial draft.
 // The only writes are to the isolated week4-style-drafts namespace.
-import {getStore} from '@netlify/blobs';
 import {authorizeEditorialGeneration} from './inquirer-week4-run-auth.mjs';
 import {loadNetlifyEditorialGatewayClient} from './inquirer-week4-gateway.mjs';
 import {stageWeek4EditorialBatch} from './inquirer-week4-staging.mjs';
@@ -10,13 +9,14 @@ const json=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'co
 const sourceKey=(season,week)=>`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
 
 export async function handler(request,{readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
-  openStore=()=>getStore('fleeced-league-hub',{consistency:'strong'}),loadClient=loadNetlifyEditorialGatewayClient,
+  openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore('fleeced-league-hub',{consistency:'strong'});},
+  loadClient=loadNetlifyEditorialGatewayClient,
   stage=stageWeek4EditorialBatch}={}){
   const auth=authorizeEditorialGeneration(request,{readEnv});
   if(!auth.ok)return json(auth.status,{error:'Editorial generation unavailable or unauthorized'});
   const model=String(readEnv('FLEECED_EDITORIAL_MODEL')||'');
   if(!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{2,90}$/.test(model))return json(503,{error:'Editorial model not configured'});
-  const store=openStore(),season=2026,week=5;
+  const store=await openStore(),season=2026,week=5;
   const jobKey=`inquirer/week4-style-drafts/${season}/week-05/generation-job.json`;
   const existing=await store.get(jobKey,{type:'json'}).catch(()=>null);
   if(existing)return json(409,{error:'Generation already attempted; operator review required before retry'});

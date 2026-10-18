@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=15;
+export const FORWARD_EDITORIAL_REVISION=16;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -699,7 +699,7 @@ function w2LedeShape(t,r,won,margin,opp,top){
     wide?"A "+w2One(margin)+"-point loss means "+team+" needed help in several lineup spots; "+star+" alone was nowhere near enough to match "+foe+".":team+" got a usable top score from "+star+", but "+foe+" finished with more total production across the matchup.",
     "The "+a.mascot+" got something from "+star+", but the lineup behind him did not produce enough to reach "+foe+"’s total.",
     close?"This was close enough to make every bench and lineup choice hurt. "+team+" finished "+w2One(margin)+" short, so the missing support behind "+star+" is concrete rather than theoretical.":"The loss was not one strange bounce; "+foe+" simply finished with more usable fantasy points while "+team+" waited for secondary scoring that never arrived.",
-    team+" spent Week 2 behind on the fantasy scoreboard. The "+w2One(margin)+"-point gap points to support behind the top scorers, not a tactical adjustment by "+foe+".",
+    team+" lost to "+foe+" by "+w2One(margin)+". On that evidence, the supporting lineup—not the opponent’s tactical genius—gets the uncomfortable attention.",
     star+" gave the "+a.mascot+" something to build around, but the rest of the lineup did not supply enough points to overcome "+foe+"."
   ];return rows[k];
 }
@@ -987,9 +987,9 @@ function w2Week1DeltaRead(t,r,p,pp,role){
     },
     phrase=(rise?(up[rid]||up["walter-mercer"]):(down[rid]||down["walter-mercer"]))[v];
   const rows=[
-    "The "+label+" moved from "+prior+" in Week 1 to "+now+" this week and "+phrase+".",
-    "Week 1 put the "+label+" at "+prior+"; Week 2 answered with "+now+" and "+phrase+".",
-    "From "+prior+" in the opener to "+now+" now, the "+label+" "+phrase+".",
+    p.name+" changed from "+prior+" in Week 1 to "+now+" in Week 2; the "+label+" "+phrase+".",
+    p.name+" had "+prior+" last Sunday and "+now+" now. That "+label+" shift "+phrase+".",
+    For "+p.name+", "+prior+" became "+now+" the following week. The "+label+" "+phrase+".",
     "After a "+prior+"-point Week 1, the "+label+" reached "+now+" and "+phrase+"."
   ];
   return rows[v]
@@ -2210,7 +2210,7 @@ function w2ManagementMoveRead(t,r,won,margin){
     const tails={
       "walter-mercer":[w2Hash(team+"|walter-nonstarter-adds")%2===0?("None of the additions started for "+team+" in Week 2, so the roster changed while Sunday’s scoring lineup stayed intact."):("The incoming players stayed outside "+team+"’s Week 2 starters; those moves altered the roster, not the lineup that produced this result."),"Those additions did not reach the Week 2 starters, which makes them roster work rather than an explanation for Sunday."],
       "tess-delaney":["None of the new arrivals reached the Week 2 starting table, so the room changed without changing Sunday’s place settings.","The new guests did not make the Week 2 starting table for "+team+"; Sunday still belongs to the starters who were already seated."],
-      "mack-hollis":["None of the new names cracked the Week 2 starting lineup, so do not hang Sunday’s result on the transaction count.","The additions stayed off the Week 2 starting card. That is roster churn, not a scoring explanation."],
+      "mack-hollis":["A silent box score from the new arrivals makes the actual starters responsible for Sunday’s result.","The additions stayed off the Week 2 starting card. That is roster churn, not a scoring explanation."],
       "nora-voss":["None of the additions made the Week 2 starting lineup, so rivals cannot credit or blame the transactions for this score yet.","The new names stayed outside the Week 2 starters. That keeps the move jokes on hold until somebody actually enters the lineup."]
     };
     impact=(tails[rid]||tails["walter-mercer"])[v]

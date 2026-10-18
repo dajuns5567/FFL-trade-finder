@@ -19,10 +19,12 @@ on:
       - 'netlify/functions/inquirer-week4-preflight.mjs'
       - 'netlify/functions/inquirer-recover-week-archive.mjs'
       - 'netlify/functions/inquirer-recovery-upload-ui.mjs'
+      - 'netlify/functions/inquirer-recovery-status.mjs'
       - 'netlify/functions/inquirer-week4-accepted-source.mjs'
       - 'tests/inquirer-week4-run-auth.test.mjs'
       - 'tests/inquirer-week4-preflight.test.mjs'
       - 'tests/inquirer-recover-week-archive.test.mjs'
+      - 'tests/inquirer-recovery-status.test.mjs'
       - 'tests/inquirer-week4-accepted-source.test.mjs'
       - 'tests/inquirer-week4-editorial-brief.test.mjs'
       - 'tests/inquirer-week4-batch.test.mjs'
@@ -55,10 +57,12 @@ on:
       - 'netlify/functions/inquirer-week4-preflight.mjs'
       - 'netlify/functions/inquirer-recover-week-archive.mjs'
       - 'netlify/functions/inquirer-recovery-upload-ui.mjs'
+      - 'netlify/functions/inquirer-recovery-status.mjs'
       - 'netlify/functions/inquirer-week4-accepted-source.mjs'
       - 'tests/inquirer-week4-run-auth.test.mjs'
       - 'tests/inquirer-week4-preflight.test.mjs'
       - 'tests/inquirer-recover-week-archive.test.mjs'
+      - 'tests/inquirer-recovery-status.test.mjs'
       - 'tests/inquirer-week4-accepted-source.test.mjs'
       - 'tests/inquirer-week4-editorial-brief.test.mjs'
       - 'tests/inquirer-week4-batch.test.mjs'
@@ -87,7 +91,7 @@ jobs:
         with:
           node-version: '22'
       - name: Fail-closed editorial regression and approval tests
-        run: node --test tests/inquirer-publication-guard.test.mjs tests/forward-week-prose-source.test.mjs tests/inquirer-week4-editorial-brief.test.mjs tests/inquirer-week4-batch.test.mjs tests/inquirer-week4-staging.test.mjs tests/inquirer-week4-model-client.test.mjs tests/inquirer-week4-gateway.test.mjs tests/inquirer-week4-run-auth.test.mjs tests/inquirer-week4-preflight.test.mjs tests/inquirer-recover-week-archive.test.mjs tests/inquirer-week4-accepted-source.test.mjs tests/generate-week4-style-review.test.mjs tests/week5-live-audit-depth.test.mjs
+        run: node --test tests/inquirer-publication-guard.test.mjs tests/forward-week-prose-source.test.mjs tests/inquirer-week4-editorial-brief.test.mjs tests/inquirer-week4-batch.test.mjs tests/inquirer-week4-staging.test.mjs tests/inquirer-week4-model-client.test.mjs tests/inquirer-week4-gateway.test.mjs tests/inquirer-week4-run-auth.test.mjs tests/inquirer-week4-preflight.test.mjs tests/inquirer-recover-week-archive.test.mjs tests/inquirer-recovery-status.test.mjs tests/inquirer-week4-accepted-source.test.mjs tests/generate-week4-style-review.test.mjs tests/week5-live-audit-depth.test.mjs
       - name: Parse production entrypoints
         run: |
           node --check netlify/functions/inquirer-publication-guard.mjs
@@ -106,6 +110,7 @@ jobs:
           node --check netlify/functions/inquirer-week4-preflight.mjs
           node --check netlify/functions/inquirer-recover-week-archive.mjs
           node --check netlify/functions/inquirer-recovery-upload-ui.mjs
+          node --check netlify/functions/inquirer-recovery-status.mjs
           node --check netlify/functions/inquirer-week4-accepted-source.mjs
           node --check scripts/generate-week4-style-review.mjs
           node --check scripts/audit-fleeced-week5-live-published.mjs

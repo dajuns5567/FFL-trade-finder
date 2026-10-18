@@ -9,7 +9,7 @@ const html=`<!doctype html>
 <p>Stores original files in an isolated recovery folder only. The recovery check never changes live broadcasts. Optional draft generation uses AI credits, but never publishes articles.</p>
 <form id="form"><label for="token">Week 5 authorization token</label><input id="token" type="password" autocomplete="off" required>
 <label for="files">Original week-03.json and week-04.json</label><input id="files" type="file" accept=".json,application/json" multiple required>
-<button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><button id="generate" type="button" disabled>Start one-time Week 5 editorial DRAFT (no publishing)</button><button id="review" type="button">Check draft generation status (read-only)</button><button id="diagnose" type="button">Diagnose model HTTP 400 (one minimal AI call)</button><button id="audit" type="button">Audit staged Week 5 draft (read-only)</button><button id="copy" type="button">Copy full audit result</button><pre id="result" aria-live="polite">Waiting for files.</pre>
+<button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><button id="generate" type="button" disabled>Start one-time Week 5 editorial DRAFT (no publishing)</button><button id="review" type="button">Check draft generation status (read-only)</button><button id="diagnose" type="button">Diagnose model HTTP 400 (one minimal AI call)</button><button id="audit" type="button">Audit staged Week 5 draft (read-only)</button><button id="copy" type="button">Copy full audit result</button><button id="repair" type="button">Repair flagged Week 5 draft once (private; uses AI credits)</button><pre id="result" aria-live="polite">Waiting for files.</pre>
 <script>
 let generationReady=false,lastAudit='';
 const recoveryStatus=async token=>{
@@ -42,6 +42,26 @@ document.querySelector('#copy').addEventListener('click',async()=>{
  if(!lastAudit){document.querySelector('#result').textContent='Run the read-only draft audit first.';return;}
  try{await navigator.clipboard.writeText(lastAudit);document.querySelector('#result').textContent='Full audit copied. '+lastAudit;}
  catch{document.querySelector('#result').textContent='Clipboard unavailable; select and copy the report below. '+lastAudit;}
+});
+document.querySelector('#repair').addEventListener('click',async()=>{
+ const out=document.querySelector('#result'),button=document.querySelector('#repair');
+ const token=document.querySelector('#token').value.trim();
+ if(!token){out.textContent='Enter the token first.';return;}
+ button.disabled=true;
+ try{
+  const auditResponse=await fetch('/.netlify/functions/inquirer-week4-review-audit',
+    {headers:{authorization:'Bearer '+token}});
+  if(!auditResponse.ok)throw Error('Cannot verify source: HTTP '+auditResponse.status);
+  const audit=await auditResponse.json();
+  if(audit.ready!==true||audit.publishable!==false||audit.quality_ok===true)
+    throw Error('No verified unapproved failing draft available for repair.');
+  if(!confirm('One-time private Week 5 editorial repair. Only flagged stories plus the recap will be sent to the AI model. This consumes Netlify AI credits. Original staged copy is preserved and NOTHING publishes. Continue?'))return;
+  const r=await fetch('/.netlify/functions/inquirer-week4-repair-review',{
+    method:'POST',headers:{authorization:'Bearer '+token}});
+  out.textContent='ONE-SHOT TARGETED REPAIR: HTTP '+r.status+' — '+await r.text()+
+    String.fromCharCode(10)+'No automatic retry. Check status and rerun read-only audit when complete.';
+ }catch(error){out.textContent='Repair request uncertain: '+String(error)+'. Inspect status before any other attempt.';}
+ finally{button.disabled=false;}
 });
 document.querySelector('#diagnose').addEventListener('click',async()=>{
  const out=document.querySelector('#result'),button=document.querySelector('#diagnose');

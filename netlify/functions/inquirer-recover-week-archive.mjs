@@ -9,18 +9,18 @@ const respond=(status,body)=>new Response(JSON.stringify(body),{status,
   headers:{'content-type':'application/json','cache-control':'no-store'}});
 const keyFor=week=>`inquirer/recovery-originals/2026/week-${String(week).padStart(2,'0')}.json`;
 export async function handler(req,{site,readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
-  openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore('fleeced-league-hub',{consistency:'strong'});}}={}){
+  expectedHashes=originalHashes,openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore('fleeced-league-hub',{consistency:'strong'});}}={}){
  const auth=authorizeEditorialGeneration(req,{readEnv});
  if(!auth.ok)return respond(auth.status,{error:'Recovery import unavailable or unauthorized'});
  if(site?.id&&site.id!=='2e556797-6f35-4037-aa5a-1338724eb71d')
    return respond(403,{error:'Wrong recovery destination site'});
  const week=Number(req.headers.get('x-recovery-week'));
- if(!Object.hasOwn(originalHashes,week))return respond(400,{error:'Only original Weeks 3 and 4 may be staged'});
+ if(!Object.hasOwn(expectedHashes,week))return respond(400,{error:'Only original Weeks 3 and 4 may be staged'});
  if(Number(req.headers.get('content-length')||0)>4_000_000)return respond(413,{error:'Archive too large'});
  const raw=await req.text();
  if(Buffer.byteLength(raw,'utf8')>4_000_000)return respond(413,{error:'Archive too large'});
  const sha=createHash('sha256').update(raw).digest('hex');
- if(sha!==originalHashes[week])return respond(422,{error:'Original archival SHA-256 does not match verified backup'});
+ if(sha!==expectedHashes[week])return respond(422,{error:'Original archival SHA-256 does not match verified backup'});
  let edition;try{edition=JSON.parse(raw)}catch{return respond(422,{error:'Invalid archival JSON'})}
  if(Number(edition.season)!==2026||Number(edition.week)!==week||edition.available!==true||
    !Array.isArray(edition.teams)||edition.teams.length!==32||

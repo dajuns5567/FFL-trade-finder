@@ -9,8 +9,21 @@ const html=`<!doctype html>
 <p>Stores original files in an isolated recovery folder only. No live broadcast is overwritten, no articles are published, and no AI credits are used.</p>
 <form id="form"><label for="token">Week 5 authorization token</label><input id="token" type="password" autocomplete="off" required>
 <label for="files">Original week-03.json and week-04.json</label><input id="files" type="file" accept=".json,application/json" multiple required>
-<button id="submit" type="submit">Verify and stage both originals</button></form><pre id="result" aria-live="polite">Waiting for files.</pre>
+<button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><pre id="result" aria-live="polite">Waiting for files.</pre>
 <script>
+const recoveryStatus=async token=>{
+ const r=await fetch('/.netlify/functions/inquirer-recovery-status',{headers:{authorization:'Bearer '+token}});
+ if(!r.ok)throw Error('Status check unavailable: HTTP '+r.status);
+ const body=await r.json();
+ if(!body.weeks||[3,4].some(w=>body.weeks[w]?.read_error))throw Error('Recovery status uncertain; nothing will be uploaded');
+ return body;
+};
+document.querySelector('#check').addEventListener('click',async()=>{
+ const out=document.querySelector('#result'),token=document.querySelector('#token').value.trim();
+ if(!token){out.textContent='Enter the token to inspect recovery status.';return;}
+ try{out.textContent='READ-ONLY STATUS: '+JSON.stringify(await recoveryStatus(token));}
+ catch(error){out.textContent=String(error);}
+});
 document.querySelector('#form').addEventListener('submit',async e=>{
  e.preventDefault();
  const out=document.querySelector('#result'),button=document.querySelector('#submit');
@@ -22,8 +35,11 @@ document.querySelector('#form').addEventListener('submit',async e=>{
  }
  button.disabled=true;out.textContent='Verifying original files without touching production...';
  try{
+  const existing=await recoveryStatus(token);
   for(const file of files.sort((a,b)=>a.name.localeCompare(b.name))){
    const week=Number(file.name.match(/week-0([34])/)[1]);
+   if(existing.weeks[week]?.verified){out.textContent+='\\nWeek '+week+': already staged and hash verified; no rewrite.';continue;}
+   if(existing.weeks[week]?.present!==false)throw Error('Week '+week+' storage is uncertain or conflicting; no write made');
    const response=await fetch('/.netlify/functions/inquirer-recover-week-archive',
     {method:'POST',headers:{authorization:'Bearer '+token,'x-recovery-week':String(week),
      'content-type':'application/json'},body:file});

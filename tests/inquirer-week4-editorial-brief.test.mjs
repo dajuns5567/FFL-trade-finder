@@ -18,6 +18,8 @@ test('only a complete approved Week 4 edition may provide style samples',()=>{
   assert.equal(payload.current_week_verified_facts.team,team.team_name);
   assert.match(brief.system,/Never lift or paraphrase/);
   assert.match(brief.system,/Do not borrow Weeks 1–3/);
+  assert.match(brief.system,/first lede paragraph must naturally state the EXACT verified team and opponent names/);
+  assert.match(brief.system,/grounded fleeced\/value signals/);
   assert.doesNotMatch(brief.user,/previous_week_prose_source/);
 });
 

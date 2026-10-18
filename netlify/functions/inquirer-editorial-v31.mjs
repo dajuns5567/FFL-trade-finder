@@ -3377,6 +3377,9 @@ function assertWeek2Originality(result,previousEdition){
   overview=deepStrings(overview,s=>adaptWeekLanguage(s,week,weekClassification));
   if(week>=3)teams=evolveForwardTeams(teams,previousEdition,week,variationSalt);
   if(week>=3)teams=polishForwardTeamCopy(teams,week,variationSalt);
+  // Recheck the finished language: polishing can expose collisions that the
+  // earlier pass could not see, especially across distinct reporter desks.
+  if(week>=3)teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+101);
 
   const trajectory=(overview.sections||[]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
   if(trajectory)trajectory.paragraphs=forwardTrajectoryParagraphs(teams,week);
@@ -3408,7 +3411,14 @@ function assertWeek2Originality(result,previousEdition){
     :'Week '+week+' gets its own newspaper: new games, new arguments, and enough season memory to know which developments are starting to repeat.';
   overview.week=week;overview.season=season;overview.week_classification=weekClassification||overview.week_classification;
   overview.inquirer_version=FORWARD_INQUIRER_VERSION;overview.editorial_revision=FORWARD_EDITORIAL_REVISION;
-  for(const t of teams){if(t?.inquirer_article){t.inquirer_article.headline=w2TeamGrammar(t,String(t.inquirer_article.headline||'')).replace(/^this Sunday/i,'This Sunday').replace(/the Week (\\d+) Look Less Accidental/gi,'Week $1 Look Less Accidental');t.inquirer_article.week=week;t.inquirer_article.week_classification=t.week_classification||weekClassification;t.inquirer_article.editorial_revision=FORWARD_EDITORIAL_REVISION}}
+  for(const t of teams){if(t?.inquirer_article){{
+   let title=String(t.inquirer_article.headline||'').replace(/^this Sunday/i,'This Sunday').replace(/the Week (\d+) Look Less Accidental/gi,'Week $1 Look Less Accidental');
+   if(w2PluralTeamName(t.team_name)){
+    const titleVerbs={Makes:'Make',Wins:'Win',Has:'Have',Keeps:'Keep',Falls:'Fall',Loses:'Lose',Takes:'Take',Gives:'Give',Puts:'Put',Gets:'Get',Leaves:'Leave',Turns:'Turn',Banks:'Bank',Raises:'Raise',Is:'Are',Looks:'Look',Exposes:'Expose',Needs:'Need',Owns:'Own',Starts:'Start',Earns:'Earn',Lands:'Land'};
+    title=title.replace(new RegExp(w2EscRe(w2DisplayTeam(t.team_name))+' ('+Object.keys(titleVerbs).join('|')+')\\b','g'),(_,verb)=>w2DisplayTeam(t.team_name)+' '+titleVerbs[verb]);
+   }
+   t.inquirer_article.headline=title;
+  }t.inquirer_article.week=week;t.inquirer_article.week_classification=t.week_classification||weekClassification;t.inquirer_article.editorial_revision=FORWARD_EDITORIAL_REVISION}}
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

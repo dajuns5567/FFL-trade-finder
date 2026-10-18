@@ -70,7 +70,9 @@ export async function composeWeek4ArticleDraft({client,model,team,acceptedWeek4,
   let draft;
   try{draft=JSON.parse(String(source||''))}catch{throw new Error('Week 4 editorial model did not return a JSON article')}
   const check=validateWeek4EditorialDraft(draft,team);
-  if(!check.ok)throw new Error('Week 4 editorial draft held: '+check.errors.join(', '));
+  // Keep imperfect draft text in the private review area so one shallow
+  // article cannot erase an otherwise complete 32-team generation run.
+  // Quality failures still block approval and publication at the edition gate.
   // Never accept arbitrary model-supplied metadata, badge data, approvals,
   // reporter identities, or other edition fields as authoritative.
   const article={...team.inquirer_article,headline:draft.headline,deck:typeof draft.deck==='string'?draft.deck:'',sections:draft.sections,aside:null,generated_from:'week4-v19-style-ai-review',week:Number(week),

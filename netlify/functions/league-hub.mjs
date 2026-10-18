@@ -78,9 +78,15 @@ async function nflWeekSchedule(season,week){
 }
 // Calling the handler inside the same Netlify function avoids SSO's external HTTP 401 gate.
 // The handler uses this site's own Blob context and existing server-side read contract.
-async function internalHistory(origin,query){
+async function internalHistory(origin,query,previewReadOnly=false){
  try{
-  const r=await valueHistoryHandler(new Request(origin+'/.netlify/functions/value-history?'+query));
+  // The local value-history GET handler performs legacy Blob cleanups before
+  // reading. On a Deploy Preview, use production's public read endpoint so
+  // this preview invocation cannot mutate the shared history store.
+  const url=origin+'/.netlify/functions/value-history?'+query;
+  const r=previewReadOnly
+   ?await fetch(url,{headers:{accept:'application/json'},cache:'no-store'})
+   :await valueHistoryHandler(new Request(url));
   if(!r.ok)throw Error('value-history '+r.status);
   return await r.json();
  }catch(e){console.warn('inquirer-canonical-history',String(e?.message||e));return{error:String(e?.message||e)}}
@@ -331,7 +337,11 @@ export async function weeklyReport(req){
  const historicalSeasonYear=season-1,historicalSeason=await fetchBestSeason(historicalSeasonYear).catch(()=>({stats:null,source:null,errors:['unavailable']}));
  const previousStored=week>1?await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null):null,previousBroadcast=previousStored?{...previousStored,published_locked:true}:preloadedBroadcast(season,week-1);
  let managerHistoryData=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
- if(!managerHistoryData?.career?.length)managerHistoryData=await managerHistory().catch(()=>({career:[],current:[],assignments:[]}));
+ if(!managerHistoryData?.career?.length){
+  // managerHistory() rebuilds two shared Blob keys. A preview must never call
+  // it, even when production has no cached manager history.
+  managerHistoryData=previewReadOnly?{career:[],current:[],assignments:[]}:await managerHistory().catch(()=>({career:[],current:[],assignments:[]}));
+ }
  const [matchups,transactions,rosters,users,proj,players,nextMatchups,nextProj,weeklyStats,winnersBracket]=await Promise.all([
   fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`),fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>[]),
   fetchJson(`${API}/league/${LEAGUE}/rosters`),fetchJson(`${API}/league/${LEAGUE}/users`),projections(season,week,league?.scoring_settings||{}),
@@ -342,9 +352,9 @@ export async function weeklyReport(req){
  ]);
  const futureFantasyWeeks=Array.from({length:Math.min(3,Math.max(0,INQUIRER_FINAL_WEEK-week))},(_,i)=>week+i+1),futureFantasyMatchups=await Promise.all(futureFantasyWeeks.map(w=>w===week+1?Promise.resolve(nextMatchups):fetchJson(`${API}/league/${LEAGUE}/matchups/${w}`).catch(()=>[])));
  const nextNflWeek=week<INQUIRER_FINAL_WEEK?week+1:null,[teamValueHistory,canonicalTrades,nextSchedule,playerMarket]=await Promise.all([
-  internalHistory(origin,'team_net_all=1'),
-  internalHistory(origin,'trades=1'),
-  nflWeekSchedule(season,nextNflWeek), internalHistory(origin,'market=1')
+  internalHistory(origin,'team_net_all=1',previewReadOnly),
+  internalHistory(origin,'trades=1',previewReadOnly),
+  nflWeekSchedule(season,nextNflWeek), internalHistory(origin,'market=1',previewReadOnly)
  ]);
  const matchupWeeks=Array.from({length:Math.max(1,week)},(_,i)=>i+1),statWeeks=Array.from({length:Math.max(1,week)},(_,i)=>i+1);
  const [seasonMatchupsRows,recentStatRows]=await Promise.all([

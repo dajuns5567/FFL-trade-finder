@@ -22,7 +22,9 @@ test('preflight is read-only and confirms a complete locked source without spend
 });
 test('preflight exposes missing locked source instead of a misleading background 202',async()=>{
  const body=await (await handler(request,context({...weeks,'broadcasts/2026/week-05.json':null}))).json();
- assert.deepEqual(body,{ready:false,reason:'locked_week5_source_missing'});
+ assert.equal(body.ready,false);assert.equal(body.reason,'locked_week5_source_missing');
+ assert.equal(body.sources.week4.present,true);assert.equal(body.sources.week4.locked,true);
+ assert.equal(body.sources.week5.present,false);
 });
 test('preflight never generates or rewrites after job marker exists',async()=>{
  const body=await (await handler(request,context({...weeks,
@@ -33,4 +35,13 @@ test('preflight rejects bad auth before any Blob read',async()=>{
  let opened=false;
  const response=await handler(new Request(request.url,{method:'GET'}),{site,readEnv,openStore:async()=>{opened=true;}});
  assert.equal(response.status,401);assert.equal(opened,false);
+});
+
+test('both source flags are reported when legacy Week 4 lacks a lock marker',async()=>{
+ const body=await (await handler(request,context({...weeks,
+  'broadcasts/2026/week-04.json':{...fixture,week:4},
+  'broadcasts/2026/week-05.json':null}))).json();
+ assert.equal(body.ready,false);
+ assert.equal(body.sources.week4.present,true);assert.equal(body.sources.week4.locked,false);
+ assert.equal(body.sources.week5.present,false);
 });

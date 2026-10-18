@@ -97,3 +97,22 @@ export function editorialApprovalMatches(edition,approval) {
     &&Number.isFinite(Date.parse(approval.reviewed_at));
   return{approved:!!valid,digest};
 }
+
+/**
+ * Explicit cost-free admission for the audited, deterministic V31 newsroom.
+ * This is not valid for AI drafts, arbitrary imported editions, or a missing
+ * locked Week 4. A failing audit always blocks public writes.
+ */
+export function deterministicInquirerAdmission(edition,{quality,audit,previousEdition}={}){
+  const digest=editorialCopyDigest(edition),week=Number(edition?.week);
+  const allowed=week>=5&&week<=18&&Number(edition?.season)>=2026&&
+    edition?.editorial_generation?.engine==='v31-forward'&&
+    Number(edition?.inquirer_version)===31&&
+    Number(previousEdition?.season)===Number(edition?.season)&&
+    Number(previousEdition?.week)===week-1&&
+    previousEdition?.published_locked===true&&
+    quality?.ok===true&&audit?.ok===true&&
+    Array.isArray(edition?.teams)&&edition.teams.length===32&&
+    Array.isArray(edition?.league_overview?.sections)&&edition.league_overview.sections.length>=4;
+  return{approved:!!allowed,digest,mode:allowed?'audited-deterministic-v31':'held'};
+}

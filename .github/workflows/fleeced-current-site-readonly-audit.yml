@@ -1,10 +1,6 @@
 name: FLEECED current-site protected storage audit (read only)
+# Opt-in only: the current-team read-only Blob credential must exist first.
 on:
-  push:
-    branches:
-      - fix/deterministic-inquirer-week5-no-ai-20261018
-    paths:
-      - .github/workflows/fleeced-current-site-readonly-audit.yml
   workflow_dispatch:
 permissions:
   contents: read

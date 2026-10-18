@@ -14,10 +14,16 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
    const job=await store.get('inquirer/week4-style-drafts/2026/week-05/generation-job.json',{type:'json'}).catch(()=>null);
    if(job)return reply(200,{ready:false,reason:'generation_already_attempted',status:job.status||'unknown'});
    const [week4,week5]=await Promise.all([4,5].map(w=>store.get(`broadcasts/2026/week-${String(w).padStart(2,'0')}.json`,{type:'json'})));
-   if(!week4||Number(week4.week)!==4||week4.published_locked!==true)
-     return reply(200,{ready:false,reason:'locked_week4_source_missing'});
-   if(!week5||Number(week5.week)!==5||week5.published_locked!==true)
-     return reply(200,{ready:false,reason:'locked_week5_source_missing'});
+   const sources={
+     week4:{present:!!week4,correct_week:Number(week4?.week)===4,locked:week4?.published_locked===true,
+       team_count:Array.isArray(week4?.teams)?week4.teams.length:0},
+     week5:{present:!!week5,correct_week:Number(week5?.week)===5,locked:week5?.published_locked===true,
+       team_count:Array.isArray(week5?.teams)?week5.teams.length:0}
+   };
+   if(!sources.week4.present||!sources.week4.correct_week||!sources.week4.locked)
+     return reply(200,{ready:false,reason:'locked_week4_source_missing',sources});
+   if(!sources.week5.present||!sources.week5.correct_week||!sources.week5.locked)
+     return reply(200,{ready:false,reason:'locked_week5_source_missing',sources});
    const checked=verifyWeeklyEditorialSource(week5);
    if(!checked.ok)return reply(200,{ready:false,reason:'week5_source_validation_failed',
      issue_count:checked.issues.length,issue_categories:[...new Set(checked.issues.map(s=>s.replace(/^.*?: /,'')))].slice(0,12)});

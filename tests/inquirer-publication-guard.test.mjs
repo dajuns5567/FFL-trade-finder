@@ -89,7 +89,11 @@ test('deep copy-forward quality must pass independently of manual approval',()=>
  assert(hub.includes('if(!audit.ok||!deepQualityOk||!admission.approved)'));
  assert(hub.includes('generation_quality:quality'));
  assert(hub.includes('deterministicInquirerAdmission(result'));
- assert(hub.includes('Preview is read-only. Editorial publication is disabled here.'));
+ assert(hub.includes("if(previewReadOnly&&!new URL(req.url).searchParams.has('preview_editorial'))"));
+ const previewReturn=hub.indexOf('if(previewReadOnly)return{...result');
+ const firstStageWrite=hub.indexOf('await s.setJSON(stageKey');
+ assert(previewReturn>0&&firstStageWrite>previewReturn,'Preview must return an in-memory draft before any shared Blob publication write');
+ assert(hub.includes('preview_only:true'),'Preview draft must be explicitly marked unpublished');
  assert(approval.includes('stage.generation_quality?.ok===true'));
 });
 

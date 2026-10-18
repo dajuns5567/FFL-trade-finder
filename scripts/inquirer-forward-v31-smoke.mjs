@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import week2 from '../netlify/functions/inquirer-week2-2026-preload.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
 import {inquirerWeekClassification} from '../netlify/functions/inquirer-reporters.mjs';
+import {inspectEditionBeforePublication} from '../netlify/functions/inquirer-publication-guard.mjs';
 
 const clone=x=>JSON.parse(JSON.stringify(x));
 const rawForWeek=(week)=>{
@@ -46,6 +47,31 @@ assert.ok(week3.teams.every(t=>Number(t.inquirer_article?.week)===3),'Every Week
 const w3copy=[...week3.teams.flatMap(t=>t.inquirer_article?.paragraphs||[]),...(week3.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[])].join(' ');
 assert.doesNotMatch(w3copy,/\bWeek 2 gets its own newspaper\b/i,'Forward edition must not retain Week 2 publication framing');
 
+// Protect later weeks against a regression into copied Week 2 phrasing.
+// Scores stay paired exactly as in the 32-team fixture so matchup integrity
+// remains independently checked; only the week label and editorial history
+// change. The locked Week 4 edition is not rewritten or stored by this test.
+const realisticForwardRaw=week=>{
+  const teams=clone(week2.teams).map(t=>({...t,week,week_classification:inquirerWeekClassification(week,2026,t.conference)}));
+  const overview=clone(week2.league_overview);
+  overview.week=week;
+  overview.week_classification=inquirerWeekClassification(week,2026);
+  return{rawInquirer:{reporters:clone(week2.reporters),teams},rawOverview:overview};
+};
+let editorialSweep=0;
+for(const week of [5,6,9,14]){
+  const raw=realisticForwardRaw(week),classification=inquirerWeekClassification(week,2026);
+  for(const salt of (week===5?[0,1,5]:[5])){
+    const drafted=applyInquirerEditorialV31({season:2026,week,...raw,previousEdition:week2,weekClassification:classification,variationSalt:salt});
+    const edition={season:2026,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
+    const audit=inspectEditionBeforePublication(edition);
+    assert.ok(audit.ok,'Week '+week+' salt '+salt+' failed publication copy audit: '+JSON.stringify(audit.issues.slice(0,8)));
+    const q=evaluateInquirerEditionQuality(edition,week2);
+    assert.ok(q.ok,'Week '+week+' salt '+salt+' repeated editorial scaffolds: '+JSON.stringify(q.issues.slice(0,8)));
+    editorialSweep++;
+  }
+}
+
 const week9raw=rawForWeek(9),week9=applyInquirerEditorialV31({season:2026,week:9,...week9raw,previousEdition:week3,weekClassification:inquirerWeekClassification(9,2026),variationSalt:2});
 assert.ok((week9.leagueOverview.sections||[]).some(s=>s.heading==='The Playoff Race Is No Longer Background Noise'),'Late regular-season edition must introduce explicit playoff-race coverage');
 
@@ -68,4 +94,4 @@ assert.match(playoffCopy,/eliminated from championship contention/i,'Wildcard ed
 assert.match(playoffCopy,/advances to .*Divisional Round/i,'Wildcard edition must identify teams advancing to the Divisional Round');
 assert.ok((week14.leagueOverview.sections||[]).some(s=>/Wildcard Round: Who Advanced and Who Went Home/.test(String(s.heading||''))),'Wildcard recap must include explicit round advancement/elimination section');
 
-console.log(JSON.stringify({ok:true,week3_quality:quality?.metrics||{},week3_headline:week3.league_overview.headline,week9_playoff_race:true,week14_round:true},null,2));
+console.log(JSON.stringify({ok:true,editorial_sweep:editorialSweep,week3_quality:quality?.metrics||{},week3_headline:week3.league_overview.headline,week9_playoff_race:true,week14_round:true},null,2));

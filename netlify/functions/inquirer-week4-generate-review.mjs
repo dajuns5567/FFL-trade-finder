@@ -18,7 +18,7 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
   if(site?.id&&site.id!=='2e556797-6f35-4037-aa5a-1338724eb71d')
     return json(403,{error:'Wrong Netlify project for Fleeced editorial generation'});
   const model=String(readEnv('FLEECED_EDITORIAL_MODEL')||'');
-  if(!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{2,90}$/.test(model))return json(503,{error:'Editorial model not configured'});
+  if(model!=='gpt-4.1')return json(503,{error:'Editorial model not configured'});
   const store=await openStore(),season=2026,week=5;
   const jobKey=`inquirer/week4-style-drafts/${season}/week-05/generation-job.json`;
   const existing=await store.get(jobKey,{type:'json'}).catch(()=>null);

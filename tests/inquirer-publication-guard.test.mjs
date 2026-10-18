@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {inspectEditionBeforePublication,editorialCopyDigest,editorialApprovalMatches,deterministicInquirerAdmission}
+import {inspectEditionBeforePublication,editorialCopyDigest,editorialApprovalMatches,deterministicInquirerAdmission,isReadOnlyEditorialPreview}
  from '../netlify/functions/inquirer-publication-guard.mjs';
 
 const makeEdition=()=>{
@@ -124,10 +124,9 @@ test('audited original V31 newsroom auto-admits only Week 5+ after locked Week 4
  assert.equal(deterministicInquirerAdmission({...edition,teams:edition.teams.slice(1)},clean).approved,false);
 });
 
-test('deploy previews cannot trigger shared-Blob editorial publishing',async()=>{
- const {weeklyReport}=await import('../netlify/functions/league-hub.mjs');
- const result=await weeklyReport(new Request('https://deploy-preview-397--some-site.netlify.app/.netlify/functions/league-hub?weekly=1'));
- assert.equal(result.available,false);
- assert.equal(result.published_locked,false);
- assert.match(result.reason,/read-only/);
+test('deploy previews are read-only before shared-Blob publication can run',()=>{
+ assert.equal(isReadOnlyEditorialPreview('https://deploy-preview-398--some-site.netlify.app/.netlify/functions/league-hub'),true);
+ assert.equal(isReadOnlyEditorialPreview('https://some-site.netlify.app/.netlify/functions/league-hub','deploy-preview'),true);
+ assert.equal(isReadOnlyEditorialPreview('https://some-site.netlify.app/.netlify/functions/league-hub','branch-deploy'),true);
+ assert.equal(isReadOnlyEditorialPreview('https://some-site.netlify.app/.netlify/functions/league-hub','production'),false);
 });

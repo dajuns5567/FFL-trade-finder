@@ -1,6 +1,6 @@
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
-import {inspectEditionBeforePublication,editorialApprovalMatches} from './inquirer-publication-guard.mjs';
+import {inspectEditionBeforePublication,editorialApprovalMatches,deterministicInquirerAdmission} from './inquirer-publication-guard.mjs';
 import { getStore } from '@netlify/blobs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
@@ -303,6 +303,12 @@ async function reporterArchive(id){
 async function reporterDirectory(){return{schema_version:1,inquirer_version:INQUIRER_VERSION,reporters:publicReporters()}}
 
 export async function weeklyReport(req){
+ // Deploy previews share site-wide Netlify Blobs with production. Never let a
+ // preview recompute or publish articles, awards, or historical archive keys.
+ const host=new URL(req.url).hostname;
+ const context=String(globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'');
+ if(/^deploy-preview-|^deploy-branch-/.test(host)||['deploy-preview','branch-deploy'].includes(context))
+  return{available:false,published_locked:false,reason:'Preview is read-only. Editorial publication is disabled here.'};
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
  const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,origin=new URL(req.url).origin,s=store(),
   cappedWeek=Math.min(INQUIRER_FINAL_WEEK,Math.max(1,currentWeek));
@@ -400,7 +406,9 @@ export async function weeklyReport(req){
  const stageKey='inquirer/editorial-staging/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
  const approvalKey='inquirer/editorial-approvals/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
  const approval=await s.get(approvalKey,{type:'json'}).catch(()=>null);
- const admission=editorialApprovalMatches(result,approval);
+ const manualAdmission=editorialApprovalMatches(result,approval);
+ const automatedAdmission=deterministicInquirerAdmission(result,{quality,audit,previousEdition:previousBroadcast});
+ const admission=manualAdmission.approved?manualAdmission:automatedAdmission;
  // A clean basic manuscript audit is not enough: the full cross-week
  // evaluator also rejects recycled paragraphs and cross-reporter scaffolds.
  // Never allow a reviewed digest to override an unresolved generation failure.
@@ -419,6 +427,8 @@ export async function weeklyReport(req){
     audit.ok?'Awaiting exact-copy editorial approval.':
     'Editorial quality hold: '+audit.issues.length+' findings. No edition was published.'};
  }
+ if(automatedAdmission.approved&&!manualAdmission.approved)
+  result.editorial_generation.publication_mode='audited-deterministic-v31';
  await s.setJSON(key,result);await syncReporterArchives(s,result,key);if(result.league_overview){const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json',storedOverview=await s.get(overviewKey,{type:'json'}).catch(()=>null);if(!storedOverview?.headline)await s.setJSON(overviewKey,{...result.league_overview,editorial_revision:result.editorial_revision,captured_at:result.generated_at,published_locked:true})}
  const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),list=Array.isArray(idx)?idx:[];if(!list.some(x=>x.season===season&&x.week===week)){list.push({type:'week',season,week,key,captured_at:result.generated_at});list.sort((a,b)=>a.season-b.season||a.week-b.week);await s.setJSON('broadcasts/index.json',list)}return result;
 }

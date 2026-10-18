@@ -1,4 +1,5 @@
 import {weeklyReport,weeklyAwards} from './league-hub.mjs';
+import {getStore} from '@netlify/blobs';
 
 // Netlify background functions run for up to 15 minutes. The hourly scheduler
 // queues this private job instead of trying to generate 32 articles in 30 seconds.
@@ -10,7 +11,10 @@ export default async function publishInquirerInBackground(req){
   console.error('inquirer-background rejected unauthorized invocation');
   return new Response('Forbidden',{status:403});
  }
- let report=null,awards=null;
+ const statusStore=getStore('fleeced-league-hub',{consistency:'strong'});
+ const startedAt=new Date().toISOString();
+ await statusStore.setJSON('inquirer/publication-status.json',{state:'running',started_at:startedAt}).catch(error=>console.error('inquirer-status-start',error));
+ let report=null,awards=null,reportError=null,awardsError=null;
  try{
   report=await weeklyReport(req);
   console.info('inquirer-background-report',JSON.stringify({
@@ -18,9 +22,18 @@ export default async function publishInquirerInBackground(req){
    waiting_for_week:report?.waiting_for_week,review_required:!!report?.review_required,
    editorial_findings:report?.editorial_findings,reason:report?.reason||null
   }));
- }catch(error){console.error('inquirer-background-report-failed',error)}
+ }catch(error){reportError=String(error?.message||error);console.error('inquirer-background-report-failed',error)}
  try{
   awards=await weeklyAwards();
   console.info('inquirer-background-awards',JSON.stringify({records:awards?.records?.length||0}));
- }catch(error){console.error('inquirer-background-awards-failed',error)}
+ }catch(error){awardsError=String(error?.message||error);console.error('inquirer-background-awards-failed',error)}
+ await statusStore.setJSON('inquirer/publication-status.json',{
+  state:reportError||awardsError?'error':report?.review_required?'editorial-hold':'completed',
+  started_at:startedAt,finished_at:new Date().toISOString(),
+  season:report?.season??null,week:report?.week??null,
+  available:!!report?.available,review_required:!!report?.review_required,
+  reason:report?.reason||null,editorial_findings:report?.editorial_findings??null,
+  weekly_awards_records:awards?.records?.length??null,
+  error:reportError,award_error:awardsError
+ }).catch(error=>console.error('inquirer-status-final',error));
 }

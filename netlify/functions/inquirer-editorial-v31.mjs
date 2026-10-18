@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=17;
+export const FORWARD_EDITORIAL_REVISION=18;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -119,16 +119,16 @@ function evolutionHash(value){
 }
 const EVOLUTION_INTROS={
   'walter-mercer':[
-    'The football read is straightforward:','Strip away the noise and this is what remains:','The weekly ledger is blunt here:','The useful football answer is simpler:','Put the emotion to one side for a second:','The Sunday note that survives review is this:','The cleanest read from the result is this:','Start with the part that will still matter Tuesday:'
+    'Look at the names behind the final score:','The margin leaves one especially stubborn question:','The weekly ledger is blunt here:','The useful football answer is simpler:','Put the emotion to one side for a second:','The Sunday note that survives review is this:','The part that survives the box-score argument:','Start with the part that will still matter Tuesday:'
   ],
   'tess-delaney':[
-    'The less glamorous truth is this:','There is no elegant detour around it:','The cleaner football answer is this:','No need to romanticize the result:','The civilized version is still fairly obvious:','Once the postgame swagger wears off, this remains:','The part worth keeping after the applause is this:','Even a dramatic Sunday can be reduced to one useful point:'
+    'The less glamorous truth is this:','The fashionable excuses do not survive this score:','The cleaner football answer is this:','No need to romanticize the result:','The civilized version is still fairly obvious:','After the celebration dies down, the lineup still has to answer:','Once the cheers fade, this detail stays in the room:','For all the Sunday noise, one choice still sticks:'
   ],
   'mack-hollis':[
-    'Here is the loud part:','Put this on the big screen:','The back-page version is simple:','Skip the polite introduction:','Here is what survives the shouting:','The part rival managers will screenshot is this:','No tiny print required:','This is the sentence the group chat will keep:'
+    'Here is the loud part:','Put this on the big screen:','The back-page version is simple:','Skip the polite introduction:','Here is what survives the shouting:','The part rival managers will screenshot is this:','No tiny print required:','Someone will be explaining this on Monday:'
   ],
   'nora-voss':[
-    'Rivals can circle this:','The rival-chat version is uncomfortable:','No conspiracy is required here:','The part opponents will remember is this:','The annoying fact survives review:','Rivals do not need help finding this one:','The useful weakness-or-strength note is this:','This is the detail that will follow them into next week:'
+    'Rivals can circle this:','The other sideline will notice this:','No conspiracy is required here:','The part opponents will remember is this:','The annoying fact survives review:','Rivals do not need help finding this one:','One lineup detail deserves another look:','This is the detail that will follow them into next week:'
   ]
 };
 const EVOLUTION_TAILS={
@@ -2160,7 +2160,7 @@ function w2ValueMoverReads(t,r){
     },bank=voice[rid]||voice["walter-mercer"],out=[];
   if(risers.length)out.push(w2S(t,r,"value-risers",bank.riseLead[q]+w2ValueMoverSentence(t,r,risers,true)+" "+bank.riseTail[q]));
   if(fallers.length)out.push(w2S(t,r,"value-fallers",bank.fallLead[(q+1)%4]+w2ValueMoverSentence(t,r,fallers,false)+" "+bank.fallTail[(q+1)%4]));
-  if(!out.length)out.push(w2S(t,r,"value-movers-missing","The team-level value move is real, but the player-level mover rows are missing, so the article stops there instead of inventing culprits."));
+  if(!out.length)out.push(w2S(t,r,"value-movers-missing","No verified player-level value mover can be attributed to this week's market shift."));
   return out;
 }
 

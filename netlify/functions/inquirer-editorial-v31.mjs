@@ -136,7 +136,7 @@ const EVOLUTION_INTROS={
 const EVOLUTION_TAILS={
   'walter-mercer':['That is the part worth carrying forward.','The next matchup gets to test whether it travels.','That belongs in the season ledger now.','The following Sunday gets the rebuttal.','That is enough to change the next conversation.','The point is useful precisely because it can be tested again.','The season has another data point to answer now.','Keep that in the notebook when the next lineup locks.'],
   'tess-delaney':['Elegant or not, the score keeps the receipt.','The next opponent is allowed to object.','Good manners do not make the point less true.','The following Sunday can improve the presentation.','That is the version I am willing to keep.','The next matchup can either polish it or ruin it.','There is plenty of time for the season to make this look foolish.','For now, the football has earned the sentence.'],
-  'mack-hollis':['Nobody needs a committee meeting to understand it.','Next week can yell back if it disagrees.','Save the screenshot; the next game gets a vote.','That one is going straight into the group chat.','The next opponent can file the complaint.','If it repeats, the headline gets bigger.','If it disappears, we will happily print the correction.','Either way, the next Sunday is already booked.'],
+  'mack-hollis':['Nobody needs a committee meeting to understand it.','Next Sunday can answer.','Save the screenshot; the next game gets a vote.','That one is going straight into the group chat.','The next opponent can file the complaint.','If it repeats, the headline gets bigger.','If it disappears, we will happily print the correction.','Either way, the next Sunday is already booked.'],
   'nora-voss':['Rivals will remember it even if management would rather they did not.','The next matchup gets first chance to dispute it.','That is enough material for the rival chat.','The next Sunday decides whether this becomes a pattern.','Opponents now know exactly where to look.','Management gets one week to make the note boring.','Rivals do not need a second invitation to test it.','The season will either confirm the note or embarrass it.']
 };
 const EVOLUTION_LEXICON=[
@@ -187,8 +187,8 @@ function evolveCrossReporterSentence(sentence,reporterId,seed){
   if(!changed){
     const tails={
       'walter-mercer':' The next week gets to test that read.',
-      'tess-delaney':' The next Sunday can improve the wording if it objects.',
-      'mack-hollis':' Next week can yell back if it disagrees.',
+      'tess-delaney':' Sunday gets the rebuttal.',
+      'mack-hollis':' Next Sunday gets a vote.',
       'nora-voss':' Rivals get the next chance to prove the point wrong.'
     };
     out=out.replace(/[.!?]?$/,'.')+tails[rid];
@@ -645,26 +645,26 @@ function w2BenchRead(t,r,miss,gap,won,margin){
   const facts=[
     reserve+" managed "+points+" more than "+starter+", who got the "+slot+" start.",
     starter+" kept the "+slot+" job while "+reserve+" scored "+points+" extra points from the bench.",
-    "At "+slot+", the point difference favored reserve "+reserve+" over starter "+starter+" by "+points+".",
+    reserve+"'s "+points+"-point edge over "+starter+" makes that "+slot+" choice sting.",
     "Management chose "+starter+" for "+slot+"; "+reserve+" answered with "+points+" more points.",
     "The missed "+slot+" call: "+reserve+" beat "+starter+" by "+points+".",
     reserve+" supplied "+points+" more than "+starter+" without getting the "+slot+" start.",
     "A "+points+"-point advantage for "+reserve+" over starter "+starter+" did "+team+" no good from the sideline.",
     starter+" got the nod at "+slot+"; "+reserve+"'s extra "+points+" points stayed unused.",
-    "There was a "+points+"-point gap between bench option "+reserve+" and "+slot+" starter "+starter+".",
+    reserve+" beat "+starter+" by "+points+". "+reserve+" stayed on the bench.",
     "One roster choice aged poorly: "+starter+" started over "+reserve+", whose return was "+points+" points better.",
-    "The "+slot+" selection left "+points+" points on the table, with "+reserve+" behind "+starter+".",
+    reserve+" scored "+points+" more than "+starter+" from the bench while "+slot+" was occupied.",
     "Reserve "+reserve+" finished "+points+" ahead of "+starter+" despite the latter occupying "+slot+"."
   ];
   const judgment=won?[
-    "A win covers the bruise; it does not make the lineup decision intelligent.",
-    "Bank the victory, then ask why the better score was wearing a headset.",
-    "The scoreline forgave the manager. The bench has not.",
+    team+" keeps the win, but "+reserve+"'s "+points+"-point advantage over "+starter+" will still come up in lineup review.",
+    "The result belongs to "+team+"; the unused "+reserve+" points belong in the manager's notes.",
+    reserve+" outscored "+starter+" without even taking the "+slot+" start.",
     "Nobody is returning the win, but somebody should review that lineup card."
   ]:[
-    "With a "+marginText+"-point defeat already booked, this mistake deserves an explanation.",
+    reserve+" outscored "+starter+" during a "+marginText+"-point loss. That hurts.",
     "Those unused points will be much louder at the next lineup meeting.",
-    "The manager cannot appeal the final score, only the decision that wasted production.",
+    starter+" started at "+slot+". "+reserve+" beat that choice by "+points+".",
     "A losing week is a rough time to discover the bench had a better answer."
   ];
   return facts[choice]+" "+judgment[w2Hash(team+"|bench-verdict")%judgment.length];
@@ -683,7 +683,7 @@ function w2LedeShape(t,r,won,margin,opp,top){
     const rows=[
       close?star+" supplied the biggest "+a.mascot+" score, and a "+w2One(margin)+"-point finish means the supporting points behind him were every bit as important.":star+" set the pace, while "+team+" got enough additional scoring to finish ahead of "+foe+" without relying on one line alone.",
       wide?team+" won by "+w2One(margin)+" because the top of the lineup produced and the rest did not leave much for "+foe+" to erase on the scoreboard.":team+" finished ahead of "+foe+" with "+w2One(support)+" points from its second scorer, a healthier shape than a one-player carry.",
-      "The "+a.mascot+" headline belongs to "+star+", but the repeatable part is whether the production behind him keeps showing up. Week 2 had enough of it to beat "+foe+".",
+      star+" earned the "+a.mascot+" headline; "+(second?.name||"the support cast")+" supplied the part that made "+foe+" reachable.",
       close?"A "+w2One(margin)+"-point win makes every useful score count. "+team+" got enough behind "+star+" that no single quiet slot decided the result.":"The final score favored "+team+" because the roster produced in more than one place instead of asking "+star+" to cover every gap.",
       ([
         star+" was the loudest "+a.mascot+" reason for the win, but the supporting points behind him are what kept the result from becoming a one-player carry.",
@@ -691,15 +691,15 @@ function w2LedeShape(t,r,won,margin,opp,top){
         "The "+a.mascot+" got the star turn from "+star+" and enough production elsewhere to turn that performance into a win.",
         star+" led the "+a.mascot+" scoring, while the rest of the lineup supplied enough points to keep the result from depending on one name."
       ])[w2Hash(team+"|lede-depth")%4],
-      "The box score says "+star+" led it. The result says the points behind him were sufficient for "+team+" to finish ahead of "+foe+"."
+      star+" led "+team+", with "+(second?.name||"another starter")+" adding what "+team+" needed against "+foe+"."
     ];return rows[k];
   }
   const rows=[
     close?foe+" won by only "+w2One(margin)+", which puts ordinary lineup decisions and missing secondary points under a microscope for "+team+".":team+" lost by "+w2One(margin)+", and the gap came from too little scoring beyond "+star+", not from one mysterious football adjustment.",
     wide?"A "+w2One(margin)+"-point loss means "+team+" needed help in several lineup spots; "+star+" alone was nowhere near enough to match "+foe+".":team+" got a usable top score from "+star+", but "+foe+" finished with more total production across the matchup.",
     "The "+a.mascot+" got something from "+star+", but the lineup behind him did not produce enough to reach "+foe+"’s total.",
-    close?"This was close enough to make every bench and lineup choice hurt. "+team+" finished "+w2One(margin)+" short, so the missing support behind "+star+" is concrete rather than theoretical.":"The loss was not one strange bounce; "+foe+" simply finished with more usable fantasy points while "+team+" waited for secondary scoring that never arrived.",
-    team+" lost to "+foe+" by "+w2One(margin)+". On that evidence, the supporting lineup—not the opponent’s tactical genius—gets the uncomfortable attention.",
+    close?"This was close enough to make every bench and lineup choice hurt. "+team+" finished "+w2One(margin)+" short, so the missing support behind "+star+" is concrete rather than theoretical.":star+" gave "+team+" a focal point, but the "+w2One(margin)+"-point gap to "+foe+" survived the best individual performance.",
+    team+" lost to "+foe+" by "+w2One(margin)+". "+star+" supplied the anchor, but "+(second?.name||"the next starter")+" could not turn the result.",
     star+" gave the "+a.mascot+" something to build around, but the rest of the lineup did not supply enough points to overcome "+foe+"."
   ];return rows[k];
 }
@@ -752,7 +752,16 @@ function w2HistoricalColor(p,r,t=null,slot=0,ref=""){
     ],
     "mack-hollis":up?[
       name+" averaged "+old+" last season; "+now+" in Week 2 did not beat that number so much as kick the door off it.",
-      "The "+year+" baseline for "+name+" was "+old+"; Week 2 showed up at "+now+" with a megaphone and no indoor voice.",
+      ([
+        name+" put up "+now+" where the "+year+" baseline had been "+old+".",
+        "The old figure for "+name+" was "+old+" in "+year+". Sunday brought "+now+".",
+        name+"'s "+now+" barely resembles the "+old+" average from "+year+".",
+        "Put "+old+" beside "+now+" for "+name+". That is the difference from "+year+".",
+        "A "+year+" average of "+old+" did not predict "+name+"'s "+now+".",
+        name+" moved from a "+old+" benchmark in "+year+" to "+now+" this week.",
+        "Last year "+name+" was a "+old+"-point player. The new mark is "+now+".",
+        name+" turned the "+year+" baseline of "+old+" into a "+now+"-point Sunday."
+       ])[w2Hash(String(p?.id||name)+"|historical-angle")%8],
       name+" lived around "+old+" a game in "+year+"; Sunday’s "+now+" moved the number to a different ZIP code.",
       "Last season gave "+name+" a "+old+"-point average; Week 2 gave us "+now+" and a perfectly good reason to use the big headline.",
       "Put "+old+" next to "+name+" as the "+year+" norm; now put "+now+" next to Week 2 and try pretending nothing changed.",
@@ -913,7 +922,7 @@ function w2PlayerTrajectoryContext(t,r,p,pp,slot=0,ref=""){
         "Two Sundays now have "+who+" at "+avg+" per game after "+prior+" last season, enough evidence to treat the early jump as more than one hot box score.",
         who+" is averaging "+avg+" through two weeks after "+prior+" last year; paired with the larger opportunity, the rise has earned another week of serious attention.",
         "The two-week number is "+avg+" for "+who+" versus "+prior+" last season, which gives the early role growth something sturdier than one Sunday underneath it.",
-        "At "+avg+" per game across both weeks after "+prior+" last year, "+who+" has moved beyond the one-game-flier stage without pretending September has settled the season."
+        "At "+avg+" per game across both weeks after "+prior+" last year, "+who+" has moved beyond the one-game-flier stage without pretending the season is settled."
       ],
       "tess-delaney":[
         "Two Sundays at "+avg+" per game after "+prior+" last season give "+who+" enough substance that the larger role no longer looks like decorative optimism.",
@@ -1295,7 +1304,7 @@ function w2DivisionBoardTake(flags,reporter,subject){
         context=leadOne+" "+w2TeamVerb(leadOne,"sits","sit")+" on "+y.record+" while "+chasePair+" "+(chasePlural?"form":"forms")+" the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
         break;
       case "AFC WEST":
-        context=leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the best record at "+y.record+"; "+chasePair+" "+chaseBe+" the immediate chase, and the bottom of the division is already spending September trying not to turn two losses into a season-long tax."+midaNote+titleNote;
+        context=leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the best record at "+y.record+"; "+chasePair+" "+chaseBe+" the immediate chase, and the bottom of the division is already trying not to let two losses become a season-long tax."+midaNote+titleNote;
         break;
       case "NFC EAST":
         context=leaders.length>1
@@ -1305,7 +1314,7 @@ function w2DivisionBoardTake(flags,reporter,subject){
       case "NFC NORTH":
         context=leaders.length>=3
           ?leaderNames+" are all "+y.record+", so the standings currently resemble three people trying to leave an elevator at once. "+closestName+" ("+closestRec+") is not far enough away to create meaningful separation."+midaNote+titleNote
-          :(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"holds","hold"):leaderNames+" hold")+" the top line at "+y.record+", but "+chasePair+" keeps the race packed tightly enough that nobody can hide behind September."+midaNote+titleNote;
+          :(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"holds","hold"):leaderNames+" hold")+" the top line at "+y.record+", but "+chasePair+" keeps the race packed tightly enough that nobody can hide behind the calendar."+midaNote+titleNote;
         break;
       case "NFC SOUTH":
         context=leadOne+" "+w2TeamVerb(leadOne,"owns","own")+" "+y.record+", with "+chasePair+" providing the nearest pressure. The gap is real but thin; one stumble turns the leader from front-runner into participant again."+midaNote+titleNote;
@@ -1377,14 +1386,14 @@ function w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders){
   const a=w2Alias(t),div=String(t.division_context?.division_name||"the division"),peers=w2Natural(divisionPeerLine),k=w2Hash(String(t.roster_id)+"|division|"+String(r?.id||""))%8,lead=selfLead&&otherLeaders.length;
   const leadNames=w2Natural([t.team_name,...otherLeaders.map(x=>x.team_name)]);
   const rows=[
-    (lead?"At the top of "+div+", "+leadNames+" are tied. ":"In "+div+", "+t.team_name+" is still fighting for position. ")+(peers?"The other three are "+peers+", so Week 3 can move more than one line at once.":"Week 3 can move the order immediately."),
-    (lead?leadNames+" are tied for the "+div+" lead. ":"The "+div+" standings already put pressure on "+t.team_name+". ")+(peers?"Around the "+a.mascot+" sit "+peers+"; each head-to-head result can change the order around "+t.team_name+".":"The next result has direct standings weight."),
-    (lead?"The "+div+" has no solo leader because "+leadNames+" are level. ":"The "+a.mascot+" are not alone in a crowded "+div+" race. ")+(peers?"Around "+a.mascot+", the rest of the division reads "+peers+", making Week 3 an actual standings swing.":"Week 3 can create separation."),
+    (lead?"At the top of "+div+", "+leadNames+" are tied. ":"In "+div+", "+t.team_name+" is still fighting for position. ")+(peers?"The other contenders are "+peers+". "+a.mascot+" will notice.":"Week 3 can move the order immediately."),
+    (lead?leadNames+" are tied for the "+div+" lead. ":"The "+div+" standings give "+a.mascot+" no reason to relax. ")+(peers?"The "+div+" chase includes "+peers+". "+a.mascot+" have to make their own case next.":"The next result has direct standings weight."),
+    (lead?"The "+div+" has no solo leader because "+leadNames+" are level. ":"The "+a.mascot+" are not alone in a crowded "+div+" race. ")+(peers?"Within "+div+", the immediate competition is "+peers+". No one gets a free pass.":"Week 3 can create separation."),
     (lead?t.team_name+" is tied atop "+div+" with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" race around "+t.team_name+" is already compressed. ")+(peers?"The rivals are "+peers+"; one Sunday can reorder the whole group.":"One Sunday can reorder the group."),
     (lead?"At the top of "+div+", "+leadNames+" are tied. ":"The "+a.mascot+" enter Week 3 with division leverage still available. ")+(peers?"Behind and around them are "+peers+", so every clean result carries immediate value.":"Every clean result carries immediate value."),
-    (lead?leadNames+" are tied for first in "+div+". ":"Nobody around "+t.team_name+" has made "+div+" comfortable yet. ")+(peers?"For "+a.mascot+", the division board also includes "+peers+", and Week 3 gets first crack at breaking that cluster.":"Week 3 gets first crack at breaking the cluster."),
-    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For the "+a.mascot+", the other division names are "+peers+"; their next result belongs to the race, not an isolated September box score.":"The next result is part of the race."),
-    (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"With "+peers+" also in the divisional conversation, "+t.team_name+" needs the win for more than the weekly bragging rights.":"That is enough context to make Week 3 matter immediately.")
+    (lead?leadNames+" are tied for first in "+div+". ":"Nobody around "+t.team_name+" has made "+div+" comfortable yet. ")+(peers?a.mascot+" share "+div+" with "+peers+". Next comes the test.":"Week 3 gets first crack at breaking the cluster."),
+    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For the "+a.mascot+", the other division names are "+peers+"; the "+div+" schedule offers no free results.":"The next result is part of the race."),
+    (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"The division includes "+peers+". "+a.mascot+" need this one.":"That is enough context to make Week 3 matter immediately.")
   ];
   return rows[k];
 }
@@ -1427,8 +1436,13 @@ function w2DivisionalOutlook(t,r,next,nrecord,ndiv){
     v=w2Cohort(t)%4,article=/^[AEIOU]/i.test(ndiv)?"an":"a",
     mida=ownM&&oppM?("MIDA has the division race at "+ownM+" for "+team+" and "+oppM+" for "+next+". "):"",
     leverage=lead
-      ?team+" can make a direct "+ndiv+" rival spend the next week chasing the same division lead."
-      :team+" can take a head-to-head bite out of the "+ndiv+" race instead of leaving its own division position to results elsewhere.";
+      ?team+" can make "+next+" rethink the "+ndiv+" chase after their head-to-head result."
+      :({
+        "walter-mercer":team+" can improve its "+ndiv+" position directly against "+next+".",
+        "tess-delaney":"I would rather see "+team+" settle the "+ndiv+" argument on the field against "+next+".",
+        "mack-hollis":"Put "+team+" opposite "+next+" in the "+ndiv+" spotlight. That is the game.",
+        "nora-voss":"The "+ndiv+" rivals will be watching "+team+" against "+next+". They have a reason."
+       }[rid]||team+" gets a direct division test against "+next+".");
   const rows={
     "walter-mercer":[
       "Week 3 brings "+article+" "+ndiv+" head-to-head: "+team+" ("+own+") against "+next+" ("+nrecord+"). These games are scarce, and in this league the division winner owns a playoff berth, so "+leverage+" "+mida+"That is real leverage, not just a louder label on the schedule.",
@@ -1439,7 +1453,7 @@ function w2DivisionalOutlook(t,r,next,nrecord,ndiv){
     "tess-delaney":[
       next+" is not merely the next reservation; it is a "+ndiv+" table fight with "+team+". There are only so many head-to-head chances to move a direct rival, and the division winner gets a playoff seat automatically. "+mida+"This is one of the appointments where stealing the chair matters.",
       "Week 3 seats "+team+" and "+next+" at the same "+ndiv+" table. A division win helps the "+a.mascot+" while handing the rival the opposite result, and the eventual division crown comes with a playoff invitation. "+mida+"That is a considerably more expensive dinner than the schedule usually serves.",
-      "The room should circle "+next+" for one reason above all: "+ndiv+" is their shared route to an automatic playoff berth. Head-to-head chances are limited, so "+leverage+" "+mida+"Nobody should confuse that with decorative September drama.",
+      "The room should circle "+next+" for one reason above all: "+ndiv+" is their shared route to an automatic playoff berth. Head-to-head chances are limited, so "+leverage+" "+mida+"Nobody should confuse that with decorative schedule drama.",
       team+" gets a direct "+ndiv+" rival in "+next+". The division title buys a playoff seat, which means one result can improve the "+a.mascot+" position and damage the rival’s at the same time. "+mida+"That is the kind of reservation worth wearing the good suit for."
     ],
     "mack-hollis":[
@@ -1449,7 +1463,7 @@ function w2DivisionalOutlook(t,r,next,nrecord,ndiv){
       team+" and "+next+" are fighting for the same "+ndiv+" door, and that door opens straight into the playoffs for the division winner. Head-to-head chances are limited. "+mida+"If the "+a.mascot+" want leverage, this is where they stop asking politely."
     ],
     "nora-voss":[
-      next+" shares "+ndiv+" with "+team+", which means the rival chat finally gets a game with actual teeth. A division result helps one side and hurts the other in the same race, and the division winner gets a playoff berth. "+mida+"That is much harder to laugh away than a random September loss.",
+      next+" shares "+ndiv+" with "+team+", which means the rival chat finally gets a game with actual teeth. A division result helps one side and hurts the other in the same race, and the division winner gets a playoff berth. "+mida+"That is much harder to laugh away than a random regular-season loss.",
       "Week 3 gives "+team+" a direct "+ndiv+" rival in "+next+". There are only so many head-to-head shots, and the division crown carries a playoff spot, so "+leverage+" "+mida+"Rivals can joke afterward; first they have to survive the leverage.",
       "The pressure in "+team+"–"+next+" comes from both teams spending the same limited head-to-head opportunity in a race whose winner reaches the playoffs. "+mida+"Somebody leaves with a better argument and somebody leaves with less room.",
       team+" meets "+next+" inside "+ndiv+", where the schedule does not hand out unlimited rematches. The division winner gets a playoff berth, so every direct result changes the path for both sides. "+mida+"That is the kind of joke that shows up in the standings."
@@ -1558,7 +1572,7 @@ function w2ScheduleStretchRead(t,r,next,later){
     "mack-hollis":{
       hard:[
         "Then the schedule puts on shoulder pads: "+detail+" are waiting after "+next+". Win Week 3 and "+a.mascot+" hit that wall with momentum; lose and the wall gets to introduce itself while everybody is already yelling.",
-        "The heavy part comes after "+next+": "+detail+". Bank Week 3 before that stretch arrives, because asking those games to fix a loss is how September starts sounding like an emergency broadcast.",
+        "The heavy part comes after "+next+": "+detail+". Bank Week 3 before that stretch arrives, because asking those games to fix a loss is how the schedule starts sounding like an emergency broadcast.",
         detail+" are next behind "+next+", and that is a real gauntlet. Week 3 is the one to grab before the schedule turns the resistance up and starts charging extra for every bad lineup call.",
         "After "+next+", "+team+" runs into "+detail+". That is the hard stretch, full stop. Win now and attack it; lose now and the next two games show up carrying a much louder problem."
       ],
@@ -2490,16 +2504,26 @@ function w2ProjectionOutlookRead(t,r,next){
   const team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(next||t.next_opponent_name||"the opponent"),
     rid=String(r?.id||""),gap=Math.abs(own-opp),fav=own===opp?null:(own>opp?team:foe),v=w2Cohort(t)%4,
     ownPts=w2One(own),oppPts=w2One(opp),edge=w2One(gap),
-    label=!fav?"no projection favorite":gap<3?"a paper-thin favorite":gap<8?"the modest projection favorite":"the clear projection favorite";
+    label=!fav?"no projection favorite":gap<3?"barely favored":gap<8?"modestly favored":"heavily favored";
   const rows={
     "walter-mercer":[
-      team+" is projected at "+ownPts+" against "+foe+" at "+oppPts+". "+(fav?fav+" is "+label+" by "+edge+", enough to set an expectation without settling the argument.":"There is no projection favorite; the numbers have declined to pick a side.")+" The lineup still has to earn the part that matters.",
+      team+" is projected at "+ownPts+" against "+foe+" at "+oppPts+". "+(fav?({
+        "walter-mercer":"The "+edge+"-point forecast advantage belongs to "+fav,
+        "tess-delaney":fav+" takes the "+edge+"-point favorite seat",
+        "mack-hollis":fav+" owns the "+edge+"-point projection megaphone",
+        "nora-voss":"Rivals see a "+edge+"-point forecast advantage for "+fav
+       }[rid]||fav+" has a "+edge+"-point forecast edge")+", enough to set an expectation without settling the argument.":"There is no projection favorite; the numbers have declined to pick a side.")+" The lineup still has to earn the part that matters.",
       "The Week 3 board has "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?fav+" carries the projection edge of "+edge+", which is useful context rather than a permission slip.":"That leaves no projection favorite and no numerical excuse for confidence.")+" Sunday gets the final word.",
       ownPts+" for "+team+" and "+oppPts+" for "+foe+" is the current projection. "+(fav?fav+" enters as "+label+" with a "+edge+"-point edge.":"The projection favorite is nobody; the line is even.")+" Treat that as the starting expectation, not a verdict with shoulder pads.",
       "Projection-wise, "+team+" brings "+ownPts+" to "+foe+"’s "+oppPts+". "+(fav?fav+" owns the "+edge+"-point edge and therefore the favorite label for now.":"Neither side owns a projection edge.")+" The actual lineup remains inconveniently necessary."
     ],
     "tess-delaney":[
-      "The place cards read "+team+" "+ownPts+", "+foe+" "+oppPts+". "+(fav?fav+" is "+label+" by "+edge+", so the reservation has a favorite without becoming a coronation.":"There is no projection favorite; even the seating chart has refused to gossip.")+" This table has already demonstrated poor manners.",
+      "The place cards read "+team+" "+ownPts+", "+foe+" "+oppPts+". "+(fav?({
+        "walter-mercer":"The "+edge+"-point forecast advantage belongs to "+fav,
+        "tess-delaney":fav+" takes the "+edge+"-point favorite seat",
+        "mack-hollis":fav+" owns the "+edge+"-point projection megaphone",
+        "nora-voss":"Rivals see a "+edge+"-point forecast advantage for "+fav
+       }[rid]||fav+" has a "+edge+"-point forecast edge")+", so the reservation has a favorite without becoming a coronation.":"There is no projection favorite; even the seating chart has refused to gossip.")+" This table has already demonstrated poor manners.",
       team+" arrives with a "+ownPts+" projection while "+foe+" carries "+oppPts+". "+(fav?fav+" gets the favorite chair by "+edge+" points.":"The projection edge is zero, so nobody gets the favorite chair.")+" The room is still fully capable of embarrassing the place cards.",
       "For the next reservation, the forecast serves "+ownPts+" to "+team+" and "+oppPts+" to "+foe+". "+(fav?fav+" holds a "+edge+"-point projection edge.":"No projection favorite appears on the menu.")+" That is enough to set expectations and nowhere near enough to order champagne.",
       team+" is penciled in for "+ownPts+" and "+foe+" for "+oppPts+". "+(fav?fav+" wears the favorite label with a "+edge+"-point edge.":"The projection refuses to name a favorite.")+" Sunday is under no obligation to respect the seating chart."
@@ -2508,12 +2532,22 @@ function w2ProjectionOutlookRead(t,r,next){
       "The projection board screams "+team+" "+ownPts+", "+foe+" "+oppPts+". "+(fav?fav+" is the favorite by "+edge+" points.":"There is no projection favorite; the numbers are tied and apparently afraid of commitment.")+" Now somebody has to survive the actual noise.",
       team+" gets "+ownPts+" on the forecast and "+foe+" gets "+oppPts+". "+(fav?fav+" owns a "+edge+"-point projection edge, enough to put the favorite badge on the door.":"Nobody owns a projection edge, so keep the favorite badge in the drawer.")+" One busted lineup call can still set the whole thing on fire.",
       "Week 3 projects "+ownPts+" for "+team+" against "+oppPts+" for "+foe+". "+(fav?fav+" carries the "+edge+"-point favorite edge.":"The projection favorite is a shrug.")+" Put it on the marquee if you want; the margin is where the yelling starts.",
-      "The numbers put "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?fav+" is "+label+" by "+edge+".":"No projection favorite survives the math.")+" The spreadsheet has picked as much of a fight as it can; Sunday gets the final word."
+      "The numbers put "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?({
+        "walter-mercer":"The "+edge+"-point forecast advantage belongs to "+fav,
+        "tess-delaney":fav+" takes the "+edge+"-point favorite seat",
+        "mack-hollis":fav+" owns the "+edge+"-point projection megaphone",
+        "nora-voss":"Rivals see a "+edge+"-point forecast advantage for "+fav
+       }[rid]||fav+" has a "+edge+"-point forecast edge")+".":"No projection favorite survives the math.")+" The spreadsheet has picked as much of a fight as it can; Sunday gets the final word."
     ],
     "nora-voss":[
       team+" projects to "+ownPts+" and "+foe+" to "+oppPts+". "+(fav?fav+" gets the favorite label with a "+edge+"-point projection edge.":"There is no projection favorite, which deprives rivals of one easy screenshot.")+" Somebody still has to survive the result afterward.",
       "The pregame screenshot shows "+team+" "+ownPts+" and "+foe+" "+oppPts+". "+(fav?fav+" owns a "+edge+"-point edge and the favorite tag.":"The projection edge is zero; neither side gets free bragging rights.")+" Rivals can frame the number until kickoff.",
-      ownPts+" is the projection for "+team+"; "+oppPts+" is the number for "+foe+". "+(fav?fav+" is "+label+" by "+edge+".":"The model declines to name a projection favorite.")+" The losing screenshot will still be larger.",
+      ownPts+" is the projection for "+team+"; "+oppPts+" is the number for "+foe+". "+(fav?({
+        "walter-mercer":"The "+edge+"-point forecast advantage belongs to "+fav,
+        "tess-delaney":fav+" takes the "+edge+"-point favorite seat",
+        "mack-hollis":fav+" owns the "+edge+"-point projection megaphone",
+        "nora-voss":"Rivals see a "+edge+"-point forecast advantage for "+fav
+       }[rid]||fav+" has a "+edge+"-point forecast edge")+".":"The model declines to name a projection favorite.")+" The losing screenshot will still be larger.",
       "The forecast gives "+team+" "+ownPts+" and "+foe+" "+oppPts+". "+(fav?fav+" carries a "+edge+"-point favorite edge.":"There is no projection favorite and therefore no pregame punch line.")+" The matchup decides who has to live with it."
     ]
   };
@@ -2538,8 +2572,8 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
         team+" split the first two Sundays by responding to the opener. The win matters most as proof that the first result did not have to repeat."
       ],
       "wl":[
-        "The opening win no longer gets to carry the whole argument for "+team+". The second Sunday exposed enough friction to make the next answer matter.",
-        team+" has now shown a winning version and a losing one. The Week 3 assignment is deciding which lineup shape deserves to become familiar."
+        team+" followed the previous win with a loss. "+((t.starter_details||[])[0]?.name||team)+" now carries the pressure to produce a response.",
+        team+" has both a winning and losing recent example. "+((t.starter_details||[])[0]?.name||team)+" can help decide which version survives next."
       ],
       "no-history":[
         team+" has no complete opener to use as a clean comparison, so the second Sunday has to stand on its own merits.",
@@ -2570,8 +2604,8 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
     },
     "mack-hollis":{
       "ww":[
-        "Two wins have the "+a.mascot+" making noise for a reason. Keep the speakers on; just do not confuse September volume with a parade permit.",
-        team+" has hit the scoreboard hard enough to leave 2-0 with receipts. The next test is whether the backup singers know the chorus too."
+        "Two wins have the "+a.mascot+" making noise for a reason. Keep the speakers on; just do not confuse a loud Sunday with a parade permit.",
+        team+" has a recent win to frame, but "+((t.starter_details||[])[0]?.name||team)+" cannot sing every part of the next one."
       ],
       "ll":[
         "Two losses have killed the mystery for "+team+": there are weak spots, everybody can see them, and Week 3 is where the toolbox gets judged.",
@@ -2582,7 +2616,7 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
         "The "+a.mascot+" punched back after Week 1. Good. The next headline asks whether that response had a sequel or just one loud page."
       ],
       "wl":[
-        team+" followed the opening win with a loss, so the victory lap has officially been interrupted. Week 3 gets to decide whether the stumble has company.",
+        team+" followed the previous victory with a defeat. The "+a.mascot+" now need a cleaner second act from "+((t.starter_details||[])[0]?.name||team)+".",
         "The "+a.mascot+" went from one good headline to one bad one. Nobody needs panic about "+team+" yet, but the next Sunday suddenly has real stakes."
       ],
       "no-history":[
@@ -2643,10 +2677,10 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
       team+" opened at "+score+" against "+foe+" and left with "+(prevWon?"a win":"a loss")+". The current result gets compared with that beginning without being forced to imitate it."
     ],
     "mack-hollis":[
-      "Week 1 had "+team+" at "+score+" against "+foe+", good for "+(prevWon?"a win":"a loss")+". Week 2 just gave the season a new headline instead of recycling the old one.",
+      "The previous result against "+foe+" was "+score+" for "+team+". "+((t.starter_details||[])[0]?.name||team)+" gives this week's score a fresh point of comparison.",
       team+" left the opener with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". Another Sunday means another piece of evidence and, thankfully, a different argument.",
-      "The first scoreboard for "+team+" read "+score+" against "+foe+". That "+(prevWon?"win":"loss")+" was loud then; Week 2 gets its own volume knob.",
-      "A "+score+" "+(prevWon?"win over ":"loss to ")+foe+" started "+team+"’s season. The latest Sunday changed the evidence enough to stand on its own."
+      "A week earlier "+team+" posted "+score+" against "+foe+". "+((t.starter_details||[])[0]?.name||team)+" gives the new angle.",
+      "Against "+foe+", "+team+" previously posted "+score+". "+((t.starter_details||[])[0]?.name||team)+" supplies the new reference point this week."
     ],
     "nora-voss":[
       "Rivals entered Week 2 with "+team+"’s "+score+" "+(prevWon?"win over ":"loss to ")+foe+" already in the chat. Sunday gave them new material, for better or worse.",
@@ -2770,7 +2804,7 @@ function w2RoycingtonFootballPolish(t,body){
     ["Leave it alone and the same circuit gets another chance to spark.","Ignore it and the same weakness gets another Sunday to hurt them."],
     ["Some of it is management getting free advice at dangerous volume.","Some of the noise is the fan base handing management free advice at full volume."],
     ["The division crown punches a playoff ticket in this league.","Win the division and the playoff berth comes with it; that is why this game carries extra weight."],
-    ["That is why this one gets the megaphone.","That is why this matchup deserves more volume than an ordinary September game."],
+    ["That is why this one gets the megaphone.","That is why this matchup deserves more volume than an ordinary regular-season game."],
     ["One busted lineup call can still set the whole thing on fire.","One bad lineup decision can still turn a close game into a week of regret."],
     ["Week 3 is the volume knob for everything behind it.","Week 3 decides whether the rest of this stretch gets discussed as opportunity or damage control."],
     ["The headline gets louder only if the supporting lineup stops making the stars do all the shouting.",pick(["The next headline only gets better if the supporting lineup stops outsourcing everything to the stars.","A bigger headline requires more than the stars doing emergency work again.","The stars have done enough shouting; the supporting lineup has to give the next headline some depth.","The next headline belongs to the whole lineup only if the support finally earns a line of its own."])],
@@ -2815,7 +2849,7 @@ function w2RoycingtonFootballPolish(t,body){
     ["Beat the first team and the noise stays fun; lose and the crowd starts treating ","Handle Week 3 and the swagger survives; lose and the crowd starts treating "],
     [" because the top of the lineup produced and the rest did not leave much for ","; the top of the lineup produced, and that left "],
     [" to erase on the scoreboard."," chasing too much scoreboard ground."],
-    [" are the clear projection favorite by "," hold the projection edge at "],
+    [" hold a projection edge of "," hold the projection edge at "],
     ["The numbers put ","The Week 3 math puts "],
     ["Week 3 starts with ","The next stretch starts with "]
   ];
@@ -2859,7 +2893,7 @@ function w2TrajectorySentence(t,mode,r){
   const weakRead=weak?weak.name+" finished at "+w2One(weak.points)+", so the bottom of the lineup still has a receipt attached.":"";
   if(mode==="undefeated"){
     const longView=Number.isFinite(title)&&title>=10
-      ?" MIDA’s "+w2MidaPct(title)+" title outlook says the clean record is attached to more than September charm."
+      ?" MIDA’s "+w2MidaPct(title)+" title outlook says the clean record is attached to more than an early-season illusion."
       :Number.isFinite(playoff)&&playoff>=65
         ?" MIDA has the playoff outlook at "+w2MidaPct(playoff)+", so the longer view is taking the start seriously too."
         :"";
@@ -3019,7 +3053,7 @@ function w2TwoWeekLeagueRead(teams,r){
     ?name(improving)+" materially improved its team scoring from the opener despite losing again, so there is at least a usable correction underneath the record. "
     :"Some winless teams at least showed a healthier scoring shape on the second Sunday. ")+(sliding&&sliding!==improving
     ?name(sliding)+" went sharply the other direction; that is much harder to wave away as bad luck. "
-    :"The teams that also lost scoring ground have the more urgent problem. ")+"Two losses can describe a team getting closer or a team digging. Those are not the same September.";
+    :"The teams that also lost scoring ground have the more urgent problem. ")+"Two losses can describe a team getting closer or a team digging. Those are not the same problem.";
   const p3="The 1-1 middle is where the league looks calmest on paper and messiest underneath. "+(rebound
     ?name(rebound)+" delivered one of the clearest rebounds from its opener. "
     :"Several split-record teams materially changed their scoring level from the opener. ")+(volatile&&volatile!==rebound

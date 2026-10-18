@@ -32,3 +32,24 @@ test('authorized repeats cannot spend again after a one-shot marker exists',asyn
   assert.equal(response.status,409);
   assert.equal(calls,0);
 });
+
+test('authorized job stages only an unapproved copy and records a one-shot result',async()=>{
+  const calls=[],saves=[];
+  const source={week:5,published_locked:true,teams:[]};
+  const accepted={week:4,published_locked:true,teams:[]};
+  // Source preflight intentionally blocks fabricated or incomplete league data
+  // before a staging call, despite valid credentials.
+  const store={
+    get:async(key)=>{calls.push(key);if(key.endsWith('generation-job.json'))return null;
+      if(key.endsWith('week-04.json'))return accepted;
+      if(key.endsWith('week-05.json'))return source;
+      return null;},
+    setJSON:async(key,body)=>saves.push({key,body})
+  };
+  const response=await handler(req(),{readEnv,openStore:()=>store,
+    loadClient:()=>{throw new Error('Model must not load for corrupt roster data')},
+    stage:()=>{throw new Error('Must not stage invalid source')}});
+  assert.equal(response.status,422);
+  assert.equal(saves.length,0);
+  assert.ok(calls.some(key=>key.includes('week-05.json')));
+});

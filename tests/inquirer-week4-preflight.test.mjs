@@ -61,3 +61,18 @@ test('only exact invalid-model failure admits one correction; second correction 
  assert.equal(second.ready,false);
  assert.equal(second.reason,'corrected_generation_already_attempted');
 });
+
+test('a corrected-model application failure can stage once more for review without changing the old marker',async()=>{
+ const recovered={...weeks,
+  'inquirer/week4-style-drafts/2026/week-05/generation-job.json':{status:'failed_manual_review_required'},
+  'inquirer/week4-style-drafts/2026/week-05/gateway-diagnostic.json':{
+   status:'gateway_rejected',model:'true',provider_http_status:400,provider_message:'400 true is not a valid model ID'},
+  'inquirer/week4-style-drafts/2026/week-05/generation-job-model-fix-v2.json':{
+   status:'failed_manual_review_required',failure_http_status:null,failure_type:'Error',failure_code:'unknown'}};
+ const first=await (await handler(request,context(recovered))).json();
+ assert.equal(first.ready,true);
+ const second=await (await handler(request,context({...recovered,
+  'inquirer/week4-style-drafts/2026/week-05/generation-job-review-salvage-v3.json':{status:'started'}}))).json();
+ assert.equal(second.ready,false);
+ assert.equal(second.reason,'review_salvage_already_attempted');
+});

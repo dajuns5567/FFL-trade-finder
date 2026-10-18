@@ -8,7 +8,7 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
  const auth=authorizeEditorialGeneration(request,{readEnv,method:'GET'});
  if(!auth.ok)return reply(auth.status,{error:'Preflight unavailable or unauthorized'});
  if(site?.id&&site.id!=='2e556797-6f35-4037-aa5a-1338724eb71d')return reply(403,{error:'Wrong Netlify project'});
- if(!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{2,90}$/.test(String(readEnv('FLEECED_EDITORIAL_MODEL')||'')))
+ if(String(readEnv('FLEECED_EDITORIAL_MODEL')||'')!=='gpt-4.1')
    return reply(200,{ready:false,reason:'model_not_configured'});
  try{
    const store=await openStore();

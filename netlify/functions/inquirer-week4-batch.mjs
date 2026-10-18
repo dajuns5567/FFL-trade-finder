@@ -104,9 +104,17 @@ export async function buildWeek4EditorialBatch({edition,acceptedWeek4,previousEd
       if(!result.quality.ok)articleReviewIssues.push({team_index:index,issues:result.quality.errors});
     }
   }));
-  const candidate={...edition,teams:articles,league_overview:await composeWeek4RecapDraft({client,model,edition:{...edition,teams:articles},acceptedWeek4}),published_locked:false};
+  let recapReviewIssue=null,leagueOverview;
+  try{leagueOverview=await composeWeek4RecapDraft({client,model,edition:{...edition,teams:articles},acceptedWeek4});}
+  catch(error){
+    // Save the 32 generated articles in quarantine even when the recap fails.
+    // Preserve factual input recap for review only; quality.ok remains false.
+    recapReviewIssue='recap_draft_invalid';
+    leagueOverview={...edition.league_overview,editorial_source:'source_recap_pending_ai_review',review_status:'unapproved'};
+  }
+  const candidate={...edition,teams:articles,league_overview:leagueOverview,published_locked:false};
   const structural=inspectEditionBeforePublication(candidate),deep=evaluateInquirerEditionQuality(candidate,previousEdition||null);
   return{edition:candidate,review_status:'unapproved',publishable:false,
-    quality:{ok:articleReviewIssues.length===0&&structural.ok&&deep.ok,
-      article_review_issues:articleReviewIssues,structural,deep}};
+    quality:{ok:articleReviewIssues.length===0&&!recapReviewIssue&&structural.ok&&deep.ok,
+      article_review_issues:articleReviewIssues,recap_review_issue:recapReviewIssue,structural,deep}};
 }

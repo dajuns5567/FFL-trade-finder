@@ -306,10 +306,13 @@ export async function weeklyReport(req){
  // Deploy previews share site-wide Netlify Blobs with production. Never let a
  // preview recompute or publish articles, awards, or historical archive keys.
  const context=String(globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'');
- if(isReadOnlyEditorialPreview(req.url,context))
-  return{available:false,published_locked:false,reason:'Preview is read-only. Editorial publication is disabled here.'};
+ const previewReadOnly=isReadOnlyEditorialPreview(req.url,context);
+ // A preview may render a requested draft in memory; no preview invocation
+ // is allowed to write any shared Blob, editorial stage, or archive entry.
+ if(previewReadOnly&&!new URL(req.url).searchParams.has('preview_editorial'))
+  return{available:false,published_locked:false,reason:'Preview is read-only. Use preview_editorial=1 for a non-publishing draft.'};
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
- const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,origin=new URL(req.url).origin,s=store(),
+ const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,origin=previewReadOnly?'https://brilliant-faun-c5b649.netlify.app':new URL(req.url).origin,s=store(),
   cappedWeek=Math.min(INQUIRER_FINAL_WEEK,Math.max(1,currentWeek));
  // Publish sequentially. A missing older edition is generated before a newer one so every article has the immediately
  // previous locked edition available for continuity and copy-forward checks. Preloaded Week 1/2 editions count as published.
@@ -388,7 +391,7 @@ export async function weeklyReport(req){
   // A deep-quality pass is not sufficient if the independent admission audit
   // still catches draft scaffolds or repeated newsroom phrases. Evaluate both
   // before selecting a candidate and search a larger deterministic salt space.
-  for(const salt of [5,0,1]){
+  for(const salt of (previewReadOnly?[5]:[5,0,1])){
    const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,weekClassification,variationSalt:salt});
    const candidate={season,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
    const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);
@@ -408,6 +411,9 @@ export async function weeklyReport(req){
  // admission boundary. A passing structural draft is only a staged candidate,
  // never publication authority. No future draft can mutate locked editions.
  const audit=inspectEditionBeforePublication(result);
+ if(previewReadOnly)return{...result,available:true,published_locked:false,preview_only:true,
+  preview_editorial_audit:audit,preview_generation_quality:quality,
+  preview_warning:'Unpublished draft. No shared data was written.'};
  const stageKey='inquirer/editorial-staging/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
  const approvalKey='inquirer/editorial-approvals/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
  const approval=await s.get(approvalKey,{type:'json'}).catch(()=>null);

@@ -9,9 +9,9 @@ const html=`<!doctype html>
 <p>Stores original files in an isolated recovery folder only. The recovery check never changes live broadcasts. Optional draft generation uses AI credits, but never publishes articles.</p>
 <form id="form"><label for="token">Week 5 authorization token</label><input id="token" type="password" autocomplete="off" required>
 <label for="files">Original week-03.json and week-04.json</label><input id="files" type="file" accept=".json,application/json" multiple required>
-<button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><button id="generate" type="button" disabled>Start one-time Week 5 editorial DRAFT (no publishing)</button><button id="review" type="button">Check draft generation status (read-only)</button><button id="diagnose" type="button">Diagnose model HTTP 400 (one minimal AI call)</button><pre id="result" aria-live="polite">Waiting for files.</pre>
+<button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><button id="generate" type="button" disabled>Start one-time Week 5 editorial DRAFT (no publishing)</button><button id="review" type="button">Check draft generation status (read-only)</button><button id="diagnose" type="button">Diagnose model HTTP 400 (one minimal AI call)</button><button id="audit" type="button">Audit staged Week 5 draft (read-only)</button><button id="copy" type="button">Copy full audit result</button><pre id="result" aria-live="polite">Waiting for files.</pre>
 <script>
-let generationReady=false;
+let generationReady=false,lastAudit='';
 const recoveryStatus=async token=>{
  const r=await fetch('/.netlify/functions/inquirer-recovery-status',{headers:{authorization:'Bearer '+token}});
  if(!r.ok)throw Error('Status check unavailable: HTTP '+r.status);
@@ -28,6 +28,20 @@ document.querySelector('#check').addEventListener('click',async()=>{
    generationReady=preflight.ok&&readiness.ready===true;
    document.querySelector('#generate').disabled=!generationReady;\n  }\n }
  catch(error){out.textContent=String(error);}
+});
+document.querySelector('#audit').addEventListener('click',async()=>{
+ const out=document.querySelector('#result'),token=document.querySelector('#token').value.trim();
+ if(!token){out.textContent='Enter your token first.';return;}
+ try{
+  const r=await fetch('/.netlify/functions/inquirer-week4-review-audit',{headers:{authorization:'Bearer '+token}});
+  const body=await r.json();lastAudit=JSON.stringify({http_status:r.status,...body},null,2);
+  out.textContent=lastAudit;
+ }catch(error){out.textContent='Audit unavailable: '+String(error);}
+});
+document.querySelector('#copy').addEventListener('click',async()=>{
+ if(!lastAudit){document.querySelector('#result').textContent='Run the read-only draft audit first.';return;}
+ try{await navigator.clipboard.writeText(lastAudit);document.querySelector('#result').textContent='Full audit copied. '+lastAudit;}
+ catch{document.querySelector('#result').textContent='Clipboard unavailable; select and copy the report below. '+lastAudit;}
 });
 document.querySelector('#diagnose').addEventListener('click',async()=>{
  const out=document.querySelector('#result'),button=document.querySelector('#diagnose');

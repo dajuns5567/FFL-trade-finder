@@ -1,6 +1,6 @@
 // Offline/staging-only orchestration. No Blob writes or publication entrypoints.
 // A failed article or recap holds the *entire* edition for revision.
-import {composeWeek4ArticleDraft} from './inquirer-week4-editorial-brief.mjs';
+import {composeWeek4ArticleDraft,validateWeek4EditorialDraft} from './inquirer-week4-editorial-brief.mjs';
 import {inspectEditionBeforePublication} from './inquirer-publication-guard.mjs';
 import {evaluateInquirerEditionQuality} from './inquirer-editorial-v31.mjs';
 
@@ -55,7 +55,7 @@ export function week4RecapBrief({edition,acceptedWeek4}){
     games.push({team:summaryOf(team),opponent:summaryOf(foe)});
   }
   if(games.length!==16)throw new Error('Complete recap requires 16 verified games');
-  return{system:`Write a fresh, sarcastic, passionate, fact-based Fleeced! Inquirer weekly recap. Follow the APPROVED WEEK 4 newspaper writing STYLE only; never copy or paraphrase its sentences, jokes, or claims. Do not draw prose from Weeks 1–3. Cover consequential wins/losses, rivalries, players, bad managerial decisions, division consequences and meaningful hot takes. Weave verified stats into judgments, not explanatory stat lectures. Make jokes original and varied. No invented facts. Name at least eight distinct clubs from at least four different matchups and include at least four verified fantasy point totals; do not deliver an interchangeable generic recap. Output valid JSON: headline, deck, sections (at least 4, each with heading and two substantive paragraphs), and hot_takes (at least 4, each with title and take).`,
+  return{system:`Write a fresh, sarcastic, passionate, fact-based Fleeced! Inquirer weekly recap. Follow the APPROVED WEEK 4 newspaper writing STYLE only; never copy or paraphrase its sentences, jokes, or claims. Do not draw prose from Weeks 1–3. Cover consequential wins/losses, rivalries, players, bad managerial decisions, division consequences and meaningful hot takes. Weave verified stats into judgments, not explanatory stat lectures. Make jokes original and varied. No invented facts. Name at least eight distinct clubs as FOUR COMPLETE RECIPROCAL MATCHUPS (both EXACT team names in each of four games) and quote at least four EXACT verified fantasy point totals from the supplied game data; do not deliver an interchangeable generic recap. Output valid JSON: headline, deck, sections (at least 4, each with heading and two substantive paragraphs), and hot_takes (at least 4, each with title and take).`,
     user:JSON.stringify({approved_week4_recap_style_samples:examples,week:edition.week,season:edition.season,verified_games:games})};
 }
 
@@ -117,4 +117,57 @@ export async function buildWeek4EditorialBatch({edition,acceptedWeek4,previousEd
   return{edition:candidate,review_status:'unapproved',publishable:false,
     quality:{ok:articleReviewIssues.length===0&&!recapReviewIssue&&structural.ok&&deep.ok,
       article_review_issues:articleReviewIssues,recap_review_issue:recapReviewIssue,structural,deep}};
+}
+
+/**
+ * Targeted, one-pass rescue for an already staged, unapproved edition.
+ * Recompute current quality first so nickname-only false positives do not
+ * spend credits. Preserve every passing article verbatim. Never writes here.
+ */
+export async function repairWeek4EditorialBatch({edition,acceptedWeek4,client,model,concurrency=2}){
+  const sourceCheck=verifyWeeklyEditorialSource(edition);
+  if(!sourceCheck.ok||Number(edition?.week)!==5||Number(acceptedWeek4?.week)!==4||
+     acceptedWeek4?.published_locked!==true)throw new Error('Verified Week 5 and locked Week 4 required');
+  if(!Number.isInteger(concurrency)||concurrency<1||concurrency>4)throw new Error('Invalid editorial repair concurrency');
+  week4RecapBrief({edition,acceptedWeek4});
+  const originalChecks=edition.teams.map(t=>validateWeek4EditorialDraft(t.inquirer_article,t));
+  const originalDeep=evaluateInquirerEditionQuality(edition,acceptedWeek4);
+  const originalStructural=inspectEditionBeforePublication(edition);
+  const byName=new Map(edition.teams.map((t,i)=>[t.team_name,i]));
+  const targeted=new Set(originalChecks.flatMap((check,i)=>check.ok?[]:[i]));
+  for(const issue of [...(originalDeep.issues||[]),...(originalStructural.issues||[])]){
+    if(byName.has(issue.team))targeted.add(byName.get(issue.team));
+    for(const name of issue.teams||[])if(byName.has(name))targeted.add(byName.get(name));
+  }
+  const articles=edition.teams.slice(),issues=[];let cursor=0;
+  const targets=[...targeted].sort((a,b)=>a-b);
+  await Promise.all(Array.from({length:Math.min(concurrency,targets.length)},async()=>{
+    while(cursor<targets.length){
+      const index=targets[cursor++],team=edition.teams[index],before=originalChecks[index];
+      try{
+        const reroll=await composeWeek4ArticleDraft({client,model,team,acceptedWeek4,week:5});
+        // A failed model rewrite may not replace stronger existing prose.
+        // Keep the better article and flag any remaining issues for review.
+        if(reroll.quality.errors.length<before.errors.length){
+          articles[index]={...team,inquirer_article:reroll.article};
+        }
+      }catch{
+        // Preserve this single article and continue collecting other repairs.
+      }
+    }
+  }));
+  for(let i=0;i<articles.length;i++){
+    const check=validateWeek4EditorialDraft(articles[i].inquirer_article,articles[i]);
+    if(!check.ok)issues.push({team_index:i,issues:check.errors});
+  }
+  let recap=edition.league_overview,recapReviewIssue=null;
+  try{recap=await composeWeek4RecapDraft({client,model,edition:{...edition,teams:articles},acceptedWeek4});}
+  catch{recapReviewIssue='recap_draft_invalid';}
+  const candidate={...edition,teams:articles,league_overview:recap,published_locked:false};
+  const structural=inspectEditionBeforePublication(candidate);
+  const deep=evaluateInquirerEditionQuality(candidate,acceptedWeek4);
+  return{edition:candidate,repair_attempted_articles:targets.length,
+    review_status:'unapproved',publishable:false,
+    quality:{ok:issues.length===0&&!recapReviewIssue&&structural.ok&&deep.ok,
+      article_review_issues:issues,recap_review_issue:recapReviewIssue,structural,deep}};
 }

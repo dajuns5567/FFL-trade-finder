@@ -11,7 +11,7 @@ export async function handler(req,{site,readEnv=(name)=>globalThis.Netlify?.env?
  if(!auth.ok)return reply(auth.status,{error:'Diagnostic unavailable or unauthorized'});
  if(site?.id&&site.id!=='2e556797-6f35-4037-aa5a-1338724eb71d')return reply(403,{error:'Wrong site'});
  const model=String(readEnv('FLEECED_EDITORIAL_MODEL')||'');
- if(!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{2,90}$/.test(model))return reply(503,{error:'Model not configured'});
+ if(model!=='gpt-4.1')return reply(503,{error:'Model not configured'});
  const store=await openStore();
  const existing=await store.get(marker,{type:'json'}).catch(()=>null);
  if(existing)return reply(200,{status:existing.status,model:existing.model,

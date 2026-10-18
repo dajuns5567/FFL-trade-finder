@@ -10,7 +10,7 @@ const json=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'co
 const sourceKey=(season,week)=>`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
 
 export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
-  openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore('fleeced-league-hub',{consistency:'strong'});},
+  openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore({name:'fleeced-league-hub',consistency:'strong'});},
   loadClient=loadNetlifyEditorialGatewayClient,
   stage=stageWeek4EditorialBatch}={}){
   const auth=authorizeEditorialGeneration(request,{readEnv});

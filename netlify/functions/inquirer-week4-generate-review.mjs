@@ -5,7 +5,7 @@ import {loadNetlifyEditorialGatewayClient} from './inquirer-week4-gateway.mjs';
 import {stageWeek4EditorialBatch} from './inquirer-week4-staging.mjs';
 import {verifyWeeklyEditorialSource} from './inquirer-week4-batch.mjs';
 import {loadAcceptedWeek4} from './inquirer-week4-accepted-source.mjs';
-import {originalJobKey,correctedJobKey,diagnosticKey,permitModelFixReplay} from './inquirer-week4-retry-policy.mjs';
+import {originalJobKey,correctedJobKey,reviewSalvageJobKey,diagnosticKey,permitModelFixReplay,permitReviewSalvageReplay} from './inquirer-week4-retry-policy.mjs';
 
 const json=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 const sourceKey=(season,week)=>`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
@@ -27,9 +27,15 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
     const diagnostic=await store.get(diagnosticKey,{type:'json'}).catch(()=>null);
     if(!permitModelFixReplay({original:existing,diagnostic,model}))
       return json(409,{error:'Generation already attempted; operator review required before retry'});
-    if(await store.get(correctedJobKey,{type:'json'}).catch(()=>null))
-      return json(409,{error:'Corrected-model generation already attempted; no duplicate calls'});
-    jobKey=correctedJobKey;
+    const corrected=await store.get(correctedJobKey,{type:'json'}).catch(()=>null);
+    if(!corrected)jobKey=correctedJobKey;
+    else{
+      if(!permitReviewSalvageReplay({original:existing,diagnostic,corrected,model}))
+        return json(409,{error:'Corrected-model generation already attempted; no duplicate calls'});
+      if(await store.get(reviewSalvageJobKey,{type:'json'}).catch(()=>null))
+        return json(409,{error:'Review-salvage generation already attempted; no duplicate calls'});
+      jobKey=reviewSalvageJobKey;
+    }
   }
   const [acceptedWeek4,edition,previousEdition]=await Promise.all([
     loadAcceptedWeek4(store).then(result=>result.edition),

@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=25;
+export const FORWARD_EDITORIAL_REVISION=26;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -37,7 +37,9 @@ export function adaptWeekLanguage(value,week,classification){
      .replace(/\bthe two-week sample\b/gi,'the recent two-week sample')
      .replace(/What Two Weeks Are Starting to Say/g,'What the Last Two Weeks Are Starting to Say')
      .replace(/\bAt (2-0|0-2|1-1),/g,'Across the last two games ($1),')
-     .replace(/\bthe first the last two weeks\b/gi,'the last two weeks');
+     .replace(/\bthe first the last two (weeks|Sundays)\b/gi,(_,unit)=>'the last two '+unit)
+     .replace(/\b(?:the last\s+){2,}two (weeks|Sundays)\b/gi,(match,unit)=>
+       (/^[A-Z]/.test(match)?'The':'the')+' last two '+unit);
   if(classification?.playoffs)s=s.replace(/Week \d+ • Regular Season/g,String(classification.label||('Week '+week+' • Playoffs')));
   return s;
 }

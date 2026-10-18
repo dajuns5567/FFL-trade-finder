@@ -69,6 +69,7 @@ for(const week of [5,6,9,14]){
     assert.ok(audit.ok,'Week '+week+' salt '+salt+' failed publication copy audit: '+JSON.stringify(audit.issues.slice(0,8)));
     const q=evaluateInquirerEditionQuality(edition,week2);
     assert.ok(q.ok,'Week '+week+' salt '+salt+' repeated editorial scaffolds: '+JSON.stringify(q.issues.slice(0,8)));
+    assert.ok(edition.teams.every(t=>!/\b(?:the last\s+){2,}two (?:weeks|Sundays)\b|\bthe first the last two\b/i.test((t.inquirer_article?.paragraphs||[]).join(' '))),'Forward copy must never double the last-two-weeks phrase');
     editorialSweep++;
   }
 }
@@ -116,6 +117,15 @@ for(const [scenario,scorerPoints] of [['shutout',[0,0,0,0,0,0,0]],['one-scorer',
 // Live-preview regressions: forward-week language, real records, headline agreement,
 // and partial opponent projections must never be represented as complete forecasts.
 assert.equal(adaptWeekLanguage('the first two weeks describe a repeatable lineup',5),'the last two weeks describe a repeatable lineup');
+for(const [source,expected] of [
+ ['the last two weeks','the last two weeks'],
+ ['across the last two weeks','across the last two weeks'],
+ ['The last two weeks','The last two weeks'],
+ ['the first two Sundays','the last two Sundays'],
+ ['The last the last two weeks','The last two weeks'],
+ ['across the last the last two Sundays','across the last two Sundays']
+])assert.equal(adaptWeekLanguage(source,5),expected,'Week language must not double-normalize: '+source);
+
 const handReview=polishForwardTeamCopy([
  {roster_id:'1',team_name:'Baltimore Ravens',next_opponent_roster_id:'2',next_opponent_name:'Kansas City Chiefs',next_projected:102.1,next_projection_coverage:7,next_opponent_projected:1.35,
   inquirer_article:{headline:'Baltimore Ravens Banks Another Sunday and Raises the Standard',sections:[

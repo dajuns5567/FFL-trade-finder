@@ -37,10 +37,9 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
       jobKey=reviewSalvageJobKey;
     }
   }
-  const [acceptedWeek4,edition,previousEdition]=await Promise.all([
+  const [acceptedWeek4,edition]=await Promise.all([
     loadAcceptedWeek4(store).then(result=>result.edition),
-    store.get(sourceKey(season,5),{type:'json'}),
-    store.get(sourceKey(season,3),{type:'json'}).catch(()=>null)
+    store.get(sourceKey(season,5),{type:'json'})
   ]);
   if(!acceptedWeek4||!edition||Number(acceptedWeek4.week)!==4||acceptedWeek4.published_locked!==true
       ||Number(edition.week)!==5||edition.published_locked!==true)
@@ -54,7 +53,9 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
   if(!admission.modified)return json(409,{error:'Generation was started by another request; no duplicate model calls'});
   try{
     const client=await loadClient();
-    const result=await stage({store,edition,acceptedWeek4,previousEdition,client,model,concurrency:2});
+    // Compare new prose against the immediately preceding accepted Week 4,
+    // never Week 3, to prevent false continuity passes and regressions.
+    const result=await stage({store,edition,acceptedWeek4,previousEdition:acceptedWeek4,client,model,concurrency:2});
     await store.setJSON(jobKey,{status:'draft_staged',season,week,key:result.key,sha256:result.sha256,
       quality_ok:result.quality.ok,review_status:'unapproved',publishable:false,finished_at:new Date().toISOString()});
     return json(200,{status:'draft_staged',quality_ok:result.quality.ok,review_status:'unapproved',publishable:false});

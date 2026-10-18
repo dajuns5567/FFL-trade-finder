@@ -45,8 +45,12 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
       quality_ok:result.quality.ok,review_status:'unapproved',publishable:false,finished_at:new Date().toISOString()});
     return json(200,{status:'draft_staged',quality_ok:result.quality.ok,review_status:'unapproved',publishable:false});
   }catch(error){
+    const status=Number(error?.status)||null;
+    const code=String(error?.code||'unknown').slice(0,80).replace(/[^a-zA-Z0-9_.:-]/g,'');
+    const type=String(error?.type||error?.name||'unknown').slice(0,80).replace(/[^a-zA-Z0-9_.:-]/g,'');
     await store.setJSON(jobKey,{status:'failed_manual_review_required',season,week,
-      review_status:'unapproved',failed_at:new Date().toISOString()});
+      review_status:'unapproved',failed_at:new Date().toISOString(),
+      failure_http_status:status,failure_code:code,failure_type:type});
     return json(500,{error:'Generation held for operator investigation; no publication changed'});
   }
 }

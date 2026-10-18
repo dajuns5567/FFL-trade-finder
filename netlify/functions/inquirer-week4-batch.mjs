@@ -95,16 +95,18 @@ export async function buildWeek4EditorialBatch({edition,acceptedWeek4,previousEd
   if(!preflight.ok)throw new Error('Unverified weekly source: '+preflight.issues.join('; '));
   // Validate the accepted style edition before making the first paid request.
   week4RecapBrief({edition,acceptedWeek4});
-  const articles=new Array(32);let cursor=0;
+  const articles=new Array(32),articleReviewIssues=[];let cursor=0;
   await Promise.all(Array.from({length:Math.min(concurrency,32)},async()=>{
     while(cursor<32){
       const index=cursor++,team=edition.teams[index];
       const result=await composeWeek4ArticleDraft({client,model,team,acceptedWeek4,week:edition.week});
       articles[index]={...team,inquirer_article:result.article};
+      if(!result.quality.ok)articleReviewIssues.push({team_index:index,issues:result.quality.errors});
     }
   }));
   const candidate={...edition,teams:articles,league_overview:await composeWeek4RecapDraft({client,model,edition:{...edition,teams:articles},acceptedWeek4}),published_locked:false};
   const structural=inspectEditionBeforePublication(candidate),deep=evaluateInquirerEditionQuality(candidate,previousEdition||null);
   return{edition:candidate,review_status:'unapproved',publishable:false,
-    quality:{ok:structural.ok&&deep.ok,structural,deep}};
+    quality:{ok:articleReviewIssues.length===0&&structural.ok&&deep.ok,
+      article_review_issues:articleReviewIssues,structural,deep}};
 }

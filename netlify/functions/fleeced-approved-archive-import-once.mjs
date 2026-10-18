@@ -105,7 +105,7 @@ async function finalize(s,w3,w4){
 export default async (req,context)=>{
  if(req.method!=='POST')return response(405,{error:'POST required'});
  if(context.site?.id!==SITE_ID||context.deploy?.context!=='production')return response(403,{error:'Wrong site or deploy'});
- const secret=Netlify.env.get('FLEECED_ARCHIVE_IMPORT_TOKEN');
+ const secret=Netlify.env.get('FLEECED_ARCHIVE_IMPORT_TOKEN')||process.env.FLEECED_ARCHIVE_IMPORT_TOKEN;
  if(!secretMatches(req.headers.get('x-fleeced-import-token')||'',secret))return response(401,{error:'Unauthorized'});
  const week=Number(new URL(req.url).searchParams.get('week'));
  if(!Object.hasOwn(HASHES,week))return response(400,{error:'Only original Week 3 or Week 4 accepted'});

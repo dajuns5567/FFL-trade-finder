@@ -46,6 +46,9 @@ export async function handler(req,{site,readEnv=(name)=>globalThis.Netlify?.env?
    structural_issue_count:structuralIssues.length,structural_issue_categories:counts(structuralIssues.map(x=>x.id)),
    article_review_issue_count:failures.length,article_issue_categories:counts(failures.flatMap(x=>x.issues||[])),
    recap_review_issue:quality.recap_review_issue||null,deep_ok:deep.ok===true,
+   deep_issue_categories:counts((deep.issues||[]).map(x=>x.id)),
+   article_review_issues:failures.map(x=>({roster_id:String(teams[x.team_index]?.roster_id||''),team:teams[x.team_index]?.team_name||'',issues:x.issues||[]})),
+   structural_issues:structuralIssues.map(x=>({id:x.id,team:x.team||null,teams:x.teams||null,excerpt:x.excerpt||null})),
    teams:teamChecks});
  }catch{return respond(503,{error:'Private staged draft could not be inspected'});}
 }

@@ -118,17 +118,19 @@ function evolutionHash(value){
   let h=2166136261;for(const ch of String(value||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0;
 }
 const EVOLUTION_INTROS={
+  // Short, distinct desk cues. Longer boilerplate prefatory clauses were
+  // repeated across teams and read like automated copy rather than Week 4.
   'walter-mercer':[
-    'Look at the names behind the final score:','The margin leaves one especially stubborn question:','The weekly ledger is blunt here:','The useful football answer is simpler:','Put the emotion to one side for a second:','The Sunday note that survives review is this:','The part that survives the box-score argument:','Start with the part that will still matter Tuesday:'
+    'Look at the personnel:','The margin asks more:','Follow the scoring:','The numbers resist spin:','Forget the excuses:','Sunday left a clue:','The box score settles this:','Carry this into Monday:'
   ],
   'tess-delaney':[
-    'The less glamorous truth is this:','The fashionable excuses do not survive this score:','The cleaner football answer is this:','No need to romanticize the result:','The civilized version is still fairly obvious:','After the celebration dies down, the lineup still has to answer:','Once the cheers fade, this detail stays in the room:','For all the Sunday noise, one choice still sticks:'
+    'The unromantic version:','Spare me the excuses:','The football is plain:','No need to romanticize it:','Nicely put, but:','After the applause:','The lineup still answers:','Cut through the commotion:'
   ],
   'mack-hollis':[
-    'Here is the loud part:','Put this on the big screen:','The back-page version is simple:','Skip the polite introduction:','Here is what survives the shouting:','The part rival managers will screenshot is this:','No tiny print required:','Someone will be explaining this on Monday:'
+    'Here is the noise:','Put this onscreen:','Back-page material:','Forget the preamble:','Turn it up:','Screenshot this:','No fine print:','Monday will have questions:'
   ],
   'nora-voss':[
-    'Rivals can circle this:','The other sideline will notice this:','No conspiracy is required here:','The part opponents will remember is this:','The annoying fact survives review:','Rivals do not need help finding this one:','One lineup detail deserves another look:','This is the detail that will follow them into next week:'
+    'Rivals noticed:','Across the sideline:','Nothing mysterious here:','File that under obvious:','The irritating part:','Rivals can spot it:','One lineup detail:','Next week remembers:'
   ]
 };
 const EVOLUTION_TAILS={
@@ -1320,7 +1322,7 @@ function w2DivisionBoardTake(flags,reporter,subject){
 }
 function w2HotTrend(t,r,weak,weakPrev){
   const a=w2Alias(t),cur=Number(weak.points)||0,old=Number(weakPrev.points)||0,delta=cur-old,k=w2Hash(String(t.roster_id)+"|hot|"+String(r?.id||""))%6;
-  if(cur<3&&Math.abs(delta)<0.05)return weak.name+" scored "+w2One(cur)+" in both Week 1 and Week 2. For "+a.mascot+", that is the same empty production twice, not progress.";
+  if(cur<3&&Math.abs(delta)<0.05)return weak.name+" scored "+w2One(cur)+" in both Week 1 and Week 2. "+a.mascot+" cannot count on "+weak.name+" to fix a repeat performance without changing something.";
   if(cur<3&&Math.abs(delta)<4){
     const rows=[
       weak.name+" went from "+w2One(old)+" in Week 1 to "+w2One(cur)+" in Week 2. Calling that progress would be generous; the "+a.mascot+" still need useful points from the spot.",
@@ -1376,7 +1378,7 @@ function w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders){
   const leadNames=w2Natural([t.team_name,...otherLeaders.map(x=>x.team_name)]);
   const rows=[
     (lead?"At the top of "+div+", "+leadNames+" are tied. ":"In "+div+", "+t.team_name+" is still fighting for position. ")+(peers?"The other three are "+peers+", so Week 3 can move more than one line at once.":"Week 3 can move the order immediately."),
-    (lead?leadNames+" are tied for the "+div+" lead. ":"The "+div+" standings already put pressure on "+t.team_name+". ")+(peers?"Around the "+a.mascot+" sit "+peers+"; there is nowhere to hide a September result.":"The next result has direct standings weight."),
+    (lead?leadNames+" are tied for the "+div+" lead. ":"The "+div+" standings already put pressure on "+t.team_name+". ")+(peers?"Around the "+a.mascot+" sit "+peers+"; each head-to-head result can change the order around "+t.team_name+".":"The next result has direct standings weight."),
     (lead?"The "+div+" has no solo leader because "+leadNames+" are level. ":"The "+a.mascot+" are not alone in a crowded "+div+" race. ")+(peers?"Around "+a.mascot+", the rest of the division reads "+peers+", making Week 3 an actual standings swing.":"Week 3 can create separation."),
     (lead?t.team_name+" is tied atop "+div+" with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" race around "+t.team_name+" is already compressed. ")+(peers?"The rivals are "+peers+"; one Sunday can reorder the whole group.":"One Sunday can reorder the group."),
     (lead?"At the top of "+div+", "+leadNames+" are tied. ":"The "+a.mascot+" enter Week 3 with division leverage still available. ")+(peers?"Behind and around them are "+peers+", so every clean result carries immediate value.":"Every clean result carries immediate value."),
@@ -1426,7 +1428,7 @@ function w2DivisionalOutlook(t,r,next,nrecord,ndiv){
     mida=ownM&&oppM?("MIDA has the division race at "+ownM+" for "+team+" and "+oppM+" for "+next+". "):"",
     leverage=lead
       ?team+" can make a direct "+ndiv+" rival spend the next week chasing the same division lead."
-      :team+" can take a head-to-head bite out of the "+ndiv+" race instead of hoping another result moves the same playoff route.";
+      :team+" can take a head-to-head bite out of the "+ndiv+" race instead of leaving its own division position to results elsewhere.";
   const rows={
     "walter-mercer":[
       "Week 3 brings "+article+" "+ndiv+" head-to-head: "+team+" ("+own+") against "+next+" ("+nrecord+"). These games are scarce, and in this league the division winner owns a playoff berth, so "+leverage+" "+mida+"That is real leverage, not just a louder label on the schedule.",
@@ -2030,7 +2032,7 @@ function w2ValueMoverMethod(t,row){
   const acquired=(t.trade_acquisitions||[]).find(a=>String(a?.player_id||"")===id);
   if(acquired){
     const when=acquired?.season&&acquired?.week?"Week "+String(acquired.week)+" of "+String(acquired.season):"an earlier week";
-    return{key:"old-trade-in-"+when,one:"after arriving by trade in "+when,many:"after arriving by trade in "+when};
+    return{key:"old-trade-in-"+when,one:"since "+String(pmeta(id)?.name||id)+" came over in "+when,many:"since the trade for "+String(pmeta(id)?.name||id)+" in "+when};
   }
   const sent=(t.trade_acquisitions||[]).find(a=>(a?.outgoing_player_ids||[]).map(String).includes(id));
   if(sent){

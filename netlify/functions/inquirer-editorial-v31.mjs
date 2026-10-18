@@ -3379,7 +3379,8 @@ function assertWeek2Originality(result,previousEdition){
   if(week>=3)teams=polishForwardTeamCopy(teams,week,variationSalt);
   // Recheck the finished language: polishing can expose collisions that the
   // earlier pass could not see, especially across distinct reporter desks.
-  if(week>=3)teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+101);
+  if(week>=3&&forwardCrossReporterPhraseOffenders(teams,[...forwardEntities({teams}),...forwardEntities(previousEdition)]).size)
+    teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+101);
 
   const trajectory=(overview.sections||[]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
   if(trajectory)trajectory.paragraphs=forwardTrajectoryParagraphs(teams,week);

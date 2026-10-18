@@ -116,3 +116,9 @@ export function deterministicInquirerAdmission(edition,{quality,audit,previousEd
     Array.isArray(edition?.league_overview?.sections)&&edition.league_overview.sections.length>=4;
   return{approved:!!allowed,digest,mode:allowed?'audited-deterministic-v31':'held'};
 }
+
+export function isReadOnlyEditorialPreview(url,context=''){
+ const host=new URL(url).hostname;
+ return /^deploy-preview-|^deploy-branch-/.test(host)||
+   ['deploy-preview','branch-deploy'].includes(String(context));
+}

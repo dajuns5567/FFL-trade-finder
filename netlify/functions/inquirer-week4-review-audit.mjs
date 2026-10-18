@@ -5,7 +5,7 @@ import {editorialCopyDigest,inspectEditionBeforePublication} from './inquirer-pu
 import {evaluateInquirerEditionQuality} from './inquirer-editorial-v31.mjs';
 import {validateWeek4EditorialDraft} from './inquirer-week4-editorial-brief.mjs';
 import {loadAcceptedWeek4} from './inquirer-week4-accepted-source.mjs';
-import {originalJobKey,correctedJobKey,reviewSalvageJobKey} from './inquirer-week4-retry-policy.mjs';
+import {originalJobKey,correctedJobKey,reviewSalvageJobKey,targetedRepairJobKey} from './inquirer-week4-retry-policy.mjs';
 const respond=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 const counts=items=>items.reduce((a,item)=>{const k=String(item||'unknown');a[k]=(a[k]||0)+1;return a},{});
 export async function handler(req,{site,readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
@@ -15,9 +15,9 @@ export async function handler(req,{site,readEnv=(name)=>globalThis.Netlify?.env?
  if(site?.id&&site.id!=='2e556797-6f35-4037-aa5a-1338724eb71d')return respond(403,{error:'Wrong Netlify project'});
  try{
   const store=await openStore();
-  const markers=await Promise.all([reviewSalvageJobKey,correctedJobKey,originalJobKey].map(k=>
+  const markers=await Promise.all([targetedRepairJobKey,reviewSalvageJobKey,correctedJobKey,originalJobKey].map(k=>
    store.get(k,{type:'json'}).catch(()=>null)));
-  const job=markers.find(Boolean);
+  const job=markers.find(x=>x?.status==='draft_staged')||markers.find(Boolean);
   if(!job||job.status!=='draft_staged'||!job.key)return respond(200,{ready:false,status:job?.status||'not_started',publishable:false});
   const envelope=await store.get(job.key,{type:'json'});
   if(!envelope||envelope.schema!=='fleeced-editorial-review-draft-v1'||envelope.review_status!=='unapproved'||

@@ -22,6 +22,9 @@ test('read-only digest-verified audit reports 32 teams without publication',asyn
  assert.deepEqual(body.article_review_issues[0].issues,['team-identity','missing-or-shallow-lede']);
  assert.equal(body.structural_issues[0].id,'fan-sentiment');
  assert.equal(body.deep_issue_categories['cross-team-copy-scaffold'],1);
+ assert.equal(body.reassessed.reference_week4_available,false);
+ assert.equal(body.reassessed.quality_ok,false);
+ assert.equal(body.reassessed.article_issue_count>=0,true);
 });
 test('audit rejects wrong digest and unauthorized requests',async()=>{
  let opened=0;const ctx={site,readEnv,openStore:async()=>{opened++;return{get:async()=>null}}};

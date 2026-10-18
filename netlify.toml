@@ -2,6 +2,9 @@
 [build]
   publish = "."
   functions = "netlify/functions"
+  # Skip builds on old Git-linked Netlify clones; leave the current site active.
+  # Netlify ignore-command exit 0 skips, exit 1 continues normally.
+  ignore = "node -e \"process.exit(process.env.SITE_NAME === 'brilliant-faun-c5b649' ? 1 : 0)\""
 
 [functions]
   node_bundler = "esbuild"

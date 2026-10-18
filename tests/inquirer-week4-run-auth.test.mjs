@@ -25,6 +25,15 @@ test('unauthorized requests never access private broadcasts or paid model',async
   assert.equal(calls,0);
 });
 
+test('an otherwise-authorized request from a different Netlify project cannot read data',async()=>{
+  let calls=0;
+  const response=await handler(req(),{site:{id:'unrelated-site-id'},readEnv,
+    openStore:()=>{calls++;throw new Error('must not read')},
+    loadClient:()=>{calls++;throw new Error('must not bill')}});
+  assert.equal(response.status,403);
+  assert.equal(calls,0);
+});
+
 test('authorized repeats cannot spend again after a one-shot marker exists',async()=>{
   let calls=0;
   const response=await handler(req(),{readEnv,openStore:()=>({get:async()=>({status:'started'})}),

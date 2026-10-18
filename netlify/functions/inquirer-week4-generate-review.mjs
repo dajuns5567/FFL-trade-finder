@@ -8,12 +8,14 @@ import {verifyWeeklyEditorialSource} from './inquirer-week4-batch.mjs';
 const json=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 const sourceKey=(season,week)=>`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
 
-export async function handler(request,{readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
+export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
   openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore('fleeced-league-hub',{consistency:'strong'});},
   loadClient=loadNetlifyEditorialGatewayClient,
   stage=stageWeek4EditorialBatch}={}){
   const auth=authorizeEditorialGeneration(request,{readEnv});
   if(!auth.ok)return json(auth.status,{error:'Editorial generation unavailable or unauthorized'});
+  if(site?.id&&site.id!=='2e556797-6f35-4037-aa5a-1338724eb71d')
+    return json(403,{error:'Wrong Netlify project for Fleeced editorial generation'});
   const model=String(readEnv('FLEECED_EDITORIAL_MODEL')||'');
   if(!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{2,90}$/.test(model))return json(503,{error:'Editorial model not configured'});
   const store=await openStore(),season=2026,week=5;
@@ -47,4 +49,4 @@ export async function handler(request,{readEnv=(name)=>globalThis.Netlify?.env?.
 }
 
 export default handler;
-export const config={background:true,rateLimit:{windowLimit:1,windowSize:3600,aggregateBy:'ip'}};
+export const config={background:true,rateLimit:{action:'rate_limit',windowLimit:1,windowSize:3600,aggregateBy:'ip'}};

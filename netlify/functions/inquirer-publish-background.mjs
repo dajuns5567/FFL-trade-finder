@@ -1,5 +1,6 @@
 import {weeklyReport,weeklyAwards} from './league-hub.mjs';
 import {getStore} from '@netlify/blobs';
+import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 
 // Netlify background functions run for up to 15 minutes. The hourly scheduler
 // queues this private job instead of trying to generate 32 articles in 30 seconds.
@@ -33,6 +34,7 @@ export default async function publishInquirerInBackground(req){
   season:report?.season??null,week:report?.week??null,
   available:!!report?.available,review_required:!!report?.review_required,
   reason:report?.reason||null,editorial_findings:report?.editorial_findings??null,
+  editorial_revision:FORWARD_EDITORIAL_REVISION,
   weekly_awards_records:awards?.records?.length??null,
   error:reportError,award_error:awardsError
  }).catch(error=>console.error('inquirer-status-final',error));

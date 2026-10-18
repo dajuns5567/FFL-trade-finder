@@ -16,7 +16,9 @@ on:
       - 'netlify/functions/inquirer-week4-run-auth.mjs'
       - 'netlify/functions/inquirer-week4-generate-review.mjs'
       - 'netlify/functions/inquirer-week4-review-status.mjs'
+      - 'netlify/functions/inquirer-week4-preflight.mjs'
       - 'tests/inquirer-week4-run-auth.test.mjs'
+      - 'tests/inquirer-week4-preflight.test.mjs'
       - 'tests/inquirer-week4-editorial-brief.test.mjs'
       - 'tests/inquirer-week4-batch.test.mjs'
       - 'tests/inquirer-week4-staging.test.mjs'
@@ -45,7 +47,9 @@ on:
       - 'netlify/functions/inquirer-week4-run-auth.mjs'
       - 'netlify/functions/inquirer-week4-generate-review.mjs'
       - 'netlify/functions/inquirer-week4-review-status.mjs'
+      - 'netlify/functions/inquirer-week4-preflight.mjs'
       - 'tests/inquirer-week4-run-auth.test.mjs'
+      - 'tests/inquirer-week4-preflight.test.mjs'
       - 'tests/inquirer-week4-editorial-brief.test.mjs'
       - 'tests/inquirer-week4-batch.test.mjs'
       - 'tests/inquirer-week4-staging.test.mjs'
@@ -73,7 +77,7 @@ jobs:
         with:
           node-version: '22'
       - name: Fail-closed editorial regression and approval tests
-        run: node --test tests/inquirer-publication-guard.test.mjs tests/forward-week-prose-source.test.mjs tests/inquirer-week4-editorial-brief.test.mjs tests/inquirer-week4-batch.test.mjs tests/inquirer-week4-staging.test.mjs tests/inquirer-week4-model-client.test.mjs tests/inquirer-week4-gateway.test.mjs tests/inquirer-week4-run-auth.test.mjs tests/generate-week4-style-review.test.mjs tests/week5-live-audit-depth.test.mjs
+        run: node --test tests/inquirer-publication-guard.test.mjs tests/forward-week-prose-source.test.mjs tests/inquirer-week4-editorial-brief.test.mjs tests/inquirer-week4-batch.test.mjs tests/inquirer-week4-staging.test.mjs tests/inquirer-week4-model-client.test.mjs tests/inquirer-week4-gateway.test.mjs tests/inquirer-week4-run-auth.test.mjs tests/inquirer-week4-preflight.test.mjs tests/generate-week4-style-review.test.mjs tests/week5-live-audit-depth.test.mjs
       - name: Parse production entrypoints
         run: |
           node --check netlify/functions/inquirer-publication-guard.mjs
@@ -89,6 +93,7 @@ jobs:
           node --check netlify/functions/inquirer-week4-run-auth.mjs
           node --check netlify/functions/inquirer-week4-generate-review.mjs
           node --check netlify/functions/inquirer-week4-review-status.mjs
+          node --check netlify/functions/inquirer-week4-preflight.mjs
           node --check scripts/generate-week4-style-review.mjs
           node --check scripts/audit-fleeced-week5-live-published.mjs
       - name: Verify gate cannot be bypassed by direct weekly entrypoint

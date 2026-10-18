@@ -2834,7 +2834,7 @@ function rewriteWeek2Team(t,prev){
     built=w2BuildSections(styleTeam,prev),
     sections=roycington?built.map(s=>({...s,heading:s.kind==="trade-commentary"?"Trade Receipt: What Week 2 Added":w2SectionHead(a.reporter||{},s.kind),paragraphs:(s.paragraphs||[]).map(p=>w2RoycingtonFootballPolish(normalized,p))})):built,
     paragraphs=sections.flatMap(s=>s.paragraphs||[]),
-    headline=w2Headline(normalized,a.reporter||{});
+    headline=w2TeamGrammar(normalized,w2Headline(normalized,a.reporter||{}));
   return{...normalized,inquirer_article:{...a,headline,deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:14}}
 }
 function w2Games(teams){const by=new Map((teams||[]).map(t=>[String(t.roster_id),t])),seen=new Set(),out=[];for(const t of teams||[]){const o=by.get(String(t.opponent_roster_id));if(!o)continue;const k=[String(t.roster_id),String(o.roster_id)].sort().join("|");if(seen.has(k))continue;seen.add(k);const w=Number(t.points)>=Number(o.points)?t:o,l=w===t?o:t,margin=Math.abs(Number(w.points)-Number(l.points)),proj=Number.isFinite(Number(w.projected))&&Number.isFinite(Number(l.projected)),upset=proj&&Number(w.projected)<Number(l.projected);out.push({winner:w,loser:l,margin,upset,combined:Number(w.points)+Number(l.points)})}return out}

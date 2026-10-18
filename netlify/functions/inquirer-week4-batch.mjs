@@ -148,7 +148,7 @@ export async function repairWeek4EditorialBatch({edition,acceptedWeek4,client,mo
         const reroll=await composeWeek4ArticleDraft({client,model,team,acceptedWeek4,week:5});
         // A failed model rewrite may not replace stronger existing prose.
         // Keep the better article and flag any remaining issues for review.
-        if(reroll.quality.errors.length<before.errors.length){
+        if(reroll.quality.ok||reroll.quality.errors.length<before.errors.length){
           articles[index]={...team,inquirer_article:reroll.article};
         }
       }catch{

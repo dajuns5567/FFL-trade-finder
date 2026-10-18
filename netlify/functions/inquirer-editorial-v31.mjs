@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=14;
+export const FORWARD_EDITORIAL_REVISION=15;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -202,7 +202,9 @@ function evolveSentence(sentence,reporterId,seed){
   }
   out=out.trim();if(out)out=out[0].toUpperCase()+out.slice(1);
   const intro=EVOLUTION_INTROS[rid][h%EVOLUTION_INTROS[rid].length];
-  out=intro+' '+out;
+  // A stock announcer preface turns otherwise distinct copy into the same column.
+  // Keep the concrete sentence and its reporter-specific lexical edit.
+  out=out;
   if(!/[.!?]$/.test(out))out+='.';
   return out;
 }
@@ -637,11 +639,35 @@ function w2PlayerAngle(t,r,p,pp,i,opp){
 }
 
 function w2BenchRead(t,r,miss,gap,won,margin){
-  const reserve=miss.reserve.name,starter=miss.starter.name,slot=w2SlotLabel(miss.slot||miss.starter?.lineup_slot),rid=String(r?.id||"");
-  if(rid==="tess-delaney")return reserve+" outscored "+starter+" by "+w2One(gap)+" on the bench in the "+slot+". "+(won?"The "+w2Alias(t).mascot+" victory keeps the silverware intact, but that is still a choice worth circling before next Sunday.":"After a "+w2One(margin)+"-point loss, "+w2Alias(t).mascot+" suddenly have a seating arrangement everyone wants explained.");
-  if(rid==="mack-hollis")return reserve+" had "+w2One(gap)+" more points than "+starter+" sitting on the bench in the "+slot+". "+(won?"Fine, "+w2Alias(t).mascot+" can celebrate the win—but those bench points were still visible.":"For "+w2Alias(t).mascot+", that is bench regret with a scoreboard attached to it.");
-  if(rid==="nora-voss")return reserve+" beat "+starter+" by "+w2One(gap)+" points from the bench in the "+slot+". "+(won?"For "+w2Alias(t).mascot+", the win turns it into a warning instead of a punchline.":"Lose by "+w2One(margin)+" and "+w2Alias(t).mascot+" have to hear about every bench point in the postgame roast.");
-  return reserve+" outscored "+starter+" by "+w2One(gap)+" from the bench in the "+slot+". "+(won?"For "+w2Alias(t).mascot+", it lands as a warning rather than a regret.":"For "+w2Alias(t).mascot+", that belongs in the postgame second-guessing.");
+  const reserve=miss.reserve.name,starter=miss.starter.name,slot=w2SlotLabel(miss.slot||miss.starter?.lineup_slot);
+  const points=w2One(gap),team=w2DisplayTeam(t.team_name),marginText=w2One(margin);
+  const choice=w2Hash(team+"|"+reserve+"|"+starter+"|bench-journalism")%12;
+  const facts=[
+    reserve+" managed "+points+" more than "+starter+", who got the "+slot+" start.",
+    starter+" kept the "+slot+" job while "+reserve+" scored "+points+" extra points from the bench.",
+    "At "+slot+", the point difference favored reserve "+reserve+" over starter "+starter+" by "+points+".",
+    "Management chose "+starter+" for "+slot+"; "+reserve+" answered with "+points+" more points.",
+    "The missed "+slot+" call: "+reserve+" beat "+starter+" by "+points+".",
+    reserve+" supplied "+points+" more than "+starter+" without getting the "+slot+" start.",
+    "A "+points+"-point advantage for "+reserve+" over starter "+starter+" did "+team+" no good from the sideline.",
+    starter+" got the nod at "+slot+"; "+reserve+"'s extra "+points+" points stayed unused.",
+    "There was a "+points+"-point gap between bench option "+reserve+" and "+slot+" starter "+starter+".",
+    "One roster choice aged poorly: "+starter+" started over "+reserve+", whose return was "+points+" points better.",
+    "The "+slot+" selection left "+points+" points on the table, with "+reserve+" behind "+starter+".",
+    "Reserve "+reserve+" finished "+points+" ahead of "+starter+" despite the latter occupying "+slot+"."
+  ];
+  const judgment=won?[
+    "A win covers the bruise; it does not make the lineup decision intelligent.",
+    "Bank the victory, then ask why the better score was wearing a headset.",
+    "The scoreline forgave the manager. The bench has not.",
+    "Nobody is returning the win, but somebody should review that lineup card."
+  ]:[
+    "With a "+marginText+"-point defeat already booked, this mistake deserves an explanation.",
+    "Those unused points will be much louder at the next lineup meeting.",
+    "The manager cannot appeal the final score, only the decision that wasted production.",
+    "A losing week is a rough time to discover the bench had a better answer."
+  ];
+  return facts[choice]+" "+judgment[w2Hash(team+"|bench-verdict")%judgment.length];
 }
 function w2StatKind(p){
   const pos=String(p?.position||"").toUpperCase();
@@ -1358,7 +1384,7 @@ function w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders){
     (lead?"At the top of "+div+", "+leadNames+" are tied. ":"The "+a.mascot+" enter Week 3 with division leverage still available. ")+(peers?"Behind and around them are "+peers+", so every clean result carries immediate value.":"Every clean result carries immediate value."),
     (lead?leadNames+" are tied for first in "+div+". ":"Nobody around "+t.team_name+" has made "+div+" comfortable yet. ")+(peers?"For "+a.mascot+", the division board also includes "+peers+", and Week 3 gets first crack at breaking that cluster.":"Week 3 gets first crack at breaking the cluster."),
     (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For the "+a.mascot+", the other division names are "+peers+"; their next result belongs to the race, not an isolated September box score.":"The next result is part of the race."),
-    (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"The surrounding records belong to "+peers+"; that is enough context to make Week 3 matter immediately.":"That is enough context to make Week 3 matter immediately.")
+    (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"The relevant division opponents are "+peers+"; "+t.team_name+" cannot afford to treat this matchup as an isolated result.":"That is enough context to make Week 3 matter immediately.")
   ];
   return rows[k];
 }
@@ -2147,7 +2173,7 @@ function w2ManagementMoveRead(t,r,won,margin){
     const rows={
       "walter-mercer":[
         t.manager_name+" made no completed Week 2 transaction. "+(q===0?((weak?weak.name+" at "+w2One(weak.points)+" points":"The quiet end of the lineup")+" remains the management problem already on the roster."):q===1?("With no new arrival to credit, "+(weak?weak.name+" and a "+w2One(weak.points)+"-point return":"the existing starters")+" stay at the center of the Week 2 review."):q===2?("The relevant management issue is therefore "+(weak?weak.name+" producing "+w2One(weak.points)+" points":"the lineup already in place")+", not a transaction that never happened."):("No acquisition changed Sunday, which puts the focus back on "+(weak?weak.name+" at "+w2One(weak.points):"the roster that actually started")+".")),
-        "The Week 2 transaction log is empty for "+t.manager_name+". "+(miss?.reserve&&miss?.starter?miss.reserve.name+" over "+miss.starter.name+" is therefore the more relevant management question.":team+" has to read Sunday through the roster it already carried.")
+        "No new move rescued "+t.manager_name+" on Sunday. "+(miss?.reserve&&miss?.starter?"The selection of "+miss.starter.name+" over "+miss.reserve.name+" still asks for a defense.":team+" must make its existing starters earn their places.")
       ],
       "tess-delaney":[
         t.manager_name+" did not remake the roster during Week 2. The management conversation stays with "+(weak?weak.name+" and the "+w2One(weak.points)+"-point quiet spot":"the existing table")+" rather than an imaginary new guest.",
@@ -2578,7 +2604,7 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
         "The "+a.mascot+" dragged the season from 0-1 to 1-1. Not glamorous, but considerably more useful than spending another week digging."
       ],
       "wl":[
-        team+" gave rivals the sequel they wanted after an opening win. One loss is not a collapse, but it has restored everybody’s favorite screenshots.",
+        team+" followed its opening victory with a loss to "+w2DisplayTeam(t.opponent_name||'the opposition')+". Rivals can enjoy the reversal; management has to explain the missing points.",
         "The "+a.mascot+" split the first two games. Week 3 gets to decide whether Week 2 was a bruise or the beginning of a habit."
       ],
       "no-history":[

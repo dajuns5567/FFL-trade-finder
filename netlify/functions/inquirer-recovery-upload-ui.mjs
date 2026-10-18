@@ -29,8 +29,11 @@ document.querySelector('#form').addEventListener('submit',async e=>{
      'content-type':'application/json'},body:file});
    const body=await response.json();
    out.textContent+='\\nWeek '+week+': HTTP '+response.status+' — '+JSON.stringify(body);
-   if(!response.ok)break;
+   if(!response.ok)throw Error('An archive was rejected; no further work triggered');
   }
+  const check=await fetch('/.netlify/functions/inquirer-week4-preflight',
+   {headers:{authorization:'Bearer '+token}});
+  out.textContent+='\\nGenerator readiness: '+JSON.stringify(await check.json());
  }catch(error){out.textContent+='\\nUpload failed; no retry made. '+String(error);}
  button.disabled=false;
 });

@@ -1,8 +1,26 @@
+import {getStore} from '@netlify/blobs';
+import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
  const key=globalThis.Netlify?.env?.get('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
  if(!key)throw new Error('FLEECED_INQUIRER_QUEUE_KEY is not configured');
+ const skip=reason=>new Response(JSON.stringify({queued:false,reason}),{
+  headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
+ });
+ // Do not spend another generation on identical copy that already failed the
+ // editorial gate. A new newsroom revision or new completed NFL week unblocks it.
+ try{
+  const status=await getStore('fleeced-league-hub',{consistency:'strong'}).get('inquirer/publication-status.json',{type:'json'});
+  const current=await fetch('https://api.sleeper.app/v1/state/nfl',{signal:AbortSignal.timeout(6000)}).then(r=>r.ok?r.json():null);
+  const finishedWeek=(Number(current?.week)||0)-1;
+  const sameWeek=Number(status?.week)===finishedWeek&&Number(current?.season)===Number(status?.season);
+  if(sameWeek&&Number(status?.editorial_revision)===FORWARD_EDITORIAL_REVISION){
+   if(status?.state==='editorial-hold')return skip('Unchanged editorial draft is held; next revision or completed week triggers a new attempt');
+   if(status?.state==='completed'&&status?.available)return skip('Current completed week is already published');
+  }
+  if(status?.state==='running'&&Date.now()-Date.parse(status?.started_at||0)<16*60*1000)return skip('A background publication is already running');
+ }catch(error){console.warn('inquirer-schedule-status-check',String(error?.message||error))}
  const url=new URL('/.netlify/functions/inquirer-publish-background',req.url);
  const result=await fetch(url,{
   method:'POST',

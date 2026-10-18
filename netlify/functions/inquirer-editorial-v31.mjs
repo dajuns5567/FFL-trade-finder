@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=16;
+export const FORWARD_EDITORIAL_REVISION=17;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -202,9 +202,7 @@ function evolveSentence(sentence,reporterId,seed){
   }
   out=out.trim();if(out)out=out[0].toUpperCase()+out.slice(1);
   const intro=EVOLUTION_INTROS[rid][h%EVOLUTION_INTROS[rid].length];
-  // A stock announcer preface turns otherwise distinct copy into the same column.
-  // Keep the concrete sentence and its reporter-specific lexical edit.
-  out=out;
+  out=intro+' '+out;
   if(!/[.!?]$/.test(out))out+='.';
   return out;
 }

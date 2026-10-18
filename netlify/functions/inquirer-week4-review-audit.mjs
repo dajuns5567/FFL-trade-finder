@@ -35,6 +35,27 @@ export async function handler(req,{site,readEnv=(name)=>globalThis.Netlify?.env?
       opponent_mention:!!t.opponent_name&&text.includes(t.opponent_name),
       prose_characters:text.length};
   });
+  // Inspect the non-editorial Week 5 release dependencies alongside the draft.
+  // All reads use known keys; never list private stores or mutate production.
+  const liveKeys=['broadcasts/2026/week-03.json','broadcasts/2026/week-04.json',
+    'broadcasts/2026/week-05.json','broadcasts/index.json',
+    'awards/weekly.json','managers/registry.json','managers/history-cache.json',
+    'inquirer/reporters/index.json','inquirer/league-overview/2026/week-05.json'];
+  const liveValues=await Promise.all(liveKeys.map(key=>store.get(key,{type:'json'}).catch(()=>null)));
+  const [live3,live4,live5,index,awards,registry,history,reporters,recapArchive]=liveValues;
+  const award=(awards?.records||[]).find(x=>Number(x.season)===2026&&Number(x.week)===5);
+  const releaseState={
+    live_week3_complete:live3?.teams?.length===32&&Number(live3.week)===3,
+    live_week4_complete:live4?.teams?.length===32&&Number(live4.week)===4,
+    live_week5_locked:live5?.published_locked===true&&live5?.teams?.length===32,
+    archive_index_has_week5:Array.isArray(index)&&index.some(x=>Number(x.season)===2026&&Number(x.week)===5),
+    player_awards_week5:!!(award?.players_of_week?.offense?.player_id&&award?.players_of_week?.defense?.player_id),
+    manager_badges_week5:award?.manager_awards?.length===4,
+    manager_registry_present:!!registry?.current&&Object.keys(registry.current).length>=32,
+    manager_history_present:Array.isArray(history?.career)&&history.career.length>0,
+    reporter_directory_complete:reporters?.reporters?.length===4,
+    week5_recap_archive_locked:recapArchive?.published_locked===true&&!!recapArchive?.headline
+  };
   const quality=envelope.quality||{},structural=quality.structural||{},deep=quality.deep||{};
   const accepted=await loadAcceptedWeek4(store).catch(()=>({edition:null}));
   const recomputedArticles=teams.map(t=>({roster_id:String(t.roster_id),team:t.team_name,
@@ -47,6 +68,7 @@ export async function handler(req,{site,readEnv=(name)=>globalThis.Netlify?.env?
   const structuralIssues=Array.isArray(structural.issues)?structural.issues:[];
   return respond(200,{ready:true,season:2026,week:5,sha256:job.sha256,
    approved:false,publishable:false,quality_ok:quality.ok===true,
+   site_release_state:releaseState,
    team_count:teams.length,headline_count:teamChecks.filter(t=>t.headline).length,
    recap_sections:(overview.sections||[]).length,hot_takes:(overview.hot_takes||[]).length,
    checks:{sentiment:teamChecks.filter(t=>t.sentiment).length,management:teamChecks.filter(t=>t.management).length,

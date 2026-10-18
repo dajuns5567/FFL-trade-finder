@@ -167,14 +167,14 @@ async function regularWeekAppliedToRosterRecords(week,rows){
   prior=week>1?await Promise.all(Array.from({length:Math.min(13,week-1)},(_,i)=>fetchJson(`${API}/league/${LEAGUE}/matchups/${i+1}`).catch(()=>[]))):[],record={};
  const tally=source=>{for(const pair of matchupGroups(source).values())if(pair.length===2){const[a,b]=pair,ai=String(a.roster_id),bi=String(b.roster_id);record[ai]??={wins:0,losses:0};record[bi]??={wins:0,losses:0};if(Number(a.points)>Number(b.points)){record[ai].wins++;record[bi].losses++}else if(Number(b.points)>Number(a.points)){record[bi].wins++;record[ai].losses++}}};
  for(const p of prior)tally(p);tally(rows);
- return rows.every(m=>{const r=rosters.find(x=>String(x.roster_id)===String(m.roster_id)),x=record[String(m.roster_id)];return r&&x&&Number(r?.settings?.wins||0)>=x.wins&&Number(r?.settings?.losses||0)>=x.losses});
+ return{applied:rows.every(m=>{const r=rosters.find(x=>String(x.roster_id)===String(m.roster_id)),x=record[String(m.roster_id)];return r&&x&&Number(r?.settings?.wins||0)>=x.wins&&Number(r?.settings?.losses||0)>=x.losses}),rosters,prior};
 }
 async function completedPublicationWeek(week){
  const rows=await fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`).catch(()=>[]);
  if(!matchupComplete(rows))return{complete:false,rows,reason:'player scoring is not complete'};
  if(Number(week)<INQUIRER_PLAYOFF_START_WEEK){
-  const applied=await regularWeekAppliedToRosterRecords(Number(week),rows);
-  return{complete:applied,rows,reason:applied?'complete':'Sleeper has not applied the completed result to roster records'};
+  const check=await regularWeekAppliedToRosterRecords(Number(week),rows);
+  return{complete:check.applied,rows,rosters:check.rosters,prior:check.prior,reason:check.applied?'complete':'Sleeper has not applied the completed result to roster records'};
  }
  const bracket=await fetchJson(`${API}/league/${LEAGUE}/winners_bracket`).catch(()=>[]);
  const resolved=playoffRoundComplete(bracket,week);
@@ -353,8 +353,8 @@ export async function weeklyReport(req){
   managerHistoryData=previewReadOnly?{career:[],current:[],assignments:[]}:await managerHistory().catch(()=>({career:[],current:[],assignments:[]}));
  }
  const [matchups,transactions,rosters,users,proj,players,nextMatchups,nextProj,weeklyStats,winnersBracket]=await Promise.all([
-  fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`),fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>[]),
-  fetchJson(`${API}/league/${LEAGUE}/rosters`),fetchJson(`${API}/league/${LEAGUE}/users`),projections(season,week,league?.scoring_settings||{}),
+  Promise.resolve(completion.rows),fetchJson(`${API}/league/${LEAGUE}/transactions/${week}`).catch(()=>[]),
+  completion.rosters?Promise.resolve(completion.rosters):fetchJson(`${API}/league/${LEAGUE}/rosters`),fetchJson(`${API}/league/${LEAGUE}/users`),projections(season,week,league?.scoring_settings||{}),
   fetchJson(`${API}/players/nfl`).catch(()=>({})),week<INQUIRER_FINAL_WEEK?fetchJson(`${API}/league/${LEAGUE}/matchups/${week+1}`).catch(()=>[]):Promise.resolve([]),
   week<INQUIRER_FINAL_WEEK?projections(season,week+1,league?.scoring_settings||{}):Promise.resolve({}),
   fetchJson(`${API}/stats/nfl/regular/${season}/${week}`).catch(()=>({})),
@@ -365,7 +365,7 @@ export async function weeklyReport(req){
  const historicalSeason=await historicalSeasonPromise;
  const matchupWeeks=Array.from({length:Math.max(1,week)},(_,i)=>i+1),statWeeks=Array.from({length:Math.max(1,week)},(_,i)=>i+1);
  const [seasonMatchupsRows,recentStatRows]=await Promise.all([
-  Promise.all(matchupWeeks.map(w=>w===week?Promise.resolve(matchups):fetchJson(`${API}/league/${LEAGUE}/matchups/${w}`).catch(()=>[]))),
+  Promise.all(matchupWeeks.map(w=>w===week?Promise.resolve(matchups):completion.prior?.[w-1]?Promise.resolve(completion.prior[w-1]):fetchJson(`${API}/league/${LEAGUE}/matchups/${w}`).catch(()=>[]))),
   Promise.all(statWeeks.map(w=>w===week?Promise.resolve(weeklyStats):fetchJson(`${API}/stats/nfl/regular/${season}/${w}`).catch(()=>({}))))
  ]);
  const matchupsByWeek=Object.fromEntries(matchupWeeks.map((w,i)=>[w,seasonMatchupsRows[i]||[]])),weeklyStatHistory=Object.fromEntries(statWeeks.map((w,i)=>[w,recentStatRows[i]||{}])),seasonContext=leagueSeasonContext(matchupsByWeek,rosters,week,league);

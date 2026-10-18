@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fixture from '../netlify/functions/inquirer-week2-2026-preload.mjs';
-import {week4EditorialBrief,validateWeek4EditorialDraft,composeWeek4ArticleDraft,REQUIRED_SECTION_KINDS} from '../netlify/functions/inquirer-week4-editorial-brief.mjs';
+import {week4EditorialBrief,validateWeek4EditorialDraft,composeWeek4ArticleDraft,mentionsVerifiedTeam,REQUIRED_SECTION_KINDS} from '../netlify/functions/inquirer-week4-editorial-brief.mjs';
 
 const baseline={...fixture,week:4};
 const team=fixture.teams[0];
@@ -21,6 +21,14 @@ test('only a complete approved Week 4 edition may provide style samples',()=>{
   assert.match(brief.system,/first lede paragraph must naturally state the EXACT verified team and opponent names/);
   assert.match(brief.system,/grounded fleeced\/value signals/);
   assert.doesNotMatch(brief.user,/previous_week_prose_source/);
+});
+
+test('exact verified nicknames count without substring collisions or invented identities',()=>{
+ assert.equal(mentionsVerifiedTeam('The Cardinals won it late.','Arizona Cardinals'),true);
+ assert.equal(mentionsVerifiedTeam('The Chiefs lost their grip.','Kansas City Chiefs'),true);
+ assert.equal(mentionsVerifiedTeam('The Jets called it a circus.','New York Jets'),true);
+ assert.equal(mentionsVerifiedTeam('The Jetsons came to town.','New York Jets'),false);
+ assert.equal(mentionsVerifiedTeam('Nobody mentioned Arizona.','Arizona Cardinals'),false);
 });
 
 test('football facts rank actual scorer output rather than assuming starter order, and exclude pending moves',()=>{

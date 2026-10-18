@@ -5,7 +5,7 @@ import {authorizeEditorialGeneration} from './inquirer-week4-run-auth.mjs';
 
 export default async function handler(request,{site,
   readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
-  openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore('fleeced-league-hub',{consistency:'strong'});}}={}){
+  openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore({name:'fleeced-league-hub',consistency:'strong'});}}={}){
   const reply=(status,body)=>new Response(JSON.stringify(body),{status,
     headers:{'content-type':'application/json','cache-control':'no-store'}});
   const auth=authorizeEditorialGeneration(request,{readEnv,method:'GET'});

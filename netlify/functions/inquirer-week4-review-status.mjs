@@ -2,6 +2,7 @@
 // No draft manuscript, football data, provider secrets or payment credentials
 // are returned. Auth is required even for a status-only request.
 import {authorizeEditorialGeneration} from './inquirer-week4-run-auth.mjs';
+import {originalJobKey,correctedJobKey} from './inquirer-week4-retry-policy.mjs';
 
 export default async function handler(request,{site,
   readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
@@ -13,9 +14,10 @@ export default async function handler(request,{site,
   if(site?.id&&site.id!=='2e556797-6f35-4037-aa5a-1338724eb71d')
     return reply(403,{error:'Wrong Netlify project'});
   const store=await openStore();
-  const job=await store.get('inquirer/week4-style-drafts/2026/week-05/generation-job.json',{type:'json'}).catch(()=>null);
+  const corrected=await store.get(correctedJobKey,{type:'json'}).catch(()=>null);
+  const job=corrected||await store.get(originalJobKey,{type:'json'}).catch(()=>null);
   if(!job)return reply(200,{status:'not_started',publishable:false});
-  return reply(200,{status:job.status||'unknown',quality_ok:job.quality_ok===true,
+  return reply(200,{status:job.status||'unknown',attempt:corrected?'model_corrected_v2':'original',quality_ok:job.quality_ok===true,
     review_status:'unapproved',publishable:false,finished_at:job.finished_at||null,
     sha256:job.sha256||null,
     failure_http_status:Number(job.failure_http_status)||null,

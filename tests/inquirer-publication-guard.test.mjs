@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {inspectEditionBeforePublication,editorialCopyDigest,editorialApprovalMatches}
+import {inspectEditionBeforePublication,editorialCopyDigest,editorialApprovalMatches,deterministicInquirerAdmission,isReadOnlyEditorialPreview}
  from '../netlify/functions/inquirer-publication-guard.mjs';
 
 const makeEdition=()=>{
@@ -88,6 +88,8 @@ test('deep copy-forward quality must pass independently of manual approval',()=>
  assert(hub.includes('const deepQualityOk=week<3||quality.ok===true'));
  assert(hub.includes('if(!audit.ok||!deepQualityOk||!admission.approved)'));
  assert(hub.includes('generation_quality:quality'));
+ assert(hub.includes('deterministicInquirerAdmission(result'));
+ assert(hub.includes('Preview is read-only. Editorial publication is disabled here.'));
  assert(approval.includes('stage.generation_quality?.ok===true'));
 });
 
@@ -97,4 +99,34 @@ test('recycled editorial eight-word phrases are blocked across teams',()=>{
   'The latest Sunday changed the evidence enough to stand on its own, even if the standings refused to cooperate.');
  const issues=inspectEditionBeforePublication(e).issues;
  assert(issues.some(x=>x.id==='shared-editorial-phrase'&&x.teams.length>=6));
+});
+
+test('audited original V31 newsroom auto-admits only Week 5+ after locked Week 4',()=>{
+ const edition=makeEdition();
+ edition.league_overview.sections=Array.from({length:4},(_,i)=>({heading:'Section '+i,paragraphs:[
+  'Independently verified football analysis for section '+i+'.'
+ ]}));
+ edition.inquirer_version=31;
+ edition.editorial_generation={engine:'v31-forward',variation_salt:5};
+ const prev={season:2026,week:4,published_locked:true};
+ const audit=inspectEditionBeforePublication(edition);
+ const clean={quality:{ok:true},audit,previousEdition:prev};
+ assert.equal(audit.ok,true);
+ const good=deterministicInquirerAdmission(edition,clean);
+ assert.equal(good.approved,true);
+ assert.match(good.digest,/^[a-f0-9]{64}$/);
+ assert.equal(deterministicInquirerAdmission(edition,{...clean,quality:{ok:false}}).approved,false);
+ assert.equal(deterministicInquirerAdmission(edition,{...clean,previousEdition:{...prev,published_locked:false}}).approved,false);
+ assert.equal(deterministicInquirerAdmission(edition,{...clean,previousEdition:{...prev,week:3}}).approved,false);
+ assert.equal(deterministicInquirerAdmission(edition,{...clean,audit:{ok:false}}).approved,false);
+ assert.equal(deterministicInquirerAdmission({...edition,editorial_generation:{engine:'week4-v19-style-ai-draft'}},clean).approved,false);
+ assert.equal(deterministicInquirerAdmission({...edition,week:4},clean).approved,false);
+ assert.equal(deterministicInquirerAdmission({...edition,teams:edition.teams.slice(1)},clean).approved,false);
+});
+
+test('deploy previews are read-only before shared-Blob publication can run',()=>{
+ assert.equal(isReadOnlyEditorialPreview('https://deploy-preview-398--some-site.netlify.app/.netlify/functions/league-hub'),true);
+ assert.equal(isReadOnlyEditorialPreview('https://some-site.netlify.app/.netlify/functions/league-hub','deploy-preview'),true);
+ assert.equal(isReadOnlyEditorialPreview('https://some-site.netlify.app/.netlify/functions/league-hub','branch-deploy'),true);
+ assert.equal(isReadOnlyEditorialPreview('https://some-site.netlify.app/.netlify/functions/league-hub','production'),false);
 });

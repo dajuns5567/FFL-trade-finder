@@ -1,0 +1,22 @@
+name: FLEECED current-site protected storage audit (read only)
+# Opt-in only: the current-team read-only Blob credential must exist first.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing dependencies without lifecycle scripts
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Read current team Blob inventory without mutations
+        env:
+          NETLIFY_SANDBOX_DEPLOY_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
+          FLEECED_AUDIT_SITE_ID: 'd51af6d7-e5f3-4c51-8c6d-25e31db39a0c'
+        run: node scripts/audit-fleeced-current-site-blobs.mjs

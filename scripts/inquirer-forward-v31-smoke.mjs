@@ -95,6 +95,24 @@ assert.match(playoffCopy,/eliminated from championship contention/i,'Wildcard ed
 assert.match(playoffCopy,/advances to .*Divisional Round/i,'Wildcard edition must identify teams advancing to the Divisional Round');
 assert.ok((week14.leagueOverview.sections||[]).some(s=>/Wildcard Round: Who Advanced and Who Went Home/.test(String(s.heading||''))),'Wildcard recap must include explicit round advancement/elimination section');
 
+// Zero- and near-zero-score regression: no journalist may invent a productive trio.
+for(const [scenario,scorerPoints] of [['shutout',[0,0,0,0,0,0,0]],['one-scorer',[1.4,0,0,0,0,0,0]]]){
+  const raw=realisticForwardRaw(5);
+  raw.rawInquirer.teams=raw.rawInquirer.teams.map((t,i)=>i<4?{...t,
+    points:scorerPoints.reduce((sum,p)=>sum+p,0),opponent_points:35,won:false,
+    starter_details:(t.starter_details||[]).map((p,j)=>({...p,points:scorerPoints[j]||0}))
+  }:t);
+  const drafted=applyInquirerEditorialV31({season:2026,week:5,...raw,previousEdition:week2,weekClassification:inquirerWeekClassification(5,2026),variationSalt:5});
+  for(const t of drafted.inquirer.teams.slice(0,4)){
+    const players=t.inquirer_article.sections.find(s=>s.kind==='players');
+    const copy=(players?.paragraphs||[]).join(' ');
+    assert.doesNotMatch(copy,/enough real scoring|a real scoring spine|usable top end|sustainable instead of solitary|supporting scorer|enough real food|actual voltage|proper center of gravity/i,
+      scenario+' must not invent multiple producers for '+t.team_name);
+    assert.match(copy,scenario==='shutout'?/0\\.0|zeroes|zero/i:/1\\.4|one contribution|one meaningful/i,
+      scenario+' must explain the thin production for '+t.team_name);
+  }
+}
+
 // Live-preview regressions: forward-week language, real records, headline agreement,
 // and partial opponent projections must never be represented as complete forecasts.
 assert.equal(adaptWeekLanguage('the first two weeks describe a repeatable lineup',5),'the last two weeks describe a repeatable lineup');

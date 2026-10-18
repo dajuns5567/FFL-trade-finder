@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=24;
+export const FORWARD_EDITORIAL_REVISION=25;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -2586,6 +2586,37 @@ function w2PlayerSynthesisRead(t,r,top,opp,won){
     support=top?.[1]?w2ShortPlayerName(t,r,top[1],"synthesis-1"):"the supporting scorer",
     third=top?.[2]?w2ShortPlayerName(t,r,top[2],"synthesis-2"):null,
     v=w2Cohort(t)%4,names=w2Natural([star,support,third].filter(Boolean));
+  // A scorer list is not a scoring core when one or more names put up zero.
+  // Guard the shared synthesis before any reporter-specific praise template.
+  const scores=(top||[]).slice(0,3).map(p=>Number(p?.points)||0),
+    producers=scores.filter(p=>p>0).length,total=scores.reduce((sum,p)=>sum+p,0),
+    lead=top?.[0]?w2ShortPlayerName(t,r,top[0],"synthesis-0"):"the lead starter";
+  if(producers<2||total<10){
+    const zero=producers===0,tag=w2One(total),leadPts=w2One(scores[0]||0),v2=w2Cohort(t)%3;
+    const low={
+      "walter-mercer":[
+        zero?team+" got "+tag+" points from its three leading starters. There is no scoring spine to praise, only a lineup to repair.":lead+" supplied "+leadPts+" of "+tag+" points from the three names. That is one contribution, not a dependable supporting cast.",
+        zero?"Three listed starters, three zeroes. "+team+" cannot call that depth; it can only call the next lineup meeting.":team+" had "+lead+" on the scoresheet and almost nobody behind him. The next result needs actual support.",
+        zero?"The top three on the "+team+" card combined for "+tag+". The rest of the review starts with that unpleasant fact.":lead+" gave "+team+" the only real pulse in this group. The roster cannot ask one starter to carry silence."
+      ],
+      "tess-delaney":[
+        zero?"The "+a.mascot+" offered three empty plates and called it a lineup. "+tag+" points is not a course; it is a bill.":lead+" brought "+leadPts+" points to the table; the other two brought mostly decorative cutlery.",
+        zero?"A trio combining for "+tag+" is not a supporting cast. It is an ensemble audition for the bench.":team+" can applaud "+lead+" without pretending the other two supplied a chorus.",
+        zero?"Three names, "+tag+" points. Even the most generous review cannot locate the performance.":lead+" supplied the one audible note. The rest of the trio made a compelling case for silence."
+      ],
+      "mack-hollis":[
+        zero?"Three starters combined for "+tag+". That is not a scoring attack. That is a power outage with uniforms.":lead+" posted "+leadPts+" points while the other two barely disturbed the scoreboard. Hold the parade.",
+        zero?team+" got three zeroes from its supposed leaders. Rivals will not need a second joke.":team+" got a pulse from "+lead+" and static from the rest of this trio. Fix the speakers.",
+        zero?"The headline is "+tag+" from three starters. Somebody check whether the scoreboard is plugged in.":lead+" did the scoring. The other two helped fill out the photograph."
+      ],
+      "nora-voss":[
+        zero?"The evidence from "+names+" totals "+tag+" points. There was no productive core to rescue the case.":lead+" accounted for "+leadPts+" of "+tag+" points from the group. Calling the other two support would be an accounting error.",
+        zero?"Three starters and "+tag+" combined points. Rival managers can submit the box score as their entire argument.":team+" had one meaningful contribution from "+lead+" and two names on the attendance sheet.",
+        zero?"The three-name summary produces "+tag+". The record does not support an optimistic reading.":lead+" did the useful work. The other two supplied rivals with evidence."
+      ]
+    };
+    return (low[rid]||low["walter-mercer"])[v2];
+  }
   const rows={
     "walter-mercer":[
       names+" gave "+team+" a usable top end against "+foe+". Against "+foe+", the support behind the lead score made the top of "+team+" sustainable instead of solitary.",

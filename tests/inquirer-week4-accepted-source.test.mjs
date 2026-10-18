@@ -11,7 +11,7 @@ test('legacy Week 4 archive may serve as style only after exact digest check',as
  assert.equal(result.source,'sha256_pinned_original_archive');
  assert.equal(result.edition.published_locked,true);
  assert.equal(original.published_locked,undefined,'archive remains untouched');
- assert.deepEqual(Object.keys(result.edition).filter(k=>k!=='published_locked'),Object.keys(original));
+ assert.deepEqual(Object.keys(result.edition).filter(k=>k!=='published_locked'),Object.keys(JSON.parse(raw)));
 });
 test('changed original bytes cannot be trusted and never fall through',async()=>{
  const store={get:async key=>key.includes('recovery-originals')?raw+' ':null};

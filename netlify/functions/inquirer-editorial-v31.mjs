@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=19;
+export const FORWARD_EDITORIAL_REVISION=20;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -931,7 +931,7 @@ function w2PlayerTrajectoryContext(t,r,p,pp,slot=0,ref=""){
         "Across both weeks, "+who+" is at "+avg+" after "+prior+" last year, which is enough runway to treat the bigger role as something more than one flashy course."
       ],
       "mack-hollis":[
-        "Two weeks at "+avg+" per game after "+prior+" last season give "+who+" actual signal, not one Sunday with the volume knob ripped off.",
+        who+" has averaged "+avg+" over the recent two games, against "+prior+" last season. That is a change worth tracking.",
         who+" is sitting at "+avg+" through two games after "+prior+" last year; with the workload up too, the early surge has real voltage behind it.",
         "The two-week average is "+avg+" for "+who+" versus "+prior+" last season, enough repeated noise to stop treating the jump like one lucky blast.",
         "Both Sundays have pushed "+who+" to "+avg+" per game after "+prior+" last year, which makes the larger role worth tracking instead of screaming about one box score."
@@ -1331,7 +1331,7 @@ function w2DivisionBoardTake(flags,reporter,subject){
 }
 function w2HotTrend(t,r,weak,weakPrev){
   const a=w2Alias(t),cur=Number(weak.points)||0,old=Number(weakPrev.points)||0,delta=cur-old,k=w2Hash(String(t.roster_id)+"|hot|"+String(r?.id||""))%6;
-  if(cur<3&&Math.abs(delta)<0.05)return weak.name+" scored "+w2One(cur)+" in both Week 1 and Week 2. "+a.mascot+" cannot count on "+weak.name+" to fix a repeat performance without changing something.";
+  if(cur<3&&Math.abs(delta)<0.05)return weak.name+" scored "+w2One(cur)+" in both Week 1 and Week 2. "+a.mascot+" need a different answer from "+weak.name+".";
   if(cur<3&&Math.abs(delta)<4){
     const rows=[
       weak.name+" went from "+w2One(old)+" in Week 1 to "+w2One(cur)+" in Week 2. Calling that progress would be generous; the "+a.mascot+" still need useful points from the spot.",
@@ -2608,8 +2608,8 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
         team+" has a recent win to frame, but "+((t.starter_details||[])[0]?.name||team)+" cannot sing every part of the next one."
       ],
       "ll":[
-        "Two losses have killed the mystery for "+team+": there are weak spots, everybody can see them, and Week 3 is where the toolbox gets judged.",
-        "The "+a.mascot+" are 0-2, which means the siren is allowed to be audible now. Fix the dead outlets before another Sunday finds them first."
+        "The "+a.mascot+" have two recent losses. "+((t.starter_details||[])[0]?.name||team)+" needs more help across the lineup.",
+        "The "+a.mascot+" have lost twice recently. "+((t.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0]?.name||"The quietest starter")+" is one place to begin the lineup review."
       ],
       "lw":[
         team+" answered the opening loss with a win, and that is the kind of response worth yelling about. Now do it again without needing the same emergency.",
@@ -2666,7 +2666,7 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
   const banks={
     "walter-mercer":[
       "A week earlier, "+team+" "+outcome+" "+foe+" "+score+". That opener belongs in the comparison, but the current Sunday gets its own evaluation.",
-      "Week 1 put a "+score+" "+(prevWon?"win over ":"loss to ")+foe+" on "+team+"’s ledger. Week 2 adds a second result without turning either one into a permanent identity.",
+      "The prior result against "+foe+" read "+score+" for "+team+". "+((t.starter_details||[])[0]?.name||team)+" now gives the ledger another entry.",
       team+" came out of Week 1 with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". The next Sunday changes the season sample; it does not simply photocopy the first conclusion.",
       "The opening entry for "+team+" was "+score+" against "+foe+", a "+(prevWon?"win":"loss")+". Week 2 now gives that result context instead of permission to speak for the whole season."
     ],
@@ -2683,10 +2683,10 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
       "Against "+foe+", "+team+" previously posted "+score+". "+((t.starter_details||[])[0]?.name||team)+" supplies the new reference point this week."
     ],
     "nora-voss":[
-      "Rivals entered Week 2 with "+team+"’s "+score+" "+(prevWon?"win over ":"loss to ")+foe+" already in the chat. Sunday gave them new material, for better or worse.",
+      "Rivals already had "+team+"'s "+score+" result against "+foe+" in the chat. "+((t.starter_details||[])[0]?.name||team)+" gets the fresh headline.",
       team+" opened with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". That screenshot stays in the archive; Week 2 gets judged on the fresh one.",
       "The first result on "+team+" was "+score+" against "+foe+", a "+(prevWon?"win":"loss")+". Rivals can keep it, but they do not get to pretend the second Sunday said the exact same thing.",
-      "Week 1 handed the rival chat a "+score+" "+(prevWon?"win over ":"loss to ")+foe+" for "+team+". Week 2 changed the material instead of asking everyone to resend it."
+      "Rivals already saw "+team+"'s "+score+" against "+foe+". "+((t.starter_details||[])[0]?.name||team)+" now gives them a different argument."
     ]
   };
   const bank=banks[rid]||banks["walter-mercer"],chosen=bank[v],cut=chosen.indexOf(". ");

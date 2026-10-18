@@ -989,7 +989,7 @@ function w2Week1DeltaRead(t,r,p,pp,role){
   const rows=[
     p.name+" changed from "+prior+" in Week 1 to "+now+" in Week 2; the "+label+" "+phrase+".",
     p.name+" had "+prior+" last Sunday and "+now+" now. That "+label+" shift "+phrase+".",
-    For "+p.name+", "+prior+" became "+now+" the following week. The "+label+" "+phrase+".",
+    "For "+p.name+", "+prior+" became "+now+" the following week. The "+label+" "+phrase+".",
     "After a "+prior+"-point Week 1, the "+label+" reached "+now+" and "+phrase+"."
   ];
   return rows[v]

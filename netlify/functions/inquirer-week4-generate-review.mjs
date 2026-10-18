@@ -56,9 +56,15 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
     const status=Number(error?.status)||null;
     const code=String(error?.code||'unknown').slice(0,80).replace(/[^a-zA-Z0-9_.:-]/g,'');
     const type=String(error?.type||error?.name||'unknown').slice(0,80).replace(/[^a-zA-Z0-9_.:-]/g,'');
+    const reason=String(error?.message||'');
+    const editorialIssue=reason.startsWith('Week 4 editorial draft held:')?
+      reason.slice('Week 4 editorial draft held:'.length).trim().slice(0,250):
+      reason==='Week 4 editorial model did not return a JSON article'?'invalid_model_json':
+      reason==='Recap model did not return valid JSON'?'invalid_recap_json':null;
     await store.setJSON(jobKey,{status:'failed_manual_review_required',season,week,
       review_status:'unapproved',failed_at:new Date().toISOString(),
-      failure_http_status:status,failure_code:code,failure_type:type});
+      failure_http_status:status,failure_code:code,failure_type:type,
+      editorial_issue:editorialIssue});
     return json(500,{error:'Generation held for operator investigation; no publication changed'});
   }
 }

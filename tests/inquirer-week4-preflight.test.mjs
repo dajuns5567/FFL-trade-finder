@@ -39,7 +39,7 @@ test('preflight rejects bad auth before any Blob read',async()=>{
 
 test('both source flags are reported when legacy Week 4 lacks a lock marker',async()=>{
  const body=await (await handler(request,context({...weeks,
-  'broadcasts/2026/week-04.json':{...fixture,week:4},
+  'broadcasts/2026/week-04.json':{...fixture,week:4,published_locked:false},
   'broadcasts/2026/week-05.json':null}))).json();
  assert.equal(body.ready,false);
  assert.equal(body.sources.week4.present,true);assert.equal(body.sources.week4.locked,false);

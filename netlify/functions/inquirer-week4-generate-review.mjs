@@ -5,6 +5,7 @@ import {loadNetlifyEditorialGatewayClient} from './inquirer-week4-gateway.mjs';
 import {stageWeek4EditorialBatch} from './inquirer-week4-staging.mjs';
 import {verifyWeeklyEditorialSource} from './inquirer-week4-batch.mjs';
 import {loadAcceptedWeek4} from './inquirer-week4-accepted-source.mjs';
+import {originalJobKey,correctedJobKey,diagnosticKey,permitModelFixReplay} from './inquirer-week4-retry-policy.mjs';
 
 const json=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 const sourceKey=(season,week)=>`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
@@ -20,9 +21,16 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
   const model=String(readEnv('FLEECED_EDITORIAL_MODEL')||'');
   if(model!=='gpt-4.1')return json(503,{error:'Editorial model not configured'});
   const store=await openStore(),season=2026,week=5;
-  const jobKey=`inquirer/week4-style-drafts/${season}/week-05/generation-job.json`;
-  const existing=await store.get(jobKey,{type:'json'}).catch(()=>null);
-  if(existing)return json(409,{error:'Generation already attempted; operator review required before retry'});
+  const existing=await store.get(originalJobKey,{type:'json'}).catch(()=>null);
+  let jobKey=originalJobKey;
+  if(existing){
+    const diagnostic=await store.get(diagnosticKey,{type:'json'}).catch(()=>null);
+    if(!permitModelFixReplay({original:existing,diagnostic,model}))
+      return json(409,{error:'Generation already attempted; operator review required before retry'});
+    if(await store.get(correctedJobKey,{type:'json'}).catch(()=>null))
+      return json(409,{error:'Corrected-model generation already attempted; no duplicate calls'});
+    jobKey=correctedJobKey;
+  }
   const [acceptedWeek4,edition,previousEdition]=await Promise.all([
     loadAcceptedWeek4(store).then(result=>result.edition),
     store.get(sourceKey(season,5),{type:'json'}),

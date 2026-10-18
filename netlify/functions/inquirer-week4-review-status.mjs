@@ -17,7 +17,10 @@ export default async function handler(request,{site,
   if(!job)return reply(200,{status:'not_started',publishable:false});
   return reply(200,{status:job.status||'unknown',quality_ok:job.quality_ok===true,
     review_status:'unapproved',publishable:false,finished_at:job.finished_at||null,
-    sha256:job.sha256||null});
+    sha256:job.sha256||null,
+    failure_http_status:Number(job.failure_http_status)||null,
+    failure_code:job.failure_code||null,
+    failure_type:job.failure_type||null});
 }
 
 export const config={rateLimit:{action:'rate_limit',windowLimit:12,windowSize:60,aggregateBy:'ip'}};

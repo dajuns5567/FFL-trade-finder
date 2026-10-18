@@ -1,12 +1,12 @@
 import {getDeployStore} from '@netlify/blobs';
 import {weeklyReport} from './league-hub.mjs';
-import {isPreviewDiagnosticContext,PREVIEW_DIAGNOSTIC_STORE,PREVIEW_DIAGNOSTIC_STATUS,PREVIEW_DIAGNOSTIC_EDITION,summarizePreviewDiagnostic} from './inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,PREVIEW_DIAGNOSTIC_STORE,PREVIEW_DIAGNOSTIC_STATUS,PREVIEW_DIAGNOSTIC_EDITION,summarizePreviewDiagnostic} from './lib/inquirer-preview-diagnostics.mjs';
 
 // Explicit preview-only diagnostic invocation. Never publishes or stages an edition.
 // A background function is not constrained by the normal 30-second HTTP response timeout.
 export const config={background:true};
 export default async function generateInquirerPreview(req){
- if(!isPreviewDiagnosticContext()||req.method!=='GET'||new URL(req.url).searchParams.get('start')!=='1'){
+ if(!isPreviewDiagnosticContext(req.url)||req.method!=='GET'||new URL(req.url).searchParams.get('start')!=='1'){
   console.warn('inquirer-preview-background-rejected');
   return new Response('Forbidden',{status:403});
  }

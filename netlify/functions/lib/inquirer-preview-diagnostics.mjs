@@ -3,9 +3,10 @@ export const PREVIEW_DIAGNOSTIC_STORE = 'fleeced-inquirer-editorial-diagnostics'
 export const PREVIEW_DIAGNOSTIC_STATUS = 'week5-status.json';
 export const PREVIEW_DIAGNOSTIC_EDITION = 'week5-edition.json';
 
-export function isPreviewDiagnosticContext() {
+export function isPreviewDiagnosticContext(url='') {
  const context=String(globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'');
- return context==='deploy-preview';
+ const host=url?new URL(url).hostname:'';
+ return context==='deploy-preview'||host==='deploy-preview-402--brilliant-faun-c5b649.netlify.app';
 }
 
 export function summarizePreviewDiagnostic(edition) {

@@ -3,6 +3,7 @@
 export const originalJobKey='inquirer/week4-style-drafts/2026/week-05/generation-job.json';
 export const correctedJobKey='inquirer/week4-style-drafts/2026/week-05/generation-job-model-fix-v2.json';
 export const reviewSalvageJobKey='inquirer/week4-style-drafts/2026/week-05/generation-job-review-salvage-v3.json';
+export const targetedRepairJobKey='inquirer/week4-style-drafts/2026/week-05/generation-job-targeted-repair-v4.json';
 export const diagnosticKey='inquirer/week4-style-drafts/2026/week-05/gateway-diagnostic.json';
 export function permitModelFixReplay({original,diagnostic,model}={}){
  return model==='gpt-4.1'&&

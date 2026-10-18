@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=21;
+export const FORWARD_EDITORIAL_REVISION=22;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -357,7 +357,28 @@ export function polishForwardTeamCopy(teams,week,salt){
    let s=String(value||'');
    if(kind==='outlook'&&partial.length&&/\b(?:projection|forecast|pregame screenshot|favorite|Week \d+ board|model)\b/i.test(s)){
     const gaps=partial.map(x=>x.name+' ('+x.coverage+' projected starters)').join(' and ');
-    return 'Week '+(week+1)+' has incomplete projections for '+gaps+'. A precise favorite or point spread would mislead until those starter projections are filled in; '+team+' and '+next+' still have to play the game.';
+    // Rotate short factual clauses by roster identity. Shared notices must not
+    // become the same long cross-team newspaper sentence.
+    const variant=Math.abs(Number(t.roster_id)||0)%16;
+    const lead=[
+      'This forecast carries a warning:',
+      'Treat next Sunday’s spread skeptically:',
+      'The projection math needs context:',
+      'Here is the missing piece:'
+    ][variant%4];
+    const evidence=[
+      gaps+' have gaps in starter projections;',
+      gaps+' do not represent full-lineup estimates;',
+      'coverage remains thin for '+gaps+';',
+      gaps+' have not reached a complete forecast;'
+    ][Math.floor(variant/4)%4];
+    const consequence=[
+      'calling a favorite now would be a guess.',
+      'the press box can wait for better numbers.',
+      'rival managers should save their victory laps.',
+      'not every decimal deserves a headline.'
+    ][(variant+Math.floor(variant/4))%4];
+    return lead+' '+evidence+' '+consequence;
    }
    s=s.replace(/\bthe first the last two weeks\b/gi,'the last two weeks')
     .replace(/\bare 2-0\b/gi,'have won their last two games')

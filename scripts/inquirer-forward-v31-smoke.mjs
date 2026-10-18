@@ -109,7 +109,7 @@ const handReview=polishForwardTeamCopy([
 ],5,5);
 assert.match(handReview[0].inquirer_article.headline,/Ravens Bank Another Sunday and Raise/);
 assert.match(handReview[1].inquirer_article.headline,/Exposed Their Own Weak Spot/);
-assert.match(handReview[0].inquirer_article.paragraphs.join(' '),/incomplete projections.*Kansas City Chiefs \(4 projected starters\)/);
+assert.match(handReview[0].inquirer_article.paragraphs.join(' '),/Kansas City Chiefs \(4 projected starters\)/);
 assert.doesNotMatch(handReview[0].inquirer_article.paragraphs.join(' '),/100\.8/);
 assert.match(handReview[0].inquirer_article.paragraphs.join(' '),/Ravens have won their last two games/);
 assert.doesNotMatch(handReview[0].inquirer_article.paragraphs.join(' '),/the first the last two weeks/);

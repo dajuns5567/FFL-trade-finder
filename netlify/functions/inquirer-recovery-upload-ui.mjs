@@ -9,7 +9,7 @@ const html=`<!doctype html>
 <p>Stores original files in an isolated recovery folder only. The recovery check never changes live broadcasts. Optional draft generation uses AI credits, but never publishes articles.</p>
 <form id="form"><label for="token">Week 5 authorization token</label><input id="token" type="password" autocomplete="off" required>
 <label for="files">Original week-03.json and week-04.json</label><input id="files" type="file" accept=".json,application/json" multiple required>
-<button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><button id="generate" type="button" disabled>Start one-time Week 5 editorial DRAFT (no publishing)</button><pre id="result" aria-live="polite">Waiting for files.</pre>
+<button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><button id="generate" type="button" disabled>Start one-time Week 5 editorial DRAFT (no publishing)</button><button id="review" type="button">Check draft generation status (read-only)</button><pre id="result" aria-live="polite">Waiting for files.</pre>
 <script>
 let generationReady=false;
 const recoveryStatus=async token=>{
@@ -28,6 +28,14 @@ document.querySelector('#check').addEventListener('click',async()=>{
    generationReady=preflight.ok&&readiness.ready===true;
    document.querySelector('#generate').disabled=!generationReady;\n  }\n }
  catch(error){out.textContent=String(error);}
+});
+document.querySelector('#review').addEventListener('click',async()=>{
+ const out=document.querySelector('#result'),token=document.querySelector('#token').value.trim();
+ if(!token){out.textContent='Enter your token first.';return;}
+ try{
+  const r=await fetch('/.netlify/functions/inquirer-week4-review-status',{headers:{authorization:'Bearer '+token}});
+  out.textContent=String.fromCharCode(10)+'DRAFT STATUS: HTTP '+r.status+' — '+JSON.stringify(await r.json());
+ }catch(error){out.textContent='Status check failed: '+String(error);}
 });
 document.querySelector('#generate').addEventListener('click',async()=>{
  const out=document.querySelector('#result'),button=document.querySelector('#generate');

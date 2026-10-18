@@ -13,6 +13,8 @@ export default async function inquirerPublicationStatus(req){
   s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),
   s.get('inquirer/publication-status.json',{type:'json'}).catch(()=>null)
  ]);
+ if(new URL(req.url).searchParams.get('draft')==='1')
+  return new Response(JSON.stringify({edition:stage?.edition||null,audit:stage?.audit||null,quality:stage?.generation_quality||null}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
  const response={
   schema_version:1,season:2026,week:5,
   published:edition?.available===true&&Array.isArray(edition?.teams)&&edition.teams.length===32,

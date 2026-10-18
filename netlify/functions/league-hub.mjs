@@ -384,12 +384,18 @@ export async function weeklyReport(req){
  const rawOverview=buildLeagueOverview({season,week,teams:rawInquirer.teams,players,transactions,canonicalTrades:currentWeekTrades,weekClassification,valueHistoryMeta:{period:teamValueHistory?.period||null,baseline:teamValueHistory?.baseline||null,latest:teamValueHistory?.latest||null,source:teamValueHistory?.source||null}});
  let inquirer=rawInquirer,leagueOverview=rawOverview,quality={ok:true,issues:[],metrics:{}},variationSalt=0;
  if(week>=3){
-  let accepted=null,best=null,bestSalt=0,bestQuality=null;
-  for(const salt of [5,0,1,2,3,4,6,7]){
+  let accepted=null,best=null,bestSalt=0,bestQuality=null,bestScore=Infinity;
+  // A deep-quality pass is not sufficient if the independent admission audit
+  // still catches draft scaffolds or repeated newsroom phrases. Evaluate both
+  // before selecting a candidate and search a larger deterministic salt space.
+  for(const salt of [5,...Array.from({length:96},(_,i)=>i).filter(i=>i!==5)]){
    const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,weekClassification,variationSalt:salt});
-   const q=evaluateInquirerEditionQuality({teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview},previousBroadcast);
-   if(!best||q.issues.length<bestQuality.issues.length){best=drafted;bestQuality=q;bestSalt=salt}
-   if(q.ok){accepted=drafted;quality=q;variationSalt=salt;break}
+   const candidate={season,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
+   const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);
+   const a=inspectEditionBeforePublication(candidate);
+   const score=q.issues.length*4+a.issues.length;
+   if(!best||score<bestScore){best=drafted;bestQuality=q;bestSalt=salt;bestScore=score}
+   if(q.ok&&a.ok){accepted=drafted;quality=q;variationSalt=salt;break}
   }
   // A candidate with unresolved editorial issues is still valuable to review.
   // The publication guard below stages it with findings and never publishes it.

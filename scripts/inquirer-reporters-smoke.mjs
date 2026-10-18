@@ -184,7 +184,7 @@ assert(ui.includes('reporterArchiveHTML(w)'),'League Hub must expose reporter ar
 assert(ui.includes('data-lh-reporter-archive'),'Reporter archive controls missing');
 assert(ui.includes('leagueOverviewArticle(o)')&&ui.includes('Weekly Recap • All 4 Reporters'),'Weekly Recap must be a first-class archived Inquirer article in the UI');
 assert(ui.includes('lh-fan-sentiment'),'Fan Sentiment must render as a dedicated visual section in the team article');
-assert(backend.includes("internalHistory(origin,'team_net_all=1')"),'Inquirer must reuse the canonical Value History team-movement endpoint');
+assert(backend.includes("internalHistory(origin,'team_net_all=1',previewReadOnly)")&&backend.includes("internalHistory(origin,'trades=1',previewReadOnly)")&&backend.includes("async function internalHistory(origin,query,previewReadOnly=false)"),'Inquirer must reuse the canonical Value History team-movement endpoint');
 assert(backend.includes("internalHistory(origin,'trades=1')"),'Inquirer must reuse canonical Trade History for weekly trade reactions');
 assert(backend.includes('nflWeekSchedule(season,nextNflWeek)'),'Inquirer must verify next-week NFL schedule before calling bye situations');
 assert(backend.includes('injury_status'),'Inquirer must use Sleeper injury designations for roster-pressure analysis');

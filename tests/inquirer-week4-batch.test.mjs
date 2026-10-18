@@ -78,9 +78,14 @@ test('batch builds 32 review-only drafts and never publishes a failing audit',as
   assert.deepEqual(accepted,{...fixture,week:4},'the Week 4 baseline is read-only');
 });
 
-test('invalid articles abort the whole batch before any recap call',async()=>{
+test('shallow model drafts are preserved for review but can never pass publication quality',async()=>{
   let calls=0;
   const client={chat:{completions:{create:async()=>{calls++;return{choices:[{message:{content:'{}'}}]}}}}};
-  await assert.rejects(buildWeek4EditorialBatch({edition:input,acceptedWeek4:accepted,client,model:'mock',concurrency:1}),/held/);
-  assert.equal(calls,1);
+  const result=await buildWeek4EditorialBatch({edition:input,acceptedWeek4:accepted,client,model:'mock',concurrency:1});
+  assert.equal(calls,33,'one request per team and one recap request, with no blind paid retries');
+  assert.equal(result.publishable,false);
+  assert.equal(result.quality.ok,false);
+  assert.equal(result.quality.article_review_issues.length,32);
+  assert.equal(result.quality.recap_review_issue,'recap_draft_invalid');
+  assert.equal(result.edition.teams.length,32);
 });

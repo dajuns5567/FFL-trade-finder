@@ -5,12 +5,12 @@ import {createHash} from 'node:crypto';
 import {verifyWeeklyEditorialSource} from './inquirer-week4-batch.mjs';
 const trustedOriginalSha='038248bef97fd7bfd2bdece6df9c3a538cac9c29ae1bb34487458927c129022c';
 const originalKey='inquirer/recovery-originals/2026/week-04.json';
-export async function loadAcceptedWeek4(store){
+export async function loadAcceptedWeek4(store,{trustedSha=trustedOriginalSha}={}){
  const live=await store.get('broadcasts/2026/week-04.json',{type:'json'}).catch(()=>null);
  if(live?.published_locked===true&&Number(live.week)===4&&verifyWeeklyEditorialSource(live).ok)
    return{edition:live,source:'verified_locked_broadcast'};
  const raw=await store.get(originalKey,{type:'text'}).catch(()=>null);
- if(typeof raw!=='string'||createHash('sha256').update(raw).digest('hex')!==trustedOriginalSha)
+ if(typeof raw!=='string'||createHash('sha256').update(raw).digest('hex')!==trustedSha)
    return{edition:null,source:'trusted_original_not_staged'};
  let original;try{original=JSON.parse(raw)}catch{return{edition:null,source:'archive_json_invalid'}};
  if(Number(original.week)!==4||Number(original.season)!==2026||original.available!==true||

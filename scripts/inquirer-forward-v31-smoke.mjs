@@ -46,6 +46,7 @@ assert.match(week3.league_overview.headline,/Week 3/);
 assert.ok(week3.teams.every(t=>Number(t.inquirer_article?.week)===3),'Every Week 3 team article must carry the current week');
 const w3copy=[...week3.teams.flatMap(t=>t.inquirer_article?.paragraphs||[]),...(week3.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[])].join(' ');
 assert.doesNotMatch(w3copy,/\bWeek 2 gets its own newspaper\b/i,'Forward edition must not retain Week 2 publication framing');
+assert.doesNotMatch(w3copy,/could not turn the came in result/i,'Lexical freshness must not corrupt the result idiom');
 
 // Protect later weeks against a regression into copied Week 2 phrasing.
 // Scores stay paired exactly as in the 32-team fixture so matchup integrity
@@ -67,6 +68,7 @@ for(const week of [5,6,9,14]){
     assert.ok(edition.teams.every(t=>!/\b(?:Make|Makes) this Sunday\b/.test(String(t.inquirer_article?.headline||''))),'Forward headlines must use title-case This');
     const audit=inspectEditionBeforePublication(edition);
     assert.ok(audit.ok,'Week '+week+' salt '+salt+' failed publication copy audit: '+JSON.stringify(audit.issues.slice(0,8)));
+    assert.ok(edition.teams.every(t=>!/(?:could not turn the came in result|eligible option|fleeced signal)/i.test((t.inquirer_article?.paragraphs||[]).join(' '))),'Forward copy must not contain malformed or meta prose');
     const q=evaluateInquirerEditionQuality(edition,week2);
     assert.ok(q.ok,'Week '+week+' salt '+salt+' repeated editorial scaffolds: '+JSON.stringify(q.issues.slice(0,8)));
     assert.ok(edition.teams.every(t=>!/\b(?:the last\s+){2,}two (?:weeks|Sundays)\b|\bthe first the last two\b/i.test((t.inquirer_article?.paragraphs||[]).join(' '))),'Forward copy must never double the last-two-weeks phrase');

@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=26;
+export const FORWARD_EDITORIAL_REVISION=27;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -143,7 +143,7 @@ const EVOLUTION_TAILS={
   'nora-voss':['Rivals will remember it even if management would rather they did not.','The next matchup gets first chance to dispute it.','That is enough material for the rival chat.','The next Sunday decides whether this becomes a pattern.','Opponents now know exactly where to look.','Management gets one week to make the note boring.','Rivals do not need a second invitation to test it.','The season will either confirm the note or embarrass it.']
 };
 const EVOLUTION_LEXICON=[
-  [/\bthe result\b/gi,['the final score','Sunday’s outcome','the finished result','the scoreboard answer']],
+  [/\bthe result\b/gi,['the final score','Sunday’s outcome','the settled outcome','the scoreboard answer']],
   [/\bthe lineup\b/gi,['the starting group','the lineup card','the starters','the weekly lineup']],
   [/\bthe roster\b/gi,['the squad','the roster construction','the team','the full roster']],
   [/\bthe scoreboard\b/gi,['the score','the scoring column','the final tally','the board']],
@@ -2081,7 +2081,15 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
       "The fan base has screenshots, memes and exactly one volume setting about "+subject+". Nobody needs a siren yet, but the siren has been located.",
       "Supporters are doing what supporters do best: turning "+subject+" into twelve different lineup arguments and one extremely loud thread.",
       "The call-in crowd has "+subject+" circled so hard the screen may file a complaint. Some of it is comedy. Some of it is management getting free advice at dangerous volume.",
-      "The memes are already built around "+subject+". If the issue disappears, everybody laughs and moves on. If it stays, the joke gets a season ticket."
+      "The memes are already built around "+subject+". If the issue disappears, everybody laughs and moves on. If it stays, the joke gets a season ticket.",
+      "A rival account is auctioning screenshots of "+subject+" as evidence of managerial negligence. Bidding is brisk because complaining remains free.",
+      "The group chat has called a mock emergency meeting over "+subject+". Minutes were taken in all caps; the decision was to yell again next Sunday.",
+      "Fans have submitted "+subject+" to the Department of Extremely Avoidable Sundays. The paperwork is fictional. The embarrassment is on the scoreboard.",
+      "Somebody printed "+subject+" on a protest placard. Management may want a better lineup before supporters invest in matching shirts.",
+      "The call-in show is running a public inquiry into "+subject+". Nobody has subpoena power, but everyone has a screenshot and a microphone.",
+      "There is a neighborhood petition to retire "+subject+" as a recurring joke. The signatures are mostly from people who started the joke.",
+      "The fan base wants "+subject+" explained on a giant video board. Apparently the 30-person group chat did not offer enough public humiliation.",
+      "The crowd has a fresh nickname for "+subject+" and management will not enjoy hearing it shouted from rival sections."
     ],
     "nora-voss":[
       "Rival chats keep returning to "+subject+" because it is the easiest material available. Supporters are responding with lineup screenshots, excuses and the occasional respectable counterargument.",
@@ -2090,7 +2098,7 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
       "Supporters are trying to retire the joke around "+subject+" before rivals turn it into a franchise logo. The internet, as always, is showing admirable restraint by showing none."
     ]
   };
-  return (rows[rid]||rows["walter-mercer"])[v]
+  return (rows[rid]||rows["walter-mercer"])[rid==='mack-hollis'?w2Hash(team+'|'+subject+'|sentiment')%12:v]
 }
 function w2RecapTradeParagraphs(teams,r){
   const seen=new Set(),trades=[];
@@ -3520,8 +3528,14 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     const rid=String(t?.inquirer_article?.reporter?.id||''),copy=(t?.inquirer_article?.paragraphs||[]).join(' '),
       valueCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='value').flatMap(s=>s?.paragraphs||[]).join(' ');
     if(/already on the roster when Week \d+ began/i.test(valueCopy))issues.push({id:'value-roster-status-filler',team:t.team_name});
+    if(/could not turn the (?:came in|finished|closed the week) result/i.test(copy))issues.push({id:'malformed-result-idiom',team:t.team_name});
     if(rid==='tess-delaney'&&/\b(?:furniture|chair|chairs|tablecloth|linen|napkin|china|silverware|place setting|dining room|dinner|centerpiece|velvet rope|chaise|ballroom|salon|coat check)\b/i.test(copy))issues.push({id:'roycington-retired-metaphor',team:t.team_name});
     if(rid==='nora-voss'&&/\b(?:docket|cross-examination|defendant|prosecution|indictment|courtroom)\b/i.test(copy))issues.push({id:'filch-courtroom-scaffold',team:t.team_name});
+  }
+  // Named-player substitutions must not disguise a copy-pasted fan joke.
+  for(const riff of ['supporters are doing what supporters do best','the fan base has screenshots, memes and exactly one volume setting']){
+    const owners=teams.filter(t=>String((t?.inquirer_article?.paragraphs||[]).join(' ')).toLowerCase().includes(riff)).map(t=>t.team_name);
+    if(owners.length>=4)issues.push({id:'repeated-fan-joke',riff,teams:owners});
   }
   for(const [sentence,ids] of articleScaffold)if(ids.size>=4)issues.push({id:'cross-team-copy-scaffold',teams:ids.size,sentence});
   for(const [phrase,rows] of forwardCrossReporterPhraseOffenders(teams,entities))issues.push({id:'cross-reporter-phrase-scaffold',phrase,teams:rows.map(x=>x.team),reporters:[...new Set(rows.map(x=>x.reporter))]});

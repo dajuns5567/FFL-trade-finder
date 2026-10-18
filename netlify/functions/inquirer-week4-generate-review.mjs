@@ -35,7 +35,9 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
   if(!sourceCheck.ok)return json(422,{error:'Week 5 source failed verification',issues:sourceCheck.issues});
   // Set a persistent one-shot marker BEFORE consuming model credits. Even a
   // Netlify background retry cannot silently issue another 33 paid calls.
-  await store.setJSON(jobKey,{status:'started',season,week,created_at:new Date().toISOString(),review_status:'unapproved'});
+  const admission=await store.setJSON(jobKey,{status:'started',season,week,created_at:new Date().toISOString(),review_status:'unapproved'},
+    {onlyIfNew:true});
+  if(!admission.modified)return json(409,{error:'Generation was started by another request; no duplicate model calls'});
   try{
     const client=await loadClient();
     const result=await stage({store,edition,acceptedWeek4,previousEdition,client,model,concurrency:2});

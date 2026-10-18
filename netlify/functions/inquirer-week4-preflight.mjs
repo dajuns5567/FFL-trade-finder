@@ -4,7 +4,7 @@ import {verifyWeeklyEditorialSource,week4RecapBrief} from './inquirer-week4-batc
 import {loadAcceptedWeek4} from './inquirer-week4-accepted-source.mjs';
 const reply=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
- openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore('fleeced-league-hub',{consistency:'strong'});}}={}){
+ openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore({name:'fleeced-league-hub',consistency:'strong'});}}={}){
  const auth=authorizeEditorialGeneration(request,{readEnv,method:'GET'});
  if(!auth.ok)return reply(auth.status,{error:'Preflight unavailable or unauthorized'});
  if(site?.id&&site.id!=='2e556797-6f35-4037-aa5a-1338724eb71d')return reply(403,{error:'Wrong Netlify project'});

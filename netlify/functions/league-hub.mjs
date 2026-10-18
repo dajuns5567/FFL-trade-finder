@@ -388,7 +388,7 @@ export async function weeklyReport(req){
   // A deep-quality pass is not sufficient if the independent admission audit
   // still catches draft scaffolds or repeated newsroom phrases. Evaluate both
   // before selecting a candidate and search a larger deterministic salt space.
-  for(const salt of [5,...Array.from({length:12},(_,i)=>i).filter(i=>i!==5)]){
+  for(const salt of [5,0,1]){
    const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,weekClassification,variationSalt:salt});
    const candidate={season,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
    const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);

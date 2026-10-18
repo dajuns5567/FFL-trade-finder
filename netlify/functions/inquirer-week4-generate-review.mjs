@@ -4,6 +4,7 @@ import {authorizeEditorialGeneration} from './inquirer-week4-run-auth.mjs';
 import {loadNetlifyEditorialGatewayClient} from './inquirer-week4-gateway.mjs';
 import {stageWeek4EditorialBatch} from './inquirer-week4-staging.mjs';
 import {verifyWeeklyEditorialSource} from './inquirer-week4-batch.mjs';
+import {loadAcceptedWeek4} from './inquirer-week4-accepted-source.mjs';
 
 const json=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 const sourceKey=(season,week)=>`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
@@ -23,7 +24,7 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
   const existing=await store.get(jobKey,{type:'json'}).catch(()=>null);
   if(existing)return json(409,{error:'Generation already attempted; operator review required before retry'});
   const [acceptedWeek4,edition,previousEdition]=await Promise.all([
-    store.get(sourceKey(season,4),{type:'json'}),
+    loadAcceptedWeek4(store).then(result=>result.edition),
     store.get(sourceKey(season,5),{type:'json'}),
     store.get(sourceKey(season,3),{type:'json'}).catch(()=>null)
   ]);

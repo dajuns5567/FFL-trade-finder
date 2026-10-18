@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=27;
+export const FORWARD_EDITORIAL_REVISION=28;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -2098,7 +2098,7 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
       "Supporters are trying to retire the joke around "+subject+" before rivals turn it into a franchise logo. The internet, as always, is showing admirable restraint by showing none."
     ]
   };
-  return (rows[rid]||rows["walter-mercer"])[rid==='mack-hollis'?w2Hash(team+'|'+subject+'|sentiment')%12:v]
+  return (rows[rid]||rows["walter-mercer"])[rid==='mack-hollis'?(Math.max(1,Number(t.roster_id)||1)+Number(week)+Number(variationSalt||0))%12:v]
 }
 function w2RecapTradeParagraphs(teams,r){
   const seen=new Set(),trades=[];

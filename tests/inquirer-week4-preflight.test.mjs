@@ -46,3 +46,18 @@ test('both source flags are reported when legacy Week 4 lacks a lock marker',asy
  assert.equal(body.sources.week4.source,'trusted_original_not_staged');
  assert.equal(body.sources.week5.present,false);
 });
+
+test('only exact invalid-model failure admits one correction; second correction is blocked',async()=>{
+ const failed={status:'failed_manual_review_required'};
+ const diagnostic={status:'gateway_rejected',model:'true',provider_http_status:400,
+  provider_message:'400 true is not a valid model ID'};
+ const recovered={...weeks,
+  'inquirer/week4-style-drafts/2026/week-05/generation-job.json':failed,
+  'inquirer/week4-style-drafts/2026/week-05/gateway-diagnostic.json':diagnostic};
+ const first=await (await handler(request,context(recovered))).json();
+ assert.equal(first.ready,true);
+ const second=await (await handler(request,context({...recovered,
+  'inquirer/week4-style-drafts/2026/week-05/generation-job-model-fix-v2.json':{status:'started'}}))).json();
+ assert.equal(second.ready,false);
+ assert.equal(second.reason,'corrected_generation_already_attempted');
+});

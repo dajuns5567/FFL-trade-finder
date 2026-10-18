@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {authorizeEditorialGeneration} from '../netlify/functions/inquirer-week4-run-auth.mjs';
 import {handler} from '../netlify/functions/inquirer-week4-generate-review.mjs';
+import reviewStatus from '../netlify/functions/inquirer-week4-review-status.mjs';
 
 const secret='q'.repeat(48);
 const env={FLEECED_ENABLE_WEEK4_AI_STAGING:'true',FLEECED_EDITORIAL_RUN_TOKEN:secret,FLEECED_EDITORIAL_MODEL:'gpt-4.1'};
@@ -61,4 +62,22 @@ test('authorized job stages only an unapproved copy and records a one-shot resul
   assert.equal(response.status,422);
   assert.equal(saves.length,0);
   assert.ok(calls.some(key=>key.includes('week-05.json')));
+});
+
+test('review status is private and only reveals an unapproved job marker',async()=>{
+  let reads=0;
+  const getRequest=(token)=>new Request('https://example.test/.netlify/functions/inquirer-week4-review-status',
+    {headers:{authorization:`Bearer ${token}`}});
+  const deps={readEnv,openStore:()=>({get:async()=>{reads++;return{status:'draft_staged',quality_ok:true,
+    sha256:'a'.repeat(64),private_article:'must not leak',finished_at:'2026-10-18T00:00:00Z'}}})};
+  const denied=await reviewStatus(getRequest('wrong'),deps);
+  assert.equal(denied.status,401);
+  assert.equal(reads,0);
+  const response=await reviewStatus(getRequest(secret),deps);
+  assert.equal(response.status,200);
+  const data=await response.json();
+  assert.equal(data.review_status,'unapproved');
+  assert.equal(data.publishable,false);
+  assert.equal(data.private_article,undefined);
+  assert.equal(data.status,'draft_staged');
 });

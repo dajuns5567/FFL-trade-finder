@@ -1,17 +1,24 @@
-// Explicitly authorized, create-only restoration of approved 2026 Weeks 3-4 to the original production Inquirer store.
+// Explicitly authorized, create-only restoration of SHA-verified approved 2026 Weeks 3-4 to the NEW Netlify team.
 // No generator, HTTP publisher call, deletes, or overwrite. Writes index LAST after readback.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {getStore} from '@netlify/blobs';
-const PROD='2e556797-6f35-4037-aa5a-1338724eb71d';
+const PROD='d51af6d7-e5f3-4c51-8c6d-25e31db39a0c';
 assert.equal(process.env.FLEECED_NEW_TEAM_SITE_ID,PROD,'production site mismatch');
-const token=process.env.NETLIFY_SANDBOX_DEPLOY_TOKEN;
-assert(token,'missing Actions-only old-team Blob token');
-const file=process.argv[2]||'';
-assert(file.includes('.tmp/')&&file.endsWith('.json'),'temporary staged archive required');
+const token=process.env.NETLIFY_BLOBS_TOKEN;
 const dry=process.argv.includes('--dry-run');
-const editions=JSON.parse(await fs.readFile(file,'utf8'));
-assert.deepEqual(Object.keys(editions),['1','2','3','4']);
+const paths=process.argv.slice(2).filter(v=>!v.startsWith('--'));
+assert.equal(paths.length,2,'Pass original approved Week 3 and Week 4 JSON paths');
+const hashes={3:'8f2631fd4f83b556daa29d78ab63e92b87a4914e7875ed6799e852397e86715c',4:'038248bef97fd7bfd2bdece6df9c3a538cac9c29ae1bb34487458927c129022c'};
+const editions={};
+for(const [i,week] of [3,4].entries()){
+ const bytes=await fs.readFile(paths[i]);
+ const hash=createHash('sha256').update(bytes).digest('hex');
+ assert.equal(hash,hashes[week],'Approved original Week '+week+' checksum mismatch');
+ editions[week]=JSON.parse(bytes.toString('utf8'));
+}
+assert(token,'NETLIFY_BLOBS_TOKEN for the NEW account is required');
 for(const week of [3,4]){
  const v=editions[week];
  assert.equal(v.available,true);assert.equal(Number(v.season),2026);assert.equal(Number(v.week),week);
@@ -62,7 +69,7 @@ for(const {key,value} of entries){
  if(exists!==null){assert.deepEqual(exists,value,'Existing protected object differs: '+key);known.set(key,true)}
  else known.set(key,false);
 }
-console.log('NEW TEAM LIVE APPROVED RESTORATION PREFLIGHT '+JSON.stringify({dry_run:dry,site:PROD,weeks:[3,4],articles:64,reporters:4,planned_objects:entries.length,existing_identical:[...known.values()].filter(Boolean).length,previous_index_rows:oldIndex.length,overwrites:0,deletes:0,approved_week4_paragraphs:457}));
+console.log('NEW TEAM LIVE APPROVED RESTORATION PREFLIGHT '+JSON.stringify({dry_run:dry,site:PROD,weeks:[3,4],articles:64,reporters:4,planned_objects:entries.length,existing_identical:[...known.values()].filter(Boolean).length,previous_index_rows:oldIndex.length,overwrites:0,deletes:0,approved_week4_sha256:hashes[4]}));
 if(dry)process.exit(0);
 for(const {key,value} of entries){
  if(known.get(key))continue;
@@ -77,4 +84,4 @@ assert.equal(idxWrite?.modified,true,'Archive index conditional commit failed');
 const published=await s.get('broadcasts/index.json',{type:'json'});
 assert.deepEqual(published,newIndex);
 for(const week of [3,4])assert.deepEqual(await s.get(broadcastKey(week),{type:'json'}),editions[week]);
-console.log('NEW TEAM LIVE APPROVED INQUIRER RESTORATION VERIFIED '+JSON.stringify({weeks:[3,4],articles:64,objects:entries.length+1,readback:true,indexed:true,preserved_week4_paragraphs:457,overwrites:0,deletes:0}));
+console.log('NEW TEAM LIVE APPROVED INQUIRER RESTORATION VERIFIED '+JSON.stringify({weeks:[3,4],articles:64,objects:entries.length+1,readback:true,indexed:true,preserved_week4_sha256:hashes[4],overwrites:0,deletes:0}));

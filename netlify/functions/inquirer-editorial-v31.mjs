@@ -2668,7 +2668,7 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
       "A week earlier, "+team+" "+outcome+" "+foe+" "+score+". That opener belongs in the comparison, but the current Sunday gets its own evaluation.",
       "The prior result against "+foe+" read "+score+" for "+team+". "+((t.starter_details||[])[0]?.name||team)+" now gives the ledger another entry.",
       team+" came out of Week 1 with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". The next Sunday changes the season sample; it does not simply photocopy the first conclusion.",
-      "The opening entry for "+team+" was "+score+" against "+foe+", a "+(prevWon?"win":"loss")+". Week 2 now gives that result context instead of permission to speak for the whole season."
+      "In the earlier visit with "+foe+", "+team+" "+(prevWon?"banked":"dropped")+" the "+score+" decision. "+((t.starter_details||[])[0]?.name||team)+" now offers the beat desk its next, more revealing piece of evidence."
     ],
     "tess-delaney":[
       team+" arrived from Week 1 carrying a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". The second Sunday changes the conversation without requiring us to pretend the opener vanished.",
@@ -2684,7 +2684,7 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
     ],
     "nora-voss":[
       "Rivals already had "+team+"'s "+score+" result against "+foe+" in the chat. "+((t.starter_details||[])[0]?.name||team)+" gets the fresh headline.",
-      team+" opened with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". That screenshot stays in the archive; Week 2 gets judged on the fresh one.",
+      "Put the "+score+" "+(prevWon?"victory":"defeat")+" against "+foe+" beside this week's "+Number(t.points||0).toFixed(1)+" points for "+team+". Rivals have two different scoreboards to answer for now.",
       "The first result on "+team+" was "+score+" against "+foe+", a "+(prevWon?"win":"loss")+". Rivals can keep it, but they do not get to pretend the second Sunday said the exact same thing.",
       "Rivals already saw "+team+"'s "+score+" against "+foe+". "+((t.starter_details||[])[0]?.name||team)+" now gives them a different argument."
     ]

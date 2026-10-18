@@ -2684,7 +2684,18 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
     ],
     "nora-voss":[
       "Rivals already had "+team+"'s "+score+" result against "+foe+" in the chat. "+((t.starter_details||[])[0]?.name||team)+" gets the fresh headline.",
-      "Put the "+score+" "+(prevWon?"victory":"defeat")+" against "+foe+" beside this week's "+Number(t.points||0).toFixed(1)+" points for "+team+". Rivals have two different scoreboards to answer for now.",
+      ([
+        "The "+score+" "+(prevWon?"win":"loss")+" with "+foe+" is old news to the "+team+" crowd. Their latest "+Number(t.points||0).toFixed(1)+"-point showing has a separate argument to make.",
+        team+" brought the "+score+" "+(prevWon?"victory":"defeat")+" against "+foe+" into the new week; the argument now runs through "+((t.starter_details||[])[0]?.name||team)+".",
+        "The "+foe+" result went "+score+" for "+team+". Its second examination begins with "+Number(t.points||0).toFixed(1)+" fresh fantasy points, not that old verdict.",
+        "Every rival remembers "+team+"'s "+score+" date with "+foe+". The latest starters have supplied a different set of names for the argument.",
+        "That "+score+" line against "+foe+" is part of "+team+"'s record, not a standing invitation to predict the next result.",
+        "The "+foe+" scoreboard read "+score+" last time. For "+team+", the current week's performance demands a new headline.",
+        team+" previously finished "+score+" with "+foe+". Now "+((t.starter_details||[])[0]?.name||team)+" is where the next round of criticism or applause begins.",
+        "Rivals can cite "+team+"'s "+score+" "+(prevWon?"success":"setback")+" against "+foe+" all they like; this week's "+Number(t.points||0).toFixed(1)+" is a different story.",
+        "That earlier "+score+" game with "+foe+" belongs to "+team+"'s archive. Sunday supplied its own lineup verdict.",
+        "On the last trip past "+foe+", "+team+" left with "+score+". The new box score must stand on what happened this week."
+      ])[w2Hash(team+"|nora-bridge-variants")%10],
       "The first result on "+team+" was "+score+" against "+foe+", a "+(prevWon?"win":"loss")+". Rivals can keep it, but they do not get to pretend the second Sunday said the exact same thing.",
       "Rivals already saw "+team+"'s "+score+" against "+foe+". "+((t.starter_details||[])[0]?.name||team)+" now gives them a different argument."
     ]

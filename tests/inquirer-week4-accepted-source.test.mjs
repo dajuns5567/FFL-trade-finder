@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import fixture from '../netlify/functions/inquirer-week2-2026-preload.mjs';
 import {loadAcceptedWeek4} from '../netlify/functions/inquirer-week4-accepted-source.mjs';
-const original={...fixture,week:4,available:true};
+const original={...fixture,week:4,available:true,published_locked:undefined};
 const raw=JSON.stringify(original),sha=createHash('sha256').update(raw).digest('hex');
 test('legacy Week 4 archive may serve as style only after exact digest check',async()=>{
  const store={get:async key=>key.includes('recovery-originals')?raw:null};

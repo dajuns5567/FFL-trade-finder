@@ -331,20 +331,23 @@ export async function weeklyReport(req){
   week=w;break;
  }
  if(!week)return latestPublished||{available:false,season,week:null,reason:'No completed Fleeced! Inquirer edition is available yet.'};
- const completion=await completedPublicationWeek(week);
- if(!completion.complete)return{available:false,season,week,waiting_for_week:week,reason:'The Fleeced! Inquirer is waiting for Sleeper to finalize Week '+week+': '+completion.reason+'.'};
- const key=`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
- const historicalSeasonYear=season-1;
- // Independent enrichment reads can overlap the historical lookup and Sleeper
- // fetches. The preview still reads production history without writing Blobs.
- const historicalSeasonPromise=fetchBestSeason(historicalSeasonYear).catch(()=>({stats:null,source:null,errors:['unavailable']}));
- const nextNflWeek=week<INQUIRER_FINAL_WEEK?week+1:null;
- const enrichmentPromise=Promise.all([
+ // For read-only previews, the completion check and independent source reads
+ // can safely overlap. Production starts these reads only after completion,
+ // preserving the established scheduled-publication admission behavior.
+ const historicalSeasonYear=season-1,nextNflWeek=week<INQUIRER_FINAL_WEEK?week+1:null;
+ const loadHistorical=()=>fetchBestSeason(historicalSeasonYear).catch(()=>({stats:null,source:null,errors:['unavailable']}));
+ const loadEnrichment=()=>Promise.all([
   internalHistory(origin,'team_net_all=1',previewReadOnly),
   internalHistory(origin,'trades=1',previewReadOnly),
   nflWeekSchedule(season,nextNflWeek),
   internalHistory(origin,'market=1',previewReadOnly)
  ]);
+ const previewTasks=previewReadOnly?{historical:loadHistorical(),enrichment:loadEnrichment()}:null;
+ const completion=await completedPublicationWeek(week);
+ if(!completion.complete)return{available:false,season,week,waiting_for_week:week,reason:'The Fleeced! Inquirer is waiting for Sleeper to finalize Week '+week+': '+completion.reason+'.'};
+ const key=`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
+ const historicalSeasonPromise=previewTasks?.historical||loadHistorical();
+ const enrichmentPromise=previewTasks?.enrichment||loadEnrichment();
  const previousStored=week>1?await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null):null,previousBroadcast=previousStored?{...previousStored,published_locked:true}:preloadedBroadcast(season,week-1);
  let managerHistoryData=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
  if(!managerHistoryData?.career?.length){

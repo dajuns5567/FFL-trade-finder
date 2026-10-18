@@ -41,7 +41,7 @@ for(let salt=0;salt<8;salt++){
 assert.ok(week3,'Forward engine must find a non-copying Week 3 variant within the live retry budget; last quality='+JSON.stringify(lastQuality));
 assert.equal(week3.teams.length,32);
 assert.equal(week3.inquirer_version,31);
-assert.equal(week3.editorial_revision,14);
+assert.equal(week3.editorial_revision,FORWARD_EDITORIAL_REVISION);
 assert.match(week3.league_overview.headline,/Week 3/);
 assert.ok(week3.teams.every(t=>Number(t.inquirer_article?.week)===3),'Every Week 3 team article must carry the current week');
 const w3copy=[...week3.teams.flatMap(t=>t.inquirer_article?.paragraphs||[]),...(week3.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[])].join(' ');

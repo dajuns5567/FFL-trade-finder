@@ -24,7 +24,7 @@ export default async function inquirerPublicationStatus(req){
   stage_audit_ok:stage?.audit?.ok??null,
   stage_quality_ok:stage?.generation_quality?.ok??null,
   stage_issue_count:(stage?.audit?.issues?.length||0)+(stage?.generation_quality?.issues?.length||0),
-  stage_issue_codes:[...(stage?.audit?.issues||[]),...(stage?.generation_quality?.issues||[])].slice(0,20).map(x=>typeof x==='string'?x:String(x?.code||x?.reason||'issue')),
+  stage_issue_codes:[...(stage?.audit?.issues||[]),...(stage?.generation_quality?.issues||[])].slice(0,80).map(x=>typeof x==='string'?x:String(x?.id||x?.code||x?.reason||'issue')),
   worker_status:status||null
  };
  return new Response(JSON.stringify(response),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});

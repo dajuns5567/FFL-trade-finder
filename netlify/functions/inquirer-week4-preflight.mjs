@@ -2,7 +2,7 @@
 import {authorizeEditorialGeneration} from './inquirer-week4-run-auth.mjs';
 import {verifyWeeklyEditorialSource,week4RecapBrief} from './inquirer-week4-batch.mjs';
 import {loadAcceptedWeek4} from './inquirer-week4-accepted-source.mjs';
-import {originalJobKey,correctedJobKey,diagnosticKey,permitModelFixReplay} from './inquirer-week4-retry-policy.mjs';
+import {originalJobKey,correctedJobKey,reviewSalvageJobKey,diagnosticKey,permitModelFixReplay,permitReviewSalvageReplay} from './inquirer-week4-retry-policy.mjs';
 const reply=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
  openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore({name:'fleeced-league-hub',consistency:'strong'});}}={}){
@@ -18,7 +18,12 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
      const [diagnostic,corrected]=await Promise.all([
        store.get(diagnosticKey,{type:'json'}).catch(()=>null),
        store.get(correctedJobKey,{type:'json'}).catch(()=>null)]);
-     if(corrected)return reply(200,{ready:false,reason:'corrected_generation_already_attempted',status:corrected.status||'unknown'});
+     if(corrected){
+       const salvage=await store.get(reviewSalvageJobKey,{type:'json'}).catch(()=>null);
+       if(salvage)return reply(200,{ready:false,reason:'review_salvage_already_attempted',status:salvage.status||'unknown'});
+       if(!permitReviewSalvageReplay({original:job,diagnostic,corrected,model:String(readEnv('FLEECED_EDITORIAL_MODEL')||'')}))
+         return reply(200,{ready:false,reason:'corrected_generation_already_attempted',status:corrected.status||'unknown'});
+     }
      if(!permitModelFixReplay({original:job,diagnostic,model:String(readEnv('FLEECED_EDITORIAL_MODEL')||'')}))
        return reply(200,{ready:false,reason:'generation_already_attempted',status:job.status||'unknown'});
    }

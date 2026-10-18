@@ -326,7 +326,7 @@ export async function weeklyReport(req){
  if(!completion.complete)return{available:false,season,week,waiting_for_week:week,reason:'The Fleeced! Inquirer is waiting for Sleeper to finalize Week '+week+': '+completion.reason+'.'};
  const key=`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
  const historicalSeasonYear=season-1,historicalSeason=await fetchBestSeason(historicalSeasonYear).catch(()=>({stats:null,source:null,errors:['unavailable']}));
- const previousStored=week>1?await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null):null,previousBroadcast=previousStored||preloadedBroadcast(season,week-1);
+ const previousStored=week>1?await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null):null,previousBroadcast=previousStored?{...previousStored,published_locked:true}:preloadedBroadcast(season,week-1);
  let managerHistoryData=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
  if(!managerHistoryData?.career?.length)managerHistoryData=await managerHistory().catch(()=>({career:[],current:[],assignments:[]}));
  const [matchups,transactions,rosters,users,proj,players,nextMatchups,nextProj,weeklyStats,winnersBracket]=await Promise.all([

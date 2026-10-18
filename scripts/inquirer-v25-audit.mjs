@@ -96,7 +96,9 @@ assert.ok(forwardSource.includes('function w2PreviousWeekBridge')&&!forwardSourc
 assert.ok(forwardSource.includes('The Playoff Race Is No Longer Background Noise')&&forwardSource.includes('Who Advanced and Who Went Home'),'Forward newsroom must evolve from playoff-race coverage into round-specific advancement/elimination coverage');
 const scheduledSource=fs.readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
 const netlifyConfig=fs.readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
-assert.ok(scheduledSource.includes("weeklyReport")&&scheduledSource.includes("waiting_for_week"),'Scheduled publisher must invoke the same sequential weeklyReport publication path and surface wait state');
+const backgroundSource=fs.readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');
+assert.ok(scheduledSource.includes('inquirer-publish-background')&&scheduledSource.includes('FLEECED_INQUIRER_QUEUE_KEY')&&scheduledSource.includes("method:'POST'"),'Scheduled publisher must enqueue the authenticated background edition generator without blocking');
+assert.ok(backgroundSource.includes('background:true')&&backgroundSource.includes('weeklyReport(req)')&&backgroundSource.includes('weeklyAwards()')&&backgroundSource.includes('waiting_for_week')&&backgroundSource.includes('FLEECED_INQUIRER_QUEUE_KEY'),'Background publisher must invoke the unchanged sequential weeklyReport quality gate and weekly awards');
 assert.ok(netlifyConfig.includes('[functions."inquirer-publish-scheduled"]')&&netlifyConfig.includes('schedule = "0 * * * *"'),'Netlify must check for newly completed Inquirer weeks hourly');
 assert.ok(leagueHub.includes("games.filter(g=>g.result==='W').length"),'League Hub records must be reconstructed from archived matchups rather than current Sleeper roster totals');
 assert.ok(leagueHub.includes("import week2Preload2026 from './inquirer-week2-2026-preload.mjs'"),'League Hub must load the locked Week 2 preload');

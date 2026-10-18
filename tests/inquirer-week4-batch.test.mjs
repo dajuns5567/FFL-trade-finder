@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fixture from '../netlify/functions/inquirer-week2-2026-preload.mjs';
-import {buildWeek4EditorialBatch,week4RecapBrief,verifyWeeklyEditorialSource,composeWeek4RecapDraft} from '../netlify/functions/inquirer-week4-batch.mjs';
+import {buildWeek4EditorialBatch,week4RecapBrief,verifyWeeklyEditorialSource,composeWeek4RecapDraft,repairWeek4EditorialBatch} from '../netlify/functions/inquirer-week4-batch.mjs';
 import {REQUIRED_SECTION_KINDS} from '../netlify/functions/inquirer-week4-editorial-brief.mjs';
 
 const accepted={...fixture,week:4};
@@ -88,4 +88,26 @@ test('shallow model drafts are preserved for review but can never pass publicati
   assert.equal(result.quality.article_review_issues.length,32);
   assert.equal(result.quality.recap_review_issue,'recap_draft_invalid');
   assert.equal(result.edition.teams.length,32);
+});
+
+test('targeted review repair preserves facts, does not rerun passing stories blindly, and remains unapproved',async()=>{
+  let calls=0;
+  const client={chat:{completions:{create:async()=>{calls++;return{choices:[{message:{content:'{}'}}]}}}}};
+  const source={...input,teams:input.teams.map(t=>({...t}))};
+  const before=JSON.stringify(source);
+  const result=await repairWeek4EditorialBatch({
+    edition:source,acceptedWeek4:accepted,client,model:'mock',concurrency:2});
+  assert.equal(JSON.stringify(source),before,'the original staged manuscript must remain unmodified');
+  assert.equal(result.edition.teams.length,32);
+  assert.equal(result.edition.published_locked,false);
+  assert.equal(result.publishable,false);
+  assert.equal(result.review_status,'unapproved');
+  assert.equal(result.quality.ok,false,'invalid repairs may never be approved');
+  assert(calls<=33,'at most 32 targeted article calls and one recap call');
+  assert(calls>=1,'recap salvage is attempted once');
+  for(let i=0;i<32;i++){
+    const {inquirer_article:beforeArticle,...beforeFacts}=source.teams[i];
+    const {inquirer_article:afterArticle,...afterFacts}=result.edition.teams[i];
+    assert.deepEqual(afterFacts,beforeFacts,'repair must preserve verified football and manager facts');
+  }
 });

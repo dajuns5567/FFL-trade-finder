@@ -5,6 +5,15 @@ export const REQUIRED_SECTION_KINDS=['lede','players','management','hot-seat','c
 
 const paragraphs=article=>(article?.sections||[]).flatMap(s=>s.paragraphs||[]).filter(x=>typeof x==='string');
 const exact=number=>Number(number||0).toFixed(2);
+// Teams commonly appear in natural prose by their distinctive mascot/nickname.
+// Whole-word matching accepts that legitimate journalism without allowing a
+// coincidental substring to satisfy an opponent-identity check.
+const escaped=value=>String(value).replace(/[^a-zA-Z0-9 ]/g,ch=>'\\'+ch);
+export function mentionsVerifiedTeam(copy,name){
+  const label=String(name||'').trim();if(!label)return false;
+  const nickname=label.split(/\s+/).at(-1);
+  return [label,nickname].some(value=>value.length>=3&&new RegExp('(?:^|[^\\p{L}])'+escaped(value)+'(?=$|[^\\p{L}])','iu').test(copy));
+}
 
 export function week4EditorialBrief({team,acceptedWeek4,week}){
   if(Number(acceptedWeek4?.week)!==4||acceptedWeek4?.published_locked!==true||!Array.isArray(acceptedWeek4.teams)||acceptedWeek4.teams.length!==32)
@@ -44,8 +53,8 @@ export function validateWeek4EditorialDraft(draft,team){
       errors.push('missing-or-shallow-'+kind);
   }
   const copy=paragraphs(draft).join(' ');
-  if(!copy.includes(String(team?.team_name||'')))errors.push('team-identity');
-  if(!copy.includes(String(team?.opponent_name||'')))errors.push('opponent-identity');
+  if(!mentionsVerifiedTeam(copy,team?.team_name))errors.push('team-identity');
+  if(!mentionsVerifiedTeam(copy,team?.opponent_name))errors.push('opponent-identity');
   if(!copy.includes(Number(team?.points||0).toFixed(1))&&!copy.includes(exact(team?.points)))errors.push('score-identity');
   if(!copy.includes(Number(team?.opponent_points||0).toFixed(1))&&!copy.includes(exact(team?.opponent_points)))errors.push('opponent-score-identity');
   const leadingPlayer=(team?.starter_details||[]).filter(p=>Number.isFinite(Number(p.points)))

@@ -9,7 +9,7 @@ const respond=(status,body)=>new Response(JSON.stringify(body),{status,
   headers:{'content-type':'application/json','cache-control':'no-store'}});
 const keyFor=week=>`inquirer/recovery-originals/2026/week-${String(week).padStart(2,'0')}.json`;
 export async function handler(req,{site,readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
-  expectedHashes=originalHashes,maxArchiveBytes=4_000_000,openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore('fleeced-league-hub',{consistency:'strong'});}}={}){
+  expectedHashes=originalHashes,maxArchiveBytes=4_000_000,openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore({name:'fleeced-league-hub',consistency:'strong'});}}={}){
  const auth=authorizeEditorialGeneration(req,{readEnv});
  if(!auth.ok)return respond(auth.status,{error:'Recovery import unavailable or unauthorized'});
  if(site?.id&&site.id!=='2e556797-6f35-4037-aa5a-1338724eb71d')

@@ -2,6 +2,7 @@
 import {authorizeEditorialGeneration} from './inquirer-week4-run-auth.mjs';
 import {verifyWeeklyEditorialSource,week4RecapBrief} from './inquirer-week4-batch.mjs';
 import {loadAcceptedWeek4} from './inquirer-week4-accepted-source.mjs';
+import {originalJobKey,correctedJobKey,diagnosticKey,permitModelFixReplay} from './inquirer-week4-retry-policy.mjs';
 const reply=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
  openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore({name:'fleeced-league-hub',consistency:'strong'});}}={}){
@@ -12,8 +13,15 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
    return reply(200,{ready:false,reason:'model_not_configured'});
  try{
    const store=await openStore();
-   const job=await store.get('inquirer/week4-style-drafts/2026/week-05/generation-job.json',{type:'json'}).catch(()=>null);
-   if(job)return reply(200,{ready:false,reason:'generation_already_attempted',status:job.status||'unknown'});
+   const job=await store.get(originalJobKey,{type:'json'}).catch(()=>null);
+   if(job){
+     const [diagnostic,corrected]=await Promise.all([
+       store.get(diagnosticKey,{type:'json'}).catch(()=>null),
+       store.get(correctedJobKey,{type:'json'}).catch(()=>null)]);
+     if(corrected)return reply(200,{ready:false,reason:'corrected_generation_already_attempted',status:corrected.status||'unknown'});
+     if(!permitModelFixReplay({original:job,diagnostic,model:String(readEnv('FLEECED_EDITORIAL_MODEL')||'')}))
+       return reply(200,{ready:false,reason:'generation_already_attempted',status:job.status||'unknown'});
+   }
    const [{edition:week4,source:week4Source},week5]=await Promise.all([
      loadAcceptedWeek4(store),store.get('broadcasts/2026/week-05.json',{type:'json'})
    ]);

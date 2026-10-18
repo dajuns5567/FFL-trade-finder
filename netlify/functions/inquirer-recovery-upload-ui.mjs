@@ -6,7 +6,7 @@ const html=`<!doctype html>
 <title>Fleeced archive recovery — preview only</title>
 <style>body{font:16px system-ui;background:#101820;color:#fafafa;max-width:680px;margin:8vh auto;padding:24px}h1{font-size:28px}label{display:block;margin:20px 0 8px}input{box-sizing:border-box;width:100%;padding:12px;background:#1d2b36;border:1px solid #75818a;border-radius:8px;color:white}button{padding:13px 20px;margin-top:18px;border:0;border-radius:8px;background:#20c5c5;color:#071519;font-weight:bold;cursor:pointer}button:disabled{opacity:.5}pre{white-space:pre-wrap;word-break:break-word;background:#1d2b36;padding:16px;border-radius:8px}p{color:#cbd5db}</style>
 <h1>Verified Week 3 &amp; Week 4 recovery</h1>
-<p>Stores original files in an isolated recovery folder only. No live broadcast is overwritten, no articles are published, and no AI credits are used.</p>
+<p>Stores original files in an isolated recovery folder only. The recovery check never changes live broadcasts. Optional draft generation uses AI credits, but never publishes articles.</p>
 <form id="form"><label for="token">Week 5 authorization token</label><input id="token" type="password" autocomplete="off" required>
 <label for="files">Original week-03.json and week-04.json</label><input id="files" type="file" accept=".json,application/json" multiple required>
 <button id="submit" type="submit">Verify and stage both originals</button></form><button id="check" type="button">Check previously staged files (read-only)</button><button id="generate" type="button" disabled>Start one-time Week 5 editorial DRAFT (no publishing)</button><pre id="result" aria-live="polite">Waiting for files.</pre>
@@ -24,7 +24,7 @@ document.querySelector('#check').addEventListener('click',async()=>{
  generationReady=false;document.querySelector('#generate').disabled=true;
  if(!token){out.textContent='Enter the token to inspect recovery status.';return;}
  try{\n  const recovery=await recoveryStatus(token);\n  out.textContent='READ-ONLY STATUS: '+JSON.stringify(recovery);\n  if(recovery.weeks[3]?.verified&&recovery.weeks[4]?.verified){\n   const preflight=await fetch('/.netlify/functions/inquirer-week4-preflight',{headers:{authorization:'Bearer '+token}});\n   const readiness=await preflight.json();
-   out.textContent+='\\\\nWEEK 5 READINESS: '+JSON.stringify(readiness);
+   out.textContent+=String.fromCharCode(10)+'WEEK 5 READINESS: '+JSON.stringify(readiness);
    generationReady=preflight.ok&&readiness.ready===true;
    document.querySelector('#generate').disabled=!generationReady;\n  }\n }
  catch(error){out.textContent=String(error);}
@@ -38,9 +38,9 @@ document.querySelector('#generate').addEventListener('click',async()=>{
  try{
   const response=await fetch('/.netlify/functions/inquirer-week4-generate-review',{
    method:'POST',headers:{authorization:'Bearer '+token}});
-  out.textContent+='\\\\nDRAFT GENERATION: HTTP '+response.status+' — '+await response.text();
-  out.textContent+='\\\\nGeneration is unapproved and not published. Check review status after completion.';
- }catch(error){out.textContent+='\\\\nGeneration request uncertain: '+String(error)+'. Do not retry; inspect status.';}
+  out.textContent+=String.fromCharCode(10)+'DRAFT GENERATION: HTTP '+response.status+' — '+await response.text();
+  out.textContent+=String.fromCharCode(10)+'Generation is unapproved and not published. Check review status after completion.';
+ }catch(error){out.textContent+=String.fromCharCode(10)+'Generation request uncertain: '+String(error)+'. Do not retry; inspect status.';}
 });
 document.querySelector('#form').addEventListener('submit',async e=>{
  e.preventDefault();

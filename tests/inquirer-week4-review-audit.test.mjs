@@ -24,6 +24,9 @@ test('read-only digest-verified audit reports 32 teams without publication',asyn
  assert.equal(body.deep_issue_categories['cross-team-copy-scaffold'],1);
  assert.equal(body.reassessed.reference_week4_available,false);
  assert.equal(body.reassessed.quality_ok,false);
+ assert.equal(body.site_release_state.live_week5_locked,false);
+ assert.equal(body.site_release_state.player_awards_week5,false);
+ assert.equal(body.site_release_state.manager_history_present,false);
  assert.equal(body.reassessed.article_issue_count>=0,true);
 });
 test('audit rejects wrong digest and unauthorized requests',async()=>{

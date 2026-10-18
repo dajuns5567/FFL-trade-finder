@@ -21,7 +21,7 @@ const recoveryStatus=async token=>{
 document.querySelector('#check').addEventListener('click',async()=>{
  const out=document.querySelector('#result'),token=document.querySelector('#token').value.trim();
  if(!token){out.textContent='Enter the token to inspect recovery status.';return;}
- try{out.textContent='READ-ONLY STATUS: '+JSON.stringify(await recoveryStatus(token));}
+ try{\n  const recovery=await recoveryStatus(token);\n  out.textContent='READ-ONLY STATUS: '+JSON.stringify(recovery);\n  if(recovery.weeks[3]?.verified&&recovery.weeks[4]?.verified){\n   const preflight=await fetch('/.netlify/functions/inquirer-week4-preflight',{headers:{authorization:'Bearer '+token}});\n   out.textContent+='\\\\nWEEK 5 READINESS: '+JSON.stringify(await preflight.json());\n  }\n }
  catch(error){out.textContent=String(error);}
 });
 document.querySelector('#form').addEventListener('submit',async e=>{

@@ -1,6 +1,7 @@
 // Authenticated read-only check of prerequisites before starting a paid background job.
 import {authorizeEditorialGeneration} from './inquirer-week4-run-auth.mjs';
 import {verifyWeeklyEditorialSource,week4RecapBrief} from './inquirer-week4-batch.mjs';
+import {loadAcceptedWeek4} from './inquirer-week4-accepted-source.mjs';
 const reply=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
  openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore('fleeced-league-hub',{consistency:'strong'});}}={}){
@@ -13,9 +14,11 @@ export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.
    const store=await openStore();
    const job=await store.get('inquirer/week4-style-drafts/2026/week-05/generation-job.json',{type:'json'}).catch(()=>null);
    if(job)return reply(200,{ready:false,reason:'generation_already_attempted',status:job.status||'unknown'});
-   const [week4,week5]=await Promise.all([4,5].map(w=>store.get(`broadcasts/2026/week-${String(w).padStart(2,'0')}.json`,{type:'json'})));
+   const [{edition:week4,source:week4Source},week5]=await Promise.all([
+     loadAcceptedWeek4(store),store.get('broadcasts/2026/week-05.json',{type:'json'})
+   ]);
    const sources={
-     week4:{present:!!week4,correct_week:Number(week4?.week)===4,locked:week4?.published_locked===true,
+     week4:{present:!!week4,correct_week:Number(week4?.week)===4,locked:week4?.published_locked===true,source:week4Source,
        team_count:Array.isArray(week4?.teams)?week4.teams.length:0},
      week5:{present:!!week5,correct_week:Number(week5?.week)===5,locked:week5?.published_locked===true,
        team_count:Array.isArray(week5?.teams)?week5.teams.length:0}

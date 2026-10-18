@@ -334,7 +334,17 @@ export async function weeklyReport(req){
  const completion=await completedPublicationWeek(week);
  if(!completion.complete)return{available:false,season,week,waiting_for_week:week,reason:'The Fleeced! Inquirer is waiting for Sleeper to finalize Week '+week+': '+completion.reason+'.'};
  const key=`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
- const historicalSeasonYear=season-1,historicalSeason=await fetchBestSeason(historicalSeasonYear).catch(()=>({stats:null,source:null,errors:['unavailable']}));
+ const historicalSeasonYear=season-1;
+ // Independent enrichment reads can overlap the historical lookup and Sleeper
+ // fetches. The preview still reads production history without writing Blobs.
+ const historicalSeasonPromise=fetchBestSeason(historicalSeasonYear).catch(()=>({stats:null,source:null,errors:['unavailable']}));
+ const nextNflWeek=week<INQUIRER_FINAL_WEEK?week+1:null;
+ const enrichmentPromise=Promise.all([
+  internalHistory(origin,'team_net_all=1',previewReadOnly),
+  internalHistory(origin,'trades=1',previewReadOnly),
+  nflWeekSchedule(season,nextNflWeek),
+  internalHistory(origin,'market=1',previewReadOnly)
+ ]);
  const previousStored=week>1?await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null):null,previousBroadcast=previousStored?{...previousStored,published_locked:true}:preloadedBroadcast(season,week-1);
  let managerHistoryData=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
  if(!managerHistoryData?.career?.length){
@@ -351,11 +361,8 @@ export async function weeklyReport(req){
   week>=INQUIRER_PLAYOFF_START_WEEK?fetchJson(`${API}/league/${LEAGUE}/winners_bracket`).catch(()=>[]):Promise.resolve([])
  ]);
  const futureFantasyWeeks=Array.from({length:Math.min(3,Math.max(0,INQUIRER_FINAL_WEEK-week))},(_,i)=>week+i+1),futureFantasyMatchups=await Promise.all(futureFantasyWeeks.map(w=>w===week+1?Promise.resolve(nextMatchups):fetchJson(`${API}/league/${LEAGUE}/matchups/${w}`).catch(()=>[])));
- const nextNflWeek=week<INQUIRER_FINAL_WEEK?week+1:null,[teamValueHistory,canonicalTrades,nextSchedule,playerMarket]=await Promise.all([
-  internalHistory(origin,'team_net_all=1',previewReadOnly),
-  internalHistory(origin,'trades=1',previewReadOnly),
-  nflWeekSchedule(season,nextNflWeek), internalHistory(origin,'market=1',previewReadOnly)
- ]);
+ const [teamValueHistory,canonicalTrades,nextSchedule,playerMarket]=await enrichmentPromise;
+ const historicalSeason=await historicalSeasonPromise;
  const matchupWeeks=Array.from({length:Math.max(1,week)},(_,i)=>i+1),statWeeks=Array.from({length:Math.max(1,week)},(_,i)=>i+1);
  const [seasonMatchupsRows,recentStatRows]=await Promise.all([
   Promise.all(matchupWeeks.map(w=>w===week?Promise.resolve(matchups):fetchJson(`${API}/league/${LEAGUE}/matchups/${w}`).catch(()=>[]))),

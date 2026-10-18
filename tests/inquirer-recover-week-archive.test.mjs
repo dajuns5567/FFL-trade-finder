@@ -16,7 +16,7 @@ test('original-only recovery writes to an isolated prefix and verifies readback'
   assert.equal(options.onlyIfNew,true);assert.match(k,/^inquirer\/recovery-originals\/2026\/week-04.json$/);
   assert.equal(written.has(k),false);written.set(k,v);writes++;return{modified:true};
  }};
- const context={site,readEnv,expectedHashes:{4:sha},openStore:async()=>store};
+ const context={site,readEnv,expectedHashes:{4:sha},maxArchiveBytes:10_000_000,openStore:async()=>store};
  const response=await handler(makeRequest(),context),body=await response.json();
  assert.equal(response.status,201);assert.equal(body.sha256,sha);assert.equal(body.production_unchanged,true);
  assert.equal(writes,1);
@@ -24,7 +24,7 @@ test('original-only recovery writes to an isolated prefix and verifies readback'
  assert.equal(duplicate.status,200);assert.equal((await duplicate.json()).status,'already_staged');assert.equal(writes,1);
 });
 test('digest mismatch and unauthorized upload never open storage',async()=>{
- let opened=0;const context={site,readEnv,openStore:async()=>{opened++;throw Error('not allowed')}};
+ let opened=0;const context={site,readEnv,maxArchiveBytes:10_000_000,openStore:async()=>{opened++;throw Error('not allowed')}};
  assert.equal((await handler(makeRequest(4,raw,false),context)).status,401);
  assert.equal((await handler(makeRequest(),context)).status,422);
  assert.equal(opened,0);

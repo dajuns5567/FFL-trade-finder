@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import week2 from '../netlify/functions/inquirer-week2-2026-preload.mjs';
-import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
+import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,adaptWeekLanguage,polishForwardTeamCopy,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
 import {inquirerWeekClassification} from '../netlify/functions/inquirer-reporters.mjs';
 import {inspectEditionBeforePublication} from '../netlify/functions/inquirer-publication-guard.mjs';
 
@@ -93,5 +93,25 @@ const playoffCopy=[...week14.inquirer.teams.flatMap(t=>t.inquirer_article?.parag
 assert.match(playoffCopy,/eliminated from championship contention/i,'Wildcard edition must identify eliminated playoff teams');
 assert.match(playoffCopy,/advances to .*Divisional Round/i,'Wildcard edition must identify teams advancing to the Divisional Round');
 assert.ok((week14.leagueOverview.sections||[]).some(s=>/Wildcard Round: Who Advanced and Who Went Home/.test(String(s.heading||''))),'Wildcard recap must include explicit round advancement/elimination section');
+
+// Live-preview regressions: forward-week language, real records, headline agreement,
+// and partial opponent projections must never be represented as complete forecasts.
+assert.equal(adaptWeekLanguage('the first two weeks describe a repeatable lineup',5),'the last two weeks describe a repeatable lineup');
+const handReview=polishForwardTeamCopy([
+ {roster_id:'1',team_name:'Baltimore Ravens',next_opponent_roster_id:'2',next_opponent_name:'Kansas City Chiefs',next_projected:102.1,next_projection_coverage:7,next_opponent_projected:1.35,
+  inquirer_article:{headline:'Baltimore Ravens Banks Another Sunday and Raises the Standard',sections:[
+   {kind:'outlook',paragraphs:['The forecast gives Baltimore Ravens 102.1 and Kansas City Chiefs 1.4. Baltimore Ravens are favored by 100.8.']},
+   {kind:'sentiment',paragraphs:['The Ravens are 2-0 and the crowd is getting loud.']},
+   {kind:'management',paragraphs:['We must test whether the first the last two weeks describe a pattern.']}
+  ]}},
+ {roster_id:'2',team_name:'Kansas City Chiefs',next_opponent_roster_id:'1',next_opponent_name:'Baltimore Ravens',next_projected:1.35,next_projection_coverage:4,next_opponent_projected:102.1,
+  inquirer_article:{headline:'Kansas City Chiefs Exposed Its Own Weak Spot',sections:[]}}
+],5,5);
+assert.match(handReview[0].inquirer_article.headline,/Ravens Bank Another Sunday and Raise/);
+assert.match(handReview[1].inquirer_article.headline,/Exposed Their Own Weak Spot/);
+assert.match(handReview[0].inquirer_article.paragraphs.join(' '),/incomplete projections.*Kansas City Chiefs \(4 projected starters\)/);
+assert.doesNotMatch(handReview[0].inquirer_article.paragraphs.join(' '),/100\.8/);
+assert.match(handReview[0].inquirer_article.paragraphs.join(' '),/Ravens have won their last two games/);
+assert.doesNotMatch(handReview[0].inquirer_article.paragraphs.join(' '),/the first the last two weeks/);
 
 console.log(JSON.stringify({ok:true,editorial_sweep:editorialSweep,week3_quality:quality?.metrics||{},week3_headline:week3.league_overview.headline,week9_playoff_race:true,week14_round:true},null,2));

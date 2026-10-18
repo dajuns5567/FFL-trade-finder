@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=20;
+export const FORWARD_EDITORIAL_REVISION=21;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -36,7 +36,8 @@ export function adaptWeekLanguage(value,week,classification){
      .replace(/\btwo Sundays\b/g,'the last two Sundays')
      .replace(/\bthe two-week sample\b/gi,'the recent two-week sample')
      .replace(/What Two Weeks Are Starting to Say/g,'What the Last Two Weeks Are Starting to Say')
-     .replace(/\bAt (2-0|0-2|1-1),/g,'Across the last two games ($1),');
+     .replace(/\bAt (2-0|0-2|1-1),/g,'Across the last two games ($1),')
+     .replace(/\bthe first the last two weeks\b/gi,'the last two weeks');
   if(classification?.playoffs)s=s.replace(/Week \d+ • Regular Season/g,String(classification.label||('Week '+week+' • Playoffs')));
   return s;
 }
@@ -341,15 +342,27 @@ function evolveForwardOverview(overview,previousOverview,week,salt,entities=[]){
 }
 // Refresh recurrent Week 2-derived idioms against live forward-week facts.
 // This is deliberately confined to Week 3+; preloaded editions remain untouched.
-function polishForwardTeamCopy(teams,week,salt){
+export function polishForwardTeamCopy(teams,week,salt){
+ const byRoster=new Map((teams||[]).map(t=>[String(t.roster_id),t]));
  const pick=(team,key,options)=>options[evolutionHash([week,salt,team.roster_id,key].join('|'))%options.length];
  return (teams||[]).map(t=>{
   const article=t?.inquirer_article;if(!article)return t;
   const team=String(t.team_name||'the team'),record=forwardRecordText(t),
     top=(t.starter_details||[])[0],weak=(t.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0],
-    next=String(t.next_opponent_name||'the next opponent');
-  const rewrite=value=>{
+    next=String(t.next_opponent_name||'the next opponent'),opponent=byRoster.get(String(t.next_opponent_roster_id)),
+    partial=[{name:team,points:Number(t.next_projected),coverage:Number(t.next_projection_coverage)},
+      {name:next,points:Number(t.next_opponent_projected),coverage:Number(opponent?.next_projection_coverage)}]
+      .filter(x=>Number.isFinite(x.points)&&x.points<15&&Number.isFinite(x.coverage)&&x.coverage<6);
+  const rewrite=(value,kind='')=>{
    let s=String(value||'');
+   if(kind==='outlook'&&partial.length&&/\b(?:projection|forecast|pregame screenshot|favorite|Week \d+ board|model)\b/i.test(s)){
+    const gaps=partial.map(x=>x.name+' ('+x.coverage+' projected starters)').join(' and ');
+    return 'Week '+(week+1)+' has incomplete projections for '+gaps+'. A precise favorite or point spread would mislead until those starter projections are filled in; '+team+' and '+next+' still have to play the game.';
+   }
+   s=s.replace(/\bthe first the last two weeks\b/gi,'the last two weeks')
+    .replace(/\bare 2-0\b/gi,'have won their last two games')
+    .replace(/\bare 0-2\b/gi,'have lost their last two games')
+    .replace(/\bcrowd is 0-2\b/gi,'crowd has watched two straight losses');
    s=s.replace(/followed its opening victory with a loss to /gi,pick(t,'reversal',[
     'could not follow last week’s win with another against ',
     'carried a victory into this matchup but fell to ',
@@ -413,8 +426,13 @@ function polishForwardTeamCopy(teams,week,salt){
    ]));
    return s;
   };
-  const sections=(article.sections||[]).map(section=>({...section,paragraphs:(section.paragraphs||[]).map(rewrite)}));
-  return {...t,inquirer_article:{...article,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
+  const headline=String(article.headline||'')
+    .replace(/\bBanks Another Sunday and Raises the Standard\b/g,'Bank Another Sunday and Raise the Standard')
+    .replace(/\bExposed Its Own Weak Spot\b/g,'Exposed Their Own Weak Spot')
+    .replace(/\bMade Week (\d+) Much Funnier for Its Rivals\b/g,'Made Week $1 Much Funnier for Their Rivals')
+    .replace(/\bMake this Sunday\b/g,'Make This Sunday');
+  const sections=(article.sections||[]).map(section=>({...section,paragraphs:(section.paragraphs||[]).map(p=>rewrite(p,section.kind))}));
+  return {...t,inquirer_article:{...article,headline,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
  });
 }
 export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,weekClassification=null,variationSalt=0}={}){

@@ -1,0 +1,30 @@
+// Authenticated read-only check of prerequisites before starting a paid background job.
+import {authorizeEditorialGeneration} from './inquirer-week4-run-auth.mjs';
+import {verifyWeeklyEditorialSource,week4RecapBrief} from './inquirer-week4-batch.mjs';
+const reply=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
+export async function handler(request,{site,readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
+ openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore('fleeced-league-hub',{consistency:'strong'});}}={}){
+ const auth=authorizeEditorialGeneration(request,{readEnv,method:'GET'});
+ if(!auth.ok)return reply(auth.status,{error:'Preflight unavailable or unauthorized'});
+ if(site?.id&&site.id!=='2e556797-6f35-4037-aa5a-1338724eb71d')return reply(403,{error:'Wrong Netlify project'});
+ if(!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{2,90}$/.test(String(readEnv('FLEECED_EDITORIAL_MODEL')||'')))
+   return reply(200,{ready:false,reason:'model_not_configured'});
+ try{
+   const store=await openStore();
+   const job=await store.get('inquirer/week4-style-drafts/2026/week-05/generation-job.json',{type:'json'}).catch(()=>null);
+   if(job)return reply(200,{ready:false,reason:'generation_already_attempted',status:job.status||'unknown'});
+   const [week4,week5]=await Promise.all([4,5].map(w=>store.get(`broadcasts/2026/week-${String(w).padStart(2,'0')}.json`,{type:'json'})));
+   if(!week4||Number(week4.week)!==4||week4.published_locked!==true)
+     return reply(200,{ready:false,reason:'locked_week4_source_missing'});
+   if(!week5||Number(week5.week)!==5||week5.published_locked!==true)
+     return reply(200,{ready:false,reason:'locked_week5_source_missing'});
+   const checked=verifyWeeklyEditorialSource(week5);
+   if(!checked.ok)return reply(200,{ready:false,reason:'week5_source_validation_failed',
+     issue_count:checked.issues.length,issue_categories:[...new Set(checked.issues.map(s=>s.replace(/^.*?: /,'')))].slice(0,12)});
+   try{week4RecapBrief({edition:week5,acceptedWeek4:week4});}
+   catch{return reply(200,{ready:false,reason:'week4_style_or_recap_preflight_failed'});}
+   return reply(200,{ready:true,reason:'verified_no_paid_calls_made'});
+ }catch{return reply(200,{ready:false,reason:'source_store_unavailable_or_read_failed'});}
+}
+export default handler;
+export const config={rateLimit:{action:'rate_limit',windowLimit:12,windowSize:60,aggregateBy:'ip'}};

@@ -15,7 +15,7 @@ export function inspectInquirerFormatContract(edition){
       issues.push({id:'week4-team-section-order',team:name});
     if((sections.find(s=>s.kind==='outlook')?.paragraphs||[]).length>3)
       issues.push({id:'week4-overstuffed-outlook',team:name});
-    for(const s of sections)if(!String(s.heading||'').trim())
+    for(const s of sections)if(!String(s.heading||'').trim()||String(s.heading||'').trim().toLowerCase()===String(s.kind||'').trim().toLowerCase())
       issues.push({id:'week4-missing-section-heading',team:name,kind:s.kind});
   }
   const recap=edition?.league_overview?.sections||[];

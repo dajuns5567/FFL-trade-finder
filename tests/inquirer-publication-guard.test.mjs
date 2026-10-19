@@ -16,7 +16,7 @@ const makeEdition=()=>{
    ' as the scoring and strategic choices develop.');
   const sections=[
    {kind:'lede',heading:'Week 5 account',paragraphs:prose},
-   ...['players','management','hot-seat','cool-throne','value'].map(kind=>({kind,heading:kind,paragraphs:[]})),
+   ...['players','management','hot-seat','cool-throne','value'].map(kind=>({kind,heading:'The '+kind.replaceAll('-',' ')+' report',paragraphs:[]})),
    {kind:'sentiment',heading:'Fan reaction',paragraphs:[
     'Supporters '+distinct+' of '+name+' are '+distinct+' reacting to '+Array(i+4).fill('distinctly local evidence '+distinct).join(' ')+' as the '+distinct+' roster assesses the matchup.',
     'The '+distinct+' group chat for '+name+' has '+distinct+' '+Array(i+5).fill('a separate observation '+distinct).join(' ')+' before the manager responds.'
@@ -44,9 +44,10 @@ test('Week 5 cannot regress from the locked Week 4 newspaper format',()=>{
  const e=makeEdition();
  e.teams[0].inquirer_article.sections=e.teams[0].inquirer_article.sections.filter(s=>!['cool-throne','value'].includes(s.kind));
  e.teams[1].inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs=Array(7).fill('Extra future-week paragraph.');
+ e.teams[2].inquirer_article.sections.find(s=>s.kind==='cool-throne').heading='cool-throne';
  e.league_overview.sections[0].blocks=e.league_overview.sections[0].blocks.slice(0,5);
  const found=new Set(inspectEditionBeforePublication(e).issues.map(x=>x.id));
- for(const id of ['week4-team-section-contract','week4-overstuffed-outlook','week4-recap-six-beat-contract'])
+ for(const id of ['week4-team-section-contract','week4-overstuffed-outlook','week4-missing-section-heading','week4-recap-six-beat-contract'])
   assert(found.has(id),'missing independent format gate: '+id);
 });
 

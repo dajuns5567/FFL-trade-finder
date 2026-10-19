@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=30;
+export const FORWARD_EDITORIAL_REVISION=31;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -1475,6 +1475,8 @@ function w2DivisionBoardTake(flags,reporter,subject){
       titleRows=rows.filter(t=>Number.isFinite(Number(t?.mida_outlook?.title))&&Number(t.mida_outlook.title)>0).slice().sort((a,b)=>Number(b.mida_outlook.title)-Number(a.mida_outlook.title)),
       titleFav=titleRows[0]||null,titlePct=titleFav?w2MidaPositivePct(titleFav.mida_outlook.title):null,
       leadOne=leaders.length===1?w2DisplayTeam(leaders[0].team_name):null,
+      leadSubject=leadOne||leaderNames,
+      leadVerb=(singular,plural)=>leadOne?w2TeamVerb(leadOne,singular,plural):plural,
       divKey=String(y.d).toUpperCase(),
       midaPhrases={
         "AFC EAST":midaFav&&midaPct?(" The probability sheet prefers "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+" for the division."):"",
@@ -1512,10 +1514,10 @@ function w2DivisionBoardTake(flags,reporter,subject){
           :leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the cleanest record at "+y.record+", but "+chasePair+" keeps this from becoming a solo act."+midaNote+titleNote;
         break;
       case "AFC SOUTH":
-        context=leadOne+" "+w2TeamVerb(leadOne,"sits","sit")+" on "+y.record+" while "+chasePair+" "+(chasePlural?"form":"forms")+" the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
+        context=leadSubject+" "+leadVerb("sits","sit")+" on "+y.record+" while "+chasePair+" "+(chasePlural?"form":"forms")+" the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
         break;
       case "AFC WEST":
-        context=leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the best record at "+y.record+"; "+chasePair+" "+chaseBe+" the immediate chase, and the bottom of the division is already trying not to let two losses become a season-long tax."+midaNote+titleNote;
+        context=leadSubject+" "+leadVerb("has","have")+" the best record at "+y.record+"; "+chasePair+" "+chaseBe+" the immediate chase, and the bottom of the division is already trying not to let two losses become a season-long tax."+midaNote+titleNote;
         break;
       case "NFC EAST":
         context=leaders.length>1
@@ -1528,10 +1530,10 @@ function w2DivisionBoardTake(flags,reporter,subject){
           :(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"holds","hold"):leaderNames+" hold")+" the top line at "+y.record+", but "+chasePair+" keeps the race packed tightly enough that nobody can hide behind the calendar."+midaNote+titleNote;
         break;
       case "NFC SOUTH":
-        context=leadOne+" "+w2TeamVerb(leadOne,"owns","own")+" "+y.record+", with "+chasePair+" providing the nearest pressure. The gap is real but thin; one stumble turns the leader from front-runner into participant again."+midaNote+titleNote;
+        context=leadSubject+" "+leadVerb("owns","own")+" "+y.record+", with "+chasePair+" providing the nearest pressure. The gap is real but thin; one stumble turns the leader from front-runner into participant again."+midaNote+titleNote;
         break;
       case "NFC WEST":
-        context=leadOne+" "+w2TeamVerb(leadOne,"has","have")+" banked "+y.record+", while "+chasePair+" "+chaseVerb+" the chase from becoming a postcard. The leader has daylight, not distance."+midaNote+titleNote;
+        context=leadSubject+" "+leadVerb("has","have")+" banked "+y.record+", while "+chasePair+" "+chaseVerb+" the chase from becoming a postcard. The leader has daylight, not distance."+midaNote+titleNote;
         break;
       default:
         context=(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"leads","lead"):leaderNames+" lead")+" at "+y.record+" with "+chasePair+" nearest."+midaNote+titleNote;

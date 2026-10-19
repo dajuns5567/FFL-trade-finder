@@ -9,7 +9,8 @@ const misleading = [
   {id:'grammatical-regression', pattern:/\ban previous-week\b|\bthe first result on .+ were\b|\bthe .+ makes this sunday\b/i},
   {id:'mechanical-draft-language', pattern:/the useful weakness-or-strength note|the second scorer moved|the third scorer moved|the football read is straightforward|the rival-chat version is uncomfortable:/i},
   {id:'copy-repair-scaffold', pattern:/fantasy points, a \d+(?:\.\d+)?-point margin in Week \d+/i},
-  {id:'editorial-placeholder', pattern:/\b(?:TBD|TODO|lorem ipsum)\b|\bn\/a\b/i}
+  {id:'editorial-placeholder', pattern:/\b(?:TBD|TODO|lorem ipsum)\b|\bn\/a\b/i},
+  {id:'unrendered-data-placeholder', pattern:/\b(?:null|undefined)\b/i}
 ];
 
 export function editorialCopyDigest(edition) {
@@ -83,6 +84,9 @@ export function inspectEditionBeforePublication(edition) {
   if(!recap?.headline||!(recap.sections||[]).length)issues.push({id:'recap-missing'});
   for(const p of (recap?.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])])){
     for(const pattern of misleading)if(pattern.pattern.test(p))issues.push({id:'recap-'+pattern.id,excerpt:p.slice(0,180)});
+  }
+  for(const p of (recap?.hot_takes||[]).flatMap(t=>[t.title,t.take].filter(x=>typeof x==='string'))){
+    for(const pattern of misleading)if(pattern.pattern.test(p))issues.push({id:'recap-hot-take-'+pattern.id,excerpt:p.slice(0,180)});
   }
   return{ok:issues.length===0,issues,metrics:{team_articles:teams.length,issues:issues.length}};
 }

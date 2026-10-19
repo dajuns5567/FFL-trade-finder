@@ -3693,6 +3693,40 @@ function assertWeek2Originality(result,previousEdition){
     ?String(weekClassification.round||'The playoffs')+' gets its own newspaper: who advanced, who was eliminated, and which surviving roster now has to answer for the next round.'
     :'Week '+week+' gets its own newspaper: new games, new arguments, and enough season memory to know which developments are starting to repeat.';
   overview.week=week;overview.season=season;overview.week_classification=weekClassification||overview.week_classification;
+  if(week>=3){
+    // The copy changes every week, so these are data-driven finishing rules,
+    // not a one-time Week 5 correction. Apply to the recap AND every desk.
+    const pluralNames=[...new Set(teams.map(t=>w2DisplayTeam(t.team_name)).filter(w2PluralTeamName))]
+      .sort((a,b)=>b.length-a.length);
+    const players=[...new Set(teams.flatMap(t=>(t.starter_details||[]).map(p=>String(p.name||'').trim())).filter(Boolean))]
+      .sort((a,b)=>b.length-a.length);
+    const agreement={does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep'};
+    const pluralPattern=pluralNames.length?new RegExp('\\b('+pluralNames.map(w2EscRe).join('|')+') (does|gets|has|is|needs|sits|keeps)\\b','gi'):null;
+    const pronounPattern=pluralNames.length?new RegExp('\\b('+pluralNames.map(w2EscRe).join('|')+') saw its\\b','gi'):null;
+    const playerNames=new Map(players.map(name=>[name.toLowerCase(),name]));
+    const playerPattern=players.length?new RegExp('\\b(?:'+players.map(w2EscRe).join('|')+')\\b','gi'):null;
+    const polish=s=>{
+      let copy=String(s||'').replace(/:\s*this Sunday\b/g,': This Sunday')
+        .replace(/; The season record is\b/g,'; the season record is');
+      if(pluralPattern)copy=copy.replace(pluralPattern,(_,name,verb)=>name+' '+agreement[verb.toLowerCase()]);
+      if(pronounPattern)copy=copy.replace(pronounPattern,(_,name)=>name+' saw their');
+      // Player names are facts from the current lineup, not casing guesses.
+      if(playerPattern)copy=copy.replace(playerPattern,name=>playerNames.get(name.toLowerCase())||name);
+      return copy;
+    };
+    for(const s of overview.sections||[]){
+      s.heading=polish(s.heading);
+      if(s.blocks?.length){for(const b of s.blocks){b.heading=polish(b.heading);b.paragraphs=(b.paragraphs||[]).map(polish)}s.paragraphs=s.blocks.flatMap(b=>b.paragraphs||[])}
+      else s.paragraphs=(s.paragraphs||[]).map(polish);
+    }
+    overview.hot_takes=(overview.hot_takes||[]).map(h=>({...h,title:polish(h.title),take:polish(h.take)}));
+    for(const t of teams){
+      const a=t.inquirer_article;if(!a)continue;
+      a.headline=polish(a.headline);
+      for(const s of a.sections||[]){s.heading=polish(s.heading);s.paragraphs=(s.paragraphs||[]).map(polish)}
+      a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
+  }
   overview.inquirer_version=FORWARD_INQUIRER_VERSION;overview.editorial_revision=FORWARD_EDITORIAL_REVISION;
   for(const t of teams){if(t?.inquirer_article){{
    let title=String(t.inquirer_article.headline||'').replace(/^this Sunday/i,'This Sunday').replace(/the Week (\d+) Look Less Accidental/gi,'Week $1 Look Less Accidental');
@@ -3820,6 +3854,19 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     }
   }
   if(Number(current?.week)>=3){
+    const allReaderText=[...(current?.league_overview?.sections||[]).flatMap(s=>[s.heading,...(s.paragraphs||[])]),
+      ...(current?.league_overview?.hot_takes||[]).flatMap(h=>[h.title,h.take]),
+      ...teams.flatMap(t=>[t.inquirer_article?.headline,...(t.inquirer_article?.sections||[]).flatMap(s=>[s.heading,...(s.paragraphs||[])])])].filter(Boolean).join('\n');
+    for(const name of [...new Set(teams.map(t=>String(t.team_name||'').trim()).filter(n=>/s$/i.test(n.split(/\s+/).at(-1)||'')))]){
+      if(new RegExp('\\b'+forwardEscRe(name)+' (?:does|gets|has|is|needs|sits|keeps)\\b','i').test(allReaderText))
+        issues.push({id:'plural-team-agreement',team:name});
+    }
+    if(/:\s*this Sunday\b|; The season record is\b/.test(allReaderText))
+      issues.push({id:'reader-facing-case-and-punctuation'});
+    for(const player of [...new Set(teams.flatMap(t=>(t.starter_details||[]).map(p=>String(p.name||'').trim())).filter(Boolean))]){
+      const matches=allReaderText.match(new RegExp('\\b'+forwardEscRe(player)+'\\b','gi'))||[];
+      if(matches.some(m=>m!==player))issues.push({id:'player-name-capitalization',player});
+    }
     for(const t of teams){
       const a=t?.inquirer_article||{},paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
       for(const p of paragraphs){

@@ -40,6 +40,27 @@ test('future-week editorial gate catches sentence-template repetition despite di
  assert(audit.issues.some(x=>x.id==='repeated-team-editorial-template'));
 });
 
+test('editorial gate rejects shared ten-word sarcastic clauses even under one reporter',()=>{
+ const suffix='get another Sunday to prove the Week 5 noise came from a real speaker and not somebody dropping a pan.';
+ const teams=Array.from({length:4},(_,i)=>({roster_id:String(i+1),team_name:'Club '+i,inquirer_article:{reporter:{id:'mack-hollis'},paragraphs:[`The fans of Club ${i} ${suffix}`],sections:[{kind:'outlook',paragraphs:[`The fans of Club ${i} ${suffix}`]}]}}));
+ const edition={week:5,teams,league_overview:{sections:[]}};
+ assert(evaluateInquirerEditionQuality(edition).issues.some(x=>x.id==='cross-team-clause-scaffold'));
+ const result=repairNewEditionCopy({inquirer:{teams},leagueOverview:{sections:[]}},null,5,evaluateInquirerEditionQuality);
+ // Missing matchup facts must never be silently invented to placate the gate.
+ assert(result.verdict.issues.some(x=>x.id==='cross-team-clause-scaffold'));
+});
+
+test('recap section titles are actual accessible headings',()=>{
+ const source=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+ assert.match(source,/<h2 class="lh-inquirer-story-heading">/);
+});
+
+test('dated MIDA probabilities cannot masquerade as fresh weekly forecasts',()=>{
+ const old=new Date(Date.now()-25*86400000).toISOString();
+ const edition={week:5,teams:[{team_name:'Club A',roster_id:'1',mida_outlook:{source_date:old,title:30},inquirer_article:{paragraphs:[]}}],league_overview:{sections:[],hot_takes:[{take:'MIDA currently puts the title chance at 30%.'}]}};
+ assert(evaluateInquirerEditionQuality(edition).issues.some(x=>x.id==='stale-forecast-presented-as-current'));
+});
+
 test('future weeks never describe the prior week as the season opener',()=>{
  const copy=adaptWeekLanguage('That opener belongs in the comparison. A week earlier was Week 1. In the opener, the opponent won.',5,{});
  assert(!/\bopener\b/i.test(copy),copy);

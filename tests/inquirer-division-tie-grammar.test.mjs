@@ -15,6 +15,10 @@ test('all divisions report tied leaders without leaking null into prose',()=>{
   assert.match(block,/context=leadSubject\+" "\+leadVerb\(/,division);
   assert.doesNotMatch(block,/context=leadOne\+/,division);
  }
+ for(const division of ['AFC EAST','NFC NORTH']){
+  const block=board.split('case "'+division+'":')[1]?.split('break;')[0];
+  assert.match(block,/chasePair\+" "\+chase(?:Be|Verb)/,division+' must agree with a two-team chasing pair');
+ }
 });
 
 test('publication gate blocks unrendered data placeholders inside recap hot takes',()=>{

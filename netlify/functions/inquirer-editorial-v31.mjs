@@ -1506,12 +1506,12 @@ function w2DivisionBoardTake(flags,reporter,subject){
       case "AFC EAST":
         context=leaders.length===1
           ?leadOne+" "+w2TeamVerb(leadOne,"owns","own")+" the early edge at "+y.record+", but "+chasePair+" "+chaseVerb+" the chase tight enough that nobody gets a velvet rope yet."+midaNote+titleNote
-          :leaderNames+" share the top at "+y.record+", while "+chasePair+" is close enough to turn one ordinary Sunday into a three-team argument."+midaNote+titleNote;
+          :leaderNames+" share the top at "+y.record+", while "+chasePair+" "+chaseBe+" close enough to turn one ordinary Sunday into a three-team argument."+midaNote+titleNote;
         break;
       case "AFC NORTH":
         context=leaders.length>1
           ?leaderNames+" are level at "+y.record+", which means neither has bought even a week of separation. "+closestName+" ("+closestRec+") is the first team waiting for one of them to blink."+midaNote+titleNote
-          :leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the cleanest record at "+y.record+", but "+chasePair+" keeps this from becoming a solo act."+midaNote+titleNote;
+          :leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the cleanest record at "+y.record+", but "+chasePair+" "+chaseVerb+" this from becoming a solo act."+midaNote+titleNote;
         break;
       case "AFC SOUTH":
         context=leadSubject+" "+leadVerb("sits","sit")+" on "+y.record+" while "+chasePair+" "+(chasePlural?"form":"forms")+" the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
@@ -1527,7 +1527,7 @@ function w2DivisionBoardTake(flags,reporter,subject){
       case "NFC NORTH":
         context=leaders.length>=3
           ?leaderNames+" are all "+y.record+", so the standings currently resemble three people trying to leave an elevator at once. "+closestName+" ("+closestRec+") is not far enough away to create meaningful separation."+midaNote+titleNote
-          :(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"holds","hold"):leaderNames+" hold")+" the top line at "+y.record+", but "+chasePair+" keeps the race packed tightly enough that nobody can hide behind the calendar."+midaNote+titleNote;
+          :(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"holds","hold"):leaderNames+" hold")+" the top line at "+y.record+", but "+chasePair+" "+chaseVerb+" the race packed tightly enough that nobody can hide behind the calendar."+midaNote+titleNote;
         break;
       case "NFC SOUTH":
         context=leadSubject+" "+leadVerb("owns","own")+" "+y.record+", with "+chasePair+" providing the nearest pressure. The gap is real but thin; one stumble turns the leader from front-runner into participant again."+midaNote+titleNote;
@@ -3662,6 +3662,13 @@ function assertWeek2Originality(result,previousEdition){
     overview=evolveForwardOverview(overview,previousEdition?.league_overview||null,week,variationSalt,recapEntities);
     overview=enforceRecapEvolution(overview,previousEdition?.league_overview||null,week,variationSalt,recapEntities);
     overview=rejectRecapCopyForward(overview,previousEdition?.league_overview||null,week,recapEntities);
+    const recapBlocks=(overview.sections||[]).flatMap(s=>s.blocks?.length?s.blocks:[s]);
+    const standingsBlock=recapBlocks.find(b=>/The Standings Have Receipts/i.test(String(b.heading||'')));
+    const seasonBlock=recapBlocks.find(b=>/The Season Is Bigger Than Sunday/i.test(String(b.heading||'')));
+    if(standingsBlock&&seasonBlock&&/\btop of the table\b/i.test((standingsBlock.paragraphs||[]).join(' '))&&
+       /^The league leaders are\b/i.test(String(seasonBlock.paragraphs?.[0]||'')))
+      seasonBlock.paragraphs=seasonBlock.paragraphs.slice(1);
+    for(const section of overview.sections||[])if(section.blocks?.length)section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
     // A weekly recap cannot spend two news paragraphs announcing the same
     // leaders, or copy the same manager scolding into separate examples.
     const recapSeen=new Set();
@@ -3675,9 +3682,10 @@ function assertWeek2Originality(result,previousEdition){
         }
         return text;
       });
-      section.paragraphs=clean(section.paragraphs);
-      for(const block of section.blocks||[])block.paragraphs=clean(block.paragraphs);
-      if(section.blocks?.length)section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+      if(section.blocks?.length){
+        for(const block of section.blocks)block.paragraphs=clean(block.paragraphs);
+        section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+      }else section.paragraphs=clean(section.paragraphs);
     }
   }
   overview.headline='Fleeced! Weekly Recap — '+String(weekClassification?.label||('Week '+week));
@@ -3699,6 +3707,7 @@ function assertWeek2Originality(result,previousEdition){
    // variation can reintroduce stock prefixes and malformed grammar.
    if(week>=3){
     const article=t.inquirer_article;
+    const usedPrefaces=new Set();let usedLouder=false;
     for(const section of article.sections||[]){
       section.heading=String(section.heading||'').replace(/^this Sunday/,'This Sunday');
       section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
@@ -3706,10 +3715,21 @@ function assertWeek2Originality(result,previousEdition){
           .replace(/\ba ([89](?:\.\d+)?-point)\b/gi,'an $1')
           .replace(/\bin the league order\b/gi,'in the league standings')
           .replace(/\bNo\. (\d+) in the league order\b/gi,'No. $1 in the league standings');
+        if(w2PluralTeamName(t.team_name)){
+          const n=w2EscRe(t.team_name);
+          s=s.replace(new RegExp('\\b'+n+' sits\\b','gi'),t.team_name+' sit')
+             .replace(new RegExp('\\b'+n+' does\\b','gi'),t.team_name+' do');
+        }
         for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:','Follow the scoring:','No fine print:']){
           const escaped=prefix.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
           const matches=[...s.matchAll(new RegExp(escaped,'g'))];
           for(let i=matches.length-1;i>=1;i--)s=s.slice(0,matches[i].index)+s.slice(matches[i].index+prefix.length).replace(/^\s*/, ' ');
+          if(usedPrefaces.has(prefix)&&s.includes(prefix))s=s.replace(prefix,'').trimStart();
+          if(s.includes(prefix))usedPrefaces.add(prefix);
+        }
+        if(/louder of the two/i.test(s)){
+          if(usedLouder)s=s.replace(/\s+and turned Week \d+ into the louder of the two/gi,'');
+          usedLouder=true;
         }
         return s;
       });
@@ -3717,6 +3737,28 @@ function assertWeek2Originality(result,previousEdition){
     article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
    }
    t.inquirer_article.week=week;t.inquirer_article.week_classification=t.week_classification||weekClassification;t.inquirer_article.editorial_revision=FORWARD_EDITORIAL_REVISION}}
+  // Finishing edits can make a sentence converge on an archived one. Recheck
+  // *after* finishing, preserving the locked prior edition as the comparator.
+  if(week>=3&&previousEdition){
+    const finalAudit=evaluateInquirerEditionQuality({week,teams,league_overview:overview},previousEdition);
+    if(finalAudit.issues.some(x=>x.id==='same-team-copy-forward'))
+      teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+909);
+    // Evolution itself may reintroduce a familiar opening phrase. Keep only
+    // its first appearance per article, including after the final retry.
+    for(const t of teams){
+      const a=t?.inquirer_article;if(!a)continue;
+      const seen=new Set();
+      for(const s of a.sections||[])s.paragraphs=(s.paragraphs||[]).map(p=>{
+        let copy=String(p||'');
+        for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:']){
+          if(seen.has(prefix))copy=copy.replaceAll(prefix,'');
+          if(copy.includes(prefix))seen.add(prefix);
+        }
+        return copy.trim();
+      });
+      a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -3787,6 +3829,10 @@ export function evaluateInquirerEditionQuality(current,previous=null){
         for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:'])
           if(String(p).split(prefix).length>2)issues.push({id:'stacked-stock-preface',team:t.team_name,prefix});
       }
+      const all=paragraphs.join(' ');
+      if((all.match(/louder of the two/gi)||[]).length>1)issues.push({id:'within-team-scorer-echo',team:t.team_name});
+      for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:'])
+        if(all.split(prefix).length>2)issues.push({id:'repeated-stock-preface',team:t.team_name,prefix});
       if((a.sections||[]).some(s=>/^this Sunday,/.test(String(s.heading||''))))issues.push({id:'uncapitalized-section-heading',team:t.team_name});
     }
   }
@@ -3820,6 +3866,8 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     const recapSentences=forwardSentenceParts(recapCopy).filter(s=>forwardWordCount(s)>=10);
     const counts=new Map();for(const sentence of recapSentences){const key=forwardNormSentence(sentence,entities);counts.set(key,(counts.get(key)||0)+1)}
     for(const [sentence,count] of counts)if(count>=2)issues.push({id:'recap-duplicate-commentary',sentence,count});
+    if(/\btop of the table now starts with\b/i.test(recapCopy)&&/\bThe league leaders are\b/i.test(recapCopy))
+      issues.push({id:'recap-duplicated-leaders',detail:'The recap announces the same top-of-standings cluster in two sections.'});
   }
   if(/\b(?:worth reopening|real departure from the established level|changes what the next box score is allowed to tell us|role deserves fresh attention|large enough to matter|matter beyond one|that is (?:star|veteran|breakout|emerging|rookie|reliable) production|useful veteran work)\b/i.test(matteredCopy))issues.push({id:'recap-meta-explainer'});
   const blocks=(mattered?.blocks||[]).slice(0,5),blockSentences=blocks.flatMap(b=>forwardSentenceParts((b.paragraphs||[]).join(' ')).filter(s=>forwardWordCount(s)>=8));

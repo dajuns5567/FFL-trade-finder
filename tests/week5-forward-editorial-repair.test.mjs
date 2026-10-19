@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {repairNewEditionCopy} from '../netlify/functions/inquirer-editorial-collision-repair.mjs';
-import {evaluateInquirerEditionQuality} from '../netlify/functions/inquirer-editorial-v31.mjs';
+import {adaptWeekLanguage,evaluateInquirerEditionQuality} from '../netlify/functions/inquirer-editorial-v31.mjs';
 test('future-week duplicate copy is replaced with scoreboard facts without disabling the strict editorial gate',()=>{
  const sentence='The next Sunday can improve the wording if it objects, but the team still has to answer the same stale argument every week without any individual matchup evidence.';
  const teams=Array.from({length:4},(_,i)=>({
@@ -36,4 +36,23 @@ test('future-week editorial gate catches sentence-template repetition despite di
  ]}}));
  const audit=evaluateInquirerEditionQuality({week:5,teams,league_overview:{sections:[]}});
  assert(audit.issues.some(x=>x.id==='repeated-team-editorial-template'));
+});
+
+test('future weeks never describe the prior week as the season opener',()=>{
+ const copy=adaptWeekLanguage('That opener belongs in the comparison. A week earlier was Week 1. In the opener, the opponent won.',5,{});
+ assert(!/\bopener\b/i.test(copy),copy);
+ assert.match(copy,/Week 4/);
+});
+
+test('32-team editorial gate prevents bench and screenshot fan-commentary monoculture',()=>{
+ const teams=Array.from({length:32},(_,i)=>({
+  roster_id:String(i+1),team_name:'Club '+(i+1),
+  inquirer_article:{paragraphs:[`Club ${i+1} has a distinct result to explain.`],sections:[{
+   kind:'sentiment',paragraphs:[`Club ${i+1} supporters are screaming about a player sitting behind somebody else. A lineup screenshot has become their whole personality.`,
+    'Their crowd reaction should be specific to a result and not just repeat the same bench choice.']
+  }]}
+ }));
+ const audit=evaluateInquirerEditionQuality({week:5,teams,league_overview:{sections:[]}});
+ assert(audit.issues.some(x=>x.id==='fan-bench-subject-monoculture'));
+ assert(audit.issues.some(x=>x.id==='fan-screenshot-monoculture'));
 });

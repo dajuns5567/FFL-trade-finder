@@ -1,0 +1,58 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {curateForwardTeamNarrative,inspectNarrativeArchitecture} from '../netlify/functions/inquirer-narrative-architecture.mjs';
+
+const makeStory=(i=1)=>{
+ const t={roster_id:String(i),team_name:'Home Club '+i,opponent_name:'Away Club '+i,points:101+i,opponent_points:90,
+  league_context:{record:{wins:3,losses:2}},best_lineup_miss:{gap:12,starter:{name:'Bench Target'},reserve:{name:'Bench Alternative'}},
+  starter_details:[{name:'Top Runner',position:'RB',points:22,real_stats:{rush_att:16,rush_yd:92,rush_td:1,rec:4,rec_tgt:5,rec_yd:33}}],
+  inquirer_article:{reporter:{id:['walter-mercer','tess-delaney','mack-hollis','nora-voss'][(i-1)%4]},sections:[
+   {kind:'lede',heading:'The result',paragraphs:['A genuinely reported local opening.','The same score was recited mechanically.','The previous result had consequences.','The new score was recited again.','The same thing happened, apparently.']},
+   {kind:'players',heading:'Players',paragraphs:[]},
+   {kind:'management',heading:'Management',paragraphs:['Bench Target lost a legal lineup comparison to Bench Alternative.','Bench Target should have been replaced by Bench Alternative.','Next week Bench Target should lose the slot to Bench Alternative.']},
+   {kind:'hot-seat',heading:'Hot seat',paragraphs:['A distinct weak-link analysis.']},
+   {kind:'cool-throne',heading:'Credit',paragraphs:['Top Runner made the good part possible.']},
+   {kind:'value',heading:'Value',paragraphs:[]},
+   {kind:'sentiment',heading:'Fans',paragraphs:['The supporters have a specific response.','The reaction will last into the next week.']},
+   {kind:'outlook',heading:'Next',paragraphs:['Away Club is next.','The schedule creates a second consequence.','The coming contest will answer the question.']}
+  ]}
+ };return t;
+};
+
+test('forward curation makes one result, one lineup argument, and real football prose',()=>{
+ const t=curateForwardTeamNarrative(makeStory(),5),sections=t.inquirer_article.sections;
+ assert.equal(sections.find(s=>s.kind==='lede').paragraphs.length,2);
+ assert.equal(sections.find(s=>s.kind==='management').paragraphs.length,1);
+ const player=sections.find(s=>s.kind==='players').paragraphs[0];
+ assert.match(player,/22\.0 fantasy points/);
+ assert.match(player,/16 carries for 92 yards/);
+ assert.doesNotMatch(player,/Against Away Club, Top Runner led/);
+ assert.deepEqual(t.inquirer_article.paragraphs,sections.flatMap(s=>s.paragraphs));
+});
+
+test('edition gate detects a single template and repeated internal lineup reporting',()=>{
+ const edition={week:5,teams:Array.from({length:32},(_,i)=>makeStory(i+1))};
+ const ids=new Set(inspectNarrativeArchitecture(edition).map(issue=>issue.id));
+ for(const id of ['overwritten-with-five-part-legacy-lede','repeated-management-case','same-lineup-decision-reported-twice','one-template-for-thirty-two-stories'])
+  assert(ids.has(id),'missing editorial regression gate: '+id);
+});
+
+test('editorial ordering is reporter- and outcome-sensitive across an issue',()=>{
+ const teams=Array.from({length:32},(_,i)=>curateForwardTeamNarrative(makeStory(i+1),5));
+ const orders=new Set(teams.map(t=>t.inquirer_article.sections.map(s=>s.kind).join('|')));
+ assert.ok(orders.size>=3,'the complete edition may not use one shared section layout');
+});
+
+test('reordering sections cannot reintroduce canned editorial prefaces',()=>{
+ const t=makeStory();
+ t.inquirer_article.sections.find(s=>s.kind==='management').paragraphs[0]='Back-page material: The manager has to explain the lineup.';
+ t.inquirer_article.sections.find(s=>s.kind==='hot-seat').paragraphs[0]='Back-page material: The weak starter cannot hide.';
+ curateForwardTeamNarrative(t,5);
+ const joined=t.inquirer_article.paragraphs.join(' ');
+ assert.equal((joined.match(/Back-page material:/g)||[]).length,0);
+});
+
+test('a recap cannot smuggle a Week 2 season-record sentence into Week 5',()=>{
+ const edition={week:5,teams:Array.from({length:32},(_,i)=>makeStory(i+1)),league_overview:{sections:[{paragraphs:['Cleveland Browns improved. The record is 2-0 after this result.']} ]}};
+ assert.ok(inspectNarrativeArchitecture(edition).some(x=>x.id==='unattributed-or-stale-season-record'));
+});

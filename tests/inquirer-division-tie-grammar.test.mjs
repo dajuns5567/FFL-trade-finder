@@ -34,3 +34,8 @@ test('future weekly quality gate rejects grammar and player-name casing in rende
  assert.ok(ids.includes('reader-facing-case-and-punctuation'));
  assert.ok(ids.includes('player-name-capitalization'));
 });
+
+test('recap composed after earlier grammar passes still rejects plural-team faces',()=>{
+ const current={week:5,teams:[{team_name:'Miami Dolphins',roster_id:1,starter_details:[],inquirer_article:{headline:'Week 5',sections:[],paragraphs:[]}}],league_overview:{sections:[{heading:'The Week Ahead',paragraphs:['Miami Dolphins faces Kansas City Chiefs next.']}],hot_takes:[]}};
+ assert.ok(evaluateInquirerEditionQuality(current).issues.some(x=>x.id==='plural-team-agreement'&&x.team==='Miami Dolphins'));
+});

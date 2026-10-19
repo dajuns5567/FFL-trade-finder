@@ -15,14 +15,21 @@ const makeEdition=()=>{
    Array(i+5).fill('distinctive football detail '+distinct).join(' ')+
    ' as the scoring and strategic choices develop.');
   const sections=[
-   {kind:'lede',heading:'Week 5 account',paragraphs:prose},
-   ...['players','management','hot-seat','cool-throne','value'].map(kind=>({kind,heading:'The '+kind.replaceAll('-',' ')+' report',paragraphs:[]})),
+   {kind:'lede',heading:'Week 5 account',paragraphs:prose.slice(0,2)},
+   {kind:'players',heading:'Player story',paragraphs:[distinct+' delivered 20 fantasy points. '+prose[2]]},
+   {kind:'management',heading:'Management judgment',paragraphs:[prose[3]]},
+   {kind:'hot-seat',heading:'The problem to solve',paragraphs:[prose[4]]},
+   {kind:'cool-throne',heading:'The bright spot',paragraphs:[prose[5]]},
+   {kind:'value',heading:'Market movement report',paragraphs:[]},
    {kind:'sentiment',heading:'Fan reaction',paragraphs:[
     'Supporters '+distinct+' of '+name+' are '+distinct+' reacting to '+Array(i+4).fill('distinctly local evidence '+distinct).join(' ')+' as the '+distinct+' roster assesses the matchup.',
     'The '+distinct+' group chat for '+name+' has '+distinct+' '+Array(i+5).fill('a separate observation '+distinct).join(' ')+' before the manager responds.'
    ]},
    {kind:'outlook',heading:'The Week Ahead',paragraphs:['The team has a verifiable next matchup.']}
   ];
+  if(i%4===1){const c=sections.splice(4,1)[0];sections.splice(2,0,c)}
+  if(i%4===2){const c=sections.splice(4,1)[0];sections.splice(1,0,c)}
+  if(i%4===3){const c=sections.splice(2,1)[0];sections.splice(1,0,c)}
   return{roster_id:String(id),team_name:name,opponent_name,
    opponent_roster_id:String(opp),points,opponent_points,
    league_context:{record:{wins:3,losses:2}},
@@ -59,8 +66,9 @@ test('the exact real Week 5 regression patterns block publication',()=>{
  article.sections[0].paragraphs.push('The useful weakness-or-strength note is this: the lineup requires improvement.');
  article.sections[1].paragraphs.push('At 1-1, supporters can cherry-pick the season.');
  e.league_overview.sections[0].paragraphs.push('The football read is straightforward: the result was a result.');
+ e.league_overview.sections[1].paragraphs.push('The useful lesson is not to ask the obvious question.');
  const ids=new Set(inspectEditionBeforePublication(e).issues.map(i=>i.id));
- for(const id of ['grammatical-regression','mechanical-draft-language','misleading-record','recap-mechanical-draft-language'])
+ for(const id of ['grammatical-regression','mechanical-draft-language','misleading-record','recap-mechanical-draft-language','recap-mechanical-lesson-scaffold'])
   assert(ids.has(id),'missing regression detection '+id);
 });
 

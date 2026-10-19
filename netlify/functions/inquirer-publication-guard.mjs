@@ -3,12 +3,14 @@
 // route may approve a draft. Historical locked editions are never rewritten.
 import {createHash} from 'node:crypto';
 import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
+import {inspectNarrativeArchitecture} from './inquirer-narrative-architecture.mjs';
 
 const articleParagraphs = article => (article?.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(p=>typeof p==='string');
 const normalized = value => String(value||'').toLowerCase().replace(/\s+/g,' ').trim();
 const misleading = [
   {id:'grammatical-regression', pattern:/\ban previous-week\b|\bthe first result on .+ were\b|\bthe .+ makes this sunday\b/i},
   {id:'mechanical-draft-language', pattern:/the useful weakness-or-strength note|the second scorer moved|the third scorer moved|the football read is straightforward|the rival-chat version is uncomfortable:/i},
+  {id:'mechanical-lesson-scaffold',pattern:/\bthe useful lesson is not\b|\bthe margin asks more:/i},
   {id:'copy-repair-scaffold', pattern:/fantasy points, a \d+(?:\.\d+)?-point margin in Week \d+/i},
   {id:'editorial-placeholder', pattern:/\b(?:TBD|TODO|lorem ipsum)\b|\bn\/a\b/i},
   {id:'unrendered-data-placeholder', pattern:/\b(?:null|undefined)\b/i}
@@ -24,7 +26,7 @@ export function editorialCopyDigest(edition) {
 }
 
 export function inspectEditionBeforePublication(edition) {
-  const issues=inspectInquirerFormatContract(edition),teams=edition?.teams||[],unique=new Set(teams.map(t=>String(t.roster_id)));
+  const issues=[...inspectInquirerFormatContract(edition),...inspectNarrativeArchitecture(edition)],teams=edition?.teams||[],unique=new Set(teams.map(t=>String(t.roster_id)));
   if(teams.length!==32||unique.size!==32)issues.push({id:'coverage',detail:'32 unique team articles required'});
   const rosterById=new Map(teams.map(t=>[String(t.roster_id),t]));
   const scaffoldOwners=new Map(),phraseOwners=new Map();

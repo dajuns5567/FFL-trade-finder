@@ -64,7 +64,7 @@ const realisticForwardRaw=week=>{
   overview.week_classification=inquirerWeekClassification(week,2026);
   return{rawInquirer:{reporters:clone(week2.reporters),teams},rawOverview:overview};
 };
-let editorialSweep=0;
+let editorialSweep=0,week5NarrativeMetrics=null;
 for(const week of [5,6,9,14]){
   const raw=realisticForwardRaw(week),classification=inquirerWeekClassification(week,2026);
   for(const salt of (week===5?[0,1,5]:[5])){
@@ -77,6 +77,12 @@ for(const week of [5,6,9,14]){
     assert.ok(edition.teams.every(t=>!/(?:could not turn the came in result|eligible option|fleeced signal)/i.test((t.inquirer_article?.paragraphs||[]).join(' '))),'Forward copy must not contain malformed or meta prose');
     const q=evaluateInquirerEditionQuality(edition,week2);
     assert.ok(q.ok,'Week '+week+' salt '+salt+' repeated editorial scaffolds: '+JSON.stringify(q.issues.slice(0,8)));
+    if(week===5&&salt===0){
+      const sections=edition.teams.map(t=>t.inquirer_article.sections||[]),orders=new Set(sections.map(rows=>rows.map(s=>s.kind).join('|')));
+      const leads=sections.map(rows=>(rows.find(s=>s.kind==='lede')?.paragraphs||[]).length);
+      const management=sections.map(rows=>(rows.find(s=>s.kind==='management')?.paragraphs||[]).length);
+      week5NarrativeMetrics={distinct_section_orders:orders.size,maximum_lede_paragraphs:Math.max(...leads),maximum_management_paragraphs:Math.max(...management),mean_team_paragraphs:Number((edition.teams.reduce((n,t)=>n+(t.inquirer_article.paragraphs||[]).length,0)/32).toFixed(2))};
+    }
     assert.ok(edition.teams.every(t=>!/\b(?:the last\s+){2,}two (?:weeks|Sundays)\b|\bthe first the last two\b/i.test((t.inquirer_article?.paragraphs||[]).join(' '))),'Forward copy must never double the last-two-weeks phrase');
     editorialSweep++;
   }
@@ -151,4 +157,4 @@ assert.doesNotMatch(handReview[0].inquirer_article.paragraphs.join(' '),/100\.8/
 assert.match(handReview[0].inquirer_article.paragraphs.join(' '),/Ravens have won their last two games/);
 assert.doesNotMatch(handReview[0].inquirer_article.paragraphs.join(' '),/the first the last two weeks/);
 
-console.log(JSON.stringify({ok:true,editorial_sweep:editorialSweep,week3_quality:quality?.metrics||{},week3_headline:week3.league_overview.headline,week9_playoff_race:true,week14_round:true},null,2));
+console.log(JSON.stringify({ok:true,editorial_sweep:editorialSweep,week3_quality:quality?.metrics||{},week5_narrative:week5NarrativeMetrics,week3_headline:week3.league_overview.headline,week9_playoff_race:true,week14_round:true},null,2));

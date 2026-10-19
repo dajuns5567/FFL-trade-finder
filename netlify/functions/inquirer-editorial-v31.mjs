@@ -3,11 +3,12 @@
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
+import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPlayerFact} from './inquirer-narrative-architecture.mjs';
 
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=32;
+export const FORWARD_EDITORIAL_REVISION=33;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4012,6 +4013,7 @@ function assertWeek2Originality(result,previousEdition){
       }
       article.sections=sectionOrder.map(k=>byKind.get(k)).filter(Boolean);
       article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+      curateForwardTeamNarrative(t,week);
     }
     const first=overview.sections?.[0];
     if(first?.blocks?.length){
@@ -4027,18 +4029,140 @@ function assertWeek2Originality(result,previousEdition){
       const runnerUp=(teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[1];
       const rebuilding=(teams||[]).find(t=>!t.won&&t.next_opponent_name&&t!==top);
       const next=top?.next_opponent_name||'the next opponent';
+      const leagueParagraphs=(league?.paragraphs||[]).map(p=>String(p).replace(/The useful lesson is not that everybody should chase the loudest box score; it is that the season is developing memory, and repeated strengths and repeated mistakes are starting to carry receipts\./gi,
+        'Teams repeating the same weakness are doing the opposition a favor: the scouting report practically writes itself. There is a limit to how long Monday can be blamed on surprise.'));
       const blocks=[
         {kind:'lead',heading:'The Story That Defined Week '+week,paragraphs:leadWithoutPlayers.length?leadWithoutPlayers:lead.slice(0,5)},
         {kind:'standings',heading:'The Standings Have Started Talking',paragraphs:standings?.paragraphs||[]},
         {kind:'players',heading:'The Names Behind the Noise',paragraphs:playerDetails.length?playerDetails:lead.slice(0,2)},
         {kind:'decisions',heading:'The Decisions and the Damage',paragraphs:decisions?.paragraphs||[]},
-        {kind:'league',heading:'What the League Learned',paragraphs:[...(league?.paragraphs||[]),...(top&&runnerUp?['The high-score race had its own second headline: '+w2DisplayTeam(runnerUp.team_name)+' finished on '+forwardOne(runnerUp.points)+' points, '+forwardOne(Math.max(0,Number(top.points)-Number(runnerUp.points)))+' behind '+w2DisplayTeam(top.team_name)+'. That distinction matters when the league decides whether one runaway score was the whole week.']:[])]},
-        {kind:'outlook',heading:'The Week Ahead',paragraphs:[...(top?['After Week '+week+', '+w2DisplayTeam(top.team_name)+' faces '+w2DisplayTeam(next)+' next. The '+forwardOne(top.points)+'-point performance earned attention; the new opponent gets its own answer.']:[]),...(rebuilding?['For '+w2DisplayTeam(rebuilding.team_name)+', the next opponent is '+w2DisplayTeam(rebuilding.next_opponent_name)+'. After a '+forwardOne(rebuilding.points)+'-point loss-week showing, the immediate question is which starting spots can supply a credible answer before another result goes into the standings.']:[])]}
+        {kind:'league',heading:'What the League Learned',paragraphs:[...leagueParagraphs,...(top&&runnerUp?['The high-score race had its own second headline: '+w2DisplayTeam(runnerUp.team_name)+' finished on '+forwardOne(runnerUp.points)+' points, '+forwardOne(Math.max(0,Number(top.points)-Number(runnerUp.points)))+' behind '+w2DisplayTeam(top.team_name)+'. That distinction matters when the league decides whether one runaway score was the whole week.']:[])]},
+        {kind:'outlook',heading:'The Week Ahead',paragraphs:[...(top?['After Week '+week+', '+w2DisplayTeam(top.team_name)+(w2PluralTeamName(top.team_name)?' face ':' faces ')+w2DisplayTeam(next)+' next. The '+forwardOne(top.points)+'-point performance earned attention; the new opponent gets its own answer.']:[]),...(rebuilding?['For '+w2DisplayTeam(rebuilding.team_name)+', the next opponent is '+w2DisplayTeam(rebuilding.next_opponent_name)+'. After a '+forwardOne(rebuilding.points)+'-point loss-week showing, the immediate question is which starting spots can supply a credible answer before another result goes into the standings.']:[])]}
       ];
       first.heading='Week '+week+': The League-Wide Reckoning';
       first.blocks=blocks;
       first.paragraphs=blocks.flatMap(b=>b.paragraphs||[]);
     }
+  }
+  // Composition is the last writer. Therefore grammar cleanup must run AFTER
+  // composition, not before it, on both the recap and the team columns.
+  if(week>=3){
+    const plural=teams.map(t=>w2DisplayTeam(t.team_name)).filter(w2PluralTeamName).sort((a,b)=>b.length-a.length);
+    const clean=s=>{
+      let x=String(s||'');
+      for(const name of plural){
+        const re=new RegExp('\\b'+w2EscRe(name)+' (faces|does|gets|has|is|needs|sits|keeps|projects)\\b','gi');
+        const verbs={faces:'face',does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project'};
+        x=x.replace(re,(_,v)=>name+' '+verbs[v.toLowerCase()]);
+      }
+      return x.replace(/\bThe margin asks more:\s*/gi,'')
+        .replace(/\b(?:Look at the personnel:\s*)?The record is \d+-\d+[^.]*\./gi,'')
+        .replace(/\b(The radio station covering [^.?!]{4,85}?) have declared\b/gi,'$1 has declared')
+        .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!]{4,85}?) are already compressed\b/gi,'$1 is already compressed')
+        .replace(/\b(The road after [^.?!]{4,85}?) are mixed\b/gi,'$1 is mixed');
+    };
+    for(const t of teams){const a=t.inquirer_article;if(!a)continue;
+      a.headline=clean(a.headline);
+      for(const s of a.sections||[]){s.heading=clean(s.heading);s.paragraphs=(s.paragraphs||[]).map(clean)}
+      a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
+    }
+    for(const s of overview.sections||[]){s.heading=clean(s.heading);
+      if(s.blocks?.length){for(const b of s.blocks){b.heading=clean(b.heading);b.paragraphs=(b.paragraphs||[]).map(clean)}s.paragraphs=s.blocks.flatMap(b=>b.paragraphs||[])}
+      else s.paragraphs=(s.paragraphs||[]).map(clean);
+    }
+    overview.hot_takes=(overview.hot_takes||[]).map(h=>({...h,title:clean(h.title),take:clean(h.take)}));
+  }
+  // The editor shortens each article AFTER the legacy collision checks. A
+  // sentence that was only 1/18 of the old article can become 1/11 of the
+  // published one. Recheck the actual final selection against the prior issue
+  // and across this issue before the quality/publication gates see it.
+  if(week>=5){
+    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const priorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
+    for(const t of teams){const a=t.inquirer_article,prior=priorByRoster.get(String(t.roster_id));if(!a||!prior)continue;
+      const old=new Set(forwardArticleSentences(prior).map(s=>forwardNormSentence(s,entities)));
+      for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(p=>
+        forwardSentenceParts(p).filter(s=>forwardWordCount(s)<10||!old.has(forwardNormSentence(s,entities))).join(' ').trim()
+      ).filter(Boolean);
+      a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
+    }
+    for(let pass=0;pass<2;pass++){
+      const offenders=forwardCrossTeamClauseOffenders(teams,entities);
+      if(!offenders.size)break;
+      for(const t of teams){const a=t.inquirer_article;if(!a)continue;
+        for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(p=>
+          forwardSentenceParts(p).filter(s=>!forwardEditorialPhraseKeys(s,entities,12,false).some(key=>(offenders.get(key)||[]).includes(t.team_name))).join(' ').trim()
+        ).filter(Boolean);
+        a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
+      }
+    }
+    // Whole-sentence variants shorter than a twelve-word phrase can still
+    // reproduce across four desks; the publication gate counts those too.
+    const repeated=new Map();
+    for(const t of teams)for(const s of forwardArticleSentences(t)){
+      const key=forwardNormSentence(s,entities);
+      if(!repeated.has(key))repeated.set(key,new Set());
+      repeated.get(key).add(String(t.roster_id));
+    }
+    const repeatedSentences=new Set([...repeated].filter(([,owners])=>owners.size>=4).map(([s])=>s));
+    if(repeatedSentences.size)for(const t of teams){const a=t.inquirer_article;if(!a)continue;
+      for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(p=>
+        forwardSentenceParts(p).filter(s=>forwardWordCount(s)<10||!repeatedSentences.has(forwardNormSentence(s,entities))).join(' ').trim()
+      ).filter(Boolean);
+      a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
+    }
+    // Recap copy-forward is independent of team-story copy-forward. A division
+    // board is especially susceptible: unchanged positions may be newsworthy,
+    // but the newspaper must not reproduce the prior issue's entire prose.
+    if(previousEdition?.league_overview){
+      const oldRecap=new Set(forwardRecapSentences(previousEdition).map(s=>forwardNormSentence(s,entities)));
+      const fresh=p=>forwardSentenceParts(p).filter(s=>forwardWordCount(s)<10||!oldRecap.has(forwardNormSentence(s,entities))).join(' ').trim();
+      for(const [sectionIndex,section] of (overview.sections||[]).entries()){
+        if(section.blocks?.length){
+          for(const block of section.blocks){
+            const before=block.paragraphs||[],after=before.map(fresh).filter(Boolean),floor=['league','outlook'].includes(block.kind)?2:1;
+            if(after.length>=floor)block.paragraphs=after;
+          }
+          section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+        }else{
+          const after=(section.paragraphs||[]).map(fresh).filter(Boolean);
+          if(after.length)section.paragraphs=after;
+          else if((section.paragraphs||[]).length){
+            // The recycled synthetic standings board can otherwise make an
+            // entire reporter desk empty. Replace it with this week's source
+            // scoreboard rather than republishing last week's standings.
+            const game=teams[(sectionIndex*7)%teams.length];
+            const score=Number(game.points).toFixed(1),against=Number(game.opponent_points).toFixed(1);
+            const reports=[
+              `${game.team_name} scored ${score} against ${game.opponent_name}'s ${against} in Week ${week}; that result belongs in the division conversation, regardless of where anyone placed the preseason bets.`,
+              `An actual Week ${week} result supplies the counterweight to the standings chatter: ${game.team_name} ${score}, ${game.opponent_name} ${against}.`,
+              `Forget the old division-board shorthand for a moment. Week ${week} produced ${score} from ${game.team_name} and ${against} from ${game.opponent_name}.`,
+              `The Week ${week} scoreboard gives this race a concrete reference point: ${game.team_name} finished on ${score}; ${game.opponent_name} ended on ${against}.`
+            ];
+            section.paragraphs=[reports[sectionIndex%reports.length]];
+          }
+        }
+      }
+      overview.hot_takes=(overview.hot_takes||[]).map((h,i)=>{
+        const copy=forwardSentenceParts(h.take||'');
+        const recycled=copy.filter(s=>forwardWordCount(s)>=10&&oldRecap.has(forwardNormSentence(s,entities)));
+        if(recycled.length<2)return h;
+        // Hot takes are a second, independent recap surface. A preloaded
+        // division-board manifesto cannot survive merely because its title
+        // changed to the current week. Ground a new take in a real result.
+        const winners=teams.filter(t=>Number(t.points)>Number(t.opponent_points));
+        const game=(winners.length?winners:teams)[(i*3)%(winners.length||teams.length)];
+        const own=Number(game.points).toFixed(1),opp=Number(game.opponent_points).toFixed(1);
+        const lines=[
+          `${game.team_name} put up ${own} to ${game.opponent_name}'s ${opp}. That is a Week ${week} result, not a borrowed claim about who owns the division; the next lineup still has to defend it.`,
+          `Here is what the Week ${week} ledger can actually prove: ${game.team_name} finished with ${own} while ${game.opponent_name} had ${opp}. The standings get to react, but they do not get to rewrite the game.`,
+          `The division board loves a coronation. Week ${week} supplied ${game.team_name} ${own} points and ${game.opponent_name} ${opp}; try fitting that into the preseason victory speech without editing the tape.`,
+          `Nobody gets a championship banner for a column of standings. In Week ${week}, ${game.team_name} recorded ${own} opposite ${opp} for ${game.opponent_name}; that score is the only receipt on this desk.`
+        ];
+        return {...h,title:`Week ${week}: A Scoreboard Receipts Check`,take:lines[i%lines.length]};
+      });
+    }
+    for(const t of teams)restoreForwardPlayerFact(t);
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
@@ -4052,7 +4176,7 @@ function forwardArticleSentences(t){return forwardSentenceParts((t?.inquirer_art
 function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(e?.league_overview?.hot_takes||[]).flatMap(x=>[x?.title,x?.take])].filter(Boolean).join(' ')).filter(x=>forwardWordCount(x)>=10)}
 
 export function evaluateInquirerEditionQuality(current,previous=null){
-  const issues=inspectInquirerFormatContract(current),teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
+  const issues=[...inspectInquirerFormatContract(current),...inspectNarrativeArchitecture(current)],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
   const dated=teams.filter(t=>t.mida_outlook);
   if(Number(current?.week)>=3&&dated.length&&dated.every(t=>{
     const stamp=Date.parse(String(t.mida_outlook?.source_date||t.mida_outlook?.as_of||''));
@@ -4117,7 +4241,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
       .replace(/\bThe (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!\n]{4,85}? is already compressed\b/gi,'The division race is already compressed')
       .replace(/\bThe road after [^.?!\n]{4,85}? is mixed\b/gi,'The road is mixed');
     for(const name of [...new Set(teams.map(t=>String(t.team_name||'').trim()).filter(n=>/s$/i.test(n.split(/\s+/).at(-1)||'')))]){
-      if(new RegExp('\\b'+forwardEscRe(name)+' (?:does|gets|has|is|needs|sits|keeps|projects)\\b','i').test(agreementReaderText))
+      if(new RegExp('\\b'+forwardEscRe(name)+' (?:does|gets|has|is|needs|sits|keeps|projects|faces)\\b','i').test(agreementReaderText))
         issues.push({id:'plural-team-agreement',team:name});
     }
     if(/:\s*this Sunday\b|; The season record is\b/.test(allReaderText))

@@ -36,6 +36,7 @@ jobs:
           node --check netlify/functions/league-hub.mjs
           node --check netlify/functions/inquirer-editorial-v31.mjs
           node --check netlify/functions/inquirer-format-contract.mjs
+          node --check netlify/functions/inquirer-narrative-architecture.mjs
           node --check netlify/functions/inquirer-publish-scheduled.mjs
           node --check scripts/one-time-generate-inquirer-week1.mjs
           node --check scripts/one-time-generate-inquirer-week2.mjs
@@ -48,7 +49,7 @@ jobs:
       - name: Verify access-aware preview CI contract
         run: node --test tests/inquirer-private-preview-ci.test.mjs
       - name: Enforce Week 4 format regression contract
-        run: node --test tests/inquirer-publication-guard.test.mjs tests/week5-forward-editorial-repair.test.mjs
+        run: node --test tests/inquirer-publication-guard.test.mjs tests/week5-forward-editorial-repair.test.mjs tests/inquirer-narrative-architecture.test.mjs
 
       - name: Capture forward V31 season smoke
         run: |

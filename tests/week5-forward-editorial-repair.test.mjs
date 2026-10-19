@@ -65,6 +65,10 @@ test('dated MIDA probabilities cannot masquerade as fresh weekly forecasts',()=>
  const old=new Date(Date.now()-25*86400000).toISOString();
  const edition={week:5,teams:[{team_name:'Club A',roster_id:'1',mida_outlook:{source_date:old,title:30},inquirer_article:{paragraphs:[]}}],league_overview:{sections:[],hot_takes:[{take:'MIDA currently puts the title chance at 30%.'}]}};
  assert(evaluateInquirerEditionQuality(edition).issues.some(x=>x.id==='stale-forecast-presented-as-current'));
+ edition.league_overview.hot_takes[0].take='Miami Dolphins also carry a 30.6% title outlook, so the race reaches beyond local bragging rights.';
+ assert(evaluateInquirerEditionQuality(edition).issues.some(x=>x.id==='stale-forecast-presented-as-current'), 'unattributed old MIDA odds in a division hot take must fail');
+ edition.league_overview.hot_takes[0].take='San Francisco 49ers also have the division’s best title number at 13.4%.';
+ assert(evaluateInquirerEditionQuality(edition).issues.some(x=>x.id==='stale-forecast-presented-as-current'), 'stale title number must fail even without MIDA attribution');
 });
 
 test('the subject, not an intervening plural team name, governs agreement',()=>{

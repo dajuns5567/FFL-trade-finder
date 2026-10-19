@@ -3831,6 +3831,49 @@ function assertWeek2Originality(result,previousEdition){
     }
     overview.hot_takes=(overview.hot_takes||[]).map(h=>({...h,take:freshOnly(h.take)||'The completed weekly results, rather than an out-of-date forecast, carry this argument.'}));
   }
+  if(week>=3){
+    // A final whole-edition pass is essential: late evolution can bring back
+    // same-reporter boilerplate after the earlier sentence cleanup.
+    for(let pass=0;pass<4;pass++){
+      const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+      const offenders=new Set(forwardCrossTeamClauseOffenders(teams,entities).keys());
+      if(!offenders.size)break;
+      teams=teams.map(t=>{
+        const a=t.inquirer_article;if(!a)return t;
+        const sections=(a.sections||[]).map((s,si)=>({...s,paragraphs:(s.paragraphs||[]).map((p,pi)=>forwardSentenceParts(p).map((sentence,sj)=>{
+          const collided=forwardEditorialPhraseKeys(sentence,entities,12,false).some(gram=>offenders.has(gram));
+          return collided?(groundedSentence(t,week,pass+29,si*37+pi*7+sj)||sentence):sentence;
+        }).join(' '))}));
+        return{...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
+      });
+    }
+    const plural=teams.map(t=>w2DisplayTeam(t.team_name)).filter(w2PluralTeamName);
+    const fixGrammar=(s,isHeadline=false)=>{
+      let copy=String(s||'');
+      for(const name of plural){
+        const expression=new RegExp('\\b'+w2EscRe(name)+' (does|gets|has|is|needs|sits|keeps|projects)\\b','gi');
+        const verbs={does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project'};
+        copy=copy.replace(expression,(_,verb)=>{
+          const result=verbs[verb.toLowerCase()];
+          return name+' '+(isHeadline?result[0].toUpperCase()+result.slice(1):result);
+        });
+      }
+      return copy;
+    };
+    for(const t of teams){const a=t.inquirer_article;if(!a)continue;
+      a.headline=fixGrammar(a.headline,true);
+      const seen=new Set();
+      for(const s of a.sections||[])s.paragraphs=(s.paragraphs||[]).map(p=>{
+        let copy=fixGrammar(p);
+        for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:']){
+          const parts=copy.split(prefix);
+          if(parts.length>1){copy=parts[0]+(seen.has(prefix)?'':prefix)+parts.slice(1).join('');seen.add(prefix)}
+        }
+        return copy.trim();
+      });
+      a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

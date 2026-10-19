@@ -25,6 +25,8 @@ export default async function generateInquirerPreview(req){
   const edition=await weeklyReport(new Request(draftUrl));
   if(edition?.preview_only!==true||edition?.published_locked!==false||edition?.available!==true)
    throw Error('Expected an available, unpublished read-only editorial draft: '+String(edition?.reason||'unavailable'));
+  if(edition?.preview_generation_quality?.ok!==true||edition?.preview_editorial_audit?.ok!==true)
+   throw Error('Private draft failed final quality or publication audit; refusing to present it as completed.');
   await store.setJSON(PREVIEW_DIAGNOSTIC_EDITION,edition);
   await store.setJSON(PREVIEW_DIAGNOSTIC_STATUS,{
    state:'completed',started_at,finished_at:new Date().toISOString(),

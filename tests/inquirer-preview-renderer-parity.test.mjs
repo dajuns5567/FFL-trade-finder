@@ -22,3 +22,9 @@ test('preview article uses the exact archived article and recap render functions
  assert.match(hub,/else if\(opened\)body=teamArticle\(opened,w\.week,teams\)/);
  assert.match(hub,/PRIVATE EDITORIAL PREVIEW • UNPUBLISHED WEEK/);
 });
+
+test('site HTML requests the current canonical article renderer instead of a cached older script',()=>{
+ const site=read('netlify/functions/site-v29.mjs');
+ assert.match(site,/league-hub-v451\.js\?v=524/);
+ assert.doesNotMatch(site,/runtimeV21 = .*league-hub-v451\.js\?v=523/);
+});

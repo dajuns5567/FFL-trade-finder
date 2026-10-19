@@ -143,6 +143,10 @@ jobs:
               echo "Private Inquirer background generation queued (HTTP 202)."
               exit 0
             fi
+            if [ "$status" = '401' ] || [ "$status" = '403' ]; then
+              echo 'Deploy Preview visitor access blocked the automatic enqueue. Configure an approved non-interactive Netlify preview access path; the draft remains unpublished.' >&2
+              exit 1
+            fi
             echo "Preview background enqueue attempt ${attempt}: HTTP ${status:-unavailable}"
             sleep 10
           done

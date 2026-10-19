@@ -31,7 +31,7 @@ const makeEdition=()=>{
  });
  return{season:2026,week:5,teams,
   league_overview:{headline:'Week 5 recap',sections:[
-   {heading:'Review',blocks:['lead','standings','players','decisions','league','outlook'].map(kind=>({kind,heading:kind,paragraphs:['Verified '+kind+' football reporting.']})),paragraphs:['lead','standings','players','decisions','league','outlook'].map(kind=>'Verified '+kind+' football reporting.')},
+   {heading:'Review',blocks:['lead','standings','players','decisions','league','outlook'].map(kind=>({kind,heading:kind,paragraphs:['Verified '+kind+' football reporting.',...(['league','outlook'].includes(kind)?['A second independently reported '+kind+' angle.']:[])]})),paragraphs:['lead','standings','players','decisions','league','outlook'].flatMap(kind=>['Verified '+kind+' football reporting.',...(['league','outlook'].includes(kind)?['A second independently reported '+kind+' angle.']:[])])},
    ...['Second reporter','Third reporter','Fourth reporter'].map(heading=>({heading,paragraphs:['Independent commentary.']}))]}};
 };
 
@@ -46,8 +46,9 @@ test('Week 5 cannot regress from the locked Week 4 newspaper format',()=>{
  e.teams[1].inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs=Array(7).fill('Extra future-week paragraph.');
  e.teams[2].inquirer_article.sections.find(s=>s.kind==='cool-throne').heading='cool-throne';
  e.league_overview.sections[0].blocks=e.league_overview.sections[0].blocks.slice(0,5);
+ e.league_overview.sections[0].blocks.find(b=>b.kind==='league').paragraphs=['Only a single thin league paragraph.'];
  const found=new Set(inspectEditionBeforePublication(e).issues.map(x=>x.id));
- for(const id of ['week4-team-section-contract','week4-overstuffed-outlook','week4-missing-section-heading','week4-recap-six-beat-contract'])
+ for(const id of ['week4-team-section-contract','week4-overstuffed-outlook','week4-missing-section-heading','week4-recap-six-beat-contract','week4-thin-recap-beat'])
   assert(found.has(id),'missing independent format gate: '+id);
 });
 

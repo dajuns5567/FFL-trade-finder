@@ -85,6 +85,10 @@ export function curateForwardTeamNarrative(t,week){
   let memory=rows.slice(2).find(p=>/Week \d+|last week|previous|opener/i.test(p)&&!hasOpponentPreview(p))||rows[2]||'';
   memory=memory.replace(/; the season record is [^;.]*(?:; the next game against [^.]+)?\./i,'.')
     .replace(/; the next game against [^.]+\./i,'.');
+  // Forward articles must not mistake a Week-2 archive sentence for the
+  // immediate prior-week trajectory. Absence of a trustworthy comparison is
+  // preferable to false recency.
+  if(/\b(?:split the first two games|first result on|Week 3 gets to decide whether Week 2)\b/i.test(memory))memory='';
   if(memory&&opening&&memory===opening)memory='';
   const verifiedScore=rows[1]||editorialResult(t,week,(Number(t.roster_id)||1)-1);
   lede.paragraphs=[`${opening} ${verifiedScore}`.trim(),memory].filter(Boolean);
@@ -100,7 +104,12 @@ export function curateForwardTeamNarrative(t,week){
   const statRows=sourceStatRows.length?sourceStatRows:featured.map((p,i)=>storyStat(p,t.opponent_name||'the opponent',i,(Number(t.roster_id)||1)-1));
   // Preserve acquired-player or distinct long-form commentary, but discard
   // the formulaic "Against X, Y led" stat rows from the old draft.
-  const additional=players.paragraphs.filter(p=>!/^Against /i.test(p)&&!featured.some(f=>p.includes(f.name)&&/fantasy points;/.test(p))).slice(0,1);
+  const additional=players.paragraphs.filter(p=>!/^Against /i.test(p)&&!featured.some(f=>p.includes(f.name)&&/fantasy points;/.test(p)))
+   .map(p=>clauseParts(p).filter(sentence=>{
+    if(/\b(?:second punch turned the Week \d+ volume up|made this Sunday harder to mock)\b/i.test(sentence))return false;
+    if(/\b(?:the star receiver|the star tight end|the second scorer|the top rival target|second punch)\b/i.test(sentence)&&!featured.some(f=>sentence.includes(f.name)))return false;
+    return true;
+   }).join(' ')).filter(p=>p&&featured.some(f=>p.includes(f.name))).slice(0,1);
   players.paragraphs=[...statRows,...additional];
  }
  const management=byKind.get('management');
@@ -183,6 +192,8 @@ export function inspectNarrativeArchitecture(edition){
   if(names.length===2&&mgmt.some(p=>clauseParts(p).filter(s=>names.every(n=>s.includes(n))).length>1))
     issues.push({id:'same-lineup-decision-twice-inside-paragraph',team});
   if(mgmt.some(p=>/\bby added\b/i.test(p)))issues.push({id:'malformed-transaction-verb',team});
+  if((a.paragraphs||[]).some(p=>/\b(?:second punch turned the Week \d+ volume up|made this Sunday harder to mock|split the first two games)\b/i.test(p)))
+    issues.push({id:'legacy-week2-prose-survived-final-composition',team});
   if(!String(kind('players')?.paragraphs?.[0]||'').includes('fantasy points'))
     issues.push({id:'player-story-lacks-fantasy-fact',team});
   if((a.paragraphs||[]).length!==ss.flatMap(s=>s.paragraphs||[]).length)

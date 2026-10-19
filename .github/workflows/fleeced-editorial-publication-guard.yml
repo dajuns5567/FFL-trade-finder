@@ -4,6 +4,10 @@ on:
     paths:
       - 'netlify/functions/inquirer-publication-guard.mjs'
       - 'netlify/functions/inquirer-format-contract.mjs'
+      - 'netlify/functions/inquirer-narrative-architecture.mjs'
+      - 'league-hub-v451.js'
+      - 'tests/inquirer-narrative-architecture.test.mjs'
+      - 'tests/week5-forward-editorial-repair.test.mjs'
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/inquirer-publish-scheduled.mjs'
       - 'tests/inquirer-publication-guard.test.mjs'
@@ -16,6 +20,10 @@ on:
     paths:
       - 'netlify/functions/inquirer-publication-guard.mjs'
       - 'netlify/functions/inquirer-format-contract.mjs'
+      - 'netlify/functions/inquirer-narrative-architecture.mjs'
+      - 'league-hub-v451.js'
+      - 'tests/inquirer-narrative-architecture.test.mjs'
+      - 'tests/week5-forward-editorial-repair.test.mjs'
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/inquirer-publish-scheduled.mjs'
       - 'tests/inquirer-publication-guard.test.mjs'

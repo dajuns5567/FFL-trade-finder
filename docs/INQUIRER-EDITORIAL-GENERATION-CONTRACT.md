@@ -45,6 +45,11 @@ conclusions may not replace distinct reported consequences.
   one-liners is not a substitute for a story angle grounded in that team’s week.
 - Preserve headings, byline, archive selections and links in the canonical
   League Hub reader. The `paragraphs` flat mirror must match section contents.
+- Division-board hot takes must display an introduction and eight individually
+  separated AFC/NFC division entries, even when a source draft delivers them
+  as one unbroken paragraph. The browser-rendered layout is part of the audit.
+- Reject inherited Week-2 first-two-games narration and anonymous, repeated
+  second-scorer punchlines in Week 5+ rather than merely swapping week digits.
 - The recap needs all four reporter desks and six named news beats in its first
   desk; its final league and outlook beats need multiple substantive paragraphs.
 

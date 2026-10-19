@@ -5,6 +5,10 @@ on:
     paths:
       - 'netlify/functions/inquirer-*.mjs'
       - 'netlify/functions/league-hub.mjs'
+      - 'league-hub-v451.js'
+      - 'tests/inquirer-narrative-architecture.test.mjs'
+      - 'tests/week5-forward-editorial-repair.test.mjs'
+      - 'docs/INQUIRER-EDITORIAL-GENERATION-CONTRACT.md'
       - 'scripts/inquirer-*.mjs'
       - 'scripts/one-time-generate-inquirer-week1.mjs'
       - 'scripts/one-time-generate-inquirer-week2.mjs'

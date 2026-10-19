@@ -59,6 +59,7 @@ test('editorial gate catches a long copy-pasted punchline in only two articles',
 test('recap section titles are actual accessible headings',()=>{
  const source=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
  assert.match(source,/<h2 class="lh-inquirer-story-heading">/);
+ assert.match(source,/\(\?=\\b\(\?:AFC\|NFC\)/,'The division-board reader must split compact data into visible division lines');
 });
 
 test('dated MIDA probabilities cannot masquerade as fresh weekly forecasts',()=>{

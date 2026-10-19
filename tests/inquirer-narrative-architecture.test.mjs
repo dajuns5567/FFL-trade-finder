@@ -59,6 +59,19 @@ test('the admission gate detects repeated same-player comparisons inside one par
  assert.ok(ids.includes('same-lineup-decision-twice-inside-paragraph'));
 });
 
+test('future-week player writing removes anonymous stock second-scorer prose and stale opening-week language',()=>{
+ const t=makeStory();
+ t.inquirer_article.sections.find(s=>s.kind==='lede').paragraphs[2]='The Home Club split the first two games. Week 3 gets to decide whether Week 2 was a bruise.';
+ t.inquirer_article.sections.find(s=>s.kind==='players').paragraphs=[
+  'Against Away Club, Top Runner led with 22.0 fantasy points.',
+  'The star tight end kept the loss from becoming a simple story about one star. After a 7.7-point Week 4, the second scorer reached 15.2 and made this Sunday harder to mock.'
+ ];
+ curateForwardTeamNarrative(t,5);
+ const p=t.inquirer_article.paragraphs.join(' ');
+ assert.doesNotMatch(p,/split the first two games|second scorer reached|harder to mock|star tight end/i);
+ assert.match(p,/Top Runner/);
+});
+
 test('editorial ordering is reporter- and outcome-sensitive across an issue',()=>{
  const teams=Array.from({length:32},(_,i)=>curateForwardTeamNarrative(makeStory(i+1),5));
  const orders=new Set(teams.map(t=>t.inquirer_article.sections.map(s=>s.kind).join('|')));

@@ -4024,14 +4024,16 @@ function assertWeek2Originality(result,previousEdition){
       const playerDetails=lead.filter(p=>/fantasy points|scored|gave .* at the top/i.test(p));
       const leadWithoutPlayers=lead.filter(p=>!playerDetails.includes(p));
       const top=(teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
+      const runnerUp=(teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[1];
+      const rebuilding=(teams||[]).find(t=>!t.won&&t.next_opponent_name&&t!==top);
       const next=top?.next_opponent_name||'the next opponent';
       const blocks=[
         {kind:'lead',heading:'The Story That Defined Week '+week,paragraphs:leadWithoutPlayers.length?leadWithoutPlayers:lead.slice(0,5)},
         {kind:'standings',heading:'The Standings Have Started Talking',paragraphs:standings?.paragraphs||[]},
         {kind:'players',heading:'The Names Behind the Noise',paragraphs:playerDetails.length?playerDetails:lead.slice(0,2)},
         {kind:'decisions',heading:'The Decisions and the Damage',paragraphs:decisions?.paragraphs||[]},
-        {kind:'league',heading:'What the League Learned',paragraphs:league?.paragraphs||[]},
-        {kind:'outlook',heading:'The Week Ahead',paragraphs:top?['After Week '+week+', '+w2DisplayTeam(top.team_name)+' faces '+w2DisplayTeam(next)+' next. The '+forwardOne(top.points)+'-point performance earned attention; the new opponent gets its own answer.']:[]}
+        {kind:'league',heading:'What the League Learned',paragraphs:[...(league?.paragraphs||[]),...(top&&runnerUp?['The high-score race had its own second headline: '+w2DisplayTeam(runnerUp.team_name)+' finished on '+forwardOne(runnerUp.points)+' points, '+forwardOne(Math.max(0,Number(top.points)-Number(runnerUp.points)))+' behind '+w2DisplayTeam(top.team_name)+'. That distinction matters when the league decides whether one runaway score was the whole week.']:[])]},
+        {kind:'outlook',heading:'The Week Ahead',paragraphs:[...(top?['After Week '+week+', '+w2DisplayTeam(top.team_name)+' faces '+w2DisplayTeam(next)+' next. The '+forwardOne(top.points)+'-point performance earned attention; the new opponent gets its own answer.']:[]),...(rebuilding?['For '+w2DisplayTeam(rebuilding.team_name)+', the next opponent is '+w2DisplayTeam(rebuilding.next_opponent_name)+'. After a '+forwardOne(rebuilding.points)+'-point loss-week showing, the immediate question is which starting spots can supply a credible answer before another result goes into the standings.']:[])]}
       ];
       first.heading='Week '+week+': The League-Wide Reckoning';
       first.blocks=blocks;

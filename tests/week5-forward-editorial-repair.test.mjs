@@ -50,6 +50,12 @@ test('editorial gate rejects shared ten-word sarcastic clauses even under one re
  assert(result.verdict.issues.some(x=>x.id==='cross-team-clause-scaffold'));
 });
 
+test('editorial gate catches a long copy-pasted punchline in only two articles',()=>{
+ const punch='The fans can keep this ridiculous argument until the next Sunday proves that somebody actually learned the lesson instead of repeating the performance for an exhausted audience.';
+ const teams=['Club North','Club South'].map((team,i)=>({roster_id:String(i+1),team_name:team,inquirer_article:{paragraphs:[`For ${team}, ${punch}`]}}));
+ assert(evaluateInquirerEditionQuality({week:5,teams,league_overview:{sections:[]}}).issues.some(x=>x.id==='paired-editorial-clause-scaffold'));
+});
+
 test('recap section titles are actual accessible headings',()=>{
  const source=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
  assert.match(source,/<h2 class="lh-inquirer-story-heading">/);
@@ -59,6 +65,12 @@ test('dated MIDA probabilities cannot masquerade as fresh weekly forecasts',()=>
  const old=new Date(Date.now()-25*86400000).toISOString();
  const edition={week:5,teams:[{team_name:'Club A',roster_id:'1',mida_outlook:{source_date:old,title:30},inquirer_article:{paragraphs:[]}}],league_overview:{sections:[],hot_takes:[{take:'MIDA currently puts the title chance at 30%.'}]}};
  assert(evaluateInquirerEditionQuality(edition).issues.some(x=>x.id==='stale-forecast-presented-as-current'));
+});
+
+test('the subject, not an intervening plural team name, governs agreement',()=>{
+ const sentence='The radio station covering New England Patriots have declared its phone lines a public utility.';
+ const edition={week:5,teams:[{roster_id:'1',team_name:'New England Patriots',inquirer_article:{paragraphs:[sentence],sections:[{kind:'sentiment',paragraphs:[sentence]}]}}],league_overview:{sections:[]}};
+ assert(evaluateInquirerEditionQuality(edition).issues.some(x=>x.id==='intervening-team-subject-agreement'));
 });
 
 test('future weeks never describe the prior week as the season opener',()=>{

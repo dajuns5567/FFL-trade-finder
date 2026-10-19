@@ -3632,7 +3632,12 @@ function assertWeek2Originality(result,previousEdition){
       const subject=teams.find(t=>String(take.title||'').includes(t.team_name))||teams.find(t=>String(take.take||'').includes(t.team_name));
       if(!subject)return{...take,take:'The early-season label no longer tells the story. The standings have moved; this call needs a verified current matchup before it earns a stronger verdict.'};
       const record=forwardRecordText(subject),outcome=subject.won?'won':'lost';
-      return{...take,take:subject.team_name+' '+outcome+' Week '+week+' with '+forwardOne(subject.points)+' fantasy points and holds a '+record+' season record. A title or fraud argument has to reckon with all '+week+' games, not borrow an undefeated claim from Week 2.'};
+      const score=forwardOne(subject.points),top=(subject.starter_details||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],weak=(subject.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0];
+      const title=String(take.title||'').toLowerCase(),danger=/danger|fraud|warning/.test(title);
+      const commentary=danger
+        ?'The '+record+' record has not erased '+(weak?weak.name+' scoring '+forwardOne(weak.points)+' in the starting lineup':'the lineup vulnerability opponents can target')+'. A winning record buys patience, not a lifetime warranty.'
+        :'The '+record+' record is the strongest part of the argument, with '+(top?top.name+' supplying '+forwardOne(top.points)+' this Sunday':'Sunday’s lineup contributing '+score+' points')+'. Rivals have had '+week+' weeks to find a rebuttal, and the wins are still on the page.';
+      return{...take,take:subject.team_name+' '+outcome+' Week '+week+' with '+score+' fantasy points. '+commentary};
     });
   }
 
@@ -3657,6 +3662,23 @@ function assertWeek2Originality(result,previousEdition){
     overview=evolveForwardOverview(overview,previousEdition?.league_overview||null,week,variationSalt,recapEntities);
     overview=enforceRecapEvolution(overview,previousEdition?.league_overview||null,week,variationSalt,recapEntities);
     overview=rejectRecapCopyForward(overview,previousEdition?.league_overview||null,week,recapEntities);
+    // A weekly recap cannot spend two news paragraphs announcing the same
+    // leaders, or copy the same manager scolding into separate examples.
+    const recapSeen=new Set();
+    for(const section of overview.sections||[]){
+      const clean=paras=>(paras||[]).map(p=>{
+        const text=String(p||'');
+        if(/That is a specific lineup choice, not an inspirational lesson about trying harder\./.test(text)){
+          const suffix='That is a specific lineup choice, not an inspirational lesson about trying harder.';
+          if(recapSeen.has(suffix))return text.replace(suffix,'The bench score makes the decision concrete; the next lineup card will show whether management listened.');
+          recapSeen.add(suffix);
+        }
+        return text;
+      });
+      section.paragraphs=clean(section.paragraphs);
+      for(const block of section.blocks||[])block.paragraphs=clean(block.paragraphs);
+      if(section.blocks?.length)section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+    }
   }
   overview.headline='Fleeced! Weekly Recap — '+String(weekClassification?.label||('Week '+week));
   overview.deck=weekClassification?.playoffs
@@ -3672,7 +3694,29 @@ function assertWeek2Originality(result,previousEdition){
    }
    if(week>=3)title=title.replace(/\b(Make|Makes) this Sunday\b/g,'$1 This Sunday');
    t.inquirer_article.headline=title;
-  }t.inquirer_article.week=week;t.inquirer_article.week_classification=t.week_classification||weekClassification;t.inquirer_article.editorial_revision=FORWARD_EDITORIAL_REVISION}}
+  }
+   // Final, reader-facing copy pass. Run *after* every variation pass, because
+   // variation can reintroduce stock prefixes and malformed grammar.
+   if(week>=3){
+    const article=t.inquirer_article;
+    for(const section of article.sections||[]){
+      section.heading=String(section.heading||'').replace(/^this Sunday/,'This Sunday');
+      section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
+        let s=String(paragraph||'').replace(/\bthis round of games’s\b/gi,'this week’s')
+          .replace(/\ba ([89](?:\.\d+)?-point)\b/gi,'an $1')
+          .replace(/\bin the league order\b/gi,'in the league standings')
+          .replace(/\bNo\. (\d+) in the league order\b/gi,'No. $1 in the league standings');
+        for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:','Follow the scoring:','No fine print:']){
+          const escaped=prefix.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+          const matches=[...s.matchAll(new RegExp(escaped,'g'))];
+          for(let i=matches.length-1;i>=1;i--)s=s.slice(0,matches[i].index)+s.slice(matches[i].index+prefix.length).replace(/^\s*/, ' ');
+        }
+        return s;
+      });
+    }
+    article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
+   }
+   t.inquirer_article.week=week;t.inquirer_article.week_classification=t.week_classification||weekClassification;t.inquirer_article.editorial_revision=FORWARD_EDITORIAL_REVISION}}
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -3734,6 +3778,18 @@ export function evaluateInquirerEditionQuality(current,previous=null){
       if(/\b1 carries\b|\b1 rush yds\b/i.test(copy))issues.push({id:'stat-grammar',team:t.team_name});
     }
   }
+  if(Number(current?.week)>=3){
+    for(const t of teams){
+      const a=t?.inquirer_article||{},paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+      for(const p of paragraphs){
+        if(/\b(?:this round of games’s|a [89](?:\.\d+)?-point|(?:Texans|Bears|Billiards|Falcons) sits)\b/i.test(p))
+          issues.push({id:'reader-facing-grammar',team:t.team_name,excerpt:String(p).slice(0,150)});
+        for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:'])
+          if(String(p).split(prefix).length>2)issues.push({id:'stacked-stock-preface',team:t.team_name,prefix});
+      }
+      if((a.sections||[]).some(s=>/^this Sunday,/.test(String(s.heading||''))))issues.push({id:'uncapitalized-section-heading',team:t.team_name});
+    }
+  }
   // Named-player substitutions must not disguise a copy-pasted fan joke.
   for(const riff of ['supporters are doing what supporters do best','the fan base has screenshots, memes and exactly one volume setting']){
     const owners=teams.filter(t=>String((t?.inquirer_article?.paragraphs||[]).join(' ')).toLowerCase().includes(riff)).map(t=>t.team_name);
@@ -3754,6 +3810,16 @@ export function evaluateInquirerEditionQuality(current,previous=null){
       issues.push({id:'recap-week2-record-language',detail:'Old Week 2 record groups appear in a later week.'});
     if(/\b(?:A 84\.6-point|1 carries|1 rush yds)\b/i.test(recapCopy))
       issues.push({id:'recap-uncorrected-stat-grammar'});
+    const takes=(current?.league_overview?.hot_takes||[]).map(x=>String(x.take||''));
+    if(takes.some(s=>/borrow an undefeated claim from Week 2/i.test(s)))issues.push({id:'recap-recycled-week2-hot-take'});
+    for(let i=0;i<takes.length;i++)for(let j=i+1;j<takes.length;j++){
+      const a=new Set(forwardSentenceParts(takes[i]).map(s=>forwardNormSentence(s,entities)));
+      if(forwardSentenceParts(takes[j]).some(s=>forwardWordCount(s)>=10&&a.has(forwardNormSentence(s,entities))))
+        issues.push({id:'recap-duplicate-hot-take-argument',items:[i,j]});
+    }
+    const recapSentences=forwardSentenceParts(recapCopy).filter(s=>forwardWordCount(s)>=10);
+    const counts=new Map();for(const sentence of recapSentences){const key=forwardNormSentence(sentence,entities);counts.set(key,(counts.get(key)||0)+1)}
+    for(const [sentence,count] of counts)if(count>=2)issues.push({id:'recap-duplicate-commentary',sentence,count});
   }
   if(/\b(?:worth reopening|real departure from the established level|changes what the next box score is allowed to tell us|role deserves fresh attention|large enough to matter|matter beyond one|that is (?:star|veteran|breakout|emerging|rookie|reliable) production|useful veteran work)\b/i.test(matteredCopy))issues.push({id:'recap-meta-explainer'});
   const blocks=(mattered?.blocks||[]).slice(0,5),blockSentences=blocks.flatMap(b=>forwardSentenceParts((b.paragraphs||[]).join(' ')).filter(s=>forwardWordCount(s)>=8));

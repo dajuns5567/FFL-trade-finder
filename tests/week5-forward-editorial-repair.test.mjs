@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
 import {repairNewEditionCopy} from '../netlify/functions/inquirer-editorial-collision-repair.mjs';
 import {adaptWeekLanguage,evaluateInquirerEditionQuality} from '../netlify/functions/inquirer-editorial-v31.mjs';
 test('future-week duplicate copy is replaced with scoreboard facts without disabling the strict editorial gate',()=>{
@@ -55,4 +57,34 @@ test('32-team editorial gate prevents bench and screenshot fan-commentary monocu
  const audit=evaluateInquirerEditionQuality({week:5,teams,league_overview:{sections:[]}});
  assert(audit.issues.some(x=>x.id==='fan-bench-subject-monoculture'));
  assert(audit.issues.some(x=>x.id==='fan-screenshot-monoculture'));
+});
+
+test('Week 5 and later Fan Sentiment labels follow the article week and prior archived week',()=>{
+ const source=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+ const start=source.indexOf('function fanSentimentMeter(t,a){'),end=source.indexOf('\nfunction storedInquirerArticle(',start);
+ assert(start>=0&&end>start);
+ const render=runInNewContext(source.slice(start,end)+'\nfanSentimentMeter',{esc:String});
+ for(const week of [3,5,6,14,17]){
+  const actual=render({previous_fan_sentiment:{score:-12}},{week,fan_sentiment:{score:48,title:'Ready to parade'}});
+  assert.match(actual,new RegExp('Gold = Week '+week));
+  assert.match(actual,new RegExp('Gray = Week '+(week-1)));
+  assert.match(actual,new RegExp('from Week '+(week-1)));
+  assert(!actual.includes('Gold = Week 2'));
+ }
+ const noPrior=render({previous_fan_sentiment:null},{week:5,fan_sentiment:{score:30}});
+ assert(!noPrior.includes('Gray ='));
+ assert(!noPrior.includes('from Week'));
+});
+
+test('editorial quality gate rejects repeated recap arguments, stale hot takes and visible bad grammar',()=>{
+ const repeat='The manager made this choice, and it deserves a specific explanation instead of the same speech every week.';
+ const edition={week:5,teams:[{roster_id:'1',team_name:'Houston Texans',inquirer_article:{sections:[
+  {kind:'lede',heading:'this Sunday, Properly Dressed',paragraphs:['Houston Texans sits in the conference. A 8.3-point edge is not decisive.']}
+ ],paragraphs:['Houston Texans sits in the conference. A 8.3-point edge is not decisive.']}}],league_overview:{sections:[{heading:'What Actually Mattered This Week',paragraphs:[repeat,repeat]}],hot_takes:[
+  {title:'Title call',take:'A title or fraud argument must not borrow an undefeated claim from Week 2.'},
+  {title:'Danger sign',take:'A title or fraud argument must not borrow an undefeated claim from Week 2.'}
+ ]}};
+ const ids=evaluateInquirerEditionQuality(edition).issues.map(x=>x.id);
+ for(const id of ['reader-facing-grammar','uncapitalized-section-heading','recap-recycled-week2-hot-take','recap-duplicate-hot-take-argument','recap-duplicate-commentary'])
+  assert(ids.includes(id),id+' not rejected: '+ids.join(','));
 });

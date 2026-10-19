@@ -2,26 +2,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {startPreviewDraftForDeploy} from '../netlify/functions/inquirer-preview-on-deploy.mjs';
 
-const deploy_url='https://deploy-preview-402--brilliant-faun-c5b649.netlify.app';
+const previewUrl='https://deploy-preview-402--brilliant-faun-c5b649.netlify.app';
 
 test('successful PR preview queues its own isolated unpublished draft',async()=>{
  const calls=[];
- const queued=await startPreviewDraftForDeploy({deploy:{context:'deploy-preview',deploy_url}},async(url,options)=>{
+ const queued=await startPreviewDraftForDeploy({deploy:{context:'deploy-preview',sslUrl:previewUrl}},async(url,options)=>{
   calls.push({url:String(url),options});return{ok:true};
  });
  assert.equal(queued,true);
  assert.equal(calls.length,1);
- assert.equal(calls[0].url,deploy_url+'/.netlify/functions/inquirer-preview-background?start=1');
+ assert.equal(calls[0].url,previewUrl+'/.netlify/functions/inquirer-preview-background?start=1');
  assert.equal(calls[0].options.method,'GET');
 });
 
 test('never starts draft generation on production, branch or arbitrary hosts',async()=>{
  const calls=[];const fetcher=async url=>{calls.push(url);return{ok:true}};
  for(const event of [
-  {deploy:{context:'production',deploy_url}},
-  {deploy:{context:'branch-deploy',deploy_url}},
-  {deploy:{context:'deploy-preview',deploy_url:'https://brilliant-faun-c5b649.netlify.app'}},
-  {deploy:{context:'deploy-preview',deploy_url:'https://example.com'}},
+  {deploy:{context:'production',sslUrl:previewUrl}},
+  {deploy:{context:'branch-deploy',sslUrl:previewUrl}},
+  {deploy:{context:'deploy-preview',sslUrl:'https://brilliant-faun-c5b649.netlify.app'}},
+  {deploy:{context:'deploy-preview',sslUrl:'https://example.com'}},
   {deploy:{context:'deploy-preview'}},
   {}
  ])assert.equal(await startPreviewDraftForDeploy(event,fetcher),false);

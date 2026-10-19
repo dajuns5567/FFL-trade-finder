@@ -9,6 +9,7 @@ test('private readable URL redirects into the canonical League Hub article UI',(
  const diagnostic=read('netlify/functions/inquirer-preview-diagnostic.mjs');
  assert.match(diagnostic,/target\.searchParams\.set\('inquirer_preview','1'\)/);
  assert.match(diagnostic,/status:302/);
+ assert.ok(diagnostic.indexOf("get('view')==='readable')return readableEdition(req)")<diagnostic.indexOf("status?.state!=='completed'"),'reader must redirect even before draft generation finishes');
  assert.doesNotMatch(diagnostic,/<details id="team-|class="recap-block"|background:#f4f0e7/);
 });
 

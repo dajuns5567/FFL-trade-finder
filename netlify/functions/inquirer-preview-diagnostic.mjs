@@ -17,10 +17,13 @@ export default async function inquirerPreviewDiagnostic(req){
  const store=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
  const status=await store.get(PREVIEW_DIAGNOSTIC_STATUS,{type:'json'}).catch(()=>null);
  if(new URL(req.url).searchParams.get('draft')==='1'){
+  // Human-readable entry is always the canonical site shell, including while
+  // deploy-local background generation is in progress.
+  if(new URL(req.url).searchParams.get('view')==='readable')return readableEdition(req);
   if(status?.state!=='completed')return json({status:status||{state:'not-started'},error:'Draft is not ready'},404);
   const edition=await store.get(PREVIEW_DIAGNOSTIC_EDITION,{type:'json'}).catch(()=>null);
   return edition?.preview_only===true&&edition?.published_locked===false
-   ?(new URL(req.url).searchParams.get('view')==='readable'?readableEdition(req):json(edition)):json({error:'Unpublished draft not found'},404);
+   ?json(edition):json({error:'Unpublished draft not found'},404);
  }
  return json({
   status:status||{state:'not-started'},

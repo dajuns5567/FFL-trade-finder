@@ -4,7 +4,7 @@ const previewHost=/^deploy-preview-\d+--[^.]+\.netlify\.app$/i;
 
 export async function startPreviewDraftForDeploy(event,fetcher=fetch){
  if(event?.deploy?.context!=='deploy-preview')return false;
- const candidates=[event.deploy.deploy_url,event.deploy.url,event.deploy.permalink];
+ const candidates=[event.deploy.sslUrl,event.deploy.url,event.deploy.permalinkUrl];
  const preview=candidates.map(value=>{
   try{return new URL(value)}catch{return null}
  }).find(url=>url?.protocol==='https:'&&previewHost.test(url.hostname));

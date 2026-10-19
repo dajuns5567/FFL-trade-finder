@@ -3809,6 +3809,58 @@ function assertWeek2Originality(result,previousEdition){
         }
         return copy.trim();
       });
+      const fanSection=(a.sections||[]).find(s=>s.kind==='sentiment');
+      if(fanSection&&forwardWordCount((fanSection.paragraphs||[]).join(' '))<35){
+        const riffs=[
+          'The call-in show has already misplaced its indoor voice','The neighborhood group chat is charging admission to the argument',
+          'The supporters are treating one lineup slot like public property','The postgame complaints have acquired an unnecessary second act',
+          'Even the quiet fans have started offering roster suggestions','The season-ticket optimists are asking for a receipt this time',
+          'The local sports bar has appointed itself a lineup committee','Nobody at the watch party asked for another mystery performance',
+          'The fan section has rehearsed a very specific grievance','The town is not yet rioting, but the patience meter is visible',
+          'The radio callers found the soft spot without a scouting budget','The supporters are tired of being handed a fresh explanation',
+          'The crowd knows the difference between a blip and a habit','The faithful have kept the scoreboard image for unfortunate reasons',
+          'The loudest backers are now demanding quieter mistakes','The fan base has turned the weak position into a weekly referendum'
+        ];
+        const idx=(Number(t.roster_id)||1)-1,player=t.worst_starter?.name||t.starter_details?.at(-1)?.name||'the quietest starter';
+        const first=riffs[((idx%riffs.length)+riffs.length)%riffs.length];
+        const second=[
+          'Against '+w2DisplayTeam(t.opponent_name||'the opponent')+', '+player+' is the name everybody will remember from this result.',
+          'With '+player+' on the postgame complaint list, the next lineup announcement deserves unusually thorough reading.',
+          'A number next to '+player+' has done more damage to the mood than rivals could have arranged.',
+          'Nobody needs a conspiracy to explain why '+player+' now occupies so much of the argument.',
+          'Someone will have to explain '+player+' before the cheering section accepts another optimistic forecast.',
+          'The next opponent gets a free scouting clue if '+player+' cannot change the conversation.',
+          'A fresh lineup card offers '+player+' one honest opportunity to quiet the neighborhood.',
+          'The manager may prefer patience; the people yelling about '+player+' have apparently canceled theirs.',
+          'Rivals will not need an elaborate joke if '+player+' supplies the same number twice.',
+          'The faithful can tolerate bad luck; they are less tolerant of '+player+' becoming a ritual.',
+          'After this Sunday, '+player+' has become the least comfortable subject at the watch party.',
+          'A little competence from '+player+' would do wonders for a very irritated local audience.',
+          'The supporters have offered '+player+' a challenge that requires points instead of explanations.',
+          'This is where '+player+' can make the complaint sound outdated by next Monday.',
+          'Even the sympathetic callers have started asking what changes around '+player+' next week.',
+          'The cleanest answer for '+player+' is a box score that silences the criticism.'
+        ][((idx%16)+16)%16];
+        const ending=[
+          'The next result can settle that without an apology tour.',
+          'There is no substitute for a quieter, better Sunday.',
+          'The answer is available on the next actual scoreboard.',
+          'Nobody is accepting a press conference as a substitute.',
+          'At least the next matchup offers a fresh examination.',
+          'The noise will follow the starters into the next game.',
+          'One more bad performance turns irritation into routine.',
+          'The supporters would dearly like to change the subject.',
+          'The joke gets less funny every time it repeats.',
+          'The coming week can still make this criticism obsolete.',
+          'Better execution is a wonderfully economical public statement.',
+          'The next opponent is unlikely to offer sympathy.',
+          'Winning would be a far more convincing rebuttal.',
+          'Patience has a finite and increasingly visible budget.',
+          'One decent follow-up would calm quite a few people.',
+          'There is still time to make the noise embarrassing.'
+        ][((idx%16)+16)%16];
+        fanSection.paragraphs=[...(fanSection.paragraphs||[]),first+'. '+second+' '+ending];
+      }
       a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
     }
   }

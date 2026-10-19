@@ -2,6 +2,7 @@
 // Derived from the locked Week 2 V31 newsroom logic.
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
+import {groundedSentence} from './inquirer-editorial-collision-repair.mjs';
 
 export const FORWARD_INQUIRER_VERSION=31;
 export const FORWARD_EDITORIAL_REVISION=31;
@@ -235,7 +236,7 @@ function paragraphSentenceRows(paragraph){
   return forwardSentenceParts(paragraph).map(sentence=>({sentence,norm:forwardNormSentence(sentence,[]),words:forwardWordCount(sentence)}));
 }
 const FORWARD_CROSS_REPORTER_STYLE=/\b(?:room|table|chair|seating|rearrang\w*|headline|screenshot|joke|punchline|megaphone|receipt|reservation|silverware|china|wardrobe|decorative|parade|siren|menu|dinner|bill|gossip|guest list|repair|spiral|standard|unanswered|pressure|urgency|runway|rubble|identity|rebuttal|warning|panic|collapse|argument|response)\b/i;
-function forwardEditorialPhraseKeys(sentence,entities,width=9){
+function forwardEditorialPhraseKeys(sentence,entities,width=9,styleRequired=true){
   const raw=String(sentence||''),numeric=(raw.match(/\b\d+(?:\.\d+)?%?\b/g)||[]).length,
     factual=/\b(?:fantasy points?|solo tackles?|assisted tackles?|tackle for loss|qb hits?|passes?|targets?|receptions?|rushing yards?|receiving yards?|touchdowns?|carries|projection|projected)\b/i;
   if(numeric>=2&&factual.test(raw))return[];
@@ -243,7 +244,7 @@ function forwardEditorialPhraseKeys(sentence,entities,width=9){
     ws=norm.split(/\s+/).filter(Boolean),out=[];
   for(let i=0;i+width<=ws.length;i++){
     const gram=ws.slice(i,i+width).join(' ');
-    if(FORWARD_CROSS_REPORTER_STYLE.test(gram))out.push(gram);
+    if(!styleRequired||FORWARD_CROSS_REPORTER_STYLE.test(gram))out.push(gram);
   }
   return[...new Set(out)];
 }
@@ -260,12 +261,25 @@ function forwardCrossReporterPhraseOffenders(teams,entities){
   }
   return new Map([...placements.entries()].filter(([,rows])=>rows.length>1&&new Set(rows.map(x=>x.reporter)).size>1));
 }
+// Catch copied editorial clauses even when their sentence openings or reporters
+// differ. A shared 10-word rhetorical run in three articles is not fresh copy.
+function forwardCrossTeamClauseOffenders(teams,entities){
+  const placement=new Map();
+  for(const t of teams||[]){
+    const seen=new Set();
+    for(const sentence of forwardArticleSentences(t))for(const gram of forwardEditorialPhraseKeys(sentence,entities,12,false)){
+      if((gram.match(/\[(?:entity|#)\]/g)||[]).length<=1)seen.add(gram);
+    }
+    for(const gram of seen){const rows=placement.get(gram)||[];rows.push(String(t.team_name||''));placement.set(gram,rows)}
+  }
+  return new Map([...placement].filter(([,owners])=>owners.length>=3));
+}
 function evolveForwardTeams(teams,previousEdition,week,salt){
   const currentEntities=forwardEntities({teams}),previousEntities=forwardEntities(previousEdition),entities=[...currentEntities,...previousEntities],
     priorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),new Set(forwardArticleSentences(t).map(s=>forwardNormSentence(s,entities)))])),
     currentCounts=new Map();
   for(const t of teams||[])for(const s of forwardArticleSentences(t)){const n=forwardNormSentence(s,entities);currentCounts.set(n,(currentCounts.get(n)||0)+1)}
-  const phraseOffenders=new Set(forwardCrossReporterPhraseOffenders(teams,entities).keys());
+  const phraseOffenders=new Set([...forwardCrossReporterPhraseOffenders(teams,entities).keys(),...forwardCrossTeamClauseOffenders(teams,entities).keys()]);
   return (teams||[]).map(t=>{
     const a=t?.inquirer_article;if(!a)return t;const rid=String(a?.reporter?.id||'walter-mercer'),prior=priorByRoster.get(String(t.roster_id))||new Set();
     const sections=(a.sections||[]).map((section,si)=>({...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>{
@@ -274,6 +288,8 @@ function evolveForwardTeams(teams,previousEdition,week,salt){
           offender=forwardWordCount(sentence)>=10&&(prior.has(n)||(currentCounts.get(n)||0)>3||phraseCollision),
           seed=[week,salt,t.roster_id,section.kind||section.heading,si,pi,sj,n].join('|');
         if(!offender)return sentence;
+        if(phraseCollision&&Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points)))
+          return groundedSentence(t,week,evolutionHash(seed)%17,sj+pi*7+si*11)||sentence;
         const evolved=evolveSentence(sentence,rid,seed);
         return phraseCollision?evolveCrossReporterSentence(evolved,rid,seed):evolved;
       }).join(' ');
@@ -3700,15 +3716,17 @@ function assertWeek2Originality(result,previousEdition){
       .sort((a,b)=>b.length-a.length);
     const players=[...new Set(teams.flatMap(t=>(t.starter_details||[]).map(p=>String(p.name||'').trim())).filter(Boolean))]
       .sort((a,b)=>b.length-a.length);
-    const agreement={does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep'};
-    const pluralPattern=pluralNames.length?new RegExp('\\b('+pluralNames.map(w2EscRe).join('|')+') (does|gets|has|is|needs|sits|keeps)\\b','gi'):null;
+    const agreement={does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project'};
+    const pluralPattern=pluralNames.length?new RegExp('\\b('+pluralNames.map(w2EscRe).join('|')+') (does|gets|has|is|needs|sits|keeps|projects)\\b','gi'):null;
     const pronounPattern=pluralNames.length?new RegExp('\\b('+pluralNames.map(w2EscRe).join('|')+') saw its\\b','gi'):null;
     const playerNames=new Map(players.map(name=>[name.toLowerCase(),name]));
     const playerPattern=players.length?new RegExp('\\b(?:'+players.map(w2EscRe).join('|')+')\\b','gi'):null;
     const polish=s=>{
       let copy=String(s||'').replace(/:\s*this Sunday\b/g,': This Sunday')
         .replace(/; The season record is\b/g,'; the season record is');
-      if(pluralPattern)copy=copy.replace(pluralPattern,(_,name,verb)=>name+' '+agreement[verb.toLowerCase()]);
+      if(pluralPattern)copy=copy.replace(pluralPattern,(_,name,verb)=>name+' '+(verb[0]===verb[0].toUpperCase()?agreement[verb.toLowerCase()][0].toUpperCase()+agreement[verb.toLowerCase()].slice(1):agreement[verb.toLowerCase()]));
+      copy=copy.replace(/(The radio station covering [^.?!]{4,75}?) have declared\b/g,'$1 has declared')
+        .replace(/\b(The road after [^.?!]{4,65}?) are mixed\b/g,'$1 is mixed');
       if(pronounPattern)copy=copy.replace(pronounPattern,(_,name)=>name+' saw their');
       // Player names are facts from the current lineup, not casing guesses.
       if(playerPattern)copy=copy.replace(playerPattern,name=>playerNames.get(name.toLowerCase())||name);
@@ -3730,6 +3748,8 @@ function assertWeek2Originality(result,previousEdition){
   overview.inquirer_version=FORWARD_INQUIRER_VERSION;overview.editorial_revision=FORWARD_EDITORIAL_REVISION;
   for(const t of teams){if(t?.inquirer_article){{
    let title=String(t.inquirer_article.headline||'').replace(/^this Sunday/i,'This Sunday').replace(/the Week (\d+) Look Less Accidental/gi,'Week $1 Look Less Accidental');
+   if(week>=3&&/Week \d+ Look Less Accidental/i.test(title)&&Number(t.points)>Number(t.opponent_points))
+     title=w2DisplayTeam(t.team_name)+' Make Week '+week+' Count';
    if(w2PluralTeamName(t.team_name)){
     const titleVerbs={Makes:'Make',Wins:'Win',Has:'Have',Keeps:'Keep',Falls:'Fall',Loses:'Lose',Takes:'Take',Gives:'Give',Puts:'Put',Gets:'Get',Leaves:'Leave',Turns:'Turn',Banks:'Bank',Raises:'Raise',Is:'Are',Looks:'Look',Exposes:'Expose',Needs:'Need',Owns:'Own',Starts:'Start',Earns:'Earn',Lands:'Land'};
     title=title.replace(new RegExp(w2EscRe(w2DisplayTeam(t.team_name))+' ('+Object.keys(titleVerbs).join('|')+')\\b','g'),(_,verb)=>w2DisplayTeam(t.team_name)+' '+titleVerbs[verb]);
@@ -3792,6 +3812,25 @@ function assertWeek2Originality(result,previousEdition){
       a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
     }
   }
+  // Forecasts are not live league facts. An old MIDA snapshot must not be
+  // presented as a current championship or playoff probability in a new issue.
+  const forecastRows=teams.filter(t=>t.mida_outlook),staleForecasts=forecastRows.length>0&&forecastRows.every(t=>{
+    const d=Date.parse(String(t.mida_outlook?.source_date||t.mida_outlook?.as_of||''));
+    return Number.isFinite(d)&&Date.now()-d>7*86400000;
+  });
+  if(week>=3&&staleForecasts){
+    const freshOnly=value=>forwardSentenceParts(value).filter(s=>! /\bMIDA\b/i.test(s)).join(' ').trim();
+    const filterParagraphs=rows=>(rows||[]).map(freshOnly).filter(Boolean);
+    for(const t of teams){const a=t.inquirer_article;if(!a)continue;
+      for(const s of a.sections||[])s.paragraphs=filterParagraphs(s.paragraphs);
+      a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
+    for(const s of overview.sections||[]){
+      if(s.blocks?.length){for(const b of s.blocks)b.paragraphs=filterParagraphs(b.paragraphs);s.paragraphs=s.blocks.flatMap(b=>b.paragraphs||[])}
+      else s.paragraphs=filterParagraphs(s.paragraphs);
+    }
+    overview.hot_takes=(overview.hot_takes||[]).map(h=>({...h,take:freshOnly(h.take)||'The completed weekly results, rather than an out-of-date forecast, carry this argument.'}));
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -3805,6 +3844,12 @@ function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_ove
 
 export function evaluateInquirerEditionQuality(current,previous=null){
   const issues=[],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
+  const dated=teams.filter(t=>t.mida_outlook);
+  if(Number(current?.week)>=3&&dated.length&&dated.every(t=>{
+    const stamp=Date.parse(String(t.mida_outlook?.source_date||t.mida_outlook?.as_of||''));
+    return Number.isFinite(stamp)&&Date.now()-stamp>7*86400000;
+  })&&/\bMIDA\b/i.test([...(current?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(current?.league_overview?.hot_takes||[]).map(h=>h.take),...teams.flatMap(t=>t.inquirer_article?.paragraphs||[])].join(' ')))
+    issues.push({id:'stale-forecast-presented-as-current',detail:'Forecast source is more than seven days old.'});
   if(!teams.length)issues.push({id:'no-team-articles',detail:'No team articles were generated.'});
   const articleScaffold=new Map();
   const recurringTeamPhrases=[
@@ -3858,7 +3903,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
       ...(current?.league_overview?.hot_takes||[]).flatMap(h=>[h.title,h.take]),
       ...teams.flatMap(t=>[t.inquirer_article?.headline,...(t.inquirer_article?.sections||[]).flatMap(s=>[s.heading,...(s.paragraphs||[])])])].filter(Boolean).join('\n');
     for(const name of [...new Set(teams.map(t=>String(t.team_name||'').trim()).filter(n=>/s$/i.test(n.split(/\s+/).at(-1)||'')))]){
-      if(new RegExp('\\b'+forwardEscRe(name)+' (?:does|gets|has|is|needs|sits|keeps)\\b','i').test(allReaderText))
+      if(new RegExp('\\b'+forwardEscRe(name)+' (?:does|gets|has|is|needs|sits|keeps|projects)\\b','i').test(allReaderText))
         issues.push({id:'plural-team-agreement',team:name});
     }
     if(/:\s*this Sunday\b|; The season record is\b/.test(allReaderText))
@@ -3869,6 +3914,10 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     }
     for(const t of teams){
       const a=t?.inquirer_article||{},paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+      if(/\b(?:have|keep|are|do|make|project) [A-Z][a-z]+\b/.test(String(a.headline||'')))
+        issues.push({id:'headline-verb-capitalization',team:t.team_name,headline:a.headline});
+      if(/Week \d+ Look Less Accidental/i.test(String(a.headline||''))&&Number(t.points)>Number(t.opponent_points))
+        issues.push({id:'unverified-prior-week-headline',team:t.team_name,headline:a.headline});
       for(const p of paragraphs){
         if(/\b(?:this round of games’s|a [89](?:\.\d+)?-point|(?:Texans|Bears|Billiards|Falcons) sits)\b/i.test(p))
           issues.push({id:'reader-facing-grammar',team:t.team_name,excerpt:String(p).slice(0,150)});
@@ -3889,6 +3938,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
   }
   for(const [sentence,ids] of articleScaffold)if(ids.size>=4)issues.push({id:'cross-team-copy-scaffold',teams:ids.size,sentence});
   for(const [phrase,rows] of forwardCrossReporterPhraseOffenders(teams,entities))issues.push({id:'cross-reporter-phrase-scaffold',phrase,teams:rows.map(x=>x.team),reporters:[...new Set(rows.map(x=>x.reporter))]});
+  for(const [phrase,owners] of forwardCrossTeamClauseOffenders(teams,entities))issues.push({id:'cross-team-clause-scaffold',phrase,teams:owners});
 
   if(previous){
     const pset=new Set(forwardRecapSentences(previous).map(s=>forwardNormSentence(s,entities))),curr=forwardRecapSentences(current).map(s=>forwardNormSentence(s,entities)),overlap=curr.filter(n=>pset.has(n));

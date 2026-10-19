@@ -31,14 +31,19 @@ const rawForWeek=(week)=>{
 };
 
 const week3raw=rawForWeek(3),w3class=inquirerWeekClassification(3,2026);
-let week3=null,quality=null,lastQuality=null;
-for(let salt=0;salt<8;salt++){
+let week3=null,quality=null,lastQuality=null,lastCandidate=null;
+for(let salt=0;salt<(process.env.INQUIRER_DEBUG_SINGLE_SALT?1:8);salt++){
   const edited=applyInquirerEditorialV31({season:2026,week:3,...week3raw,previousEdition:week2,weekClassification:w3class,variationSalt:salt});
   const candidate={available:true,season:2026,week:3,inquirer_version:FORWARD_INQUIRER_VERSION,editorial_revision:FORWARD_EDITORIAL_REVISION,teams:edited.inquirer.teams,league_overview:edited.leagueOverview,editorial_generation:{variation_salt:salt}};
+  lastCandidate=candidate;
   const q=evaluateInquirerEditionQuality(candidate,week2);lastQuality=q;
   if(q.ok){week3=candidate;quality=q;break}
 }
-assert.ok(week3,'Forward engine must find a non-copying Week 3 variant within the live retry budget; last quality='+JSON.stringify(lastQuality));
+const badTeams=(lastQuality?.issues||[]).filter(x=>x.id==='plural-team-agreement').map(x=>x.team);
+const badAgreement=(lastCandidate?.teams||[]).flatMap(t=>[t.inquirer_article?.headline,...(t.inquirer_article?.paragraphs||[])]).concat(
+  ...(lastCandidate?.league_overview?.sections||[]).flatMap(s=>[s.heading,...(s.paragraphs||[])]),
+  ...(lastCandidate?.league_overview?.hot_takes||[]).flatMap(h=>[h.title,h.take])).filter(s=>badTeams.some(name=>String(s||'').toLowerCase().includes(name.toLowerCase())&&new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+' (?:does|gets|has|is|needs|sits|keeps|projects)\\b','i').test(String(s||'')))).slice(0,8);
+assert.ok(week3,'Forward engine must find a non-copying Week 3 variant within the live retry budget; last quality='+JSON.stringify(lastQuality)+'; grammar excerpts='+JSON.stringify(badAgreement));
 assert.equal(week3.teams.length,32);
 assert.equal(week3.inquirer_version,31);
 assert.equal(week3.editorial_revision,FORWARD_EDITORIAL_REVISION);
@@ -67,7 +72,8 @@ for(const week of [5,6,9,14]){
     const edition={season:2026,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
     assert.ok(edition.teams.every(t=>!/\b(?:Make|Makes) this Sunday\b/.test(String(t.inquirer_article?.headline||''))),'Forward headlines must use title-case This');
     const audit=inspectEditionBeforePublication(edition);
-    assert.ok(audit.ok,'Week '+week+' salt '+salt+' failed publication copy audit: '+JSON.stringify(audit.issues.slice(0,8)));
+    const fanDiagnostics=audit.issues.filter(x=>x.id==='fan-sentiment').map(x=>({team:x.team,sections:edition.teams.find(t=>t.team_name===x.team)?.inquirer_article?.sections?.filter(s=>s.kind==='sentiment').map(s=>s.paragraphs?.map(p=>String(p).length))}));
+    assert.ok(audit.ok,'Week '+week+' salt '+salt+' failed publication copy audit: '+JSON.stringify(audit.issues.slice(0,8))+'; fan details='+JSON.stringify(fanDiagnostics));
     assert.ok(edition.teams.every(t=>!/(?:could not turn the came in result|eligible option|fleeced signal)/i.test((t.inquirer_article?.paragraphs||[]).join(' '))),'Forward copy must not contain malformed or meta prose');
     const q=evaluateInquirerEditionQuality(edition,week2);
     assert.ok(q.ok,'Week '+week+' salt '+salt+' repeated editorial scaffolds: '+JSON.stringify(q.issues.slice(0,8)));

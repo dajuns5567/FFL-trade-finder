@@ -3737,12 +3737,11 @@ function assertWeek2Originality(result,previousEdition){
     article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
    }
    t.inquirer_article.week=week;t.inquirer_article.week_classification=t.week_classification||weekClassification;t.inquirer_article.editorial_revision=FORWARD_EDITORIAL_REVISION}}
-  // Finishing edits can make a sentence converge on an archived one. Recheck
-  // *after* finishing, preserving the locked prior edition as the comparator.
+  // Finishing edits can make a sentence converge on an archived one. Run the
+  // established collision evolution once more after finishing, then remove
+  // repeated rhetorical prefaces without repeating the full quality audit.
   if(week>=3&&previousEdition){
-    const finalAudit=evaluateInquirerEditionQuality({week,teams,league_overview:overview},previousEdition);
-    if(finalAudit.issues.some(x=>x.id==='same-team-copy-forward'))
-      teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+909);
+    teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+909);
     // Evolution itself may reintroduce a familiar opening phrase. Keep only
     // its first appearance per article, including after the final retry.
     for(const t of teams){

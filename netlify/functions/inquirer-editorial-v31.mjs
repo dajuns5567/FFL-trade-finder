@@ -2,7 +2,6 @@
 // Derived from the locked Week 2 V31 newsroom logic.
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
-import {groundedSentence} from './inquirer-editorial-collision-repair.mjs';
 
 export const FORWARD_INQUIRER_VERSION=31;
 export const FORWARD_EDITORIAL_REVISION=31;
@@ -279,7 +278,8 @@ function evolveForwardTeams(teams,previousEdition,week,salt){
     priorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),new Set(forwardArticleSentences(t).map(s=>forwardNormSentence(s,entities)))])),
     currentCounts=new Map();
   for(const t of teams||[])for(const s of forwardArticleSentences(t)){const n=forwardNormSentence(s,entities);currentCounts.set(n,(currentCounts.get(n)||0)+1)}
-  const phraseOffenders=new Set([...forwardCrossReporterPhraseOffenders(teams,entities).keys(),...forwardCrossTeamClauseOffenders(teams,entities).keys()]);
+  const clauseOffenders=forwardCrossTeamClauseOffenders(teams,entities);
+  const phraseOffenders=new Set([...forwardCrossReporterPhraseOffenders(teams,entities).keys(),...clauseOffenders.keys()]);
   return (teams||[]).map(t=>{
     const a=t?.inquirer_article;if(!a)return t;const rid=String(a?.reporter?.id||'walter-mercer'),prior=priorByRoster.get(String(t.roster_id))||new Set();
     const sections=(a.sections||[]).map((section,si)=>({...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>{
@@ -288,12 +288,12 @@ function evolveForwardTeams(teams,previousEdition,week,salt){
           offender=forwardWordCount(sentence)>=10&&(prior.has(n)||(currentCounts.get(n)||0)>3||phraseCollision),
           seed=[week,salt,t.roster_id,section.kind||section.heading,si,pi,sj,n].join('|');
         if(!offender)return sentence;
-        if(phraseCollision&&Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points)))
-          return groundedSentence(t,week,evolutionHash(seed)%17,sj+pi*7+si*11)||sentence;
+        const targetedClause=forwardEditorialPhraseKeys(sentence,entities,12,false).some(gram=>(clauseOffenders.get(gram)||[]).indexOf(t.team_name)>=2);
+        if(targetedClause)return '';
         const evolved=evolveSentence(sentence,rid,seed);
         return phraseCollision?evolveCrossReporterSentence(evolved,rid,seed):evolved;
-      }).join(' ');
-    })}));
+      }).filter(Boolean).join(' ');
+    }).filter(Boolean)}));
     return{...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
   });
 }
@@ -3836,14 +3836,14 @@ function assertWeek2Originality(result,previousEdition){
     // same-reporter boilerplate after the earlier sentence cleanup.
     for(let pass=0;pass<4;pass++){
       const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
-      const offenders=new Set(forwardCrossTeamClauseOffenders(teams,entities).keys());
+      const offenders=forwardCrossTeamClauseOffenders(teams,entities);
       if(!offenders.size)break;
       teams=teams.map(t=>{
         const a=t.inquirer_article;if(!a)return t;
         const sections=(a.sections||[]).map((s,si)=>({...s,paragraphs:(s.paragraphs||[]).map((p,pi)=>forwardSentenceParts(p).map((sentence,sj)=>{
-          const collided=forwardEditorialPhraseKeys(sentence,entities,12,false).some(gram=>offenders.has(gram));
-          return collided?(groundedSentence(t,week,pass+29,si*37+pi*7+sj)||sentence):sentence;
-        }).join(' '))}));
+          const collided=forwardEditorialPhraseKeys(sentence,entities,12,false).some(gram=>(offenders.get(gram)||[]).indexOf(t.team_name)>=2);
+          return collided?'':sentence;
+        }).filter(Boolean).join(' ')).filter(Boolean)}));
         return{...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
       });
     }
@@ -3858,7 +3858,8 @@ function assertWeek2Originality(result,previousEdition){
           return name+' '+(isHeadline?result[0].toUpperCase()+result.slice(1):result);
         });
       }
-      return copy;
+      return copy.replace(/\ba ([89](?:\.\d+)?-point)\b/gi,'an $1')
+        .replace(/\bthis round of games’s\b/gi,'this week’s');
     };
     for(const t of teams){const a=t.inquirer_article;if(!a)continue;
       a.headline=fixGrammar(a.headline,true);

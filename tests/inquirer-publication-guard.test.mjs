@@ -15,11 +15,13 @@ const makeEdition=()=>{
    Array(i+5).fill('distinctive football detail '+distinct).join(' ')+
    ' as the scoring and strategic choices develop.');
   const sections=[
-   {kind:'lede',paragraphs:prose},
-   {kind:'sentiment',paragraphs:[
+   {kind:'lede',heading:'Week 5 account',paragraphs:prose},
+   ...['players','management','hot-seat','cool-throne','value'].map(kind=>({kind,heading:kind,paragraphs:[]})),
+   {kind:'sentiment',heading:'Fan reaction',paragraphs:[
     'Supporters '+distinct+' of '+name+' are '+distinct+' reacting to '+Array(i+4).fill('distinctly local evidence '+distinct).join(' ')+' as the '+distinct+' roster assesses the matchup.',
     'The '+distinct+' group chat for '+name+' has '+distinct+' '+Array(i+5).fill('a separate observation '+distinct).join(' ')+' before the manager responds.'
-   ]}
+   ]},
+   {kind:'outlook',heading:'The Week Ahead',paragraphs:['The team has a verifiable next matchup.']}
   ];
   return{roster_id:String(id),team_name:name,opponent_name,
    opponent_roster_id:String(opp),points,opponent_points,
@@ -28,14 +30,24 @@ const makeEdition=()=>{
     sections,paragraphs:sections.flatMap(s=>s.paragraphs)}};
  });
  return{season:2026,week:5,teams,
-  league_overview:{headline:'Week 5 recap',sections:[{heading:'Review',paragraphs:[
-   'The final outcomes were confirmed, and the recap reports what happened without pretending an algorithm approved style.'
-  ]}]}};
+  league_overview:{headline:'Week 5 recap',sections:[
+   {heading:'Review',blocks:['lead','standings','players','decisions','league','outlook'].map(kind=>({kind,heading:kind,paragraphs:['Verified '+kind+' football reporting.']})),paragraphs:['lead','standings','players','decisions','league','outlook'].map(kind=>'Verified '+kind+' football reporting.')},
+   ...['Second reporter','Third reporter','Fourth reporter'].map(heading=>({heading,paragraphs:['Independent commentary.']}))]}};
 };
 
 test('complete original reporting candidate can pass structural and prose checks',()=>{
  const result=inspectEditionBeforePublication(makeEdition());
  assert.equal(result.ok,true,JSON.stringify(result.issues.slice(0,5)));
+});
+
+test('Week 5 cannot regress from the locked Week 4 newspaper format',()=>{
+ const e=makeEdition();
+ e.teams[0].inquirer_article.sections=e.teams[0].inquirer_article.sections.filter(s=>!['cool-throne','value'].includes(s.kind));
+ e.teams[1].inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs=Array(7).fill('Extra future-week paragraph.');
+ e.league_overview.sections[0].blocks=e.league_overview.sections[0].blocks.slice(0,5);
+ const found=new Set(inspectEditionBeforePublication(e).issues.map(x=>x.id));
+ for(const id of ['week4-team-section-contract','week4-overstuffed-outlook','week4-recap-six-beat-contract'])
+  assert(found.has(id),'missing independent format gate: '+id);
 });
 
 test('the exact real Week 5 regression patterns block publication',()=>{
@@ -107,9 +119,7 @@ test('recycled editorial eight-word phrases are blocked across teams',()=>{
 
 test('audited original V31 newsroom auto-admits only Week 5+ after locked Week 4',()=>{
  const edition=makeEdition();
- edition.league_overview.sections=Array.from({length:4},(_,i)=>({heading:'Section '+i,paragraphs:[
-  'Independently verified football analysis for section '+i+'.'
- ]}));
+ // Keep the canonical Week 4 six-beat recap fixture intact for admission.
  edition.inquirer_version=31;
  edition.editorial_generation={engine:'v31-forward',variation_salt:5};
  const prev={season:2026,week:4,published_locked:true};

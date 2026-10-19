@@ -3903,7 +3903,10 @@ function assertWeek2Originality(result,previousEdition){
         return{...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
       });
     }
-    const plural=teams.map(t=>w2DisplayTeam(t.team_name)).filter(w2PluralTeamName);
+    // Match the acceptance gate's visible-name rule exactly. Alias-based
+    // grammatical classification can miss mascots when a display nickname
+    // differs from the underlying team identity.
+    const plural=teams.map(t=>w2DisplayTeam(t.team_name)).filter(n=>/s$/i.test(String(n).split(/\s+/).at(-1)||''));
     const fixGrammar=(s,isHeadline=false)=>{
       let copy=String(s||'');
       for(const name of plural){
@@ -3919,6 +3922,12 @@ function assertWeek2Originality(result,previousEdition){
         .replace(/\b(The radio station covering [^.?!]{4,85}?) have declared\b/gi,'$1 has declared')
         .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!]{4,85}?) are already compressed\b/gi,'$1 is already compressed');
     };
+    for(const s of overview.sections||[]){
+      s.heading=fixGrammar(s.heading);
+      if(s.blocks?.length){for(const b of s.blocks){b.heading=fixGrammar(b.heading);b.paragraphs=(b.paragraphs||[]).map(p=>fixGrammar(p))}s.paragraphs=s.blocks.flatMap(b=>b.paragraphs||[])}
+      else s.paragraphs=(s.paragraphs||[]).map(p=>fixGrammar(p));
+    }
+    overview.hot_takes=(overview.hot_takes||[]).map(h=>({...h,title:fixGrammar(h.title),take:fixGrammar(h.take)}));
     for(const t of teams){const a=t.inquirer_article;if(!a)continue;
       a.headline=fixGrammar(a.headline,true);
       const seen=new Set();

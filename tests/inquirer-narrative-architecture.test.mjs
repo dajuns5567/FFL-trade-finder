@@ -37,6 +37,28 @@ test('edition gate detects a single template and repeated internal lineup report
   assert(ids.has(id),'missing editorial regression gate: '+id);
 });
 
+test('late editorial curation removes repeated decisions within one paragraph and fixes transaction syntax',()=>{
+ const t=makeStory();
+ t.inquirer_article.sections.find(s=>s.kind==='management').paragraphs=[
+  'Bench Target lost 11.2 to Bench Alternative. Bench Target started at wr. Bench Alternative beat Bench Target by 11.2.',
+  'The manager changed the roster this week by added Another Player. Those additions did not reach the Week 5 starters.'
+ ];
+ curateForwardTeamNarrative(t,5);
+ const management=t.inquirer_article.sections.find(s=>s.kind==='management').paragraphs;
+ assert.equal((management[0].match(/11\.2/g)||[]).length,1);
+ assert.doesNotMatch(management.join(' '),/by added|Those additions did not reach|beat Bench Target/i);
+ assert.match(management[1],/added Another Player/);
+});
+
+test('the admission gate detects repeated same-player comparisons inside one paragraph',()=>{
+ const teams=Array.from({length:32},(_,i)=>curateForwardTeamNarrative(makeStory(i+1),5));
+ teams[0].inquirer_article.sections.find(s=>s.kind==='management').paragraphs=[
+  'Bench Target trailed Bench Alternative by 11.2. Bench Alternative beat Bench Target by 11.2.'
+ ];
+ const ids=inspectNarrativeArchitecture({week:5,teams}).map(x=>x.id);
+ assert.ok(ids.includes('same-lineup-decision-twice-inside-paragraph'));
+});
+
 test('editorial ordering is reporter- and outcome-sensitive across an issue',()=>{
  const teams=Array.from({length:32},(_,i)=>curateForwardTeamNarrative(makeStory(i+1),5));
  const orders=new Set(teams.map(t=>t.inquirer_article.sections.map(s=>s.kind).join('|')));

@@ -108,7 +108,20 @@ export function curateForwardTeamNarrative(t,week){
   const rows=management.paragraphs,first=rows[0]||'';
   const miss=t.best_lineup_miss,benchNames=[miss?.starter?.name,miss?.reserve?.name].filter(Boolean);
   const move=rows.slice(1).find(p=>hasMove(p)&&!(benchNames.length===2&&benchNames.every(name=>p.includes(name))));
-  management.paragraphs=[first,move].filter(Boolean);
+  const pruneCase=p=>{
+   let alreadyReported=false;
+   return clauseParts(p).filter(sentence=>{
+    const mentionsBoth=benchNames.length===2&&benchNames.every(n=>sentence.includes(n));
+    if(mentionsBoth){if(alreadyReported)return false;alreadyReported=true;return true}
+    // "X started at WR" and "Y stayed on the bench" repeat a comparison
+    // whose first sentence has already supplied the legal decision and gap.
+    if(alreadyReported&&benchNames.some(n=>sentence.includes(n))&&/\b(?:started at|stayed on the bench|outscored|beat that choice)\b/i.test(sentence))return false;
+    return true;
+   }).join(' ');
+  };
+  const pruneMove=p=>clauseParts(p.replace(/\bby added\b/gi,': added'))
+   .filter(sentence=>!/\b(?:The additions stayed off|Those additions did not reach|Until an addition enters|That is roster churn)\b/i.test(sentence)).join(' ');
+  management.paragraphs=[pruneCase(first),move&&pruneMove(move)].filter(Boolean);
  }
  const credit=byKind.get('cool-throne');
  if(credit)credit.paragraphs=credit.paragraphs.map(cullRecycledMetaphors).filter(Boolean);
@@ -167,6 +180,9 @@ export function inspectNarrativeArchitecture(edition){
   const miss=t.best_lineup_miss,names=[miss?.starter?.name,miss?.reserve?.name].filter(Boolean);
   if(names.length===2&&mgmt.filter(p=>names.every(n=>p.includes(n))).length>1)
     issues.push({id:'same-lineup-decision-reported-twice',team});
+  if(names.length===2&&mgmt.some(p=>clauseParts(p).filter(s=>names.every(n=>s.includes(n))).length>1))
+    issues.push({id:'same-lineup-decision-twice-inside-paragraph',team});
+  if(mgmt.some(p=>/\bby added\b/i.test(p)))issues.push({id:'malformed-transaction-verb',team});
   if(!String(kind('players')?.paragraphs?.[0]||'').includes('fantasy points'))
     issues.push({id:'player-story-lacks-fantasy-fact',team});
   if((a.paragraphs||[]).length!==ss.flatMap(s=>s.paragraphs||[]).length)

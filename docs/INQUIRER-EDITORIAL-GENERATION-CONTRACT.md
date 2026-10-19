@@ -27,6 +27,10 @@ no five-paragraph legacy lead, no duplicate bench argument, no mandatory
 three-scorer praise, no synthetic transactions, no fictional injury or score.
 It uses real NFL stat fields to write the leading player’s football evidence
 in sentences; fantasy points alone must not become a repeated statistic dump.
+One lineup decision may appear only once even when an older template embeds
+the same starter, reserve and gap in consecutive sentences of one paragraph.
+Transaction syntax must use grammatical verbs, and generic roster-churn
+conclusions may not replace distinct reported consequences.
 
 ## Format and voice
 
@@ -48,6 +52,9 @@ in sentences; fantasy points alone must not become a repeated statistic dump.
 
 The generation quality gate and independent publication admission **both**
 import `inquirer-narrative-architecture.mjs` and `inquirer-format-contract.mjs`.
+They inspect the final, rendered-order narrative after late copy-pruning;
+recap hot takes must undergo freshness checks independently from the main
+recap sections, since an old division-board monologue can hide there.
 No human approval or previously good prose audit can bypass an article-layout,
 semantic repetition or factual-integrity failure. A failing private preview
 must report error, not completed; it must never be published by accident.

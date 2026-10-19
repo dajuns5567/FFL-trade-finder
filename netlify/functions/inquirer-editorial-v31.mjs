@@ -2,9 +2,12 @@
 // Derived from the locked Week 2 V31 newsroom logic.
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
+import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=31;
+// Bump on any material editorial contract change so an earlier held draft
+// cannot suppress the next scheduled regeneration for the same NFL week.
+export const FORWARD_EDITORIAL_REVISION=32;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -3963,6 +3966,72 @@ function assertWeek2Originality(result,previousEdition){
       article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
     }
   }
+  // Week 4 is the approved newspaper layout. The forward generator must
+  // preserve its *section taxonomy*, regardless of how the copy evolves.
+  // Do this at handoff, after every de-duplication pass has run.
+  if(week>=5){
+    const sectionOrder=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
+    for(const t of teams){
+      const article=t.inquirer_article;if(!article)continue;
+      const byKind=new Map((article.sections||[]).map(s=>[s.kind,s]));
+      const top=(t.starter_details||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
+      const team=w2DisplayTeam(t.team_name),r=article.reporter||{};
+      if(!byKind.has('cool-throne')){
+        // The forward copy already has team-specific player reporting. Move a
+        // distinct paragraph to the Week 4 credit desk instead of inventing
+        // a universal praise template that reappears in 32 articles.
+        const playerDesk=byKind.get('players');
+        const playerRows=playerDesk?.paragraphs||[];
+        const creditIndex=playerRows.length>1
+          ?Math.max(1,playerRows.findIndex((p,i)=>i>0&&top?.name&&p.includes(top.name)))
+          :-1;
+        const credit=creditIndex>=1&&creditIndex<playerRows.length
+          ?playerRows.splice(creditIndex,1)
+          :[top?`${top.name} put ${forwardOne(top.points)} fantasy points on ${team}'s Week ${week} board.`:`${team} could not identify a verified individual scoring leader.`];
+        byKind.set('cool-throne',{kind:'cool-throne',heading:w2SectionHead(r,'cool-throne'),paragraphs:credit});
+      }
+      if(!byKind.has('value')){
+        // The Week 4 market section may be intentionally empty. A small
+        // value fluctuation is not a story and must not force filler prose.
+        byKind.set('value',{kind:'value',heading:w2SectionHead(r,'value'),paragraphs:[]});
+      }
+      const outlook=byKind.get('outlook');
+      if(outlook?.paragraphs?.length>3){
+        // Keep the week-ahead newspaper kicker concise, as it was in Week 4.
+        // Retain opening matchup facts, a distinct scheduling concern and the
+        // final judgment, without reproducing a second seven-paragraph story.
+        const rows=outlook.paragraphs;
+        outlook.paragraphs=[rows[0],rows.find((p,i)=>i>0&&i<rows.length-1&&/bye|questionable|injur|division|playoff|schedule/i.test(p))||rows[1],rows.at(-1)]
+          .filter((p,i,a)=>p&&!a.slice(0,i).includes(p));
+      }
+      article.sections=sectionOrder.map(k=>byKind.get(k)).filter(Boolean);
+      article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+    }
+    const first=overview.sections?.[0];
+    if(first?.blocks?.length){
+      const original=first.blocks;
+      const gameBlocks=original.filter(b=>/vs\.|Loudest Game/i.test(String(b.heading||'')));
+      const standings=original.find(b=>/Standings/i.test(String(b.heading||'')));
+      const decisions=original.find(b=>/Decisions/i.test(String(b.heading||'')));
+      const league=original.find(b=>/Season Is Bigger/i.test(String(b.heading||'')));
+      const lead=gameBlocks.flatMap(b=>b.paragraphs||[]);
+      const playerDetails=lead.filter(p=>/fantasy points|scored|gave .* at the top/i.test(p));
+      const leadWithoutPlayers=lead.filter(p=>!playerDetails.includes(p));
+      const top=(teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
+      const next=top?.next_opponent_name||'the next opponent';
+      const blocks=[
+        {kind:'lead',heading:'The Story That Defined Week '+week,paragraphs:leadWithoutPlayers.length?leadWithoutPlayers:lead.slice(0,5)},
+        {kind:'standings',heading:'The Standings Have Started Talking',paragraphs:standings?.paragraphs||[]},
+        {kind:'players',heading:'The Names Behind the Noise',paragraphs:playerDetails.length?playerDetails:lead.slice(0,2)},
+        {kind:'decisions',heading:'The Decisions and the Damage',paragraphs:decisions?.paragraphs||[]},
+        {kind:'league',heading:'What the League Learned',paragraphs:league?.paragraphs||[]},
+        {kind:'outlook',heading:'The Week Ahead',paragraphs:top?['After Week '+week+', '+w2DisplayTeam(top.team_name)+' faces '+w2DisplayTeam(next)+' next. The '+forwardOne(top.points)+'-point performance earned attention; the new opponent gets its own answer.']:[]}
+      ];
+      first.heading='Week '+week+': The League-Wide Reckoning';
+      first.blocks=blocks;
+      first.paragraphs=blocks.flatMap(b=>b.paragraphs||[]);
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -3975,7 +4044,7 @@ function forwardArticleSentences(t){return forwardSentenceParts((t?.inquirer_art
 function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(e?.league_overview?.hot_takes||[]).flatMap(x=>[x?.title,x?.take])].filter(Boolean).join(' ')).filter(x=>forwardWordCount(x)>=10)}
 
 export function evaluateInquirerEditionQuality(current,previous=null){
-  const issues=[],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
+  const issues=inspectInquirerFormatContract(current),teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
   const dated=teams.filter(t=>t.mida_outlook);
   if(Number(current?.week)>=3&&dated.length&&dated.every(t=>{
     const stamp=Date.parse(String(t.mida_outlook?.source_date||t.mida_outlook?.as_of||''));

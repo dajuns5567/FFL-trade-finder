@@ -11,7 +11,9 @@
   included_files = ["index.html", "trade-section1-core-v100.js", "trade-section1-v100.css", "trade-section1-v106.css"]
 
 [functions."inquirer-publish-scheduled"]
-  schedule = "0 10 * * *"
+  # Poll every two hours; the function skips previously published/held weeks.
+  # Actual publication still waits for final Sleeper roster records.
+  schedule = "0 */2 * * *"
 
 [build.processing.html]
   pretty_urls = false

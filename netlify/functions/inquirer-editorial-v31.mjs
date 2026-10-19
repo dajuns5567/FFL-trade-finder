@@ -4,7 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=28;
+export const FORWARD_EDITORIAL_REVISION=29;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -72,6 +72,20 @@ function forwardTrajectoryParagraphs(teams,week){
     ?'This week’s league scoring ran from '+forwardOne(high.points)+' for '+high.team_name+' down to '+forwardOne(low.points)+' for '+low.team_name+', with a league average of '+forwardOne(avg)+'. The useful lesson is not that everybody should chase the loudest box score; it is that the season is developing memory, and repeated strengths and repeated mistakes are starting to carry receipts.'
     :'The league-wide scoring sample is incomplete, so the larger trend stays on hold instead of being invented.';
   return[p1,p2,p3,p4];
+}
+
+// A season record is never a two-game record. Keep all streak labels tied to
+// the actual completed games being discussed, including after Week 2.
+function forwardRecentResults(team,week,count=2){
+  const games=(team?.league_context?.recent_games||[]).filter(g=>Number(g.week)<=Number(week))
+    .sort((a,b)=>Number(b.week)-Number(a.week)).slice(0,count);
+  return games.length===count?games.map(g=>String(g.result||'').toUpperCase()):[];
+}
+function forwardRecentGroup(teams,week,result){
+  return (teams||[]).filter(t=>{
+    const recent=forwardRecentResults(t,week);
+    return recent.length===2&&recent.every(r=>r===result);
+  });
 }
 
 function playoffTeamLine(team,classification){
@@ -207,7 +221,10 @@ function evolveSentence(sentence,reporterId,seed){
   }
   out=out.trim();if(out)out=out[0].toUpperCase()+out.slice(1);
   const intro=EVOLUTION_INTROS[rid][h%EVOLUTION_INTROS[rid].length];
-  out=intro+' '+out;
+  // Never stack a prefatory cue on copy that already has one; that produced
+  // "The box score settles this: Look at the personnel: ..." in Week 5.
+  const existingPrefaces=Object.values(EVOLUTION_INTROS).flat();
+  if(!existingPrefaces.some(prefix=>out.toLowerCase().startsWith(prefix.toLowerCase())))out=intro+' '+out;
   if(!/[.!?]$/.test(out))out+='.';
   return out;
 }
@@ -287,9 +304,15 @@ function enforceRecapEvolution(overview,previousOverview,week,salt,entities=[]){
         out=evolveSentence(out,rid,[week,salt,'enforce-second-pass',seedBase,i,n].join('|'));
         outNorm=forwardNormSentence(out,entities);
       }
+      if(collision&&(prior.has(outNorm)||seen.has(outNorm))){
+        const tails=EVOLUTION_TAILS[rid]||EVOLUTION_TAILS['walter-mercer'];
+        const qualification=tails[evolutionHash([week,salt,seedBase,i,'fresh-tail'].join('|'))%tails.length];
+        out=out.replace(/[.!?]?$/,', and '+qualification.charAt(0).toLowerCase()+qualification.slice(1));
+        outNorm=forwardNormSentence(out,entities);
+      }
       if(longEnough)seen.add(outNorm);
       return out;
-    }).join(' ');
+    }).join(' ').replace(/\b(?:The box score settles this|Sunday left a clue|Carry this into Monday|Look at the personnel|Forget the excuses|The numbers resist spin):\s*/gi,((seen)=>match=>seen++?'':match)(0));
   };
   const sections=(overview.sections||[]).map((section,si)=>{
     const rid=String(section?.reporter?.id||'walter-mercer');
@@ -307,6 +330,20 @@ function enforceRecapEvolution(overview,previousOverview,week,salt,entities=[]){
     return{...take,take:evolvedBody};
   });
   return{...overview,sections,hot_takes};
+}
+function rejectRecapCopyForward(overview,previousOverview,week,entities){
+  if(!previousOverview)return overview;
+  const previous={league_overview:previousOverview};
+  const prior=new Set(forwardRecapSentences(previous).map(s=>forwardNormSentence(s,entities)));
+  const rewrite=paragraph=>forwardSentenceParts(paragraph).map(sentence=>{
+    if(forwardWordCount(sentence)<10||!prior.has(forwardNormSentence(sentence,entities)))return sentence;
+    return 'By Week '+week+', '+sentence.charAt(0).toLowerCase()+sentence.slice(1).replace(/[.!?]?$/,'—and managers no longer get to call that a surprise.');
+  }).join(' ');
+  const sections=(overview.sections||[]).map(section=>{
+    if(section.blocks?.length){const blocks=section.blocks.map(b=>({...b,paragraphs:(b.paragraphs||[]).map(rewrite)}));return{...section,blocks,paragraphs:blocks.flatMap(b=>b.paragraphs||[])}}
+    return{...section,paragraphs:(section.paragraphs||[]).map(rewrite)};
+  });
+  return{...overview,sections};
 }
 function evolveForwardOverview(overview,previousOverview,week,salt,entities=[]){
   if(!overview)return overview;
@@ -386,6 +423,53 @@ export function polishForwardTeamCopy(teams,week,salt){
     .replace(/\bare 2-0\b/gi,'have won their last two games')
     .replace(/\bare 0-2\b/gi,'have lost their last two games')
     .replace(/\bcrowd is 0-2\b/gi,'crowd has watched two straight losses');
+   // Remove phrase banks that only changed a team/player name. Freshness is
+   // measured across the whole 32-team issue, not within one reporter desk.
+   s=s.replace(/the next Sunday changes the season sample; it does not simply photocopy the first conclusion\./gi,
+     pick(t,'season-sample',[`Week ${week} changes the ledger; the manager still owns ${forwardOne(t.points)} points.`,
+       `That ${forwardOne(t.points)}-point Sunday must be judged alongside the previous result, not mistaken for the whole season.`,
+       `The season record is ${record}; the next game against ${next} will test which part is repeatable.`,
+       `One more score belongs in the archive, and ${team} cannot edit the earlier one out.`]));
+   s=s.replace(/same stars are fine; same emergency dependence is not\./gi,
+     pick(t,'emergency-dependence',[`Against ${next}, ${team} needs more than one rescuer.`,
+       `The next opponent will happily let the rest of the lineup disappear again.`,
+       `A single star can win an argument; the supporting cast has to win a matchup.`,
+       `Management should ask the quiet starters why the rescue shift keeps falling to somebody else.`]));
+   s=s.replace(/that headliner shift made the second scoreboard louder\./gi,
+     pick(t,'headliner-shift',[`The week-to-week scoring jump is real; the next defense will have the scouting report.`,
+       `The new total raised expectations, a punishment reserved for players who actually produce.`,
+       `The box score finally gave the highlight tape a number worth printing.`,
+       `Somebody in the rival chat just retired last week's joke.`]));
+   s=s.replace(/the third score turned the Week \d+ volume up\./gi,
+     pick(t,'third-score',[`The supporting points matter because the matchup is scored beyond its biggest star.`,
+       `That swing improved the lineup's floor, which is more useful than another solo highlight.`,
+       `The difference belongs on the manager's Week ${week} report card.`,
+       `Those points change the matchup without requiring a podium for every starter.`]));
+   s=s.replace(/kicked the door in and ([^.]+?) actually followed through it\./gi,
+     pick(t,'door',[`gave ${team} a decisive start, and the ${forwardOne(t.points)}-point total backed it up.`,
+       `made the opposing lineup pay attention; ${team} supplied the rest of the argument.`,
+       `put a real number behind the week's bravado.`,
+       `did the headline work while ${team} handled the final score.`]));
+   s=s.replace(/kicked the door in and the rest of ([^.]+?) still managed to lose the building\./gi,
+     pick(t,'door-loss',[`gave ${team} a score to be proud of, only for the final margin to ruin the party.`,
+       `did enough to deserve a win while the rest of the lineup filed its excuses.`,
+       `put the opposition under pressure but did not get enough company on the scoring sheet.`,
+       `left ${team} with one bright line and a much less flattering final score.`]));
+   s=s.replace(/kicked the door in and the ([^.]+?) made sure the rest of the lineup followed him through it\./gi,
+     pick(t,'door-support',[`set the tone, and ${team} finished the argument with ${forwardOne(t.points)} points.`,
+       `made the first statement; the supporting starters made it count.`,
+       `put up the headline number while the roster supplied enough answers behind it.`,
+       `earned top billing without requiring the rest of the lineup to disappear.`]));
+   s=s.replace(/kicked the door in and [^.]+\./gi,
+     pick(t,'door-any',[`made the scorer's contribution impossible to ignore in a ${forwardOne(t.points)}-point team result.`,
+       `supplied a headline that the rest of ${team} had to earn.`,
+       `made the difference visible on the final score, for better or worse.`,
+       `gave the manager one answer and several more lineup questions.`]));
+   s=s.replace(/kept the middle of the scoreboard from going dark\./gi,
+     pick(t,'middle-score',[`added points the manager could not afford to lose.`,
+       `kept the supporting cast relevant to the result.`,
+       `made the score less dependent on one star.`,
+       `made the quieter lineup slots look a little less guilty.`]));
    s=s.replace(/followed its opening victory with a loss to /gi,pick(t,'reversal',[
     'could not follow last week’s win with another against ',
     'carried a victory into this matchup but fell to ',
@@ -495,7 +579,7 @@ function w2Sentence(body){
 }
 function w2S(t,r,key,body){return w2TeamGrammar(t,w2Sentence(body))}
 function w2Natural(xs){const a=(xs||[]).filter(Boolean);return a.length<=1?(a[0]||""):a.length===2?a[0]+" and "+a[1]:a.slice(0,-1).join(", ")+", and "+a.at(-1)}
-function w2Stat(p){const real=String(p?.real_stat_line||"").trim();return real?real.replaceAll(" • ",", "):""}
+function w2Stat(p){const real=String(p?.real_stat_line||"").trim();return real?real.replaceAll(" • ",", ").replace(/\b1 carries\b/g,'1 carry').replace(/\b1 rush yds\b/g,'1 rush yd'):""}
 function w2StatClause(p){const stat=w2Stat(p);return stat?"; "+w2StatKind(p)+": "+stat:""}
 function w2PrevPlayer(prev,id){return (prev?.starter_details||[]).find(p=>String(p?.id)===String(id))||null}
 function w2SlotLabel(slot){return String(slot||"lineup spot").replaceAll("_"," ").toLowerCase().replace(/^idp /,"IDP ")}
@@ -2872,17 +2956,22 @@ function w2BuildSections(t,prev){
     w2S(t,r,"lede-shape",w2LedeShape(t,r,won,margin,opp,top)),
     w2S(t,r,"lede-alias",w2LedeAliasRead(t,r,prev,prevWon,won))
   ];
+  // Report meaningful contributors, not a mandatory podium of three scorers.
+  // One prominent performance may be the story; two get space when both
+  // cleared a genuinely useful scoring threshold.
+  const spotlights=Number(week)<=2?top:top.slice(0,top.length>1&&Number(top[1]?.points)>=15?2:1);
   const players=[];
-  for(let i=0;i<3;i++){
-    const p=top[i];if(!p)continue;const pp=w2PrevPlayer(prev,p.id),acq=p.acquisition;
+  for(let i=0;i<spotlights.length;i++){
+    const p=spotlights[i];if(!p)continue;const pp=w2PrevPlayer(prev,p.id),acq=p.acquisition;
     players.push(w2S(t,r,"player-stat-"+i,(i===0?("Against "+w2DisplayTeam(opp)+", "+p.name+" led the "+alias.mascot+" with "+w2One(p.points)+" fantasy points"+w2StatClause(p)+"."):i===1?("Against "+w2DisplayTeam(opp)+", "+p.name+" added "+w2One(p.points)+" for the "+alias.mascot+w2StatClause(p)+"."):(alias.mascot+" also got "+w2One(p.points)+" from "+p.name+w2StatClause(p)+"."))));
     players.push(w2S(t,r,"player-read-"+i,w2PlayerColumnRead(t,r,p,pp,i,opp,won)+(acq&&Number(acq.season)===season&&Number(acq.week)===week?" The Week 2 trade that brought "+p.name+" in put the new arrival on the Sunday stage immediately.":"")));
   }
-  const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));
+  const discussed=new Set(spotlights.filter(Boolean).map(p=>String(p.id)));
   const rememberedAcquisitions=(t.trade_acquisitions||[]).map(x=>{
     const p=(t.starter_details||[]).find(p=>String(p?.id)===String(x?.player_id)||p?.name===x?.player_name);
     return{x,p};
-  }).filter(({x,p})=>x?.player_name&&p&&!discussed.has(String(x.player_id))&&Number(p?.points)>=10)
+  }).filter(({x,p})=>x?.player_name&&p&&!discussed.has(String(x.player_id))&&Number(p?.points)>=10&&
+    (Number(week)<=2||(Number(x.season)===Number(season)&&Number(x.week)>=Number(week)-2)))
     .sort((a,b)=>Number(b.p?.points)-Number(a.p?.points)||Number(b.x?.season)-Number(a.x?.season)||Number(b.x?.week)-Number(a.x?.week))
     .slice(0,1).map(({x})=>x);
   for(let i=0;i<rememberedAcquisitions.length;i++){
@@ -2896,9 +2985,9 @@ function w2BuildSections(t,prev){
     players.push(w2S(t,r,"player-acquisition-"+i,variants[(w2Cohort(t)+i)%variants.length]));
   }
 
-  players.push(...w2IdentityRead(t,prev,r,top,opp));
+  players.push(...w2IdentityRead(t,prev,r,spotlights,opp));
   const weakPreview=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0];
-  players.push(w2S(t,r,"player-synthesis",w2PlayerSynthesisRead(t,r,top,opp,won)));
+  if(Number(week)<=2)players.push(w2S(t,r,"player-synthesis",w2PlayerSynthesisRead(t,r,top,opp,won)));
   const weakDepth=weakPreview;
   const miss=t.best_lineup_miss,gap=Number(miss?.gap)||0;
   const management=[
@@ -2916,8 +3005,8 @@ function w2BuildSections(t,prev){
   const eligibleCredit=w2EligibleCool(t),topIds=new Set(top.filter(Boolean).map(p=>String(p.id))),supportCredit=(t.starter_details||[]).filter(p=>!topIds.has(String(p.id))&&Number(p.points)>=10).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2);
   const cool=eligibleCredit.length<2&&supportCredit.length?[
     w2S(t,r,"cool-one",supportCredit.length===1
-      ?supportCredit[0].name+" gets the under-the-radar credit after "+w2One(supportCredit[0].points)+" points from outside the three names already carrying the main scoring story."
-      :w2Natural(supportCredit.map(p=>p.name))+" deserve the under-the-radar credit after "+w2One(supportCredit.reduce((n,p)=>n+Number(p.points||0),0))+" combined points from outside the three headline scorers.")
+      ?supportCredit[0].name+" gets the under-the-radar credit after "+w2One(supportCredit[0].points)+" points from outside the featured scoring story."
+      :w2Natural(supportCredit.map(p=>p.name))+" deserve the under-the-radar credit after "+w2One(supportCredit.reduce((n,p)=>n+Number(p.points||0),0))+" combined points from outside the featured scorers.")
   ]:["n/a"];
   const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=[
     w2S(t,r,"sent-one",w2SentimentRead(t,prev,r,fs,prevSent,won)),
@@ -3291,9 +3380,12 @@ function w2RecapPlayerRead(t,p,prev,r,slot=0,blockIndex=0){
   }
   return""
 }
-function rewriteWeek2Overview(overview,teams,previousEdition){
+function rewriteWeek2Overview(overview,teams,previousEdition,week=2){
   const previous=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t])),games=w2Games(teams),top=(teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],topGame=games.find(g=>[String(g.winner.roster_id),String(g.loser.roster_id)].includes(String(top?.roster_id))),close=games.slice().sort((a,b)=>a.margin-b.margin)[0],upset=games.find(g=>g.upset),big=games.slice().sort((a,b)=>b.margin-a.margin)[0],chosen=[],seen=new Set();
-  for(const g of [topGame,upset,close,big,...games.slice().sort((a,b)=>b.combined-a.combined)]){if(!g||chosen.length>=5)continue;const k=[g.winner.roster_id,g.loser.roster_id].sort().join("|");if(!seen.has(k)){seen.add(k);chosen.push(g)}}
+  // A league column is not a conveyor belt of five identically structured
+  // matchup mini-columns. Two games leave space for league-wide reporting.
+  const featuredLimit=Number(week)<=2?5:2;
+  for(const g of [topGame,upset,close,big,...games.slice().sort((a,b)=>b.combined-a.combined)]){if(!g||chosen.length>=featuredLimit)continue;const k=[g.winner.roster_id,g.loser.roster_id].sort().join("|");if(!seen.has(k)){seen.add(k);chosen.push(g)}}
   const rep=i=>overview?.sections?.[i]?.reporter||null;
   const blocks=chosen.map((g,i)=>{
     const r=rep(0)||{},w=g.winner,l=g.loser,wName=w2DisplayTeam(w.team_name),lName=w2DisplayTeam(l.team_name),
@@ -3303,10 +3395,12 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
       shootout=g.combined>=240,blowout=g.margin>=25,knife=g.margin<=6;
     const hook=w2RecapHook(g,wName,lName,i);
     paras.push(w2S(w,r,"recap-game-"+i,hook));
-    const statNames=(i===0?wTop:[wStar,lStar,ws[1]]).filter((p,j,a)=>p&&a.findIndex(q=>String(q.id)===String(p.id))===j);
-    paras.push(w2S(w,r,"recap-stats-"+i,w2RecapStatLead(g,i).trim()+"\n"+statNames.map(w2RecapStat).join("\n")));
+    // Contextualize one decisive player; do not mandate three box-score rows
+    // for every game, or then narrate all three again in the next paragraph.
+    const statNames=Number(week)<=2?(i===0?wTop:[wStar,lStar,ws[1]]):[wStar];
+    paras.push(w2S(w,r,"recap-stats-"+i,w2RecapStatLead(g,i).trim()+" "+statNames.filter(Boolean).map(w2RecapStat).join('; ')));
     let turn;
-    if(blowout&&wTop3>Number(l.points))turn=w2Natural(wTop.map(p=>p.name))+" combined for "+w2One(wTop3)+" points—more than "+lName+"’s entire "+w2One(l.points)+"-point lineup. That is the sort of blowout where the losing side starts checking whether the scoring app accidentally counted two Sundays.";
+    if(blowout&&wTop3>Number(l.points))turn=Number(week)<=2?w2Natural(wTop.map(p=>p.name))+" combined for "+w2One(wTop3)+" points—more than "+lName+"’s entire "+w2One(l.points)+"-point lineup. That is the sort of blowout where the losing side starts checking whether the scoring app accidentally counted two Sundays.":wName+" outscored "+lName+" by "+w2One(g.margin)+". A gap that large is not one unlucky starter; it is a lineup full of unanswered questions.";
     else if(knife&&loserMiss>0&&l?.best_lineup_miss?.reserve&&l?.best_lineup_miss?.starter)turn=w2RecapBenchTurn(l,g,l.best_lineup_miss);
     else if(shootout)turn=(lStar?lStar.name+" gave "+lName+" "+w2One(lStar.points)+" points and still had to watch a huge team total lose. ":"")+lName+" brought "+w2One(l.points)+" points—enough to win plenty of weeks. "+wName+" simply had one more scoring answer left.";
     else if(g.upset)turn=w2RecapUpsetTurn(w,l,wStar,lWeak);
@@ -3328,7 +3422,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     paras.push(w2S(w,r,"recap-context-"+i,w2RecapContext(w,prev,i)));
     return{heading:(i===0?"Week 2’s Loudest Game: ":"")+wName+" vs. "+lName,paragraphs:paras}
   });
-  const undefeated=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===2),winless=(teams||[]).filter(t=>Number(t?.league_context?.record?.losses)===2),upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
+  const undefeated=forwardRecentGroup(teams,week,'W'),winless=forwardRecentGroup(teams,week,'L'),upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
   const moverSummary=(team,key,label)=>{
     const rows=(team?.value_history_player_movers?.[key]||[]).filter(x=>Number.isFinite(Number(x?.delta))).slice(0,3);
     if(!rows.length)return" No current-roster player registered a "+(key==="risers"?"positive":"negative")+" value move over that same tracked window.";
@@ -3336,10 +3430,24 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     return" The roster’s biggest "+label+" over that same window: "+w2Natural(items)+".";
   };
   const middleTeams=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===1&&Number(t?.league_context?.record?.losses)===1),trajectoryReporter=rep(0)||{};
-  blocks.push({heading:"What Two Weeks Are Starting to Say",paragraphs:
+  if(Number(week)>2){
+    const seasonLeaders=(teams||[]).slice().sort((a,b)=>Number(a.league_context?.standings_rank||999)-Number(b.league_context?.standings_rank||999)).slice(0,4);
+    blocks.push({heading:'The Standings Have Receipts',paragraphs:forwardTrajectoryParagraphs(teams,week).slice(0,2)});
+    const missed=(teams||[]).filter(t=>Number(t.best_lineup_miss?.gap)>0&&t.best_lineup_miss?.reserve&&t.best_lineup_miss?.starter).sort((a,b)=>Number(b.best_lineup_miss.gap)-Number(a.best_lineup_miss.gap));
+    blocks.push({heading:'The Decisions Managers Have to Defend',paragraphs:missed.slice(0,2).map(t=>t.team_name+' left '+w2One(t.best_lineup_miss.gap)+' points on the table by starting '+t.best_lineup_miss.starter.name+' ahead of '+t.best_lineup_miss.reserve.name+'. That is a specific lineup choice, not an inspirational lesson about trying harder.')});
+    blocks.push({heading:'The Season Is Bigger Than Sunday',paragraphs:[seasonLeaders.length?'The league leaders are '+w2Natural(seasonLeaders.map(t=>t.team_name+' ('+forwardRecordText(t)+')'))+'. Those are full-season records, and nobody gets to erase the first '+(Number(week)-1)+' games because this week made a better headline.':'The season standings are not available for a verified comparison.',forwardTrajectoryParagraphs(teams,week)[3]]});
+  }else blocks.push({heading:"What Two Weeks Are Starting to Say",paragraphs:
     w2TwoWeekLeagueRead(teams,trajectoryReporter).map((p,i)=>w2S(top,trajectoryReporter,"recap-two-weeks-"+i,p))
   });
-  const velvet=[w2S(top,rep(1)||{},"contender-undefeated",undefeated.length?("The 2-0 club now includes "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". Two wins are not a coronation, but they are enough to make opening-week charm look more like actual form."):"Nobody escaped Week 2 undefeated, which is rude to the optimists and excellent for the rest of us."),upValue?w2S(upValue,rep(1)||{},"contender-up","The biggest positive value mover is "+w2DisplayTeam(upValue.team_name)+", up "+Math.abs(Math.round(Number(upValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(upValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(upValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(upValue,"risers","risers")+" The market has pushed this roster closer to contender territory; Sunday still decides whether that optimism survives contact."):null,downValue?w2S(downValue,rep(1)||{},"contender-down","The biggest negative value mover is "+w2DisplayTeam(downValue.team_name)+", down "+Math.abs(Math.round(Number(downValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(downValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(downValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(downValue,"fallers","fallers")+" I am not declaring the roster doomed, but the market has already started asking which assumptions deserve to survive the drop."):null,w2S(top,rep(1)||{},"contender-close",close?(close.winner.team_name+" and "+close.loser.team_name+" gave us the week’s most impolite close game at "+w2One(close.margin)+" points apart; one side gets relief, the other gets seven days to discover how many tiny choices suddenly feel enormous."):"Week 2 declined to give us a properly rude close finish, so I will save the sharp elbows for next Sunday.")].filter(Boolean);
+  const recentWinners=undefeated.length?("The teams that won both of the last two games are "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". That is form, not an undefeated-season claim; the season standings still count every result."):"Nobody won both of the last two completed games. Apparently consistency has become an optional luxury.";
+  const velvet=[
+    w2S(top,rep(1)||{},"contender-undefeated",Number(week)<=2
+      ?(undefeated.length?"The 2-0 club now includes "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". Two wins are not a coronation, but they are enough to make opening-week charm look more like actual form.":"Nobody escaped Week 2 undefeated, which is rude to the optimists and excellent for the rest of us.")
+      :recentWinners),
+    upValue?w2S(upValue,rep(1)||{},"contender-up","The biggest positive value mover is "+w2DisplayTeam(upValue.team_name)+", up "+Math.abs(Math.round(Number(upValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(upValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(upValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(upValue,"risers","risers")+" The market has pushed this roster closer to contender territory; Sunday still decides whether that optimism survives contact."):null,
+    downValue?w2S(downValue,rep(1)||{},"contender-down","The biggest negative value mover is "+w2DisplayTeam(downValue.team_name)+", down "+Math.abs(Math.round(Number(downValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(downValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(downValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(downValue,"fallers","fallers")+" I am not declaring the roster doomed, but the market has already started asking which assumptions deserve to survive the drop."):null,
+    w2S(top,rep(1)||{},"contender-close",close?(close.winner.team_name+" and "+close.loser.team_name+" gave us the week’s most impolite close game at "+w2One(close.margin)+" points apart; one side gets relief, the other gets seven days to discover how many tiny choices suddenly feel enormous."):"Week 2 declined to give us a properly rude close finish, so I will save the sharp elbows for next Sunday.")
+  ].filter(Boolean);
   const active=(teams||[]).slice().sort((a,b)=>(b.transactions?.length||0)-(a.transactions?.length||0))[0],tradeParagraphs=w2RecapTradeParagraphs(teams,rep(2)||{}),
     activeMoves=active?w2TransactionMoveDetails(active):[],activeAddedIds=new Set((active?.transactions||[]).flatMap(tx=>tx.adds||[]).map(String)),
     activeHit=(active?.starter_details||[]).filter(p=>activeAddedIds.has(String(p.id))).sort((a,b)=>Number(b.points)-Number(a.points))[0],
@@ -3452,7 +3560,7 @@ function assertWeek2Originality(result,previousEdition){
     if(judgment){const target=(a.sections||[]).find(s=>s.kind==='outlook')||(a.sections||[]).at(-1);if(target?.paragraphs)target.paragraphs.push(w2TeamGrammar(t,judgment));a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);seenDesk.add(rid)}
   }
 
-  let overview=rewriteWeek2Overview(rawOverview||{},rewritten,previousEdition||{teams:[]});
+  let overview=rewriteWeek2Overview(rawOverview||{},rewritten,previousEdition||{teams:[]},week);
   let teams=deepStrings(rewritten,s=>adaptWeekLanguage(s,week,weekClassification));
   overview=deepStrings(overview,s=>adaptWeekLanguage(s,week,weekClassification));
   if(week>=3)teams=evolveForwardTeams(teams,previousEdition,week,variationSalt);
@@ -3462,8 +3570,22 @@ function assertWeek2Originality(result,previousEdition){
   if(week>=3&&forwardCrossReporterPhraseOffenders(teams,[...forwardEntities({teams}),...forwardEntities(previousEdition)]).size)
     teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+101);
 
-  const trajectory=(overview.sections||[]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
-  if(trajectory)trajectory.paragraphs=forwardTrajectoryParagraphs(teams,week);
+  const trajectory=(overview.sections||[]).flatMap(s=>[s,...(s.blocks||[])]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
+  if(trajectory){
+    trajectory.paragraphs=forwardTrajectoryParagraphs(teams,week);
+    // The parent section also stores a flattened mirror: synchronize both.
+    const parent=(overview.sections||[]).find(s=>(s.blocks||[]).includes(trajectory));
+    if(parent)parent.paragraphs=parent.blocks.flatMap(b=>b.paragraphs||[]);
+  }
+  if(week>=3){
+    overview.hot_takes=(overview.hot_takes||[]).map(take=>{
+      if(!/\b(?:2-0 start|clean record|first two weeks|opening-week charm)\b/i.test(String(take.take||'')))return take;
+      const subject=teams.find(t=>String(take.title||'').includes(t.team_name))||teams.find(t=>String(take.take||'').includes(t.team_name));
+      if(!subject)return{...take,take:'The early-season label no longer tells the story. The standings have moved; this call needs a verified current matchup before it earns a stronger verdict.'};
+      const record=forwardRecordText(subject),outcome=subject.won?'won':'lost';
+      return{...take,take:subject.team_name+' '+outcome+' Week '+week+' with '+forwardOne(subject.points)+' fantasy points and holds a '+record+' season record. A title or fraud argument has to reckon with all '+week+' games, not borrow an undefeated claim from Week 2.'};
+    });
+  }
 
   if(weekClassification?.playoffs){
     for(const t of teams){
@@ -3485,6 +3607,7 @@ function assertWeek2Originality(result,previousEdition){
     const recapEntities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
     overview=evolveForwardOverview(overview,previousEdition?.league_overview||null,week,variationSalt,recapEntities);
     overview=enforceRecapEvolution(overview,previousEdition?.league_overview||null,week,variationSalt,recapEntities);
+    overview=rejectRecapCopyForward(overview,previousEdition?.league_overview||null,week,recapEntities);
   }
   overview.headline='Fleeced! Weekly Recap — '+String(weekClassification?.label||('Week '+week));
   overview.deck=weekClassification?.playoffs
@@ -3516,6 +3639,16 @@ export function evaluateInquirerEditionQuality(current,previous=null){
   const issues=[],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
   if(!teams.length)issues.push({id:'no-team-articles',detail:'No team articles were generated.'});
   const articleScaffold=new Map();
+  const recurringTeamPhrases=[
+    'the next Sunday changes the season sample; it does not simply photocopy',
+    'same stars are fine; same emergency dependence is not',
+    'headliner shift made the second scoreboard louder',
+    'the third score turned the Week',
+    'kicked the door in and',
+    'kept the middle of the scoreboard from going dark'
+  ];
+  const repeatedTeamPhrases=new Map(recurringTeamPhrases.map(phrase=>[phrase,[]]));
+  let trioMentions=0;
   for(const t of teams){
     const sentences=forwardArticleSentences(t),norms=sentences.map(s=>forwardNormSentence(s,entities));
     for(const n of new Set(norms)){if(!articleScaffold.has(n))articleScaffold.set(n,new Set());articleScaffold.get(n).add(String(t.roster_id))}
@@ -3527,11 +3660,17 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     }
     const rid=String(t?.inquirer_article?.reporter?.id||''),copy=(t?.inquirer_article?.paragraphs||[]).join(' '),
       valueCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='value').flatMap(s=>s?.paragraphs||[]).join(' ');
+    trioMentions+=(copy.match(/\btrio\b/gi)||[]).length;
+    for(const [phrase,owners] of repeatedTeamPhrases)if(copy.toLowerCase().includes(phrase.toLowerCase()))owners.push(t.team_name);
     if(/already on the roster when Week \d+ began/i.test(valueCopy))issues.push({id:'value-roster-status-filler',team:t.team_name});
     if(/could not turn the (?:came in|finished|closed the week) result/i.test(copy))issues.push({id:'malformed-result-idiom',team:t.team_name});
     if(rid==='tess-delaney'&&/\b(?:furniture|chair|chairs|tablecloth|linen|napkin|china|silverware|place setting|dining room|dinner|centerpiece|velvet rope|chaise|ballroom|salon|coat check)\b/i.test(copy))issues.push({id:'roycington-retired-metaphor',team:t.team_name});
     if(rid==='nora-voss'&&/\b(?:docket|cross-examination|defendant|prosecution|indictment|courtroom)\b/i.test(copy))issues.push({id:'filch-courtroom-scaffold',team:t.team_name});
   }
+  for(const [phrase,owners] of repeatedTeamPhrases)if(owners.length>=3)
+    issues.push({id:'repeated-team-editorial-template',phrase,teams:owners});
+  if(Number(current?.week)>=3&&teams.length===32&&trioMentions>12)
+    issues.push({id:'overused-scorer-trios',mentions:trioMentions,maximum:12});
   // Named-player substitutions must not disguise a copy-pasted fan joke.
   for(const riff of ['supporters are doing what supporters do best','the fan base has screenshots, memes and exactly one volume setting']){
     const owners=teams.filter(t=>String((t?.inquirer_article?.paragraphs||[]).join(' ')).toLowerCase().includes(riff)).map(t=>t.team_name);
@@ -3546,8 +3685,23 @@ export function evaluateInquirerEditionQuality(current,previous=null){
   }
   const mattered=(current?.league_overview?.sections||[]).find(s=>String(s?.heading||'')==='What Actually Mattered This Week');
   const matteredCopy=(mattered?.paragraphs||[]).join(' ');
+  if(Number(current?.week)>=3){
+    const recapCopy=[...(current?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(current?.league_overview?.hot_takes||[]).map(t=>t.take||'')].join(' ');
+    if(/\b(?:2-0 club|2-0 group|at 0-2|the 0-2 records)\b/i.test(recapCopy))
+      issues.push({id:'recap-week2-record-language',detail:'Old Week 2 record groups appear in a later week.'});
+    if(/\b(?:A 84\.6-point|1 carries|1 rush yds)\b/i.test(recapCopy))
+      issues.push({id:'recap-uncorrected-stat-grammar'});
+  }
   if(/\b(?:worth reopening|real departure from the established level|changes what the next box score is allowed to tell us|role deserves fresh attention|large enough to matter|matter beyond one|that is (?:star|veteran|breakout|emerging|rookie|reliable) production|useful veteran work)\b/i.test(matteredCopy))issues.push({id:'recap-meta-explainer'});
   const blocks=(mattered?.blocks||[]).slice(0,5),blockSentences=blocks.flatMap(b=>forwardSentenceParts((b.paragraphs||[]).join(' ')).filter(s=>forwardWordCount(s)>=8));
+  const statListBlocks=blocks.filter(b=>(b.paragraphs||[]).some(p=>(String(p).match(/\bfantasy points\b/gi)||[]).length>=3));
+  if(Number(current?.week)>=3&&statListBlocks.length>=3)
+    issues.push({id:'recap-mandatory-scorer-trios',blocks:statListBlocks.map(b=>b.heading)});
+  const intro=/\b(?:The box score settles this|Sunday left a clue|Carry this into Monday|Look at the personnel|Forget the excuses|The numbers resist spin):/gi;
+  for(const b of blocks)for(const p of b.paragraphs||[]){
+    const matches=String(p).match(intro)||[];
+    if(matches.length>=2)issues.push({id:'recap-stacked-prefaces',block:b.heading,count:matches.length});
+  }
   const seen=new Set();for(const s of blockSentences){const n=forwardNormSentence(s,entities);if(seen.has(n))issues.push({id:'recap-repeated-developed-sentence',sentence:n});seen.add(n)}
   return{ok:issues.length===0,issues,metrics:{team_articles:teams.length,cross_team_scaffolds:[...articleScaffold.values()].filter(ids=>ids.size>=4).length}};
 }

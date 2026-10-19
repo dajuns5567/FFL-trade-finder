@@ -20,3 +20,20 @@ test('future-week duplicate copy is replaced with scoreboard facts without disab
  assert.equal(new Set(paragraphs).size,4);
  assert(paragraphs.some(p=>/fantasy points/.test(p)&&/143\.00/.test(p)));
 });
+
+test('future-week editorial gate rejects Week 2 record leakage and mandated scoring trios',()=>{
+ const current={week:5,teams:[{roster_id:'1',team_name:'Test Team',inquirer_article:{paragraphs:['A specific and otherwise acceptable team paragraph.']}}],league_overview:{sections:[
+  {heading:'What Actually Mattered This Week',blocks:Array.from({length:3},(_,i)=>({heading:'Game '+i,paragraphs:['A — 12 fantasy points\nB — 10 fantasy points\nC — 8 fantasy points']})),paragraphs:['The 2-0 club now includes Test Team.']}
+ ]}};
+ const audit=evaluateInquirerEditionQuality(current);
+ assert(audit.issues.some(x=>x.id==='recap-week2-record-language'));
+ assert(audit.issues.some(x=>x.id==='recap-mandatory-scorer-trios'));
+});
+
+test('future-week editorial gate catches sentence-template repetition despite different team labels',()=>{
+ const teams=Array.from({length:3},(_,i)=>({roster_id:String(i+1),team_name:'Club '+i,inquirer_article:{paragraphs:[
+  'Club '+i+' came out of the previous matchup with a defeat; the next Sunday changes the season sample; it does not simply photocopy the first conclusion.'
+ ]}}));
+ const audit=evaluateInquirerEditionQuality({week:5,teams,league_overview:{sections:[]}});
+ assert(audit.issues.some(x=>x.id==='repeated-team-editorial-template'));
+});

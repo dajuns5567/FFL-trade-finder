@@ -3813,7 +3813,8 @@ function assertWeek2Originality(result,previousEdition){
         return copy.trim();
       });
       const fanSection=(a.sections||[]).find(s=>s.kind==='sentiment');
-      if(fanSection&&forwardWordCount((fanSection.paragraphs||[]).join(' '))<35){
+      if(fanSection&&(forwardWordCount((fanSection.paragraphs||[]).join(' '))<35||
+        (fanSection.paragraphs||[]).filter(p=>String(p).length>=50).length<2)){
         const riffs=[
           'The call-in show has already misplaced its indoor voice','The neighborhood group chat is charging admission to the argument',
           'The supporters are treating one lineup slot like public property','The postgame complaints have acquired an unnecessary second act',
@@ -3863,6 +3864,10 @@ function assertWeek2Originality(result,previousEdition){
           'There is still time to make the noise embarrassing.'
         ][((idx%16)+16)%16];
         fanSection.paragraphs=[...(fanSection.paragraphs||[]),first+'. '+second+' '+ending];
+        if(fanSection.paragraphs.filter(p=>String(p).length>=50).length<2){
+          const alternate=riffs[((idx+7)%16+16)%16];
+          fanSection.paragraphs.push(alternate+'. '+w2DisplayTeam(t.team_name)+' still has the next matchup against '+w2DisplayTeam(t.next_opponent_name||'its next opponent')+' to turn this noise into a better story.');
+        }
       }
       a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
     }
@@ -3941,6 +3946,21 @@ function assertWeek2Originality(result,previousEdition){
       });
       a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
     }
+    // Apply the structural floor *after* clause removal. A collision repair
+    // can shorten a sentiment paragraph even if it passed an earlier check.
+    for(const t of teams){
+      const article=t.inquirer_article,fan=(article?.sections||[]).find(s=>s.kind==='sentiment');
+      if(!fan)continue;
+      const player=t.worst_starter?.name||t.starter_details?.at(-1)?.name||'the quietest starter';
+      const team=w2DisplayTeam(t.team_name),opponent=w2DisplayTeam(t.next_opponent_name||'the next opponent');
+      while((fan.paragraphs||[]).filter(p=>String(p).length>=50).length<2){
+        const count=(fan.paragraphs||[]).length;
+        fan.paragraphs.push(count%2
+          ?'The '+team+' fan section is watching '+player+' with a week of accumulated impatience. '+opponent+' will get the next look, and supporters want the answer to arrive in fantasy points.'
+          :'Around '+team+', the latest discussion has turned to '+player+' and the decisions that made the matchup harder than necessary. The next Sunday offers the manager a practical way to quiet it.');
+      }
+      article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
@@ -4013,8 +4033,13 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     const allReaderText=[...(current?.league_overview?.sections||[]).flatMap(s=>[s.heading,...(s.paragraphs||[])]),
       ...(current?.league_overview?.hot_takes||[]).flatMap(h=>[h.title,h.take]),
       ...teams.flatMap(t=>[t.inquirer_article?.headline,...(t.inquirer_article?.sections||[]).flatMap(s=>[s.heading,...(s.paragraphs||[])])])].filter(Boolean).join('\n');
+    // Exclude correctly formed singular subjects with intervening plural clubs.
+    const agreementReaderText=allReaderText
+      .replace(/\bThe radio station covering [^.?!\n]{4,85}? has declared\b/gi,'The radio station has declared')
+      .replace(/\bThe (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!\n]{4,85}? is already compressed\b/gi,'The division race is already compressed')
+      .replace(/\bThe road after [^.?!\n]{4,85}? is mixed\b/gi,'The road is mixed');
     for(const name of [...new Set(teams.map(t=>String(t.team_name||'').trim()).filter(n=>/s$/i.test(n.split(/\s+/).at(-1)||'')))]){
-      if(new RegExp('\\b'+forwardEscRe(name)+' (?:does|gets|has|is|needs|sits|keeps|projects)\\b','i').test(allReaderText))
+      if(new RegExp('\\b'+forwardEscRe(name)+' (?:does|gets|has|is|needs|sits|keeps|projects)\\b','i').test(agreementReaderText))
         issues.push({id:'plural-team-agreement',team:name});
     }
     if(/:\s*this Sunday\b|; The season record is\b/.test(allReaderText))

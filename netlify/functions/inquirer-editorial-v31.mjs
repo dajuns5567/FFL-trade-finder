@@ -3976,6 +3976,12 @@ function assertWeek2Originality(result,previousEdition){
       const byKind=new Map((article.sections||[]).map(s=>[s.kind,s]));
       const top=(t.starter_details||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
       const team=w2DisplayTeam(t.team_name),r=article.reporter||{};
+      const creditHeadings={
+        'nick swindell':'Credit Where It Is Due',
+        'bartholomew roycington iii':'The Credit Ledger, With Reservations',
+        'tilly fleecer':'The Name That Earned the Headline',
+        'jefferson filch':'The Evidence in Their Favor'
+      };
       if(!byKind.has('cool-throne')){
         // The forward copy already has team-specific player reporting. Move a
         // distinct paragraph to the Week 4 credit desk instead of inventing
@@ -3988,12 +3994,12 @@ function assertWeek2Originality(result,previousEdition){
         const credit=creditIndex>=1&&creditIndex<playerRows.length
           ?playerRows.splice(creditIndex,1)
           :[top?`${top.name} put ${forwardOne(top.points)} fantasy points on ${team}'s Week ${week} board.`:`${team} could not identify a verified individual scoring leader.`];
-        byKind.set('cool-throne',{kind:'cool-throne',heading:w2SectionHead(r,'cool-throne'),paragraphs:credit});
+        byKind.set('cool-throne',{kind:'cool-throne',heading:creditHeadings[String(r.name||'').toLowerCase()]||'Credit Where It Is Due',paragraphs:credit});
       }
       if(!byKind.has('value')){
         // The Week 4 market section may be intentionally empty. A small
         // value fluctuation is not a story and must not force filler prose.
-        byKind.set('value',{kind:'value',heading:w2SectionHead(r,'value'),paragraphs:[]});
+        byKind.set('value',{kind:'value',heading:'The Roster-Value Ledger',paragraphs:[]});
       }
       const outlook=byKind.get('outlook');
       if(outlook?.paragraphs?.length>3){

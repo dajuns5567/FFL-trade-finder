@@ -2,6 +2,7 @@
 // checks AND a review approval bound to the exact copy digest. No public HTTP
 // route may approve a draft. Historical locked editions are never rewritten.
 import {createHash} from 'node:crypto';
+import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
 
 const articleParagraphs = article => (article?.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(p=>typeof p==='string');
 const normalized = value => String(value||'').toLowerCase().replace(/\s+/g,' ').trim();
@@ -23,7 +24,7 @@ export function editorialCopyDigest(edition) {
 }
 
 export function inspectEditionBeforePublication(edition) {
-  const issues=[],teams=edition?.teams||[],unique=new Set(teams.map(t=>String(t.roster_id)));
+  const issues=inspectInquirerFormatContract(edition),teams=edition?.teams||[],unique=new Set(teams.map(t=>String(t.roster_id)));
   if(teams.length!==32||unique.size!==32)issues.push({id:'coverage',detail:'32 unique team articles required'});
   const rosterById=new Map(teams.map(t=>[String(t.roster_id),t]));
   const scaffoldOwners=new Map(),phraseOwners=new Map();

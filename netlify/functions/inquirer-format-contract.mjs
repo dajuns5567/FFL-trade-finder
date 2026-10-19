@@ -25,6 +25,8 @@ export function inspectInquirerFormatContract(edition){
     issues.push({id:'week4-recap-six-beat-contract',expected:INQUIRER_RECAP_BEATS,actual});
   for(const b of blocks)if(!String(b.heading||'').trim()||!(b.paragraphs||[]).length)
     issues.push({id:'week4-empty-recap-beat',kind:b.kind});
+  for(const b of blocks)if(['league','outlook'].includes(b.kind)&&(b.paragraphs||[]).length<2)
+    issues.push({id:'week4-thin-recap-beat',kind:b.kind});
   if(blocks.length&&JSON.stringify(recap[0].paragraphs||[])!==JSON.stringify(blocks.flatMap(b=>b.paragraphs||[])))
     issues.push({id:'week4-recap-flattened-mirror'});
   return issues;

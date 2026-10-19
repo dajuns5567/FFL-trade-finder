@@ -13,12 +13,21 @@ export async function startPreviewDraftForDeploy(event,generate){
    url.hostname.endsWith('--'+String(event.site?.name||'')+'.netlify.app'))));
  if(!preview)return false;
  const target=new URL('/.netlify/functions/inquirer-preview-background?start=1',preview);
- // Event handlers already execute as background functions. Run the shared
- // generation job in this same deploy context: no HTTP re-entry or 502 proxy.
- const run=generate||(await import('./inquirer-preview-background.mjs')).default;
- const response=await run(new Request(target));
- if(response instanceof Response&&!response.ok)throw Error('Could not generate unpublished Inquirer preview: '+response.status);
- return true;
+ // A deploySucceeded event is still reached through a short-lived event
+ // request (observed 30s/504). Never await full edition generation here.
+ // The dedicated Background Function returns HTTP 202 immediately and runs
+ // for up to 15 minutes. Retry brief cold-deploy 502/503 responses safely.
+ const submit=generate||fetch,delays=[0,500,1500,3000];let lastFailure='unknown';
+ for(let attempt=0;attempt<delays.length;attempt++){
+  if(delays[attempt])await new Promise(resolve=>setTimeout(resolve,delays[attempt]));
+  try{
+   const response=await submit(new Request(target,{headers:{'cache-control':'no-store'}}));
+   if(!response||response.status===202||response.ok===true)return true;
+   lastFailure='HTTP '+String(response.status);
+   if(response.status!==502&&response.status!==503&&response.status!==504)break;
+  }catch(error){lastFailure=String(error?.message||error)}
+ }
+ throw Error('Could not enqueue isolated Inquirer preview background job: '+lastFailure);
 }
 
 export default {

@@ -36,3 +36,22 @@ test('never starts draft generation on production, branch or arbitrary hosts',as
  ])assert.equal(await startPreviewDraftForDeploy(event,generator),false);
  assert.equal(calls.length,0);
 });
+
+test('deploy event only waits for background 202 acceptance, never for the full manuscript',async()=>{
+ let calls=0;
+ const started=Date.now();
+ const queued=await startPreviewDraftForDeploy({deploy:{context:'deploy-preview',sslUrl:previewUrl}},async request=>{
+  calls++;assert.match(request.url,/inquirer-preview-background\?start=1$/);
+  return new Response(null,{status:202});
+ });
+ assert.equal(queued,true);
+ assert.equal(calls,1);
+ assert(Date.now()-started<300,'Queue acknowledgement must be immediate');
+});
+
+test('a permanent background enqueue failure cannot silently claim success',async()=>{
+ await assert.rejects(
+  startPreviewDraftForDeploy({deploy:{context:'deploy-preview',sslUrl:previewUrl}},async()=>new Response('Unavailable',{status:403})),
+  /Could not enqueue isolated Inquirer preview background job: HTTP 403/
+ );
+});

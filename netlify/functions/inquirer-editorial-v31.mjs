@@ -3879,7 +3879,8 @@ function assertWeek2Originality(result,previousEdition){
     return Number.isFinite(d)&&Date.now()-d>7*86400000;
   });
   if(week>=3&&staleForecasts){
-    const freshOnly=value=>forwardSentenceParts(value).filter(s=>! /\bMIDA\b/i.test(s)).join(' ').trim();
+    const staleOdds=/\bMIDA\b|\b\d+(?:\.\d+)?%\s+(?:title|playoff|postseason|championship)\s+(?:outlook|odds|chance|probability)\b|\b(?:title|playoff|postseason|championship)\s+(?:number|probability|odds|outlook)\s+at\s+\d+(?:\.\d+)?%/i;
+    const freshOnly=value=>forwardSentenceParts(value).filter(s=>!staleOdds.test(s)).join(' ').trim();
     const filterParagraphs=rows=>(rows||[]).map(freshOnly).filter(Boolean);
     for(const t of teams){const a=t.inquirer_article;if(!a)continue;
       for(const s of a.sections||[])s.paragraphs=filterParagraphs(s.paragraphs);
@@ -3979,7 +3980,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
   if(Number(current?.week)>=3&&dated.length&&dated.every(t=>{
     const stamp=Date.parse(String(t.mida_outlook?.source_date||t.mida_outlook?.as_of||''));
     return Number.isFinite(stamp)&&Date.now()-stamp>7*86400000;
-  })&&/\bMIDA\b/i.test([...(current?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(current?.league_overview?.hot_takes||[]).map(h=>h.take),...teams.flatMap(t=>t.inquirer_article?.paragraphs||[])].join(' ')))
+  })&&/\bMIDA\b|\b\d+(?:\.\d+)?%\s+(?:title|playoff|postseason|championship)\s+(?:outlook|odds|chance|probability)\b|\b(?:title|playoff|postseason|championship)\s+(?:number|probability|odds|outlook)\s+at\s+\d+(?:\.\d+)?%/i.test([...(current?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(current?.league_overview?.hot_takes||[]).map(h=>h.take),...teams.flatMap(t=>t.inquirer_article?.paragraphs||[])].join(' ')))
     issues.push({id:'stale-forecast-presented-as-current',detail:'Forecast source is more than seven days old.'});
   if(!teams.length)issues.push({id:'no-team-articles',detail:'No team articles were generated.'});
   const articleScaffold=new Map();

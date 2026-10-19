@@ -71,6 +71,10 @@ test('the subject, not an intervening plural team name, governs agreement',()=>{
  const sentence='The radio station covering New England Patriots have declared its phone lines a public utility.';
  const edition={week:5,teams:[{roster_id:'1',team_name:'New England Patriots',inquirer_article:{paragraphs:[sentence],sections:[{kind:'sentiment',paragraphs:[sentence]}]}}],league_overview:{sections:[]}};
  assert(evaluateInquirerEditionQuality(edition).issues.some(x=>x.id==='intervening-team-subject-agreement'));
+ const correct='The radio station covering New England Patriots has declared its phone lines a public utility. The AFC EAST race around New England Patriots is already compressed.';
+ edition.teams[0].inquirer_article.paragraphs=[correct];
+ edition.teams[0].inquirer_article.sections[0].paragraphs=[correct];
+ assert(!evaluateInquirerEditionQuality(edition).issues.some(x=>x.id==='plural-team-agreement'));
 });
 
 test('future weeks never describe the prior week as the season opener',()=>{

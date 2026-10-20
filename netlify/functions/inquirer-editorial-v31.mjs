@@ -3,7 +3,7 @@
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
-import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPlayerFact} from './inquirer-narrative-architecture.mjs';
+import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPlayerFact,restoreForwardArticleDepth} from './inquirer-narrative-architecture.mjs';
 
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
@@ -4244,6 +4244,9 @@ function assertWeek2Originality(result,previousEdition){
       a.paragraphs=a.sections.flatMap(x=>x.paragraphs||[]);
     }
   }
+  // Final editorial-depth check runs *after* archival and cross-team pruning.
+  // It must see the exact article structure handed to the admission gate.
+  if(week>=5)for(const t of teams)restoreForwardArticleDepth(t,week);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

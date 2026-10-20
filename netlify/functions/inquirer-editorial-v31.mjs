@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=35;
+export const FORWARD_EDITORIAL_REVISION=36;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4143,23 +4143,20 @@ function assertWeek2Originality(result,previousEdition){
           }
         }
       }
-      overview.hot_takes=(overview.hot_takes||[]).map((h,i)=>{
-        const copy=forwardSentenceParts(h.take||'');
-        const recycled=copy.filter(s=>forwardWordCount(s)>=10&&oldRecap.has(forwardNormSentence(s,entities)));
-        if(recycled.length<2)return h;
-        // Hot takes are a second, independent recap surface. A preloaded
-        // division-board manifesto cannot survive merely because its title
-        // changed to the current week. Ground a new take in a real result.
-        const winners=teams.filter(t=>Number(t.points)>Number(t.opponent_points));
-        const game=(winners.length?winners:teams)[(i*3)%(winners.length||teams.length)];
-        const own=Number(game.points).toFixed(1),opp=Number(game.opponent_points).toFixed(1);
-        const lines=[
-          `${game.team_name} put up ${own} to ${game.opponent_name}'s ${opp}. That is a Week ${week} result, not a borrowed claim about who owns the division; the next lineup still has to defend it.`,
-          `Here is what the Week ${week} ledger can actually prove: ${game.team_name} finished with ${own} while ${game.opponent_name} had ${opp}. The standings get to react, but they do not get to rewrite the game.`,
-          `The division board loves a coronation. Week ${week} supplied ${game.team_name} ${own} points and ${game.opponent_name} ${opp}; try fitting that into the preseason victory speech without editing the tape.`,
-          `Nobody gets a championship banner for a column of standings. In Week ${week}, ${game.team_name} recorded ${own} opposite ${opp} for ${game.opponent_name}; that score is the only receipt on this desk.`
-        ];
-        return {...h,title:`Week ${week}: A Scoreboard Receipts Check`,take:lines[i%lines.length]};
+      overview.hot_takes=(overview.hot_takes||[]).map(h=>{
+        // A division board is structured standings data, not recycled
+        // commentary. Preserve its current league-derived eight entries:
+        // replacing them with a stock scoreboard gag destroys both the
+        // source evidence and the format the reader expects.
+        if(/division board/i.test(String(h.title||'')))return h;
+        const original=forwardSentenceParts(h.take||'');
+        const fresh=original.filter(sentence=>
+          forwardWordCount(sentence)<10||!oldRecap.has(forwardNormSentence(sentence,entities)));
+        if(fresh.length===original.length)return h;
+        // Do not manufacture a punchline when archival language is removed.
+        // An empty take is rejected by the independent publication guard and
+        // the candidate selector tries another variation instead.
+        return {...h,take:fresh.join(' ').trim()};
       });
     }
     for(const t of teams)restoreForwardPlayerFact(t);
@@ -4173,7 +4170,7 @@ function forwardEscRe(s){return [...String(s||'')].map(ch=>'.*+?^$(){}|[]'.inclu
 function forwardEntities(edition){return[...(edition?.teams||[])].flatMap(t=>[t.team_name,t.manager_name,t.opponent_name,t.next_opponent_name,...(t.starter_details||[]).map(p=>p.name)]).filter(Boolean).map(String).sort((a,b)=>b.length-a.length)}
 function forwardNormSentence(s,entities=[]){let x=String(s||'');for(const e of entities)x=x.replace(new RegExp(forwardEscRe(e),'gi'),'[ENTITY]');return x.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,'[#]').replace(/\s+/g,' ').trim()}
 function forwardArticleSentences(t){return forwardSentenceParts((t?.inquirer_article?.paragraphs||[]).join(' ')).filter(x=>forwardWordCount(x)>=10)}
-function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(e?.league_overview?.hot_takes||[]).flatMap(x=>[x?.title,x?.take])].filter(Boolean).join(' ')).filter(x=>forwardWordCount(x)>=10)}
+function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(e?.league_overview?.hot_takes||[]).filter(x=>!/division board/i.test(String(x?.title||''))).flatMap(x=>[x?.title,x?.take])].filter(Boolean).join(' ')).filter(x=>forwardWordCount(x)>=10)}
 
 export function evaluateInquirerEditionQuality(current,previous=null){
   const issues=[...inspectInquirerFormatContract(current),...inspectNarrativeArchitecture(current)],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));

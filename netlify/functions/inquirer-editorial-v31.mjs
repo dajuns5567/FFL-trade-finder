@@ -4225,7 +4225,7 @@ function assertWeek2Originality(result,previousEdition){
         let text=String(line||'');
         for(const name of pluralNames){
           const verb={has:'have',is:'are',does:'do',gets:'get',sits:'sit',needs:'need',keeps:'keep',faces:'face',projects:'project'};
-          text=text.replace(new RegExp('\\\\b'+w2EscRe(name)+' (has|is|does|gets|sits|needs|keeps|faces|projects)\\\\b','gi'),
+          text=text.replace(new RegExp('\\b'+w2EscRe(name)+' (has|is|does|gets|sits|needs|keeps|faces|projects)\\b','gi'),
             (_,word)=>name+' '+verb[word.toLowerCase()]);
         }
         return text;

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {curateForwardTeamNarrative,inspectNarrativeArchitecture} from '../netlify/functions/inquirer-narrative-architecture.mjs';
+import {curateForwardTeamNarrative,restoreForwardArticleDepth,inspectNarrativeArchitecture} from '../netlify/functions/inquirer-narrative-architecture.mjs';
 
 const makeStory=(i=1)=>{
  const t={roster_id:String(i),team_name:'Home Club '+i,opponent_name:'Away Club '+i,points:101+i,opponent_points:90,
@@ -130,6 +130,7 @@ test('under-length team reporting adds a distinct verified reserve fact rather t
   {name:'Young Tackler',position:'LB',points:7.5,real_stats:{tkl_solo:5,tkl_ast:3}}
  );
  curateForwardTeamNarrative(t,5);
+ restoreForwardArticleDepth(t,5);
  const p=t.inquirer_article.sections.find(s=>s.kind==='players').paragraphs.join(' ');
  assert.match(p,/Young Tackler/);
  assert.match(p,/7\.5 fantasy points/);

@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=36;
+export const FORWARD_EDITORIAL_REVISION=37;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4029,14 +4029,23 @@ function assertWeek2Originality(result,previousEdition){
       const runnerUp=(teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[1];
       const rebuilding=(teams||[]).find(t=>!t.won&&t.next_opponent_name&&t!==top);
       const next=top?.next_opponent_name||'the next opponent';
-      const leagueParagraphs=(league?.paragraphs||[]).map(p=>String(p).replace(/The useful lesson is not that everybody should chase the loudest box score; it is that the season is developing memory, and repeated strengths and repeated mistakes are starting to carry receipts\./gi,
-        'Teams repeating the same weakness are doing the opposition a favor: the scouting report practically writes itself. There is a limit to how long Monday can be blamed on surprise.'));
+      // Week-aware, score-backed league analysis. Never replace an entire
+      // editorial argument with the same newsroom maxim every Sunday.
+      const highScore=Number(top?.points)||0,secondScore=Number(runnerUp?.points)||0;
+      const scoreGap=forwardOne(Math.max(0,highScore-secondScore));
+      const topName=w2DisplayTeam(top?.team_name||'the leader');
+      const secondName=w2DisplayTeam(runnerUp?.team_name||'the runner-up');
+      const leagueParagraphs=week%2
+        ?[`The scoreboard made a hierarchy this Sunday: ${topName} finished on ${forwardOne(highScore)}, while ${secondName} answered with ${forwardOne(secondScore)}. Anyone calling that a photo finish should get their eyes checked.`,
+          `The ${scoreGap}-point separation matters to this week's league argument, but the table still demands another Sunday of evidence before anyone gets a crown.`]
+        :[`The loudest number on the board belonged to ${topName}: ${forwardOne(highScore)}. ${secondName} managed ${forwardOne(secondScore)}, which gives the challengers an actual target rather than another motivational speech.`,
+          `A ${scoreGap}-point spread between first and second is the week's measuring stick, not a championship certificate. Those are printed much later, usually after someone regrets the parade plans.`];
       const blocks=[
         {kind:'lead',heading:'The Story That Defined Week '+week,paragraphs:leadWithoutPlayers.length?leadWithoutPlayers:lead.slice(0,5)},
         {kind:'standings',heading:'The Standings Have Started Talking',paragraphs:standings?.paragraphs||[]},
         {kind:'players',heading:'The Names Behind the Noise',paragraphs:playerDetails.length?playerDetails:lead.slice(0,2)},
         {kind:'decisions',heading:'The Decisions and the Damage',paragraphs:decisions?.paragraphs||[]},
-        {kind:'league',heading:'What the League Learned',paragraphs:[...leagueParagraphs,...(top&&runnerUp?['The high-score race had its own second headline: '+w2DisplayTeam(runnerUp.team_name)+' finished on '+forwardOne(runnerUp.points)+' points, '+forwardOne(Math.max(0,Number(top.points)-Number(runnerUp.points)))+' behind '+w2DisplayTeam(top.team_name)+'. That distinction matters when the league decides whether one runaway score was the whole week.']:[])]},
+        {kind:'league',heading:'What the League Learned',paragraphs:leagueParagraphs},
         {kind:'outlook',heading:'The Week Ahead',paragraphs:[...(top?['After Week '+week+', '+w2DisplayTeam(top.team_name)+(w2PluralTeamName(top.team_name)?' face ':' faces ')+w2DisplayTeam(next)+' next. The '+forwardOne(top.points)+'-point performance earned attention; the new opponent gets its own answer.']:[]),...(rebuilding?['For '+w2DisplayTeam(rebuilding.team_name)+', the next opponent is '+w2DisplayTeam(rebuilding.next_opponent_name)+'. After a '+forwardOne(rebuilding.points)+'-point loss-week showing, the immediate question is which starting spots can supply a credible answer before another result goes into the standings.']:[])]}
       ];
       first.heading='Week '+week+': The League-Wide Reckoning';
@@ -4160,6 +4169,31 @@ function assertWeek2Originality(result,previousEdition){
       });
     }
     for(const t of teams)restoreForwardPlayerFact(t);
+    // Last-stage fan integrity: prior-issue copy cleanup is complete. Restore
+    // only independently selected, score-grounded scenes not already present
+    // in this article or its prior-week edition. Never reuse stock repair text.
+    const priorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
+    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    for(const t of teams){
+      const a=t.inquirer_article,fan=a?.sections?.find(s=>s.kind==='sentiment');
+      if(!fan)continue;
+      const prior=priorByRoster.get(String(t.roster_id));
+      const old=new Set(forwardArticleSentences(prior).map(s=>forwardNormSentence(s,entities)));
+      const used=new Set(forwardSentenceParts((fan.paragraphs||[]).join(' ')).map(s=>forwardNormSentence(s,entities)));
+      for(let offset=1;offset<=32&&(fan.paragraphs||[]).filter(p=>String(p).length>=50).length<2;offset++){
+        const alternate={...t,roster_id:String((Number(t.roster_id)||1)+offset)};
+        const scenes=forwardFanScenes(alternate,Number(t.points)>Number(t.opponent_points));
+        for(const candidate of scenes){
+          if(String(candidate).length<50)continue;
+          const sentences=forwardSentenceParts(candidate);
+          if(sentences.some(x=>old.has(forwardNormSentence(x,entities))||used.has(forwardNormSentence(x,entities))))continue;
+          fan.paragraphs.push(candidate);
+          sentences.forEach(x=>used.add(forwardNormSentence(x,entities)));
+          if(fan.paragraphs.filter(p=>String(p).length>=50).length>=2)break;
+        }
+      }
+      a.paragraphs=a.sections.flatMap(x=>x.paragraphs||[]);
+    }
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }

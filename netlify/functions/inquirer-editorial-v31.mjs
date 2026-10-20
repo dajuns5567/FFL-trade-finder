@@ -2270,7 +2270,7 @@ function forwardFanScenes(t,won,week,variationSalt){
   ["After "+name+"'s latest game, fans proposed an exhibit of useful excuses and found the display case almost empty. "+points+" points were on the board; "+danger+" contributed "+dangerPts+" to them.","That is the appeal of a box score: it does not accept a request for a better caption before the next game against "+next+"."],
   ["The "+a.mascot+" fan orchestra has a new conductor: "+star+" and "+starPts+" points. The rest of the musicians are being asked to rehearse after "+danger+" played a "+dangerPts+"-point solo nobody ordered.","Supporters will tolerate one rehearsal disaster. A second one against "+next+" gets reviewed by the entire neighborhood."]
  );
- const index=(Math.max(0,Number(t.roster_id)||1)+Number(week)*7+Number(variationSalt||0))%scenes.length;
+ const index=(Math.max(0,Number(t.roster_id)||1)+Number(week)*7+Number(variationSalt||0))%(Number(week)<5?16:scenes.length);
  return scenes[index];
 }
 

@@ -2220,7 +2220,7 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
 // Forward editions use independently selected fan scenes.  The Week 2 bank
 // remains untouched for locked editions; bench screenshots are one possible
 // subject, not the mandatory premise of every fan reaction.
-function forwardFanScenes(t,won){
+function forwardFanScenes(t,won,week,variationSalt){
  const name=w2DisplayTeam(t.team_name),a=w2Alias(t),leader=(t.starter_details||[])[0],
   low=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],
   miss=t.best_lineup_miss,record=w2Record(t),points=w2One(t.points),
@@ -3081,7 +3081,7 @@ function w2BuildSections(t,prev){
       :w2Natural(supportCredit.map(p=>p.name))+" deserve the under-the-radar credit after "+w2One(supportCredit.reduce((n,p)=>n+Number(p.points||0),0))+" combined points from outside the featured scorers.")
   ]:["n/a"];
   const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=(Number(week)>2
-    ?forwardFanScenes(t,won)
+    ?forwardFanScenes(t,won,week,variationSalt)
     :[w2SentimentRead(t,prev,r,fs,prevSent,won),w2SentimentFollowup(t,prev,r,fs,prevSent,won)])
     .map((line,i)=>w2S(t,r,"sent-"+i,line));
   const nctx=t.next_opponent_context||{},nrec=nctx.record||{},nrecord=String(Number(nrec.wins)||0)+"-"+String(Number(nrec.losses)||0),ndiv=t.next_opponent_division_context?.division_name||"its division",leaders=(t.division_context?.leaders||[]).filter(x=>x?.team_name),selfLead=leaders.some(x=>String(x.roster_id)===String(t.roster_id)),otherLeaders=leaders.filter(x=>String(x.roster_id)!==String(t.roster_id)),divisionPeers=[...(t.division_context?.ahead_teams||[]),...(t.division_context?.same_record_teams||[]),...(t.division_context?.behind_teams||[])].filter((x,i,a)=>x?.team_name&&String(x.roster_id)!==String(t.roster_id)&&a.findIndex(y=>String(y.roster_id)===String(x.roster_id))===i),divisionPeerLine=divisionPeers.map(x=>w2DisplayTeam(x.team_name)+" ("+String(Number(x?.record?.wins)||0)+"-"+String(Number(x?.record?.losses)||0)+")"),next=t.next_opponent_name||"the next opponent",
@@ -4182,7 +4182,7 @@ function assertWeek2Originality(result,previousEdition){
       const used=new Set(forwardSentenceParts((fan.paragraphs||[]).join(' ')).map(s=>forwardNormSentence(s,entities)));
       for(let offset=1;offset<=32&&(fan.paragraphs||[]).filter(p=>String(p).length>=50).length<2;offset++){
         const alternate={...t,roster_id:String((Number(t.roster_id)||1)+offset)};
-        const scenes=forwardFanScenes(alternate,Number(t.points)>Number(t.opponent_points));
+        const scenes=forwardFanScenes(alternate,Number(t.points)>Number(t.opponent_points),week,variationSalt);
         for(const candidate of scenes){
           if(String(candidate).length<50)continue;
           const sentences=forwardSentenceParts(candidate);

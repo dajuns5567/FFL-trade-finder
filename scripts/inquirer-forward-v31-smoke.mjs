@@ -76,7 +76,13 @@ for(const week of [5,6,9,14]){
     assert.ok(audit.ok,'Week '+week+' salt '+salt+' failed publication copy audit: '+JSON.stringify(audit.issues.slice(0,8))+'; fan details='+JSON.stringify(fanDiagnostics));
     assert.ok(edition.teams.every(t=>!/(?:could not turn the came in result|eligible option|fleeced signal)/i.test((t.inquirer_article?.paragraphs||[]).join(' '))),'Forward copy must not contain malformed or meta prose');
     const q=evaluateInquirerEditionQuality(edition,week2);
-    assert.ok(q.ok,'Week '+week+' salt '+salt+' repeated editorial scaffolds: '+JSON.stringify(q.issues.slice(0,8)));
+    const badGrammarTeams=q.issues.filter(x=>x.id==='plural-team-agreement').map(x=>x.team);
+    const grammarExamples=badGrammarTeams.flatMap(name=>{
+      const text=[...edition.teams.flatMap(t=>[t.inquirer_article?.headline,...(t.inquirer_article?.paragraphs||[])]),
+        ...(edition.league_overview.sections||[]).flatMap(sec=>sec.paragraphs||[])];
+      return text.filter(line=>String(line).includes(name)&&new RegExp(name.replace(/[.*+?^\\${}()|[\\]\\\\]/g,'\\\\    assert.ok(q.ok,'Week '+week+' salt '+salt+' repeated editorial scaffolds: '+JSON.stringify(q.issues.slice(0,8)));')+' (?:has|is|does|gets|sits|needs|keeps|faces|projects)\\\\b','i').test(String(line))).slice(0,6);
+    });
+    assert.ok(q.ok,'Week '+week+' salt '+salt+' repeated editorial scaffolds: '+JSON.stringify(q.issues.slice(0,8))+'; grammar examples: '+JSON.stringify(grammarExamples));
     if(week===5&&salt===0){
       const sections=edition.teams.map(t=>t.inquirer_article.sections||[]),orders=new Set(sections.map(rows=>rows.map(s=>s.kind).join('|')));
       const leads=sections.map(rows=>(rows.find(s=>s.kind==='lede')?.paragraphs||[]).length);

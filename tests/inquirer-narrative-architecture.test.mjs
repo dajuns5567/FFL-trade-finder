@@ -150,3 +150,20 @@ test('final composition names unnamed stat evidence and removes repeated two-gam
  assert.match(copy,/1 carry for 18 yards/);
  assert.doesNotMatch(copy,/two-game reason to inspect the role|1 carries/);
 });
+
+
+test('final newsroom restores empty Week 4 essential desks with verified performance facts',()=>{
+ const t=makeStory();
+ t.worst_starter={name:'Quiet Flex',points:2.0,projected:9.5,lineup_slot:'IDP_FLEX'};
+ t.inquirer_article.sections.find(s=>s.kind==='hot-seat').paragraphs=[];
+ t.inquirer_article.sections.find(s=>s.kind==='cool-throne').paragraphs=[];
+ curateForwardTeamNarrative(t,5);
+ restoreForwardArticleDepth(t,5);
+ const hot=t.inquirer_article.sections.find(s=>s.kind==='hot-seat').paragraphs.join(' ');
+ const cool=t.inquirer_article.sections.find(s=>s.kind==='cool-throne').paragraphs.join(' ');
+ assert.match(hot,/Quiet Flex.*2\.0.*7\.5/);
+ assert.match(cool,/Top Runner.*22\.0.*%/);
+ const editions=Array.from({length:32},(_,i)=>curateForwardTeamNarrative(makeStory(i+1),5));
+ editions[0].inquirer_article.sections.find(s=>s.kind==='hot-seat').paragraphs=[];
+ assert(inspectNarrativeArchitecture({week:5,teams:editions}).some(x=>x.id==='week4-essential-desk-empty'));
+});

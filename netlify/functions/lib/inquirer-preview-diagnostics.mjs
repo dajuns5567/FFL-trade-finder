@@ -2,6 +2,7 @@
 export const PREVIEW_DIAGNOSTIC_STORE = 'fleeced-inquirer-editorial-diagnostics';
 export const PREVIEW_DIAGNOSTIC_STATUS = 'week5-status.json';
 export const PREVIEW_DIAGNOSTIC_EDITION = 'week5-edition.json';
+export const PREVIEW_DIAGNOSTIC_REJECTED = 'week5-rejected-review.json';
 
 export function isPreviewDiagnosticContext(url='') {
  const context=String(globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'');

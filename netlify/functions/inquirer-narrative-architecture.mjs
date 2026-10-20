@@ -178,8 +178,22 @@ export function curateForwardTeamNarrative(t,week){
 export function restoreForwardArticleDepth(t,week){
  const a=t?.inquirer_article,players=a?.sections?.find(s=>s.kind==='players');
  if(!a||!players||Number(week)<5)return;
+ // Repair source facts after all rewrite/collision passes, not before.
+ for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(line=>
+  text(line).replace(/,\s+and [^.?!]+ now has a two-game reason to inspect the role\./gi,'.')
+    .replace(/\b1 carries\b/gi,'1 carry')
+    .replace(/\b1 catches\b/gi,'1 catch')
+    .replace(/\bthe route to (.+?) were a trade\b/gi,'the route to $1 was a trade'));
+ const featured=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points));
+ for(const [i,line] of (players.paragraphs||[]).entries()){
+  const contributor=featured[i];
+  if(i===0||!contributor?.name)continue;
+  if(/^(?:The play-by-play records|On the NFL field it amounted to|His game also featured|The stat sheet shows|That included|The actual football work reads|The supporting evidence:|The production came with)\b/i.test(line)
+    &&!line.includes(contributor.name))
+    players.paragraphs[i]=contributor.name+' supplied '+one(contributor.points)+' fantasy points. '+line;
+ }
  const words=()=>a.sections.flatMap(s=>s.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length;
- if(words()>=300)return;
+ if(words()>=300){a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);return;}
  // Apply only after all newsroom de-duplication. Earlier supplementation was
  // itself removed by the final phrase pass, leaving an unreported short copy.
  const candidates=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points));

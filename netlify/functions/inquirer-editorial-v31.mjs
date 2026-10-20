@@ -4172,23 +4172,23 @@ function assertWeek2Originality(result,previousEdition){
     // Last-stage fan integrity: prior-issue copy cleanup is complete. Restore
     // only independently selected, score-grounded scenes not already present
     // in this article or its prior-week edition. Never reuse stock repair text.
-    const priorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
-    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const lastStagePriorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
+    const fanDedupEntities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
     for(const t of teams){
       const a=t.inquirer_article,fan=a?.sections?.find(s=>s.kind==='sentiment');
       if(!fan)continue;
-      const prior=priorByRoster.get(String(t.roster_id));
-      const old=new Set(forwardArticleSentences(prior).map(s=>forwardNormSentence(s,entities)));
-      const used=new Set(forwardSentenceParts((fan.paragraphs||[]).join(' ')).map(s=>forwardNormSentence(s,entities)));
+      const prior=lastStagePriorByRoster.get(String(t.roster_id));
+      const old=new Set(forwardArticleSentences(prior).map(s=>forwardNormSentence(s,fanDedupEntities)));
+      const used=new Set(forwardSentenceParts((fan.paragraphs||[]).join(' ')).map(s=>forwardNormSentence(s,fanDedupEntities)));
       for(let offset=1;offset<=32&&(fan.paragraphs||[]).filter(p=>String(p).length>=50).length<2;offset++){
         const alternate={...t,roster_id:String((Number(t.roster_id)||1)+offset)};
         const scenes=forwardFanScenes(alternate,Number(t.points)>Number(t.opponent_points),week,variationSalt);
         for(const candidate of scenes){
           if(String(candidate).length<50)continue;
           const sentences=forwardSentenceParts(candidate);
-          if(sentences.some(x=>old.has(forwardNormSentence(x,entities))||used.has(forwardNormSentence(x,entities))))continue;
+          if(sentences.some(x=>old.has(forwardNormSentence(x,fanDedupEntities))||used.has(forwardNormSentence(x,fanDedupEntities))))continue;
           fan.paragraphs.push(candidate);
-          sentences.forEach(x=>used.add(forwardNormSentence(x,entities)));
+          sentences.forEach(x=>used.add(forwardNormSentence(x,fanDedupEntities)));
           if(fan.paragraphs.filter(p=>String(p).length>=50).length>=2)break;
         }
       }

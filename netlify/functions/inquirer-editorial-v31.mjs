@@ -3961,11 +3961,11 @@ function assertWeek2Originality(result,previousEdition){
     for(const t of teams){const a=t.inquirer_article;if(!a)continue;
       a.headline=fixGrammar(a.headline,true)
         .replace(/^A this Sunday Worth Talking About for (.+)$/i,(_,club)=>`${club} Turn Week ${week} Into a Talking Point`)
-        .replace(/\\bRuins (.+)[’'] this Sunday$/i,(_,club)=>`Put a Dent in ${club}’ Week ${week}`)
-        .replace(/\\bMake It The last two Sundays Worth Talking About\\b/i,`Make Week ${week} Worth Talking About`)
-        .replace(/\\bThe last two Sundays\\b/gi,`Week ${week}`)
-        .replace(/\\bTwo Weeks of\\b/g,`${week} Weeks of`)
-        .replace(/\\bthis Sunday\\b/gi,`Week ${week}`);
+        .replace(/\bRuins (.+)[’'] this Sunday$/i,(_,club)=>`Put a Dent in ${club}’ Week ${week}`)
+        .replace(/\bMake It The last two Sundays Worth Talking About\b/i,`Make Week ${week} Worth Talking About`)
+        .replace(/\bThe last two Sundays\b/gi,`Week ${week}`)
+        .replace(/\bTwo Weeks of\b/g,`${week} Weeks of`)
+        .replace(/\bthis Sunday\b/gi,`Week ${week}`);
       const seen=new Set();
       for(const s of a.sections||[])s.paragraphs=(s.paragraphs||[]).map(p=>{
         let copy=fixGrammar(p);

@@ -181,3 +181,10 @@ test('late newsroom corrects plural-mascot possessives and admits no new malform
  teams[0].inquirer_article.paragraphs.push("Seattle Seahawks's scorebook is here.");
  assert(inspectNarrativeArchitecture({week:5,teams}).some(x=>x.id==='plural-team-possessive'));
 });
+
+
+test('Week 5 recap gate refuses the stale first-impression arc',()=>{
+ const teams=Array.from({length:32},(_,i)=>makeStory(i+1));
+ const league_overview={sections:[{paragraphs:['Week 4 was a first impression; Week 5 was something else. Good starts have to survive a third opponent.']}]};
+ assert(inspectNarrativeArchitecture({week:5,teams,league_overview}).some(x=>x.id==='stale-week2-recap-arc'));
+});

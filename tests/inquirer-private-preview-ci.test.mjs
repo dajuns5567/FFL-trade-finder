@@ -5,6 +5,8 @@ import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('../.github/workflows/inquirer-editorial-r5-smoke.yml',import.meta.url),'utf8');
 const queueJob=source.split('  seed-private-preview:\n')[1];
 const readerSource=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+const previewJobSource=readFileSync(new URL('../netlify/functions/inquirer-preview-background.mjs',import.meta.url),'utf8');
+const previewDiagnosticSource=readFileSync(new URL('../netlify/functions/inquirer-preview-diagnostic.mjs',import.meta.url),'utf8');
 
 test('only audit-passing pull requests attempt automatic private draft enqueue',()=>{
   assert.ok(queueJob,'preview job must exist');
@@ -38,4 +40,16 @@ test('authenticated preview reader starts an isolated draft and reports real sta
   assert.match(readerSource,/Private Week 5 preview is not ready/);
   assert.match(readerSource,/if\(isRunning&&\+\+inquirerPreviewPollAttempts/);
   assert.doesNotMatch(readerSource,/<h3>Private Week 5 preview is generating<\/h3>/);
+});
+
+test('a failed editorial gate retains only a deploy-local rejected review copy',()=>{
+  assert.match(previewJobSource,/getDeployStore/);
+  assert.match(previewJobSource,/setJSON\(PREVIEW_DIAGNOSTIC_REJECTED,\{started_at,edition\}\)/);
+  assert.match(previewJobSource,/rejected_summary=summarizePreviewDiagnostic/);
+  assert.match(previewDiagnosticSource,/get\(PREVIEW_DIAGNOSTIC_REJECTED/);
+  assert.match(previewDiagnosticSource,/rejected\?\.started_at===status.started_at/);
+  assert.match(previewDiagnosticSource,/review_only:true/);
+  assert.match(previewDiagnosticSource,/status\?\.state!=='error'/);
+  assert.match(previewDiagnosticSource,/status\?\.state!=='completed'/);
+  assert.match(previewDiagnosticSource,/rejected_review_url:/);
 });

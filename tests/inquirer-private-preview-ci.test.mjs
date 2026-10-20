@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 
 const source=readFileSync(new URL('../.github/workflows/inquirer-editorial-r5-smoke.yml',import.meta.url),'utf8');
 const queueJob=source.split('  seed-private-preview:\n')[1];
+const readerSource=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
 
 test('only audit-passing pull requests attempt automatic private draft enqueue',()=>{
   assert.ok(queueJob,'preview job must exist');
@@ -25,4 +26,16 @@ test('the only successful unattended enqueue is HTTP 202; operational errors sti
   assert.match(queueJob,/result=queued/);
   assert.match(queueJob,/Preview generation was not enqueued/);
   assert.match(queueJob,/exit 1/);
+});
+
+test('authenticated preview reader starts an isolated draft and reports real states',()=>{
+  assert.match(readerSource,/inquirer-preview-diagnostic\?draft=1/);
+  assert.match(readerSource,/inquirer-preview-background\?start=1/);
+  assert.match(readerSource,/status\.state==='not-started'/);
+  assert.match(readerSource,/status\.state==='running'/);
+  assert.match(readerSource,/status\.state==='error'/);
+  assert.match(readerSource,/queued\.status!==202/);
+  assert.match(readerSource,/Private Week 5 preview is not ready/);
+  assert.match(readerSource,/if\(isRunning&&\+\+inquirerPreviewPollAttempts/);
+  assert.doesNotMatch(readerSource,/<h3>Private Week 5 preview is generating<\/h3>/);
 });

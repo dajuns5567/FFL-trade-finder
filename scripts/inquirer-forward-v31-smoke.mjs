@@ -78,9 +78,9 @@ for(const week of [5,6,9,14]){
     const q=evaluateInquirerEditionQuality(edition,week2);
     const badGrammarTeams=q.issues.filter(x=>x.id==='plural-team-agreement').map(x=>x.team);
     const grammarExamples=badGrammarTeams.flatMap(name=>{
-      const text=[...edition.teams.flatMap(t=>[t.inquirer_article?.headline,...(t.inquirer_article?.paragraphs||[])]),
+      const rows=[...edition.teams.flatMap(t=>[t.inquirer_article?.headline,...(t.inquirer_article?.paragraphs||[])]),
         ...(edition.league_overview.sections||[]).flatMap(sec=>sec.paragraphs||[])];
-      return text.filter(line=>String(line).includes(name)&&new RegExp(name.replace(/[.*+?^\\${}()|[\\]\\\\]/g,'\\\\    assert.ok(q.ok,'Week '+week+' salt '+salt+' repeated editorial scaffolds: '+JSON.stringify(q.issues.slice(0,8)));')+' (?:has|is|does|gets|sits|needs|keeps|faces|projects)\\\\b','i').test(String(line))).slice(0,6);
+      return rows.filter(line=>String(line).includes(name)&&/ (?:has|is|does|gets|sits|needs|keeps|faces|projects)\\b/i.test(String(line))).slice(0,6);
     });
     assert.ok(q.ok,'Week '+week+' salt '+salt+' repeated editorial scaffolds: '+JSON.stringify(q.issues.slice(0,8))+'; grammar examples: '+JSON.stringify(grammarExamples));
     if(week===5&&salt===0){

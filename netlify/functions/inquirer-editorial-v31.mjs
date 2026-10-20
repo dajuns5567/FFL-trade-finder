@@ -4184,7 +4184,7 @@ function assertWeek2Originality(result,previousEdition){
       const prior=finalPriorByRoster.get(String(t.roster_id));
       const old=new Set(forwardArticleSentences(prior).map(line=>forwardNormSentence(line,fanEntities)));
       const used=new Set(forwardSentenceParts((fan.paragraphs||[]).join(' ')).map(line=>forwardNormSentence(line,fanEntities)));
-      const hasFans=()=>/\\b(?:fans?|supporters?|crowd|fan club|fan base|faithful|stadium|radio|call-in|bars?|group chat|neighborhood)\\b/i.test((fan.paragraphs||[]).join(' '));
+      const hasFans=()=>/\b(?:fans?|supporters?|crowd|fan club|fan base|faithful|stadium|radio|call-in|bars?|group chat|neighborhood)\b/i.test((fan.paragraphs||[]).join(' '));
       for(let offset=1;offset<=64&&((fan.paragraphs||[]).filter(p=>String(p).length>=50).length<2||!hasFans());offset++){
         const alternate={...t,roster_id:String((Number(t.roster_id)||1)+offset)};
         for(const candidate of forwardFanScenes(alternate,Number(t.points)>Number(t.opponent_points),week,variationSalt)){

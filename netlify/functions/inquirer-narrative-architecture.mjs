@@ -190,13 +190,16 @@ export function restoreForwardArticleDepth(t,week){
   const projected=Number(weak.projected),scored=Number(weak.points);
   const miss=Number.isFinite(projected)&&projected>scored?projected-scored:null;
   hot.paragraphs=[miss!=null
-   ?`${weak.name} gave ${team} ${one(scored)} points from ${text(weak.lineup_slot||'a starting spot')}, ${one(miss)} short of the ${one(projected)} projection. ${gap>0?`The final defeat was ${one(gap)} points; this was a real shortfall, although not the only one.`:'The win covered the number but did not turn it into a good starting return.'}`
+   ?`${weak.name} gave ${team} ${one(scored)} points from ${text(String(weak.lineup_slot||'a starting spot').replaceAll('_',' ').replace(/\bidp\b/i,'IDP'))}, ${one(miss)} short of the ${one(projected)} projection. ${gap>0?`The final defeat was ${one(gap)} points; this was a real shortfall, although not the only one.`:'The win covered the number but did not turn it into a good starting return.'}`
    :`${weak.name} supplied just ${one(scored)} points in ${team}'s Week ${week} lineup. The manager has an identifiable weak spot to revisit before the next opponent.`];
  }
  if(cool&&!(cool.paragraphs||[]).length&&leader?.name){
   const share=Number(t.points)>0?Math.round(100*Number(leader.points)/Number(t.points)):0;
   cool.paragraphs=[`${leader.name} scored ${one(leader.points)}, accounting for ${share}% of ${team}'s ${one(t.points)}-point total. ${gap>0?`Even in the loss to ${opponent}, the individual performance earned its own credit.`:'That return gave the winning roster something concrete to celebrate.'}`];
  }
+ // Correct team possessives in every desk, including source fan scenes.
+ if(/s$/i.test(team))for(const section of a.sections||[])
+  section.paragraphs=(section.paragraphs||[]).map(p=>text(p).replaceAll(team+"'s",team+'’').replaceAll(team+'’s',team+'’'));
  // Repair source facts after all rewrite/collision passes, not before.
  for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(line=>
   text(line).replace(/,\s+and [^.?!]+ now has a two-game reason to inspect the role\./gi,'.')
@@ -248,6 +251,8 @@ export function inspectNarrativeArchitecture(edition){
   for(const desk of ['hot-seat','cool-throne'])if(!(kind(desk)?.paragraphs||[]).length)
     issues.push({id:'week4-essential-desk-empty',team,desk});
   const headline=text(a.headline),all=(a.paragraphs||[]).join(' ');
+  if(/s$/i.test(team)&&all.includes(team+"'s"))
+    issues.push({id:'plural-team-possessive',team});
   if(/\b(?:A this Sunday|their this Sunday|[’'] this Sunday|It The last two Sundays|this Sunday's)\b/i.test(headline)
     ||/\b(?:the last two Sundays|this Sunday) Worth Talking About\b/i.test(headline))
     issues.push({id:'malformed-week-adapted-headline',team,headline});

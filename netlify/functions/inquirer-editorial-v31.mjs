@@ -2270,12 +2270,10 @@ function forwardFanScenes(t,won,week,variationSalt){
   ["After "+name+"'s latest game, fans proposed an exhibit of useful excuses and found the display case almost empty. "+points+" points were on the board; "+danger+" contributed "+dangerPts+" to them.","That is the appeal of a box score: it does not accept a request for a better caption before the next game against "+next+"."],
   ["The "+a.mascot+" fan orchestra has a new conductor: "+star+" and "+starPts+" points. The rest of the musicians are being asked to rehearse after "+danger+" played a "+dangerPts+"-point solo nobody ordered.","Supporters will tolerate one rehearsal disaster. A second one against "+next+" gets reviewed by the entire neighborhood."]
  );
- const choiceScene=choice&&Number(t.roster_id)%5===0
-  ?["Fans have one legitimate lineup complaint amid all the noise: "+choice+". That is a measurable missed opportunity, not a license to invent a scandal in every position group.","Somebody has put the decision on a protest sign. The manager gets another chance against "+next+", when the sign either becomes a souvenir or a weekly subscription."]
-  :null;
  const index=(Math.max(0,Number(t.roster_id)||1)+Number(week)*7+Number(variationSalt||0))%scenes.length;
- return choiceScene||scenes[index];
+ return scenes[index];
 }
+
 function w2RecapTradeParagraphs(teams,r){
   const seen=new Set(),trades=[];
   for(const t of teams||[])for(const tr of t.trade_history||[]){const id=String(tr?.id||"");if(!id||seen.has(id))continue;seen.add(id);trades.push(tr)}

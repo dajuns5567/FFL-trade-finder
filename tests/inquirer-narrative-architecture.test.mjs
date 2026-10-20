@@ -121,3 +121,17 @@ test('forward player desk keeps the verified second contributor even below 15 po
  assert.match(copy,/Reliable Receiver/);
  assert.match(copy,/12\.3 fantasy points/);
 });
+
+
+test('under-length team reporting adds a distinct verified reserve fact rather than fan boilerplate',()=>{
+ const t=makeStory();
+ t.starter_details.push(
+  {name:'Reliable Receiver',position:'WR',points:12.3,real_stats:{rec:6,rec_tgt:8,rec_yd:84}},
+  {name:'Young Tackler',position:'LB',points:7.5,real_stats:{tkl_solo:5,tkl_ast:3}}
+ );
+ curateForwardTeamNarrative(t,5);
+ const p=t.inquirer_article.sections.find(s=>s.kind==='players').paragraphs.join(' ');
+ assert.match(p,/Young Tackler/);
+ assert.match(p,/7\.5 fantasy points/);
+ assert.match(p,/solo tackles/);
+});

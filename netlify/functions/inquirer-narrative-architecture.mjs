@@ -277,10 +277,11 @@ export function inspectNarrativeArchitecture(edition){
  }
  if((edition?.teams||[]).length>=16&&orders.size<3)
   issues.push({id:'one-template-for-thirty-two-stories',distinctOrders:orders.size});
- for(const p of (edition?.league_overview?.sections||[]).flatMap(s=>s.blocks?.length?s.blocks.flatMap(b=>b.paragraphs||[]):s.paragraphs||[]))
+ for(const p of (edition?.league_overview?.sections||[]).flatMap(s=>s.blocks?.length?s.blocks.flatMap(b=>b.paragraphs||[]):s.paragraphs||[])){
   if(/\bThe record is \d+-\d+\b/i.test(p))
    issues.push({id:'unattributed-or-stale-season-record',excerpt:String(p).slice(0,130)});
   if(/\b(?:Week \d+ was a first impression|good starts have to survive a third opponent)\b/i.test(p))
    issues.push({id:'stale-week2-recap-arc',excerpt:String(p).slice(0,130)});
+ }
  return issues;
 }

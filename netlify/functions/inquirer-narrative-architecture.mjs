@@ -102,13 +102,15 @@ export function curateForwardTeamNarrative(t,week){
  }
  const players=byKind.get('players');
  if(players){
-  const featured=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points)).slice(0,2)
-    .filter((p,i)=>i===0||Number(p.points)>=15);
+  const featured=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points)).slice(0,2);
   // The pre-existing source stat rows passed factual audits. Preserve them
   // when available: mass-rewording all 32 into eight new sentence templates
   // would simply manufacture a different flavor of repeated prose.
   const sourceStatRows=players.paragraphs.filter(p=>/fantasy points/i.test(p)).slice(0,featured.length);
-  const statRows=sourceStatRows.length?sourceStatRows:featured.map((p,i)=>storyStat(p,t.opponent_name||'the opponent',i,(Number(t.roster_id)||1)-1));
+  const statRows=sourceStatRows.length?[...sourceStatRows]:[];
+  for(const [i,player] of featured.entries())
+    if(!statRows.some(row=>row.includes(player.name)))
+      statRows.push(storyStat(player,t.opponent_name||'the opponent',i,(Number(t.roster_id)||1)-1));
   // Preserve acquired-player or distinct long-form commentary, but discard
   // the formulaic "Against X, Y led" stat rows from the old draft.
   const additional=players.paragraphs.filter(p=>!/^Against /i.test(p)&&!featured.some(f=>p.includes(f.name)&&/fantasy points;/.test(p)))

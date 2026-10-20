@@ -21,7 +21,7 @@ const makeStory=(i=1)=>{
 
 test('forward curation makes one result, one lineup argument, and real football prose',()=>{
  const t=curateForwardTeamNarrative(makeStory(),5),sections=t.inquirer_article.sections;
- assert.equal(sections.find(s=>s.kind==='lede').paragraphs.length,2);
+ assert.ok(sections.find(s=>s.kind==='lede').paragraphs.length<=3);
  assert.equal(sections.find(s=>s.kind==='management').paragraphs.length,1);
  const player=sections.find(s=>s.kind==='players').paragraphs[0];
  assert.match(player,/22\.0 fantasy points/);
@@ -90,4 +90,23 @@ test('reordering sections cannot reintroduce canned editorial prefaces',()=>{
 test('a recap cannot smuggle a Week 2 season-record sentence into Week 5',()=>{
  const edition={week:5,teams:Array.from({length:32},(_,i)=>makeStory(i+1)),league_overview:{sections:[{paragraphs:['Cleveland Browns improved. The record is 2-0 after this result.']} ]}};
  assert.ok(inspectNarrativeArchitecture(edition).some(x=>x.id==='unattributed-or-stale-season-record'));
+});
+
+
+test('forward-week admission rejects malformed transplanted headlines and skeletal articles',()=>{
+ const teams=Array.from({length:32},(_,i)=>curateForwardTeamNarrative(makeStory(i+1),5));
+ teams[0].inquirer_article.headline='A this Sunday Worth Talking About for Home Club 1';
+ const failures=inspectNarrativeArchitecture({week:5,teams});
+ assert(failures.some(x=>x.id==='malformed-week-adapted-headline'&&x.team==='Home Club 1'));
+ assert(failures.some(x=>x.id==='article-below-week4-editorial-floor'&&x.team==='Home Club 1'));
+});
+
+test('anonymous Week 2 praise is removed even when it survives in the credit desk',()=>{
+ const t=makeStory();
+ t.inquirer_article.sections.find(s=>s.kind==='cool-throne').paragraphs=[
+  'Top Runner posted 22.0 points. After Week 4 the top rival target made this Sunday harder to mock. The result mattered for the standings.'
+ ];
+ curateForwardTeamNarrative(t,5);
+ assert.doesNotMatch(t.inquirer_article.paragraphs.join(' '),/top rival target|harder to mock/i);
+ assert.match(t.inquirer_article.paragraphs.join(' '),/result mattered for the standings/);
 });

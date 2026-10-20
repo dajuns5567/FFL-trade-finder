@@ -4169,27 +4169,34 @@ function assertWeek2Originality(result,previousEdition){
       });
     }
     for(const t of teams)restoreForwardPlayerFact(t);
-    // Last-stage fan integrity: prior-issue copy cleanup is complete. Restore
-    // only independently selected, score-grounded scenes not already present
-    // in this article or its prior-week edition. Never reuse stock repair text.
-    const lastStagePriorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
-    const fanDedupEntities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    // Final stage after every archive filter: keep meaningful fan response,
+    // and reject paired punchlines shared with any other current team.
+    const finalPriorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
+    const fanEntities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const fanPhraseKeys=new Set();
+    for(const teamRow of teams){
+      const fan=teamRow.inquirer_article?.sections?.find(x=>x.kind==='sentiment');
+      for(const para of fan?.paragraphs||[])for(const key of forwardEditorialPhraseKeys(para,fanEntities,16,false))fanPhraseKeys.add(key);
+    }
     for(const t of teams){
-      const a=t.inquirer_article,fan=a?.sections?.find(s=>s.kind==='sentiment');
+      const a=t.inquirer_article,fan=a?.sections?.find(x=>x.kind==='sentiment');
       if(!fan)continue;
-      const prior=lastStagePriorByRoster.get(String(t.roster_id));
-      const old=new Set(forwardArticleSentences(prior).map(s=>forwardNormSentence(s,fanDedupEntities)));
-      const used=new Set(forwardSentenceParts((fan.paragraphs||[]).join(' ')).map(s=>forwardNormSentence(s,fanDedupEntities)));
-      for(let offset=1;offset<=32&&(fan.paragraphs||[]).filter(p=>String(p).length>=50).length<2;offset++){
+      const prior=finalPriorByRoster.get(String(t.roster_id));
+      const old=new Set(forwardArticleSentences(prior).map(line=>forwardNormSentence(line,fanEntities)));
+      const used=new Set(forwardSentenceParts((fan.paragraphs||[]).join(' ')).map(line=>forwardNormSentence(line,fanEntities)));
+      const hasFans=()=>/\\b(?:fans?|supporters?|crowd|fan club|fan base|faithful|stadium|radio|call-in|bars?|group chat|neighborhood)\\b/i.test((fan.paragraphs||[]).join(' '));
+      for(let offset=1;offset<=64&&((fan.paragraphs||[]).filter(p=>String(p).length>=50).length<2||!hasFans());offset++){
         const alternate={...t,roster_id:String((Number(t.roster_id)||1)+offset)};
-        const scenes=forwardFanScenes(alternate,Number(t.points)>Number(t.opponent_points),week,variationSalt);
-        for(const candidate of scenes){
+        for(const candidate of forwardFanScenes(alternate,Number(t.points)>Number(t.opponent_points),week,variationSalt)){
           if(String(candidate).length<50)continue;
           const sentences=forwardSentenceParts(candidate);
-          if(sentences.some(x=>old.has(forwardNormSentence(x,fanDedupEntities))||used.has(forwardNormSentence(x,fanDedupEntities))))continue;
+          if(sentences.some(line=>old.has(forwardNormSentence(line,fanEntities))||used.has(forwardNormSentence(line,fanEntities))))continue;
+          const keys=forwardEditorialPhraseKeys(candidate,fanEntities,16,false);
+          if(keys.some(key=>fanPhraseKeys.has(key)))continue;
           fan.paragraphs.push(candidate);
-          sentences.forEach(x=>used.add(forwardNormSentence(x,fanDedupEntities)));
-          if(fan.paragraphs.filter(p=>String(p).length>=50).length>=2)break;
+          sentences.forEach(line=>used.add(forwardNormSentence(line,fanEntities)));
+          keys.forEach(key=>fanPhraseKeys.add(key));
+          if(fan.paragraphs.filter(p=>String(p).length>=50).length>=2&&hasFans())break;
         }
       }
       a.paragraphs=a.sections.flatMap(x=>x.paragraphs||[]);

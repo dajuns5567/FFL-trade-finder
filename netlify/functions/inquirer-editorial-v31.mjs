@@ -4218,6 +4218,18 @@ function assertWeek2Originality(result,previousEdition){
           if(fan.paragraphs.filter(p=>String(p).length>=50).length>=2&&hasFans())break;
         }
       }
+      // The scene selector is the final writer. Agreement correction must
+      // therefore run here, after the selected scene is inserted.
+      const pluralNames=teams.map(row=>w2DisplayTeam(row.team_name)).filter(w2PluralTeamName);
+      fan.paragraphs=(fan.paragraphs||[]).map(line=>{
+        let text=String(line||'');
+        for(const name of pluralNames){
+          const verb={has:'have',is:'are',does:'do',gets:'get',sits:'sit',needs:'need',keeps:'keep',faces:'face',projects:'project'};
+          text=text.replace(new RegExp('\\\\b'+w2EscRe(name)+' (has|is|does|gets|sits|needs|keeps|faces|projects)\\\\b','gi'),
+            (_,word)=>name+' '+verb[word.toLowerCase()]);
+        }
+        return text;
+      });
       a.paragraphs=a.sections.flatMap(x=>x.paragraphs||[]);
     }
   }

@@ -130,3 +130,11 @@ test('editorial quality gate rejects repeated recap arguments, stale hot takes a
  for(const id of ['reader-facing-grammar','uncapitalized-section-heading','recap-recycled-week2-hot-take','recap-duplicate-hot-take-argument','recap-duplicate-commentary'])
   assert(ids.includes(id),id+' not rejected: '+ids.join(','));
 });
+
+
+test('week adaptation cannot replay the Week 2 first-impression and third-opponent arc',()=>{
+ const copy=adaptWeekLanguage('Week 1 was a first impression; Week 2 is where the loud result starts becoming a reputation. Good starts have to survive a third opponent, and Week 3 gets the next look.',5);
+ assert.match(copy,/Week 4 supplied the comparison; Week 5 is where/);
+ assert.match(copy,/survive the next opponent/);
+ assert.doesNotMatch(copy,/first impression|third opponent/);
+});

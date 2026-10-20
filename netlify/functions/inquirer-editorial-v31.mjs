@@ -3946,7 +3946,8 @@ function assertWeek2Originality(result,previousEdition){
           return name+' '+(isHeadline?result[0].toUpperCase()+result.slice(1):result);
         });
       }
-      return copy.replace(/\ba ([89](?:\.\d+)?-point)\b/gi,'an $1')
+      return copy.replace(/\bthis round of games['’]s\b/gi,"this week's")
+        .replace(/\ba ([89](?:\.\d+)?-point)\b/gi,'an $1')
         .replace(/\bthis round of games’s\b/gi,'this week’s')
         .replace(/\b(The radio station covering [^.?!]{4,85}?) have declared\b/gi,'$1 has declared')
         .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!]{4,85}?) are already compressed\b/gi,'$1 is already compressed');
@@ -3958,7 +3959,13 @@ function assertWeek2Originality(result,previousEdition){
     }
     overview.hot_takes=(overview.hot_takes||[]).map(h=>({...h,title:fixGrammar(h.title),take:fixGrammar(h.take)}));
     for(const t of teams){const a=t.inquirer_article;if(!a)continue;
-      a.headline=fixGrammar(a.headline,true);
+      a.headline=fixGrammar(a.headline,true)
+        .replace(/^A this Sunday Worth Talking About for (.+)$/i,(_,club)=>`${club} Turn Week ${week} Into a Talking Point`)
+        .replace(/\\bRuins (.+)[’'] this Sunday$/i,(_,club)=>`Put a Dent in ${club}’ Week ${week}`)
+        .replace(/\\bMake It The last two Sundays Worth Talking About\\b/i,`Make Week ${week} Worth Talking About`)
+        .replace(/\\bThe last two Sundays\\b/gi,`Week ${week}`)
+        .replace(/\\bTwo Weeks of\\b/g,`${week} Weeks of`)
+        .replace(/\\bthis Sunday\\b/gi,`Week ${week}`);
       const seen=new Set();
       for(const s of a.sections||[])s.paragraphs=(s.paragraphs||[]).map(p=>{
         let copy=fixGrammar(p);

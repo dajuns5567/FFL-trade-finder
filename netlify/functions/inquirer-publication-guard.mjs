@@ -85,6 +85,22 @@ export function inspectEditionBeforePublication(edition) {
     issues.push({id:'shared-editorial-phrase',teams:row.teams,excerpt:row.phrase});
   const recap=edition?.league_overview;
   if(!recap?.headline||!(recap.sections||[]).length)issues.push({id:'recap-missing'});
+  // These are emergency templates manufactured AFTER the writer finished.
+  // They pass factual score tests but destroy weekly freshness and sarcasm.
+  // Hold the candidate and try another writing variant; never approve filler.
+  if(Number(edition?.week)>=5){
+   const emergencyCopy=/\\b(?:An actual Week \\d+ result supplies the counterweight|Forget the old division-board shorthand|The Week \\d+ scoreboard gives this race a concrete reference point|Here is what the Week \\d+ ledger can actually prove|Nobody gets a championship banner for a column of standings|A Scoreboard Receipts Check|The division board loves a coronation)\\b/i;
+   for(const [i,s] of (recap?.sections||[]).entries()){
+    const rows=s.blocks?.length?s.blocks.flatMap(b=>b.paragraphs||[]):s.paragraphs||[];
+    if(!rows.some(p=>String(p||'').trim()))issues.push({id:'empty-recap-desk',section:i});
+    for(const p of rows)if(emergencyCopy.test(p))issues.push({id:'emergency-recap-filler',section:i,excerpt:String(p).slice(0,160)});
+   }
+   for(const [i,h] of (recap?.hot_takes||[]).entries()){
+    if(!String(h.take||'').trim())issues.push({id:'empty-recap-hot-take',index:i});
+    if(emergencyCopy.test(String(h.title||'')+' '+String(h.take||'')))
+     issues.push({id:'emergency-recap-filler',hot_take:i,excerpt:String(h.take||'').slice(0,160)});
+   }
+  }
   for(const p of (recap?.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])])){
     for(const pattern of misleading)if(pattern.pattern.test(p))issues.push({id:'recap-'+pattern.id,excerpt:p.slice(0,180)});
   }

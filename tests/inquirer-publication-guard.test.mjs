@@ -154,3 +154,19 @@ test('deploy previews are read-only before shared-Blob publication can run',()=>
  assert.equal(isReadOnlyEditorialPreview('https://some-site.netlify.app/.netlify/functions/league-hub','branch-deploy'),true);
  assert.equal(isReadOnlyEditorialPreview('https://some-site.netlify.app/.netlify/functions/league-hub','production'),false);
 });
+
+test('a manufactured emergency scoreboard paragraph cannot be admitted as fresh commentary',()=>{
+ const e=makeEdition();
+ e.league_overview.sections[2].paragraphs=['Forget the old division-board shorthand for a moment. Week 5 produced 102 points from Team 2 and 101 from Team 1.'];
+ e.league_overview.hot_takes=[{title:'Week 5: A Scoreboard Receipts Check',take:'Here is what the Week 5 ledger can actually prove: Team 2 finished with 102.'}];
+ const ids=new Set(inspectEditionBeforePublication(e).issues.map(x=>x.id));
+ assert(ids.has('emergency-recap-filler'));
+});
+test('empty recap desks and hot takes block publication instead of silently disappearing',()=>{
+ const e=makeEdition();
+ e.league_overview.sections[2].paragraphs=[];
+ e.league_overview.hot_takes=[{title:'Division Board',take:''}];
+ const ids=new Set(inspectEditionBeforePublication(e).issues.map(x=>x.id));
+ assert(ids.has('empty-recap-desk'));
+ assert(ids.has('empty-recap-hot-take'));
+});

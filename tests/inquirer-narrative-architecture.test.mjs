@@ -136,3 +136,17 @@ test('under-length team reporting adds a distinct verified reserve fact rather t
  assert.match(p,/7\.5 fantasy points/);
  assert.match(p,/solo tackles/);
 });
+
+
+test('final composition names unnamed stat evidence and removes repeated two-game scaffold',()=>{
+ const t=makeStory();
+ t.starter_details.push({name:'Reliable Receiver',position:'WR',points:12.3,real_stats:{rec:6,rec_tgt:8,rec_yd:84}});
+ curateForwardTeamNarrative(t,5);
+ t.inquirer_article.sections.find(s=>s.kind==='players').paragraphs[1]='The play-by-play records 1 carries for 18 yards.';
+ t.inquirer_article.sections.find(s=>s.kind==='hot-seat').paragraphs=['Reliable Receiver lost 9.6 points from Week 4, and Home Club 1 now has a two-game reason to inspect the role.'];
+ restoreForwardArticleDepth(t,5);
+ const copy=t.inquirer_article.paragraphs.join(' ');
+ assert.match(copy,/Reliable Receiver supplied 12\.3 fantasy points/);
+ assert.match(copy,/1 carry for 18 yards/);
+ assert.doesNotMatch(copy,/two-game reason to inspect the role|1 carries/);
+});

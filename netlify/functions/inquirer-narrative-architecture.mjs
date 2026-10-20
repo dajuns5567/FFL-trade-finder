@@ -171,6 +171,16 @@ export function curateForwardTeamNarrative(t,week){
   }
   return copy;
  });
+ // Only a genuinely short article earns a third player fact. This uses
+ // the lineup's real scoring/stat line, not a canned fan scene or an invented
+ // quotation, and avoids the repetitive three-scorer framing in long stories.
+ const articleWords=()=>a.sections.flatMap(s=>s.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length;
+ if(articleWords()<300&&players){
+  const already=players.paragraphs.join(' ');
+  const third=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points))
+    .find(p=>p?.name&&!already.includes(p.name));
+  if(third)players.paragraphs.push(storyStat(third,t.opponent_name,2,(Number(t.roster_id)||1)+week+3));
+ }
  a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
  return t;
 }

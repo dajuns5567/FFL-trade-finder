@@ -167,3 +167,17 @@ test('final newsroom restores empty Week 4 essential desks with verified perform
  editions[0].inquirer_article.sections.find(s=>s.kind==='hot-seat').paragraphs=[];
  assert(inspectNarrativeArchitecture({week:5,teams:editions}).some(x=>x.id==='week4-essential-desk-empty'));
 });
+
+
+test('late newsroom corrects plural-mascot possessives and admits no new malformed copy',()=>{
+ const t=makeStory();t.team_name='Seattle Seahawks';
+ t.inquirer_article.sections.find(s=>s.kind==='sentiment').paragraphs=["Seattle Seahawks's spectators expected a better showing."];
+ curateForwardTeamNarrative(t,5);
+ restoreForwardArticleDepth(t,5);
+ assert.match(t.inquirer_article.paragraphs.join(' '),/Seattle Seahawks’ spectators/);
+ assert.doesNotMatch(t.inquirer_article.paragraphs.join(' '),/Seahawks's/);
+ const teams=Array.from({length:32},(_,i)=>curateForwardTeamNarrative(makeStory(i+1),5));
+ teams[0].team_name='Seattle Seahawks';
+ teams[0].inquirer_article.paragraphs.push("Seattle Seahawks's scorebook is here.");
+ assert(inspectNarrativeArchitecture({week:5,teams}).some(x=>x.id==='plural-team-possessive'));
+});

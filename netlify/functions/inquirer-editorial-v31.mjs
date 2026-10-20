@@ -4229,9 +4229,9 @@ function assertWeek2Originality(result,previousEdition){
             (_,word)=>name+' '+verb[word.toLowerCase()]);
         }
         return text
-          .replace(/\\b(The radio station covering [^.?!]{4,85}?) have declared\\b/gi,'$1 has declared')
-          .replace(/\\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!]{4,85}?) are already compressed\\b/gi,'$1 is already compressed')
-          .replace(/\\b(The road after [^.?!]{4,85}?) are mixed\\b/gi,'$1 is mixed');
+          .replace(/\b(The radio station covering [^.?!]{4,85}?) have declared\b/gi,'$1 has declared')
+          .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!]{4,85}?) are already compressed\b/gi,'$1 is already compressed')
+          .replace(/\b(The road after [^.?!]{4,85}?) are mixed\b/gi,'$1 is mixed');
       });
       a.paragraphs=a.sections.flatMap(x=>x.paragraphs||[]);
     }

@@ -91,7 +91,14 @@ export function curateForwardTeamNarrative(t,week){
   if(/\b(?:split the first two games|first result on|Week 3 gets to decide whether Week 2)\b/i.test(memory))memory='';
   if(memory&&opening&&memory===opening)memory='';
   const verifiedScore=rows[1]||editorialResult(t,week,(Number(t.roster_id)||1)-1);
-  lede.paragraphs=[`${opening} ${verifiedScore}`.trim(),memory].filter(Boolean);
+  // Preserve one genuinely different editorial observation when the source
+  // has it. Week 4's approved ledes carry a third beat; blanket compression
+  // into two lines made the short teams read like score summaries.
+  const distinct=rows.slice(2).find(p=>p!==memory&&!hasOpponentPreview(p)
+    &&!/\\b(?:final score|beat|lost to|season record is|No\\. \\d+ in the league standings)\\b/i.test(p)
+    &&!/[0-9]{2,3}\\.[0-9]\\s*[-–]\\s*[0-9]{2,3}\\.[0-9]/.test(p));
+  lede.paragraphs=[`${opening} ${verifiedScore}`.trim(),memory,distinct]
+    .filter((p,i,arr)=>p&&!arr.slice(0,i).includes(p));
  }
  const players=byKind.get('players');
  if(players){
@@ -133,7 +140,10 @@ export function curateForwardTeamNarrative(t,week){
   management.paragraphs=[pruneCase(first),move&&pruneMove(move)].filter(Boolean);
  }
  const credit=byKind.get('cool-throne');
- if(credit)credit.paragraphs=credit.paragraphs.map(cullRecycledMetaphors).filter(Boolean);
+ if(credit)credit.paragraphs=credit.paragraphs.map(p=>cullRecycledMetaphors(p))
+  .map(p=>clauseParts(p).filter(sentence=>
+    !/\\b(?:made this Sunday harder to mock|the top rival target|the second scorer|second punch)\\b/i.test(sentence)
+  ).join(' ')).filter(Boolean);
  const outlook=byKind.get('outlook');
  if(outlook?.paragraphs?.length){
   const rows=outlook.paragraphs,first=rows[0],last=rows.at(-1);
@@ -184,6 +194,14 @@ export function inspectNarrativeArchitecture(edition){
   const a=t.inquirer_article||{},ss=a.sections||[],kind=k=>ss.find(s=>s.kind===k),team=t.team_name;
   orders.add(ss.map(s=>s.kind).join('|'));
   const lede=kind('lede')?.paragraphs||[],mgmt=kind('management')?.paragraphs||[];
+  const headline=text(a.headline),all=(a.paragraphs||[]).join(' ');
+  if(/\\b(?:A this Sunday|their this Sunday|[’'] this Sunday|It The last two Sundays|this Sunday's)\\b/i.test(headline)
+    ||/\\b(?:the last two Sundays|this Sunday) Worth Talking About\\b/i.test(headline))
+    issues.push({id:'malformed-week-adapted-headline',team,headline});
+  const words=all.split(/\\s+/).filter(Boolean).length;
+  if(words<300)issues.push({id:'article-below-week4-editorial-floor',team,words});
+  if(/\\b(?:made this Sunday harder to mock|the top rival target|the second scorer)\\b/i.test(all))
+    issues.push({id:'anonymous-week2-player-trope',team});
   if(lede.length>3)issues.push({id:'overwritten-with-five-part-legacy-lede',team,count:lede.length});
   if(mgmt.length>2)issues.push({id:'repeated-management-case',team,count:mgmt.length});
   const miss=t.best_lineup_miss,names=[miss?.starter?.name,miss?.reserve?.name].filter(Boolean);

@@ -1,6 +1,6 @@
 import {getDeployStore} from '@netlify/blobs';
 import {weeklyReport} from './league-hub.mjs';
-import {isPreviewDiagnosticContext,PREVIEW_DIAGNOSTIC_STORE,PREVIEW_DIAGNOSTIC_STATUS,PREVIEW_DIAGNOSTIC_EDITION,summarizePreviewDiagnostic} from './lib/inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,PREVIEW_DIAGNOSTIC_STORE,PREVIEW_DIAGNOSTIC_STATUS,PREVIEW_DIAGNOSTIC_EDITION,PREVIEW_DIAGNOSTIC_REJECTED,summarizePreviewDiagnostic} from './lib/inquirer-preview-diagnostics.mjs';
 
 // Explicit preview-only diagnostic invocation. Never publishes or stages an edition.
 // A background function is not constrained by the normal 30-second HTTP response timeout.
@@ -25,8 +25,14 @@ export default async function generateInquirerPreview(req){
   const edition=await weeklyReport(new Request(draftUrl));
   if(edition?.preview_only!==true||edition?.published_locked!==false||edition?.available!==true)
    throw Error('Expected an available, unpublished read-only editorial draft: '+String(edition?.reason||'unavailable'));
-  if(edition?.preview_generation_quality?.ok!==true||edition?.preview_editorial_audit?.ok!==true)
-   throw Error('Private draft failed final quality or publication audit; refusing to present it as completed.');
+  if(edition?.preview_generation_quality?.ok!==true||edition?.preview_editorial_audit?.ok!==true){
+   // Keep a rejected manuscript only in deploy-local diagnostic storage so
+   // editors can inspect the exact failed prose without admitting it to the reader.
+   await store.setJSON(PREVIEW_DIAGNOSTIC_REJECTED,{started_at,edition});
+   const failure=Error('Private draft failed final quality or publication audit; refusing to present it as completed.');
+   failure.rejected_summary=summarizePreviewDiagnostic(edition);
+   throw failure;
+  }
   await store.setJSON(PREVIEW_DIAGNOSTIC_EDITION,edition);
   await store.setJSON(PREVIEW_DIAGNOSTIC_STATUS,{
    state:'completed',started_at,finished_at:new Date().toISOString(),
@@ -35,7 +41,7 @@ export default async function generateInquirerPreview(req){
   console.info('inquirer-preview-background-completed',JSON.stringify({season:edition.season,week:edition.week,articles:edition.teams?.length}));
  }catch(error){
   const message=String(error?.message||error);
-  await store.setJSON(PREVIEW_DIAGNOSTIC_STATUS,{state:'error',started_at,finished_at:new Date().toISOString(),preview_only:true,error:message})
+  await store.setJSON(PREVIEW_DIAGNOSTIC_STATUS,{state:'error',started_at,finished_at:new Date().toISOString(),preview_only:true,error:message,summary:error?.rejected_summary||null})
    .catch(statusError=>console.error('inquirer-preview-background-status',statusError));
   console.error('inquirer-preview-background-failed',error);
  }

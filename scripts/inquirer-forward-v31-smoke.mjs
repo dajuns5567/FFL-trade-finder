@@ -88,6 +88,24 @@ for(const week of [5,6,9,14]){
   }
 }
 
+// Test a real editorial handoff between two freshly generated adjacent weeks.
+// Merely comparing Week 6 to a preloaded Week 2 fixture misses the exact
+// previous-week repetition that has repeatedly reached the site.
+const adjacentFiveRaw=realisticForwardRaw(5);
+const adjacentFiveDraft=applyInquirerEditorialV31({season:2026,week:5,...adjacentFiveRaw,
+ previousEdition:week2,weekClassification:inquirerWeekClassification(5,2026),variationSalt:5});
+const adjacentFive={season:2026,week:5,published_locked:true,teams:adjacentFiveDraft.inquirer.teams,
+ league_overview:adjacentFiveDraft.leagueOverview};
+const adjacentSixRaw=realisticForwardRaw(6);
+const adjacentSixDraft=applyInquirerEditorialV31({season:2026,week:6,...adjacentSixRaw,
+ previousEdition:adjacentFive,weekClassification:inquirerWeekClassification(6,2026),variationSalt:5});
+const adjacentSix={season:2026,week:6,teams:adjacentSixDraft.inquirer.teams,
+ league_overview:adjacentSixDraft.leagueOverview};
+const adjacentAudit=inspectEditionBeforePublication(adjacentSix);
+assert.ok(adjacentAudit.ok,'Adjacent Week 5 to Week 6 publication audit failed: '+JSON.stringify(adjacentAudit.issues.slice(0,8)));
+const adjacentQuality=evaluateInquirerEditionQuality(adjacentSix,adjacentFive);
+assert.ok(adjacentQuality.ok,'Week 6 must be fresh relative to generated Week 5: '+JSON.stringify(adjacentQuality.issues.slice(0,8)));
+
 const week9raw=rawForWeek(9),week9=applyInquirerEditorialV31({season:2026,week:9,...week9raw,previousEdition:week3,weekClassification:inquirerWeekClassification(9,2026),variationSalt:2});
 assert.ok((week9.leagueOverview.sections||[]).some(s=>s.heading==='The Playoff Race Is No Longer Background Noise'),'Late regular-season edition must introduce explicit playoff-race coverage');
 

@@ -110,3 +110,14 @@ test('anonymous Week 2 praise is removed even when it survives in the credit des
  assert.doesNotMatch(t.inquirer_article.paragraphs.join(' '),/top rival target|harder to mock/i);
  assert.match(t.inquirer_article.paragraphs.join(' '),/result mattered for the standings/);
 });
+
+
+test('forward player desk keeps the verified second contributor even below 15 points',()=>{
+ const t=makeStory();
+ t.starter_details.push({name:'Reliable Receiver',position:'WR',points:12.3,real_stats:{rec:6,rec_tgt:8,rec_yd:84}});
+ curateForwardTeamNarrative(t,5);
+ const copy=t.inquirer_article.sections.find(s=>s.kind==='players').paragraphs.join(' ');
+ assert.match(copy,/Top Runner/);
+ assert.match(copy,/Reliable Receiver/);
+ assert.match(copy,/12\.3 fantasy points/);
+});

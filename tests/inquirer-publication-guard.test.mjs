@@ -12,7 +12,7 @@ const makeEdition=()=>{
   const distinct='lexeme'+String.fromCharCode(97+i%26)+String.fromCharCode(97+Math.floor(i/26));
   const prose=Array.from({length:6},(_,j)=>
    'Editorial evidence '+distinct+' for '+name+' in '+distinct+' chapter '+j+': '+
-   Array(i+5).fill('distinctive football detail '+distinct).join(' ')+
+   Array(i+6).fill('distinctive football detail '+distinct).join(' ')+
    ' as the scoring and strategic choices develop.');
   const sections=[
    {kind:'lede',heading:'Week 5 account',paragraphs:prose.slice(0,2)},

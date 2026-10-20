@@ -4246,7 +4246,15 @@ function assertWeek2Originality(result,previousEdition){
   }
   // Final editorial-depth check runs *after* archival and cross-team pruning.
   // It must see the exact article structure handed to the admission gate.
-  if(week>=5)for(const t of teams)restoreForwardArticleDepth(t,week);
+  if(week>=5)for(const t of teams){
+    restoreForwardArticleDepth(t,week);
+    const a=t.inquirer_article;if(!a)continue;
+    // Headline rewrites must be finalized here: the late composition pass
+    // can re-introduce the old Week-2 two-game conclusion in other salts.
+    a.headline=String(a.headline||'').replaceAll(
+      'Make Week '+week+' Look Less Accidental',
+      'Make Their Week '+week+' Win Harder to Ignore');
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

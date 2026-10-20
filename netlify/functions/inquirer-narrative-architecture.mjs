@@ -171,18 +171,24 @@ export function curateForwardTeamNarrative(t,week){
   }
   return copy;
  });
- // Only a genuinely short article earns a third player fact. This uses
- // the lineup's real scoring/stat line, not a canned fan scene or an invented
- // quotation, and avoids the repetitive three-scorer framing in long stories.
- const articleWords=()=>a.sections.flatMap(s=>s.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length;
- if(articleWords()<300&&players){
-  const already=players.paragraphs.join(' ');
-  const third=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points))
-    .find(p=>p?.name&&!already.includes(p.name));
-  if(third)players.paragraphs.push(storyStat(third,t.opponent_name,2,(Number(t.roster_id)||1)+week+3));
- }
  a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
  return t;
+}
+
+export function restoreForwardArticleDepth(t,week){
+ const a=t?.inquirer_article,players=a?.sections?.find(s=>s.kind==='players');
+ if(!a||!players||Number(week)<5)return;
+ const words=()=>a.sections.flatMap(s=>s.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length;
+ if(words()>=300)return;
+ // Apply only after all newsroom de-duplication. Earlier supplementation was
+ // itself removed by the final phrase pass, leaving an unreported short copy.
+ const candidates=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points));
+ for(const [i,p] of candidates.entries()){
+  if(words()>=300)break;
+  if(!p?.name||players.paragraphs.some(row=>row.includes(p.name)))continue;
+  players.paragraphs.push(storyStat(p,t.opponent_name,i,(Number(t.roster_id)||1)+Number(week)+i));
+ }
+ a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
 }
 
 export function restoreForwardPlayerFact(t){

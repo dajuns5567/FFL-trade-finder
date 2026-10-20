@@ -89,7 +89,7 @@ export function inspectEditionBeforePublication(edition) {
   // They pass factual score tests but destroy weekly freshness and sarcasm.
   // Hold the candidate and try another writing variant; never approve filler.
   if(Number(edition?.week)>=5){
-   const emergencyCopy=/\\b(?:An actual Week \\d+ result supplies the counterweight|Forget the old division-board shorthand|The Week \\d+ scoreboard gives this race a concrete reference point|Here is what the Week \\d+ ledger can actually prove|Nobody gets a championship banner for a column of standings|A Scoreboard Receipts Check|The division board loves a coronation)\\b/i;
+   const emergencyCopy=/\b(?:An actual Week \d+ result supplies the counterweight|Forget the old division-board shorthand|The Week \d+ scoreboard gives this race a concrete reference point|Here is what the Week \d+ ledger can actually prove|Nobody gets a championship banner for a column of standings|A Scoreboard Receipts Check|The division board loves a coronation)\b/i;
    for(const [i,s] of (recap?.sections||[]).entries()){
     const rows=s.blocks?.length?s.blocks.flatMap(b=>b.paragraphs||[]):s.paragraphs||[];
     if(!rows.some(p=>String(p||'').trim()))issues.push({id:'empty-recap-desk',section:i});

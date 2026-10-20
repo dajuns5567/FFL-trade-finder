@@ -47,6 +47,11 @@ export function adaptWeekLanguage(value,week,classification){
      .replace(/\bthe first the last two (weeks|Sundays)\b/gi,(_,unit)=>'the last two '+unit)
      .replace(/\b(?:the last\s+){2,}two (weeks|Sundays)\b/gi,(match,unit)=>
        (/^[A-Z]/.test(match)?'The':'the')+' last two '+unit);
+  if(Number(week)>=5)s=s
+    .replace(/Week \d+ was a first impression; Week \d+ is where/gi,
+      'Week '+prev+' supplied the comparison; Week '+Number(week)+' is where')
+    .replace(/Good starts have to survive a third opponent/gi,
+      'Good starts have to survive the next opponent');
   if(classification?.playoffs)s=s.replace(/Week \d+ • Regular Season/g,String(classification.label||('Week '+week+' • Playoffs')));
   return s;
 }

@@ -11,6 +11,16 @@
 
 Three site-wide \`us-east-2\` stores are in scope: \`fleeced-league-hub\`, \`fleeced-consensus-lkg\`, \`fll-value-history-v2\`. The original archive includes \`broadcasts/2026/week-03.json\` and \`week-04.json\`, each approximately 3.1 MB. Old UI downloads individual keys, but neither old nor new Netlify Blob dashboard allows store-level export/copy/upload. The existing new consensus and value-history stores already contain keys and differ from the originals: **never overwrite them.** Neither the official Netlify ChatGPT connector nor TinyFish exposes the complete raw Blob byte-stream needed for direct connector-to-connector migration. The signed-in TinyFish browser can inspect but cannot automatically transfer through the read-only UI.
 
+## Fastest one-time recovery command
+
+If you have Node.js 22 and this PR branch checked out on your computer, run:
+
+\`\`\`bash
+bash scripts/one-time-fleeced-archive-recovery.sh
+\`\`\`
+
+The script privately prompts for the old and new Fleeced! Netlify account tokens (typed invisibly, not stored in Git or chat). It then backs up and SHA-256-verifies **both** sites, prints a **dry-run** comparison, and only creates missing destination objects if you explicitly type \`RESTORE\`. Existing destination objects are NEVER overwritten. The detailed commands below are provided as an alternative for independent review.
+
 ## One-time operator procedure (tokens remain local; never share in chat)
 
 On a computer with Node.js 22 and Git, use the existing working copy of the repository on \`fix/inquirer-week5-editorial-preview\` or download that branch. Two *separate* Netlify personal access tokens with access to the specified original and replacement project are needed to use the supported \`@netlify/blobs\` SDK outside a Netlify function. Obtain them through your own Netlify account; **do not expose values to assistants, TinyFish, GitHub, screenshots, CI, commit history, or chat**.

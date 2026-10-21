@@ -98,9 +98,26 @@ export async function verifyBackup(dir,expectedSite){
   }
   return {manifest,counts:total};
 }
+async function assertCanonicalHistory(sourceDir,sourceManifest){
+  const entries=sourceManifest.stores['fleeced-league-hub']||[];
+  for(const week of [3,4]){
+    const key='broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
+    const row=entries.find(entry=>entry.key===key);
+    if(!row)throw Error('Original Fleeced! published Week '+week+' archive is missing; refusing migration');
+    let edition;
+    try{edition=JSON.parse(await readFile(join(sourceDir,'objects',row.file),'utf8'))}
+    catch{throw Error('Original Week '+week+' archive is not valid JSON; refusing migration')}
+    if(edition.available!==true||edition.published_locked!==true||
+       Number(edition.season)!==2026||Number(edition.week)!==week||
+       !Array.isArray(edition.teams)||edition.teams.length!==32||
+       !edition.league_overview?.headline)
+      throw Error('Original Week '+week+' is not a complete locked 2026 edition with 32 teams; refusing migration');
+  }
+}
 async function prepare(base){
   const source=await verifyBackup(join(base,'source'),SOURCE_SITE);
   const destination=await verifyBackup(join(base,'destination'),DEST_SITE);
+  await assertCanonicalHistory(join(base,'source'),source.manifest);
   return {source:source.manifest,destination:destination.manifest};
 }
 export function compareManifests(source,destination){

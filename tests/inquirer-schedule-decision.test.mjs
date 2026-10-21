@@ -27,3 +27,13 @@ test('Netlify schedules the publication poll within two hours, not once daily',(
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  assert.match(config,/\[functions\."inquirer-publish-scheduled"\]\s*(?:#[^\n]*\n\s*)*schedule\s*=\s*"0 \*\/2 \* \* \*"/);
 });
+
+test('scheduled publisher fails closed on replacement sites and missing history',()=>{
+ const source=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
+ assert.match(source,/FLEECED_ENABLE_NEW_SITE_PUBLISHER/);
+ assert.match(source,/Replacement site is preview-only pending verified archive migration/);
+ assert.match(source,/context==='deploy-preview'/);
+ assert.match(source,/if\(!status\|\|typeof status!=='object'\)/);
+ assert.match(source,/Publication state or NFL clock unavailable; holding publication/);
+ assert.doesNotMatch(source,/catch\(error\)\{console\.warn\('inquirer-schedule-status-check'/);
+});

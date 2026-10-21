@@ -36,14 +36,9 @@ node scripts/migrate-fleeced-blobs.mjs backup --dir "$backup_dir"
 node scripts/migrate-fleeced-blobs.mjs verify --dir "$backup_dir"
 node scripts/migrate-fleeced-blobs.mjs plan --dir "$backup_dir"
 
-printf '\nThe DRY RUN above is your final check. Existing keys will NEVER be overwritten.\n'
-printf 'Type RESTORE to create missing destination keys, or press Enter to stop safely: '
-read -r approval
-if [[ "$approval" != "RESTORE" ]]; then
-  echo "Stopped after completing verified local backups; no restore writes were made."
-  exit 0
-fi
-node scripts/migrate-fleeced-blobs.mjs restore --dir "$backup_dir" --apply
-echo "Read-back SHA-256 verification completed for created objects."
-echo "Keep the private backup folder securely on your own computer: $backup_dir"
-echo "Before publishing, the private Week 5 editor must be independently audited."
+printf '\nSafety hold: the replacement site currently registers an ENABLED production Inquirer scheduled function.\n'
+printf 'Its queue key is currently missing, but that is not an adequate permanent disablement.\n'
+printf 'Verified local backups and dry-run are complete. No site-wide restore writes have been made.\n'
+printf 'Do not apply restoration until the scheduled publisher has been independently disabled.\n'
+echo "Keep the private backup folder securely on your computer: $backup_dir"
+echo "Once schedule disablement is verified, see docs/blob-archive-recovery.md for the guarded create-only restore."

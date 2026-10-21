@@ -22,6 +22,8 @@ export default async function generateInquirerPreview(req){
  await store.setJSON(PREVIEW_DIAGNOSTIC_STATUS,{state:'running',started_at,preview_only:true});
  try{
   const draftUrl=new URL('/.netlify/functions/league-hub?weekly=1&preview_editorial=1',req.url);
+  const requestedWeek=new URL(req.url).searchParams.get('preview_week');
+  if(requestedWeek!==null)draftUrl.searchParams.set('preview_week',requestedWeek);
   const edition=await weeklyReport(new Request(draftUrl));
   if(edition?.preview_only!==true||edition?.published_locked!==false||edition?.available!==true)
    throw Error('Expected an available, unpublished read-only editorial draft: '+String(edition?.reason||'unavailable'));

@@ -318,7 +318,7 @@ export async function weeklyReport(req){
  if(previewReadOnly&&!new URL(req.url).searchParams.has('preview_editorial'))
   return{available:false,published_locked:false,reason:'Preview is read-only. Use preview_editorial=1 for a non-publishing draft.'};
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
- const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,origin=previewReadOnly?'https://brilliant-faun-c5b649.netlify.app':new URL(req.url).origin,s=store(),
+ const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,origin=new URL(req.url).origin,s=store(),
   cappedWeek=Math.min(INQUIRER_FINAL_WEEK,Math.max(1,currentWeek));
  // Publish sequentially. A missing older edition is generated before a newer one so every article has the immediately
  // previous locked edition available for continuity and copy-forward checks. Preloaded Week 1/2 editions count as published.

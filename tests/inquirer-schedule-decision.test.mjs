@@ -37,3 +37,12 @@ test('scheduled publisher fails closed on replacement sites and missing history'
  assert.match(source,/Publication state or NFL clock unavailable; holding publication/);
  assert.doesNotMatch(source,/catch\(error\)\{console\.warn\('inquirer-schedule-status-check'/);
 });
+
+test('private Inquirer history reads remain local, SSO-independent, and mutation-free',()=>{
+ const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ const history=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
+ assert.match(hub,/if\(previewReadOnly\)url\.searchParams\.set\('readonly_preview','1'\)/);
+ assert.match(hub,/const r=await valueHistoryHandler\(new Request\(url\)\)/);
+ assert.match(history,/const readonlyPreview=req\.method==='GET'&&url\.searchParams\.get\('readonly_preview'\)==='1'/);
+ assert.match(history,/if\(s&&!readonlyPreview\)\{/);
+});

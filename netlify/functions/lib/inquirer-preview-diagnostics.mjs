@@ -1,13 +1,13 @@
 // Deploy Preview diagnostics are isolated from shared league publication storage.
 export const PREVIEW_DIAGNOSTIC_STORE = 'fleeced-inquirer-editorial-diagnostics';
-export const PREVIEW_DIAGNOSTIC_STATUS = 'week5-status.json';
-export const PREVIEW_DIAGNOSTIC_EDITION = 'week5-edition.json';
-export const PREVIEW_DIAGNOSTIC_REJECTED = 'week5-rejected-review.json';
+export const PREVIEW_DIAGNOSTIC_STATUS = 'current-status.json';
+export const PREVIEW_DIAGNOSTIC_EDITION = 'current-edition.json';
+export const PREVIEW_DIAGNOSTIC_REJECTED = 'current-rejected-review.json';
 
 export function isPreviewDiagnosticContext(url='') {
  const context=String(globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'');
  const host=url?new URL(url).hostname:'';
- return context==='deploy-preview'||host==='deploy-preview-402--brilliant-faun-c5b649.netlify.app';
+ return context==='deploy-preview'||/^deploy-preview-\\d+--(?:brilliant-faun-c5b649|transcendent-manatee-2f0123)\\.netlify\\.app$/i.test(host);
 }
 
 export function summarizePreviewDiagnostic(edition) {

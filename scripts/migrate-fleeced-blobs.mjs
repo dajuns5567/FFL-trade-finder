@@ -214,6 +214,11 @@ async function main(){
   }
   if(command==='restore'){
     if(!process.argv.includes('--apply'))throw Error('Restore is dry-run by default. Add --apply ONLY after inspecting plan output.');
+    // A running production scheduled function can publish as soon as historical
+    // site-wide archives appear. Never restore until it has been disabled
+    // independently; a missing queue secret alone is NOT a durable kill switch.
+    if(process.env.FLEECED_PRODUCTION_PUBLISHER_DISABLED_CONFIRMED!=='YES')
+      throw Error('SAFETY HOLD: replacement Netlify project has an enabled production scheduled publisher. Disable it and independently verify before restoring site-wide blobs; then set local FLEECED_PRODUCTION_PUBLISHER_DISABLED_CONFIRMED=YES. No writes made.');
     const report=await liveCompare(base,requireToken('destination'),'restore',true);
     if(report.conflicts.length)process.stdout.write('Existing differing destination keys were LEFT UNCHANGED; manually reconcile after review.\n');
     return;

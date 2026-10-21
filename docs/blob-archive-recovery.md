@@ -19,7 +19,7 @@ If you have Node.js 22 and this PR branch checked out on your computer, run:
 bash scripts/one-time-fleeced-archive-recovery.sh
 \`\`\`
 
-The script privately prompts for the old and new Fleeced! Netlify account tokens (typed invisibly, not stored in Git or chat). It then backs up and SHA-256-verifies **both** sites, prints a **dry-run** comparison, and only creates missing destination objects if you explicitly type \`RESTORE\`. Existing destination objects are NEVER overwritten. The detailed commands below are provided as an alternative for independent review.
+The script privately prompts for the old and new Fleeced! Netlify account tokens (typed invisibly, not stored in Git or chat). It then backs up and SHA-256-verifies **both** sites, prints a **dry-run** comparison, and **STOPS before any restore**, because the replacement project's production Inquirer scheduled function is currently ENABLED. Existing destination objects are never overwritten. The detailed commands below are provided as an alternative for independent review.
 
 ## One-time operator procedure (tokens remain local; never share in chat)
 
@@ -42,12 +42,16 @@ node scripts/migrate-fleeced-blobs.mjs backup --dir "$HOME/fleeced-private-archi
 node scripts/migrate-fleeced-blobs.mjs verify --dir "$HOME/fleeced-private-archive/backup-2026"
 node scripts/migrate-fleeced-blobs.mjs plan --dir "$HOME/fleeced-private-archive/backup-2026"
 
-# ONLY after reviewing the dry run: create missing source keys on the replacement site.
-# This never overwrites or deletes an existing destination or source key.
-node scripts/migrate-fleeced-blobs.mjs restore --dir "$HOME/fleeced-private-archive/backup-2026" --apply
+# SAFETY HOLD: DO NOT RUN restore while the replacement production scheduled
+# publisher is enabled, even though its queue key is currently missing.
+# After separate authorized disablement and independent verification ONLY:
+# export FLEECED_PRODUCTION_PUBLISHER_DISABLED_CONFIRMED=YES
+# node scripts/migrate-fleeced-blobs.mjs restore --dir "$HOME/fleeced-private-archive/backup-2026" --apply
 
 unset FLEECED_OLD_NETLIFY_TOKEN FLEECED_NEW_NETLIFY_TOKEN
 \`\`\`
+
+**Current blocker (browser-verified 2026-10-21):** replacement project production contains an **enabled** \`inquirer-publish-scheduled\` function. Its scheduled run currently reports a missing \`FLEECED_INQUIRER_QUEUE_KEY\`, but missing credentials alone do not prove permanent disablement. The recovery tool now **refuses site-wide restoration** unless the publisher has been separately disabled and verified and a local explicit confirmation flag has been set. Do not change \`main\` or Netlify site settings without the user's specific approval. A backed-up, verified plan can still be prepared safely.
 
 Do NOT run the \`restore --apply\` command if any key counts, required season or Week 4 baseline, or audit information is unexpectedly missing; report the output first. The tool fails rather than resetting or replacing any existing key. It also checks destination freshness against the backup snapshot before writes and performs SHA-256 readback verification for created items. No production publishing or Netlify account/project configuration changes are performed.
 

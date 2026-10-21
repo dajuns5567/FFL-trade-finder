@@ -13,7 +13,7 @@ if [[ ! -t 0 ]]; then
   exit 1
 fi
 
-script_dir="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$script_dir/.."
 backup_parent="$HOME/fleeced-private-archive"
 mkdir -p "$backup_parent"

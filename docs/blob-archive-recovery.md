@@ -1,0 +1,55 @@
+# Fleeced! one-time, non-destructive Netlify Blob archive recovery
+
+**Status:** backup/restore tool is staged on draft PR #402. **No historical blobs have been copied yet.** The destination currently lacks \`fleeced-league-hub\`; original approved Weeks 3–4 remain in the credit-paused \`brilliant-faun-c5b649\` project.
+
+## Verified Fleeced! projects
+
+| Side | Project | Netlify Site ID |
+| --- | --- | --- |
+| Canonical historical source (read-only) | \`brilliant-faun-c5b649\` | \`d51af6d7-e5f3-4c51-8c6d-25e31db39a0c\` |
+| Replacement destination (only missing keys may be created) | \`transcendent-manatee-2f0123\` | \`8776d155-bc7b-4dcd-bafc-3d70d3d51800\` |
+
+Three site-wide \`us-east-2\` stores are in scope: \`fleeced-league-hub\`, \`fleeced-consensus-lkg\`, \`fll-value-history-v2\`. The original archive includes \`broadcasts/2026/week-03.json\` and \`week-04.json\`, each approximately 3.1 MB. Old UI downloads individual keys, but neither old nor new Netlify Blob dashboard allows store-level export/copy/upload. The existing new consensus and value-history stores already contain keys and differ from the originals: **never overwrite them.** Neither the official Netlify ChatGPT connector nor TinyFish exposes the complete raw Blob byte-stream needed for direct connector-to-connector migration. The signed-in TinyFish browser can inspect but cannot automatically transfer through the read-only UI.
+
+## One-time operator procedure (tokens remain local; never share in chat)
+
+On a computer with Node.js 22 and Git, use the existing working copy of the repository on \`fix/inquirer-week5-editorial-preview\` or download that branch. Two *separate* Netlify personal access tokens with access to the specified original and replacement project are needed to use the supported \`@netlify/blobs\` SDK outside a Netlify function. Obtain them through your own Netlify account; **do not expose values to assistants, TinyFish, GitHub, screenshots, CI, commit history, or chat**.
+
+In a **local terminal**, use masked input so secrets do not appear in terminal history:
+
+\`\`\`bash
+read -r -s -p "Original Netlify account token: " FLEECED_OLD_NETLIFY_TOKEN; echo
+export FLEECED_OLD_NETLIFY_TOKEN
+read -r -s -p "Replacement Netlify account token: " FLEECED_NEW_NETLIFY_TOKEN; echo
+export FLEECED_NEW_NETLIFY_TOKEN
+
+npm install --no-save --package-lock=false
+mkdir -p "$HOME/fleeced-private-archive"  # private, outside the repository
+chmod 700 "$HOME/fleeced-private-archive"
+
+# Tool requires a FRESH subfolder for an immutable backup.
+node scripts/migrate-fleeced-blobs.mjs backup --dir "$HOME/fleeced-private-archive/backup-2026"
+node scripts/migrate-fleeced-blobs.mjs verify --dir "$HOME/fleeced-private-archive/backup-2026"
+node scripts/migrate-fleeced-blobs.mjs plan --dir "$HOME/fleeced-private-archive/backup-2026"
+
+# ONLY after reviewing the dry run: create missing source keys on the replacement site.
+# This never overwrites or deletes an existing destination or source key.
+node scripts/migrate-fleeced-blobs.mjs restore --dir "$HOME/fleeced-private-archive/backup-2026" --apply
+
+unset FLEECED_OLD_NETLIFY_TOKEN FLEECED_NEW_NETLIFY_TOKEN
+\`\`\`
+
+Do NOT run the \`restore --apply\` command if any key counts, required season or Week 4 baseline, or audit information is unexpectedly missing; report the output first. The tool fails rather than resetting or replacing any existing key. It also checks destination freshness against the backup snapshot before writes and performs SHA-256 readback verification for created items. No production publishing or Netlify account/project configuration changes are performed.
+
+Keep the private backup folder offline and outside GitHub; it contains sensitive original league files. The tool backs up **both source and destination** to private local files before restore, with per-key SHA-256, metadata and recorded original ETag in manifests. It creates only absent destination keys using \`onlyIfNew\`; conflict entries are left untouched, not silently reconciled. Because the source and replacement stores may contain different legitimate latest states, conflicts require separate independent review before deciding which side is canonical.
+
+## Acceptance / post-restore
+
+1. Confirm both backup manifests pass SHA-256 verification, and the source store counts and expected Week 3–4 blob keys are present.
+2. Confirm old project source data, team/project settings, and production publishing remain unchanged.
+3. Confirm missing destination objects were created and read-back hashes match; retain a conflict report of any divergent original vs destination keys.
+4. On the private PR #402 preview at \`/?inquirer_preview=1&preview_week=5\`, start **read-only draft** generation and confirm season 2026, **week 5**, 32 team articles, official prior locked Week 4 continuity, and both publication/editorial quality gates passing.
+5. Independently read the 32 articles and Weekly Recap for headings, accuracy, repetition, variance and Week 4 voice. Audit Week 5 → Week 6 continuity before considering a production cutover.
+6. No merge to \`main\`, public publication, enabling of \`FLEECED_ENABLE_NEW_SITE_PUBLISHER\`, project deletion or transfer is authorized by this procedure.
+
+**Important:** a CLI dry run, passing CI simulation, or successfully generated **Week 3** preview is not evidence that Week 5 is restored or independently accepted.

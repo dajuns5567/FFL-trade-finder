@@ -58,3 +58,10 @@ test('preview seeding targets the active Netlify account by default',()=>{
  assert.match(queueJob,/vars\.INQUIRER_PREVIEW_SITE \|\| 'transcendent-manatee-2f0123\.netlify\.app'/);
  assert.doesNotMatch(queueJob,/vars\.INQUIRER_PREVIEW_SITE \|\| 'brilliant-faun-c5b649\.netlify\.app'/);
 });
+
+test('unpublished manuscript and missing migrated archives are never conflated',()=>{
+ assert.match(readerSource,/const onNetlifyDeployPreview=/);
+ assert.match(readerSource,/onNetlifyDeployPreview&&new URLSearchParams\(location\.search\)\.get\('inquirer_preview'\)==='1'/);
+ assert.match(readerSource,/This is not the unpublished Week 5 editorial draft/);
+ assert.match(readerSource,/href="\/\?inquirer_preview=1"/);
+});

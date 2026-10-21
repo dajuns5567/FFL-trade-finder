@@ -46,5 +46,8 @@ test('migration program never deletes or uses unconditional overwrite',async()=>
  assert.doesNotMatch(code,/\bdeleteAll\s*\(|\.delete\s*\(/);
  assert.match(code,/if\(stale.length\)\{/);
  assert.match(code,/SECOND PASS: onlyIfNew prevents all overwrites/);
+ assert.match(code,/FLEECED_PRODUCTION_PUBLISHER_DISABLED_CONFIRMED/);
+ assert.match(code,/assertCanonicalHistory/);
+ assert.match(code,/edition\.published_locked!==true/);
  assert.match(code,/if\(insideRepo\(full\)\)/);
 });

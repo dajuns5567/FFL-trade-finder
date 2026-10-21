@@ -37,7 +37,7 @@ test('authenticated preview reader starts an isolated draft and reports real sta
   assert.match(readerSource,/status\.state==='running'/);
   assert.match(readerSource,/status\.state==='error'/);
   assert.match(readerSource,/queued\.status!==202/);
-  assert.match(readerSource,/Private Week 5 preview is not ready/);
+  assert.match(readerSource,/preview is not ready/);
   assert.match(readerSource,/if\(isRunning&&\+\+inquirerPreviewPollAttempts/);
   assert.doesNotMatch(readerSource,/<h3>Private Week 5 preview is generating<\/h3>/);
 });
@@ -64,4 +64,16 @@ test('unpublished manuscript and missing migrated archives are never conflated',
  assert.match(readerSource,/onNetlifyDeployPreview&&new URLSearchParams\(location\.search\)\.get\('inquirer_preview'\)==='1'/);
  assert.match(readerSource,/This is not the unpublished Week 5 editorial draft/);
  assert.match(readerSource,/href="\/\?inquirer_preview=1"/);
+});
+
+test('every private draft targets the requested or latest completed week rather than silently backfilling',()=>{
+ const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ assert.match(readerSource,/inquirerPreviewRequestedWeek/);
+ assert.match(readerSource,/refusing to present the wrong manuscript/);
+ assert.match(readerSource,/&preview_week=/);
+ assert.match(previewJobSource,/draftUrl\.searchParams\.set\('preview_week',requestedWeek\)/);
+ assert.match(hub,/const targetWeek=requestedRaw!==null\?requested:Math\.max\(1,cappedWeek-1\)/);
+ assert.match(hub,/if\(week!==targetWeek\)/);
+ assert.match(hub,/earliest missing locked archive/);
+ assert.match(hub,/if\(previewReadOnly\)\{/);
 });

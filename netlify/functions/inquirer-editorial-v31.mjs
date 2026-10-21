@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=37;
+export const FORWARD_EDITORIAL_REVISION=38;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -81,7 +81,12 @@ function forwardTrajectoryParagraphs(teams,week){
     ?'The playoff race is now an actual weekly story with '+gamesLeft+' regular-season game'+(gamesLeft===1?'':'s')+' left. Around the current conference cut lines sit '+forwardList(bubble.map(t=>t.team_name+' (#'+String(t.league_context.playoff_seed||'?')+' seed)'))+'. From here on, a division result can move a team and damage the exact rival it is trying to catch.'
     :'The middle of the league still has enough traffic to punish anyone who treats one good Sunday like permanent clearance. The last two weeks matter because repeatable scoring is beginning to separate useful form from one-night theater.';
   const p4=(high&&low)
-    ?'This week’s league scoring ran from '+forwardOne(high.points)+' for '+high.team_name+' down to '+forwardOne(low.points)+' for '+low.team_name+', with a league average of '+forwardOne(avg)+'. The useful lesson is not that everybody should chase the loudest box score; it is that the season is developing memory, and repeated strengths and repeated mistakes are starting to carry receipts.'
+    ?[
+      high.team_name+' led the league at '+forwardOne(high.points)+', '+forwardOne(Number(high.points)-avg)+' above the '+forwardOne(avg)+'-point average. '+low.team_name+' finished at '+forwardOne(low.points)+', '+forwardOne(avg-Number(low.points))+' below it. The scoreboard has already filed the complaint.',
+      'The '+forwardOne(Number(high.points)-Number(low.points))+'-point distance between '+high.team_name+' ('+forwardOne(high.points)+') and '+low.team_name+' ('+forwardOne(low.points)+') is the week’s widest argument. The league average was '+forwardOne(avg)+'; neither end of that spread needs a fictional locker-room quote.',
+      high.team_name+' set this week’s ceiling at '+forwardOne(high.points)+', and '+low.team_name+' set the floor at '+forwardOne(low.points)+'. Against the '+forwardOne(avg)+'-point league mean, that is a '+forwardOne(Number(high.points)-Number(low.points))+'-point reminder that the starting cards, not the pregame speeches, count.',
+      'The weekly range runs from '+high.team_name+' at '+forwardOne(high.points)+' to '+low.team_name+' at '+forwardOne(low.points)+', with '+forwardOne(avg)+' as the 32-team average. A '+forwardOne(Number(high.points)-Number(low.points))+'-point gap leaves little room for the losing end to hide behind “it was close.”'
+    ][Math.abs(Number(week)||0)%4]
     :'The league-wide scoring sample is incomplete, so the larger trend stays on hold instead of being invented.';
   return[p1,p2,p3,p4];
 }
@@ -2501,7 +2506,7 @@ function w2ManagementMoveRead(t,r,won,margin){
       ],
       "mack-hollis":[
         t.manager_name+" stayed off the Week 2 transaction wire. That means "+(weak?weak.name+" at "+w2One(weak.points)+" is":"the current lineup is")+" the management headline, not a move count.",
-        "There was no completed Week 2 roster move for "+t.manager_name+". "+(miss?.reserve&&miss?.starter?"So talk about "+miss.reserve.name+" sitting behind "+miss.starter.name+", not phantom churn.":"The starters who produced this score own the story.")
+        (q===0?t.manager_name+" left the Week 2 transaction sheet alone. ":q===1?"The "+w2DisplayTeam(t.team_name)+" bench got no help from a completed Week 2 move. ":q===2?"No completed transaction changed "+t.manager_name+"\u0027s roster this week. ":"The Week 2 personnel log stayed unchanged for "+t.manager_name+". ")+(miss?.reserve&&miss?.starter?"The live decision was "+miss.reserve.name+" remaining behind "+miss.starter.name+".":"The starting lineup, not an imaginary acquisition, supplied the score.")
       ],
       "nora-voss":[
         t.manager_name+" made no completed Week 2 move. Rivals can skip the transaction joke and look at "+(weak?weak.name+" at "+w2One(weak.points):"the lineup that actually played")+" instead.",

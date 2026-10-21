@@ -80,13 +80,11 @@ async function nflWeekSchedule(season,week){
 // The handler uses this site's own Blob context and existing server-side read contract.
 async function internalHistory(origin,query,previewReadOnly=false){
  try{
-  // The local value-history GET handler performs legacy Blob cleanups before
-  // reading. On a Deploy Preview, use production's public read endpoint so
-  // this preview invocation cannot mutate the shared history store.
-  const url=origin+'/.netlify/functions/value-history?'+query;
-  const r=previewReadOnly
-   ?await fetch(url,{headers:{accept:'application/json'},cache:'no-store'})
-   :await valueHistoryHandler(new Request(url));
+  // A preview calls the same local handler as production, using an explicit
+  // side-effect-free GET path: no external SSO request and no Blob scrubs.
+  const url=new URL(origin+'/.netlify/functions/value-history?'+query);
+  if(previewReadOnly)url.searchParams.set('readonly_preview','1');
+  const r=await valueHistoryHandler(new Request(url));
   if(!r.ok)throw Error('value-history '+r.status);
   return await r.json();
  }catch(e){console.warn('inquirer-canonical-history',String(e?.message||e));return{error:String(e?.message||e)}}

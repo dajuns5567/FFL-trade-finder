@@ -47,3 +47,14 @@ Netlify documents project transfer between teams at https://docs.netlify.com/man
 ## Stop conditions
 
 Stop if source Blob export or restore verification is incomplete; any required credential is unavailable; destination preview protections cannot be applied; project transfer warning indicates loss of data/features; or CI is skipped due to `SITE_NAME` guard. Never use a production deployment as a migration smoke test.
+
+## Confirmed destination and operational handoff (2026-10-20)
+
+- New connected Netlify team: `lebrunski55`, team ID `6ad822c9e7da4bd779714ebf`, Free plan.
+- Existing destination placeholder project: `transcendent-manatee-2f0123`, site ID `8776d155-bc7b-4dcd-bafc-3d70d3d51800`. It has an unrelated ready deployment, site-wide SSO visibility, and no configured site environment variables. **Do not overwrite this placeholder to simulate transfer.**
+- Source and destination Netlify connections are distinct account owners; connecting both to ChatGPT does not grant Netlify cross-team transfer authority.
+- Available Netlify connector currently has read/list/project-create/env-var operations, **no** site-transfer or Blob-export/import operation. Source-to-destination migration has NOT occurred; no Blob bytes were backed up.
+- To perform a genuine team transfer, the Netlify account holder should follow Netlify's Transfer project workflow and resolve any account/team access requirements. Verify Netlify's warning about data retention before final submission. If the destination team cannot be selected, request the proper team-member/ownership setup from Netlify rather than recreating the project.
+- After transfer, first recheck the original Site ID `d51af6d7-e5f3-4c51-8c6d-25e31db39a0c`, original project name, all three site-level Blob stores, publication-status, env settings, private Deploy Preview rules, GitHub linked repository and two-hour schedule. Recheck that the source project is no longer under the old team.
+- CI diagnostic at migration checkpoint: run `39367395304` marked failed **only** because job `seed-private-preview` failed; the `inquirer-r6` job's forward-season smoke, source contracts, and prose audits succeeded. Finder runtime and publication guard also passed at commit `63a93086efe71001ba2f04bd47b3a4d022e2a45a`.
+- Do not merge PR #402, change production, weaken preview access, or enable a second scheduled publisher during transfer.

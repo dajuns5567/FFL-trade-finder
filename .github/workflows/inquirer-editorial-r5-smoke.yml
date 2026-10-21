@@ -5,6 +5,9 @@ on:
     paths:
       - 'netlify/functions/inquirer-*.mjs'
       - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/lib/inquirer-schedule-decision.mjs'
+      - 'tests/inquirer-schedule-decision.test.mjs'
       - 'league-hub-v451.js'
       - 'tests/inquirer-narrative-architecture.test.mjs'
       - 'tests/week5-forward-editorial-repair.test.mjs'
@@ -53,7 +56,7 @@ jobs:
       - name: Verify access-aware preview CI contract
         run: node --test tests/inquirer-private-preview-ci.test.mjs
       - name: Enforce Week 4 format regression contract
-        run: node --test tests/inquirer-publication-guard.test.mjs tests/week5-forward-editorial-repair.test.mjs tests/inquirer-narrative-architecture.test.mjs
+        run: node --test tests/inquirer-publication-guard.test.mjs tests/week5-forward-editorial-repair.test.mjs tests/inquirer-narrative-architecture.test.mjs tests/inquirer-schedule-decision.test.mjs
 
       - name: Capture forward V31 season smoke
         run: |
@@ -144,7 +147,7 @@ jobs:
         id: enqueue
         env:
           PREVIEW_NUMBER: ${{ github.event.pull_request.number }}
-          PREVIEW_SITE: ${{ vars.INQUIRER_PREVIEW_SITE || 'brilliant-faun-c5b649.netlify.app' }}
+          PREVIEW_SITE: ${{ vars.INQUIRER_PREVIEW_SITE || 'transcendent-manatee-2f0123.netlify.app' }}
         run: |
           set -eu
           url="https://deploy-preview-${PREVIEW_NUMBER}--${PREVIEW_SITE}/.netlify/functions/inquirer-preview-background?start=1"

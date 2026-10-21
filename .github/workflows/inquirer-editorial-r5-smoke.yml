@@ -15,6 +15,8 @@ on:
       - 'tests/week5-forward-editorial-repair.test.mjs'
       - 'docs/INQUIRER-EDITORIAL-GENERATION-CONTRACT.md'
       - 'scripts/inquirer-*.mjs'
+      - 'scripts/migrate-fleeced-blobs.mjs'
+      - 'tests/fleeced-blob-migration.test.mjs'
       - 'scripts/one-time-generate-inquirer-week1.mjs'
       - 'scripts/one-time-generate-inquirer-week2.mjs'
       - 'docs/FLEECED-INQUIRER-VOICE-AND-REPORTERS.md'
@@ -52,6 +54,10 @@ jobs:
           node --check scripts/inquirer-v25-audit.mjs
           node --check scripts/inquirer-v25-generated-audit.mjs
           node --check scripts/inquirer-forward-v31-smoke.mjs
+          node --check scripts/migrate-fleeced-blobs.mjs
+
+      - name: Offline migration safety regression tests
+        run: node --test tests/fleeced-blob-migration.test.mjs
 
       - name: Run source contract
         run: node scripts/inquirer-v25-audit.mjs

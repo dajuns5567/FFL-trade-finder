@@ -329,6 +329,19 @@ export async function weeklyReport(req){
   week=w;break;
  }
  if(!week)return latestPublished||{available:false,season,week:null,reason:'No completed Fleeced! Inquirer edition is available yet.'};
+ // A private editorial draft must be the requested or current completed week.
+ // A newly provisioned Netlify site with only Week 1/2 preloads must never
+ // silently label a Week 3 backfill as the Week 5 (or later) manuscript.
+ // Production retains its sequential historical publication path unchanged.
+ if(previewReadOnly){
+  const requestedRaw=new URL(req.url).searchParams.get('preview_week');
+  const requested=Number(requestedRaw);
+  if(requestedRaw!==null&&(!Number.isInteger(requested)||requested<1||requested>INQUIRER_FINAL_WEEK))
+   return{available:false,season,week,preview_only:true,published_locked:false,reason:'Invalid editorial preview week'};
+  const targetWeek=requestedRaw!==null?requested:Math.max(1,cappedWeek-1);
+  if(week!==targetWeek)return{available:false,season,week,requested_week:targetWeek,preview_only:true,published_locked:false,
+   reason:'Cannot generate Week '+targetWeek+' editorial preview: Week '+week+' is the earliest missing locked archive. Restore prior published editions, including the approved Week 4 baseline, before auditing later weeks. No replacement article has been published.'};
+ }
  // For read-only previews, the completion check and independent source reads
  // can safely overlap. Production starts these reads only after completion,
  // preserving the established scheduled-publication admission behavior.

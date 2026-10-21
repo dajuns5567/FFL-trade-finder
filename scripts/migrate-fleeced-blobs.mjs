@@ -117,36 +117,54 @@ export function compareManifests(source,destination){
   return{toCreate,matched,conflicts};
 }
 async function liveCompare(base,token,plan,apply){
-  const {source,destination}=await prepare(base),snapshot=compareManifests(source,destination);
-  const writes=[],verified=[],conflicts=[],stale=[];
+  const {source,destination}=await prepare(base);
+  const pending=[],verified=[],conflicts=[],stale=[];
+  // FIRST PASS: verify every source object against live target and backup.
+  // Perform no writes until the complete preflight is free of stale entries.
   for(const name of STORES){
     const store=openStore(DEST_SITE,token,name);
-    const existingBackup=new Map(destination.stores[name].map(r=>[r.key,r]));
+    const atBackup=new Map(destination.stores[name].map(r=>[r.key,r]));
     for(const row of source.stores[name]){
-      const sourceData=await readFile(join(base,'source','objects',row.file));
-      if(digest(sourceData)!==row.sha256)throw Error('Backup changed after verification: '+name+'/'+row.key);
+      const item=name+'/'+row.key,was=atBackup.get(row.key);
       const present=await store.getWithMetadata(row.key,{type:'arrayBuffer',consistency:'strong'});
-      const was=existingBackup.get(row.key);
       if(!present){
-        if(was){stale.push(name+'/'+row.key);continue}
-        if(!apply){writes.push(name+'/'+row.key);continue}
-        // A create-only write is the only allowed mutation. There is NO overwrite path.
-        const outcome=await store.set(row.key,new Blob([sourceData]),{metadata:row.metadata||{},onlyIfNew:true});
-        if(!outcome.modified)throw Error('Concurrent destination key creation: '+name+'/'+row.key);
-        const check=await entryBytes(store,row.key);
-        if(digest(check.data)!==row.sha256)throw Error('RESTORED BLOB HASH MISMATCH: '+name+'/'+row.key);
-        verified.push(name+'/'+row.key);
+        if(was)stale.push(item);
+        else pending.push({name,row,item});
         continue;
       }
       const actual=digest(Buffer.from(present.data));
-      if(was && was.sha256!==actual){stale.push(name+'/'+row.key);continue}
-      if(actual!==row.sha256)conflicts.push(name+'/'+row.key);
-      else verified.push(name+'/'+row.key);
+      if(was && was.sha256!==actual){stale.push(item);continue}
+      if(actual!==row.sha256)conflicts.push(item);
+      else verified.push(item);
     }
   }
-  const report={action:plan,mode:apply?'APPLIED_CREATE_ONLY':'DRY_RUN',missing:apply?[]:writes,verified:verified.length,created:apply?verified.filter(x=>snapshot.toCreate.some(y=>y.store+'/'+y.key===x)).length:0,conflicts,stale,source_counts:Object.fromEntries(STORES.map(n=>[n,source.stores[n].length])),destination_backup_counts:Object.fromEntries(STORES.map(n=>[n,destination.stores[n].length]))};
+  if(stale.length){
+    process.stdout.write(JSON.stringify({status:'STOPPED_DESTINATION_CHANGED',stale},null,2)+'\n');
+    throw Error('Destination changed since backup. Re-backup both projects before restoration.');
+  }
+  const missing=pending.map(x=>x.item),created=[];
+  if(apply){
+    // SECOND PASS: onlyIfNew prevents all overwrites, even under races.
+    for(const {name,row,item} of pending){
+      const store=openStore(DEST_SITE,token,name);
+      const bytes=await readFile(join(base,'source','objects',row.file));
+      if(digest(bytes)!==row.sha256)throw Error('Backup changed after preflight: '+item);
+      const result=await store.set(row.key,new Blob([bytes]),{metadata:row.metadata||{},onlyIfNew:true});
+      if(!result.modified)throw Error('Concurrent destination key creation: '+item);
+      const check=await entryBytes(store,row.key);
+      if(digest(check.data)!==row.sha256)throw Error('RESTORED BLOB HASH MISMATCH: '+item);
+      created.push(item);
+      verified.push(item);
+    }
+  }
+  const report={
+    action:plan,mode:apply?'APPLIED_CREATE_ONLY':'DRY_RUN',
+    missing:apply?[]:missing,created:created.length,verified:verified.length,conflicts,stale,
+    source_counts:Object.fromEntries(STORES.map(n=>[n,source.stores[n].length])),
+    destination_backup_counts:Object.fromEntries(STORES.map(n=>[n,destination.stores[n].length]))
+  };
   process.stdout.write(JSON.stringify(report,null,2)+'\n');
-  if(stale.length)throw Error('Destination changed since backup. Stop and take a new backup before writing further.');
+  if(conflicts.length)process.stdout.write('Differing keys in the destination were preserved without overwrite.\n');
   return report;
 }
 async function main(){

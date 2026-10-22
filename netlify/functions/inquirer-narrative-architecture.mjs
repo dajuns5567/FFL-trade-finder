@@ -257,7 +257,18 @@ export function inspectNarrativeArchitecture(edition){
     ||/\b(?:the last two Sundays|this Sunday) Worth Talking About\b/i.test(headline))
     issues.push({id:'malformed-week-adapted-headline',team,headline});
   const words=all.split(/\s+/).filter(Boolean).length;
+  // The user's approved 2026 Week 4 corpus contains 32 articles of 331-437
+  // words each. The rejected October 17 Week 5 snapshot ballooned to 683-905
+  // words after losing key desks. Allow room for more facts, not double-length
+  // recycled commentary. This is an editorial gate, never a truncation step.
   if(words<300)issues.push({id:'article-below-week4-editorial-floor',team,words});
+  if(words>650)issues.push({id:'article-above-week4-editorial-ceiling',team,words,maximum:650});
+  if(/^\s*[a-z]/.test((ss||[]).find(x=>/^\s*[a-z]/.test(text(x?.heading)))?.heading||''))
+    issues.push({id:'lowercase-editorial-section-heading',team});
+  // Plural fantasy-team mascots must not take singular-person verbs in titles.
+  if(/s$/i.test(team)&&headline.slice(0,team.length).toLowerCase()===team.toLowerCase()&&
+     /^\s+(?:makes|gets|has|is|does|needs|sits|keeps|projects|faces|puts|follows)\b/i.test(headline.slice(team.length)))
+    issues.push({id:'plural-mascot-headline-agreement',team,headline});
   if(/\b(?:made this Sunday harder to mock|the top rival target|the second scorer)\b/i.test(all))
     issues.push({id:'anonymous-week2-player-trope',team});
   if(lede.length>3)issues.push({id:'overwritten-with-five-part-legacy-lede',team,count:lede.length});

@@ -299,6 +299,24 @@ async function syncReporterArchives(s,result,broadcastKey){
  }));
  await s.setJSON('inquirer/reporters/index.json',{schema_version:1,inquirer_version:result.inquirer_version,reporters});
 }
+// Broadcast JSON is immutable and written first. The final index is its
+// commit marker. If a function died after the broadcast write, safely repair
+// its derived reporter/overview records BEFORE admitting later weeks.
+async function ensureLockedEditionIndexed(s,edition,key){
+ const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>null);
+ const rows=Array.isArray(idx)?idx:[];
+ if(rows.some(x=>Number(x.season)===Number(edition.season)&&Number(x.week)===Number(edition.week)))return false;
+ await syncReporterArchives(s,edition,key);
+ if(edition.league_overview){
+  const overviewKey='inquirer/league-overview/'+edition.season+'/week-'+String(edition.week).padStart(2,'0')+'.json';
+  const old=await s.get(overviewKey,{type:'json'}).catch(()=>null);
+  if(!old?.headline)await s.setJSON(overviewKey,{...edition.league_overview,editorial_revision:edition.editorial_revision,captured_at:edition.generated_at,published_locked:true});
+ }
+ const next=[...rows,{type:'week',season:edition.season,week:edition.week,key,captured_at:edition.generated_at}]
+  .sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
+ await s.setJSON('broadcasts/index.json',next);
+ return true;
+}
 async function reporterArchive(id){
  const reporter=publicReporters().find(x=>x.id===String(id||''));if(!reporter)return{error:'reporter not found'};
  const s=store(),j=await s.get('inquirer/reporters/'+reporter.id+'/index.json',{type:'json'}).catch(()=>null),articles=mergeArchiveEntries(Array.isArray(j?.articles)?j.articles:[],preloadedReporterEntries(reporter.id));
@@ -346,6 +364,7 @@ export async function weeklyReport(req){
    if(!isLockedInquirerEdition(stored,season,w))
     return{available:false,published_locked:false,season,week:w,
      reason:'Stored Week '+w+' is incomplete or not explicitly locked. Refusing to overwrite historical content.'};
+   if(!previewReadOnly)await ensureLockedEditionIndexed(s,stored,key);
    latestPublished=stored;continue;
   }
   week=w;break;
@@ -502,8 +521,9 @@ export async function weeklyReport(req){
  }
  if(automatedAdmission.approved&&!manualAdmission.approved)
   result.editorial_generation.publication_mode='audited-deterministic-v31';
- await s.setJSON(key,result);await syncReporterArchives(s,result,key);if(result.league_overview){const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json',storedOverview=await s.get(overviewKey,{type:'json'}).catch(()=>null);if(!storedOverview?.headline)await s.setJSON(overviewKey,{...result.league_overview,editorial_revision:result.editorial_revision,captured_at:result.generated_at,published_locked:true})}
- const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),list=Array.isArray(idx)?idx:[];if(!list.some(x=>x.season===season&&x.week===week)){list.push({type:'week',season,week,key,captured_at:result.generated_at});list.sort((a,b)=>a.season-b.season||a.week-b.week);await s.setJSON('broadcasts/index.json',list)}return result;
+ await s.setJSON(key,result);
+ await ensureLockedEditionIndexed(s,result,key);
+ return result;
 }
 async function broadcastArchive(){
  const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),rows=Array.isArray(idx)?idx.slice():[];

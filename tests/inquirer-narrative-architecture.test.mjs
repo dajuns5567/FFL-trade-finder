@@ -188,3 +188,27 @@ test('Week 5 recap gate refuses the stale first-impression arc',()=>{
  const league_overview={sections:[{paragraphs:['Week 4 was a first impression; Week 5 was something else. Good starts have to survive a third opponent.']}]};
  assert(inspectNarrativeArchitecture({week:5,teams,league_overview}).some(x=>x.id==='stale-week2-recap-arc'));
 });
+
+test('real Week 4 baseline blocks overlong Week 5 copy and mangled team/headline grammar',()=>{
+ const teams=Array.from({length:32},(_,i)=>{
+  const t=makeStory(i+1);
+  t.inquirer_article.paragraphs=Array(90).fill('Management must explain another result without repeating a stock fan reaction.').join(' ').split(/(?<=\\.) /);
+  return t;
+ });
+ teams[0].team_name='Miami Dolphins';
+ teams[0].inquirer_article.headline='Miami Dolphins Makes this Sunday Look Less Accidental';
+ teams[0].inquirer_article.sections[0].heading='this Sunday, Properly Dressed';
+ const ids=new Set(inspectNarrativeArchitecture({week:5,teams}).map(x=>x.id));
+ for(const id of ['article-above-week4-editorial-ceiling','lowercase-editorial-section-heading','plural-mascot-headline-agreement'])
+  assert.ok(ids.has(id),'Missing archived Week 5 regression guard: '+id);
+});
+
+test('Week 4-style readable section headings and plural mascot headline are not falsely flagged',()=>{
+ const teams=Array.from({length:32},(_,i)=>makeStory(i+1));
+ teams[0].team_name='Miami Dolphins';
+ teams[0].inquirer_article.headline='Miami Dolphins Won With 134.8, Despite the Bench';
+ teams[0].inquirer_article.sections[0].heading='What Week 5 Changed';
+ const ids=inspectNarrativeArchitecture({week:5,teams}).filter(x=>x.team==='Miami Dolphins').map(x=>x.id);
+ assert.ok(!ids.includes('plural-mascot-headline-agreement'));
+ assert.ok(!ids.includes('lowercase-editorial-section-heading'));
+});

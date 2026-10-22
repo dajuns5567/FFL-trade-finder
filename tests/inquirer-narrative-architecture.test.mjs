@@ -198,6 +198,8 @@ test('real Week 4 baseline blocks overlong Week 5 copy and mangled team/headline
  teams[0].team_name='Miami Dolphins';
  teams[0].inquirer_article.headline='Miami Dolphins Makes this Sunday Look Less Accidental';
  teams[0].inquirer_article.sections[0].heading='this Sunday, Properly Dressed';
+ teams[1].team_name='New England Patriots';
+ teams[1].inquirer_article.headline='New England Patriots Wins Week 5 and the Volume Goes Up';
  const ids=new Set(inspectNarrativeArchitecture({week:5,teams}).map(x=>x.id));
  for(const id of ['article-above-week4-editorial-ceiling','lowercase-editorial-section-heading','plural-mascot-headline-agreement'])
   assert.ok(ids.has(id),'Missing archived Week 5 regression guard: '+id);

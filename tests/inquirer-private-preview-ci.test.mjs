@@ -89,3 +89,10 @@ test('private reader never shares a completed Week 3 result with a Week 5 or Wee
  assert.match(diagnostics,/season\+'\/week-'\+String\(week\)/);
  assert.match(diagnostics,/resolvePreviewIdentity/);
 });
+
+test('unpublished previews explain missing historical archives before generic week mismatch',()=>{
+ const hold=previewJobSource.indexOf("Private preview held:");
+ const mismatch=previewJobSource.indexOf("Private manuscript identity mismatch;");
+ assert.ok(hold>=0&&mismatch>hold,'Archive continuity errors must remain specific and causal');
+ assert.match(previewJobSource,/edition\?\.preview_only!==true\|\|edition\?\.published_locked!==false\|\|edition\?\.available!==true/);
+});

@@ -278,11 +278,11 @@ function leagueSeasonContext(matchupsByWeek,rosters,week,league){
 async function syncReporterArchives(s,result,broadcastKey){
  const reporters=result?.reporters||publicReporters(),teams=result?.teams||[];
  await Promise.all(reporters.map(async reporter=>{
-  const key='inquirer/reporters/'+reporter.id+'/index.json',old=await s.get(key,{type:'json'}).catch(()=>null),rows=Array.isArray(old?.articles)?old.articles:[];
+  const key='inquirer/reporters/'+reporter.id+'/index.json',old=await s.get(key,{type:'json'}),rows=Array.isArray(old?.articles)?old.articles:[];
   const seen=new Map(rows.map((x,i)=>[[x.season,x.week,x.roster_id].join('|'),i]));
   const teamEntries=await Promise.all(teams.filter(t=>t?.inquirer_article?.reporter?.id===reporter.id).map(async team=>{
    const article=team.inquirer_article,k=[result.season,result.week,team.roster_id].join('|'),articleKey='inquirer/reporters/'+reporter.id+'/articles/'+result.season+'/week-'+String(result.week).padStart(2,'0')+'-roster-'+String(team.roster_id).padStart(2,'0')+'.json';
-   const stored=await s.get(articleKey,{type:'json'}).catch(()=>null);
+   const stored=await s.get(articleKey,{type:'json'});
    if(!stored?.headline)await s.setJSON(articleKey,{...article,editorial_revision:result.editorial_revision,team_name:String(team.team_name||''),manager_name:String(team.manager_name||''),captured_at:String(result.generated_at||new Date().toISOString()),published_locked:true});
    const locked=stored?.headline?stored:article;
    return{k,entry:{season:Number(result.season),week:Number(result.week),roster_id:String(team.roster_id),team_name:String(stored?.team_name||team.team_name||''),manager_name:String(stored?.manager_name||team.manager_name||''),headline:String(locked?.headline||''),byline:String(locked?.byline||''),captured_at:String(stored?.captured_at||result.generated_at||new Date().toISOString()),broadcast_key:broadcastKey,article_key:articleKey,inquirer_version:Number(stored?.inquirer_version||result.inquirer_version),editorial_revision:Number(stored?.editorial_revision||result.editorial_revision),published_locked:true}};
@@ -303,13 +303,13 @@ async function syncReporterArchives(s,result,broadcastKey){
 // commit marker. If a function died after the broadcast write, safely repair
 // its derived reporter/overview records BEFORE admitting later weeks.
 async function ensureLockedEditionIndexed(s,edition,key){
- const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>null);
+ const idx=await s.get('broadcasts/index.json',{type:'json'});
  const rows=Array.isArray(idx)?idx:[];
  if(rows.some(x=>Number(x.season)===Number(edition.season)&&Number(x.week)===Number(edition.week)))return false;
  await syncReporterArchives(s,edition,key);
  if(edition.league_overview){
   const overviewKey='inquirer/league-overview/'+edition.season+'/week-'+String(edition.week).padStart(2,'0')+'.json';
-  const old=await s.get(overviewKey,{type:'json'}).catch(()=>null);
+  const old=await s.get(overviewKey,{type:'json'});
   if(!old?.headline)await s.setJSON(overviewKey,{...edition.league_overview,editorial_revision:edition.editorial_revision,captured_at:edition.generated_at,published_locked:true});
  }
  const next=[...rows,{type:'week',season:edition.season,week:edition.week,key,captured_at:edition.generated_at}]
@@ -526,7 +526,7 @@ export async function weeklyReport(req){
  return result;
 }
 async function broadcastArchive(){
- const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),rows=Array.isArray(idx)?idx.slice():[];
+ const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}),rows=Array.isArray(idx)?idx.slice():[];
  for(const p of PRELOADED_BROADCASTS.values()){
   if(!Array.isArray(p?.teams)||!p.teams.length)continue;
   const season=Number(p.season),week=Number(p.week),key=String(season)+'|'+String(week);
@@ -535,7 +535,7 @@ async function broadcastArchive(){
  rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
 }
 async function broadcastStored(season,week){
- const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null);
+ const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'});
  return v||preloadedBroadcast(season,week)||{error:'broadcast not found'};
 }
 
@@ -578,7 +578,7 @@ function weeklyPlayersOfWeek(stats,players,scoring){
 export async function weeklyAwards(){
  const s=store(),archive=await broadcastArchive(),pairs=[],seen=new Set();
  for(const row of archive.reports||[]){const season=Number(row?.season),week=Number(row?.week),key=season+'|'+week;if(season&&week&&!seen.has(key)){seen.add(key);pairs.push({season,week,captured_at:String(row?.captured_at||'')})}}
- const old=await s.get('awards/weekly.json',{type:'json'}).catch(()=>null),records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[],byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r]));
+ const old=await s.get('awards/weekly.json',{type:'json'}),records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[],byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r]));
  const missing=pairs.filter(p=>!byKey.has(p.season+'|'+p.week)||!byKey.get(p.season+'|'+p.week)?.players_of_week);
  if(missing.length){
   const [league,players]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/players/nfl`).catch(()=>({}))]),scoring=league?.scoring_settings||{};

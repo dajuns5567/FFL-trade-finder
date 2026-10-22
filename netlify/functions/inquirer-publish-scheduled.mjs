@@ -3,6 +3,12 @@ import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
+ const site=String(process.env.SITE_NAME||globalThis.Netlify?.env?.get?.('SITE_NAME')||'');
+ if(site==='transcendent-manatee-2f0123'&&process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER!=='true'){
+  return new Response(JSON.stringify({queued:false,reason:'Replacement Fleeced! site is held pending verified historical archive migration and editorial approval'}),{
+   headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
+  });
+ }
  const key=globalThis.Netlify?.env?.get('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
  if(!key)throw new Error('FLEECED_INQUIRER_QUEUE_KEY is not configured');
  const skip=reason=>new Response(JSON.stringify({queued:false,reason}),{

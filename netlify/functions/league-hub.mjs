@@ -306,6 +306,19 @@ async function reporterArchive(id){
 }
 async function reporterDirectory(){return{schema_version:1,inquirer_version:INQUIRER_VERSION,reporters:publicReporters()}}
 
+// Historical archives are immutable source material. A corrupt or half-written
+// edition must never be silently promoted to "published" or overwritten.
+export function isLockedInquirerEdition(edition,season,week){
+ const teams=edition?.teams;
+ return edition?.available===true&&edition?.published_locked===true&&
+  Number(edition?.season)===Number(season)&&Number(edition?.week)===Number(week)&&
+  Array.isArray(teams)&&teams.length===32&&
+  new Set(teams.map(t=>String(t?.roster_id||''))).size===32&&
+  teams.every(t=>t?.roster_id!=null&&String(t?.inquirer_article?.headline||'').trim())&&
+  !!String(edition?.league_overview?.headline||'').trim()&&
+  Array.isArray(edition?.league_overview?.sections)&&edition.league_overview.sections.length>0;
+}
+
 export async function weeklyReport(req){
  // Deploy previews share site-wide Netlify Blobs with production. Never let a
  // preview recompute or publish articles, awards, or historical archive keys.
@@ -324,8 +337,17 @@ export async function weeklyReport(req){
  for(let w=1;w<=cappedWeek;w++){
   const preload=preloadedBroadcast(season,w);
   if(preload){latestPublished=preload;continue}
-  const key=`broadcasts/${season}/week-${String(w).padStart(2,'0')}.json`,stored=await s.get(key,{type:'json'}).catch(()=>null);
-  if(stored?.available&&Array.isArray(stored?.teams)&&stored.teams.length){latestPublished=stored;continue}
+  const key=`broadcasts/${season}/week-${String(w).padStart(2,'0')}.json`;
+  let stored;
+  try{stored=await s.get(key,{type:'json'})}
+  catch(error){return{available:false,published_locked:false,season,week:w,
+   reason:'Could not verify the locked Week '+w+' archive. Holding to protect published history.'}}
+  if(stored!==null&&stored!==undefined){
+   if(!isLockedInquirerEdition(stored,season,w))
+    return{available:false,published_locked:false,season,week:w,
+     reason:'Stored Week '+w+' is incomplete or not explicitly locked. Refusing to overwrite historical content.'};
+   latestPublished=stored;continue;
+  }
   week=w;break;
  }
  if(!week)return latestPublished||{available:false,season,week:null,reason:'No completed Fleeced! Inquirer edition is available yet.'};
@@ -359,7 +381,14 @@ export async function weeklyReport(req){
  const key=`broadcasts/${season}/week-${String(week).padStart(2,'0')}.json`;
  const historicalSeasonPromise=previewTasks?.historical||loadHistorical();
  const enrichmentPromise=previewTasks?.enrichment||loadEnrichment();
- const previousStored=week>1?await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'}).catch(()=>null):null,previousBroadcast=previousStored?{...previousStored,published_locked:true}:preloadedBroadcast(season,week-1);
+ let previousStored=null;
+ if(week>2){
+  try{previousStored=await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'})}
+  catch(error){return{available:false,published_locked:false,season,week,reason:'Previous locked edition cannot be read. Generation held.'}}
+ }
+ const previousBroadcast=previousStored||preloadedBroadcast(season,week-1);
+ if(week>1&&!isLockedInquirerEdition(previousBroadcast,season,week-1))
+  return{available:false,published_locked:false,season,week,reason:'Previous Week '+(week-1)+' is not a verified locked Inquirer edition. Historical newsroom continuity required.'};
  let managerHistoryData=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
  if(!managerHistoryData?.career?.length){
   // managerHistory() rebuilds two shared Blob keys. A preview must never call

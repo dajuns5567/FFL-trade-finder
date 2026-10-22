@@ -267,7 +267,7 @@ export function inspectNarrativeArchitecture(edition){
     issues.push({id:'lowercase-editorial-section-heading',team});
   // Plural fantasy-team mascots must not take singular-person verbs in titles.
   if(/s$/i.test(team)&&headline.slice(0,team.length).toLowerCase()===team.toLowerCase()&&
-     /^\s+(?:makes|gets|has|is|does|needs|sits|keeps|projects|faces|puts|follows)\b/i.test(headline.slice(team.length)))
+     /^\s+(?:makes|gets|has|is|does|needs|sits|keeps|projects|faces|puts|follows|wins|loses|beats|claims|takes|finds|adds)\b/i.test(headline.slice(team.length)))
     issues.push({id:'plural-mascot-headline-agreement',team,headline});
   if(/\b(?:made this Sunday harder to mock|the top rival target|the second scorer)\b/i.test(all))
     issues.push({id:'anonymous-week2-player-trope',team});

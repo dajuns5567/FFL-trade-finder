@@ -44,9 +44,9 @@ test('authenticated preview reader starts an isolated draft and reports real sta
 
 test('a failed editorial gate retains only a deploy-local rejected review copy',()=>{
   assert.match(previewJobSource,/getDeployStore/);
-  assert.match(previewJobSource,/setJSON\(PREVIEW_DIAGNOSTIC_REJECTED,\{started_at,edition\}\)/);
+  assert.match(previewJobSource,/setJSON\(identity\.rejected,\{started_at,edition\}\)/);
   assert.match(previewJobSource,/rejected_summary=summarizePreviewDiagnostic/);
-  assert.match(previewDiagnosticSource,/get\(PREVIEW_DIAGNOSTIC_REJECTED/);
+  assert.match(previewDiagnosticSource,/get\(identity\.rejected/);
   assert.match(previewDiagnosticSource,/rejected\?\.started_at===status.started_at/);
   assert.match(previewDiagnosticSource,/review_only:true/);
   assert.match(previewDiagnosticSource,/status\?\.state!=='error'/);
@@ -71,9 +71,21 @@ test('every private draft targets the requested or latest completed week rather 
  assert.match(readerSource,/inquirerPreviewRequestedWeek/);
  assert.match(readerSource,/refusing to present the wrong manuscript/);
  assert.match(readerSource,/&preview_week=/);
- assert.match(previewJobSource,/draftUrl\.searchParams\.set\('preview_week',requestedWeek\)/);
+ assert.match(previewJobSource,/draftUrl\.searchParams\.set\('preview_week',String\(identity\.week\)\)/);
  assert.match(hub,/const targetWeek=requestedRaw!==null\?requested:Math\.max\(1,cappedWeek-1\)/);
  assert.match(hub,/if\(week!==targetWeek\)/);
  assert.match(hub,/earliest missing locked archive/);
  assert.match(hub,/if\(previewReadOnly\)\{/);
+});
+
+test('private reader never shares a completed Week 3 result with a Week 5 or Week 6 request',()=>{
+ const diagnostics=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
+ assert.match(readerSource,/inquirer-preview-diagnostic\?draft=1'\+scope/);
+ assert.match(readerSource,/info\?\.start_url/);
+ assert.match(readerSource,/scope\? '\?'\+scope\.slice\(1\)/);
+ assert.match(previewJobSource,/get\(identity\.status/);
+ assert.match(previewJobSource,/setJSON\(identity\.edition/);
+ assert.match(previewDiagnosticSource,/get\(identity\.edition/);
+ assert.match(diagnostics,/season\+'\/week-'\+String\(week\)/);
+ assert.match(diagnostics,/resolvePreviewIdentity/);
 });

@@ -4,7 +4,10 @@ import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
  const site=String(process.env.SITE_NAME||globalThis.Netlify?.env?.get?.('SITE_NAME')||'');
- if(site==='transcendent-manatee-2f0123'&&process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER!=='true'){
+ const siteId=String(process.env.SITE_ID||globalThis.Netlify?.env?.get?.('SITE_ID')||'');
+ const requestHost=new URL(req.url).hostname;
+ const replacement=site==='transcendent-manatee-2f0123'||siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||requestHost==='transcendent-manatee-2f0123.netlify.app';
+ if(replacement&&process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER!=='true'){
   return new Response(JSON.stringify({queued:false,reason:'Replacement Fleeced! site is held pending verified historical archive migration and editorial approval'}),{
    headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
   });

@@ -2,9 +2,9 @@
   "schema_version": 1,
   "league_id": "1316867686394769408",
   "latest": {
-    "t": "2026-10-22T04:52:55.743Z",
-    "path": "value-history/snapshots/2026/10/2026-10-22T04-52-55-743Z.json",
-    "fingerprint": "1k2aku5",
+    "t": "2026-10-22T07:39:58.420Z",
+    "path": "value-history/snapshots/2026/10/2026-10-22T07-39-58-420Z.json",
+    "fingerprint": "g0o511",
     "count": 825,
     "source": "scheduled"
   }

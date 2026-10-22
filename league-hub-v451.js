@@ -12,15 +12,16 @@ let inquirerPreviewLaunchAttempted=false;
 async function loadInquirerPreview(){
  if(!inquirerPreviewMode)return null;
  if(inquirerPreviewEdition)return inquirerPreviewEdition;
- const response=await fetch('/.netlify/functions/inquirer-preview-diagnostic?draft=1',{cache:'no-store'});
+ const scope=inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:'';
+ const response=await fetch('/.netlify/functions/inquirer-preview-diagnostic?draft=1'+scope,{cache:'no-store'});
  if(!response.ok){
-  const statusResponse=await fetch('/.netlify/functions/inquirer-preview-diagnostic',{cache:'no-store'});
+  const statusResponse=await fetch('/.netlify/functions/inquirer-preview-diagnostic'+(scope?'?'+scope.slice(1):''),{cache:'no-store'});
   if(!statusResponse.ok)throw Error('Private preview status unavailable (HTTP '+statusResponse.status+'). Sign in to Netlify to review.');
   const info=await statusResponse.json(),status=info?.status||{state:'not-started'};
   if(status.state==='not-started'){
    if(!inquirerPreviewLaunchAttempted){
     inquirerPreviewLaunchAttempted=true;
-    const queued=await fetch('/.netlify/functions/inquirer-preview-background?start=1'+(inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:''),{cache:'no-store'});
+    const queued=await fetch(info?.start_url||('/.netlify/functions/inquirer-preview-background?start=1'+scope),{cache:'no-store'});
     if(queued.status!==202)throw Error('Private preview generation could not start (HTTP '+queued.status+').');
    }
    throw Error('Private preview generation started; awaiting the final editorial audit.');
@@ -32,6 +33,7 @@ async function loadInquirerPreview(){
  const edition=await response.json();
  if(edition?.preview_only!==true||edition?.published_locked!==false||!edition?.league_overview||!Array.isArray(edition?.teams)||edition.teams.length!==32)throw Error('Invalid unpublished editorial draft');
  if(inquirerPreviewRequestedWeek&&Number(edition.week)!==inquirerPreviewRequestedWeek)throw Error('Private preview generated Week '+edition.week+' instead of requested Week '+inquirerPreviewRequestedWeek+'; refusing to present the wrong manuscript.');
+ if(edition.preview_editorial_audit?.ok!==true||edition.preview_generation_quality?.ok!==true)throw Error('Refusing to display a manuscript that failed its independent editorial gates.');
  inquirerPreviewEdition=edition;
  return edition;
 }

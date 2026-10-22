@@ -263,7 +263,7 @@ export function inspectNarrativeArchitecture(edition){
   // recycled commentary. This is an editorial gate, never a truncation step.
   if(words<300)issues.push({id:'article-below-week4-editorial-floor',team,words});
   if(words>650)issues.push({id:'article-above-week4-editorial-ceiling',team,words,maximum:650});
-  if(/^\s*[a-z]/.test((ss||[]).find(x=>/^\s*[a-z]/.test(text(x?.heading)))?.heading||''))
+  if(ss.some(section=>/^[a-z]/.test(text(section?.heading))))
     issues.push({id:'lowercase-editorial-section-heading',team});
   // Plural fantasy-team mascots must not take singular-person verbs in titles.
   if(/s$/i.test(team)&&headline.slice(0,team.length).toLowerCase()===team.toLowerCase()&&

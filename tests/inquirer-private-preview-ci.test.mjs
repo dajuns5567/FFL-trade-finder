@@ -82,7 +82,7 @@ test('private reader never shares a completed Week 3 result with a Week 5 or Wee
  const diagnostics=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
  assert.match(readerSource,/inquirer-preview-diagnostic\?draft=1'\+scope/);
  assert.match(readerSource,/info\?\.start_url/);
- assert.match(readerSource,/scope\? '\?'\+scope\.slice\(1\)/);
+ assert.match(readerSource,/scope\?'\?'\+scope\.slice\(1\)/);
  assert.match(previewJobSource,/get\(identity\.status/);
  assert.match(previewJobSource,/setJSON\(identity\.edition/);
  assert.match(previewDiagnosticSource,/get\(identity\.edition/);

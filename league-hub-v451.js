@@ -514,7 +514,7 @@ function managerWeeklyBadgesHTML(id,mgr,data=weeklyAwardsCache){
  return '<div class="lh-weekly-badges">'+badges.map(a=>'<span class="lh-weekly-badge">'+esc(a.title)+' • '+esc(a.season+' Week '+a.week)+(a.captured_at?' • '+esc(date(a.captured_at)):'')+'</span>').join('')+'</div>';
 }
 function playersOfWeekHTML(w,data=weeklyAwardsCache){
- const rows=Array.isArray(data?.records)?data.records:[],season=Number(w?.season),week=Number(w?.week),rec=rows.find(r=>Number(r.season)===season&&Number(r.week)===week)||latestWeeklyAwardRecord(data),p=rec?.players_of_week;if(!p?.offense&&!p?.defense)return'';
+ const rows=Array.isArray(data?.records)?data.records:[],season=Number(w?.season),week=Number(w?.week),rec=rows.find(r=>Number(r.season)===season&&Number(r.week)===week)||null,p=rec?.players_of_week;if(!p?.offense&&!p?.defense)return'';
  const card=(label,x)=>x?'<div class="lh-player-week-card"><small>'+esc(label)+'</small><button type="button" data-lh-inquirer-player="'+esc(x.player_id)+'">'+esc(x.player_name||playerName(x.player_id))+'</button><div class="lh-sub">'+esc(x.position||'')+' • '+esc(x.nfl_team||'FA')+' • '+Number(x.points||0).toFixed(2)+' pts</div></div>':'';
  return '<div class="lh-card lh-wide"><h3>⭐ Players of the Week</h3><div class="lh-sub">'+esc(rec.season+' Week '+rec.week)+' • highest fantasy scorer by side of the ball under this league’s scoring settings</div><div class="lh-player-week">'+card('Offense',p.offense)+card('Defense',p.defense)+'</div></div>';
 }

@@ -46,3 +46,13 @@ test('private Inquirer history reads remain local, SSO-independent, and mutation
  assert.match(history,/const readonlyPreview=req\.method==='GET'&&url\.searchParams\.get\('readonly_preview'\)==='1'/);
  assert.match(history,/if\(s&&!readonlyPreview\)\{/);
 });
+
+test('an unchanged earlier-week editorial hold blocks later weeks without repeated costly generation',()=>{
+ const w7={season:2026,week:7};
+ const held={state:'editorial-hold',season:2026,week:5,editorial_revision:29};
+ const current=inquirerScheduleDecision({nfl:w7,revision:29,status:held});
+ assert.equal(current.queue,false);
+ assert.match(current.reason,/earlier-week editorial hold/);
+ assert.equal(inquirerScheduleDecision({nfl:w7,revision:30,status:held}).queue,true,'new vetted editorial revision must release the hold');
+ assert.equal(inquirerScheduleDecision({nfl:{season:2027,week:3},revision:29,status:held}).queue,true,'a hold from another season cannot suppress this season');
+});

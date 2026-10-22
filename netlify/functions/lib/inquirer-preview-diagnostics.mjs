@@ -10,6 +10,32 @@ export function isPreviewDiagnosticContext(url='') {
  return context==='deploy-preview'||/^deploy-preview-\d+--(?:brilliant-faun-c5b649|transcendent-manatee-2f0123)\.netlify\.app$/i.test(host);
 }
 
+
+// A Deploy Preview can inspect several weeks without allowing a Week 3 draft
+// to masquerade as Week 5. Keep all diagnostic keys season/week scoped.
+// Resolve the default from Sleeper's NFL clock, never from a stale shared key.
+export async function resolvePreviewIdentity(url=''){
+ const query=new URL(url);
+ const value=query.searchParams.get('preview_week');
+ if(value!==null&&(!/^\d{1,2}$/.test(value)||Number(value)<1||Number(value)>17))
+  throw Error('Invalid private preview_week; enter a fantasy week between 1 and 17');
+ const response=await fetch('https://api.sleeper.app/v1/state/nfl',{
+  headers:{accept:'application/json'},signal:AbortSignal.timeout(6000),cache:'no-store'
+ });
+ if(!response.ok)throw Error('Sleeper season/week clock unavailable (HTTP '+response.status+'); preview held.');
+ const state=await response.json(),season=Number(state?.season),current=Number(state?.week);
+ if(!Number.isInteger(season)||season<2026||!Number.isInteger(current)||current<1)
+  throw Error('Sleeper season/week clock invalid; preview held.');
+ const week=value===null?Math.min(17,Math.max(1,current-1)):Number(value);
+ const prefix=season+'/week-'+String(week).padStart(2,'0');
+ return{
+  season,week,explicit:value!==null,
+  status:prefix+'/status.json',
+  edition:prefix+'/edition.json',
+  rejected:prefix+'/rejected-review.json'
+ };
+}
+
 export function summarizePreviewDiagnostic(edition) {
  const teams=Array.isArray(edition?.teams)?edition.teams:[];
  const reporterCounts={};

@@ -302,19 +302,41 @@ async function syncReporterArchives(s,result,broadcastKey){
 // Broadcast JSON is immutable and written first. The final index is its
 // commit marker. If a function died after the broadcast write, safely repair
 // its derived reporter/overview records BEFORE admitting later weeks.
-async function ensureLockedEditionIndexed(s,edition,key){
+// The broadcast index alone does not prove all reporter/recap records survived.
+// Scan only the four small reporter indexes and one recap for existing editions;
+// never rewrite a locked broadcast just to repair a derived record.
+export async function ensureLockedEditionIndexed(s,edition,key){
  const idx=await s.get('broadcasts/index.json',{type:'json'});
- const rows=Array.isArray(idx)?idx:[];
- if(rows.some(x=>Number(x.season)===Number(edition.season)&&Number(x.week)===Number(edition.week)))return false;
+ if(idx!==null&&!Array.isArray(idx))throw Error('Invalid broadcast index; refusing to overwrite it');
+ const rows=idx||[],season=Number(edition.season),week=Number(edition.week);
+ const committed=rows.some(x=>Number(x.season)===season&&Number(x.week)===week);
+ const reporters=edition?.reporters||publicReporters(),teams=edition?.teams||[];
+ const overviewKey='inquirer/league-overview/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
+ if(committed){
+  const [indices,overview]=await Promise.all([
+   Promise.all(reporters.map(r=>s.get('inquirer/reporters/'+r.id+'/index.json',{type:'json'}))),
+   s.get(overviewKey,{type:'json'})
+  ]);
+  const complete=indices.every((index,i)=>{
+   const expected=teams.filter(t=>t?.inquirer_article?.reporter?.id===reporters[i].id);
+   if(!Array.isArray(index?.articles))return false;
+   return expected.every(team=>index.articles.some(entry=>
+    Number(entry?.season)===season&&Number(entry?.week)===week&&
+    String(entry?.roster_id)===String(team.roster_id)&&
+    String(entry?.article_key||'').length>0));
+  })&&!!overview?.headline;
+  if(complete)return false;
+ }
  await syncReporterArchives(s,edition,key);
  if(edition.league_overview){
-  const overviewKey='inquirer/league-overview/'+edition.season+'/week-'+String(edition.week).padStart(2,'0')+'.json';
   const old=await s.get(overviewKey,{type:'json'});
   if(!old?.headline)await s.setJSON(overviewKey,{...edition.league_overview,editorial_revision:edition.editorial_revision,captured_at:edition.generated_at,published_locked:true});
  }
- const next=[...rows,{type:'week',season:edition.season,week:edition.week,key,captured_at:edition.generated_at}]
-  .sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
- await s.setJSON('broadcasts/index.json',next);
+ if(!committed){
+  const next=[...rows,{type:'week',season,week,key,captured_at:edition.generated_at}]
+   .sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
+  await s.setJSON('broadcasts/index.json',next);
+ }
  return true;
 }
 async function reporterArchive(id){

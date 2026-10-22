@@ -25,10 +25,12 @@ export default async function generateInquirerPreview(req){
   const draftUrl=new URL('/.netlify/functions/league-hub?weekly=1&preview_editorial=1',req.url);
   draftUrl.searchParams.set('preview_week',String(identity.week));
   const edition=await weeklyReport(new Request(draftUrl));
+  // Missing locked history is an explicit hold, not a mismatched manuscript.
+  // Surface the original causal reason instead of hiding it behind a week error.
+  if(edition?.preview_only!==true||edition?.published_locked!==false||edition?.available!==true)
+   throw Error('Private preview held: '+String(edition?.reason||'unavailable'));
   if(Number(edition?.season)!==identity.season||Number(edition?.week)!==identity.week)
    throw Error('Private manuscript identity mismatch; expected '+identity.season+' Week '+identity.week+' and received '+String(edition?.season)+' Week '+String(edition?.week));
-  if(edition?.preview_only!==true||edition?.published_locked!==false||edition?.available!==true)
-   throw Error('Expected an available, unpublished read-only editorial draft: '+String(edition?.reason||'unavailable'));
   if(edition?.preview_generation_quality?.ok!==true||edition?.preview_editorial_audit?.ok!==true){
    // Keep a rejected manuscript only in deploy-local diagnostic storage so
    // editors can inspect the exact failed prose without admitting it to the reader.

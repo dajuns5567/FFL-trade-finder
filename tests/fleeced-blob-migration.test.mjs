@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resolve} from 'node:path';
-import {SOURCE_SITE,DEST_SITE,REGION,STORES,digest,blobName,compareManifests,validateBackupDir} from '../scripts/migrate-fleeced-blobs.mjs';
+import {SOURCE_SITE,DEST_SITE,REGION,STORES,RESTORE_KEYS,digest,blobName,compareManifests,validateBackupDir} from '../scripts/migrate-fleeced-blobs.mjs';
 
 const makeManifest=stores=>({
  version:1,site:SOURCE_SITE,region:REGION,
@@ -14,6 +14,7 @@ test('only the approved old/new Fleeced! Netlify site IDs and site-wide store na
  assert.equal(DEST_SITE,'8776d155-bc7b-4dcd-bafc-3d70d3d51800');
  assert.equal(REGION,'us-east-2');
  assert.deepEqual(STORES,['fleeced-league-hub','fleeced-consensus-lkg','fll-value-history-v2']);
+ assert.deepEqual(RESTORE_KEYS,['broadcasts/2026/week-03.json','broadcasts/2026/week-04.json']);
 });
 
 test('backup paths cannot point to repository or relative directories',()=>{
@@ -31,12 +32,15 @@ test('content hashes stable and filenames do not expose or traverse arbitrary ke
 });
 
 test('existing destinations with differing data never become create candidates',()=>{
- const source=makeManifest({'fleeced-league-hub':[row('broadcasts/2026/week-03.json','a'),row('broadcasts/2026/week-04.json','b'),row('inquirer/publication-status.json','c')]});
- const destination=makeManifest({'fleeced-league-hub':[row('broadcasts/2026/week-03.json','a'),row('inquirer/publication-status.json','different')]});
+ const source=makeManifest({'fleeced-league-hub':[row('broadcasts/2026/week-03.json','a'),row('broadcasts/2026/week-04.json','b'),row('broadcasts/2026/week-05.json','BAD-LOCKED-WEEK5'),row('inquirer/publication-status.json','c'),row('broadcasts/index.json','STALE')]});
+ const destination=makeManifest({'fleeced-league-hub':[row('broadcasts/2026/week-03.json','a'),row('broadcasts/2026/week-05.json','different-bad'),row('inquirer/publication-status.json','different')]});
  const plan=compareManifests(source,destination);
  assert.deepEqual(plan.toCreate.map(x=>x.key),['broadcasts/2026/week-04.json']);
  assert.deepEqual(plan.matched.map(x=>x.key),['broadcasts/2026/week-03.json']);
- assert.deepEqual(plan.conflicts.map(x=>x.key),['inquirer/publication-status.json']);
+ assert.deepEqual(plan.conflicts.map(x=>x.key),[]);
+ assert.ok(!plan.toCreate.some(x=>/week-05|publication-status|index\.json/.test(x.key)), 'Old Week 5 and its stale publication state must NEVER migrate');
+ assert.ok(!plan.conflicts.some(x=>/week-05|publication-status/.test(x.key)));
+
 });
 
 test('migration program never deletes or uses unconditional overwrite',async()=>{

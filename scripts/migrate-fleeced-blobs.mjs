@@ -19,6 +19,10 @@ export const SOURCE_SITE = 'd51af6d7-e5f3-4c51-8c6d-25e31db39a0c';
 export const DEST_SITE = '8776d155-bc7b-4dcd-bafc-3d70d3d51800';
 export const REGION = 'us-east-2';
 export const STORES = ['fleeced-league-hub', 'fleeced-consensus-lkg', 'fll-value-history-v2'];
+// Restore only two independently verified historical baselines, never old Week 5,
+// unrelated consensus/value data, or stale publication-status/index records.
+export const RESTORE_KEYS = Object.freeze(['broadcasts/2026/week-03.json','broadcasts/2026/week-04.json']);
+const restoreCandidate=(store,key)=>store==='fleeced-league-hub'&&RESTORE_KEYS.includes(key);
 export const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 export const blobName = (store,key) => digest(Buffer.from(store+'\0'+key,'utf8'))+'.blob';
 const canonicalDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -125,6 +129,7 @@ export function compareManifests(source,destination){
   for(const name of STORES){
     const existing=new Map((destination.stores[name]||[]).map(r=>[r.key,r]));
     for(const row of source.stores[name]||[]){
+      if(!restoreCandidate(name,row.key))continue;
       const target=existing.get(row.key),ref={store:name,key:row.key,sha256:row.sha256};
       if(!target)toCreate.push(ref);
       else if(target.sha256===row.sha256)matched.push(ref);
@@ -142,6 +147,7 @@ async function liveCompare(base,token,plan,apply){
     const store=openStore(DEST_SITE,token,name);
     const atBackup=new Map(destination.stores[name].map(r=>[r.key,r]));
     for(const row of source.stores[name]){
+      if(!restoreCandidate(name,row.key))continue;
       const item=name+'/'+row.key,was=atBackup.get(row.key);
       const present=await store.getWithMetadata(row.key,{type:'arrayBuffer',consistency:'strong'});
       if(!present){

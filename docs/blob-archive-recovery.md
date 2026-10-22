@@ -1,6 +1,6 @@
 # Fleeced! one-time, non-destructive Netlify Blob archive recovery
 
-**Status:** backup/restore tool is staged on draft PR #402. **No historical blobs have been copied yet.** The destination currently lacks \`fleeced-league-hub\`; original approved Weeks 3–4 remain in the credit-paused \`brilliant-faun-c5b649\` project.
+**Status:** safe targeted recovery is staged on draft PR #402. **No historical blobs have been copied yet.** The destination currently lacks \`fleeced-league-hub\`; original approved Weeks 3–4 remain in the credit-paused \`brilliant-faun-c5b649\` project.
 
 ## Verified Fleeced! projects
 
@@ -19,7 +19,7 @@ If you have Node.js 22 and this PR branch checked out on your computer, run:
 bash scripts/one-time-fleeced-archive-recovery.sh
 \`\`\`
 
-The script privately prompts for the old and new Fleeced! Netlify account tokens (typed invisibly, not stored in Git or chat). It then backs up and SHA-256-verifies **both** sites, prints a **dry-run** comparison, and **STOPS before any restore**, because the replacement project's production Inquirer scheduled function is currently ENABLED. Existing destination objects are never overwritten. The detailed commands below are provided as an alternative for independent review.
+The script privately prompts for the old and new Fleeced! Netlify account tokens (typed invisibly, not stored in Git or chat). It then backs up and SHA-256-verifies **both** sites, prints a **dry-run limited to ONLY `broadcasts/2026/week-03.json` and `week-04.json`**, and **STOPS before any restore**, because the replacement project's production Inquirer scheduled function is currently ENABLED. Existing destination objects are never overwritten. The detailed commands below are provided as an alternative for independent review.
 
 ## One-time operator procedure (tokens remain local; never share in chat)
 
@@ -53,7 +53,7 @@ unset FLEECED_OLD_NETLIFY_TOKEN FLEECED_NEW_NETLIFY_TOKEN
 
 **Current blocker (browser-verified 2026-10-21):** replacement project production contains an **enabled** \`inquirer-publish-scheduled\` function. Its scheduled run currently reports a missing \`FLEECED_INQUIRER_QUEUE_KEY\`, but missing credentials alone do not prove permanent disablement. The recovery tool now **refuses site-wide restoration** unless the publisher has been separately disabled and verified and a local explicit confirmation flag has been set. Do not change \`main\` or Netlify site settings without the user's specific approval. A backed-up, verified plan can still be prepared safely.
 
-Do NOT run the \`restore --apply\` command if any key counts, required season or Week 4 baseline, or audit information is unexpectedly missing; report the output first. The tool fails rather than resetting or replacing any existing key. It also checks destination freshness against the backup snapshot before writes and performs SHA-256 readback verification for created items. No production publishing or Netlify account/project configuration changes are performed.
+Do NOT run the \`restore --apply\` command if any key counts, required season or Week 4 baseline, or audit information is unexpectedly missing; report the output first. Only those **two** original locked archive objects can ever be restored; Week 5, `broadcasts/index.json`, publication status, reporter archives and all unrelated stores are explicitly excluded. This prevents an old, editorially rejected Week 5 from becoming immutable on the replacement site. The tool fails rather than resetting or replacing any existing key. It also checks destination freshness against the backup snapshot before writes and performs SHA-256 readback verification for created items. No production publishing or Netlify account/project configuration changes are performed.
 
 Keep the private backup folder offline and outside GitHub; it contains sensitive original league files. The tool backs up **both source and destination** to private local files before restore, with per-key SHA-256, metadata and recorded original ETag in manifests. It creates only absent destination keys using \`onlyIfNew\`; conflict entries are left untouched, not silently reconciled. Because the source and replacement stores may contain different legitimate latest states, conflicts require separate independent review before deciding which side is canonical.
 
@@ -61,7 +61,7 @@ Keep the private backup folder offline and outside GitHub; it contains sensitive
 
 1. Confirm both backup manifests pass SHA-256 verification, and the source store counts and expected Week 3–4 blob keys are present.
 2. Confirm old project source data, team/project settings, and production publishing remain unchanged.
-3. Confirm missing destination objects were created and read-back hashes match; retain a conflict report of any divergent original vs destination keys.
+3. Confirm only original `broadcasts/2026/week-03.json` and `week-04.json` were created and read-back hashes match. Do NOT transfer an older Week 5 manuscript. After restoring, the canonical publication process will reconcile missing archive/reporter indexes from those locked source editions.
 4. On the private PR #402 preview at \`/?inquirer_preview=1&preview_week=5\`, start **read-only draft** generation and confirm season 2026, **week 5**, 32 team articles, official prior locked Week 4 continuity, and both publication/editorial quality gates passing.
 5. Independently read the 32 articles and Weekly Recap for headings, accuracy, repetition, variance and Week 4 voice. Audit Week 5 → Week 6 continuity before considering a production cutover.
 6. No merge to \`main\`, public publication, enabling of \`FLEECED_ENABLE_NEW_SITE_PUBLISHER\`, project deletion or transfer is authorized by this procedure.

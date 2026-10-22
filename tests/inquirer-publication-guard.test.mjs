@@ -12,7 +12,7 @@ const makeEdition=()=>{
   const distinct='lexeme'+String.fromCharCode(97+i%26)+String.fromCharCode(97+Math.floor(i/26));
   const prose=Array.from({length:6},(_,j)=>
    'Editorial evidence '+distinct+' for '+name+' in '+distinct+' chapter '+j+': '+
-   Array(i+6).fill('distinctive football detail '+distinct).join(' ')+
+   Array(Math.min(i+6,13)).fill('distinctive football detail '+distinct).join(' ')+
    ' as the scoring and strategic choices develop.');
   const sections=[
    {kind:'lede',heading:'Week 5 account',paragraphs:prose.slice(0,2)},
@@ -22,8 +22,8 @@ const makeEdition=()=>{
    {kind:'cool-throne',heading:'The bright spot',paragraphs:[prose[5]]},
    {kind:'value',heading:'Market movement report',paragraphs:[]},
    {kind:'sentiment',heading:'Fan reaction',paragraphs:[
-    'Supporters '+distinct+' of '+name+' are '+distinct+' reacting to '+Array(i+4).fill('distinctly local evidence '+distinct).join(' ')+' as the '+distinct+' roster assesses the matchup.',
-    'The '+distinct+' group chat for '+name+' has '+distinct+' '+Array(i+5).fill('a separate observation '+distinct).join(' ')+' before the manager responds.'
+    'Supporters '+distinct+' of '+name+' are '+distinct+' reacting to '+Array(Math.min(i+4,13)).fill('distinctly local evidence '+distinct).join(' ')+' as the '+distinct+' roster assesses the matchup.',
+    'The '+distinct+' group chat for '+name+' has '+distinct+' '+Array(Math.min(i+5,13)).fill('a separate observation '+distinct).join(' ')+' before the manager responds.'
    ]},
    {kind:'outlook',heading:'The Week Ahead',paragraphs:['The team has a verifiable next matchup.']}
   ];

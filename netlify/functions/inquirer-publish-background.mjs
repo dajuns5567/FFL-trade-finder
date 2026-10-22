@@ -24,12 +24,19 @@ export default async function publishInquirerInBackground(req){
    editorial_findings:report?.editorial_findings,reason:report?.reason||null
   }));
  }catch(error){reportError=String(error?.message||error);console.error('inquirer-background-report-failed',error)}
- try{
-  awards=await weeklyAwards();
-  console.info('inquirer-background-awards',JSON.stringify({records:awards?.records?.length||0}));
- }catch(error){awardsError=String(error?.message||error);console.error('inquirer-background-awards-failed',error)}
+ // Award snapshots are downstream of a locked, fully indexed edition.
+ // Never write Week N awards when Week N's newsroom copy is held or incomplete.
+ if(report?.available===true&&report?.published_locked===true){
+  try{
+   awards=await weeklyAwards();
+   const record=(awards?.records||[]).find(x=>Number(x.season)===Number(report.season)&&Number(x.week)===Number(report.week));
+   if(!record?.players_of_week||!Array.isArray(record?.manager_awards))
+    throw Error('Weekly awards package incomplete for '+report.season+' Week '+report.week);
+   console.info('inquirer-background-awards',JSON.stringify({records:awards?.records?.length||0,season:report.season,week:report.week}));
+  }catch(error){awardsError=String(error?.message||error);console.error('inquirer-background-awards-failed',error)}
+ }else console.info('inquirer-background-awards-held','No fully published newspaper; awards were not backfilled.');
  await statusStore.setJSON('inquirer/publication-status.json',{
-  state:reportError||awardsError?'error':report?.review_required?'editorial-hold':'completed',
+  state:reportError||awardsError?'error':report?.review_required?'editorial-hold':report?.available===true?'completed':'waiting',
   started_at:startedAt,finished_at:new Date().toISOString(),
   season:report?.season??null,week:report?.week??null,
   available:!!report?.available,review_required:!!report?.review_required,

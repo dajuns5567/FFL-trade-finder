@@ -170,7 +170,7 @@ const reporting=fs.readFileSync('netlify/functions/inquirer-reporting-v25.mjs','
 assert(backend.includes('/stats/nfl/regular/\${season}/\${week}'),'League Hub must fetch Sleeper raw weekly stats for Inquirer articles');
 assert(backend.includes("inquirer/reporters/'+reporter.id+'/index.json"),'Each reporter must have a persistent article archive index');
 assert(backend.includes("u.searchParams.get('reporter_archive')"),'Reporter archive API route missing');
-assert(backend.includes("for(let w=1;w<=cappedWeek;w++)")&&backend.includes("stored?.available&&Array.isArray(stored?.teams)&&stored.teams.length"),'Published completed-week broadcasts must remain locked and be skipped unchanged while the publisher searches sequentially for the next missing week');
+assert(backend.includes("for(let w=1;w<=cappedWeek;w++)")&&backend.includes("isLockedInquirerEdition(stored,season,w)")&&backend.includes("await ensureLockedEditionIndexed(s,stored,key)")&&backend.includes("Refusing to overwrite historical content."),'Published completed-week broadcasts must remain verified as locked, reconciled and never overwritten while searching for the next missing week');
 assert(backend.includes("const preloadedBroadcast=(season,week)=>PRELOADED_BROADCASTS.get")&&backend.includes("preloaded:true"),'Bundled Week 1 must stay available even if a future editorial revision changes');
 assert(ui.includes("Open Full Inquirer ▾")&&ui.includes("Weekly Recap →")&&ui.includes("data-lh-archive-season"),'Held Inquirer state must keep both Open Full Inquirer and Weekly Recap controls when a published edition exists');
 assert(backend.includes('published_locked:true'),'Newly published Inquirer broadcasts and archive articles must be marked immutable');

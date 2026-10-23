@@ -42,6 +42,15 @@ test('an explicit unlocked draft or any Week5+ without published_locked=true is 
  badForward.teams[0].inquirer_article.sections.pop();
  assert.match(inspectCanonicalArchive(badForward,2026,5).issues.join(' '),/eight editorial desks/);
  assert.equal(inspectCanonicalArchive({...make(4),season:2027},2027,4).ok,false);
+ const nextSeasonRejected={...make(1),season:2027,published_locked:true};
+ assert.equal(inspectCanonicalArchive(nextSeasonRejected,2027,1).ok,false,
+  '2027 Week 1 cannot silently revert to legacy 2026 early-week writing');
+ assert.match(inspectCanonicalArchive(nextSeasonRejected,2027,1).issues.join(' '),/revision 39 or later/);
+ const nextSeasonApproved={...vettedWeek5,season:2027,week:1};
+ assert.equal(inspectCanonicalArchive(nextSeasonApproved,2027,1).ok,true);
+ const badEarly2027=clone(nextSeasonApproved);
+ badEarly2027.teams[0].inquirer_article.sections.pop();
+ assert.match(inspectCanonicalArchive(badEarly2027,2027,1).issues.join(' '),/eight editorial desks/);
 });
 test('legacy Week 4 refuses every known old-format regression',()=>{
  const original=make(4);

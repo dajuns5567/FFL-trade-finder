@@ -1,0 +1,68 @@
+// Independent editorial language audit for every completed Week 5+ newsroom.
+// Mechanical quality checks are fail-closed; humor/voice are reviewer judgments.
+const norm=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ').trim();
+const words=s=>norm(s).split(' ').filter(Boolean);
+const lines=a=>(a?.sections||[]).flatMap(s=>Array.isArray(s?.paragraphs)?s.paragraphs:[]).filter(Boolean);
+const story=t=>t?.inquirer_article||{};
+function repeatedCrossTeamWindows(teams,size=13,minimumOwners=5){
+ const owners=new Map();
+ for(const t of teams){
+  const id=String(t.roster_id),seen=new Set();
+  for(const p of lines(story(t))){
+   const w=words(p);for(let i=0;i+size<=w.length;i++){
+    const part=w.slice(i,i+size).join(' ');
+    if(part.length>=55)seen.add(part);
+   }
+  }
+  for(const phrase of seen){const set=owners.get(phrase)||new Set();set.add(id);owners.set(phrase,set)}
+ }
+ return [...owners].filter(([,ids])=>ids.size>=minimumOwners).sort((a,b)=>b[1].size-a[1].size)
+  .slice(0,12).map(([phrase,ids])=>({phrase,teams:ids.size}));
+}
+export function auditInquirerLanguage(edition,previous=null){
+ const teams=Array.isArray(edition?.teams)?edition.teams:[];
+ const issues=[],warnings=[],reporters={},leads=new Map(),headlines=new Set();
+ if(Number(edition?.week)<5)return{ok:true,issues,warnings,stats:{skipped:'pre-Week-5 archive'}};
+ for(const t of teams){
+  const id=String(t?.roster_id),a=story(t),paragraphs=lines(a),rid=String(a?.reporter?.id||'unknown');
+  reporters[rid]=(reporters[rid]||0)+1;
+  const headline=norm(a.headline);
+  if(headlines.has(headline))issues.push({id:'duplicate-headline',team:id});
+  headlines.add(headline);
+  const opening=words(paragraphs[0]||'').slice(0,9).join(' ');
+  if(opening.length>35){const set=leads.get(opening)||new Set();set.add(id);leads.set(opening,set)}
+  const seen=new Set();
+  for(const p of paragraphs){
+   const k=norm(p);
+   if(k.length>75&&seen.has(k))issues.push({id:'within-article-paragraph-echo',team:id,excerpt:k.slice(0,85)});
+   seen.add(k);
+  }
+  const prior=(previous?.teams||[]).find(x=>String(x?.roster_id)===id);
+  if(prior){
+   const p=new Set(lines(story(prior)).map(norm).filter(x=>x.length>75));
+   const copied=paragraphs.map(norm).filter(x=>x.length>75&&p.has(x));
+   if(copied.length>=2)issues.push({id:'recycled-prior-week-paragraphs',team:id,count:copied.length});
+  }
+  const text=paragraphs.join(' ');
+  // Such examples are objective anti-journalism scaffolds, not humor itself.
+  if(/\b(?:as an ai|generated narrative|data suggests that|the algorithm concludes|in this section we will|fantasy football analysis follows)\b/i.test(text))
+   issues.push({id:'robotic-editorial-meta-copy',team:id});
+  const sarcasmSignals=(text.match(/\b(?:apparently|naturally|of course|congratulations|surely|mercifully|somehow|ridiculous|audacity|absurd|embarrass|excus|please|parade|miracle|disaster|fiasco|suspect|fraud|laugh|joke|nonsense|inexplicable|unbelievable|gall|nerve)\b|[!?]/gi)||[]).length;
+  if(sarcasmSignals===0)warnings.push({id:'voice-read-required',team:id,detail:'No simple sarcasm signal; a human must judge whether this is funny, original and reporter-specific'});
+ }
+ const cross=repeatedCrossTeamWindows(teams);
+ for(const offender of cross)issues.push({id:'cross-team-long-language-reuse',...offender});
+ for(const [prefix,ids] of leads)if(ids.size>=5)issues.push({id:'formulaic-lede-openings',opening:prefix,teams:ids.size});
+ if(teams.length===32&&(Object.keys(reporters).length!==4||Object.values(reporters).some(n=>n!==8)))
+  issues.push({id:'reporter-rotation-break',counts:reporters});
+ return{ok:issues.length===0,issues,warnings,stats:{article_count:teams.length,reporters,
+  common_openings:[...leads].filter(([,ids])=>ids.size>=3).slice(0,8).map(([text,ids])=>({text,count:ids.size})),
+  repetitive_windows:cross.length,voice_warnings:warnings.length},
+  reviewer_required:true,reviewer_questions:[
+   'Do all four writers sound unmistakably different in rhythm and satire?',
+   'Is the humor grounded in real box scores, management decisions and consequences?',
+   'Are the insults clever rather than interchangeable filler?',
+   'Does each team story add a distinct fact or argument beyond the recap?',
+   'Is the sarcasm frequent, earned and non-repetitive without fabricated facts?'
+  ]};
+}

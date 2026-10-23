@@ -1,6 +1,12 @@
 name: Fleeced private Week 5 browser audit
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/inquirer-week5-playwright.yml'
+      - 'scripts/inquirer-week5-playwright-audit.mjs'
+      - 'netlify/functions/inquirer-preview-diagnostic.mjs'
+      - 'netlify/functions/lib/inquirer-preview-diagnostics.mjs'
 permissions:
   contents: read
 jobs:

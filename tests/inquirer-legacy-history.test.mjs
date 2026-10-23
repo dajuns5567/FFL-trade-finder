@@ -28,7 +28,18 @@ test('an explicit unlocked draft or any Week5+ without published_locked=true is 
  assert.equal(inspectCanonicalArchive({...week4,published_locked:false},2026,4).ok,false);
  assert.equal(inspectCanonicalArchive({...make(5)},2026,5).ok,false);
  assert.equal(inspectCanonicalArchive({...make(5),published_locked:false},2026,5).ok,false);
- assert.equal(inspectCanonicalArchive({...make(5),published_locked:true},2026,5).ok,true);
+ const rejectedOldWeek5={...make(5),published_locked:true};
+ assert.equal(inspectCanonicalArchive(rejectedOldWeek5,2026,5).ok,false,
+  'A locked but rejected revision-14 Week 5 is NOT a canonical published edition');
+ assert.match(inspectCanonicalArchive(rejectedOldWeek5,2026,5).issues.join(' '),/revision 39 or later/);
+ const vettedWeek5={...make(5),published_locked:true,editorial_revision:39,
+  editorial_generation:{engine:'v31-forward',variation_salt:5}};
+ assert.equal(inspectCanonicalArchive(vettedWeek5,2026,5).ok,true);
+ const vettedWeek6={...vettedWeek5,week:6,editorial_revision:40};
+ assert.equal(inspectCanonicalArchive(vettedWeek6,2026,6).ok,true);
+ const badForward=clone(vettedWeek5);
+ badForward.teams[0].inquirer_article.sections.pop();
+ assert.match(inspectCanonicalArchive(badForward,2026,5).issues.join(' '),/eight editorial desks/);
  assert.equal(inspectCanonicalArchive({...make(4),season:2027},2027,4).ok,false);
 });
 test('legacy Week 4 refuses every known old-format regression',()=>{

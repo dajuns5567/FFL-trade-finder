@@ -1,6 +1,6 @@
 import {getDeployStore} from '@netlify/blobs';
 import {weeklyReport} from './league-hub.mjs';
-import {isPreviewDiagnosticContext,resolvePreviewIdentity,PREVIEW_DIAGNOSTIC_STORE,summarizePreviewDiagnostic} from './lib/inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,summarizePreviewDiagnostic} from './lib/inquirer-preview-diagnostics.mjs';
 
 // Explicit preview-only diagnostic invocation. Never publishes or stages an edition.
 // A background function is not constrained by the normal 30-second HTTP response timeout.
@@ -15,14 +15,15 @@ export default async function generateInquirerPreview(req){
  const store=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
  // A transient store outage is not evidence that no draft exists.
  // Fail closed rather than launching overlapping 32-column jobs.
- const existing=await store.get(identity.status,{type:'json'});
+ const observed=await store.get(identity.status,{type:'json'});
+ const existing=previewStatusMatchesIdentity(observed,identity)?observed:null;
  const age=Date.now()-Date.parse(existing?.started_at||0);
  if(existing?.state==='completed'||(existing?.state==='running'&&age>=0&&age<20*60*1000)){
   console.info('inquirer-preview-background-already-started',existing.state);
   return;
  }
  const started_at=new Date().toISOString();
- await store.setJSON(identity.status,{state:'running',started_at,preview_only:true});
+ await store.setJSON(identity.status,{state:'running',started_at,season:identity.season,week:identity.week,preview_only:true});
  try{
   const draftUrl=new URL('/.netlify/functions/league-hub?weekly=1&preview_editorial=1',req.url);
   draftUrl.searchParams.set('preview_week',String(identity.week));

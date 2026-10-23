@@ -47,6 +47,12 @@ export function auditInquirerLanguage(edition,previous=null){
   // Such examples are objective anti-journalism scaffolds, not humor itself.
   if(/\b(?:as an ai|generated narrative|data suggests that|the algorithm concludes|in this section we will|fantasy football analysis follows)\b/i.test(text))
    issues.push({id:'robotic-editorial-meta-copy',team:id});
+  // A 0.0-point lineup is reporting gold, not a positive contribution.
+  // The Week5 Chiefs story literally said it 'got something' from a player
+  // despite all seven starters scoring zero; never rubber-stamp that praise.
+  const lede=lines(a).slice(0,3).join(' ');
+  if(Number(t?.points)===0&&/\\bgot something from\\b/i.test(lede))
+   issues.push({id:'zero-point-roster-false-credit',team:id,detail:'Article credits a zero-point starter with meaningful production'});
   const sarcasmSignals=(text.match(/\b(?:apparently|naturally|of course|congratulations|surely|mercifully|somehow|ridiculous|audacity|absurd|embarrass|excus|please|parade|miracle|disaster|fiasco|suspect|fraud|laugh|joke|nonsense|inexplicable|unbelievable|gall|nerve)\b|[!?]/gi)||[]).length;
   if(sarcasmSignals===0)warnings.push({id:'voice-read-required',team:id,detail:'No simple sarcasm signal; a human must judge whether this is funny, original and reporter-specific'});
  }

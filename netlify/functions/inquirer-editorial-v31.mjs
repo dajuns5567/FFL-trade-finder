@@ -4275,9 +4275,9 @@ function assertWeek2Originality(result,previousEdition){
     for(const t of teams){
       const prior=oldByRoster.get(String(t.roster_id)),article=t.inquirer_article;
       if(!prior?.inquirer_article||!Array.isArray(article?.sections))continue;
-      const oldSentences=new Set(forwardSentenceParts(
-        (prior.inquirer_article.sections||[]).flatMap(x=>x.paragraphs||[]).join(' ')
-      ).filter(x=>forwardWordCount(x)>=13).map(x=>editorialSentenceSkeleton(x,prior)));
+      const oldSentences=new Set((prior.inquirer_article.sections||[])
+        .flatMap(x=>x.paragraphs||[]).flatMap(p=>forwardSentenceParts(p))
+        .filter(x=>forwardWordCount(x)>=13).map(x=>editorialSentenceSkeleton(x,prior)));
       let dropped=0;
       for(const section of article.sections){
         section.paragraphs=(section.paragraphs||[]).map(p=>{

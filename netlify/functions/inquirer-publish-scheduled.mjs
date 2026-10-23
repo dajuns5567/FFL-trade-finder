@@ -12,11 +12,12 @@ export default async function inquirerPublishScheduled(req){
  // an explicit, site-scoped cutover flag is enabled. Previews never publish.
  const site=process.env.SITE_NAME||globalThis.Netlify?.env?.get?.('SITE_NAME')||'';
  const siteId=process.env.SITE_ID||globalThis.Netlify?.env?.get?.('SITE_ID')||'';
- const host=new URL(req.url).hostname,context=process.env.CONTEXT||'';
+ const host=new URL(req.url).hostname,context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
  if(context==='deploy-preview'||context==='branch-deploy')return skip('Non-production deployment');
  const isReplacement=site==='transcendent-manatee-2f0123'||
   siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||host==='transcendent-manatee-2f0123.netlify.app';
- if(isReplacement&&process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER!=='true')
+ const publishingEnabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
+ if(isReplacement&&publishingEnabled!=='true')
   return skip('Replacement site is preview-only pending verified archive migration');
  const key=globalThis.Netlify?.env?.get('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
  if(!key)return skip('Publication queue credential not configured');

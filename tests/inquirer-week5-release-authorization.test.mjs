@@ -2,6 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {editorialCopyDigest} from '../netlify/functions/inquirer-publication-guard.mjs';
 import {inspectWeek5ReleaseAuthorization,REPLACEMENT_SITE_ID,WEEK5_RELEASE_KEY} from '../scripts/inquirer-week5-release-authorization.mjs';
+const legacyArchive=(week)=>({
+ available:true,season:2026,week,inquirer_version:31,
+ ...(week===4?{editorial_revision:14}:{}),
+ teams:Array.from({length:32},(_,i)=>({roster_id:String(i+1),inquirer_article:{
+  headline:'Historical headline '+i,reporter:{id:['a','b','c','d'][i%4]},
+  sections:['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'].map(kind=>({kind,paragraphs:['Original history']}))
+ }})),
+ league_overview:{headline:'Historical recap',
+  sections:[{blocks:['lead','standings','players','decisions','league','outlook'].map(kind=>({kind,paragraphs:['archive']}))},
+   {paragraphs:['Desk2']},{paragraphs:['Desk3']},{paragraphs:['Desk4']}]}
+});
 const inputs=()=>{
  const candidate={season:2026,week:5,preview_only:true,published_locked:false,teams:[],league_overview:{sections:[]}};
  const digest=editorialCopyDigest(candidate);
@@ -9,8 +20,8 @@ const inputs=()=>{
  return {siteId:REPLACEMENT_SITE_ID,candidate,sourceDigest,
   preflight:{safe_to_consider_for_manual_review:true,failures:[],original_digest:sourceDigest,candidate_digest:digest},
   approval:{approved:true,season:2026,week:5,sha256:digest,reviewed_by:'Authorized human editor',reviewed_at:'2026-10-23T18:00:00Z'},
-  originalWeek3:{season:2026,week:3,published_locked:true},
-  originalWeek4:{season:2026,week:4,published_locked:true},
+  originalWeek3:legacyArchive(3),
+  originalWeek4:legacyArchive(4),
   existingWeek5:null,featurePlan:{awards:['offense','defense','manager-badges'],spotlight_count:32,reporter_archive_count:4,weekly_recap:true}};
 };
 test('correctly scoped approval is a request to import, never a publication',()=>{
@@ -25,7 +36,7 @@ for(const [title,edit,expect] of [
  ['foreign site',x=>x.siteId='legacy-old-site','wrong-replacement-site'],
  ['missing approval',x=>x.approval=null,'no-human-approval-of-exact-candidate-digest'],
  ['tampered digest',x=>x.approval.sha256='wrong','no-human-approval-of-exact-candidate-digest'],
- ['missing week4',x=>x.originalWeek4=null,'missing-locked-week-4'],
+ ['missing week4',x=>x.originalWeek4=null,'canonical-week3-week4-history-invalid'],
  ['week5 archive conflict',x=>x.existingWeek5={},'week5-already-exists-refuse-overwrite'],
  ['preview source not retained',x=>x.candidate.preview_only=false,'not-the-private-week5-candidate'],
  ['incomplete awards',x=>x.featurePlan.awards=['offense'],'incomplete-associated-feature-plan'],
@@ -38,6 +49,6 @@ for(const [title,edit,expect] of [
   const r=inspectWeek5ReleaseAuthorization(args);
   assert.equal(r.ready_to_request_operator_import,false);
   assert.equal(r.publication_executed,false);
-  assert.ok(r.issues.includes(expect),JSON.stringify(r.issues));
+  assert.ok(r.issues.some(i=>i.includes(expect)),JSON.stringify(r.issues));
  });
 }

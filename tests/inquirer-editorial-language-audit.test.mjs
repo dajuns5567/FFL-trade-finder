@@ -106,3 +106,15 @@ test('future weeks detect two reused sentence skeletons despite updated team nam
  const ids=auditInquirerLanguage(after,before).issues.map(x=>x.id);
  assert.ok(ids.includes('recycled-prior-week-sentence-template'),JSON.stringify(ids));
 });
+
+test('independent publication gate also uses prior-week prose history',async()=>{
+ const {inspectEditionBeforePublication}=await import('../netlify/functions/inquirer-publication-guard.mjs');
+ const prior=draft(),current=structuredClone(prior);
+ prior.week=6;current.week=7;
+ for(const [e,n,k] of [[prior,'Prior Club',102],[current,'Next Club',121]]){
+  e.teams[0].team_name=n;
+  e.teams[0].inquirer_article.sections[0].paragraphs.push(n+' left their supporters calculating whether the second half actually offered a sensible way to manage Sunday at '+k+' points.');
+  e.teams[0].inquirer_article.sections[1].paragraphs.push('The responsible manager then insisted '+n+' could still salvage credibility, but the next lineup deadline made that argument a regrettable fantasy at '+k+' points.');
+ }
+ assert.ok(inspectEditionBeforePublication(current,prior).issues.some(x=>x.id==='recycled-prior-week-sentence-template'));
+});

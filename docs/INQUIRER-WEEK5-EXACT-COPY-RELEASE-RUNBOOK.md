@@ -8,6 +8,9 @@
 - Run `node scripts/inquirer-week5-exact-copy-preflight.mjs <original-authenticated.json> <candidate.json>` and inspect its failures, editorial findings and editorial copy SHA-256.
 - Candidate `preview_generation_quality.ok=false` and `preview_editorial_audit.ok=false` intentionally indicate human review HOLD. The preflight MUST NOT interpret them as approval.
 
+## Independent no-write release contract
+Before operator import, supply canonical historical Weeks 3 and 4, the real replacement Netlify site ID, **null** for the Week 5 target (proof that the canonical slot is vacant), the authenticated original digest, exact candidate digest, explicit human approval bound to the latter, and a complete associated-feature plan to `inspectWeek5ReleaseAuthorization` in `scripts/inquirer-week5-release-authorization.mjs`. It refuses a wrong team/site, any locked Week 5, a modified manuscript, missing feature work, or missing approval. Legacy 2026 Week 3/4 archives are verified by their canonical validator and may legitimately lack a `published_locked` property; **do not mutate the archive to supply it**. This is a pure dry-run check, not a Netlify write API, approval mechanism or certification that the import was executed.
+
 ## Minimum release architecture (not implemented or authorized yet)
 1. A protected, production-only operator must separately provide a signed approval naming the **candidate** editorial digest, reviewer and timestamp; a public HTTP endpoint cannot mint approval.
 2. Verify the approved site ID is **8776d155-bc7b-4dcd-bafc-3d70d3d51800**, site name `transcendent-manatee-2f0123`, and the original Week 3/4 archive fingerprints. Never import into original paused site `brilliant-faun-c5b649`.

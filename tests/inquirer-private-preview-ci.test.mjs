@@ -96,3 +96,19 @@ test('unpublished previews explain missing historical archives before generic we
  assert.ok(hold>=0&&mismatch>hold,'Archive continuity errors must remain specific and causal');
  assert.match(previewJobSource,/edition\?\.preview_only!==true\|\|edition\?\.published_locked!==false\|\|edition\?\.available!==true/);
 });
+
+test('a previously failed Week 5 preview automatically retries only after the exact locked history is restored',()=>{
+ assert.match(readerSource,/async function canRetryArchiveBlockedPreview\(season,targetWeek\)/);
+ assert.match(readerSource,/length:targetWeek-3/);
+ assert.match(readerSource,/isVerifiedHistoricalPreviewEdition\(edition,season,i\+3\)/);
+ assert.match(readerSource,/if\(!history\.every\(/);
+ assert.match(readerSource,/const week4=history\[1\]/);
+ assert.match(readerSource,/cool-throne/);
+ assert.match(readerSource,/Week 3 is the earliest missing locked archive/);
+ assert.match(readerSource,/if\(again\.status===202\)throw Error/);
+ assert.match(readerSource,/!inquirerPreviewLaunchAttempted/);
+ assert.match(readerSource,/info\?\.target\?\.week/);
+ assert.match(readerSource,/status\.week/);
+ assert.match(readerSource,/Refusing to display stale diagnostic text/);
+ assert.match(readerSource,/inquirerPreviewPollAttempts<=80/);
+});

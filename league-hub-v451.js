@@ -31,7 +31,11 @@ async function canRetryArchiveBlockedPreview(season,targetWeek){
  if(!history.every((edition,i)=>isVerifiedHistoricalPreviewEdition(edition,season,i+3)))return false;
  const week4=history[1];
  const kinds=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
- return week4.teams.every(t=>kinds.every(k=>(t?.inquirer_article?.sections||[]).some(s=>s.kind===k)));
+ const beats=['lead','standings','players','decisions','league','outlook'];
+ const recap=week4.league_overview?.sections||[],blocks=recap[0]?.blocks||[];
+ return recap.length>=4&&blocks.length===beats.length&&
+  beats.every((kind,i)=>blocks[i]?.kind===kind)&&
+  week4.teams.every(t=>kinds.every(k=>(t?.inquirer_article?.sections||[]).some(s=>s.kind===k)));
 }
 async function loadInquirerPreview(){
  if(!inquirerPreviewMode)return null;

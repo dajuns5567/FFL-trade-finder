@@ -4266,6 +4266,34 @@ function assertWeek2Originality(result,previousEdition){
       'Make Week '+week+' Look Less Accidental',
       'Make Their Week '+week+' Win Harder to Ignore');
   }
+  // A new edition must never carry full sentence templates forward from
+  // the same club's prior locked newspaper. Prune only redundant prior-edition
+  // sentences; retain current facts, and let independent depth/format gates
+  // HOLD any story made too thin. Never replace prose with generic filler.
+  if(week>=5&&previousEdition?.teams?.length){
+    const oldByRoster=new Map(previousEdition.teams.map(x=>[String(x.roster_id),x]));
+    for(const t of teams){
+      const prior=oldByRoster.get(String(t.roster_id)),article=t.inquirer_article;
+      if(!prior?.inquirer_article||!Array.isArray(article?.sections))continue;
+      const names=forwardEntities({teams:[t,prior]});
+      const oldSentences=new Set(forwardSentenceParts(
+        (prior.inquirer_article.sections||[]).flatMap(x=>x.paragraphs||[]).join(' ')
+      ).filter(x=>forwardWordCount(x)>=13).map(x=>forwardNormSentence(x,names)));
+      let dropped=0;
+      for(const section of article.sections){
+        section.paragraphs=(section.paragraphs||[]).map(p=>{
+          const parts=forwardSentenceParts(p);
+          const kept=parts.filter(sentence=>{
+            if(forwardWordCount(sentence)<13)return true;
+            if(!oldSentences.has(forwardNormSentence(sentence,names)))return true;
+            dropped++;return false;
+          });
+          return kept.join(' ').trim();
+        }).filter(Boolean);
+      }
+      if(dropped)article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
+    }
+  }
   // Recap prose receives the same late factual/grammar curation as team desks.
   // Keep its six-beat paragraph mirror synchronized for reader and admission.
   if(week>=5&&overview?.hot_takes?.length){

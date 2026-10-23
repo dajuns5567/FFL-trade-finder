@@ -8,6 +8,7 @@ function edition(week){
  return{available:true,published_locked:true,season:2026,week,
   teams:Array.from({length:32},(_,i)=>({
    roster_id:String(i+1),inquirer_article:{headline:'Specific Team '+(i+1)+' Week '+week+' article',
+    reporter:{id:'reporter-'+Math.floor(i/8)},
     sections:kinds.map(kind=>({kind,heading:'The '+kind,paragraphs:['Reported facts']}))}})),
   league_overview:{headline:'Week '+week+' full recap',sections:[
    {blocks:beats.map(kind=>({kind,heading:kind,paragraphs:['Reported analysis']}))},

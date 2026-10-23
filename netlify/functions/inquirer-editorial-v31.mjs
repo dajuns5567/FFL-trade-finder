@@ -4273,11 +4273,11 @@ function assertWeek2Originality(result,previousEdition){
       let copy=String(take.take||'');
       if(take.kind==='division')copy=copy
        .replace('The gap is real but thin; one stumble turns the leader from front-runner into participant again',
-        'The leader has a three-win cushion. It takes more than one bad Sunday to erase that advantage.')
+        'The leader owns a genuine cushion; one bad Sunday can dent it, not erase the standings.')
        .replace(/while ([^.]{0,85}?) are close enough to turn one ordinary Sunday into a three-team argument/g,
         'while $1 are fighting to avoid a much deeper hole');
       if(take.kind==='upset')copy=copy.replace(
-       /([A-Z][a-z]+(?: [A-Z][a-z]+)* over [A-Z][a-z]+(?: [A-Z][a-z]+)*) are the (Week \\d+ upset call)/,
+       /([A-Z][a-z]+(?: [A-Z][a-z]+)* over [A-Z][a-z]+(?: [A-Z][a-z]+)*) are the (Week \d+ upset call)/,
        '$1 is the $2');
       copy=copy.replace(/Washington Commanders now has a reason/g,'Washington Commanders now have a reason');
       take.take=copy;

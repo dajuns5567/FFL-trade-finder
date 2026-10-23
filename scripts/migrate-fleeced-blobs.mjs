@@ -25,6 +25,10 @@ export const STORES = ['fleeced-league-hub'];
 // Restore only two independently verified historical baselines, never old Week 5,
 // unrelated consensus/value data, or stale publication-status/index records.
 export const RESTORE_KEYS = Object.freeze(['broadcasts/2026/week-03.json','broadcasts/2026/week-04.json']);
+export const EXPECTED_ORIGINAL_SHA256=Object.freeze({
+ 'broadcasts/2026/week-03.json':'8f2631fd4f83b556daa29d78ab63e92b87a4914e7875ed6799e852397e86715c',
+ 'broadcasts/2026/week-04.json':'038248bef97fd7bfd2bdece6df9c3a538cac9c29ae1bb34487458927c129022c'
+});
 const restoreCandidate=(store,key)=>store==='fleeced-league-hub'&&RESTORE_KEYS.includes(key);
 export const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 export const blobName = (store,key) => digest(Buffer.from(store+'\0'+key,'utf8'))+'.blob';
@@ -117,6 +121,8 @@ async function assertCanonicalHistory(sourceDir,sourceManifest){
   const key='broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
   const row=entries.find(entry=>entry.key===key);
   if(!row)throw Error('Original Fleeced! published Week '+week+' archive is missing; refusing migration');
+  if(row.sha256!==EXPECTED_ORIGINAL_SHA256[key])
+   throw Error('Original Week '+week+' differs from independently verified approved archive bytes. No restore writes made.');
   let edition;
   try{edition=JSON.parse(await readFile(join(sourceDir,'objects',row.file),'utf8'))}
   catch{throw Error('Original Week '+week+' archive is not valid JSON; refusing migration')}

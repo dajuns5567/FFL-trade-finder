@@ -105,8 +105,8 @@ test('publisher completion cannot be claimed without the matching locked newsroo
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,newsroom_engine:'legacy'}]}),false);
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,players_of_week:{offense:{player_id:'O1'},defense:null}}]}),false);
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,manager_awards:[]}]}),false);
- assert.match(pub,/hasCompleteWeekFeaturePackage\\(report,awards\\)/);
- assert.match(pub,/const completed=!reportError&&!awardsError&&!report\\?\\.review_required&&hasCompleteWeekFeaturePackage\\(report,awards\\)/);
+ assert.match(pub,/hasCompleteWeekFeaturePackage\(report,awards\)/);
+ assert.match(pub,/const completed=!reportError&&!awardsError&&!report\?\.review_required&&hasCompleteWeekFeaturePackage\(report,awards\)/);
 });
 
 test('private archive-to-preview link keeps an explicitly requested week instead of misleadingly opening another week',()=>{

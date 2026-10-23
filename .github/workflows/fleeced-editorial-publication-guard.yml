@@ -59,4 +59,4 @@ jobs:
           node --check netlify/functions/inquirer-editorial-v31.mjs
       - name: Verify gate cannot be bypassed by direct weekly entrypoint
         run: |
-          node --input-type=module -e "import fs from 'node:fs';const s=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');const guard=s.indexOf('inspectEditionBeforePublication(result)'),gate=s.indexOf('if(!audit.ok||!deepQualityOk||!admission.approved)'),publish=s.indexOf('await s.setJSON(key,result)'),commit=s.indexOf('await ensureLockedEditionIndexed(s,result,key)');if(guard<0||gate<guard||publish<gate||commit<publish)process.exit(1);"
+          node --input-type=module -e "import fs from 'node:fs';const s=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');const guard=s.indexOf('inspectEditionBeforePublication(result,previousBroadcast)'),gate=s.indexOf('if(!audit.ok||!deepQualityOk||!admission.approved)'),publish=s.indexOf('await s.setJSON(key,result)'),commit=s.indexOf('await ensureLockedEditionIndexed(s,result,key)');if(guard<0||gate<guard||publish<gate||commit<publish)process.exit(1);"

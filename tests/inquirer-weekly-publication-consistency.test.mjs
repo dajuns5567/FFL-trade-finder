@@ -14,7 +14,7 @@ test('only ONE forward editorial writer remains in both production and private p
  assert.match(hub,/const q=evaluateInquirerEditionQuality\(candidate,previousBroadcast\)/);
  assert.match(hub,/const a=inspectEditionBeforePublication\(candidate\)/);
  assert.match(hub,/if\(q\.ok&&a\.ok\)/);
- assert.match(source,/FORWARD_EDITORIAL_REVISION=39/);
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=40/);
  assert.match(hub,/preview_editorial_audit:audit,preview_generation_quality:quality/);
 });
 test('previous published copy can neither be invented nor overwritten after partial failure',()=>{

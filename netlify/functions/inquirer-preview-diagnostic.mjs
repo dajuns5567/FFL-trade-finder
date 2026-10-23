@@ -1,3 +1,4 @@
+import {auditInquirerLanguage} from './lib/inquirer-editorial-language-audit.mjs';
 import {getDeployStore} from '@netlify/blobs';
 import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,auditPrivateEdition} from './lib/inquirer-preview-diagnostics.mjs';
 
@@ -33,10 +34,10 @@ export default async function inquirerPreviewDiagnostic(req){
   catch(error){return json({ready:false,error:'Private manuscript storage unavailable'},503)}
   if(!draft||Number(draft.season)!==identity.season||Number(draft.week)!==identity.week)
    return json({ready:false,error:'Private manuscript identity or storage mismatch'},409);
-  const audit=auditPrivateEdition(draft);
-  return json({ready:true,season:identity.season,week:identity.week,editorial:audit,
+  const audit=auditPrivateEdition(draft),language=auditInquirerLanguage(draft);
+  return json({ready:true,season:identity.season,week:identity.week,editorial:audit,language,
    publication_ready:false,requires_human_editorial_review:true,
-   status:audit.passed?'STRUCTURAL_PASS_HUMAN_REVIEW_REQUIRED':'HOLD'});
+   status:audit.passed&&language.ok?'STRUCTURAL_PASS_HUMAN_REVIEW_REQUIRED':'HOLD'});
  }
  if(new URL(req.url).searchParams.get('review')==='1'){
   // Only an explicitly requested, protected diagnostic can expose failed prose.

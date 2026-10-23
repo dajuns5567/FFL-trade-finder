@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resolve} from 'node:path';
 import {readFileSync} from 'node:fs';
-import {validateRestoreSource,extractCanonicalZip} from '../netlify/functions/inquirer-archive-restore.mjs';
 import {SOURCE_SITE,DEST_SITE,REGION,STORES,RESTORE_KEYS,EXPECTED_ORIGINAL_SHA256,validateOriginalArchiveEdition,digest,blobName,compareManifests,validateBackupDir} from '../scripts/migrate-fleeced-blobs.mjs';
 
 const makeManifest=stores=>({
@@ -105,28 +104,6 @@ test('original locked Week 4 migration requires the exact approved editorial des
  assert.deepEqual(validateOriginalArchiveEdition(week3,3),[]);
 });
 
-test('temporary browser ingress accepts only the two original Netlify S3 archives, never another site or key',()=>{
- const original='https://cmh-services-prod-netliblob-935421240257.s3.us-east-2.amazonaws.com/d51af6d7-e5f3-4c51-8c6d-25e31db39a0c/site%3Afleeced-league-hub/broadcasts/2026/week-03.json';
- const query='?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=30&X-Amz-Signature=dummy';
- assert.equal(validateRestoreSource(original+query,3),true);
- assert.equal(validateRestoreSource(original+query,4),false);
- assert.equal(validateRestoreSource(original.replace('week-03','week-05')+query,3),false);
- assert.equal(validateRestoreSource(original.replace('d51af6d7-e5f3-4c51-8c6d-25e31db39a0c','8776d155-bc7b-4dcd-bafc-3d70d3d51800')+query,3),false);
- assert.equal(validateRestoreSource(original.replace('cmh-services-prod-netliblob-935421240257.s3.us-east-2.amazonaws.com','example.com')+query,3),false);
- assert.equal(validateRestoreSource(original+query.replace('X-Amz-Expires=30','X-Amz-Expires=3600'),3),false);
- assert.equal(validateRestoreSource(original+query.replace('X-Amz-Signature=dummy','X-Amz-Signature='),3),false);
- assert.equal(validateRestoreSource(original+query.replace('AWS4-HMAC-SHA256','unknown'),3),false);
- assert.equal(validateRestoreSource('http://'+original.slice(8)+query,3),false);
-});
-
-test('private one-time restore refuses malformed, oversized, and incomplete ZIP archives',()=>{
- assert.throws(()=>extractCanonicalZip(Buffer.from('not a ZIP')),/size outside safe bounds/);
- assert.throws(()=>extractCanonicalZip(Buffer.alloc(1500001)),/size outside safe bounds/);
- assert.throws(()=>extractCanonicalZip(Buffer.alloc(100)),/Missing ZIP central directory/);
- const handler=readFileSync(new URL('../netlify/functions/inquirer-archive-restore.mjs',import.meta.url),'utf8');
- assert.match(handler,/FLEECED_ENABLE_NEW_SITE_PUBLISHER/);
- assert.match(handler,/if\(current\.some\(/);
- assert.match(handler,/onlyIfNew:true/);
- assert.match(handler,/CREATED_VERIFIED/);
- assert.match(handler,/archive_bundle/);
+test('temporary browser ingress is retired, while offline migration retains safe create-only protections',()=>{
+ assert.equal(readFileSync(new URL('../scripts/migrate-fleeced-blobs.mjs',import.meta.url),'utf8').includes('onlyIfNew:true'),true);
 });

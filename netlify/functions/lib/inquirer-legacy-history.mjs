@@ -26,19 +26,20 @@ export function inspectCanonicalArchive(edition,season,week){
   errors.push('incomplete weekly recap');
  if(legacy&&Number(edition?.inquirer_version)!==31)
   errors.push('legacy newspaper version must be V31');
- if((season===2026&&week===4)||(season>=2026&&week>=5)){
-  // Week 4 is the frozen approved revision 14 source. Week 5 and later
-  // MUST use the revised forward newsroom, not an old revision-14 Week 5
-  // that happened to have its published_locked bit set in the old account.
-  const approvedBaseline=season===2026&&week===4;
+ // 2026 Week 4 is the immutable original reference. Every subsequent
+ // newsroom season (including Week 1 of 2027) uses the forward contract.
+ // Never allow a new NFL season to slip back into the 2026 Week 1-3 format.
+ const approvedBaseline=season===2026&&week===4;
+ const forwardEdition=season>2026||(season===2026&&week>=5);
+ if(approvedBaseline||forwardEdition){
   if(Number(edition?.inquirer_version)!==31)
-   errors.push(approvedBaseline?'approved Week 4 must be V31':'Week 5+ must use forward V31 newsroom');
+   errors.push(approvedBaseline?'approved Week 4 must be V31':'All post-2026-baseline weeks must use forward V31 newsroom');
   if(approvedBaseline&&Number(edition?.editorial_revision)!==14)
    errors.push('approved Week 4 must be revision 14');
   if(!approvedBaseline&&(
      Number(edition?.editorial_revision)<39||
      edition?.editorial_generation?.engine!=='v31-forward'))
-   errors.push('Week 5+ must be a vetted forward edition, revision 39 or later');
+   errors.push('Post-baseline newsroom must be a vetted forward edition, revision 39 or later');
   const reporterCount=new Map();
   for(const t of teams){
    const article=t?.inquirer_article||{},sections=article.sections||[],kinds=sections.map(x=>x?.kind);

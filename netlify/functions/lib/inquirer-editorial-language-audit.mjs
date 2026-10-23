@@ -76,6 +76,29 @@ export function auditInquirerLanguage(edition,previous=null){
   else if(matches.length>=2)
    issues.push({id:'recycled-editorial-punchline',phrase:punch,teams:matches});
  }
+ // Recap is part of the newspaper, not a free pass around article QA.
+ const overview=edition?.league_overview||{};
+ const first=(overview.sections||[])[0]||{};
+ const kinds=(first.blocks||[]).map(b=>b.kind);
+ if(teams.length===32&&kinds.join('|')!=='lead|standings|players|decisions|league|outlook')
+  issues.push({id:'recap-six-beat-layout',beats:kinds});
+ if(teams.length===32&&(overview.sections||[]).length!==4)
+  issues.push({id:'recap-four-reporter-desks',count:(overview.sections||[]).length});
+ const takes=overview.hot_takes||[];
+ const division=String(takes.find(h=>h.kind==='division')?.take||'');
+ const labels=['AFC EAST','AFC NORTH','AFC SOUTH','AFC WEST','NFC EAST','NFC NORTH','NFC SOUTH','NFC WEST'];
+ if(teams.length===32&&labels.some(label=>!division.includes(label+':')))
+  issues.push({id:'recap-missing-division-report',missing:labels.filter(label=>!division.includes(label+':'))});
+ if(/(?:Washington Commanders|Baltimore Ravens|Carolina Panthers|New Orleans Aints) now has\\b/i.test(JSON.stringify(overview)))
+  issues.push({id:'recap-plural-team-grammar'});
+ if(/(?:1-4[^.]{0,80}|0-5[^.]{0,80})close enough/i.test(division))
+  issues.push({id:'recap-misleading-standings-gap'});
+ if(/The gap is real but thin; one stumble turns the leader from front-runner into participant again/i.test(division))
+  issues.push({id:'recap-misleading-division-lead'});
+ for(const h of takes){
+  if(/over [A-Z][a-z]+(?: [A-Z][a-z]+)* are the Week \\d+ upset call/.test(h.take||''))
+   issues.push({id:'recap-upset-syntax',title:h.title});
+ }
  const cross=repeatedCrossTeamWindows(teams);
  for(const offender of cross)issues.push({id:'cross-team-long-language-reuse',...offender});
  for(const [prefix,ids] of leads)if(ids.size>=5)issues.push({id:'formulaic-lede-openings',opening:prefix,teams:ids.size});

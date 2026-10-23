@@ -4,6 +4,18 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {inspectEditionBeforePublication,editorialCopyDigest} from '../netlify/functions/inquirer-publication-guard.mjs';
 const digest=(value)=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const stripArticleProse=article=>{
+ const copy=structuredClone(article||{});
+ // Only explicitly editable prose fields are removed. Keep reporter, awards,
+ // roster and player metadata, layout, evidence and all unfamiliar fields.
+ for(const key of ['headline','deck','subtitle','paragraphs','lede'])delete copy[key];
+ if(Array.isArray(copy.sections))for(const section of copy.sections){
+  delete section.paragraphs;
+  // Section labels are part of the approved structural format, not prose.
+ }
+ return copy;
+};
+
 export function inspectImmutableWeekCandidate(original,candidate){
  const failures=[],changes=[];
  if(Number(original?.season)!==2026||Number(original?.week)!==5||Number(candidate?.season)!==2026||Number(candidate?.week)!==5)
@@ -24,6 +36,8 @@ export function inspectImmutableWeekCandidate(original,candidate){
   // Only editorial article text may change; every other team fact is immutable.
   const strip=x=>Object.fromEntries(Object.entries(x).filter(([k])=>k!=='inquirer_article'));
   if(digest(strip(team))!==digest(strip(next)))failures.push('Fact or context modified in roster '+team.roster_id);
+  if(digest(stripArticleProse(team.inquirer_article))!==digest(stripArticleProse(next.inquirer_article)))
+   failures.push('Non-prose article metadata or section layout modified for roster '+team.roster_id);
   if(digest(team.inquirer_article)!==digest(next.inquirer_article))changes.push('article:'+team.roster_id);
  }
  if(digest(original?.reporters)!==digest(candidate?.reporters))failures.push('Reporter directory altered');
@@ -32,6 +46,16 @@ export function inspectImmutableWeekCandidate(original,candidate){
  if(digest(omitRecap(oldRecap))!==digest(omitRecap(newRecap)))failures.push('Recap metadata/provenance changed');
  if(digest(oldRecap.sections)!==digest(newRecap.sections))changes.push('recap:sections');
  if(digest(oldRecap.hot_takes)!==digest(newRecap.hot_takes))changes.push('recap:hot_takes');
+ const recapShape=o=>({
+  sections:(o?.sections||[]).map(section=>({
+   ...Object.fromEntries(Object.entries(section).filter(([k])=>!['paragraphs','blocks'].includes(k))),
+   blocks:(section.blocks||[]).map(block=>Object.fromEntries(Object.entries(block).filter(([k])=>k!=='paragraphs')))
+  })),
+  hot_takes:(o?.hot_takes||[]).map(t=>Object.fromEntries(Object.entries(t).filter(([k])=>k!=='take')))
+ });
+ if(digest(recapShape(oldRecap))!==digest(recapShape(newRecap)))
+  failures.push('Recap reporter, hot-take identity, or section structure modified');
+
  // Edited review packets may annotate a HOLD, never a pass. Strip only
  // explicitly non-authoritative review notes before fact-level comparison.
  for(const [name,value] of [['preview_editorial_audit',candidate?.preview_editorial_audit],

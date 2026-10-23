@@ -17,6 +17,7 @@ on:
       - 'tests/inquirer-archive-reconciliation.test.mjs'
       - 'tests/inquirer-weekly-publication-consistency.test.mjs'
       - 'netlify/functions/lib/inquirer-preview-diagnostics.mjs'
+      - 'tests/inquirer-private-edition-audit.test.mjs'
       - 'league-hub-v451.js'
       - 'tests/inquirer-narrative-architecture.test.mjs'
       - 'tests/week5-forward-editorial-repair.test.mjs'
@@ -48,6 +49,8 @@ jobs:
 
       - name: Install generator dependency
         run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Audit machine-readable private manuscript contract
+        run: node --test tests/inquirer-private-edition-audit.test.mjs
       - name: Syntax check active Inquirer
         run: |
           node --check netlify/functions/inquirer-reporting-v25.mjs

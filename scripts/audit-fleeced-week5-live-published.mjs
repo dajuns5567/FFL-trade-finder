@@ -1,6 +1,8 @@
 // Read-only acceptance of the actual new-team live Week5 release and protected archive.
 import assert from 'node:assert/strict';
 import {getStore} from '@netlify/blobs';
+import {inspectEditionBeforePublication} from '../netlify/functions/inquirer-publication-guard.mjs';
+import {evaluateInquirerEditionQuality} from '../netlify/functions/inquirer-editorial-v31.mjs';
 const SITE='2e556797-6f35-4037-aa5a-1338724eb71d';
 assert.equal(process.env.FLEECED_NEW_TEAM_SITE_ID,SITE);
 assert(process.env.NETLIFY_SANDBOX_DEPLOY_TOKEN);
@@ -18,6 +20,12 @@ assert.equal(new Set(week5.teams.map(t=>String(t.roster_id))).size,32);
 assert(week5.league_overview?.headline&&week5.league_overview?.sections?.length);
 assert(week5.teams.every(t=>t.inquirer_article?.headline&&t.inquirer_article?.sections?.some(s=>s.kind==='sentiment'&&s.paragraphs?.length>=2)));
 assert(week5.teams.every(t=>(t.inquirer_article?.paragraphs||[]).every(p=>!/\bn\/a\b/i.test(p))));
+// Archive presence alone is not editorial acceptance: Week 5 previously
+// passed completeness checks while serving repetitive, regressed prose.
+const structural=inspectEditionBeforePublication(week5);
+const deep=evaluateInquirerEditionQuality(week5,week4);
+assert(structural.ok,'Week 5 editorial structural audit failed: '+JSON.stringify(structural.issues.slice(0,12)));
+assert(deep.ok,'Week 5 editorial copy-forward audit failed: '+JSON.stringify((deep.issues||[]).slice(0,12)));
 const award=(awards?.records||[]).find(x=>Number(x.season)===2026&&Number(x.week)===5);
 assert.equal(award?.manager_awards?.length,4);
 assert(award.players_of_week?.offense?.player_id&&award.players_of_week?.defense?.player_id);

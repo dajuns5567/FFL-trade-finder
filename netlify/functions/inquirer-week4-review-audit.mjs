@@ -1,0 +1,95 @@
+// Read-only audit of a draft already staged in the private review namespace.
+// This endpoint never approves, edits, publishes, or returns access credentials.
+import {authorizeEditorialGeneration} from './inquirer-week4-run-auth.mjs';
+import {editorialCopyDigest,inspectEditionBeforePublication} from './inquirer-publication-guard.mjs';
+import {evaluateInquirerEditionQuality} from './inquirer-editorial-v31.mjs';
+import {validateWeek4EditorialDraft} from './inquirer-week4-editorial-brief.mjs';
+import {loadAcceptedWeek4} from './inquirer-week4-accepted-source.mjs';
+import {originalJobKey,correctedJobKey,reviewSalvageJobKey,targetedRepairJobKey} from './inquirer-week4-retry-policy.mjs';
+const respond=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
+const counts=items=>items.reduce((a,item)=>{const k=String(item||'unknown');a[k]=(a[k]||0)+1;return a},{});
+export async function handler(req,{site,readEnv=(name)=>globalThis.Netlify?.env?.get?.(name)||process.env[name],
+ openStore=async()=>{const {getStore}=await import('@netlify/blobs');return getStore({name:'fleeced-league-hub',consistency:'strong'});}}={}){
+ const auth=authorizeEditorialGeneration(req,{readEnv,method:'GET'});
+ if(!auth.ok)return respond(auth.status,{error:'Draft audit unavailable or unauthorized'});
+ if(site?.id&&site.id!=='2e556797-6f35-4037-aa5a-1338724eb71d')return respond(403,{error:'Wrong Netlify project'});
+ try{
+  const store=await openStore();
+  const markers=await Promise.all([targetedRepairJobKey,reviewSalvageJobKey,correctedJobKey,originalJobKey].map(k=>
+   store.get(k,{type:'json'}).catch(()=>null)));
+  const job=markers.find(x=>x?.status==='draft_staged')||markers.find(Boolean);
+  if(!job||job.status!=='draft_staged'||!job.key)return respond(200,{ready:false,status:job?.status||'not_started',publishable:false});
+  const envelope=await store.get(job.key,{type:'json'});
+  if(!envelope||envelope.schema!=='fleeced-editorial-review-draft-v1'||envelope.review_status!=='unapproved'||
+    envelope.publishable!==false||Number(envelope.week)!==5||envelope.sha256!==job.sha256||
+    editorialCopyDigest(envelope.edition)!==job.sha256)return respond(409,{error:'Staged draft integrity mismatch'});
+  const teams=envelope.edition.teams||[],overview=envelope.edition.league_overview||{};
+  const teamChecks=teams.map(t=>{
+    const a=t.inquirer_article||{},sections=Array.isArray(a.sections)?a.sections:[];
+    const text=sections.flatMap(s=>s.paragraphs||[]).join(' ');
+    return{roster_id:String(t.roster_id),team:t.team_name,headline:a.headline||'',
+      section_count:sections.length,sentiment:sections.some(s=>s.kind==='sentiment'&&(s.paragraphs||[]).length>=2),
+      management:sections.some(s=>s.kind==='management'&&(s.paragraphs||[]).length>=2),
+      player_mention:(t.starter_details||[]).some(p=>p.name&&text.includes(p.name)),
+      score_mention:text.includes(Number(t.points).toFixed(1))||text.includes(Number(t.points).toFixed(2)),
+      opponent_mention:!!t.opponent_name&&text.includes(t.opponent_name),
+      prose_characters:text.length};
+  });
+  // Inspect the non-editorial Week 5 release dependencies alongside the draft.
+  // All reads use known keys; never list private stores or mutate production.
+  const liveKeys=['broadcasts/2026/week-03.json','broadcasts/2026/week-04.json',
+    'broadcasts/2026/week-05.json','broadcasts/index.json',
+    'awards/weekly.json','managers/registry.json','managers/history-cache.json',
+    'inquirer/reporters/index.json','inquirer/league-overview/2026/week-05.json'];
+  const liveValues=await Promise.all(liveKeys.map(key=>store.get(key,{type:'json'}).catch(()=>null)));
+  const [live3,live4,live5,index,awards,registry,history,reporters,recapArchive]=liveValues;
+  const award=(awards?.records||[]).find(x=>Number(x.season)===2026&&Number(x.week)===5);
+  const releaseState={
+    live_week3_complete:live3?.teams?.length===32&&Number(live3.week)===3,
+    live_week4_complete:live4?.teams?.length===32&&Number(live4.week)===4,
+    live_week5_locked:live5?.published_locked===true&&live5?.teams?.length===32,
+    archive_index_has_week5:Array.isArray(index)&&index.some(x=>Number(x.season)===2026&&Number(x.week)===5),
+    player_awards_week5:!!(award?.players_of_week?.offense?.player_id&&award?.players_of_week?.defense?.player_id),
+    manager_badges_week5:award?.manager_awards?.length===4,
+    manager_registry_present:!!registry?.current&&Object.keys(registry.current).length>=32,
+    manager_history_present:Array.isArray(history?.career)&&history.career.length>0,
+    reporter_directory_complete:reporters?.reporters?.length===4,
+    week5_recap_archive_locked:recapArchive?.published_locked===true&&!!recapArchive?.headline
+  };
+  const quality=envelope.quality||{},structural=quality.structural||{},deep=quality.deep||{};
+  const accepted=await loadAcceptedWeek4(store).catch(()=>({edition:null}));
+  const recomputedArticles=teams.map(t=>({roster_id:String(t.roster_id),team:t.team_name,
+    issues:validateWeek4EditorialDraft(t.inquirer_article,t).errors})).filter(t=>t.issues.length);
+  const recomputedStructural=inspectEditionBeforePublication(envelope.edition);
+  const recomputedDeep=evaluateInquirerEditionQuality(envelope.edition,accepted.edition||null);
+  const recomputedOk=Boolean(accepted.edition)&&recomputedArticles.length===0&&recomputedStructural.ok&&recomputedDeep.ok&&
+    !quality.recap_review_issue;
+  const failures=Array.isArray(quality.article_review_issues)?quality.article_review_issues:[];
+  const structuralIssues=Array.isArray(structural.issues)?structural.issues:[];
+  return respond(200,{ready:true,season:2026,week:5,sha256:job.sha256,
+   approved:false,publishable:false,quality_ok:quality.ok===true,
+   site_release_state:releaseState,
+   team_count:teams.length,headline_count:teamChecks.filter(t=>t.headline).length,
+   recap_sections:(overview.sections||[]).length,hot_takes:(overview.hot_takes||[]).length,
+   checks:{sentiment:teamChecks.filter(t=>t.sentiment).length,management:teamChecks.filter(t=>t.management).length,
+    player_mentions:teamChecks.filter(t=>t.player_mention).length,
+    score_mentions:teamChecks.filter(t=>t.score_mention).length,
+    opponent_mentions:teamChecks.filter(t=>t.opponent_mention).length},
+   structural_issue_count:structuralIssues.length,structural_issue_categories:counts(structuralIssues.map(x=>x.id)),
+   article_review_issue_count:failures.length,article_issue_categories:counts(failures.flatMap(x=>x.issues||[])),
+   recap_review_issue:quality.recap_review_issue||null,deep_ok:deep.ok===true,
+   deep_issue_categories:counts((deep.issues||[]).map(x=>x.id)),
+   article_review_issues:failures.map(x=>({roster_id:String(teams[x.team_index]?.roster_id||''),team:teams[x.team_index]?.team_name||'',issues:x.issues||[]})),
+   structural_issues:structuralIssues.map(x=>({id:x.id,team:x.team||null,teams:x.teams||null,excerpt:x.excerpt||null})),
+   reassessed:{reference_week4_available:!!accepted.edition,quality_ok:recomputedOk,
+    article_issue_count:recomputedArticles.length,article_review_issues:recomputedArticles,
+    structural_issue_count:recomputedStructural.issues.length,
+    structural_issue_categories:counts(recomputedStructural.issues.map(x=>x.id)),
+    deep_issue_count:recomputedDeep.issues.length,
+    deep_issue_categories:counts(recomputedDeep.issues.map(x=>x.id)),
+    recap_review_issue:quality.recap_review_issue||null},
+   teams:teamChecks});
+ }catch{return respond(503,{error:'Private staged draft could not be inspected'});}
+}
+export default handler;
+export const config={rateLimit:{action:'rate_limit',windowLimit:12,windowSize:60,aggregateBy:'ip'}};

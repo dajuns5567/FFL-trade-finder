@@ -187,8 +187,8 @@ export function restoreForwardArticleDepth(t,week){
   section.paragraphs=(section.paragraphs||[]).map(line=>{
    let p=text(line);
    p=p.replace('the kind of headline that usually gets folded underneath the newspaper',
-    even?'kind of defeat that leaves management explaining a '+gap+'-point deficit without the courtesy of a refund':
-     'loss to '+rival+' that deserves its own '+gap+'-point apology from the starting lineup');
+    even?'a kind of defeat that leaves management explaining a '+gap+'-point deficit without the courtesy of a refund':
+     'a loss to '+rival+' that deserves its own '+gap+'-point apology from the starting lineup');
    p=p.replace('The next Sunday is a new roster test, not a rerun of the first two.',
     even?'Week '+(week+1)+' against '+next+' demands another real performance, not another copy of the old result.':
      team+' take '+points+' points into a very different test against '+next+'. The scoreboard will not accept a forwarding address.');

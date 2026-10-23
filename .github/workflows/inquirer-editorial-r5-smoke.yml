@@ -19,6 +19,7 @@ on:
       - 'netlify/functions/lib/inquirer-preview-diagnostics.mjs'
       - 'tests/inquirer-private-edition-audit.test.mjs'
       - 'tests/inquirer-complete-feature-package.test.mjs'
+      - 'tests/inquirer-spotlight-readiness.test.mjs'
       - 'league-hub-v451.js'
       - 'tests/inquirer-narrative-architecture.test.mjs'
       - 'tests/week5-forward-editorial-repair.test.mjs'
@@ -50,6 +51,8 @@ jobs:
 
       - name: Install generator dependency
         run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Verify complete manager spotlight readiness
+        run: node --test tests/inquirer-spotlight-readiness.test.mjs
       - name: Verify complete Week 5 manager and player award package
         run: node --test tests/inquirer-complete-feature-package.test.mjs
       - name: Audit machine-readable private manuscript contract

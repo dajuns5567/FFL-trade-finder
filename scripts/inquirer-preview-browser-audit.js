@@ -15,7 +15,6 @@
  const week=Number(query.get('preview_week'));
  if(!Number.isInteger(week)||week<1||week>17||season!==2026)
   throw Error('An explicit 2026 preview_week=1..17 is required for this audit.');
- const path='/\.netlify/functions/league-hub';
  const jsonGet=async pathname=>{
   const res=await fetch(pathname,{method:'GET',cache:'no-store',credentials:'same-origin'});
   let data=null;
@@ -53,6 +52,8 @@
   const constraints={yearWeek:actualSeason===season&&actualWeek===w,
    locked:privateDraft?(e?.preview_only===true&&e?.published_locked===false):e?.published_locked===true,
    teamCount:teams.length===32,uniqueRosters:unique.size===32,
+   fourDistinctReporters:Object.keys(reporters).length===4&&Object.values(reporters).every(n=>n===8),
+   teamHeadlines:teams.every(t=>String(t?.inquirer_article?.headline||'').trim()),
    eightSections:missing.length===0,recapSixBeats:sixBeats,
    readableHeadings:headings.length===0,wordLength:short.length===0&&long.length===0,
    exactParagraphRepetition:duplicated.length===0,

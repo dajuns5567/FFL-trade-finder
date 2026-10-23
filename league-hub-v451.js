@@ -39,10 +39,13 @@ async function canRetryArchiveBlockedPreview(season,targetWeek){
  const recap=week4.league_overview?.sections||[],blocks=recap[0]?.blocks||[];
  return recap.length>=4&&blocks.length===beats.length&&
   beats.every((kind,i)=>blocks[i]?.kind===kind)&&
-  Object.keys(week4.teams.reduce((counts,t)=>{
-   const reporter=String(t?.inquirer_article?.reporter?.id||'unknown');
-   counts[reporter]=(counts[reporter]||0)+1;return counts;
-  },{})).length===4&&
+  (()=>{
+   const counts=week4.teams.reduce((acc,t)=>{
+    const reporter=String(t?.inquirer_article?.reporter?.id||'unknown');
+    acc[reporter]=(acc[reporter]||0)+1;return acc;
+   },{});
+   return Object.keys(counts).length===4&&Object.values(counts).every(count=>count===8);
+  })()&&
   week4.teams.every(t=>{
    const sections=t?.inquirer_article?.sections||[];
    return sections.length===8&&kinds.every(k=>sections.some(s=>s.kind===k));

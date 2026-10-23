@@ -105,3 +105,10 @@ test('publisher completion cannot be claimed without the matching locked newsroo
  assert.match(pub,/hasCompleteWeekFeaturePackage\(report,awards\)/);
  assert.match(pub,/const completed=!reportError&&!awardsError&&!report\?\.review_required&&hasCompleteWeekFeaturePackage\(report,awards\)/);
 });
+
+test('private archive-to-preview link keeps an explicitly requested week instead of misleadingly opening another week',()=>{
+ assert.match(ui,/const inquirerPreviewEntryUrl=/);
+ assert.match(ui,/inquirerPreviewRequestedWeek\?'&preview_week='\+inquirerPreviewRequestedWeek/);
+ assert.match(ui,/Open the private Inquirer manuscript preview/);
+ assert.doesNotMatch(ui,/Open the private Week 5 manuscript preview/);
+});

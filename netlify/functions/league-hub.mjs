@@ -603,41 +603,64 @@ function weeklyPlayersOfWeek(stats,players,scoring){
  }
  return{offense:leaders.offense,defense:leaders.defense};
 }
+// Old cached Week 5 awards may have been generated from the rejected
+// revision-14 newspaper. Require a verified newsroom provenance stamp for
+// Week 5+ awards, without re-downloading every 3MB newspaper on every page
+// view. New/missing awards are always built from a validated source edition.
+export function isTrustedWeeklyAwardCache(rec,season,week){
+ if(Number(rec?.season)!==Number(season)||Number(rec?.week)!==Number(week))return false;
+ if(!rec?.players_of_week?.offense?.player_id||!rec?.players_of_week?.defense?.player_id)return false;
+ const badges=rec?.manager_awards;
+ if(!Array.isArray(badges)||!['highest-scorer','lowest-scorer'].every(kind=>badges.some(b=>b.type===kind)))
+  return false;
+ if(Number(season)>=2026&&Number(week)>=5)
+  return Number(rec?.newsroom_editorial_revision)>=39&&rec?.newsroom_engine==='v31-forward';
+ return true;
+}
 export async function weeklyAwards(){
  const s=store(),archive=await broadcastArchive(),pairs=[],seen=new Set();
- for(const row of archive.reports||[]){const season=Number(row?.season),week=Number(row?.week),key=season+'|'+week;if(season&&week&&!seen.has(key)){seen.add(key);pairs.push({season,week,captured_at:String(row?.captured_at||'')})}}
- const old=await s.get('awards/weekly.json',{type:'json'}),records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[],byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r]));
- // Exclude stale awards that belonged to a rejected newspaper. A historic
- // index row or a truthy awards record can never certify an edition.
- const verified=await Promise.all(pairs.map(async pair=>{
-  const edition=await broadcastStored(pair.season,pair.week);
-  return isLockedInquirerEdition(edition,pair.season,pair.week)?{...pair,edition}:null;
- }));
- const validPairs=verified.filter(Boolean);
- const validIds=new Set(validPairs.map(p=>p.season+'|'+p.week));
- for(const id of byKey.keys())if(!validIds.has(id))byKey.delete(id);
- const missing=validPairs.filter(p=>{
-  const rec=byKey.get(p.season+'|'+p.week);
-  return !rec?.players_of_week?.offense?.player_id||!rec?.players_of_week?.defense?.player_id||
-   !Array.isArray(rec?.manager_awards)||rec.manager_awards.length<2;
- });
- if(missing.length){
-  const [league,players]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/players/nfl`).catch(()=>({}))]),scoring=league?.scoring_settings||{};
-  const built=await Promise.all(missing.map(async p=>{
-   // p.edition was admission-verified above. Do not calculate POTW
-   // independently of the corresponding accepted newsroom edition.
-   const broadcast=p.edition,stats=await fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({})),captured=String(broadcast.generated_at||p.captured_at||new Date().toISOString());
-   return{season:p.season,week:p.week,captured_at:captured,manager_awards:weeklyManagerAwards(broadcast),players_of_week:weeklyPlayersOfWeek(stats,players,scoring)};
-  }));
-  for(const rec of built)byKey.set(rec.season+'|'+rec.week,rec);
-  const next=[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
-  await s.setJSON('awards/weekly.json',{schema_version:1,records:next});
- }else if(records.length!==byKey.size){
-  // Reconcile stale previously saved badges only when a disallowed
-  // edition is actually detected. Never erase the original newspaper.
-  await s.setJSON('awards/weekly.json',{schema_version:1,records:[...byKey.values()]});
+ for(const row of archive.reports||[]){
+  const season=Number(row?.season),week=Number(row?.week),key=season+'|'+week;
+  if(season&&week&&!seen.has(key)){seen.add(key);pairs.push({season,week,captured_at:String(row?.captured_at||'')})}
  }
- return{schema_version:1,records:[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week))};
+ const old=await s.get('awards/weekly.json',{type:'json'});
+ const records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[];
+ const eligible=new Set(pairs.map(p=>p.season+'|'+p.week));
+ const byKey=new Map(records.filter(rec=>{
+  const season=Number(rec?.season),week=Number(rec?.week);
+  return eligible.has(season+'|'+week)&&isTrustedWeeklyAwardCache(rec,season,week);
+ }).map(rec=>[Number(rec.season)+'|'+Number(rec.week),rec]));
+ // Avoid an expensive read of every multi-megabyte historical article:
+ // verify an actual locked newsroom only for a missing/incomplete award.
+ const missing=pairs.filter(p=>!byKey.has(p.season+'|'+p.week));
+ if(missing.length){
+  const verified=await Promise.all(missing.map(async p=>{
+   const edition=await broadcastStored(p.season,p.week);
+   return isLockedInquirerEdition(edition,p.season,p.week)?{...p,edition}:null;
+  }));
+  const validPairs=verified.filter(Boolean);
+  if(validPairs.length){
+   const [league,players]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/players/nfl`).catch(()=>({}))]);
+   const scoring=league?.scoring_settings||{};
+   const built=await Promise.all(validPairs.map(async p=>{
+    const stats=await fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({}));
+    const broadcast=p.edition;
+    const rec={season:p.season,week:p.week,
+     captured_at:String(broadcast.generated_at||p.captured_at||new Date().toISOString()),
+     newsroom_editorial_revision:Number(broadcast.editorial_revision)||null,
+     newsroom_engine:String(broadcast?.editorial_generation?.engine||''),
+     manager_awards:weeklyManagerAwards(broadcast),
+     players_of_week:weeklyPlayersOfWeek(stats,players,scoring)};
+    return rec;
+   }));
+   for(const rec of built)if(isTrustedWeeklyAwardCache(rec,rec.season,rec.week))
+    byKey.set(rec.season+'|'+rec.week,rec);
+  }
+ }
+ const next=[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
+ if(missing.length||records.length!==next.length)
+  await s.setJSON('awards/weekly.json',{schema_version:1,records:next});
+ return{schema_version:1,records:next};
 }
 
 async function draftAwards(){

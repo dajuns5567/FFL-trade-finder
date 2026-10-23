@@ -582,7 +582,7 @@ export function polishForwardTeamCopy(teams,week,salt){
 // When a stale prior-week Hot Seat line is removed, rebuild the desk from
 // this week's actual starter ledger instead of restoring reused copy.
 function forwardFreshHotSeat(t,week,salt){
- const ranked=(t.starter_details||[]).filter(p=>p&&p.name&&Number.isFinite(Number(p.points)))
+ const ranked=(t.starter_details||[]).filter(p=>p&&p.name&&p.points!==null&&p.points!==undefined&&p.points!==''&&Number.isFinite(Number(p.points)))
   .sort((a,b)=>Number(a.points)-Number(b.points));
  const weak=ranked[0];if(!weak)return null;
  const team=String(t.team_name||'This club'),name=String(weak.name),

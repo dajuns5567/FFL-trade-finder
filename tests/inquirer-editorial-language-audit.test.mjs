@@ -118,3 +118,12 @@ test('independent publication gate also uses prior-week prose history',async()=>
  }
  assert.ok(inspectEditionBeforePublication(current,prior).issues.some(x=>x.id==='recycled-prior-week-sentence-template'));
 });
+
+test('next NFL season Week 1 enforces strict editorial writing quality while original 2026 Week 1 stays frozen',()=>{
+ const edition=draft();
+ edition.season=2027;edition.week=1;
+ edition.teams[0].inquirer_article.headline=edition.teams[1].inquirer_article.headline;
+ assert.ok(auditInquirerLanguage(edition).issues.some(i=>i.id==='duplicate-headline'));
+ edition.season=2026;
+ assert.equal(auditInquirerLanguage(edition).stats.skipped,'original 2026 Week 1-4 archive');
+});

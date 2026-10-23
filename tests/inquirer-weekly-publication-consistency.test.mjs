@@ -12,7 +12,7 @@ test('only ONE forward editorial writer remains in both production and private p
  assert.match(hub,/applyInquirerEditorialV31\(\{season,week/);
  assert.match(hub,/for\(const salt of \[5,0,1,2,3,4\]\)/);
  assert.match(hub,/const q=evaluateInquirerEditionQuality\(candidate,previousBroadcast\)/);
- assert.match(hub,/const a=inspectEditionBeforePublication\(candidate\)/);
+ assert.match(hub,/const a=inspectEditionBeforePublication\(candidate,previousBroadcast\)/);
  assert.match(hub,/if\(q\.ok&&a\.ok\)/);
  assert.match(source,/FORWARD_EDITORIAL_REVISION=40/);
  assert.match(hub,/preview_editorial_audit:audit,preview_generation_quality:quality/);

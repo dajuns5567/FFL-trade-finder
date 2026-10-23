@@ -42,7 +42,7 @@ const makeCompleteStore=()=>{
   ['awards/weekly.json',{records:[{season:2026,week:5,players_of_week:{offense:{player_id:'offense-1'},defense:{player_id:'defense-1'}},
    newsroom_editorial_revision:40,newsroom_engine:'v31-forward',manager_awards_generation_version:2,
    manager_awards:[{type:'highest-scorer',roster_id:'32'},{type:'lowest-scorer',roster_id:'1'},
-    {type:'cool-throne',roster_id:'32'}]}]}],
+    {type:'cool-throne',roster_id:'1'}]}]}],
   ['managers/history-cache.json',{current:teams.map(t=>({roster_id:t.roster_id,user_id:'user-'+t.roster_id})),
    career:teams.map(t=>({user_id:'user-'+t.roster_id})),scoring_history:{through_season:2026,through_week:5}}]
  ]);

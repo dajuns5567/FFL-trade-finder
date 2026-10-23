@@ -32,7 +32,19 @@ export function inspectImmutableWeekCandidate(original,candidate){
  if(digest(omitRecap(oldRecap))!==digest(omitRecap(newRecap)))failures.push('Recap metadata/provenance changed');
  if(digest(oldRecap.sections)!==digest(newRecap.sections))changes.push('recap:sections');
  if(digest(oldRecap.hot_takes)!==digest(newRecap.hot_takes))changes.push('recap:hot_takes');
- const record=(e)=>Object.fromEntries(Object.entries(e).filter(([k])=>!['teams','league_overview'].includes(k)));
+ // Edited review packets may annotate a HOLD, never a pass. Strip only
+ // explicitly non-authoritative review notes before fact-level comparison.
+ for(const [name,value] of [['preview_editorial_audit',candidate?.preview_editorial_audit],
+   ['preview_generation_quality',candidate?.preview_generation_quality]])
+  if(value&&value.ok!==false)failures.push('Changed candidate must have '+name+'.ok=false pending a new independent audit');
+ if(typeof candidate?.preview_warning!=='string'||!candidate.preview_warning.includes('Offline'))
+  failures.push('Candidate must carry explicit offline-unapproved warning');
+ const record=(e)=>{
+  const copy=structuredClone(e);
+  for(const key of ['teams','league_overview','preview_editorial_audit','preview_generation_quality','preview_warning'])delete copy[key];
+  if(copy.editorial_generation)delete copy.editorial_generation.offline_editorial_revision_note;
+  return copy;
+ };
  if(digest(record(original))!==digest(record(candidate)))failures.push('Root source metadata modified');
  for(const t of b){
   const sections=t.inquirer_article?.sections||[],flat=sections.flatMap(s=>s.paragraphs||[]);

@@ -4266,6 +4266,23 @@ function assertWeek2Originality(result,previousEdition){
       'Make Week '+week+' Look Less Accidental',
       'Make Their Week '+week+' Win Harder to Ignore');
   }
+  // Recap prose receives the same late factual/grammar curation as team desks.
+  // Keep its six-beat paragraph mirror synchronized for reader and admission.
+  if(week>=5&&overview?.hot_takes?.length){
+    for(const take of overview.hot_takes){
+      let copy=String(take.take||'');
+      if(take.kind==='division')copy=copy
+       .replace('The gap is real but thin; one stumble turns the leader from front-runner into participant again',
+        'The leader has a three-win cushion. It takes more than one bad Sunday to erase that advantage.')
+       .replace(/while ([^.]{0,85}?) are close enough to turn one ordinary Sunday into a three-team argument/g,
+        'while $1 are fighting to avoid a much deeper hole');
+      if(take.kind==='upset')copy=copy.replace(
+       /([A-Z][a-z]+(?: [A-Z][a-z]+)* over [A-Z][a-z]+(?: [A-Z][a-z]+)*) are the (Week \\d+ upset call)/,
+       '$1 is the $2');
+      copy=copy.replace(/Washington Commanders now has a reason/g,'Washington Commanders now have a reason');
+      take.take=copy;
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

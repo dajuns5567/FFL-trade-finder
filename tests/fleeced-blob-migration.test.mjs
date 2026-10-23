@@ -49,6 +49,9 @@ test('migration program never deletes or uses unconditional overwrite',async()=>
  assert.match(code,/onlyIfNew:true/);
  assert.doesNotMatch(code,/\bdeleteAll\s*\(|\.delete\s*\(/);
  assert.match(code,/if\(stale.length\)\{/);
+ assert.match(code,/if\(apply&&conflicts.length\)\{/);
+ assert.match(code,/STOPPED_HISTORICAL_HASH_CONFLICT/);
+ assert.match(code,/refusing ALL destination writes/);
  assert.match(code,/SECOND PASS: onlyIfNew prevents all overwrites/);
  assert.match(code,/FLEECED_PRODUCTION_PUBLISHER_DISABLED_CONFIRMED/);
  assert.match(code,/assertCanonicalHistory/);

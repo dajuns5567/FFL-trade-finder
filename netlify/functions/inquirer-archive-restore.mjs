@@ -25,14 +25,14 @@ export function validateRestoreSource(source,week){
   url.pathname.includes('/'+ORIGINAL_ID+'/')&&
   url.pathname.endsWith(EXPECTED[week].key)&&
   url.searchParams.get('X-Amz-Algorithm')==='AWS4-HMAC-SHA256'&&
-  /^\\d+$/.test(url.searchParams.get('X-Amz-Expires')||'')&&
+  /^\d+$/.test(url.searchParams.get('X-Amz-Expires')||'')&&
   Number(url.searchParams.get('X-Amz-Expires'))<=120&&
   !!url.searchParams.get('X-Amz-Signature');
 }
 export default async function restoreOnlyApprovedHistory(req){
  const url=new URL(req.url),host=url.hostname;
  if(host!=='transcendent-manatee-2f0123.netlify.app'&&
-    !/^deploy-preview-402--transcendent-manatee-2f0123\\.netlify\\.app$/i.test(host))
+    !/^deploy-preview-402--transcendent-manatee-2f0123\.netlify\.app$/i.test(host))
    return json({error:'Wrong project hostname'},403);
  if(req.method==='GET')return form();
  if(req.method!=='POST')return json({error:'POST required'},405);

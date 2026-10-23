@@ -4278,7 +4278,7 @@ function assertWeek2Originality(result,previousEdition){
         'while $1 are fighting to avoid a much deeper hole');
       if(take.kind==='upset')copy=copy.replace(
        /([A-Z][a-z]+(?: [A-Z][a-z]+)* over [A-Z][a-z]+(?: [A-Z][a-z]+)*) are the (Week \d+ upset call)/,
-       '$1 is the $2');
+       'The $2 is $1.');
       copy=copy.replace(/Washington Commanders now has a reason/g,'Washington Commanders now have a reason');
       take.take=copy;
     }

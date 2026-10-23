@@ -21,30 +21,45 @@ function repeatedCrossTeamWindows(teams,size=13,minimumOwners=5){
 }
 // Detect entire reusable sentence structures even when teams, players and
 // numerical scores change. This is a cross-week rule, not a Week5 phrase list.
+function sentenceSkeletons(team){
+ const names=[team.team_name,team.opponent_name,team.manager_name,...(team.starter_details||[]).map(p=>p.name)]
+  .filter(x=>typeof x==='string'&&x.trim().length>=4).sort((a,b)=>b.length-a.length);
+ const seen=new Set();
+ for(const p of lines(story(team)))for(const sentence of String(p).split(/(?<=[.!?])\s+/)){
+  let masked=sentence.toLowerCase();
+  for(const name of names)masked=masked.split(name.toLowerCase()).join('@');
+  masked=masked.replace(/\b\d+(?:\.\d+)?\b/g,'#');
+  const w=words(masked);
+  if(w.length>=13&&w.length<=85&&w.filter(x=>x!=='fantasy'&&x!=='points').length>=11)
+   seen.add(w.join(' '));
+ }
+ return seen;
+}
+function recycledPreviousWeekTemplates(teams,previous){
+ if(!Array.isArray(previous?.teams))return [];
+ const previousByRoster=new Map(previous.teams.map(t=>[String(t.roster_id),t]));
+ const flagged=[];
+ for(const team of teams){
+  const prior=previousByRoster.get(String(team.roster_id));
+  if(!prior)continue;
+  const a=sentenceSkeletons(team),b=sentenceSkeletons(prior);
+  const reused=[...a].filter(x=>b.has(x));
+  if(reused.length>=2)flagged.push({roster_id:String(team.roster_id),count:reused.length,
+   examples:reused.slice(0,2).map(x=>x.slice(0,130))});
+ }
+ return flagged;
+}
 function templateSkeletonEchoes(teams){
  const ownership=new Map();
  for(const t of teams){
-  const names=[t.team_name,t.opponent_name,t.manager_name,...(t.starter_details||[]).map(p=>p.name)]
-  .filter(x=>typeof x==='string'&&x.trim().length>=4).sort((a,b)=>b.length-a.length);
-  const seen=new Set();
-  for(const p of lines(story(t))){
-   for(const sentence of String(p).split(/(?<=[.!?])\s+/)){
-    let masked=sentence.toLowerCase();
-    for(const name of names)masked=masked.split(name.toLowerCase()).join('@');
-    masked=masked.replace(/\b\d+(?:\.\d+)?\b/g,'#');
-    const w=words(masked);
-    if(w.length>=13&&w.length<=85&&w.filter(x=>x!=='fantasy'&&x!=='points').length>=11)
-     seen.add(w.join(' '));
-   }
-  }
-  for(const phrase of seen){
+  for(const phrase of sentenceSkeletons(t)){
    if(!ownership.has(phrase))ownership.set(phrase,new Set());
    ownership.get(phrase).add(String(t.roster_id));
   }
  }
  return [...ownership].filter(([,ids])=>ids.size>=4)
   .sort((a,b)=>b[1].size-a[1].size).slice(0,12)
-  .map(([s,ids])=>({template:s.slice(0,160),teams:ids.size}));
+  .map(([phrase,ids])=>({template:phrase.slice(0,160),teams:ids.size}));
 }
 export function auditInquirerLanguage(edition,previous=null){
  const teams=Array.isArray(edition?.teams)?edition.teams:[];
@@ -126,6 +141,8 @@ export function auditInquirerLanguage(edition,previous=null){
   if(/over [A-Z][a-z]+(?: [A-Z][a-z]+)* are the Week \d+ upset call/.test(h.take||''))
    issues.push({id:'recap-upset-syntax',title:h.title});
  }
+ for(const echo of recycledPreviousWeekTemplates(teams,previous))
+  issues.push({id:'recycled-prior-week-sentence-template',...echo});
  const skeletons=templateSkeletonEchoes(teams);
  for(const offender of skeletons)issues.push({id:'cross-team-reused-sentence-template',...offender});
  const cross=repeatedCrossTeamWindows(teams);

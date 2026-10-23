@@ -63,7 +63,7 @@ test('original locked Week 4 migration requires the exact approved editorial des
  const desks=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
  const beats=['lead','standings','players','decisions','league','outlook'];
  const edition={
-  available:true,published_locked:true,season:2026,week:4,
+  available:true,published_locked:true,season:2026,week:4,inquirer_version:31,editorial_revision:14,
   teams:Array.from({length:32},(_,i)=>({
    roster_id:String(i+1),
    inquirer_article:{headline:'Original approved team article '+(i+1),

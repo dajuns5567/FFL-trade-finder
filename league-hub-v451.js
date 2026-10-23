@@ -14,11 +14,15 @@ let inquirerPreviewLaunchAttempted=false;
 // that *private deploy-only* draft once without resetting approved prose or
 // requiring the owner to navigate developer tools.
 function isVerifiedHistoricalPreviewEdition(edition,season,week){
- const teams=edition?.teams||[];
- return edition?.available===true&&edition?.published_locked===true&&
+ const teams=edition?.teams||[],legacy=season===2026&&(week===3||week===4)&&
+  edition?.published_locked==null&&Number(edition?.inquirer_version)===31&&
+  (week!==4||Number(edition?.editorial_revision)===14);
+ return edition?.available===true&&edition?.published_locked!==false&&
+  (edition?.published_locked===true||legacy)&&
   Number(edition?.season)===season&&Number(edition?.week)===week&&
   Array.isArray(teams)&&teams.length===32&&
   new Set(teams.map(t=>String(t?.roster_id||''))).size===32&&
+  teams.every(t=>t?.roster_id!=null&&String(t?.inquirer_article?.headline||'').trim())&&
   !!edition?.league_overview?.headline;
 }
 async function canRetryArchiveBlockedPreview(season,targetWeek){
@@ -35,7 +39,14 @@ async function canRetryArchiveBlockedPreview(season,targetWeek){
  const recap=week4.league_overview?.sections||[],blocks=recap[0]?.blocks||[];
  return recap.length>=4&&blocks.length===beats.length&&
   beats.every((kind,i)=>blocks[i]?.kind===kind)&&
-  week4.teams.every(t=>kinds.every(k=>(t?.inquirer_article?.sections||[]).some(s=>s.kind===k)));
+  Object.keys(week4.teams.reduce((counts,t)=>{
+   const reporter=String(t?.inquirer_article?.reporter?.id||'unknown');
+   counts[reporter]=(counts[reporter]||0)+1;return counts;
+  },{})).length===4&&
+  week4.teams.every(t=>{
+   const sections=t?.inquirer_article?.sections||[];
+   return sections.length===8&&kinds.every(k=>sections.some(s=>s.kind===k));
+  });
 }
 async function loadInquirerPreview(){
  if(!inquirerPreviewMode)return null;

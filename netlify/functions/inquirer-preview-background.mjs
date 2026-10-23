@@ -13,7 +13,9 @@ export default async function generateInquirerPreview(req){
  // getDeployStore is scoped to this single Deploy Preview, never production's shared Blob store.
  const identity=await resolvePreviewIdentity(req.url);
  const store=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
- const existing=await store.get(identity.status,{type:'json'}).catch(()=>null);
+ // A transient store outage is not evidence that no draft exists.
+ // Fail closed rather than launching overlapping 32-column jobs.
+ const existing=await store.get(identity.status,{type:'json'});
  const age=Date.now()-Date.parse(existing?.started_at||0);
  if(existing?.state==='completed'||(existing?.state==='running'&&age>=0&&age<20*60*1000)){
   console.info('inquirer-preview-background-already-started',existing.state);

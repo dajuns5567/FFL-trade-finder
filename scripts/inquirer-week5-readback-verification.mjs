@@ -26,6 +26,10 @@ export async function inspectWeek5Readback(store,expectedDigest){
   failures.push('recap-is-not-exact-approved-copy');
  const reporters=edition?.reporters||[];
  if(reporters.length!==4)failures.push('reporter-directory-incomplete');
+ if(reporters.length!==4||new Set(reporters.map(r=>String(r.id))).size!==4)
+  failures.push('reporter-directory-nonunique-or-incomplete');
+ const seenArticleKeys=new Set();
+
  for(const reporter of reporters){
   const rid=String(reporter.id),listed=await read('inquirer/reporters/'+rid+'/index.json');
   const members=(edition?.teams||[]).filter(t=>t?.inquirer_article?.reporter?.id===rid);
@@ -36,10 +40,13 @@ export async function inspectWeek5Readback(store,expectedDigest){
    if(!listed?.articles?.some(a=>Number(a.season)===2026&&Number(a.week)===5&&
      String(a.roster_id)===String(t.roster_id)&&a.article_key===key))
     failures.push('reporter-index-entry-missing:'+rid+':'+t.roster_id);
+   if(seenArticleKeys.has(key))failures.push('duplicate-reporter-article-key:'+key);
+   seenArticleKeys.add(key);
    const saved=await read(key);
    if(!saved||Object.entries(t.inquirer_article||{}).some(
      ([field,value])=>JSON.stringify(saved[field])!==JSON.stringify(value)))
     failures.push('reporter-article-does-not-match:'+rid+':'+t.roster_id);
+   if(saved?.published_locked!==true)failures.push('reporter-article-unlocked:'+rid+':'+t.roster_id);
   }
  }
  const awards=await read('awards/weekly.json');

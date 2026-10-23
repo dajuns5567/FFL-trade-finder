@@ -42,7 +42,7 @@ function storyStat(p,opponent,index,variant=0){
   `The scorebook starts with ${n}'s ${points} fantasy points.`,
   `${n} supplied the decisive individual production: ${points} fantasy points.`
  ]:[
-  `${n} contributed ${points} fantasy points beside the headline act.`,
+  `${n} offered another scoring source at ${points} fantasy points.`,
   `${points} fantasy points from ${n} gave the lineup another source.`,
   `${n} also made the scoreboard with ${points} fantasy points.`,
   `${n}'s ${points} fantasy points mattered beyond the leading scorer.`,

@@ -19,6 +19,7 @@ function isVerifiedHistoricalPreviewEdition(edition,season,week){
   (week!==4||Number(edition?.editorial_revision)===14);
  return edition?.available===true&&edition?.published_locked!==false&&
   (edition?.published_locked===true||legacy)&&
+  (season!==2026||week!==4||(Number(edition?.inquirer_version)===31&&Number(edition?.editorial_revision)===14))&&
   Number(edition?.season)===season&&Number(edition?.week)===week&&
   Array.isArray(teams)&&teams.length===32&&
   new Set(teams.map(t=>String(t?.roster_id||''))).size===32&&

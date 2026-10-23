@@ -169,7 +169,9 @@ jobs:
 
   seed-private-preview:
     needs: inquirer-r6
-    if: github.event_name == 'pull_request'
+    # Isolated award-guard PR #404 must not waste Netlify/CI minutes or regenerate
+    # a newspaper already undergoing editorial review on PR #402.
+    if: github.event_name == 'pull_request' && github.head_ref != 'fix/inquirer-week5-feature-package-guard'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

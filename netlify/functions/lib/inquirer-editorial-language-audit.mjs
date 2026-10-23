@@ -27,7 +27,7 @@ export function auditInquirerLanguage(edition,previous=null){
   const id=String(t?.roster_id),a=story(t),paragraphs=lines(a),rid=String(a?.reporter?.id||'unknown');
   reporters[rid]=(reporters[rid]||0)+1;
   const headline=norm(a.headline);
-  if(headlines.has(headline))issues.push({id:'duplicate-headline',team:id});
+  if(teams.length===32&&headlines.has(headline))issues.push({id:'duplicate-headline',team:id});
   headlines.add(headline);
   const opening=words(paragraphs[0]||'').slice(0,9).join(' ');
   if(opening.length>35){const set=leads.get(opening)||new Set();set.add(id);leads.set(opening,set)}

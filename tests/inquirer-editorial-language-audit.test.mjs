@@ -127,3 +127,12 @@ test('next NFL season Week 1 enforces strict editorial writing quality while ori
  edition.season=2026;
  assert.equal(auditInquirerLanguage(edition).stats.skipped,'original 2026 Week 1-4 archive');
 });
+
+
+test('weekly recap catches singular agreement after plural NFL team names',()=>{
+ const e=draft();
+ e.league_overview={sections:[],hot_takes:[{kind:'report',take:'Baltimore Ravens now has an excuse for the poor result.'}]};
+ assert.ok(auditInquirerLanguage(e).issues.some(x=>x.id==='recap-plural-team-grammar'));
+ e.league_overview.hot_takes[0].take='Baltimore Ravens now have an excuse for the poor result.';
+ assert.ok(!auditInquirerLanguage(e).issues.some(x=>x.id==='recap-plural-team-grammar'));
+});

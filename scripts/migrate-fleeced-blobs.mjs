@@ -102,21 +102,52 @@ export async function verifyBackup(dir,expectedSite){
   }
   return {manifest,counts:total};
 }
-async function assertCanonicalHistory(sourceDir,sourceManifest){
-  const entries=sourceManifest.stores['fleeced-league-hub']||[];
-  for(const week of [3,4]){
-    const key='broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
-    const row=entries.find(entry=>entry.key===key);
-    if(!row)throw Error('Original Fleeced! published Week '+week+' archive is missing; refusing migration');
-    let edition;
-    try{edition=JSON.parse(await readFile(join(sourceDir,'objects',row.file),'utf8'))}
-    catch{throw Error('Original Week '+week+' archive is not valid JSON; refusing migration')}
-    if(edition.available!==true||edition.published_locked!==true||
-       Number(edition.season)!==2026||Number(edition.week)!==week||
-       !Array.isArray(edition.teams)||edition.teams.length!==32||
-       !edition.league_overview?.headline)
-      throw Error('Original Week '+week+' is not a complete locked 2026 edition with 32 teams; refusing migration');
+const CANONICAL_WEEK4_DESKS=Object.freeze(['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook']);
+const CANONICAL_WEEK4_BEATS=Object.freeze(['lead','standings','players','decisions','league','outlook']);
+// Verify the ORIGINAL frozen newsroom, not a regenerated best-effort Week 4.
+// These are pure acceptance checks: no network access and no data mutation.
+export function validateOriginalArchiveEdition(edition,week){
+ const problems=[],teams=Array.isArray(edition?.teams)?edition.teams:[];
+ if(edition?.available!==true||edition?.published_locked!==true)
+  problems.push('source edition is not explicitly available and locked');
+ if(Number(edition?.season)!==2026||Number(edition?.week)!==week)
+  problems.push('wrong source year/week');
+ if(teams.length!==32||new Set(teams.map(t=>String(t?.roster_id||''))).size!==32)
+  problems.push('missing or duplicated team rosters');
+ if(teams.some(t=>!t?.roster_id||!String(t?.inquirer_article?.headline||'').trim()))
+  problems.push('missing reporter/team article headline');
+ if(!String(edition?.league_overview?.headline||'').trim())
+  problems.push('missing published recap headline');
+ if(week===4){
+  const reporters={};
+  for(const team of teams){
+   const article=team.inquirer_article||{},sections=article.sections||[],kinds=sections.map(x=>x?.kind);
+   const reporter=String(article.reporter?.id||'unknown');
+   reporters[reporter]=(reporters[reporter]||0)+1;
+   if(sections.length!==8||!CANONICAL_WEEK4_DESKS.every(x=>kinds.includes(x)))
+    problems.push('Week 4 lacks its approved eight editorial desks');
   }
+  if(Object.keys(reporters).length!==4||Object.values(reporters).some(x=>x!==8))
+   problems.push('Week 4 does not have four distinct reporters with eight team articles each');
+  const recap=edition?.league_overview?.sections||[],blocks=recap[0]?.blocks||[];
+  if(recap.length<4||blocks.length!==6||
+     !CANONICAL_WEEK4_BEATS.every((kind,i)=>blocks[i]?.kind===kind))
+   problems.push('Week 4 recap does not have the approved six beats');
+ }
+ return[...new Set(problems)];
+}
+async function assertCanonicalHistory(sourceDir,sourceManifest){
+ const entries=sourceManifest.stores['fleeced-league-hub']||[];
+ for(const week of [3,4]){
+  const key='broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
+  const row=entries.find(entry=>entry.key===key);
+  if(!row)throw Error('Original Fleeced! published Week '+week+' archive is missing; refusing migration');
+  let edition;
+  try{edition=JSON.parse(await readFile(join(sourceDir,'objects',row.file),'utf8'))}
+  catch{throw Error('Original Week '+week+' archive is not valid JSON; refusing migration')}
+  const issues=validateOriginalArchiveEdition(edition,week);
+  if(issues.length)throw Error('Original Week '+week+' failed canonical newsroom verification: '+issues.join('; ')+'. No restore writes made.');
+ }
 }
 async function prepare(base){
   const source=await verifyBackup(join(base,'source'),SOURCE_SITE);

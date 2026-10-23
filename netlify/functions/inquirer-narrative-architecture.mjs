@@ -187,7 +187,7 @@ export function restoreForwardArticleDepth(t,week){
  const paragraphSeen=new Set();
  for(const section of a.sections){
   section.paragraphs=(section.paragraphs||[]).filter(line=>{
-   const key=text(line).toLowerCase().replace(/[’‘]/g,"'").replace(/\\s+/g,' ').trim();
+   const key=text(line).toLowerCase().replace(/[’‘]/g,"'").replace(/\s+/g,' ').trim();
    if(!key)return false;
    if(paragraphSeen.has(key))return false;
    paragraphSeen.add(key);

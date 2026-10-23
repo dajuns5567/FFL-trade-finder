@@ -10,7 +10,7 @@ function fixture(){
   {type:'highest-scorer',roster_id:'32'},
   {type:'lowest-scorer',roster_id:'1'},
   {type:'hot-seat',roster_id:'31'},
-  {type:'cool-throne',roster_id:'2'}]}]};
+  {type:'cool-throne',roster_id:'32'}]}]};
  return{report,awards};
 }
 test('Week5 complete package requires four matching awards, scored offense and IDP',()=>{

@@ -24,8 +24,10 @@ export async function inspectWeek5Readback(store,expectedDigest){
  if(!overview||!edition?.league_overview||Object.entries(edition.league_overview).some(
    ([key,value])=>JSON.stringify(overview[key])!==JSON.stringify(value)))
   failures.push('recap-is-not-exact-approved-copy');
+ if(overview?.published_locked!==true)failures.push('recap-archive-unlocked');
  const reporters=edition?.reporters||[];
  if(reporters.length!==4)failures.push('reporter-directory-incomplete');
+ if(!Array.isArray(edition?.teams)||edition.teams.length!==32)failures.push('canonical-team-count-invalid');
  if(reporters.length!==4||new Set(reporters.map(r=>String(r.id))).size!==4)
   failures.push('reporter-directory-nonunique-or-incomplete');
  const seenArticleKeys=new Set();

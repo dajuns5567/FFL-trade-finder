@@ -579,6 +579,32 @@ export function polishForwardTeamCopy(teams,week,salt){
   return {...t,inquirer_article:{...article,headline,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
  });
 }
+// When a stale prior-week Hot Seat line is removed, rebuild the desk from
+// this week's actual starter ledger instead of restoring reused copy.
+function forwardFreshHotSeat(t,week,salt){
+ const ranked=(t.starter_details||[]).filter(p=>p&&p.name&&Number.isFinite(Number(p.points)))
+  .sort((a,b)=>Number(a.points)-Number(b.points));
+ const weak=ranked[0];if(!weak)return null;
+ const team=String(t.team_name||'This club'),name=String(weak.name),
+  pos=String(weak.position||'starter'),pts=Number(weak.points).toFixed(1),
+  foe=String(t.opponent_name||'the opposition');
+ const variants=[
+  name+' was the smallest entry on '+team+'\'s starting card: '+pts+' fantasy points at '+pos+'. Against '+foe+', that slot is an argument the manager cannot outsource to the standings.',
+  'The '+pos+' spot occupied by '+name+' returned '+pts+' fantasy points for '+team+'. '+foe+' did not draft the lineup; whoever did now owns the explanation.',
+  team+' received '+pts+' fantasy points from '+name+' at '+pos+'. Every roster has a weak link, but putting its name on the Week '+week+' ledger makes denial rather difficult.',
+  'There is a specific receipt for the '+team+' coaching staff: '+name+', '+pos+', '+pts+' fantasy points. The case for keeping that slot unchanged needs more than a postgame shrug.',
+  'Find '+name+' on the '+team+' starter sheet and there is the problem: '+pts+' fantasy points at '+pos+'. The next depth-chart meeting should begin with the number, not an alibi.',
+  foe+' only had to play the starters '+team+' chose. One was '+name+' at '+pos+', whose '+pts+' fantasy points now belong in the manager\'s least comfortable review.',
+  'The quietest '+team+' starting contribution was '+name+'\'s '+pts+' fantasy points. The position was '+pos+'; the duty to reconsider its use belongs upstairs.',
+  'For '+team+', '+name+' supplied just '+pts+' fantasy points from the '+pos+' slot. It is one documented number, but an excellent reason to ask what the lineup plan actually was.',
+  'A line in the '+team+' scoring ledger reads '+name+' — '+pts+' fantasy points at '+pos+'. There is no need to invent a crisis when the official lineup provides its own question.',
+  'The manager sent '+name+' into Week '+week+' at '+pos+' and received '+pts+' fantasy points. That is the uncomfortable evidence before any debate about what '+foe+' did.',
+  'At the bottom of '+team+'\'s documented starting totals sits '+name+' with '+pts+' fantasy points. A '+pos+' slot can be changed; rewriting Sunday\'s number is not an option.',
+  name+' finished on '+pts+' fantasy points for '+team+' from '+pos+'. If a lineup adjustment is coming, that verified entry is where the meeting ought to start.'
+ ];
+ const id=Number(t.roster_id)||0;
+ return variants[((id*5+Number(week)*7+Number(salt)*11)%variants.length+variants.length)%variants.length];
+}
 export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,weekClassification=null,variationSalt=0}={}){
   season=Number(season);week=Number(week);variationSalt=Number(variationSalt)||0;
   if(!rawInquirer||!Array.isArray(rawInquirer.teams))throw new Error('V31 forward editorial layer requires raw team articles');
@@ -4280,7 +4306,8 @@ function assertWeek2Originality(result,previousEdition){
         .map(x=>editorialSentenceSkeleton(x,prior)).filter(x=>x.split(' ').length>=13));
       let dropped=0;
       for(const section of article.sections){
-        section.paragraphs=(section.paragraphs||[]).map(p=>{
+        const originalParagraphs=section.paragraphs||[];
+        section.paragraphs=originalParagraphs.map(p=>{
           const parts=editorialSentenceParts(p);
           const kept=parts.filter(sentence=>{
             if(editorialSentenceSkeleton(sentence,t).split(' ').length<13)return true;
@@ -4289,6 +4316,10 @@ function assertWeek2Originality(result,previousEdition){
           });
           return kept.join(' ').trim();
         }).filter(Boolean);
+        if(dropped&&section.kind==='hot-seat'&&originalParagraphs.length&&!section.paragraphs.length){
+          const factual=forwardFreshHotSeat(t,week,variationSalt);
+          if(factual)section.paragraphs=[factual];
+        }
       }
       if(dropped)article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
     }

@@ -117,26 +117,6 @@ function regularPlayoffRaceSection(teams,week,classification,reporter){
 function evolutionHash(value){
   let h=2166136261;for(const ch of String(value||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0;
 }
-const EVOLUTION_INTROS={
-  'walter-mercer':[
-    'The football read is straightforward:','Strip away the noise and this is what remains:','The weekly ledger is blunt here:','The useful football answer is simpler:','Put the emotion to one side for a second:','The Sunday note that survives review is this:','The cleanest read from the result is this:','Start with the part that will still matter Tuesday:'
-  ],
-  'tess-delaney':[
-    'The less glamorous truth is this:','There is no elegant detour around it:','The cleaner football answer is this:','No need to romanticize the result:','The civilized version is still fairly obvious:','Once the postgame swagger wears off, this remains:','The part worth keeping after the applause is this:','Even a dramatic Sunday can be reduced to one useful point:'
-  ],
-  'mack-hollis':[
-    'Here is the loud part:','Put this on the big screen:','The back-page version is simple:','Skip the polite introduction:','Here is what survives the shouting:','The part rival managers will screenshot is this:','No tiny print required:','This is the sentence the group chat will keep:'
-  ],
-  'nora-voss':[
-    'Rivals can circle this:','The rival-chat version is uncomfortable:','No conspiracy is required here:','The part opponents will remember is this:','The annoying fact survives review:','Rivals do not need help finding this one:','The useful weakness-or-strength note is this:','This is the detail that will follow them into next week:'
-  ]
-};
-const EVOLUTION_TAILS={
-  'walter-mercer':['That is the part worth carrying forward.','The next matchup gets to test whether it travels.','That belongs in the season ledger now.','The following Sunday gets the rebuttal.','That is enough to change the next conversation.','The point is useful precisely because it can be tested again.','The season has another data point to answer now.','Keep that in the notebook when the next lineup locks.'],
-  'tess-delaney':['Elegant or not, the score keeps the receipt.','The next opponent is allowed to object.','Good manners do not make the point less true.','The following Sunday can improve the presentation.','That is the version I am willing to keep.','The next matchup can either polish it or ruin it.','There is plenty of time for the season to make this look foolish.','For now, the football has earned the sentence.'],
-  'mack-hollis':['Nobody needs a committee meeting to understand it.','Next week can yell back if it disagrees.','Save the screenshot; the next game gets a vote.','That one is going straight into the group chat.','The next opponent can file the complaint.','If it repeats, the headline gets bigger.','If it disappears, we will happily print the correction.','Either way, the next Sunday is already booked.'],
-  'nora-voss':['Rivals will remember it even if management would rather they did not.','The next matchup gets first chance to dispute it.','That is enough material for the rival chat.','The next Sunday decides whether this becomes a pattern.','Opponents now know exactly where to look.','Management gets one week to make the note boring.','Rivals do not need a second invitation to test it.','The season will either confirm the note or embarrass it.']
-};
 const EVOLUTION_LEXICON=[
   [/\bthe result\b/gi,['the final score','Sunday’s outcome','the finished result','the scoreboard answer']],
   [/\bthe lineup\b/gi,['the starting group','the lineup card','the starters','the weekly lineup']],
@@ -173,7 +153,7 @@ const CROSS_REPORTER_WORDS={
     [/\bheadline\b/gi,'talking point'],[/\bargument\b/gi,'rival case'],[/\bresponse\b/gi,'rebuttal'],[/\bpanic\b/gi,'rival excitement'],[/\bsiren\b/gi,'warning light'],[/\bevidence\b/gi,'material'],[/\broom\b/gi,'space'],[/\bparade\b/gi,'celebration'],[/\bvolume\b/gi,'noise'],[/\bexplanation\b/gi,'excuse'],[/\bflexibility\b/gi,'options']
   ]
 };
-function evolveCrossReporterSentence(sentence,reporterId,seed){
+export function evolveCrossReporterSentence(sentence,reporterId,seed){
   let out=String(sentence||''),rid=CROSS_REPORTER_WORDS[reporterId]?reporterId:'walter-mercer',
     rows=CROSS_REPORTER_WORDS[rid],h=evolutionHash(seed+'|cross-reporter');
   let changed=0;
@@ -182,27 +162,21 @@ function evolveCrossReporterSentence(sentence,reporterId,seed){
     if(re.test(out)){re.lastIndex=0;out=out.replace(re,repl);changed++}
     if(changed>=3)break;
   }
-  if(!changed){
-    const tails={
-      'walter-mercer':' The next week gets to test that read.',
-      'tess-delaney':' The next Sunday can improve the wording if it objects.',
-      'mack-hollis':' Next week can yell back if it disagrees.',
-      'nora-voss':' Rivals get the next chance to prove the point wrong.'
-    };
-    out=out.replace(/[.!?]?$/,'.')+tails[rid];
-  }
+  // No automatic stock closing sentence: an unvaried draft must remain
+  // visible to quality review, not be disguised with another canned tail.
   return out;
 }
-function evolveSentence(sentence,reporterId,seed){
+export function evolveSentence(sentence,reporterId,seed){
   let out=String(sentence||'').trim();if(!out)return out;
-  const h=evolutionHash(seed),rid=EVOLUTION_INTROS[reporterId]?reporterId:'walter-mercer';
+  const h=evolutionHash(seed);
   for(let i=0;i<EVOLUTION_LEXICON.length;i++){
     const [re,choices]=EVOLUTION_LEXICON[i];if(!re.test(out)){re.lastIndex=0;continue}re.lastIndex=0;
     const choice=choices[(h+i*7)%choices.length];out=out.replace(re,choice);
   }
   out=out.trim();if(out)out=out[0].toUpperCase()+out.slice(1);
-  const intro=EVOLUTION_INTROS[rid][h%EVOLUTION_INTROS[rid].length];
-  out=intro+' '+out;
+  // Prefix banks caused nested filler such as "The football read is
+  // straightforward: The useful football answer is simpler:". Preserving
+  // the original reporting beats is preferable to manufactured variation.
   if(!/[.!?]$/.test(out))out+='.';
   return out;
 }

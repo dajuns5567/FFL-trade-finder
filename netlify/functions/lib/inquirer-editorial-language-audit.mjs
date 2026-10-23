@@ -50,6 +50,26 @@ export function auditInquirerLanguage(edition,previous=null){
   const sarcasmSignals=(text.match(/\b(?:apparently|naturally|of course|congratulations|surely|mercifully|somehow|ridiculous|audacity|absurd|embarrass|excus|please|parade|miracle|disaster|fiasco|suspect|fraud|laugh|joke|nonsense|inexplicable|unbelievable|gall|nerve)\b|[!?]/gi)||[]).length;
   if(sarcasmSignals===0)warnings.push({id:'voice-read-required',team:id,detail:'No simple sarcasm signal; a human must judge whether this is funny, original and reporter-specific'});
  }
+ // Week 5 manuscript review exposed recycled editorial jokes shared by only
+ // two clubs; the legacy >=5-team n-gram threshold missed them.
+ // This is a targeted warning about newsroom rhetoric, not sports facts.
+ // Fail closed on a repeated recognizably identical punchline or stale
+ // first-two-game arc, while preserving common factual stat syntax.
+ const checkedPunchlines=[
+  'the week 5 noise came from a real speaker and not somebody dropping a pan',
+  'the week 5 strengths survive a new opponent or whether the joke simply changes names',
+  'the kind of headline that usually gets folded underneath the newspaper',
+  'the loud part of week 5 to bring backup',
+  'not a rerun of the first two'
+ ];
+ for(const punch of checkedPunchlines){
+  const matches=teams.filter(t=>norm(lines(story(t)).join(' ')).includes(norm(punch)))
+   .map(t=>({team:t.team_name,roster_id:String(t.roster_id)}));
+  if(punch==='not a rerun of the first two'&&matches.length)
+   issues.push({id:'stale-opening-weeks-outlook',phrase:punch,teams:matches});
+  else if(matches.length>=2)
+   issues.push({id:'recycled-editorial-punchline',phrase:punch,teams:matches});
+ }
  const cross=repeatedCrossTeamWindows(teams);
  for(const offender of cross)issues.push({id:'cross-team-long-language-reuse',...offender});
  for(const [prefix,ids] of leads)if(ids.size>=5)issues.push({id:'formulaic-lede-openings',opening:prefix,teams:ids.size});

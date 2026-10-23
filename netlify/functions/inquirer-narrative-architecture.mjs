@@ -181,14 +181,14 @@ export function restoreForwardArticleDepth(t,week){
  // actual score, opponent and next opponent, not another canned one-liner.
  const a=t?.inquirer_article,teamLabel=text(t?.team_name),rival=text(t?.opponent_name),
   next=text(t?.next_opponent_name||'the next opponent'),points=Number(t?.points||0).toFixed(1),
-  gap=Math.abs(Number(t?.points||0)-Number(t?.opponent_points||0)).toFixed(1),
+  scoreGap=Math.abs(Number(t?.points||0)-Number(t?.opponent_points||0)).toFixed(1),
   even=Number(t?.roster_id)%2===0;
  if(a&&Number(week)>=5)for(const section of a.sections||[]){
   section.paragraphs=(section.paragraphs||[]).map(line=>{
    let p=text(line);
    p=p.replace('the kind of headline that usually gets folded underneath the newspaper',
-    even?'a kind of defeat that leaves management explaining a '+gap+'-point deficit without the courtesy of a refund':
-     'a loss to '+rival+' that deserves its own '+gap+'-point apology from the starting lineup');
+    even?'a kind of defeat that leaves management explaining a '+scoreGap+'-point deficit without the courtesy of a refund':
+     'a loss to '+rival+' that deserves its own '+scoreGap+'-point apology from the starting lineup');
    p=p.replace('The next Sunday is a new roster test, not a rerun of the first two.',
     even?'Week '+(week+1)+' against '+next+' demands another real performance, not another copy of the old result.':
      teamLabel+' take '+points+' points into a very different test against '+next+'. The scoreboard will not accept a forwarding address.');
@@ -196,11 +196,11 @@ export function restoreForwardArticleDepth(t,week){
     even?'the '+points+'-point display carries over when '+next+' asks for proof':
      next+' has to hear the same '+points+'-point argument before the cheering counts as evidence');
    p=p.replace('the Week 5 strengths survive a new opponent or whether the joke simply changes names',
-    even?'the '+gap+'-point result produces an actual lineup response against '+next:
-     teamLabel+' can give '+next+' a better answer than the '+gap+'-point margin just delivered');
+    even?'the '+scoreGap+'-point result produces an actual lineup response against '+next:
+     teamLabel+' can give '+next+' a better answer than the '+scoreGap+'-point margin just delivered');
    p=p.replace('the loud part of Week 5 to bring backup this time',
     even?'starters to explain their '+points+'-point showing to '+next+' without blaming the calendar':
-     'supporting cast to give '+next+' a more convincing answer than the '+gap+'-point result');
+     'supporting cast to give '+next+' a more convincing answer than the '+scoreGap+'-point result');
    if(Number(t?.points)===0)p=p.replace('The Chiefs got something from Michael Burton, but the lineup behind him did not produce enough to reach Las Vegas Raiders’ total.',
     'Michael Burton scored 0.0, and so did every other Chiefs starter. Management finally achieved complete unanimity; unfortunately the vote was against scoring.');
    return p;

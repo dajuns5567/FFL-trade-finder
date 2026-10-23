@@ -23,7 +23,7 @@
  };
  const needed=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
  const beats=['lead','standings','players','decisions','league','outlook'];
- const auditEdition=(e,w,privateDraft=false)=>{
+ const auditEdition=(e,w,privateDraft=false,legacyHistorical=false)=>{
   const teams=Array.isArray(e?.teams)?e.teams:[],ids=teams.map(t=>String(t?.roster_id||''));
   const unique=new Set(ids);
   const headings=[],short=[],long=[],missing=[],reporters={},paragraphs=new Map();
@@ -50,7 +50,7 @@
   const actualWeek=Number(e?.week),actualSeason=Number(e?.season);
   const hasEditorialGates=e?.preview_editorial_audit?.ok===true&&e?.preview_generation_quality?.ok===true;
   const constraints={yearWeek:actualSeason===season&&actualWeek===w,
-   locked:privateDraft?(e?.preview_only===true&&e?.published_locked===false):e?.published_locked===true,
+   locked:privateDraft?(e?.preview_only===true&&e?.published_locked===false):(legacyHistorical?(e?.published_locked!==false&&Number(e?.inquirer_version)===31):e?.published_locked===true),
    teamCount:teams.length===32,uniqueRosters:unique.size===32,
    fourDistinctReporters:Object.keys(reporters).length===4&&Object.values(reporters).every(n=>n===8),
    teamHeadlines:teams.every(t=>String(t?.inquirer_article?.headline||'').trim()),
@@ -75,7 +75,7 @@
   // only for these canonical historical editions after structural validation.
   if(r.data?.available===true&&r.data?.published_locked!==false&&
      Number(r.data?.inquirer_version)===31&&Number(r.data?.season)===season&&Number(r.data?.week)===w)
-   report.historical['week'+w].schema=auditEdition(r.data,w);
+   report.historical['week'+w].schema=auditEdition(r.data,w,false,true);
  }
  const status=await jsonGet('/.netlify/functions/inquirer-preview-diagnostic?preview_week='+week);
  report.preview.diagnostic={http:status.http,target:status.data?.target||null,

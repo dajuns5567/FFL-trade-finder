@@ -11,11 +11,22 @@ export const config={background:true};
 // completed publication-status record or suppress the next scheduler retry.
 export function hasCompleteWeekFeaturePackage(report,awards){
  if(report?.available!==true||report?.published_locked!==true||!Array.isArray(awards?.records))return false;
+ const teams=Array.isArray(report.teams)?report.teams:[];
+ if(teams.length!==32||new Set(teams.map(t=>String(t?.roster_id||''))).size!==32)return false;
  const record=awards.records.find(x=>Number(x?.season)===Number(report.season)&&Number(x?.week)===Number(report.week));
- return !!record?.players_of_week?.offense?.player_id&&!!record?.players_of_week?.defense?.player_id&&
-  Array.isArray(record?.manager_awards)&&
-  ['highest-scorer','lowest-scorer'].every(type=>record.manager_awards.some(b=>b.type===type))&&
-  Number(record.newsroom_editorial_revision)>=39&&record.newsroom_engine==='v31-forward';
+ if(!record?.players_of_week?.offense?.player_id||!record?.players_of_week?.defense?.player_id)return false;
+ if(!Array.isArray(record.manager_awards)||Number(record.newsroom_editorial_revision)<39||record.newsroom_engine!=='v31-forward')return false;
+ const byType=new Map(record.manager_awards.map(b=>[b?.type,b]));
+ const high=teams.filter(t=>Number.isFinite(Number(t?.points))).sort((a,b)=>Number(b.points)-Number(a.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0];
+ const low=teams.filter(t=>Number.isFinite(Number(t?.points))).sort((a,b)=>Number(a.points)-Number(b.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0];
+ const cool=teams.filter(t=>t.won===true).sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points))||String(a.roster_id).localeCompare(String(b.roster_id)))[0];
+ const hot=teams.filter(t=>t.won===false&&Number.isFinite(Number(t.projected))&&Number.isFinite(Number(t.opponent_projected))&&Number(t.projected)>Number(t.opponent_projected)).sort((a,b)=>(Number(b.projected)-Number(b.opponent_projected))-(Number(a.projected)-Number(a.opponent_projected))||String(a.roster_id).localeCompare(String(b.roster_id)))[0];
+ for(const [type,expected] of [['highest-scorer',high],['lowest-scorer',low],['cool-throne',cool],['hot-seat',hot]]){
+  const badge=byType.get(type);
+  if(expected&&(!badge||String(badge.roster_id)!==String(expected.roster_id)))return false;
+  if(!expected&&badge)return false;
+ }
+ return true;
 }
 
 export default async function publishInquirerInBackground(req){

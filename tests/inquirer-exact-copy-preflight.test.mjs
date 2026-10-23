@@ -29,3 +29,12 @@ test('offline preflight rejects an unsynchronized team article or recap mirror',
  b.league_overview.sections[0].paragraphs=['bad'];
  assert.ok(inspectImmutableWeekCandidate(a,b).failures.some(x=>x.includes('Recap paragraph mirror')));
 });
+
+test('copy preflight prevents changing article provenance and recap award identity',()=>{
+ const a=source(),b=structuredClone(a);
+ b.teams[0].inquirer_article.reporter={id:'impostor'};
+ assert.ok(inspectImmutableWeekCandidate(a,b).failures.some(x=>x.includes('Non-prose article metadata')));
+ b.teams[0].inquirer_article=structuredClone(a.teams[0].inquirer_article);
+ b.league_overview.hot_takes=[{kind:'division',take:'Replacement factual claims'}];
+ assert.ok(inspectImmutableWeekCandidate(a,b).failures.some(x=>x.includes('Recap reporter, hot-take identity')));
+});

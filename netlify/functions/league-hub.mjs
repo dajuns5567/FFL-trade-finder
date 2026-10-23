@@ -8,6 +8,7 @@ import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
 import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
+import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
 
 const LEAGUE='1316867686394769408';
 const API='https://api.sleeper.app/v1';
@@ -349,14 +350,10 @@ async function reporterDirectory(){return{schema_version:1,inquirer_version:INQU
 // Historical archives are immutable source material. A corrupt or half-written
 // edition must never be silently promoted to "published" or overwritten.
 export function isLockedInquirerEdition(edition,season,week){
- const teams=edition?.teams;
- return edition?.available===true&&edition?.published_locked===true&&
-  Number(edition?.season)===Number(season)&&Number(edition?.week)===Number(week)&&
-  Array.isArray(teams)&&teams.length===32&&
-  new Set(teams.map(t=>String(t?.roster_id||''))).size===32&&
-  teams.every(t=>t?.roster_id!=null&&String(t?.inquirer_article?.headline||'').trim())&&
-  !!String(edition?.league_overview?.headline||'').trim()&&
-  Array.isArray(edition?.league_overview?.sections)&&edition.league_overview.sections.length>0;
+ // Read original history exactly as it was saved. Only original 2026 Weeks
+ // 3/4 may lack the later lock field, and even then the canonical editorial
+ // structure must verify. Never relabel the raw legacy object as "locked".
+ return inspectCanonicalArchive(edition,season,week).ok;
 }
 
 export async function weeklyReport(req){

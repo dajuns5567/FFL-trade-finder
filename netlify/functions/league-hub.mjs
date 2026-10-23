@@ -636,8 +636,16 @@ export function isTrustedWeeklyAwardCache(rec,season,week){
  const badges=rec?.manager_awards;
  if(!Array.isArray(badges)||!['highest-scorer','lowest-scorer'].every(kind=>badges.some(b=>b.type===kind)))
   return false;
- if(Number(season)>2026||(Number(season)===2026&&Number(week)>=5))
-  return Number(rec?.newsroom_editorial_revision)>=39&&rec?.newsroom_engine==='v31-forward';
+ if(Number(season)>2026||(Number(season)===2026&&Number(week)>=5)){
+  // Revision-39 awards built before the complete manager-badge gate are stale,
+  // even if the headline's newsroom stamp looks new. Rebuild once from the
+  // locked edition, then reuse the verified cache without 3MB article reads.
+  const expected=rec?.manager_awards_expected_types;
+  return Number(rec?.newsroom_editorial_revision)>=39&&rec?.newsroom_engine==='v31-forward'&&
+   Number(rec?.manager_awards_generation_version)>=2&&
+   Array.isArray(expected)&&['highest-scorer','lowest-scorer'].every(k=>expected.includes(k))&&
+   expected.every(k=>badges.some(b=>b?.type===k&&b?.roster_id!=null));
+ }
  return true;
 }
 export async function weeklyAwards(){
@@ -668,11 +676,14 @@ export async function weeklyAwards(){
    const built=await Promise.all(validPairs.map(async p=>{
     const stats=await fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({}));
     const broadcast=p.edition;
+    const managerAwardRows=weeklyManagerAwards(broadcast);
     const rec={season:p.season,week:p.week,
      captured_at:String(broadcast.generated_at||p.captured_at||new Date().toISOString()),
      newsroom_editorial_revision:Number(broadcast.editorial_revision)||null,
      newsroom_engine:String(broadcast?.editorial_generation?.engine||''),
-     manager_awards:weeklyManagerAwards(broadcast),
+     manager_awards:managerAwardRows,
+     manager_awards_generation_version:2,
+     manager_awards_expected_types:managerAwardRows.map(a=>a.type),
      players_of_week:weeklyPlayersOfWeek(stats,players,scoring)};
     return rec;
    }));

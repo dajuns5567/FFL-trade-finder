@@ -92,3 +92,17 @@ test('newspaper-wide sentence scaffold is caught after names and points change, 
  const ids=auditInquirerLanguage(e).issues.map(x=>x.id);
  assert.ok(ids.includes('cross-team-reused-sentence-template'),JSON.stringify(ids));
 });
+
+test('future weeks detect two reused sentence skeletons despite updated team names and scorelines',()=>{
+ const before=draft(),after=structuredClone(before);
+ before.week=6;after.week=7;
+ for(const [edition,name,score] of [[before,'One Club',114],[after,'Renamed Club',129]]){
+  edition.teams[0].team_name=name;
+  edition.teams[0].inquirer_article.sections[0].paragraphs.push(
+   name+' once again left its manager answering for a Sunday decision that should have been settled long before the lineup deadline at '+score+' points.');
+  edition.teams[0].inquirer_article.sections[1].paragraphs.push(
+   'The full box score could not rescue '+name+' from the same unnecessary second-half argument about whether the bench had been managed at '+score+' points.');
+ }
+ const ids=auditInquirerLanguage(after,before).issues.map(x=>x.id);
+ assert.ok(ids.includes('recycled-prior-week-sentence-template'),JSON.stringify(ids));
+});

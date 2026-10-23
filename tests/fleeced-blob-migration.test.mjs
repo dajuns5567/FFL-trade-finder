@@ -75,20 +75,20 @@ test('original locked Week 4 migration requires the exact approved editorial des
  };
  const copy=x=>JSON.parse(JSON.stringify(x));
  assert.deepEqual(validateOriginalArchiveEdition(edition,4),[]);
- assert.deepEqual(validateOriginalArchiveEdition({...edition,week:5},4),['wrong source year/week']);
+ assert.deepEqual(validateOriginalArchiveEdition({...edition,week:5},4),['season/week mismatch']);
  assert.match(validateOriginalArchiveEdition({...edition,published_locked:false},4).join(' '),/locked/);
  const noDesk=copy(edition);
  noDesk.teams[0].inquirer_article.sections=noDesk.teams[0].inquirer_article.sections.filter(x=>x.kind!=='cool-throne');
  assert.match(validateOriginalArchiveEdition(noDesk,4).join(' '),/eight editorial desks/);
  const wrongReporters=copy(edition);
  wrongReporters.teams[0].inquirer_article.reporter.id='reporter-1';
- assert.match(validateOriginalArchiveEdition(wrongReporters,4).join(' '),/four distinct reporters/);
+ assert.match(validateOriginalArchiveEdition(wrongReporters,4).join(' '),/four-reporter/);
  const wrongRecap=copy(edition);
  wrongRecap.league_overview.sections[0].blocks.pop();
- assert.match(validateOriginalArchiveEdition(wrongRecap,4).join(' '),/six beats/);
+ assert.match(validateOriginalArchiveEdition(wrongRecap,4).join(' '),/six-beat/);
  const duplicate=copy(edition);
  duplicate.teams[31].roster_id='1';
- assert.match(validateOriginalArchiveEdition(duplicate,4).join(' '),/duplicated/);
+ assert.match(validateOriginalArchiveEdition(duplicate,4).join(' '),/distinct roster/);
  // Week 3 remains a separately validated locked edition; it is NOT a
  // substitute for approved Week 4's eight desks.
  const week3=copy(edition);

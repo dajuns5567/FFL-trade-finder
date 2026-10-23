@@ -613,7 +613,7 @@ export function isTrustedWeeklyAwardCache(rec,season,week){
  const badges=rec?.manager_awards;
  if(!Array.isArray(badges)||!['highest-scorer','lowest-scorer'].every(kind=>badges.some(b=>b.type===kind)))
   return false;
- if(Number(season)>=2026&&Number(week)>=5)
+ if(Number(season)>2026||(Number(season)===2026&&Number(week)>=5))
   return Number(rec?.newsroom_editorial_revision)>=39&&rec?.newsroom_engine==='v31-forward';
  return true;
 }

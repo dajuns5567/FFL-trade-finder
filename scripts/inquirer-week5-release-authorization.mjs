@@ -1,6 +1,7 @@
 // Pure release admission: no I/O, tokens, Netlify runtime, locks or writes.
 // Call only after the immutable offline preflight; it can NEVER publish itself.
 import {editorialCopyDigest,editorialApprovalMatches} from '../netlify/functions/inquirer-publication-guard.mjs';
+import {verifiedReplacementHistory} from '../netlify/functions/lib/inquirer-replacement-archive-gate.mjs';
 export const REPLACEMENT_SITE_ID='8776d155-bc7b-4dcd-bafc-3d70d3d51800';
 export const WEEK5_RELEASE_KEY='broadcasts/2026/week-05.json';
 export function inspectWeek5ReleaseAuthorization({siteId,candidate,sourceDigest,approval,
@@ -14,11 +15,10 @@ export function inspectWeek5ReleaseAuthorization({siteId,candidate,sourceDigest,
  if(candidateDigest!==preflight?.candidate_digest)issues.push('candidate-digest-mismatch');
  if(preflight?.safe_to_consider_for_manual_review!==true||preflight?.failures?.length)
   issues.push('offline-copy-preflight-failed');
- // Both historical editions MUST already be locked. Detailed canonical archive
- // checks are separately required before this release contract can be used.
- for(const [n,edition] of [[3,originalWeek3],[4,originalWeek4]])
-  if(Number(edition?.season)!==2026||Number(edition?.week)!==n||edition?.published_locked!==true)
-   issues.push('missing-locked-week-'+n);
+ // Verify the actual original immutable Week 3/4 newspapers. These legacy
+ // archives may lack a published_locked flag: never mutate or fabricate one.
+ const history=verifiedReplacementHistory(originalWeek3,originalWeek4);
+ if(!history.ready)issues.push('canonical-week3-week4-history-invalid: '+history.reason);
  if(existingWeek5!=null)issues.push('week5-already-exists-refuse-overwrite');
  const approved=editorialApprovalMatches(candidate,approval);
  if(!approved.approved)issues.push('no-human-approval-of-exact-candidate-digest');

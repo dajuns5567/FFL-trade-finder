@@ -1,4 +1,4 @@
-import {auditInquirerLanguage} from './lib/inquirer-editorial-language-audit.mjs';
+import {auditInquirerLanguage,editorialSentenceSkeleton} from './lib/inquirer-editorial-language-audit.mjs';
 // Reusable Fleeced! Inquirer V31 editorial layer.
 // Derived from the locked Week 2 V31 newsroom logic.
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
@@ -4275,17 +4275,16 @@ function assertWeek2Originality(result,previousEdition){
     for(const t of teams){
       const prior=oldByRoster.get(String(t.roster_id)),article=t.inquirer_article;
       if(!prior?.inquirer_article||!Array.isArray(article?.sections))continue;
-      const names=forwardEntities({teams:[t,prior]});
       const oldSentences=new Set(forwardSentenceParts(
         (prior.inquirer_article.sections||[]).flatMap(x=>x.paragraphs||[]).join(' ')
-      ).filter(x=>forwardWordCount(x)>=13).map(x=>forwardNormSentence(x,names)));
+      ).filter(x=>forwardWordCount(x)>=13).map(x=>editorialSentenceSkeleton(x,prior)));
       let dropped=0;
       for(const section of article.sections){
         section.paragraphs=(section.paragraphs||[]).map(p=>{
           const parts=forwardSentenceParts(p);
           const kept=parts.filter(sentence=>{
             if(forwardWordCount(sentence)<13)return true;
-            if(!oldSentences.has(forwardNormSentence(sentence,names)))return true;
+            if(!oldSentences.has(editorialSentenceSkeleton(sentence,t)))return true;
             dropped++;return false;
           });
           return kept.join(' ').trim();

@@ -37,6 +37,10 @@ export function hasCompleteManagerSpotlightCache(report,cache){
  const current=Array.isArray(cache?.current)?cache.current:[];
  const career=Array.isArray(cache?.career)?cache.career:[];
  if(teams.length!==32||current.length<32||!career.length)return false;
+ // A complete-looking but stale manager cache can show last week's career
+ // totals under this week's spotlight. Validate the scorer's time horizon.
+ if(Number(cache?.scoring_history?.through_season)!==Number(report.season)||
+    Number(cache?.scoring_history?.through_week)<Number(report.week))return false;
  const managerByRoster=new Map(current.map(m=>[String(m.roster_id),m]));
  const careerUsers=new Set(career.map(m=>String(m.user_id)));
  return teams.every(team=>{

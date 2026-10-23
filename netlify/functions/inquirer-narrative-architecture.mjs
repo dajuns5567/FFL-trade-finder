@@ -177,9 +177,9 @@ export function curateForwardTeamNarrative(t,week){
 
 export function restoreForwardArticleDepth(t,week){
  // Final narrative copy must not resurrect the repeated jokes already found
- // in the authenticated Week 5 manuscript. Replace them with each team's
+ // in the authenticated Week 5 manuscript. Replace them with each teamLabel's
  // actual score, opponent and next opponent, not another canned one-liner.
- const a=t?.inquirer_article,team=text(t?.team_name),rival=text(t?.opponent_name),
+ const a=t?.inquirer_article,teamLabel=text(t?.team_name),rival=text(t?.opponent_name),
   next=text(t?.next_opponent_name||'the next opponent'),points=Number(t?.points||0).toFixed(1),
   gap=Math.abs(Number(t?.points||0)-Number(t?.opponent_points||0)).toFixed(1),
   even=Number(t?.roster_id)%2===0;
@@ -191,13 +191,13 @@ export function restoreForwardArticleDepth(t,week){
      'a loss to '+rival+' that deserves its own '+gap+'-point apology from the starting lineup');
    p=p.replace('The next Sunday is a new roster test, not a rerun of the first two.',
     even?'Week '+(week+1)+' against '+next+' demands another real performance, not another copy of the old result.':
-     team+' take '+points+' points into a very different test against '+next+'. The scoreboard will not accept a forwarding address.');
+     teamLabel+' take '+points+' points into a very different test against '+next+'. The scoreboard will not accept a forwarding address.');
    p=p.replace('the Week 5 noise came from a real speaker and not somebody dropping a pan',
     even?'the '+points+'-point display carries over when '+next+' asks for proof':
      next+' has to hear the same '+points+'-point argument before the cheering counts as evidence');
    p=p.replace('the Week 5 strengths survive a new opponent or whether the joke simply changes names',
     even?'the '+gap+'-point result produces an actual lineup response against '+next:
-     team+' can give '+next+' a better answer than the '+gap+'-point margin just delivered');
+     teamLabel+' can give '+next+' a better answer than the '+gap+'-point margin just delivered');
    p=p.replace('the loud part of Week 5 to bring backup this time',
     even?'starters to explain their '+points+'-point showing to '+next+' without blaming the calendar':
      'supporting cast to give '+next+' a more convincing answer than the '+gap+'-point result');

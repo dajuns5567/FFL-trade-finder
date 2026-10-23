@@ -19,6 +19,32 @@ function repeatedCrossTeamWindows(teams,size=13,minimumOwners=5){
  return [...owners].filter(([,ids])=>ids.size>=minimumOwners).sort((a,b)=>b[1].size-a[1].size)
   .slice(0,12).map(([phrase,ids])=>({phrase,teams:ids.size}));
 }
+// Detect entire reusable sentence structures even when teams, players and
+// numerical scores change. This is a cross-week rule, not a Week5 phrase list.
+function templateSkeletonEchoes(teams){
+ const ownership=new Map();
+ for(const t of teams){
+  const names=[t.team_name,t.opponent_name,t.manager_name,...(t.starter_details||[]).map(p=>p.name)]
+  .filter(x=>typeof x==='string'&&x.trim().length>=4).sort((a,b)=>b.length-a.length);
+  const seen=new Set();
+  for(const p of lines(story(t))){
+   for(const sentence of String(p).split(/(?<=[.!?])\\s+/)){
+    let masked=sentence.toLowerCase().replace(/\\b\\d+(?:\\.\\d+)?\\b/g,'#');
+    for(const name of names)masked=masked.split(name.toLowerCase()).join('@');
+    const w=words(masked);
+    if(w.length>=13&&w.length<=85&&w.filter(x=>x!=='fantasy'&&x!=='points').length>=11)
+     seen.add(w.join(' '));
+   }
+  }
+  for(const phrase of seen){
+   if(!ownership.has(phrase))ownership.set(phrase,new Set());
+   ownership.get(phrase).add(String(t.roster_id));
+  }
+ }
+ return [...ownership].filter(([,ids])=>ids.size>=4)
+  .sort((a,b)=>b[1].size-a[1].size).slice(0,12)
+  .map(([s,ids])=>({template:s.slice(0,160),teams:ids.size}));
+}
 export function auditInquirerLanguage(edition,previous=null){
  const teams=Array.isArray(edition?.teams)?edition.teams:[];
  const issues=[],warnings=[],reporters={},leads=new Map(),headlines=new Set();
@@ -99,6 +125,8 @@ export function auditInquirerLanguage(edition,previous=null){
   if(/over [A-Z][a-z]+(?: [A-Z][a-z]+)* are the Week \d+ upset call/.test(h.take||''))
    issues.push({id:'recap-upset-syntax',title:h.title});
  }
+ const skeletons=templateSkeletonEchoes(teams);
+ for(const offender of skeletons)issues.push({id:'cross-team-reused-sentence-template',...offender});
  const cross=repeatedCrossTeamWindows(teams);
  for(const offender of cross)issues.push({id:'cross-team-long-language-reuse',...offender});
  for(const [prefix,ids] of leads)if(ids.size>=5)issues.push({id:'formulaic-lede-openings',opening:prefix,teams:ids.size});

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {isTrustedWeeklyAwardCache} from '../netlify/functions/league-hub.mjs';
 const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
 const pub=readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');
 const ui=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
@@ -41,11 +42,31 @@ test('the reader never labels old Players of the Week as the current newspaper w
  assert.match(ui,/function weeklyAwardCardsHTML/);
 });
 
-test('an existing award record with a null offensive or defensive winner is retried rather than treated complete',()=>{
- assert.match(hub,/!rec\?\.players_of_week\?\.offense\?\.player_id/);
- assert.match(hub,/!rec\?\.players_of_week\?\.defense\?\.player_id/);
- assert.match(hub,/!Array\.isArray\(rec\?\.manager_awards\)\|\|rec\.manager_awards\.length<2/);
- assert.match(pub,/!record\?\.players_of_week\?\.offense\?\.player_id/);
- assert.match(pub,/!record\?\.players_of_week\?\.defense\?\.player_id/);
- assert.match(pub,/record\.manager_awards\.length<2/);
+test('never certify old locked Week5 awards or incomplete player/scorer badges',()=>{
+ const valid={season:2026,week:5,newsroom_editorial_revision:39,newsroom_engine:'v31-forward',
+  players_of_week:{offense:{player_id:'O1'},defense:{player_id:'D1'}},
+  manager_awards:[{type:'highest-scorer',roster_id:'1'},{type:'lowest-scorer',roster_id:'2'}]};
+ assert.equal(isTrustedWeeklyAwardCache(valid,2026,5),true);
+ assert.equal(isTrustedWeeklyAwardCache({...valid,newsroom_editorial_revision:14},2026,5),false);
+ assert.equal(isTrustedWeeklyAwardCache({...valid,newsroom_engine:'legacy'},2026,5),false);
+ assert.equal(isTrustedWeeklyAwardCache({...valid,players_of_week:{offense:{player_id:'O1'},defense:null}},2026,5),false);
+ assert.equal(isTrustedWeeklyAwardCache({...valid,manager_awards:[{type:'hot-seat'}]},2026,5),false);
+ assert.equal(isTrustedWeeklyAwardCache({...valid,week:6},2026,5),false);
+ assert.equal(isTrustedWeeklyAwardCache({...valid,season:2027,week:1,newsroom_editorial_revision:14},2027,1),false);
+ assert.equal(isTrustedWeeklyAwardCache({...valid,season:2027,week:1},2027,1),true);
+ assert.match(hub,/const verified=await Promise\.all\(missing\.map/);
+ assert.match(hub,/isLockedInquirerEdition\(edition,p\.season,p\.week\)/);
+ assert.match(hub,/const missing=pairs\.filter\(p=>!byKey\.has/);
+ assert.match(pub,/record\?\.players_of_week\?\.offense\?\.player_id/);
+ assert.match(pub,/record\?\.players_of_week\?\.defense\?\.player_id/);
+ assert.match(pub,/newsroom_engine!=='v31-forward'/);
+});
+test('awards cache never forces reading every published multi-megabyte manuscript on every visit',()=>{
+ const start=hub.indexOf('export async function weeklyAwards()');
+ const end=hub.indexOf('async function draftAwards()',start);
+ assert.ok(start>0&&end>start);
+ const code=hub.slice(start,end);
+ assert.match(code,/if\(missing\.length\)\{/);
+ assert.match(code,/Promise\.all\(missing\.map/);
+ assert.doesNotMatch(code,/Promise\.all\(pairs\.map/);
 });

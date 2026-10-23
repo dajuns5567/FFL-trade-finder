@@ -607,7 +607,16 @@ export async function weeklyAwards(){
  const s=store(),archive=await broadcastArchive(),pairs=[],seen=new Set();
  for(const row of archive.reports||[]){const season=Number(row?.season),week=Number(row?.week),key=season+'|'+week;if(season&&week&&!seen.has(key)){seen.add(key);pairs.push({season,week,captured_at:String(row?.captured_at||'')})}}
  const old=await s.get('awards/weekly.json',{type:'json'}),records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[],byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r]));
- const missing=pairs.filter(p=>{
+ // Exclude stale awards that belonged to a rejected newspaper. A historic
+ // index row or a truthy awards record can never certify an edition.
+ const verified=await Promise.all(pairs.map(async pair=>{
+  const edition=await broadcastStored(pair.season,pair.week);
+  return isLockedInquirerEdition(edition,pair.season,pair.week)?{...pair,edition}:null;
+ }));
+ const validPairs=verified.filter(Boolean);
+ const validIds=new Set(validPairs.map(p=>p.season+'|'+p.week));
+ for(const id of byKey.keys())if(!validIds.has(id))byKey.delete(id);
+ const missing=validPairs.filter(p=>{
   const rec=byKey.get(p.season+'|'+p.week);
   return !rec?.players_of_week?.offense?.player_id||!rec?.players_of_week?.defense?.player_id||
    !Array.isArray(rec?.manager_awards)||rec.manager_awards.length<2;
@@ -615,12 +624,18 @@ export async function weeklyAwards(){
  if(missing.length){
   const [league,players]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/players/nfl`).catch(()=>({}))]),scoring=league?.scoring_settings||{};
   const built=await Promise.all(missing.map(async p=>{
-   const broadcast=await broadcastStored(p.season,p.week),stats=await fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({})),captured=String(broadcast?.generated_at||p.captured_at||new Date().toISOString());
+   // p.edition was admission-verified above. Do not calculate POTW
+   // independently of the corresponding accepted newsroom edition.
+   const broadcast=p.edition,stats=await fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({})),captured=String(broadcast.generated_at||p.captured_at||new Date().toISOString());
    return{season:p.season,week:p.week,captured_at:captured,manager_awards:weeklyManagerAwards(broadcast),players_of_week:weeklyPlayersOfWeek(stats,players,scoring)};
   }));
   for(const rec of built)byKey.set(rec.season+'|'+rec.week,rec);
   const next=[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
   await s.setJSON('awards/weekly.json',{schema_version:1,records:next});
+ }else if(records.length!==byKey.size){
+  // Reconcile stale previously saved badges only when a disallowed
+  // edition is actually detected. Never erase the original newspaper.
+  await s.setJSON('awards/weekly.json',{schema_version:1,records:[...byKey.values()]});
  }
  return{schema_version:1,records:[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week))};
 }

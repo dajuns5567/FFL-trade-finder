@@ -112,3 +112,11 @@ test('a previously failed Week 5 preview automatically retries only after the ex
  assert.match(readerSource,/Refusing to display stale diagnostic text/);
  assert.match(readerSource,/inquirerPreviewPollAttempts<=80/);
 });
+
+test('diagnostic outages never masquerade as a missing week or launch duplicate expensive jobs',()=>{
+ assert.doesNotMatch(previewJobSource,/get\(identity\.status,\{type:'json'\}\)\.catch\(\(\)=>null\)/);
+ assert.match(previewDiagnosticSource,/state:'storage-unavailable'/);
+ assert.match(previewDiagnosticSource,/Private preview storage temporarily unavailable/);
+ assert.match(previewDiagnosticSource,/return json\(\{error:'Private draft storage temporarily unavailable'\},503\)/);
+ assert.match(previewDiagnosticSource,/target:\{season:identity\.season,week:identity\.week\}/);
+});

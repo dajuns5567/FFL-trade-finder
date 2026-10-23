@@ -192,13 +192,13 @@ export function restoreForwardArticleDepth(t,week){
    p=p.replace('The next Sunday is a new roster test, not a rerun of the first two.',
     even?'Week '+(week+1)+' against '+next+' demands another real performance, not another copy of the old result.':
      teamLabel+' take '+points+' points into a very different test against '+next+'. The scoreboard will not accept a forwarding address.');
-   p=p.replace('the Week 5 noise came from a real speaker and not somebody dropping a pan',
+   p=p.replace(/the Week \d+ noise came from a real speaker and not somebody dropping a pan/gi,
     even?'the '+points+'-point display carries over when '+next+' asks for proof':
      next+' has to hear the same '+points+'-point argument before the cheering counts as evidence');
-   p=p.replace('the Week 5 strengths survive a new opponent or whether the joke simply changes names',
+   p=p.replace(/the Week \d+ strengths survive a new opponent or whether the joke simply changes names/gi,
     even?'the '+scoreGap+'-point result produces an actual lineup response against '+next:
      teamLabel+' can give '+next+' a better answer than the '+scoreGap+'-point margin just delivered');
-   p=p.replace('the loud part of Week 5 to bring backup this time',
+   p=p.replace(/the loud part of Week \d+ to bring backup this time/gi,
     even?'starters to explain their '+points+'-point showing to '+next+' without blaming the calendar':
      'supporting cast to give '+next+' a more convincing answer than the '+scoreGap+'-point result');
    if(Number(t?.points)===0)p=p.replace('The Chiefs got something from Michael Burton, but the lineup behind him did not produce enough to reach Las Vegas Raiders’ total.',

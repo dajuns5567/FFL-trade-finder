@@ -26,24 +26,32 @@ export function inspectCanonicalArchive(edition,season,week){
   errors.push('incomplete weekly recap');
  if(legacy&&Number(edition?.inquirer_version)!==31)
   errors.push('legacy newspaper version must be V31');
- if(week===4&&season===2026){
-  // Even a newer explicit lock must NEVER bless a rewritten or replaced
-  // Week 4. Only the original approved V31/revision-14 editorial baseline.
-  if(Number(edition?.inquirer_version)!==31)errors.push('approved Week 4 must be V31');
-  if(Number(edition?.editorial_revision)!==14)errors.push('approved Week 4 must be revision 14');
+ if((season===2026&&week===4)||(season>=2026&&week>=5)){
+  // Week 4 is the frozen approved revision 14 source. Week 5 and later
+  // MUST use the revised forward newsroom, not an old revision-14 Week 5
+  // that happened to have its published_locked bit set in the old account.
+  const approvedBaseline=season===2026&&week===4;
+  if(Number(edition?.inquirer_version)!==31)
+   errors.push(approvedBaseline?'approved Week 4 must be V31':'Week 5+ must use forward V31 newsroom');
+  if(approvedBaseline&&Number(edition?.editorial_revision)!==14)
+   errors.push('approved Week 4 must be revision 14');
+  if(!approvedBaseline&&(
+     Number(edition?.editorial_revision)<39||
+     edition?.editorial_generation?.engine!=='v31-forward'))
+   errors.push('Week 5+ must be a vetted forward edition, revision 39 or later');
   const reporterCount=new Map();
   for(const t of teams){
-   const article=t?.inquirer_article||{},sections=article.sections||[],kinds=sections.map(s=>s?.kind);
+   const article=t?.inquirer_article||{},sections=article.sections||[],kinds=sections.map(x=>x?.kind);
    const id=String(article?.reporter?.id||'unknown');
    reporterCount.set(id,(reporterCount.get(id)||0)+1);
    if(sections.length!==8||!WEEK4_DESKS.every(d=>kinds.includes(d)))
-    errors.push('Week 4 eight editorial desks missing');
+    errors.push('eight editorial desks required for Week 4 and all forward editions');
   }
   if(reporterCount.size!==4||[...reporterCount.values()].some(n=>n!==8))
-   errors.push('Week 4 four-reporter distribution invalid');
+   errors.push('four-reporter by eight-story distribution required');
   const recap=edition?.league_overview?.sections||[],blocks=recap[0]?.blocks||[];
   if(blocks.length!==6||!WEEK4_RECAP_BEATS.every((beat,i)=>blocks[i]?.kind===beat))
-   errors.push('Week 4 six-beat recap invalid');
+   errors.push('six-beat recap required for Week 4 and all forward editions');
  }
  return{ok:errors.length===0,legacy:legacy&&errors.length===0,issues:[...new Set(errors)]};
 }

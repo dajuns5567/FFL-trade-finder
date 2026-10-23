@@ -31,8 +31,10 @@ export default async function publishInquirerInBackground(req){
    awards=await weeklyAwards();
    const record=(awards?.records||[]).find(x=>Number(x.season)===Number(report.season)&&Number(x.week)===Number(report.week));
    if(!record?.players_of_week?.offense?.player_id||!record?.players_of_week?.defense?.player_id||
-      !Array.isArray(record?.manager_awards)||record.manager_awards.length<2)
-    throw Error('Weekly awards package incomplete (offense, IDP defense or manager badges) for '+report.season+' Week '+report.week);
+      !Array.isArray(record?.manager_awards)||
+      !['highest-scorer','lowest-scorer'].every(type=>record.manager_awards.some(b=>b.type===type))||
+      Number(record?.newsroom_editorial_revision)<39||record?.newsroom_engine!=='v31-forward')
+    throw Error('Weekly awards package incomplete (offense, IDP defense, verified locked newspaper or manager scorer badges) for '+report.season+' Week '+report.week);
    console.info('inquirer-background-awards',JSON.stringify({records:awards?.records?.length||0,season:report.season,week:report.week}));
   }catch(error){awardsError=String(error?.message||error);console.error('inquirer-background-awards-failed',error)}
  }else console.info('inquirer-background-awards-held','No fully published newspaper; awards were not backfilled.');

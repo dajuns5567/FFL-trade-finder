@@ -27,6 +27,10 @@ export function inspectCanonicalArchive(edition,season,week){
  if(legacy&&Number(edition?.inquirer_version)!==31)
   errors.push('legacy newspaper version must be V31');
  if(week===4&&season===2026){
+  // Even a newer explicit lock must NEVER bless a rewritten or replaced
+  // Week 4. Only the original approved V31/revision-14 editorial baseline.
+  if(Number(edition?.inquirer_version)!==31)errors.push('approved Week 4 must be V31');
+  if(Number(edition?.editorial_revision)!==14)errors.push('approved Week 4 must be revision 14');
   const reporterCount=new Map();
   for(const t of teams){
    const article=t?.inquirer_article||{},sections=article.sections||[],kinds=sections.map(s=>s?.kind);
@@ -40,8 +44,6 @@ export function inspectCanonicalArchive(edition,season,week){
   const recap=edition?.league_overview?.sections||[],blocks=recap[0]?.blocks||[];
   if(blocks.length!==6||!WEEK4_RECAP_BEATS.every((beat,i)=>blocks[i]?.kind===beat))
    errors.push('Week 4 six-beat recap invalid');
-  if(legacy&&Number(edition?.editorial_revision)!==14)
-   errors.push('legacy approved Week 4 must be editorial revision 14');
  }
  return{ok:errors.length===0,legacy:legacy&&errors.length===0,issues:[...new Set(errors)]};
 }

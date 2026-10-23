@@ -21,6 +21,9 @@ Before operator import, supply canonical historical Weeks 3 and 4, the real repl
 7. Re-read Week 5 canonical archive and verify `editorialCopyDigest(lockedEdition) === approvedDigest`. Do not substitute a file-byte SHA for an editorial-copy digest; the latter intentionally excludes status metadata.
 8. Only after every check succeeds can the publisher enable flag/queue be considered for subsequent completed weeks. Keep original Weeks 1-4 immutable and their archive identities verified.
 
+## Read-only post-import verification
+After an authorized external operator performs the write and associated feature updates, use `inspectWeek5Readback(store,approvedDigest)` from `scripts/inquirer-week5-readback-verification.mjs`. This reads and validates the canonical `broadcasts/2026/week-05.json`, broadcast index, **entire approved** recap, all 32 reporter archive articles and reporter indexes, weekly player/manager awards, and the current Manager Spotlight cache; it performs no repairs or writes and fails closed on any mismatch. Do not report a completed release until `ok=true` and the public reader is verified using the signed-in site.
+
 ## Unresolved release blockers
 - The connected Netlify API does not provide safe Blob read/write or copy promotion for this deploy-local draft. Do not invent a working import connection.
 - Manual approval of this exact edited manuscript has not been given. A CI green check does not meet that requirement.

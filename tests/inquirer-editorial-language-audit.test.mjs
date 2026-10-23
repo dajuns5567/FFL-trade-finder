@@ -68,3 +68,13 @@ test('weekly recap rejects unsupported closeness, incomplete divisions and stale
  assert.ok(issues.includes('recap-misleading-division-lead'));
  assert.ok(issues.includes('recap-upset-syntax'));
 });
+
+test('postseason recap may include a distinct fifth playoff desk without displacing four regular reporter desks',()=>{
+ const e=draft();e.week=14;
+ e.league_overview={sections:[{blocks:['lead','standings','players','decisions','league','outlook'].map(kind=>({kind,paragraphs:['A specific playoff observation.']}))},
+ {reporter:{id:'writer-0'},paragraphs:['Desk two']},{reporter:{id:'writer-1'},paragraphs:['Desk three']},
+ {reporter:{id:'writer-2'},paragraphs:['Desk four']},{kind:'playoff',paragraphs:['Postseason context']}],hot_takes:[]};
+ assert.equal(auditInquirerLanguage(e).issues.some(x=>x.id==='recap-four-reporter-desks'),false);
+ e.week=5;
+ assert.equal(auditInquirerLanguage(e).issues.some(x=>x.id==='recap-four-reporter-desks'),true);
+});

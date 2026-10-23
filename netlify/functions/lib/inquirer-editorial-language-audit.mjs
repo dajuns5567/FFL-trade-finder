@@ -135,7 +135,7 @@ export function auditInquirerLanguage(edition,previous=null){
  const labels=['AFC EAST','AFC NORTH','AFC SOUTH','AFC WEST','NFC EAST','NFC NORTH','NFC SOUTH','NFC WEST'];
  if(teams.length===32&&takes.some(h=>h.kind==='division')&&labels.some(label=>!division.includes(label+':')))
   issues.push({id:'recap-missing-division-report',missing:labels.filter(label=>!division.includes(label+':'))});
- if(/(?:Washington Commanders|Baltimore Ravens|Carolina Panthers|New Orleans Aints) now has\\b/i.test(JSON.stringify(overview)))
+ if(/(?:Washington Commanders|Baltimore Ravens|Carolina Panthers|New Orleans Aints) now has\b/i.test(JSON.stringify(overview)))
   issues.push({id:'recap-plural-team-grammar'});
  if(/(?:1-4[^.]{0,80}|0-5[^.]{0,80})close enough/i.test(division))
   issues.push({id:'recap-misleading-standings-gap'});

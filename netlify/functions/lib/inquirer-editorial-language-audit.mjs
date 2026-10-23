@@ -21,17 +21,20 @@ function repeatedCrossTeamWindows(teams,size=13,minimumOwners=5){
 }
 // Detect entire reusable sentence structures even when teams, players and
 // numerical scores change. This is a cross-week rule, not a Week5 phrase list.
-function sentenceSkeletons(team){
- const names=[team.team_name,team.opponent_name,team.manager_name,...(team.starter_details||[]).map(p=>p.name)]
+export function editorialSentenceSkeleton(sentence,team){
+ const names=[team?.team_name,team?.opponent_name,team?.manager_name,
+  ...(team?.starter_details||[]).map(p=>p.name)]
   .filter(x=>typeof x==='string'&&x.trim().length>=4).sort((a,b)=>b.length-a.length);
+ let masked=String(sentence).toLowerCase();
+ for(const name of names)masked=masked.split(name.toLowerCase()).join('@');
+ return norm(masked.replace(/\b\d+(?:\.\d+)?\b/g,'#'));
+}
+function sentenceSkeletons(team){
  const seen=new Set();
  for(const p of lines(story(team)))for(const sentence of String(p).split(/(?<=[.!?])\s+/)){
-  let masked=sentence.toLowerCase();
-  for(const name of names)masked=masked.split(name.toLowerCase()).join('@');
-  masked=masked.replace(/\b\d+(?:\.\d+)?\b/g,'#');
-  const w=words(masked);
+  const skeleton=editorialSentenceSkeleton(sentence,team),w=words(skeleton);
   if(w.length>=13&&w.length<=85&&w.filter(x=>x!=='fantasy'&&x!=='points').length>=11)
-   seen.add(w.join(' '));
+   seen.add(skeleton);
  }
  return seen;
 }

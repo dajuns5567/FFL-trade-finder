@@ -24,6 +24,7 @@ on:
       - 'tests/inquirer-exact-copy-preflight.test.mjs'
       - 'tests/inquirer-week5-release-authorization.test.mjs'
       - 'tests/inquirer-week5-lock-preparation.test.mjs'
+      - 'tests/inquirer-week5-readback-verification.test.mjs'
       - 'scripts/inquirer-week5-exact-copy-preflight.mjs'
       - 'netlify/functions/lib/inquirer-editorial-language-audit.mjs'
       - 'league-hub-v451.js'
@@ -57,6 +58,8 @@ jobs:
 
       - name: Install generator dependency
         run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Verify complete published Week5 readback is fail-closed
+        run: node --test tests/inquirer-week5-readback-verification.test.mjs
       - name: Verify reviewed Week5 lock preparation preserves exact copy
         run: node --test tests/inquirer-week5-lock-preparation.test.mjs
       - name: Verify authenticated release authorization never publishes

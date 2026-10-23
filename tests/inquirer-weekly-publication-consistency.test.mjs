@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {isTrustedWeeklyAwardCache} from '../netlify/functions/league-hub.mjs';
+import {hasCompleteWeekFeaturePackage} from '../netlify/functions/inquirer-publish-background.mjs';
 const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
 const pub=readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');
 const ui=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
@@ -32,7 +33,8 @@ test('Week 5+ publication includes locked award package or remains retryable',()
  assert.match(pub,/record\?\.players_of_week/);
  assert.match(pub,/Array\.isArray\(record\?\.manager_awards\)/);
  assert.match(pub,/awardsError/);
- assert.match(pub,/report\?\.available===true\?'completed':'waiting'/);
+ assert.match(pub,/completed\?'completed':'waiting'/);
+ assert.match(pub,/available:completed,newsroom_available:/);
 });
 test('the reader never labels old Players of the Week as the current newspaper week',()=>{
  assert.match(ui,/function playersOfWeekHTML\(w,data=weeklyAwardsCache\)/);
@@ -59,7 +61,7 @@ test('never certify old locked Week5 awards or incomplete player/scorer badges',
  assert.match(hub,/const missing=pairs\.filter\(p=>!byKey\.has/);
  assert.match(pub,/record\?\.players_of_week\?\.offense\?\.player_id/);
  assert.match(pub,/record\?\.players_of_week\?\.defense\?\.player_id/);
- assert.match(pub,/newsroom_engine!=='v31-forward'/);
+ assert.match(pub,/record\.newsroom_engine==='v31-forward'/);
 });
 test('awards cache never forces reading every published multi-megabyte manuscript on every visit',()=>{
  const start=hub.indexOf('export async function weeklyAwards()');
@@ -81,4 +83,25 @@ test('scheduled publisher must repair pending Week 5 awards before generating We
  assert.match(code,/isTrustedWeeklyAwardCache\(award,season,w\)/);
  assert.match(code,/return stored;/);
  assert.match(code,/if\(!previewReadOnly\)await ensureLockedEditionIndexed/);
+});
+
+test('publisher completion cannot be claimed without the matching locked newsroom and all weekly features',()=>{
+ const report={available:true,published_locked:true,season:2026,week:5};
+ const award={season:2026,week:5,newsroom_editorial_revision:39,newsroom_engine:'v31-forward',
+  players_of_week:{offense:{player_id:'O1'},defense:{player_id:'D1'}},
+  manager_awards:[{type:'highest-scorer',roster_id:'1'},{type:'lowest-scorer',roster_id:'2'}]};
+ const complete={records:[award]};
+ assert.equal(hasCompleteWeekFeaturePackage(report,complete),true);
+ assert.equal(hasCompleteWeekFeaturePackage({...report,published_locked:false},complete),false);
+ assert.equal(hasCompleteWeekFeaturePackage({...report,available:false},complete),false);
+ assert.equal(hasCompleteWeekFeaturePackage(report,null),false);
+ assert.equal(hasCompleteWeekFeaturePackage(report,{records:[]}),false);
+ assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,week:6}]}),false);
+ assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,season:2027}]}),false);
+ assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,newsroom_editorial_revision:14}]}),false);
+ assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,newsroom_engine:'legacy'}]}),false);
+ assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,players_of_week:{offense:{player_id:'O1'},defense:null}}]}),false);
+ assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,manager_awards:[]}]}),false);
+ assert.match(pub,/hasCompleteWeekFeaturePackage\(report,awards\)/);
+ assert.match(pub,/const completed=!reportError&&!awardsError&&!report\?\.review_required&&hasCompleteWeekFeaturePackage\(report,awards\)/);
 });

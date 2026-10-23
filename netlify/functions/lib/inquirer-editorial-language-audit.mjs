@@ -28,9 +28,10 @@ function templateSkeletonEchoes(teams){
   .filter(x=>typeof x==='string'&&x.trim().length>=4).sort((a,b)=>b.length-a.length);
   const seen=new Set();
   for(const p of lines(story(t))){
-   for(const sentence of String(p).split(/(?<=[.!?])\\s+/)){
-    let masked=sentence.toLowerCase().replace(/\\b\\d+(?:\\.\\d+)?\\b/g,'#');
+   for(const sentence of String(p).split(/(?<=[.!?])\s+/)){
+    let masked=sentence.toLowerCase();
     for(const name of names)masked=masked.split(name.toLowerCase()).join('@');
+    masked=masked.replace(/\b\d+(?:\.\d+)?\b/g,'#');
     const w=words(masked);
     if(w.length>=13&&w.length<=85&&w.filter(x=>x!=='fantasy'&&x!=='points').length>=11)
      seen.add(w.join(' '));

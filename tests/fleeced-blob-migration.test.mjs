@@ -9,11 +9,11 @@ const makeManifest=stores=>({
 });
 const row=(key,sha256)=>({key,sha256,file:blobName('fleeced-league-hub',key),size:42,metadata:{},etag:null});
 
-test('only the approved old/new Fleeced! Netlify site IDs and site-wide store names are configured',()=>{
+test('only original/new site IDs and explicit locked Inquirer archive keys are accessed',()=>{
  assert.equal(SOURCE_SITE,'d51af6d7-e5f3-4c51-8c6d-25e31db39a0c');
  assert.equal(DEST_SITE,'8776d155-bc7b-4dcd-bafc-3d70d3d51800');
  assert.equal(REGION,'us-east-2');
- assert.deepEqual(STORES,['fleeced-league-hub','fleeced-consensus-lkg','fll-value-history-v2']);
+ assert.deepEqual(STORES,['fleeced-league-hub']);
  assert.deepEqual(RESTORE_KEYS,['broadcasts/2026/week-03.json','broadcasts/2026/week-04.json']);
 });
 
@@ -52,6 +52,9 @@ test('migration program never deletes or uses unconditional overwrite',async()=>
  assert.match(code,/SECOND PASS: onlyIfNew prevents all overwrites/);
  assert.match(code,/FLEECED_PRODUCTION_PUBLISHER_DISABLED_CONFIRMED/);
  assert.match(code,/assertCanonicalHistory/);
+ assert.match(code,/for\(const key of RESTORE_KEYS\)/);
+ assert.doesNotMatch(code,/\.list\(\{paginate:true\}\)/);
+ assert.doesNotMatch(code,/fleeced-consensus-lkg|fll-value-history-v2/);
  assert.match(code,/edition\.published_locked!==true/);
  assert.match(code,/if\(insideRepo\(full\)\)/);
 });

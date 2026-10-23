@@ -227,3 +227,15 @@ test('final depth restoration removes verbatim desk echoes without dropping veri
  assert.deepEqual(t.inquirer_article.paragraphs,rows);
  assert.ok(rows.some(p=>p.includes('fantasy points')));
 });
+
+
+test('Week 8 final newsroom avoids the Week 5 recycled speaker joke without inventing a box score',()=>{
+ const t=makeStory(8);
+ t.points=108.2;t.opponent_points=70.1;t.next_opponent_name='Actual Week 9 Opponent';
+ t.inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs[0]='The club gets another Sunday to prove the Week 8 noise came from a real speaker and not somebody dropping a pan.';
+ restoreForwardArticleDepth(t,8);
+ const copy=t.inquirer_article.paragraphs.join(' ');
+ assert.doesNotMatch(copy,/real speaker and not somebody dropping a pan/i);
+ assert.match(copy,/108\\.2/);
+ assert.match(copy,/Actual Week 9 Opponent/);
+});

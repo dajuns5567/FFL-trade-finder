@@ -64,7 +64,7 @@ function templateSkeletonEchoes(teams){
 export function auditInquirerLanguage(edition,previous=null){
  const teams=Array.isArray(edition?.teams)?edition.teams:[];
  const issues=[],warnings=[],reporters={},leads=new Map(),headlines=new Set();
- if(Number(edition?.week)<5)return{ok:true,issues,warnings,stats:{skipped:'pre-Week-5 archive'}};
+ if(Number(edition?.season)===2026&&Number(edition?.week)<5)return{ok:true,issues,warnings,stats:{skipped:'original 2026 Week 1-4 archive'}};
  for(const t of teams){
   const id=String(t?.roster_id),a=story(t),paragraphs=lines(a),rid=String(a?.reporter?.id||'unknown');
   reporters[rid]=(reporters[rid]||0)+1;

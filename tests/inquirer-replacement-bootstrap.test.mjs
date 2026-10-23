@@ -5,7 +5,7 @@ import {verifiedReplacementHistory} from '../netlify/functions/lib/inquirer-repl
 const kinds=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
 const beats=['lead','standings','players','decisions','league','outlook'];
 function edition(week){
- return{available:true,published_locked:true,season:2026,week,
+ return{available:true,published_locked:true,season:2026,week,inquirer_version:31,editorial_revision:14,
   teams:Array.from({length:32},(_,i)=>({
    roster_id:String(i+1),inquirer_article:{headline:'Specific Team '+(i+1)+' Week '+week+' article',
     reporter:{id:'reporter-'+Math.floor(i/8)},

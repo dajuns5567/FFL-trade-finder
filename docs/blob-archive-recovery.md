@@ -2,6 +2,23 @@
 
 **Status:** safe targeted recovery is staged on draft PR #402. **No historical blobs have been copied yet.** The destination currently lacks the exact 2026 Week 3–4 archive keys in `fleeced-league-hub`; original approved Weeks 3–4 remain in the credit-paused `brilliant-faun-c5b649` project.
 
+## Preferred path — owner Library historical files already recovered
+
+**NEW FINDING (2026-10-22):** The user already uploaded `week-03.json` and `week-04.json` to their private ChatGPT Library in October 2026 (two identical copies of each). Both recovered originals were byte-verified and stored in a **private one-time restore ZIP attachment** in the working ChatGPT conversation. **Do not upload the private 3+ MB league data to this PUBLIC GitHub repository. Do not request the original Netlify account token again.**
+
+Exact immutable file provenance checksums, independently cross-checked against the saved October 17 Week 4 editorial audit:
+
+| Archive | Bytes | SHA-256 |
+| --- | ---: | --- |
+| 2026 Week 3 | 3,248,428 | `8f2631fd4f83b556daa29d78ab63e92b87a4914e7875ed6799e852397e86715c` |
+| Approved 2026 Week 4 | 3,204,521 | `038248bef97fd7bfd2bdece6df9c3a538cac9c29ae1bb34487458927c129022c` |
+
+**Preferred local verification:** Download the one-time bundle `fleeced-week3-week4-recovery-verified.zip` from its **ChatGPT conversation attachment**, unzip and run `node restore.mjs --verify-local`. The bundled isolated restore script needs only a token for the **new** Netlify site, not the original paused account. For a masked-token read-only live preflight, run `bash recover.sh` in the extracted folder. That script never writes historical data by default.
+
+**No actual restoration yet.** Independent Netlify dashboard verification on October 22 found the replacement site's `fleeced-league-hub` store **absent**, while its production `inquirer-publish-scheduled` function remained **enabled**, schedule `0 10 * * *`. Before any `--apply`, first durably hold the replacement-only production publisher without altering other functions or the original site; missing the queue secret alone is not sufficient. Do not set the bundled local safety acknowledgment variables unless that publisher hold has actually been confirmed. The ChatGPT Netlify connector still lacks raw Blob write operations; obtaining the files is resolved, but remote permission and safety hold still require an authorized execution path.
+
+The repo-based two-account SDK script below remains a **legacy alternative**, not the recommended workflow now that exact originals have been recovered locally.
+
 ## Verified Fleeced! projects
 
 | Side | Project | Netlify Site ID |

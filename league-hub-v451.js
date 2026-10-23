@@ -9,6 +9,26 @@ const inquirerPreviewRequestedWeek=Number(new URLSearchParams(location.search).g
 let inquirerPreviewEdition=null;
 let inquirerPreviewPollAttempts=0;
 let inquirerPreviewLaunchAttempted=false;
+// A prior preview may be blocked because the NEW Netlify site lacked historic
+// editions. Once the exact original locked Weeks 3/4 have been restored, retry
+// that *private deploy-only* draft once without resetting approved prose or
+// requiring the owner to navigate developer tools.
+function isVerifiedHistoricalPreviewEdition(edition,week){
+ const teams=edition?.teams||[];
+ return edition?.available===true&&edition?.published_locked===true&&
+  Number(edition?.season)===2026&&Number(edition?.week)===week&&
+  Array.isArray(teams)&&teams.length===32&&
+  new Set(teams.map(t=>String(t?.roster_id||''))).size===32&&
+  !!edition?.league_overview?.headline;
+}
+async function canRetryArchiveBlockedPreview(){
+ const [w3,w4]=await Promise.all([3,4].map(w=>
+  fetch('/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week='+w,{cache:'no-store'})
+   .then(async r=>r.ok?await r.json():null).catch(()=>null)));
+ if(!isVerifiedHistoricalPreviewEdition(w3,3)||!isVerifiedHistoricalPreviewEdition(w4,4))return false;
+ const kinds=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
+ return w4.teams.every(t=>kinds.every(k=>(t?.inquirer_article?.sections||[]).some(s=>s.kind===k)));
+}
 async function loadInquirerPreview(){
  if(!inquirerPreviewMode)return null;
  if(inquirerPreviewEdition)return inquirerPreviewEdition;
@@ -18,6 +38,18 @@ async function loadInquirerPreview(){
   const statusResponse=await fetch('/.netlify/functions/inquirer-preview-diagnostic'+(scope?'?'+scope.slice(1):''),{cache:'no-store'});
   if(!statusResponse.ok)throw Error('Private preview status unavailable (HTTP '+statusResponse.status+'). Sign in to Netlify to review.');
   const info=await statusResponse.json(),status=info?.status||{state:'not-started'};
+  if(inquirerPreviewRequestedWeek&&
+     (Number(info?.target?.week)!==inquirerPreviewRequestedWeek||
+      (status?.week!=null&&Number(status.week)!==inquirerPreviewRequestedWeek)))
+   throw Error('Week '+inquirerPreviewRequestedWeek+' preview returned a different week identity. Refusing to display stale diagnostic text.');
+  if(status.state==='error'&&!inquirerPreviewLaunchAttempted&&
+     /Week 3 is the earliest missing locked archive/.test(String(status.error||''))){
+   inquirerPreviewLaunchAttempted=true;
+   if(await canRetryArchiveBlockedPreview()){
+    const again=await fetch(info?.start_url||('/.netlify/functions/inquirer-preview-background?start=1'+scope),{cache:'no-store'});
+    if(again.status===202)throw Error('Private preview generation started after verified historical archive restoration.');
+   }
+  }
   if(status.state==='not-started'){
    if(!inquirerPreviewLaunchAttempted){
     inquirerPreviewLaunchAttempted=true;

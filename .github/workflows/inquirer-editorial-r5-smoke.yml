@@ -8,6 +8,8 @@ on:
       - 'netlify/functions/value-history.mjs'
       - 'netlify/functions/lib/inquirer-schedule-decision.mjs'
       - 'tests/inquirer-schedule-decision.test.mjs'
+      - 'tests/inquirer-replacement-bootstrap.test.mjs'
+      - 'netlify/functions/lib/inquirer-replacement-archive-gate.mjs'
       - 'tests/inquirer-preview-context.test.mjs'
       - 'tests/inquirer-archive-lineage.test.mjs'
       - 'tests/inquirer-archive-reconciliation.test.mjs'
@@ -70,7 +72,7 @@ jobs:
       - name: Verify access-aware preview CI contract
         run: node --test tests/inquirer-private-preview-ci.test.mjs
       - name: Enforce Week 4 format regression contract
-        run: node --test tests/inquirer-publication-guard.test.mjs tests/week5-forward-editorial-repair.test.mjs tests/inquirer-narrative-architecture.test.mjs tests/inquirer-schedule-decision.test.mjs tests/inquirer-preview-context.test.mjs tests/inquirer-archive-lineage.test.mjs tests/inquirer-weekly-publication-consistency.test.mjs tests/inquirer-archive-reconciliation.test.mjs
+        run: node --test tests/inquirer-publication-guard.test.mjs tests/week5-forward-editorial-repair.test.mjs tests/inquirer-narrative-architecture.test.mjs tests/inquirer-schedule-decision.test.mjs tests/inquirer-replacement-bootstrap.test.mjs tests/inquirer-preview-context.test.mjs tests/inquirer-archive-lineage.test.mjs tests/inquirer-weekly-publication-consistency.test.mjs tests/inquirer-archive-reconciliation.test.mjs
 
       - name: Capture forward V31 season smoke
         run: |

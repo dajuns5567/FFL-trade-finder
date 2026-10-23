@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isPreviewDiagnosticContext,resolvePreviewIdentity,PREVIEW_DIAGNOSTIC_STATUS,PREVIEW_DIAGNOSTIC_EDITION,PREVIEW_DIAGNOSTIC_REJECTED} from '../netlify/functions/lib/inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STATUS,PREVIEW_DIAGNOSTIC_EDITION,PREVIEW_DIAGNOSTIC_REJECTED} from '../netlify/functions/lib/inquirer-preview-diagnostics.mjs';
 
 const preview=(site,n=402)=>'https://deploy-preview-'+n+'--'+site+'.netlify.app/.netlify/functions/inquirer-preview-diagnostic';
 
@@ -72,4 +72,18 @@ test('new 2027 week reuses no old 2026 preview status',async()=>{
   assert.notEqual(prev.status,next.status);
   assert.notEqual(prev.edition,next.edition);
  }finally{globalThis.fetch=savedFetch}
+});
+
+test('stored preview status must match the requested exact week and error label',()=>{
+ const target={season:2026,week:5};
+ assert.equal(previewStatusMatchesIdentity(null,target),false);
+ assert.equal(previewStatusMatchesIdentity({state:'running',season:2026,week:5},target),true);
+ assert.equal(previewStatusMatchesIdentity({state:'completed',season:2026,week:6},target),false);
+ assert.equal(previewStatusMatchesIdentity({state:'error',season:2026,week:5,
+  error:'Private preview held: Cannot generate Week 6 editorial preview: Week 3 missing'},target),false);
+ assert.equal(previewStatusMatchesIdentity({state:'error',season:2026,week:5,
+  error:'Private preview held: Cannot generate Week 5 editorial preview: Week 3 missing'},target),true);
+ assert.equal(previewStatusMatchesIdentity({state:'running',started_at:new Date().toISOString()},target),false,
+  'Legacy unscoped status cannot be trusted or treated as an existing Week 5 generation');
+ assert.equal(previewStatusMatchesIdentity({state:'error',season:2027,week:5},target),false);
 });

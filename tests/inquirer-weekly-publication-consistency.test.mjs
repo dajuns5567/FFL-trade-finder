@@ -70,3 +70,15 @@ test('awards cache never forces reading every published multi-megabyte manuscrip
  assert.match(code,/Promise\.all\(missing\.map/);
  assert.doesNotMatch(code,/Promise\.all\(pairs\.map/);
 });
+
+test('scheduled publisher must repair pending Week 5 awards before generating Week 6',()=>{
+ const start=hub.indexOf('export async function weeklyReport(req)');
+ const end=hub.indexOf('export async function',start+20);
+ const code=end>start?hub.slice(start,end):hub.slice(start);
+ assert.match(code,/enforceFeatureContinuity=req\.method==='POST'/);
+ assert.match(code,/saved=await s\.get\('awards\/weekly\.json'/);
+ assert.match(code,/if\(enforceFeatureContinuity&&\(season>2026\|\|\(season===2026&&w>=5\)\)\)/);
+ assert.match(code,/isTrustedWeeklyAwardCache\(award,season,w\)/);
+ assert.match(code,/return stored;/);
+ assert.match(code,/if\(!previewReadOnly\)await ensureLockedEditionIndexed/);
+});

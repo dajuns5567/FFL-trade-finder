@@ -36,6 +36,17 @@ export async function resolvePreviewIdentity(url=''){
  };
 }
 
+// Old or cross-week deploy-local status can never be authoritative. In
+// particular, a Week 6 error may not be displayed on the requested Week 5
+// page just because both drafts share the same Netlify deploy.
+export function previewStatusMatchesIdentity(status,identity){
+ if(!status||typeof status!=='object')return false;
+ if(Number(status.season)!==identity.season||Number(status.week)!==identity.week)return false;
+ const error=String(status.error||'');
+ const mentioned=error.match(/Cannot generate Week (\d+) editorial preview/i);
+ return !mentioned||Number(mentioned[1])===identity.week;
+}
+
 export function summarizePreviewDiagnostic(edition) {
  const teams=Array.isArray(edition?.teams)?edition.teams:[];
  const reporterCounts={};

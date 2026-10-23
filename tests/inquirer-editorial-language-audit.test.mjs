@@ -34,3 +34,15 @@ test('prior-week verbatim prose, copied ledes and robotic filler are identified'
  assert.ok(issues.some(x=>x.id==='recycled-prior-week-paragraphs'),JSON.stringify(issues));
  assert.ok(issues.some(x=>x.id==='robotic-editorial-meta-copy'));
 });
+
+
+test('two clubs cannot recycle the same newsroom joke, and week 5 cannot regress to first-two-game outlook language',()=>{
+ const e=draft();
+ const line='The Week 5 noise came from a real speaker and not somebody dropping a pan.';
+ e.teams[0].inquirer_article.sections[7].paragraphs.push(line);
+ e.teams[1].inquirer_article.sections[7].paragraphs.push(line);
+ e.teams[2].inquirer_article.sections[7].paragraphs.push('The next Sunday is a new roster test, not a rerun of the first two.');
+ const issues=auditInquirerLanguage(e).issues;
+ assert.ok(issues.some(x=>x.id==='recycled-editorial-punchline'),JSON.stringify(issues));
+ assert.ok(issues.some(x=>x.id==='stale-opening-weeks-outlook'),JSON.stringify(issues));
+});

@@ -46,3 +46,11 @@ test('two clubs cannot recycle the same newsroom joke, and week 5 cannot regress
  assert.ok(issues.some(x=>x.id==='recycled-editorial-punchline'),JSON.stringify(issues));
  assert.ok(issues.some(x=>x.id==='stale-opening-weeks-outlook'),JSON.stringify(issues));
 });
+
+
+test('a winless scoreless lineup must not be described as useful player production',()=>{
+ const e=draft();
+ e.teams[0].points=0;
+ e.teams[0].inquirer_article.sections[0].paragraphs.push('The Chiefs got something from Michael Burton, but not much else.');
+ assert.ok(auditInquirerLanguage(e).issues.some(x=>x.id==='zero-point-roster-false-credit'));
+});

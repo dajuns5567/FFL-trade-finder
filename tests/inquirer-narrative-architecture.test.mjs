@@ -214,3 +214,16 @@ test('Week 4-style readable section headings and plural mascot headline are not 
  assert.ok(!ids.includes('plural-mascot-headline-agreement'));
  assert.ok(!ids.includes('lowercase-editorial-section-heading'));
 });
+
+
+test('final depth restoration removes verbatim desk echoes without dropping verified player evidence',()=>{
+ const t=makeStory(14);
+ const copy='Put this onscreen: Top Runner scored 22.0 fantasy points with 92 rushing yards, one touchdown and four catches.';
+ t.inquirer_article.sections.find(s=>s.kind==='players').paragraphs.push(copy);
+ t.inquirer_article.sections.find(s=>s.kind==='sentiment').paragraphs.push(copy);
+ restoreForwardArticleDepth(t,5);
+ const rows=t.inquirer_article.sections.flatMap(s=>s.paragraphs||[]);
+ assert.equal(rows.filter(p=>p===copy).length,1);
+ assert.deepEqual(t.inquirer_article.paragraphs,rows);
+ assert.ok(rows.some(p=>p.includes('fantasy points')));
+});

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {inspectCanonicalArchive} from '../netlify/functions/lib/inquirer-legacy-history.mjs';
 const DESKS=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
 const BEATS=['lead','standings','players','decisions','league','outlook'];
@@ -62,4 +63,15 @@ test('legacy Week 4 refuses every known old-format regression',()=>{
  assert.match(inspectCanonicalArchive(rewrittenLocked,2026,4).issues.join(' '),/revision 14/);
  const wrongRevision={...original,editorial_revision:13};
  assert.match(inspectCanonicalArchive(wrongRevision,2026,4).issues.join(' '),/revision 14/);
+});
+
+test('public archive reader refuses a legacy rejected Week 5 even if it has a broadcast index row',()=>{
+ const source=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ const start=source.indexOf('async function broadcastStored(');
+ const end=source.indexOf('function weeklyAwardStatRows',start);
+ assert.ok(start>=0&&end>start);
+ const reader=source.slice(start,end);
+ assert.match(reader,/if\(!isLockedInquirerEdition\(v,season,week\)\)/);
+ assert.match(reader,/available:false/);
+ assert.match(reader,/Publication held; original bytes were not altered/);
 });

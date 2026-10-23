@@ -21,9 +21,8 @@ export async function inspectWeek5Readback(store,expectedDigest){
  if(!Array.isArray(index)||!index.some(x=>Number(x?.season)===2026&&Number(x?.week)===5&&x?.key===WEEK5_RELEASE_KEY))
   failures.push('canonical-broadcast-index-incomplete');
  const overview=await read('inquirer/league-overview/2026/week-05.json');
- if(!overview||!edition?.league_overview||
-    JSON.stringify(overview.sections)!==JSON.stringify(edition.league_overview.sections)||
-    JSON.stringify(overview.hot_takes)!==JSON.stringify(edition.league_overview.hot_takes))
+ if(!overview||!edition?.league_overview||Object.entries(edition.league_overview).some(
+   ([key,value])=>JSON.stringify(overview[key])!==JSON.stringify(value)))
   failures.push('recap-is-not-exact-approved-copy');
  const reporters=edition?.reporters||[];
  if(reporters.length!==4)failures.push('reporter-directory-incomplete');
@@ -38,8 +37,8 @@ export async function inspectWeek5Readback(store,expectedDigest){
      String(a.roster_id)===String(t.roster_id)&&a.article_key===key))
     failures.push('reporter-index-entry-missing:'+rid+':'+t.roster_id);
    const saved=await read(key);
-   if(!saved||JSON.stringify(saved.sections)!==JSON.stringify(t.inquirer_article?.sections)||
-      saved.headline!==t.inquirer_article?.headline)
+   if(!saved||Object.entries(t.inquirer_article||{}).some(
+     ([field,value])=>JSON.stringify(saved[field])!==JSON.stringify(value)))
     failures.push('reporter-article-does-not-match:'+rid+':'+t.roster_id);
   }
  }

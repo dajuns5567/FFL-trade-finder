@@ -50,6 +50,8 @@ export async function inspectWeek5Readback(store,expectedDigest){
   }
  }
  const awards=await read('awards/weekly.json');
+ // Validate the public edition and the associated weekly awards against
+ // the same canonical object. In particular, no awards-only publication.
  if(!hasCompleteWeekFeaturePackage(edition,awards))
   failures.push('weekly-awards-or-badges-incomplete');
  const spotlight=await read('managers/history-cache.json');

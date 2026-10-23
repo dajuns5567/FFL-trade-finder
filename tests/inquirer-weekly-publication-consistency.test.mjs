@@ -40,3 +40,12 @@ test('the reader never labels old Players of the Week as the current newspaper w
  assert.match(ui,/function spotlightBlock/);
  assert.match(ui,/function weeklyAwardCardsHTML/);
 });
+
+test('an existing award record with a null offensive or defensive winner is retried rather than treated complete',()=>{
+ assert.match(hub,/!rec\?\.players_of_week\?\.offense\?\.player_id/);
+ assert.match(hub,/!rec\?\.players_of_week\?\.defense\?\.player_id/);
+ assert.match(hub,/!Array\.isArray\(rec\?\.manager_awards\)\|\|rec\.manager_awards\.length<2/);
+ assert.match(pub,/!record\?\.players_of_week\?\.offense\?\.player_id/);
+ assert.match(pub,/!record\?\.players_of_week\?\.defense\?\.player_id/);
+ assert.match(pub,/record\.manager_awards\.length<2/);
+});

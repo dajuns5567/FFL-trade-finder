@@ -1,4 +1,4 @@
-import {weeklyReport,weeklyAwards} from './league-hub.mjs';
+import {weeklyReport,weeklyAwards,managerHistory} from './league-hub.mjs';
 import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 
@@ -73,7 +73,13 @@ export default async function publishInquirerInBackground(req){
    // The manager spotlight uses the same production cache as the Managers UI.
    // An absent cache is not a success; it can be repaired by the existing
    // manager-history build route without rereleasing or rewriting the paper.
-   const managerCache=await statusStore.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
+   let managerCache=await statusStore.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
+   if(!hasCompleteManagerSpotlightCache(report,managerCache)){
+    // Use the existing production manager-history builder once; it writes the
+    // same cache consumed by the Managers page, without changing the newspaper.
+    await managerHistory();
+    managerCache=await statusStore.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
+   }
    if(!hasCompleteManagerSpotlightCache(report,managerCache))
     throw Error('Manager Spotlight cache is incomplete for the locked weekly edition');
    console.info('inquirer-background-awards',JSON.stringify({records:awards?.records?.length||0,season:report.season,week:report.week}));

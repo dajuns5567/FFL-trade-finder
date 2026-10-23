@@ -87,7 +87,7 @@ export function auditInquirerLanguage(edition,previous=null){
  const takes=overview.hot_takes||[];
  const division=String(takes.find(h=>h.kind==='division')?.take||'');
  const labels=['AFC EAST','AFC NORTH','AFC SOUTH','AFC WEST','NFC EAST','NFC NORTH','NFC SOUTH','NFC WEST'];
- if(teams.length===32&&labels.some(label=>!division.includes(label+':')))
+ if(teams.length===32&&takes.some(h=>h.kind==='division')&&labels.some(label=>!division.includes(label+':')))
   issues.push({id:'recap-missing-division-report',missing:labels.filter(label=>!division.includes(label+':'))});
  if(/(?:Washington Commanders|Baltimore Ravens|Carolina Panthers|New Orleans Aints) now has\\b/i.test(JSON.stringify(overview)))
   issues.push({id:'recap-plural-team-grammar'});

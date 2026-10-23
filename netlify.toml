@@ -2,9 +2,9 @@
 [build]
   publish = "."
   functions = "netlify/functions"
-  # Allow the existing and replacement Netlify sites to build PR previews during migration.
-  # Netlify ignore-command exit 0 skips, exit 1 continues normally; disable old publisher before cutover.
-  ignore = "node -e \"process.exit(['brilliant-faun-c5b649','transcendent-manatee-2f0123'].includes(process.env.SITE_NAME) ? 1 : 0)\""
+  # Build only the approved replacement project; keep the paused original and unrelated clones untouched.
+  # Netlify ignore-command exit 0 skips, exit 1 builds normally.
+  ignore = "node -e \"process.exit(process.env.SITE_NAME === 'transcendent-manatee-2f0123' ? 1 : 0)\""
 
 [functions]
   node_bundler = "esbuild"

@@ -171,6 +171,13 @@ async function liveCompare(base,token,plan,apply){
     process.stdout.write(JSON.stringify({status:'STOPPED_DESTINATION_CHANGED',stale},null,2)+'\n');
     throw Error('Destination changed since backup. Re-backup both projects before restoration.');
   }
+  // The two historical editions form one editorial continuity baseline.
+  // Do not write one if the other has a SHA-256 conflict. The dry-run may
+  // report conflicts, but applying any part of a conflicted plan is forbidden.
+  if(apply&&conflicts.length){
+    process.stdout.write(JSON.stringify({status:'STOPPED_HISTORICAL_HASH_CONFLICT',conflicts,created:0},null,2)+'\n');
+    throw Error('Historical archive conflict: refusing ALL destination writes. Reconcile source and destination first.');
+  }
   const missing=pending.map(x=>x.item),created=[];
   if(apply){
     // SECOND PASS: onlyIfNew prevents all overwrites, even under races.

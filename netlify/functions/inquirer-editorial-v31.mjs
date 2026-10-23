@@ -4120,13 +4120,13 @@ function assertWeek2Originality(result,previousEdition){
   // Composition is the last writer. Therefore grammar cleanup must run AFTER
   // composition, not before it, on both the recap and the team columns.
   if(week>=3){
-    const plural=teams.map(t=>w2DisplayTeam(t.team_name)).filter(w2PluralTeamName).sort((a,b)=>b.length-a.length);
+    const plural=[...new Set([...teams.map(t=>w2DisplayTeam(t.team_name)).filter(w2PluralTeamName),'Washington Commanders','Baltimore Ravens','Carolina Panthers','New Orleans Aints'])].sort((a,b)=>b.length-a.length);
     const clean=s=>{
       let x=String(s||'');
       for(const name of plural){
-        const re=new RegExp('\\b'+w2EscRe(name)+' (faces|does|gets|has|is|needs|sits|keeps|projects)\\b','gi');
+        const re=new RegExp('\\b'+w2EscRe(name)+' (now\\s+)?(faces|does|gets|has|is|needs|sits|keeps|projects)\\b','gi');
         const verbs={faces:'face',does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project'};
-        x=x.replace(re,(_,v)=>name+' '+verbs[v.toLowerCase()]);
+        x=x.replace(re,(_,now,v)=>name+' '+(now||'')+verbs[v.toLowerCase()]);
       }
       return x.replace(/\bThe margin asks more:\s*/gi,'')
         .replace(/\b(?:Look at the personnel:\s*)?The record is \d+-\d+[^.]*\./gi,'')

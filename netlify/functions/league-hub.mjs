@@ -601,7 +601,11 @@ export async function weeklyAwards(){
  const s=store(),archive=await broadcastArchive(),pairs=[],seen=new Set();
  for(const row of archive.reports||[]){const season=Number(row?.season),week=Number(row?.week),key=season+'|'+week;if(season&&week&&!seen.has(key)){seen.add(key);pairs.push({season,week,captured_at:String(row?.captured_at||'')})}}
  const old=await s.get('awards/weekly.json',{type:'json'}),records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[],byKey=new Map(records.map(r=>[Number(r.season)+'|'+Number(r.week),r]));
- const missing=pairs.filter(p=>!byKey.has(p.season+'|'+p.week)||!byKey.get(p.season+'|'+p.week)?.players_of_week);
+ const missing=pairs.filter(p=>{
+  const rec=byKey.get(p.season+'|'+p.week);
+  return !rec?.players_of_week?.offense?.player_id||!rec?.players_of_week?.defense?.player_id||
+   !Array.isArray(rec?.manager_awards)||rec.manager_awards.length<2;
+ });
  if(missing.length){
   const [league,players]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/players/nfl`).catch(()=>({}))]),scoring=league?.scoring_settings||{};
   const built=await Promise.all(missing.map(async p=>{

@@ -54,3 +54,17 @@ test('a winless scoreless lineup must not be described as useful player producti
  e.teams[0].inquirer_article.sections[0].paragraphs.push('The Chiefs got something from Michael Burton, but not much else.');
  assert.ok(auditInquirerLanguage(e).issues.some(x=>x.id==='zero-point-roster-false-credit'));
 });
+
+test('weekly recap rejects unsupported closeness, incomplete divisions and stale tabloid syntax',()=>{
+ const e=draft();
+ e.league_overview={sections:[
+  {blocks:['lead','standings','players','decisions','league','outlook'].map(kind=>({kind,paragraphs:['Reporting']}))},
+  {paragraphs:['Reporter two']},{paragraphs:['Reporter three']},{paragraphs:['Reporter four']}
+ ],hot_takes:[{kind:'division',take:'AFC EAST: Clubs at 1-4 remain close enough to 4-1 leaders. NFC SOUTH: The gap is real but thin; one stumble turns the leader from front-runner into participant again.'},
+ {kind:'upset',title:'Upset',take:'Baltimore Ravens over Indianapolis Colts are the Week 6 upset call.'}]};
+ const issues=auditInquirerLanguage(e).issues.map(x=>x.id);
+ assert.ok(issues.includes('recap-missing-division-report'));
+ assert.ok(issues.includes('recap-misleading-standings-gap'));
+ assert.ok(issues.includes('recap-misleading-division-lead'));
+ assert.ok(issues.includes('recap-upset-syntax'));
+});

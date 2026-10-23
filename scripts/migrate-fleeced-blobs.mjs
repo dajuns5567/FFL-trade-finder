@@ -18,7 +18,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const SOURCE_SITE = 'd51af6d7-e5f3-4c51-8c6d-25e31db39a0c';
 export const DEST_SITE = '8776d155-bc7b-4dcd-bafc-3d70d3d51800';
 export const REGION = 'us-east-2';
-export const STORES = ['fleeced-league-hub', 'fleeced-consensus-lkg', 'fll-value-history-v2'];
+// Read and back up ONLY original Inquirer historical newsroom files.\n// Other Trade Finder, consensus and value-history stores are outside scope.\nexport const STORES = ['fleeced-league-hub'];
 // Restore only two independently verified historical baselines, never old Week 5,
 // unrelated consensus/value data, or stale publication-status/index records.
 export const RESTORE_KEYS = Object.freeze(['broadcasts/2026/week-03.json','broadcasts/2026/week-04.json']);
@@ -47,12 +47,6 @@ function requireToken(which){
 function openStore(site, token, name){
   return getStore({siteID:site,token,name,region:REGION,consistency:'strong'});
 }
-async function listKeys(store){
-  const keys=[];
-  for await (const page of store.list({paginate:true}))
-    for(const item of page.blobs||[])keys.push(item.key);
-  return [...new Set(keys)].sort();
-}
 async function entryBytes(store,key){
   const result=await store.getWithMetadata(key,{type:'arrayBuffer',consistency:'strong'});
   if(!result||result.data===null)throw Error('Object vanished while reading: '+key);
@@ -68,15 +62,21 @@ async function backupOne(label, site, token,base){
   await mkdir(join(dir,'objects'),privateMode);
   const manifest={version:1,site,region:REGION,created_at:new Date().toISOString(),stores:{}};
   for(const name of STORES){
-    const store=openStore(site,token,name),keys=await listKeys(store),rows=[];
-    for(const key of keys){
-      const {data,metadata,etag}=await entryBytes(store,key);
+    const store=openStore(site,token,name),rows=[];
+    // Two explicit direct GETs. Never enumerate the full Blob store.
+    for(const key of RESTORE_KEYS){
+      const response=await store.getWithMetadata(key,{type:'arrayBuffer',consistency:'strong'});
+      if(!response||response.data==null){
+        if(label==='source')throw Error('Original locked history missing: '+key);
+        continue;
+      }
+      const data=Buffer.from(response.data),metadata=response.metadata||{},etag=response.etag||null;
       const filename=blobName(name,key);
       await writeFile(join(dir,'objects',filename),data,{mode:0o600,flag:'wx'});
       rows.push({key,file:filename,size:data.length,sha256:digest(data),metadata,etag});
     }
     manifest.stores[name]=rows;
-    process.stdout.write('Backed up '+label+' / '+name+': '+rows.length+' keys\n');
+    process.stdout.write('Backed up '+label+' / '+name+': '+rows.length+' explicitly approved historical keys\n');
   }
   await saveManifest(dir,manifest);
   return manifest;
@@ -92,8 +92,8 @@ export async function verifyBackup(dir,expectedSite){
     const seen=new Set(),rows=manifest.stores[store];
     if(!Array.isArray(rows))throw Error('Invalid store manifest '+store);
     for(const row of rows){
-      if(typeof row.key!=='string'||!row.key||seen.has(row.key)||row.file!==blobName(store,row.key))
-        throw Error('Unexpected / repeated backup key '+store+'/'+row.key);
+      if(typeof row.key!=='string'||!restoreCandidate(store,row.key)||seen.has(row.key)||row.file!==blobName(store,row.key))
+        throw Error('Unexpected / repeated or out-of-scope backup key '+store+'/'+row.key);
       seen.add(row.key);
       const data=await readFile(join(dir,'objects',row.file));
       if(data.length!==row.size||digest(data)!==row.sha256)throw Error('Backup integrity mismatch: '+store+'/'+row.key);
@@ -237,7 +237,7 @@ async function main(){
     await backupOne('source',SOURCE_SITE,oldToken,base);
     await backupOne('destination',DEST_SITE,newToken,base);
     await prepare(base);
-    process.stdout.write('Both site-wide store backups passed local SHA-256 verification; originals unchanged.\n');
+    process.stdout.write('Both targeted Weeks 3-4 backups passed local SHA-256 verification; originals unchanged.\n');
     return;
   }
   if(command==='verify'){

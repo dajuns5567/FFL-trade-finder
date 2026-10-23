@@ -2,7 +2,7 @@
 // Call only after the immutable offline preflight; it can NEVER publish itself.
 import {editorialCopyDigest,editorialApprovalMatches} from '../netlify/functions/inquirer-publication-guard.mjs';
 export const REPLACEMENT_SITE_ID='8776d155-bc7b-4dcd-bafc-3d70d3d51800';
-export const WEEK5_RELEASE_KEY='inquirer/broadcast/2026/week-05.json';
+export const WEEK5_RELEASE_KEY='broadcasts/2026/week-05.json';
 export function inspectWeek5ReleaseAuthorization({siteId,candidate,sourceDigest,approval,
  originalWeek3,originalWeek4,existingWeek5,preflight,featurePlan}={}){
  const issues=[];

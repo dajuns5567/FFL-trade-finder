@@ -9,7 +9,7 @@ function fixture(){
  manager_awards:[
   {type:'highest-scorer',roster_id:'32'},
   {type:'lowest-scorer',roster_id:'1'},
-  {type:'hot-seat',roster_id:'31'},
+  {type:'hot-seat',roster_id:'1'},
   {type:'cool-throne',roster_id:'10'}]}]};
  return{report,awards};
 }

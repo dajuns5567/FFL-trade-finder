@@ -1,5 +1,5 @@
 import {getDeployStore} from '@netlify/blobs';
-import {isPreviewDiagnosticContext,resolvePreviewIdentity,PREVIEW_DIAGNOSTIC_STORE} from './lib/inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE} from './lib/inquirer-preview-diagnostics.mjs';
 
 const json=(value,status=200)=>new Response(JSON.stringify(value),{
  status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-robots-tag':'noindex'}
@@ -22,6 +22,10 @@ export default async function inquirerPreviewDiagnostic(req){
  let status;
  try{status=await store.get(identity.status,{type:'json'})}
  catch(error){console.error('inquirer-preview-diagnostic-status-read',String(error?.message||error));return json({error:'Private preview storage temporarily unavailable',status:{state:'storage-unavailable'},target:{season:identity.season,week:identity.week}},503)}
+ // A status saved under a previous UI version or a week-mislabeled error
+ // must never pass the requested Week 5 diagnostic or be treated as complete.
+ if(status&&!previewStatusMatchesIdentity(status,identity))
+  status={state:'not-started',season:identity.season,week:identity.week,reason:'Mismatched prior private preview status ignored; generate this exact week again.'};
  if(new URL(req.url).searchParams.get('review')==='1'){
   // Only an explicitly requested, protected diagnostic can expose failed prose.
   // The canonical reader never consumes this route or treats it as publishable.

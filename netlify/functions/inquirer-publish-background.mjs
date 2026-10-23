@@ -15,7 +15,7 @@ export function hasCompleteWeekFeaturePackage(report,awards){
  if(teams.length!==32||new Set(teams.map(t=>String(t?.roster_id||''))).size!==32)return false;
  const record=awards.records.find(x=>Number(x?.season)===Number(report.season)&&Number(x?.week)===Number(report.week));
  if(!record?.players_of_week?.offense?.player_id||!record?.players_of_week?.defense?.player_id)return false;
- if(!Array.isArray(record.manager_awards)||Number(record.newsroom_editorial_revision)<39||record.newsroom_engine!=='v31-forward')return false;
+ if(!Array.isArray(record?.manager_awards)||Number(record.newsroom_editorial_revision)<39||record.newsroom_engine==='legacy'||record.newsroom_engine!=='v31-forward')return false;
  const byType=new Map(record.manager_awards.map(b=>[b?.type,b]));
  const high=teams.filter(t=>Number.isFinite(Number(t?.points))).sort((a,b)=>Number(b.points)-Number(a.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0];
  const low=teams.filter(t=>Number.isFinite(Number(t?.points))).sort((a,b)=>Number(a.points)-Number(b.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0];

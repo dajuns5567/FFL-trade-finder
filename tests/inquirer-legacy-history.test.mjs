@@ -47,6 +47,8 @@ test('legacy Week 4 refuses every known old-format regression',()=>{
  assert.match(inspectCanonicalArchive(reporters,2026,4).issues.join(' '),/four-reporter/);
  const wrongVersion={...original,inquirer_version:30};
  assert.match(inspectCanonicalArchive(wrongVersion,2026,4).issues.join(' '),/V31/);
+ const rewrittenLocked={...original,published_locked:true,editorial_revision:39};
+ assert.match(inspectCanonicalArchive(rewrittenLocked,2026,4).issues.join(' '),/revision 14/);
  const wrongRevision={...original,editorial_revision:13};
  assert.match(inspectCanonicalArchive(wrongRevision,2026,4).issues.join(' '),/revision 14/);
 });

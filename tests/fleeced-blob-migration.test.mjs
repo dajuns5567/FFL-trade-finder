@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resolve} from 'node:path';
-import {SOURCE_SITE,DEST_SITE,REGION,STORES,RESTORE_KEYS,digest,blobName,compareManifests,validateBackupDir} from '../scripts/migrate-fleeced-blobs.mjs';
+import {SOURCE_SITE,DEST_SITE,REGION,STORES,RESTORE_KEYS,validateOriginalArchiveEdition,digest,blobName,compareManifests,validateBackupDir} from '../scripts/migrate-fleeced-blobs.mjs';
 
 const makeManifest=stores=>({
  version:1,site:SOURCE_SITE,region:REGION,
@@ -54,4 +54,41 @@ test('migration program never deletes or uses unconditional overwrite',async()=>
  assert.match(code,/assertCanonicalHistory/);
  assert.match(code,/edition\.published_locked!==true/);
  assert.match(code,/if\(insideRepo\(full\)\)/);
+});
+
+test('original locked Week 4 migration requires the exact approved editorial desk and recap baseline',()=>{
+ const desks=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
+ const beats=['lead','standings','players','decisions','league','outlook'];
+ const edition={
+  available:true,published_locked:true,season:2026,week:4,
+  teams:Array.from({length:32},(_,i)=>({
+   roster_id:String(i+1),
+   inquirer_article:{headline:'Original approved team article '+(i+1),
+    reporter:{id:'reporter-'+Math.floor(i/8)},
+    sections:desks.map(kind=>({kind,heading:'Editorial '+kind,paragraphs:['Reported facts.']}))}
+  })),
+  league_overview:{headline:'Original approved Week 4 recap',
+   sections:[{blocks:beats.map(kind=>({kind,heading:kind}))},{},{},{}]}
+ };
+ const copy=x=>JSON.parse(JSON.stringify(x));
+ assert.deepEqual(validateOriginalArchiveEdition(edition,4),[]);
+ assert.deepEqual(validateOriginalArchiveEdition({...edition,week:5},4),['wrong source year/week']);
+ assert.match(validateOriginalArchiveEdition({...edition,published_locked:false},4).join(' '),/locked/);
+ const noDesk=copy(edition);
+ noDesk.teams[0].inquirer_article.sections=noDesk.teams[0].inquirer_article.sections.filter(x=>x.kind!=='cool-throne');
+ assert.match(validateOriginalArchiveEdition(noDesk,4).join(' '),/eight editorial desks/);
+ const wrongReporters=copy(edition);
+ wrongReporters.teams[0].inquirer_article.reporter.id='reporter-1';
+ assert.match(validateOriginalArchiveEdition(wrongReporters,4).join(' '),/four distinct reporters/);
+ const wrongRecap=copy(edition);
+ wrongRecap.league_overview.sections[0].blocks.pop();
+ assert.match(validateOriginalArchiveEdition(wrongRecap,4).join(' '),/six beats/);
+ const duplicate=copy(edition);
+ duplicate.teams[31].roster_id='1';
+ assert.match(validateOriginalArchiveEdition(duplicate,4).join(' '),/duplicated/);
+ // Week 3 remains a separately validated locked edition; it is NOT a
+ // substitute for approved Week 4's eight desks.
+ const week3=copy(edition);
+ week3.week=3;week3.teams[0].inquirer_article.sections=[];
+ assert.deepEqual(validateOriginalArchiveEdition(week3,3),[]);
 });

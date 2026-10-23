@@ -29,6 +29,22 @@ export function hasCompleteWeekFeaturePackage(report,awards){
  return true;
 }
 
+// Manager Spotlight requires a complete current-manager/career cache.
+// Do not treat a released newspaper as a fully delivered weekly feature package
+// while every manager's associated profile is unavailable.
+export function hasCompleteManagerSpotlightCache(report,cache){
+ const teams=Array.isArray(report?.teams)?report.teams:[];
+ const current=Array.isArray(cache?.current)?cache.current:[];
+ const career=Array.isArray(cache?.career)?cache.career:[];
+ if(teams.length!==32||current.length<32||!career.length)return false;
+ const managerByRoster=new Map(current.map(m=>[String(m.roster_id),m]));
+ const careerUsers=new Set(career.map(m=>String(m.user_id)));
+ return teams.every(team=>{
+  const manager=managerByRoster.get(String(team.roster_id));
+  return manager&&String(manager.user_id||'')!==''&&careerUsers.has(String(manager.user_id));
+ });
+}
+
 export default async function publishInquirerInBackground(req){
  const expected=globalThis.Netlify?.env?.get('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
  if(req.method!=='POST'||!expected||req.headers.get('x-fleeced-queue-key')!==expected){
@@ -54,6 +70,12 @@ export default async function publishInquirerInBackground(req){
    awards=await weeklyAwards();
    if(!hasCompleteWeekFeaturePackage(report,awards))
     throw Error('Weekly awards package incomplete (offense, IDP defense, verified locked newspaper or manager scorer badges) for '+report.season+' Week '+report.week);
+   // The manager spotlight uses the same production cache as the Managers UI.
+   // An absent cache is not a success; it can be repaired by the existing
+   // manager-history build route without rereleasing or rewriting the paper.
+   const managerCache=await statusStore.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
+   if(!hasCompleteManagerSpotlightCache(report,managerCache))
+    throw Error('Manager Spotlight cache is incomplete for the locked weekly edition');
    console.info('inquirer-background-awards',JSON.stringify({records:awards?.records?.length||0,season:report.season,week:report.week}));
   }catch(error){awardsError=String(error?.message||error);console.error('inquirer-background-awards-failed',error)}
  }else console.info('inquirer-background-awards-held','No fully published newspaper; awards were not backfilled.');

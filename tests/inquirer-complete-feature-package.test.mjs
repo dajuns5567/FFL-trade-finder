@@ -5,6 +5,7 @@ function fixture(){
  const teams=Array.from({length:32},(_,i)=>({roster_id:String(i+1),points:100+i,opponent_points:100+i+(i%2===0?10:-10),won:i%2===1,projected:120,opponent_projected:110}));
  const report={season:2026,week:5,available:true,published_locked:true,teams};
  const awards={records:[{season:2026,week:5,newsroom_editorial_revision:39,newsroom_engine:'v31-forward',
+  manager_awards_generation_version:2,
  players_of_week:{offense:{player_id:'offense'},defense:{player_id:'idp'}},
  manager_awards:[
   {type:'highest-scorer',roster_id:'32'},

@@ -82,7 +82,7 @@ export function auditInquirerLanguage(edition,previous=null){
  const kinds=(first.blocks||[]).map(b=>b.kind);
  if(teams.length===32&&(overview.sections||[]).length>0&&kinds.join('|')!=='lead|standings|players|decisions|league|outlook')
   issues.push({id:'recap-six-beat-layout',beats:kinds});
- if(teams.length===32&&(overview.sections||[]).length>0&&(overview.sections||[]).length!==4)
+ if(teams.length===32&&(overview.sections||[]).length>0&&(Number(edition.week)<14?(overview.sections||[]).length!==4:((overview.sections||[]).length<4||(overview.sections||[]).length>5)))
   issues.push({id:'recap-four-reporter-desks',count:(overview.sections||[]).length});
  const takes=overview.hot_takes||[];
  const division=String(takes.find(h=>h.kind==='division')?.take||'');

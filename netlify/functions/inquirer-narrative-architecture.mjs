@@ -181,6 +181,19 @@ export function restoreForwardArticleDepth(t,week){
  // Week 4's approved paper has a real criticism and a real credit desk
  // for every team. If cross-edition de-duplication emptied one, recover it
  // from the recorded performance instead of retaining a heading with no copy.
+ // Different reporting desks must not print the same source paragraph twice.
+ // Preserve its first occurrence, then allow the existing fact-grounded
+ // Hot Seat/Cool Throne and word-depth repair below to restore lost coverage.
+ const paragraphSeen=new Set();
+ for(const section of a.sections){
+  section.paragraphs=(section.paragraphs||[]).filter(line=>{
+   const key=text(line).toLowerCase().replace(/[’‘]/g,"'").replace(/\\s+/g,' ').trim();
+   if(!key)return false;
+   if(paragraphSeen.has(key))return false;
+   paragraphSeen.add(key);
+   return true;
+  });
+ }
  const kind=k=>a.sections.find(s=>s.kind===k);
  const hot=kind('hot-seat'),cool=kind('cool-throne');
  const weak=t.worst_starter,leader=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points))[0];

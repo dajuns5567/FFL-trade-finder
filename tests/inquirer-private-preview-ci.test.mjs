@@ -62,8 +62,9 @@ test('preview seeding targets the active Netlify account by default',()=>{
 test('unpublished manuscript and missing migrated archives are never conflated',()=>{
  assert.match(readerSource,/const onNetlifyDeployPreview=/);
  assert.match(readerSource,/onNetlifyDeployPreview&&new URLSearchParams\(location\.search\)\.get\('inquirer_preview'\)==='1'/);
- assert.match(readerSource,/This is not the unpublished Week 5 editorial draft/);
- assert.match(readerSource,/href="\/\?inquirer_preview=1"/);
+ assert.match(readerSource,/This is not an unpublished editorial draft/);
+ assert.match(readerSource,/const inquirerPreviewEntryUrl=/);
+ assert.match(readerSource,/Open the private Inquirer manuscript preview/);
 });
 
 test('every private draft targets the requested or latest completed week rather than silently backfilling',()=>{

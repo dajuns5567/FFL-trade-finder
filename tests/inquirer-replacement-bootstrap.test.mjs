@@ -35,11 +35,13 @@ test('replacement cutover rejects the old Week 5 regression that omitted approve
 });
 test('scheduled publisher never starts from a missing status before verifying original historical migration',()=>{
  const source=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
- const replacement=source.indexOf("if(isReplacement&&process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER!=='true')");
+ const replacement=source.indexOf("if(isReplacement&&publishingEnabled!=='true')");
  const verify=source.indexOf('verifiedReplacementHistory(week3,week4)');
  const seed=source.indexOf("if(status===null)status={state:'waiting',season:2026,week:4,editorial_revision:0}");
  const decision=source.indexOf('inquirerScheduleDecision({status,nfl:current');
  assert.ok(replacement>0&&verify>replacement&&seed>verify&&decision>seed);
+ assert.match(source,/Netlify\?\.env\?\.get\?\.\('FLEECED_ENABLE_NEW_SITE_PUBLISHER'\)/);
+ assert.match(source,/context=globalThis\.Netlify\?\.env\?\.get\?\.\('CONTEXT'\)/);
  assert.match(source,/siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'/);
  assert.match(source,/if\(!status\|\|typeof status!=='object'\)return skip/);
 });

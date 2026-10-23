@@ -21,6 +21,7 @@ on:
       - 'docs/INQUIRER-EDITORIAL-GENERATION-CONTRACT.md'
       - 'scripts/inquirer-*.mjs'
       - 'scripts/migrate-fleeced-blobs.mjs'
+      - 'scripts/inquirer-preview-browser-audit.js'
       - 'scripts/one-time-fleeced-archive-recovery.sh'
       - 'tests/fleeced-blob-migration.test.mjs'
       - 'scripts/one-time-generate-inquirer-week1.mjs'
@@ -61,6 +62,7 @@ jobs:
           node --check scripts/inquirer-v25-generated-audit.mjs
           node --check scripts/inquirer-forward-v31-smoke.mjs
           node --check scripts/migrate-fleeced-blobs.mjs
+          node --check scripts/inquirer-preview-browser-audit.js
 
       - name: Validate one-time private recovery wrapper syntax
         run: bash -n scripts/one-time-fleeced-archive-recovery.sh

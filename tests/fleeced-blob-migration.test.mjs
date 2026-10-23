@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resolve} from 'node:path';
-import {SOURCE_SITE,DEST_SITE,REGION,STORES,RESTORE_KEYS,validateOriginalArchiveEdition,digest,blobName,compareManifests,validateBackupDir} from '../scripts/migrate-fleeced-blobs.mjs';
+import {SOURCE_SITE,DEST_SITE,REGION,STORES,RESTORE_KEYS,EXPECTED_ORIGINAL_SHA256,validateOriginalArchiveEdition,digest,blobName,compareManifests,validateBackupDir} from '../scripts/migrate-fleeced-blobs.mjs';
 
 const makeManifest=stores=>({
  version:1,site:SOURCE_SITE,region:REGION,
@@ -15,6 +15,9 @@ test('only original/new site IDs and explicit locked Inquirer archive keys are a
  assert.equal(REGION,'us-east-2');
  assert.deepEqual(STORES,['fleeced-league-hub']);
  assert.deepEqual(RESTORE_KEYS,['broadcasts/2026/week-03.json','broadcasts/2026/week-04.json']);
+ assert.deepEqual(Object.keys(EXPECTED_ORIGINAL_SHA256),RESTORE_KEYS);
+ assert.equal(EXPECTED_ORIGINAL_SHA256[RESTORE_KEYS[0]],'8f2631fd4f83b556daa29d78ab63e92b87a4914e7875ed6799e852397e86715c');
+ assert.equal(EXPECTED_ORIGINAL_SHA256[RESTORE_KEYS[1]],'038248bef97fd7bfd2bdece6df9c3a538cac9c29ae1bb34487458927c129022c');
 });
 
 test('backup paths cannot point to repository or relative directories',()=>{
@@ -55,6 +58,7 @@ test('migration program never deletes or uses unconditional overwrite',async()=>
  assert.match(code,/SECOND PASS: onlyIfNew prevents all overwrites/);
  assert.match(code,/FLEECED_PRODUCTION_PUBLISHER_DISABLED_CONFIRMED/);
  assert.match(code,/assertCanonicalHistory/);
+ assert.match(code,/row\.sha256!==EXPECTED_ORIGINAL_SHA256\[key\]/);
  assert.match(code,/for\(const key of RESTORE_KEYS\)/);
  assert.doesNotMatch(code,/\.list\(\{paginate:true\}\)/);
  assert.doesNotMatch(code,/fleeced-consensus-lkg|fll-value-history-v2/);

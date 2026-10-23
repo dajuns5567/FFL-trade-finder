@@ -555,7 +555,16 @@ async function broadcastArchive(){
 }
 async function broadcastStored(season,week){
  const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'});
- return v||preloadedBroadcast(season,week)||{error:'broadcast not found'};
+ if(v!==null&&v!==undefined){
+  // The existing Blob index is NOT admission evidence. The original site
+  // contains a marked-locked but rejected 2026 Week 5 revision-14 draft.
+  // Never display it as canonical news if it enters the replacement store.
+  if(!isLockedInquirerEdition(v,season,week))
+   return{available:false,season:Number(season),week:Number(week),
+    reason:'Archived Inquirer edition fails the Week 4 newsroom continuity/quality contract. Publication held; original bytes were not altered.'};
+  return v;
+ }
+ return preloadedBroadcast(season,week)||{error:'broadcast not found'};
 }
 
 function weeklyAwardStatRows(payload){

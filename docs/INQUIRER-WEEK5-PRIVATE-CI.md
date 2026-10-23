@@ -22,3 +22,12 @@ No TinyFish usage is required. GitHub and Netlify allowances can still be metere
 4. The temporary one-time `inquirer-archive-restore` function has been removed from the PR branch after successful restoration. Do not reintroduce this sensitive one-time migration endpoint into permanent releases.
 
 Do not confuse a green CI workflow with a real, approved Week 5 published newspaper.
+
+## No-Work, no-TinyFish local authenticated browser path
+The new `scripts/inquirer-week5-playwright-local.mjs` runs on the user's computer, using an interactive Chromium window. From a local clone of this branch run:
+```sh
+npm install --no-save --package-lock=false playwright
+npx playwright install chromium
+node scripts/inquirer-week5-playwright-local.mjs
+```
+Sign into Netlify in that browser, then press Enter in the terminal. The script reads the private Week 5 draft; if missing, it starts exactly one private Week 5 background generation, waits for status, runs `audit=1&preview_week=5`, and writes a JSON report and screenshot to the **local** `artifacts/inquirer-week5-local/` folder. It never publishes or exports cookies. Keep local artifacts private. Never commit them. A structural pass still requires a human article and awards review.

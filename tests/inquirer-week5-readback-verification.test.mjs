@@ -75,3 +75,14 @@ test('complete archive is rejected when only the secondary recap or an article h
  result=await inspectWeek5Readback(store,approved);
  assert.ok(result.failures.some(x=>x.startsWith('reporter-article-does-not-match:')));
 });
+
+test('a complete archive fails readback if the separately saved weekly recap loses its lock or index',async()=>{
+ const {edition,data,store}=makeCompleteStore(),approved=editorialCopyDigest(edition);
+ data.get('inquirer/league-overview/2026/week-05.json').published_locked=false;
+ let result=await inspectWeek5Readback(store,approved);
+ assert.ok(result.failures.includes('recap-archive-unlocked'));
+ data.get('inquirer/league-overview/2026/week-05.json').published_locked=true;
+ data.set('broadcasts/index.json',[]);
+ result=await inspectWeek5Readback(store,approved);
+ assert.ok(result.failures.includes('canonical-broadcast-index-incomplete'));
+});

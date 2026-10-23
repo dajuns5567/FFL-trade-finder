@@ -55,7 +55,7 @@ test('migration program never deletes or uses unconditional overwrite',async()=>
  assert.match(code,/for\(const key of RESTORE_KEYS\)/);
  assert.doesNotMatch(code,/\.list\(\{paginate:true\}\)/);
  assert.doesNotMatch(code,/fleeced-consensus-lkg|fll-value-history-v2/);
- assert.match(code,/edition\.published_locked!==true/);
+ assert.match(code,/edition\?\.published_locked!==true/);
  assert.match(code,/if\(insideRepo\(full\)\)/);
 });
 

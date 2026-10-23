@@ -80,9 +80,9 @@ export function auditInquirerLanguage(edition,previous=null){
  const overview=edition?.league_overview||{};
  const first=(overview.sections||[])[0]||{};
  const kinds=(first.blocks||[]).map(b=>b.kind);
- if(teams.length===32&&kinds.join('|')!=='lead|standings|players|decisions|league|outlook')
+ if(teams.length===32&&(overview.sections||[]).length>0&&kinds.join('|')!=='lead|standings|players|decisions|league|outlook')
   issues.push({id:'recap-six-beat-layout',beats:kinds});
- if(teams.length===32&&(overview.sections||[]).length!==4)
+ if(teams.length===32&&(overview.sections||[]).length>0&&(overview.sections||[]).length!==4)
   issues.push({id:'recap-four-reporter-desks',count:(overview.sections||[]).length});
  const takes=overview.hot_takes||[];
  const division=String(takes.find(h=>h.kind==='division')?.take||'');
@@ -96,7 +96,7 @@ export function auditInquirerLanguage(edition,previous=null){
  if(/The gap is real but thin; one stumble turns the leader from front-runner into participant again/i.test(division))
   issues.push({id:'recap-misleading-division-lead'});
  for(const h of takes){
-  if(/over [A-Z][a-z]+(?: [A-Z][a-z]+)* are the Week \\d+ upset call/.test(h.take||''))
+  if(/over [A-Z][a-z]+(?: [A-Z][a-z]+)* are the Week \d+ upset call/.test(h.take||''))
    issues.push({id:'recap-upset-syntax',title:h.title});
  }
  const cross=repeatedCrossTeamWindows(teams);

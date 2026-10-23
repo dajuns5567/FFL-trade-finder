@@ -518,7 +518,7 @@ export async function weeklyReport(req){
    const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,weekClassification,variationSalt:salt});
    const candidate={season,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
    const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);
-   const a=inspectEditionBeforePublication(candidate);
+   const a=inspectEditionBeforePublication(candidate,previousBroadcast);
    const score=q.issues.length*4+a.issues.length;
    if(!best||score<bestScore){best=drafted;bestQuality=q;bestSalt=salt;bestScore=score}
    if(q.ok&&a.ok){accepted=drafted;quality=q;variationSalt=salt;break}
@@ -533,7 +533,7 @@ export async function weeklyReport(req){
  // Every publication entry point (including ?weekly=1) must pass this
  // admission boundary. A passing structural draft is only a staged candidate,
  // never publication authority. No future draft can mutate locked editions.
- const audit=inspectEditionBeforePublication(result);
+ const audit=inspectEditionBeforePublication(result,previousBroadcast);
  if(previewReadOnly)return{...result,available:true,published_locked:false,preview_only:true,
   preview_editorial_audit:audit,preview_generation_quality:quality,
   preview_warning:'Unpublished draft. No shared data was written.'};

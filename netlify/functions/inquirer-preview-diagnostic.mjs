@@ -19,12 +19,16 @@ export default async function inquirerPreviewDiagnostic(req){
  let identity;
  try{identity=await resolvePreviewIdentity(req.url)}catch(error){return json({error:String(error?.message||error),status:{state:'error'}},503)}
  const store=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
- const status=await store.get(identity.status,{type:'json'}).catch(()=>null);
+ let status;
+ try{status=await store.get(identity.status,{type:'json'})}
+ catch(error){console.error('inquirer-preview-diagnostic-status-read',String(error?.message||error));return json({error:'Private preview storage temporarily unavailable',status:{state:'storage-unavailable'},target:{season:identity.season,week:identity.week}},503)}
  if(new URL(req.url).searchParams.get('review')==='1'){
   // Only an explicitly requested, protected diagnostic can expose failed prose.
   // The canonical reader never consumes this route or treats it as publishable.
   if(status?.state!=='error')return json({error:'No rejected manuscript for this deployment'},404);
-  const rejected=await store.get(identity.rejected,{type:'json'}).catch(()=>null);
+  let rejected;
+  try{rejected=await store.get(identity.rejected,{type:'json'})}
+  catch(error){return json({error:'Rejected draft storage temporarily unavailable'},503)}
   const edition=rejected?.started_at===status.started_at?rejected.edition:null;
   return edition?.preview_only===true&&edition?.published_locked===false
    ?json({...edition,review_only:true}):json({error:'Rejected manuscript unavailable'},404);
@@ -34,7 +38,9 @@ export default async function inquirerPreviewDiagnostic(req){
   // deploy-local background generation is in progress.
   if(new URL(req.url).searchParams.get('view')==='readable')return readableEdition(req);
   if(status?.state!=='completed')return json({status:status||{state:'not-started'},error:'Draft is not ready'},404);
-  const edition=await store.get(identity.edition,{type:'json'}).catch(()=>null);
+  let edition;
+  try{edition=await store.get(identity.edition,{type:'json'})}
+  catch(error){return json({error:'Private draft storage temporarily unavailable'},503)}
   return edition?.preview_only===true&&edition?.published_locked===false
    ?json(edition):json({error:'Unpublished draft not found'},404);
  }

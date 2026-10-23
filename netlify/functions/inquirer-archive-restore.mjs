@@ -34,15 +34,25 @@ export default async function restoreOnlyApprovedHistory(req){
  if(host!=='transcendent-manatee-2f0123.netlify.app'&&
     !/^deploy-preview-402--transcendent-manatee-2f0123\.netlify\.app$/i.test(host))
    return json({error:'Wrong project hostname'},403);
- if(req.method==='GET')return form();
- if(req.method!=='POST')return json({error:'POST required'},405);
+ // The short-lived signed URL may be transferred in a single browser
+ // navigation, avoiding a multi-step form that exceeds S3's 30-second TTL.
+ // Exact-object hashes and the replacement-only publisher hold still apply.
+ const direct=req.method==='GET'&&url.searchParams.get('restore')==='1';
+ if(req.method==='GET'&&!direct)return form();
+ if(req.method!=='POST'&&!direct)return json({error:'POST or explicit one-time restore required'},405);
  const name=env('SITE_NAME'),id=env('SITE_ID');
  if(id!==SITE_ID&&name!==SITE_NAME)return json({error:'Wrong target site identity'},403);
  if(env('FLEECED_ENABLE_NEW_SITE_PUBLISHER')!=='false')return json({error:'Publisher hold is not explicitly configured'},423);
- let formValues;
- try{formValues=await req.formData()}catch{return json({error:'Invalid form body'},400)}
- const week=Number(formValues.get('week'));
- const source=String(formValues.get('source_url')||'').trim();
+ let week,source;
+ if(direct){
+  week=Number(url.searchParams.get('week'));
+  source=String(url.searchParams.get('source_url')||'').trim();
+ }else{
+  let formValues;
+  try{formValues=await req.formData()}catch{return json({error:'Invalid form body'},400)}
+  week=Number(formValues.get('week'));
+  source=String(formValues.get('source_url')||'').trim();
+ }
  if(!validateRestoreSource(source,week))return json({error:'Not an approved original short-lived Netlify Blob download URL'},400);
  const store=getStore({name:'fleeced-league-hub',region:'us-east-2',consistency:'strong'});
  // Do not write either baseline when either target has a conflicting checksum.

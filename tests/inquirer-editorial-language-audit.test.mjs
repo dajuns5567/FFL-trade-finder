@@ -78,3 +78,17 @@ test('postseason recap may include a distinct fifth playoff desk without displac
  e.week=5;
  assert.equal(auditInquirerLanguage(e).issues.some(x=>x.id==='recap-four-reporter-desks'),true);
 });
+
+test('newspaper-wide sentence scaffold is caught after names and points change, not just Week5 phrases',()=>{
+ const e=draft();
+ for(let i=0;i<4;i++){
+  const t=e.teams[i];
+  t.team_name='Unique Team '+i;
+  t.opponent_name='Different Rival '+i;
+  t.inquirer_article.sections[0].paragraphs.push(
+   t.team_name+' had one chance to defend a credible Sunday, but '+t.opponent_name+
+   ' insisted on turning the postgame explanation into a spectacularly unnecessary management argument at '+(101+i)+' points.');
+ }
+ const ids=auditInquirerLanguage(e).issues.map(x=>x.id);
+ assert.ok(ids.includes('cross-team-reused-sentence-template'),JSON.stringify(ids));
+});

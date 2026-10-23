@@ -19,6 +19,6 @@ No TinyFish usage is required. GitHub and Netlify allowances can still be metere
 1. Confirm the actual draft JSON's `audit=1` output passes and independently inspect all 32 articles for Week 4 editorial voice, factual accuracy, and variety.
 2. Ensure full Week 5 weekly awards, offense/IDP Players of the Week, highest/lowest scoring manager badges, and Manager Spotlight are generated and verified.
 3. Obtain final publication authorization, perform a controlled replacement-site production release, and verify both runtime content and safe automated future schedules.
-4. Remove the temporary one-time `inquirer-archive-restore` function from the branch after migration is verified; it must not remain a permanent production endpoint.
+4. The temporary one-time `inquirer-archive-restore` function has been removed from the PR branch after successful restoration. Do not reintroduce this sensitive one-time migration endpoint into permanent releases.
 
 Do not confuse a green CI workflow with a real, approved Week 5 published newspaper.

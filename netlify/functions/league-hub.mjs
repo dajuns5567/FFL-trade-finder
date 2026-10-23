@@ -365,9 +365,23 @@ export async function weeklyReport(req){
  // is allowed to write any shared Blob, editorial stage, or archive entry.
  if(previewReadOnly&&!new URL(req.url).searchParams.has('preview_editorial'))
   return{available:false,published_locked:false,reason:'Preview is read-only. Use preview_editorial=1 for a non-publishing draft.'};
+ // Only the authenticated scheduled background publisher must finish a
+ // week's accepted newspaper AND its matching awards before progressing to
+ // the next week. Read-only reader/previews never acquire this extra gate.
+ const enforceFeatureContinuity=req.method==='POST'&&
+  !!req.headers?.get?.('x-fleeced-queue-key');
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
  const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,origin=new URL(req.url).origin,s=store(),
   cappedWeek=Math.min(INQUIRER_FINAL_WEEK,Math.max(1,currentWeek));
+ let awardedWeeks=null;
+ if(enforceFeatureContinuity){
+  let saved;
+  try{saved=await s.get('awards/weekly.json',{type:'json'})}
+  catch(error){return{available:false,published_locked:false,season,week:null,
+   reason:'Cannot verify already published weekly features. Publisher held.'}}
+  awardedWeeks=new Map((Array.isArray(saved?.records)?saved.records:Array.isArray(saved)?saved:[])
+   .map(row=>[Number(row.season)+'|'+Number(row.week),row]));
+ }
  // Publish sequentially. A missing older edition is generated before a newer one so every article has the immediately
  // previous locked edition available for continuity and copy-forward checks. Preloaded Week 1/2 editions count as published.
  let week=null,latestPublished=null;
@@ -384,6 +398,15 @@ export async function weeklyReport(req){
     return{available:false,published_locked:false,season,week:w,
      reason:'Stored Week '+w+' is incomplete or not explicitly locked. Refusing to overwrite historical content.'};
    if(!previewReadOnly)await ensureLockedEditionIndexed(s,stored,key);
+   if(enforceFeatureContinuity&&(season>2026||(season===2026&&w>=5))){
+    const award=awardedWeeks.get(season+'|'+w);
+    if(!isTrustedWeeklyAwardCache(award,season,w)){
+     // Replay the existing accepted edition to the background awards job;
+     // do not generate next week's columns until this week's features are
+     // complete. The immutable newspaper itself is never regenerated.
+     return stored;
+    }
+   }
    latestPublished=stored;continue;
   }
   week=w;break;

@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resolve} from 'node:path';
-import {validateRestoreSource} from '../netlify/functions/inquirer-archive-restore.mjs';
+import {readFileSync} from 'node:fs';
+import {validateRestoreSource,extractCanonicalZip} from '../netlify/functions/inquirer-archive-restore.mjs';
 import {SOURCE_SITE,DEST_SITE,REGION,STORES,RESTORE_KEYS,EXPECTED_ORIGINAL_SHA256,validateOriginalArchiveEdition,digest,blobName,compareManifests,validateBackupDir} from '../scripts/migrate-fleeced-blobs.mjs';
 
 const makeManifest=stores=>({
@@ -116,4 +117,16 @@ test('temporary browser ingress accepts only the two original Netlify S3 archive
  assert.equal(validateRestoreSource(original+query.replace('X-Amz-Signature=dummy','X-Amz-Signature='),3),false);
  assert.equal(validateRestoreSource(original+query.replace('AWS4-HMAC-SHA256','unknown'),3),false);
  assert.equal(validateRestoreSource('http://'+original.slice(8)+query,3),false);
+});
+
+test('private one-time restore refuses malformed, oversized, and incomplete ZIP archives',()=>{
+ assert.throws(()=>extractCanonicalZip(Buffer.from('not a ZIP')),/size outside safe bounds/);
+ assert.throws(()=>extractCanonicalZip(Buffer.alloc(1500001)),/size outside safe bounds/);
+ assert.throws(()=>extractCanonicalZip(Buffer.alloc(100)),/Missing ZIP central directory/);
+ const handler=readFileSync(new URL('../netlify/functions/inquirer-archive-restore.mjs',import.meta.url),'utf8');
+ assert.match(handler,/FLEECED_ENABLE_NEW_SITE_PUBLISHER/);
+ assert.match(handler,/if\(current\.some\(/);
+ assert.match(handler,/onlyIfNew:true/);
+ assert.match(handler,/CREATED_VERIFIED/);
+ assert.match(handler,/archive_bundle/);
 });

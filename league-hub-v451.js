@@ -13,21 +13,25 @@ let inquirerPreviewLaunchAttempted=false;
 // editions. Once the exact original locked Weeks 3/4 have been restored, retry
 // that *private deploy-only* draft once without resetting approved prose or
 // requiring the owner to navigate developer tools.
-function isVerifiedHistoricalPreviewEdition(edition,week){
+function isVerifiedHistoricalPreviewEdition(edition,season,week){
  const teams=edition?.teams||[];
  return edition?.available===true&&edition?.published_locked===true&&
-  Number(edition?.season)===2026&&Number(edition?.week)===week&&
+  Number(edition?.season)===season&&Number(edition?.week)===week&&
   Array.isArray(teams)&&teams.length===32&&
   new Set(teams.map(t=>String(t?.roster_id||''))).size===32&&
   !!edition?.league_overview?.headline;
 }
-async function canRetryArchiveBlockedPreview(){
- const [w3,w4]=await Promise.all([3,4].map(w=>
-  fetch('/.netlify/functions/league-hub?broadcast_season=2026&broadcast_week='+w,{cache:'no-store'})
+async function canRetryArchiveBlockedPreview(season,targetWeek){
+ // The 2026 Week 4 reference is mandatory for starting at Week 5, but later
+ // weeks also need every sequential locked predecessor, not only Week 3/4.
+ if(season<2026||targetWeek<5||targetWeek>17)return false;
+ const history=await Promise.all(Array.from({length:targetWeek-3},(_,i)=>i+3).map(week=>
+  fetch('/.netlify/functions/league-hub?broadcast_season='+season+'&broadcast_week='+week,{cache:'no-store'})
    .then(async r=>r.ok?await r.json():null).catch(()=>null)));
- if(!isVerifiedHistoricalPreviewEdition(w3,3)||!isVerifiedHistoricalPreviewEdition(w4,4))return false;
+ if(!history.every((edition,i)=>isVerifiedHistoricalPreviewEdition(edition,season,i+3)))return false;
+ const week4=history[1];
  const kinds=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
- return w4.teams.every(t=>kinds.every(k=>(t?.inquirer_article?.sections||[]).some(s=>s.kind===k)));
+ return week4.teams.every(t=>kinds.every(k=>(t?.inquirer_article?.sections||[]).some(s=>s.kind===k)));
 }
 async function loadInquirerPreview(){
  if(!inquirerPreviewMode)return null;
@@ -45,7 +49,7 @@ async function loadInquirerPreview(){
   if(status.state==='error'&&!inquirerPreviewLaunchAttempted&&
      /Week 3 is the earliest missing locked archive/.test(String(status.error||''))){
    inquirerPreviewLaunchAttempted=true;
-   if(await canRetryArchiveBlockedPreview()){
+   if(await canRetryArchiveBlockedPreview(Number(info?.target?.season),Number(info?.target?.week))){
     const again=await fetch(info?.start_url||('/.netlify/functions/inquirer-preview-background?start=1'+scope),{cache:'no-store'});
     if(again.status===202)throw Error('Private preview generation started after verified historical archive restoration.');
    }

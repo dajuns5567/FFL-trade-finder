@@ -68,9 +68,13 @@
  for(const w of [3,4]){
   const r=await getWeek(w);
   report.historical['week'+w]={http:r.http,available:r.data?.available===true,
-   locked:r.data?.published_locked===true,correctIdentity:Number(r.data?.season)===season&&Number(r.data?.week)===w,
+   locked:r.data?.published_locked!==false&&Number(r.data?.inquirer_version)===31,correctIdentity:Number(r.data?.season)===season&&Number(r.data?.week)===w,
    teams:r.data?.teams?.length||0,headline:r.data?.league_overview?.headline||null};
-  if(r.data?.available===true&&r.data?.published_locked===true)
+  // The approved 2026 Week 3/4 V31 archives predate the published_locked flag.
+  // An explicitly false lock is always a draft; a missing lock is acceptable
+  // only for these canonical historical editions after structural validation.
+  if(r.data?.available===true&&r.data?.published_locked!==false&&
+     Number(r.data?.inquirer_version)===31&&Number(r.data?.season)===season&&Number(r.data?.week)===w)
    report.historical['week'+w].schema=auditEdition(r.data,w);
  }
  const status=await jsonGet('/.netlify/functions/inquirer-preview-diagnostic?preview_week='+week);

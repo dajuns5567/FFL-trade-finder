@@ -86,14 +86,17 @@ test('scheduled publisher must repair pending Week 5 awards before generating We
 });
 
 test('publisher completion cannot be claimed without the matching locked newsroom and all weekly features',()=>{
- const report={available:true,published_locked:true,season:2026,week:5};
+ const teams=Array.from({length:32},(_,i)=>({roster_id:String(i+1),points:100+i,opponent_points:100+i+(i%2===0?10:-10),won:i%2===1,projected:120,opponent_projected:110}));
+ const report={available:true,published_locked:true,season:2026,week:5,teams};
  const award={season:2026,week:5,newsroom_editorial_revision:39,newsroom_engine:'v31-forward',
   players_of_week:{offense:{player_id:'O1'},defense:{player_id:'D1'}},
-  manager_awards:[{type:'highest-scorer',roster_id:'1'},{type:'lowest-scorer',roster_id:'2'}]};
+  manager_awards:[{type:'highest-scorer',roster_id:'32'},{type:'lowest-scorer',roster_id:'1'},
+   {type:'hot-seat',roster_id:'1'},{type:'cool-throne',roster_id:'10'}]};
  const complete={records:[award]};
  assert.equal(hasCompleteWeekFeaturePackage(report,complete),true);
  assert.equal(hasCompleteWeekFeaturePackage({...report,published_locked:false},complete),false);
  assert.equal(hasCompleteWeekFeaturePackage({...report,available:false},complete),false);
+ assert.equal(hasCompleteWeekFeaturePackage({...report,teams:teams.slice(1)},complete),false);
  assert.equal(hasCompleteWeekFeaturePackage(report,null),false);
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[]}),false);
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,week:6}]}),false);
@@ -102,8 +105,8 @@ test('publisher completion cannot be claimed without the matching locked newsroo
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,newsroom_engine:'legacy'}]}),false);
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,players_of_week:{offense:{player_id:'O1'},defense:null}}]}),false);
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,manager_awards:[]}]}),false);
- assert.match(pub,/hasCompleteWeekFeaturePackage\(report,awards\)/);
- assert.match(pub,/const completed=!reportError&&!awardsError&&!report\?\.review_required&&hasCompleteWeekFeaturePackage\(report,awards\)/);
+ assert.match(pub,/hasCompleteWeekFeaturePackage\\(report,awards\\)/);
+ assert.match(pub,/const completed=!reportError&&!awardsError&&!report\\?\\.review_required&&hasCompleteWeekFeaturePackage\\(report,awards\\)/);
 });
 
 test('private archive-to-preview link keeps an explicitly requested week instead of misleadingly opening another week',()=>{

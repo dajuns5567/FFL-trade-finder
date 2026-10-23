@@ -1,3 +1,4 @@
+import {auditInquirerLanguage} from './lib/inquirer-editorial-language-audit.mjs';
 // Reusable Fleeced! Inquirer V31 editorial layer.
 // Derived from the locked Week 2 V31 newsroom logic.
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
@@ -4277,7 +4278,7 @@ function forwardArticleSentences(t){return forwardSentenceParts((t?.inquirer_art
 function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(e?.league_overview?.hot_takes||[]).filter(x=>!/division board/i.test(String(x?.title||''))).flatMap(x=>[x?.title,x?.take])].filter(Boolean).join(' ')).filter(x=>forwardWordCount(x)>=10)}
 
 export function evaluateInquirerEditionQuality(current,previous=null){
-  const issues=[...inspectInquirerFormatContract(current),...inspectNarrativeArchitecture(current)],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
+  const issues=[...inspectInquirerFormatContract(current),...inspectNarrativeArchitecture(current),...auditInquirerLanguage(current,previous).issues],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
   const dated=teams.filter(t=>t.mida_outlook);
   if(Number(current?.week)>=3&&dated.length&&dated.every(t=>{
     const stamp=Date.parse(String(t.mida_outlook?.source_date||t.mida_outlook?.as_of||''));

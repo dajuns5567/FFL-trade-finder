@@ -236,6 +236,6 @@ test('Week 8 final newsroom avoids the Week 5 recycled speaker joke without inve
  restoreForwardArticleDepth(t,8);
  const copy=t.inquirer_article.paragraphs.join(' ');
  assert.doesNotMatch(copy,/real speaker and not somebody dropping a pan/i);
- assert.match(copy,/108\\.2/);
+ assert.ok(copy.includes('108.2'));
  assert.match(copy,/Actual Week 9 Opponent/);
 });

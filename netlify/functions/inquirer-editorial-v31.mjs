@@ -2297,7 +2297,7 @@ function forwardFanScenes(t,won,week,variationSalt){
  // institution for every team's reaction while retaining reporter sarcasm.
  if(Number(week)>=5&&Number(t.roster_id)%2===0){
   const footballAngles=[
-   [name+' posted '+points+' points; '+record+' is the record that survives the postgame spin.',star+' delivered '+starPts+'. Against '+next+', this roster needs a second answer with numbers rather than applause.'],
+   [name+' posted '+points+' points; '+record+' is where '+name+' stands after the final score, regardless of the spin.',star+' delivered '+starPts+'. Against '+next+', this roster needs a second answer with numbers rather than applause.'],
    [danger+' registered '+dangerPts+' for '+name+'. That is a score, not a clever excuse in search of a writer.','The first lineup question against '+next+' belongs to the manager. The box score has already submitted its testimony.'],
    [name+' and '+opponent+' finished their game. '+(won?'The win deserves credit, not instant sainthood.':'The defeat deserves scrutiny, not a documentary about bad luck.'),star+' produced '+starPts+' while '+danger+' supplied '+dangerPts+'. A manager who sees identical performances deserves the next result.'],
    ['At '+record+', '+name+' has a league position rather than a personality test. The scoreboard shows '+points+'.','The next assignment is '+next+'. Sarcasm is available in unlimited quantities; scoring help is not.'],
@@ -2311,7 +2311,7 @@ function forwardFanScenes(t,won,week,variationSalt){
    ['The '+record+' line beside '+name+' is not a mood. It is a cumulative account of finished games.','The '+starPts+' from '+star+' belong on the positive side. The '+dangerPts+' from '+danger+' still demand a place in the manager’s next decision.'],
    ['There were '+points+' fantasy points on the '+name+' board. Anyone promising to fix the result retroactively should begin by inventing time travel.','Instead, the staff gets '+next+'. It could start with an explanation for '+danger+' scoring '+dangerPts+'.'],
    [name+' has one useful advantage in the debate over '+opponent+': the game has already been scored at '+points+'.','The next opponent, '+next+', will not accept a better narrative in place of improved production from the starting lineup.'],
-   ['For '+name+', '+star+' and '+starPts+' supplied the paragraph management wants clipped and framed.','The accompanying footnote is '+danger+' at '+dangerPts+'. Against '+next+', the footnote could become the headline if nothing changes.'],
+   ['For '+name+', '+star+' and '+starPts+' handed '+name+' a scoring highlight the staff will want to display.','The accompanying footnote is '+danger+' at '+dangerPts+'. Against '+next+', the footnote could become the headline if nothing changes.'],
    ['A supporter of '+name+' can cheer '+(won?'the victory':'the effort')+' without pretending '+record+' is a secret code for perfection.','The actual evidence is '+points+' against '+opponent+'. The next test against '+next+' is better suited to football than fortune-telling.']
   ];
   return footballAngles[Math.max(0,Math.floor((Number(t.roster_id)-2)/2))%footballAngles.length];

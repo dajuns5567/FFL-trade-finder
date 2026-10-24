@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 
 const url=process.env.PREVIEW_URL;
 const state=process.env.PLAYWRIGHT_STATE_FILE;
-const report={target:url,authenticated:false,verified:false,checks:{},errors:[]};
+const report={target:url,authenticated:false,landing_page_verified:false,complete_edition_verified:false,checks:{},errors:[]};
 const save=async()=>fs.writeFile('playwright-audit-result.json',JSON.stringify(report,null,2)+'\n');
 if(!url||!state){report.errors.push('Missing preview URL or authenticated storage state');await save();process.exit(1);}
 let browser;
@@ -45,8 +45,8 @@ try {
  // Mark those checks pending rather than asserting a fictional pass.
  report.checks.all_32_articles='not_verified_by_landing_page';
  report.checks.exact_blob_readback='not_verified_by_browser';
- report.verified=report.checks.week5_visible&&report.checks.inquirer_visible&&snapshot.textLength>200;
- if(!report.verified)throw new Error('Authenticated preview loaded but Week 5 Inquirer rendering was not confirmed.');
+ report.landing_page_verified=report.checks.week5_visible&&report.checks.inquirer_visible&&snapshot.textLength>200;
+ if(!report.landing_page_verified)throw new Error('Authenticated preview loaded but Week 5 Inquirer rendering was not confirmed.');
  await save();
 } catch(error) {report.errors.push(String(error?.message||error));await save();process.exitCode=1;}
 finally {if(browser)await browser.close();}

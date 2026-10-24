@@ -77,6 +77,15 @@ export function auditPrivateEdition(edition){
   const reporter=String(article?.reporter?.id||'missing');counts[reporter]=(counts[reporter]||0)+1;
   const kinds=sections.map(s=>s?.kind);
   if(REQUIRED_DESKS.some(kind=>!kinds.includes(kind)))issues.push('missing desks roster '+id);
+  // A heading alone is not a completed market desk. Saved previews must
+  // have actual reporting whenever weekly roster-value facts exist.
+  const market=t?.value_history_week;
+  if(market?.value!=null&&market?.delta!=null&&
+     Number.isFinite(Number(market.value))&&Number.isFinite(Number(market.delta))){
+   const value=sections.find(s=>s?.kind==='value');
+   if(!(value?.paragraphs||[]).some(p=>String(p||'').trim()))
+    issues.push('empty value desk despite market data roster '+id);
+  }
   if(!String(article.headline||'').trim())issues.push('missing headline roster '+id);
   const prose=sections.flatMap(s=>Array.isArray(s?.paragraphs)?s.paragraphs:[]);
   // Repeated opening riffs make 32 otherwise valid columns read like one

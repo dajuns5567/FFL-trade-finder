@@ -191,8 +191,8 @@ export function restoreForwardArticleDepth(t,week){
  // seven-day roster valuations being available. Restore verifiable figures,
  // varying the angle without inventing a player-level cause.
  const market=t.value_history_week||{};
- if(valueDesk&&!(valueDesk.paragraphs||[]).some(p=>String(p).trim())&&Number.isFinite(Number(market.value))&&Number.isFinite(Number(market.delta))){
-  const valuation=Number(market.value),delta=Number(market.delta),prior=Number(market.baseline_value);
+ if(valueDesk&&!(valueDesk.paragraphs||[]).some(p=>String(p).trim())&&market.value!=null&&market.delta!=null&&Number.isFinite(Number(market.value))&&Number.isFinite(Number(market.delta))){
+  const valuation=Number(market.value),delta=Number(market.delta);
   const movement=delta>0?'gained':delta<0?'lost':'held steady on';
   const magnitude=Math.abs(delta).toLocaleString('en-US'),current=valuation.toLocaleString('en-US');
   const span=String(market.period||'7D').replace(/[^0-9A-Za-z -]/g,'').slice(0,12);

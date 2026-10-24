@@ -1,6 +1,6 @@
 import {getDeployStore} from '@netlify/blobs';
 import {weeklyReport} from './league-hub.mjs';
-import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,summarizePreviewDiagnostic} from './lib/inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,summarizePreviewDiagnostic,auditPrivateEdition} from './lib/inquirer-preview-diagnostics.mjs';
 
 // Explicit preview-only diagnostic invocation. Never publishes or stages an edition.
 // A background function is not constrained by the normal 30-second HTTP response timeout.
@@ -40,6 +40,15 @@ export default async function generateInquirerPreview(req){
    await store.setJSON(identity.rejected,{started_at,edition});
    const failure=Error('Private draft failed final quality or publication audit; refusing to present it as completed.');
    failure.rejected_summary=summarizePreviewDiagnostic(edition);
+   throw failure;
+  }
+  // Every week must satisfy the independently defined newspaper structure
+  // before the draft is admitted to deploy-local completed storage.
+  const structural=auditPrivateEdition(edition);
+  if(!structural.passed){
+   await store.setJSON(identity.rejected,{started_at,edition});
+   const failure=Error('Private draft failed weekly structural quality audit; refusing to mark complete.');
+   failure.rejected_summary={...summarizePreviewDiagnostic(edition),structural};
    throw failure;
   }
   await store.setJSON(identity.edition,edition);

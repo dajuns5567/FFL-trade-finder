@@ -4054,7 +4054,7 @@ function assertWeek2Originality(result,previousEdition){
       // measured movement, however small, or explicitly disclose absent data.
       // Do not invent an estimate or inflate a routine fluctuation into news.
       const marketDesk=byKind.get('value');
-      if(!(marketDesk?.paragraphs||[]).some(p=>String(p||'').trim())){
+      if(!(marketDesk?.paragraphs||[]).some(p=>String(p||'').trim()&&!/^n\/?a$/i.test(String(p).trim()))){ 
         const market=t.value_history_week||{},delta=Number(market.delta),current=Number(market.value);
         const validDelta=market.delta!=null&&Number.isFinite(delta);
         const validCurrent=market.value!=null&&Number.isFinite(current);

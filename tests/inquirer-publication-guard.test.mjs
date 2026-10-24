@@ -20,7 +20,7 @@ const makeEdition=()=>{
    {kind:'management',heading:'Management judgment',paragraphs:[prose[3]]},
    {kind:'hot-seat',heading:'The problem to solve',paragraphs:[prose[4]]},
    {kind:'cool-throne',heading:'The bright spot',paragraphs:[prose[5]]},
-   {kind:'value',heading:'Market movement report',paragraphs:[name+' '+distinct+' recorded a verified '+id+'-point market movement; '+distinct' '+Array(12).fill('independent roster evidence '+distinct).join(' ')+' supports an independent market reading.']},
+   {kind:'value',heading:'Market movement report',paragraphs:[name+' '+distinct+' recorded a verified '+id+'-point market movement; '+distinct+' '+Array(12).fill('independent roster evidence '+distinct).join(' ')+' supports an independent market reading.']},
    {kind:'sentiment',heading:'Fan reaction',paragraphs:[
     'Supporters '+distinct+' of '+name+' are '+distinct+' reacting to '+Array(Math.min(i+4,13)).fill('distinctly local evidence '+distinct).join(' ')+' as the '+distinct+' roster assesses the matchup.',
     'The '+distinct+' group chat for '+name+' has '+distinct+' '+Array(Math.min(i+5,13)).fill('a separate observation '+distinct).join(' ')+' before the manager responds.'

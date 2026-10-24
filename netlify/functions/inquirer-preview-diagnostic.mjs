@@ -61,9 +61,11 @@ export default async function inquirerPreviewDiagnostic(req){
   if(!draft||Number(draft.season)!==identity.season||Number(draft.week)!==identity.week)
    return json({ready:false,error:'Private manuscript identity or storage mismatch'},409);
   const audit=auditPrivateEdition(draft);
-  return json({ready:audit.passed,season:identity.season,week:identity.week,editorial:audit,
+  const approved=audit.passed&&draft.preview_editorial_audit?.ok===true&&
+    draft.preview_generation_quality?.ok===true&&status?.state==='completed';
+  return json({ready:approved,season:identity.season,week:identity.week,editorial:audit,
    publication_ready:false,requires_human_editorial_review:true,
-   status:audit.passed?'STRUCTURAL_PASS_HUMAN_REVIEW_REQUIRED':'HOLD'});
+   status:approved?'STRUCTURAL_PASS_HUMAN_REVIEW_REQUIRED':'HOLD'});
  }
  if(new URL(req.url).searchParams.get('review')==='1'){
   // Only an explicitly requested, protected diagnostic can expose failed prose.

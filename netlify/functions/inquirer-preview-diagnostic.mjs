@@ -45,6 +45,7 @@ export default async function inquirerPreviewDiagnostic(req){
  if(status?.state==='completed'&&!(savedEdition&&
     Number(savedEdition.season)===identity.season&&Number(savedEdition.week)===identity.week&&
     savedEdition.preview_only===true&&savedEdition.published_locked===false&&
+    savedEdition.preview_editorial_audit?.ok===true&&savedEdition.preview_generation_quality?.ok===true&&
     auditPrivateEdition(savedEdition).passed))
   status={state:'editorial-hold',season:identity.season,week:identity.week,
     reason:'Saved draft is missing or does not pass the current editorial audit'};

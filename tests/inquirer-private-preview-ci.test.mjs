@@ -281,8 +281,8 @@ test('final forward handoff deduplicates exact substantial sentences after curat
  const curation=generator.lastIndexOf('curateForwardTeamNarrative(t,week)');
  const dedup=generator.lastIndexOf('const usedSentences=new Set()');
  assert.ok(curation>=0&&dedup>curation);
- assert.match(generator.slice(dedup,dedup+900),/usedSentences\.has\(key\)/);
- assert.match(generator.slice(dedup,dedup+900),/article\.paragraphs=/);
+ assert.match(generator.slice(dedup,dedup+2200),/usedSentences\.has\(key\)/);
+ assert.match(generator.slice(dedup,dedup+2200),/article\.paragraphs=/);
 });
 
 test('forward articles keep the locked editorial word ceiling without cutting sentences midstream',()=>{

@@ -18,6 +18,10 @@ export default async function inquirerPreviewDiagnostic(req){
  if(!isPreviewDiagnosticContext(req.url)||req.method!=='GET')return json({error:'Preview-only diagnostic'},403);
  let identity;
  try{identity=await resolvePreviewIdentity(req.url)}catch(error){return json({error:String(error?.message||error),status:{state:'error'}},503)}
+ // The persistent store is site-wide; never expose PR #402 drafts to other
+ // deploy previews even if their functions share the same Netlify site ID.
+ if(new URL(req.url).hostname!=='deploy-preview-402--transcendent-manatee-2f0123.netlify.app')
+  return json({error:'Private editorial store reserved for PR 402'},403);
  const store=getStore('fleeced-inquirer-private-pr402-persistent',{consistency:'strong'});
  const legacy=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
  let status;

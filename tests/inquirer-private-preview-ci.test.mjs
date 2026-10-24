@@ -216,14 +216,14 @@ test('a persisted preview cannot regain completed status with empty evidence-bac
 
 test('stale completed preview status cannot serve editorially rejected manuscripts',()=>{
  assert.match(previewDiagnosticSource,/state:'editorial-hold'/);
- assert.match(previewDiagnosticSource,/ready:audit\.passed/);
+ assert.match(previewDiagnosticSource,/ready:approved/);
  assert.match(previewDiagnosticSource,/auditPrivateEdition\(edition\)\.passed/);
  assert.match(previewDiagnosticSource,/Unpublished draft failed current editorial requirements/);
 });
 
 test('editorial hold remains inspectable without serving the rejected manuscript',()=>{
  assert.match(previewDiagnosticSource,/status\?\.state!=='completed'&&status\?\.state!=='editorial-hold'/);
- assert.match(previewDiagnosticSource,/ready:audit\.passed/);
+ assert.match(previewDiagnosticSource,/ready:approved/);
  assert.match(previewDiagnosticSource,/Unpublished draft failed current editorial requirements/);
 });
 

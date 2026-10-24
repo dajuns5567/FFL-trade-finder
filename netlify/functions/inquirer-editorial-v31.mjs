@@ -4113,6 +4113,21 @@ function assertWeek2Originality(result,previousEdition){
         for(const desk of article.sections||[])
           desk.paragraphs=(desk.paragraphs||[]).map(p=>String(p).replaceAll(team+"'s",team+"'"));
       }
+      // Curators can reinsert an identical factual sentence into two desks.
+      // Keep the first occurrence and remove only exact repeated sentences;
+      // distinct facts and different interpretations remain untouched.
+      const usedSentences=new Set();
+      for(const desk of article.sections||[]){
+        desk.paragraphs=(desk.paragraphs||[]).map(paragraph=>{
+          const sentences=String(paragraph).split(/(?<=[.!?])\s+/);
+          return sentences.filter(sentence=>{
+            const key=sentence.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim();
+            if(key.split(' ').length<13)return true;
+            if(usedSentences.has(key))return false;
+            usedSentences.add(key);return true;
+          }).join(' ').trim();
+        }).filter(Boolean);
+      }
       article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
     }
     const first=overview.sections?.[0];

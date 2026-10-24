@@ -26,6 +26,8 @@ jobs:
           umask 077
           printf '%s' "$PLAYWRIGHT_STORAGE_STATE_B64" | base64 --decode > "$RUNNER_TEMP/netlify-playwright-state.json"
           node -e "const fs=require('fs');const p=process.argv[1];const s=JSON.parse(fs.readFileSync(p));if(!Array.isArray(s.cookies)||!Array.isArray(s.origins))process.exit(1)" "$RUNNER_TEMP/netlify-playwright-state.json"
+      - name: Validate Playwright audit script syntax
+        run: node --check scripts/inquirer-authenticated-browser-audit.mjs
       - name: Install Playwright
         run: |
           npm install --no-save --package-lock=false playwright

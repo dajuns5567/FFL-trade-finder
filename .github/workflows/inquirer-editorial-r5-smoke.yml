@@ -32,6 +32,7 @@ on:
       - 'tests/week5-forward-editorial-repair.test.mjs'
       - 'docs/INQUIRER-EDITORIAL-GENERATION-CONTRACT.md'
       - 'scripts/inquirer-*.mjs'
+      - '.github/workflows/fleeced-authenticated-week5-playwright.yml'
       - 'scripts/migrate-fleeced-blobs.mjs'
       - 'scripts/inquirer-preview-browser-audit.js'
       - 'scripts/one-time-fleeced-archive-recovery.sh'
@@ -89,6 +90,7 @@ jobs:
           node --check scripts/inquirer-v25-audit.mjs
           node --check scripts/inquirer-v25-generated-audit.mjs
           node --check scripts/inquirer-forward-v31-smoke.mjs
+          node --check scripts/inquirer-authenticated-browser-audit.mjs
           node --check scripts/migrate-fleeced-blobs.mjs
           node --check netlify/functions/lib/inquirer-legacy-history.mjs
           node --check scripts/inquirer-preview-browser-audit.js

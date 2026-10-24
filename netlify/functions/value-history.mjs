@@ -957,7 +957,10 @@ export { monthKey, marketFromSnapshots, baselineFor };
 export default async (req)=>{
   try{
     const url=new URL(req.url),s=safeStore();
-    if(s){
+    // Internal editorial previews must be read-only even when the handler's
+    // ordinary GET path performs one-time legacy cleanup writes.
+    const readonlyPreview=req.method==='GET'&&url.searchParams.get('readonly_preview')==='1';
+    if(s&&!readonlyPreview){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
       try{await scrubV380PartialWeekSnapshot(s)}catch(e){console.warn('v380-history-scrub',e)}

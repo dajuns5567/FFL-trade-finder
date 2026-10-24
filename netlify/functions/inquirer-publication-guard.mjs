@@ -2,14 +2,18 @@
 // checks AND a review approval bound to the exact copy digest. No public HTTP
 // route may approve a draft. Historical locked editions are never rewritten.
 import {createHash} from 'node:crypto';
+import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
+import {inspectNarrativeArchitecture} from './inquirer-narrative-architecture.mjs';
 
 const articleParagraphs = article => (article?.sections||[]).flatMap(s=>s?.paragraphs||[]).filter(p=>typeof p==='string');
 const normalized = value => String(value||'').toLowerCase().replace(/\s+/g,' ').trim();
 const misleading = [
   {id:'grammatical-regression', pattern:/\ban previous-week\b|\bthe first result on .+ were\b|\bthe .+ makes this sunday\b/i},
   {id:'mechanical-draft-language', pattern:/the useful weakness-or-strength note|the second scorer moved|the third scorer moved|the football read is straightforward|the rival-chat version is uncomfortable:/i},
+  {id:'mechanical-lesson-scaffold',pattern:/\bthe useful lesson is not\b|\bthe margin asks more:/i},
   {id:'copy-repair-scaffold', pattern:/fantasy points, a \d+(?:\.\d+)?-point margin in Week \d+/i},
-  {id:'editorial-placeholder', pattern:/\b(?:TBD|TODO|lorem ipsum)\b|\bn\/a\b/i}
+  {id:'editorial-placeholder', pattern:/\b(?:TBD|TODO|lorem ipsum)\b|\bn\/a\b/i},
+  {id:'unrendered-data-placeholder', pattern:/\b(?:null|undefined)\b/i}
 ];
 
 export function editorialCopyDigest(edition) {
@@ -22,7 +26,7 @@ export function editorialCopyDigest(edition) {
 }
 
 export function inspectEditionBeforePublication(edition) {
-  const issues=[],teams=edition?.teams||[],unique=new Set(teams.map(t=>String(t.roster_id)));
+  const issues=[...inspectInquirerFormatContract(edition),...inspectNarrativeArchitecture(edition)],teams=edition?.teams||[],unique=new Set(teams.map(t=>String(t.roster_id)));
   if(teams.length!==32||unique.size!==32)issues.push({id:'coverage',detail:'32 unique team articles required'});
   const rosterById=new Map(teams.map(t=>[String(t.roster_id),t]));
   const scaffoldOwners=new Map(),phraseOwners=new Map();
@@ -33,6 +37,13 @@ export function inspectEditionBeforePublication(edition) {
     if(!article?.headline||!article?.byline||!article?.reporter?.id)issues.push({id:'article-metadata',team});
     const paragraphs=articleParagraphs(article),substantive=paragraphs.filter(p=>p.trim().length>=50);
     if(substantive.length<6)issues.push({id:'article-depth',team,count:substantive.length});
+    // A heading without prose is not an editorial desk. Check forward
+    // editions with real valuation snapshots without altering locked history.
+    if(Number(edition?.season)>=2026&&Number(edition?.week)>=5&&t.value_history_week?.value!=null){
+      const value=(article?.sections||[]).find(s=>s.kind==='value');
+      if(!value||(value.paragraphs||[]).every(p=>!String(p||'').trim()))
+        issues.push({id:'empty-value-desk',team});
+    }
     const fan=(article?.sections||[]).find(s=>s.kind==='sentiment');
     if(!fan||fan.paragraphs?.filter(p=>String(p).length>=50).length<2)issues.push({id:'fan-sentiment',team});
     const opponent=rosterById.get(String(t.opponent_roster_id));
@@ -81,8 +92,27 @@ export function inspectEditionBeforePublication(edition) {
     issues.push({id:'shared-editorial-phrase',teams:row.teams,excerpt:row.phrase});
   const recap=edition?.league_overview;
   if(!recap?.headline||!(recap.sections||[]).length)issues.push({id:'recap-missing'});
+  // These are emergency templates manufactured AFTER the writer finished.
+  // They pass factual score tests but destroy weekly freshness and sarcasm.
+  // Hold the candidate and try another writing variant; never approve filler.
+  if(Number(edition?.week)>=5){
+   const emergencyCopy=/\b(?:An actual Week \d+ result supplies the counterweight|Forget the old division-board shorthand|The Week \d+ scoreboard gives this race a concrete reference point|Here is what the Week \d+ ledger can actually prove|Nobody gets a championship banner for a column of standings|A Scoreboard Receipts Check|The division board loves a coronation)\b/i;
+   for(const [i,s] of (recap?.sections||[]).entries()){
+    const rows=s.blocks?.length?s.blocks.flatMap(b=>b.paragraphs||[]):s.paragraphs||[];
+    if(!rows.some(p=>String(p||'').trim()))issues.push({id:'empty-recap-desk',section:i});
+    for(const p of rows)if(emergencyCopy.test(p))issues.push({id:'emergency-recap-filler',section:i,excerpt:String(p).slice(0,160)});
+   }
+   for(const [i,h] of (recap?.hot_takes||[]).entries()){
+    if(!String(h.take||'').trim())issues.push({id:'empty-recap-hot-take',index:i});
+    if(emergencyCopy.test(String(h.title||'')+' '+String(h.take||'')))
+     issues.push({id:'emergency-recap-filler',hot_take:i,excerpt:String(h.take||'').slice(0,160)});
+   }
+  }
   for(const p of (recap?.sections||[]).flatMap(s=>[...(s.paragraphs||[]),...(s.blocks||[]).flatMap(b=>b.paragraphs||[])])){
     for(const pattern of misleading)if(pattern.pattern.test(p))issues.push({id:'recap-'+pattern.id,excerpt:p.slice(0,180)});
+  }
+  for(const p of (recap?.hot_takes||[]).flatMap(t=>[t.title,t.take].filter(x=>typeof x==='string'))){
+    for(const pattern of misleading)if(pattern.pattern.test(p))issues.push({id:'recap-hot-take-'+pattern.id,excerpt:p.slice(0,180)});
   }
   return{ok:issues.length===0,issues,metrics:{team_articles:teams.length,issues:issues.length}};
 }

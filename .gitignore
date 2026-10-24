@@ -1,0 +1,5 @@
+node_modules/
+artifacts/inquirer-week5-local/
+playwright-report/
+test-results/
+*.storage-state.json

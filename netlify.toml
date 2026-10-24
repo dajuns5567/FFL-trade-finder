@@ -2,16 +2,18 @@
 [build]
   publish = "."
   functions = "netlify/functions"
-  # Skip builds on old Git-linked Netlify clones; leave the current site active.
-  # Netlify ignore-command exit 0 skips, exit 1 continues normally.
-  ignore = "node -e \"process.exit(process.env.SITE_NAME === 'brilliant-faun-c5b649' ? 1 : 0)\""
+  # Build only the approved replacement project; keep the paused original and unrelated clones untouched.
+  # Netlify ignore-command exit 0 skips, exit 1 builds normally.
+  ignore = "node -e \"process.exit(process.env.SITE_NAME === 'transcendent-manatee-2f0123' ? 1 : 0)\""
 
 [functions]
   node_bundler = "esbuild"
   included_files = ["index.html", "trade-section1-core-v100.js", "trade-section1-v100.css", "trade-section1-v106.css"]
 
 [functions."inquirer-publish-scheduled"]
-  schedule = "0 10 * * *"
+  # Poll every two hours; the function skips previously published/held weeks.
+  # Actual publication still waits for final Sleeper roster records.
+  schedule = "0 */2 * * *"
 
 [build.processing.html]
   pretty_urls = false

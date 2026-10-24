@@ -2,9 +2,13 @@
 // Derived from the locked Week 2 V31 newsroom logic.
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
+import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
+import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPlayerFact,restoreForwardArticleDepth} from './inquirer-narrative-architecture.mjs';
 
 export const FORWARD_INQUIRER_VERSION=31;
-export const FORWARD_EDITORIAL_REVISION=17;
+// Bump on any material editorial contract change so an earlier held draft
+// cannot suppress the next scheduled regeneration for the same NFL week.
+export const FORWARD_EDITORIAL_REVISION=39;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -21,6 +25,9 @@ export function adaptWeekLanguage(value,week,classification){
   s=s.replace(/\bWeek 1\b/g,P0).replace(/\bWeek 2\b/g,P1).replace(/\bWeek 3\b/g,P2);
   s=s.replaceAll(P0,'Week '+prev).replaceAll(P1,'Week '+Number(week)).replaceAll(P2,'Week '+next);
   s=s.replace(/\bthe opener\b/gi,'Week '+prev)
+     .replace(/\bthat opener\b/gi,'that Week '+prev+' result')
+     .replace(/\bthe opening result\b/gi,'the Week '+prev+' result')
+     .replace(/\bopener\b/gi,'previous result')
      .replace(/\bopening week\b/gi,'Week '+prev)
      .replace(/\ban opening (win|loss)\b/gi,(_,kind)=>'a '+kind+' the previous week')
      .replace(/\bopening (win|loss)\b/gi,'$1 the previous week')
@@ -36,7 +43,15 @@ export function adaptWeekLanguage(value,week,classification){
      .replace(/\btwo Sundays\b/g,'the last two Sundays')
      .replace(/\bthe two-week sample\b/gi,'the recent two-week sample')
      .replace(/What Two Weeks Are Starting to Say/g,'What the Last Two Weeks Are Starting to Say')
-     .replace(/\bAt (2-0|0-2|1-1),/g,'Across the last two games ($1),');
+     .replace(/\bAt (2-0|0-2|1-1),/g,'Across the last two games ($1),')
+     .replace(/\bthe first the last two (weeks|Sundays)\b/gi,(_,unit)=>'the last two '+unit)
+     .replace(/\b(?:the last\s+){2,}two (weeks|Sundays)\b/gi,(match,unit)=>
+       (/^[A-Z]/.test(match)?'The':'the')+' last two '+unit);
+  if(Number(week)>=5)s=s
+    .replace(/Week \d+ was a first impression; Week \d+ is where/gi,
+      'Week '+prev+' supplied the comparison; Week '+Number(week)+' is where')
+    .replace(/Good starts have to survive a third opponent/gi,
+      'Good starts have to survive the next opponent');
   if(classification?.playoffs)s=s.replace(/Week \d+ • Regular Season/g,String(classification.label||('Week '+week+' • Playoffs')));
   return s;
 }
@@ -66,9 +81,28 @@ function forwardTrajectoryParagraphs(teams,week){
     ?'The playoff race is now an actual weekly story with '+gamesLeft+' regular-season game'+(gamesLeft===1?'':'s')+' left. Around the current conference cut lines sit '+forwardList(bubble.map(t=>t.team_name+' (#'+String(t.league_context.playoff_seed||'?')+' seed)'))+'. From here on, a division result can move a team and damage the exact rival it is trying to catch.'
     :'The middle of the league still has enough traffic to punish anyone who treats one good Sunday like permanent clearance. The last two weeks matter because repeatable scoring is beginning to separate useful form from one-night theater.';
   const p4=(high&&low)
-    ?'This week’s league scoring ran from '+forwardOne(high.points)+' for '+high.team_name+' down to '+forwardOne(low.points)+' for '+low.team_name+', with a league average of '+forwardOne(avg)+'. The useful lesson is not that everybody should chase the loudest box score; it is that the season is developing memory, and repeated strengths and repeated mistakes are starting to carry receipts.'
+    ?[
+      high.team_name+' led the league at '+forwardOne(high.points)+', '+forwardOne(Number(high.points)-avg)+' above the '+forwardOne(avg)+'-point average. '+low.team_name+' finished at '+forwardOne(low.points)+', '+forwardOne(avg-Number(low.points))+' below it. The scoreboard has already filed the complaint.',
+      'The '+forwardOne(Number(high.points)-Number(low.points))+'-point distance between '+high.team_name+' ('+forwardOne(high.points)+') and '+low.team_name+' ('+forwardOne(low.points)+') is the week’s widest argument. The league average was '+forwardOne(avg)+'; neither end of that spread needs a fictional locker-room quote.',
+      high.team_name+' set this week’s ceiling at '+forwardOne(high.points)+', and '+low.team_name+' set the floor at '+forwardOne(low.points)+'. Against the '+forwardOne(avg)+'-point league mean, that is a '+forwardOne(Number(high.points)-Number(low.points))+'-point reminder that the starting cards, not the pregame speeches, count.',
+      'The weekly range runs from '+high.team_name+' at '+forwardOne(high.points)+' to '+low.team_name+' at '+forwardOne(low.points)+', with '+forwardOne(avg)+' as the 32-team average. A '+forwardOne(Number(high.points)-Number(low.points))+'-point gap leaves little room for the losing end to hide behind “it was close.”'
+    ][Math.abs(Number(week)||0)%4]
     :'The league-wide scoring sample is incomplete, so the larger trend stays on hold instead of being invented.';
   return[p1,p2,p3,p4];
+}
+
+// A season record is never a two-game record. Keep all streak labels tied to
+// the actual completed games being discussed, including after Week 2.
+function forwardRecentResults(team,week,count=2){
+  const games=(team?.league_context?.recent_games||[]).filter(g=>Number(g.week)<=Number(week))
+    .sort((a,b)=>Number(b.week)-Number(a.week)).slice(0,count);
+  return games.length===count?games.map(g=>String(g.result||'').toUpperCase()):[];
+}
+function forwardRecentGroup(teams,week,result){
+  return (teams||[]).filter(t=>{
+    const recent=forwardRecentResults(t,week);
+    return recent.length===2&&recent.every(r=>r===result);
+  });
 }
 
 function playoffTeamLine(team,classification){
@@ -118,27 +152,29 @@ function evolutionHash(value){
   let h=2166136261;for(const ch of String(value||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0;
 }
 const EVOLUTION_INTROS={
+  // Short, distinct desk cues. Longer boilerplate prefatory clauses were
+  // repeated across teams and read like automated copy rather than Week 4.
   'walter-mercer':[
-    'The football read is straightforward:','Strip away the noise and this is what remains:','The weekly ledger is blunt here:','The useful football answer is simpler:','Put the emotion to one side for a second:','The Sunday note that survives review is this:','The cleanest read from the result is this:','Start with the part that will still matter Tuesday:'
+    'Look at the personnel:','The margin asks more:','Follow the scoring:','The numbers resist spin:','Forget the excuses:','Sunday left a clue:','The box score settles this:','Carry this into Monday:'
   ],
   'tess-delaney':[
-    'The less glamorous truth is this:','There is no elegant detour around it:','The cleaner football answer is this:','No need to romanticize the result:','The civilized version is still fairly obvious:','Once the postgame swagger wears off, this remains:','The part worth keeping after the applause is this:','Even a dramatic Sunday can be reduced to one useful point:'
+    'The unromantic version:','Spare me the excuses:','The football is plain:','No need to romanticize it:','Nicely put, but:','After the applause:','The lineup still answers:','Cut through the commotion:'
   ],
   'mack-hollis':[
-    'Here is the loud part:','Put this on the big screen:','The back-page version is simple:','Skip the polite introduction:','Here is what survives the shouting:','The part rival managers will screenshot is this:','No tiny print required:','This is the sentence the group chat will keep:'
+    'Here is the noise:','Put this onscreen:','Back-page material:','Forget the preamble:','Turn it up:','Screenshot this:','No fine print:','Monday will have questions:'
   ],
   'nora-voss':[
-    'Rivals can circle this:','The rival-chat version is uncomfortable:','No conspiracy is required here:','The part opponents will remember is this:','The annoying fact survives review:','Rivals do not need help finding this one:','The useful weakness-or-strength note is this:','This is the detail that will follow them into next week:'
+    'Rivals noticed:','Across the sideline:','Nothing mysterious here:','File that under obvious:','The irritating part:','Rivals can spot it:','One lineup detail:','Next week remembers:'
   ]
 };
 const EVOLUTION_TAILS={
   'walter-mercer':['That is the part worth carrying forward.','The next matchup gets to test whether it travels.','That belongs in the season ledger now.','The following Sunday gets the rebuttal.','That is enough to change the next conversation.','The point is useful precisely because it can be tested again.','The season has another data point to answer now.','Keep that in the notebook when the next lineup locks.'],
   'tess-delaney':['Elegant or not, the score keeps the receipt.','The next opponent is allowed to object.','Good manners do not make the point less true.','The following Sunday can improve the presentation.','That is the version I am willing to keep.','The next matchup can either polish it or ruin it.','There is plenty of time for the season to make this look foolish.','For now, the football has earned the sentence.'],
-  'mack-hollis':['Nobody needs a committee meeting to understand it.','Next week can yell back if it disagrees.','Save the screenshot; the next game gets a vote.','That one is going straight into the group chat.','The next opponent can file the complaint.','If it repeats, the headline gets bigger.','If it disappears, we will happily print the correction.','Either way, the next Sunday is already booked.'],
+  'mack-hollis':['Nobody needs a committee meeting to understand it.','Next Sunday can answer.','Save the screenshot; the next game gets a vote.','That one is going straight into the group chat.','The next opponent can file the complaint.','If it repeats, the headline gets bigger.','If it disappears, we will happily print the correction.','Either way, the next Sunday is already booked.'],
   'nora-voss':['Rivals will remember it even if management would rather they did not.','The next matchup gets first chance to dispute it.','That is enough material for the rival chat.','The next Sunday decides whether this becomes a pattern.','Opponents now know exactly where to look.','Management gets one week to make the note boring.','Rivals do not need a second invitation to test it.','The season will either confirm the note or embarrass it.']
 };
 const EVOLUTION_LEXICON=[
-  [/\bthe result\b/gi,['the final score','Sunday’s outcome','the finished result','the scoreboard answer']],
+  [/\bthe result\b/gi,['the final score','Sunday’s outcome','the settled outcome','the scoreboard answer']],
   [/\bthe lineup\b/gi,['the starting group','the lineup card','the starters','the weekly lineup']],
   [/\bthe roster\b/gi,['the squad','the roster construction','the team','the full roster']],
   [/\bthe scoreboard\b/gi,['the score','the scoring column','the final tally','the board']],
@@ -185,8 +221,8 @@ function evolveCrossReporterSentence(sentence,reporterId,seed){
   if(!changed){
     const tails={
       'walter-mercer':' The next week gets to test that read.',
-      'tess-delaney':' The next Sunday can improve the wording if it objects.',
-      'mack-hollis':' Next week can yell back if it disagrees.',
+      'tess-delaney':' Sunday gets the rebuttal.',
+      'mack-hollis':' Next Sunday gets a vote.',
       'nora-voss':' Rivals get the next chance to prove the point wrong.'
     };
     out=out.replace(/[.!?]?$/,'.')+tails[rid];
@@ -202,7 +238,17 @@ function evolveSentence(sentence,reporterId,seed){
   }
   out=out.trim();if(out)out=out[0].toUpperCase()+out.slice(1);
   const intro=EVOLUTION_INTROS[rid][h%EVOLUTION_INTROS[rid].length];
-  out=intro+' '+out;
+  // Never stack a prefatory cue on copy that already has one; that produced
+  // "The box score settles this: Look at the personnel: ..." in Week 5.
+  const existingPrefaces=Object.values(EVOLUTION_INTROS).flat();
+  const priorCue=existingPrefaces.find(prefix=>out.toLowerCase().startsWith(prefix.toLowerCase()));
+  if(priorCue){
+    // Existing newsroom cues must EVOLVE, not freeze unchanged merely because
+    // the previous edition already used one. Replace, never stack, the cue.
+    const variants=EVOLUTION_INTROS[rid].filter(prefix=>prefix.toLowerCase()!==priorCue.toLowerCase());
+    const replacement=variants[h%variants.length]||intro;
+    out=replacement+' '+out.slice(priorCue.length).trim();
+  }else out=intro+' '+out;
   if(!/[.!?]$/.test(out))out+='.';
   return out;
 }
@@ -210,7 +256,7 @@ function paragraphSentenceRows(paragraph){
   return forwardSentenceParts(paragraph).map(sentence=>({sentence,norm:forwardNormSentence(sentence,[]),words:forwardWordCount(sentence)}));
 }
 const FORWARD_CROSS_REPORTER_STYLE=/\b(?:room|table|chair|seating|rearrang\w*|headline|screenshot|joke|punchline|megaphone|receipt|reservation|silverware|china|wardrobe|decorative|parade|siren|menu|dinner|bill|gossip|guest list|repair|spiral|standard|unanswered|pressure|urgency|runway|rubble|identity|rebuttal|warning|panic|collapse|argument|response)\b/i;
-function forwardEditorialPhraseKeys(sentence,entities,width=9){
+function forwardEditorialPhraseKeys(sentence,entities,width=9,styleRequired=true){
   const raw=String(sentence||''),numeric=(raw.match(/\b\d+(?:\.\d+)?%?\b/g)||[]).length,
     factual=/\b(?:fantasy points?|solo tackles?|assisted tackles?|tackle for loss|qb hits?|passes?|targets?|receptions?|rushing yards?|receiving yards?|touchdowns?|carries|projection|projected)\b/i;
   if(numeric>=2&&factual.test(raw))return[];
@@ -218,7 +264,7 @@ function forwardEditorialPhraseKeys(sentence,entities,width=9){
     ws=norm.split(/\s+/).filter(Boolean),out=[];
   for(let i=0;i+width<=ws.length;i++){
     const gram=ws.slice(i,i+width).join(' ');
-    if(FORWARD_CROSS_REPORTER_STYLE.test(gram))out.push(gram);
+    if(!styleRequired||FORWARD_CROSS_REPORTER_STYLE.test(gram))out.push(gram);
   }
   return[...new Set(out)];
 }
@@ -235,12 +281,28 @@ function forwardCrossReporterPhraseOffenders(teams,entities){
   }
   return new Map([...placements.entries()].filter(([,rows])=>rows.length>1&&new Set(rows.map(x=>x.reporter)).size>1));
 }
+// Catch copied editorial clauses even when their sentence openings or reporters
+// differ. A shared 10-word rhetorical run in three articles is not fresh copy.
+function forwardCrossTeamClauseOffenders(teams,entities,{width=12,minOwners=3,maxPlaceholders=1}={}){
+  const placement=new Map();
+  for(const t of teams||[]){
+    const seen=new Set();
+    for(const sentence of forwardArticleSentences(t))for(const gram of forwardEditorialPhraseKeys(sentence,entities,width,false)){
+      if((gram.match(/\[(?:entity|#)\]/g)||[]).length<=maxPlaceholders)seen.add(gram);
+    }
+    for(const gram of seen){const rows=placement.get(gram)||[];rows.push(String(t.team_name||''));placement.set(gram,rows)}
+  }
+  return new Map([...placement].filter(([,owners])=>owners.length>=minOwners));
+}
+const forwardPairedNarrativeOffenders=(teams,entities)=>forwardCrossTeamClauseOffenders(teams,entities,{width:16,minOwners:2,maxPlaceholders:0});
 function evolveForwardTeams(teams,previousEdition,week,salt){
   const currentEntities=forwardEntities({teams}),previousEntities=forwardEntities(previousEdition),entities=[...currentEntities,...previousEntities],
     priorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),new Set(forwardArticleSentences(t).map(s=>forwardNormSentence(s,entities)))])),
     currentCounts=new Map();
   for(const t of teams||[])for(const s of forwardArticleSentences(t)){const n=forwardNormSentence(s,entities);currentCounts.set(n,(currentCounts.get(n)||0)+1)}
-  const phraseOffenders=new Set(forwardCrossReporterPhraseOffenders(teams,entities).keys());
+  const clauseOffenders=forwardCrossTeamClauseOffenders(teams,entities);
+  const pairedOffenders=forwardPairedNarrativeOffenders(teams,entities);
+  const phraseOffenders=new Set([...forwardCrossReporterPhraseOffenders(teams,entities).keys(),...clauseOffenders.keys()]);
   return (teams||[]).map(t=>{
     const a=t?.inquirer_article;if(!a)return t;const rid=String(a?.reporter?.id||'walter-mercer'),prior=priorByRoster.get(String(t.roster_id))||new Set();
     const sections=(a.sections||[]).map((section,si)=>({...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>{
@@ -249,10 +311,13 @@ function evolveForwardTeams(teams,previousEdition,week,salt){
           offender=forwardWordCount(sentence)>=10&&(prior.has(n)||(currentCounts.get(n)||0)>3||phraseCollision),
           seed=[week,salt,t.roster_id,section.kind||section.heading,si,pi,sj,n].join('|');
         if(!offender)return sentence;
+        const targetedClause=forwardEditorialPhraseKeys(sentence,entities,12,false).some(gram=>(clauseOffenders.get(gram)||[]).indexOf(t.team_name)>=2)||
+          forwardEditorialPhraseKeys(sentence,entities,16,false).some(gram=>(pairedOffenders.get(gram)||[]).indexOf(t.team_name)>=1);
+        if(targetedClause)return '';
         const evolved=evolveSentence(sentence,rid,seed);
         return phraseCollision?evolveCrossReporterSentence(evolved,rid,seed):evolved;
-      }).join(' ');
-    })}));
+      }).filter(Boolean).join(' ');
+    }).filter(Boolean)}));
     return{...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
   });
 }
@@ -282,9 +347,15 @@ function enforceRecapEvolution(overview,previousOverview,week,salt,entities=[]){
         out=evolveSentence(out,rid,[week,salt,'enforce-second-pass',seedBase,i,n].join('|'));
         outNorm=forwardNormSentence(out,entities);
       }
+      if(collision&&(prior.has(outNorm)||seen.has(outNorm))){
+        const tails=EVOLUTION_TAILS[rid]||EVOLUTION_TAILS['walter-mercer'];
+        const qualification=tails[evolutionHash([week,salt,seedBase,i,'fresh-tail'].join('|'))%tails.length];
+        out=out.replace(/[.!?]?$/,', and '+qualification.charAt(0).toLowerCase()+qualification.slice(1));
+        outNorm=forwardNormSentence(out,entities);
+      }
       if(longEnough)seen.add(outNorm);
       return out;
-    }).join(' ');
+    }).join(' ').replace(/\b(?:The box score settles this|Sunday left a clue|Carry this into Monday|Look at the personnel|Forget the excuses|The numbers resist spin):\s*/gi,((seen)=>match=>seen++?'':match)(0));
   };
   const sections=(overview.sections||[]).map((section,si)=>{
     const rid=String(section?.reporter?.id||'walter-mercer');
@@ -302,6 +373,20 @@ function enforceRecapEvolution(overview,previousOverview,week,salt,entities=[]){
     return{...take,take:evolvedBody};
   });
   return{...overview,sections,hot_takes};
+}
+function rejectRecapCopyForward(overview,previousOverview,week,entities){
+  if(!previousOverview)return overview;
+  const previous={league_overview:previousOverview};
+  const prior=new Set(forwardRecapSentences(previous).map(s=>forwardNormSentence(s,entities)));
+  const rewrite=paragraph=>forwardSentenceParts(paragraph).map(sentence=>{
+    if(forwardWordCount(sentence)<10||!prior.has(forwardNormSentence(sentence,entities)))return sentence;
+    return 'By Week '+week+', '+sentence.charAt(0).toLowerCase()+sentence.slice(1).replace(/[.!?]?$/,'—and managers no longer get to call that a surprise.');
+  }).join(' ');
+  const sections=(overview.sections||[]).map(section=>{
+    if(section.blocks?.length){const blocks=section.blocks.map(b=>({...b,paragraphs:(b.paragraphs||[]).map(rewrite)}));return{...section,blocks,paragraphs:blocks.flatMap(b=>b.paragraphs||[])}}
+    return{...section,paragraphs:(section.paragraphs||[]).map(rewrite)};
+  });
+  return{...overview,sections};
 }
 function evolveForwardOverview(overview,previousOverview,week,salt,entities=[]){
   if(!overview)return overview;
@@ -336,6 +421,172 @@ function evolveForwardOverview(overview,previousOverview,week,salt,entities=[]){
     return{...take,title:evolveParagraph(title,rid,['hot-title',i].join('|')),take:evolveParagraph(body,rid,['hot-take',i].join('|'))};
   });
   return{...overview,sections,hot_takes};
+}
+// Refresh recurrent Week 2-derived idioms against live forward-week facts.
+// This is deliberately confined to Week 3+; preloaded editions remain untouched.
+export function polishForwardTeamCopy(teams,week,salt){
+ const byRoster=new Map((teams||[]).map(t=>[String(t.roster_id),t]));
+ const pick=(team,key,options)=>options[evolutionHash([week,salt,team.roster_id,key].join('|'))%options.length];
+ return (teams||[]).map(t=>{
+  const article=t?.inquirer_article;if(!article)return t;
+  const team=String(t.team_name||'the team'),record=forwardRecordText(t),
+    top=(t.starter_details||[])[0],weak=(t.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0],
+    next=String(t.next_opponent_name||'the next opponent'),opponent=byRoster.get(String(t.next_opponent_roster_id)),
+    partial=[{name:team,points:Number(t.next_projected),coverage:Number(t.next_projection_coverage)},
+      {name:next,points:Number(t.next_opponent_projected),coverage:Number(opponent?.next_projection_coverage)}]
+      .filter(x=>Number.isFinite(x.points)&&x.points<15&&Number.isFinite(x.coverage)&&x.coverage<6);
+  const rewrite=(value,kind='')=>{
+   let s=String(value||'');
+   // Numeric adjective starts with a consonant sound for nine (e.g. a 9.5-point week).
+   // Apply before other copy transformations so all forward weeks share the repair.
+   s=s.replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ').replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an ');
+   if(kind==='outlook'&&partial.length&&/\b(?:projection|forecast|pregame screenshot|favorite|Week \d+ board|model)\b/i.test(s)){
+    const gaps=partial.map(x=>x.name+' ('+x.coverage+' projected starters)').join(' and ');
+    // Rotate short factual clauses by roster identity. Shared notices must not
+    // become the same long cross-team newspaper sentence.
+    const variant=Math.abs(Number(t.roster_id)||0)%16;
+    const lead=[
+      'This forecast carries a warning:',
+      'Treat next Sunday’s spread skeptically:',
+      'The projection math needs context:',
+      'Here is the missing piece:'
+    ][variant%4];
+    const evidence=[
+      gaps+' have gaps in starter projections;',
+      gaps+' do not represent full-lineup estimates;',
+      'coverage remains thin for '+gaps+';',
+      gaps+' have not reached a complete forecast;'
+    ][Math.floor(variant/4)%4];
+    const consequence=[
+      'calling a favorite now would be a guess.',
+      'the press box can wait for better numbers.',
+      'rival managers should save their victory laps.',
+      'not every decimal deserves a headline.'
+    ][(variant+Math.floor(variant/4))%4];
+    return lead+' '+evidence+' '+consequence;
+   }
+   s=s.replace(/\bthe first the last two weeks\b/gi,'the last two weeks')
+    .replace(/\bare 2-0\b/gi,'have won their last two games')
+    .replace(/\bare 0-2\b/gi,'have lost their last two games')
+    .replace(/\bcrowd is 0-2\b/gi,'crowd has watched two straight losses');
+   // Remove phrase banks that only changed a team/player name. Freshness is
+   // measured across the whole 32-team issue, not within one reporter desk.
+   s=s.replace(/the next Sunday changes the season sample; it does not simply photocopy the first conclusion\./gi,
+     pick(t,'season-sample',[`Week ${week} changes the ledger; the manager still owns ${forwardOne(t.points)} points.`,
+       `That ${forwardOne(t.points)}-point Sunday must be judged alongside the previous result, not mistaken for the whole season.`,
+       `The season record is ${record}; the next game against ${next} will test which part is repeatable.`,
+       `One more score belongs in the archive, and ${team} cannot edit the earlier one out.`]));
+   s=s.replace(/same stars are fine; same emergency dependence is not\./gi,
+     pick(t,'emergency-dependence',[`Against ${next}, ${team} needs more than one rescuer.`,
+       `The next opponent will happily let the rest of the lineup disappear again.`,
+       `A single star can win an argument; the supporting cast has to win a matchup.`,
+       `Management should ask the quiet starters why the rescue shift keeps falling to somebody else.`]));
+   s=s.replace(/that headliner shift made the second scoreboard louder\./gi,
+     pick(t,'headliner-shift',[`The week-to-week scoring jump is real; the next defense will have the scouting report.`,
+       `The new total raised expectations, a punishment reserved for players who actually produce.`,
+       `The box score finally gave the highlight tape a number worth printing.`,
+       `Somebody in the rival chat just retired last week's joke.`]));
+   s=s.replace(/the third score turned the Week \d+ volume up\./gi,
+     pick(t,'third-score',[`The supporting points matter because the matchup is scored beyond its biggest star.`,
+       `That swing improved the lineup's floor, which is more useful than another solo highlight.`,
+       `The difference belongs on the manager's Week ${week} report card.`,
+       `Those points change the matchup without requiring a podium for every starter.`]));
+   s=s.replace(/kicked the door in and ([^.]+?) actually followed through it\./gi,
+     pick(t,'door',[`gave ${team} a decisive start, and the ${forwardOne(t.points)}-point total backed it up.`,
+       `made the opposing lineup pay attention; ${team} supplied the rest of the argument.`,
+       `put a real number behind the week's bravado.`,
+       `did the headline work while ${team} handled the final score.`]));
+   s=s.replace(/kicked the door in and the rest of ([^.]+?) still managed to lose the building\./gi,
+     pick(t,'door-loss',[`gave ${team} a score to be proud of, only for the final margin to ruin the party.`,
+       `did enough to deserve a win while the rest of the lineup filed its excuses.`,
+       `put the opposition under pressure but did not get enough company on the scoring sheet.`,
+       `left ${team} with one bright line and a much less flattering final score.`]));
+   s=s.replace(/kicked the door in and the ([^.]+?) made sure the rest of the lineup followed him through it\./gi,
+     pick(t,'door-support',[`set the tone, and ${team} finished the argument with ${forwardOne(t.points)} points.`,
+       `made the first statement; the supporting starters made it count.`,
+       `put up the headline number while the roster supplied enough answers behind it.`,
+       `earned top billing without requiring the rest of the lineup to disappear.`]));
+   s=s.replace(/kicked the door in and [^.]+\./gi,
+     pick(t,'door-any',[`made the scorer's contribution impossible to ignore in a ${forwardOne(t.points)}-point team result.`,
+       `supplied a headline that the rest of ${team} had to earn.`,
+       `made the difference visible on the final score, for better or worse.`,
+       `gave the manager one answer and several more lineup questions.`]));
+   s=s.replace(/kept the middle of the scoreboard from going dark\./gi,
+     pick(t,'middle-score',[`added points the manager could not afford to lose.`,
+       `kept the supporting cast relevant to the result.`,
+       `made the score less dependent on one star.`,
+       `made the quieter lineup slots look a little less guilty.`]));
+   s=s.replace(/followed its opening victory with a loss to /gi,pick(t,'reversal',[
+    'could not follow last week’s win with another against ',
+    'carried a victory into this matchup but fell to ',
+    'won the previous week, then came up short against ',
+    'saw its winning momentum end against '
+   ]));
+   s=s.replace(/Rivals can enjoy the reversal; management has to explain the missing points\./g,pick(t,'reversal-read',[
+    'The drop in production is the manager’s immediate problem, regardless of how loudly the rivals celebrate.',
+    'That swing demands a closer look at the starters, especially '+String(weak?.name||'the lowest scorer')+' at '+forwardOne(weak?.points)+' points.',
+    'A week ago the result offered cover; now the '+forwardOne(t.points)+'-point total needs explaining.',
+    'The previous victory does not erase Sunday’s weaker output, and '+next+' is already on the schedule.'
+   ]));
+   s=s.replace(/The ([A-Z][A-Z ]+) picture has ([^.]+?) in the middle of a live race\./g,(_,division)=>pick(t,'division-open',[
+    team+' sits in a competitive '+division+' picture at '+record+'.',
+    'The '+division+' standings leave '+team+' with a '+record+' record and plenty to settle.',
+    'At '+record+', '+team+' has immediate work in '+division+'.',
+    division+' remains tightly contested around '+team+' ('+record+').',
+    'A '+record+' mark puts '+team+' in the thick of the '+division+' argument.',
+    'There is no comfortable lane for '+team+' in '+division+' at '+record+'.'
+   ]));
+   s=s.replace(/The division includes /g,pick(t,'division-list',[
+    'The other clubs in that division are ','The teams across the table are ',
+    'That race also features ','The direct competition includes ',
+    'Sharing the same division are ','Its nearby rivals on the standings page are '
+   ]));
+   s=s.replace(/The rivals are /g,pick(t,'division-rivals',[
+    'The immediate challengers are ','The teams to track are ','That group consists of ',
+    'Across the division sit ','The standings also involve ','The opposition in the group includes '
+   ]));
+   s=s.replace(/one Sunday can reorder the whole group\./gi,pick(t,'division-close',[
+    'a head-to-head result could change the order quickly.',
+    'the next standings update may have a very different shape.',
+    'no club has earned a permanent place in that order.',
+    'each divisional contest now changes two teams’ arguments at once.',
+    'the schedule still offers plenty of ways to move.',
+    'that makes the next matchup a meaningful standings test.'
+   ]));
+   s=s.replace(/A silent box score from the new arrivals makes the actual starters responsible for Sunday’s result\./g,pick(t,'inactive-adds',[
+    'The additions were not in the scoring lineup; the '+forwardOne(t.points)+' points belong to the players who started.',
+    'None of those newcomers supplied Sunday’s points. The starters, led by '+String(top?.name||'the top scorer')+', own this result.',
+    'Those transactions changed the roster, but not the lineup responsible for the final score.',
+    'A new name on the wire is not a point on the board; Sunday’s starters still have to answer for '+forwardOne(t.points)+'.',
+    'The acquisitions stayed outside the starting group, leaving the actual lineup to explain the margin.',
+    'Until an addition enters the lineup, the scoring responsibility remains with the players already starting.'
+   ]));
+   s=s.replace(/Rivals can skip the transaction joke and look at /g,pick(t,'quiet-wire',[
+    'Without a completed move to blame, the scrutiny falls on ',
+    'The roster wire offers no diversion from ',
+    'The more useful criticism starts with ',
+    'A quiet transaction log puts the focus directly on ',
+    'Instead of inventing a trade controversy, study ',
+    'The rival chat has an easier target in '
+   ]));
+   s=s.replace(/Fix the part everybody saw and rivals have to find new material\./g,pick(t,'repair-close',[
+    'The next lineup against '+next+' will show whether management addressed that weakness.',
+    'A response begins with better scoring from the quietest starter, not another explanation.',
+    'Sunday identified the problem; the next opponent will test the correction.',
+    'Improvement needs to appear in the box score before the rival jokes lose their force.',
+    'The only persuasive answer is a lineup that makes the same complaint obsolete.',
+    'The next result has to offer stronger evidence than this scoring line.'
+   ]));
+   return s;
+  };
+  const headline=String(article.headline||'')
+    .replace(/\bBanks Another Sunday and Raises the Standard\b/g,'Bank Another Sunday and Raise the Standard')
+    .replace(/\bExposed Its Own Weak Spot\b/g,'Exposed Their Own Weak Spot')
+    .replace(/\bMade Week (\d+) Much Funnier for Its Rivals\b/g,'Made Week $1 Much Funnier for Their Rivals')
+    .replace(/\bMake this Sunday\b/g,'Make This Sunday');
+  const sections=(article.sections||[]).map(section=>({...section,paragraphs:(section.paragraphs||[]).map(p=>rewrite(p,section.kind))}));
+  return {...t,inquirer_article:{...article,headline,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
+ });
 }
 export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,weekClassification=null,variationSalt=0}={}){
   season=Number(season);week=Number(week);variationSalt=Number(variationSalt)||0;
@@ -374,7 +625,7 @@ function w2Sentence(body){
 }
 function w2S(t,r,key,body){return w2TeamGrammar(t,w2Sentence(body))}
 function w2Natural(xs){const a=(xs||[]).filter(Boolean);return a.length<=1?(a[0]||""):a.length===2?a[0]+" and "+a[1]:a.slice(0,-1).join(", ")+", and "+a.at(-1)}
-function w2Stat(p){const real=String(p?.real_stat_line||"").trim();return real?real.replaceAll(" • ",", "):""}
+function w2Stat(p){const real=String(p?.real_stat_line||"").trim();return real?real.replaceAll(" • ",", ").replace(/\b1 carries\b/g,'1 carry').replace(/\b1 rush yds\b/g,'1 rush yd'):""}
 function w2StatClause(p){const stat=w2Stat(p);return stat?"; "+w2StatKind(p)+": "+stat:""}
 function w2PrevPlayer(prev,id){return (prev?.starter_details||[]).find(p=>String(p?.id)===String(id))||null}
 function w2SlotLabel(slot){return String(slot||"lineup spot").replaceAll("_"," ").toLowerCase().replace(/^idp /,"IDP ")}
@@ -423,6 +674,11 @@ function w2TeamGrammar(t,body){
       .replace(new RegExp(e+" banks\\b","g"),name+" bank")
       .replace(new RegExp(e+" looks\\b","g"),name+" look")
       .replace(new RegExp(e+" reaches\\b","g"),name+" reach")
+      .replace(new RegExp(e+" brings\\b","g"),name+" bring")
+      .replace(new RegExp(e+" enters\\b","g"),name+" enter")
+      .replace(new RegExp(e+" carries\\b","g"),name+" carry")
+      .replace(new RegExp(e+" meets\\b","g"),name+" meet")
+      .replace(new RegExp(e+" holds\\b","g"),name+" hold")
       .replace(new RegExp(e+"’s\\b","g"),name+"’")
       .replace(new RegExp(e+"'s\\b","g"),name+"’");
   }
@@ -643,26 +899,26 @@ function w2BenchRead(t,r,miss,gap,won,margin){
   const facts=[
     reserve+" managed "+points+" more than "+starter+", who got the "+slot+" start.",
     starter+" kept the "+slot+" job while "+reserve+" scored "+points+" extra points from the bench.",
-    "At "+slot+", the point difference favored reserve "+reserve+" over starter "+starter+" by "+points+".",
+    reserve+"'s "+points+"-point edge over "+starter+" makes that "+slot+" choice sting.",
     "Management chose "+starter+" for "+slot+"; "+reserve+" answered with "+points+" more points.",
     "The missed "+slot+" call: "+reserve+" beat "+starter+" by "+points+".",
     reserve+" supplied "+points+" more than "+starter+" without getting the "+slot+" start.",
     "A "+points+"-point advantage for "+reserve+" over starter "+starter+" did "+team+" no good from the sideline.",
     starter+" got the nod at "+slot+"; "+reserve+"'s extra "+points+" points stayed unused.",
-    "There was a "+points+"-point gap between bench option "+reserve+" and "+slot+" starter "+starter+".",
+    reserve+" beat "+starter+" by "+points+". "+reserve+" stayed on the bench.",
     "One roster choice aged poorly: "+starter+" started over "+reserve+", whose return was "+points+" points better.",
-    "The "+slot+" selection left "+points+" points on the table, with "+reserve+" behind "+starter+".",
+    reserve+" scored "+points+" more than "+starter+" from the bench while "+slot+" was occupied.",
     "Reserve "+reserve+" finished "+points+" ahead of "+starter+" despite the latter occupying "+slot+"."
   ];
   const judgment=won?[
-    "A win covers the bruise; it does not make the lineup decision intelligent.",
-    "Bank the victory, then ask why the better score was wearing a headset.",
-    "The scoreline forgave the manager. The bench has not.",
+    team+" keeps the win, but "+reserve+"'s "+points+"-point advantage over "+starter+" will still come up in lineup review.",
+    "The result belongs to "+team+"; the unused "+reserve+" points belong in the manager's notes.",
+    reserve+" outscored "+starter+" without even taking the "+slot+" start.",
     "Nobody is returning the win, but somebody should review that lineup card."
   ]:[
-    "With a "+marginText+"-point defeat already booked, this mistake deserves an explanation.",
+    reserve+" outscored "+starter+" during a "+marginText+"-point loss. That hurts.",
     "Those unused points will be much louder at the next lineup meeting.",
-    "The manager cannot appeal the final score, only the decision that wasted production.",
+    starter+" started at "+slot+". "+reserve+" beat that choice by "+points+".",
     "A losing week is a rough time to discover the bench had a better answer."
   ];
   return facts[choice]+" "+judgment[w2Hash(team+"|bench-verdict")%judgment.length];
@@ -677,11 +933,13 @@ function w2StatKind(p){
 function w2LedeShape(t,r,won,margin,opp,top){
   const a=w2Alias(t),star=top?.[0]?.name||t.team_name,close=margin<=6,wide=margin>=20,k=w2Hash(String(t.roster_id)+"|lede|"+String(r?.id||""))%6,team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(opp);
   const second=top?.[1],support=Number(second?.points)||0;
+  if(!won&&Number(top?.[0]?.points||0)===0&&Number(t.points||0)===0)
+    return team+" scored exactly 0.0, including 0.0 from "+star+". It takes commitment to submit a whole starting lineup and bring home absolutely nothing; "+foe+" only needed to show up on the scoreboard.";
   if(won){
     const rows=[
       close?star+" supplied the biggest "+a.mascot+" score, and a "+w2One(margin)+"-point finish means the supporting points behind him were every bit as important.":star+" set the pace, while "+team+" got enough additional scoring to finish ahead of "+foe+" without relying on one line alone.",
       wide?team+" won by "+w2One(margin)+" because the top of the lineup produced and the rest did not leave much for "+foe+" to erase on the scoreboard.":team+" finished ahead of "+foe+" with "+w2One(support)+" points from its second scorer, a healthier shape than a one-player carry.",
-      "The "+a.mascot+" headline belongs to "+star+", but the repeatable part is whether the production behind him keeps showing up. Week 2 had enough of it to beat "+foe+".",
+      star+" earned the "+a.mascot+" headline; "+(second?.name||"the support cast")+" supplied the part that made "+foe+" reachable.",
       close?"A "+w2One(margin)+"-point win makes every useful score count. "+team+" got enough behind "+star+" that no single quiet slot decided the result.":"The final score favored "+team+" because the roster produced in more than one place instead of asking "+star+" to cover every gap.",
       ([
         star+" was the loudest "+a.mascot+" reason for the win, but the supporting points behind him are what kept the result from becoming a one-player carry.",
@@ -689,15 +947,15 @@ function w2LedeShape(t,r,won,margin,opp,top){
         "The "+a.mascot+" got the star turn from "+star+" and enough production elsewhere to turn that performance into a win.",
         star+" led the "+a.mascot+" scoring, while the rest of the lineup supplied enough points to keep the result from depending on one name."
       ])[w2Hash(team+"|lede-depth")%4],
-      "The box score says "+star+" led it. The result says the points behind him were sufficient for "+team+" to finish ahead of "+foe+"."
+      star+" led "+team+", with "+(second?.name||"another starter")+" adding what "+team+" needed against "+foe+"."
     ];return rows[k];
   }
   const rows=[
     close?foe+" won by only "+w2One(margin)+", which puts ordinary lineup decisions and missing secondary points under a microscope for "+team+".":team+" lost by "+w2One(margin)+", and the gap came from too little scoring beyond "+star+", not from one mysterious football adjustment.",
     wide?"A "+w2One(margin)+"-point loss means "+team+" needed help in several lineup spots; "+star+" alone was nowhere near enough to match "+foe+".":team+" got a usable top score from "+star+", but "+foe+" finished with more total production across the matchup.",
     "The "+a.mascot+" got something from "+star+", but the lineup behind him did not produce enough to reach "+foe+"’s total.",
-    close?"This was close enough to make every bench and lineup choice hurt. "+team+" finished "+w2One(margin)+" short, so the missing support behind "+star+" is concrete rather than theoretical.":"The loss was not one strange bounce; "+foe+" simply finished with more usable fantasy points while "+team+" waited for secondary scoring that never arrived.",
-    team+" lost to "+foe+" by "+w2One(margin)+". On that evidence, the supporting lineup—not the opponent’s tactical genius—gets the uncomfortable attention.",
+    close?"This was close enough to make every bench and lineup choice hurt. "+team+" finished "+w2One(margin)+" short, so the missing support behind "+star+" is concrete rather than theoretical.":star+" gave "+team+" a focal point, but the "+w2One(margin)+"-point gap to "+foe+" survived the best individual performance.",
+    team+" lost to "+foe+" by "+w2One(margin)+". "+star+" supplied the anchor, but "+(second?.name||"the next starter")+" could not turn the result.",
     star+" gave the "+a.mascot+" something to build around, but the rest of the lineup did not supply enough points to overcome "+foe+"."
   ];return rows[k];
 }
@@ -750,7 +1008,16 @@ function w2HistoricalColor(p,r,t=null,slot=0,ref=""){
     ],
     "mack-hollis":up?[
       name+" averaged "+old+" last season; "+now+" in Week 2 did not beat that number so much as kick the door off it.",
-      "The "+year+" baseline for "+name+" was "+old+"; Week 2 showed up at "+now+" with a megaphone and no indoor voice.",
+      ([
+        name+" put up "+now+" where the "+year+" baseline had been "+old+".",
+        "The old figure for "+name+" was "+old+" in "+year+". Sunday brought "+now+".",
+        name+"'s "+now+" barely resembles the "+old+" average from "+year+".",
+        "Put "+old+" beside "+now+" for "+name+". That is the difference from "+year+".",
+        "A "+year+" average of "+old+" did not predict "+name+"'s "+now+".",
+        name+" moved from a "+old+" benchmark in "+year+" to "+now+" this week.",
+        "Last year "+name+" was a "+old+"-point player. The new mark is "+now+".",
+        name+" turned the "+year+" baseline of "+old+" into a "+now+"-point Sunday."
+       ])[w2Hash(String(p?.id||name)+"|historical-angle")%8],
       name+" lived around "+old+" a game in "+year+"; Sunday’s "+now+" moved the number to a different ZIP code.",
       "Last season gave "+name+" a "+old+"-point average; Week 2 gave us "+now+" and a perfectly good reason to use the big headline.",
       "Put "+old+" next to "+name+" as the "+year+" norm; now put "+now+" next to Week 2 and try pretending nothing changed.",
@@ -911,7 +1178,7 @@ function w2PlayerTrajectoryContext(t,r,p,pp,slot=0,ref=""){
         "Two Sundays now have "+who+" at "+avg+" per game after "+prior+" last season, enough evidence to treat the early jump as more than one hot box score.",
         who+" is averaging "+avg+" through two weeks after "+prior+" last year; paired with the larger opportunity, the rise has earned another week of serious attention.",
         "The two-week number is "+avg+" for "+who+" versus "+prior+" last season, which gives the early role growth something sturdier than one Sunday underneath it.",
-        "At "+avg+" per game across both weeks after "+prior+" last year, "+who+" has moved beyond the one-game-flier stage without pretending September has settled the season."
+        "At "+avg+" per game across both weeks after "+prior+" last year, "+who+" has moved beyond the one-game-flier stage without pretending the season is settled."
       ],
       "tess-delaney":[
         "Two Sundays at "+avg+" per game after "+prior+" last season give "+who+" enough substance that the larger role no longer looks like decorative optimism.",
@@ -920,7 +1187,7 @@ function w2PlayerTrajectoryContext(t,r,p,pp,slot=0,ref=""){
         "Across both weeks, "+who+" is at "+avg+" after "+prior+" last year, which is enough runway to treat the bigger role as something more than one flashy course."
       ],
       "mack-hollis":[
-        "Two weeks at "+avg+" per game after "+prior+" last season give "+who+" actual signal, not one Sunday with the volume knob ripped off.",
+        who+" has averaged "+avg+" over the recent two games, against "+prior+" last season. That is a change worth tracking.",
         who+" is sitting at "+avg+" through two games after "+prior+" last year; with the workload up too, the early surge has real voltage behind it.",
         "The two-week average is "+avg+" for "+who+" versus "+prior+" last season, enough repeated noise to stop treating the jump like one lucky blast.",
         "Both Sundays have pushed "+who+" to "+avg+" per game after "+prior+" last year, which makes the larger role worth tracking instead of screaming about one box score."
@@ -1253,6 +1520,8 @@ function w2DivisionBoardTake(flags,reporter,subject){
       titleRows=rows.filter(t=>Number.isFinite(Number(t?.mida_outlook?.title))&&Number(t.mida_outlook.title)>0).slice().sort((a,b)=>Number(b.mida_outlook.title)-Number(a.mida_outlook.title)),
       titleFav=titleRows[0]||null,titlePct=titleFav?w2MidaPositivePct(titleFav.mida_outlook.title):null,
       leadOne=leaders.length===1?w2DisplayTeam(leaders[0].team_name):null,
+      leadSubject=leadOne||leaderNames,
+      leadVerb=(singular,plural)=>leadOne?w2TeamVerb(leadOne,singular,plural):plural,
       divKey=String(y.d).toUpperCase(),
       midaPhrases={
         "AFC EAST":midaFav&&midaPct?(" The probability sheet prefers "+w2DisplayTeam(midaFav.team_name)+" at "+midaPct+" for the division."):"",
@@ -1282,18 +1551,18 @@ function w2DivisionBoardTake(flags,reporter,subject){
       case "AFC EAST":
         context=leaders.length===1
           ?leadOne+" "+w2TeamVerb(leadOne,"owns","own")+" the early edge at "+y.record+", but "+chasePair+" "+chaseVerb+" the chase tight enough that nobody gets a velvet rope yet."+midaNote+titleNote
-          :leaderNames+" share the top at "+y.record+", while "+chasePair+" is close enough to turn one ordinary Sunday into a three-team argument."+midaNote+titleNote;
+          :leaderNames+" share the top at "+y.record+", while "+chasePair+" "+chaseBe+" close enough to turn one ordinary Sunday into a three-team argument."+midaNote+titleNote;
         break;
       case "AFC NORTH":
         context=leaders.length>1
           ?leaderNames+" are level at "+y.record+", which means neither has bought even a week of separation. "+closestName+" ("+closestRec+") is the first team waiting for one of them to blink."+midaNote+titleNote
-          :leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the cleanest record at "+y.record+", but "+chasePair+" keeps this from becoming a solo act."+midaNote+titleNote;
+          :leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the cleanest record at "+y.record+", but "+chasePair+" "+chaseVerb+" this from becoming a solo act."+midaNote+titleNote;
         break;
       case "AFC SOUTH":
-        context=leadOne+" "+w2TeamVerb(leadOne,"sits","sit")+" on "+y.record+" while "+chasePair+" "+(chasePlural?"form":"forms")+" the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
+        context=leadSubject+" "+leadVerb("sits","sit")+" on "+y.record+" while "+chasePair+" "+(chasePlural?"form":"forms")+" the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
         break;
       case "AFC WEST":
-        context=leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the best record at "+y.record+"; "+chasePair+" "+chaseBe+" the immediate chase, and the bottom of the division is already spending September trying not to turn two losses into a season-long tax."+midaNote+titleNote;
+        context=leadSubject+" "+leadVerb("has","have")+" the best record at "+y.record+"; "+chasePair+" "+chaseBe+" the immediate chase, and the bottom of the division is already trying not to let two losses become a season-long tax."+midaNote+titleNote;
         break;
       case "NFC EAST":
         context=leaders.length>1
@@ -1303,13 +1572,13 @@ function w2DivisionBoardTake(flags,reporter,subject){
       case "NFC NORTH":
         context=leaders.length>=3
           ?leaderNames+" are all "+y.record+", so the standings currently resemble three people trying to leave an elevator at once. "+closestName+" ("+closestRec+") is not far enough away to create meaningful separation."+midaNote+titleNote
-          :(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"holds","hold"):leaderNames+" hold")+" the top line at "+y.record+", but "+chasePair+" keeps the race packed tightly enough that nobody can hide behind September."+midaNote+titleNote;
+          :(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"holds","hold"):leaderNames+" hold")+" the top line at "+y.record+", but "+chasePair+" "+chaseVerb+" the race packed tightly enough that nobody can hide behind the calendar."+midaNote+titleNote;
         break;
       case "NFC SOUTH":
-        context=leadOne+" "+w2TeamVerb(leadOne,"owns","own")+" "+y.record+", with "+chasePair+" providing the nearest pressure. The gap is real but thin; one stumble turns the leader from front-runner into participant again."+midaNote+titleNote;
+        context=leadSubject+" "+leadVerb("owns","own")+" "+y.record+", with "+chasePair+" providing the nearest pressure. The gap is real but thin; one stumble turns the leader from front-runner into participant again."+midaNote+titleNote;
         break;
       case "NFC WEST":
-        context=leadOne+" "+w2TeamVerb(leadOne,"has","have")+" banked "+y.record+", while "+chasePair+" "+chaseVerb+" the chase from becoming a postcard. The leader has daylight, not distance."+midaNote+titleNote;
+        context=leadSubject+" "+leadVerb("has","have")+" banked "+y.record+", while "+chasePair+" "+chaseVerb+" the chase from becoming a postcard. The leader has daylight, not distance."+midaNote+titleNote;
         break;
       default:
         context=(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"leads","lead"):leaderNames+" lead")+" at "+y.record+" with "+chasePair+" nearest."+midaNote+titleNote;
@@ -1320,7 +1589,7 @@ function w2DivisionBoardTake(flags,reporter,subject){
 }
 function w2HotTrend(t,r,weak,weakPrev){
   const a=w2Alias(t),cur=Number(weak.points)||0,old=Number(weakPrev.points)||0,delta=cur-old,k=w2Hash(String(t.roster_id)+"|hot|"+String(r?.id||""))%6;
-  if(cur<3&&Math.abs(delta)<0.05)return weak.name+" scored "+w2One(cur)+" in both Week 1 and Week 2. For "+a.mascot+", that is the same empty production twice, not progress.";
+  if(cur<3&&Math.abs(delta)<0.05)return weak.name+" scored "+w2One(cur)+" in both Week 1 and Week 2. "+a.mascot+" need a different answer from "+weak.name+".";
   if(cur<3&&Math.abs(delta)<4){
     const rows=[
       weak.name+" went from "+w2One(old)+" in Week 1 to "+w2One(cur)+" in Week 2. Calling that progress would be generous; the "+a.mascot+" still need useful points from the spot.",
@@ -1375,14 +1644,14 @@ function w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders){
   const a=w2Alias(t),div=String(t.division_context?.division_name||"the division"),peers=w2Natural(divisionPeerLine),k=w2Hash(String(t.roster_id)+"|division|"+String(r?.id||""))%8,lead=selfLead&&otherLeaders.length;
   const leadNames=w2Natural([t.team_name,...otherLeaders.map(x=>x.team_name)]);
   const rows=[
-    (lead?"At the top of "+div+", "+leadNames+" are tied. ":"In "+div+", "+t.team_name+" is still fighting for position. ")+(peers?"The other three are "+peers+", so Week 3 can move more than one line at once.":"Week 3 can move the order immediately."),
-    (lead?leadNames+" are tied for the "+div+" lead. ":"The "+div+" standings already put pressure on "+t.team_name+". ")+(peers?"Around the "+a.mascot+" sit "+peers+"; there is nowhere to hide a September result.":"The next result has direct standings weight."),
-    (lead?"The "+div+" has no solo leader because "+leadNames+" are level. ":"The "+a.mascot+" are not alone in a crowded "+div+" race. ")+(peers?"Around "+a.mascot+", the rest of the division reads "+peers+", making Week 3 an actual standings swing.":"Week 3 can create separation."),
+    (lead?"At the top of "+div+", "+leadNames+" are tied. ":"In "+div+", "+t.team_name+" is still fighting for position. ")+(peers?"The other contenders are "+peers+". "+a.mascot+" will notice.":"Week 3 can move the order immediately."),
+    (lead?leadNames+" are tied for the "+div+" lead. ":"The "+div+" standings give "+a.mascot+" no reason to relax. ")+(peers?"The "+div+" chase includes "+peers+". "+a.mascot+" have to make their own case next.":"The next result has direct standings weight."),
+    (lead?"The "+div+" has no solo leader because "+leadNames+" are level. ":"The "+a.mascot+" are not alone in a crowded "+div+" race. ")+(peers?"Within "+div+", the immediate competition is "+peers+". No one gets a free pass.":"Week 3 can create separation."),
     (lead?t.team_name+" is tied atop "+div+" with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" race around "+t.team_name+" is already compressed. ")+(peers?"The rivals are "+peers+"; one Sunday can reorder the whole group.":"One Sunday can reorder the group."),
     (lead?"At the top of "+div+", "+leadNames+" are tied. ":"The "+a.mascot+" enter Week 3 with division leverage still available. ")+(peers?"Behind and around them are "+peers+", so every clean result carries immediate value.":"Every clean result carries immediate value."),
-    (lead?leadNames+" are tied for first in "+div+". ":"Nobody around "+t.team_name+" has made "+div+" comfortable yet. ")+(peers?"For "+a.mascot+", the division board also includes "+peers+", and Week 3 gets first crack at breaking that cluster.":"Week 3 gets first crack at breaking the cluster."),
-    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For the "+a.mascot+", the other division names are "+peers+"; their next result belongs to the race, not an isolated September box score.":"The next result is part of the race."),
-    (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"The relevant division opponents are "+peers+"; "+t.team_name+" cannot afford to treat this matchup as an isolated result.":"That is enough context to make Week 3 matter immediately.")
+    (lead?leadNames+" are tied for first in "+div+". ":"Nobody around "+t.team_name+" has made "+div+" comfortable yet. ")+(peers?a.mascot+" share "+div+" with "+peers+". Next comes the test.":"Week 3 gets first crack at breaking the cluster."),
+    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For the "+a.mascot+", the other division names are "+peers+"; the "+div+" schedule offers no free results.":"The next result is part of the race."),
+    (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"The division includes "+peers+". "+a.mascot+" need this one.":"That is enough context to make Week 3 matter immediately.")
   ];
   return rows[k];
 }
@@ -1425,8 +1694,13 @@ function w2DivisionalOutlook(t,r,next,nrecord,ndiv){
     v=w2Cohort(t)%4,article=/^[AEIOU]/i.test(ndiv)?"an":"a",
     mida=ownM&&oppM?("MIDA has the division race at "+ownM+" for "+team+" and "+oppM+" for "+next+". "):"",
     leverage=lead
-      ?team+" can make a direct "+ndiv+" rival spend the next week chasing the same division lead."
-      :team+" can take a head-to-head bite out of the "+ndiv+" race instead of hoping another result moves the same playoff route.";
+      ?team+" can make "+next+" rethink the "+ndiv+" chase after their head-to-head result."
+      :({
+        "walter-mercer":team+" can improve its "+ndiv+" position directly against "+next+".",
+        "tess-delaney":"I would rather see "+team+" settle the "+ndiv+" argument on the field against "+next+".",
+        "mack-hollis":"Put "+team+" opposite "+next+" in the "+ndiv+" spotlight. That is the game.",
+        "nora-voss":"The "+ndiv+" rivals will be watching "+team+" against "+next+". They have a reason."
+       }[rid]||team+" gets a direct division test against "+next+".");
   const rows={
     "walter-mercer":[
       "Week 3 brings "+article+" "+ndiv+" head-to-head: "+team+" ("+own+") against "+next+" ("+nrecord+"). These games are scarce, and in this league the division winner owns a playoff berth, so "+leverage+" "+mida+"That is real leverage, not just a louder label on the schedule.",
@@ -1437,17 +1711,17 @@ function w2DivisionalOutlook(t,r,next,nrecord,ndiv){
     "tess-delaney":[
       next+" is not merely the next reservation; it is a "+ndiv+" table fight with "+team+". There are only so many head-to-head chances to move a direct rival, and the division winner gets a playoff seat automatically. "+mida+"This is one of the appointments where stealing the chair matters.",
       "Week 3 seats "+team+" and "+next+" at the same "+ndiv+" table. A division win helps the "+a.mascot+" while handing the rival the opposite result, and the eventual division crown comes with a playoff invitation. "+mida+"That is a considerably more expensive dinner than the schedule usually serves.",
-      "The room should circle "+next+" for one reason above all: "+ndiv+" is their shared route to an automatic playoff berth. Head-to-head chances are limited, so "+leverage+" "+mida+"Nobody should confuse that with decorative September drama.",
+      "The room should circle "+next+" for one reason above all: "+ndiv+" is their shared route to an automatic playoff berth. Head-to-head chances are limited, so "+leverage+" "+mida+"Nobody should confuse that with decorative schedule drama.",
       team+" gets a direct "+ndiv+" rival in "+next+". The division title buys a playoff seat, which means one result can improve the "+a.mascot+" position and damage the rival’s at the same time. "+mida+"That is the kind of reservation worth wearing the good suit for."
     ],
     "mack-hollis":[
-      "Week 3 is "+team+" versus "+next+" inside "+ndiv+", so throw the 'just one game' sign in the trash. Division shots are limited, the division winner gets a playoff berth, and one head-to-head result hits both teams at once. "+mida+leverage,
+      "Week 3 is "+team+" versus "+next+" inside "+ndiv+". The 'just one game' excuse can leave the building: winning "+ndiv+" sends "+team+" to the playoffs, and beating "+next+" takes a swing at both sides of that particular argument. "+mida+leverage,
       next+" is a direct "+ndiv+" rival, which makes Week 3 a two-sided punch: "+team+" can add a win and hand the same race a loss. The division crown punches a playoff ticket in this league. "+mida+"That is why this one gets the megaphone.",
-      "The schedule gives "+team+" "+article+" "+ndiv+" game against "+next+". There are not many direct swings like this, and the prize for winning the division is a playoff berth. "+mida+"Win it and the "+a.mascot+" are not just 1-0 better; a rival is 0-1 worse in the exact same race.",
-      team+" and "+next+" are fighting for the same "+ndiv+" door, and that door opens straight into the playoffs for the division winner. Head-to-head chances are limited. "+mida+"If the "+a.mascot+" want leverage, this is where they stop asking politely."
+      "The schedule gives "+team+" "+article+" "+ndiv+" game against "+next+". There are not many direct swings like this, and the prize for winning the division is a playoff berth. "+mida+"Beat "+next+" and the "+a.mascot+" bank a win while handing a division rival a loss; the standings rarely offer such a convenient two-for-one insult.",
+      team+" and "+next+" are fighting for the same "+ndiv+" door, and that door opens straight into the playoffs for the division winner. Head-to-head chances are limited. "+mida+"The "+a.mascot+" can stop begging the schedule for a favor by beating "+next+" in the game that actually controls their division arithmetic."
     ],
     "nora-voss":[
-      next+" shares "+ndiv+" with "+team+", which means the rival chat finally gets a game with actual teeth. A division result helps one side and hurts the other in the same race, and the division winner gets a playoff berth. "+mida+"That is much harder to laugh away than a random September loss.",
+      next+" shares "+ndiv+" with "+team+", which means the rival chat finally gets a game with actual teeth. A division result helps one side and hurts the other in the same race, and the division winner gets a playoff berth. "+mida+"That is much harder to laugh away than a random regular-season loss.",
       "Week 3 gives "+team+" a direct "+ndiv+" rival in "+next+". There are only so many head-to-head shots, and the division crown carries a playoff spot, so "+leverage+" "+mida+"Rivals can joke afterward; first they have to survive the leverage.",
       "The pressure in "+team+"–"+next+" comes from both teams spending the same limited head-to-head opportunity in a race whose winner reaches the playoffs. "+mida+"Somebody leaves with a better argument and somebody leaves with less room.",
       team+" meets "+next+" inside "+ndiv+", where the schedule does not hand out unlimited rematches. The division winner gets a playoff berth, so every direct result changes the path for both sides. "+mida+"That is the kind of joke that shows up in the standings."
@@ -1556,7 +1830,7 @@ function w2ScheduleStretchRead(t,r,next,later){
     "mack-hollis":{
       hard:[
         "Then the schedule puts on shoulder pads: "+detail+" are waiting after "+next+". Win Week 3 and "+a.mascot+" hit that wall with momentum; lose and the wall gets to introduce itself while everybody is already yelling.",
-        "The heavy part comes after "+next+": "+detail+". Bank Week 3 before that stretch arrives, because asking those games to fix a loss is how September starts sounding like an emergency broadcast.",
+        "The heavy part comes after "+next+": "+detail+". Bank Week 3 before that stretch arrives, because asking those games to fix a loss is how the schedule starts sounding like an emergency broadcast.",
         detail+" are next behind "+next+", and that is a real gauntlet. Week 3 is the one to grab before the schedule turns the resistance up and starts charging extra for every bad lineup call.",
         "After "+next+", "+team+" runs into "+detail+". That is the hard stretch, full stop. Win now and attack it; lose now and the next two games show up carrying a much louder problem."
       ],
@@ -1946,7 +2220,15 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
       "The fan base has screenshots, memes and exactly one volume setting about "+subject+". Nobody needs a siren yet, but the siren has been located.",
       "Supporters are doing what supporters do best: turning "+subject+" into twelve different lineup arguments and one extremely loud thread.",
       "The call-in crowd has "+subject+" circled so hard the screen may file a complaint. Some of it is comedy. Some of it is management getting free advice at dangerous volume.",
-      "The memes are already built around "+subject+". If the issue disappears, everybody laughs and moves on. If it stays, the joke gets a season ticket."
+      "The memes are already built around "+subject+". If the issue disappears, everybody laughs and moves on. If it stays, the joke gets a season ticket.",
+      "A rival account is auctioning screenshots of "+subject+" as evidence of managerial negligence. Bidding is brisk because complaining remains free.",
+      "The group chat has called a mock emergency meeting over "+subject+". Minutes were taken in all caps; the decision was to yell again next Sunday.",
+      "Fans have submitted "+subject+" to the Department of Extremely Avoidable Sundays. The paperwork is fictional. The embarrassment is on the scoreboard.",
+      "Somebody printed "+subject+" on a protest placard. Management may want a better lineup before supporters invest in matching shirts.",
+      "The call-in show is running a public inquiry into "+subject+". Nobody has subpoena power, but everyone has a screenshot and a microphone.",
+      "There is a neighborhood petition to retire "+subject+" as a recurring joke. The signatures are mostly from people who started the joke.",
+      "The fan base wants "+subject+" explained on a giant video board. Apparently the 30-person group chat did not offer enough public humiliation.",
+      "The crowd has a fresh nickname for "+subject+" and management will not enjoy hearing it shouted from rival sections."
     ],
     "nora-voss":[
       "Rival chats keep returning to "+subject+" because it is the easiest material available. Supporters are responding with lineup screenshots, excuses and the occasional respectable counterargument.",
@@ -1955,8 +2237,65 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
       "Supporters are trying to retire the joke around "+subject+" before rivals turn it into a franchise logo. The internet, as always, is showing admirable restraint by showing none."
     ]
   };
-  return (rows[rid]||rows["walter-mercer"])[v]
+  return (rows[rid]||rows["walter-mercer"])[rid==='mack-hollis'?(Math.max(1,Number(t.roster_id)||1)+Number(week)+Number(variationSalt||0))%12:v]
 }
+// Forward editions use independently selected fan scenes.  The Week 2 bank
+// remains untouched for locked editions; bench screenshots are one possible
+// subject, not the mandatory premise of every fan reaction.
+function forwardFanScenes(t,won,week,variationSalt){
+ const name=w2DisplayTeam(t.team_name),a=w2Alias(t),leader=(t.starter_details||[])[0],
+  low=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],
+  miss=t.best_lineup_miss,record=w2Record(t),points=w2One(t.points),
+  opponent=w2DisplayTeam(t.opponent_name||'the opposition'),next=w2DisplayTeam(t.next_opponent_name||'the next opponent'),
+  star=leader?.name||'the leading scorer',starPts=w2One(leader?.points),
+  danger=low?.name||'the quietest starter',dangerPts=w2One(low?.points),
+  gap=w2One(miss?.gap),choice=miss?.reserve&&miss?.starter&&Number(miss.gap)>=7
+   ?miss.reserve.name+' outscoring the selected '+miss.starter.name+' by '+gap+' points'
+   :null;
+ const celebration=won?'celebrating a '+points+'-point victory':'trying to explain a '+points+'-point loss';
+ const scenes=[
+  ["The "+a.mascot+" faithful are "+celebration+" with the restraint of a marching band in a library. "+star+" put up "+starPts+"; that number is doing more work than any slogan on the merchandise.","A few supporters have already designed the parade route. Others want to see what happens against "+next+" before renting the bus. For once, both camps can point to an actual box score."],
+  ["The supporters' call-in show has been promoted to a three-hour civic emergency over "+name+" at "+record+". The first caller cited "+danger+" and "+dangerPts+" points; the second demanded a different microphone because that one sounded too optimistic.","The front office can ignore the volume. It cannot ignore the weekly result against "+opponent+", which is why the callers have another six days of material."],
+  ["Someone in the "+a.mascot+" section brought a homemade trophy to the game. "+(won?'After the win, nobody asked for the receipt.':'After the loss, it became an extremely expensive drink holder.')+" "+star+" and "+starPts+" points are the part of the story fans can actually defend.","The real argument is whether the rest of the lineup can back that performance up against "+next+". The props department has already done its share."],
+  ["Fans are holding an imaginary town-hall meeting about a "+points+"-point Sunday. "+(won?'The motion to declare a dynasty passed unanimously and was immediately challenged.':'The motion to replace the entire lineup was ruled financially irresponsible.')+" Nobody has stopped arguing about "+danger+" at "+dangerPts+".","Rival supporters are delighted to offer advice without offering a single roster spot. The next result will decide whether this meeting gets adjourned or televised."],
+  ["The "+a.mascot+" group chat has switched from game updates to absurdly elaborate weather forecasts: "+(won?'sunshine, confetti, and a chance of irrational confidence.':'storm clouds, emergency umbrellas, and a high probability of yelling at the television.')+" The actual forecast is "+record+" in the standings.","That record is more stubborn than the memes. "+star+" supplied "+starPts+" points; somebody still has to turn the rest of the roster into a convincing reply next week."],
+  ["The stadium concession stand could sell "+(won?'champagne by the gallon':'stress balls by the truckload')+" after what "+name+" just put on the scoreboard. "+(won?'A victory tends to make even bad hot dogs taste heroic.':'The only thing moving faster than the complaint line is the refund fantasy.') ,"The joke has a football target: "+danger+" managed "+dangerPts+" while the team finished at "+points+". A new menu will not repair that gap."],
+  ["The neighborhood fan club has made "+name+"'s "+record+" record the subject of a completely unnecessary public referendum. "+(won?'The optimists are already printing victory posters.':'The pessimists brought pitchforks made of cardboard and very real questions.')+" "+star+" gave them "+starPts+" points of evidence.","The loudest argument is still about how the other lineup spots will answer "+next+". At least the ballot can be settled by playing the game."],
+  ["Fans spent Monday treating "+name+"'s result like a family wedding: "+(won?'everybody danced, nobody agreed on who deserved the microphone.':'the speeches were awkward and somebody blamed the seating arrangement.')+" "+points+" points against "+opponent+" is the one detail nobody can edit out of the photographs.","The useful conversation starts with "+star+" scoring "+starPts+" and ends with what has to change before "+next+". Everything between is catering criticism."],
+  ["The supporters have sent "+(won?'a thank-you card the size of a billboard':'a complaint letter with its own table of contents')+" to the "+a.mascot+" headquarters. "+danger+" at "+dangerPts+" is the figure underlined in red ink.","The office does not owe anybody a theatrical apology. It owes the next opponent a lineup that is harder to ridicule than this one."],
+  ["The victory-or-panic meter in the "+a.mascot+" bars has broken its needle "+(won?'on the happy side':'on the unhappy side')+". With "+record+" in the season ledger, pretending this is all one unlucky bounce is becoming a risky business model.","A realistic fan can applaud "+star+" for "+starPts+" and still ask what "+next+" might exploit. That is analysis; the rest of the bar is providing percussion."],
+  ["The "+a.mascot+" faithful have invented a mock holiday to commemorate this game. "+(won?'Fireworks were proposed before anyone checked the permit situation.':'The invitation says black attire and includes a diagram of the weakest lineup slot.')+" "+points+" points is the number on the invitation.","The celebration or mourning cannot substitute for "+star+' at '+starPts+". The team gets "+next+" next, and the fireworks budget will be revised accordingly."],
+  ["The radio station covering "+name+" has declared its phone lines a public utility after that "+points+"-point showing. "+(won?'The callers are competing to invent the grandest compliment.':'The callers are competing to invent the most expensive possible solution.')+" "+star+" at "+starPts+" remains the one indisputable contribution.","The station can turn the volume down for "+next+". The lineup cannot afford to."],
+  ["The "+a.mascot+" fan club has opened a mock museum for this week's result. "+(won?'The first exhibit is a victory banner made from old predictions.':'The first exhibit is an empty display marked Where Were the Points?')+" "+record+" is printed at the entrance for context.","Visitors are arguing over "+danger+" at "+dangerPts+" rather than the gift shop. Even an imaginary museum cannot curate the weak spots away."],
+  ["A supporter has commissioned a giant cake in the shape of "+name+"'s scoreboard. "+(won?'Nobody objects to dessert after a win.':'Nobody is sure whether to serve it or throw it at a screen.')+" "+points+" is written in frosting and remains the real number.","The next opponent, "+next+", has no obligation to follow the recipe. The fans can bake; the team has to score."],
+  ["The "+a.mascot+" supporters have started an unofficial noise competition with the rival fans. "+(won?'A win gave them a head start nobody can buy.':'The other side has the scoreboard and therefore the cruelest microphone.')+" "+star+" scored "+starPts+", which is louder than the merchandise slogans.","This crowd can keep shouting, but "+record+" is the season record that will travel with them to "+next+"."],
+  ["Someone is organizing a mock victory parade or protest march for "+name+", depending on which side of the "+points+"-point result they remember first. The permit request reportedly lists "+danger+" at "+dangerPts+" as the official reason for concern.","That is ridiculous civic theater, but the starter's score is real. The next matchup with "+next+" will reveal whether it deserves a sequel."]
+ ];
+ // Every roster must have its own scene in a 32-team issue. A 16-scene
+ // bank repeated exactly twice per issue and the normalization audit caught it.
+ // These additional independent scenes are anchored in the current scoreboard.
+ scenes.push(
+  ["Outside the "+a.mascot+" supporters' club, the chalkboard has only two numbers: "+points+" and "+dangerPts+". Somebody added a third column labeled patience, but nobody could agree what belonged there.","The first argument was about "+danger+". The second was whether "+next+" will be generous enough to allow the same mistake. Nobody volunteered to test that theory."],
+  ["The neighborhood watch has politely declined jurisdiction over "+name+"'s starting decisions. "+star+"'s "+starPts+" points are evidence of what worked, while the rest of the scoreboard is a less convincing witness.","Fans are not asking for a criminal inquiry. They are asking the next lineup to look like somebody reviewed the last one."],
+  ["The "+a.mascot+" train platform has become an unofficial postgame press conference. Riders can recite "+points+" without checking their phones, and "+dangerPts+" has become a number people mutter at the timetable.","The trip to the next matchup with "+next+" is not getting shorter. Supporters would settle for the lineup making it less unpleasant."],
+  ["An imaginary "+a.mascot+" civic budget has allocated every available dollar to explaining "+danger+"'s "+dangerPts+" points. The treasury department insists no actual taxpayer funds were harmed.","People can laugh at the accounting until "+next+" arrives. A repeat will be less amusing, and considerably harder to defend."],
+  ["The fan podcast opened with ten seconds of silence for "+name+"'s weakest position. That was followed by thirty minutes on "+star+"'s "+starPts+" points and an argument over who gets to call that progress.","The hosts disagree about almost everything. Even they know the next opponent will care more about the starting lineup than the episode title."],
+  ["At the "+a.mascot+" tailgate, one group raised a toast to "+points+" points while another kept asking about "+danger+" and "+dangerPts+". The two circles have agreed to share the grill but not their conclusions.","The peace treaty lasts until "+next+" appears on the schedule. Fans are already reserving the louder picnic table."],
+  ["A fan-made "+a.mascot+" scoreboard mural now shows "+star+" on one side and "+danger+" on the other. The artist gave each the same amount of wall space, which is more equality than their "+starPts+" and "+dangerPts+" points earned.","The debate is artistic only in the loosest sense. The manager gets another Sunday to make the picture less lopsided."],
+  ["The "+a.mascot+" supporters called a mock zoning hearing to decide whether "+points+" points qualifies as a safe structure. "+(won?"Approval was granted with a noisy parade clause.":"Inspectors demanded that the weakest starter be reinforced immediately."),"Nobody has filed actual paperwork, but "+next+" will conduct the next inspection for free."],
+  ["The team's unofficial fan librarian has placed "+name+"'s latest result in the reference section, right beside the volume nobody wants checked out: "+danger+"'s "+dangerPts+" points.","The club can argue over the classification system all week. The upcoming game with "+next+" will add a new chapter regardless."],
+  ["Somebody at the "+a.mascot+" gathering issued a commemorative stamp for "+star+"'s "+starPts+" points. The same committee refused to print one for the rest of the lineup.","A postage stamp cannot carry a roster. Supporters know the next envelope addressed to "+next+" needs considerably more than one scorer."],
+  ["A mock "+a.mascot+" weather bureau called the "+points+"-point finish a pressure system. Fans are divided over whether "+danger+"'s "+dangerPts+" counts as a passing shower or a recurring climate problem.","The forecast for "+next+" requires no professional meteorologist: the manager must actually change something if the cloud follows the same starter."],
+  ["The "+a.mascot+" crowd drew a seating chart for the weekly argument and put "+star+"'s "+starPts+" points at the head. "+danger+"'s "+dangerPts+" received a folding chair near the exit.","The chart is fiction. The scoring is not, and the upcoming matchup with "+next+" does not care where anybody sits."],
+  ["One supporter has started a tiny "+a.mascot+" roadside attraction called The "+points+"-Point Sunday. Admission is free if visitors promise not to ask why "+danger+" finished on "+dangerPts+".","That rule lasted four minutes. The manager will have a harder time controlling the questions when "+next+" shows up."],
+  ["The "+a.mascot+" block association voted to rename Monday after "+star+"'s "+starPts+" points. The motion stalled when the committee got to "+danger+" and discovered "+dangerPts+" points waiting in the minutes.","There is no ordinance to solve this. The next lineup is the only document anybody actually needs signed."],
+  ["After "+name+"'s latest game, fans proposed an exhibit of useful excuses and found the display case almost empty. "+points+" points were on the board; "+danger+" contributed "+dangerPts+" to them.","That is the appeal of a box score: it does not accept a request for a better caption before the next game against "+next+"."],
+  ["The "+a.mascot+" fan orchestra has a new conductor: "+star+" and "+starPts+" points. The rest of the musicians are being asked to rehearse after "+danger+" played a "+dangerPts+"-point solo nobody ordered.","Supporters will tolerate one rehearsal disaster. A second one against "+next+" gets reviewed by the entire neighborhood."]
+ );
+ const index=(Math.max(0,Number(t.roster_id)||1)+Number(week)*7+Number(variationSalt||0))%(Number(week)<5?16:scenes.length);
+ return scenes[index];
+}
+
 function w2RecapTradeParagraphs(teams,r){
   const seen=new Set(),trades=[];
   for(const t of teams||[])for(const tr of t.trade_history||[]){const id=String(tr?.id||"");if(!id||seen.has(id))continue;seen.add(id);trades.push(tr)}
@@ -2030,7 +2369,7 @@ function w2ValueMoverMethod(t,row){
   const acquired=(t.trade_acquisitions||[]).find(a=>String(a?.player_id||"")===id);
   if(acquired){
     const when=acquired?.season&&acquired?.week?"Week "+String(acquired.week)+" of "+String(acquired.season):"an earlier week";
-    return{key:"old-trade-in-"+when,one:"after arriving by trade in "+when,many:"after arriving by trade in "+when};
+    return{key:"old-trade-in-"+when,one:"since "+String(pmeta(id)?.name||id)+" came over in "+when,many:"since the trade for "+String(pmeta(id)?.name||id)+" in "+when};
   }
   const sent=(t.trade_acquisitions||[]).find(a=>(a?.outgoing_player_ids||[]).map(String).includes(id));
   if(sent){
@@ -2160,7 +2499,7 @@ function w2ValueMoverReads(t,r){
     },bank=voice[rid]||voice["walter-mercer"],out=[];
   if(risers.length)out.push(w2S(t,r,"value-risers",bank.riseLead[q]+w2ValueMoverSentence(t,r,risers,true)+" "+bank.riseTail[q]));
   if(fallers.length)out.push(w2S(t,r,"value-fallers",bank.fallLead[(q+1)%4]+w2ValueMoverSentence(t,r,fallers,false)+" "+bank.fallTail[(q+1)%4]));
-  if(!out.length)out.push(w2S(t,r,"value-movers-missing","The team-level value move is real, but the player-level mover rows are missing, so the article stops there instead of inventing culprits."));
+  // No player-level attribution means there is no player mover story to invent.
   return out;
 }
 
@@ -2179,7 +2518,7 @@ function w2ManagementMoveRead(t,r,won,margin){
       ],
       "mack-hollis":[
         t.manager_name+" stayed off the Week 2 transaction wire. That means "+(weak?weak.name+" at "+w2One(weak.points)+" is":"the current lineup is")+" the management headline, not a move count.",
-        "There was no completed Week 2 roster move for "+t.manager_name+". "+(miss?.reserve&&miss?.starter?"So talk about "+miss.reserve.name+" sitting behind "+miss.starter.name+", not phantom churn.":"The starters who produced this score own the story.")
+        (q===0?t.manager_name+" left the Week 2 transaction sheet alone. ":q===1?"The "+w2DisplayTeam(t.team_name)+" bench got no help from a completed Week 2 move. ":q===2?"No completed transaction changed "+t.manager_name+"\u0027s roster this week. ":"The Week 2 personnel log stayed unchanged for "+t.manager_name+". ")+(miss?.reserve&&miss?.starter?"The live decision was "+miss.reserve.name+" remaining behind "+miss.starter.name+".":"The starting lineup, not an imaginary acquisition, supplied the score.")
       ],
       "nora-voss":[
         t.manager_name+" made no completed Week 2 move. Rivals can skip the transaction joke and look at "+(weak?weak.name+" at "+w2One(weak.points):"the lineup that actually played")+" instead.",
@@ -2224,7 +2563,7 @@ function w2InjuryOutlookRead(t,r,x,next){
       :[name+" has a "+d+" tag for Week 3, so the "+w2Alias(t).mascot+" cannot finish the seating chart for "+foe+" just yet.",name+" reaches the "+foe+" appointment as "+d+". The room should care because one starting chair remains unsettled."],
     "mack-hollis":hard?[name+" is "+d+" for Week 3. If he cannot go, the "+w2Alias(t).mascot+" need a replacement before "+foe+" and that is a bigger story than another depth percentage.",name+" has "+d+" next to his name for the "+foe+" game, which could change the actual starting card before anybody starts yelling about trends."]
       :[name+" is carrying a "+d+" tag into Week 3, so the "+w2Alias(t).mascot+" have a real availability question before "+foe+".",name+" is "+d+" ahead of "+foe+". Put that on the Week 3 board because it may change the lineup, not just the pregame chatter."],
-    "nora-voss":hard?[name+" is "+d+" heading toward "+foe+", giving rivals a concrete lineup uncertainty to watch before Week 3.",name+" carries "+d+" status into the "+foe+" matchup. If the "+w2Alias(t).mascot+" need a replacement, that changes the next joke before kickoff."]
+    "nora-voss":hard?[name+" is "+d+" heading toward "+foe+", giving rivals a concrete lineup uncertainty to watch before Week 3.",name+" carries "+d+" status into the "+foe+" matchup. If "+name+" needs relief, the "+w2Alias(t).mascot+" must reshape the depth chart before "+foe+" gets to write the punchline."]
       :[name+" is "+d+" for the "+foe+" game, and rivals will notice whether that tag changes the "+w2Alias(t).mascot+" starting lineup.",name+" takes a "+d+" designation into Week 3 against "+foe+". The designation matters because it may force the "+w2Alias(t).mascot+" to change starters before kickoff."]
   };
   return (rows[rid]||rows["walter-mercer"])[v]
@@ -2453,6 +2792,37 @@ function w2PlayerSynthesisRead(t,r,top,opp,won){
     support=top?.[1]?w2ShortPlayerName(t,r,top[1],"synthesis-1"):"the supporting scorer",
     third=top?.[2]?w2ShortPlayerName(t,r,top[2],"synthesis-2"):null,
     v=w2Cohort(t)%4,names=w2Natural([star,support,third].filter(Boolean));
+  // A scorer list is not a scoring core when one or more names put up zero.
+  // Guard the shared synthesis before any reporter-specific praise template.
+  const scores=(top||[]).slice(0,3).map(p=>Number(p?.points)||0),
+    producers=scores.filter(p=>p>0).length,total=scores.reduce((sum,p)=>sum+p,0),
+    lead=top?.[0]?w2ShortPlayerName(t,r,top[0],"synthesis-0"):"the lead starter";
+  if(producers<2||total<10){
+    const zero=producers===0,tag=w2One(total),leadPts=w2One(scores[0]||0),v2=w2Cohort(t)%3;
+    const low={
+      "walter-mercer":[
+        zero?team+" got "+tag+" points from its three leading starters. There is no scoring spine to praise, only a lineup to repair.":lead+" supplied "+leadPts+" of "+tag+" points from the three names. That is one contribution, not a dependable supporting cast.",
+        zero?"Three listed starters, three zeroes. "+team+" cannot call that depth; it can only call the next lineup meeting.":team+" had "+lead+" on the scoresheet and almost nobody behind him. The next result needs actual support.",
+        zero?"The top three on the "+team+" card combined for "+tag+". The rest of the review starts with that unpleasant fact.":lead+" gave "+team+" the only real pulse in this group. The roster cannot ask one starter to carry silence."
+      ],
+      "tess-delaney":[
+        zero?"The "+a.mascot+" offered three empty plates and called it a lineup. "+tag+" points is not a course; it is a bill.":lead+" brought "+leadPts+" points to the table; the other two brought mostly decorative cutlery.",
+        zero?"A trio combining for "+tag+" is not a supporting cast. It is an ensemble audition for the bench.":team+" can applaud "+lead+" without pretending the other two supplied a chorus.",
+        zero?"Three names, "+tag+" points. Even the most generous review cannot locate the performance.":lead+" supplied the one audible note. The rest of the trio made a compelling case for silence."
+      ],
+      "mack-hollis":[
+        zero?"Three starters combined for "+tag+". That is not a scoring attack. That is a power outage with uniforms.":lead+" posted "+leadPts+" points while the other two barely disturbed the scoreboard. Hold the parade.",
+        zero?team+" got three zeroes from its supposed leaders. Rivals will not need a second joke.":team+" got a pulse from "+lead+" and static from the rest of this trio. Fix the speakers.",
+        zero?"The headline is "+tag+" from three starters. Somebody check whether the scoreboard is plugged in.":lead+" did the scoring. The other two helped fill out the photograph."
+      ],
+      "nora-voss":[
+        zero?"The evidence from "+names+" totals "+tag+" points. There was no productive core to rescue the case.":lead+" accounted for "+leadPts+" of "+tag+" points from the group. Calling the other two support would be an accounting error.",
+        zero?"Three starters and "+tag+" combined points. Rival managers can submit the box score as their entire argument.":team+" had one meaningful contribution from "+lead+" and two names on the attendance sheet.",
+        zero?"The three-name summary produces "+tag+". The record does not support an optimistic reading.":lead+" did the useful work. The other two supplied rivals with evidence."
+      ]
+    };
+    return (low[rid]||low["walter-mercer"])[v2];
+  }
   const rows={
     "walter-mercer":[
       names+" gave "+team+" a usable top end against "+foe+". Against "+foe+", the support behind the lead score made the top of "+team+" sustainable instead of solitary.",
@@ -2488,16 +2858,26 @@ function w2ProjectionOutlookRead(t,r,next){
   const team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(next||t.next_opponent_name||"the opponent"),
     rid=String(r?.id||""),gap=Math.abs(own-opp),fav=own===opp?null:(own>opp?team:foe),v=w2Cohort(t)%4,
     ownPts=w2One(own),oppPts=w2One(opp),edge=w2One(gap),
-    label=!fav?"no projection favorite":gap<3?"a paper-thin favorite":gap<8?"the modest projection favorite":"the clear projection favorite";
+    label=!fav?"no projection favorite":gap<3?"barely favored":gap<8?"modestly favored":"heavily favored";
   const rows={
     "walter-mercer":[
-      team+" is projected at "+ownPts+" against "+foe+" at "+oppPts+". "+(fav?fav+" is "+label+" by "+edge+", enough to set an expectation without settling the argument.":"There is no projection favorite; the numbers have declined to pick a side.")+" The lineup still has to earn the part that matters.",
+      team+" is projected at "+ownPts+" against "+foe+" at "+oppPts+". "+(fav?({
+        "walter-mercer":"The "+edge+"-point forecast advantage belongs to "+fav,
+        "tess-delaney":fav+" takes the "+edge+"-point favorite seat",
+        "mack-hollis":fav+" owns the "+edge+"-point projection megaphone",
+        "nora-voss":"Rivals see a "+edge+"-point forecast advantage for "+fav
+       }[rid]||fav+" has a "+edge+"-point forecast edge")+", enough to set an expectation without settling the argument.":"There is no projection favorite; the numbers have declined to pick a side.")+" The lineup still has to earn the part that matters.",
       "The Week 3 board has "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?fav+" carries the projection edge of "+edge+", which is useful context rather than a permission slip.":"That leaves no projection favorite and no numerical excuse for confidence.")+" Sunday gets the final word.",
       ownPts+" for "+team+" and "+oppPts+" for "+foe+" is the current projection. "+(fav?fav+" enters as "+label+" with a "+edge+"-point edge.":"The projection favorite is nobody; the line is even.")+" Treat that as the starting expectation, not a verdict with shoulder pads.",
       "Projection-wise, "+team+" brings "+ownPts+" to "+foe+"’s "+oppPts+". "+(fav?fav+" owns the "+edge+"-point edge and therefore the favorite label for now.":"Neither side owns a projection edge.")+" The actual lineup remains inconveniently necessary."
     ],
     "tess-delaney":[
-      "The place cards read "+team+" "+ownPts+", "+foe+" "+oppPts+". "+(fav?fav+" is "+label+" by "+edge+", so the reservation has a favorite without becoming a coronation.":"There is no projection favorite; even the seating chart has refused to gossip.")+" This table has already demonstrated poor manners.",
+      "The place cards read "+team+" "+ownPts+", "+foe+" "+oppPts+". "+(fav?({
+        "walter-mercer":"The "+edge+"-point forecast advantage belongs to "+fav,
+        "tess-delaney":fav+" takes the "+edge+"-point favorite seat",
+        "mack-hollis":fav+" owns the "+edge+"-point projection megaphone",
+        "nora-voss":"Rivals see a "+edge+"-point forecast advantage for "+fav
+       }[rid]||fav+" has a "+edge+"-point forecast edge")+", so the reservation has a favorite without becoming a coronation.":"There is no projection favorite; even the seating chart has refused to gossip.")+" This table has already demonstrated poor manners.",
       team+" arrives with a "+ownPts+" projection while "+foe+" carries "+oppPts+". "+(fav?fav+" gets the favorite chair by "+edge+" points.":"The projection edge is zero, so nobody gets the favorite chair.")+" The room is still fully capable of embarrassing the place cards.",
       "For the next reservation, the forecast serves "+ownPts+" to "+team+" and "+oppPts+" to "+foe+". "+(fav?fav+" holds a "+edge+"-point projection edge.":"No projection favorite appears on the menu.")+" That is enough to set expectations and nowhere near enough to order champagne.",
       team+" is penciled in for "+ownPts+" and "+foe+" for "+oppPts+". "+(fav?fav+" wears the favorite label with a "+edge+"-point edge.":"The projection refuses to name a favorite.")+" Sunday is under no obligation to respect the seating chart."
@@ -2506,12 +2886,22 @@ function w2ProjectionOutlookRead(t,r,next){
       "The projection board screams "+team+" "+ownPts+", "+foe+" "+oppPts+". "+(fav?fav+" is the favorite by "+edge+" points.":"There is no projection favorite; the numbers are tied and apparently afraid of commitment.")+" Now somebody has to survive the actual noise.",
       team+" gets "+ownPts+" on the forecast and "+foe+" gets "+oppPts+". "+(fav?fav+" owns a "+edge+"-point projection edge, enough to put the favorite badge on the door.":"Nobody owns a projection edge, so keep the favorite badge in the drawer.")+" One busted lineup call can still set the whole thing on fire.",
       "Week 3 projects "+ownPts+" for "+team+" against "+oppPts+" for "+foe+". "+(fav?fav+" carries the "+edge+"-point favorite edge.":"The projection favorite is a shrug.")+" Put it on the marquee if you want; the margin is where the yelling starts.",
-      "The numbers put "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?fav+" is "+label+" by "+edge+".":"No projection favorite survives the math.")+" The spreadsheet has picked as much of a fight as it can; Sunday gets the final word."
+      "The numbers put "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?({
+        "walter-mercer":"The "+edge+"-point forecast advantage belongs to "+fav,
+        "tess-delaney":fav+" takes the "+edge+"-point favorite seat",
+        "mack-hollis":fav+" owns the "+edge+"-point projection megaphone",
+        "nora-voss":"Rivals see a "+edge+"-point forecast advantage for "+fav
+       }[rid]||fav+" has a "+edge+"-point forecast edge")+".":"No projection favorite survives the math.")+" The spreadsheet has picked as much of a fight as it can; Sunday gets the final word."
     ],
     "nora-voss":[
       team+" projects to "+ownPts+" and "+foe+" to "+oppPts+". "+(fav?fav+" gets the favorite label with a "+edge+"-point projection edge.":"There is no projection favorite, which deprives rivals of one easy screenshot.")+" Somebody still has to survive the result afterward.",
       "The pregame screenshot shows "+team+" "+ownPts+" and "+foe+" "+oppPts+". "+(fav?fav+" owns a "+edge+"-point edge and the favorite tag.":"The projection edge is zero; neither side gets free bragging rights.")+" Rivals can frame the number until kickoff.",
-      ownPts+" is the projection for "+team+"; "+oppPts+" is the number for "+foe+". "+(fav?fav+" is "+label+" by "+edge+".":"The model declines to name a projection favorite.")+" The losing screenshot will still be larger.",
+      ownPts+" is the projection for "+team+"; "+oppPts+" is the number for "+foe+". "+(fav?({
+        "walter-mercer":"The "+edge+"-point forecast advantage belongs to "+fav,
+        "tess-delaney":fav+" takes the "+edge+"-point favorite seat",
+        "mack-hollis":fav+" owns the "+edge+"-point projection megaphone",
+        "nora-voss":"Rivals see a "+edge+"-point forecast advantage for "+fav
+       }[rid]||fav+" has a "+edge+"-point forecast edge")+".":"The model declines to name a projection favorite.")+" The losing screenshot will still be larger.",
       "The forecast gives "+team+" "+ownPts+" and "+foe+" "+oppPts+". "+(fav?fav+" carries a "+edge+"-point favorite edge.":"There is no projection favorite and therefore no pregame punch line.")+" The matchup decides who has to live with it."
     ]
   };
@@ -2536,8 +2926,8 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
         team+" split the first two Sundays by responding to the opener. The win matters most as proof that the first result did not have to repeat."
       ],
       "wl":[
-        "The opening win no longer gets to carry the whole argument for "+team+". The second Sunday exposed enough friction to make the next answer matter.",
-        team+" has now shown a winning version and a losing one. The Week 3 assignment is deciding which lineup shape deserves to become familiar."
+        team+" followed the previous win with a loss. "+((t.starter_details||[])[0]?.name||team)+" now carries the pressure to produce a response.",
+        team+" has both a winning and losing recent example. "+((t.starter_details||[])[0]?.name||team)+" can help decide which version survives next."
       ],
       "no-history":[
         team+" has no complete opener to use as a clean comparison, so the second Sunday has to stand on its own merits.",
@@ -2568,19 +2958,19 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
     },
     "mack-hollis":{
       "ww":[
-        "Two wins have the "+a.mascot+" making noise for a reason. Keep the speakers on; just do not confuse September volume with a parade permit.",
-        team+" has hit the scoreboard hard enough to leave 2-0 with receipts. The next test is whether the backup singers know the chorus too."
+        "Two wins have the "+a.mascot+" making noise for a reason. Keep the speakers on; just do not confuse a loud Sunday with a parade permit.",
+        team+" has a recent win to frame, but "+((t.starter_details||[])[0]?.name||team)+" cannot sing every part of the next one."
       ],
       "ll":[
-        "Two losses have killed the mystery for "+team+": there are weak spots, everybody can see them, and Week 3 is where the toolbox gets judged.",
-        "The "+a.mascot+" are 0-2, which means the siren is allowed to be audible now. Fix the dead outlets before another Sunday finds them first."
+        "The "+a.mascot+" have two recent losses. "+((t.starter_details||[])[0]?.name||team)+" needs more help across the lineup.",
+        "The "+a.mascot+" have lost twice recently. "+((t.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0]?.name||"The quietest starter")+" is one place to begin the lineup review."
       ],
       "lw":[
         team+" answered the opening loss with a win, and that is the kind of response worth yelling about. Now do it again without needing the same emergency.",
         "The "+a.mascot+" punched back after Week 1. Good. The next headline asks whether that response had a sequel or just one loud page."
       ],
       "wl":[
-        team+" followed the opening win with a loss, so the victory lap has officially been interrupted. Week 3 gets to decide whether the stumble has company.",
+        team+" followed the previous victory with a defeat. The "+a.mascot+" now need a cleaner second act from "+((t.starter_details||[])[0]?.name||team)+".",
         "The "+a.mascot+" went from one good headline to one bad one. Nobody needs panic about "+team+" yet, but the next Sunday suddenly has real stakes."
       ],
       "no-history":[
@@ -2617,6 +3007,7 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
 
 function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
   const a=w2Alias(t),team=w2DisplayTeam(t.team_name),rid=String(r?.id||"walter-mercer");
+  const playerLead=w2Sentence(String((t.starter_details||[])[0]?.name||team));
   if(!prev){
     const missing={
       "walter-mercer":"There is no complete opening-week snapshot for "+team+", so Sunday gets evaluated on the result in front of us instead of a comparison we do not have.",
@@ -2630,9 +3021,9 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
   const banks={
     "walter-mercer":[
       "A week earlier, "+team+" "+outcome+" "+foe+" "+score+". That opener belongs in the comparison, but the current Sunday gets its own evaluation.",
-      "Week 1 put a "+score+" "+(prevWon?"win over ":"loss to ")+foe+" on "+team+"’s ledger. Week 2 adds a second result without turning either one into a permanent identity.",
+      "The prior result against "+foe+" read "+score+" for "+team+". "+playerLead+" now gives the ledger another entry.",
       team+" came out of Week 1 with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". The next Sunday changes the season sample; it does not simply photocopy the first conclusion.",
-      "The opening entry for "+team+" was "+score+" against "+foe+", a "+(prevWon?"win":"loss")+". Week 2 now gives that result context instead of permission to speak for the whole season."
+      "In the earlier visit with "+foe+", "+team+" "+(prevWon?"banked":"dropped")+" the "+score+" decision. "+playerLead+" now offers the beat desk its next, more revealing piece of evidence."
     ],
     "tess-delaney":[
       team+" arrived from Week 1 carrying a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". The second Sunday changes the conversation without requiring us to pretend the opener vanished.",
@@ -2641,16 +3032,27 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
       team+" opened at "+score+" against "+foe+" and left with "+(prevWon?"a win":"a loss")+". The current result gets compared with that beginning without being forced to imitate it."
     ],
     "mack-hollis":[
-      "Week 1 had "+team+" at "+score+" against "+foe+", good for "+(prevWon?"a win":"a loss")+". Week 2 just gave the season a new headline instead of recycling the old one.",
+      "The previous result against "+foe+" was "+score+" for "+team+". "+playerLead+" gives this week's score a fresh point of comparison.",
       team+" left the opener with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". Another Sunday means another piece of evidence and, thankfully, a different argument.",
-      "The first scoreboard for "+team+" read "+score+" against "+foe+". That "+(prevWon?"win":"loss")+" was loud then; Week 2 gets its own volume knob.",
-      "A "+score+" "+(prevWon?"win over ":"loss to ")+foe+" started "+team+"’s season. The latest Sunday changed the evidence enough to stand on its own."
+      "A week earlier "+team+" posted "+score+" against "+foe+". "+playerLead+" gives the new angle.",
+      "Against "+foe+", "+team+" previously posted "+score+". "+playerLead+" supplies the new reference point this week."
     ],
     "nora-voss":[
-      "Rivals entered Week 2 with "+team+"’s "+score+" "+(prevWon?"win over ":"loss to ")+foe+" already in the chat. Sunday gave them new material, for better or worse.",
-      team+" opened with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". That screenshot stays in the archive; Week 2 gets judged on the fresh one.",
+      "Rivals already had "+team+"'s "+score+" result against "+foe+" in the chat. "+((t.starter_details||[])[0]?.name||team)+" gets the fresh headline.",
+      ([
+        "The "+score+" "+(prevWon?"win":"loss")+" with "+foe+" is old news to the "+team+" crowd. Their latest "+Number(t.points||0).toFixed(1)+"-point showing has a separate argument to make.",
+        team+" brought the "+score+" "+(prevWon?"victory":"defeat")+" against "+foe+" into the new week; the argument now runs through "+((t.starter_details||[])[0]?.name||team)+".",
+        "The "+foe+" result went "+score+" for "+team+". Its second examination begins with "+Number(t.points||0).toFixed(1)+" fresh fantasy points, not that old verdict.",
+        "Every rival remembers "+team+"'s "+score+" date with "+foe+". The latest starters have supplied a different set of names for the argument.",
+        "That "+score+" line against "+foe+" is part of "+team+"'s record, not a standing invitation to predict the next result.",
+        "The "+foe+" scoreboard read "+score+" last time. For "+team+", the current week's performance demands a new headline.",
+        team+" previously finished "+score+" with "+foe+". Now "+((t.starter_details||[])[0]?.name||team)+" is where the next round of criticism or applause begins.",
+        "Rivals can cite "+team+"'s "+score+" "+(prevWon?"success":"setback")+" against "+foe+" all they like; this week's "+Number(t.points||0).toFixed(1)+" is a different story.",
+        "That earlier "+score+" game with "+foe+" belongs to "+team+"'s archive. Sunday supplied its own lineup verdict.",
+        "On the last trip past "+foe+", "+team+" left with "+score+". The new box score must stand on what happened this week."
+      ])[w2Hash(team+"|nora-bridge-variants")%10],
       "The first result on "+team+" was "+score+" against "+foe+", a "+(prevWon?"win":"loss")+". Rivals can keep it, but they do not get to pretend the second Sunday said the exact same thing.",
-      "Week 1 handed the rival chat a "+score+" "+(prevWon?"win over ":"loss to ")+foe+" for "+team+". Week 2 changed the material instead of asking everyone to resend it."
+      "Rivals already saw "+team+"'s "+score+" against "+foe+". "+((t.starter_details||[])[0]?.name||team)+" now gives them a different argument."
     ]
   };
   const bank=banks[rid]||banks["walter-mercer"],chosen=bank[v],cut=chosen.indexOf(". ");
@@ -2667,17 +3069,22 @@ function w2BuildSections(t,prev){
     w2S(t,r,"lede-shape",w2LedeShape(t,r,won,margin,opp,top)),
     w2S(t,r,"lede-alias",w2LedeAliasRead(t,r,prev,prevWon,won))
   ];
+  // Report meaningful contributors, not a mandatory podium of three scorers.
+  // One prominent performance may be the story; two get space when both
+  // cleared a genuinely useful scoring threshold.
+  const spotlights=Number(week)<=2?top:top.slice(0,top.length>1&&Number(top[1]?.points)>=15?2:1);
   const players=[];
-  for(let i=0;i<3;i++){
-    const p=top[i];if(!p)continue;const pp=w2PrevPlayer(prev,p.id),acq=p.acquisition;
+  for(let i=0;i<spotlights.length;i++){
+    const p=spotlights[i];if(!p)continue;const pp=w2PrevPlayer(prev,p.id),acq=p.acquisition;
     players.push(w2S(t,r,"player-stat-"+i,(i===0?("Against "+w2DisplayTeam(opp)+", "+p.name+" led the "+alias.mascot+" with "+w2One(p.points)+" fantasy points"+w2StatClause(p)+"."):i===1?("Against "+w2DisplayTeam(opp)+", "+p.name+" added "+w2One(p.points)+" for the "+alias.mascot+w2StatClause(p)+"."):(alias.mascot+" also got "+w2One(p.points)+" from "+p.name+w2StatClause(p)+"."))));
     players.push(w2S(t,r,"player-read-"+i,w2PlayerColumnRead(t,r,p,pp,i,opp,won)+(acq&&Number(acq.season)===season&&Number(acq.week)===week?" The Week 2 trade that brought "+p.name+" in put the new arrival on the Sunday stage immediately.":"")));
   }
-  const discussed=new Set(top.filter(Boolean).map(p=>String(p.id)));
+  const discussed=new Set(spotlights.filter(Boolean).map(p=>String(p.id)));
   const rememberedAcquisitions=(t.trade_acquisitions||[]).map(x=>{
     const p=(t.starter_details||[]).find(p=>String(p?.id)===String(x?.player_id)||p?.name===x?.player_name);
     return{x,p};
-  }).filter(({x,p})=>x?.player_name&&p&&!discussed.has(String(x.player_id))&&Number(p?.points)>=10)
+  }).filter(({x,p})=>x?.player_name&&p&&!discussed.has(String(x.player_id))&&Number(p?.points)>=10&&
+    (Number(week)<=2||(Number(x.season)===Number(season)&&Number(x.week)>=Number(week)-2)))
     .sort((a,b)=>Number(b.p?.points)-Number(a.p?.points)||Number(b.x?.season)-Number(a.x?.season)||Number(b.x?.week)-Number(a.x?.week))
     .slice(0,1).map(({x})=>x);
   for(let i=0;i<rememberedAcquisitions.length;i++){
@@ -2691,9 +3098,9 @@ function w2BuildSections(t,prev){
     players.push(w2S(t,r,"player-acquisition-"+i,variants[(w2Cohort(t)+i)%variants.length]));
   }
 
-  players.push(...w2IdentityRead(t,prev,r,top,opp));
+  players.push(...w2IdentityRead(t,prev,r,spotlights,opp));
   const weakPreview=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0];
-  players.push(w2S(t,r,"player-synthesis",w2PlayerSynthesisRead(t,r,top,opp,won)));
+  if(Number(week)<=2)players.push(w2S(t,r,"player-synthesis",w2PlayerSynthesisRead(t,r,top,opp,won)));
   const weakDepth=weakPreview;
   const miss=t.best_lineup_miss,gap=Number(miss?.gap)||0;
   const management=[
@@ -2711,13 +3118,13 @@ function w2BuildSections(t,prev){
   const eligibleCredit=w2EligibleCool(t),topIds=new Set(top.filter(Boolean).map(p=>String(p.id))),supportCredit=(t.starter_details||[]).filter(p=>!topIds.has(String(p.id))&&Number(p.points)>=10).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2);
   const cool=eligibleCredit.length<2&&supportCredit.length?[
     w2S(t,r,"cool-one",supportCredit.length===1
-      ?supportCredit[0].name+" gets the under-the-radar credit after "+w2One(supportCredit[0].points)+" points from outside the three names already carrying the main scoring story."
-      :w2Natural(supportCredit.map(p=>p.name))+" deserve the under-the-radar credit after "+w2One(supportCredit.reduce((n,p)=>n+Number(p.points||0),0))+" combined points from outside the three headline scorers.")
+      ?supportCredit[0].name+" gets the under-the-radar credit after "+w2One(supportCredit[0].points)+" points from outside the featured scoring story."
+      :w2Natural(supportCredit.map(p=>p.name))+" deserve the under-the-radar credit after "+w2One(supportCredit.reduce((n,p)=>n+Number(p.points||0),0))+" combined points from outside the featured scorers.")
   ]:["n/a"];
-  const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=[
-    w2S(t,r,"sent-one",w2SentimentRead(t,prev,r,fs,prevSent,won)),
-    w2S(t,r,"sent-two",w2SentimentFollowup(t,prev,r,fs,prevSent,won))
-  ];
+  const fs=a.fan_sentiment||{},prevSent=prev?.inquirer_article?.fan_sentiment||{},sentiment=(Number(week)>2
+    ?forwardFanScenes(t,won,week,variationSalt)
+    :[w2SentimentRead(t,prev,r,fs,prevSent,won),w2SentimentFollowup(t,prev,r,fs,prevSent,won)])
+    .map((line,i)=>w2S(t,r,"sent-"+i,line));
   const nctx=t.next_opponent_context||{},nrec=nctx.record||{},nrecord=String(Number(nrec.wins)||0)+"-"+String(Number(nrec.losses)||0),ndiv=t.next_opponent_division_context?.division_name||"its division",leaders=(t.division_context?.leaders||[]).filter(x=>x?.team_name),selfLead=leaders.some(x=>String(x.roster_id)===String(t.roster_id)),otherLeaders=leaders.filter(x=>String(x.roster_id)!==String(t.roster_id)),divisionPeers=[...(t.division_context?.ahead_teams||[]),...(t.division_context?.same_record_teams||[]),...(t.division_context?.behind_teams||[])].filter((x,i,a)=>x?.team_name&&String(x.roster_id)!==String(t.roster_id)&&a.findIndex(y=>String(y.roster_id)===String(x.roster_id))===i),divisionPeerLine=divisionPeers.map(x=>w2DisplayTeam(x.team_name)+" ("+String(Number(x?.record?.wins)||0)+"-"+String(Number(x?.record?.losses)||0)+")"),next=t.next_opponent_name||"the next opponent",
     nextStar=(t.next_opponent_roster?.starters||t.next_opponent_roster?.players||[]).filter(p=>p?.name).slice().sort((x,y)=>Number(y.season_fantasy_points||y.points||0)-Number(x.season_fantasy_points||x.points||0))[0],
     up=(t.upcoming_opponents||[]).slice().sort((x,y)=>Number(x.week)-Number(y.week)),later=up.slice(1,3);
@@ -2768,7 +3175,7 @@ function w2RoycingtonFootballPolish(t,body){
     ["Leave it alone and the same circuit gets another chance to spark.","Ignore it and the same weakness gets another Sunday to hurt them."],
     ["Some of it is management getting free advice at dangerous volume.","Some of the noise is the fan base handing management free advice at full volume."],
     ["The division crown punches a playoff ticket in this league.","Win the division and the playoff berth comes with it; that is why this game carries extra weight."],
-    ["That is why this one gets the megaphone.","That is why this matchup deserves more volume than an ordinary September game."],
+    ["That is why this one gets the megaphone.","That is why this matchup deserves more volume than an ordinary regular-season game."],
     ["One busted lineup call can still set the whole thing on fire.","One bad lineup decision can still turn a close game into a week of regret."],
     ["Week 3 is the volume knob for everything behind it.","Week 3 decides whether the rest of this stretch gets discussed as opportunity or damage control."],
     ["The headline gets louder only if the supporting lineup stops making the stars do all the shouting.",pick(["The next headline only gets better if the supporting lineup stops outsourcing everything to the stars.","A bigger headline requires more than the stars doing emergency work again.","The stars have done enough shouting; the supporting lineup has to give the next headline some depth.","The next headline belongs to the whole lineup only if the support finally earns a line of its own."])],
@@ -2813,7 +3220,7 @@ function w2RoycingtonFootballPolish(t,body){
     ["Beat the first team and the noise stays fun; lose and the crowd starts treating ","Handle Week 3 and the swagger survives; lose and the crowd starts treating "],
     [" because the top of the lineup produced and the rest did not leave much for ","; the top of the lineup produced, and that left "],
     [" to erase on the scoreboard."," chasing too much scoreboard ground."],
-    [" are the clear projection favorite by "," hold the projection edge at "],
+    [" hold a projection edge of "," hold the projection edge at "],
     ["The numbers put ","The Week 3 math puts "],
     ["Week 3 starts with ","The next stretch starts with "]
   ];
@@ -2832,7 +3239,7 @@ function rewriteWeek2Team(t,prev){
     built=w2BuildSections(styleTeam,prev),
     sections=roycington?built.map(s=>({...s,heading:s.kind==="trade-commentary"?"Trade Receipt: What Week 2 Added":w2SectionHead(a.reporter||{},s.kind),paragraphs:(s.paragraphs||[]).map(p=>w2RoycingtonFootballPolish(normalized,p))})):built,
     paragraphs=sections.flatMap(s=>s.paragraphs||[]),
-    headline=w2Headline(normalized,a.reporter||{});
+    headline=w2TeamGrammar(normalized,w2Headline(normalized,a.reporter||{}));
   return{...normalized,inquirer_article:{...a,headline,deck:(a.reporter?.desk||"Fleeced! Inquirer")+" • "+String(normalized.week_classification?.label||"Week 2"),sections,paragraphs,editorial_revision:14}}
 }
 function w2Games(teams){const by=new Map((teams||[]).map(t=>[String(t.roster_id),t])),seen=new Set(),out=[];for(const t of teams||[]){const o=by.get(String(t.opponent_roster_id));if(!o)continue;const k=[String(t.roster_id),String(o.roster_id)].sort().join("|");if(seen.has(k))continue;seen.add(k);const w=Number(t.points)>=Number(o.points)?t:o,l=w===t?o:t,margin=Math.abs(Number(w.points)-Number(l.points)),proj=Number.isFinite(Number(w.projected))&&Number.isFinite(Number(l.projected)),upset=proj&&Number(w.projected)<Number(l.projected);out.push({winner:w,loser:l,margin,upset,combined:Number(w.points)+Number(l.points)})}return out}
@@ -2857,7 +3264,7 @@ function w2TrajectorySentence(t,mode,r){
   const weakRead=weak?weak.name+" finished at "+w2One(weak.points)+", so the bottom of the lineup still has a receipt attached.":"";
   if(mode==="undefeated"){
     const longView=Number.isFinite(title)&&title>=10
-      ?" MIDA’s "+w2MidaPct(title)+" title outlook says the clean record is attached to more than September charm."
+      ?" MIDA’s "+w2MidaPct(title)+" title outlook says the clean record is attached to more than an early-season illusion."
       :Number.isFinite(playoff)&&playoff>=65
         ?" MIDA has the playoff outlook at "+w2MidaPct(playoff)+", so the longer view is taking the start seriously too."
         :"";
@@ -3017,7 +3424,7 @@ function w2TwoWeekLeagueRead(teams,r){
     ?name(improving)+" materially improved its team scoring from the opener despite losing again, so there is at least a usable correction underneath the record. "
     :"Some winless teams at least showed a healthier scoring shape on the second Sunday. ")+(sliding&&sliding!==improving
     ?name(sliding)+" went sharply the other direction; that is much harder to wave away as bad luck. "
-    :"The teams that also lost scoring ground have the more urgent problem. ")+"Two losses can describe a team getting closer or a team digging. Those are not the same September.";
+    :"The teams that also lost scoring ground have the more urgent problem. ")+"Two losses can describe a team getting closer or a team digging. Those are not the same problem.";
   const p3="The 1-1 middle is where the league looks calmest on paper and messiest underneath. "+(rebound
     ?name(rebound)+" delivered one of the clearest rebounds from its opener. "
     :"Several split-record teams materially changed their scoring level from the opener. ")+(volatile&&volatile!==rebound
@@ -3086,9 +3493,12 @@ function w2RecapPlayerRead(t,p,prev,r,slot=0,blockIndex=0){
   }
   return""
 }
-function rewriteWeek2Overview(overview,teams,previousEdition){
+function rewriteWeek2Overview(overview,teams,previousEdition,week=2){
   const previous=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t])),games=w2Games(teams),top=(teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],topGame=games.find(g=>[String(g.winner.roster_id),String(g.loser.roster_id)].includes(String(top?.roster_id))),close=games.slice().sort((a,b)=>a.margin-b.margin)[0],upset=games.find(g=>g.upset),big=games.slice().sort((a,b)=>b.margin-a.margin)[0],chosen=[],seen=new Set();
-  for(const g of [topGame,upset,close,big,...games.slice().sort((a,b)=>b.combined-a.combined)]){if(!g||chosen.length>=5)continue;const k=[g.winner.roster_id,g.loser.roster_id].sort().join("|");if(!seen.has(k)){seen.add(k);chosen.push(g)}}
+  // A league column is not a conveyor belt of five identically structured
+  // matchup mini-columns. Two games leave space for league-wide reporting.
+  const featuredLimit=Number(week)<=2?5:2;
+  for(const g of [topGame,upset,close,big,...games.slice().sort((a,b)=>b.combined-a.combined)]){if(!g||chosen.length>=featuredLimit)continue;const k=[g.winner.roster_id,g.loser.roster_id].sort().join("|");if(!seen.has(k)){seen.add(k);chosen.push(g)}}
   const rep=i=>overview?.sections?.[i]?.reporter||null;
   const blocks=chosen.map((g,i)=>{
     const r=rep(0)||{},w=g.winner,l=g.loser,wName=w2DisplayTeam(w.team_name),lName=w2DisplayTeam(l.team_name),
@@ -3098,10 +3508,12 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
       shootout=g.combined>=240,blowout=g.margin>=25,knife=g.margin<=6;
     const hook=w2RecapHook(g,wName,lName,i);
     paras.push(w2S(w,r,"recap-game-"+i,hook));
-    const statNames=(i===0?wTop:[wStar,lStar,ws[1]]).filter((p,j,a)=>p&&a.findIndex(q=>String(q.id)===String(p.id))===j);
-    paras.push(w2S(w,r,"recap-stats-"+i,w2RecapStatLead(g,i).trim()+"\n"+statNames.map(w2RecapStat).join("\n")));
+    // Contextualize one decisive player; do not mandate three box-score rows
+    // for every game, or then narrate all three again in the next paragraph.
+    const statNames=Number(week)<=2?(i===0?wTop:[wStar,lStar,ws[1]]):[wStar];
+    paras.push(w2S(w,r,"recap-stats-"+i,w2RecapStatLead(g,i).trim()+" "+statNames.filter(Boolean).map(w2RecapStat).join('; ')));
     let turn;
-    if(blowout&&wTop3>Number(l.points))turn=w2Natural(wTop.map(p=>p.name))+" combined for "+w2One(wTop3)+" points—more than "+lName+"’s entire "+w2One(l.points)+"-point lineup. That is the sort of blowout where the losing side starts checking whether the scoring app accidentally counted two Sundays.";
+    if(blowout&&wTop3>Number(l.points))turn=Number(week)<=2?w2Natural(wTop.map(p=>p.name))+" combined for "+w2One(wTop3)+" points—more than "+lName+"’s entire "+w2One(l.points)+"-point lineup. That is the sort of blowout where the losing side starts checking whether the scoring app accidentally counted two Sundays.":wName+" outscored "+lName+" by "+w2One(g.margin)+". A gap that large is not one unlucky starter; it is a lineup full of unanswered questions.";
     else if(knife&&loserMiss>0&&l?.best_lineup_miss?.reserve&&l?.best_lineup_miss?.starter)turn=w2RecapBenchTurn(l,g,l.best_lineup_miss);
     else if(shootout)turn=(lStar?lStar.name+" gave "+lName+" "+w2One(lStar.points)+" points and still had to watch a huge team total lose. ":"")+lName+" brought "+w2One(l.points)+" points—enough to win plenty of weeks. "+wName+" simply had one more scoring answer left.";
     else if(g.upset)turn=w2RecapUpsetTurn(w,l,wStar,lWeak);
@@ -3123,7 +3535,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     paras.push(w2S(w,r,"recap-context-"+i,w2RecapContext(w,prev,i)));
     return{heading:(i===0?"Week 2’s Loudest Game: ":"")+wName+" vs. "+lName,paragraphs:paras}
   });
-  const undefeated=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===2),winless=(teams||[]).filter(t=>Number(t?.league_context?.record?.losses)===2),upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
+  const undefeated=forwardRecentGroup(teams,week,'W'),winless=forwardRecentGroup(teams,week,'L'),upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
   const moverSummary=(team,key,label)=>{
     const rows=(team?.value_history_player_movers?.[key]||[]).filter(x=>Number.isFinite(Number(x?.delta))).slice(0,3);
     if(!rows.length)return" No current-roster player registered a "+(key==="risers"?"positive":"negative")+" value move over that same tracked window.";
@@ -3131,10 +3543,24 @@ function rewriteWeek2Overview(overview,teams,previousEdition){
     return" The roster’s biggest "+label+" over that same window: "+w2Natural(items)+".";
   };
   const middleTeams=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===1&&Number(t?.league_context?.record?.losses)===1),trajectoryReporter=rep(0)||{};
-  blocks.push({heading:"What Two Weeks Are Starting to Say",paragraphs:
+  if(Number(week)>2){
+    const seasonLeaders=(teams||[]).slice().sort((a,b)=>Number(a.league_context?.standings_rank||999)-Number(b.league_context?.standings_rank||999)).slice(0,4);
+    blocks.push({heading:'The Standings Have Receipts',paragraphs:forwardTrajectoryParagraphs(teams,week).slice(0,2)});
+    const missed=(teams||[]).filter(t=>Number(t.best_lineup_miss?.gap)>0&&t.best_lineup_miss?.reserve&&t.best_lineup_miss?.starter).sort((a,b)=>Number(b.best_lineup_miss.gap)-Number(a.best_lineup_miss.gap));
+    blocks.push({heading:'The Decisions Managers Have to Defend',paragraphs:missed.slice(0,2).map(t=>t.team_name+' left '+w2One(t.best_lineup_miss.gap)+' points on the table by starting '+t.best_lineup_miss.starter.name+' ahead of '+t.best_lineup_miss.reserve.name+'. That is a specific lineup choice, not an inspirational lesson about trying harder.')});
+    blocks.push({heading:'The Season Is Bigger Than Sunday',paragraphs:[seasonLeaders.length?'The league leaders are '+w2Natural(seasonLeaders.map(t=>t.team_name+' ('+forwardRecordText(t)+')'))+'. Those are full-season records, and nobody gets to erase the first '+(Number(week)-1)+' games because this week made a better headline.':'The season standings are not available for a verified comparison.',forwardTrajectoryParagraphs(teams,week)[3]]});
+  }else blocks.push({heading:"What Two Weeks Are Starting to Say",paragraphs:
     w2TwoWeekLeagueRead(teams,trajectoryReporter).map((p,i)=>w2S(top,trajectoryReporter,"recap-two-weeks-"+i,p))
   });
-  const velvet=[w2S(top,rep(1)||{},"contender-undefeated",undefeated.length?("The 2-0 club now includes "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". Two wins are not a coronation, but they are enough to make opening-week charm look more like actual form."):"Nobody escaped Week 2 undefeated, which is rude to the optimists and excellent for the rest of us."),upValue?w2S(upValue,rep(1)||{},"contender-up","The biggest positive value mover is "+w2DisplayTeam(upValue.team_name)+", up "+Math.abs(Math.round(Number(upValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(upValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(upValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(upValue,"risers","risers")+" The market has pushed this roster closer to contender territory; Sunday still decides whether that optimism survives contact."):null,downValue?w2S(downValue,rep(1)||{},"contender-down","The biggest negative value mover is "+w2DisplayTeam(downValue.team_name)+", down "+Math.abs(Math.round(Number(downValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(downValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(downValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(downValue,"fallers","fallers")+" I am not declaring the roster doomed, but the market has already started asking which assumptions deserve to survive the drop."):null,w2S(top,rep(1)||{},"contender-close",close?(close.winner.team_name+" and "+close.loser.team_name+" gave us the week’s most impolite close game at "+w2One(close.margin)+" points apart; one side gets relief, the other gets seven days to discover how many tiny choices suddenly feel enormous."):"Week 2 declined to give us a properly rude close finish, so I will save the sharp elbows for next Sunday.")].filter(Boolean);
+  const recentWinners=undefeated.length?("The teams that won both of the last two games are "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". That is form, not an undefeated-season claim; the season standings still count every result."):"Nobody won both of the last two completed games. Apparently consistency has become an optional luxury.";
+  const velvet=[
+    w2S(top,rep(1)||{},"contender-undefeated",Number(week)<=2
+      ?(undefeated.length?"The 2-0 club now includes "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". Two wins are not a coronation, but they are enough to make opening-week charm look more like actual form.":"Nobody escaped Week 2 undefeated, which is rude to the optimists and excellent for the rest of us.")
+      :recentWinners),
+    upValue?w2S(upValue,rep(1)||{},"contender-up","The biggest positive value mover is "+w2DisplayTeam(upValue.team_name)+", up "+Math.abs(Math.round(Number(upValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(upValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(upValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(upValue,"risers","risers")+" The market has pushed this roster closer to contender territory; Sunday still decides whether that optimism survives contact."):null,
+    downValue?w2S(downValue,rep(1)||{},"contender-down","The biggest negative value mover is "+w2DisplayTeam(downValue.team_name)+", down "+Math.abs(Math.round(Number(downValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(downValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(downValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(downValue,"fallers","fallers")+" I am not declaring the roster doomed, but the market has already started asking which assumptions deserve to survive the drop."):null,
+    w2S(top,rep(1)||{},"contender-close",close?(close.winner.team_name+" and "+close.loser.team_name+" gave us the week’s most impolite close game at "+w2One(close.margin)+" points apart; one side gets relief, the other gets seven days to discover how many tiny choices suddenly feel enormous."):"Week 2 declined to give us a properly rude close finish, so I will save the sharp elbows for next Sunday.")
+  ].filter(Boolean);
   const active=(teams||[]).slice().sort((a,b)=>(b.transactions?.length||0)-(a.transactions?.length||0))[0],tradeParagraphs=w2RecapTradeParagraphs(teams,rep(2)||{}),
     activeMoves=active?w2TransactionMoveDetails(active):[],activeAddedIds=new Set((active?.transactions||[]).flatMap(tx=>tx.adds||[]).map(String)),
     activeHit=(active?.starter_details||[]).filter(p=>activeAddedIds.has(String(p.id))).sort((a,b)=>Number(b.points)-Number(a.points))[0],
@@ -3247,13 +3673,41 @@ function assertWeek2Originality(result,previousEdition){
     if(judgment){const target=(a.sections||[]).find(s=>s.kind==='outlook')||(a.sections||[]).at(-1);if(target?.paragraphs)target.paragraphs.push(w2TeamGrammar(t,judgment));a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);seenDesk.add(rid)}
   }
 
-  let overview=rewriteWeek2Overview(rawOverview||{},rewritten,previousEdition||{teams:[]});
+  let overview=rewriteWeek2Overview(rawOverview||{},rewritten,previousEdition||{teams:[]},week);
   let teams=deepStrings(rewritten,s=>adaptWeekLanguage(s,week,weekClassification));
   overview=deepStrings(overview,s=>adaptWeekLanguage(s,week,weekClassification));
   if(week>=3)teams=evolveForwardTeams(teams,previousEdition,week,variationSalt);
+  if(week>=3)teams=polishForwardTeamCopy(teams,week,variationSalt);
+  // Polishing may reintroduce an unchanged Week N-1 sentence. Run the
+  // same deterministic prior-edition freshness repair on the finished copy.
+  // Every newsroom edition gets this pass, not a special Week 5 exception.
+  if(week>=3)teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+307);
+  // Recheck the finished language: polishing can expose collisions that the
+  // earlier pass could not see, especially across distinct reporter desks.
+  if(week>=3&&forwardCrossReporterPhraseOffenders(teams,[...forwardEntities({teams}),...forwardEntities(previousEdition)]).size)
+    teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+101);
 
-  const trajectory=(overview.sections||[]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
-  if(trajectory)trajectory.paragraphs=forwardTrajectoryParagraphs(teams,week);
+  const trajectory=(overview.sections||[]).flatMap(s=>[s,...(s.blocks||[])]).find(s=>/Last Two Weeks Are Starting to Say|Two Weeks Are Starting to Say/i.test(String(s?.heading||'')));
+  if(trajectory){
+    trajectory.paragraphs=forwardTrajectoryParagraphs(teams,week);
+    // The parent section also stores a flattened mirror: synchronize both.
+    const parent=(overview.sections||[]).find(s=>(s.blocks||[]).includes(trajectory));
+    if(parent)parent.paragraphs=parent.blocks.flatMap(b=>b.paragraphs||[]);
+  }
+  if(week>=3){
+    overview.hot_takes=(overview.hot_takes||[]).map(take=>{
+      if(!/\b(?:2-0 start|clean record|first two weeks|opening-week charm)\b/i.test(String(take.take||'')))return take;
+      const subject=teams.find(t=>String(take.title||'').includes(t.team_name))||teams.find(t=>String(take.take||'').includes(t.team_name));
+      if(!subject)return{...take,take:'The early-season label no longer tells the story. The standings have moved; this call needs a verified current matchup before it earns a stronger verdict.'};
+      const record=forwardRecordText(subject),outcome=subject.won?'won':'lost';
+      const score=forwardOne(subject.points),top=(subject.starter_details||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0],weak=(subject.starter_details||[]).slice().sort((a,b)=>Number(a.points)-Number(b.points))[0];
+      const title=String(take.title||'').toLowerCase(),danger=/danger|fraud|warning/.test(title);
+      const commentary=danger
+        ?'The '+record+' record has not erased '+(weak?weak.name+' scoring '+forwardOne(weak.points)+' in the starting lineup':'the lineup vulnerability opponents can target')+'. A winning record buys patience, not a lifetime warranty.'
+        :'The '+record+' record is the strongest part of the argument, with '+(top?top.name+' supplying '+forwardOne(top.points)+' this Sunday':'Sunday’s lineup contributing '+score+' points')+'. Rivals have had '+week+' weeks to find a rebuttal, and the wins are still on the page.';
+      return{...take,take:subject.team_name+' '+outcome+' Week '+week+' with '+score+' fantasy points. '+commentary};
+    });
+  }
 
   if(weekClassification?.playoffs){
     for(const t of teams){
@@ -3275,14 +3729,595 @@ function assertWeek2Originality(result,previousEdition){
     const recapEntities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
     overview=evolveForwardOverview(overview,previousEdition?.league_overview||null,week,variationSalt,recapEntities);
     overview=enforceRecapEvolution(overview,previousEdition?.league_overview||null,week,variationSalt,recapEntities);
+    overview=rejectRecapCopyForward(overview,previousEdition?.league_overview||null,week,recapEntities);
+    const recapBlocks=(overview.sections||[]).flatMap(s=>s.blocks?.length?s.blocks:[s]);
+    const standingsBlock=recapBlocks.find(b=>/The Standings Have Receipts/i.test(String(b.heading||'')));
+    const seasonBlock=recapBlocks.find(b=>/The Season Is Bigger Than Sunday/i.test(String(b.heading||'')));
+    if(standingsBlock&&seasonBlock&&/\btop of the table\b/i.test((standingsBlock.paragraphs||[]).join(' '))&&
+       /^The league leaders are\b/i.test(String(seasonBlock.paragraphs?.[0]||'')))
+      seasonBlock.paragraphs=seasonBlock.paragraphs.slice(1);
+    for(const section of overview.sections||[])if(section.blocks?.length)section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+    // A weekly recap cannot spend two news paragraphs announcing the same
+    // leaders, or copy the same manager scolding into separate examples.
+    const recapSeen=new Set();
+    for(const section of overview.sections||[]){
+      const clean=paras=>(paras||[]).map(p=>{
+        const text=String(p||'');
+        if(/That is a specific lineup choice, not an inspirational lesson about trying harder\./.test(text)){
+          const suffix='That is a specific lineup choice, not an inspirational lesson about trying harder.';
+          if(recapSeen.has(suffix))return text.replace(suffix,'The bench score makes the decision concrete; the next lineup card will show whether management listened.');
+          recapSeen.add(suffix);
+        }
+        return text;
+      });
+      if(section.blocks?.length){
+        for(const block of section.blocks)block.paragraphs=clean(block.paragraphs);
+        section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+      }else section.paragraphs=clean(section.paragraphs);
+    }
   }
   overview.headline='Fleeced! Weekly Recap — '+String(weekClassification?.label||('Week '+week));
   overview.deck=weekClassification?.playoffs
     ?String(weekClassification.round||'The playoffs')+' gets its own newspaper: who advanced, who was eliminated, and which surviving roster now has to answer for the next round.'
     :'Week '+week+' gets its own newspaper: new games, new arguments, and enough season memory to know which developments are starting to repeat.';
   overview.week=week;overview.season=season;overview.week_classification=weekClassification||overview.week_classification;
+  if(week>=3){
+    // The copy changes every week, so these are data-driven finishing rules,
+    // not a one-time Week 5 correction. Apply to the recap AND every desk.
+    const pluralNames=[...new Set(teams.map(t=>w2DisplayTeam(t.team_name)).filter(w2PluralTeamName))]
+      .sort((a,b)=>b.length-a.length);
+    const players=[...new Set(teams.flatMap(t=>(t.starter_details||[]).map(p=>String(p.name||'').trim())).filter(Boolean))]
+      .sort((a,b)=>b.length-a.length);
+    const agreement={does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project'};
+    const pluralPattern=pluralNames.length?new RegExp('\\b('+pluralNames.map(w2EscRe).join('|')+') (does|gets|has|is|needs|sits|keeps|projects)\\b','gi'):null;
+    const pronounPattern=pluralNames.length?new RegExp('\\b('+pluralNames.map(w2EscRe).join('|')+') saw its\\b','gi'):null;
+    const playerNames=new Map(players.map(name=>[name.toLowerCase(),name]));
+    const playerPattern=players.length?new RegExp('\\b(?:'+players.map(w2EscRe).join('|')+')\\b','gi'):null;
+    const polish=s=>{
+      let copy=String(s||'').replace(/:\s*this Sunday\b/g,': This Sunday')
+        .replace(/; The season record is\b/g,'; the season record is');
+      if(pluralPattern)copy=copy.replace(pluralPattern,(_,name,verb)=>name+' '+(verb[0]===verb[0].toUpperCase()?agreement[verb.toLowerCase()][0].toUpperCase()+agreement[verb.toLowerCase()].slice(1):agreement[verb.toLowerCase()]));
+      copy=copy.replace(/(The radio station covering [^.?!]{4,75}?) have declared\b/g,'$1 has declared')
+        .replace(/\b(The road after [^.?!]{4,65}?) are mixed\b/g,'$1 is mixed');
+      if(pronounPattern)copy=copy.replace(pronounPattern,(_,name)=>name+' saw their');
+      // Player names are facts from the current lineup, not casing guesses.
+      if(playerPattern)copy=copy.replace(playerPattern,name=>playerNames.get(name.toLowerCase())||name);
+      return copy;
+    };
+    for(const s of overview.sections||[]){
+      s.heading=polish(s.heading);
+      if(s.blocks?.length){for(const b of s.blocks){b.heading=polish(b.heading);b.paragraphs=(b.paragraphs||[]).map(polish)}s.paragraphs=s.blocks.flatMap(b=>b.paragraphs||[])}
+      else s.paragraphs=(s.paragraphs||[]).map(polish);
+    }
+    overview.hot_takes=(overview.hot_takes||[]).map(h=>({...h,title:polish(h.title),take:polish(h.take)}));
+    for(const t of teams){
+      const a=t.inquirer_article;if(!a)continue;
+      a.headline=polish(a.headline);
+      for(const s of a.sections||[]){s.heading=polish(s.heading);s.paragraphs=(s.paragraphs||[]).map(polish)}
+      a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
+  }
   overview.inquirer_version=FORWARD_INQUIRER_VERSION;overview.editorial_revision=FORWARD_EDITORIAL_REVISION;
-  for(const t of teams){if(t?.inquirer_article){t.inquirer_article.week=week;t.inquirer_article.week_classification=t.week_classification||weekClassification;t.inquirer_article.editorial_revision=FORWARD_EDITORIAL_REVISION}}
+  for(const t of teams){if(t?.inquirer_article){{
+   let title=String(t.inquirer_article.headline||'').replace(/^this Sunday/i,'This Sunday').replace(/the Week (\d+) Look Less Accidental/gi,'Week $1 Look Less Accidental');
+   if(week>=3&&/Week \d+ Look Less Accidental/i.test(title)&&Number(t.points)>Number(t.opponent_points))
+     title=w2DisplayTeam(t.team_name)+' Make Week '+week+' Count';
+   if(w2PluralTeamName(t.team_name)){
+    const titleVerbs={Makes:'Make',Wins:'Win',Has:'Have',Keeps:'Keep',Falls:'Fall',Loses:'Lose',Takes:'Take',Gives:'Give',Puts:'Put',Gets:'Get',Leaves:'Leave',Turns:'Turn',Banks:'Bank',Raises:'Raise',Is:'Are',Looks:'Look',Exposes:'Expose',Needs:'Need',Owns:'Own',Starts:'Start',Earns:'Earn',Lands:'Land'};
+    title=title.replace(new RegExp(w2EscRe(w2DisplayTeam(t.team_name))+' ('+Object.keys(titleVerbs).join('|')+')\\b','g'),(_,verb)=>w2DisplayTeam(t.team_name)+' '+titleVerbs[verb]);
+   }
+   if(week>=3)title=title.replace(/\b(Make|Makes) this Sunday\b/g,'$1 This Sunday');
+   t.inquirer_article.headline=title;
+  }
+   // Final, reader-facing copy pass. Run *after* every variation pass, because
+   // variation can reintroduce stock prefixes and malformed grammar.
+   if(week>=3){
+    const article=t.inquirer_article;
+    const usedPrefaces=new Set();let usedLouder=false;
+    for(const section of article.sections||[]){
+      section.heading=String(section.heading||'').replace(/^this Sunday/,'This Sunday');
+      section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
+        let s=String(paragraph||'').replace(/\bthis round of games’s\b/gi,'this week’s')
+          .replace(/\ba ([89](?:\.\d+)?-point)\b/gi,'an $1')
+          .replace(/\bin the league order\b/gi,'in the league standings')
+          .replace(/\bNo\. (\d+) in the league order\b/gi,'No. $1 in the league standings');
+        if(w2PluralTeamName(t.team_name)){
+          const n=w2EscRe(t.team_name);
+          s=s.replace(new RegExp('\\b'+n+' sits\\b','gi'),t.team_name+' sit')
+             .replace(new RegExp('\\b'+n+' does\\b','gi'),t.team_name+' do');
+        }
+        for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:','Follow the scoring:','No fine print:']){
+          const escaped=prefix.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+          const matches=[...s.matchAll(new RegExp(escaped,'g'))];
+          for(let i=matches.length-1;i>=1;i--)s=s.slice(0,matches[i].index)+s.slice(matches[i].index+prefix.length).replace(/^\s*/, ' ');
+          if(usedPrefaces.has(prefix)&&s.includes(prefix))s=s.replace(prefix,'').trimStart();
+          if(s.includes(prefix))usedPrefaces.add(prefix);
+        }
+        if(/louder of the two/i.test(s)){
+          if(usedLouder)s=s.replace(/\s+and turned Week \d+ into the louder of the two/gi,'');
+          usedLouder=true;
+        }
+        return s;
+      });
+    }
+    article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
+   }
+   t.inquirer_article.week=week;t.inquirer_article.week_classification=t.week_classification||weekClassification;t.inquirer_article.editorial_revision=FORWARD_EDITORIAL_REVISION}}
+  // Finishing edits can make a sentence converge on an archived one. Run the
+  // established collision evolution once more after finishing, then remove
+  // repeated rhetorical prefaces without repeating the full quality audit.
+  if(week>=3&&previousEdition){
+    teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+909);
+    // Evolution itself may reintroduce a familiar opening phrase. Keep only
+    // its first appearance per article, including after the final retry.
+    for(const t of teams){
+      const a=t?.inquirer_article;if(!a)continue;
+      const seen=new Set();
+      for(const s of a.sections||[])s.paragraphs=(s.paragraphs||[]).map(p=>{
+        let copy=String(p||'');
+        for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:']){
+          if(seen.has(prefix))copy=copy.replaceAll(prefix,'');
+          if(copy.includes(prefix))seen.add(prefix);
+        }
+        return copy.trim();
+      });
+      const fanSection=(a.sections||[]).find(s=>s.kind==='sentiment');
+      if(fanSection&&(forwardWordCount((fanSection.paragraphs||[]).join(' '))<35||
+        (fanSection.paragraphs||[]).filter(p=>String(p).length>=50).length<2)){
+        const riffs=[
+          'The call-in show has already misplaced its indoor voice','The neighborhood group chat is charging admission to the argument',
+          'The supporters are treating one lineup slot like public property','The postgame complaints have acquired an unnecessary second act',
+          'Even the quiet fans have started offering roster suggestions','The season-ticket optimists are asking for a receipt this time',
+          'The local sports bar has appointed itself a lineup committee','Nobody at the watch party asked for another mystery performance',
+          'The fan section has rehearsed a very specific grievance','The town is not yet rioting, but the patience meter is visible',
+          'The radio callers found the soft spot without a scouting budget','The supporters are tired of being handed a fresh explanation',
+          'The crowd knows the difference between a blip and a habit','The faithful have kept the scoreboard image for unfortunate reasons',
+          'The loudest backers are now demanding quieter mistakes','The fan base has turned the weak position into a weekly referendum'
+        ];
+        const idx=(Number(t.roster_id)||1)-1,player=t.worst_starter?.name||t.starter_details?.at(-1)?.name||'the quietest starter';
+        const first=riffs[((idx%riffs.length)+riffs.length)%riffs.length];
+        const second=[
+          'Against '+w2DisplayTeam(t.opponent_name||'the opponent')+', '+player+' is the name everybody will remember from this result.',
+          'With '+player+' on the postgame complaint list, the next lineup announcement deserves unusually thorough reading.',
+          'A number next to '+player+' has done more damage to the mood than rivals could have arranged.',
+          'Nobody needs a conspiracy to explain why '+player+' now occupies so much of the argument.',
+          'Someone will have to explain '+player+' before the cheering section accepts another optimistic forecast.',
+          'The next opponent gets a free scouting clue if '+player+' cannot change the conversation.',
+          'A fresh lineup card offers '+player+' one honest opportunity to quiet the neighborhood.',
+          'The manager may prefer patience; the people yelling about '+player+' have apparently canceled theirs.',
+          'Rivals will not need an elaborate joke if '+player+' supplies the same number twice.',
+          'The faithful can tolerate bad luck; they are less tolerant of '+player+' becoming a ritual.',
+          'After this Sunday, '+player+' has become the least comfortable subject at the watch party.',
+          'A little competence from '+player+' would do wonders for a very irritated local audience.',
+          'The supporters have offered '+player+' a challenge that requires points instead of explanations.',
+          'This is where '+player+' can make the complaint sound outdated by next Monday.',
+          'Even the sympathetic callers have started asking what changes around '+player+' next week.',
+          'The cleanest answer for '+player+' is a box score that silences the criticism.'
+        ][((idx%16)+16)%16];
+        const ending=[
+          'The next result can settle that without an apology tour.',
+          'There is no substitute for a quieter, better Sunday.',
+          'The answer is available on the next actual scoreboard.',
+          'Nobody is accepting a press conference as a substitute.',
+          'At least the next matchup offers a fresh examination.',
+          'The noise will follow the starters into the next game.',
+          'One more bad performance turns irritation into routine.',
+          'The supporters would dearly like to change the subject.',
+          'The joke gets less funny every time it repeats.',
+          'The coming week can still make this criticism obsolete.',
+          'Better execution is a wonderfully economical public statement.',
+          'The next opponent is unlikely to offer sympathy.',
+          'Winning would be a far more convincing rebuttal.',
+          'Patience has a finite and increasingly visible budget.',
+          'One decent follow-up would calm quite a few people.',
+          'There is still time to make the noise embarrassing.'
+        ][((idx%16)+16)%16];
+        fanSection.paragraphs=[...(fanSection.paragraphs||[]),first+'. '+second+' '+ending];
+        if(fanSection.paragraphs.filter(p=>String(p).length>=50).length<2){
+          const alternate=riffs[((idx+7)%16+16)%16];
+          fanSection.paragraphs.push(alternate+'. '+w2DisplayTeam(t.team_name)+' still has the next matchup against '+w2DisplayTeam(t.next_opponent_name||'its next opponent')+' to turn this noise into a better story.');
+        }
+      }
+      a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
+  }
+  // Forecasts are not live league facts. An old MIDA snapshot must not be
+  // presented as a current championship or playoff probability in a new issue.
+  const forecastRows=teams.filter(t=>t.mida_outlook),staleForecasts=forecastRows.length>0&&forecastRows.every(t=>{
+    const d=Date.parse(String(t.mida_outlook?.source_date||t.mida_outlook?.as_of||''));
+    return Number.isFinite(d)&&Date.now()-d>7*86400000;
+  });
+  if(week>=3&&staleForecasts){
+    const staleOdds=/\bMIDA\b|\b\d+(?:\.\d+)?%\s+(?:title|playoff|postseason|championship)\s+(?:outlook|odds|chance|probability)\b|\b(?:title|playoff|postseason|championship)\s+(?:number|probability|odds|outlook)\s+at\s+\d+(?:\.\d+)?%/i;
+    const freshOnly=value=>forwardSentenceParts(value).filter(s=>!staleOdds.test(s)).join(' ').trim();
+    const filterParagraphs=rows=>(rows||[]).map(freshOnly).filter(Boolean);
+    for(const t of teams){const a=t.inquirer_article;if(!a)continue;
+      for(const s of a.sections||[])s.paragraphs=filterParagraphs(s.paragraphs);
+      a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
+    for(const s of overview.sections||[]){
+      if(s.blocks?.length){for(const b of s.blocks)b.paragraphs=filterParagraphs(b.paragraphs);s.paragraphs=s.blocks.flatMap(b=>b.paragraphs||[])}
+      else s.paragraphs=filterParagraphs(s.paragraphs);
+    }
+    overview.hot_takes=(overview.hot_takes||[]).map(h=>({...h,take:freshOnly(h.take)||'The completed weekly results, rather than an out-of-date forecast, carry this argument.'}));
+  }
+  if(week>=3){
+    // A final whole-edition pass is essential: late evolution can bring back
+    // same-reporter boilerplate after the earlier sentence cleanup.
+    for(let pass=0;pass<4;pass++){
+      const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+      const offenders=forwardCrossTeamClauseOffenders(teams,entities),paired=forwardPairedNarrativeOffenders(teams,entities);
+      if(!offenders.size&&!paired.size)break;
+      teams=teams.map(t=>{
+        const a=t.inquirer_article;if(!a)return t;
+        const sections=(a.sections||[]).map((s,si)=>({...s,paragraphs:(s.paragraphs||[]).map((p,pi)=>forwardSentenceParts(p).map((sentence,sj)=>{
+          const collided=forwardEditorialPhraseKeys(sentence,entities,12,false).some(gram=>(offenders.get(gram)||[]).indexOf(t.team_name)>=2)||
+            forwardEditorialPhraseKeys(sentence,entities,16,false).some(gram=>(paired.get(gram)||[]).indexOf(t.team_name)>=1);
+          return collided?'':sentence;
+        }).filter(Boolean).join(' ')).filter(Boolean)}));
+        return{...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
+      });
+    }
+    // Match the acceptance gate's visible-name rule exactly. Alias-based
+    // grammatical classification can miss mascots when a display nickname
+    // differs from the underlying team identity.
+    const plural=teams.map(t=>w2DisplayTeam(t.team_name)).filter(n=>/s$/i.test(String(n).split(/\s+/).at(-1)||''));
+    const fixGrammar=(s,isHeadline=false)=>{
+      let copy=String(s||'');
+      for(const name of plural){
+        const expression=new RegExp('\\b'+w2EscRe(name)+' (does|gets|has|is|needs|sits|keeps|projects)\\b','gi');
+        const verbs={does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project'};
+        copy=copy.replace(expression,(_,verb)=>{
+          const result=verbs[verb.toLowerCase()];
+          return name+' '+(isHeadline?result[0].toUpperCase()+result.slice(1):result);
+        });
+      }
+      return copy.replace(/\bthis round of games['’]s\b/gi,"this week's")
+        .replace(/\ba ([89](?:\.\d+)?-point)\b/gi,'an $1')
+        .replace(/\bthis round of games’s\b/gi,'this week’s')
+        .replace(/\b(The radio station covering [^.?!]{4,85}?) have declared\b/gi,'$1 has declared')
+        .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!]{4,85}?) are already compressed\b/gi,'$1 is already compressed');
+    };
+    for(const s of overview.sections||[]){
+      s.heading=fixGrammar(s.heading);
+      if(s.blocks?.length){for(const b of s.blocks){b.heading=fixGrammar(b.heading);b.paragraphs=(b.paragraphs||[]).map(p=>fixGrammar(p))}s.paragraphs=s.blocks.flatMap(b=>b.paragraphs||[])}
+      else s.paragraphs=(s.paragraphs||[]).map(p=>fixGrammar(p));
+    }
+    overview.hot_takes=(overview.hot_takes||[]).map(h=>({...h,title:fixGrammar(h.title),take:fixGrammar(h.take)}));
+    for(const t of teams){const a=t.inquirer_article;if(!a)continue;
+      a.headline=fixGrammar(a.headline,true)
+        .replace(/^A this Sunday Worth Talking About for (.+)$/i,(_,club)=>`${club} Turn Week ${week} Into a Talking Point`)
+        .replace(/\bRuins (.+)[’'] this Sunday$/i,(_,club)=>`Put a Dent in ${club}’ Week ${week}`)
+        .replace(/\bMake It The last two Sundays Worth Talking About\b/i,`Make Week ${week} Worth Talking About`)
+        .replace(/\bMake Week \d+ Look Less Accidental\b/i,`Make Their Week ${week} Win Harder to Ignore`)
+        .replace(/\bThe last two Sundays\b/gi,`Week ${week}`)
+        .replace(/\bTwo Weeks of\b/g,`${week} Weeks of`)
+        .replace(/\bthis Sunday\b/gi,`Week ${week}`);
+      const seen=new Set();
+      for(const s of a.sections||[])s.paragraphs=(s.paragraphs||[]).map(p=>{
+        let copy=fixGrammar(p);
+        for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:']){
+          const parts=copy.split(prefix);
+          if(parts.length>1){copy=parts[0]+(seen.has(prefix)?'':prefix)+parts.slice(1).join('');seen.add(prefix)}
+        }
+        return copy.trim();
+      });
+      a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
+    // Apply the structural floor *after* clause removal. A collision repair
+    // can shorten a sentiment paragraph even if it passed an earlier check.
+    for(const t of teams){
+      const article=t.inquirer_article,fan=(article?.sections||[]).find(s=>s.kind==='sentiment');
+      if(!fan)continue;
+      const player=t.worst_starter?.name||t.starter_details?.at(-1)?.name||'the quietest starter';
+      const team=w2DisplayTeam(t.team_name),opponent=w2DisplayTeam(t.next_opponent_name||'the next opponent');
+      while((fan.paragraphs||[]).filter(p=>String(p).length>=50).length<2){
+        const count=(fan.paragraphs||[]).length;
+        fan.paragraphs.push(count%2
+          ?'The '+team+' fan section is watching '+player+' with a week of accumulated impatience. '+opponent+' will get the next look, and supporters want the answer to arrive in fantasy points.'
+          :'Around '+team+', the latest discussion has turned to '+player+' and the decisions that made the matchup harder than necessary. The next Sunday offers the manager a practical way to quiet it.');
+      }
+      article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
+    }
+  }
+  // Week 4 is the approved newspaper layout. The forward generator must
+  // preserve its *section taxonomy*, regardless of how the copy evolves.
+  // Do this at handoff, after every de-duplication pass has run.
+  if(week>=5){
+    const sectionOrder=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
+    for(const t of teams){
+      const article=t.inquirer_article;if(!article)continue;
+      const byKind=new Map((article.sections||[]).map(s=>[s.kind,s]));
+      const top=(t.starter_details||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
+      const team=w2DisplayTeam(t.team_name),r=article.reporter||{};
+      const creditHeadings={
+        'nick swindell':'Credit Where It Is Due',
+        'bartholomew roycington iii':'The Credit Ledger, With Reservations',
+        'tilly fleecer':'The Name That Earned the Headline',
+        'jefferson filch':'The Evidence in Their Favor'
+      };
+      if(!byKind.has('cool-throne')){
+        // The forward copy already has team-specific player reporting. Move a
+        // distinct paragraph to the Week 4 credit desk instead of inventing
+        // a universal praise template that reappears in 32 articles.
+        const playerDesk=byKind.get('players');
+        const playerRows=playerDesk?.paragraphs||[];
+        const creditIndex=playerRows.length>1
+          ?Math.max(1,playerRows.findIndex((p,i)=>i>0&&top?.name&&p.includes(top.name)))
+          :-1;
+        const credit=creditIndex>=1&&creditIndex<playerRows.length
+          ?playerRows.splice(creditIndex,1)
+          :[top?`${top.name} put ${forwardOne(top.points)} fantasy points on ${team}'s Week ${week} board.`:`${team} could not identify a verified individual scoring leader.`];
+        byKind.set('cool-throne',{kind:'cool-throne',heading:creditHeadings[String(r.name||'').toLowerCase()]||'Credit Where It Is Due',paragraphs:credit});
+      }
+      if(!byKind.has('value')){
+        // The Week 4 market section may be intentionally empty. A small
+        // value fluctuation is not a story and must not force filler prose.
+        byKind.set('value',{kind:'value',heading:'The Roster-Value Ledger',paragraphs:[]});
+      }
+      const outlook=byKind.get('outlook');
+      if(outlook?.paragraphs?.length>3){
+        // Keep the week-ahead newspaper kicker concise, as it was in Week 4.
+        // Retain opening matchup facts, a distinct scheduling concern and the
+        // final judgment, without reproducing a second seven-paragraph story.
+        const rows=outlook.paragraphs;
+        outlook.paragraphs=[rows[0],rows.find((p,i)=>i>0&&i<rows.length-1&&/bye|questionable|injur|division|playoff|schedule/i.test(p))||rows[1],rows.at(-1)]
+          .filter((p,i,a)=>p&&!a.slice(0,i).includes(p));
+      }
+      article.sections=sectionOrder.map(k=>byKind.get(k)).filter(Boolean);
+      article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+      curateForwardTeamNarrative(t,week);
+    }
+    const first=overview.sections?.[0];
+    if(first?.blocks?.length){
+      const original=first.blocks;
+      const gameBlocks=original.filter(b=>/vs\.|Loudest Game/i.test(String(b.heading||'')));
+      const standings=original.find(b=>/Standings/i.test(String(b.heading||'')));
+      const decisions=original.find(b=>/Decisions/i.test(String(b.heading||'')));
+      const league=original.find(b=>/Season Is Bigger/i.test(String(b.heading||'')));
+      const lead=gameBlocks.flatMap(b=>b.paragraphs||[]);
+      const playerDetails=lead.filter(p=>/fantasy points|scored|gave .* at the top/i.test(p));
+      const leadWithoutPlayers=lead.filter(p=>!playerDetails.includes(p));
+      const top=(teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
+      const runnerUp=(teams||[]).slice().sort((a,b)=>Number(b.points)-Number(a.points))[1];
+      const rebuilding=(teams||[]).find(t=>!t.won&&t.next_opponent_name&&t!==top);
+      const next=top?.next_opponent_name||'the next opponent';
+      // Week-aware, score-backed league analysis. Never replace an entire
+      // editorial argument with the same newsroom maxim every Sunday.
+      const highScore=Number(top?.points)||0,secondScore=Number(runnerUp?.points)||0;
+      const scoreGap=forwardOne(Math.max(0,highScore-secondScore));
+      const topName=w2DisplayTeam(top?.team_name||'the leader');
+      const secondName=w2DisplayTeam(runnerUp?.team_name||'the runner-up');
+      const leagueParagraphs=week%2
+        ?[`The scoreboard made a hierarchy this Sunday: ${topName} finished on ${forwardOne(highScore)}, while ${secondName} answered with ${forwardOne(secondScore)}. Anyone calling that a photo finish should get their eyes checked.`,
+          `The ${scoreGap}-point separation matters to this week's league argument, but the table still demands another Sunday of evidence before anyone gets a crown.`]
+        :[`The loudest number on the board belonged to ${topName}: ${forwardOne(highScore)}. ${secondName} managed ${forwardOne(secondScore)}, which gives the challengers an actual target rather than another motivational speech.`,
+          `A ${scoreGap}-point spread between first and second is the week's measuring stick, not a championship certificate. Those are printed much later, usually after someone regrets the parade plans.`];
+      const blocks=[
+        {kind:'lead',heading:'The Story That Defined Week '+week,paragraphs:leadWithoutPlayers.length?leadWithoutPlayers:lead.slice(0,5)},
+        {kind:'standings',heading:'The Standings Have Started Talking',paragraphs:standings?.paragraphs||[]},
+        {kind:'players',heading:'The Names Behind the Noise',paragraphs:playerDetails.length?playerDetails:lead.slice(0,2)},
+        {kind:'decisions',heading:'The Decisions and the Damage',paragraphs:decisions?.paragraphs||[]},
+        {kind:'league',heading:'What the League Learned',paragraphs:leagueParagraphs},
+        {kind:'outlook',heading:'The Week Ahead',paragraphs:[...(top?['After Week '+week+', '+w2DisplayTeam(top.team_name)+(w2PluralTeamName(top.team_name)?' face ':' faces ')+w2DisplayTeam(next)+' next. The '+forwardOne(top.points)+'-point performance earned attention; the new opponent gets its own answer.']:[]),...(rebuilding?['For '+w2DisplayTeam(rebuilding.team_name)+', the next opponent is '+w2DisplayTeam(rebuilding.next_opponent_name)+'. After a '+forwardOne(rebuilding.points)+'-point loss-week showing, the immediate question is which starting spots can supply a credible answer before another result goes into the standings.']:[])]}
+      ];
+      first.heading='Week '+week+': The League-Wide Reckoning';
+      first.blocks=blocks;
+      first.paragraphs=blocks.flatMap(b=>b.paragraphs||[]);
+    }
+  }
+  // Composition is the last writer. Therefore grammar cleanup must run AFTER
+  // composition, not before it, on both the recap and the team columns.
+  if(week>=3){
+    const plural=teams.map(t=>w2DisplayTeam(t.team_name)).filter(w2PluralTeamName).sort((a,b)=>b.length-a.length);
+    const clean=s=>{
+      let x=String(s||'');
+      for(const name of plural){
+        const re=new RegExp('\\b'+w2EscRe(name)+' (faces|does|gets|has|is|needs|sits|keeps|projects)\\b','gi');
+        const verbs={faces:'face',does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project'};
+        x=x.replace(re,(_,v)=>name+' '+verbs[v.toLowerCase()]);
+      }
+      return x.replace(/\bThe margin asks more:\s*/gi,'')
+        .replace(/\b(?:Look at the personnel:\s*)?The record is \d+-\d+[^.]*\./gi,'')
+        .replace(/\b(The radio station covering [^.?!]{4,85}?) have declared\b/gi,'$1 has declared')
+        .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!]{4,85}?) are already compressed\b/gi,'$1 is already compressed')
+        .replace(/\b(The road after [^.?!]{4,85}?) are mixed\b/gi,'$1 is mixed');
+    };
+    for(const t of teams){const a=t.inquirer_article;if(!a)continue;
+      a.headline=clean(a.headline);
+      for(const s of a.sections||[]){s.heading=clean(s.heading);s.paragraphs=(s.paragraphs||[]).map(clean)}
+      a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
+    }
+    for(const s of overview.sections||[]){s.heading=clean(s.heading);
+      if(s.blocks?.length){for(const b of s.blocks){b.heading=clean(b.heading);b.paragraphs=(b.paragraphs||[]).map(clean)}s.paragraphs=s.blocks.flatMap(b=>b.paragraphs||[])}
+      else s.paragraphs=(s.paragraphs||[]).map(clean);
+    }
+    overview.hot_takes=(overview.hot_takes||[]).map(h=>({...h,title:clean(h.title),take:clean(h.take)}));
+  }
+  // The editor shortens each article AFTER the legacy collision checks. A
+  // sentence that was only 1/18 of the old article can become 1/11 of the
+  // published one. Recheck the actual final selection against the prior issue
+  // and across this issue before the quality/publication gates see it.
+  if(week>=5){
+    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const priorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
+    for(const t of teams){const a=t.inquirer_article,prior=priorByRoster.get(String(t.roster_id));if(!a||!prior)continue;
+      const old=new Set(forwardArticleSentences(prior).map(s=>forwardNormSentence(s,entities)));
+      for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(p=>
+        forwardSentenceParts(p).filter(s=>forwardWordCount(s)<10||!old.has(forwardNormSentence(s,entities))).join(' ').trim()
+      ).filter(Boolean);
+      a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
+    }
+    for(let pass=0;pass<2;pass++){
+      const offenders=forwardCrossTeamClauseOffenders(teams,entities);
+      if(!offenders.size)break;
+      for(const t of teams){const a=t.inquirer_article;if(!a)continue;
+        for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(p=>
+          forwardSentenceParts(p).filter(s=>!forwardEditorialPhraseKeys(s,entities,12,false).some(key=>(offenders.get(key)||[]).includes(t.team_name))).join(' ').trim()
+        ).filter(Boolean);
+        a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
+      }
+    }
+    // Whole-sentence variants shorter than a twelve-word phrase can still
+    // reproduce across four desks; the publication gate counts those too.
+    const repeated=new Map();
+    for(const t of teams)for(const s of forwardArticleSentences(t)){
+      const key=forwardNormSentence(s,entities);
+      if(!repeated.has(key))repeated.set(key,new Set());
+      repeated.get(key).add(String(t.roster_id));
+    }
+    const repeatedSentences=new Set([...repeated].filter(([,owners])=>owners.size>=4).map(([s])=>s));
+    if(repeatedSentences.size)for(const t of teams){const a=t.inquirer_article;if(!a)continue;
+      for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(p=>
+        forwardSentenceParts(p).filter(s=>forwardWordCount(s)<10||!repeatedSentences.has(forwardNormSentence(s,entities))).join(' ').trim()
+      ).filter(Boolean);
+      a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
+    }
+    // Recap copy-forward is independent of team-story copy-forward. A division
+    // board is especially susceptible: unchanged positions may be newsworthy,
+    // but the newspaper must not reproduce the prior issue's entire prose.
+    if(previousEdition?.league_overview){
+      const oldRecap=new Set(forwardRecapSentences(previousEdition).map(s=>forwardNormSentence(s,entities)));
+      const fresh=p=>forwardSentenceParts(p).filter(s=>forwardWordCount(s)<10||!oldRecap.has(forwardNormSentence(s,entities))).join(' ').trim();
+      for(const [sectionIndex,section] of (overview.sections||[]).entries()){
+        if(section.blocks?.length){
+          for(const block of section.blocks){
+            const before=block.paragraphs||[],after=before.map(fresh).filter(Boolean),floor=['league','outlook'].includes(block.kind)?2:1;
+            if(after.length>=floor)block.paragraphs=after;
+          }
+          section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+        }else{
+          const after=(section.paragraphs||[]).map(fresh).filter(Boolean);
+          if(after.length)section.paragraphs=after;
+          else if((section.paragraphs||[]).length){
+            // The recycled synthetic standings board can otherwise make an
+            // entire reporter desk empty. Replace it with this week's source
+            // scoreboard rather than republishing last week's standings.
+            const game=teams[(sectionIndex*7)%teams.length];
+            const score=Number(game.points).toFixed(1),against=Number(game.opponent_points).toFixed(1);
+            const reports=[
+              `${game.team_name} scored ${score} against ${game.opponent_name}'s ${against} in Week ${week}; that result belongs in the division conversation, regardless of where anyone placed the preseason bets.`,
+              `An actual Week ${week} result supplies the counterweight to the standings chatter: ${game.team_name} ${score}, ${game.opponent_name} ${against}.`,
+              `Forget the old division-board shorthand for a moment. Week ${week} produced ${score} from ${game.team_name} and ${against} from ${game.opponent_name}.`,
+              `The Week ${week} scoreboard gives this race a concrete reference point: ${game.team_name} finished on ${score}; ${game.opponent_name} ended on ${against}.`
+            ];
+            section.paragraphs=[reports[sectionIndex%reports.length]];
+          }
+        }
+      }
+      overview.hot_takes=(overview.hot_takes||[]).map(h=>{
+        // A division board is structured standings data, not recycled
+        // commentary. Preserve its current league-derived eight entries:
+        // replacing them with a stock scoreboard gag destroys both the
+        // source evidence and the format the reader expects.
+        if(/division board/i.test(String(h.title||'')))return h;
+        const original=forwardSentenceParts(h.take||'');
+        const fresh=original.filter(sentence=>
+          forwardWordCount(sentence)<10||!oldRecap.has(forwardNormSentence(sentence,entities)));
+        if(fresh.length===original.length)return h;
+        // Do not manufacture a punchline when archival language is removed.
+        // An empty take is rejected by the independent publication guard and
+        // the candidate selector tries another variation instead.
+        return {...h,take:fresh.join(' ').trim()};
+      });
+    }
+    for(const t of teams)restoreForwardPlayerFact(t);
+    // Final stage after every archive filter: keep meaningful fan response,
+    // and reject paired punchlines shared with any other current team.
+    const finalPriorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
+    const fanEntities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const fanPhraseKeys=new Set();
+    for(const teamRow of teams){
+      const fan=teamRow.inquirer_article?.sections?.find(x=>x.kind==='sentiment');
+      for(const para of fan?.paragraphs||[])for(const key of forwardEditorialPhraseKeys(para,fanEntities,16,false))fanPhraseKeys.add(key);
+    }
+    for(const t of teams){
+      const a=t.inquirer_article,fan=a?.sections?.find(x=>x.kind==='sentiment');
+      if(!fan)continue;
+      const prior=finalPriorByRoster.get(String(t.roster_id));
+      const old=new Set(forwardArticleSentences(prior).map(line=>forwardNormSentence(line,fanEntities)));
+      const used=new Set(forwardSentenceParts((fan.paragraphs||[]).join(' ')).map(line=>forwardNormSentence(line,fanEntities)));
+      const hasFans=()=>/\b(?:fans?|supporters?|crowd|fan club|fan base|faithful|stadium|radio|call-in|bars?|group chat|neighborhood)\b/i.test((fan.paragraphs||[]).join(' '));
+      for(let offset=1;offset<=64&&((fan.paragraphs||[]).filter(p=>String(p).length>=50).length<2||!hasFans());offset++){
+        const alternate={...t,roster_id:String((Number(t.roster_id)||1)+offset)};
+        for(const candidate of forwardFanScenes(alternate,Number(t.points)>Number(t.opponent_points),week,variationSalt)){
+          if(String(candidate).length<50)continue;
+          const sentences=forwardSentenceParts(candidate);
+          if(sentences.some(line=>old.has(forwardNormSentence(line,fanEntities))||used.has(forwardNormSentence(line,fanEntities))))continue;
+          const keys=forwardEditorialPhraseKeys(candidate,fanEntities,16,false);
+          if(keys.some(key=>fanPhraseKeys.has(key)))continue;
+          fan.paragraphs.push(candidate);
+          sentences.forEach(line=>used.add(forwardNormSentence(line,fanEntities)));
+          keys.forEach(key=>fanPhraseKeys.add(key));
+          if(fan.paragraphs.filter(p=>String(p).length>=50).length>=2&&hasFans())break;
+        }
+      }
+      // The scene selector is the final writer. Agreement correction must
+      // therefore run here, after the selected scene is inserted.
+      const pluralNames=teams.map(row=>w2DisplayTeam(row.team_name)).filter(w2PluralTeamName);
+      fan.paragraphs=(fan.paragraphs||[]).map(line=>{
+        let text=String(line||'');
+        for(const name of pluralNames){
+          const verb={has:'have',is:'are',does:'do',gets:'get',sits:'sit',needs:'need',keeps:'keep',faces:'face',projects:'project'};
+          text=text.replace(new RegExp('\\b'+w2EscRe(name)+' (has|is|does|gets|sits|needs|keeps|faces|projects)\\b','gi'),
+            (_,word)=>name+' '+verb[word.toLowerCase()]);
+        }
+        return text
+          .replace(/\b(The radio station covering [^.?!]{4,85}?) have declared\b/gi,'$1 has declared')
+          .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!]{4,85}?) are already compressed\b/gi,'$1 is already compressed')
+          .replace(/\b(The road after [^.?!]{4,85}?) are mixed\b/gi,'$1 is mixed');
+      });
+      a.paragraphs=a.sections.flatMap(x=>x.paragraphs||[]);
+    }
+  }
+  // Final editorial-depth check runs *after* archival and cross-team pruning.
+  // It must see the exact article structure handed to the admission gate.
+  if(week>=5)for(const t of teams){
+    restoreForwardArticleDepth(t,week);
+    const a=t.inquirer_article;if(!a)continue;
+    // Headline rewrites must be finalized here: the late composition pass
+    // can re-introduce the old Week-2 two-game conclusion in other salts.
+    a.headline=String(a.headline||'').replaceAll(
+      'Make Week '+week+' Look Less Accidental',
+      'Make Their Week '+week+' Win Harder to Ignore');
+  }
+  // Late copy edits can resurrect Week N-1 sentences. Repair only confirmed
+  // same-roster reuse, NOT the full newsroom (which can introduce shared riffs).
+  if(week>=3&&previousEdition){
+    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const prior=new Map((previousEdition.teams||[]).map(t=>[String(t.roster_id),
+      new Set(forwardArticleSentences(t).map(x=>forwardNormSentence(x,entities)))]));
+    teams=teams.map(t=>{
+      const a=t.inquirer_article,old=prior.get(String(t.roster_id));
+      if(!a||!old?.size)return t;
+      const rid=String(a?.reporter?.id||'walter-mercer');
+      const sections=(a.sections||[]).map((sec,si)=>({...sec,paragraphs:(sec.paragraphs||[]).map((p,pi)=>
+        forwardSentenceParts(p).map((sentence,sj)=>{
+          if(forwardWordCount(sentence)<10||!old.has(forwardNormSentence(sentence,entities)))return sentence;
+          let out=sentence;
+          for(let attempt=0;attempt<8;attempt++){
+            out=evolveSentence(out,rid,[week,variationSalt,t.roster_id,sec.kind,si,pi,sj,attempt].join('|'));
+            if(!old.has(forwardNormSentence(out,entities)))break;
+          }
+          return out;
+        }).join(' ')
+      )}));
+      return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(x=>x.paragraphs||[])}};
+    });
+  }
+  // Final reader-facing grammar pass: later variation/architecture steps can
+  // introduce numeric adjectives after earlier copy polishing has run.
+  const finishGrammar=s=>String(s)
+    .replace(/\bThe margin asks more:\s*/gi,'')
+    .replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ')
+    .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an ');
+  teams=teams.map(t=>{
+    const a=t?.inquirer_article;
+    if(!a)return t;
+    const sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(finishGrammar)}));
+    return {...t,inquirer_article:{...a,headline:finishGrammar(a.headline||''),sections,paragraphs:sections.flatMap(sec=>sec.paragraphs)}};
+  });
+  overview=deepStrings(overview,finishGrammar);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -3292,29 +4327,144 @@ function forwardEscRe(s){return [...String(s||'')].map(ch=>'.*+?^$(){}|[]'.inclu
 function forwardEntities(edition){return[...(edition?.teams||[])].flatMap(t=>[t.team_name,t.manager_name,t.opponent_name,t.next_opponent_name,...(t.starter_details||[]).map(p=>p.name)]).filter(Boolean).map(String).sort((a,b)=>b.length-a.length)}
 function forwardNormSentence(s,entities=[]){let x=String(s||'');for(const e of entities)x=x.replace(new RegExp(forwardEscRe(e),'gi'),'[ENTITY]');return x.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,'[#]').replace(/\s+/g,' ').trim()}
 function forwardArticleSentences(t){return forwardSentenceParts((t?.inquirer_article?.paragraphs||[]).join(' ')).filter(x=>forwardWordCount(x)>=10)}
-function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(e?.league_overview?.hot_takes||[]).flatMap(x=>[x?.title,x?.take])].filter(Boolean).join(' ')).filter(x=>forwardWordCount(x)>=10)}
+function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(e?.league_overview?.hot_takes||[]).filter(x=>!/division board/i.test(String(x?.title||''))).flatMap(x=>[x?.title,x?.take])].filter(Boolean).join(' ')).filter(x=>forwardWordCount(x)>=10)}
 
 export function evaluateInquirerEditionQuality(current,previous=null){
-  const issues=[],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
+  const issues=[...inspectInquirerFormatContract(current),...inspectNarrativeArchitecture(current)],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
+  const dated=teams.filter(t=>t.mida_outlook);
+  if(Number(current?.week)>=3&&dated.length&&dated.every(t=>{
+    const stamp=Date.parse(String(t.mida_outlook?.source_date||t.mida_outlook?.as_of||''));
+    return Number.isFinite(stamp)&&Date.now()-stamp>7*86400000;
+  })&&/\bMIDA\b|\b\d+(?:\.\d+)?%\s+(?:title|playoff|postseason|championship)\s+(?:outlook|odds|chance|probability)\b|\b(?:title|playoff|postseason|championship)\s+(?:number|probability|odds|outlook)\s+at\s+\d+(?:\.\d+)?%/i.test([...(current?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(current?.league_overview?.hot_takes||[]).map(h=>h.take),...teams.flatMap(t=>t.inquirer_article?.paragraphs||[])].join(' ')))
+    issues.push({id:'stale-forecast-presented-as-current',detail:'Forecast source is more than seven days old.'});
   if(!teams.length)issues.push({id:'no-team-articles',detail:'No team articles were generated.'});
   const articleScaffold=new Map();
+  const extendedPhraseOwners=new Map();
+  const recurringTeamPhrases=[
+    'the next Sunday changes the season sample; it does not simply photocopy',
+    'same stars are fine; same emergency dependence is not',
+    'headliner shift made the second scoreboard louder',
+    'the third score turned the Week',
+    'kicked the door in and',
+    'kept the middle of the scoreboard from going dark'
+  ];
+  const repeatedTeamPhrases=new Map(recurringTeamPhrases.map(phrase=>[phrase,[]]));
+  let trioMentions=0;
   for(const t of teams){
     const sentences=forwardArticleSentences(t),norms=sentences.map(s=>forwardNormSentence(s,entities));
+    const fullCopy=(t?.inquirer_article?.sections||[]).flatMap(x=>x?.paragraphs||[]).join(' ');
+    const uniqueLongPhrases=new Set();
+    const tokens=(fullCopy.toLowerCase().match(/[a-z0-9]+/g)||[]);
+    for(let at=0;at+9<=tokens.length;at++){
+      const window=tokens.slice(at,at+9);
+      // Numeric records shared by multiple teams (e.g., 0-0 in Weeks 2/3)
+      // are facts, not recycled editorial phrasing; never weaken the
+      // independent rejection of repeated jokes and prose.
+      if(window.filter(word=>/^\d+$/.test(word)).length>=2)continue;
+      uniqueLongPhrases.add(window.join(' '));
+    }
+    for(const phrase of uniqueLongPhrases){
+      const owners=extendedPhraseOwners.get(phrase)||new Set();
+      owners.add(String(t.roster_id));extendedPhraseOwners.set(phrase,owners);
+    }
+    if(Number(t?.points)===0&&/\bgot something from\b/i.test(fullCopy))
+      issues.push({id:'zero-point-production-praise',team:t.team_name});
+
     for(const n of new Set(norms)){if(!articleScaffold.has(n))articleScaffold.set(n,new Set());articleScaffold.get(n).add(String(t.roster_id))}
     const prior=(previous?.teams||[]).find(x=>String(x.roster_id)===String(t.roster_id));
     if(prior){
       const pset=new Set(forwardArticleSentences(prior).map(s=>forwardNormSentence(s,entities))),overlap=norms.filter(n=>pset.has(n));
       const ratio=norms.length?overlap.length/norms.length:0;
-      if(overlap.length>=5||ratio>.16)issues.push({id:'same-team-copy-forward',team:t.team_name,overlap:overlap.length,ratio:Number(ratio.toFixed(3))});
+      if(overlap.length>=5||ratio>.16)issues.push({id:'same-team-copy-forward',team:t.team_name,overlap:overlap.length,ratio:Number(ratio.toFixed(3)),examples:sentences.filter((sentence,i)=>pset.has(norms[i])).slice(0,6)});
     }
     const rid=String(t?.inquirer_article?.reporter?.id||''),copy=(t?.inquirer_article?.paragraphs||[]).join(' '),
       valueCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='value').flatMap(s=>s?.paragraphs||[]).join(' ');
+    trioMentions+=(copy.match(/\btrio\b/gi)||[]).length;
+    for(const [phrase,owners] of repeatedTeamPhrases)if(copy.toLowerCase().includes(phrase.toLowerCase()))owners.push(t.team_name);
     if(/already on the roster when Week \d+ began/i.test(valueCopy))issues.push({id:'value-roster-status-filler',team:t.team_name});
+    if(/could not turn the (?:came in|finished|closed the week) result/i.test(copy))issues.push({id:'malformed-result-idiom',team:t.team_name});
     if(rid==='tess-delaney'&&/\b(?:furniture|chair|chairs|tablecloth|linen|napkin|china|silverware|place setting|dining room|dinner|centerpiece|velvet rope|chaise|ballroom|salon|coat check)\b/i.test(copy))issues.push({id:'roycington-retired-metaphor',team:t.team_name});
     if(rid==='nora-voss'&&/\b(?:docket|cross-examination|defendant|prosecution|indictment|courtroom)\b/i.test(copy))issues.push({id:'filch-courtroom-scaffold',team:t.team_name});
   }
-  for(const [sentence,ids] of articleScaffold)if(ids.size>=4)issues.push({id:'cross-team-copy-scaffold',teams:ids.size,sentence});
+  // Evaluate repeated prose once across the complete newsroom, not once per
+  // roster processed. Preserve substantive repeats as editorial failures.
+  const longRecycled=[...extendedPhraseOwners].filter(([,owners])=>owners.size>=4);
+  if(longRecycled.length)issues.push({id:'cross-team-nine-word-scaffold',count:longRecycled.length,
+    examples:longRecycled.slice(0,3).map(([phrase,owners])=>({phrase,team_count:owners.size}))});
+  for(const [phrase,owners] of repeatedTeamPhrases)if(owners.length>=3)
+    issues.push({id:'repeated-team-editorial-template',phrase,teams:owners});
+  if(Number(current?.week)>=3&&teams.length===32&&trioMentions>12)
+    issues.push({id:'overused-scorer-trios',mentions:trioMentions,maximum:12});
+  if(Number(current?.week)>=3&&teams.length===32){
+    const fanCopies=teams.map(t=>({team:t.team_name,copy:(t?.inquirer_article?.sections||[]).filter(s=>s.kind==='sentiment').flatMap(s=>s.paragraphs||[]).join(' ')}));
+    const benches=fanCopies.filter(x=>/\bsitting behind\b/i.test(x.copy)).map(x=>x.team);
+    const screenshots=fanCopies.filter(x=>/\bscreenshots?\b/i.test(x.copy)).map(x=>x.team);
+    const scenes=fanCopies.filter(x=>/\b(?:fans?|supporters?|crowd|fan club|fan base|faithful|stadium|radio|call-in|bars?|group chat|neighborhood)\b/i.test(x.copy));
+    if(benches.length>8)issues.push({id:'fan-bench-subject-monoculture',teams:benches,maximum:8});
+    if(screenshots.length>8)issues.push({id:'fan-screenshot-monoculture',teams:screenshots,maximum:8});
+    if(scenes.length<30)issues.push({id:'missing-real-fan-reaction',count:scenes.length,minimum:30});
+    for(const x of fanCopies)if(forwardWordCount(x.copy)<35)issues.push({id:'thin-fan-sentiment',team:x.team});
+    for(const t of teams){const copy=(t?.inquirer_article?.paragraphs||[]).join(' ');
+      if(/\bthat opener\b|\bin next week.s lineup\b/i.test(copy))issues.push({id:'stale-week-context',team:t.team_name});
+      if(/\b1 carries\b|\b1 rush yds\b/i.test(copy))issues.push({id:'stat-grammar',team:t.team_name});
+    }
+  }
+  if(Number(current?.week)>=3){
+    const allReaderText=[...(current?.league_overview?.sections||[]).flatMap(s=>[s.heading,...(s.paragraphs||[])]),
+      ...(current?.league_overview?.hot_takes||[]).flatMap(h=>[h.title,h.take]),
+      ...teams.flatMap(t=>[t.inquirer_article?.headline,...(t.inquirer_article?.sections||[]).flatMap(s=>[s.heading,...(s.paragraphs||[])])])].filter(Boolean).join('\n');
+    // Exclude correctly formed singular subjects with intervening plural clubs.
+    const agreementReaderText=allReaderText
+      .replace(/\bThe radio station covering [^.?!\n]{4,85}? has declared\b/gi,'The radio station has declared')
+      .replace(/\bThe (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!\n]{4,85}? is already compressed\b/gi,'The division race is already compressed')
+      .replace(/\bThe road after [^.?!\n]{4,85}? is mixed\b/gi,'The road is mixed');
+    for(const name of [...new Set(teams.map(t=>String(t.team_name||'').trim()).filter(n=>/s$/i.test(n.split(/\s+/).at(-1)||'')))]){
+      if(new RegExp('\\b'+forwardEscRe(name)+' (?:does|gets|has|is|needs|sits|keeps|projects|faces)\\b','i').test(agreementReaderText))
+        issues.push({id:'plural-team-agreement',team:name});
+    }
+    if(/:\s*this Sunday\b|; The season record is\b/.test(allReaderText))
+      issues.push({id:'reader-facing-case-and-punctuation'});
+    if(/\bThe radio station covering [^.?!]{4,85}? have declared\b|\bThe (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!]{4,85}? are already compressed\b/i.test(allReaderText))
+      issues.push({id:'intervening-team-subject-agreement'});
+    for(const player of [...new Set(teams.flatMap(t=>(t.starter_details||[]).map(p=>String(p.name||'').trim())).filter(Boolean))]){
+      const matches=allReaderText.match(new RegExp('\\b'+forwardEscRe(player)+'\\b','gi'))||[];
+      if(matches.some(m=>m!==player))issues.push({id:'player-name-capitalization',player});
+    }
+    for(const t of teams){
+      const a=t?.inquirer_article||{},paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
+      if(/\b(?:have|keep|are|do|make|project) [A-Z][a-z]+\b/.test(String(a.headline||'')))
+        issues.push({id:'headline-verb-capitalization',team:t.team_name,headline:a.headline});
+      if(/Week \d+ Look Less Accidental/i.test(String(a.headline||''))&&Number(t.points)>Number(t.opponent_points))
+        issues.push({id:'unverified-prior-week-headline',team:t.team_name,headline:a.headline});
+      for(const p of paragraphs){
+        if(/\b(?:this round of games’s|(?:a 8|an 9)(?:\.\d+)?-point|(?:Texans|Bears|Billiards|Falcons) sits)\b/i.test(p))
+          issues.push({id:'reader-facing-grammar',team:t.team_name,excerpt:String(p).slice(0,150)});
+        for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:'])
+          if(String(p).split(prefix).length>2)issues.push({id:'stacked-stock-preface',team:t.team_name,prefix});
+      }
+      const all=paragraphs.join(' ');
+      if((all.match(/louder of the two/gi)||[]).length>1)issues.push({id:'within-team-scorer-echo',team:t.team_name});
+      for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:'])
+        if(all.split(prefix).length>2)issues.push({id:'repeated-stock-preface',team:t.team_name,prefix});
+      if((a.sections||[]).some(s=>/^this Sunday,/.test(String(s.heading||''))))issues.push({id:'uncapitalized-section-heading',team:t.team_name});
+    }
+  }
+  // Named-player substitutions must not disguise a copy-pasted fan joke.
+  for(const riff of ['supporters are doing what supporters do best','the fan base has screenshots, memes and exactly one volume setting']){
+    const owners=teams.filter(t=>String((t?.inquirer_article?.paragraphs||[]).join(' ')).toLowerCase().includes(riff)).map(t=>t.team_name);
+    if(owners.length>=4)issues.push({id:'repeated-fan-joke',riff,teams:owners});
+  }
+  for(const [sentence,ids] of articleScaffold){
+    // Independent football statistics often have identical *syntax* when all
+    // the player names and numbers are deliberately normalized. That is not
+    // the same as reusing an editorial joke or analysis sentence.
+    const pureStatLine=/^\[#\]\s+(?:carries|catches|completions|solo|assisted|sacks?|receiving|rushing|passing|yards?)/.test(sentence)
+      &&(sentence.match(/\[#\]/g)||[]).length>=3;
+    if(ids.size>=4&&!pureStatLine)issues.push({id:'cross-team-copy-scaffold',teams:ids.size,sentence});
+  }
   for(const [phrase,rows] of forwardCrossReporterPhraseOffenders(teams,entities))issues.push({id:'cross-reporter-phrase-scaffold',phrase,teams:rows.map(x=>x.team),reporters:[...new Set(rows.map(x=>x.reporter))]});
+  for(const [phrase,owners] of forwardCrossTeamClauseOffenders(teams,entities))issues.push({id:'cross-team-clause-scaffold',phrase,teams:owners});
+  for(const [phrase,owners] of forwardPairedNarrativeOffenders(teams,entities))issues.push({id:'paired-editorial-clause-scaffold',phrase,teams:owners});
 
   if(previous){
     const pset=new Set(forwardRecapSentences(previous).map(s=>forwardNormSentence(s,entities))),curr=forwardRecapSentences(current).map(s=>forwardNormSentence(s,entities)),overlap=curr.filter(n=>pset.has(n));
@@ -3322,8 +4472,35 @@ export function evaluateInquirerEditionQuality(current,previous=null){
   }
   const mattered=(current?.league_overview?.sections||[]).find(s=>String(s?.heading||'')==='What Actually Mattered This Week');
   const matteredCopy=(mattered?.paragraphs||[]).join(' ');
+  if(Number(current?.week)>=3){
+    const recapCopy=[...(current?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(current?.league_overview?.hot_takes||[]).map(t=>t.take||'')].join(' ');
+    if(/\b(?:2-0 club|2-0 group|at 0-2|the 0-2 records)\b/i.test(recapCopy))
+      issues.push({id:'recap-week2-record-language',detail:'Old Week 2 record groups appear in a later week.'});
+    if(/\b(?:A 84\.6-point|1 carries|1 rush yds)\b/i.test(recapCopy))
+      issues.push({id:'recap-uncorrected-stat-grammar'});
+    const takes=(current?.league_overview?.hot_takes||[]).map(x=>String(x.take||''));
+    if(takes.some(s=>/borrow an undefeated claim from Week 2/i.test(s)))issues.push({id:'recap-recycled-week2-hot-take'});
+    for(let i=0;i<takes.length;i++)for(let j=i+1;j<takes.length;j++){
+      const a=new Set(forwardSentenceParts(takes[i]).map(s=>forwardNormSentence(s,entities)));
+      if(forwardSentenceParts(takes[j]).some(s=>forwardWordCount(s)>=10&&a.has(forwardNormSentence(s,entities))))
+        issues.push({id:'recap-duplicate-hot-take-argument',items:[i,j]});
+    }
+    const recapSentences=forwardSentenceParts(recapCopy).filter(s=>forwardWordCount(s)>=10);
+    const counts=new Map();for(const sentence of recapSentences){const key=forwardNormSentence(sentence,entities);counts.set(key,(counts.get(key)||0)+1)}
+    for(const [sentence,count] of counts)if(count>=2)issues.push({id:'recap-duplicate-commentary',sentence,count});
+    if(/\btop of the table now starts with\b/i.test(recapCopy)&&/\bThe league leaders are\b/i.test(recapCopy))
+      issues.push({id:'recap-duplicated-leaders',detail:'The recap announces the same top-of-standings cluster in two sections.'});
+  }
   if(/\b(?:worth reopening|real departure from the established level|changes what the next box score is allowed to tell us|role deserves fresh attention|large enough to matter|matter beyond one|that is (?:star|veteran|breakout|emerging|rookie|reliable) production|useful veteran work)\b/i.test(matteredCopy))issues.push({id:'recap-meta-explainer'});
   const blocks=(mattered?.blocks||[]).slice(0,5),blockSentences=blocks.flatMap(b=>forwardSentenceParts((b.paragraphs||[]).join(' ')).filter(s=>forwardWordCount(s)>=8));
+  const statListBlocks=blocks.filter(b=>(b.paragraphs||[]).some(p=>(String(p).match(/\bfantasy points\b/gi)||[]).length>=3));
+  if(Number(current?.week)>=3&&statListBlocks.length>=3)
+    issues.push({id:'recap-mandatory-scorer-trios',blocks:statListBlocks.map(b=>b.heading)});
+  const intro=/\b(?:The box score settles this|Sunday left a clue|Carry this into Monday|Look at the personnel|Forget the excuses|The numbers resist spin):/gi;
+  for(const b of blocks)for(const p of b.paragraphs||[]){
+    const matches=String(p).match(intro)||[];
+    if(matches.length>=2)issues.push({id:'recap-stacked-prefaces',block:b.heading,count:matches.length});
+  }
   const seen=new Set();for(const s of blockSentences){const n=forwardNormSentence(s,entities);if(seen.has(n))issues.push({id:'recap-repeated-developed-sentence',sentence:n});seen.add(n)}
   return{ok:issues.length===0,issues,metrics:{team_articles:teams.length,cross_team_scaffolds:[...articleScaffold.values()].filter(ids=>ids.size>=4).length}};
 }

@@ -183,8 +183,10 @@ test('publication gate rejects every blank or placeholder forward valuation desk
 test('successive weeks cannot recycle a fourteen-word editorial sentence from the prior edition',()=>{
  const earlier=makeEdition(),current=makeEdition();
  earlier.week=4; earlier.published_locked=true;
- current.teams[0].inquirer_article.sections[0].paragraphs.push(
-  earlier.teams[0].inquirer_article.sections[0].paragraphs[0]);
+ const priorSentence='This entirely distinct long editorial sentence describes how a roster management decision became the source of fan frustration after a narrow defeat.';
+ for(const team of earlier.teams)team.inquirer_article.sections=[];
+ earlier.teams[0].inquirer_article.sections=[{kind:'lede',paragraphs:[priorSentence]}];
+ current.teams[0].inquirer_article.sections[0].paragraphs.push(priorSentence);
  assert.ok(inspectPreviousWeekEditorialReuse(current,earlier).some(i=>i.id==='prior-week-prose-reuse'));
  current.teams[0].inquirer_article.sections[0].paragraphs.pop();
  assert.equal(inspectPreviousWeekEditorialReuse(current,earlier).length,0);

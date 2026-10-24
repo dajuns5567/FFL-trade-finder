@@ -5,6 +5,7 @@ import { chromium } from 'playwright';
 import { spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
+import { gzipSync } from 'node:zlib';
 
 const repo='dajuns5567/FFL-trade-finder';
 const preview='https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/';
@@ -26,7 +27,8 @@ try {
   throw Error('Playwright cannot confirm the protected Fleeced project. No secret was created.');
  const state=await context.storageState();
  if(!state.cookies.length&&!state.origins.length)throw Error('No browser session data was captured. No secret was created.');
- const encoded=Buffer.from(JSON.stringify(state)).toString('base64');
+ const encoded=gzipSync(Buffer.from(JSON.stringify(state)),{level:9}).toString('base64');
+ if(Buffer.byteLength(encoded,'utf8')>45000)throw Error('Compressed session still exceeds GitHub secret limits; no credentials were uploaded.');
  const result=spawnSync('gh',['secret','set',secret,'--repo',repo],{input:encoded,encoding:'utf8',stdio:['pipe','pipe','pipe']});
  if(result.status!==0)throw Error('GitHub secret upload failed: '+String(result.stderr||'').slice(0,250));
  console.log('Encrypted repository secret saved. Do not paste browser-state data into chat, logs, or issues.');

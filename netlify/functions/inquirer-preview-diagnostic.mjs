@@ -22,7 +22,7 @@ export default async function inquirerPreviewDiagnostic(req){
  // deploy previews even if their functions share the same Netlify site ID.
  if(new URL(req.url).hostname!=='deploy-preview-402--transcendent-manatee-2f0123.netlify.app')
   return json({error:'Private editorial store reserved for PR 402'},403);
- const store=getStore('fleeced-inquirer-private-pr402-persistent',{consistency:'strong'});
+ const store=getStore({name:'fleeced-inquirer-private-pr402-persistent',consistency:'strong'});
  const legacy=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
  let status;
  try{status=await store.get(identity.status,{type:'json'})||await legacy.get(identity.status,{type:'json'})}

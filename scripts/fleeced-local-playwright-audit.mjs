@@ -4,17 +4,22 @@ import {chromium} from 'playwright';
 import {writeFile} from 'node:fs/promises';
 import {createInterface} from 'node:readline/promises';
 import {stdin,stdout} from 'node:process';
+import {homedir} from 'node:os';
+import {join} from 'node:path';
+import {mkdir,chmod} from 'node:fs/promises';
 const target=process.argv[2]||'https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/?inquirer_preview=1&preview_week=5';
 const u=new URL(target);
 if(u.protocol!=='https:'||!(/^(?:deploy-preview-\d+--)?transcendent-manatee-2f0123\.netlify\.app$/).test(u.hostname))throw Error('Only the Fleeced replacement Netlify site or its previews are allowed.');
 const report={url:target,read_only:true,authenticated:false,landing_page:false,complete_edition_verified:false,links:[],checks:{},errors:[]};
-const browser=await chromium.launch({headless:false});
+const profileDir=join(homedir(),'.config','fleeced-playwright-browser');
+await mkdir(profileDir,{recursive:true,mode:0o700});
+await chmod(profileDir,0o700);
+const context=await chromium.launchPersistentContext(profileDir,{headless:false});
 try{
- const context=await browser.newContext();
  const page=await context.newPage();
  await page.goto(target,{waitUntil:'domcontentloaded',timeout:60000});
  const rl=createInterface({input:stdin,output:stdout});
- try{await rl.question('After the protected Fleeced page is visible, press Enter to perform the read-only browser audit: ');}finally{rl.close();}
+ try{await rl.question('If needed, sign in once. When the protected Fleeced page is visible, press Enter to audit: ');}finally{rl.close();}
  const current=new URL(page.url());
  const text=await page.locator('body').innerText({timeout:20000});
  report.authenticated=current.host===u.host&&!/sign in to continue|authentication required|access denied/i.test(text.slice(0,2200));
@@ -48,5 +53,5 @@ try{
 }catch(e){report.errors.push(String(e.message||e));process.exitCode=1;}
 finally{
  await writeFile('playwright-local-audit.json',JSON.stringify(report,null,2)+'\n');
- await browser.close();
+ await context.close();
 }

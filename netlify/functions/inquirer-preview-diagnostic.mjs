@@ -53,7 +53,7 @@ export default async function inquirerPreviewDiagnostic(req){
  if(status&&!previewStatusMatchesIdentity(status,identity))
   status={state:'not-started',season:identity.season,week:identity.week,reason:'Mismatched prior private preview status ignored; generate this exact week again.'};
  if(new URL(req.url).searchParams.get('audit')==='1'){
-  if(status?.state!=='completed')return json({ready:false,state:status?.state||'not-started',target:{season:identity.season,week:identity.week},reason:'No completed private manuscript to audit'},409);
+  if(status?.state!=='completed'&&status?.state!=='editorial-hold')return json({ready:false,state:status?.state||'not-started',target:{season:identity.season,week:identity.week},reason:'No completed private manuscript to audit'},409);
   let draft;
   try{draft=await store.get(identity.edition,{type:'json'})||await legacy.get(identity.edition,{type:'json'})}
   catch(error){return json({ready:false,error:'Private manuscript storage unavailable'},503)}

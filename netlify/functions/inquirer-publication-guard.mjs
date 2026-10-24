@@ -39,9 +39,9 @@ export function inspectEditionBeforePublication(edition) {
     if(substantive.length<6)issues.push({id:'article-depth',team,count:substantive.length});
     // A heading without prose is not an editorial desk. Check forward
     // editions with real valuation snapshots without altering locked history.
-    if(Number(edition?.season)>=2026&&Number(edition?.week)>=5&&t.value_history_week?.value!=null){
+    if(Number(edition?.season)>=2026&&Number(edition?.week)>=5){
       const value=(article?.sections||[]).find(s=>s.kind==='value');
-      if(!value||(value.paragraphs||[]).every(p=>!String(p||'').trim()))
+      if(!value||(value.paragraphs||[]).every(p=>!String(p||'').trim()||/^n\/?a$/i.test(String(p).trim())))
         issues.push({id:'empty-value-desk',team});
     }
     const fan=(article?.sections||[]).find(s=>s.kind==='sentiment');

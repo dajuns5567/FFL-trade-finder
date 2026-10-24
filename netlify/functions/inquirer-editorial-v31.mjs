@@ -4059,12 +4059,16 @@ function assertWeek2Originality(result,previousEdition){
         const validDelta=market.delta!=null&&Number.isFinite(delta);
         const validCurrent=market.value!=null&&Number.isFinite(current);
         const magnitude=validDelta?Math.abs(Math.round(delta)).toLocaleString('en-US'):null;
+        const baseline=Number(market.baseline_value);
+        const validBaseline=market.baseline_value!=null&&Number.isFinite(baseline);
         const observed=validDelta
-          ?team+' moved '+(delta>0?'up ':delta<0?'down ':'by ')+magnitude+' market points in Week '+week+'; '+team+' still has to prove that paper movement matters on a scoreboard.'
-          :team+' has no verified market movement for Week '+week+'; '+team+' will not be awarded a fictional rise or fall.';
-        const context=validCurrent
-          ?team+' carries a recorded valuation of '+Math.round(current).toLocaleString('en-US')+' points; '+team+' cannot cash that number in for a matchup victory.'
-          :team+' also lacks a verified current valuation; '+team+' gets a documented data gap, not a made-up price tag.';
+          ?team+' finished the Week '+week+' market window '+(delta>0?'up ':delta<0?'down ':'unchanged at ')+magnitude+' valuation points.'
+          :team+' has no verified market movement for Week '+week+'; '+team+' gets no imaginary rise or fall.';
+        const context=validCurrent&&validBaseline
+          ?'From '+Math.round(baseline).toLocaleString('en-US')+' to '+Math.round(current).toLocaleString('en-US')+', '+team+' has a recorded price tag; '+team+' still must win games.'
+          :validCurrent
+            ?team+' has a recorded valuation of '+Math.round(current).toLocaleString('en-US')+' points; '+team+' still has to win games.'
+            :team+' lacks a verified current price; '+team+' gets a data caveat instead.';
         byKind.set('value',{kind:'value',heading:marketDesk?.heading||'The Roster-Value Ledger',paragraphs:[observed+' '+context]});
       }
       const outlook=byKind.get('outlook');

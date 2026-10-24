@@ -4438,7 +4438,14 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     const owners=teams.filter(t=>String((t?.inquirer_article?.paragraphs||[]).join(' ')).toLowerCase().includes(riff)).map(t=>t.team_name);
     if(owners.length>=4)issues.push({id:'repeated-fan-joke',riff,teams:owners});
   }
-  for(const [sentence,ids] of articleScaffold)if(ids.size>=4)issues.push({id:'cross-team-copy-scaffold',teams:ids.size,sentence});
+  for(const [sentence,ids] of articleScaffold){
+    // Independent football statistics often have identical *syntax* when all
+    // the player names and numbers are deliberately normalized. That is not
+    // the same as reusing an editorial joke or analysis sentence.
+    const pureStatLine=/^\[#\]\s+(?:carries|catches|completions|solo|assisted|sacks?|receiving|rushing|passing|yards?)/.test(sentence)
+      &&(sentence.match(/\[#\]/g)||[]).length>=3;
+    if(ids.size>=4&&!pureStatLine)issues.push({id:'cross-team-copy-scaffold',teams:ids.size,sentence});
+  }
   for(const [phrase,rows] of forwardCrossReporterPhraseOffenders(teams,entities))issues.push({id:'cross-reporter-phrase-scaffold',phrase,teams:rows.map(x=>x.team),reporters:[...new Set(rows.map(x=>x.reporter))]});
   for(const [phrase,owners] of forwardCrossTeamClauseOffenders(teams,entities))issues.push({id:'cross-team-clause-scaffold',phrase,teams:owners});
   for(const [phrase,owners] of forwardPairedNarrativeOffenders(teams,entities))issues.push({id:'paired-editorial-clause-scaffold',phrase,teams:owners});

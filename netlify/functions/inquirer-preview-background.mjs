@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import {getDeployStore} from '@netlify/blobs';
 import {weeklyReport} from './league-hub.mjs';
 import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,summarizePreviewDiagnostic,auditPrivateEdition} from './lib/inquirer-preview-diagnostics.mjs';
@@ -56,7 +57,8 @@ export default async function generateInquirerPreview(req){
   // be read back and independently passes the exact requested-week checks.
   // An incomplete write must remain a hold, not a phantom completed edition.
   const readback=await store.get(identity.edition,{type:'json'});
-  if(!readback||Number(readback.season)!==identity.season||
+  const fingerprint=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+  if(!readback||fingerprint(readback)!==fingerprint(edition)||Number(readback.season)!==identity.season||
       Number(readback.week)!==identity.week||
       readback.preview_only!==true||readback.published_locked!==false||
       !auditPrivateEdition(readback).passed)

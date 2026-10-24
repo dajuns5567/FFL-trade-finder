@@ -186,6 +186,7 @@ export function restoreForwardArticleDepth(t,week){
  // from the recorded performance instead of retaining a heading with no copy.
  const kind=k=>a.sections.find(s=>s.kind===k);
  const hot=kind('hot-seat'),cool=kind('cool-throne'),valueDesk=kind('value');
+ const team=text(t.team_name),opponent=text(t.opponent_name);
  // Empty desk headings passed earlier structural audits despite actual
  // seven-day roster valuations being available. Restore verifiable figures,
  // varying the angle without inventing a player-level cause.
@@ -205,7 +206,7 @@ export function restoreForwardArticleDepth(t,week){
  }
 
  const weak=t.worst_starter,leader=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points))[0];
- const team=text(t.team_name),opponent=text(t.opponent_name);
+
  const gap=Number(t.opponent_points)-Number(t.points);
  if(hot&&!(hot.paragraphs||[]).length&&weak?.name){
   const projected=Number(weak.projected),scored=Number(weak.points);

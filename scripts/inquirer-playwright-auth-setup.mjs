@@ -22,10 +22,10 @@ try {
  finally {rl.close();}
  const actual=new URL(page.url());
  const text=await page.locator('body').innerText({timeout:20000});
- if(actual.host!=='deploy-preview-402--transcendent-manatee-2f0123.netlify.app'||!/week\\s*5/i.test(text)||!/inquirer/i.test(text))
+ if(actual.host!=='deploy-preview-402--transcendent-manatee-2f0123.netlify.app'||!/week\s*5/i.test(text)||!/inquirer/i.test(text))
   throw Error('Playwright cannot confirm the protected Week 5 Inquirer. No secret was created.');
  const state=await context.storageState();
- if(!state.cookies.length)throw Error('No session cookies were captured. No secret was created.');
+ if(!state.cookies.length&&!state.origins.length)throw Error('No browser session data was captured. No secret was created.');
  const encoded=Buffer.from(JSON.stringify(state)).toString('base64');
  const result=spawnSync('gh',['secret','set',secret,'--repo',repo],{input:encoded,encoding:'utf8',stdio:['pipe','pipe','pipe']});
  if(result.status!==0)throw Error('GitHub secret upload failed: '+String(result.stderr||'').slice(0,250));

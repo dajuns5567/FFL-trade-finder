@@ -27,6 +27,18 @@ export default async function inquirerPreviewDiagnostic(req){
  let status;
  try{status=await store.get(identity.status,{type:'json'})||await legacy.get(identity.status,{type:'json'})}
  catch(error){console.error('inquirer-preview-diagnostic-status-read',String(error?.message||error));return json({error:'Private preview storage temporarily unavailable',status:{state:'storage-unavailable'},target:{season:identity.season,week:identity.week}},503)}
+ // A stored, identity-matching, independently approved manuscript is the
+ // source of truth. Rebuilds may lose their status key, but must never
+ // erase the newspaper or falsely send the reader to regeneration.
+ let savedEdition=null;
+ try{savedEdition=await store.get(identity.edition,{type:'json'})||await legacy.get(identity.edition,{type:'json'})}
+ catch(error){console.error('inquirer-preview-diagnostic-edition-read',String(error?.message||error));}
+ if(savedEdition&&Number(savedEdition.season)===identity.season&&Number(savedEdition.week)===identity.week&&
+    savedEdition.preview_only===true&&savedEdition.published_locked===false&&
+    savedEdition.preview_editorial_audit?.ok===true&&savedEdition.preview_generation_quality?.ok===true){
+   status={state:'completed',season:identity.season,week:identity.week,preview_only:true,
+     restored_from_saved_manuscript:true};
+ }
  // A status saved under a previous UI version or a week-mislabeled error
  // must never pass the requested Week 5 diagnostic or be treated as complete.
  if(status&&!previewStatusMatchesIdentity(status,identity))

@@ -284,3 +284,13 @@ test('final forward handoff deduplicates exact substantial sentences after curat
  assert.match(generator.slice(dedup,dedup+900),/usedSentences\.has\(key\)/);
  assert.match(generator.slice(dedup,dedup+900),/article\.paragraphs=/);
 });
+
+test('forward articles keep the locked editorial word ceiling without cutting sentences midstream',()=>{
+ const generator=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
+ const i=generator.indexOf('const forwardWordCount=()=>');
+ assert.ok(i>=0);
+ const clip=generator.slice(i,i+1400);
+ assert.match(clip,/forwardWordCount\(\)>640/);
+ assert.match(clip,/\['sentiment','outlook','lede'\]/);
+ assert.match(clip,/slice\(0,-1\)\.join\(' '\)/);
+});

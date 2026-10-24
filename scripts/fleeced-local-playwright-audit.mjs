@@ -119,7 +119,8 @@ try{
  report.evidence=text.slice(0,3200);
  // Do not click buttons, start generation, publish, contact payments, or navigate to mutation endpoints.
  if(!report.landing_page)throw Error('Authenticated page did not display Fleeced.');
- console.log('Read-only audit complete. Check playwright-local-audit.json for findings.');
+ if(report.errors.length){process.exitCode=1;console.error('Read-only audit found blocking inconsistencies; see playwright-local-audit.json.');}
+ else console.log('Read-only audit complete. Check playwright-local-audit.json for findings.');
 }catch(e){report.errors.push(String(e.message||e));process.exitCode=1;}
 finally{
  await writeFile('playwright-local-audit.json',JSON.stringify(report,null,2)+'\n');

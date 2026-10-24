@@ -32,6 +32,7 @@ const safe={
  week5_draft_readback:checks.week5_draft_readback||null,
  preview_diagnostic_requests:checks.preview_diagnostic_requests||[],
  reader_runtime:checks.reader_runtime||null,
+ reader_consistency:checks.reader_consistency||null,
  ui_flags:{
   not_ready:checks.not_ready===true,
   missing_archive:checks.missing_archive===true,

@@ -52,6 +52,15 @@ export default async function generateInquirerPreview(req){
    throw failure;
   }
   await store.setJSON(identity.edition,edition);
+  // Never mark a week complete until the *same deploy-local manuscript* can
+  // be read back and independently passes the exact requested-week checks.
+  // An incomplete write must remain a hold, not a phantom completed edition.
+  const readback=await store.get(identity.edition,{type:'json'});
+  if(!readback||Number(readback.season)!==identity.season||
+      Number(readback.week)!==identity.week||
+      readback.preview_only!==true||readback.published_locked!==false||
+      !auditPrivateEdition(readback).passed)
+   throw Error('Private draft write verification failed; completion withheld.');
   await store.setJSON(identity.status,{
    state:'completed',started_at,finished_at:new Date().toISOString(),season:identity.season,week:identity.week,
    preview_only:true,summary:summarizePreviewDiagnostic(edition)

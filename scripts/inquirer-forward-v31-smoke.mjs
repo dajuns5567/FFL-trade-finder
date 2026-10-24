@@ -48,7 +48,7 @@ const copyEscape=value=>[...String(value)].map(ch=>".*+?^$(){}|[]".includes(ch)|
 const copyNorm=value=>{
  let out=String(value||'');
  for(const entity of copyEntities)out=out.replace(new RegExp(copyEscape(entity),'gi'),'[ENTITY]');
- return out.toLowerCase().replace(/\\b\\d+(?:\\.\\d+)?%?\\b/g,'[#]').replace(/\\s+/g,' ').trim();
+ return out.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,'[#]').replace(/\\s+/g,' ').trim();
 };
 const copiedExamples=(lastCandidate?.teams||[]).filter(t=>['Tampa Bay Buccaneers','Seattle Seahawks'].includes(t.team_name)).map(t=>{
  const prev=week2.teams.find(p=>String(p.roster_id)===String(t.roster_id));

@@ -93,7 +93,13 @@ export function auditPrivateEdition(edition){
   // Repeated nine-word sequences across four different columns signal
   // a cloned reporting scaffold, even when entire paragraphs differ.
   const phrases=new Set();
-  for(let at=0;at+9<=tokens.length;at++)phrases.add(tokens.slice(at,at+9).join(' '));
+  for(let at=0;at+9<=tokens.length;at++){
+   const phraseTokens=tokens.slice(at,at+9);
+   // Identical scores and records are legitimate common facts, not a
+   // repeated punchline. Other nine-word scaffolds remain a quality hold.
+   if(phraseTokens.filter(token=>/^\d+$/.test(token)).length>=2)continue;
+   phrases.add(phraseTokens.join(' '));
+  }
   for(const phrase of phrases){const owners=phraseOwners.get(phrase)||new Set();owners.add(id);phraseOwners.set(phrase,owners)}
   if(Number(t?.points)===0&&/\bgot something from\b/i.test(copy))issues.push('zero-point team falsely credited with production roster '+id);
   lengths.push(words);

@@ -122,7 +122,7 @@ test('diagnostic outages never masquerade as a missing week or launch duplicate 
 
 test('every future completed draft passes full independent structural audit before storage',()=>{
  const gate=previewJobSource.indexOf('const structural=auditPrivateEdition(edition)');
- const saved=previewJobSource.indexOf('await store.setJSON(identity.edition,edition)');
+ const saved=previewJobSource.indexOf('await store.setJSON(identity.edition,edition,{onlyIfNew:true})');
  assert.ok(gate>=0&&saved>gate,'structural audit must precede saved completed edition');
  assert.match(previewJobSource,/if\(!structural\.passed\)/);
  assert.match(previewJobSource,/setJSON\(identity\.rejected,\{started_at,edition\}\)/);
@@ -137,7 +137,7 @@ test('every future completed draft passes full independent structural audit befo
 });
 
 test('every completed weekly preview must be structurally verified after exact deploy-local readback',()=>{
- const write=previewJobSource.indexOf('await store.setJSON(identity.edition,edition)');
+ const write=previewJobSource.indexOf('await store.setJSON(identity.edition,edition,{onlyIfNew:true})');
  const read=previewJobSource.indexOf("const readback=await store.get(identity.edition,{type:'json'})");
  const status=previewJobSource.indexOf("await store.setJSON(identity.status,{\\n   state:'completed'".replace('\\n','\n'));
  assert.ok(write>=0&&read>write&&status>read,'completion follows an independently audited saved-blob readback');
@@ -157,7 +157,7 @@ test('weekly structural checker blocks recycled column openings instead of rewar
 test('exact saved manuscript digest is required before any week is marked completed',()=>{
  assert.match(previewJobSource,/createHash/);
  assert.match(previewJobSource,/fingerprint\(readback\)!==fingerprint\(edition\)/);
- const write=previewJobSource.indexOf('await store.setJSON(identity.edition,edition)');
+ const write=previewJobSource.indexOf('await store.setJSON(identity.edition,edition,{onlyIfNew:true})');
  const digest=previewJobSource.indexOf('fingerprint(readback)!==fingerprint(edition)');
  const complete=previewJobSource.indexOf("state:'completed'",write);
  assert.ok(write>=0&&digest>write&&complete>digest);

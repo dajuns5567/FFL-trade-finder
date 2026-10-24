@@ -34,6 +34,7 @@ const safe={
  observed_diagnostic_requests:checks.observed_diagnostic_requests||[],
  reader_runtime:checks.reader_runtime||null,
  reader_consistency:checks.reader_consistency||null,
+ reader_vs_endpoint:checks.reader_vs_endpoint||null,
  ui_flags:{
   not_ready:checks.not_ready===true,
   missing_archive:checks.missing_archive===true,

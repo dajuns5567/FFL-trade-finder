@@ -1705,7 +1705,7 @@ function w2DivisionalOutlook(t,r,next,nrecord,ndiv){
       team+" gets a direct "+ndiv+" rival in "+next+". The division title buys a playoff seat, which means one result can improve the "+a.mascot+" position and damage the rival’s at the same time. "+mida+"That is the kind of reservation worth wearing the good suit for."
     ],
     "mack-hollis":[
-      "Week 3 is "+team+" versus "+next+" inside "+ndiv+", so throw the 'just one game' sign in the trash. Division shots are limited, the division winner gets a playoff berth, and one head-to-head result hits both teams at once. "+mida+leverage,
+      "Week 3 is "+team+" versus "+next+" inside "+ndiv+". The 'just one game' excuse can leave the building: winning "+ndiv+" sends "+team+" to the playoffs, and beating "+next+" takes a swing at both sides of that particular argument. "+mida+leverage,
       next+" is a direct "+ndiv+" rival, which makes Week 3 a two-sided punch: "+team+" can add a win and hand the same race a loss. The division crown punches a playoff ticket in this league. "+mida+"That is why this one gets the megaphone.",
       "The schedule gives "+team+" "+article+" "+ndiv+" game against "+next+". There are not many direct swings like this, and the prize for winning the division is a playoff berth. "+mida+"Win it and the "+a.mascot+" are not just 1-0 better; a rival is 0-1 worse in the exact same race.",
       team+" and "+next+" are fighting for the same "+ndiv+" door, and that door opens straight into the playoffs for the division winner. Head-to-head chances are limited. "+mida+"If the "+a.mascot+" want leverage, this is where they stop asking politely."

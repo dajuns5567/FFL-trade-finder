@@ -923,6 +923,8 @@ function w2StatKind(p){
 function w2LedeShape(t,r,won,margin,opp,top){
   const a=w2Alias(t),star=top?.[0]?.name||t.team_name,close=margin<=6,wide=margin>=20,k=w2Hash(String(t.roster_id)+"|lede|"+String(r?.id||""))%6,team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(opp);
   const second=top?.[1],support=Number(second?.points)||0;
+  if(!won&&Number(top?.[0]?.points||0)===0&&Number(t.points||0)===0)
+    return team+" scored exactly 0.0, including 0.0 from "+star+". It takes commitment to submit a whole starting lineup and bring home absolutely nothing; "+foe+" only needed to show up on the scoreboard.";
   if(won){
     const rows=[
       close?star+" supplied the biggest "+a.mascot+" score, and a "+w2One(margin)+"-point finish means the supporting points behind him were every bit as important.":star+" set the pace, while "+team+" got enough additional scoring to finish ahead of "+foe+" without relying on one line alone.",

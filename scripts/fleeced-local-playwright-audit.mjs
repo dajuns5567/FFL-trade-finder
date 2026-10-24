@@ -74,6 +74,17 @@ try{
   .map(x=>x.name).filter(x=>x.includes('/.netlify/functions/inquirer-preview-diagnostic'))
   .map(x=>{const u=new URL(x);return u.pathname+u.search}).slice(0,12));
  report.checks.preview_diagnostic_requests=requests;
+ // Compare visible failure with the completed, validated same-week manuscript.
+ // This prevents treating a stale Week 6 page error as loss of Week 5 data.
+ const d=report.checks.week5_diagnostic||{},m=report.checks.week5_draft_readback||{};
+ report.checks.reader_consistency={
+  completed_week5_diagnostic:d.http_status===200&&d.target_week===5&&d.state==='completed',
+  valid_week5_draft:m.http_status===200&&m.season===2026&&m.week===5&&m.preview_only===true&&m.published_locked_false===true&&m.team_count===32&&m.recap_present===true&&m.editorial_audit_ok===true&&m.generation_quality_ok===true,
+  visible_week6_failure:/Cannot generate Week 6 editorial preview/i.test(text),
+  inconsistent:false
+ };
+ report.checks.reader_consistency.inconsistent=report.checks.reader_consistency.completed_week5_diagnostic&&report.checks.reader_consistency.valid_week5_draft&&report.checks.reader_consistency.visible_week6_failure;
+ if(report.checks.reader_consistency.inconsistent)report.errors.push('STALE_READER_WEEK_MISMATCH: validated Week 5 draft exists, but the rendered page displays Week 6 failure.');
  report.checks.reader_runtime={
   current_url:page.url().replace(/([?&])[^=]+=[^&]*/g,'$1[redacted]'),
   page_errors:jsFailures.slice(0,10),

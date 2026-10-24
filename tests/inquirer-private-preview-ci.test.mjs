@@ -251,6 +251,6 @@ test('blank-market safeguards also reject legacy n/a placeholders',()=>{
  const generator=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
  const audit=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
  assert.match(generator,/marketDesk\?\.paragraphs/);
- assert.match(generator,/!\/\^n\\\/\?a\$\/i\.test/);
- assert.match(audit,/!\/\^n\\\/\?a\$\/i\.test/);
+ assert.ok(generator.includes('!/\\^n\\/?a$/i.test'.replace('\\^','^')));
+ assert.ok(audit.includes('!/\\^n\\/?a$/i.test'.replace('\\^','^')));
 });

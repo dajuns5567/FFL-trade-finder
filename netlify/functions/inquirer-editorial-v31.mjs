@@ -4278,11 +4278,30 @@ function assertWeek2Originality(result,previousEdition){
       'Make Week '+week+' Look Less Accidental',
       'Make Their Week '+week+' Win Harder to Ignore');
   }
-  // The last grammar, structural, and depth passes can restore old Week N-1
-  // wording. Recheck and evolve the ACTUAL reader-facing article copy,
-  // once, after all composition is complete.
-  if(week>=3&&previousEdition)
-    teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+1409);
+  // Late copy edits can resurrect Week N-1 sentences. Repair only confirmed
+  // same-roster reuse, NOT the full newsroom (which can introduce shared riffs).
+  if(week>=3&&previousEdition){
+    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const prior=new Map((previousEdition.teams||[]).map(t=>[String(t.roster_id),
+      new Set(forwardArticleSentences(t).map(x=>forwardNormSentence(x,entities)))]));
+    teams=teams.map(t=>{
+      const a=t.inquirer_article,old=prior.get(String(t.roster_id));
+      if(!a||!old?.size)return t;
+      const rid=String(a?.reporter?.id||'walter-mercer');
+      const sections=(a.sections||[]).map((sec,si)=>({...sec,paragraphs:(sec.paragraphs||[]).map((p,pi)=>
+        forwardSentenceParts(p).map((sentence,sj)=>{
+          if(forwardWordCount(sentence)<10||!old.has(forwardNormSentence(sentence,entities)))return sentence;
+          let out=sentence;
+          for(let attempt=0;attempt<8;attempt++){
+            out=evolveSentence(out,rid,[week,variationSalt,t.roster_id,sec.kind,si,pi,sj,attempt].join('|'));
+            if(!old.has(forwardNormSentence(out,entities)))break;
+          }
+          return out;
+        }).join(' ')
+      )}));
+      return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(x=>x.paragraphs||[])}};
+    });
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

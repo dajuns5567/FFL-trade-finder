@@ -33,16 +33,16 @@ try{
  // requested read-only preview URL once, after the browser has authenticated.
  const afterAuth=new URL(page.url());
  if(afterAuth.origin===u.origin&&(afterAuth.searchParams.get('preview_week')!=='5'||afterAuth.searchParams.get('inquirer_preview')!=='1')){
-  report.checks.review_query_lost_during_auth=true;
+  report.review_query_lost_during_auth=true;
   await page.goto(target,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForTimeout(3000);
- }else report.checks.review_query_lost_during_auth=false;
+ }else report.review_query_lost_during_auth=false;
  const current=new URL(page.url());
  const text=await page.locator('body').innerText({timeout:20000});
  report.authenticated=current.host===u.host&&!/sign in to continue|authentication required|access denied/i.test(text.slice(0,2200));
  if(!report.authenticated)throw Error('Site redirected to login or denied access.');
  report.landing_page=/fleeced/i.test(text)&&text.length>200;
- report.checks={week5:/week\s*5/i.test(text),inquirer:/inquirer/i.test(text),recap:/weekly recap/i.test(text),awards:/players of the week|player of the week/i.test(text),badges:/badges?/i.test(text),spotlight:/manager spotlight/i.test(text),reporters:/reporter|swindell|roycington|fleecer|filch/i.test(text),not_ready:/private inquirer preview is not ready/i.test(text),missing_archive:/earliest missing locked archive/i.test(text)};
+ report.checks={review_query_lost_during_auth:report.review_query_lost_during_auth,week5:/week\s*5/i.test(text),inquirer:/inquirer/i.test(text),recap:/weekly recap/i.test(text),awards:/players of the week|player of the week/i.test(text),badges:/badges?/i.test(text),spotlight:/manager spotlight/i.test(text),reporters:/reporter|swindell|roycington|fleecer|filch/i.test(text),not_ready:/private inquirer preview is not ready/i.test(text),missing_archive:/earliest missing locked archive/i.test(text)};
  const anchors=await page.locator('a[href]').evaluateAll(els=>els.map(a=>({text:(a.innerText||'').trim().slice(0,90),href:a.getAttribute('href')})));
  report.links=anchors.filter(a=>/inquirer|league|recap|award|reporter|manager|badge/i.test(a.text+' '+a.href)).slice(0,40).map(a=>({text:a.text,href:new URL(a.href,page.url()).pathname}));
  // Independently inspect the read-only, week-scoped preview diagnostic.

@@ -81,8 +81,8 @@ export function auditPrivateEdition(edition){
   const prose=sections.flatMap(s=>Array.isArray(s?.paragraphs)?s.paragraphs:[]);
   // Repeated opening riffs make 32 otherwise valid columns read like one
   // template. Limit normalized, sufficiently substantial opening sentences.
-  const first=String(prose.find(p=>String(p||'').trim())||'').split(/[.!?](?:\\s|$)/)[0]
-   .toLowerCase().replace(/[^a-z0-9\\s]/g,'').replace(/\\s+/g,' ').trim();
+  const first=String(prose.find(p=>String(p||'').trim())||'').split(/[.!?](?:\s|$)/)[0]
+   .toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim();
   if(first.split(' ').length>=10){
    const seen=openings.get(first)||[];
    seen.push(id);openings.set(first,seen);

@@ -208,7 +208,27 @@ export function restoreForwardArticleDepth(t,week){
    'A rival can admire the asset sheet and still enjoy the result on Sunday.',
    'The front office gets a number; the locker room still owes a performance.',
    'Paper wealth is entertaining until another lineup outproduces it.',
-   'The weekly market has spoken, and thankfully it does not set the standings.'
+   'The weekly market has spoken, and thankfully it does not set the standings.',
+   'Somebody can frame the valuation report after the actual starters finish their jobs.',
+   'An appreciating bench is lovely furniture; league standings are built elsewhere.',
+   'Asset prices are a conversation starter, not a substitute for converting possessions into points.',
+   'The financial column gets the decimal places; the football column gets the blame.',
+   'There is no waiver claim that cashes in abstract roster equity on Sunday morning.',
+   'That ledger gives the manager another talking point, which is not the same as another victory.',
+   'The market ticker is not a scoreboard, no matter how often the group chat refreshes it.',
+   'A prettier portfolio might win a debate; it cannot throw a touchdown for anyone.',
+   'Roster economics make for compelling reading until the matchup supplies its own uncomfortable arithmetic.',
+   'The valuation chart got its movement; the lineup has no obligation to imitate the graph.',
+   'A week of price discovery does not excuse a season of questionable starting decisions.',
+   'If this number inspires a victory parade, somebody has mistaken the exchange for the end zone.',
+   'Managers can quote market value at negotiations; opponents will quote the final margin.',
+   'A roster can grow on paper while Sunday politely declines to cooperate with the investment thesis.',
+   'The ledger offers an argument about future value; the current schedule does not accept IOUs.',
+   'Even an impressive market correction cannot reverse points already left sitting on a bench.',
+   'Trading screens may applaud the holdings, but the fantasy season grades actual usage.',
+   'The appraisal is evidence of price movement, not evidence that the coach learned anything.',
+   'The roster report is useful homework, provided management remembers there is a football test afterward.',
+   'Accounting for the fluctuation is easy; convincing the next opponent to care will be harder.'
   ];
   const rosterIndex=Math.max(0,(Number(t.roster_id)||1)-1);
   // Keep the common statistical label shorter than a reusable prose phrase.

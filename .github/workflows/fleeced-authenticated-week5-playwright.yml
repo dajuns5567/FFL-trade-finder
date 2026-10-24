@@ -53,6 +53,15 @@ jobs:
         env:
           PLAYWRIGHT_STATE_FILE: ${{ runner.temp }}/netlify-playwright-state.json
         run: node scripts/inquirer-authenticated-browser-audit.mjs
+      - name: Explain authenticated browser failure without leaking session data
+        if: failure()
+        shell: bash
+        run: |
+          if [ -f playwright-audit-result.json ]; then
+            node -e "const r=require('./playwright-audit-result.json'); const u=String(r.checks?.final_host||'unknown');const errors=(r.errors||[]).map(x=>String(x).slice(0,160));console.log('Authenticated browser audit: '+JSON.stringify({authenticated:!!r.authenticated,landing_page_verified:!!r.landing_page_verified,final_host:u,sso_redirect:!!r.checks?.sso_redirect,sso_wall:!!r.checks?.sso_wall,http_status:r.checks?.http_status??null,errors}));"
+          else
+            echo "Browser audit did not create a diagnostic report."
+          fi
       - name: Upload diagnostic only (no cookies)
         if: always()
         uses: actions/upload-artifact@v4

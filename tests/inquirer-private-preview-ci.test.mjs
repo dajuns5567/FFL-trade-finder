@@ -238,3 +238,11 @@ test('value desk quality gate does not depend on optional roster-value adapter k
  assert.match(audit,/value\.paragraphs\.some/);
  assert.doesNotMatch(audit,/const market=t\?\.value_history_week/);
 });
+
+test('forward weekly newspaper populates otherwise blank value desks without making up market history',()=>{
+ const generator=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
+ assert.match(generator,/const marketDesk=byKind\.get\('value'\)/);
+ assert.match(generator,/market\.delta!=null&&Number\.isFinite\(delta\)/);
+ assert.match(generator,/no verified Week /);
+ assert.match(generator,/paragraphs:\[observed\+' '\+context\]/);
+});

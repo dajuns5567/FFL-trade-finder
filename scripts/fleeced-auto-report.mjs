@@ -31,6 +31,7 @@ const safe={
  week5_diagnostic:checks.week5_diagnostic||null,
  week5_draft_readback:checks.week5_draft_readback||null,
  preview_diagnostic_requests:checks.preview_diagnostic_requests||[],
+ observed_diagnostic_requests:checks.observed_diagnostic_requests||[],
  reader_runtime:checks.reader_runtime||null,
  reader_consistency:checks.reader_consistency||null,
  ui_flags:{

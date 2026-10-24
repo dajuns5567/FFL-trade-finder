@@ -35,7 +35,8 @@ export default async function inquirerPreviewDiagnostic(req){
  catch(error){console.error('inquirer-preview-diagnostic-edition-read',String(error?.message||error));}
  if(savedEdition&&Number(savedEdition.season)===identity.season&&Number(savedEdition.week)===identity.week&&
     savedEdition.preview_only===true&&savedEdition.published_locked===false&&
-    savedEdition.preview_editorial_audit?.ok===true&&savedEdition.preview_generation_quality?.ok===true){
+    savedEdition.preview_editorial_audit?.ok===true&&savedEdition.preview_generation_quality?.ok===true&&
+    auditPrivateEdition(savedEdition).passed){
    status={state:'completed',season:identity.season,week:identity.week,preview_only:true,
      restored_from_saved_manuscript:true};
  }

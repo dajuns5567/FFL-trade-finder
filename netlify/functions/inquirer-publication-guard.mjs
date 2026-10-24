@@ -133,6 +133,25 @@ export function editorialApprovalMatches(edition,approval) {
  * This is not valid for AI drafts, arbitrary imported editions, or a missing
  * locked Week 4. A failing audit always blocks public writes.
  */
+// Compare complete prose sentences, not shared scores or roster names.
+// A future week must not reprint a prior week's actual editorial sentence.
+export function inspectPreviousWeekEditorialReuse(edition,previousEdition){
+ const previous=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
+ const issues=[];
+ const sentences=a=>(a?.sections||[]).flatMap(s=>s.paragraphs||[])
+  .flatMap(p=>String(p).split(/(?<=[.!?])\\s+/))
+  .map(s=>normalized(s).replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim())
+  .filter(s=>s.split(' ').length>=14);
+ for(const team of edition?.teams||[]){
+  const before=previous.get(String(team.roster_id));
+  if(!before)continue;
+  const prior=new Set(sentences(before.inquirer_article));
+  const repeated=[...new Set(sentences(team.inquirer_article).filter(s=>prior.has(s)))];
+  if(repeated.length)issues.push({id:'prior-week-prose-reuse',team:team.team_name,count:repeated.length,excerpt:repeated[0].slice(0,150)});
+ }
+ return issues;
+}
+
 export function deterministicInquirerAdmission(edition,{quality,audit,previousEdition}={}){
   const digest=editorialCopyDigest(edition),week=Number(edition?.week);
   const allowed=week>=5&&week<=18&&Number(edition?.season)>=2026&&
@@ -142,6 +161,7 @@ export function deterministicInquirerAdmission(edition,{quality,audit,previousEd
     Number(previousEdition?.week)===week-1&&
     previousEdition?.published_locked===true&&
     quality?.ok===true&&audit?.ok===true&&
+    inspectPreviousWeekEditorialReuse(edition,previousEdition).length===0&&
     Array.isArray(edition?.teams)&&edition.teams.length===32&&
     Array.isArray(edition?.league_overview?.sections)&&edition.league_overview.sections.length>=4;
   return{approved:!!allowed,digest,mode:allowed?'audited-deterministic-v31':'held'};

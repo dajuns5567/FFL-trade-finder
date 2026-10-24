@@ -437,6 +437,9 @@ export function polishForwardTeamCopy(teams,week,salt){
       .filter(x=>Number.isFinite(x.points)&&x.points<15&&Number.isFinite(x.coverage)&&x.coverage<6);
   const rewrite=(value,kind='')=>{
    let s=String(value||'');
+   // Numeric adjective starts with a consonant sound for nine (e.g. a 9.5-point week).
+   // Apply before other copy transformations so all forward weeks share the repair.
+   s=s.replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ');
    if(kind==='outlook'&&partial.length&&/\b(?:projection|forecast|pregame screenshot|favorite|Week \d+ board|model)\b/i.test(s)){
     const gaps=partial.map(x=>x.name+' ('+x.coverage+' projected starters)').join(' and ');
     // Rotate short factual clauses by roster identity. Shared notices must not

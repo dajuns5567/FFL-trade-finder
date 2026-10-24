@@ -18,9 +18,11 @@ const unattended=process.env.FLEECED_HEADLESS==='1';
 const context=await chromium.launchPersistentContext(profileDir,{headless:unattended});
 try{
  const page=await context.newPage();
- await page.goto(target,{waitUntil:'domcontentloaded',timeout:60000});
- const jsFailures=[];
+ const jsFailures=[],networkDiagnosticRequests=[];
  page.on('pageerror',err=>jsFailures.push(String(err.message||err).slice(0,180)));
+ page.on('request',request=>{try{const x=new URL(request.url());if(x.origin===u.origin&&x.pathname==='/.netlify/functions/inquirer-preview-diagnostic')networkDiagnosticRequests.push({method:request.method(),path:x.pathname,preview_week:x.searchParams.get('preview_week'),draft:x.searchParams.get('draft')==='1'});}catch{}});
+ await page.goto(target,{waitUntil:'domcontentloaded',timeout:60000});
+ await page.waitForTimeout(3000);
  const initial=await page.locator('body').innerText({timeout:20000});
  if(!/fleeced/i.test(initial)||/sign in to continue|authentication required/i.test(initial.slice(0,2200))){
   if(unattended)throw Error('Saved browser session expired or the preview is unavailable. Interactive reauthentication required; no unattended login attempted.');
@@ -74,6 +76,7 @@ try{
   .map(x=>x.name).filter(x=>x.includes('/.netlify/functions/inquirer-preview-diagnostic'))
   .map(x=>{const u=new URL(x);return u.pathname+u.search}).slice(0,12));
  report.checks.preview_diagnostic_requests=requests;
+ report.checks.observed_diagnostic_requests=networkDiagnosticRequests.slice(0,30);
  // Compare visible failure with the completed, validated same-week manuscript.
  // This prevents treating a stale Week 6 page error as loss of Week 5 data.
  const d=report.checks.week5_diagnostic||{},m=report.checks.week5_draft_readback||{};

@@ -31,12 +31,12 @@ test('the only successful unattended enqueue is HTTP 202; operational errors sti
 });
 
 test('preview reader is read-only and reports real states without starting regeneration',()=>{
-  assert.match(readerSource,/inquirer-preview-diagnostic\\?draft=1/);
-  assert.doesNotMatch(readerSource,/fetch\\(info\\?\\.start_url/);
-  assert.doesNotMatch(readerSource,/fetch\\(\\'\\/\\.netlify\\/functions\\/inquirer-preview-background/);
-  assert.match(readerSource,/status\\.state==='not-started'/);
-  assert.match(readerSource,/status\\.state==='running'/);
-  assert.match(readerSource,/status\\.state==='error'/);
+  assert.match(readerSource,/inquirer-preview-diagnostic\?draft=1/);
+  assert.doesNotMatch(readerSource,/fetch\(info\?\.start_url/);
+  assert.doesNotMatch(readerSource,/fetch\(\'\/\.netlify\/functions\/inquirer-preview-background/);
+  assert.match(readerSource,/status\.state==='not-started'/);
+  assert.match(readerSource,/status\.state==='running'/);
+  assert.match(readerSource,/status\.state==='error'/);
   assert.match(readerSource,/no generation was triggered/);
   assert.match(readerSource,/preview is not ready/);
 });
@@ -98,10 +98,10 @@ test('unpublished previews explain missing historical archives before generic we
 });
 
 test('failed historical preview never auto-retries or regenerates while the reader opens',()=>{
- assert.match(readerSource,/async function canRetryArchiveBlockedPreview\\(season,targetWeek\\)/);
+ assert.match(readerSource,/async function canRetryArchiveBlockedPreview\(season,targetWeek\)/);
  assert.match(readerSource,/Refusing to display stale diagnostic text/);
- assert.doesNotMatch(readerSource,/if\\(again\\.status===202\\)throw Error/);
- assert.doesNotMatch(readerSource,/fetch\\(info\\?\\.start_url/);
+ assert.doesNotMatch(readerSource,/if\(again\.status===202\)throw Error/);
+ assert.doesNotMatch(readerSource,/fetch\(info\?\.start_url/);
  assert.match(readerSource,/no generation was triggered/);
 });
 

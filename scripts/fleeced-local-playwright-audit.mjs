@@ -19,6 +19,8 @@ const context=await chromium.launchPersistentContext(profileDir,{headless:unatte
 try{
  const page=await context.newPage();
  await page.goto(target,{waitUntil:'domcontentloaded',timeout:60000});
+ const jsFailures=[];
+ page.on('pageerror',err=>jsFailures.push(String(err.message||err).slice(0,180)));
  const initial=await page.locator('body').innerText({timeout:20000});
  if(!/fleeced/i.test(initial)||/sign in to continue|authentication required/i.test(initial.slice(0,2200))){
   if(unattended)throw Error('Saved browser session expired or the preview is unavailable. Interactive reauthentication required; no unattended login attempted.');
@@ -66,6 +68,11 @@ try{
    error:String(data?.error||'').slice(0,180)
   };
  }catch(e){report.checks.week5_draft_readback={error:String(e.message||e).slice(0,180)};}
+ report.checks.reader_runtime={
+  current_url:page.url().replace(/([?&])[^=]+=[^&]*/g,'$1[redacted]'),
+  page_errors:jsFailures.slice(0,10),
+  script_paths:await page.locator('script[src]').evaluateAll(els=>els.map(e=>new URL(e.src).pathname).filter(p=>/league-hub|main|app/i.test(p)).slice(0,12))
+ };
  report.rendered_characters=text.length;
  report.evidence=text.slice(0,3200);
  // Do not click buttons, start generation, publish, contact payments, or navigate to mutation endpoints.

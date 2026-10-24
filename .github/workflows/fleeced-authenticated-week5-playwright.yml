@@ -1,6 +1,12 @@
-name: Authenticated Week 5 Playwright verification
+name: Authenticated Fleeced project Playwright verification
 on:
   workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Authorized Fleeced replacement-site page or preview to audit'
+        required: true
+        type: string
+        default: 'https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/?inquirer_preview=1&preview_week=5'
 jobs:
   protected-preview-playwright:
     runs-on: ubuntu-latest
@@ -8,12 +14,15 @@ jobs:
     permissions:
       contents: read
     env:
-      PREVIEW_URL: https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/?inquirer_preview=1&preview_week=5
+      PREVIEW_URL: ${{ inputs.target_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Validate target is the Fleeced replacement project
+        run: |
+          node -e "const u=new URL(process.env.PREVIEW_URL);if(u.protocol!=='https:'||!(/^(?:deploy-preview-[0-9]+--)?transcendent-manatee-2f0123\\.netlify\\.app$/).test(u.hostname))process.exit(1)"
       - name: Require authenticated browser state
         env:
           PLAYWRIGHT_STORAGE_STATE_B64: ${{ secrets.FLEECED_PLAYWRIGHT_STORAGE_STATE_B64 }}

@@ -213,3 +213,10 @@ test('a persisted preview cannot regain completed status with empty evidence-bac
  assert.match(audit,/empty value desk despite market data roster/);
  assert.match(previewDiagnosticSource,/auditPrivateEdition\(savedEdition\)\.passed/);
 });
+
+test('stale completed preview status cannot serve editorially rejected manuscripts',()=>{
+ assert.match(previewDiagnosticSource,/state:'editorial-hold'/);
+ assert.match(previewDiagnosticSource,/ready:audit\.passed/);
+ assert.match(previewDiagnosticSource,/auditPrivateEdition\(edition\)\.passed/);
+ assert.match(previewDiagnosticSource,/Unpublished draft failed current editorial requirements/);
+});

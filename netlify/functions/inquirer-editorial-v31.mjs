@@ -4307,7 +4307,10 @@ function assertWeek2Originality(result,previousEdition){
   }
   // Final reader-facing grammar pass: later variation/architecture steps can
   // introduce numeric adjectives after earlier copy polishing has run.
-  const finishGrammar=s=>String(s).replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ');
+  const finishGrammar=s=>String(s)
+    .replace(/\bThe margin asks more:\s*/gi,'')
+    .replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ')
+    .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an ');
   teams=teams.map(t=>{
     const a=t?.inquirer_article;
     if(!a)return t;

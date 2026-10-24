@@ -14,12 +14,14 @@ const report={url:target,read_only:true,authenticated:false,landing_page:false,c
 const profileDir=join(homedir(),'.config','fleeced-playwright-browser');
 await mkdir(profileDir,{recursive:true,mode:0o700});
 await chmod(profileDir,0o700);
-const context=await chromium.launchPersistentContext(profileDir,{headless:false});
+const unattended=process.env.FLEECED_HEADLESS==='1';
+const context=await chromium.launchPersistentContext(profileDir,{headless:unattended});
 try{
  const page=await context.newPage();
  await page.goto(target,{waitUntil:'domcontentloaded',timeout:60000});
  const initial=await page.locator('body').innerText({timeout:20000});
  if(!/fleeced/i.test(initial)||/sign in to continue|authentication required/i.test(initial.slice(0,2200))){
+  if(unattended)throw Error('Saved browser session expired or the preview is unavailable. Interactive reauthentication required; no unattended login attempted.');
   const rl=createInterface({input:stdin,output:stdout});
   try{await rl.question('Login required: sign in to Fleeced, then press Enter to audit: ');}finally{rl.close();}
  }

@@ -66,22 +66,7 @@ async function loadInquirerPreview(){
      (Number(info?.target?.week)!==inquirerPreviewRequestedWeek||
       (status?.week!=null&&Number(status.week)!==inquirerPreviewRequestedWeek)))
    throw Error('Week '+inquirerPreviewRequestedWeek+' preview returned a different week identity. Refusing to display stale diagnostic text.');
-  if(status.state==='error'&&!inquirerPreviewLaunchAttempted&&
-     /Week 3 is the earliest missing locked archive/.test(String(status.error||''))){
-   inquirerPreviewLaunchAttempted=true;
-   if(await canRetryArchiveBlockedPreview(Number(info?.target?.season),Number(info?.target?.week))){
-    const again=await fetch(info?.start_url||('/.netlify/functions/inquirer-preview-background?start=1'+scope),{cache:'no-store'});
-    if(again.status===202)throw Error('Private preview generation started after verified historical archive restoration.');
-   }
-  }
-  if(status.state==='not-started'){
-   if(!inquirerPreviewLaunchAttempted){
-    inquirerPreviewLaunchAttempted=true;
-    const queued=await fetch(info?.start_url||('/.netlify/functions/inquirer-preview-background?start=1'+scope),{cache:'no-store'});
-    if(queued.status!==202)throw Error('Private preview generation could not start (HTTP '+queued.status+').');
-   }
-   throw Error('Private preview generation started; awaiting the final editorial audit.');
-  }
+  // Reading an unpublished preview must never generate or replace it.\n  // Generation is an explicit, separately authorized action only.\n  if(status.state==='not-started')throw Error('Private preview has not been started; no generation was triggered.');
   if(status.state==='running')throw Error('Private preview generation in progress.');
   if(status.state==='error')throw Error('Private preview generation failed: '+String(status.error||'Unknown error'));
   throw Error('Unpublished preview not ready (state: '+String(status.state||'unknown')+').');

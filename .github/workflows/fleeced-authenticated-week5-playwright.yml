@@ -6,6 +6,8 @@ on:
     paths:
       - 'scripts/inquirer-authenticated-browser-audit.mjs'
       - '.github/workflows/fleeced-authenticated-week5-playwright.yml'
+  pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       target_url:
@@ -29,7 +31,7 @@ jobs:
       - name: Validate target is the Fleeced replacement project
         run: |
           node -e "const u=new URL(process.env.PREVIEW_URL);if(u.protocol!=='https:'||!(/^(?:deploy-preview-[0-9]+--)?transcendent-manatee-2f0123\\.netlify\\.app$/).test(u.hostname))process.exit(1)"
-      - name: Require authenticated browser state
+      - name: Require authenticated browser state (failure is not a pass)
         env:
           PLAYWRIGHT_STORAGE_STATE_B64: ${{ secrets.FLEECED_PLAYWRIGHT_STORAGE_STATE_B64 }}
         shell: bash

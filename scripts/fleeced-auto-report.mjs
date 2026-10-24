@@ -34,6 +34,7 @@ const safe={
  errors:(report.errors||[]).map(e=>String(e).slice(0,200))
 };
 const body='<!-- fleeced-readonly-audit -->\n### Automated read-only Fleeced audit\n\n'+'\u0060\u0060\u0060json\n'+JSON.stringify(safe,null,2)+'\n\u0060\u0060\u0060\n\nNo login state, manuscript prose, page evidence, cookies, or tokens included.\n';
+if(!report.authenticated){console.error('Saved session unavailable: interactive sign-in required in the persistent Playwright profile. Skipping PR diagnostic publication.');process.exit(2);}
 const path=join(root,'playwright-safe-pr-report.md');
 await writeFile(path,body,{mode:0o600});
 const result=spawnSync('gh',['pr','comment',String(pr),'--repo',repo,'--body-file',path],{cwd:root,encoding:'utf8'});

@@ -139,8 +139,8 @@ export function inspectPreviousWeekEditorialReuse(edition,previousEdition){
  const previous=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
  const issues=[];
  const sentences=a=>(a?.sections||[]).flatMap(s=>s.paragraphs||[])
-  .flatMap(p=>String(p).split(/(?<=[.!?])\\s+/))
-  .map(s=>normalized(s).replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim())
+  .flatMap(p=>String(p).split(/(?<=[.!?])\s+/))
+  .map(s=>normalized(s).replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim())
   .filter(s=>s.split(' ').length>=14);
  for(const team of edition?.teams||[]){
   const before=previous.get(String(team.roster_id));

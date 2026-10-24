@@ -9,13 +9,14 @@ jobs:
       contents: read
     env:
       PREVIEW_URL: https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/?inquirer_preview=1&preview_week=5
-      PLAYWRIGHT_STORAGE_STATE_B64: ${{ secrets.FLEECED_PLAYWRIGHT_STORAGE_STATE_B64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Require authenticated browser state
+        env:
+          PLAYWRIGHT_STORAGE_STATE_B64: ${{ secrets.FLEECED_PLAYWRIGHT_STORAGE_STATE_B64 }}
         shell: bash
         run: |
           if [ -z "$PLAYWRIGHT_STORAGE_STATE_B64" ]; then

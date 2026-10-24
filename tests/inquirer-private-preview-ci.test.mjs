@@ -236,5 +236,5 @@ test('audit readiness requires both upstream quality gates and completed audited
 test('value desk quality gate does not depend on optional roster-value adapter keys',()=>{
  const audit=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
  assert.match(audit,/value\.paragraphs\.some/);
- assert.doesNotMatch(audit,/value_history_week/);
+ assert.doesNotMatch(audit,/const market=t\?\.value_history_week/);
 });

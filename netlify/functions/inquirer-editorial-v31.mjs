@@ -4434,7 +4434,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
       if(/Week \d+ Look Less Accidental/i.test(String(a.headline||''))&&Number(t.points)>Number(t.opponent_points))
         issues.push({id:'unverified-prior-week-headline',team:t.team_name,headline:a.headline});
       for(const p of paragraphs){
-        if(/\b(?:this round of games’s|a [89](?:\.\d+)?-point|(?:Texans|Bears|Billiards|Falcons) sits)\b/i.test(p))
+        if(/\b(?:this round of games’s|(?:a 8|an 9)(?:\.\d+)?-point|(?:Texans|Bears|Billiards|Falcons) sits)\b/i.test(p))
           issues.push({id:'reader-facing-grammar',team:t.team_name,excerpt:String(p).slice(0,150)});
         for(const prefix of ['Spare me the excuses:','Back-page material:','The lineup still answers:'])
           if(String(p).split(prefix).length>2)issues.push({id:'stacked-stock-preface',team:t.team_name,prefix});

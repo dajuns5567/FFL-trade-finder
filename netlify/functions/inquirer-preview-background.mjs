@@ -17,7 +17,7 @@ export default async function generateInquirerPreview(req){
  // deploy previews even if their functions share the same Netlify site ID.
  if(new URL(req.url).hostname!=='deploy-preview-402--transcendent-manatee-2f0123.netlify.app')
   return new Response('Forbidden',{status:403});
- const store=getStore('fleeced-inquirer-private-pr402-persistent',{consistency:'strong'});
+ const store=getStore({name:'fleeced-inquirer-private-pr402-persistent',consistency:'strong'});
  const legacy=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
  // A transient store outage is not evidence that no draft exists.
  // Fail closed rather than launching overlapping 32-column jobs.

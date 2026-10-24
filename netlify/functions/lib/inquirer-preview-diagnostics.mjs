@@ -81,7 +81,7 @@ export function auditPrivateEdition(edition){
   // regardless of which upstream adapter supplies (or omits) market fields.
   // This closes the gap where a missing value_history_week masked 27 blank desks.
   const value=sections.find(s=>s?.kind==='value');
-  if(!(Array.isArray(value?.paragraphs)&&value.paragraphs.some(p=>String(p||'').trim())))
+  if(!(Array.isArray(value?.paragraphs)&&value.paragraphs.some(p=>String(p||'').trim()&&!/^n\/?a$/i.test(String(p).trim()))))
    issues.push('empty value desk roster '+id);
   if(!String(article.headline||'').trim())issues.push('missing headline roster '+id);
   const prose=sections.flatMap(s=>Array.isArray(s?.paragraphs)?s.paragraphs:[]);

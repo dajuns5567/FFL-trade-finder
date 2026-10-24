@@ -72,7 +72,7 @@ export default async function inquirerPreviewDiagnostic(req){
   if(new URL(req.url).searchParams.get('view')==='readable')return readableEdition(req);
   if(status?.state!=='completed')return json({status:status||{state:'not-started'},error:'Draft is not ready'},404);
   let edition;
-  try{edition=await store.get(identity.edition,{type:'json'})}
+  try{edition=await store.get(identity.edition,{type:'json'})||await legacy.get(identity.edition,{type:'json'})}
   catch(error){return json({error:'Private draft storage temporarily unavailable'},503)}
   return edition?.preview_only===true&&edition?.published_locked===false
    ?json(edition):json({error:'Unpublished draft not found'},404);

@@ -1707,7 +1707,7 @@ function w2DivisionalOutlook(t,r,next,nrecord,ndiv){
     "mack-hollis":[
       "Week 3 is "+team+" versus "+next+" inside "+ndiv+". The 'just one game' excuse can leave the building: winning "+ndiv+" sends "+team+" to the playoffs, and beating "+next+" takes a swing at both sides of that particular argument. "+mida+leverage,
       next+" is a direct "+ndiv+" rival, which makes Week 3 a two-sided punch: "+team+" can add a win and hand the same race a loss. The division crown punches a playoff ticket in this league. "+mida+"That is why this one gets the megaphone.",
-      "The schedule gives "+team+" "+article+" "+ndiv+" game against "+next+". There are not many direct swings like this, and the prize for winning the division is a playoff berth. "+mida+"Win it and the "+a.mascot+" are not just 1-0 better; a rival is 0-1 worse in the exact same race.",
+      "The schedule gives "+team+" "+article+" "+ndiv+" game against "+next+". There are not many direct swings like this, and the prize for winning the division is a playoff berth. "+mida+"Beat "+next+" and the "+a.mascot+" bank a win while handing a division rival a loss; the standings rarely offer such a convenient two-for-one insult.",
       team+" and "+next+" are fighting for the same "+ndiv+" door, and that door opens straight into the playoffs for the division winner. Head-to-head chances are limited. "+mida+"If the "+a.mascot+" want leverage, this is where they stop asking politely."
     ],
     "nora-voss":[
@@ -2553,7 +2553,7 @@ function w2InjuryOutlookRead(t,r,x,next){
       :[name+" has a "+d+" tag for Week 3, so the "+w2Alias(t).mascot+" cannot finish the seating chart for "+foe+" just yet.",name+" reaches the "+foe+" appointment as "+d+". The room should care because one starting chair remains unsettled."],
     "mack-hollis":hard?[name+" is "+d+" for Week 3. If he cannot go, the "+w2Alias(t).mascot+" need a replacement before "+foe+" and that is a bigger story than another depth percentage.",name+" has "+d+" next to his name for the "+foe+" game, which could change the actual starting card before anybody starts yelling about trends."]
       :[name+" is carrying a "+d+" tag into Week 3, so the "+w2Alias(t).mascot+" have a real availability question before "+foe+".",name+" is "+d+" ahead of "+foe+". Put that on the Week 3 board because it may change the lineup, not just the pregame chatter."],
-    "nora-voss":hard?[name+" is "+d+" heading toward "+foe+", giving rivals a concrete lineup uncertainty to watch before Week 3.",name+" carries "+d+" status into the "+foe+" matchup. If the "+w2Alias(t).mascot+" need a replacement, that changes the next joke before kickoff."]
+    "nora-voss":hard?[name+" is "+d+" heading toward "+foe+", giving rivals a concrete lineup uncertainty to watch before Week 3.",name+" carries "+d+" status into the "+foe+" matchup. If "+name+" needs relief, the "+w2Alias(t).mascot+" must reshape the depth chart before "+foe+" gets to write the punchline."]
       :[name+" is "+d+" for the "+foe+" game, and rivals will notice whether that tag changes the "+w2Alias(t).mascot+" starting lineup.",name+" takes a "+d+" designation into Week 3 against "+foe+". The designation matters because it may force the "+w2Alias(t).mascot+" to change starters before kickoff."]
   };
   return (rows[rid]||rows["walter-mercer"])[v]

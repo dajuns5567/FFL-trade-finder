@@ -1,5 +1,11 @@
 name: Authenticated Fleeced project Playwright verification
 on:
+  push:
+    branches:
+      - fix/inquirer-week5-feature-package-guard
+    paths:
+      - 'scripts/inquirer-authenticated-browser-audit.mjs'
+      - '.github/workflows/fleeced-authenticated-week5-playwright.yml'
   workflow_dispatch:
     inputs:
       target_url:
@@ -14,7 +20,7 @@ jobs:
     permissions:
       contents: read
     env:
-      PREVIEW_URL: ${{ inputs.target_url }}
+      PREVIEW_URL: ${{ inputs.target_url || 'https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/?inquirer_preview=1&preview_week=5' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

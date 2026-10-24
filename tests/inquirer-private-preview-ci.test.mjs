@@ -220,3 +220,9 @@ test('stale completed preview status cannot serve editorially rejected manuscrip
  assert.match(previewDiagnosticSource,/auditPrivateEdition\(edition\)\.passed/);
  assert.match(previewDiagnosticSource,/Unpublished draft failed current editorial requirements/);
 });
+
+test('editorial hold remains inspectable without serving the rejected manuscript',()=>{
+ assert.match(previewDiagnosticSource,/status\?\.state!=='completed'&&status\?\.state!=='editorial-hold'/);
+ assert.match(previewDiagnosticSource,/ready:audit\.passed/);
+ assert.match(previewDiagnosticSource,/Unpublished draft failed current editorial requirements/);
+});

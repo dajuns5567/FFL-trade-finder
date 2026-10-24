@@ -4060,11 +4060,11 @@ function assertWeek2Originality(result,previousEdition){
         const validCurrent=market.value!=null&&Number.isFinite(current);
         const magnitude=validDelta?Math.abs(Math.round(delta)).toLocaleString('en-US'):null;
         const observed=validDelta
-          ?team+' registered a '+(delta>0?'gain of ':delta<0?'decline of ':'flat movement of ')+magnitude+' roster-value points in the Week '+week+' ledger.'
-          :team+' has no verified Week '+week+' roster-value movement in the available league snapshot; this desk will not invent one.';
+          ?team+' moved '+(delta>0?'up ':delta<0?'down ':'by ')+magnitude+' market points in Week '+week+'; '+team+' still has to prove that paper movement matters on a scoreboard.'
+          :team+' has no verified market movement for Week '+week+'; '+team+' will not be awarded a fictional rise or fall.';
         const context=validCurrent
-          ?'Its recorded roster valuation is '+Math.round(current).toLocaleString('en-US')+' points; that number describes the roster market, not the result of a fantasy matchup.'
-          :'The absence of a verified current valuation is a data limitation, not evidence of a roster gaining or losing value.';
+          ?team+' carries a recorded valuation of '+Math.round(current).toLocaleString('en-US')+' points; '+team+' cannot cash that number in for a matchup victory.'
+          :team+' also lacks a verified current valuation; '+team+' gets a documented data gap, not a made-up price tag.';
         byKind.set('value',{kind:'value',heading:marketDesk?.heading||'The Roster-Value Ledger',paragraphs:[observed+' '+context]});
       }
       const outlook=byKind.get('outlook');

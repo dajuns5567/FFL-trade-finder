@@ -186,9 +186,9 @@ test('production candidate evaluator enforces original Week5 anti-scaffold findi
  assert.match(editorial,/extendedPhraseOwners/);
  assert.match(editorial,/zero-point-production-praise/);
  assert.match(editorial,/scored exactly 0\.0, including 0\.0/);
- assert.match(narrative,/const evidenceIndex=/);
- assert.match(narrative,/nameSalt/);
- assert.match(narrative,/The play-by-play records/);
+ assert.match(narrative,/const lead=leads\[variant%leads.length\]/);
+ assert.match(narrative,/detail\.charAt\(0\)\.toUpperCase\(\)/);
+ assert.doesNotMatch(narrative,/The play-by-play records/);
 });
 
 test('a previously saved edition cannot be overwritten or regenerated after a lost status key',()=>{

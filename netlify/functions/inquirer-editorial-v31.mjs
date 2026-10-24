@@ -241,7 +241,14 @@ function evolveSentence(sentence,reporterId,seed){
   // Never stack a prefatory cue on copy that already has one; that produced
   // "The box score settles this: Look at the personnel: ..." in Week 5.
   const existingPrefaces=Object.values(EVOLUTION_INTROS).flat();
-  if(!existingPrefaces.some(prefix=>out.toLowerCase().startsWith(prefix.toLowerCase())))out=intro+' '+out;
+  const priorCue=existingPrefaces.find(prefix=>out.toLowerCase().startsWith(prefix.toLowerCase()));
+  if(priorCue){
+    // Existing newsroom cues must EVOLVE, not freeze unchanged merely because
+    // the previous edition already used one. Replace, never stack, the cue.
+    const variants=EVOLUTION_INTROS[rid].filter(prefix=>prefix.toLowerCase()!==priorCue.toLowerCase());
+    const replacement=variants[h%variants.length]||intro;
+    out=replacement+' '+out.slice(priorCue.length).trim();
+  }else out=intro+' '+out;
   if(!/[.!?]$/.test(out))out+='.';
   return out;
 }

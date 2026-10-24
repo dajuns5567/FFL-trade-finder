@@ -4278,6 +4278,11 @@ function assertWeek2Originality(result,previousEdition){
       'Make Week '+week+' Look Less Accidental',
       'Make Their Week '+week+' Win Harder to Ignore');
   }
+  // The last grammar, structural, and depth passes can restore old Week N-1
+  // wording. Recheck and evolve the ACTUAL reader-facing article copy,
+  // once, after all composition is complete.
+  if(week>=3&&previousEdition)
+    teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+1409);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

@@ -119,3 +119,19 @@ test('diagnostic outages never masquerade as a missing week or launch duplicate 
  assert.match(previewDiagnosticSource,/return json\(\{error:'Private draft storage temporarily unavailable'\},503\)/);
  assert.match(previewDiagnosticSource,/target:\{season:identity\.season,week:identity\.week\}/);
 });
+
+test('every future completed draft passes full independent structural audit before storage',()=>{
+ const gate=previewJobSource.indexOf('const structural=auditPrivateEdition(edition)');
+ const saved=previewJobSource.indexOf('await store.setJSON(identity.edition,edition)');
+ assert.ok(gate>=0&&saved>gate,'structural audit must precede saved completed edition');
+ assert.match(previewJobSource,/if\(!structural\.passed\)/);
+ assert.match(previewJobSource,/setJSON\(identity\.rejected,\{started_at,edition\}\)/);
+ assert.match(previewJobSource,/structural quality audit/);
+ const audit=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
+ assert.match(audit,/teams\.length!==32/);
+ assert.match(audit,/Object\.keys\(counts\)\.length!==4/);
+ assert.match(audit,/c!==8/);
+ assert.match(audit,/words<300\|\|words>650/);
+ assert.match(audit,/six-beat recap missing/);
+ assert.match(audit,/repeated cross-roster paragraphs/);
+});

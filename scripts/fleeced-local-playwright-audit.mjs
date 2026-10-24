@@ -45,6 +45,22 @@ try{
    error_excerpt:String(data?.status?.error||data?.error||'').slice(0,360)
   };
  }catch(e){report.checks.week5_diagnostic={error:String(e.message||e).slice(0,180)};}
+ // Read the completed private draft for identity only; never include manuscript content in diagnostics.
+ const draftUrl=new URL('/.netlify/functions/inquirer-preview-diagnostic?draft=1&preview_week=5',target);
+ try{
+  const response=await context.request.get(draftUrl.href,{timeout:25000});
+  const data=await response.json().catch(()=>null);
+  report.checks.week5_draft_readback={
+   http_status:response.status(),
+   season:Number(data?.season)||null,week:Number(data?.week)||null,
+   preview_only:data?.preview_only===true,published_locked:data?.published_locked===false,
+   team_count:Array.isArray(data?.teams)?data.teams.length:null,
+   recap_present:!!data?.league_overview,
+   editorial_audit_ok:data?.preview_editorial_audit?.ok===true,
+   generation_quality_ok:data?.preview_generation_quality?.ok===true,
+   error:String(data?.error||'').slice(0,180)
+  };
+ }catch(e){report.checks.week5_draft_readback={error:String(e.message||e).slice(0,180)};}
  report.rendered_characters=text.length;
  report.evidence=text.slice(0,3200);
  // Do not click buttons, start generation, publish, contact payments, or navigate to mutation endpoints.

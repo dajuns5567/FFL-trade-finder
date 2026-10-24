@@ -185,7 +185,25 @@ export function restoreForwardArticleDepth(t,week){
  // for every team. If cross-edition de-duplication emptied one, recover it
  // from the recorded performance instead of retaining a heading with no copy.
  const kind=k=>a.sections.find(s=>s.kind===k);
- const hot=kind('hot-seat'),cool=kind('cool-throne');
+ const hot=kind('hot-seat'),cool=kind('cool-throne'),valueDesk=kind('value');
+ // Empty desk headings passed earlier structural audits despite actual
+ // seven-day roster valuations being available. Restore verifiable figures,
+ // varying the angle without inventing a player-level cause.
+ const market=t.value_history_week||{};
+ if(valueDesk&&!(valueDesk.paragraphs||[]).some(p=>String(p).trim())&&Number.isFinite(Number(market.value))&&Number.isFinite(Number(market.delta))){
+  const valuation=Number(market.value),delta=Number(market.delta),prior=Number(market.baseline_value);
+  const movement=delta>0?'gained':delta<0?'lost':'held steady on';
+  const magnitude=Math.abs(delta).toLocaleString('en-US'),current=valuation.toLocaleString('en-US');
+  const span=String(market.period||'7D').replace(/[^0-9A-Za-z -]/g,'').slice(0,12);
+  const lines=[
+   `${team}'s roster is valued at ${current}; over ${span}, it ${movement} ${magnitude} value points. The score and the market are separate report cards.`,
+   `Roster-value ledger: ${team} at ${current}, a ${delta>=0?'+':''}${delta.toLocaleString('en-US')} move over ${span}. That is a valuation change, not another fantasy touchdown.`,
+   `The ${span} market snapshot puts ${team} at ${current} roster-value points, ${delta>=0?'up':'down'} ${magnitude} from its baseline. Sunday still decides the matchup.`,
+   `Off the field, ${team} carries ${current} in roster value after a ${delta>=0?'gain':'decline'} of ${magnitude} over ${span}. Management can celebrate the number only if the lineup eventually backs it up.`
+  ];
+  valueDesk.paragraphs=[lines[(Number(t.roster_id)||0)%lines.length]];
+ }
+
  const weak=t.worst_starter,leader=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points))[0];
  const team=text(t.team_name),opponent=text(t.opponent_name);
  const gap=Number(t.opponent_points)-Number(t.points);

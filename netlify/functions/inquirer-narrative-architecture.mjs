@@ -202,7 +202,22 @@ export function restoreForwardArticleDepth(t,week){
    `The ${span} market snapshot puts ${team} at ${current} roster-value points, ${delta>=0?'up':'down'} ${magnitude} from its baseline. Sunday still decides the matchup.`,
    `Off the field, ${team} carries ${current} in roster value after a ${delta>=0?'gain':'decline'} of ${magnitude} over ${span}. Management can celebrate the number only if the lineup eventually backs it up.`
   ];
-  valueDesk.paragraphs=[lines[(Number(t.roster_id)||0)%lines.length]];
+  const angle=[
+   'The spreadsheet may be excited; the starting lineup still has to earn its applause.',
+   'That number is worth noting, not hanging a championship banner over.',
+   'A trade calculator cannot collect the points left on the bench.',
+   'A larger roster appraisal does not automatically buy a better Sunday.',
+   'That movement belongs in the personnel file, not the win column.',
+   'Managers should examine the price tag without confusing it for a final score.',
+   'The market takes the long view; the next matchup will be far less patient.',
+   'Fantasy valuations can swing while the actual scoreboard refuses to negotiate.',
+   'A rival can admire the asset sheet and still enjoy the result on Sunday.',
+   'The front office gets a number; the locker room still owes a performance.',
+   'Paper wealth is entertaining until another lineup outproduces it.',
+   'The weekly market has spoken, and thankfully it does not set the standings.'
+  ];
+  const rosterIndex=Math.max(0,(Number(t.roster_id)||1)-1);
+  valueDesk.paragraphs=[lines[rosterIndex%lines.length]+' '+angle[Math.floor(rosterIndex/lines.length)%angle.length]];
  }
 
  const weak=t.worst_starter,leader=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points))[0];

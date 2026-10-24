@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import week2 from '../netlify/functions/inquirer-week2-2026-preload.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,adaptWeekLanguage,polishForwardTeamCopy,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
+import {restoreForwardArticleDepth} from '../netlify/functions/inquirer-narrative-architecture.mjs';
 import {inquirerWeekClassification} from '../netlify/functions/inquirer-reporters.mjs';
 import {inspectEditionBeforePublication} from '../netlify/functions/inquirer-publication-guard.mjs';
 
@@ -198,5 +199,14 @@ assert.match(handReview[0].inquirer_article.paragraphs.join(' '),/Kansas City Ch
 assert.doesNotMatch(handReview[0].inquirer_article.paragraphs.join(' '),/100\.8/);
 assert.match(handReview[0].inquirer_article.paragraphs.join(' '),/Ravens have won their last two games/);
 assert.doesNotMatch(handReview[0].inquirer_article.paragraphs.join(' '),/the first the last two weeks/);
+
+// Regression: a required value desk with a real roster snapshot must never
+// survive the final editorial pass as an empty decorative heading.
+const valuationFixture=clone(week2.teams[0]);
+valuationFixture.value_history_week={value:50514,baseline_value:50614,delta:-100,period:'7D'};
+valuationFixture.inquirer_article.sections.find(section=>section.kind==='value').paragraphs=[];
+restoreForwardArticleDepth(valuationFixture,5);
+assert.ok(valuationFixture.inquirer_article.sections.find(section=>section.kind==='value').paragraphs.some(p=>/50,514/.test(p)&&/100/.test(p)),
+  'Final editorial depth repair must restore evidence-backed market copy');
 
 console.log(JSON.stringify({ok:true,editorial_sweep:editorialSweep,week3_quality:quality?.metrics||{},week5_narrative:week5NarrativeMetrics,week3_headline:week3.league_overview.headline,week9_playoff_race:true,week14_round:true},null,2));

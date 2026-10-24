@@ -4322,15 +4322,17 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     const rid=String(t?.inquirer_article?.reporter?.id||''),copy=(t?.inquirer_article?.paragraphs||[]).join(' '),
       valueCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='value').flatMap(s=>s?.paragraphs||[]).join(' ');
     trioMentions+=(copy.match(/\btrio\b/gi)||[]).length;
-    const longRecycled=[...extendedPhraseOwners].filter(([,owners])=>owners.size>=4);
-  if(longRecycled.length)issues.push({id:'cross-team-nine-word-scaffold',count:longRecycled.length,
-    examples:longRecycled.slice(0,3).map(([phrase,owners])=>({phrase,team_count:owners.size}))});
-  for(const [phrase,owners] of repeatedTeamPhrases)if(copy.toLowerCase().includes(phrase.toLowerCase()))owners.push(t.team_name);
+    for(const [phrase,owners] of repeatedTeamPhrases)if(copy.toLowerCase().includes(phrase.toLowerCase()))owners.push(t.team_name);
     if(/already on the roster when Week \d+ began/i.test(valueCopy))issues.push({id:'value-roster-status-filler',team:t.team_name});
     if(/could not turn the (?:came in|finished|closed the week) result/i.test(copy))issues.push({id:'malformed-result-idiom',team:t.team_name});
     if(rid==='tess-delaney'&&/\b(?:furniture|chair|chairs|tablecloth|linen|napkin|china|silverware|place setting|dining room|dinner|centerpiece|velvet rope|chaise|ballroom|salon|coat check)\b/i.test(copy))issues.push({id:'roycington-retired-metaphor',team:t.team_name});
     if(rid==='nora-voss'&&/\b(?:docket|cross-examination|defendant|prosecution|indictment|courtroom)\b/i.test(copy))issues.push({id:'filch-courtroom-scaffold',team:t.team_name});
   }
+  // Evaluate repeated prose once across the complete newsroom, not once per
+  // roster processed. Preserve substantive repeats as editorial failures.
+  const longRecycled=[...extendedPhraseOwners].filter(([,owners])=>owners.size>=4);
+  if(longRecycled.length)issues.push({id:'cross-team-nine-word-scaffold',count:longRecycled.length,
+    examples:longRecycled.slice(0,3).map(([phrase,owners])=>({phrase,team_count:owners.size}))});
   for(const [phrase,owners] of repeatedTeamPhrases)if(owners.length>=3)
     issues.push({id:'repeated-team-editorial-template',phrase,teams:owners});
   if(Number(current?.week)>=3&&teams.length===32&&trioMentions>12)

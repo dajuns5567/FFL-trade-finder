@@ -121,3 +121,18 @@ test('diagnostic outages never masquerade as a missing week or launch duplicate 
  assert.match(previewDiagnosticSource,/return json\(\{error:'Private draft storage temporarily unavailable'\},503\)/);
  assert.match(previewDiagnosticSource,/target:\{season:identity\.season,week:identity\.week\}/);
 });
+
+test('authenticated Playwright workflow fails closed and never mistakes a landing page for complete edition readback',()=>{
+ const workflow=readFileSync(new URL('../.github/workflows/fleeced-authenticated-week5-playwright.yml',import.meta.url),'utf8');
+ const audit=readFileSync(new URL('../scripts/inquirer-authenticated-browser-audit.mjs',import.meta.url),'utf8');
+ assert.match(workflow,/workflow_dispatch:/);
+ assert.match(workflow,/FLEECED_PLAYWRIGHT_STORAGE_STATE_B64/);
+ assert.match(workflow,/Protected preview was NOT audited/);
+ assert.match(workflow,/exit 1/);
+ assert.match(workflow,/node --check scripts\/inquirer-authenticated-browser-audit\.mjs/);
+ assert.match(audit,/SSO; cannot audit protected content/);
+ assert.match(audit,/complete_edition_verified:false/);
+ assert.match(audit,/all_32_articles='not_verified_by_landing_page'/);
+ assert.match(audit,/exact_blob_readback='not_verified_by_browser'/);
+ assert.doesNotMatch(audit,/complete_edition_verified=true/);
+});

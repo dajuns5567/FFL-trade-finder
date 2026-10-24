@@ -144,3 +144,12 @@ test('every completed weekly preview must be structurally verified after exact d
  assert.match(previewJobSource,/auditPrivateEdition\(readback\)\.passed/);
  assert.match(previewJobSource,/write verification failed; completion withheld/);
 });
+
+test('weekly structural checker blocks recycled column openings instead of rewarding repeated punchlines',()=>{
+ const audit=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
+ assert.match(audit,/const repeatedOpenings=/);
+ assert.match(audit,/recycled column openings/);
+ assert.match(audit,/recycled_opening_groups/);
+ assert.match(previewJobSource,/auditPrivateEdition\(edition\)/);
+ assert.match(previewJobSource,/auditPrivateEdition\(readback\)/);
+});

@@ -58,7 +58,7 @@ try{
   report.checks.week5_draft_readback={
    http_status:response.status(),
    season:Number(data?.season)||null,week:Number(data?.week)||null,
-   preview_only:data?.preview_only===true,published_locked:data?.published_locked===false,
+   preview_only:data?.preview_only===true,published_locked_false:data?.published_locked===false,
    team_count:Array.isArray(data?.teams)?data.teams.length:null,
    recap_present:!!data?.league_overview,
    editorial_audit_ok:data?.preview_editorial_audit?.ok===true,

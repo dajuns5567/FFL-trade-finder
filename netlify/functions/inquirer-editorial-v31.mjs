@@ -4128,6 +4128,26 @@ function assertWeek2Originality(result,previousEdition){
           }).join(' ').trim();
         }).filter(Boolean);
       }
+      // Keep forward articles under the locked Week 4 editorial ceiling.
+      // Tighten optional commentary sentences, never erase a factual desk or
+      // clip a paragraph mid-sentence. Every retained paragraph stays substantial.
+      const forwardWordCount=()=>article.sections.flatMap(s=>s.paragraphs||[])
+        .join(' ').trim().split(/\s+/).filter(Boolean).length;
+      for(let cut=0;forwardWordCount()>640&&cut<8;cut++){
+        let reduced=false;
+        for(const kind of ['sentiment','outlook','lede']){
+          const desk=article.sections.find(s=>s.kind===kind);
+          if(!desk)continue;
+          const i=(desk.paragraphs||[]).findIndex(p=>{
+            const parts=String(p).split(/(?<=[.!?])\s+/);
+            return parts.length>1&&parts.slice(0,-1).join(' ').length>=75;
+          });
+          if(i<0)continue;
+          desk.paragraphs[i]=String(desk.paragraphs[i]).split(/(?<=[.!?])\s+/).slice(0,-1).join(' ');
+          reduced=true;break;
+        }
+        if(!reduced)break;
+      }
       article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
     }
     const first=overview.sections?.[0];

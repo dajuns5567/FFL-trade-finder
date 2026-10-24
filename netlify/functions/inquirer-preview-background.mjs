@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {getDeployStore} from '@netlify/blobs';
+import {getStore,getDeployStore} from '@netlify/blobs';
 import {weeklyReport} from './league-hub.mjs';
 import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,summarizePreviewDiagnostic,auditPrivateEdition} from './lib/inquirer-preview-diagnostics.mjs';
 
@@ -13,10 +13,11 @@ export default async function generateInquirerPreview(req){
  }
  // getDeployStore is scoped to this single Deploy Preview, never production's shared Blob store.
  const identity=await resolvePreviewIdentity(req.url);
- const store=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
+ const store=getStore('fleeced-inquirer-private-pr402-persistent',{consistency:'strong'});
+ const legacy=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
  // A transient store outage is not evidence that no draft exists.
  // Fail closed rather than launching overlapping 32-column jobs.
- const observed=await store.get(identity.status,{type:'json'});
+ const observed=await store.get(identity.status,{type:'json'})||await legacy.get(identity.status,{type:'json'});
  const existing=previewStatusMatchesIdentity(observed,identity)?observed:null;
  const age=Date.now()-Date.parse(existing?.started_at||0);
  if(existing?.state==='completed'||(existing?.state==='running'&&age>=0&&age<20*60*1000)){

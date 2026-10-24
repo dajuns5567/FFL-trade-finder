@@ -82,7 +82,7 @@ test('every private draft targets the requested or latest completed week rather 
 test('private reader never shares a completed Week 3 result with a Week 5 or Week 6 request',()=>{
  const diagnostics=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
  assert.match(readerSource,/inquirer-preview-diagnostic\?draft=1'\+scope/);
- assert.match(readerSource,/info\?\.start_url/);
+ assert.doesNotMatch(readerSource,/fetch\(info\?\.start_url/);
  assert.match(readerSource,/scope\?'\?'\+scope\.slice\(1\)/);
  assert.match(previewJobSource,/get\(identity\.status/);
  assert.match(previewJobSource,/setJSON\(identity\.edition/);
@@ -98,20 +98,16 @@ test('unpublished previews explain missing historical archives before generic we
  assert.match(previewJobSource,/edition\?\.preview_only!==true\|\|edition\?\.published_locked!==false\|\|edition\?\.available!==true/);
 });
 
-test('a previously failed Week 5 preview automatically retries only after the exact locked history is restored',()=>{
- assert.match(readerSource,/async function canRetryArchiveBlockedPreview\(season,targetWeek\)/);
- assert.match(readerSource,/length:targetWeek-3/);
- assert.match(readerSource,/isVerifiedHistoricalPreviewEdition\(edition,season,i\+3\)/);
- assert.match(readerSource,/if\(!history\.every\(/);
- assert.match(readerSource,/const week4=history\[1\]/);
- assert.match(readerSource,/cool-throne/);
- assert.match(readerSource,/Week 3 is the earliest missing locked archive/);
- assert.match(readerSource,/if\(again\.status===202\)throw Error/);
- assert.match(readerSource,/!inquirerPreviewLaunchAttempted/);
- assert.match(readerSource,/info\?\.target\?\.week/);
- assert.match(readerSource,/status\.week/);
- assert.match(readerSource,/Refusing to display stale diagnostic text/);
- assert.match(readerSource,/inquirerPreviewPollAttempts<=80/);
+test('Week 5 reader never retries manuscript generation or launches a preview job',()=>{
+ const loader=readerSource.slice(readerSource.indexOf('async function loadInquirerPreview()'),readerSource.indexOf('const esc='));
+ assert.match(loader,/draft=1/);
+ assert.match(loader,/preview_week/);
+ assert.match(loader,/Refusing to display stale diagnostic text/);
+ assert.doesNotMatch(loader,/fetch\(info\?\.start_url/);
+ assert.doesNotMatch(loader,/inquirer-preview-background/);
+ assert.doesNotMatch(loader,/canRetryArchiveBlockedPreview/);
+ assert.match(loader,/preview_editorial_audit/);
+ assert.match(loader,/preview_generation_quality/);
 });
 
 test('diagnostic outages never masquerade as a missing week or launch duplicate expensive jobs',()=>{

@@ -18,8 +18,11 @@ const context=await chromium.launchPersistentContext(profileDir,{headless:false}
 try{
  const page=await context.newPage();
  await page.goto(target,{waitUntil:'domcontentloaded',timeout:60000});
- const rl=createInterface({input:stdin,output:stdout});
- try{await rl.question('If needed, sign in once. When the protected Fleeced page is visible, press Enter to audit: ');}finally{rl.close();}
+ const initial=await page.locator('body').innerText({timeout:20000});
+ if(!/fleeced/i.test(initial)||/sign in to continue|authentication required/i.test(initial.slice(0,2200))){
+  const rl=createInterface({input:stdin,output:stdout});
+  try{await rl.question('Login required: sign in to Fleeced, then press Enter to audit: ');}finally{rl.close();}
+ }
  const current=new URL(page.url());
  const text=await page.locator('body').innerText({timeout:20000});
  report.authenticated=current.host===u.host&&!/sign in to continue|authentication required|access denied/i.test(text.slice(0,2200));

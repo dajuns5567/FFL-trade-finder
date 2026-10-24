@@ -4305,6 +4305,16 @@ function assertWeek2Originality(result,previousEdition){
       return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(x=>x.paragraphs||[])}};
     });
   }
+  // Final reader-facing grammar pass: later variation/architecture steps can
+  // introduce numeric adjectives after earlier copy polishing has run.
+  const finishGrammar=s=>String(s).replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ');
+  teams=teams.map(t=>{
+    const a=t?.inquirer_article;
+    if(!a)return t;
+    const sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(finishGrammar)}));
+    return {...t,inquirer_article:{...a,headline:finishGrammar(a.headline||''),sections,paragraphs:sections.flatMap(sec=>sec.paragraphs)}};
+  });
+  overview=deepStrings(overview,finishGrammar);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

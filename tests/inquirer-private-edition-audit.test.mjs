@@ -38,3 +38,20 @@ test('three identical cross-roster paragraphs are rejected',()=>{
  assert.equal(auditPrivateEdition(e).passed,false);
  assert.match(auditPrivateEdition(e).issues.join(' '),/repeated cross-roster/);
 });
+
+test('rejects nine-word recycled scaffolds across four different newspaper columns',()=>{
+ const e=makeDraft(),recycled='The same tired newspaper joke somehow appeared in four different locker rooms. ';
+ for(const i of [0,1,2,3])e.teams[i].inquirer_article.sections[0].paragraphs[0]=recycled+e.teams[i].inquirer_article.sections[0].paragraphs[0];
+ const audit=auditPrivateEdition(e);
+ assert.equal(audit.passed,false);
+ assert.match(audit.issues.join(' '),/recurring nine-word story scaffolds/);
+ assert.ok(audit.recycled_nine_word_scaffolds>0);
+});
+test('rejects praise for zero-point roster production',()=>{
+ const e=makeDraft();
+ e.teams[0].points=0;
+ e.teams[0].inquirer_article.sections[0].paragraphs[0]='The team got something from a player, allegedly. '+e.teams[0].inquirer_article.sections[0].paragraphs[0];
+ const audit=auditPrivateEdition(e);
+ assert.equal(audit.passed,false);
+ assert.match(audit.issues.join(' '),/zero-point team falsely credited/);
+});

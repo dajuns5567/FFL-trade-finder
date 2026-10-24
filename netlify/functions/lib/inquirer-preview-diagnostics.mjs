@@ -70,7 +70,7 @@ const REQUIRED_DESKS=['lede','players','management','hot-seat','cool-throne','va
 const REQUIRED_BEATS=['lead','standings','players','decisions','league','outlook'];
 export function auditPrivateEdition(edition){
  const teams=Array.isArray(edition?.teams)?edition.teams:[],counts={},rosters=new Set(),paragraphs=new Map();
- const issues=[],lengths=[],openings=new Map();
+ const issues=[],lengths=[],openings=new Map(),phraseOwners=new Map();
  for(const t of teams){
   const id=String(t?.roster_id||'');rosters.add(id);
   const article=t?.inquirer_article||{},sections=Array.isArray(article.sections)?article.sections:[];
@@ -87,7 +87,15 @@ export function auditPrivateEdition(edition){
    const seen=openings.get(first)||[];
    seen.push(id);openings.set(first,seen);
   }
-  const words=prose.join(' ').trim().split(/\s+/).filter(Boolean).length;
+  const copy=prose.join(' ');
+  const words=copy.trim().split(/\s+/).filter(Boolean).length;
+  const tokens=(copy.toLowerCase().match(/[a-z0-9]+/g)||[]);
+  // Repeated nine-word sequences across four different columns signal
+  // a cloned reporting scaffold, even when entire paragraphs differ.
+  const phrases=new Set();
+  for(let at=0;at+9<=tokens.length;at++)phrases.add(tokens.slice(at,at+9).join(' '));
+  for(const phrase of phrases){const owners=phraseOwners.get(phrase)||new Set();owners.add(id);phraseOwners.set(phrase,owners)}
+  if(Number(t?.points)===0&&/\bgot something from\b/i.test(copy))issues.push('zero-point team falsely credited with production roster '+id);
   lengths.push(words);
   if(words<300||words>650)issues.push('article length roster '+id+': '+words);
   for(const p of prose){
@@ -101,6 +109,8 @@ export function auditPrivateEdition(edition){
  const repeated=[...paragraphs].filter(([,ids])=>ids.size>=3);
  const repeatedOpenings=[...openings].filter(([,ids])=>ids.length>=3);
  if(repeatedOpenings.length)issues.push('recycled column openings: '+repeatedOpenings.length);
+ const recycledSequences=[...phraseOwners].filter(([,owners])=>owners.size>=4);
+ if(recycledSequences.length)issues.push('recurring nine-word story scaffolds: '+recycledSequences.length);
  if(repeated.length)issues.push('repeated cross-roster paragraphs: '+repeated.length);
  const overview=edition?.league_overview||{},blocks=overview?.sections?.[0]?.blocks||[];
  if(!Array.isArray(overview.sections)||overview.sections.length<4||
@@ -110,5 +120,5 @@ export function auditPrivateEdition(edition){
  if(edition?.preview_editorial_audit?.ok!==true||edition?.preview_generation_quality?.ok!==true)issues.push('underlying editorial audit failed');
  return{passed:issues.length===0,issues,article_count:teams.length,reporter_counts:counts,
   word_counts:{minimum:lengths.length?Math.min(...lengths):null,maximum:lengths.length?Math.max(...lengths):null,average:lengths.length?Math.round(lengths.reduce((a,b)=>a+b,0)/lengths.length):null},
-  repeated_paragraph_groups:repeated.length,recycled_opening_groups:repeatedOpenings.length,recap_beats:blocks.map(b=>b.kind)};
+  repeated_paragraph_groups:repeated.length,recycled_opening_groups:repeatedOpenings.length,recycled_nine_word_scaffolds:recycledSequences.length,recap_beats:blocks.map(b=>b.kind)};
 }

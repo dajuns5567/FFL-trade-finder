@@ -207,3 +207,9 @@ test('verified persisted manuscript wins over lost preview status after redeploy
  assert.match(previewDiagnosticSource,/savedEdition\.published_locked===false/);
  assert.match(previewDiagnosticSource,/Number\(savedEdition\.week\)===identity\.week/);
 });
+
+test('a persisted preview cannot regain completed status with empty evidence-backed value desks',()=>{
+ const audit=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
+ assert.match(audit,/empty value desk despite market data roster/);
+ assert.match(previewDiagnosticSource,/auditPrivateEdition\(savedEdition\)\.passed/);
+});

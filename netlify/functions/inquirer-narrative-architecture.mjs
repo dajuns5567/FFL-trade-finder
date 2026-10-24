@@ -52,11 +52,10 @@ function storyStat(p,opponent,index,variant=0){
   `${n} kept the scoring conversation from ending at one player with ${points} fantasy points.`
  ];
  const lead=leads[variant%leads.length];
- // Independent evidence rotation prevents the same eight-team modulo cohort
- // from repeating a complete lead-plus-stat template across four columns.
- const nameSalt=[...n].reduce((sum,ch)=>sum+ch.charCodeAt(0),0);
- const evidenceIndex=(variant*5+nameSalt+index*3)%8;
- return detail?`${lead} ${['The play-by-play records','On the NFL field it amounted to','His game also featured','The stat sheet shows','That included','The actual football work reads','The supporting evidence:','The production came with'][evidenceIndex]} ${detail}.`:lead;
+ // A fixed transition after "fantasy points" was normalized into the
+ // same nine-word scaffold in four or more columns. Give the verified stat
+ // line directly, without manufacturing a reusable newsroom segue.
+ return detail?`${lead} ${detail.charAt(0).toUpperCase()+detail.slice(1)}.`:lead;
 }
 
 function cullRecycledMetaphors(s){

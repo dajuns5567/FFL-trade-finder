@@ -135,3 +135,12 @@ test('every future completed draft passes full independent structural audit befo
  assert.match(audit,/six-beat recap missing/);
  assert.match(audit,/repeated cross-roster paragraphs/);
 });
+
+test('every completed weekly preview must be structurally verified after exact deploy-local readback',()=>{
+ const write=previewJobSource.indexOf('await store.setJSON(identity.edition,edition)');
+ const read=previewJobSource.indexOf("const readback=await store.get(identity.edition,{type:'json'})");
+ const status=previewJobSource.indexOf("await store.setJSON(identity.status,{\\n   state:'completed'".replace('\\n','\n'));
+ assert.ok(write>=0&&read>write&&status>read,'completion follows an independently audited saved-blob readback');
+ assert.match(previewJobSource,/auditPrivateEdition\(readback\)\.passed/);
+ assert.match(previewJobSource,/write verification failed; completion withheld/);
+});
